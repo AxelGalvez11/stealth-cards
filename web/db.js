@@ -1,6 +1,7 @@
 // The web app's database: your real decks, cards, and reviews, saved on this computer by the local server
-// (web/store.mjs). Every screen asks it the same questions the canvas's sample data answers (design/mock.mjs),
-// so the same screens run on both: sample data on the canvas, your data here.
+// (web/store.mjs), or online in your own library once you sign in. Every screen asks it the same questions the
+// canvas's sample data answers (design/mock.mjs), so the same screens run on both: sample data on the canvas,
+// your data here.
 import { preview, waitLabel, dayAt } from './fsrs.js';
 import R from './rich.js';
 
@@ -14,15 +15,42 @@ const ICON = { basic: 'text', cloze: 'blank', image: 'image', audio: 'audio' };
 const plural = (n, w) => n + ' ' + w + (n === 1 ? '' : 's');
 const byAI = c => c.source && c.source !== 'you' && c.source !== 'import';
 
+// Online, nobody is signed in yet: only the sign-in pages work. The email waits in this tab while you get the code.
+function signedOut(go) {
+  const q = new URLSearchParams(location.search), keep = sessionStorage;
+  let email = ''; try { email = keep.getItem('lucida.email') || ''; } catch {}
+  const post = async (url, body) => {
+    const r = await fetch(url, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) });
+    const j = await r.json().catch(() => ({}));
+    if (!r.ok) throw new Error(j.error || 'That didn’t work. Try again in a minute.');
+    return j;
+  };
+  const off = q.get('off');
+  const auth = {
+    email: () => email,
+    error: () => off ? (off === 'apple' ? 'Apple' : 'Google') + ' sign-in isn’t set up yet. Use your email for now.' : q.get('failed') ? 'That didn’t work. Try again.' : '',
+    sendCode: async e => { await post('/api/auth/code', { email: e }); email = e; try { keep.setItem('lucida.email', e); } catch {} },
+    verify: code => post('/api/auth/verify', { email, code }),
+    done: () => { try { keep.removeItem('lucida.email'); } catch {} location.assign('/'); },
+    go
+  };
+  return { signedOut: true, mock: false, auth, settings: () => ({ look: 'system' }), act: { go } };
+}
+// A request that finds you signed out (your session ended) goes back to signing in.
+const toSignIn = () => location.assign('/sign-in');
+
 export async function createDb({ onChange, go }) {
-  const get = async url => (await fetch(url, { cache: 'no-store' })).json();
-  let S = await get('/api/state');
+  const get = async url => { const r = await fetch(url, { cache: 'no-store' }); if (r.status === 401) { toSignIn(); throw new Error('Signed out'); } return r.json(); };
+  const first = await fetch('/api/state', { cache: 'no-store' });
+  if (first.status === 401) return signedOut(go);
+  let S = await first.json();
   let session = null; // the review in progress: { key, deckId, pile, started, graded: [{ cardId, rating, pile, was, logId }] }
   let memo = {};
   const changed = () => { memo = {}; onChange(); };
   const accept = next => { if (next && next.rev >= S.rev) { S = next; changed(); } };
   async function send(type, payload = {}) {
     const r = await fetch('/api/action', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ type, ...payload }) });
+    if (r.status === 401) { toSignIn(); throw new Error('Signed out'); }
     const j = await r.json();
     if (!r.ok) { alert(j.error || 'Something went wrong.'); throw new Error(j.error); }
     accept(j.state);
@@ -215,7 +243,10 @@ export async function createDb({ onChange, go }) {
     play: url => { if (url) new Audio(url).play(); },
     importCards: async o => { const r = await send('data.import', o); go('/deck/' + r.deckId); },
     exportAll: () => download('lucida.json', JSON.stringify({ decks: S.decks, cards: S.cards, logs: S.logs }, null, 1), 'application/json'),
-    resetAll: async () => { if (!confirm('Delete every deck, card, and review on this computer? This can’t be undone.')) return; await send('data.reset'); session = null; go('/'); },
+    resetAll: async () => { if (!confirm('Delete every deck, card, and review' + (S.me ? '' : ' on this computer') + '? This can’t be undone.')) return; await send('data.reset'); session = null; go('/'); },
+    signOut: async () => { await fetch('/api/auth/signout', { method: 'POST' }).catch(() => {}); toSignIn(); },
+    // A new link for AI apps; the old one stops working (for a link that got out).
+    newLink: () => send('ai.link'),
     go
   };
 
@@ -226,7 +257,8 @@ export async function createDb({ onChange, go }) {
       const due = S.decks.filter(d => !d.paused).reduce((n, d) => n + deckStat(d).due, 0);
       return { nav: { today: due ? String(due) : '' }, me: { bg: COLORS[S.settings.color] || COLORS[0], initial: (S.settings.name || 'You').trim()[0].toUpperCase() } };
     },
-    settings: () => ({ ...S.settings, name: S.settings.name || 'You', sub: 'Saved on this computer', signedIn: false, google: false, photo: 'color', check: !!S.ai.perms.check }),
+    settings: () => ({ ...S.settings, name: S.settings.name || (S.me && S.me.name) || 'You', sub: S.me ? S.me.email : 'Saved on this computer', signedIn: !!S.me,
+      google: false, photo: 'color', check: !!S.ai.perms.check }),
     tags: () => [...new Set([...S.decks.flatMap(d => d.tags), ...S.cards.flatMap(c => c.tags)])],
     decks: () => S.decks.map(deckRow),
     searchDecks: q => S.decks.filter(d => d.name.toLowerCase().includes(q) || d.tags.some(g => g.toLowerCase().includes(q))
@@ -293,7 +325,7 @@ export async function createDb({ onChange, go }) {
     },
     ai: () => {
       const names = Object.keys(S.ai.clients), has = n => names.includes(n);
-      return { url: location.origin + '/mcp', perms: S.ai.perms, connected: names.length ? names.join(', ') : 'None yet',
+      return { url: location.origin + (S.me && S.ai.key ? '/mcp/' + S.ai.key : '/mcp'), perms: S.ai.perms, connected: names.length ? names.join(', ') : 'None yet',
         clients: { claude: has('Claude'), openai: has('ChatGPT'), cursor: has('Cursor'), mcp: names.some(n => !['Claude', 'ChatGPT', 'Cursor'].includes(n)) } };
     },
     href: (kind, id) => ({ decks: '/decks', newDeck: '/decks/new', import: id ? '/deck/' + id + '/import' : '/decks/import', connect: '/connect', today: '/', done: '/review/done',

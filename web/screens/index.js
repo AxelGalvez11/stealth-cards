@@ -49,6 +49,18 @@ export default [
   "h": 900
  },
  {
+  "name": "Landing",
+  "title": "Landing page · lucida.cards",
+  "w": 1440,
+  "h": 3499
+ },
+ {
+  "name": "LandingPhone",
+  "title": "Landing page · lucida.cards on a phone",
+  "w": 390,
+  "h": 4675
+ },
+ {
   "name": "Main",
   "title": "Web · Today",
   "w": 1440,

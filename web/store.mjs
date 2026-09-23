@@ -1,12 +1,14 @@
 // Your decks, cards, and reviews, saved in data/stealth-cards.json next to the app (images and audio in data/media).
-// Online (on Vercel) they live in Supabase instead (see supa.mjs): each request starts from the latest copy with
-// begin() and saves once with finish(). The web app and connected AI apps (over MCP) both change data through
-// apply(), so every change is saved the same way.
+// Online (on Vercel) each person's library lives in Supabase instead (see supa.mjs): withLibrary() runs one request
+// against the signed-in person's newest copy and saves it once at the end. The web app and connected AI apps (over
+// MCP) both change data through apply(), so every change is saved the same way.
 import { readFileSync, writeFileSync, renameSync, mkdirSync, existsSync, rmSync } from 'node:fs';
 import { readFile, writeFile, access } from 'node:fs/promises';
+import { AsyncLocalStorage } from 'node:async_hooks';
 import { fileURLToPath } from 'node:url';
 import { join } from 'node:path';
 import { cloud, library, files } from './supa.mjs';
+import { newLink } from './auth.mjs';
 import { grade as fsrsGrade, newCard } from './fsrs.js';
 import R from './rich.js';
 
@@ -21,55 +23,61 @@ const fresh = () => ({
   ai: { perms: { read: true, text: true, media: true, edit: true, check: false, del: false }, clients: {} },
   decks: [], cards: [], logs: []
 });
-let S = fresh();
 // Saved data from an older version gets any settings added since.
 const upgrade = d => { const f = fresh(); return { ...f, ...d, settings: { ...f.settings, ...d.settings }, ai: { ...f.ai, ...d.ai, perms: { ...f.ai.perms, ...(d.ai || {}).perms } } }; };
+// The library a request works on: this computer's one, or (online) a copy of the signed-in person's, one per request,
+// so two requests running at once never share a copy. `later` is work to finish before saving.
+const here = { uid: null, S: fresh(), base: null, dirty: false, later: [] };
+const current = new AsyncLocalStorage();
+const lib = () => current.getStore() || here;
 export function load() {
-  if (cloud()) return S;
+  if (cloud()) return here.S;
   mkdirSync(MEDIA, { recursive: true });
-  if (existsSync(FILE)) S = upgrade(JSON.parse(readFileSync(FILE, 'utf8')));
-  return S;
+  if (existsSync(FILE)) here.S = upgrade(JSON.parse(readFileSync(FILE, 'utf8')));
+  return here.S;
 }
-// Online: the copy this request started from (its rev), whether it changed, and work to finish before saving.
-let base = null, loaded = false, dirty = false, later = [];
-export async function begin() {
-  if (!cloud()) return;
-  later = [];
-  const rev = await library.rev();
-  if (loaded && rev === base && !dirty) return;
-  const row = rev == null ? null : await library.load();
-  S = row ? upgrade(row.state) : fresh(); base = row ? row.rev : null; loaded = true; dirty = !row;
+// Online: loads uid's newest copy, runs fn, and saves once. False means another request saved first, so the caller
+// should run it again. A first visit makes the library (and its personal MCP link), unless `existing` says it must
+// already be there (an AI app's link can't make one).
+export async function withLibrary(uid, fn, { existing = false } = {}) {
+  if (!cloud()) { await fn(); return true; }
+  const L = { uid, S: null, base: null, dirty: false, later: [] };
+  return current.run(L, async () => {
+    const row = await library.load(uid);
+    if (!row && existing) throw Object.assign(new Error('No such library'), { status: 401 });
+    L.S = row ? upgrade(row.state) : fresh(); L.base = row ? row.rev : null; L.dirty = !row;
+    if (!L.S.ai.key) makeLink(L);
+    await fn();
+    await Promise.all(L.later);
+    if (!L.dirty) return true;
+    return L.base == null ? library.create(uid, L.S) : library.update(uid, L.S, L.base);
+  });
 }
-// Saves this request's changes; false means someone else saved first, so the request should run again.
-export async function finish() {
-  if (!cloud()) return true;
-  await Promise.all(later); later = [];
-  if (!dirty) return true;
-  const ok = base == null ? await library.create(S) : await library.update(S, base);
-  if (ok) { base = S.rev; dirty = false; } else loaded = false;
-  return ok;
-}
+// The rev of uid's library without loading it (the app asks every few seconds whether anything changed).
+export const revOf = async uid => (cloud() ? (await library.rev(uid)) ?? 0 : here.S.rev);
+function makeLink(L) { L.S.ai.key = newLink(L.uid); L.dirty = true; }
 const save = () => {
-  S.rev++;
-  if (cloud()) { dirty = true; return; }
-  const tmp = FILE + '.tmp'; writeFileSync(tmp, JSON.stringify(S)); renameSync(tmp, FILE);
+  const L = lib();
+  L.S.rev++;
+  if (cloud()) { L.dirty = true; return; }
+  const tmp = FILE + '.tmp'; writeFileSync(tmp, JSON.stringify(L.S)); renameSync(tmp, FILE);
 };
-// Pictures and sound for cards: in data/media here, in the Supabase bucket online.
-export const putMedia = (name, buf, type) => (cloud() ? files.put(name, buf, type) : writeFile(join(MEDIA, name), buf));
-export const readMedia = name => (cloud() ? files.get(name) : readFile(join(MEDIA, name)).catch(() => null));
-export const hasMedia = name => (cloud() ? files.has(name) : access(join(MEDIA, name)).then(() => true, () => false));
-export const mediaLink = name => (cloud() ? files.link(name) : Promise.resolve(null));
-export const state = () => S;
+// Pictures and sound for cards: in data/media here, in the person's folder of the Supabase bucket online.
+export const putMedia = (name, buf, type) => (cloud() ? files.put(lib().uid, name, buf, type) : writeFile(join(MEDIA, name), buf));
+export const readMedia = name => (cloud() ? files.get(lib().uid, name) : readFile(join(MEDIA, name)).catch(() => null));
+export const hasMedia = name => (cloud() ? files.has(lib().uid, name) : access(join(MEDIA, name)).then(() => true, () => false));
+export const mediaLink = (name, uid) => (cloud() ? files.link(uid, name) : Promise.resolve(null));
+export const state = () => lib().S;
 const id = p => p + Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
 const clean = (x, n = 5000) => String(x ?? '').slice(0, n);
 const cleanTags = t => (Array.isArray(t) ? [...new Set(t.map(x => clean(x, 40).trim()).filter(Boolean))].slice(0, 50) : []);
-const findDeck = x => S.decks.find(d => d.id === x) || S.decks.find(d => d.name.toLowerCase() === String(x || '').toLowerCase());
-const deckOf = c => S.decks.find(d => d.id === c.deckId);
+const findDeck = x => state().decks.find(d => d.id === x) || state().decks.find(d => d.name.toLowerCase() === String(x || '').toLowerCase());
+const deckOf = c => state().decks.find(d => d.id === c.deckId);
 // The words hidden in a fill-in-the-blank card's [[blanks]] (read the same way the app draws them).
 export const blanks = text => R.blanks(text);
 
 function makeDeck(o = {}) {
-  const st = S.settings;
+  const S = state(), st = S.settings;
   const d = { id: id('d'), name: clean(o.name, 120).trim() || 'Untitled deck', tags: cleanTags(o.tags), created: Date.now(),
     cover: { style: o.style || st.grads || 'mix', round: +o.round || 0, image: o.image || null, seed: clean(o.name, 120).trim() || 'Untitled deck' }, paused: false,
     grading: ['four', 'binary', 'piles'].includes(o.grading) ? o.grading : st.grading, fsrs: o.fsrs ?? st.fsrs,
@@ -80,6 +88,7 @@ function makeDeck(o = {}) {
 }
 // One card, or one per blank for fill-in-the-blank text when asked.
 function makeCards(deck, o, source = 'you') {
+  const S = state();
   const kind = ['basic', 'cloze', 'image', 'audio'].includes(o.kind) ? o.kind : 'basic';
   const base = { deckId: deck.id, kind, front: clean(o.front), back: clean(o.back), note: clean(o.note, 2000), text: clean(o.text),
     tags: cleanTags(o.tags), image: o.image || null, audio: o.audio || null, speak: clean(o.speak, 500), lang: clean(o.lang, 20), auto: o.auto !== false,
@@ -97,13 +106,12 @@ const pick = (o, keys) => Object.fromEntries(Object.entries(o || {}).filter(([k]
 
 // Every change goes through here. Returns what the action made (ids), or throws with a message people can read.
 export function apply(a, who = 'you') {
-  let out;
-  // Online, a change that fails halfway makes the next request start again from the saved copy.
-  try { out = run(a, who); } catch (e) { if (cloud()) loaded = false; throw e; }
+  const out = run(a, who);
   save();
   return out;
 }
 function run(a, who) {
+  const L = lib(), S = L.S;
   switch (a.type) {
     case 'deck.add': return { id: makeDeck(a).id };
     case 'deck.update': {
@@ -193,8 +201,14 @@ function run(a, who) {
     }
     case 'data.reset': {
       // The rev keeps counting up, so every copy of the app sees the reset as the newest data.
-      const keep = S.ai.clients, rev = S.rev; S = fresh(); S.ai.clients = keep; S.rev = rev;
-      if (cloud()) later.push(files.clear()); else { rmSync(MEDIA, { recursive: true, force: true }); mkdirSync(MEDIA, { recursive: true }); }
+      const next = fresh(); next.ai.clients = S.ai.clients; next.ai.key = S.ai.key; next.rev = S.rev; L.S = next;
+      if (cloud()) L.later.push(files.clear(L.uid)); else { rmSync(MEDIA, { recursive: true, force: true }); mkdirSync(MEDIA, { recursive: true }); }
+      return {};
+    }
+    // A new personal MCP link; the old one stops working.
+    case 'ai.link': {
+      if (!cloud()) throw new Error('This copy of Lucida has no personal link; AI apps on this computer use /mcp.');
+      makeLink(L);
       return {};
     }
     default: throw new Error('Unknown action ' + a.type);

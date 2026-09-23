@@ -1,4 +1,5 @@
-// The MCP link (http://localhost:3000/mcp): Claude, Cursor, or any app that speaks MCP can read and add cards.
+// The MCP link: Claude, Cursor, or any app that speaks MCP can read and add cards. On this computer it's
+// http://localhost:3000/mcp; online each person has their own link (see handler.mjs), so an AI only sees their cards.
 // What an AI may do is set on the Connect AI page; tools it isn't allowed to use aren't offered.
 import { apply, state, blanks } from './store.mjs';
 import { dayAt } from './fsrs.js';
@@ -6,8 +7,8 @@ import { fetchMedia, speechFile } from './media.mjs';
 import R from './rich.js';
 
 const VERSIONS = ['2025-06-18', '2025-03-26', '2024-11-05'];
-const sessions = new Map();
-let lastClient = '';
+// Which AI app each session is, and the last one each person connected (for sessions that don't say).
+const sessions = new Map(), lastClient = new Map();
 const text = s => ({ content: [{ type: 'text', text: typeof s === 'string' ? s : JSON.stringify(s, null, 2) }] });
 const fail = s => ({ content: [{ type: 'text', text: s }], isError: true });
 const deckBy = x => state().decks.find(d => d.id === x) || state().decks.find(d => d.name.toLowerCase() === String(x || '').trim().toLowerCase());
@@ -127,7 +128,8 @@ async function handle(m, sid, ctx) {
     switch (m.method) {
       case 'initialize': {
         const info = (m.params || {}).clientInfo || {};
-        sessions.set(sid, nameOf(info)); lastClient = nameOf(info);
+        if (sessions.size > 10000) sessions.clear();
+        sessions.set(sid, nameOf(info)); lastClient.set(ctx.uid || '', nameOf(info));
         apply({ type: 'ai.client', name: nameOf(info), version: info.version });
         const asked = (m.params || {}).protocolVersion;
         return ok({ protocolVersion: VERSIONS.includes(asked) ? asked : VERSIONS[0], capabilities: { tools: {} },
@@ -140,14 +142,14 @@ async function handle(m, sid, ctx) {
       case 'tools/call': {
         const p = m.params || {}, t = allowed().find(x => x.name === p.name);
         if (!t) return ok(fail(TOOLS.some(x => x.name === p.name) ? 'The learner turned this off on the Connect AI page.' : 'Unknown tool ' + p.name));
-        return ok(await t.run(p.arguments || {}, sessions.get(sid) || lastClient || 'AI', ctx));
+        return ok(await t.run(p.arguments || {}, sessions.get(sid) || lastClient.get(ctx.uid || '') || 'AI', ctx));
       }
       default: return err(-32601, 'Method not found: ' + m.method);
     }
   } catch (e) { return m.method === 'tools/call' ? ok(fail(e.message)) : err(-32603, e.message); }
 }
 
-export async function mcp(req, res, body) {
+export async function mcp(req, res, body, uid) {
   if (req.method !== 'POST') { res.writeHead(req.method === 'DELETE' ? 200 : 405, { allow: 'POST' }).end(); return; }
   let msg;
   try { msg = JSON.parse(body); } catch { res.writeHead(400, { 'content-type': 'application/json' }).end(JSON.stringify({ jsonrpc: '2.0', id: null, error: { code: -32700, message: 'Parse error' } })); return; }
@@ -156,7 +158,7 @@ export async function mcp(req, res, body) {
   if (!sid && list.some(x => x && x.method === 'initialize')) sid = 's' + Date.now().toString(36) + Math.random().toString(36).slice(2, 10);
   // Files on this computer are only for AI apps running here: not through a tunnel or proxy, which adds these headers.
   const local = ['127.0.0.1', '::1', '::ffff:127.0.0.1'].includes(req.socket.remoteAddress) && !['x-forwarded-for', 'forwarded', 'x-real-ip', 'cf-connecting-ip'].some(h => req.headers[h]);
-  const out = (await Promise.all(list.map(x => handle(x || {}, sid, { local })))).filter(Boolean);
+  const out = (await Promise.all(list.map(x => handle(x || {}, sid, { local, uid })))).filter(Boolean);
   const head = { 'content-type': 'application/json', ...(sid ? { 'mcp-session-id': sid } : {}) };
   if (!out.length) { res.writeHead(202, head).end(); return; }
   res.writeHead(200, head).end(JSON.stringify(Array.isArray(msg) ? out : out[0]));

@@ -7,6 +7,10 @@ import { createDb } from './db.js';
 // ---------- pages ----------
 // Which board shows for a page. Some depend on your data: no decks yet shows the new-user Today, and so on.
 function resolve(path, q) {
+  if (path.startsWith('/b/')) return { name: decodeURIComponent(path.slice(3)), design: true };
+  // Online and signed out: only the sign-in pages (and the code page once a code is on its way).
+  if (db.signedOut) return path === '/sign-in/code' && db.auth.email() ? { name: 'WebSignInCode' } : path === '/sign-in' ? { name: 'WebSignIn' } : { redirect: '/sign-in' };
+  if (path.startsWith('/sign-in')) return { redirect: '/' };
   const deck = /^\/deck\/([^/]+)(\/card(?:\/([^/]+))?|\/import)?$/.exec(path);
   if (path === '/') return { name: db.decks().length ? 'Main' : 'WebTodayNew' };
   if (path === '/decks') return { name: db.decks().length ? 'WebDecks' : 'WebDecksEmpty' };
@@ -32,7 +36,6 @@ function resolve(path, q) {
   if (path === '/stats') return { name: db.hasReviews() ? 'WebStats' : 'WebStatsEmpty' };
   if (path === '/connect') return { name: 'WebConnect' };
   if (path === '/settings') return { name: 'WebSettings' };
-  if (path.startsWith('/b/')) return { name: decodeURIComponent(path.slice(3)), design: true };
   return { redirect: '/' };
 }
 // Links between boards: in the app they go to the matching page (for the deck you're on); on /b they stay on /b.
@@ -41,8 +44,8 @@ function linkFor(name) {
   const id = current && current.props.deckId;
   const pages = { Main: '/', WebTodayNew: '/', WebTodayCaughtUp: '/', WebDecks: '/decks', WebDecksEmpty: '/decks', WebDecksList: '/decks', WebNewDeck: '/decks/new',
     WebImport: id ? '/deck/' + id + '/import' : '/decks/import', WebDeck: id ? '/deck/' + id : '/decks', WebDeckSettings: id ? '/deck/' + id + '?settings=1' : '/decks',
-    WebEditor: id ? '/deck/' + id + '/card' : db.today().newCardHref, WebReview: id ? '/review/' + id : '/review', WebDone: '/review/done', WebDonePiles: '/review/done',
-    WebStats: '/stats', WebStatsEmpty: '/stats', WebConnect: '/connect', WebSettings: '/settings' };
+    WebEditor: id ? '/deck/' + id + '/card' : db.signedOut ? '/' : db.today().newCardHref, WebReview: id ? '/review/' + id : '/review', WebDone: '/review/done', WebDonePiles: '/review/done',
+    WebStats: '/stats', WebStatsEmpty: '/stats', WebConnect: '/connect', WebSettings: '/settings', WebSignIn: '/sign-in', WebSignInCode: '/sign-in/code' };
   return pages[name] || '/b/' + name;
 }
 
@@ -218,7 +221,7 @@ async function go(path, push, replace) {
   instances.clear();
   app.className = s.fill ? '' : 'fixed';
   app.textContent = '';
-  const deck = current.props.deckId && db.raw().decks.find(d => d.id === current.props.deckId);
+  const deck = current.props.deckId && !db.signedOut && db.raw().decks.find(d => d.id === current.props.deckId);
   document.title = (r.name === 'Main' ? 'Today' : deck && r.name.startsWith('WebDeck') ? deck.name : s.title.replace(/^Web · /, '').replace(/ page$/, '').replace(/ · .*$/, '')) + ' · Lucida';
   paint();
   scrollTo(0, 0);
@@ -244,7 +247,8 @@ app.addEventListener('click', e => {
   const a = e.target.closest && e.target.closest('a[href]');
   if (!a || e.defaultPrevented || e.metaKey || e.ctrlKey || e.shiftKey || e.button) return;
   const url = new URL(a.href, location.href);
-  if (url.origin !== location.origin) return;
+  // Signing in with Google or Apple leaves the app for a moment, so those links load for real.
+  if (url.origin !== location.origin || url.pathname.startsWith('/auth/')) return;
   e.preventDefault();
   go(url.pathname + url.search, true);
 });

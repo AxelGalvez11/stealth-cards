@@ -109,10 +109,10 @@ const I = {
   flame: '<path d="M12 22c4 0 7-3 7-7 0-5-5-8-5-13-3 2-5 5-5 8-1-1-2-2-2-4-2 2-2 5-2 7 0 5 3 9 7 9z"/>'
 };
 
-const logo = (size = 28) => `<div style="display: flex; align-items: center; gap: 10px;">
-  <div style="width: ${size}px; height: ${size}px; border-radius: ${Math.round(size / 3)}px; background: {{t.inv}}; display: flex; align-items: center; justify-content: center;"><div style="width: ${Math.round(size * .4)}px; height: ${Math.round(size * .54)}px; box-sizing: border-box; border-radius: 4px; border: 2px solid {{t.invText}};"></div></div>
-  <div style="font-size: 16px; font-weight: 600; letter-spacing: -.01em;">Lucida</div>
-</div>`;
+// The mark: three dots, two above and one below, in the text color. The viewBox hugs the ink, so `h` is its real height.
+const MARK_DOTS = [[7, 7], [26, 7], [16.5, 23.45]].map(([x, y]) => `<circle cx="${x}" cy="${y}" r="7"/>`).join('');
+const mark = h => `<svg width="${Math.round(h * 33 / 30.5)}" height="${h}" viewBox="0 0 33 30.5" fill="currentColor" aria-hidden="true" style="flex-shrink: 0; display: block;">${MARK_DOTS}</svg>`;
+const logo = (size = 28) => `<div style="display: flex; align-items: center; gap: 9px;">${mark(Math.round(size / 2))}<div style="font-size: 17px; font-weight: 600; letter-spacing: -.02em;">Lucida</div></div>`;
 
 // ---------- Structure A: web sidebar ----------
 const NAV_A = [['Today', 'today', 'Main.dc.html', '64'], ['Decks', 'decks', 'WebDecks.dc.html', ''], ['Stats', 'stats', 'WebStats.dc.html', ''], ['Connect AI', 'connect', 'WebConnect.dc.html', '']];
@@ -1485,7 +1485,8 @@ const webConnect = webRoot(`${sidebar('Connect AI')}
     <section style="flex-grow: 1; display: flex; flex-direction: column; gap: 12px; min-width: 0;">
       ${meshCard('hero', 'border-radius: 20px; flex-shrink: 0;', 'box-sizing: border-box; padding: 26px; display: flex; flex-direction: column; gap: 14px;', `
         <div style="font-size: 12px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; opacity: .8;">Your MCP link</div>
-        <div style="display: flex; gap: 10px;"><div style="flex-grow: 1; height: 50px; box-sizing: border-box; padding: 0 20px; display: flex; align-items: center; border-radius: 999px; ${glass} font-family: ${MONO}; font-size: 15px;">{{mcpUrl}}</div><button type="button" onClick="{{copy}}" style="height: 50px; padding: 0 24px; border: 0; border-radius: 999px; background: #FFFFFF; color: #000000; font: inherit; font-size: 14px; font-weight: 600; cursor: pointer;">{{copyLabel}}</button></div>`)}
+        <div style="display: flex; gap: 10px;"><div style="flex-grow: 1; min-width: 0; height: 50px; box-sizing: border-box; padding: 0 20px; display: flex; align-items: center; border-radius: 999px; ${glass} font-family: ${MONO}; font-size: 15px;"><span style="min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis;">{{mcpUrl}}</span></div><button type="button" onClick="{{copy}}" style="flex-shrink: 0; height: 50px; padding: 0 24px; border: 0; border-radius: 999px; background: #FFFFFF; color: #000000; font: inherit; font-size: 14px; font-weight: 600; cursor: pointer;">{{copyLabel}}</button></div>
+        <sc-if value="{{canRenew}}" hint-placeholder-val="{{ true }}"><button type="button" onClick="{{renew}}" style="align-self: flex-start; border: 0; padding: 0; background: transparent; color: inherit; opacity: .8; font: inherit; font-size: 13px; font-weight: 500; cursor: pointer;">{{renewLabel}}</button></sc-if>`)}
       <div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px;">
         <sc-for list="{{providers}}" as="p" hint-placeholder-count="4">
           <div style="background: {{t.surf}}; border-radius: 16px; padding: 16px; display: flex; flex-direction: column; gap: 12px;"><span style="width: 36px; height: 36px; border-radius: 18px; background: {{t.bg}}; display: flex; align-items: center; justify-content: center;">${PROVIDER_LOGO(22)}</span><span style="font-size: 15px; font-weight: 600;">{{p.name}}</span><span style="font-size: 13px; color: {{p.color}};">{{p.status}}</span></div>
@@ -1527,7 +1528,10 @@ renderVals() {
   ];
   const perms = defs.map(d => { const on = ai.perms[d.id]; return { ...d, checked: on ? 'true' : 'false', track: on ? t.inv : t.surf2, knobColor: on ? t.invText : t.bg, knob: on ? 'translateX(20px)' : 'translateX(0)', toggle: () => db.act.setPerm(d.id, !on) }; });
   ${PROVIDERS('ai.clients')}
-  return { ${MESH_VALS('Apricot')} t, ...chrome, perms, providers, mcpUrl: ai.url, copyLabel: this.state.copied ? 'Copied' : 'Copy', copy: () => { db.act.copy(ai.url); this.setState({ copied: true }); } };
+  // Online, a link that got out can be swapped for a new one; AI apps with the old link lose access.
+  const renew = () => { if (db.mock) return this.setState({ renewed: true }); if (!confirm('Make a new link? AI apps using the old one will stop working until you give them the new link.')) return; db.act.newLink().then(() => this.setState({ renewed: true, copied: false })); };
+  return { ${MESH_VALS('Apricot')} t, ...chrome, perms, providers, mcpUrl: ai.url, copyLabel: this.state.copied ? 'Copied' : 'Copy', copy: () => { db.act.copy(ai.url); this.setState({ copied: true }); },
+    canRenew: db.mock || db.settings().signedIn, renew, renewLabel: this.state.renewed ? 'New link made' : 'Make a new link' };
 }`;
 
 // ---------- Structure B: top tabs, one centered column ----------
@@ -1994,7 +1998,7 @@ const phoneConnect = phone(`<div style="padding: 64px 20px 120px; display: flex;
   <div style="font-size: 15px; line-height: 1.45; color: {{t.muted}};">Make cards from any chat: text, fill-in-the-blank, images, and audio.</div>
   ${meshCard('hero', 'border-radius: 32px;', 'box-sizing: border-box; padding: 20px; display: flex; flex-direction: column; gap: 12px;', `
     <span style="font-size: 12px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; opacity: .8;">Your MCP link</span>
-    <span style="font-family: ${MONO}; font-size: 14px; padding: 14px 16px; border-radius: 999px; ${glass}">https://[YOUR-DOMAIN]/mcp</span>
+    <span style="font-family: ${MONO}; font-size: 14px; padding: 14px 16px; border-radius: 999px; ${glass}">https://app.lucida.cards/mcp/lk_5b1f0c6e…</span>
     <button type="button" onClick="{{copy}}" style="height: 48px; border: 0; border-radius: 999px; background: #FFFFFF; color: #000000; font: inherit; font-size: 15px; font-weight: 600; cursor: pointer;">{{copyLabel}}</button>`)}
   <div style="display: flex; flex-direction: column;">
     <sc-for list="{{providers}}" as="p" hint-placeholder-count="4">
@@ -2062,7 +2066,7 @@ const webSettings = webRoot(`${sidebar('You')}
           <sc-if value="{{photoColor}}" hint-placeholder-val="{{ true }}"><span style="width: 64px; height: 64px; flex-shrink: 0; border-radius: 20px; background: {{avatarBg}}; color: #FFFFFF; display: flex; align-items: center; justify-content: center; font-size: 26px; font-weight: 600;">{{initial}}</span></sc-if>
           <sc-if value="{{photoGoogle}}" hint-placeholder-val="{{ false }}">${PHOTO(64)}</sc-if>
           <span style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px;"><span style="font-size: 18px; font-weight: 600;">{{name}}</span><span style="font-size: 13px; color: {{t.muted}};">{{sub}}</span></span>
-          <sc-if value="{{signedIn}}" hint-placeholder-val="{{ true }}"><button type="button" style="height: 36px; padding: 0 16px; border: 0; border-radius: 999px; background: {{t.bg}}; color: {{t.text}}; font: inherit; font-size: 14px; font-weight: 600; cursor: pointer;">Sign out</button></sc-if>
+          <sc-if value="{{signedIn}}" hint-placeholder-val="{{ true }}"><button type="button" onClick="{{signOut}}" style="height: 36px; padding: 0 16px; border: 0; border-radius: 999px; background: {{t.bg}}; color: {{t.text}}; font: inherit; font-size: 14px; font-weight: 600; cursor: pointer;">Sign out</button></sc-if>
         </div>
         <div style="display: flex; flex-direction: column; gap: 12px;">
           <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px;"><span style="font-size: 14px; font-weight: 600;">Profile picture</span><sc-if value="{{google}}" hint-placeholder-val="{{ true }}">${SEG('photoOpts', 'Profile picture', 2)}</sc-if></div>
@@ -2126,7 +2130,7 @@ renderVals() {
     lessDay: () => set({ perDay: Math.max(0, st.perDay - 5) }), moreDay: () => set({ perDay: Math.min(999, st.perDay + 5) }),
     lessGoal: () => set({ goal: Math.max(70, st.goal - 1) }), moreGoal: () => set({ goal: Math.min(97, st.goal + 1) }),
     reminder: st.reminder, connected: db.ai().connected,
-    exportAll: () => db.act.exportAll(), deleteAccount: () => db.act.resetAll()
+    exportAll: () => db.act.exportAll(), deleteAccount: () => db.act.resetAll(), signOut: () => db.act.signOut && db.act.signOut()
   };
 }`;
 
@@ -2395,35 +2399,75 @@ const styleOf = (name, w, h, grading) => `<div style="width: ${w}px; height: ${h
 // ---------- Sign in: Google, Apple, or a 6-digit code sent by email ----------
 const G_LOGO = `<svg width="18" height="18" viewBox="0 0 48 48" aria-hidden="true"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>`;
 const APPLE_LOGO = `<svg width="17" height="17" viewBox="0 0 24 24" aria-hidden="true" fill="currentColor"><path d="M12.152 6.896c-.948 0-2.415-1.078-3.96-1.04-2.04.027-3.91 1.183-4.961 3.014-2.117 3.675-.546 9.103 1.519 12.09 1.013 1.454 2.208 3.09 3.792 3.039 1.52-.065 2.09-.987 3.935-.987 1.831 0 2.35.987 3.96.948 1.637-.026 2.676-1.48 3.676-2.948 1.156-1.688 1.636-3.325 1.662-3.415-.039-.013-3.182-1.221-3.22-4.857-.026-3.04 2.48-4.494 2.597-4.559-1.429-2.09-3.623-2.324-4.39-2.376-2-.156-3.675 1.09-4.61 1.09zM15.53 3.83c.843-1.012 1.4-2.427 1.245-3.83-1.207.052-2.662.805-3.532 1.818-.78.896-1.454 2.338-1.273 3.714 1.338.104 2.715-.688 3.559-1.701"/></svg>`;
-const authBtn = (label, glyph, href, h) => `<a href="${href}" style="height: ${h}px; display: flex; align-items: center; justify-content: center; gap: 10px; border-radius: 999px; background: {{t.bg}}; box-shadow: inset 0 0 0 1px {{t.surf2}}; font-size: 15px; font-weight: 600;">${glyph}${label}</a>`;
+// In the app these sign in for real (the logic's handlers); on the canvas their links just show the next board.
+const authBtn = (label, glyph, href, h, handler) => `<a href="${href}" onClick="{{${handler}}}" style="height: ${h}px; display: flex; align-items: center; justify-content: center; gap: 10px; border-radius: 999px; background: {{t.bg}}; box-shadow: inset 0 0 0 1px {{t.surf2}}; font-size: 15px; font-weight: 600;">${glyph}${label}</a>`;
 const orLine = `<div style="display: flex; align-items: center; gap: 12px; font-size: 13px; color: {{t.muted}};"><span style="flex-grow: 1; height: 1px; background: {{t.line}};"></span>or<span style="flex-grow: 1; height: 1px; background: {{t.line}};"></span></div>`;
-const emailForm = (h, next) => `<div style="display: flex; flex-direction: column; gap: 10px;"><input type="email" value="{{email}}" onChange="{{setEmail}}" placeholder="Email" aria-label="Email" autocomplete="email" style="height: ${h}px; box-sizing: border-box; padding: 0 20px; border: 0; outline: 0; border-radius: 999px; background: {{t.surf}}; color: {{t.text}}; font: inherit; font-size: 15px;"><a href="${next}" style="height: ${h}px; display: flex; align-items: center; justify-content: center; border-radius: 999px; background: {{t.inv}}; color: {{t.invText}}; font-size: 15px; font-weight: 600;">Continue</a></div>`;
+const emailForm = (h, next) => `<div style="display: flex; flex-direction: column; gap: 10px;"><input type="email" value="{{email}}" onChange="{{setEmail}}" onKeyDown="{{emailKey}}" placeholder="Email" aria-label="Email" autocomplete="email" style="height: ${h}px; box-sizing: border-box; padding: 0 20px; border: 0; outline: 0; border-radius: 999px; background: {{t.surf}}; color: {{t.text}}; font: inherit; font-size: 15px;"><a href="${next}" onClick="{{sendCode}}" style="height: ${h}px; display: flex; align-items: center; justify-content: center; border-radius: 999px; background: {{t.inv}}; color: {{t.invText}}; font-size: 15px; font-weight: 600;">{{sendLabel}}</a>${SIGN_ERROR}</div>`;
+// Why signing in didn't work (a wrong code, Google not set up yet), under the field it's about.
+const SIGN_ERROR = `<sc-if value="{{hasError}}" hint-placeholder-val="{{ false }}"><div role="alert" style="padding: 2px 4px 0; font-size: 14px; line-height: 1.4; color: {{t.again}};">{{error}}</div></sc-if>`;
 // Six boxes over one real field, so typing, pasting, and the phone's "code from Mail" all work.
 const codeBoxes = (w, h) => `<label style="position: relative; display: flex; justify-content: space-between; cursor: text;"><sc-for list="{{boxes}}" as="b" hint-placeholder-count="6"><span style="width: ${w}px; height: ${h}px; border-radius: 14px; background: {{t.surf}}; box-shadow: {{b.ring}}; display: flex; align-items: center; justify-content: center; font-size: 22px; font-weight: 600;">{{b.digit}}</span></sc-for><input type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6" value="{{code}}" onChange="{{setCode}}" aria-label="6-digit code" style="position: absolute; inset: 0; width: 100%; opacity: 0; border: 0; padding: 0; font-size: 16px;"></label>`;
-// The gradient panel: one sample card, the way cards look in review.
-const signArt = (cardW, textSize) => `<div style="position: relative; align-self: center; width: ${cardW}px;"><div style="position: absolute; inset: 0; border-radius: 22px; background: {{t.card}}; opacity: .45; transform: rotate(-5deg) translate(-10px, 8px);"></div><div style="position: relative; box-sizing: border-box; min-height: ${Math.round(cardW * .6)}px; padding: 28px; border-radius: 22px; background: {{t.card}}; color: {{t.text}}; box-shadow: 0 24px 60px -24px rgba(0,0,0,.35); display: flex; align-items: center; justify-content: center; text-align: center; text-shadow: none; font-size: ${textSize}px; font-weight: 500; line-height: 1.25; letter-spacing: -.02em;">What makes most of the cell’s energy?</div></div>`;
+// The sign-in panel: flashcards in tilted columns, each column drifting slowly up or down (the next one the other way).
+// A column holds its cards twice and moves by one set, so the loop has no seam; with reduced motion it holds still.
+const WALL_ROWS = 6;
+// One card from each sample deck, on the vivid gradient the deck's name makes; set so neighbors never share a color family.
+// {} is a blank, ♪ an audio card, and `…` code.
+const WALL_CARDS = [
+  [['Cell Biology', 'The {} is the powerhouse of the cell.'], ['Psychology', 'Who proposed classical conditioning?'], ['Calculus', 'd/dx (x²) = ?'], ['Anatomy', 'Largest bone in the body?'], ['Pharmacology', 'Ibuprofen blocks which enzyme?'], ['Spanish Verbs', 'Yo {} dos hermanos.']],
+  [['Organic Chemistry', 'C₆H₆'], ['Italian', 'Buongiorno'], ['Music Theory', 'How many sharps in D major?'], ['Python', '`len([1, 2, 3])`'], ['Philosophy', 'Cogito, ergo sum'], ['Art History', 'Who painted The Starry Night?']],
+  [['Ecology', 'What is a keystone species?'], ['Geography', 'Capital of Australia?'], ['Japanese', 'でんしゃ'], ['Physics', 'F = m · a'], ['Genetics', 'Adenine pairs with {}.'], ['Astronomy', 'Closest star to Earth?']],
+  [['French', 'la bibliothèque'], ['Latin', 'Carpe diem'], ['Korean', '♪'], ['Physiology', 'Normal resting heart rate?'], ['Statistics', 'What does p < 0.05 mean?'], ['Botany', 'Where does photosynthesis happen?']]
+];
+// Columns for renderVals: text sized by its length (k shrinks it for smaller cards) and seconds per loop for each column;
+// each column starts part of a card from the last, so rows don't line up.
+const WALL_VALS = (secs, k) => `wall: ${JSON.stringify(secs)}.map((d, i) => {
+      // Wider walls reuse the columns, turned a few cards so the same cards never sit side by side.
+      const base = ${JSON.stringify(WALL_CARDS)}[i % 4], turn = 3 * Math.floor(i / 4), col = base.slice(turn).concat(base.slice(0, turn));
+      const cards = col.map(([deck, text]) => {
+        const audio = text === '♪', code = /^\`.*\`$/.test(text), s = code ? text.slice(1, -1) : text, [before, after] = s.split('{}');
+        return { ...this.gen(deck, 'vivid'), audio, words: !audio, before, after: after ?? '', blank: after != null,
+          font: code ? "${MONO}" : 'inherit', size: Math.round((s.length <= 12 ? 30 : s.length <= 26 ? 23 : 19) * ${k}) };
+      });
+      const up = i % 2 === 0, f = [0, .5, .25, .75, .125, .625, .375, .875][i % 8] / ${WALL_ROWS};
+      return { cards: cards.concat(cards), anim: (up ? 'scUp ' : 'scDown ') + d + 's linear -' + ((up ? f : 1 - f) * d).toFixed(2) + 's infinite' };
+    }),`;
+const WALL_CSS = '@keyframes scUp{from{transform:translateY(0)}to{transform:translateY(-50%)}}@keyframes scDown{from{transform:translateY(-50%)}to{transform:translateY(0)}}@media (prefers-reduced-motion:reduce){.sc-drift{animation-play-state:paused!important}}';
+// What a card shows, the way review shows it: its words (a blank is a glass pill), or a play button and waveform for sound.
+const wallFace = k => {
+  const px = n => Math.max(2, Math.round(n * k));
+  const bars = [10, 20, 30, 16, 26, 12, 22, 14, 8].map(b => `<span style="width: ${px(3)}px; height: ${px(b)}px; border-radius: 2px; background: currentColor; opacity: .85;"></span>`).join('');
+  return `<sc-if value="{{c.words}}" hint-placeholder-val="{{ true }}"><span style="font-family: {{c.font}}; font-size: {{c.size}}px; font-weight: 500; line-height: 1.2; letter-spacing: -.02em;">{{c.before}}<sc-if value="{{c.blank}}" hint-placeholder-val="{{ false }}"><span style="display: inline-block; width: 2.4em; height: .9em; margin: 0 .1em; border-radius: 999px; vertical-align: -.1em; background: {{c.glass}}; box-shadow: inset 0 0 0 1.5px {{c.glassLine}};"></span></sc-if>{{c.after}}</span></sc-if><sc-if value="{{c.audio}}" hint-placeholder-val="{{ false }}"><span style="display: flex; align-items: center; gap: ${px(14)}px;"><span style="width: ${px(46)}px; height: ${px(46)}px; flex-shrink: 0; border-radius: 50%; background: {{c.glass}}; box-shadow: inset 0 0 0 1.5px {{c.glassLine}}; display: flex; align-items: center; justify-content: center;"><span style="display: flex; margin-left: ${px(3)}px;">${svg(I.play, px(20), 0)}</span></span><span style="display: flex; align-items: center; gap: ${px(4)}px;">${bars}</span></span></sc-if>`;
+};
+const cardWall = ({ cols, w, h, gap, r, tilt, k }) => {
+  const set = WALL_ROWS * (h + gap), width = cols * w + (cols - 1) * gap;
+  return `<div aria-hidden="true" style="position: absolute; left: 50%; top: 50%; width: ${width}px; height: ${set}px; margin: -${set / 2}px 0 0 -${width / 2}px; display: flex; gap: ${gap}px; transform: rotate(${tilt}deg); pointer-events: none;"><sc-for list="{{wall}}" as="col" hint-placeholder-count="${cols}"><div class="sc-drift" style="flex-shrink: 0; align-self: flex-start; display: flex; flex-direction: column; gap: ${gap}px; padding-bottom: ${gap}px; animation: {{col.anim}};"><sc-for list="{{col.cards}}" as="c" hint-placeholder-count="${WALL_ROWS * 2}">${meshCard('c', `width: ${w}px; height: ${h}px; flex-shrink: 0; border-radius: ${r}px;`, `height: 100%; box-sizing: border-box; padding: ${Math.round(22 * k)}px; display: flex; align-items: center; justify-content: center; text-align: center;`, wallFace(k))}</sc-for></div></sc-for></div>`;
+};
+const wallTag = (h, size, bottom) => `<div style="position: absolute; left: 50%; bottom: ${bottom}px; transform: translateX(-50%); height: ${h}px; padding: 0 ${h / 2}px; display: flex; align-items: center; border-radius: 999px; background: {{t.bg}}; color: {{t.text}}; font-size: ${size}px; font-weight: 500; letter-spacing: -.01em; white-space: nowrap; box-shadow: 0 12px 32px -14px rgba(0,0,0,.45);">Flashcards your AI can make.</div>`;
+// iPhone cards are smaller, so their words and padding shrink by this much.
+const PHONE_K = 150 / 264;
+const signPanel = (style, wall, tag) => `<div style="position: relative; overflow: hidden; background: {{t.surf}}; ${style}">${cardWall(wall)}${tag}</div>`;
 const signCol = inner => `<section style="width: 560px; flex-shrink: 0; box-sizing: border-box; padding: 32px 40px; display: flex; flex-direction: column;">
     ${logo()}
     <div style="flex-grow: 1; display: flex; flex-direction: column; justify-content: center;"><div style="width: 360px; margin: 0 auto; display: flex; flex-direction: column; gap: 24px;">${inner}</div></div>
   </section>`;
 const webSignRoot = inner => `<div style="width: 1440px; height: 900px; box-sizing: border-box; display: flex; font-family: ${FONT}; background: {{t.bg}}; color: {{t.text}}; overflow: hidden;">
   ${signCol(inner)}
-  <div style="flex-grow: 1; min-width: 0; box-sizing: border-box; padding: 16px 16px 16px 0; display: flex;">${meshCard('hero', 'flex-grow: 1; border-radius: 24px;', 'height: 100%; box-sizing: border-box; padding: 40px; display: flex; flex-direction: column; justify-content: center; gap: 48px;', `${signArt(420, 30)}<div style="align-self: center; font-size: 24px; font-weight: 500; letter-spacing: -.02em;">Flashcards your AI can make.</div>`)}</div>
+  <div style="flex-grow: 1; min-width: 0; box-sizing: border-box; padding: 16px 16px 16px 0; display: flex;">${signPanel('flex-grow: 1; border-radius: 24px;', { cols: 4, w: 264, h: 176, gap: 16, r: 20, tilt: -14, k: 1 }, wallTag(44, 16, 28))}</div>
 </div>`;
 const webSignIn = webSignRoot(`<h1 style="margin: 0; font-size: 32px; font-weight: 600; letter-spacing: -.03em;">Sign in to Lucida</h1>
-      <div style="display: flex; flex-direction: column; gap: 10px;">${authBtn('Continue with Google', G_LOGO, 'Main.dc.html', 44)}${authBtn('Continue with Apple', APPLE_LOGO, 'Main.dc.html', 44)}</div>
+      <div style="display: flex; flex-direction: column; gap: 10px;">${authBtn('Continue with Google', G_LOGO, 'Main.dc.html', 44, 'google')}${authBtn('Continue with Apple', APPLE_LOGO, 'Main.dc.html', 44, 'apple')}</div>
       ${orLine}
       ${emailForm(44, 'WebSignInCode.dc.html')}`);
 const codeText = `<div style="display: flex; flex-direction: column; gap: 8px;"><h1 style="margin: 0; font-size: 32px; font-weight: 600; letter-spacing: -.03em;">Check your email</h1><div style="font-size: 15px; line-height: 1.45; color: {{t.muted}};">Enter the 6-digit code we sent to <span style="color: {{t.text}}; font-weight: 500;">{{sentTo}}</span></div></div>`;
 const webSignInCode = webSignRoot(`<a href="WebSignIn.dc.html" style="align-self: flex-start; display: inline-flex; align-items: center; gap: 6px; font-size: 14px; color: {{t.muted}};">${svg(I.back, 16, 2)}Use another email</a>
       ${codeText}
-      ${codeBoxes(52, 60)}
-      <div style="display: flex; flex-direction: column; gap: 14px;"><a href="Main.dc.html" style="height: 44px; display: flex; align-items: center; justify-content: center; border-radius: 999px; background: {{t.inv}}; color: {{t.invText}}; font-size: 15px; font-weight: 600;">Continue</a><button type="button" onClick="{{resend}}" style="align-self: center; border: 0; padding: 0; background: transparent; color: {{t.muted}}; font: inherit; font-size: 14px; cursor: pointer;">{{resendLabel}}</button></div>`);
+      ${codeBoxes(52, 60)}${SIGN_ERROR}
+      <div style="display: flex; flex-direction: column; gap: 14px;"><a href="Main.dc.html" onClick="{{verify}}" style="height: 44px; display: flex; align-items: center; justify-content: center; border-radius: 999px; background: {{t.inv}}; color: {{t.invText}}; font-size: 15px; font-weight: 600;">{{verifyLabel}}</a><button type="button" onClick="{{resend}}" style="align-self: center; border: 0; padding: 0; background: transparent; color: {{t.muted}}; font: inherit; font-size: 14px; cursor: pointer;">{{resendLabel}}</button></div>`);
 const phoneSignIn = phone(`<div style="height: 100%; box-sizing: border-box; padding: 12px 12px 34px; display: flex; flex-direction: column; gap: 22px;">
-  ${meshCard('hero', 'height: 380px; flex-shrink: 0; border-radius: 32px;', 'height: 100%; box-sizing: border-box; padding: 48px 24px 24px; display: flex; flex-direction: column; justify-content: center; gap: 28px;', `${signArt(250, 21)}<div style="align-self: center; font-size: 18px; font-weight: 500; letter-spacing: -.02em;">Flashcards your AI can make.</div>`)}
+  ${signPanel('height: 380px; flex-shrink: 0; border-radius: 32px;', { cols: 4, w: 150, h: 100, gap: 10, r: 16, tilt: -14, k: PHONE_K }, wallTag(38, 14, 18))}
   <div style="padding: 0 8px; display: flex; flex-direction: column; gap: 10px;">
     <h1 style="margin: 0 0 8px; font-size: 28px; font-weight: 700; letter-spacing: -.03em;">Sign in to Lucida</h1>
-    ${authBtn('Continue with Apple', APPLE_LOGO, 'PhoneToday.dc.html', 50)}${authBtn('Continue with Google', G_LOGO, 'PhoneToday.dc.html', 50)}
+    ${authBtn('Continue with Apple', APPLE_LOGO, 'PhoneToday.dc.html', 50, 'apple')}${authBtn('Continue with Google', G_LOGO, 'PhoneToday.dc.html', 50, 'google')}
     <div style="padding: 4px 0;">${orLine}</div>
     ${emailForm(50, 'PhoneSignInCode.dc.html')}
   </div>
@@ -2431,19 +2475,129 @@ const phoneSignIn = phone(`<div style="height: 100%; box-sizing: border-box; pad
 const phoneSignInCode = phone(`<div style="height: 100%; box-sizing: border-box; padding: 64px 20px 34px; display: flex; flex-direction: column; gap: 28px;">
   ${roundBtn('back', 'Use another email', 'PhoneSignIn.dc.html')}
   ${codeText}
-  ${codeBoxes(50, 58)}
+  ${codeBoxes(50, 58)}${SIGN_ERROR}
   <div style="flex-grow: 1;"></div>
-  <div style="display: flex; flex-direction: column; gap: 14px;"><a href="PhoneToday.dc.html" style="height: 52px; display: flex; align-items: center; justify-content: center; border-radius: 999px; background: {{t.inv}}; color: {{t.invText}}; font-size: 16px; font-weight: 600;">Continue</a><button type="button" onClick="{{resend}}" style="align-self: center; border: 0; padding: 0; background: transparent; color: {{t.muted}}; font: inherit; font-size: 15px; cursor: pointer;">{{resendLabel}}</button></div>
+  <div style="display: flex; flex-direction: column; gap: 14px;"><a href="PhoneToday.dc.html" onClick="{{verify}}" style="height: 52px; display: flex; align-items: center; justify-content: center; border-radius: 999px; background: {{t.inv}}; color: {{t.invText}}; font-size: 16px; font-weight: 600;">{{verifyLabel}}</a><button type="button" onClick="{{resend}}" style="align-self: center; border: 0; padding: 0; background: transparent; color: {{t.muted}}; font: inherit; font-size: 15px; cursor: pointer;">{{resendLabel}}</button></div>
 </div>`);
 // On the canvas the code page shows three digits typed, with the fourth box next.
-const signInLogic = code => `constructor(props) { super(props); this.state = { email: '', code: '${code}', resent: false }; }
+const signInLogic = (code, secs, k = 1) => `constructor(props) { super(props); const a = props.db && props.db.auth; this.state = { email: a ? a.email() : '', code: a ? '' : '${code}', resent: false, busy: false, error: a ? a.error() : '' }; }
 renderVals() { ${T}
-  const s = this.state, code = String(s.code || '');
-  return { ${MESH_VALS('Iris')} t,
-    email: s.email, setEmail: e => this.setState({ email: e && e.target ? e.target.value : '' }), sentTo: (s.email || '').trim() || 'you@school.edu',
-    code, setCode: e => this.setState({ code: String(e && e.target ? e.target.value : '').replace(/\\D/g, '').slice(0, 6) }),
+  const s = this.state, code = String(s.code || ''), a = this.props.db && this.props.db.auth;
+  // In the app (props.db) these sign in for real: an email code, or Google and Apple through the server.
+  const stop = e => { if (e && e.preventDefault) e.preventDefault(); };
+  const failed = e => this.setState({ busy: false, error: e.message });
+  const send = e => {
+    if (!a) return; stop(e);
+    const email = String(s.email || '').trim();
+    if (!/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(email)) return this.setState({ error: 'Type your email address.' });
+    if (s.busy) return;
+    this.setState({ busy: true, error: '' });
+    a.sendCode(email).then(() => { this.setState({ busy: false }); a.go('/sign-in/code'); }, failed);
+  };
+  const check = digits => {
+    if (!a || digits.length < 6 || s.busy) return;
+    this.setState({ busy: true, error: '' });
+    // A wrong code empties the boxes (and the field under them, which keeps typed text while it has focus).
+    a.verify(digits).then(() => a.done(), e => { const box = document.querySelector('input[autocomplete="one-time-code"]'); if (box) box.value = ''; this.setState({ busy: false, code: '', error: e.message }); });
+  };
+  const leave = to => e => { if (!a) return; stop(e); location.assign(to); };
+  return { grain: String(this.props.grain ?? 0.7), t, ${secs ? WALL_VALS(secs, k) : ''}
+    email: s.email, setEmail: e => this.setState({ email: e && e.target ? e.target.value : '', error: '' }), emailKey: e => { if (e && e.key === 'Enter') send(e); },
+    sentTo: (s.email || '').trim() || 'you@school.edu', sendCode: send, sendLabel: s.busy ? 'Sending…' : 'Continue',
+    google: leave('/auth/google'), apple: leave('/auth/apple'),
+    code, setCode: e => { const c = String(e && e.target ? e.target.value : '').replace(/\\D/g, '').slice(0, 6); this.setState({ code: c, error: '' }); check(c); },
+    verify: e => { if (!a) return; stop(e); if (code.length < 6) return this.setState({ error: 'Type the 6-digit code from the email.' }); check(code); },
+    verifyLabel: s.busy ? 'Checking…' : 'Continue', error: s.error, hasError: !!s.error,
     boxes: Array.from({ length: 6 }, (_, i) => ({ digit: code[i] || '', ring: i === Math.min(code.length, 5) ? 'inset 0 0 0 2px ' + t.text : 'none' })),
-    resend: () => this.setState({ resent: true }), resendLabel: s.resent ? 'New code sent' : 'Send a new code' }; }`;
+    resend: () => { if (!a) return this.setState({ resent: true }); a.sendCode(a.email()).then(() => this.setState({ resent: true, error: '' }), failed); },
+    resendLabel: s.resent ? 'New code sent' : 'Send a new code' }; }`;
+
+// ---------- Landing page (lucida.cards) ----------
+// One page, drawn twice: for computers (Landing) and phones (LandingPhone). design/to-site.mjs turns both into the
+// static page at lucida.cards; there the links go to the app, on the canvas to the sign-in boards.
+const LAND = {
+  web: { pad: 48, h1: 80, lead: 19, h2: 48, gapTop: 128, btn: 48, wallH: 560, wall: { cols: 6, w: 264, h: 176, gap: 16, r: 20, tilt: -14, k: 1 }, tile: 28, typeH: 196, ctaH1: 56, cols: 'repeat(auto-fit, minmax(300px, 1fr))', typeCols: 'repeat(auto-fit, minmax(240px, 1fr))' },
+  phone: { pad: 20, h1: 44, lead: 17, h2: 32, gapTop: 88, btn: 50, wallH: 420, wall: { cols: 4, w: 150, h: 100, gap: 10, r: 16, tilt: -14, k: PHONE_K }, tile: 22, typeH: 150, ctaH1: 34, cols: '1fr', typeCols: 'repeat(2, minmax(0, 1fr))' }
+};
+const landPill = (label, href, inv, h, extra = '') => `<a href="${href}" style="height: ${h}px; padding: 0 ${Math.round(h / 2)}px; box-sizing: border-box; display: inline-flex; align-items: center; justify-content: center; border-radius: 999px; font-size: ${h >= 48 ? 15 : 14}px; font-weight: 600; white-space: nowrap; ${inv ? 'background: {{t.inv}}; color: {{t.invText}};' : 'background: {{t.surf}}; color: {{t.text}};'} ${extra}">${label}</a>`;
+const landH2 = (L, text) => `<h2 style="margin: 0; max-width: 760px; font-size: ${L.h2}px; font-weight: 600; line-height: 1.04; letter-spacing: -.04em; text-wrap: balance;">${text}</h2>`;
+const leadP = (L, text, center) => `<p style="margin: ${Math.round(L.lead * .9)}px ${center ? 'auto' : '0'} 0; max-width: 600px; font-size: ${L.lead}px; line-height: 1.5; color: {{t.muted}}; text-wrap: pretty;">${text}</p>`;
+// How it works: three steps, each with a small piece of the real app.
+const stepTile = (L, n, title, text, visual) => `<div style="border-radius: ${L.tile}px; background: {{t.surf}}; padding: ${L.tile}px; display: flex; flex-direction: column; gap: 12px; min-width: 0;">
+      <span style="width: 32px; height: 32px; border-radius: 16px; background: {{t.bg}}; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 600;">${n}</span>
+      <span style="margin-top: 6px; font-size: 21px; font-weight: 600; letter-spacing: -.02em;">${title}</span>
+      <span style="font-size: 15px; line-height: 1.5; color: {{t.muted}};">${text}</span>
+      <div style="margin-top: auto; padding-top: 18px;">${visual}</div>
+    </div>`;
+const stepLink = `<div style="border-radius: 20px; background: {{t.bg}}; padding: 14px; display: flex; gap: 8px; align-items: center;"><span style="flex-grow: 1; min-width: 0; height: 40px; box-sizing: border-box; padding: 0 14px; display: flex; align-items: center; border-radius: 999px; background: {{t.surf}}; font-family: ${MONO}; font-size: 13px;"><span style="overflow: hidden; white-space: nowrap; text-overflow: ellipsis;">app.lucida.cards/mcp/lk_5b1f0c6e9a2d</span></span><span style="flex-shrink: 0; height: 40px; padding: 0 16px; display: flex; align-items: center; border-radius: 999px; background: {{t.inv}}; color: {{t.invText}}; font-size: 13px; font-weight: 600;">Copy</span></div>`;
+const stepChat = `<div style="border-radius: 20px; background: {{t.bg}}; padding: 14px; display: flex; flex-direction: column; gap: 8px; font-size: 14px; line-height: 1.4;"><span style="align-self: flex-end; max-width: 85%; padding: 10px 14px; border-radius: 18px 18px 6px 18px; background: {{t.inv}}; color: {{t.invText}};">Make flashcards from my biology lecture.</span><span style="align-self: flex-start; max-width: 85%; padding: 10px 14px; border-radius: 18px 18px 18px 6px; background: {{t.surf}};">Added 24 cards to Cell Biology.</span></div>`;
+const stepStudy = `<div style="border-radius: 20px; background: {{t.bg}}; padding: 14px; display: flex; flex-direction: column; gap: 10px;"><span style="height: 64px; display: flex; align-items: center; justify-content: center; text-align: center; padding: 0 12px; border-radius: 14px; background: {{t.surf}}; font-size: 15px; font-weight: 500; letter-spacing: -.01em;">What makes most of the cell’s energy?</span><span style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px;">${[['Forgot', 'again'], ['Hard', 'hard'], ['Good', 'good'], ['Easy', 'easy']].map(([l, k]) => `<span style="height: 34px; display: flex; align-items: center; justify-content: center; border-radius: 999px; background: {{t.surf}}; color: {{t.${k}}}; font-size: 13px; font-weight: 600;">${l}</span>`).join('')}</span></div>`;
+// Card types: the four kinds, each on its own deck's gradient.
+const typeCard = (L, key, label, sub, face) => `<div style="display: flex; flex-direction: column; gap: 10px; min-width: 0;">${meshCard(key, `height: ${L.typeH}px; border-radius: 22px;`, `height: 100%; box-sizing: border-box; padding: ${L === LAND.phone ? 14 : 22}px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; text-align: center;`, face)}<span style="padding: 0 4px; font-size: 16px; font-weight: 600;">${label}</span><span style="padding: 0 4px; margin-top: -6px; font-size: 14px; line-height: 1.45; color: {{t.muted}};">${sub}</span></div>`;
+const typeText = (L, text) => `<span style="font-size: ${L === LAND.phone ? 15 : 21}px; font-weight: 500; line-height: 1.22; letter-spacing: -.02em;">${text}</span>`;
+const typeBlank = (L, key) => typeText(L, `The <span style="display: inline-block; width: 2.4em; height: .9em; margin: 0 .1em; border-radius: 999px; vertical-align: -.1em; background: {{${key}.glass}}; box-shadow: inset 0 0 0 1.5px {{${key}.glassLine}};"></span> is the powerhouse of the cell.`);
+const typePicture = L => { const w = L === LAND.phone ? 90 : 130; return `<svg width="${w}" height="${Math.round(w * .62)}" viewBox="0 0 130 80" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" aria-hidden="true"><ellipse cx="62" cy="42" rx="56" ry="32"/><path d="M18 44c8-16 14 14 22 0s14 14 22 0 14 14 22 0 12 12 20 0"/><circle cx="112" cy="14" r="11" fill="currentColor" stroke="none"/><path d="M103 21 90 30"/></svg>${typeText(L, 'Name part 1.')}`; };
+const typeSound = L => { const k = L === LAND.phone ? .7 : 1, px = n => Math.max(2, Math.round(n * k)); return `<span style="display: flex; align-items: center; gap: ${px(14)}px;"><span style="width: ${px(50)}px; height: ${px(50)}px; flex-shrink: 0; border-radius: 50%; background: {{q4.glass}}; box-shadow: inset 0 0 0 1.5px {{q4.glassLine}}; display: flex; align-items: center; justify-content: center;"><span style="display: flex; margin-left: ${px(3)}px;">${svg(I.play, px(22), 0)}</span></span><span style="display: flex; align-items: center; gap: ${px(4)}px;">${[12, 22, 34, 18, 28, 14, 24, 16, 9].map(b => `<span style="width: ${px(3)}px; height: ${px(b)}px; border-radius: 2px; background: currentColor; opacity: .85;"></span>`).join('')}</span></span>`; };
+// More reasons: small tiles with an icon each.
+const reason = (ic, title, text) => `<div style="border-radius: 24px; background: {{t.surf}}; padding: 24px; display: flex; flex-direction: column; gap: 10px; min-width: 0;"><span style="width: 40px; height: 40px; border-radius: 20px; background: {{t.bg}}; display: flex; align-items: center; justify-content: center;">${svg(I[ic], 19, 1.8)}</span><span style="margin-top: 6px; font-size: 17px; font-weight: 600; letter-spacing: -.01em;">${title}</span><span style="font-size: 15px; line-height: 1.5; color: {{t.muted}};">${text}</span></div>`;
+const REASONS = [
+  ['stats', 'Remembers what you forget', 'FSRS spaced repetition plans every review, so the hard cards come back sooner.'],
+  ['connect', 'You stay in charge', 'Choose what your AI may do, and check its cards before they join a deck.'],
+  ['upload', 'Bring your cards', 'Import from Anki, Quizlet, or a CSV file.'],
+  ['decks', 'Decks with their own look', 'Every deck gets its own gradient, or a photo of your choice.'],
+  ['today', 'A few minutes a day', 'Today shows what’s due, how long it takes, and your streak.'],
+  ['list', 'Your cards stay yours', 'Export every deck, card, and review whenever you want.']
+];
+const landing = (L, w, hgt) => { const phone = L === LAND.phone; return `<div style="width: ${w}px; height: ${hgt}px; box-sizing: border-box; font-family: ${FONT}; background: {{t.bg}}; color: {{t.text}}; overflow: hidden;">
+<header style="max-width: 1344px; margin: 0 auto; height: ${phone ? 64 : 76}px; box-sizing: border-box; padding: 0 ${L.pad}px; display: flex; align-items: center; justify-content: space-between; gap: 12px;">
+  <a href="{{homeHref}}" aria-label="Lucida home">${logo(phone ? 26 : 30)}</a>
+  <nav style="display: flex; align-items: center; gap: ${phone ? 6 : 4}px;">${phone ? '' : `<a href="#how" style="height: 36px; padding: 0 14px; display: inline-flex; align-items: center; border-radius: 999px; font-size: 14px; color: {{t.muted}};">How it works</a><a href="#cards" style="height: 36px; padding: 0 14px; display: inline-flex; align-items: center; border-radius: 999px; font-size: 14px; color: {{t.muted}};">Card types</a>`}<a href="{{signInHref}}" style="height: 36px; padding: 0 14px; display: inline-flex; align-items: center; border-radius: 999px; font-size: 14px; color: {{t.muted}};">Sign in</a>${landPill('Get started', '{{startHref}}', true, 36, phone ? 'padding: 0 14px;' : '')}</nav>
+</header>
+<section style="padding: ${phone ? 40 : 64}px ${L.pad}px 0; display: flex; flex-direction: column; align-items: center; text-align: center;">
+  <span style="height: 32px; padding: 0 14px; display: inline-flex; align-items: center; gap: 8px; border-radius: 999px; background: {{t.surf}}; font-size: 13px; font-weight: 500; color: {{t.muted}};"><span style="width: 7px; height: 7px; border-radius: 4px; background: {{t.good}};"></span>Works with Claude and ChatGPT</span>
+  <h1 style="margin: ${phone ? 20 : 26}px 0 0; max-width: 1200px; font-size: ${L.h1}px; font-weight: 600; line-height: 1; letter-spacing: -.05em; text-wrap: balance;">Flashcards your AI can make.</h1>
+  ${leadP(L, 'Ask Claude or ChatGPT to turn a lecture into cards. Lucida keeps them in your decks and brings each one back right before you’d forget it.', true)}
+  <div style="margin-top: ${phone ? 26 : 32}px; display: flex; gap: 10px; ${phone ? 'flex-direction: column; align-self: stretch;' : ''}">${landPill('Get started', '{{startHref}}', true, L.btn)}${landPill('See how it works', '#how', false, L.btn)}</div>
+</section>
+<section style="padding: ${phone ? 44 : 64}px ${phone ? 12 : 16}px 0;"><div style="position: relative; max-width: 1408px; height: ${L.wallH}px; margin: 0 auto; overflow: hidden; border-radius: ${phone ? 28 : 36}px; background: {{t.surf}};">${cardWall(L.wall)}</div></section>
+<section id="how" style="max-width: 1200px; margin: 0 auto; box-sizing: border-box; padding: ${L.gapTop}px ${L.pad}px 0;">
+  ${landH2(L, 'From lecture to memory in three steps.')}
+  <div style="margin-top: ${phone ? 28 : 40}px; display: grid; grid-template-columns: ${L.cols}; gap: 16px;">
+    ${stepTile(L, 1, 'Connect your AI', 'Paste your Lucida link into Claude or ChatGPT. It takes a minute.', stepLink)}
+    ${stepTile(L, 2, 'Ask for cards', 'Share your notes or slides and ask for flashcards. They land in your decks.', stepChat)}
+    ${stepTile(L, 3, 'Study a little each day', 'Lucida brings back each card right before you’d forget it.', stepStudy)}
+  </div>
+</section>
+<section id="cards" style="max-width: 1200px; margin: 0 auto; box-sizing: border-box; padding: ${L.gapTop}px ${L.pad}px 0;">
+  ${landH2(L, 'Every kind of card.')}
+  ${leadP(L, 'Questions, fill in the blank, pictures, and sound. Your AI can make all four, and so can you.')}
+  <div style="margin-top: ${phone ? 28 : 40}px; display: grid; grid-template-columns: ${L.typeCols}; gap: ${phone ? 12 : 16}px;">
+    ${typeCard(L, 'q1', 'Question', 'A question on the front, the answer on the back.', typeText(L, 'What makes most of the cell’s energy?'))}
+    ${typeCard(L, 'q2', 'Fill in the blank', 'The hidden words show up in place.', typeBlank(L, 'q2'))}
+    ${typeCard(L, 'q3', 'Picture', 'Diagrams, maps, and slides from your class.', typePicture(L))}
+    ${typeCard(L, 'q4', 'Sound', 'Hear it, then say what it means.', typeSound(L))}
+  </div>
+</section>
+<section style="max-width: 1200px; margin: 0 auto; box-sizing: border-box; padding: ${L.gapTop}px ${L.pad}px 0;">
+  ${landH2(L, 'Everything else you need.')}
+  <div style="margin-top: ${phone ? 28 : 40}px; display: grid; grid-template-columns: ${phone ? '1fr' : 'repeat(auto-fit, minmax(300px, 1fr))'}; gap: ${phone ? 12 : 16}px;">
+    ${REASONS.map(([ic, t, x]) => reason(ic, t, x)).join('\n    ')}
+  </div>
+</section>
+<section style="padding: ${L.gapTop}px ${phone ? 12 : 16}px 0;">
+  ${meshCard('hero', `max-width: 1408px; margin: 0 auto; border-radius: ${phone ? 28 : 36}px;`, `box-sizing: border-box; padding: ${phone ? '64px 24px' : '104px 32px'}; display: flex; flex-direction: column; align-items: center; text-align: center;`, `<h2 style="margin: 0; font-size: ${L.ctaH1}px; font-weight: 600; line-height: 1.04; letter-spacing: -.04em; text-wrap: balance;">Your next exam, in cards.</h2><p style="margin: 16px 0 0; max-width: 480px; font-size: ${phone ? 16 : 18}px; line-height: 1.5; opacity: .8;">Start with one deck. Your AI can fill it in a few minutes.</p><div style="margin-top: 28px;">${landPill('Get started', '{{startHref}}', true, L.btn)}</div>`)}
+</section>
+<footer style="max-width: 1344px; margin: 0 auto; box-sizing: border-box; padding: ${phone ? '36px 20px 40px' : '48px 48px 48px'}; display: flex; align-items: center; justify-content: space-between; gap: 16px; font-size: 14px; color: {{t.muted}};">
+  ${logo(phone ? 24 : 26)}<span style="display: flex; gap: 20px;"><a href="{{signInHref}}">Sign in</a><span>© 2026 Lucida</span></span>
+</footer>
+</div>`; };
+const LANDING_H = 3499, LANDING_PHONE_H = 4675;
+const landingLogic = phone => `renderVals() { ${T}
+  // On lucida.cards (props.site) the links open the app; on the canvas they open the sign-in board.
+  const site = !!this.props.site, signIn = site ? 'https://app.lucida.cards/sign-in' : '${phone ? 'PhoneSignIn' : 'WebSignIn'}.dc.html';
+  return { t, grain: String(this.props.grain ?? 0.7), hero: this.mesh('Iris'), ${WALL_VALS(phone ? [50, 60, 55, 65] : [64, 78, 70, 84, 74, 88], phone ? PHONE_K : 1)}
+    q1: this.gen('Cell Biology', 'vivid'), q2: this.gen('Genetics', 'vivid'), q3: this.gen('Anatomy', 'vivid'), q4: this.gen('Korean', 'vivid'),
+    homeHref: site ? '/' : '${phone ? 'LandingPhone' : 'Landing'}.dc.html', signInHref: signIn, startHref: site ? 'https://app.lucida.cards/' : signIn }; }`;
 
 // ---------- write ----------
 const W = 1440, H = 900, PW = 390, PH = 844;
@@ -2466,8 +2620,8 @@ const files = {
   'WebDeckTagPicker': ['Web · Deck settings · Add tag', attrOf('WebDeck', W, H, 'settings-open="{{yes}}" tag-picker="{{yes}}"'), { logic: darkLogic, css: NUM_CSS, w: W, h: H }],
   'WebEditor': ['Web · Card editor', webEditor, { props: { ...DARK, cardType: { editor: 'enum', default: 'Basic', options: ['Basic', 'Blank', 'Image', 'Audio'] }, slashDemo: { editor: 'boolean', default: false } }, logic: EDITOR_LOGIC, css: RICH_CSS, w: W, h: H }],
   'WebEditorSlash': ['Web · Card editor · / menu', attrOf('WebEditor', W, H, 'slash-demo="{{yes}}"'), { logic: darkLogic, css: RICH_CSS, w: W, h: H }],
-  'WebSignIn': ['Web · Sign in', webSignIn, { props: { ...DARK, ...MESH('Iris') }, logic: signInLogic(''), w: W, h: H }],
-  'WebSignInCode': ['Web · Sign in · code from email', webSignInCode, { props: { ...DARK, ...MESH('Iris') }, logic: signInLogic('482'), w: W, h: H }],
+  'WebSignIn': ['Web · Sign in', webSignIn, { props: { ...DARK, grain: MESH('Iris').grain }, logic: signInLogic('', [64, 78, 70, 84]), css: WALL_CSS, w: W, h: H }],
+  'WebSignInCode': ['Web · Sign in · code from email', webSignInCode, { props: { ...DARK, grain: MESH('Iris').grain }, logic: signInLogic('482', [64, 78, 70, 84]), css: WALL_CSS, w: W, h: H }],
   'WebEditorBlank': ['Web · Card editor · fill in the blank', typeOf('WebEditor', W, H, 'Blank'), { logic: darkLogic, css: RICH_CSS, w: W, h: H }],
   'WebEditorImage': ['Web · Card editor · image', typeOf('WebEditor', W, H, 'Image'), { logic: darkLogic, css: RICH_CSS, w: W, h: H }],
   'WebEditorAudio': ['Web · Card editor · audio', typeOf('WebEditor', W, H, 'Audio'), { logic: darkLogic, css: RICH_CSS, w: W, h: H }],
@@ -2514,8 +2668,10 @@ const files = {
   'PhoneReview': ['iPhone · Review', phoneReview, { props: { ...DARK, grading: { editor: 'enum', default: 'Four buttons', options: ['Four buttons', 'Check or X', 'Piles'] }, card: { editor: 'enum', default: 'Basic', options: ['Basic', 'Fill in the blank', 'Image', 'Audio'] }, startRevealed: { editor: 'boolean', default: false }, fsrs: { editor: 'boolean', default: true }, progress: { editor: 'enum', default: 'Bar', options: ['Bar', 'Counts', 'None'] }, settingsOpen: { editor: 'boolean', default: false }, newPileOpen: { editor: 'boolean', default: false }, radius: { editor: 'range', default: 32, min: 12, max: 48, step: 2, unit: 'px' } }, logic: REVIEW_LOGIC(64), css: REVIEW_CSS, w: PW, h: PH }],
   'PhoneDone': ['iPhone · Session done', phoneDone, { props: DARK, logic: doneLogic(260, 20), w: PW, h: PH }],
   'PhoneDonePiles': ['iPhone · Session done · piles', phoneDonePiles, { props: DARK, logic: donePilesLogic, w: PW, h: PH }],
-  'PhoneSignIn': ['iPhone · Sign in', phoneSignIn, { props: { ...DARK, ...MESH('Iris') }, logic: signInLogic(''), w: PW, h: PH }],
-  'PhoneSignInCode': ['iPhone · Sign in · code from email', phoneSignInCode, { props: { ...DARK, ...MESH('Iris') }, logic: signInLogic('482'), w: PW, h: PH }],
+  'PhoneSignIn': ['iPhone · Sign in', phoneSignIn, { props: { ...DARK, grain: MESH('Iris').grain }, logic: signInLogic('', [50, 60, 55, 65], PHONE_K), css: WALL_CSS, w: PW, h: PH }],
+  'PhoneSignInCode': ['iPhone · Sign in · code from email', phoneSignInCode, { props: DARK, logic: signInLogic('482'), w: PW, h: PH }],
+  'Landing': ['Landing page · lucida.cards', landing(LAND.web, W, LANDING_H), { props: { ...DARK, grain: MESH('Iris').grain }, logic: landingLogic(false), css: WALL_CSS, w: W, h: LANDING_H }],
+  'LandingPhone': ['Landing page · lucida.cards on a phone', landing(LAND.phone, PW, LANDING_PHONE_H), { props: { ...DARK, grain: MESH('Iris').grain }, logic: landingLogic(true), css: WALL_CSS, w: PW, h: LANDING_PHONE_H }],
   'PhoneStats': ['iPhone · Stats', phoneStats, { props: DARK, logic: phoneStatsLogic, w: PW, h: PH }],
   'PhoneConnect': ['iPhone · Connect AI', phoneConnect, { props: { ...DARK, ...MESH('Apricot') }, logic: phoneConnectLogic, w: PW, h: PH }],
   'PhoneTodayDark': ['iPhone · Today (dark)', darkOf('PhoneToday', PW, PH), { logic: darkLogic, w: PW, h: PH }],

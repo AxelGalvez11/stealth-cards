@@ -1,10 +1,16 @@
 {
-  "buildCommand": "node design/to-web.mjs",
+  "buildCommand": "node design/to-web.mjs && node design/to-site.mjs",
   "outputDirectory": "web",
   "functions": { "api/index.js": { "maxDuration": 60 } },
+  "redirects": [
+    { "source": "/:path+", "has": [{ "type": "host", "value": "lucida.cards" }], "destination": "https://app.lucida.cards/:path+", "permanent": false }
+  ],
   "rewrites": [
+    { "source": "/", "has": [{ "type": "host", "value": "lucida.cards" }], "destination": "/landing.html" },
     { "source": "/api/:path*", "destination": "/api/index" },
+    { "source": "/auth/:path*", "destination": "/api/index" },
     { "source": "/mcp", "destination": "/api/index" },
+    { "source": "/mcp/:path*", "destination": "/api/index" },
     { "source": "/media/:path*", "destination": "/api/index" },
     { "source": "/((?!.*\\.).*)", "destination": "/index.html" }
   ]
