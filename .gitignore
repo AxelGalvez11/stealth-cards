@@ -5,3 +5,8 @@ node_modules/
 .vercel/
 DerivedData/
 *.xcuserstate
+# Your decks and cards (made by the app)
+data/
+# Local tools (paths on this computer) and design snapshots
+.claude/
+design/.snapshot.json

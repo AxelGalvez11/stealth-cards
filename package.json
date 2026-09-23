@@ -1,0 +1,10 @@
+{
+  "name": "stealth-cards",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "design": "node design/build.mjs && node design/check.mjs",
+    "web": "node design/to-web.mjs",
+    "dev": "node design/to-web.mjs && node web/server.mjs"
+  }
+}
