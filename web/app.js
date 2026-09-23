@@ -6,8 +6,10 @@ import { createDb } from './db.js';
 
 // ---------- pages ----------
 // Which board shows for a page. Some depend on your data: no decks yet shows the new-user Today, and so on.
+// /b (every canvas board with sample data) is for working on the design, so it only opens on your own computer.
+const DESIGN = ['localhost', '127.0.0.1'].includes(location.hostname);
 function resolve(path, q) {
-  if (path.startsWith('/b/')) return { name: decodeURIComponent(path.slice(3)), design: true };
+  if (path.startsWith('/b/')) return DESIGN ? { name: decodeURIComponent(path.slice(3)), design: true } : { redirect: '/' };
   // Online and signed out: only the sign-in pages (and the code page once a code is on its way).
   if (db.signedOut) return path === '/sign-in/code' && db.auth.email() ? { name: 'WebSignInCode' } : path === '/sign-in' ? { name: 'WebSignIn' } : { redirect: '/sign-in' };
   if (path.startsWith('/sign-in')) return { redirect: '/' };
@@ -204,7 +206,7 @@ function paint() {
 }
 async function go(path, push, replace) {
   const url = new URL(path, location.origin);
-  if (url.pathname === '/b') return screenList(push, url);
+  if (url.pathname === '/b' && DESIGN) return screenList(push, url);
   // A review started from somewhere else is a new session (coming back from editing a card keeps it),
   // and so is going over a pile from the Session done page.
   const rvm = /^\/review(?:\/([^/]+))?$/.exec(url.pathname), pile = url.searchParams.get('pile') || '';

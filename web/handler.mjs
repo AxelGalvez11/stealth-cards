@@ -63,7 +63,11 @@ async function signIn(req, res, path) {
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || email.length > 254) return send(res, 400, { error: 'Type your email address.' });
     const p = pkce(req);
     try { await auth.sendCode(email, originOf(req) + '/auth/callback', p.challenge); res.setHeader('set-cookie', p.set); return send(res, 200, { ok: true }); }
-    catch (e) { return send(res, e.status === 429 ? 429 : 400, { error: e.status === 429 ? 'Too many codes for now. Wait a minute, then try again.' : TRY_AGAIN }); }
+    catch (e) {
+      // Until Lucida has its own email service, Supabase only mails the project's team, and says so.
+      if (/email_address_not_authorized|signup_disabled/.test(e.body || '')) return send(res, 403, { error: 'Sign-ups aren’t open yet. Check back soon.' });
+      return send(res, e.status === 429 ? 429 : 400, { error: e.status === 429 ? 'Too many codes for now. Wait a minute, then try again.' : TRY_AGAIN });
+    }
   }
   if (path === '/api/auth/verify' && req.method === 'POST') {
     const b = jsonOf(await readBody(req, 1e4)), email = String(b.email || '').trim().toLowerCase(), code = String(b.code || '').replace(/\D/g, '');
