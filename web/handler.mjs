@@ -7,6 +7,7 @@ import { fileURLToPath } from 'node:url';
 import { state, apply, begin, finish, putMedia, mediaLink, MEDIA } from './store.mjs';
 import { mcp } from './mcp.mjs';
 import { EXT } from './media.mjs';
+import { cloud } from './supa.mjs';
 
 const ROOT = fileURLToPath(new URL('.', import.meta.url));
 const TYPES = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.mjs': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8', '.json': 'application/json', '.svg': 'image/svg+xml',
@@ -76,6 +77,8 @@ export async function handle(req, res) {
   try {
     if (path === '/mcp' || path.startsWith('/api/')) {
       if (!sameSite(req)) return send(res, 403, { error: 'Forbidden' });
+      // On Vercel, saving needs the Supabase database; until it's linked, say so instead of losing changes.
+      if (process.env.VERCEL && !cloud() && req.method === 'POST') return send(res, 503, { error: 'Lucida isn’t connected to its database yet, so nothing can be saved.' });
       const body = req.method === 'POST' ? await readBody(req, path === '/api/media' ? 20e6 : 5e6) : null;
       // Online, another request can save first; then this one runs again from the newer copy.
       for (let attempt = 0; attempt < 3; attempt++) {
