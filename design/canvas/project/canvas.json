@@ -774,6 +774,114 @@
       "w": 1440,
       "x": 0,
       "y": 0
+    },
+    "WebQuizStart.dc.html": {
+      "h": 900,
+      "w": 1440,
+      "x": 0,
+      "y": 0,
+      "page": "quiz",
+      "title": "Web · AI quiz · start (Pro)",
+      "is_interactive": true
+    },
+    "WebQuizUpgrade.dc.html": {
+      "h": 900,
+      "w": 1440,
+      "x": 1520,
+      "y": 0,
+      "page": "quiz",
+      "title": "Web · AI quiz · on Free: go Pro",
+      "is_interactive": true
+    },
+    "WebQuiz.dc.html": {
+      "h": 900,
+      "w": 1440,
+      "x": 3040,
+      "y": 0,
+      "page": "quiz",
+      "title": "Web · AI quiz · question (tap an answer)",
+      "is_interactive": true
+    },
+    "WebQuizAnswered.dc.html": {
+      "h": 900,
+      "w": 1440,
+      "x": 4560,
+      "y": 0,
+      "page": "quiz",
+      "title": "Web · AI quiz · answered",
+      "is_interactive": true
+    },
+    "WebQuizDone.dc.html": {
+      "h": 900,
+      "w": 1440,
+      "x": 6080,
+      "y": 0,
+      "page": "quiz",
+      "title": "Web · AI quiz · results",
+      "is_interactive": true
+    },
+    "PhoneQuizStart.dc.html": {
+      "h": 844,
+      "w": 390,
+      "x": 0,
+      "y": 1320,
+      "page": "quiz",
+      "title": "iPhone · AI quiz · start (Pro)",
+      "is_interactive": true
+    },
+    "PhoneQuizUpgrade.dc.html": {
+      "h": 844,
+      "w": 390,
+      "x": 470,
+      "y": 1320,
+      "page": "quiz",
+      "title": "iPhone · AI quiz · on Free: go Pro",
+      "is_interactive": true
+    },
+    "PhoneQuiz.dc.html": {
+      "h": 844,
+      "w": 390,
+      "x": 940,
+      "y": 1320,
+      "page": "quiz",
+      "title": "iPhone · AI quiz · question (tap an answer)",
+      "is_interactive": true
+    },
+    "PhoneQuizAnswered.dc.html": {
+      "h": 844,
+      "w": 390,
+      "x": 1410,
+      "y": 1320,
+      "page": "quiz",
+      "title": "iPhone · AI quiz · answered",
+      "is_interactive": true
+    },
+    "PhoneQuizDone.dc.html": {
+      "h": 844,
+      "w": 390,
+      "x": 1880,
+      "y": 1320,
+      "page": "quiz",
+      "title": "iPhone · AI quiz · results",
+      "is_interactive": true
+    },
+    "Pricing.dc.html": {
+      "h": 1617,
+      "w": 1440,
+      "x": 5030,
+      "y": 0,
+      "page": "landing",
+      "title": "Pricing · lucida.cards/pricing (computers)",
+      "is_interactive": true
+    },
+    "PricingPhone.dc.html": {
+      "h": 2191,
+      "w": 390,
+      "x": 6550,
+      "y": 0,
+      "page": "landing",
+      "title": "Pricing · lucida.cards/pricing (phones)",
+      "is_interactive": true
     }
   },
   "createdOnFiles": {
@@ -914,7 +1022,7 @@
     },
     "lTitle": {
       "kind": "title1",
-      "maxW": 4950,
+      "maxW": 6940,
       "page": "landing",
       "text": "lucida.cards",
       "w": 240,
@@ -983,6 +1091,24 @@
       "w": 240,
       "x": 0,
       "y": -300
+    },
+    "qWeb": {
+      "kind": "title1",
+      "maxW": 7520,
+      "page": "quiz",
+      "text": "AI quiz (Pro) · web",
+      "w": 240,
+      "x": 0,
+      "y": -300
+    },
+    "qPhone": {
+      "kind": "title1",
+      "maxW": 2270,
+      "page": "quiz",
+      "text": "AI quiz (Pro) · iPhone",
+      "w": 240,
+      "x": 0,
+      "y": 1020
     }
   },
   "order": [
@@ -1071,7 +1197,19 @@
     "Landing.dc.html",
     "LandingPhone.dc.html",
     "Privacy.dc.html",
-    "Terms.dc.html"
+    "Terms.dc.html",
+    "WebQuizStart.dc.html",
+    "WebQuizUpgrade.dc.html",
+    "WebQuiz.dc.html",
+    "WebQuizAnswered.dc.html",
+    "WebQuizDone.dc.html",
+    "PhoneQuizStart.dc.html",
+    "PhoneQuizUpgrade.dc.html",
+    "PhoneQuiz.dc.html",
+    "PhoneQuizAnswered.dc.html",
+    "PhoneQuizDone.dc.html",
+    "Pricing.dc.html",
+    "PricingPhone.dc.html"
   ],
   "pages": [
     {
@@ -1109,6 +1247,10 @@
     {
       "id": "landing",
       "name": "Landing page"
+    },
+    {
+      "id": "quiz",
+      "name": "AI quiz (Pro)"
     }
   ],
   "title": "Lucida Design"

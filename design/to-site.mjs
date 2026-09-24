@@ -1,7 +1,8 @@
 // Turns the site's boards into static pages: the landing page (Landing, LandingPhone) into web/landing.html, the page at
-// lucida.cards, and Privacy and Terms into web/privacy.html and web/terms.html. The landing page holds both boards, with
-// their links pointing at the app; phones see the phone board, everything else the computer one. Gradient cards come
-// from pictures (web/art, design/art.mjs). Run after design/build.mjs (Vercel runs it when it builds the site).
+// lucida.cards, Pricing (Pricing, PricingPhone) into web/pricing.html, and Privacy and Terms into web/privacy.html and
+// web/terms.html. The landing and pricing pages hold both boards, with their links pointing at the app; phones see the
+// phone board, everything else the computer one. Gradient cards come from pictures (web/art, design/art.mjs). Run after
+// design/build.mjs (Vercel runs it when it builds the site).
 import { readFileSync, writeFileSync } from 'node:fs';
 
 const SRC = new URL('./canvas/project/', import.meta.url);
@@ -99,6 +100,31 @@ if ('IntersectionObserver' in window) {
 </body>
 </html>
 `);
+
+// Pricing at lucida.cards/pricing: like the landing page, both boards, phones seeing the phone one.
+{
+  const pw = board('Pricing', { site: true, dark: false }), pp = board('PricingPhone', { site: true, dark: false });
+  pp.html = pp.html.replace(/\sid="([^"]+)"/g, ' id="$1-m"').replace(/url\(#([^)]+)\)/g, 'url(#$1-m)');
+  write('pricing.html', head('Pricing · Lucida', 'Lucida is free, with unlimited decks and cards. Pro adds Learn mode, photo covers, your own colors, and unlimited pictures and sounds.', 'https://lucida.cards/pricing', `/* Phones get the phone board. */
+.phone { display: none; }
+@media (max-width: 760px) { .computer { display: none; } .phone { display: block; } }
+${pw.css.includes(pp.css) ? pw.css : pw.css + '\n' + pp.css}
+${readFileSync(new URL('../web/fast.css', import.meta.url), 'utf8').trim()}
+/* The sky's clouds stop while they're off screen. */
+.sc-off, .sc-off * { animation: none !important; }`) + `
+<body>
+<div class="computer">${pw.html}</div>
+<div class="phone">${pp.html}</div>
+<script>
+if ('IntersectionObserver' in window) {
+  const io = new IntersectionObserver(seen => seen.forEach(e => e.target.classList.toggle('sc-off', !e.isIntersecting)), { rootMargin: '120px 0px' });
+  document.querySelectorAll('.sc-demo').forEach(el => io.observe(el));
+}
+</script>
+</body>
+</html>
+`);
+}
 
 // Privacy and Terms: one column of text, the same on every screen.
 for (const [name, file, title, desc] of [['Privacy', 'privacy', 'Privacy Policy', 'What Lucida keeps, why, and what you can do about it.'], ['Terms', 'terms', 'Terms of Service', 'The terms for using Lucida.']]) {

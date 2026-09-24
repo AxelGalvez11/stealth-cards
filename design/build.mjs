@@ -635,6 +635,7 @@ const webDeck = webRoot(`${sidebar('Decks')}
       <div style="display: flex; align-items: flex-end; justify-content: space-between; gap: 16px;">
         <div style="display: flex; flex-direction: column; gap: 6px; min-width: 0; text-shadow: {{coverShadow}};"><h1 style="margin: 0; font-size: 34px; font-weight: 600; letter-spacing: -.035em; line-height: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{deckName}}</h1><div style="font-size: 14px; opacity: .8;">{{deckLine}}</div></div>
         <div style="display: flex; gap: 10px; flex-shrink: 0;">
+          <sc-if value="{{showQuiz}}" hint-placeholder-val="{{ false }}"><a href="WebQuizStart.dc.html" style="height: 36px; padding: 0 16px; display: inline-flex; align-items: center; gap: 8px; border-radius: 999px; ${onCover} font-size: 14px; font-weight: 600;">${svg(I.sparkle, 15, 2)}Quiz</a></sc-if>
           <a href="{{newCardHref}}" style="height: 36px; padding: 0 18px; display: inline-flex; align-items: center; gap: 8px; border-radius: 999px; ${onCover} font-size: 14px; font-weight: 600;">${svg(I.plus, 16, 2)}New card</a>
           <a href="{{studyHref}}" style="height: 36px; padding: 0 22px; display: inline-flex; align-items: center; border-radius: 999px; background: #FFFFFF; color: #000000; box-shadow: 0 1px 2px rgba(0,0,0,.1); font-size: 14px; font-weight: 600;">{{studyLabel}}</a>
         </div>
@@ -695,7 +696,9 @@ renderVals() {
     tagMenu: { open: menuOpen, expanded: menuOpen ? 'true' : 'false', query: this.state.tagQ || '',
       toggle: () => this.setState({ tagMenuOpen: !menuOpen, tagQ: '' }), setQuery: e => this.setState({ tagQ: e && e.target ? e.target.value : '' }),
       rows: found.map(g => ({ ...tagChip(g), count: String(uses[g]), on: g === f, pressed: g === f ? 'true' : 'false', pick: () => this.setState({ filter: g === f ? 'All' : g, tagMenuOpen: false, tagQ: '' }) })), none: found.length === 0 },
-    spark: forecast
+    spark: forecast,
+    // AI quizzes (Pro) are on the canvas only until they're built.
+    showQuiz: !!db.mock
   };
 }`;
 
@@ -1942,7 +1945,7 @@ const phoneDeck = phone(`<div style="padding: 0 0 120px; display: flex; flex-dir
     <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px;">
       <sc-for list="{{tiles}}" as="k" hint-placeholder-count="3">${deckTile(false)}</sc-for>
     </div>
-    <a href="PhoneReview.dc.html" style="height: 56px; border-radius: 999px; background: {{t.inv}}; color: {{t.invText}}; display: flex; align-items: center; justify-content: center; font-size: 17px; font-weight: 600;">{{studyLabel}}</a>
+    <div style="display: flex; gap: 8px;"><a href="PhoneReview.dc.html" style="flex: 2 1 0; height: 56px; border-radius: 999px; background: {{t.inv}}; color: {{t.invText}}; display: flex; align-items: center; justify-content: center; font-size: 17px; font-weight: 600;">{{studyLabel}}</a><sc-if value="{{showQuiz}}" hint-placeholder-val="{{ false }}"><a href="PhoneQuizStart.dc.html" style="flex: 1 1 0; height: 56px; border-radius: 999px; background: {{t.surf}}; display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 17px; font-weight: 600;">${svg(I.sparkle, 17, 2)}Quiz</a></sc-if></div>
     <div style="display: flex; flex-direction: column;">
       <sc-for list="{{rows}}" as="r" hint-placeholder-count="4">
         <a href="PhoneEditor.dc.html" style="display: flex; flex-direction: column; gap: 3px; padding: 12px 0; border-bottom: 1px solid {{t.line}};"><span style="font-size: 15px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{r.front}}</span><span style="display: flex; align-items: center; gap: 8px; min-width: 0; font-size: 13px; color: {{t.muted}};"><span style="white-space: nowrap;">{{r.kind}} · {{r.next}}</span>${cardTag('c1')}${cardTag('c2')}${cardMore}</span></a>
@@ -1960,7 +1963,7 @@ constructor(props) { super(props); this.state = {}; }
 renderVals() { ${T}${DB_JS}${COVER_LOGIC}
   ${CARD_TAGS_JS}
   return { t, dark: !!this.props.dark, ...coverVals, tiles: coverVals.tiles.map(k => k.label === 'Due now' ? { ...k, label: 'Due' } : k),
-    rows: db.cards(dk.id).slice(0, 4).map(r => ({ ...r, ...cardFit(r.tags) })) }; }`;
+    rows: db.cards(dk.id).slice(0, 4).map(r => ({ ...r, ...cardFit(r.tags) })), showQuiz: !!db.mock }; }`;
 
 const phoneEditor = `<div style="position: relative; width: 390px; height: 844px; overflow: hidden; font-family: ${FONT}; color: {{t.text}};">
   <dc-import name="PhoneDeck" dark="{{dark}}" hint-size="390px,844px"></dc-import>
@@ -2463,6 +2466,141 @@ renderVals() {
   };
 }`;
 
+// ---------- AI quiz (Pro) ----------
+// From a deck, AI writes new questions about its cards, so you test the idea and not just the words you memorized.
+// It's part of Pro: on Free the same button opens an upgrade card. Canvas only for now: the app hides the Quiz button
+// until quizzes are built.
+const QUIZ = [
+  { kind: 'Multiple choice', q: 'A drug makes the inner mitochondrial membrane leak protons. What happens to the cell’s ATP output?', options: ['It drops', 'It rises', 'It stays the same', 'Only glycolysis stops'], right: 0,
+    why: 'ATP synthase runs on the proton gradient the electron transport chain builds. A leak spends that gradient before it can make ATP.', card: ['What does the electron transport chain pump across the inner membrane?', 'Protons (H⁺)'] },
+  { kind: 'Multiple choice', q: 'A pancreas cell ships out lots of insulin. Which organelle would it have plenty of?', options: ['Golgi apparatus', 'Lysosome', 'Peroxisome', 'Centriole'], right: 0,
+    why: 'Insulin is a protein made for export, and the Golgi apparatus packages proteins for secretion.', card: ['Which organelle packages proteins for secretion?', 'Golgi apparatus'] },
+  { kind: 'True or false', q: 'Ribosomes copy DNA into mRNA.', options: ['True', 'False'], right: 1,
+    why: 'Copying DNA into mRNA is transcription, and it happens in the nucleus. Ribosomes do the next step: they translate mRNA into protein.', card: ['What is the role of the ribosome?', 'Translates mRNA into protein'] },
+  { kind: 'Multiple choice', q: 'Which part of the cell makes most of its ATP?', options: ['Nucleus', 'Mitochondrion', 'Ribosome', 'Golgi apparatus'], right: 1,
+    why: 'The mitochondrion runs the electron transport chain and ATP synthase, which make most of the cell’s ATP.', card: ['The ____ is the powerhouse of the cell.', 'mitochondrion'] }
+];
+const QUIZ_CSS = '@keyframes scQuizIn{from{opacity:0;transform:translateY(6px)}}@media (prefers-reduced-motion:reduce){.sc-quiz-in{animation:none!important}}';
+const PRO_BADGE = '<span style="height: 22px; padding: 0 9px; display: inline-flex; align-items: center; border-radius: 999px; background: {{t.inv}}; color: {{t.invText}}; font-size: 12px; font-weight: 700; letter-spacing: .01em;">Pro</span>';
+const quizSeg = list => `<div role="group" style="display: flex; padding: 4px; border-radius: 999px; background: {{t.surf}};"><sc-for list="{{${list}}}" as="o" hint-placeholder-count="3"><button type="button" onClick="{{o.pick}}" aria-pressed="{{o.pressed}}" style="flex: 1 1 0; height: 38px; border: 0; border-radius: 999px; background: {{o.bg}}; color: {{o.fg}}; box-shadow: {{o.sh}}; font: inherit; font-size: 14px; font-weight: 600; cursor: pointer;">{{o.label}}</button></sc-for></div>`;
+const quizField = (label, body) => `<div style="display: flex; flex-direction: column; gap: 8px;"><span style="font-size: 13px; font-weight: 600;">${label}</span>${body}</div>`;
+const quizHead = (back, pro) => `<div style="display: flex; align-items: center; justify-content: space-between; gap: 12px;"><span style="display: flex; align-items: center; gap: 10px; font-size: 22px; font-weight: 600; letter-spacing: -.02em;">${svg(I.sparkle, 20, 1.8)}Quiz yourself${pro ? '' : PRO_BADGE}</span><a href="${back}" aria-label="Close" style="width: 40px; height: 40px; flex-shrink: 0; border-radius: 20px; background: {{t.surf}}; display: flex; align-items: center; justify-content: center;">${svg(I.close, 16, 2)}</a></div>`;
+const quizBtns = (left, right) => `<div style="display: flex; gap: 10px;">${left}${right}</div>`;
+const quizBtn = (label, href, inv, grow, icon = '') => `<a href="${href}" style="flex-grow: ${grow}; height: 52px; border-radius: 999px; background: ${inv ? '{{t.inv}}' : '{{t.surf}}'}; color: ${inv ? '{{t.invText}}' : '{{t.text}}'}; display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 15px; font-weight: 600;">${icon ? svg(I[icon], 16, 2) : ''}${label}</a>`;
+// Starting a quiz (Pro): how many questions, which cards, and what kinds of questions.
+const quizStartBody = (back, start) => `${quizHead(back, true)}
+    <p style="margin: 0; font-size: 15px; line-height: 1.5; color: {{t.muted}};">AI writes new questions from your cards in {{deckName}}, so you test the idea, not just the words on the card.</p>
+    ${quizField('Questions', quizSeg('counts'))}
+    ${quizField('From', quizSeg('froms'))}
+    ${quizField('Kinds', `<div style="display: flex; flex-wrap: wrap; gap: 8px;"><sc-for list="{{kinds}}" as="k" hint-placeholder-count="3"><button type="button" onClick="{{k.pick}}" aria-pressed="{{k.pressed}}" style="height: 38px; padding: 0 14px; display: inline-flex; align-items: center; gap: 6px; border: 0; border-radius: 999px; background: {{k.bg}}; color: {{k.fg}}; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer;"><sc-if value="{{k.on}}" hint-placeholder-val="{{ true }}">${svg(I.check, 14, 2.4)}</sc-if>{{k.label}}</button></sc-for></div>`)}
+    <div style="font-size: 13px; color: {{t.muted}};">{{fromLine}}</div>
+    ${quizBtns(quizBtn('Cancel', back, false, 1), quizBtn('Start quiz', start, true, 2, 'sparkle'))}`;
+// On Free, the Quiz button opens this instead: a peek at a quiz question, what Pro adds, and the price.
+const quizUpgradeBody = back => `${quizHead(back, false)}
+    <div aria-hidden="true" style="box-sizing: border-box; padding: 18px; border-radius: 22px; background: {{t.surf}}; display: flex; flex-direction: column; gap: 12px;"><span style="font-size: 12px; font-weight: 600; color: {{t.muted}};">Multiple choice</span><span style="font-size: 16px; font-weight: 600; line-height: 1.35;">A drug makes the inner mitochondrial membrane leak protons. What happens to ATP output?</span><div style="display: flex; flex-direction: column; gap: 6px;"><span style="height: 40px; box-sizing: border-box; padding: 0 14px; border-radius: 14px; background: {{t.goodTint}}; color: {{t.good}}; display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 600;">${svg(I.check, 14, 2.4)}It drops</span><span style="height: 40px; box-sizing: border-box; padding: 0 14px; border-radius: 14px; background: {{t.bg}}; display: flex; align-items: center; font-size: 14px; color: {{t.muted}};">It rises</span></div></div>
+    <p style="margin: 0; font-size: 15px; line-height: 1.5;">Quizzes come with Pro. AI turns your cards into new questions, so you know you understand them, not just remember them.</p>
+    <div style="display: flex; flex-direction: column; gap: 10px; font-size: 15px;">${['AI quizzes from any deck', 'Photo covers and your own colors', 'Unlimited pictures and sounds'].map(x => `<span style="display: flex; align-items: center; gap: 10px;"><span style="width: 22px; height: 22px; flex-shrink: 0; border-radius: 11px; background: {{t.surf}}; display: flex; align-items: center; justify-content: center;">${svg(I.check, 13, 2.4)}</span>${x}</span>`).join('')}</div>
+    <div style="font-size: 14px; color: {{t.muted}};">$39 a year, or $5.99 a month. Cancel anytime.</div>
+    ${quizBtns(quizBtn('See plans', '{{plansHref}}', false, 1), quizBtn('Go Pro', '{{plansHref}}', true, 2))}`;
+const webQuizStart = pro => `<div style="position: relative; width: 1440px; height: 900px; overflow: hidden; font-family: ${FONT}; color: {{t.text}};">
+  <dc-import name="WebDeck" dark="{{dark}}" hint-size="1440px,900px"></dc-import>
+  <div style="position: absolute; inset: 0; background: {{t.dim}};"></div>
+  <div role="dialog" aria-label="Quiz yourself" style="position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); width: 560px; box-sizing: border-box; padding: 28px; border-radius: 36px; background: {{t.bg}}; box-shadow: 0 24px 64px rgba(0,0,0,.24); display: flex; flex-direction: column; gap: 20px;">
+    ${pro ? quizStartBody('WebDeck.dc.html', 'WebQuiz.dc.html') : quizUpgradeBody('WebDeck.dc.html')}
+  </div>
+</div>`;
+const phoneQuizStart = pro => `<div style="position: relative; width: 390px; height: 844px; overflow: hidden; font-family: ${FONT}; color: {{t.text}};">
+  <dc-import name="PhoneDeck" dark="{{dark}}" hint-size="390px,844px"></dc-import>
+  <div style="position: absolute; inset: 0; background: {{t.dim}};"></div>
+  <div role="dialog" aria-label="Quiz yourself" style="position: absolute; left: 0; right: 0; bottom: 0; box-sizing: border-box; padding: 10px 20px 34px; border-radius: 36px 36px 0 0; background: {{t.bg}}; display: flex; flex-direction: column; gap: 18px;">
+    <div style="align-self: center; width: 40px; height: 5px; border-radius: 3px; background: {{t.surf2}};"></div>
+    ${pro ? quizStartBody('PhoneDeck.dc.html', 'PhoneQuiz.dc.html') : quizUpgradeBody('PhoneDeck.dc.html')}
+  </div>
+</div>`;
+const QUIZ_START_LOGIC = phone => `
+constructor(props) { super(props); this.state = { count: 10, from: 'all', kinds: ['Multiple choice', 'True or false'] }; }
+renderVals() { ${T}
+  const s = this.state, seg = (id, cur) => ({ pressed: id === cur ? 'true' : 'false', bg: id === cur ? t.bg : 'transparent', fg: id === cur ? t.text : t.muted, sh: id === cur ? '0 1px 3px rgba(0,0,0,.14)' : 'none' });
+  const from = { all: 'all 412 cards', hard: 'the 36 cards you miss most', tag: 'the 48 cards tagged Exam 1' }[s.from];
+  return { t, dark: !!this.props.dark, deckName: 'Cell Biology', plansHref: '${phone ? 'PricingPhone' : 'Pricing'}.dc.html',
+    counts: [5, 10, 20].map(n => ({ label: String(n), ...seg(n, s.count), pick: () => this.setState({ count: n }) })),
+    froms: [['all', 'All cards'], ['hard', 'Hard ones'], ['tag', 'A tag']].map(([id, label]) => ({ label, ...seg(id, s.from), pick: () => this.setState({ from: id }) })),
+    kinds: ['Multiple choice', 'True or false', 'Type the answer'].map(k => { const on = s.kinds.includes(k); return { label: k, on, pressed: on ? 'true' : 'false', bg: on ? t.inv : t.surf, fg: on ? t.invText : t.text, pick: () => this.setState({ kinds: on && s.kinds.length > 1 ? s.kinds.filter(x => x !== k) : on ? s.kinds : [...s.kinds, k] }) }; }),
+    fromLine: s.count + ' questions from ' + from + '. Takes about ' + Math.max(2, Math.round(s.count * .4)) + ' minutes.' }; }`;
+// A question: pick an answer, see right or wrong with the reason and the card it came from, then go on. The sample
+// quiz starts at question 7 of 10.
+const quizOption = (h, fs, r) => `<button type="button" onClick="{{o.pick}}" data-key="{{o.key}}" aria-pressed="{{o.pressed}}" style="min-height: ${h}px; box-sizing: border-box; padding: 10px 18px 10px 12px; display: flex; align-items: center; gap: 14px; border: 0; border-radius: ${r}px; background: {{o.bg}}; color: {{o.fg}}; opacity: {{o.op}}; font: inherit; font-size: ${fs}px; font-weight: 500; text-align: left; cursor: {{o.cursor}}; transition: background-color .2s, opacity .2s;"><span style="width: 34px; height: 34px; flex-shrink: 0; border-radius: 11px; background: {{o.badgeBg}}; color: {{o.badgeFg}}; display: flex; align-items: center; justify-content: center; font-family: ${MONO}; font-size: 14px; font-weight: 600;"><sc-if value="{{o.plain}}" hint-placeholder-val="{{ true }}">{{o.key}}</sc-if><sc-if value="{{o.isRight}}" hint-placeholder-val="{{ false }}">${svg(I.check, 16, 2.4)}</sc-if><sc-if value="{{o.isWrong}}" hint-placeholder-val="{{ false }}">${svg(I.close, 14, 2.4)}</sc-if></span><span style="flex-grow: 1;">{{o.label}}</span></button>`;
+const quizNext = (h, fs) => `<sc-if value="{{isLast}}" hint-placeholder-val="{{ false }}"><a href="{{doneHref}}" style="height: ${h}px; padding: 0 24px; display: inline-flex; align-items: center; justify-content: center; border-radius: 999px; background: {{t.inv}}; color: {{t.invText}}; font-size: ${fs}px; font-weight: 600;">See results</a></sc-if><sc-if value="{{notLast}}" hint-placeholder-val="{{ true }}"><button type="button" onClick="{{next}}" data-key="Enter" style="height: ${h}px; padding: 0 24px; border: 0; border-radius: 999px; background: {{t.inv}}; color: {{t.invText}}; font: inherit; font-size: ${fs}px; font-weight: 600; cursor: pointer;">Next question</button></sc-if>`;
+const quizFrom = `<div style="min-width: 0; display: flex; flex-direction: column; gap: 4px; padding: 12px 14px; border-radius: 16px; background: {{t.surf}}; font-size: 13px; line-height: 1.4;"><span style="color: {{t.muted}};">From your card</span><span style="min-width: 0;">{{cardFront}} <span style="color: {{t.muted}};">→</span> <span style="font-weight: 600;">{{cardBack}}</span></span></div>`;
+const webQuiz = `<div style="position: relative; width: 1440px; height: 900px; box-sizing: border-box; display: flex; flex-direction: column; font-family: ${FONT}; background: {{t.bg}}; color: {{t.text}};">
+  <header style="height: 76px; box-sizing: border-box; padding: 0 32px; display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: center; gap: 16px;">
+    <div style="display: flex;"><a href="WebDeck.dc.html" aria-label="End quiz" title="End quiz" style="width: 36px; height: 36px; border-radius: 18px; background: {{t.surf}}; display: flex; align-items: center; justify-content: center;">${svg(I.close, 16, 2.2)}</a></div>
+    <div style="display: flex; align-items: center; gap: 14px;"><div style="width: 360px; height: 6px; border-radius: 3px; background: {{t.surf}}; overflow: hidden;"><div style="height: 6px; border-radius: 3px; background: {{t.text}}; width: {{progress}}; transition: width .3s cubic-bezier(.2,.8,.2,1);"></div></div><span style="font-family: ${MONO}; font-size: 13px; color: {{t.muted}};">{{count}}</span></div>
+    <div style="display: flex; justify-content: flex-end;"><span style="display: inline-flex; align-items: center; gap: 6px; font-size: 13px; color: {{t.muted}};">${svg(I.sparkle, 14, 1.8)}Quiz · {{deckName}}</span></div>
+  </header>
+  <main style="flex-grow: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;">
+    <div style="width: 720px; display: flex; flex-direction: column; gap: 20px;">
+      <span style="font-size: 13px; font-weight: 600; color: {{t.muted}};">{{kind}}</span>
+      <h1 style="margin: 0; font-size: 30px; font-weight: 600; line-height: 1.25; letter-spacing: -.025em; text-wrap: pretty;">{{question}}</h1>
+      <div style="display: flex; flex-direction: column; gap: 10px;"><sc-for list="{{options}}" as="o" hint-placeholder-count="4">${quizOption(60, 17, 20)}</sc-for></div>
+      <div style="min-height: 140px;"><sc-if value="{{answered}}" hint-placeholder-val="{{ false }}"><div class="sc-quiz-in" style="display: flex; flex-direction: column; gap: 14px; animation: scQuizIn .3s cubic-bezier(.2,.8,.2,1) both;">
+        <div style="font-size: 16px; line-height: 1.5;"><span style="font-weight: 600; color: {{verdictColor}};">{{verdict}}</span> {{why}}</div>
+        <div style="display: flex; align-items: flex-end; justify-content: space-between; gap: 20px;">${quizFrom}<div style="flex-shrink: 0;">${quizNext(48, 15)}</div></div>
+      </div></sc-if></div>
+    </div>
+  </main>
+  <footer style="height: 64px; box-sizing: border-box; padding: 0 32px; display: flex; align-items: center; justify-content: space-between; font-size: 13px; color: {{t.muted}};"><span>AI wrote these questions from your cards. It can make mistakes.</span><span>Answer <span style="font-family: ${MONO};">1–4</span> · Next <span style="font-family: ${MONO};">Enter</span></span></footer>
+</div>`;
+const phoneQuiz = `<div style="position: relative; width: 390px; height: 844px; box-sizing: border-box; padding: 60px 16px 34px; display: flex; flex-direction: column; gap: 18px; overflow: hidden; font-family: ${FONT}; background: {{t.bg}}; color: {{t.text}};">
+  <div style="display: flex; align-items: center; gap: 12px;">${roundBtn('close', 'End quiz', 'PhoneDeck.dc.html')}<div style="flex-grow: 1; height: 6px; border-radius: 3px; background: {{t.surf}}; overflow: hidden;"><div style="height: 6px; border-radius: 3px; background: {{t.text}}; width: {{progress}}; transition: width .3s cubic-bezier(.2,.8,.2,1);"></div></div><span style="font-family: ${MONO}; font-size: 13px; color: {{t.muted}};">{{count}}</span></div>
+  <div style="display: flex; flex-direction: column; gap: 10px; padding: 8px 4px 0;"><span style="display: inline-flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 600; color: {{t.muted}};">${svg(I.sparkle, 13, 1.8)}{{kind}}</span><div style="font-size: 23px; font-weight: 600; line-height: 1.28; letter-spacing: -.02em; text-wrap: pretty;">{{question}}</div></div>
+  <div style="display: flex; flex-direction: column; gap: 8px;"><sc-for list="{{options}}" as="o" hint-placeholder-count="4">${quizOption(56, 16, 18)}</sc-for></div>
+  <sc-if value="{{answered}}" hint-placeholder-val="{{ false }}"><div class="sc-quiz-in" style="display: flex; flex-direction: column; gap: 12px; padding: 0 4px; animation: scQuizIn .3s cubic-bezier(.2,.8,.2,1) both;"><div style="font-size: 15px; line-height: 1.5;"><span style="font-weight: 600; color: {{verdictColor}};">{{verdict}}</span> {{why}}</div>${quizFrom}</div></sc-if>
+  <div style="flex-grow: 1;"></div>
+  <sc-if value="{{answered}}" hint-placeholder-val="{{ false }}"><div style="display: flex; flex-direction: column;">${quizNext(56, 17)}</div></sc-if>
+</div>`;
+const QUIZ_LOGIC = phone => `
+constructor(props) { super(props); this.state = { i: 0, pick: props && props.answered ? 1 : null }; }
+renderVals() { ${T}
+  const Q = ${JSON.stringify(QUIZ)}, s = this.state, q = Q[s.i], done = s.pick != null, n = 7 + s.i, last = s.i === Q.length - 1;
+  return { t, dark: !!this.props.dark, deckName: 'Cell Biology', count: n + ' of 10', progress: (n - 1) * 10 + '%', kind: q.kind, question: q.q,
+    options: q.options.map((label, j) => {
+      const right = done && j === q.right, wrong = done && j === s.pick && j !== q.right;
+      return { label, key: String(j + 1), pressed: j === s.pick ? 'true' : 'false', plain: !right && !wrong, isRight: right, isWrong: wrong,
+        bg: right ? t.goodTint : wrong ? t.againTint : t.surf, fg: right ? t.good : wrong ? t.again : t.text, op: done && !right && !wrong ? '.45' : '1',
+        badgeBg: right ? t.good : wrong ? t.again : t.bg, badgeFg: right || wrong ? '#FFFFFF' : t.muted, cursor: done ? 'default' : 'pointer',
+        pick: () => { if (this.state.pick == null) this.setState({ pick: j }); } };
+    }),
+    answered: done, verdict: s.pick === q.right ? 'Right.' : 'Not quite.', verdictColor: s.pick === q.right ? t.good : t.again, why: q.why,
+    cardFront: q.card[0], cardBack: q.card[1], isLast: last, notLast: !last, doneHref: '${phone ? 'PhoneQuizDone' : 'WebQuizDone'}.dc.html',
+    next: () => this.setState({ i: Math.min(Q.length - 1, s.i + 1), pick: null }) }; }`;
+// Results: the score, the questions you missed with their answers, and what to do next.
+// The score as a ring that draws in (80%: eight of ten), like the session meter.
+const quizRing = (size, stroke) => {
+  const r = (size - stroke) / 2, cx = size / 2, cy = size / 2, a = 2 * Math.PI * .8, x = (cx + r * Math.sin(a)).toFixed(1), y = (cy - r * Math.cos(a)).toFixed(1);
+  return `<div style="position: relative; width: ${size}px; height: ${size}px;"><svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" aria-hidden="true"><circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="{{t.surf2}}" stroke-width="${stroke}"/><path class="sc-draw" pathLength="1" d="M ${cx} ${cy - r} A ${r} ${r} 0 1 1 ${x} ${y}" fill="none" stroke="{{ring}}" stroke-width="${stroke}" stroke-linecap="round"/></svg><div style="position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center;"><span style="font-size: ${Math.round(size / 4.4)}px; font-weight: 600; letter-spacing: -.04em; line-height: 1;">8/10</span><span style="margin-top: 4px; font-size: 13px; color: {{t.muted}};">right</span></div></div>`;
+};
+const quizMissed = (fs) => `<div style="width: 100%; display: flex; flex-direction: column; gap: 10px; text-align: left;"><span style="font-size: 15px; font-weight: 600;">Worth another look</span><sc-for list="{{missed}}" as="m" hint-placeholder-count="2"><div style="box-sizing: border-box; padding: 14px 16px; border-radius: 18px; background: {{t.surf}}; display: flex; flex-direction: column; gap: 6px;"><span style="font-size: ${fs}px; font-weight: 500; line-height: 1.35;">{{m.q}}</span><span style="font-size: 13px; color: {{t.muted}};">You said <span style="color: {{t.again}}; font-weight: 600;">{{m.said}}</span> · Answer <span style="color: {{t.good}}; font-weight: 600;">{{m.answer}}</span></span></div></sc-for></div>`;
+const webQuizDone = `<div style="width: 1440px; height: 900px; box-sizing: border-box; display: flex; align-items: center; justify-content: center; font-family: ${FONT}; background: {{t.bg}}; color: {{t.text}};">
+  <main style="width: 560px; display: flex; flex-direction: column; align-items: center; gap: 26px; text-align: center;">
+    ${quizRing(190, 16)}
+    <div style="display: flex; flex-direction: column; gap: 8px;"><h1 style="margin: 0; font-size: 32px; font-weight: 600; letter-spacing: -.03em;">Quiz done</h1><div style="font-size: 16px; color: {{t.muted}};">8 of 10 right · 4 minutes · Cell Biology</div></div>
+    ${quizMissed(15)}
+    <div style="width: 100%; display: flex; gap: 10px;">${quizBtn('Study these 2 cards', 'WebReview.dc.html', false, 2)}${quizBtn('New quiz', 'WebQuizStart.dc.html', false, 1)}${quizBtn('Done', 'WebDeck.dc.html', true, 1)}</div>
+  </main>
+</div>`;
+const phoneQuizDone = phone(`<div style="height: 100%; box-sizing: border-box; padding: 64px 20px 34px; display: flex; flex-direction: column; align-items: center; gap: 22px; text-align: center;">
+  ${quizRing(160, 14)}
+  <div style="display: flex; flex-direction: column; gap: 6px;"><div style="font-size: 30px; font-weight: 700; letter-spacing: -.03em;">Quiz done</div><div style="font-size: 15px; color: {{t.muted}};">8 of 10 right · 4 min · Cell Biology</div></div>
+  ${quizMissed(15)}
+  <div style="flex-grow: 1;"></div>
+  <div style="width: 100%; display: flex; flex-direction: column; gap: 10px;">${quizBtn('Study these 2 cards', 'PhoneReview.dc.html', false, 0)}<div style="display: flex; gap: 10px;">${quizBtn('New quiz', 'PhoneQuizStart.dc.html', false, 1)}${quizBtn('Done', 'PhoneDeck.dc.html', true, 1)}</div></div>
+</div>`, '');
+const QUIZ_DONE_LOGIC = `renderVals() { ${T}
+  return { t, ring: this.props.dark ? '#8C9AFC' : '#4353E0', missed: [
+    { q: 'Ribosomes copy DNA into mRNA.', said: 'True', answer: 'False' },
+    { q: 'A drug makes the inner mitochondrial membrane leak protons. What happens to the cell’s ATP output?', said: 'It rises', answer: 'It drops' }] }; }`;
+
 // ---------- dark wrappers ----------
 const darkOf = (name, w, h) => `<div style="width: ${w}px; height: ${h}px; overflow: hidden; background: #000000;"><dc-import name="${name}" dark="{{yes}}" hint-size="${w}px,${h}px"></dc-import></div>`;
 const darkLogic = `renderVals() { return { yes: true }; }`;
@@ -2755,7 +2893,7 @@ const landing = (L, w, hgt) => { const phone = L === LAND.phone; return `<div st
 ${skyLayer(phone)}
 <header style="max-width: 1344px; margin: 0 auto; height: ${phone ? 64 : 76}px; box-sizing: border-box; padding: 0 ${L.pad}px; display: flex; align-items: center; justify-content: space-between; gap: 12px;">
   <a href="{{homeHref}}" aria-label="Lucida home">${logo(phone ? 26 : 30)}</a>
-  <nav style="display: flex; align-items: center; gap: ${phone ? 6 : 4}px;">${phone ? '' : `<a href="#how" style="height: 36px; padding: 0 14px; display: inline-flex; align-items: center; border-radius: 999px; font-size: 14px; color: {{t.text}};">How it works</a><a href="#cards" style="height: 36px; padding: 0 14px; display: inline-flex; align-items: center; border-radius: 999px; font-size: 14px; color: {{t.text}};">Card types</a>`}<a href="{{signInHref}}" style="height: 36px; padding: 0 14px; display: inline-flex; align-items: center; border-radius: 999px; font-size: 14px; color: {{t.text}};">Sign in</a>${landPill('Get started', '{{startHref}}', true, 36, phone ? 'padding: 0 14px;' : '')}</nav>
+  <nav style="display: flex; align-items: center; gap: ${phone ? 6 : 4}px;">${phone ? '' : `<a href="#how" style="height: 36px; padding: 0 14px; display: inline-flex; align-items: center; border-radius: 999px; font-size: 14px; color: {{t.text}};">How it works</a><a href="#cards" style="height: 36px; padding: 0 14px; display: inline-flex; align-items: center; border-radius: 999px; font-size: 14px; color: {{t.text}};">Card types</a><a href="{{pricingHref}}" style="height: 36px; padding: 0 14px; display: inline-flex; align-items: center; border-radius: 999px; font-size: 14px; color: {{t.text}};">Pricing</a>`}<a href="{{signInHref}}" style="height: 36px; padding: 0 14px; display: inline-flex; align-items: center; border-radius: 999px; font-size: 14px; color: {{t.text}};">Sign in</a>${landPill('Get started', '{{startHref}}', true, 36, phone ? 'padding: 0 14px;' : '')}</nav>
 </header>
 <section style="padding: ${phone ? 48 : 88}px ${L.pad}px 0; display: flex; flex-direction: column; align-items: center; text-align: center;">
   <h1 style="margin: 0; max-width: 1200px; font-size: ${L.h1}px; font-weight: 600; line-height: 1; letter-spacing: -.05em; text-wrap: balance;">Flashcards your AI can make.</h1>
@@ -2794,10 +2932,10 @@ const socialLinks = gap => `<span style="display: flex; align-items: center; gap
 const landFooter = phone => phone
   ? `<footer style="box-sizing: border-box; padding: 36px 20px 40px; display: flex; flex-direction: column; gap: 24px; font-size: 14px; color: {{t.muted}};">
   <div style="display: flex; align-items: center; justify-content: space-between; gap: 16px;">${logo(24)}${socialLinks(22)}</div>
-  <span style="display: flex; flex-wrap: wrap; gap: 16px;"><a href="{{privacyHref}}">Privacy</a><a href="{{termsHref}}">Terms</a><span>© 2026 Lucida</span></span>
+  <span style="display: flex; flex-wrap: wrap; gap: 16px;"><a href="{{pricingHref}}">Pricing</a><a href="{{privacyHref}}">Privacy</a><a href="{{termsHref}}">Terms</a><span>© 2026 Lucida</span></span>
 </footer>`
   : `<footer style="max-width: 1344px; margin: 0 auto; box-sizing: border-box; padding: 48px clamp(20px, 4vw, 48px); display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 20px 16px; font-size: 14px; color: {{t.muted}};">
-  ${logo(26)}<span style="display: flex; flex-wrap: wrap; align-items: center; gap: 16px 20px;"><a href="{{privacyHref}}">Privacy</a><a href="{{termsHref}}">Terms</a><span>© 2026 Lucida</span><span style="margin-left: 8px;">${socialLinks(20)}</span></span>
+  ${logo(26)}<span style="display: flex; flex-wrap: wrap; align-items: center; gap: 16px 20px;"><a href="{{pricingHref}}">Pricing</a><a href="{{privacyHref}}">Privacy</a><a href="{{termsHref}}">Terms</a><span>© 2026 Lucida</span><span style="margin-left: 8px;">${socialLinks(20)}</span></span>
 </footer>`;
 const LANDING_H = 4002, LANDING_PHONE_H = 4818;
 // The sky behind the landing page's top: daylight, or a night sky in dark mode.
@@ -2813,7 +2951,69 @@ renderVals() { ${T}
   return { t, sky: ${SKY}, grain: String(this.props.grain ?? 0.7), hero: this.art(${MIDNIGHT}, '${phone ? '' : 'wide'}'), ${WALL_VALS(phone ? [50, 60, 55, 65] : [64, 78, 70, 84, 74, 88, 68, 80, 72], phone ? PHONE_K : 1, phone ? FLIPS.phone : FLIPS.busy)}
     q1: deck('Cell Biology'), q2: deck('Genetics'), q3: deck('Anatomy'), q4: deck('Korean'), m1: deck('Cell Biology'),
     homeHref: site ? '/' : '${phone ? 'LandingPhone' : 'Landing'}.dc.html', signInHref: signIn, startHref: site ? 'https://app.lucida.cards/' : signIn,
-    privacyHref: site ? '/privacy' : 'Privacy.dc.html', termsHref: site ? '/terms' : 'Terms.dc.html' }; }`;
+    privacyHref: site ? '/privacy' : 'Privacy.dc.html', termsHref: site ? '/terms' : 'Terms.dc.html', pricingHref: site ? '/pricing' : '${phone ? 'PricingPhone' : 'Pricing'}.dc.html' }; }`;
+
+// ---------- Pricing (lucida.cards/pricing) ----------
+// Free keeps every card. Pro ($5.99 a month or $39 a year) is for making Lucida yours: AI quizzes, photo covers and
+// your own colors, unlimited pictures and sounds, natural voices. Drawn for computers and phones like the landing page,
+// with the same sky; it isn't on the site yet (it goes live with payments).
+const PLAN_FREE = ['Unlimited decks and cards', 'Your AI makes cards for you', 'Reviews planned by spaced repetition', 'All four card types', 'A color for every deck', 'Up to 100 pictures and sounds', 'Import and export anytime'];
+const PLAN_PRO = ['Learn mode with AI questions', 'Photo covers and your own colors', 'Unlimited pictures and sounds', 'Natural voices for sound cards', 'Early access to new features'];
+const PRICING_FAQ = [
+  ['Do I need Pro for my AI to make cards?', 'No. On Free, your AI can make as many cards as you want.'],
+  ['What happens to my cards if I stop Pro?', 'Nothing. Every deck and card stays yours. Only the Pro extras switch off.'],
+  ['Can I cancel anytime?', 'Yes, from Settings. Pro stays on until the end of the time you paid for.'],
+  ['What counts toward the 100 pictures and sounds?', 'Each picture or sound on a card. Text cards never count.']
+];
+const planList = (items, check) => `<ul style="margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 12px; font-size: 15px; line-height: 1.35;">${items.map(x => `<li style="display: flex; align-items: flex-start; gap: 10px;"><span style="margin-top: 1px; flex-shrink: 0; display: flex; ${check}">${svg(I.check, 17, 2.2)}</span>${x}</li>`).join('')}</ul>`;
+const planPrice = (price, per, note) => `<div style="display: flex; flex-direction: column; gap: 6px;"><div style="display: flex; align-items: baseline; gap: 8px;"><span style="font-size: 56px; font-weight: 600; letter-spacing: -.04em; line-height: 1;">${price}</span><span style="font-size: 16px; opacity: .75;">${per}</span></div><span style="min-height: 20px; font-size: 14px; opacity: .75;">${note}</span></div>`;
+const pricing = (L, w, hgt) => { const phone = L === LAND.phone, pad = phone ? 20 : 32; return `<div style="position: relative; isolation: isolate; width: ${w}px; height: ${hgt}px; box-sizing: border-box; font-family: ${FONT}; background: {{t.bg}}; color: {{t.text}}; overflow: hidden;">
+${skyLayer(phone)}
+<header style="max-width: 1344px; margin: 0 auto; height: ${phone ? 64 : 76}px; box-sizing: border-box; padding: 0 ${L.pad}px; display: flex; align-items: center; justify-content: space-between; gap: 12px;">
+  <a href="{{homeHref}}" aria-label="Lucida home">${logo(phone ? 26 : 30)}</a>
+  <nav style="display: flex; align-items: center; gap: ${phone ? 6 : 4}px;">${phone ? '' : `<a href="{{howHref}}" style="height: 36px; padding: 0 14px; display: inline-flex; align-items: center; border-radius: 999px; font-size: 14px; color: {{t.text}};">How it works</a><a href="{{typesHref}}" style="height: 36px; padding: 0 14px; display: inline-flex; align-items: center; border-radius: 999px; font-size: 14px; color: {{t.text}};">Card types</a><a href="#" aria-current="page" style="height: 36px; padding: 0 14px; display: inline-flex; align-items: center; border-radius: 999px; font-size: 14px; font-weight: 600; color: {{t.text}};">Pricing</a>`}<a href="{{signInHref}}" style="height: 36px; padding: 0 14px; display: inline-flex; align-items: center; border-radius: 999px; font-size: 14px; color: {{t.text}};">Sign in</a>${landPill('Get started', '{{startHref}}', true, 36, phone ? 'padding: 0 14px;' : '')}</nav>
+</header>
+<section style="padding: ${phone ? 44 : 80}px ${L.pad}px 0; display: flex; flex-direction: column; align-items: center; text-align: center;">
+  <h1 style="margin: 0; font-size: ${phone ? 44 : 72}px; font-weight: 600; line-height: 1; letter-spacing: -.05em; text-wrap: balance;">Simple pricing.</h1>
+  ${leadP(L, 'Your cards are always free. Pro is for making Lucida yours.', true)}
+  <sc-if value="{{showToggle}}" hint-placeholder-val="{{ true }}"><div role="group" aria-label="Billing" style="margin-top: ${phone ? 26 : 32}px; display: inline-flex; padding: 4px; border-radius: 999px; background: {{t.bg}}; box-shadow: 0 1px 2px rgba(0,0,0,.06), 0 10px 24px -14px rgba(0,0,0,.25);"><sc-for list="{{billing}}" as="b" hint-placeholder-count="2"><button type="button" onClick="{{b.pick}}" aria-pressed="{{b.pressed}}" style="height: 40px; padding: 0 18px; display: inline-flex; align-items: center; gap: 8px; border: 0; border-radius: 999px; background: {{b.bg}}; color: {{b.fg}}; font: inherit; font-size: 14px; font-weight: 600; cursor: pointer;">{{b.label}}<sc-if value="{{b.hasTag}}" hint-placeholder-val="{{ false }}"><span style="height: 22px; padding: 0 8px; display: inline-flex; align-items: center; border-radius: 999px; background: {{t.goodTint}}; color: {{t.good}}; font-size: 12px; font-weight: 600;">Save 45%</span></sc-if></button></sc-for></div></sc-if>
+</section>
+<section style="padding: ${phone ? 28 : 44}px ${phone ? 16 : L.pad}px 0;">
+  <div style="max-width: 960px; margin: 0 auto; display: grid; grid-template-columns: ${phone ? '1fr' : '1fr 1fr'}; gap: ${phone ? 12 : 16}px;">
+    <div style="box-sizing: border-box; padding: ${pad}px; border-radius: ${phone ? 28 : 32}px; background: {{t.bg}}; box-shadow: 0 0 0 1px {{t.line}}, 0 18px 44px -24px rgba(0,0,0,.25); display: flex; flex-direction: column; gap: 24px;">
+      <div><div style="font-size: 20px; font-weight: 600; letter-spacing: -.01em;">Free</div><div style="margin-top: 6px; font-size: 15px; color: {{t.muted}};">Everything you need to learn.</div></div>
+      ${planPrice('$0', 'forever', '')}
+      ${landPill('Get started', '{{startHref}}', false, 50)}
+      ${planList(PLAN_FREE, 'color: {{t.muted}};')}
+    </div>
+    ${artCard('pro', `border-radius: ${phone ? 28 : 32}px; box-shadow: 0 24px 56px -28px rgba(20,22,90,.55);`, `height: 100%; box-sizing: border-box; padding: ${pad}px; display: flex; flex-direction: column; gap: 24px;`, `<div><div style="display: flex; align-items: center; gap: 8px; font-size: 20px; font-weight: 600; letter-spacing: -.01em;">${svg(I.sparkle, 18, 1.8)}Pro</div><div style="margin-top: 6px; font-size: 15px; opacity: .8;">Make Lucida yours.</div></div>
+      ${planPrice('{{proPrice}}', '{{proPer}}', '{{proNote}}')}
+      <sc-if value="{{proLive}}" hint-placeholder-val="{{ true }}">${landPill('Go Pro', '{{startHref}}', true, 50, 'background: #FFFFFF; color: #000000;')}</sc-if><sc-if value="{{proSoon}}" hint-placeholder-val="{{ false }}"><span style="height: 50px; display: flex; align-items: center; justify-content: center; border-radius: 999px; background: rgba(255,255,255,.16); box-shadow: inset 0 0 0 1px rgba(255,255,255,.35); font-size: 15px; font-weight: 600;">Pro is coming soon</span></sc-if>
+      <div style="display: flex; flex-direction: column; gap: 12px;"><span style="font-size: 14px; opacity: .8;">Everything in Free, plus:</span>${planList(PLAN_PRO, 'color: #FFFFFF;')}</div>`)}
+  </div>
+</section>
+<section style="max-width: 1024px; margin: 0 auto; box-sizing: border-box; padding: ${phone ? 72 : 112}px ${phone ? 20 : 32}px 0;">
+  ${landH2(L, 'Questions')}
+  <div style="margin-top: ${phone ? 24 : 32}px; display: grid; grid-template-columns: ${phone ? '1fr' : '1fr 1fr'}; gap: ${phone ? 10 : 16}px;">
+    ${PRICING_FAQ.map(([q, a]) => `<div style="box-sizing: border-box; padding: ${phone ? 20 : 24}px; border-radius: ${phone ? 22 : 24}px; background: {{t.surf}}; display: flex; flex-direction: column; gap: 8px;"><span style="font-size: 17px; font-weight: 600; letter-spacing: -.01em;">${q}</span><span style="font-size: 15px; line-height: 1.5; color: {{t.muted}};">${a}</span></div>`).join('\n    ')}
+  </div>
+</section>
+<div style="height: ${phone ? 72 : 112}px;"></div>
+${landFooter(phone)}
+</div>`; };
+const PRICING_H = 1617, PRICING_PHONE_H = 2191;
+const pricingLogic = phone => `${ART_METHOD}
+constructor(props) { super(props); this.state = { yearly: true }; }
+renderVals() { ${T}
+  // On lucida.cards (props.site) the links open the app and the landing page; on the canvas, the boards.
+  const site = !!this.props.site, y = this.state.yearly, signIn = site ? 'https://app.lucida.cards/sign-in' : '${phone ? 'PhoneSignIn' : 'WebSignIn'}.dc.html';
+  const seg = on => ({ bg: on ? t.inv : 'transparent', fg: on ? t.invText : t.text, pressed: on ? 'true' : 'false' });
+  return { t, sky: ${SKY}, grain: String(this.props.grain ?? 0.7), pro: this.art(${MIDNIGHT}, ''),
+    billing: [{ label: 'Monthly', ...seg(!y), hasTag: false, pick: () => this.setState({ yearly: false }) }, { label: 'Yearly', ...seg(y), hasTag: true, pick: () => this.setState({ yearly: true }) }],
+    proPrice: y ? '$39' : '$5.99', proPer: y ? 'a year' : 'a month', proNote: site ? 'That’s $3.25 a month, or $5.99 paid monthly.' : y ? 'That’s $3.25 a month.' : 'Billed monthly. Cancel anytime.',
+    homeHref: site ? '/' : '${phone ? 'LandingPhone' : 'Landing'}.dc.html', howHref: site ? '/#how' : 'Landing.dc.html', typesHref: site ? '/#cards' : 'Landing.dc.html',
+    signInHref: signIn, startHref: site ? 'https://app.lucida.cards/' : signIn, privacyHref: site ? '/privacy' : 'Privacy.dc.html', termsHref: site ? '/terms' : 'Terms.dc.html',
+    pricingHref: site ? '/pricing' : '${phone ? 'PricingPhone' : 'Pricing'}.dc.html', proLive: !site, proSoon: site, showToggle: !site }; }`;
 
 // ---------- Privacy and Terms (lucida.cards/privacy and /terms) ----------
 // Plain pages from legal.mjs: one column of text that fits any window. design/to-site.mjs makes them pages.
@@ -2835,7 +3035,7 @@ ${landFooter(false)}
 const legalLogic = `renderVals() { ${T}
   const site = !!this.props.site;
   return { t, homeHref: site ? 'https://lucida.cards/' : 'Landing.dc.html', signInHref: site ? 'https://app.lucida.cards/sign-in' : 'WebSignIn.dc.html', startHref: site ? 'https://app.lucida.cards/' : 'WebSignIn.dc.html',
-    privacyHref: site ? '/privacy' : 'Privacy.dc.html', termsHref: site ? '/terms' : 'Terms.dc.html' }; }`;
+    privacyHref: site ? '/privacy' : 'Privacy.dc.html', termsHref: site ? '/terms' : 'Terms.dc.html', pricingHref: site ? '/pricing' : 'Pricing.dc.html' }; }`;
 
 // ---------- write ----------
 const W = 1440, H = 900, PW = 390, PH = 844;
@@ -2909,6 +3109,18 @@ const files = {
   'PhoneSignIn': ['iPhone · Sign in', phoneSignIn, { props: { ...DARK, grain: MESH('Iris').grain }, logic: signInLogic('', [50, 60, 55, 65], PHONE_K), css: WALL_CSS, w: PW, h: PH }],
   'PhoneSignInCode': ['iPhone · Sign in · code from email', phoneSignInCode, { props: DARK, logic: signInLogic('482'), w: PW, h: PH }],
   'Landing': ['Landing page · lucida.cards', landing(LAND.web, W, LANDING_H), { props: { ...DARK, grain: MESH('Iris').grain }, logic: landingLogic(false), css: WALL_CSS + DEMO_CSS + SKY_CSS, w: W, h: LANDING_H }],
+  'WebQuizStart': ['Web · AI quiz · start (Pro)', webQuizStart(true), { props: DARK, logic: QUIZ_START_LOGIC(false), w: W, h: H }],
+  'WebQuizUpgrade': ['Web · AI quiz · on Free: go Pro', webQuizStart(false), { props: DARK, logic: QUIZ_START_LOGIC(false), w: W, h: H }],
+  'WebQuiz': ['Web · AI quiz · question', webQuiz, { props: { ...DARK, answered: { editor: 'boolean', default: false } }, logic: QUIZ_LOGIC(false), css: QUIZ_CSS, w: W, h: H }],
+  'WebQuizAnswered': ['Web · AI quiz · answered', attrOf('WebQuiz', W, H, 'answered="{{yes}}"'), { logic: darkLogic, css: QUIZ_CSS, w: W, h: H }],
+  'WebQuizDone': ['Web · AI quiz · results', webQuizDone, { props: DARK, logic: QUIZ_DONE_LOGIC, w: W, h: H }],
+  'PhoneQuizStart': ['iPhone · AI quiz · start (Pro)', phoneQuizStart(true), { props: DARK, logic: QUIZ_START_LOGIC(true), w: PW, h: PH }],
+  'PhoneQuizUpgrade': ['iPhone · AI quiz · on Free: go Pro', phoneQuizStart(false), { props: DARK, logic: QUIZ_START_LOGIC(true), w: PW, h: PH }],
+  'PhoneQuiz': ['iPhone · AI quiz · question', phoneQuiz, { props: { ...DARK, answered: { editor: 'boolean', default: false } }, logic: QUIZ_LOGIC(true), css: QUIZ_CSS, w: PW, h: PH }],
+  'PhoneQuizAnswered': ['iPhone · AI quiz · answered', attrOf('PhoneQuiz', PW, PH, 'answered="{{yes}}"'), { logic: darkLogic, css: QUIZ_CSS, w: PW, h: PH }],
+  'PhoneQuizDone': ['iPhone · AI quiz · results', phoneQuizDone, { props: DARK, logic: QUIZ_DONE_LOGIC, w: PW, h: PH }],
+  'Pricing': ['Pricing · lucida.cards/pricing', pricing(LAND.web, W, PRICING_H), { props: { ...DARK, grain: MESH('Iris').grain }, logic: pricingLogic(false), css: SKY_CSS, w: W, h: PRICING_H }],
+  'PricingPhone': ['Pricing · lucida.cards/pricing on a phone', pricing(LAND.phone, PW, PRICING_PHONE_H), { props: { ...DARK, grain: MESH('Iris').grain }, logic: pricingLogic(true), css: SKY_CSS, w: PW, h: PRICING_PHONE_H }],
   'Privacy': ['Privacy Policy · lucida.cards/privacy', legalPage(PRIVACY, LEGAL_H.Privacy), { props: DARK, logic: legalLogic, w: W, h: LEGAL_H.Privacy }],
   'Terms': ['Terms of Service · lucida.cards/terms', legalPage(TERMS, LEGAL_H.Terms), { props: DARK, logic: legalLogic, w: W, h: LEGAL_H.Terms }],
   'LandingPhone': ['Landing page · lucida.cards on a phone', landing(LAND.phone, PW, LANDING_PHONE_H), { props: { ...DARK, grain: MESH('Iris').grain }, logic: landingLogic(true), css: WALL_CSS + DEMO_CSS + SKY_CSS, w: PW, h: LANDING_PHONE_H }],

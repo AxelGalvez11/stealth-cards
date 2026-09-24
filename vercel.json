@@ -6,7 +6,7 @@
     { "source": "/art/(.*)", "headers": [{ "key": "Cache-Control", "value": "public, max-age=86400, stale-while-revalidate=604800" }] }
   ],
   "redirects": [
-    { "source": "/:path((?!art/|privacy$|terms$).+)", "has": [{ "type": "host", "value": "lucida.cards" }], "destination": "https://app.lucida.cards/:path", "permanent": false }
+    { "source": "/:path((?!art/|privacy$|terms$|pricing$).+)", "has": [{ "type": "host", "value": "lucida.cards" }], "destination": "https://app.lucida.cards/:path", "permanent": false }
   ],
   "rewrites": [
     { "source": "/", "has": [{ "type": "host", "value": "lucida.cards" }], "destination": "/landing.html" },
@@ -15,6 +15,7 @@
     { "source": "/mcp", "destination": "/api/index" },
     { "source": "/mcp/:path*", "destination": "/api/index" },
     { "source": "/media/:path*", "destination": "/api/index" },
+    { "source": "/pricing", "destination": "/pricing.html" },
     { "source": "/privacy", "destination": "/privacy.html" },
     { "source": "/terms", "destination": "/terms.html" },
     { "source": "/((?!.*\\.).*)", "destination": "/app.html" }

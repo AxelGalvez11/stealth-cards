@@ -145,6 +145,36 @@ export default [
   "h": 844
  },
  {
+  "name": "PhoneQuiz",
+  "title": "iPhone · AI quiz · question",
+  "w": 390,
+  "h": 844
+ },
+ {
+  "name": "PhoneQuizAnswered",
+  "title": "iPhone · AI quiz · answered",
+  "w": 390,
+  "h": 844
+ },
+ {
+  "name": "PhoneQuizDone",
+  "title": "iPhone · AI quiz · results",
+  "w": 390,
+  "h": 844
+ },
+ {
+  "name": "PhoneQuizStart",
+  "title": "iPhone · AI quiz · start (Pro)",
+  "w": 390,
+  "h": 844
+ },
+ {
+  "name": "PhoneQuizUpgrade",
+  "title": "iPhone · AI quiz · on Free: go Pro",
+  "w": 390,
+  "h": 844
+ },
+ {
   "name": "PhoneReview",
   "title": "iPhone · Review",
   "w": 390,
@@ -251,6 +281,18 @@ export default [
   "title": "iPhone · Today · new user",
   "w": 390,
   "h": 844
+ },
+ {
+  "name": "Pricing",
+  "title": "Pricing · lucida.cards/pricing",
+  "w": 1440,
+  "h": 1617
+ },
+ {
+  "name": "PricingPhone",
+  "title": "Pricing · lucida.cards/pricing on a phone",
+  "w": 390,
+  "h": 2191
  },
  {
   "name": "Privacy",
@@ -411,6 +453,36 @@ export default [
  {
   "name": "WebNewDeck",
   "title": "Web · New deck",
+  "w": 1440,
+  "h": 900
+ },
+ {
+  "name": "WebQuiz",
+  "title": "Web · AI quiz · question",
+  "w": 1440,
+  "h": 900
+ },
+ {
+  "name": "WebQuizAnswered",
+  "title": "Web · AI quiz · answered",
+  "w": 1440,
+  "h": 900
+ },
+ {
+  "name": "WebQuizDone",
+  "title": "Web · AI quiz · results",
+  "w": 1440,
+  "h": 900
+ },
+ {
+  "name": "WebQuizStart",
+  "title": "Web · AI quiz · start (Pro)",
+  "w": 1440,
+  "h": 900
+ },
+ {
+  "name": "WebQuizUpgrade",
+  "title": "Web · AI quiz · on Free: go Pro",
   "w": 1440,
   "h": 900
  },
