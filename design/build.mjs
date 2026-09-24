@@ -2549,7 +2549,8 @@ const webSignInCode = webSignRoot(`<a href="WebSignIn.dc.html" style="align-self
 const signPhoneRoot = inner => `<div style="position: relative; width: 390px; height: 844px; box-sizing: border-box; display: flex; flex-direction: column; font-family: ${FONT}; background: {{t.bg}}; color: {{t.text}}; overflow: hidden;">
 ${inner}
 </div>`;
-const phoneSignIn = signPhoneRoot(`${signPanel('flex: 1 1 380px; min-height: 220px;', { cols: 4, w: 150, h: 100, gap: 10, r: 16, tilt: -14, k: PHONE_K })}
+// The wall takes only the height the form leaves (at least 120px), so sign-in fits a phone's screen without scrolling.
+const phoneSignIn = signPhoneRoot(`${signPanel('flex: 1 1 0; min-height: 120px;', { cols: 4, w: 150, h: 100, gap: 10, r: 16, tilt: -14, k: PHONE_K })}
   <div style="flex-shrink: 0; box-sizing: border-box; padding: 22px 20px 34px; display: flex; flex-direction: column; gap: 10px;">
     <h1 style="margin: 0 0 8px; font-size: 28px; font-weight: 700; letter-spacing: -.03em; text-align: center;">Sign in to Lucida</h1>
     ${authBtn('Continue with Apple', APPLE_LOGO, 'PhoneToday.dc.html', 50, 'apple')}${authBtn('Continue with Google', G_LOGO, 'PhoneToday.dc.html', 50, 'google')}
