@@ -2651,7 +2651,7 @@ const DEMO_CSS = [
   showAt('scChatYou', 2), showBetween('scChatDots', 9, 17, 'transform:none'), showBetween('scChatWork', 18, 30), showAt('scChatDone', 30, 'transform:none'),
   showAt('scChatCard1', 33, 'transform:translateY(10px) scale(.92)'), showAt('scChatCard2', 36, 'transform:translateY(10px) scale(.92)'), showAt('scChatCard3', 39, 'transform:translateY(10px) scale(.92)'),
   showAt('scChatText', 45),
-  '@keyframes scSpin{to{transform:rotate(360deg)}}@keyframes scDot{0%,60%,100%{transform:none;opacity:.45}30%{transform:translateY(-3px);opacity:1}}@keyframes scWaveSoft{from{transform:scaleY(.5)}to{transform:none}}',
+  '@keyframes scSpin{to{transform:rotate(360deg)}}@keyframes scDot{0%,60%,100%{transform:none;opacity:.45}30%{transform:translateY(-3px);opacity:1}}@keyframes scWaveSoft{from{transform:scaleY(.5)}to{transform:none}}@keyframes scFill{0%,35%{opacity:0;transform:translateY(.25em)}45%,85%{opacity:1;transform:none}95%,100%{opacity:0;transform:none}}',
   studyKeys('A', 0), studyKeys('B', 50),
   '@media (prefers-reduced-motion:reduce){.sc-anim,.sc-anim *{animation:none!important}.sc-transient{display:none!important}}'
 ].join('');
@@ -2709,7 +2709,9 @@ const studyDemo = phone => {
 // Card types: the four kinds, each on its own deck's gradient.
 const typeCard = (L, key, label, sub, face) => `<div style="display: flex; flex-direction: column; gap: 10px; min-width: 0;">${artCard(key, `height: ${L.typeH}px; border-radius: 22px;`, `height: 100%; box-sizing: border-box; padding: ${L === LAND.phone ? 14 : 22}px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; text-align: center;`, face)}<span style="padding: 0 4px; font-size: 16px; font-weight: 600;">${label}</span><span style="padding: 0 4px; margin-top: -6px; font-size: 14px; line-height: 1.45; color: {{t.muted}};">${sub}</span></div>`;
 const typeText = (L, text) => `<span style="font-size: ${L === LAND.phone ? 15 : 21}px; font-weight: 500; line-height: 1.22; letter-spacing: -.02em;">${text}</span>`;
-const typeBlank = (L, key) => typeText(L, `The <span style="display: inline-block; width: 2.4em; height: .9em; margin: 0 .1em; border-radius: 999px; vertical-align: -.1em; background: {{${key}.glass}};"></span> is the powerhouse of the cell.`);
+// The blank fills in now and then: the answer rises into the pill, stays a moment, and fades (the pill stays empty with
+// reduced motion; on the site it rests while it's off screen).
+const typeBlank = (L, key) => typeText(L, `The <span class="sc-demo sc-anim" style="display: inline-block; margin: 0 .1em; padding: 0 .4em; border-radius: 999px; line-height: 1.1; background: {{${key}.glass}};"><span style="display: inline-block; opacity: 0; animation: scFill 6s ease-in-out infinite;">mitochondrion</span></span> is the powerhouse of the cell.`);
 const typePicture = L => { const w = L === LAND.phone ? 90 : 130; return `<svg width="${w}" height="${Math.round(w * .62)}" viewBox="0 0 130 80" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" aria-hidden="true">${PICTURE_ICON}</svg>${typeText(L, 'Name part 1.')}`; };
 // Sound: just a waveform whose bars rise and fall a little, like a clip playing (still with reduced motion; on the
 // site it stops while it's off screen).
