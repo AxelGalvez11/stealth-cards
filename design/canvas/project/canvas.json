@@ -1036,20 +1036,20 @@
       "x": 0,
       "y": 0
     },
-    "WebQuizWaves.dc.html": {
+    "WebQuizMist.dc.html": {
       "h": 900,
       "is_interactive": true,
       "page": "quiz",
-      "title": "Web · Learn mode · idea: faint gradient waves (tap an answer)",
+      "title": "Web · Learn mode · idea: noisy gradient, white with faint color (tap an answer)",
       "w": 1440,
       "x": 0,
       "y": 2584
     },
-    "PhoneQuizWaves.dc.html": {
+    "PhoneQuizMist.dc.html": {
       "h": 844,
       "is_interactive": true,
       "page": "quiz",
-      "title": "iPhone · Learn mode · idea: faint gradient waves (tap an answer)",
+      "title": "iPhone · Learn mode · idea: noisy gradient, white with faint color (tap an answer)",
       "w": 390,
       "x": 1520,
       "y": 2584
@@ -1303,7 +1303,7 @@
       "kind": "title1",
       "maxW": 1910,
       "page": "quiz",
-      "text": "Learn mode · idea: faint gradient waves",
+      "text": "Learn mode · idea: noisy gradient, white with faint color",
       "w": 240,
       "x": 0,
       "y": 2284
@@ -1425,8 +1425,8 @@
     "LiveResult.dc.html",
     "LiveResultWrong.dc.html",
     "LiveFinal.dc.html",
-    "WebQuizWaves.dc.html",
-    "PhoneQuizWaves.dc.html"
+    "WebQuizMist.dc.html",
+    "PhoneQuizMist.dc.html"
   ],
   "pages": [
     {

@@ -247,6 +247,12 @@ export default [
   "h": 844
  },
  {
+  "name": "PhoneQuizMist",
+  "title": "iPhone · Learn mode · idea: noisy gradient, white with faint color",
+  "w": 390,
+  "h": 844
+ },
+ {
   "name": "PhoneQuizStart",
   "title": "iPhone · Learn mode · start (Pro)",
   "w": 390,
@@ -261,12 +267,6 @@ export default [
  {
   "name": "PhoneQuizUpgrade",
   "title": "iPhone · Learn mode · on Free: go Pro",
-  "w": 390,
-  "h": 844
- },
- {
-  "name": "PhoneQuizWaves",
-  "title": "iPhone · Learn mode · idea: faint gradient waves",
   "w": 390,
   "h": 844
  },
@@ -577,6 +577,12 @@ export default [
   "h": 900
  },
  {
+  "name": "WebQuizMist",
+  "title": "Web · Learn mode · idea: noisy gradient, white with faint color",
+  "w": 1440,
+  "h": 900
+ },
+ {
   "name": "WebQuizStart",
   "title": "Web · Learn mode · start (Pro)",
   "w": 1440,
@@ -591,12 +597,6 @@ export default [
  {
   "name": "WebQuizUpgrade",
   "title": "Web · Learn mode · on Free: go Pro",
-  "w": 1440,
-  "h": 900
- },
- {
-  "name": "WebQuizWaves",
-  "title": "Web · Learn mode · idea: faint gradient waves",
   "w": 1440,
   "h": 900
  },

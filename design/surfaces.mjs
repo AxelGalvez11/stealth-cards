@@ -110,6 +110,15 @@ export const SITE_PALETTES = {
     streaks: [['#5A64E6', 1, 40, 3.2, 70, 12], ['#3A47C0', 44, 50, 2.6, 80, 12]],
     blur: 6, sblur: 2.2, disp: 10,
     ink: '#FFFFFF'
+  },
+  // White with faint color: Iris washed almost to white, so periwinkle, sky, lilac, and pink only show faintly through
+  // the grain (the owner's idea for Learn mode's background, canvas V83); navy text.
+  Mist: {
+    base: 'linear-gradient(102deg, #F3F4FF 0%, #ECEEFF 17%, #F0F3FF 32%, #F8F9FF 52%, #F4F7FF 70%, #EAF5FD 86%, #DFF1FB 100%)',
+    blobs: [['#DDE1FF', 14, 70, 10, 70, 12], ['#F7F8FF', 55, 40, 12, 80, 12], ['#CFEAF8', 102, 102, 20, 42, 18], ['#EDE3FD', 88, 0, 22, 26, 0], ['#FADFEC', 6, 100, 16, 22, 12], ['#E8EEFF', 72, 60, 10, 70, 12]],
+    streaks: [['#FFFFFF', 1, 40, 3.2, 70, 12], ['#FFFFFF', 44, 50, 2.6, 80, 12]],
+    blur: 6, sblur: 2.2, disp: 10,
+    ink: '#0D1542'
   }
 };
 

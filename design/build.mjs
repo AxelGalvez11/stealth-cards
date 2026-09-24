@@ -3451,33 +3451,20 @@ const LIVE_FINAL_LOGIC = LIVE_LOGIC.replace('    r: wrongPick ? {', `    rest: $
     r: wrongPick ? {`);
 
 // ---------- Learn mode: an idea (canvas only) ----------
-// The owner picked the sky style for Learn mode and asked to "also try a faint gradient waves" (V82). The same question,
-// with three soft waves of faint color drifting slowly behind the top, instead of the plain fade. Each wave is a
-// sideways gradient (periwinkle, sky, lilac, pink) that melts into the page at the bottom; at night they glow faintly.
-// Reduced motion holds them still.
-// A ribbon: a band that swells and thins as it rolls across (1440 x 600 box).
-const ribbon = (base, amp, period, phase, thick) => {
-  const top = [], bottom = [];
-  for (let x = -48; x <= 1488; x += 24) {
-    const a = 2 * Math.PI * x / period + phase, y = base + amp * Math.sin(a), h = thick * (.72 + .28 * Math.sin(a * .6 + 1));
-    top.push(x + ' ' + (y - h / 2).toFixed(1)); bottom.unshift(x + ' ' + (y + h / 2).toFixed(1));
-  }
-  return 'M' + top.join('L') + 'L' + bottom.join('L') + 'Z';
-};
-const WAVES = [
-  { d: ribbon(110, 56, 1180, .4, 170), stops: ['#8C9AFC', '#7ACFEA', '#C4A7FF'], op: .30, secs: 26 },
-  { d: ribbon(250, 66, 1380, 2.2, 130), stops: ['#7ACFEA', '#C4A7FF', '#F9A8D4'], op: .24, secs: 34 },
-  { d: ribbon(370, 50, 960, 4.1, 104), stops: ['#F9A8D4', '#8C9AFC', '#7ACFEA'], op: .20, secs: 42 }
-];
-const wavesLayer = phone => `<div aria-hidden="true" style="position: absolute; left: 0; right: 0; top: 0; height: ${phone ? 520 : 640}px; z-index: -1; overflow: hidden; pointer-events: none; -webkit-mask-image: linear-gradient(180deg, #000 60%, transparent); mask-image: linear-gradient(180deg, #000 60%, transparent);">${WAVES.map((w, i) => `<svg class="sc-wave" viewBox="0 0 1440 600" preserveAspectRatio="none" style="position: absolute; left: -10%; top: 0; width: 120%; height: 100%; opacity: {{waveOp}}; animation: scWave${i} ${w.secs}s ease-in-out -${i * 7}s infinite alternate;"><defs><linearGradient id="lcw${phone ? 'p' : 'w'}${i}" x1="0" x2="1" y1="0" y2="0">${w.stops.map((c, j) => `<stop offset="${j / (w.stops.length - 1)}" stop-color="${c}" stop-opacity="${w.op}"/>`).join('')}</linearGradient></defs><path d="${w.d}" fill="url(#lcw${phone ? 'p' : 'w'}${i})"/></svg>`).join('')}</div>`;
-const WAVES_CSS = WAVES.map((w, i) => `@keyframes scWave${i}{from{transform:translateX(${i % 2 ? '' : '-'}3%)}to{transform:translateX(${i % 2 ? '-' : ''}3%)}}`).join('') + '@media (prefers-reduced-motion:reduce){.sc-wave{animation:none!important}}';
-const webQuizWaves = webQuizOf(wavesLayer(false));
-const phoneQuizWaves = phoneQuizOf(wavesLayer(true));
-// Its logic: the question's, plus how strongly the waves show (softer at night).
-const WAVES_LOGIC = phone => QUIZ_LOGIC(phone).replace('renderVals() {', 'baseVals() {') + `
+// The owner picked the sky style for Learn mode and asked to try another background (V82: "faint gradient waves"). They
+// meant the cards' noisy gradient, "white with faint color" (V83), so this is the same question over Mist: the cards'
+// soft color field (blobs warped by noise and blurred into each other) washed almost to white, with film grain on top,
+// drifting slowly like the Today card. The grain only shows where there's color, so the white stays clean. At night the
+// page keeps the night sky.
+const MIST = JSON.stringify(paletteData('Mist'));
+const mistLayer = `<div aria-hidden="true" class="sc-alive" style="position: absolute; inset: 0; z-index: -1; overflow: hidden; pointer-events: none; background: {{mist.base}};">${flowLayer('mist')}${grainSvg('{{mistGrain}}', { blend: 'overlay', freq: 0.85, slope: 3.4, id: 'sc-mist-grain' })}</div>`;
+const mistBg = phone => `<sc-if value="{{light}}" hint-placeholder-val="{{ true }}">${mistLayer}</sc-if><sc-if value="{{dark}}" hint-placeholder-val="{{ false }}">${skyFade(phone)}</sc-if>`;
+const webQuizMist = webQuizOf(mistBg(false));
+const phoneQuizMist = phoneQuizOf(mistBg(true));
+// Its logic: the question's, plus Mist's colors. On the pale page the top's track needs a touch of navy to show.
+const MIST_LOGIC = phone => QUIZ_LOGIC(phone).replace('renderVals() {', 'baseVals() {') + `
 renderVals() { const v = this.baseVals(), dark = !!this.props.dark;
-  // On a white page the top's chips and track need a touch of gray to show.
-  return { ...v, waveOp: dark ? '.55' : '1', k: dark ? v.k : { ...v.k, chip: 'rgba(13,21,66,.06)', track: 'rgba(13,21,66,.08)' } }; }`;
+  return { ...v, mist: ${MIST}, mistGrain: '.9', light: !dark, dark, k: dark ? v.k : { ...v.k, chip: 'rgba(255,255,255,.75)', track: 'rgba(13,21,66,.08)' } }; }`;
 
 // ---------- Pricing (lucida.cards/pricing) ----------
 // Free keeps every card. Pro ($5.99 a month or $39 a year) is for making Lucida yours: AI quizzes, photo covers and
@@ -3648,8 +3635,8 @@ const files = {
   'WebQuizMatch': ['Web · Learn mode · matching', webQuizMatch, { props: DARK, logic: MATCH_LOGIC(false), css: LEARN_CSS, w: W, h: H }],
   'WebQuizType': ['Web · Learn mode · type the answer', webQuizType, { props: DARK, logic: TYPE_LOGIC(false), css: LEARN_CSS, w: W, h: H }],
   'WebQuizDone': ['Web · Learn mode · all learned', webQuizDone, { props: DARK, logic: QUIZ_DONE_LOGIC, css: LEARN_CSS, w: W, h: H }],
-  'WebQuizWaves': ['Web · Learn mode · idea: faint gradient waves', webQuizWaves, { props: { ...DARK, answered: { editor: 'boolean', default: false } }, logic: WAVES_LOGIC(false), css: LEARN_CSS + WAVES_CSS, w: W, h: H }],
-  'PhoneQuizWaves': ['iPhone · Learn mode · idea: faint gradient waves', phoneQuizWaves, { props: { ...DARK, answered: { editor: 'boolean', default: false } }, logic: WAVES_LOGIC(true), css: LEARN_CSS + WAVES_CSS, w: PW, h: PH }],
+  'WebQuizMist': ['Web · Learn mode · idea: noisy gradient, white with faint color', webQuizMist, { props: { ...DARK, answered: { editor: 'boolean', default: false } }, logic: MIST_LOGIC(false), css: LEARN_CSS, w: W, h: H }],
+  'PhoneQuizMist': ['iPhone · Learn mode · idea: noisy gradient, white with faint color', phoneQuizMist, { props: { ...DARK, answered: { editor: 'boolean', default: false } }, logic: MIST_LOGIC(true), css: LEARN_CSS, w: PW, h: PH }],
   'PhoneQuizStart': ['iPhone · Learn mode · start (Pro)', phoneQuizStart(true), { props: DARK, logic: QUIZ_START_LOGIC(true, true), w: PW, h: PH }],
   'PhoneQuizUpgrade': ['iPhone · Learn mode · on Free: go Pro', phoneQuizStart(false), { props: { ...DARK, grain: MESH('Iris').grain }, logic: QUIZ_START_LOGIC(true), w: PW, h: PH }],
   'PhoneQuiz': ['iPhone · Learn mode · choice question', phoneQuiz, { props: { ...DARK, answered: { editor: 'boolean', default: false } }, logic: QUIZ_LOGIC(true), css: LEARN_CSS, w: PW, h: PH }],
