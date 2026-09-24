@@ -2544,15 +2544,15 @@ const LEARN_QS = [
 const LEARN_PAIRS = [['Mitochondrion', 'Makes most of the cell’s ATP'], ['Ribosome', 'Builds proteins from mRNA'], ['Golgi apparatus', 'Packages proteins for export'], ['Nucleus', 'Holds the cell’s DNA'], ['Lysosome', 'Breaks down waste']];
 const LEARN_RIGHT = [3, 0, 4, 2, 1];
 const LEARN_KINDS = [['mc', 'Multiple choice'], ['match', 'Matching'], ['tf', 'True or false'], ['blank', 'Fill in the blank'], ['type', 'Type the answer']];
-// Motion: each question rises in, a right answer pops as its check draws, a wrong one shakes, a streak dot pops, "+1"
+// Motion: each question rises in, a right answer pops as its check draws, a wrong one shakes, "+1"
 // floats up by the count when a card is learned, and the end counts up while its ring draws. Reduced motion: none.
 const LEARN_CSS = '@keyframes scQuizIn{from{opacity:0;transform:translateY(6px)}}@keyframes scQA{from{opacity:0;transform:translateY(12px)}}@keyframes scQB{from{opacity:0;transform:translateY(12px)}}'
-  + '@keyframes scShake{0%,100%{transform:none}25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}@keyframes scPop{40%{transform:scale(1.025)}}@keyframes scDot{50%{transform:scale(1.9)}}'
+  + '@keyframes scShake{0%,100%{transform:none}25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}@keyframes scPop{40%{transform:scale(1.025)}}'
   + '@keyframes scPlusA{0%{opacity:0;transform:translateY(6px)}25%{opacity:1}100%{opacity:0;transform:translateY(-16px)}}@keyframes scPlusB{0%{opacity:0;transform:translateY(6px)}25%{opacity:1}100%{opacity:0;transform:translateY(-16px)}}'
   + '.sc-tick path{stroke-dasharray:24;stroke-dashoffset:24;animation:scTick .32s .06s ease forwards}@keyframes scTick{to{stroke-dashoffset:0}}'
   + "@property --sc-n{syntax:'<integer>';initial-value:0;inherits:false}.sc-count{--sc-n:var(--to);counter-reset:n var(--sc-n);animation:scCount 1.1s .25s cubic-bezier(.2,.8,.2,1) backwards}.sc-count::after{content:counter(n)}@keyframes scCount{from{--sc-n:0}}"
   + '@keyframes scLearnIn{from{transform:none}to{transform:translateY(-5px)}}@keyframes scLearnHover{from{transform:translateY(-5px)}to{transform:translateY(-9px)}}'
-  + '@media (prefers-reduced-motion:reduce){.sc-quiz-in,.sc-shake,.sc-q,.sc-count,.sc-plus,.sc-dot,.sc-opt{animation:none!important}.sc-tick path{animation:none;stroke-dashoffset:0}}';
+  + '@media (prefers-reduced-motion:reduce){.sc-quiz-in,.sc-shake,.sc-q,.sc-count,.sc-plus,.sc-opt{animation:none!important}.sc-tick path{animation:none;stroke-dashoffset:0}}';
 const LEARN_HOVER = 'scLearnIn .45s cubic-bezier(.2,.8,.2,1) both, scLearnHover 2.4s ease-in-out .45s infinite alternate';
 // Learn mode's look, picked by the owner from the style ideas (V82: "lets go with this style"): the sky. The sky's faint
 // blue fade behind the top (a night sky in dark mode), big navy words, and white answer cards with colored numbers; the
@@ -2572,9 +2572,6 @@ const learnTop = back => `<header style="height: 76px; flex-shrink: 0; box-sizin
     <div style="display: flex; justify-content: flex-end; min-width: 0;"><span style="height: 34px; padding: 0 14px; display: inline-flex; align-items: center; gap: 6px; border-radius: 999px; background: {{k.chip}}; font-size: 13px; font-weight: 600; white-space: nowrap;">${svg(I.sparkle, 14, 1.8)}<span>Learn · {{setName}}</span></span></div>
   </header>`;
 const learnTopPhone = back => `<div style="display: flex; align-items: center; gap: 12px;"><a href="${back}" aria-label="Stop for now" style="width: 44px; height: 44px; flex-shrink: 0; border-radius: 22px; background: {{k.chip}}; display: flex; align-items: center; justify-content: center;">${svg(I.close, 18, 2)}</a>${learnBar(0)}<span role="status" style="position: relative; font-size: 13px; white-space: nowrap;"><span style="font-weight: 700;">{{learned}}</span>/{{total}}${learnPlus}</span></div>`;
-// Two dots for the card: one fills for each right answer in a row (two and it's learned). The kind of question
-// ("Multiple choice") isn't named: the owner asked to drop it (V73).
-const learnDots = `<span title="Right twice in a row and it’s learned" style="align-self: flex-start; height: 17px; display: inline-flex; align-items: center; gap: 4px;"><sc-for list="{{dots}}" as="d" hint-placeholder-count="2"><span class="sc-dot" style="width: 7px; height: 7px; border-radius: 4px; background: {{d.bg}}; animation: {{d.anim}};"></span></sc-for></span>`;
 const quizSeg = list => `<div role="group" style="display: flex; padding: 4px; border-radius: 999px; background: {{t.surf}};"><sc-for list="{{${list}}}" as="o" hint-placeholder-count="4"><button type="button" onClick="{{o.pick}}" aria-pressed="{{o.pressed}}" style="flex: 1 1 0; min-width: 0; height: 38px; padding: 0 6px; border: 0; border-radius: 999px; background: {{o.bg}}; color: {{o.fg}}; box-shadow: {{o.sh}}; font: inherit; font-size: 13px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: pointer;">{{o.label}}</button></sc-for></div>`;
 const quizField = (label, body) => `<div style="display: flex; flex-direction: column; gap: 8px;"><span style="font-size: 13px; font-weight: 600;">${label}</span>${body}</div>`;
 const quizBtn = (label, href, inv, grow, icon = '', click = '') => `<a href="${href}"${click ? ` onClick="{{${click}}}"` : ''} style="flex-grow: ${grow}; height: 52px; border-radius: 999px; background: ${inv ? '{{t.inv}}' : '{{t.surf}}'}; color: ${inv ? '{{t.invText}}' : '{{t.text}}'}; display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 15px; font-weight: 600;">${icon ? svg(I[icon], 16, 2) : ''}${label}</a>`;
@@ -2661,13 +2658,12 @@ renderVals() { ${T}${DB_JS}
     goalLine: n ? 'Learn all ' + n + ' card' + (n === 1 ? '' : 's') + ', about ' + (mins >= 90 ? Math.round(mins / 60) + ' hours over a few sessions' : mins + ' minute' + (mins === 1 ? '' : 's')) + '. You can stop anytime and pick up where you left off.' : 'This deck has no cards to learn yet. Picture and text cards work; sound cards come later.',
     startHref: '${phone ? 'PhoneQuiz' : 'WebQuiz'}.dc.html',
     start: e => { if (db.mock) return; if (e && e.preventDefault) e.preventDefault(); if (n) db.act.startLearn(id, set.id, s.kinds); } }; }`;
-// What every question shows: progress, the card's dots, and the motion keys.
+// What every question shows: progress and the motion keys.
 const LEARN_VIEW_JS = `${LEARN_K}
   const L = db.mock ? null : db.learn() || { learned: 0, total: 1, learning: 0, justLearned: 0, n: 0, setName: '' };
   const view = (learned, total, part, n, just) => ({ k: K, sky: ${SKY}, learned: String(learned), total: String(total), setName: L ? L.setName : 'Exam 1',
     doneW: learned / total * 100 + '%', partW: part / total * 100 + '%', qAnim: (n % 2 ? 'scQA' : 'scQB') + ' .36s cubic-bezier(.2,.8,.2,1) both',
-    plusOne: just > 0, plusAnim: (learned % 2 ? 'scPlusA' : 'scPlusB') + ' 1.1s ease both' });
-  const dots = (streak, popped) => [0, 1].map(i => ({ bg: i < streak ? K.bar : K.other, anim: popped && i === streak - 1 ? 'scDot .45s ease' : 'none' }));`;
+    plusOne: just > 0, plusAnim: (learned % 2 ? 'scPlusA' : 'scPlusB') + ' 1.1s ease both' });`;
 // A choice question (multiple choice, true or false, fill in the blank): pick, then see why and the card it came from.
 // The answers are white cards with a colored number; the right one rises and hovers with a green check, a wrong pick
 // gets an ×, and after an answer the others go gray.
@@ -2683,8 +2679,7 @@ const webQuizOf = bg => `<div style="position: relative; isolation: isolate; wid
   ${learnTop('WebDeck.dc.html')}
   <main style="flex-grow: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;">
     <div class="sc-q" style="width: 720px; display: flex; flex-direction: column; gap: 22px; animation: {{qAnim}};">
-      ${learnDots}
-      <h1 style="margin: -10px 0 0; font-size: 36px; font-weight: 700; line-height: 1.15; letter-spacing: -.03em; text-wrap: pretty;">{{question}}</h1>
+      <h1 style="margin: 0; font-size: 36px; font-weight: 700; line-height: 1.15; letter-spacing: -.03em; text-wrap: pretty;">{{question}}</h1>
       ${learnImage(240)}${learnClaim(20)}
       <div style="display: flex; flex-direction: column; gap: 12px;"><sc-for list="{{options}}" as="o" hint-placeholder-count="4">${learnOption(64, 22, 18)}</sc-for></div>
       <div style="min-height: 150px;"><sc-if value="{{answered}}" hint-placeholder-val="{{ false }}"><div class="sc-quiz-in" style="display: flex; flex-direction: column; gap: 14px; animation: scQuizIn .3s cubic-bezier(.2,.8,.2,1) both;">
@@ -2699,7 +2694,7 @@ const phoneQuizOf = bg => `<div style="position: relative; isolation: isolate; w
   ${bg}
   ${learnTopPhone('PhoneDeck.dc.html')}
   <div class="sc-q" style="display: flex; flex-direction: column; gap: 16px; animation: {{qAnim}};">
-    <div style="display: flex; flex-direction: column; gap: 10px; padding: 8px 4px 0;">${learnDots}<div style="font-size: 24px; font-weight: 700; line-height: 1.2; letter-spacing: -.025em; text-wrap: pretty;">{{question}}</div>${learnImage(180)}${learnClaim(18)}</div>
+    <div style="display: flex; flex-direction: column; gap: 10px; padding: 8px 4px 0;"><div style="font-size: 24px; font-weight: 700; line-height: 1.2; letter-spacing: -.025em; text-wrap: pretty;">{{question}}</div>${learnImage(180)}${learnClaim(18)}</div>
     <div style="display: flex; flex-direction: column; gap: 8px;"><sc-for list="{{options}}" as="o" hint-placeholder-count="4">${learnOption(54, 20, 16, 34)}</sc-for></div>
     <sc-if value="{{answered}}" hint-placeholder-val="{{ false }}"><div class="sc-quiz-in" style="display: flex; flex-direction: column; gap: 12px; padding: 0 4px; animation: scQuizIn .3s cubic-bezier(.2,.8,.2,1) both;">${learnWhy(16)}${quizFrom}</div></sc-if>
   </div>
@@ -2733,7 +2728,6 @@ renderVals() { ${T}${DB_JS}
   }
   const done = pick != null, ok = pick === q.right;
   return { t, dark: !!this.props.dark, ...v, kind: q.kind, question: q.q, hasClaim: !!q.claim, claim: q.claim || '', hasImage: !!(L && L.image), image: L ? L.image : '',
-    dots: dots(streak, done && ok),
     options: q.options.map((label, j) => {
       const right = done && j === q.right, wrong = done && j === pick && j !== q.right, other = done && !right && !wrong;
       return { label, key: String(j + 1), pressed: j === pick ? 'true' : 'false', plain: !right && !wrong, isRight: right, isWrong: wrong,
@@ -2751,8 +2745,7 @@ const webQuizMatch = `<div style="position: relative; isolation: isolate; width:
   ${learnTop('WebDeck.dc.html')}
   <main style="flex-grow: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;">
     <div class="sc-q" style="width: 760px; display: flex; flex-direction: column; gap: 20px; animation: {{qAnim}};">
-      ${learnDots}
-      <h1 style="margin: -10px 0 0; font-size: 36px; font-weight: 700; line-height: 1.15; letter-spacing: -.03em;">{{question}}</h1>
+      <h1 style="margin: 0; font-size: 36px; font-weight: 700; line-height: 1.15; letter-spacing: -.03em;">{{question}}</h1>
       ${matchCols(60, 16, 12)}
       <div style="min-height: 56px; display: flex; align-items: center; justify-content: space-between; gap: 20px;"><span style="font-size: 14px; color: {{k.ink2}};">{{matchLine}}</span><sc-if value="{{allMatched}}" hint-placeholder-val="{{ false }}"><div class="sc-quiz-in" style="width: 180px; animation: scQuizIn .3s cubic-bezier(.2,.8,.2,1) both;">${learnNext(52, 15)}</div></sc-if></div>
     </div>
@@ -2762,7 +2755,7 @@ const phoneQuizMatch = `<div style="position: relative; isolation: isolate; widt
   ${skyFade(true)}
   ${learnTopPhone('PhoneDeck.dc.html')}
   <div class="sc-q" style="display: flex; flex-direction: column; gap: 18px; animation: {{qAnim}};">
-    <div style="display: flex; flex-direction: column; gap: 10px; padding: 8px 4px 0;">${learnDots}<div style="font-size: 24px; font-weight: 700; line-height: 1.2; letter-spacing: -.025em;">{{question}}</div></div>
+    <div style="display: flex; flex-direction: column; gap: 10px; padding: 8px 4px 0;"><div style="font-size: 24px; font-weight: 700; line-height: 1.2; letter-spacing: -.025em;">{{question}}</div></div>
     ${matchCols(64, 14, 10)}
     <div style="padding: 0 4px; font-size: 14px; color: {{k.ink2}};">{{matchLine}}</div>
   </div>
@@ -2792,7 +2785,7 @@ renderVals() { ${T}${DB_JS}
     ring: st === 'sel' ? 'inset 0 0 0 2.5px ' + K.bar + ', ' + K.lift : st === 'idle' ? K.shadow : 'none', tf: st === 'sel' ? 'translateY(-3px)' : 'none',
     op: st === 'done' ? '.55' : '1', anim: st === 'wrong' ? 'scShake .35s ease' : st === 'done' ? 'scPop .32s ease' : 'none',
     check: st === 'done', cursor: st === 'done' ? 'default' : 'pointer', pressed: st === 'sel' ? 'true' : 'false' });
-  return { t, dark: !!this.props.dark, ...v, kind: 'Matching', dots: [{ bg: K.other, anim: 'none' }, { bg: K.other, anim: 'none' }], question: L ? 'Match each one to its answer.' : 'Match each organelle to what it does.', allMatched: all,
+  return { t, dark: !!this.props.dark, ...v, kind: 'Matching', question: L ? 'Match each one to its answer.' : 'Match each organelle to what it does.', allMatched: all,
     matchLine: all ? 'All ' + left.length + ' matched.' : (left.length - doneIds.length) + ' pair' + (left.length - doneIds.length === 1 ? '' : 's') + ' to go',
     left: left.map(x => ({ label: x.label, ...look(doneIds.includes(x.id) ? 'done' : wrong && wrong[0] === x.id ? 'wrong' : sel === x.id ? 'sel' : 'idle'), pick: () => { if (!doneIds.includes(x.id)) pickL(x.id); } })),
     right: right.map(x => ({ label: x.label, ...look(doneIds.includes(x.id) ? 'done' : wrong && wrong[1] === x.id ? 'wrong' : 'idle'), pick: () => { if (!doneIds.includes(x.id)) pickR(x.id); } })),
@@ -2805,8 +2798,7 @@ const webQuizType = `<div style="position: relative; isolation: isolate; width: 
   ${learnTop('WebDeck.dc.html')}
   <main style="flex-grow: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;">
     <div class="sc-q" style="width: 720px; display: flex; flex-direction: column; gap: 20px; animation: {{qAnim}};">
-      ${learnDots}
-      <h1 style="margin: -10px 0 0; font-size: 36px; font-weight: 700; line-height: 1.15; letter-spacing: -.03em; text-wrap: pretty;">{{question}}</h1>
+      <h1 style="margin: 0; font-size: 36px; font-weight: 700; line-height: 1.15; letter-spacing: -.03em; text-wrap: pretty;">{{question}}</h1>
       ${learnImage(240)}
       ${typeRow(64, 18)}
       <span style="font-size: 13px; color: {{k.ink2}};">Close spelling counts.</span>
@@ -2821,7 +2813,7 @@ const phoneQuizType = `<div style="position: relative; isolation: isolate; width
   ${skyFade(true)}
   ${learnTopPhone('PhoneDeck.dc.html')}
   <div class="sc-q" style="display: flex; flex-direction: column; gap: 16px; animation: {{qAnim}};">
-    <div style="display: flex; flex-direction: column; gap: 10px; padding: 8px 4px 0;">${learnDots}<div style="font-size: 24px; font-weight: 700; line-height: 1.2; letter-spacing: -.025em;">{{question}}</div>${learnImage(180)}</div>
+    <div style="display: flex; flex-direction: column; gap: 10px; padding: 8px 4px 0;"><div style="font-size: 24px; font-weight: 700; line-height: 1.2; letter-spacing: -.025em;">{{question}}</div>${learnImage(180)}</div>
     ${typeRow(56, 16)}
     <span style="padding: 0 4px; font-size: 13px; color: {{k.ink2}};">Close spelling counts.</span>
     <sc-if value="{{checked}}" hint-placeholder-val="{{ true }}"><div class="sc-quiz-in" style="display: flex; flex-direction: column; gap: 12px; padding: 0 4px; animation: scQuizIn .3s cubic-bezier(.2,.8,.2,1) both;">${learnWhy(16)}${typeOverride}${quizFrom}</div></sc-if>
@@ -2833,11 +2825,11 @@ const TYPE_LOGIC = phone => `
 constructor(props) { super(props); this.state = { typed: 'golgi body', checked: true, qid: null }; }
 renderVals() { ${T}${DB_JS}
   ${LEARN_VIEW_JS}
-  let typed, checked, ok, question, answer, why, v, check, override, next, last, streak, learnedNow;
+  let typed, checked, ok, question, answer, why, v, check, override, next, last, learnedNow;
   if (L) {
     // A new question clears what you typed for the last one.
     if (this.state.qid !== L.id) { this.state.qid = L.id; this.state.typed = ''; }
-    typed = L.checked ? L.typed : this.state.typed; checked = !!L.checked; ok = !!L.ok; question = L.text; answer = L.answer; streak = L.streak; learnedNow = L.learnedNow; last = false;
+    typed = L.checked ? L.typed : this.state.typed; checked = !!L.checked; ok = !!L.ok; question = L.text; answer = L.answer; learnedNow = L.learnedNow; last = false;
     const note = L.note ? ' ' + L.note : '';
     why = !checked ? '' : ok ? (learnedNow ? 'Two right in a row.' + note : 'Get it right once more, asked another way, and it’s learned.' + note) : 'The answer is “' + answer + '”.' + note + ' This card comes back in a few questions.';
     check = () => db.act.learnType(this.state.typed); override = () => db.act.learnOverride(); next = () => db.act.learnNext();
@@ -2845,12 +2837,12 @@ renderVals() { ${T}${DB_JS}
   } else {
     const s = this.state;
     typed = s.typed; checked = s.checked; ok = /golg/i.test(s.typed || ''); question = 'Which organelle packages proteins for secretion?'; answer = 'Golgi apparatus'; last = true;
-    streak = checked && ok ? 2 : 1; learnedNow = checked && ok;
+    learnedNow = checked && ok;
     why = ok ? '“' + String(s.typed).trim() + '” is close to the Golgi apparatus, so it counts. That was the second time in a row.' : 'The answer is “Golgi apparatus”. This card comes back in a few questions.';
     check = () => { if ((this.state.typed || '').trim()) this.setState({ checked: true }); }; override = () => this.setState({ typed: 'Golgi apparatus' }); next = () => {};
     v = view(learnedNow ? 19 : 18, 40, 9, 2, learnedNow ? 1 : 0);
   }
-  return { t, dark: !!this.props.dark, ...v, kind: 'Type the answer', question, hasImage: !!(L && L.image), image: L ? L.image : '', dots: dots(streak, checked && ok),
+  return { t, dark: !!this.props.dark, ...v, kind: 'Type the answer', question, hasImage: !!(L && L.image), image: L ? L.image : '', 
     typed, checked, notChecked: !checked, canOverride: checked && !ok, check, override, next,
     setTyped: e => { const x = e && e.target ? e.target.value : ''; if (L) this.state.typed = x; else this.setState({ typed: x, checked: false }); },
     typedKey: e => { if (e && e.key === 'Enter' && !checked) { if (e.preventDefault) e.preventDefault(); check(); } },

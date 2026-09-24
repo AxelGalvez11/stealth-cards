@@ -248,7 +248,7 @@ export default [
  },
  {
   "name": "PhoneQuizMist",
-  "title": "iPhone · Learn mode · idea: noisy gradient, white with faint color",
+  "title": "iPhone · Learn mode · idea: white silk with grain",
   "w": 390,
   "h": 844
  },
@@ -578,7 +578,7 @@ export default [
  },
  {
   "name": "WebQuizMist",
-  "title": "Web · Learn mode · idea: noisy gradient, white with faint color",
+  "title": "Web · Learn mode · idea: white silk with grain",
   "w": 1440,
   "h": 900
  },
