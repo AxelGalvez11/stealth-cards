@@ -2651,7 +2651,7 @@ const DEMO_CSS = [
   showAt('scChatYou', 2), showBetween('scChatDots', 9, 17, 'transform:none'), showBetween('scChatWork', 18, 30), showAt('scChatDone', 30, 'transform:none'),
   showAt('scChatCard1', 33, 'transform:translateY(10px) scale(.92)'), showAt('scChatCard2', 36, 'transform:translateY(10px) scale(.92)'), showAt('scChatCard3', 39, 'transform:translateY(10px) scale(.92)'),
   showAt('scChatText', 45),
-  '@keyframes scSpin{to{transform:rotate(360deg)}}@keyframes scDot{0%,60%,100%{transform:none;opacity:.45}30%{transform:translateY(-3px);opacity:1}}',
+  '@keyframes scSpin{to{transform:rotate(360deg)}}@keyframes scDot{0%,60%,100%{transform:none;opacity:.45}30%{transform:translateY(-3px);opacity:1}}@keyframes scWaveSoft{from{transform:scaleY(.5)}to{transform:none}}',
   studyKeys('A', 0), studyKeys('B', 50),
   '@media (prefers-reduced-motion:reduce){.sc-anim,.sc-anim *{animation:none!important}.sc-transient{display:none!important}}'
 ].join('');
@@ -2711,7 +2711,9 @@ const typeCard = (L, key, label, sub, face) => `<div style="display: flex; flex-
 const typeText = (L, text) => `<span style="font-size: ${L === LAND.phone ? 15 : 21}px; font-weight: 500; line-height: 1.22; letter-spacing: -.02em;">${text}</span>`;
 const typeBlank = (L, key) => typeText(L, `The <span style="display: inline-block; width: 2.4em; height: .9em; margin: 0 .1em; border-radius: 999px; vertical-align: -.1em; background: {{${key}.glass}};"></span> is the powerhouse of the cell.`);
 const typePicture = L => { const w = L === LAND.phone ? 90 : 130; return `<svg width="${w}" height="${Math.round(w * .62)}" viewBox="0 0 130 80" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" aria-hidden="true">${PICTURE_ICON}</svg>${typeText(L, 'Name part 1.')}`; };
-const typeSound = L => { const k = L === LAND.phone ? .7 : 1, px = n => Math.max(2, Math.round(n * k)); return `<span style="display: flex; align-items: center; gap: ${px(14)}px;"><span style="width: ${px(50)}px; height: ${px(50)}px; flex-shrink: 0; border-radius: 50%; background: {{q4.glass}}; box-shadow: inset 0 0 0 1.5px {{q4.glassLine}}; display: flex; align-items: center; justify-content: center;"><span style="display: flex; margin-left: ${px(3)}px;">${svg(I.play, px(22), 0)}</span></span><span style="display: flex; align-items: center; gap: ${px(4)}px;">${[12, 22, 34, 18, 28, 14, 24, 16, 9].map(b => `<span style="width: ${px(3)}px; height: ${px(b)}px; border-radius: 2px; background: currentColor; opacity: .85;"></span>`).join('')}</span></span>`; };
+// Sound: just a waveform whose bars rise and fall a little, like a clip playing (still with reduced motion; on the
+// site it stops while it's off screen).
+const typeSound = L => { const k = L === LAND.phone ? .7 : 1, px = n => Math.max(2, Math.round(n * k)); return `<span class="sc-demo sc-anim" style="display: flex; align-items: center; gap: ${px(5)}px; height: ${px(44)}px;">${[14, 26, 40, 22, 34, 16, 30, 20, 12, 24, 36, 18].map((b, i) => `<span style="width: ${px(4)}px; height: ${px(b)}px; border-radius: 3px; background: currentColor; opacity: .9; animation: scWaveSoft ${(0.8 + (i * 3 % 7) / 10).toFixed(1)}s ease-in-out -${(i * 0.37 % 1.4).toFixed(2)}s infinite alternate;"></span>`).join('')}</span>`; };
 // More reasons: small tiles with an icon each.
 const reason = (ic, title, text) => `<div style="border-radius: 24px; background: {{t.surf}}; padding: 24px; display: flex; flex-direction: column; gap: 10px; min-width: 0;"><span style="width: 40px; height: 40px; border-radius: 20px; background: {{t.bg}}; display: flex; align-items: center; justify-content: center;">${svg(I[ic], 19, 1.8)}</span><span style="margin-top: 6px; font-size: 17px; font-weight: 600; letter-spacing: -.01em;">${title}</span><span style="font-size: 15px; line-height: 1.5; color: {{t.muted}};">${text}</span></div>`;
 const REASONS = [
