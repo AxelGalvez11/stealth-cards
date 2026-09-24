@@ -2461,11 +2461,11 @@ const APPLE_LOGO = `<svg width="17" height="17" viewBox="0 0 24 24" aria-hidden=
 const authBtn = (label, glyph, href, h, handler) => `<a href="${href}" onClick="{{${handler}}}" style="height: ${h}px; display: flex; align-items: center; justify-content: center; gap: 10px; border-radius: 999px; background: {{t.bg}}; box-shadow: inset 0 0 0 1px {{t.surf2}}; font-size: 15px; font-weight: 600;">${glyph}${label}</a>`;
 const orLine = `<div style="display: flex; align-items: center; gap: 12px; font-size: 13px; color: {{t.muted}};"><span style="flex-grow: 1; height: 1px; background: {{t.line}};"></span>or<span style="flex-grow: 1; height: 1px; background: {{t.line}};"></span></div>`;
 // What signing in means, with the Terms and Privacy pages a tap away.
-const AGREE = `<p style="margin: 0; font-size: 12px; line-height: 1.5; color: {{t.muted}};">By continuing, you agree to the <a href="{{termsHref}}" style="text-decoration: underline;">Terms</a> and <a href="{{privacyHref}}" style="text-decoration: underline;">Privacy Policy</a>.</p>`;
+const AGREE = `<p style="margin: 0; font-size: 12px; line-height: 1.5; color: {{t.muted}}; text-align: center;">By continuing, you agree to the <a href="{{termsHref}}" style="text-decoration: underline;">Terms</a> and <a href="{{privacyHref}}" style="text-decoration: underline;">Privacy Policy</a>.</p>`;
 // Phones get 16px text in the field, or they zoom in when it's tapped.
 const emailForm = (h, next, fs = 15) => `<div style="display: flex; flex-direction: column; gap: 10px;"><input type="email" value="{{email}}" onChange="{{setEmail}}" onKeyDown="{{emailKey}}" placeholder="Email" aria-label="Email" autocomplete="email" style="height: ${h}px; box-sizing: border-box; padding: 0 20px; border: 0; outline: 0; border-radius: 999px; background: {{t.surf}}; color: {{t.text}}; font: inherit; font-size: ${fs}px;"><a href="${next}" onClick="{{sendCode}}" style="height: ${h}px; display: flex; align-items: center; justify-content: center; border-radius: 999px; background: {{t.inv}}; color: {{t.invText}}; font-size: 15px; font-weight: 600;">{{sendLabel}}</a>${SIGN_ERROR}</div>`;
 // Why signing in didn't work (a wrong code, Google not set up yet), under the field it's about.
-const SIGN_ERROR = `<sc-if value="{{hasError}}" hint-placeholder-val="{{ false }}"><div role="alert" style="padding: 2px 4px 0; font-size: 14px; line-height: 1.4; color: {{t.again}};">{{error}}</div></sc-if>`;
+const SIGN_ERROR = `<sc-if value="{{hasError}}" hint-placeholder-val="{{ false }}"><div role="alert" style="padding: 2px 4px 0; font-size: 14px; line-height: 1.4; color: {{t.again}}; text-align: center;">{{error}}</div></sc-if>`;
 // Six boxes over one real field, so typing, pasting, and the phone's "code from Mail" all work.
 const codeBoxes = (w, h) => `<label style="position: relative; display: flex; justify-content: space-between; gap: 6px; cursor: text;"><sc-for list="{{boxes}}" as="b" hint-placeholder-count="6"><span style="flex: 0 1 ${w}px; min-width: 0; height: ${h}px; border-radius: 14px; background: {{t.surf}}; box-shadow: {{b.ring}}; display: flex; align-items: center; justify-content: center; font-size: 22px; font-weight: 600;">{{b.digit}}</span></sc-for><input type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6" value="{{code}}" onChange="{{setCode}}" aria-label="6-digit code" style="position: absolute; inset: 0; width: 100%; opacity: 0; border: 0; padding: 0; font-size: 16px;"></label>`;
 // The card wall (sign-in and the landing page): flashcards in tilted columns, each column drifting slowly up or down (the
@@ -2525,21 +2525,22 @@ const cardWall = ({ cols, w, h, gap, r, tilt, k }) => {
 const PHONE_K = 150 / 264;
 // The wall on sign-in drifts over near-black, edge to edge, in light and dark mode alike.
 const signPanel = (style, wall) => `<div style="position: relative; overflow: hidden; background: linear-gradient(180deg, #12141C 0%, #0B0C12 55%, #060709 100%); ${style}">${cardWall(wall)}</div>`;
-const signCol = inner => `<section style="width: 560px; flex-shrink: 0; box-sizing: border-box; padding: 32px 40px; display: flex; flex-direction: column;">
-    ${logo()}
-    <div style="flex-grow: 1; display: flex; flex-direction: column; justify-content: center;"><div style="width: 360px; margin: 0 auto; display: flex; flex-direction: column; gap: 24px;">${inner}</div></div>
+// The sign-in column: the form in the very middle (the logo sits in the corner, apart from it).
+const signCol = inner => `<section style="position: relative; width: 560px; flex-shrink: 0; box-sizing: border-box; padding: 32px 40px; display: flex; flex-direction: column; justify-content: center;">
+    <div style="position: absolute; top: 32px; left: 40px;">${logo()}</div>
+    <div style="width: 360px; margin: 0 auto; display: flex; flex-direction: column; gap: 24px;">${inner}</div>
   </section>`;
 const webSignRoot = inner => `<div style="width: 1440px; height: 900px; box-sizing: border-box; display: flex; font-family: ${FONT}; background: {{t.bg}}; color: {{t.text}}; overflow: hidden;">
   ${signCol(inner)}
   ${signPanel('flex-grow: 1; min-width: 0;', { cols: 4, w: 264, h: 176, gap: 16, r: 20, tilt: -14, k: 1 })}
 </div>`;
-const webSignIn = webSignRoot(`<h1 style="margin: 0; font-size: 32px; font-weight: 600; letter-spacing: -.03em;">Sign in to Lucida</h1>
+const webSignIn = webSignRoot(`<h1 style="margin: 0; font-size: 32px; font-weight: 600; letter-spacing: -.03em; text-align: center;">Sign in to Lucida</h1>
       <div style="display: flex; flex-direction: column; gap: 10px;">${authBtn('Continue with Google', G_LOGO, 'Main.dc.html', 44, 'google')}${authBtn('Continue with Apple', APPLE_LOGO, 'Main.dc.html', 44, 'apple')}</div>
       ${orLine}
       ${emailForm(44, 'WebSignInCode.dc.html')}
       ${AGREE}`);
-const codeText = `<div style="display: flex; flex-direction: column; gap: 8px;"><h1 style="margin: 0; font-size: 32px; font-weight: 600; letter-spacing: -.03em;">Check your email</h1><div style="font-size: 15px; line-height: 1.45; color: {{t.muted}};">Enter the 6-digit code we sent to <span style="color: {{t.text}}; font-weight: 500;">{{sentTo}}</span></div></div>`;
-const webSignInCode = webSignRoot(`<a href="WebSignIn.dc.html" style="align-self: flex-start; display: inline-flex; align-items: center; gap: 6px; font-size: 14px; color: {{t.muted}};">${svg(I.back, 16, 2)}Use another email</a>
+const codeText = `<div style="display: flex; flex-direction: column; gap: 8px; text-align: center;"><h1 style="margin: 0; font-size: 32px; font-weight: 600; letter-spacing: -.03em;">Check your email</h1><div style="font-size: 15px; line-height: 1.45; color: {{t.muted}};">Enter the 6-digit code we sent to <span style="color: {{t.text}}; font-weight: 500;">{{sentTo}}</span></div></div>`;
+const webSignInCode = webSignRoot(`<a href="WebSignIn.dc.html" style="align-self: center; display: inline-flex; align-items: center; gap: 6px; font-size: 14px; color: {{t.muted}};">${svg(I.back, 16, 2)}Use another email</a>
       ${codeText}
       ${codeBoxes(52, 60)}${SIGN_ERROR}
       <div style="display: flex; flex-direction: column; gap: 14px;"><a href="Main.dc.html" onClick="{{verify}}" style="height: 44px; display: flex; align-items: center; justify-content: center; border-radius: 999px; background: {{t.inv}}; color: {{t.invText}}; font-size: 15px; font-weight: 600;">{{verifyLabel}}</a><button type="button" onClick="{{resend}}" style="align-self: center; border: 0; padding: 0; background: transparent; color: {{t.muted}}; font: inherit; font-size: 14px; cursor: pointer;">{{resendLabel}}</button></div>`);
@@ -2550,7 +2551,7 @@ ${inner}
 </div>`;
 const phoneSignIn = signPhoneRoot(`${signPanel('flex: 1 1 380px; min-height: 220px;', { cols: 4, w: 150, h: 100, gap: 10, r: 16, tilt: -14, k: PHONE_K })}
   <div style="flex-shrink: 0; box-sizing: border-box; padding: 22px 20px 34px; display: flex; flex-direction: column; gap: 10px;">
-    <h1 style="margin: 0 0 8px; font-size: 28px; font-weight: 700; letter-spacing: -.03em;">Sign in to Lucida</h1>
+    <h1 style="margin: 0 0 8px; font-size: 28px; font-weight: 700; letter-spacing: -.03em; text-align: center;">Sign in to Lucida</h1>
     ${authBtn('Continue with Apple', APPLE_LOGO, 'PhoneToday.dc.html', 50, 'apple')}${authBtn('Continue with Google', G_LOGO, 'PhoneToday.dc.html', 50, 'google')}
     <div style="padding: 4px 0;">${orLine}</div>
     ${emailForm(50, 'PhoneSignInCode.dc.html', 16)}
