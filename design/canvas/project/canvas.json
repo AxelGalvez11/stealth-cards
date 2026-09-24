@@ -143,7 +143,7 @@
       "page": "empty",
       "title": "iPhone · Deck · no cards yet",
       "w": 390,
-      "x": 940,
+      "x": 1410,
       "y": 1300
     },
     "PhoneDeckSettings.dc.html": {
@@ -341,7 +341,7 @@
       "page": "empty",
       "title": "iPhone · Stats · no reviews yet",
       "w": 390,
-      "x": 1410,
+      "x": 1880,
       "y": 1300
     },
     "PhoneToday.dc.html": {
@@ -925,7 +925,7 @@
       "x": 0,
       "y": 0,
       "page": "live",
-      "title": "Live · Host · set up from a deck (Game or Poll)",
+      "title": "Live · Host · set up from a deck",
       "is_interactive": true
     },
     "LiveLobby.dc.html": {
@@ -952,22 +952,13 @@
       "x": 4560,
       "y": 0,
       "page": "live",
-      "title": "Live · Big screen · the answer (Game)",
-      "is_interactive": true
-    },
-    "LiveRevealPoll.dc.html": {
-      "h": 900,
-      "w": 1440,
-      "x": 6080,
-      "y": 0,
-      "page": "live",
-      "title": "Live · Big screen · the answer (Poll)",
+      "title": "Live · Big screen · the answer",
       "is_interactive": true
     },
     "LiveLeaderboard.dc.html": {
       "h": 900,
       "w": 1440,
-      "x": 7600,
+      "x": 6080,
       "y": 0,
       "page": "live",
       "title": "Live · Big screen · leaderboard",
@@ -976,7 +967,7 @@
     "LivePodium.dc.html": {
       "h": 900,
       "w": 1440,
-      "x": 9120,
+      "x": 7600,
       "y": 0,
       "page": "live",
       "title": "Live · Big screen · podium",
@@ -1035,6 +1026,15 @@
       "page": "live",
       "title": "Live · Phone · final place",
       "is_interactive": true
+    },
+    "PhoneDecksEmpty.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "page": "empty",
+      "title": "iPhone · Decks · no decks yet",
+      "w": 390,
+      "x": 940,
+      "y": 1300
     }
   },
   "createdOnFiles": {
@@ -1157,7 +1157,7 @@
     },
     "ePhone": {
       "kind": "title1",
-      "maxW": 1800,
+      "maxW": 2270,
       "page": "empty",
       "text": "Empty states · iPhone",
       "w": 240,
@@ -1265,7 +1265,7 @@
     },
     "vBig": {
       "kind": "title1",
-      "maxW": 10560,
+      "maxW": 9040,
       "page": "live",
       "text": "Live · the big screen (host)",
       "w": 240,
@@ -1363,6 +1363,7 @@
     "WebStatsEmpty.dc.html",
     "PhoneTodayNew.dc.html",
     "PhoneTodayCaughtUp.dc.html",
+    "PhoneDecksEmpty.dc.html",
     "PhoneDeckEmpty.dc.html",
     "PhoneStatsEmpty.dc.html",
     "Landing.dc.html",
@@ -1389,7 +1390,6 @@
     "LiveLobby.dc.html",
     "LiveQuestion.dc.html",
     "LiveReveal.dc.html",
-    "LiveRevealPoll.dc.html",
     "LiveLeaderboard.dc.html",
     "LivePodium.dc.html",
     "LiveJoin.dc.html",
@@ -1442,7 +1442,7 @@
     },
     {
       "id": "live",
-      "name": "Live (study together)"
+      "name": "Live (play with friends)"
     }
   ],
   "title": "Lucida Design"

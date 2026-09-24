@@ -14,3 +14,7 @@ web/landing.html
 web/pricing.html
 web/privacy.html
 web/terms.html
+
+# Xcode
+ios/**/xcuserdata/
+ios/**/*.xcuserstate

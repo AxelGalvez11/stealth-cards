@@ -116,19 +116,13 @@ export default [
  },
  {
   "name": "LiveReveal",
-  "title": "Live · big screen · answer (Game)",
-  "w": 1440,
-  "h": 900
- },
- {
-  "name": "LiveRevealPoll",
-  "title": "Live · big screen · answer (Poll)",
+  "title": "Live · big screen · answer",
   "w": 1440,
   "h": 900
  },
  {
   "name": "LiveSetup",
-  "title": "Live · host · set up (Game or Poll)",
+  "title": "Live · host · set up",
   "w": 1440,
   "h": 900
  },
@@ -189,6 +183,12 @@ export default [
  {
   "name": "PhoneDeckTagPicker",
   "title": "iPhone · Deck settings · Add tag",
+  "w": 390,
+  "h": 844
+ },
+ {
+  "name": "PhoneDecksEmpty",
+  "title": "iPhone · Decks · no decks yet",
   "w": 390,
   "h": 844
  },

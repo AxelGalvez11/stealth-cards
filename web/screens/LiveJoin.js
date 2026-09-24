@@ -169,24 +169,22 @@ mock() {
 }
 
 
-constructor(props) { super(props); this.state = { mode: this.props && this.props.mode === 'Poll' ? 'poll' : 'game', set: 'tag', count: 10, time: 20 }; }
+constructor(props) { super(props); this.state = { set: 'tag', count: 10, time: 20 }; }
 renderVals() { const t = this.theme(!!this.props.dark);
-  const s = this.state, poll = (this.props.mode || '') === 'Poll' || s.mode === 'poll', reveal = !!this.props.reveal, Q = {"n":3,"of":10,"q":"Which organelle packages proteins for secretion?","options":["Golgi apparatus","Lysosome","Nucleus","Ribosome"],"right":0,"counts":[7,2,1,2]}, total = Q.counts.reduce((a, b) => a + b, 0);
+  const s = this.state, reveal = !!this.props.reveal, Q = {"n":3,"of":10,"q":"Which organelle packages proteins for secretion?","options":["Golgi apparatus","Lysosome","Nucleus","Ribosome"],"right":0,"counts":[7,2,1,2]}, total = Q.counts.reduce((a, b) => a + b, 0);
   const seg = (k, cur) => ({ pressed: k === cur ? 'true' : 'false', bg: k === cur ? t.bg : 'transparent', fg: k === cur ? t.text : t.muted, sh: k === cur ? '0 1px 3px rgba(0,0,0,.14)' : 'none' });
   const pals = ["Iris","Apricot","Mint","Rose"], colors = ["linear-gradient(135deg, #7E94FB, #2CB2EA)","linear-gradient(135deg, #F2AC45, #EE8CA6)","linear-gradient(135deg, #7FD0B0, #2CB2EA)","linear-gradient(135deg, #EE8CA6, #7E94FB)","linear-gradient(135deg, #F7D84E, #F2AC45)"];
   const opt = i => ({ p: this.mesh(pals[i]), i, label: Q.options[i], count: String(Q.counts[i]), right: i === Q.right, showCount: reveal, op: reveal && i !== Q.right ? '.38' : '1', ring: reveal && i === Q.right ? '0 0 0 4px ' + t.good : 'none' });
   const wrongPick = !!this.props.wrong;
   return { t, dark: !!this.props.dark, sky: (this.props.dark ? { top: '#081733', mid: '#0D2148', low: '#0A1530', glow: 'rgba(120,150,255,.16)', cloud: 'rgba(150,170,230,.10)' }
-    : { top: '#86BDF3', mid: '#C9E2FB', low: '#EDF5FE', glow: 'rgba(255,255,255,.75)', cloud: 'rgba(255,255,255,.94)' }), grain: String(this.props.grain ?? 0.7), q: Q, poll, modeName: poll ? 'Poll' : 'Game', peopleN: '12',
+    : { top: '#86BDF3', mid: '#C9E2FB', low: '#EDF5FE', glow: 'rgba(255,255,255,.75)', cloud: 'rgba(255,255,255,.94)' }), grain: String(this.props.grain ?? 0.7), q: Q, peopleN: '12',
     o0: opt(0), o1: opt(1), o2: opt(2), o3: opt(3), c0: colors[0], c1: colors[2], c2: colors[1], p0: this.mesh('Iris'), p1: this.mesh('Mint'), p2: this.mesh('Apricot'),
-    nextHref: poll ? 'LiveQuestion.dc.html' : 'LiveLeaderboard.dc.html', nextLabel: poll ? 'Next question' : 'Leaderboard',
-    split: Q.counts.map((n, i) => ({ w: n / total * 100 + '%', bg: i === Q.right ? t.good : t.surf2 })),
+    nextHref: 'LiveLeaderboard.dc.html', nextLabel: 'Leaderboard',
     people: ["Maya","Jordan","Priya","Leo","Sofia","Ethan","Ana","Kai","Zoe","Omar","Lina","Noah"].map((name, i) => ({ name, initial: name[0], color: colors[i % colors.length], delay: (i * .12).toFixed(2) + 's' })),
     board: [["Maya",3420,1],["Jordan",3210,2],["Kai",2980,-1],["Priya",2860,0],["Leo",2640,3]].map(([name, score, move], i) => ({ rank: String(i + 1), name, initial: name[0], color: colors[i % colors.length], score: score.toLocaleString('en-US'), w: score / 3420 * 100 + '%',
       move: move > 0 ? '▲ ' + move : move < 0 ? '▼ ' + -move : '–', moveColor: move > 0 ? t.good : move < 0 ? t.again : t.muted, delay: (i * .08).toFixed(2) + 's' })),
     r: wrongPick ? { right: false, wrong: true, bg: t.againTint, color: t.again, title: 'Not quite', line: 'It was Golgi apparatus.', place: 'You’re in 5th place' }
       : { right: true, wrong: false, bg: t.goodTint, color: t.good, title: 'Right!', line: '+870 points', place: 'You’re in 2nd place, 140 points behind Maya' },
-    modes: [['game', 'Game', 'Points for right and fast answers, a leaderboard, and a podium.'], ['poll', 'Poll', 'No scores. See how the room answered each question.']].map(([k, label, sub]) => ({ label, sub, pressed: s.mode === k ? 'true' : 'false', bg: s.mode === k ? t.bg : t.surf, ring: s.mode === k ? 'inset 0 0 0 2px ' + t.text : 'none', pick: () => this.setState({ mode: k }) })),
     sets: [['new', 'New · 10'], ['hard', 'Hard · 36'], ['tag', 'Exam 1 · 40'], ['all', 'All · 412']].map(([k, label]) => ({ label, ...seg(k, s.set), pick: () => this.setState({ set: k }) })),
     counts: [5, 10, 20].map(n => ({ label: String(n), ...seg(n, s.count), pick: () => this.setState({ count: n }) })),
     times: [10, 20, 30].map(n => ({ label: n + 's', ...seg(n, s.time), pick: () => this.setState({ time: n }) })),
