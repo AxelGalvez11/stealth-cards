@@ -57,8 +57,10 @@ export const clearPkce = req => cookie(req, PKCE, '', 0);
 // Google and Apple: the visitor signs in on Google's or Apple's own page, which sends them back here with an ID token
 // (a signed note saying who they are), and Supabase checks it (handler.mjs). No secret is needed: these IDs are public.
 // The iPhone app signs in with both by itself and sends its token the same way.
-export const GOOGLE_ID = process.env.LUCIDA_GOOGLE_ID || ''; // Google Cloud → Google Auth Platform → Clients → "Lucida web"
-export const APPLE_ID = process.env.LUCIDA_APPLE_ID || ''; // Apple Developer → Identifiers → Services IDs
+// Google Cloud project "Lucida" (lucida-509622) → Google Auth Platform → Clients → "Lucida web".
+export const GOOGLE_ID = process.env.LUCIDA_GOOGLE_ID || '274372639474-g5n55o83ad2p60sghkd00d95g6vk4scm.apps.googleusercontent.com';
+// Apple Developer (team 27AW3HBC3Z) → Identifiers → Services IDs → "Lucida" (for app.lucida.cards).
+export const APPLE_ID = process.env.LUCIDA_APPLE_ID || 'cards.lucida.web';
 // A random state and nonce wait in a cookie for ten minutes, so only the browser that started can finish. Google and
 // Apple put the nonce's hash in the token, and Supabase checks that it matches. Apple posts its answer from its own
 // site, so its cookie has to allow that (SameSite=None, which needs https).
