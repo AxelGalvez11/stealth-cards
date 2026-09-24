@@ -265,6 +265,12 @@ export default [
   "h": 844
  },
  {
+  "name": "PhoneQuizWaves",
+  "title": "iPhone · Learn mode · idea: faint gradient waves",
+  "w": 390,
+  "h": 844
+ },
+ {
   "name": "PhoneReview",
   "title": "iPhone · Review",
   "w": 390,
@@ -559,18 +565,6 @@ export default [
   "h": 900
  },
  {
-  "name": "WebQuizDeep",
-  "title": "Web · Learn mode · style idea 2: deep card",
-  "w": 1440,
-  "h": 900
- },
- {
-  "name": "WebQuizDeepAnswered",
-  "title": "Web · Learn mode · style idea 2: deep card, answered",
-  "w": 1440,
-  "h": 900
- },
- {
   "name": "WebQuizDone",
   "title": "Web · Learn mode · all learned",
   "w": 1440,
@@ -579,18 +573,6 @@ export default [
  {
   "name": "WebQuizMatch",
   "title": "Web · Learn mode · matching",
-  "w": 1440,
-  "h": 900
- },
- {
-  "name": "WebQuizSky",
-  "title": "Web · Learn mode · style idea 1: sky",
-  "w": 1440,
-  "h": 900
- },
- {
-  "name": "WebQuizSkyAnswered",
-  "title": "Web · Learn mode · style idea 1: sky, answered",
   "w": 1440,
   "h": 900
  },
@@ -609,6 +591,12 @@ export default [
  {
   "name": "WebQuizUpgrade",
   "title": "Web · Learn mode · on Free: go Pro",
+  "w": 1440,
+  "h": 900
+ },
+ {
+  "name": "WebQuizWaves",
+  "title": "Web · Learn mode · idea: faint gradient waves",
   "w": 1440,
   "h": 900
  },

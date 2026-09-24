@@ -2521,6 +2521,11 @@ renderVals() {
   };
 }`;
 
+// Live's flat colors (LV), which Learn mode's sky style shares, and the hover (a card rises, then bobs gently).
+const LV = { blue: '#7ACFEA', green: '#62DE8A', yellow: '#FFD84A', navy: '#0D1542', ink2: 'rgba(13,21,66,.68)', chip: 'rgba(255,255,255,.55)', check: '#16C64A', gray: '#C4CBD5', grayInk: '#5D6677', purple: '#4F60E6', shadow: '0 10px 24px -16px rgba(13,21,66,.35)', lift: '0 26px 48px -20px rgba(13,21,66,.5)' };
+const HOVER_CSS = (a, b) => `@keyframes scLiftIn{from{transform:none}to{transform:translateY(${a}px)}}@keyframes scHover{from{transform:translateY(${a}px)}to{transform:translateY(${b}px)}}`;
+const HOVER = (a, delay) => `scLiftIn .45s cubic-bezier(.2,.8,.2,1) ${delay}s both, scHover 2.4s ease-in-out ${delay + .45}s infinite alternate`;
+
 // ---------- Learn mode ----------
 // Learn a set of cards until you know every one. Each card is asked in different ways (multiple choice, true or false,
 // matching, filling in its blank, typing the answer); it's learned after two right answers in a row, asked two ways,
@@ -2545,17 +2550,27 @@ const LEARN_CSS = '@keyframes scQuizIn{from{opacity:0;transform:translateY(6px)}
   + '@keyframes scPlusA{0%{opacity:0;transform:translateY(6px)}25%{opacity:1}100%{opacity:0;transform:translateY(-16px)}}@keyframes scPlusB{0%{opacity:0;transform:translateY(6px)}25%{opacity:1}100%{opacity:0;transform:translateY(-16px)}}'
   + '.sc-tick path{stroke-dasharray:24;stroke-dashoffset:24;animation:scTick .32s .06s ease forwards}@keyframes scTick{to{stroke-dashoffset:0}}'
   + "@property --sc-n{syntax:'<integer>';initial-value:0;inherits:false}.sc-count{--sc-n:var(--to);counter-reset:n var(--sc-n);animation:scCount 1.1s .25s cubic-bezier(.2,.8,.2,1) backwards}.sc-count::after{content:counter(n)}@keyframes scCount{from{--sc-n:0}}"
+  + '@keyframes scLearnIn{from{transform:none}to{transform:translateY(-5px)}}@keyframes scLearnHover{from{transform:translateY(-5px)}to{transform:translateY(-9px)}}'
   + '@media (prefers-reduced-motion:reduce){.sc-quiz-in,.sc-shake,.sc-q,.sc-count,.sc-plus,.sc-dot,.sc-opt{animation:none!important}.sc-tick path{animation:none;stroke-dashoffset:0}}';
-// Progress through the set: learned (dark), still learning (light), not yet (track), with "+1" when one is learned.
-const LEARN_BAR = `bar: this.props.dark ? { done: '#8C9AFC', part: '#3A4BB0' } : { done: '#4353E0', part: '#B0BAFB' },`;
-const learnBar = w => `<div style="${w ? `width: ${w}px;` : 'flex-grow: 1;'} height: 8px; border-radius: 4px; background: {{t.surf}}; overflow: hidden; display: flex;"><div style="width: {{doneW}}; background: {{bar.done}}; transition: width .5s cubic-bezier(.2,.8,.2,1);"></div><div style="width: {{partW}}; background: {{bar.part}}; transition: width .5s cubic-bezier(.2,.8,.2,1);"></div></div>`;
-const learnPlus = `<sc-if value="{{plusOne}}" hint-placeholder-val="{{ false }}"><span class="sc-plus" aria-hidden="true" style="position: absolute; left: 100%; top: -3px; margin-left: 6px; font-size: 13px; font-weight: 700; color: {{bar.done}}; animation: {{plusAnim}};">+1</span></sc-if>`;
+const LEARN_HOVER = 'scLearnIn .45s cubic-bezier(.2,.8,.2,1) both, scLearnHover 2.4s ease-in-out .45s infinite alternate';
+// Learn mode's look, picked by the owner from the style ideas (V82: "lets go with this style"): the sky. The sky's faint
+// blue fade behind the top (a night sky in dark mode), big navy words, and white answer cards with colored numbers; the
+// right answer rises and hovers with a green check, and after an answer the rest turn gray (Live's rules). Its colors
+// are `k` in renderVals (K below): light, or the same look at night.
+const LEARN_COLORS = ['#4F60E6', '#F2701D', '#0E8FB0', '#E5407E'];
+const LEARN_K = `const K = this.props.dark
+    ? { ink: '#F2F3F7', ink2: 'rgba(242,243,247,.66)', card: '#1B1D24', shadow: '0 10px 24px -16px rgba(0,0,0,.7)', lift: '0 26px 48px -20px rgba(0,0,0,.85)', gray: '#2A2D35', grayInk: '#8E95A3', chip: 'rgba(255,255,255,.1)', track: 'rgba(255,255,255,.14)', btn: '#F2F3F7', btnFg: '${LV.navy}', other: 'rgba(255,255,255,.14)', wrong: '#4A4F5C', bar: '#8C9AFC', part: 'rgba(140,154,252,.4)', check: '${LV.check}' }
+    : { ink: '${LV.navy}', ink2: '${LV.ink2}', card: '#FFFFFF', shadow: '${LV.shadow}', lift: '${LV.lift}', gray: '${LV.gray}', grayInk: '${LV.grayInk}', chip: 'rgba(255,255,255,.72)', track: 'rgba(255,255,255,.62)', btn: '${LV.navy}', btnFg: '#FFFFFF', other: 'rgba(13,21,66,.12)', wrong: '${LV.navy}', bar: '${LV.purple}', part: 'rgba(79,96,230,.38)', check: '${LV.check}' };`;
+// Progress through the set: learned (purple), still learning (light purple), not yet (track), with "+1" when one is learned.
+const learnBar = w => `<div style="${w ? `width: ${w}px;` : 'flex-grow: 1;'} height: 10px; border-radius: 5px; background: {{k.track}}; overflow: hidden; display: flex;"><div style="width: {{doneW}}; background: {{k.bar}}; transition: width .5s cubic-bezier(.2,.8,.2,1);"></div><div style="width: {{partW}}; background: {{k.part}}; transition: width .5s cubic-bezier(.2,.8,.2,1);"></div></div>`;
+const learnPlus = `<sc-if value="{{plusOne}}" hint-placeholder-val="{{ false }}"><span class="sc-plus" aria-hidden="true" style="position: absolute; left: 100%; top: -3px; margin-left: 6px; font-size: 13px; font-weight: 700; color: {{k.bar}}; animation: {{plusAnim}};">+1</span></sc-if>`;
+// The top: stop, progress, and the set, on soft glass chips over the sky.
 const learnTop = back => `<header style="height: 76px; flex-shrink: 0; box-sizing: border-box; padding: 0 32px; display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: center; gap: 16px;">
-    <div style="display: flex;"><a href="${back}" aria-label="Stop for now" title="Stop for now" style="width: 36px; height: 36px; border-radius: 18px; background: {{t.surf}}; display: flex; align-items: center; justify-content: center;">${svg(I.close, 16, 2.2)}</a></div>
-    <div style="display: flex; align-items: center; gap: 14px;">${learnBar(360)}<span role="status" style="position: relative; font-size: 13px; color: {{t.muted}}; white-space: nowrap;"><span style="font-weight: 600; color: {{t.text}};">{{learned}}</span> of {{total}} learned${learnPlus}</span></div>
-    <div style="display: flex; justify-content: flex-end; min-width: 0;"><span style="display: inline-flex; align-items: center; gap: 6px; font-size: 13px; color: {{t.muted}}; white-space: nowrap;">${svg(I.sparkle, 14, 1.8)}<span>Learn · {{setName}}</span></span></div>
+    <div style="display: flex;"><a href="${back}" aria-label="Stop for now" title="Stop for now" style="width: 40px; height: 40px; border-radius: 20px; background: {{k.chip}}; display: flex; align-items: center; justify-content: center;">${svg(I.close, 16, 2.2)}</a></div>
+    <div style="display: flex; align-items: center; gap: 14px;">${learnBar(360)}<span role="status" style="position: relative; font-size: 14px; white-space: nowrap;"><span style="font-weight: 700;">{{learned}}</span> of {{total}} learned${learnPlus}</span></div>
+    <div style="display: flex; justify-content: flex-end; min-width: 0;"><span style="height: 34px; padding: 0 14px; display: inline-flex; align-items: center; gap: 6px; border-radius: 999px; background: {{k.chip}}; font-size: 13px; font-weight: 600; white-space: nowrap;">${svg(I.sparkle, 14, 1.8)}<span>Learn · {{setName}}</span></span></div>
   </header>`;
-const learnTopPhone = back => `<div style="display: flex; align-items: center; gap: 12px;">${roundBtn('close', 'Stop for now', back)}${learnBar(0)}<span role="status" style="position: relative; font-size: 13px; color: {{t.muted}}; white-space: nowrap;"><span style="font-weight: 600; color: {{t.text}};">{{learned}}</span>/{{total}}${learnPlus}</span></div>`;
+const learnTopPhone = back => `<div style="display: flex; align-items: center; gap: 12px;"><a href="${back}" aria-label="Stop for now" style="width: 44px; height: 44px; flex-shrink: 0; border-radius: 22px; background: {{k.chip}}; display: flex; align-items: center; justify-content: center;">${svg(I.close, 18, 2)}</a>${learnBar(0)}<span role="status" style="position: relative; font-size: 13px; white-space: nowrap;"><span style="font-weight: 700;">{{learned}}</span>/{{total}}${learnPlus}</span></div>`;
 // Two dots for the card: one fills for each right answer in a row (two and it's learned). The kind of question
 // ("Multiple choice") isn't named: the owner asked to drop it (V73).
 const learnDots = `<span title="Right twice in a row and it’s learned" style="align-self: flex-start; height: 17px; display: inline-flex; align-items: center; gap: 4px;"><sc-for list="{{dots}}" as="d" hint-placeholder-count="2"><span class="sc-dot" style="width: 7px; height: 7px; border-radius: 4px; background: {{d.bg}}; animation: {{d.anim}};"></span></sc-for></span>`;
@@ -2646,43 +2661,51 @@ renderVals() { ${T}${DB_JS}
     startHref: '${phone ? 'PhoneQuiz' : 'WebQuiz'}.dc.html',
     start: e => { if (db.mock) return; if (e && e.preventDefault) e.preventDefault(); if (n) db.act.startLearn(id, set.id, s.kinds); } }; }`;
 // What every question shows: progress, the card's dots, and the motion keys.
-const LEARN_VIEW_JS = `const L = db.mock ? null : db.learn() || { learned: 0, total: 1, learning: 0, justLearned: 0, n: 0, setName: '' };
-  const view = (learned, total, part, n, just) => ({ ${LEARN_BAR} learned: String(learned), total: String(total), setName: L ? L.setName : 'Exam 1',
+const LEARN_VIEW_JS = `${LEARN_K}
+  const L = db.mock ? null : db.learn() || { learned: 0, total: 1, learning: 0, justLearned: 0, n: 0, setName: '' };
+  const view = (learned, total, part, n, just) => ({ k: K, sky: ${SKY}, learned: String(learned), total: String(total), setName: L ? L.setName : 'Exam 1',
     doneW: learned / total * 100 + '%', partW: part / total * 100 + '%', qAnim: (n % 2 ? 'scQA' : 'scQB') + ' .36s cubic-bezier(.2,.8,.2,1) both',
     plusOne: just > 0, plusAnim: (learned % 2 ? 'scPlusA' : 'scPlusB') + ' 1.1s ease both' });
-  const dots = (streak, popped) => [0, 1].map(i => ({ bg: i < streak ? (this.props.dark ? '#8C9AFC' : '#4353E0') : t.surf2, anim: popped && i === streak - 1 ? 'scDot .45s ease' : 'none' }));`;
+  const dots = (streak, popped) => [0, 1].map(i => ({ bg: i < streak ? K.bar : K.other, anim: popped && i === streak - 1 ? 'scDot .45s ease' : 'none' }));`;
 // A choice question (multiple choice, true or false, fill in the blank): pick, then see why and the card it came from.
-const quizOption = (h, fs, r) => `<button type="button" class="sc-opt" onClick="{{o.pick}}" data-key="{{o.key}}" aria-pressed="{{o.pressed}}" style="min-height: ${h}px; box-sizing: border-box; padding: 10px 18px 10px 12px; display: flex; align-items: center; gap: 14px; border: 0; border-radius: ${r}px; background: {{o.bg}}; color: {{o.fg}}; opacity: {{o.op}}; animation: {{o.anim}}; font: inherit; font-size: ${fs}px; font-weight: 500; text-align: left; cursor: {{o.cursor}}; transition: background-color .2s, opacity .2s;"><span style="width: 34px; height: 34px; flex-shrink: 0; border-radius: 11px; background: {{o.badgeBg}}; color: {{o.badgeFg}}; display: flex; align-items: center; justify-content: center; font-family: ${MONO}; font-size: 14px; font-weight: 600; transition: background-color .2s;"><sc-if value="{{o.plain}}" hint-placeholder-val="{{ true }}">{{o.key}}</sc-if><sc-if value="{{o.isRight}}" hint-placeholder-val="{{ false }}"><span class="sc-tick" style="display: flex;">${svg(I.check, 16, 2.4)}</span></sc-if><sc-if value="{{o.isWrong}}" hint-placeholder-val="{{ false }}">${svg(I.close, 14, 2.4)}</sc-if></span><span style="flex-grow: 1;">{{o.label}}</span></button>`;
-const quizFrom = `<div style="min-width: 0; display: flex; flex-direction: column; gap: 4px; padding: 12px 14px; border-radius: 16px; background: {{t.surf}}; font-size: 13px; line-height: 1.4;"><span style="color: {{t.muted}};">From your card</span><span style="min-width: 0;">{{cardFront}} <span style="color: {{t.muted}};">→</span> <span style="font-weight: 600;">{{cardBack}}</span></span></div>`;
-const learnNext = (h, fs) => `<sc-if value="{{isLast}}" hint-placeholder-val="{{ false }}"><a href="{{afterHref}}" style="height: ${h}px; padding: 0 24px; display: flex; align-items: center; justify-content: center; border-radius: 999px; background: {{t.inv}}; color: {{t.invText}}; font-size: ${fs}px; font-weight: 600;">Next question</a></sc-if><sc-if value="{{notLast}}" hint-placeholder-val="{{ true }}"><button type="button" onClick="{{next}}" data-key="Enter" style="width: 100%; height: ${h}px; padding: 0 24px; border: 0; border-radius: 999px; background: {{t.inv}}; color: {{t.invText}}; font: inherit; font-size: ${fs}px; font-weight: 600; cursor: pointer;">Next question</button></sc-if>`;
-const learnWhy = `<div style="font-size: 16px; line-height: 1.5;"><span style="font-weight: 600; color: {{verdictColor}};">{{verdict}}</span> {{why}}</div>`;
+// The answers are white cards with a colored number; the right one rises and hovers with a green check, a wrong pick
+// gets an ×, and after an answer the others go gray.
+const learnMark = `<sc-if value="{{o.plain}}" hint-placeholder-val="{{ true }}">{{o.key}}</sc-if><sc-if value="{{o.isRight}}" hint-placeholder-val="{{ false }}"><span class="sc-tick" style="display: flex;">${svg(I.check, 18, 2.6)}</span></sc-if><sc-if value="{{o.isWrong}}" hint-placeholder-val="{{ false }}">${svg(I.close, 16, 2.6)}</sc-if>`;
+const learnOption = (h, r, fs, badge = 40) => `<button type="button" class="sc-opt" onClick="{{o.pick}}" data-key="{{o.key}}" aria-pressed="{{o.pressed}}" style="min-height: ${h}px; box-sizing: border-box; padding: 10px 20px 10px 12px; display: flex; align-items: center; gap: ${badge > 36 ? 16 : 14}px; border: 0; border-radius: ${r}px; background: {{o.bg}}; color: {{o.fg}}; box-shadow: {{o.shadow}}; transform: {{o.tf}}; animation: {{o.anim}}; font: inherit; font-size: ${fs}px; font-weight: 600; text-align: left; cursor: {{o.cursor}}; transition: background-color .25s, color .25s, box-shadow .35s, transform .35s cubic-bezier(.2,.8,.2,1);"><span style="width: ${badge}px; height: ${badge}px; flex-shrink: 0; border-radius: ${badge / 2}px; background: {{o.badge}}; color: {{o.badgeFg}}; display: flex; align-items: center; justify-content: center; font-size: ${badge > 36 ? 16 : 15}px; font-weight: 700; transition: background-color .25s, color .25s;">${learnMark}</span><span style="flex-grow: 1;">{{o.label}}</span></button>`;
+const quizFrom = `<div style="min-width: 0; display: flex; flex-direction: column; gap: 4px; padding: 12px 16px; border-radius: 18px; background: {{k.card}}; box-shadow: {{k.shadow}}; font-size: 13px; line-height: 1.4;"><span style="color: {{k.ink2}};">From your card</span><span style="min-width: 0;">{{cardFront}} <span style="color: {{k.ink2}};">→</span> <span style="font-weight: 700;">{{cardBack}}</span></span></div>`;
+const learnNext = (h, fs) => `<sc-if value="{{isLast}}" hint-placeholder-val="{{ false }}"><a href="{{afterHref}}" style="height: ${h}px; padding: 0 24px; display: flex; align-items: center; justify-content: center; border-radius: 999px; background: {{k.btn}}; color: {{k.btnFg}}; font-size: ${fs}px; font-weight: 600;">Next question</a></sc-if><sc-if value="{{notLast}}" hint-placeholder-val="{{ true }}"><button type="button" onClick="{{next}}" data-key="Enter" style="width: 100%; height: ${h}px; padding: 0 24px; border: 0; border-radius: 999px; background: {{k.btn}}; color: {{k.btnFg}}; font: inherit; font-size: ${fs}px; font-weight: 600; cursor: pointer;">Next question</button></sc-if>`;
+const learnWhy = (fs = 17) => `<div style="font-size: ${fs}px; line-height: 1.5;"><span style="font-weight: 700; color: {{verdictColor}};">{{verdict}}</span> {{why}}</div>`;
 const learnImage = h => `<sc-if value="{{hasImage}}" hint-placeholder-val="{{ false }}"><img src="{{image}}" alt="" style="align-self: flex-start; max-width: 100%; max-height: ${h}px; border-radius: 18px; background: {{t.surf}};"></sc-if>`;
-const learnClaim = fs => `<sc-if value="{{hasClaim}}" hint-placeholder-val="{{ false }}"><div style="padding: 16px 20px; border-radius: 18px; background: {{t.surf}}; box-shadow: inset 0 0 0 1px {{t.line}}; font-size: ${fs}px; font-weight: 600; line-height: 1.35;">{{claim}}</div></sc-if>`;
-const webQuiz = `<div style="position: relative; width: 1440px; height: 900px; box-sizing: border-box; display: flex; flex-direction: column; font-family: ${FONT}; background: {{t.bg}}; color: {{t.text}};">
+const learnClaim = fs => `<sc-if value="{{hasClaim}}" hint-placeholder-val="{{ false }}"><div style="padding: 16px 20px; border-radius: 20px; background: {{k.card}}; box-shadow: {{k.shadow}}; font-size: ${fs}px; font-weight: 700; line-height: 1.35;">{{claim}}</div></sc-if>`;
+const webQuizOf = bg => `<div style="position: relative; isolation: isolate; width: 1440px; height: 900px; box-sizing: border-box; display: flex; flex-direction: column; overflow: hidden; font-family: ${FONT}; background: {{t.bg}}; color: {{k.ink}};">
+  ${bg}
   ${learnTop('WebDeck.dc.html')}
   <main style="flex-grow: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;">
-    <div class="sc-q" style="width: 720px; display: flex; flex-direction: column; gap: 20px; animation: {{qAnim}};">
+    <div class="sc-q" style="width: 720px; display: flex; flex-direction: column; gap: 22px; animation: {{qAnim}};">
       ${learnDots}
-      <h1 style="margin: 0; font-size: 30px; font-weight: 600; line-height: 1.25; letter-spacing: -.025em; text-wrap: pretty;">{{question}}</h1>
+      <h1 style="margin: -10px 0 0; font-size: 36px; font-weight: 700; line-height: 1.15; letter-spacing: -.03em; text-wrap: pretty;">{{question}}</h1>
       ${learnImage(240)}${learnClaim(20)}
-      <div style="display: flex; flex-direction: column; gap: 10px;"><sc-for list="{{options}}" as="o" hint-placeholder-count="4">${quizOption(60, 17, 20)}</sc-for></div>
+      <div style="display: flex; flex-direction: column; gap: 12px;"><sc-for list="{{options}}" as="o" hint-placeholder-count="4">${learnOption(64, 22, 18)}</sc-for></div>
       <div style="min-height: 150px;"><sc-if value="{{answered}}" hint-placeholder-val="{{ false }}"><div class="sc-quiz-in" style="display: flex; flex-direction: column; gap: 14px; animation: scQuizIn .3s cubic-bezier(.2,.8,.2,1) both;">
-        ${learnWhy}
-        <div style="display: flex; align-items: flex-end; justify-content: space-between; gap: 20px;">${quizFrom}<div style="flex-shrink: 0; width: 180px;">${learnNext(48, 15)}</div></div>
+        ${learnWhy()}
+        <div style="display: flex; align-items: flex-end; justify-content: space-between; gap: 20px;">${quizFrom}<div style="flex-shrink: 0; width: 180px;">${learnNext(52, 15)}</div></div>
       </div></sc-if></div>
     </div>
   </main>
 </div>`;
-const phoneQuiz = `<div style="position: relative; width: 390px; height: 844px; box-sizing: border-box; padding: 60px 16px 34px; display: flex; flex-direction: column; gap: 18px; overflow: hidden; font-family: ${FONT}; background: {{t.bg}}; color: {{t.text}};">
+const webQuiz = webQuizOf(skyFade(false));
+const phoneQuizOf = bg => `<div style="position: relative; isolation: isolate; width: 390px; height: 844px; box-sizing: border-box; padding: 60px 16px 34px; display: flex; flex-direction: column; gap: 18px; overflow: hidden; font-family: ${FONT}; background: {{t.bg}}; color: {{k.ink}};">
+  ${bg}
   ${learnTopPhone('PhoneDeck.dc.html')}
-  <div class="sc-q" style="display: flex; flex-direction: column; gap: 18px; animation: {{qAnim}};">
-    <div style="display: flex; flex-direction: column; gap: 10px; padding: 8px 4px 0;">${learnDots}<div style="font-size: 23px; font-weight: 600; line-height: 1.28; letter-spacing: -.02em; text-wrap: pretty;">{{question}}</div>${learnImage(180)}${learnClaim(18)}</div>
-    <div style="display: flex; flex-direction: column; gap: 8px;"><sc-for list="{{options}}" as="o" hint-placeholder-count="4">${quizOption(56, 16, 18)}</sc-for></div>
-    <sc-if value="{{answered}}" hint-placeholder-val="{{ false }}"><div class="sc-quiz-in" style="display: flex; flex-direction: column; gap: 12px; padding: 0 4px; animation: scQuizIn .3s cubic-bezier(.2,.8,.2,1) both;">${learnWhy}${quizFrom}</div></sc-if>
+  <div class="sc-q" style="display: flex; flex-direction: column; gap: 16px; animation: {{qAnim}};">
+    <div style="display: flex; flex-direction: column; gap: 10px; padding: 8px 4px 0;">${learnDots}<div style="font-size: 24px; font-weight: 700; line-height: 1.2; letter-spacing: -.025em; text-wrap: pretty;">{{question}}</div>${learnImage(180)}${learnClaim(18)}</div>
+    <div style="display: flex; flex-direction: column; gap: 8px;"><sc-for list="{{options}}" as="o" hint-placeholder-count="4">${learnOption(54, 20, 16, 34)}</sc-for></div>
+    <sc-if value="{{answered}}" hint-placeholder-val="{{ false }}"><div class="sc-quiz-in" style="display: flex; flex-direction: column; gap: 12px; padding: 0 4px; animation: scQuizIn .3s cubic-bezier(.2,.8,.2,1) both;">${learnWhy(16)}${quizFrom}</div></sc-if>
   </div>
   <div style="flex-grow: 1;"></div>
   <sc-if value="{{answered}}" hint-placeholder-val="{{ false }}"><div style="display: flex; flex-direction: column;">${learnNext(56, 17)}</div></sc-if>
 </div>`;
+const phoneQuiz = phoneQuizOf(skyFade(true));
 const QUIZ_LOGIC = phone => `
 constructor(props) { super(props); this.state = { i: 0, pick: props && props.answered ? 1 : null, gained: 0 }; }
 renderVals() { ${T}${DB_JS}
@@ -2711,34 +2734,36 @@ renderVals() { ${T}${DB_JS}
   return { t, dark: !!this.props.dark, ...v, kind: q.kind, question: q.q, hasClaim: !!q.claim, claim: q.claim || '', hasImage: !!(L && L.image), image: L ? L.image : '',
     dots: dots(streak, done && ok),
     options: q.options.map((label, j) => {
-      const right = done && j === q.right, wrong = done && j === pick && j !== q.right;
+      const right = done && j === q.right, wrong = done && j === pick && j !== q.right, other = done && !right && !wrong;
       return { label, key: String(j + 1), pressed: j === pick ? 'true' : 'false', plain: !right && !wrong, isRight: right, isWrong: wrong,
-        bg: right ? t.goodTint : wrong ? t.againTint : t.surf, fg: right ? t.good : wrong ? t.again : t.text, op: done && !right && !wrong ? '.45' : '1',
-        badgeBg: right ? t.good : wrong ? t.again : t.bg, badgeFg: right || wrong ? '#FFFFFF' : t.muted, cursor: done ? 'default' : 'pointer',
-        anim: right && ok ? 'scPop .32s ease' : wrong ? 'scShake .35s ease' : 'none', pick: () => { if (!done) choose(j); } };
+        bg: wrong || other ? K.gray : K.card, fg: wrong || other ? K.grayInk : K.ink, shadow: right ? K.lift : wrong || other ? 'none' : K.shadow,
+        tf: right ? 'translateY(-5px)' : 'none', badge: right ? K.check : wrong ? K.wrong : other ? K.other : ${JSON.stringify(LEARN_COLORS)}[j % 4], badgeFg: other ? K.grayInk : '#FFFFFF',
+        cursor: done ? 'default' : 'pointer', anim: right ? '${LEARN_HOVER}' : wrong ? 'scShake .35s ease' : 'none', pick: () => { if (!done) choose(j); } };
     }),
     answered: done, verdict: ok ? (learnedNow ? 'Learned.' : 'Right.') : 'Not quite.', verdictColor: ok ? t.good : t.again, why,
     cardFront: q.card[0], cardBack: q.card[1], isLast: last, notLast: !last, afterHref: '${phone ? 'PhoneQuizMatch' : 'WebQuizMatch'}.dc.html', next }; }`;
 // Matching: tap a word, then what it means. A right pair pops and goes green; a wrong one shakes and clears.
-const matchTile = (h, fs) => `<button type="button" onClick="{{m.pick}}" aria-pressed="{{m.pressed}}" class="sc-shake" style="min-height: ${h}px; box-sizing: border-box; padding: 10px 16px; display: flex; align-items: center; justify-content: space-between; gap: 10px; border: 0; border-radius: 18px; background: {{m.bg}}; color: {{m.fg}}; box-shadow: {{m.ring}}; opacity: {{m.op}}; animation: {{m.anim}}; font: inherit; font-size: ${fs}px; font-weight: 500; line-height: 1.3; text-align: left; cursor: {{m.cursor}}; transition: background-color .2s, opacity .3s, box-shadow .2s;"><span>{{m.label}}</span><sc-if value="{{m.check}}" hint-placeholder-val="{{ false }}"><span class="sc-tick" style="display: flex;">${svg(I.check, 16, 2.4)}</span></sc-if></button>`;
+const matchTile = (h, fs) => `<button type="button" onClick="{{m.pick}}" aria-pressed="{{m.pressed}}" class="sc-shake" style="min-height: ${h}px; box-sizing: border-box; padding: 10px 16px; display: flex; align-items: center; justify-content: space-between; gap: 10px; border: 0; border-radius: 18px; background: {{m.bg}}; color: {{m.fg}}; box-shadow: {{m.ring}}; opacity: {{m.op}}; transform: {{m.tf}}; animation: {{m.anim}}; font: inherit; font-size: ${fs}px; font-weight: 600; line-height: 1.3; text-align: left; cursor: {{m.cursor}}; transition: background-color .2s, opacity .3s, box-shadow .25s, transform .3s cubic-bezier(.2,.8,.2,1);"><span>{{m.label}}</span><sc-if value="{{m.check}}" hint-placeholder-val="{{ false }}"><span class="sc-tick" style="display: flex; color: {{k.check}};">${svg(I.check, 16, 2.6)}</span></sc-if></button>`;
 const matchCols = (h, fs, gap) => `<div style="display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr); gap: ${gap}px;"><div style="display: flex; flex-direction: column; gap: ${gap}px;"><sc-for list="{{left}}" as="m" hint-placeholder-count="5">${matchTile(h, fs)}</sc-for></div><div style="display: flex; flex-direction: column; gap: ${gap}px;"><sc-for list="{{right}}" as="m" hint-placeholder-count="5">${matchTile(h, fs)}</sc-for></div></div>`;
-const webQuizMatch = `<div style="position: relative; width: 1440px; height: 900px; box-sizing: border-box; display: flex; flex-direction: column; font-family: ${FONT}; background: {{t.bg}}; color: {{t.text}};">
+const webQuizMatch = `<div style="position: relative; isolation: isolate; width: 1440px; height: 900px; box-sizing: border-box; display: flex; flex-direction: column; overflow: hidden; font-family: ${FONT}; background: {{t.bg}}; color: {{k.ink}};">
+  ${skyFade(false)}
   ${learnTop('WebDeck.dc.html')}
   <main style="flex-grow: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;">
     <div class="sc-q" style="width: 760px; display: flex; flex-direction: column; gap: 20px; animation: {{qAnim}};">
       ${learnDots}
-      <h1 style="margin: 0; font-size: 30px; font-weight: 600; line-height: 1.25; letter-spacing: -.025em;">{{question}}</h1>
-      ${matchCols(60, 16, 10)}
-      <div style="min-height: 56px; display: flex; align-items: center; justify-content: space-between; gap: 20px;"><span style="font-size: 14px; color: {{t.muted}};">{{matchLine}}</span><sc-if value="{{allMatched}}" hint-placeholder-val="{{ false }}"><div class="sc-quiz-in" style="width: 180px; animation: scQuizIn .3s cubic-bezier(.2,.8,.2,1) both;">${learnNext(48, 15)}</div></sc-if></div>
+      <h1 style="margin: -10px 0 0; font-size: 36px; font-weight: 700; line-height: 1.15; letter-spacing: -.03em;">{{question}}</h1>
+      ${matchCols(60, 16, 12)}
+      <div style="min-height: 56px; display: flex; align-items: center; justify-content: space-between; gap: 20px;"><span style="font-size: 14px; color: {{k.ink2}};">{{matchLine}}</span><sc-if value="{{allMatched}}" hint-placeholder-val="{{ false }}"><div class="sc-quiz-in" style="width: 180px; animation: scQuizIn .3s cubic-bezier(.2,.8,.2,1) both;">${learnNext(52, 15)}</div></sc-if></div>
     </div>
   </main>
 </div>`;
-const phoneQuizMatch = `<div style="position: relative; width: 390px; height: 844px; box-sizing: border-box; padding: 60px 16px 34px; display: flex; flex-direction: column; gap: 18px; overflow: hidden; font-family: ${FONT}; background: {{t.bg}}; color: {{t.text}};">
+const phoneQuizMatch = `<div style="position: relative; isolation: isolate; width: 390px; height: 844px; box-sizing: border-box; padding: 60px 16px 34px; display: flex; flex-direction: column; gap: 18px; overflow: hidden; font-family: ${FONT}; background: {{t.bg}}; color: {{k.ink}};">
+  ${skyFade(true)}
   ${learnTopPhone('PhoneDeck.dc.html')}
   <div class="sc-q" style="display: flex; flex-direction: column; gap: 18px; animation: {{qAnim}};">
-    <div style="display: flex; flex-direction: column; gap: 10px; padding: 8px 4px 0;">${learnDots}<div style="font-size: 23px; font-weight: 600; line-height: 1.28; letter-spacing: -.02em;">{{question}}</div></div>
-    ${matchCols(64, 14, 8)}
-    <div style="padding: 0 4px; font-size: 14px; color: {{t.muted}};">{{matchLine}}</div>
+    <div style="display: flex; flex-direction: column; gap: 10px; padding: 8px 4px 0;">${learnDots}<div style="font-size: 24px; font-weight: 700; line-height: 1.2; letter-spacing: -.025em;">{{question}}</div></div>
+    ${matchCols(64, 14, 10)}
+    <div style="padding: 0 4px; font-size: 14px; color: {{k.ink2}};">{{matchLine}}</div>
   </div>
   <div style="flex-grow: 1;"></div>
   <sc-if value="{{allMatched}}" hint-placeholder-val="{{ false }}"><div style="display: flex; flex-direction: column;">${learnNext(56, 17)}</div></sc-if>
@@ -2762,40 +2787,43 @@ renderVals() { ${T}${DB_JS}
     v = view(18, 40, 9, 1, 0);
   }
   const all = doneIds.length === left.length;
-  const look = st => ({ bg: st === 'done' ? t.goodTint : st === 'wrong' ? t.againTint : st === 'sel' ? t.bg : t.surf, fg: st === 'done' ? t.good : st === 'wrong' ? t.again : t.text,
-    ring: st === 'sel' ? 'inset 0 0 0 2px ' + t.text : 'none', op: st === 'done' ? '.6' : '1', anim: st === 'wrong' ? 'scShake .35s ease' : st === 'done' ? 'scPop .32s ease' : 'none',
+  const look = st => ({ bg: st === 'wrong' ? K.gray : K.card, fg: st === 'wrong' ? K.grayInk : K.ink,
+    ring: st === 'sel' ? 'inset 0 0 0 2.5px ' + K.bar + ', ' + K.lift : st === 'idle' ? K.shadow : 'none', tf: st === 'sel' ? 'translateY(-3px)' : 'none',
+    op: st === 'done' ? '.55' : '1', anim: st === 'wrong' ? 'scShake .35s ease' : st === 'done' ? 'scPop .32s ease' : 'none',
     check: st === 'done', cursor: st === 'done' ? 'default' : 'pointer', pressed: st === 'sel' ? 'true' : 'false' });
-  return { t, dark: !!this.props.dark, ...v, kind: 'Matching', dots: [{ bg: t.surf2, anim: 'none' }, { bg: t.surf2, anim: 'none' }], question: L ? 'Match each one to its answer.' : 'Match each organelle to what it does.', allMatched: all,
+  return { t, dark: !!this.props.dark, ...v, kind: 'Matching', dots: [{ bg: K.other, anim: 'none' }, { bg: K.other, anim: 'none' }], question: L ? 'Match each one to its answer.' : 'Match each organelle to what it does.', allMatched: all,
     matchLine: all ? 'All ' + left.length + ' matched.' : (left.length - doneIds.length) + ' pair' + (left.length - doneIds.length === 1 ? '' : 's') + ' to go',
     left: left.map(x => ({ label: x.label, ...look(doneIds.includes(x.id) ? 'done' : wrong && wrong[0] === x.id ? 'wrong' : sel === x.id ? 'sel' : 'idle'), pick: () => { if (!doneIds.includes(x.id)) pickL(x.id); } })),
     right: right.map(x => ({ label: x.label, ...look(doneIds.includes(x.id) ? 'done' : wrong && wrong[1] === x.id ? 'wrong' : 'idle'), pick: () => { if (!doneIds.includes(x.id)) pickR(x.id); } })),
     isLast: last, notLast: !last, afterHref: '${phone ? 'PhoneQuizType' : 'WebQuizType'}.dc.html', next }; }`;
 // Typing the answer: close spelling counts, and "I was right" takes another word for the same thing.
-const typeRow = (h, fs) => `<div style="display: flex; gap: 10px;"><input type="text" value="{{typed}}" onChange="{{setTyped}}" onKeyDown="{{typedKey}}" ref="{{focusIn}}" placeholder="Type your answer" aria-label="Your answer" autocomplete="off" autocapitalize="off" spellcheck="false" style="flex-grow: 1; min-width: 0; height: ${h}px; box-sizing: border-box; padding: 0 20px; border: 0; outline: 0; border-radius: 20px; background: {{inputBg}}; box-shadow: {{inputRing}}; color: {{t.text}}; font: inherit; font-size: ${fs}px; animation: {{inputAnim}}; transition: background-color .2s, box-shadow .2s;"><sc-if value="{{notChecked}}" hint-placeholder-val="{{ false }}"><button type="button" onClick="{{check}}" style="height: ${h}px; padding: 0 26px; border: 0; border-radius: 999px; background: {{t.inv}}; color: {{t.invText}}; font: inherit; font-size: 15px; font-weight: 600; cursor: pointer;">Check</button></sc-if></div>`;
-const typeOverride = `<sc-if value="{{canOverride}}" hint-placeholder-val="{{ false }}"><button type="button" onClick="{{override}}" style="align-self: flex-start; height: 36px; padding: 0 14px; border: 0; border-radius: 999px; background: {{t.surf}}; color: {{t.text}}; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer;">I was right</button></sc-if>`;
-const webQuizType = `<div style="position: relative; width: 1440px; height: 900px; box-sizing: border-box; display: flex; flex-direction: column; font-family: ${FONT}; background: {{t.bg}}; color: {{t.text}};">
+const typeRow = (h, fs) => `<div style="display: flex; gap: 10px;"><input type="text" value="{{typed}}" onChange="{{setTyped}}" onKeyDown="{{typedKey}}" ref="{{focusIn}}" placeholder="Type your answer" aria-label="Your answer" autocomplete="off" autocapitalize="off" spellcheck="false" style="flex-grow: 1; min-width: 0; height: ${h}px; box-sizing: border-box; padding: 0 20px; border: 0; outline: 0; border-radius: 20px; background: {{inputBg}}; box-shadow: {{inputRing}}; color: {{inputFg}}; font: inherit; font-size: ${fs}px; font-weight: 600; transform: {{inputTf}}; animation: {{inputAnim}}; transition: background-color .2s, box-shadow .25s, transform .3s cubic-bezier(.2,.8,.2,1);"><sc-if value="{{notChecked}}" hint-placeholder-val="{{ false }}"><button type="button" onClick="{{check}}" style="height: ${h}px; padding: 0 26px; border: 0; border-radius: 999px; background: {{k.btn}}; color: {{k.btnFg}}; font: inherit; font-size: 15px; font-weight: 600; cursor: pointer;">Check</button></sc-if></div>`;
+const typeOverride = `<sc-if value="{{canOverride}}" hint-placeholder-val="{{ false }}"><button type="button" onClick="{{override}}" style="align-self: flex-start; height: 36px; padding: 0 14px; border: 0; border-radius: 999px; background: {{k.card}}; box-shadow: {{k.shadow}}; color: {{k.ink}}; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer;">I was right</button></sc-if>`;
+const webQuizType = `<div style="position: relative; isolation: isolate; width: 1440px; height: 900px; box-sizing: border-box; display: flex; flex-direction: column; overflow: hidden; font-family: ${FONT}; background: {{t.bg}}; color: {{k.ink}};">
+  ${skyFade(false)}
   ${learnTop('WebDeck.dc.html')}
   <main style="flex-grow: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;">
     <div class="sc-q" style="width: 720px; display: flex; flex-direction: column; gap: 20px; animation: {{qAnim}};">
       ${learnDots}
-      <h1 style="margin: 0; font-size: 30px; font-weight: 600; line-height: 1.25; letter-spacing: -.025em; text-wrap: pretty;">{{question}}</h1>
+      <h1 style="margin: -10px 0 0; font-size: 36px; font-weight: 700; line-height: 1.15; letter-spacing: -.03em; text-wrap: pretty;">{{question}}</h1>
       ${learnImage(240)}
-      ${typeRow(60, 18)}
-      <span style="font-size: 13px; color: {{t.muted}};">Close spelling counts.</span>
+      ${typeRow(64, 18)}
+      <span style="font-size: 13px; color: {{k.ink2}};">Close spelling counts.</span>
       <div style="min-height: 150px;"><sc-if value="{{checked}}" hint-placeholder-val="{{ true }}"><div class="sc-quiz-in" style="display: flex; flex-direction: column; gap: 14px; animation: scQuizIn .3s cubic-bezier(.2,.8,.2,1) both;">
-        ${learnWhy}${typeOverride}
-        <div style="display: flex; align-items: flex-end; justify-content: space-between; gap: 20px;">${quizFrom}<div style="flex-shrink: 0; width: 180px;">${learnNext(48, 15)}</div></div>
+        ${learnWhy()}${typeOverride}
+        <div style="display: flex; align-items: flex-end; justify-content: space-between; gap: 20px;">${quizFrom}<div style="flex-shrink: 0; width: 180px;">${learnNext(52, 15)}</div></div>
       </div></sc-if></div>
     </div>
   </main>
 </div>`;
-const phoneQuizType = `<div style="position: relative; width: 390px; height: 844px; box-sizing: border-box; padding: 60px 16px 34px; display: flex; flex-direction: column; gap: 16px; overflow: hidden; font-family: ${FONT}; background: {{t.bg}}; color: {{t.text}};">
+const phoneQuizType = `<div style="position: relative; isolation: isolate; width: 390px; height: 844px; box-sizing: border-box; padding: 60px 16px 34px; display: flex; flex-direction: column; gap: 16px; overflow: hidden; font-family: ${FONT}; background: {{t.bg}}; color: {{k.ink}};">
+  ${skyFade(true)}
   ${learnTopPhone('PhoneDeck.dc.html')}
   <div class="sc-q" style="display: flex; flex-direction: column; gap: 16px; animation: {{qAnim}};">
-    <div style="display: flex; flex-direction: column; gap: 10px; padding: 8px 4px 0;">${learnDots}<div style="font-size: 23px; font-weight: 600; line-height: 1.28; letter-spacing: -.02em;">{{question}}</div>${learnImage(180)}</div>
+    <div style="display: flex; flex-direction: column; gap: 10px; padding: 8px 4px 0;">${learnDots}<div style="font-size: 24px; font-weight: 700; line-height: 1.2; letter-spacing: -.025em;">{{question}}</div>${learnImage(180)}</div>
     ${typeRow(56, 16)}
-    <span style="padding: 0 4px; font-size: 13px; color: {{t.muted}};">Close spelling counts.</span>
-    <sc-if value="{{checked}}" hint-placeholder-val="{{ true }}"><div class="sc-quiz-in" style="display: flex; flex-direction: column; gap: 12px; padding: 0 4px; animation: scQuizIn .3s cubic-bezier(.2,.8,.2,1) both;">${learnWhy}${typeOverride}${quizFrom}</div></sc-if>
+    <span style="padding: 0 4px; font-size: 13px; color: {{k.ink2}};">Close spelling counts.</span>
+    <sc-if value="{{checked}}" hint-placeholder-val="{{ true }}"><div class="sc-quiz-in" style="display: flex; flex-direction: column; gap: 12px; padding: 0 4px; animation: scQuizIn .3s cubic-bezier(.2,.8,.2,1) both;">${learnWhy(16)}${typeOverride}${quizFrom}</div></sc-if>
   </div>
   <div style="flex-grow: 1;"></div>
   <sc-if value="{{checked}}" hint-placeholder-val="{{ true }}"><div style="display: flex; flex-direction: column;">${learnNext(56, 17)}</div></sc-if>
@@ -2826,7 +2854,8 @@ renderVals() { ${T}${DB_JS}
     setTyped: e => { const x = e && e.target ? e.target.value : ''; if (L) this.state.typed = x; else this.setState({ typed: x, checked: false }); },
     typedKey: e => { if (e && e.key === 'Enter' && !checked) { if (e.preventDefault) e.preventDefault(); check(); } },
     focusIn: el => { if (L && el && !checked && document.activeElement !== el) el.focus(); },
-    inputBg: !checked ? t.surf : ok ? t.goodTint : t.againTint, inputRing: !checked ? 'none' : 'inset 0 0 0 2px ' + (ok ? t.good : t.again), inputAnim: checked && !ok ? 'scShake .35s ease' : 'none',
+    inputBg: checked && !ok ? K.gray : K.card, inputFg: checked && !ok ? K.grayInk : K.ink, inputTf: checked && ok ? 'translateY(-3px)' : 'none',
+    inputRing: !checked ? K.shadow : ok ? 'inset 0 0 0 2.5px ' + K.check + ', ' + K.lift : 'none', inputAnim: checked && !ok ? 'scShake .35s ease' : 'none',
     verdict: ok ? (learnedNow ? 'Learned.' : 'Right.') : 'Not quite.', verdictColor: ok ? t.good : t.again, why,
     cardFront: question, cardBack: answer, isLast: last, notLast: !last, afterHref: '${phone ? 'PhoneQuizDone' : 'WebQuizDone'}.dc.html' }; }`;
 // The end: every card learned, what took the most tries, and that they're in your reviews now. The sky's faint blue
@@ -3213,7 +3242,6 @@ const liveShape = (i, s) => `<svg width="${s}" height="${s}" viewBox="0 0 24 24"
 // The lobby, the leaderboard, and a phone's join and waiting screens are on the daylight sky; the big screen's question
 // and answer are on white (V74); a phone's answering is blue; green means you got it; yellow means not quite; the end
 // is a faint yellow fading to white (V76). The answers are tiles in vivid gradients. The screens stay bright in dark mode.
-const LV = { blue: '#7ACFEA', green: '#62DE8A', yellow: '#FFD84A', navy: '#0D1542', ink2: 'rgba(13,21,66,.68)', chip: 'rgba(255,255,255,.55)', check: '#16C64A', gray: '#C4CBD5', grayInk: '#5D6677', purple: '#4F60E6', shadow: '0 10px 24px -16px rgba(13,21,66,.35)', lift: '0 26px 48px -20px rgba(13,21,66,.5)' };
 // The four answers: tiles in vivid gradients (the decks' "Vivid" style, generator.mjs), with white words. The owner
 // asked for the deep set in V72, then for "brighter gradients than this" (V76). These seeds give four clearly different
 // colors, blue, purple, orange, and magenta, each dark side on the left behind the words (the 225° angle, unflipped).
@@ -3241,8 +3269,6 @@ const LIVE_QR = (() => {
 })();
 // The right answer rises and then hovers above the others, bobbing gently (the owner: no tilt, "make it appear like it is
 // hovering above the rest and that should be an animation", V77). It holds at `a` with Reduce Motion.
-const HOVER_CSS = (a, b) => `@keyframes scLiftIn{from{transform:none}to{transform:translateY(${a}px)}}@keyframes scHover{from{transform:translateY(${a}px)}to{transform:translateY(${b}px)}}`;
-const HOVER = (a, delay) => `scLiftIn .45s cubic-bezier(.2,.8,.2,1) ${delay}s both, scHover 2.4s ease-in-out ${delay + .45}s infinite alternate`;
 const LIVE_CSS = '@keyframes scTimer{from{stroke-dashoffset:0}to{stroke-dashoffset:1}}@keyframes scJoin{from{opacity:0;transform:scale(.6)}}@keyframes scBar{from{transform:scaleX(0)}}@keyframes scRiseUp{from{opacity:0;transform:translateY(40px)}}@keyframes scFloat2{50%{transform:translateY(-6px)}}@keyframes scPop{from{transform:scale(0)}}'
   + '@keyframes scDealR{from{opacity:0;transform:translate(40px,30px)}}@keyframes scDealL{from{opacity:0;transform:translate(-30px,30px)}}'
   + HOVER_CSS(-10, -15)
@@ -3424,67 +3450,34 @@ const LIVE_SETUP_LOGIC = LIVE_LOGIC.replace('  return { t,', '  return { deep: '
 const LIVE_FINAL_LOGIC = LIVE_LOGIC.replace('    r: wrongPick ? {', `    rest: ${JSON.stringify(LIVE_FINAL_REST)}.map(([name, score], i, all) => ({ rank: String(i + 4), name, initial: name[0], score, color: colors[(i + 3) % colors.length], line: i < all.length - 1 ? 'inset 0 -1px 0 rgba(13,21,66,.08)' : 'none', delay: (.8 + i * .08).toFixed(2) + 's' })),
     r: wrongPick ? {`);
 
-// ---------- Learn mode: style ideas (canvas only) ----------
-// The owner asked to see Learn mode's question in styles "with some more color and character" (V73). Two ideas, with
-// the same questions and logic as WebQuiz (tap an answer on the canvas), each also shown answered:
-// - Sky: the sky's faint blue fade (no clouds, V75), big navy words, and white answer cards with colored numbers. The right answer
-//   rises and hovers with a green check (V77: no tilt), and the rest turn gray (Live's rules).
-// - Deep card: the page stays white, and the question sits on a deep gradient card (the start card's Midnight) like the
-//   front of a flashcard, with the answers on soft tints of their colors. The right answer turns green.
-// The four colors skip green and red, which mean right and wrong here.
-const IDEA_COLORS = ['#4F60E6', '#F2701D', '#0E8FB0', '#E5407E'];
-const IDEA_TINTS = ['#ECEEFD', '#FDEEE4', '#E1F2F7', '#FCE8F0'];
-const ideaMark = `<sc-if value="{{o.plain}}" hint-placeholder-val="{{ true }}">{{o.key}}</sc-if><sc-if value="{{o.isRight}}" hint-placeholder-val="{{ false }}"><span class="sc-tick" style="display: flex;">${svg(I.check, 18, 2.6)}</span></sc-if><sc-if value="{{o.isWrong}}" hint-placeholder-val="{{ false }}">${svg(I.close, 16, 2.6)}</sc-if>`;
-const ideaOption = (h, r, fs) => `<button type="button" class="sc-opt" onClick="{{o.pick}}" data-key="{{o.key}}" aria-pressed="{{o.pressed}}" style="min-height: ${h}px; box-sizing: border-box; padding: 10px 20px 10px 12px; display: flex; align-items: center; gap: 16px; border: 0; border-radius: ${r}px; background: {{o.bg}}; color: {{o.fg}}; box-shadow: {{o.shadow}}; transform: {{o.tf}}; animation: {{o.anim}}; font: inherit; font-size: ${fs}px; font-weight: 600; text-align: left; cursor: {{o.cursor}}; transition: background-color .25s, color .25s, box-shadow .35s, transform .35s cubic-bezier(.2,.8,.2,1);"><span style="width: 40px; height: 40px; flex-shrink: 0; border-radius: 20px; background: {{o.badge}}; color: {{o.badgeFg}}; display: flex; align-items: center; justify-content: center; font-size: 16px; font-weight: 700; transition: background-color .25s, color .25s;">${ideaMark}</span><span style="flex-grow: 1;">{{o.label}}</span></button>`;
-const ideaNext = (bg, fg) => learnNext(52, 15).split('{{t.inv}}').join(bg).split('{{t.invText}}').join(fg);
-const webQuizSky = `<div style="position: relative; isolation: isolate; width: 1440px; height: 900px; box-sizing: border-box; display: flex; flex-direction: column; overflow: hidden; font-family: ${FONT}; background: #FFFFFF; color: ${LV.navy};">
-  ${skyFade(false)}
-  <header style="height: 76px; flex-shrink: 0; box-sizing: border-box; padding: 0 32px; display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: center; gap: 16px;">
-    <div style="display: flex;"><a href="WebDeck.dc.html" aria-label="Stop for now" title="Stop for now" style="width: 40px; height: 40px; border-radius: 20px; background: rgba(255,255,255,.72); display: flex; align-items: center; justify-content: center;">${svg(I.close, 16, 2.2)}</a></div>
-    <div style="display: flex; align-items: center; gap: 14px;"><div style="width: 360px; height: 10px; border-radius: 5px; background: rgba(255,255,255,.62); overflow: hidden; display: flex;"><div style="width: {{doneW}}; background: ${LV.purple}; transition: width .5s cubic-bezier(.2,.8,.2,1);"></div><div style="width: {{partW}}; background: rgba(79,96,230,.38); transition: width .5s cubic-bezier(.2,.8,.2,1);"></div></div><span role="status" style="font-size: 14px; white-space: nowrap;"><span style="font-weight: 700;">{{learned}}</span> of {{total}} learned</span></div>
-    <div style="display: flex; justify-content: flex-end;"><span style="height: 34px; padding: 0 14px; display: inline-flex; align-items: center; gap: 6px; border-radius: 999px; background: rgba(255,255,255,.72); font-size: 13px; font-weight: 600; white-space: nowrap;">${svg(I.sparkle, 14, 1.8)}<span>Learn · {{setName}}</span></span></div>
-  </header>
-  <main style="flex-grow: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;">
-    <div class="sc-q" style="width: 720px; display: flex; flex-direction: column; gap: 22px; animation: {{qAnim}};">
-      ${learnDots}
-      <h1 style="margin: -10px 0 0; font-size: 36px; font-weight: 700; line-height: 1.15; letter-spacing: -.03em; text-wrap: pretty;">{{question}}</h1>
-      <sc-if value="{{hasClaim}}" hint-placeholder-val="{{ false }}"><div style="padding: 16px 20px; border-radius: 20px; background: #FFFFFF; box-shadow: ${LV.shadow}; font-size: 20px; font-weight: 700; line-height: 1.35;">{{claim}}</div></sc-if>
-      <div style="display: flex; flex-direction: column; gap: 12px;"><sc-for list="{{options}}" as="o" hint-placeholder-count="4">${ideaOption(64, 22, 18)}</sc-for></div>
-      <div style="min-height: 150px;"><sc-if value="{{answered}}" hint-placeholder-val="{{ false }}"><div class="sc-quiz-in" style="display: flex; flex-direction: column; gap: 14px; animation: scQuizIn .3s cubic-bezier(.2,.8,.2,1) both;">
-        <div style="font-size: 17px; line-height: 1.5;"><span style="font-weight: 700; color: {{verdictColor}};">{{verdict}}</span> {{why}}</div>
-        <div style="display: flex; align-items: flex-end; justify-content: space-between; gap: 20px;"><div style="min-width: 0; display: flex; flex-direction: column; gap: 4px; padding: 12px 16px; border-radius: 18px; background: #FFFFFF; box-shadow: ${LV.shadow}; font-size: 13px; line-height: 1.4;"><span style="color: ${LV.ink2};">From your card</span><span style="min-width: 0;">{{cardFront}} <span style="color: ${LV.ink2};">→</span> <span style="font-weight: 700;">{{cardBack}}</span></span></div><div style="flex-shrink: 0; width: 180px;">${ideaNext(LV.navy, '#FFFFFF')}</div></div>
-      </div></sc-if></div>
-    </div>
-  </main>
-</div>`;
-const webQuizDeep = `<div style="position: relative; width: 1440px; height: 900px; box-sizing: border-box; display: flex; flex-direction: column; font-family: ${FONT}; background: {{t.bg}}; color: {{t.text}};">
-  ${learnTop('WebDeck.dc.html')}
-  <main style="flex-grow: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;">
-    <div class="sc-q" style="width: 760px; display: flex; flex-direction: column; gap: 14px; animation: {{qAnim}};">
-      ${meshCard('deep', 'border-radius: 32px; box-shadow: 0 30px 60px -32px rgba(20,22,90,.6);', 'box-sizing: border-box; min-height: 240px; padding: 30px 34px 34px; display: flex; flex-direction: column; justify-content: space-between; gap: 30px;', `<span title="Right twice in a row and it’s learned" style="display: inline-flex; gap: 5px;"><sc-for list="{{ddots}}" as="d" hint-placeholder-count="2"><span class="sc-dot" style="width: 9px; height: 9px; border-radius: 5px; background: {{d.bg}}; animation: {{d.anim}};"></span></sc-for></span><h1 style="margin: 0; font-size: 32px; font-weight: 600; line-height: 1.22; letter-spacing: -.025em; text-wrap: pretty;">{{question}}</h1>`)}
-      <sc-if value="{{hasClaim}}" hint-placeholder-val="{{ false }}"><div style="padding: 16px 20px; border-radius: 20px; background: {{t.surf}}; font-size: 20px; font-weight: 600; line-height: 1.35;">{{claim}}</div></sc-if>
-      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;"><sc-for list="{{options}}" as="o" hint-placeholder-count="4">${ideaOption(84, 24, 17)}</sc-for></div>
-      <div style="min-height: 150px; margin-top: 8px;"><sc-if value="{{answered}}" hint-placeholder-val="{{ false }}"><div class="sc-quiz-in" style="display: flex; flex-direction: column; gap: 14px; animation: scQuizIn .3s cubic-bezier(.2,.8,.2,1) both;">
-        ${learnWhy}
-        <div style="display: flex; align-items: flex-end; justify-content: space-between; gap: 20px;">${quizFrom}<div style="flex-shrink: 0; width: 180px;">${learnNext(48, 15)}</div></div>
-      </div></sc-if></div>
-    </div>
-  </main>
-</div>`;
-// The ideas' logic: WebQuiz's, with each answer's look for the idea on top.
-const IDEA_LOGIC = style => QUIZ_LOGIC(false).replace('renderVals() {', 'baseVals() {') + `
-renderVals() { const v = this.baseVals(), t = v.t, done = v.answered, C = ${JSON.stringify(IDEA_COLORS)}, TINT = ${JSON.stringify(IDEA_TINTS)}, LV = ${JSON.stringify(LV)};
-  const look = ${style === 'sky' ? `(o, j) => { const other = done && o.plain;
-    return { bg: o.isWrong || other ? LV.gray : '#FFFFFF', fg: o.isWrong || other ? LV.grayInk : LV.navy, shadow: o.isRight ? LV.lift : o.isWrong || other ? 'none' : LV.shadow,
-      tf: o.isRight ? 'translateY(-5px)' : 'none', anim: o.isRight ? '${HOVER(-5, 0)}' : o.anim, badge: o.isRight ? LV.check : o.isWrong ? LV.navy : other ? 'rgba(13,21,66,.12)' : C[j], badgeFg: other ? LV.grayInk : '#FFFFFF' }; }`
-    : `(o, j) => { const other = done && o.plain;
-    return { bg: o.isRight ? '#12A150' : o.isWrong ? LV.gray : other ? '#F1F2F5' : TINT[j], fg: o.isRight ? '#FFFFFF' : o.isWrong ? LV.grayInk : other ? '#8A909C' : t.text,
-      shadow: o.isRight ? '0 18px 36px -18px rgba(18,161,80,.75)' : 'none', tf: o.isRight ? 'translateY(-3px)' : 'none',
-      badge: o.isRight ? 'rgba(255,255,255,.24)' : o.isWrong ? LV.navy : other ? '#DADDE3' : C[j], badgeFg: other ? '#8A909C' : '#FFFFFF' }; }`};
-  return { ...v, sky: ${SKY}, deep: ${MIDNIGHT}, grain: String(this.props.grain ?? 0.7),
-    ddots: v.dots.map(d => ({ ...d, bg: d.bg === t.surf2 ? 'rgba(255,255,255,.3)' : '#FFFFFF' })),
-    ${style === 'sky' ? "dots: v.dots.map(d => ({ ...d, bg: d.bg === t.surf2 ? 'rgba(13,21,66,.16)' : LV.purple }))," : ''}
-    options: v.options.map((o, j) => ({ ...o, ...look(o, j) })) }; }`;
+// ---------- Learn mode: an idea (canvas only) ----------
+// The owner picked the sky style for Learn mode and asked to "also try a faint gradient waves" (V82). The same question,
+// with three soft waves of faint color drifting slowly behind the top, instead of the plain fade. Each wave is a
+// sideways gradient (periwinkle, sky, lilac, pink) that melts into the page at the bottom; at night they glow faintly.
+// Reduced motion holds them still.
+// A ribbon: a band that swells and thins as it rolls across (1440 x 600 box).
+const ribbon = (base, amp, period, phase, thick) => {
+  const top = [], bottom = [];
+  for (let x = -48; x <= 1488; x += 24) {
+    const a = 2 * Math.PI * x / period + phase, y = base + amp * Math.sin(a), h = thick * (.72 + .28 * Math.sin(a * .6 + 1));
+    top.push(x + ' ' + (y - h / 2).toFixed(1)); bottom.unshift(x + ' ' + (y + h / 2).toFixed(1));
+  }
+  return 'M' + top.join('L') + 'L' + bottom.join('L') + 'Z';
+};
+const WAVES = [
+  { d: ribbon(110, 56, 1180, .4, 170), stops: ['#8C9AFC', '#7ACFEA', '#C4A7FF'], op: .30, secs: 26 },
+  { d: ribbon(250, 66, 1380, 2.2, 130), stops: ['#7ACFEA', '#C4A7FF', '#F9A8D4'], op: .24, secs: 34 },
+  { d: ribbon(370, 50, 960, 4.1, 104), stops: ['#F9A8D4', '#8C9AFC', '#7ACFEA'], op: .20, secs: 42 }
+];
+const wavesLayer = phone => `<div aria-hidden="true" style="position: absolute; left: 0; right: 0; top: 0; height: ${phone ? 520 : 640}px; z-index: -1; overflow: hidden; pointer-events: none; -webkit-mask-image: linear-gradient(180deg, #000 60%, transparent); mask-image: linear-gradient(180deg, #000 60%, transparent);">${WAVES.map((w, i) => `<svg class="sc-wave" viewBox="0 0 1440 600" preserveAspectRatio="none" style="position: absolute; left: -10%; top: 0; width: 120%; height: 100%; opacity: {{waveOp}}; animation: scWave${i} ${w.secs}s ease-in-out -${i * 7}s infinite alternate;"><defs><linearGradient id="lcw${phone ? 'p' : 'w'}${i}" x1="0" x2="1" y1="0" y2="0">${w.stops.map((c, j) => `<stop offset="${j / (w.stops.length - 1)}" stop-color="${c}" stop-opacity="${w.op}"/>`).join('')}</linearGradient></defs><path d="${w.d}" fill="url(#lcw${phone ? 'p' : 'w'}${i})"/></svg>`).join('')}</div>`;
+const WAVES_CSS = WAVES.map((w, i) => `@keyframes scWave${i}{from{transform:translateX(${i % 2 ? '' : '-'}3%)}to{transform:translateX(${i % 2 ? '-' : ''}3%)}}`).join('') + '@media (prefers-reduced-motion:reduce){.sc-wave{animation:none!important}}';
+const webQuizWaves = webQuizOf(wavesLayer(false));
+const phoneQuizWaves = phoneQuizOf(wavesLayer(true));
+// Its logic: the question's, plus how strongly the waves show (softer at night).
+const WAVES_LOGIC = phone => QUIZ_LOGIC(phone).replace('renderVals() {', 'baseVals() {') + `
+renderVals() { const v = this.baseVals(), dark = !!this.props.dark;
+  // On a white page the top's chips and track need a touch of gray to show.
+  return { ...v, waveOp: dark ? '.55' : '1', k: dark ? v.k : { ...v.k, chip: 'rgba(13,21,66,.06)', track: 'rgba(13,21,66,.08)' } }; }`;
 
 // ---------- Pricing (lucida.cards/pricing) ----------
 // Free keeps every card. Pro ($5.99 a month or $39 a year) is for making Lucida yours: AI quizzes, photo covers and
@@ -3655,10 +3648,8 @@ const files = {
   'WebQuizMatch': ['Web · Learn mode · matching', webQuizMatch, { props: DARK, logic: MATCH_LOGIC(false), css: LEARN_CSS, w: W, h: H }],
   'WebQuizType': ['Web · Learn mode · type the answer', webQuizType, { props: DARK, logic: TYPE_LOGIC(false), css: LEARN_CSS, w: W, h: H }],
   'WebQuizDone': ['Web · Learn mode · all learned', webQuizDone, { props: DARK, logic: QUIZ_DONE_LOGIC, css: LEARN_CSS, w: W, h: H }],
-  'WebQuizSky': ['Web · Learn mode · style idea 1: sky', webQuizSky, { props: { answered: { editor: 'boolean', default: false } }, logic: IDEA_LOGIC('sky'), css: LEARN_CSS + HOVER_CSS(-5, -9), w: W, h: H }],
-  'WebQuizSkyAnswered': ['Web · Learn mode · style idea 1: sky, answered', attrOf('WebQuizSky', W, H, 'answered="{{yes}}"'), { logic: darkLogic, css: LEARN_CSS + HOVER_CSS(-5, -9), w: W, h: H }],
-  'WebQuizDeep': ['Web · Learn mode · style idea 2: deep card', webQuizDeep, { props: { answered: { editor: 'boolean', default: false }, grain: MESH('Iris').grain }, logic: IDEA_LOGIC('deep'), css: LEARN_CSS, w: W, h: H }],
-  'WebQuizDeepAnswered': ['Web · Learn mode · style idea 2: deep card, answered', attrOf('WebQuizDeep', W, H, 'answered="{{yes}}"'), { logic: darkLogic, css: LEARN_CSS, w: W, h: H }],
+  'WebQuizWaves': ['Web · Learn mode · idea: faint gradient waves', webQuizWaves, { props: { ...DARK, answered: { editor: 'boolean', default: false } }, logic: WAVES_LOGIC(false), css: LEARN_CSS + WAVES_CSS, w: W, h: H }],
+  'PhoneQuizWaves': ['iPhone · Learn mode · idea: faint gradient waves', phoneQuizWaves, { props: { ...DARK, answered: { editor: 'boolean', default: false } }, logic: WAVES_LOGIC(true), css: LEARN_CSS + WAVES_CSS, w: PW, h: PH }],
   'PhoneQuizStart': ['iPhone · Learn mode · start (Pro)', phoneQuizStart(true), { props: DARK, logic: QUIZ_START_LOGIC(true, true), w: PW, h: PH }],
   'PhoneQuizUpgrade': ['iPhone · Learn mode · on Free: go Pro', phoneQuizStart(false), { props: { ...DARK, grain: MESH('Iris').grain }, logic: QUIZ_START_LOGIC(true), w: PW, h: PH }],
   'PhoneQuiz': ['iPhone · Learn mode · choice question', phoneQuiz, { props: { ...DARK, answered: { editor: 'boolean', default: false } }, logic: QUIZ_LOGIC(true), css: LEARN_CSS, w: PW, h: PH }],

@@ -1036,38 +1036,22 @@
       "x": 0,
       "y": 0
     },
-    "WebQuizSky.dc.html": {
+    "WebQuizWaves.dc.html": {
       "h": 900,
       "is_interactive": true,
       "page": "quiz",
-      "title": "Web · Learn mode · style idea 1: sky (tap an answer)",
+      "title": "Web · Learn mode · idea: faint gradient waves (tap an answer)",
       "w": 1440,
       "x": 0,
       "y": 2584
     },
-    "WebQuizSkyAnswered.dc.html": {
-      "h": 900,
-      "page": "quiz",
-      "title": "Web · Learn mode · style idea 1: sky, answered",
-      "w": 1440,
-      "x": 1520,
-      "y": 2584
-    },
-    "WebQuizDeep.dc.html": {
-      "h": 900,
+    "PhoneQuizWaves.dc.html": {
+      "h": 844,
       "is_interactive": true,
       "page": "quiz",
-      "title": "Web · Learn mode · style idea 2: deep card (tap an answer)",
-      "w": 1440,
-      "x": 3040,
-      "y": 2584
-    },
-    "WebQuizDeepAnswered.dc.html": {
-      "h": 900,
-      "page": "quiz",
-      "title": "Web · Learn mode · style idea 2: deep card, answered",
-      "w": 1440,
-      "x": 4560,
+      "title": "iPhone · Learn mode · idea: faint gradient waves (tap an answer)",
+      "w": 390,
+      "x": 1520,
       "y": 2584
     }
   },
@@ -1317,9 +1301,9 @@
     },
     "qIdeas": {
       "kind": "title1",
-      "maxW": 6000,
+      "maxW": 1910,
       "page": "quiz",
-      "text": "Learn mode · style ideas (more color)",
+      "text": "Learn mode · idea: faint gradient waves",
       "w": 240,
       "x": 0,
       "y": 2284
@@ -1441,10 +1425,8 @@
     "LiveResult.dc.html",
     "LiveResultWrong.dc.html",
     "LiveFinal.dc.html",
-    "WebQuizSky.dc.html",
-    "WebQuizSkyAnswered.dc.html",
-    "WebQuizDeep.dc.html",
-    "WebQuizDeepAnswered.dc.html"
+    "WebQuizWaves.dc.html",
+    "PhoneQuizWaves.dc.html"
   ],
   "pages": [
     {
