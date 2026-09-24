@@ -1040,7 +1040,7 @@
       "h": 900,
       "is_interactive": true,
       "page": "quiz",
-      "title": "Web · Learn mode · idea: noisy gradient, white with faint color (tap an answer)",
+      "title": "Web · Learn mode · idea: white silk with grain (tap an answer)",
       "w": 1440,
       "x": 0,
       "y": 2584
@@ -1049,7 +1049,7 @@
       "h": 844,
       "is_interactive": true,
       "page": "quiz",
-      "title": "iPhone · Learn mode · idea: noisy gradient, white with faint color (tap an answer)",
+      "title": "iPhone · Learn mode · idea: white silk with grain (tap an answer)",
       "w": 390,
       "x": 1520,
       "y": 2584
@@ -1303,7 +1303,7 @@
       "kind": "title1",
       "maxW": 1910,
       "page": "quiz",
-      "text": "Learn mode · idea: noisy gradient, white with faint color",
+      "text": "Learn mode · idea: white silk with grain",
       "w": 240,
       "x": 0,
       "y": 2284
