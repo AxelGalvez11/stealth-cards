@@ -114,14 +114,15 @@ async function media(req, res, name, uid) {
   return files(req, res, name, MEDIA);
 }
 
+// The app's page is app.html, not index.html: on Vercel an index.html would answer lucida.cards before its landing page.
 async function files(req, res, path, root) {
   let file = join(root, path);
   if (!inside(root, file)) return send(res, 403, 'Forbidden', 'text/plain');
   try {
-    if ((await stat(file)).isDirectory()) file = join(file, 'index.html');
+    if ((await stat(file)).isDirectory()) file = join(file, 'app.html');
   } catch {
     if (extname(path) || root !== ROOT) return send(res, 404, 'Not found', 'text/plain');
-    file = join(ROOT, 'index.html');
+    file = join(ROOT, 'app.html');
   }
   try { send(res, 200, await readFile(file), TYPES[extname(file)] || 'application/octet-stream'); }
   catch { send(res, 404, 'Not found', 'text/plain'); }

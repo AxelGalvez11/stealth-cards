@@ -1,6 +1,6 @@
 // Local server for the web app. No packages needed: `node web/server.mjs`, then open http://localhost:3000.
 // It serves the app, saves your data (see store.mjs), and hosts the MCP link for AI apps at /mcp (see handler.mjs).
-// Pages without a file (like /decks) get index.html, and the app shows the right screen.
+// Pages without a file (like /decks) get app.html, and the app shows the right screen.
 import { createServer } from 'node:http';
 import { fileURLToPath } from 'node:url';
 

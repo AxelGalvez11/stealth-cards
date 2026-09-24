@@ -12,6 +12,6 @@
     { "source": "/mcp", "destination": "/api/index" },
     { "source": "/mcp/:path*", "destination": "/api/index" },
     { "source": "/media/:path*", "destination": "/api/index" },
-    { "source": "/((?!.*\\.).*)", "destination": "/index.html" }
+    { "source": "/((?!.*\\.).*)", "destination": "/app.html" }
   ]
 }
