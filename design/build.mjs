@@ -2568,6 +2568,9 @@ const skyLayer = phone => `<div aria-hidden="true" class="sc-demo" style="positi
   ${SKY_CLOUDS[phone ? 'phone' : 'web'].map(([x, y, w, h, secs], i) => `<div class="sc-cloud" style="position: absolute; left: ${x}%; top: ${y}px; width: ${w}px; height: ${h}px; animation: scCloud ${secs}s ease-in-out -${i * 11}s infinite alternate;">${[[0, 30, 60, 70], [24, 0, 56, 88], [46, 24, 54, 76]].map(([l, t, pw, ph]) => `<span style="position: absolute; left: ${l}%; top: ${t}%; width: ${pw}%; height: ${ph}%; background: radial-gradient(closest-side, {{sky.cloud}} 40%, transparent);"></span>`).join('')}</div>`).join('')}
 </div>`;
 const SKY_CSS = '@keyframes scCloud{from{transform:translateX(-28px)}to{transform:translateX(28px)}}@media (prefers-reduced-motion:reduce){.sc-cloud{animation:none!important}}';
+// Learn mode's sky: only the faint blue fade, with no clouds or glow (the owner: "remove the clouds, i only want the
+// faint blue fade", V75). A night sky in dark mode.
+const skyFade = phone => `<div aria-hidden="true" style="position: absolute; left: 0; right: 0; top: 0; height: ${phone ? 600 : 700}px; z-index: -1; pointer-events: none; background: linear-gradient(180deg, {{sky.top}} 0%, {{sky.mid}} 30%, {{sky.low}} 55%, {{t.bg}} 100%);"></div>`;
 // The sky's colors, for renderVals: daylight, or a night sky in dark mode (the landing page's top, Learn mode's end).
 const SKY = `(this.props.dark ? { top: '#081733', mid: '#0D2148', low: '#0A1530', glow: 'rgba(120,150,255,.16)', cloud: 'rgba(150,170,230,.10)' }
     : { top: '#86BDF3', mid: '#C9E2FB', low: '#EDF5FE', glow: 'rgba(255,255,255,.75)', cloud: 'rgba(255,255,255,.94)' })`;
@@ -2798,14 +2801,14 @@ renderVals() { ${T}${DB_JS}
     inputBg: !checked ? t.surf : ok ? t.goodTint : t.againTint, inputRing: !checked ? 'none' : 'inset 0 0 0 2px ' + (ok ? t.good : t.again), inputAnim: checked && !ok ? 'scShake .35s ease' : 'none',
     verdict: ok ? (learnedNow ? 'Learned.' : 'Right.') : 'Not quite.', verdictColor: ok ? t.good : t.again, why,
     cardFront: question, cardBack: answer, isLast: last, notLast: !last, afterHref: '${phone ? 'PhoneQuizDone' : 'WebQuizDone'}.dc.html' }; }`;
-// The end: every card learned, what took the most tries, and that they're in your reviews now. It's on the daylight
-// sky (a night sky in dark mode), like the landing page's top: the owner asked for a sky here (V73).
+// The end: every card learned, what took the most tries, and that they're in your reviews now. The sky's faint blue
+// fade sits behind its top (a night sky in dark mode): the owner asked for a sky here (V73), then for no clouds (V75).
 const learnRing = (size, stroke) => { const r = (size - stroke) / 2, c = size / 2;
   return `<div style="position: relative; width: ${size}px; height: ${size}px;"><svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" aria-hidden="true"><circle cx="${c}" cy="${c}" r="${r}" fill="none" stroke="{{t.surf2}}" stroke-width="${stroke}"/><circle class="sc-draw" pathLength="1" transform="rotate(-90 ${c} ${c})" cx="${c}" cy="${c}" r="${r}" fill="none" stroke="{{ring}}" stroke-width="${stroke}" stroke-linecap="round"/></svg><div style="position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center;"><span aria-label="{{total}} of {{total}}" style="font-size: ${Math.round(size / 4.6)}px; font-weight: 600; letter-spacing: -.04em; line-height: 1; font-variant-numeric: tabular-nums;"><span class="sc-count" style="--to: {{total}};"></span>/{{total}}</span><span style="margin-top: 4px; font-size: 13px; color: {{t.muted}};">learned</span></div></div>`; };
 const learnTries = `<sc-if value="{{hasTries}}" hint-placeholder-val="{{ true }}"><div style="width: 100%; display: flex; flex-direction: column; gap: 10px; text-align: left;"><span style="font-size: 15px; font-weight: 600;">Took the most tries</span><sc-for list="{{tries}}" as="m" hint-placeholder-count="2"><div style="box-sizing: border-box; padding: 14px 16px; border-radius: 18px; background: {{t.surf}}; display: flex; align-items: center; justify-content: space-between; gap: 12px;"><span style="min-width: 0; font-size: 15px; line-height: 1.35;">{{m.front}} <span style="color: {{t.muted}};">→</span> <span style="font-weight: 600;">{{m.back}}</span></span><span style="flex-shrink: 0; font-size: 13px; color: {{t.muted}};">{{m.n}}</span></div></sc-for></div></sc-if>`;
 const learnInReviews = `<div style="width: 100%; box-sizing: border-box; padding: 14px 16px; border-radius: 18px; background: {{t.surf}}; display: flex; align-items: center; gap: 12px; text-align: left; font-size: 14px; line-height: 1.45;"><span style="width: 36px; height: 36px; flex-shrink: 0; border-radius: 18px; background: {{t.bg}}; display: flex; align-items: center; justify-content: center;">${svg(I.today, 18, 1.8)}</span>They’re in your reviews now. Lucida brings each card back right before you’d forget it.</div>`;
 const webQuizDone = `<div style="position: relative; isolation: isolate; width: 1440px; height: 900px; box-sizing: border-box; display: flex; align-items: center; justify-content: center; overflow: hidden; font-family: ${FONT}; background: {{t.bg}}; color: {{t.text}};">
-  ${skyLayer(false)}
+  ${skyFade(false)}
   <main style="width: 560px; display: flex; flex-direction: column; align-items: center; gap: 24px; text-align: center;">
     ${learnRing(190, 16)}
     <div style="display: flex; flex-direction: column; gap: 8px;"><h1 style="margin: 0; font-size: 32px; font-weight: 600; letter-spacing: -.03em;">{{title}}</h1><div style="font-size: 16px; color: {{t.muted}};">{{summary}}</div></div>
@@ -2815,7 +2818,7 @@ const webQuizDone = `<div style="position: relative; isolation: isolate; width: 
   </main>
 </div>`;
 const phoneQuizDone = `<div style="position: relative; isolation: isolate; width: 390px; height: 844px; box-sizing: border-box; padding: 60px 20px 34px; display: flex; flex-direction: column; align-items: center; gap: 20px; text-align: center; overflow: hidden; font-family: ${FONT}; background: {{t.bg}}; color: {{t.text}};">
-  ${skyLayer(true)}
+  ${skyFade(true)}
   ${learnRing(156, 14)}
   <div style="display: flex; flex-direction: column; gap: 6px;"><div style="font-size: 28px; font-weight: 700; letter-spacing: -.03em;">{{title}}</div><div style="font-size: 15px; color: {{t.muted}};">{{summaryShort}}</div></div>
   ${learnInReviews}
@@ -3180,15 +3183,16 @@ const LIVE_BOARD = [['Maya', 3420, 1], ['Jordan', 3210, 2], ['Kai', 2980, -1], [
 const LIVE_SHAPES = ['<circle cx="12" cy="12" r="7.5"/>', '<path d="M12 4.5l8.5 15h-17z"/>', '<rect x="5" y="5" width="14" height="14" rx="2.5"/>', '<path d="M12 3.5l8.5 8.5-8.5 8.5-8.5-8.5z"/>'];
 const liveShape = (i, s) => `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">${LIVE_SHAPES[i]}</svg>`;
 // Live's look (the owner's reference, 2026-09-24, then their comments): bright colors and big navy type, like a game.
-// The lobby and a phone's join and waiting screens are on the daylight sky; the big screen's question and answer are on
-// white (V74); the leaderboard and a phone's answering are blue; green means you got it; yellow means not quite, and
-// the end. The answers are tiles in the deep gradients. The screens stay bright in dark mode.
+// The lobby, the leaderboard, and a phone's join and waiting screens are on the daylight sky; the big screen's question
+// and answer are on white (V74); a phone's answering is blue; green means you got it; yellow means not quite; the end
+// is a faint yellow fading to white (V76). The answers are tiles in vivid gradients. The screens stay bright in dark mode.
 const LV = { blue: '#7ACFEA', green: '#62DE8A', yellow: '#FFD84A', navy: '#0D1542', ink2: 'rgba(13,21,66,.68)', chip: 'rgba(255,255,255,.55)', check: '#16C64A', gray: '#C4CBD5', grayInk: '#5D6677', purple: '#4F60E6', shadow: '0 10px 24px -16px rgba(13,21,66,.35)', lift: '0 26px 48px -20px rgba(13,21,66,.5)' };
-// The four answers: tiles in the deep gradients (surfaces.mjs), with white words (the owner asked for them in V72).
-// Blue, mauve, olive green, and brown into orange: the four that stay dark enough behind words in the middle of a tile.
-// The number is how tall the gradient is drawn (% of the tile, from the bottom): Ocean and Forest show only their deep
-// lower part, without the pale sky on top.
-const LIVE_DEEP = [['Ocean', 180], ['Dusk', 100], ['Forest', 180], ['Ember', 100]];
+// The four answers: tiles in vivid gradients (the decks' "Vivid" style, generator.mjs), with white words. The owner
+// asked for the deep set in V72, then for "brighter gradients than this" (V76). These seeds give four clearly different
+// colors, blue, purple, orange, and magenta, each dark side on the left behind the words (the 225° angle, unflipped).
+const LIVE_VIVID = ['Live answer 9', 'Live answer 86', 'Live answer 34', 'Live answer 5'];
+// The end's faint sunny color, fading to white like the sky (the owner asked for "faint color" there, V76).
+const LIVE_SUN = (mid, low) => `linear-gradient(180deg, #FFE08A 0%, #FFF0C2 ${mid}%, #FFF9E8 ${low}%, #FFFFFF 100%)`;
 // The daylight sky (the landing page's, SKY, in daylight), fading to white. `mid` and `low` place its paler bands, in %.
 const liveSky = (mid, low) => `linear-gradient(180deg, #86BDF3 0%, #C9E2FB ${mid}%, #EDF5FE ${low}%, #FFFFFF 100%)`;
 const LIVE_SKY = liveSky(45, 75);
@@ -3224,11 +3228,11 @@ const liveTop = (right, chip = LV.chip) => `<header style="height: 96px; flex-sh
   </header>`;
 const liveFoot = `<footer style="height: 56px; flex-shrink: 0; box-sizing: border-box; padding: 0 48px; display: flex; align-items: center; justify-content: space-between; font-size: 15px; color: ${LV.ink2};"><span>Join at <span style="font-weight: 700; color: ${LV.navy};">lucida.cards/join</span> with <span style="font-weight: 700; color: ${LV.navy}; letter-spacing: .06em;">482 913</span></span><span>{{peopleN}} people</span></footer>`;
 const liveRoot = (w, h, extra = '') => `class="sc-live" style="position: relative; width: ${w}px; height: ${h}px; box-sizing: border-box; font-family: ${FONT}; background: ${LV.blue}; color: ${LV.navy}; overflow: hidden; ${extra}"`;
-// An answer on the big screen: a tile in its deep gradient, with its shape and words. After the reveal, the right one
-// lifts and tilts a little with a green check, like a card pulled from the pile; the others turn flat gray. Each shows
-// how many picked it. `liveDeep` is the color under a tile (the phones' too): the gradient, grain, and the gray.
-const liveDeep = i => `<span aria-hidden="true" style="position: absolute; left: 0; right: 0; bottom: 0; height: {{o${i}.zoom}}; background: {{o${i}.p.base}};">${flowLayer(`o${i}.p`)}</span>${GRAIN_LAYER}<span aria-hidden="true" style="position: absolute; inset: 0; background: ${LV.gray}; opacity: {{o${i}.grayOp}}; transition: opacity .3s;"></span>`;
-const liveTile = i => `<div style="position: relative; overflow: hidden; height: 150px; border-radius: 28px; background: {{o${i}.p.base}}; color: {{o${i}.fg}}; box-shadow: {{o${i}.shadow}}; transform: {{o${i}.tf}}; transition: color .3s, transform .4s cubic-bezier(.2,.8,.2,1), box-shadow .4s;">${liveDeep(i)}<div style="position: relative; height: 100%; box-sizing: border-box; padding: 0 32px; display: flex; align-items: center; gap: 22px; text-shadow: {{o${i}.ts}};"><span style="width: 60px; height: 60px; flex-shrink: 0; border-radius: 30px; background: {{o${i}.badge}}; box-shadow: {{o${i}.badgeLine}}; display: flex; align-items: center; justify-content: center;">${liveShape(i, 26)}</span><span style="flex-grow: 1; font-size: 34px; font-weight: 700; letter-spacing: -.02em;">{{o${i}.label}}</span><sc-if value="{{o${i}.showCount}}" hint-placeholder-val="{{ false }}"><span style="display: flex; align-items: center; gap: 14px;"><span style="font-size: 30px; font-weight: 700; font-variant-numeric: tabular-nums;">{{o${i}.count}}</span><sc-if value="{{o${i}.right}}" hint-placeholder-val="{{ false }}"><span style="width: 52px; height: 52px; border-radius: 26px; background: ${LV.check}; color: #FFFFFF; display: flex; align-items: center; justify-content: center; animation: scPop .4s cubic-bezier(.2,.8,.2,1) both;">${svg(I.check, 26, 3)}</span></sc-if></span></sc-if></div></div>`;
+// An answer on the big screen: a tile in its vivid gradient, with its shape and words. After the reveal, the right one
+// lifts and tilts a little with a green check, like a card pulled from the pile; the others keep their gradients, grayed
+// out (the owner, V76). Each shows how many picked it. `liveDeep` is the color under a tile (the phones' too).
+const liveDeep = i => `<span aria-hidden="true" style="position: absolute; inset: 0; background: {{o${i}.p.base}}; filter: {{o${i}.gfilter}}; transition: filter .35s;">${flowLayer(`o${i}.p`)}</span>${GRAIN_LAYER}`;
+const liveTile = i => `<div style="position: relative; overflow: hidden; height: 150px; border-radius: 28px; color: {{o${i}.fg}}; box-shadow: {{o${i}.shadow}}; transform: {{o${i}.tf}}; transition: color .3s, transform .4s cubic-bezier(.2,.8,.2,1), box-shadow .4s;">${liveDeep(i)}<div style="position: relative; height: 100%; box-sizing: border-box; padding: 0 32px; display: flex; align-items: center; gap: 22px; text-shadow: {{o${i}.ts}};"><span style="width: 60px; height: 60px; flex-shrink: 0; border-radius: 30px; background: {{o${i}.badge}}; box-shadow: {{o${i}.badgeLine}}; display: flex; align-items: center; justify-content: center;">${liveShape(i, 26)}</span><span style="flex-grow: 1; font-size: 34px; font-weight: 700; letter-spacing: -.02em;">{{o${i}.label}}</span><sc-if value="{{o${i}.showCount}}" hint-placeholder-val="{{ false }}"><span style="display: flex; align-items: center; gap: 14px;"><span style="font-size: 30px; font-weight: 700; font-variant-numeric: tabular-nums;">{{o${i}.count}}</span><sc-if value="{{o${i}.right}}" hint-placeholder-val="{{ false }}"><span style="width: 52px; height: 52px; border-radius: 26px; background: ${LV.check}; color: #FFFFFF; display: flex; align-items: center; justify-content: center; animation: scPop .4s cubic-bezier(.2,.8,.2,1) both;">${svg(I.check, 26, 3)}</span></sc-if></span></sc-if></div></div>`;
 const liveTiles = `<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">${[0, 1, 2, 3].map(liveTile).join('')}</div>`;
 // The question, on white (the owner asked to go back to it, V74), so the deep gradient answers stand out.
 const liveQuestion = `<div ${liveRoot(1440, 900, 'display: flex; flex-direction: column; background: #FFFFFF;')}>
@@ -3249,8 +3253,9 @@ const liveReveal = `<div ${liveRoot(1440, 900, 'display: flex; flex-direction: c
   </main>
   ${liveFoot}
 </div>`;
-// The leaderboard between questions: the top five on white cards, how far each moved, and purple bars against the leader.
-const liveLeaderboard = `<div ${liveRoot(1440, 900, 'display: flex; flex-direction: column;')}>
+// The leaderboard between questions, on the sky's faint blue fade (the owner, V76): the top five on white cards, how far
+// each moved, and purple bars against the leader.
+const liveLeaderboard = `<div ${liveRoot(1440, 900, 'display: flex; flex-direction: column; background: ' + liveSky(42, 70) + ';')}>
   ${liveTop(navyBtn(`Next question${svg(I.chev, 16, 2.4)}`, 'LiveQuestion.dc.html'))}
   <main style="flex-grow: 1; box-sizing: border-box; padding: 16px 48px 32px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 28px;">
     <h1 style="margin: 0; font-size: 60px; font-weight: 700; letter-spacing: -.035em;">Leaderboard</h1>
@@ -3258,16 +3263,17 @@ const liveLeaderboard = `<div ${liveRoot(1440, 900, 'display: flex; flex-directi
   </main>
   ${liveFoot}
 </div>`;
-// The end: yellow, with confetti, a flat podium (navy, white, and blue blocks), the next few places, and play again.
-const LIVE_PODIUM = [[1, 'Jordan', '8,940', 230, '#FFFFFF', LV.navy], [0, 'Maya', '9,610', 320, LV.navy, '#FFFFFF'], [2, 'Kai', '8,120', 170, LV.blue, LV.navy]];
-const livePodium = `<div ${liveRoot(1440, 900, 'display: flex; flex-direction: column; align-items: center; background: ' + LV.yellow + ';')}>
-  <div aria-hidden="true" style="position: absolute; inset: 0; pointer-events: none;">${Array.from({ length: 28 }, (_, i) => { const x = (i * 37) % 100, y = (i * 53) % 55, c = [LV.navy, '#FFFFFF', LV.blue, '#1FC45A', LV.purple][i % 5], s = 6 + (i % 4) * 3; return `<span style="position: absolute; left: ${x}%; top: ${y}%; width: ${s}px; height: ${s}px; border-radius: ${i % 3 ? '50%' : '2px'}; background: ${c}; animation: scFloat2 ${3 + (i % 3)}s ease-in-out -${i % 4}s infinite;"></span>`; }).join('')}</div>
+// The end: a faint yellow fading to white (the owner, V76), with confetti, a flat podium (navy, purple, and blue blocks),
+// and play again.
+const LIVE_PODIUM = [[1, 'Jordan', '8,940', 230, LV.purple, '#FFFFFF'], [0, 'Maya', '9,610', 320, LV.navy, '#FFFFFF'], [2, 'Kai', '8,120', 170, LV.blue, LV.navy]];
+const livePodium = `<div ${liveRoot(1440, 900, 'display: flex; flex-direction: column; align-items: center; background: ' + LIVE_SUN(42, 70) + ';')}>
+  <div aria-hidden="true" style="position: absolute; inset: 0; pointer-events: none;">${Array.from({ length: 28 }, (_, i) => { const x = (i * 37) % 100, y = (i * 53) % 55, c = [LV.navy, '#FFB020', LV.blue, '#1FC45A', LV.purple][i % 5], s = 6 + (i % 4) * 3; return `<span style="position: absolute; left: ${x}%; top: ${y}%; width: ${s}px; height: ${s}px; border-radius: ${i % 3 ? '50%' : '2px'}; background: ${c}; animation: scFloat2 ${3 + (i % 3)}s ease-in-out -${i % 4}s infinite;"></span>`; }).join('')}</div>
   <header style="position: relative; width: 100%; height: 96px; box-sizing: border-box; padding: 0 48px; display: flex; align-items: center; justify-content: space-between;">${logo(30)}<span style="font-size: 15px; color: ${LV.ink2};">Cell Biology · final results</span></header>
   <h1 style="position: relative; margin: 8px 0 0; font-size: 60px; font-weight: 700; letter-spacing: -.035em;">Maya wins!</h1>
   <div style="position: relative; flex-grow: 1; width: 900px; display: flex; align-items: flex-end; justify-content: center; gap: 18px;">
-    ${LIVE_PODIUM.map(([i, name, score, h, bg, fg]) => `<div style="width: 260px; display: flex; flex-direction: column; align-items: center; gap: 12px; animation: scRiseUp .7s cubic-bezier(.2,.8,.2,1) both; animation-delay: ${[.4, .8, 0][i]}s;"><span style="width: 64px; height: 64px; border-radius: 32px; background: {{c${i}}}; color: #FFFFFF; display: flex; align-items: center; justify-content: center; font-size: 26px; font-weight: 700; box-shadow: 0 0 0 4px ${LV.yellow}, 0 0 0 6px rgba(13,21,66,.12);">${name[0]}</span><span style="font-size: 24px; font-weight: 700;">${name}</span><span style="font-size: 18px; color: ${LV.ink2}; font-variant-numeric: tabular-nums;">${score}</span><div style="width: 100%; height: ${h}px; box-sizing: border-box; padding-top: 22px; border-radius: 28px 28px 0 0; background: ${bg}; color: ${fg}; display: flex; justify-content: center;"><span style="font-size: 64px; font-weight: 700; letter-spacing: -.04em; line-height: 1;">${i + 1}</span></div></div>`).join('')}
+    ${LIVE_PODIUM.map(([i, name, score, h, bg, fg]) => `<div style="width: 260px; display: flex; flex-direction: column; align-items: center; gap: 12px; animation: scRiseUp .7s cubic-bezier(.2,.8,.2,1) both; animation-delay: ${[.4, .8, 0][i]}s;"><span style="width: 64px; height: 64px; border-radius: 32px; background: {{c${i}}}; color: #FFFFFF; display: flex; align-items: center; justify-content: center; font-size: 26px; font-weight: 700; box-shadow: 0 0 0 4px #FFFFFF, 0 0 0 6px rgba(13,21,66,.12);">${name[0]}</span><span style="font-size: 24px; font-weight: 700;">${name}</span><span style="font-size: 18px; color: ${LV.ink2}; font-variant-numeric: tabular-nums;">${score}</span><div style="width: 100%; height: ${h}px; box-sizing: border-box; padding-top: 22px; border-radius: 28px 28px 0 0; background: ${bg}; color: ${fg}; display: flex; justify-content: center;"><span style="font-size: 64px; font-weight: 700; letter-spacing: -.04em; line-height: 1;">${i + 1}</span></div></div>`).join('')}
   </div>
-  <div style="position: relative; width: 100%; height: 108px; box-sizing: border-box; padding: 0 48px; display: flex; align-items: center; justify-content: space-between; background: #FFFFFF;"><span style="font-size: 17px; color: ${LV.ink2};">4 Priya 7,860 · 5 Leo 7,420 · 6 Sofia 6,980</span><div style="display: flex; gap: 12px;"><a href="LiveLobby.dc.html" style="height: 52px; padding: 0 26px; display: inline-flex; align-items: center; border-radius: 999px; background: rgba(13,21,66,.07); font-size: 16px; font-weight: 600;">Play again</a>${navyBtn('Done', 'WebDeck.dc.html')}</div></div>
+  <div style="position: relative; width: 100%; height: 108px; box-sizing: border-box; padding: 0 48px; display: flex; align-items: center; justify-content: center; gap: 12px;"><a href="LiveLobby.dc.html" style="height: 52px; padding: 0 26px; display: inline-flex; align-items: center; border-radius: 999px; background: rgba(13,21,66,.07); font-size: 16px; font-weight: 600;">Play again</a>${navyBtn('Done', 'WebDeck.dc.html')}</div>
 </div>`;
 // The lobby: on the daylight sky, like before V71 (the owner asked for it back, V74), with the join code big, a QR code,
 // and people popping in as they join.
@@ -3321,7 +3327,7 @@ const liveWaiting = `<div ${liveRoot(390, 844, 'padding: 64px 24px 40px; display
 const liveAnswer = `<div ${liveRoot(390, 844, 'padding: 60px 16px 34px; display: flex; flex-direction: column; gap: 16px;')}>
   <div style="display: flex; align-items: center; gap: 12px;"><span style="font-size: 13px; font-weight: 700; color: ${LV.ink2};">3 of 10</span><div style="flex-grow: 1; height: 8px; border-radius: 4px; background: ${LV.chip}; overflow: hidden;"><div style="width: 70%; height: 100%; border-radius: 4px; background: ${LV.purple}; transform-origin: left; animation: scBar 20s linear reverse infinite;"></div></div><span style="font-size: 13px; font-weight: 700; font-variant-numeric: tabular-nums;">14s</span></div>
   <div style="padding: 8px 4px 6px; font-size: 28px; font-weight: 700; line-height: 1.15; letter-spacing: -.025em;">{{q.q}}</div>
-  <div style="flex-grow: 1; display: grid; grid-template-rows: repeat(4, minmax(0, 1fr)); gap: 10px;">${[0, 1, 2, 3].map(i => `<button type="button" style="position: relative; overflow: hidden; width: 100%; height: 100%; box-sizing: border-box; padding: 0; border: 0; border-radius: 26px; background: {{o${i}.p.base}}; color: {{o${i}.fg}}; box-shadow: ${LV.shadow}; font: inherit; text-align: left; cursor: pointer;">${liveDeep(i)}<span style="position: relative; height: 100%; box-sizing: border-box; padding: 0 20px; display: flex; align-items: center; gap: 16px; text-shadow: {{o${i}.ts}};"><span style="width: 48px; height: 48px; flex-shrink: 0; border-radius: 24px; background: {{o${i}.badge}}; box-shadow: {{o${i}.badgeLine}}; display: flex; align-items: center; justify-content: center;">${liveShape(i, 22)}</span><span style="font-size: 21px; font-weight: 700;">{{o${i}.label}}</span></span></button>`).join('')}</div>
+  <div style="flex-grow: 1; display: grid; grid-template-rows: repeat(4, minmax(0, 1fr)); gap: 10px;">${[0, 1, 2, 3].map(i => `<button type="button" style="position: relative; overflow: hidden; width: 100%; height: 100%; box-sizing: border-box; padding: 0; border: 0; border-radius: 26px; background: none; color: {{o${i}.fg}}; box-shadow: ${LV.shadow}; font: inherit; text-align: left; cursor: pointer;">${liveDeep(i)}<span style="position: relative; height: 100%; box-sizing: border-box; padding: 0 20px; display: flex; align-items: center; gap: 16px; text-shadow: {{o${i}.ts}};"><span style="width: 48px; height: 48px; flex-shrink: 0; border-radius: 24px; background: {{o${i}.badge}}; box-shadow: {{o${i}.badgeLine}}; display: flex; align-items: center; justify-content: center;">${liveShape(i, 22)}</span><span style="font-size: 21px; font-weight: 700;">{{o${i}.label}}</span></span></button>`).join('')}</div>
   <div style="display: flex; align-items: center; justify-content: space-between; font-size: 14px; color: ${LV.ink2};"><span style="display: flex; align-items: center; gap: 8px; font-weight: 600; color: ${LV.navy};"><span style="width: 24px; height: 24px; border-radius: 12px; background: ${LV.purple}; color: #FFFFFF; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700;">M</span>Maya</span><span style="font-variant-numeric: tabular-nums;"><span style="font-weight: 700; color: ${LV.navy};">2,550</span> points</span></div>
 </div>`;
 // The streak flame: orange, with a yellow core, flickering from its base (it holds still with Reduce Motion).
@@ -3337,35 +3343,35 @@ const liveResult = `<div ${liveRoot(390, 844, 'padding: 64px 24px 40px; display:
   <sc-if value="{{r.right}}" hint-placeholder-val="{{ true }}"><span style="height: 40px; padding: 0 16px; display: inline-flex; align-items: center; gap: 8px; border-radius: 999px; background: #FFFFFF; font-size: 15px; font-weight: 700;">${liveFlame(20)}3 in a row</span></sc-if>
   <span style="font-size: 16px; color: ${LV.ink2};">{{r.place}}</span>
 </div>`;
-// The end on a phone: the final leaderboard, on yellow. The top three stand on a flat podium (you're marked), everyone
+// The end on a phone: the final leaderboard, on the faint yellow fading to white (V76). The top three stand on a flat podium (you're marked), everyone
 // else is listed under it, and players without Lucida get a way to make their own cards.
 const LIVE_FINAL_REST = [['Priya', '7,860'], ['Leo', '7,420'], ['Sofia', '6,980'], ['Ethan', '6,540'], ['Ana', '6,110']];
-const LIVE_FINAL_PODIUM = [[1, 'Jordan', '8,940', 88, true, '#FFFFFF', LV.navy], [0, 'Maya', '9,610', 120, false, LV.navy, '#FFFFFF'], [2, 'Kai', '8,120', 64, false, LV.blue, LV.navy]];
-const liveFinal = `<div ${liveRoot(390, 844, 'padding: 64px 20px 34px; display: flex; flex-direction: column; gap: 18px; background: ' + LV.yellow + ';')}>
+const LIVE_FINAL_PODIUM = [[1, 'Jordan', '8,940', 88, true, LV.purple, '#FFFFFF'], [0, 'Maya', '9,610', 120, false, LV.navy, '#FFFFFF'], [2, 'Kai', '8,120', 64, false, LV.blue, LV.navy]];
+const liveFinal = `<div ${liveRoot(390, 844, 'padding: 64px 20px 34px; display: flex; flex-direction: column; gap: 18px; background: ' + LIVE_SUN(45, 75) + ';')}>
   <div style="display: flex; flex-direction: column; align-items: center; gap: 6px; text-align: center;">
     <span style="font-size: 13px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: ${LV.ink2};">Final results</span>
     <h1 style="margin: 0; font-size: 34px; font-weight: 700; letter-spacing: -.03em;">You placed 2nd!</h1>
     <span style="font-size: 15px; color: ${LV.ink2};">8,940 points · 8 of 10 right</span>
   </div>
   <div role="list" aria-label="Top three" style="display: flex; align-items: flex-end; gap: 8px;">
-    ${LIVE_FINAL_PODIUM.map(([i, name, score, h, you, bg, fg]) => `<div role="listitem" aria-label="${i + 1}. ${you ? 'You' : name}, ${score} points" style="flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; align-items: center; gap: 6px; animation: scRiseUp .6s cubic-bezier(.2,.8,.2,1) both; animation-delay: ${[.3, .6, 0][i]}s;"><span style="width: 48px; height: 48px; flex-shrink: 0; border-radius: 24px; background: {{c${i}}}; color: #FFFFFF; display: flex; align-items: center; justify-content: center; font-size: 20px; font-weight: 700;${you ? ` box-shadow: 0 0 0 3px ${LV.yellow}, 0 0 0 5px ${LV.navy};` : ''}">${name[0]}</span><span style="font-size: 15px; font-weight: 700;">${you ? 'You' : name}</span><span style="font-size: 13px; color: ${LV.ink2}; font-variant-numeric: tabular-nums;">${score}</span><div style="width: 100%; height: ${h}px; box-sizing: border-box; padding-top: 10px; border-radius: 18px 18px 8px 8px; background: ${bg}; color: ${fg}; display: flex; justify-content: center;"><span style="font-size: 26px; font-weight: 700; line-height: 1;">${i + 1}</span></div></div>`).join('')}
+    ${LIVE_FINAL_PODIUM.map(([i, name, score, h, you, bg, fg]) => `<div role="listitem" aria-label="${i + 1}. ${you ? 'You' : name}, ${score} points" style="flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; align-items: center; gap: 6px; animation: scRiseUp .6s cubic-bezier(.2,.8,.2,1) both; animation-delay: ${[.3, .6, 0][i]}s;"><span style="width: 48px; height: 48px; flex-shrink: 0; border-radius: 24px; background: {{c${i}}}; color: #FFFFFF; display: flex; align-items: center; justify-content: center; font-size: 20px; font-weight: 700;${you ? ` box-shadow: 0 0 0 3px #FFFFFF, 0 0 0 5px ${LV.navy};` : ''}">${name[0]}</span><span style="font-size: 15px; font-weight: 700;">${you ? 'You' : name}</span><span style="font-size: 13px; color: ${LV.ink2}; font-variant-numeric: tabular-nums;">${score}</span><div style="width: 100%; height: ${h}px; box-sizing: border-box; padding-top: 10px; border-radius: 18px 18px 8px 8px; background: ${bg}; color: ${fg}; display: flex; justify-content: center;"><span style="font-size: 26px; font-weight: 700; line-height: 1;">${i + 1}</span></div></div>`).join('')}
   </div>
-  <div role="list" aria-label="Everyone else" style="box-sizing: border-box; padding: 2px 16px; border-radius: 22px; background: #FFFFFF; display: flex; flex-direction: column;">
+  <div role="list" aria-label="Everyone else" style="box-sizing: border-box; padding: 2px 16px; border-radius: 22px; background: #FFFFFF; box-shadow: ${LV.shadow}; display: flex; flex-direction: column;">
     <sc-for list="{{rest}}" as="p" hint-placeholder-count="5"><div role="listitem" style="height: 50px; display: flex; align-items: center; gap: 12px; box-shadow: {{p.line}}; animation: scRiseUp .5s cubic-bezier(.2,.8,.2,1) both; animation-delay: {{p.delay}};"><span style="width: 18px; font-size: 15px; font-weight: 700; font-variant-numeric: tabular-nums; color: ${LV.ink2};">{{p.rank}}</span><span style="width: 32px; height: 32px; flex-shrink: 0; border-radius: 16px; background: {{p.color}}; color: #FFFFFF; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 700;">{{p.initial}}</span><span style="flex-grow: 1; font-size: 16px; font-weight: 600;">{{p.name}}</span><span style="font-size: 15px; color: ${LV.ink2}; font-variant-numeric: tabular-nums;">{{p.score}}</span></div></sc-for>
   </div>
   <div style="flex-grow: 1;"></div>
-  <div style="box-sizing: border-box; padding: 14px 14px 14px 18px; border-radius: 22px; background: #FFFFFF; display: flex; align-items: center; gap: 12px; text-align: left;"><span style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px;"><span style="font-size: 15px; font-weight: 700;">Make your own cards</span><span style="font-size: 13px; line-height: 1.35; color: ${LV.ink2};">Your AI makes them. Lucida plans your reviews.</span></span>${navyBtn('Try free', 'https://lucida.cards', 40, 14, 'flex-shrink: 0; padding: 0 16px;')}</div>
+  <div style="box-sizing: border-box; padding: 14px 14px 14px 18px; border-radius: 22px; background: #FFFFFF; box-shadow: ${LV.shadow}; display: flex; align-items: center; gap: 12px; text-align: left;"><span style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px;"><span style="font-size: 15px; font-weight: 700;">Make your own cards</span><span style="font-size: 13px; line-height: 1.35; color: ${LV.ink2};">Your AI makes them. Lucida plans your reviews.</span></span>${navyBtn('Try free', 'https://lucida.cards', 40, 14, 'flex-shrink: 0; padding: 0 16px;')}</div>
 </div>`;
 const LIVE_LOGIC = `
 constructor(props) { super(props); this.state = { set: 'tag', count: 10, time: 20 }; }
 renderVals() { ${T}
   const s = this.state, reveal = !!this.props.reveal, Q = ${JSON.stringify(LIVE_Q)}, total = Q.counts.reduce((a, b) => a + b, 0);
   const seg = (k, cur) => ({ pressed: k === cur ? 'true' : 'false', bg: k === cur ? t.bg : 'transparent', fg: k === cur ? t.text : t.muted, sh: k === cur ? '0 1px 3px rgba(0,0,0,.14)' : 'none' });
-  const LV = ${JSON.stringify(LV)}, DEEP = ${JSON.stringify(LIVE_DEEP)}, colors = ${JSON.stringify(LIVE_COLORS)};
-  // Each answer's deep gradient; after the reveal the right one lifts and tilts a little, and the others turn flat gray.
-  const opt = i => { const lift = reveal && i === Q.right, gray = reveal && i !== Q.right, p = this.mesh(DEEP[i][0]);
-    return { i, p, zoom: DEEP[i][1] + '%', label: Q.options[i], count: String(Q.counts[i]), right: lift, showCount: reveal, grayOp: gray ? '1' : '0', fg: gray ? LV.grayInk : p.ink, ts: gray ? 'none' : p.shadow,
-      badge: gray ? 'rgba(13,21,66,.06)' : p.glass, badgeLine: gray ? 'none' : 'inset 0 0 0 1.5px ' + p.glassLine, shadow: lift ? LV.lift : gray ? 'none' : LV.shadow, tf: lift ? 'translateY(-6px) rotate(-1.5deg)' : 'none' }; };
+  const LV = ${JSON.stringify(LV)}, VIVID = ${JSON.stringify(LIVE_VIVID)}, colors = ${JSON.stringify(LIVE_COLORS)};
+  // Each answer's vivid gradient; after the reveal the right one lifts and tilts a little, and the others gray out.
+  const opt = i => { const lift = reveal && i === Q.right, gray = reveal && i !== Q.right, p = this.gen(VIVID[i], 'vivid');
+    return { i, p, label: Q.options[i], count: String(Q.counts[i]), right: lift, showCount: reveal, gfilter: gray ? 'grayscale(1)' : 'none', fg: p.ink, ts: p.shadow,
+      badge: p.glass, badgeLine: 'inset 0 0 0 1.5px ' + p.glassLine, shadow: lift ? LV.lift : gray ? 'none' : LV.shadow, tf: lift ? 'translateY(-6px) rotate(-1.5deg)' : 'none' }; };
   const wrongPick = !!this.props.wrong;
   return { t, dark: !!this.props.dark, grain: String(this.props.grain ?? 0.7), q: Q, peopleN: '12',
     o0: opt(0), o1: opt(1), o2: opt(2), o3: opt(3), c0: colors[0], c1: colors[2], c2: colors[1],
@@ -3388,7 +3394,7 @@ const LIVE_FINAL_LOGIC = LIVE_LOGIC.replace('    r: wrongPick ? {', `    rest: $
 // ---------- Learn mode: style ideas (canvas only) ----------
 // The owner asked to see Learn mode's question in styles "with some more color and character" (V73). Two ideas, with
 // the same questions and logic as WebQuiz (tap an answer on the canvas), each also shown answered:
-// - Sky: the daylight sky with clouds, big navy words, and white answer cards with colored numbers. The right answer
+// - Sky: the sky's faint blue fade (no clouds, V75), big navy words, and white answer cards with colored numbers. The right answer
 //   tilts up with a green check, like a card pulled from the pile, and the rest turn gray (Live's rules).
 // - Deep card: the page stays white, and the question sits on a deep gradient card (the start card's Midnight) like the
 //   front of a flashcard, with the answers on soft tints of their colors. The right answer turns green.
@@ -3399,7 +3405,7 @@ const ideaMark = `<sc-if value="{{o.plain}}" hint-placeholder-val="{{ true }}">{
 const ideaOption = (h, r, fs) => `<button type="button" class="sc-opt" onClick="{{o.pick}}" data-key="{{o.key}}" aria-pressed="{{o.pressed}}" style="min-height: ${h}px; box-sizing: border-box; padding: 10px 20px 10px 12px; display: flex; align-items: center; gap: 16px; border: 0; border-radius: ${r}px; background: {{o.bg}}; color: {{o.fg}}; box-shadow: {{o.shadow}}; transform: {{o.tf}}; animation: {{o.anim}}; font: inherit; font-size: ${fs}px; font-weight: 600; text-align: left; cursor: {{o.cursor}}; transition: background-color .25s, color .25s, box-shadow .35s, transform .35s cubic-bezier(.2,.8,.2,1);"><span style="width: 40px; height: 40px; flex-shrink: 0; border-radius: 20px; background: {{o.badge}}; color: {{o.badgeFg}}; display: flex; align-items: center; justify-content: center; font-size: 16px; font-weight: 700; transition: background-color .25s, color .25s;">${ideaMark}</span><span style="flex-grow: 1;">{{o.label}}</span></button>`;
 const ideaNext = (bg, fg) => learnNext(52, 15).split('{{t.inv}}').join(bg).split('{{t.invText}}').join(fg);
 const webQuizSky = `<div style="position: relative; isolation: isolate; width: 1440px; height: 900px; box-sizing: border-box; display: flex; flex-direction: column; overflow: hidden; font-family: ${FONT}; background: #FFFFFF; color: ${LV.navy};">
-  ${skyLayer(false)}
+  ${skyFade(false)}
   <header style="height: 76px; flex-shrink: 0; box-sizing: border-box; padding: 0 32px; display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: center; gap: 16px;">
     <div style="display: flex;"><a href="WebDeck.dc.html" aria-label="Stop for now" title="Stop for now" style="width: 40px; height: 40px; border-radius: 20px; background: rgba(255,255,255,.72); display: flex; align-items: center; justify-content: center;">${svg(I.close, 16, 2.2)}</a></div>
     <div style="display: flex; align-items: center; gap: 14px;"><div style="width: 360px; height: 10px; border-radius: 5px; background: rgba(255,255,255,.62); overflow: hidden; display: flex;"><div style="width: {{doneW}}; background: ${LV.purple}; transition: width .5s cubic-bezier(.2,.8,.2,1);"></div><div style="width: {{partW}}; background: rgba(79,96,230,.38); transition: width .5s cubic-bezier(.2,.8,.2,1);"></div></div><span role="status" style="font-size: 14px; white-space: nowrap;"><span style="font-weight: 700;">{{learned}}</span> of {{total}} learned</span></div>
@@ -3610,9 +3616,9 @@ const files = {
   'WebQuizAnswered': ['Web · Learn mode · answered', attrOf('WebQuiz', W, H, 'answered="{{yes}}"'), { logic: darkLogic, css: LEARN_CSS, w: W, h: H }],
   'WebQuizMatch': ['Web · Learn mode · matching', webQuizMatch, { props: DARK, logic: MATCH_LOGIC(false), css: LEARN_CSS, w: W, h: H }],
   'WebQuizType': ['Web · Learn mode · type the answer', webQuizType, { props: DARK, logic: TYPE_LOGIC(false), css: LEARN_CSS, w: W, h: H }],
-  'WebQuizDone': ['Web · Learn mode · all learned', webQuizDone, { props: DARK, logic: QUIZ_DONE_LOGIC, css: LEARN_CSS + SKY_CSS, w: W, h: H }],
-  'WebQuizSky': ['Web · Learn mode · style idea 1: sky', webQuizSky, { props: { answered: { editor: 'boolean', default: false } }, logic: IDEA_LOGIC('sky'), css: LEARN_CSS + SKY_CSS, w: W, h: H }],
-  'WebQuizSkyAnswered': ['Web · Learn mode · style idea 1: sky, answered', attrOf('WebQuizSky', W, H, 'answered="{{yes}}"'), { logic: darkLogic, css: LEARN_CSS + SKY_CSS, w: W, h: H }],
+  'WebQuizDone': ['Web · Learn mode · all learned', webQuizDone, { props: DARK, logic: QUIZ_DONE_LOGIC, css: LEARN_CSS, w: W, h: H }],
+  'WebQuizSky': ['Web · Learn mode · style idea 1: sky', webQuizSky, { props: { answered: { editor: 'boolean', default: false } }, logic: IDEA_LOGIC('sky'), css: LEARN_CSS, w: W, h: H }],
+  'WebQuizSkyAnswered': ['Web · Learn mode · style idea 1: sky, answered', attrOf('WebQuizSky', W, H, 'answered="{{yes}}"'), { logic: darkLogic, css: LEARN_CSS, w: W, h: H }],
   'WebQuizDeep': ['Web · Learn mode · style idea 2: deep card', webQuizDeep, { props: { answered: { editor: 'boolean', default: false }, grain: MESH('Iris').grain }, logic: IDEA_LOGIC('deep'), css: LEARN_CSS, w: W, h: H }],
   'WebQuizDeepAnswered': ['Web · Learn mode · style idea 2: deep card, answered', attrOf('WebQuizDeep', W, H, 'answered="{{yes}}"'), { logic: darkLogic, css: LEARN_CSS, w: W, h: H }],
   'PhoneQuizStart': ['iPhone · Learn mode · start (Pro)', phoneQuizStart(true), { props: DARK, logic: QUIZ_START_LOGIC(true), w: PW, h: PH }],
@@ -3621,7 +3627,7 @@ const files = {
   'PhoneQuizAnswered': ['iPhone · Learn mode · answered', attrOf('PhoneQuiz', PW, PH, 'answered="{{yes}}"'), { logic: darkLogic, css: LEARN_CSS, w: PW, h: PH }],
   'PhoneQuizMatch': ['iPhone · Learn mode · matching', phoneQuizMatch, { props: DARK, logic: MATCH_LOGIC(true), css: LEARN_CSS, w: PW, h: PH }],
   'PhoneQuizType': ['iPhone · Learn mode · type the answer', phoneQuizType, { props: DARK, logic: TYPE_LOGIC(true), css: LEARN_CSS, w: PW, h: PH }],
-  'PhoneQuizDone': ['iPhone · Learn mode · all learned', phoneQuizDone, { props: DARK, logic: QUIZ_DONE_LOGIC, css: LEARN_CSS + SKY_CSS, w: PW, h: PH }],
+  'PhoneQuizDone': ['iPhone · Learn mode · all learned', phoneQuizDone, { props: DARK, logic: QUIZ_DONE_LOGIC, css: LEARN_CSS, w: PW, h: PH }],
   'LiveSetup': ['Live · host · set up', liveSetup, { props: DARK, logic: LIVE_SETUP_LOGIC, w: W, h: H }],
   'LiveLobby': ['Live · big screen · lobby (join code)', liveLobby, { props: DARK, logic: LIVE_LOGIC, css: LIVE_CSS, w: W, h: H }],
   'LiveQuestion': ['Live · big screen · question', liveQuestion, { props: { ...DARK, grain: MESH('Iris').grain }, logic: LIVE_LOGIC, css: LIVE_CSS, w: W, h: H }],
