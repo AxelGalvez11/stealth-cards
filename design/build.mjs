@@ -2523,8 +2523,8 @@ const cardWall = ({ cols, w, h, gap, r, tilt, k }) => {
 };
 // iPhone cards are smaller, so their words and padding shrink by this much.
 const PHONE_K = 150 / 264;
-// The wall on sign-in drifts over a sky (a night sky in dark mode), edge to edge.
-const signPanel = (style, wall) => `<div style="position: relative; overflow: hidden; background: linear-gradient(180deg, {{sky.wall.top}} 0%, {{sky.wall.mid}} 55%, {{sky.wall.low}} 100%); ${style}">${cardWall(wall)}</div>`;
+// The wall on sign-in drifts over near-black, edge to edge, in light and dark mode alike.
+const signPanel = (style, wall) => `<div style="position: relative; overflow: hidden; background: linear-gradient(180deg, #12141C 0%, #0B0C12 55%, #060709 100%); ${style}">${cardWall(wall)}</div>`;
 const signCol = inner => `<section style="width: 560px; flex-shrink: 0; box-sizing: border-box; padding: 32px 40px; display: flex; flex-direction: column;">
     ${logo()}
     <div style="flex-grow: 1; display: flex; flex-direction: column; justify-content: center;"><div style="width: 360px; margin: 0 auto; display: flex; flex-direction: column; gap: 24px;">${inner}</div></div>
@@ -2586,7 +2586,7 @@ renderVals() { ${T}
     a.verify(digits).then(() => a.done(), e => { const box = document.querySelector('input[autocomplete="one-time-code"]'); if (box) box.value = ''; this.setState({ busy: false, code: '', error: e.message }); });
   };
   const leave = to => e => { if (!a) return; stop(e); location.assign(to); };
-  return { grain: String(this.props.grain ?? 0.7), t, sky: ${SKY}, ${secs ? WALL_VALS(secs, k, FLIPS.calm) : ''}
+  return { grain: String(this.props.grain ?? 0.7), t, ${secs ? WALL_VALS(secs, k, FLIPS.calm) : ''}
     email: s.email, setEmail: e => this.setState({ email: e && e.target ? e.target.value : '', error: '' }), emailKey: e => { if (e && e.key === 'Enter') send(e); },
     sentTo: (s.email || '').trim() || 'you@school.edu', sendCode: send, sendLabel: s.busy ? 'Sending…' : 'Continue',
     google: leave('/auth/google'), apple: leave('/auth/apple'),
@@ -2775,10 +2775,9 @@ const landFooter = phone => phone
   ${logo(26)}<span style="display: flex; flex-wrap: wrap; align-items: center; gap: 16px 20px;"><a href="{{privacyHref}}">Privacy</a><a href="{{termsHref}}">Terms</a><span>© 2026 Lucida</span><span style="margin-left: 8px;">${socialLinks(20)}</span></span>
 </footer>`;
 const LANDING_H = 4002, LANDING_PHONE_H = 4818;
-// The sky behind the landing page's top and the sign-in wall: daylight, or a night sky in dark mode. Sign-in's (`wall`)
-// is a deeper blue, since it's only seen between the cards.
-const SKY = `(this.props.dark ? { top: '#081733', mid: '#0D2148', low: '#0A1530', glow: 'rgba(120,150,255,.16)', cloud: 'rgba(150,170,230,.10)', wall: { top: '#081733', mid: '#0D2148', low: '#0A1530' } }
-    : { top: '#86BDF3', mid: '#C9E2FB', low: '#EDF5FE', glow: 'rgba(255,255,255,.75)', cloud: 'rgba(255,255,255,.94)', wall: { top: '#4F8FDB', mid: '#7FB2EA', low: '#A9CDF3' } })`;
+// The sky behind the landing page's top: daylight, or a night sky in dark mode.
+const SKY = `(this.props.dark ? { top: '#081733', mid: '#0D2148', low: '#0A1530', glow: 'rgba(120,150,255,.16)', cloud: 'rgba(150,170,230,.10)' }
+    : { top: '#86BDF3', mid: '#C9E2FB', low: '#EDF5FE', glow: 'rgba(255,255,255,.75)', cloud: 'rgba(255,255,255,.94)' })`;
 // The band that ends the page runs edge to edge in the site's dark Midnight gradient (surfaces.mjs).
 const MIDNIGHT = JSON.stringify(paletteData('Midnight'));
 const landingLogic = phone => `${ART_METHOD}

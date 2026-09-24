@@ -215,8 +215,7 @@ renderVals() { const t = this.theme(!!this.props.dark);
     a.verify(digits).then(() => a.done(), e => { const box = document.querySelector('input[autocomplete="one-time-code"]'); if (box) box.value = ''; this.setState({ busy: false, code: '', error: e.message }); });
   };
   const leave = to => e => { if (!a) return; stop(e); location.assign(to); };
-  return { grain: String(this.props.grain ?? 0.7), t, sky: (this.props.dark ? { top: '#081733', mid: '#0D2148', low: '#0A1530', glow: 'rgba(120,150,255,.16)', cloud: 'rgba(150,170,230,.10)', wall: { top: '#081733', mid: '#0D2148', low: '#0A1530' } }
-    : { top: '#86BDF3', mid: '#C9E2FB', low: '#EDF5FE', glow: 'rgba(255,255,255,.75)', cloud: 'rgba(255,255,255,.94)', wall: { top: '#4F8FDB', mid: '#7FB2EA', low: '#A9CDF3' } }), 
+  return { grain: String(this.props.grain ?? 0.7), t, 
     email: s.email, setEmail: e => this.setState({ email: e && e.target ? e.target.value : '', error: '' }), emailKey: e => { if (e && e.key === 'Enter') send(e); },
     sentTo: (s.email || '').trim() || 'you@school.edu', sendCode: send, sendLabel: s.busy ? 'Sending…' : 'Continue',
     google: leave('/auth/google'), apple: leave('/auth/apple'),
