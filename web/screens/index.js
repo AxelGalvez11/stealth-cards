@@ -316,7 +316,7 @@ export default [
   "name": "PhoneSettings",
   "title": "iPhone · Settings",
   "w": 390,
-  "h": 844
+  "h": 1040
  },
  {
   "name": "PhoneSignIn",

@@ -26,15 +26,23 @@ function signedOut(go) {
     return j;
   };
   const off = q.get('off');
+  // Where to go once signed in (going Pro signs you in first): a page of this site only.
+  const next = q.get('next') || '';
+  if (/^\/(?![\/\\])/.test(next)) try { keep.setItem('lucida.next', next); } catch {}
   const auth = {
     email: () => email,
     error: () => off ? (off === 'apple' ? 'Apple' : 'Google') + ' sign-in isn’t set up yet. Use your email for now.' : q.get('failed') ? 'That didn’t work. Try again.' : '',
     sendCode: async e => { await post('/api/auth/code', { email: e }); email = e; try { keep.setItem('lucida.email', e); } catch {} },
     verify: code => post('/api/auth/verify', { email, code }),
-    done: () => { try { keep.removeItem('lucida.email'); } catch {} location.assign('/'); },
+    done: () => { try { keep.removeItem('lucida.email'); } catch {} location.assign(afterSignIn() || '/'); },
     go
   };
   return { signedOut: true, mock: false, auth, settings: () => ({ look: 'system' }), act: { go } };
+}
+// The page to open once you're signed in, if signing in started somewhere (asked once, then forgotten).
+export function afterSignIn() {
+  let next = ''; try { next = sessionStorage.getItem('lucida.next') || ''; sessionStorage.removeItem('lucida.next'); } catch {}
+  return /^\/(?![\/\\])/.test(next) ? next : '';
 }
 // A request that finds you signed out (your session ended) goes back to signing in.
 const toSignIn = () => location.assign('/sign-in');
@@ -44,6 +52,14 @@ export async function createDb({ onChange, go }) {
   const first = await fetch('/api/state', { cache: 'no-store' });
   if (first.status === 401) return signedOut(go);
   let S = await first.json();
+  // Back from paying for Pro: Stripe's news can land a moment after you do, so ask again for a little while.
+  if (new URLSearchParams(location.search).get('welcome') === 'pro' && S.me && !(S.me.plan && S.me.plan.pro)) {
+    let tries = 0;
+    const again = setInterval(async () => {
+      try { const next = await get('/api/state'); if (next.me && next.me.plan && next.me.plan.pro) { clearInterval(again); S = { ...S, me: next.me }; changed(); } } catch {}
+      if (++tries >= 15) clearInterval(again);
+    }, 2000);
+  }
   let session = null; // the review in progress: { key, deckId, pile, started, graded: [{ cardId, rating, pile, was, logId }] }
   let memo = {};
   const changed = () => { memo = {}; onChange(); };
@@ -412,6 +428,9 @@ export async function createDb({ onChange, go }) {
     },
     settings: () => ({ ...S.settings, name: S.settings.name || (S.me && S.me.name) || 'You', sub: S.me ? S.me.email : 'Saved on this computer', signedIn: !!S.me,
       google: false, photo: 'color', check: !!S.ai.perms.check }),
+    // Lucida Pro: online, from Stripe (the server's `me.plan`); on this computer everything is on.
+    pro: () => !S.me || !!(S.me.plan && S.me.plan.pro),
+    plan: () => (S.me ? { ...(S.me.plan || { pro: false }), manage: S.me.manage || '' } : null),
     tags: () => [...new Set([...S.decks.flatMap(d => d.tags), ...S.cards.flatMap(c => c.tags)])],
     decks: () => S.decks.map(deckRow),
     searchDecks: q => S.decks.filter(d => d.name.toLowerCase().includes(q) || d.tags.some(g => g.toLowerCase().includes(q))

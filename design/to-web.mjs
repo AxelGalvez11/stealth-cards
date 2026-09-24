@@ -21,7 +21,7 @@ for (const file of readdirSync(SRC).filter(f => f.endsWith('.dc.html')).sort()) 
   const props = Object.fromEntries(Object.entries(raw).filter(([k]) => k !== '$preview').map(([k, v]) => [k, v.default]));
   const logic = src.split('data-dc-script')[1].split('>').slice(1).join('>').split('</script>')[0].trim();
   let template = body.replace(/<helmet>[\s\S]*?<\/helmet>/, '').trim();
-  const phoneFill = ['PhoneSignIn', 'PhoneSignInCode', 'PhoneQuizStart', 'PhoneQuiz', 'PhoneQuizMatch', 'PhoneQuizType', 'PhoneQuizDone'].includes(name), fill = (w === 1440 && h === 900) || phoneFill;
+  const phoneFill = ['PhoneSignIn', 'PhoneSignInCode', 'PhoneQuizStart', 'PhoneQuizUpgrade', 'PhoneQuiz', 'PhoneQuizMatch', 'PhoneQuizType', 'PhoneQuizDone'].includes(name), fill = (w === 1440 && h === 900) || phoneFill;
   if (phoneFill) template = template.replace('width: 390px; height: 844px;', 'width: 100%; min-height: 100vh; min-height: 100dvh;');
   else if (fill) {
     template = template.replace('width: 1440px; height: 900px;', 'width: 100%; height: 100vh;');

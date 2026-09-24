@@ -1,5 +1,5 @@
 // Every request to Lucida's server: the web app's data (/api), signing in (/api/auth, /auth), the MCP link for AI
-// apps (/mcp), pictures and sound (/media), and the app's own files. The same code runs on your computer (server.mjs)
+// apps (/mcp), pictures and sound (/media), going Pro (/pro, and Stripe's webhook at /api/stripe), and the app's own files. The same code runs on your computer (server.mjs)
 // and on Vercel (api/index.js), where the pages are static files and only /api, /auth, /mcp, and /media reach this.
 // Online, everything but signing in needs a signed-in person, and each person only ever sees their own library.
 import { readFile, stat } from 'node:fs/promises';
@@ -9,7 +9,9 @@ import { state, apply, withLibrary, revOf, putMedia, mediaLink, MEDIA } from './
 import { mcp } from './mcp.mjs';
 import { EXT } from './media.mjs';
 import { cloud, auth } from './supa.mjs';
-import { who, forget, accessToken, sessionCookies, clearCookies, pkce, verifier, clearPkce, linkOwner, sameLink } from './auth.mjs';
+import { who, forget, accessToken, sessionCookies, clearCookies, pkce, verifier, clearPkce, linkOwner, sameLink,
+  GOOGLE_ID, APPLE_ID, oauthStart, oauthNonce, oauthDone, googleUrl, appleUrl, appleName } from './auth.mjs';
+import { planOf, checkoutUrl, portalUrl, signedBy, onEvent } from './billing.mjs';
 
 const ROOT = fileURLToPath(new URL('.', import.meta.url));
 const TYPES = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.mjs': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8', '.json': 'application/json', '.svg': 'image/svg+xml',
@@ -17,7 +19,7 @@ const TYPES = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; ch
 
 const inside = (root, file) => file === root || file.startsWith(root.endsWith(sep) ? root : root + sep);
 const send = (res, code, body, type = 'application/json') => { res.writeHead(code, { 'content-type': type, 'cache-control': 'no-store' }); res.end(typeof body === 'string' || Buffer.isBuffer(body) ? body : JSON.stringify(body)); };
-const go = (res, to) => { res.writeHead(302, { location: to, 'cache-control': 'no-store' }); res.end(); };
+const go = (res, to, code = 302) => { res.writeHead(code, { location: to, 'cache-control': 'no-store' }); res.end(); };
 const readBody = (req, limit) => new Promise((ok, bad) => {
   const parts = []; let n = 0;
   req.on('data', b => { n += b.length; if (n > limit) { bad(new Error('Too big')); req.destroy(); } else parts.push(b); });
@@ -84,14 +86,40 @@ async function signIn(req, res, path) {
     res.setHeader('set-cookie', clearCookies(req));
     return send(res, 200, { ok: true });
   }
-  // Google and Apple go through Supabase and come back to /auth/callback.
+  // Google and Apple: off to their own sign-in page (auth.mjs), unless they aren't set up yet.
   const provider = /^\/auth\/(google|apple)$/.exec(path);
   if (provider && req.method === 'GET') {
-    const on = await auth.providers().catch(() => ({}));
-    if (!on[provider[1]]) return go(res, '/sign-in?off=' + provider[1]);
-    const p = pkce(req);
-    res.setHeader('set-cookie', p.set);
-    return go(res, auth.startUrl(provider[1], originOf(req) + '/auth/callback', p.challenge));
+    const p = provider[1], on = await auth.providers().catch(() => ({}));
+    if (!(p === 'google' ? GOOGLE_ID : APPLE_ID) || !on[p]) return go(res, '/sign-in?off=' + p);
+    const o = oauthStart(req);
+    res.setHeader('set-cookie', o.set);
+    return go(res, (p === 'google' ? googleUrl : appleUrl)(originOf(req), o));
+  }
+  // Google comes back to this page. Its token is after the # in the address, so only the page's script sees it (never a
+  // server log), and the script hands it to /api/auth/token.
+  if (path === '/auth/google/back' && req.method === 'GET') return send(res, 200, GOOGLE_BACK, 'text/html; charset=utf-8');
+  // Apple posts its answer here from its own site.
+  if (path === '/auth/apple/back' && req.method === 'POST') {
+    const f = new URLSearchParams(String(await readBody(req, 1e5))), nonce = oauthNonce(req, f.get('state'));
+    if (!nonce || !f.get('id_token')) { res.setHeader('set-cookie', oauthDone(req)); return go(res, f.get('error') === 'user_cancelled_authorize' ? '/sign-in' : '/sign-in?failed=1', 303); }
+    try {
+      const s = await auth.idToken('apple', f.get('id_token'), nonce), name = appleName(f.get('user'));
+      if (name) await auth.setName(s.access_token, name).catch(() => {});
+      res.setHeader('set-cookie', [...sessionCookies(req, s), oauthDone(req)]);
+      return go(res, '/', 303);
+    } catch { res.setHeader('set-cookie', oauthDone(req)); return go(res, '/sign-in?failed=1', 303); }
+  }
+  // An ID token from Google's page above (checked against this browser's state), or from the iPhone app, which signs in
+  // with Apple and Google itself and sends the nonce it made.
+  if (path === '/api/auth/token' && req.method === 'POST') {
+    const b = jsonOf(await readBody(req, 3e4)), p = b.provider, nonce = b.state ? oauthNonce(req, String(b.state)) : String(b.nonce || '');
+    if (!['google', 'apple'].includes(p) || typeof b.token !== 'string' || !nonce) return send(res, 400, { error: TRY_AGAIN });
+    try {
+      const s = await auth.idToken(p, b.token, nonce), name = String(b.name || '').trim().slice(0, 80);
+      if (name) await auth.setName(s.access_token, name).catch(() => {});
+      res.setHeader('set-cookie', [...sessionCookies(req, s), oauthDone(req)]);
+      return send(res, 200, { ok: true });
+    } catch { res.setHeader('set-cookie', oauthDone(req)); return send(res, 400, { error: TRY_AGAIN }); }
   }
   if (path === '/auth/callback' && req.method === 'GET') {
     const code = new URL(req.url, 'http://x').searchParams.get('code'), v = verifier(req);
@@ -104,6 +132,42 @@ async function signIn(req, res, path) {
   }
   return null;
 }
+
+const GOOGLE_BACK = `<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Signing in · Lucida</title>
+<body style="margin: 0; height: 100vh; display: flex; align-items: center; justify-content: center; font: 15px Geist, -apple-system, system-ui, sans-serif; color: #8A8F98; color-scheme: light dark;">Signing in…
+<script>
+const p = new URLSearchParams(location.hash.slice(1)), fail = () => location.replace(p.get('error') === 'access_denied' ? '/sign-in' : '/sign-in?failed=1');
+history.replaceState(null, '', location.pathname);
+if (!p.get('id_token')) fail();
+else fetch('/api/auth/token', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ provider: 'google', token: p.get('id_token'), state: p.get('state') }) })
+  .then(r => (r.ok ? location.replace('/') : fail()), fail);
+</script></body></html>`;
+
+// Going Pro: Stripe's checkout, told who is paying. Signed out, sign in first and come back; already Pro, see Settings.
+// On this computer nobody signs in and everything is on, so there's nothing to buy.
+async function upgrade(req, res) {
+  const every = new URL(req.url, 'http://x').searchParams.get('plan') === 'monthly' ? 'month' : 'year';
+  if (!cloud()) return go(res, '/settings');
+  const w = await who(req);
+  if (w.set.length) res.setHeader('set-cookie', w.set);
+  if (!w.user) return go(res, '/sign-in?next=' + encodeURIComponent('/pro?plan=' + (every === 'month' ? 'monthly' : 'yearly')));
+  if ((await planOf(w.user.id, w.user.email, true)).pro) return go(res, '/settings');
+  return go(res, checkoutUrl(every, w.user));
+}
+// Stripe's webhook (billing.mjs): signed by Stripe with the endpoint's secret, not by a signed-in person. An error
+// answers 500, so Stripe sends the event again later.
+async function stripe(req, res) {
+  const raw = await readBody(req, 1e6);
+  if (!signedBy(raw, req.headers['stripe-signature'], process.env.STRIPE_WEBHOOK_SECRET)) return send(res, 400, { error: 'Bad signature' });
+  let e; try { e = JSON.parse(String(raw)); } catch { return send(res, 400, { error: 'Bad event' }); }
+  await onEvent(e);
+  return send(res, 200, { received: true });
+}
+// Who's signed in, for the app: their plan, and Stripe's page for changing or cancelling it.
+const meOf = async (user, fresh) => {
+  const plan = await planOf(user.id, user.email, fresh);
+  return { email: user.email, provider: user.provider, name: user.name, plan, manage: plan.pro ? portalUrl(user.email) : '' };
+};
 
 // Online, pictures and sound load straight from the person's own storage folder through a short-lived link.
 async function media(req, res, name, uid) {
@@ -146,9 +210,11 @@ export async function handle(req, res) {
   catch { return send(res, 400, 'Bad request', 'text/plain'); }
   try {
     const isApi = path.startsWith('/api/'), isMcp = path === '/mcp' || path.startsWith('/mcp/'), isAuth = path.startsWith('/api/auth/') || path.startsWith('/auth/');
-    if ((isApi || isMcp) && !sameSite(req)) return send(res, 403, { error: 'Forbidden' });
     // On Vercel, saving needs the Supabase database; until it's linked, say so instead of losing changes.
     if (process.env.VERCEL && !cloud() && (isApi || isMcp || isAuth)) return send(res, 503, { error: 'Lucida isn’t connected to its database yet, so nothing can be saved.' });
+    if (path === '/api/stripe' && req.method === 'POST') return await stripe(req, res);
+    if (path === '/pro' && req.method === 'GET') return await upgrade(req, res);
+    if ((isApi || isMcp) && !sameSite(req)) return send(res, 403, { error: 'Forbidden' });
 
     if (isAuth) {
       if (!cloud()) return send(res, 404, { error: 'Nobody signs in to Lucida on this computer.' });
@@ -163,26 +229,30 @@ export async function handle(req, res) {
       const key = path.slice(5), uid = linkOwner(key);
       const denied = () => send(res, 401, { jsonrpc: '2.0', id: null, error: { code: -32001, message: 'This Lucida link doesn’t work anymore. Copy the link again from the Connect AI page.' } });
       if (!uid) return denied();
+      // Free has a limit on pictures and sound (store.mjs); a link only knows whose it is, so Pro is looked up by id.
+      const { pro } = await planOf(uid, '');
       try {
         return await run(res, uid, async out => {
           if (!sameLink(state().ai.key, key)) { out.writeHead(401, { 'content-type': 'application/json' }).end(JSON.stringify({ jsonrpc: '2.0', id: null, error: { code: -32001, message: 'This Lucida link doesn’t work anymore. Copy the link again from the Connect AI page.' } })); return; }
           await mcp(req, out, body, uid);
-        }, { existing: true });
+        }, { existing: true, pro });
       } catch (e) { if (e.status === 401) return denied(); throw e; }
     }
 
     if (isApi || path.startsWith('/media/')) {
-      let uid = null, me = null;
+      let uid = null, me = null, user = null;
       if (cloud()) {
         const w = await who(req);
         if (w.set.length) res.setHeader('set-cookie', w.set);
         if (!w.user) return send(res, 401, { error: 'Sign in to Lucida.', signIn: true });
-        uid = w.user.id; me = { email: w.user.email, provider: w.user.provider, name: w.user.name };
+        user = w.user; uid = user.id;
       }
       if (path.startsWith('/media/')) return await media(req, res, path.slice(7), uid);
       if (path === '/api/rev' && req.method === 'GET') return send(res, 200, { rev: await revOf(uid) });
+      // The app's first load asks Stripe's news afresh, so Pro shows right after paying.
+      if (user) me = await meOf(user, path === '/api/state');
       const body = req.method === 'POST' ? await readBody(req, path === '/api/media' ? 20e6 : 5e6) : null;
-      return await run(res, uid, out => api(req, out, path, body, me));
+      return await run(res, uid, out => api(req, out, path, body, me), { pro: me ? me.plan.pro : undefined });
     }
     return await files(req, res, path, ROOT);
   } catch (e) { send(res, /Too big/.test(e.message) ? 413 : 500, { error: /Too big/.test(e.message) ? 'That file is too big.' : 'Something went wrong. Try again.' }); console.error(e); }

@@ -45,7 +45,7 @@ export async function who(req) {
 export const forget = token => seen.delete(token);
 export const accessToken = req => cookies(req)[AT] || '';
 
-// Google and Apple: Supabase sends the visitor back to /auth/callback with a code, which only this browser can
+// The email's link (when its template has one) comes back to /auth/callback with a code, which only this browser can
 // exchange, because the secret half (the verifier) waits in a cookie for up to ten minutes.
 export function pkce(req) {
   const verifier = randomBytes(32).toString('base64url');
@@ -53,6 +53,30 @@ export function pkce(req) {
 }
 export const verifier = req => cookies(req)[PKCE] || '';
 export const clearPkce = req => cookie(req, PKCE, '', 0);
+
+// Google and Apple: the visitor signs in on Google's or Apple's own page, which sends them back here with an ID token
+// (a signed note saying who they are), and Supabase checks it (handler.mjs). No secret is needed: these IDs are public.
+// The iPhone app signs in with both by itself and sends its token the same way.
+export const GOOGLE_ID = process.env.LUCIDA_GOOGLE_ID || ''; // Google Cloud → Google Auth Platform → Clients → "Lucida web"
+export const APPLE_ID = process.env.LUCIDA_APPLE_ID || ''; // Apple Developer → Identifiers → Services IDs
+// A random state and nonce wait in a cookie for ten minutes, so only the browser that started can finish. Google and
+// Apple put the nonce's hash in the token, and Supabase checks that it matches. Apple posts its answer from its own
+// site, so its cookie has to allow that (SameSite=None, which needs https).
+const OA = 'lc_oa';
+const oaCookie = (req, value, maxAge) => OA + '=' + value + '; Path=/; HttpOnly; Max-Age=' + maxAge + (secure(req) ? '; SameSite=None; Secure' : '; SameSite=Lax');
+export function oauthStart(req) {
+  const state = randomBytes(18).toString('base64url'), nonce = randomBytes(18).toString('base64url');
+  return { state, hashed: createHash('sha256').update(nonce).digest('hex'), set: oaCookie(req, state + '.' + nonce, 600) };
+}
+// The nonce, if `state` is the one this browser started with.
+export const oauthNonce = (req, state) => { const [s, n] = String(cookies(req)[OA] || '').split('.'); return s && n && state && sameLink(s, state) ? n : ''; };
+export const oauthDone = req => oaCookie(req, '', 0);
+export const googleUrl = (origin, o) => 'https://accounts.google.com/o/oauth2/v2/auth?' + new URLSearchParams({ client_id: GOOGLE_ID, redirect_uri: origin + '/auth/google/back', response_type: 'id_token',
+  scope: 'openid email profile', nonce: o.hashed, state: o.state, prompt: 'select_account' });
+export const appleUrl = (origin, o) => 'https://appleid.apple.com/auth/authorize?' + new URLSearchParams({ client_id: APPLE_ID, redirect_uri: origin + '/auth/apple/back', response_type: 'code id_token',
+  scope: 'name email', response_mode: 'form_post', nonce: o.hashed, state: o.state });
+// Apple's first sign-in says the person's name: {"name":{"firstName":"Ada","lastName":"Lovelace"}}.
+export const appleName = user => { try { const n = JSON.parse(user || '{}').name || {}; return [n.firstName, n.lastName].filter(Boolean).join(' ').trim().slice(0, 80); } catch { return ''; } };
 
 // Personal MCP links (/mcp/lk_…): the person's user id, then 32 random characters that only their library knows.
 export const newLink = uid => 'lk_' + String(uid).replace(/-/g, '') + randomBytes(24).toString('base64url');

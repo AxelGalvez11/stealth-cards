@@ -15,6 +15,7 @@
     { "source": "/mcp", "destination": "/api/index" },
     { "source": "/mcp/:path*", "destination": "/api/index" },
     { "source": "/media/:path*", "destination": "/api/index" },
+    { "source": "/pro", "destination": "/api/index" },
     { "source": "/pricing", "destination": "/pricing.html" },
     { "source": "/privacy", "destination": "/privacy.html" },
     { "source": "/terms", "destination": "/terms.html" },

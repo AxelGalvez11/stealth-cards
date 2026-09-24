@@ -59,7 +59,7 @@ export const files = {
   }
 };
 
-// Sign-in (Supabase Auth): a 6-digit code by email, or Google and Apple through Supabase.
+// Sign-in (Supabase Auth): a 6-digit code by email, or an ID token from Google or Apple.
 const authCall = (path, body, extra = {}) => call('/auth/v1' + path, { method: body ? 'POST' : 'GET', headers: body ? json : {}, body: body && JSON.stringify(body), key: publicKey(), ...extra });
 export const auth = {
   // The email has the 6-digit code; its link (if the email template has one) comes back to /auth/callback in this browser.
@@ -71,5 +71,22 @@ export const auth = {
   signOut: token => call('/auth/v1/logout', { method: 'POST', key: publicKey(), headers: { authorization: 'Bearer ' + token } }),
   // Which ways to sign in are turned on in Supabase (Google and Apple need their own setup there).
   providers: async () => ((await authCall('/settings')) || {}).external || {},
-  startUrl: (provider, redirectTo, challenge) => base() + '/auth/v1/authorize?' + new URLSearchParams({ provider, redirect_to: redirectTo, code_challenge: challenge, code_challenge_method: 's256' })
+  // Google and Apple (see auth.mjs): their signed ID token, checked by Supabase against the raw nonce it was made for.
+  idToken: (provider, id_token, nonce) => authCall('/token?grant_type=id_token', { provider, id_token, nonce }),
+  // Apple sends the person's name only the first time, and not in the token, so it's saved to their account.
+  setName: (token, name) => call('/auth/v1/user', { method: 'PUT', key: publicKey(), headers: { ...json, authorization: 'Bearer ' + token }, body: JSON.stringify({ data: { full_name: name } }) })
+};
+
+// Lucida Pro (see billing.mjs): one row per Stripe subscription in the private `pro` table. Stripe's webhook writes
+// the rows through two database functions (they keep the newest news and never lose who paid); only this server's
+// secret key can reach either.
+const rpc = (fn, args) => call('/rest/v1/rpc/' + fn, { method: 'POST', headers: json, body: JSON.stringify(args) });
+// A value in a PostgREST filter goes in double quotes (an email has dots).
+const quoted = s => '"' + String(s).replace(/["\\]/g, '') + '"';
+export const pro = {
+  checkout: args => rpc('pro_checkout', args),
+  status: args => rpc('pro_status', args),
+  // Someone's rows: theirs, and any paid with their email before they signed in (nobody's yet).
+  of: (uid, email) => call('/rest/v1/pro?select=subscription,user_id,status,plan,period_end,ending&or=' + encodeURIComponent('(user_id.eq.' + uuid(uid) + (email ? ',and(user_id.is.null,email.eq.' + quoted(String(email).toLowerCase()) + ')' : '') + ')')),
+  claim: (subscription, uid) => call('/rest/v1/pro?subscription=eq.' + encodeURIComponent(subscription) + '&user_id=is.null', { method: 'PATCH', headers: { ...json, prefer: 'return=minimal' }, body: JSON.stringify({ user_id: uuid(uid) }) })
 };

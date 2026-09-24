@@ -6,6 +6,8 @@ import { GEN_METHOD } from './generator.mjs';
 import { MOCK_METHOD } from './mock.mjs';
 import { WALL_CARDS } from './wall.mjs';
 import { PRIVACY, TERMS, UPDATED } from './legal.mjs';
+import { PRO_LINKS } from '../web/plans.mjs';
+import { G_LOGO, APPLE_LOGO } from './logos.mjs';
 const MESH_DATA = JSON.stringify(Object.fromEntries(PALETTE_NAMES.map(n => [n, { ...paletteData(n), shadow: PALETTES[n].ink === '#FFFFFF' ? '0 1px 14px rgba(0,0,0,.16)' : 'none' }])));
 // Card text formatting (web/rich.js), copied into every board that shows or edits card text.
 const RICH_SRC = readFileSync(new URL('../web/rich.js', import.meta.url), 'utf8');
@@ -1863,7 +1865,7 @@ const NAV_P = [['Today', 'today', 'PhoneToday.dc.html'], ['Decks', 'decks', 'Pho
 const tabBar = active => `<nav style="position: absolute; left: 16px; right: 16px; bottom: 28px; height: 64px; box-sizing: border-box; padding: 6px; border-radius: 999px; background: {{t.surf}}; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 4px;">
   ${NAV_P.map(([l, ic, h]) => `<a href="${h}" style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; border-radius: 999px; font-size: 11px; font-weight: 600; ${l === active ? 'background: {{t.inv}}; color: {{t.invText}};' : 'color: {{t.muted}};'}">${svg(I[ic], 20, 2)}${l}</a>`).join('\n  ')}
 </nav>`;
-const phone = (inner, active, extra = '') => `<div style="position: relative; width: 390px; height: 844px; box-sizing: border-box; font-family: ${FONT}; background: {{t.bg}}; color: {{t.text}}; overflow: hidden;">
+const phone = (inner, active, extra = '', h = 844) => `<div style="position: relative; width: 390px; height: ${h}px; box-sizing: border-box; font-family: ${FONT}; background: {{t.bg}}; color: {{t.text}}; overflow: hidden;">
 ${inner}
 ${active ? tabBar(active) : ''}
 ${extra}
@@ -2081,7 +2083,9 @@ renderVals() { ${T}
   ${PROVIDERS_JS}
   return { ${MESH_VALS('Apricot')} t, providers, copyLabel: this.state.copied ? 'Copied' : 'Copy link', copy: () => this.setState({ copied: true }) }; }`;
 
-// iPhone Settings, from the gear on Today. Appearance switches this screen right away.
+// iPhone Settings, from the gear on Today. Appearance switches this screen right away. The page scrolls; the board is
+// tall enough to show all of it.
+const PHONE_SETTINGS_H = 1040;
 const sRow = (label, right, { href = '', sub = '', click = '' } = {}) => {
   const inner = `<span style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px;"><span style="font-size: 16px;">${label}</span>${sub ? `<span style="font-size: 12px; color: {{t.muted}};">${sub}</span>` : ''}</span>${right}`;
   const st = 'min-height: 52px; box-sizing: border-box; padding: 8px 16px; display: flex; align-items: center; gap: 12px;';
@@ -2089,9 +2093,27 @@ const sRow = (label, right, { href = '', sub = '', click = '' } = {}) => {
 };
 const sVal = v => `<span style="display: flex; align-items: center; gap: 6px; font-size: 15px; color: {{t.muted}}; white-space: nowrap;">${v}${svg(I.chev, 14, 2.2)}</span>`;
 const sGroup = (title, rows) => `<div style="display: flex; flex-direction: column; gap: 8px;"><span style="padding: 0 4px; font-size: 13px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: {{t.muted}};">${title}</span><div style="border-radius: 24px; background: {{t.surf}}; overflow: hidden;">${rows.join('<div style="height: 1px; margin-left: 16px; background: {{t.bg}};"></div>')}</div></div>`;
+const PRO_BADGE = '<span style="height: 22px; padding: 0 9px; display: inline-flex; align-items: center; border-radius: 999px; background: linear-gradient(90deg, #7E94FB, #2CB2EA); color: #FFFFFF; font-size: 12px; font-weight: 700; letter-spacing: .01em;">Pro</span>';
+// Settings → Plan: Free, with a way to Go Pro; or Pro, when it renews (or ends), and Stripe's page to manage or cancel it.
+// Online only: on your own computer everything is on, so there's no plan to show.
+const PRO_PILL = `<a href="{{proHref}}" style="height: 36px; padding: 0 16px; display: inline-flex; align-items: center; border-radius: 999px; background: {{t.inv}}; color: {{t.invText}}; font-size: 14px; font-weight: 600; white-space: nowrap;">Go Pro</a>`;
+const planGroups = `<sc-if value="{{planFree}}" hint-placeholder-val="{{ false }}">${sGroup('Plan', [sRow('Free', PRO_PILL, { sub: 'Pro adds Learn mode, photo covers, and more' })])}</sc-if>
+      <sc-if value="{{planPro}}" hint-placeholder-val="{{ true }}">${sGroup('Plan', [
+        sRow(`<span style="display: inline-flex; align-items: center; gap: 8px;">Lucida ${PRO_BADGE}</span>`, '', { sub: '{{planSub}}' }),
+        sRow('Manage plan', sVal(''), { href: '{{manageHref}}' }),
+        `<sc-if value="{{planRenews}}" hint-placeholder-val="{{ true }}">${sRow('<span style="color: {{t.again}};">Cancel Pro</span>', '', { href: '{{manageHref}}' })}</sc-if><sc-if value="{{planEnding}}" hint-placeholder-val="{{ false }}">${sRow('Keep Pro', sVal(''), { href: '{{manageHref}}' })}</sc-if>`
+      ])}</sc-if>`;
+// The plan's values for renderVals: the app's plan (db.plan()), or on the canvas the board's `plan` setting.
+const PLAN_JS = pricingBoard => `const planOf = { Free: { pro: false }, Pro: { pro: true, every: 'year', until: '2027-09-24T12:00:00Z', ending: false, manage: '#' }, 'Pro, ending': { pro: true, every: 'year', until: '2027-09-24T12:00:00Z', ending: true, manage: '#' } };
+  const plan = db.mock ? planOf[this.props.plan] || planOf.Pro : db.plan && db.plan();
+  const planDay = plan && plan.until ? new Date(plan.until).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : '';
+  const planVals = { planFree: !!plan && !plan.pro, planPro: !!plan && !!plan.pro, planRenews: !!plan && !plan.ending, planEnding: !!plan && !!plan.ending,
+    planSub: plan ? [({ month: 'Monthly', year: 'Yearly' })[plan.every] || '', planDay ? (plan.ending ? 'ends ' : 'renews ') + planDay : ''].filter(Boolean).join(' · ') : '',
+    manageHref: plan && plan.manage || 'https://lucida.cards/pricing', proHref: db.mock ? '${pricingBoard}.dc.html' : 'https://lucida.cards/pricing' };`;
 const phoneSettings = phone(`<div style="padding: 64px 20px 34px; display: flex; flex-direction: column; gap: 18px;">
   <div style="display: flex; align-items: center; gap: 12px;">${roundBtn('back', 'Back', 'PhoneToday.dc.html')}<div style="flex-grow: 1; font-size: 17px; font-weight: 600; text-align: center;">Settings</div><div style="width: 44px;"></div></div>
   <div style="border-radius: 24px; background: {{t.surf}}; padding: 14px 16px; display: flex; align-items: center; gap: 14px;">${AVATAR(44)}<span style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px;"><span style="font-size: 16px; font-weight: 600;">Your account</span><span style="font-size: 13px; color: {{t.muted}};">Synced on all your devices · just now</span></span><span style="display: flex; color: {{t.muted}};">${svg(I.chev, 14, 2.2)}</span></div>
+  ${planGroups}
   ${sGroup('Studying', [
     sRow('Daily reminder', sVal('9:00 AM')),
     sRow('New cards a day', sVal('20')),
@@ -2104,7 +2126,7 @@ const phoneSettings = phone(`<div style="padding: 64px 20px 34px; display: flex;
     sRow('Check AI cards first', SWITCH('checkSw', 'toggleCheck', 'Check AI cards first')),
     sRow('Cards to check', sVal('3'), { href: 'PhoneInbox.dc.html' })
   ])}
-</div>`, '');
+</div>`, '', '', PHONE_SETTINGS_H);
 const phoneSettingsLogic = `
 constructor(props) { super(props); this.state = { look: 'system', grads: 'mix', fsrs: true, check: true }; }
 renderVals() {
@@ -2113,8 +2135,10 @@ renderVals() {
   const t = this.theme(s.look === 'dark' || (s.look === 'system' && !!this.props.dark));
   ${SW_JS}
   ${OPTS_JS}
+  const db = this.props.db || this.mock();
+  ${PLAN_JS('PricingPhone')}
   return {
-    t,
+    t, ...planVals,
     looks: opts([['system', 'System'], ['light', 'Light'], ['dark', 'Dark']], s.look, id => this.setState({ look: id })),
     grads: opts([['mix', 'Mix'], ['vivid', 'Vivid'], ['deep', 'Deep']], s.grads, id => this.setState({ grads: id })),
     fsrsSw: sw(s.fsrs), toggleFsrs: () => this.setState({ fsrs: !s.fsrs }),
@@ -2153,6 +2177,7 @@ const webSettings = webRoot(`${sidebar('You')}
       ])}
     </div>
     <div style="display: flex; flex-direction: column; gap: 24px;">
+      ${planGroups}
       ${sGroup('Look', [
         sRow('Appearance', SEG('looks', 'Appearance')),
         `<div style="padding: 10px 16px 16px; display: flex; flex-direction: column; gap: 12px;"><div style="display: flex; align-items: center; gap: 12px;"><span style="flex-grow: 1; font-size: 16px;">Card gradients</span>${SEG('grads', 'Card gradients')}</div><div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px;"><sc-for list="{{gradPreview}}" as="k" hint-placeholder-count="4">${meshCard('k', 'height: 60px; border-radius: 14px;', 'height: 100%; box-sizing: border-box; padding: 8px 10px; display: flex; align-items: flex-end; font-size: 11px; font-weight: 600;', '{{k.name}}')}</sc-for></div></div>`
@@ -2181,8 +2206,9 @@ renderVals() {
   ${NUM_JS}
   const colors = [['Periwinkle', 'linear-gradient(135deg, #8C9AFC 0%, #4F60E6 100%)'], ['Orange', 'linear-gradient(135deg, #FFC857 0%, #EE5A36 100%)'], ['Green', 'linear-gradient(135deg, #7EE0B0 0%, #1F8F5F 100%)'], ['Pink', 'linear-gradient(135deg, #F9A8D4 0%, #D6336C 100%)'], ['Teal', 'linear-gradient(135deg, #7DE3F0 0%, #0E8A9E 100%)'], ['Violet', 'linear-gradient(135deg, #C4A7FF 0%, #7C3AED 100%)']];
   const piles = st.grading === 'piles', photo = st.google ? st.photo : 'color';
+  ${PLAN_JS('Pricing')}
   return {
-    t, ...chrome, grain: String(this.props.grain ?? 0.7),
+    t, ...chrome, grain: String(this.props.grain ?? 0.7), ...planVals,
     name: st.name, sub: st.sub, signedIn: st.signedIn, google: st.google, initial: chrome.me.initial,
     avatarBg: colors[st.color][1], photoColor: photo === 'color', photoGoogle: photo === 'google',
     photoOpts: opts([['google', 'Google photo'], ['color', 'Color']], photo, id => set({ photo: id })),
@@ -2498,9 +2524,9 @@ renderVals() {
 // ---------- Learn mode ----------
 // Learn a set of cards until you know every one. Each card is asked in different ways (multiple choice, true or false,
 // matching, filling in its blank, typing the answer); it's learned after two right answers in a row, asked two ways,
-// and a card you miss comes back a few questions later (web/db.js runs a session). In the app it's free while Pro
-// can't be bought yet; the upgrade card is how it'll look on Free once it can. On the canvas the boards show a sample
-// session: the 40 cards tagged Exam 1 in Cell Biology, 18 learned so far.
+// and a card you miss comes back a few questions later (web/db.js runs a session). It's Pro: on Free the Learn button
+// opens the upgrade card instead. On the canvas the boards show a sample session: the 40 cards tagged Exam 1 in Cell
+// Biology, 18 learned so far.
 const LEARN_QS = [
   { kind: 'Multiple choice', streak: 1, q: 'A drug makes the inner mitochondrial membrane leak protons. What happens to the cell’s ATP output?', options: ['It drops', 'It rises', 'It stays the same', 'Only glycolysis stops'], right: 0,
     why: 'ATP synthase runs on the proton gradient the electron transport chain builds. A leak spends that gradient before it can make ATP.', card: ['What does the electron transport chain pump across the inner membrane?', 'Protons (H⁺)'] },
@@ -2533,7 +2559,6 @@ const learnTopPhone = back => `<div style="display: flex; align-items: center; g
 // Two dots for the card: one fills for each right answer in a row (two and it's learned). The kind of question
 // ("Multiple choice") isn't named: the owner asked to drop it (V73).
 const learnDots = `<span title="Right twice in a row and it’s learned" style="align-self: flex-start; height: 17px; display: inline-flex; align-items: center; gap: 4px;"><sc-for list="{{dots}}" as="d" hint-placeholder-count="2"><span class="sc-dot" style="width: 7px; height: 7px; border-radius: 4px; background: {{d.bg}}; animation: {{d.anim}};"></span></sc-for></span>`;
-const PRO_BADGE = '<span style="height: 22px; padding: 0 9px; display: inline-flex; align-items: center; border-radius: 999px; background: linear-gradient(90deg, #7E94FB, #2CB2EA); color: #FFFFFF; font-size: 12px; font-weight: 700; letter-spacing: .01em;">Pro</span>';
 const quizSeg = list => `<div role="group" style="display: flex; padding: 4px; border-radius: 999px; background: {{t.surf}};"><sc-for list="{{${list}}}" as="o" hint-placeholder-count="4"><button type="button" onClick="{{o.pick}}" aria-pressed="{{o.pressed}}" style="flex: 1 1 0; min-width: 0; height: 38px; padding: 0 6px; border: 0; border-radius: 999px; background: {{o.bg}}; color: {{o.fg}}; box-shadow: {{o.sh}}; font: inherit; font-size: 13px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: pointer;">{{o.label}}</button></sc-for></div>`;
 const quizField = (label, body) => `<div style="display: flex; flex-direction: column; gap: 8px;"><span style="font-size: 13px; font-weight: 600;">${label}</span>${body}</div>`;
 const quizBtn = (label, href, inv, grow, icon = '', click = '') => `<a href="${href}"${click ? ` onClick="{{${click}}}"` : ''} style="flex-grow: ${grow}; height: 52px; border-radius: 999px; background: ${inv ? '{{t.inv}}' : '{{t.surf}}'}; color: ${inv ? '{{t.invText}}' : '{{t.text}}'}; display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 15px; font-weight: 600;">${icon ? svg(I[icon], 16, 2) : ''}${label}</a>`;
@@ -2591,7 +2616,7 @@ const learnUpgradeBody = (back, pad) => `<a href="${back}" aria-label="Close" st
       <div style="display: flex; flex-direction: column; gap: 8px;"><span style="display: flex; align-items: center; gap: 10px; font-size: 26px; font-weight: 600; letter-spacing: -.03em;">Learn every card${PRO_BADGE}</span><span style="font-size: 15px; line-height: 1.5; color: {{t.muted}};">AI turns your cards into questions of every kind, like matching and typing the answer, and keeps going until you know them all.</span></div>
       <div style="display: flex; flex-direction: column; gap: 10px; font-size: 15px;">${['Learn mode with 5 kinds of questions', 'Photo covers and your own colors', 'Unlimited pictures and sounds'].map(x => `<span style="display: flex; align-items: center; gap: 10px;"><span style="width: 22px; height: 22px; flex-shrink: 0; border-radius: 11px; background: linear-gradient(135deg, #7E94FB, #2CB2EA); color: #FFFFFF; display: flex; align-items: center; justify-content: center;">${svg(I.check, 13, 2.6)}</span>${x}</span>`).join('')}</div>
       <div style="font-size: 14px; color: {{t.muted}};">$39 a year, or $5.99 a month. Cancel anytime.</div>
-      <div style="display: flex; gap: 10px;">${quizBtn('See plans', '{{plansHref}}', false, 1)}${quizBtn('Go Pro', '{{plansHref}}', true, 2)}</div>
+      <div style="display: flex; gap: 10px;">${quizBtn('See plans', '{{plansHref}}', false, 1)}${quizBtn('Go Pro', '{{proHref}}', true, 2)}</div>
     </div>`;
 const webQuizStart = pro => `<div style="position: relative; width: 1440px; height: 900px; overflow: hidden; font-family: ${FONT}; color: {{t.text}};">
   <dc-import name="WebDeck" dark="{{dark}}" deck-id="{{deckId}}" hint-size="1440px,900px"></dc-import>
@@ -2614,7 +2639,7 @@ renderVals() { ${T}${DB_JS}
   const s = this.state, id = this.props.deckId, seg = (k, cur) => ({ pressed: k === cur ? 'true' : 'false', bg: k === cur ? t.bg : 'transparent', fg: k === cur ? t.text : t.muted, sh: k === cur ? '0 1px 3px rgba(0,0,0,.14)' : 'none' });
   const sets = db.mock ? [{ id: 'new', label: 'New', n: 10 }, { id: 'hard', label: 'Hard', n: 36 }, { id: 'tag:Exam 1', label: 'Exam 1', n: 40 }, { id: 'all', label: 'All', n: 412 }] : db.learnSets(id);
   const set = sets.find(x => x.id === s.set) || (db.mock ? sets[2] : sets.find(x => x.n > 0) || sets[sets.length - 1]), n = set.n, mins = Math.max(1, Math.round(n * .6));
-  return { t, dark: !!this.props.dark, deckId: id || '', sky: ${SKY}, grain: String(this.props.grain ?? 0.7), m1: this.mesh('Iris'), m2: this.mesh('Mint'), ${deep ? 'deep: ' + MIDNIGHT + ', ' : ''}plansHref: '${phone ? 'PricingPhone' : 'Pricing'}.dc.html',
+  return { t, dark: !!this.props.dark, deckId: id || '', sky: ${SKY}, grain: String(this.props.grain ?? 0.7), m1: this.mesh('Iris'), m2: this.mesh('Mint'), ${deep ? 'deep: ' + MIDNIGHT + ', ' : ''}plansHref: '${phone ? 'PricingPhone' : 'Pricing'}.dc.html', proHref: db.mock ? '${phone ? 'PricingPhone' : 'Pricing'}.dc.html' : '/pro?plan=yearly',
     sets: sets.map(x => ({ label: x.label + ' · ' + x.n, ...seg(x.id, set.id), pick: () => this.setState({ set: x.id }) })),
     kinds: ${JSON.stringify(LEARN_KINDS)}.map(([k, label]) => { const on = s.kinds.includes(k); return { label, on, pressed: on ? 'true' : 'false', bg: on ? t.inv : t.surf, fg: on ? t.invText : t.text, pick: () => this.setState({ kinds: on && s.kinds.length > 1 ? s.kinds.filter(x => x !== k) : on ? s.kinds : [...s.kinds, k] }) }; }),
     goalLine: n ? 'Learn all ' + n + ' card' + (n === 1 ? '' : 's') + ', about ' + (mins >= 90 ? Math.round(mins / 60) + ' hours over a few sessions' : mins + ' minute' + (mins === 1 ? '' : 's')) + '. You can stop anytime and pick up where you left off.' : 'This deck has no cards to learn yet. Picture and text cards work; sound cards come later.',
@@ -2851,8 +2876,7 @@ const attrOf = (name, w, h, attrs) => `<div style="width: ${w}px; height: ${h}px
 const styleOf = (name, w, h, grading) => `<div style="width: ${w}px; height: ${h}px; overflow: hidden;"><dc-import name="${name}" grading="${grading}" start-revealed="{{yes}}" hint-size="${w}px,${h}px"></dc-import></div>`;
 
 // ---------- Sign in: Google, Apple, or a 6-digit code sent by email ----------
-const G_LOGO = `<svg width="18" height="18" viewBox="0 0 48 48" aria-hidden="true"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>`;
-const APPLE_LOGO = `<svg width="17" height="17" viewBox="0 0 24 24" aria-hidden="true" fill="currentColor"><path d="M12.152 6.896c-.948 0-2.415-1.078-3.96-1.04-2.04.027-3.91 1.183-4.961 3.014-2.117 3.675-.546 9.103 1.519 12.09 1.013 1.454 2.208 3.09 3.792 3.039 1.52-.065 2.09-.987 3.935-.987 1.831 0 2.35.987 3.96.948 1.637-.026 2.676-1.48 3.676-2.948 1.156-1.688 1.636-3.325 1.662-3.415-.039-.013-3.182-1.221-3.22-4.857-.026-3.04 2.48-4.494 2.597-4.559-1.429-2.09-3.623-2.324-4.39-2.376-2-.156-3.675 1.09-4.61 1.09zM15.53 3.83c.843-1.012 1.4-2.427 1.245-3.83-1.207.052-2.662.805-3.532 1.818-.78.896-1.454 2.338-1.273 3.714 1.338.104 2.715-.688 3.559-1.701"/></svg>`;
+// The Google and Apple logos come from design/logos (see logos.mjs).
 // In the app these sign in for real (the logic's handlers); on the canvas their links just show the next board.
 const authBtn = (label, glyph, href, h, handler) => `<a href="${href}" onClick="{{${handler}}}" style="height: ${h}px; display: flex; align-items: center; justify-content: center; gap: 10px; border-radius: 999px; background: {{t.bg}}; box-shadow: inset 0 0 0 1px {{t.surf2}}; font-size: 15px; font-weight: 600;">${glyph}${label}</a>`;
 const orLine = `<div style="display: flex; align-items: center; gap: 12px; font-size: 13px; color: {{t.muted}};"><span style="flex-grow: 1; height: 1px; background: {{t.line}};"></span>or<span style="flex-grow: 1; height: 1px; background: {{t.line}};"></span></div>`;
@@ -3511,10 +3535,9 @@ ${skyLayer(phone)}
 ${landFooter(phone)}
 </div>`; };
 const PRICING_H = 1617, PRICING_PHONE_H = 2191;
-// Pro's Stripe payment links (Stripe → Payment links; the "Lucida Pro" product at $5.99 a month and $39 a year). While
-// they're empty the site says "Pro is coming soon"; once both are set, Go Pro opens Stripe's checkout (yearly on the
-// site, with a link to pay monthly; the canvas follows its Monthly/Yearly toggle).
-const PRO_LINKS = { monthly: 'https://buy.stripe.com/fZu7sMaaM2IN8SL7WW4F201', yearly: 'https://buy.stripe.com/fZu8wQ3Mo6Z3b0Tcdc4F200' };
+// Pro's Stripe payment links are in web/plans.mjs. While they're empty the site says "Pro is coming soon"; once both are
+// set, Go Pro goes through the app's /pro page (it signs you in first, then opens Stripe's checkout knowing who's
+// paying): yearly on the site, with a link to pay monthly. The canvas follows its Monthly/Yearly toggle.
 const pricingLogic = phone => `${ART_METHOD}
 constructor(props) { super(props); this.state = { yearly: true }; }
 renderVals() { ${T}
@@ -3525,7 +3548,7 @@ renderVals() { ${T}
   return { t, sky: ${SKY}, grain: String(this.props.grain ?? 0.7), pro: this.art(${MIDNIGHT}, ''),
     billing: [{ label: 'Monthly', ...seg(!y), hasTag: false, pick: () => this.setState({ yearly: false }) }, { label: 'Yearly', ...seg(y), hasTag: true, pick: () => this.setState({ yearly: true }) }],
     proPrice: y ? '$39' : '$5.99', proPer: y ? 'a year' : 'a month', proNote: site ? (selling ? 'That’s $3.25 a month.' : 'That’s $3.25 a month, or $5.99 paid monthly.') : y ? 'That’s $3.25 a month.' : 'Billed monthly. Cancel anytime.',
-    proHref: selling ? (site || y ? links.yearly : links.monthly) : start, proMonthly: site && selling, proMonthlyHref: links.monthly,
+    proHref: selling ? (site ? 'https://app.lucida.cards/pro?plan=yearly' : y ? links.yearly : links.monthly) : start, proMonthly: site && selling, proMonthlyHref: 'https://app.lucida.cards/pro?plan=monthly',
     homeHref: site ? '/' : '${phone ? 'LandingPhone' : 'Landing'}.dc.html', howHref: site ? '/#how' : 'Landing.dc.html', typesHref: site ? '/#cards' : 'Landing.dc.html',
     signInHref: signIn, startHref: site ? 'https://app.lucida.cards/' : signIn, privacyHref: site ? '/privacy' : 'Privacy.dc.html', termsHref: site ? '/terms' : 'Terms.dc.html',
     pricingHref: site ? '/pricing' : '${phone ? 'PricingPhone' : 'Pricing'}.dc.html', proLive: !site || selling, proSoon: site && !selling, showToggle: !site }; }`;
@@ -3562,7 +3585,7 @@ const files = {
   'WebDecksTags': ['Web · Decks · a deck with 11 tags (+9 shows them all)', attrOf('WebDecks', W, H, 'open-tags="{{yes}}"'), { logic: darkLogic, w: W, h: H }],
   'WebDecksMoreTags': ['Web · Decks · More (find any tag)', attrOf('WebDecks', W, H, 'more-tags="{{yes}}"'), { logic: darkLogic, w: W, h: H }],
   'WebDecksList': ['Web · Decks · list view', listOf('WebDecks', W, H), { logic: 'renderVals() { return {}; }', w: W, h: H }],
-  'WebSettings': ['Web · Settings', webSettings, { props: { ...DARK, grain: MESH('Iris').grain, photo: { editor: 'enum', default: 'Color', options: ['Color', 'Google photo'] } }, logic: webSettingsLogic, css: NUM_CSS, w: W, h: H }],
+  'WebSettings': ['Web · Settings', webSettings, { props: { ...DARK, grain: MESH('Iris').grain, photo: { editor: 'enum', default: 'Color', options: ['Color', 'Google photo'] }, plan: { editor: 'enum', default: 'Pro', options: ['Free', 'Pro', 'Pro, ending'] } }, logic: webSettingsLogic, css: NUM_CSS, w: W, h: H }],
   'IconOptions': ['Web · Icon options', iconOptions, { props: DARK, logic: iconOptionsLogic, w: W, h: H }],
   'WebTodayNew': ['Web · Today · new user', webTodayNew, { props: { ...DARK, ...MESH('Iris') }, logic: emptyLogic(), w: W, h: H }],
   'WebTodayCaughtUp': ['Web · Today · all caught up', caughtOf('Main', W, H), { logic: darkLogic, w: W, h: H }],
@@ -3670,7 +3693,7 @@ const files = {
   'PhoneReviewPiles': ['iPhone · Review · Piles', styleOf('PhoneReview', PW, PH, 'Piles'), { logic: darkLogic, css: REVIEW_CSS, w: PW, h: PH }],
   'PhoneReviewNewPile': ['iPhone · Review · New pile popup', pileOf('PhoneReview', PW, PH), { logic: darkLogic, css: REVIEW_CSS, w: PW, h: PH }],
   'PhoneReviewBlank': ['iPhone · Review · fill in the blank', blankOf('PhoneReview', PW, PH), { logic: darkLogic, css: REVIEW_CSS, w: PW, h: PH }],
-  'PhoneSettings': ['iPhone · Settings', phoneSettings, { props: DARK, logic: phoneSettingsLogic, w: PW, h: PH }],
+  'PhoneSettings': ['iPhone · Settings', phoneSettings, { props: { ...DARK, plan: { editor: 'enum', default: 'Pro', options: ['Free', 'Pro', 'Pro, ending'] } }, logic: phoneSettingsLogic, w: PW, h: PHONE_SETTINGS_H }],
   'PhoneDeckSettings': ['iPhone · Deck settings', openOf('PhoneDeck', PW, PH), { logic: darkLogic, css: NUM_CSS, w: PW, h: PH }],
   'PhoneDeckDark': ['iPhone · Deck page (dark)', darkOf('PhoneDeck', PW, PH), { logic: darkLogic, css: NUM_CSS, w: PW, h: PH }],
   'PhoneStatsDark': ['iPhone · Stats (dark)', darkOf('PhoneStats', PW, PH), { logic: darkLogic, w: PW, h: PH }]

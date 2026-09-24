@@ -9,6 +9,7 @@ import { fileURLToPath } from 'node:url';
 import { join } from 'node:path';
 import { cloud, library, files } from './supa.mjs';
 import { newLink } from './auth.mjs';
+import { FREE_MEDIA } from './plans.mjs';
 import { grade as fsrsGrade, newCard } from './fsrs.js';
 import R from './rich.js';
 
@@ -38,10 +39,10 @@ export function load() {
 }
 // Online: loads uid's newest copy, runs fn, and saves once. False means another request saved first, so the caller
 // should run it again. A first visit makes the library (and its personal MCP link), unless `existing` says it must
-// already be there (an AI app's link can't make one).
-export async function withLibrary(uid, fn, { existing = false } = {}) {
+// already be there (an AI app's link can't make one). `pro`: whether they have Pro (false means Free).
+export async function withLibrary(uid, fn, { existing = false, pro } = {}) {
   if (!cloud()) { await fn(); return true; }
-  const L = { uid, S: null, base: null, dirty: false, later: [] };
+  const L = { uid, S: null, base: null, dirty: false, later: [], pro };
   return current.run(L, async () => {
     const row = await library.load(uid);
     if (!row && existing) throw Object.assign(new Error('No such library'), { status: 401 });
@@ -68,6 +69,9 @@ export const readMedia = name => (cloud() ? files.get(lib().uid, name) : readFil
 export const hasMedia = name => (cloud() ? files.has(lib().uid, name) : access(join(MEDIA, name)).then(() => true, () => false));
 export const mediaLink = (name, uid) => (cloud() ? files.link(uid, name) : Promise.resolve(null));
 export const state = () => lib().S;
+// On Free, up to FREE_MEDIA cards can have a picture or a sound (Pro has no limit, and neither does this computer).
+export const MEDIA_FULL = 'Free includes up to ' + FREE_MEDIA + ' pictures and sounds. Go Pro for as many as you like: lucida.cards/pricing';
+export const mediaLeft = () => (lib().pro === false ? Math.max(0, FREE_MEDIA - state().cards.filter(c => c.image || c.audio).length) : Infinity);
 const id = p => p + Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
 const clean = (x, n = 5000) => String(x ?? '').slice(0, n);
 const cleanTags = t => (Array.isArray(t) ? [...new Set(t.map(x => clean(x, 40).trim()).filter(Boolean))].slice(0, 50) : []);
@@ -132,12 +136,14 @@ function run(a, who) {
       return { id: d.id };
     }
     case 'card.add': {
+      if ((a.image || a.audio) && mediaLeft() < 1) throw new Error(MEDIA_FULL);
       const d = findDeck(a.deckId) || (a.deckName ? makeDeck({ name: a.deckName }) : null); if (!d) throw new Error('No such deck');
       return { ids: makeCards(d, a, who).map(c => c.id), deckId: d.id };
     }
     case 'card.update': {
       const c = S.cards.find(x => x.id === a.id); if (!c) throw new Error('No such card');
       const p = pick(a.patch, CARD_KEYS);
+      if ((p.image || p.audio) && !(c.image || c.audio) && mediaLeft() < 1) throw new Error(MEDIA_FULL);
       for (const k of ['front', 'back', 'text']) if (k in p) p[k] = clean(p[k]);
       if ('speak' in p) p.speak = clean(p.speak, 500);
       if ('lang' in p) p.lang = clean(p.lang, 20);

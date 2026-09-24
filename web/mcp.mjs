@@ -1,7 +1,7 @@
 // The MCP link: Claude, Cursor, or any app that speaks MCP can read and add cards. On this computer it's
 // http://localhost:3000/mcp; online each person has their own link (see handler.mjs), so an AI only sees their cards.
 // What an AI may do is set on the Connect AI page; tools it isn't allowed to use aren't offered.
-import { apply, state, blanks } from './store.mjs';
+import { apply, state, blanks, mediaLeft, MEDIA_FULL } from './store.mjs';
 import { dayAt } from './fsrs.js';
 import { fetchMedia, speechFile } from './media.mjs';
 import R from './rich.js';
@@ -82,9 +82,12 @@ const TOOLS = [
       const bad = list.find(problem);
       if (bad) return fail('Can’t add these cards: ' + problem(bad) + ': ' + JSON.stringify(bad));
       if (list.some(c => c.image || c.audio || c.kind === 'audio') && !state().ai.perms.media) return fail(NO_MEDIA);
+      // Free's limit on pictures and sound: checked before fetching anything, and again once spoken words have their files.
+      if (list.filter(c => c.image || c.audio).length > mediaLeft()) return fail(MEDIA_FULL);
       // Pictures and sound first, so a bad link doesn't leave half the cards made.
       const notes = new Set(), ready = [];
       try { for (const c of list) ready.push(await withMedia(c, a.files, ctx, notes)); } catch (e) { return fail(e.message); }
+      if (ready.filter(c => c.image || c.audio).length > mediaLeft()) return fail(MEDIA_FULL);
       const check = state().ai.perms.check;
       let d = deckBy(a.deck), made = 0;
       for (const c of ready) { const r = apply({ type: 'card.add', deckId: d ? d.id : null, deckName: d ? null : a.deck, ...c, pending: check }, who); d = deckBy(r.deckId); made += r.ids.length; }

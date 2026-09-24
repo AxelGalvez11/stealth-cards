@@ -2,7 +2,7 @@
 // a template with {{holes}}, <sc-if>, <sc-for> and <dc-import>, plus the board's own logic class.
 // This file renders those screens with your data (web/db.js), keeps them updated, and moves between them.
 // /b/<Board> shows any canvas board with the canvas's sample data instead.
-import { createDb } from './db.js';
+import { createDb, afterSignIn } from './db.js';
 
 // ---------- pages ----------
 // Which board shows for a page. Some depend on your data: no decks yet shows the new-user Today, and so on.
@@ -24,8 +24,9 @@ function resolve(path, q) {
     const id = deck[1];
     if (!db.raw().decks.some(d => d.id === id)) return { redirect: '/decks' };
     if (deck[2] === '/import') return { name: 'WebImport', props: { deckId: id } };
-    // Learn mode starts from a sheet over the deck (phones get the phone boards, which fill the screen).
-    if (deck[2] === '/learn') return { name: (narrow.matches ? 'Phone' : 'Web') + 'QuizStart', props: { deckId: id } };
+    // Learn mode starts from a sheet over the deck (phones get the phone boards, which fill the screen). It's Pro: on
+    // Free the sheet shows what Pro adds instead.
+    if (deck[2] === '/learn') return { name: (narrow.matches ? 'Phone' : 'Web') + (db.pro() ? 'QuizStart' : 'QuizUpgrade'), props: { deckId: id } };
     if (deck[2]) return { name: 'WebEditor', props: { deckId: id, cardId: deck[3] || '', from: q.get('from') || '' } };
     // An empty deck shows its empty page, unless you opened its settings.
     return { name: db.cards(id).length || q.get('settings') === '1' ? 'WebDeck' : 'WebDeckEmpty', props: { deckId: id, settingsOpen: q.get('settings') === '1' } };
@@ -33,6 +34,7 @@ function resolve(path, q) {
   // A Learn mode session: the board for its current question, or the end once every card is learned.
   const ln = /^\/learn\/([^/]+)$/.exec(path);
   if (ln) {
+    if (!db.pro()) return { redirect: '/deck/' + ln[1] + '/learn' };
     const L = db.learn();
     if (!L || L.deckId !== ln[1]) return { redirect: '/deck/' + ln[1] + '/learn' };
     return { name: (narrow.matches ? 'Phone' : 'Web') + (L.done === true ? 'QuizDone' : { match: 'QuizMatch', type: 'QuizType' }[L.type] || 'Quiz'), props: { deckId: ln[1] } };
@@ -58,7 +60,7 @@ function linkFor(name) {
   const pages = { Main: '/', WebTodayNew: '/', WebTodayCaughtUp: '/', WebDecks: '/decks', WebDecksEmpty: '/decks', WebDecksList: '/decks', WebNewDeck: '/decks/new',
     WebImport: id ? '/deck/' + id + '/import' : '/decks/import', WebDeck: id ? '/deck/' + id : '/decks', WebDeckSettings: id ? '/deck/' + id + '?settings=1' : '/decks',
     WebEditor: id ? '/deck/' + id + '/card' : db.signedOut ? '/' : db.today().newCardHref, WebReview: id ? '/review/' + id : '/review', WebDone: '/review/done', WebDonePiles: '/review/done',
-    WebQuizStart: id ? '/deck/' + id + '/learn' : '/decks', PhoneQuizStart: id ? '/deck/' + id + '/learn' : '/decks', PhoneDeck: id ? '/deck/' + id : '/decks', Pricing: 'https://lucida.cards/pricing', PricingPhone: 'https://lucida.cards/pricing',
+    WebQuizStart: id ? '/deck/' + id + '/learn' : '/decks', PhoneQuizStart: id ? '/deck/' + id + '/learn' : '/decks', WebQuizUpgrade: id ? '/deck/' + id + '/learn' : '/decks', PhoneQuizUpgrade: id ? '/deck/' + id + '/learn' : '/decks', PhoneDeck: id ? '/deck/' + id : '/decks', Pricing: 'https://lucida.cards/pricing', PricingPhone: 'https://lucida.cards/pricing',
     WebStats: '/stats', WebStatsEmpty: '/stats', WebConnect: '/connect', WebSettings: '/settings', WebSignIn: '/sign-in', WebSignInCode: '/sign-in/code', PhoneSignIn: '/sign-in', PhoneSignInCode: '/sign-in/code', PhoneToday: '/', Privacy: '/privacy', Terms: '/terms' };
   return pages[name] || '/b/' + name;
 }
@@ -261,9 +263,9 @@ app.addEventListener('click', e => {
   const a = e.target.closest && e.target.closest('a[href]');
   if (!a || e.defaultPrevented || e.metaKey || e.ctrlKey || e.shiftKey || e.button) return;
   const url = new URL(a.href, location.href);
-  // Signing in with Google or Apple leaves the app for a moment, and Privacy and Terms are pages of the site, so those
-  // links load for real.
-  if (url.origin !== location.origin || url.pathname.startsWith('/auth/') || /^\/(privacy|terms)$/.test(url.pathname)) return;
+  // Signing in with Google or Apple and going Pro leave the app for a moment, and Privacy and Terms are pages of the
+  // site, so those links load for real.
+  if (url.origin !== location.origin || url.pathname.startsWith('/auth/') || /^\/(privacy|terms|pro)$/.test(url.pathname)) return;
   e.preventDefault();
   go(url.pathname + url.search, true);
 });
@@ -299,4 +301,7 @@ dark.addEventListener('change', schedule);
 narrow.addEventListener('change', schedule);
 
 db = await createDb({ onChange: schedule, go: path => go(path, true) });
-go(location.pathname + location.search, false);
+// Just signed in on the way somewhere (like going Pro): go there now.
+const next = db.signedOut ? '' : afterSignIn();
+if (next) location.assign(next);
+else go(location.pathname + location.search, false);
