@@ -2521,18 +2521,17 @@ const cardWall = ({ cols, w, h, gap, r, tilt, k }) => {
   const face = back => `<div${back ? ' class="sc-wb"' : ''} style="position: absolute; inset: 0; overflow: hidden; border-radius: ${r}px; color: {{c.ink}}; background: {{c.base}};${back ? ' visibility: hidden; animation: {{c.back}};' : ''}">${ART_LAYERS('c')}<div style="position: relative; height: 100%; box-sizing: border-box; padding: ${Math.round(22 * k)}px; display: flex; align-items: center; justify-content: center; text-align: center; text-shadow: {{c.shadow}};">${back ? WALL_BACK : wallFace(k)}</div></div>`;
   return `<div aria-hidden="true" style="position: absolute; left: 50%; top: 50%; width: ${width}px; height: ${set}px; margin: -${set / 2}px 0 0 -${width / 2}px; display: flex; gap: ${gap}px; transform: rotate(${tilt}deg); pointer-events: none;"><sc-for list="{{wall}}" as="col" hint-placeholder-count="${cols}"><div class="sc-drift" style="flex-shrink: 0; align-self: flex-start; display: flex; flex-direction: column; gap: ${gap}px; padding-bottom: ${gap}px; animation: {{col.anim}};"><sc-for list="{{col.cards}}" as="c" hint-placeholder-count="${WALL_ROWS * 2}"><div class="sc-wc" style="position: relative; z-index: {{c.z}}; width: ${w}px; height: ${h}px; flex-shrink: 0; animation: {{c.flip}};">${face(false)}<sc-if value="{{c.flips}}" hint-placeholder-val="{{ false }}">${face(true)}</sc-if></div></sc-for></div></sc-for></div>`;
 };
-const wallTag = (h, size, bottom) => `<div style="position: absolute; left: 50%; bottom: ${bottom}px; transform: translateX(-50%); height: ${h}px; padding: 0 ${h / 2}px; display: flex; align-items: center; border-radius: 999px; background: {{t.bg}}; color: {{t.text}}; font-size: ${size}px; font-weight: 500; letter-spacing: -.01em; white-space: nowrap; box-shadow: 0 12px 32px -14px rgba(0,0,0,.45);">Flashcards your AI can make.</div>`;
 // iPhone cards are smaller, so their words and padding shrink by this much.
 const PHONE_K = 150 / 264;
 // The wall on sign-in drifts over a sky (a night sky in dark mode), edge to edge.
-const signPanel = (style, wall, tag) => `<div style="position: relative; overflow: hidden; background: radial-gradient(120% 50% at 50% 0%, {{sky.glow}}, transparent 70%), linear-gradient(180deg, {{sky.top}} 0%, {{sky.mid}} 55%, {{sky.low}} 100%); ${style}">${cardWall(wall)}${tag}</div>`;
+const signPanel = (style, wall) => `<div style="position: relative; overflow: hidden; background: radial-gradient(120% 50% at 50% 0%, {{sky.glow}}, transparent 70%), linear-gradient(180deg, {{sky.top}} 0%, {{sky.mid}} 55%, {{sky.low}} 100%); ${style}">${cardWall(wall)}</div>`;
 const signCol = inner => `<section style="width: 560px; flex-shrink: 0; box-sizing: border-box; padding: 32px 40px; display: flex; flex-direction: column;">
     ${logo()}
     <div style="flex-grow: 1; display: flex; flex-direction: column; justify-content: center;"><div style="width: 360px; margin: 0 auto; display: flex; flex-direction: column; gap: 24px;">${inner}</div></div>
   </section>`;
 const webSignRoot = inner => `<div style="width: 1440px; height: 900px; box-sizing: border-box; display: flex; font-family: ${FONT}; background: {{t.bg}}; color: {{t.text}}; overflow: hidden;">
   ${signCol(inner)}
-  ${signPanel('flex-grow: 1; min-width: 0;', { cols: 4, w: 264, h: 176, gap: 16, r: 20, tilt: -14, k: 1 }, wallTag(44, 16, 36))}
+  ${signPanel('flex-grow: 1; min-width: 0;', { cols: 4, w: 264, h: 176, gap: 16, r: 20, tilt: -14, k: 1 })}
 </div>`;
 const webSignIn = webSignRoot(`<h1 style="margin: 0; font-size: 32px; font-weight: 600; letter-spacing: -.03em;">Sign in to Lucida</h1>
       <div style="display: flex; flex-direction: column; gap: 10px;">${authBtn('Continue with Google', G_LOGO, 'Main.dc.html', 44, 'google')}${authBtn('Continue with Apple', APPLE_LOGO, 'Main.dc.html', 44, 'apple')}</div>
@@ -2549,7 +2548,7 @@ const webSignInCode = webSignRoot(`<a href="WebSignIn.dc.html" style="align-self
 const signPhoneRoot = inner => `<div style="position: relative; width: 390px; height: 844px; box-sizing: border-box; display: flex; flex-direction: column; font-family: ${FONT}; background: {{t.bg}}; color: {{t.text}}; overflow: hidden;">
 ${inner}
 </div>`;
-const phoneSignIn = signPhoneRoot(`${signPanel('flex: 1 1 380px; min-height: 220px;', { cols: 4, w: 150, h: 100, gap: 10, r: 16, tilt: -14, k: PHONE_K }, wallTag(38, 14, 18))}
+const phoneSignIn = signPhoneRoot(`${signPanel('flex: 1 1 380px; min-height: 220px;', { cols: 4, w: 150, h: 100, gap: 10, r: 16, tilt: -14, k: PHONE_K })}
   <div style="flex-shrink: 0; box-sizing: border-box; padding: 22px 20px 34px; display: flex; flex-direction: column; gap: 10px;">
     <h1 style="margin: 0 0 8px; font-size: 28px; font-weight: 700; letter-spacing: -.03em;">Sign in to Lucida</h1>
     ${authBtn('Continue with Apple', APPLE_LOGO, 'PhoneToday.dc.html', 50, 'apple')}${authBtn('Continue with Google', G_LOGO, 'PhoneToday.dc.html', 50, 'google')}
