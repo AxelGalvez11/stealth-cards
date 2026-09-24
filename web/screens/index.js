@@ -61,6 +61,84 @@ export default [
   "h": 4818
  },
  {
+  "name": "LiveAnswer",
+  "title": "Live · phone · answer",
+  "w": 390,
+  "h": 844
+ },
+ {
+  "name": "LiveFinal",
+  "title": "Live · phone · final",
+  "w": 390,
+  "h": 844
+ },
+ {
+  "name": "LiveJoin",
+  "title": "Live · phone · join",
+  "w": 390,
+  "h": 844
+ },
+ {
+  "name": "LiveLeaderboard",
+  "title": "Live · big screen · leaderboard",
+  "w": 1440,
+  "h": 900
+ },
+ {
+  "name": "LiveLobby",
+  "title": "Live · big screen · lobby (join code)",
+  "w": 1440,
+  "h": 900
+ },
+ {
+  "name": "LivePodium",
+  "title": "Live · big screen · podium",
+  "w": 1440,
+  "h": 900
+ },
+ {
+  "name": "LiveQuestion",
+  "title": "Live · big screen · question",
+  "w": 1440,
+  "h": 900
+ },
+ {
+  "name": "LiveResult",
+  "title": "Live · phone · right",
+  "w": 390,
+  "h": 844
+ },
+ {
+  "name": "LiveResultWrong",
+  "title": "Live · phone · not quite",
+  "w": 390,
+  "h": 844
+ },
+ {
+  "name": "LiveReveal",
+  "title": "Live · big screen · answer (Game)",
+  "w": 1440,
+  "h": 900
+ },
+ {
+  "name": "LiveRevealPoll",
+  "title": "Live · big screen · answer (Poll)",
+  "w": 1440,
+  "h": 900
+ },
+ {
+  "name": "LiveSetup",
+  "title": "Live · host · set up (Game or Poll)",
+  "w": 1440,
+  "h": 900
+ },
+ {
+  "name": "LiveWaiting",
+  "title": "Live · phone · waiting",
+  "w": 390,
+  "h": 844
+ },
+ {
   "name": "Main",
   "title": "Web · Today",
   "w": 1440,

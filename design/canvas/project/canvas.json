@@ -918,6 +918,123 @@
       "x": 2350,
       "y": 1320,
       "title": "iPhone · Learn mode · type the answer"
+    },
+    "LiveSetup.dc.html": {
+      "h": 900,
+      "w": 1440,
+      "x": 0,
+      "y": 0,
+      "page": "live",
+      "title": "Live · Host · set up from a deck (Game or Poll)",
+      "is_interactive": true
+    },
+    "LiveLobby.dc.html": {
+      "h": 900,
+      "w": 1440,
+      "x": 1520,
+      "y": 0,
+      "page": "live",
+      "title": "Live · Big screen · lobby with the join code",
+      "is_interactive": true
+    },
+    "LiveQuestion.dc.html": {
+      "h": 900,
+      "w": 1440,
+      "x": 3040,
+      "y": 0,
+      "page": "live",
+      "title": "Live · Big screen · question with the timer",
+      "is_interactive": true
+    },
+    "LiveReveal.dc.html": {
+      "h": 900,
+      "w": 1440,
+      "x": 4560,
+      "y": 0,
+      "page": "live",
+      "title": "Live · Big screen · the answer (Game)",
+      "is_interactive": true
+    },
+    "LiveRevealPoll.dc.html": {
+      "h": 900,
+      "w": 1440,
+      "x": 6080,
+      "y": 0,
+      "page": "live",
+      "title": "Live · Big screen · the answer (Poll)",
+      "is_interactive": true
+    },
+    "LiveLeaderboard.dc.html": {
+      "h": 900,
+      "w": 1440,
+      "x": 7600,
+      "y": 0,
+      "page": "live",
+      "title": "Live · Big screen · leaderboard",
+      "is_interactive": true
+    },
+    "LivePodium.dc.html": {
+      "h": 900,
+      "w": 1440,
+      "x": 9120,
+      "y": 0,
+      "page": "live",
+      "title": "Live · Big screen · podium",
+      "is_interactive": true
+    },
+    "LiveJoin.dc.html": {
+      "h": 844,
+      "w": 390,
+      "x": 0,
+      "y": 1320,
+      "page": "live",
+      "title": "Live · Phone · join with the code",
+      "is_interactive": true
+    },
+    "LiveWaiting.dc.html": {
+      "h": 844,
+      "w": 390,
+      "x": 470,
+      "y": 1320,
+      "page": "live",
+      "title": "Live · Phone · in, waiting",
+      "is_interactive": true
+    },
+    "LiveAnswer.dc.html": {
+      "h": 844,
+      "w": 390,
+      "x": 940,
+      "y": 1320,
+      "page": "live",
+      "title": "Live · Phone · answer",
+      "is_interactive": true
+    },
+    "LiveResult.dc.html": {
+      "h": 844,
+      "w": 390,
+      "x": 1410,
+      "y": 1320,
+      "page": "live",
+      "title": "Live · Phone · right",
+      "is_interactive": true
+    },
+    "LiveResultWrong.dc.html": {
+      "h": 844,
+      "w": 390,
+      "x": 1880,
+      "y": 1320,
+      "page": "live",
+      "title": "Live · Phone · not quite",
+      "is_interactive": true
+    },
+    "LiveFinal.dc.html": {
+      "h": 844,
+      "w": 390,
+      "x": 2350,
+      "y": 1320,
+      "page": "live",
+      "title": "Live · Phone · final place",
+      "is_interactive": true
     }
   },
   "createdOnFiles": {
@@ -1145,6 +1262,24 @@
       "w": 240,
       "x": 0,
       "y": 1020
+    },
+    "vBig": {
+      "kind": "title1",
+      "maxW": 10560,
+      "page": "live",
+      "text": "Live · the big screen (host)",
+      "w": 240,
+      "x": 0,
+      "y": -300
+    },
+    "vPhone": {
+      "kind": "title1",
+      "maxW": 2740,
+      "page": "live",
+      "text": "Live · phones (players)",
+      "w": 240,
+      "x": 0,
+      "y": 1020
     }
   },
   "order": [
@@ -1249,7 +1384,20 @@
     "PhoneQuizType.dc.html",
     "PhoneQuizDone.dc.html",
     "Pricing.dc.html",
-    "PricingPhone.dc.html"
+    "PricingPhone.dc.html",
+    "LiveSetup.dc.html",
+    "LiveLobby.dc.html",
+    "LiveQuestion.dc.html",
+    "LiveReveal.dc.html",
+    "LiveRevealPoll.dc.html",
+    "LiveLeaderboard.dc.html",
+    "LivePodium.dc.html",
+    "LiveJoin.dc.html",
+    "LiveWaiting.dc.html",
+    "LiveAnswer.dc.html",
+    "LiveResult.dc.html",
+    "LiveResultWrong.dc.html",
+    "LiveFinal.dc.html"
   ],
   "pages": [
     {
@@ -1291,6 +1439,10 @@
     {
       "id": "quiz",
       "name": "Learn mode (Pro)"
+    },
+    {
+      "id": "live",
+      "name": "Live (study together)"
     }
   ],
   "title": "Lucida Design"

@@ -40,6 +40,7 @@ a{color:inherit;text-decoration:none}a:hover{opacity:.8}
       <div style="display: flex; align-items: flex-end; justify-content: space-between; gap: 16px;">
         <div style="display: flex; flex-direction: column; gap: 6px; min-width: 0; text-shadow: {{coverShadow}};"><h1 style="margin: 0; font-size: 34px; font-weight: 600; letter-spacing: -.035em; line-height: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{deckName}}</h1><div style="font-size: 14px; opacity: .8;">{{deckLine}}</div></div>
         <div style="display: flex; gap: 10px; flex-shrink: 0;">
+          <sc-if value="{{showLive}}" hint-placeholder-val="{{ false }}"><a href="LiveSetup.dc.html" style="height: 36px; padding: 0 16px; display: inline-flex; align-items: center; gap: 8px; border-radius: 999px; background: rgba(255,255,255,.62); color: #000000; box-shadow: inset 0 0 0 1px rgba(0,0,0,.08); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); font-size: 14px; font-weight: 600;"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="2.2" fill="currentColor" stroke="none"/><path d="M15.8 8.2a5.4 5.4 0 0 1 0 7.6M8.2 15.8a5.4 5.4 0 0 1 0-7.6M18.7 5.3a9.5 9.5 0 0 1 0 13.4M5.3 18.7a9.5 9.5 0 0 1 0-13.4"/></svg>Play live</a></sc-if>
           <a href="{{learnHref}}" style="height: 36px; padding: 0 16px; display: inline-flex; align-items: center; gap: 8px; border-radius: 999px; background: rgba(255,255,255,.62); color: #000000; box-shadow: inset 0 0 0 1px rgba(0,0,0,.08); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); font-size: 14px; font-weight: 600;"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 3l1.9 5.1L18 10l-5.1 1.9L11 17l-1.9-5.1L4 10l5.1-1.9z"/><path d="M18.5 15l.8 2.2 2.2.8-2.2.8-.8 2.2-.8-2.2-2.2-.8 2.2-.8z"/></svg>{{learnLabel}}</a>
           <a href="{{newCardHref}}" style="height: 36px; padding: 0 18px; display: inline-flex; align-items: center; gap: 8px; border-radius: 999px; background: rgba(255,255,255,.62); color: #000000; box-shadow: inset 0 0 0 1px rgba(0,0,0,.08); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); font-size: 14px; font-weight: 600;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>New card</a>
           <a href="{{studyHref}}" style="height: 36px; padding: 0 22px; display: inline-flex; align-items: center; border-radius: 999px; background: #FFFFFF; color: #000000; box-shadow: 0 1px 2px rgba(0,0,0,.1); font-size: 14px; font-weight: 600;">{{studyLabel}}</a>
@@ -394,7 +395,9 @@ renderVals() {
       rows: found.map(g => ({ ...tagChip(g), count: String(uses[g]), on: g === f, pressed: g === f ? 'true' : 'false', pick: () => this.setState({ filter: g === f ? 'All' : g, tagMenuOpen: false, tagQ: '' }) })), none: found.length === 0 },
     spark: forecast,
     // Learn mode: start one, or go back to the one you stopped.
-    learnHref: db.mock ? 'WebQuizStart.dc.html' : db.learnOn(dk.id) ? '/learn/' + dk.id : '/deck/' + dk.id + '/learn', learnLabel: !db.mock && db.learnOn(dk.id) ? 'Keep learning' : 'Learn'
+    learnHref: db.mock ? 'WebQuizStart.dc.html' : db.learnOn(dk.id) ? '/learn/' + dk.id : '/deck/' + dk.id + '/learn', learnLabel: !db.mock && db.learnOn(dk.id) ? 'Keep learning' : 'Learn',
+    // Live (study together) is on the canvas only until it's built.
+    showLive: !!db.mock
   };
 }
 }

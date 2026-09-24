@@ -136,7 +136,8 @@ const I = {
   tiktok: '<path d="M15.5 3c.4 2.7 2.3 4.6 5 5"/><path d="M15.5 3v11.8a4.3 4.3 0 1 1-4.3-4.3"/>',
   youtube: '<rect x="2.5" y="5" width="19" height="14" rx="4.5"/><path d="M10 9.2v5.6l4.8-2.8z" fill="currentColor"/>',
   instagram: '<rect x="3" y="3" width="18" height="18" rx="5.5"/><circle cx="12" cy="12" r="4.2"/><circle cx="17.3" cy="6.7" r=".9" fill="currentColor" stroke="none"/>',
-  facebook: '<circle cx="12" cy="12" r="9.5"/><path d="M15.5 7.5h-1.8a2.7 2.7 0 0 0-2.7 2.7v11.3M8.5 13.2h6"/>'
+  facebook: '<circle cx="12" cy="12" r="9.5"/><path d="M15.5 7.5h-1.8a2.7 2.7 0 0 0-2.7 2.7v11.3M8.5 13.2h6"/>',
+  live: '<circle cx="12" cy="12" r="2.2" fill="currentColor" stroke="none"/><path d="M15.8 8.2a5.4 5.4 0 0 1 0 7.6M8.2 15.8a5.4 5.4 0 0 1 0-7.6M18.7 5.3a9.5 9.5 0 0 1 0 13.4M5.3 18.7a9.5 9.5 0 0 1 0-13.4"/>'
 };
 
 // The mark: three dots, two above and one below, in the text color. The viewBox hugs the ink, so `h` is its real height.
@@ -635,6 +636,7 @@ const webDeck = webRoot(`${sidebar('Decks')}
       <div style="display: flex; align-items: flex-end; justify-content: space-between; gap: 16px;">
         <div style="display: flex; flex-direction: column; gap: 6px; min-width: 0; text-shadow: {{coverShadow}};"><h1 style="margin: 0; font-size: 34px; font-weight: 600; letter-spacing: -.035em; line-height: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{deckName}}</h1><div style="font-size: 14px; opacity: .8;">{{deckLine}}</div></div>
         <div style="display: flex; gap: 10px; flex-shrink: 0;">
+          <sc-if value="{{showLive}}" hint-placeholder-val="{{ false }}"><a href="LiveSetup.dc.html" style="height: 36px; padding: 0 16px; display: inline-flex; align-items: center; gap: 8px; border-radius: 999px; ${onCover} font-size: 14px; font-weight: 600;">${svg(I.live, 15, 2)}Play live</a></sc-if>
           <a href="{{learnHref}}" style="height: 36px; padding: 0 16px; display: inline-flex; align-items: center; gap: 8px; border-radius: 999px; ${onCover} font-size: 14px; font-weight: 600;">${svg(I.sparkle, 15, 2)}{{learnLabel}}</a>
           <a href="{{newCardHref}}" style="height: 36px; padding: 0 18px; display: inline-flex; align-items: center; gap: 8px; border-radius: 999px; ${onCover} font-size: 14px; font-weight: 600;">${svg(I.plus, 16, 2)}New card</a>
           <a href="{{studyHref}}" style="height: 36px; padding: 0 22px; display: inline-flex; align-items: center; border-radius: 999px; background: #FFFFFF; color: #000000; box-shadow: 0 1px 2px rgba(0,0,0,.1); font-size: 14px; font-weight: 600;">{{studyLabel}}</a>
@@ -698,7 +700,9 @@ renderVals() {
       rows: found.map(g => ({ ...tagChip(g), count: String(uses[g]), on: g === f, pressed: g === f ? 'true' : 'false', pick: () => this.setState({ filter: g === f ? 'All' : g, tagMenuOpen: false, tagQ: '' }) })), none: found.length === 0 },
     spark: forecast,
     // Learn mode: start one, or go back to the one you stopped.
-    learnHref: db.mock ? 'WebQuizStart.dc.html' : db.learnOn(dk.id) ? '/learn/' + dk.id : '/deck/' + dk.id + '/learn', learnLabel: !db.mock && db.learnOn(dk.id) ? 'Keep learning' : 'Learn'
+    learnHref: db.mock ? 'WebQuizStart.dc.html' : db.learnOn(dk.id) ? '/learn/' + dk.id : '/deck/' + dk.id + '/learn', learnLabel: !db.mock && db.learnOn(dk.id) ? 'Keep learning' : 'Learn',
+    // Live (study together) is on the canvas only until it's built.
+    showLive: !!db.mock
   };
 }`;
 
@@ -3126,6 +3130,169 @@ renderVals() { ${T}
     homeHref: site ? '/' : '${phone ? 'LandingPhone' : 'Landing'}.dc.html', signInHref: signIn, startHref: site ? 'https://app.lucida.cards/' : signIn,
     privacyHref: site ? '/privacy' : 'Privacy.dc.html', termsHref: site ? '/terms' : 'Terms.dc.html', pricingHref: site ? '/pricing' : '${phone ? 'PricingPhone' : 'Pricing'}.dc.html' }; }`;
 
+// ---------- Live (study together) ----------
+// Like Kahoot or Poll Everywhere, from any deck: a host puts a room on a big screen, people join on their phones with a
+// code and a name (no account), and everyone answers the same questions (Learn mode's multiple choice and true or
+// false). Game: points for right and fast answers, a leaderboard, and a podium. Poll: no scores, just how the room
+// answered each one. Canvas only for now: the design, before it's built. The sample room plays Cell Biology.
+const LIVE_Q = { n: 3, of: 10, q: 'Which organelle packages proteins for secretion?', options: ['Golgi apparatus', 'Lysosome', 'Nucleus', 'Ribosome'], right: 0, counts: [7, 2, 1, 2] };
+const LIVE_PEOPLE = ['Maya', 'Jordan', 'Priya', 'Leo', 'Sofia', 'Ethan', 'Ana', 'Kai', 'Zoe', 'Omar', 'Lina', 'Noah'];
+const LIVE_BOARD = [['Maya', 3420, 1], ['Jordan', 3210, 2], ['Kai', 2980, -1], ['Priya', 2860, 0], ['Leo', 2640, 3]];
+// Each answer has a color (one of the gradients) and a shape, the same on the big screen and on phones.
+const LIVE_SHAPES = ['<circle cx="12" cy="12" r="7.5"/>', '<path d="M12 4.5l8.5 15h-17z"/>', '<rect x="5" y="5" width="14" height="14" rx="2.5"/>', '<path d="M12 3.5l8.5 8.5-8.5 8.5-8.5-8.5z"/>'];
+const LIVE_PALETTES = ['Iris', 'Apricot', 'Mint', 'Rose'];
+const liveShape = (i, s) => `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">${LIVE_SHAPES[i]}</svg>`;
+// A made-up QR code for the design (the real one points at lucida.cards/join/<code>): 25 by 25 modules, three finders.
+const LIVE_QR = (() => {
+  const n = 25, on = new Set(), finder = (x, y) => { for (let i = 0; i < 7; i++) for (let j = 0; j < 7; j++) { const edge = i === 0 || i === 6 || j === 0 || j === 6, core = i >= 2 && i <= 4 && j >= 2 && j <= 4; if (edge || core) on.add((x + i) + ',' + (y + j)); } };
+  finder(0, 0); finder(n - 7, 0); finder(0, n - 7);
+  let seed = 7;
+  for (let x = 0; x < n; x++) for (let y = 0; y < n; y++) {
+    if ((x < 8 && y < 8) || (x > n - 9 && y < 8) || (x < 8 && y > n - 9)) continue;
+    seed = (seed * 9301 + 49297) % 233280; if (seed / 233280 < .46) on.add(x + ',' + y);
+  }
+  return `<svg width="100%" height="100%" viewBox="-2 -2 ${n + 4} ${n + 4}" shape-rendering="crispEdges" aria-label="QR code to join"><rect x="-2" y="-2" width="${n + 4}" height="${n + 4}" fill="#FFFFFF"/>${[...on].map(k => { const [x, y] = k.split(','); return `<rect x="${x}" y="${y}" width="1" height="1" fill="#000000"/>`; }).join('')}</svg>`;
+})();
+const LIVE_CSS = '@keyframes scTimer{from{stroke-dashoffset:0}to{stroke-dashoffset:1}}@keyframes scJoin{from{opacity:0;transform:scale(.6)}}@keyframes scBar{from{transform:scaleX(0)}}@keyframes scRiseUp{from{opacity:0;transform:translateY(40px)}}@keyframes scFloat2{50%{transform:translateY(-6px)}}'
+  + '@media (prefers-reduced-motion:reduce){.sc-live *{animation:none!important}}';
+// The top of the big screen during a game: which question, how many answered, and the time left.
+const liveTimer = (size, stroke) => { const r = (size - stroke) / 2, c = size / 2;
+  return `<div style="position: relative; width: ${size}px; height: ${size}px;"><svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" aria-hidden="true" style="transform: rotate(-90deg);"><circle cx="${c}" cy="${c}" r="${r}" fill="none" stroke="{{t.surf2}}" stroke-width="${stroke}"/><circle pathLength="1" cx="${c}" cy="${c}" r="${r}" fill="none" stroke="{{t.text}}" stroke-width="${stroke}" stroke-linecap="round" stroke-dasharray="1" style="animation: scTimer 20s linear infinite;"/></svg><span style="position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: ${Math.round(size / 3)}px; font-weight: 600; font-variant-numeric: tabular-nums;">14</span></div>`; };
+const liveTop = right => `<header style="height: 96px; flex-shrink: 0; box-sizing: border-box; padding: 0 48px; display: flex; align-items: center; justify-content: space-between; gap: 24px;">
+    <div style="display: flex; align-items: center; gap: 16px;">${logo(30)}<span style="height: 32px; padding: 0 14px; display: inline-flex; align-items: center; border-radius: 999px; background: {{t.surf}}; font-size: 14px; font-weight: 600;">Question {{q.n}} of {{q.of}}</span><span style="font-size: 15px; color: {{t.muted}};">Cell Biology · {{modeName}}</span></div>
+    ${right}
+  </header>`;
+const liveFoot = `<footer style="height: 56px; flex-shrink: 0; box-sizing: border-box; padding: 0 48px; display: flex; align-items: center; justify-content: space-between; font-size: 15px; color: {{t.muted}};"><span>Join at <span style="font-weight: 600; color: {{t.text}};">lucida.cards/join</span> with <span style="font-weight: 600; color: {{t.text}}; letter-spacing: .06em;">482 913</span></span><span>{{peopleN}} people</span></footer>`;
+// An answer on the big screen: its shape and words on its gradient, and after the reveal, how many picked it.
+const liveTile = i => `<div style="position: relative; opacity: {{o${i}.op}}; transition: opacity .3s;">${meshCard(`o${i}.p`, 'height: 150px; border-radius: 28px; box-shadow: {{o' + i + '.ring}};', 'height: 100%; box-sizing: border-box; padding: 0 32px; display: flex; align-items: center; gap: 22px;', `<span style="width: 60px; height: 60px; flex-shrink: 0; border-radius: 30px; background: rgba(255,255,255,.7); color: #000000; display: flex; align-items: center; justify-content: center;">${liveShape(i, 26)}</span><span style="flex-grow: 1; font-size: 34px; font-weight: 600; letter-spacing: -.02em;">{{o${i}.label}}</span><sc-if value="{{o${i}.showCount}}" hint-placeholder-val="{{ false }}"><span style="display: flex; align-items: center; gap: 12px;"><span style="font-size: 30px; font-weight: 700; font-variant-numeric: tabular-nums;">{{o${i}.count}}</span><sc-if value="{{o${i}.right}}" hint-placeholder-val="{{ false }}"><span style="width: 48px; height: 48px; border-radius: 24px; background: #FFFFFF; color: #067647; display: flex; align-items: center; justify-content: center;">${svg(I.check, 24, 2.8)}</span></sc-if></span></sc-if>`)}</div>`;
+const liveTiles = `<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">${[0, 1, 2, 3].map(liveTile).join('')}</div>`;
+const liveQuestion = `<div class="sc-live" style="width: 1440px; height: 900px; box-sizing: border-box; display: flex; flex-direction: column; font-family: ${FONT}; background: {{t.bg}}; color: {{t.text}};">
+  ${liveTop(`<div style="display: flex; align-items: center; gap: 20px;"><span style="font-size: 15px; color: {{t.muted}};"><span style="font-weight: 600; color: {{t.text}};">9</span> of 12 answered</span>${liveTimer(76, 7)}</div>`)}
+  <main style="flex-grow: 1; box-sizing: border-box; padding: 8px 48px 24px; display: flex; flex-direction: column; justify-content: center; gap: 40px;">
+    <h1 style="margin: 0; text-align: center; font-size: 56px; font-weight: 600; line-height: 1.1; letter-spacing: -.035em; text-wrap: balance;">{{q.q}}</h1>
+    ${liveTiles}
+  </main>
+  ${liveFoot}
+</div>`;
+// After time's up: the right answer stays bright with how many picked each. Game goes on to the leaderboard; Poll
+// shows how much of the room got it, with no names or scores.
+const liveReveal = `<div class="sc-live" style="width: 1440px; height: 900px; box-sizing: border-box; display: flex; flex-direction: column; font-family: ${FONT}; background: {{t.bg}}; color: {{t.text}};">
+  ${liveTop(`<div style="display: flex; align-items: center; gap: 14px;"><sc-if value="{{poll}}" hint-placeholder-val="{{ false }}"><span style="height: 44px; padding: 0 18px; display: inline-flex; align-items: center; border-radius: 999px; background: {{t.goodTint}}; color: {{t.good}}; font-size: 17px; font-weight: 700;">58% of the room got it</span></sc-if><a href="{{nextHref}}" style="height: 52px; padding: 0 26px; display: inline-flex; align-items: center; gap: 8px; border-radius: 999px; background: {{t.inv}}; color: {{t.invText}}; font-size: 16px; font-weight: 600;">{{nextLabel}}${svg(I.chev, 16, 2.4)}</a></div>`)}
+  <main style="flex-grow: 1; box-sizing: border-box; padding: 8px 48px 24px; display: flex; flex-direction: column; justify-content: center; gap: 40px;">
+    <h1 style="margin: 0; text-align: center; font-size: 56px; font-weight: 600; line-height: 1.1; letter-spacing: -.035em; text-wrap: balance;">{{q.q}}</h1>
+    ${liveTiles}
+    <sc-if value="{{poll}}" hint-placeholder-val="{{ false }}"><div style="display: flex; flex-direction: column; gap: 10px;"><div style="display: flex; height: 14px; border-radius: 7px; overflow: hidden; gap: 3px;"><sc-for list="{{split}}" as="s" hint-placeholder-count="4"><div style="width: {{s.w}}; background: {{s.bg}}; transform-origin: left; animation: scBar .8s cubic-bezier(.2,.8,.2,1) both;"></div></sc-for></div><div style="display: flex; justify-content: space-between; font-size: 15px; color: {{t.muted}};"><span>How the room answered</span><span>12 answers</span></div></div></sc-if>
+  </main>
+  ${liveFoot}
+</div>`;
+// The leaderboard between questions: the top five, how far each moved, and bars against the leader.
+const liveLeaderboard = `<div class="sc-live" style="width: 1440px; height: 900px; box-sizing: border-box; display: flex; flex-direction: column; font-family: ${FONT}; background: {{t.bg}}; color: {{t.text}};">
+  ${liveTop(`<a href="LiveQuestion.dc.html" style="height: 52px; padding: 0 26px; display: inline-flex; align-items: center; gap: 8px; border-radius: 999px; background: {{t.inv}}; color: {{t.invText}}; font-size: 16px; font-weight: 600;">Next question${svg(I.chev, 16, 2.4)}</a>`)}
+  <main style="flex-grow: 1; box-sizing: border-box; padding: 16px 48px 32px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 28px;">
+    <h1 style="margin: 0; font-size: 56px; font-weight: 600; letter-spacing: -.035em;">Leaderboard</h1>
+    <div style="width: 900px; display: flex; flex-direction: column; gap: 12px;"><sc-for list="{{board}}" as="p" hint-placeholder-count="5"><div style="height: 72px; box-sizing: border-box; padding: 0 22px; border-radius: 22px; background: {{t.surf}}; display: flex; align-items: center; gap: 18px; animation: scRiseUp .5s cubic-bezier(.2,.8,.2,1) both; animation-delay: {{p.delay}};"><span style="width: 32px; font-size: 22px; font-weight: 700; font-variant-numeric: tabular-nums; color: {{t.muted}};">{{p.rank}}</span><span style="width: 44px; height: 44px; flex-shrink: 0; border-radius: 22px; background: {{p.color}}; color: #FFFFFF; display: flex; align-items: center; justify-content: center; font-size: 18px; font-weight: 700;">{{p.initial}}</span><span style="width: 150px; font-size: 22px; font-weight: 600;">{{p.name}}</span><div style="flex-grow: 1; height: 12px; border-radius: 6px; background: {{t.surf2}}; overflow: hidden;"><div style="width: {{p.w}}; height: 100%; border-radius: 6px; background: linear-gradient(90deg, #7E94FB, #2CB2EA); transform-origin: left; animation: scBar .9s cubic-bezier(.2,.8,.2,1) both;"></div></div><span style="width: 90px; text-align: right; font-size: 22px; font-weight: 700; font-variant-numeric: tabular-nums;">{{p.score}}</span><span style="width: 44px; text-align: right; font-size: 15px; font-weight: 600; color: {{p.moveColor}};">{{p.move}}</span></div></sc-for></div>
+  </main>
+  ${liveFoot}
+</div>`;
+// The end: a podium in three gradients, the next few places, and play again.
+const livePodium = `<div class="sc-live" style="position: relative; width: 1440px; height: 900px; box-sizing: border-box; display: flex; flex-direction: column; align-items: center; font-family: ${FONT}; background: {{t.bg}}; color: {{t.text}}; overflow: hidden;">
+  <div aria-hidden="true" style="position: absolute; inset: 0; pointer-events: none;">${Array.from({ length: 28 }, (_, i) => { const x = (i * 37) % 100, y = (i * 53) % 55, c = ['#7E94FB', '#F2AC45', '#7FD0B0', '#EE8CA6', '#2CB2EA'][i % 5], s = 6 + (i % 4) * 3; return `<span style="position: absolute; left: ${x}%; top: ${y}%; width: ${s}px; height: ${s}px; border-radius: ${i % 3 ? '50%' : '2px'}; background: ${c}; opacity: .8; animation: scFloat2 ${3 + (i % 3)}s ease-in-out -${i % 4}s infinite;"></span>`; }).join('')}</div>
+  <header style="position: relative; width: 100%; height: 96px; box-sizing: border-box; padding: 0 48px; display: flex; align-items: center; justify-content: space-between;">${logo(30)}<span style="font-size: 15px; color: {{t.muted}};">Cell Biology · final results</span></header>
+  <h1 style="position: relative; margin: 8px 0 0; font-size: 56px; font-weight: 600; letter-spacing: -.035em;">Maya wins!</h1>
+  <div style="position: relative; flex-grow: 1; width: 900px; display: flex; align-items: flex-end; justify-content: center; gap: 18px;">
+    ${[[1, 'Jordan', '8,940', 'Mint', 230], [0, 'Maya', '9,610', 'Iris', 320], [2, 'Kai', '8,120', 'Apricot', 170]].map(([i, name, score, pal, h]) => `<div style="width: 260px; display: flex; flex-direction: column; align-items: center; gap: 12px; animation: scRiseUp .7s cubic-bezier(.2,.8,.2,1) both; animation-delay: ${[.4, .8, 0][i]}s;"><span style="width: 64px; height: 64px; border-radius: 32px; background: {{c${i}}}; color: #FFFFFF; display: flex; align-items: center; justify-content: center; font-size: 26px; font-weight: 700;">${name[0]}</span><span style="font-size: 24px; font-weight: 600;">${name}</span><span style="font-size: 18px; color: {{t.muted}}; font-variant-numeric: tabular-nums;">${score}</span>${meshCard('p' + i, `width: 100%; height: ${h}px; border-radius: 28px 28px 0 0;`, 'height: 100%; display: flex; justify-content: center; padding-top: 22px; box-sizing: border-box;', `<span style="font-size: 64px; font-weight: 700; letter-spacing: -.04em; line-height: 1;">${i + 1}</span>`)}</div>`).join('')}
+  </div>
+  <div style="position: relative; width: 100%; height: 108px; box-sizing: border-box; padding: 0 48px; display: flex; align-items: center; justify-content: space-between; border-top: 1px solid {{t.line}};"><span style="font-size: 17px; color: {{t.muted}};">4 Priya 7,860 · 5 Leo 7,420 · 6 Sofia 6,980</span><div style="display: flex; gap: 12px;"><a href="LiveLobby.dc.html" style="height: 52px; padding: 0 26px; display: inline-flex; align-items: center; border-radius: 999px; background: {{t.surf}}; font-size: 16px; font-weight: 600;">Play again</a><a href="WebDeck.dc.html" style="height: 52px; padding: 0 30px; display: inline-flex; align-items: center; border-radius: 999px; background: {{t.inv}}; color: {{t.invText}}; font-size: 16px; font-weight: 600;">Done</a></div></div>
+</div>`;
+// The lobby: the join code, big, a QR code, and people popping in as they join.
+const liveLobby = `<div class="sc-live" style="position: relative; width: 1440px; height: 900px; box-sizing: border-box; display: flex; flex-direction: column; font-family: ${FONT}; color: {{t.text}}; background: linear-gradient(180deg, {{sky.top}} 0%, {{sky.mid}} 42%, {{sky.low}} 70%, {{t.bg}} 100%); overflow: hidden;">
+  <header style="height: 96px; flex-shrink: 0; box-sizing: border-box; padding: 0 48px; display: flex; align-items: center; justify-content: space-between;">${logo(30)}<span style="height: 36px; padding: 0 16px; display: inline-flex; align-items: center; gap: 8px; border-radius: 999px; background: rgba(255,255,255,.7); color: #000000; font-size: 14px; font-weight: 600;">${svg(I.live, 16, 2)}Cell Biology · {{modeName}}</span></header>
+  <main style="flex-grow: 1; box-sizing: border-box; padding: 0 48px 48px; display: grid; grid-template-columns: 1fr 380px; gap: 48px; align-items: center;">
+    <div style="display: flex; flex-direction: column; gap: 18px;">
+      <span style="font-size: 30px; font-weight: 500; color: {{t.muted}};">Join at <span style="font-weight: 700; color: {{t.text}};">lucida.cards/join</span></span>
+      <span style="font-size: 150px; font-weight: 700; line-height: .95; letter-spacing: .02em; font-variant-numeric: tabular-nums;">482 913</span>
+      <div style="margin-top: 22px; display: flex; flex-wrap: wrap; gap: 10px; max-width: 820px;"><sc-for list="{{people}}" as="p" hint-placeholder-count="12"><span style="height: 44px; padding: 0 18px 0 8px; display: inline-flex; align-items: center; gap: 10px; border-radius: 999px; background: {{t.bg}}; box-shadow: 0 6px 18px -10px rgba(0,0,0,.35); font-size: 18px; font-weight: 600; animation: scJoin .45s cubic-bezier(.2,.8,.2,1) both; animation-delay: {{p.delay}};"><span style="width: 30px; height: 30px; border-radius: 15px; background: {{p.color}}; color: #FFFFFF; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 700;">{{p.initial}}</span>{{p.name}}</span></sc-for></div>
+    </div>
+    <div style="display: flex; flex-direction: column; align-items: center; gap: 22px;">
+      <div style="width: 300px; height: 300px; box-sizing: border-box; padding: 18px; border-radius: 32px; background: #FFFFFF; box-shadow: 0 24px 56px -28px rgba(20,22,90,.45);">${LIVE_QR}</div>
+      <span style="font-size: 18px; color: {{t.muted}};"><span style="font-weight: 700; color: {{t.text}};">12</span> people in</span>
+      <a href="LiveQuestion.dc.html" style="width: 300px; height: 64px; display: flex; align-items: center; justify-content: center; border-radius: 999px; background: {{t.inv}}; color: {{t.invText}}; font-size: 20px; font-weight: 600;">Start</a>
+    </div>
+  </main>
+</div>`;
+// Setting up, from a deck: Game or Poll, which cards, how many questions, and the time for each.
+const liveSetup = `<div style="position: relative; width: 1440px; height: 900px; overflow: hidden; font-family: ${FONT}; color: {{t.text}};">
+  <dc-import name="WebDeck" dark="{{dark}}" hint-size="1440px,900px"></dc-import>
+  <div style="position: absolute; inset: 0; background: {{t.dim}};"></div>
+  <div role="dialog" aria-label="Play live" style="position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); width: 560px; box-sizing: border-box; padding: 28px; border-radius: 36px; background: {{t.bg}}; box-shadow: 0 24px 64px rgba(0,0,0,.24); display: flex; flex-direction: column; gap: 20px;">
+    <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px;"><span style="display: flex; align-items: center; gap: 10px; font-size: 22px; font-weight: 600; letter-spacing: -.02em;">${svg(I.live, 20, 1.8)}Play live</span><a href="WebDeck.dc.html" aria-label="Close" style="width: 40px; height: 40px; border-radius: 20px; background: {{t.surf}}; display: flex; align-items: center; justify-content: center;">${svg(I.close, 16, 2)}</a></div>
+    <p style="margin: 0; font-size: 15px; line-height: 1.5; color: {{t.muted}};">Put this deck on a big screen. People join on their phones with a code, no account needed, and answer together.</p>
+    <div role="group" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;"><sc-for list="{{modes}}" as="m" hint-placeholder-count="2"><button type="button" onClick="{{m.pick}}" aria-pressed="{{m.pressed}}" style="box-sizing: border-box; padding: 16px; border: 0; border-radius: 20px; background: {{m.bg}}; box-shadow: {{m.ring}}; color: {{t.text}}; font: inherit; text-align: left; display: flex; flex-direction: column; gap: 6px; cursor: pointer;"><span style="font-size: 16px; font-weight: 600;">{{m.label}}</span><span style="font-size: 13px; line-height: 1.4; color: {{t.muted}};">{{m.sub}}</span></button></sc-for></div>
+    ${quizField('Cards', quizSeg('sets'))}
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">${quizField('Questions', quizSeg('counts'))}${quizField('Time for each', quizSeg('times'))}</div>
+    <div style="display: flex; gap: 10px;">${quizBtn('Cancel', 'WebDeck.dc.html', false, 1)}${quizBtn('Open the room', 'LiveLobby.dc.html', true, 2, 'live')}</div>
+  </div>
+</div>`;
+// On phones: join with the code and a name.
+const liveJoin = `<div style="position: relative; width: 390px; height: 844px; box-sizing: border-box; padding: 72px 20px 34px; display: flex; flex-direction: column; gap: 28px; font-family: ${FONT}; background: {{t.bg}}; color: {{t.text}}; overflow: hidden;">
+  ${logo(28)}
+  <div style="display: flex; flex-direction: column; gap: 8px;"><h1 style="margin: 0; font-size: 32px; font-weight: 700; letter-spacing: -.03em;">Join a live game</h1><span style="font-size: 16px; line-height: 1.45; color: {{t.muted}};">Type the code on the big screen. No account needed.</span></div>
+  <div style="display: flex; flex-direction: column; gap: 8px;"><span style="font-size: 13px; font-weight: 600;">Code</span>${codeBoxes(50, 58)}</div>
+  <label style="display: flex; flex-direction: column; gap: 8px;"><span style="font-size: 13px; font-weight: 600;">Your name</span><input type="text" value="Maya" aria-label="Your name" style="height: 56px; box-sizing: border-box; padding: 0 20px; border: 0; outline: 0; border-radius: 999px; background: {{t.surf}}; color: {{t.text}}; font: inherit; font-size: 16px;"></label>
+  <div style="flex-grow: 1;"></div>
+  <a href="LiveWaiting.dc.html" style="height: 58px; border-radius: 999px; background: {{t.inv}}; color: {{t.invText}}; display: flex; align-items: center; justify-content: center; font-size: 17px; font-weight: 600;">Join</a>
+</div>`;
+// In, and waiting for the host to start.
+const liveWaiting = `<div class="sc-live" style="position: relative; width: 390px; height: 844px; box-sizing: border-box; padding: 64px 24px 40px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 22px; text-align: center; font-family: ${FONT}; color: {{t.text}}; background: linear-gradient(180deg, {{sky.top}} 0%, {{sky.mid}} 45%, {{sky.low}} 75%, {{t.bg}} 100%); overflow: hidden;">
+  <span style="width: 112px; height: 112px; border-radius: 56px; background: linear-gradient(135deg, #7E94FB, #2CB2EA); color: #FFFFFF; display: flex; align-items: center; justify-content: center; font-size: 48px; font-weight: 700; box-shadow: 0 20px 44px -20px rgba(20,22,90,.55); animation: scFloat2 3s ease-in-out infinite;">M</span>
+  <div style="display: flex; flex-direction: column; gap: 8px;"><div style="font-size: 32px; font-weight: 700; letter-spacing: -.03em;">You’re in, Maya!</div><div style="font-size: 16px; line-height: 1.5; color: {{t.muted}};">Look for your name on the big screen. The game starts soon.</div></div>
+  <span style="height: 36px; padding: 0 16px; display: inline-flex; align-items: center; gap: 8px; border-radius: 999px; background: rgba(255,255,255,.75); color: #000000; font-size: 14px; font-weight: 600;">${svg(I.live, 15, 2)}Cell Biology · Game</span>
+</div>`;
+// Answering on a phone: the question, and four big buttons with the same shapes and colors as the big screen.
+const liveAnswer = `<div class="sc-live" style="position: relative; width: 390px; height: 844px; box-sizing: border-box; padding: 60px 16px 34px; display: flex; flex-direction: column; gap: 16px; font-family: ${FONT}; background: {{t.bg}}; color: {{t.text}}; overflow: hidden;">
+  <div style="display: flex; align-items: center; gap: 12px;"><span style="font-size: 13px; font-weight: 600; color: {{t.muted}};">3 of 10</span><div style="flex-grow: 1; height: 6px; border-radius: 3px; background: {{t.surf}}; overflow: hidden;"><div style="width: 70%; height: 100%; border-radius: 3px; background: {{t.text}}; transform-origin: left; animation: scBar 20s linear reverse infinite;"></div></div><span style="font-size: 13px; font-weight: 600; font-variant-numeric: tabular-nums;">14s</span></div>
+  <div style="padding: 6px 4px 4px; font-size: 22px; font-weight: 600; line-height: 1.3; letter-spacing: -.02em;">{{q.q}}</div>
+  <div style="flex-grow: 1; display: grid; grid-template-rows: repeat(4, minmax(0, 1fr)); gap: 10px;">${[0, 1, 2, 3].map(i => meshCard('o' + i + '.p', 'border: 0; padding: 0; width: 100%; border-radius: 24px; font: inherit; text-align: left; cursor: pointer;', 'height: 100%; box-sizing: border-box; padding: 0 20px; display: flex; align-items: center; gap: 16px;', `<span style="width: 48px; height: 48px; flex-shrink: 0; border-radius: 24px; background: rgba(255,255,255,.7); color: #000000; display: flex; align-items: center; justify-content: center;">${liveShape(i, 22)}</span><span style="font-size: 20px; font-weight: 600;">{{o${i}.label}}</span>`, 'button', ' type="button"')).join('')}</div>
+  <div style="display: flex; align-items: center; justify-content: space-between; font-size: 14px; color: {{t.muted}};"><span style="display: flex; align-items: center; gap: 8px;"><span style="width: 24px; height: 24px; border-radius: 12px; background: linear-gradient(135deg, #7E94FB, #2CB2EA); color: #FFFFFF; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700;">M</span>Maya</span><span style="font-variant-numeric: tabular-nums;"><span style="font-weight: 700; color: {{t.text}};">2,550</span> points</span></div>
+</div>`;
+// After each question on a phone: right (with the points and your streak) or not, and your place.
+const liveResult = `<div class="sc-live" style="position: relative; width: 390px; height: 844px; box-sizing: border-box; padding: 64px 24px 40px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 20px; text-align: center; font-family: ${FONT}; background: {{r.bg}}; color: {{t.text}}; overflow: hidden;">
+  <span style="width: 112px; height: 112px; border-radius: 56px; background: {{r.color}}; color: #FFFFFF; display: flex; align-items: center; justify-content: center; animation: scJoin .45s cubic-bezier(.2,.8,.2,1) both;"><sc-if value="{{r.right}}" hint-placeholder-val="{{ true }}">${svg(I.check, 54, 2.6)}</sc-if><sc-if value="{{r.wrong}}" hint-placeholder-val="{{ false }}">${svg(I.close, 46, 2.6)}</sc-if></span>
+  <div style="display: flex; flex-direction: column; gap: 8px;"><div style="font-size: 34px; font-weight: 700; letter-spacing: -.03em; color: {{r.color}};">{{r.title}}</div><div style="font-size: 17px; line-height: 1.45;">{{r.line}}</div></div>
+  <sc-if value="{{r.right}}" hint-placeholder-val="{{ true }}"><span style="height: 40px; padding: 0 16px; display: inline-flex; align-items: center; gap: 8px; border-radius: 999px; background: {{t.bg}}; font-size: 15px; font-weight: 600;">${svg(I.flame, 16, 2)}3 in a row</span></sc-if>
+  <span style="font-size: 16px; color: {{t.muted}};">{{r.place}}</span>
+</div>`;
+// The end on a phone: your place, your score, and a way to make your own cards.
+const liveFinal = `<div class="sc-live" style="position: relative; width: 390px; height: 844px; box-sizing: border-box; padding: 64px 20px 34px; display: flex; flex-direction: column; align-items: center; gap: 22px; text-align: center; font-family: ${FONT}; background: {{t.bg}}; color: {{t.text}}; overflow: hidden;">
+  ${meshCard('p1', 'width: 128px; height: 128px; border-radius: 64px; margin-top: 20px; animation: scJoin .6s cubic-bezier(.2,.8,.2,1) both;', 'height: 100%; display: flex; align-items: center; justify-content: center;', '<span style="font-size: 60px; font-weight: 700; letter-spacing: -.04em;">2</span>')}
+  <div style="display: flex; flex-direction: column; gap: 6px;"><div style="font-size: 32px; font-weight: 700; letter-spacing: -.03em;">You placed 2nd!</div><div style="font-size: 16px; color: {{t.muted}};">8,940 points · 8 of 10 right</div></div>
+  <div style="flex-grow: 1;"></div>
+  <div style="width: 100%; box-sizing: border-box; padding: 20px; border-radius: 24px; background: {{t.surf}}; display: flex; flex-direction: column; gap: 12px; text-align: left;"><span style="display: flex; align-items: center; gap: 10px;">${mark(16)}<span style="font-size: 17px; font-weight: 600;">Make your own cards</span></span><span style="font-size: 15px; line-height: 1.5; color: {{t.muted}};">Ask Claude or ChatGPT to turn your notes into flashcards. Lucida keeps them and plans your reviews.</span><a href="https://lucida.cards" style="height: 50px; border-radius: 999px; background: {{t.inv}}; color: {{t.invText}}; display: flex; align-items: center; justify-content: center; font-size: 16px; font-weight: 600;">Try Lucida free</a></div>
+</div>`;
+const LIVE_COLORS = ['linear-gradient(135deg, #7E94FB, #2CB2EA)', 'linear-gradient(135deg, #F2AC45, #EE8CA6)', 'linear-gradient(135deg, #7FD0B0, #2CB2EA)', 'linear-gradient(135deg, #EE8CA6, #7E94FB)', 'linear-gradient(135deg, #F7D84E, #F2AC45)'];
+const LIVE_LOGIC = `
+constructor(props) { super(props); this.state = { mode: this.props && this.props.mode === 'Poll' ? 'poll' : 'game', set: 'tag', count: 10, time: 20 }; }
+renderVals() { ${T}
+  const s = this.state, poll = (this.props.mode || '') === 'Poll' || s.mode === 'poll', reveal = !!this.props.reveal, Q = ${JSON.stringify(LIVE_Q)}, total = Q.counts.reduce((a, b) => a + b, 0);
+  const seg = (k, cur) => ({ pressed: k === cur ? 'true' : 'false', bg: k === cur ? t.bg : 'transparent', fg: k === cur ? t.text : t.muted, sh: k === cur ? '0 1px 3px rgba(0,0,0,.14)' : 'none' });
+  const pals = ${JSON.stringify(LIVE_PALETTES)}, colors = ${JSON.stringify(LIVE_COLORS)};
+  const opt = i => ({ p: this.mesh(pals[i]), i, label: Q.options[i], count: String(Q.counts[i]), right: i === Q.right, showCount: reveal, op: reveal && i !== Q.right ? '.38' : '1', ring: reveal && i === Q.right ? '0 0 0 4px ' + t.good : 'none' });
+  const wrongPick = !!this.props.wrong;
+  return { t, dark: !!this.props.dark, sky: ${SKY}, grain: String(this.props.grain ?? 0.7), q: Q, poll, modeName: poll ? 'Poll' : 'Game', peopleN: '12',
+    o0: opt(0), o1: opt(1), o2: opt(2), o3: opt(3), c0: colors[0], c1: colors[2], c2: colors[1], p0: this.mesh('Iris'), p1: this.mesh('Mint'), p2: this.mesh('Apricot'),
+    nextHref: poll ? 'LiveQuestion.dc.html' : 'LiveLeaderboard.dc.html', nextLabel: poll ? 'Next question' : 'Leaderboard',
+    split: Q.counts.map((n, i) => ({ w: n / total * 100 + '%', bg: i === Q.right ? t.good : t.surf2 })),
+    people: ${JSON.stringify(LIVE_PEOPLE)}.map((name, i) => ({ name, initial: name[0], color: colors[i % colors.length], delay: (i * .12).toFixed(2) + 's' })),
+    board: ${JSON.stringify(LIVE_BOARD)}.map(([name, score, move], i) => ({ rank: String(i + 1), name, initial: name[0], color: colors[i % colors.length], score: score.toLocaleString('en-US'), w: score / ${LIVE_BOARD[0][1]} * 100 + '%',
+      move: move > 0 ? '▲ ' + move : move < 0 ? '▼ ' + -move : '–', moveColor: move > 0 ? t.good : move < 0 ? t.again : t.muted, delay: (i * .08).toFixed(2) + 's' })),
+    r: wrongPick ? { right: false, wrong: true, bg: t.againTint, color: t.again, title: 'Not quite', line: 'It was Golgi apparatus.', place: 'You’re in 5th place' }
+      : { right: true, wrong: false, bg: t.goodTint, color: t.good, title: 'Right!', line: '+870 points', place: 'You’re in 2nd place, 140 points behind Maya' },
+    modes: [['game', 'Game', 'Points for right and fast answers, a leaderboard, and a podium.'], ['poll', 'Poll', 'No scores. See how the room answered each question.']].map(([k, label, sub]) => ({ label, sub, pressed: s.mode === k ? 'true' : 'false', bg: s.mode === k ? t.bg : t.surf, ring: s.mode === k ? 'inset 0 0 0 2px ' + t.text : 'none', pick: () => this.setState({ mode: k }) })),
+    sets: [['new', 'New · 10'], ['hard', 'Hard · 36'], ['tag', 'Exam 1 · 40'], ['all', 'All · 412']].map(([k, label]) => ({ label, ...seg(k, s.set), pick: () => this.setState({ set: k }) })),
+    counts: [5, 10, 20].map(n => ({ label: String(n), ...seg(n, s.count), pick: () => this.setState({ count: n }) })),
+    times: [10, 20, 30].map(n => ({ label: n + 's', ...seg(n, s.time), pick: () => this.setState({ time: n }) })),
+    code: '482913', setCode: () => {}, boxes: '482913'.split('').map(d => ({ digit: d, ring: 'none' })) }; }`;
+
 // ---------- Pricing (lucida.cards/pricing) ----------
 // Free keeps every card. Pro ($5.99 a month or $39 a year) is for making Lucida yours: AI quizzes, photo covers and
 // your own colors, unlimited pictures and sounds, natural voices. Drawn for computers and phones like the landing page,
@@ -3296,6 +3463,19 @@ const files = {
   'PhoneQuizMatch': ['iPhone · Learn mode · matching', phoneQuizMatch, { props: DARK, logic: MATCH_LOGIC(true), css: LEARN_CSS, w: PW, h: PH }],
   'PhoneQuizType': ['iPhone · Learn mode · type the answer', phoneQuizType, { props: DARK, logic: TYPE_LOGIC(true), css: LEARN_CSS, w: PW, h: PH }],
   'PhoneQuizDone': ['iPhone · Learn mode · all learned', phoneQuizDone, { props: DARK, logic: QUIZ_DONE_LOGIC, css: LEARN_CSS, w: PW, h: PH }],
+  'LiveSetup': ['Live · host · set up (Game or Poll)', liveSetup, { props: DARK, logic: LIVE_LOGIC, w: W, h: H }],
+  'LiveLobby': ['Live · big screen · lobby (join code)', liveLobby, { props: { ...DARK, mode: { editor: 'enum', default: 'Game', options: ['Game', 'Poll'] } }, logic: LIVE_LOGIC, css: LIVE_CSS, w: W, h: H }],
+  'LiveQuestion': ['Live · big screen · question', liveQuestion, { props: { ...DARK, grain: MESH('Iris').grain }, logic: LIVE_LOGIC, css: LIVE_CSS, w: W, h: H }],
+  'LiveReveal': ['Live · big screen · answer (Game)', liveReveal, { props: { ...DARK, grain: MESH('Iris').grain, reveal: { editor: 'boolean', default: true }, mode: { editor: 'enum', default: 'Game', options: ['Game', 'Poll'] } }, logic: LIVE_LOGIC, css: LIVE_CSS, w: W, h: H }],
+  'LiveRevealPoll': ['Live · big screen · answer (Poll)', attrOf('LiveReveal', W, H, 'mode="Poll"'), { logic: darkLogic, css: LIVE_CSS, w: W, h: H }],
+  'LiveLeaderboard': ['Live · big screen · leaderboard', liveLeaderboard, { props: DARK, logic: LIVE_LOGIC, css: LIVE_CSS, w: W, h: H }],
+  'LivePodium': ['Live · big screen · podium', livePodium, { props: { ...DARK, grain: MESH('Iris').grain }, logic: LIVE_LOGIC, css: LIVE_CSS, w: W, h: H }],
+  'LiveJoin': ['Live · phone · join', liveJoin, { props: DARK, logic: LIVE_LOGIC, w: PW, h: PH }],
+  'LiveWaiting': ['Live · phone · waiting', liveWaiting, { props: DARK, logic: LIVE_LOGIC, css: LIVE_CSS, w: PW, h: PH }],
+  'LiveAnswer': ['Live · phone · answer', liveAnswer, { props: { ...DARK, grain: MESH('Iris').grain }, logic: LIVE_LOGIC, css: LIVE_CSS, w: PW, h: PH }],
+  'LiveResult': ['Live · phone · right', liveResult, { props: { ...DARK, wrong: { editor: 'boolean', default: false } }, logic: LIVE_LOGIC, css: LIVE_CSS, w: PW, h: PH }],
+  'LiveResultWrong': ['Live · phone · not quite', attrOf('LiveResult', PW, PH, 'wrong="{{yes}}"'), { logic: darkLogic, css: LIVE_CSS, w: PW, h: PH }],
+  'LiveFinal': ['Live · phone · final', liveFinal, { props: { ...DARK, grain: MESH('Iris').grain }, logic: LIVE_LOGIC, css: LIVE_CSS, w: PW, h: PH }],
   'Pricing': ['Pricing · lucida.cards/pricing', pricing(LAND.web, W, PRICING_H), { props: { ...DARK, grain: MESH('Iris').grain }, logic: pricingLogic(false), css: SKY_CSS, w: W, h: PRICING_H }],
   'PricingPhone': ['Pricing · lucida.cards/pricing on a phone', pricing(LAND.phone, PW, PRICING_PHONE_H), { props: { ...DARK, grain: MESH('Iris').grain }, logic: pricingLogic(true), css: SKY_CSS, w: PW, h: PRICING_PHONE_H }],
   'Privacy': ['Privacy Policy · lucida.cards/privacy', legalPage(PRIVACY, LEGAL_H.Privacy), { props: DARK, logic: legalLogic, w: W, h: LEGAL_H.Privacy }],
