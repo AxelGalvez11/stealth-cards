@@ -2537,12 +2537,18 @@ const PRO_BADGE = '<span style="height: 22px; padding: 0 9px; display: inline-fl
 const quizSeg = list => `<div role="group" style="display: flex; padding: 4px; border-radius: 999px; background: {{t.surf}};"><sc-for list="{{${list}}}" as="o" hint-placeholder-count="4"><button type="button" onClick="{{o.pick}}" aria-pressed="{{o.pressed}}" style="flex: 1 1 0; min-width: 0; height: 38px; padding: 0 6px; border: 0; border-radius: 999px; background: {{o.bg}}; color: {{o.fg}}; box-shadow: {{o.sh}}; font: inherit; font-size: 13px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: pointer;">{{o.label}}</button></sc-for></div>`;
 const quizField = (label, body) => `<div style="display: flex; flex-direction: column; gap: 8px;"><span style="font-size: 13px; font-weight: 600;">${label}</span>${body}</div>`;
 const quizBtn = (label, href, inv, grow, icon = '', click = '') => `<a href="${href}"${click ? ` onClick="{{${click}}}"` : ''} style="flex-grow: ${grow}; height: 52px; border-radius: 999px; background: ${inv ? '{{t.inv}}' : '{{t.surf}}'}; color: ${inv ? '{{t.invText}}' : '{{t.text}}'}; display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 15px; font-weight: 600;">${icon ? svg(I[icon], 16, 2) : ''}${label}</a>`;
+// A fade that looks natural: the alpha follows the "scrim" easing curve (it lets go slowly, faster in the middle, then
+// slowly again), so neither end shows as an edge the way a straight ramp does. `from` and `to` are % of the layer.
+const SCRIM = [[0, 1], [.081, .987], [.155, .951], [.225, .896], [.29, .825], [.353, .741], [.412, .648], [.471, .55], [.529, .45], [.588, .352], [.647, .259], [.71, .175], [.775, .104], [.845, .049], [.919, .013], [1, 0]];
+const scrimMask = (from, to) => `linear-gradient(180deg, ${SCRIM.map(([p, a]) => `rgba(0,0,0,${a}) ${+(from + (to - from) * p).toFixed(1)}%`).join(', ')})`;
 // A deep gradient across the top of a dialog that fades out toward the bottom, under a white title and line (the owner
-// asked for it on the web's Learn mode and Play live cards). It's the site's Midnight (`deep` in renderVals). The line
-// keeps room under it, so the fade is nearly gone where the dark labels start.
-const deepTop = `<div aria-hidden="true" style="position: absolute; left: 0; right: 0; top: 0; height: 216px; overflow: hidden; background: {{deep.base}}; -webkit-mask-image: linear-gradient(180deg, #000 64%, transparent); mask-image: linear-gradient(180deg, #000 64%, transparent);">${flowLayer('deep')}${GRAIN_LAYER}</div>`;
+// asked for it on the web's Learn mode and Play live cards). It's the site's Midnight (`deep` in renderVals). The fade
+// starts under the title and runs 290px on the scrim curve (V74; V72's short straight fade "looks forced"): the line
+// stays on the dark part (alpha .75 or more), and it's under .6 by the first label, where black text reads again.
+// Midnight's bright bottom corners fall past the end, so the fade shows no band.
+const deepTop = `<div aria-hidden="true" style="position: absolute; left: 0; right: 0; top: 0; height: 330px; overflow: hidden; background: {{deep.base}}; -webkit-mask-image: ${scrimMask(12.1, 100)}; mask-image: ${scrimMask(12.1, 100)};">${flowLayer('deep')}${GRAIN_LAYER}</div>`;
 const deepHead = (icon, title, back, line) => `<div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; color: #FFFFFF;"><span style="display: flex; align-items: center; gap: 10px; font-size: 22px; font-weight: 600; letter-spacing: -.02em;">${svg(I[icon], 20, 1.8)}${title}</span><a href="${back}" aria-label="Close" style="width: 40px; height: 40px; flex-shrink: 0; border-radius: 20px; background: rgba(255,255,255,.14); box-shadow: inset 0 0 0 1.5px rgba(255,255,255,.3); color: #FFFFFF; display: flex; align-items: center; justify-content: center;">${svg(I.close, 16, 2)}</a></div>
-    <p style="margin: 0 0 44px; font-size: 15px; line-height: 1.5; color: rgba(255,255,255,.8); text-shadow: {{deep.shadow}};">${line}</p>`;
+    <p style="margin: 0 0 24px; font-size: 15px; line-height: 1.5; color: rgba(255,255,255,.9); text-shadow: {{deep.shadow}};">${line}</p>`;
 // Starting: which cards to learn and which kinds of questions to ask (on the web, under the deep top).
 const LEARN_LINE = 'Learn cards until you know every one. Each card is asked a few different ways, and the ones you miss come back.';
 const learnStartBody = (back, start, deep) => `${deep ? deepHead('sparkle', 'Learn mode', back, LEARN_LINE) : `<div style="display: flex; align-items: center; justify-content: space-between; gap: 12px;"><span style="display: flex; align-items: center; gap: 10px; font-size: 22px; font-weight: 600; letter-spacing: -.02em;">${svg(I.sparkle, 20, 1.8)}Learn mode</span><a href="${back}" aria-label="Close" style="width: 40px; height: 40px; flex-shrink: 0; border-radius: 20px; background: {{t.surf}}; display: flex; align-items: center; justify-content: center;">${svg(I.close, 16, 2)}</a></div>
@@ -3173,16 +3179,21 @@ const LIVE_BOARD = [['Maya', 3420, 1], ['Jordan', 3210, 2], ['Kai', 2980, -1], [
 // Each answer has a flat color and a shape, the same on the big screen and on phones.
 const LIVE_SHAPES = ['<circle cx="12" cy="12" r="7.5"/>', '<path d="M12 4.5l8.5 15h-17z"/>', '<rect x="5" y="5" width="14" height="14" rx="2.5"/>', '<path d="M12 3.5l8.5 8.5-8.5 8.5-8.5-8.5z"/>'];
 const liveShape = (i, s) => `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">${LIVE_SHAPES[i]}</svg>`;
-// Live's look (the owner's reference, 2026-09-24): bright colors and big navy type, like a game, instead of the app's
-// white. Blue is the room (joining, questions, the leaderboard), and a phone waits on the daylight sky; green means you
-// got it; yellow means not quite, and the end. The answers are tiles in the deep gradients. The screens stay bright in
-// dark mode.
+// Live's look (the owner's reference, 2026-09-24, then their comments): bright colors and big navy type, like a game.
+// The lobby and a phone's join and waiting screens are on the daylight sky; the big screen's question and answer are on
+// white (V74); the leaderboard and a phone's answering are blue; green means you got it; yellow means not quite, and
+// the end. The answers are tiles in the deep gradients. The screens stay bright in dark mode.
 const LV = { blue: '#7ACFEA', green: '#62DE8A', yellow: '#FFD84A', navy: '#0D1542', ink2: 'rgba(13,21,66,.68)', chip: 'rgba(255,255,255,.55)', check: '#16C64A', gray: '#C4CBD5', grayInk: '#5D6677', purple: '#4F60E6', shadow: '0 10px 24px -16px rgba(13,21,66,.35)', lift: '0 26px 48px -20px rgba(13,21,66,.5)' };
 // The four answers: tiles in the deep gradients (surfaces.mjs), with white words (the owner asked for them in V72).
 // Blue, mauve, olive green, and brown into orange: the four that stay dark enough behind words in the middle of a tile.
 // The number is how tall the gradient is drawn (% of the tile, from the bottom): Ocean and Forest show only their deep
 // lower part, without the pale sky on top.
 const LIVE_DEEP = [['Ocean', 180], ['Dusk', 100], ['Forest', 180], ['Ember', 100]];
+// The daylight sky (the landing page's, SKY, in daylight), fading to white. `mid` and `low` place its paler bands, in %.
+const liveSky = (mid, low) => `linear-gradient(180deg, #86BDF3 0%, #C9E2FB ${mid}%, #EDF5FE ${low}%, #FFFFFF 100%)`;
+const LIVE_SKY = liveSky(45, 75);
+// On white, chips are a faint navy instead of glass.
+const LIVE_TINT = 'rgba(13,21,66,.06)';
 // Players' circles: flat colors dark enough for a white initial.
 const LIVE_COLORS = ['#4F60E6', '#F2701D', '#12A150', '#E5407E', '#0D1542'];
 const navyBtn = (label, href, h = 52, fs = 16, extra = '') => `<a href="${href}" style="height: ${h}px; padding: 0 26px; display: inline-flex; align-items: center; justify-content: center; gap: 8px; border-radius: 999px; background: ${LV.navy}; color: #FFFFFF; font-size: ${fs}px; font-weight: 600; ${extra}">${label}</a>`;
@@ -3205,10 +3216,10 @@ const FLAME_CSS = '@keyframes scFlame{0%,100%{transform:rotate(-3deg) scale(1,1)
 // The top of the big screen during a game: which question, how many answered, and the time left (a purple ring).
 // (Words beside a {{hole}} sit in their own span: the canvas wraps each hole in one, and a flex box drops the spaces
 // around it.)
-const liveTimer = (size, stroke) => { const r = (size - stroke) / 2, c = size / 2;
-  return `<div style="position: relative; width: ${size}px; height: ${size}px; border-radius: 50%; background: ${LV.chip};"><svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" aria-hidden="true" style="transform: rotate(-90deg);"><circle cx="${c}" cy="${c}" r="${r}" fill="none" stroke="rgba(13,21,66,.1)" stroke-width="${stroke}"/><circle pathLength="1" cx="${c}" cy="${c}" r="${r}" fill="none" stroke="${LV.purple}" stroke-width="${stroke}" stroke-linecap="round" stroke-dasharray="1" style="animation: scTimer 20s linear infinite;"/></svg><span style="position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: ${Math.round(size / 3)}px; font-weight: 700; font-variant-numeric: tabular-nums;">14</span></div>`; };
-const liveTop = right => `<header style="height: 96px; flex-shrink: 0; box-sizing: border-box; padding: 0 48px; display: flex; align-items: center; justify-content: space-between; gap: 24px;">
-    <div style="display: flex; align-items: center; gap: 16px;">${logo(30)}<span style="height: 32px; padding: 0 14px; display: inline-flex; align-items: center; border-radius: 999px; background: ${LV.chip}; font-size: 14px; font-weight: 600;"><span>Question {{q.n}} of {{q.of}}</span></span><span style="font-size: 15px; color: ${LV.ink2};">Cell Biology</span></div>
+const liveTimer = (size, stroke, chip = LV.chip) => { const r = (size - stroke) / 2, c = size / 2;
+  return `<div style="position: relative; width: ${size}px; height: ${size}px; border-radius: 50%; background: ${chip};"><svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" aria-hidden="true" style="transform: rotate(-90deg);"><circle cx="${c}" cy="${c}" r="${r}" fill="none" stroke="rgba(13,21,66,.1)" stroke-width="${stroke}"/><circle pathLength="1" cx="${c}" cy="${c}" r="${r}" fill="none" stroke="${LV.purple}" stroke-width="${stroke}" stroke-linecap="round" stroke-dasharray="1" style="animation: scTimer 20s linear infinite;"/></svg><span style="position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: ${Math.round(size / 3)}px; font-weight: 700; font-variant-numeric: tabular-nums;">14</span></div>`; };
+const liveTop = (right, chip = LV.chip) => `<header style="height: 96px; flex-shrink: 0; box-sizing: border-box; padding: 0 48px; display: flex; align-items: center; justify-content: space-between; gap: 24px;">
+    <div style="display: flex; align-items: center; gap: 16px;">${logo(30)}<span style="height: 32px; padding: 0 14px; display: inline-flex; align-items: center; border-radius: 999px; background: ${chip}; font-size: 14px; font-weight: 600;"><span>Question {{q.n}} of {{q.of}}</span></span><span style="font-size: 15px; color: ${LV.ink2};">Cell Biology</span></div>
     ${right}
   </header>`;
 const liveFoot = `<footer style="height: 56px; flex-shrink: 0; box-sizing: border-box; padding: 0 48px; display: flex; align-items: center; justify-content: space-between; font-size: 15px; color: ${LV.ink2};"><span>Join at <span style="font-weight: 700; color: ${LV.navy};">lucida.cards/join</span> with <span style="font-weight: 700; color: ${LV.navy}; letter-spacing: .06em;">482 913</span></span><span>{{peopleN}} people</span></footer>`;
@@ -3219,17 +3230,19 @@ const liveRoot = (w, h, extra = '') => `class="sc-live" style="position: relativ
 const liveDeep = i => `<span aria-hidden="true" style="position: absolute; left: 0; right: 0; bottom: 0; height: {{o${i}.zoom}}; background: {{o${i}.p.base}};">${flowLayer(`o${i}.p`)}</span>${GRAIN_LAYER}<span aria-hidden="true" style="position: absolute; inset: 0; background: ${LV.gray}; opacity: {{o${i}.grayOp}}; transition: opacity .3s;"></span>`;
 const liveTile = i => `<div style="position: relative; overflow: hidden; height: 150px; border-radius: 28px; background: {{o${i}.p.base}}; color: {{o${i}.fg}}; box-shadow: {{o${i}.shadow}}; transform: {{o${i}.tf}}; transition: color .3s, transform .4s cubic-bezier(.2,.8,.2,1), box-shadow .4s;">${liveDeep(i)}<div style="position: relative; height: 100%; box-sizing: border-box; padding: 0 32px; display: flex; align-items: center; gap: 22px; text-shadow: {{o${i}.ts}};"><span style="width: 60px; height: 60px; flex-shrink: 0; border-radius: 30px; background: {{o${i}.badge}}; box-shadow: {{o${i}.badgeLine}}; display: flex; align-items: center; justify-content: center;">${liveShape(i, 26)}</span><span style="flex-grow: 1; font-size: 34px; font-weight: 700; letter-spacing: -.02em;">{{o${i}.label}}</span><sc-if value="{{o${i}.showCount}}" hint-placeholder-val="{{ false }}"><span style="display: flex; align-items: center; gap: 14px;"><span style="font-size: 30px; font-weight: 700; font-variant-numeric: tabular-nums;">{{o${i}.count}}</span><sc-if value="{{o${i}.right}}" hint-placeholder-val="{{ false }}"><span style="width: 52px; height: 52px; border-radius: 26px; background: ${LV.check}; color: #FFFFFF; display: flex; align-items: center; justify-content: center; animation: scPop .4s cubic-bezier(.2,.8,.2,1) both;">${svg(I.check, 26, 3)}</span></sc-if></span></sc-if></div></div>`;
 const liveTiles = `<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">${[0, 1, 2, 3].map(liveTile).join('')}</div>`;
-const liveQuestion = `<div ${liveRoot(1440, 900, 'display: flex; flex-direction: column;')}>
-  ${liveTop(`<div style="display: flex; align-items: center; gap: 20px;"><span style="font-size: 15px; color: ${LV.ink2};"><span style="font-weight: 700; color: ${LV.navy};">9</span> of 12 answered</span>${liveTimer(76, 7)}</div>`)}
+// The question, on white (the owner asked to go back to it, V74), so the deep gradient answers stand out.
+const liveQuestion = `<div ${liveRoot(1440, 900, 'display: flex; flex-direction: column; background: #FFFFFF;')}>
+  ${liveTop(`<div style="display: flex; align-items: center; gap: 20px;"><span style="font-size: 15px; color: ${LV.ink2};"><span style="font-weight: 700; color: ${LV.navy};">9</span> of 12 answered</span>${liveTimer(76, 7, LIVE_TINT)}</div>`, LIVE_TINT)}
   <main style="flex-grow: 1; box-sizing: border-box; padding: 8px 48px 24px; display: flex; flex-direction: column; justify-content: center; gap: 40px;">
     <h1 style="margin: 0; text-align: center; font-size: 60px; font-weight: 700; line-height: 1.08; letter-spacing: -.035em; text-wrap: balance;">{{q.q}}</h1>
     ${liveTiles}
   </main>
   ${liveFoot}
 </div>`;
-// After time's up: the right answer lifts with a check, the rest go gray, and each shows how many picked it.
-const liveReveal = `<div ${liveRoot(1440, 900, 'display: flex; flex-direction: column;')}>
-  ${liveTop(`<div style="display: flex; align-items: center; gap: 14px;"><span style="font-size: 15px; color: ${LV.ink2};"><span style="font-weight: 700; color: ${LV.navy};">7 of 12</span> got it</span>${navyBtn(`{{nextLabel}}${svg(I.chev, 16, 2.4)}`, '{{nextHref}}')}</div>`)}
+// After time's up: the right answer lifts with a check, the rest go gray, and each shows how many picked it. On white,
+// like the question it follows.
+const liveReveal = `<div ${liveRoot(1440, 900, 'display: flex; flex-direction: column; background: #FFFFFF;')}>
+  ${liveTop(`<div style="display: flex; align-items: center; gap: 14px;"><span style="font-size: 15px; color: ${LV.ink2};"><span style="font-weight: 700; color: ${LV.navy};">7 of 12</span> got it</span>${navyBtn(`{{nextLabel}}${svg(I.chev, 16, 2.4)}`, '{{nextHref}}')}</div>`, LIVE_TINT)}
   <main style="flex-grow: 1; box-sizing: border-box; padding: 8px 48px 24px; display: flex; flex-direction: column; justify-content: center; gap: 40px;">
     <h1 style="margin: 0; text-align: center; font-size: 60px; font-weight: 700; line-height: 1.08; letter-spacing: -.035em; text-wrap: balance;">{{q.q}}</h1>
     ${liveTiles}
@@ -3256,8 +3269,9 @@ const livePodium = `<div ${liveRoot(1440, 900, 'display: flex; flex-direction: c
   </div>
   <div style="position: relative; width: 100%; height: 108px; box-sizing: border-box; padding: 0 48px; display: flex; align-items: center; justify-content: space-between; background: #FFFFFF;"><span style="font-size: 17px; color: ${LV.ink2};">4 Priya 7,860 · 5 Leo 7,420 · 6 Sofia 6,980</span><div style="display: flex; gap: 12px;"><a href="LiveLobby.dc.html" style="height: 52px; padding: 0 26px; display: inline-flex; align-items: center; border-radius: 999px; background: rgba(13,21,66,.07); font-size: 16px; font-weight: 600;">Play again</a>${navyBtn('Done', 'WebDeck.dc.html')}</div></div>
 </div>`;
-// The lobby: blue, with the join code big, a QR code, and people popping in as they join.
-const liveLobby = `<div ${liveRoot(1440, 900, 'display: flex; flex-direction: column;')}>
+// The lobby: on the daylight sky, like before V71 (the owner asked for it back, V74), with the join code big, a QR code,
+// and people popping in as they join.
+const liveLobby = `<div ${liveRoot(1440, 900, 'display: flex; flex-direction: column; background: ' + liveSky(42, 70) + ';')}>
   <header style="height: 96px; flex-shrink: 0; box-sizing: border-box; padding: 0 48px; display: flex; align-items: center; justify-content: space-between;">${logo(30)}<span style="height: 36px; padding: 0 16px; display: inline-flex; align-items: center; gap: 8px; border-radius: 999px; background: ${LV.chip}; font-size: 14px; font-weight: 600;">${svg(I.live, 16, 2)}Cell Biology</span></header>
   <main style="flex-grow: 1; box-sizing: border-box; padding: 0 48px 48px; display: grid; grid-template-columns: 1fr 380px; gap: 48px; align-items: center;">
     <div style="display: flex; flex-direction: column; gap: 18px;">
@@ -3286,8 +3300,9 @@ const liveSetup = `<div style="position: relative; width: 1440px; height: 900px;
     </div>
   </div>
 </div>`;
-// On phones: join with the code and a name, on the room's blue.
-const liveJoin = `<div ${liveRoot(390, 844, 'padding: 72px 20px 34px; display: flex; flex-direction: column; gap: 28px;')}>
+// On phones: join with the code and a name, on the daylight sky like the waiting screen after it (the owner asked for
+// it, V74; the same on the web's join page and in the iPhone app once Live is built).
+const liveJoin = `<div ${liveRoot(390, 844, 'padding: 72px 20px 34px; display: flex; flex-direction: column; gap: 28px; background: ' + LIVE_SKY + ';')}>
   ${logo(28)}
   <div style="display: flex; flex-direction: column; gap: 10px;"><h1 style="margin: 0; font-size: 36px; font-weight: 700; line-height: 1.08; letter-spacing: -.03em;">Join a live game</h1><span style="font-size: 16px; line-height: 1.45; color: ${LV.ink2};">Type the code on the big screen. No account needed.</span></div>
   <div style="display: flex; flex-direction: column; gap: 8px;"><span style="font-size: 13px; font-weight: 700;">Code</span><label style="position: relative; display: flex; justify-content: space-between; gap: 6px; cursor: text;"><sc-for list="{{boxes}}" as="b" hint-placeholder-count="6"><span style="flex: 0 1 50px; min-width: 0; height: 58px; border-radius: 14px; background: #FFFFFF; box-shadow: ${LV.shadow}; display: flex; align-items: center; justify-content: center; font-size: 24px; font-weight: 700;">{{b.digit}}</span></sc-for><input type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6" value="{{code}}" onChange="{{setCode}}" aria-label="6-digit code" style="position: absolute; inset: 0; width: 100%; opacity: 0; border: 0; padding: 0; font-size: 16px;"></label></div>
@@ -3295,9 +3310,7 @@ const liveJoin = `<div ${liveRoot(390, 844, 'padding: 72px 20px 34px; display: f
   <div style="flex-grow: 1;"></div>
   ${navyBtn('Join', 'LiveWaiting.dc.html', 58, 17)}
 </div>`;
-// In, and waiting for the host to start, on the daylight sky it had before V71 (the owner asked for it back): the
-// landing page's day sky (SKY) fading to white. It stays bright in dark mode, like the rest of Live.
-const LIVE_SKY = 'linear-gradient(180deg, #86BDF3 0%, #C9E2FB 45%, #EDF5FE 75%, #FFFFFF 100%)';
+// In, and waiting for the host to start, on the daylight sky it had before V71 (the owner asked for it back).
 const liveWaiting = `<div ${liveRoot(390, 844, 'padding: 64px 24px 40px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 22px; text-align: center; background: ' + LIVE_SKY + ';')}>
   <span style="width: 112px; height: 112px; border-radius: 56px; background: ${LV.purple}; color: #FFFFFF; display: flex; align-items: center; justify-content: center; font-size: 48px; font-weight: 700; box-shadow: ${LV.lift}; animation: scFloat2 3s ease-in-out infinite;">M</span>
   <div style="display: flex; flex-direction: column; gap: 8px;"><div style="font-size: 34px; font-weight: 700; letter-spacing: -.03em;">You’re in, Maya!</div><div style="font-size: 16px; line-height: 1.5; color: ${LV.ink2};">Look for your name on the big screen. The game starts soon.</div></div>
