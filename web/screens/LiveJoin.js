@@ -177,7 +177,7 @@ renderVals() { const t = this.theme(!!this.props.dark);
   // Each answer's vivid gradient; after the reveal the right one lifts and tilts a little, and the others gray out.
   const opt = i => { const lift = reveal && i === Q.right, gray = reveal && i !== Q.right, p = this.gen(VIVID[i], 'vivid');
     return { i, p, label: Q.options[i], count: String(Q.counts[i]), right: lift, showCount: reveal, gfilter: gray ? 'grayscale(1)' : 'none', fg: p.ink, ts: p.shadow,
-      badge: p.glass, badgeLine: 'inset 0 0 0 1.5px ' + p.glassLine, shadow: lift ? LV.lift : gray ? 'none' : LV.shadow, tf: lift ? 'translateY(-6px) rotate(-1.5deg)' : 'none' }; };
+      badge: p.glass, badgeLine: 'inset 0 0 0 1.5px ' + p.glassLine, shadow: lift ? LV.lift : gray ? 'none' : LV.shadow, tf: lift ? 'translateY(-10px)' : 'none', anim: lift ? 'scLiftIn .45s cubic-bezier(.2,.8,.2,1) 0.1s both, scHover 2.4s ease-in-out 0.55s infinite alternate' : 'none' }; };
   const wrongPick = !!this.props.wrong;
   return { t, dark: !!this.props.dark, grain: String(this.props.grain ?? 0.7), q: Q, peopleN: '12',
     o0: opt(0), o1: opt(1), o2: opt(2), o3: opt(3), c0: colors[0], c1: colors[2], c2: colors[1],
@@ -185,8 +185,8 @@ renderVals() { const t = this.theme(!!this.props.dark);
     people: ["Maya","Jordan","Priya","Leo","Sofia","Ethan","Ana","Kai","Zoe","Omar","Lina","Noah"].map((name, i) => ({ name, initial: name[0], color: colors[i % colors.length], delay: (i * .12).toFixed(2) + 's' })),
     board: [["Maya",3420,1],["Jordan",3210,2],["Kai",2980,-1],["Priya",2860,0],["Leo",2640,3]].map(([name, score, move], i) => ({ rank: String(i + 1), name, initial: name[0], color: colors[i % colors.length], score: score.toLocaleString('en-US'), w: score / 3420 * 100 + '%',
       move: move > 0 ? '▲ ' + move : move < 0 ? '▼ ' + -move : '–', moveColor: move > 0 ? '#12A150' : move < 0 ? '#D92D20' : LV.grayInk, delay: (i * .08).toFixed(2) + 's' })),
-    r: wrongPick ? { right: false, wrong: true, bg: LV.yellow, title: 'Not quite', line: 'It was Golgi apparatus.', place: 'You’re in 5th place', pick: 'Lysosome', answer: 'Golgi apparatus', cardX: '134px', cardTilt: '6deg' }
-      : { right: true, wrong: false, bg: LV.green, title: 'Right!', line: '+870 points', place: 'You’re in 2nd place, 140 points behind Maya', pick: '', answer: 'Golgi apparatus', cardX: '61px', cardTilt: '-4deg' },
+    r: wrongPick ? { right: false, wrong: true, bg: 'linear-gradient(180deg, #FFE08A 0%, #FFF0C2 45%, #FFF9E8 75%, #FFFFFF 100%)', title: 'Not quite', line: 'It was Golgi apparatus.', place: 'You’re in 5th place', pick: 'Lysosome', answer: 'Golgi apparatus', cardX: '134px' }
+      : { right: true, wrong: false, bg: 'linear-gradient(180deg, #A3E8BC 0%, #D0F5DD 45%, #EEFCF3 75%, #FFFFFF 100%)', title: 'Right!', line: '+870 points', place: 'You’re in 2nd place, 140 points behind Maya', pick: '', answer: 'Golgi apparatus', cardX: '61px' },
     sets: [['new', 'New · 10'], ['hard', 'Hard · 36'], ['tag', 'Exam 1 · 40'], ['all', 'All · 412']].map(([k, label]) => ({ label, ...seg(k, s.set), pick: () => this.setState({ set: k }) })),
     counts: [5, 10, 20].map(n => ({ label: String(n), ...seg(n, s.count), pick: () => this.setState({ count: n }) })),
     times: [10, 20, 30].map(n => ({ label: n + 's', ...seg(n, s.time), pick: () => this.setState({ time: n }) })),

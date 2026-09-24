@@ -2546,7 +2546,10 @@ const scrimMask = (from, to) => `linear-gradient(180deg, ${SCRIM.map(([p, a]) =>
 // starts under the title and runs 290px on the scrim curve (V74; V72's short straight fade "looks forced"): the line
 // stays on the dark part (alpha .75 or more), and it's under .6 by the first label, where black text reads again.
 // Midnight's bright bottom corners fall past the end, so the fade shows no band.
-const deepTop = `<div aria-hidden="true" style="position: absolute; left: 0; right: 0; top: 0; height: 330px; overflow: hidden; background: {{deep.base}}; -webkit-mask-image: ${scrimMask(12.1, 100)}; mask-image: ${scrimMask(12.1, 100)};">${flowLayer('deep')}${GRAIN_LAYER}</div>`;
+// `deepTopOf(h, from)`: the layer's height and where its fade starts (px). The phone's sheet starts it lower: its line
+// runs 3 lines under a grab handle, so it ends near 158px and the first label sits near 200px (V77).
+const deepTopOf = (h, from) => `<div aria-hidden="true" style="position: absolute; left: 0; right: 0; top: 0; height: ${h}px; overflow: hidden; background: {{deep.base}}; -webkit-mask-image: ${scrimMask(+(from / h * 100).toFixed(1), 100)}; mask-image: ${scrimMask(+(from / h * 100).toFixed(1), 100)};">${flowLayer('deep')}${GRAIN_LAYER}</div>`;
+const deepTop = deepTopOf(330, 40);
 const deepHead = (icon, title, back, line) => `<div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; color: #FFFFFF;"><span style="display: flex; align-items: center; gap: 10px; font-size: 22px; font-weight: 600; letter-spacing: -.02em;">${svg(I[icon], 20, 1.8)}${title}</span><a href="${back}" aria-label="Close" style="width: 40px; height: 40px; flex-shrink: 0; border-radius: 20px; background: rgba(255,255,255,.14); box-shadow: inset 0 0 0 1.5px rgba(255,255,255,.3); color: #FFFFFF; display: flex; align-items: center; justify-content: center;">${svg(I.close, 16, 2)}</a></div>
     <p style="margin: 0 0 24px; font-size: 15px; line-height: 1.5; color: rgba(255,255,255,.9); text-shadow: {{deep.shadow}};">${line}</p>`;
 // Starting: which cards to learn and which kinds of questions to ask (on the web, under the deep top).
@@ -2600,11 +2603,11 @@ const webQuizStart = pro => `<div style="position: relative; width: 1440px; heig
 const phoneQuizStart = pro => `<div style="position: relative; width: 390px; height: 844px; overflow: hidden; font-family: ${FONT}; color: {{t.text}};">
   <dc-import name="PhoneDeck" dark="{{dark}}" deck-id="{{deckId}}" hint-size="390px,844px"></dc-import>
   <div style="position: absolute; inset: 0; background: {{t.dim}};"></div>
-  <div role="dialog" aria-label="Learn mode" style="position: absolute; left: 0; right: 0; bottom: 0; box-sizing: border-box; border-radius: 36px 36px 0 0; overflow: hidden; background: {{t.bg}}; ${pro ? 'padding: 10px 20px 34px; display: flex; flex-direction: column; gap: 18px;' : 'padding-bottom: 14px;'}">
-    ${pro ? '<div style="align-self: center; width: 40px; height: 5px; border-radius: 3px; background: {{t.surf2}};"></div>' + learnStartBody('PhoneDeck.dc.html', '{{startHref}}') : skyTop(200, 132, 88) + learnUpgradeBody('PhoneDeck.dc.html', 20)}
+  <div role="dialog" aria-label="Learn mode" style="position: absolute; left: 0; right: 0; bottom: 0; box-sizing: border-box; border-radius: 36px 36px 0 0; overflow: hidden; background: {{t.bg}}; ${pro ? 'padding: 10px 20px 34px;' : 'padding-bottom: 14px;'}">
+    ${pro ? deepTopOf(354, 64) + '<div style="position: relative; display: flex; flex-direction: column; gap: 18px;"><div style="align-self: center; width: 40px; height: 5px; border-radius: 3px; background: rgba(255,255,255,.45);"></div>' + learnStartBody('PhoneDeck.dc.html', '{{startHref}}', true) + '</div>' : skyTop(200, 132, 88) + learnUpgradeBody('PhoneDeck.dc.html', 20)}
   </div>
 </div>`;
-// `deep`: the web start card's deep top.
+// `deep`: the start card's deep top (web and iPhone).
 const QUIZ_START_LOGIC = (phone, deep) => `
 constructor(props) { super(props); this.state = { set: null, kinds: ['mc', 'match', 'tf', 'blank'] }; }
 renderVals() { ${T}${DB_JS}
@@ -3212,8 +3215,13 @@ const LIVE_QR = (() => {
   }
   return `<svg width="100%" height="100%" viewBox="-2 -2 ${n + 4} ${n + 4}" shape-rendering="crispEdges" aria-label="QR code to join"><rect x="-2" y="-2" width="${n + 4}" height="${n + 4}" fill="#FFFFFF"/>${[...on].map(k => { const [x, y] = k.split(','); return `<rect x="${x}" y="${y}" width="1" height="1" fill="#000000"/>`; }).join('')}</svg>`;
 })();
+// The right answer rises and then hovers above the others, bobbing gently (the owner: no tilt, "make it appear like it is
+// hovering above the rest and that should be an animation", V77). It holds at `a` with Reduce Motion.
+const HOVER_CSS = (a, b) => `@keyframes scLiftIn{from{transform:none}to{transform:translateY(${a}px)}}@keyframes scHover{from{transform:translateY(${a}px)}to{transform:translateY(${b}px)}}`;
+const HOVER = (a, delay) => `scLiftIn .45s cubic-bezier(.2,.8,.2,1) ${delay}s both, scHover 2.4s ease-in-out ${delay + .45}s infinite alternate`;
 const LIVE_CSS = '@keyframes scTimer{from{stroke-dashoffset:0}to{stroke-dashoffset:1}}@keyframes scJoin{from{opacity:0;transform:scale(.6)}}@keyframes scBar{from{transform:scaleX(0)}}@keyframes scRiseUp{from{opacity:0;transform:translateY(40px)}}@keyframes scFloat2{50%{transform:translateY(-6px)}}@keyframes scPop{from{transform:scale(0)}}'
-  + '@keyframes scDealR{from{opacity:0;transform:translate(40px,30px) rotate(18deg)}}@keyframes scDealL{from{opacity:0;transform:translate(-30px,30px) rotate(-14deg)}}'
+  + '@keyframes scDealR{from{opacity:0;transform:translate(40px,30px)}}@keyframes scDealL{from{opacity:0;transform:translate(-30px,30px)}}'
+  + HOVER_CSS(-10, -15)
   + '@media (prefers-reduced-motion:reduce){.sc-live *{animation:none!important}}';
 // The streak flame's flicker (only the phone's "right" screen has it).
 const FLAME_CSS = '@keyframes scFlame{0%,100%{transform:rotate(-3deg) scale(1,1)}25%{transform:rotate(2deg) scale(1.05,.96)}50%{transform:rotate(-1deg) scale(.97,1.06)}75%{transform:rotate(3deg) scale(1.02,.99)}}@keyframes scFlameCore{0%,100%{transform:scale(1,1);opacity:1}50%{transform:scale(.86,1.14);opacity:.82}}';
@@ -3229,10 +3237,9 @@ const liveTop = (right, chip = LV.chip) => `<header style="height: 96px; flex-sh
 const liveFoot = `<footer style="height: 56px; flex-shrink: 0; box-sizing: border-box; padding: 0 48px; display: flex; align-items: center; justify-content: space-between; font-size: 15px; color: ${LV.ink2};"><span>Join at <span style="font-weight: 700; color: ${LV.navy};">lucida.cards/join</span> with <span style="font-weight: 700; color: ${LV.navy}; letter-spacing: .06em;">482 913</span></span><span>{{peopleN}} people</span></footer>`;
 const liveRoot = (w, h, extra = '') => `class="sc-live" style="position: relative; width: ${w}px; height: ${h}px; box-sizing: border-box; font-family: ${FONT}; background: ${LV.blue}; color: ${LV.navy}; overflow: hidden; ${extra}"`;
 // An answer on the big screen: a tile in its vivid gradient, with its shape and words. After the reveal, the right one
-// lifts and tilts a little with a green check, like a card pulled from the pile; the others keep their gradients, grayed
-// out (the owner, V76). Each shows how many picked it. `liveDeep` is the color under a tile (the phones' too).
+// rises and hovers above the rest with a green check (V77: no tilt); the others keep their gradients, grayed out (V76). Each shows how many picked it. `liveDeep` is the color under a tile (the phones' too).
 const liveDeep = i => `<span aria-hidden="true" style="position: absolute; inset: 0; background: {{o${i}.p.base}}; filter: {{o${i}.gfilter}}; transition: filter .35s;">${flowLayer(`o${i}.p`)}</span>${GRAIN_LAYER}`;
-const liveTile = i => `<div style="position: relative; overflow: hidden; height: 150px; border-radius: 28px; color: {{o${i}.fg}}; box-shadow: {{o${i}.shadow}}; transform: {{o${i}.tf}}; transition: color .3s, transform .4s cubic-bezier(.2,.8,.2,1), box-shadow .4s;">${liveDeep(i)}<div style="position: relative; height: 100%; box-sizing: border-box; padding: 0 32px; display: flex; align-items: center; gap: 22px; text-shadow: {{o${i}.ts}};"><span style="width: 60px; height: 60px; flex-shrink: 0; border-radius: 30px; background: {{o${i}.badge}}; box-shadow: {{o${i}.badgeLine}}; display: flex; align-items: center; justify-content: center;">${liveShape(i, 26)}</span><span style="flex-grow: 1; font-size: 34px; font-weight: 700; letter-spacing: -.02em;">{{o${i}.label}}</span><sc-if value="{{o${i}.showCount}}" hint-placeholder-val="{{ false }}"><span style="display: flex; align-items: center; gap: 14px;"><span style="font-size: 30px; font-weight: 700; font-variant-numeric: tabular-nums;">{{o${i}.count}}</span><sc-if value="{{o${i}.right}}" hint-placeholder-val="{{ false }}"><span style="width: 52px; height: 52px; border-radius: 26px; background: ${LV.check}; color: #FFFFFF; display: flex; align-items: center; justify-content: center; animation: scPop .4s cubic-bezier(.2,.8,.2,1) both;">${svg(I.check, 26, 3)}</span></sc-if></span></sc-if></div></div>`;
+const liveTile = i => `<div style="position: relative; overflow: hidden; height: 150px; border-radius: 28px; color: {{o${i}.fg}}; box-shadow: {{o${i}.shadow}}; transform: {{o${i}.tf}}; animation: {{o${i}.anim}}; transition: color .3s, transform .4s cubic-bezier(.2,.8,.2,1), box-shadow .4s;">${liveDeep(i)}<div style="position: relative; height: 100%; box-sizing: border-box; padding: 0 32px; display: flex; align-items: center; gap: 22px; text-shadow: {{o${i}.ts}};"><span style="width: 60px; height: 60px; flex-shrink: 0; border-radius: 30px; background: {{o${i}.badge}}; box-shadow: {{o${i}.badgeLine}}; display: flex; align-items: center; justify-content: center;">${liveShape(i, 26)}</span><span style="flex-grow: 1; font-size: 34px; font-weight: 700; letter-spacing: -.02em;">{{o${i}.label}}</span><sc-if value="{{o${i}.showCount}}" hint-placeholder-val="{{ false }}"><span style="display: flex; align-items: center; gap: 14px;"><span style="font-size: 30px; font-weight: 700; font-variant-numeric: tabular-nums;">{{o${i}.count}}</span><sc-if value="{{o${i}.right}}" hint-placeholder-val="{{ false }}"><span style="width: 52px; height: 52px; border-radius: 26px; background: ${LV.check}; color: #FFFFFF; display: flex; align-items: center; justify-content: center; animation: scPop .4s cubic-bezier(.2,.8,.2,1) both;">${svg(I.check, 26, 3)}</span></sc-if></span></sc-if></div></div>`;
 const liveTiles = `<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">${[0, 1, 2, 3].map(liveTile).join('')}</div>`;
 // The question, on white (the owner asked to go back to it, V74), so the deep gradient answers stand out.
 const liveQuestion = `<div ${liveRoot(1440, 900, 'display: flex; flex-direction: column; background: #FFFFFF;')}>
@@ -3322,25 +3329,27 @@ const liveWaiting = `<div ${liveRoot(390, 844, 'padding: 64px 24px 40px; display
   <div style="display: flex; flex-direction: column; gap: 8px;"><div style="font-size: 34px; font-weight: 700; letter-spacing: -.03em;">You’re in, Maya!</div><div style="font-size: 16px; line-height: 1.5; color: ${LV.ink2};">Look for your name on the big screen. The game starts soon.</div></div>
   <span style="height: 36px; padding: 0 16px; display: inline-flex; align-items: center; gap: 8px; border-radius: 999px; background: #FFFFFF; font-size: 14px; font-weight: 700;">${svg(I.live, 15, 2)}Cell Biology</span>
 </div>`;
-// Answering on a phone: the question in big navy type, then four big tiles with the same gradients and shapes as the
-// big screen. The bar at the top is the time left, in Lucida's purple.
-const liveAnswer = `<div ${liveRoot(390, 844, 'padding: 60px 16px 34px; display: flex; flex-direction: column; gap: 16px;')}>
-  <div style="display: flex; align-items: center; gap: 12px;"><span style="font-size: 13px; font-weight: 700; color: ${LV.ink2};">3 of 10</span><div style="flex-grow: 1; height: 8px; border-radius: 4px; background: ${LV.chip}; overflow: hidden;"><div style="width: 70%; height: 100%; border-radius: 4px; background: ${LV.purple}; transform-origin: left; animation: scBar 20s linear reverse infinite;"></div></div><span style="font-size: 13px; font-weight: 700; font-variant-numeric: tabular-nums;">14s</span></div>
+// Answering on a phone, on white like the big screen's question (V77): the question in big navy type, then four big
+// tiles with the same gradients and shapes as the big screen. The bar at the top is the time left, in Lucida's purple.
+const liveAnswer = `<div ${liveRoot(390, 844, 'padding: 60px 16px 34px; display: flex; flex-direction: column; gap: 16px; background: #FFFFFF;')}>
+  <div style="display: flex; align-items: center; gap: 12px;"><span style="font-size: 13px; font-weight: 700; color: ${LV.ink2};">3 of 10</span><div style="flex-grow: 1; height: 8px; border-radius: 4px; background: ${LIVE_TINT}; overflow: hidden;"><div style="width: 70%; height: 100%; border-radius: 4px; background: ${LV.purple}; transform-origin: left; animation: scBar 20s linear reverse infinite;"></div></div><span style="font-size: 13px; font-weight: 700; font-variant-numeric: tabular-nums;">14s</span></div>
   <div style="padding: 8px 4px 6px; font-size: 28px; font-weight: 700; line-height: 1.15; letter-spacing: -.025em;">{{q.q}}</div>
   <div style="flex-grow: 1; display: grid; grid-template-rows: repeat(4, minmax(0, 1fr)); gap: 10px;">${[0, 1, 2, 3].map(i => `<button type="button" style="position: relative; overflow: hidden; width: 100%; height: 100%; box-sizing: border-box; padding: 0; border: 0; border-radius: 26px; background: none; color: {{o${i}.fg}}; box-shadow: ${LV.shadow}; font: inherit; text-align: left; cursor: pointer;">${liveDeep(i)}<span style="position: relative; height: 100%; box-sizing: border-box; padding: 0 20px; display: flex; align-items: center; gap: 16px; text-shadow: {{o${i}.ts}};"><span style="width: 48px; height: 48px; flex-shrink: 0; border-radius: 24px; background: {{o${i}.badge}}; box-shadow: {{o${i}.badgeLine}}; display: flex; align-items: center; justify-content: center;">${liveShape(i, 22)}</span><span style="font-size: 21px; font-weight: 700;">{{o${i}.label}}</span></span></button>`).join('')}</div>
   <div style="display: flex; align-items: center; justify-content: space-between; font-size: 14px; color: ${LV.ink2};"><span style="display: flex; align-items: center; gap: 8px; font-weight: 600; color: ${LV.navy};"><span style="width: 24px; height: 24px; border-radius: 12px; background: ${LV.purple}; color: #FFFFFF; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700;">M</span>Maya</span><span style="font-variant-numeric: tabular-nums;"><span style="font-weight: 700; color: ${LV.navy};">2,550</span> points</span></div>
 </div>`;
 // The streak flame: orange, with a yellow core, flickering from its base (it holds still with Reduce Motion).
 const liveFlame = s => `<svg width="${s}" height="${s}" viewBox="0 0 24 24" aria-hidden="true" style="flex-shrink: 0; overflow: visible; filter: drop-shadow(0 1px 2px rgba(238,90,54,.35));"><defs><linearGradient id="sc-flame" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFB03B"/><stop offset=".55" stop-color="#F7792A"/><stop offset="1" stop-color="#EE5A36"/></linearGradient></defs><g class="sc-flame" style="transform-origin: 12px 21px; animation: scFlame 1.6s ease-in-out infinite;"><path fill="url(#sc-flame)" d="M12 2C12.8 5.2 15 7.1 16.7 9.1C18.2 10.9 19 12.9 19 15.2C19 19.1 15.9 22 12 22C8.1 22 5 19.1 5 15.4C5 13.1 5.9 11.2 7.5 9.7C7.7 11.2 8.4 12.3 9.5 12.9C9.2 9.1 10.1 5.6 12 2Z"/><path fill="#FFD25E" style="transform-origin: 12px 21.6px; animation: scFlameCore .9s ease-in-out infinite;" d="M12 11.5C12.5 13.4 13.8 14.5 14.7 15.7C15.3 16.5 15.6 17.3 15.6 18.2C15.6 20.2 14 21.6 12 21.6C10 21.6 8.4 20.2 8.4 18.3C8.4 16.9 9.1 15.8 10.2 15C10.3 15.8 10.7 16.4 11.3 16.7C11.1 14.9 11.4 13.1 12 11.5Z"/></g></svg>`;
-// After each question on a phone. Right: green, with the answer dealt onto a white card with a green check, your
-// points, and your streak. Not quite: yellow, with your pick grayed out behind the right answer's card. Then your place.
+// After each question on a phone, on a faint color fading to white (the owner: iPhone backgrounds faint, like the big
+// screen, V77). Right: faint green, the answer dealt onto a white card with a green check that hovers, your points, and
+// your streak. Not quite: faint yellow, your pick on a gray card beside the right answer's. Then your place.
+const LIVE_MINT = (mid, low) => `linear-gradient(180deg, #A3E8BC 0%, #D0F5DD ${mid}%, #EEFCF3 ${low}%, #FFFFFF 100%)`;
 const liveResult = `<div ${liveRoot(390, 844, 'padding: 64px 24px 40px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 22px; text-align: center; background: {{r.bg}};')}>
   <div style="position: relative; width: 310px; height: 236px;">
-    <sc-if value="{{r.wrong}}" hint-placeholder-val="{{ false }}"><div style="position: absolute; left: -4px; top: 58px; width: 158px; height: 168px; box-sizing: border-box; padding: 18px; border-radius: 28px; background: rgba(255,255,255,.45); display: flex; flex-direction: column; justify-content: space-between; align-items: flex-start; text-align: left; transform: rotate(-5deg); animation: scDealL .5s cubic-bezier(.2,.8,.2,1) both;"><span style="width: 44px; height: 44px; border-radius: 22px; background: ${LV.navy}; color: #FFFFFF; display: flex; align-items: center; justify-content: center;">${svg(I.close, 20, 2.8)}</span><span style="font-size: 22px; font-weight: 700; line-height: 1.12;">{{r.pick}}</span></div></sc-if>
-    <div style="position: absolute; left: {{r.cardX}}; top: 12px; width: 188px; height: 196px; box-sizing: border-box; padding: 20px; border-radius: 30px; background: #FFFFFF; box-shadow: ${LV.lift}; display: flex; flex-direction: column; justify-content: space-between; align-items: flex-start; text-align: left; transform: rotate({{r.cardTilt}}); animation: scDealR .55s cubic-bezier(.2,.8,.2,1) .1s both;"><span style="width: 48px; height: 48px; border-radius: 24px; background: ${LV.check}; color: #FFFFFF; display: flex; align-items: center; justify-content: center;">${svg(I.check, 24, 3)}</span><span style="font-size: 24px; font-weight: 700; line-height: 1.1; letter-spacing: -.01em;">{{r.answer}}</span></div>
+    <sc-if value="{{r.wrong}}" hint-placeholder-val="{{ false }}"><div style="position: absolute; left: -4px; top: 58px; width: 158px; height: 168px; box-sizing: border-box; padding: 18px; border-radius: 28px; background: ${LV.gray}; color: ${LV.grayInk}; display: flex; flex-direction: column; justify-content: space-between; align-items: flex-start; text-align: left; animation: scDealL .5s cubic-bezier(.2,.8,.2,1) both;"><span style="width: 44px; height: 44px; border-radius: 22px; background: ${LV.navy}; color: #FFFFFF; display: flex; align-items: center; justify-content: center;">${svg(I.close, 20, 2.8)}</span><span style="font-size: 22px; font-weight: 700; line-height: 1.12;">{{r.pick}}</span></div></sc-if>
+    <div style="position: absolute; left: {{r.cardX}}; top: 12px; width: 188px; height: 196px; box-sizing: border-box; padding: 20px; border-radius: 30px; background: #FFFFFF; box-shadow: ${LV.lift}; display: flex; flex-direction: column; justify-content: space-between; align-items: flex-start; text-align: left; transform: translateY(-8px); animation: scDealR .55s cubic-bezier(.2,.8,.2,1) .1s backwards, ${HOVER(-8, .65).replace('scLiftIn .45s cubic-bezier(.2,.8,.2,1) 0.65s both, ', '')};"><span style="width: 48px; height: 48px; border-radius: 24px; background: ${LV.check}; color: #FFFFFF; display: flex; align-items: center; justify-content: center;">${svg(I.check, 24, 3)}</span><span style="font-size: 24px; font-weight: 700; line-height: 1.1; letter-spacing: -.01em;">{{r.answer}}</span></div>
   </div>
   <div style="display: flex; flex-direction: column; gap: 6px;"><div style="font-size: 40px; font-weight: 700; letter-spacing: -.03em;">{{r.title}}</div><div style="font-size: 18px; font-weight: 600;">{{r.line}}</div></div>
-  <sc-if value="{{r.right}}" hint-placeholder-val="{{ true }}"><span style="height: 40px; padding: 0 16px; display: inline-flex; align-items: center; gap: 8px; border-radius: 999px; background: #FFFFFF; font-size: 15px; font-weight: 700;">${liveFlame(20)}3 in a row</span></sc-if>
+  <sc-if value="{{r.right}}" hint-placeholder-val="{{ true }}"><span style="height: 40px; padding: 0 16px; display: inline-flex; align-items: center; gap: 8px; border-radius: 999px; background: #FFFFFF; box-shadow: ${LV.shadow}; font-size: 15px; font-weight: 700;">${liveFlame(20)}3 in a row</span></sc-if>
   <span style="font-size: 16px; color: ${LV.ink2};">{{r.place}}</span>
 </div>`;
 // The end on a phone: the final leaderboard, on the faint yellow fading to white (V76). The top three stand on a flat podium (you're marked), everyone
@@ -3371,7 +3380,7 @@ renderVals() { ${T}
   // Each answer's vivid gradient; after the reveal the right one lifts and tilts a little, and the others gray out.
   const opt = i => { const lift = reveal && i === Q.right, gray = reveal && i !== Q.right, p = this.gen(VIVID[i], 'vivid');
     return { i, p, label: Q.options[i], count: String(Q.counts[i]), right: lift, showCount: reveal, gfilter: gray ? 'grayscale(1)' : 'none', fg: p.ink, ts: p.shadow,
-      badge: p.glass, badgeLine: 'inset 0 0 0 1.5px ' + p.glassLine, shadow: lift ? LV.lift : gray ? 'none' : LV.shadow, tf: lift ? 'translateY(-6px) rotate(-1.5deg)' : 'none' }; };
+      badge: p.glass, badgeLine: 'inset 0 0 0 1.5px ' + p.glassLine, shadow: lift ? LV.lift : gray ? 'none' : LV.shadow, tf: lift ? 'translateY(-10px)' : 'none', anim: lift ? '${HOVER(-10, .1)}' : 'none' }; };
   const wrongPick = !!this.props.wrong;
   return { t, dark: !!this.props.dark, grain: String(this.props.grain ?? 0.7), q: Q, peopleN: '12',
     o0: opt(0), o1: opt(1), o2: opt(2), o3: opt(3), c0: colors[0], c1: colors[2], c2: colors[1],
@@ -3379,8 +3388,8 @@ renderVals() { ${T}
     people: ${JSON.stringify(LIVE_PEOPLE)}.map((name, i) => ({ name, initial: name[0], color: colors[i % colors.length], delay: (i * .12).toFixed(2) + 's' })),
     board: ${JSON.stringify(LIVE_BOARD)}.map(([name, score, move], i) => ({ rank: String(i + 1), name, initial: name[0], color: colors[i % colors.length], score: score.toLocaleString('en-US'), w: score / ${LIVE_BOARD[0][1]} * 100 + '%',
       move: move > 0 ? '▲ ' + move : move < 0 ? '▼ ' + -move : '–', moveColor: move > 0 ? '#12A150' : move < 0 ? '#D92D20' : LV.grayInk, delay: (i * .08).toFixed(2) + 's' })),
-    r: wrongPick ? { right: false, wrong: true, bg: LV.yellow, title: 'Not quite', line: 'It was Golgi apparatus.', place: 'You’re in 5th place', pick: 'Lysosome', answer: 'Golgi apparatus', cardX: '134px', cardTilt: '6deg' }
-      : { right: true, wrong: false, bg: LV.green, title: 'Right!', line: '+870 points', place: 'You’re in 2nd place, 140 points behind Maya', pick: '', answer: 'Golgi apparatus', cardX: '61px', cardTilt: '-4deg' },
+    r: wrongPick ? { right: false, wrong: true, bg: '${LIVE_SUN(45, 75)}', title: 'Not quite', line: 'It was Golgi apparatus.', place: 'You’re in 5th place', pick: 'Lysosome', answer: 'Golgi apparatus', cardX: '134px' }
+      : { right: true, wrong: false, bg: '${LIVE_MINT(45, 75)}', title: 'Right!', line: '+870 points', place: 'You’re in 2nd place, 140 points behind Maya', pick: '', answer: 'Golgi apparatus', cardX: '61px' },
     sets: [['new', 'New · 10'], ['hard', 'Hard · 36'], ['tag', 'Exam 1 · 40'], ['all', 'All · 412']].map(([k, label]) => ({ label, ...seg(k, s.set), pick: () => this.setState({ set: k }) })),
     counts: [5, 10, 20].map(n => ({ label: String(n), ...seg(n, s.count), pick: () => this.setState({ count: n }) })),
     times: [10, 20, 30].map(n => ({ label: n + 's', ...seg(n, s.time), pick: () => this.setState({ time: n }) })),
@@ -3395,7 +3404,7 @@ const LIVE_FINAL_LOGIC = LIVE_LOGIC.replace('    r: wrongPick ? {', `    rest: $
 // The owner asked to see Learn mode's question in styles "with some more color and character" (V73). Two ideas, with
 // the same questions and logic as WebQuiz (tap an answer on the canvas), each also shown answered:
 // - Sky: the sky's faint blue fade (no clouds, V75), big navy words, and white answer cards with colored numbers. The right answer
-//   tilts up with a green check, like a card pulled from the pile, and the rest turn gray (Live's rules).
+//   rises and hovers with a green check (V77: no tilt), and the rest turn gray (Live's rules).
 // - Deep card: the page stays white, and the question sits on a deep gradient card (the start card's Midnight) like the
 //   front of a flashcard, with the answers on soft tints of their colors. The right answer turns green.
 // The four colors skip green and red, which mean right and wrong here.
@@ -3443,7 +3452,7 @@ const IDEA_LOGIC = style => QUIZ_LOGIC(false).replace('renderVals() {', 'baseVal
 renderVals() { const v = this.baseVals(), t = v.t, done = v.answered, C = ${JSON.stringify(IDEA_COLORS)}, TINT = ${JSON.stringify(IDEA_TINTS)}, LV = ${JSON.stringify(LV)};
   const look = ${style === 'sky' ? `(o, j) => { const other = done && o.plain;
     return { bg: o.isWrong || other ? LV.gray : '#FFFFFF', fg: o.isWrong || other ? LV.grayInk : LV.navy, shadow: o.isRight ? LV.lift : o.isWrong || other ? 'none' : LV.shadow,
-      tf: o.isRight ? 'translateY(-4px) rotate(-1.2deg)' : 'none', badge: o.isRight ? LV.check : o.isWrong ? LV.navy : other ? 'rgba(13,21,66,.12)' : C[j], badgeFg: other ? LV.grayInk : '#FFFFFF' }; }`
+      tf: o.isRight ? 'translateY(-5px)' : 'none', anim: o.isRight ? '${HOVER(-5, 0)}' : o.anim, badge: o.isRight ? LV.check : o.isWrong ? LV.navy : other ? 'rgba(13,21,66,.12)' : C[j], badgeFg: other ? LV.grayInk : '#FFFFFF' }; }`
     : `(o, j) => { const other = done && o.plain;
     return { bg: o.isRight ? '#12A150' : o.isWrong ? LV.gray : other ? '#F1F2F5' : TINT[j], fg: o.isRight ? '#FFFFFF' : o.isWrong ? LV.grayInk : other ? '#8A909C' : t.text,
       shadow: o.isRight ? '0 18px 36px -18px rgba(18,161,80,.75)' : 'none', tf: o.isRight ? 'translateY(-3px)' : 'none',
@@ -3617,11 +3626,11 @@ const files = {
   'WebQuizMatch': ['Web · Learn mode · matching', webQuizMatch, { props: DARK, logic: MATCH_LOGIC(false), css: LEARN_CSS, w: W, h: H }],
   'WebQuizType': ['Web · Learn mode · type the answer', webQuizType, { props: DARK, logic: TYPE_LOGIC(false), css: LEARN_CSS, w: W, h: H }],
   'WebQuizDone': ['Web · Learn mode · all learned', webQuizDone, { props: DARK, logic: QUIZ_DONE_LOGIC, css: LEARN_CSS, w: W, h: H }],
-  'WebQuizSky': ['Web · Learn mode · style idea 1: sky', webQuizSky, { props: { answered: { editor: 'boolean', default: false } }, logic: IDEA_LOGIC('sky'), css: LEARN_CSS, w: W, h: H }],
-  'WebQuizSkyAnswered': ['Web · Learn mode · style idea 1: sky, answered', attrOf('WebQuizSky', W, H, 'answered="{{yes}}"'), { logic: darkLogic, css: LEARN_CSS, w: W, h: H }],
+  'WebQuizSky': ['Web · Learn mode · style idea 1: sky', webQuizSky, { props: { answered: { editor: 'boolean', default: false } }, logic: IDEA_LOGIC('sky'), css: LEARN_CSS + HOVER_CSS(-5, -9), w: W, h: H }],
+  'WebQuizSkyAnswered': ['Web · Learn mode · style idea 1: sky, answered', attrOf('WebQuizSky', W, H, 'answered="{{yes}}"'), { logic: darkLogic, css: LEARN_CSS + HOVER_CSS(-5, -9), w: W, h: H }],
   'WebQuizDeep': ['Web · Learn mode · style idea 2: deep card', webQuizDeep, { props: { answered: { editor: 'boolean', default: false }, grain: MESH('Iris').grain }, logic: IDEA_LOGIC('deep'), css: LEARN_CSS, w: W, h: H }],
   'WebQuizDeepAnswered': ['Web · Learn mode · style idea 2: deep card, answered', attrOf('WebQuizDeep', W, H, 'answered="{{yes}}"'), { logic: darkLogic, css: LEARN_CSS, w: W, h: H }],
-  'PhoneQuizStart': ['iPhone · Learn mode · start (Pro)', phoneQuizStart(true), { props: DARK, logic: QUIZ_START_LOGIC(true), w: PW, h: PH }],
+  'PhoneQuizStart': ['iPhone · Learn mode · start (Pro)', phoneQuizStart(true), { props: DARK, logic: QUIZ_START_LOGIC(true, true), w: PW, h: PH }],
   'PhoneQuizUpgrade': ['iPhone · Learn mode · on Free: go Pro', phoneQuizStart(false), { props: { ...DARK, grain: MESH('Iris').grain }, logic: QUIZ_START_LOGIC(true), w: PW, h: PH }],
   'PhoneQuiz': ['iPhone · Learn mode · choice question', phoneQuiz, { props: { ...DARK, answered: { editor: 'boolean', default: false } }, logic: QUIZ_LOGIC(true), css: LEARN_CSS, w: PW, h: PH }],
   'PhoneQuizAnswered': ['iPhone · Learn mode · answered', attrOf('PhoneQuiz', PW, PH, 'answered="{{yes}}"'), { logic: darkLogic, css: LEARN_CSS, w: PW, h: PH }],
