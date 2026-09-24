@@ -3496,8 +3496,8 @@ ${skyLayer(phone)}
       ${planList(PLAN_FREE, 'color: {{t.muted}};')}
     </div>
     ${artCard('pro', `border-radius: ${phone ? 28 : 32}px; box-shadow: 0 24px 56px -28px rgba(20,22,90,.55);`, `height: 100%; box-sizing: border-box; padding: ${pad}px; display: flex; flex-direction: column; gap: 24px;`, `<div><div style="display: flex; align-items: center; gap: 8px; font-size: 20px; font-weight: 600; letter-spacing: -.01em;">${svg(I.sparkle, 18, 1.8)}Pro</div><div style="margin-top: 6px; font-size: 15px; opacity: .8;">Make Lucida yours.</div></div>
-      ${planPrice('{{proPrice}}', '{{proPer}}', '{{proNote}}')}
-      <sc-if value="{{proLive}}" hint-placeholder-val="{{ true }}">${landPill('Go Pro', '{{startHref}}', true, 50, 'background: #FFFFFF; color: #000000;')}</sc-if><sc-if value="{{proSoon}}" hint-placeholder-val="{{ false }}"><span style="height: 50px; display: flex; align-items: center; justify-content: center; border-radius: 999px; background: rgba(255,255,255,.16); box-shadow: inset 0 0 0 1px rgba(255,255,255,.35); font-size: 15px; font-weight: 600;">Pro is coming soon</span></sc-if>
+      ${planPrice('{{proPrice}}', '{{proPer}}', '{{proNote}}<sc-if value="{{proMonthly}}" hint-placeholder-val="{{ false }}"> <a href="{{proMonthlyHref}}" style="text-decoration: underline;">Pay $5.99 monthly instead</a></sc-if>')}
+      <sc-if value="{{proLive}}" hint-placeholder-val="{{ true }}">${landPill('Go Pro', '{{proHref}}', true, 50, 'background: #FFFFFF; color: #000000;')}</sc-if><sc-if value="{{proSoon}}" hint-placeholder-val="{{ false }}"><span style="height: 50px; display: flex; align-items: center; justify-content: center; border-radius: 999px; background: rgba(255,255,255,.16); box-shadow: inset 0 0 0 1px rgba(255,255,255,.35); font-size: 15px; font-weight: 600;">Pro is coming soon</span></sc-if>
       <div style="display: flex; flex-direction: column; gap: 12px;"><span style="font-size: 14px; opacity: .8;">Everything in Free, plus:</span>${planList(PLAN_PRO, 'color: #FFFFFF;')}</div>`)}
   </div>
 </section>
@@ -3511,18 +3511,24 @@ ${skyLayer(phone)}
 ${landFooter(phone)}
 </div>`; };
 const PRICING_H = 1617, PRICING_PHONE_H = 2191;
+// Pro's Stripe payment links (Stripe → Payment links; the "Lucida Pro" product at $5.99 a month and $39 a year). While
+// they're empty the site says "Pro is coming soon"; once both are set, Go Pro opens Stripe's checkout (yearly on the
+// site, with a link to pay monthly; the canvas follows its Monthly/Yearly toggle).
+const PRO_LINKS = { monthly: '', yearly: '' };
 const pricingLogic = phone => `${ART_METHOD}
 constructor(props) { super(props); this.state = { yearly: true }; }
 renderVals() { ${T}
   // On lucida.cards (props.site) the links open the app and the landing page; on the canvas, the boards.
   const site = !!this.props.site, y = this.state.yearly, signIn = site ? 'https://app.lucida.cards/sign-in' : '${phone ? 'PhoneSignIn' : 'WebSignIn'}.dc.html';
   const seg = on => ({ bg: on ? t.inv : 'transparent', fg: on ? t.invText : t.text, pressed: on ? 'true' : 'false' });
+  const links = ${JSON.stringify(PRO_LINKS)}, selling = !!(links.monthly && links.yearly), start = site ? 'https://app.lucida.cards/' : signIn;
   return { t, sky: ${SKY}, grain: String(this.props.grain ?? 0.7), pro: this.art(${MIDNIGHT}, ''),
     billing: [{ label: 'Monthly', ...seg(!y), hasTag: false, pick: () => this.setState({ yearly: false }) }, { label: 'Yearly', ...seg(y), hasTag: true, pick: () => this.setState({ yearly: true }) }],
-    proPrice: y ? '$39' : '$5.99', proPer: y ? 'a year' : 'a month', proNote: site ? 'That’s $3.25 a month, or $5.99 paid monthly.' : y ? 'That’s $3.25 a month.' : 'Billed monthly. Cancel anytime.',
+    proPrice: y ? '$39' : '$5.99', proPer: y ? 'a year' : 'a month', proNote: site ? (selling ? 'That’s $3.25 a month.' : 'That’s $3.25 a month, or $5.99 paid monthly.') : y ? 'That’s $3.25 a month.' : 'Billed monthly. Cancel anytime.',
+    proHref: selling ? (site || y ? links.yearly : links.monthly) : start, proMonthly: site && selling, proMonthlyHref: links.monthly,
     homeHref: site ? '/' : '${phone ? 'LandingPhone' : 'Landing'}.dc.html', howHref: site ? '/#how' : 'Landing.dc.html', typesHref: site ? '/#cards' : 'Landing.dc.html',
     signInHref: signIn, startHref: site ? 'https://app.lucida.cards/' : signIn, privacyHref: site ? '/privacy' : 'Privacy.dc.html', termsHref: site ? '/terms' : 'Terms.dc.html',
-    pricingHref: site ? '/pricing' : '${phone ? 'PricingPhone' : 'Pricing'}.dc.html', proLive: !site, proSoon: site, showToggle: !site }; }`;
+    pricingHref: site ? '/pricing' : '${phone ? 'PricingPhone' : 'Pricing'}.dc.html', proLive: !site || selling, proSoon: site && !selling, showToggle: !site }; }`;
 
 // ---------- Privacy and Terms (lucida.cards/privacy and /terms) ----------
 // Plain pages from legal.mjs: one column of text that fits any window. design/to-site.mjs makes them pages.

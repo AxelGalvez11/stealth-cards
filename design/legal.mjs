@@ -2,8 +2,10 @@
 // what Lucida actually does (see web/: auth.mjs, store.mjs, supa.mjs, mcp.mjs, media.mjs, voice.mjs). Keep them in
 // step with the app. build.mjs draws each as a board; design/to-site.mjs turns them into pages.
 // A body item is a paragraph, or ['list', ...items].
-export const CONTACT = '[CONTACT EMAIL]';
-export const UPDATED = 'September 23, 2026';
+// Support: the address Lucida's sign-in emails come from (Resend). It needs receiving turned on in Resend (an MX record
+// on lucida.cards) before replies arrive.
+export const CONTACT = 'team@lucida.cards';
+export const UPDATED = 'September 24, 2026';
 
 export const PRIVACY = {
   title: 'Privacy Policy',
