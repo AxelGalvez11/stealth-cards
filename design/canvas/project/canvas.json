@@ -1035,6 +1035,40 @@
       "w": 1440,
       "x": 0,
       "y": 0
+    },
+    "WebQuizSky.dc.html": {
+      "h": 900,
+      "is_interactive": true,
+      "page": "quiz",
+      "title": "Web · Learn mode · style idea 1: sky (tap an answer)",
+      "w": 1440,
+      "x": 0,
+      "y": 2584
+    },
+    "WebQuizSkyAnswered.dc.html": {
+      "h": 900,
+      "page": "quiz",
+      "title": "Web · Learn mode · style idea 1: sky, answered",
+      "w": 1440,
+      "x": 1520,
+      "y": 2584
+    },
+    "WebQuizDeep.dc.html": {
+      "h": 900,
+      "is_interactive": true,
+      "page": "quiz",
+      "title": "Web · Learn mode · style idea 2: deep card (tap an answer)",
+      "w": 1440,
+      "x": 3040,
+      "y": 2584
+    },
+    "WebQuizDeepAnswered.dc.html": {
+      "h": 900,
+      "page": "quiz",
+      "title": "Web · Learn mode · style idea 2: deep card, answered",
+      "w": 1440,
+      "x": 4560,
+      "y": 2584
     }
   },
   "createdOnFiles": {
@@ -1280,6 +1314,15 @@
       "w": 240,
       "x": 0,
       "y": 1020
+    },
+    "qIdeas": {
+      "kind": "title1",
+      "maxW": 6000,
+      "page": "quiz",
+      "text": "Learn mode · style ideas (more color)",
+      "w": 240,
+      "x": 0,
+      "y": 2284
     }
   },
   "order": [
@@ -1397,7 +1440,11 @@
     "LiveAnswer.dc.html",
     "LiveResult.dc.html",
     "LiveResultWrong.dc.html",
-    "LiveFinal.dc.html"
+    "LiveFinal.dc.html",
+    "WebQuizSky.dc.html",
+    "WebQuizSkyAnswered.dc.html",
+    "WebQuizDeep.dc.html",
+    "WebQuizDeepAnswered.dc.html"
   ],
   "pages": [
     {

@@ -2530,8 +2530,9 @@ const learnTop = back => `<header style="height: 76px; flex-shrink: 0; box-sizin
     <div style="display: flex; justify-content: flex-end; min-width: 0;"><span style="display: inline-flex; align-items: center; gap: 6px; font-size: 13px; color: {{t.muted}}; white-space: nowrap;">${svg(I.sparkle, 14, 1.8)}<span>Learn · {{setName}}</span></span></div>
   </header>`;
 const learnTopPhone = back => `<div style="display: flex; align-items: center; gap: 12px;">${roundBtn('close', 'Stop for now', back)}${learnBar(0)}<span role="status" style="position: relative; font-size: 13px; color: {{t.muted}}; white-space: nowrap;"><span style="font-weight: 600; color: {{t.text}};">{{learned}}</span>/{{total}}${learnPlus}</span></div>`;
-// The kind of question, and two dots for the card: one fills for each right answer in a row (two and it's learned).
-const learnKind = `<span style="display: inline-flex; align-items: center; gap: 10px; font-size: 13px; font-weight: 600; color: {{t.muted}};">{{kind}}<span title="Right twice in a row and it’s learned" style="display: inline-flex; gap: 4px;"><sc-for list="{{dots}}" as="d" hint-placeholder-count="2"><span class="sc-dot" style="width: 7px; height: 7px; border-radius: 4px; background: {{d.bg}}; animation: {{d.anim}};"></span></sc-for></span></span>`;
+// Two dots for the card: one fills for each right answer in a row (two and it's learned). The kind of question
+// ("Multiple choice") isn't named: the owner asked to drop it (V73).
+const learnDots = `<span title="Right twice in a row and it’s learned" style="align-self: flex-start; height: 17px; display: inline-flex; align-items: center; gap: 4px;"><sc-for list="{{dots}}" as="d" hint-placeholder-count="2"><span class="sc-dot" style="width: 7px; height: 7px; border-radius: 4px; background: {{d.bg}}; animation: {{d.anim}};"></span></sc-for></span>`;
 const PRO_BADGE = '<span style="height: 22px; padding: 0 9px; display: inline-flex; align-items: center; border-radius: 999px; background: linear-gradient(90deg, #7E94FB, #2CB2EA); color: #FFFFFF; font-size: 12px; font-weight: 700; letter-spacing: .01em;">Pro</span>';
 const quizSeg = list => `<div role="group" style="display: flex; padding: 4px; border-radius: 999px; background: {{t.surf}};"><sc-for list="{{${list}}}" as="o" hint-placeholder-count="4"><button type="button" onClick="{{o.pick}}" aria-pressed="{{o.pressed}}" style="flex: 1 1 0; min-width: 0; height: 38px; padding: 0 6px; border: 0; border-radius: 999px; background: {{o.bg}}; color: {{o.fg}}; box-shadow: {{o.sh}}; font: inherit; font-size: 13px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: pointer;">{{o.label}}</button></sc-for></div>`;
 const quizField = (label, body) => `<div style="display: flex; flex-direction: column; gap: 8px;"><span style="font-size: 13px; font-weight: 600;">${label}</span>${body}</div>`;
@@ -2550,6 +2551,20 @@ const learnStartBody = (back, start, deep) => `${deep ? deepHead('sparkle', 'Lea
     ${quizField('Kinds of questions', `<div style="display: flex; flex-wrap: wrap; gap: 8px;"><sc-for list="{{kinds}}" as="k" hint-placeholder-count="5"><button type="button" onClick="{{k.pick}}" aria-pressed="{{k.pressed}}" style="height: 38px; padding: 0 14px; display: inline-flex; align-items: center; gap: 6px; border: 0; border-radius: 999px; background: {{k.bg}}; color: {{k.fg}}; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer;"><sc-if value="{{k.on}}" hint-placeholder-val="{{ true }}">${svg(I.check, 14, 2.4)}</sc-if>{{k.label}}</button></sc-for></div>`)}
     <div style="font-size: 13px; color: {{t.muted}};">{{goalLine}}</div>
     <div style="display: flex; gap: 10px;">${quizBtn('Cancel', back, false, 1)}${quizBtn('Start learning', start, true, 2, 'sparkle', 'start')}</div>`;
+// A daylight sky behind the top of the page (a night sky in dark mode): deep blue up high, paler toward the page,
+// a soft glow, and clouds of three soft puffs each, drifting slowly. The wall and the words sit over it.
+const SKY_CLOUDS = {
+  web: [[-4, 118, 440, 150, 52], [79, 84, 470, 160, 64], [8, 404, 540, 170, 58], [67, 372, 500, 160, 70], [41, 22, 280, 96, 46]],
+  phone: [[-24, 104, 260, 100, 44], [62, 64, 250, 94, 52], [48, 372, 300, 110, 60]]
+};
+const skyLayer = phone => `<div aria-hidden="true" class="sc-demo" style="position: absolute; left: 0; right: 0; top: 0; height: ${phone ? 600 : 700}px; z-index: -1; overflow: hidden; pointer-events: none; background: linear-gradient(180deg, {{sky.top}} 0%, {{sky.mid}} 30%, {{sky.low}} 55%, {{t.bg}} 100%);">
+  <div style="position: absolute; left: 50%; top: -35%; width: 120%; height: 90%; transform: translateX(-50%); background: radial-gradient(closest-side, {{sky.glow}}, transparent);"></div>
+  ${SKY_CLOUDS[phone ? 'phone' : 'web'].map(([x, y, w, h, secs], i) => `<div class="sc-cloud" style="position: absolute; left: ${x}%; top: ${y}px; width: ${w}px; height: ${h}px; animation: scCloud ${secs}s ease-in-out -${i * 11}s infinite alternate;">${[[0, 30, 60, 70], [24, 0, 56, 88], [46, 24, 54, 76]].map(([l, t, pw, ph]) => `<span style="position: absolute; left: ${l}%; top: ${t}%; width: ${pw}%; height: ${ph}%; background: radial-gradient(closest-side, {{sky.cloud}} 40%, transparent);"></span>`).join('')}</div>`).join('')}
+</div>`;
+const SKY_CSS = '@keyframes scCloud{from{transform:translateX(-28px)}to{transform:translateX(28px)}}@media (prefers-reduced-motion:reduce){.sc-cloud{animation:none!important}}';
+// The sky's colors, for renderVals: daylight, or a night sky in dark mode (the landing page's top, Learn mode's end).
+const SKY = `(this.props.dark ? { top: '#081733', mid: '#0D2148', low: '#0A1530', glow: 'rgba(120,150,255,.16)', cloud: 'rgba(150,170,230,.10)' }
+    : { top: '#86BDF3', mid: '#C9E2FB', low: '#EDF5FE', glow: 'rgba(255,255,255,.75)', cloud: 'rgba(255,255,255,.94)' })`;
 // On Free (once Pro can be bought), the Learn button opens this: a sky, two matched cards, what Pro adds, the price.
 const skyTop = (h, cw, ch) => `<div aria-hidden="true" style="position: relative; height: ${h}px; background: linear-gradient(180deg, {{sky.top}} 0%, {{sky.mid}} 58%, {{sky.low}} 82%, {{t.bg}} 100%); overflow: hidden;">
       ${[[-8, 18, 190, 70], [58, 6, 210, 76], [70, 58, 170, 60]].map(([x, y, w, hh]) => `<div style="position: absolute; left: ${x}%; top: ${y}%; width: ${w}px; height: ${hh}px;">${[[0, 30, 60, 70], [24, 0, 56, 88], [46, 24, 54, 76]].map(([l, t, pw, ph]) => `<span style="position: absolute; left: ${l}%; top: ${t}%; width: ${pw}%; height: ${ph}%; background: radial-gradient(closest-side, {{sky.cloud}} 40%, transparent);"></span>`).join('')}</div>`).join('')}
@@ -2593,7 +2608,7 @@ renderVals() { ${T}${DB_JS}
     goalLine: n ? 'Learn all ' + n + ' card' + (n === 1 ? '' : 's') + ', about ' + (mins >= 90 ? Math.round(mins / 60) + ' hours over a few sessions' : mins + ' minute' + (mins === 1 ? '' : 's')) + '. You can stop anytime and pick up where you left off.' : 'This deck has no cards to learn yet. Picture and text cards work; sound cards come later.',
     startHref: '${phone ? 'PhoneQuiz' : 'WebQuiz'}.dc.html',
     start: e => { if (db.mock) return; if (e && e.preventDefault) e.preventDefault(); if (n) db.act.startLearn(id, set.id, s.kinds); } }; }`;
-// What every question shows: progress, the kind of question with the card's dots, and the motion keys.
+// What every question shows: progress, the card's dots, and the motion keys.
 const LEARN_VIEW_JS = `const L = db.mock ? null : db.learn() || { learned: 0, total: 1, learning: 0, justLearned: 0, n: 0, setName: '' };
   const view = (learned, total, part, n, just) => ({ ${LEARN_BAR} learned: String(learned), total: String(total), setName: L ? L.setName : 'Exam 1',
     doneW: learned / total * 100 + '%', partW: part / total * 100 + '%', qAnim: (n % 2 ? 'scQA' : 'scQB') + ' .36s cubic-bezier(.2,.8,.2,1) both',
@@ -2610,7 +2625,7 @@ const webQuiz = `<div style="position: relative; width: 1440px; height: 900px; b
   ${learnTop('WebDeck.dc.html')}
   <main style="flex-grow: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;">
     <div class="sc-q" style="width: 720px; display: flex; flex-direction: column; gap: 20px; animation: {{qAnim}};">
-      ${learnKind}
+      ${learnDots}
       <h1 style="margin: 0; font-size: 30px; font-weight: 600; line-height: 1.25; letter-spacing: -.025em; text-wrap: pretty;">{{question}}</h1>
       ${learnImage(240)}${learnClaim(20)}
       <div style="display: flex; flex-direction: column; gap: 10px;"><sc-for list="{{options}}" as="o" hint-placeholder-count="4">${quizOption(60, 17, 20)}</sc-for></div>
@@ -2624,7 +2639,7 @@ const webQuiz = `<div style="position: relative; width: 1440px; height: 900px; b
 const phoneQuiz = `<div style="position: relative; width: 390px; height: 844px; box-sizing: border-box; padding: 60px 16px 34px; display: flex; flex-direction: column; gap: 18px; overflow: hidden; font-family: ${FONT}; background: {{t.bg}}; color: {{t.text}};">
   ${learnTopPhone('PhoneDeck.dc.html')}
   <div class="sc-q" style="display: flex; flex-direction: column; gap: 18px; animation: {{qAnim}};">
-    <div style="display: flex; flex-direction: column; gap: 10px; padding: 8px 4px 0;">${learnKind}<div style="font-size: 23px; font-weight: 600; line-height: 1.28; letter-spacing: -.02em; text-wrap: pretty;">{{question}}</div>${learnImage(180)}${learnClaim(18)}</div>
+    <div style="display: flex; flex-direction: column; gap: 10px; padding: 8px 4px 0;">${learnDots}<div style="font-size: 23px; font-weight: 600; line-height: 1.28; letter-spacing: -.02em; text-wrap: pretty;">{{question}}</div>${learnImage(180)}${learnClaim(18)}</div>
     <div style="display: flex; flex-direction: column; gap: 8px;"><sc-for list="{{options}}" as="o" hint-placeholder-count="4">${quizOption(56, 16, 18)}</sc-for></div>
     <sc-if value="{{answered}}" hint-placeholder-val="{{ false }}"><div class="sc-quiz-in" style="display: flex; flex-direction: column; gap: 12px; padding: 0 4px; animation: scQuizIn .3s cubic-bezier(.2,.8,.2,1) both;">${learnWhy}${quizFrom}</div></sc-if>
   </div>
@@ -2674,7 +2689,7 @@ const webQuizMatch = `<div style="position: relative; width: 1440px; height: 900
   ${learnTop('WebDeck.dc.html')}
   <main style="flex-grow: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;">
     <div class="sc-q" style="width: 760px; display: flex; flex-direction: column; gap: 20px; animation: {{qAnim}};">
-      ${learnKind}
+      ${learnDots}
       <h1 style="margin: 0; font-size: 30px; font-weight: 600; line-height: 1.25; letter-spacing: -.025em;">{{question}}</h1>
       ${matchCols(60, 16, 10)}
       <div style="min-height: 56px; display: flex; align-items: center; justify-content: space-between; gap: 20px;"><span style="font-size: 14px; color: {{t.muted}};">{{matchLine}}</span><sc-if value="{{allMatched}}" hint-placeholder-val="{{ false }}"><div class="sc-quiz-in" style="width: 180px; animation: scQuizIn .3s cubic-bezier(.2,.8,.2,1) both;">${learnNext(48, 15)}</div></sc-if></div>
@@ -2684,7 +2699,7 @@ const webQuizMatch = `<div style="position: relative; width: 1440px; height: 900
 const phoneQuizMatch = `<div style="position: relative; width: 390px; height: 844px; box-sizing: border-box; padding: 60px 16px 34px; display: flex; flex-direction: column; gap: 18px; overflow: hidden; font-family: ${FONT}; background: {{t.bg}}; color: {{t.text}};">
   ${learnTopPhone('PhoneDeck.dc.html')}
   <div class="sc-q" style="display: flex; flex-direction: column; gap: 18px; animation: {{qAnim}};">
-    <div style="display: flex; flex-direction: column; gap: 10px; padding: 8px 4px 0;">${learnKind}<div style="font-size: 23px; font-weight: 600; line-height: 1.28; letter-spacing: -.02em;">{{question}}</div></div>
+    <div style="display: flex; flex-direction: column; gap: 10px; padding: 8px 4px 0;">${learnDots}<div style="font-size: 23px; font-weight: 600; line-height: 1.28; letter-spacing: -.02em;">{{question}}</div></div>
     ${matchCols(64, 14, 8)}
     <div style="padding: 0 4px; font-size: 14px; color: {{t.muted}};">{{matchLine}}</div>
   </div>
@@ -2725,7 +2740,7 @@ const webQuizType = `<div style="position: relative; width: 1440px; height: 900p
   ${learnTop('WebDeck.dc.html')}
   <main style="flex-grow: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;">
     <div class="sc-q" style="width: 720px; display: flex; flex-direction: column; gap: 20px; animation: {{qAnim}};">
-      ${learnKind}
+      ${learnDots}
       <h1 style="margin: 0; font-size: 30px; font-weight: 600; line-height: 1.25; letter-spacing: -.025em; text-wrap: pretty;">{{question}}</h1>
       ${learnImage(240)}
       ${typeRow(60, 18)}
@@ -2740,7 +2755,7 @@ const webQuizType = `<div style="position: relative; width: 1440px; height: 900p
 const phoneQuizType = `<div style="position: relative; width: 390px; height: 844px; box-sizing: border-box; padding: 60px 16px 34px; display: flex; flex-direction: column; gap: 16px; overflow: hidden; font-family: ${FONT}; background: {{t.bg}}; color: {{t.text}};">
   ${learnTopPhone('PhoneDeck.dc.html')}
   <div class="sc-q" style="display: flex; flex-direction: column; gap: 16px; animation: {{qAnim}};">
-    <div style="display: flex; flex-direction: column; gap: 10px; padding: 8px 4px 0;">${learnKind}<div style="font-size: 23px; font-weight: 600; line-height: 1.28; letter-spacing: -.02em;">{{question}}</div>${learnImage(180)}</div>
+    <div style="display: flex; flex-direction: column; gap: 10px; padding: 8px 4px 0;">${learnDots}<div style="font-size: 23px; font-weight: 600; line-height: 1.28; letter-spacing: -.02em;">{{question}}</div>${learnImage(180)}</div>
     ${typeRow(56, 16)}
     <span style="padding: 0 4px; font-size: 13px; color: {{t.muted}};">Close spelling counts.</span>
     <sc-if value="{{checked}}" hint-placeholder-val="{{ true }}"><div class="sc-quiz-in" style="display: flex; flex-direction: column; gap: 12px; padding: 0 4px; animation: scQuizIn .3s cubic-bezier(.2,.8,.2,1) both;">${learnWhy}${typeOverride}${quizFrom}</div></sc-if>
@@ -2777,12 +2792,14 @@ renderVals() { ${T}${DB_JS}
     inputBg: !checked ? t.surf : ok ? t.goodTint : t.againTint, inputRing: !checked ? 'none' : 'inset 0 0 0 2px ' + (ok ? t.good : t.again), inputAnim: checked && !ok ? 'scShake .35s ease' : 'none',
     verdict: ok ? (learnedNow ? 'Learned.' : 'Right.') : 'Not quite.', verdictColor: ok ? t.good : t.again, why,
     cardFront: question, cardBack: answer, isLast: last, notLast: !last, afterHref: '${phone ? 'PhoneQuizDone' : 'WebQuizDone'}.dc.html' }; }`;
-// The end: every card learned, what took the most tries, and that they're in your reviews now.
+// The end: every card learned, what took the most tries, and that they're in your reviews now. It's on the daylight
+// sky (a night sky in dark mode), like the landing page's top: the owner asked for a sky here (V73).
 const learnRing = (size, stroke) => { const r = (size - stroke) / 2, c = size / 2;
   return `<div style="position: relative; width: ${size}px; height: ${size}px;"><svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" aria-hidden="true"><circle cx="${c}" cy="${c}" r="${r}" fill="none" stroke="{{t.surf2}}" stroke-width="${stroke}"/><circle class="sc-draw" pathLength="1" transform="rotate(-90 ${c} ${c})" cx="${c}" cy="${c}" r="${r}" fill="none" stroke="{{ring}}" stroke-width="${stroke}" stroke-linecap="round"/></svg><div style="position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center;"><span aria-label="{{total}} of {{total}}" style="font-size: ${Math.round(size / 4.6)}px; font-weight: 600; letter-spacing: -.04em; line-height: 1; font-variant-numeric: tabular-nums;"><span class="sc-count" style="--to: {{total}};"></span>/{{total}}</span><span style="margin-top: 4px; font-size: 13px; color: {{t.muted}};">learned</span></div></div>`; };
 const learnTries = `<sc-if value="{{hasTries}}" hint-placeholder-val="{{ true }}"><div style="width: 100%; display: flex; flex-direction: column; gap: 10px; text-align: left;"><span style="font-size: 15px; font-weight: 600;">Took the most tries</span><sc-for list="{{tries}}" as="m" hint-placeholder-count="2"><div style="box-sizing: border-box; padding: 14px 16px; border-radius: 18px; background: {{t.surf}}; display: flex; align-items: center; justify-content: space-between; gap: 12px;"><span style="min-width: 0; font-size: 15px; line-height: 1.35;">{{m.front}} <span style="color: {{t.muted}};">→</span> <span style="font-weight: 600;">{{m.back}}</span></span><span style="flex-shrink: 0; font-size: 13px; color: {{t.muted}};">{{m.n}}</span></div></sc-for></div></sc-if>`;
 const learnInReviews = `<div style="width: 100%; box-sizing: border-box; padding: 14px 16px; border-radius: 18px; background: {{t.surf}}; display: flex; align-items: center; gap: 12px; text-align: left; font-size: 14px; line-height: 1.45;"><span style="width: 36px; height: 36px; flex-shrink: 0; border-radius: 18px; background: {{t.bg}}; display: flex; align-items: center; justify-content: center;">${svg(I.today, 18, 1.8)}</span>They’re in your reviews now. Lucida brings each card back right before you’d forget it.</div>`;
-const webQuizDone = `<div style="width: 1440px; height: 900px; box-sizing: border-box; display: flex; align-items: center; justify-content: center; font-family: ${FONT}; background: {{t.bg}}; color: {{t.text}};">
+const webQuizDone = `<div style="position: relative; isolation: isolate; width: 1440px; height: 900px; box-sizing: border-box; display: flex; align-items: center; justify-content: center; overflow: hidden; font-family: ${FONT}; background: {{t.bg}}; color: {{t.text}};">
+  ${skyLayer(false)}
   <main style="width: 560px; display: flex; flex-direction: column; align-items: center; gap: 24px; text-align: center;">
     ${learnRing(190, 16)}
     <div style="display: flex; flex-direction: column; gap: 8px;"><h1 style="margin: 0; font-size: 32px; font-weight: 600; letter-spacing: -.03em;">{{title}}</h1><div style="font-size: 16px; color: {{t.muted}};">{{summary}}</div></div>
@@ -2791,7 +2808,8 @@ const webQuizDone = `<div style="width: 1440px; height: 900px; box-sizing: borde
     <div style="width: 100%; display: flex; gap: 10px;">${quizBtn('Learn more cards', 'WebQuizStart.dc.html', false, 1)}${quizBtn('Done', 'WebDeck.dc.html', true, 1)}</div>
   </main>
 </div>`;
-const phoneQuizDone = `<div style="position: relative; width: 390px; height: 844px; box-sizing: border-box; padding: 60px 20px 34px; display: flex; flex-direction: column; align-items: center; gap: 20px; text-align: center; overflow: hidden; font-family: ${FONT}; background: {{t.bg}}; color: {{t.text}};">
+const phoneQuizDone = `<div style="position: relative; isolation: isolate; width: 390px; height: 844px; box-sizing: border-box; padding: 60px 20px 34px; display: flex; flex-direction: column; align-items: center; gap: 20px; text-align: center; overflow: hidden; font-family: ${FONT}; background: {{t.bg}}; color: {{t.text}};">
+  ${skyLayer(true)}
   ${learnRing(156, 14)}
   <div style="display: flex; flex-direction: column; gap: 6px;"><div style="font-size: 28px; font-weight: 700; letter-spacing: -.03em;">{{title}}</div><div style="font-size: 15px; color: {{t.muted}};">{{summaryShort}}</div></div>
   ${learnInReviews}
@@ -2802,7 +2820,7 @@ const phoneQuizDone = `<div style="position: relative; width: 390px; height: 844
 const QUIZ_DONE_LOGIC = `renderVals() { ${T}${DB_JS}
   const L = db.mock ? { total: 40, setName: 'Exam 1', minutes: 26, firstPct: 88, tries: [{ front: 'Lysosome', back: 'Breaks down waste', n: '4 tries' }, { front: 'What is the role of the ribosome?', back: 'Translates mRNA into protein', n: '3 tries' }] }
     : db.learn() || { total: 0, setName: '', minutes: 0, firstPct: 0, tries: [] };
-  return { t, ring: this.props.dark ? '#8C9AFC' : '#4353E0', total: String(L.total), title: L.total === 1 ? 'You learned it' : 'You learned all ' + L.total + ' cards',
+  return { t, sky: ${SKY}, ring: this.props.dark ? '#8C9AFC' : '#4353E0', total: String(L.total), title: L.total === 1 ? 'You learned it' : 'You learned all ' + L.total + ' cards',
     summary: L.setName + ' · ' + L.minutes + ' minute' + (L.minutes === 1 ? '' : 's') + ' · ' + L.firstPct + '% right the first time', summaryShort: L.setName + ' · ' + L.minutes + ' min · ' + L.firstPct + '% first time',
     hasTries: L.tries.length > 0, tries: L.tries }; }`;
 
@@ -2976,17 +2994,6 @@ const LAND = {
 const landPill = (label, href, inv, h, extra = '') => `<a href="${href}" style="height: ${h}px; padding: 0 ${Math.round(h / 2)}px; box-sizing: border-box; display: inline-flex; align-items: center; justify-content: center; border-radius: 999px; font-size: ${h >= 48 ? 15 : 14}px; font-weight: 600; white-space: nowrap; ${inv ? 'background: {{t.inv}}; color: {{t.invText}};' : 'background: {{t.surf}}; color: {{t.text}};'} ${extra}">${label}</a>`;
 const landH2 = (L, text) => `<h2 style="margin: 0; max-width: 760px; font-size: ${L.h2}px; font-weight: 600; line-height: 1.04; letter-spacing: -.04em; text-wrap: balance;">${text}</h2>`;
 const leadP = (L, text, center) => `<p style="margin: ${Math.round(L.lead * .9)}px ${center ? 'auto' : '0'} 0; max-width: 600px; font-size: ${L.lead}px; line-height: 1.5; color: {{t.muted}}; text-wrap: pretty;">${text}</p>`;
-// A daylight sky behind the top of the page (a night sky in dark mode): deep blue up high, paler toward the page,
-// a soft glow, and clouds of three soft puffs each, drifting slowly. The wall and the words sit over it.
-const SKY_CLOUDS = {
-  web: [[-4, 118, 440, 150, 52], [79, 84, 470, 160, 64], [8, 404, 540, 170, 58], [67, 372, 500, 160, 70], [41, 22, 280, 96, 46]],
-  phone: [[-24, 104, 260, 100, 44], [62, 64, 250, 94, 52], [48, 372, 300, 110, 60]]
-};
-const skyLayer = phone => `<div aria-hidden="true" class="sc-demo" style="position: absolute; left: 0; right: 0; top: 0; height: ${phone ? 600 : 700}px; z-index: -1; overflow: hidden; pointer-events: none; background: linear-gradient(180deg, {{sky.top}} 0%, {{sky.mid}} 30%, {{sky.low}} 55%, {{t.bg}} 100%);">
-  <div style="position: absolute; left: 50%; top: -35%; width: 120%; height: 90%; transform: translateX(-50%); background: radial-gradient(closest-side, {{sky.glow}}, transparent);"></div>
-  ${SKY_CLOUDS[phone ? 'phone' : 'web'].map(([x, y, w, h, secs], i) => `<div class="sc-cloud" style="position: absolute; left: ${x}%; top: ${y}px; width: ${w}px; height: ${h}px; animation: scCloud ${secs}s ease-in-out -${i * 11}s infinite alternate;">${[[0, 30, 60, 70], [24, 0, 56, 88], [46, 24, 54, 76]].map(([l, t, pw, ph]) => `<span style="position: absolute; left: ${l}%; top: ${t}%; width: ${pw}%; height: ${ph}%; background: radial-gradient(closest-side, {{sky.cloud}} 40%, transparent);"></span>`).join('')}</div>`).join('')}
-</div>`;
-const SKY_CSS = '@keyframes scCloud{from{transform:translateX(-28px)}to{transform:translateX(28px)}}@media (prefers-reduced-motion:reduce){.sc-cloud{animation:none!important}}';
 // A demo beside its words: side by side on computers (the demo first when `demoFirst`), stacked on phones.
 const featureRow = (L, id, title, text, demo, demoFirst) => {
   const phone = L === LAND.phone, words = `<div style="min-width: 0;">${landH2(L, title)}${leadP(L, text)}</div>`;
@@ -3143,9 +3150,6 @@ const landFooter = phone => phone
   ${logo(26)}<span style="display: flex; flex-wrap: wrap; align-items: center; gap: 16px 20px;"><a href="{{pricingHref}}">Pricing</a><a href="{{privacyHref}}">Privacy</a><a href="{{termsHref}}">Terms</a><span>© 2026 Lucida</span><span style="margin-left: 8px;">${socialLinks(20)}</span></span>
 </footer>`;
 const LANDING_H = 4002, LANDING_PHONE_H = 4818;
-// The sky behind the landing page's top: daylight, or a night sky in dark mode.
-const SKY = `(this.props.dark ? { top: '#081733', mid: '#0D2148', low: '#0A1530', glow: 'rgba(120,150,255,.16)', cloud: 'rgba(150,170,230,.10)' }
-    : { top: '#86BDF3', mid: '#C9E2FB', low: '#EDF5FE', glow: 'rgba(255,255,255,.75)', cloud: 'rgba(255,255,255,.94)' })`;
 // The band that ends the page runs edge to edge in the site's dark Midnight gradient (surfaces.mjs).
 const MIDNIGHT = JSON.stringify(paletteData('Midnight'));
 const landingLogic = phone => `${ART_METHOD}
@@ -3368,6 +3372,68 @@ const LIVE_SETUP_LOGIC = LIVE_LOGIC.replace('  return { t,', '  return { deep: '
 const LIVE_FINAL_LOGIC = LIVE_LOGIC.replace('    r: wrongPick ? {', `    rest: ${JSON.stringify(LIVE_FINAL_REST)}.map(([name, score], i, all) => ({ rank: String(i + 4), name, initial: name[0], score, color: colors[(i + 3) % colors.length], line: i < all.length - 1 ? 'inset 0 -1px 0 rgba(13,21,66,.08)' : 'none', delay: (.8 + i * .08).toFixed(2) + 's' })),
     r: wrongPick ? {`);
 
+// ---------- Learn mode: style ideas (canvas only) ----------
+// The owner asked to see Learn mode's question in styles "with some more color and character" (V73). Two ideas, with
+// the same questions and logic as WebQuiz (tap an answer on the canvas), each also shown answered:
+// - Sky: the daylight sky with clouds, big navy words, and white answer cards with colored numbers. The right answer
+//   tilts up with a green check, like a card pulled from the pile, and the rest turn gray (Live's rules).
+// - Deep card: the page stays white, and the question sits on a deep gradient card (the start card's Midnight) like the
+//   front of a flashcard, with the answers on soft tints of their colors. The right answer turns green.
+// The four colors skip green and red, which mean right and wrong here.
+const IDEA_COLORS = ['#4F60E6', '#F2701D', '#0E8FB0', '#E5407E'];
+const IDEA_TINTS = ['#ECEEFD', '#FDEEE4', '#E1F2F7', '#FCE8F0'];
+const ideaMark = `<sc-if value="{{o.plain}}" hint-placeholder-val="{{ true }}">{{o.key}}</sc-if><sc-if value="{{o.isRight}}" hint-placeholder-val="{{ false }}"><span class="sc-tick" style="display: flex;">${svg(I.check, 18, 2.6)}</span></sc-if><sc-if value="{{o.isWrong}}" hint-placeholder-val="{{ false }}">${svg(I.close, 16, 2.6)}</sc-if>`;
+const ideaOption = (h, r, fs) => `<button type="button" class="sc-opt" onClick="{{o.pick}}" data-key="{{o.key}}" aria-pressed="{{o.pressed}}" style="min-height: ${h}px; box-sizing: border-box; padding: 10px 20px 10px 12px; display: flex; align-items: center; gap: 16px; border: 0; border-radius: ${r}px; background: {{o.bg}}; color: {{o.fg}}; box-shadow: {{o.shadow}}; transform: {{o.tf}}; animation: {{o.anim}}; font: inherit; font-size: ${fs}px; font-weight: 600; text-align: left; cursor: {{o.cursor}}; transition: background-color .25s, color .25s, box-shadow .35s, transform .35s cubic-bezier(.2,.8,.2,1);"><span style="width: 40px; height: 40px; flex-shrink: 0; border-radius: 20px; background: {{o.badge}}; color: {{o.badgeFg}}; display: flex; align-items: center; justify-content: center; font-size: 16px; font-weight: 700; transition: background-color .25s, color .25s;">${ideaMark}</span><span style="flex-grow: 1;">{{o.label}}</span></button>`;
+const ideaNext = (bg, fg) => learnNext(52, 15).split('{{t.inv}}').join(bg).split('{{t.invText}}').join(fg);
+const webQuizSky = `<div style="position: relative; isolation: isolate; width: 1440px; height: 900px; box-sizing: border-box; display: flex; flex-direction: column; overflow: hidden; font-family: ${FONT}; background: #FFFFFF; color: ${LV.navy};">
+  ${skyLayer(false)}
+  <header style="height: 76px; flex-shrink: 0; box-sizing: border-box; padding: 0 32px; display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: center; gap: 16px;">
+    <div style="display: flex;"><a href="WebDeck.dc.html" aria-label="Stop for now" title="Stop for now" style="width: 40px; height: 40px; border-radius: 20px; background: rgba(255,255,255,.72); display: flex; align-items: center; justify-content: center;">${svg(I.close, 16, 2.2)}</a></div>
+    <div style="display: flex; align-items: center; gap: 14px;"><div style="width: 360px; height: 10px; border-radius: 5px; background: rgba(255,255,255,.62); overflow: hidden; display: flex;"><div style="width: {{doneW}}; background: ${LV.purple}; transition: width .5s cubic-bezier(.2,.8,.2,1);"></div><div style="width: {{partW}}; background: rgba(79,96,230,.38); transition: width .5s cubic-bezier(.2,.8,.2,1);"></div></div><span role="status" style="font-size: 14px; white-space: nowrap;"><span style="font-weight: 700;">{{learned}}</span> of {{total}} learned</span></div>
+    <div style="display: flex; justify-content: flex-end;"><span style="height: 34px; padding: 0 14px; display: inline-flex; align-items: center; gap: 6px; border-radius: 999px; background: rgba(255,255,255,.72); font-size: 13px; font-weight: 600; white-space: nowrap;">${svg(I.sparkle, 14, 1.8)}<span>Learn · {{setName}}</span></span></div>
+  </header>
+  <main style="flex-grow: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;">
+    <div class="sc-q" style="width: 720px; display: flex; flex-direction: column; gap: 22px; animation: {{qAnim}};">
+      ${learnDots}
+      <h1 style="margin: -10px 0 0; font-size: 36px; font-weight: 700; line-height: 1.15; letter-spacing: -.03em; text-wrap: pretty;">{{question}}</h1>
+      <sc-if value="{{hasClaim}}" hint-placeholder-val="{{ false }}"><div style="padding: 16px 20px; border-radius: 20px; background: #FFFFFF; box-shadow: ${LV.shadow}; font-size: 20px; font-weight: 700; line-height: 1.35;">{{claim}}</div></sc-if>
+      <div style="display: flex; flex-direction: column; gap: 12px;"><sc-for list="{{options}}" as="o" hint-placeholder-count="4">${ideaOption(64, 22, 18)}</sc-for></div>
+      <div style="min-height: 150px;"><sc-if value="{{answered}}" hint-placeholder-val="{{ false }}"><div class="sc-quiz-in" style="display: flex; flex-direction: column; gap: 14px; animation: scQuizIn .3s cubic-bezier(.2,.8,.2,1) both;">
+        <div style="font-size: 17px; line-height: 1.5;"><span style="font-weight: 700; color: {{verdictColor}};">{{verdict}}</span> {{why}}</div>
+        <div style="display: flex; align-items: flex-end; justify-content: space-between; gap: 20px;"><div style="min-width: 0; display: flex; flex-direction: column; gap: 4px; padding: 12px 16px; border-radius: 18px; background: #FFFFFF; box-shadow: ${LV.shadow}; font-size: 13px; line-height: 1.4;"><span style="color: ${LV.ink2};">From your card</span><span style="min-width: 0;">{{cardFront}} <span style="color: ${LV.ink2};">→</span> <span style="font-weight: 700;">{{cardBack}}</span></span></div><div style="flex-shrink: 0; width: 180px;">${ideaNext(LV.navy, '#FFFFFF')}</div></div>
+      </div></sc-if></div>
+    </div>
+  </main>
+</div>`;
+const webQuizDeep = `<div style="position: relative; width: 1440px; height: 900px; box-sizing: border-box; display: flex; flex-direction: column; font-family: ${FONT}; background: {{t.bg}}; color: {{t.text}};">
+  ${learnTop('WebDeck.dc.html')}
+  <main style="flex-grow: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;">
+    <div class="sc-q" style="width: 760px; display: flex; flex-direction: column; gap: 14px; animation: {{qAnim}};">
+      ${meshCard('deep', 'border-radius: 32px; box-shadow: 0 30px 60px -32px rgba(20,22,90,.6);', 'box-sizing: border-box; min-height: 240px; padding: 30px 34px 34px; display: flex; flex-direction: column; justify-content: space-between; gap: 30px;', `<span title="Right twice in a row and it’s learned" style="display: inline-flex; gap: 5px;"><sc-for list="{{ddots}}" as="d" hint-placeholder-count="2"><span class="sc-dot" style="width: 9px; height: 9px; border-radius: 5px; background: {{d.bg}}; animation: {{d.anim}};"></span></sc-for></span><h1 style="margin: 0; font-size: 32px; font-weight: 600; line-height: 1.22; letter-spacing: -.025em; text-wrap: pretty;">{{question}}</h1>`)}
+      <sc-if value="{{hasClaim}}" hint-placeholder-val="{{ false }}"><div style="padding: 16px 20px; border-radius: 20px; background: {{t.surf}}; font-size: 20px; font-weight: 600; line-height: 1.35;">{{claim}}</div></sc-if>
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;"><sc-for list="{{options}}" as="o" hint-placeholder-count="4">${ideaOption(84, 24, 17)}</sc-for></div>
+      <div style="min-height: 150px; margin-top: 8px;"><sc-if value="{{answered}}" hint-placeholder-val="{{ false }}"><div class="sc-quiz-in" style="display: flex; flex-direction: column; gap: 14px; animation: scQuizIn .3s cubic-bezier(.2,.8,.2,1) both;">
+        ${learnWhy}
+        <div style="display: flex; align-items: flex-end; justify-content: space-between; gap: 20px;">${quizFrom}<div style="flex-shrink: 0; width: 180px;">${learnNext(48, 15)}</div></div>
+      </div></sc-if></div>
+    </div>
+  </main>
+</div>`;
+// The ideas' logic: WebQuiz's, with each answer's look for the idea on top.
+const IDEA_LOGIC = style => QUIZ_LOGIC(false).replace('renderVals() {', 'baseVals() {') + `
+renderVals() { const v = this.baseVals(), t = v.t, done = v.answered, C = ${JSON.stringify(IDEA_COLORS)}, TINT = ${JSON.stringify(IDEA_TINTS)}, LV = ${JSON.stringify(LV)};
+  const look = ${style === 'sky' ? `(o, j) => { const other = done && o.plain;
+    return { bg: o.isWrong || other ? LV.gray : '#FFFFFF', fg: o.isWrong || other ? LV.grayInk : LV.navy, shadow: o.isRight ? LV.lift : o.isWrong || other ? 'none' : LV.shadow,
+      tf: o.isRight ? 'translateY(-4px) rotate(-1.2deg)' : 'none', badge: o.isRight ? LV.check : o.isWrong ? LV.navy : other ? 'rgba(13,21,66,.12)' : C[j], badgeFg: other ? LV.grayInk : '#FFFFFF' }; }`
+    : `(o, j) => { const other = done && o.plain;
+    return { bg: o.isRight ? '#12A150' : o.isWrong ? LV.gray : other ? '#F1F2F5' : TINT[j], fg: o.isRight ? '#FFFFFF' : o.isWrong ? LV.grayInk : other ? '#8A909C' : t.text,
+      shadow: o.isRight ? '0 18px 36px -18px rgba(18,161,80,.75)' : 'none', tf: o.isRight ? 'translateY(-3px)' : 'none',
+      badge: o.isRight ? 'rgba(255,255,255,.24)' : o.isWrong ? LV.navy : other ? '#DADDE3' : C[j], badgeFg: other ? '#8A909C' : '#FFFFFF' }; }`};
+  return { ...v, sky: ${SKY}, deep: ${MIDNIGHT}, grain: String(this.props.grain ?? 0.7),
+    ddots: v.dots.map(d => ({ ...d, bg: d.bg === t.surf2 ? 'rgba(255,255,255,.3)' : '#FFFFFF' })),
+    ${style === 'sky' ? "dots: v.dots.map(d => ({ ...d, bg: d.bg === t.surf2 ? 'rgba(13,21,66,.16)' : LV.purple }))," : ''}
+    options: v.options.map((o, j) => ({ ...o, ...look(o, j) })) }; }`;
+
 // ---------- Pricing (lucida.cards/pricing) ----------
 // Free keeps every card. Pro ($5.99 a month or $39 a year) is for making Lucida yours: AI quizzes, photo covers and
 // your own colors, unlimited pictures and sounds, natural voices. Drawn for computers and phones like the landing page,
@@ -3531,14 +3597,18 @@ const files = {
   'WebQuizAnswered': ['Web · Learn mode · answered', attrOf('WebQuiz', W, H, 'answered="{{yes}}"'), { logic: darkLogic, css: LEARN_CSS, w: W, h: H }],
   'WebQuizMatch': ['Web · Learn mode · matching', webQuizMatch, { props: DARK, logic: MATCH_LOGIC(false), css: LEARN_CSS, w: W, h: H }],
   'WebQuizType': ['Web · Learn mode · type the answer', webQuizType, { props: DARK, logic: TYPE_LOGIC(false), css: LEARN_CSS, w: W, h: H }],
-  'WebQuizDone': ['Web · Learn mode · all learned', webQuizDone, { props: DARK, logic: QUIZ_DONE_LOGIC, css: LEARN_CSS, w: W, h: H }],
+  'WebQuizDone': ['Web · Learn mode · all learned', webQuizDone, { props: DARK, logic: QUIZ_DONE_LOGIC, css: LEARN_CSS + SKY_CSS, w: W, h: H }],
+  'WebQuizSky': ['Web · Learn mode · style idea 1: sky', webQuizSky, { props: { answered: { editor: 'boolean', default: false } }, logic: IDEA_LOGIC('sky'), css: LEARN_CSS + SKY_CSS, w: W, h: H }],
+  'WebQuizSkyAnswered': ['Web · Learn mode · style idea 1: sky, answered', attrOf('WebQuizSky', W, H, 'answered="{{yes}}"'), { logic: darkLogic, css: LEARN_CSS + SKY_CSS, w: W, h: H }],
+  'WebQuizDeep': ['Web · Learn mode · style idea 2: deep card', webQuizDeep, { props: { answered: { editor: 'boolean', default: false }, grain: MESH('Iris').grain }, logic: IDEA_LOGIC('deep'), css: LEARN_CSS, w: W, h: H }],
+  'WebQuizDeepAnswered': ['Web · Learn mode · style idea 2: deep card, answered', attrOf('WebQuizDeep', W, H, 'answered="{{yes}}"'), { logic: darkLogic, css: LEARN_CSS, w: W, h: H }],
   'PhoneQuizStart': ['iPhone · Learn mode · start (Pro)', phoneQuizStart(true), { props: DARK, logic: QUIZ_START_LOGIC(true), w: PW, h: PH }],
   'PhoneQuizUpgrade': ['iPhone · Learn mode · on Free: go Pro', phoneQuizStart(false), { props: { ...DARK, grain: MESH('Iris').grain }, logic: QUIZ_START_LOGIC(true), w: PW, h: PH }],
   'PhoneQuiz': ['iPhone · Learn mode · choice question', phoneQuiz, { props: { ...DARK, answered: { editor: 'boolean', default: false } }, logic: QUIZ_LOGIC(true), css: LEARN_CSS, w: PW, h: PH }],
   'PhoneQuizAnswered': ['iPhone · Learn mode · answered', attrOf('PhoneQuiz', PW, PH, 'answered="{{yes}}"'), { logic: darkLogic, css: LEARN_CSS, w: PW, h: PH }],
   'PhoneQuizMatch': ['iPhone · Learn mode · matching', phoneQuizMatch, { props: DARK, logic: MATCH_LOGIC(true), css: LEARN_CSS, w: PW, h: PH }],
   'PhoneQuizType': ['iPhone · Learn mode · type the answer', phoneQuizType, { props: DARK, logic: TYPE_LOGIC(true), css: LEARN_CSS, w: PW, h: PH }],
-  'PhoneQuizDone': ['iPhone · Learn mode · all learned', phoneQuizDone, { props: DARK, logic: QUIZ_DONE_LOGIC, css: LEARN_CSS, w: PW, h: PH }],
+  'PhoneQuizDone': ['iPhone · Learn mode · all learned', phoneQuizDone, { props: DARK, logic: QUIZ_DONE_LOGIC, css: LEARN_CSS + SKY_CSS, w: PW, h: PH }],
   'LiveSetup': ['Live · host · set up', liveSetup, { props: DARK, logic: LIVE_SETUP_LOGIC, w: W, h: H }],
   'LiveLobby': ['Live · big screen · lobby (join code)', liveLobby, { props: DARK, logic: LIVE_LOGIC, css: LIVE_CSS, w: W, h: H }],
   'LiveQuestion': ['Live · big screen · question', liveQuestion, { props: { ...DARK, grain: MESH('Iris').grain }, logic: LIVE_LOGIC, css: LIVE_CSS, w: W, h: H }],

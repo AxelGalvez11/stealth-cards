@@ -559,6 +559,18 @@ export default [
   "h": 900
  },
  {
+  "name": "WebQuizDeep",
+  "title": "Web · Learn mode · style idea 2: deep card",
+  "w": 1440,
+  "h": 900
+ },
+ {
+  "name": "WebQuizDeepAnswered",
+  "title": "Web · Learn mode · style idea 2: deep card, answered",
+  "w": 1440,
+  "h": 900
+ },
+ {
   "name": "WebQuizDone",
   "title": "Web · Learn mode · all learned",
   "w": 1440,
@@ -567,6 +579,18 @@ export default [
  {
   "name": "WebQuizMatch",
   "title": "Web · Learn mode · matching",
+  "w": 1440,
+  "h": 900
+ },
+ {
+  "name": "WebQuizSky",
+  "title": "Web · Learn mode · style idea 1: sky",
+  "w": 1440,
+  "h": 900
+ },
+ {
+  "name": "WebQuizSkyAnswered",
+  "title": "Web · Learn mode · style idea 1: sky, answered",
   "w": 1440,
   "h": 900
  },
