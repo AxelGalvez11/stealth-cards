@@ -3443,21 +3443,20 @@ const LIVE_SETUP_LOGIC = LIVE_LOGIC.replace('  return { t,', '  return { deep: '
 const LIVE_FINAL_LOGIC = LIVE_LOGIC.replace('    r: wrongPick ? {', `    rest: ${JSON.stringify(LIVE_FINAL_REST)}.map(([name, score], i, all) => ({ rank: String(i + 4), name, initial: name[0], score, color: colors[(i + 3) % colors.length], line: i < all.length - 1 ? 'inset 0 -1px 0 rgba(13,21,66,.08)' : 'none', delay: (.8 + i * .08).toFixed(2) + 's' })),
     r: wrongPick ? {`);
 
-// ---------- Learn mode: an idea (canvas only) ----------
+// ---------- Learn mode: ideas (canvas only) ----------
 // The owner picked the sky style for Learn mode and asked to try other backgrounds: "faint gradient waves" (V82), the
-// cards' noisy gradient "white with faint color" (V83), then a grainy fold of cloth, "but white, and subtle" (V84). So
-// this is silk (silk.mjs): a white sheet with soft folds lit from the top left, drawn once as a small picture the page
+// cards' noisy gradient "white with faint color" (V83), then a grainy fold of cloth, "but white, and subtle" (V84), then
+// "make this fainter, could you show me more of these gradient faint designs? i want a wave pattern" (V86). So these are
+// silk (silk.mjs): a white sheet lit from the top left, folded or waved four ways, drawn once as a small picture the page
 // stretches, with film grain on top, drifting slowly like the Today card. At night the page keeps the night sky.
-const SILK_PIC = { web: ['wide', 720, 450], phone: ['tall', 390, 844] };
-for (const k in SILK_PIC) SILK_PIC[k].unshift(silkUri(...SILK_PIC[k]));
-const silkLayer = phone => {
-  const [src, , w, h] = SILK_PIC[phone ? 'phone' : 'web'];
-  return `<div aria-hidden="true" class="sc-alive" style="position: absolute; inset: 0; z-index: -1; overflow: hidden; pointer-events: none; background: #F7F8F9;"><svg aria-hidden="true" viewBox="0 0 ${w} ${h}" preserveAspectRatio="xMidYMid slice" width="100%" height="100%" style="position: absolute; inset: 0; pointer-events: none;"><image href="${src}" width="${w}" height="${h}" preserveAspectRatio="none"/></svg>${grainSvg('{{silkGrain}}', { blend: 'overlay', freq: 0.85, slope: 3.4, id: 'sc-silk-grain' })}</div>`;
+const SILK_IDEAS = [['Mist', 'fold', 'idea 1: silk fold'], ['Swell', 'swell', 'idea 2: swell, broad waves'], ['Flow', 'flow', 'idea 3: flow, layered waves'], ['Ripple', 'ripple', 'idea 4: ripples, fine waves']];
+const silkPic = Object.fromEntries(SILK_IDEAS.map(([, d]) => [d, { web: silkUri(d, 720, 450), phone: silkUri(d, 390, 844) }]));
+const silkLayer = (phone, design) => {
+  const [w, h] = phone ? [390, 844] : [720, 450];
+  return `<div aria-hidden="true" class="sc-alive" style="position: absolute; inset: 0; z-index: -1; overflow: hidden; pointer-events: none; background: #F9FAFB;"><svg aria-hidden="true" viewBox="0 0 ${w} ${h}" preserveAspectRatio="xMidYMid slice" width="100%" height="100%" style="position: absolute; inset: 0; pointer-events: none;"><image href="${silkPic[design][phone ? 'phone' : 'web']}" width="${w}" height="${h}" preserveAspectRatio="none"/></svg>${grainSvg('{{silkGrain}}', { blend: 'overlay', freq: 0.85, slope: 3.4, id: 'sc-silk-grain' })}</div>`;
 };
-const silkBg = phone => `<sc-if value="{{light}}" hint-placeholder-val="{{ true }}">${silkLayer(phone)}</sc-if><sc-if value="{{dark}}" hint-placeholder-val="{{ false }}">${skyFade(phone)}</sc-if>`;
-const webQuizSilk = webQuizOf(silkBg(false));
-const phoneQuizSilk = phoneQuizOf(silkBg(true));
-// Its logic: the question's, plus the grain. On the pale page the top's track needs a touch of navy to show.
+const silkBg = (phone, design) => `<sc-if value="{{light}}" hint-placeholder-val="{{ true }}">${silkLayer(phone, design)}</sc-if><sc-if value="{{dark}}" hint-placeholder-val="{{ false }}">${skyFade(phone)}</sc-if>`;
+// Their logic: the question's, plus the grain. On the pale page the top's track needs a touch of navy to show.
 const SILK_LOGIC = phone => QUIZ_LOGIC(phone).replace('renderVals() {', 'baseVals() {') + `
 renderVals() { const v = this.baseVals(), dark = !!this.props.dark;
   return { ...v, silkGrain: '.9', light: !dark, dark, k: dark ? v.k : { ...v.k, chip: 'rgba(255,255,255,.75)', track: 'rgba(13,21,66,.08)' } }; }`;
@@ -3631,8 +3630,10 @@ const files = {
   'WebQuizMatch': ['Web · Learn mode · matching', webQuizMatch, { props: DARK, logic: MATCH_LOGIC(false), css: LEARN_CSS, w: W, h: H }],
   'WebQuizType': ['Web · Learn mode · type the answer', webQuizType, { props: DARK, logic: TYPE_LOGIC(false), css: LEARN_CSS, w: W, h: H }],
   'WebQuizDone': ['Web · Learn mode · all learned', webQuizDone, { props: DARK, logic: QUIZ_DONE_LOGIC, css: LEARN_CSS, w: W, h: H }],
-  'WebQuizMist': ['Web · Learn mode · idea: white silk with grain', webQuizSilk, { props: { ...DARK, answered: { editor: 'boolean', default: false } }, logic: SILK_LOGIC(false), css: LEARN_CSS, w: W, h: H }],
-  'PhoneQuizMist': ['iPhone · Learn mode · idea: white silk with grain', phoneQuizSilk, { props: { ...DARK, answered: { editor: 'boolean', default: false } }, logic: SILK_LOGIC(true), css: LEARN_CSS, w: PW, h: PH }],
+  ...Object.fromEntries(SILK_IDEAS.flatMap(([name, d, title]) => [
+    ['WebQuiz' + name, ['Web · Learn mode · ' + title, webQuizOf(silkBg(false, d)), { props: { ...DARK, answered: { editor: 'boolean', default: false } }, logic: SILK_LOGIC(false), css: LEARN_CSS, w: W, h: H }]],
+    ['PhoneQuiz' + name, ['iPhone · Learn mode · ' + title, phoneQuizOf(silkBg(true, d)), { props: { ...DARK, answered: { editor: 'boolean', default: false } }, logic: SILK_LOGIC(true), css: LEARN_CSS, w: PW, h: PH }]]
+  ])),
   'PhoneQuizStart': ['iPhone · Learn mode · start (Pro)', phoneQuizStart(true), { props: DARK, logic: QUIZ_START_LOGIC(true, true), w: PW, h: PH }],
   'PhoneQuizUpgrade': ['iPhone · Learn mode · on Free: go Pro', phoneQuizStart(false), { props: { ...DARK, grain: MESH('Iris').grain }, logic: QUIZ_START_LOGIC(true), w: PW, h: PH }],
   'PhoneQuiz': ['iPhone · Learn mode · choice question', phoneQuiz, { props: { ...DARK, answered: { editor: 'boolean', default: false } }, logic: QUIZ_LOGIC(true), css: LEARN_CSS, w: PW, h: PH }],

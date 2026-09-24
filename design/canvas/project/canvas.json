@@ -1040,7 +1040,7 @@
       "h": 900,
       "is_interactive": true,
       "page": "quiz",
-      "title": "Web · Learn mode · idea: white silk with grain (tap an answer)",
+      "title": "Web · Learn mode · idea 1: silk fold (tap an answer)",
       "w": 1440,
       "x": 0,
       "y": 2584
@@ -1049,9 +1049,63 @@
       "h": 844,
       "is_interactive": true,
       "page": "quiz",
-      "title": "iPhone · Learn mode · idea: white silk with grain (tap an answer)",
+      "title": "iPhone · Learn mode · idea 1: silk fold (tap an answer)",
       "w": 390,
       "x": 1520,
+      "y": 2584
+    },
+    "WebQuizSwell.dc.html": {
+      "h": 900,
+      "is_interactive": true,
+      "page": "quiz",
+      "title": "Web · Learn mode · idea 2: swell, broad waves (tap an answer)",
+      "w": 1440,
+      "x": 2030,
+      "y": 2584
+    },
+    "PhoneQuizSwell.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "page": "quiz",
+      "title": "iPhone · Learn mode · idea 2: swell, broad waves (tap an answer)",
+      "w": 390,
+      "x": 3550,
+      "y": 2584
+    },
+    "WebQuizFlow.dc.html": {
+      "h": 900,
+      "is_interactive": true,
+      "page": "quiz",
+      "title": "Web · Learn mode · idea 3: flow, layered waves (tap an answer)",
+      "w": 1440,
+      "x": 4060,
+      "y": 2584
+    },
+    "PhoneQuizFlow.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "page": "quiz",
+      "title": "iPhone · Learn mode · idea 3: flow, layered waves (tap an answer)",
+      "w": 390,
+      "x": 5580,
+      "y": 2584
+    },
+    "WebQuizRipple.dc.html": {
+      "h": 900,
+      "is_interactive": true,
+      "page": "quiz",
+      "title": "Web · Learn mode · idea 4: ripples, fine waves (tap an answer)",
+      "w": 1440,
+      "x": 6090,
+      "y": 2584
+    },
+    "PhoneQuizRipple.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "page": "quiz",
+      "title": "iPhone · Learn mode · idea 4: ripples, fine waves (tap an answer)",
+      "w": 390,
+      "x": 7610,
       "y": 2584
     }
   },
@@ -1301,9 +1355,9 @@
     },
     "qIdeas": {
       "kind": "title1",
-      "maxW": 1910,
+      "maxW": 7910,
       "page": "quiz",
-      "text": "Learn mode · idea: white silk with grain",
+      "text": "Learn mode · ideas: faint silk and waves",
       "w": 240,
       "x": 0,
       "y": 2284
@@ -1426,7 +1480,13 @@
     "LiveResultWrong.dc.html",
     "LiveFinal.dc.html",
     "WebQuizMist.dc.html",
-    "PhoneQuizMist.dc.html"
+    "PhoneQuizMist.dc.html",
+    "WebQuizSwell.dc.html",
+    "PhoneQuizSwell.dc.html",
+    "WebQuizFlow.dc.html",
+    "PhoneQuizFlow.dc.html",
+    "WebQuizRipple.dc.html",
+    "PhoneQuizRipple.dc.html"
   ],
   "pages": [
     {
