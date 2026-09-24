@@ -781,7 +781,7 @@
       "x": 0,
       "y": 0,
       "page": "quiz",
-      "title": "Web · AI quiz · start (Pro)",
+      "title": "Web · Learn mode · start (Pro)",
       "is_interactive": true
     },
     "WebQuizUpgrade.dc.html": {
@@ -790,7 +790,7 @@
       "x": 1520,
       "y": 0,
       "page": "quiz",
-      "title": "Web · AI quiz · on Free: go Pro",
+      "title": "Web · Learn mode · on Free: go Pro",
       "is_interactive": true
     },
     "WebQuiz.dc.html": {
@@ -799,7 +799,7 @@
       "x": 3040,
       "y": 0,
       "page": "quiz",
-      "title": "Web · AI quiz · question (tap an answer)",
+      "title": "Web · Learn mode · choice question (tap an answer)",
       "is_interactive": true
     },
     "WebQuizAnswered.dc.html": {
@@ -808,16 +808,16 @@
       "x": 4560,
       "y": 0,
       "page": "quiz",
-      "title": "Web · AI quiz · answered",
+      "title": "Web · Learn mode · answered",
       "is_interactive": true
     },
     "WebQuizDone.dc.html": {
       "h": 900,
       "w": 1440,
-      "x": 6080,
+      "x": 9120,
       "y": 0,
       "page": "quiz",
-      "title": "Web · AI quiz · results",
+      "title": "Web · Learn mode · all learned",
       "is_interactive": true
     },
     "PhoneQuizStart.dc.html": {
@@ -826,7 +826,7 @@
       "x": 0,
       "y": 1320,
       "page": "quiz",
-      "title": "iPhone · AI quiz · start (Pro)",
+      "title": "iPhone · Learn mode · start (Pro)",
       "is_interactive": true
     },
     "PhoneQuizUpgrade.dc.html": {
@@ -835,7 +835,7 @@
       "x": 470,
       "y": 1320,
       "page": "quiz",
-      "title": "iPhone · AI quiz · on Free: go Pro",
+      "title": "iPhone · Learn mode · on Free: go Pro",
       "is_interactive": true
     },
     "PhoneQuiz.dc.html": {
@@ -844,7 +844,7 @@
       "x": 940,
       "y": 1320,
       "page": "quiz",
-      "title": "iPhone · AI quiz · question (tap an answer)",
+      "title": "iPhone · Learn mode · choice question (tap an answer)",
       "is_interactive": true
     },
     "PhoneQuizAnswered.dc.html": {
@@ -853,16 +853,16 @@
       "x": 1410,
       "y": 1320,
       "page": "quiz",
-      "title": "iPhone · AI quiz · answered",
+      "title": "iPhone · Learn mode · answered",
       "is_interactive": true
     },
     "PhoneQuizDone.dc.html": {
       "h": 844,
       "w": 390,
-      "x": 1880,
+      "x": 2820,
       "y": 1320,
       "page": "quiz",
-      "title": "iPhone · AI quiz · results",
+      "title": "iPhone · Learn mode · all learned",
       "is_interactive": true
     },
     "Pricing.dc.html": {
@@ -882,6 +882,42 @@
       "page": "landing",
       "title": "Pricing · lucida.cards/pricing (phones)",
       "is_interactive": true
+    },
+    "WebQuizMatch.dc.html": {
+      "h": 900,
+      "w": 1440,
+      "page": "quiz",
+      "is_interactive": true,
+      "x": 6080,
+      "y": 0,
+      "title": "Web · Learn mode · matching (tap a word, then its meaning)"
+    },
+    "WebQuizType.dc.html": {
+      "h": 900,
+      "w": 1440,
+      "page": "quiz",
+      "is_interactive": true,
+      "x": 7600,
+      "y": 0,
+      "title": "Web · Learn mode · type the answer"
+    },
+    "PhoneQuizMatch.dc.html": {
+      "h": 844,
+      "w": 390,
+      "page": "quiz",
+      "is_interactive": true,
+      "x": 1880,
+      "y": 1320,
+      "title": "iPhone · Learn mode · matching (tap a word, then its meaning)"
+    },
+    "PhoneQuizType.dc.html": {
+      "h": 844,
+      "w": 390,
+      "page": "quiz",
+      "is_interactive": true,
+      "x": 2350,
+      "y": 1320,
+      "title": "iPhone · Learn mode · type the answer"
     }
   },
   "createdOnFiles": {
@@ -1094,18 +1130,18 @@
     },
     "qWeb": {
       "kind": "title1",
-      "maxW": 7520,
+      "maxW": 10560,
       "page": "quiz",
-      "text": "AI quiz (Pro) · web",
+      "text": "Learn mode (Pro) · web",
       "w": 240,
       "x": 0,
       "y": -300
     },
     "qPhone": {
       "kind": "title1",
-      "maxW": 2270,
+      "maxW": 3210,
       "page": "quiz",
-      "text": "AI quiz (Pro) · iPhone",
+      "text": "Learn mode (Pro) · iPhone",
       "w": 240,
       "x": 0,
       "y": 1020
@@ -1202,11 +1238,15 @@
     "WebQuizUpgrade.dc.html",
     "WebQuiz.dc.html",
     "WebQuizAnswered.dc.html",
+    "WebQuizMatch.dc.html",
+    "WebQuizType.dc.html",
     "WebQuizDone.dc.html",
     "PhoneQuizStart.dc.html",
     "PhoneQuizUpgrade.dc.html",
     "PhoneQuiz.dc.html",
     "PhoneQuizAnswered.dc.html",
+    "PhoneQuizMatch.dc.html",
+    "PhoneQuizType.dc.html",
     "PhoneQuizDone.dc.html",
     "Pricing.dc.html",
     "PricingPhone.dc.html"
@@ -1250,7 +1290,7 @@
     },
     {
       "id": "quiz",
-      "name": "AI quiz (Pro)"
+      "name": "Learn mode (Pro)"
     }
   ],
   "title": "Lucida Design"

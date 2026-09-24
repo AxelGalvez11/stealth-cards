@@ -146,31 +146,43 @@ export default [
  },
  {
   "name": "PhoneQuiz",
-  "title": "iPhone · AI quiz · question",
+  "title": "iPhone · Learn mode · choice question",
   "w": 390,
   "h": 844
  },
  {
   "name": "PhoneQuizAnswered",
-  "title": "iPhone · AI quiz · answered",
+  "title": "iPhone · Learn mode · answered",
   "w": 390,
   "h": 844
  },
  {
   "name": "PhoneQuizDone",
-  "title": "iPhone · AI quiz · results",
+  "title": "iPhone · Learn mode · all learned",
+  "w": 390,
+  "h": 844
+ },
+ {
+  "name": "PhoneQuizMatch",
+  "title": "iPhone · Learn mode · matching",
   "w": 390,
   "h": 844
  },
  {
   "name": "PhoneQuizStart",
-  "title": "iPhone · AI quiz · start (Pro)",
+  "title": "iPhone · Learn mode · start (Pro)",
+  "w": 390,
+  "h": 844
+ },
+ {
+  "name": "PhoneQuizType",
+  "title": "iPhone · Learn mode · type the answer",
   "w": 390,
   "h": 844
  },
  {
   "name": "PhoneQuizUpgrade",
-  "title": "iPhone · AI quiz · on Free: go Pro",
+  "title": "iPhone · Learn mode · on Free: go Pro",
   "w": 390,
   "h": 844
  },
@@ -458,31 +470,43 @@ export default [
  },
  {
   "name": "WebQuiz",
-  "title": "Web · AI quiz · question",
+  "title": "Web · Learn mode · choice question",
   "w": 1440,
   "h": 900
  },
  {
   "name": "WebQuizAnswered",
-  "title": "Web · AI quiz · answered",
+  "title": "Web · Learn mode · answered",
   "w": 1440,
   "h": 900
  },
  {
   "name": "WebQuizDone",
-  "title": "Web · AI quiz · results",
+  "title": "Web · Learn mode · all learned",
+  "w": 1440,
+  "h": 900
+ },
+ {
+  "name": "WebQuizMatch",
+  "title": "Web · Learn mode · matching",
   "w": 1440,
   "h": 900
  },
  {
   "name": "WebQuizStart",
-  "title": "Web · AI quiz · start (Pro)",
+  "title": "Web · Learn mode · start (Pro)",
+  "w": 1440,
+  "h": 900
+ },
+ {
+  "name": "WebQuizType",
+  "title": "Web · Learn mode · type the answer",
   "w": 1440,
   "h": 900
  },
  {
   "name": "WebQuizUpgrade",
-  "title": "Web · AI quiz · on Free: go Pro",
+  "title": "Web · Learn mode · on Free: go Pro",
   "w": 1440,
   "h": 900
  },
