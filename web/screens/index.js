@@ -52,13 +52,13 @@ export default [
   "name": "Landing",
   "title": "Landing page · lucida.cards",
   "w": 1440,
-  "h": 3499
+  "h": 4002
  },
  {
   "name": "LandingPhone",
   "title": "Landing page · lucida.cards on a phone",
   "w": 390,
-  "h": 4675
+  "h": 4818
  },
  {
   "name": "Main",
@@ -70,7 +70,7 @@ export default [
   "name": "Motion",
   "title": "Motion",
   "w": 1440,
-  "h": 900
+  "h": 1260
  },
  {
   "name": "PhoneConnect",
@@ -253,10 +253,22 @@ export default [
   "h": 844
  },
  {
+  "name": "Privacy",
+  "title": "Privacy Policy · lucida.cards/privacy",
+  "w": 1440,
+  "h": 2236
+ },
+ {
   "name": "Reference",
   "title": "Your reference",
   "w": 1440,
   "h": 1110
+ },
+ {
+  "name": "Terms",
+  "title": "Terms of Service · lucida.cards/terms",
+  "w": 1440,
+  "h": 1963
  },
  {
   "name": "TopDeck",

@@ -12,7 +12,7 @@ const PROP_SETS = [
   { card: 'Audio' }, { card: 'Image', startRevealed: true }, { keyboard: true }, { keyboard: false }, { caughtUp: true }, { view: 'List' }, { photo: 'Google photo' }, { textStyles: true, keyboard: true }, { cardType: 'Blank' }, { cardType: 'Image' }, { cardType: 'Audio', keyboard: true }, { settingsOpen: true, settingsTab: 'Studying' },
   { openTags: true }, { moreTags: true }, { view: 'List', openTags: true }, { settingsOpen: true, tagPicker: true }, { tagPicker: true, keyboard: false },
   { $state: { moreOpen: true, moreQ: 'zz' } }, { $state: { tag: 'Must know' } }, { $state: { tagMenuOpen: true, tagQ: 'ex', filter: 'Organelles' } },
-  { settingsOpen: true, $state: { dpOpen: true, dpQ: 'Pharm' } }, { $state: { cpOpen: true, cpQ: 'new tag' } }, { slashDemo: true }
+  { settingsOpen: true, $state: { dpOpen: true, dpQ: 'Pharm' } }, { $state: { cpOpen: true, cpQ: 'new tag' } }, { slashDemo: true }, { site: true }
 ];
 
 function walk(str, sc, miss) {

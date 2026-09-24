@@ -1,10 +1,10 @@
-// Turns the landing page boards (Landing, LandingPhone) into web/landing.html, the static page at lucida.cards.
-// Both boards are drawn once, with their links pointing at the app; phones see the phone board, everything else the
-// computer one. Run after design/build.mjs (Vercel runs it when it builds the site).
+// Turns the site's boards into static pages: the landing page (Landing, LandingPhone) into web/landing.html, the page at
+// lucida.cards, and Privacy and Terms into web/privacy.html and web/terms.html. The landing page holds both boards, with
+// their links pointing at the app; phones see the phone board, everything else the computer one. Gradient cards come
+// from pictures (web/art, design/art.mjs). Run after design/build.mjs (Vercel runs it when it builds the site).
 import { readFileSync, writeFileSync } from 'node:fs';
 
 const SRC = new URL('./canvas/project/', import.meta.url);
-const OUT = new URL('../web/landing.html', import.meta.url);
 const get = (o, p) => p.trim().split('.').reduce((a, k) => (a == null ? a : a[k]), o);
 const esc = v => String(v).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 
@@ -47,21 +47,20 @@ phone.html = phone.html.replace(/\sid="([^"]+)"/g, ' id="$1-m"').replace(/url\(#
 
 const MARK = '<circle cx="7" cy="7" r="7"/><circle cx="26" cy="7" r="7"/><circle cx="16.5" cy="23.45" r="7"/>';
 const ICON = 'data:image/svg+xml,' + encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="-1.5 -2.75 36 36"><style>g{fill:#000}@media (prefers-color-scheme:dark){g{fill:#fff}}</style><g>${MARK}</g></svg>`);
-const TITLE = 'Lucida · Flashcards your AI can make';
-const DESC = 'Ask Claude or ChatGPT to turn a lecture into flashcards. Lucida keeps them in your decks and brings each one back right before you’d forget it.';
-writeFileSync(OUT, `<!doctype html>
+// Every page shares the same head: title, description, link previews, the dots icon, and the fonts.
+const head = (title, desc, url, css) => `<!doctype html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>${TITLE}</title>
-<meta name="description" content="${esc(DESC)}">
-<link rel="canonical" href="https://lucida.cards/">
+<title>${title}</title>
+<meta name="description" content="${esc(desc)}">
+<link rel="canonical" href="${url}">
 <meta property="og:type" content="website">
-<meta property="og:url" content="https://lucida.cards/">
+<meta property="og:url" content="${url}">
 <meta property="og:site_name" content="Lucida">
-<meta property="og:title" content="${TITLE}">
-<meta property="og:description" content="${esc(DESC)}">
+<meta property="og:title" content="${title}">
+<meta property="og:description" content="${esc(desc)}">
 <meta name="twitter:card" content="summary">
 <link rel="icon" href="${ICON}" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -72,16 +71,35 @@ body { font-family: Geist, -apple-system, system-ui, sans-serif; -webkit-font-sm
 a { color: inherit; text-decoration: none; }
 a:hover { opacity: .8; }
 @media (prefers-reduced-motion: no-preference) { html { scroll-behavior: smooth; } }
-/* Phones get the phone board. */
+${css}
+</style>
+</head>`;
+const write = (file, html) => { writeFileSync(new URL('../web/' + file, import.meta.url), html); console.log(file + ':', Math.round(html.length / 1024) + ' KB'); };
+
+write('landing.html', head('Lucida · Flashcards your AI can make', 'Ask Claude or ChatGPT to turn a lecture into flashcards. Lucida keeps them in your decks and brings each one back right before you’d forget it.', 'https://lucida.cards/', `/* Phones get the phone board. */
 .phone { display: none; }
 @media (max-width: 760px) { .computer { display: none; } .phone { display: block; } }
 ${web.css.includes(phone.css) ? web.css : web.css + '\n' + phone.css}
-</style>
-</head>
+${readFileSync(new URL('../web/fast.css', import.meta.url), 'utf8').trim()}
+/* The card wall, the sky and the demos stop while they're off screen (and start over when they're back), so a phone
+   only keeps layers for what's in view. */
+.sc-off, .sc-off * { animation: none !important; }`) + `
 <body>
 <div class="computer">${web.html}</div>
 <div class="phone">${phone.html}</div>
+<script>
+// Phones only animate what's on screen: the wall, the sky and the demos stop when you scroll past them.
+if ('IntersectionObserver' in window) {
+  const io = new IntersectionObserver(seen => seen.forEach(e => e.target.classList.toggle('sc-off', !e.isIntersecting)), { rootMargin: '120px 0px' });
+  document.querySelectorAll('.sc-demo').forEach(el => io.observe(el));
+}
+</script>
 </body>
 </html>
 `);
-console.log('landing page:', Math.round(readFileSync(OUT).length / 1024) + ' KB');
+
+// Privacy and Terms: one column of text, the same on every screen.
+for (const [name, file, title, desc] of [['Privacy', 'privacy', 'Privacy Policy', 'What Lucida keeps, why, and what you can do about it.'], ['Terms', 'terms', 'Terms of Service', 'The terms for using Lucida.']]) {
+  const b = board(name, { site: true, dark: false });
+  write(file + '.html', head(title + ' · Lucida', desc, 'https://lucida.cards/' + file, b.css) + `\n<body>\n${b.html}\n</body>\n</html>\n`);
+}

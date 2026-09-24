@@ -1,9 +1,11 @@
 // Generates every board of the Lucida design canvas (https://claude.ai/artifact/VLXyuTGdroHdrJ2qNAmiGs).
 // The web app is made from these boards too (design/to-web.mjs), so the canvas and the app always match.
-import { writeFileSync, mkdirSync, readFileSync } from 'node:fs';
-import { PALETTE_NAMES, PALETTES, flowSvg, grainSvg, paletteData } from './surfaces.mjs';
+import { writeFileSync, mkdirSync, readFileSync, readdirSync, existsSync } from 'node:fs';
+import { PALETTE_NAMES, PALETTES, flowSvg, grainSvg, grainTile, paletteData } from './surfaces.mjs';
 import { GEN_METHOD } from './generator.mjs';
 import { MOCK_METHOD } from './mock.mjs';
+import { WALL_CARDS } from './wall.mjs';
+import { PRIVACY, TERMS, UPDATED } from './legal.mjs';
 const MESH_DATA = JSON.stringify(Object.fromEntries(PALETTE_NAMES.map(n => [n, { ...paletteData(n), shadow: PALETTES[n].ink === '#FFFFFF' ? '0 1px 14px rgba(0,0,0,.16)' : 'none' }])));
 // Card text formatting (web/rich.js), copied into every board that shows or edits card text.
 const RICH_SRC = readFileSync(new URL('../web/rich.js', import.meta.url), 'utf8');
@@ -35,6 +37,7 @@ const page = (title, body, { props = {}, logic = '', css = '', w, h }) => `<!doc
 <style>
 body{margin:0;font-family:${FONT}}
 a{color:inherit;text-decoration:none}a:hover{opacity:.8}
+${APP_MOTION_CSS}
 ${css}
 </style>
 </helmet>
@@ -61,6 +64,26 @@ ${logic}
 </body>
 </html>
 `;
+// Motion on every board, as the Motion board shows it: a page's content rises in (each part a moment after the one
+// before), pills and buttons press in, deck cards lift under the pointer, empty states float in a soft light with a
+// shine crossing the top card, the Today card's colors drift, the session meter draws in, and forecast bars grow.
+// Reduced motion turns all of it off.
+const APP_MOTION_CSS = [
+  '@keyframes scRise{from{opacity:0;transform:translateY(14px)}}main>*{animation:scRise .5s cubic-bezier(.2,.8,.2,1) backwards}',
+  [2, 3, 4, 5].map(n => `main>*:nth-child(${n}){animation-delay:${((n - 1) * 0.06).toFixed(2)}s}`).join('') + 'main>*:nth-child(n+6){animation-delay:.3s}',
+  'button,.sc-press{transition:transform .1s ease}button:active,.sc-press:active{transform:scale(.96)}',
+  '.sc-lift{transition:transform .25s cubic-bezier(.2,.8,.2,1),box-shadow .25s cubic-bezier(.2,.8,.2,1)}.sc-lift:hover{transform:translateY(-4px);box-shadow:0 24px 48px -24px rgba(0,0,0,.45)}',
+  '@keyframes scFloat{50%{transform:translateY(-6px)}}@keyframes scSwayA{50%{transform:rotate(-13deg) translateX(-3px)}}@keyframes scSwayB{50%{transform:rotate(10deg) translateX(3px)}}@keyframes scGlow{50%{opacity:.55}}',
+  '@keyframes scSheen{0%,58%{transform:translateX(-160%) skewX(-18deg)}86%,100%{transform:translateX(260%) skewX(-18deg)}}',
+  '.sc-float{animation:scFloat 6s ease-in-out infinite}.sc-sway-a{animation:scSwayA 6s ease-in-out infinite}.sc-sway-b{animation:scSwayB 6s ease-in-out infinite}.sc-glow{animation:scGlow 6s ease-in-out infinite}',
+  '.sc-sheen{position:absolute;top:0;bottom:0;left:0;width:45%;background:linear-gradient(90deg,transparent,rgba(255,255,255,.4),transparent);animation:scSheen 5s cubic-bezier(.4,0,.2,1) infinite;pointer-events:none}',
+  '@keyframes scDrift{from{transform:scale(1.14) translate(-3%,-2%)}to{transform:scale(1.14) translate(3%,2%)}}.sc-alive>svg:first-of-type{animation:scDrift 16s ease-in-out infinite alternate}',
+  '@keyframes scDraw{from{stroke-dashoffset:1.02}}.sc-draw{stroke-dasharray:1 2;animation:scDraw .9s cubic-bezier(.2,.8,.2,1) backwards}',
+  '@keyframes scKnob{from{opacity:0;transform:scale(.3)}}.sc-knob{transform-box:fill-box;transform-origin:center;animation:scKnob .35s .75s cubic-bezier(.34,1.56,.64,1) backwards}',
+  '@keyframes scGrow{from{transform:scaleY(0)}}.sc-grow{transform-origin:bottom;animation:scGrow .6s cubic-bezier(.2,.8,.2,1) backwards}',
+  Array.from({ length: 13 }, (_, i) => `:nth-child(${i + 2})>.sc-grow{animation-delay:${((i + 1) * 0.04).toFixed(2)}s}`).join(''),
+  '@media (prefers-reduced-motion:reduce){main>*,.sc-float,.sc-sway-a,.sc-sway-b,.sc-glow,.sc-alive>svg,.sc-draw,.sc-knob,.sc-grow{animation:none!important}.sc-sheen{display:none}button:active,.sc-press:active,.sc-lift:hover{transform:none}}'
+].join('');
 const DARK = { dark: { editor: 'boolean', default: false } };
 const T = 'const t = this.theme(!!this.props.dark);';
 // Data: the web app passes its database as props.db; on the canvas, boards use the sample in mock.mjs.
@@ -106,7 +129,14 @@ const I = {
   grid: '<rect x="3.5" y="3.5" width="7" height="7" rx="2"/><rect x="13.5" y="3.5" width="7" height="7" rx="2"/><rect x="3.5" y="13.5" width="7" height="7" rx="2"/><rect x="13.5" y="13.5" width="7" height="7" rx="2"/>',
   upload: '<path d="M12 15V4M7 9l5-5 5 5"/><path d="M4 15v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3"/>',
   sparkle: '<path d="M11 3l1.9 5.1L18 10l-5.1 1.9L11 17l-1.9-5.1L4 10l5.1-1.9z"/><path d="M18.5 15l.8 2.2 2.2.8-2.2.8-.8 2.2-.8-2.2-2.2-.8 2.2-.8z"/>',
-  flame: '<path d="M12 22c4 0 7-3 7-7 0-5-5-8-5-13-3 2-5 5-5 8-1-1-2-2-2-4-2 2-2 5-2 7 0 5 3 9 7 9z"/>'
+  flame: '<path d="M12 22c4 0 7-3 7-7 0-5-5-8-5-13-3 2-5 5-5 8-1-1-2-2-2-4-2 2-2 5-2 7 0 5 3 9 7 9z"/>',
+  file: '<path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/>',
+  arrowUp: '<path d="M12 19V5M6 11l6-6 6 6"/>',
+  // Where Lucida posts (the landing and legal footers).
+  tiktok: '<path d="M15.5 3c.4 2.7 2.3 4.6 5 5"/><path d="M15.5 3v11.8a4.3 4.3 0 1 1-4.3-4.3"/>',
+  youtube: '<rect x="2.5" y="5" width="19" height="14" rx="4.5"/><path d="M10 9.2v5.6l4.8-2.8z" fill="currentColor"/>',
+  instagram: '<rect x="3" y="3" width="18" height="18" rx="5.5"/><circle cx="12" cy="12" r="4.2"/><circle cx="17.3" cy="6.7" r=".9" fill="currentColor" stroke="none"/>',
+  facebook: '<circle cx="12" cy="12" r="9.5"/><path d="M15.5 7.5h-1.8a2.7 2.7 0 0 0-2.7 2.7v11.3M8.5 13.2h6"/>'
 };
 
 // The mark: three dots, two above and one below, in the text color. The viewBox hugs the ink, so `h` is its real height.
@@ -134,7 +164,7 @@ ${inner}
 const pill = (label, { inv = false, href = '', icon = '', h = 36, onClick = '' } = {}) => {
   const st = `height: ${h}px; padding: 0 ${h >= 44 ? 22 : h >= 36 ? 16 : 14}px; display: inline-flex; align-items: center; justify-content: center; gap: 8px; border-radius: 999px; border: 0; font: inherit; font-size: ${h >= 36 ? 14 : 13}px; font-weight: 600; cursor: pointer; ${inv ? 'background: {{t.inv}}; color: {{t.invText}};' : 'background: {{t.surf}}; color: {{t.text}};'}`;
   const inner = `${icon ? svg(I[icon], 16, 2) : ''}${label}`;
-  return href ? `<a href="${href}" style="${st}">${inner}</a>` : `<button type="button"${onClick ? ` onClick="${onClick}"` : ''} style="${st}">${inner}</button>`;
+  return href ? `<a href="${href}" class="sc-press" style="${st}">${inner}</a>` : `<button type="button"${onClick ? ` onClick="${onClick}"` : ''} class="sc-press" style="${st}">${inner}</button>`;
 };
 const eyebrow = txt => `<div style="font-size: 12px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: {{t.muted}};">${txt}</div>`;
 const chip = (txt, extra = '') => `<span style="display: inline-flex; align-items: center; gap: 6px; height: 26px; padding: 0 10px; border-radius: 999px; background: {{t.surf}}; font-size: 12px; font-weight: 500; ${extra}">${txt}</span>`;
@@ -215,6 +245,20 @@ const meshCard = (key, outer, inner, body, tag = 'div', attrs = '') => `<${tag}$
 const glass = 'background: {{hero.glass}}; box-shadow: inset 0 0 0 1.5px {{hero.glassLine}}; color: {{hero.ink}};';
 const MESH = def => ({ gradient: { editor: 'enum', default: def, options: PALETTE_NAMES }, grain: { editor: 'range', default: 0.7, min: 0, max: 1, step: 0.05 } });
 const MESH_VALS = def => `hero: this.mesh(this.props.gradient ?? '${def}'), grain: String(this.props.grain ?? 0.7),`;
+// The landing page and the sign-in wall move dozens of these cards, which phones can't redraw live. There (props.site
+// on the site, props.db in the app) a card's color field is a picture from design/art.mjs (web/art) under one grain
+// tile (web/fast.css); the canvas draws it live. `variant` picks a picture drawn at another shape.
+const ART_DIR = new URL('../web/art/', import.meta.url);
+const ART_FILES = existsSync(ART_DIR) ? readdirSync(ART_DIR).filter(f => f.endsWith('.webp')).map(f => f.slice(0, -5)).sort() : [];
+const ART_METHOD = `art(p, variant) {
+  const name = p.fid + (variant ? '-' + variant : ''), on = !!(this.props.site || this.props.db) && ${JSON.stringify(ART_FILES)}.includes(name);
+  return { ...p, art: on ? 'url(/art/' + name + '.webp)' : '', live: !on };
+}`;
+const ART_LAYERS = key => `<sc-if value="{{${key}.art}}" hint-placeholder-val="{{ false }}"><div style="position: absolute; inset: 0; background: {{${key}.art}} center / 100% 100% no-repeat;"></div><div class="sc-grain" style="opacity: {{grain}};"></div></sc-if><sc-if value="{{${key}.live}}" hint-placeholder-val="{{ true }}">${flowLayer(key)}${GRAIN_LAYER}</sc-if>`;
+const artCard = (key, outer, inner, body) => `<div style="position: relative; overflow: hidden; color: {{${key}.ink}}; background: {{${key}.base}}; ${outer}">${ART_LAYERS(key)}<div style="position: relative; text-shadow: {{${key}.shadow}}; ${inner}">${body}</div></div>`;
+writeFileSync(new URL('../web/fast.css', import.meta.url), `/* Made by design/build.mjs. Film grain for gradient cards drawn from pictures (web/art): one tile, drawn once. */
+.sc-grain { position: absolute; inset: 0; pointer-events: none; mix-blend-mode: soft-light; background: url("data:image/svg+xml,${encodeURIComponent(grainTile(256)).replace(/'/g, '%27')}") 0 0 / 256px 256px; }
+`);
 
 const DECKS = `[
   { name: 'Cell Biology', total: '412', due: 28, overdue: 12, soon: 0, fresh: 10, ret: '91%' },
@@ -253,7 +297,7 @@ const DUE_HEAD = (span, stacked) => stacked
   ? `<div style="display: flex; flex-direction: column; gap: 2px;"><span style="font-size: 15px; font-weight: 600;">Cards due each day</span><span style="font-size: 12px; color: {{t.muted}};">${span} · {{dueTotal}} in all</span></div>`
   : `<div style="display: flex; align-items: baseline; justify-content: space-between; gap: 12px;"><span style="font-size: 16px; font-weight: 600;">Cards due each day <span style="font-weight: 400; color: {{t.muted}};">· ${span}</span></span><span style="font-size: 13px; color: {{t.muted}};">{{dueTotal}} in all</span></div>`;
 const DUE_BARS = (n, gap, radius, twoLine = false) => `<div style="flex-grow: 1; display: flex; align-items: flex-end; gap: ${gap}px;">
-        <sc-for list="{{forecast}}" as="f" hint-placeholder-count="${n}"><div style="flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; align-items: center; gap: 5px;"><span style="font-family: ${MONO}; font-size: 11px; font-weight: 600; color: {{f.strong}};">{{f.n}}</span><div style="width: 100%; border-radius: ${radius}px; background: {{f.c}}; height: {{f.h}};"></div><span style="display: flex; flex-direction: column; align-items: center; font-size: 11px; line-height: 1.3; color: {{f.strong}}; font-weight: {{f.weight}}; white-space: nowrap;">${twoLine ? '<span style="opacity: .7;">{{f.w}}</span>' : ''}{{f.d}}</span></div></sc-for>
+        <sc-for list="{{forecast}}" as="f" hint-placeholder-count="${n}"><div style="flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; align-items: center; gap: 5px;"><span style="font-family: ${MONO}; font-size: 11px; font-weight: 600; color: {{f.strong}};">{{f.n}}</span><div class="sc-grow" style="width: 100%; border-radius: ${radius}px; background: {{f.c}}; height: {{f.h}};"></div><span style="display: flex; flex-direction: column; align-items: center; font-size: 11px; line-height: 1.3; color: {{f.strong}}; font-weight: {{f.weight}}; white-space: nowrap;">${twoLine ? '<span style="opacity: .7;">{{f.w}}</span>' : ''}{{f.d}}</span></div></sc-for>
       </div>
       <div style="display: flex; align-items: center; gap: 8px; font-size: 12px; color: {{t.muted}};"><span style="width: 10px; height: 10px; border-radius: 3px; background: {{busy.c}};"></span>{{busy.text}}</div>`;
 
@@ -270,7 +314,7 @@ const webToday = webRoot(`${sidebar('Today')}
       <div style="display: flex; gap: 10px;">
         <a href="{{newCardHref}}" style="height: 36px; padding: 0 20px; display: inline-flex; align-items: center; gap: 8px; border-radius: 999px; ${glass} font-size: 14px; font-weight: 600;">${svg(I.plus, 16, 2)}New card</a>
         <a href="{{heroHref}}" style="height: 36px; padding: 0 24px; display: inline-flex; align-items: center; border-radius: 999px; background: #FFFFFF; color: #000000; font-size: 14px; font-weight: 600;">{{heroCta}}</a>
-      </div>`)}
+      </div>`, 'div', ' class="sc-alive"')}
 
     <div style="display: flex; flex-direction: column; gap: 6px;">
       <div style="display: flex; align-items: center; justify-content: space-between;">${eyebrow('Decks')}<span style="font-size: 12px; color: {{t.muted}};">Most urgent first</span></div>
@@ -411,7 +455,7 @@ const webDecks = webRoot(`${sidebar('Decks')}
               <span style="font-size: 13px; opacity: .85;">{{d.line}}</span>
             </a>
             <a href="{{d.studyHref}}" style="flex-shrink: 0; height: 36px; padding: 0 18px; display: inline-flex; align-items: center; border-radius: 999px; background: #FFFFFF; color: #000000; font-size: 13px; font-weight: 600; text-shadow: none;">Study</a>
-          </div>`)}
+          </div>`, 'div', ' class="sc-lift"')}
         ${deckTagsPop('left: 12px; top: 58px;')}
       </div></sc-for>
     </div>
@@ -1291,7 +1335,7 @@ const webReview = `<div style="position: relative; width: 1440px; height: 900px;
   <header style="height: 76px; box-sizing: border-box; padding: 0 32px; display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: center; gap: 16px;">
     <div style="display: flex;"><a href="WebDone.dc.html" aria-label="End review" title="End review" style="width: 36px; height: 36px; border-radius: 18px; background: {{t.surf}}; display: flex; align-items: center; justify-content: center;">${svg(I.close, 16, 2.2)}</a></div>
     <div style="display: flex; align-items: center; justify-content: center; gap: 14px; min-width: 420px; min-height: 24px;">
-      <sc-if value="{{showBar}}" hint-placeholder-val="{{ true }}"><div style="width: 360px; height: 6px; border-radius: 3px; background: {{t.surf}}; overflow: hidden;"><div style="height: 6px; border-radius: 3px; background: {{t.text}}; width: {{progress}};"></div></div><span style="font-family: ${MONO}; font-size: 13px; color: {{t.muted}};">{{left}} left</span></sc-if>
+      <sc-if value="{{showBar}}" hint-placeholder-val="{{ true }}"><div style="width: 360px; height: 6px; border-radius: 3px; background: {{t.surf}}; overflow: hidden;"><div style="height: 6px; border-radius: 3px; background: {{t.text}}; width: {{progress}}; transition: width .3s cubic-bezier(.2,.8,.2,1);"></div></div><span style="font-family: ${MONO}; font-size: 13px; color: {{t.muted}};">{{left}} left</span></sc-if>
       <sc-if value="{{showCounts}}" hint-placeholder-val="{{ false }}">${COUNTS(false)}</sc-if>
     </div>
     <div style="display: flex; justify-content: flex-end;">${settingsBtn}</div>
@@ -1349,7 +1393,7 @@ const RING_ON_GRADIENT = { track: 'rgba(255,255,255,.5)', color: '#FFFFFF', sub:
 const METER = (w, stroke) => {
   const r = (w - stroke) / 2 - 6, cx = w / 2, cy = r + stroke / 2 + 6, h = Math.ceil(cy + stroke / 2 + 2);
   const start = `M ${(cx - r).toFixed(1)} ${cy.toFixed(1)}`, arc = `A ${r.toFixed(1)} ${r.toFixed(1)} 0 0 1`;
-  return `<div style="position: relative; width: ${w}px; height: ${h}px;"><svg width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" aria-hidden="true"><defs><linearGradient id="sc-meter" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="{{meter.a}}"/><stop offset="1" stop-color="{{meter.b}}"/></linearGradient></defs><path d="${start} ${arc} ${(cx + r).toFixed(1)} ${cy.toFixed(1)}" fill="none" stroke="{{t.surf2}}" stroke-width="${stroke}" stroke-linecap="round"/><path d="${start} ${arc} {{meter.x}} {{meter.y}}" fill="none" stroke="url(#sc-meter)" stroke-width="${stroke}" stroke-linecap="round"/><circle cx="{{meter.x}}" cy="{{meter.y}}" r="${(stroke / 2 + 5).toFixed(1)}" fill="{{t.bg}}" stroke="{{meter.b}}" stroke-width="4"/></svg><div role="img" aria-label="{{meter.pct}}% remembered" style="position: absolute; left: 0; right: 0; bottom: 0; display: flex; flex-direction: column; align-items: center; gap: 2px;"><span style="font-size: ${Math.round(w / 5)}px; font-weight: 600; letter-spacing: -.04em; line-height: 1;">{{meter.pct}}%</span><span style="font-size: 13px; color: {{t.muted}};">remembered</span></div></div>`;
+  return `<div style="position: relative; width: ${w}px; height: ${h}px;"><svg width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" aria-hidden="true"><defs><linearGradient id="sc-meter" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="{{meter.a}}"/><stop offset="1" stop-color="{{meter.b}}"/></linearGradient></defs><path d="${start} ${arc} ${(cx + r).toFixed(1)} ${cy.toFixed(1)}" fill="none" stroke="{{t.surf2}}" stroke-width="${stroke}" stroke-linecap="round"/><path d="${start} ${arc} {{meter.x}} {{meter.y}}" fill="none" stroke="url(#sc-meter)" stroke-width="${stroke}" stroke-linecap="round" pathLength="1" class="sc-draw"/><circle class="sc-knob" cx="{{meter.x}}" cy="{{meter.y}}" r="${(stroke / 2 + 5).toFixed(1)}" fill="{{t.bg}}" stroke="{{meter.b}}" stroke-width="4"/></svg><div role="img" aria-label="{{meter.pct}}% remembered" style="position: absolute; left: 0; right: 0; bottom: 0; display: flex; flex-direction: column; align-items: center; gap: 2px;"><span style="font-size: ${Math.round(w / 5)}px; font-weight: 600; letter-spacing: -.04em; line-height: 1;">{{meter.pct}}%</span><span style="font-size: 13px; color: {{t.muted}};">remembered</span></div></div>`;
 };
 // Where the ring's knob sits for a score, matching METER(w, stroke).
 const METER_JS = (w, stroke) => `const mr = ${(w - stroke) / 2 - 6}, mcx = ${w / 2}, mcy = ${(w - stroke) / 2 - 6 + stroke / 2 + 6};
@@ -1697,9 +1741,11 @@ const tile = (title, spec, stage) => `<div style="background: #F4F4F4; border-ra
   <div style="display: flex; flex-direction: column; gap: 4px;"><span style="font-size: 16px; font-weight: 600;">${title}</span><span style="font-family: ${MONO}; font-size: 12px; color: #666666;">${spec}</span></div>
 </div>`;
 const mcard = (txt, extra = '', cls = '') => `<div class="${cls}" style="width: 180px; height: 120px; box-sizing: border-box; padding: 16px; border-radius: 22px; background: #FFFFFF; border: 1px solid #EBEBEB; box-shadow: 0 12px 28px -12px rgba(0,0,0,.22); display: flex; align-items: flex-end; font-size: 15px; font-weight: 600; ${extra}">${txt}</div>`;
-const motion = `<div style="width: 1440px; height: 900px; box-sizing: border-box; padding: 56px 64px; display: flex; flex-direction: column; gap: 28px; font-family: ${FONT}; background: #FFFFFF; color: #000000;">
-  <div style="display: flex; flex-direction: column; gap: 8px;"><h1 style="margin: 0; font-size: 44px; font-weight: 600; letter-spacing: -.035em;">Motion</h1><p style="margin: 0; font-size: 16px; color: #666666;">Every animation loops here so you can watch it. In the app each one plays once. All of them turn off when the phone’s Reduce Motion setting is on.</p></div>
-  <div style="flex-grow: 1; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); grid-template-rows: repeat(2, minmax(0, 1fr)); gap: 16px;">
+const MOTION_H = 1260;
+// Drawn when the boards are made, since its tiles use parts defined further down (EMPTY_ART).
+const motion = () => `<div style="width: 1440px; height: ${MOTION_H}px; box-sizing: border-box; padding: 56px 64px; display: flex; flex-direction: column; gap: 28px; font-family: ${FONT}; background: #FFFFFF; color: #000000;">
+  <div style="display: flex; flex-direction: column; gap: 8px;"><h1 style="margin: 0; font-size: 44px; font-weight: 600; letter-spacing: -.035em;">Motion</h1><p style="margin: 0; font-size: 16px; color: #666666;">Every animation loops here so you can watch it. In the app most play once; empty states and the Today card keep moving, slowly. All of them turn off when Reduce Motion is on.</p></div>
+  <div style="flex-grow: 1; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); grid-template-rows: repeat(3, minmax(0, 1fr)); gap: 16px;">
     ${tile('Card flip', '500 ms · 3D turn · ease in-out', `<div style="perspective: 900px;"><div class="m-flip" style="position: relative; width: 180px; height: 120px; transform-style: preserve-3d;">${mcard('Question', 'position: absolute; inset: 0; backface-visibility: hidden;')}${mcard('Answer', 'position: absolute; inset: 0; backface-visibility: hidden; transform: rotateY(180deg); background: #000000; color: #FFFFFF; border-color: #000000;')}</div></div>`)}
     ${tile('Grade → next card', 'out 220 ms · in 320 ms · slight lift', `<div style="position: relative; width: 180px; height: 120px;">${mcard('Next card', 'position: absolute; inset: 0;', 'm-in')}${mcard('Graded card', 'position: absolute; inset: 0;', 'm-out')}</div>`)}
     ${tile('Button press', '100 ms · shrinks to 96%', `<div class="m-press" style="height: 56px; padding: 0 36px; border-radius: 999px; background: #000000; color: #FFFFFF; display: flex; align-items: center; font-size: 15px; font-weight: 600;">Save card</div>`)}
@@ -1708,6 +1754,10 @@ const motion = `<div style="width: 1440px; height: 900px; box-sizing: border-box
     ${tile('Session done', 'ring fills · 900 ms · ease out', `<div style="position: relative; width: 140px; height: 140px;"><svg width="140" height="140" viewBox="0 0 140 140" style="transform: rotate(-90deg);"><circle cx="70" cy="70" r="60" fill="none" stroke="#EBEBEB" stroke-width="12"/><circle class="m-ring" cx="70" cy="70" r="60" fill="none" stroke="#000000" stroke-width="12" stroke-linecap="round" stroke-dasharray="377"/></svg><div class="m-fade" style="position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 32px; font-weight: 600; letter-spacing: -.03em;">91%</div></div>`)}
     ${tile('Progress bar', 'moves after each card · 300 ms', `<div style="width: 220px; height: 8px; border-radius: 4px; background: #EBEBEB; overflow: hidden;"><div class="m-bar" style="height: 8px; border-radius: 4px; background: #000000;"></div></div>`)}
     ${tile('Light ↔ dark', 'cross-fade · 250 ms', `<div class="m-theme" style="width: 200px; height: 130px; border-radius: 24px; display: flex; flex-direction: column; justify-content: space-between; padding: 18px; box-sizing: border-box; border: 1px solid #EBEBEB;"><span style="font-size: 13px; font-weight: 600;">64 cards due</span><span class="m-theme-btn" style="height: 36px; border-radius: 999px; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 600;">Study</span></div>`)}
+    ${tile('Page opens', 'rises 14 px · 500 ms · each part 60 ms later', `<div style="width: 220px; display: flex; flex-direction: column; gap: 10px;"><div class="m-rise1" style="width: 120px; height: 20px; border-radius: 6px; background: #000000;"></div><div class="m-rise2" style="height: 64px; border-radius: 16px; background: #F4F4F4;"></div><div class="m-rise3" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;"><div style="height: 40px; border-radius: 12px; background: #F4F4F4;"></div><div style="height: 40px; border-radius: 12px; background: #F4F4F4;"></div></div></div>`)}
+    ${tile('Empty state', 'floats and fans · 6 s · a shine every 5 s', EMPTY_ART(150, 'plus'))}
+    ${tile('Deck card hover', 'lifts 4 px · 250 ms · shadow grows', meshCard('hero', 'width: 200px; height: 132px; border-radius: 20px;', 'height: 100%; box-sizing: border-box; padding: 16px; display: flex; align-items: flex-end; font-size: 15px; font-weight: 600;', 'Cell Biology', 'div', ' class="m-lift"'))}
+    ${tile('Today card', 'colors drift · 16 s · back and forth', meshCard('hero', 'width: 240px; height: 132px; border-radius: 20px;', 'height: 100%; box-sizing: border-box; padding: 18px; display: flex; flex-direction: column; justify-content: flex-end; gap: 4px;', '<span style="font-size: 12px; opacity: .8;">Tuesday</span><span style="font-size: 26px; font-weight: 500; letter-spacing: -.03em; line-height: 1;">64 cards due</span>', 'div', ' class="sc-alive"'))}
   </div>
 </div>`;
 const motionCss = `.m-flip{animation:flip 3.2s cubic-bezier(.4,0,.2,1) infinite}
@@ -1734,6 +1784,10 @@ const motionCss = `.m-flip{animation:flip 3.2s cubic-bezier(.4,0,.2,1) infinite}
 @keyframes theme{0%,40%{background:#FFFFFF;color:#000000;border-color:#EBEBEB}50%,90%{background:#000000;color:#FFFFFF;border-color:#000000}100%{background:#FFFFFF;color:#000000}}
 .m-theme-btn{animation:themebtn 3.6s infinite}
 @keyframes themebtn{0%,40%{background:#000000;color:#FFFFFF}50%,90%{background:#FFFFFF;color:#000000}100%{background:#000000;color:#FFFFFF}}
+.m-rise1,.m-rise2,.m-rise3{animation:rise 2.4s cubic-bezier(.2,.8,.2,1) infinite}.m-rise2{animation-delay:.06s}.m-rise3{animation-delay:.12s}
+@keyframes rise{0%{opacity:0;transform:translateY(14px)}21%,85%{opacity:1;transform:none}100%{opacity:0;transform:none}}
+.m-lift{animation:lift 2.4s cubic-bezier(.2,.8,.2,1) infinite}
+@keyframes lift{0%,20%,100%{transform:none;box-shadow:0 8px 20px -14px rgba(0,0,0,.3)}35%,70%{transform:translateY(-4px);box-shadow:0 24px 48px -24px rgba(0,0,0,.45)}}
 @media (prefers-reduced-motion:reduce){[class^="m-"]{animation:none!important}}`;
 
 
@@ -1925,7 +1979,7 @@ const phoneReview = `<div style="position: relative; width: 390px; height: 844px
   <div style="display: flex; align-items: center; gap: 12px;">
     ${roundBtn('close', 'End review', 'PhoneDone.dc.html')}
     <div style="flex-grow: 1; min-width: 0; display: flex; align-items: center; justify-content: center; gap: 10px;">
-      <sc-if value="{{showBar}}" hint-placeholder-val="{{ true }}"><div style="flex-grow: 1; height: 6px; border-radius: 3px; background: {{t.surf}}; overflow: hidden;"><div style="height: 6px; border-radius: 3px; background: {{t.text}}; width: {{progress}};"></div></div><span style="font-family: ${MONO}; font-size: 13px; color: {{t.muted}};">{{left}}</span></sc-if>
+      <sc-if value="{{showBar}}" hint-placeholder-val="{{ true }}"><div style="flex-grow: 1; height: 6px; border-radius: 3px; background: {{t.surf}}; overflow: hidden;"><div style="height: 6px; border-radius: 3px; background: {{t.text}}; width: {{progress}}; transition: width .3s cubic-bezier(.2,.8,.2,1);"></div></div><span style="font-family: ${MONO}; font-size: 13px; color: {{t.muted}};">{{left}}</span></sc-if>
       <sc-if value="{{showCounts}}" hint-placeholder-val="{{ false }}">${COUNTS(true)}</sc-if>
     </div>
     ${settingsBtn}
@@ -2182,11 +2236,15 @@ renderVals() {
 }`;
 
 // ---------- Empty states ----------
-// A small stack of blank cards, each in its own gradient: Iris on top, Mint and Apricot behind.
-const EMPTY_ART = (w, icon) => { const r = Math.round(w * 0.14); return `<div aria-hidden="true" style="position: relative; width: ${w}px; height: ${Math.round(w * 0.8)}px;">
-  ${meshCard('art3', `position: absolute; left: 10%; top: 18%; width: 70%; height: 68%; border-radius: ${r}px; transform: rotate(-9deg); box-shadow: 0 10px 24px -14px rgba(0,0,0,.35);`, 'height: 100%;', '')}
-  ${meshCard('art2', `position: absolute; left: 22%; top: 12%; width: 70%; height: 68%; border-radius: ${r}px; transform: rotate(6deg); box-shadow: 0 10px 24px -14px rgba(0,0,0,.35);`, 'height: 100%;', '')}
-  ${meshCard('art', `position: absolute; left: 15%; top: 4%; width: 70%; height: 68%; border-radius: ${r}px; box-shadow: 0 14px 30px -14px rgba(0,0,0,.4);`, 'height: 100%; display: flex; align-items: center; justify-content: center;', `<span style="display: flex; opacity: .9;">${svg(I[icon], Math.round(w * 0.2), 2)}</span>`)}
+// A small stack of blank cards, each in its own gradient: Iris on top, Mint and Apricot behind. It floats in a soft
+// light, the back cards fan in and out, and a shine crosses the top card now and then (APP_MOTION_CSS).
+const EMPTY_ART = (w, icon) => { const r = Math.round(w * 0.14); return `<div aria-hidden="true" style="position: relative; isolation: isolate; width: ${w}px; height: ${Math.round(w * 0.8)}px;">
+  <div class="sc-glow" style="position: absolute; left: -45%; right: -45%; top: -40%; bottom: -50%; z-index: -1; background: radial-gradient(closest-side, {{t.surf}}, transparent);"></div>
+  <div class="sc-float" style="position: absolute; inset: 0;">
+  ${meshCard('art3', `position: absolute; left: 10%; top: 18%; width: 70%; height: 68%; border-radius: ${r}px; transform: rotate(-9deg); box-shadow: 0 10px 24px -14px rgba(0,0,0,.35);`, 'height: 100%;', '', 'div', ' class="sc-sway-a"')}
+  ${meshCard('art2', `position: absolute; left: 22%; top: 12%; width: 70%; height: 68%; border-radius: ${r}px; transform: rotate(6deg); box-shadow: 0 10px 24px -14px rgba(0,0,0,.35);`, 'height: 100%;', '', 'div', ' class="sc-sway-b"')}
+  ${meshCard('art', `position: absolute; left: 15%; top: 4%; width: 70%; height: 68%; border-radius: ${r}px; box-shadow: 0 14px 30px -14px rgba(0,0,0,.4);`, 'height: 100%; display: flex; align-items: center; justify-content: center;', `<span style="display: flex; opacity: .9;">${svg(I[icon], Math.round(w * 0.2), 2)}</span><span class="sc-sheen"></span>`)}
+  </div>
 </div>`; };
 const emptyBlock = ({ art, title, body, actions = '', size = 24, w = 420 }) => `<div style="display: flex; flex-direction: column; align-items: center; gap: 18px; text-align: center;">${art}<div style="max-width: ${w}px; display: flex; flex-direction: column; gap: 8px;"><span style="font-size: ${size}px; font-weight: 600; letter-spacing: -.02em;">${title}</span><span style="font-size: 15px; line-height: 1.5; color: {{t.muted}};">${body}</span></div>${actions}</div>`;
 const webActions = btns => `<div style="display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; padding-top: 2px;">${btns}</div>`;
@@ -2402,77 +2460,104 @@ const APPLE_LOGO = `<svg width="17" height="17" viewBox="0 0 24 24" aria-hidden=
 // In the app these sign in for real (the logic's handlers); on the canvas their links just show the next board.
 const authBtn = (label, glyph, href, h, handler) => `<a href="${href}" onClick="{{${handler}}}" style="height: ${h}px; display: flex; align-items: center; justify-content: center; gap: 10px; border-radius: 999px; background: {{t.bg}}; box-shadow: inset 0 0 0 1px {{t.surf2}}; font-size: 15px; font-weight: 600;">${glyph}${label}</a>`;
 const orLine = `<div style="display: flex; align-items: center; gap: 12px; font-size: 13px; color: {{t.muted}};"><span style="flex-grow: 1; height: 1px; background: {{t.line}};"></span>or<span style="flex-grow: 1; height: 1px; background: {{t.line}};"></span></div>`;
-const emailForm = (h, next) => `<div style="display: flex; flex-direction: column; gap: 10px;"><input type="email" value="{{email}}" onChange="{{setEmail}}" onKeyDown="{{emailKey}}" placeholder="Email" aria-label="Email" autocomplete="email" style="height: ${h}px; box-sizing: border-box; padding: 0 20px; border: 0; outline: 0; border-radius: 999px; background: {{t.surf}}; color: {{t.text}}; font: inherit; font-size: 15px;"><a href="${next}" onClick="{{sendCode}}" style="height: ${h}px; display: flex; align-items: center; justify-content: center; border-radius: 999px; background: {{t.inv}}; color: {{t.invText}}; font-size: 15px; font-weight: 600;">{{sendLabel}}</a>${SIGN_ERROR}</div>`;
+// What signing in means, with the Terms and Privacy pages a tap away.
+const AGREE = `<p style="margin: 0; font-size: 12px; line-height: 1.5; color: {{t.muted}};">By continuing, you agree to the <a href="{{termsHref}}" style="text-decoration: underline;">Terms</a> and <a href="{{privacyHref}}" style="text-decoration: underline;">Privacy Policy</a>.</p>`;
+// Phones get 16px text in the field, or they zoom in when it's tapped.
+const emailForm = (h, next, fs = 15) => `<div style="display: flex; flex-direction: column; gap: 10px;"><input type="email" value="{{email}}" onChange="{{setEmail}}" onKeyDown="{{emailKey}}" placeholder="Email" aria-label="Email" autocomplete="email" style="height: ${h}px; box-sizing: border-box; padding: 0 20px; border: 0; outline: 0; border-radius: 999px; background: {{t.surf}}; color: {{t.text}}; font: inherit; font-size: ${fs}px;"><a href="${next}" onClick="{{sendCode}}" style="height: ${h}px; display: flex; align-items: center; justify-content: center; border-radius: 999px; background: {{t.inv}}; color: {{t.invText}}; font-size: 15px; font-weight: 600;">{{sendLabel}}</a>${SIGN_ERROR}</div>`;
 // Why signing in didn't work (a wrong code, Google not set up yet), under the field it's about.
 const SIGN_ERROR = `<sc-if value="{{hasError}}" hint-placeholder-val="{{ false }}"><div role="alert" style="padding: 2px 4px 0; font-size: 14px; line-height: 1.4; color: {{t.again}};">{{error}}</div></sc-if>`;
 // Six boxes over one real field, so typing, pasting, and the phone's "code from Mail" all work.
-const codeBoxes = (w, h) => `<label style="position: relative; display: flex; justify-content: space-between; cursor: text;"><sc-for list="{{boxes}}" as="b" hint-placeholder-count="6"><span style="width: ${w}px; height: ${h}px; border-radius: 14px; background: {{t.surf}}; box-shadow: {{b.ring}}; display: flex; align-items: center; justify-content: center; font-size: 22px; font-weight: 600;">{{b.digit}}</span></sc-for><input type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6" value="{{code}}" onChange="{{setCode}}" aria-label="6-digit code" style="position: absolute; inset: 0; width: 100%; opacity: 0; border: 0; padding: 0; font-size: 16px;"></label>`;
-// The sign-in panel: flashcards in tilted columns, each column drifting slowly up or down (the next one the other way).
-// A column holds its cards twice and moves by one set, so the loop has no seam; with reduced motion it holds still.
+const codeBoxes = (w, h) => `<label style="position: relative; display: flex; justify-content: space-between; gap: 6px; cursor: text;"><sc-for list="{{boxes}}" as="b" hint-placeholder-count="6"><span style="flex: 0 1 ${w}px; min-width: 0; height: ${h}px; border-radius: 14px; background: {{t.surf}}; box-shadow: {{b.ring}}; display: flex; align-items: center; justify-content: center; font-size: 22px; font-weight: 600;">{{b.digit}}</span></sc-for><input type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6" value="{{code}}" onChange="{{setCode}}" aria-label="6-digit code" style="position: absolute; inset: 0; width: 100%; opacity: 0; border: 0; padding: 0; font-size: 16px;"></label>`;
+// The card wall (sign-in and the landing page): flashcards in tilted columns, each column drifting slowly up or down (the
+// next one the other way). A column holds its cards twice and moves by one set, so the loop has no seam; with reduced
+// motion it holds still. Some cards turn over now and then to show their backs; a blank fills in where it is.
 const WALL_ROWS = 6;
-// One card from each sample deck, on the vivid gradient the deck's name makes; set so neighbors never share a color family.
-// {} is a blank, ♪ an audio card, and `…` code.
-const WALL_CARDS = [
-  [['Cell Biology', 'The {} is the powerhouse of the cell.'], ['Psychology', 'Who proposed classical conditioning?'], ['Calculus', 'd/dx (x²) = ?'], ['Anatomy', 'Largest bone in the body?'], ['Pharmacology', 'Ibuprofen blocks which enzyme?'], ['Spanish Verbs', 'Yo {} dos hermanos.']],
-  [['Organic Chemistry', 'C₆H₆'], ['Italian', 'Buongiorno'], ['Music Theory', 'How many sharps in D major?'], ['Python', '`len([1, 2, 3])`'], ['Philosophy', 'Cogito, ergo sum'], ['Art History', 'Who painted The Starry Night?']],
-  [['Ecology', 'What is a keystone species?'], ['Geography', 'Capital of Australia?'], ['Japanese', 'でんしゃ'], ['Physics', 'F = m · a'], ['Genetics', 'Adenine pairs with {}.'], ['Astronomy', 'Closest star to Earth?']],
-  [['French', 'la bibliothèque'], ['Latin', 'Carpe diem'], ['Korean', '♪'], ['Physiology', 'Normal resting heart rate?'], ['Statistics', 'What does p < 0.05 mean?'], ['Botany', 'Where does photosynthesis happen?']]
-];
-// Columns for renderVals: text sized by its length (k shrinks it for smaller cards) and seconds per loop for each column;
-// each column starts part of a card from the last, so rows don't line up.
-const WALL_VALS = (secs, k) => `wall: ${JSON.stringify(secs)}.map((d, i) => {
+// How often cards turn: on the landing page every other card (every third on phones), once every 16 s; on sign-in, where
+// the wall is only a backdrop, every third card, once every 28 s.
+const FLIPS = { busy: { loop: 16, every: 2 }, phone: { loop: 16, every: 3 }, calm: { loop: 28, every: 3 } };
+// Columns for renderVals (the cards are in wall.mjs): text sized by its length (k shrinks it for smaller cards), seconds
+// per loop for each column, each column starting part of a card from the last so rows don't line up, and a turn time
+// for each card spread over the loop so only a few turn at once.
+const WALL_VALS = (secs, k, { loop, every } = FLIPS.busy) => `wall: ${JSON.stringify(secs)}.map((d, i) => {
       // Wider walls reuse the columns, turned a few cards so the same cards never sit side by side.
       const base = ${JSON.stringify(WALL_CARDS)}[i % 4], turn = 3 * Math.floor(i / 4), col = base.slice(turn).concat(base.slice(0, turn));
-      const cards = col.map(([deck, text]) => {
-        const audio = text === '♪', code = /^\`.*\`$/.test(text), s = code ? text.slice(1, -1) : text, [before, after] = s.split('{}');
-        return { ...this.gen(deck, 'vivid'), audio, words: !audio, before, after: after ?? '', blank: after != null,
-          font: code ? "${MONO}" : 'inherit', size: Math.round((s.length <= 12 ? 30 : s.length <= 26 ? 23 : 19) * ${k}) };
+      const size = s => Math.round((s.length <= 12 ? 30 : s.length <= 26 ? 23 : 19) * ${k});
+      const cards = col.map(([deck, front, back], j) => {
+        const audio = front === '♪', code = /^\`.*\`$/.test(front), s = code ? front.slice(1, -1) : front, [before, after] = s.split('{}');
+        const blank = after != null, bcode = /^\`.*\`$/.test(back), [answer, sub = ''] = (bcode ? back.slice(1, -1) : back).split('\\n');
+        const flips = !blank && ((i + j) % ${every} === 0 || audio), at = ' ${loop}s linear -' + (((i * 37 + j * 17) % 32) / 32 * ${loop}).toFixed(2) + 's infinite';
+        // Turning cards draw above the rest (z 1), so a phone keeps the still cards of a column together in one layer.
+        return { ...this.art(this.gen(deck, 'vivid')), audio, words: !audio, before, after: after ?? '', blank, z: flips ? 1 : 0,
+          font: code ? "${MONO}" : 'inherit', size: size(s), answer, sub, hasSub: !!sub, answerFont: bcode ? "${MONO}" : 'inherit',
+          answerSize: size(answer), subSize: Math.round(16 * ${k}), flips, flip: flips ? 'scFlip${loop}' + at : 'none', back: flips ? 'scBack${loop}' + at : 'none', reveal: blank ? 'scReveal${loop}' + at : 'none' };
       });
       const up = i % 2 === 0, f = [0, .5, .25, .75, .125, .625, .375, .875][i % 8] / ${WALL_ROWS};
       return { cards: cards.concat(cards), anim: (up ? 'scUp ' : 'scDown ') + d + 's linear -' + ((up ? f : 1 - f) * d).toFixed(2) + 's infinite' };
     }),`;
-const WALL_CSS = '@keyframes scUp{from{transform:translateY(0)}to{transform:translateY(-50%)}}@keyframes scDown{from{transform:translateY(-50%)}to{transform:translateY(0)}}@media (prefers-reduced-motion:reduce){.sc-drift{animation-play-state:paused!important}}';
-// What a card shows, the way review shows it: its words (a blank is a glass pill), or a play button and waveform for sound.
+// The review card's turn curve (the landing page's study demo uses it too).
+const TURN = 'animation-timing-function:cubic-bezier(.4,0,.2,1)';
+// A wall card's turn takes .5 s: it narrows to its edge, shows its other side, and widens again; the back stays up for
+// about 5 s of each loop. It turns flat (no 3D), so a turning card is one layer for a phone to draw instead of three.
+const wallKeys = L => {
+  const p = s => +(s / L * 100).toFixed(3), a = L - 6.4, c = L - 1.12;
+  const turn = at => `${p(at)}%{transform:scaleX(1);animation-timing-function:cubic-bezier(.4,0,1,1)}${p(at + .25)}%{transform:scaleX(0);animation-timing-function:cubic-bezier(0,0,.2,1)}${p(at + .5)}%{transform:scaleX(1)}`;
+  return `@keyframes scFlip${L}{0%{transform:scaleX(1)}${turn(a)}${turn(c)}100%{transform:scaleX(1)}}`
+    + `@keyframes scBack${L}{0%,${p(a + .25)}%{visibility:hidden}${p(a + .26)}%,${p(c + .25)}%{visibility:visible}${p(c + .26)}%,100%{visibility:hidden}}`
+    + `@keyframes scReveal${L}{0%,${p(a)}%{opacity:0}${p(a + .5)}%,${p(c)}%{opacity:1}${p(c + .5)}%,100%{opacity:0}}`;
+};
+const WALL_CSS = '@keyframes scUp{from{transform:translateY(0)}to{transform:translateY(-50%)}}@keyframes scDown{from{transform:translateY(-50%)}to{transform:translateY(0)}}.sc-drift{will-change:transform}'
+  + Object.values(FLIPS).map(f => wallKeys(f.loop)).join('')
+  + '@media (prefers-reduced-motion:reduce){.sc-drift{animation-play-state:paused!important}.sc-wc,.sc-wb,.sc-rev{animation:none!important}}';
+// What a card shows, the way review shows it: its words (a blank is a glass pill the answer fills), or a play button
+// and waveform for sound. Its back: the answer, and a smaller second line.
 const wallFace = k => {
   const px = n => Math.max(2, Math.round(n * k));
   const bars = [10, 20, 30, 16, 26, 12, 22, 14, 8].map(b => `<span style="width: ${px(3)}px; height: ${px(b)}px; border-radius: 2px; background: currentColor; opacity: .85;"></span>`).join('');
-  return `<sc-if value="{{c.words}}" hint-placeholder-val="{{ true }}"><span style="font-family: {{c.font}}; font-size: {{c.size}}px; font-weight: 500; line-height: 1.2; letter-spacing: -.02em;">{{c.before}}<sc-if value="{{c.blank}}" hint-placeholder-val="{{ false }}"><span style="display: inline-block; width: 2.4em; height: .9em; margin: 0 .1em; border-radius: 999px; vertical-align: -.1em; background: {{c.glass}}; box-shadow: inset 0 0 0 1.5px {{c.glassLine}};"></span></sc-if>{{c.after}}</span></sc-if><sc-if value="{{c.audio}}" hint-placeholder-val="{{ false }}"><span style="display: flex; align-items: center; gap: ${px(14)}px;"><span style="width: ${px(46)}px; height: ${px(46)}px; flex-shrink: 0; border-radius: 50%; background: {{c.glass}}; box-shadow: inset 0 0 0 1.5px {{c.glassLine}}; display: flex; align-items: center; justify-content: center;"><span style="display: flex; margin-left: ${px(3)}px;">${svg(I.play, px(20), 0)}</span></span><span style="display: flex; align-items: center; gap: ${px(4)}px;">${bars}</span></span></sc-if>`;
+  return `<sc-if value="{{c.words}}" hint-placeholder-val="{{ true }}"><span style="font-family: {{c.font}}; font-size: {{c.size}}px; font-weight: 500; line-height: 1.2; letter-spacing: -.02em;">{{c.before}}<sc-if value="{{c.blank}}" hint-placeholder-val="{{ false }}"><span style="display: inline-block; margin: 0 .1em; padding: 0 .4em; border-radius: 999px; line-height: 1.1; background: {{c.glass}};"><span class="sc-rev" style="opacity: 0; animation: {{c.reveal}};">{{c.answer}}</span></span></sc-if>{{c.after}}</span></sc-if><sc-if value="{{c.audio}}" hint-placeholder-val="{{ false }}"><span style="display: flex; align-items: center; gap: ${px(14)}px;"><span style="width: ${px(46)}px; height: ${px(46)}px; flex-shrink: 0; border-radius: 50%; background: {{c.glass}}; box-shadow: inset 0 0 0 1.5px {{c.glassLine}}; display: flex; align-items: center; justify-content: center;"><span style="display: flex; margin-left: ${px(3)}px;">${svg(I.play, px(20), 0)}</span></span><span style="display: flex; align-items: center; gap: ${px(4)}px;">${bars}</span></span></sc-if>`;
 };
+const WALL_BACK = `<span style="display: flex; flex-direction: column; align-items: center; gap: 4px;"><span style="font-family: {{c.answerFont}}; font-size: {{c.answerSize}}px; font-weight: 600; line-height: 1.15; letter-spacing: -.02em;">{{c.answer}}</span><sc-if value="{{c.hasSub}}" hint-placeholder-val="{{ false }}"><span style="font-size: {{c.subSize}}px; font-weight: 500; opacity: .85;">{{c.sub}}</span></sc-if></span>`;
 const cardWall = ({ cols, w, h, gap, r, tilt, k }) => {
   const set = WALL_ROWS * (h + gap), width = cols * w + (cols - 1) * gap;
-  return `<div aria-hidden="true" style="position: absolute; left: 50%; top: 50%; width: ${width}px; height: ${set}px; margin: -${set / 2}px 0 0 -${width / 2}px; display: flex; gap: ${gap}px; transform: rotate(${tilt}deg); pointer-events: none;"><sc-for list="{{wall}}" as="col" hint-placeholder-count="${cols}"><div class="sc-drift" style="flex-shrink: 0; align-self: flex-start; display: flex; flex-direction: column; gap: ${gap}px; padding-bottom: ${gap}px; animation: {{col.anim}};"><sc-for list="{{col.cards}}" as="c" hint-placeholder-count="${WALL_ROWS * 2}">${meshCard('c', `width: ${w}px; height: ${h}px; flex-shrink: 0; border-radius: ${r}px;`, `height: 100%; box-sizing: border-box; padding: ${Math.round(22 * k)}px; display: flex; align-items: center; justify-content: center; text-align: center;`, wallFace(k))}</sc-for></div></sc-for></div>`;
+  const face = back => `<div${back ? ' class="sc-wb"' : ''} style="position: absolute; inset: 0; overflow: hidden; border-radius: ${r}px; color: {{c.ink}}; background: {{c.base}};${back ? ' visibility: hidden; animation: {{c.back}};' : ''}">${ART_LAYERS('c')}<div style="position: relative; height: 100%; box-sizing: border-box; padding: ${Math.round(22 * k)}px; display: flex; align-items: center; justify-content: center; text-align: center; text-shadow: {{c.shadow}};">${back ? WALL_BACK : wallFace(k)}</div></div>`;
+  return `<div aria-hidden="true" style="position: absolute; left: 50%; top: 50%; width: ${width}px; height: ${set}px; margin: -${set / 2}px 0 0 -${width / 2}px; display: flex; gap: ${gap}px; transform: rotate(${tilt}deg); pointer-events: none;"><sc-for list="{{wall}}" as="col" hint-placeholder-count="${cols}"><div class="sc-drift" style="flex-shrink: 0; align-self: flex-start; display: flex; flex-direction: column; gap: ${gap}px; padding-bottom: ${gap}px; animation: {{col.anim}};"><sc-for list="{{col.cards}}" as="c" hint-placeholder-count="${WALL_ROWS * 2}"><div class="sc-wc" style="position: relative; z-index: {{c.z}}; width: ${w}px; height: ${h}px; flex-shrink: 0; animation: {{c.flip}};">${face(false)}<sc-if value="{{c.flips}}" hint-placeholder-val="{{ false }}">${face(true)}</sc-if></div></sc-for></div></sc-for></div>`;
 };
 const wallTag = (h, size, bottom) => `<div style="position: absolute; left: 50%; bottom: ${bottom}px; transform: translateX(-50%); height: ${h}px; padding: 0 ${h / 2}px; display: flex; align-items: center; border-radius: 999px; background: {{t.bg}}; color: {{t.text}}; font-size: ${size}px; font-weight: 500; letter-spacing: -.01em; white-space: nowrap; box-shadow: 0 12px 32px -14px rgba(0,0,0,.45);">Flashcards your AI can make.</div>`;
 // iPhone cards are smaller, so their words and padding shrink by this much.
 const PHONE_K = 150 / 264;
-const signPanel = (style, wall, tag) => `<div style="position: relative; overflow: hidden; background: {{t.surf}}; ${style}">${cardWall(wall)}${tag}</div>`;
+// The wall on sign-in drifts over a sky (a night sky in dark mode), edge to edge.
+const signPanel = (style, wall, tag) => `<div style="position: relative; overflow: hidden; background: radial-gradient(120% 50% at 50% 0%, {{sky.glow}}, transparent 70%), linear-gradient(180deg, {{sky.top}} 0%, {{sky.mid}} 55%, {{sky.low}} 100%); ${style}">${cardWall(wall)}${tag}</div>`;
 const signCol = inner => `<section style="width: 560px; flex-shrink: 0; box-sizing: border-box; padding: 32px 40px; display: flex; flex-direction: column;">
     ${logo()}
     <div style="flex-grow: 1; display: flex; flex-direction: column; justify-content: center;"><div style="width: 360px; margin: 0 auto; display: flex; flex-direction: column; gap: 24px;">${inner}</div></div>
   </section>`;
 const webSignRoot = inner => `<div style="width: 1440px; height: 900px; box-sizing: border-box; display: flex; font-family: ${FONT}; background: {{t.bg}}; color: {{t.text}}; overflow: hidden;">
   ${signCol(inner)}
-  <div style="flex-grow: 1; min-width: 0; box-sizing: border-box; padding: 16px 16px 16px 0; display: flex;">${signPanel('flex-grow: 1; border-radius: 24px;', { cols: 4, w: 264, h: 176, gap: 16, r: 20, tilt: -14, k: 1 }, wallTag(44, 16, 28))}</div>
+  ${signPanel('flex-grow: 1; min-width: 0;', { cols: 4, w: 264, h: 176, gap: 16, r: 20, tilt: -14, k: 1 }, wallTag(44, 16, 36))}
 </div>`;
 const webSignIn = webSignRoot(`<h1 style="margin: 0; font-size: 32px; font-weight: 600; letter-spacing: -.03em;">Sign in to Lucida</h1>
       <div style="display: flex; flex-direction: column; gap: 10px;">${authBtn('Continue with Google', G_LOGO, 'Main.dc.html', 44, 'google')}${authBtn('Continue with Apple', APPLE_LOGO, 'Main.dc.html', 44, 'apple')}</div>
       ${orLine}
-      ${emailForm(44, 'WebSignInCode.dc.html')}`);
+      ${emailForm(44, 'WebSignInCode.dc.html')}
+      ${AGREE}`);
 const codeText = `<div style="display: flex; flex-direction: column; gap: 8px;"><h1 style="margin: 0; font-size: 32px; font-weight: 600; letter-spacing: -.03em;">Check your email</h1><div style="font-size: 15px; line-height: 1.45; color: {{t.muted}};">Enter the 6-digit code we sent to <span style="color: {{t.text}}; font-weight: 500;">{{sentTo}}</span></div></div>`;
 const webSignInCode = webSignRoot(`<a href="WebSignIn.dc.html" style="align-self: flex-start; display: inline-flex; align-items: center; gap: 6px; font-size: 14px; color: {{t.muted}};">${svg(I.back, 16, 2)}Use another email</a>
       ${codeText}
       ${codeBoxes(52, 60)}${SIGN_ERROR}
       <div style="display: flex; flex-direction: column; gap: 14px;"><a href="Main.dc.html" onClick="{{verify}}" style="height: 44px; display: flex; align-items: center; justify-content: center; border-radius: 999px; background: {{t.inv}}; color: {{t.invText}}; font-size: 15px; font-weight: 600;">{{verifyLabel}}</a><button type="button" onClick="{{resend}}" style="align-self: center; border: 0; padding: 0; background: transparent; color: {{t.muted}}; font: inherit; font-size: 14px; cursor: pointer;">{{resendLabel}}</button></div>`);
-const phoneSignIn = phone(`<div style="height: 100%; box-sizing: border-box; padding: 12px 12px 34px; display: flex; flex-direction: column; gap: 22px;">
-  ${signPanel('height: 380px; flex-shrink: 0; border-radius: 32px;', { cols: 4, w: 150, h: 100, gap: 10, r: 16, tilt: -14, k: PHONE_K }, wallTag(38, 14, 18))}
-  <div style="padding: 0 8px; display: flex; flex-direction: column; gap: 10px;">
+// The phone sign-in pages fill any phone's screen in the app (design/to-web.mjs swaps this 390 x 844 frame for the
+// window), so the wall takes whatever height the form leaves.
+const signPhoneRoot = inner => `<div style="position: relative; width: 390px; height: 844px; box-sizing: border-box; display: flex; flex-direction: column; font-family: ${FONT}; background: {{t.bg}}; color: {{t.text}}; overflow: hidden;">
+${inner}
+</div>`;
+const phoneSignIn = signPhoneRoot(`${signPanel('flex: 1 1 380px; min-height: 220px;', { cols: 4, w: 150, h: 100, gap: 10, r: 16, tilt: -14, k: PHONE_K }, wallTag(38, 14, 18))}
+  <div style="flex-shrink: 0; box-sizing: border-box; padding: 22px 20px 34px; display: flex; flex-direction: column; gap: 10px;">
     <h1 style="margin: 0 0 8px; font-size: 28px; font-weight: 700; letter-spacing: -.03em;">Sign in to Lucida</h1>
     ${authBtn('Continue with Apple', APPLE_LOGO, 'PhoneToday.dc.html', 50, 'apple')}${authBtn('Continue with Google', G_LOGO, 'PhoneToday.dc.html', 50, 'google')}
     <div style="padding: 4px 0;">${orLine}</div>
-    ${emailForm(50, 'PhoneSignInCode.dc.html')}
-  </div>
-</div>`);
-const phoneSignInCode = phone(`<div style="height: 100%; box-sizing: border-box; padding: 64px 20px 34px; display: flex; flex-direction: column; gap: 28px;">
+    ${emailForm(50, 'PhoneSignInCode.dc.html', 16)}
+    ${AGREE}
+  </div>`);
+const phoneSignInCode = signPhoneRoot(`<div style="flex: 1 0 auto; box-sizing: border-box; padding: 64px 20px 34px; display: flex; flex-direction: column; gap: 28px;">
   ${roundBtn('back', 'Use another email', 'PhoneSignIn.dc.html')}
   ${codeText}
   ${codeBoxes(50, 58)}${SIGN_ERROR}
@@ -2480,7 +2565,8 @@ const phoneSignInCode = phone(`<div style="height: 100%; box-sizing: border-box;
   <div style="display: flex; flex-direction: column; gap: 14px;"><a href="PhoneToday.dc.html" onClick="{{verify}}" style="height: 52px; display: flex; align-items: center; justify-content: center; border-radius: 999px; background: {{t.inv}}; color: {{t.invText}}; font-size: 16px; font-weight: 600;">{{verifyLabel}}</a><button type="button" onClick="{{resend}}" style="align-self: center; border: 0; padding: 0; background: transparent; color: {{t.muted}}; font: inherit; font-size: 15px; cursor: pointer;">{{resendLabel}}</button></div>
 </div>`);
 // On the canvas the code page shows three digits typed, with the fourth box next.
-const signInLogic = (code, secs, k = 1) => `constructor(props) { super(props); const a = props.db && props.db.auth; this.state = { email: a ? a.email() : '', code: a ? '' : '${code}', resent: false, busy: false, error: a ? a.error() : '' }; }
+const signInLogic = (code, secs, k = 1) => `${ART_METHOD}
+constructor(props) { super(props); const a = props.db && props.db.auth; this.state = { email: a ? a.email() : '', code: a ? '' : '${code}', resent: false, busy: false, error: a ? a.error() : '' }; }
 renderVals() { ${T}
   const s = this.state, code = String(s.code || ''), a = this.props.db && this.props.db.auth;
   // In the app (props.db) these sign in for real: an email code, or Google and Apple through the server.
@@ -2501,7 +2587,7 @@ renderVals() { ${T}
     a.verify(digits).then(() => a.done(), e => { const box = document.querySelector('input[autocomplete="one-time-code"]'); if (box) box.value = ''; this.setState({ busy: false, code: '', error: e.message }); });
   };
   const leave = to => e => { if (!a) return; stop(e); location.assign(to); };
-  return { grain: String(this.props.grain ?? 0.7), t, ${secs ? WALL_VALS(secs, k) : ''}
+  return { grain: String(this.props.grain ?? 0.7), t, sky: ${SKY}, ${secs ? WALL_VALS(secs, k, FLIPS.calm) : ''}
     email: s.email, setEmail: e => this.setState({ email: e && e.target ? e.target.value : '', error: '' }), emailKey: e => { if (e && e.key === 'Enter') send(e); },
     sentTo: (s.email || '').trim() || 'you@school.edu', sendCode: send, sendLabel: s.busy ? 'Sending…' : 'Continue',
     google: leave('/auth/google'), apple: leave('/auth/apple'),
@@ -2510,33 +2596,122 @@ renderVals() { ${T}
     verifyLabel: s.busy ? 'Checking…' : 'Continue', error: s.error, hasError: !!s.error,
     boxes: Array.from({ length: 6 }, (_, i) => ({ digit: code[i] || '', ring: i === Math.min(code.length, 5) ? 'inset 0 0 0 2px ' + t.text : 'none' })),
     resend: () => { if (!a) return this.setState({ resent: true }); a.sendCode(a.email()).then(() => this.setState({ resent: true, error: '' }), failed); },
-    resendLabel: s.resent ? 'New code sent' : 'Send a new code' }; }`;
+    resendLabel: s.resent ? 'New code sent' : 'Send a new code',
+    termsHref: a ? '/terms' : 'Terms.dc.html', privacyHref: a ? '/privacy' : 'Privacy.dc.html' }; }`;
 
 // ---------- Landing page (lucida.cards) ----------
 // One page, drawn twice: for computers (Landing) and phones (LandingPhone). design/to-site.mjs turns both into the
 // static page at lucida.cards; there the links go to the app, on the canvas to the sign-in boards.
 const LAND = {
-  web: { pad: 48, h1: 80, lead: 19, h2: 48, gapTop: 128, btn: 48, wallH: 560, wall: { cols: 6, w: 264, h: 176, gap: 16, r: 20, tilt: -14, k: 1 }, tile: 28, typeH: 196, ctaH1: 56, cols: 'repeat(auto-fit, minmax(300px, 1fr))', typeCols: 'repeat(auto-fit, minmax(240px, 1fr))' },
-  phone: { pad: 20, h1: 44, lead: 17, h2: 32, gapTop: 88, btn: 50, wallH: 420, wall: { cols: 4, w: 150, h: 100, gap: 10, r: 16, tilt: -14, k: PHONE_K }, tile: 22, typeH: 150, ctaH1: 34, cols: '1fr', typeCols: 'repeat(2, minmax(0, 1fr))' }
+  web: { pad: 48, h1: 80, lead: 19, h2: 48, gapTop: 128, btn: 48, wallH: 560, wall: { cols: 9, w: 264, h: 176, gap: 16, r: 20, tilt: -14, k: 1 }, typeH: 196, ctaH1: 56, typeCols: 'repeat(auto-fit, minmax(240px, 1fr))' },
+  phone: { pad: 20, h1: 44, lead: 17, h2: 32, gapTop: 88, btn: 50, wallH: 420, wall: { cols: 4, w: 150, h: 100, gap: 10, r: 16, tilt: -14, k: PHONE_K }, typeH: 150, ctaH1: 34, typeCols: 'repeat(2, minmax(0, 1fr))' }
 };
 const landPill = (label, href, inv, h, extra = '') => `<a href="${href}" style="height: ${h}px; padding: 0 ${Math.round(h / 2)}px; box-sizing: border-box; display: inline-flex; align-items: center; justify-content: center; border-radius: 999px; font-size: ${h >= 48 ? 15 : 14}px; font-weight: 600; white-space: nowrap; ${inv ? 'background: {{t.inv}}; color: {{t.invText}};' : 'background: {{t.surf}}; color: {{t.text}};'} ${extra}">${label}</a>`;
 const landH2 = (L, text) => `<h2 style="margin: 0; max-width: 760px; font-size: ${L.h2}px; font-weight: 600; line-height: 1.04; letter-spacing: -.04em; text-wrap: balance;">${text}</h2>`;
 const leadP = (L, text, center) => `<p style="margin: ${Math.round(L.lead * .9)}px ${center ? 'auto' : '0'} 0; max-width: 600px; font-size: ${L.lead}px; line-height: 1.5; color: {{t.muted}}; text-wrap: pretty;">${text}</p>`;
-// How it works: three steps, each with a small piece of the real app.
-const stepTile = (L, n, title, text, visual) => `<div style="border-radius: ${L.tile}px; background: {{t.surf}}; padding: ${L.tile}px; display: flex; flex-direction: column; gap: 12px; min-width: 0;">
-      <span style="width: 32px; height: 32px; border-radius: 16px; background: {{t.bg}}; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 600;">${n}</span>
-      <span style="margin-top: 6px; font-size: 21px; font-weight: 600; letter-spacing: -.02em;">${title}</span>
-      <span style="font-size: 15px; line-height: 1.5; color: {{t.muted}};">${text}</span>
-      <div style="margin-top: auto; padding-top: 18px;">${visual}</div>
-    </div>`;
-const stepLink = `<div style="border-radius: 20px; background: {{t.bg}}; padding: 14px; display: flex; gap: 8px; align-items: center;"><span style="flex-grow: 1; min-width: 0; height: 40px; box-sizing: border-box; padding: 0 14px; display: flex; align-items: center; border-radius: 999px; background: {{t.surf}}; font-family: ${MONO}; font-size: 13px;"><span style="overflow: hidden; white-space: nowrap; text-overflow: ellipsis;">app.lucida.cards/mcp/lk_5b1f0c6e9a2d</span></span><span style="flex-shrink: 0; height: 40px; padding: 0 16px; display: flex; align-items: center; border-radius: 999px; background: {{t.inv}}; color: {{t.invText}}; font-size: 13px; font-weight: 600;">Copy</span></div>`;
-const stepChat = `<div style="border-radius: 20px; background: {{t.bg}}; padding: 14px; display: flex; flex-direction: column; gap: 8px; font-size: 14px; line-height: 1.4;"><span style="align-self: flex-end; max-width: 85%; padding: 10px 14px; border-radius: 18px 18px 6px 18px; background: {{t.inv}}; color: {{t.invText}};">Make flashcards from my biology lecture.</span><span style="align-self: flex-start; max-width: 85%; padding: 10px 14px; border-radius: 18px 18px 18px 6px; background: {{t.surf}};">Added 24 cards to Cell Biology.</span></div>`;
-const stepStudy = `<div style="border-radius: 20px; background: {{t.bg}}; padding: 14px; display: flex; flex-direction: column; gap: 10px;"><span style="height: 64px; display: flex; align-items: center; justify-content: center; text-align: center; padding: 0 12px; border-radius: 14px; background: {{t.surf}}; font-size: 15px; font-weight: 500; letter-spacing: -.01em;">What makes most of the cell’s energy?</span><span style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px;">${[['Forgot', 'again'], ['Hard', 'hard'], ['Good', 'good'], ['Easy', 'easy']].map(([l, k]) => `<span style="height: 34px; display: flex; align-items: center; justify-content: center; border-radius: 999px; background: {{t.surf}}; color: {{t.${k}}}; font-size: 13px; font-weight: 600;">${l}</span>`).join('')}</span></div>`;
+// A daylight sky behind the top of the page (a night sky in dark mode): deep blue up high, paler toward the page,
+// a soft glow, and clouds of three soft puffs each, drifting slowly. The wall and the words sit over it.
+const SKY_CLOUDS = {
+  web: [[-4, 118, 440, 150, 52], [79, 84, 470, 160, 64], [8, 404, 540, 170, 58], [67, 372, 500, 160, 70], [41, 22, 280, 96, 46]],
+  phone: [[-24, 104, 260, 100, 44], [62, 64, 250, 94, 52], [48, 372, 300, 110, 60]]
+};
+const skyLayer = phone => `<div aria-hidden="true" class="sc-demo" style="position: absolute; left: 0; right: 0; top: 0; height: ${phone ? 600 : 700}px; z-index: -1; overflow: hidden; pointer-events: none; background: linear-gradient(180deg, {{sky.top}} 0%, {{sky.mid}} 30%, {{sky.low}} 55%, {{t.bg}} 100%);">
+  <div style="position: absolute; left: 50%; top: -35%; width: 120%; height: 90%; transform: translateX(-50%); background: radial-gradient(closest-side, {{sky.glow}}, transparent);"></div>
+  ${SKY_CLOUDS[phone ? 'phone' : 'web'].map(([x, y, w, h, secs], i) => `<div class="sc-cloud" style="position: absolute; left: ${x}%; top: ${y}px; width: ${w}px; height: ${h}px; animation: scCloud ${secs}s ease-in-out -${i * 11}s infinite alternate;">${[[0, 30, 60, 70], [24, 0, 56, 88], [46, 24, 54, 76]].map(([l, t, pw, ph]) => `<span style="position: absolute; left: ${l}%; top: ${t}%; width: ${pw}%; height: ${ph}%; background: radial-gradient(closest-side, {{sky.cloud}} 40%, transparent);"></span>`).join('')}</div>`).join('')}
+</div>`;
+const SKY_CSS = '@keyframes scCloud{from{transform:translateX(-28px)}to{transform:translateX(28px)}}@media (prefers-reduced-motion:reduce){.sc-cloud{animation:none!important}}';
+// A demo beside its words: side by side on computers (the demo first when `demoFirst`), stacked on phones.
+const featureRow = (L, id, title, text, demo, demoFirst) => {
+  const phone = L === LAND.phone, words = `<div style="min-width: 0;">${landH2(L, title)}${leadP(L, text)}</div>`;
+  return `<section${id ? ` id="${id}"` : ''} style="max-width: 1200px; margin: 0 auto; box-sizing: border-box; padding: ${L.gapTop}px ${L.pad}px 0;">
+  <div style="${phone ? 'display: flex; flex-direction: column; gap: 28px;' : `display: grid; grid-template-columns: ${demoFirst ? 'minmax(0, 7fr) minmax(0, 5fr)' : 'minmax(0, 5fr) minmax(0, 7fr)'}; gap: 64px; align-items: center;`}">
+    ${demoFirst && !phone ? demo + words : words + demo}
+  </div>
+</section>`;
+};
+
+// Two demos that loop on CSS keyframes alone, so they play the same on the canvas and the site. Every part of a demo
+// runs on the same loop, so the parts stay together; with reduced motion each shows its finished state.
+const CHAT_S = 14, STUDY_S = 16;
+const keyframes = (name, stops) => `@keyframes ${name}{${stops.map(([at, css]) => `${at}{${css}}`).join('')}}`;
+const EASE_OUT = 'animation-timing-function:cubic-bezier(.2,.8,.2,1)';
+const showAt = (name, at, from = 'transform:translateY(10px)') => keyframes(name, [[`0%,${at}%`, `opacity:0;${from};${EASE_OUT}`], [`${at + 4}%,100%`, 'opacity:1;transform:none']]);
+const showBetween = (name, a, b, from = 'transform:translateY(6px)') => keyframes(name, [[`0%,${a}%`, `opacity:0;${from};${EASE_OUT}`], [`${a + 2.5}%,${b}%`, 'opacity:1;transform:none'], [`${b + 2}%,100%`, 'opacity:0;transform:none']]);
+// The study demo's two cards take turns: A in the first half of the loop, B (the same steps) in the second.
+const studyKeys = (x, o) => [
+  keyframes('scStudy' + x, [[`0%,${o}%`, `opacity:0;transform:translateX(28px);${EASE_OUT}`], [`${o + 3}%,${o + 44}%`, 'opacity:1;transform:none;animation-timing-function:ease-in'], [`${o + 48}%,100%`, 'opacity:0;transform:translateX(-28px)']]),
+  keyframes('scTurn' + x, [[`0%,${o + 14}%`, `transform:rotateY(0deg);${TURN}`], [`${o + 17.125}%,100%`, 'transform:rotateY(180deg)']]),
+  keyframes('scTap' + x, [[`0%,${o + 11}%`, 'opacity:0;transform:scale(.5)'], [`${o + 12}%`, 'opacity:.16;transform:scale(.5)'], [`${o + 15}%,100%`, 'opacity:0;transform:scale(1.5)']]),
+  showBetween('scRate' + x, o + 18, o + 35),
+  keyframes('scPress' + x, [[`0%,${o + 29}%`, 'transform:none'], [`${o + 30.5}%`, 'transform:scale(.93)'], [`${o + 32}%,100%`, 'transform:none']]),
+  keyframes('scPick' + x, [[`0%,${o + 29.5}%`, 'opacity:0'], [`${o + 30.5}%,${o + 35}%`, 'opacity:1'], [`${o + 37}%,100%`, 'opacity:0']]),
+  showBetween('scToast' + x, o + 36.5, o + 44)
+].join('');
+const DEMO_CSS = [
+  keyframes('scChat', [['0%,91%', 'opacity:1'], ['95%,100%', 'opacity:0']]),
+  showAt('scChatYou', 2), showBetween('scChatDots', 9, 17, 'transform:none'), showBetween('scChatWork', 18, 30), showAt('scChatDone', 30, 'transform:none'),
+  showAt('scChatCard1', 33, 'transform:translateY(10px) scale(.92)'), showAt('scChatCard2', 36, 'transform:translateY(10px) scale(.92)'), showAt('scChatCard3', 39, 'transform:translateY(10px) scale(.92)'),
+  showAt('scChatText', 45),
+  '@keyframes scSpin{to{transform:rotate(360deg)}}@keyframes scDot{0%,60%,100%{transform:none;opacity:.45}30%{transform:translateY(-3px);opacity:1}}',
+  studyKeys('A', 0), studyKeys('B', 50),
+  '@media (prefers-reduced-motion:reduce){.sc-anim,.sc-anim *{animation:none!important}.sc-transient{display:none!important}}'
+].join('');
+
+// An AI chat using Lucida: you share a lecture, the AI adds cards through your Lucida link, and they show up.
+const PICTURE_ICON = '<ellipse cx="62" cy="42" rx="56" ry="32"/><path d="M18 44c8-16 14 14 22 0s14 14 22 0 14 14 22 0 12 12 20 0"/><circle cx="112" cy="14" r="11" fill="currentColor" stroke="none"/><path d="M103 21 90 30"/>';
+const chatDemo = phone => {
+  const A = `${CHAT_S}s linear infinite`;
+  const pill = '<span style="display: inline-block; width: 2.4em; height: .9em; margin: 0 .1em; border-radius: 999px; vertical-align: -.1em; background: {{m1.glass}};"></span>';
+  const mini = ['<span>What makes most of the cell’s energy?</span>', `<span>The ${pill} is the powerhouse of the cell.</span>`, `<svg width="46" height="28" viewBox="0 0 130 80" fill="none" stroke="currentColor" stroke-width="6" stroke-linecap="round" aria-hidden="true">${PICTURE_ICON}</svg><span>Name part 1.</span>`].slice(0, phone ? 2 : 3)
+    .map((body, i) => `<div class="sc-anim" style="flex: 1 1 0; min-width: 0; max-width: 150px; animation: scChatCard${i + 1} ${A};">${artCard('m1', `height: ${phone ? 92 : 96}px; border-radius: 14px;`, 'height: 100%; box-sizing: border-box; padding: 10px 12px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; text-align: center; font-size: 13px; font-weight: 500; line-height: 1.25; letter-spacing: -.01em;', body)}</div>`).join('');
+  const dots = [0, .15, .3].map(d => `<span style="width: 6px; height: 6px; border-radius: 3px; background: {{t.muted}}; animation: scDot 1.2s ease-in-out ${d}s infinite;"></span>`).join('');
+  // Lucida at work in the chat, the way AI apps show a tool running: what it's doing, then a check.
+  const tool = (text, end) => `<span style="height: 36px; box-sizing: border-box; padding: 0 14px; display: inline-flex; align-items: center; gap: 8px; border-radius: 999px; border: 1px solid {{t.line}}; font-size: 13px; font-weight: 500; white-space: nowrap;">${text}${end}</span>`;
+  return `<div class="sc-demo" style="border-radius: ${phone ? 24 : 28}px; background: {{t.surf}}; padding: ${phone ? '16px' : '40px 32px'}; display: flex; justify-content: center;">
+  <div style="width: 100%; max-width: 540px; border-radius: 22px; background: {{t.bg}}; box-shadow: 0 1px 2px rgba(0,0,0,.05), 0 24px 56px -28px rgba(0,0,0,.3); overflow: hidden; display: flex; flex-direction: column;">
+    <div class="sc-anim" style="height: ${phone ? 352 : 344}px; box-sizing: border-box; padding: ${phone ? 16 : 20}px; display: flex; flex-direction: column; gap: 12px; animation: scChat ${A};">
+      <div class="sc-anim" style="align-self: flex-end; max-width: 88%; display: flex; flex-direction: column; align-items: flex-end; gap: 6px; animation: scChatYou ${A};">
+        <span style="display: flex; align-items: center; gap: 10px; padding: 7px 14px 7px 7px; border-radius: 14px; border: 1px solid {{t.line}};"><span style="width: 34px; height: 34px; flex-shrink: 0; border-radius: 9px; background: {{t.surf}}; display: flex; align-items: center; justify-content: center;">${svg(I.file, 17, 1.8)}</span><span style="display: flex; flex-direction: column; gap: 1px; text-align: left;"><span style="font-size: 13px; font-weight: 600;">Lecture 7 · The cell.pdf</span><span style="font-size: 12px; color: {{t.muted}};">PDF · 32 pages</span></span></span>
+        <span style="padding: 10px 15px; border-radius: 18px 18px 6px 18px; background: {{t.inv}}; color: {{t.invText}}; font-size: 15px; line-height: 1.4;">Make flashcards from this lecture.</span>
+      </div>
+      <div style="display: grid; justify-items: start;">
+        <span class="sc-anim sc-transient" style="grid-area: 1 / 1; height: 36px; padding: 0 14px; display: inline-flex; align-items: center; gap: 5px; border-radius: 18px; background: {{t.surf}}; animation: scChatDots ${A};">${dots}</span>
+        <span class="sc-anim sc-transient" style="grid-area: 1 / 1; animation: scChatWork ${A};">${tool('Adding cards to Cell Biology', '<span style="width: 14px; height: 14px; box-sizing: border-box; border-radius: 50%; border: 2px solid {{t.line}}; border-top-color: {{t.text}}; animation: scSpin .8s linear infinite;"></span>')}</span>
+        <span class="sc-anim" style="grid-area: 1 / 1; animation: scChatDone ${A};">${tool('Added 12 cards to Cell Biology', `<span style="display: flex; color: {{t.good}};">${svg(I.check, 15, 2.4)}</span>`)}</span>
+      </div>
+      <div style="display: flex; gap: 8px;">${mini}</div>
+      <p class="sc-anim" style="margin: 0; font-size: 15px; line-height: 1.45; text-align: left; animation: scChatText ${A};">Done. 12 new cards are in Cell Biology, ready to study.</p>
+    </div>
+    <div style="padding: 0 14px 14px;"><div style="height: 46px; box-sizing: border-box; padding: 0 6px 0 18px; border-radius: 999px; border: 1px solid {{t.line}}; display: flex; align-items: center; gap: 10px; font-size: 15px; color: {{t.muted}};"><span style="flex-grow: 1; text-align: left;">Reply…</span><span style="width: 34px; height: 34px; border-radius: 17px; background: {{t.inv}}; color: {{t.invText}}; display: flex; align-items: center; justify-content: center;">${svg(I.arrowUp, 16, 2.2)}</span></div></div>
+  </div>
+</div>`;
+};
+
+// A card in review, as the app shows it: tap to turn it, rate how well you knew it, and see when it comes back.
+// Two cards take turns: one you know (Good, back in 12 days) and a new one you forgot (back in 1 minute).
+// The gaps are what FSRS gives those cards (web/fsrs.js).
+const STUDY = [
+  { front: 'What makes most of the cell’s energy?', back: 'The mitochondria', note: 'They turn sugar and oxygen into ATP.', iv: ['10m', '6d', '12d', '28d'], pick: 2, when: 'back in 12 days' },
+  { front: 'でんしゃ', big: true, back: 'train', note: '電車 · densha', iv: ['1m', '6m', '10m', '16d'], pick: 0, when: 'back in 1 minute' }
+];
+const GRADES = [['Forgot', 'again', 'againTint'], ['Hard', 'hard', 'hardTint'], ['Good', 'good', 'goodTint'], ['Easy', 'easy', 'goodTint']];
+const studyDemo = phone => {
+  const A = `${STUDY_S}s linear infinite`, fs = phone ? 21 : 26, r = phone ? 20 : 24;
+  const face = (c, back) => `<div style="position: absolute; inset: 0; box-sizing: border-box; padding: ${phone ? '20px 22px' : '28px 32px'}; display: flex; flex-direction: column; text-align: center; background: {{t.card}}; border: 1px solid {{t.line}}; border-radius: ${r}px; box-shadow: {{t.shadow}}; backface-visibility: hidden; -webkit-backface-visibility: hidden;${back ? ' transform: rotateY(180deg);' : ''}"><div style="flex-grow: 1; display: flex; flex-direction: column; justify-content: center;"><span style="font-size: ${back ? fs - 2 : c.big ? fs + 16 : fs}px; font-weight: 500; line-height: 1.25; letter-spacing: -.02em;">${back ? c.back : c.front}</span></div>${back ? `<span style="font-size: 14px; line-height: 1.5; color: {{t.muted}};">${c.note}</span>` : ''}</div>`;
+  const card = (c, i) => { const x = 'AB'[i]; return `<div class="sc-anim${i ? ' sc-transient' : ''}" style="position: absolute; inset: 0; perspective: 1600px; animation: scStudy${x} ${A};"><div class="sc-anim" style="position: relative; width: 100%; height: 100%; transform-style: preserve-3d; animation: scTurn${x} ${A};">${face(c, false)}${face(c, true)}</div><span class="sc-anim sc-transient" style="position: absolute; left: 62%; top: 56%; width: 64px; height: 64px; margin: -32px 0 0 -32px; border-radius: 50%; background: {{t.text}}; opacity: 0; animation: scTap${x} ${A};"></span></div>`; };
+  const row = (c, i) => { const x = 'AB'[i]; return `<div class="sc-anim${i ? ' sc-transient' : ''}" style="position: absolute; inset: 0; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: ${phone ? 6 : 8}px; animation: scRate${x} ${A};">${GRADES.map(([label, color, tint], g) => { const on = g === c.pick; return `<span${on ? ' class="sc-anim"' : ''} style="position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; border-radius: 999px; background: {{t.bg}};${on ? ` animation: scPress${x} ${A};` : ''}">${on ? `<span class="sc-anim" style="position: absolute; inset: 0; border-radius: 999px; background: {{t.${tint}}}; opacity: 0; animation: scPick${x} ${A};"></span>` : ''}<span style="position: relative; display: flex; align-items: center; gap: 6px; font-size: ${phone ? 13 : 14}px; font-weight: 600;"><span style="width: 7px; height: 7px; border-radius: 4px; background: {{t.${color}}};"></span>${label}</span><span style="position: relative; font-family: ${MONO}; font-size: ${phone ? 11 : 12}px; color: {{t.muted}};">${c.iv[g]}</span></span>`; }).join('')}</div>`; };
+  const toast = (c, i) => { const [label, color] = GRADES[c.pick]; return `<div class="sc-anim sc-transient" style="position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; animation: scToast${'AB'[i]} ${A};"><span style="height: 40px; padding: 0 16px; display: inline-flex; align-items: center; gap: 8px; border-radius: 999px; background: {{t.bg}}; font-size: 14px; font-weight: 600; white-space: nowrap;"><span style="width: 7px; height: 7px; border-radius: 4px; background: {{t.${color}}};"></span>${label} · ${c.when}</span></div>`; };
+  return `<div class="sc-demo" style="border-radius: ${phone ? 24 : 28}px; background: {{t.surf}}; padding: ${phone ? '24px 16px' : '48px 32px'}; display: flex; flex-direction: column; align-items: center; gap: ${phone ? 14 : 18}px;">
+  <div style="position: relative; width: 100%; max-width: 440px; height: ${phone ? 196 : 248}px;">${STUDY.map(card).join('')}</div>
+  <div style="position: relative; width: 100%; max-width: 440px; height: ${phone ? 54 : 58}px;">${STUDY.map(row).join('')}${STUDY.map(toast).join('')}</div>
+</div>`;
+};
+
 // Card types: the four kinds, each on its own deck's gradient.
-const typeCard = (L, key, label, sub, face) => `<div style="display: flex; flex-direction: column; gap: 10px; min-width: 0;">${meshCard(key, `height: ${L.typeH}px; border-radius: 22px;`, `height: 100%; box-sizing: border-box; padding: ${L === LAND.phone ? 14 : 22}px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; text-align: center;`, face)}<span style="padding: 0 4px; font-size: 16px; font-weight: 600;">${label}</span><span style="padding: 0 4px; margin-top: -6px; font-size: 14px; line-height: 1.45; color: {{t.muted}};">${sub}</span></div>`;
+const typeCard = (L, key, label, sub, face) => `<div style="display: flex; flex-direction: column; gap: 10px; min-width: 0;">${artCard(key, `height: ${L.typeH}px; border-radius: 22px;`, `height: 100%; box-sizing: border-box; padding: ${L === LAND.phone ? 14 : 22}px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; text-align: center;`, face)}<span style="padding: 0 4px; font-size: 16px; font-weight: 600;">${label}</span><span style="padding: 0 4px; margin-top: -6px; font-size: 14px; line-height: 1.45; color: {{t.muted}};">${sub}</span></div>`;
 const typeText = (L, text) => `<span style="font-size: ${L === LAND.phone ? 15 : 21}px; font-weight: 500; line-height: 1.22; letter-spacing: -.02em;">${text}</span>`;
-const typeBlank = (L, key) => typeText(L, `The <span style="display: inline-block; width: 2.4em; height: .9em; margin: 0 .1em; border-radius: 999px; vertical-align: -.1em; background: {{${key}.glass}}; box-shadow: inset 0 0 0 1.5px {{${key}.glassLine}};"></span> is the powerhouse of the cell.`);
-const typePicture = L => { const w = L === LAND.phone ? 90 : 130; return `<svg width="${w}" height="${Math.round(w * .62)}" viewBox="0 0 130 80" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" aria-hidden="true"><ellipse cx="62" cy="42" rx="56" ry="32"/><path d="M18 44c8-16 14 14 22 0s14 14 22 0 14 14 22 0 12 12 20 0"/><circle cx="112" cy="14" r="11" fill="currentColor" stroke="none"/><path d="M103 21 90 30"/></svg>${typeText(L, 'Name part 1.')}`; };
+const typeBlank = (L, key) => typeText(L, `The <span style="display: inline-block; width: 2.4em; height: .9em; margin: 0 .1em; border-radius: 999px; vertical-align: -.1em; background: {{${key}.glass}};"></span> is the powerhouse of the cell.`);
+const typePicture = L => { const w = L === LAND.phone ? 90 : 130; return `<svg width="${w}" height="${Math.round(w * .62)}" viewBox="0 0 130 80" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" aria-hidden="true">${PICTURE_ICON}</svg>${typeText(L, 'Name part 1.')}`; };
 const typeSound = L => { const k = L === LAND.phone ? .7 : 1, px = n => Math.max(2, Math.round(n * k)); return `<span style="display: flex; align-items: center; gap: ${px(14)}px;"><span style="width: ${px(50)}px; height: ${px(50)}px; flex-shrink: 0; border-radius: 50%; background: {{q4.glass}}; box-shadow: inset 0 0 0 1.5px {{q4.glassLine}}; display: flex; align-items: center; justify-content: center;"><span style="display: flex; margin-left: ${px(3)}px;">${svg(I.play, px(22), 0)}</span></span><span style="display: flex; align-items: center; gap: ${px(4)}px;">${[12, 22, 34, 18, 28, 14, 24, 16, 9].map(b => `<span style="width: ${px(3)}px; height: ${px(b)}px; border-radius: 2px; background: currentColor; opacity: .85;"></span>`).join('')}</span></span>`; };
 // More reasons: small tiles with an icon each.
 const reason = (ic, title, text) => `<div style="border-radius: 24px; background: {{t.surf}}; padding: 24px; display: flex; flex-direction: column; gap: 10px; min-width: 0;"><span style="width: 40px; height: 40px; border-radius: 20px; background: {{t.bg}}; display: flex; align-items: center; justify-content: center;">${svg(I[ic], 19, 1.8)}</span><span style="margin-top: 6px; font-size: 17px; font-weight: 600; letter-spacing: -.01em;">${title}</span><span style="font-size: 15px; line-height: 1.5; color: {{t.muted}};">${text}</span></div>`;
@@ -2548,26 +2723,20 @@ const REASONS = [
   ['today', 'A few minutes a day', 'Today shows what’s due, how long it takes, and your streak.'],
   ['list', 'Your cards stay yours', 'Export every deck, card, and review whenever you want.']
 ];
-const landing = (L, w, hgt) => { const phone = L === LAND.phone; return `<div style="width: ${w}px; height: ${hgt}px; box-sizing: border-box; font-family: ${FONT}; background: {{t.bg}}; color: {{t.text}}; overflow: hidden;">
+const landing = (L, w, hgt) => { const phone = L === LAND.phone; return `<div style="position: relative; isolation: isolate; width: ${w}px; height: ${hgt}px; box-sizing: border-box; font-family: ${FONT}; background: {{t.bg}}; color: {{t.text}}; overflow: hidden;">
+${skyLayer(phone)}
 <header style="max-width: 1344px; margin: 0 auto; height: ${phone ? 64 : 76}px; box-sizing: border-box; padding: 0 ${L.pad}px; display: flex; align-items: center; justify-content: space-between; gap: 12px;">
   <a href="{{homeHref}}" aria-label="Lucida home">${logo(phone ? 26 : 30)}</a>
-  <nav style="display: flex; align-items: center; gap: ${phone ? 6 : 4}px;">${phone ? '' : `<a href="#how" style="height: 36px; padding: 0 14px; display: inline-flex; align-items: center; border-radius: 999px; font-size: 14px; color: {{t.muted}};">How it works</a><a href="#cards" style="height: 36px; padding: 0 14px; display: inline-flex; align-items: center; border-radius: 999px; font-size: 14px; color: {{t.muted}};">Card types</a>`}<a href="{{signInHref}}" style="height: 36px; padding: 0 14px; display: inline-flex; align-items: center; border-radius: 999px; font-size: 14px; color: {{t.muted}};">Sign in</a>${landPill('Get started', '{{startHref}}', true, 36, phone ? 'padding: 0 14px;' : '')}</nav>
+  <nav style="display: flex; align-items: center; gap: ${phone ? 6 : 4}px;">${phone ? '' : `<a href="#how" style="height: 36px; padding: 0 14px; display: inline-flex; align-items: center; border-radius: 999px; font-size: 14px; color: {{t.text}};">How it works</a><a href="#cards" style="height: 36px; padding: 0 14px; display: inline-flex; align-items: center; border-radius: 999px; font-size: 14px; color: {{t.text}};">Card types</a>`}<a href="{{signInHref}}" style="height: 36px; padding: 0 14px; display: inline-flex; align-items: center; border-radius: 999px; font-size: 14px; color: {{t.text}};">Sign in</a>${landPill('Get started', '{{startHref}}', true, 36, phone ? 'padding: 0 14px;' : '')}</nav>
 </header>
-<section style="padding: ${phone ? 40 : 64}px ${L.pad}px 0; display: flex; flex-direction: column; align-items: center; text-align: center;">
-  <span style="height: 32px; padding: 0 14px; display: inline-flex; align-items: center; gap: 8px; border-radius: 999px; background: {{t.surf}}; font-size: 13px; font-weight: 500; color: {{t.muted}};"><span style="width: 7px; height: 7px; border-radius: 4px; background: {{t.good}};"></span>Works with Claude and ChatGPT</span>
-  <h1 style="margin: ${phone ? 20 : 26}px 0 0; max-width: 1200px; font-size: ${L.h1}px; font-weight: 600; line-height: 1; letter-spacing: -.05em; text-wrap: balance;">Flashcards your AI can make.</h1>
+<section style="padding: ${phone ? 48 : 88}px ${L.pad}px 0; display: flex; flex-direction: column; align-items: center; text-align: center;">
+  <h1 style="margin: 0; max-width: 1200px; font-size: ${L.h1}px; font-weight: 600; line-height: 1; letter-spacing: -.05em; text-wrap: balance;">Flashcards your AI can make.</h1>
   ${leadP(L, 'Ask Claude or ChatGPT to turn a lecture into cards. Lucida keeps them in your decks and brings each one back right before you’d forget it.', true)}
-  <div style="margin-top: ${phone ? 26 : 32}px; display: flex; gap: 10px; ${phone ? 'flex-direction: column; align-self: stretch;' : ''}">${landPill('Get started', '{{startHref}}', true, L.btn)}${landPill('See how it works', '#how', false, L.btn)}</div>
+  <div style="margin-top: ${phone ? 26 : 32}px; display: flex; gap: 10px; ${phone ? 'flex-direction: column; align-self: stretch;' : ''}">${landPill('Get started', '{{startHref}}', true, L.btn)}${landPill('See how it works', '#how', false, L.btn, 'background: {{t.bg}}; box-shadow: 0 1px 2px rgba(0,0,0,.06), 0 10px 24px -14px rgba(0,0,0,.25);')}</div>
 </section>
-<section style="padding: ${phone ? 44 : 64}px ${phone ? 12 : 16}px 0;"><div style="position: relative; max-width: 1408px; height: ${L.wallH}px; margin: 0 auto; overflow: hidden; border-radius: ${phone ? 28 : 36}px; background: {{t.surf}};">${cardWall(L.wall)}</div></section>
-<section id="how" style="max-width: 1200px; margin: 0 auto; box-sizing: border-box; padding: ${L.gapTop}px ${L.pad}px 0;">
-  ${landH2(L, 'From lecture to memory in three steps.')}
-  <div style="margin-top: ${phone ? 28 : 40}px; display: grid; grid-template-columns: ${L.cols}; gap: 16px;">
-    ${stepTile(L, 1, 'Connect your AI', 'Paste your Lucida link into Claude or ChatGPT. It takes a minute.', stepLink)}
-    ${stepTile(L, 2, 'Ask for cards', 'Share your notes or slides and ask for flashcards. They land in your decks.', stepChat)}
-    ${stepTile(L, 3, 'Study a little each day', 'Lucida brings back each card right before you’d forget it.', stepStudy)}
-  </div>
-</section>
+<section style="padding-top: ${phone ? 44 : 64}px;"><div class="sc-demo" style="position: relative; height: ${L.wallH}px; overflow: hidden;">${cardWall(L.wall)}</div></section>
+${featureRow(L, 'how', 'Ask for cards in your chat.', 'Paste your Lucida link into Claude or ChatGPT once. Then share a lecture or your notes and ask for flashcards. They land in your decks, ready to study.', chatDemo(phone), false)}
+${featureRow(L, '', 'Flip, rate, remember.', 'Tap a card to see the answer, then say how well you knew it. Lucida picks the day it comes back: soon if you forgot, much later if it was easy.', studyDemo(phone), true)}
 <section id="cards" style="max-width: 1200px; margin: 0 auto; box-sizing: border-box; padding: ${L.gapTop}px ${L.pad}px 0;">
   ${landH2(L, 'Every kind of card.')}
   ${leadP(L, 'Questions, fill in the blank, pictures, and sound. Your AI can make all four, and so can you.')}
@@ -2584,20 +2753,61 @@ const landing = (L, w, hgt) => { const phone = L === LAND.phone; return `<div st
     ${REASONS.map(([ic, t, x]) => reason(ic, t, x)).join('\n    ')}
   </div>
 </section>
-<section style="padding: ${L.gapTop}px ${phone ? 12 : 16}px 0;">
-  ${meshCard('hero', `max-width: 1408px; margin: 0 auto; border-radius: ${phone ? 28 : 36}px;`, `box-sizing: border-box; padding: ${phone ? '64px 24px' : '104px 32px'}; display: flex; flex-direction: column; align-items: center; text-align: center;`, `<h2 style="margin: 0; font-size: ${L.ctaH1}px; font-weight: 600; line-height: 1.04; letter-spacing: -.04em; text-wrap: balance;">Your next exam, in cards.</h2><p style="margin: 16px 0 0; max-width: 480px; font-size: ${phone ? 16 : 18}px; line-height: 1.5; opacity: .8;">Start with one deck. Your AI can fill it in a few minutes.</p><div style="margin-top: 28px;">${landPill('Get started', '{{startHref}}', true, L.btn)}</div>`)}
+<section style="padding-top: ${L.gapTop}px;">
+  ${artCard('hero', '', `box-sizing: border-box; padding: ${phone ? '64px 24px' : '104px 32px'}; display: flex; flex-direction: column; align-items: center; text-align: center;`, `<h2 style="margin: 0; font-size: ${L.ctaH1}px; font-weight: 600; line-height: 1.04; letter-spacing: -.04em; text-wrap: balance;">Your next exam, in cards.</h2><p style="margin: 16px 0 0; max-width: 480px; font-size: ${phone ? 16 : 18}px; line-height: 1.5; opacity: .8; text-wrap: balance;">Start with one deck. Your AI can fill it in a few minutes.</p><div style="margin-top: 28px;">${landPill('Get started', '{{startHref}}', true, L.btn, 'background: #FFFFFF; color: #000000;')}</div>`)}
 </section>
-<footer style="max-width: 1344px; margin: 0 auto; box-sizing: border-box; padding: ${phone ? '36px 20px 40px' : '48px 48px 48px'}; display: flex; align-items: center; justify-content: space-between; gap: 16px; font-size: 14px; color: {{t.muted}};">
-  ${logo(phone ? 24 : 26)}<span style="display: flex; gap: 20px;"><a href="{{signInHref}}">Sign in</a><span>© 2026 Lucida</span></span>
-</footer>
+${landFooter(phone)}
 </div>`; };
-const LANDING_H = 3499, LANDING_PHONE_H = 4675;
-const landingLogic = phone => `renderVals() { ${T}
+// The footer on the landing page and the Privacy and Terms pages.
+// Lucida's accounts, as icons (each a 36px target) that open in a new tab.
+const SOCIALS = [['tiktok', 'TikTok', 'https://www.tiktok.com/@lucidacards'], ['youtube', 'YouTube', 'https://www.youtube.com/@lucidacards'], ['instagram', 'Instagram', 'https://www.instagram.com/lucidacards/'], ['facebook', 'Facebook', 'https://www.facebook.com/61594547618098']];
+const socialLinks = gap => `<span style="display: flex; align-items: center; gap: ${gap}px;">${SOCIALS.map(([ic, name, href]) => `<a href="${href}" target="_blank" rel="noopener" aria-label="Lucida on ${name}" title="${name}" style="width: 36px; height: 36px; margin: -8px; display: inline-flex; align-items: center; justify-content: center;">${svg(I[ic], 20, 1.8)}</a>`).join('')}</span>`;
+// On phones: the logo and the accounts, then the links. On computers it's one row, which wraps on a narrow window.
+const landFooter = phone => phone
+  ? `<footer style="box-sizing: border-box; padding: 36px 20px 40px; display: flex; flex-direction: column; gap: 24px; font-size: 14px; color: {{t.muted}};">
+  <div style="display: flex; align-items: center; justify-content: space-between; gap: 16px;">${logo(24)}${socialLinks(22)}</div>
+  <span style="display: flex; flex-wrap: wrap; gap: 16px;"><a href="{{privacyHref}}">Privacy</a><a href="{{termsHref}}">Terms</a><span>© 2026 Lucida</span></span>
+</footer>`
+  : `<footer style="max-width: 1344px; margin: 0 auto; box-sizing: border-box; padding: 48px clamp(20px, 4vw, 48px); display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 20px 16px; font-size: 14px; color: {{t.muted}};">
+  ${logo(26)}<span style="display: flex; flex-wrap: wrap; align-items: center; gap: 16px 20px;"><a href="{{privacyHref}}">Privacy</a><a href="{{termsHref}}">Terms</a><span>© 2026 Lucida</span><span style="margin-left: 8px;">${socialLinks(20)}</span></span>
+</footer>`;
+const LANDING_H = 4002, LANDING_PHONE_H = 4818;
+// The sky behind the landing page's top and the sign-in wall: daylight, or a night sky in dark mode.
+const SKY = `(this.props.dark ? { top: '#081733', mid: '#0D2148', low: '#0A1530', glow: 'rgba(120,150,255,.16)', cloud: 'rgba(150,170,230,.10)' }
+    : { top: '#86BDF3', mid: '#C9E2FB', low: '#EDF5FE', glow: 'rgba(255,255,255,.75)', cloud: 'rgba(255,255,255,.94)' })`;
+// The band that ends the page runs edge to edge in the site's dark Midnight gradient (surfaces.mjs).
+const MIDNIGHT = JSON.stringify(paletteData('Midnight'));
+const landingLogic = phone => `${ART_METHOD}
+renderVals() { ${T}
   // On lucida.cards (props.site) the links open the app; on the canvas they open the sign-in board.
   const site = !!this.props.site, signIn = site ? 'https://app.lucida.cards/sign-in' : '${phone ? 'PhoneSignIn' : 'WebSignIn'}.dc.html';
-  return { t, grain: String(this.props.grain ?? 0.7), hero: this.mesh('Iris'), ${WALL_VALS(phone ? [50, 60, 55, 65] : [64, 78, 70, 84, 74, 88], phone ? PHONE_K : 1)}
-    q1: this.gen('Cell Biology', 'vivid'), q2: this.gen('Genetics', 'vivid'), q3: this.gen('Anatomy', 'vivid'), q4: this.gen('Korean', 'vivid'),
-    homeHref: site ? '/' : '${phone ? 'LandingPhone' : 'Landing'}.dc.html', signInHref: signIn, startHref: site ? 'https://app.lucida.cards/' : signIn }; }`;
+  const deck = name => this.art(this.gen(name, 'vivid'));
+  return { t, sky: ${SKY}, grain: String(this.props.grain ?? 0.7), hero: this.art(${MIDNIGHT}, '${phone ? '' : 'wide'}'), ${WALL_VALS(phone ? [50, 60, 55, 65] : [64, 78, 70, 84, 74, 88, 68, 80, 72], phone ? PHONE_K : 1, phone ? FLIPS.phone : FLIPS.busy)}
+    q1: deck('Cell Biology'), q2: deck('Genetics'), q3: deck('Anatomy'), q4: deck('Korean'), m1: deck('Cell Biology'),
+    homeHref: site ? '/' : '${phone ? 'LandingPhone' : 'Landing'}.dc.html', signInHref: signIn, startHref: site ? 'https://app.lucida.cards/' : signIn,
+    privacyHref: site ? '/privacy' : 'Privacy.dc.html', termsHref: site ? '/terms' : 'Terms.dc.html' }; }`;
+
+// ---------- Privacy and Terms (lucida.cards/privacy and /terms) ----------
+// Plain pages from legal.mjs: one column of text that fits any window. design/to-site.mjs makes them pages.
+const LEGAL_H = { Privacy: 2236, Terms: 1963 };
+const legalPage = (doc, hgt) => `<div style="width: 1440px; height: ${hgt}px; box-sizing: border-box; font-family: ${FONT}; background: {{t.bg}}; color: {{t.text}}; overflow: hidden;">
+<header style="max-width: 1344px; margin: 0 auto; height: 76px; box-sizing: border-box; padding: 0 clamp(20px, 4vw, 48px); display: flex; align-items: center; justify-content: space-between; gap: 12px;">
+  <a href="{{homeHref}}" aria-label="Lucida home">${logo(28)}</a>
+  <nav style="display: flex; align-items: center; gap: 4px;"><a href="{{signInHref}}" style="height: 36px; padding: 0 14px; display: inline-flex; align-items: center; border-radius: 999px; font-size: 14px; color: {{t.muted}};">Sign in</a>${landPill('Get started', '{{startHref}}', true, 36)}</nav>
+</header>
+<main style="max-width: 720px; margin: 0 auto; box-sizing: border-box; padding: clamp(40px, 7vw, 88px) 24px 72px; display: flex; flex-direction: column; gap: 16px;">
+  <h1 style="margin: 0; font-size: clamp(38px, 5vw, 52px); font-weight: 600; line-height: 1.05; letter-spacing: -.045em;">${doc.title}</h1>
+  <p style="margin: 0; font-size: 14px; color: {{t.muted}};">Last updated ${UPDATED}</p>
+  <p style="margin: 8px 0 0; font-size: 19px; line-height: 1.55; text-wrap: pretty;">${doc.intro}</p>
+  ${doc.sections.map(x => `<section style="margin-top: 24px; display: flex; flex-direction: column; gap: 12px;"><h2 style="margin: 0; font-size: 22px; font-weight: 600; letter-spacing: -.02em;">${x.h}</h2>${x.body.map(b => Array.isArray(b) ? `<ul style="margin: 0; padding-left: 22px; display: flex; flex-direction: column; gap: 8px; font-size: 16px; line-height: 1.6; color: {{t.muted}};">${b.slice(1).map(li => `<li>${li}</li>`).join('')}</ul>` : `<p style="margin: 0; font-size: 16px; line-height: 1.6; color: {{t.muted}};">${b}</p>`).join('')}</section>`).join('\n  ')}
+</main>
+${landFooter(false)}
+</div>`;
+// On lucida.cards (props.site) the links open the site and the app; on the canvas, the boards.
+const legalLogic = `renderVals() { ${T}
+  const site = !!this.props.site;
+  return { t, homeHref: site ? 'https://lucida.cards/' : 'Landing.dc.html', signInHref: site ? 'https://app.lucida.cards/sign-in' : 'WebSignIn.dc.html', startHref: site ? 'https://app.lucida.cards/' : 'WebSignIn.dc.html',
+    privacyHref: site ? '/privacy' : 'Privacy.dc.html', termsHref: site ? '/terms' : 'Terms.dc.html' }; }`;
 
 // ---------- write ----------
 const W = 1440, H = 900, PW = 390, PH = 844;
@@ -2653,7 +2863,7 @@ const files = {
   'Reference': ['Your reference', `<div style="width: 1440px; height: 1110px; overflow: hidden; background: #FFFFFF;"><img src="/_blob/b36d0110fdee9533cc5677ceb6b78d3d" alt="Reference: blurred green and gold gradient with grain and chat bubbles" width="1440" height="1110" style="display: block; width: 1440px; height: 1110px; object-fit: cover;"></div>`, { logic: 'renderVals() { return {}; }', w: W, h: 1110 }],
   'Generated': ['Generated gradients', generatedBoard, { props: { grain: MESH('Iris').grain }, logic: generatedLogic, w: W, h: H }],
   'Gallery': ['Gradient cards', galleryBoard, { props: { grain: MESH('Iris').grain }, logic: galleryLogic, w: W, h: H }],
-  'Motion': ['Motion', motion, { logic: 'renderVals() { return {}; }', css: motionCss, w: W, h: H }],
+  'Motion': ['Motion', motion(), { props: { grain: MESH('Iris').grain }, logic: `renderVals() { return { t: this.theme(false), grain: String(this.props.grain ?? 0.7), hero: this.mesh('Iris'), art: this.mesh('Iris'), art2: this.mesh('Mint'), art3: this.mesh('Apricot') }; }`, css: motionCss, w: W, h: MOTION_H }],
   'PhoneToday': ['iPhone · Today', phoneToday, { props: { ...DARK, ...MESH('Iris'), caughtUp: { editor: 'boolean', default: false } }, logic: phoneDecksLogic, w: PW, h: PH }],
   'PhoneTodayNew': ['iPhone · Today · new user', phoneTodayNew, { props: { ...DARK, ...MESH('Iris') }, logic: emptyLogic(), w: PW, h: PH }],
   'PhoneTodayCaughtUp': ['iPhone · Today · all caught up', caughtOf('PhoneToday', PW, PH), { logic: darkLogic, w: PW, h: PH }],
@@ -2670,8 +2880,10 @@ const files = {
   'PhoneDonePiles': ['iPhone · Session done · piles', phoneDonePiles, { props: DARK, logic: donePilesLogic, w: PW, h: PH }],
   'PhoneSignIn': ['iPhone · Sign in', phoneSignIn, { props: { ...DARK, grain: MESH('Iris').grain }, logic: signInLogic('', [50, 60, 55, 65], PHONE_K), css: WALL_CSS, w: PW, h: PH }],
   'PhoneSignInCode': ['iPhone · Sign in · code from email', phoneSignInCode, { props: DARK, logic: signInLogic('482'), w: PW, h: PH }],
-  'Landing': ['Landing page · lucida.cards', landing(LAND.web, W, LANDING_H), { props: { ...DARK, grain: MESH('Iris').grain }, logic: landingLogic(false), css: WALL_CSS, w: W, h: LANDING_H }],
-  'LandingPhone': ['Landing page · lucida.cards on a phone', landing(LAND.phone, PW, LANDING_PHONE_H), { props: { ...DARK, grain: MESH('Iris').grain }, logic: landingLogic(true), css: WALL_CSS, w: PW, h: LANDING_PHONE_H }],
+  'Landing': ['Landing page · lucida.cards', landing(LAND.web, W, LANDING_H), { props: { ...DARK, grain: MESH('Iris').grain }, logic: landingLogic(false), css: WALL_CSS + DEMO_CSS + SKY_CSS, w: W, h: LANDING_H }],
+  'Privacy': ['Privacy Policy · lucida.cards/privacy', legalPage(PRIVACY, LEGAL_H.Privacy), { props: DARK, logic: legalLogic, w: W, h: LEGAL_H.Privacy }],
+  'Terms': ['Terms of Service · lucida.cards/terms', legalPage(TERMS, LEGAL_H.Terms), { props: DARK, logic: legalLogic, w: W, h: LEGAL_H.Terms }],
+  'LandingPhone': ['Landing page · lucida.cards on a phone', landing(LAND.phone, PW, LANDING_PHONE_H), { props: { ...DARK, grain: MESH('Iris').grain }, logic: landingLogic(true), css: WALL_CSS + DEMO_CSS + SKY_CSS, w: PW, h: LANDING_PHONE_H }],
   'PhoneStats': ['iPhone · Stats', phoneStats, { props: DARK, logic: phoneStatsLogic, w: PW, h: PH }],
   'PhoneConnect': ['iPhone · Connect AI', phoneConnect, { props: { ...DARK, ...MESH('Apricot') }, logic: phoneConnectLogic, w: PW, h: PH }],
   'PhoneTodayDark': ['iPhone · Today (dark)', darkOf('PhoneToday', PW, PH), { logic: darkLogic, w: PW, h: PH }],

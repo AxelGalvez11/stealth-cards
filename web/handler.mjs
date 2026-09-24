@@ -122,7 +122,8 @@ async function files(req, res, path, root) {
     if ((await stat(file)).isDirectory()) file = join(file, 'app.html');
   } catch {
     if (extname(path) || root !== ROOT) return send(res, 404, 'Not found', 'text/plain');
-    file = join(ROOT, 'app.html');
+    // A page of the site (/privacy is privacy.html); anything else is a page of the app.
+    file = await stat(file + '.html').then(() => file + '.html', () => join(ROOT, 'app.html'));
   }
   try { send(res, 200, await readFile(file), TYPES[extname(file)] || 'application/octet-stream'); }
   catch { send(res, 404, 'Not found', 'text/plain'); }

@@ -8,10 +8,12 @@ import { createDb } from './db.js';
 // Which board shows for a page. Some depend on your data: no decks yet shows the new-user Today, and so on.
 // /b (every canvas board with sample data) is for working on the design, so it only opens on your own computer.
 const DESIGN = ['localhost', '127.0.0.1'].includes(location.hostname);
+// Phones sign in on the phone sign-in pages, which fill the screen (design/to-web.mjs).
+const narrow = matchMedia('(max-width: 760px)');
 function resolve(path, q) {
   if (path.startsWith('/b/')) return DESIGN ? { name: decodeURIComponent(path.slice(3)), design: true } : { redirect: '/' };
   // Online and signed out: only the sign-in pages (and the code page once a code is on its way).
-  if (db.signedOut) return path === '/sign-in/code' && db.auth.email() ? { name: 'WebSignInCode' } : path === '/sign-in' ? { name: 'WebSignIn' } : { redirect: '/sign-in' };
+  if (db.signedOut) { const p = narrow.matches ? 'Phone' : 'Web'; return path === '/sign-in/code' && db.auth.email() ? { name: p + 'SignInCode' } : path === '/sign-in' ? { name: p + 'SignIn' } : { redirect: '/sign-in' }; }
   if (path.startsWith('/sign-in')) return { redirect: '/' };
   const deck = /^\/deck\/([^/]+)(\/card(?:\/([^/]+))?|\/import)?$/.exec(path);
   if (path === '/') return { name: db.decks().length ? 'Main' : 'WebTodayNew' };
@@ -47,7 +49,7 @@ function linkFor(name) {
   const pages = { Main: '/', WebTodayNew: '/', WebTodayCaughtUp: '/', WebDecks: '/decks', WebDecksEmpty: '/decks', WebDecksList: '/decks', WebNewDeck: '/decks/new',
     WebImport: id ? '/deck/' + id + '/import' : '/decks/import', WebDeck: id ? '/deck/' + id : '/decks', WebDeckSettings: id ? '/deck/' + id + '?settings=1' : '/decks',
     WebEditor: id ? '/deck/' + id + '/card' : db.signedOut ? '/' : db.today().newCardHref, WebReview: id ? '/review/' + id : '/review', WebDone: '/review/done', WebDonePiles: '/review/done',
-    WebStats: '/stats', WebStatsEmpty: '/stats', WebConnect: '/connect', WebSettings: '/settings', WebSignIn: '/sign-in', WebSignInCode: '/sign-in/code' };
+    WebStats: '/stats', WebStatsEmpty: '/stats', WebConnect: '/connect', WebSettings: '/settings', WebSignIn: '/sign-in', WebSignInCode: '/sign-in/code', PhoneSignIn: '/sign-in', PhoneSignInCode: '/sign-in/code', PhoneToday: '/', Privacy: '/privacy', Terms: '/terms' };
   return pages[name] || '/b/' + name;
 }
 
@@ -224,7 +226,7 @@ async function go(path, push, replace) {
   app.className = s.fill ? '' : 'fixed';
   app.textContent = '';
   const deck = current.props.deckId && !db.signedOut && db.raw().decks.find(d => d.id === current.props.deckId);
-  document.title = (r.name === 'Main' ? 'Today' : deck && r.name.startsWith('WebDeck') ? deck.name : s.title.replace(/^Web · /, '').replace(/ page$/, '').replace(/ · .*$/, '')) + ' · Lucida';
+  document.title = (r.name === 'Main' ? 'Today' : deck && r.name.startsWith('WebDeck') ? deck.name : s.title.replace(/^(Web|iPhone) · /, '').replace(/ page$/, '').replace(/ · .*$/, '')) + ' · Lucida';
   paint();
   scrollTo(0, 0);
 }
@@ -249,8 +251,9 @@ app.addEventListener('click', e => {
   const a = e.target.closest && e.target.closest('a[href]');
   if (!a || e.defaultPrevented || e.metaKey || e.ctrlKey || e.shiftKey || e.button) return;
   const url = new URL(a.href, location.href);
-  // Signing in with Google or Apple leaves the app for a moment, so those links load for real.
-  if (url.origin !== location.origin || url.pathname.startsWith('/auth/')) return;
+  // Signing in with Google or Apple leaves the app for a moment, and Privacy and Terms are pages of the site, so those
+  // links load for real.
+  if (url.origin !== location.origin || url.pathname.startsWith('/auth/') || /^\/(privacy|terms)$/.test(url.pathname)) return;
   e.preventDefault();
   go(url.pathname + url.search, true);
 });
@@ -283,6 +286,7 @@ addEventListener('keydown', e => {
 });
 addEventListener('popstate', () => go(location.pathname + location.search, false));
 dark.addEventListener('change', schedule);
+narrow.addEventListener('change', schedule);
 
 db = await createDb({ onChange: schedule, go: path => go(path, true) });
 go(location.pathname + location.search, false);

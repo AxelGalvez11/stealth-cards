@@ -2,8 +2,11 @@
   "buildCommand": "node design/to-web.mjs && node design/to-site.mjs",
   "outputDirectory": "web",
   "functions": { "api/index.js": { "maxDuration": 60 } },
+  "headers": [
+    { "source": "/art/(.*)", "headers": [{ "key": "Cache-Control", "value": "public, max-age=86400, stale-while-revalidate=604800" }] }
+  ],
   "redirects": [
-    { "source": "/:path+", "has": [{ "type": "host", "value": "lucida.cards" }], "destination": "https://app.lucida.cards/:path+", "permanent": false }
+    { "source": "/:path((?!art/|privacy$|terms$).+)", "has": [{ "type": "host", "value": "lucida.cards" }], "destination": "https://app.lucida.cards/:path", "permanent": false }
   ],
   "rewrites": [
     { "source": "/", "has": [{ "type": "host", "value": "lucida.cards" }], "destination": "/landing.html" },
@@ -12,6 +15,8 @@
     { "source": "/mcp", "destination": "/api/index" },
     { "source": "/mcp/:path*", "destination": "/api/index" },
     { "source": "/media/:path*", "destination": "/api/index" },
+    { "source": "/privacy", "destination": "/privacy.html" },
+    { "source": "/terms", "destination": "/terms.html" },
     { "source": "/((?!.*\\.).*)", "destination": "/app.html" }
   ]
 }

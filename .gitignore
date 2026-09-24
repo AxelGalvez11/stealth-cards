@@ -11,3 +11,5 @@ data/
 .claude/
 design/.snapshot.json
 web/landing.html
+web/privacy.html
+web/terms.html

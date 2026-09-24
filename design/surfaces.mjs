@@ -101,13 +101,33 @@ export const PALETTES = {
   }
 };
 export const PALETTE_NAMES = Object.keys(PALETTES);
+// The site's own: the dark band that ends the landing page. Kept out of PALETTES, so the app's gradients stay as they are.
+export const SITE_PALETTES = {
+  // Iris after dark: deep indigo with periwinkle bands of light and a cyan glow in the corner; white text.
+  Midnight: {
+    base: 'linear-gradient(102deg, #14165A 0%, #20238A 17%, #1B2378 32%, #151D66 52%, #172372 70%, #123F86 86%, #0B6C9C 100%)',
+    blobs: [['#3440C4', 14, 70, 10, 70, 12], ['#1A2270', 55, 40, 12, 80, 12], ['#0E8CC6', 102, 102, 20, 42, 18], ['#262C8E', 88, 0, 22, 26, 0], ['#4450DA', 6, 100, 16, 22, 12], ['#1C2A80', 72, 60, 10, 70, 12]],
+    streaks: [['#5A64E6', 1, 40, 3.2, 70, 12], ['#3A47C0', 44, 50, 2.6, 80, 12]],
+    blur: 6, sblur: 2.2, disp: 10,
+    ink: '#FFFFFF'
+  }
+};
 
 // Organic flow: blobs warped by low-frequency noise then blurred into each other; streaks get a light blur
 // only, so bands of light keep a cleaner edge. `get(k)` returns a static value or a {{hole}} for field k.
 const FLOW_FILTER = (id, disp, blur) => `<filter id="${id}" x="-60%" y="-60%" width="220%" height="220%" color-interpolation-filters="sRGB"><feTurbulence type="fractalNoise" baseFrequency=".018" numOctaves="2" seed="7" result="n"/><feDisplacementMap in="SourceGraphic" in2="n" scale="${disp}" xChannelSelector="R" yChannelSelector="G"/><feGaussianBlur stdDeviation="${blur}"/></filter>`;
 const STREAK_FILTER = (id, blur) => `<filter id="${id}" x="-60%" y="-60%" width="220%" height="220%" color-interpolation-filters="sRGB"><feGaussianBlur stdDeviation="${blur}"/></filter>`;
 const shape = (get, key) => `<ellipse cx="${get(key + '.x')}" cy="${get(key + '.y')}" rx="${get(key + '.rx')}" ry="${get(key + '.ry')}" fill="${get(key + '.c')}" transform="rotate(${get(key + '.r')} ${get(key + '.x')} ${get(key + '.y')})"/>`;
-export const flowSvg = get => `<svg aria-hidden="true" viewBox="0 0 100 100" preserveAspectRatio="none" width="100%" height="100%" style="position: absolute; inset: 0; pointer-events: none;"><defs>${FLOW_FILTER(get('fid'), get('disp'), get('blur'))}${STREAK_FILTER(get('sid'), get('sblur'))}</defs><g filter="url(#${get('fid')})">${[0, 1, 2, 3, 4, 5].map(i => shape(get, 'b' + i)).join('')}</g><g filter="url(#${get('sid')})">${[0, 1].map(i => shape(get, 's' + i)).join('')}</g></svg>`;
+const flowInner = get => `<defs>${FLOW_FILTER(get('fid'), get('disp'), get('blur'))}${STREAK_FILTER(get('sid'), get('sblur'))}</defs><g filter="url(#${get('fid')})">${[0, 1, 2, 3, 4, 5].map(i => shape(get, 'b' + i)).join('')}</g><g filter="url(#${get('sid')})">${[0, 1].map(i => shape(get, 's' + i)).join('')}</g>`;
+export const flowSvg = get => `<svg aria-hidden="true" viewBox="0 0 100 100" preserveAspectRatio="none" width="100%" height="100%" style="position: absolute; inset: 0; pointer-events: none;">${flowInner(get)}</svg>`;
+// The same color field as a standalone picture of one palette (design/art.mjs renders these for the site and app).
+// It's drawn square and stretched like the live one, which scales its 100 x 100 view the same way.
+export const flowImage = (p, size) => `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 100 100" preserveAspectRatio="none">${flowInner(k => k.split('.').reduce((a, x) => a[x], p))}</svg>`;
+// Film grain as a small tile that repeats: pages draw it once as a picture instead of filtering every card.
+export const grainTile = (size, { freq = 0.85, slope = 3.4 } = {}) => {
+  const b = Math.round((1 - slope) / 2 * 100) / 100, f = c => `<feFunc${c} type="linear" slope="${slope}" intercept="${b}"/>`;
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}"><filter id="g" x="0" y="0" width="100%" height="100%" color-interpolation-filters="sRGB"><feTurbulence type="fractalNoise" baseFrequency="${freq}" numOctaves="3" stitchTiles="stitch"/><feColorMatrix type="saturate" values="0"/><feComponentTransfer>${f('R')}${f('G')}${f('B')}</feComponentTransfer></filter><rect width="100%" height="100%" filter="url(#g)"/></svg>`;
+};
 
 // Fine monochrome film grain in CSS pixels (no viewBox, so it never stretches).
 export const grainSvg = (opacity, { blend = 'overlay', freq = 0.9, slope = 3, id = 'sc-grain' } = {}) =>
@@ -115,7 +135,7 @@ export const grainSvg = (opacity, { blend = 'overlay', freq = 0.9, slope = 3, id
 
 // Plain data for a palette, shaped for templates: { base, ink, b0: { c, x, y, rx, ry }, ... }.
 export const paletteData = name => {
-  const p = PALETTES[name], dark = p.ink === '#FFFFFF';
+  const p = PALETTES[name] || SITE_PALETTES[name], dark = p.ink === '#FFFFFF';
   const o = { base: p.base, ink: p.ink, fid: 'sc-flow-' + name.toLowerCase(), sid: 'sc-streak-' + name.toLowerCase(),
     blur: String(p.blur || 9), sblur: String(p.sblur || 3), disp: String(p.disp ?? 26),
     glass: dark ? 'rgba(255,255,255,.12)' : 'rgba(255,255,255,.34)', glassLine: dark ? 'rgba(255,255,255,.62)' : 'rgba(0,0,0,.22)',

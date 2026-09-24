@@ -1,6 +1,7 @@
 // Turns the design canvas boards (canvas/project/*.dc.html) into screens for the web app (web/screens/*.js).
 // Each screen keeps its board's markup, styles, and logic as they are, so the app looks and works like the canvas.
-// Web boards (1440 x 900) are stretched to fill the browser window; the others keep their size.
+// Web boards (1440 x 900) are stretched to fill the browser window, and so are the phone sign-in pages on a phone;
+// the others keep their size.
 import { readFileSync, writeFileSync, readdirSync, mkdirSync, rmSync } from 'node:fs';
 
 const SRC = new URL('./canvas/project/', import.meta.url);
@@ -20,8 +21,9 @@ for (const file of readdirSync(SRC).filter(f => f.endsWith('.dc.html')).sort()) 
   const props = Object.fromEntries(Object.entries(raw).filter(([k]) => k !== '$preview').map(([k, v]) => [k, v.default]));
   const logic = src.split('data-dc-script')[1].split('>').slice(1).join('>').split('</script>')[0].trim();
   let template = body.replace(/<helmet>[\s\S]*?<\/helmet>/, '').trim();
-  const fill = w === 1440 && h === 900;
-  if (fill) {
+  const phoneFill = ['PhoneSignIn', 'PhoneSignInCode'].includes(name), fill = (w === 1440 && h === 900) || phoneFill;
+  if (phoneFill) template = template.replace('width: 390px; height: 844px;', 'width: 100%; min-height: 100vh; min-height: 100dvh;');
+  else if (fill) {
     template = template.replace('width: 1440px; height: 900px;', 'width: 100%; height: 100vh;');
     template = template.replace(/<main style="/g, '<main style="overflow-y: auto; ');
   }

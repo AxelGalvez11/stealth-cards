@@ -18,12 +18,14 @@ The design canvas is the source of truth for how the app looks: https://claude.a
 - **Each person has their own library**: one row in the `libraries` table (keyed by their user id), and their pictures and sound in their own folder of the private `media` bucket (`web/supa.mjs`). Each request works on its own copy (`withLibrary` in `web/store.mjs`), so people never see each other's cards.
 - **Personal MCP links**: AI apps connect at `https://app.lucida.cards/mcp/lk_…`, shown on the Connect AI page. The link opens only that person's library; "Make a new link" there turns off the old one. (Plain `/mcp` works only on your own computer.)
 - Vercel gets `SUPABASE_URL` and the keys from the Supabase integration. Without them, the app saves to `data/` on your computer and nobody signs in.
-- **Landing page**: the Landing boards on the canvas become `web/landing.html` (`node design/to-site.mjs`), shown at lucida.cards. Its links open the app at app.lucida.cards.
+- **Landing page**: the Landing boards on the canvas become `web/landing.html` (`node design/to-site.mjs`), shown at lucida.cards. Its links open the app at app.lucida.cards. The Privacy and Terms boards become lucida.cards/privacy and /terms (their words are in `design/legal.mjs`).
+- **Gradient pictures**: the landing page and the sign-in wall move dozens of gradient cards, which phones can't redraw live, so there each card's colors come from a small picture in `web/art/` under one grain tile (`web/fast.css`). `node design/art.mjs` draws them with Chrome; run it after changing the wall cards (`design/wall.mjs`), the palettes, or the generator. The canvas still draws them live.
 
-Supabase settings sign-in needs (Supabase dashboard → Authentication):
+Supabase settings sign-in needs (Supabase dashboard → Authentication), all set:
+- Emails → SMTP Settings: Resend (connected from Resend → Settings → Integrations → Supabase), sending as Lucida, team@lucida.cards. Supabase's own sender only mails the project's team, and templates can't be edited without this.
+- Emails → "Magic link or OTP" and "Confirm sign up": the code in the email with `{{ .Token }}`.
+- Sign In / Providers → Email: Email OTP Length 6 (the sign-in page has six boxes).
 - URL Configuration: Site URL `https://app.lucida.cards`, and Redirect URLs `https://app.lucida.cards/**`, `https://lucida-eight.vercel.app/**`, `http://localhost:3000/**`.
-- Emails → "Magic Link" and "Confirm signup": put the code in the email with `{{ .Token }}`.
-- Emails → SMTP: Supabase's own sender only mails the project's team, so real users need an email service (like Resend).
 - Sign In / Providers: turn on Google and Apple with their own client ids (Google Cloud and Apple Developer). Until then, those buttons say they aren't set up yet.
 
 ## Your data and AI apps

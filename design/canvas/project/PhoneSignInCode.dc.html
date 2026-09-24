@@ -13,19 +13,18 @@
 <style>
 body{margin:0;font-family:Geist, -apple-system, system-ui, sans-serif}
 a{color:inherit;text-decoration:none}a:hover{opacity:.8}
+@keyframes scRise{from{opacity:0;transform:translateY(14px)}}main>*{animation:scRise .5s cubic-bezier(.2,.8,.2,1) backwards}main>*:nth-child(2){animation-delay:0.06s}main>*:nth-child(3){animation-delay:0.12s}main>*:nth-child(4){animation-delay:0.18s}main>*:nth-child(5){animation-delay:0.24s}main>*:nth-child(n+6){animation-delay:.3s}button,.sc-press{transition:transform .1s ease}button:active,.sc-press:active{transform:scale(.96)}.sc-lift{transition:transform .25s cubic-bezier(.2,.8,.2,1),box-shadow .25s cubic-bezier(.2,.8,.2,1)}.sc-lift:hover{transform:translateY(-4px);box-shadow:0 24px 48px -24px rgba(0,0,0,.45)}@keyframes scFloat{50%{transform:translateY(-6px)}}@keyframes scSwayA{50%{transform:rotate(-13deg) translateX(-3px)}}@keyframes scSwayB{50%{transform:rotate(10deg) translateX(3px)}}@keyframes scGlow{50%{opacity:.55}}@keyframes scSheen{0%,58%{transform:translateX(-160%) skewX(-18deg)}86%,100%{transform:translateX(260%) skewX(-18deg)}}.sc-float{animation:scFloat 6s ease-in-out infinite}.sc-sway-a{animation:scSwayA 6s ease-in-out infinite}.sc-sway-b{animation:scSwayB 6s ease-in-out infinite}.sc-glow{animation:scGlow 6s ease-in-out infinite}.sc-sheen{position:absolute;top:0;bottom:0;left:0;width:45%;background:linear-gradient(90deg,transparent,rgba(255,255,255,.4),transparent);animation:scSheen 5s cubic-bezier(.4,0,.2,1) infinite;pointer-events:none}@keyframes scDrift{from{transform:scale(1.14) translate(-3%,-2%)}to{transform:scale(1.14) translate(3%,2%)}}.sc-alive>svg:first-of-type{animation:scDrift 16s ease-in-out infinite alternate}@keyframes scDraw{from{stroke-dashoffset:1.02}}.sc-draw{stroke-dasharray:1 2;animation:scDraw .9s cubic-bezier(.2,.8,.2,1) backwards}@keyframes scKnob{from{opacity:0;transform:scale(.3)}}.sc-knob{transform-box:fill-box;transform-origin:center;animation:scKnob .35s .75s cubic-bezier(.34,1.56,.64,1) backwards}@keyframes scGrow{from{transform:scaleY(0)}}.sc-grow{transform-origin:bottom;animation:scGrow .6s cubic-bezier(.2,.8,.2,1) backwards}:nth-child(2)>.sc-grow{animation-delay:0.04s}:nth-child(3)>.sc-grow{animation-delay:0.08s}:nth-child(4)>.sc-grow{animation-delay:0.12s}:nth-child(5)>.sc-grow{animation-delay:0.16s}:nth-child(6)>.sc-grow{animation-delay:0.20s}:nth-child(7)>.sc-grow{animation-delay:0.24s}:nth-child(8)>.sc-grow{animation-delay:0.28s}:nth-child(9)>.sc-grow{animation-delay:0.32s}:nth-child(10)>.sc-grow{animation-delay:0.36s}:nth-child(11)>.sc-grow{animation-delay:0.40s}:nth-child(12)>.sc-grow{animation-delay:0.44s}:nth-child(13)>.sc-grow{animation-delay:0.48s}:nth-child(14)>.sc-grow{animation-delay:0.52s}@media (prefers-reduced-motion:reduce){main>*,.sc-float,.sc-sway-a,.sc-sway-b,.sc-glow,.sc-alive>svg,.sc-draw,.sc-knob,.sc-grow{animation:none!important}.sc-sheen{display:none}button:active,.sc-press:active,.sc-lift:hover{transform:none}}
 
 </style>
 </helmet>
-<div style="position: relative; width: 390px; height: 844px; box-sizing: border-box; font-family: Geist, -apple-system, system-ui, sans-serif; background: {{t.bg}}; color: {{t.text}}; overflow: hidden;">
-<div style="height: 100%; box-sizing: border-box; padding: 64px 20px 34px; display: flex; flex-direction: column; gap: 28px;">
+<div style="position: relative; width: 390px; height: 844px; box-sizing: border-box; display: flex; flex-direction: column; font-family: Geist, -apple-system, system-ui, sans-serif; background: {{t.bg}}; color: {{t.text}}; overflow: hidden;">
+<div style="flex: 1 0 auto; box-sizing: border-box; padding: 64px 20px 34px; display: flex; flex-direction: column; gap: 28px;">
   <a href="PhoneSignIn.dc.html" aria-label="Use another email" style="width: 44px; height: 44px; border-radius: 22px; background: {{t.surf}}; display: flex; align-items: center; justify-content: center;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg></a>
   <div style="display: flex; flex-direction: column; gap: 8px;"><h1 style="margin: 0; font-size: 32px; font-weight: 600; letter-spacing: -.03em;">Check your email</h1><div style="font-size: 15px; line-height: 1.45; color: {{t.muted}};">Enter the 6-digit code we sent to <span style="color: {{t.text}}; font-weight: 500;">{{sentTo}}</span></div></div>
-  <label style="position: relative; display: flex; justify-content: space-between; cursor: text;"><sc-for list="{{boxes}}" as="b" hint-placeholder-count="6"><span style="width: 50px; height: 58px; border-radius: 14px; background: {{t.surf}}; box-shadow: {{b.ring}}; display: flex; align-items: center; justify-content: center; font-size: 22px; font-weight: 600;">{{b.digit}}</span></sc-for><input type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6" value="{{code}}" onChange="{{setCode}}" aria-label="6-digit code" style="position: absolute; inset: 0; width: 100%; opacity: 0; border: 0; padding: 0; font-size: 16px;"></label><sc-if value="{{hasError}}" hint-placeholder-val="{{ false }}"><div role="alert" style="padding: 2px 4px 0; font-size: 14px; line-height: 1.4; color: {{t.again}};">{{error}}</div></sc-if>
+  <label style="position: relative; display: flex; justify-content: space-between; gap: 6px; cursor: text;"><sc-for list="{{boxes}}" as="b" hint-placeholder-count="6"><span style="flex: 0 1 50px; min-width: 0; height: 58px; border-radius: 14px; background: {{t.surf}}; box-shadow: {{b.ring}}; display: flex; align-items: center; justify-content: center; font-size: 22px; font-weight: 600;">{{b.digit}}</span></sc-for><input type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6" value="{{code}}" onChange="{{setCode}}" aria-label="6-digit code" style="position: absolute; inset: 0; width: 100%; opacity: 0; border: 0; padding: 0; font-size: 16px;"></label><sc-if value="{{hasError}}" hint-placeholder-val="{{ false }}"><div role="alert" style="padding: 2px 4px 0; font-size: 14px; line-height: 1.4; color: {{t.again}};">{{error}}</div></sc-if>
   <div style="flex-grow: 1;"></div>
   <div style="display: flex; flex-direction: column; gap: 14px;"><a href="PhoneToday.dc.html" onClick="{{verify}}" style="height: 52px; display: flex; align-items: center; justify-content: center; border-radius: 999px; background: {{t.inv}}; color: {{t.invText}}; font-size: 16px; font-weight: 600;">{{verifyLabel}}</a><button type="button" onClick="{{resend}}" style="align-self: center; border: 0; padding: 0; background: transparent; color: {{t.muted}}; font: inherit; font-size: 15px; cursor: pointer;">{{resendLabel}}</button></div>
 </div>
-
-
 </div>
 </x-dc>
 <script type="text/x-dc" data-dc-script data-props='{"dark":{"editor":"boolean","default":false},"$preview":{"width":390,"height":844}}'>
@@ -191,6 +190,10 @@ mock() {
   };
 }
 
+art(p, variant) {
+  const name = p.fid + (variant ? '-' + variant : ''), on = !!(this.props.site || this.props.db) && ["sc-flow-midnight","sc-flow-midnight-wide","sc-gen-1bgiry6","sc-gen-1eyvfay","sc-gen-1h674rq","sc-gen-1iccxh","sc-gen-1madw05","sc-gen-1mheeld","sc-gen-1mukigx","sc-gen-1neye4o","sc-gen-1s1ssqz","sc-gen-1tj9ifj","sc-gen-1ul2ng5","sc-gen-1yac7zp","sc-gen-2xvhhe","sc-gen-5gnrcu","sc-gen-8f1umk","sc-gen-90zkel","sc-gen-favxds","sc-gen-o6z85t","sc-gen-px21tz","sc-gen-qmdzqs","sc-gen-v4yoeu","sc-gen-vwxtrt","sc-gen-ym0akm","sc-gen-yzu3mr"].includes(name);
+  return { ...p, art: on ? 'url(/art/' + name + '.webp)' : '', live: !on };
+}
 constructor(props) { super(props); const a = props.db && props.db.auth; this.state = { email: a ? a.email() : '', code: a ? '' : '482', resent: false, busy: false, error: a ? a.error() : '' }; }
 renderVals() { const t = this.theme(!!this.props.dark);
   const s = this.state, code = String(s.code || ''), a = this.props.db && this.props.db.auth;
@@ -212,7 +215,8 @@ renderVals() { const t = this.theme(!!this.props.dark);
     a.verify(digits).then(() => a.done(), e => { const box = document.querySelector('input[autocomplete="one-time-code"]'); if (box) box.value = ''; this.setState({ busy: false, code: '', error: e.message }); });
   };
   const leave = to => e => { if (!a) return; stop(e); location.assign(to); };
-  return { grain: String(this.props.grain ?? 0.7), t, 
+  return { grain: String(this.props.grain ?? 0.7), t, sky: (this.props.dark ? { top: '#081733', mid: '#0D2148', low: '#0A1530', glow: 'rgba(120,150,255,.16)', cloud: 'rgba(150,170,230,.10)' }
+    : { top: '#86BDF3', mid: '#C9E2FB', low: '#EDF5FE', glow: 'rgba(255,255,255,.75)', cloud: 'rgba(255,255,255,.94)' }), 
     email: s.email, setEmail: e => this.setState({ email: e && e.target ? e.target.value : '', error: '' }), emailKey: e => { if (e && e.key === 'Enter') send(e); },
     sentTo: (s.email || '').trim() || 'you@school.edu', sendCode: send, sendLabel: s.busy ? 'Sending…' : 'Continue',
     google: leave('/auth/google'), apple: leave('/auth/apple'),
@@ -221,7 +225,8 @@ renderVals() { const t = this.theme(!!this.props.dark);
     verifyLabel: s.busy ? 'Checking…' : 'Continue', error: s.error, hasError: !!s.error,
     boxes: Array.from({ length: 6 }, (_, i) => ({ digit: code[i] || '', ring: i === Math.min(code.length, 5) ? 'inset 0 0 0 2px ' + t.text : 'none' })),
     resend: () => { if (!a) return this.setState({ resent: true }); a.sendCode(a.email()).then(() => this.setState({ resent: true, error: '' }), failed); },
-    resendLabel: s.resent ? 'New code sent' : 'Send a new code' }; }
+    resendLabel: s.resent ? 'New code sent' : 'Send a new code',
+    termsHref: a ? '/terms' : 'Terms.dc.html', privacyHref: a ? '/privacy' : 'Privacy.dc.html' }; }
 }
 </script>
 </body>
