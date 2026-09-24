@@ -187,6 +187,117 @@ export async function createDb({ onChange, go }) {
   const upload = async blob => { const r = await fetch('/api/media', { method: 'POST', headers: { 'content-type': blob.type }, body: blob }); const j = await r.json(); if (!r.ok) { alert(j.error); return null; } return j.url; };
   let recorder = null, typing = {}, typingTimer = null;
 
+  // ---------- Learn mode ----------
+  // Learn a set of cards until you know every one. Each card is asked in different ways: pick from a few answers, true
+  // or false, match it with others, fill in its blank, or type it. It's learned after two right answers in a row, asked
+  // two ways, and a card you miss comes back a few questions later. Up to 7 cards are in play at a time. The session
+  // keeps itself on this device, so you can stop and pick up later; when every card is learned, the ones that were new
+  // get their first review, so spaced repetition takes over.
+  const LEARN_KEY = 'lucida.learn', PLAY = 7, KIND_NAME = { mc: 'Multiple choice', tf: 'True or false', blank: 'Fill in the blank', match: 'Matching', type: 'Type the answer' };
+  const cardById = id => S.cards.find(c => c.id === id);
+  const learnText = c => (c.kind === 'cloze' ? R.plain(c.text, { cloze: true, blank: '____', join: ' ', math: 'show' }) : flat(c.front)).trim();
+  const answerOf = c => (c.kind === 'cloze' ? R.blanks(c.text, { math: 'show' }).join(', ') : flat(c.back)).trim();
+  const learnable = c => !c.pending && c.kind !== 'audio' && !!answerOf(c) && (c.kind === 'image' ? !!c.image : !!learnText(c));
+  const isHard = c => (c.srs.lapses || 0) > 0 || c.srs.state === 'relearning' || (c.srs.state === 'review' && (c.srs.d || 0) >= 7);
+  const shuffle = a => { const b = a.slice(); for (let i = b.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [b[i], b[j]] = [b[j], b[i]]; } return b; };
+  const oneOf = a => a[Math.floor(Math.random() * a.length)];
+  let learning = (() => { try { const x = JSON.parse(localStorage.getItem(LEARN_KEY) || 'null'); return x && x.v === 1 ? x : null; } catch { return null; } })();
+  // A saved session only counts while its deck and cards are still here (and belong to whoever is signed in).
+  const learnOk = () => learning && deckById(learning.deckId) && learning.ids.every(cardById);
+  const saveLearn = () => { try { if (learning) localStorage.setItem(LEARN_KEY, JSON.stringify(learning)); else localStorage.removeItem(LEARN_KEY); } catch { /* private window */ } };
+  function learnSet(id, set) {
+    const cs = cardsOf(id).filter(learnable);
+    if (set === 'new') return cs.filter(c => c.srs.state === 'new');
+    if (set === 'hard') return cs.filter(isHard);
+    if (set.startsWith('tag:')) return cs.filter(c => c.tags.includes(set.slice(4)));
+    return cs;
+  }
+  // Wrong answers that look like the right one: other cards' answers of about the same length, from the same deck.
+  function distractors(c, n) {
+    const right = answerOf(c).toLowerCase(), deck = cardsOf(c.deckId).filter(x => x.id !== c.id && learnable(x)), same = deck.filter(x => x.kind === c.kind);
+    const pool = [...new Set((same.length > n ? same : deck).map(answerOf))].filter(a => a && a.toLowerCase() !== right);
+    pool.sort((a, b) => Math.abs(a.length - right.length) - Math.abs(b.length - right.length));
+    return shuffle(pool.slice(0, n * 2)).slice(0, n);
+  }
+  const short = c => c.kind !== 'image' && learnText(c).length <= 70 && answerOf(c).length <= 60;
+  // Which kind of question a card gets: a choice first; once it's right, typing it (or another kind of choice).
+  function kindFor(s, c, play) {
+    const on = k => learning.kinds.includes(k), fits = {
+      mc: distractors(c, 3).length >= 1, tf: distractors(c, 1).length >= 1, blank: c.kind === 'cloze' && distractors(c, 3).length >= 1,
+      match: short(c) && play.filter(x => learning.st[x].streak === 0 && short(cardById(x))).length >= 4, type: answerOf(c).length <= 40 };
+    const pickFrom = ks => ks.filter(k => on(k) && fits[k]);
+    const choice = pickFrom(['mc', 'tf', 'blank', 'match']), recall = pickFrom(['type']);
+    if (s.streak === 1) { const r = recall.length ? recall : choice.filter(k => k !== s.lastKind); if (r.length) return oneOf(r); }
+    return oneOf(choice.length ? choice : recall.length ? recall : ['mc']);
+  }
+  // Moves a card a few places later among the cards still to learn, so something else comes first.
+  function later(cid, k) {
+    const q = learning.queue; q.splice(q.indexOf(cid), 1);
+    const open = q.filter(x => !learning.st[x].learned), after = open[Math.min(k, open.length) - 1];
+    q.splice(after ? q.indexOf(after) + 1 : q.length, 0, cid);
+  }
+  function nextQuestion() {
+    const L = learning, open = L.queue.filter(x => !L.st[x].learned);
+    if (!open.length) { L.q = null; L.done = true; L.ended = now(); finishLearn(); return; }
+    const play = open.slice(0, PLAY), cid = play.find(x => x !== L.lastCard) || play[0], c = cardById(cid), s = L.st[cid], kind = kindFor(s, c, play);
+    L.asked++; L.justLearned = 0; L.lastCard = cid;
+    if (kind === 'match') {
+      const group = [cid, ...play.filter(x => x !== cid && L.st[x].streak === 0 && short(cardById(x)))].slice(0, 5);
+      L.q = { type: 'match', ids: group, left: shuffle(group), right: shuffle(group), done: [], sel: null, wrong: null };
+      return;
+    }
+    if (kind === 'type') { L.q = { type: 'type', kind, id: cid, typed: '', checked: false, ok: false }; return; }
+    if (kind === 'tf') {
+      const truth = Math.random() < .5, claim = truth ? answerOf(c) : distractors(c, 1)[0];
+      L.q = { type: 'choice', kind, id: cid, claim, options: ['True', 'False'], right: truth ? 0 : 1, pick: null };
+      return;
+    }
+    const options = shuffle([answerOf(c), ...distractors(c, 3)]);
+    L.q = { type: 'choice', kind: c.kind === 'cloze' && learning.kinds.includes('blank') ? 'blank' : kind, id: cid, options, right: options.indexOf(answerOf(c)), pick: null };
+  }
+  function mark(cid, ok, kind) {
+    const L = learning, s = L.st[cid];
+    s.tries++;
+    if (!s.seen) { s.seen = true; if (ok) L.firstRight++; }
+    s.lastKind = kind;
+    if (ok) { s.streak++; if (s.streak >= 2) { s.learned = true; L.justLearned++; } else later(cid, 3); }
+    else { s.streak = 0; s.misses++; later(cid, 2); }
+  }
+  // Every card learned: the new ones start their reviews (Good, or Hard if they took misses).
+  async function finishLearn() {
+    const L = learning;
+    if (L.graded) return;
+    L.graded = true; saveLearn();
+    for (const cid of L.ids) { const c = cardById(cid); if (c && c.srs.state === 'new') { try { await send('review.grade', { cardId: cid, rating: L.st[cid].misses ? 2 : 3 }); } catch { /* shown already */ } } }
+  }
+  // Spelling that's close enough counts: case, accents, a missing "the", and a typo or two in a longer word.
+  const norm = x => String(x).toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/\([^)]*\)/g, ' ').replace(/[^\p{L}\p{N}]+/gu, ' ').replace(/\b(the|a|an)\b/g, ' ').replace(/\s+/g, ' ').trim();
+  const lev = (a, b) => { const d = Array.from({ length: b.length + 1 }, (_, i) => i); for (let i = 1; i <= a.length; i++) { let p = d[0]; d[0] = i; for (let j = 1; j <= b.length; j++) { const t = d[j]; d[j] = Math.min(d[j] + 1, d[j - 1] + 1, p + (a[i - 1] === b[j - 1] ? 0 : 1)); p = t; } } return d[b.length]; };
+  function closeEnough(typed, answer) {
+    const t = norm(typed);
+    if (!t) return false;
+    const inParens = (String(answer).match(/\(([^)]*)\)/) || [])[1];
+    const parts = [answer, ...String(answer).split(/[,;/]|\bor\b/), inParens].filter(Boolean).map(norm).filter(Boolean);
+    return parts.some(p => p === t || lev(p, t) <= Math.max(p.length > 4 ? 1 : 0, Math.floor(p.length / 7)));
+  }
+  const learnDeckLabel = L => (L.set.startsWith('tag:') ? L.set.slice(4) : { new: 'New cards', hard: 'Hard cards', all: 'All cards' }[L.set]);
+  function learnView() {
+    if (!learnOk()) return null;
+    const L = learning, total = L.ids.length, learned = L.ids.filter(x => L.st[x].learned).length;
+    const base = { deckId: L.deckId, setName: learnDeckLabel(L), total, learned, learning: L.ids.filter(x => !L.st[x].learned && L.st[x].seen).length, justLearned: L.justLearned, n: L.asked };
+    if (L.done) {
+      const tries = L.ids.map(x => ({ c: cardById(x), n: L.st[x].tries })).filter(x => x.n > 2).sort((a, b) => b.n - a.n).slice(0, 3);
+      return { ...base, done: true, minutes: Math.max(1, Math.round((L.ended - L.started) / MIN)), firstPct: Math.round(L.firstRight / total * 100),
+        tries: tries.map(x => ({ front: learnText(x.c), back: answerOf(x.c), n: x.n + ' tries' })) };
+    }
+    const q = L.q;
+    if (q.type === 'match') return { ...base, type: 'match', kind: KIND_NAME.match, left: q.left.map(id => ({ id, label: learnText(cardById(id)) })), right: q.right.map(id => ({ id, label: answerOf(cardById(id)) })), matched: q.done, sel: q.sel, wrong: q.wrong, all: q.done.length === q.ids.length };
+    const c = cardById(q.id), s = L.st[q.id];
+    const common = { ...base, id: q.id, text: learnText(c), image: c.kind === 'image' ? c.image : '', answer: answerOf(c), note: flat(c.note || ''), streak: s.streak, learnedNow: s.learned };
+    if (q.type === 'type') return { ...common, type: 'type', kind: KIND_NAME.type, typed: q.typed, checked: q.checked, ok: q.ok };
+    return { ...common, type: 'choice', kind: KIND_NAME[q.kind], claim: q.claim || '', options: q.options, right: q.right, pick: q.pick };
+  }
+
   const act = {
     addDeck: async o => { const r = await send('deck.add', o); go('/deck/' + r.id); },
     // While you type a name it saves a moment after you stop.
@@ -242,6 +353,48 @@ export async function createDb({ onChange, go }) {
     speak: (text, lang) => { text = R.plain(text, { join: ' ', math: 'show' }).trim(); if (!text || !window.speechSynthesis) return; speechSynthesis.cancel(); const u = new SpeechSynthesisUtterance(text); if (lang) u.lang = lang; speechSynthesis.speak(u); },
     play: url => { if (url) new Audio(url).play(); },
     importCards: async o => { const r = await send('data.import', o); go('/deck/' + r.deckId); },
+    // Learn mode (see above).
+    startLearn: (id, set, kinds) => {
+      const cs = learnSet(id, set);
+      if (!cs.length) return;
+      const ids = shuffle(cs.map(c => c.id));
+      learning = { v: 1, deckId: id, set, kinds: kinds.length ? kinds : ['mc'], ids, queue: ids.slice(), asked: 0, firstRight: 0, justLearned: 0, started: now(), q: null, done: false, graded: false,
+        st: Object.fromEntries(ids.map(x => [x, { streak: 0, tries: 0, misses: 0, lastKind: null, learned: false, seen: false }])) };
+      nextQuestion(); saveLearn(); go('/learn/' + id);
+    },
+    learnAnswer: j => { const q = learning && learning.q; if (!q || q.type !== 'choice' || q.pick != null) return; q.pick = j; mark(q.id, j === q.right, q.kind); saveLearn(); changed(); },
+    learnPick: (side, cid) => {
+      const q = learning && learning.q;
+      if (!q || q.type !== 'match' || q.done.includes(cid)) return;
+      if (side === 'left') { q.sel = cid; q.wrong = null; changed(); return; }
+      if (q.sel == null) return;
+      if (cid === q.sel) { q.done.push(cid); mark(cid, true, 'match'); q.sel = null; }
+      else { const a = q.sel; mark(a, false, 'match'); q.wrong = [a, cid]; q.sel = null; setTimeout(() => { if (learning && learning.q === q) { q.wrong = null; changed(); } }, 700); }
+      saveLearn(); changed();
+    },
+    learnType: typed => {
+      const q = learning && learning.q;
+      if (!q || q.type !== 'type' || q.checked || !String(typed || '').trim()) return;
+      const s = learning.st[q.id];
+      q.before = { streak: s.streak, seen: s.seen }; q.typed = String(typed); q.checked = true; q.ok = closeEnough(typed, answerOf(cardById(q.id)));
+      mark(q.id, q.ok, 'type'); saveLearn(); changed();
+    },
+    // The spelling check missed it (another word for the same thing): count it as right after all.
+    learnOverride: () => {
+      const L = learning, q = L && L.q;
+      if (!q || q.type !== 'type' || !q.checked || q.ok) return;
+      const s = L.st[q.id];
+      q.ok = true; s.misses = Math.max(0, s.misses - 1); s.streak = q.before.streak + 1;
+      if (!q.before.seen) L.firstRight++;
+      if (s.streak >= 2) { s.learned = true; L.justLearned++; }
+      saveLearn(); changed();
+    },
+    learnNext: () => {
+      const L = learning, q = L && L.q;
+      if (!L || L.done || !q) return;
+      if ((q.type === 'choice' && q.pick == null) || (q.type === 'type' && !q.checked) || (q.type === 'match' && q.done.length < q.ids.length)) return;
+      nextQuestion(); saveLearn(); changed();
+    },
     exportAll: () => download('lucida.json', JSON.stringify({ decks: S.decks, cards: S.cards, logs: S.logs }, null, 1), 'application/json'),
     resetAll: async () => { if (!confirm('Delete every deck, card, and review' + (S.me ? '' : ' on this computer') + '? This can’t be undone.')) return; await send('data.reset'); session = null; go('/'); },
     signOut: async () => { await fetch('/api/auth/signout', { method: 'POST' }).catch(() => {}); toSignIn(); },
@@ -295,6 +448,15 @@ export async function createDb({ onChange, go }) {
         iv: pv ? { again: waitLabel(pv[1], t), hard: waitLabel(pv[2], t), good: waitLabel(pv[3], t), easy: waitLabel(pv[4], t) } : { again: '', hard: '', good: '', easy: '' } };
     },
     hasQueue: (id, pile) => queue(id, pile).length > 0,
+    learn: learnView,
+    learnSets: id => {
+      const cs = cardsOf(id).filter(learnable), uses = {};
+      cs.forEach(c => c.tags.forEach(g => { uses[g] = (uses[g] || 0) + 1; }));
+      const tag = Object.keys(uses).sort((a, b) => uses[b] - uses[a])[0];
+      return [['new', 'New', cs.filter(c => c.srs.state === 'new').length], ['hard', 'Hard', cs.filter(isHard).length], ...(tag ? [['tag:' + tag, tag, uses[tag]]] : []), ['all', 'All', cs.length]]
+        .filter(([k, , n]) => n > 0 || k === 'all').map(([k, label, n]) => ({ id: k, label, n }));
+    },
+    learnOn: id => !!(learnOk() && learning.deckId === id && !learning.done),
     startReview: (id, pile) => { session = { key: keyOf(id, pile), deckId: id || null, pile: pile || null, started: now(), graded: [] }; },
     session: () => {
       const g = session ? session.graded : [], rated = g.filter(x => x.rating);

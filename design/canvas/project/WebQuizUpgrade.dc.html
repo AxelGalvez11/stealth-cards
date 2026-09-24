@@ -18,7 +18,7 @@ a{color:inherit;text-decoration:none}a:hover{opacity:.8}
 </style>
 </helmet>
 <div style="position: relative; width: 1440px; height: 900px; overflow: hidden; font-family: Geist, -apple-system, system-ui, sans-serif; color: {{t.text}};">
-  <dc-import name="WebDeck" dark="{{dark}}" hint-size="1440px,900px"></dc-import>
+  <dc-import name="WebDeck" dark="{{dark}}" deck-id="{{deckId}}" hint-size="1440px,900px"></dc-import>
   <div style="position: absolute; inset: 0; background: {{t.dim}};"></div>
   <div role="dialog" aria-label="Learn mode" style="position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); width: 560px; box-sizing: border-box; border-radius: 36px; overflow: hidden; background: {{t.bg}}; box-shadow: 0 24px 64px rgba(0,0,0,.24); ">
     <div aria-hidden="true" style="position: relative; height: 236px; background: linear-gradient(180deg, {{sky.top}} 0%, {{sky.mid}} 58%, {{sky.low}} 82%, {{t.bg}} 100%); overflow: hidden;">
@@ -33,7 +33,7 @@ a{color:inherit;text-decoration:none}a:hover{opacity:.8}
       <div style="display: flex; flex-direction: column; gap: 8px;"><span style="display: flex; align-items: center; gap: 10px; font-size: 26px; font-weight: 600; letter-spacing: -.03em;">Learn every card<span style="height: 22px; padding: 0 9px; display: inline-flex; align-items: center; border-radius: 999px; background: linear-gradient(90deg, #7E94FB, #2CB2EA); color: #FFFFFF; font-size: 12px; font-weight: 700; letter-spacing: .01em;">Pro</span></span><span style="font-size: 15px; line-height: 1.5; color: {{t.muted}};">AI turns your cards into questions of every kind, like matching and typing the answer, and keeps going until you know them all.</span></div>
       <div style="display: flex; flex-direction: column; gap: 10px; font-size: 15px;"><span style="display: flex; align-items: center; gap: 10px;"><span style="width: 22px; height: 22px; flex-shrink: 0; border-radius: 11px; background: linear-gradient(135deg, #7E94FB, #2CB2EA); color: #FFFFFF; display: flex; align-items: center; justify-content: center;"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5 9-10"/></svg></span>Learn mode with 5 kinds of questions</span><span style="display: flex; align-items: center; gap: 10px;"><span style="width: 22px; height: 22px; flex-shrink: 0; border-radius: 11px; background: linear-gradient(135deg, #7E94FB, #2CB2EA); color: #FFFFFF; display: flex; align-items: center; justify-content: center;"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5 9-10"/></svg></span>Photo covers and your own colors</span><span style="display: flex; align-items: center; gap: 10px;"><span style="width: 22px; height: 22px; flex-shrink: 0; border-radius: 11px; background: linear-gradient(135deg, #7E94FB, #2CB2EA); color: #FFFFFF; display: flex; align-items: center; justify-content: center;"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5 9-10"/></svg></span>Unlimited pictures and sounds</span></div>
       <div style="font-size: 14px; color: {{t.muted}};">$39 a year, or $5.99 a month. Cancel anytime.</div>
-      <div style="display: flex; gap: 10px;"><a href="{{plansHref}}" style="flex-grow: 1; height: 52px; border-radius: 999px; background: {{t.surf}}; color: {{t.text}}; display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 15px; font-weight: 600; ">See plans</a><a href="{{plansHref}}" style="flex-grow: 2; height: 52px; border-radius: 999px; background: {{t.inv}}; color: {{t.invText}}; display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 15px; font-weight: 600; ">Go Pro</a></div>
+      <div style="display: flex; gap: 10px;"><a href="{{plansHref}}" style="flex-grow: 1; height: 52px; border-radius: 999px; background: {{t.surf}}; color: {{t.text}}; display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 15px; font-weight: 600;">See plans</a><a href="{{plansHref}}" style="flex-grow: 2; height: 52px; border-radius: 999px; background: {{t.inv}}; color: {{t.invText}}; display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 15px; font-weight: 600;">Go Pro</a></div>
     </div>
   </div>
 </div>
@@ -202,15 +202,18 @@ mock() {
 }
 
 
-constructor(props) { super(props); this.state = { set: 'tag', kinds: ['Multiple choice', 'Matching', 'True or false', 'Fill in the blank'] }; }
-renderVals() { const t = this.theme(!!this.props.dark);
-  const s = this.state, seg = (id, cur) => ({ pressed: id === cur ? 'true' : 'false', bg: id === cur ? t.bg : 'transparent', fg: id === cur ? t.text : t.muted, sh: id === cur ? '0 1px 3px rgba(0,0,0,.14)' : 'none' });
-  const SETS = [['new', 'New', 10], ['hard', 'Hard', 36], ['tag', 'Exam 1', 40], ['all', 'All', 412]], n = SETS.find(x => x[0] === s.set)[2], mins = Math.round(n * .6);
-  return { t, dark: !!this.props.dark, sky: (this.props.dark ? { top: '#081733', mid: '#0D2148', low: '#0A1530', glow: 'rgba(120,150,255,.16)', cloud: 'rgba(150,170,230,.10)' }
+constructor(props) { super(props); this.state = { set: null, kinds: ['mc', 'match', 'tf', 'blank'] }; }
+renderVals() { const t = this.theme(!!this.props.dark);const db = this.props.db || this.mock(); const chrome = db.chrome();
+  const s = this.state, id = this.props.deckId, seg = (k, cur) => ({ pressed: k === cur ? 'true' : 'false', bg: k === cur ? t.bg : 'transparent', fg: k === cur ? t.text : t.muted, sh: k === cur ? '0 1px 3px rgba(0,0,0,.14)' : 'none' });
+  const sets = db.mock ? [{ id: 'new', label: 'New', n: 10 }, { id: 'hard', label: 'Hard', n: 36 }, { id: 'tag:Exam 1', label: 'Exam 1', n: 40 }, { id: 'all', label: 'All', n: 412 }] : db.learnSets(id);
+  const set = sets.find(x => x.id === s.set) || (db.mock ? sets[2] : sets.find(x => x.n > 0) || sets[sets.length - 1]), n = set.n, mins = Math.max(1, Math.round(n * .6));
+  return { t, dark: !!this.props.dark, deckId: id || '', sky: (this.props.dark ? { top: '#081733', mid: '#0D2148', low: '#0A1530', glow: 'rgba(120,150,255,.16)', cloud: 'rgba(150,170,230,.10)' }
     : { top: '#86BDF3', mid: '#C9E2FB', low: '#EDF5FE', glow: 'rgba(255,255,255,.75)', cloud: 'rgba(255,255,255,.94)' }), grain: String(this.props.grain ?? 0.7), m1: this.mesh('Iris'), m2: this.mesh('Mint'), plansHref: 'Pricing.dc.html',
-    sets: SETS.map(([id, label, c]) => ({ label: label + ' · ' + c, ...seg(id, s.set), pick: () => this.setState({ set: id }) })),
-    kinds: ["Multiple choice","Matching","True or false","Fill in the blank","Type the answer"].map(k => { const on = s.kinds.includes(k); return { label: k, on, pressed: on ? 'true' : 'false', bg: on ? t.inv : t.surf, fg: on ? t.invText : t.text, pick: () => this.setState({ kinds: on && s.kinds.length > 1 ? s.kinds.filter(x => x !== k) : on ? s.kinds : [...s.kinds, k] }) }; }),
-    goalLine: 'Learn all ' + n + ' cards, about ' + (mins >= 90 ? Math.round(mins / 60) + ' hours over a few sessions' : mins + ' minutes') + '. You can stop anytime and pick up where you left off.' }; }
+    sets: sets.map(x => ({ label: x.label + ' · ' + x.n, ...seg(x.id, set.id), pick: () => this.setState({ set: x.id }) })),
+    kinds: [["mc","Multiple choice"],["match","Matching"],["tf","True or false"],["blank","Fill in the blank"],["type","Type the answer"]].map(([k, label]) => { const on = s.kinds.includes(k); return { label, on, pressed: on ? 'true' : 'false', bg: on ? t.inv : t.surf, fg: on ? t.invText : t.text, pick: () => this.setState({ kinds: on && s.kinds.length > 1 ? s.kinds.filter(x => x !== k) : on ? s.kinds : [...s.kinds, k] }) }; }),
+    goalLine: n ? 'Learn all ' + n + ' card' + (n === 1 ? '' : 's') + ', about ' + (mins >= 90 ? Math.round(mins / 60) + ' hours over a few sessions' : mins + ' minute' + (mins === 1 ? '' : 's')) + '. You can stop anytime and pick up where you left off.' : 'This deck has no cards to learn yet. Picture and text cards work; sound cards come later.',
+    startHref: 'WebQuiz.dc.html',
+    start: e => { if (db.mock) return; if (e && e.preventDefault) e.preventDefault(); if (n) db.act.startLearn(id, set.id, s.kinds); } }; }
 }
 </script>
 </body>

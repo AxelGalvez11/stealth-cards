@@ -15,7 +15,7 @@ function resolve(path, q) {
   // Online and signed out: only the sign-in pages (and the code page once a code is on its way).
   if (db.signedOut) { const p = narrow.matches ? 'Phone' : 'Web'; return path === '/sign-in/code' && db.auth.email() ? { name: p + 'SignInCode' } : path === '/sign-in' ? { name: p + 'SignIn' } : { redirect: '/sign-in' }; }
   if (path.startsWith('/sign-in')) return { redirect: '/' };
-  const deck = /^\/deck\/([^/]+)(\/card(?:\/([^/]+))?|\/import)?$/.exec(path);
+  const deck = /^\/deck\/([^/]+)(\/card(?:\/([^/]+))?|\/import|\/learn)?$/.exec(path);
   if (path === '/') return { name: db.decks().length ? 'Main' : 'WebTodayNew' };
   if (path === '/decks') return { name: db.decks().length ? 'WebDecks' : 'WebDecksEmpty' };
   if (path === '/decks/new') return { name: 'WebNewDeck' };
@@ -24,9 +24,18 @@ function resolve(path, q) {
     const id = deck[1];
     if (!db.raw().decks.some(d => d.id === id)) return { redirect: '/decks' };
     if (deck[2] === '/import') return { name: 'WebImport', props: { deckId: id } };
+    // Learn mode starts from a sheet over the deck (phones get the phone boards, which fill the screen).
+    if (deck[2] === '/learn') return { name: (narrow.matches ? 'Phone' : 'Web') + 'QuizStart', props: { deckId: id } };
     if (deck[2]) return { name: 'WebEditor', props: { deckId: id, cardId: deck[3] || '', from: q.get('from') || '' } };
     // An empty deck shows its empty page, unless you opened its settings.
     return { name: db.cards(id).length || q.get('settings') === '1' ? 'WebDeck' : 'WebDeckEmpty', props: { deckId: id, settingsOpen: q.get('settings') === '1' } };
+  }
+  // A Learn mode session: the board for its current question, or the end once every card is learned.
+  const ln = /^\/learn\/([^/]+)$/.exec(path);
+  if (ln) {
+    const L = db.learn();
+    if (!L || L.deckId !== ln[1]) return { redirect: '/deck/' + ln[1] + '/learn' };
+    return { name: (narrow.matches ? 'Phone' : 'Web') + (L.done === true ? 'QuizDone' : { match: 'QuizMatch', type: 'QuizType' }[L.type] || 'Quiz'), props: { deckId: ln[1] } };
   }
   const rv = /^\/review(?:\/([^/]+))?$/.exec(path);
   if (rv && rv[1] !== 'done') {
@@ -49,6 +58,7 @@ function linkFor(name) {
   const pages = { Main: '/', WebTodayNew: '/', WebTodayCaughtUp: '/', WebDecks: '/decks', WebDecksEmpty: '/decks', WebDecksList: '/decks', WebNewDeck: '/decks/new',
     WebImport: id ? '/deck/' + id + '/import' : '/decks/import', WebDeck: id ? '/deck/' + id : '/decks', WebDeckSettings: id ? '/deck/' + id + '?settings=1' : '/decks',
     WebEditor: id ? '/deck/' + id + '/card' : db.signedOut ? '/' : db.today().newCardHref, WebReview: id ? '/review/' + id : '/review', WebDone: '/review/done', WebDonePiles: '/review/done',
+    WebQuizStart: id ? '/deck/' + id + '/learn' : '/decks', PhoneQuizStart: id ? '/deck/' + id + '/learn' : '/decks', PhoneDeck: id ? '/deck/' + id : '/decks', Pricing: 'https://lucida.cards/pricing', PricingPhone: 'https://lucida.cards/pricing',
     WebStats: '/stats', WebStatsEmpty: '/stats', WebConnect: '/connect', WebSettings: '/settings', WebSignIn: '/sign-in', WebSignInCode: '/sign-in/code', PhoneSignIn: '/sign-in', PhoneSignInCode: '/sign-in/code', PhoneToday: '/', Privacy: '/privacy', Terms: '/terms' };
   return pages[name] || '/b/' + name;
 }
