@@ -46,7 +46,9 @@ const phone = board('LandingPhone', { site: true, dark: false });
 phone.html = phone.html.replace(/\sid="([^"]+)"/g, ' id="$1-m"').replace(/url\(#([^)]+)\)/g, 'url(#$1-m)').replace(/href="#(how|cards)"/g, 'href="#$1-m"');
 
 const MARK = '<circle cx="7" cy="7" r="7"/><circle cx="26" cy="7" r="7"/><circle cx="16.5" cy="23.45" r="7"/>';
-const ICON = 'data:image/svg+xml,' + encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="-1.5 -2.75 36 36"><style>g{fill:#000}@media (prefers-color-scheme:dark){g{fill:#fff}}</style><g>${MARK}</g></svg>`);
+// The tab icon, as web/icon.svg: three small white dots on a black rounded tile, which shows on light and dark tab
+// strips alike (in dark mode a faint edge keeps the tile apart from the strip).
+const ICON = 'data:image/svg+xml,' + encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><style>.tile{fill:#000;stroke:none}@media (prefers-color-scheme:dark){.tile{stroke:#5A5A5E}}</style><rect class="tile" x="2.5" y="2.5" width="27" height="27" rx="7.5" stroke-width="1.5"/><g fill="#fff" transform="translate(8.41 9) scale(.46)">${MARK}</g></svg>`);
 // Every page shares the same head: title, description, link previews, the dots icon, and the fonts.
 const head = (title, desc, url, css) => `<!doctype html>
 <html lang="en">
