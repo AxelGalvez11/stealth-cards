@@ -3514,7 +3514,7 @@ const PRICING_H = 1617, PRICING_PHONE_H = 2191;
 // Pro's Stripe payment links (Stripe → Payment links; the "Lucida Pro" product at $5.99 a month and $39 a year). While
 // they're empty the site says "Pro is coming soon"; once both are set, Go Pro opens Stripe's checkout (yearly on the
 // site, with a link to pay monthly; the canvas follows its Monthly/Yearly toggle).
-const PRO_LINKS = { monthly: '', yearly: '' };
+const PRO_LINKS = { monthly: 'https://buy.stripe.com/fZu7sMaaM2IN8SL7WW4F201', yearly: 'https://buy.stripe.com/fZu8wQ3Mo6Z3b0Tcdc4F200' };
 const pricingLogic = phone => `${ART_METHOD}
 constructor(props) { super(props); this.state = { yearly: true }; }
 renderVals() { ${T}
