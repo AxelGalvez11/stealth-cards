@@ -173,18 +173,20 @@ constructor(props) { super(props); this.state = { set: 'tag', count: 10, time: 2
 renderVals() { const t = this.theme(!!this.props.dark);
   const s = this.state, reveal = !!this.props.reveal, Q = {"n":3,"of":10,"q":"Which organelle packages proteins for secretion?","options":["Golgi apparatus","Lysosome","Nucleus","Ribosome"],"right":0,"counts":[7,2,1,2]}, total = Q.counts.reduce((a, b) => a + b, 0);
   const seg = (k, cur) => ({ pressed: k === cur ? 'true' : 'false', bg: k === cur ? t.bg : 'transparent', fg: k === cur ? t.text : t.muted, sh: k === cur ? '0 1px 3px rgba(0,0,0,.14)' : 'none' });
-  const pals = ["Iris","Apricot","Mint","Rose"], colors = ["linear-gradient(135deg, #7E94FB, #2CB2EA)","linear-gradient(135deg, #F2AC45, #EE8CA6)","linear-gradient(135deg, #7FD0B0, #2CB2EA)","linear-gradient(135deg, #EE8CA6, #7E94FB)","linear-gradient(135deg, #F7D84E, #F2AC45)"];
-  const opt = i => ({ p: this.mesh(pals[i]), i, label: Q.options[i], count: String(Q.counts[i]), right: i === Q.right, showCount: reveal, op: reveal && i !== Q.right ? '.38' : '1', ring: reveal && i === Q.right ? '0 0 0 4px ' + t.good : 'none' });
+  const LV = {"blue":"#7ACFEA","green":"#62DE8A","yellow":"#FFD84A","navy":"#0D1542","ink2":"rgba(13,21,66,.68)","chip":"rgba(255,255,255,.55)","check":"#16C64A","gray":"#C4CBD5","grayInk":"#5D6677","purple":"#4F60E6","shadow":"0 10px 24px -16px rgba(13,21,66,.35)","lift":"0 26px 48px -20px rgba(13,21,66,.5)"}, OPT = [["#0D1542","#FFFFFF"],["#FFFFFF","#0D1542"],["#1FC45A","#0D1542"],["#FFD84A","#0D1542"]], colors = ["#4F60E6","#F2701D","#12A150","#E5407E","#0D1542"];
+  // After the reveal the right answer lifts and tilts a little; the others go gray.
+  const opt = i => { const lift = reveal && i === Q.right, gray = reveal && i !== Q.right;
+    return { i, label: Q.options[i], count: String(Q.counts[i]), right: lift, showCount: reveal, bg: gray ? LV.gray : OPT[i][0], fg: gray ? LV.grayInk : OPT[i][1],
+      badge: gray ? 'rgba(13,21,66,.06)' : i === 0 ? 'rgba(255,255,255,.16)' : 'rgba(13,21,66,.08)', shadow: lift ? LV.lift : gray ? 'none' : LV.shadow, tf: lift ? 'translateY(-6px) rotate(-1.5deg)' : 'none' }; };
   const wrongPick = !!this.props.wrong;
-  return { t, dark: !!this.props.dark, sky: (this.props.dark ? { top: '#081733', mid: '#0D2148', low: '#0A1530', glow: 'rgba(120,150,255,.16)', cloud: 'rgba(150,170,230,.10)' }
-    : { top: '#86BDF3', mid: '#C9E2FB', low: '#EDF5FE', glow: 'rgba(255,255,255,.75)', cloud: 'rgba(255,255,255,.94)' }), grain: String(this.props.grain ?? 0.7), q: Q, peopleN: '12',
-    o0: opt(0), o1: opt(1), o2: opt(2), o3: opt(3), c0: colors[0], c1: colors[2], c2: colors[1], p0: this.mesh('Iris'), p1: this.mesh('Mint'), p2: this.mesh('Apricot'),
+  return { t, dark: !!this.props.dark, q: Q, peopleN: '12',
+    o0: opt(0), o1: opt(1), o2: opt(2), o3: opt(3), c0: colors[0], c1: colors[2], c2: colors[1],
     nextHref: 'LiveLeaderboard.dc.html', nextLabel: 'Leaderboard',
     people: ["Maya","Jordan","Priya","Leo","Sofia","Ethan","Ana","Kai","Zoe","Omar","Lina","Noah"].map((name, i) => ({ name, initial: name[0], color: colors[i % colors.length], delay: (i * .12).toFixed(2) + 's' })),
     board: [["Maya",3420,1],["Jordan",3210,2],["Kai",2980,-1],["Priya",2860,0],["Leo",2640,3]].map(([name, score, move], i) => ({ rank: String(i + 1), name, initial: name[0], color: colors[i % colors.length], score: score.toLocaleString('en-US'), w: score / 3420 * 100 + '%',
-      move: move > 0 ? '▲ ' + move : move < 0 ? '▼ ' + -move : '–', moveColor: move > 0 ? t.good : move < 0 ? t.again : t.muted, delay: (i * .08).toFixed(2) + 's' })),
-    r: wrongPick ? { right: false, wrong: true, bg: t.againTint, color: t.again, title: 'Not quite', line: 'It was Golgi apparatus.', place: 'You’re in 5th place' }
-      : { right: true, wrong: false, bg: t.goodTint, color: t.good, title: 'Right!', line: '+870 points', place: 'You’re in 2nd place, 140 points behind Maya' },
+      move: move > 0 ? '▲ ' + move : move < 0 ? '▼ ' + -move : '–', moveColor: move > 0 ? '#12A150' : move < 0 ? '#D92D20' : LV.grayInk, delay: (i * .08).toFixed(2) + 's' })),
+    r: wrongPick ? { right: false, wrong: true, bg: LV.yellow, title: 'Not quite', line: 'It was Golgi apparatus.', place: 'You’re in 5th place', pick: 'Lysosome', answer: 'Golgi apparatus', cardX: '134px', cardTilt: '6deg' }
+      : { right: true, wrong: false, bg: LV.green, title: 'Right!', line: '+870 points', place: 'You’re in 2nd place, 140 points behind Maya', pick: '', answer: 'Golgi apparatus', cardX: '61px', cardTilt: '-4deg' },
     sets: [['new', 'New · 10'], ['hard', 'Hard · 36'], ['tag', 'Exam 1 · 40'], ['all', 'All · 412']].map(([k, label]) => ({ label, ...seg(k, s.set), pick: () => this.setState({ set: k }) })),
     counts: [5, 10, 20].map(n => ({ label: String(n), ...seg(n, s.count), pick: () => this.setState({ count: n }) })),
     times: [10, 20, 30].map(n => ({ label: n + 's', ...seg(n, s.time), pick: () => this.setState({ time: n }) })),

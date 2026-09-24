@@ -92,6 +92,114 @@
       "x": 1520,
       "y": 0
     },
+    "LiveAnswer.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "page": "live",
+      "title": "Live · Phone · answer",
+      "w": 390,
+      "x": 940,
+      "y": 1320
+    },
+    "LiveFinal.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "page": "live",
+      "title": "Live · Phone · final place",
+      "w": 390,
+      "x": 2350,
+      "y": 1320
+    },
+    "LiveJoin.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "page": "live",
+      "title": "Live · Phone · join with the code",
+      "w": 390,
+      "x": 0,
+      "y": 1320
+    },
+    "LiveLeaderboard.dc.html": {
+      "h": 900,
+      "is_interactive": true,
+      "page": "live",
+      "title": "Live · Big screen · leaderboard",
+      "w": 1440,
+      "x": 6080,
+      "y": 0
+    },
+    "LiveLobby.dc.html": {
+      "h": 900,
+      "is_interactive": true,
+      "page": "live",
+      "title": "Live · Big screen · lobby with the join code",
+      "w": 1440,
+      "x": 1520,
+      "y": 0
+    },
+    "LivePodium.dc.html": {
+      "h": 900,
+      "is_interactive": true,
+      "page": "live",
+      "title": "Live · Big screen · podium",
+      "w": 1440,
+      "x": 7600,
+      "y": 0
+    },
+    "LiveQuestion.dc.html": {
+      "h": 900,
+      "is_interactive": true,
+      "page": "live",
+      "title": "Live · Big screen · question with the timer",
+      "w": 1440,
+      "x": 3040,
+      "y": 0
+    },
+    "LiveResult.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "page": "live",
+      "title": "Live · Phone · right",
+      "w": 390,
+      "x": 1410,
+      "y": 1320
+    },
+    "LiveResultWrong.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "page": "live",
+      "title": "Live · Phone · not quite",
+      "w": 390,
+      "x": 1880,
+      "y": 1320
+    },
+    "LiveReveal.dc.html": {
+      "h": 900,
+      "is_interactive": true,
+      "page": "live",
+      "title": "Live · Big screen · the answer",
+      "w": 1440,
+      "x": 4560,
+      "y": 0
+    },
+    "LiveSetup.dc.html": {
+      "h": 900,
+      "is_interactive": true,
+      "page": "live",
+      "title": "Live · Host · set up from a deck",
+      "w": 1440,
+      "x": 0,
+      "y": 0
+    },
+    "LiveWaiting.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "page": "live",
+      "title": "Live · Phone · in, waiting",
+      "w": 390,
+      "x": 470,
+      "y": 1320
+    },
     "Main.dc.html": {
       "h": 900,
       "is_interactive": true,
@@ -173,6 +281,15 @@
       "x": 5640,
       "y": 0
     },
+    "PhoneDecksEmpty.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "page": "empty",
+      "title": "iPhone · Decks · no decks yet",
+      "w": 390,
+      "x": 940,
+      "y": 1300
+    },
     "PhoneDone.dc.html": {
       "h": 844,
       "is_interactive": true,
@@ -217,6 +334,69 @@
       "w": 390,
       "x": 3760,
       "y": 0
+    },
+    "PhoneQuiz.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "page": "quiz",
+      "title": "iPhone · Learn mode · choice question (tap an answer)",
+      "w": 390,
+      "x": 940,
+      "y": 1320
+    },
+    "PhoneQuizAnswered.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "page": "quiz",
+      "title": "iPhone · Learn mode · answered",
+      "w": 390,
+      "x": 1410,
+      "y": 1320
+    },
+    "PhoneQuizDone.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "page": "quiz",
+      "title": "iPhone · Learn mode · all learned",
+      "w": 390,
+      "x": 2820,
+      "y": 1320
+    },
+    "PhoneQuizMatch.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "page": "quiz",
+      "title": "iPhone · Learn mode · matching (tap a word, then its meaning)",
+      "w": 390,
+      "x": 1880,
+      "y": 1320
+    },
+    "PhoneQuizStart.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "page": "quiz",
+      "title": "iPhone · Learn mode · start (Pro)",
+      "w": 390,
+      "x": 0,
+      "y": 1320
+    },
+    "PhoneQuizType.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "page": "quiz",
+      "title": "iPhone · Learn mode · type the answer",
+      "w": 390,
+      "x": 2350,
+      "y": 1320
+    },
+    "PhoneQuizUpgrade.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "page": "quiz",
+      "title": "iPhone · Learn mode · on Free: go Pro",
+      "w": 390,
+      "x": 470,
+      "y": 1320
     },
     "PhoneReview.dc.html": {
       "h": 844,
@@ -379,6 +559,24 @@
       "w": 390,
       "x": 0,
       "y": 1300
+    },
+    "Pricing.dc.html": {
+      "h": 1617,
+      "is_interactive": true,
+      "page": "landing",
+      "title": "Pricing · lucida.cards/pricing (computers)",
+      "w": 1440,
+      "x": 5030,
+      "y": 0
+    },
+    "PricingPhone.dc.html": {
+      "h": 2191,
+      "is_interactive": true,
+      "page": "landing",
+      "title": "Pricing · lucida.cards/pricing (phones)",
+      "w": 390,
+      "x": 6550,
+      "y": 0
     },
     "Privacy.dc.html": {
       "h": 2236,
@@ -622,6 +820,69 @@
       "x": 6080,
       "y": 1320
     },
+    "WebQuiz.dc.html": {
+      "h": 900,
+      "is_interactive": true,
+      "page": "quiz",
+      "title": "Web · Learn mode · choice question (tap an answer)",
+      "w": 1440,
+      "x": 3040,
+      "y": 0
+    },
+    "WebQuizAnswered.dc.html": {
+      "h": 900,
+      "is_interactive": true,
+      "page": "quiz",
+      "title": "Web · Learn mode · answered",
+      "w": 1440,
+      "x": 4560,
+      "y": 0
+    },
+    "WebQuizDone.dc.html": {
+      "h": 900,
+      "is_interactive": true,
+      "page": "quiz",
+      "title": "Web · Learn mode · all learned",
+      "w": 1440,
+      "x": 9120,
+      "y": 0
+    },
+    "WebQuizMatch.dc.html": {
+      "h": 900,
+      "is_interactive": true,
+      "page": "quiz",
+      "title": "Web · Learn mode · matching (tap a word, then its meaning)",
+      "w": 1440,
+      "x": 6080,
+      "y": 0
+    },
+    "WebQuizStart.dc.html": {
+      "h": 900,
+      "is_interactive": true,
+      "page": "quiz",
+      "title": "Web · Learn mode · start (Pro)",
+      "w": 1440,
+      "x": 0,
+      "y": 0
+    },
+    "WebQuizType.dc.html": {
+      "h": 900,
+      "is_interactive": true,
+      "page": "quiz",
+      "title": "Web · Learn mode · type the answer",
+      "w": 1440,
+      "x": 7600,
+      "y": 0
+    },
+    "WebQuizUpgrade.dc.html": {
+      "h": 900,
+      "is_interactive": true,
+      "page": "quiz",
+      "title": "Web · Learn mode · on Free: go Pro",
+      "w": 1440,
+      "x": 1520,
+      "y": 0
+    },
     "WebReview.dc.html": {
       "h": 900,
       "is_interactive": true,
@@ -774,267 +1035,6 @@
       "w": 1440,
       "x": 0,
       "y": 0
-    },
-    "WebQuizStart.dc.html": {
-      "h": 900,
-      "w": 1440,
-      "x": 0,
-      "y": 0,
-      "page": "quiz",
-      "title": "Web · Learn mode · start (Pro)",
-      "is_interactive": true
-    },
-    "WebQuizUpgrade.dc.html": {
-      "h": 900,
-      "w": 1440,
-      "x": 1520,
-      "y": 0,
-      "page": "quiz",
-      "title": "Web · Learn mode · on Free: go Pro",
-      "is_interactive": true
-    },
-    "WebQuiz.dc.html": {
-      "h": 900,
-      "w": 1440,
-      "x": 3040,
-      "y": 0,
-      "page": "quiz",
-      "title": "Web · Learn mode · choice question (tap an answer)",
-      "is_interactive": true
-    },
-    "WebQuizAnswered.dc.html": {
-      "h": 900,
-      "w": 1440,
-      "x": 4560,
-      "y": 0,
-      "page": "quiz",
-      "title": "Web · Learn mode · answered",
-      "is_interactive": true
-    },
-    "WebQuizDone.dc.html": {
-      "h": 900,
-      "w": 1440,
-      "x": 9120,
-      "y": 0,
-      "page": "quiz",
-      "title": "Web · Learn mode · all learned",
-      "is_interactive": true
-    },
-    "PhoneQuizStart.dc.html": {
-      "h": 844,
-      "w": 390,
-      "x": 0,
-      "y": 1320,
-      "page": "quiz",
-      "title": "iPhone · Learn mode · start (Pro)",
-      "is_interactive": true
-    },
-    "PhoneQuizUpgrade.dc.html": {
-      "h": 844,
-      "w": 390,
-      "x": 470,
-      "y": 1320,
-      "page": "quiz",
-      "title": "iPhone · Learn mode · on Free: go Pro",
-      "is_interactive": true
-    },
-    "PhoneQuiz.dc.html": {
-      "h": 844,
-      "w": 390,
-      "x": 940,
-      "y": 1320,
-      "page": "quiz",
-      "title": "iPhone · Learn mode · choice question (tap an answer)",
-      "is_interactive": true
-    },
-    "PhoneQuizAnswered.dc.html": {
-      "h": 844,
-      "w": 390,
-      "x": 1410,
-      "y": 1320,
-      "page": "quiz",
-      "title": "iPhone · Learn mode · answered",
-      "is_interactive": true
-    },
-    "PhoneQuizDone.dc.html": {
-      "h": 844,
-      "w": 390,
-      "x": 2820,
-      "y": 1320,
-      "page": "quiz",
-      "title": "iPhone · Learn mode · all learned",
-      "is_interactive": true
-    },
-    "Pricing.dc.html": {
-      "h": 1617,
-      "w": 1440,
-      "x": 5030,
-      "y": 0,
-      "page": "landing",
-      "title": "Pricing · lucida.cards/pricing (computers)",
-      "is_interactive": true
-    },
-    "PricingPhone.dc.html": {
-      "h": 2191,
-      "w": 390,
-      "x": 6550,
-      "y": 0,
-      "page": "landing",
-      "title": "Pricing · lucida.cards/pricing (phones)",
-      "is_interactive": true
-    },
-    "WebQuizMatch.dc.html": {
-      "h": 900,
-      "w": 1440,
-      "page": "quiz",
-      "is_interactive": true,
-      "x": 6080,
-      "y": 0,
-      "title": "Web · Learn mode · matching (tap a word, then its meaning)"
-    },
-    "WebQuizType.dc.html": {
-      "h": 900,
-      "w": 1440,
-      "page": "quiz",
-      "is_interactive": true,
-      "x": 7600,
-      "y": 0,
-      "title": "Web · Learn mode · type the answer"
-    },
-    "PhoneQuizMatch.dc.html": {
-      "h": 844,
-      "w": 390,
-      "page": "quiz",
-      "is_interactive": true,
-      "x": 1880,
-      "y": 1320,
-      "title": "iPhone · Learn mode · matching (tap a word, then its meaning)"
-    },
-    "PhoneQuizType.dc.html": {
-      "h": 844,
-      "w": 390,
-      "page": "quiz",
-      "is_interactive": true,
-      "x": 2350,
-      "y": 1320,
-      "title": "iPhone · Learn mode · type the answer"
-    },
-    "LiveSetup.dc.html": {
-      "h": 900,
-      "w": 1440,
-      "x": 0,
-      "y": 0,
-      "page": "live",
-      "title": "Live · Host · set up from a deck",
-      "is_interactive": true
-    },
-    "LiveLobby.dc.html": {
-      "h": 900,
-      "w": 1440,
-      "x": 1520,
-      "y": 0,
-      "page": "live",
-      "title": "Live · Big screen · lobby with the join code",
-      "is_interactive": true
-    },
-    "LiveQuestion.dc.html": {
-      "h": 900,
-      "w": 1440,
-      "x": 3040,
-      "y": 0,
-      "page": "live",
-      "title": "Live · Big screen · question with the timer",
-      "is_interactive": true
-    },
-    "LiveReveal.dc.html": {
-      "h": 900,
-      "w": 1440,
-      "x": 4560,
-      "y": 0,
-      "page": "live",
-      "title": "Live · Big screen · the answer",
-      "is_interactive": true
-    },
-    "LiveLeaderboard.dc.html": {
-      "h": 900,
-      "w": 1440,
-      "x": 6080,
-      "y": 0,
-      "page": "live",
-      "title": "Live · Big screen · leaderboard",
-      "is_interactive": true
-    },
-    "LivePodium.dc.html": {
-      "h": 900,
-      "w": 1440,
-      "x": 7600,
-      "y": 0,
-      "page": "live",
-      "title": "Live · Big screen · podium",
-      "is_interactive": true
-    },
-    "LiveJoin.dc.html": {
-      "h": 844,
-      "w": 390,
-      "x": 0,
-      "y": 1320,
-      "page": "live",
-      "title": "Live · Phone · join with the code",
-      "is_interactive": true
-    },
-    "LiveWaiting.dc.html": {
-      "h": 844,
-      "w": 390,
-      "x": 470,
-      "y": 1320,
-      "page": "live",
-      "title": "Live · Phone · in, waiting",
-      "is_interactive": true
-    },
-    "LiveAnswer.dc.html": {
-      "h": 844,
-      "w": 390,
-      "x": 940,
-      "y": 1320,
-      "page": "live",
-      "title": "Live · Phone · answer",
-      "is_interactive": true
-    },
-    "LiveResult.dc.html": {
-      "h": 844,
-      "w": 390,
-      "x": 1410,
-      "y": 1320,
-      "page": "live",
-      "title": "Live · Phone · right",
-      "is_interactive": true
-    },
-    "LiveResultWrong.dc.html": {
-      "h": 844,
-      "w": 390,
-      "x": 1880,
-      "y": 1320,
-      "page": "live",
-      "title": "Live · Phone · not quite",
-      "is_interactive": true
-    },
-    "LiveFinal.dc.html": {
-      "h": 844,
-      "w": 390,
-      "x": 2350,
-      "y": 1320,
-      "page": "live",
-      "title": "Live · Phone · final place",
-      "is_interactive": true
-    },
-    "PhoneDecksEmpty.dc.html": {
-      "h": 844,
-      "is_interactive": true,
-      "page": "empty",
-      "title": "iPhone · Decks · no decks yet",
-      "w": 390,
-      "x": 940,
-      "y": 1300
     }
   },
   "createdOnFiles": {
@@ -1227,6 +1227,24 @@
       "x": 0,
       "y": -300
     },
+    "qPhone": {
+      "kind": "title1",
+      "maxW": 3210,
+      "page": "quiz",
+      "text": "Learn mode (Pro) · iPhone",
+      "w": 240,
+      "x": 0,
+      "y": 1020
+    },
+    "qWeb": {
+      "kind": "title1",
+      "maxW": 8000,
+      "page": "quiz",
+      "text": "Learn mode (Pro) · web",
+      "w": 240,
+      "x": 0,
+      "y": -300
+    },
     "sTitle": {
       "kind": "title1",
       "maxW": 4480,
@@ -1245,27 +1263,9 @@
       "x": 0,
       "y": -300
     },
-    "qWeb": {
-      "kind": "title1",
-      "maxW": 10560,
-      "page": "quiz",
-      "text": "Learn mode (Pro) · web",
-      "w": 240,
-      "x": 0,
-      "y": -300
-    },
-    "qPhone": {
-      "kind": "title1",
-      "maxW": 3210,
-      "page": "quiz",
-      "text": "Learn mode (Pro) · iPhone",
-      "w": 240,
-      "x": 0,
-      "y": 1020
-    },
     "vBig": {
       "kind": "title1",
-      "maxW": 9040,
+      "maxW": 8000,
       "page": "live",
       "text": "Live · the big screen (host)",
       "w": 240,
