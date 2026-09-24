@@ -2344,9 +2344,16 @@ const emptyLogic = (cover = '') => `renderVals() { ${T}${DB_JS}
     newCardHref: db.mock ? 'WebEditor.dc.html' : dk.newCardHref, importHref: db.href('import', dk.id), connectHref: db.href('connect'),
     openSettings: () => { if (!db.mock) db.act.go(dk.settingsHref); } }; }`;
 
-// New deck. The cover is generated from the name as you type; Shuffle re-rolls it.
+// New deck. The cover starts white. Its colors (generated from the name) fade in over 2 s once you stop typing the name
+// or press Shuffle, and each later change fades the new colors in over the old ones the same way.
+const COVER_FADE_CSS = '@keyframes scCoverA{from{opacity:0}to{opacity:1}}@keyframes scCoverB{from{opacity:0}to{opacity:1}}@media (prefers-reduced-motion:reduce){.sc-cover-in{animation:none!important}}';
+// Both layers stay in the page and hide when unused, so clearing the old one never restarts the new one's fade.
+const coverLayer = (key, extra = '') => `<div${extra ? ' class="sc-cover-in"' : ''} style="position: absolute; inset: 0; display: {{${key}Show}}; background: {{${key}.base}};${extra}">${flowLayer(key)}${GRAIN_LAYER}</div>`;
 const newDeckBody = (phone, back, done) => `<div style="display: flex; align-items: center; justify-content: space-between;"><span style="font-size: 22px; font-weight: 600; letter-spacing: -.02em;">New deck</span><a href="${back}" aria-label="Close" style="width: 40px; height: 40px; border-radius: 20px; background: {{t.surf}}; display: flex; align-items: center; justify-content: center;">${svg(I.close, 16, 2)}</a></div>
-    ${meshCard('cover', `height: ${phone ? 132 : 150}px; border-radius: 26px; flex-shrink: 0;`, 'height: 100%; box-sizing: border-box; padding: 14px 16px 16px 18px; display: flex; flex-direction: column; justify-content: space-between;', `<div style="display: flex; justify-content: flex-end; gap: 8px;">${coverBtn('Shuffle', 'shuffle', 'shuffle')}${coverBtn(phone ? 'Image' : 'Upload image', 'pickCover', 'image')}</div><span style="font-size: ${phone ? 22 : 26}px; font-weight: 600; letter-spacing: -.02em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{title}}</span>`)}
+    <div style="position: relative; height: ${phone ? 132 : 150}px; border-radius: 26px; flex-shrink: 0; overflow: hidden; background: {{t.bg}}; box-shadow: inset 0 0 0 1px {{t.line}}; color: {{coverInk}}; transition: color 2s ease;">
+      ${coverLayer('prev')}${coverLayer('cover', ' animation: {{coverFade}};')}
+      <div style="position: relative; height: 100%; box-sizing: border-box; padding: 14px 16px 16px 18px; display: flex; flex-direction: column; justify-content: space-between; text-shadow: {{coverShadow}};"><div style="display: flex; justify-content: flex-end; gap: 8px;">${coverBtn('Shuffle', 'shuffle', 'shuffle')}${coverBtn(phone ? 'Image' : 'Upload image', 'pickCover', 'image')}</div><span style="font-size: ${phone ? 22 : 26}px; font-weight: 600; letter-spacing: -.02em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{title}}</span></div>
+    </div>
     <label style="display: flex; flex-direction: column; gap: 8px;"><span style="font-size: 13px; font-weight: 600;">Name</span><input type="text" value="{{name}}" onChange="{{setName}}" placeholder="Name your deck" style="height: 48px; box-sizing: border-box; padding: 0 16px; border: 0; outline: 0; border-radius: 16px; background: {{t.surf}}; color: {{t.text}}; font: inherit; font-size: 16px;"></label>
     <div style="display: flex; flex-direction: column; gap: 8px;"><span style="font-size: 13px; font-weight: 600;">Tags</span>${TAG_EDIT('deckTags', 'deckPick', phone)}</div>
     <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px;">${stepper('New cards a day', 'perDay', 'lessDay', 'moreDay', true, 'perDayIn')}${stepper('Remember goal', 'goal', 'lessGoal', 'moreGoal', true)}</div>
@@ -2410,10 +2417,18 @@ const phoneNewDeck = `<div style="position: relative; width: 390px; height: 844p
   </div>
 </div>`;
 const NEW_DECK_LOGIC = `
-constructor(props) { super(props); this.state = { name: 'Pharmacology', round: 0, tags: ['MCAT'] }; }
+constructor(props) { super(props); this.state = { name: 'Pharmacology', round: 0, tags: ['MCAT'], shown: null, prev: null, k: 0 }; }
 renderVals() {
   ${T}${DB_JS}
   const s = this.state, st = db.settings();
+  // The cover's colors come from a seed (the name, plus the Shuffle count). show() fades a new seed in over the one before;
+  // the one underneath goes once the fade is done.
+  const seedOf = (n, r) => ((n || '').trim() || 'Untitled deck') + (r ? ' #' + r : '');
+  const show = (seed, more = {}) => {
+    const k = this.state.k + 1;
+    this.setState({ ...more, prev: this.state.shown, shown: seed, k });
+    clearTimeout(this.faded); this.faded = setTimeout(() => { if (this.state.k === k) this.setState({ prev: null }); }, 2100);
+  };
   ${TAG_JS}
   // A new deck starts from your Settings (new cards a day, goal, grading) until you change them here.
   const name = db.mock ? s.name : s.name === 'Pharmacology' && s.typed == null ? '' : s.name;
@@ -2426,9 +2441,17 @@ renderVals() {
   return {
     t, dark: !!this.props.dark, grain: String(this.props.grain ?? 0.7),
     name, title,
-    cover: this.gen(title + (s.round ? ' #' + s.round : ''), st.grads),
-    setName: e => this.setState({ name: e && e.target ? e.target.value : s.name, typed: true }),
-    shuffle: () => this.setState({ round: s.round + 1 }), noop: () => {},
+    coverShow: s.shown ? 'block' : 'none', prevShow: s.prev ? 'block' : 'none', cover: this.gen(s.shown || seedOf(title, s.round), st.grads), prev: this.gen(s.prev || seedOf(title, s.round), st.grads),
+    coverFade: s.k % 2 ? 'scCoverA 2s ease-in-out both' : 'scCoverB 2s ease-in-out both',
+    coverInk: s.shown ? this.gen(s.shown, st.grads).ink : t.text, coverShadow: s.shown ? this.gen(s.shown, st.grads).shadow : 'none',
+    // A moment after you stop typing a name, its colors fade in.
+    setName: e => {
+      const v = e && e.target ? e.target.value : s.name;
+      this.setState({ name: v, typed: true });
+      clearTimeout(this.settle);
+      this.settle = setTimeout(() => { const seed = seedOf(v, this.state.round); if (v.trim() && seed !== this.state.shown) show(seed); }, 800);
+    },
+    shuffle: () => show(seedOf(name, s.round + 1), { round: s.round + 1 }), noop: () => {},
     pickCover: () => db.act.pickFile('image').then(url => url && this.setState({ image: url })),
     modes: [['four', 'Forgot · Hard · Good · Easy', '4 grades'], ['binary', 'Check or X', '✓ / ✗'], ['piles', 'Piles', 'Piles']].map(([id, long, short]) => ({ label: short, long, ...seg(id, grading), pick: () => this.setState({ grading: id }) })),
     perDay: String(perDay), goal: goal + '%', perDayIn: typed('perDay', perDay, n => this.setState({ perDay: n }), 'New cards a day'),
@@ -2818,7 +2841,7 @@ const legalLogic = `renderVals() { ${T}
 const W = 1440, H = 900, PW = 390, PH = 844;
 const files = {
   'Main': ['Web · Today', webToday, { props: { ...DARK, ...MESH('Iris'), caughtUp: { editor: 'boolean', default: false } }, logic: todayLogic, w: W, h: H }],
-  'WebNewDeck': ['Web · New deck', webNewDeck, { props: { ...DARK, grain: MESH('Iris').grain }, logic: NEW_DECK_LOGIC, css: NUM_CSS, w: W, h: H }],
+  'WebNewDeck': ['Web · New deck', webNewDeck, { props: { ...DARK, grain: MESH('Iris').grain }, logic: NEW_DECK_LOGIC, css: NUM_CSS + COVER_FADE_CSS, w: W, h: H }],
   'WebImport': ['Web · Import cards', webImport, { props: { ...DARK, grain: MESH('Iris').grain }, logic: importLogic, w: W, h: H }],
   'WebDecks': ['Web · Decks', webDecks, { props: { ...DARK, grain: MESH('Iris').grain, view: { editor: 'enum', default: 'Cards', options: ['Cards', 'List'] }, openTags: { editor: 'boolean', default: false }, moreTags: { editor: 'boolean', default: false } }, logic: decksLogic, w: W, h: H }],
   'WebDecksTags': ['Web · Decks · a deck with 11 tags (+9 shows them all)', attrOf('WebDecks', W, H, 'open-tags="{{yes}}"'), { logic: darkLogic, w: W, h: H }],
@@ -2874,7 +2897,7 @@ const files = {
   'PhoneTodayCaughtUp': ['iPhone · Today · all caught up', caughtOf('PhoneToday', PW, PH), { logic: darkLogic, w: PW, h: PH }],
   'PhoneDeckEmpty': ['iPhone · Deck · no cards yet', phoneDeckEmpty, { props: { ...DARK, grain: MESH('Iris').grain }, logic: emptyLogic('Pharmacology'), w: PW, h: PH }],
   'PhoneStatsEmpty': ['iPhone · Stats · no reviews yet', phoneStatsEmpty, { props: { ...DARK, grain: MESH('Iris').grain }, logic: emptyLogic(), w: PW, h: PH }],
-  'PhoneNewDeck': ['iPhone · New deck', phoneNewDeck, { props: { ...DARK, grain: MESH('Iris').grain }, logic: NEW_DECK_LOGIC, css: NUM_CSS, w: PW, h: PH }],
+  'PhoneNewDeck': ['iPhone · New deck', phoneNewDeck, { props: { ...DARK, grain: MESH('Iris').grain }, logic: NEW_DECK_LOGIC, css: NUM_CSS + COVER_FADE_CSS, w: PW, h: PH }],
   'PhoneInbox': ['iPhone · Check AI cards', phoneInbox, { props: DARK, logic: phoneInboxLogic, css: REVIEW_CSS, w: PW, h: PH }],
   'PhoneDeck': ['iPhone · Deck page', phoneDeck, { props: { ...DARK, grain: MESH('Iris').grain, settingsOpen: { editor: 'boolean', default: false }, settingsTab: { editor: 'enum', default: 'General', options: ['General', 'Studying'] }, tagPicker: { editor: 'boolean', default: false } }, logic: phoneDeckLogic, css: NUM_CSS, w: PW, h: PH }],
   'PhoneDeckTagPicker': ['iPhone · Deck settings · Add tag', attrOf('PhoneDeck', PW, PH, 'settings-open="{{yes}}" tag-picker="{{yes}}"'), { logic: darkLogic, css: NUM_CSS, w: PW, h: PH }],
