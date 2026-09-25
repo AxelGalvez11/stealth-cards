@@ -70,10 +70,12 @@ extension Store {
                   folder: d.folder, folders: lib.folders.map { ($0.id, $0.name) }, bg: d.bg)
   }
 
-  /// How a card reads in a list: its words without formatting; a blank reads "____".
+  /// How a card reads in a list: its words without formatting; a blank reads "____", and a box of a picture "What’s under
+  /// box 2?" (or its prompt, with the box's number).
   static func listFront(_ c: Card) -> String {
     if c.kind == "cloze" { return Rich.plain(c.text, cloze: true, blank: "____", join: " ", showMath: true) }
     let f = Rich.plain(c.front, join: " ", showMath: true)
+    if let o = Occ(c) { return f.isEmpty ? "What’s under box \(o.n)?" : f + " (box \(o.n))" }
     return !f.isEmpty ? f : c.kind == "audio" ? (Rich.plain(c.speak, join: " ", showMath: true).nilIfEmpty ?? "Audio card") : "Image card"
   }
 

@@ -1,8 +1,11 @@
-// iPhone · Card editor (PhoneEditor): a sheet over the deck. Four kinds of card (basic, fill in the blank, image, audio),
-// tags, and a floating formatting bar over the keyboard, like Notion's. Card text is the same markdown the web app and
-// AI apps write (see Rich.swift): the bar puts **bold**, [[blanks]], and the rest around what you select.
+// iPhone · Card editor (PhoneEditor, PhoneEditorImage, PhoneEditorAudio, PhoneEditorRecording): a sheet over the deck.
+// Four kinds of card (basic, fill in the blank, image, audio), tags, and a floating formatting bar over the keyboard,
+// like Notion's. Card text is the same markdown the web app and AI apps write (see Rich.swift): the bar puts **bold**,
+// [[blanks]], and the rest around what you select. An image card can hide parts of its picture behind boxes (each box
+// is its own card); an audio card has a recording, an uploaded sound, or words read aloud, with its waveform.
 import SwiftUI
 import PhotosUI
+import UniformTypeIdentifiers
 
 /// The keyboard's height, so the formatting bar can float just above it.
 @MainActor
@@ -22,21 +25,31 @@ final class Keyboard: ObservableObject {
   }
 }
 
+/// A card as the editor holds it.
+struct CardDraft {
+  var kind = "basic", front = "", back = "", text = "", note = "", tags: [String] = []
+  var image: String? = nil, audio: String? = nil, wave: Wave? = nil, speak = "", lang = "", auto = true, clozeMode = "each"
+  /// A picture's boxes, what to hide, and (a saved box's card) its own box.
+  var boxes: [OccBox] = [], occ = "one", box: String? = nil
+}
+
 extension Store {
   /// A card for the editor: the saved one, or a new one (the canvas's sample draft on design screens).
-  func draft(_ cardId: String?, type: String) -> (kind: String, front: String, back: String, text: String, note: String, tags: [String], image: String?, audio: String?, speak: String, auto: Bool, clozeMode: String) {
+  func draft(_ cardId: String?, type: String) -> CardDraft {
     if let id = cardId, let c = lib.cards.first(where: { $0.id == id }) {
-      return (c.kind, c.front, c.back, c.text, c.note, c.tags, c.image, c.audio, c.speak, c.auto, c.cloze == -1 ? "one" : "each")
+      return CardDraft(kind: c.kind, front: c.front, back: c.back, text: c.text, note: c.note, tags: c.tags, image: c.image, audio: c.audio, wave: c.wave,
+                       speak: c.speak, lang: c.lang, auto: c.auto, clozeMode: c.cloze == -1 ? "one" : "each", boxes: c.boxes, occ: c.occ == "all" ? "all" : "one", box: c.box)
     }
     if demo {
+      let tags = ["Energy", "Exam 1"]
       switch type {
-      case "Blank": return ("cloze", "", "", "The [[mitochondrion]] is the powerhouse of the cell, making most of its [[ATP]].", "It makes most of the cell’s ATP.", ["Energy", "Exam 1"], nil, nil, "", true, "each")
-      case "Image": return ("image", "Name structure 1.", "Nucleus", "", "", ["Energy", "Exam 1"], "mock", nil, "", true, "each")
-      case "Audio": return ("audio", "", "電車 (でんしゃ): train", "", "", ["Energy", "Exam 1"], nil, "mock", "", true, "each")
-      default: return ("basic", "What does the electron transport chain pump across the inner membrane?", "Protons (H⁺), into the intermembrane space.", "", "", ["Energy", "Exam 1"], nil, nil, "", true, "each")
+      case "Blank": return CardDraft(kind: "cloze", text: "The [[mitochondrion]] is the powerhouse of the cell, making most of its [[ATP]].", note: "It makes most of the cell’s ATP.", tags: tags)
+      case "Image": return CardDraft(kind: "image", front: "Name the part of the cell.", tags: tags, image: "mock", boxes: Sample.shared.BOXES, occ: "one", box: "b1")
+      case "Audio": return CardDraft(kind: "audio", back: "電車 (でんしゃ): train", tags: tags, audio: "mock")
+      default: return CardDraft(kind: "basic", front: "What does the electron transport chain pump across the inner membrane?", back: "Protons (H⁺), into the intermembrane space.", tags: tags)
       }
     }
-    return (["Blank": "cloze", "Image": "image", "Audio": "audio"][type] ?? "basic", "", "", "", "", [], nil, nil, "", true, "each")
+    return CardDraft(kind: ["Blank": "cloze", "Image": "image", "Audio": "audio"][type] ?? "basic")
   }
 
   func saveCard(_ cardId: String?, deckId: String, _ o: [String: Any]) async -> Bool {
@@ -52,6 +65,8 @@ struct EditorSheet: View {
   @Environment(\.theme) private var t
   @EnvironmentObject private var store: Store
   @EnvironmentObject private var nav: Nav
+  /// Recording and playing (a clip starts, stops, or is saved).
+  @ObservedObject private var sound = Sound.shared
   @StateObject private var keyboard = Keyboard()
   let deckId: String?
   let cardId: String?
@@ -64,11 +79,22 @@ struct EditorSheet: View {
   @State private var text = ""
   @State private var note = ""
   @State private var speak = ""
+  @State private var lang = ""
   @State private var tags: [String] = []
   @State private var image: String? = nil
   @State private var audio: String? = nil
+  @State private var wave: Wave? = nil
   @State private var auto = true
   @State private var clozeMode = "each"
+  /// Image occlusion: the boxes, what to hide, the picked box, and a drag on the picture under way.
+  @State private var boxes: [OccBox] = []
+  @State private var occ = "one"
+  @State private var picked: String? = nil
+  @State private var boxDrag = false
+  @State private var picture: (path: String, image: UIImage)? = nil
+  /// Sound: the words-read-aloud field open, and the file picker.
+  @State private var speakOpen = false
+  @State private var pickingSound = false
   @State private var loaded = false
   @State private var tagPicker = false
   @State private var styles = false
@@ -77,6 +103,8 @@ struct EditorSheet: View {
   @State private var sel: [Field: TextSelection] = [:]
   @State private var history: [(Field, String)] = []
   @FocusState private var focus: Field?
+  /// The box whose answer is being typed.
+  @FocusState private var labelFocus: String?
 
   private var deck: DeckVM { store.deck(deckId ?? "") }
 
@@ -91,33 +119,54 @@ struct EditorSheet: View {
           Spacer()
           Button(action: save) { Text("Save").css(16, .semibold).foregroundStyle(t.text).frame(minHeight: 44) }.buttonStyle(.plain)
         }
-        Segmented(options: [("Basic", "Basic"), ("Blank", "Blank"), ("Image", "Image"), ("Audio", "Audio")], current: type, height: 36, weight: .medium) { type = $0 }
-        ScrollView(showsIndicators: false) {
-          VStack(alignment: .leading, spacing: 16) {
-            fields
-            FlowLayout(spacing: 6, lineSpacing: 6) {
-              HStack(spacing: 6) { Icon("decks", 12, 2); Text(deck.name).css(13, .semibold) }
-                .padding(.horizontal, 12).frame(height: 32).background(Capsule().fill(t.surf))
-              ForEach(tags, id: \.self) { g in
-                let c = Tags.color(g)
-                Button { tags.removeAll { $0 == g } } label: {
-                  HStack(spacing: 6) { Text(g).css(13, .semibold); Icon("close", 10, 2.4).opacity(0.7) }
-                    .foregroundStyle(c.color).padding(.leading, 12).padding(.trailing, 10).frame(height: 32).background(Capsule().fill(c.opacity(0.149).color))
+        // Switching away from Audio while it records throws the recording away.
+        Segmented(options: [("Basic", "Basic"), ("Blank", "Blank"), ("Image", "Image"), ("Audio", "Audio")], current: type, height: 36, weight: .medium) { k in
+          if k != "Audio" && store.isRecording { store.discardRecording() }
+          type = k
+        }
+        ScrollViewReader { proxy in
+          ScrollView(showsIndicators: false) {
+            VStack(alignment: .leading, spacing: 16) {
+              fields
+              // The deck, then the tags as one group, which goes under the deck when it doesn't fit beside it.
+              ChipThenGroup(gap: 6) {
+                HStack(spacing: 6) { Icon("decks", 12, 2); Text(deck.name).css(13, .semibold) }
+                  .padding(.horizontal, 12).frame(height: 32).background(Capsule().fill(t.surf))
+                FlowLayout(spacing: 6, lineSpacing: 6) {
+                ForEach(tags, id: \.self) { g in
+                  let c = Tags.color(g)
+                  Button { tags.removeAll { $0 == g } } label: {
+                    HStack(spacing: 6) { Text(g).css(13, .semibold); Icon("close", 10, 2.4).opacity(0.7) }
+                      .foregroundStyle(c.color).padding(.leading, 12).padding(.trailing, 10).frame(height: 32).background(Capsule().fill(c.opacity(0.149).color))
+                  }
+                  .buttonStyle(.press)
+                }
+                Button { focus = nil; labelFocus = nil; tagPicker = true } label: {
+                  HStack(spacing: 6) { Icon("plus", 12, 2.4); Text("Add tag").css(13, .semibold) }
+                    .foregroundStyle(t.muted).padding(.horizontal, 12).frame(height: 32)
+                    .overlay(Capsule().strokeBorder(t.muted, style: StrokeStyle(lineWidth: 1.5, dash: [4, 3])))
                 }
                 .buttonStyle(.press)
+                }
               }
-              Button { focus = nil; tagPicker = true } label: {
-                HStack(spacing: 6) { Icon("plus", 12, 2.4); Text("Add tag").css(13, .semibold) }
-                  .foregroundStyle(t.muted).padding(.horizontal, 12).frame(height: 32)
-                  .overlay(Capsule().strokeBorder(t.muted, style: StrokeStyle(lineWidth: 1.5, dash: [4, 3])))
+              if cardId != nil {
+                Button { Task { await store.deleteCard(cardId!); nav.close() } } label: { Text("Delete card").css(14, .semibold).foregroundStyle(t.again) }.buttonStyle(.plain)
               }
-              .buttonStyle(.press)
             }
-            if cardId != nil {
-              Button { Task { await store.deleteCard(cardId!); nav.close() } } label: { Text("Delete card").css(14, .semibold).foregroundStyle(t.again) }.buttonStyle(.plain)
-            }
+            .padding(.bottom, keyboard.height > 0 ? keyboard.height + 60 : 0)
           }
-          .padding(.bottom, keyboard.height > 0 ? keyboard.height + 60 : 0)
+          // A drag on the picture draws or moves a box instead of scrolling.
+          .scrollDisabled(boxDrag)
+          // What you type into stays in sight above the keyboard.
+          .onChange(of: labelFocus) { _, id in
+            guard let id else { return }
+            if picked != id { picked = id }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) { withAnimation(.out(0.3)) { proxy.scrollTo("box-" + id, anchor: UnitPoint(x: 0.5, y: 0.3)) } }
+          }
+          .onChange(of: focus) { _, f in
+            guard let f, type == "Image" || type == "Audio" else { return }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) { withAnimation(.out(0.3)) { proxy.scrollTo(f, anchor: UnitPoint(x: 0.5, y: 0.3)) } }
+          }
         }
       }
       .foregroundStyle(t.text)
@@ -129,7 +178,13 @@ struct EditorSheet: View {
     }
     .photosPicker(isPresented: $picking, selection: $photo, matching: .images)
     .onChange(of: photo) { _, item in upload(item) }
+    .fileImporter(isPresented: $pickingSound, allowedContentTypes: [.audio]) { r in
+      guard case .success(let url) = r else { return }
+      Task { if let clip = await store.pickSound(url) { audio = clip.url; wave = clip.wave } }
+    }
     .onAppear(perform: load)
+    // Leaving the editor while it records throws the recording away.
+    .onDisappear { if store.isRecording { store.discardRecording() }; store.stopSound() }
   }
 
   // ---------- fields ----------
@@ -142,52 +197,159 @@ struct EditorSheet: View {
         Segmented(options: [("each", "One card per blank · \(Rich.blanks(text).count)"), ("one", "One card, all blanks")], current: clozeMode, hPad: 10) { clozeMode = $0 }
       }
       field("Extra, shown after", $note, .note, rows: 1)
-    case "Image":
-      ZStack {
-        RoundedRectangle(cornerRadius: 20, style: .continuous).fill(t.surf)
-        if image == "mock" { CellDiagram().frame(width: 250, height: 170) }
-        else if let img = image, let url = store.api.mediaURL(img) { AsyncImage(url: url) { $0.resizable().scaledToFit() } placeholder: { ProgressView() }.padding(8) }
-        else {
-          Button { picking = true } label: { VStack(spacing: 8) { Icon("image", 22, 1.8); Text("Add an image").css(14, .semibold) }.foregroundStyle(t.muted).frame(maxWidth: .infinity, maxHeight: .infinity) }
-            .buttonStyle(.plain)
-            .overlay(RoundedRectangle(cornerRadius: 20, style: .continuous).strokeBorder(t.muted, style: StrokeStyle(lineWidth: 1.5, dash: [4, 3])))
-        }
-      }
-      .frame(height: 196)
-      SmallButton(label: "Replace image", icon: "image") { picking = true }
-      field("Prompt", $front, .front, rows: 1, "What should they name?")
-      field("Answer", $back, .back, rows: 1)
-    case "Audio":
-      HStack(spacing: 14) {
-        Button { store.play(CardFace(front: speak, audio: audio, speak: speak)) } label: {
-          Icon("play", 16).foregroundStyle(t.invText).frame(width: 40, height: 40).background(Circle().fill(audio != nil || !speak.isEmpty ? t.inv : t.surf2))
-        }
-        .buttonStyle(.press).accessibilityLabel("Play")
-        if audio == "mock" {
-          HStack(spacing: 2) { ForEach(0..<64, id: \.self) { i in RoundedRectangle(cornerRadius: 1).fill(t.text).frame(height: Editor.wave[i]) } }.frame(height: 32)
-          Text("0:02").css(12, mono: true).foregroundStyle(t.muted)
-        } else {
-          Text(audio != nil ? "Your recording" : !speak.isEmpty ? "Reads: “\(speak)”" : "No sound yet. Record one, upload a file, or have it read aloud.")
-            .css(14).foregroundStyle(audio != nil || !speak.isEmpty ? t.text : t.muted).lineLimit(1).frame(maxWidth: .infinity, alignment: .leading)
-        }
-      }
-      .padding(.horizontal, 16).frame(height: 72)
-      .background(RoundedRectangle(cornerRadius: 20, style: .continuous).fill(t.surf))
-      field("Words to read aloud", $speak, .speak, rows: 1, "What the card says out loud")
-      field("Answer", $back, .back, rows: 1)
-      HStack(spacing: 12) {
-        VStack(alignment: .leading, spacing: 2) {
-          Text("Play on its own").css(14, .semibold)
-          Text("The sound starts when the card comes up").css(12).foregroundStyle(t.muted)
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        Toggle48(on: auto, label: "Play on its own") { auto.toggle() }
-      }
-      .frame(minHeight: 44)
+    case "Image": imageFields
+    case "Audio": audioFields
     default:
       field("Front", $front, .front, rows: 3, "The question")
       field("Back", $back, .back, rows: 2, "The answer")
     }
+  }
+
+  // ---------- image: the picture and its boxes ----------
+  @ViewBuilder private var imageFields: some View {
+    if let img = image {
+      OccEditor(image: img, ui: picture?.path == img ? picture?.image : Pictures.cached(img), boxes: $boxes, picked: $picked, busy: $boxDrag)
+        .task(id: img) { if let got = await Pictures.load(img) { picture = (img, got) } }
+    } else {
+      Button { picking = true } label: {
+        VStack(spacing: 8) { Icon("image", 22, 1.8); Text("Add an image").css(14, .semibold) }.foregroundStyle(t.muted).frame(maxWidth: .infinity).frame(height: 240)
+          .overlay(RoundedRectangle(cornerRadius: 20, style: .continuous).strokeBorder(t.muted, style: StrokeStyle(lineWidth: 1.5, dash: [4, 3])))
+      }
+      .buttonStyle(.plain)
+    }
+    FlowLayout(spacing: 8, lineSpacing: 8) {
+      SmallButton(label: "Replace image", icon: "image") { picking = true }
+      if image != nil && boxes.count < 30 { SmallButton(label: "Add a box", icon: "plus") { addBox() } }
+      if !boxes.isEmpty { HideSegmented(current: occ) { occ = $0 } }
+    }
+    if !boxes.isEmpty {
+      VStack(alignment: .leading, spacing: 8) {
+        LabelText(text: answersHead)
+        VStack(spacing: 6) { ForEach(Array(boxes.enumerated()), id: \.element.id) { i, b in answerRow(b, i) } }
+      }
+    } else if image != nil && image != "mock" {
+      Text("Drag on the picture to hide a part behind a box. Each box becomes its own card, with what’s under it as the answer.")
+        .css(13, lh: 1.45).foregroundStyle(t.muted)
+    }
+    field("Prompt", $front, .front, rows: 1, "What should they name?")
+    // With boxes, each box's answer is its card's answer.
+    if boxes.isEmpty { field("Answer", $back, .back, rows: 1) }
+  }
+
+  /// "Answers · Each box is its own card. …" (the second part in gray).
+  private var answersHead: NSAttributedString {
+    let para = NSMutableParagraphStyle(); para.minimumLineHeight = 13 * GEIST_LINE; para.maximumLineHeight = 13 * GEIST_LINE; para.lineBreakStrategy = []
+    let s = NSMutableAttributedString(string: "Answers", attributes: [.font: Rich.geist(.semibold, 13), .foregroundColor: UIColor(t.text), .paragraphStyle: para])
+    s.append(NSAttributedString(string: " · Each box is its own card. " + (occ == "all" ? "Every box stays hidden while one is asked." : "Only the box being asked is hidden."),
+                                attributes: [.font: Rich.geist(.regular, 13), .foregroundColor: UIColor(t.muted), .paragraphStyle: para]))
+    return s
+  }
+
+  /// One row per box: its number (tap to pick the box), what's under it (the card's answer), and × to take it away.
+  private func answerRow(_ b: OccBox, _ i: Int) -> some View {
+    let on = b.id == picked, n = i + 1
+    return HStack(spacing: 8) {
+      Button { picked = b.id } label: {
+        Text("\(n)").css(12, .bold).foregroundStyle(on ? t.invText : t.text).frame(width: 24, height: 24)
+          .background(RoundedRectangle(cornerRadius: 8, style: .continuous).fill(on ? t.inv : t.bg))
+      }
+      .buttonStyle(.flat)
+      .accessibilityLabel("Pick box \(n)")
+      .accessibilityAddTraits(on ? .isSelected : [])
+      TextField("", text: Binding(get: { boxes.first { $0.id == b.id }?.label ?? "" },
+                                  set: { v in if let k = boxes.firstIndex(where: { $0.id == b.id }) { boxes[k].label = String(v.prefix(200)) } }),
+                prompt: Text("What’s under box \(n)").foregroundStyle(t.muted))
+        .font(.geist(15)).foregroundStyle(t.text)
+        .focused($labelFocus, equals: b.id)
+        .submitLabel(i + 1 < boxes.count ? .next : .done)
+        // Return goes on to the next box's answer.
+        .onSubmit { labelFocus = i + 1 < boxes.count ? boxes[i + 1].id : nil }
+        .autocorrectionDisabled()
+        .accessibilityLabel("What’s under box \(n)")
+      Button { removeBox(b.id) } label: { Icon("close", 12, 2.2).foregroundStyle(t.muted).frame(width: 28, height: 28).contentShape(Circle()) }
+        .buttonStyle(.flat)
+        .accessibilityLabel("Remove box \(n)")
+    }
+    .padding(.horizontal, 6)
+    .frame(height: 34)
+    .background(RoundedRectangle(cornerRadius: 14, style: .continuous).fill(t.surf))
+    .overlay(RoundedRectangle(cornerRadius: 14, style: .continuous).strokeBorder(t.text, lineWidth: on ? 2 : 0))
+    .animation(.easeOut(duration: 0.15), value: on)
+    .id("box-" + b.id)
+  }
+
+  /// Add a box: in the middle, a little lower and to the right of any box already there.
+  private func addBox() {
+    guard image != nil, boxes.count < 30 else { return }
+    let w = 0.26, h = 0.18
+    var x = 0.37, y = 0.41
+    while boxes.contains(where: { abs($0.x - x) < 0.02 && abs($0.y - y) < 0.02 }) && y < 0.78 { x = min(1 - w, x + 0.04); y += 0.04 }
+    let id = "b" + String(Int(Date().timeIntervalSince1970 * 1000), radix: 36) + String(UUID().uuidString.prefix(4)).lowercased()
+    boxes.append(OccBox(id: id, x: x, y: y, w: w, h: h))
+    picked = id
+  }
+  private func removeBox(_ id: String) {
+    if labelFocus == id { labelFocus = nil }
+    boxes.removeAll { $0.id == id }
+    if picked == id { picked = nil }
+  }
+
+  // ---------- audio: the sound ----------
+  /// The sound as it plays: a file (and its waveform), or the words read aloud.
+  private var clip: Clip? {
+    if let a = audio, !a.isEmpty { return Clip(audio: a, wave: wave) }
+    return Rich.plain(speak, join: " ", showMath: true).trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? nil : Clip(speak: speak, lang: lang)
+  }
+
+  @ViewBuilder private var audioFields: some View {
+    let rec = store.isRecording, c = clip, vm = store.sound(c)
+    // The sound: its player, or while recording the live waveform (the newest bar at the right), the time, and Stop.
+    HStack(spacing: 14) {
+      if rec {
+        Button { store.toggleRecord { got in audio = got.url; wave = got.wave } } label: {
+          RoundedRectangle(cornerRadius: 1.67, style: .continuous).fill(Color.white).frame(width: 7.33, height: 7.33)
+            .frame(width: 40, height: 40).background(Circle().fill(store.recSaving ? t.muted : t.again))
+        }
+        .buttonStyle(.press)
+        .disabled(store.recSaving)
+        .accessibilityLabel(store.recSaving ? "Saving the recording" : "Stop recording")
+        RecBars().frame(height: 32).frame(maxWidth: .infinity).clipped()
+        RecTime()
+      } else if let c {
+        PlayButton(clip: c, vm: vm, size: 40, glyph: 16)
+        WaveRow(clip: c, vm: vm, bars: 56, gap: 2).frame(height: 32)
+        if vm.hasTime { ClipTime(vm: vm).css(12, mono: true).foregroundStyle(t.muted).frame(minWidth: 30, alignment: .trailing) }
+      } else {
+        Icon("play", 16).foregroundStyle(t.muted).frame(width: 40, height: 40).background(Circle().fill(t.surf2)).accessibilityHidden(true)
+        Text("No sound yet. Record one, upload a file, or have it read aloud.").css(14).foregroundStyle(t.muted).lineLimit(1).frame(maxWidth: .infinity, alignment: .leading)
+      }
+    }
+    .padding(.horizontal, 16).frame(height: 72)
+    .background(RoundedRectangle(cornerRadius: 20, style: .continuous).fill(rec ? t.againTint : t.surf).animation(.easeOut(duration: 0.2), value: rec))
+    FlowLayout(spacing: 8, lineSpacing: 8) {
+      SmallButton(label: rec ? "Stop" : "Record", icon: "mic") { record() }
+      SmallButton(label: "Upload", icon: "upload") { pickingSound = true }
+      SmallButton(label: "Read it aloud", icon: "audio") { speakOpen.toggle() }
+    }
+    if speakOpen || !Rich.plain(speak).trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+      field("Words to read aloud", $speak, .speak, rows: 1, "What the card says out loud")
+    }
+    field("Answer", $back, .back, rows: 1)
+    HStack(spacing: 12) {
+      VStack(alignment: .leading, spacing: 2) {
+        Text("Play on its own").css(14, .semibold)
+        Text("The sound starts when the card comes up").css(12).foregroundStyle(t.muted)
+      }
+      .frame(maxWidth: .infinity, alignment: .leading)
+      Toggle48(on: auto, label: "Play on its own") { auto.toggle() }
+    }
+    .frame(minHeight: 44)
+  }
+
+  /// Record, then Stop: the new clip (its link and its waveform) goes on the card.
+  private func record() {
+    focus = nil
+    store.toggleRecord { got in audio = got.url; wave = got.wave }
   }
 
   /// A card field: gray, rounded, 15px text; a ring while you type in it.
@@ -203,7 +365,9 @@ struct EditorSheet: View {
         .frame(minHeight: (CGFloat(rows) * 15 * 1.45 + 28).rounded(), alignment: .topLeading)
         .background(RoundedRectangle(cornerRadius: 20, style: .continuous).fill(t.surf))
         .overlay(RoundedRectangle(cornerRadius: 20, style: .continuous).strokeBorder(t.text, lineWidth: focus == f ? 2 : 0))
+        .accessibilityLabel(label)
     }
+    .id(f)
   }
 
   // ---------- the formatting bar ----------
@@ -223,7 +387,8 @@ struct EditorSheet: View {
           barButton("Make a blank") { if type != "Blank" { type = "Blank" }; wrap("[[", "]]") } label: { Icon("bracket", 22, 1.6) }
           barButton("List") { listLine() } label: { Icon("list", 21, 1.6) }
           barButton("Add image") { type = "Image"; picking = true } label: { Icon("image", 21, 1.6) }
-          barButton("Record audio") { type = "Audio" } label: { Icon("mic", 21, 1.6) }
+          // Audio: switch to an audio card, or record when it is one.
+          barButton("Record audio") { if type != "Audio" { type = "Audio" } else { record() } } label: { Icon("mic", 21, 1.6) }
           barButton("Math") { wrap("$", "$") } label: { Icon("sqrt", 21, 1.6) }
           barButton("Undo") { undo() } label: { Icon("undo", 21, 1.6) }
         }
@@ -271,7 +436,10 @@ struct EditorSheet: View {
     loaded = true
     let d = store.draft(cardId, type: store.demo ? store.props.cardType : "Basic")
     type = ["cloze": "Blank", "image": "Image", "audio": "Audio"][d.kind] ?? "Basic"
-    front = d.front; back = d.back; text = d.text; note = d.note; tags = d.tags; image = d.image; audio = d.audio; speak = d.speak; auto = d.auto; clozeMode = d.clozeMode
+    front = d.front; back = d.back; text = d.text; note = d.note; tags = d.tags; image = d.image; audio = d.audio; wave = d.wave; speak = d.speak; lang = d.lang
+    auto = d.auto; clozeMode = d.clozeMode; boxes = d.boxes; occ = d.occ
+    // A saved box's card opens with its box picked (the canvas shows box 1 picked).
+    picked = d.box.flatMap { id in d.boxes.contains { $0.id == id } ? id : nil }
     history = []
     if store.demo && store.props.editorTyping { DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { focus = .front } }
   }
@@ -279,15 +447,20 @@ struct EditorSheet: View {
   private func save() {
     let kind = ["Blank": "cloze", "Image": "image", "Audio": "audio"][type] ?? "basic"
     let fr = Rich.plain(front).trimmingCharacters(in: .whitespacesAndNewlines), bk = Rich.plain(back).trimmingCharacters(in: .whitespacesAndNewlines)
-    // What's missing, in the order you'd fill it in.
+    // What's missing, in the order you'd fill it in. A picture with boxes needs no Answer: each box's label is its card's.
     switch kind {
     case "basic": if fr.isEmpty { focus = .front; return }; if bk.isEmpty { focus = .back; return }
     case "cloze": if Rich.blanks(text).isEmpty { focus = .text; return }
-    case "image": if image == nil { picking = true; return }; if bk.isEmpty { focus = .back; return }
-    default: if audio == nil && speak.trimmingCharacters(in: .whitespaces).isEmpty { focus = .speak; return }; if bk.isEmpty { focus = .back; return }
+    case "image": if image == nil { picking = true; return }; if boxes.isEmpty && bk.isEmpty { focus = .back; return }
+    default:
+      if clip == nil { speakOpen = true; DispatchQueue.main.async { focus = .speak }; return }
+      if bk.isEmpty { focus = .back; return }
     }
     var o: [String: Any] = ["kind": kind, "front": front, "back": back, "text": text, "note": note, "tags": tags, "speak": speak, "auto": auto, "clozeMode": clozeMode]
     o["image"] = image ?? NSNull(); o["audio"] = audio ?? NSNull()
+    o["wave"] = audio != nil ? (wave?.json ?? NSNull()) : NSNull()
+    // A picture's boxes (as fractions) and what to hide: the server makes one card per box.
+    if kind == "image" { o["boxes"] = boxes.map(\.json); o["occ"] = occ }
     Task { if await store.saveCard(cardId, deckId: deckId ?? "", o) { nav.close() } }
   }
 
@@ -301,10 +474,65 @@ struct EditorSheet: View {
   }
 }
 
-enum Editor {
-  /// The canvas's small waveform (64 bars).
-  static let wave: [CGFloat] = (0..<64).map { i in
-    let x = Double(i) / 63, env = pow(sin(Double.pi * x), 0.6), v = 0.55 + 0.45 * sin(Double(i) * 1.7) * cos(Double(i) * 0.43 + 1.1)
-    return CGFloat(max(3, (30 * env * v).rounded()))
+/// "What to hide": Hide one or Hide all, both as wide as the wider (a grid of equal columns on the canvas).
+private struct HideSegmented: View {
+  @Environment(\.theme) private var t
+  let current: String
+  let pick: (String) -> Void
+  var body: some View {
+    EqualWidths(gap: 4) {
+      ForEach([("one", "Hide one"), ("all", "Hide all")], id: \.0) { id, label in
+        let on = id == current
+        Button { pick(id) } label: {
+          Text(label).css(13, .semibold).lineLimit(1).foregroundStyle(on ? t.text : t.muted)
+            .padding(.horizontal, 10).frame(maxWidth: .infinity).frame(height: 34)
+            .background(Capsule().fill(on ? t.bg : .clear).shadow(color: .black.opacity(on ? 0.12 : 0), radius: 1.5, x: 0, y: 1))
+            .contentShape(Capsule())
+        }
+        .buttonStyle(.plain)
+        .accessibilityAddTraits(on ? .isSelected : [])
+      }
+    }
+    .padding(4)
+    .background(Capsule().fill(t.surf))
+    .accessibilityElement(children: .contain)
+    .accessibilityLabel("What to hide")
+  }
+}
+
+/// A row whose items are all as wide as the widest one.
+struct EqualWidths: Layout {
+  var gap: CGFloat = 4
+  func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
+    let sizes = subviews.map { $0.sizeThatFits(.unspecified) }, w = sizes.map(\.width).max() ?? 0
+    return CGSize(width: w * CGFloat(subviews.count) + gap * CGFloat(max(0, subviews.count - 1)), height: sizes.map(\.height).max() ?? 0)
+  }
+  func placeSubviews(in b: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) {
+    let w = (b.width - gap * CGFloat(max(0, subviews.count - 1))) / CGFloat(max(1, subviews.count))
+    for (i, v) in subviews.enumerated() { v.place(at: CGPoint(x: b.minX + CGFloat(i) * (w + gap), y: b.minY), proposal: ProposedViewSize(width: w, height: b.height)) }
+  }
+}
+
+/// A chip, then a group that wraps as one (a flex item holding a flex-wrap row): beside the chip when it fits, else on
+/// its own lines under it.
+struct ChipThenGroup: Layout {
+  var gap: CGFloat = 6
+  private func arrange(_ w: CGFloat?, _ subviews: Subviews) -> (chip: CGSize, group: CGSize, below: Bool) {
+    guard subviews.count == 2 else { return (.zero, .zero, false) }
+    let chip = subviews[0].sizeThatFits(.unspecified), ideal = subviews[1].sizeThatFits(.unspecified)
+    guard let w, chip.width + gap + ideal.width > w else { return (chip, ideal, false) }
+    return (chip, subviews[1].sizeThatFits(ProposedViewSize(width: w, height: nil)), true)
+  }
+  func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
+    let a = arrange(proposal.width, subviews)
+    return CGSize(width: proposal.width ?? a.chip.width + gap + a.group.width,
+                  height: a.below ? a.chip.height + gap + a.group.height : max(a.chip.height, a.group.height))
+  }
+  func placeSubviews(in b: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) {
+    guard subviews.count == 2 else { return }
+    let a = arrange(b.width, subviews), h = max(a.chip.height, a.group.height)
+    subviews[0].place(at: CGPoint(x: b.minX, y: b.minY + (a.below ? 0 : (h - a.chip.height) / 2)), proposal: ProposedViewSize(a.chip))
+    if a.below { subviews[1].place(at: CGPoint(x: b.minX, y: b.minY + a.chip.height + gap), proposal: ProposedViewSize(width: b.width, height: a.group.height)) }
+    else { subviews[1].place(at: CGPoint(x: b.minX + a.chip.width + gap, y: b.minY + (h - a.group.height) / 2), proposal: ProposedViewSize(a.group)) }
   }
 }

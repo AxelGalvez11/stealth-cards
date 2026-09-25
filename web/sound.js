@@ -222,7 +222,10 @@ export function createSound({ onChange, upload, measured, known }) {
     try { ctx = new AC(); if (ctx.resume) ctx.resume().catch(() => {}); } catch { /* no meter; the recording still works */ }
     return Promise.resolve().then(() => navigator.mediaDevices.getUserMedia({ audio: true })).then(stream => new Promise((ok, bad) => {
       let mr;
-      try { mr = new MediaRecorder(stream); } catch (e) { stream.getTracks().forEach(x => x.stop()); return bad(e); }
+      // AAC in MP4 where the browser can make it (Safari, and Chrome since 2024), so the iPhone app can play the clip too;
+      // other browsers fall back to their own format.
+      const mp4 = ['audio/mp4;codecs=mp4a.40.2', 'audio/mp4'].find(t => window.MediaRecorder && MediaRecorder.isTypeSupported && MediaRecorder.isTypeSupported(t));
+      try { mr = mp4 ? new MediaRecorder(stream, { mimeType: mp4 }) : new MediaRecorder(stream); } catch (e) { stream.getTracks().forEach(x => x.stop()); return bad(e); }
       const chunks = [];
       let an = null, buf = null;
       if (ctx) { an = ctx.createAnalyser(); an.fftSize = 1024; ctx.createMediaStreamSource(stream).connect(an); buf = new Float32Array(an.fftSize); }

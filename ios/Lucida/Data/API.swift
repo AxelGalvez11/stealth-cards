@@ -96,5 +96,6 @@ final class API {
   }
 
   /// Pictures and sound: /media/… answers with a short-lived link to the file.
-  func mediaURL(_ path: String) -> URL? { path.hasPrefix("http") ? URL(string: path) : URL(string: path, relativeTo: API.base)?.absoluteURL }
+  func mediaURL(_ path: String) -> URL? { API.media(path) }
+  static func media(_ path: String) -> URL? { path.hasPrefix("http") ? URL(string: path) : URL(string: path, relativeTo: API.base)?.absoluteURL }
 }

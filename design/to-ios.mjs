@@ -1,9 +1,10 @@
 // Copies what the iPhone app (ios/) shares with the design canvas into Swift: the theme colors, the icons, the gradient
-// palettes (plus the site's Midnight, for the Learn sheet's deep top), tag colors, the sign-in wall's cards, and the canvas's sample data. Run it after changing any of those.
+// palettes (plus the site's Midnight, for the Learn sheet's deep top), tag colors, the sign-in wall's cards, and the canvas's sample data
+// (and its sample sound's waveform). Run it after changing any of those.
 import { readFileSync, writeFileSync } from 'node:fs';
 import { PALETTES, PALETTE_NAMES, SITE_PALETTES } from './surfaces.mjs';
 import { WALL_CARDS } from './wall.mjs';
-import { SAMPLE } from './mock.mjs';
+import { SAMPLE, SAMPLE_WAVE } from './mock.mjs';
 import { G_LOGO, APPLE_LOGO } from './logos.mjs';
 
 const OUT = new URL('../ios/Lucida/Design/Generated.swift', import.meta.url);
@@ -96,6 +97,9 @@ ${Object.entries(logos).map(([k, v]) => `    ${str(k)}: (${str(v.vb)}, [${v.path
 
   /// The canvas's sample data (design/mock.mjs), for the demo screens.
   static let sampleJSON = ${str(JSON.stringify(SAMPLE))}
+
+  /// The sample sound's waveform (design/mock.mjs SAMPLE_WAVE): 96 peaks, 0 to 1.
+  static let sampleWave: [Double] = ${str(SAMPLE_WAVE)}
 }
 `;
 writeFileSync(OUT, out);

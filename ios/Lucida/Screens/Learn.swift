@@ -303,7 +303,10 @@ struct LearnScreen: View {
   private func head(_ v: LearnView, question: String? = nil) -> some View {
     VStack(alignment: .leading, spacing: 10) {
       LabelText(text: Rich.nsText([Rich.Run(t: question ?? v.text, m: "")], size: 24, weight: .bold, ls: -0.025, lh: 1.2, color: UIColor(look.ink), dark: t.dark))
-      if let img = v.image, let url = store.api.mediaURL(img) {
+      // A picture with boxes shows them, the asked one highlighted, and it turns to an outline once answered.
+      if let img = v.image, let o = v.occ {
+        LearnPicture(image: img, occ: o, shown: v.type == "type" ? v.checked : v.pick != nil, look: look)
+      } else if let img = v.image, let url = store.api.mediaURL(img) {
         AsyncImage(url: url) { $0.resizable().scaledToFit() } placeholder: { t.surf }.frame(maxHeight: 180).clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
       }
       if !v.claim.isEmpty {

@@ -25,7 +25,7 @@ extension Store {
   }
 
   /// Asks Lucida's AI to explain a card (`question`: how Learn mode asked it, if it did). It's kept on the card, and on
-  /// the other cards made from the same blanks.
+  /// the other cards made from the same blanks (each box of a picture has its own answer, so its own explanation).
   func explain(_ cardId: String, question: String) async {
     guard !demo, let c = lib.cards.first(where: { $0.id == cardId }), !explaining.contains(cardId) else { return }
     explaining.insert(cardId); explainErr[cardId] = nil
@@ -33,7 +33,7 @@ extension Store {
     do {
       let r = try await api.explain(cardId, question: question)
       if (200..<300).contains(r.status), let text = r.body["text"] as? String {
-        for i in lib.cards.indices where c.group != nil ? lib.cards[i].group == c.group : lib.cards[i].id == cardId {
+        for i in lib.cards.indices where c.group != nil && c.kind == "cloze" ? lib.cards[i].group == c.group : lib.cards[i].id == cardId {
           lib.cards[i].explain = Explanation(text: text, by: "Lucida")
         }
         aiLeftToday = r.body["free"] as? Bool == true ? r.body["left"] as? Int : nil

@@ -58,6 +58,8 @@ struct LearnView {
   var type = "choice", kind = ""
   // one card (text is how it's asked; cardText is the card's own words)
   var id = "", text = "", cardText = "", image: String? = nil, answer = "", note = "", streak = 0, learnedNow = false
+  /// A picture with boxes: its boxes, the one asked, and whether the others stay hidden.
+  var occ: (boxes: [OccBox], ask: Int, mode: String)? = nil
   var claim = "", options: [String] = [], right = 0, pick: Int? = nil
   // an AI's question: why, and its right option
   var why = "", aiAnswer = ""
@@ -79,11 +81,16 @@ extension Store {
   static let learnPlay = 7
 
   // ---------- the cards ----------
+  /// A box's card asks what's under its box (the picture shows the box); a box with no label has no answer to check, so
+  /// Learn leaves it out.
   func learnText(_ c: Card) -> String {
-    (c.kind == "cloze" ? Rich.plain(c.text, cloze: true, blank: "____", join: " ", showMath: true) : Rich.plain(c.front, join: " ", showMath: true)).trimmingCharacters(in: .whitespacesAndNewlines)
+    let front = Rich.plain(c.front, join: " ", showMath: true).trimmingCharacters(in: .whitespacesAndNewlines)
+    if let o = Occ(c) { return front.isEmpty ? "What’s under box \(o.n)?" : front }
+    return (c.kind == "cloze" ? Rich.plain(c.text, cloze: true, blank: "____", join: " ", showMath: true) : front).trimmingCharacters(in: .whitespacesAndNewlines)
   }
   func answerOf(_ c: Card) -> String {
-    (c.kind == "cloze" ? Rich.blanks(c.text, showMath: true).joined(separator: ", ") : Rich.plain(c.back, join: " ", showMath: true)).trimmingCharacters(in: .whitespacesAndNewlines)
+    if let o = Occ(c) { return o.label }
+    return (c.kind == "cloze" ? Rich.blanks(c.text, showMath: true).joined(separator: ", ") : Rich.plain(c.back, join: " ", showMath: true)).trimmingCharacters(in: .whitespacesAndNewlines)
   }
   func learnable(_ c: Card) -> Bool { !c.pending && c.kind != "audio" && !answerOf(c).isEmpty && (c.kind == "image" ? c.image != nil : !learnText(c).isEmpty) }
   func isHard(_ c: Card) -> Bool { c.srs.lapses > 0 || c.srs.state == "relearning" || (c.srs.state == "review" && c.srs.d >= 7) }
@@ -109,13 +116,19 @@ extension Store {
     return out.filter { $0.2 > 0 || $0.0 == "all" }
   }
 
-  /// Wrong answers that look like the right one: other cards' answers of about the same length, from the same deck.
+  /// Wrong answers that look like the right one: other cards' answers of about the same length, from the same deck. A
+  /// box of a picture gets the picture's other labels first.
   private func distractors(_ c: Card, _ n: Int) -> [String] {
     let right = answerOf(c).lowercased(), deck = engine.cards(of: c.deckId).filter { $0.id != c.id && learnable($0) }, same = deck.filter { $0.kind == c.kind }
+    var near: [String] = []
+    for b in Occ(c)?.boxes ?? [] {
+      let a = b.label.trimmingCharacters(in: .whitespacesAndNewlines)
+      if !a.isEmpty && a.lowercased() != right && !near.contains(a) { near.append(a) }
+    }
     var seen = Set<String>(), pool: [String] = []
-    for a in (same.count > n ? same : deck).map(answerOf) where !a.isEmpty && a.lowercased() != right && seen.insert(a).inserted { pool.append(a) }
+    for a in (same.count > n ? same : deck).map(answerOf) where !a.isEmpty && a.lowercased() != right && !near.contains(a) && seen.insert(a).inserted { pool.append(a) }
     pool.sort { abs($0.count - right.count) < abs($1.count - right.count) }
-    return Array(Array(pool.prefix(n * 2)).shuffled().prefix(n))
+    return Array((near.shuffled() + Array(pool.prefix(n * 2)).shuffled()).prefix(n))
   }
   private func short(_ c: Card) -> Bool { c.kind != "image" && learnText(c).count <= 70 && answerOf(c).count <= 60 }
 
@@ -317,6 +330,7 @@ extension Store {
     }
     guard let id = q.id, let c = card(id), let s = L.st[id] else { return v }
     v.id = id; v.text = learnText(c); v.image = c.kind == "image" ? c.image : nil; v.answer = answerOf(c); v.note = Rich.plain(c.note, join: " ", showMath: true)
+    v.occ = Occ(c).map { ($0.boxes, $0.i, $0.mode) }
     v.streak = s.streak; v.learnedNow = s.learned
     if q.type == "type" { v.typed = q.typed ?? ""; v.checked = q.checked == true; v.ok = q.ok == true; return v }
     v.cardText = v.text; v.text = q.text ?? v.text

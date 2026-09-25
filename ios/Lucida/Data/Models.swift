@@ -180,29 +180,73 @@ struct QuizQuestion: Decodable, Equatable {
   }
 }
 
+/// Image occlusion (web/store.mjs cleanBoxes): a box over part of a picture, hiding what's under it (its label, the
+/// answer). Place and size are fractions of the picture (0 to 1), so a box fits the picture at any size.
+struct OccBox: Decodable, Equatable, Identifiable {
+  var id: String, x: Double, y: Double, w: Double, h: Double, label: String
+  enum CodingKeys: String, CodingKey { case id, x, y, w, h, label }
+  init(id: String, x: Double, y: Double, w: Double, h: Double, label: String = "") { self.id = id; self.x = x; self.y = y; self.w = w; self.h = h; self.label = label }
+  init(from d: Decoder) throws {
+    let c = try d.container(keyedBy: CodingKeys.self)
+    id = c.v(.id, UUID().uuidString); x = c.v(.x, 0); y = c.v(.y, 0); w = c.v(.w, 0); h = c.v(.h, 0); label = c.v(.label, "")
+  }
+  /// As the server keeps it: four decimals, like the web editor saves them.
+  var json: [String: Any] {
+    let r = { (v: Double) in (v * 10000).rounded() / 10000 }
+    return ["id": id, "x": r(x), "y": r(y), "w": r(w), "h": r(h), "label": label]
+  }
+}
+
+/// A sound's shape (web/sound.js packWave): its length in seconds, and one letter per peak.
+struct Wave: Decodable, Equatable {
+  var d: Double, p: String
+  enum CodingKeys: String, CodingKey { case d, p }
+  init(d: Double, p: String) { self.d = d; self.p = p }
+  init(from dec: Decoder) throws { let c = try dec.container(keyedBy: CodingKeys.self); d = c.v(.d, 0); p = c.v(.p, "") }
+  var json: [String: Any] { ["d": d, "p": p] }
+}
+
 struct Card: Decodable, Identifiable {
   var id: String, deckId: String, kind: String
   var front = "", back = "", note = "", text = ""
   var tags: [String] = []
   var image: String?, audio: String?
+  /// The sound's waveform, measured once and kept with the card.
+  var wave: Wave?
   var speak = "", lang = "", auto = true, source = "you", pending = false
   var created: Double = 0
   var srs = SRS()
   var pile: String?
   var cloze: Int?
   var group: String?
+  /// A picture with parts hidden: every box on it, which one this card asks, and whether the others stay hidden ("all")
+  /// or show ("one").
+  var boxes: [OccBox] = []
+  var box: String?
+  var occ = "one"
   /// Its AI explanation, and the Learn mode questions an AI app wrote for it.
   var explain: Explanation?
   var quiz: [QuizQuestion] = []
-  enum CodingKeys: String, CodingKey { case id, deckId, kind, front, back, note, text, tags, image, audio, speak, lang, auto, source, pending, created, srs, pile, cloze, group, explain, quiz }
+  enum CodingKeys: String, CodingKey { case id, deckId, kind, front, back, note, text, tags, image, audio, wave, speak, lang, auto, source, pending, created, srs, pile, cloze, group, boxes, box, occ, explain, quiz }
   init(from d: Decoder) throws {
     let c = try d.container(keyedBy: CodingKeys.self)
     id = c.v(.id, UUID().uuidString); deckId = c.v(.deckId, ""); kind = c.v(.kind, "basic")
     front = c.v(.front, ""); back = c.v(.back, ""); note = c.v(.note, ""); text = c.v(.text, ""); tags = c.v(.tags, [])
-    image = c.v(.image, nil); audio = c.v(.audio, nil); speak = c.v(.speak, ""); lang = c.v(.lang, ""); auto = c.v(.auto, true)
+    image = c.v(.image, nil); audio = c.v(.audio, nil); wave = c.v(.wave, nil); speak = c.v(.speak, ""); lang = c.v(.lang, ""); auto = c.v(.auto, true)
     source = c.v(.source, "you"); pending = c.v(.pending, false); created = c.v(.created, 0); srs = c.v(.srs, SRS())
     pile = c.v(.pile, nil); cloze = c.v(.cloze, nil); group = c.v(.group, nil)
+    boxes = c.v(.boxes, []); box = c.v(.box, nil); occ = c.v(.occ, "one")
     explain = c.v(.explain, nil); quiz = c.v(.quiz, [])
+  }
+}
+
+/// A picture with parts hidden (db.js occOf): the card asks box `n` (its `i`th); nil for every other card.
+struct Occ {
+  let boxes: [OccBox], i: Int, label: String, mode: String
+  var n: Int { i + 1 }
+  init?(_ c: Card) {
+    guard c.kind == "image", let id = c.box, let i = c.boxes.firstIndex(where: { $0.id == id }) else { return nil }
+    boxes = c.boxes; self.i = i; label = c.boxes[i].label.trimmingCharacters(in: .whitespacesAndNewlines); mode = c.occ == "all" ? "all" : "one"
   }
 }
 
