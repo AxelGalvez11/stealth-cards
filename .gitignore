@@ -5,8 +5,8 @@ node_modules/
 .vercel/
 DerivedData/
 *.xcuserstate
-# Your decks and cards (made by the app)
-data/
+# Your decks and cards (made by the app). Only the top folder: on a Mac, git would also skip ios/Lucida/Data.
+/data/
 # Local tools (paths on this computer) and design snapshots
 .claude/
 design/.snapshot.json

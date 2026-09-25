@@ -103,7 +103,7 @@ struct ExplainPanel: View {
       if !ex.error.isEmpty && !ex.busy {
         Text(ex.error).css(14, lh: 1.4).foregroundStyle(t.again).fixedSize(horizontal: false, vertical: true)
         if ex.goPro {
-          Button { UIApplication.shared.open(API.pro) } label: {
+          Button { UIApplication.shared.open(API.pricing) } label: {
             Text("Go Pro").css(13, .semibold).foregroundStyle(look.btnFg).padding(.horizontal, 16).frame(height: 34).background(Capsule().fill(look.btn))
           }
           .buttonStyle(.press)

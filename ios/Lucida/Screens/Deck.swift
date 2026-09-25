@@ -11,8 +11,10 @@ struct DeckVM {
   var image: String? = nil
   var lineShort = ""
   var due = 0, fresh = 0, ret: Int? = nil
-  var studyLabel = ""
-  var learnLabel = "Learn"
+  /// Flashcards and Learn (the owner: "learn button needs to be 'learn', flashcards need to have flashcards button"):
+  /// Flashcards shows how many cards wait today, and Learn picks up a session you left.
+  var studyLabel = "Flashcards", studyCount = 0
+  var learnLabel = "Learn", resume = false
   var rows: [CardRowVM] = []
   var tags: [String] = []
   var allTags: [String] = []
@@ -44,9 +46,9 @@ extension Store {
   func deck(_ id: String) -> DeckVM {
     if demo {
       let X = Sample.shared, e = demoDeck, empty = props.emptyDeck
-      if empty { return DeckVM(id: "pharm", name: "Pharmacology", seed: "Pharmacology", lineShort: "No cards yet", studyLabel: "Nothing due") }
+      if empty { return DeckVM(id: "pharm", name: "Pharmacology", seed: "Pharmacology", lineShort: "No cards yet") }
       let d = DeckVM(id: "cell", name: e.name ?? "Cell Biology", seed: "Cell Biology", style: e.style ?? "mix", round: e.round, image: e.image,
-                     lineShort: "412 cards · 38 from your AI", due: 28, fresh: 10, ret: 91, studyLabel: "Study 28 cards", learnLabel: "Learn",
+                     lineShort: "412 cards · 38 from your AI", due: 28, fresh: 10, ret: 91, studyCount: 28,
                      rows: X.CARDS.prefix(6).map { CardRowVM(id: $0.id, front: $0.front, meta: $0.kind + " · " + $0.next, tags: $0.tags) },
                      tags: e.tags ?? X.TAGS["cell"] ?? [], allTags: Array(Generated.tagColors.keys),
                      paused: e.paused, grading: e.grading ?? props.grading, fsrs: e.fsrs, goal: e.goal, gapIdx: e.gapIdx, steps: e.steps, perDay: e.perDay,
@@ -59,8 +61,7 @@ extension Store {
     let total = plural(st.total, "card").replacingOccurrences(of: String(st.total), with: grouped(st.total))
     return DeckVM(id: d.id, name: d.name, seed: d.cover.seed ?? d.name, style: d.cover.style ?? "mix", round: d.cover.round, image: d.cover.image,
                   lineShort: total + (st.aiCount > 0 ? " · \(st.aiCount) from your AI" : ""), due: st.due, fresh: st.fresh, ret: st.ret,
-                  studyLabel: st.due > 0 ? "Study " + plural(st.due, "card") : st.fresh > 0 ? "Learn " + plural(st.fresh, "new card") : "Nothing due",
-                  learnLabel: learnOn(id) ? "Resume" : "Learn",
+                  studyCount: st.due > 0 ? st.due : st.fresh, resume: learnOn(id),
                   rows: cards.map { c in CardRowVM(id: c.id, front: Store.listFront(c), meta: (KIND_LABEL[c.kind] ?? "Basic") + " · " + E.nextLabel(c), tags: c.tags) },
                   tags: d.tags, allTags: E.tags, paused: d.paused, grading: d.grading, fsrs: d.fsrs, goal: d.goal, gapIdx: d.gapIdx, steps: d.steps, perDay: d.perDay,
                   folder: d.folder, folders: lib.folders.map { ($0.id, $0.name) }, bg: d.bg)
@@ -225,12 +226,19 @@ struct DeckScreen: View {
           }
           HStack(spacing: 8) {
             Button { nav.study(deckId: d.id) } label: {
-              Text(d.studyLabel).css(17, .semibold).foregroundStyle(t.invText).frame(maxWidth: .infinity).frame(height: 56).background(Capsule().fill(t.inv))
+              HStack(spacing: 8) {
+                Icon("decks", 17, 2)
+                Text(d.studyLabel).css(17, .semibold).lineLimit(1).fixedSize()
+                if d.studyCount > 0 {
+                  Text(String(d.studyCount)).css(13, .semibold, mono: true).padding(.horizontal, 7).frame(minWidth: 24, minHeight: 24).background(Capsule().fill(Color(white: 0.5).opacity(0.32)))
+                }
+              }
+              .foregroundStyle(t.invText).frame(maxWidth: .infinity).frame(height: 56).background(Capsule().fill(t.inv))
             }
             .buttonStyle(.press)
             .frame(maxWidth: .infinity)
             .layoutPriority(2)
-            Button { nav.learn(deckId: d.id, resume: store.isPro && d.learnLabel == "Resume") } label: {
+            Button { nav.learn(deckId: d.id, resume: store.isPro && d.resume) } label: {
               HStack(spacing: 8) { Icon("sparkle", 17, 2); Text(d.learnLabel).css(17, .semibold).lineLimit(1).fixedSize() }
                 .foregroundStyle(t.text).frame(maxWidth: .infinity).frame(height: 56).background(Capsule().fill(t.surf))
             }
