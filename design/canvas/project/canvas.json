@@ -1341,6 +1341,60 @@
       "w": 1440,
       "x": 10640,
       "y": 3960
+    },
+    "WebEditorBigImage.dc.html": {
+      "h": 900,
+      "is_interactive": true,
+      "page": "sidebar",
+      "title": "Web · Bigger card editor · image with boxes (mockup)",
+      "w": 1440,
+      "x": 0,
+      "y": 10560
+    },
+    "WebEditorBig.dc.html": {
+      "h": 900,
+      "is_interactive": true,
+      "page": "sidebar",
+      "title": "Web · Bigger card editor · basic (mockup)",
+      "w": 1440,
+      "x": 1520,
+      "y": 10560
+    },
+    "WebEditorBigBlank.dc.html": {
+      "h": 900,
+      "is_interactive": true,
+      "page": "sidebar",
+      "title": "Web · Bigger card editor · fill in the blank (mockup)",
+      "w": 1440,
+      "x": 3040,
+      "y": 10560
+    },
+    "WebEditorBigAudio.dc.html": {
+      "h": 900,
+      "is_interactive": true,
+      "page": "sidebar",
+      "title": "Web · Bigger card editor · audio (mockup)",
+      "w": 1440,
+      "x": 4560,
+      "y": 10560
+    },
+    "WebEditorBigImageDark.dc.html": {
+      "h": 900,
+      "is_interactive": true,
+      "page": "sidebar",
+      "title": "Web · Bigger card editor · image with boxes (dark, mockup)",
+      "w": 1440,
+      "x": 6080,
+      "y": 10560
+    },
+    "WebEditorBigDark.dc.html": {
+      "h": 900,
+      "is_interactive": true,
+      "page": "sidebar",
+      "title": "Web · Bigger card editor · basic (dark, mockup)",
+      "w": 1440,
+      "x": 7600,
+      "y": 10560
     }
   },
   "createdOnFiles": {
@@ -1622,6 +1676,24 @@
       "w": 240,
       "x": 1880,
       "y": 1000
+    },
+    "aBigEditor": {
+      "kind": "title1",
+      "maxW": 9040,
+      "page": "sidebar",
+      "text": "Bigger card editor (mockup, not in the app yet)",
+      "w": 240,
+      "x": 0,
+      "y": 10260
+    },
+    "aBigSticky": {
+      "fill": "gray",
+      "page": "sidebar",
+      "size": 40,
+      "text": "Bigger card editor\nA wide sheet instead of the side panel: pictures get most of the room, and text cards get big front and back fields. Drag boxes, type, and switch types to try it. The app still opens the panel.",
+      "w": 520,
+      "x": 9120,
+      "y": 10560
     }
   },
   "order": [
@@ -1773,7 +1845,13 @@
     "PhoneLibraryFolder.dc.html",
     "PhoneLibraryNewFolder.dc.html",
     "PhoneDeckMoveTray.dc.html",
-    "PhoneReviewExplain.dc.html"
+    "PhoneReviewExplain.dc.html",
+    "WebEditorBigImage.dc.html",
+    "WebEditorBig.dc.html",
+    "WebEditorBigBlank.dc.html",
+    "WebEditorBigAudio.dc.html",
+    "WebEditorBigImageDark.dc.html",
+    "WebEditorBigDark.dc.html"
   ],
   "pages": [
     {
