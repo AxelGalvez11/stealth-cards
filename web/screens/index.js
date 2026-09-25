@@ -637,6 +637,42 @@ export default [
   "h": 900
  },
  {
+  "name": "WebEditorBig",
+  "title": "Web · Bigger card editor (mockup)",
+  "w": 1440,
+  "h": 900
+ },
+ {
+  "name": "WebEditorBigAudio",
+  "title": "Web · Bigger card editor · audio (mockup)",
+  "w": 1440,
+  "h": 900
+ },
+ {
+  "name": "WebEditorBigBlank",
+  "title": "Web · Bigger card editor · fill in the blank (mockup)",
+  "w": 1440,
+  "h": 900
+ },
+ {
+  "name": "WebEditorBigDark",
+  "title": "Web · Bigger card editor (dark, mockup)",
+  "w": 1440,
+  "h": 900
+ },
+ {
+  "name": "WebEditorBigImage",
+  "title": "Web · Bigger card editor · image with boxes (mockup)",
+  "w": 1440,
+  "h": 900
+ },
+ {
+  "name": "WebEditorBigImageDark",
+  "title": "Web · Bigger card editor · image with boxes (dark, mockup)",
+  "w": 1440,
+  "h": 900
+ },
+ {
   "name": "WebEditorBlank",
   "title": "Web · Card editor · fill in the blank",
   "w": 1440,
