@@ -24,7 +24,7 @@ a{color:inherit;text-decoration:none}a:hover{opacity:.8}
   
   <div style="width: 100%; display: flex; gap: 8px;"><div style="flex-grow: 1; background: {{t.surf}}; border-radius: 22px; padding: 14px; text-align: left;"><div style="font-size: 12px; color: {{t.muted}};">Streak</div><div style="font-size: 20px; font-weight: 700;">{{streakLabel}}</div></div><div style="flex-grow: 1; background: {{t.surf}}; border-radius: 22px; padding: 14px; text-align: left;"><div style="font-size: 12px; color: {{t.muted}};">Next</div><div style="font-size: 20px; font-weight: 700;">{{nextShort}}</div></div></div>
   <div style="flex-grow: 1;"></div>
-  <a href="PhoneToday.dc.html" style="width: 100%; height: 58px; border-radius: 999px; background: {{t.inv}}; color: {{t.invText}}; display: flex; align-items: center; justify-content: center; font-size: 17px; font-weight: 600;">Done</a>
+  <a href="{{doneHref}}" style="width: 100%; height: 58px; border-radius: 999px; background: {{t.inv}}; color: {{t.invText}}; display: flex; align-items: center; justify-content: center; font-size: 17px; font-weight: 600;">Done</a>
 </div></div>
 
 
@@ -232,7 +232,7 @@ renderVals() { const t = this.theme(!!this.props.dark, !!this.props.dim);const d
     piles: ss.piles.map(p => ({ name: p.name, count: String(p.n), w: Math.round(p.n / all * 100) + '%', href: p.href || 'WebReview.dc.html', pe: p.total === 0 ? 'none' : 'auto', arrow: p.total === 0 ? t.surf2 : t.text })),
     summary: plural(ss.sorted, 'card') + ' sorted · ' + plural(ss.minutes, 'minute'), summaryShort: ss.sorted + ' sorted · ' + ss.minutes + ' min',
     streakLabel: plural(ss.streak, 'day'), nextLabel: ss.next, nextShort: ss.next.split(' · ')[0],
-    moreHref: ss.moreHref, moreLabel: ss.moreLabel || 'Study 10 more' }; }
+    moreHref: ss.moreHref, moreLabel: ss.moreLabel || 'Study 10 more', doneHref: db.mock ? 'PhoneDeck.dc.html' : ss.doneHref }; }
 }
 </script>
 </body>

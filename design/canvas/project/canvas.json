@@ -362,6 +362,15 @@
       "x": 2820,
       "y": 1320
     },
+    "PhoneQuizSettings.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "page": "quiz",
+      "title": "iPhone · Learn mode · settings (the deck’s background)",
+      "w": 390,
+      "x": 3290,
+      "y": 1320
+    },
     "PhoneQuizMatch.dc.html": {
       "h": 844,
       "is_interactive": true,
@@ -863,6 +872,15 @@
       "title": "Web · Learn mode · all learned",
       "w": 1440,
       "x": 9120,
+      "y": 0
+    },
+    "WebQuizSettings.dc.html": {
+      "h": 900,
+      "is_interactive": true,
+      "page": "quiz",
+      "title": "Web · Learn mode · settings (the deck’s background)",
+      "w": 1440,
+      "x": 10640,
       "y": 0
     },
     "WebQuizMatch.dc.html": {
@@ -1813,6 +1831,7 @@
     "WebQuizMatch.dc.html",
     "WebQuizType.dc.html",
     "WebQuizDone.dc.html",
+    "WebQuizSettings.dc.html",
     "PhoneQuizStart.dc.html",
     "PhoneQuizUpgrade.dc.html",
     "PhoneQuiz.dc.html",
@@ -1820,6 +1839,7 @@
     "PhoneQuizMatch.dc.html",
     "PhoneQuizType.dc.html",
     "PhoneQuizDone.dc.html",
+    "PhoneQuizSettings.dc.html",
     "Pricing.dc.html",
     "PricingPhone.dc.html",
     "LiveSetup.dc.html",

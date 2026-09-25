@@ -63,7 +63,7 @@ a{color:inherit;text-decoration:none}a:hover{opacity:.8}
         </div>
         <div style="display: flex; flex-direction: column; gap: 8px;"><span style="font-size: 13px; font-weight: 600;">Background</span><span style="margin-top: -4px; font-size: 12px; color: {{t.muted}};">Behind Learn mode, flashcards, and Live</span>
           <div role="radiogroup" aria-label="Background" style="display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 8px;"><sc-for list="{{bgOptions}}" as="o" hint-placeholder-count="5"><button type="button" role="radio" aria-checked="{{o.pressed}}" onClick="{{o.pick}}" style="min-width: 0; padding: 0; border: 0; background: transparent; color: {{t.text}}; display: flex; flex-direction: column; gap: 6px; font: inherit; font-size: 12px; font-weight: 600; cursor: pointer;"><span style="position: relative; height: 48px; border-radius: 14px; overflow: hidden; box-shadow: {{o.ring}};">
-            <sc-if value="{{o.isDeck}}" hint-placeholder-val="{{ true }}"><span style="position: absolute; inset: 0; background: {{cover.base}}; filter: saturate(.16) brightness(1.15);"></span><span style="position: absolute; inset: 0; background: rgba(255,255,255,.55);"></span></sc-if>
+            <sc-if value="{{o.isDeck}}" hint-placeholder-val="{{ true }}"><span style="position: absolute; inset: 0; background: {{bgTile.base}};"></span><span style="position: absolute; inset: 0; background: {{bgTile.veil}};"></span></sc-if>
             <sc-if value="{{o.isPlain}}" hint-placeholder-val="{{ false }}"><span style="position: absolute; inset: 0; background: {{t.bg}};"></span></sc-if>
             <sc-if value="{{o.isSky}}" hint-placeholder-val="{{ false }}"><span style="position: absolute; inset: 0; background: linear-gradient(180deg, #86BDF3 0%, #C9E2FB 45%, #EDF5FE 100%);"></span></sc-if>
             <sc-if value="{{o.isSunset}}" hint-placeholder-val="{{ false }}"><span style="position: absolute; inset: 0; background: radial-gradient(90% 60% at 88% 100%, rgba(238,142,98,.22), rgba(238,142,98,0) 70%), linear-gradient(180deg, #C3D3E3 0%, #D3DBE6 30%, #E6DDE4 52%, #F2DCD8 72%, #F5CFC2 100%);"></span></sc-if>
@@ -521,7 +521,31 @@ renderVals() { const t = this.theme(!!this.props.dark, !!this.props.dim);const d
   // A header image replaces the gradient: your photo in the app, a placeholder on the canvas.
   const isImage = !!dk.cover.image, photo = isImage && dk.cover.image !== 'mock' ? dk.cover.image : '';
   const settingsOpen = cs.deckSettings == null ? !!this.props.settingsOpen : cs.deckSettings;
-  const bgKind = (dk.bg && dk.bg.kind) || 'deck', bgImage = (dk.bg && dk.bg.image) || dk.cover.image || '', bgPhoto = bgImage && bgImage !== 'mock' ? bgImage : '';
+  const studyBg = (dk, dark, dim) => {
+    const b = (dk && dk.bg) || {}, img = b.image || (dk && dk.image) || '';
+    const kind = ['deck', 'plain', 'sky', 'sunset', 'photo'].includes(b.kind) && !(b.kind === 'photo' && !img) ? b.kind : 'deck';
+    const mesh = this.gen(((dk && dk.seed) || 'Lucida') + (dk && dk.round ? ' #' + dk.round : ''), (dk && dk.style) || 'mix');
+    // On the canvas a photo is a placeholder, so it shows the deck's colors at full strength instead.
+    const photo = kind === 'photo' && img !== 'mock' ? img : '', sample = kind === 'photo' && !photo, faint = kind === 'deck', gray = dark && dim;
+    // In light mode the deck's colors are one pale hue (the owner: "make the background for flashcards and learn be
+    // monochrome and lighter/fainter on light mode"): every fold of its gradient in the deck's main color (the middle of
+    // the gradient), light and soft, a pastel wash under the words. Dark and gray keep theirs.
+    const mono = faint && !dark, hue = parseInt(mesh.base.split('hsl(')[2]) || 0;
+    const pale = c => c.replace(/hsl\((\d+) (\d+)% (\d+)%\)/g, (_, h, s, l) => 'hsl(' + hue + ' 50% ' + Math.round(84 + l * .12) + '%)');
+    return { isDeck: faint || sample, isPhoto: !!photo, isSky: kind === 'sky', isSunset: kind === 'sunset', photo,
+      mesh: mono ? Object.fromEntries(Object.entries(mesh).map(([k, v]) => [k, typeof v === 'string' ? pale(v) : v && v.c ? { ...v, c: pale(v.c) } : v])) : mesh,
+      filter: sample || !dark ? 'none' : gray ? 'saturate(.16) brightness(.34)' : 'saturate(.16) brightness(.42)',
+      veil: faint ? (gray ? 'rgba(30,30,32,.45)' : dark ? 'rgba(0,0,0,.3)' : 'rgba(255,255,255,.35)') : photo || sample ? (gray ? 'rgba(30,30,32,.55)' : dark ? 'rgba(0,0,0,.5)' : 'rgba(255,255,255,.38)') : 'rgba(0,0,0,0)',
+      skyTop: gray ? '#1B2A48' : dark ? '#081733' : '#86BDF3', skyMid: gray ? '#1F2B45' : dark ? '#0D2148' : '#C9E2FB', skyLow: gray ? '#212637' : dark ? '#0A1530' : '#EDF5FE',
+      sunset: gray ? "radial-gradient(90% 60% at 88% 100%, rgba(238,142,98,.18), rgba(238,142,98,0) 70%), linear-gradient(180deg, #1F2638 0%, #272C40 35%, #332C3F 65%, #3E2E37 100%)" : dark ? "radial-gradient(90% 60% at 88% 100%, rgba(238,142,98,.16), rgba(238,142,98,0) 70%), linear-gradient(180deg, #0C1426 0%, #151B31 35%, #231C2E 65%, #2E1D25 100%)" : "radial-gradient(90% 60% at 88% 100%, rgba(238,142,98,.22), rgba(238,142,98,0) 70%), linear-gradient(180deg, #C3D3E3 0%, #D3DBE6 30%, #E6DDE4 52%, #F2DCD8 72%, #F5CFC2 100%)", grain: faint || sample || kind === 'sunset' ? '.55' : '0' };
+  };
+  const bgPick = dk => {
+    const kind = (dk.bg && dk.bg.kind) || 'deck', image = (dk.bg && dk.bg.image) || (dk.cover && dk.cover.image) || '', photo = image && image !== 'mock' ? image : '', tile = studyBg({ ...dk, bg: { kind: 'deck' } }, false);
+    return { bgTile: { base: tile.mesh.base, veil: tile.veil }, hasBgPhoto: !!photo, bgPhoto: photo, bgIsPhoto: kind === 'photo', uploadBg: () => db.act.pickBg(dk.id),
+      bgOptions: [['deck', 'Colors'], ['plain', 'Plain'], ['sky', 'Sky'], ['sunset', 'Sunset'], ['photo', 'Photo']].map(([id, label]) => { const on = kind === id;
+        return { label, pressed: on ? 'true' : 'false', ring: on ? '0 0 0 2px ' + t.text : 'inset 0 0 0 1px ' + t.line, isDeck: id === 'deck', isPlain: id === 'plain', isSky: id === 'sky', isSunset: id === 'sunset', isPhoto: id === 'photo',
+          pick: () => (id === 'photo' && !image ? db.act.pickBg(dk.id) : db.act.setBg(dk.id, id)) }; }) };
+  };
   const perDay = dk.perDay, goal = dk.goal, grading = dk.grading, paused = dk.paused;
   // FSRS is set per deck. It schedules the four grades and check / x; piles only sort cards.
   const sw = (on, enabled = true) => ({ checked: on ? 'true' : 'false', track: on ? t.inv : t.surf2, knob: on ? 'translateX(20px)' : 'translateX(0)', knobColor: on ? t.invText : t.bg, op: enabled ? '1' : '.4', disabled: enabled ? 'false' : 'true' });
@@ -562,11 +586,7 @@ renderVals() { const t = this.theme(!!this.props.dark, !!this.props.dim);const d
     exportDeck: () => db.act.exportDeck(dk.id), deleteDeck: () => db.act.deleteDeck(dk.id),
     // The deck's folder, and its background for Learn mode, flashcards, and Live.
     folderChips: [{ id: null, name: 'No folder' }, ...db.folders()].map(f => { const on = (dk.folder || null) === f.id; return { label: f.name, pressed: on ? 'true' : 'false', bg: on ? t.inv : t.surf, fg: on ? t.invText : t.text, pick: () => db.act.moveDeck(dk.id, f.id) }; }),
-    noFolders: !db.folders().length,
-    bgOptions: [['deck', 'Colors'], ['plain', 'Plain'], ['sky', 'Sky'], ['sunset', 'Sunset'], ['photo', 'Photo']].map(([id, label]) => { const on = bgKind === id;
-      return { label, pressed: on ? 'true' : 'false', ring: on ? '0 0 0 2px ' + t.text : 'inset 0 0 0 1px ' + t.line, isDeck: id === 'deck', isPlain: id === 'plain', isSky: id === 'sky', isSunset: id === 'sunset', isPhoto: id === 'photo',
-        pick: () => (id === 'photo' && !bgImage ? db.act.pickBg(dk.id) : db.act.setBg(dk.id, id)) }; }),
-    hasBgPhoto: !!bgPhoto, bgPhoto, bgIsPhoto: bgKind === 'photo', uploadBg: () => db.act.pickBg(dk.id),
+    noFolders: !db.folders().length, ...bgPick(dk),
     deckLine: plural(dk.total, 'card').replace(String(dk.total), dk.totalLabel) + (dk.aiCount ? ' · ' + dk.aiCount + ' added by your AI' : ''),
     deckLineShort: plural(dk.total, 'card').replace(String(dk.total), dk.totalLabel) + (dk.aiCount ? ' · ' + dk.aiCount + ' from your AI' : ''),
     // The owner: "learn button needs to be 'learn', flashcards need to have flashcards button". So this one always says

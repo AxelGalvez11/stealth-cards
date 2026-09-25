@@ -555,7 +555,10 @@ export async function createDb({ onChange, go }) {
       const q = queue(id, pile), cur = q[0], done = session.graded.length;
       const counts = { new: q.filter(x => x.lane === 'new').length, learn: q.filter(x => x.lane === 'learn').length, rev: q.filter(x => x.lane === 'rev').length };
       const d = cur ? cur.deck : deckById(id) || S.decks[0] || { grading: 'four', piles: [] };
-      const base = { deckId: d.id, done, left: q.length, total: done + q.length, counts, mode: d.grading, prog: S.settings.prog, piles: (d.piles || []).map(p => ({ name: p.name, n: cardsOf(d.id).filter(c => c.pile === p.name).length })) };
+      // X goes straight back to the deck's page, or to Today from Today's review of every deck (the owner: "clicking 'x' on
+      // flashcards or learn should take one back to decks not to the finish screen"). Every grade is saved already.
+      const base = { deckId: d.id, done, left: q.length, total: done + q.length, counts, mode: d.grading, prog: S.settings.prog, piles: (d.piles || []).map(p => ({ name: p.name, n: cardsOf(d.id).filter(c => c.pile === p.name).length })),
+        endHref: id ? '/deck/' + id : '/' };
       if (!cur) return { ...base, empty: true, card: null, queue: 'rev', iv: { again: '', hard: '', good: '', easy: '' }, fsrsOn: false, editHref: '' };
       const c = cur.card, t = now(), pv = scheduled(d) ? preview(c.srs, t, { goal: d.goal / 100, maxDays: GAPS[d.gapIdx ?? 3], steps: d.steps }) : null;
       autoplay(c);
@@ -584,6 +587,9 @@ export async function createDb({ onChange, go }) {
         cards: g.length, minutes: session ? Math.max(1, Math.round((now() - session.started) / MIN)) : 0, fresh: g.filter(x => x.was === 'new').length, split,
         streak: streaks().streak, next: nx ? nx.short + ' · ' + nx.n : 'Nothing due',
         moreHref: left ? reviewHref(session.deckId, session.pile) : d ? '/deck/' + d.id + '/card' : '/library', moreLabel: left ? 'Keep going · ' + left + ' left' : 'Add cards',
+        // Done goes back to the deck the session was from (the owner: "finishing a deck takes one back to 'today' page and
+        // not deck page"), or to Today after reviewing every deck.
+        doneHref: d ? '/deck/' + d.id : '/',
         // Each pile: how many cards went in this time, how many are in it now, and a link to go over it.
         sorted: piled.length, onlyPiles: piled.length > 0 && !rated.length,
         piles: names.map(name => ({ name, n: piled.filter(x => x.pile === name).length, total: (d ? cardsOf(d.id) : S.cards).filter(c => c.pile === name).length, href: reviewHref(session && session.deckId, name) })) };

@@ -240,9 +240,15 @@ renderVals() { const t = this.theme(!!this.props.dark, !!this.props.dim);
     const mesh = this.gen(((dk && dk.seed) || 'Lucida') + (dk && dk.round ? ' #' + dk.round : ''), (dk && dk.style) || 'mix');
     // On the canvas a photo is a placeholder, so it shows the deck's colors at full strength instead.
     const photo = kind === 'photo' && img !== 'mock' ? img : '', sample = kind === 'photo' && !photo, faint = kind === 'deck', gray = dark && dim;
-    return { isDeck: faint || sample, isPhoto: !!photo, isSky: kind === 'sky', isSunset: kind === 'sunset', mesh, photo,
-      filter: sample ? 'none' : gray ? 'saturate(.16) brightness(.34)' : dark ? 'saturate(.16) brightness(.42)' : 'saturate(.16) brightness(1.15)',
-      veil: faint ? (gray ? 'rgba(30,30,32,.45)' : dark ? 'rgba(0,0,0,.3)' : 'rgba(255,255,255,.6)') : photo || sample ? (gray ? 'rgba(30,30,32,.55)' : dark ? 'rgba(0,0,0,.5)' : 'rgba(255,255,255,.38)') : 'rgba(0,0,0,0)',
+    // In light mode the deck's colors are one pale hue (the owner: "make the background for flashcards and learn be
+    // monochrome and lighter/fainter on light mode"): every fold of its gradient in the deck's main color (the middle of
+    // the gradient), light and soft, a pastel wash under the words. Dark and gray keep theirs.
+    const mono = faint && !dark, hue = parseInt(mesh.base.split('hsl(')[2]) || 0;
+    const pale = c => c.replace(/hsl\((\d+) (\d+)% (\d+)%\)/g, (_, h, s, l) => 'hsl(' + hue + ' 50% ' + Math.round(84 + l * .12) + '%)');
+    return { isDeck: faint || sample, isPhoto: !!photo, isSky: kind === 'sky', isSunset: kind === 'sunset', photo,
+      mesh: mono ? Object.fromEntries(Object.entries(mesh).map(([k, v]) => [k, typeof v === 'string' ? pale(v) : v && v.c ? { ...v, c: pale(v.c) } : v])) : mesh,
+      filter: sample || !dark ? 'none' : gray ? 'saturate(.16) brightness(.34)' : 'saturate(.16) brightness(.42)',
+      veil: faint ? (gray ? 'rgba(30,30,32,.45)' : dark ? 'rgba(0,0,0,.3)' : 'rgba(255,255,255,.35)') : photo || sample ? (gray ? 'rgba(30,30,32,.55)' : dark ? 'rgba(0,0,0,.5)' : 'rgba(255,255,255,.38)') : 'rgba(0,0,0,0)',
       skyTop: gray ? '#1B2A48' : dark ? '#081733' : '#86BDF3', skyMid: gray ? '#1F2B45' : dark ? '#0D2148' : '#C9E2FB', skyLow: gray ? '#212637' : dark ? '#0A1530' : '#EDF5FE',
       sunset: gray ? "radial-gradient(90% 60% at 88% 100%, rgba(238,142,98,.18), rgba(238,142,98,0) 70%), linear-gradient(180deg, #1F2638 0%, #272C40 35%, #332C3F 65%, #3E2E37 100%)" : dark ? "radial-gradient(90% 60% at 88% 100%, rgba(238,142,98,.16), rgba(238,142,98,0) 70%), linear-gradient(180deg, #0C1426 0%, #151B31 35%, #231C2E 65%, #2E1D25 100%)" : "radial-gradient(90% 60% at 88% 100%, rgba(238,142,98,.22), rgba(238,142,98,0) 70%), linear-gradient(180deg, #C3D3E3 0%, #D3DBE6 30%, #E6DDE4 52%, #F2DCD8 72%, #F5CFC2 100%)", grain: faint || sample || kind === 'sunset' ? '.55' : '0' };
   };
