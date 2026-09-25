@@ -3,7 +3,7 @@
 import { writeFileSync, mkdirSync, readFileSync, readdirSync, existsSync } from 'node:fs';
 import { PALETTE_NAMES, PALETTES, flowSvg, grainSvg, grainTile, paletteData } from './surfaces.mjs';
 import { GEN_METHOD } from './generator.mjs';
-import { MOCK_METHOD, SAMPLE } from './mock.mjs';
+import { MOCK_METHOD, SAMPLE, SAMPLE_WAVE } from './mock.mjs';
 import { DRAG_METHOD } from './drag.mjs';
 import { WALL_CARDS } from './wall.mjs';
 import { PRIVACY, TERMS, UPDATED } from './legal.mjs';
@@ -18,12 +18,6 @@ mkdirSync(OUT, { recursive: true });
 
 const FONT = 'Geist, -apple-system, system-ui, sans-serif';
 const MONO = "'Geist Mono', ui-monospace, monospace";
-// A finer waveform: many thin bars with a speech-like shape, quiet at the ends. Made once, when the boards are built.
-const waveHeights = (n, max, min = 3) => Array.from({ length: n }, (_, i) => {
-  const x = i / (n - 1), env = Math.pow(Math.sin(Math.PI * x), 0.6), v = 0.55 + 0.45 * Math.sin(i * 1.7) * Math.cos(i * 0.43 + 1.1);
-  return Math.max(min, Math.round(max * env * v));
-});
-const WAVE_BIG = JSON.stringify(waveHeights(44, 46, 4)), WAVE_SMALL = JSON.stringify(waveHeights(64, 30));
 
 const page = (title, body, { props = {}, logic = '', css = '', w, h }) => `<!doctype html>
 <html lang="en">
@@ -1036,8 +1030,78 @@ const TYPE_SEG = `<div style="display: grid; grid-template-columns: repeat(4, mi
 const RICH_SHOW = e => `<sc-for list="{{${e}}}" as="rl" hint-placeholder-count="1"><div style="{{rl.css}}"><sc-for list="{{rl.items}}" as="rc" hint-placeholder-count="1"><span style="{{rc.css}}">{{rc.t}}</span></sc-for></div></sc-for>`;
 const RICH_CLOZE = (e, pill, cls = '') => `<sc-for list="{{${e}}}" as="rl" hint-placeholder-count="1"><div style="{{rl.css}}"><sc-for list="{{rl.items}}" as="rc" hint-placeholder-count="3"><sc-if value="{{rc.plain}}" hint-placeholder-val="{{ true }}"><span style="{{rc.css}}">{{rc.t}}</span></sc-if><sc-if value="{{rc.blank}}" hint-placeholder-val="{{ false }}"><span${cls ? ` class="${cls}"` : ''} style="${pill}"><sc-for list="{{rc.runs}}" as="rr" hint-placeholder-count="1"><span style="{{rr.css}}">{{rr.t}}</span></sc-for></span></sc-if></sc-for></div></sc-for>`;
 const RICH_EDIT = e => `<sc-for list="{{${e}}}" as="rl" hint-placeholder-count="1"><div style="{{rl.css}}"><sc-for list="{{rl.items}}" as="rc" hint-placeholder-count="1"><sc-if value="{{rc.plain}}" hint-placeholder-val="{{ true }}"><span data-edge="{{rc.edge}}" style="{{rc.css}}">{{rc.t}}</span></sc-if><sc-if value="{{rc.blank}}" hint-placeholder-val="{{ false }}"><span data-edge="1" style="padding: 1px 10px; border-radius: 999px; background: {{t.inv}}; color: {{t.invText}}; font-weight: 600; -webkit-box-decoration-break: clone; box-decoration-break: clone;"><sc-for list="{{rc.runs}}" as="rr" hint-placeholder-count="1"><span style="{{rr.css}}">{{rr.t}}</span></sc-for></span></sc-if></sc-for><sc-if value="{{rl.empty}}" hint-placeholder-val="{{ false }}"><br></sc-if></div></sc-for>`;
+// ---------- Sound: waveforms ----------
+// Every sound shows its waveform, like a voice note: bars from the clip's real peaks (web/sound.js measures them once and
+// saves them with the card), the part already played in the text color and the rest faint. `v` names a renderVals object
+// made by soundView() (SOUND_JS). With `seek` the waveform is a slider: tap or drag on it, or use the arrow keys, to jump
+// there. `grow`: it takes the room left in a row (else its box's width).
+const waveBars = (v, n) => `<sc-for list="{{${v}.bars}}" as="b" hint-placeholder-count="${n}"><span style="flex: 1 1 0; min-width: 1px; height: {{b.h}}; border-radius: 2px; background: currentColor;"></span></sc-for>`;
+const waveRow = (v, n, h, { gap = 2, grow = true, seek = true } = {}) => `<div${seek ? ` ref="{{${v}.ref}}" role="slider" tabindex="0" aria-label="Where to play from" aria-valuemin="0" aria-valuemax="100" aria-valuenow="{{${v}.pct}}" aria-valuetext="{{${v}.valueText}}" onClick="{{${v}.hold}}" onKeyDown="{{${v}.keys}}"` : ' aria-hidden="true"'} class="sc-wave" style="position: relative; ${grow ? 'flex-grow: 1; min-width: 0;' : 'width: 100%;'} height: ${h}px; color: {{t.text}};${seek ? ' cursor: pointer; touch-action: pan-y;' : ''}">
+  <div style="position: absolute; inset: 0; display: flex; align-items: center; gap: ${gap}px; opacity: .22;">${waveBars(v, n)}</div>
+  <div data-anim="1" style="position: absolute; inset: 0; display: flex; align-items: center; gap: ${gap}px; clip-path: {{${v}.fill}}; animation: {{${v}.anim}};">${waveBars(v, n)}</div>
+</div>`;
+const playGlyph = (v, size) => `<sc-if value="{{${v}.off}}" hint-placeholder-val="{{ true }}">${svg(I.play, size)}</sc-if><sc-if value="{{${v}.on}}" hint-placeholder-val="{{ false }}">${svg(I.pause, size)}</sc-if>`;
+const STOP = '<rect x="6.5" y="6.5" width="11" height="11" rx="2.5" fill="currentColor" stroke="none"/>';
+// The sample clip's bars, for boards that draw a waveform without a clip (Card types).
+const SAMPLE_BARS = n => JSON.stringify(Array.from({ length: n }, (_, i) => {
+  const a = Math.floor(i * SAMPLE_WAVE.length / n), b = Math.max(a + 1, Math.floor((i + 1) * SAMPLE_WAVE.length / n));
+  return { h: Math.max(9, Math.round(Math.max(...SAMPLE_WAVE.slice(a, b)) * 100)) + '%' };
+}));
+// A clip's player: `src` is a card or the editor's fields ({ audio, wave } for a sound file, { speak, lang } for words
+// read aloud), `n` its number of bars, `slot` which player on the screen. While the clip plays, web/sound.js moves the
+// played part and the time every frame, through the refs (the screen redraws only when it starts, pauses, or ends).
+const SOUND_JS = `const clock = s => { s = Math.max(0, Math.floor(s || 0)); return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0'); };
+  // A clip's length, rounded (a clip under a second still says 0:01).
+  const clipLength = d => clock(d > 0 ? Math.max(1, Math.round(d)) : 0);
+  const fillTo = f => 'inset(0 ' + ((1 - f) * 100).toFixed(2) + '% 0 0)';
+  const soundView = (src, n, slot) => {
+    const w = db.sound(src), f = w.frac || 0, dur = w.dur || 0, P = w.peaks && w.peaks.length ? w.peaks : [0];
+    const bars = Array.from({ length: n }, (_, i) => { const a = Math.floor(i * P.length / n), b = Math.max(a + 1, Math.floor((i + 1) * P.length / n)); let v = 0; for (let j = a; j < b; j++) v = Math.max(v, P[j] || 0); return { h: Math.max(9, Math.round(v * 100)) + '%' }; });
+    const all = this.sounds || (this.sounds = {});
+    const h = all[slot] || (all[slot] = {
+      wave: el => {
+        if (!el) return;
+        el.__snd = h;
+        h.db.act.watchSound(el, h.key, x => { const p = el.lastElementChild; if (p) p.style.clipPath = fillTo(x); });
+        if (el.__sndOn) return;
+        el.__sndOn = true;
+        // Tap or drag: the waveform follows the finger, and letting go moves the sound there.
+        let drag = false;
+        const at = e => { const r = el.getBoundingClientRect(); return r.width ? Math.min(1, Math.max(0, (e.clientX - r.left) / r.width)) : 0; };
+        const go = (x, dragging) => { const s = el.__snd; s.db.act.seekSound(s.src, x, dragging); };
+        el.addEventListener('pointerdown', e => { if (e.button > 0) return; drag = true; try { el.setPointerCapture(e.pointerId); } catch (err) { /* already let go */ } go(at(e), true); });
+        el.addEventListener('pointermove', e => { if (drag) go(at(e), true); });
+        el.addEventListener('pointerup', e => { if (drag) { drag = false; go(at(e), false); } });
+        el.addEventListener('pointercancel', () => { if (drag) { drag = false; go(null, false); } });
+      },
+      at: el => { if (el) h.db.act.watchSound(el, h.key, (x, sec) => { el.textContent = clock(sec); }); },
+      time: el => { if (el) h.db.act.watchSound(el, h.key, (x, sec, d, on) => { el.textContent = x > 0 || on ? clock(sec) : clipLength(d); }); }
+    });
+    Object.assign(h, { db, src, key: w.key, dur });
+    return { key: w.key, bars, fill: fillTo(f), anim: 'none', on: w.on, off: !w.on, hasTime: !w.speech && dur > 0,
+      label: w.on ? 'Pause' : 'Play the sound', word: w.on ? 'Pause' : 'Play',
+      at: clock(f * dur), total: clipLength(dur), time: f > 0 || w.on ? clock(f * dur) : clipLength(dur),
+      pct: String(Math.round(f * 100)), valueText: w.speech ? Math.round(f * 100) + '%' : clock(f * dur) + ' of ' + clipLength(dur),
+      toggle: e => { if (e && e.stopPropagation) e.stopPropagation(); h.db.act.playSound(h.src); },
+      hold: e => { if (e && e.stopPropagation) e.stopPropagation(); },
+      // ← and → move a second (or a twentieth of the words), Home and End go to either end, Space or Return plays or pauses.
+      keys: e => {
+        const x = h.db.sound(h.src).frac || 0, step = h.dur ? Math.min(.25, 1 / h.dur) : .05;
+        const to = { ArrowLeft: x - step, ArrowRight: x + step, Home: 0, End: 1 }[e.key];
+        if (to != null) { e.preventDefault(); h.db.act.seekSound(h.src, Math.min(1, Math.max(0, to)), false); }
+        else if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); h.db.act.playSound(h.src); }
+      },
+      ref: h.wave, atRef: h.at, timeRef: h.time };
+  };`;
+// Waveforms: a ring for the keyboard, bars that settle into a clip's shape when it arrives, and pressing a player inside
+// a flip card doesn't press the card. The dot beside a recording's time pulses (not with reduced motion).
+const WAVE_CSS = '.sc-wave{outline:0;-webkit-tap-highlight-color:transparent}.sc-wave:focus-visible{box-shadow:0 0 0 2px currentColor;border-radius:8px}.sc-wave span{transition:height .35s cubic-bezier(.2,.8,.2,1)}'
+  + 'button:has(.sc-hold:active,.sc-wave:active){transform:none}'
+  + '@keyframes scRecDot{50%{opacity:.25}}.sc-rec-dot{animation:scRecDot 1.2s ease-in-out infinite}'
+  + '@keyframes scPlayed{from{clip-path:inset(0 100% 0 0)}to{clip-path:inset(0 0 0 0)}}'
+  + '@media (prefers-reduced-motion:reduce){.sc-wave span{transition:none}.sc-rec-dot{animation:none}}';
 // An empty field shows its placeholder.
-const RICH_CSS = '.sc-rich[data-empty="true"]::before{content:attr(data-ph);position:absolute;color:var(--ph);pointer-events:none}';
+const RICH_CSS = '.sc-rich[data-empty="true"]::before{content:attr(data-ph);position:absolute;color:var(--ph);pointer-events:none}' + WAVE_CSS;
 // A card field: it shows bold, blanks, and the rest as you type. The editor's logic handles every keystroke.
 const field = (label, key, rows = 3, ph = '') => `<div style="display: flex; flex-direction: column; gap: 8px;"><span style="font-size: 13px; font-weight: 600;">${label}</span><div class="sc-rich" contenteditable="true" role="textbox" aria-multiline="true" aria-label="${label}" spellcheck="true" data-rk="${key}" data-ph="${ph}" data-empty="{{rich.${key}.empty}}" key="{{rich.${key}.key}}" ref="{{rich.${key}.ref}}" style="position: relative; min-height: ${+(rows * 1.45).toFixed(2)}em; max-height: 14.5em; overflow-y: auto; border-radius: 20px; padding: 14px 16px; background: {{t.surf}}; color: {{t.text}}; box-shadow: {{rich.${key}.ring}}; outline: 0; font-size: 15px; line-height: 1.45; white-space: pre-wrap; overflow-wrap: break-word; --ph: {{t.muted}}; transition: box-shadow .15s;">${RICH_EDIT(`rich.${key}.lines`)}</div></div>`;
 const blankPill = word => `<span style="padding: 1px 10px; border-radius: 999px; background: {{t.inv}}; color: {{t.invText}}; font-weight: 600;">${word}</span>`;
@@ -1051,7 +1115,10 @@ const editorFieldsOf = phone => `
   <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">${smallBtn('Replace image', 'pickImage', 'image')}<sc-if value="{{occ.canAdd}}" hint-placeholder-val="{{ true }}">${smallBtn('Add a box', 'addBox', 'plus')}</sc-if><sc-if value="{{occ.has}}" hint-placeholder-val="{{ true }}"><span style="flex-grow: 1;"></span>${panelSeg('occModes', 'What to hide')}</sc-if></div>
   ${occAnswers}
   ${field('Prompt', 'front', 1, 'What should they name?')}<sc-if value="{{occ.none}}" hint-placeholder-val="{{ false }}">${field('Answer', 'back', 1)}</sc-if></sc-if>
-<sc-if value="{{isAudio}}" hint-placeholder-val="{{ false }}"><div style="height: 72px; border-radius: 20px; background: {{t.surf}}; display: flex; align-items: center; gap: 14px; padding: 0 16px;"><button type="button" onClick="{{playAudio}}" aria-label="Play" style="width: 40px; height: 40px; flex-shrink: 0; padding: 0; border: 0; border-radius: 20px; background: {{snd.btn}}; color: {{t.invText}}; display: flex; align-items: center; justify-content: center; cursor: pointer;">${svg(I.play, 16)}</button><sc-if value="{{snd.mock}}" hint-placeholder-val="{{ true }}"><div style="flex-grow: 1; min-width: 0; display: flex; align-items: center; gap: 2px; height: 32px;"><sc-for list="{{bars}}" as="b" hint-placeholder-count="64"><div style="flex: 1 1 0; min-width: 1px; border-radius: 1px; background: {{t.text}}; height: {{b.h}};"></div></sc-for></div><span style="font-family: ${MONO}; font-size: 12px; color: {{t.muted}};">0:02</span></sc-if><sc-if value="{{snd.real}}" hint-placeholder-val="{{ false }}"><span style="flex-grow: 1; min-width: 0; font-size: 14px; color: {{snd.fg}}; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{snd.label}}</span></sc-if></div>
+<sc-if value="{{isAudio}}" hint-placeholder-val="{{ false }}"><div style="height: 72px; box-sizing: border-box; border-radius: 20px; background: {{rec.bg}}; display: flex; align-items: center; gap: 14px; padding: 0 16px; transition: background-color .2s;">
+  <sc-if value="{{rec.show}}" hint-placeholder-val="{{ false }}"><button type="button" onClick="{{toggleRecord}}" aria-label="{{rec.label}}" style="width: 40px; height: 40px; flex-shrink: 0; padding: 0; border: 0; border-radius: 20px; background: {{rec.btn}}; color: #FFFFFF; display: flex; align-items: center; justify-content: center; cursor: pointer;">${svg(STOP, 16)}</button><div ref="{{rec.ref}}" aria-hidden="true" style="flex-grow: 1; min-width: 0; height: 32px; overflow: hidden; display: flex; justify-content: flex-end;"><div style="flex-shrink: 0; height: 100%; display: flex; align-items: center; gap: 2px;"><sc-for list="{{rec.bars}}" as="b" hint-placeholder-count="71"><span style="width: 3px; flex-shrink: 0; height: {{b.h}}; border-radius: 2px; background: {{t.text}};"></span></sc-for></div></div><span role="timer" aria-label="Recording time" style="flex-shrink: 0; display: flex; align-items: center; gap: 6px; font-family: ${MONO}; font-size: 12px; color: {{rec.ink}};"><sc-if value="{{rec.on}}" hint-placeholder-val="{{ true }}"><span class="sc-rec-dot" style="width: 7px; height: 7px; border-radius: 4px; background: {{t.again}};"></span></sc-if><span ref="{{rec.timeRef}}">{{rec.time}}</span></span></sc-if>
+  <sc-if value="{{snd.show}}" hint-placeholder-val="{{ true }}"><button type="button" onClick="{{snd.toggle}}" aria-label="{{snd.label}}" style="width: 40px; height: 40px; flex-shrink: 0; padding: 0; border: 0; border-radius: 20px; background: {{t.inv}}; color: {{t.invText}}; display: flex; align-items: center; justify-content: center; cursor: pointer;">${playGlyph('snd', 16)}</button>${waveRow('snd', 56, 32)}<sc-if value="{{snd.hasTime}}" hint-placeholder-val="{{ true }}"><span ref="{{snd.timeRef}}" style="flex-shrink: 0; min-width: 30px; text-align: right; font-family: ${MONO}; font-size: 12px; color: {{t.muted}};">{{snd.time}}</span></sc-if></sc-if>
+  <sc-if value="{{snd.none}}" hint-placeholder-val="{{ false }}"><span aria-hidden="true" style="width: 40px; height: 40px; flex-shrink: 0; border-radius: 20px; background: {{t.surf2}}; color: {{t.muted}}; display: flex; align-items: center; justify-content: center;">${svg(I.play, 16)}</span><span style="flex-grow: 1; min-width: 0; font-size: 14px; color: {{t.muted}}; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">No sound yet. Record one, upload a file, or have it read aloud.</span></sc-if></div>
   <div style="display: flex; gap: 8px; flex-wrap: wrap;">${smallBtn('{{recLabel}}', 'toggleRecord', 'mic')}${smallBtn('Upload', 'pickAudio', 'upload')}${smallBtn('Read it aloud', 'toggleSpeak', 'audio')}</div>
   <sc-if value="{{speakOn}}" hint-placeholder-val="{{ false }}">${field('Words to read aloud', 'speak', 1, 'What the card says out loud')}</sc-if>
   ${field('Answer', 'back', 1)}
@@ -1093,7 +1160,8 @@ constructor(props) {
 }
 componentDidMount() { this.placeCaret(); this.placeSlash(); this.onDocKey = ev => this.boxKey(ev); document.addEventListener('keydown', this.onDocKey); }
 componentDidUpdate() { this.placeCaret(); this.placeSlash(); this.placeLabel(); }
-componentWillUnmount() { if (this.onSel) document.removeEventListener('selectionchange', this.onSel); if (this.onDocKey) document.removeEventListener('keydown', this.onDocKey); }
+// Leaving the editor while it records throws the recording away.
+componentWillUnmount() { if (this.onSel) document.removeEventListener('selectionchange', this.onSel); if (this.onDocKey) document.removeEventListener('keydown', this.onDocKey); const db = this.props.db; if (db && db.recording()) db.act.stopRecording(true); }
 // A saved card opens with what it says; a new one starts empty in the app (the canvas shows a sample).
 doc() {
   const db = this.props.db || this.mock(), e = this.ed;
@@ -1552,11 +1620,11 @@ boxKey(ev) {
   ev.preventDefault();
   this.putBoxes(list.map(b => (b.id === id ? { ...b, x: Math.min(1 - b.w, Math.max(0, b.x + m[0])), y: Math.min(1 - b.h, Math.max(0, b.y + m[1])) } : b)), 'type:nudge' + id);
 }
+// Record, then Stop: the new clip (its link and its waveform) goes on the card.
 toggleRecord() {
   const db = this.props.db || this.mock();
-  if (this.state.recording) { this.setState({ recording: false }); db.act.record(); return; }
-  this.setState({ recording: true });
-  db.act.record().then(url => { this.setState({ recording: false }); if (url) this.commit({ audio: url }); });
+  if (db.recording()) { db.act.record(); return; }
+  db.act.record().then(clip => { if (clip) this.commit({ audio: clip.url, wave: clip.wave }); });
 }
 renderVals() {
   ${T}${DB_JS}
@@ -1609,8 +1677,25 @@ renderVals() {
   const missing = kind === 'basic' ? (!fr ? 'front' : !bk ? 'back' : '') : kind === 'cloze' ? (nBlanks ? '' : 'text') : kind === 'image' ? (!f.image ? 'image' : bx.length || bk ? '' : 'back') : (!hasSound ? 'speak' : !bk ? 'back' : '');
   // Back goes where you came from: the review, the Library's All cards, or the deck.
   const backHref = this.props.from === 'review' ? db.href('review', dk.id) : this.props.from === 'library' ? db.href('cards') : dk.href;
-  const snd = f.audio === 'mock' ? { mock: true, real: false, btn: t.inv } : { mock: false, real: true, btn: hasSound ? t.inv : t.surf2, fg: hasSound ? t.text : t.muted,
-    label: f.audio ? 'Your recording' : said ? 'Reads: “' + said + '”' : 'No sound yet. Record one, upload a file, or have it read aloud.' };
+  // The sound: its player (a file's waveform, or the words the device reads aloud) or, while recording, the live waveform
+  // (the newest bar at the right), how long it's been, and Stop.
+  ${SOUND_JS}
+  const recNow = db.recording(), src = f.audio ? { audio: f.audio, wave: f.wave || null } : said ? { speak: f.speak, lang: f.lang } : null;
+  const snd = { ...soundView(src, 56, 'editor'), show: !!src && !recNow, none: !src && !recNow };
+  const mic = this.mic || (this.mic = {
+    bars: el => { if (el) mic.db.act.watchMic(el, (levels, level, slide) => {
+      const row = el.firstElementChild, bs = row ? row.children : [], n = bs.length;
+      for (let i = 0; i < n; i++) bs[i].style.height = Math.max(9, Math.round((i === n - 1 ? level : levels[levels.length - n + 1 + i] || 0) * 100)) + '%';
+      if (row) row.style.transform = slide ? 'translateX(' + (-5 * slide).toFixed(2) + 'px)' : '';
+    }); },
+    time: el => { if (el) mic.db.act.watchMic(el, (levels, level, slide, secs) => { el.textContent = clock(secs); }); }
+  });
+  mic.db = db;
+  const lv = recNow ? recNow.levels : [], saving = !!recNow && recNow.saving;
+  const rec = { show: !!recNow, on: !!recNow && !saving, bg: recNow ? t.againTint : t.surf, btn: saving ? t.muted : t.again, ink: saving ? t.muted : t.again,
+    label: saving ? 'Saving the recording' : 'Stop recording', time: recNow ? (saving ? 'Saving…' : clock(recNow.secs)) : '0:00',
+    bars: Array.from({ length: 71 }, (_, i) => ({ h: Math.max(9, Math.round((i === 70 ? (recNow ? recNow.level : 0) : lv[lv.length - 70 + i] || 0) * 100)) + '%' })),
+    ref: mic.bars, timeRef: mic.time };
   // Formatting buttons: which are on, and what each does.
   const on = this.pressed();
   e.sig = JSON.stringify(on);
@@ -1631,8 +1716,8 @@ renderVals() {
     // On the canvas the iPhone editor goes back to the iPhone deck page.
     phoneBack: db.mock ? 'PhoneDeck.dc.html' : backHref,
     isBasic: ty === 'Basic', isCloze: ty === 'Blank', isImage: ty === 'Image', isAudio: ty === 'Audio',
-    types: ['Basic', 'Blank', 'Image', 'Audio'].map(l => ({ label: l, bg: l === ty ? t.bg : 'transparent', fg: l === ty ? t.text : t.muted, sh: l === ty ? '0 1px 3px rgba(0,0,0,.12)' : 'none', pick: () => this.commit({}, { type: l, kind: 'kind' }) })),
-    bars: ${WAVE_SMALL}.map(h => ({ h: h + 'px' })),
+    // Switching away from Audio while it records throws the recording away.
+    types: ['Basic', 'Blank', 'Image', 'Audio'].map(l => ({ label: l, bg: l === ty ? t.bg : 'transparent', fg: l === ty ? t.text : t.muted, sh: l === ty ? '0 1px 3px rgba(0,0,0,.12)' : 'none', pick: () => { if (l !== 'Audio' && recNow) db.act.stopRecording(true); this.commit({}, { type: l, kind: 'kind' }); } })),
     hideKeyboard: () => this.setState({ typing: false }),
     // Pressing a formatting button leaves the caret in the field.
     keepFocus: ev => { if (ev && ev.preventDefault) ev.preventDefault(); },
@@ -1647,10 +1732,9 @@ renderVals() {
     img: { mock: f.image === 'mock', url: f.image && f.image !== 'mock' ? f.image : '', none: !f.image, some: !!f.image },
     occ, addBox: () => this.addBox(),
     pickImage: () => this.pickImage(),
-    snd, recLabel: s.recording ? 'Stop' : 'Record',
+    snd, rec, recLabel: recNow ? 'Stop' : 'Record',
     toggleRecord: () => this.toggleRecord(),
-    pickAudio: () => db.act.pickFile('audio').then(url => url && put({ audio: url })),
-    playAudio: () => (f.audio && f.audio !== 'mock' ? db.act.play(f.audio) : db.act.speak(said, f.lang)),
+    pickAudio: () => db.act.pickSound().then(clip => clip && put({ audio: clip.url, wave: clip.wave })),
     speakOn: !!s.speakOpen || !!said, toggleSpeak: () => this.setState({ speakOpen: !s.speakOpen }),
     autoSw: sw(f.auto !== false), toggleAuto: () => put({ auto: f.auto === false }), noop: () => {},
     // A card can have any number of tags.
@@ -1663,14 +1747,13 @@ renderVals() {
       ev.preventDefault();
       if (missing === 'image') return this.pickImage();
       if (missing) return this.focusField(missing);
-      db.act.saveCard(saved ? saved.id : null, dk.id, { kind, front: f.front, back: f.back, text: f.text, note: f.note, tags, image: f.image || null, audio: f.audio || null, speak: f.speak || '', auto: f.auto !== false, clozeMode: f.clozeMode || 'each',
+      db.act.saveCard(saved ? saved.id : null, dk.id, { kind, front: f.front, back: f.back, text: f.text, note: f.note, tags, image: f.image || null, audio: f.audio || null, wave: f.audio ? f.wave || null : null, speak: f.speak || '', auto: f.auto !== false, clozeMode: f.clozeMode || 'each',
         ...(kind === 'image' ? { boxes: f.boxes || [], occ: f.occ === 'all' ? 'all' : 'one' } : {}) }, backHref);
     }
   };
 }`;
 
 // ---------- Review (shared by web + phone) ----------
-const WAVE = (h) => `<div style="display: flex; align-items: center; gap: 3px; height: ${h}px;"><sc-for list="{{bars}}" as="b" hint-placeholder-count="44"><div data-anim="1" style="width: 3px; border-radius: 2px; background: {{t.text}}; height: {{b.h}}; animation: {{b.anim}};"></div></sc-for></div>`;
 // A picture with boxes fills the card: the picture as big as it fits (its shape is known once it loads), the question
 // under it, and the answer (the box's label), which shows as the box fades to an outline.
 const occFace = big => `<sc-if value="{{card.isOcc}}" hint-placeholder-val="{{ false }}"><div style="position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: ${big ? 14 : 12}px;">
@@ -1688,11 +1771,12 @@ const faceFront = big => `${occFace(big)}
 <sc-if value="{{card.isBasic}}" hint-placeholder-val="{{ true }}"><div style="font-size: ${big ? 38 : 28}px; font-weight: 500; line-height: 1.25; letter-spacing: -.02em;">${RICH_SHOW('card.frontLines')}</div></sc-if>
 <sc-if value="{{card.isCloze}}" hint-placeholder-val="{{ false }}"><div style="font-size: ${big ? 38 : 28}px; font-weight: 500; line-height: 1.45; letter-spacing: -.02em;">${RICH_CLOZE('card.lines', `display: inline-block; padding: 0 ${big ? 16 : 12}px; border-radius: 999px; line-height: 1.3; background: {{blank.bg}}; color: {{blank.fg}}; transition: background-color .3s ease, color .3s ease;`, '{{blank.cls}}')}</div></sc-if>
 <sc-if value="{{card.isImage}}" hint-placeholder-val="{{ false }}"><div style="display: flex; flex-direction: column; align-items: center; gap: 16px;"><sc-if value="{{card.imageMock}}" hint-placeholder-val="{{ true }}">${CELL(big ? 330 : 260, big ? 225 : 178)}</sc-if><sc-if value="{{card.imageUrl}}" hint-placeholder-val="{{ false }}"><img src="{{card.imageUrl}}" alt="" style="max-width: 100%; max-height: ${big ? 250 : 200}px; border-radius: 16px; object-fit: contain;"></sc-if><div style="font-size: ${big ? 24 : 20}px; font-weight: 500;">${RICH_SHOW('card.frontLines')}</div></div></sc-if>
-<sc-if value="{{card.isAudio}}" hint-placeholder-val="{{ false }}"><div style="display: flex; flex-direction: column; align-items: center; gap: 24px;"><span role="button" aria-label="Play the sound" onClick="{{playSound}}" style="width: ${big ? 88 : 76}px; height: ${big ? 88 : 76}px; border-radius: 50%; background: {{t.inv}}; color: {{t.invText}}; display: flex; align-items: center; justify-content: center;">${svg(I.play, 30)}</span>${WAVE(48)}<div style="font-size: ${big ? 24 : 20}px; font-weight: 500;">${RICH_SHOW('card.frontLines')}</div></div></sc-if>`;
+<sc-if value="{{card.isAudio}}" hint-placeholder-val="{{ false }}"><div style="display: flex; flex-direction: column; align-items: center; gap: ${big ? 24 : 20}px;"><span role="button" aria-label="{{snd.label}}" onClick="{{snd.toggle}}" class="sc-hold" style="width: ${big ? 88 : 76}px; height: ${big ? 88 : 76}px; border-radius: 50%; background: {{t.inv}}; color: {{t.invText}}; display: flex; align-items: center; justify-content: center;">${playGlyph('snd', 30)}</span><div style="width: ${big ? 400 : 272}px; max-width: 100%; display: flex; flex-direction: column; gap: 8px;">${waveRow('snd', 48, big ? 52 : 44, { gap: big ? 4 : 3, grow: false })}<sc-if value="{{snd.hasTime}}" hint-placeholder-val="{{ true }}"><div style="display: flex; justify-content: space-between; font-family: ${MONO}; font-size: 12px; color: {{t.muted}};"><span ref="{{snd.atRef}}">{{snd.at}}</span><span>{{snd.total}}</span></div></sc-if></div><div style="font-size: ${big ? 24 : 20}px; font-weight: 500;">${RICH_SHOW('card.frontLines')}</div></div></sc-if>`;
 const faceBack = big => `
 <sc-if value="{{card.isBasic}}" hint-placeholder-val="{{ true }}"><div style="font-size: ${big ? 32 : 24}px; font-weight: 500; line-height: 1.3; letter-spacing: -.015em;">${RICH_SHOW('card.backLines')}</div></sc-if>
 <sc-if value="{{card.isImage}}" hint-placeholder-val="{{ false }}"><div style="display: flex; flex-direction: column; align-items: center; gap: 16px;"><sc-if value="{{card.imageMock}}" hint-placeholder-val="{{ true }}">${CELL(big ? 330 : 260, big ? 225 : 178)}</sc-if><sc-if value="{{card.imageUrl}}" hint-placeholder-val="{{ false }}"><img src="{{card.imageUrl}}" alt="" style="max-width: 100%; max-height: ${big ? 250 : 200}px; border-radius: 16px; object-fit: contain;"></sc-if><div style="font-size: ${big ? 32 : 26}px; font-weight: 600; letter-spacing: -.02em;">${RICH_SHOW('card.labelLines')}</div></div></sc-if>
-<sc-if value="{{card.isAudio}}" hint-placeholder-val="{{ false }}"><div style="display: flex; flex-direction: column; align-items: center; gap: 8px;"><div style="font-size: ${big ? 64 : 52}px; font-weight: 600; letter-spacing: -.02em;">${RICH_SHOW('card.bigLines')}</div><div style="font-size: ${big ? 22 : 18}px; color: {{t.muted}};">${RICH_SHOW('card.subLines')}</div></div></sc-if>`;
+<sc-if value="{{card.isAudio}}" hint-placeholder-val="{{ false }}"><div style="display: flex; flex-direction: column; align-items: center; gap: 8px;"><div style="font-size: ${big ? 64 : 52}px; font-weight: 600; letter-spacing: -.02em;">${RICH_SHOW('card.bigLines')}</div><div style="font-size: ${big ? 22 : 18}px; color: {{t.muted}};">${RICH_SHOW('card.subLines')}</div>
+  <div onClick="{{sndBack.hold}}" class="sc-hold" style="margin-top: ${big ? 18 : 14}px; width: ${big ? 300 : 248}px; max-width: 100%; box-sizing: border-box; height: 48px; padding: 0 16px 0 6px; border-radius: 999px; background: {{t.surf}}; display: flex; align-items: center; gap: 12px; cursor: default;"><span role="button" aria-label="{{sndBack.label}}" onClick="{{sndBack.toggle}}" style="width: 36px; height: 36px; flex-shrink: 0; border-radius: 18px; background: {{t.inv}}; color: {{t.invText}}; display: flex; align-items: center; justify-content: center; cursor: pointer;">${playGlyph('sndBack', 14)}</span>${waveRow('sndBack', 36, 24)}<sc-if value="{{sndBack.hasTime}}" hint-placeholder-val="{{ true }}"><span ref="{{sndBack.timeRef}}" style="flex-shrink: 0; font-family: ${MONO}; font-size: 12px; color: {{t.muted}};">{{sndBack.time}}</span></sc-if></div></div></sc-if>`;
 // Card view fields: each text as lines with its formatting (blanks hidden until shown), plus image and sound flags.
 // The canvas's sample blanks come as before / blank / after; real cards have their text.
 const CARD_VIEW_JS = `const R = this.rich(), ro = { t, dark: !!this.props.dark };
@@ -1757,9 +1841,11 @@ renderVals() {
   const progs = [['bar', 'Bar'], ['counts', 'Counts'], ['none', 'None']].map(([id, label]) => ({ label, long: label, ...seg(id, prog), pick: () => db.act.setSettings({ prog: id }) }));
   const queue = rv.queue, n = rv.counts;
   const u = q => (queue === q ? 'underline' : 'none');
-  const playing = card.isAudio && !rev;
+  // A sound card's player, on the front (big) and the back (small).
+  ${SOUND_JS}
+  const src = card.isAudio ? c : null, snd = soundView(src, 48, 'front'), sndBack = soundView(src, 36, 'back');
   return {
-    t, bg, ex, kb, card, grades, piles, modes, progs,
+    t, bg, ex, kb, card, grades, piles, modes, progs, snd, sndBack,
     showBar: prog === 'bar', showCounts: prog === 'counts',
     cNew: { n: String(n.new), u: u('new') }, cLearn: { n: String(n.learn), u: u('learn') }, cRev: { n: String(n.rev), u: u('rev') },
     countsLabel: n.new + ' new, ' + n.learn + ' learning, ' + n.rev + ' to review',
@@ -1791,9 +1877,7 @@ renderVals() {
     blank: ${BLANK_JS},
     reveal: () => this.setState({ revealed: !rev, moved: false }),
     undo: () => { if (done > 0 || !db.mock) { this.setState({ revealed: true, moved: false }); db.act.undo(); } },
-    editHref: rv.editHref,
-    playSound: e => { if (e && e.stopPropagation) e.stopPropagation(); if (c.audio && c.audio !== 'mock') db.act.play(c.audio); else if (c.speak) db.act.speak(c.speak, c.lang); },
-    bars: ${WAVE_BIG}.map((h, i) => ({ h: h + 'px', anim: playing ? 'scWave .9s ease-in-out ' + ((i % 5) * 0.12).toFixed(2) + 's infinite alternate' : 'none' }))
+    editHref: rv.editHref
   };
 }`;
 const progSeg = `<div role="group" aria-label="Progress style" style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 4px; padding: 4px; border-radius: 999px; background: {{t.surf}};">
@@ -1892,6 +1976,7 @@ const webReview = `<div style="position: relative; isolation: isolate; width: 14
   </main>
   <footer style="height: 64px; box-sizing: border-box; padding: 0 32px; display: flex; align-items: center; gap: 24px; font-size: 13px; color: {{t.muted}};">
     <span style="flex-grow: 1;"></span>
+    <sc-if value="{{card.isAudio}}" hint-placeholder-val="{{ false }}"><button type="button" onClick="{{snd.toggle}}" data-key="p" style="padding: 0; border: 0; background: transparent; color: inherit; font: inherit; cursor: pointer;">{{snd.word}} <span style="font-family: ${MONO};">P</span></button></sc-if>
     <a href="{{editHref}}" data-key="e">Edit <span style="font-family: ${MONO};">E</span></a><button type="button" onClick="{{undo}}" data-key="z" style="padding: 0; border: 0; background: transparent; color: inherit; font: inherit; cursor: pointer;">Undo <span style="font-family: ${MONO};">Z</span></button>
   </footer>
   <sc-if value="{{settingsOpen}}" hint-placeholder-val="{{ false }}">
@@ -2216,15 +2301,13 @@ const cardTypes = `<div style="width: 1440px; height: 900px; box-sizing: border-
       ${revealBtn('flipImage', 'imageLabel')}`)}
     ${typeCol('Audio', 'Hear a word or a phrase, then say what it means.', 'audio', `${centered(`<div style="display: flex; flex-direction: column; align-items: center; gap: 20px;">
         <button type="button" onClick="{{togglePlay}}" aria-label="{{playLabel}}" style="width: 80px; height: 80px; border: 0; border-radius: 40px; background: {{t.inv}}; color: {{t.invText}}; display: flex; align-items: center; justify-content: center; cursor: pointer;"><sc-if value="{{paused}}" hint-placeholder-val="{{ true }}">${svg(I.play, 28)}</sc-if><sc-if value="{{playing}}" hint-placeholder-val="{{ false }}">${svg(I.pause, 28)}</sc-if></button>
-        <div style="display: flex; align-items: center; gap: 3px; height: 48px;"><sc-for list="{{bars}}" as="b" hint-placeholder-count="44"><div data-anim="1" style="width: 3px; border-radius: 2px; background: {{t.text}}; height: {{b.h}}; animation: {{b.anim}};"></div></sc-for></div>
-        <div style="width: 180px; height: 3px; border-radius: 2px; background: {{t.surf2}}; overflow: hidden;"><div data-anim="1" style="width: 0; height: 3px; border-radius: 2px; background: {{t.text}}; animation: {{progAnim}};"></div></div>
+        <div style="width: 264px;">${waveRow('wave', 44, 48, { gap: 3, grow: false, seek: false })}</div>
         <span class="{{audioCls}}" style="font-size: 20px; font-weight: 600;">{{audioText}}</span>
       </div>`)}
       ${revealBtn('flipAudio', 'audioLabel')}`)}
   </div>
 </div>`;
-const cardTypesCss = `@keyframes scWave{from{transform:scaleY(.3)}to{transform:scaleY(1)}}
-@keyframes scProg{from{width:0}to{width:100%}}
+const cardTypesCss = `${WAVE_CSS}
 @keyframes scPop{0%{transform:scale(.6) translateY(4px);opacity:0}60%{transform:scale(1.08);opacity:1}100%{transform:none;opacity:1}}
 @keyframes scFadeA{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
 @keyframes scFadeB{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
@@ -2255,8 +2338,8 @@ renderVals() {
     audioText: s.audio ? '電車 · でんしゃ · train' : 'What word do you hear?', audioCls: fade(s.audio), audioLabel: s.audio ? 'Hide answer' : 'Show answer', flipAudio: () => this.setState({ audio: !s.audio }),
     playing: s.playing, paused: !s.playing, playLabel: s.playing ? 'Pause audio' : 'Play audio',
     togglePlay: () => this.setState({ playing: !s.playing }),
-    progAnim: s.playing ? 'scProg 2.4s linear infinite' : 'none',
-    bars: ${WAVE_BIG}.map((h, i) => ({ h: h + 'px', anim: s.playing ? 'scWave .9s ease-in-out ' + ((i % 5) * 0.12).toFixed(2) + 's infinite alternate' : 'none' }))
+    // The sample clip's waveform: while it plays, the played part sweeps across; paused, it rests partway.
+    wave: { bars: ${SAMPLE_BARS(44)}, fill: 'inset(0 58% 0 0)', anim: s.playing ? 'scPlayed 2.6s linear infinite' : 'none' }
   };
 }`;
 
@@ -2508,16 +2591,17 @@ renderVals() { ${T}
   const card = cardView({ ...c, image: c.kind === 'image' ? 'mock' : null, backLabel: c.kind === 'image' ? '1 = ' + c.back : '', backBig: c.kind === 'audio' ? '電車' : '', backSub: c.kind === 'audio' ? 'でんしゃ · ' + c.back : undefined }, rev);
   const handle = v => () => this.setState({ revealed: false, moved: true, handled: { ...done, [c.id]: v } });
   const count = v => Object.values(done).filter(x => x === v).length;
-  const playing = card.isAudio && !rev;
+  const db = this.mock();
+  ${SOUND_JS}
+  const src = card.isAudio ? c : null;
   return {
-    t, card, radius: '36px',
+    t, card, radius: '36px', snd: soundView(src, 48, 'front'), sndBack: soundView(src, 36, 'back'),
     reveal: () => this.setState({ revealed: !rev, moved: false }),
     flipTransform: rev && !card.isCloze ? 'rotateY(180deg)' : 'rotateY(0deg)',
     flipTrans: this.state.moved ? 'none' : 'transform .5s cubic-bezier(.4,0,.2,1)', cardIn: this.state.moved ? (Object.keys(done).length % 2 ? 'sc-in-a' : 'sc-in-b') : '',
     flipLabel: card.isCloze ? (rev ? 'Hide the answer' : 'Show the blank') : (rev ? 'Flip back' : 'Flip card'),
     clozeShown: rev && card.isCloze,
     blank: ${BLANK_JS},
-    bars: ${WAVE_BIG}.map((h, i) => ({ h: h + 'px', anim: playing ? 'scWave .9s ease-in-out ' + ((i % 5) * 0.12).toFixed(2) + 's infinite alternate' : 'none' })),
     keep: handle('kept'), toss: handle('tossed'),
     hasItem: items.length > 0, noItems: items.length === 0,
     deckLine: items.length ? c.deck : '', counter: items.length ? (4 - items.length) + '/3' : '',
@@ -3543,6 +3627,7 @@ const darkOf = (name, w, h) => `<div style="width: ${w}px; height: ${h}px; overf
 const darkLogic = `renderVals() { return { yes: true }; }`;
 // Gray dark mode (Settings → Dark mode: Gray): the same boards, dark on gray instead of black.
 const grayOf = (name, w, h) => `<div style="width: ${w}px; height: ${h}px; overflow: hidden; background: #1E1E20;"><dc-import name="${name}" dark="{{yes}}" dim="{{yes}}" hint-size="${w}px,${h}px"></dc-import></div>`;
+const yesNoLogic = `renderVals() { return { yes: true, no: false }; }`;
 const settingsOf = (name, w, h) => `<div style="width: ${w}px; height: ${h}px; overflow: hidden;"><dc-import name="${name}" settings-open="{{yes}}" progress="Counts" hint-size="${w}px,${h}px"></dc-import></div>`;
 const openOf = (name, w, h) => `<div style="width: ${w}px; height: ${h}px; overflow: hidden;"><dc-import name="${name}" settings-open="{{yes}}" hint-size="${w}px,${h}px"></dc-import></div>`;
 const pileOf = (name, w, h) => `<div style="width: ${w}px; height: ${h}px; overflow: hidden;"><dc-import name="${name}" grading="Piles" start-revealed="{{yes}}" new-pile-open="{{yes}}" hint-size="${w}px,${h}px"></dc-import></div>`;
@@ -4232,14 +4317,15 @@ const files = {
   'WebStatsEmpty': ['Web · Stats · no reviews yet', webStatsEmpty, { props: { ...DARK, grain: MESH('Iris').grain }, logic: emptyLogic(), w: W, h: H }],
   'WebDeck': ['Web · Deck page', webDeck, { props: { ...DARK, grain: MESH('Iris').grain, settingsOpen: { editor: 'boolean', default: false }, settingsTab: { editor: 'enum', default: 'General', options: ['General', 'Studying'] }, tagPicker: { editor: 'boolean', default: false } }, logic: deckLogic, css: NUM_CSS + PARALLAX_CSS + DRAG_CSS, w: W, h: H }],
   'WebDeckTagPicker': ['Web · Deck settings · Add tag', attrOf('WebDeck', W, H, 'settings-open="{{yes}}" tag-picker="{{yes}}"'), { logic: darkLogic, css: NUM_CSS + DRAG_CSS, w: W, h: H }],
-  'WebEditor': ['Web · Card editor', webEditor, { props: { ...DARK, cardType: { editor: 'enum', default: 'Basic', options: ['Basic', 'Blank', 'Image', 'Audio'] }, slashDemo: { editor: 'boolean', default: false } }, logic: EDITOR_LOGIC, css: EDITOR_CSS, w: W, h: H }],
+  'WebEditor': ['Web · Card editor', webEditor, { props: { ...DARK, cardType: { editor: 'enum', default: 'Basic', options: ['Basic', 'Blank', 'Image', 'Audio'] }, recording: { editor: 'boolean', default: false }, slashDemo: { editor: 'boolean', default: false } }, logic: EDITOR_LOGIC, css: EDITOR_CSS, w: W, h: H }],
   'WebEditorSlash': ['Web · Card editor · / menu', attrOf('WebEditor', W, H, 'slash-demo="{{yes}}"'), { logic: darkLogic, css: EDITOR_CSS, w: W, h: H }],
   'WebSignIn': ['Web · Sign in', webSignIn, { props: { ...DARK, grain: MESH('Iris').grain }, logic: signInLogic('', [64, 78, 70, 84]), css: WALL_CSS, w: W, h: H }],
   'WebSignInCode': ['Web · Sign in · code from email', webSignInCode, { props: { ...DARK, grain: MESH('Iris').grain }, logic: signInLogic('482', [64, 78, 70, 84]), css: WALL_CSS, w: W, h: H }],
   'WebEditorBlank': ['Web · Card editor · fill in the blank', typeOf('WebEditor', W, H, 'Blank'), { logic: darkLogic, css: EDITOR_CSS, w: W, h: H }],
   'WebEditorImage': ['Web · Card editor · image', typeOf('WebEditor', W, H, 'Image'), { logic: darkLogic, css: EDITOR_CSS, w: W, h: H }],
   'WebEditorAudio': ['Web · Card editor · audio', typeOf('WebEditor', W, H, 'Audio'), { logic: darkLogic, css: EDITOR_CSS, w: W, h: H }],
-  'WebReview': ['Web · Review', webReview, { props: { ...DARK, explainOpen: { editor: 'boolean', default: false }, explained: { editor: 'boolean', default: false }, grading: { editor: 'enum', default: 'Four buttons', options: ['Four buttons', 'Check or X', 'Piles'] }, card: { editor: 'enum', default: 'Basic', options: ['Basic', 'Fill in the blank', 'Image', 'Audio'] }, startRevealed: { editor: 'boolean', default: false }, fsrs: { editor: 'boolean', default: true }, progress: { editor: 'enum', default: 'Bar', options: ['Bar', 'Counts', 'None'] }, settingsOpen: { editor: 'boolean', default: false }, newPileOpen: { editor: 'boolean', default: false }, radius: { editor: 'range', default: 32, min: 12, max: 48, step: 2, unit: 'px' } }, logic: REVIEW_LOGIC(64), css: REVIEW_CSS, w: W, h: H }],
+  'WebEditorRecording': ['Web · Card editor · recording audio', attrOf('WebEditor', W, H, 'card-type="Audio" recording="{{yes}}"'), { logic: darkLogic, css: EDITOR_CSS, w: W, h: H }],
+  'WebReview': ['Web · Review', webReview, { props: { ...DARK, playing: { editor: 'boolean', default: false }, explainOpen: { editor: 'boolean', default: false }, explained: { editor: 'boolean', default: false }, grading: { editor: 'enum', default: 'Four buttons', options: ['Four buttons', 'Check or X', 'Piles'] }, card: { editor: 'enum', default: 'Basic', options: ['Basic', 'Fill in the blank', 'Image', 'Audio'] }, startRevealed: { editor: 'boolean', default: false }, fsrs: { editor: 'boolean', default: true }, progress: { editor: 'enum', default: 'Bar', options: ['Bar', 'Counts', 'None'] }, settingsOpen: { editor: 'boolean', default: false }, newPileOpen: { editor: 'boolean', default: false }, radius: { editor: 'range', default: 32, min: 12, max: 48, step: 2, unit: 'px' } }, logic: REVIEW_LOGIC(64), css: REVIEW_CSS, w: W, h: H }],
   'WebDone': ['Web · Session done', webDone, { props: DARK, logic: doneLogic(300, 22), w: W, h: H }],
   'WebDonePiles': ['Web · Session done · piles', webDonePiles, { props: DARK, logic: donePilesLogic, w: W, h: H }],
   'WebStats': ['Web · Stats', webStats, { props: DARK, logic: statsLogic, w: W, h: H }],
@@ -4254,6 +4340,7 @@ const files = {
   'WebReviewNewPile': ['Web · Review · New pile popup', pileOf('WebReview', W, H), { logic: darkLogic, css: REVIEW_CSS, w: W, h: H }],
   'WebReviewBlank': ['Web · Review · fill in the blank', blankOf('WebReview', W, H), { logic: darkLogic, css: REVIEW_CSS, w: W, h: H }],
   'WebReviewImage': ['Web · Review · picture with hidden parts (click the card or press Space)', attrOf('WebReview', W, H, 'card="Image"'), { logic: darkLogic, css: REVIEW_CSS, w: W, h: H }],
+  'WebReviewAudio': ['Web · Review · audio card, playing', attrOf('WebReview', W, H, 'card="Audio" playing="{{yes}}"'), { logic: darkLogic, css: REVIEW_CSS, w: W, h: H }],
   'WebDeckSettings': ['Web · Deck settings', openOf('WebDeck', W, H), { logic: darkLogic, css: NUM_CSS + DRAG_CSS, w: W, h: H }],
   'WebDeckSettingsStudy': ['Web · Deck settings · Studying (FSRS)', studyOf('WebDeck', W, H), { logic: darkLogic, css: NUM_CSS + DRAG_CSS, w: W, h: H }],
   'WebDeckDark': ['Web · Deck page (dark)', darkOf('WebDeck', W, H), { logic: darkLogic, css: NUM_CSS + DRAG_CSS, w: W, h: H }],
@@ -4293,8 +4380,10 @@ const files = {
   'PhoneDeck': ['iPhone · Deck page', phoneDeck, { props: { ...DARK, grain: MESH('Iris').grain, settingsOpen: { editor: 'boolean', default: false }, settingsTab: { editor: 'enum', default: 'General', options: ['General', 'Studying'] }, tagPicker: { editor: 'boolean', default: false } }, logic: phoneDeckLogic, css: NUM_CSS + PARALLAX_CSS + DRAG_CSS, w: PW, h: PH }],
   'PhoneDeckTagPicker': ['iPhone · Deck settings · Add tag', attrOf('PhoneDeck', PW, PH, 'settings-open="{{yes}}" tag-picker="{{yes}}"'), { logic: darkLogic, css: NUM_CSS + DRAG_CSS, w: PW, h: PH }],
   'PhoneDeckSettingsStudy': ['iPhone · Deck settings · Studying (FSRS)', studyOf('PhoneDeck', PW, PH), { logic: darkLogic, css: NUM_CSS + DRAG_CSS, w: PW, h: PH }],
-  'PhoneEditor': ['iPhone · Card editor', phoneEditor, { props: { ...DARK, keyboard: { editor: 'boolean', default: true }, textStyles: { editor: 'boolean', default: false }, cardType: { editor: 'enum', default: 'Basic', options: ['Basic', 'Blank', 'Image', 'Audio'] } }, logic: EDITOR_LOGIC, css: EDITOR_CSS, w: PW, h: PH }],
-  'PhoneReview': ['iPhone · Review', phoneReview, { props: { ...DARK, explainOpen: { editor: 'boolean', default: false }, explained: { editor: 'boolean', default: false }, grading: { editor: 'enum', default: 'Four buttons', options: ['Four buttons', 'Check or X', 'Piles'] }, card: { editor: 'enum', default: 'Basic', options: ['Basic', 'Fill in the blank', 'Image', 'Audio'] }, startRevealed: { editor: 'boolean', default: false }, fsrs: { editor: 'boolean', default: true }, progress: { editor: 'enum', default: 'Bar', options: ['Bar', 'Counts', 'None'] }, settingsOpen: { editor: 'boolean', default: false }, newPileOpen: { editor: 'boolean', default: false }, radius: { editor: 'range', default: 32, min: 12, max: 48, step: 2, unit: 'px' } }, logic: REVIEW_LOGIC(64), css: REVIEW_CSS, w: PW, h: PH }],
+  'PhoneEditor': ['iPhone · Card editor', phoneEditor, { props: { ...DARK, keyboard: { editor: 'boolean', default: true }, textStyles: { editor: 'boolean', default: false }, cardType: { editor: 'enum', default: 'Basic', options: ['Basic', 'Blank', 'Image', 'Audio'] }, recording: { editor: 'boolean', default: false } }, logic: EDITOR_LOGIC, css: EDITOR_CSS, w: PW, h: PH }],
+  'PhoneEditorAudio': ['iPhone · Card editor · audio', attrOf('PhoneEditor', PW, PH, 'card-type="Audio" keyboard="{{no}}"'), { logic: yesNoLogic, css: EDITOR_CSS, w: PW, h: PH }],
+  'PhoneEditorRecording': ['iPhone · Card editor · recording audio', attrOf('PhoneEditor', PW, PH, 'card-type="Audio" keyboard="{{no}}" recording="{{yes}}"'), { logic: yesNoLogic, css: EDITOR_CSS, w: PW, h: PH }],
+  'PhoneReview': ['iPhone · Review', phoneReview, { props: { ...DARK, playing: { editor: 'boolean', default: false }, explainOpen: { editor: 'boolean', default: false }, explained: { editor: 'boolean', default: false }, grading: { editor: 'enum', default: 'Four buttons', options: ['Four buttons', 'Check or X', 'Piles'] }, card: { editor: 'enum', default: 'Basic', options: ['Basic', 'Fill in the blank', 'Image', 'Audio'] }, startRevealed: { editor: 'boolean', default: false }, fsrs: { editor: 'boolean', default: true }, progress: { editor: 'enum', default: 'Bar', options: ['Bar', 'Counts', 'None'] }, settingsOpen: { editor: 'boolean', default: false }, newPileOpen: { editor: 'boolean', default: false }, radius: { editor: 'range', default: 32, min: 12, max: 48, step: 2, unit: 'px' } }, logic: REVIEW_LOGIC(64), css: REVIEW_CSS, w: PW, h: PH }],
   'PhoneDone': ['iPhone · Session done', phoneDone, { props: DARK, logic: doneLogic(260, 20), w: PW, h: PH }],
   'PhoneDonePiles': ['iPhone · Session done · piles', phoneDonePiles, { props: DARK, logic: donePilesLogic, w: PW, h: PH }],
   'PhoneSignIn': ['iPhone · Sign in', phoneSignIn, { props: { ...DARK, grain: MESH('Iris').grain }, logic: signInLogic('', [50, 60, 55, 65], PHONE_K), css: WALL_CSS, w: PW, h: PH }],
@@ -4342,6 +4431,7 @@ const files = {
   'PhoneReviewPiles': ['iPhone · Review · Piles', styleOf('PhoneReview', PW, PH, 'Piles'), { logic: darkLogic, css: REVIEW_CSS, w: PW, h: PH }],
   'PhoneReviewNewPile': ['iPhone · Review · New pile popup', pileOf('PhoneReview', PW, PH), { logic: darkLogic, css: REVIEW_CSS, w: PW, h: PH }],
   'PhoneReviewBlank': ['iPhone · Review · fill in the blank', blankOf('PhoneReview', PW, PH), { logic: darkLogic, css: REVIEW_CSS, w: PW, h: PH }],
+  'PhoneReviewAudio': ['iPhone · Review · audio card, playing', attrOf('PhoneReview', PW, PH, 'card="Audio" playing="{{yes}}"'), { logic: darkLogic, css: REVIEW_CSS, w: PW, h: PH }],
   'PhoneReviewImage': ['iPhone · Review · picture with hidden parts (tap the card)', attrOf('PhoneReview', PW, PH, 'card="Image"'), { logic: darkLogic, css: REVIEW_CSS, w: PW, h: PH }],
   'PhoneEditorImage': ['iPhone · Card editor · image with boxes', attrOf('PhoneEditor', PW, PH, 'card-type="Image" keyboard="{{no}}"'), { logic: 'renderVals() { return { yes: true, no: false }; }', css: EDITOR_CSS, w: PW, h: PH }],
   'PhoneSettings': ['iPhone · Settings', phoneSettings, { props: { ...DARK, plan: { editor: 'enum', default: 'Pro', options: ['Free', 'Pro', 'Pro, ending'] } }, logic: phoneSettingsLogic, w: PW, h: PHONE_SETTINGS_H }],

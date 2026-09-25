@@ -90,6 +90,8 @@ const folderOf = x => { const F = state().folders; return (F.find(f => f.id === 
 // the sunset, or a photo.
 export const BG_KINDS = ['deck', 'plain', 'sky', 'sunset', 'photo'];
 const cleanBg = (was, o) => { const b = { kind: 'deck', image: null, ...was, ...pick(o, ['kind', 'image']) }; return { kind: BG_KINDS.includes(b.kind) ? b.kind : 'deck', image: b.image ? clean(b.image, 300) : null }; };
+// A card's sound, drawn as a waveform (web/sound.js): its length in seconds, and one letter per peak.
+const cleanWave = w => (w && typeof w === 'object' && typeof w.p === 'string' && /^[\w-]{8,256}$/.test(w.p) ? { d: Math.min(36000, Math.max(0, Math.round(+w.d * 100) / 100 || 0)), p: w.p } : null);
 // The words hidden in a fill-in-the-blank card's [[blanks]] (read the same way the app draws them).
 export const blanks = text => R.blanks(text);
 // Image occlusion: boxes over an image card's picture, each hiding one part, with what's under it (its label). Each box
@@ -128,7 +130,7 @@ function makeCards(deck, o, source = 'you') {
   const S = state();
   const kind = ['basic', 'cloze', 'image', 'audio'].includes(o.kind) ? o.kind : 'basic';
   const base = { deckId: deck.id, kind, front: clean(o.front), back: clean(o.back), note: clean(o.note, 2000), text: clean(o.text),
-    tags: cleanTags(o.tags), image: o.image || null, audio: o.audio || null, speak: clean(o.speak, 500), lang: clean(o.lang, 20), auto: o.auto !== false,
+    tags: cleanTags(o.tags), image: o.image || null, audio: o.audio || null, wave: o.audio ? cleanWave(o.wave) : null, speak: clean(o.speak, 500), lang: clean(o.lang, 20), auto: o.auto !== false,
     source: clean(source, 60), pending: !!o.pending, created: Date.now(), srs: newCard(), pile: null };
   const n = kind === 'cloze' ? blanks(base.text).length : 0;
   // An image card with boxes: one card per box, each asking its own box.
@@ -142,7 +144,7 @@ function makeCards(deck, o, source = 'you') {
   return cards;
 }
 const DECK_KEYS = ['name', 'tags', 'cover', 'paused', 'grading', 'fsrs', 'goal', 'gapIdx', 'steps', 'perDay', 'piles', 'folder', 'bg'];
-const CARD_KEYS = ['kind', 'front', 'back', 'note', 'text', 'tags', 'image', 'audio', 'speak', 'lang', 'auto', 'pending', 'cloze', 'boxes', 'occ'];
+const CARD_KEYS = ['kind', 'front', 'back', 'note', 'text', 'tags', 'image', 'audio', 'wave', 'speak', 'lang', 'auto', 'pending', 'cloze', 'boxes', 'occ'];
 // What every card of one picture with boxes shares (everything but which box it asks, and its reviews).
 const SHARED_KEYS = ['kind', 'front', 'back', 'note', 'tags', 'image', 'lang', 'pending', 'boxes', 'occ'];
 // Keeps a picture's cards in step with its boxes: a new box gets a card, a box that's gone takes its card with it, and
@@ -264,6 +266,9 @@ function run(a, who) {
       for (const k of ['front', 'back', 'text']) if (k in p) p[k] = clean(p[k]);
       if ('speak' in p) p.speak = clean(p.speak, 500);
       if ('lang' in p) p.lang = clean(p.lang, 20);
+      // A new sound file brings its own waveform; without one, the old waveform goes (the app measures the new sound).
+      if ('wave' in p) p.wave = cleanWave(p.wave);
+      else if ('audio' in p && p.audio !== c.audio) p.wave = null;
       if ('tags' in p) p.tags = cleanTags(p.tags);
       if ('boxes' in p) p.boxes = cleanBoxes(p.boxes);
       if ('occ' in p) p.occ = occMode(p.occ);

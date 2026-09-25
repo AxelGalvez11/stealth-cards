@@ -1296,6 +1296,51 @@
       "w": 390,
       "x": 4700,
       "y": 1300
+    },
+    "PhoneEditorAudio.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "page": "phone",
+      "title": "iPhone · Card editor · audio",
+      "w": 390,
+      "x": 1880,
+      "y": 5200
+    },
+    "PhoneEditorRecording.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "page": "phone",
+      "title": "iPhone · Card editor · recording audio",
+      "w": 390,
+      "x": 2350,
+      "y": 5200
+    },
+    "PhoneReviewAudio.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "page": "phone",
+      "title": "iPhone · Review · audio card, playing",
+      "w": 390,
+      "x": 3290,
+      "y": 2600
+    },
+    "WebEditorRecording.dc.html": {
+      "h": 900,
+      "is_interactive": true,
+      "page": "sidebar",
+      "title": "Web · Card editor · recording audio",
+      "w": 1440,
+      "x": 10640,
+      "y": 5280
+    },
+    "WebReviewAudio.dc.html": {
+      "h": 900,
+      "is_interactive": true,
+      "page": "sidebar",
+      "title": "Web · Review · audio card, playing",
+      "w": 1440,
+      "x": 10640,
+      "y": 3960
     }
   },
   "createdOnFiles": {
@@ -1613,6 +1658,7 @@
     "WebReviewSettings.dc.html",
     "WebReviewNewPile.dc.html",
     "WebReviewBlank.dc.html",
+    "WebReviewAudio.dc.html",
     "WebReviewImage.dc.html",
     "WebSettings.dc.html",
     "WebDecksList.dc.html",
@@ -1620,6 +1666,7 @@
     "WebEditorBlank.dc.html",
     "WebEditorImage.dc.html",
     "WebEditorAudio.dc.html",
+    "WebEditorRecording.dc.html",
     "WebEditorSlash.dc.html",
     "WebSignIn.dc.html",
     "WebSignInCode.dc.html",
@@ -1644,6 +1691,8 @@
     "PhoneDeckTagPicker.dc.html",
     "PhoneSettings.dc.html",
     "PhoneEditor.dc.html",
+    "PhoneEditorAudio.dc.html",
+    "PhoneEditorRecording.dc.html",
     "PhoneReview.dc.html",
     "PhoneDone.dc.html",
     "PhoneDonePiles.dc.html",
@@ -1666,6 +1715,7 @@
     "PhoneReviewSettings.dc.html",
     "PhoneReviewNewPile.dc.html",
     "PhoneReviewBlank.dc.html",
+    "PhoneReviewAudio.dc.html",
     "PhoneReviewImage.dc.html",
     "PhoneEditorImage.dc.html",
     "PhoneSignIn.dc.html",

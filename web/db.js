@@ -5,6 +5,7 @@
 import { preview, waitLabel, dayAt } from './fsrs.js';
 import R from './rich.js';
 import { placeBefore, deckCards, cardBefore, cardToDeck } from './order.js';
+import { createSound } from './sound.js';
 
 const DAY = 86400000, MIN = 60000, GAPS = [30, 90, 180, 365, 730, 1825, 3650];
 const DAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
@@ -180,7 +181,7 @@ export async function createDb({ onChange, go }) {
     }
     // A picture with boxes brings its boxes, which one it asks, and whether the others stay hidden.
     const o = occOf(c);
-    return { id: c.id, kind: c.kind, front: c.front || (c.kind === 'audio' ? 'What do you hear?' : ''), back: o ? o.label : c.back, note: c.note, image: c.image, audio: c.audio, speak: c.speak, lang: c.lang || '',
+    return { id: c.id, kind: c.kind, front: c.front || (c.kind === 'audio' ? 'What do you hear?' : ''), back: o ? o.label : c.back, note: c.note, image: c.image, audio: c.audio, wave: c.wave || null, speak: c.speak, lang: c.lang || '',
       backLabel: c.back, backBig: c.back, backSub: c.note || '', ...(o ? { boxes: o.boxes, box: c.box, occ: o.mode } : {}) };
   }
   // AI explanations (Lucida's own AI, a few free a day on Free): asked for from a card once it's answered, and saved on
@@ -208,7 +209,7 @@ export async function createDb({ onChange, go }) {
     return days <= 1 ? 'Tomorrow' : days < 60 ? 'In ' + days + ' days' : 'In ' + Math.round(days / 30.4) + ' months';
   }
   let spoken = null;
-  const autoplay = c => { if (c.kind !== 'audio' || c.auto === false || spoken === c.id) return; spoken = c.id; setTimeout(() => (c.audio ? act.play(c.audio) : act.speak(c.speak, c.lang)), 350); };
+  const autoplay = c => { if (c.kind !== 'audio' || c.auto === false || spoken === c.id) return; spoken = c.id; setTimeout(() => sound.play({ audio: c.audio, speak: c.speak, lang: c.lang, wave: c.wave }, true), 350); };
   const nextDue = () => {
     const t = now(), ups = S.cards.filter(c => !c.pending && c.srs.state !== 'new' && c.srs.due > t);
     if (!ups.length) return null;
@@ -222,7 +223,17 @@ export async function createDb({ onChange, go }) {
     i.onchange = () => ok(i.files[0] || null); i.addEventListener('cancel', () => ok(null)); i.click();
   });
   const upload = async blob => { const r = await fetch('/api/media', { method: 'POST', headers: { 'content-type': blob.type }, body: blob }); const j = await r.json(); if (!r.ok) { alert(j.error); return null; } return j.url; };
-  let recorder = null, typing = {}, typingTimer = null;
+  let typing = {}, typingTimer = null;
+  // Recording, playing, and the waveforms of sound (sound.js). A clip's shape measured on this device is saved with the
+  // cards that play it, quietly (if that fails, it's measured again next time).
+  const sound = createSound({ onChange: () => changed(), upload, measured: (url, wave) => {
+    for (const c of S.cards) {
+      if (c.audio !== url || c.wave) continue;
+      c.wave = wave;
+      fetch('/api/action', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ type: 'card.update', id: c.id, patch: { wave } }) })
+        .then(r => (r.ok ? r.json() : null)).then(j => j && accept(j.state)).catch(() => {});
+    }
+  }, known: url => (S.cards.find(c => c.audio === url && c.wave) || {}).wave });
 
   // ---------- Learn mode ----------
   // Learn a set of cards until you know every one. Each card is asked in different ways: pick from a few answers, true
@@ -420,19 +431,18 @@ export async function createDb({ onChange, go }) {
     copy: text => navigator.clipboard && navigator.clipboard.writeText(text),
     pickFile: async kind => { const f = await choose(kind === 'audio' ? 'audio/*' : 'image/*'); return f ? upload(f) : null; },
     pickText: async () => { const f = await choose('.csv,.tsv,.txt,text/plain,text/csv'); return f ? f.text() : null; },
-    record: () => {
-      if (recorder) { recorder.stop(); return Promise.resolve(null); }
-      return navigator.mediaDevices.getUserMedia({ audio: true }).then(stream => new Promise(ok => {
-        const chunks = [], r = new MediaRecorder(stream);
-        recorder = r;
-        r.ondataavailable = e => chunks.push(e.data);
-        r.onstop = async () => { stream.getTracks().forEach(x => x.stop()); recorder = null; ok(await upload(new Blob(chunks, { type: (r.mimeType || 'audio/webm').split(';')[0] }))); };
-        r.start();
-      })).catch(() => { alert('Your browser didn’t allow the microphone.'); return null; });
-    },
-    // lang (like "es") picks a voice that speaks the card's language.
-    speak: (text, lang) => { text = R.plain(text, { join: ' ', math: 'show' }).trim(); if (!text || !window.speechSynthesis) return; speechSynthesis.cancel(); const u = new SpeechSynthesisUtterance(text); if (lang) u.lang = lang; speechSynthesis.speak(u); },
-    play: url => { if (url) new Audio(url).play(); },
+    // Sound (sound.js). record() starts recording and gives back { url, wave } once it's stopped (a second call stops it).
+    record: () => sound.record(),
+    stopRecording: discard => sound.stopRecording(discard),
+    pickSound: () => sound.pick(choose),
+    // A clip is a card's sound: { audio, wave } for a file, or { speak, lang } for words the device reads aloud (lang, like
+    // "es", picks a voice that speaks the card's language). playSound plays it, or pauses it if it's playing.
+    playSound: c => sound.play(c),
+    seekSound: (c, f, dragging) => sound.seek(c, f, dragging),
+    watchSound: (el, key, fn) => sound.watch(el, key, fn),
+    watchMic: (el, fn) => sound.watchMic(el, fn),
+    speak: (text, lang) => sound.play({ speak: text, lang }, true),
+    play: url => { if (url) sound.play({ audio: url }, true); },
     importCards: async o => { const r = await send('data.import', o); go('/deck/' + r.deckId); },
     // Learn mode (see above).
     startLearn: (id, set, kinds) => {
@@ -498,6 +508,9 @@ export async function createDb({ onChange, go }) {
   return {
     mock: false, act,
     raw: () => S,
+    // A clip's waveform and where it's at (sound.js), and the recording under way, if there is one.
+    sound: c => sound.view(c),
+    recording: () => sound.recording(),
     chrome: () => {
       const due = S.decks.filter(d => !d.paused).reduce((n, d) => n + deckStat(d).due, 0);
       return { nav: { today: due ? String(due) : '' }, me: { bg: COLORS[S.settings.color] || COLORS[0], initial: (S.settings.name || 'You').trim()[0].toUpperCase() } };

@@ -223,8 +223,20 @@ export default [
   "h": 844
  },
  {
+  "name": "PhoneEditorAudio",
+  "title": "iPhone · Card editor · audio",
+  "w": 390,
+  "h": 844
+ },
+ {
   "name": "PhoneEditorImage",
   "title": "iPhone · Card editor · image with boxes",
+  "w": 390,
+  "h": 844
+ },
+ {
+  "name": "PhoneEditorRecording",
+  "title": "iPhone · Card editor · recording audio",
   "w": 390,
   "h": 844
  },
@@ -321,6 +333,12 @@ export default [
  {
   "name": "PhoneReview",
   "title": "iPhone · Review",
+  "w": 390,
+  "h": 844
+ },
+ {
+  "name": "PhoneReviewAudio",
+  "title": "iPhone · Review · audio card, playing",
   "w": 390,
   "h": 844
  },
@@ -631,6 +649,12 @@ export default [
   "h": 900
  },
  {
+  "name": "WebEditorRecording",
+  "title": "Web · Card editor · recording audio",
+  "w": 1440,
+  "h": 900
+ },
+ {
   "name": "WebEditorSlash",
   "title": "Web · Card editor · / menu",
   "w": 1440,
@@ -729,6 +753,12 @@ export default [
  {
   "name": "WebReview",
   "title": "Web · Review",
+  "w": 1440,
+  "h": 900
+ },
+ {
+  "name": "WebReviewAudio",
+  "title": "Web · Review · audio card, playing",
   "w": 1440,
   "h": 900
  },
