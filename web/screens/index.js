@@ -254,7 +254,7 @@ export default [
  },
  {
   "name": "PhoneQuizSunset",
-  "title": "iPhone · Learn mode · idea: grainy sunset hills",
+  "title": "iPhone · Learn mode · idea: faint sunset",
   "w": 390,
   "h": 844
  },
@@ -584,7 +584,7 @@ export default [
  },
  {
   "name": "WebQuizSunset",
-  "title": "Web · Learn mode · idea: grainy sunset hills",
+  "title": "Web · Learn mode · idea: faint sunset",
   "w": 1440,
   "h": 900
  },

@@ -8,7 +8,6 @@ import { WALL_CARDS } from './wall.mjs';
 import { PRIVACY, TERMS, UPDATED } from './legal.mjs';
 import { PRO_LINKS } from '../web/plans.mjs';
 import { G_LOGO, APPLE_LOGO } from './logos.mjs';
-import { scapeUri } from './scape.mjs';
 const MESH_DATA = JSON.stringify(Object.fromEntries(PALETTE_NAMES.map(n => [n, { ...paletteData(n), shadow: PALETTES[n].ink === '#FFFFFF' ? '0 1px 14px rgba(0,0,0,.16)' : 'none' }])));
 // Card text formatting (web/rich.js), copied into every board that shows or edits card text.
 const RICH_SRC = readFileSync(new URL('../web/rich.js', import.meta.url), 'utf8');
@@ -3448,21 +3447,18 @@ const LIVE_FINAL_LOGIC = LIVE_LOGIC.replace('    r: wrongPick ? {', `    rest: $
 
 // ---------- Learn mode: an idea (canvas only) ----------
 // The owner picked the sky style for Learn mode and asked to try other backgrounds: faint waves (V82), a white noisy
-// gradient (V83), white silk (V84) and white waves (V86). Then "just remove the white wave gradients, trial something
-// like this" with a grainy sunset over hills, UI windows floating on it (V87). So this is the sunset (scape.mjs): the
-// hills drawn once as a picture the page stretches, strong film grain on top, drifting slowly like the Today card, and
-// the question and answers on a white card, like the windows. At night the page keeps the night sky, with no card.
-const SUNSET_PIC = { web: scapeUri(960, 600), phone: scapeUri(390, 844) };
-const sunsetLayer = phone => {
-  const [w, h] = phone ? [390, 844] : [960, 600];
-  return `<div aria-hidden="true" class="sc-alive" style="position: absolute; inset: 0; z-index: -1; overflow: hidden; pointer-events: none; background: #5E88AC;"><svg aria-hidden="true" viewBox="0 0 ${w} ${h}" preserveAspectRatio="xMidYMid slice" width="100%" height="100%" style="position: absolute; inset: 0; pointer-events: none;"><image href="${SUNSET_PIC[phone ? 'phone' : 'web']}" width="${w}" height="${h}" preserveAspectRatio="none"/></svg>${grainSvg('{{grain}}', { blend: 'overlay', freq: 0.85, slope: 3.4, id: 'sc-sunset-grain' })}</div>`;
-};
-const sunsetBg = phone => `<sc-if value="{{light}}" hint-placeholder-val="{{ true }}">${sunsetLayer(phone)}</sc-if><sc-if value="{{dark}}" hint-placeholder-val="{{ false }}">${skyFade(phone)}</sc-if>`;
-// Its logic: the question's, plus the grain, brighter chips over the blue, and the card (none at night).
+// gradient (V83), white silk (V84) and white waves (V86), then a grainy sunset over hills with windows floating on it
+// (V94), then "make it more faint ... remove the mountains and the movement ... just keep the blue and reddish sunset
+// look" (V95). So this is that sunset's sky, washed pale: steel blue at the top through mauve and pink to a coral glow
+// at the bottom, with film grain, standing still. The question and answers sit on a white card, like the windows. At
+// night the page keeps the night sky, with no card.
+const SUNSET_BG = 'radial-gradient(90% 60% at 88% 100%, rgba(238,142,98,.22), rgba(238,142,98,0) 70%), linear-gradient(180deg, #C3D3E3 0%, #D3DBE6 30%, #E6DDE4 52%, #F2DCD8 72%, #F5CFC2 100%)';
+const sunsetBg = phone => `<sc-if value="{{light}}" hint-placeholder-val="{{ true }}"><div aria-hidden="true" style="position: absolute; inset: 0; z-index: -1; overflow: hidden; pointer-events: none; background: ${SUNSET_BG};">${grainSvg('{{grain}}', { blend: 'overlay', freq: 0.85, slope: 3.4, id: 'sc-sunset-grain' })}</div></sc-if><sc-if value="{{dark}}" hint-placeholder-val="{{ false }}">${skyFade(phone)}</sc-if>`;
+// Its logic: the question's, plus the grain, brighter chips, and the card (none at night).
 const SUNSET_LOGIC = phone => QUIZ_LOGIC(phone).replace('renderVals() {', 'baseVals() {') + `
 renderVals() { const v = this.baseVals(), dark = !!this.props.dark;
-  return { ...v, grain: '.8', light: !dark, dark, k: dark ? { ...v.k, panel: 'transparent', panelShadow: 'none' }
-    : { ...v.k, chip: 'rgba(255,255,255,.86)', track: 'rgba(13,21,66,.1)', panel: '#FFFFFF', panelShadow: '0 44px 90px -44px rgba(46,20,8,.6), 0 2px 8px rgba(46,20,8,.1)' } }; }`;
+  return { ...v, grain: '.6', light: !dark, dark, k: dark ? { ...v.k, panel: 'transparent', panelShadow: 'none' }
+    : { ...v.k, chip: 'rgba(255,255,255,.8)', track: 'rgba(13,21,66,.1)', panel: '#FFFFFF', panelShadow: '0 34px 80px -44px rgba(70,46,72,.45), 0 1px 6px rgba(70,46,72,.07)' } }; }`;
 
 // ---------- Pricing (lucida.cards/pricing) ----------
 // Free keeps every card. Pro ($5.99 a month or $39 a year) is for making Lucida yours: AI quizzes, photo covers and
@@ -3633,8 +3629,8 @@ const files = {
   'WebQuizMatch': ['Web · Learn mode · matching', webQuizMatch, { props: DARK, logic: MATCH_LOGIC(false), css: LEARN_CSS, w: W, h: H }],
   'WebQuizType': ['Web · Learn mode · type the answer', webQuizType, { props: DARK, logic: TYPE_LOGIC(false), css: LEARN_CSS, w: W, h: H }],
   'WebQuizDone': ['Web · Learn mode · all learned', webQuizDone, { props: DARK, logic: QUIZ_DONE_LOGIC, css: LEARN_CSS, w: W, h: H }],
-  'WebQuizSunset': ['Web · Learn mode · idea: grainy sunset hills', webQuizOf(sunsetBg(false), true), { props: { ...DARK, answered: { editor: 'boolean', default: false } }, logic: SUNSET_LOGIC(false), css: LEARN_CSS, w: W, h: H }],
-  'PhoneQuizSunset': ['iPhone · Learn mode · idea: grainy sunset hills', phoneQuizOf(sunsetBg(true), true), { props: { ...DARK, answered: { editor: 'boolean', default: false } }, logic: SUNSET_LOGIC(true), css: LEARN_CSS, w: PW, h: PH }],
+  'WebQuizSunset': ['Web · Learn mode · idea: faint sunset', webQuizOf(sunsetBg(false), true), { props: { ...DARK, answered: { editor: 'boolean', default: false } }, logic: SUNSET_LOGIC(false), css: LEARN_CSS, w: W, h: H }],
+  'PhoneQuizSunset': ['iPhone · Learn mode · idea: faint sunset', phoneQuizOf(sunsetBg(true), true), { props: { ...DARK, answered: { editor: 'boolean', default: false } }, logic: SUNSET_LOGIC(true), css: LEARN_CSS, w: PW, h: PH }],
   'PhoneQuizStart': ['iPhone · Learn mode · start (Pro)', phoneQuizStart(true), { props: DARK, logic: QUIZ_START_LOGIC(true, true), w: PW, h: PH }],
   'PhoneQuizUpgrade': ['iPhone · Learn mode · on Free: go Pro', phoneQuizStart(false), { props: { ...DARK, grain: MESH('Iris').grain }, logic: QUIZ_START_LOGIC(true), w: PW, h: PH }],
   'PhoneQuiz': ['iPhone · Learn mode · choice question', phoneQuiz, { props: { ...DARK, answered: { editor: 'boolean', default: false } }, logic: QUIZ_LOGIC(true), css: LEARN_CSS, w: PW, h: PH }],
