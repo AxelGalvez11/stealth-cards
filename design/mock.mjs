@@ -21,6 +21,22 @@ const CARDS = [
   { id: 'k5', front: 'Say it: ribosome', back: 'RY-buh-sohm', kind: 'Audio', icon: 'audio', next: 'Due now', ai: 'ChatGPT', tags: ['Pronunciation'] },
   { id: 'k6', front: 'What is the role of the ribosome?', back: 'Translates mRNA into protein', kind: 'Basic', icon: 'text', next: 'In 12 days', ai: '', tags: ['Proteins', 'Exam 2'] }
 ];
+// Folders in the Library, and a few cards from every deck for All cards (with how hard each one is).
+const FOLDERS = [{ id: 'f1', name: 'Languages', decks: ['jlpt', 'span'] }, { id: 'f2', name: 'Year 1', decks: ['orgo', 'hist'] }];
+const ALL_CARDS = [
+  ['cell', 'What does the electron transport chain pump across the inner membrane?', 'Protons (H⁺)', 'text', 'Tomorrow', 'easy', ['Energy', 'Exam 1', 'Mitochondria', 'Must know']],
+  ['cell', 'The ____ is the powerhouse of the cell.', 'mitochondrion', 'blank', 'Due now', 'hard', ['Organelles', 'Exam 1']],
+  ['jlpt', '電車', 'train (でんしゃ)', 'text', 'In 2 days', 'medium', ['Vocabulary']],
+  ['orgo', 'C₆H₆', 'Benzene', 'text', 'In 5 days', 'easy', ['Aromatics']],
+  ['cell', 'Name structure 1 on the diagram.', 'Nucleus', 'image', 'In 3 days', 'medium', ['Organelles', 'Diagrams']],
+  ['hist', 'Year the Declaration of Independence was signed?', '1776', 'text', 'In 9 days', 'easy', ['Revolution']],
+  ['span', 'Yo ____ dos hermanos.', 'tengo', 'blank', 'Due now', 'hard', ['Irregular']],
+  ['sys', 'What does a load balancer do?', 'Spreads requests across servers', 'text', 'New', 'new', ['Basics']],
+  ['cell', 'Which organelle packages proteins for secretion?', 'Golgi apparatus', 'text', 'In 6 days', 'medium', ['Organelles']],
+  ['jlpt', '学校', 'school (がっこう)', 'text', 'New', 'new', ['Vocabulary']],
+  ['orgo', 'Markovnikov’s rule says the H goes to…', 'The carbon with more H’s', 'text', 'Due now', 'hard', ['Reactions', 'Exam 2']],
+  ['cell', 'Say it: ribosome', 'RY-buh-sohm', 'audio', 'Due now', 'new', ['Pronunciation']]
+];
 const REVIEW = [
   { kind: 'basic', front: 'What does the electron transport chain pump across the inner membrane?', back: 'Protons (H⁺), from the matrix into the intermembrane space.', note: 'That gradient powers ATP synthase.' },
   { kind: 'cloze', before: 'The', after: 'is the powerhouse of the cell.', back: 'mitochondrion', note: 'It makes most of the cell’s ATP.' },
@@ -36,7 +52,7 @@ const DRAFTS = {
 const DUE_7 = { vals: [32, 18, 24, 12, 30, 8, 16], labels: ['Wed', 'Thu', 'Fri', 'Sat', 'Sun', 'Mon', 'Tue'], tops: null, names: ['tomorrow', 'Thursday', 'Friday', 'Saturday', 'Sunday', 'Monday', 'Tuesday'] };
 const DUE_14 = { vals: [32, 18, 24, 12, 30, 8, 16, 22, 14, 26, 10, 20, 6, 12], labels: ['23', '24', '25', '26', '27', '28', '29', '30', '1', '2', '3', '4', '5', '6'], tops: ['W', 'T', 'F', 'S', 'S', 'M', 'T', 'W', 'T', 'F', 'S', 'S', 'M', 'T'],
   names: ['tomorrow', 'Thu 24', 'Fri 25', 'Sat 26', 'Sun 27', 'Mon 28', 'Tue 29', 'Wed 30', 'Thu, Oct 1', 'Fri, Oct 2', 'Sat, Oct 3', 'Sun, Oct 4', 'Mon, Oct 5', 'Tue, Oct 6'] };
-export const SAMPLE = { DECKS, TAGS, CARDS, REVIEW, DRAFTS, DUE_7, DUE_14 };
+export const SAMPLE = { DECKS, TAGS, CARDS, FOLDERS, ALL_CARDS, REVIEW, DRAFTS, DUE_7, DUE_14 };
 
 export const MOCK_METHOD = String.raw`mock() {
   const p = this.props, m = this.state.$m || {};
@@ -48,21 +64,28 @@ export const MOCK_METHOD = String.raw`mock() {
   const deck = () => ({ id: 'cell', name: ed.name ?? 'Cell Biology', tags: ed.tags || X.TAGS.cell, seed: 'Cell Biology', cover: { style: 'mix', round: 0, image: null, ...(ed.cover || {}) },
     paused: !!ed.paused, grading: ed.grading || byName[p.grading] || 'four', fsrs: ed.fsrs ?? (p.fsrs !== false), goal: ed.goal ?? 90, gapIdx: ed.gapIdx ?? 3, steps: ed.steps || ['1m', '10m'], perDay: ed.perDay ?? 20,
     total: 412, totalLabel: '412', due: 28, fresh: 10, ret: 91, aiCount: 38, forecast: [28, 14, 20, 9, 24, 6, 12], piles: m.piles || [{ name: 'Know it', n: 18 }, { name: 'Almost', n: 6 }, { name: 'No clue', n: 3 }],
-    href: 'WebDeck.dc.html', studyHref: 'WebReview.dc.html', settingsHref: 'WebDeckSettings.dc.html', newCardHref: 'WebEditor.dc.html' });
+    href: 'WebDeck.dc.html', studyHref: 'WebReview.dc.html', settingsHref: 'WebDeckSettings.dc.html', newCardHref: 'WebEditor.dc.html', folder: null, bg: ed.bg || { kind: 'deck', image: null } });
   const idx = m.idx ?? (({ 'Fill in the blank': 1, Image: 2, Audio: 3 })[p.card] || 0);
   const st = { name: 'Alex Kim', sub: 'Signed in with Google · alex@gmail.com', signedIn: true, google: true, photo: p.photo === 'Google photo' ? 'google' : 'color', color: 0,
     look: 'system', grads: 'mix', prog: ({ Bar: 'bar', Counts: 'counts', None: 'none' })[p.progress] || 'bar', perDay: 20, goal: 90, grading: 'four', fsrs: true, check: true, reminder: '9:00 AM', ...(m.settings || {}) };
   const perms = { read: true, text: true, media: true, edit: true, check: true, del: false, ...(m.perms || {}) };
   const noop = () => {};
+  // Folders you make or change here stay on this board.
+  const folders = () => m.folders || X.FOLDERS;
+  const folderOf = id => (m.moved && id in m.moved ? m.moved[id] : (folders().find(f => (f.decks || []).includes(id)) || {}).id || null);
   return {
     mock: true,
     chrome: () => ({ nav: { today: caught ? '' : '64' }, me: { bg: 'linear-gradient(135deg, #8C9AFC 0%, #4F60E6 100%)', initial: 'A' } }),
     settings: () => st,
     tags: () => [],
-    decks: () => X.DECKS.map((d, i) => ({ ...d, name: d.name, tags: X.TAGS[d.id], seed: d.name, style: null, image: null, totalLabel: d.total, paused: false,
+    decks: () => X.DECKS.map((d, i) => ({ ...d, name: d.name, tags: X.TAGS[d.id], seed: d.name, style: null, image: null, totalLabel: d.total, paused: false, folder: folderOf(d.id), bg: { kind: 'deck', image: null },
       due: caught ? 0 : d.due, overdue: caught ? 0 : d.overdue, soon: caught ? (d.soon || [1, 1, 2, 3, 1, 3][i]) : d.soon,
       href: 'WebDeck.dc.html', studyHref: 'WebReview.dc.html', settingsHref: 'WebDeckSettings.dc.html' })),
     deck,
+    folders: () => folders().map(f => { const ds = X.DECKS.filter(d => folderOf(d.id) === f.id);
+      return { id: f.id, name: f.name, n: ds.length, due: caught ? 0 : ds.reduce((n, d) => n + d.due, 0), decks: ds.map(d => ({ ...d, seed: d.name, style: null, round: 0 })), href: 'WebLibraryFolder.dc.html' }; }),
+    allCards: () => X.ALL_CARDS.map(([deckId, front, back, icon, next, level, tags], i) => { const d = X.DECKS.find(x => x.id === deckId);
+      return { id: 'a' + i, kind: '', icon, front, back, tags, next, level, deckId, deckName: d.name, seed: d.name, style: null, round: 0, folder: folderOf(deckId), href: 'WebEditor.dc.html' }; }),
     searchDecks: q => X.DECKS.filter(d => d.name.toLowerCase().includes(q)).map(d => d.id),
     cards: () => X.CARDS.map(r => ({ ...r, href: 'WebEditor.dc.html' })),
     card: () => null,
@@ -93,6 +116,12 @@ export const MOCK_METHOD = String.raw`mock() {
       setSettings: patch => set({ settings: { ...(m.settings || {}), ...patch } }),
       setPerm: (k, on) => set(k === 'check' ? { perms: { ...(m.perms || {}), check: on }, settings: { ...(m.settings || {}), check: on } } : { perms: { ...(m.perms || {}), [k]: on } }),
       pickCover: () => set({ deck: { ...ed, cover: { ...(ed.cover || {}), image: 'mock' } } }),
+      newFolder: (name, deckId) => { const id = 'f' + (folders().length + 1) + Date.now().toString(36); set({ folders: [...folders(), { id, name, decks: [] }], ...(deckId ? { moved: { ...(m.moved || {}), [deckId]: id } } : {}) }); return id; },
+      renameFolder: (id, name) => set({ folders: folders().map(f => (f.id === id ? { ...f, name } : f)) }),
+      deleteFolder: id => set({ folders: folders().filter(f => f.id !== id) }),
+      moveDeck: (id, folder) => set({ moved: { ...(m.moved || {}), [id]: folder || null } }),
+      setBg: (id, kind) => set({ deck: { ...ed, bg: { ...(ed.bg || { kind: 'deck', image: null }), kind } } }),
+      pickBg: () => set({ deck: { ...ed, bg: { kind: 'photo', image: 'mock' } } }),
       addDeck: noop, deleteDeck: noop, exportDeck: noop, saveCard: noop, deleteCard: noop, copy: noop, speak: noop, play: noop, importCards: noop, exportAll: noop, resetAll: noop,
       pickFile: () => Promise.resolve(null), pickText: () => Promise.resolve(null), record: () => Promise.resolve(null),
       addPile: (id, name) => set({ piles: [...deck().piles, { name, n: 0 }] })

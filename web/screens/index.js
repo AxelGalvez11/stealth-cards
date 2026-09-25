@@ -188,7 +188,7 @@ export default [
  },
  {
   "name": "PhoneDecksEmpty",
-  "title": "iPhone · Decks · no decks yet",
+  "title": "iPhone · Library · no decks yet",
   "w": 390,
   "h": 844
  },
@@ -213,6 +213,24 @@ export default [
  {
   "name": "PhoneInbox",
   "title": "iPhone · Check AI cards",
+  "w": 390,
+  "h": 844
+ },
+ {
+  "name": "PhoneLibrary",
+  "title": "iPhone · Library",
+  "w": 390,
+  "h": 844
+ },
+ {
+  "name": "PhoneLibraryCards",
+  "title": "iPhone · Library · all cards",
+  "w": 390,
+  "h": 844
+ },
+ {
+  "name": "PhoneLibraryFolder",
+  "title": "iPhone · Library · a folder",
   "w": 390,
   "h": 844
  },
@@ -253,12 +271,6 @@ export default [
   "h": 844
  },
  {
-  "name": "PhoneQuizSunset",
-  "title": "iPhone · Learn mode · idea: faint sunset",
-  "w": 390,
-  "h": 844
- },
- {
   "name": "PhoneQuizType",
   "title": "iPhone · Learn mode · type the answer",
   "w": 390,
@@ -291,6 +303,12 @@ export default [
  {
   "name": "PhoneReviewDark",
   "title": "iPhone · Review (dark)",
+  "w": 390,
+  "h": 844
+ },
+ {
+  "name": "PhoneReviewExplain",
+  "title": "iPhone · Review · Explain (AI explains the answer)",
   "w": 390,
   "h": 844
  },
@@ -470,31 +488,31 @@ export default [
  },
  {
   "name": "WebDecks",
-  "title": "Web · Decks",
+  "title": "Web · Library",
   "w": 1440,
   "h": 900
  },
  {
   "name": "WebDecksEmpty",
-  "title": "Web · Decks · no decks yet",
+  "title": "Web · Library · no decks yet",
   "w": 1440,
   "h": 900
  },
  {
   "name": "WebDecksList",
-  "title": "Web · Decks · list view",
+  "title": "Web · Library · list view",
   "w": 1440,
   "h": 900
  },
  {
   "name": "WebDecksMoreTags",
-  "title": "Web · Decks · More (find any tag)",
+  "title": "Web · Library · More (find any tag)",
   "w": 1440,
   "h": 900
  },
  {
   "name": "WebDecksTags",
-  "title": "Web · Decks · a deck with 11 tags (+9 shows them all)",
+  "title": "Web · Library · a deck with 11 tags (+9 shows them all)",
   "w": 1440,
   "h": 900
  },
@@ -547,6 +565,24 @@ export default [
   "h": 900
  },
  {
+  "name": "WebLibraryCards",
+  "title": "Web · Library · all cards (filter by tags and difficulty)",
+  "w": 1440,
+  "h": 900
+ },
+ {
+  "name": "WebLibraryFolder",
+  "title": "Web · Library · a folder",
+  "w": 1440,
+  "h": 900
+ },
+ {
+  "name": "WebLibraryNewFolder",
+  "title": "Web · Library · new folder, and a deck’s ⋯ menu",
+  "w": 1440,
+  "h": 900
+ },
+ {
   "name": "WebNewDeck",
   "title": "Web · New deck",
   "w": 1440,
@@ -583,12 +619,6 @@ export default [
   "h": 900
  },
  {
-  "name": "WebQuizSunset",
-  "title": "Web · Learn mode · idea: faint sunset",
-  "w": 1440,
-  "h": 900
- },
- {
   "name": "WebQuizType",
   "title": "Web · Learn mode · type the answer",
   "w": 1440,
@@ -621,6 +651,12 @@ export default [
  {
   "name": "WebReviewDark",
   "title": "Web · Review (dark)",
+  "w": 1440,
+  "h": 900
+ },
+ {
+  "name": "WebReviewExplain",
+  "title": "Web · Review · Explain (AI explains the answer)",
   "w": 1440,
   "h": 900
  },

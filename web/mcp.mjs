@@ -1,7 +1,7 @@
 // The MCP link: Claude, Cursor, or any app that speaks MCP can read and add cards. On this computer it's
 // http://localhost:3000/mcp; online each person has their own link (see handler.mjs), so an AI only sees their cards.
 // What an AI may do is set on the Connect AI page; tools it isn't allowed to use aren't offered.
-import { apply, state, blanks, mediaLeft, MEDIA_FULL } from './store.mjs';
+import { apply, state, blanks, mediaLeft, MEDIA_FULL, BG_KINDS } from './store.mjs';
 import { dayAt } from './fsrs.js';
 import { fetchMedia, speechFile } from './media.mjs';
 import R from './rich.js';
@@ -15,12 +15,12 @@ const deckBy = x => state().decks.find(d => d.id === x) || state().decks.find(d 
 const dueNow = c => c.srs.state !== 'new' && c.srs.due <= Date.now();
 const cardOut = c => ({ id: c.id, deck: (deckBy(c.deckId) || {}).name, kind: c.kind === 'cloze' ? 'fill in the blank' : c.kind, front: c.front || undefined, back: c.back || undefined,
   text: c.text || undefined, note: c.note || undefined, image: c.image || undefined, audio: c.audio || undefined, speak: c.speak || undefined, lang: c.lang || undefined,
-  tags: c.tags.length ? c.tags : undefined, waiting_for_review: c.pending || undefined,
+  tags: c.tags.length ? c.tags : undefined, waiting_for_review: c.pending || undefined, quiz_questions: (c.quiz || []).length || undefined, has_explanation: c.explain ? true : undefined,
   next_review: c.srs.state === 'new' ? 'new' : new Date(c.srs.due).toISOString().slice(0, 10) });
 // Card text is short markdown; the app shows it formatted (see rich.js).
 const FORMAT = 'Can use **bold**, *italic*, <u>underline</u>, ~~strikethrough~~, ==highlight==, $math$ in LaTeX (like $x^2$ or $\\frac{a}{b}$), and lines that start with "# " (a heading; ## and ### are smaller), "- " (a bullet), or "1. " (a numbered list).';
 // Pictures and sound: a link, an uploaded file ("file:N" from `files`), or a path on this computer (see media.mjs).
-const SOURCE = 'A link (https://…), "file:0" for the first file in "files" (a file the learner uploaded in this chat), "file:1" for the second, and so on, or the full path of a file on this computer (only for AI apps running on the same computer as Lucida).';
+const SOURCE = 'A link (https://…), "file:0" for the first file in "files" (a file the learner uploaded in this chat), "file:1" for the second, and so on, a data URL with the file itself ("data:image/png;base64,…", for a picture or sound you made), or the full path of a file on this computer (only for AI apps running on the same computer as Lucida).';
 const MEDIA_PROPS = {
   image: { type: 'string', description: 'The picture for an image card (PNG, JPEG, GIF, or WebP). ' + SOURCE },
   audio: { type: 'string', description: 'A sound file for an audio card (MP3, M4A, WAV, OGG, or WebM), if you have one. Usually leave this out and use "speak". ' + SOURCE },
@@ -39,6 +39,11 @@ const problem = c => c.kind === 'cloze' ? (blanks(c.text).length ? '' : 'a cloze
   : c.kind === 'audio' ? (!(c.speak || c.audio) ? 'an audio card needs "speak" (or a sound file in "audio")' : !c.back ? 'an audio card needs a back' : '')
   : c.front && c.back ? '' : 'a basic card needs a front and a back';
 const NO_MEDIA = 'The learner turned off image and audio cards on the Connect AI page.';
+const FOLDER = { type: 'string', description: 'A folder to put it in (by name), made if there isn’t one yet.' };
+const COVER = { type: 'string', description: 'A cover picture for the deck. ' + SOURCE };
+const folderName = d => (state().folders.find(f => f.id === d.folder) || {}).name || undefined;
+// The id of the folder with this name, made if needed.
+const folderFor = (name, who) => (state().folders.find(f => f.name.toLowerCase() === String(name).trim().toLowerCase()) || { id: apply({ type: 'folder.add', name }, who).id }).id;
 const DEVICE_VOICE = 'No voice key is set up, so the app reads audio cards aloud with the device’s voice.';
 // Fetches a card's picture and sound (or makes its speech) and keeps only the fields a card has.
 async function withMedia(c, files, ctx, notes) {
@@ -56,7 +61,7 @@ async function speakFile(words, lang, notes) {
 
 const TOOLS = [
   { name: 'list_decks', perm: 'read', description: 'List the decks with how many cards each has and how many are due.', inputSchema: { type: 'object', properties: {} },
-    run: () => text(state().decks.map(d => { const cs = state().cards.filter(c => c.deckId === d.id); return { id: d.id, name: d.name, tags: d.tags, cards: cs.length, due: cs.filter(dueNow).length, new: cs.filter(c => c.srs.state === 'new').length }; })) },
+    run: () => text(state().decks.map(d => { const cs = state().cards.filter(c => c.deckId === d.id); return { id: d.id, name: d.name, folder: folderName(d), tags: d.tags, cards: cs.length, due: cs.filter(dueNow).length, new: cs.filter(c => c.srs.state === 'new').length }; })) },
   { name: 'list_cards', perm: 'read', description: 'List or search the cards in a deck (or in every deck).', inputSchema: { type: 'object', properties: { deck: { type: 'string', description: 'Deck name or id. Leave out for every deck.' }, search: { type: 'string' }, limit: { type: 'number', description: 'Up to 500. Default 50.' } } },
     run: a => { const d = a.deck ? deckBy(a.deck) : null; if (a.deck && !d) return fail('No deck called ' + a.deck);
       const q = String(a.search || '').toLowerCase();
@@ -72,8 +77,42 @@ const TOOLS = [
       while (days.has(t)) { streak++; t = dayAt(t, -1); }
       return text({ decks: S.decks.length, cards: S.cards.length, reviews_last_30_days: S.logs.filter(l => l.at >= since).length,
         remembered_last_30_days: logs.length ? Math.round(logs.filter(l => l.rating > 1).length / logs.length * 100) + '%' : 'no reviews yet', streak_days: streak }); } },
-  { name: 'create_deck', perm: 'text', description: 'Make a new deck.', inputSchema: { type: 'object', properties: { name: { type: 'string' }, tags: { type: 'array', items: { type: 'string' } } }, required: ['name'] },
-    run: (a, who) => { if (deckBy(a.name)) return fail('There is already a deck called ' + a.name); return text(apply({ type: 'deck.add', name: a.name, tags: a.tags }, who)); } },
+  { name: 'create_deck', perm: 'text', description: 'Make a new deck, optionally in a folder and with a cover picture.', inputSchema: { type: 'object', properties: { name: { type: 'string' }, tags: { type: 'array', items: { type: 'string' } }, folder: FOLDER, cover_image: COVER, files: FILES }, required: ['name'] },
+    meta: { 'openai/fileParams': ['files'] },
+    run: async (a, who, ctx) => {
+      if (deckBy(a.name)) return fail('There is already a deck called ' + a.name);
+      if (a.cover_image && !state().ai.perms.media) return fail(NO_MEDIA);
+      let image = null;
+      try { if (a.cover_image) image = await fetchMedia(a.cover_image, 'image', { files: a.files, local: ctx.local }); } catch (e) { return fail(e.message); }
+      return text(apply({ type: 'deck.add', name: a.name, tags: a.tags, folder: a.folder ? folderFor(a.folder, who) : null, image }, who));
+    } },
+  { name: 'update_deck', perm: 'edit', description: 'Change a deck: rename it, retag it, move it into or out of a folder, give it a cover picture, or change the background it shows in Learn mode, flashcards, and Live.',
+    inputSchema: { type: 'object', properties: { deck: { type: 'string', description: 'Deck name or id.' }, name: { type: 'string' }, tags: { type: 'array', items: { type: 'string' } },
+      folder: { type: 'string', description: 'A folder name, made if there isn’t one yet. An empty string takes the deck out of its folder.' },
+      cover_image: { type: 'string', description: 'The deck’s cover picture. ' + SOURCE + ' An empty string goes back to the deck’s own gradient.' },
+      background: { type: 'string', enum: BG_KINDS, description: 'Behind Learn mode, flashcards, and Live: deck (the deck’s own colors, faint; the default), plain, sky, sunset, or photo (needs background_image, or uses the cover picture).' },
+      background_image: { type: 'string', description: 'A picture for the background (sets background to photo). ' + SOURCE }, files: FILES }, required: ['deck'] },
+    meta: { 'openai/fileParams': ['files'] },
+    run: async (a, who, ctx) => {
+      const d = deckBy(a.deck); if (!d) return fail('No deck called ' + a.deck);
+      if ((a.cover_image || a.background_image) && !state().ai.perms.media) return fail(NO_MEDIA);
+      const patch = {};
+      if (a.name !== undefined) { const other = deckBy(a.name); if (other && other !== d) return fail('There is already a deck called ' + a.name); patch.name = a.name; }
+      if (a.tags !== undefined) patch.tags = a.tags;
+      if (a.folder !== undefined) patch.folder = a.folder ? folderFor(a.folder, who) : null;
+      try {
+        if (a.cover_image !== undefined) patch.cover = { image: a.cover_image ? await fetchMedia(a.cover_image, 'image', { files: a.files, local: ctx.local }) : null };
+        if (a.background_image) patch.bg = { kind: 'photo', image: await fetchMedia(a.background_image, 'image', { files: a.files, local: ctx.local }) };
+      } catch (e) { return fail(e.message); }
+      if (a.background !== undefined && !patch.bg) {
+        if (!BG_KINDS.includes(a.background)) return fail('The background is one of: ' + BG_KINDS.join(', '));
+        const image = a.background === 'photo' ? (d.bg && d.bg.image) || (patch.cover ? patch.cover.image : d.cover.image) : undefined;
+        if (a.background === 'photo' && !image) return fail('A photo background needs background_image (or a cover picture on the deck).');
+        patch.bg = image ? { kind: 'photo', image } : { kind: a.background };
+      }
+      apply({ type: 'deck.update', id: d.id, patch }, who);
+      return text('Updated ' + (patch.name || d.name) + '.');
+    } },
   { name: 'add_cards', perm: 'text', description: 'Add flashcards to a deck. The deck is made if it doesn’t exist yet. Keep each card to one idea.',
     inputSchema: { type: 'object', properties: { deck: { type: 'string', description: 'Deck name or id.' }, cards: { type: 'array', items: CARD, minItems: 1 }, files: FILES }, required: ['deck', 'cards'] },
     meta: { 'openai/fileParams': ['files'] },
@@ -118,6 +157,17 @@ const TOOLS = [
       apply({ type: 'card.update', id: a.id, patch }, who);
       return text('Updated the card.');
     } },
+  { name: 'add_quiz', perm: 'text', description: 'Write Learn mode questions for cards, so the learner is quizzed on understanding, not just recall. For each card give one to three questions: multiple choice (the question, the right answer, and three wrong answers that are plausible, the same kind of thing as the right one) or a true-or-false statement. Add a short why to each. Questions can apply the idea (a situation, a cause and effect) instead of repeating the card. You can also leave a two to four sentence explanation of the card’s answer, which shows when the learner taps Explain. Use list_cards for card ids; quiz_questions shows which cards have some already. New questions replace a card’s old ones.',
+    inputSchema: { type: 'object', properties: { quizzes: { type: 'array', minItems: 1, items: { type: 'object', properties: {
+      card: { type: 'string', description: 'The card id.' },
+      questions: { type: 'array', items: { type: 'object', properties: {
+        kind: { type: 'string', enum: ['choice', 'true_false'] },
+        question: { type: 'string', description: 'For choice, the question. For true_false, a statement that is true or false.' },
+        answer: { type: 'string', description: 'For choice, the right answer (short). For true_false, "true" or "false".' },
+        wrong: { type: 'array', items: { type: 'string' }, description: 'For choice: three plausible wrong answers, about as long as the right one.' },
+        why: { type: 'string', description: 'One or two sentences on why the answer is right.' } }, required: ['kind', 'question', 'answer'] } },
+      explanation: { type: 'string', description: 'Optional: two to four plain sentences explaining the card’s answer.' } }, required: ['card'] } } }, required: ['quizzes'] },
+    run: (a, who) => { const r = apply({ type: 'card.quiz', quizzes: a.quizzes }, who); return r.questions || (a.quizzes || []).some(q => q.explanation) ? text('Saved ' + r.questions + ' question' + (r.questions === 1 ? '' : 's') + '. Learn mode uses them next time.') : fail('None of those questions could be used. Check the card ids, and give each choice question three wrong answers.'); } },
   { name: 'delete_cards', perm: 'del', description: 'Delete cards for good.', inputSchema: { type: 'object', properties: { ids: { type: 'array', items: { type: 'string' }, minItems: 1 } }, required: ['ids'] },
     run: (a, who) => text(apply({ type: 'card.delete', ids: a.ids }, who)) }
 ];
@@ -138,7 +188,8 @@ async function handle(m, sid, ctx) {
         return ok({ protocolVersion: VERSIONS.includes(asked) ? asked : VERSIONS[0], capabilities: { tools: {} },
           serverInfo: { name: 'lucida', title: 'Lucida', version: '0.1.0' },
           instructions: 'Lucida holds the learner’s flashcards. Use list_decks first. Make clear, short cards with one idea each; use cloze cards with [[blanks]] for facts inside sentences. ' + FORMAT +
-            ' Image cards show a picture: a link, a file the learner uploaded in the chat, or a file on this computer. Audio cards read words aloud (put them in "speak" and the language in "lang"); use them for languages and pronunciation.' });
+            ' Image cards show a picture: a link, a file the learner uploaded in the chat, or a file on this computer. Audio cards read words aloud (put them in "speak" and the language in "lang"); use them for languages and pronunciation.' +
+            ' Learn mode quizzes the learner on a deck: add_quiz gives cards better questions (multiple choice with plausible wrong answers, or true or false) and an explanation. Decks can sit in folders and have a cover picture and a background (update_deck).' });
       }
       case 'ping': return ok({});
       case 'tools/list': return ok({ tools: allowed().map(({ name, description, inputSchema, meta }) => ({ name, description, inputSchema, ...(meta ? { _meta: meta } : {}) })) });

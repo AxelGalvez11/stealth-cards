@@ -1036,23 +1036,77 @@
       "x": 0,
       "y": 0
     },
-    "WebQuizSunset.dc.html": {
+    "WebLibraryCards.dc.html": {
       "h": 900,
       "is_interactive": true,
-      "page": "quiz",
-      "title": "Web · Learn mode · idea: faint sunset (tap an answer)",
+      "page": "sidebar",
+      "title": "Web · Library · all cards (filter by tags and difficulty)",
       "w": 1440,
       "x": 0,
-      "y": 2584
+      "y": 9240
     },
-    "PhoneQuizSunset.dc.html": {
+    "WebLibraryFolder.dc.html": {
+      "h": 900,
+      "is_interactive": true,
+      "page": "sidebar",
+      "title": "Web · Library · a folder",
+      "w": 1440,
+      "x": 1520,
+      "y": 9240
+    },
+    "WebLibraryNewFolder.dc.html": {
+      "h": 900,
+      "is_interactive": true,
+      "page": "sidebar",
+      "title": "Web · Library · new folder, and a deck’s ⋯ menu",
+      "w": 1440,
+      "x": 3040,
+      "y": 9240
+    },
+    "WebReviewExplain.dc.html": {
+      "h": 900,
+      "is_interactive": true,
+      "page": "sidebar",
+      "title": "Web · Review · Explain (AI explains the answer)",
+      "w": 1440,
+      "x": 4560,
+      "y": 9240
+    },
+    "PhoneLibrary.dc.html": {
       "h": 844,
       "is_interactive": true,
-      "page": "quiz",
-      "title": "iPhone · Learn mode · idea: faint sunset (tap an answer)",
+      "page": "phone",
+      "title": "iPhone · Library",
       "w": 390,
-      "x": 1520,
-      "y": 2584
+      "x": 0,
+      "y": 5200
+    },
+    "PhoneLibraryCards.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "page": "phone",
+      "title": "iPhone · Library · all cards",
+      "w": 390,
+      "x": 470,
+      "y": 5200
+    },
+    "PhoneLibraryFolder.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "page": "phone",
+      "title": "iPhone · Library · a folder",
+      "w": 390,
+      "x": 940,
+      "y": 5200
+    },
+    "PhoneReviewExplain.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "page": "phone",
+      "title": "iPhone · Review · Explain (AI explains the answer)",
+      "w": 390,
+      "x": 1410,
+      "y": 5200
     }
   },
   "createdOnFiles": {
@@ -1087,7 +1141,7 @@
       "kind": "title1",
       "maxW": 5960,
       "page": "sidebar",
-      "text": "Home, decks, and editing",
+      "text": "Home, library, and editing",
       "w": 240,
       "x": 0,
       "y": -300
@@ -1299,14 +1353,23 @@
       "x": 0,
       "y": 1020
     },
-    "qIdeas": {
+    "aLibrary": {
       "kind": "title1",
-      "maxW": 1910,
-      "page": "quiz",
-      "text": "Learn mode · idea: faint sunset",
+      "maxW": 6000,
+      "page": "sidebar",
+      "text": "Library: folders, all cards, and AI explanations",
       "w": 240,
       "x": 0,
-      "y": 2284
+      "y": 8940
+    },
+    "pLibrary": {
+      "kind": "title1",
+      "maxW": 1800,
+      "page": "phone",
+      "text": "iPhone · Library and AI explanations",
+      "w": 240,
+      "x": 0,
+      "y": 4900
     }
   },
   "order": [
@@ -1425,8 +1488,14 @@
     "LiveResult.dc.html",
     "LiveResultWrong.dc.html",
     "LiveFinal.dc.html",
-    "WebQuizSunset.dc.html",
-    "PhoneQuizSunset.dc.html"
+    "WebLibraryCards.dc.html",
+    "WebLibraryFolder.dc.html",
+    "WebLibraryNewFolder.dc.html",
+    "WebReviewExplain.dc.html",
+    "PhoneLibrary.dc.html",
+    "PhoneLibraryCards.dc.html",
+    "PhoneLibraryFolder.dc.html",
+    "PhoneReviewExplain.dc.html"
   ],
   "pages": [
     {

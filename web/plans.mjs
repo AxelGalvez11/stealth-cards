@@ -9,3 +9,5 @@ export const PRO_LINKS = { monthly: 'https://buy.stripe.com/fZu7sMaaM2IN8SL7WW4F
 export const PORTAL = 'https://billing.stripe.com/p/login/fZu8wQ3Mo6Z3b0Tcdc4F200';
 // On Free, up to this many cards can have a picture or a sound. Pro has no limit.
 export const FREE_MEDIA = 100;
+// AI explanations of a card (ai.mjs): Free gets this many a day, Pro as many as it likes (up to a fair-use ceiling).
+export const FREE_EXPLAINS = 3, PRO_EXPLAINS = 200;

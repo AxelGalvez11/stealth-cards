@@ -110,6 +110,7 @@ export async function createDb({ onChange, go }) {
   const deckRow = d => {
     const st = deckStat(d);
     return { id: d.id, name: d.name, tags: d.tags, seed: d.cover.seed || d.name, style: d.cover.style, round: d.cover.round, image: d.cover.image, paused: d.paused,
+      folder: d.folder || null, bg: d.bg || { kind: 'deck', image: null },
       total: st.total, totalLabel: st.total.toLocaleString('en-US'), due: st.due, overdue: st.overdue, soon: st.soon, fresh: st.fresh, ret: st.ret, aiCount: st.aiCount,
       href: '/deck/' + d.id, studyHref: '/review/' + d.id, settingsHref: '/deck/' + d.id + '?settings=1', newCardHref: '/deck/' + d.id + '/card' };
   };
@@ -171,6 +172,13 @@ export async function createDb({ onChange, go }) {
     return { id: c.id, kind: c.kind, front: c.front || (c.kind === 'audio' ? 'What do you hear?' : ''), back: c.back, note: c.note, image: c.image, audio: c.audio, speak: c.speak, lang: c.lang || '',
       backLabel: c.back, backBig: c.back, backSub: c.note || '' };
   }
+  // AI explanations (Lucida's own AI, a few free a day on Free): asked for from a card once it's answered, and saved on
+  // the card, so it's written once. `on`: the server has AI set up, or this card already has one.
+  const explaining = {}, explainErr = {}, explainPro = {};
+  let aiLeftToday = null;
+  const explainOf = c => { if (!c) return { on: false }; const text = c.explain ? String(c.explain.text || '').replace(/\*\*/g, '') : '';
+    return { on: !!S.aiOn || !!text, text, busy: !!explaining[c.id], error: explainErr[c.id] || '', goPro: !!explainPro[c.id],
+      note: text && aiLeftToday != null ? (aiLeftToday === 1 ? '1 free explanation left today' : aiLeftToday + ' free explanations left today') : '' }; };
   // Deck lists and search use the words without the formatting.
   const flat = md => R.plain(md, { join: ' ', math: 'show' });
   const listFront = c => (c.kind === 'cloze' ? R.plain(c.text, { cloze: true, blank: '____', join: ' ', math: 'show' }) : flat(c.front) || (c.kind === 'audio' ? flat(c.speak) || 'Audio card' : 'Image card'));
@@ -215,6 +223,19 @@ export async function createDb({ onChange, go }) {
   const answerOf = c => (c.kind === 'cloze' ? R.blanks(c.text, { math: 'show' }).join(', ') : flat(c.back)).trim();
   const learnable = c => !c.pending && c.kind !== 'audio' && !!answerOf(c) && (c.kind === 'image' ? !!c.image : !!learnText(c));
   const isHard = c => (c.srs.lapses || 0) > 0 || c.srs.state === 'relearning' || (c.srs.state === 'review' && (c.srs.d || 0) >= 7);
+  // How hard a card is for you (the Library's filter): new (never studied), easy, medium, or hard (the "hard" Learn mode
+  // uses). Spaced repetition knows each card's difficulty; decks without it go by the card's last answer, and piles by
+  // which pile the card is in (the first pile is easy, the last is hard).
+  const lastAnswer = id => { if (!memo.last) { memo.last = {}; for (const l of S.logs) if (l.rating) memo.last[l.cardId] = l.rating; } return memo.last[id]; };
+  const difficulty = c => {
+    const d = deckById(c.deckId) || {};
+    if (d.grading === 'piles') { const P = (d.piles || []).map(p => p.name), i = P.indexOf(c.pile); return i < 0 ? 'new' : i === 0 ? 'easy' : i === P.length - 1 ? 'hard' : 'medium'; }
+    if (c.srs.state === 'new' && !c.srs.reps) return 'new';
+    if (isHard(c) || (c.srs.d || 0) >= 7) return 'hard';
+    if (c.srs.d) return c.srs.d <= 4 ? 'easy' : 'medium';
+    const r = lastAnswer(c.id);
+    return !r ? 'new' : r === 1 ? 'hard' : r === 2 ? 'medium' : 'easy';
+  };
   const shuffle = a => { const b = a.slice(); for (let i = b.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [b[i], b[j]] = [b[j], b[i]]; } return b; };
   const oneOf = a => a[Math.floor(Math.random() * a.length)];
   let learning = (() => { try { const x = JSON.parse(localStorage.getItem(LEARN_KEY) || 'null'); return x && x.v === 1 ? x : null; } catch { return null; } })();
@@ -239,13 +260,15 @@ export async function createDb({ onChange, go }) {
   // Which kind of question a card gets: a choice first; once it's right, typing it (or another kind of choice).
   function kindFor(s, c, play) {
     const on = k => learning.kinds.includes(k), fits = {
-      mc: distractors(c, 3).length >= 1, tf: distractors(c, 1).length >= 1, blank: c.kind === 'cloze' && distractors(c, 3).length >= 1,
+      mc: distractors(c, 3).length >= 1 || aiQuiz(c, 'choice').length > 0, tf: distractors(c, 1).length >= 1 || aiQuiz(c, 'true_false').length > 0, blank: c.kind === 'cloze' && distractors(c, 3).length >= 1,
       match: short(c) && play.filter(x => learning.st[x].streak === 0 && short(cardById(x))).length >= 4, type: answerOf(c).length <= 40 };
     const pickFrom = ks => ks.filter(k => on(k) && fits[k]);
     const choice = pickFrom(['mc', 'tf', 'blank', 'match']), recall = pickFrom(['type']);
     if (s.streak === 1) { const r = recall.length ? recall : choice.filter(k => k !== s.lastKind); if (r.length) return oneOf(r); }
     return oneOf(choice.length ? choice : recall.length ? recall : ['mc']);
   }
+  // Questions the learner's AI app wrote for a card (mcp.mjs add_quiz), of one kind.
+  const aiQuiz = (c, kind) => (c.quiz || []).filter(x => x.kind === kind);
   // Moves a card a few places later among the cards still to learn, so something else comes first.
   function later(cid, k) {
     const q = learning.queue; q.splice(q.indexOf(cid), 1);
@@ -263,6 +286,15 @@ export async function createDb({ onChange, go }) {
       return;
     }
     if (kind === 'type') { L.q = { type: 'type', kind, id: cid, typed: '', checked: false, ok: false }; return; }
+    // An AI-written question, when the card has one of this kind (most of the time; now and then the card's own words).
+    const ai = kind === 'tf' ? aiQuiz(c, 'true_false') : kind === 'mc' ? aiQuiz(c, 'choice') : [];
+    if (ai.length && (Math.random() < .8 || !distractors(c, 1).length)) {
+      const x = oneOf(ai);
+      if (kind === 'tf') { L.q = { type: 'choice', kind, id: cid, text: 'True or false?', claim: x.question, options: ['True', 'False'], right: x.answer === 'true' ? 0 : 1, pick: null, why: x.why, ai: true }; return; }
+      const options = shuffle([x.answer, ...x.wrong]);
+      L.q = { type: 'choice', kind, id: cid, text: x.question, options, right: options.indexOf(x.answer), pick: null, why: x.why, ai: true };
+      return;
+    }
     if (kind === 'tf') {
       const truth = Math.random() < .5, claim = truth ? answerOf(c) : distractors(c, 1)[0];
       L.q = { type: 'choice', kind, id: cid, claim, options: ['True', 'False'], right: truth ? 0 : 1, pick: null };
@@ -309,9 +341,10 @@ export async function createDb({ onChange, go }) {
     const q = L.q;
     if (q.type === 'match') return { ...base, type: 'match', kind: KIND_NAME.match, left: q.left.map(id => ({ id, label: learnText(cardById(id)) })), right: q.right.map(id => ({ id, label: answerOf(cardById(id)) })), matched: q.done, sel: q.sel, wrong: q.wrong, all: q.done.length === q.ids.length };
     const c = cardById(q.id), s = L.st[q.id];
-    const common = { ...base, id: q.id, text: learnText(c), image: c.kind === 'image' ? c.image : '', answer: answerOf(c), note: flat(c.note || ''), streak: s.streak, learnedNow: s.learned };
+    const common = { ...base, id: q.id, text: learnText(c), image: c.kind === 'image' ? c.image : '', answer: answerOf(c), note: flat(c.note || ''), streak: s.streak, learnedNow: s.learned, ex: explainOf(c) };
     if (q.type === 'type') return { ...common, type: 'type', kind: KIND_NAME.type, typed: q.typed, checked: q.checked, ok: q.ok };
-    return { ...common, type: 'choice', kind: KIND_NAME[q.kind], claim: q.claim || '', options: q.options, right: q.right, pick: q.pick };
+    return { ...common, text: q.text || common.text, cardText: common.text, type: 'choice', kind: KIND_NAME[q.kind], claim: q.claim || '', options: q.options, right: q.right, pick: q.pick,
+      why: q.why || '', aiAnswer: q.ai ? q.options[q.right] : '' };
   }
 
   const act = {
@@ -325,7 +358,15 @@ export async function createDb({ onChange, go }) {
       clearTimeout(typingTimer);
       typingTimer = setTimeout(() => { const all = typing; typing = {}; for (const [k, p] of Object.entries(all)) send('deck.update', { id: k, patch: p }); }, 400);
     },
-    deleteDeck: async id => { const d = deckById(id); if (!d || !confirm('Delete “' + d.name + '” and its ' + plural(cardsOf(id).length, 'card') + '? This can’t be undone.')) return; await send('deck.delete', { id }); go('/decks'); },
+    deleteDeck: async id => { const d = deckById(id); if (!d || !confirm('Delete “' + d.name + '” and its ' + plural(cardsOf(id).length, 'card') + '? This can’t be undone.')) return; await send('deck.delete', { id }); go('/library'); },
+    // Folders: make one (optionally putting a deck in it), rename one, or remove one (its decks go back to the library).
+    newFolder: async (name, deckId) => { const r = await send('folder.add', { name }); if (deckId) await send('deck.update', { id: deckId, patch: { folder: r.id } }); return r.id; },
+    renameFolder: (id, name) => send('folder.update', { id, patch: { name } }),
+    deleteFolder: async id => { const f = S.folders.find(x => x.id === id); if (!f || !confirm('Remove the folder “' + f.name + '”? Its decks stay in your library.')) return; await send('folder.delete', { id }); go('/library'); },
+    moveDeck: (id, folder) => send('deck.update', { id, patch: { folder: folder || null } }),
+    // What Learn mode, flashcards, and Live show behind a deck; a photo is uploaded here.
+    setBg: (id, kind) => send('deck.update', { id, patch: { bg: { kind } } }),
+    pickBg: async id => { const url = await act.pickFile('image'); if (url) await send('deck.update', { id, patch: { bg: { kind: 'photo', image: url } } }); },
     exportDeck: id => {
       const d = deckById(id), q = x => '"' + String(x ?? '').replace(/"/g, '""') + '"';
       const rows = [['front', 'back', 'kind', 'text', 'note', 'tags'].join(',')].concat(cardsOf(id).map(c => [c.front, c.back, c.kind, c.text, c.note, c.tags.join(' ')].map(q).join(',')));
@@ -414,6 +455,17 @@ export async function createDb({ onChange, go }) {
     exportAll: () => download('lucida.json', JSON.stringify({ decks: S.decks, cards: S.cards, logs: S.logs }, null, 1), 'application/json'),
     resetAll: async () => { if (!confirm('Delete every deck, card, and review' + (S.me ? '' : ' on this computer') + '? This can’t be undone.')) return; await send('data.reset'); session = null; go('/'); },
     signOut: async () => { await fetch('/api/auth/signout', { method: 'POST' }).catch(() => {}); toSignIn(); },
+    // Explain a card with AI; `question` is how Learn mode asked it, if it did.
+    explain: async (cardId, question) => {
+      const c = S.cards.find(x => x.id === cardId); if (!c || explaining[cardId]) return;
+      explaining[cardId] = true; explainErr[cardId] = ''; explainPro[cardId] = false; changed();
+      try {
+        const r = await fetch('/api/explain', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ cardId, question: question || '' }) }), j = await r.json().catch(() => ({}));
+        if (r.ok) { (c.group ? S.cards.filter(x => x.group === c.group) : [c]).forEach(x => { x.explain = { text: j.text, by: 'Lucida' }; }); aiLeftToday = j.free ? j.left : null; }
+        else { explainErr[cardId] = j.error || 'Something went wrong. Try again.'; explainPro[cardId] = !!j.pro; }
+      } catch { explainErr[cardId] = 'Couldn’t reach Lucida. Try again.'; }
+      explaining[cardId] = false; changed();
+    },
     // A new link for AI apps; the old one stops working (for a link that got out).
     newLink: () => send('ai.link'),
     go
@@ -433,12 +485,19 @@ export async function createDb({ onChange, go }) {
     plan: () => (S.me ? { ...(S.me.plan || { pro: false }), manage: S.me.manage || '' } : null),
     tags: () => [...new Set([...S.decks.flatMap(d => d.tags), ...S.cards.flatMap(c => c.tags)])],
     decks: () => S.decks.map(deckRow),
+    folders: () => S.folders.map(f => { const ds = S.decks.filter(d => d.folder === f.id).map(deckRow);
+      return { id: f.id, name: f.name, n: ds.length, due: ds.filter(d => !d.paused).reduce((n, d) => n + d.due, 0), decks: ds, href: '/library/folder/' + f.id }; }),
+    // Every card you've kept, with its deck and how hard it is (for the Library's All cards).
+    allCards: () => S.cards.filter(c => !c.pending).slice().reverse().map(c => { const d = deckById(c.deckId) || {};
+      return { id: c.id, kind: KIND[c.kind], icon: ICON[c.kind], front: listFront(c), back: listBack(c), tags: c.tags, next: nextLabel(c), level: difficulty(c),
+        deckId: d.id, deckName: d.name, seed: (d.cover && d.cover.seed) || d.name, style: d.cover && d.cover.style, round: d.cover && d.cover.round, folder: d.folder || null,
+        href: '/deck/' + d.id + '/card/' + c.id + '?from=library' }; }),
     searchDecks: q => S.decks.filter(d => d.name.toLowerCase().includes(q) || d.tags.some(g => g.toLowerCase().includes(q))
       || cardsOf(d.id).some(c => (words(c) + ' ' + c.tags.join(' ')).toLowerCase().includes(q))).map(d => d.id),
     deck: id => {
       const d = deckById(id) || S.decks[0];
       if (!d) return { id: '', name: '', tags: [], seed: '', cover: { style: 'mix', round: 0, image: null }, paused: false, grading: S.settings.grading, fsrs: true, goal: 90, gapIdx: 3, steps: ['1m', '10m'], perDay: 20,
-        total: 0, totalLabel: '0', due: 0, fresh: 0, ret: null, aiCount: 0, forecast: Array(7).fill(0), piles: [], href: '/decks', studyHref: '/review', settingsHref: '/decks', newCardHref: '/decks/new' };
+        total: 0, totalLabel: '0', due: 0, fresh: 0, ret: null, aiCount: 0, forecast: Array(7).fill(0), piles: [], folder: null, bg: { kind: 'deck', image: null }, href: '/library', studyHref: '/review', settingsHref: '/library', newCardHref: '/decks/new' };
       return { ...deckRow(d), cover: d.cover, grading: d.grading, fsrs: d.fsrs !== false, goal: d.goal, gapIdx: d.gapIdx ?? 3, steps: d.steps, perDay: d.perDay,
         forecast: forecast(7, [d]).vals, piles: (d.piles || []).map(p => ({ name: p.name, n: cardsOf(d.id).filter(c => c.pile === p.name).length })) };
     },
@@ -463,7 +522,7 @@ export async function createDb({ onChange, go }) {
       if (!cur) return { ...base, empty: true, card: null, queue: 'rev', iv: { again: '', hard: '', good: '', easy: '' }, fsrsOn: false, editHref: '' };
       const c = cur.card, t = now(), pv = scheduled(d) ? preview(c.srs, t, { goal: d.goal / 100, maxDays: GAPS[d.gapIdx ?? 3], steps: d.steps }) : null;
       autoplay(c);
-      return { ...base, empty: false, card: face(c), queue: cur.lane, fsrsOn: !!pv, editHref: '/deck/' + d.id + '/card/' + c.id + '?from=review',
+      return { ...base, empty: false, card: face(c), ex: explainOf(c), queue: cur.lane, fsrsOn: !!pv, editHref: '/deck/' + d.id + '/card/' + c.id + '?from=review',
         iv: pv ? { again: waitLabel(pv[1], t), hard: waitLabel(pv[2], t), good: waitLabel(pv[3], t), easy: waitLabel(pv[4], t) } : { again: '', hard: '', good: '', easy: '' } };
     },
     hasQueue: (id, pile) => queue(id, pile).length > 0,
@@ -487,7 +546,7 @@ export async function createDb({ onChange, go }) {
       return { pct: rated.length ? Math.round(rated.filter(x => x.rating > 1).length / rated.length * 100) : 100, goal: d ? d.goal : S.settings.goal,
         cards: g.length, minutes: session ? Math.max(1, Math.round((now() - session.started) / MIN)) : 0, fresh: g.filter(x => x.was === 'new').length, split,
         streak: streaks().streak, next: nx ? nx.short + ' · ' + nx.n : 'Nothing due',
-        moreHref: left ? reviewHref(session.deckId, session.pile) : d ? '/deck/' + d.id + '/card' : '/decks', moreLabel: left ? 'Keep going · ' + left + ' left' : 'Add cards',
+        moreHref: left ? reviewHref(session.deckId, session.pile) : d ? '/deck/' + d.id + '/card' : '/library', moreLabel: left ? 'Keep going · ' + left + ' left' : 'Add cards',
         // Each pile: how many cards went in this time, how many are in it now, and a link to go over it.
         sorted: piled.length, onlyPiles: piled.length > 0 && !rated.length,
         piles: names.map(name => ({ name, n: piled.filter(x => x.pile === name).length, total: (d ? cardsOf(d.id) : S.cards).filter(c => c.pile === name).length, href: reviewHref(session && session.deckId, name) })) };
@@ -509,7 +568,7 @@ export async function createDb({ onChange, go }) {
       return { url: location.origin + (S.me && S.ai.key ? '/mcp/' + S.ai.key : '/mcp'), perms: S.ai.perms, connected: names.length ? names.join(', ') : 'None yet',
         clients: { claude: has('Claude'), openai: has('ChatGPT'), cursor: has('Cursor'), mcp: names.some(n => !['Claude', 'ChatGPT', 'Cursor'].includes(n)) } };
     },
-    href: (kind, id) => ({ decks: '/decks', newDeck: '/decks/new', import: id ? '/deck/' + id + '/import' : '/decks/import', connect: '/connect', today: '/', done: '/review/done',
+    href: (kind, id) => ({ decks: '/library', library: '/library', cards: '/library/cards', newDeck: '/decks/new', import: id ? '/deck/' + id + '/import' : '/decks/import', connect: '/connect', today: '/', done: '/review/done',
       review: id ? '/review/' + id : '/review', deck: '/deck/' + id })[kind] || '/'
   };
 }

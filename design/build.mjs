@@ -134,6 +134,7 @@ const I = {
   flame: '<path d="M12 22c4 0 7-3 7-7 0-5-5-8-5-13-3 2-5 5-5 8-1-1-2-2-2-4-2 2-2 5-2 7 0 5 3 9 7 9z"/>',
   file: '<path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/>',
   arrowUp: '<path d="M12 19V5M6 11l6-6 6 6"/>',
+  folder: '<path d="M3 7.5A2.5 2.5 0 0 1 5.5 5h3.6l2 2.2h7.4A2.5 2.5 0 0 1 21 9.7v7.8a2.5 2.5 0 0 1-2.5 2.5h-13A2.5 2.5 0 0 1 3 17.5z"/>',
   // Where Lucida posts (the landing and legal footers).
   tiktok: '<path d="M15.5 3c.4 2.7 2.3 4.6 5 5"/><path d="M15.5 3v11.8a4.3 4.3 0 1 1-4.3-4.3"/>',
   youtube: '<rect x="2.5" y="5" width="19" height="14" rx="4.5"/><path d="M10 9.2v5.6l4.8-2.8z" fill="currentColor"/>',
@@ -148,7 +149,7 @@ const mark = h => `<svg width="${Math.round(h * 33 / 30.5)}" height="${h}" viewB
 const logo = (size = 28) => `<div style="display: flex; align-items: center; gap: 9px;">${mark(Math.round(size / 2))}<div style="font-size: 17px; font-weight: 600; letter-spacing: -.02em;">Lucida</div></div>`;
 
 // ---------- Structure A: web sidebar ----------
-const NAV_A = [['Today', 'today', 'Main.dc.html', '64'], ['Decks', 'decks', 'WebDecks.dc.html', ''], ['Stats', 'stats', 'WebStats.dc.html', ''], ['Connect AI', 'connect', 'WebConnect.dc.html', '']];
+const NAV_A = [['Today', 'today', 'Main.dc.html', '64'], ['Library', 'decks', 'WebDecks.dc.html', ''], ['Stats', 'stats', 'WebStats.dc.html', ''], ['Connect AI', 'connect', 'WebConnect.dc.html', '']];
 // Profile circle: a color by default (Settings can switch it to the Google photo).
 const AVATAR_BG = 'linear-gradient(135deg, #8C9AFC 0%, #4F60E6 100%)';
 const AVATAR = size => `<span style="width: ${size}px; height: ${size}px; flex-shrink: 0; border-radius: ${size / 2}px; background: ${AVATAR_BG}; color: #FFFFFF; display: flex; align-items: center; justify-content: center; font-size: ${Math.round(size * 0.42)}px; font-weight: 600;">A</span>`;
@@ -414,7 +415,7 @@ const tagSearch = (q, set, ph, h = 40) => `<label style="display: flex; align-it
 const tagRow = (o, { count = false, h = 38, line = false } = {}) => `<button type="button" onClick="{{${o}.pick}}" aria-pressed="{{${o}.pressed}}" style="height: ${h}px; flex-shrink: 0; padding: 0 ${line ? 4 : 12}px; display: flex; align-items: center; gap: 10px; border: 0; border-radius: ${line ? 0 : 12}px; ${line ? 'border-bottom: 1px solid {{t.line}}; ' : ''}background: transparent; color: {{t.text}}; font: inherit; font-size: ${h > 40 ? 16 : 14}px; text-align: left; cursor: pointer;"><span style="width: ${h > 40 ? 10 : 8}px; height: ${h > 40 ? 10 : 8}px; flex-shrink: 0; border-radius: 5px; background: {{${o}.dot}};"></span><span style="flex-grow: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{${o}.label}}</span>${count ? `<span style="font-family: ${MONO}; font-size: 12px; color: {{t.muted}};">{{${o}.count}}</span>` : ''}<sc-if value="{{${o}.on}}" hint-placeholder-val="{{ false }}"><span style="display: flex;">${svg(I.check, 15, 2.4)}</span></sc-if></button>`;
 const popBox = 'box-sizing: border-box; padding: 8px; border-radius: 22px; background: {{t.bg}}; color: {{t.text}}; box-shadow: 0 18px 48px rgba(0,0,0,.2), 0 0 0 1px {{t.line}}; display: flex; flex-direction: column; gap: 4px;';
 // Filter by tag: every tag, with how many decks (or cards) have it.
-const tagMenu = (m, pos) => `<sc-if value="{{${m}.open}}" hint-placeholder-val="{{ false }}"><div role="dialog" aria-label="Filter by tag" style="position: absolute; ${pos} z-index: 30; width: 300px; ${popBox}">${tagSearch(m + '.query', m + '.setQuery', 'Find a tag')}<div style="max-height: 304px; overflow-y: auto; scrollbar-width: thin; display: flex; flex-direction: column;"><sc-for list="{{${m}.rows}}" as="o" hint-placeholder-count="6">${tagRow('o', { count: true })}</sc-for><sc-if value="{{${m}.none}}" hint-placeholder-val="{{ false }}"><span style="padding: 10px 12px; font-size: 13px; color: {{t.muted}};">No tags match</span></sc-if></div></div></sc-if>`;
+const tagMenu = (m, pos, { label = 'Filter by tag', find = 'Find a tag', none = 'No tags match' } = {}) => `<sc-if value="{{${m}.open}}" hint-placeholder-val="{{ false }}"><div role="dialog" aria-label="${label}" style="position: absolute; ${pos} z-index: 30; width: 300px; ${popBox}">${tagSearch(m + '.query', m + '.setQuery', find)}<div style="max-height: 304px; overflow-y: auto; scrollbar-width: thin; display: flex; flex-direction: column;"><sc-for list="{{${m}.rows}}" as="o" hint-placeholder-count="6">${tagRow('o', { count: true })}</sc-for><sc-if value="{{${m}.none}}" hint-placeholder-val="{{ false }}"><span style="padding: 10px 12px; font-size: 13px; color: {{t.muted}};">${none}</span></sc-if></div></div></sc-if>`;
 const makeRow = (pk, h = 38) => `<sc-if value="{{${pk}.canMake}}" hint-placeholder-val="{{ false }}"><button type="button" onClick="{{${pk}.make}}" style="height: ${h}px; flex-shrink: 0; padding: 0 12px; display: flex; align-items: center; gap: 10px; border: 0; border-radius: 12px; background: {{t.surf}}; color: {{t.text}}; font: inherit; font-size: ${h > 40 ? 16 : 14}px; font-weight: 600; text-align: left; cursor: pointer;">${svg(I.plus, 13, 2.4)}{{${pk}.makeLabel}}</button></sc-if>`;
 // Tags on a deck or card: x removes one. Add tag opens the picker: a menu on web, its own sheet on iPhone.
 const TAG_EDIT = (list, pk, phone = false) => `<div style="${phone ? '' : 'position: relative; '}display: flex; flex-wrap: wrap; gap: 6px;"><sc-for list="{{${list}}}" as="g" hint-placeholder-count="2"><button type="button" onClick="{{g.remove}}" aria-label="Remove tag {{g.label}}" style="height: 32px; padding: 0 10px 0 12px; display: inline-flex; align-items: center; gap: 6px; border: 0; border-radius: 999px; background: {{g.bg}}; color: {{g.fg}}; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer;">{{g.label}}<span style="display: flex; opacity: .7;">${svg(I.close, 10, 2.4)}</span></button></sc-for><button type="button" onClick="{{${pk}.toggle}}" aria-expanded="{{${pk}.expanded}}" style="height: 32px; padding: 0 12px; display: inline-flex; align-items: center; gap: 6px; box-sizing: border-box; border: 1.5px dashed {{t.muted}}; border-radius: 999px; background: transparent; color: {{t.muted}}; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer;">${svg(I.plus, 12, 2.4)}Add tag</button>${phone
@@ -431,92 +432,237 @@ const deckTagsPop = pos => `<sc-if value="{{d.tagsOpen}}" hint-placeholder-val="
   <a href="{{d.settingsHref}}" style="align-self: flex-start; font-size: 13px; font-weight: 600; color: {{t.muted}};">Edit tags</a>
 </div></sc-if>`;
 const moreTag = (bg, h) => `<sc-if value="{{d.more.show}}" hint-placeholder-val="{{ false }}"><button type="button" onClick="{{d.toggleTags}}" aria-expanded="{{d.expanded}}" aria-label="Show all {{d.tagCount}}" style="height: ${h}px; padding: 0 10px; flex-shrink: 0; display: inline-flex; align-items: center; border: 0; border-radius: 999px; ${bg} font: inherit; font-size: 12px; font-weight: 600; white-space: nowrap; text-shadow: none; cursor: pointer;">{{d.more.label}}</button></sc-if>`;
-const LIST_COLS = 'display: grid; grid-template-columns: 44px minmax(0, 1.5fr) minmax(0, 1.3fr) 70px 80px 120px 110px; gap: 16px; align-items: center;';
-const webDecks = webRoot(`${sidebar('Decks')}
-<main style="flex-grow: 1; box-sizing: border-box; padding: 36px 48px; display: flex; flex-direction: column; gap: 22px; min-width: 0;">
+// A card's tag as a small chip; `k` names the row's tag slot (c1, c2).
+const cardTag = k => `<sc-if value="{{r.${k}.show}}" hint-placeholder-val="{{ true }}"><span style="height: 22px; padding: 0 9px; display: inline-flex; align-items: center; border-radius: 999px; background: {{r.${k}.bg}}; color: {{r.${k}.fg}}; font-size: 11px; font-weight: 600; white-space: nowrap;">{{r.${k}.label}}</span></sc-if>`;
+// Cards show up to two tags; with more, the first one and a +N (hover it to read the rest).
+const cardMore = `<sc-if value="{{r.cMore.show}}" hint-placeholder-val="{{ false }}"><span title="{{r.cMore.title}}" style="height: 22px; padding: 0 8px; flex-shrink: 0; display: inline-flex; align-items: center; border-radius: 999px; background: {{t.surf}}; color: {{t.muted}}; font-size: 11px; font-weight: 600; white-space: nowrap;">{{r.cMore.label}}</span></sc-if>`;
+const CARD_TAGS_JS = `const cardSlot = (tags, i) => (tags && tags[i] ? { show: true, ...tagChip(tags[i]) } : { show: false, label: '', bg: 'transparent', fg: t.text });
+  const cardFit = tags => { const fit = tagFit(tags, 2); return { c1: cardSlot(fit.vis, 0), c2: cardSlot(fit.vis, 1), cMore: { show: fit.more > 0, label: '+' + fit.more, title: (tags || []).slice(fit.vis.length).join(', ') } }; };`;
+// ---------- Library (was Decks) ----------
+// The owner (V96): "rename decks to library", folders for decks, and every card in one place to filter by tags and
+// difficulty. One board is the whole Library: your folders and decks, one folder's decks (prop `folder`), or all your
+// cards (prop `mode`). The app gives each its own address: /library, /library/folder/<id>, /library/cards.
+const LIST_COLS = 'display: grid; grid-template-columns: 44px minmax(0, 1.5fr) minmax(0, 1.3fr) 70px 80px 120px 150px; gap: 16px; align-items: center;';
+const CARD_COLS = 'display: grid; grid-template-columns: 36px minmax(0, 1.5fr) minmax(0, 1fr) minmax(0, .9fr) 170px 80px 96px; gap: 16px; align-items: center;';
+// Decks or All cards: two links, since each is its own page.
+const libModes = (h, fs = 13, grow = false) => `<div role="group" aria-label="Show" style="display: flex; gap: 2px; padding: 4px; border-radius: 999px; background: {{t.surf}};"><sc-for list="{{modes}}" as="m" hint-placeholder-count="2"><a href="{{m.href}}" aria-current="{{m.current}}" style="height: ${h}px; padding: 0 16px; ${grow ? 'flex: 1 1 0; ' : ''}display: inline-flex; align-items: center; justify-content: center; border-radius: 999px; background: {{m.bg}}; color: {{m.fg}}; box-shadow: {{m.sh}}; font-size: ${fs}px; font-weight: 600; white-space: nowrap;">{{m.label}}</a></sc-for></div>`;
+// A folder: its first decks' colors fanned like cards, its name, and how many decks and due cards are in it.
+const folderTile = (h, w, pad = '18px 20px') => `<a href="{{f.href}}" class="sc-lift" style="position: relative; height: ${h}px; box-sizing: border-box; padding: ${pad}; border-radius: 20px; background: {{t.surf}}; display: flex; flex-direction: column; justify-content: space-between; overflow: hidden;">
+  <span aria-hidden="true" style="position: relative; height: ${Math.round(w * .68) + 8}px;"><sc-for list="{{f.swatches}}" as="w" hint-placeholder-count="3"><span style="position: absolute; left: {{w.x}}; top: {{w.y}}; width: ${w}px; height: ${Math.round(w * .68)}px; border-radius: 12px; background: {{w.base}}; transform: rotate({{w.r}}); box-shadow: 0 8px 18px -8px rgba(0,0,0,.4), 0 0 0 2px {{t.surf}};"></span></sc-for><sc-if value="{{f.empty}}" hint-placeholder-val="{{ false }}"><span style="position: absolute; left: -2px; top: 2px; color: {{t.muted}};">${svg(I.folder, 44, 1.5)}</span></sc-if></span>
+  <span style="display: flex; flex-direction: column; gap: 3px; min-width: 0;"><span style="font-size: 17px; font-weight: 600; letter-spacing: -.01em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{f.name}}</span><span style="font-size: 13px; color: {{t.muted}};">{{f.line}}</span></span>
+</a>`;
+// Naming a folder (a new one, or this one): Enter saves, Escape or Cancel closes.
+const folderForm = (h = 36, fs = 15) => `<sc-if value="{{naming.show}}" hint-placeholder-val="{{ false }}"><div role="group" aria-label="{{naming.title}}" style="display: flex; align-items: center; gap: 8px; box-sizing: border-box; padding: 6px 6px 6px 18px; border-radius: 999px; background: {{t.surf}}; color: {{t.muted}};">${svg(I.folder, 18, 1.8)}<input value="{{naming.value}}" onChange="{{naming.set}}" onKeyDown="{{naming.key}}" placeholder="Folder name" aria-label="Folder name" style="flex-grow: 1; min-width: 0; height: ${h}px; border: 0; outline: 0; background: transparent; font: inherit; font-size: ${fs}px; color: {{t.text}};"><button type="button" onClick="{{naming.cancel}}" style="height: ${h}px; padding: 0 14px; border: 0; border-radius: 999px; background: transparent; color: {{t.muted}}; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer;">Cancel</button><button type="button" onClick="{{naming.save}}" style="height: ${h}px; padding: 0 18px; border: 0; border-radius: 999px; background: {{t.inv}}; color: {{t.invText}}; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer;">{{naming.action}}</button></div></sc-if>`;
+// A deck's folder menu: into a folder, out of one, or into a new one.
+const moveMenu = pos => `<sc-if value="{{d.moveOpen}}" hint-placeholder-val="{{ false }}"><div role="dialog" aria-label="Move {{d.name}}" style="position: absolute; ${pos} z-index: 25; width: 240px; ${popBox} text-shadow: none;"><span style="padding: 8px 12px 4px; font-size: 12px; font-weight: 600; color: {{t.muted}};">Move to</span><sc-for list="{{d.moveTo}}" as="o" hint-placeholder-count="3"><button type="button" onClick="{{o.pick}}" aria-pressed="{{o.pressed}}" style="height: 38px; flex-shrink: 0; padding: 0 12px; display: flex; align-items: center; gap: 10px; border: 0; border-radius: 12px; background: transparent; color: {{t.text}}; font: inherit; font-size: 14px; text-align: left; cursor: pointer;"><span style="display: flex; color: {{t.muted}};">${svg(I.folder, 16, 1.8)}</span><span style="flex-grow: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{o.label}}</span><sc-if value="{{o.on}}" hint-placeholder-val="{{ false }}"><span style="display: flex;">${svg(I.check, 14, 2.4)}</span></sc-if></button></sc-for><button type="button" onClick="{{d.newFolder}}" style="height: 38px; flex-shrink: 0; padding: 0 12px; display: flex; align-items: center; gap: 10px; border: 0; border-radius: 12px; background: {{t.surf}}; color: {{t.text}}; font: inherit; font-size: 14px; font-weight: 600; text-align: left; cursor: pointer;">${svg(I.plus, 13, 2.4)}New folder</button></div></sc-if>`;
+const moveBtn = (bg, size = 32) => `<button type="button" onClick="{{d.toggleMove}}" aria-label="Move {{d.name}} to a folder" aria-expanded="{{d.moveExpanded}}" style="width: ${size}px; height: ${size}px; flex-shrink: 0; border: 0; border-radius: ${size / 2}px; ${bg} display: flex; align-items: center; justify-content: center; cursor: pointer;">${svg(I.more, 16, 2)}</button>`;
+// All cards: how hard each one is, as a colored dot and word.
+const levelTag = `<span style="display: inline-flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 600; color: {{r.levelFg}};"><span style="width: 8px; height: 8px; border-radius: 4px; background: {{r.levelFg}};"></span>{{r.level}}</span>`;
+const levelSeg = (h, fs = 13, tight = false) => `<div role="group" aria-label="Difficulty" style="display: flex; gap: 2px; padding: 4px; border-radius: 999px; background: {{t.surf}}; max-width: 100%; overflow-x: auto; scrollbar-width: none;"><sc-for list="{{levels}}" as="l" hint-placeholder-count="5"><button type="button" onClick="{{l.pick}}" aria-pressed="{{l.pressed}}" style="height: ${h}px; ${tight ? 'flex: 1 1 auto; padding: 0 6px; justify-content: center; gap: 4px;' : 'flex-shrink: 0; padding: 0 12px; gap: 7px;'} display: inline-flex; align-items: center; border: 0; border-radius: 999px; background: {{l.bg}}; color: {{l.fg}}; box-shadow: {{l.sh}}; font: inherit; font-size: ${fs}px; font-weight: 600; white-space: nowrap; cursor: pointer;"><span style="width: {{l.dotW}}; height: 8px; border-radius: 4px; background: {{l.dot}};"></span>{{l.label}}<span style="font-family: ${MONO}; font-size: 11px; opacity: .6;">{{l.count}}</span></button></sc-for></div>`;
+// Picked tags, each with an x; and the menus to add a tag or pick a deck.
+const pickedTags = h => `<sc-for list="{{pickedTags}}" as="g" hint-placeholder-count="1"><button type="button" onClick="{{g.remove}}" aria-label="Stop filtering by {{g.label}}" style="height: ${h}px; flex-shrink: 0; padding: 0 10px 0 12px; display: inline-flex; align-items: center; gap: 6px; border: 0; border-radius: 999px; background: {{g.bg}}; color: {{g.fg}}; font: inherit; font-size: 13px; font-weight: 600; white-space: nowrap; cursor: pointer;">{{g.label}}<span style="display: flex; opacity: .7;">${svg(I.close, 10, 2.4)}</span></button></sc-for>`;
+const menuBtn = (m, label, h) => `<button type="button" onClick="{{${m}.toggle}}" aria-expanded="{{${m}.expanded}}" style="height: ${h}px; flex-shrink: 0; padding: 0 12px 0 14px; display: inline-flex; align-items: center; gap: 6px; border: 0; border-radius: 999px; background: {{t.surf}}; color: {{t.text}}; font: inherit; font-size: 13px; font-weight: 600; white-space: nowrap; cursor: pointer;">${label}${svg(I.chevDown, 14, 2)}</button>`;
+const webDecks = webRoot(`${sidebar('Library')}
+<main style="flex-grow: 1; box-sizing: border-box; padding: 36px 48px; display: flex; flex-direction: column; gap: 22px; min-width: 0; overflow-y: auto;">
+  <sc-if value="{{inFolder}}" hint-placeholder-val="{{ false }}"><a href="{{libraryHref}}" style="align-self: flex-start; margin-bottom: -12px; display: inline-flex; align-items: center; gap: 6px; font-size: 14px; color: {{t.muted}};">${svg(I.back, 16, 2)}Library</a></sc-if>
   <div style="display: flex; align-items: center; gap: 12px;">
-    <h1 style="margin: 0; font-size: 32px; font-weight: 600; letter-spacing: -.03em; flex-grow: 1;">Decks</h1>
-    <label style="display: flex; align-items: center; gap: 10px; width: 320px; height: 36px; padding: 0 16px; box-sizing: border-box; border-radius: 999px; background: {{t.surf}}; color: {{t.muted}};">${svg(I.search, 16)}<span style="position: absolute; left: -9999px;">Search all cards</span><input value="{{query}}" onChange="{{setQuery}}" placeholder="Search all cards" style="flex-grow: 1; border: 0; outline: 0; background: transparent; font: inherit; font-size: 14px; color: {{t.text}};"></label>
+    <h1 style="margin: 0; font-size: 32px; font-weight: 600; letter-spacing: -.03em; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{title}}</h1>
+    <sc-if value="{{atTop}}" hint-placeholder-val="{{ true }}"><span style="margin-left: 10px; display: flex;">${libModes(32)}</span></sc-if>
+    <span style="flex-grow: 1;"></span>
+    <label style="display: flex; align-items: center; gap: 10px; width: 280px; height: 36px; padding: 0 16px; box-sizing: border-box; border-radius: 999px; background: {{t.surf}}; color: {{t.muted}};">${svg(I.search, 16)}<span style="position: absolute; left: -9999px;">{{searchHint}}</span><input value="{{query}}" onChange="{{setQuery}}" placeholder="{{searchHint}}" style="flex-grow: 1; min-width: 0; border: 0; outline: 0; background: transparent; font: inherit; font-size: 14px; color: {{t.text}};"></label>
+    <sc-if value="{{inFolder}}" hint-placeholder-val="{{ false }}">${pill('Rename', { onClick: '{{renameFolder}}' })}${pill('Remove folder', { onClick: '{{removeFolder}}' })}</sc-if>
+    <sc-if value="{{deckView}}" hint-placeholder-val="{{ true }}"><sc-if value="{{atTop}}" hint-placeholder-val="{{ true }}">${pill('New folder', { icon: 'folder', onClick: '{{newFolder}}' })}</sc-if></sc-if>
     ${pill('New deck', { inv: true, icon: 'plus', href: 'WebNewDeck.dc.html' })}
   </div>
-  <div style="display: flex; align-items: center; gap: 16px;">
-    <div role="group" aria-label="Filter by tag" style="flex-grow: 1; display: flex; flex-wrap: wrap; gap: 8px;">
-      <sc-for list="{{tagFilters}}" as="g" hint-placeholder-count="6"><button type="button" onClick="{{g.pick}}" aria-pressed="{{g.pressed}}" style="height: 36px; padding: 0 14px; display: inline-flex; align-items: center; border: 0; border-radius: 999px; background: {{g.bg}}; color: {{g.fg}}; font: inherit; font-size: 13px; font-weight: 500; cursor: pointer;"><span style="width: {{g.dotW}}; height: 8px; margin-right: {{g.dotM}}; border-radius: 4px; background: {{g.dot}};"></span>{{g.label}}<span style="margin-left: 8px; font-family: ${MONO}; font-size: 11px; opacity: .6;">{{g.count}}</span></button></sc-for>
-      <sc-if value="{{moreMenu.show}}" hint-placeholder-val="{{ true }}"><div style="position: relative;"><button type="button" onClick="{{moreMenu.toggle}}" aria-expanded="{{moreMenu.expanded}}" style="height: 36px; padding: 0 12px 0 14px; display: inline-flex; align-items: center; gap: 6px; border: 0; border-radius: 999px; background: {{t.surf}}; color: {{t.text}}; font: inherit; font-size: 13px; font-weight: 500; cursor: pointer;">More${svg(I.chevDown, 14, 2)}</button>${tagMenu('moreMenu', 'left: 0; top: 44px;')}</div></sc-if>
+  ${folderForm()}
+  <sc-if value="{{deckView}}" hint-placeholder-val="{{ true }}">
+    <div style="display: flex; align-items: center; gap: 16px;">
+      <div role="group" aria-label="Filter by tag" style="flex-grow: 1; display: flex; flex-wrap: wrap; gap: 8px;">
+        <sc-for list="{{tagFilters}}" as="g" hint-placeholder-count="6"><button type="button" onClick="{{g.pick}}" aria-pressed="{{g.pressed}}" style="height: 36px; padding: 0 14px; display: inline-flex; align-items: center; border: 0; border-radius: 999px; background: {{g.bg}}; color: {{g.fg}}; font: inherit; font-size: 13px; font-weight: 500; cursor: pointer;"><span style="width: {{g.dotW}}; height: 8px; margin-right: {{g.dotM}}; border-radius: 4px; background: {{g.dot}};"></span>{{g.label}}<span style="margin-left: 8px; font-family: ${MONO}; font-size: 11px; opacity: .6;">{{g.count}}</span></button></sc-for>
+        <sc-if value="{{moreMenu.show}}" hint-placeholder-val="{{ true }}"><div style="position: relative;"><button type="button" onClick="{{moreMenu.toggle}}" aria-expanded="{{moreMenu.expanded}}" style="height: 36px; padding: 0 12px 0 14px; display: inline-flex; align-items: center; gap: 6px; border: 0; border-radius: 999px; background: {{t.surf}}; color: {{t.text}}; font: inherit; font-size: 13px; font-weight: 500; cursor: pointer;">More${svg(I.chevDown, 14, 2)}</button>${tagMenu('moreMenu', 'left: 0; top: 44px;')}</div></sc-if>
+      </div>
+      <div role="group" aria-label="View" style="display: flex; gap: 2px; padding: 4px; border-radius: 999px; background: {{t.surf}};">${viewBtn('vCards', 'showCards', 'Card view', 'grid')}${viewBtn('vList', 'showList', 'List view', 'list')}</div>
     </div>
-    <div role="group" aria-label="View" style="display: flex; gap: 2px; padding: 4px; border-radius: 999px; background: {{t.surf}};">${viewBtn('vCards', 'showCards', 'Card view', 'grid')}${viewBtn('vList', 'showList', 'List view', 'list')}</div>
-  </div>
-  <sc-if value="{{cardView}}" hint-placeholder-val="{{ true }}">
-    <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px;">
-      <sc-for list="{{decks}}" as="d" hint-placeholder-count="6"><div style="position: relative;">
-        ${meshCard('d', 'border-radius: 20px; height: 240px;', 'height: 100%; box-sizing: border-box; padding: 22px; display: flex; flex-direction: column; justify-content: space-between;', `
-          <div style="display: flex; flex-wrap: wrap; gap: 6px;">${glassTag('t1')}${glassTag('t2')}${glassTag('t3')}${moreTag('background: {{d.glass}}; box-shadow: inset 0 0 0 1px {{d.glassLine}}; color: inherit;', 26)}</div>
-          <div style="display: flex; align-items: flex-end; justify-content: space-between; gap: 12px;">
-            <a href="{{d.href}}" style="display: flex; flex-direction: column; gap: 4px; min-width: 0;">
-              <span style="font-size: 44px; font-weight: 500; letter-spacing: -.035em; line-height: 1;">{{d.due}}<span style="font-size: 15px; letter-spacing: 0; margin-left: 6px; opacity: .85;">due</span></span>
-              <span style="font-size: 19px; font-weight: 600; letter-spacing: -.015em; padding-top: 8px;">{{d.name}}</span>
-              <span style="font-size: 13px; opacity: .85;">{{d.line}}</span>
-            </a>
-            <a href="{{d.studyHref}}" style="flex-shrink: 0; height: 36px; padding: 0 18px; display: inline-flex; align-items: center; border-radius: 999px; background: #FFFFFF; color: #000000; font-size: 13px; font-weight: 600; text-shadow: none;">Study</a>
-          </div>`, 'div', ' class="sc-lift"')}
-        ${deckTagsPop('left: 12px; top: 58px;')}
-      </div></sc-for>
-    </div>
+    <sc-if value="{{showFolders}}" hint-placeholder-val="{{ true }}">
+      <div style="display: flex; flex-direction: column; gap: 12px;"><span style="font-size: 13px; font-weight: 600; color: {{t.muted}};">Folders</span><div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px;"><sc-for list="{{folders}}" as="f" hint-placeholder-count="2">${folderTile(150, 76)}</sc-for></div></div>
+      <span style="margin-bottom: -10px; font-size: 13px; font-weight: 600; color: {{t.muted}};">Decks</span>
+    </sc-if>
+    <sc-if value="{{cardView}}" hint-placeholder-val="{{ true }}">
+      <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px;">
+        <sc-for list="{{decks}}" as="d" hint-placeholder-count="6"><div style="position: relative;">
+          ${meshCard('d', 'border-radius: 20px; height: 240px;', 'height: 100%; box-sizing: border-box; padding: 22px; display: flex; flex-direction: column; justify-content: space-between;', `
+            <sc-if value="{{d.hasPhoto}}" hint-placeholder-val="{{ false }}"><img src="{{d.photo}}" alt="" style="position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover;"><span style="position: absolute; inset: 0; background: linear-gradient(180deg, rgba(0,0,0,.18) 0%, rgba(0,0,0,0) 35%, rgba(0,0,0,.55) 100%);"></span></sc-if>
+            <div style="position: relative; display: flex; flex-wrap: wrap; gap: 6px; padding-right: 40px;">${glassTag('t1')}${glassTag('t2')}${glassTag('t3')}${moreTag('background: {{d.glass}}; box-shadow: inset 0 0 0 1px {{d.glassLine}}; color: inherit;', 26)}</div>
+            <div style="position: relative; display: flex; align-items: flex-end; justify-content: space-between; gap: 12px;">
+              <a href="{{d.href}}" style="display: flex; flex-direction: column; gap: 4px; min-width: 0;">
+                <span style="font-size: 44px; font-weight: 500; letter-spacing: -.035em; line-height: 1;">{{d.due}}<span style="font-size: 15px; letter-spacing: 0; margin-left: 6px; opacity: .85;">due</span></span>
+                <span style="font-size: 19px; font-weight: 600; letter-spacing: -.015em; padding-top: 8px;">{{d.name}}</span>
+                <span style="font-size: 13px; opacity: .85;">{{d.line}}</span>
+              </a>
+              <a href="{{d.studyHref}}" style="flex-shrink: 0; height: 36px; padding: 0 18px; display: inline-flex; align-items: center; border-radius: 999px; background: #FFFFFF; color: #000000; font-size: 13px; font-weight: 600; text-shadow: none;">Study</a>
+            </div>`, 'div', ' class="sc-lift"')}
+          <span style="position: absolute; top: 16px; right: 16px; z-index: 2; color: {{d.ink}};">${moveBtn('background: {{d.glass}}; box-shadow: inset 0 0 0 1px {{d.glassLine}}; color: inherit;')}</span>
+          ${moveMenu('right: 12px; top: 56px;')}
+          ${deckTagsPop('left: 12px; top: 58px;')}
+        </div></sc-for>
+      </div>
+    </sc-if>
+    <sc-if value="{{listView}}" hint-placeholder-val="{{ false }}">
+      <div style="display: flex; flex-direction: column;">
+        <div style="${LIST_COLS} height: 36px; font-size: 12px; font-weight: 600; letter-spacing: .05em; text-transform: uppercase; color: {{t.muted}}; border-bottom: 1px solid {{t.line}};"><span></span><span>Deck</span><span>Tags</span><span style="text-align: right;">Due</span><span style="text-align: right;">Cards</span><span style="text-align: right;">Remembered</span><span></span></div>
+        <sc-for list="{{decks}}" as="d" hint-placeholder-count="6">
+          <div style="${LIST_COLS} position: relative; height: 64px; border-bottom: 1px solid {{t.line}}; font-size: 14px;">
+            <span style="width: 36px; height: 36px; border-radius: 12px; background: {{d.base}}; overflow: hidden;"><sc-if value="{{d.hasPhoto}}" hint-placeholder-val="{{ false }}"><img src="{{d.photo}}" alt="" style="width: 100%; height: 100%; object-fit: cover;"></sc-if></span>
+            <a href="{{d.href}}" style="font-size: 15px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{d.name}}</a>
+            <span style="position: relative; min-width: 0;"><span style="display: flex; gap: 6px; min-width: 0; overflow: hidden;">${tagSlot('t1')}${tagSlot('t2')}${tagSlot('t3')}${moreTag('background: {{t.surf}}; color: {{t.muted}};', 24)}</span>${deckTagsPop('left: -12px; top: 34px;')}</span>
+            <span style="text-align: right; font-family: ${MONO}; font-size: 15px; color: {{d.dueColor}};">{{d.due}}</span>
+            <span style="text-align: right; font-family: ${MONO}; font-size: 14px; color: {{t.muted}};">{{d.total}}</span>
+            <span style="text-align: right; font-family: ${MONO}; font-size: 14px; font-weight: 600; color: {{d.retColor}};">{{d.ret}}</span>
+            <span style="display: flex; align-items: center; justify-content: flex-end; gap: 8px;"><sc-if value="{{d.hasDue}}" hint-placeholder-val="{{ true }}">${pill('Study', { href: '{{d.studyHref}}', h: 36 })}</sc-if><sc-if value="{{d.noDue}}" hint-placeholder-val="{{ false }}"><span style="font-size: 13px; color: {{t.muted}};">Up to date</span></sc-if>${moveBtn('background: {{t.surf}}; color: {{t.text}};', 36)}</span>
+            ${moveMenu('right: 0; top: 56px;')}
+          </div>
+        </sc-for>
+      </div>
+    </sc-if>
+    <sc-if value="{{noDecks}}" hint-placeholder-val="{{ false }}"><div style="padding: 48px 24px; border-radius: 20px; background: {{t.surf}}; text-align: center; font-size: 15px; color: {{t.muted}};">{{noDecksLine}}</div></sc-if>
   </sc-if>
-  <sc-if value="{{listView}}" hint-placeholder-val="{{ false }}">
+  <sc-if value="{{cardsView}}" hint-placeholder-val="{{ false }}">
+    <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+      ${levelSeg(32)}
+      <div style="position: relative;">${menuBtn('tagPick', 'Tags', 40)}${tagMenu('tagPick', 'left: 0; top: 48px;')}</div>
+      ${pickedTags(32)}
+      <div style="position: relative;">${menuBtn('deckPick', '{{deckPick.label}}', 40)}${tagMenu('deckPick', 'left: 0; top: 48px;', { label: 'Filter by deck', find: 'Find a deck or folder', none: 'No decks match' })}</div>
+      <span style="flex-grow: 1;"></span>
+      <span style="font-size: 13px; color: {{t.muted}};">{{cardCount}}</span>
+    </div>
     <div style="display: flex; flex-direction: column;">
-      <div style="${LIST_COLS} height: 36px; font-size: 12px; font-weight: 600; letter-spacing: .05em; text-transform: uppercase; color: {{t.muted}}; border-bottom: 1px solid {{t.line}};"><span></span><span>Deck</span><span>Tags</span><span style="text-align: right;">Due</span><span style="text-align: right;">Cards</span><span style="text-align: right;">Remembered</span><span></span></div>
-      <sc-for list="{{decks}}" as="d" hint-placeholder-count="6">
-        <div style="${LIST_COLS} height: 64px; border-bottom: 1px solid {{t.line}}; font-size: 14px;">
-          <span style="width: 36px; height: 36px; border-radius: 12px; background: {{d.base}};"></span>
-          <a href="{{d.href}}" style="font-size: 15px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{d.name}}</a>
-          <span style="position: relative; min-width: 0;"><span style="display: flex; gap: 6px; min-width: 0; overflow: hidden;">${tagSlot('t1')}${tagSlot('t2')}${tagSlot('t3')}${moreTag('background: {{t.surf}}; color: {{t.muted}};', 24)}</span>${deckTagsPop('left: -12px; top: 34px;')}</span>
-          <span style="text-align: right; font-family: ${MONO}; font-size: 15px; color: {{d.dueColor}};">{{d.due}}</span>
-          <span style="text-align: right; font-family: ${MONO}; font-size: 14px; color: {{t.muted}};">{{d.total}}</span>
-          <span style="text-align: right; font-family: ${MONO}; font-size: 14px; font-weight: 600; color: {{d.retColor}};">{{d.ret}}</span>
-          <span style="display: flex; justify-content: flex-end;"><sc-if value="{{d.hasDue}}" hint-placeholder-val="{{ true }}">${pill('Study', { href: '{{d.studyHref}}', h: 36 })}</sc-if><sc-if value="{{d.noDue}}" hint-placeholder-val="{{ false }}"><span style="font-size: 13px; color: {{t.muted}};">Up to date</span></sc-if></span>
-        </div>
+      <div style="${CARD_COLS} height: 36px; font-size: 12px; font-weight: 600; letter-spacing: .05em; text-transform: uppercase; color: {{t.muted}}; border-bottom: 1px solid {{t.line}};"><span></span><span>Card</span><span>Answer</span><span>Deck</span><span>Tags</span><span>Difficulty</span><span style="text-align: right;">Next</span></div>
+      <sc-for list="{{rows}}" as="r" hint-placeholder-count="8">
+        <a href="{{r.href}}" style="${CARD_COLS} height: 60px; border-bottom: 1px solid {{t.line}}; font-size: 14px;">
+          <span style="width: 32px; height: 32px; border-radius: 16px; background: {{t.surf}}; display: flex; align-items: center; justify-content: center; font-size: 13px;">{{r.glyph}}</span>
+          <span style="min-width: 0; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{r.front}}</span>
+          <span style="min-width: 0; color: {{t.muted}}; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{r.back}}</span>
+          <span style="min-width: 0; display: flex; align-items: center; gap: 8px;"><span style="width: 14px; height: 14px; flex-shrink: 0; border-radius: 5px; background: {{r.swatch}};"></span><span style="font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{r.deckName}}</span></span>
+          <span style="display: flex; gap: 6px; min-width: 0; overflow: hidden;">${cardTag('c1')}${cardTag('c2')}${cardMore}</span>
+          ${levelTag}
+          <span style="font-size: 13px; text-align: right;">{{r.next}}</span>
+        </a>
       </sc-for>
     </div>
+    <sc-if value="{{hasMore}}" hint-placeholder-val="{{ false }}"><button type="button" onClick="{{showMore}}" style="align-self: center; height: 40px; padding: 0 20px; border: 0; border-radius: 999px; background: {{t.surf}}; color: {{t.text}}; font: inherit; font-size: 14px; font-weight: 600; cursor: pointer;">{{moreLabel}}</button></sc-if>
+    <sc-if value="{{noCards}}" hint-placeholder-val="{{ false }}"><div style="padding: 48px 24px; border-radius: 20px; background: {{t.surf}}; text-align: center; font-size: 15px; color: {{t.muted}};">No cards match. Try fewer filters.</div></sc-if>
   </sc-if>
 </main>`);
-const decksLogic = `
-constructor(props) { super(props); this.state = { tag: 'All', view: props.view === 'List' ? 'list' : 'cards', openDeck: props.openTags ? 'cell' : null, moreOpen: !!props.moreTags, moreQ: '', q: '' }; }
+// The Library's logic, for the web and iPhone boards.
+const libraryLogic = phone => `
+constructor(props) { super(props); this.state = { tag: 'All', view: props.view === 'List' ? 'list' : 'cards', openDeck: props.openTags ? 'cell' : null, moreOpen: !!props.moreTags, moreQ: '', q: '',
+  level: 'all', cardTags: [], deck: '', tagPickOpen: false, tagPickQ: '', deckPickOpen: false, deckPickQ: '', shown: 60, naming: props.naming ? 'new' : null, name: '', moveDeck: props.moveOpen ? 'cell' : null, moveAfter: null }; }
 renderVals() {
   ${T}${DB_JS}
   ${TAG_JS}
-  const s = this.state, tag = s.tag, view = s.view;
-  const all = db.decks(), q = (s.q || '').trim().toLowerCase(), hits = q ? db.searchDecks(q) : null;
+  ${CARD_TAGS_JS}
+  const p = this.props, s = this.state, tag = s.tag, view = s.view, act = db.act;
+  const board = n => '${phone ? 'Phone' : 'Web'}' + n + '.dc.html';
+  const folders = db.folders(), folder = p.folder ? folders.find(f => f.id === p.folder) || null : null;
+  const cards = p.mode === 'cards' && !folder, atTop = !folder;
+  const all = db.decks(), q = (s.q || '').trim().toLowerCase();
   const seg = on => ({ pressed: on ? 'true' : 'false', bg: on ? t.bg : 'transparent', fg: on ? t.text : t.muted, sh: on ? '0 1px 3px rgba(0,0,0,.14)' : 'none' });
-  // Filter row: your five most-used tags. Every other tag is under More.
-  const uses = {}; all.forEach(d => d.tags.forEach(g => { uses[g] = (uses[g] || 0) + 1; }));
+  const grad = d => this.gen(d.seed + (d.round ? ' #' + d.round : ''), d.style);
+  // Naming a folder: a new one (maybe for a deck that asked to move into it), or renaming this one.
+  const naming = s.naming, closeNaming = () => this.setState({ naming: null, name: '', moveAfter: null });
+  const saveName = async () => {
+    const name = (s.name || '').trim(); if (!name) return;
+    if (naming === 'rename' && folder) act.renameFolder(folder.id, name); else await act.newFolder(name, s.moveAfter);
+    closeNaming();
+  };
+  // Decks: in a folder, its decks. At the top, folders and the decks in none, unless a tag or search looks everywhere.
+  const hits = q && !cards ? db.searchDecks(q) : null, looking = tag !== 'All' || !!hits;
+  const scope = folder ? all.filter(d => d.folder === folder.id) : looking || !folders.length ? all : all.filter(d => !d.folder);
+  const uses = {}; (folder ? scope : all).forEach(d => d.tags.forEach(g => { uses[g] = (uses[g] || 0) + 1; }));
   const byUse = Object.keys(uses).sort((a, b) => uses[b] - uses[a]);
-  const top = byUse.slice(0, 5), shownTags = tag === 'All' || top.includes(tag) ? top : [...top, tag];
+  const top = byUse.slice(0, ${phone ? 3 : 5}), shownTags = tag === 'All' || top.includes(tag) ? top : [...top, tag];
   const pickTag = g => this.setState({ tag: g, openDeck: null, moreOpen: false, moreQ: '' });
   const mq = (s.moreQ || '').trim().toLowerCase(), found = byUse.filter(g => !mq || g.toLowerCase().includes(mq));
-  const decks = all.filter(d => (tag === 'All' || d.tags.includes(tag)) && (!hits || hits.includes(d.id))).map(d => {
-    const tg = d.tags, fit = tagFit(tg, 3), open = s.openDeck === d.id;
+  const decks = scope.filter(d => (tag === 'All' || d.tags.includes(tag)) && (!hits || hits.includes(d.id))).map(d => {
+    const tg = d.tags, fit = tagFit(tg, 3), open = s.openDeck === d.id, moving = s.moveDeck === d.id, photo = d.image && d.image !== 'mock' ? d.image : '';
     const slot = i => (fit.vis[i] ? { show: true, ...tagChip(fit.vis[i]) } : { show: false, label: '', bg: 'transparent', fg: t.text });
-    return { ...d, ...this.gen(d.seed + (d.round ? ' #' + d.round : ''), d.style), t1: slot(0), t2: slot(1), t3: slot(2),
+    const move = f => () => { act.moveDeck(d.id, f); this.setState({ moveDeck: null }); };
+    // A photo cover takes white words on a dark wash, whatever the gradient would have used.
+    const onPhoto = photo ? { ink: '#FFFFFF', glass: 'rgba(0,0,0,.28)', glassLine: 'rgba(255,255,255,.35)', shadow: '0 1px 12px rgba(0,0,0,.35)' } : {};
+    return { ...d, ...grad(d), ...onPhoto, t1: slot(0), t2: slot(1), t3: slot(2), hasPhoto: !!photo, photo,
+      href: db.mock ? board('Deck') : d.href, studyHref: db.mock ? board('Review') : d.studyHref,
       more: { show: fit.more > 0, label: '+' + fit.more }, tagCount: tg.length + (tg.length === 1 ? ' tag' : ' tags'), tagsOpen: open, expanded: open ? 'true' : 'false',
-      toggleTags: () => this.setState({ openDeck: open ? null : d.id, moreOpen: false }),
+      toggleTags: () => this.setState({ openDeck: open ? null : d.id, moreOpen: false, moveDeck: null }),
       allTags: tg.map(g => ({ ...tagChip(g), pick: () => pickTag(g) })),
+      moveOpen: moving, moveExpanded: moving ? 'true' : 'false', toggleMove: () => this.setState({ moveDeck: moving ? null : d.id, openDeck: null }),
+      moveTo: [{ id: null, name: 'No folder' }, ...folders].map(f => ({ label: f.name, on: (d.folder || null) === f.id, pressed: (d.folder || null) === f.id ? 'true' : 'false', pick: move(f.id) })),
+      newFolder: () => this.setState({ moveDeck: null, naming: 'new', name: '', moveAfter: d.id }),
       total: d.totalLabel, ret: d.ret == null ? '—' : d.ret + '%', line: d.totalLabel + ' cards · ' + d.fresh + ' new' + (d.ret == null ? '' : ' · ' + d.ret + '%'),
-      hasDue: d.due > 0, noDue: d.due === 0, dueColor: d.due ? t.text : t.muted,
+      hasDue: d.due > 0, noDue: d.due === 0, dueColor: d.due ? t.text : t.muted, dueLabel: d.due ? String(d.due) : '—',
       retColor: d.ret == null ? t.muted : d.ret >= 90 ? t.good : d.ret >= 85 ? t.hard : t.again };
   });
+  // Folders, each with its first decks' colors fanned out.
+  const fanned = [['0px', '8px', '-8deg'], ['22px', '4px', '0deg'], ['44px', '0px', '8deg']];
+  const folderRows = folders.map(f => ({ ...f, href: db.mock ? board('LibraryFolder') : f.href, empty: !f.decks.length,
+    line: f.n + (f.n === 1 ? ' deck' : ' decks') + (f.due ? ' · ' + f.due + ' due' : ''),
+    swatches: f.decks.slice(0, 3).map((d, i) => ({ base: grad(d).base, x: fanned[i][0], y: fanned[i][1], r: fanned[i][2] })) }));
+  // All cards, filtered by how hard, by tags (every picked one), by deck or folder, and by the search.
+  const LV = { new: ['New', t.easy], easy: ['Easy', t.good], medium: ['Medium', t.hard], hard: ['Hard', t.again] };
+  const every = cards ? db.allCards() : [];
+  const picked = s.cardTags || [], pick = s.deck || '';
+  const inPick = c => !pick || (pick.startsWith('f:') ? c.folder === pick.slice(2) : c.deckId === pick);
+  const base = every.filter(c => inPick(c) && picked.every(g => c.tags.includes(g)) && (!q || [c.front, c.back, c.deckName, ...c.tags].join(' ').toLowerCase().includes(q)));
+  const count = k => base.filter(c => k === 'all' || c.level === k).length;
+  const matched = base.filter(c => s.level === 'all' || c.level === s.level);
+  const glyphs = { text: 'Aa', blank: '_', image: '▢', audio: '♪' };
+  const rows = matched.slice(0, s.shown).map(c => ({ ...c, glyph: glyphs[c.icon], level: LV[c.level][0], levelFg: LV[c.level][1], swatch: grad(c).base,
+    href: db.mock ? board('Editor') : c.href, ...cardFit(c.tags) }));
+  const cardUses = {}; every.forEach(c => c.tags.forEach(g => { cardUses[g] = (cardUses[g] || 0) + 1; }));
+  const tq = (s.tagPickQ || '').trim().toLowerCase(), cardTagNames = Object.keys(cardUses).sort((a, b) => cardUses[b] - cardUses[a] || a.localeCompare(b)).filter(g => !tq || g.toLowerCase().includes(tq));
+  const dq = (s.deckPickQ || '').trim().toLowerCase();
+  const allOptions = [{ id: '', label: 'All decks', dot: t.muted }, ...folders.map(f => ({ id: 'f:' + f.id, label: f.name, dot: t.text })), ...all.map(d => ({ id: d.id, label: d.name, dot: grad(d).base }))];
+  const deckOptions = allOptions.filter(o => !dq || o.label.toLowerCase().includes(dq)), pickedName = (allOptions.find(o => o.id === pick) || allOptions[0]).label;
+  const title = folder ? folder.name : 'Library';
   return {
-    t, ...chrome, grain: String(this.props.grain ?? 0.7), decks, query: s.q || '', setQuery: e => this.setState({ q: e && e.target ? e.target.value : '' }),
-    tagFilters: ['All', ...shownTags].map(n => { const on = n === tag, isAll = n === 'All'; return { label: isAll ? 'All decks' : n, dot: isAll ? 'transparent' : tagCol(n), dotW: isAll ? '0px' : '8px', dotM: isAll ? '0px' : '8px',
-      count: String(isAll ? all.length : uses[n] || 0), pressed: on ? 'true' : 'false', bg: on ? t.inv : t.surf, fg: on ? t.invText : t.text, pick: () => pickTag(n) }; }),
+    t, ...chrome, grain: String(this.props.grain ?? 0.7), decks, title, atTop, inFolder: !!folder, libraryHref: db.mock ? board('Decks') : '/library',
+    query: s.q || '', setQuery: e => this.setState({ q: e && e.target ? e.target.value : '', shown: 60 }), searchHint: cards ? 'Search all cards' : folder ? 'Search this folder' : 'Search decks and cards',
+    modes: [['Decks', !cards, db.mock ? board('Decks') : '/library'], ['All cards', cards, db.mock ? board('LibraryCards') : '/library/cards']]
+      .map(([label, on, href]) => ({ label, href, current: on ? 'page' : 'false', ...seg(on) })),
+    deckView: !cards, cardsView: cards,
+    folders: folderRows, showFolders: atTop && !cards && !looking && folders.length > 0,
+    noDecks: !cards && decks.length === 0, noDecksLine: folder ? 'No decks in this folder yet. Use a deck’s ⋯ button to move it here.' : 'No decks match.',
+    newFolder: () => this.setState({ naming: 'new', name: '', moveAfter: null }),
+    renameFolder: () => this.setState({ naming: 'rename', name: folder ? folder.name : '' }),
+    removeFolder: () => folder && act.deleteFolder(folder.id),
+    naming: { show: !!naming, title: naming === 'rename' ? 'Rename folder' : 'New folder', action: naming === 'rename' ? 'Save' : 'Create', value: s.name || '',
+      set: e => this.setState({ name: e && e.target ? e.target.value : '' }), save: saveName, cancel: closeNaming,
+      key: e => { if (e.key === 'Enter') { e.preventDefault(); saveName(); } if (e.key === 'Escape') closeNaming(); } },
+    tagFilters: ['All', ...shownTags].map(n => { const on = n === tag, isAll = n === 'All'; return { label: isAll ? (folder ? 'All' : 'All decks') : n, dot: isAll ? 'transparent' : tagCol(n), dotW: isAll ? '0px' : '8px', dotM: isAll ? '0px' : '8px',
+      count: String(isAll ? (folder ? scope.length : all.length) : uses[n] || 0), pressed: on ? 'true' : 'false', bg: on ? t.inv : t.surf, fg: on ? t.invText : t.text, pick: () => pickTag(n) }; }),
     moreMenu: { show: byUse.length > top.length, open: !!s.moreOpen, expanded: s.moreOpen ? 'true' : 'false', query: s.moreQ || '',
       toggle: () => this.setState({ moreOpen: !s.moreOpen, moreQ: '', openDeck: null }), setQuery: e => this.setState({ moreQ: e && e.target ? e.target.value : '' }),
       rows: found.map(g => ({ ...tagChip(g), count: String(uses[g]), on: g === tag, pressed: g === tag ? 'true' : 'false', pick: () => pickTag(g === tag ? 'All' : g) })), none: found.length === 0 },
     cardView: view === 'cards', listView: view === 'list',
     vCards: seg(view === 'cards'), vList: seg(view === 'list'),
-    showCards: () => this.setState({ view: 'cards' }), showList: () => this.setState({ view: 'list' })
+    showCards: () => this.setState({ view: 'cards' }), showList: () => this.setState({ view: 'list' }),
+    levels: ['all', 'new', 'easy', 'medium', 'hard'].map(k => { const on = s.level === k; return { label: k === 'all' ? 'All' : LV[k][0], count: String(count(k)), dot: k === 'all' ? 'transparent' : LV[k][1], dotW: k === 'all' ? '0px' : '8px',
+      pick: () => this.setState({ level: k, shown: 60 }), ...seg(on) }; }),
+    tagPick: { open: !!s.tagPickOpen, expanded: s.tagPickOpen ? 'true' : 'false', query: s.tagPickQ || '', toggle: () => this.setState({ tagPickOpen: !s.tagPickOpen, tagPickQ: '', deckPickOpen: false }),
+      setQuery: e => this.setState({ tagPickQ: e && e.target ? e.target.value : '' }), none: cardTagNames.length === 0,
+      rows: cardTagNames.map(g => ({ ...tagChip(g), count: String(cardUses[g]), on: picked.includes(g), pressed: picked.includes(g) ? 'true' : 'false',
+        pick: () => this.setState({ cardTags: picked.includes(g) ? picked.filter(x => x !== g) : [...picked, g], shown: 60 }) })) },
+    pickedTags: picked.map(g => ({ ...tagChip(g), remove: () => this.setState({ cardTags: picked.filter(x => x !== g), shown: 60 }) })),
+    deckPick: { label: pickedName, open: !!s.deckPickOpen, expanded: s.deckPickOpen ? 'true' : 'false', query: s.deckPickQ || '', toggle: () => this.setState({ deckPickOpen: !s.deckPickOpen, deckPickQ: '', tagPickOpen: false }),
+      setQuery: e => this.setState({ deckPickQ: e && e.target ? e.target.value : '' }), none: deckOptions.length === 0,
+      rows: deckOptions.map(o => ({ label: o.label, dot: o.dot, count: '', on: o.id === pick, pressed: o.id === pick ? 'true' : 'false', pick: () => this.setState({ deck: o.id, deckPickOpen: false, shown: 60 }) })) },
+    rows, cardCount: matched.length.toLocaleString('en-US') + (matched.length === 1 ? ' card' : ' cards'), noCards: cards && matched.length === 0,
+    hasMore: matched.length > s.shown, moreLabel: 'Show ' + Math.min(${phone ? 40 : 60}, matched.length - s.shown) + ' more', showMore: () => this.setState({ shown: s.shown + ${phone ? 40 : 60} })
   };
 }`;
+const decksLogic = libraryLogic(false);
+// Which Library page a board shows (the app sets these from the address).
+const LIB_MODE = { editor: 'enum', default: 'decks', options: ['decks', 'cards'] }, LIB_FOLDER = { editor: 'string', default: '' };
+
 
 // Deck page
 const CARD_ROWS = `[
@@ -527,18 +673,42 @@ const CARD_ROWS = `[
   { front: 'Say it: ribosome', back: 'RY-buh-sohm', kind: 'Audio', icon: 'audio', next: 'Due now', ai: 'ChatGPT', tags: ['Pronunciation'] },
   { front: 'What is the role of the ribosome?', back: 'Translates mRNA into protein', kind: 'Basic', icon: 'text', next: 'In 12 days', ai: '', tags: ['Proteins', 'Exam 2'] }
 ]`;
-// A card's tag as a small chip; `k` names the row's tag slot (c1, c2).
-const cardTag = k => `<sc-if value="{{r.${k}.show}}" hint-placeholder-val="{{ true }}"><span style="height: 22px; padding: 0 9px; display: inline-flex; align-items: center; border-radius: 999px; background: {{r.${k}.bg}}; color: {{r.${k}.fg}}; font-size: 11px; font-weight: 600; white-space: nowrap;">{{r.${k}.label}}</span></sc-if>`;
-// Cards show up to two tags; with more, the first one and a +N (hover it to read the rest).
-const cardMore = `<sc-if value="{{r.cMore.show}}" hint-placeholder-val="{{ false }}"><span title="{{r.cMore.title}}" style="height: 22px; padding: 0 8px; flex-shrink: 0; display: inline-flex; align-items: center; border-radius: 999px; background: {{t.surf}}; color: {{t.muted}}; font-size: 11px; font-weight: 600; white-space: nowrap;">{{r.cMore.label}}</span></sc-if>`;
-const CARD_TAGS_JS = `const cardSlot = (tags, i) => (tags && tags[i] ? { show: true, ...tagChip(tags[i]) } : { show: false, label: '', bg: 'transparent', fg: t.text });
-  const cardFit = tags => { const fit = tagFit(tags, 2); return { c1: cardSlot(fit.vis, 0), c2: cardSlot(fit.vis, 1), cMore: { show: fit.more > 0, label: '+' + fit.more, title: (tags || []).slice(fit.vis.length).join(', ') } }; };`;
 // Deck header: the deck's gradient by default; an uploaded image replaces it (placeholder here).
 const onCover = 'background: rgba(255,255,255,.62); color: #000000; box-shadow: inset 0 0 0 1px rgba(0,0,0,.08); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px);';
 const coverBtn = (label, handler, icon = '') => `<button type="button" onClick="{{${handler}}}" style="height: 36px; padding: 0 14px; display: inline-flex; align-items: center; gap: 6px; border: 0; border-radius: 999px; ${onCover} font: inherit; font-size: 13px; font-weight: 600; cursor: pointer;">${icon ? svg(I[icon], 14, 2) : ''}${label}</button>`;
 const coverRound = (ic, label, href = '', onClick = '') => href
   ? `<a href="${href}" aria-label="${label}" style="width: 44px; height: 44px; border-radius: 22px; ${onCover} display: flex; align-items: center; justify-content: center;">${svg(I[ic], 18, 2)}</a>`
   : `<button type="button" aria-label="${label}"${onClick ? ` onClick="${onClick}"` : ''} style="width: 44px; height: 44px; border: 0; border-radius: 22px; ${onCover} display: flex; align-items: center; justify-content: center; cursor: pointer;">${svg(I[ic], 18, 2)}</button>`;
+// ---------- Study backgrounds ----------
+// The owner (V96): "make the background be the decks gradient by default, but make it monochrome, slight color only
+// faint, for darkmode, make the gradient monochrome too but black", and let people change it "for learn, flashcards,
+// and live". Behind those screens: the deck's own gradient, nearly gray with a faint hint of its colors (near-black at
+// night); or, picked in the deck's settings, a plain page, the sky, the sunset (the owner's faint sunset idea, V95),
+// or a photo they upload, softened so the words stay easy to read.
+const SUNSET_BG = 'radial-gradient(90% 60% at 88% 100%, rgba(238,142,98,.22), rgba(238,142,98,0) 70%), linear-gradient(180deg, #C3D3E3 0%, #D3DBE6 30%, #E6DDE4 52%, #F2DCD8 72%, #F5CFC2 100%)';
+const SUNSET_NIGHT = 'radial-gradient(90% 60% at 88% 100%, rgba(238,142,98,.16), rgba(238,142,98,0) 70%), linear-gradient(180deg, #0C1426 0%, #151B31 35%, #231C2E 65%, #2E1D25 100%)';
+const SKY_TILE = 'linear-gradient(180deg, #86BDF3 0%, #C9E2FB 45%, #EDF5FE 100%)';
+const STUDY_BG_JS = `const studyBg = (dk, dark) => {
+    const b = (dk && dk.bg) || {}, img = b.image || (dk && dk.image) || '';
+    const kind = ['deck', 'plain', 'sky', 'sunset', 'photo'].includes(b.kind) && !(b.kind === 'photo' && !img) ? b.kind : 'deck';
+    const mesh = this.gen(((dk && dk.seed) || 'Lucida') + (dk && dk.round ? ' #' + dk.round : ''), (dk && dk.style) || 'mix');
+    // On the canvas a photo is a placeholder, so it shows the deck's colors at full strength instead.
+    const photo = kind === 'photo' && img !== 'mock' ? img : '', sample = kind === 'photo' && !photo, faint = kind === 'deck';
+    return { isDeck: faint || sample, isPhoto: !!photo, isSky: kind === 'sky', isSunset: kind === 'sunset', mesh, photo,
+      filter: sample ? 'none' : dark ? 'saturate(.16) brightness(.42)' : 'saturate(.16) brightness(1.15)',
+      veil: faint ? (dark ? 'rgba(0,0,0,.3)' : 'rgba(255,255,255,.6)') : photo || sample ? (dark ? 'rgba(0,0,0,.5)' : 'rgba(255,255,255,.38)') : 'rgba(0,0,0,0)',
+      skyTop: dark ? '#081733' : '#86BDF3', skyMid: dark ? '#0D2148' : '#C9E2FB', skyLow: dark ? '#0A1530' : '#EDF5FE',
+      sunset: dark ? ${JSON.stringify(SUNSET_NIGHT)} : ${JSON.stringify(SUNSET_BG)}, grain: faint || sample || kind === 'sunset' ? '.55' : '0' };
+  };`;
+// The layer itself, behind everything on the page (its parent needs isolation: isolate).
+const studyBgLayer = `<div aria-hidden="true" style="position: absolute; inset: 0; z-index: -1; overflow: hidden; pointer-events: none; background: {{t.bg}};">
+  <sc-if value="{{bg.isDeck}}" hint-placeholder-val="{{ true }}"><div style="position: absolute; inset: -4%; background: {{bg.mesh.base}}; filter: {{bg.filter}};">${flowLayer('bg.mesh')}</div></sc-if>
+  <sc-if value="{{bg.isPhoto}}" hint-placeholder-val="{{ false }}"><img src="{{bg.photo}}" alt="" style="position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover;"></sc-if>
+  <sc-if value="{{bg.isSky}}" hint-placeholder-val="{{ false }}"><div style="position: absolute; left: 0; right: 0; top: 0; height: 700px; background: linear-gradient(180deg, {{bg.skyTop}} 0%, {{bg.skyMid}} 30%, {{bg.skyLow}} 55%, {{t.bg}} 100%);"></div></sc-if>
+  <sc-if value="{{bg.isSunset}}" hint-placeholder-val="{{ false }}"><div style="position: absolute; inset: 0; background: {{bg.sunset}};"></div></sc-if>
+  <div style="position: absolute; inset: 0; background: {{bg.veil}};"></div>
+  ${grainSvg('{{bg.grain}}', { blend: 'overlay', freq: 0.85, slope: 3.4, id: 'sc-study-grain' })}
+</div>`;
 const coverFill = `<sc-if value="{{coverIsGradient}}" hint-placeholder-val="{{ true }}">${meshCard('cover', 'position: absolute; inset: 0;', 'height: 100%;', '')}</sc-if>
     <sc-if value="{{coverIsImage}}" hint-placeholder-val="{{ false }}"><div style="position: absolute; inset: 0; background: repeating-linear-gradient(135deg, {{t.surf}} 0 14px, {{t.surf2}} 14px 28px); display: flex; align-items: center; justify-content: center; gap: 8px; color: {{t.muted}}; font-size: 14px; font-weight: 500;">${svg(I.image, 18, 1.8)}[Your header image]</div></sc-if>
     <sc-if value="{{coverHasPhoto}}" hint-placeholder-val="{{ false }}"><img src="{{coverPhoto}}" alt="" style="position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover;"></sc-if>`;
@@ -561,6 +731,7 @@ const COVER_LOGIC = `
   // A header image replaces the gradient: your photo in the app, a placeholder on the canvas.
   const isImage = !!dk.cover.image, photo = isImage && dk.cover.image !== 'mock' ? dk.cover.image : '';
   const settingsOpen = cs.deckSettings == null ? !!this.props.settingsOpen : cs.deckSettings;
+  const bgKind = (dk.bg && dk.bg.kind) || 'deck', bgImage = (dk.bg && dk.bg.image) || dk.cover.image || '', bgPhoto = bgImage && bgImage !== 'mock' ? bgImage : '';
   const perDay = dk.perDay, goal = dk.goal, grading = dk.grading, paused = dk.paused;
   // FSRS is set per deck. It schedules the four grades and check / x; piles only sort cards.
   ${SW_JS}
@@ -599,6 +770,13 @@ const COVER_LOGIC = `
     deckTags: tagList.map(g => ({ ...tagChip(g), remove: () => up({ tags: tagList.filter(x => x !== g) }) })),
     deckPick: tagPicker(tagList, next => up({ tags: next }), 'dp', db.mock ? null : db.tags()),
     exportDeck: () => db.act.exportDeck(dk.id), deleteDeck: () => db.act.deleteDeck(dk.id),
+    // The deck's folder, and its background for Learn mode, flashcards, and Live.
+    folderChips: [{ id: null, name: 'No folder' }, ...db.folders()].map(f => { const on = (dk.folder || null) === f.id; return { label: f.name, pressed: on ? 'true' : 'false', bg: on ? t.inv : t.surf, fg: on ? t.invText : t.text, pick: () => db.act.moveDeck(dk.id, f.id) }; }),
+    noFolders: !db.folders().length,
+    bgOptions: [['deck', 'Colors'], ['plain', 'Plain'], ['sky', 'Sky'], ['sunset', 'Sunset'], ['photo', 'Photo']].map(([id, label]) => { const on = bgKind === id;
+      return { label, pressed: on ? 'true' : 'false', ring: on ? '0 0 0 2px ' + t.text : 'inset 0 0 0 1px ' + t.line, isDeck: id === 'deck', isPlain: id === 'plain', isSky: id === 'sky', isSunset: id === 'sunset', isPhoto: id === 'photo',
+        pick: () => (id === 'photo' && !bgImage ? db.act.pickBg(dk.id) : db.act.setBg(dk.id, id)) }; }),
+    hasBgPhoto: !!bgPhoto, bgPhoto, bgIsPhoto: bgKind === 'photo', uploadBg: () => db.act.pickBg(dk.id),
     deckLine: plural(dk.total, 'card').replace(String(dk.total), dk.totalLabel) + (dk.aiCount ? ' · ' + dk.aiCount + ' added by your AI' : ''),
     deckLineShort: plural(dk.total, 'card').replace(String(dk.total), dk.totalLabel) + (dk.aiCount ? ' · ' + dk.aiCount + ' from your AI' : ''),
     studyLabel: dk.due ? 'Study ' + plural(dk.due, 'card') : dk.fresh ? 'Learn ' + plural(dk.fresh, 'new card') : 'Nothing due',
@@ -610,13 +788,27 @@ const deckSettingsBody = phone => `<div style="display: flex; align-items: cente
     ? `<button type="button" onClick="{{closeSettings}}" style="height: 36px; padding: 0 16px; border: 0; border-radius: 999px; background: {{t.inv}}; color: {{t.invText}}; font: inherit; font-size: 14px; font-weight: 600; cursor: pointer;">Done</button>`
     : `<button type="button" onClick="{{closeSettings}}" aria-label="Close settings" style="width: 36px; height: 36px; border: 0; border-radius: 18px; background: {{t.surf}}; color: {{t.text}}; display: flex; align-items: center; justify-content: center; cursor: pointer;">${svg(I.close, 14, 2.2)}</button>`}</div>
       <div role="tablist" aria-label="Deck settings sections" style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px; padding: 4px; border-radius: 999px; background: {{t.surf}};"><sc-for list="{{dsTabs}}" as="m" hint-placeholder-count="2"><button type="button" role="tab" onClick="{{m.pick}}" aria-selected="{{m.pressed}}" style="height: 36px; border: 0; border-radius: 999px; font: inherit; font-size: 14px; font-weight: 600; cursor: pointer; background: {{m.bg}}; color: {{m.fg}}; box-shadow: {{m.sh}};">{{m.label}}</button></sc-for></div>
-      <sc-if value="{{dsGeneral}}" hint-placeholder-val="{{ true }}"><div style="flex-grow: 1; min-height: 0; display: flex; flex-direction: column; gap: 14px;">
+      <sc-if value="{{dsGeneral}}" hint-placeholder-val="{{ true }}"><div style="flex-grow: 1; min-height: 0; overflow-y: auto; scrollbar-width: thin; display: flex; flex-direction: column; gap: 14px;">
         <div style="display: flex; flex-direction: column; gap: 8px;"><span style="font-size: 13px; font-weight: 600;">Header</span>
           <div style="position: relative; height: ${phone ? 88 : 108}px; flex-shrink: 0; border-radius: 20px; overflow: hidden;">${coverFill}</div>
           <div style="display: flex; gap: 6px; flex-wrap: wrap;">${smallBtn('Shuffle', 'nextCover', 'shuffle')}${smallBtn('Upload image', 'uploadCover', 'image')}<sc-if value="{{coverIsImage}}" hint-placeholder-val="{{ false }}">${smallBtn('Use gradient', 'removeCover')}</sc-if></div>
           <div role="group" aria-label="Gradient style" style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 4px; padding: 4px; border-radius: 999px; background: {{t.surf}};">
             <sc-for list="{{coverStyles}}" as="m" hint-placeholder-count="3"><button type="button" onClick="{{m.pick}}" aria-pressed="{{m.pressed}}" style="height: 34px; border: 0; border-radius: 999px; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; background: {{m.bg}}; color: {{m.fg}}; box-shadow: {{m.sh}};">{{m.label}}</button></sc-for>
           </div>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 8px;"><span style="font-size: 13px; font-weight: 600;">Background</span><span style="margin-top: -4px; font-size: 12px; color: {{t.muted}};">Behind Learn mode, flashcards, and Live</span>
+          <div role="radiogroup" aria-label="Background" style="display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 8px;"><sc-for list="{{bgOptions}}" as="o" hint-placeholder-count="5"><button type="button" role="radio" aria-checked="{{o.pressed}}" onClick="{{o.pick}}" style="min-width: 0; padding: 0; border: 0; background: transparent; color: {{t.text}}; display: flex; flex-direction: column; gap: 6px; font: inherit; font-size: 12px; font-weight: 600; cursor: pointer;"><span style="position: relative; height: ${phone ? 48 : 54}px; border-radius: 14px; overflow: hidden; box-shadow: {{o.ring}};">
+            <sc-if value="{{o.isDeck}}" hint-placeholder-val="{{ true }}"><span style="position: absolute; inset: 0; background: {{cover.base}}; filter: saturate(.16) brightness(1.15);"></span><span style="position: absolute; inset: 0; background: rgba(255,255,255,.55);"></span></sc-if>
+            <sc-if value="{{o.isPlain}}" hint-placeholder-val="{{ false }}"><span style="position: absolute; inset: 0; background: {{t.bg}};"></span></sc-if>
+            <sc-if value="{{o.isSky}}" hint-placeholder-val="{{ false }}"><span style="position: absolute; inset: 0; background: ${SKY_TILE};"></span></sc-if>
+            <sc-if value="{{o.isSunset}}" hint-placeholder-val="{{ false }}"><span style="position: absolute; inset: 0; background: ${SUNSET_BG};"></span></sc-if>
+            <sc-if value="{{o.isPhoto}}" hint-placeholder-val="{{ false }}"><span style="position: absolute; inset: 0; background: {{t.surf}}; color: {{t.muted}}; display: flex; align-items: center; justify-content: center;">${svg(I.image, 18, 1.8)}</span><sc-if value="{{hasBgPhoto}}" hint-placeholder-val="{{ false }}"><img src="{{bgPhoto}}" alt="" style="position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover;"></sc-if></sc-if>
+          </span><span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{o.label}}</span></button></sc-for></div>
+          <sc-if value="{{bgIsPhoto}}" hint-placeholder-val="{{ false }}"><div style="display: flex; gap: 6px;">${smallBtn('Change photo', 'uploadBg', 'image')}</div></sc-if>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 8px;"><span style="font-size: 13px; font-weight: 600;">Folder</span>
+          <div style="display: flex; flex-wrap: wrap; gap: 6px;"><sc-for list="{{folderChips}}" as="f" hint-placeholder-count="3"><button type="button" onClick="{{f.pick}}" aria-pressed="{{f.pressed}}" style="height: 32px; padding: 0 12px; display: inline-flex; align-items: center; gap: 6px; border: 0; border-radius: 999px; background: {{f.bg}}; color: {{f.fg}}; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer;">${svg(I.folder, 14, 1.8)}{{f.label}}</button></sc-for></div>
+          <sc-if value="{{noFolders}}" hint-placeholder-val="{{ false }}"><span style="font-size: 12px; color: {{t.muted}};">Make folders on the Library page.</span></sc-if>
         </div>
         <label style="display: flex; flex-direction: column; gap: 8px;"><span style="font-size: 13px; font-weight: 600;">Name</span><input type="text" value="{{deckName}}" onChange="{{setDeckName}}" style="height: 46px; box-sizing: border-box; padding: 0 16px; border: 0; outline: 0; border-radius: 16px; background: {{t.surf}}; color: {{t.text}}; font: inherit; font-size: 15px;"></label>
         <div style="display: flex; flex-direction: column; gap: 8px;"><span style="font-size: 13px; font-weight: 600;">Tags</span>${TAG_EDIT('deckTags', 'deckPick', phone)}</div>
@@ -630,13 +822,13 @@ const deckSettingsBody = phone => `<div style="display: flex; align-items: cente
         <div style="display: flex; align-items: center; gap: 12px; min-height: 44px;"><span style="flex-grow: 1; display: flex; flex-direction: column; gap: 2px;"><span style="font-size: 14px; font-weight: 600;">New cards a day</span><span style="font-size: 12px; color: {{t.muted}};">Unseen cards added each day</span></span>${miniStep('perDay', 'lessDay', 'moreDay', '{{t.surf}}', 'perDayIn')}</div>
       </div></sc-if>`;
 
-const webDeck = webRoot(`${sidebar('Decks')}
+const webDeck = webRoot(`${sidebar('Library')}
 <main style="position: relative; flex-grow: 1; box-sizing: border-box; padding: 24px 48px 20px; display: flex; flex-direction: column; gap: 20px; min-width: 0; scroll-timeline: --deck block;">
   <div style="position: relative; height: 184px; flex-shrink: 0; border-radius: 20px; overflow: hidden;">
     ${parallax(184, 24)}
     <div style="position: absolute; inset: 0; box-sizing: border-box; padding: 20px 24px 24px 28px; display: flex; flex-direction: column; justify-content: space-between; color: {{coverInk}};">
       <div style="display: flex; align-items: center; justify-content: space-between;">
-        <a href="WebDecks.dc.html" style="height: 36px; padding: 0 14px 0 10px; display: inline-flex; align-items: center; gap: 4px; border-radius: 999px; ${onCover} font-size: 13px; font-weight: 600;">${svg(I.back, 14, 2.2)}Decks</a>
+        <a href="WebDecks.dc.html" style="height: 36px; padding: 0 14px 0 10px; display: inline-flex; align-items: center; gap: 4px; border-radius: 999px; ${onCover} font-size: 13px; font-weight: 600;">${svg(I.back, 14, 2.2)}Library</a>
         ${coverBtn('Deck settings', 'openSettings', 'gear')}
       </div>
       <div style="display: flex; align-items: flex-end; justify-content: space-between; gap: 16px;">
@@ -1161,7 +1353,8 @@ renderVals() {
   const kind = kinds[ty], fr = R.plain(f.front || '').trim(), bk = R.plain(f.back || '').trim(), said = R.plain(f.speak || '').trim();
   const hasSound = (f.audio && f.audio !== 'mock') || said;
   const missing = kind === 'basic' ? (!fr ? 'front' : !bk ? 'back' : '') : kind === 'cloze' ? (nBlanks ? '' : 'text') : kind === 'image' ? (!f.image ? 'image' : !bk ? 'back' : '') : (!hasSound ? 'speak' : !bk ? 'back' : '');
-  const backHref = this.props.from === 'review' ? db.href('review', dk.id) : dk.href;
+  // Back goes where you came from: the review, the Library's All cards, or the deck.
+  const backHref = this.props.from === 'review' ? db.href('review', dk.id) : this.props.from === 'library' ? db.href('cards') : dk.href;
   const snd = f.audio === 'mock' ? { mock: true, real: false, btn: t.inv } : { mock: false, real: true, btn: hasSound ? t.inv : t.surf2, fg: hasSound ? t.text : t.muted,
     label: f.audio ? 'Your recording' : said ? 'Reads: “' + said + '”' : 'No sound yet. Record one, upload a file, or have it read aloud.' };
   // Formatting buttons: which are on, and what each does.
@@ -1241,13 +1434,18 @@ const CARD_VIEW_JS = `const R = this.rich(), ro = { t, dark: !!this.props.dark }
   };`;
 const BLANK_JS = `rev ? { text: c.back, bg: t.inv, fg: t.invText, cls: 'sc-pop' } : { text: '\\u2003\\u2003\\u2003\\u2003', bg: t.surf2, fg: 'transparent', cls: '' }`;
 const REVIEW_LOGIC = total => `
-constructor(props) { super(props); this.state = { revealed: !!props.startRevealed, settings: null, pileDraft: props.newPileOpen ? 'Tricky ones' : null }; }
+constructor(props) { super(props); this.state = { revealed: !!props.startRevealed, settings: null, pileDraft: props.newPileOpen ? 'Tricky ones' : null, exOpen: !!props.explainOpen, exFor: props.explainOpen ? 'r0' : null }; }
 renderVals() {
   ${T}${DB_JS}
   ${KB_JS}
   ${CARD_VIEW_JS}
+  ${STUDY_BG_JS}
+  ${EXPLAIN_JS}
   const rv = db.review(this.props.deckId, this.props.pile);
   const rev = this.state.revealed;
+  const ex = explainView(rv.ex, rv.card && rv.card.id, '', rev, ${JSON.stringify('It pumps protons (H⁺) out of the matrix into the space between the two membranes. That builds a gradient, like water held behind a dam, and ATP synthase uses the flow back in to make ATP. Remember it as pump uphill first, then cash in on the way down.')});
+  // Behind the cards: the background of the deck this card is from.
+  const bg = studyBg(db.deck(rv.deckId), !!this.props.dark);
   const c = rv.card || { kind: 'basic', front: '', back: '' };
   const card = cardView(c, rev);
   const after = patch => this.setState({ revealed: false, moved: true, ...(patch || {}) });
@@ -1274,7 +1472,7 @@ renderVals() {
   const u = q => (queue === q ? 'underline' : 'none');
   const playing = card.isAudio && !rev;
   return {
-    t, kb, card, grades, piles, modes, progs,
+    t, bg, ex, kb, card, grades, piles, modes, progs,
     showBar: prog === 'bar', showCounts: prog === 'counts',
     cNew: { n: String(n.new), u: u('new') }, cLearn: { n: String(n.learn), u: u('learn') }, cRev: { n: String(n.rev), u: u('rev') },
     countsLabel: n.new + ' new, ' + n.learn + ' learning, ' + n.rev + ' to review',
@@ -1338,13 +1536,37 @@ const FACE = (pad, big, back) => `<div style="position: absolute; inset: 0; box-
   <div style="display: flex; flex-direction: column; justify-content: center; flex-grow: 1;">${back ? faceBack(big) : faceFront(big)}</div>
   <div style="font-size: 14px; line-height: 1.5; color: {{t.muted}}; min-height: 21px;">${back ? RICH_SHOW('card.noteLines') : `<sc-if value="{{clozeShown}}" hint-placeholder-val="{{ false }}"><span class="sc-fade-a" style="display: block;">${RICH_SHOW('card.noteLines')}</span></sc-if>`}</div>
 </div>`;
+// Explain (V96): once a card is turned over, its corner offers an AI explanation of the answer, which opens over the
+// card. It shows only when Lucida's AI is set up (or the card already has one); Free gets a few a day.
+const explainOver = phone => `<sc-if value="{{ex.show}}" hint-placeholder-val="{{ false }}">
+  <sc-if value="{{ex.closed}}" hint-placeholder-val="{{ true }}"><button type="button" onClick="{{ex.ask}}" class="sc-press" style="position: absolute; top: ${phone ? 12 : 16}px; right: ${phone ? 12 : 16}px; z-index: 3; height: 34px; padding: 0 14px 0 12px; display: inline-flex; align-items: center; gap: 6px; border: 0; border-radius: 999px; background: {{t.surf}}; color: {{t.text}}; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer;">${svg(I.sparkle, 14, 2)}{{ex.label}}</button></sc-if>
+  <sc-if value="{{ex.open}}" hint-placeholder-val="{{ false }}"><div role="region" aria-label="Explanation" class="sc-quiz-in" style="position: absolute; left: ${phone ? 10 : 16}px; right: ${phone ? 10 : 16}px; bottom: ${phone ? 10 : 16}px; z-index: 3; max-height: 72%; overflow-y: auto; box-sizing: border-box; padding: ${phone ? '14px 16px' : '18px 20px'}; border-radius: 20px; background: {{t.bg}}; box-shadow: 0 18px 44px -14px rgba(0,0,0,.4), 0 0 0 1px {{t.line}}; display: flex; flex-direction: column; gap: 8px; text-align: left; animation: scQuizIn .25s cubic-bezier(.2,.8,.2,1) both;">
+    <div style="display: flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 600; color: {{t.muted}};">${svg(I.sparkle, 13, 2)}<span style="flex-grow: 1;">Explained by AI</span><button type="button" onClick="{{ex.close}}" aria-label="Close the explanation" style="width: 28px; height: 28px; border: 0; border-radius: 14px; background: {{t.surf}}; color: {{t.text}}; display: flex; align-items: center; justify-content: center; cursor: pointer;">${svg(I.close, 10, 2.4)}</button></div>
+    <sc-if value="{{ex.busy}}" hint-placeholder-val="{{ false }}"><span style="font-size: 15px; color: {{t.muted}};">Thinking…</span></sc-if>
+    <sc-if value="{{ex.hasText}}" hint-placeholder-val="{{ true }}"><span style="font-size: ${phone ? 15 : 17}px; line-height: 1.5;">{{ex.text}}</span></sc-if>
+    <sc-if value="{{ex.hasError}}" hint-placeholder-val="{{ false }}"><span style="font-size: 14px; line-height: 1.4; color: {{t.again}};">{{ex.error}}</span><sc-if value="{{ex.goPro}}" hint-placeholder-val="{{ false }}"><a href="{{ex.proHref}}" style="align-self: flex-start; height: 34px; padding: 0 16px; display: inline-flex; align-items: center; border-radius: 999px; background: {{t.inv}}; color: {{t.invText}}; font-size: 13px; font-weight: 600;">Go Pro</a></sc-if></sc-if>
+    <sc-if value="{{ex.hasNote}}" hint-placeholder-val="{{ false }}"><span style="font-size: 12px; color: {{t.muted}};">{{ex.note}}</span></sc-if>
+  </div></sc-if>
+</sc-if>`;
+// The explanation's state for a screen (review or Learn): `exv` is db's view of it, `id` the card, `question` how it
+// was asked, `answered` whether the answer is showing.
+const EXPLAIN_JS = `const explainView = (exv, id, question, answered, sample) => {
+    exv = db.mock ? { on: true, text: this.state.exMock || this.props.explained ? sample : '', note: this.state.exMock || this.props.explained ? '2 free explanations left today' : '' } : exv || { on: false };
+    const open = !!this.state.exOpen && this.state.exFor === id;
+    return { show: !!(answered && exv.on && id), closed: !open, open, label: exv.text ? 'Explanation' : 'Explain',
+      busy: !!exv.busy, hasText: !!exv.text && !exv.busy, text: exv.text || '', hasError: !!exv.error && !exv.busy, error: exv.error || '', goPro: !!exv.goPro,
+      proHref: db.mock ? 'Pricing.dc.html' : '/pro?plan=yearly', hasNote: !!exv.note && !!exv.text, note: exv.note || '',
+      ask: () => { this.setState({ exOpen: true, exFor: id }); if (db.mock) this.setState({ exMock: true }); else if (!exv.text) db.act.explain(id, question); },
+      close: () => this.setState({ exOpen: false }) };
+  };`;
 const flipCard = (w, h, pad, big) => `<button type="button" onClick="{{reveal}}" aria-label="{{flipLabel}}" data-key="Space" class="{{cardIn}}" style="width: ${w}; height: ${h}; padding: 0; border: 0; background: transparent; perspective: 1600px; font: inherit; color: inherit; cursor: pointer; flex-grow: ${h === 'auto' ? 1 : 0};">
   <div style="position: relative; width: 100%; height: 100%; transform-style: preserve-3d; transition: {{flipTrans}}; transform: {{flipTransform}};">
     ${FACE(pad, big, false)}
     ${FACE(pad, big, true)}
   </div>
 </button>`;
-const webReview = `<div style="position: relative; width: 1440px; height: 900px; box-sizing: border-box; display: flex; flex-direction: column; font-family: ${FONT}; background: {{t.bg}}; color: {{t.text}};">
+const webReview = `<div style="position: relative; isolation: isolate; width: 1440px; height: 900px; box-sizing: border-box; display: flex; flex-direction: column; font-family: ${FONT}; background: {{t.bg}}; color: {{t.text}};">
+  ${studyBgLayer}
   <header style="height: 76px; box-sizing: border-box; padding: 0 32px; display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: center; gap: 16px;">
     <div style="display: flex;"><a href="WebDone.dc.html" aria-label="End review" title="End review" style="width: 36px; height: 36px; border-radius: 18px; background: {{t.surf}}; display: flex; align-items: center; justify-content: center;">${svg(I.close, 16, 2.2)}</a></div>
     <div style="display: flex; align-items: center; justify-content: center; gap: 14px; min-width: 420px; min-height: 24px;">
@@ -1354,7 +1576,7 @@ const webReview = `<div style="position: relative; width: 1440px; height: 900px;
     <div style="display: flex; justify-content: flex-end;">${settingsBtn}</div>
   </header>
   <main style="flex-grow: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 28px;">
-    ${flipCard('780px', '480px', '44px 56px', true)}
+    <div style="position: relative; width: 780px; height: 480px;">${flipCard('780px', '480px', '44px 56px', true)}${explainOver(false)}</div>
     <div style="width: 780px; height: 84px; display: flex;">
       <sc-if value="{{showBinary}}" hint-placeholder-val="{{ false }}">
         <div style="flex-grow: 1; display: flex; align-items: center; justify-content: center; gap: 56px;">
@@ -1861,7 +2083,7 @@ renderVals() {
 }`;
 
 // ---------- iPhone ----------
-const NAV_P = [['Today', 'today', 'PhoneToday.dc.html'], ['Decks', 'decks', 'PhoneDeck.dc.html'], ['Stats', 'stats', 'PhoneStats.dc.html'], ['Connect', 'connect', 'PhoneConnect.dc.html']];
+const NAV_P = [['Today', 'today', 'PhoneToday.dc.html'], ['Library', 'decks', 'PhoneLibrary.dc.html'], ['Stats', 'stats', 'PhoneStats.dc.html'], ['Connect', 'connect', 'PhoneConnect.dc.html']];
 const tabBar = active => `<nav style="position: absolute; left: 16px; right: 16px; bottom: 28px; height: 64px; box-sizing: border-box; padding: 6px; border-radius: 999px; background: {{t.surf}}; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 4px;">
   ${NAV_P.map(([l, ic, h]) => `<a href="${h}" style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; border-radius: 999px; font-size: 11px; font-weight: 600; ${l === active ? 'background: {{t.inv}}; color: {{t.invText}};' : 'color: {{t.muted}};'}">${svg(I[ic], 20, 2)}${l}</a>`).join('\n  ')}
 </nav>`;
@@ -1870,6 +2092,57 @@ ${inner}
 ${active ? tabBar(active) : ''}
 ${extra}
 </div>`;
+// iPhone: the same Library as a list, with the Decks / All cards switch under the title.
+const phoneLibRow = `<a href="{{d.href}}" style="flex-grow: 1; min-width: 0; display: flex; align-items: center; gap: 12px;"><span style="width: 48px; height: 48px; flex-shrink: 0; border-radius: 14px; background: {{d.base}}; overflow: hidden;"><sc-if value="{{d.hasPhoto}}" hint-placeholder-val="{{ false }}"><img src="{{d.photo}}" alt="" style="width: 100%; height: 100%; object-fit: cover;"></sc-if></span><span style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px;"><span style="font-size: 16px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{d.name}}</span><span style="font-size: 13px; color: {{t.muted}}; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{d.line}}</span></span><span style="font-family: ${MONO}; font-size: 15px; color: {{d.dueColor}};">{{d.dueLabel}}</span></a>`;
+const libRound = (ic, label, { href = '', onClick = '', inv = false } = {}) => { const st = `width: 40px; height: 40px; flex-shrink: 0; border: 0; border-radius: 20px; ${inv ? 'background: {{t.inv}}; color: {{t.invText}};' : 'background: {{t.surf}}; color: {{t.text}};'} display: flex; align-items: center; justify-content: center; cursor: pointer;`;
+  return href ? `<a href="${href}" aria-label="${label}" class="sc-press" style="${st}">${svg(I[ic], 18, 2)}</a>` : `<button type="button" onClick="${onClick}" aria-label="${label}" class="sc-press" style="${st}">${svg(I[ic], 18, 2)}</button>`; };
+const phoneLibrary = phone(`<div style="padding: 64px 20px 120px; display: flex; flex-direction: column; gap: 14px;">
+  <sc-if value="{{atTop}}" hint-placeholder-val="{{ true }}"><div style="display: flex; align-items: center; gap: 8px;">
+    <h1 style="margin: 0; flex-grow: 1; min-width: 0; font-size: 32px; font-weight: 700; letter-spacing: -.03em;">Library</h1>
+    <sc-if value="{{deckView}}" hint-placeholder-val="{{ true }}">${libRound('folder', 'New folder', { onClick: '{{newFolder}}' })}</sc-if>
+    ${libRound('plus', 'New deck', { href: 'PhoneNewDeck.dc.html', inv: true })}
+  </div></sc-if>
+  <sc-if value="{{inFolder}}" hint-placeholder-val="{{ false }}"><div style="display: flex; align-items: center; gap: 8px;">
+    ${libRound('back', 'Library', { href: '{{libraryHref}}' })}<span style="flex-grow: 1;"></span>
+    <button type="button" onClick="{{renameFolder}}" class="sc-press" style="height: 40px; padding: 0 16px; border: 0; border-radius: 20px; background: {{t.surf}}; color: {{t.text}}; font: inherit; font-size: 14px; font-weight: 600; cursor: pointer;">Rename</button>
+    ${libRound('plus', 'New deck', { href: 'PhoneNewDeck.dc.html', inv: true })}
+  </div>
+  <h1 style="margin: 0; font-size: 32px; font-weight: 700; letter-spacing: -.03em; overflow-wrap: anywhere;">{{title}}</h1></sc-if>
+  <sc-if value="{{atTop}}" hint-placeholder-val="{{ true }}">${libModes(36, 14, true)}</sc-if>
+  <label style="display: flex; align-items: center; gap: 10px; height: 44px; padding: 0 16px; box-sizing: border-box; border-radius: 999px; background: {{t.surf}}; color: {{t.muted}};">${svg(I.search, 16)}<span style="position: absolute; left: -9999px;">{{searchHint}}</span><input value="{{query}}" onChange="{{setQuery}}" placeholder="{{searchHint}}" style="flex-grow: 1; min-width: 0; border: 0; outline: 0; background: transparent; font: inherit; font-size: 16px; color: {{t.text}};"></label>
+  ${folderForm(36, 16)}
+  <sc-if value="{{deckView}}" hint-placeholder-val="{{ true }}">
+    <sc-if value="{{showFolders}}" hint-placeholder-val="{{ true }}">
+      <div style="font-size: 13px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: {{t.muted}}; padding: 6px 4px 0;">Folders</div>
+      <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px;"><sc-for list="{{folders}}" as="f" hint-placeholder-count="2">${folderTile(132, 60, '16px')}</sc-for></div>
+      <div style="font-size: 13px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: {{t.muted}}; padding: 10px 4px 0;">Decks</div>
+    </sc-if>
+    <div style="display: flex; flex-direction: column;">
+      <sc-for list="{{decks}}" as="d" hint-placeholder-count="4"><div style="position: relative; display: flex; align-items: center; gap: 8px; min-height: 68px; border-bottom: 1px solid {{t.line}};">${phoneLibRow}${moveBtn('background: transparent; color: {{t.muted}};', 36)}${moveMenu('right: 0; top: 60px;')}</div></sc-for>
+    </div>
+    <sc-if value="{{inFolder}}" hint-placeholder-val="{{ false }}"><button type="button" onClick="{{removeFolder}}" style="align-self: center; height: 40px; padding: 0 16px; border: 0; border-radius: 999px; background: transparent; color: {{t.again}}; font: inherit; font-size: 14px; font-weight: 600; cursor: pointer;">Remove folder</button></sc-if>
+    <sc-if value="{{noDecks}}" hint-placeholder-val="{{ false }}"><div style="padding: 36px 20px; border-radius: 20px; background: {{t.surf}}; text-align: center; font-size: 15px; line-height: 1.4; color: {{t.muted}};">{{noDecksLine}}</div></sc-if>
+  </sc-if>
+  <sc-if value="{{cardsView}}" hint-placeholder-val="{{ false }}">
+    ${levelSeg(34, 12, true)}
+    <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+      <div style="position: relative;">${menuBtn('tagPick', 'Tags', 36)}${tagMenu('tagPick', 'left: 0; top: 44px;')}</div>
+      <div style="position: relative;">${menuBtn('deckPick', '{{deckPick.label}}', 36)}${tagMenu('deckPick', 'left: 0; top: 44px;', { label: 'Filter by deck', find: 'Find a deck or folder', none: 'No decks match' })}</div>
+      ${pickedTags(32)}
+    </div>
+    <span style="font-size: 13px; color: {{t.muted}}; padding: 2px 4px 0;">{{cardCount}}</span>
+    <div style="display: flex; flex-direction: column;">
+      <sc-for list="{{rows}}" as="r" hint-placeholder-count="6">
+        <a href="{{r.href}}" style="display: flex; flex-direction: column; gap: 6px; padding: 12px 0; border-bottom: 1px solid {{t.line}};">
+          <span style="font-size: 15px; font-weight: 500; line-height: 1.35; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">{{r.front}}</span>
+          <span style="display: flex; align-items: center; gap: 8px; min-width: 0; font-size: 13px; color: {{t.muted}};"><span style="width: 12px; height: 12px; flex-shrink: 0; border-radius: 4px; background: {{r.swatch}};"></span><span style="min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{r.deckName}}</span>${levelTag}<span style="flex-grow: 1;"></span><span style="flex-shrink: 0;">{{r.next}}</span></span>
+        </a>
+      </sc-for>
+    </div>
+    <sc-if value="{{hasMore}}" hint-placeholder-val="{{ false }}"><button type="button" onClick="{{showMore}}" style="align-self: center; height: 40px; padding: 0 20px; border: 0; border-radius: 999px; background: {{t.surf}}; color: {{t.text}}; font: inherit; font-size: 14px; font-weight: 600; cursor: pointer;">{{moreLabel}}</button></sc-if>
+    <sc-if value="{{noCards}}" hint-placeholder-val="{{ false }}"><div style="padding: 36px 20px; border-radius: 20px; background: {{t.surf}}; text-align: center; font-size: 15px; color: {{t.muted}};">No cards match. Try fewer filters.</div></sc-if>
+  </sc-if>
+</div>`, 'Library');
 const pTitle = (txt, right = '') => `<div style="display: flex; align-items: center; justify-content: space-between;"><div style="font-size: 34px; font-weight: 700; letter-spacing: -.03em;">${txt}</div>${right}</div>`;
 const roundBtn = (ic, label, href = '') => href ? `<a href="${href}" aria-label="${label}" style="width: 44px; height: 44px; border-radius: 22px; background: {{t.surf}}; display: flex; align-items: center; justify-content: center;">${svg(I[ic], 18, 2)}</a>` : `<button type="button" aria-label="${label}" style="width: 44px; height: 44px; border: 0; border-radius: 22px; background: {{t.surf}}; color: {{t.text}}; display: flex; align-items: center; justify-content: center; cursor: pointer;">${svg(I[ic], 18, 2)}</button>`;
 // Today's header: your picture on the left (it opens Settings), the title in the middle, and + on the right.
@@ -1964,7 +2237,7 @@ const phoneDeck = phone(`<div style="height: 100%; overflow-y: auto; scrollbar-w
       </sc-for>
     </div>
   </div>
-</div></div>`, 'Decks', `<sc-if value="{{settingsOpen}}" hint-placeholder-val="{{ false }}">
+</div></div>`, 'Library', `<sc-if value="{{settingsOpen}}" hint-placeholder-val="{{ false }}">
   <div style="position: absolute; inset: 0; background: {{t.dim}};"></div>
   <div role="dialog" aria-label="Deck settings" style="position: absolute; left: 0; right: 0; bottom: 0; top: 56px; box-sizing: border-box; padding: 16px 20px 34px; border-radius: 32px 32px 0 0; background: {{t.bg}}; display: flex; flex-direction: column; gap: 14px;">
     ${deckSettingsBody(true)}
@@ -1992,7 +2265,8 @@ const phoneEditor = `<div style="position: relative; width: 390px; height: 844px
   <sc-if value="{{typing}}" hint-placeholder-val="{{ true }}">${KEYBOARD(FMT_BAR)}</sc-if>
 </div>`;
 
-const phoneReview = `<div style="position: relative; width: 390px; height: 844px; box-sizing: border-box; padding: 60px 16px 34px; display: flex; flex-direction: column; gap: 16px; overflow: hidden; font-family: ${FONT}; background: {{t.bg}}; color: {{t.text}};">
+const phoneReview = `<div style="position: relative; isolation: isolate; width: 390px; height: 844px; box-sizing: border-box; padding: 60px 16px 34px; display: flex; flex-direction: column; gap: 16px; overflow: hidden; font-family: ${FONT}; background: {{t.bg}}; color: {{t.text}};">
+  ${studyBgLayer}
   <div style="display: flex; align-items: center; gap: 12px;">
     ${roundBtn('close', 'End review', 'PhoneDone.dc.html')}
     <div style="flex-grow: 1; min-width: 0; display: flex; align-items: center; justify-content: center; gap: 10px;">
@@ -2001,7 +2275,7 @@ const phoneReview = `<div style="position: relative; width: 390px; height: 844px
     </div>
     ${settingsBtn}
   </div>
-  ${flipCard('100%', 'auto', '26px 22px', false)}
+  <div style="position: relative; flex-grow: 1; display: flex; flex-direction: column;">${flipCard('100%', 'auto', '26px 22px', false)}${explainOver(true)}</div>
   <div style="height: 76px; display: flex;">
     <sc-if value="{{showBinary}}" hint-placeholder-val="{{ false }}">
       <div style="flex-grow: 1; display: flex; align-items: center; justify-content: center; gap: 44px;">
@@ -2325,19 +2599,19 @@ const webTodayNew = webRoot(`${sidebar('Today')}
     </div>
   </aside>
 </main>`);
-const webDecksEmpty = webRoot(`${sidebar('Decks')}
+const webDecksEmpty = webRoot(`${sidebar('Library')}
 <main style="flex-grow: 1; box-sizing: border-box; padding: 36px 48px; display: flex; flex-direction: column; gap: 28px; min-width: 0;">
-  <div style="display: flex; align-items: center; gap: 12px;"><h1 style="margin: 0; font-size: 32px; font-weight: 600; letter-spacing: -.03em; flex-grow: 1;">Decks</h1>${pill('New deck', { inv: true, icon: 'plus', href: 'WebNewDeck.dc.html' })}</div>
+  <div style="display: flex; align-items: center; gap: 12px;"><h1 style="margin: 0; font-size: 32px; font-weight: 600; letter-spacing: -.03em; flex-grow: 1;">Library</h1>${pill('New deck', { inv: true, icon: 'plus', href: 'WebNewDeck.dc.html' })}</div>
   <div style="flex-grow: 1; display: flex; align-items: center; justify-content: center; padding-bottom: 60px;">
     ${emptyBlock({ art: EMPTY_ART(170, 'plus'), title: 'No decks yet', body: 'Make one, bring your cards from Anki or Quizlet, or let your AI make them for you.', actions: webActions(pill('New deck', { inv: true, icon: 'plus', href: 'WebNewDeck.dc.html' }) + pill('Import cards', { icon: 'upload', href: 'WebImport.dc.html' }) + pill('Connect your AI', { icon: 'connect', href: 'WebConnect.dc.html' })) })}
   </div>
 </main>`);
-const webDeckEmpty = webRoot(`${sidebar('Decks')}
+const webDeckEmpty = webRoot(`${sidebar('Library')}
 <main style="flex-grow: 1; box-sizing: border-box; padding: 24px 48px 20px; display: flex; flex-direction: column; gap: 20px; min-width: 0;">
   <div style="position: relative; height: 184px; flex-shrink: 0; border-radius: 20px; overflow: hidden;">
     ${meshCard('cover', 'position: absolute; inset: 0;', 'height: 100%;', '')}
     <div style="position: absolute; inset: 0; box-sizing: border-box; padding: 20px 24px 24px 28px; display: flex; flex-direction: column; justify-content: space-between; color: {{cover.ink}};">
-      <div style="display: flex; align-items: center; justify-content: space-between;"><a href="WebDecks.dc.html" style="height: 36px; padding: 0 14px 0 10px; display: inline-flex; align-items: center; gap: 4px; border-radius: 999px; ${onCover} font-size: 13px; font-weight: 600;">${svg(I.back, 14, 2.2)}Decks</a>${coverBtn('Deck settings', 'openSettings', 'gear')}</div>
+      <div style="display: flex; align-items: center; justify-content: space-between;"><a href="WebDecks.dc.html" style="height: 36px; padding: 0 14px 0 10px; display: inline-flex; align-items: center; gap: 4px; border-radius: 999px; ${onCover} font-size: 13px; font-weight: 600;">${svg(I.back, 14, 2.2)}Library</a>${coverBtn('Deck settings', 'openSettings', 'gear')}</div>
       <div style="display: flex; flex-direction: column; gap: 6px; text-shadow: {{cover.shadow}};"><h1 style="margin: 0; font-size: 34px; font-weight: 600; letter-spacing: -.035em; line-height: 1;">{{deckName}}</h1><div style="font-size: 14px; opacity: .8;">No cards yet</div></div>
     </div>
   </div>
@@ -2379,14 +2653,14 @@ const phoneDeckEmpty = phone(`<div style="height: 100%; box-sizing: border-box; 
   <div style="flex-grow: 1; box-sizing: border-box; padding: 0 28px; display: flex; align-items: center; justify-content: center;">
     ${emptyBlock({ art: EMPTY_ART(140, 'plus'), title: 'This deck is empty', size: 22, body: 'Add your first card, import some, or ask your AI to make them.', actions: phoneActionRow(phoneBtn('New card', 'PhoneEditor.dc.html', 'plus', true), phoneBtn2('Import cards', 'PhoneDeckEmpty.dc.html', 'upload'), phoneBtn2('Ask your AI', 'PhoneConnect.dc.html', 'sparkle')) })}
   </div>
-</div>`, 'Decks');
+</div>`, 'Library');
 // The Decks tab before there are any decks.
 const phoneDecksEmpty = phone(`<div style="height: 100%; box-sizing: border-box; padding: 64px 20px 120px; display: flex; flex-direction: column; gap: 14px;">
-  ${pTitle('Decks', roundBtn('plus', 'New deck', 'PhoneNewDeck.dc.html'))}
+  ${pTitle('Library', roundBtn('plus', 'New deck', 'PhoneNewDeck.dc.html'))}
   <div style="flex-grow: 1; box-sizing: border-box; padding: 0 8px 20px; display: flex; align-items: center; justify-content: center;">
     ${emptyBlock({ art: EMPTY_ART(150, 'plus'), title: 'No decks yet', size: 22, body: 'Make one, bring your cards from Anki or Quizlet, or let your AI make them for you.', actions: phoneActionRow(phoneBtn('New deck', 'PhoneNewDeck.dc.html', 'plus', true), phoneBtn2('Import cards', 'PhoneDecksEmpty.dc.html', 'upload'), phoneBtn2('Connect AI', 'PhoneConnect.dc.html', 'connect')) })}
   </div>
-</div>`, 'Decks');
+</div>`, 'Library');
 const phoneStatsEmpty = phone(`<div style="height: 100%; box-sizing: border-box; padding: 64px 20px 120px; display: flex; flex-direction: column; gap: 14px;">
   ${pTitle('Stats')}
   ${emptyKpis([['Streak', '0 days'], ['Remembered', '—'], ['Reviews', '0'], ['Cards', '0']], false)}
@@ -2560,17 +2834,17 @@ const LEARN_HOVER = 'scLearnIn .45s cubic-bezier(.2,.8,.2,1) both, scLearnHover 
 const LEARN_COLORS = ['#4F60E6', '#F2701D', '#0E8FB0', '#E5407E'];
 const LEARN_K = `const K = this.props.dark
     ? { ink: '#F2F3F7', ink2: 'rgba(242,243,247,.66)', card: '#1B1D24', shadow: '0 10px 24px -16px rgba(0,0,0,.7)', lift: '0 26px 48px -20px rgba(0,0,0,.85)', gray: '#2A2D35', grayInk: '#8E95A3', chip: 'rgba(255,255,255,.1)', track: 'rgba(255,255,255,.14)', btn: '#F2F3F7', btnFg: '${LV.navy}', other: 'rgba(255,255,255,.14)', wrong: '#4A4F5C', bar: '#8C9AFC', part: 'rgba(140,154,252,.4)', check: '${LV.check}' }
-    : { ink: '${LV.navy}', ink2: '${LV.ink2}', card: '#FFFFFF', shadow: '${LV.shadow}', lift: '${LV.lift}', gray: '${LV.gray}', grayInk: '${LV.grayInk}', chip: 'rgba(255,255,255,.72)', track: 'rgba(255,255,255,.62)', btn: '${LV.navy}', btnFg: '#FFFFFF', other: 'rgba(13,21,66,.12)', wrong: '${LV.navy}', bar: '${LV.purple}', part: 'rgba(79,96,230,.38)', check: '${LV.check}' };`;
+    : { ink: '${LV.navy}', ink2: '${LV.ink2}', card: '#FFFFFF', shadow: '${LV.shadow}', lift: '${LV.lift}', gray: '${LV.gray}', grayInk: '${LV.grayInk}', chip: 'rgba(255,255,255,.72)', track: 'rgba(13,21,66,.08)', btn: '${LV.navy}', btnFg: '#FFFFFF', other: 'rgba(13,21,66,.12)', wrong: '${LV.navy}', bar: '${LV.purple}', part: 'rgba(79,96,230,.38)', check: '${LV.check}' };`;
 // Progress through the set: learned (purple), still learning (light purple), not yet (track), with "+1" when one is learned.
 const learnBar = w => `<div style="${w ? `width: ${w}px;` : 'flex-grow: 1;'} height: 10px; border-radius: 5px; background: {{k.track}}; overflow: hidden; display: flex;"><div style="width: {{doneW}}; background: {{k.bar}}; transition: width .5s cubic-bezier(.2,.8,.2,1);"></div><div style="width: {{partW}}; background: {{k.part}}; transition: width .5s cubic-bezier(.2,.8,.2,1);"></div></div>`;
 const learnPlus = `<sc-if value="{{plusOne}}" hint-placeholder-val="{{ false }}"><span class="sc-plus" aria-hidden="true" style="position: absolute; left: 100%; top: -3px; margin-left: 6px; font-size: 13px; font-weight: 700; color: {{k.bar}}; animation: {{plusAnim}};">+1</span></sc-if>`;
 // The top: stop, progress, and the set, on soft glass chips over the sky.
-const learnTop = (back, chip = false) => `<header style="height: 76px; flex-shrink: 0; box-sizing: border-box; padding: 0 32px; display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: center; gap: 16px;">
+const learnTop = back => `<header style="height: 76px; flex-shrink: 0; box-sizing: border-box; padding: 0 32px; display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: center; gap: 16px;">
     <div style="display: flex;"><a href="${back}" aria-label="Stop for now" title="Stop for now" style="width: 40px; height: 40px; border-radius: 20px; background: {{k.chip}}; display: flex; align-items: center; justify-content: center;">${svg(I.close, 16, 2.2)}</a></div>
-    <div style="display: flex; align-items: center; gap: 14px;${chip ? ' height: 40px; padding: 0 18px; border-radius: 20px; background: {{k.chip}};' : ''}">${learnBar(360)}<span role="status" style="position: relative; font-size: 14px; white-space: nowrap;"><span style="font-weight: 700;">{{learned}}</span> of {{total}} learned${learnPlus}</span></div>
+    <div style="display: flex; align-items: center; gap: 14px;">${learnBar(360)}<span role="status" style="position: relative; font-size: 14px; white-space: nowrap;"><span style="font-weight: 700;">{{learned}}</span> of {{total}} learned${learnPlus}</span></div>
     <div style="display: flex; justify-content: flex-end; min-width: 0;"><span style="height: 34px; padding: 0 14px; display: inline-flex; align-items: center; gap: 6px; border-radius: 999px; background: {{k.chip}}; font-size: 13px; font-weight: 600; white-space: nowrap;">${svg(I.sparkle, 14, 1.8)}<span>Learn · {{setName}}</span></span></div>
   </header>`;
-const learnTopPhone = (back, chip = false) => `<div style="display: flex; align-items: center; gap: 12px;"><a href="${back}" aria-label="Stop for now" style="width: 44px; height: 44px; flex-shrink: 0; border-radius: 22px; background: {{k.chip}}; display: flex; align-items: center; justify-content: center;">${svg(I.close, 18, 2)}</a>${chip ? '<div style="flex-grow: 1; min-width: 0; height: 44px; box-sizing: border-box; padding: 0 16px; border-radius: 22px; background: {{k.chip}}; display: flex; align-items: center; gap: 12px;">' : ''}${learnBar(0)}<span role="status" style="position: relative; font-size: 13px; white-space: nowrap;"><span style="font-weight: 700;">{{learned}}</span>/{{total}}${learnPlus}</span>${chip ? '</div>' : ''}</div>`;
+const learnTopPhone = back => `<div style="display: flex; align-items: center; gap: 12px;"><a href="${back}" aria-label="Stop for now" style="width: 44px; height: 44px; flex-shrink: 0; border-radius: 22px; background: {{k.chip}}; display: flex; align-items: center; justify-content: center;">${svg(I.close, 18, 2)}</a>${learnBar(0)}<span role="status" style="position: relative; font-size: 13px; white-space: nowrap;"><span style="font-weight: 700;">{{learned}}</span>/{{total}}${learnPlus}</span></div>`;
 const quizSeg = list => `<div role="group" style="display: flex; padding: 4px; border-radius: 999px; background: {{t.surf}};"><sc-for list="{{${list}}}" as="o" hint-placeholder-count="4"><button type="button" onClick="{{o.pick}}" aria-pressed="{{o.pressed}}" style="flex: 1 1 0; min-width: 0; height: 38px; padding: 0 6px; border: 0; border-radius: 999px; background: {{o.bg}}; color: {{o.fg}}; box-shadow: {{o.sh}}; font: inherit; font-size: 13px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: pointer;">{{o.label}}</button></sc-for></div>`;
 const quizField = (label, body) => `<div style="display: flex; flex-direction: column; gap: 8px;"><span style="font-size: 13px; font-weight: 600;">${label}</span>${body}</div>`;
 const quizBtn = (label, href, inv, grow, icon = '', click = '') => `<a href="${href}"${click ? ` onClick="{{${click}}}"` : ''} style="flex-grow: ${grow}; height: 52px; border-radius: 999px; background: ${inv ? '{{t.inv}}' : '{{t.surf}}'}; color: ${inv ? '{{t.invText}}' : '{{t.text}}'}; display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 15px; font-weight: 600;">${icon ? svg(I[icon], 16, 2) : ''}${label}</a>`;
@@ -2610,7 +2884,6 @@ const skyLayer = phone => `<div aria-hidden="true" class="sc-demo" style="positi
 const SKY_CSS = '@keyframes scCloud{from{transform:translateX(-28px)}to{transform:translateX(28px)}}@media (prefers-reduced-motion:reduce){.sc-cloud{animation:none!important}}';
 // Learn mode's sky: only the faint blue fade, with no clouds or glow (the owner: "remove the clouds, i only want the
 // faint blue fade", V75). A night sky in dark mode.
-const skyFade = (phone, opacity = 1) => `<div aria-hidden="true" style="position: absolute; left: 0; right: 0; top: 0; height: ${phone ? 600 : 700}px; z-index: -1; pointer-events: none; background: linear-gradient(180deg, {{sky.top}} 0%, {{sky.mid}} 30%, {{sky.low}} 55%, {{t.bg}} 100%);${opacity < 1 ? ' opacity: ' + opacity : ''}"></div>`;
 // The sky's colors, for renderVals: daylight, or a night sky in dark mode (the landing page's top, Learn mode's end).
 const SKY = `(this.props.dark ? { top: '#081733', mid: '#0D2148', low: '#0A1530', glow: 'rgba(120,150,255,.16)', cloud: 'rgba(150,170,230,.10)' }
     : { top: '#86BDF3', mid: '#C9E2FB', low: '#EDF5FE', glow: 'rgba(255,255,255,.75)', cloud: 'rgba(255,255,255,.94)' })`;
@@ -2659,8 +2932,10 @@ renderVals() { ${T}${DB_JS}
     start: e => { if (db.mock) return; if (e && e.preventDefault) e.preventDefault(); if (n) db.act.startLearn(id, set.id, s.kinds); } }; }`;
 // What every question shows: progress and the motion keys.
 const LEARN_VIEW_JS = `${LEARN_K}
+  ${STUDY_BG_JS}
   const L = db.mock ? null : db.learn() || { learned: 0, total: 1, learning: 0, justLearned: 0, n: 0, setName: '' };
-  const view = (learned, total, part, n, just) => ({ k: K, sky: ${SKY}, learned: String(learned), total: String(total), setName: L ? L.setName : 'Exam 1',
+  const bg = studyBg(db.deck(L ? L.deckId : this.props.deckId), !!this.props.dark);
+  const view = (learned, total, part, n, just) => ({ k: K, sky: ${SKY}, bg, learned: String(learned), total: String(total), setName: L ? L.setName : 'Exam 1',
     doneW: learned / total * 100 + '%', partW: part / total * 100 + '%', qAnim: (n % 2 ? 'scQA' : 'scQB') + ' .36s cubic-bezier(.2,.8,.2,1) both',
     plusOne: just > 0, plusAnim: (learned % 2 ? 'scPlusA' : 'scPlusB') + ' 1.1s ease both' });`;
 // A choice question (multiple choice, true or false, fill in the blank): pick, then see why and the card it came from.
@@ -2670,51 +2945,61 @@ const learnMark = `<sc-if value="{{o.plain}}" hint-placeholder-val="{{ true }}">
 const learnOption = (h, r, fs, badge = 40) => `<button type="button" class="sc-opt" onClick="{{o.pick}}" data-key="{{o.key}}" aria-pressed="{{o.pressed}}" style="min-height: ${h}px; box-sizing: border-box; padding: 10px 20px 10px 12px; display: flex; align-items: center; gap: ${badge > 36 ? 16 : 14}px; border: 0; border-radius: ${r}px; background: {{o.bg}}; color: {{o.fg}}; box-shadow: {{o.shadow}}; transform: {{o.tf}}; animation: {{o.anim}}; font: inherit; font-size: ${fs}px; font-weight: 600; text-align: left; cursor: {{o.cursor}}; transition: background-color .25s, color .25s, box-shadow .35s, transform .35s cubic-bezier(.2,.8,.2,1);"><span style="width: ${badge}px; height: ${badge}px; flex-shrink: 0; border-radius: ${badge / 2}px; background: {{o.badge}}; color: {{o.badgeFg}}; display: flex; align-items: center; justify-content: center; font-size: ${badge > 36 ? 16 : 15}px; font-weight: 700; transition: background-color .25s, color .25s;">${learnMark}</span><span style="flex-grow: 1;">{{o.label}}</span></button>`;
 const quizFrom = `<div style="min-width: 0; display: flex; flex-direction: column; gap: 4px; padding: 12px 16px; border-radius: 18px; background: {{k.card}}; box-shadow: {{k.shadow}}; font-size: 13px; line-height: 1.4;"><span style="color: {{k.ink2}};">From your card</span><span style="min-width: 0;">{{cardFront}} <span style="color: {{k.ink2}};">→</span> <span style="font-weight: 700;">{{cardBack}}</span></span></div>`;
 const learnNext = (h, fs) => `<sc-if value="{{isLast}}" hint-placeholder-val="{{ false }}"><a href="{{afterHref}}" style="height: ${h}px; padding: 0 24px; display: flex; align-items: center; justify-content: center; border-radius: 999px; background: {{k.btn}}; color: {{k.btnFg}}; font-size: ${fs}px; font-weight: 600;">Next question</a></sc-if><sc-if value="{{notLast}}" hint-placeholder-val="{{ true }}"><button type="button" onClick="{{next}}" data-key="Enter" style="width: 100%; height: ${h}px; padding: 0 24px; border: 0; border-radius: 999px; background: {{k.btn}}; color: {{k.btnFg}}; font: inherit; font-size: ${fs}px; font-weight: 600; cursor: pointer;">Next question</button></sc-if>`;
+// The canvas's sample explanation for the Learn question.
+const EX_SAMPLE_LEARN = 'It drops. ATP synthase makes ATP only as protons flow back through it, down the gradient the electron transport chain built. A leak lets them slip back another way, so the gradient runs down and far less ATP gets made. Picture a dam with a hole in it: the water still falls, but the turbine barely turns.';
+// After an answer, the AI can explain it, under the line that says why (the same explanation as the card's, V96).
+const learnExplain = fs => `<sc-if value="{{ex.show}}" hint-placeholder-val="{{ false }}"><sc-if value="{{ex.closed}}" hint-placeholder-val="{{ true }}"><button type="button" onClick="{{ex.ask}}" class="sc-press" style="align-self: flex-start; height: 34px; padding: 0 14px 0 12px; display: inline-flex; align-items: center; gap: 6px; border: 0; border-radius: 999px; background: {{k.card}}; box-shadow: {{k.shadow}}; color: {{k.ink}}; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer;">${svg(I.sparkle, 14, 2)}{{ex.label}}</button></sc-if><sc-if value="{{ex.open}}" hint-placeholder-val="{{ false }}"><div role="region" aria-label="Explanation" style="box-sizing: border-box; padding: 14px 16px; border-radius: 18px; background: {{k.card}}; box-shadow: {{k.shadow}}; display: flex; flex-direction: column; gap: 6px; animation: scQuizIn .25s cubic-bezier(.2,.8,.2,1) both;">
+    <div style="display: flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 600; color: {{k.ink2}};">${svg(I.sparkle, 13, 2)}<span style="flex-grow: 1;">Explained by AI</span><button type="button" onClick="{{ex.close}}" aria-label="Close the explanation" style="width: 26px; height: 26px; border: 0; border-radius: 13px; background: {{k.track}}; color: {{k.ink}}; display: flex; align-items: center; justify-content: center; cursor: pointer;">${svg(I.close, 10, 2.4)}</button></div>
+    <sc-if value="{{ex.busy}}" hint-placeholder-val="{{ false }}"><span style="font-size: ${fs}px; color: {{k.ink2}};">Thinking…</span></sc-if>
+    <sc-if value="{{ex.hasText}}" hint-placeholder-val="{{ true }}"><span style="font-size: ${fs}px; line-height: 1.5;">{{ex.text}}</span></sc-if>
+    <sc-if value="{{ex.hasError}}" hint-placeholder-val="{{ false }}"><span style="font-size: 14px; line-height: 1.4; color: {{t.again}};">{{ex.error}}</span><sc-if value="{{ex.goPro}}" hint-placeholder-val="{{ false }}"><a href="{{ex.proHref}}" style="align-self: flex-start; height: 34px; padding: 0 16px; display: inline-flex; align-items: center; border-radius: 999px; background: {{k.btn}}; color: {{k.btnFg}}; font-size: 13px; font-weight: 600;">Go Pro</a></sc-if></sc-if>
+    <sc-if value="{{ex.hasNote}}" hint-placeholder-val="{{ false }}"><span style="font-size: 12px; color: {{k.ink2}};">{{ex.note}}</span></sc-if>
+  </div></sc-if></sc-if>`;
 const learnWhy = (fs = 17) => `<div style="font-size: ${fs}px; line-height: 1.5;"><span style="font-weight: 700; color: {{verdictColor}};">{{verdict}}</span> {{why}}</div>`;
 const learnImage = h => `<sc-if value="{{hasImage}}" hint-placeholder-val="{{ false }}"><img src="{{image}}" alt="" style="align-self: flex-start; max-width: 100%; max-height: ${h}px; border-radius: 18px; background: {{t.surf}};"></sc-if>`;
 const learnClaim = fs => `<sc-if value="{{hasClaim}}" hint-placeholder-val="{{ false }}"><div style="padding: 16px 20px; border-radius: 20px; background: {{k.card}}; box-shadow: {{k.shadow}}; font-size: ${fs}px; font-weight: 700; line-height: 1.35;">{{claim}}</div></sc-if>`;
-const webQuizOf = (bg, panel = false) => `<div style="position: relative; isolation: isolate; width: 1440px; height: 900px; box-sizing: border-box; display: flex; flex-direction: column; overflow: hidden; font-family: ${FONT}; background: {{t.bg}}; color: {{k.ink}};">
+const webQuizOf = bg => `<div style="position: relative; isolation: isolate; width: 1440px; height: 900px; box-sizing: border-box; display: flex; flex-direction: column; overflow: hidden; font-family: ${FONT}; background: {{t.bg}}; color: {{k.ink}};">
   ${bg}
-  ${learnTop('WebDeck.dc.html', panel)}
-  <main style="flex-grow: 1; display: flex; flex-direction: column; align-items: center; justify-content: ${panel ? 'flex-start; padding-top: 56px' : 'center'};">
-    <div class="sc-q" style="width: 720px; display: flex; flex-direction: column; gap: 22px; animation: {{qAnim}};${panel ? LEARN_PANEL(false) : ''}">
+  ${learnTop('WebDeck.dc.html')}
+  <main style="flex-grow: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;">
+    <div class="sc-q" style="width: 720px; display: flex; flex-direction: column; gap: 22px; animation: {{qAnim}};">
       <h1 style="margin: 0; font-size: 36px; font-weight: 700; line-height: 1.15; letter-spacing: -.03em; text-wrap: pretty;">{{question}}</h1>
       ${learnImage(240)}${learnClaim(20)}
       <div style="display: flex; flex-direction: column; gap: 12px;"><sc-for list="{{options}}" as="o" hint-placeholder-count="4">${learnOption(64, 22, 18)}</sc-for></div>
-      <div style="min-height: ${panel ? 0 : 150}px;"><sc-if value="{{answered}}" hint-placeholder-val="{{ false }}"><div class="sc-quiz-in" style="display: flex; flex-direction: column; gap: 14px; animation: scQuizIn .3s cubic-bezier(.2,.8,.2,1) both;">
+      <div style="min-height: 150px;"><sc-if value="{{answered}}" hint-placeholder-val="{{ false }}"><div class="sc-quiz-in" style="display: flex; flex-direction: column; gap: 14px; animation: scQuizIn .3s cubic-bezier(.2,.8,.2,1) both;">
         ${learnWhy()}
+        ${learnExplain(16)}
         <div style="display: flex; align-items: flex-end; justify-content: space-between; gap: 20px;">${quizFrom}<div style="flex-shrink: 0; width: 180px;">${learnNext(52, 15)}</div></div>
       </div></sc-if></div>
     </div>
   </main>
 </div>`;
-// The card a question can sit on, like a window over a picture (the sunset idea); its colors come from `k`.
-const LEARN_PANEL = phone => ` box-sizing: content-box; padding: ${phone ? '14px 14px 16px; gap: 12px' : '40px 44px 36px'}; border-radius: ${phone ? 26 : 30}px; background: {{k.panel}}; box-shadow: {{k.panelShadow}};`;
-const webQuiz = webQuizOf(skyFade(false));
-const phoneQuizOf = (bg, panel = false) => `<div style="position: relative; isolation: isolate; width: 390px; height: 844px; box-sizing: border-box; padding: 60px 16px 34px; display: flex; flex-direction: column; gap: ${panel ? 12 : 18}px; overflow: hidden; font-family: ${FONT}; background: {{t.bg}}; color: {{k.ink}};">
+const webQuiz = webQuizOf(studyBgLayer);
+const phoneQuizOf = bg => `<div style="position: relative; isolation: isolate; width: 390px; height: 844px; box-sizing: border-box; padding: 60px 16px 34px; display: flex; flex-direction: column; gap: 18px; overflow: hidden; font-family: ${FONT}; background: {{t.bg}}; color: {{k.ink}};">
   ${bg}
-  ${learnTopPhone('PhoneDeck.dc.html', panel)}
-  <div class="sc-q" style="display: flex; flex-direction: column; gap: 16px; animation: {{qAnim}};${panel ? LEARN_PANEL(true) : ''}">
-    <div style="display: flex; flex-direction: column; gap: 10px; padding: ${panel ? 2 : 8}px 4px 0;"><div style="font-size: 24px; font-weight: 700; line-height: 1.2; letter-spacing: -.025em; text-wrap: pretty;">{{question}}</div>${learnImage(180)}${learnClaim(18)}</div>
+  ${learnTopPhone('PhoneDeck.dc.html')}
+  <div class="sc-q" style="display: flex; flex-direction: column; gap: 16px; animation: {{qAnim}};">
+    <div style="display: flex; flex-direction: column; gap: 10px; padding: 8px 4px 0;"><div style="font-size: 24px; font-weight: 700; line-height: 1.2; letter-spacing: -.025em; text-wrap: pretty;">{{question}}</div>${learnImage(180)}${learnClaim(18)}</div>
     <div style="display: flex; flex-direction: column; gap: 8px;"><sc-for list="{{options}}" as="o" hint-placeholder-count="4">${learnOption(54, 20, 16, 34)}</sc-for></div>
-    <sc-if value="{{answered}}" hint-placeholder-val="{{ false }}"><div class="sc-quiz-in" style="display: flex; flex-direction: column; gap: 12px; padding: 0 4px; animation: scQuizIn .3s cubic-bezier(.2,.8,.2,1) both;">${learnWhy(16)}${quizFrom}</div></sc-if>
+    <sc-if value="{{answered}}" hint-placeholder-val="{{ false }}"><div class="sc-quiz-in" style="display: flex; flex-direction: column; gap: 12px; padding: 0 4px; animation: scQuizIn .3s cubic-bezier(.2,.8,.2,1) both;">${learnWhy(16)}${learnExplain(15)}${quizFrom}</div></sc-if>
   </div>
   <div style="flex-grow: 1;"></div>
   <sc-if value="{{answered}}" hint-placeholder-val="{{ false }}"><div style="display: flex; flex-direction: column;">${learnNext(56, 17)}</div></sc-if>
 </div>`;
-// The owner made this one's sky half as strong by hand on the canvas (V87).
-const phoneQuiz = phoneQuizOf(skyFade(true, 0.5));
+const phoneQuiz = phoneQuizOf(studyBgLayer);
 const QUIZ_LOGIC = phone => `
 constructor(props) { super(props); this.state = { i: 0, pick: props && props.answered ? 1 : null, gained: 0 }; }
 renderVals() { ${T}${DB_JS}
   ${LEARN_VIEW_JS}
+  ${EXPLAIN_JS}
   let q, pick, streak, learnedNow, why, v, n, choose, next, last;
   if (L) {
     // The app: the session's current question (web/db.js).
-    q = { kind: L.kind, q: L.text, claim: L.claim, options: L.options || [], right: L.right, card: [L.text, L.answer] };
+    q = { kind: L.kind, q: L.text, claim: L.claim, options: L.options || [], right: L.right, card: [L.cardText || L.text, L.answer] };
     pick = L.pick; streak = L.streak; learnedNow = L.learnedNow; n = L.n; last = false;
-    const ok = pick === q.right, note = L.note ? ' ' + L.note : '';
-    why = pick == null ? '' : ok ? (learnedNow ? 'Two right in a row.' + note : 'Get it right once more, asked another way, and it’s learned.' + note) : 'The answer is “' + L.answer + '”.' + note + ' This card comes back in a few questions.';
+    // A question the learner's AI wrote brings its own why.
+    const ok = pick === q.right, note = L.why ? ' ' + L.why : L.note ? ' ' + L.note : '';
+    why = pick == null ? '' : ok ? (learnedNow ? 'Two right in a row.' + note : 'Get it right once more, asked another way, and it’s learned.' + note) : 'The answer is “' + (L.aiAnswer || L.answer) + '”.' + note + ' This card comes back in a few questions.';
     v = view(L.learned, L.total, L.learning, n, L.justLearned);
     choose = j => db.act.learnAnswer(j); next = () => db.act.learnNext();
   } else {
@@ -2729,7 +3014,8 @@ renderVals() { ${T}${DB_JS}
     next = () => this.setState({ i: Math.min(Q.length - 1, s.i + 1), pick: null });
   }
   const done = pick != null, ok = pick === q.right;
-  return { t, dark: !!this.props.dark, ...v, kind: q.kind, question: q.q, hasClaim: !!q.claim, claim: q.claim || '', hasImage: !!(L && L.image), image: L ? L.image : '',
+  const ex = explainView(L && L.ex, L ? L.id : 'q' + (this.state.i || 0), q.q, done, ${JSON.stringify(EX_SAMPLE_LEARN)});
+  return { t, ex, dark: !!this.props.dark, ...v, kind: q.kind, question: q.q, hasClaim: !!q.claim, claim: q.claim || '', hasImage: !!(L && L.image), image: L ? L.image : '',
     options: q.options.map((label, j) => {
       const right = done && j === q.right, wrong = done && j === pick && j !== q.right, other = done && !right && !wrong;
       return { label, key: String(j + 1), pressed: j === pick ? 'true' : 'false', plain: !right && !wrong, isRight: right, isWrong: wrong,
@@ -2743,7 +3029,7 @@ renderVals() { ${T}${DB_JS}
 const matchTile = (h, fs) => `<button type="button" onClick="{{m.pick}}" aria-pressed="{{m.pressed}}" class="sc-shake" style="min-height: ${h}px; box-sizing: border-box; padding: 10px 16px; display: flex; align-items: center; justify-content: space-between; gap: 10px; border: 0; border-radius: 18px; background: {{m.bg}}; color: {{m.fg}}; box-shadow: {{m.ring}}; opacity: {{m.op}}; transform: {{m.tf}}; animation: {{m.anim}}; font: inherit; font-size: ${fs}px; font-weight: 600; line-height: 1.3; text-align: left; cursor: {{m.cursor}}; transition: background-color .2s, opacity .3s, box-shadow .25s, transform .3s cubic-bezier(.2,.8,.2,1);"><span>{{m.label}}</span><sc-if value="{{m.check}}" hint-placeholder-val="{{ false }}"><span class="sc-tick" style="display: flex; color: {{k.check}};">${svg(I.check, 16, 2.6)}</span></sc-if></button>`;
 const matchCols = (h, fs, gap) => `<div style="display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr); gap: ${gap}px;"><div style="display: flex; flex-direction: column; gap: ${gap}px;"><sc-for list="{{left}}" as="m" hint-placeholder-count="5">${matchTile(h, fs)}</sc-for></div><div style="display: flex; flex-direction: column; gap: ${gap}px;"><sc-for list="{{right}}" as="m" hint-placeholder-count="5">${matchTile(h, fs)}</sc-for></div></div>`;
 const webQuizMatch = `<div style="position: relative; isolation: isolate; width: 1440px; height: 900px; box-sizing: border-box; display: flex; flex-direction: column; overflow: hidden; font-family: ${FONT}; background: {{t.bg}}; color: {{k.ink}};">
-  ${skyFade(false)}
+  ${studyBgLayer}
   ${learnTop('WebDeck.dc.html')}
   <main style="flex-grow: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;">
     <div class="sc-q" style="width: 760px; display: flex; flex-direction: column; gap: 20px; animation: {{qAnim}};">
@@ -2754,7 +3040,7 @@ const webQuizMatch = `<div style="position: relative; isolation: isolate; width:
   </main>
 </div>`;
 const phoneQuizMatch = `<div style="position: relative; isolation: isolate; width: 390px; height: 844px; box-sizing: border-box; padding: 60px 16px 34px; display: flex; flex-direction: column; gap: 18px; overflow: hidden; font-family: ${FONT}; background: {{t.bg}}; color: {{k.ink}};">
-  ${skyFade(true)}
+  ${studyBgLayer}
   ${learnTopPhone('PhoneDeck.dc.html')}
   <div class="sc-q" style="display: flex; flex-direction: column; gap: 18px; animation: {{qAnim}};">
     <div style="display: flex; flex-direction: column; gap: 10px; padding: 8px 4px 0;"><div style="font-size: 24px; font-weight: 700; line-height: 1.2; letter-spacing: -.025em;">{{question}}</div></div>
@@ -2796,7 +3082,7 @@ renderVals() { ${T}${DB_JS}
 const typeRow = (h, fs) => `<div style="display: flex; gap: 10px;"><input type="text" value="{{typed}}" onChange="{{setTyped}}" onKeyDown="{{typedKey}}" ref="{{focusIn}}" placeholder="Type your answer" aria-label="Your answer" autocomplete="off" autocapitalize="off" spellcheck="false" style="flex-grow: 1; min-width: 0; height: ${h}px; box-sizing: border-box; padding: 0 20px; border: 0; outline: 0; border-radius: 20px; background: {{inputBg}}; box-shadow: {{inputRing}}; color: {{inputFg}}; font: inherit; font-size: ${fs}px; font-weight: 600; transform: {{inputTf}}; animation: {{inputAnim}}; transition: background-color .2s, box-shadow .25s, transform .3s cubic-bezier(.2,.8,.2,1);"><sc-if value="{{notChecked}}" hint-placeholder-val="{{ false }}"><button type="button" onClick="{{check}}" style="height: ${h}px; padding: 0 26px; border: 0; border-radius: 999px; background: {{k.btn}}; color: {{k.btnFg}}; font: inherit; font-size: 15px; font-weight: 600; cursor: pointer;">Check</button></sc-if></div>`;
 const typeOverride = `<sc-if value="{{canOverride}}" hint-placeholder-val="{{ false }}"><button type="button" onClick="{{override}}" style="align-self: flex-start; height: 36px; padding: 0 14px; border: 0; border-radius: 999px; background: {{k.card}}; box-shadow: {{k.shadow}}; color: {{k.ink}}; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer;">I was right</button></sc-if>`;
 const webQuizType = `<div style="position: relative; isolation: isolate; width: 1440px; height: 900px; box-sizing: border-box; display: flex; flex-direction: column; overflow: hidden; font-family: ${FONT}; background: {{t.bg}}; color: {{k.ink}};">
-  ${skyFade(false)}
+  ${studyBgLayer}
   ${learnTop('WebDeck.dc.html')}
   <main style="flex-grow: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;">
     <div class="sc-q" style="width: 720px; display: flex; flex-direction: column; gap: 20px; animation: {{qAnim}};">
@@ -2805,20 +3091,20 @@ const webQuizType = `<div style="position: relative; isolation: isolate; width: 
       ${typeRow(64, 18)}
       <span style="font-size: 13px; color: {{k.ink2}};">Close spelling counts.</span>
       <div style="min-height: 150px;"><sc-if value="{{checked}}" hint-placeholder-val="{{ true }}"><div class="sc-quiz-in" style="display: flex; flex-direction: column; gap: 14px; animation: scQuizIn .3s cubic-bezier(.2,.8,.2,1) both;">
-        ${learnWhy()}${typeOverride}
+        ${learnWhy()}${typeOverride}${learnExplain(16)}
         <div style="display: flex; align-items: flex-end; justify-content: space-between; gap: 20px;">${quizFrom}<div style="flex-shrink: 0; width: 180px;">${learnNext(52, 15)}</div></div>
       </div></sc-if></div>
     </div>
   </main>
 </div>`;
 const phoneQuizType = `<div style="position: relative; isolation: isolate; width: 390px; height: 844px; box-sizing: border-box; padding: 60px 16px 34px; display: flex; flex-direction: column; gap: 16px; overflow: hidden; font-family: ${FONT}; background: {{t.bg}}; color: {{k.ink}};">
-  ${skyFade(true)}
+  ${studyBgLayer}
   ${learnTopPhone('PhoneDeck.dc.html')}
   <div class="sc-q" style="display: flex; flex-direction: column; gap: 16px; animation: {{qAnim}};">
     <div style="display: flex; flex-direction: column; gap: 10px; padding: 8px 4px 0;"><div style="font-size: 24px; font-weight: 700; line-height: 1.2; letter-spacing: -.025em;">{{question}}</div>${learnImage(180)}</div>
     ${typeRow(56, 16)}
     <span style="padding: 0 4px; font-size: 13px; color: {{k.ink2}};">Close spelling counts.</span>
-    <sc-if value="{{checked}}" hint-placeholder-val="{{ true }}"><div class="sc-quiz-in" style="display: flex; flex-direction: column; gap: 12px; padding: 0 4px; animation: scQuizIn .3s cubic-bezier(.2,.8,.2,1) both;">${learnWhy(16)}${typeOverride}${quizFrom}</div></sc-if>
+    <sc-if value="{{checked}}" hint-placeholder-val="{{ true }}"><div class="sc-quiz-in" style="display: flex; flex-direction: column; gap: 12px; padding: 0 4px; animation: scQuizIn .3s cubic-bezier(.2,.8,.2,1) both;">${learnWhy(16)}${typeOverride}${learnExplain(15)}${quizFrom}</div></sc-if>
   </div>
   <div style="flex-grow: 1;"></div>
   <sc-if value="{{checked}}" hint-placeholder-val="{{ true }}"><div style="display: flex; flex-direction: column;">${learnNext(56, 17)}</div></sc-if>
@@ -2827,6 +3113,7 @@ const TYPE_LOGIC = phone => `
 constructor(props) { super(props); this.state = { typed: 'golgi body', checked: true, qid: null }; }
 renderVals() { ${T}${DB_JS}
   ${LEARN_VIEW_JS}
+  ${EXPLAIN_JS}
   let typed, checked, ok, question, answer, why, v, check, override, next, last, learnedNow;
   if (L) {
     // A new question clears what you typed for the last one.
@@ -2844,7 +3131,8 @@ renderVals() { ${T}${DB_JS}
     check = () => { if ((this.state.typed || '').trim()) this.setState({ checked: true }); }; override = () => this.setState({ typed: 'Golgi apparatus' }); next = () => {};
     v = view(learnedNow ? 19 : 18, 40, 9, 2, learnedNow ? 1 : 0);
   }
-  return { t, dark: !!this.props.dark, ...v, kind: 'Type the answer', question, hasImage: !!(L && L.image), image: L ? L.image : '', 
+  const ex = explainView(L && L.ex, L ? L.id : 'typeq', question, checked, ${JSON.stringify("The Golgi apparatus takes proteins from the rough ER, finishes them with sugar tags, and ships them out in little bubbles called vesicles. Think of it as the cell’s post office: sort, label, send.")});
+  return { t, ex, dark: !!this.props.dark, ...v, kind: 'Type the answer', question, hasImage: !!(L && L.image), image: L ? L.image : '', 
     typed, checked, notChecked: !checked, canOverride: checked && !ok, check, override, next,
     setTyped: e => { const x = e && e.target ? e.target.value : ''; if (L) this.state.typed = x; else this.setState({ typed: x, checked: false }); },
     typedKey: e => { if (e && e.key === 'Enter' && !checked) { if (e.preventDefault) e.preventDefault(); check(); } },
@@ -2860,7 +3148,7 @@ const learnRing = (size, stroke) => { const r = (size - stroke) / 2, c = size / 
 const learnTries = `<sc-if value="{{hasTries}}" hint-placeholder-val="{{ true }}"><div style="width: 100%; display: flex; flex-direction: column; gap: 10px; text-align: left;"><span style="font-size: 15px; font-weight: 600;">Took the most tries</span><sc-for list="{{tries}}" as="m" hint-placeholder-count="2"><div style="box-sizing: border-box; padding: 14px 16px; border-radius: 18px; background: {{t.surf}}; display: flex; align-items: center; justify-content: space-between; gap: 12px;"><span style="min-width: 0; font-size: 15px; line-height: 1.35;">{{m.front}} <span style="color: {{t.muted}};">→</span> <span style="font-weight: 600;">{{m.back}}</span></span><span style="flex-shrink: 0; font-size: 13px; color: {{t.muted}};">{{m.n}}</span></div></sc-for></div></sc-if>`;
 const learnInReviews = `<div style="width: 100%; box-sizing: border-box; padding: 14px 16px; border-radius: 18px; background: {{t.surf}}; display: flex; align-items: center; gap: 12px; text-align: left; font-size: 14px; line-height: 1.45;"><span style="width: 36px; height: 36px; flex-shrink: 0; border-radius: 18px; background: {{t.bg}}; display: flex; align-items: center; justify-content: center;">${svg(I.today, 18, 1.8)}</span>They’re in your reviews now. Lucida brings each card back right before you’d forget it.</div>`;
 const webQuizDone = `<div style="position: relative; isolation: isolate; width: 1440px; height: 900px; box-sizing: border-box; display: flex; align-items: center; justify-content: center; overflow: hidden; font-family: ${FONT}; background: {{t.bg}}; color: {{t.text}};">
-  ${skyFade(false)}
+  ${studyBgLayer}
   <main style="width: 560px; display: flex; flex-direction: column; align-items: center; gap: 24px; text-align: center;">
     ${learnRing(190, 16)}
     <div style="display: flex; flex-direction: column; gap: 8px;"><h1 style="margin: 0; font-size: 32px; font-weight: 600; letter-spacing: -.03em;">{{title}}</h1><div style="font-size: 16px; color: {{t.muted}};">{{summary}}</div></div>
@@ -2870,7 +3158,7 @@ const webQuizDone = `<div style="position: relative; isolation: isolate; width: 
   </main>
 </div>`;
 const phoneQuizDone = `<div style="position: relative; isolation: isolate; width: 390px; height: 844px; box-sizing: border-box; padding: 60px 20px 34px; display: flex; flex-direction: column; align-items: center; gap: 20px; text-align: center; overflow: hidden; font-family: ${FONT}; background: {{t.bg}}; color: {{t.text}};">
-  ${skyFade(true)}
+  ${studyBgLayer}
   ${learnRing(156, 14)}
   <div style="display: flex; flex-direction: column; gap: 6px;"><div style="font-size: 28px; font-weight: 700; letter-spacing: -.03em;">{{title}}</div><div style="font-size: 15px; color: {{t.muted}};">{{summaryShort}}</div></div>
   ${learnInReviews}
@@ -2881,7 +3169,8 @@ const phoneQuizDone = `<div style="position: relative; isolation: isolate; width
 const QUIZ_DONE_LOGIC = `renderVals() { ${T}${DB_JS}
   const L = db.mock ? { total: 40, setName: 'Exam 1', minutes: 26, firstPct: 88, tries: [{ front: 'Lysosome', back: 'Breaks down waste', n: '4 tries' }, { front: 'What is the role of the ribosome?', back: 'Translates mRNA into protein', n: '3 tries' }] }
     : db.learn() || { total: 0, setName: '', minutes: 0, firstPct: 0, tries: [] };
-  return { t, sky: ${SKY}, ring: this.props.dark ? '#8C9AFC' : '#4353E0', total: String(L.total), title: L.total === 1 ? 'You learned it' : 'You learned all ' + L.total + ' cards',
+  ${STUDY_BG_JS}
+  return { t, sky: ${SKY}, bg: studyBg(db.deck(db.mock ? 'cell' : (db.learn() || {}).deckId || this.props.deckId), !!this.props.dark), ring: this.props.dark ? '#8C9AFC' : '#4353E0', total: String(L.total), title: L.total === 1 ? 'You learned it' : 'You learned all ' + L.total + ' cards',
     summary: L.setName + ' · ' + L.minutes + ' minute' + (L.minutes === 1 ? '' : 's') + ' · ' + L.firstPct + '% right the first time', summaryShort: L.setName + ' · ' + L.minutes + ' min · ' + L.firstPct + '% first time',
     hasTries: L.tries.length > 0, tries: L.tries }; }`;
 
@@ -2970,8 +3259,12 @@ const PHONE_K = 150 / 264;
 // The wall on sign-in drifts over near-black, edge to edge, in light and dark mode alike.
 const signPanel = (style, wall) => `<div style="position: relative; overflow: hidden; background: linear-gradient(180deg, #12141C 0%, #0B0C12 55%, #060709 100%); ${style}">${cardWall(wall)}</div>`;
 // The sign-in column: the form in the very middle (the logo sits in the corner, apart from it).
+// The owner: "allow users to go back to landing page from the sign in page". The logo and a quiet link both go to
+// lucida.cards.
+const HOME = 'https://lucida.cards';
 const signCol = inner => `<section style="position: relative; width: 560px; flex-shrink: 0; box-sizing: border-box; padding: 32px 40px; display: flex; flex-direction: column; justify-content: center;">
-    <div style="position: absolute; top: 32px; left: 40px;">${logo()}</div>
+    <a href="${HOME}" aria-label="Lucida home" style="position: absolute; top: 32px; left: 40px;">${logo()}</a>
+    <a href="${HOME}" style="position: absolute; top: 34px; right: 40px; display: inline-flex; align-items: center; gap: 4px; font-size: 14px; color: {{t.muted}};">${svg(I.back, 16, 2)}Back to home</a>
     <div style="width: 360px; margin: 0 auto; display: flex; flex-direction: column; gap: 24px;">${inner}</div>
   </section>`;
 const webSignRoot = inner => `<div style="width: 1440px; height: 900px; box-sizing: border-box; display: flex; font-family: ${FONT}; background: {{t.bg}}; color: {{t.text}}; overflow: hidden;">
@@ -2994,7 +3287,8 @@ const signPhoneRoot = inner => `<div style="position: relative; width: 390px; he
 ${inner}
 </div>`;
 // The wall takes only the height the form leaves (at least 120px), so sign-in fits a phone's screen without scrolling.
-const phoneSignIn = signPhoneRoot(`${signPanel('flex: 1 1 0; min-height: 120px;', { cols: 4, w: 150, h: 100, gap: 10, r: 16, tilt: -14, k: PHONE_K })}
+const phoneSignIn = signPhoneRoot(`<a href="${HOME}" style="position: absolute; top: 56px; left: 16px; z-index: 2; height: 36px; box-sizing: border-box; padding: 0 14px 0 10px; border-radius: 18px; background: rgba(255,255,255,.88); -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); box-shadow: 0 4px 14px rgba(0,0,0,.18); color: #111111; display: inline-flex; align-items: center; gap: 4px; font-size: 14px; font-weight: 600;">${svg(I.back, 16, 2.2)}Home</a>
+  ${signPanel('flex: 1 1 0; min-height: 120px;', { cols: 4, w: 150, h: 100, gap: 10, r: 16, tilt: -14, k: PHONE_K })}
   <div style="flex-shrink: 0; box-sizing: border-box; padding: 22px 20px 34px; display: flex; flex-direction: column; gap: 10px;">
     <h1 style="margin: 0 0 8px; font-size: 28px; font-weight: 700; letter-spacing: -.03em; text-align: center;">Sign in to Lucida</h1>
     ${authBtn('Continue with Apple', APPLE_LOGO, 'PhoneToday.dc.html', 50, 'apple')}${authBtn('Continue with Google', G_LOGO, 'PhoneToday.dc.html', 50, 'google')}
@@ -3245,7 +3539,6 @@ const LIVE_VIVID = ['Live answer 9', 'Live answer 86', 'Live answer 34', 'Live a
 const LIVE_SUN = (mid, low) => `linear-gradient(180deg, #FFE08A 0%, #FFF0C2 ${mid}%, #FFF9E8 ${low}%, #FFFFFF 100%)`;
 // The daylight sky (the landing page's, SKY, in daylight), fading to white. `mid` and `low` place its paler bands, in %.
 const liveSky = (mid, low) => `linear-gradient(180deg, #86BDF3 0%, #C9E2FB ${mid}%, #EDF5FE ${low}%, #FFFFFF 100%)`;
-const LIVE_SKY = liveSky(45, 75);
 // On white, chips are a faint navy instead of glass.
 const LIVE_TINT = 'rgba(13,21,66,.06)';
 // Players' circles: flat colors dark enough for a white initial.
@@ -3280,7 +3573,7 @@ const liveTop = (right, chip = LV.chip) => `<header style="height: 96px; flex-sh
     ${right}
   </header>`;
 const liveFoot = `<footer style="height: 56px; flex-shrink: 0; box-sizing: border-box; padding: 0 48px; display: flex; align-items: center; justify-content: space-between; font-size: 15px; color: ${LV.ink2};"><span>Join at <span style="font-weight: 700; color: ${LV.navy};">lucida.cards/join</span> with <span style="font-weight: 700; color: ${LV.navy}; letter-spacing: .06em;">482 913</span></span><span>{{peopleN}} people</span></footer>`;
-const liveRoot = (w, h, extra = '') => `class="sc-live" style="position: relative; width: ${w}px; height: ${h}px; box-sizing: border-box; font-family: ${FONT}; background: ${LV.blue}; color: ${LV.navy}; overflow: hidden; ${extra}"`;
+const liveRoot = (w, h, extra = '') => `class="sc-live" style="position: relative; isolation: isolate; width: ${w}px; height: ${h}px; box-sizing: border-box; font-family: ${FONT}; background: ${LV.blue}; color: ${LV.navy}; overflow: hidden; ${extra}"`;
 // An answer on the big screen: a tile in its vivid gradient, with its shape and words. After the reveal, the right one
 // rises and hovers above the rest with a green check (V77: no tilt); the others keep their gradients, grayed out (V76). Each shows how many picked it. `liveDeep` is the color under a tile (the phones' too).
 const liveDeep = i => `<span aria-hidden="true" style="position: absolute; inset: 0; background: {{o${i}.p.base}}; filter: {{o${i}.gfilter}}; transition: filter .35s;">${flowLayer(`o${i}.p`)}</span>${GRAIN_LAYER}`;
@@ -3288,6 +3581,7 @@ const liveTile = i => `<div style="position: relative; overflow: hidden; height:
 const liveTiles = `<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">${[0, 1, 2, 3].map(liveTile).join('')}</div>`;
 // The question, on white (the owner asked to go back to it, V74), so the deep gradient answers stand out.
 const liveQuestion = `<div ${liveRoot(1440, 900, 'display: flex; flex-direction: column; background: #FFFFFF;')}>
+  ${studyBgLayer}
   ${liveTop(`<div style="display: flex; align-items: center; gap: 20px;"><span style="font-size: 15px; color: ${LV.ink2};"><span style="font-weight: 700; color: ${LV.navy};">9</span> of 12 answered</span>${liveTimer(76, 7, LIVE_TINT)}</div>`, LIVE_TINT)}
   <main style="flex-grow: 1; box-sizing: border-box; padding: 8px 48px 24px; display: flex; flex-direction: column; justify-content: center; gap: 40px;">
     <h1 style="margin: 0; text-align: center; font-size: 60px; font-weight: 700; line-height: 1.08; letter-spacing: -.035em; text-wrap: balance;">{{q.q}}</h1>
@@ -3298,6 +3592,7 @@ const liveQuestion = `<div ${liveRoot(1440, 900, 'display: flex; flex-direction:
 // After time's up: the right answer lifts with a check, the rest go gray, and each shows how many picked it. On white,
 // like the question it follows.
 const liveReveal = `<div ${liveRoot(1440, 900, 'display: flex; flex-direction: column; background: #FFFFFF;')}>
+  ${studyBgLayer}
   ${liveTop(`<div style="display: flex; align-items: center; gap: 14px;"><span style="font-size: 15px; color: ${LV.ink2};"><span style="font-weight: 700; color: ${LV.navy};">7 of 12</span> got it</span>${navyBtn(`{{nextLabel}}${svg(I.chev, 16, 2.4)}`, '{{nextHref}}')}</div>`, LIVE_TINT)}
   <main style="flex-grow: 1; box-sizing: border-box; padding: 8px 48px 24px; display: flex; flex-direction: column; justify-content: center; gap: 40px;">
     <h1 style="margin: 0; text-align: center; font-size: 60px; font-weight: 700; line-height: 1.08; letter-spacing: -.035em; text-wrap: balance;">{{q.q}}</h1>
@@ -3307,7 +3602,8 @@ const liveReveal = `<div ${liveRoot(1440, 900, 'display: flex; flex-direction: c
 </div>`;
 // The leaderboard between questions, on the sky's faint blue fade (the owner, V76): the top five on white cards, how far
 // each moved, and purple bars against the leader.
-const liveLeaderboard = `<div ${liveRoot(1440, 900, 'display: flex; flex-direction: column; background: ' + liveSky(42, 70) + ';')}>
+const liveLeaderboard = `<div ${liveRoot(1440, 900, 'display: flex; flex-direction: column; background: #FFFFFF;')}>
+  ${studyBgLayer}
   ${liveTop(navyBtn(`Next question${svg(I.chev, 16, 2.4)}`, 'LiveQuestion.dc.html'))}
   <main style="flex-grow: 1; box-sizing: border-box; padding: 16px 48px 32px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 28px;">
     <h1 style="margin: 0; font-size: 60px; font-weight: 700; letter-spacing: -.035em;">Leaderboard</h1>
@@ -3318,7 +3614,8 @@ const liveLeaderboard = `<div ${liveRoot(1440, 900, 'display: flex; flex-directi
 // The end: a faint yellow fading to white (the owner, V76), with confetti, a flat podium (navy, purple, and blue blocks),
 // and play again.
 const LIVE_PODIUM = [[1, 'Jordan', '8,940', 230, LV.purple, '#FFFFFF'], [0, 'Maya', '9,610', 320, LV.navy, '#FFFFFF'], [2, 'Kai', '8,120', 170, LV.blue, LV.navy]];
-const livePodium = `<div ${liveRoot(1440, 900, 'display: flex; flex-direction: column; align-items: center; background: ' + LIVE_SUN(42, 70) + ';')}>
+const livePodium = `<div ${liveRoot(1440, 900, 'display: flex; flex-direction: column; align-items: center; background: #FFFFFF;')}>
+  ${studyBgLayer}
   <div aria-hidden="true" style="position: absolute; inset: 0; pointer-events: none;">${Array.from({ length: 28 }, (_, i) => { const x = (i * 37) % 100, y = (i * 53) % 55, c = [LV.navy, '#FFB020', LV.blue, '#1FC45A', LV.purple][i % 5], s = 6 + (i % 4) * 3; return `<span style="position: absolute; left: ${x}%; top: ${y}%; width: ${s}px; height: ${s}px; border-radius: ${i % 3 ? '50%' : '2px'}; background: ${c}; animation: scFloat2 ${3 + (i % 3)}s ease-in-out -${i % 4}s infinite;"></span>`; }).join('')}</div>
   <header style="position: relative; width: 100%; height: 96px; box-sizing: border-box; padding: 0 48px; display: flex; align-items: center; justify-content: space-between;">${logo(30)}<span style="font-size: 15px; color: ${LV.ink2};">Cell Biology · final results</span></header>
   <h1 style="position: relative; margin: 8px 0 0; font-size: 60px; font-weight: 700; letter-spacing: -.035em;">Maya wins!</h1>
@@ -3329,7 +3626,8 @@ const livePodium = `<div ${liveRoot(1440, 900, 'display: flex; flex-direction: c
 </div>`;
 // The lobby: on the daylight sky, like before V71 (the owner asked for it back, V74), with the join code big, a QR code,
 // and people popping in as they join.
-const liveLobby = `<div ${liveRoot(1440, 900, 'display: flex; flex-direction: column; background: ' + liveSky(42, 70) + ';')}>
+const liveLobby = `<div ${liveRoot(1440, 900, 'display: flex; flex-direction: column; background: #FFFFFF;')}>
+  ${studyBgLayer}
   <header style="height: 96px; flex-shrink: 0; box-sizing: border-box; padding: 0 48px; display: flex; align-items: center; justify-content: space-between;">${logo(30)}<span style="height: 36px; padding: 0 16px; display: inline-flex; align-items: center; gap: 8px; border-radius: 999px; background: ${LV.chip}; font-size: 14px; font-weight: 600;">${svg(I.live, 16, 2)}Cell Biology</span></header>
   <main style="flex-grow: 1; box-sizing: border-box; padding: 0 48px 48px; display: grid; grid-template-columns: 1fr 380px; gap: 48px; align-items: center;">
     <div style="display: flex; flex-direction: column; gap: 18px;">
@@ -3360,7 +3658,8 @@ const liveSetup = `<div style="position: relative; width: 1440px; height: 900px;
 </div>`;
 // On phones: join with the code and a name, on the daylight sky like the waiting screen after it (the owner asked for
 // it, V74; the same on the web's join page and in the iPhone app once Live is built).
-const liveJoin = `<div ${liveRoot(390, 844, 'padding: 72px 20px 34px; display: flex; flex-direction: column; gap: 28px; background: ' + LIVE_SKY + ';')}>
+const liveJoin = `<div ${liveRoot(390, 844, 'padding: 72px 20px 34px; display: flex; flex-direction: column; gap: 28px; background: #FFFFFF;')}>
+  ${studyBgLayer}
   ${logo(28)}
   <div style="display: flex; flex-direction: column; gap: 10px;"><h1 style="margin: 0; font-size: 36px; font-weight: 700; line-height: 1.08; letter-spacing: -.03em;">Join a live game</h1><span style="font-size: 16px; line-height: 1.45; color: ${LV.ink2};">Type the code on the big screen. No account needed.</span></div>
   <div style="display: flex; flex-direction: column; gap: 8px;"><span style="font-size: 13px; font-weight: 700;">Code</span><label style="position: relative; display: flex; justify-content: space-between; gap: 6px; cursor: text;"><sc-for list="{{boxes}}" as="b" hint-placeholder-count="6"><span style="flex: 0 1 50px; min-width: 0; height: 58px; border-radius: 14px; background: #FFFFFF; box-shadow: ${LV.shadow}; display: flex; align-items: center; justify-content: center; font-size: 24px; font-weight: 700;">{{b.digit}}</span></sc-for><input type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6" value="{{code}}" onChange="{{setCode}}" aria-label="6-digit code" style="position: absolute; inset: 0; width: 100%; opacity: 0; border: 0; padding: 0; font-size: 16px;"></label></div>
@@ -3369,7 +3668,8 @@ const liveJoin = `<div ${liveRoot(390, 844, 'padding: 72px 20px 34px; display: f
   ${navyBtn('Join', 'LiveWaiting.dc.html', 58, 17)}
 </div>`;
 // In, and waiting for the host to start, on the daylight sky it had before V71 (the owner asked for it back).
-const liveWaiting = `<div ${liveRoot(390, 844, 'padding: 64px 24px 40px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 22px; text-align: center; background: ' + LIVE_SKY + ';')}>
+const liveWaiting = `<div ${liveRoot(390, 844, 'padding: 64px 24px 40px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 22px; text-align: center; background: #FFFFFF;')}>
+  ${studyBgLayer}
   <span style="width: 112px; height: 112px; border-radius: 56px; background: ${LV.purple}; color: #FFFFFF; display: flex; align-items: center; justify-content: center; font-size: 48px; font-weight: 700; box-shadow: ${LV.lift}; animation: scFloat2 3s ease-in-out infinite;">M</span>
   <div style="display: flex; flex-direction: column; gap: 8px;"><div style="font-size: 34px; font-weight: 700; letter-spacing: -.03em;">You’re in, Maya!</div><div style="font-size: 16px; line-height: 1.5; color: ${LV.ink2};">Look for your name on the big screen. The game starts soon.</div></div>
   <span style="height: 36px; padding: 0 16px; display: inline-flex; align-items: center; gap: 8px; border-radius: 999px; background: #FFFFFF; font-size: 14px; font-weight: 700;">${svg(I.live, 15, 2)}Cell Biology</span>
@@ -3377,6 +3677,7 @@ const liveWaiting = `<div ${liveRoot(390, 844, 'padding: 64px 24px 40px; display
 // Answering on a phone, on white like the big screen's question (V77): the question in big navy type, then four big
 // tiles with the same gradients and shapes as the big screen. The bar at the top is the time left, in Lucida's purple.
 const liveAnswer = `<div ${liveRoot(390, 844, 'padding: 60px 16px 34px; display: flex; flex-direction: column; gap: 16px; background: #FFFFFF;')}>
+  ${studyBgLayer}
   <div style="display: flex; align-items: center; gap: 12px;"><span style="font-size: 13px; font-weight: 700; color: ${LV.ink2};">3 of 10</span><div style="flex-grow: 1; height: 8px; border-radius: 4px; background: ${LIVE_TINT}; overflow: hidden;"><div style="width: 70%; height: 100%; border-radius: 4px; background: ${LV.purple}; transform-origin: left; animation: scBar 20s linear reverse infinite;"></div></div><span style="font-size: 13px; font-weight: 700; font-variant-numeric: tabular-nums;">14s</span></div>
   <div style="padding: 8px 4px 6px; font-size: 28px; font-weight: 700; line-height: 1.15; letter-spacing: -.025em;">{{q.q}}</div>
   <div style="flex-grow: 1; display: grid; grid-template-rows: repeat(4, minmax(0, 1fr)); gap: 10px;">${[0, 1, 2, 3].map(i => `<button type="button" style="position: relative; overflow: hidden; width: 100%; height: 100%; box-sizing: border-box; padding: 0; border: 0; border-radius: 26px; background: none; color: {{o${i}.fg}}; box-shadow: ${LV.shadow}; font: inherit; text-align: left; cursor: pointer;">${liveDeep(i)}<span style="position: relative; height: 100%; box-sizing: border-box; padding: 0 20px; display: flex; align-items: center; gap: 16px; text-shadow: {{o${i}.ts}};"><span style="width: 48px; height: 48px; flex-shrink: 0; border-radius: 24px; background: {{o${i}.badge}}; box-shadow: {{o${i}.badgeLine}}; display: flex; align-items: center; justify-content: center;">${liveShape(i, 22)}</span><span style="font-size: 21px; font-weight: 700;">{{o${i}.label}}</span></span></button>`).join('')}</div>
@@ -3401,7 +3702,8 @@ const liveResult = `<div ${liveRoot(390, 844, 'padding: 64px 24px 40px; display:
 // else is listed under it, and players without Lucida get a way to make their own cards.
 const LIVE_FINAL_REST = [['Priya', '7,860'], ['Leo', '7,420'], ['Sofia', '6,980'], ['Ethan', '6,540'], ['Ana', '6,110']];
 const LIVE_FINAL_PODIUM = [[1, 'Jordan', '8,940', 88, true, LV.purple, '#FFFFFF'], [0, 'Maya', '9,610', 120, false, LV.navy, '#FFFFFF'], [2, 'Kai', '8,120', 64, false, LV.blue, LV.navy]];
-const liveFinal = `<div ${liveRoot(390, 844, 'padding: 64px 20px 34px; display: flex; flex-direction: column; gap: 18px; background: ' + LIVE_SUN(45, 75) + ';')}>
+const liveFinal = `<div ${liveRoot(390, 844, 'padding: 64px 20px 34px; display: flex; flex-direction: column; gap: 18px; background: #FFFFFF;')}>
+  ${studyBgLayer}
   <div style="display: flex; flex-direction: column; align-items: center; gap: 6px; text-align: center;">
     <span style="font-size: 13px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: ${LV.ink2};">Final results</span>
     <h1 style="margin: 0; font-size: 34px; font-weight: 700; letter-spacing: -.03em;">You placed 2nd!</h1>
@@ -3419,6 +3721,7 @@ const liveFinal = `<div ${liveRoot(390, 844, 'padding: 64px 20px 34px; display: 
 const LIVE_LOGIC = `
 constructor(props) { super(props); this.state = { set: 'tag', count: 10, time: 20 }; }
 renderVals() { ${T}
+  ${STUDY_BG_JS}
   const s = this.state, reveal = !!this.props.reveal, Q = ${JSON.stringify(LIVE_Q)}, total = Q.counts.reduce((a, b) => a + b, 0);
   const seg = (k, cur) => ({ pressed: k === cur ? 'true' : 'false', bg: k === cur ? t.bg : 'transparent', fg: k === cur ? t.text : t.muted, sh: k === cur ? '0 1px 3px rgba(0,0,0,.14)' : 'none' });
   const LV = ${JSON.stringify(LV)}, VIVID = ${JSON.stringify(LIVE_VIVID)}, colors = ${JSON.stringify(LIVE_COLORS)};
@@ -3427,7 +3730,7 @@ renderVals() { ${T}
     return { i, p, label: Q.options[i], count: String(Q.counts[i]), right: lift, showCount: reveal, gfilter: gray ? 'grayscale(1)' : 'none', fg: p.ink, ts: p.shadow,
       badge: p.glass, badgeLine: 'inset 0 0 0 1.5px ' + p.glassLine, shadow: lift ? LV.lift : gray ? 'none' : LV.shadow, tf: lift ? 'translateY(-10px)' : 'none', anim: lift ? '${HOVER(-10, .1)}' : 'none' }; };
   const wrongPick = !!this.props.wrong;
-  return { t, dark: !!this.props.dark, grain: String(this.props.grain ?? 0.7), q: Q, peopleN: '12',
+  return { t, bg: studyBg({ seed: 'Cell Biology', style: 'mix', bg: { kind: 'deck' } }, false), dark: !!this.props.dark, grain: String(this.props.grain ?? 0.7), q: Q, peopleN: '12',
     o0: opt(0), o1: opt(1), o2: opt(2), o3: opt(3), c0: colors[0], c1: colors[2], c2: colors[1],
     nextHref: 'LiveLeaderboard.dc.html', nextLabel: 'Leaderboard',
     people: ${JSON.stringify(LIVE_PEOPLE)}.map((name, i) => ({ name, initial: name[0], color: colors[i % colors.length], delay: (i * .12).toFixed(2) + 's' })),
@@ -3444,21 +3747,6 @@ const LIVE_SETUP_LOGIC = LIVE_LOGIC.replace('  return { t,', '  return { deep: '
 // The phone's final leaderboard also lists everyone from 4th place on (white card, hairlines between rows).
 const LIVE_FINAL_LOGIC = LIVE_LOGIC.replace('    r: wrongPick ? {', `    rest: ${JSON.stringify(LIVE_FINAL_REST)}.map(([name, score], i, all) => ({ rank: String(i + 4), name, initial: name[0], score, color: colors[(i + 3) % colors.length], line: i < all.length - 1 ? 'inset 0 -1px 0 rgba(13,21,66,.08)' : 'none', delay: (.8 + i * .08).toFixed(2) + 's' })),
     r: wrongPick ? {`);
-
-// ---------- Learn mode: an idea (canvas only) ----------
-// The owner picked the sky style for Learn mode and asked to try other backgrounds: faint waves (V82), a white noisy
-// gradient (V83), white silk (V84) and white waves (V86), then a grainy sunset over hills with windows floating on it
-// (V94), then "make it more faint ... remove the mountains and the movement ... just keep the blue and reddish sunset
-// look" (V95). So this is that sunset's sky, washed pale: steel blue at the top through mauve and pink to a coral glow
-// at the bottom, with film grain, standing still. The question and answers sit on a white card, like the windows. At
-// night the page keeps the night sky, with no card.
-const SUNSET_BG = 'radial-gradient(90% 60% at 88% 100%, rgba(238,142,98,.22), rgba(238,142,98,0) 70%), linear-gradient(180deg, #C3D3E3 0%, #D3DBE6 30%, #E6DDE4 52%, #F2DCD8 72%, #F5CFC2 100%)';
-const sunsetBg = phone => `<sc-if value="{{light}}" hint-placeholder-val="{{ true }}"><div aria-hidden="true" style="position: absolute; inset: 0; z-index: -1; overflow: hidden; pointer-events: none; background: ${SUNSET_BG};">${grainSvg('{{grain}}', { blend: 'overlay', freq: 0.85, slope: 3.4, id: 'sc-sunset-grain' })}</div></sc-if><sc-if value="{{dark}}" hint-placeholder-val="{{ false }}">${skyFade(phone)}</sc-if>`;
-// Its logic: the question's, plus the grain, brighter chips, and the card (none at night).
-const SUNSET_LOGIC = phone => QUIZ_LOGIC(phone).replace('renderVals() {', 'baseVals() {') + `
-renderVals() { const v = this.baseVals(), dark = !!this.props.dark;
-  return { ...v, grain: '.6', light: !dark, dark, k: dark ? { ...v.k, panel: 'transparent', panelShadow: 'none' }
-    : { ...v.k, chip: 'rgba(255,255,255,.8)', track: 'rgba(13,21,66,.1)', panel: '#FFFFFF', panelShadow: '0 34px 80px -44px rgba(70,46,72,.45), 0 1px 6px rgba(70,46,72,.07)' } }; }`;
 
 // ---------- Pricing (lucida.cards/pricing) ----------
 // Free keeps every card. Pro ($5.99 a month or $39 a year) is for making Lucida yours: AI quizzes, photo covers and
@@ -3555,15 +3843,18 @@ const files = {
   'Main': ['Web · Today', webToday, { props: { ...DARK, ...MESH('Iris'), caughtUp: { editor: 'boolean', default: false } }, logic: todayLogic, w: W, h: H }],
   'WebNewDeck': ['Web · New deck', webNewDeck, { props: { ...DARK, grain: MESH('Iris').grain }, logic: NEW_DECK_LOGIC, css: NUM_CSS + COVER_FADE_CSS, w: W, h: H }],
   'WebImport': ['Web · Import cards', webImport, { props: { ...DARK, grain: MESH('Iris').grain }, logic: importLogic, w: W, h: H }],
-  'WebDecks': ['Web · Decks', webDecks, { props: { ...DARK, grain: MESH('Iris').grain, view: { editor: 'enum', default: 'Cards', options: ['Cards', 'List'] }, openTags: { editor: 'boolean', default: false }, moreTags: { editor: 'boolean', default: false } }, logic: decksLogic, w: W, h: H }],
-  'WebDecksTags': ['Web · Decks · a deck with 11 tags (+9 shows them all)', attrOf('WebDecks', W, H, 'open-tags="{{yes}}"'), { logic: darkLogic, w: W, h: H }],
-  'WebDecksMoreTags': ['Web · Decks · More (find any tag)', attrOf('WebDecks', W, H, 'more-tags="{{yes}}"'), { logic: darkLogic, w: W, h: H }],
-  'WebDecksList': ['Web · Decks · list view', listOf('WebDecks', W, H), { logic: 'renderVals() { return {}; }', w: W, h: H }],
+  'WebDecks': ['Web · Library', webDecks, { props: { ...DARK, grain: MESH('Iris').grain, mode: LIB_MODE, folder: LIB_FOLDER, view: { editor: 'enum', default: 'Cards', options: ['Cards', 'List'] }, openTags: { editor: 'boolean', default: false }, moreTags: { editor: 'boolean', default: false } }, logic: decksLogic, w: W, h: H }],
+  'WebLibraryCards': ['Web · Library · all cards (filter by tags and difficulty)', attrOf('WebDecks', W, H, 'mode="cards"'), { logic: darkLogic, w: W, h: H }],
+  'WebLibraryFolder': ['Web · Library · a folder', attrOf('WebDecks', W, H, 'folder="f1"'), { logic: darkLogic, w: W, h: H }],
+  'WebLibraryNewFolder': ['Web · Library · new folder, and a deck’s ⋯ menu', attrOf('WebDecks', W, H, 'naming="{{yes}}" move-open="{{yes}}"'), { logic: darkLogic, w: W, h: H }],
+  'WebDecksTags': ['Web · Library · a deck with 11 tags (+9 shows them all)', attrOf('WebDecks', W, H, 'open-tags="{{yes}}"'), { logic: darkLogic, w: W, h: H }],
+  'WebDecksMoreTags': ['Web · Library · More (find any tag)', attrOf('WebDecks', W, H, 'more-tags="{{yes}}"'), { logic: darkLogic, w: W, h: H }],
+  'WebDecksList': ['Web · Library · list view', listOf('WebDecks', W, H), { logic: 'renderVals() { return {}; }', w: W, h: H }],
   'WebSettings': ['Web · Settings', webSettings, { props: { ...DARK, grain: MESH('Iris').grain, photo: { editor: 'enum', default: 'Color', options: ['Color', 'Google photo'] }, plan: { editor: 'enum', default: 'Pro', options: ['Free', 'Pro', 'Pro, ending'] } }, logic: webSettingsLogic, css: NUM_CSS, w: W, h: H }],
   'IconOptions': ['Web · Icon options', iconOptions, { props: DARK, logic: iconOptionsLogic, w: W, h: H }],
   'WebTodayNew': ['Web · Today · new user', webTodayNew, { props: { ...DARK, ...MESH('Iris') }, logic: emptyLogic(), w: W, h: H }],
   'WebTodayCaughtUp': ['Web · Today · all caught up', caughtOf('Main', W, H), { logic: darkLogic, w: W, h: H }],
-  'WebDecksEmpty': ['Web · Decks · no decks yet', webDecksEmpty, { props: { ...DARK, grain: MESH('Iris').grain }, logic: emptyLogic(), w: W, h: H }],
+  'WebDecksEmpty': ['Web · Library · no decks yet', webDecksEmpty, { props: { ...DARK, grain: MESH('Iris').grain }, logic: emptyLogic(), w: W, h: H }],
   'WebDeckEmpty': ['Web · Deck · no cards yet', webDeckEmpty, { props: { ...DARK, grain: MESH('Iris').grain }, logic: emptyLogic('Pharmacology'), w: W, h: H }],
   'WebStatsEmpty': ['Web · Stats · no reviews yet', webStatsEmpty, { props: { ...DARK, grain: MESH('Iris').grain }, logic: emptyLogic(), w: W, h: H }],
   'WebDeck': ['Web · Deck page', webDeck, { props: { ...DARK, grain: MESH('Iris').grain, settingsOpen: { editor: 'boolean', default: false }, settingsTab: { editor: 'enum', default: 'General', options: ['General', 'Studying'] }, tagPicker: { editor: 'boolean', default: false } }, logic: deckLogic, css: NUM_CSS + PARALLAX_CSS, w: W, h: H }],
@@ -3575,7 +3866,7 @@ const files = {
   'WebEditorBlank': ['Web · Card editor · fill in the blank', typeOf('WebEditor', W, H, 'Blank'), { logic: darkLogic, css: RICH_CSS, w: W, h: H }],
   'WebEditorImage': ['Web · Card editor · image', typeOf('WebEditor', W, H, 'Image'), { logic: darkLogic, css: RICH_CSS, w: W, h: H }],
   'WebEditorAudio': ['Web · Card editor · audio', typeOf('WebEditor', W, H, 'Audio'), { logic: darkLogic, css: RICH_CSS, w: W, h: H }],
-  'WebReview': ['Web · Review', webReview, { props: { ...DARK, grading: { editor: 'enum', default: 'Four buttons', options: ['Four buttons', 'Check or X', 'Piles'] }, card: { editor: 'enum', default: 'Basic', options: ['Basic', 'Fill in the blank', 'Image', 'Audio'] }, startRevealed: { editor: 'boolean', default: false }, fsrs: { editor: 'boolean', default: true }, progress: { editor: 'enum', default: 'Bar', options: ['Bar', 'Counts', 'None'] }, settingsOpen: { editor: 'boolean', default: false }, newPileOpen: { editor: 'boolean', default: false }, radius: { editor: 'range', default: 32, min: 12, max: 48, step: 2, unit: 'px' } }, logic: REVIEW_LOGIC(64), css: REVIEW_CSS, w: W, h: H }],
+  'WebReview': ['Web · Review', webReview, { props: { ...DARK, explainOpen: { editor: 'boolean', default: false }, explained: { editor: 'boolean', default: false }, grading: { editor: 'enum', default: 'Four buttons', options: ['Four buttons', 'Check or X', 'Piles'] }, card: { editor: 'enum', default: 'Basic', options: ['Basic', 'Fill in the blank', 'Image', 'Audio'] }, startRevealed: { editor: 'boolean', default: false }, fsrs: { editor: 'boolean', default: true }, progress: { editor: 'enum', default: 'Bar', options: ['Bar', 'Counts', 'None'] }, settingsOpen: { editor: 'boolean', default: false }, newPileOpen: { editor: 'boolean', default: false }, radius: { editor: 'range', default: 32, min: 12, max: 48, step: 2, unit: 'px' } }, logic: REVIEW_LOGIC(64), css: REVIEW_CSS, w: W, h: H }],
   'WebDone': ['Web · Session done', webDone, { props: DARK, logic: doneLogic(300, 22), w: W, h: H }],
   'WebDonePiles': ['Web · Session done · piles', webDonePiles, { props: DARK, logic: donePilesLogic, w: W, h: H }],
   'WebStats': ['Web · Stats', webStats, { props: DARK, logic: statsLogic, w: W, h: H }],
@@ -3584,6 +3875,7 @@ const files = {
   'WebReviewDark': ['Web · Review (dark)', darkOf('WebReview', W, H), { logic: darkLogic, css: REVIEW_CSS, w: W, h: H }],
   'WebReviewFour': ['Web · Review · 4 grades', styleOf('WebReview', W, H, 'Four buttons'), { logic: darkLogic, css: REVIEW_CSS, w: W, h: H }],
   'WebReviewCheck': ['Web · Review · ✓ or ✗', styleOf('WebReview', W, H, 'Check or X'), { logic: darkLogic, css: REVIEW_CSS, w: W, h: H }],
+  'WebReviewExplain': ['Web · Review · Explain (AI explains the answer)', attrOf('WebReview', W, H, 'start-revealed="{{yes}}" explain-open="{{yes}}" explained="{{yes}}"'), { logic: darkLogic, css: REVIEW_CSS, w: W, h: H }],
   'WebReviewSettings': ['Web · Review · settings', settingsOf('WebReview', W, H), { logic: darkLogic, css: REVIEW_CSS, w: W, h: H }],
   'WebReviewPiles': ['Web · Review · Piles', styleOf('WebReview', W, H, 'Piles'), { logic: darkLogic, css: REVIEW_CSS, w: W, h: H }],
   'WebReviewNewPile': ['Web · Review · New pile popup', pileOf('WebReview', W, H), { logic: darkLogic, css: REVIEW_CSS, w: W, h: H }],
@@ -3608,7 +3900,10 @@ const files = {
   'PhoneTodayNew': ['iPhone · Today · new user', phoneTodayNew, { props: { ...DARK, ...MESH('Iris') }, logic: emptyLogic(), w: PW, h: PH }],
   'PhoneTodayCaughtUp': ['iPhone · Today · all caught up', caughtOf('PhoneToday', PW, PH), { logic: darkLogic, w: PW, h: PH }],
   'PhoneDeckEmpty': ['iPhone · Deck · no cards yet', phoneDeckEmpty, { props: { ...DARK, grain: MESH('Iris').grain }, logic: emptyLogic('Pharmacology'), w: PW, h: PH }],
-  'PhoneDecksEmpty': ['iPhone · Decks · no decks yet', phoneDecksEmpty, { props: { ...DARK, grain: MESH('Iris').grain }, logic: emptyLogic(), w: PW, h: PH }],
+  'PhoneDecksEmpty': ['iPhone · Library · no decks yet', phoneDecksEmpty, { props: { ...DARK, grain: MESH('Iris').grain }, logic: emptyLogic(), w: PW, h: PH }],
+  'PhoneLibrary': ['iPhone · Library', phoneLibrary, { props: { ...DARK, grain: MESH('Iris').grain, mode: LIB_MODE, folder: LIB_FOLDER }, logic: libraryLogic(true), w: PW, h: PH }],
+  'PhoneLibraryCards': ['iPhone · Library · all cards', attrOf('PhoneLibrary', PW, PH, 'mode="cards"'), { logic: darkLogic, w: PW, h: PH }],
+  'PhoneLibraryFolder': ['iPhone · Library · a folder', attrOf('PhoneLibrary', PW, PH, 'folder="f1"'), { logic: darkLogic, w: PW, h: PH }],
   'PhoneStatsEmpty': ['iPhone · Stats · no reviews yet', phoneStatsEmpty, { props: { ...DARK, grain: MESH('Iris').grain }, logic: emptyLogic(), w: PW, h: PH }],
   'PhoneNewDeck': ['iPhone · New deck', phoneNewDeck, { props: { ...DARK, grain: MESH('Iris').grain }, logic: NEW_DECK_LOGIC, css: NUM_CSS + COVER_FADE_CSS, w: PW, h: PH }],
   'PhoneInbox': ['iPhone · Check AI cards', phoneInbox, { props: DARK, logic: phoneInboxLogic, css: REVIEW_CSS, w: PW, h: PH }],
@@ -3616,7 +3911,7 @@ const files = {
   'PhoneDeckTagPicker': ['iPhone · Deck settings · Add tag', attrOf('PhoneDeck', PW, PH, 'settings-open="{{yes}}" tag-picker="{{yes}}"'), { logic: darkLogic, css: NUM_CSS, w: PW, h: PH }],
   'PhoneDeckSettingsStudy': ['iPhone · Deck settings · Studying (FSRS)', studyOf('PhoneDeck', PW, PH), { logic: darkLogic, css: NUM_CSS, w: PW, h: PH }],
   'PhoneEditor': ['iPhone · Card editor', phoneEditor, { props: { ...DARK, keyboard: { editor: 'boolean', default: true }, textStyles: { editor: 'boolean', default: false }, cardType: { editor: 'enum', default: 'Basic', options: ['Basic', 'Blank', 'Image', 'Audio'] } }, logic: EDITOR_LOGIC, css: RICH_CSS, w: PW, h: PH }],
-  'PhoneReview': ['iPhone · Review', phoneReview, { props: { ...DARK, grading: { editor: 'enum', default: 'Four buttons', options: ['Four buttons', 'Check or X', 'Piles'] }, card: { editor: 'enum', default: 'Basic', options: ['Basic', 'Fill in the blank', 'Image', 'Audio'] }, startRevealed: { editor: 'boolean', default: false }, fsrs: { editor: 'boolean', default: true }, progress: { editor: 'enum', default: 'Bar', options: ['Bar', 'Counts', 'None'] }, settingsOpen: { editor: 'boolean', default: false }, newPileOpen: { editor: 'boolean', default: false }, radius: { editor: 'range', default: 32, min: 12, max: 48, step: 2, unit: 'px' } }, logic: REVIEW_LOGIC(64), css: REVIEW_CSS, w: PW, h: PH }],
+  'PhoneReview': ['iPhone · Review', phoneReview, { props: { ...DARK, explainOpen: { editor: 'boolean', default: false }, explained: { editor: 'boolean', default: false }, grading: { editor: 'enum', default: 'Four buttons', options: ['Four buttons', 'Check or X', 'Piles'] }, card: { editor: 'enum', default: 'Basic', options: ['Basic', 'Fill in the blank', 'Image', 'Audio'] }, startRevealed: { editor: 'boolean', default: false }, fsrs: { editor: 'boolean', default: true }, progress: { editor: 'enum', default: 'Bar', options: ['Bar', 'Counts', 'None'] }, settingsOpen: { editor: 'boolean', default: false }, newPileOpen: { editor: 'boolean', default: false }, radius: { editor: 'range', default: 32, min: 12, max: 48, step: 2, unit: 'px' } }, logic: REVIEW_LOGIC(64), css: REVIEW_CSS, w: PW, h: PH }],
   'PhoneDone': ['iPhone · Session done', phoneDone, { props: DARK, logic: doneLogic(260, 20), w: PW, h: PH }],
   'PhoneDonePiles': ['iPhone · Session done · piles', phoneDonePiles, { props: DARK, logic: donePilesLogic, w: PW, h: PH }],
   'PhoneSignIn': ['iPhone · Sign in', phoneSignIn, { props: { ...DARK, grain: MESH('Iris').grain }, logic: signInLogic('', [50, 60, 55, 65], PHONE_K), css: WALL_CSS, w: PW, h: PH }],
@@ -3629,8 +3924,6 @@ const files = {
   'WebQuizMatch': ['Web · Learn mode · matching', webQuizMatch, { props: DARK, logic: MATCH_LOGIC(false), css: LEARN_CSS, w: W, h: H }],
   'WebQuizType': ['Web · Learn mode · type the answer', webQuizType, { props: DARK, logic: TYPE_LOGIC(false), css: LEARN_CSS, w: W, h: H }],
   'WebQuizDone': ['Web · Learn mode · all learned', webQuizDone, { props: DARK, logic: QUIZ_DONE_LOGIC, css: LEARN_CSS, w: W, h: H }],
-  'WebQuizSunset': ['Web · Learn mode · idea: faint sunset', webQuizOf(sunsetBg(false), true), { props: { ...DARK, answered: { editor: 'boolean', default: false } }, logic: SUNSET_LOGIC(false), css: LEARN_CSS, w: W, h: H }],
-  'PhoneQuizSunset': ['iPhone · Learn mode · idea: faint sunset', phoneQuizOf(sunsetBg(true), true), { props: { ...DARK, answered: { editor: 'boolean', default: false } }, logic: SUNSET_LOGIC(true), css: LEARN_CSS, w: PW, h: PH }],
   'PhoneQuizStart': ['iPhone · Learn mode · start (Pro)', phoneQuizStart(true), { props: DARK, logic: QUIZ_START_LOGIC(true, true), w: PW, h: PH }],
   'PhoneQuizUpgrade': ['iPhone · Learn mode · on Free: go Pro', phoneQuizStart(false), { props: { ...DARK, grain: MESH('Iris').grain }, logic: QUIZ_START_LOGIC(true), w: PW, h: PH }],
   'PhoneQuiz': ['iPhone · Learn mode · choice question', phoneQuiz, { props: { ...DARK, answered: { editor: 'boolean', default: false } }, logic: QUIZ_LOGIC(true), css: LEARN_CSS, w: PW, h: PH }],
@@ -3661,6 +3954,7 @@ const files = {
   'PhoneReviewDark': ['iPhone · Review (dark)', darkOf('PhoneReview', PW, PH), { logic: darkLogic, css: REVIEW_CSS, w: PW, h: PH }],
   'PhoneReviewFour': ['iPhone · Review · 4 grades', styleOf('PhoneReview', PW, PH, 'Four buttons'), { logic: darkLogic, css: REVIEW_CSS, w: PW, h: PH }],
   'PhoneReviewCheck': ['iPhone · Review · ✓ or ✗', styleOf('PhoneReview', PW, PH, 'Check or X'), { logic: darkLogic, css: REVIEW_CSS, w: PW, h: PH }],
+  'PhoneReviewExplain': ['iPhone · Review · Explain (AI explains the answer)', attrOf('PhoneReview', PW, PH, 'start-revealed="{{yes}}" explain-open="{{yes}}" explained="{{yes}}"'), { logic: darkLogic, css: REVIEW_CSS, w: PW, h: PH }],
   'PhoneReviewSettings': ['iPhone · Review · settings', settingsOf('PhoneReview', PW, PH), { logic: darkLogic, css: REVIEW_CSS, w: PW, h: PH }],
   'PhoneReviewPiles': ['iPhone · Review · Piles', styleOf('PhoneReview', PW, PH, 'Piles'), { logic: darkLogic, css: REVIEW_CSS, w: PW, h: PH }],
   'PhoneReviewNewPile': ['iPhone · Review · New pile popup', pileOf('PhoneReview', PW, PH), { logic: darkLogic, css: REVIEW_CSS, w: PW, h: PH }],

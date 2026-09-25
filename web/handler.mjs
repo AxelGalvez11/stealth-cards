@@ -5,7 +5,9 @@
 import { readFile, stat } from 'node:fs/promises';
 import { extname, join, normalize, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { state, apply, withLibrary, revOf, putMedia, mediaLink, MEDIA } from './store.mjs';
+import { state, apply, withLibrary, revOf, putMedia, mediaLink, MEDIA, aiLeft, useAi, refundAi, saveExplain } from './store.mjs';
+import { aiReady, explain } from './ai.mjs';
+import { FREE_EXPLAINS, PRO_EXPLAINS } from './plans.mjs';
 import { mcp } from './mcp.mjs';
 import { EXT } from './media.mjs';
 import { cloud, auth } from './supa.mjs';
@@ -39,7 +41,7 @@ const held = () => {
   return { writeHead(code, h) { head = [code, h || {}]; return this; }, end(b) { body = b ?? ''; return this; }, sendTo(res) { res.writeHead(head[0], head[1]); res.end(body); } };
 };
 // What the app gets: the library, plus who is signed in (online).
-const view = me => ({ ...state(), me });
+const view = me => ({ ...state(), me, aiOn: aiReady() });
 
 async function api(req, res, path, body, me) {
   if (path === '/api/state' && req.method === 'GET') return send(res, 200, view(me));
@@ -193,6 +195,37 @@ async function files(req, res, path, root) {
   catch { send(res, 404, 'Not found', 'text/plain'); }
 }
 
+// Runs fn against one library and gives back what it returned, again from the newer copy if another request saved
+// first (like run, below, for work that happens in steps).
+async function inLibrary(uid, fn, opts) {
+  for (let attempt = 0; attempt < 8; attempt++) {
+    if (attempt) await new Promise(r => setTimeout(r, Math.random() * 40 * attempt));
+    let result;
+    if (await withLibrary(uid, async () => { result = await fn(); }, opts)) return result;
+  }
+  throw new Error('Your cards changed somewhere else at the same moment. Try again.');
+}
+// Explain a card with AI (ai.mjs). It's written once and saved on the card, so showing it again costs nothing. Free
+// gets FREE_EXPLAINS a day, Pro PRO_EXPLAINS. The AI is asked between two saves, so it's never asked twice when
+// another change lands at the same moment, and a failed answer gives the day's count back.
+async function explainReq(res, uid, me, a) {
+  if (!aiReady()) return send(res, 503, { error: 'AI explanations aren’t set up yet.' });
+  const pro = !me || !!me.plan.pro, limit = pro ? PRO_EXPLAINS : FREE_EXPLAINS, day = new Date().toISOString().slice(0, 10), opts = { pro: me ? me.plan.pro : undefined };
+  const first = await inLibrary(uid, () => {
+    const c = state().cards.find(x => x.id === a.cardId);
+    if (!c) return { code: 404, error: 'There’s no card like that.' };
+    if (c.explain && c.explain.text) return { text: c.explain.text, left: aiLeft(day, limit) };
+    if (!useAi(day, limit)) return { code: 402, pro: !pro, error: pro ? 'That’s a lot of explanations for one day. More tomorrow.' : 'That’s today’s ' + FREE_EXPLAINS + ' free explanations. Go Pro for as many as you like.' };
+    return { card: JSON.parse(JSON.stringify(c)), deck: (state().decks.find(d => d.id === c.deckId) || {}).name || '' };
+  }, opts);
+  if (!first.card) return send(res, first.code || 200, first);
+  let text;
+  try { text = await explain(first.card, { deck: first.deck, question: String(a.question || '').slice(0, 500) }); }
+  catch (e) { await inLibrary(uid, () => refundAi(day), opts); return send(res, 502, { error: e.message }); }
+  const left = await inLibrary(uid, () => { saveExplain(first.card.id, text, 'Lucida'); return aiLeft(day, limit); }, opts);
+  return send(res, 200, { text, left, free: !pro });
+}
+
 // Runs a request against one library, again from the newer copy if another request saved first (after a short,
 // growing wait, so a burst of changes from the same person all get their turn).
 async function run(res, uid, work, opts) {
@@ -252,6 +285,7 @@ export async function handle(req, res) {
       // The app's first load asks Stripe's news afresh, so Pro shows right after paying.
       if (user) me = await meOf(user, path === '/api/state');
       const body = req.method === 'POST' ? await readBody(req, path === '/api/media' ? 20e6 : 5e6) : null;
+      if (path === '/api/explain' && req.method === 'POST') return await explainReq(res, uid, me, jsonOf(body));
       return await run(res, uid, out => api(req, out, path, body, me), { pro: me ? me.plan.pro : undefined });
     }
     return await files(req, res, path, ROOT);

@@ -17,12 +17,20 @@ function resolve(path, q) {
   if (path.startsWith('/sign-in')) return { redirect: '/' };
   const deck = /^\/deck\/([^/]+)(\/card(?:\/([^/]+))?|\/import|\/learn)?$/.exec(path);
   if (path === '/') return { name: db.decks().length ? 'Main' : 'WebTodayNew' };
-  if (path === '/decks') return { name: db.decks().length ? 'WebDecks' : 'WebDecksEmpty' };
+  // The Library (it was called Decks): your folders and decks, one folder, or all your cards. Old /decks links land here.
+  if (path === '/decks') return { redirect: '/library' };
+  const lib = /^\/library(?:\/(cards)|\/folder\/([^/]+))?$/.exec(path);
+  if (lib) {
+    if (lib[2] && !db.raw().folders.some(f => f.id === lib[2])) return { redirect: '/library' };
+    const phone = narrow.matches, empty = !db.decks().length && !db.raw().folders.length;
+    if (empty && !lib[1] && !lib[2]) return { name: phone ? 'PhoneDecksEmpty' : 'WebDecksEmpty' };
+    return { name: phone ? 'PhoneLibrary' : 'WebDecks', props: { mode: lib[1] ? 'cards' : 'decks', folder: lib[2] || '' } };
+  }
   if (path === '/decks/new') return { name: 'WebNewDeck' };
   if (path === '/decks/import') return { name: 'WebImport' };
   if (deck) {
     const id = deck[1];
-    if (!db.raw().decks.some(d => d.id === id)) return { redirect: '/decks' };
+    if (!db.raw().decks.some(d => d.id === id)) return { redirect: '/library' };
     if (deck[2] === '/import') return { name: 'WebImport', props: { deckId: id } };
     // Learn mode starts from a sheet over the deck (phones get the phone boards, which fill the screen). It's Pro: on
     // Free the sheet shows what Pro adds instead.
@@ -42,7 +50,7 @@ function resolve(path, q) {
   const rv = /^\/review(?:\/([^/]+))?$/.exec(path);
   if (rv && rv[1] !== 'done') {
     const id = rv[1] || '', pile = q.get('pile') || '';
-    if (id && !db.raw().decks.some(d => d.id === id)) return { redirect: '/decks' };
+    if (id && !db.raw().decks.some(d => d.id === id)) return { redirect: '/library' };
     if (!db.hasQueue(id, pile)) return { redirect: db.session().cards ? '/review/done' : id ? '/deck/' + id : '/' };
     return { name: 'WebReview', props: { deckId: id, pile } };
   }
@@ -57,10 +65,11 @@ function resolve(path, q) {
 function linkFor(name) {
   if (current && current.design) return '/b/' + name;
   const id = current && current.props.deckId;
-  const pages = { Main: '/', WebTodayNew: '/', WebTodayCaughtUp: '/', WebDecks: '/decks', WebDecksEmpty: '/decks', WebDecksList: '/decks', WebNewDeck: '/decks/new',
-    WebImport: id ? '/deck/' + id + '/import' : '/decks/import', WebDeck: id ? '/deck/' + id : '/decks', WebDeckSettings: id ? '/deck/' + id + '?settings=1' : '/decks',
+  const pages = { Main: '/', WebTodayNew: '/', WebTodayCaughtUp: '/', WebDecks: '/library', WebDecksEmpty: '/library', WebDecksList: '/library', WebLibraryCards: '/library/cards', WebNewDeck: '/decks/new',
+    PhoneLibrary: '/library', PhoneLibraryCards: '/library/cards', PhoneDecksEmpty: '/library',
+    WebImport: id ? '/deck/' + id + '/import' : '/decks/import', WebDeck: id ? '/deck/' + id : '/library', WebDeckSettings: id ? '/deck/' + id + '?settings=1' : '/library',
     WebEditor: id ? '/deck/' + id + '/card' : db.signedOut ? '/' : db.today().newCardHref, WebReview: id ? '/review/' + id : '/review', WebDone: '/review/done', WebDonePiles: '/review/done',
-    WebQuizStart: id ? '/deck/' + id + '/learn' : '/decks', PhoneQuizStart: id ? '/deck/' + id + '/learn' : '/decks', WebQuizUpgrade: id ? '/deck/' + id + '/learn' : '/decks', PhoneQuizUpgrade: id ? '/deck/' + id + '/learn' : '/decks', PhoneDeck: id ? '/deck/' + id : '/decks', Pricing: 'https://lucida.cards/pricing', PricingPhone: 'https://lucida.cards/pricing',
+    WebQuizStart: id ? '/deck/' + id + '/learn' : '/library', PhoneQuizStart: id ? '/deck/' + id + '/learn' : '/library', WebQuizUpgrade: id ? '/deck/' + id + '/learn' : '/library', PhoneQuizUpgrade: id ? '/deck/' + id + '/learn' : '/library', PhoneDeck: id ? '/deck/' + id : '/library', Pricing: 'https://lucida.cards/pricing', PricingPhone: 'https://lucida.cards/pricing',
     WebStats: '/stats', WebStatsEmpty: '/stats', WebConnect: '/connect', WebSettings: '/settings', WebSignIn: '/sign-in', WebSignInCode: '/sign-in/code', PhoneSignIn: '/sign-in', PhoneSignInCode: '/sign-in/code', PhoneToday: '/', Privacy: '/privacy', Terms: '/terms' };
   return pages[name] || '/b/' + name;
 }
