@@ -29,7 +29,7 @@ struct TodayScreen: View {
 
   // The Iris card: what's due, then one button.
   private func hero(_ vm: TodayVM) -> some View {
-    Button { vm.caught && vm.nothingNew ? nav.newCard(deckId: vm.newCardDeck) : nav.study(deckId: nil) } label: {
+    Button { if vm.caught && vm.nothingNew { nav.newCard(deckId: vm.newCardDeck) } else { store.startReview(nil); nav.study(deckId: nil) } } label: {
       MeshCard(mesh: .palette("Iris"), radius: 32) {
         VStack(alignment: .leading, spacing: 18) {
           Color.clear.frame(height: 56)

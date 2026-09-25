@@ -233,7 +233,7 @@ struct DeckScreen: View {
             tile("Remembered", d.ret.map { "\($0)%" } ?? "—", d.ret == nil ? t.muted : d.ret! >= d.goal ? t.good : d.ret! >= d.goal - 5 ? t.hard : t.again)
           }
           HStack(spacing: 8) {
-            Button { nav.study(deckId: d.id) } label: {
+            Button { store.startReview(d.id); nav.study(deckId: d.id) } label: {
               HStack(spacing: 8) {
                 Icon("decks", 17, 2)
                 Text(d.studyLabel).css(17, .semibold).lineLimit(1).fixedSize()
@@ -344,7 +344,6 @@ struct DeckSettingsSheet: View {
   let close: () -> Void
   @State private var name: String? = nil
   @State private var pickingCover = false
-  @State private var pickingBg = false
   private let gaps = [(30, "1 mo"), (90, "3 mo"), (180, "6 mo"), (365, "1 yr"), (730, "2 yr"), (1825, "5 yr"), (3650, "10 yr")]
   private let stepPool = ["1m", "10m", "1h", "1d"]
 
@@ -376,7 +375,7 @@ struct DeckSettingsSheet: View {
       ScrollView(showsIndicators: false) {
         VStack(alignment: .leading, spacing: 14) {
           header
-          background
+          BgChooser(deckId: d.id)
           folder
           VStack(alignment: .leading, spacing: 8) {
             label("Name")
@@ -416,7 +415,6 @@ struct DeckSettingsSheet: View {
       .clipped()
     }
     .photoPicker($pickingCover) { store.setCover(d.id, $0) }
-    .background(Color.clear.photoPicker($pickingBg) { store.setBgPhoto(d.id, $0) })
   }
 
   // The header: its gradient or photo, Shuffle, Upload image, and the gradient's style.
@@ -435,45 +433,6 @@ struct DeckSettingsSheet: View {
         if d.hasImage { SmallButton(label: "Use gradient") { store.updateDeck(d.id, ["cover": ["image": NSNull()]]) } }
       }
       Segmented(options: [("mix", "Mix"), ("vivid", "Vivid"), ("deep", "Deep")], current: d.style) { store.updateDeck(d.id, ["cover": ["style": $0, "image": NSNull()]]) }
-    }
-  }
-
-  // What shows behind Learn mode, flashcards, and Live: five tiles, the chosen one ringed. Photo with no picture yet
-  // opens the photo picker (the header's photo counts).
-  private var background: some View {
-    let kind = d.bg.kind, photo = d.bgImage.flatMap { $0 == "mock" ? nil : $0 }
-    return VStack(alignment: .leading, spacing: 8) {
-      label("Background")
-      Text("Behind Learn mode, flashcards, and Live").css(12, lh: 16 / 12).foregroundStyle(t.muted).padding(.top, -4)
-      HStack(spacing: 8) {
-        ForEach([("deck", "Colors"), ("plain", "Plain"), ("sky", "Sky"), ("sunset", "Sunset"), ("photo", "Photo")], id: \.0) { id, label in
-          let on = kind == id
-          Button { id == "photo" && d.bgImage == nil ? (pickingBg = true) : store.setBg(d.id, id) } label: {
-            VStack(spacing: 6) {
-              ZStack {
-                switch id {
-                case "deck": ZStack { CSSLinearGradient(angle: d.mesh.angle, stops: d.mesh.filtered(saturate: 0.16, brightness: 1.15).stops); Color.white.opacity(0.55) }
-                case "plain": t.bg
-                case "sky": LinearGradient(stops: [.init(color: Color(hex: 0x86BDF3), location: 0), .init(color: Color(hex: 0xC9E2FB), location: 0.45), .init(color: Color(hex: 0xEDF5FE), location: 1)], startPoint: .top, endPoint: .bottom)
-                case "sunset": SunsetFill(dark: false)
-                default:
-                  ZStack { t.surf; Icon("image", 18, 1.8).foregroundStyle(t.muted) }
-                    .overlay { if let photo { FillPhoto(url: store.api.mediaURL(photo)) } }
-                }
-              }
-              .frame(height: 48)
-              .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
-              .overlay { if on { RoundedRectangle(cornerRadius: 16, style: .continuous).strokeBorder(t.text, lineWidth: 2).padding(-2) } }
-              Text(label).css(12, .semibold, lh: 16 / 12).lineLimit(1).foregroundStyle(t.text)
-            }
-            .frame(maxWidth: .infinity)
-          }
-          .buttonStyle(.press)
-          .accessibilityLabel(label)
-          .accessibilityAddTraits(on ? .isSelected : [])
-        }
-      }
-      if kind == "photo" { HStack(spacing: 6) { SmallButton(label: "Change photo", icon: "image") { pickingBg = true } } }
     }
   }
 

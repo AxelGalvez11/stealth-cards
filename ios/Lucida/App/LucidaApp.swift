@@ -148,10 +148,14 @@ extension Board {
     case "PhoneQuizMatch": store.demoLearn.screen = "match"; nav.full = .learn("cell")
     case "PhoneQuizType": store.demoLearn.screen = "type"; nav.full = .learn("cell")
     case "PhoneQuizDone": store.demoLearn.screen = "done"; nav.full = .learn("cell")
+    case "PhoneQuizSettings": store.props.learnSettings = true; nav.full = .learn("cell")
     case "PhoneSignIn": store.phase = .signedOut
     case "PhoneSignInCode": store.phase = .signedOut; store.signInStep = .code
     default: break
     }
+    // A full screen (review, session done, Learn mode) opens once the page under it is drawn: a page drawn under one from
+    // the start stays blank after it closes, so X or Done would land on an empty page.
+    if let f = nav.full { nav.boardFull = f; nav.full = nil }
   }
 }
 
@@ -188,6 +192,8 @@ struct MainView: View {
       if let f = nav.full { FullHost(kind: f).zIndex(6).transition(.move(edge: .bottom)) }
     }
     .ignoresSafeArea(edges: .bottom)
+    // A design screen's full screen, over its page once that's drawn (Board.setUp).
+    .task { if let f = nav.boardFull { nav.boardFull = nil; try? await Task.sleep(nanoseconds: 100_000_000); nav.full = f } }
   }
 
   @ViewBuilder private var tabRoot: some View {

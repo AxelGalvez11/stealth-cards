@@ -1,5 +1,6 @@
 // iPhone · Session done (PhoneDone, PhoneDonePiles): how much you remembered on a half ring (or, after sorting into
-// piles, how many went in each), the grades, your streak, and when the next review is.
+// piles, how many went in each), the grades, your streak, and when the next review is. Done goes back to the deck's page
+// (to Today after reviewing every deck).
 import SwiftUI
 
 struct SessionVM {
@@ -17,7 +18,7 @@ extension Store {
   func sessionView() -> SessionVM {
     if demo {
       return SessionVM(pct: 91, goal: 90, cards: 40, minutes: 12, fresh: 3, split: [3, 5, 25, 7], streak: 13, next: "Tomorrow · 32", sorted: 12, onlyPiles: props.onlyPiles,
-                       piles: [("Know it", 7, 18), ("Almost", 3, 6), ("No clue", 2, 3)])
+                       piles: [("Know it", 7, 18), ("Almost", 3, 6), ("No clue", 2, 3)], deckId: "cell")
     }
     let E = engine, g = session?.graded ?? [], rated = g.filter { $0.rating != nil }
     let d = session?.deckId.flatMap { E.deck($0) }
@@ -62,7 +63,7 @@ struct DoneScreen: View {
         tile("Next", ss.next.components(separatedBy: " · ").first ?? ss.next)
       }
       Spacer(minLength: 0)
-      BigButton(label: "Done", height: 58, size: 17) { store.session = nil; nav.endSession() }
+      BigButton(label: "Done", height: 58, size: 17) { store.session = nil; nav.leave(to: ss.deckId) }
     }
     .foregroundStyle(t.text)
     .padding(.top, Screen.top(64)).padding(.horizontal, 20).padding(.bottom, 34)
@@ -103,7 +104,7 @@ struct DoneScreen: View {
     let all = max(1, ss.sorted), ink = t.dark ? [Color(hex: 0x3A4BB0), Color(hex: 0x8C9AFC)] : [Color(hex: 0xB0BAFB), Color(hex: 0x4353E0)]
     return HStack(spacing: 8) {
       ForEach(Array(ss.piles.enumerated()), id: \.offset) { _, p in
-        Button { if p.total > 0 { nav.study(deckId: ss.deckId, pile: p.name) } } label: {
+        Button { if p.total > 0 { store.startReview(ss.deckId, pile: p.name); nav.study(deckId: ss.deckId, pile: p.name) } } label: {
           VStack(alignment: .leading, spacing: 4) {
             Text("\(p.n)").css(34, .semibold, ls: -0.03).lineBox(34)
             Text(p.name).css(13, .semibold).foregroundStyle(t.muted).lineLimit(1)
