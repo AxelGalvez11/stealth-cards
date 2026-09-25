@@ -213,7 +213,8 @@ renderVals() {
     streakTitle: td.streak ? td.streak + '-day streak' : 'No streak yet', bestLine: 'Best: ' + plural(td.best, 'day'),
     heroTitle: caught ? 'All caught up' : plural(td.due, 'card') + ' due',
     heroSub: caught ? (td.next ? 'Next review ' + td.next.day + ' · ' + plural(td.next.n, 'card') : 'Nothing scheduled yet') : 'About ' + plural(td.minutes, 'minute'),
-    heroCta: caught ? (td.fresh ? 'Learn ' + plural(td.fresh, 'new card') : 'Add cards') : 'Study all',
+    // Only Learn mode's button says Learn (the owner: "learn button needs to be 'learn'"); this one starts flashcards.
+    heroCta: caught ? (td.fresh ? 'Study ' + plural(td.fresh, 'new card') : 'Add cards') : 'Study all',
     heroHref: caught && !td.fresh ? td.newCardHref : td.studyHref, newCardHref: td.newCardHref,
     week: td.week.map(w => ({ d: w.d, done: w.done, fill: w.done ? streak : t.surf2, ring: w.today ? '0 0 0 2px ' + t.surf + ', 0 0 0 4px #F58A3A' : 'none', labelColor: w.today ? t.text : t.muted, weight: w.today ? '600' : '400' })),
     forecast, dueTotal, busy

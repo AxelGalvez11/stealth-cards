@@ -247,7 +247,7 @@ renderVals() { const t = this.theme(!!this.props.dark);const db = this.props.db 
     const open = !!this.state.exOpen && this.state.exFor === id;
     return { show: !!(answered && exv.on && id), closed: !open, open, label: exv.text ? 'Explanation' : 'Explain',
       busy: !!exv.busy, hasText: !!exv.text && !exv.busy, text: exv.text || '', hasError: !!exv.error && !exv.busy, error: exv.error || '', goPro: !!exv.goPro,
-      proHref: db.mock ? 'Pricing.dc.html' : '/pro?plan=yearly', hasNote: !!exv.note && !!exv.text, note: exv.note || '',
+      proHref: db.mock ? 'Pricing.dc.html' : 'https://lucida.cards/pricing', hasNote: !!exv.note && !!exv.text, note: exv.note || '',
       ask: () => { this.setState({ exOpen: true, exFor: id }); if (db.mock) this.setState({ exMock: true }); else if (!exv.text) db.act.explain(id, question); },
       close: () => this.setState({ exOpen: false }) };
   };

@@ -374,7 +374,8 @@ renderVals() {
     streakTitle: td.streak ? td.streak + '-day streak' : 'No streak yet', bestLine: 'Best: ' + plural(td.best, 'day'),
     heroTitle: caught ? 'All caught up' : plural(td.due, 'card') + ' due',
     heroSub: caught ? (td.next ? 'Next review ' + td.next.day + ' · ' + plural(td.next.n, 'card') : 'Nothing scheduled yet') : 'About ' + plural(td.minutes, 'minute'),
-    heroCta: caught ? (td.fresh ? 'Learn ' + plural(td.fresh, 'new card') : 'Add cards') : 'Study all',
+    // Only Learn mode's button says Learn (the owner: "learn button needs to be 'learn'"); this one starts flashcards.
+    heroCta: caught ? (td.fresh ? 'Study ' + plural(td.fresh, 'new card') : 'Add cards') : 'Study all',
     heroHref: caught && !td.fresh ? td.newCardHref : td.studyHref, newCardHref: td.newCardHref,
     week: td.week.map(w => ({ d: w.d, done: w.done, fill: w.done ? streak : t.surf2, ring: w.today ? '0 0 0 2px ' + t.surf + ', 0 0 0 4px #F58A3A' : 'none', labelColor: w.today ? t.text : t.muted, weight: w.today ? '600' : '400' })),
     forecast, dueTotal, busy
@@ -775,7 +776,9 @@ const COVER_LOGIC = `
     hasBgPhoto: !!bgPhoto, bgPhoto, bgIsPhoto: bgKind === 'photo', uploadBg: () => db.act.pickBg(dk.id),
     deckLine: plural(dk.total, 'card').replace(String(dk.total), dk.totalLabel) + (dk.aiCount ? ' · ' + dk.aiCount + ' added by your AI' : ''),
     deckLineShort: plural(dk.total, 'card').replace(String(dk.total), dk.totalLabel) + (dk.aiCount ? ' · ' + dk.aiCount + ' from your AI' : ''),
-    studyLabel: dk.due ? 'Study ' + plural(dk.due, 'card') : dk.fresh ? 'Learn ' + plural(dk.fresh, 'new card') : 'Nothing due',
+    // The owner: "learn button needs to be 'learn', flashcards need to have flashcards button". So this one always says
+    // Flashcards ("Learn 10 new cards" read like Learn mode), with how many cards wait for it today.
+    studyLabel: 'Flashcards', studyCount: String(dk.due || dk.fresh || 0), hasStudyCount: !!(dk.due || dk.fresh), noStudyCount: !(dk.due || dk.fresh),
     studyHref: dk.studyHref, newCardHref: dk.newCardHref
   };`;
 // Deck settings: shared by the web side panel and the iPhone sheet.
@@ -818,6 +821,8 @@ const deckSettingsBody = phone => `<div style="display: flex; align-items: cente
         <div style="display: flex; align-items: center; gap: 12px; min-height: 44px;"><span style="flex-grow: 1; display: flex; flex-direction: column; gap: 2px;"><span style="font-size: 14px; font-weight: 600;">New cards a day</span><span style="font-size: 12px; color: {{t.muted}};">Unseen cards added each day</span></span>${miniStep('perDay', 'lessDay', 'moreDay', '{{t.surf}}', 'perDayIn')}</div>
       </div></sc-if>`;
 
+// How many cards wait for Flashcards today, as a small round count inside its button.
+const STUDY_COUNT = (h, bg, fg) => `<span style="min-width: ${h}px; height: ${h}px; padding: 0 7px; box-sizing: border-box; display: inline-flex; align-items: center; justify-content: center; border-radius: ${h / 2}px; background: ${bg}; color: ${fg}; font-family: ${MONO}; font-size: ${h > 22 ? 13 : 12}px; font-weight: 600;">{{studyCount}}</span>`;
 const webDeck = webRoot(`${sidebar('Library')}
 <main style="position: relative; flex-grow: 1; box-sizing: border-box; padding: 24px 48px 20px; display: flex; flex-direction: column; gap: 20px; min-width: 0; scroll-timeline: --deck block;">
   <div style="position: relative; height: 184px; flex-shrink: 0; border-radius: 20px; overflow: hidden;">
@@ -833,7 +838,7 @@ const webDeck = webRoot(`${sidebar('Library')}
           <sc-if value="{{showLive}}" hint-placeholder-val="{{ false }}"><a href="LiveSetup.dc.html" style="height: 36px; padding: 0 16px; display: inline-flex; align-items: center; gap: 8px; border-radius: 999px; ${onCover} font-size: 14px; font-weight: 600;">${svg(I.live, 15, 2)}Play live</a></sc-if>
           <a href="{{learnHref}}" style="height: 36px; padding: 0 16px; display: inline-flex; align-items: center; gap: 8px; border-radius: 999px; ${onCover} font-size: 14px; font-weight: 600;">${svg(I.sparkle, 15, 2)}{{learnLabel}}</a>
           <a href="{{newCardHref}}" style="height: 36px; padding: 0 18px; display: inline-flex; align-items: center; gap: 8px; border-radius: 999px; ${onCover} font-size: 14px; font-weight: 600;">${svg(I.plus, 16, 2)}New card</a>
-          <a href="{{studyHref}}" style="height: 36px; padding: 0 22px; display: inline-flex; align-items: center; border-radius: 999px; background: #FFFFFF; color: #000000; box-shadow: 0 1px 2px rgba(0,0,0,.1); font-size: 14px; font-weight: 600;">{{studyLabel}}</a>
+          <a href="{{studyHref}}" style="height: 36px; padding: 0 8px 0 18px; display: inline-flex; align-items: center; gap: 8px; border-radius: 999px; background: #FFFFFF; color: #000000; box-shadow: 0 1px 2px rgba(0,0,0,.1); font-size: 14px; font-weight: 600;">${svg(I.decks, 15, 2)}<span>{{studyLabel}}</span><sc-if value="{{hasStudyCount}}" hint-placeholder-val="{{ true }}">${STUDY_COUNT(22, '#EDEDED', '#000000')}</sc-if><sc-if value="{{noStudyCount}}" hint-placeholder-val="{{ false }}"><span style="width: 2px;"></span></sc-if></a>
         </div>
       </div>
     </div>
@@ -894,7 +899,7 @@ renderVals() {
       rows: found.map(g => ({ ...tagChip(g), count: String(uses[g]), on: g === f, pressed: g === f ? 'true' : 'false', pick: () => this.setState({ filter: g === f ? 'All' : g, tagMenuOpen: false, tagQ: '' }) })), none: found.length === 0 },
     spark: forecast,
     // Learn mode: start one, or go back to the one you stopped.
-    learnHref: db.mock ? 'WebQuizStart.dc.html' : db.learnOn(dk.id) ? '/learn/' + dk.id : '/deck/' + dk.id + '/learn', learnLabel: !db.mock && db.learnOn(dk.id) ? 'Keep learning' : 'Learn',
+    learnHref: db.mock ? 'WebQuizStart.dc.html' : db.learnOn(dk.id) ? '/learn/' + dk.id : '/deck/' + dk.id + '/learn', learnLabel: 'Learn',
     // Live (play with friends) is on the canvas only until it’s built.
     showLive: !!db.mock
   };
@@ -1556,7 +1561,7 @@ const EXPLAIN_JS = `const explainView = (exv, id, question, answered, sample) =>
     const open = !!this.state.exOpen && this.state.exFor === id;
     return { show: !!(answered && exv.on && id), closed: !open, open, label: exv.text ? 'Explanation' : 'Explain',
       busy: !!exv.busy, hasText: !!exv.text && !exv.busy, text: exv.text || '', hasError: !!exv.error && !exv.busy, error: exv.error || '', goPro: !!exv.goPro,
-      proHref: db.mock ? 'Pricing.dc.html' : '/pro?plan=yearly', hasNote: !!exv.note && !!exv.text, note: exv.note || '',
+      proHref: db.mock ? 'Pricing.dc.html' : 'https://lucida.cards/pricing', hasNote: !!exv.note && !!exv.text, note: exv.note || '',
       ask: () => { this.setState({ exOpen: true, exFor: id }); if (db.mock) this.setState({ exMock: true }); else if (!exv.text) db.act.explain(id, question); },
       close: () => this.setState({ exOpen: false }) };
   };`;
@@ -2179,7 +2184,7 @@ const phoneDecksLogic = `renderVals() { ${T}${DB_JS}
     heroMeta: (caught ? 'Done for today' : 'Due now') + (td.streak ? ' · ' + td.streak + '-day streak' : ''),
     heroTitle: caught ? 'All caught up' : plural(td.due, 'card'), heroSize: caught ? '42px' : '56px',
     heroSub: caught ? (td.next ? 'Next review ' + td.next.day + ' · ' + plural(td.next.n, 'card') : 'Nothing scheduled yet') : 'About ' + plural(td.minutes, 'minute'),
-    heroCta: caught ? (td.fresh ? 'Learn ' + plural(td.fresh, 'new card') : 'Add cards') : 'Start review',
+    heroCta: caught ? (td.fresh ? 'Study ' + plural(td.fresh, 'new card') : 'Add cards') : 'Start review',
     // All caught up with nothing new to learn: the card adds cards instead.
     heroHref: caught && !td.fresh ? td.newCardHref : td.studyHref };
 }`;
@@ -2247,7 +2252,7 @@ const phoneDeck = phone(`<div style="height: 100%; overflow-y: auto; scrollbar-w
     <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px;">
       <sc-for list="{{tiles}}" as="k" hint-placeholder-count="3">${deckTile(false)}</sc-for>
     </div>
-    <div style="display: flex; gap: 8px;"><a href="PhoneReview.dc.html" style="flex: 2 1 0; height: 56px; border-radius: 999px; background: {{t.inv}}; color: {{t.invText}}; display: flex; align-items: center; justify-content: center; font-size: 17px; font-weight: 600;">{{studyLabel}}</a><a href="{{learnHref}}" style="flex: 1 1 0; height: 56px; border-radius: 999px; background: {{t.surf}}; display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 17px; font-weight: 600; white-space: nowrap;">${svg(I.sparkle, 17, 2)}{{learnShort}}</a></div>
+    <div style="display: flex; gap: 8px;"><a href="PhoneReview.dc.html" style="flex: 2 1 0; height: 56px; border-radius: 999px; background: {{t.inv}}; color: {{t.invText}}; display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 17px; font-weight: 600; white-space: nowrap;">${svg(I.decks, 17, 2)}<span>{{studyLabel}}</span><sc-if value="{{hasStudyCount}}" hint-placeholder-val="{{ true }}">${STUDY_COUNT(24, 'rgba(128,128,128,.32)', 'inherit')}</sc-if></a><a href="{{learnHref}}" style="flex: 1 1 0; height: 56px; border-radius: 999px; background: {{t.surf}}; display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 17px; font-weight: 600; white-space: nowrap;">${svg(I.sparkle, 17, 2)}{{learnShort}}</a></div>
     <div style="display: flex; flex-direction: column;">
       <sc-for list="{{rows}}" as="r" hint-placeholder-count="4">
         <a href="{{r.href}}" style="display: flex; flex-direction: column; gap: 3px; padding: 12px 0; border-bottom: 1px solid {{t.line}};"><span style="font-size: 15px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{r.front}}</span><span style="display: flex; align-items: center; gap: 8px; min-width: 0; font-size: 13px; color: {{t.muted}};"><span style="white-space: nowrap;">{{r.kind}} · {{r.next}}</span>${cardTag('c1')}${cardTag('c2')}${cardMore}</span></a>
@@ -2268,7 +2273,7 @@ renderVals() { ${T}${DB_JS}${COVER_LOGIC}
     // Every card (all six sample cards on the canvas, so the page scrolls and shows the cover's parallax); each opens
     // in the editor.
     rows: db.cards(dk.id).map(r => ({ ...r, ...cardFit(r.tags), href: db.mock ? 'PhoneEditor.dc.html' : r.href })),
-    learnHref: db.mock ? 'PhoneQuizStart.dc.html' : db.learnOn(dk.id) ? '/learn/' + dk.id : '/deck/' + dk.id + '/learn', learnShort: !db.mock && db.learnOn(dk.id) ? 'Resume' : 'Learn' }; }`;
+    learnHref: db.mock ? 'PhoneQuizStart.dc.html' : db.learnOn(dk.id) ? '/learn/' + dk.id : '/deck/' + dk.id + '/learn', learnShort: 'Learn' }; }`;
 
 // The fields scroll under the header when they're taller than the sheet. The keyboard is drawn on the canvas only: in
 // the app, the phone shows its own.
@@ -2946,12 +2951,14 @@ const skyTop = (h, cw, ch) => `<div aria-hidden="true" style="position: relative
         ${meshCard('m2', `width: ${cw}px; height: ${ch}px; border-radius: 18px; transform: rotate(5deg); box-shadow: 0 16px 32px -16px rgba(20,22,90,.45);`, 'height: 100%; box-sizing: border-box; padding: 12px; display: flex; align-items: center; justify-content: center; text-align: center;', `<span style="font-size: ${Math.round(cw / 11)}px; font-weight: 600; line-height: 1.25;">Packages proteins for export</span>`)}
       </div>
     </div>`;
+// Each price is its own button, so paying never picks yearly for you (the owner: "the pricing is confusing because
+// it only has the yearly subscription no monthly option").
 const learnUpgradeBody = (back, pad) => `<a href="${back}" aria-label="Close" style="position: absolute; top: 16px; right: 16px; z-index: 1; width: 40px; height: 40px; border-radius: 20px; background: rgba(255,255,255,.7); color: #000000; display: flex; align-items: center; justify-content: center;">${svg(I.close, 16, 2)}</a>
     <div style="box-sizing: border-box; padding: 0 ${pad}px ${pad}px; margin-top: -6px; display: flex; flex-direction: column; gap: 18px;">
       <div style="display: flex; flex-direction: column; gap: 8px;"><span style="display: flex; align-items: center; gap: 10px; font-size: 26px; font-weight: 600; letter-spacing: -.03em;">Learn every card${PRO_BADGE}</span><span style="font-size: 15px; line-height: 1.5; color: {{t.muted}};">AI turns your cards into questions of every kind, like matching and typing the answer, and keeps going until you know them all.</span></div>
       <div style="display: flex; flex-direction: column; gap: 10px; font-size: 15px;">${['Learn mode with 5 kinds of questions', 'Photo covers and your own colors', 'Unlimited pictures and sounds'].map(x => `<span style="display: flex; align-items: center; gap: 10px;"><span style="width: 22px; height: 22px; flex-shrink: 0; border-radius: 11px; background: linear-gradient(135deg, #7E94FB, #2CB2EA); color: #FFFFFF; display: flex; align-items: center; justify-content: center;">${svg(I.check, 13, 2.6)}</span>${x}</span>`).join('')}</div>
-      <div style="font-size: 14px; color: {{t.muted}};">$39 a year, or $5.99 a month. Cancel anytime.</div>
-      <div style="display: flex; gap: 10px;">${quizBtn('See plans', '{{plansHref}}', false, 1)}${quizBtn('Go Pro', '{{proHref}}', true, 2)}</div>
+      <div style="font-size: 14px; color: {{t.muted}};">Yearly works out to $3.25 a month. Cancel anytime.</div>
+      <div style="display: flex; gap: 10px;">${quizBtn('$5.99 a month', '{{monthlyHref}}', false, 1)}${quizBtn('$39 a year', '{{yearlyHref}}', true, 1)}</div>
     </div>`;
 const webQuizStart = pro => `<div style="position: relative; width: 1440px; height: 900px; overflow: hidden; font-family: ${FONT}; color: {{t.text}};">
   <dc-import name="WebDeck" dark="{{dark}}" deck-id="{{deckId}}" hint-size="1440px,900px"></dc-import>
@@ -2974,7 +2981,7 @@ renderVals() { ${T}${DB_JS}
   const s = this.state, id = this.props.deckId, seg = (k, cur) => ({ pressed: k === cur ? 'true' : 'false', bg: k === cur ? t.bg : 'transparent', fg: k === cur ? t.text : t.muted, sh: k === cur ? '0 1px 3px rgba(0,0,0,.14)' : 'none' });
   const sets = db.mock ? [{ id: 'new', label: 'New', n: 10 }, { id: 'hard', label: 'Hard', n: 36 }, { id: 'tag:Exam 1', label: 'Exam 1', n: 40 }, { id: 'all', label: 'All', n: 412 }] : db.learnSets(id);
   const set = sets.find(x => x.id === s.set) || (db.mock ? sets[2] : sets.find(x => x.n > 0) || sets[sets.length - 1]), n = set.n, mins = Math.max(1, Math.round(n * .6));
-  return { t, dark: !!this.props.dark, deckId: id || '', sky: ${SKY}, grain: String(this.props.grain ?? 0.7), m1: this.mesh('Iris'), m2: this.mesh('Mint'), ${deep ? 'deep: ' + MIDNIGHT + ', ' : ''}plansHref: '${phone ? 'PricingPhone' : 'Pricing'}.dc.html', proHref: db.mock ? '${phone ? 'PricingPhone' : 'Pricing'}.dc.html' : '/pro?plan=yearly',
+  return { t, dark: !!this.props.dark, deckId: id || '', sky: ${SKY}, grain: String(this.props.grain ?? 0.7), m1: this.mesh('Iris'), m2: this.mesh('Mint'), ${deep ? 'deep: ' + MIDNIGHT + ', ' : ''}monthlyHref: db.mock ? '${phone ? 'PricingPhone' : 'Pricing'}.dc.html' : '/pro?plan=monthly', yearlyHref: db.mock ? '${phone ? 'PricingPhone' : 'Pricing'}.dc.html' : '/pro?plan=yearly',
     sets: sets.map(x => ({ label: x.label + ' · ' + x.n, ...seg(x.id, set.id), pick: () => this.setState({ set: x.id }) })),
     kinds: ${JSON.stringify(LEARN_KINDS)}.map(([k, label]) => { const on = s.kinds.includes(k); return { label, on, pressed: on ? 'true' : 'false', bg: on ? t.inv : t.surf, fg: on ? t.invText : t.text, pick: () => this.setState({ kinds: on && s.kinds.length > 1 ? s.kinds.filter(x => x !== k) : on ? s.kinds : [...s.kinds, k] }) }; }),
     goalLine: n ? 'Learn all ' + n + ' card' + (n === 1 ? '' : 's') + ', about ' + (mins >= 90 ? Math.round(mins / 60) + ' hours over a few sessions' : mins + ' minute' + (mins === 1 ? '' : 's')) + '. You can stop anytime and pick up where you left off.' : 'This deck has no cards to learn yet. Picture and text cards work; sound cards come later.',
@@ -3812,6 +3819,9 @@ const PRICING_FAQ = [
 ];
 const planList = (items, check) => `<ul style="margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 12px; font-size: 15px; line-height: 1.35;">${items.map(x => `<li style="display: flex; align-items: flex-start; gap: 10px;"><span style="margin-top: 1px; flex-shrink: 0; display: flex; ${check}">${svg(I.check, 17, 2.2)}</span>${x}</li>`).join('')}</ul>`;
 const planPrice = (price, per, note) => `<div style="display: flex; flex-direction: column; gap: 6px;"><div style="display: flex; align-items: baseline; gap: 8px;"><span style="font-size: 56px; font-weight: 600; letter-spacing: -.04em; line-height: 1;">${price}</span><span style="font-size: 16px; opacity: .75;">${per}</span></div><span style="min-height: 20px; font-size: 14px; opacity: .75;">${note}</span></div>`;
+// Pro's price and Go Pro for one way of paying. Both are drawn, and the Monthly/Yearly switch shows one (on the site, a
+// small script in design/to-site.mjs flips them, since its pages are plain HTML).
+const proPlan = (plan, price, per, note) => `<div data-plan="${plan}" style="display: {{${plan}Show}}; flex-direction: column; gap: 24px;">${planPrice(price, per, note)}<sc-if value="{{proLive}}" hint-placeholder-val="{{ true }}">${landPill('Go Pro', `{{${plan}Href}}`, true, 50, 'background: #FFFFFF; color: #000000;')}</sc-if><sc-if value="{{proSoon}}" hint-placeholder-val="{{ false }}"><span style="height: 50px; display: flex; align-items: center; justify-content: center; border-radius: 999px; background: rgba(255,255,255,.16); box-shadow: inset 0 0 0 1px rgba(255,255,255,.35); font-size: 15px; font-weight: 600;">Pro is coming soon</span></sc-if></div>`;
 const pricing = (L, w, hgt) => { const phone = L === LAND.phone, pad = phone ? 20 : 32; return `<div style="position: relative; isolation: isolate; width: ${w}px; height: ${hgt}px; box-sizing: border-box; font-family: ${FONT}; background: {{t.bg}}; color: {{t.text}}; overflow: hidden;">
 ${skyLayer(phone)}
 <header style="max-width: 1344px; margin: 0 auto; height: ${phone ? 64 : 76}px; box-sizing: border-box; padding: 0 ${L.pad}px; display: flex; align-items: center; justify-content: space-between; gap: 12px;">
@@ -3821,7 +3831,7 @@ ${skyLayer(phone)}
 <section style="padding: ${phone ? 44 : 80}px ${L.pad}px 0; display: flex; flex-direction: column; align-items: center; text-align: center;">
   <h1 style="margin: 0; font-size: ${phone ? 44 : 72}px; font-weight: 600; line-height: 1; letter-spacing: -.05em; text-wrap: balance;">Simple pricing.</h1>
   ${leadP(L, 'Your cards are always free. Pro is for making Lucida yours.', true)}
-  <sc-if value="{{showToggle}}" hint-placeholder-val="{{ true }}"><div role="group" aria-label="Billing" style="margin-top: ${phone ? 26 : 32}px; display: inline-flex; padding: 4px; border-radius: 999px; background: {{t.bg}}; box-shadow: 0 1px 2px rgba(0,0,0,.06), 0 10px 24px -14px rgba(0,0,0,.25);"><sc-for list="{{billing}}" as="b" hint-placeholder-count="2"><button type="button" onClick="{{b.pick}}" aria-pressed="{{b.pressed}}" style="height: 40px; padding: 0 18px; display: inline-flex; align-items: center; gap: 8px; border: 0; border-radius: 999px; background: {{b.bg}}; color: {{b.fg}}; font: inherit; font-size: 14px; font-weight: 600; cursor: pointer;">{{b.label}}<sc-if value="{{b.hasTag}}" hint-placeholder-val="{{ false }}"><span style="height: 22px; padding: 0 8px; display: inline-flex; align-items: center; border-radius: 999px; background: {{t.goodTint}}; color: {{t.good}}; font-size: 12px; font-weight: 600;">Save 45%</span></sc-if></button></sc-for></div></sc-if>
+  <div role="group" aria-label="Billing" style="margin-top: ${phone ? 26 : 32}px; display: inline-flex; padding: 4px; border-radius: 999px; background: {{t.bg}}; box-shadow: 0 1px 2px rgba(0,0,0,.06), 0 10px 24px -14px rgba(0,0,0,.25);"><sc-for list="{{billing}}" as="b" hint-placeholder-count="2"><button type="button" onClick="{{b.pick}}" data-plan-pick="{{b.id}}" aria-pressed="{{b.pressed}}" style="height: 40px; padding: 0 18px; display: inline-flex; align-items: center; gap: 8px; border: 0; border-radius: 999px; background: {{b.bg}}; color: {{b.fg}}; font: inherit; font-size: 14px; font-weight: 600; cursor: pointer;">{{b.label}}<sc-if value="{{b.hasTag}}" hint-placeholder-val="{{ false }}"><span style="height: 22px; padding: 0 8px; display: inline-flex; align-items: center; border-radius: 999px; background: {{t.goodTint}}; color: {{t.good}}; font-size: 12px; font-weight: 600;">Save 45%</span></sc-if></button></sc-for></div>
 </section>
 <section style="padding: ${phone ? 28 : 44}px ${phone ? 16 : L.pad}px 0;">
   <div style="max-width: 960px; margin: 0 auto; display: grid; grid-template-columns: ${phone ? '1fr' : '1fr 1fr'}; gap: ${phone ? 12 : 16}px;">
@@ -3832,8 +3842,8 @@ ${skyLayer(phone)}
       ${planList(PLAN_FREE, 'color: {{t.muted}};')}
     </div>
     ${artCard('pro', `border-radius: ${phone ? 28 : 32}px; box-shadow: 0 24px 56px -28px rgba(20,22,90,.55);`, `height: 100%; box-sizing: border-box; padding: ${pad}px; display: flex; flex-direction: column; gap: 24px;`, `<div><div style="display: flex; align-items: center; gap: 8px; font-size: 20px; font-weight: 600; letter-spacing: -.01em;">${svg(I.sparkle, 18, 1.8)}Pro</div><div style="margin-top: 6px; font-size: 15px; opacity: .8;">Make Lucida yours.</div></div>
-      ${planPrice('{{proPrice}}', '{{proPer}}', '{{proNote}}<sc-if value="{{proMonthly}}" hint-placeholder-val="{{ false }}"> <a href="{{proMonthlyHref}}" style="text-decoration: underline;">Pay $5.99 monthly instead</a></sc-if>')}
-      <sc-if value="{{proLive}}" hint-placeholder-val="{{ true }}">${landPill('Go Pro', '{{proHref}}', true, 50, 'background: #FFFFFF; color: #000000;')}</sc-if><sc-if value="{{proSoon}}" hint-placeholder-val="{{ false }}"><span style="height: 50px; display: flex; align-items: center; justify-content: center; border-radius: 999px; background: rgba(255,255,255,.16); box-shadow: inset 0 0 0 1px rgba(255,255,255,.35); font-size: 15px; font-weight: 600;">Pro is coming soon</span></sc-if>
+      ${proPlan('yearly', '$39', 'a year', 'That’s $3.25 a month, paid once a year.')}
+      ${proPlan('monthly', '$5.99', 'a month', 'Paid monthly. Cancel anytime.')}
       <div style="display: flex; flex-direction: column; gap: 12px;"><span style="font-size: 14px; opacity: .8;">Everything in Free, plus:</span>${planList(PLAN_PRO, 'color: #FFFFFF;')}</div>`)}
   </div>
 </section>
@@ -3849,7 +3859,8 @@ ${landFooter(phone)}
 const PRICING_H = 1617, PRICING_PHONE_H = 2191;
 // Pro's Stripe payment links are in web/plans.mjs. While they're empty the site says "Pro is coming soon"; once both are
 // set, Go Pro goes through the app's /pro page (it signs you in first, then opens Stripe's checkout knowing who's
-// paying): yearly on the site, with a link to pay monthly. The canvas follows its Monthly/Yearly toggle.
+// paying). The site had only yearly with a "Pay $5.99 monthly instead" link, and the owner found it confusing ("it only
+// has the yearly subscription no monthly option"), so the site has the Monthly/Yearly switch too, starting on Yearly.
 const pricingLogic = phone => `${ART_METHOD}
 constructor(props) { super(props); this.state = { yearly: true }; }
 renderVals() { ${T}
@@ -3858,12 +3869,12 @@ renderVals() { ${T}
   const seg = on => ({ bg: on ? t.inv : 'transparent', fg: on ? t.invText : t.text, pressed: on ? 'true' : 'false' });
   const links = ${JSON.stringify(PRO_LINKS)}, selling = !!(links.monthly && links.yearly), start = site ? 'https://app.lucida.cards/' : signIn;
   return { t, sky: ${SKY}, grain: String(this.props.grain ?? 0.7), pro: this.art(${MIDNIGHT}, ''),
-    billing: [{ label: 'Monthly', ...seg(!y), hasTag: false, pick: () => this.setState({ yearly: false }) }, { label: 'Yearly', ...seg(y), hasTag: true, pick: () => this.setState({ yearly: true }) }],
-    proPrice: y ? '$39' : '$5.99', proPer: y ? 'a year' : 'a month', proNote: site ? (selling ? 'That’s $3.25 a month.' : 'That’s $3.25 a month, or $5.99 paid monthly.') : y ? 'That’s $3.25 a month.' : 'Billed monthly. Cancel anytime.',
-    proHref: selling ? (site ? 'https://app.lucida.cards/pro?plan=yearly' : y ? links.yearly : links.monthly) : start, proMonthly: site && selling, proMonthlyHref: 'https://app.lucida.cards/pro?plan=monthly',
+    billing: [{ id: 'monthly', label: 'Monthly', ...seg(!y), hasTag: false, pick: () => this.setState({ yearly: false }) }, { id: 'yearly', label: 'Yearly', ...seg(y), hasTag: true, pick: () => this.setState({ yearly: true }) }],
+    yearlyShow: y ? 'flex' : 'none', monthlyShow: y ? 'none' : 'flex',
+    yearlyHref: selling ? (site ? 'https://app.lucida.cards/pro?plan=yearly' : links.yearly) : start, monthlyHref: selling ? (site ? 'https://app.lucida.cards/pro?plan=monthly' : links.monthly) : start,
     homeHref: site ? '/' : '${phone ? 'LandingPhone' : 'Landing'}.dc.html', howHref: site ? '/#how' : 'Landing.dc.html', typesHref: site ? '/#cards' : 'Landing.dc.html',
     signInHref: signIn, startHref: site ? 'https://app.lucida.cards/' : signIn, privacyHref: site ? '/privacy' : 'Privacy.dc.html', termsHref: site ? '/terms' : 'Terms.dc.html',
-    pricingHref: site ? '/pricing' : '${phone ? 'PricingPhone' : 'Pricing'}.dc.html', proLive: !site || selling, proSoon: site && !selling, showToggle: !site }; }`;
+    pricingHref: site ? '/pricing' : '${phone ? 'PricingPhone' : 'Pricing'}.dc.html', proLive: !site || selling, proSoon: site && !selling }; }`;
 
 // ---------- Privacy and Terms (lucida.cards/privacy and /terms) ----------
 // Plain pages from legal.mjs: one column of text that fits any window. design/to-site.mjs makes them pages.

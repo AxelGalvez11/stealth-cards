@@ -246,6 +246,9 @@ async function go(path, push, replace) {
   lastPath = url.pathname + url.search;
   const s = loaded[r.name];
   current = { name: r.name, path: url.pathname, search: url.search, query: url.searchParams, design: !!r.design, key: 'r' + (++navs), props: r.props || {} };
+  // A page's content rises in only when the app opens; after that, pages just appear (the owner: "its annoying that
+  // clicking on new pages causes the fade in animation to always play", and adding a card shouldn't fade the page in).
+  document.documentElement.classList.toggle('sc-calm', navs > 1);
   for (const c of instances.values()) c.componentWillUnmount?.();
   instances.clear();
   // A phone board fills a phone's screen; on a wider window (only /b shows one there) it keeps the phone's size.

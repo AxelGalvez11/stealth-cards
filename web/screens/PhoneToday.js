@@ -205,7 +205,7 @@ renderVals() { const t = this.theme(!!this.props.dark);const db = this.props.db 
     heroMeta: (caught ? 'Done for today' : 'Due now') + (td.streak ? ' · ' + td.streak + '-day streak' : ''),
     heroTitle: caught ? 'All caught up' : plural(td.due, 'card'), heroSize: caught ? '42px' : '56px',
     heroSub: caught ? (td.next ? 'Next review ' + td.next.day + ' · ' + plural(td.next.n, 'card') : 'Nothing scheduled yet') : 'About ' + plural(td.minutes, 'minute'),
-    heroCta: caught ? (td.fresh ? 'Learn ' + plural(td.fresh, 'new card') : 'Add cards') : 'Start review',
+    heroCta: caught ? (td.fresh ? 'Study ' + plural(td.fresh, 'new card') : 'Add cards') : 'Start review',
     // All caught up with nothing new to learn: the card adds cards instead.
     heroHref: caught && !td.fresh ? td.newCardHref : td.studyHref };
 }

@@ -116,6 +116,14 @@ ${readFileSync(new URL('../web/fast.css', import.meta.url), 'utf8').trim()}
 <div class="computer">${pw.html}</div>
 <div class="phone">${pp.html}</div>
 <script>
+// Monthly or Yearly: both prices are on the page, and the switch shows one (on computers and phones alike).
+const picks = [...document.querySelectorAll('[data-plan-pick]')], look = b => b && { background: b.style.background, color: b.style.color };
+const ON = look(picks.find(b => b.getAttribute('aria-pressed') === 'true')), OFF = look(picks.find(b => b.getAttribute('aria-pressed') !== 'true'));
+picks.forEach(b => b.addEventListener('click', () => {
+  const plan = b.dataset.planPick;
+  picks.forEach(x => { const on = x.dataset.planPick === plan; x.setAttribute('aria-pressed', String(on)); Object.assign(x.style, on ? ON : OFF); });
+  document.querySelectorAll('[data-plan]').forEach(el => { el.style.display = el.dataset.plan === plan ? 'flex' : 'none'; });
+}));
 if ('IntersectionObserver' in window) {
   const io = new IntersectionObserver(seen => seen.forEach(e => e.target.classList.toggle('sc-off', !e.isIntersecting)), { rootMargin: '120px 0px' });
   document.querySelectorAll('.sc-demo').forEach(el => io.observe(el));
