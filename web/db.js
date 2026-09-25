@@ -14,6 +14,12 @@ const KIND = { basic: 'Basic', cloze: 'Fill in the blank', image: 'Image', audio
 const ICON = { basic: 'text', cloze: 'blank', image: 'image', audio: 'audio' };
 const plural = (n, w) => n + ' ' + w + (n === 1 ? '' : 's');
 const byAI = c => c.source && c.source !== 'you' && c.source !== 'import';
+// A picture with parts hidden (image occlusion): each box is its own card, which asks one box. Null for other cards.
+const occOf = c => {
+  if (!c || c.kind !== 'image' || c.box == null || !Array.isArray(c.boxes)) return null;
+  const i = c.boxes.findIndex(b => b.id === c.box);
+  return i < 0 ? null : { boxes: c.boxes, i, n: i + 1, label: String(c.boxes[i].label || '').trim(), mode: c.occ === 'all' ? 'all' : 'one' };
+};
 
 // Online, nobody is signed in yet: only the sign-in pages work. The email waits in this tab while you get the code.
 function signedOut(go) {
@@ -169,8 +175,10 @@ export async function createDb({ onChange, go }) {
       const bl = R.blanks(c.text), ask = c.cloze == null ? -1 : c.cloze;
       return { id: c.id, kind: 'cloze', text: c.text || '', cloze: ask, back: (ask < 0 ? bl : bl.slice(ask, ask + 1)).join(', '), note: c.note };
     }
-    return { id: c.id, kind: c.kind, front: c.front || (c.kind === 'audio' ? 'What do you hear?' : ''), back: c.back, note: c.note, image: c.image, audio: c.audio, speak: c.speak, lang: c.lang || '',
-      backLabel: c.back, backBig: c.back, backSub: c.note || '' };
+    // A picture with boxes brings its boxes, which one it asks, and whether the others stay hidden.
+    const o = occOf(c);
+    return { id: c.id, kind: c.kind, front: c.front || (c.kind === 'audio' ? 'What do you hear?' : ''), back: o ? o.label : c.back, note: c.note, image: c.image, audio: c.audio, speak: c.speak, lang: c.lang || '',
+      backLabel: c.back, backBig: c.back, backSub: c.note || '', ...(o ? { boxes: o.boxes, box: c.box, occ: o.mode } : {}) };
   }
   // AI explanations (Lucida's own AI, a few free a day on Free): asked for from a card once it's answered, and saved on
   // the card, so it's written once. `on`: the server has AI set up, or this card already has one.
@@ -181,10 +189,12 @@ export async function createDb({ onChange, go }) {
       note: text && aiLeftToday != null ? (aiLeftToday === 1 ? '1 free explanation left today' : aiLeftToday + ' free explanations left today') : '' }; };
   // Deck lists and search use the words without the formatting.
   const flat = md => R.plain(md, { join: ' ', math: 'show' });
-  const listFront = c => (c.kind === 'cloze' ? R.plain(c.text, { cloze: true, blank: '____', join: ' ', math: 'show' }) : flat(c.front) || (c.kind === 'audio' ? flat(c.speak) || 'Audio card' : 'Image card'));
-  const listBack = c => (c.kind === 'cloze' ? R.blanks(c.text, { math: 'show' }).join(', ') : flat(c.back));
+  // A box's card: its prompt (or "What's under box 2?") and the box's label.
+  const boxAsk = (c, o) => (flat(c.front) ? flat(c.front) + ' (box ' + o.n + ')' : 'What’s under box ' + o.n + '?');
+  const listFront = c => { const o = occOf(c); return o ? boxAsk(c, o) : c.kind === 'cloze' ? R.plain(c.text, { cloze: true, blank: '____', join: ' ', math: 'show' }) : flat(c.front) || (c.kind === 'audio' ? flat(c.speak) || 'Audio card' : 'Image card'); };
+  const listBack = c => { const o = occOf(c); return o ? o.label || '—' : c.kind === 'cloze' ? R.blanks(c.text, { math: 'show' }).join(', ') : flat(c.back); };
   // Search finds a formula by what it shows (π) or how it was typed (\pi).
-  const words = c => [c.front, c.back, c.note, c.speak].map(x => R.plain(x, { join: ' ' }) + ' ' + flat(x)).join(' ') + ' ' + R.plain(c.text, { cloze: true, join: ' ' }) + ' ' + R.plain(c.text, { cloze: true, join: ' ', math: 'show' });
+  const words = c => [c.front, c.back, c.note, c.speak, (occOf(c) || {}).label].map(x => R.plain(x, { join: ' ' }) + ' ' + flat(x)).join(' ') + ' ' + R.plain(c.text, { cloze: true, join: ' ' }) + ' ' + R.plain(c.text, { cloze: true, join: ' ', math: 'show' });
   function nextLabel(c) {
     if (c.pending) return 'Waiting for you';
     if (c.srs.state === 'new') return 'New';
@@ -219,8 +229,10 @@ export async function createDb({ onChange, go }) {
   // get their first review, so spaced repetition takes over.
   const LEARN_KEY = 'lucida.learn', PLAY = 7, KIND_NAME = { mc: 'Multiple choice', tf: 'True or false', blank: 'Fill in the blank', match: 'Matching', type: 'Type the answer' };
   const cardById = id => S.cards.find(c => c.id === id);
-  const learnText = c => (c.kind === 'cloze' ? R.plain(c.text, { cloze: true, blank: '____', join: ' ', math: 'show' }) : flat(c.front)).trim();
-  const answerOf = c => (c.kind === 'cloze' ? R.blanks(c.text, { math: 'show' }).join(', ') : flat(c.back)).trim();
+  // A box's card asks what's under its box (the picture shows the box); a box with no label has no answer to check,
+  // so Learn leaves it out.
+  const learnText = c => { const o = occOf(c); return (o ? flat(c.front) || 'What’s under box ' + o.n + '?' : c.kind === 'cloze' ? R.plain(c.text, { cloze: true, blank: '____', join: ' ', math: 'show' }) : flat(c.front)).trim(); };
+  const answerOf = c => { const o = occOf(c); return (o ? o.label : c.kind === 'cloze' ? R.blanks(c.text, { math: 'show' }).join(', ') : flat(c.back)).trim(); };
   const learnable = c => !c.pending && c.kind !== 'audio' && !!answerOf(c) && (c.kind === 'image' ? !!c.image : !!learnText(c));
   const isHard = c => (c.srs.lapses || 0) > 0 || c.srs.state === 'relearning' || (c.srs.state === 'review' && (c.srs.d || 0) >= 7);
   // How hard a card is for you (the Library's filter): new (never studied), easy, medium, or hard (the "hard" Learn mode
@@ -250,11 +262,13 @@ export async function createDb({ onChange, go }) {
     return cs;
   }
   // Wrong answers that look like the right one: other cards' answers of about the same length, from the same deck.
+  // A box of a picture gets the picture's other labels first.
   function distractors(c, n) {
     const right = answerOf(c).toLowerCase(), deck = cardsOf(c.deckId).filter(x => x.id !== c.id && learnable(x)), same = deck.filter(x => x.kind === c.kind);
-    const pool = [...new Set((same.length > n ? same : deck).map(answerOf))].filter(a => a && a.toLowerCase() !== right);
+    const o = occOf(c), near = o ? [...new Set(o.boxes.map(b => String(b.label || '').trim()))].filter(a => a && a.toLowerCase() !== right) : [];
+    const pool = [...new Set((same.length > n ? same : deck).map(answerOf))].filter(a => a && a.toLowerCase() !== right && !near.includes(a));
     pool.sort((a, b) => Math.abs(a.length - right.length) - Math.abs(b.length - right.length));
-    return shuffle(pool.slice(0, n * 2)).slice(0, n);
+    return [...shuffle(near), ...shuffle(pool.slice(0, n * 2))].slice(0, n);
   }
   const short = c => c.kind !== 'image' && learnText(c).length <= 70 && answerOf(c).length <= 60;
   // Which kind of question a card gets: a choice first; once it's right, typing it (or another kind of choice).
@@ -341,7 +355,9 @@ export async function createDb({ onChange, go }) {
     const q = L.q;
     if (q.type === 'match') return { ...base, type: 'match', kind: KIND_NAME.match, left: q.left.map(id => ({ id, label: learnText(cardById(id)) })), right: q.right.map(id => ({ id, label: answerOf(cardById(id)) })), matched: q.done, sel: q.sel, wrong: q.wrong, all: q.done.length === q.ids.length };
     const c = cardById(q.id), s = L.st[q.id];
-    const common = { ...base, id: q.id, text: learnText(c), image: c.kind === 'image' ? c.image : '', answer: answerOf(c), note: flat(c.note || ''), streak: s.streak, learnedNow: s.learned, ex: explainOf(c) };
+    const o = occOf(c);
+    const common = { ...base, id: q.id, text: learnText(c), image: c.kind === 'image' ? c.image : '', answer: answerOf(c), note: flat(c.note || ''), streak: s.streak, learnedNow: s.learned, ex: explainOf(c),
+      occ: o ? { boxes: o.boxes, ask: o.i, mode: o.mode } : null };
     if (q.type === 'type') return { ...common, type: 'type', kind: KIND_NAME.type, typed: q.typed, checked: q.checked, ok: q.ok };
     return { ...common, text: q.text || common.text, cardText: common.text, type: 'choice', kind: KIND_NAME[q.kind], claim: q.claim || '', options: q.options, right: q.right, pick: q.pick,
       why: q.why || '', aiAnswer: q.ai ? q.options[q.right] : '' };
@@ -369,7 +385,7 @@ export async function createDb({ onChange, go }) {
     pickBg: async id => { const url = await act.pickFile('image'); if (url) await send('deck.update', { id, patch: { bg: { kind: 'photo', image: url } } }); },
     exportDeck: id => {
       const d = deckById(id), q = x => '"' + String(x ?? '').replace(/"/g, '""') + '"';
-      const rows = [['front', 'back', 'kind', 'text', 'note', 'tags'].join(',')].concat(cardsOf(id).map(c => [c.front, c.back, c.kind, c.text, c.note, c.tags.join(' ')].map(q).join(',')));
+      const rows = [['front', 'back', 'kind', 'text', 'note', 'tags'].join(',')].concat(cardsOf(id).map(c => [c.front, occOf(c) ? occOf(c).label : c.back, c.kind, c.text, c.note, c.tags.join(' ')].map(q).join(',')));
       download(d.name.replace(/[^\w\- ]+/g, '').trim() + '.csv', rows.join('\n'), 'text/csv');
     },
     pickCover: async id => { const url = await act.pickFile('image'); if (url) await send('deck.update', { id, patch: { cover: { image: url } } }); },
@@ -461,7 +477,7 @@ export async function createDb({ onChange, go }) {
       explaining[cardId] = true; explainErr[cardId] = ''; explainPro[cardId] = false; changed();
       try {
         const r = await fetch('/api/explain', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ cardId, question: question || '' }) }), j = await r.json().catch(() => ({}));
-        if (r.ok) { (c.group ? S.cards.filter(x => x.group === c.group) : [c]).forEach(x => { x.explain = { text: j.text, by: 'Lucida' }; }); aiLeftToday = j.free ? j.left : null; }
+        if (r.ok) { (c.group && c.kind === 'cloze' ? S.cards.filter(x => x.group === c.group) : [c]).forEach(x => { x.explain = { text: j.text, by: 'Lucida' }; }); aiLeftToday = j.free ? j.left : null; }
         else { explainErr[cardId] = j.error || 'Something went wrong. Try again.'; explainPro[cardId] = !!j.pro; }
       } catch { explainErr[cardId] = 'Couldn’t reach Lucida. Try again.'; }
       explaining[cardId] = false; changed();
@@ -504,7 +520,7 @@ export async function createDb({ onChange, go }) {
     cards: id => cardsOf(id).slice().reverse().map(c => ({ id: c.id, kind: KIND[c.kind], icon: ICON[c.kind], front: listFront(c), back: listBack(c), tags: c.tags, next: nextLabel(c),
       ai: byAI(c) ? c.source : '', href: '/deck/' + id + '/card/' + c.id })),
     card: id => { const c = S.cards.find(x => x.id === id); return c ? { ...c, clozeMode: c.cloze === -1 ? 'one' : 'each' } : null; },
-    draft: type => ({ kind: { Basic: 'basic', Blank: 'cloze', Image: 'image', Audio: 'audio' }[type] || 'basic', front: '', back: '', text: '', note: '', tags: [], image: null, audio: null, speak: '', auto: true }),
+    draft: type => ({ kind: { Basic: 'basic', Blank: 'cloze', Image: 'image', Audio: 'audio' }[type] || 'basic', front: '', back: '', text: '', note: '', tags: [], image: null, audio: null, speak: '', auto: true, boxes: [], occ: 'one' }),
     today: () => {
       const t = new Date(), live = S.decks.filter(d => !d.paused), sum = k => live.reduce((n, d) => n + deckStat(d)[k], 0);
       const due = sum('due'), fresh = sum('fresh'), { streak, best, days } = streaks(), monday = dayAt(t, -((t.getDay() + 6) % 7)), today = dayAt(t);

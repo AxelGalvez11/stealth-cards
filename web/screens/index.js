@@ -211,6 +211,12 @@ export default [
   "h": 844
  },
  {
+  "name": "PhoneEditorImage",
+  "title": "iPhone · Card editor · image with boxes",
+  "w": 390,
+  "h": 844
+ },
+ {
   "name": "PhoneInbox",
   "title": "iPhone · Check AI cards",
   "w": 390,
@@ -315,6 +321,12 @@ export default [
  {
   "name": "PhoneReviewFour",
   "title": "iPhone · Review · 4 grades",
+  "w": 390,
+  "h": 844
+ },
+ {
+  "name": "PhoneReviewImage",
+  "title": "iPhone · Review · picture with hidden parts (tap the card)",
   "w": 390,
   "h": 844
  },
@@ -663,6 +675,12 @@ export default [
  {
   "name": "WebReviewFour",
   "title": "Web · Review · 4 grades",
+  "w": 1440,
+  "h": 900
+ },
+ {
+  "name": "WebReviewImage",
+  "title": "Web · Review · picture with hidden parts (click the card or press Space)",
   "w": 1440,
   "h": 900
  },

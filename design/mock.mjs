@@ -37,22 +37,26 @@ const ALL_CARDS = [
   ['orgo', 'Markovnikov’s rule says the H goes to…', 'The carbon with more H’s', 'text', 'Due now', 'hard', ['Reactions', 'Exam 2']],
   ['cell', 'Say it: ribosome', 'RY-buh-sohm', 'audio', 'Due now', 'new', ['Pronunciation']]
 ];
+// The sample diagram's parts, hidden by boxes (image occlusion): each box is its own card. Place and size are fractions
+// of the picture.
+const BOXES = [{ id: 'b1', x: .409, y: .32, w: .236, h: .347, label: 'Nucleus' }, { id: 'b2', x: .164, y: .573, w: .164, h: .133, label: 'Mitochondrion' },
+  { id: 'b3', x: .645, y: .687, w: .145, h: .12, label: 'Vacuole' }];
 const REVIEW = [
   { kind: 'basic', front: 'What does the electron transport chain pump across the inner membrane?', back: 'Protons (H⁺), from the matrix into the intermembrane space.', note: 'That gradient powers ATP synthase.' },
   { kind: 'cloze', before: 'The', after: 'is the powerhouse of the cell.', back: 'mitochondrion', note: 'It makes most of the cell’s ATP.' },
-  { kind: 'image', front: 'Name structure 1.', back: 'Nucleus', note: 'Holds the cell’s DNA.', image: 'mock', backLabel: '1 = Nucleus' },
+  { kind: 'image', front: '', back: 'Nucleus', note: 'Holds the cell’s DNA.', image: 'mock', boxes: BOXES, box: 'b1', occ: 'all' },
   { kind: 'audio', front: 'What word do you hear?', back: 'train', note: '電 electricity + 車 vehicle.', audio: 'mock', backBig: '電車', backSub: 'でんしゃ · train' }
 ];
 const DRAFTS = {
   Basic: { kind: 'basic', front: 'What does the electron transport chain pump across the inner membrane?', back: 'Protons (H⁺), into the intermembrane space.' },
   Blank: { kind: 'cloze', text: 'The [[mitochondrion]] is the powerhouse of the cell, making most of its [[ATP]].', note: 'It makes most of the cell’s ATP.' },
-  Image: { kind: 'image', front: 'Name structure 1.', back: 'Nucleus', image: 'mock' },
+  Image: { kind: 'image', front: 'Name the part of the cell.', back: '', image: 'mock', boxes: BOXES, occ: 'one' },
   Audio: { kind: 'audio', back: '電車 (でんしゃ): train', audio: 'mock' }
 };
 const DUE_7 = { vals: [32, 18, 24, 12, 30, 8, 16], labels: ['Wed', 'Thu', 'Fri', 'Sat', 'Sun', 'Mon', 'Tue'], tops: null, names: ['tomorrow', 'Thursday', 'Friday', 'Saturday', 'Sunday', 'Monday', 'Tuesday'] };
 const DUE_14 = { vals: [32, 18, 24, 12, 30, 8, 16, 22, 14, 26, 10, 20, 6, 12], labels: ['23', '24', '25', '26', '27', '28', '29', '30', '1', '2', '3', '4', '5', '6'], tops: ['W', 'T', 'F', 'S', 'S', 'M', 'T', 'W', 'T', 'F', 'S', 'S', 'M', 'T'],
   names: ['tomorrow', 'Thu 24', 'Fri 25', 'Sat 26', 'Sun 27', 'Mon 28', 'Tue 29', 'Wed 30', 'Thu, Oct 1', 'Fri, Oct 2', 'Sat, Oct 3', 'Sun, Oct 4', 'Mon, Oct 5', 'Tue, Oct 6'] };
-export const SAMPLE = { DECKS, TAGS, CARDS, FOLDERS, ALL_CARDS, REVIEW, DRAFTS, DUE_7, DUE_14 };
+export const SAMPLE = { DECKS, TAGS, CARDS, FOLDERS, ALL_CARDS, REVIEW, DRAFTS, DUE_7, DUE_14, BOXES };
 
 export const MOCK_METHOD = String.raw`mock() {
   const p = this.props, m = this.state.$m || {};
