@@ -61,7 +61,7 @@ extension Store {
                       counts: (8, 3, max(left - 11, 0)), iv: (d.steps.first ?? "1m", fmt(hardD), fmt(goodD), fmt(easyD)),
                       mode: d.grading, fsrsOn: d.grading != "piles" && d.fsrs, prog: props.prog, piles: demoPiles, deckId: "cell")
     }
-    let key = (deckId ?? "all") + (pile.map { "|" + $0 } ?? "")
+    let key = Store.sessionKey(deckId, pile)
     if session == nil || session!.key != key { session = ReviewSession(key: key, deckId: deckId, pile: pile) }
     let E = engine, q = E.queue(deckId, pile: pile, done: Set(session!.graded.map(\.cardId))), done = session!.graded.count
     let cur = q.first, d = cur?.deck ?? E.deck(deckId) ?? lib.decks.first
@@ -78,6 +78,14 @@ extension Store {
       vm.fsrsOn = true
     } else { vm.fsrsOn = false }
     return vm
+  }
+
+  static func sessionKey(_ deckId: String?, _ pile: String?) -> String { (deckId ?? "all") + (pile.map { "|" + $0 } ?? "") }
+  /// A review started from a button is a new session, like the web's (X leaves one without the summary, so the next
+  /// review of that deck mustn't carry its grades).
+  func startReview(_ deckId: String?, pile: String? = nil) {
+    guard !demo else { return }
+    session = ReviewSession(key: Store.sessionKey(deckId, pile), deckId: deckId, pile: pile)
   }
 
   /// A card as review shows it; a fill-in-the-blank card asks one blank (cloze) or all of them (-1).
@@ -225,7 +233,8 @@ struct ReviewScreen: View {
 
   private func topBar(_ rv: ReviewVM) -> some View {
     HStack(spacing: 12) {
-      RoundButton(icon: "close", label: "End review") { nav.finishReview() }
+      // X goes straight back to the deck's page (Today after a review of every deck); every grade is saved already.
+      RoundButton(icon: "close", label: "End review") { nav.leave(to: deckId) }
       HStack(spacing: 10) {
         if rv.prog == "bar" {
           GeometryReader { g in
@@ -343,6 +352,10 @@ struct ReviewScreen: View {
         Segmented(options: [("bar", "Bar"), ("counts", "Counts"), ("none", "None")], current: rv.prog, hPad: 8) { store.setProgress($0) }
         Text(["bar": "A thin bar and how many cards are left.", "counts": "New · learning · review, like Anki. The current card’s queue is underlined.", "none": "Nothing on screen but the card."][rv.prog] ?? "")
           .css(12, lh: 1.4).foregroundStyle(t.muted)
+      }
+      // The background of the deck this card is from; reviewing every deck, it says which deck that is.
+      if !rv.deckId.isEmpty {
+        BgChooser(deckId: rv.deckId, title: store.demo || deckId != nil ? "Background" : "Background for " + (store.engine.deck(rv.deckId)?.name ?? ""))
       }
     }
     .foregroundStyle(t.text)

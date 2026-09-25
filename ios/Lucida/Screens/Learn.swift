@@ -1,5 +1,6 @@
 // iPhone · Learn mode (PhoneQuizStart, PhoneQuizUpgrade, PhoneQuiz, PhoneQuizAnswered, PhoneQuizMatch, PhoneQuizType,
-// PhoneQuizDone): pick the cards and kinds of questions, then answer until every card is learned.
+// PhoneQuizDone, PhoneQuizSettings): pick the cards and kinds of questions, then answer until every card is learned. X
+// stops for now and goes back to the deck's page; the gear by it picks the deck's background.
 import SwiftUI
 
 /// The canvas's sample session (the 40 cards tagged Exam 1 in Cell Biology, 18 learned so far).
@@ -213,16 +214,35 @@ struct LearnScreen: View {
   /// The question whose explanation is open, and (on a design screen) whether the sample one was asked for.
   @State private var exFor: String? = nil
   @State private var exMock = false
+  /// Learn settings (the gear by X): the deck's background, in a sheet.
+  @State private var settingsOpen = false
 
   var body: some View {
-    Group {
-      if store.demo { demoBody } else if let v = store.learnView() {
-        if v.done { done(total: v.total, summary: "\(v.setName) · \(v.minutes) min · \(v.firstPct)% first time", tries: v.tries) }
-        else if v.type == "match" { match(v) } else if v.type == "type" { type(v) } else { choice(v) }
-      } else { Color.clear.onAppear { nav.closeFull() } }
+    ZStack {
+      Group {
+        if store.demo { demoBody } else if let v = store.learnView() {
+          if v.done { done(total: v.total, summary: "\(v.setName) · \(v.minutes) min · \(v.firstPct)% first time", tries: v.tries) }
+          else if v.type == "match" { match(v) } else if v.type == "type" { type(v) } else { choice(v) }
+        } else { Color.clear.onAppear { nav.closeFull() } }
+      }
+      .foregroundStyle(look.ink)
+      if settingsOpen {
+        SheetOverlay(top: nil, close: { withAnimation(.out(0.3)) { settingsOpen = false } }) { settingsSheet }.zIndex(2)
+      }
     }
-    .foregroundStyle(look.ink)
     .background(t.bg)
+    .onAppear { if store.demo { settingsOpen = store.props.learnSettings } }
+  }
+
+  // The deck's background, as in Deck settings: it changes behind the questions as soon as one is picked.
+  private var settingsSheet: some View {
+    VStack(alignment: .leading, spacing: 18) {
+      Grabber().frame(maxWidth: .infinity)
+      HStack { Text("Learn settings").css(18, .semibold); Spacer(); SheetDone { withAnimation(.out(0.3)) { settingsOpen = false } } }
+      BgChooser(deckId: deckId)
+    }
+    .foregroundStyle(t.text)
+    .padding(.top, 10).padding(.horizontal, 20).padding(.bottom, 34)
   }
 
   /// Learn mode's colors: the sky style (canvas V82), light or at night.
@@ -273,13 +293,17 @@ struct LearnScreen: View {
     }
   }
 
-  // The top: stop, progress through the set (learned purple, still learning light purple), and the count, on soft
-  // glass chips over the sky.
+  // The top: stop (back to the deck's page; you can pick up where you stopped), settings, progress through the set
+  // (learned purple, still learning light purple), and the count, on soft glass chips over the sky.
   private func top(_ v: LearnView) -> some View {
     let k = look
     return HStack(spacing: 12) {
-      Button { nav.closeFull() } label: { Icon("close", 18, 2).foregroundStyle(k.ink).frame(width: 44, height: 44).background(Circle().fill(k.chip)) }
+      Button { nav.leave(to: deckId) } label: { Icon("close", 18, 2).foregroundStyle(k.ink).frame(width: 44, height: 44).background(Circle().fill(k.chip)) }
         .buttonStyle(.press).accessibilityLabel("Stop for now")
+      Button { withAnimation(.out(0.35)) { settingsOpen.toggle() } } label: {
+        Icon("gear", 18, 2).foregroundStyle(settingsOpen ? k.btnFg : k.ink).frame(width: 44, height: 44).background(Circle().fill(settingsOpen ? k.btn : k.chip))
+      }
+      .buttonStyle(.press).accessibilityLabel("Learn settings")
       GeometryReader { g in
         HStack(spacing: 0) {
           k.bar.frame(width: g.size.width * CGFloat(v.learned) / CGFloat(max(1, v.total)))
@@ -542,7 +566,7 @@ struct LearnScreen: View {
         Button { nav.closeFull(); if !store.demo { store.stopLearn() }; nav.sheet = .learnStart(deckId) } label: {
           Text("Learn more").css(15, .semibold).foregroundStyle(t.text).frame(maxWidth: .infinity).frame(height: 52).background(Capsule().fill(t.surf))
         }.buttonStyle(.press)
-        Button { if !store.demo { store.stopLearn() }; nav.closeFull() } label: {
+        Button { if !store.demo { store.stopLearn() }; nav.leave(to: deckId) } label: {
           Text("Done").css(15, .semibold).foregroundStyle(t.invText).frame(maxWidth: .infinity).frame(height: 52).background(Capsule().fill(t.inv))
         }.buttonStyle(.press)
       }

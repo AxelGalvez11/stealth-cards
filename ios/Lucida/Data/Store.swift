@@ -63,6 +63,8 @@ struct DemoProps {
   var explainOpen = false
   /// The Library with its New folder popup open, this name typed (PhoneLibraryNewFolder).
   var naming: String? = nil
+  /// Learn mode with its settings open (PhoneQuizSettings).
+  var learnSettings = false
 }
 
 struct TodayVM {
