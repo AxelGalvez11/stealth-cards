@@ -203,11 +203,12 @@ function morphChildren(from, to) {
 const app = document.getElementById('app');
 const dark = matchMedia('(prefers-color-scheme: dark)');
 let db = null, current = null, queued = false, navs = 0, lastPath = '';
-// Props every app screen gets: the database and dark mode (from Settings: System, Light, or Dark).
+// Props every app screen gets: the database, dark mode (from Settings: System, Light, or Dark), and whether dark mode
+// is gray (Settings → Dark mode: Gray or Black). On /b, ?dark shows a board dark and ?gray shows it dark and gray.
 const base = () => {
-  if (current && current.design) return current.query.has('dark') ? { dark: true } : {};
-  const look = db.settings().look;
-  return { db, dark: look === 'dark' || (look === 'system' && dark.matches) };
+  if (current && current.design) return current.query.has('gray') ? { dark: true, dim: true } : current.query.has('dark') ? { dark: true } : {};
+  const st = db.settings(), look = st.look;
+  return { db, dark: look === 'dark' || (look === 'system' && dark.matches), dim: st.darkMode === 'gray' };
 };
 function schedule() { if (!queued) { queued = true; queueMicrotask(() => { queued = false; paint(); }); } }
 function paint() {
@@ -220,7 +221,8 @@ function paint() {
   }
   handlers = []; refs = []; drawn = [];
   const s = loaded[current.name], props = { ...s.props, ...current.props, ...base() };
-  document.body.style.background = props.dark ? '#000000' : '#FFFFFF';
+  // The page behind the screen: the boards' background (theme(): white, black, or gray #1E1E20).
+  document.body.style.background = props.dark ? (props.dim ? '#1E1E20' : '#000000') : '#FFFFFF';
   const tpl = document.createElement('template');
   tpl.innerHTML = renderScreen(s, current.key, props).replace(/href="([A-Za-z0-9]+)\.dc\.html"/g, (_, n) => 'href="' + linkFor(n) + '"');
   morphChildren(app, tpl.content);

@@ -31,9 +31,13 @@ a{color:inherit;text-decoration:none}a:hover{opacity:.8}
   <span style="height: 36px; padding: 0 16px; display: inline-flex; align-items: center; gap: 8px; border-radius: 999px; background: #FFFFFF; font-size: 14px; font-weight: 700;"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="2.2" fill="currentColor" stroke="none"/><path d="M15.8 8.2a5.4 5.4 0 0 1 0 7.6M8.2 15.8a5.4 5.4 0 0 1 0-7.6M18.7 5.3a9.5 9.5 0 0 1 0 13.4M5.3 18.7a9.5 9.5 0 0 1 0-13.4"/></svg>Cell Biology</span>
 </div>
 </x-dc>
-<script type="text/x-dc" data-dc-script data-props='{"dark":{"editor":"boolean","default":false},"$preview":{"width":390,"height":844}}'>
+<script type="text/x-dc" data-dc-script data-props='{"dark":{"editor":"boolean","default":false},"dim":{"editor":"boolean","default":false},"$preview":{"width":390,"height":844}}'>
 class Component extends DCLogic {
-theme(d) {
+// Dark mode has two looks, picked in Settings → Dark mode: black (the first one, and still the default) or gray (the
+// owner: "add a darkmode option that is grayish not fully blackedout"). g asks for gray; it only counts when d is on.
+// Gray keeps the grade colors, and its muted words still read at WCAG AA on every surface.
+theme(d, g) {
+  if (d && g) return { bg: '#1E1E20', surf: '#2A2A2D', surf2: '#353539', line: '#3A3A3E', text: '#F2F2F2', muted: '#A8A8AD', inv: '#F2F2F2', invText: '#1E1E20', card: '#2A2A2D', shadow: '0 1px 2px rgba(0,0,0,.2), 0 18px 44px -18px rgba(0,0,0,.5)', again: '#F97066', hard: '#FDB022', good: '#47CD89', easy: '#53B1FD', againTint: 'rgba(249,112,102,.16)', goodTint: 'rgba(71,205,137,.16)', hardTint: 'rgba(253,176,34,.16)', dim: 'rgba(0,0,0,.45)' };
   return d
     ? { bg: '#000000', surf: '#141414', surf2: '#222222', line: '#262626', text: '#FFFFFF', muted: '#A3A3A3', inv: '#FFFFFF', invText: '#000000', card: '#141414', shadow: 'none', again: '#F97066', hard: '#FDB022', good: '#47CD89', easy: '#53B1FD', againTint: 'rgba(249,112,102,.16)', goodTint: 'rgba(71,205,137,.16)', hardTint: 'rgba(253,176,34,.16)', dim: 'rgba(0,0,0,.7)' }
     : { bg: '#FFFFFF', surf: '#F4F4F4', surf2: '#E8E8E8', line: '#EBEBEB', text: '#000000', muted: '#666666', inv: '#000000', invText: '#FFFFFF', card: '#FFFFFF', shadow: '0 1px 2px rgba(0,0,0,.04), 0 18px 44px -18px rgba(0,0,0,.18)', again: '#D92D20', hard: '#B54708', good: '#067647', easy: '#175CD3', againTint: '#FDECEA', goodTint: '#E6F4EC', hardTint: '#FDF1E3', dim: 'rgba(0,0,0,.28)' };
@@ -145,7 +149,7 @@ mock() {
     href: 'WebDeck.dc.html', studyHref: 'WebReview.dc.html', settingsHref: 'WebDeckSettings.dc.html', newCardHref: 'WebEditor.dc.html', folder: null, bg: ed.bg || { kind: 'deck', image: null } });
   const idx = m.idx ?? (({ 'Fill in the blank': 1, Image: 2, Audio: 3 })[p.card] || 0);
   const st = { name: 'Alex Kim', sub: 'Signed in with Google · alex@gmail.com', signedIn: true, google: true, photo: p.photo === 'Google photo' ? 'google' : 'color', color: 0,
-    look: 'system', grads: 'mix', prog: ({ Bar: 'bar', Counts: 'counts', None: 'none' })[p.progress] || 'bar', perDay: 20, goal: 90, grading: 'four', fsrs: true, check: true, reminder: '9:00 AM', ...(m.settings || {}) };
+    look: 'system', darkMode: p.dim ? 'gray' : 'black', grads: 'mix', prog: ({ Bar: 'bar', Counts: 'counts', None: 'none' })[p.progress] || 'bar', perDay: 20, goal: 90, grading: 'four', fsrs: true, check: true, reminder: '9:00 AM', ...(m.settings || {}) };
   const perms = { read: true, text: true, media: true, edit: true, check: true, del: false, ...(m.perms || {}) };
   const noop = () => {};
   // Folders you make or change here stay on this board.
@@ -209,18 +213,18 @@ mock() {
 
 
 constructor(props) { super(props); this.state = { set: 'tag', count: 10, time: 20 }; }
-renderVals() { const t = this.theme(!!this.props.dark);
-  const studyBg = (dk, dark) => {
+renderVals() { const t = this.theme(!!this.props.dark, !!this.props.dim);
+  const studyBg = (dk, dark, dim) => {
     const b = (dk && dk.bg) || {}, img = b.image || (dk && dk.image) || '';
     const kind = ['deck', 'plain', 'sky', 'sunset', 'photo'].includes(b.kind) && !(b.kind === 'photo' && !img) ? b.kind : 'deck';
     const mesh = this.gen(((dk && dk.seed) || 'Lucida') + (dk && dk.round ? ' #' + dk.round : ''), (dk && dk.style) || 'mix');
     // On the canvas a photo is a placeholder, so it shows the deck's colors at full strength instead.
-    const photo = kind === 'photo' && img !== 'mock' ? img : '', sample = kind === 'photo' && !photo, faint = kind === 'deck';
+    const photo = kind === 'photo' && img !== 'mock' ? img : '', sample = kind === 'photo' && !photo, faint = kind === 'deck', gray = dark && dim;
     return { isDeck: faint || sample, isPhoto: !!photo, isSky: kind === 'sky', isSunset: kind === 'sunset', mesh, photo,
-      filter: sample ? 'none' : dark ? 'saturate(.16) brightness(.42)' : 'saturate(.16) brightness(1.15)',
-      veil: faint ? (dark ? 'rgba(0,0,0,.3)' : 'rgba(255,255,255,.6)') : photo || sample ? (dark ? 'rgba(0,0,0,.5)' : 'rgba(255,255,255,.38)') : 'rgba(0,0,0,0)',
-      skyTop: dark ? '#081733' : '#86BDF3', skyMid: dark ? '#0D2148' : '#C9E2FB', skyLow: dark ? '#0A1530' : '#EDF5FE',
-      sunset: dark ? "radial-gradient(90% 60% at 88% 100%, rgba(238,142,98,.16), rgba(238,142,98,0) 70%), linear-gradient(180deg, #0C1426 0%, #151B31 35%, #231C2E 65%, #2E1D25 100%)" : "radial-gradient(90% 60% at 88% 100%, rgba(238,142,98,.22), rgba(238,142,98,0) 70%), linear-gradient(180deg, #C3D3E3 0%, #D3DBE6 30%, #E6DDE4 52%, #F2DCD8 72%, #F5CFC2 100%)", grain: faint || sample || kind === 'sunset' ? '.55' : '0' };
+      filter: sample ? 'none' : gray ? 'saturate(.16) brightness(.34)' : dark ? 'saturate(.16) brightness(.42)' : 'saturate(.16) brightness(1.15)',
+      veil: faint ? (gray ? 'rgba(30,30,32,.45)' : dark ? 'rgba(0,0,0,.3)' : 'rgba(255,255,255,.6)') : photo || sample ? (gray ? 'rgba(30,30,32,.55)' : dark ? 'rgba(0,0,0,.5)' : 'rgba(255,255,255,.38)') : 'rgba(0,0,0,0)',
+      skyTop: gray ? '#1B2A48' : dark ? '#081733' : '#86BDF3', skyMid: gray ? '#1F2B45' : dark ? '#0D2148' : '#C9E2FB', skyLow: gray ? '#212637' : dark ? '#0A1530' : '#EDF5FE',
+      sunset: gray ? "radial-gradient(90% 60% at 88% 100%, rgba(238,142,98,.18), rgba(238,142,98,0) 70%), linear-gradient(180deg, #1F2638 0%, #272C40 35%, #332C3F 65%, #3E2E37 100%)" : dark ? "radial-gradient(90% 60% at 88% 100%, rgba(238,142,98,.16), rgba(238,142,98,0) 70%), linear-gradient(180deg, #0C1426 0%, #151B31 35%, #231C2E 65%, #2E1D25 100%)" : "radial-gradient(90% 60% at 88% 100%, rgba(238,142,98,.22), rgba(238,142,98,0) 70%), linear-gradient(180deg, #C3D3E3 0%, #D3DBE6 30%, #E6DDE4 52%, #F2DCD8 72%, #F5CFC2 100%)", grain: faint || sample || kind === 'sunset' ? '.55' : '0' };
   };
   const s = this.state, reveal = !!this.props.reveal, Q = {"n":3,"of":10,"q":"Which organelle packages proteins for secretion?","options":["Golgi apparatus","Lysosome","Nucleus","Ribosome"],"right":0,"counts":[7,2,1,2]}, total = Q.counts.reduce((a, b) => a + b, 0);
   const seg = (k, cur) => ({ pressed: k === cur ? 'true' : 'false', bg: k === cur ? t.bg : 'transparent', fg: k === cur ? t.text : t.muted, sh: k === cur ? '0 1px 3px rgba(0,0,0,.14)' : 'none' });
@@ -230,7 +234,7 @@ renderVals() { const t = this.theme(!!this.props.dark);
     return { i, p, label: Q.options[i], count: String(Q.counts[i]), right: lift, showCount: reveal, gfilter: gray ? 'grayscale(1)' : 'none', fg: p.ink, ts: p.shadow,
       badge: p.glass, badgeLine: 'inset 0 0 0 1.5px ' + p.glassLine, shadow: lift ? LV.lift : gray ? 'none' : LV.shadow, tf: lift ? 'translateY(-10px)' : 'none', anim: lift ? 'scLiftIn .45s cubic-bezier(.2,.8,.2,1) 0.1s both, scHover 2.4s ease-in-out 0.55s infinite alternate' : 'none' }; };
   const wrongPick = !!this.props.wrong;
-  return { t, bg: studyBg({ seed: 'Cell Biology', style: 'mix', bg: { kind: 'deck' } }, false), dark: !!this.props.dark, grain: String(this.props.grain ?? 0.7), q: Q, peopleN: '12',
+  return { t, bg: studyBg({ seed: 'Cell Biology', style: 'mix', bg: { kind: 'deck' } }, false), dark: !!this.props.dark, dim: !!this.props.dim, grain: String(this.props.grain ?? 0.7), q: Q, peopleN: '12',
     o0: opt(0), o1: opt(1), o2: opt(2), o3: opt(3), c0: colors[0], c1: colors[2], c2: colors[1],
     nextHref: 'LiveLeaderboard.dc.html', nextLabel: 'Leaderboard',
     people: ["Maya","Jordan","Priya","Leo","Sofia","Ethan","Ana","Kai","Zoe","Omar","Lina","Noah"].map((name, i) => ({ name, initial: name[0], color: colors[i % colors.length], delay: (i * .12).toFixed(2) + 's' })),

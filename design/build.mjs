@@ -47,7 +47,11 @@ ${body}
 </x-dc>
 <script type="text/x-dc" data-dc-script data-props='${JSON.stringify({ ...props, $preview: { width: w, height: h } })}'>
 class Component extends DCLogic {
-theme(d) {
+// Dark mode has two looks, picked in Settings → Dark mode: black (the first one, and still the default) or gray (the
+// owner: "add a darkmode option that is grayish not fully blackedout"). g asks for gray; it only counts when d is on.
+// Gray keeps the grade colors, and its muted words still read at WCAG AA on every surface.
+theme(d, g) {
+  if (d && g) return { bg: '#1E1E20', surf: '#2A2A2D', surf2: '#353539', line: '#3A3A3E', text: '#F2F2F2', muted: '#A8A8AD', inv: '#F2F2F2', invText: '#1E1E20', card: '#2A2A2D', shadow: '0 1px 2px rgba(0,0,0,.2), 0 18px 44px -18px rgba(0,0,0,.5)', again: '#F97066', hard: '#FDB022', good: '#47CD89', easy: '#53B1FD', againTint: 'rgba(249,112,102,.16)', goodTint: 'rgba(71,205,137,.16)', hardTint: 'rgba(253,176,34,.16)', dim: 'rgba(0,0,0,.45)' };
   return d
     ? { bg: '#000000', surf: '#141414', surf2: '#222222', line: '#262626', text: '#FFFFFF', muted: '#A3A3A3', inv: '#FFFFFF', invText: '#000000', card: '#141414', shadow: 'none', again: '#F97066', hard: '#FDB022', good: '#47CD89', easy: '#53B1FD', againTint: 'rgba(249,112,102,.16)', goodTint: 'rgba(71,205,137,.16)', hardTint: 'rgba(253,176,34,.16)', dim: 'rgba(0,0,0,.7)' }
     : { bg: '#FFFFFF', surf: '#F4F4F4', surf2: '#E8E8E8', line: '#EBEBEB', text: '#000000', muted: '#666666', inv: '#000000', invText: '#FFFFFF', card: '#FFFFFF', shadow: '0 1px 2px rgba(0,0,0,.04), 0 18px 44px -18px rgba(0,0,0,.18)', again: '#D92D20', hard: '#B54708', good: '#067647', easy: '#175CD3', againTint: '#FDECEA', goodTint: '#E6F4EC', hardTint: '#FDF1E3', dim: 'rgba(0,0,0,.28)' };
@@ -86,8 +90,9 @@ const APP_MOTION_CSS = [
   Array.from({ length: 13 }, (_, i) => `:nth-child(${i + 2})>.sc-grow{animation-delay:${((i + 1) * 0.04).toFixed(2)}s}`).join(''),
   '@media (prefers-reduced-motion:reduce){main>*,.sc-float,.sc-sway-a,.sc-sway-b,.sc-glow,.sc-alive>svg,.sc-draw,.sc-knob,.sc-grow{animation:none!important}.sc-sheen{display:none}button:active,.sc-press:active,.sc-lift:hover{transform:none}}'
 ].join('');
-const DARK = { dark: { editor: 'boolean', default: false } };
-const T = 'const t = this.theme(!!this.props.dark);';
+// Dark mode, and its gray look (dim): the app sets both from Settings (Appearance, and Dark mode: Gray or Black).
+const DARK = { dark: { editor: 'boolean', default: false }, dim: { editor: 'boolean', default: false } };
+const T = 'const t = this.theme(!!this.props.dark, !!this.props.dim);';
 // Data: the web app passes its database as props.db; on the canvas, boards use the sample in mock.mjs.
 const DB_JS = 'const db = this.props.db || this.mock(); const chrome = db.chrome();';
 
@@ -684,17 +689,21 @@ const coverRound = (ic, label, href = '', onClick = '') => href
 const SUNSET_BG = 'radial-gradient(90% 60% at 88% 100%, rgba(238,142,98,.22), rgba(238,142,98,0) 70%), linear-gradient(180deg, #C3D3E3 0%, #D3DBE6 30%, #E6DDE4 52%, #F2DCD8 72%, #F5CFC2 100%)';
 const SUNSET_NIGHT = 'radial-gradient(90% 60% at 88% 100%, rgba(238,142,98,.16), rgba(238,142,98,0) 70%), linear-gradient(180deg, #0C1426 0%, #151B31 35%, #231C2E 65%, #2E1D25 100%)';
 const SKY_TILE = 'linear-gradient(180deg, #86BDF3 0%, #C9E2FB 45%, #EDF5FE 100%)';
-const STUDY_BG_JS = `const studyBg = (dk, dark) => {
+// Gray dark mode lifts these off black: the deck's colors under a gray wash (not a black one), a dusk sky that fades
+// into the gray page, and a dusk sunset.
+const SKY_DUSK = { top: '#1B2A48', mid: '#1F2B45', low: '#212637' };
+const SUNSET_DUSK = 'radial-gradient(90% 60% at 88% 100%, rgba(238,142,98,.18), rgba(238,142,98,0) 70%), linear-gradient(180deg, #1F2638 0%, #272C40 35%, #332C3F 65%, #3E2E37 100%)';
+const STUDY_BG_JS = `const studyBg = (dk, dark, dim) => {
     const b = (dk && dk.bg) || {}, img = b.image || (dk && dk.image) || '';
     const kind = ['deck', 'plain', 'sky', 'sunset', 'photo'].includes(b.kind) && !(b.kind === 'photo' && !img) ? b.kind : 'deck';
     const mesh = this.gen(((dk && dk.seed) || 'Lucida') + (dk && dk.round ? ' #' + dk.round : ''), (dk && dk.style) || 'mix');
     // On the canvas a photo is a placeholder, so it shows the deck's colors at full strength instead.
-    const photo = kind === 'photo' && img !== 'mock' ? img : '', sample = kind === 'photo' && !photo, faint = kind === 'deck';
+    const photo = kind === 'photo' && img !== 'mock' ? img : '', sample = kind === 'photo' && !photo, faint = kind === 'deck', gray = dark && dim;
     return { isDeck: faint || sample, isPhoto: !!photo, isSky: kind === 'sky', isSunset: kind === 'sunset', mesh, photo,
-      filter: sample ? 'none' : dark ? 'saturate(.16) brightness(.42)' : 'saturate(.16) brightness(1.15)',
-      veil: faint ? (dark ? 'rgba(0,0,0,.3)' : 'rgba(255,255,255,.6)') : photo || sample ? (dark ? 'rgba(0,0,0,.5)' : 'rgba(255,255,255,.38)') : 'rgba(0,0,0,0)',
-      skyTop: dark ? '#081733' : '#86BDF3', skyMid: dark ? '#0D2148' : '#C9E2FB', skyLow: dark ? '#0A1530' : '#EDF5FE',
-      sunset: dark ? ${JSON.stringify(SUNSET_NIGHT)} : ${JSON.stringify(SUNSET_BG)}, grain: faint || sample || kind === 'sunset' ? '.55' : '0' };
+      filter: sample ? 'none' : gray ? 'saturate(.16) brightness(.34)' : dark ? 'saturate(.16) brightness(.42)' : 'saturate(.16) brightness(1.15)',
+      veil: faint ? (gray ? 'rgba(30,30,32,.45)' : dark ? 'rgba(0,0,0,.3)' : 'rgba(255,255,255,.6)') : photo || sample ? (gray ? 'rgba(30,30,32,.55)' : dark ? 'rgba(0,0,0,.5)' : 'rgba(255,255,255,.38)') : 'rgba(0,0,0,0)',
+      skyTop: gray ? '${SKY_DUSK.top}' : dark ? '#081733' : '#86BDF3', skyMid: gray ? '${SKY_DUSK.mid}' : dark ? '#0D2148' : '#C9E2FB', skyLow: gray ? '${SKY_DUSK.low}' : dark ? '#0A1530' : '#EDF5FE',
+      sunset: gray ? ${JSON.stringify(SUNSET_DUSK)} : dark ? ${JSON.stringify(SUNSET_NIGHT)} : ${JSON.stringify(SUNSET_BG)}, grain: faint || sample || kind === 'sunset' ? '.55' : '0' };
   };`;
 // The layer itself, behind everything on the page (its parent needs isolation: isolate).
 const studyBgLayer = `<div aria-hidden="true" style="position: absolute; inset: 0; z-index: -1; overflow: hidden; pointer-events: none; background: {{t.bg}};">
@@ -946,7 +955,7 @@ const WEB_FMT = `<div role="toolbar" aria-label="Formatting" style="display: fle
 const slashIcon = `<sc-if value="{{it.g}}" hint-placeholder-val="{{ true }}">{{it.g}}</sc-if><sc-if value="{{it.list}}" hint-placeholder-val="{{ false }}">${svg(I.list, 16, 1.8)}</sc-if><sc-if value="{{it.bracket}}" hint-placeholder-val="{{ false }}">${svg(I.bracket, 16, 1.8)}</sc-if><sc-if value="{{it.sqrt}}" hint-placeholder-val="{{ false }}">${svg(I.sqrt, 16, 1.8)}</sc-if><sc-if value="{{it.image}}" hint-placeholder-val="{{ false }}">${svg(I.image, 16, 1.8)}</sc-if><sc-if value="{{it.mic}}" hint-placeholder-val="{{ false }}">${svg(I.mic, 16, 1.8)}</sc-if>`;
 const SLASH_MENU = maxH => `<sc-if value="{{slash.on}}" hint-placeholder-val="{{ false }}"><div role="listbox" aria-label="Add to the card" data-slash="1" onMouseDown="{{keepFocus}}" style="position: absolute; left: {{slash.x}}; top: {{slash.y}}; width: 248px; max-height: ${maxH}px; overflow-y: auto; box-sizing: border-box; padding: 6px; border-radius: 18px; background: {{t.bg}}; box-shadow: 0 0 0 1px {{t.line}}, 0 18px 44px rgba(0,0,0,.22); display: flex; flex-direction: column; gap: 2px; z-index: 30;"><sc-for list="{{slash.items}}" as="it" hint-placeholder-count="6"><button type="button" role="option" aria-selected="{{it.sel}}" onMouseDown="{{keepFocus}}" onClick="{{it.pick}}" style="flex-shrink: 0; height: 40px; padding: 0 8px; display: flex; align-items: center; gap: 10px; border: 0; border-radius: 12px; background: {{it.bg}}; color: {{t.text}}; font: inherit; font-size: 14px; font-weight: 500; text-align: left; cursor: pointer;"><span style="width: 28px; height: 28px; flex-shrink: 0; border-radius: 8px; background: {{it.chip}}; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; letter-spacing: -.02em;">${slashIcon}</span><span style="flex-grow: 1;">{{it.label}}</span><span style="font-family: ${MONO}; font-size: 12px; color: {{t.muted}};">{{it.hint}}</span></button></sc-for></div></sc-if>`;
 const webEditor = `<div style="position: relative; width: 1440px; height: 900px; overflow: hidden; font-family: ${FONT}; color: {{t.text}};">
-  <dc-import name="WebDeck" dark="{{dark}}" deck-id="{{deckId}}" hint-size="1440px,900px"></dc-import>
+  <dc-import name="WebDeck" dark="{{dark}}" dim="{{dim}}" deck-id="{{deckId}}" hint-size="1440px,900px"></dc-import>
   <div style="position: absolute; inset: 0; background: {{t.dim}};"></div>
   <aside style="position: absolute; top: 12px; right: 12px; bottom: 12px; width: 520px; box-sizing: border-box; padding: 28px; border-radius: 20px; background: {{t.bg}}; display: flex; flex-direction: column; gap: 20px; box-shadow: 0 24px 64px rgba(0,0,0,.24);">
     <div style="display: flex; align-items: center; justify-content: space-between;"><div style="font-size: 22px; font-weight: 600; letter-spacing: -.02em;">{{title}}</div><a href="{{backHref}}" aria-label="Close" style="width: 36px; height: 36px; border-radius: 18px; background: {{t.surf}}; display: flex; align-items: center; justify-content: center;">${svg(I.close, 16, 2)}</a></div>
@@ -1366,7 +1375,7 @@ renderVals() {
     items: sv ? sv.items.map((it, n) => ({ label: it.label, hint: it.hint, g: it.g || '', list: it.icon === 'list', bracket: it.icon === 'bracket', sqrt: it.icon === 'sqrt', image: it.icon === 'image', mic: it.icon === 'mic',
       sel: n === sl.idx ? 'true' : 'false', bg: n === sl.idx ? t.surf : 'transparent', chip: n === sl.idx ? t.bg : t.surf, pick: () => this.slashPick(it.id) })) : [] };
   return {
-    t, kb, dark: !!this.props.dark, typing: s.typing, deckId: this.props.deckId || '',
+    t, kb, dark: !!this.props.dark, dim: !!this.props.dim, typing: s.typing, deckId: this.props.deckId || '',
     // The iPhone editor's keyboard is drawn on the canvas; in the app the phone shows its own.
     drawKb: s.typing && !!db.mock,
     title: saved ? 'Edit card' : 'New card', deckName: dk.name, backHref, f, rich, slash,
@@ -1445,7 +1454,7 @@ renderVals() {
   const rev = this.state.revealed;
   const ex = explainView(rv.ex, rv.card && rv.card.id, '', rev, ${JSON.stringify('It pumps protons (H⁺) out of the matrix into the space between the two membranes. That builds a gradient, like water held behind a dam, and ATP synthase uses the flow back in to make ATP. Remember it as pump uphill first, then cash in on the way down.')});
   // Behind the cards: the background of the deck this card is from.
-  const bg = studyBg(db.deck(rv.deckId), !!this.props.dark);
+  const bg = studyBg(db.deck(rv.deckId), !!this.props.dark, !!this.props.dim);
   const c = rv.card || { kind: 'basic', front: '', back: '' };
   const card = cardView(c, rev);
   const after = patch => this.setState({ revealed: false, moved: true, ...(patch || {}) });
@@ -1679,7 +1688,8 @@ const doneLogic = (w, stroke) => `renderVals() { ${T}${DB_JS}
 // Stats
 const HEAT_LOGIC = weeks => `
   // Periwinkle scale (the Iris gradient's family): empty, then four levels of study.
-  const scale = this.props.dark ? ['#0B0B0F', '#1E2452', '#2F3D9A', '#4C5FDB', '#8C9AFC'] : ['#FFFFFF', '#DCE0FD', '#B0BAFB', '#7F8DF6', '#4F60E6'];
+  // In gray dark mode an empty day is a shade under the gray panel, not black.
+  const scale = this.props.dark && this.props.dim ? ['#232326', '#2A3272', '#3442A8', '#4F62DE', '#8C9AFC'] : this.props.dark ? ['#0B0B0F', '#1E2452', '#2F3D9A', '#4C5FDB', '#8C9AFC'] : ['#FFFFFF', '#DCE0FD', '#B0BAFB', '#7F8DF6', '#4F60E6'];
   const cell = lv => ({ c: scale[lv], edge: lv ? 'none' : 'inset 0 0 0 1px ' + t.line });
   const heat = Array.from({ length: ${weeks} * 7 }, (_, i) => { const v = (i * 37 + (i % 7) * 11) % 13; return cell(v < 3 ? 0 : v < 6 ? 1 : v < 9 ? 2 : v < 11 ? 3 : 4); });
   const legend = [0, 1, 2, 3, 4].map(cell);`;
@@ -2273,7 +2283,7 @@ renderVals() { ${T}${DB_JS}${COVER_LOGIC}
 // The fields scroll under the header when they're taller than the sheet. The keyboard is drawn on the canvas only: in
 // the app, the phone shows its own.
 const phoneEditor = `<div style="position: relative; width: 390px; height: 844px; overflow: hidden; font-family: ${FONT}; color: {{t.text}};">
-  <dc-import name="PhoneDeck" dark="{{dark}}" deck-id="{{deckId}}" hint-size="390px,844px"></dc-import>
+  <dc-import name="PhoneDeck" dark="{{dark}}" dim="{{dim}}" deck-id="{{deckId}}" hint-size="390px,844px"></dc-import>
   <div style="position: absolute; inset: 0; background: {{t.dim}};"></div>
   <div style="position: absolute; left: 0; right: 0; bottom: 0; top: 56px; box-sizing: border-box; padding: 10px 20px 34px; border-radius: 36px 36px 0 0; background: {{t.bg}}; display: flex; flex-direction: column; gap: 16px;">
     <div style="align-self: center; width: 40px; height: 5px; border-radius: 3px; background: {{t.surf2}};"></div>
@@ -2386,9 +2396,9 @@ renderVals() { ${T}${DB_JS}
   ${PROVIDERS('ai.clients')}
   return { ${MESH_VALS('Apricot')} t, providers, mcpUrl: ai.url, copyLabel: this.state.copied ? 'Copied' : 'Copy link', copy: () => { db.act.copy(ai.url); this.setState({ copied: true }); } }; }`;
 
-// iPhone Settings, from the gear on Today. Appearance switches this screen right away. The page scrolls; the board is
-// tall enough to show all of it.
-const PHONE_SETTINGS_H = 1040;
+// iPhone Settings, from the gear on Today. Appearance switches this screen right away, and so does Dark mode (gray or
+// black, for whenever the app is dark). The page scrolls; the board is tall enough to show all of it.
+const PHONE_SETTINGS_H = 1100;
 const sRow = (label, right, { href = '', sub = '', click = '' } = {}) => {
   const inner = `<span style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px;"><span style="font-size: 16px;">${label}</span>${sub ? `<span style="font-size: 12px; color: {{t.muted}};">${sub}</span>` : ''}</span>${right}`;
   const st = 'min-height: 52px; box-sizing: border-box; padding: 8px 16px; display: flex; align-items: center; gap: 12px;';
@@ -2428,7 +2438,7 @@ const phoneSettings = phone(`<div style="padding: 64px 20px 34px; display: flex;
     sPick('Remember goal', 'goal', [80, 85, 90, 93, 95].map(n => [n, n + '%'])),
     sRow('Schedule with FSRS', SWITCH('fsrsSw', 'toggleFsrs', 'Schedule with FSRS'), { sub: '{{fsrsSub}}' })
   ])}
-  ${sGroup('Look', [sRow('Appearance', SEG('looks', 'Appearance')), sRow('Card gradients', SEG('grads', 'Card gradients'))])}
+  ${sGroup('Look', [sRow('Appearance', SEG('looks', 'Appearance')), sRow('Dark mode', SEG('darks', 'Dark mode', 2), { sub: 'When the app is dark' }), sRow('Card gradients', SEG('grads', 'Card gradients'))])}
   ${sGroup('Your AI', [
     sRow('Connected apps', sVal('{{connected}}'), { href: 'PhoneConnect.dc.html' }),
     sRow('Check AI cards first', SWITCH('checkSw', 'toggleCheck', 'Check AI cards first'))
@@ -2440,8 +2450,8 @@ renderVals() {
   const db = this.props.db || this.mock(), chrome = db.chrome(), st = db.settings();
   // Appearance: on the canvas System follows the board's dark setting, and Light and Dark switch this screen right
   // away; in the app the whole app switches.
-  const look = st.look;
-  const t = this.theme(db.mock ? look === 'dark' || (look === 'system' && !!this.props.dark) : !!this.props.dark);
+  const look = st.look, darkMode = st.darkMode === 'gray' ? 'gray' : 'black';
+  const t = this.theme(db.mock ? look === 'dark' || (look === 'system' && !!this.props.dark) : !!this.props.dark, db.mock ? darkMode === 'gray' : !!this.props.dim);
   ${SW_JS}
   ${OPTS_JS}
   const set = patch => db.act.setSettings(patch), piles = st.grading === 'piles';
@@ -2459,6 +2469,7 @@ renderVals() {
     fsrsSw: sw(st.fsrs && !piles, !piles), toggleFsrs: () => !piles && set({ fsrs: !st.fsrs }),
     fsrsSub: piles ? 'Off while you grade with piles' : 'For 4 grades and ✓ / ✗',
     looks: opts([['system', 'System'], ['light', 'Light'], ['dark', 'Dark']], look, id => set({ look: id })),
+    darks: opts([['gray', 'Gray'], ['black', 'Black']], darkMode, id => set({ darkMode: id })),
     grads: opts([['mix', 'Mix'], ['vivid', 'Vivid'], ['deep', 'Deep']], st.grads, id => set({ grads: id })),
     connected: db.ai().connected,
     checkSw: sw(st.check), toggleCheck: () => db.act.setPerm('check', !st.check),
@@ -2496,21 +2507,22 @@ const webSettings = webRoot(`${sidebar('You')}
         sRow('Grade with', SEG('gradeOpts', 'Grade with')),
         sRow('Progress', SEG('progOpts', 'Progress'))
       ])}
+      ${sGroup('Your data', [
+        sRow('Import cards', sVal('Anki, Quizlet, or CSV'), { href: 'WebImport.dc.html' }),
+        sRow('Export all cards', sVal(''), { click: 'exportAll' }),
+        sRow('<span style="color: {{t.again}};">Delete account</span>', '', { click: 'deleteAccount' })
+      ])}
     </div>
     <div style="display: flex; flex-direction: column; gap: 24px;">
       ${planGroups}
       ${sGroup('Look', [
         sRow('Appearance', SEG('looks', 'Appearance')),
+        sRow('Dark mode', SEG('darks', 'Dark mode', 2), { sub: 'When the app is dark' }),
         `<div style="padding: 10px 16px 16px; display: flex; flex-direction: column; gap: 12px;"><div style="display: flex; align-items: center; gap: 12px;"><span style="flex-grow: 1; font-size: 16px;">Card gradients</span>${SEG('grads', 'Card gradients')}</div><div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px;"><sc-for list="{{gradPreview}}" as="k" hint-placeholder-count="4">${meshCard('k', 'height: 60px; border-radius: 14px;', 'height: 100%; box-sizing: border-box; padding: 8px 10px; display: flex; align-items: flex-end; font-size: 11px; font-weight: 600;', '{{k.name}}')}</sc-for></div></div>`
       ])}
       ${sGroup('Your AI', [
         sRow('Connected apps', sVal('{{connected}}'), { href: 'WebConnect.dc.html' }),
         sRow('Check AI cards first', SWITCH('checkSw', 'toggleCheck', 'Check AI cards first'), { sub: 'They wait in their deck until you keep them' })
-      ])}
-      ${sGroup('Your data', [
-        sRow('Import cards', sVal('Anki, Quizlet, or CSV'), { href: 'WebImport.dc.html' }),
-        sRow('Export all cards', sVal(''), { click: 'exportAll' }),
-        sRow('<span style="color: {{t.again}};">Delete account</span>', '', { click: 'deleteAccount' })
       ])}
     </div>
   </div>
@@ -2518,9 +2530,9 @@ const webSettings = webRoot(`${sidebar('You')}
 const webSettingsLogic = `
 renderVals() {
   const db = this.props.db || this.mock(), chrome = db.chrome(), st = db.settings();
-  // Appearance: on the canvas System follows the board's dark setting; in the app the whole app switches.
-  const look = st.look;
-  const t = this.theme(db.mock ? look === 'dark' || (look === 'system' && !!this.props.dark) : !!this.props.dark);
+  // Appearance and Dark mode: on the canvas System follows the board's dark setting; in the app the whole app switches.
+  const look = st.look, darkMode = st.darkMode === 'gray' ? 'gray' : 'black';
+  const t = this.theme(db.mock ? look === 'dark' || (look === 'system' && !!this.props.dark) : !!this.props.dark, db.mock ? darkMode === 'gray' : !!this.props.dim);
   ${SW_JS}
   ${OPTS_JS}
   const set = patch => db.act.setSettings(patch);
@@ -2535,6 +2547,7 @@ renderVals() {
     photoOpts: opts([['google', 'Google photo'], ['color', 'Color']], photo, id => set({ photo: id })),
     swatches: colors.map(([label, bg], i) => ({ label, bg, pressed: i === st.color ? 'true' : 'false', ring: i === st.color ? '0 0 0 2px ' + t.surf + ', 0 0 0 4px ' + t.text : 'none', pick: () => set({ color: i }) })),
     looks: opts([['system', 'System'], ['light', 'Light'], ['dark', 'Dark']], look, id => set({ look: id })),
+    darks: opts([['gray', 'Gray'], ['black', 'Black']], darkMode, id => set({ darkMode: id })),
     grads: opts([['mix', 'Mix'], ['vivid', 'Vivid'], ['deep', 'Deep']], st.grads, id => set({ grads: id })),
     gradPreview: ['Cell Biology', 'Japanese', 'Chemistry', 'History'].map(n => ({ ...this.gen(n, st.grads), name: n })),
     gradeOpts: opts([['four', '4 grades'], ['binary', '✓ / ✗'], ['piles', 'Piles']], st.grading, id => set({ grading: id })),
@@ -2739,7 +2752,7 @@ const newDeckBody = (phone, back, done) => `<div style="display: flex; align-ite
     <div style="display: flex; flex-direction: column; gap: 8px;"><span style="font-size: 13px; font-weight: 600;">Grade with</span>${modeSeg(true)}</div>
     <div style="display: flex; gap: 10px;"><a href="${back}" style="flex-grow: 1; height: 52px; border-radius: 999px; background: {{t.surf}}; display: flex; align-items: center; justify-content: center; font-size: 15px; font-weight: 600;">Cancel</a><a href="${done}" onClick="{{create}}" style="flex-grow: 2; height: 52px; border-radius: 999px; background: {{t.inv}}; color: {{t.invText}}; display: flex; align-items: center; justify-content: center; font-size: 15px; font-weight: 600;">Create deck</a></div>`;
 const webNewDeck = `<div style="position: relative; width: 1440px; height: 900px; overflow: hidden; font-family: ${FONT}; color: {{t.text}};">
-  <dc-import name="WebDecks" dark="{{dark}}" hint-size="1440px,900px"></dc-import>
+  <dc-import name="WebDecks" dark="{{dark}}" dim="{{dim}}" hint-size="1440px,900px"></dc-import>
   <div style="position: absolute; inset: 0; background: {{t.dim}};"></div>
   <div role="dialog" aria-label="New deck" style="position: absolute; left: 420px; top: 50%; transform: translateY(-50%); width: 600px; box-sizing: border-box; padding: 28px; border-radius: 36px; background: {{t.bg}}; box-shadow: 0 24px 64px rgba(0,0,0,.24); display: flex; flex-direction: column; gap: 18px;">
     ${newDeckBody(false, 'WebDecks.dc.html', 'WebDeck.dc.html')}
@@ -2747,7 +2760,7 @@ const webNewDeck = `<div style="position: relative; width: 1440px; height: 900px
 </div>`;
 // Import cards: paste text or pick a file (Anki and Quizlet exports, CSV), then pick the deck. Opens over Decks.
 const webImport = `<div style="position: relative; width: 1440px; height: 900px; overflow: hidden; font-family: ${FONT}; color: {{t.text}};">
-  <dc-import name="WebDecks" dark="{{dark}}" hint-size="1440px,900px"></dc-import>
+  <dc-import name="WebDecks" dark="{{dark}}" dim="{{dim}}" hint-size="1440px,900px"></dc-import>
   <div style="position: absolute; inset: 0; background: {{t.dim}};"></div>
   <div role="dialog" aria-label="Import cards" style="position: absolute; left: 420px; top: 50%; transform: translateY(-50%); width: 600px; box-sizing: border-box; padding: 28px; border-radius: 36px; background: {{t.bg}}; box-shadow: 0 24px 64px rgba(0,0,0,.24); display: flex; flex-direction: column; gap: 18px;">
     <div style="display: flex; align-items: center; justify-content: space-between;"><span style="font-size: 22px; font-weight: 600; letter-spacing: -.02em;">Import cards</span><a href="{{backHref}}" aria-label="Close" style="width: 36px; height: 36px; border-radius: 18px; background: {{t.surf}}; display: flex; align-items: center; justify-content: center;">${svg(I.close, 16, 2)}</a></div>
@@ -2778,7 +2791,7 @@ renderVals() {
   const deckName = s.deck ?? (here ? here.name : '');
   const plural = (n, w) => n + ' ' + w + (n === 1 ? '' : 's');
   return {
-    t, ...chrome, dark: !!this.props.dark, text, deckName,
+    t, ...chrome, dark: !!this.props.dark, dim: !!this.props.dim, text, deckName,
     setText: e => this.setState({ text: e && e.target ? e.target.value : '' }), setDeck: e => this.setState({ deck: e && e.target ? e.target.value : '' }),
     pickText: () => db.act.pickText().then(txt => txt != null && this.setState({ text: txt })),
     foundLine: cards.length ? plural(cards.length, 'card') + ' found' : text.trim() ? 'No cards yet. Put the front and back on one line, split by a tab or comma.' : '',
@@ -2792,7 +2805,7 @@ renderVals() {
   };
 }`;
 const phoneNewDeck = `<div style="position: relative; width: 390px; height: 844px; overflow: hidden; font-family: ${FONT}; color: {{t.text}};">
-  <dc-import name="PhoneToday" dark="{{dark}}" hint-size="390px,844px"></dc-import>
+  <dc-import name="PhoneToday" dark="{{dark}}" dim="{{dim}}" hint-size="390px,844px"></dc-import>
   <div style="position: absolute; inset: 0; background: {{t.dim}};"></div>
   <div role="dialog" aria-label="New deck" style="position: absolute; left: 0; right: 0; bottom: 0; box-sizing: border-box; padding: 16px 20px 34px; border-radius: 36px 36px 0 0; background: {{t.bg}}; display: flex; flex-direction: column; gap: 16px;">
     ${newDeckBody(true, 'PhoneToday.dc.html', 'PhoneDeck.dc.html')}
@@ -2821,7 +2834,7 @@ renderVals() {
   const setTags = next => this.setState({ tags: next, typedTags: true });
   ${NUM_JS}
   return {
-    t, dark: !!this.props.dark, grain: String(this.props.grain ?? 0.7),
+    t, dark: !!this.props.dark, dim: !!this.props.dim, grain: String(this.props.grain ?? 0.7),
     name, title,
     coverShow: s.shown ? 'block' : 'none', prevShow: s.prev ? 'block' : 'none', cover: this.gen(s.shown || seedOf(title, s.round), st.grads), prev: this.gen(s.prev || seedOf(title, s.round), st.grads),
     coverFade: s.k % 2 ? 'scCoverA 2s ease-in-out both' : 'scCoverB 2s ease-in-out both',
@@ -2882,7 +2895,10 @@ const LEARN_HOVER = 'scLearnIn .45s cubic-bezier(.2,.8,.2,1) both, scLearnHover 
 // right answer rises and hovers with a green check, and after an answer the rest turn gray (Live's rules). Its colors
 // are `k` in renderVals (K below): light, or the same look at night.
 const LEARN_COLORS = ['#4F60E6', '#F2701D', '#0E8FB0', '#E5407E'];
-const LEARN_K = `const K = this.props.dark
+// In gray dark mode the answer cards sit a step above the gray page, instead of below it.
+const LEARN_K = `const K = this.props.dark && this.props.dim
+    ? { ink: '#F2F3F7', ink2: 'rgba(242,243,247,.7)', card: '#2D2F36', shadow: '0 10px 24px -16px rgba(0,0,0,.6)', lift: '0 26px 48px -20px rgba(0,0,0,.75)', gray: '#393C45', grayInk: '#A3A9B6', chip: 'rgba(255,255,255,.12)', track: 'rgba(255,255,255,.16)', btn: '#F2F3F7', btnFg: '${LV.navy}', other: 'rgba(255,255,255,.16)', wrong: '#5A606E', bar: '#8C9AFC', part: 'rgba(140,154,252,.42)', check: '${LV.check}' }
+    : this.props.dark
     ? { ink: '#F2F3F7', ink2: 'rgba(242,243,247,.66)', card: '#1B1D24', shadow: '0 10px 24px -16px rgba(0,0,0,.7)', lift: '0 26px 48px -20px rgba(0,0,0,.85)', gray: '#2A2D35', grayInk: '#8E95A3', chip: 'rgba(255,255,255,.1)', track: 'rgba(255,255,255,.14)', btn: '#F2F3F7', btnFg: '${LV.navy}', other: 'rgba(255,255,255,.14)', wrong: '#4A4F5C', bar: '#8C9AFC', part: 'rgba(140,154,252,.4)', check: '${LV.check}' }
     : { ink: '${LV.navy}', ink2: '${LV.ink2}', card: '#FFFFFF', shadow: '${LV.shadow}', lift: '${LV.lift}', gray: '${LV.gray}', grayInk: '${LV.grayInk}', chip: 'rgba(255,255,255,.72)', track: 'rgba(13,21,66,.08)', btn: '${LV.navy}', btnFg: '#FFFFFF', other: 'rgba(13,21,66,.12)', wrong: '${LV.navy}', bar: '${LV.purple}', part: 'rgba(79,96,230,.38)', check: '${LV.check}' };`;
 // Progress through the set: learned (purple), still learning (light purple), not yet (track), with "+1" when one is learned.
@@ -2935,7 +2951,9 @@ const SKY_CSS = '@keyframes scCloud{from{transform:translateX(-28px)}to{transfor
 // Learn mode's sky: only the faint blue fade, with no clouds or glow (the owner: "remove the clouds, i only want the
 // faint blue fade", V75). A night sky in dark mode.
 // The sky's colors, for renderVals: daylight, or a night sky in dark mode (the landing page's top, Learn mode's end).
-const SKY = `(this.props.dark ? { top: '#081733', mid: '#0D2148', low: '#0A1530', glow: 'rgba(120,150,255,.16)', cloud: 'rgba(150,170,230,.10)' }
+// Gray dark mode gets a dusk sky that fades into its gray page.
+const SKY = `(this.props.dark && this.props.dim ? { top: '${SKY_DUSK.top}', mid: '${SKY_DUSK.mid}', low: '${SKY_DUSK.low}', glow: 'rgba(120,150,255,.16)', cloud: 'rgba(150,170,230,.12)' }
+    : this.props.dark ? { top: '#081733', mid: '#0D2148', low: '#0A1530', glow: 'rgba(120,150,255,.16)', cloud: 'rgba(150,170,230,.10)' }
     : { top: '#86BDF3', mid: '#C9E2FB', low: '#EDF5FE', glow: 'rgba(255,255,255,.75)', cloud: 'rgba(255,255,255,.94)' })`;
 // On Free (once Pro can be bought), the Learn button opens this: a sky, two matched cards, what Pro adds, the price.
 const skyTop = (h, cw, ch) => `<div aria-hidden="true" style="position: relative; height: ${h}px; background: linear-gradient(180deg, {{sky.top}} 0%, {{sky.mid}} 58%, {{sky.low}} 82%, {{t.bg}} 100%); overflow: hidden;">
@@ -2954,14 +2972,14 @@ const learnUpgradeBody = (back, pad) => `<a href="${back}" aria-label="Close" st
       <div style="display: flex; gap: 10px;">${quizBtn('See plans', '{{plansHref}}', false, 1)}${quizBtn('Go Pro', '{{proHref}}', true, 2)}</div>
     </div>`;
 const webQuizStart = pro => `<div style="position: relative; width: 1440px; height: 900px; overflow: hidden; font-family: ${FONT}; color: {{t.text}};">
-  <dc-import name="WebDeck" dark="{{dark}}" deck-id="{{deckId}}" hint-size="1440px,900px"></dc-import>
+  <dc-import name="WebDeck" dark="{{dark}}" dim="{{dim}}" deck-id="{{deckId}}" hint-size="1440px,900px"></dc-import>
   <div style="position: absolute; inset: 0; background: {{t.dim}};"></div>
   <div role="dialog" aria-label="Learn mode" style="position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); width: 560px; box-sizing: border-box; border-radius: 36px; overflow: hidden; background: {{t.bg}}; box-shadow: 0 24px 64px rgba(0,0,0,.24); ${pro ? 'padding: 28px;' : ''}">
     ${pro ? deepTop + '<div style="position: relative; display: flex; flex-direction: column; gap: 20px;">' + learnStartBody('WebDeck.dc.html', '{{startHref}}', true) + '</div>' : skyTop(236, 168, 108) + learnUpgradeBody('WebDeck.dc.html', 32)}
   </div>
 </div>`;
 const phoneQuizStart = pro => `<div style="position: relative; width: 390px; height: 844px; overflow: hidden; font-family: ${FONT}; color: {{t.text}};">
-  <dc-import name="PhoneDeck" dark="{{dark}}" deck-id="{{deckId}}" hint-size="390px,844px"></dc-import>
+  <dc-import name="PhoneDeck" dark="{{dark}}" dim="{{dim}}" deck-id="{{deckId}}" hint-size="390px,844px"></dc-import>
   <div style="position: absolute; inset: 0; background: {{t.dim}};"></div>
   <div role="dialog" aria-label="Learn mode" style="position: absolute; left: 0; right: 0; bottom: 0; box-sizing: border-box; border-radius: 36px 36px 0 0; overflow: hidden; background: {{t.bg}}; ${pro ? 'padding: 10px 20px 34px;' : 'padding-bottom: 14px;'}">
     ${pro ? deepTopOf(354, 64) + '<div style="position: relative; display: flex; flex-direction: column; gap: 18px;"><div style="align-self: center; width: 40px; height: 5px; border-radius: 3px; background: rgba(255,255,255,.45);"></div>' + learnStartBody('PhoneDeck.dc.html', '{{startHref}}', true) + '</div>' : skyTop(200, 132, 88) + learnUpgradeBody('PhoneDeck.dc.html', 20)}
@@ -2974,7 +2992,7 @@ renderVals() { ${T}${DB_JS}
   const s = this.state, id = this.props.deckId, seg = (k, cur) => ({ pressed: k === cur ? 'true' : 'false', bg: k === cur ? t.bg : 'transparent', fg: k === cur ? t.text : t.muted, sh: k === cur ? '0 1px 3px rgba(0,0,0,.14)' : 'none' });
   const sets = db.mock ? [{ id: 'new', label: 'New', n: 10 }, { id: 'hard', label: 'Hard', n: 36 }, { id: 'tag:Exam 1', label: 'Exam 1', n: 40 }, { id: 'all', label: 'All', n: 412 }] : db.learnSets(id);
   const set = sets.find(x => x.id === s.set) || (db.mock ? sets[2] : sets.find(x => x.n > 0) || sets[sets.length - 1]), n = set.n, mins = Math.max(1, Math.round(n * .6));
-  return { t, dark: !!this.props.dark, deckId: id || '', sky: ${SKY}, grain: String(this.props.grain ?? 0.7), m1: this.mesh('Iris'), m2: this.mesh('Mint'), ${deep ? 'deep: ' + MIDNIGHT + ', ' : ''}plansHref: '${phone ? 'PricingPhone' : 'Pricing'}.dc.html', proHref: db.mock ? '${phone ? 'PricingPhone' : 'Pricing'}.dc.html' : '/pro?plan=yearly',
+  return { t, dark: !!this.props.dark, dim: !!this.props.dim, deckId: id || '', sky: ${SKY}, grain: String(this.props.grain ?? 0.7), m1: this.mesh('Iris'), m2: this.mesh('Mint'), ${deep ? 'deep: ' + MIDNIGHT + ', ' : ''}plansHref: '${phone ? 'PricingPhone' : 'Pricing'}.dc.html', proHref: db.mock ? '${phone ? 'PricingPhone' : 'Pricing'}.dc.html' : '/pro?plan=yearly',
     sets: sets.map(x => ({ label: x.label + ' · ' + x.n, ...seg(x.id, set.id), pick: () => this.setState({ set: x.id }) })),
     kinds: ${JSON.stringify(LEARN_KINDS)}.map(([k, label]) => { const on = s.kinds.includes(k); return { label, on, pressed: on ? 'true' : 'false', bg: on ? t.inv : t.surf, fg: on ? t.invText : t.text, pick: () => this.setState({ kinds: on && s.kinds.length > 1 ? s.kinds.filter(x => x !== k) : on ? s.kinds : [...s.kinds, k] }) }; }),
     goalLine: n ? 'Learn all ' + n + ' card' + (n === 1 ? '' : 's') + ', about ' + (mins >= 90 ? Math.round(mins / 60) + ' hours over a few sessions' : mins + ' minute' + (mins === 1 ? '' : 's')) + '. You can stop anytime and pick up where you left off.' : 'This deck has no cards to learn yet. Picture and text cards work; sound cards come later.',
@@ -2984,7 +3002,7 @@ renderVals() { ${T}${DB_JS}
 const LEARN_VIEW_JS = `${LEARN_K}
   ${STUDY_BG_JS}
   const L = db.mock ? null : db.learn() || { learned: 0, total: 1, learning: 0, justLearned: 0, n: 0, setName: '' };
-  const bg = studyBg(db.deck(L ? L.deckId : this.props.deckId), !!this.props.dark);
+  const bg = studyBg(db.deck(L ? L.deckId : this.props.deckId), !!this.props.dark, !!this.props.dim);
   const view = (learned, total, part, n, just) => ({ k: K, sky: ${SKY}, bg, learned: String(learned), total: String(total), setName: L ? L.setName : 'Exam 1',
     doneW: learned / total * 100 + '%', partW: part / total * 100 + '%', qAnim: (n % 2 ? 'scQA' : 'scQB') + ' .36s cubic-bezier(.2,.8,.2,1) both',
     plusOne: just > 0, plusAnim: (learned % 2 ? 'scPlusA' : 'scPlusB') + ' 1.1s ease both' });`;
@@ -3220,13 +3238,15 @@ const QUIZ_DONE_LOGIC = `renderVals() { ${T}${DB_JS}
   const L = db.mock ? { total: 40, setName: 'Exam 1', minutes: 26, firstPct: 88, tries: [{ front: 'Lysosome', back: 'Breaks down waste', n: '4 tries' }, { front: 'What is the role of the ribosome?', back: 'Translates mRNA into protein', n: '3 tries' }] }
     : db.learn() || { total: 0, setName: '', minutes: 0, firstPct: 0, tries: [] };
   ${STUDY_BG_JS}
-  return { t, sky: ${SKY}, bg: studyBg(db.deck(db.mock ? 'cell' : (db.learn() || {}).deckId || this.props.deckId), !!this.props.dark), ring: this.props.dark ? '#8C9AFC' : '#4353E0', total: String(L.total), title: L.total === 1 ? 'You learned it' : 'You learned all ' + L.total + ' cards',
+  return { t, sky: ${SKY}, bg: studyBg(db.deck(db.mock ? 'cell' : (db.learn() || {}).deckId || this.props.deckId), !!this.props.dark, !!this.props.dim), ring: this.props.dark ? '#8C9AFC' : '#4353E0', total: String(L.total), title: L.total === 1 ? 'You learned it' : 'You learned all ' + L.total + ' cards',
     summary: L.setName + ' · ' + L.minutes + ' minute' + (L.minutes === 1 ? '' : 's') + ' · ' + L.firstPct + '% right the first time', summaryShort: L.setName + ' · ' + L.minutes + ' min · ' + L.firstPct + '% first time',
     hasTries: L.tries.length > 0, tries: L.tries }; }`;
 
 // ---------- dark wrappers ----------
 const darkOf = (name, w, h) => `<div style="width: ${w}px; height: ${h}px; overflow: hidden; background: #000000;"><dc-import name="${name}" dark="{{yes}}" hint-size="${w}px,${h}px"></dc-import></div>`;
 const darkLogic = `renderVals() { return { yes: true }; }`;
+// Gray dark mode (Settings → Dark mode: Gray): the same boards, dark on gray instead of black.
+const grayOf = (name, w, h) => `<div style="width: ${w}px; height: ${h}px; overflow: hidden; background: #1E1E20;"><dc-import name="${name}" dark="{{yes}}" dim="{{yes}}" hint-size="${w}px,${h}px"></dc-import></div>`;
 const settingsOf = (name, w, h) => `<div style="width: ${w}px; height: ${h}px; overflow: hidden;"><dc-import name="${name}" settings-open="{{yes}}" progress="Counts" hint-size="${w}px,${h}px"></dc-import></div>`;
 const openOf = (name, w, h) => `<div style="width: ${w}px; height: ${h}px; overflow: hidden;"><dc-import name="${name}" settings-open="{{yes}}" hint-size="${w}px,${h}px"></dc-import></div>`;
 const pileOf = (name, w, h) => `<div style="width: ${w}px; height: ${h}px; overflow: hidden;"><dc-import name="${name}" grading="Piles" start-revealed="{{yes}}" new-pile-open="{{yes}}" hint-size="${w}px,${h}px"></dc-import></div>`;
@@ -3694,7 +3714,7 @@ const liveLobby = `<div ${liveRoot(1440, 900, 'display: flex; flex-direction: co
 </div>`;
 // Setting up, from a deck: which cards, how many questions, and the time for each.
 const liveSetup = `<div style="position: relative; width: 1440px; height: 900px; overflow: hidden; font-family: ${FONT}; color: {{t.text}};">
-  <dc-import name="WebDeck" dark="{{dark}}" hint-size="1440px,900px"></dc-import>
+  <dc-import name="WebDeck" dark="{{dark}}" dim="{{dim}}" hint-size="1440px,900px"></dc-import>
   <div style="position: absolute; inset: 0; background: {{t.dim}};"></div>
   <div role="dialog" aria-label="Play live" style="position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); width: 560px; box-sizing: border-box; padding: 28px; border-radius: 36px; overflow: hidden; background: {{t.bg}}; box-shadow: 0 24px 64px rgba(0,0,0,.24);">
     ${deepTop}
@@ -3780,7 +3800,7 @@ renderVals() { ${T}
     return { i, p, label: Q.options[i], count: String(Q.counts[i]), right: lift, showCount: reveal, gfilter: gray ? 'grayscale(1)' : 'none', fg: p.ink, ts: p.shadow,
       badge: p.glass, badgeLine: 'inset 0 0 0 1.5px ' + p.glassLine, shadow: lift ? LV.lift : gray ? 'none' : LV.shadow, tf: lift ? 'translateY(-10px)' : 'none', anim: lift ? '${HOVER(-10, .1)}' : 'none' }; };
   const wrongPick = !!this.props.wrong;
-  return { t, bg: studyBg({ seed: 'Cell Biology', style: 'mix', bg: { kind: 'deck' } }, false), dark: !!this.props.dark, grain: String(this.props.grain ?? 0.7), q: Q, peopleN: '12',
+  return { t, bg: studyBg({ seed: 'Cell Biology', style: 'mix', bg: { kind: 'deck' } }, false), dark: !!this.props.dark, dim: !!this.props.dim, grain: String(this.props.grain ?? 0.7), q: Q, peopleN: '12',
     o0: opt(0), o1: opt(1), o2: opt(2), o3: opt(3), c0: colors[0], c1: colors[2], c2: colors[1],
     nextHref: 'LiveLeaderboard.dc.html', nextLabel: 'Leaderboard',
     people: ${JSON.stringify(LIVE_PEOPLE)}.map((name, i) => ({ name, initial: name[0], color: colors[i % colors.length], delay: (i * .12).toFixed(2) + 's' })),
@@ -3934,6 +3954,13 @@ const files = {
   'WebDeckSettingsStudy': ['Web · Deck settings · Studying (FSRS)', studyOf('WebDeck', W, H), { logic: darkLogic, css: NUM_CSS, w: W, h: H }],
   'WebDeckDark': ['Web · Deck page (dark)', darkOf('WebDeck', W, H), { logic: darkLogic, css: NUM_CSS, w: W, h: H }],
   'WebStatsDark': ['Web · Stats (dark)', darkOf('WebStats', W, H), { logic: darkLogic, w: W, h: H }],
+  'WebTodayGray': ['Web · Today (dark, gray)', grayOf('Main', W, H), { logic: darkLogic, w: W, h: H }],
+  'WebLibraryGray': ['Web · Library (dark, gray)', grayOf('WebDecks', W, H), { logic: darkLogic, w: W, h: H }],
+  'WebDeckGray': ['Web · Deck page (dark, gray)', grayOf('WebDeck', W, H), { logic: darkLogic, css: NUM_CSS, w: W, h: H }],
+  'WebReviewGray': ['Web · Review (dark, gray)', grayOf('WebReview', W, H), { logic: darkLogic, css: REVIEW_CSS, w: W, h: H }],
+  'WebQuizGray': ['Web · Learn mode (dark, gray)', grayOf('WebQuiz', W, H), { logic: darkLogic, css: LEARN_CSS, w: W, h: H }],
+  'WebStatsGray': ['Web · Stats (dark, gray)', grayOf('WebStats', W, H), { logic: darkLogic, w: W, h: H }],
+  'WebSettingsGray': ['Web · Settings (dark, gray)', grayOf('WebSettings', W, H), { logic: darkLogic, css: NUM_CSS, w: W, h: H }],
   'TopToday': ['Top tabs · Today', topToday, { props: { ...DARK, ...MESH('Iris') }, logic: topTodayLogic, w: W, h: H }],
   'TopDeck': ['Top tabs · Deck', topDeck, { props: DARK, logic: topDeckLogic, w: W, h: H }],
   'TopTodayDark': ['Top tabs · Today (dark)', darkOf('TopToday', W, H), { logic: darkLogic, w: W, h: H }],
@@ -4012,7 +4039,14 @@ const files = {
   'PhoneSettings': ['iPhone · Settings', phoneSettings, { props: { ...DARK, plan: { editor: 'enum', default: 'Pro', options: ['Free', 'Pro', 'Pro, ending'] } }, logic: phoneSettingsLogic, w: PW, h: PHONE_SETTINGS_H }],
   'PhoneDeckSettings': ['iPhone · Deck settings', openOf('PhoneDeck', PW, PH), { logic: darkLogic, css: NUM_CSS, w: PW, h: PH }],
   'PhoneDeckDark': ['iPhone · Deck page (dark)', darkOf('PhoneDeck', PW, PH), { logic: darkLogic, css: NUM_CSS, w: PW, h: PH }],
-  'PhoneStatsDark': ['iPhone · Stats (dark)', darkOf('PhoneStats', PW, PH), { logic: darkLogic, w: PW, h: PH }]
+  'PhoneStatsDark': ['iPhone · Stats (dark)', darkOf('PhoneStats', PW, PH), { logic: darkLogic, w: PW, h: PH }],
+  'PhoneTodayGray': ['iPhone · Today (dark, gray)', grayOf('PhoneToday', PW, PH), { logic: darkLogic, w: PW, h: PH }],
+  'PhoneLibraryGray': ['iPhone · Library (dark, gray)', grayOf('PhoneLibrary', PW, PH), { logic: darkLogic, w: PW, h: PH }],
+  'PhoneDeckGray': ['iPhone · Deck page (dark, gray)', grayOf('PhoneDeck', PW, PH), { logic: darkLogic, css: NUM_CSS, w: PW, h: PH }],
+  'PhoneReviewGray': ['iPhone · Review (dark, gray)', grayOf('PhoneReview', PW, PH), { logic: darkLogic, css: REVIEW_CSS, w: PW, h: PH }],
+  'PhoneQuizGray': ['iPhone · Learn mode (dark, gray)', grayOf('PhoneQuiz', PW, PH), { logic: darkLogic, css: LEARN_CSS, w: PW, h: PH }],
+  'PhoneStatsGray': ['iPhone · Stats (dark, gray)', grayOf('PhoneStats', PW, PH), { logic: darkLogic, w: PW, h: PH }],
+  'PhoneSettingsGray': ['iPhone · Settings (dark, gray)', grayOf('PhoneSettings', PW, PHONE_SETTINGS_H), { logic: darkLogic, w: PW, h: PHONE_SETTINGS_H }]
 };
 for (const [name, [title, body, opts]] of Object.entries(files)) writeFileSync(OUT + name + '.dc.html', page(title, body, opts));
 

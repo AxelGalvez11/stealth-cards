@@ -91,9 +91,13 @@ a{color:inherit;text-decoration:none}a:hover{opacity:.8}
 </footer>
 </div>
 </x-dc>
-<script type="text/x-dc" data-dc-script data-props='{"dark":{"editor":"boolean","default":false},"grain":{"editor":"range","default":0.7,"min":0,"max":1,"step":0.05},"$preview":{"width":1440,"height":4002}}'>
+<script type="text/x-dc" data-dc-script data-props='{"dark":{"editor":"boolean","default":false},"dim":{"editor":"boolean","default":false},"grain":{"editor":"range","default":0.7,"min":0,"max":1,"step":0.05},"$preview":{"width":1440,"height":4002}}'>
 class Component extends DCLogic {
-theme(d) {
+// Dark mode has two looks, picked in Settings → Dark mode: black (the first one, and still the default) or gray (the
+// owner: "add a darkmode option that is grayish not fully blackedout"). g asks for gray; it only counts when d is on.
+// Gray keeps the grade colors, and its muted words still read at WCAG AA on every surface.
+theme(d, g) {
+  if (d && g) return { bg: '#1E1E20', surf: '#2A2A2D', surf2: '#353539', line: '#3A3A3E', text: '#F2F2F2', muted: '#A8A8AD', inv: '#F2F2F2', invText: '#1E1E20', card: '#2A2A2D', shadow: '0 1px 2px rgba(0,0,0,.2), 0 18px 44px -18px rgba(0,0,0,.5)', again: '#F97066', hard: '#FDB022', good: '#47CD89', easy: '#53B1FD', againTint: 'rgba(249,112,102,.16)', goodTint: 'rgba(71,205,137,.16)', hardTint: 'rgba(253,176,34,.16)', dim: 'rgba(0,0,0,.45)' };
   return d
     ? { bg: '#000000', surf: '#141414', surf2: '#222222', line: '#262626', text: '#FFFFFF', muted: '#A3A3A3', inv: '#FFFFFF', invText: '#000000', card: '#141414', shadow: 'none', again: '#F97066', hard: '#FDB022', good: '#47CD89', easy: '#53B1FD', againTint: 'rgba(249,112,102,.16)', goodTint: 'rgba(71,205,137,.16)', hardTint: 'rgba(253,176,34,.16)', dim: 'rgba(0,0,0,.7)' }
     : { bg: '#FFFFFF', surf: '#F4F4F4', surf2: '#E8E8E8', line: '#EBEBEB', text: '#000000', muted: '#666666', inv: '#000000', invText: '#FFFFFF', card: '#FFFFFF', shadow: '0 1px 2px rgba(0,0,0,.04), 0 18px 44px -18px rgba(0,0,0,.18)', again: '#D92D20', hard: '#B54708', good: '#067647', easy: '#175CD3', againTint: '#FDECEA', goodTint: '#E6F4EC', hardTint: '#FDF1E3', dim: 'rgba(0,0,0,.28)' };
@@ -205,7 +209,7 @@ mock() {
     href: 'WebDeck.dc.html', studyHref: 'WebReview.dc.html', settingsHref: 'WebDeckSettings.dc.html', newCardHref: 'WebEditor.dc.html', folder: null, bg: ed.bg || { kind: 'deck', image: null } });
   const idx = m.idx ?? (({ 'Fill in the blank': 1, Image: 2, Audio: 3 })[p.card] || 0);
   const st = { name: 'Alex Kim', sub: 'Signed in with Google · alex@gmail.com', signedIn: true, google: true, photo: p.photo === 'Google photo' ? 'google' : 'color', color: 0,
-    look: 'system', grads: 'mix', prog: ({ Bar: 'bar', Counts: 'counts', None: 'none' })[p.progress] || 'bar', perDay: 20, goal: 90, grading: 'four', fsrs: true, check: true, reminder: '9:00 AM', ...(m.settings || {}) };
+    look: 'system', darkMode: p.dim ? 'gray' : 'black', grads: 'mix', prog: ({ Bar: 'bar', Counts: 'counts', None: 'none' })[p.progress] || 'bar', perDay: 20, goal: 90, grading: 'four', fsrs: true, check: true, reminder: '9:00 AM', ...(m.settings || {}) };
   const perms = { read: true, text: true, media: true, edit: true, check: true, del: false, ...(m.perms || {}) };
   const noop = () => {};
   // Folders you make or change here stay on this board.
@@ -271,11 +275,12 @@ art(p, variant) {
   const name = p.fid + (variant ? '-' + variant : ''), on = !!(this.props.site || this.props.db) && ["sc-flow-midnight","sc-flow-midnight-wide","sc-gen-1bgiry6","sc-gen-1eyvfay","sc-gen-1h674rq","sc-gen-1iccxh","sc-gen-1madw05","sc-gen-1mheeld","sc-gen-1mukigx","sc-gen-1neye4o","sc-gen-1s1ssqz","sc-gen-1tj9ifj","sc-gen-1ul2ng5","sc-gen-1yac7zp","sc-gen-2xvhhe","sc-gen-5gnrcu","sc-gen-8f1umk","sc-gen-90zkel","sc-gen-favxds","sc-gen-o6z85t","sc-gen-px21tz","sc-gen-qmdzqs","sc-gen-v4yoeu","sc-gen-vwxtrt","sc-gen-ym0akm","sc-gen-yzu3mr"].includes(name);
   return { ...p, art: on ? 'url(/art/' + name + '.webp)' : '', live: !on };
 }
-renderVals() { const t = this.theme(!!this.props.dark);
+renderVals() { const t = this.theme(!!this.props.dark, !!this.props.dim);
   // On lucida.cards (props.site) the links open the app; on the canvas they open the sign-in board.
   const site = !!this.props.site, signIn = site ? 'https://app.lucida.cards/sign-in' : 'WebSignIn.dc.html';
   const deck = name => this.art(this.gen(name, 'vivid'));
-  return { t, sky: (this.props.dark ? { top: '#081733', mid: '#0D2148', low: '#0A1530', glow: 'rgba(120,150,255,.16)', cloud: 'rgba(150,170,230,.10)' }
+  return { t, sky: (this.props.dark && this.props.dim ? { top: '#1B2A48', mid: '#1F2B45', low: '#212637', glow: 'rgba(120,150,255,.16)', cloud: 'rgba(150,170,230,.12)' }
+    : this.props.dark ? { top: '#081733', mid: '#0D2148', low: '#0A1530', glow: 'rgba(120,150,255,.16)', cloud: 'rgba(150,170,230,.10)' }
     : { top: '#86BDF3', mid: '#C9E2FB', low: '#EDF5FE', glow: 'rgba(255,255,255,.75)', cloud: 'rgba(255,255,255,.94)' }), grain: String(this.props.grain ?? 0.7), hero: this.art({"base":"linear-gradient(102deg, #14165A 0%, #20238A 17%, #1B2378 32%, #151D66 52%, #172372 70%, #123F86 86%, #0B6C9C 100%)","ink":"#FFFFFF","fid":"sc-flow-midnight","sid":"sc-streak-midnight","blur":"6","sblur":"2.2","disp":"10","glass":"rgba(255,255,255,.12)","glassLine":"rgba(255,255,255,.62)","shadow":"0 1px 14px rgba(0,0,0,.16)","b0":{"c":"#3440C4","x":14,"y":70,"rx":10,"ry":70,"r":12},"b1":{"c":"#1A2270","x":55,"y":40,"rx":12,"ry":80,"r":12},"b2":{"c":"#0E8CC6","x":102,"y":102,"rx":20,"ry":42,"r":18},"b3":{"c":"#262C8E","x":88,"y":0,"rx":22,"ry":26,"r":0},"b4":{"c":"#4450DA","x":6,"y":100,"rx":16,"ry":22,"r":12},"b5":{"c":"#1C2A80","x":72,"y":60,"rx":10,"ry":70,"r":12},"s0":{"c":"#5A64E6","x":1,"y":40,"rx":3.2,"ry":70,"r":12},"s1":{"c":"#3A47C0","x":44,"y":50,"rx":2.6,"ry":80,"r":12}}, 'wide'), wall: [64,78,70,84,74,88,68,80,72].map((d, i) => {
       // Wider walls reuse the columns, turned a few cards so the same cards never sit side by side.
       const base = [[["Cell Biology","The {} is the powerhouse of the cell.","mitochondrion"],["Psychology","Who proposed classical conditioning?","Ivan Pavlov"],["Calculus","d/dx (x²) = ?","2x"],["Anatomy","Largest bone in the body?","The femur"],["Pharmacology","Ibuprofen blocks which enzyme?","COX-1 and COX-2"],["Spanish Verbs","Yo {} dos hermanos.","tengo"]],[["Organic Chemistry","C₆H₆","Benzene"],["Italian","Buongiorno","Good morning"],["Music Theory","How many sharps in D major?","Two: F♯ and C♯"],["Python","`len([1, 2, 3])`","`3`"],["Philosophy","Cogito, ergo sum","I think, therefore I am"],["Art History","Who painted The Starry Night?","Vincent van Gogh"]],[["Ecology","What is a keystone species?","One its ecosystem depends on"],["Geography","Capital of Australia?","Canberra"],["Japanese","でんしゃ","train"],["Physics","F = m · a","Newton’s second law"],["Genetics","Adenine pairs with {}.","thymine"],["Astronomy","Closest star to Earth?","The Sun"]],[["French","la bibliothèque","the library"],["Latin","Carpe diem","Seize the day"],["Korean","♪","안녕하세요\nhello"],["Physiology","Normal resting heart rate?","60–100 beats a minute"],["Statistics","What does p < 0.05 mean?","Significant at the 5% level"],["Botany","Where does photosynthesis happen?","In the chloroplasts"]]][i % 4], turn = 3 * Math.floor(i / 4), col = base.slice(turn).concat(base.slice(0, turn));

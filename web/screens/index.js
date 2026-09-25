@@ -169,6 +169,12 @@ export default [
   "h": 844
  },
  {
+  "name": "PhoneDeckGray",
+  "title": "iPhone · Deck page (dark, gray)",
+  "w": 390,
+  "h": 844
+ },
+ {
   "name": "PhoneDeckSettings",
   "title": "iPhone · Deck settings",
   "w": 390,
@@ -235,6 +241,12 @@ export default [
   "h": 844
  },
  {
+  "name": "PhoneLibraryGray",
+  "title": "iPhone · Library (dark, gray)",
+  "w": 390,
+  "h": 844
+ },
+ {
   "name": "PhoneNewDeck",
   "title": "iPhone · New deck",
   "w": 390,
@@ -255,6 +267,12 @@ export default [
  {
   "name": "PhoneQuizDone",
   "title": "iPhone · Learn mode · all learned",
+  "w": 390,
+  "h": 844
+ },
+ {
+  "name": "PhoneQuizGray",
+  "title": "iPhone · Learn mode (dark, gray)",
   "w": 390,
   "h": 844
  },
@@ -319,6 +337,12 @@ export default [
   "h": 844
  },
  {
+  "name": "PhoneReviewGray",
+  "title": "iPhone · Review (dark, gray)",
+  "w": 390,
+  "h": 844
+ },
+ {
   "name": "PhoneReviewNewPile",
   "title": "iPhone · Review · New pile popup",
   "w": 390,
@@ -340,7 +364,13 @@ export default [
   "name": "PhoneSettings",
   "title": "iPhone · Settings",
   "w": 390,
-  "h": 1040
+  "h": 1100
+ },
+ {
+  "name": "PhoneSettingsGray",
+  "title": "iPhone · Settings (dark, gray)",
+  "w": 390,
+  "h": 1100
  },
  {
   "name": "PhoneSignIn",
@@ -373,6 +403,12 @@ export default [
   "h": 844
  },
  {
+  "name": "PhoneStatsGray",
+  "title": "iPhone · Stats (dark, gray)",
+  "w": 390,
+  "h": 844
+ },
+ {
   "name": "PhoneToday",
   "title": "iPhone · Today",
   "w": 390,
@@ -387,6 +423,12 @@ export default [
  {
   "name": "PhoneTodayDark",
   "title": "iPhone · Today (dark)",
+  "w": 390,
+  "h": 844
+ },
+ {
+  "name": "PhoneTodayGray",
+  "title": "iPhone · Today (dark, gray)",
   "w": 390,
   "h": 844
  },
@@ -465,6 +507,12 @@ export default [
  {
   "name": "WebDeckEmpty",
   "title": "Web · Deck · no cards yet",
+  "w": 1440,
+  "h": 900
+ },
+ {
+  "name": "WebDeckGray",
+  "title": "Web · Deck page (dark, gray)",
   "w": 1440,
   "h": 900
  },
@@ -577,6 +625,12 @@ export default [
   "h": 900
  },
  {
+  "name": "WebLibraryGray",
+  "title": "Web · Library (dark, gray)",
+  "w": 1440,
+  "h": 900
+ },
+ {
   "name": "WebLibraryNewFolder",
   "title": "Web · Library · new folder, and a deck’s ⋯ menu",
   "w": 1440,
@@ -603,6 +657,12 @@ export default [
  {
   "name": "WebQuizDone",
   "title": "Web · Learn mode · all learned",
+  "w": 1440,
+  "h": 900
+ },
+ {
+  "name": "WebQuizGray",
+  "title": "Web · Learn mode (dark, gray)",
   "w": 1440,
   "h": 900
  },
@@ -667,6 +727,12 @@ export default [
   "h": 900
  },
  {
+  "name": "WebReviewGray",
+  "title": "Web · Review (dark, gray)",
+  "w": 1440,
+  "h": 900
+ },
+ {
   "name": "WebReviewNewPile",
   "title": "Web · Review · New pile popup",
   "w": 1440,
@@ -687,6 +753,12 @@ export default [
  {
   "name": "WebSettings",
   "title": "Web · Settings",
+  "w": 1440,
+  "h": 900
+ },
+ {
+  "name": "WebSettingsGray",
+  "title": "Web · Settings (dark, gray)",
   "w": 1440,
   "h": 900
  },
@@ -721,6 +793,12 @@ export default [
   "h": 900
  },
  {
+  "name": "WebStatsGray",
+  "title": "Web · Stats (dark, gray)",
+  "w": 1440,
+  "h": 900
+ },
+ {
   "name": "WebTodayCaughtUp",
   "title": "Web · Today · all caught up",
   "w": 1440,
@@ -729,6 +807,12 @@ export default [
  {
   "name": "WebTodayDark",
   "title": "Web · Today (dark)",
+  "w": 1440,
+  "h": 900
+ },
+ {
+  "name": "WebTodayGray",
+  "title": "Web · Today (dark, gray)",
   "w": 1440,
   "h": 900
  },

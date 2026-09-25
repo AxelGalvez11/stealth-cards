@@ -471,7 +471,7 @@
       "y": 2600
     },
     "PhoneSettings.dc.html": {
-      "h": 1040,
+      "h": 1100,
       "is_interactive": true,
       "page": "phone",
       "title": "iPhone · Settings",
@@ -1107,6 +1107,132 @@
       "w": 390,
       "x": 1410,
       "y": 5200
+    },
+    "WebTodayGray.dc.html": {
+      "h": 900,
+      "is_interactive": true,
+      "page": "sidebar",
+      "title": "Web · Today (dark, gray)",
+      "w": 1440,
+      "x": 9120,
+      "y": 2640
+    },
+    "WebLibraryGray.dc.html": {
+      "h": 900,
+      "is_interactive": true,
+      "page": "sidebar",
+      "title": "Web · Library (dark, gray)",
+      "w": 1440,
+      "x": 10640,
+      "y": 2640
+    },
+    "WebDeckGray.dc.html": {
+      "h": 900,
+      "is_interactive": true,
+      "page": "sidebar",
+      "title": "Web · Deck page (dark, gray)",
+      "w": 1440,
+      "x": 12160,
+      "y": 2640
+    },
+    "WebReviewGray.dc.html": {
+      "h": 900,
+      "is_interactive": true,
+      "page": "sidebar",
+      "title": "Web · Review (dark, gray)",
+      "w": 1440,
+      "x": 13680,
+      "y": 2640
+    },
+    "WebQuizGray.dc.html": {
+      "h": 900,
+      "is_interactive": true,
+      "page": "sidebar",
+      "title": "Web · Learn mode (dark, gray)",
+      "w": 1440,
+      "x": 15200,
+      "y": 2640
+    },
+    "WebStatsGray.dc.html": {
+      "h": 900,
+      "is_interactive": true,
+      "page": "sidebar",
+      "title": "Web · Stats (dark, gray)",
+      "w": 1440,
+      "x": 16720,
+      "y": 2640
+    },
+    "WebSettingsGray.dc.html": {
+      "h": 900,
+      "is_interactive": true,
+      "page": "sidebar",
+      "title": "Web · Settings (dark, gray)",
+      "w": 1440,
+      "x": 18240,
+      "y": 2640
+    },
+    "PhoneTodayGray.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "page": "phone",
+      "title": "iPhone · Today (dark, gray)",
+      "w": 390,
+      "x": 1880,
+      "y": 1300
+    },
+    "PhoneLibraryGray.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "page": "phone",
+      "title": "iPhone · Library (dark, gray)",
+      "w": 390,
+      "x": 2350,
+      "y": 1300
+    },
+    "PhoneDeckGray.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "page": "phone",
+      "title": "iPhone · Deck page (dark, gray)",
+      "w": 390,
+      "x": 2820,
+      "y": 1300
+    },
+    "PhoneReviewGray.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "page": "phone",
+      "title": "iPhone · Review (dark, gray)",
+      "w": 390,
+      "x": 3290,
+      "y": 1300
+    },
+    "PhoneQuizGray.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "page": "phone",
+      "title": "iPhone · Learn mode (dark, gray)",
+      "w": 390,
+      "x": 3760,
+      "y": 1300
+    },
+    "PhoneStatsGray.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "page": "phone",
+      "title": "iPhone · Stats (dark, gray)",
+      "w": 390,
+      "x": 4230,
+      "y": 1300
+    },
+    "PhoneSettingsGray.dc.html": {
+      "h": 1100,
+      "is_interactive": true,
+      "page": "phone",
+      "title": "iPhone · Settings (dark, gray)",
+      "w": 390,
+      "x": 4700,
+      "y": 1300
     }
   },
   "createdOnFiles": {
@@ -1370,6 +1496,24 @@
       "w": 240,
       "x": 0,
       "y": 4900
+    },
+    "aGray": {
+      "kind": "title1",
+      "maxW": 10560,
+      "page": "sidebar",
+      "text": "Dark mode, gray (Settings → Dark mode: Gray)",
+      "w": 240,
+      "x": 9120,
+      "y": 2340
+    },
+    "pGray": {
+      "kind": "title1",
+      "maxW": 3210,
+      "page": "phone",
+      "text": "iPhone, dark and gray",
+      "w": 240,
+      "x": 1880,
+      "y": 1000
     }
   },
   "order": [
@@ -1393,6 +1537,13 @@
     "WebDeckDark.dc.html",
     "WebReviewDark.dc.html",
     "WebStatsDark.dc.html",
+    "WebTodayGray.dc.html",
+    "WebLibraryGray.dc.html",
+    "WebDeckGray.dc.html",
+    "WebReviewGray.dc.html",
+    "WebQuizGray.dc.html",
+    "WebStatsGray.dc.html",
+    "WebSettingsGray.dc.html",
     "WebReviewFour.dc.html",
     "WebReviewCheck.dc.html",
     "WebReviewPiles.dc.html",
@@ -1438,6 +1589,13 @@
     "PhoneDeckDark.dc.html",
     "PhoneReviewDark.dc.html",
     "PhoneStatsDark.dc.html",
+    "PhoneTodayGray.dc.html",
+    "PhoneLibraryGray.dc.html",
+    "PhoneDeckGray.dc.html",
+    "PhoneReviewGray.dc.html",
+    "PhoneQuizGray.dc.html",
+    "PhoneStatsGray.dc.html",
+    "PhoneSettingsGray.dc.html",
     "PhoneReviewFour.dc.html",
     "PhoneReviewCheck.dc.html",
     "PhoneReviewPiles.dc.html",

@@ -20,7 +20,7 @@ const GAPS = [30, 90, 180, 365, 730, 1825, 3650];
 
 const fresh = () => ({
   version: 1, rev: 1,
-  settings: { name: '', color: 0, look: 'system', grads: 'mix', prog: 'bar', perDay: 20, goal: 90, grading: 'four', fsrs: true, reminder: '9:00 AM' },
+  settings: { name: '', color: 0, look: 'system', darkMode: 'black', grads: 'mix', prog: 'bar', perDay: 20, goal: 90, grading: 'four', fsrs: true, reminder: '9:00 AM' },
   ai: { perms: { read: true, text: true, media: true, edit: true, check: false, del: false }, clients: {} },
   folders: [], decks: [], cards: [], logs: []
 });
