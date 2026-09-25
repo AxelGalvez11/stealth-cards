@@ -191,8 +191,20 @@ async function files(req, res, path, root) {
     // A page of the site (/privacy is privacy.html); anything else is a page of the app.
     file = await stat(file + '.html').then(() => file + '.html', () => join(ROOT, 'app.html'));
   }
-  try { send(res, 200, await readFile(file), TYPES[extname(file)] || 'application/octet-stream'); }
-  catch { send(res, 404, 'Not found', 'text/plain'); }
+  let body;
+  try { body = await readFile(file); } catch { return send(res, 404, 'Not found', 'text/plain'); }
+  const type = TYPES[extname(file)] || 'application/octet-stream', n = body.length;
+  // A sound can be played from any point: the browser asks for the part it needs. Without this, it can't jump around
+  // in a clip (a tap on a waveform would start it over).
+  const r = /^bytes=(\d*)-(\d*)$/.exec(req.headers.range || '');
+  if (r && (r[1] || r[2])) {
+    const start = r[1] ? +r[1] : Math.max(0, n - +r[2]), end = r[1] && r[2] ? Math.min(+r[2], n - 1) : n - 1;
+    if (start >= n || start > end) { res.writeHead(416, { 'content-range': 'bytes */' + n }); return res.end(); }
+    res.writeHead(206, { 'content-type': type, 'content-range': 'bytes ' + start + '-' + end + '/' + n, 'content-length': end - start + 1, 'accept-ranges': 'bytes', 'cache-control': 'no-store' });
+    return res.end(body.subarray(start, end + 1));
+  }
+  res.writeHead(200, { 'content-type': type, 'accept-ranges': 'bytes', 'cache-control': 'no-store' });
+  res.end(body);
 }
 
 // Runs fn against one library and gives back what it returned, again from the newer copy if another request saved

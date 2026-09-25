@@ -53,11 +53,18 @@ const DUE_7 = { vals: [32, 18, 24, 12, 30, 8, 16], labels: ['Wed', 'Thu', 'Fri',
 const DUE_14 = { vals: [32, 18, 24, 12, 30, 8, 16, 22, 14, 26, 10, 20, 6, 12], labels: ['23', '24', '25', '26', '27', '28', '29', '30', '1', '2', '3', '4', '5', '6'], tops: ['W', 'T', 'F', 'S', 'S', 'M', 'T', 'W', 'T', 'F', 'S', 'S', 'M', 'T'],
   names: ['tomorrow', 'Thu 24', 'Fri 25', 'Sat 26', 'Sun 27', 'Mon 28', 'Tue 29', 'Wed 30', 'Thu, Oct 1', 'Fri, Oct 2', 'Sat, Oct 3', 'Sun, Oct 4', 'Mon, Oct 5', 'Tue, Oct 6'] };
 export const SAMPLE = { DECKS, TAGS, CARDS, FOLDERS, ALL_CARDS, REVIEW, DRAFTS, DUE_7, DUE_14 };
+// The sample clip's shape for the canvas's waveforms (96 peaks, 0 to 1): two syllables, like “den-sha”, with a breath
+// between. It's kept out of SAMPLE, which the iPhone app copies.
+export const SAMPLE_WAVE = Array.from({ length: 96 }, (_, i) => {
+  const x = i / 95, syl = (c, w) => Math.exp(-Math.pow((x - c) / w, 2));
+  const env = Math.max(syl(.3, .17), .8 * syl(.7, .14)), grain = .68 + .32 * Math.abs(Math.sin(i * 2.3) * Math.cos(i * .7 + .4));
+  return Math.round(Math.max(.05, env * grain) * 100) / 100;
+});
 
 export const MOCK_METHOD = String.raw`mock() {
   const p = this.props, m = this.state.$m || {};
   const set = patch => this.setState({ $m: { ...m, ...patch } });
-  const X = __SAMPLE__;
+  const X = __SAMPLE__, WAVE = __WAVE__;
   const caught = !!p.caughtUp;
   const byName = { 'Four buttons': 'four', 'Check or X': 'binary', 'Piles': 'piles' };
   const ed = m.deck || {};
@@ -107,6 +114,10 @@ export const MOCK_METHOD = String.raw`mock() {
     stats: () => ({ streak: 12, best: 31, reviews: '1,284', cards: '2,470', ai: 312, remembered: 90, goal: 90, heat: null, forecast: X.DUE_14,
       byDeck: X.DECKS.map(d => ({ name: d.name, ret: d.ret })) }),
     ai: () => ({ url: 'https://app.lucida.cards/mcp/lk_5b1f0c6e9a2d4b7f8e3a1c0d9b8a7f6e2Hq9xWrT4kLm1ZpVb8sNc3Yd7Ga0uEfJ', perms, clients: { claude: true, openai: true, cursor: false, mcp: false }, connected: 'Claude, ChatGPT' }),
+    // Sound: the sample clip, a little way in (paused, or playing on the boards that say so). Play and the waveform work.
+    sound: c => ({ key: c && (c.audio || c.speak) ? 'mock' : '', peaks: WAVE, dur: 2.6, speech: !!c && !c.audio, on: m.playing ?? !!p.playing, frac: m.frac ?? .42, busy: false }),
+    // The Recording boards: a clip being recorded, 3 seconds in.
+    recording: () => ((p.recording && !m.recStop) || m.rec ? { saving: false, levels: Array.from({ length: 70 }, (_, i) => WAVE[(i * 3 + 30) % 96]), level: .55, secs: 3.4 } : null),
     href: kind => ({ decks: 'WebDecks.dc.html', newDeck: 'WebNewDeck.dc.html', import: 'WebImport.dc.html', connect: 'WebConnect.dc.html', today: 'Main.dc.html' })[kind] || 'Main.dc.html',
     act: {
       updateDeck: (id, patch) => set({ deck: { ...ed, ...patch, cover: { ...(ed.cover || {}), ...(patch.cover || {}) } } }),
@@ -123,8 +134,11 @@ export const MOCK_METHOD = String.raw`mock() {
       setBg: (id, kind) => set({ deck: { ...ed, bg: { ...(ed.bg || { kind: 'deck', image: null }), kind } } }),
       pickBg: () => set({ deck: { ...ed, bg: { kind: 'photo', image: 'mock' } } }),
       addDeck: noop, deleteDeck: noop, exportDeck: noop, saveCard: noop, deleteCard: noop, copy: noop, speak: noop, play: noop, importCards: noop, exportAll: noop, resetAll: noop,
-      pickFile: () => Promise.resolve(null), pickText: () => Promise.resolve(null), record: () => Promise.resolve(null),
+      pickFile: () => Promise.resolve(null), pickText: () => Promise.resolve(null), pickSound: () => Promise.resolve(null),
+      record: () => { set((p.recording && !m.recStop) || m.rec ? { rec: false, recStop: true } : { rec: true }); return Promise.resolve(null); },
+      stopRecording: () => set({ rec: false, recStop: true }), watchMic: noop, watchSound: noop,
+      playSound: () => set({ playing: !(m.playing ?? !!p.playing) }), seekSound: (c, f) => { if (f != null) set({ frac: f }); },
       addPile: (id, name) => set({ piles: [...deck().piles, { name, n: 0 }] })
     }
   };
-}`.replace('__SAMPLE__', () => JSON.stringify(SAMPLE));
+}`.replace('__SAMPLE__', () => JSON.stringify(SAMPLE)).replace('__WAVE__', () => JSON.stringify(SAMPLE_WAVE));
