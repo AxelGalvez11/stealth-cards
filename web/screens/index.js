@@ -412,13 +412,13 @@ export default [
   "name": "PhoneSettings",
   "title": "iPhone · Settings",
   "w": 390,
-  "h": 1100
+  "h": 1260
  },
  {
   "name": "PhoneSettingsGray",
   "title": "iPhone · Settings (dark, gray)",
   "w": 390,
-  "h": 1100
+  "h": 1260
  },
  {
   "name": "PhoneSignIn",

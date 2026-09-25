@@ -18,7 +18,11 @@ export const clearCookies = req => [cookie(req, AT, '', 0), cookie(req, RT, '', 
 
 // The token's own expiry time (read, not trusted: Supabase still checks the token itself).
 const expiry = token => { try { return JSON.parse(Buffer.from(token.split('.')[1], 'base64url').toString()).exp * 1000; } catch { return 0; } };
-const person = u => ({ id: u.id, email: u.email || '', provider: (u.app_metadata && u.app_metadata.provider) || 'email', name: (u.user_metadata && (u.user_metadata.full_name || u.user_metadata.name)) || '' });
+// Google sends a link to the person's photo (Apple and email sign-ins have none). Only an https link is kept, asked for
+// at 256 px so it stays sharp where the app shows it.
+const pictureOf = m => { const p = String((m && (m.avatar_url || m.picture)) || ''); return /^https:\/\/\S{1,2000}$/.test(p) ? p.replace(/(googleusercontent\.com\/.+)=s\d+-c$/, '$1=s256-c') : ''; };
+const person = u => ({ id: u.id, email: u.email || '', provider: (u.app_metadata && u.app_metadata.provider) || 'email', name: (u.user_metadata && (u.user_metadata.full_name || u.user_metadata.name)) || '',
+  picture: pictureOf(u.user_metadata) });
 
 async function check(token) {
   const hit = seen.get(token);

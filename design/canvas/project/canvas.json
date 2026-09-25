@@ -498,7 +498,7 @@
       "y": 2600
     },
     "PhoneSettings.dc.html": {
-      "h": 1100,
+      "h": 1260,
       "is_interactive": true,
       "page": "phone",
       "title": "iPhone · Settings",
@@ -1307,7 +1307,7 @@
       "y": 1300
     },
     "PhoneSettingsGray.dc.html": {
-      "h": 1100,
+      "h": 1260,
       "is_interactive": true,
       "page": "phone",
       "title": "iPhone · Settings (dark, gray)",

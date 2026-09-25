@@ -21,7 +21,7 @@ const GAPS = [30, 90, 180, 365, 730, 1825, 3650];
 
 const fresh = () => ({
   version: 1, rev: 1,
-  settings: { name: '', color: 0, look: 'system', darkMode: 'black', grads: 'mix', prog: 'bar', perDay: 20, goal: 90, grading: 'four', fsrs: true, reminder: '9:00 AM' },
+  settings: { name: '', color: 0, look: 'system', darkMode: 'black', grads: 'mix', prog: 'bar', perDay: 20, goal: 90, grading: 'four', fsrs: true, reminder: '9:00 AM', photo: '', yourPhoto: null },
   ai: { perms: { read: true, text: true, media: true, edit: true, check: false, del: false }, clients: {} },
   folders: [], decks: [], cards: [], logs: []
 });
@@ -360,6 +360,11 @@ function run(a, who) {
     case 'settings.update': {
       const p = pick(a.patch, Object.keys(fresh().settings));
       if ('perDay' in p) p.perDay = Math.min(999, Math.max(0, Math.round(+p.perDay) || 0));
+      if ('color' in p) p.color = Math.min(5, Math.max(0, Math.round(+p.color) || 0));
+      // Profile picture: the Google photo, your own, or your initial on your color ('' until you pick, which shows the
+      // Google photo if there is one). Your own is a picture you uploaded to Lucida, so it's always a /media/… path.
+      if ('photo' in p && !['', 'google', 'yours', 'color'].includes(p.photo)) throw new Error('No such profile picture');
+      if ('yourPhoto' in p && p.yourPhoto !== null && !/^\/media\/[\w-]+\.(png|jpg|gif|webp)$/.test(String(p.yourPhoto))) throw new Error('Your photo has to be a picture you uploaded.');
       Object.assign(S.settings, p); return {};
     }
     case 'ai.perm': { if (a.id in S.ai.perms) S.ai.perms[a.id] = !!a.on; return {}; }

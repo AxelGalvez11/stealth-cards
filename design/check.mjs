@@ -9,7 +9,7 @@ const PROP_SETS = [
   {}, { dark: true }, { startRevealed: true }, { startRevealed: true, grading: 'Check or X' },
   { startRevealed: true, grading: 'Piles', newPileOpen: true }, { settingsOpen: true, progress: 'Counts' },
   { settingsOpen: true, grading: 'Piles' }, { settingsOpen: true, fsrs: false }, { card: 'Fill in the blank', startRevealed: true },
-  { card: 'Audio' }, { card: 'Image', startRevealed: true }, { keyboard: true }, { keyboard: false }, { caughtUp: true }, { view: 'List' }, { photo: 'Google photo' }, { textStyles: true, keyboard: true }, { cardType: 'Blank' }, { cardType: 'Image' }, { cardType: 'Audio', keyboard: true }, { cardType: 'Audio', recording: true }, { cardType: 'Audio', recording: true, keyboard: false }, { settingsOpen: true, settingsTab: 'Studying' },
+  { card: 'Audio' }, { card: 'Image', startRevealed: true }, { keyboard: true }, { keyboard: false }, { caughtUp: true }, { view: 'List' }, { photo: 'Google photo' }, { photo: 'Your photo' }, { textStyles: true, keyboard: true }, { cardType: 'Blank' }, { cardType: 'Image' }, { cardType: 'Audio', keyboard: true }, { cardType: 'Audio', recording: true }, { cardType: 'Audio', recording: true, keyboard: false }, { settingsOpen: true, settingsTab: 'Studying' },
   { openTags: true }, { moreTags: true }, { view: 'List', openTags: true }, { settingsOpen: true, tagPicker: true }, { tagPicker: true, keyboard: false },
   { $state: { moreOpen: true, moreQ: 'zz' } }, { $state: { tag: 'Must know' } }, { $state: { tagMenuOpen: true, tagQ: 'ex', filter: 'Organelles' } },
   { settingsOpen: true, $state: { dpOpen: true, dpQ: 'Pharm' } }, { $state: { cpOpen: true, cpQ: 'new tag' } }, { slashDemo: true }, { site: true },
