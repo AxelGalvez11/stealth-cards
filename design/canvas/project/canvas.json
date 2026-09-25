@@ -431,7 +431,7 @@
       "page": "phone",
       "title": "iPhone · Review · picture with hidden parts (tap the card)",
       "w": 390,
-      "x": 3290,
+      "x": 4230,
       "y": 2600
     },
     "PhoneEditorImage.dc.html": {
@@ -943,7 +943,7 @@
       "page": "sidebar",
       "title": "Web · Review · picture with hidden parts (click the card or press Space)",
       "w": 1440,
-      "x": 10640,
+      "x": 12160,
       "y": 3960
     },
     "WebReviewCheck.dc.html": {
@@ -1168,7 +1168,7 @@
       "page": "phone",
       "title": "iPhone · Library · New folder popup",
       "w": 390,
-      "x": 1880,
+      "x": 3290,
       "y": 5200
     },
     "PhoneDeckMoveTray.dc.html": {
@@ -1330,7 +1330,7 @@
       "page": "phone",
       "title": "iPhone · Card editor · recording audio",
       "w": 390,
-      "x": 2350,
+      "x": 2820,
       "y": 5200
     },
     "PhoneReviewAudio.dc.html": {
