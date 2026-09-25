@@ -6,6 +6,7 @@ import { preview, waitLabel, dayAt } from './fsrs.js';
 import R from './rich.js';
 import { placeBefore, deckCards, cardBefore, cardToDeck } from './order.js';
 import { createSound } from './sound.js';
+import { sniff } from './sniff.js';
 
 const DAY = 86400000, MIN = 60000, GAPS = [30, 90, 180, 365, 730, 1825, 3650];
 const DAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
@@ -218,15 +219,66 @@ export async function createDb({ onChange, go }) {
     return { day: gap === 0 ? 'later today' : gap === 1 ? 'tomorrow' : gap < 7 ? 'on ' + DAYS[new Date(day).getDay()] : 'in ' + gap + ' days', short: gap === 0 ? 'Later today' : gap === 1 ? 'Tomorrow' : gap < 7 ? DAYS[new Date(day).getDay()] : 'In ' + gap + ' days', n };
   };
   const download = (name, text, type) => { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([text], { type })); a.download = name; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 1000); };
+  // The file picker. Its input waits in the page until you pick (a phone can lose the answer of one that isn't).
   const choose = accept => new Promise(ok => {
-    const i = document.createElement('input'); i.type = 'file'; i.accept = accept;
-    i.onchange = () => ok(i.files[0] || null); i.addEventListener('cancel', () => ok(null)); i.click();
+    const i = document.createElement('input'), done = f => { i.remove(); ok(f); };
+    i.type = 'file'; i.accept = accept; i.hidden = true;
+    i.onchange = () => done(i.files[0] || null); i.addEventListener('cancel', () => done(null)); document.body.appendChild(i); i.click();
   });
-  const upload = async blob => { const r = await fetch('/api/media', { method: 'POST', headers: { 'content-type': blob.type }, body: blob }); const j = await r.json(); if (!r.ok) { alert(j.error); return null; } return j.url; };
+  // Uploading a picture or sound. Online a request can't be over 4.5 MB (Vercel's limit), so a big picture is made
+  // smaller here first (at most 2400 px across, or `side`), an iPhone photo (HEIC) becomes a JPEG where this browser can
+  // open one, and a file still over 4 MB is turned away with a plain message instead of failing on the way.
+  const LIMIT = 4 * 1024 * 1024, OVER = 'That file is over 4 MB. Try a smaller or shorter one.';
+  const NOT = { image: 'That isn’t a picture Lucida can show (PNG, JPEG, GIF, or WebP).', audio: 'That isn’t a sound Lucida can play (MP3, M4A, WAV, OGG, or WebM).' };
+  const HEIC = 'That’s an iPhone photo (HEIC), which this browser can’t open. Use a JPEG or PNG instead.';
+  const toBlob = (c, type, q) => new Promise(ok => c.toBlob(ok, type, q));
+  // A picture goes as it is when it's already small (a GIF keeps moving, a PNG its see-through parts), else it's drawn
+  // again: a picture with see-through parts as a PNG (or a WebP when that's too big), anything else as a JPEG.
+  async function picture(f, type, side) {
+    const src = URL.createObjectURL(f), img = new Image();
+    img.src = src;
+    try { await img.decode(); } catch { return null; } finally { setTimeout(() => URL.revokeObjectURL(src), 0); }
+    const w = img.naturalWidth, h = img.naturalHeight, k = Math.min(1, side / Math.max(w, h, 1)), same = /^image\/(png|jpeg|gif|webp)$/.test(type) && k === 1;
+    if (same && f.size <= 2e6) return new Blob([f], { type });
+    const c = document.createElement('canvas'), g = c.getContext('2d');
+    c.width = Math.max(1, Math.round(w * k)); c.height = Math.max(1, Math.round(h * k));
+    g.drawImage(img, 0, 0, c.width, c.height);
+    let clear = false;
+    if (!/jpeg|heic/.test(type)) { const d = g.getImageData(0, 0, c.width, c.height).data; for (let i = 3; i < d.length && !clear; i += 4) clear = d[i] < 255; }
+    if (same && f.size <= LIMIT && (clear || type === 'image/gif')) return new Blob([f], { type });
+    if (clear) {
+      for (const [t, q] of [['image/png'], ['image/webp', .86]]) { const b = await toBlob(c, t, q); if (b && b.type === t && b.size <= LIMIT) return b; }
+      g.globalCompositeOperation = 'destination-over'; g.fillStyle = '#FFFFFF'; g.fillRect(0, 0, c.width, c.height);
+    }
+    const b = await toBlob(c, 'image/jpeg', .86);
+    return b && b.size > LIMIT ? toBlob(c, 'image/jpeg', .6) : b;
+  }
+  // What goes up: labeled by what the file really is (web/sniff.js), since a name can be wrong.
+  async function fit(f, want, side) {
+    const type = sniff(new Uint8Array(await f.slice(0, 16).arrayBuffer()));
+    const heic = type === 'image/heic' || /^image\/hei[cf]$/.test(f.type) || /\.hei[cf]$/i.test(f.name || '');
+    if ((heic ? 'image' : (type || f.type).split('/')[0]) !== want) { alert(NOT[want]); return null; }
+    if (want === 'image') { f = await picture(f, heic ? 'image/heic' : type, side || 2400); if (!f) { alert(heic ? HEIC : NOT.image); return null; } }
+    else if (!type) { alert(NOT.audio); return null; }
+    else f = new Blob([f], { type });
+    if (f.size > LIMIT) { alert(OVER); return null; }
+    return f;
+  }
+  const upload = async (blob, want, side) => {
+    let f = null, r = null;
+    try { f = await fit(blob, want, side); } catch { alert('Couldn’t read that file. Try another one.'); }
+    if (!f) return null;
+    try { r = await fetch('/api/media', { method: 'POST', headers: { 'content-type': f.type }, body: f }); } catch { alert('Couldn’t reach Lucida. Check your connection and try again.'); return null; }
+    if (r.status === 401) { toSignIn(); return null; }
+    // An error from Vercel itself (like a file that's too big for it) is a page, not JSON.
+    const j = await r.json().catch(() => ({}));
+    if (!r.ok || !j.url) { alert(r.status === 413 ? OVER : j.error || 'That didn’t upload. Try again in a minute.'); return null; }
+    return j.url;
+  };
   let typing = {}, typingTimer = null;
   // Recording, playing, and the waveforms of sound (sound.js). A clip's shape measured on this device is saved with the
   // cards that play it, quietly (if that fails, it's measured again next time).
-  const sound = createSound({ onChange: () => changed(), upload, measured: (url, wave) => {
+  const sound = createSound({ onChange: () => changed(), upload: b => upload(b, 'audio'), measured: (url, wave) => {
     for (const c of S.cards) {
       if (c.audio !== url || c.wave) continue;
       c.wave = wave;
@@ -429,12 +481,13 @@ export async function createDb({ onChange, go }) {
     setSettings: patch => send('settings.update', { patch }),
     setPerm: (id, on) => send('ai.perm', { id, on }),
     copy: text => navigator.clipboard && navigator.clipboard.writeText(text),
-    pickFile: async kind => { const f = await choose(kind === 'audio' ? 'audio/*' : 'image/*'); return f ? upload(f) : null; },
+    pickFile: async (kind, side) => { const f = await choose(kind === 'audio' ? 'audio/*' : 'image/*'); return f ? upload(f, kind === 'audio' ? 'audio' : 'image', side) : null; },
     pickText: async () => { const f = await choose('.csv,.tsv,.txt,text/plain,text/csv'); return f ? f.text() : null; },
     // Sound (sound.js). record() starts recording and gives back { url, wave } once it's stopped (a second call stops it).
     record: () => sound.record(),
     stopRecording: discard => sound.stopRecording(discard),
-    pickSound: () => sound.pick(choose),
+    // A sound file over the limit is turned away before it's measured.
+    pickSound: () => sound.pick(accept => choose(accept).then(f => (f && f.size > LIMIT ? (alert(OVER), null) : f))),
     // A clip is a card's sound: { audio, wave } for a file, or { speak, lang } for words the device reads aloud (lang, like
     // "es", picks a voice that speaks the card's language). playSound plays it, or pauses it if it's playing.
     playSound: c => sound.play(c),

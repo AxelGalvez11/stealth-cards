@@ -764,9 +764,11 @@ const studyBgLayer = `<div aria-hidden="true" style="position: absolute; inset: 
   <div style="position: absolute; inset: 0; background: {{bg.veil}};"></div>
   ${grainSvg('{{bg.grain}}', { blend: 'overlay', freq: 0.85, slope: 3.4, id: 'sc-study-grain' })}
 </div>`;
-const coverFill = `<sc-if value="{{coverIsGradient}}" hint-placeholder-val="{{ true }}">${meshCard('cover', 'position: absolute; inset: 0;', 'height: 100%;', '')}</sc-if>
-    <sc-if value="{{coverIsImage}}" hint-placeholder-val="{{ false }}"><div style="position: absolute; inset: 0; background: repeating-linear-gradient(135deg, {{t.surf}} 0 14px, {{t.surf2}} 14px 28px); display: flex; align-items: center; justify-content: center; gap: 8px; color: {{t.muted}}; font-size: 14px; font-weight: 500;">${svg(I.image, 18, 1.8)}[Your header image]</div></sc-if>
+// A cover's picture: yours in the app, a placeholder on the canvas.
+const coverPicture = `<sc-if value="{{coverIsImage}}" hint-placeholder-val="{{ false }}"><div style="position: absolute; inset: 0; background: repeating-linear-gradient(135deg, {{t.surf}} 0 14px, {{t.surf2}} 14px 28px); display: flex; align-items: center; justify-content: center; gap: 8px; color: {{t.muted}}; font-size: 14px; font-weight: 500;">${svg(I.image, 18, 1.8)}[Your header image]</div></sc-if>
     <sc-if value="{{coverHasPhoto}}" hint-placeholder-val="{{ false }}"><img src="{{coverPhoto}}" alt="" style="position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover;"></sc-if>`;
+const coverFill = `<sc-if value="{{coverIsGradient}}" hint-placeholder-val="{{ true }}">${meshCard('cover', 'position: absolute; inset: 0;', 'height: 100%;', '')}</sc-if>
+    ${coverPicture}`;
 // Parallax: as the page scrolls, the deck's cover drifts at half speed behind the header (once the header's top reaches
 // the top, so no gap opens above it). Browsers without scroll-linked animations, and Reduce Motion, keep it still.
 const parallax = (h, from = 0) => `<div class="sc-parallax" style="position: absolute; inset: 0; --px: ${h}px; --from: ${from}px; --to: ${from + 2 * h}px;">${coverFill}</div>`;
@@ -797,7 +799,7 @@ const COVER_LOGIC = `
   const plural = (n, w) => n + ' ' + w + (n === 1 ? '' : 's');
   const coverVals = {
     grain: String(this.props.grain ?? 0.7),
-    cover, coverIsGradient: !isImage, coverIsImage: isImage && !photo, coverHasPhoto: !!photo, coverPhoto: photo,
+    cover, coverIsGradient: !isImage, coverIsImage: isImage && !photo, coverHasPhoto: !!photo, coverPhoto: photo, coverHasImage: isImage,
     coverInk: photo ? '#FFFFFF' : isImage ? t.text : cover.ink, coverShadow: photo ? '0 1px 14px rgba(0,0,0,.45)' : isImage ? 'none' : cover.shadow,
     deckName: cs.deckName == null ? dk.name : cs.deckName,
     setDeckName: e => { const v = e && e.target ? e.target.value : cs.deckName; this.setState({ deckName: v }); up({ name: v }, true); },
@@ -848,7 +850,7 @@ const deckSettingsBody = phone => `<div style="display: flex; align-items: cente
       <sc-if value="{{dsGeneral}}" hint-placeholder-val="{{ true }}"><div style="flex-grow: 1; min-height: 0; overflow-y: auto; scrollbar-width: thin; display: flex; flex-direction: column; gap: 14px;">
         <div style="display: flex; flex-direction: column; gap: 8px;"><span style="font-size: 13px; font-weight: 600;">Header</span>
           <div style="position: relative; height: ${phone ? 88 : 108}px; flex-shrink: 0; border-radius: 20px; overflow: hidden;">${coverFill}</div>
-          <div style="display: flex; gap: 6px; flex-wrap: wrap;">${smallBtn('Shuffle', 'nextCover', 'shuffle')}${smallBtn('Upload image', 'uploadCover', 'image')}<sc-if value="{{coverIsImage}}" hint-placeholder-val="{{ false }}">${smallBtn('Use gradient', 'removeCover')}</sc-if></div>
+          <div style="display: flex; gap: 6px; flex-wrap: wrap;">${smallBtn('Shuffle', 'nextCover', 'shuffle')}${smallBtn('Upload image', 'uploadCover', 'image')}<sc-if value="{{coverHasImage}}" hint-placeholder-val="{{ false }}">${smallBtn('Use gradient', 'removeCover')}</sc-if></div>
           <div role="group" aria-label="Gradient style" style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 4px; padding: 4px; border-radius: 999px; background: {{t.surf}};">
             <sc-for list="{{coverStyles}}" as="m" hint-placeholder-count="3"><button type="button" onClick="{{m.pick}}" aria-pressed="{{m.pressed}}" style="height: 34px; border: 0; border-radius: 999px; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; background: {{m.bg}}; color: {{m.fg}}; box-shadow: {{m.sh}};">{{m.label}}</button></sc-for>
           </div>
@@ -3036,7 +3038,7 @@ const webDecksEmpty = webRoot(`${sidebar('Library')}
 const webDeckEmpty = webRoot(`${sidebar('Library')}
 <main style="flex-grow: 1; box-sizing: border-box; padding: 24px 48px 20px; display: flex; flex-direction: column; gap: 20px; min-width: 0;">
   <div style="position: relative; height: 184px; flex-shrink: 0; border-radius: 20px; overflow: hidden;">
-    ${meshCard('cover', 'position: absolute; inset: 0;', 'height: 100%;', '')}
+    ${meshCard('cover', 'position: absolute; inset: 0;', 'height: 100%;', '')}${coverPicture}
     <div style="position: absolute; inset: 0; box-sizing: border-box; padding: 20px 24px 24px 28px; display: flex; flex-direction: column; justify-content: space-between; color: {{cover.ink}};">
       <div style="display: flex; align-items: center; justify-content: space-between;"><a href="WebDecks.dc.html" style="height: 36px; padding: 0 14px 0 10px; display: inline-flex; align-items: center; gap: 4px; border-radius: 999px; ${onCover} font-size: 13px; font-weight: 600;">${svg(I.back, 14, 2.2)}Library</a>${coverBtn('Deck settings', 'openSettings', 'gear')}</div>
       <div style="display: flex; flex-direction: column; gap: 6px; text-shadow: {{cover.shadow}};"><h1 style="margin: 0; font-size: 34px; font-weight: 600; letter-spacing: -.035em; line-height: 1;">{{deckName}}</h1><div style="font-size: 14px; opacity: .8;">No cards yet</div></div>
@@ -3071,7 +3073,7 @@ const phoneTodayNew = phone(`<div style="padding: 64px 20px 120px; display: flex
 </div>`, 'Today');
 const phoneDeckEmpty = phone(`<div style="height: 100%; box-sizing: border-box; padding: 0 0 120px; display: flex; flex-direction: column;">
   <div style="position: relative; height: 232px; flex-shrink: 0; overflow: hidden;">
-    ${meshCard('cover', 'position: absolute; inset: 0;', 'height: 100%;', '')}
+    ${meshCard('cover', 'position: absolute; inset: 0;', 'height: 100%;', '')}${coverPicture}
     <div style="position: absolute; inset: 0; box-sizing: border-box; padding: 54px 16px 18px 20px; display: flex; flex-direction: column; justify-content: space-between; color: {{cover.ink}};">
       <div style="display: flex; justify-content: space-between;">${coverRound('back', 'Back', 'PhoneToday.dc.html')}<div style="display: flex; gap: 8px;">${coverRound('gear', 'Deck settings', '', '{{openSettings}}')}${coverRound('plus', 'New card', 'PhoneEditor.dc.html')}</div></div>
       <div style="display: flex; flex-direction: column; gap: 4px; text-shadow: {{cover.shadow}};"><div style="font-size: 32px; font-weight: 700; letter-spacing: -.03em; line-height: 1.05; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{deckName}}</div><div style="font-size: 14px; opacity: .8;">No cards yet</div></div>
@@ -3098,19 +3100,23 @@ const phoneStatsEmpty = phone(`<div style="height: 100%; box-sizing: border-box;
 const emptyLogic = (cover = '') => `renderVals() { ${T}${DB_JS}
   // On the canvas these boards show a brand-new account, so the Today count stays hidden (except on the empty deck).
   const dk = db.mock ? { name: '${cover}', seed: '${cover}', cover: { style: null, round: 0, image: null } } : (db.deck(this.props.deckId) || { name: '', seed: '', cover: {} });
+  // A new deck's picture shows on its empty page too, with white words over it.
+  const pic = dk.cover.image || '', photo = pic !== 'mock' ? pic : '';
   return { ${MESH_VALS('Iris')} t, ...chrome, nav: db.mock ? { today: ${cover ? "'64'" : "''"} } : chrome.nav, art: this.mesh('Iris'), art2: this.mesh('Mint'), art3: this.mesh('Apricot'), noop: () => {},
-    date: db.today().date, deckName: dk.name, cover: this.gen(dk.seed + (dk.cover.round ? ' #' + dk.cover.round : ''), dk.cover.style),
+    date: db.today().date, deckName: dk.name, cover: { ...this.gen(dk.seed + (dk.cover.round ? ' #' + dk.cover.round : ''), dk.cover.style), ...(photo ? { ink: '#FFFFFF', shadow: '0 1px 14px rgba(0,0,0,.45)' } : {}) },
+    coverIsImage: pic === 'mock', coverHasPhoto: !!photo, coverPhoto: photo,
     newCardHref: db.mock ? 'WebEditor.dc.html' : dk.newCardHref, importHref: db.href('import', dk.id), connectHref: db.href('connect'),
     openSettings: () => { if (!db.mock) db.act.go(dk.settingsHref); } }; }`;
 
 // New deck. The cover starts white. Its colors (generated from the name) fade in over 2 s once you stop typing the name
-// or press Shuffle, and each later change fades the new colors in over the old ones the same way.
+// or press Shuffle, and each later change fades the new colors in over the old ones the same way. A picture you upload
+// fills the cover, with white words over it, until Shuffle brings the colors back.
 const COVER_FADE_CSS = '@keyframes scCoverA{from{opacity:0}to{opacity:1}}@keyframes scCoverB{from{opacity:0}to{opacity:1}}@media (prefers-reduced-motion:reduce){.sc-cover-in{animation:none!important}}';
 // Both layers stay in the page and hide when unused, so clearing the old one never restarts the new one's fade.
 const coverLayer = (key, extra = '') => `<div${extra ? ' class="sc-cover-in"' : ''} style="position: absolute; inset: 0; display: {{${key}Show}}; background: {{${key}.base}};${extra}">${flowLayer(key)}${GRAIN_LAYER}</div>`;
 const newDeckBody = (phone, back, done) => `<div style="display: flex; align-items: center; justify-content: space-between;"><span style="font-size: 22px; font-weight: 600; letter-spacing: -.02em;">New deck</span><a href="${back}" aria-label="Close" style="width: 40px; height: 40px; border-radius: 20px; background: {{t.surf}}; display: flex; align-items: center; justify-content: center;">${svg(I.close, 16, 2)}</a></div>
     <div style="position: relative; height: ${phone ? 132 : 150}px; border-radius: 26px; flex-shrink: 0; overflow: hidden; background: {{t.bg}}; box-shadow: inset 0 0 0 1px {{t.line}}; color: {{coverInk}}; transition: color 2s ease;">
-      ${coverLayer('prev')}${coverLayer('cover', ' animation: {{coverFade}};')}
+      ${coverLayer('prev')}${coverLayer('cover', ' animation: {{coverFade}};')}${coverPicture}
       <div style="position: relative; height: 100%; box-sizing: border-box; padding: 14px 16px 16px 18px; display: flex; flex-direction: column; justify-content: space-between; text-shadow: {{coverShadow}};"><div style="display: flex; justify-content: flex-end; gap: 8px;">${coverBtn('Shuffle', 'shuffle', 'shuffle')}${coverBtn(phone ? 'Image' : 'Upload image', 'pickCover', 'image')}</div><span style="font-size: ${phone ? 22 : 26}px; font-weight: 600; letter-spacing: -.02em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{title}}</span></div>
     </div>
     <label style="display: flex; flex-direction: column; gap: 8px;"><span style="font-size: 13px; font-weight: 600;">Name</span><input type="text" value="{{name}}" onChange="{{setName}}" placeholder="Name your deck" style="height: 48px; box-sizing: border-box; padding: 0 16px; border: 0; outline: 0; border-radius: 16px; background: {{t.surf}}; color: {{t.text}}; font: inherit; font-size: 16px;"></label>
@@ -3118,18 +3124,19 @@ const newDeckBody = (phone, back, done) => `<div style="display: flex; align-ite
     <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px;">${stepper('New cards a day', 'perDay', 'lessDay', 'moreDay', true, 'perDayIn')}${stepper('Remember goal', 'goal', 'lessGoal', 'moreGoal', true)}</div>
     <div style="display: flex; flex-direction: column; gap: 8px;"><span style="font-size: 13px; font-weight: 600;">Grade with</span>${modeSeg(true)}</div>
     <div style="display: flex; gap: 10px;"><a href="${back}" style="flex-grow: 1; height: 52px; border-radius: 999px; background: {{t.surf}}; display: flex; align-items: center; justify-content: center; font-size: 15px; font-weight: 600;">Cancel</a><a href="${done}" onClick="{{create}}" style="flex-grow: 2; height: 52px; border-radius: 999px; background: {{t.inv}}; color: {{t.invText}}; display: flex; align-items: center; justify-content: center; font-size: 15px; font-weight: 600;">Create deck</a></div>`;
+// New deck and Import open over the Library, above its deck tiles' ⋯ buttons (they showed through the dialog).
 const webNewDeck = `<div style="position: relative; width: 1440px; height: 900px; overflow: hidden; font-family: ${FONT}; color: {{t.text}};">
   <dc-import name="WebDecks" dark="{{dark}}" dim="{{dim}}" hint-size="1440px,900px"></dc-import>
-  <div style="position: absolute; inset: 0; background: {{t.dim}};"></div>
-  <div role="dialog" aria-label="New deck" style="position: absolute; left: 420px; top: 50%; transform: translateY(-50%); width: 600px; box-sizing: border-box; padding: 28px; border-radius: 36px; background: {{t.bg}}; box-shadow: 0 24px 64px rgba(0,0,0,.24); display: flex; flex-direction: column; gap: 18px;">
+  <div style="position: absolute; inset: 0; z-index: 40; background: {{t.dim}};"></div>
+  <div role="dialog" aria-label="New deck" style="position: absolute; z-index: 40; left: 420px; top: 50%; transform: translateY(-50%); width: 600px; box-sizing: border-box; padding: 28px; border-radius: 36px; background: {{t.bg}}; box-shadow: 0 24px 64px rgba(0,0,0,.24); display: flex; flex-direction: column; gap: 18px;">
     ${newDeckBody(false, 'WebDecks.dc.html', 'WebDeck.dc.html')}
   </div>
 </div>`;
 // Import cards: paste text or pick a file (Anki and Quizlet exports, CSV), then pick the deck. Opens over Decks.
 const webImport = `<div style="position: relative; width: 1440px; height: 900px; overflow: hidden; font-family: ${FONT}; color: {{t.text}};">
   <dc-import name="WebDecks" dark="{{dark}}" dim="{{dim}}" hint-size="1440px,900px"></dc-import>
-  <div style="position: absolute; inset: 0; background: {{t.dim}};"></div>
-  <div role="dialog" aria-label="Import cards" style="position: absolute; left: 420px; top: 50%; transform: translateY(-50%); width: 600px; box-sizing: border-box; padding: 28px; border-radius: 36px; background: {{t.bg}}; box-shadow: 0 24px 64px rgba(0,0,0,.24); display: flex; flex-direction: column; gap: 18px;">
+  <div style="position: absolute; inset: 0; z-index: 40; background: {{t.dim}};"></div>
+  <div role="dialog" aria-label="Import cards" style="position: absolute; z-index: 40; left: 420px; top: 50%; transform: translateY(-50%); width: 600px; box-sizing: border-box; padding: 28px; border-radius: 36px; background: {{t.bg}}; box-shadow: 0 24px 64px rgba(0,0,0,.24); display: flex; flex-direction: column; gap: 18px;">
     <div style="display: flex; align-items: center; justify-content: space-between;"><span style="font-size: 22px; font-weight: 600; letter-spacing: -.02em;">Import cards</span><a href="{{backHref}}" aria-label="Close" style="width: 36px; height: 36px; border-radius: 18px; background: {{t.surf}}; display: flex; align-items: center; justify-content: center;">${svg(I.close, 16, 2)}</a></div>
     <label style="display: flex; flex-direction: column; gap: 8px;"><span style="font-size: 13px; font-weight: 600;">Cards</span><textarea rows="8" onChange="{{setText}}" placeholder="One card per line: front, then back" style="resize: none; border: 0; outline: 0; border-radius: 20px; padding: 14px 16px; background: {{t.surf}}; color: {{t.text}}; font-family: ${MONO}; font-size: 13px; line-height: 1.6;">{{text}}</textarea></label>
     <div style="display: flex; align-items: center; gap: 12px;">${smallBtn('Choose a file', 'pickText', 'upload')}<span style="font-size: 13px; color: {{t.muted}};">{{foundLine}}</span></div>
@@ -3199,13 +3206,15 @@ renderVals() {
   const title = (name || '').trim() || 'Untitled deck';
   const seg = (id, cur) => ({ pressed: id === cur ? 'true' : 'false', bg: id === cur ? t.bg : 'transparent', fg: id === cur ? t.text : t.muted, sh: id === cur ? '0 1px 3px rgba(0,0,0,.14)' : 'none' });
   const setTags = next => this.setState({ tags: next, typedTags: true });
+  const img = s.image || '', photo = img !== 'mock' ? img : '';
   ${NUM_JS}
   return {
     t, dark: !!this.props.dark, dim: !!this.props.dim, grain: String(this.props.grain ?? 0.7),
     name, title,
     coverShow: s.shown ? 'block' : 'none', prevShow: s.prev ? 'block' : 'none', cover: this.gen(s.shown || seedOf(title, s.round), st.grads), prev: this.gen(s.prev || seedOf(title, s.round), st.grads),
     coverFade: s.k % 2 ? 'scCoverA 2s ease-in-out both' : 'scCoverB 2s ease-in-out both',
-    coverInk: s.shown ? this.gen(s.shown, st.grads).ink : t.text, coverShadow: s.shown ? this.gen(s.shown, st.grads).shadow : 'none',
+    coverIsImage: img === 'mock', coverHasPhoto: !!photo, coverPhoto: photo,
+    coverInk: photo ? '#FFFFFF' : img ? t.text : s.shown ? this.gen(s.shown, st.grads).ink : t.text, coverShadow: photo ? '0 1px 14px rgba(0,0,0,.45)' : !img && s.shown ? this.gen(s.shown, st.grads).shadow : 'none',
     // A moment after you stop typing a name, its colors fade in.
     setName: e => {
       const v = e && e.target ? e.target.value : s.name;
@@ -3213,8 +3222,8 @@ renderVals() {
       clearTimeout(this.settle);
       this.settle = setTimeout(() => { const seed = seedOf(v, this.state.round); if (v.trim() && seed !== this.state.shown) show(seed); }, 800);
     },
-    shuffle: () => show(seedOf(name, s.round + 1), { round: s.round + 1 }), noop: () => {},
-    pickCover: () => db.act.pickFile('image').then(url => url && this.setState({ image: url })),
+    shuffle: () => show(seedOf(name, s.round + 1), { round: s.round + 1, image: null }), noop: () => {},
+    pickCover: () => (db.mock ? Promise.resolve('mock') : db.act.pickFile('image')).then(url => url && this.setState({ image: url })),
     modes: [['four', 'Forgot · Hard · Good · Easy', '4 grades'], ['binary', 'Check or X', '✓ / ✗'], ['piles', 'Piles', 'Piles']].map(([id, long, short]) => ({ label: short, long, ...seg(id, grading), pick: () => this.setState({ grading: id }) })),
     perDay: String(perDay), goal: goal + '%', perDayIn: typed('perDay', perDay, n => this.setState({ perDay: n }), 'New cards a day'),
     lessDay: () => this.setState({ perDay: Math.max(0, perDay - 5) }), moreDay: () => this.setState({ perDay: Math.min(999, perDay + 5) }),

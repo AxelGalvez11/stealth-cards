@@ -239,8 +239,11 @@ mock() {
 renderVals() { const t = this.theme(!!this.props.dark, !!this.props.dim);const db = this.props.db || this.mock(); const chrome = db.chrome();
   // On the canvas these boards show a brand-new account, so the Today count stays hidden (except on the empty deck).
   const dk = db.mock ? { name: '', seed: '', cover: { style: null, round: 0, image: null } } : (db.deck(this.props.deckId) || { name: '', seed: '', cover: {} });
+  // A new deck's picture shows on its empty page too, with white words over it.
+  const pic = dk.cover.image || '', photo = pic !== 'mock' ? pic : '';
   return { hero: this.mesh(this.props.gradient ?? 'Iris'), grain: String(this.props.grain ?? 0.7), t, ...chrome, nav: db.mock ? { today: '' } : chrome.nav, art: this.mesh('Iris'), art2: this.mesh('Mint'), art3: this.mesh('Apricot'), noop: () => {},
-    date: db.today().date, deckName: dk.name, cover: this.gen(dk.seed + (dk.cover.round ? ' #' + dk.cover.round : ''), dk.cover.style),
+    date: db.today().date, deckName: dk.name, cover: { ...this.gen(dk.seed + (dk.cover.round ? ' #' + dk.cover.round : ''), dk.cover.style), ...(photo ? { ink: '#FFFFFF', shadow: '0 1px 14px rgba(0,0,0,.45)' } : {}) },
+    coverIsImage: pic === 'mock', coverHasPhoto: !!photo, coverPhoto: photo,
     newCardHref: db.mock ? 'WebEditor.dc.html' : dk.newCardHref, importHref: db.href('import', dk.id), connectHref: db.href('connect'),
     openSettings: () => { if (!db.mock) db.act.go(dk.settingsHref); } }; }
 }

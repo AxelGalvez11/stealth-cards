@@ -9,7 +9,7 @@ import { state, apply, withLibrary, revOf, putMedia, mediaLink, MEDIA, aiLeft, u
 import { aiReady, explain } from './ai.mjs';
 import { FREE_EXPLAINS, PRO_EXPLAINS } from './plans.mjs';
 import { mcp } from './mcp.mjs';
-import { EXT } from './media.mjs';
+import { EXT, HEIC, sniff } from './media.mjs';
 import { cloud, auth } from './supa.mjs';
 import { who, forget, accessToken, sessionCookies, clearCookies, pkce, verifier, clearPkce, linkOwner, sameLink,
   GOOGLE_ID, APPLE_ID, oauthStart, oauthNonce, oauthDone, googleUrl, appleUrl, appleName } from './auth.mjs';
@@ -50,8 +50,10 @@ async function api(req, res, path, body, me) {
     catch (e) { return send(res, 400, { error: e.message }); }
   }
   if (path === '/api/media' && req.method === 'POST') {
-    const type = String(req.headers['content-type'] || '').split(';')[0], ext = EXT[type];
+    const type = String(req.headers['content-type'] || '').split(';')[0], ext = EXT[type], real = sniff(body);
     if (!ext) return send(res, 415, { error: 'Only images and audio' });
+    // The file must really be what it's labeled (its first bytes say), so nothing else is ever saved as a picture or sound.
+    if (real !== type && !(type === 'audio/x-m4a' && real === 'audio/mp4')) return send(res, 415, { error: real === 'image/heic' ? HEIC : 'That file isn’t a picture or sound Lucida can use.' });
     const name = 'm' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7) + ext;
     await putMedia(name, body, type);
     return send(res, 200, { url: '/media/' + name });
