@@ -48,8 +48,8 @@ struct DemoProps {
   /// Session done after sorting into piles only; Stats with no reviews yet.
   var onlyPiles = false
   var noStats = false
-  /// Settings on the design screen.
-  var look = "system", grads = "mix", fsrs = true, check = true
+  /// Settings on the design screen (darkMode: dark mode's look, "gray" on the canvas's Gray boards).
+  var look = "system", darkMode = "black", grads = "mix", fsrs = true, check = true
   /// Learn mode on Free: the upgrade card instead of the start sheet.
   var upgrade = false
   /// Settings' plan: "Free", "Pro", or "Pro, ending" (the canvas board's `plan`).
@@ -59,6 +59,8 @@ struct DemoProps {
   var editorTyping = false
   /// Review with the AI's explanation open (PhoneReviewExplain).
   var explainOpen = false
+  /// The Library with its New folder popup open, this name typed (PhoneLibraryNewFolder).
+  var naming: String? = nil
 }
 
 struct TodayVM {
@@ -88,6 +90,11 @@ final class Store: ObservableObject {
   /// The Library's sample folders, and decks moved in or out of one on a design screen.
   @Published var demoFolders: [(id: String, name: String, decks: [String])] = Sample.shared.FOLDERS.map { ($0.id, $0.name, $0.decks) }
   @Published var demoMoved: [String: String?] = [:]
+  /// Decks and cards dragged on a design screen: the Library's deck order, the deck page's card order, and cards moved to
+  /// another deck (mock.mjs deckOrder, cardOrder, cardDeck).
+  @Published var demoDeckOrder: [String] = Sample.shared.DECKS.map(\.id)
+  @Published var demoCardOrder: [String] = Sample.shared.CARDS.map(\.id)
+  @Published var demoCardDeck: [String: String] = [:]
   /// AI explanations being written, what went wrong asking for one (and whether Pro would help), by card; and how many
   /// free ones are left today (known once one is written on Free).
   @Published var explaining: Set<String> = []
@@ -142,7 +149,7 @@ final class Store: ObservableObject {
       }
     }
   }
-  private func accept(_ next: Library) { if next.rev >= lib.rev { lib = next } }
+  func accept(_ next: Library) { if next.rev >= lib.rev { lib = next } }
 
   /// One change on the server; the library comes back with it.
   @discardableResult

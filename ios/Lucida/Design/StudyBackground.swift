@@ -1,7 +1,7 @@
 // Study backgrounds (design/build.mjs STUDY_BG_JS and studyBgLayer): what shows behind Learn mode and flashcards. By
-// default it's the deck's own gradient, nearly gray with a faint hint of its colors (near-black at night), under film
-// grain; or, picked in the deck's settings, a plain page, the sky, the sunset, or a photo, softened so the words stay
-// easy to read.
+// default it's the deck's own gradient, nearly gray with a faint hint of its colors (near-black at night, under a gray
+// wash in gray dark mode), under film grain; or, picked in the deck's settings, a plain page, the sky, the sunset, or a
+// photo, softened so the words stay easy to read.
 import SwiftUI
 
 /// A deck's study background, worked out: which kind, the deck's gradient, and its photo.
@@ -40,11 +40,11 @@ struct StudyBackground: View {
       t.bg
       if faint || bg.sample {
         // The gradient reaches a little past the page (inset -4%), like the canvas's.
-        MeshFill(mesh: faint ? bg.mesh.filtered(saturate: 0.16, brightness: t.dark ? 0.42 : 1.15) : bg.mesh, grain: 0).scaleEffect(1.08)
+        MeshFill(mesh: faint ? bg.mesh.filtered(saturate: 0.16, brightness: t.gray ? 0.34 : t.dark ? 0.42 : 1.15) : bg.mesh, grain: 0).scaleEffect(1.08)
       }
       if let p = bg.photo { FillPhoto(url: store.api.mediaURL(p)) }
       if bg.kind == "sky" { SkyLayer(height: 700).frame(maxHeight: .infinity, alignment: .top) }
-      if bg.kind == "sunset" { SunsetFill(dark: t.dark) }
+      if bg.kind == "sunset" { SunsetFill(dark: t.dark, gray: t.gray) }
       veil
       if faint || bg.sample || bg.kind == "sunset" { GrainLayer(opacity: 0.55) }
     }
@@ -54,10 +54,11 @@ struct StudyBackground: View {
     .accessibilityHidden(true)
   }
 
-  /// A white wash (a black one at night) over the colors or the photo.
+  /// A white wash (a black one at night, a gray one in gray dark mode) over the colors or the photo.
   private var veil: Color {
-    if bg.kind == "deck" { return t.dark ? .black.opacity(0.3) : .white.opacity(0.6) }
-    if bg.photo != nil || bg.sample { return t.dark ? .black.opacity(0.5) : .white.opacity(0.38) }
+    let gray = Color(hex: 0x1E1E20)
+    if bg.kind == "deck" { return t.gray ? gray.opacity(0.45) : t.dark ? .black.opacity(0.3) : .white.opacity(0.6) }
+    if bg.photo != nil || bg.sample { return t.gray ? gray.opacity(0.55) : t.dark ? .black.opacity(0.5) : .white.opacity(0.38) }
     return .clear
   }
 }
@@ -70,14 +71,16 @@ struct GrainLayer: View {
   }
 }
 
-/// The faint sunset (SUNSET_BG, or SUNSET_NIGHT at night): a soft fade from blue-gray down to peach, with a warm glow low
-/// on the right.
+/// The faint sunset (SUNSET_BG, SUNSET_NIGHT at night, or SUNSET_DUSK in gray dark mode): a soft fade from blue-gray down
+/// to peach, with a warm glow low on the right.
 struct SunsetFill: View {
   let dark: Bool
+  var gray = false
   var body: some View {
-    let fade: [(UInt32, Double)] = dark ? [(0x0C1426, 0), (0x151B31, 0.35), (0x231C2E, 0.65), (0x2E1D25, 1)]
+    let fade: [(UInt32, Double)] = dark && gray ? [(0x1F2638, 0), (0x272C40, 0.35), (0x332C3F, 0.65), (0x3E2E37, 1)]
+                                 : dark ? [(0x0C1426, 0), (0x151B31, 0.35), (0x231C2E, 0.65), (0x2E1D25, 1)]
                                         : [(0xC3D3E3, 0), (0xD3DBE6, 0.30), (0xE6DDE4, 0.52), (0xF2DCD8, 0.72), (0xF5CFC2, 1)]
-    let glow = Color(.sRGB, red: 238 / 255, green: 142 / 255, blue: 98 / 255, opacity: dark ? 0.16 : 0.22)
+    let glow = Color(.sRGB, red: 238 / 255, green: 142 / 255, blue: 98 / 255, opacity: dark && gray ? 0.18 : dark ? 0.16 : 0.22)
     Canvas { ctx, size in
       ctx.fill(Path(CGRect(origin: .zero, size: size)), with: .linearGradient(Gradient(stops: fade.map { .init(color: Color(hex: $0.0), location: $0.1) }),
                                                                              startPoint: .zero, endPoint: CGPoint(x: 0, y: size.height)))

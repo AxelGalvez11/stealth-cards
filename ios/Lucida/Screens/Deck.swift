@@ -1,5 +1,6 @@
-// iPhone · Deck page (PhoneDeck, PhoneDeckEmpty, PhoneDeckSettings, PhoneDeckSettingsStudy, PhoneDeckTagPicker): the
-// deck's gradient header, its numbers, studying, its cards, and its settings in a sheet.
+// iPhone · Deck page (PhoneDeck, PhoneDeckEmpty, PhoneDeckSettings, PhoneDeckSettingsStudy, PhoneDeckTagPicker,
+// PhoneDeckMoveTray): the deck's gradient header, its numbers, studying, its cards, and its settings in a sheet. Hold a
+// card to drag it to another spot, or onto another deck in the Move to tray that rises while you drag (Drag.swift).
 import SwiftUI
 import PhotosUI
 
@@ -49,7 +50,8 @@ extension Store {
       if empty { return DeckVM(id: "pharm", name: "Pharmacology", seed: "Pharmacology", lineShort: "No cards yet") }
       let d = DeckVM(id: "cell", name: e.name ?? "Cell Biology", seed: "Cell Biology", style: e.style ?? "mix", round: e.round, image: e.image,
                      lineShort: "412 cards · 38 from your AI", due: 28, fresh: 10, ret: 91, studyCount: 28,
-                     rows: X.CARDS.prefix(6).map { CardRowVM(id: $0.id, front: $0.front, meta: $0.kind + " · " + $0.next, tags: $0.tags) },
+                     rows: demoCardOrder.compactMap { id in X.CARDS.first { $0.id == id } }.filter { (demoCardDeck[$0.id] ?? "cell") == "cell" }
+                       .map { CardRowVM(id: $0.id, front: $0.front, meta: $0.kind + " · " + $0.next, tags: $0.tags) },
                      tags: e.tags ?? X.TAGS["cell"] ?? [], allTags: Array(Generated.tagColors.keys),
                      paused: e.paused, grading: e.grading ?? props.grading, fsrs: e.fsrs, goal: e.goal, gapIdx: e.gapIdx, steps: e.steps, perDay: e.perDay,
                      folder: demoFolderOf("cell"), folders: demoFolders.map { ($0.id, $0.name) }, bg: e.bg)
@@ -57,7 +59,8 @@ extension Store {
     }
     let E = engine
     guard let d = E.deck(id) else { return DeckVM(id: id) }
-    let st = E.stat(d), cards = E.cards(of: id).reversed()
+    // Its cards in the deck's own order (the order you dragged them into; newest first until you do).
+    let st = E.stat(d), cards = lib.deckCards(d)
     let total = plural(st.total, "card").replacingOccurrences(of: String(st.total), with: grouped(st.total))
     return DeckVM(id: d.id, name: d.name, seed: d.cover.seed ?? d.name, style: d.cover.style ?? "mix", round: d.cover.round, image: d.cover.image,
                   lineShort: total + (st.aiCount > 0 ? " · \(st.aiCount) from your AI" : ""), due: st.due, fresh: st.fresh, ret: st.ret,
@@ -158,7 +161,10 @@ struct DeckScreen: View {
   @Environment(\.accessibilityReduceMotion) private var still
   @EnvironmentObject private var store: Store
   @EnvironmentObject private var nav: Nav
+  @Environment(DragCenter.self) private var drag
   let id: String
+  /// This page, for dragging its cards.
+  @State private var board = UUID().uuidString
   var body: some View {
     let d = store.deck(id)
     Group {
@@ -245,17 +251,37 @@ struct DeckScreen: View {
             .buttonStyle(.press)
             .frame(width: learnWidth)
           }
+          let list = board + "/cards", ids = d.rows.map(\.id)
           VStack(spacing: 0) {
             ForEach(d.rows) { r in
-              Button { nav.newCard(deckId: d.id, cardId: store.demo ? nil : r.id) } label: { row(r) }.buttonStyle(.plain)
+              let open = { nav.newCard(deckId: d.id, cardId: store.demo ? nil : r.id) }
+              row(r)
+                .overlay(alignment: .bottom) { Rectangle().fill(t.line).frame(height: 1) }
+                .accessibilityElement(children: .combine)
+                .accessibilityAddTraits(.isButton)
+                .accessibilityAction(.default, open)
+                .gesture(drag.hold(list, r.id, tap: open, ids: { ids }, face: { AnyView(row(r)) }, options: { cardDrag(d) }))
+                .dragItem(drag, list: list, id: r.id)
             }
           }
         }
         .padding(.horizontal, 20)
       }
       .padding(.bottom, 120)
+      .dragScroller(drag, board: board)
     }
     .ignoresSafeArea(edges: .top)
+  }
+
+  /// A card goes to another spot in the deck, or onto another deck in the Move to tray (it leaves this page).
+  private func cardDrag(_ d: DeckVM) -> DragOptions {
+    let others = store.libraryDecks().filter { $0.id != d.id }.map { TrayDeck(id: $0.id, name: $0.name, mesh: $0.mesh) }
+    return DragOptions(drops: ["deck:"], tray: others.isEmpty ? nil : others, drop: { id, to in
+      switch to {
+      case .before(let b): store.reorderCard(id, before: b)
+      case .place(let name): store.moveCard(id, toDeck: String(name.dropFirst("deck:".count)))
+      }
+    })
   }
 
   /// The Learn button is half the Study button (flex 2 : 1 with an 8-point gap).
@@ -286,7 +312,6 @@ struct DeckScreen: View {
     }
     .padding(.vertical, 12)
     .frame(maxWidth: .infinity, alignment: .leading)
-    .overlay(alignment: .bottom) { Rectangle().fill(t.line).frame(height: 1) }
     .contentShape(Rectangle())
   }
 
@@ -457,7 +482,7 @@ struct DeckSettingsSheet: View {
       FlowLayout(spacing: 6, lineSpacing: 6) {
         ForEach([(key: "", id: String?.none, name: "No folder")] + d.folders.map { (key: $0.id, id: Optional($0.id), name: $0.name) }, id: \.key) { f in
           let on = d.folder == f.id
-          Button { store.updateDeck(d.id, ["folder": f.id ?? NSNull()]) } label: {
+          Button { store.moveDeck(d.id, to: f.id) } label: {
             HStack(spacing: 6) { Icon("folder", 14, 1.8); Text(f.name).css(13, .semibold).lineLimit(1) }
               .foregroundStyle(on ? t.invText : t.text).padding(.horizontal, 12).frame(height: 32).background(Capsule().fill(on ? t.inv : t.surf))
           }

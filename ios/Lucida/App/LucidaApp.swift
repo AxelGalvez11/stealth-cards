@@ -6,14 +6,17 @@ import SwiftUI
 struct LucidaApp: App {
   @StateObject private var store: Store
   @StateObject private var nav: Nav
+  /// Dragging decks and cards (Drag.swift).
+  @State private var drag: DragCenter
 
   init() {
     Fonts.register()
-    let store = Store(demo: Board.requested != nil), nav = Nav()
+    let store = Store(demo: Board.requested != nil), nav = Nav(), drag = DragCenter()
     // A design screen starts where its board is, before anything draws.
-    if let b = Board.requested { Board.setUp(b, store: store, nav: nav) }
+    if let b = Board.requested { Board.setUp(b, store: store, nav: nav, drag: drag) }
     _store = StateObject(wrappedValue: store)
     _nav = StateObject(wrappedValue: nav)
+    _drag = State(initialValue: drag)
   }
 
   var body: some Scene {
@@ -21,6 +24,7 @@ struct LucidaApp: App {
       RootView()
         .environmentObject(store)
         .environmentObject(nav)
+        .environment(drag)
     }
   }
 }
@@ -42,7 +46,8 @@ struct RootView: View {
   var body: some View {
     let look = store.demo ? store.props.look : store.settings.look
     let dark = look == "dark" || (look == "system" && (store.demo ? store.props.dark : scheme == .dark))
-    let t = Theme(dark: dark)
+    // Dark mode's look (Settings → Dark mode): gray or black.
+    let t = Theme(dark: dark, gray: (store.demo ? store.props.darkMode : store.settings.darkMode) == "gray")
     ZStack {
       t.bg.ignoresSafeArea()
       switch store.phase {
@@ -92,9 +97,11 @@ struct RootView: View {
 
 extension Board {
   /// Puts the app where a board is: its sample data, its page, and its sheet.
-  @MainActor static func setUp(_ name: String, store: Store, nav: Nav) {
-    store.props.dark = name.hasSuffix("Dark")
-    switch name.replacingOccurrences(of: "Dark", with: "") {
+  @MainActor static func setUp(_ name: String, store: Store, nav: Nav, drag: DragCenter) {
+    // A board's dark twin ends in Dark; its gray one (dark mode's gray look) in Gray.
+    store.props.dark = name.hasSuffix("Dark") || name.hasSuffix("Gray")
+    if name.hasSuffix("Gray") { store.props.darkMode = "gray" }
+    switch name.replacingOccurrences(of: "Dark", with: "").replacingOccurrences(of: "Gray", with: "") {
     case "PhoneTodayCaughtUp": store.props.caughtUp = true
     case "PhoneTodayNew": store.props.newUser = true
     case "PhoneDeck": nav.tab = .library; nav.path = [.deck("cell")]
@@ -117,6 +124,12 @@ extension Board {
     case "PhoneLibrary": nav.tab = .library
     case "PhoneLibraryCards": nav.tab = .library; nav.libCards = true
     case "PhoneLibraryFolder": nav.tab = .library; nav.path = [.folder("f1")]
+    // The New folder popup, with a name typed (the phone's own keyboard is up); it opens once the Library is showing.
+    case "PhoneLibraryNewFolder": nav.tab = .library; store.props.naming = "Biology"
+    // A deck's page while a card is dragged: the Move to tray, with its first deck lit.
+    case "PhoneDeckMoveTray":
+      nav.tab = .library; nav.path = [.deck("cell")]
+      drag.showTray(Sample.shared.DECKS.filter { $0.id != "cell" }.map { TrayDeck(id: $0.id, name: $0.name, mesh: Mesh.deck(seed: $0.name)) })
     case "PhoneReviewExplain": store.props.revealed = true; store.props.explainOpen = true; nav.full = .review(deckId: "cell", pile: nil)
     case "PhoneConnect": nav.tab = .connect
     case "PhoneSettings": nav.path = [.settings]
@@ -147,6 +160,8 @@ struct MainView: View {
       NavigationStack(path: $nav.path) {
         tabRoot
           .toolbar(.hidden, for: .navigationBar)
+          // Every page on the theme's page color (the stack's own is the system's white or black, not dark mode's gray).
+          .containerBackground(t.bg, for: .navigation)
           .navigationDestination(for: Route.self) { route in
             Group {
               switch route {
@@ -157,9 +172,13 @@ struct MainView: View {
               }
             }
             .toolbar(.hidden, for: .navigationBar)
+            .containerBackground(t.bg, for: .navigation)
           }
       }
       if showsTabBar { TabBar(active: nav.tab, pick: nav.pick) }
+      // A deck or card being dragged, over the page and the tab bar; and the Move to tray over it while a card is.
+      DragGhost()
+      MoveTray()
       if let s = nav.sheet { SheetHost(kind: s).zIndex(5) }
       if let f = nav.full { FullHost(kind: f).zIndex(6).transition(.move(edge: .bottom)) }
     }
@@ -194,7 +213,7 @@ struct SheetHost: View {
       SheetOverlay(top: nil, radius: 36, close: nav.close) {
         if !store.isPro { LearnUpgradeSheet() } else { LearnStartSheet(deckId: id) }
       }
-    default: Color.clear
+    case .nameFolder(let rename, let deck, let name): FolderPopup(rename: rename, deck: deck, start: name)
     }
   }
 }

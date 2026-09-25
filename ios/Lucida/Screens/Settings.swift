@@ -8,6 +8,7 @@ extension Store {
       for (k, v) in patch {
         switch k {
         case "look": props.look = v as? String ?? "system"
+        case "darkMode": props.darkMode = v as? String ?? "black"
         case "grads": props.grads = v as? String ?? "mix"
         case "fsrs": props.fsrs = v as? Bool ?? true
         case "check": props.check = v as? Bool ?? true
@@ -20,6 +21,7 @@ extension Store {
     for (k, v) in patch {
       switch k {
       case "look": s.look = v as? String ?? s.look
+      case "darkMode": s.darkMode = v as? String ?? s.darkMode
       case "grads": s.grads = v as? String ?? s.grads
       case "fsrs": s.fsrs = v as? Bool ?? s.fsrs
       case "perDay": s.perDay = v as? Int ?? s.perDay
@@ -54,7 +56,7 @@ struct SettingsScreen: View {
 
   var body: some View {
     let s = store.settings, demo = store.demo
-    let look = demo ? store.props.look : s.look, grads = demo ? store.props.grads : s.grads
+    let look = demo ? store.props.look : s.look, grads = demo ? store.props.grads : s.grads, darkMode = demo ? store.props.darkMode : s.darkMode
     let fsrs = demo ? store.props.fsrs : s.fsrs, check = demo ? store.props.check : store.lib.ai.perms.check
     ScrollView(showsIndicators: false) {
       VStack(alignment: .leading, spacing: 18) {
@@ -93,6 +95,9 @@ struct SettingsScreen: View {
         }
         group("Look") {
           row("Appearance") { seg([("system", "System"), ("light", "Light"), ("dark", "Dark")], look) { store.setSetting(["look": $0]) } }
+          divider
+          // Gray or black, for whenever the app is dark (the owner: "grayish not fully blackedout").
+          row("Dark mode", sub: "When the app is dark") { seg([("gray", "Gray"), ("black", "Black")], darkMode == "gray" ? "gray" : "black") { store.setSetting(["darkMode": $0]) } }
           divider
           row("Card gradients") { seg([("mix", "Mix"), ("vivid", "Vivid"), ("deep", "Deep")], grads) { store.setSetting(["grads": $0]) } }
         }

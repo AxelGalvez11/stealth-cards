@@ -5,12 +5,15 @@ import SwiftUI
 enum Route: Hashable { case settings, deck(String), folder(String), inbox }
 enum SheetKind: Identifiable, Equatable {
   case newDeck, newCard(deckId: String?, cardId: String?), deckSettings(String), learnStart(String)
+  /// The New folder popup (maybe for a deck that goes in it), or Rename on a folder's page; `name`: what's typed to start.
+  case nameFolder(rename: String?, deck: String?, name: String)
   var id: String {
     switch self {
     case .newDeck: return "newDeck"
     case .newCard(let d, let c): return "card-\(d ?? "")-\(c ?? "")"
     case .deckSettings(let d): return "settings-" + d
     case .learnStart(let d): return "learn-" + d
+    case .nameFolder(let f, let d, _): return "folder-\(f ?? "")-\(d ?? "")"
     }
   }
 }
