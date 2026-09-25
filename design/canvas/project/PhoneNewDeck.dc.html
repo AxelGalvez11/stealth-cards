@@ -18,7 +18,7 @@ a{color:inherit;text-decoration:none}a:hover{opacity:.8}
 </style>
 </helmet>
 <div style="position: relative; width: 390px; height: 844px; overflow: hidden; font-family: Geist, -apple-system, system-ui, sans-serif; color: {{t.text}};">
-  <dc-import name="PhoneToday" dark="{{dark}}" hint-size="390px,844px"></dc-import>
+  <dc-import name="PhoneToday" dark="{{dark}}" dim="{{dim}}" hint-size="390px,844px"></dc-import>
   <div style="position: absolute; inset: 0; background: {{t.dim}};"></div>
   <div role="dialog" aria-label="New deck" style="position: absolute; left: 0; right: 0; bottom: 0; box-sizing: border-box; padding: 16px 20px 34px; border-radius: 36px 36px 0 0; background: {{t.bg}}; display: flex; flex-direction: column; gap: 16px;">
     <div style="display: flex; align-items: center; justify-content: space-between;"><span style="font-size: 22px; font-weight: 600; letter-spacing: -.02em;">New deck</span><a href="PhoneToday.dc.html" aria-label="Close" style="width: 40px; height: 40px; border-radius: 20px; background: {{t.surf}}; display: flex; align-items: center; justify-content: center;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 6l12 12M18 6L6 18"/></svg></a></div>
@@ -44,9 +44,13 @@ a{color:inherit;text-decoration:none}a:hover{opacity:.8}
   </div>
 </div>
 </x-dc>
-<script type="text/x-dc" data-dc-script data-props='{"dark":{"editor":"boolean","default":false},"grain":{"editor":"range","default":0.7,"min":0,"max":1,"step":0.05},"$preview":{"width":390,"height":844}}'>
+<script type="text/x-dc" data-dc-script data-props='{"dark":{"editor":"boolean","default":false},"dim":{"editor":"boolean","default":false},"grain":{"editor":"range","default":0.7,"min":0,"max":1,"step":0.05},"$preview":{"width":390,"height":844}}'>
 class Component extends DCLogic {
-theme(d) {
+// Dark mode has two looks, picked in Settings → Dark mode: black (the first one, and still the default) or gray (the
+// owner: "add a darkmode option that is grayish not fully blackedout"). g asks for gray; it only counts when d is on.
+// Gray keeps the grade colors, and its muted words still read at WCAG AA on every surface.
+theme(d, g) {
+  if (d && g) return { bg: '#1E1E20', surf: '#2A2A2D', surf2: '#353539', line: '#3A3A3E', text: '#F2F2F2', muted: '#A8A8AD', inv: '#F2F2F2', invText: '#1E1E20', card: '#2A2A2D', shadow: '0 1px 2px rgba(0,0,0,.2), 0 18px 44px -18px rgba(0,0,0,.5)', again: '#F97066', hard: '#FDB022', good: '#47CD89', easy: '#53B1FD', againTint: 'rgba(249,112,102,.16)', goodTint: 'rgba(71,205,137,.16)', hardTint: 'rgba(253,176,34,.16)', dim: 'rgba(0,0,0,.45)' };
   return d
     ? { bg: '#000000', surf: '#141414', surf2: '#222222', line: '#262626', text: '#FFFFFF', muted: '#A3A3A3', inv: '#FFFFFF', invText: '#000000', card: '#141414', shadow: 'none', again: '#F97066', hard: '#FDB022', good: '#47CD89', easy: '#53B1FD', againTint: 'rgba(249,112,102,.16)', goodTint: 'rgba(71,205,137,.16)', hardTint: 'rgba(253,176,34,.16)', dim: 'rgba(0,0,0,.7)' }
     : { bg: '#FFFFFF', surf: '#F4F4F4', surf2: '#E8E8E8', line: '#EBEBEB', text: '#000000', muted: '#666666', inv: '#000000', invText: '#FFFFFF', card: '#FFFFFF', shadow: '0 1px 2px rgba(0,0,0,.04), 0 18px 44px -18px rgba(0,0,0,.18)', again: '#D92D20', hard: '#B54708', good: '#067647', easy: '#175CD3', againTint: '#FDECEA', goodTint: '#E6F4EC', hardTint: '#FDF1E3', dim: 'rgba(0,0,0,.28)' };
@@ -158,7 +162,7 @@ mock() {
     href: 'WebDeck.dc.html', studyHref: 'WebReview.dc.html', settingsHref: 'WebDeckSettings.dc.html', newCardHref: 'WebEditor.dc.html', folder: null, bg: ed.bg || { kind: 'deck', image: null } });
   const idx = m.idx ?? (({ 'Fill in the blank': 1, Image: 2, Audio: 3 })[p.card] || 0);
   const st = { name: 'Alex Kim', sub: 'Signed in with Google · alex@gmail.com', signedIn: true, google: true, photo: p.photo === 'Google photo' ? 'google' : 'color', color: 0,
-    look: 'system', grads: 'mix', prog: ({ Bar: 'bar', Counts: 'counts', None: 'none' })[p.progress] || 'bar', perDay: 20, goal: 90, grading: 'four', fsrs: true, check: true, reminder: '9:00 AM', ...(m.settings || {}) };
+    look: 'system', darkMode: p.dim ? 'gray' : 'black', grads: 'mix', prog: ({ Bar: 'bar', Counts: 'counts', None: 'none' })[p.progress] || 'bar', perDay: 20, goal: 90, grading: 'four', fsrs: true, check: true, reminder: '9:00 AM', ...(m.settings || {}) };
   const perms = { read: true, text: true, media: true, edit: true, check: true, del: false, ...(m.perms || {}) };
   const noop = () => {};
   // Folders you make or change here stay on this board.
@@ -230,7 +234,7 @@ mock() {
 
 constructor(props) { super(props); this.state = { name: 'Pharmacology', round: 0, tags: ['MCAT'], shown: null, prev: null, k: 0 }; }
 renderVals() {
-  const t = this.theme(!!this.props.dark);const db = this.props.db || this.mock(); const chrome = db.chrome();
+  const t = this.theme(!!this.props.dark, !!this.props.dim);const db = this.props.db || this.mock(); const chrome = db.chrome();
   const s = this.state, st = db.settings();
   // The cover's colors come from a seed (the name, plus the Shuffle count). show() fades a new seed in over the one before;
   // the one underneath goes once the fade is done.
@@ -280,7 +284,7 @@ renderVals() {
       key: e => { if (e.key === 'Enter' || e.key === 'Escape') { e.preventDefault(); e.target.blur(); } } };
   };
   return {
-    t, dark: !!this.props.dark, grain: String(this.props.grain ?? 0.7),
+    t, dark: !!this.props.dark, dim: !!this.props.dim, grain: String(this.props.grain ?? 0.7),
     name, title,
     coverShow: s.shown ? 'block' : 'none', prevShow: s.prev ? 'block' : 'none', cover: this.gen(s.shown || seedOf(title, s.round), st.grads), prev: this.gen(s.prev || seedOf(title, s.round), st.grads),
     coverFade: s.k % 2 ? 'scCoverA 2s ease-in-out both' : 'scCoverB 2s ease-in-out both',
