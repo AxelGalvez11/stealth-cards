@@ -1,6 +1,8 @@
 // iPhone · Library (PhoneLibrary, PhoneLibraryCards, PhoneLibraryFolder, PhoneDecksEmpty): it was called Decks. Your
 // folders and decks, or one folder's decks, with a search and a ⋯ menu on each deck to move it between folders; or
-// every card in one list (All cards), to filter by how hard it is, its tags, and its deck or folder.
+// every card in one list (All cards), to filter by how hard it is, its tags, and its deck or folder. Tap a deck to open
+// it; hold one to drag it to another spot, onto a folder, or (in a folder) onto the Library button to take it out. In
+// All cards, hold a card to drag it onto another deck in the Move to tray (Drag.swift).
 import SwiftUI
 
 /// A deck in the Library's list (libraryLogic's decks).
@@ -40,12 +42,12 @@ extension Store {
     return demoFolders.first { $0.decks.contains(id) }?.id
   }
 
-  /// Every deck with its numbers, in the order they were made.
+  /// Every deck with its numbers, in the library's order (the order they were made, until you drag them).
   func libraryDecks() -> [LibDeck] {
     if demo {
       if props.newUser { return [] }
       let X = Sample.shared
-      return X.DECKS.map { d in
+      return demoDeckOrder.compactMap { id in X.DECKS.first { $0.id == id } }.map { d in
         LibDeck(id: d.id, name: d.name, tags: X.TAGS[d.id] ?? [], mesh: Mesh.deck(seed: d.name), folder: demoFolderOf(d.id),
                 due: props.caughtUp ? 0 : d.due, fresh: d.fresh, totalLabel: d.total, ret: d.ret)
       }
@@ -67,9 +69,10 @@ extension Store {
     if demo {
       let X = Sample.shared
       return X.ALL_CARDS.enumerated().map { i, a in
-        let name = X.DECKS.first { $0.id == a.deckId }?.name ?? ""
-        return LibCard(id: "a\(i)", front: a.front, back: a.back, tags: a.tags, next: a.next, level: a.level, deckId: a.deckId, deckName: name,
-                       mesh: Mesh.deck(seed: name), folder: demoFolderOf(a.deckId))
+        // A card dragged onto another deck here lists with that deck.
+        let deckId = demoCardDeck["a\(i)"] ?? a.deckId, name = X.DECKS.first { $0.id == deckId }?.name ?? ""
+        return LibCard(id: "a\(i)", front: a.front, back: a.back, tags: a.tags, next: a.next, level: a.level, deckId: deckId, deckName: name,
+                       mesh: Mesh.deck(seed: name), folder: demoFolderOf(deckId))
       }
     }
     if let memo = allCardsMemo { return memo }
@@ -153,9 +156,6 @@ extension Store {
     for i in lib.decks.indices where lib.decks[i].folder == id { lib.decks[i].folder = nil }
     await send("folder.delete", ["id": id])
   }
-
-  /// Into a folder, or out of one (nil).
-  func moveDeck(_ id: String, to folder: String?) { updateDeck(id, ["folder": folder ?? NSNull()]) }
 }
 
 /// How hard a card is, as a word and its color (New blue, Easy green, Medium amber, Hard red).
@@ -175,15 +175,12 @@ struct LibraryScreen: View {
   @Environment(\.theme) private var t
   @EnvironmentObject private var store: Store
   @EnvironmentObject private var nav: Nav
+  @Environment(DragCenter.self) private var drag
   /// One folder's page, or (nil) the Library itself.
   var folderId: String? = nil
   @State private var q = ""
-  /// Naming a folder: a new one (maybe for a deck that asked to move into it), or renaming this one.
-  enum Naming { case new, rename }
-  @State private var naming: Naming? = nil
-  @State private var name = ""
-  @State private var moveAfter: String? = nil
-  @FocusState private var nameFocused: Bool
+  /// This page, for dragging (its decks, cards, and folders, apart from another page's).
+  @State private var board = UUID().uuidString
   /// The open menu (see MenuAnchors), and what's typed in its search.
   @State private var menu: String? = nil
   @State private var menuQ = ""
@@ -205,6 +202,7 @@ struct LibraryScreen: View {
       else { page(decks, folders, folder, cards) }
     }
     .toolbar(.hidden, for: .navigationBar)
+    .onAppear { if store.demo, let n = store.props.naming { store.props.naming = nil; nav.sheet = .nameFolder(rename: nil, deck: nil, name: n) } }
   }
 
   // ---------- the page ----------
@@ -219,10 +217,10 @@ struct LibraryScreen: View {
           }
         }
         search(cards ? "Search all cards" : folder != nil ? "Search this folder" : "Search decks and cards")
-        if naming != nil { nameForm }
         if cards { allCards(ql, decks, folders) } else { deckList(ql, decks, folders, folder) }
       }
       .padding(.horizontal, 20).padding(.top, Screen.top(64)).padding(.bottom, 120)
+      .dragScroller(drag, board: board)
     }
     .scrollDismissesKeyboard(.immediately)
     .ignoresSafeArea(edges: .top)
@@ -237,7 +235,7 @@ struct LibraryScreen: View {
   private func top(_ cards: Bool) -> some View {
     HStack(spacing: 8) {
       Text("Library").css(32, .bold, ls: -0.03).foregroundStyle(t.text).frame(maxWidth: .infinity, alignment: .leading).accessibilityAddTraits(.isHeader)
-      if !cards { round("folder", "New folder") { startNaming(.new) } }
+      if !cards { round("folder", "New folder") { startNaming() } }
       round("plus", "New deck", inv: true) { nav.newDeck() }
     }
     .frame(height: 41)
@@ -247,9 +245,11 @@ struct LibraryScreen: View {
   private func folderTop(_ f: LibFolder) -> some View {
     VStack(alignment: .leading, spacing: 14) {
       HStack(spacing: 8) {
-        round("back", "Library") { nav.back() }
+        // Dropping a deck here takes it out of the folder.
+        round("back", "Library", lit: drag.spotKey == board + "|folder:") { nav.back() }
+          .dropPlace(drag, board: board, name: "folder:")
         Spacer(minLength: 0)
-        Button { startNaming(.rename, f.name) } label: {
+        Button { startNaming(rename: f) } label: {
           Text("Rename").css(14, .semibold).foregroundStyle(t.text).padding(.horizontal, 16).frame(height: 40).background(Capsule().fill(t.surf))
         }
         .buttonStyle(.press)
@@ -260,10 +260,11 @@ struct LibraryScreen: View {
     }
   }
 
-  /// libRound: a 40-point circle, gray or black.
-  private func round(_ icon: String, _ label: String, inv: Bool = false, _ action: @escaping () -> Void) -> some View {
+  /// libRound: a 40-point circle, gray or black (`lit`: a dragged deck is over it, filled in and a little bigger).
+  private func round(_ icon: String, _ label: String, inv: Bool = false, lit: Bool = false, _ action: @escaping () -> Void) -> some View {
     Button(action: action) {
-      Icon(icon, 18, 2).foregroundStyle(inv ? t.invText : t.text).frame(width: 40, height: 40).background(Circle().fill(inv ? t.inv : t.surf))
+      Icon(icon, 18, 2).foregroundStyle(lit ? t.bg : inv ? t.invText : t.text).frame(width: 40, height: 40).background(Circle().fill(lit ? t.text : inv ? t.inv : t.surf))
+        .scaleEffect(lit ? 1.06 : 1)
     }
     .buttonStyle(.press)
     .accessibilityLabel(label)
@@ -281,32 +282,10 @@ struct LibraryScreen: View {
     .background(Capsule().fill(t.surf))
   }
 
-  // Naming a folder: return saves, Cancel closes.
-  private var nameForm: some View {
-    HStack(spacing: 8) {
-      Icon("folder", 18, 1.8).foregroundStyle(t.muted)
-      TextField("", text: $name, prompt: Text("Folder name").foregroundStyle(t.muted))
-        .font(.geist(16)).foregroundStyle(t.text).focused($nameFocused).submitLabel(.done).onSubmit(saveName)
-        .accessibilityLabel("Folder name")
-        .onAppear { nameFocused = true }
-      Button(action: closeNaming) { Text("Cancel").css(13, .semibold).foregroundStyle(t.muted).padding(.horizontal, 14).frame(height: 36).contentShape(Capsule()) }
-        .buttonStyle(.press)
-      Button(action: saveName) {
-        Text(naming == .rename ? "Save" : "Create").css(13, .semibold).foregroundStyle(t.invText).padding(.horizontal, 18).frame(height: 36).background(Capsule().fill(t.inv))
-      }
-      .buttonStyle(.press)
-    }
-    .padding(.leading, 18).padding(.trailing, 6).padding(.vertical, 6)
-    .background(Capsule().fill(t.surf))
-  }
-  private func startNaming(_ n: Naming, _ value: String = "", deck: String? = nil) { menu = nil; naming = n; name = value; moveAfter = deck; nameFocused = true }
-  private func closeNaming() { naming = nil; name = ""; moveAfter = nil; nameFocused = false }
-  private func saveName() {
-    let n = name.trimmingCharacters(in: .whitespaces)
-    guard !n.isEmpty else { return }
-    if naming == .rename, let id = folderId { store.renameFolder(id, n) }
-    else { let deck = moveAfter; Task { await store.newFolder(n, deck: deck) } }
-    closeNaming()
+  /// Naming a folder in the popup (FolderPopup): a new one (maybe for a deck that asked to move into it), or this one.
+  private func startNaming(rename f: LibFolder? = nil, deck: String? = nil) {
+    menu = nil
+    nav.sheet = .nameFolder(rename: f?.id, deck: deck, name: f?.name ?? "")
   }
 
   // ---------- decks ----------
@@ -322,8 +301,9 @@ struct LibraryScreen: View {
       }
       Eyebrow(text: "Decks").padding(.horizontal, 4).padding(.top, 10)
     }
+    let ids = list.map(\.id)
     VStack(spacing: 0) {
-      ForEach(list) { deckRow($0) }
+      ForEach(list) { deckRow($0, ids: ids) }
     }
     if folder != nil {
       Button { confirmRemove = true } label: {
@@ -333,7 +313,7 @@ struct LibraryScreen: View {
       .frame(maxWidth: .infinity)
     }
     if list.isEmpty {
-      emptyBox(folder != nil ? "No decks in this folder yet. Use a deck’s ⋯ button to move it here." : "No decks match.")
+      emptyBox(folder != nil ? "No decks in this folder yet. Drag a deck onto the folder, or use its ⋯ button." : "No decks match.")
     }
   }
 
@@ -368,31 +348,25 @@ struct LibraryScreen: View {
       .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
     }
     .buttonStyle(.press)
+    // A deck dropped here goes into the folder.
+    .dropPlace(drag, board: board, name: "folder:" + f.id, tile: 20)
     .accessibilityElement(children: .ignore)
     .accessibilityLabel("\(f.name), \(f.line)")
     .accessibilityAddTraits(.isButton)
   }
 
-  /// A deck: its colors (or photo), name, numbers, what's due, and the ⋯ button that moves it between folders.
-  private func deckRow(_ d: LibDeck) -> some View {
-    HStack(spacing: 8) {
-      Button { menu = nil; nav.push(.deck(d.id)) } label: {
-        HStack(spacing: 12) {
-          ZStack {
-            CSSLinearGradient(angle: d.mesh.angle, stops: d.mesh.stops)
-            if let p = d.photo { FillPhoto(url: store.api.mediaURL(p)) }
-          }
-          .frame(width: 48, height: 48).clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
-          VStack(alignment: .leading, spacing: 2) {
-            Text(d.name).css(16, .medium).foregroundStyle(t.text).lineLimit(1)
-            Text(d.line).css(13).foregroundStyle(t.muted).lineLimit(1)
-          }
-          .frame(maxWidth: .infinity, alignment: .leading)
-          Text(d.due > 0 ? "\(d.due)" : "—").css(15, mono: true).foregroundStyle(d.due > 0 ? t.text : t.muted)
-        }
+  /// A deck: its colors (or photo), name, numbers, what's due, and the ⋯ button that moves it between folders. All of it
+  /// but the ⋯ button opens the deck, and holding it lifts it to drag.
+  private func deckRow(_ d: LibDeck, ids: [String]) -> some View {
+    let list = board + "/decks"
+    return HStack(spacing: 8) {
+      let open = { menu = nil; nav.push(.deck(d.id)) }
+      deckLink(d)
         .contentShape(Rectangle())
-      }
-      .buttonStyle(.plain)
+        .gesture(drag.hold(list, d.id, tap: open, ids: { ids }, face: { AnyView(deckFace(d)) }, options: { deckDrag }))
+        .accessibilityElement(children: .combine)
+        .accessibilityAddTraits(.isButton)
+        .accessibilityAction(.default, open)
       let key = "move-" + d.id
       Button { menuQ = ""; menu = menu == key ? nil : key } label: {
         Icon("more", 16, 2).foregroundStyle(t.muted).frame(width: 36, height: 36).contentShape(Circle())
@@ -404,6 +378,43 @@ struct LibraryScreen: View {
     .frame(minHeight: 68)
     .overlay(alignment: .bottom) { Rectangle().fill(t.line).frame(height: 1).offset(y: 1) }
     .padding(.bottom, 1)
+    .dragItem(drag, list: list, id: d.id)
+  }
+
+  /// The part of a deck's row that opens it: its colors (or photo), name, numbers, and what's due.
+  private func deckLink(_ d: LibDeck) -> some View {
+    HStack(spacing: 12) {
+      ZStack {
+        CSSLinearGradient(angle: d.mesh.angle, stops: d.mesh.stops)
+        if let p = d.photo { FillPhoto(url: store.api.mediaURL(p)) }
+      }
+      .frame(width: 48, height: 48).clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+      VStack(alignment: .leading, spacing: 2) {
+        Text(d.name).css(16, .medium).foregroundStyle(t.text).lineLimit(1)
+        Text(d.line).css(13).foregroundStyle(t.muted).lineLimit(1)
+      }
+      .frame(maxWidth: .infinity, alignment: .leading)
+      Text(d.due > 0 ? "\(d.due)" : "—").css(15, mono: true).foregroundStyle(d.due > 0 ? t.text : t.muted)
+    }
+  }
+
+  /// A lifted deck: its row without the line under it.
+  private func deckFace(_ d: LibDeck) -> some View {
+    HStack(spacing: 8) {
+      deckLink(d)
+      Icon("more", 16, 2).foregroundStyle(t.muted).frame(width: 36, height: 36)
+    }
+    .frame(minHeight: 68).padding(.bottom, 1)
+  }
+
+  /// A deck goes to another spot, onto a folder, or (in a folder) onto the Library button to take it out.
+  private var deckDrag: DragOptions {
+    DragOptions(drops: ["folder:"], start: { menu = nil }, drop: { id, to in
+      switch to {
+      case .before(let b): store.reorderDeck(id, before: b)
+      case .place(let name): let f = String(name.dropFirst("folder:".count)); store.moveDeck(id, to: f.isEmpty ? nil : f)
+      }
+    })
   }
 
   private func emptyBox(_ line: String) -> some View {
@@ -437,7 +448,7 @@ struct LibraryScreen: View {
     }
     Text(grouped(matched.count) + (matched.count == 1 ? " card" : " cards")).css(13).foregroundStyle(t.muted).padding(.horizontal, 4).padding(.top, 2)
     LazyVStack(spacing: 0) {
-      ForEach(matched.prefix(shown)) { cardRow($0) }
+      ForEach(matched.prefix(shown)) { cardRow($0, decks) }
     }
     if matched.count > shown {
       Button { shown += 40 } label: {
@@ -483,27 +494,40 @@ struct LibraryScreen: View {
     .anchorPreference(key: MenuAnchors.self, value: .bounds) { [key: $0] }
   }
 
-  /// A card: its front (two lines at most), its deck's color and name, how hard it is, and when it's next.
-  private func cardRow(_ c: LibCard) -> some View {
-    Button { menu = nil; nav.newCard(deckId: c.deckId, cardId: store.demo ? nil : c.id) } label: {
-      VStack(alignment: .leading, spacing: 6) {
-        LabelText(text: Rich.nsText([Rich.Run(t: c.front, m: "")], size: 15, weight: .medium, lh: 1.35, color: UIColor(t.text), dark: t.dark), lines: 2, clamp: true)
-        HStack(spacing: 8) {
-          CSSLinearGradient(angle: c.mesh.angle, stops: c.mesh.stops).frame(width: 12, height: 12).clipShape(RoundedRectangle(cornerRadius: 4, style: .continuous))
-          Text(c.deckName).css(13).foregroundStyle(t.muted).lineLimit(1)
-          HStack(spacing: 6) { Circle().frame(width: 8, height: 8); Text(Level.name(c.level)).css(13, .semibold) }
-            .foregroundStyle(Level.color(c.level, t)).fixedSize()
-          Spacer(minLength: 0)
-          Text(c.next).css(13).foregroundStyle(t.muted).fixedSize()
-        }
-      }
-      .padding(.vertical, 12)
-      .frame(maxWidth: .infinity, alignment: .leading)
-      .overlay(alignment: .bottom) { Rectangle().fill(t.line).frame(height: 1).offset(y: 1) }
-      .padding(.bottom, 1)
+  /// A card: its front (two lines at most), its deck's color and name, how hard it is, and when it's next. Tap it to edit
+  /// it; hold it to drag it onto another deck.
+  private func cardRow(_ c: LibCard, _ decks: [LibDeck]) -> some View {
+    let list = board + "/cards", open = { menu = nil; nav.newCard(deckId: c.deckId, cardId: store.demo ? nil : c.id) }
+    return cardFace(c)
+      .overlay(alignment: .bottom) { Rectangle().fill(t.line).frame(height: 1) }
       .contentShape(Rectangle())
+      .accessibilityElement(children: .combine)
+      .accessibilityAddTraits(.isButton)
+      .accessibilityAction(.default, open)
+      .gesture(drag.hold(list, c.id, tap: open, ids: { [c.id] }, face: { AnyView(cardFace(c)) }, options: {
+        // Onto another deck in the Move to tray (not its own); it stays in the list, with its new deck.
+        DragOptions(drops: ["deck:"], reorder: false, tray: decks.count > 1 ? decks.map { TrayDeck(id: $0.id, name: $0.name, mesh: $0.mesh) } : nil,
+                    own: c.deckId, keep: true, start: { menu = nil },
+                    drop: { id, to in if case .place(let name) = to { store.moveCard(id, toDeck: String(name.dropFirst("deck:".count))) } })
+      }))
+      .dragItem(drag, list: list, id: c.id)
+  }
+
+  private func cardFace(_ c: LibCard) -> some View {
+    VStack(alignment: .leading, spacing: 6) {
+      LabelText(text: Rich.nsText([Rich.Run(t: c.front, m: "")], size: 15, weight: .medium, lh: 1.35, color: UIColor(t.text), dark: t.dark), lines: 2, clamp: true)
+      HStack(spacing: 8) {
+        CSSLinearGradient(angle: c.mesh.angle, stops: c.mesh.stops).frame(width: 12, height: 12).clipShape(RoundedRectangle(cornerRadius: 4, style: .continuous))
+        Text(c.deckName).css(13).foregroundStyle(t.muted).lineLimit(1)
+        HStack(spacing: 6) { Circle().frame(width: 8, height: 8); Text(Level.name(c.level)).css(13, .semibold) }
+          .foregroundStyle(Level.color(c.level, t)).fixedSize()
+        Spacer(minLength: 0)
+        Text(c.next).css(13).foregroundStyle(t.muted).fixedSize()
+      }
     }
-    .buttonStyle(.plain)
+    .padding(.vertical, 12)
+    .frame(maxWidth: .infinity, alignment: .leading)
+    .padding(.bottom, 1)
   }
 
   // ---------- menus ----------
@@ -557,7 +581,7 @@ struct LibraryScreen: View {
         .buttonStyle(.plain)
         .accessibilityAddTraits(on ? .isSelected : [])
       }
-      Button { startNaming(.new, deck: d.id) } label: {
+      Button { startNaming(deck: d.id) } label: {
         HStack(spacing: 10) { Icon("plus", 13, 2.4); Text("New folder").css(14, .semibold); Spacer(minLength: 0) }
           .foregroundStyle(t.text).padding(.horizontal, 12).frame(height: 38)
           .background(RoundedRectangle(cornerRadius: 12, style: .continuous).fill(t.surf))

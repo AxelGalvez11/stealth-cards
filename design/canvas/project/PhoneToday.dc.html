@@ -241,7 +241,7 @@ renderVals() { const t = this.theme(!!this.props.dark, !!this.props.dim);const d
     const caught = !!this.props.caughtUp, next = ['Tomorrow', 'Tomorrow', 'In 2 days', 'In 3 days'];
     return { hero: this.mesh(this.props.gradient ?? 'Iris'), grain: String(this.props.grain ?? 0.7), t, ...chrome, heroHref: 'PhoneReview.dc.html',
       heroMeta: caught ? 'Done for today · 13-day streak' : 'Due now · 12-day streak', heroTitle: caught ? 'All caught up' : '64 cards', heroSize: caught ? '42px' : '56px',
-      heroSub: caught ? 'Next review tomorrow · 32 cards' : 'About 11 minutes', heroCta: caught ? 'Learn 10 new cards' : 'Start review',
+      heroSub: caught ? 'Next review tomorrow · 32 cards' : 'About 11 minutes', heroCta: caught ? 'Study 10 new cards' : 'Start review',
       decks: [
   { name: 'Cell Biology', total: '412', due: 28, overdue: 12, soon: 0, fresh: 10, ret: '91%' },
   { name: 'Japanese · JLPT N4', total: '1,280', due: 19, overdue: 5, soon: 0, fresh: 20, ret: '87%' },

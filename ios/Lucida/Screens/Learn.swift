@@ -164,7 +164,8 @@ struct SkyTop: View {
   @Environment(\.theme) private var t
   let height: CGFloat, cardW: CGFloat, cardH: CGFloat
   var body: some View {
-    let sky = t.dark ? (top: 0x081733, mid: 0x0D2148, low: 0x0A1530, cloud: Color(hex: 0x96AAE6, opacity: 0.10)) : (top: 0x86BDF3, mid: 0xC9E2FB, low: 0xEDF5FE, cloud: Color(hex: 0xFFFFFF, opacity: 0.94))
+    let sky = t.gray ? (top: 0x1B2A48, mid: 0x1F2B45, low: 0x212637, cloud: Color(hex: 0x96AAE6, opacity: 0.12))
+      : t.dark ? (top: 0x081733, mid: 0x0D2148, low: 0x0A1530, cloud: Color(hex: 0x96AAE6, opacity: 0.10)) : (top: 0x86BDF3, mid: 0xC9E2FB, low: 0xEDF5FE, cloud: Color(hex: 0xFFFFFF, opacity: 0.94))
     // Soft clouds: three puffs of three blobs each, and the sky's gradient, drawn in one canvas.
     let stops: [Gradient.Stop] = [.init(color: Color(hex: UInt32(sky.top)), location: 0), .init(color: Color(hex: UInt32(sky.mid)), location: 0.58), .init(color: Color(hex: UInt32(sky.low)), location: 0.82), .init(color: t.bg, location: 1)]
     Canvas { ctx, size in
@@ -225,7 +226,7 @@ struct LearnScreen: View {
   }
 
   /// Learn mode's colors: the sky style (canvas V82), light or at night.
-  private var look: LearnLook { LearnLook.of(t.dark) }
+  private var look: LearnLook { LearnLook.of(t.dark, gray: t.gray) }
 
   // The canvas's sample screens.
   @ViewBuilder private var demoBody: some View {
@@ -552,14 +553,21 @@ struct LearnScreen: View {
 }
 
 /// Learn mode's colors, the canvas's sky style (LEARN_K in design/build.mjs): navy words, white cards with colored
-/// numbers, purple progress, gray after an answer; at night, near-black cards and the same colors.
+/// numbers, purple progress, gray after an answer; at night, near-black cards and the same colors; in gray dark mode,
+/// cards a step above the gray page.
 struct LearnLook {
   let ink, ink2, card, gray, grayInk, chip, track, btn, btnFg, other, wrong, bar, part, check: Color
   let shadow: LearnShadow, lift: LearnShadow
   /// The answers' number colors (they skip green and red, which mean right and wrong here).
   static let colors: [UInt32] = [0x4F60E6, 0xF2701D, 0x0E8FB0, 0xE5407E]
-  static func of(_ dark: Bool) -> LearnLook {
+  static func of(_ dark: Bool, gray: Bool = false) -> LearnLook {
     let navy = Color(hex: 0x0D1542)
+    if dark && gray {
+      return LearnLook(ink: Color(hex: 0xF2F3F7), ink2: Color(hex: 0xF2F3F7).opacity(0.7), card: Color(hex: 0x2D2F36), gray: Color(hex: 0x393C45), grayInk: Color(hex: 0xA3A9B6),
+                       chip: .white.opacity(0.12), track: .white.opacity(0.16), btn: Color(hex: 0xF2F3F7), btnFg: navy, other: .white.opacity(0.16), wrong: Color(hex: 0x5A606E),
+                       bar: Color(hex: 0x8C9AFC), part: Color(hex: 0x8C9AFC).opacity(0.42), check: Color(hex: 0x16C64A),
+                       shadow: LearnShadow(color: .black.opacity(0.43), radius: 10, y: 8), lift: LearnShadow(color: .black.opacity(0.53), radius: 18, y: 20))
+    }
     return dark
       ? LearnLook(ink: Color(hex: 0xF2F3F7), ink2: Color(hex: 0xF2F3F7).opacity(0.66), card: Color(hex: 0x1B1D24), gray: Color(hex: 0x2A2D35), grayInk: Color(hex: 0x8E95A3),
                   chip: .white.opacity(0.1), track: .white.opacity(0.14), btn: Color(hex: 0xF2F3F7), btnFg: navy, other: .white.opacity(0.14), wrong: Color(hex: 0x4A4F5C),
@@ -602,7 +610,8 @@ struct SkyLayer: View {
   var height: CGFloat = 600
   var opacity: Double = 1
   var body: some View {
-    let sky: (top: UInt32, mid: UInt32, low: UInt32) = t.dark ? (0x081733, 0x0D2148, 0x0A1530) : (0x86BDF3, 0xC9E2FB, 0xEDF5FE)
+    // A dusk sky that fades into the page in gray dark mode.
+    let sky: (top: UInt32, mid: UInt32, low: UInt32) = t.gray ? (0x1B2A48, 0x1F2B45, 0x212637) : t.dark ? (0x081733, 0x0D2148, 0x0A1530) : (0x86BDF3, 0xC9E2FB, 0xEDF5FE)
     LinearGradient(stops: [.init(color: Color(hex: sky.top), location: 0), .init(color: Color(hex: sky.mid), location: 0.30), .init(color: Color(hex: sky.low), location: 0.55), .init(color: t.bg, location: 1)], startPoint: .top, endPoint: .bottom)
       .frame(maxWidth: .infinity).frame(height: height)
       .opacity(opacity)

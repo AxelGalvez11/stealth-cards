@@ -21,19 +21,36 @@ extension Color {
   init(hex: UInt32, opacity: Double = 1) { self = RGBA(hex, a: opacity).color }
 }
 
-/// The boards' theme(d): every color a screen uses.
+/// One layer of a CSS box-shadow: its offset, blur, spread, and color.
+struct Shadow: Hashable {
+  var x: Double = 0
+  var y: Double
+  var blur: Double
+  var spread: Double = 0
+  var color: RGBA
+}
+
+/// The boards' theme(d, g): every color a screen uses, and the cards' shadow.
 struct ThemeColors {
   let bg, surf, surf2, line, text, muted, inv, invText, card: RGBA
   let again, hard, good, easy, againTint, goodTint, hardTint, dim: RGBA
+  let shadow: [Shadow]
 }
 
-/// The theme a screen draws with: `t.bg` is a Color, `t.dark` says which one.
+/// The theme a screen draws with: `t.bg` is a Color, `t.dark` says which one. Dark mode has two looks (Settings → Dark
+/// mode): black, the default, or gray (`t.gray`, only ever on when dark).
 @dynamicMemberLookup
 struct Theme {
   let dark: Bool
+  let gray: Bool
   let colors: ThemeColors
-  init(dark: Bool) { self.dark = dark; colors = dark ? Generated.dark : Generated.light }
+  init(dark: Bool, gray: Bool = false) {
+    self.dark = dark; self.gray = dark && gray
+    colors = !dark ? Generated.light : gray ? Generated.gray : Generated.dark
+  }
   subscript(dynamicMember key: KeyPath<ThemeColors, RGBA>) -> Color { colors[keyPath: key].color }
+  /// The cards' soft shadow (none in black dark mode).
+  var shadow: [Shadow] { colors.shadow }
   static let light = Theme(dark: false), darkTheme = Theme(dark: true)
 }
 

@@ -46,7 +46,7 @@ struct RoundButton: View {
   }
 }
 
-/// coverRound: the round buttons on a deck's header (frosted white).
+/// coverRound: the round buttons on a deck's header (frosted white, in dark mode too).
 struct CoverButton: View {
   let icon: String, label: String
   let action: () -> Void
@@ -55,7 +55,7 @@ struct CoverButton: View {
       Icon(icon, 18, 2)
         .foregroundStyle(Color.black)
         .frame(width: 44, height: 44)
-        .background(Circle().fill(.ultraThinMaterial))
+        .background(Circle().fill(.ultraThinMaterial).environment(\.colorScheme, .light))
         .background(Circle().fill(Color.white.opacity(0.62)))
         .overlay(Circle().strokeBorder(Color.black.opacity(0.08), lineWidth: 1))
         .clipShape(Circle())

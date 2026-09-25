@@ -24,8 +24,9 @@ A debug build opens any canvas board with the canvas's sample data (nothing is s
 
     xcrun simctl launch booted cards.lucida.app -board PhoneToday
 
-Every iPhone board works, like `PhoneReviewFour`, `PhoneDeckSettings`, `PhoneQuizMatch`, `PhoneLibraryCards`, or `PhoneSignIn`
-(add `Dark` to the name for its dark-mode twin).
+Every iPhone board works, like `PhoneReviewFour`, `PhoneDeckSettings`, `PhoneQuizMatch`, `PhoneLibraryCards`,
+`PhoneLibraryNewFolder`, `PhoneDeckMoveTray`, or `PhoneSignIn` (add `Dark` to the name for its dark-mode twin, or `Gray`
+for dark mode's gray look). Decks and cards can be dragged on the design screens too (hold one for a third of a second).
 
 ## Testing with your own server
 

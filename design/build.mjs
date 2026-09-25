@@ -2542,7 +2542,7 @@ const phoneDecksLogic = `renderVals() { ${T}${DB_JS}
     const caught = !!this.props.caughtUp, next = ['Tomorrow', 'Tomorrow', 'In 2 days', 'In 3 days'];
     return { ${MESH_VALS('Iris')} t, ...chrome, heroHref: 'PhoneReview.dc.html',
       heroMeta: caught ? 'Done for today · 13-day streak' : 'Due now · 12-day streak', heroTitle: caught ? 'All caught up' : '64 cards', heroSize: caught ? '42px' : '56px',
-      heroSub: caught ? 'Next review tomorrow · 32 cards' : 'About 11 minutes', heroCta: caught ? 'Learn 10 new cards' : 'Start review',
+      heroSub: caught ? 'Next review tomorrow · 32 cards' : 'About 11 minutes', heroCta: caught ? 'Study 10 new cards' : 'Start review',
       decks: ${DECKS}.slice(0, 4).map((d, i) => ({ ...row(d, caught ? next[i] : String(d.due), caught), href: 'PhoneDeck.dc.html' })) };
   }
   const td = db.today(), caught = !td.due, plural = (n, w) => n + ' ' + w + (n === 1 ? '' : 's');

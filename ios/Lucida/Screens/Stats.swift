@@ -70,7 +70,10 @@ struct StatsScreen: View {
     .background(RoundedRectangle(cornerRadius: 24, style: .continuous).fill(t.surf))
   }
 
-  private var scale: [Color] { (t.dark ? [0x0B0B0F, 0x1E2452, 0x2F3D9A, 0x4C5FDB, 0x8C9AFC] : [0xFFFFFF, 0xDCE0FD, 0xB0BAFB, 0x7F8DF6, 0x4F60E6]).map { Color(hex: UInt32($0)) } }
+  /// Periwinkle: an empty day, then four levels of study. In gray dark mode an empty day is a shade under the gray panel.
+  private var scale: [Color] {
+    (t.gray ? [0x232326, 0x2A3272, 0x3442A8, 0x4F62DE, 0x8C9AFC] : t.dark ? [0x0B0B0F, 0x1E2452, 0x2F3D9A, 0x4C5FDB, 0x8C9AFC] : [0xFFFFFF, 0xDCE0FD, 0xB0BAFB, 0x7F8DF6, 0x4F60E6]).map { Color(hex: UInt32($0)) }
+  }
   private func cell(_ lv: Int, _ size: CGFloat) -> some View {
     RoundedRectangle(cornerRadius: 4, style: .continuous).fill(scale[lv]).frame(width: size, height: size)
       .overlay(RoundedRectangle(cornerRadius: 4, style: .continuous).strokeBorder(lv == 0 ? t.line : .clear, lineWidth: 1))

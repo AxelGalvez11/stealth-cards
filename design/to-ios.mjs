@@ -11,9 +11,10 @@ const src = readFileSync(new URL('./build.mjs', import.meta.url), 'utf8');
 const grab = (re, what) => { const m = src.match(re); if (!m) throw new Error('Could not find ' + what + ' in build.mjs'); return m; };
 const evalJs = code => new Function('return (' + code + ')')();
 
-// The two themes from the boards' theme(d).
+// The themes from the boards' theme(d, g): light, dark (black), and dark mode's gray look (Settings → Dark mode: Gray).
 const th = grab(/\? (\{ bg: '#000000'[^}]+\})\n\s+: (\{ bg: '#FFFFFF'[^}]+\})/, 'the theme');
 const dark = evalJs(th[1]), light = evalJs(th[2]);
+const gray = evalJs(grab(/if \(d && g\) return (\{ bg: '#[0-9A-Fa-f]{6}'[^}]+\});/, 'the gray theme')[1]);
 // Icons: stroke drawings on a 24 x 24 grid.
 const I = evalJs(grab(/const I = (\{[\s\S]*?\n\});/, 'the icons')[1]);
 // Tag colors.
@@ -44,7 +45,13 @@ const color = c => {
   if (m) return `RGBA(r: ${+m[1]}, g: ${+m[2]}, b: ${+m[3]}, a: ${+m[4]})`;
   return null;
 };
-const themeSwift = t => Object.entries(t).filter(([k]) => color(t[k])).map(([k, v]) => `${k}: ${color(v)}`).join(', ');
+// A box-shadow as Swift: each layer's offset, blur, spread, and color ("none": no layers).
+const shadow = css => css === 'none' ? '[]' : '[' + css.split(/,\s*(?![^(]*\))/).map(l => {
+  const m = /^(-?[\d.]+)(?:px)? (-?[\d.]+)(?:px)? (-?[\d.]+)(?:px)?(?: (-?[\d.]+)(?:px)?)? (.+)$/.exec(l.trim());
+  if (!m || !color(m[5])) throw new Error('Not a shadow: ' + l);
+  return `Shadow(x: ${+m[1]}, y: ${+m[2]}, blur: ${+m[3]}, spread: ${+(m[4] || 0)}, color: ${color(m[5])})`;
+}).join(', ') + ']';
+const themeSwift = t => [...Object.entries(t).filter(([k]) => color(t[k])).map(([k, v]) => `${k}: ${color(v)}`), `shadow: ${shadow(t.shadow)}`].join(', ');
 const shape = b => `Blob(c: RGBA(${hex(b[0])}), x: ${b[1]}, y: ${b[2]}, rx: ${b[3]}, ry: ${b[4]}, r: ${b[5] || 0})`;
 const linear = css => {
   const m = /^linear-gradient\((-?[\d.]+)deg,\s*(.*)\)$/.exec(css);
@@ -62,6 +69,7 @@ import Foundation
 enum Generated {
   static let light = ThemeColors(${themeSwift(light)})
   static let dark = ThemeColors(${themeSwift(dark)})
+  static let gray = ThemeColors(${themeSwift(gray)})
 
   static let icons: [String: String] = [
 ${Object.entries(I).map(([k, v]) => `    ${str(k)}: ${str(v)}`).join(',\n')}

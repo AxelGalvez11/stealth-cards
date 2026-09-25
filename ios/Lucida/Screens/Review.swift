@@ -413,11 +413,17 @@ private struct FaceShown: ViewModifier, Animatable {
 }
 
 extension View {
-  /// A card face: white (or dark gray), a thin line, rounded, with the light theme's soft shadow.
+  /// A card face: white (or dark gray), a thin line, rounded, with the theme's soft shadow.
   func cardFace(_ radius: CGFloat) -> some View { modifier(CardFaceStyle(radius: radius)) }
   /// A CSS box-shadow under a rounded rectangle: offset y, blur, and spread (negative shrinks it).
   func boxShadow(_ color: Color, y: CGFloat, blur: CGFloat, spread: CGFloat = 0, radius r: CGFloat) -> some View {
     background(RoundedRectangle(cornerRadius: max(0, r + spread), style: .continuous).fill(color).padding(-spread).blur(radius: blur / 2).offset(y: y))
+  }
+  /// The theme's shadow (t.shadow, up to two layers) under a rounded rectangle.
+  func themeShadow(_ s: [Shadow], radius r: CGFloat) -> some View {
+    let a = s.first, b = s.count > 1 ? s[1] : nil
+    return boxShadow(a?.color.color ?? .clear, y: a?.y ?? 0, blur: a?.blur ?? 0, spread: a?.spread ?? 0, radius: r)
+      .boxShadow(b?.color.color ?? .clear, y: b?.y ?? 0, blur: b?.blur ?? 0, spread: b?.spread ?? 0, radius: r)
   }
 }
 private struct CardFaceStyle: ViewModifier {
@@ -428,8 +434,7 @@ private struct CardFaceStyle: ViewModifier {
       .frame(maxWidth: .infinity, maxHeight: .infinity)
       .background(RoundedRectangle(cornerRadius: radius, style: .continuous).fill(t.card))
       .overlay(RoundedRectangle(cornerRadius: radius, style: .continuous).strokeBorder(t.line, lineWidth: 1))
-      .boxShadow(t.dark ? .clear : .black.opacity(0.04), y: 1, blur: 2, radius: radius)
-      .boxShadow(t.dark ? .clear : .black.opacity(0.18), y: 18, blur: 44, spread: -18, radius: radius)
+      .themeShadow(t.shadow, radius: radius)
   }
 }
 

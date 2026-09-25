@@ -63,12 +63,14 @@ struct Plan: Decodable {
 }
 
 struct UserSettings: Decodable {
-  var name = "", color = 0, look = "system", grads = "mix", prog = "bar", perDay = 20, goal = 90, grading = "four", fsrs = true, reminder = "9:00 AM"
-  enum CodingKeys: String, CodingKey { case name, color, look, grads, prog, perDay, goal, grading, fsrs, reminder }
+  /// look: System, Light, or Dark; darkMode: how dark looks, "gray" or "black" (the default).
+  var name = "", color = 0, look = "system", darkMode = "black", grads = "mix", prog = "bar", perDay = 20, goal = 90, grading = "four", fsrs = true, reminder = "9:00 AM"
+  enum CodingKeys: String, CodingKey { case name, color, look, darkMode, grads, prog, perDay, goal, grading, fsrs, reminder }
   init() {}
   init(from d: Decoder) throws {
     let c = try d.container(keyedBy: CodingKeys.self)
-    name = c.v(.name, ""); color = c.v(.color, 0); look = c.v(.look, "system"); grads = c.v(.grads, "mix"); prog = c.v(.prog, "bar")
+    name = c.v(.name, ""); color = c.v(.color, 0); look = c.v(.look, "system"); darkMode = c.v(.darkMode, "black") == "gray" ? "gray" : "black"
+    grads = c.v(.grads, "mix"); prog = c.v(.prog, "bar")
     perDay = c.v(.perDay, 20); goal = c.v(.goal, 90); grading = c.v(.grading, "four"); fsrs = c.v(.fsrs, true); reminder = c.v(.reminder, "9:00 AM")
   }
 }
@@ -133,13 +135,15 @@ struct Deck: Decodable, Identifiable {
   var cover: Cover, paused: Bool, grading: String, fsrs: Bool, goal: Int, gapIdx: Int, steps: [String], perDay: Int, piles: [Pile]
   /// Its folder's id (nil: the Library itself), and its study background.
   var folder: String?, bg: DeckBg
-  enum CodingKeys: String, CodingKey { case id, name, tags, created, cover, paused, grading, fsrs, goal, gapIdx, steps, perDay, piles, folder, bg }
+  /// Its cards in the order you dragged them into (nil: never rearranged, newest first; see Order.swift).
+  var cardOrder: [String]?
+  enum CodingKeys: String, CodingKey { case id, name, tags, created, cover, paused, grading, fsrs, goal, gapIdx, steps, perDay, piles, folder, bg, cardOrder }
   init(from d: Decoder) throws {
     let c = try d.container(keyedBy: CodingKeys.self)
     id = c.v(.id, UUID().uuidString); name = c.v(.name, "Untitled deck"); tags = c.v(.tags, []); created = c.v(.created, 0)
     cover = c.v(.cover, Cover()); paused = c.v(.paused, false); grading = c.v(.grading, "four"); fsrs = c.v(.fsrs, true)
     goal = c.v(.goal, 90); gapIdx = c.v(.gapIdx, 3); steps = c.v(.steps, ["1m", "10m"]); perDay = c.v(.perDay, 20); piles = c.v(.piles, [])
-    folder = c.v(.folder, nil); bg = c.v(.bg, DeckBg())
+    folder = c.v(.folder, nil); bg = c.v(.bg, DeckBg()); cardOrder = c.v(.cardOrder, nil)
   }
 }
 
