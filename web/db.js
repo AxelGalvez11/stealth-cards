@@ -429,6 +429,13 @@ export async function createDb({ onChange, go }) {
       why: q.why || '', aiAnswer: q.ai ? q.options[q.right] : '' };
   }
 
+  // Your profile picture: what you picked in Settings (your Google photo, your own photo, or your color), and until you
+  // pick, the Google photo if you signed in with Google (the owner: "the user profile should show their google account
+  // profile pic or allow user to change the profile pic image with upload").
+  const photoOf = () => {
+    const g = !!(S.me && S.me.picture), p = S.settings.photo;
+    return p === 'google' && g ? 'google' : p === 'yours' && S.settings.yourPhoto ? 'yours' : p === 'color' || !g ? 'color' : 'google';
+  };
   const act = {
     addDeck: async o => { const r = await send('deck.add', o); go('/deck/' + r.id); },
     // While you type a name it saves a moment after you stop.
@@ -479,6 +486,9 @@ export async function createDb({ onChange, go }) {
     addPile: (id, name) => { const d = deckById(id); if (d) send('deck.update', { id, patch: { piles: [...(d.piles || []), { name }] } }); },
     undo: async () => { const e = session && session.graded[session.graded.length - 1]; if (!e || !e.logId) return; session.graded.pop(); await send('review.undo', { logId: e.logId }); },
     setSettings: patch => send('settings.update', { patch }),
+    // Your profile picture: a photo you upload (kept small, since it only ever shows small), or back to the one before.
+    pickPhoto: async () => { const url = await act.pickFile('image', 512); if (url) await send('settings.update', { patch: { photo: 'yours', yourPhoto: url } }); },
+    removePhoto: () => send('settings.update', { patch: { photo: '', yourPhoto: null } }),
     setPerm: (id, on) => send('ai.perm', { id, on }),
     copy: text => navigator.clipboard && navigator.clipboard.writeText(text),
     pickFile: async (kind, side) => { const f = await choose(kind === 'audio' ? 'audio/*' : 'image/*'); return f ? upload(f, kind === 'audio' ? 'audio' : 'image', side) : null; },
@@ -564,12 +574,15 @@ export async function createDb({ onChange, go }) {
     // A clip's waveform and where it's at (sound.js), and the recording under way, if there is one.
     sound: c => sound.view(c),
     recording: () => sound.recording(),
+    // Your picture wherever it shows (the sidebar, Today on a phone, Settings): your photo, your Google photo, or your
+    // initial on your color.
     chrome: () => {
-      const due = S.decks.filter(d => !d.paused).reduce((n, d) => n + deckStat(d).due, 0);
-      return { nav: { today: due ? String(due) : '' }, me: { bg: COLORS[S.settings.color] || COLORS[0], initial: (S.settings.name || 'You').trim()[0].toUpperCase() } };
+      const due = S.decks.filter(d => !d.paused).reduce((n, d) => n + deckStat(d).due, 0), ph = photoOf();
+      return { nav: { today: due ? String(due) : '' }, me: { bg: COLORS[S.settings.color] || COLORS[0], initial: (((S.settings.name || (S.me && S.me.name) || '').trim() || 'You')[0]).toUpperCase(),
+        color: ph === 'color', photo: ph === 'google' ? S.me.picture : ph === 'yours' ? S.settings.yourPhoto : '' } };
     },
     settings: () => ({ ...S.settings, name: S.settings.name || (S.me && S.me.name) || 'You', sub: S.me ? S.me.email : 'Saved on this computer', signedIn: !!S.me,
-      google: false, photo: 'color', check: !!S.ai.perms.check }),
+      google: !!(S.me && S.me.picture), photo: photoOf(), check: !!S.ai.perms.check }),
     // Lucida Pro: online, from Stripe (the server's `me.plan`); on this computer everything is on.
     pro: () => !S.me || !!(S.me.plan && S.me.plan.pro),
     plan: () => (S.me ? { ...(S.me.plan || { pro: false }), manage: S.me.manage || '' } : null),

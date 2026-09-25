@@ -150,8 +150,13 @@ const logo = (size = 28) => `<div style="display: flex; align-items: center; gap
 
 // ---------- Structure A: web sidebar ----------
 const NAV_A = [['Today', 'today', 'Main.dc.html', '64'], ['Library', 'decks', 'WebDecks.dc.html', ''], ['Stats', 'stats', 'WebStats.dc.html', ''], ['Connect AI', 'connect', 'WebConnect.dc.html', '']];
-// Your profile circle follows Settings (color and initial): in the web sidebar, and on the iPhone's Today and Settings.
-const AVATAR_ME = size => `<span style="width: ${size}px; height: ${size}px; flex-shrink: 0; border-radius: ${size / 2}px; background: {{me.bg}}; color: #FFFFFF; display: flex; align-items: center; justify-content: center; font-size: ${Math.round(size * 0.42)}px; font-weight: 600;">{{me.initial}}</span>`;
+// Your profile circle follows Settings (your photo, your Google photo, or your initial on your color): in the web
+// sidebar, on the iPhone's Today and Settings, and on Settings' profile card. The canvas has no photos, so it draws
+// stand-ins: one for the Google photo, one for a photo you uploaded.
+const STAND_IN = (size, label, bg) => `<span role="img" aria-label="${label}" style="width: ${size}px; height: ${size}px; flex-shrink: 0; border-radius: ${size / 2}px; overflow: hidden; background: ${bg}; display: flex;"><svg width="${size}" height="${size}" viewBox="0 0 64 64" aria-hidden="true"><circle cx="32" cy="26" r="11" fill="rgba(255,255,255,.92)"/><path d="M11 64c1.5-12 10-19 21-19s19.5 7 21 19z" fill="rgba(255,255,255,.92)"/></svg></span>`;
+const PHOTO = size => STAND_IN(size, 'Google profile photo', 'linear-gradient(160deg, #FFD9A8 0%, #F59E6B 55%, #D9677A 100%)');
+const YOUR_PHOTO = size => STAND_IN(size, 'Your profile photo', 'linear-gradient(160deg, #B8F0D8 0%, #4FC3B0 50%, #3A7BD5 100%)');
+const AVATAR_ME = size => `<span style="position: relative; width: ${size}px; height: ${size}px; flex-shrink: 0; border-radius: ${size / 2}px; overflow: hidden; background: {{me.bg}}; color: #FFFFFF; display: flex; align-items: center; justify-content: center; font-size: ${Math.round(size * 0.42)}px; font-weight: 600;"><sc-if value="{{me.color}}" hint-placeholder-val="{{ true }}">{{me.initial}}</sc-if><sc-if value="{{me.photo}}" hint-placeholder-val="{{ false }}"><img src="{{me.photo}}" alt="" referrerpolicy="no-referrer" style="position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover;"></sc-if><sc-if value="{{me.sampleGoogle}}" hint-placeholder-val="{{ false }}">${PHOTO(size)}</sc-if><sc-if value="{{me.sampleYours}}" hint-placeholder-val="{{ false }}">${YOUR_PHOTO(size)}</sc-if></span>`;
 const sidebar = active => `<nav style="width: 240px; flex-shrink: 0; box-sizing: border-box; padding: 24px 16px; display: flex; flex-direction: column; gap: 4px; border-right: 1px solid {{t.line}};">
   <div style="padding: 0 12px 20px;">${logo()}</div>
   ${NAV_A.map(([label, ic, href]) => `<a href="${href}" style="display: flex; align-items: center; gap: 12px; height: 36px; padding: 0 14px; border-radius: 999px; font-size: 14px; ${label === active ? 'background: {{t.surf}}; color: {{t.text}}; font-weight: 600;' : 'color: {{t.muted}};'}">${svg(I[ic])}${label}${label === 'Today' ? `<sc-if value="{{nav.today}}" hint-placeholder-val="{{ true }}"><span style="margin-left: auto; font-family: ${MONO}; font-size: 12px;">{{nav.today}}</span></sc-if>` : ''}</a>`).join('\n  ')}
@@ -188,7 +193,8 @@ const stepper = (label, val, dec, inc, stacked = false, num = '') => stacked ? `
 const SWITCH = (v, handler, label) => `<button type="button" role="switch" aria-checked="{{${v}.checked}}" aria-disabled="{{${v}.disabled}}" aria-label="${label}" onClick="{{${handler}}}" style="width: 48px; height: 28px; flex-shrink: 0; padding: 3px; box-sizing: border-box; border: 0; border-radius: 14px; background: {{${v}.track}}; opacity: {{${v}.op}}; cursor: pointer; transition: background .2s;"><span style="display: block; width: 22px; height: 22px; border-radius: 11px; background: {{${v}.knobColor}}; transform: {{${v}.knob}}; transition: transform .2s cubic-bezier(.4,0,.2,1);"></span></button>`;
 const SW_JS = `const sw = (on, enabled = true) => ({ checked: on ? 'true' : 'false', track: on ? t.inv : t.surf2, knob: on ? 'translateX(20px)' : 'translateX(0)', knobColor: on ? t.invText : t.bg, op: enabled ? '1' : '.4', disabled: enabled ? 'false' : 'true' });`;
 // Small segmented control on a gray surface; `key` names a list made by opts() below.
-const SEG = (key, label, n = 3) => `<div role="group" aria-label="${label}" style="display: flex; gap: 2px; padding: 3px; border-radius: 999px; background: {{t.bg}}; flex-shrink: 0;"><sc-for list="{{${key}}}" as="o" hint-placeholder-count="${n}"><button type="button" onClick="{{o.pick}}" aria-pressed="{{o.pressed}}" style="height: 30px; padding: 0 12px; border: 0; border-radius: 999px; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; white-space: nowrap; background: {{o.bg}}; color: {{o.fg}};">{{o.label}}</button></sc-for></div>`;
+// `full`: it spans its row, its choices sharing the width.
+const SEG = (key, label, n = 3, full = false) => `<div role="group" aria-label="${label}" style="display: flex; gap: 2px; padding: 3px; border-radius: 999px; background: {{t.bg}}; ${full ? 'box-sizing: border-box; width: 100%;' : 'flex-shrink: 0;'}"><sc-for list="{{${key}}}" as="o" hint-placeholder-count="${n}"><button type="button" onClick="{{o.pick}}" aria-pressed="{{o.pressed}}" style="${full ? 'flex: 1 1 0; min-width: 0; height: 30px; padding: 0 8px;' : 'height: 30px; padding: 0 12px;'} border: 0; border-radius: 999px; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; white-space: nowrap; background: {{o.bg}}; color: {{o.fg}};">{{o.label}}</button></sc-for></div>`;
 const OPTS_JS = `const opts = (list, cur, set) => list.map(([id, label]) => ({ label, pressed: id === cur ? 'true' : 'false', bg: id === cur ? t.inv : 'transparent', fg: id === cur ? t.invText : t.muted, pick: () => set(id) }));`;
 
 // iOS keyboard (drawn, not interactive), with a floating formatting bar on top like Notion's.
@@ -842,7 +848,7 @@ const COVER_LOGIC = `
     studyHref: dk.studyHref, newCardHref: dk.newCardHref
   };`;
 // Deck settings: shared by the web side panel and the iPhone sheet.
-const smallBtn = (label, handler, icon = '') => `<button type="button" onClick="{{${handler}}}" style="height: 34px; padding: 0 12px; display: inline-flex; align-items: center; gap: 6px; border: 0; border-radius: 999px; background: {{t.surf}}; color: {{t.text}}; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer;">${icon ? svg(I[icon], 14, 2) : ''}${label}</button>`;
+const smallBtn = (label, handler, icon = '', bg = '{{t.surf}}') => `<button type="button" onClick="{{${handler}}}" style="height: 34px; padding: 0 12px; display: inline-flex; align-items: center; gap: 6px; border: 0; border-radius: 999px; background: ${bg}; color: {{t.text}}; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer;">${icon ? svg(I[icon], 14, 2) : ''}${label}</button>`;
 const deckSettingsBody = phone => `<div style="display: flex; align-items: center; justify-content: space-between;"><span style="font-size: ${phone ? 18 : 20}px; font-weight: 600; letter-spacing: -.01em;">Deck settings</span>${phone
     ? `<button type="button" onClick="{{closeSettings}}" style="height: 36px; padding: 0 16px; border: 0; border-radius: 999px; background: {{t.inv}}; color: {{t.invText}}; font: inherit; font-size: 14px; font-weight: 600; cursor: pointer;">Done</button>`
     : `<button type="button" onClick="{{closeSettings}}" aria-label="Close settings" style="width: 36px; height: 36px; border: 0; border-radius: 18px; background: {{t.surf}}; color: {{t.text}}; display: flex; align-items: center; justify-content: center; cursor: pointer;">${svg(I.close, 14, 2.2)}</button>`}</div>
@@ -2767,7 +2773,7 @@ renderVals() { ${T}${DB_JS}
 
 // iPhone Settings, from the gear on Today. Appearance switches this screen right away, and so does Dark mode (gray or
 // black, for whenever the app is dark). The page scrolls; the board is tall enough to show all of it.
-const PHONE_SETTINGS_H = 1100;
+const PHONE_SETTINGS_H = 1260;
 const sRow = (label, right, { href = '', sub = '', click = '' } = {}) => {
   const inner = `<span style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px;"><span style="font-size: 16px;">${label}</span>${sub ? `<span style="font-size: 12px; color: {{t.muted}};">${sub}</span>` : ''}</span>${right}`;
   const st = 'min-height: 52px; box-sizing: border-box; padding: 8px 16px; display: flex; align-items: center; gap: 12px;';
@@ -2797,9 +2803,23 @@ const PLAN_JS = pricingBoard => `const planOf = { Free: { pro: false }, Pro: { p
   const planVals = { planFree: !!plan && !plan.pro, planPro: !!plan && !!plan.pro, planRenews: !!plan && !plan.ending, planEnding: !!plan && !!plan.ending,
     planSub: plan ? [({ month: 'Monthly', year: 'Yearly' })[plan.every] || '', planDay ? (plan.ending ? 'ends ' : 'renews ') + planDay : ''].filter(Boolean).join(' · ') : '',
     manageHref: plan && plan.manage || 'https://lucida.cards/pricing', proHref: db.mock ? '${pricingBoard}.dc.html' : 'https://lucida.cards/pricing' };`;
+// Settings → Profile picture (web and iPhone): the Google photo (for people signed in with Google), a photo you upload,
+// or your initial on a color. `full`: the choices span the row (iPhone).
+const photoPanel = full => `${full ? SEG('photoOpts', 'Profile picture', 3, true) : `<div style="display: flex; align-items: center; justify-content: space-between; gap: 12px;"><span style="font-size: 14px; font-weight: 600;">Profile picture</span>${SEG('photoOpts', 'Profile picture')}</div>`}
+          <sc-if value="{{photoColor}}" hint-placeholder-val="{{ true }}"><div role="group" aria-label="Circle color" style="display: flex; gap: 10px;"><sc-for list="{{swatches}}" as="w" hint-placeholder-count="6"><button type="button" onClick="{{w.pick}}" aria-label="{{w.label}}" aria-pressed="{{w.pressed}}" style="width: 34px; height: 34px; border: 0; border-radius: 17px; background: {{w.bg}}; box-shadow: {{w.ring}}; cursor: pointer;"></button></sc-for></div></sc-if>
+          <sc-if value="{{photoGoogle}}" hint-placeholder-val="{{ false }}"><span style="font-size: 13px; line-height: 1.45; color: {{t.muted}};">Uses the photo on your Google account. Change it there and it updates here.</span></sc-if>
+          <sc-if value="{{photoYours}}" hint-placeholder-val="{{ false }}"><div style="display: flex; gap: 8px;">${smallBtn('Change photo', 'changePhoto', 'image', '{{t.bg}}')}${smallBtn('Remove', 'removePhoto', '', '{{t.bg}}')}</div></sc-if>`;
+// Its values: the picture you picked (the app works out the default: your Google photo if there is one), the choices,
+// and the colors. Picking Your photo before there is one opens the file picker, like Change photo.
+const PHOTO_JS = `const colors = [['Periwinkle', 'linear-gradient(135deg, #8C9AFC 0%, #4F60E6 100%)'], ['Orange', 'linear-gradient(135deg, #FFC857 0%, #EE5A36 100%)'], ['Green', 'linear-gradient(135deg, #7EE0B0 0%, #1F8F5F 100%)'], ['Pink', 'linear-gradient(135deg, #F9A8D4 0%, #D6336C 100%)'], ['Teal', 'linear-gradient(135deg, #7DE3F0 0%, #0E8A9E 100%)'], ['Violet', 'linear-gradient(135deg, #C4A7FF 0%, #7C3AED 100%)']];
+  const photo = st.photo, photoVals = { initial: chrome.me.initial, avatarBg: (colors[st.color] || colors[0])[1], photoColor: photo === 'color', photoGoogle: photo === 'google', photoYours: photo === 'yours', photoPic: photo !== 'color',
+    photoOpts: opts([...(st.google ? [['google', 'Google photo']] : []), ['yours', 'Your photo'], ['color', 'Color']], photo, id => (id === 'yours' && !st.yourPhoto ? db.act.pickPhoto() : set({ photo: id }))),
+    changePhoto: () => db.act.pickPhoto(), removePhoto: () => db.act.removePhoto(),
+    swatches: colors.map(([label, bg], i) => ({ label, bg, pressed: i === st.color ? 'true' : 'false', ring: i === st.color ? '0 0 0 2px ' + t.surf + ', 0 0 0 4px ' + t.text : 'none', pick: () => set({ color: i }) })) };`;
 const phoneSettings = phone(`<div style="padding: 64px 20px 34px; display: flex; flex-direction: column; gap: 18px;">
   <div style="display: flex; align-items: center; gap: 12px;">${roundBtn('back', 'Back', 'PhoneToday.dc.html')}<div style="flex-grow: 1; font-size: 17px; font-weight: 600; text-align: center;">Settings</div><div style="width: 44px;"></div></div>
   <button type="button" onClick="{{account}}" style="width: 100%; border: 0; border-radius: 24px; background: {{t.surf}}; padding: 14px 16px; display: flex; align-items: center; gap: 14px; color: inherit; font: inherit; text-align: left; cursor: pointer;">${AVATAR_ME(44)}<span style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px;"><span style="font-size: 16px; font-weight: 600;">Your account</span><span style="font-size: 13px; color: {{t.muted}}; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{accountSub}}</span></span><span style="display: flex; color: {{t.muted}};">${svg(I.chev, 14, 2.2)}</span></button>
+  ${sGroup('Profile picture', [`<div style="padding: 12px 16px 16px; display: flex; flex-direction: column; gap: 12px;">${photoPanel(true)}</div>`])}
   ${planGroups}
   ${sGroup('Studying', [
     sPick('Daily reminder', 'reminder', ['7:00 AM', '8:00 AM', '9:00 AM', '12:00 PM', '6:00 PM', '8:00 PM', '9:00 PM'].map(x => [x, x])),
@@ -2827,8 +2847,9 @@ renderVals() {
   // A row's list (sPick): the value it shows, and saving a pick. The list shows the current value as picked.
   const pickOf = (cur, label, save) => ({ label, set: e => save(e.target.value), ref: el => { if (el && el.value !== String(cur)) el.value = String(cur); } });
   ${PLAN_JS('PricingPhone')}
+  ${PHOTO_JS}
   return {
-    t, ...chrome, ...planVals,
+    t, ...chrome, ...planVals, ...photoVals,
     // Your account: tap it to sign out (online).
     accountSub: db.mock ? 'Synced on all your devices · just now' : st.sub,
     account: () => { if (!db.mock && st.signedIn && confirm('Sign out of Lucida?')) db.act.signOut(); },
@@ -2847,9 +2868,7 @@ renderVals() {
   };
 }`;
 
-// Web Settings, from "You" at the bottom of the sidebar. Profile picture: the Google photo, or a color.
-// Stand-in for a Google profile photo.
-const PHOTO = size => `<span role="img" aria-label="Google profile photo" style="width: ${size}px; height: ${size}px; flex-shrink: 0; border-radius: ${size / 2}px; overflow: hidden; background: linear-gradient(160deg, #FFD9A8 0%, #F59E6B 55%, #D9677A 100%); display: flex;"><svg width="${size}" height="${size}" viewBox="0 0 64 64" aria-hidden="true"><circle cx="32" cy="26" r="11" fill="rgba(255,255,255,.92)"/><path d="M11 64c1.5-12 10-19 21-19s19.5 7 21 19z" fill="rgba(255,255,255,.92)"/></svg></span>`;
+// Web Settings, from "You" at the bottom of the sidebar. Profile picture: the Google photo, your own photo, or a color.
 const webSettings = webRoot(`${sidebar('You')}
 <main style="flex-grow: 1; box-sizing: border-box; padding: 36px 48px; display: flex; flex-direction: column; gap: 24px; min-width: 0;">
   <h1 style="margin: 0; font-size: 32px; font-weight: 600; letter-spacing: -.03em;">Settings</h1>
@@ -2858,14 +2877,12 @@ const webSettings = webRoot(`${sidebar('You')}
       <div style="border-radius: 18px; background: {{t.surf}}; padding: 22px; display: flex; flex-direction: column; gap: 18px;">
         <div style="display: flex; align-items: center; gap: 16px;">
           <sc-if value="{{photoColor}}" hint-placeholder-val="{{ true }}"><span style="width: 64px; height: 64px; flex-shrink: 0; border-radius: 20px; background: {{avatarBg}}; color: #FFFFFF; display: flex; align-items: center; justify-content: center; font-size: 26px; font-weight: 600;">{{initial}}</span></sc-if>
-          <sc-if value="{{photoGoogle}}" hint-placeholder-val="{{ false }}">${PHOTO(64)}</sc-if>
+          <sc-if value="{{photoPic}}" hint-placeholder-val="{{ false }}">${AVATAR_ME(64)}</sc-if>
           <span style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px;"><span style="font-size: 18px; font-weight: 600;">{{name}}</span><span style="font-size: 13px; color: {{t.muted}};">{{sub}}</span></span>
           <sc-if value="{{signedIn}}" hint-placeholder-val="{{ true }}"><button type="button" onClick="{{signOut}}" style="height: 36px; padding: 0 16px; border: 0; border-radius: 999px; background: {{t.bg}}; color: {{t.text}}; font: inherit; font-size: 14px; font-weight: 600; cursor: pointer;">Sign out</button></sc-if>
         </div>
         <div style="display: flex; flex-direction: column; gap: 12px;">
-          <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px;"><span style="font-size: 14px; font-weight: 600;">Profile picture</span><sc-if value="{{google}}" hint-placeholder-val="{{ true }}">${SEG('photoOpts', 'Profile picture', 2)}</sc-if></div>
-          <sc-if value="{{photoColor}}" hint-placeholder-val="{{ true }}"><div role="group" aria-label="Circle color" style="display: flex; gap: 10px;"><sc-for list="{{swatches}}" as="w" hint-placeholder-count="6"><button type="button" onClick="{{w.pick}}" aria-label="{{w.label}}" aria-pressed="{{w.pressed}}" style="width: 34px; height: 34px; border: 0; border-radius: 17px; background: {{w.bg}}; box-shadow: {{w.ring}}; cursor: pointer;"></button></sc-for></div></sc-if>
-          <sc-if value="{{photoGoogle}}" hint-placeholder-val="{{ false }}"><span style="font-size: 13px; line-height: 1.45; color: {{t.muted}};">Uses the photo on your Google account. Change it there and it updates here.</span></sc-if>
+          ${photoPanel(false)}
         </div>
       </div>
       ${sGroup('Studying', [
@@ -2906,15 +2923,12 @@ renderVals() {
   ${OPTS_JS}
   const set = patch => db.act.setSettings(patch);
   ${NUM_JS}
-  const colors = [['Periwinkle', 'linear-gradient(135deg, #8C9AFC 0%, #4F60E6 100%)'], ['Orange', 'linear-gradient(135deg, #FFC857 0%, #EE5A36 100%)'], ['Green', 'linear-gradient(135deg, #7EE0B0 0%, #1F8F5F 100%)'], ['Pink', 'linear-gradient(135deg, #F9A8D4 0%, #D6336C 100%)'], ['Teal', 'linear-gradient(135deg, #7DE3F0 0%, #0E8A9E 100%)'], ['Violet', 'linear-gradient(135deg, #C4A7FF 0%, #7C3AED 100%)']];
-  const piles = st.grading === 'piles', photo = st.google ? st.photo : 'color';
+  const piles = st.grading === 'piles';
   ${PLAN_JS('Pricing')}
+  ${PHOTO_JS}
   return {
-    t, ...chrome, grain: String(this.props.grain ?? 0.7), ...planVals,
-    name: st.name, sub: st.sub, signedIn: st.signedIn, google: st.google, initial: chrome.me.initial,
-    avatarBg: colors[st.color][1], photoColor: photo === 'color', photoGoogle: photo === 'google',
-    photoOpts: opts([['google', 'Google photo'], ['color', 'Color']], photo, id => set({ photo: id })),
-    swatches: colors.map(([label, bg], i) => ({ label, bg, pressed: i === st.color ? 'true' : 'false', ring: i === st.color ? '0 0 0 2px ' + t.surf + ', 0 0 0 4px ' + t.text : 'none', pick: () => set({ color: i }) })),
+    t, ...chrome, grain: String(this.props.grain ?? 0.7), ...planVals, ...photoVals,
+    name: st.name, sub: st.sub, signedIn: st.signedIn,
     looks: opts([['system', 'System'], ['light', 'Light'], ['dark', 'Dark']], look, id => set({ look: id })),
     darks: opts([['gray', 'Gray'], ['black', 'Black']], darkMode, id => set({ darkMode: id })),
     grads: opts([['mix', 'Mix'], ['vivid', 'Vivid'], ['deep', 'Deep']], st.grads, id => set({ grads: id })),
@@ -4303,6 +4317,8 @@ const legalLogic = `renderVals() { ${T}
 
 // ---------- write ----------
 const W = 1440, H = 900, PW = 390, PH = 844;
+// Settings' profile picture, for showing each one on the canvas (Tweaks).
+const PHOTO_PROP = { editor: 'enum', default: 'Color', options: ['Color', 'Google photo', 'Your photo'] };
 const EDITOR_CSS = RICH_CSS + OCC_EDIT_CSS;
 const files = {
   'Main': ['Web · Today', webToday, { props: { ...DARK, ...MESH('Iris'), caughtUp: { editor: 'boolean', default: false } }, logic: todayLogic, css: DRAG_CSS, w: W, h: H }],
@@ -4317,7 +4333,7 @@ const files = {
   'WebDecksTags': ['Web · Library · a deck with 11 tags (+9 shows them all)', attrOf('WebDecks', W, H, 'open-tags="{{yes}}"'), { logic: darkLogic, css: DRAG_CSS, w: W, h: H }],
   'WebDecksMoreTags': ['Web · Library · More (find any tag)', attrOf('WebDecks', W, H, 'more-tags="{{yes}}"'), { logic: darkLogic, css: DRAG_CSS, w: W, h: H }],
   'WebDecksList': ['Web · Library · list view', listOf('WebDecks', W, H), { logic: 'renderVals() { return {}; }', css: DRAG_CSS, w: W, h: H }],
-  'WebSettings': ['Web · Settings', webSettings, { props: { ...DARK, grain: MESH('Iris').grain, photo: { editor: 'enum', default: 'Color', options: ['Color', 'Google photo'] }, plan: { editor: 'enum', default: 'Pro', options: ['Free', 'Pro', 'Pro, ending'] } }, logic: webSettingsLogic, css: NUM_CSS, w: W, h: H }],
+  'WebSettings': ['Web · Settings', webSettings, { props: { ...DARK, grain: MESH('Iris').grain, photo: PHOTO_PROP, plan: { editor: 'enum', default: 'Pro', options: ['Free', 'Pro', 'Pro, ending'] } }, logic: webSettingsLogic, css: NUM_CSS, w: W, h: H }],
   'IconOptions': ['Web · Icon options', iconOptions, { props: DARK, logic: iconOptionsLogic, w: W, h: H }],
   'WebTodayNew': ['Web · Today · new user', webTodayNew, { props: { ...DARK, ...MESH('Iris') }, logic: emptyLogic(), w: W, h: H }],
   'WebTodayCaughtUp': ['Web · Today · all caught up', caughtOf('Main', W, H), { logic: darkLogic, css: DRAG_CSS, w: W, h: H }],
@@ -4443,7 +4459,7 @@ const files = {
   'PhoneReviewAudio': ['iPhone · Review · audio card, playing', attrOf('PhoneReview', PW, PH, 'card="Audio" playing="{{yes}}"'), { logic: darkLogic, css: REVIEW_CSS, w: PW, h: PH }],
   'PhoneReviewImage': ['iPhone · Review · picture with hidden parts (tap the card)', attrOf('PhoneReview', PW, PH, 'card="Image"'), { logic: darkLogic, css: REVIEW_CSS, w: PW, h: PH }],
   'PhoneEditorImage': ['iPhone · Card editor · image with boxes', attrOf('PhoneEditor', PW, PH, 'card-type="Image" keyboard="{{no}}"'), { logic: 'renderVals() { return { yes: true, no: false }; }', css: EDITOR_CSS, w: PW, h: PH }],
-  'PhoneSettings': ['iPhone · Settings', phoneSettings, { props: { ...DARK, plan: { editor: 'enum', default: 'Pro', options: ['Free', 'Pro', 'Pro, ending'] } }, logic: phoneSettingsLogic, w: PW, h: PHONE_SETTINGS_H }],
+  'PhoneSettings': ['iPhone · Settings', phoneSettings, { props: { ...DARK, photo: PHOTO_PROP, plan: { editor: 'enum', default: 'Pro', options: ['Free', 'Pro', 'Pro, ending'] } }, logic: phoneSettingsLogic, w: PW, h: PHONE_SETTINGS_H }],
   'PhoneDeckSettings': ['iPhone · Deck settings', openOf('PhoneDeck', PW, PH), { logic: darkLogic, css: NUM_CSS + DRAG_CSS, w: PW, h: PH }],
   'PhoneDeckDark': ['iPhone · Deck page (dark)', darkOf('PhoneDeck', PW, PH), { logic: darkLogic, css: NUM_CSS + DRAG_CSS, w: PW, h: PH }],
   'PhoneStatsDark': ['iPhone · Stats (dark)', darkOf('PhoneStats', PW, PH), { logic: darkLogic, w: PW, h: PH }],
