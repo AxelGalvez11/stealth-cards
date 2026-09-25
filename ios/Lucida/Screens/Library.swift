@@ -88,9 +88,10 @@ extension Store {
     return out
   }
 
-  /// A card's answer in a list: its words without formatting (a blank's hidden words).
+  /// A card's answer in a list: its words without formatting (a blank's hidden words, a box's label).
   static func listBack(_ c: Card) -> String {
-    c.kind == "cloze" ? Rich.blanks(c.text, showMath: true).joined(separator: ", ") : Rich.plain(c.back, join: " ", showMath: true)
+    if let o = Occ(c) { return o.label.isEmpty ? "—" : o.label }
+    return c.kind == "cloze" ? Rich.blanks(c.text, showMath: true).joined(separator: ", ") : Rich.plain(c.back, join: " ", showMath: true)
   }
 
   /// How hard a card is for you (db.js difficulty): new (never studied), easy, medium, or hard. Spaced repetition knows
@@ -114,7 +115,7 @@ extension Store {
   func searchDecks(_ q: String) -> Set<String> {
     if demo { return Set(Sample.shared.DECKS.filter { $0.name.lowercased().contains(q) }.map(\.id)) }
     func words(_ c: Card) -> String {
-      ([c.front, c.back, c.note, c.speak].map { Rich.plain($0, join: " ") + " " + Rich.plain($0, join: " ", showMath: true) }
+      ([c.front, c.back, c.note, c.speak, Occ(c)?.label ?? ""].map { Rich.plain($0, join: " ") + " " + Rich.plain($0, join: " ", showMath: true) }
         + [Rich.plain(c.text, cloze: true, join: " "), Rich.plain(c.text, cloze: true, join: " ", showMath: true)] + c.tags).joined(separator: " ").lowercased()
     }
     let hit = Set(lib.cards.filter { words($0).contains(q) }.map(\.deckId))

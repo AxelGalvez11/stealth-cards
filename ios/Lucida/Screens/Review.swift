@@ -10,6 +10,14 @@ struct CardFace: Equatable {
   var text = "", cloze = -1
   var image: String? = nil, audio: String? = nil, speak = "", lang = ""
   var backLabel = "", backBig = "", backSub = ""
+  /// A picture with boxes: every box, the one asked, and whether the others stay hidden ("all") or show ("one").
+  var boxes: [OccBox] = [], box: String? = nil, occ = "one"
+  /// The sound's saved waveform, and whether it plays on its own when the card comes up.
+  var wave: Wave? = nil, auto = true
+  /// Which box is asked (nil: not a picture with boxes).
+  var occIndex: Int? { kind == "image" && image != nil ? boxes.firstIndex { $0.id == box } : nil }
+  var isOcc: Bool { occIndex != nil }
+  var clip: Clip { Clip(audio: audio, wave: wave, speak: speak, lang: lang) }
 }
 
 struct ReviewVM {
@@ -37,7 +45,7 @@ extension Store {
   static let demoCards: [CardFace] = [
     CardFace(id: "r0", kind: "basic", front: "What does the electron transport chain pump across the inner membrane?", back: "Protons (H⁺), from the matrix into the intermembrane space.", note: "That gradient powers ATP synthase."),
     CardFace(id: "r1", kind: "cloze", back: "mitochondrion", note: "It makes most of the cell’s ATP.", text: "The [[mitochondrion]] is the powerhouse of the cell.", cloze: -1),
-    CardFace(id: "r2", kind: "image", front: "Name structure 1.", back: "Nucleus", note: "Holds the cell’s DNA.", image: "mock", backLabel: "1 = Nucleus"),
+    CardFace(id: "r2", kind: "image", front: "", back: "Nucleus", note: "Holds the cell’s DNA.", image: "mock", boxes: Sample.shared.BOXES, box: "b1", occ: "all"),
     CardFace(id: "r3", kind: "audio", front: "What word do you hear?", back: "train", note: "電 electricity + 車 vehicle.", audio: "mock", backBig: "電車", backSub: "でんしゃ · train")
   ]
 
@@ -78,8 +86,11 @@ extension Store {
       let bl = Rich.blanks(c.text), ask = c.cloze ?? -1
       return CardFace(id: c.id, kind: "cloze", back: (ask < 0 ? bl : Array(bl.dropFirst(ask).prefix(1))).joined(separator: ", "), note: c.note, text: c.text, cloze: ask)
     }
-    return CardFace(id: c.id, kind: c.kind, front: c.front.isEmpty && c.kind == "audio" ? "What do you hear?" : c.front, back: c.back, note: c.note,
-                    image: c.image, audio: c.audio, speak: c.speak, lang: c.lang, backLabel: c.back, backBig: c.back, backSub: c.note)
+    // A picture with boxes brings its boxes, which one it asks, and whether the others stay hidden.
+    let o = Occ(c)
+    return CardFace(id: c.id, kind: c.kind, front: c.front.isEmpty && c.kind == "audio" ? "What do you hear?" : c.front, back: o?.label ?? c.back, note: c.note,
+                    image: c.image, audio: c.audio, speak: c.speak, lang: c.lang, backLabel: c.back, backBig: c.back, backSub: c.note,
+                    boxes: o?.boxes ?? [], box: o != nil ? c.box : nil, occ: o?.mode ?? "one", wave: c.wave, auto: c.auto)
   }
 
   /// Grades a card (1 Forgot … 4 Easy). The next card shows right away; the server saves it and sends back the library.
@@ -139,6 +150,9 @@ struct ReviewScreen: View {
   /// The card whose explanation is open, and (on a design screen) whether the sample one was asked for.
   @State private var exFor: String? = nil
   @State private var exMock = false
+  /// The sound card that last played on its own, and its start (a moment after the card comes up).
+  @State private var spoken: String? = nil
+  @State private var autoplaying: Task<Void, Never>? = nil
 
   var body: some View {
     let rv = store.review(deckId, pile: pile)
@@ -167,6 +181,17 @@ struct ReviewScreen: View {
       else if rv.empty { nav.finishReview(graded: !(store.session?.graded.isEmpty ?? true)) }
     }
     .onChange(of: rv.empty) { _, empty in if empty { nav.finishReview() } }
+    // A sound card plays on its own when it comes up (unless it's set not to).
+    .onChange(of: rv.card.id, initial: true) { _, _ in autoplay(rv.card) }
+    .onDisappear { autoplaying?.cancel(); store.stopSound() }
+  }
+
+  private func autoplay(_ c: CardFace) {
+    guard !store.demo, c.kind == "audio", c.auto, spoken != c.id, !c.clip.key.isEmpty else { return }
+    spoken = c.id
+    let clip = c.clip
+    autoplaying?.cancel()
+    autoplaying = Task { try? await Task.sleep(nanoseconds: 350_000_000); if !Task.isCancelled { store.playSound(clip, again: true) } }
   }
 
   // Once the card is turned over: Explain in its corner, or the explanation over its lower part.
@@ -380,7 +405,8 @@ struct FlipCard: View {
   var big = false
 
   var body: some View {
-    let turned = revealed && card.kind != "cloze"
+    // Fill-in-the-blank cards and pictures with boxes stay put: the blank fills in, or the box fades to an outline.
+    let turned = revealed && card.kind != "cloze" && !card.isOcc
     Button(action: tap) {
       ZStack {
         CardFaceView(card: card, back: false, revealed: revealed, big: big).padding(pad).cardFace(radius).modifier(FaceShown(angle: turned ? 180 : 0, front: true))
@@ -393,7 +419,7 @@ struct FlipCard: View {
       .transition(.asymmetric(insertion: .opacity.combined(with: .offset(y: 14)).combined(with: .scale(scale: 0.98)), removal: .identity))
     }
     .buttonStyle(.plain)
-    .accessibilityLabel(card.kind == "cloze" ? (revealed ? "Hide the answer" : "Show the blank") : (revealed ? "Flip back" : "Flip card"))
+    .accessibilityLabel(card.kind == "cloze" ? (revealed ? "Hide the answer" : "Show the blank") : card.isOcc ? (revealed ? "Hide the answer" : "Show what’s under the box") : (revealed ? "Flip back" : "Flip card"))
     .animation(.out(0.32), value: moved ? card.id : "")
   }
 }
@@ -437,6 +463,8 @@ private struct CardFaceStyle: ViewModifier {
 struct CardFaceView: View {
   @Environment(\.theme) private var t
   @EnvironmentObject private var store: Store
+  /// Sound cards follow their clip (it starts, pauses, ends).
+  @ObservedObject private var sound = Sound.shared
   let card: CardFace
   let back: Bool
   let revealed: Bool
@@ -445,12 +473,15 @@ struct CardFaceView: View {
   var body: some View {
     VStack(alignment: .leading, spacing: 0) {
       Color.clear.frame(height: 21)
+      // The face turned away can't be reached: its buttons (like a sound's) stay out of the way, and out of VoiceOver.
       middle.frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
-      // The note line keeps its height when it's empty.
+        .allowsHitTesting(facing).accessibilityHidden(!facing)
+      // The note line keeps its height when it's empty. Under a card that stays put (a blank, or a picture with boxes),
+      // it shows with the answer.
       ZStack(alignment: .topLeading) {
         Color.clear.frame(height: 21)
         if back { note }
-        else if card.kind == "cloze" && revealed { note.transition(.opacity.combined(with: .offset(y: 8))) }
+        else if card.kind == "cloze" || card.isOcc { note.modifier(FadeUp(on: revealed)).accessibilityHidden(!revealed) }
       }
       .frame(maxWidth: .infinity, alignment: .leading)
     }
@@ -458,12 +489,18 @@ struct CardFaceView: View {
   }
 
   private var note: some View { RichText(md: card.note, size: 14, lh: 1.5, color: t.muted) }
+  /// This face is the one showing (a blank or a picture with boxes never turns).
+  private var facing: Bool { card.kind == "cloze" || card.isOcc ? !back : back == revealed }
 
   @ViewBuilder private var middle: some View {
     switch (card.kind, back) {
     case ("cloze", _):
       RichText(md: card.text, size: big ? 38 : 28, weight: .medium, lh: 1.45, ls: -0.02,
                cloze: ClozeStyle(ask: card.cloze, hide: !revealed, pad: big ? 16 : 12, bg: revealed ? t.inv : t.surf2, fg: revealed ? t.invText : .clear, pop: revealed))
+    case ("image", false) where card.isOcc:
+      OccFace(card: card, revealed: revealed, big: big)
+    case ("image", true) where card.isOcc:
+      Color.clear
     case ("image", _):
       VStack(spacing: 16) {
         picture
@@ -472,20 +509,37 @@ struct CardFaceView: View {
       }
       .frame(maxWidth: .infinity)
     case ("audio", false):
-      VStack(spacing: 24) {
-        Button { store.play(card) } label: {
-          Icon("play", 30).foregroundStyle(t.invText).frame(width: big ? 88 : 76, height: big ? 88 : 76).background(Circle().fill(t.inv))
+      // The sound: play or pause, its waveform (tap or drag it to jump), and where it's at of how long it is.
+      let clip = card.clip, vm = store.sound(clip)
+      VStack(spacing: big ? 24 : 20) {
+        PlayButton(clip: clip, vm: vm, size: big ? 88 : 76, glyph: 30)
+        VStack(spacing: 8) {
+          WaveRow(clip: clip, vm: vm, bars: 48, gap: big ? 4 : 3).frame(height: big ? 52 : 44)
+          if vm.hasTime {
+            HStack(spacing: 0) { ClipTime(vm: vm, at: true); Spacer(minLength: 0); Text(vm.total) }.css(12, mono: true).foregroundStyle(t.muted)
+          }
         }
-        .buttonStyle(.press)
-        .accessibilityLabel("Play the sound")
-        Waveform(playing: !revealed)
+        .frame(maxWidth: big ? 400 : 272)
         RichText(md: card.front, size: big ? 24 : 20, weight: .medium)
       }
       .frame(maxWidth: .infinity)
     case ("audio", true):
+      let clip = card.clip, vm = store.sound(clip)
       VStack(spacing: 8) {
         RichText(md: card.backBig.isEmpty ? card.back : card.backBig, size: big ? 64 : 52, weight: .semibold, ls: -0.02)
         RichText(md: card.backSub, size: big ? 22 : 18, color: t.muted)
+        // The sound again, small, to hear it with the answer (pressing it doesn't turn the card).
+        HStack(spacing: 12) {
+          PlayButton(clip: clip, vm: vm, size: 36, glyph: 14)
+          WaveRow(clip: clip, vm: vm, bars: 36, gap: 2).frame(height: 24)
+          if vm.hasTime { ClipTime(vm: vm).css(12, mono: true).foregroundStyle(t.muted) }
+        }
+        .padding(.leading, 6).padding(.trailing, 16)
+        .frame(maxWidth: big ? 300 : 248).frame(height: 48)
+        .background(Capsule().fill(t.surf))
+        .contentShape(Capsule())
+        .onTapGesture {}
+        .padding(.top, big ? 18 : 14)
       }
       .frame(maxWidth: .infinity)
     case (_, false): RichText(md: card.front, size: big ? 38 : 28, weight: .medium, lh: 1.25, ls: -0.02)
@@ -502,34 +556,11 @@ struct CardFaceView: View {
   }
 }
 
-/// A sound's shape: thin bars that move while it plays (the canvas's WAVE, 44 bars).
-struct Waveform: View {
-  @Environment(\.theme) private var t
-  @Environment(\.accessibilityReduceMotion) private var still
-  var playing: Bool
-  var height: CGFloat = 48
-  static let bars: [CGFloat] = (0..<44).map { i in
-    let x = Double(i) / 43, env = pow(sin(Double.pi * x), 0.6), v = 0.55 + 0.45 * sin(Double(i) * 1.7) * cos(Double(i) * 0.43 + 1.1)
-    return CGFloat(max(4, (46 * env * v).rounded()))
-  }
-  @State private var up = false
-  var body: some View {
-    HStack(spacing: 3) {
-      ForEach(0..<Waveform.bars.count, id: \.self) { i in
-        RoundedRectangle(cornerRadius: 2).fill(t.text).frame(width: 3, height: Waveform.bars[i])
-          .scaleEffect(y: playing && !still ? (up ? 1 : 0.3) : 1)
-          .animation(playing && !still ? .easeInOut(duration: 0.9).repeatForever(autoreverses: true).delay(Double(i % 5) * 0.12) : .default, value: up)
-      }
-    }
-    .frame(height: height)
-    .onAppear { up = true }
-    .accessibilityHidden(true)
-  }
-}
-
-/// The canvas's sample diagram (CELL): a cell with its nucleus, organelles, and label 1.
+/// The canvas's sample diagram (CELL): a cell with its nucleus, organelles, and label 1 (`pointer`; a picture with boxes
+/// has none).
 struct CellDiagram: View {
   @Environment(\.theme) private var t
+  var pointer = true
   var body: some View {
     Canvas { ctx, size in
       ctx.scaleBy(x: size.width / 220, y: size.height / 150)
@@ -537,10 +568,13 @@ struct CellDiagram: View {
       ctx.stroke(Path(ellipseIn: CGRect(x: 10, y: 18, width: 188, height: 124)), with: .color(t.text), style: line)
       let nucleus = Path(ellipseIn: CGRect(x: 92, y: 50, width: 48, height: 48))
       ctx.fill(nucleus, with: .color(t.surf)); ctx.stroke(nucleus, with: .color(t.text), style: line)
-      ctx.fill(Path(ellipseIn: CGRect(x: 113, y: 63, width: 14, height: 14)), with: .color(t.text))
+      // The nucleolus has the drawing's outline too (the svg's stroke), like on the canvas.
+      let nucleolus = Path(ellipseIn: CGRect(x: 113, y: 63, width: 14, height: 14))
+      ctx.fill(nucleolus, with: .color(t.text)); ctx.stroke(nucleolus, with: .color(t.text), style: line)
       for (x, y, rx, ry) in [(54.0, 96.0, 16.0, 8.0), (74, 46, 12, 6), (158, 112, 14, 7)] {
         ctx.stroke(Path(ellipseIn: CGRect(x: x - rx, y: y - ry, width: rx * 2, height: ry * 2)), with: .color(t.text), style: line)
       }
+      guard pointer else { return }
       var p = Path(); p.move(to: CGPoint(x: 138, y: 60)); p.addLine(to: CGPoint(x: 186, y: 22))
       ctx.stroke(p, with: .color(t.text), style: line)
       ctx.fill(Path(ellipseIn: CGRect(x: 182, y: 4, width: 24, height: 24)), with: .color(t.inv))

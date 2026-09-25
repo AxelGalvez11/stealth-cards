@@ -25,6 +25,8 @@ struct Sample: Decodable {
   let ALL_CARDS: [A]
   let DUE_7: Due
   let DUE_14: Due
+  /// The sample diagram's parts, hidden by boxes (image occlusion).
+  let BOXES: [OccBox]
   static let shared: Sample = try! JSONDecoder().decode(Sample.self, from: Data(Generated.sampleJSON.utf8))
 }
 
@@ -85,6 +87,10 @@ final class Store: ObservableObject {
   @Published var demoGraded = 0
   @Published var demoLearn = DemoLearn()
   @Published var demoPiles: [(name: String, n: Int)] = [("Know it", 18), ("Almost", 6), ("No clue", 3)]
+  /// The design screens' sample sound: playing or not, how far in, and a recording under way.
+  @Published var demoPlaying = false
+  @Published var demoFrac = 0.42
+  @Published var demoRecording = false
   /// The Library's sample folders, and decks moved in or out of one on a design screen.
   @Published var demoFolders: [(id: String, name: String, decks: [String])] = Sample.shared.FOLDERS.map { ($0.id, $0.name, $0.decks) }
   @Published var demoMoved: [String: String?] = [:]
@@ -109,7 +115,10 @@ final class Store: ObservableObject {
 
   init(demo: Bool) {
     self.demo = demo
-    if demo { phase = .ready }
+    if demo { phase = .ready; return }
+    // A sound's waveform measured on this phone goes with its cards; another card may already have the one a file needs.
+    Sound.shared.measured = { [weak self] file, w in self?.saveWave(file, w) }
+    Sound.shared.known = { [weak self] file in self?.lib.cards.first { $0.audio == file && $0.wave != nil }?.wave }
   }
 
   var engine: Engine { Engine(S: lib) }
@@ -203,8 +212,16 @@ final class Store: ObservableObject {
   /// Learn mode is going for this deck (and not finished).
   func learnOn(_ id: String) -> Bool { !demo && learnActive(id) }
 
-  /// Plays a card's sound: its recording, or its words read aloud.
-  func play(_ c: CardFace) { Speech.play(c, api: api) }
+  /// A waveform measured on this phone is saved with the cards that play its file, quietly (if that fails, it's measured
+  /// again next time).
+  func saveWave(_ file: String, _ w: Wave) {
+    guard !demo else { return }
+    for i in lib.cards.indices where lib.cards[i].audio == file && lib.cards[i].wave == nil {
+      lib.cards[i].wave = w
+      let id = lib.cards[i].id
+      Task { if let r = try? await api.action("card.update", ["id": id, "patch": ["wave": w.json]]) { accept(r.state) } }
+    }
+  }
   func exportDeck(_ id: String) {}
 
   // ---------- Today ----------
