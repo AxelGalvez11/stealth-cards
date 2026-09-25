@@ -18,7 +18,7 @@ a{color:inherit;text-decoration:none}a:hover{opacity:.8}
 </style>
 </helmet>
 <div style="position: relative; width: 390px; height: 844px; box-sizing: border-box; font-family: Geist, -apple-system, system-ui, sans-serif; background: {{t.bg}}; color: {{t.text}}; overflow: hidden;">
-<div style="padding: 64px 20px 120px; display: flex; flex-direction: column; gap: 14px;">
+<div style="height: 100%; overflow-x: hidden; overflow-y: auto; scrollbar-width: none;"><div style="padding: 64px 20px 120px; display: flex; flex-direction: column; gap: 14px;">
   <sc-if value="{{atTop}}" hint-placeholder-val="{{ true }}"><div style="display: flex; align-items: center; gap: 8px;">
     <h1 style="margin: 0; flex-grow: 1; min-width: 0; font-size: 32px; font-weight: 700; letter-spacing: -.03em;">Library</h1>
     <sc-if value="{{deckView}}" hint-placeholder-val="{{ true }}"><button type="button" onClick="{{newFolder}}" aria-label="New folder" class="sc-press" style="width: 40px; height: 40px; flex-shrink: 0; border: 0; border-radius: 20px; background: {{t.surf}}; color: {{t.text}}; display: flex; align-items: center; justify-content: center; cursor: pointer;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7.5A2.5 2.5 0 0 1 5.5 5h3.6l2 2.2h7.4A2.5 2.5 0 0 1 21 9.7v7.8a2.5 2.5 0 0 1-2.5 2.5h-13A2.5 2.5 0 0 1 3 17.5z"/></svg></button></sc-if>
@@ -67,7 +67,7 @@ a{color:inherit;text-decoration:none}a:hover{opacity:.8}
     <sc-if value="{{hasMore}}" hint-placeholder-val="{{ false }}"><button type="button" onClick="{{showMore}}" style="align-self: center; height: 40px; padding: 0 20px; border: 0; border-radius: 999px; background: {{t.surf}}; color: {{t.text}}; font: inherit; font-size: 14px; font-weight: 600; cursor: pointer;">{{moreLabel}}</button></sc-if>
     <sc-if value="{{noCards}}" hint-placeholder-val="{{ false }}"><div style="padding: 36px 20px; border-radius: 20px; background: {{t.surf}}; text-align: center; font-size: 15px; color: {{t.muted}};">No cards match. Try fewer filters.</div></sc-if>
   </sc-if>
-</div>
+</div></div>
 <nav style="position: absolute; left: 16px; right: 16px; bottom: 28px; height: 64px; box-sizing: border-box; padding: 6px; border-radius: 999px; background: {{t.surf}}; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 4px;">
   <a href="PhoneToday.dc.html" style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; border-radius: 999px; font-size: 11px; font-weight: 600; color: {{t.muted}};"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>Today</a>
   <a href="PhoneLibrary.dc.html" style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; border-radius: 999px; font-size: 11px; font-weight: 600; background: {{t.inv}}; color: {{t.invText}};"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7" width="14" height="14" rx="3"/><path d="M7 3h11a3 3 0 0 1 3 3v11"/></svg>Library</a>

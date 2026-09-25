@@ -800,7 +800,7 @@ refFor(k) {
 onFocus(k, on) {
   if (!on && this.ed.slash) { this.ed.slash = null; this.forceUpdate(); }
   if (on) { if (!this.state.typing || this.state.focus !== k) this.setState({ typing: true, focus: k }); }
-  else if (this.props.keyboard === undefined && this.state.typing) this.setState({ typing: false });
+  else if (!this.props.keyboard && this.state.typing) this.setState({ typing: false });
 }
 // The formatting buttons follow the caret.
 trackSel() {
@@ -1132,7 +1132,11 @@ renderVals() {
       sel: n === sl.idx ? 'true' : 'false', bg: n === sl.idx ? t.surf : 'transparent', chip: n === sl.idx ? t.bg : t.surf, pick: () => this.slashPick(it.id) })) : [] };
   return {
     t, kb, dark: !!this.props.dark, typing: s.typing, deckId: this.props.deckId || '',
+    // The iPhone editor's keyboard is drawn on the canvas; in the app the phone shows its own.
+    drawKb: s.typing && !!db.mock,
     title: saved ? 'Edit card' : 'New card', deckName: dk.name, backHref, f, rich, slash,
+    // On the canvas the iPhone editor goes back to the iPhone deck page.
+    phoneBack: db.mock ? 'PhoneDeck.dc.html' : backHref,
     isBasic: ty === 'Basic', isCloze: ty === 'Blank', isImage: ty === 'Image', isAudio: ty === 'Audio',
     types: ['Basic', 'Blank', 'Image', 'Audio'].map(l => ({ label: l, bg: l === ty ? t.bg : 'transparent', fg: l === ty ? t.text : t.muted, sh: l === ty ? '0 1px 3px rgba(0,0,0,.12)' : 'none', pick: () => this.commit({}, { type: l, kind: 'kind' }) })),
     bars: [3,3,4,8,4,3,12,11,8,11,5,10,21,11,6,14,12,17,21,5,9,24,17,16,16,6,19,29,11,10,18,14,24,22,4,14,25,16,18,13,6,22,24,8,12,14,12,22,14,3,14,16,11,13,6,5,14,11,4,6,4,4,5,3].map(h => ({ h: h + 'px' })),

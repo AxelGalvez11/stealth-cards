@@ -150,10 +150,7 @@ const logo = (size = 28) => `<div style="display: flex; align-items: center; gap
 
 // ---------- Structure A: web sidebar ----------
 const NAV_A = [['Today', 'today', 'Main.dc.html', '64'], ['Library', 'decks', 'WebDecks.dc.html', ''], ['Stats', 'stats', 'WebStats.dc.html', ''], ['Connect AI', 'connect', 'WebConnect.dc.html', '']];
-// Profile circle: a color by default (Settings can switch it to the Google photo).
-const AVATAR_BG = 'linear-gradient(135deg, #8C9AFC 0%, #4F60E6 100%)';
-const AVATAR = size => `<span style="width: ${size}px; height: ${size}px; flex-shrink: 0; border-radius: ${size / 2}px; background: ${AVATAR_BG}; color: #FFFFFF; display: flex; align-items: center; justify-content: center; font-size: ${Math.round(size * 0.42)}px; font-weight: 600;">A</span>`;
-// The web sidebar's profile circle follows Settings (color and initial).
+// Your profile circle follows Settings (color and initial): in the web sidebar, and on the iPhone's Today and Settings.
 const AVATAR_ME = size => `<span style="width: ${size}px; height: ${size}px; flex-shrink: 0; border-radius: ${size / 2}px; background: {{me.bg}}; color: #FFFFFF; display: flex; align-items: center; justify-content: center; font-size: ${Math.round(size * 0.42)}px; font-weight: 600;">{{me.initial}}</span>`;
 const sidebar = active => `<nav style="width: 240px; flex-shrink: 0; box-sizing: border-box; padding: 24px 16px; display: flex; flex-direction: column; gap: 4px; border-right: 1px solid {{t.line}};">
   <div style="padding: 0 12px 20px;">${logo()}</div>
@@ -286,7 +283,6 @@ const AI_LOGIC = `
   const tossed = Object.values(done).filter(v => v === 'tossed').length;`;
 
 // Cards due each day: the count sits on each bar, darker periwinkle means a busier day, the busiest is called out.
-const DUE_7 = { vals: [32, 18, 24, 12, 30, 8, 16], labels: ['Wed', 'Thu', 'Fri', 'Sat', 'Sun', 'Mon', 'Tue'], tops: null, names: ['tomorrow', 'Thursday', 'Friday', 'Saturday', 'Sunday', 'Monday', 'Tuesday'] };
 const DUE_14 = { vals: [32, 18, 24, 12, 30, 8, 16, 22, 14, 26, 10, 20, 6, 12], labels: ['23', '24', '25', '26', '27', '28', '29', '30', '1', '2', '3', '4', '5', '6'], tops: ['W', 'T', 'F', 'S', 'S', 'M', 'T', 'W', 'T', 'F', 'S', 'S', 'M', 'T'], names: ['tomorrow', 'Thu 24', 'Fri 25', 'Sat 26', 'Sun 27', 'Mon 28', 'Tue 29', 'Wed 30', 'Thu, Oct 1', 'Fri, Oct 2', 'Sat, Oct 3', 'Sun, Oct 4', 'Mon, Oct 5', 'Tue, Oct 6'] };
 const FORECAST_JS = (data, maxH) => `
   // Periwinkle by load, from the heat map's family; the busiest day gets the darkest bar.
@@ -1063,7 +1059,7 @@ refFor(k) {
 onFocus(k, on) {
   if (!on && this.ed.slash) { this.ed.slash = null; this.forceUpdate(); }
   if (on) { if (!this.state.typing || this.state.focus !== k) this.setState({ typing: true, focus: k }); }
-  else if (this.props.keyboard === undefined && this.state.typing) this.setState({ typing: false });
+  else if (!this.props.keyboard && this.state.typing) this.setState({ typing: false });
 }
 // The formatting buttons follow the caret.
 trackSel() {
@@ -1371,7 +1367,11 @@ renderVals() {
       sel: n === sl.idx ? 'true' : 'false', bg: n === sl.idx ? t.surf : 'transparent', chip: n === sl.idx ? t.bg : t.surf, pick: () => this.slashPick(it.id) })) : [] };
   return {
     t, kb, dark: !!this.props.dark, typing: s.typing, deckId: this.props.deckId || '',
+    // The iPhone editor's keyboard is drawn on the canvas; in the app the phone shows its own.
+    drawKb: s.typing && !!db.mock,
     title: saved ? 'Edit card' : 'New card', deckName: dk.name, backHref, f, rich, slash,
+    // On the canvas the iPhone editor goes back to the iPhone deck page.
+    phoneBack: db.mock ? 'PhoneDeck.dc.html' : backHref,
     isBasic: ty === 'Basic', isCloze: ty === 'Blank', isImage: ty === 'Image', isAudio: ty === 'Audio',
     types: ['Basic', 'Blank', 'Image', 'Audio'].map(l => ({ label: l, bg: l === ty ? t.bg : 'transparent', fg: l === ty ? t.text : t.muted, sh: l === ty ? '0 1px 3px rgba(0,0,0,.12)' : 'none', pick: () => this.commit({}, { type: l, kind: 'kind' }) })),
     bars: ${WAVE_SMALL}.map(h => ({ h: h + 'px' })),
@@ -1482,7 +1482,8 @@ renderVals() {
     toggleSettings: () => this.setState({ settings: !settingsOpen }),
     knew: { label: 'Knew it', title: fsrsOn ? 'Knew it · ' + iv.good : 'Knew it', pick: grade(3) }, missed: { label: 'Didn’t know', title: fsrsOn ? 'Didn’t know · ' + iv.again : 'Didn’t know', pick: grade(1) },
     canAddPile: pileList.length < 5,
-    newPileOpen: draft != null, pileName: draft || '',
+    // The iPhone's New pile shows a keyboard drawn on the canvas; in the app the phone shows its own.
+    newPileOpen: draft != null, pileName: draft || '', drawKb: !!db.mock,
     openPile: () => this.setState({ pileDraft: '' }),
     setPileName: e => this.setState({ pileDraft: e && e.target ? e.target.value : draft }),
     cancelPile: () => this.setState({ pileDraft: null }),
@@ -1753,7 +1754,6 @@ const PROVIDER_LOGO = size => `<sc-if value="{{p.isClaude}}" hint-placeholder-va
 // Which AI apps are connected: from the MCP link's visitors in the app, a sample on the canvas.
 const PROVIDERS = on => `const providers = [['claude', 'Claude'], ['openai', 'ChatGPT'], ['cursor', 'Cursor'], ['mcp', 'Any MCP app']].map(([id, name]) => ({ name, status: (${on})[id] ? 'Connected' : 'Connect', color: (${on})[id] ? t.good : t.muted,
     isClaude: id === 'claude', isOpenAI: id === 'openai', isCursor: id === 'cursor', isMcp: id === 'mcp', cursorInk: this.props.dark ? '#edecec' : '#26251e' }));`;
-const PROVIDERS_JS = PROVIDERS("{ claude: true, openai: true, cursor: false, mcp: false }");
 
 // Connect
 const aiKind = (icon, title, text) => `<div style="background: {{t.bg}}; border-radius: 22px; padding: 16px; display: flex; flex-direction: column; gap: 10px;"><span style="width: 36px; height: 36px; border-radius: 18px; background: {{t.surf}}; display: flex; align-items: center; justify-content: center;">${svg(I[icon], 16, 2)}</span><span style="font-size: 14px; font-weight: 600;">${title}</span><span style="font-size: 13px; line-height: 1.4; color: {{t.muted}};">${text}</span></div>`;
@@ -2087,8 +2087,9 @@ const NAV_P = [['Today', 'today', 'PhoneToday.dc.html'], ['Library', 'decks', 'P
 const tabBar = active => `<nav style="position: absolute; left: 16px; right: 16px; bottom: 28px; height: 64px; box-sizing: border-box; padding: 6px; border-radius: 999px; background: {{t.surf}}; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 4px;">
   ${NAV_P.map(([l, ic, h]) => `<a href="${h}" style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; border-radius: 999px; font-size: 11px; font-weight: 600; ${l === active ? 'background: {{t.inv}}; color: {{t.invText}};' : 'color: {{t.muted}};'}">${svg(I[ic], 20, 2)}${l}</a>`).join('\n  ')}
 </nav>`;
+// A page taller than the phone scrolls under the tab bar (in the app, phone pages are the screen's height).
 const phone = (inner, active, extra = '', h = 844) => `<div style="position: relative; width: 390px; height: ${h}px; box-sizing: border-box; font-family: ${FONT}; background: {{t.bg}}; color: {{t.text}}; overflow: hidden;">
-${inner}
+<div style="height: 100%; overflow-x: hidden; overflow-y: auto; scrollbar-width: none;">${inner}</div>
 ${active ? tabBar(active) : ''}
 ${extra}
 </div>`;
@@ -2146,26 +2147,42 @@ const phoneLibrary = phone(`<div style="padding: 64px 20px 120px; display: flex;
 const pTitle = (txt, right = '') => `<div style="display: flex; align-items: center; justify-content: space-between;"><div style="font-size: 34px; font-weight: 700; letter-spacing: -.03em;">${txt}</div>${right}</div>`;
 const roundBtn = (ic, label, href = '') => href ? `<a href="${href}" aria-label="${label}" style="width: 44px; height: 44px; border-radius: 22px; background: {{t.surf}}; display: flex; align-items: center; justify-content: center;">${svg(I[ic], 18, 2)}</a>` : `<button type="button" aria-label="${label}" style="width: 44px; height: 44px; border: 0; border-radius: 22px; background: {{t.surf}}; color: {{t.text}}; display: flex; align-items: center; justify-content: center; cursor: pointer;">${svg(I[ic], 18, 2)}</button>`;
 // Today's header: your picture on the left (it opens Settings), the title in the middle, and + on the right.
-const todayTitle = (label, href) => `<div style="display: flex; align-items: center; gap: 12px;"><a href="PhoneSettings.dc.html" aria-label="Settings" style="display: flex; flex-shrink: 0; border-radius: 22px;">${AVATAR(44)}</a><h1 style="flex-grow: 1; margin: 0; font-size: 34px; font-weight: 700; letter-spacing: -.03em; text-align: center;">Today</h1>${roundBtn('plus', label, href)}</div>`;
+const todayTitle = (label, href) => `<div style="display: flex; align-items: center; gap: 12px;"><a href="PhoneSettings.dc.html" aria-label="Settings" style="display: flex; flex-shrink: 0; border-radius: 22px;">${AVATAR_ME(44)}</a><h1 style="flex-grow: 1; margin: 0; font-size: 34px; font-weight: 700; letter-spacing: -.03em; text-align: center;">Today</h1>${roundBtn('plus', label, href)}</div>`;
 const phoneToday = phone(`<div style="padding: 64px 20px 120px; display: flex; flex-direction: column; gap: 18px;">
   ${todayTitle('New card', 'PhoneEditor.dc.html')}
   ${meshCard('hero', 'display: block; border-radius: 32px;', 'box-sizing: border-box; padding: 24px; display: flex; flex-direction: column; gap: 18px;', `
     <span style="height: 56px;"></span>
     <span style="display: flex; flex-direction: column; gap: 4px;"><span style="font-size: 14px; opacity: .85;">{{heroMeta}}</span><span style="font-size: {{heroSize}}; font-weight: 600; letter-spacing: -.045em; line-height: 1;">{{heroTitle}}</span><span style="font-size: 14px; opacity: .85;">{{heroSub}}</span></span>
-    <span style="height: 52px; border-radius: 999px; background: #FFFFFF; color: #000000; display: flex; align-items: center; justify-content: center; font-size: 16px; font-weight: 600; text-shadow: none;">{{heroCta}}</span>`, 'a', ' href="PhoneReview.dc.html"')}
+    <span style="height: 52px; border-radius: 999px; background: #FFFFFF; color: #000000; display: flex; align-items: center; justify-content: center; font-size: 16px; font-weight: 600; text-shadow: none;">{{heroCta}}</span>`, 'a', ' href="{{heroHref}}"')}
   <div style="font-size: 13px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: {{t.muted}}; padding: 6px 4px 0;">Decks</div>
   <div style="display: flex; flex-direction: column;">
     <sc-for list="{{decks}}" as="d" hint-placeholder-count="4">
-      <a href="PhoneDeck.dc.html" style="display: flex; align-items: center; gap: 12px; min-height: 58px; border-bottom: 1px solid {{t.line}};"><span style="flex-grow: 1; display: flex; flex-direction: column; gap: 2px;"><span style="font-size: 16px; font-weight: 500;">{{d.name}}</span><span style="font-size: 13px; color: {{t.muted}};">{{d.fresh}} new · {{d.total}} cards</span></span><span style="font-family: {{d.rightFont}}; font-size: {{d.rightSize}}; color: {{d.rightColor}};">{{d.right}}</span></a>
+      <a href="{{d.href}}" style="display: flex; align-items: center; gap: 12px; min-height: 58px; border-bottom: 1px solid {{t.line}};"><span style="flex-grow: 1; display: flex; flex-direction: column; gap: 2px;"><span style="font-size: 16px; font-weight: 500;">{{d.name}}</span><span style="font-size: 13px; color: {{t.muted}};">{{d.fresh}} new · {{d.total}} cards</span></span><span style="font-family: {{d.rightFont}}; font-size: {{d.rightSize}}; color: {{d.rightColor}};">{{d.right}}</span></a>
     </sc-for>
   </div>
 </div>`, 'Today');
-const phoneDecksLogic = `renderVals() { ${T}
-  const caught = !!this.props.caughtUp, next = ['Tomorrow', 'Tomorrow', 'In 2 days', 'In 3 days'];
-  return { ${MESH_VALS('Iris')} t,
-    heroMeta: caught ? 'Done for today · 13-day streak' : 'Due now · 12-day streak', heroTitle: caught ? 'All caught up' : '64 cards', heroSize: caught ? '42px' : '56px',
-    heroSub: caught ? 'Next review tomorrow · 32 cards' : 'About 11 minutes', heroCta: caught ? 'Learn 10 new cards' : 'Start review',
-    decks: ${DECKS}.slice(0, 4).map((d, i) => ({ ...d, right: caught ? next[i] : String(d.due), rightColor: caught ? t.muted : t.text, rightFont: caught ? 'inherit' : "${MONO}", rightSize: caught ? '14px' : '15px' })) }; }`;
+// Your day on the Iris card, then your decks, most urgent first (like the web's Today). The canvas shows its sample day.
+const phoneDecksLogic = `renderVals() { ${T}${DB_JS}
+  // A deck's count on the right: cards due now, or (muted) when it's next due.
+  const row = (d, right, later) => ({ ...d, right, rightColor: later ? t.muted : t.text, rightFont: later ? 'inherit' : "${MONO}", rightSize: later ? '14px' : '15px' });
+  if (db.mock) {
+    const caught = !!this.props.caughtUp, next = ['Tomorrow', 'Tomorrow', 'In 2 days', 'In 3 days'];
+    return { ${MESH_VALS('Iris')} t, ...chrome, heroHref: 'PhoneReview.dc.html',
+      heroMeta: caught ? 'Done for today · 13-day streak' : 'Due now · 12-day streak', heroTitle: caught ? 'All caught up' : '64 cards', heroSize: caught ? '42px' : '56px',
+      heroSub: caught ? 'Next review tomorrow · 32 cards' : 'About 11 minutes', heroCta: caught ? 'Learn 10 new cards' : 'Start review',
+      decks: ${DECKS}.slice(0, 4).map((d, i) => ({ ...row(d, caught ? next[i] : String(d.due), caught), href: 'PhoneDeck.dc.html' })) };
+  }
+  const td = db.today(), caught = !td.due, plural = (n, w) => n + ' ' + w + (n === 1 ? '' : 's');
+  const decks = db.decks().filter(d => !d.paused).sort((a, b) => (b.overdue - a.overdue) || (b.due - a.due) || ((a.soon ?? 1e9) - (b.soon ?? 1e9)))
+    .map(d => row({ ...d, total: d.totalLabel }, d.due ? String(d.due) : d.soon == null ? (d.fresh ? d.fresh + ' new' : '—') : d.soon === 1 ? 'Tomorrow' : 'In ' + d.soon + ' days', !d.due));
+  return { ${MESH_VALS('Iris')} t, ...chrome, decks,
+    heroMeta: (caught ? 'Done for today' : 'Due now') + (td.streak ? ' · ' + td.streak + '-day streak' : ''),
+    heroTitle: caught ? 'All caught up' : plural(td.due, 'card'), heroSize: caught ? '42px' : '56px',
+    heroSub: caught ? (td.next ? 'Next review ' + td.next.day + ' · ' + plural(td.next.n, 'card') : 'Nothing scheduled yet') : 'About ' + plural(td.minutes, 'minute'),
+    heroCta: caught ? (td.fresh ? 'Learn ' + plural(td.fresh, 'new card') : 'Add cards') : 'Start review',
+    // All caught up with nothing new to learn: the card adds cards instead.
+    heroHref: caught && !td.fresh ? td.newCardHref : td.studyHref };
+}`;
 
 // Check AI cards: tap the card to see its answer (a blank fills in place), then keep or toss it.
 const INBOX_ITEMS = `[
@@ -2233,7 +2250,7 @@ const phoneDeck = phone(`<div style="height: 100%; overflow-y: auto; scrollbar-w
     <div style="display: flex; gap: 8px;"><a href="PhoneReview.dc.html" style="flex: 2 1 0; height: 56px; border-radius: 999px; background: {{t.inv}}; color: {{t.invText}}; display: flex; align-items: center; justify-content: center; font-size: 17px; font-weight: 600;">{{studyLabel}}</a><a href="{{learnHref}}" style="flex: 1 1 0; height: 56px; border-radius: 999px; background: {{t.surf}}; display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 17px; font-weight: 600; white-space: nowrap;">${svg(I.sparkle, 17, 2)}{{learnShort}}</a></div>
     <div style="display: flex; flex-direction: column;">
       <sc-for list="{{rows}}" as="r" hint-placeholder-count="4">
-        <a href="PhoneEditor.dc.html" style="display: flex; flex-direction: column; gap: 3px; padding: 12px 0; border-bottom: 1px solid {{t.line}};"><span style="font-size: 15px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{r.front}}</span><span style="display: flex; align-items: center; gap: 8px; min-width: 0; font-size: 13px; color: {{t.muted}};"><span style="white-space: nowrap;">{{r.kind}} · {{r.next}}</span>${cardTag('c1')}${cardTag('c2')}${cardMore}</span></a>
+        <a href="{{r.href}}" style="display: flex; flex-direction: column; gap: 3px; padding: 12px 0; border-bottom: 1px solid {{t.line}};"><span style="font-size: 15px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{r.front}}</span><span style="display: flex; align-items: center; gap: 8px; min-width: 0; font-size: 13px; color: {{t.muted}};"><span style="white-space: nowrap;">{{r.kind}} · {{r.next}}</span>${cardTag('c1')}${cardTag('c2')}${cardMore}</span></a>
       </sc-for>
     </div>
   </div>
@@ -2248,21 +2265,27 @@ constructor(props) { super(props); this.state = {}; }
 renderVals() { ${T}${DB_JS}${COVER_LOGIC}
   ${CARD_TAGS_JS}
   return { t, dark: !!this.props.dark, ...coverVals, tiles: coverVals.tiles.map(k => k.label === 'Due now' ? { ...k, label: 'Due' } : k),
-    // All six sample cards, so the page scrolls on the canvas (and shows the cover's parallax).
-    rows: db.cards(dk.id).slice(0, 6).map(r => ({ ...r, ...cardFit(r.tags) })),
+    // Every card (all six sample cards on the canvas, so the page scrolls and shows the cover's parallax); each opens
+    // in the editor.
+    rows: db.cards(dk.id).map(r => ({ ...r, ...cardFit(r.tags), href: db.mock ? 'PhoneEditor.dc.html' : r.href })),
     learnHref: db.mock ? 'PhoneQuizStart.dc.html' : db.learnOn(dk.id) ? '/learn/' + dk.id : '/deck/' + dk.id + '/learn', learnShort: !db.mock && db.learnOn(dk.id) ? 'Resume' : 'Learn' }; }`;
 
+// The fields scroll under the header when they're taller than the sheet. The keyboard is drawn on the canvas only: in
+// the app, the phone shows its own.
 const phoneEditor = `<div style="position: relative; width: 390px; height: 844px; overflow: hidden; font-family: ${FONT}; color: {{t.text}};">
-  <dc-import name="PhoneDeck" dark="{{dark}}" hint-size="390px,844px"></dc-import>
+  <dc-import name="PhoneDeck" dark="{{dark}}" deck-id="{{deckId}}" hint-size="390px,844px"></dc-import>
   <div style="position: absolute; inset: 0; background: {{t.dim}};"></div>
   <div style="position: absolute; left: 0; right: 0; bottom: 0; top: 56px; box-sizing: border-box; padding: 10px 20px 34px; border-radius: 36px 36px 0 0; background: {{t.bg}}; display: flex; flex-direction: column; gap: 16px;">
     <div style="align-self: center; width: 40px; height: 5px; border-radius: 3px; background: {{t.surf2}};"></div>
-    <div style="display: flex; align-items: center; justify-content: space-between;"><a href="PhoneDeck.dc.html" style="font-size: 16px; color: {{t.muted}}; min-height: 44px; display: flex; align-items: center;">Cancel</a><span style="font-size: 17px; font-weight: 600;">{{title}}</span><a href="PhoneDeck.dc.html" style="font-size: 16px; font-weight: 600; min-height: 44px; display: flex; align-items: center;">Save</a></div>
+    <div style="display: flex; align-items: center; justify-content: space-between;"><a href="{{phoneBack}}" style="font-size: 16px; color: {{t.muted}}; min-height: 44px; display: flex; align-items: center;">Cancel</a><span style="font-size: 17px; font-weight: 600;">{{title}}</span><a href="{{phoneBack}}" onClick="{{save}}" style="font-size: 16px; font-weight: 600; min-height: 44px; display: flex; align-items: center;">Save</a></div>
     ${TYPE_SEG}
+    <div style="flex-grow: 1; min-height: 0; overflow-y: auto; scrollbar-width: none;"><div style="display: flex; flex-direction: column; gap: 16px;">
     ${editorFields}
     <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">${chip(svg(I.decks, 12, 2) + '{{deckName}}', 'height: 32px; padding: 0 12px; font-size: 13px; font-weight: 600;')}${TAG_EDIT('cardTags', 'cardPick', true)}</div>
+    <sc-if value="{{canDelete}}" hint-placeholder-val="{{ false }}"><button type="button" onClick="{{remove}}" style="align-self: flex-start; min-height: 44px; padding: 0; border: 0; background: transparent; color: {{t.again}}; font: inherit; font-size: 14px; font-weight: 600; cursor: pointer;">Delete card</button></sc-if>
+    </div></div>
   </div>
-  <sc-if value="{{typing}}" hint-placeholder-val="{{ true }}">${KEYBOARD(FMT_BAR)}</sc-if>
+  <sc-if value="{{drawKb}}" hint-placeholder-val="{{ true }}">${KEYBOARD(FMT_BAR)}</sc-if>
 </div>`;
 
 const phoneReview = `<div style="position: relative; isolation: isolate; width: 390px; height: 844px; box-sizing: border-box; padding: 60px 16px 34px; display: flex; flex-direction: column; gap: 16px; overflow: hidden; font-family: ${FONT}; background: {{t.bg}}; color: {{t.text}};">
@@ -2308,7 +2331,7 @@ const phoneReview = `<div style="position: relative; isolation: isolate; width: 
     <div role="dialog" aria-label="New pile" style="position: absolute; left: 16px; right: 16px; bottom: ${KB_H + 16}px; box-sizing: border-box; padding: 20px; border-radius: 28px; background: {{t.bg}}; display: flex; flex-direction: column; gap: 14px;">
       ${PILE_FORM}
     </div>
-    ${KEYBOARD()}
+    <sc-if value="{{drawKb}}" hint-placeholder-val="{{ true }}">${KEYBOARD()}</sc-if>
   </sc-if>
 </div>`;
 
@@ -2335,15 +2358,19 @@ const phoneStats = phone(`<div style="padding: 64px 20px 120px; display: flex; f
     ${DUE_BARS(7, 6, 6)}
   </div>
 </div>`, 'Stats');
-const phoneStatsLogic = `renderVals() { ${T}${HEAT_LOGIC(17)}${FORECAST_JS(DUE_7, 60)}
-  return { t, heat, legend, forecast, dueTotal, busy, kpis: [{ label: 'Streak', value: '12 days' }, { label: 'Remembered', value: '90%' }, { label: 'Reviews', value: '1,284' }, { label: 'Cards', value: '2,470' }] }; }`;
+// Your last 30 days, the last 17 weeks of study days, and the cards due each day this week (the canvas: its sample).
+const phoneStatsLogic = `renderVals() { ${T}${DB_JS}
+  const st = db.stats('Month'), plural = (n, w) => n + ' ' + w + (n === 1 ? '' : 's');
+  ${HEAT_LOGIC(17)}${FORECAST_JS('db.today().forecast', 60)}
+  return { t, heat: st.heat ? st.heat.slice(-17 * 7).map(cell) : heat, legend, forecast, dueTotal, busy,
+    kpis: [{ label: 'Streak', value: plural(st.streak, 'day') }, { label: 'Remembered', value: st.remembered == null ? '—' : st.remembered + '%' }, { label: 'Reviews', value: st.reviews }, { label: 'Cards', value: st.cards }] }; }`;
 
 const phoneConnect = phone(`<div style="padding: 64px 20px 120px; display: flex; flex-direction: column; gap: 16px;">
   ${pTitle('Connect AI')}
   <div style="font-size: 15px; line-height: 1.45; color: {{t.muted}};">Make cards from any chat: text, fill-in-the-blank, images, and audio.</div>
   ${meshCard('hero', 'border-radius: 32px;', 'box-sizing: border-box; padding: 20px; display: flex; flex-direction: column; gap: 12px;', `
     <span style="font-size: 12px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; opacity: .8;">Your MCP link</span>
-    <span style="font-family: ${MONO}; font-size: 14px; padding: 14px 16px; border-radius: 999px; ${glass}">https://app.lucida.cards/mcp/lk_5b1f0c6e…</span>
+    <span style="font-family: ${MONO}; font-size: 14px; white-space: nowrap; padding: 14px 16px; border-radius: 999px; ${glass}">{{mcpUrl}}</span>
     <button type="button" onClick="{{copy}}" style="height: 48px; border: 0; border-radius: 999px; background: #FFFFFF; color: #000000; font: inherit; font-size: 15px; font-weight: 600; cursor: pointer;">{{copyLabel}}</button>`)}
   <div style="display: flex; flex-direction: column;">
     <sc-for list="{{providers}}" as="p" hint-placeholder-count="4">
@@ -2351,11 +2378,13 @@ const phoneConnect = phone(`<div style="padding: 64px 20px 120px; display: flex;
     </sc-for>
   </div>
 </div>`, 'Connect');
+// Your MCP link runs on past its pill to the card's edge, as on the canvas.
 const phoneConnectLogic = `
 constructor(props) { super(props); this.state = { copied: false }; }
-renderVals() { ${T}
-  ${PROVIDERS_JS}
-  return { ${MESH_VALS('Apricot')} t, providers, copyLabel: this.state.copied ? 'Copied' : 'Copy link', copy: () => this.setState({ copied: true }) }; }`;
+renderVals() { ${T}${DB_JS}
+  const ai = db.ai();
+  ${PROVIDERS('ai.clients')}
+  return { ${MESH_VALS('Apricot')} t, providers, mcpUrl: ai.url, copyLabel: this.state.copied ? 'Copied' : 'Copy link', copy: () => { db.act.copy(ai.url); this.setState({ copied: true }); } }; }`;
 
 // iPhone Settings, from the gear on Today. Appearance switches this screen right away. The page scrolls; the board is
 // tall enough to show all of it.
@@ -2366,7 +2395,12 @@ const sRow = (label, right, { href = '', sub = '', click = '' } = {}) => {
   return href ? `<a href="${href}" style="${st}">${inner}</a>` : click ? `<button type="button" onClick="{{${click}}}" style="${st} width: 100%; border: 0; background: transparent; color: inherit; font: inherit; text-align: left; cursor: pointer;">${inner}</button>` : `<div style="${st}">${inner}</div>`;
 };
 const sVal = v => `<span style="display: flex; align-items: center; gap: 6px; font-size: 15px; color: {{t.muted}}; white-space: nowrap;">${v}${svg(I.chev, 14, 2.2)}</span>`;
-const sGroup = (title, rows) => `<div style="display: flex; flex-direction: column; gap: 8px;"><span style="padding: 0 4px; font-size: 13px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: {{t.muted}};">${title}</span><div style="border-radius: 24px; background: {{t.surf}}; overflow: hidden;">${rows.join('<div style="height: 1px; margin-left: 16px; background: {{t.bg}};"></div>')}</div></div>`;
+// A row that picks from a list: tapping it opens the phone's own picker (an invisible <select> over the row, with 16px
+// text so the phone doesn't zoom in), like the iPhone app's menus. `k` names a renderVals object made by pickOf()
+// (phoneSettingsLogic); `options` are [value, label].
+const sPick = (label, k, options) => `<div style="position: relative;">${sRow(label, sVal(`{{${k}.label}}`))}<select onChange="{{${k}.set}}" ref="{{${k}.ref}}" aria-label="${label}" style="position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; border: 0; font-size: 16px; cursor: pointer;">${options.map(([v, l]) => `<option value="${v}">${l}</option>`).join('')}</select></div>`;
+const S_LINE = '<div style="height: 1px; margin-left: 16px; background: {{t.bg}};"></div>';
+const sGroup = (title, rows) => `<div style="display: flex; flex-direction: column; gap: 8px;"><span style="padding: 0 4px; font-size: 13px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: {{t.muted}};">${title}</span><div style="border-radius: 24px; background: {{t.surf}}; overflow: hidden;">${rows.join(S_LINE)}</div></div>`;
 const PRO_BADGE = '<span style="height: 22px; padding: 0 9px; display: inline-flex; align-items: center; border-radius: 999px; background: linear-gradient(90deg, #7E94FB, #2CB2EA); color: #FFFFFF; font-size: 12px; font-weight: 700; letter-spacing: .01em;">Pro</span>';
 // Settings → Plan: Free, with a way to Go Pro; or Pro, when it renews (or ends), and Stripe's page to manage or cancel it.
 // Online only: on your own computer everything is on, so there's no plan to show.
@@ -2386,37 +2420,50 @@ const PLAN_JS = pricingBoard => `const planOf = { Free: { pro: false }, Pro: { p
     manageHref: plan && plan.manage || 'https://lucida.cards/pricing', proHref: db.mock ? '${pricingBoard}.dc.html' : 'https://lucida.cards/pricing' };`;
 const phoneSettings = phone(`<div style="padding: 64px 20px 34px; display: flex; flex-direction: column; gap: 18px;">
   <div style="display: flex; align-items: center; gap: 12px;">${roundBtn('back', 'Back', 'PhoneToday.dc.html')}<div style="flex-grow: 1; font-size: 17px; font-weight: 600; text-align: center;">Settings</div><div style="width: 44px;"></div></div>
-  <div style="border-radius: 24px; background: {{t.surf}}; padding: 14px 16px; display: flex; align-items: center; gap: 14px;">${AVATAR(44)}<span style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px;"><span style="font-size: 16px; font-weight: 600;">Your account</span><span style="font-size: 13px; color: {{t.muted}};">Synced on all your devices · just now</span></span><span style="display: flex; color: {{t.muted}};">${svg(I.chev, 14, 2.2)}</span></div>
+  <button type="button" onClick="{{account}}" style="width: 100%; border: 0; border-radius: 24px; background: {{t.surf}}; padding: 14px 16px; display: flex; align-items: center; gap: 14px; color: inherit; font: inherit; text-align: left; cursor: pointer;">${AVATAR_ME(44)}<span style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px;"><span style="font-size: 16px; font-weight: 600;">Your account</span><span style="font-size: 13px; color: {{t.muted}}; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{accountSub}}</span></span><span style="display: flex; color: {{t.muted}};">${svg(I.chev, 14, 2.2)}</span></button>
   ${planGroups}
   ${sGroup('Studying', [
-    sRow('Daily reminder', sVal('9:00 AM')),
-    sRow('New cards a day', sVal('20')),
-    sRow('Remember goal', sVal('90%')),
-    sRow('Schedule with FSRS', SWITCH('fsrsSw', 'toggleFsrs', 'Schedule with FSRS'), { sub: 'For 4 grades and ✓ / ✗' })
+    sPick('Daily reminder', 'reminder', ['7:00 AM', '8:00 AM', '9:00 AM', '12:00 PM', '6:00 PM', '8:00 PM', '9:00 PM'].map(x => [x, x])),
+    sPick('New cards a day', 'perDay', [0, 5, 10, 15, 20, 30, 50].map(n => [n, n])),
+    sPick('Remember goal', 'goal', [80, 85, 90, 93, 95].map(n => [n, n + '%'])),
+    sRow('Schedule with FSRS', SWITCH('fsrsSw', 'toggleFsrs', 'Schedule with FSRS'), { sub: '{{fsrsSub}}' })
   ])}
   ${sGroup('Look', [sRow('Appearance', SEG('looks', 'Appearance')), sRow('Card gradients', SEG('grads', 'Card gradients'))])}
   ${sGroup('Your AI', [
-    sRow('Connected apps', sVal('Claude, ChatGPT'), { href: 'PhoneConnect.dc.html' }),
-    sRow('Check AI cards first', SWITCH('checkSw', 'toggleCheck', 'Check AI cards first')),
-    sRow('Cards to check', sVal('3'), { href: 'PhoneInbox.dc.html' })
+    sRow('Connected apps', sVal('{{connected}}'), { href: 'PhoneConnect.dc.html' }),
+    sRow('Check AI cards first', SWITCH('checkSw', 'toggleCheck', 'Check AI cards first'))
+      + `<sc-if value="{{hasInbox}}" hint-placeholder-val="{{ true }}">${S_LINE}${sRow('Cards to check', sVal('{{toCheck}}'), { href: 'PhoneInbox.dc.html' })}</sc-if>`
   ])}
 </div>`, '', '', PHONE_SETTINGS_H);
 const phoneSettingsLogic = `
-constructor(props) { super(props); this.state = { look: 'system', grads: 'mix', fsrs: true, check: true }; }
 renderVals() {
-  const s = this.state;
-  // System follows the board's dark setting; Light and Dark switch this screen right away.
-  const t = this.theme(s.look === 'dark' || (s.look === 'system' && !!this.props.dark));
+  const db = this.props.db || this.mock(), chrome = db.chrome(), st = db.settings();
+  // Appearance: on the canvas System follows the board's dark setting, and Light and Dark switch this screen right
+  // away; in the app the whole app switches.
+  const look = st.look;
+  const t = this.theme(db.mock ? look === 'dark' || (look === 'system' && !!this.props.dark) : !!this.props.dark);
   ${SW_JS}
   ${OPTS_JS}
-  const db = this.props.db || this.mock();
+  const set = patch => db.act.setSettings(patch), piles = st.grading === 'piles';
+  // A row's list (sPick): the value it shows, and saving a pick. The list shows the current value as picked.
+  const pickOf = (cur, label, save) => ({ label, set: e => save(e.target.value), ref: el => { if (el && el.value !== String(cur)) el.value = String(cur); } });
   ${PLAN_JS('PricingPhone')}
   return {
-    t, ...planVals,
-    looks: opts([['system', 'System'], ['light', 'Light'], ['dark', 'Dark']], s.look, id => this.setState({ look: id })),
-    grads: opts([['mix', 'Mix'], ['vivid', 'Vivid'], ['deep', 'Deep']], s.grads, id => this.setState({ grads: id })),
-    fsrsSw: sw(s.fsrs), toggleFsrs: () => this.setState({ fsrs: !s.fsrs }),
-    checkSw: sw(s.check), toggleCheck: () => this.setState({ check: !s.check })
+    t, ...chrome, ...planVals,
+    // Your account: tap it to sign out (online).
+    accountSub: db.mock ? 'Synced on all your devices · just now' : st.sub,
+    account: () => { if (!db.mock && st.signedIn && confirm('Sign out of Lucida?')) db.act.signOut(); },
+    reminder: pickOf(st.reminder, st.reminder, v => set({ reminder: v })),
+    perDay: pickOf(st.perDay, String(st.perDay), v => set({ perDay: +v })),
+    goal: pickOf(st.goal, st.goal + '%', v => set({ goal: +v })),
+    fsrsSw: sw(st.fsrs && !piles, !piles), toggleFsrs: () => !piles && set({ fsrs: !st.fsrs }),
+    fsrsSub: piles ? 'Off while you grade with piles' : 'For 4 grades and ✓ / ✗',
+    looks: opts([['system', 'System'], ['light', 'Light'], ['dark', 'Dark']], look, id => set({ look: id })),
+    grads: opts([['mix', 'Mix'], ['vivid', 'Vivid'], ['deep', 'Deep']], st.grads, id => set({ grads: id })),
+    connected: db.ai().connected,
+    checkSw: sw(st.check), toggleCheck: () => db.act.setPerm('check', !st.check),
+    // Checking AI cards has its own page on the canvas only; in the app they wait in their deck.
+    hasInbox: !!db.mock, toCheck: '3'
   };
 }`;
 
@@ -2635,7 +2682,7 @@ const phoneTodayNew = phone(`<div style="padding: 64px 20px 120px; display: flex
   <div style="display: flex; flex-direction: column; gap: 10px;">
     <div style="font-size: 13px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: {{t.muted}}; padding: 0 4px;">Get started</div>
     ${phoneStartTile('plus', 'Make a deck', 'Start from scratch with your own cards', 'PhoneNewDeck.dc.html', true)}
-    <div style="display: flex; gap: 8px;">${phoneStartTile('upload', 'Import cards', 'From Anki, Quizlet, or a CSV file.', 'PhoneTodayNew.dc.html')}${phoneStartTile('connect', 'Connect your AI', 'Let Claude or ChatGPT make cards.', 'PhoneConnect.dc.html')}</div>
+    <div style="display: flex; gap: 8px;">${phoneStartTile('upload', 'Import cards', 'From Anki, Quizlet, or a CSV file.', '{{importHref}}')}${phoneStartTile('connect', 'Connect your AI', 'Let Claude or ChatGPT make cards.', 'PhoneConnect.dc.html')}</div>
   </div>
   <div style="background: {{t.surf}}; border-radius: 24px; padding: 18px; display: flex; flex-direction: column; gap: 14px;">
     <div style="display: flex; align-items: center; gap: 12px;"><span style="width: 36px; height: 36px; border-radius: 18px; background: {{t.surf2}}; color: {{t.muted}}; display: flex; align-items: center; justify-content: center;">${svg(I.flame, 18, 2)}</span><span style="display: flex; flex-direction: column; gap: 1px;"><span style="font-size: 15px; font-weight: 600;">No streak yet</span><span style="font-size: 12px; color: {{t.muted}};">Study today to start one</span></span></div>
@@ -2646,12 +2693,12 @@ const phoneDeckEmpty = phone(`<div style="height: 100%; box-sizing: border-box; 
   <div style="position: relative; height: 232px; flex-shrink: 0; overflow: hidden;">
     ${meshCard('cover', 'position: absolute; inset: 0;', 'height: 100%;', '')}
     <div style="position: absolute; inset: 0; box-sizing: border-box; padding: 54px 16px 18px 20px; display: flex; flex-direction: column; justify-content: space-between; color: {{cover.ink}};">
-      <div style="display: flex; justify-content: space-between;">${coverRound('back', 'Back', 'PhoneToday.dc.html')}<div style="display: flex; gap: 8px;">${coverRound('gear', 'Deck settings')}${coverRound('plus', 'New card', 'PhoneEditor.dc.html')}</div></div>
-      <div style="display: flex; flex-direction: column; gap: 4px; text-shadow: {{cover.shadow}};"><div style="font-size: 32px; font-weight: 700; letter-spacing: -.03em; line-height: 1.05;">Pharmacology</div><div style="font-size: 14px; opacity: .8;">No cards yet</div></div>
+      <div style="display: flex; justify-content: space-between;">${coverRound('back', 'Back', 'PhoneToday.dc.html')}<div style="display: flex; gap: 8px;">${coverRound('gear', 'Deck settings', '', '{{openSettings}}')}${coverRound('plus', 'New card', 'PhoneEditor.dc.html')}</div></div>
+      <div style="display: flex; flex-direction: column; gap: 4px; text-shadow: {{cover.shadow}};"><div style="font-size: 32px; font-weight: 700; letter-spacing: -.03em; line-height: 1.05; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{deckName}}</div><div style="font-size: 14px; opacity: .8;">No cards yet</div></div>
     </div>
   </div>
   <div style="flex-grow: 1; box-sizing: border-box; padding: 0 28px; display: flex; align-items: center; justify-content: center;">
-    ${emptyBlock({ art: EMPTY_ART(140, 'plus'), title: 'This deck is empty', size: 22, body: 'Add your first card, import some, or ask your AI to make them.', actions: phoneActionRow(phoneBtn('New card', 'PhoneEditor.dc.html', 'plus', true), phoneBtn2('Import cards', 'PhoneDeckEmpty.dc.html', 'upload'), phoneBtn2('Ask your AI', 'PhoneConnect.dc.html', 'sparkle')) })}
+    ${emptyBlock({ art: EMPTY_ART(140, 'plus'), title: 'This deck is empty', size: 22, body: 'Add your first card, import some, or ask your AI to make them.', actions: phoneActionRow(phoneBtn('New card', 'PhoneEditor.dc.html', 'plus', true), phoneBtn2('Import cards', '{{importHref}}', 'upload'), phoneBtn2('Ask your AI', 'PhoneConnect.dc.html', 'sparkle')) })}
   </div>
 </div>`, 'Library');
 // The Decks tab before there are any decks.
@@ -2738,7 +2785,10 @@ renderVals() {
     deckChips: decks.slice(0, 6).map(d => { const on = d.name === deckName; return { name: d.name, pressed: on ? 'true' : 'false', bg: on ? t.inv : t.surf, fg: on ? t.invText : t.text, pick: () => this.setState({ deck: d.name }) }; }),
     importLabel: cards.length ? 'Import ' + plural(cards.length, 'card') : 'Import cards', importBg: cards.length ? t.inv : t.surf2, importFg: cards.length ? t.invText : t.muted,
     backHref: here && !db.mock ? here.href : db.href('decks'),
-    doImport: e => { if (db.mock) return; e.preventDefault(); if (cards.length) db.act.importCards({ deckName: deckName.trim() || 'Imported cards', cards }); }
+    // Into the deck with that name (this deck first), or a new deck when no deck has it.
+    doImport: e => { if (db.mock) return; e.preventDefault(); if (!cards.length) return;
+      const name = deckName.trim() || 'Imported cards', same = here && here.id && here.name === name ? here : decks.find(d => d.name.trim().toLowerCase() === name.toLowerCase());
+      db.act.importCards({ deckId: same ? same.id : '', deckName: name, cards }); }
   };
 }`;
 const phoneNewDeck = `<div style="position: relative; width: 390px; height: 844px; overflow: hidden; font-family: ${FONT}; color: {{t.text}};">

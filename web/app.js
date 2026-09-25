@@ -8,36 +8,39 @@ import { createDb, afterSignIn } from './db.js';
 // Which board shows for a page. Some depend on your data: no decks yet shows the new-user Today, and so on.
 // /b (every canvas board with sample data) is for working on the design, so it only opens on your own computer.
 const DESIGN = ['localhost', '127.0.0.1'].includes(location.hostname);
-// Phones sign in on the phone sign-in pages, which fill the screen (design/to-web.mjs).
+// Phones get the iPhone boards, which fill the screen (design/to-web.mjs). Importing cards has no iPhone board, so phones
+// get the web's.
 const narrow = matchMedia('(max-width: 760px)');
 function resolve(path, q) {
   if (path.startsWith('/b/')) return DESIGN ? { name: decodeURIComponent(path.slice(3)), design: true } : { redirect: '/' };
+  const P = narrow.matches ? 'Phone' : 'Web';
   // Online and signed out: only the sign-in pages (and the code page once a code is on its way).
-  if (db.signedOut) { const p = narrow.matches ? 'Phone' : 'Web'; return path === '/sign-in/code' && db.auth.email() ? { name: p + 'SignInCode' } : path === '/sign-in' ? { name: p + 'SignIn' } : { redirect: '/sign-in' }; }
+  if (db.signedOut) return path === '/sign-in/code' && db.auth.email() ? { name: P + 'SignInCode' } : path === '/sign-in' ? { name: P + 'SignIn' } : { redirect: '/sign-in' };
   if (path.startsWith('/sign-in')) return { redirect: '/' };
   const deck = /^\/deck\/([^/]+)(\/card(?:\/([^/]+))?|\/import|\/learn)?$/.exec(path);
-  if (path === '/') return { name: db.decks().length ? 'Main' : 'WebTodayNew' };
+  if (path === '/') return { name: db.decks().length ? (narrow.matches ? 'PhoneToday' : 'Main') : P + 'TodayNew' };
   // The Library (it was called Decks): your folders and decks, one folder, or all your cards. Old /decks links land here.
   if (path === '/decks') return { redirect: '/library' };
   const lib = /^\/library(?:\/(cards)|\/folder\/([^/]+))?$/.exec(path);
   if (lib) {
     if (lib[2] && !db.raw().folders.some(f => f.id === lib[2])) return { redirect: '/library' };
-    const phone = narrow.matches, empty = !db.decks().length && !db.raw().folders.length;
-    if (empty && !lib[1] && !lib[2]) return { name: phone ? 'PhoneDecksEmpty' : 'WebDecksEmpty' };
-    return { name: phone ? 'PhoneLibrary' : 'WebDecks', props: { mode: lib[1] ? 'cards' : 'decks', folder: lib[2] || '' } };
+    const empty = !db.decks().length && !db.raw().folders.length;
+    if (empty && !lib[1] && !lib[2]) return { name: P + 'DecksEmpty' };
+    return { name: narrow.matches ? 'PhoneLibrary' : 'WebDecks', props: { mode: lib[1] ? 'cards' : 'decks', folder: lib[2] || '' } };
   }
-  if (path === '/decks/new') return { name: 'WebNewDeck' };
+  if (path === '/decks/new') return { name: P + 'NewDeck' };
   if (path === '/decks/import') return { name: 'WebImport' };
   if (deck) {
     const id = deck[1];
     if (!db.raw().decks.some(d => d.id === id)) return { redirect: '/library' };
     if (deck[2] === '/import') return { name: 'WebImport', props: { deckId: id } };
-    // Learn mode starts from a sheet over the deck (phones get the phone boards, which fill the screen). It's Pro: on
-    // Free the sheet shows what Pro adds instead.
-    if (deck[2] === '/learn') return { name: (narrow.matches ? 'Phone' : 'Web') + (db.pro() ? 'QuizStart' : 'QuizUpgrade'), props: { deckId: id } };
-    if (deck[2]) return { name: 'WebEditor', props: { deckId: id, cardId: deck[3] || '', from: q.get('from') || '' } };
+    // Learn mode starts from a sheet over the deck. It's Pro: on Free the sheet shows what Pro adds instead.
+    if (deck[2] === '/learn') return { name: P + (db.pro() ? 'QuizStart' : 'QuizUpgrade'), props: { deckId: id } };
+    // The iPhone editor board starts with its keyboard up, as the canvas shows it; on a phone it starts like the web's,
+    // with no field picked (the phone brings up its own keyboard).
+    if (deck[2]) return { name: P + 'Editor', props: { deckId: id, cardId: deck[3] || '', from: q.get('from') || '', ...(narrow.matches ? { keyboard: false } : {}) } };
     // An empty deck shows its empty page, unless you opened its settings.
-    return { name: db.cards(id).length || q.get('settings') === '1' ? 'WebDeck' : 'WebDeckEmpty', props: { deckId: id, settingsOpen: q.get('settings') === '1' } };
+    return { name: P + (db.cards(id).length || q.get('settings') === '1' ? 'Deck' : 'DeckEmpty'), props: { deckId: id, settingsOpen: q.get('settings') === '1' } };
   }
   // A Learn mode session: the board for its current question, or the end once every card is learned.
   const ln = /^\/learn\/([^/]+)$/.exec(path);
@@ -45,23 +48,24 @@ function resolve(path, q) {
     if (!db.pro()) return { redirect: '/deck/' + ln[1] + '/learn' };
     const L = db.learn();
     if (!L || L.deckId !== ln[1]) return { redirect: '/deck/' + ln[1] + '/learn' };
-    return { name: (narrow.matches ? 'Phone' : 'Web') + (L.done === true ? 'QuizDone' : { match: 'QuizMatch', type: 'QuizType' }[L.type] || 'Quiz'), props: { deckId: ln[1] } };
+    return { name: P + (L.done === true ? 'QuizDone' : { match: 'QuizMatch', type: 'QuizType' }[L.type] || 'Quiz'), props: { deckId: ln[1] } };
   }
   const rv = /^\/review(?:\/([^/]+))?$/.exec(path);
   if (rv && rv[1] !== 'done') {
     const id = rv[1] || '', pile = q.get('pile') || '';
     if (id && !db.raw().decks.some(d => d.id === id)) return { redirect: '/library' };
     if (!db.hasQueue(id, pile)) return { redirect: db.session().cards ? '/review/done' : id ? '/deck/' + id : '/' };
-    return { name: 'WebReview', props: { deckId: id, pile } };
+    return { name: P + 'Review', props: { deckId: id, pile } };
   }
   // Sorting into piles doesn't grade, so that session ends on its own page.
-  if (path === '/review/done') return { name: db.session().onlyPiles ? 'WebDonePiles' : 'WebDone' };
-  if (path === '/stats') return { name: db.hasReviews() ? 'WebStats' : 'WebStatsEmpty' };
-  if (path === '/connect') return { name: 'WebConnect' };
-  if (path === '/settings') return { name: 'WebSettings' };
+  if (path === '/review/done') return { name: P + (db.session().onlyPiles ? 'DonePiles' : 'Done') };
+  if (path === '/stats') return { name: P + (db.hasReviews() ? 'Stats' : 'StatsEmpty') };
+  if (path === '/connect') return { name: P + 'Connect' };
+  if (path === '/settings') return { name: P + 'Settings' };
   return { redirect: '/' };
 }
 // Links between boards: in the app they go to the matching page (for the deck you're on); on /b they stay on /b.
+// An iPhone board goes where its web board does.
 function linkFor(name) {
   if (current && current.design) return '/b/' + name;
   const id = current && current.props.deckId;
@@ -71,7 +75,7 @@ function linkFor(name) {
     WebEditor: id ? '/deck/' + id + '/card' : db.signedOut ? '/' : db.today().newCardHref, WebReview: id ? '/review/' + id : '/review', WebDone: '/review/done', WebDonePiles: '/review/done',
     WebQuizStart: id ? '/deck/' + id + '/learn' : '/library', PhoneQuizStart: id ? '/deck/' + id + '/learn' : '/library', WebQuizUpgrade: id ? '/deck/' + id + '/learn' : '/library', PhoneQuizUpgrade: id ? '/deck/' + id + '/learn' : '/library', PhoneDeck: id ? '/deck/' + id : '/library', Pricing: 'https://lucida.cards/pricing', PricingPhone: 'https://lucida.cards/pricing',
     WebStats: '/stats', WebStatsEmpty: '/stats', WebConnect: '/connect', WebSettings: '/settings', WebSignIn: '/sign-in', WebSignInCode: '/sign-in/code', PhoneSignIn: '/sign-in', PhoneSignInCode: '/sign-in/code', PhoneToday: '/', Privacy: '/privacy', Terms: '/terms' };
-  return pages[name] || '/b/' + name;
+  return pages[name] || pages[name.replace(/^Phone/, 'Web')] || '/b/' + name;
 }
 
 // ---------- screens ----------
@@ -244,10 +248,12 @@ async function go(path, push, replace) {
   current = { name: r.name, path: url.pathname, search: url.search, query: url.searchParams, design: !!r.design, key: 'r' + (++navs), props: r.props || {} };
   for (const c of instances.values()) c.componentWillUnmount?.();
   instances.clear();
-  app.className = s.fill ? '' : 'fixed';
+  // A phone board fills a phone's screen; on a wider window (only /b shows one there) it keeps the phone's size.
+  app.className = !s.fill ? 'fixed' : s.w === 390 && !narrow.matches ? 'fixed phone' : '';
+  app.style.setProperty('--board-h', s.h + 'px');
   app.textContent = '';
   const deck = current.props.deckId && !db.signedOut && db.raw().decks.find(d => d.id === current.props.deckId);
-  document.title = (r.name === 'Main' ? 'Today' : deck && r.name.startsWith('WebDeck') ? deck.name : s.title.replace(/^(Web|iPhone) · /, '').replace(/ page$/, '').replace(/ · .*$/, '')) + ' · Lucida';
+  document.title = (r.name === 'Main' ? 'Today' : deck && /^(Web|Phone)Deck/.test(r.name) ? deck.name : s.title.replace(/^(Web|iPhone) · /, '').replace(/ page$/, '').replace(/ · .*$/, '')) + ' · Lucida';
   paint();
   scrollTo(0, 0);
 }

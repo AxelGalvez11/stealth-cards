@@ -752,7 +752,10 @@ renderVals() {
     deckChips: decks.slice(0, 6).map(d => { const on = d.name === deckName; return { name: d.name, pressed: on ? 'true' : 'false', bg: on ? t.inv : t.surf, fg: on ? t.invText : t.text, pick: () => this.setState({ deck: d.name }) }; }),
     importLabel: cards.length ? 'Import ' + plural(cards.length, 'card') : 'Import cards', importBg: cards.length ? t.inv : t.surf2, importFg: cards.length ? t.invText : t.muted,
     backHref: here && !db.mock ? here.href : db.href('decks'),
-    doImport: e => { if (db.mock) return; e.preventDefault(); if (cards.length) db.act.importCards({ deckName: deckName.trim() || 'Imported cards', cards }); }
+    // Into the deck with that name (this deck first), or a new deck when no deck has it.
+    doImport: e => { if (db.mock) return; e.preventDefault(); if (!cards.length) return;
+      const name = deckName.trim() || 'Imported cards', same = here && here.id && here.name === name ? here : decks.find(d => d.name.trim().toLowerCase() === name.toLowerCase());
+      db.act.importCards({ deckId: same ? same.id : '', deckName: name, cards }); }
   };
 }
 }

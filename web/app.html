@@ -11,8 +11,10 @@
 <style>
 html, body { margin: 0; }
 body { font-family: Geist, -apple-system, system-ui, sans-serif; }
-/* Boards that aren't web pages (the iPhone ones) keep their size and sit in the middle. */
+/* Boards that aren't web pages (the iPhone ones) keep their size and sit in the middle, and so do the iPhone boards
+   that fill a phone's screen when the window is wider (on /b). */
 #app.fixed { min-height: 100vh; box-sizing: border-box; padding: 32px; display: grid; place-items: center; background: #F4F4F4; }
+#app.phone > * { width: 390px !important; height: var(--board-h) !important; min-height: 0 !important; max-height: none !important; }
 #app.list { max-width: 960px; margin: 0 auto; padding: 48px 24px; color: #000; }
 #app.list h1 { margin: 0 0 6px; font-size: 40px; font-weight: 600; letter-spacing: -.03em; }
 #app.list p { margin: 0 0 24px; color: #666; }
@@ -21,6 +23,12 @@ body { font-family: Geist, -apple-system, system-ui, sans-serif; }
 #app.list li { padding: 6px 0; break-inside: avoid; }
 #app.list a { color: inherit; text-decoration: none; font-size: 15px; }
 #app.list a:hover { text-decoration: underline; }
+@media (max-width: 760px) {
+  /* Importing cards has no iPhone board, so on a phone the web's Import dialog spans the screen. */
+  #app [role="dialog"][aria-label="Import cards"] { left: 12px !important; right: 12px; width: auto !important; padding: 20px !important; border-radius: 28px !important; }
+  /* A phone zooms in on a field whose text is under 16px when it's tapped, so fields there use 16px. */
+  #app .sc-rich, #app input[type="text"]:not(.sc-num), #app textarea { font-size: 16px !important; }
+}
 </style>
 <script type="module" src="/app.js"></script>
 </head>

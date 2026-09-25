@@ -779,7 +779,8 @@ renderVals() {
     toggleSettings: () => this.setState({ settings: !settingsOpen }),
     knew: { label: 'Knew it', title: fsrsOn ? 'Knew it · ' + iv.good : 'Knew it', pick: grade(3) }, missed: { label: 'Didn’t know', title: fsrsOn ? 'Didn’t know · ' + iv.again : 'Didn’t know', pick: grade(1) },
     canAddPile: pileList.length < 5,
-    newPileOpen: draft != null, pileName: draft || '',
+    // The iPhone's New pile shows a keyboard drawn on the canvas; in the app the phone shows its own.
+    newPileOpen: draft != null, pileName: draft || '', drawKb: !!db.mock,
     openPile: () => this.setState({ pileDraft: '' }),
     setPileName: e => this.setState({ pileDraft: e && e.target ? e.target.value : draft }),
     cancelPile: () => this.setState({ pileDraft: null }),
