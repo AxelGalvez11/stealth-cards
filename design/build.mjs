@@ -4,6 +4,7 @@ import { writeFileSync, mkdirSync, readFileSync, readdirSync, existsSync } from 
 import { PALETTE_NAMES, PALETTES, flowSvg, grainSvg, grainTile, paletteData } from './surfaces.mjs';
 import { GEN_METHOD } from './generator.mjs';
 import { MOCK_METHOD } from './mock.mjs';
+import { DRAG_METHOD } from './drag.mjs';
 import { WALL_CARDS } from './wall.mjs';
 import { PRIVACY, TERMS, UPDATED } from './legal.mjs';
 import { PRO_LINKS } from '../web/plans.mjs';
@@ -59,7 +60,7 @@ mesh(name, i) {
 }
 ${GEN_METHOD}
 ${MOCK_METHOD}
-${logic.includes('this.rich(') ? RICH_METHOD : ''}
+${logic.includes('this.rich(') ? RICH_METHOD : ''}${logic.includes('this.drag(') ? '\n' + DRAG_METHOD : ''}
 ${logic}
 }
 </script>
@@ -158,7 +159,8 @@ const sidebar = active => `<nav style="width: 240px; flex-shrink: 0; box-sizing:
   <div style="flex-grow: 1;"></div>
   <a href="WebSettings.dc.html" aria-label="Settings" style="display: flex; align-items: center; gap: 12px; height: 40px; padding: 0 14px 0 9px; border-radius: 999px; font-size: 14px; ${active === 'You' ? 'background: {{t.surf}}; color: {{t.text}}; font-weight: 600;' : 'color: {{t.muted}};'}">${AVATAR_ME(28)}You<span style="margin-left: auto; display: flex;">${svg(I.gear, 18)}</span></a>
 </nav>`;
-const webRoot = inner => `<div style="width: 1440px; height: 900px; box-sizing: border-box; display: flex; overflow: hidden; font-family: ${FONT}; background: {{t.bg}}; color: {{t.text}};">
+// `board`: the page has things to drag (see drag.mjs), and popups and trays drawn over the whole page.
+const webRoot = (inner, board = false) => `<div${board ? ' data-sc-board="{{dragKey}}"' : ''} style="width: 1440px; height: 900px; box-sizing: border-box; display: flex; overflow: hidden; font-family: ${FONT}; background: {{t.bg}}; color: {{t.text}};${board ? ' position: relative;' : ''}">
 ${inner}
 </div>`;
 
@@ -319,13 +321,14 @@ const webToday = webRoot(`${sidebar('Today')}
     <div style="display: flex; flex-direction: column; gap: 6px;">
       <div style="display: flex; align-items: center; justify-content: space-between;">${eyebrow('Decks')}<span style="font-size: 12px; color: {{t.muted}};">Most urgent first</span></div>
       <sc-for list="{{decks}}" as="d" hint-placeholder-count="6">
-        <div style="display: flex; align-items: center; gap: 16px; height: 56px; border-bottom: 1px solid {{t.line}};">
-          <a href="{{d.href}}" style="flex-grow: 1; min-width: 0; font-size: 15px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{d.name}}</a>
+        <div class="sc-row" style="position: relative; display: flex; align-items: center; gap: 16px; height: 56px; border-bottom: 1px solid {{t.line}};">
+          <a href="{{d.href}}" aria-label="{{d.name}}" class="sc-hit" style="position: absolute; inset: 0;"></a>
+          <span style="flex-grow: 1; min-width: 0; font-size: 15px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{d.name}}</span>
           <span style="flex-shrink: 0; height: 26px; padding: 0 10px; display: inline-flex; align-items: center; border-radius: 999px; font-size: 12px; font-weight: 600; background: {{d.tagBg}}; color: {{d.tagFg}};">{{d.tag}}</span>
           <span style="flex-shrink: 0; width: 40px; text-align: right; font-family: ${MONO}; font-size: 15px; color: {{d.countColor}};">{{d.due}}</span>
-          <span style="flex-shrink: 0; width: 84px; display: flex; justify-content: flex-end;">
-            <sc-if value="{{d.hasDue}}" hint-placeholder-val="{{ true }}">${pill('Study', { href: '{{d.studyHref}}', h: 32 })}</sc-if>
-            <sc-if value="{{d.noDue}}" hint-placeholder-val="{{ false }}"><span style="font-size: 13px; color: {{t.muted}};">Up to date</span></sc-if>
+          <span style="position: relative; flex-shrink: 0; width: 100px; display: flex; justify-content: flex-end; pointer-events: none;">
+            <sc-if value="{{d.canStudy}}" hint-placeholder-val="{{ true }}"><span style="display: flex; pointer-events: auto;">${pill('Flashcards', { href: '{{d.studyHref}}', h: 32 })}</span></sc-if>
+            <sc-if value="{{d.noStudy}}" hint-placeholder-val="{{ false }}"><span style="font-size: 13px; color: {{t.muted}};">Up to date</span></sc-if>
           </span>
         </div>
       </sc-for>
@@ -365,7 +368,8 @@ renderVals() {
       : d.due ? { tag: 'Due today', tagBg: t.hardTint, tagFg: t.hard }
       : d.soon == null ? { tag: d.fresh ? d.fresh + ' new' : 'No cards yet', tagBg: t.surf, tagFg: t.muted }
       : { tag: d.soon === 1 ? 'Next: tomorrow' : 'Next: in ' + d.soon + ' days', tagBg: t.surf, tagFg: t.muted };
-    return { ...d, ...tag, hasDue: d.due > 0, noDue: d.due === 0, countColor: d.due ? t.text : t.muted };
+    // Flashcards whenever there's something to study (cards due, or new ones to learn).
+    return { ...d, ...tag, canStudy: d.due > 0 || d.fresh > 0, noStudy: !d.due && !d.fresh, countColor: d.due ? t.text : t.muted };
   });
   return {
     ${MESH_VALS('Iris')}
@@ -418,16 +422,17 @@ const TAG_EDIT = (list, pk, phone = false) => `<div style="${phone ? '' : 'posit
   ? `<sc-if value="{{${pk}.open}}" hint-placeholder-val="{{ false }}"><div role="dialog" aria-label="Tags" style="position: absolute; inset: 0; z-index: 30; box-sizing: border-box; padding: 16px 20px 34px; border-radius: 32px 32px 0 0; background: {{t.bg}}; display: flex; flex-direction: column; gap: 12px;"><div style="display: flex; align-items: center; justify-content: space-between;"><span style="font-size: 18px; font-weight: 600;">Tags<span style="margin-left: 8px; font-family: ${MONO}; font-size: 13px; font-weight: 500; color: {{t.muted}};">{{${pk}.count}}</span></span><button type="button" onClick="{{${pk}.close}}" style="height: 36px; padding: 0 16px; border: 0; border-radius: 999px; background: {{t.inv}}; color: {{t.invText}}; font: inherit; font-size: 14px; font-weight: 600; cursor: pointer;">Done</button></div>${tagSearch(pk + '.query', pk + '.setQuery', 'Find or make a tag', 44)}<div style="flex-grow: 1; min-height: 0; overflow-y: auto; scrollbar-width: none; display: flex; flex-direction: column;">${makeRow(pk, 48)}<sc-for list="{{${pk}.options}}" as="o" hint-placeholder-count="8">${tagRow('o', { h: 48, line: true })}</sc-for></div></div></sc-if>`
   : `<sc-if value="{{${pk}.open}}" hint-placeholder-val="{{ false }}"><div role="dialog" aria-label="Add a tag" style="position: absolute; left: 0; top: calc(100% + 8px); z-index: 30; width: 320px; max-width: 100%; ${popBox}">${tagSearch(pk + '.query', pk + '.setQuery', 'Find or make a tag')}<div style="max-height: 190px; overflow-y: auto; scrollbar-width: thin; display: flex; flex-direction: column;">${makeRow(pk)}<sc-for list="{{${pk}.options}}" as="o" hint-placeholder-count="5">${tagRow('o')}</sc-for></div></div></sc-if>`}</div>`;
 const viewBtn = (key, handler, label, icon) => `<button type="button" onClick="{{${handler}}}" aria-label="${label}" aria-pressed="{{${key}.pressed}}" style="width: 42px; height: 36px; border: 0; border-radius: 999px; background: {{${key}.bg}}; color: {{${key}.fg}}; box-shadow: {{${key}.sh}}; display: flex; align-items: center; justify-content: center; cursor: pointer;">${svg(I[icon], 16, 2)}</button>`;
-// One glass chip per tag on a deck's gradient card.
-const glassTag = k => `<sc-if value="{{d.${k}.show}}" hint-placeholder-val="{{ true }}"><span style="height: 26px; padding: 0 11px; display: inline-flex; align-items: center; border-radius: 999px; background: {{d.glass}}; box-shadow: inset 0 0 0 1px {{d.glassLine}}; font-size: 12px; font-weight: 600; white-space: nowrap; text-shadow: none;">{{d.${k}.label}}</span></sc-if>`;
-const tagSlot = k => `<sc-if value="{{d.${k}.show}}" hint-placeholder-val="{{ true }}"><span style="height: 24px; padding: 0 10px; display: inline-flex; align-items: center; border-radius: 999px; background: {{d.${k}.bg}}; color: {{d.${k}.fg}}; font-size: 12px; font-weight: 600; white-space: nowrap;">{{d.${k}.label}}</span></sc-if>`;
+// One glass chip per tag on a deck's gradient card (a chip in list view). Clicking one shows every deck with that tag,
+// like the chips in the +N menu, instead of opening the deck.
+const glassTag = k => `<sc-if value="{{d.${k}.show}}" hint-placeholder-val="{{ true }}"><button type="button" onClick="{{d.${k}.pick}}" title="Every deck tagged {{d.${k}.label}}" style="height: 26px; padding: 0 11px; display: inline-flex; align-items: center; border: 0; border-radius: 999px; background: {{d.glass}}; box-shadow: inset 0 0 0 1px {{d.glassLine}}; color: inherit; font: inherit; font-size: 12px; font-weight: 600; white-space: nowrap; text-shadow: none; cursor: pointer; pointer-events: auto;">{{d.${k}.label}}</button></sc-if>`;
+const tagSlot = k => `<sc-if value="{{d.${k}.show}}" hint-placeholder-val="{{ true }}"><button type="button" onClick="{{d.${k}.pick}}" title="Every deck tagged {{d.${k}.label}}" style="height: 24px; padding: 0 10px; display: inline-flex; align-items: center; border: 0; border-radius: 999px; background: {{d.${k}.bg}}; color: {{d.${k}.fg}}; font: inherit; font-size: 12px; font-weight: 600; white-space: nowrap; cursor: pointer; pointer-events: auto;">{{d.${k}.label}}</button></sc-if>`;
 // A deck's +N chip opens a menu with all of its tags; pick one to see every deck that has it.
-const deckTagsPop = pos => `<sc-if value="{{d.tagsOpen}}" hint-placeholder-val="{{ false }}"><div role="dialog" aria-label="Tags on {{d.name}}" style="position: absolute; ${pos} z-index: 20; width: 320px; box-sizing: border-box; padding: 16px; border-radius: 24px; background: {{t.bg}}; color: {{t.text}}; box-shadow: 0 18px 48px rgba(0,0,0,.2), 0 0 0 1px {{t.line}}; display: flex; flex-direction: column; gap: 12px; text-shadow: none;">
+const deckTagsPop = pos => `<sc-if value="{{d.tagsOpen}}" hint-placeholder-val="{{ false }}"><div role="dialog" aria-label="Tags on {{d.name}}" style="position: absolute; ${pos} z-index: 20; pointer-events: auto; width: 320px; box-sizing: border-box; padding: 16px; border-radius: 24px; background: {{t.bg}}; color: {{t.text}}; box-shadow: 0 18px 48px rgba(0,0,0,.2), 0 0 0 1px {{t.line}}; display: flex; flex-direction: column; gap: 12px; text-shadow: none;">
   <div style="display: flex; align-items: center; justify-content: space-between;"><span style="font-size: 14px; font-weight: 600;">{{d.tagCount}}</span><button type="button" onClick="{{d.toggleTags}}" aria-label="Close" style="width: 28px; height: 28px; border: 0; border-radius: 14px; background: {{t.surf}}; color: {{t.text}}; display: flex; align-items: center; justify-content: center; cursor: pointer;">${svg(I.close, 10, 2.4)}</button></div>
   <div style="display: flex; flex-wrap: wrap; gap: 6px;"><sc-for list="{{d.allTags}}" as="g" hint-placeholder-count="6"><button type="button" onClick="{{g.pick}}" style="height: 28px; padding: 0 11px; display: inline-flex; align-items: center; border: 0; border-radius: 999px; background: {{g.bg}}; color: {{g.fg}}; font: inherit; font-size: 12px; font-weight: 600; white-space: nowrap; cursor: pointer;">{{g.label}}</button></sc-for></div>
   <a href="{{d.settingsHref}}" style="align-self: flex-start; font-size: 13px; font-weight: 600; color: {{t.muted}};">Edit tags</a>
 </div></sc-if>`;
-const moreTag = (bg, h) => `<sc-if value="{{d.more.show}}" hint-placeholder-val="{{ false }}"><button type="button" onClick="{{d.toggleTags}}" aria-expanded="{{d.expanded}}" aria-label="Show all {{d.tagCount}}" style="height: ${h}px; padding: 0 10px; flex-shrink: 0; display: inline-flex; align-items: center; border: 0; border-radius: 999px; ${bg} font: inherit; font-size: 12px; font-weight: 600; white-space: nowrap; text-shadow: none; cursor: pointer;">{{d.more.label}}</button></sc-if>`;
+const moreTag = (bg, h) => `<sc-if value="{{d.more.show}}" hint-placeholder-val="{{ false }}"><button type="button" onClick="{{d.toggleTags}}" aria-expanded="{{d.expanded}}" aria-label="Show all {{d.tagCount}}" style="height: ${h}px; padding: 0 10px; flex-shrink: 0; display: inline-flex; align-items: center; border: 0; border-radius: 999px; ${bg} font: inherit; font-size: 12px; font-weight: 600; white-space: nowrap; text-shadow: none; cursor: pointer; pointer-events: auto;">{{d.more.label}}</button></sc-if>`;
 // A card's tag as a small chip; `k` names the row's tag slot (c1, c2).
 const cardTag = k => `<sc-if value="{{r.${k}.show}}" hint-placeholder-val="{{ true }}"><span style="height: 22px; padding: 0 9px; display: inline-flex; align-items: center; border-radius: 999px; background: {{r.${k}.bg}}; color: {{r.${k}.fg}}; font-size: 11px; font-weight: 600; white-space: nowrap;">{{r.${k}.label}}</span></sc-if>`;
 // Cards show up to two tags; with more, the first one and a +N (hover it to read the rest).
@@ -438,20 +443,50 @@ const CARD_TAGS_JS = `const cardSlot = (tags, i) => (tags && tags[i] ? { show: t
 // The owner (V96): "rename decks to library", folders for decks, and every card in one place to filter by tags and
 // difficulty. One board is the whole Library: your folders and decks, one folder's decks (prop `folder`), or all your
 // cards (prop `mode`). The app gives each its own address: /library, /library/folder/<id>, /library/cards.
-const LIST_COLS = 'display: grid; grid-template-columns: 44px minmax(0, 1.5fr) minmax(0, 1.3fr) 70px 80px 120px 150px; gap: 16px; align-items: center;';
+const LIST_COLS = 'display: grid; grid-template-columns: 44px minmax(0, 1.5fr) minmax(0, 1.3fr) 70px 80px 120px 164px; gap: 16px; align-items: center;';
 const CARD_COLS = 'display: grid; grid-template-columns: 36px minmax(0, 1.5fr) minmax(0, 1fr) minmax(0, .9fr) 170px 80px 96px; gap: 16px; align-items: center;';
 // Decks or All cards: two links, since each is its own page.
 const libModes = (h, fs = 13, grow = false) => `<div role="group" aria-label="Show" style="display: flex; gap: 2px; padding: 4px; border-radius: 999px; background: {{t.surf}};"><sc-for list="{{modes}}" as="m" hint-placeholder-count="2"><a href="{{m.href}}" aria-current="{{m.current}}" style="height: ${h}px; padding: 0 16px; ${grow ? 'flex: 1 1 0; ' : ''}display: inline-flex; align-items: center; justify-content: center; border-radius: 999px; background: {{m.bg}}; color: {{m.fg}}; box-shadow: {{m.sh}}; font-size: ${fs}px; font-weight: 600; white-space: nowrap;">{{m.label}}</a></sc-for></div>`;
 // A folder: its first decks' colors fanned like cards, its name, and how many decks and due cards are in it.
-const folderTile = (h, w, pad = '18px 20px') => `<a href="{{f.href}}" class="sc-lift" style="position: relative; height: ${h}px; box-sizing: border-box; padding: ${pad}; border-radius: 20px; background: {{t.surf}}; display: flex; flex-direction: column; justify-content: space-between; overflow: hidden;">
+const folderTile = (h, w, pad = '18px 20px') => `<a href="{{f.href}}" data-sc-drop="folder:{{f.id}}" data-sc-look="tile" draggable="false" class="sc-lift" style="position: relative; height: ${h}px; box-sizing: border-box; padding: ${pad}; border-radius: 20px; background: {{t.surf}}; display: flex; flex-direction: column; justify-content: space-between; overflow: hidden;">
   <span aria-hidden="true" style="position: relative; height: ${Math.round(w * .68) + 8}px;"><sc-for list="{{f.swatches}}" as="w" hint-placeholder-count="3"><span style="position: absolute; left: {{w.x}}; top: {{w.y}}; width: ${w}px; height: ${Math.round(w * .68)}px; border-radius: 12px; background: {{w.base}}; transform: rotate({{w.r}}); box-shadow: 0 8px 18px -8px rgba(0,0,0,.4), 0 0 0 2px {{t.surf}};"></span></sc-for><sc-if value="{{f.empty}}" hint-placeholder-val="{{ false }}"><span style="position: absolute; left: -2px; top: 2px; color: {{t.muted}};">${svg(I.folder, 44, 1.5)}</span></sc-if></span>
   <span style="display: flex; flex-direction: column; gap: 3px; min-width: 0;"><span style="font-size: 17px; font-weight: 600; letter-spacing: -.01em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{f.name}}</span><span style="font-size: 13px; color: {{t.muted}};">{{f.line}}</span></span>
 </a>`;
-// Naming a folder (a new one, or this one): Enter saves, Escape or Cancel closes.
-const folderForm = (h = 36, fs = 15) => `<sc-if value="{{naming.show}}" hint-placeholder-val="{{ false }}"><div role="group" aria-label="{{naming.title}}" style="display: flex; align-items: center; gap: 8px; box-sizing: border-box; padding: 6px 6px 6px 18px; border-radius: 999px; background: {{t.surf}}; color: {{t.muted}};">${svg(I.folder, 18, 1.8)}<input value="{{naming.value}}" onChange="{{naming.set}}" onKeyDown="{{naming.key}}" placeholder="Folder name" aria-label="Folder name" style="flex-grow: 1; min-width: 0; height: ${h}px; border: 0; outline: 0; background: transparent; font: inherit; font-size: ${fs}px; color: {{t.text}};"><button type="button" onClick="{{naming.cancel}}" style="height: ${h}px; padding: 0 14px; border: 0; border-radius: 999px; background: transparent; color: {{t.muted}}; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer;">Cancel</button><button type="button" onClick="{{naming.save}}" style="height: ${h}px; padding: 0 18px; border: 0; border-radius: 999px; background: {{t.inv}}; color: {{t.invText}}; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer;">{{naming.action}}</button></div></sc-if>`;
+// Naming a folder, in a popup over the dimmed page (the owner: "'new folder' button should bring up a popup menu"): a new
+// one, or this one (Rename). Enter or the button saves; Escape, Cancel, or a click outside closes it. On the iPhone it
+// sits above the keyboard, drawn on the canvas (the app has the phone's own).
+const folderPopup = phone => `<sc-if value="{{naming.show}}" hint-placeholder-val="{{ false }}"><div style="position: absolute; inset: 0; z-index: 80;${phone ? '' : ' display: flex; align-items: center; justify-content: center;'}">
+  <div class="sc-fade" onClick="{{naming.cancel}}" style="position: absolute; inset: 0; background: {{t.dim}};"></div>
+  <div role="dialog" aria-modal="true" aria-label="{{naming.title}}" class="sc-pop" style="position: ${phone ? 'absolute; left: 16px; right: 16px; top: 20%; padding: 20px; border-radius: 28px;' : 'relative; width: 440px; padding: 28px; border-radius: 32px; box-shadow: 0 24px 64px rgba(0,0,0,.24);'} box-sizing: border-box; background: {{t.bg}}; color: {{t.text}}; display: flex; flex-direction: column; gap: 16px;">
+    <div style="display: flex; flex-direction: column; gap: 4px;"><span style="font-size: ${phone ? 20 : 22}px; font-weight: 600; letter-spacing: -.02em;">{{naming.title}}</span><sc-if value="{{naming.hasHint}}" hint-placeholder-val="{{ true }}"><span style="font-size: 14px; line-height: 1.4; color: {{t.muted}};">{{naming.hint}}</span></sc-if></div>
+    <label style="display: flex; align-items: center; gap: 10px; height: 50px; padding: 0 16px; box-sizing: border-box; border-radius: 16px; background: {{t.surf}}; color: {{t.muted}}; box-shadow: inset 0 0 0 2px {{t.text}};">${svg(I.folder, 18, 1.8)}<input type="text" value="{{naming.value}}" onChange="{{naming.set}}" onKeyDown="{{naming.key}}" ref="{{naming.ref}}" placeholder="Folder name" aria-label="Folder name" maxlength="80" autocomplete="off" style="flex-grow: 1; min-width: 0; height: 100%; border: 0; outline: 0; background: transparent; font: inherit; font-size: 16px; color: {{t.text}};"></label>
+    <div style="display: flex; gap: 10px;"><button type="button" onClick="{{naming.cancel}}" data-key="escape" style="flex: 1 1 0; height: 48px; border: 0; border-radius: 999px; background: {{t.surf}}; color: {{t.text}}; font: inherit; font-size: 15px; font-weight: 600; cursor: pointer;">Cancel</button><button type="button" onClick="{{naming.save}}" aria-disabled="{{naming.off}}" style="flex: 1 1 0; height: 48px; border: 0; border-radius: 999px; background: {{naming.bg}}; color: {{naming.fg}}; font: inherit; font-size: 15px; font-weight: 600; cursor: pointer; transition: background-color .15s, color .15s;">{{naming.action}}</button></div>
+  </div>${phone ? `
+  <sc-if value="{{drawKb}}" hint-placeholder-val="{{ true }}">${KEYBOARD()}</sc-if>` : ''}
+</div></sc-if>`;
+// While a card is dragged: the Move to tray, your other decks to drop it on (see drag.mjs). `key` names the decks.
+const moveTray = (key, phone) => `<div data-sc-tray="1" style="display: {{trayShow}}; position: absolute; ${phone ? 'left: 12px; right: 12px; bottom: 24px;' : 'left: 240px; right: 0; bottom: 28px; justify-content: center;'} z-index: 70; pointer-events: none;">
+  <div role="group" aria-label="Move to" class="sc-tray" style="${phone ? 'flex-grow: 1; min-width: 0; padding: 14px 14px 16px; border-radius: 28px;' : 'max-width: 880px; padding: 14px 16px 16px; border-radius: 26px;'} box-sizing: border-box; background: {{t.bg}}; color: {{t.text}}; box-shadow: 0 0 0 1px {{t.line}}, 0 24px 64px rgba(0,0,0,.24); display: flex; flex-direction: column; gap: 10px; pointer-events: auto;">
+    <span style="padding: 0 4px; font-size: 12px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: {{t.muted}};">Move to</span>
+    <div style="display: flex; flex-wrap: wrap; gap: 8px; max-height: ${phone ? 184 : 136}px; overflow: hidden;"><sc-for list="{{${key}}}" as="o" hint-placeholder-count="4"><span data-sc-drop="deck:{{o.id}}" data-sc-look="chip" style="max-width: 100%; height: 40px; box-sizing: border-box; padding: 0 14px 0 8px; display: inline-flex; align-items: center; gap: 8px; border-radius: 999px; background: {{o.bg}}; color: {{o.fg}}; font-size: 14px; font-weight: 600; white-space: nowrap;"><span style="width: 24px; height: 24px; flex-shrink: 0; border-radius: 8px; background: {{o.base}};"></span><span style="min-width: 0; overflow: hidden; text-overflow: ellipsis;">{{o.name}}</span></span></sc-for></div>
+  </div>
+</div>`;
+// Decks and cards you can drag (see drag.mjs): a held finger drags instead of selecting words or opening the phone's
+// link menu. A deck's row lights up under the pointer, since all of it opens the deck. The popup and the Move to tray
+// rise in; reduced motion keeps them still.
+const DRAG_CSS = '.sc-drag{-webkit-touch-callout:none;-webkit-user-select:none;user-select:none}.sc-hit:focus-visible{outline:2px solid currentColor;outline-offset:-2px}'
+  + '.sc-row .sc-hit::before{content:"";position:absolute;inset:4px -12px;border-radius:14px;background:currentColor;opacity:0;transition:opacity .15s}.sc-row:hover .sc-hit::before{opacity:.05}'
+  + '@keyframes scTray{from{opacity:0;transform:translateY(18px) scale(.98)}}.sc-tray{animation:scTray .3s cubic-bezier(.2,.8,.2,1)}'
+  + '@keyframes scPop{from{opacity:0;transform:translateY(12px) scale(.97)}}.sc-pop{animation:scPop .26s cubic-bezier(.2,.8,.2,1)}@keyframes scFade{from{opacity:0}}.sc-fade{animation:scFade .2s ease}'
+  + '@media (prefers-reduced-motion:reduce){.sc-tray,.sc-pop,.sc-fade{animation:none}}';
+// How a dragged deck or card looks while it's lifted: a tile gets a deeper shadow; a row gets the page behind it, a
+// little room around its words, and a shadow.
+const LIFT_JS = `const liftTile = 'border-radius:20px!important;box-shadow:0 30px 60px -18px rgba(0,0,0,.5)!important;';
+  const liftRow = 'background:' + t.bg + '!important;border-radius:12px!important;border-bottom-color:transparent!important;box-shadow:0 0 0 12px ' + t.bg + ',0 0 0 13px ' + t.line + ',0 24px 48px -12px rgba(0,0,0,' + (this.props.dark ? '.8' : '.25') + ')!important;';
+  const dragKey = this.dragKey || (this.dragKey = 'b' + Math.random().toString(36).slice(2, 8)), dragList = el => this.dragList(el);`;
 // A deck's folder menu: into a folder, out of one, or into a new one.
 const moveMenu = pos => `<sc-if value="{{d.moveOpen}}" hint-placeholder-val="{{ false }}"><div role="dialog" aria-label="Move {{d.name}}" style="position: absolute; ${pos} z-index: 25; width: 240px; ${popBox} text-shadow: none;"><span style="padding: 8px 12px 4px; font-size: 12px; font-weight: 600; color: {{t.muted}};">Move to</span><sc-for list="{{d.moveTo}}" as="o" hint-placeholder-count="3"><button type="button" onClick="{{o.pick}}" aria-pressed="{{o.pressed}}" style="height: 38px; flex-shrink: 0; padding: 0 12px; display: flex; align-items: center; gap: 10px; border: 0; border-radius: 12px; background: transparent; color: {{t.text}}; font: inherit; font-size: 14px; text-align: left; cursor: pointer;"><span style="display: flex; color: {{t.muted}};">${svg(I.folder, 16, 1.8)}</span><span style="flex-grow: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{o.label}}</span><sc-if value="{{o.on}}" hint-placeholder-val="{{ false }}"><span style="display: flex;">${svg(I.check, 14, 2.4)}</span></sc-if></button></sc-for><button type="button" onClick="{{d.newFolder}}" style="height: 38px; flex-shrink: 0; padding: 0 12px; display: flex; align-items: center; gap: 10px; border: 0; border-radius: 12px; background: {{t.surf}}; color: {{t.text}}; font: inherit; font-size: 14px; font-weight: 600; text-align: left; cursor: pointer;">${svg(I.plus, 13, 2.4)}New folder</button></div></sc-if>`;
-const moveBtn = (bg, size = 32) => `<button type="button" onClick="{{d.toggleMove}}" aria-label="Move {{d.name}} to a folder" aria-expanded="{{d.moveExpanded}}" style="width: ${size}px; height: ${size}px; flex-shrink: 0; border: 0; border-radius: ${size / 2}px; ${bg} display: flex; align-items: center; justify-content: center; cursor: pointer;">${svg(I.more, 16, 2)}</button>`;
+const moveBtn = (bg, size = 32) => `<button type="button" onClick="{{d.toggleMove}}" aria-label="Move {{d.name}} to a folder" aria-expanded="{{d.moveExpanded}}" style="width: ${size}px; height: ${size}px; flex-shrink: 0; border: 0; border-radius: ${size / 2}px; ${bg} display: flex; align-items: center; justify-content: center; cursor: pointer; pointer-events: auto;">${svg(I.more, 16, 2)}</button>`;
 // All cards: how hard each one is, as a colored dot and word.
 const levelTag = `<span style="display: inline-flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 600; color: {{r.levelFg}};"><span style="width: 8px; height: 8px; border-radius: 4px; background: {{r.levelFg}};"></span>{{r.level}}</span>`;
 const levelSeg = (h, fs = 13, tight = false) => `<div role="group" aria-label="Difficulty" style="display: flex; gap: 2px; padding: 4px; border-radius: 999px; background: {{t.surf}}; max-width: 100%; overflow-x: auto; scrollbar-width: none;"><sc-for list="{{levels}}" as="l" hint-placeholder-count="5"><button type="button" onClick="{{l.pick}}" aria-pressed="{{l.pressed}}" style="height: ${h}px; ${tight ? 'flex: 1 1 auto; padding: 0 6px; justify-content: center; gap: 4px;' : 'flex-shrink: 0; padding: 0 12px; gap: 7px;'} display: inline-flex; align-items: center; border: 0; border-radius: 999px; background: {{l.bg}}; color: {{l.fg}}; box-shadow: {{l.sh}}; font: inherit; font-size: ${fs}px; font-weight: 600; white-space: nowrap; cursor: pointer;"><span style="width: {{l.dotW}}; height: 8px; border-radius: 4px; background: {{l.dot}};"></span>{{l.label}}<span style="font-family: ${MONO}; font-size: 11px; opacity: .6;">{{l.count}}</span></button></sc-for></div>`;
@@ -460,7 +495,7 @@ const pickedTags = h => `<sc-for list="{{pickedTags}}" as="g" hint-placeholder-c
 const menuBtn = (m, label, h) => `<button type="button" onClick="{{${m}.toggle}}" aria-expanded="{{${m}.expanded}}" style="height: ${h}px; flex-shrink: 0; padding: 0 12px 0 14px; display: inline-flex; align-items: center; gap: 6px; border: 0; border-radius: 999px; background: {{t.surf}}; color: {{t.text}}; font: inherit; font-size: 13px; font-weight: 600; white-space: nowrap; cursor: pointer;">${label}${svg(I.chevDown, 14, 2)}</button>`;
 const webDecks = webRoot(`${sidebar('Library')}
 <main style="flex-grow: 1; box-sizing: border-box; padding: 36px 48px; display: flex; flex-direction: column; gap: 22px; min-width: 0; overflow-y: auto;">
-  <sc-if value="{{inFolder}}" hint-placeholder-val="{{ false }}"><a href="{{libraryHref}}" style="align-self: flex-start; margin-bottom: -12px; display: inline-flex; align-items: center; gap: 6px; font-size: 14px; color: {{t.muted}};">${svg(I.back, 16, 2)}Library</a></sc-if>
+  <sc-if value="{{inFolder}}" hint-placeholder-val="{{ false }}"><a href="{{libraryHref}}" data-sc-drop="folder:" data-sc-look="chip" draggable="false" style="align-self: flex-start; margin: -6px 0 -18px -10px; height: 32px; padding: 0 14px 0 8px; display: inline-flex; align-items: center; gap: 6px; border-radius: 999px; font-size: 14px; color: {{t.muted}};">${svg(I.back, 16, 2)}Library</a></sc-if>
   <div style="display: flex; align-items: center; gap: 12px;">
     <h1 style="margin: 0; font-size: 32px; font-weight: 600; letter-spacing: -.03em; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{title}}</h1>
     <sc-if value="{{atTop}}" hint-placeholder-val="{{ true }}"><span style="margin-left: 10px; display: flex;">${libModes(32)}</span></sc-if>
@@ -470,7 +505,6 @@ const webDecks = webRoot(`${sidebar('Library')}
     <sc-if value="{{deckView}}" hint-placeholder-val="{{ true }}"><sc-if value="{{atTop}}" hint-placeholder-val="{{ true }}">${pill('New folder', { icon: 'folder', onClick: '{{newFolder}}' })}</sc-if></sc-if>
     ${pill('New deck', { inv: true, icon: 'plus', href: 'WebNewDeck.dc.html' })}
   </div>
-  ${folderForm()}
   <sc-if value="{{deckView}}" hint-placeholder-val="{{ true }}">
     <div style="display: flex; align-items: center; gap: 16px;">
       <div role="group" aria-label="Filter by tag" style="flex-grow: 1; display: flex; flex-wrap: wrap; gap: 8px;">
@@ -484,18 +518,19 @@ const webDecks = webRoot(`${sidebar('Library')}
       <span style="margin-bottom: -10px; font-size: 13px; font-weight: 600; color: {{t.muted}};">Decks</span>
     </sc-if>
     <sc-if value="{{cardView}}" hint-placeholder-val="{{ true }}">
-      <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px;">
-        <sc-for list="{{decks}}" as="d" hint-placeholder-count="6"><div style="position: relative;">
+      <div data-sc-list="decks" ref="{{dragList}}" onPointerDown="{{grabDeck}}" style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px;">
+        <sc-for list="{{decks}}" as="d" hint-placeholder-count="6"><div data-sc-item="{{d.id}}" class="sc-drag" style="position: relative;">
           ${meshCard('d', 'border-radius: 20px; height: 240px;', 'height: 100%; box-sizing: border-box; padding: 22px; display: flex; flex-direction: column; justify-content: space-between;', `
-            <sc-if value="{{d.hasPhoto}}" hint-placeholder-val="{{ false }}"><img src="{{d.photo}}" alt="" style="position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover;"><span style="position: absolute; inset: 0; background: linear-gradient(180deg, rgba(0,0,0,.18) 0%, rgba(0,0,0,0) 35%, rgba(0,0,0,.55) 100%);"></span></sc-if>
-            <div style="position: relative; display: flex; flex-wrap: wrap; gap: 6px; padding-right: 40px;">${glassTag('t1')}${glassTag('t2')}${glassTag('t3')}${moreTag('background: {{d.glass}}; box-shadow: inset 0 0 0 1px {{d.glassLine}}; color: inherit;', 26)}</div>
-            <div style="position: relative; display: flex; align-items: flex-end; justify-content: space-between; gap: 12px;">
-              <a href="{{d.href}}" style="display: flex; flex-direction: column; gap: 4px; min-width: 0;">
+            <sc-if value="{{d.hasPhoto}}" hint-placeholder-val="{{ false }}"><img src="{{d.photo}}" alt="" draggable="false" style="position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover;"><span style="position: absolute; inset: 0; background: linear-gradient(180deg, rgba(0,0,0,.18) 0%, rgba(0,0,0,0) 35%, rgba(0,0,0,.55) 100%);"></span></sc-if>
+            <a href="{{d.href}}" aria-label="{{d.name}}" draggable="false" class="sc-hit" style="position: absolute; inset: 0; border-radius: 20px;"></a>
+            <div style="position: relative; display: flex; flex-wrap: wrap; gap: 6px; padding-right: 40px; pointer-events: none;">${glassTag('t1')}${glassTag('t2')}${glassTag('t3')}${moreTag('background: {{d.glass}}; box-shadow: inset 0 0 0 1px {{d.glassLine}}; color: inherit;', 26)}</div>
+            <div style="position: relative; display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; pointer-events: none;">
+              <span style="display: flex; flex-direction: column; gap: 4px; min-width: 0;">
                 <span style="font-size: 44px; font-weight: 500; letter-spacing: -.035em; line-height: 1;">{{d.due}}<span style="font-size: 15px; letter-spacing: 0; margin-left: 6px; opacity: .85;">due</span></span>
                 <span style="font-size: 19px; font-weight: 600; letter-spacing: -.015em; padding-top: 8px;">{{d.name}}</span>
                 <span style="font-size: 13px; opacity: .85;">{{d.line}}</span>
-              </a>
-              <a href="{{d.studyHref}}" style="flex-shrink: 0; height: 36px; padding: 0 18px; display: inline-flex; align-items: center; border-radius: 999px; background: #FFFFFF; color: #000000; font-size: 13px; font-weight: 600; text-shadow: none;">Study</a>
+              </span>
+              <a href="{{d.studyHref}}" draggable="false" class="sc-press" style="flex-shrink: 0; height: 36px; padding: 0 18px; display: inline-flex; align-items: center; border-radius: 999px; background: #FFFFFF; color: #000000; font-size: 13px; font-weight: 600; text-shadow: none; pointer-events: auto;">Flashcards</a>
             </div>`, 'div', ' class="sc-lift"')}
           <span style="position: absolute; top: 16px; right: 16px; z-index: 2; color: {{d.ink}};">${moveBtn('background: {{d.glass}}; box-shadow: inset 0 0 0 1px {{d.glassLine}}; color: inherit;')}</span>
           ${moveMenu('right: 12px; top: 56px;')}
@@ -506,18 +541,19 @@ const webDecks = webRoot(`${sidebar('Library')}
     <sc-if value="{{listView}}" hint-placeholder-val="{{ false }}">
       <div style="display: flex; flex-direction: column;">
         <div style="${LIST_COLS} height: 36px; font-size: 12px; font-weight: 600; letter-spacing: .05em; text-transform: uppercase; color: {{t.muted}}; border-bottom: 1px solid {{t.line}};"><span></span><span>Deck</span><span>Tags</span><span style="text-align: right;">Due</span><span style="text-align: right;">Cards</span><span style="text-align: right;">Remembered</span><span></span></div>
-        <sc-for list="{{decks}}" as="d" hint-placeholder-count="6">
-          <div style="${LIST_COLS} position: relative; height: 64px; border-bottom: 1px solid {{t.line}}; font-size: 14px;">
-            <span style="width: 36px; height: 36px; border-radius: 12px; background: {{d.base}}; overflow: hidden;"><sc-if value="{{d.hasPhoto}}" hint-placeholder-val="{{ false }}"><img src="{{d.photo}}" alt="" style="width: 100%; height: 100%; object-fit: cover;"></sc-if></span>
-            <a href="{{d.href}}" style="font-size: 15px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{d.name}}</a>
-            <span style="position: relative; min-width: 0;"><span style="display: flex; gap: 6px; min-width: 0; overflow: hidden;">${tagSlot('t1')}${tagSlot('t2')}${tagSlot('t3')}${moreTag('background: {{t.surf}}; color: {{t.muted}};', 24)}</span>${deckTagsPop('left: -12px; top: 34px;')}</span>
+        <div data-sc-list="decks" ref="{{dragList}}" onPointerDown="{{grabDeck}}" style="display: flex; flex-direction: column;"><sc-for list="{{decks}}" as="d" hint-placeholder-count="6">
+          <div data-sc-item="{{d.id}}" class="sc-row sc-drag" style="${LIST_COLS} position: relative; height: 64px; border-bottom: 1px solid {{t.line}}; font-size: 14px;">
+            <a href="{{d.href}}" aria-label="{{d.name}}" draggable="false" class="sc-hit" style="position: absolute; inset: 0;"></a>
+            <span style="width: 36px; height: 36px; border-radius: 12px; background: {{d.base}}; overflow: hidden;"><sc-if value="{{d.hasPhoto}}" hint-placeholder-val="{{ false }}"><img src="{{d.photo}}" alt="" draggable="false" style="width: 100%; height: 100%; object-fit: cover;"></sc-if></span>
+            <span style="font-size: 15px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{d.name}}</span>
+            <span style="position: relative; min-width: 0; pointer-events: none;"><span style="display: flex; gap: 6px; min-width: 0; overflow: hidden;">${tagSlot('t1')}${tagSlot('t2')}${tagSlot('t3')}${moreTag('background: {{t.surf}}; color: {{t.muted}};', 24)}</span>${deckTagsPop('left: -12px; top: 34px;')}</span>
             <span style="text-align: right; font-family: ${MONO}; font-size: 15px; color: {{d.dueColor}};">{{d.due}}</span>
             <span style="text-align: right; font-family: ${MONO}; font-size: 14px; color: {{t.muted}};">{{d.total}}</span>
             <span style="text-align: right; font-family: ${MONO}; font-size: 14px; font-weight: 600; color: {{d.retColor}};">{{d.ret}}</span>
-            <span style="display: flex; align-items: center; justify-content: flex-end; gap: 8px;"><sc-if value="{{d.hasDue}}" hint-placeholder-val="{{ true }}">${pill('Study', { href: '{{d.studyHref}}', h: 36 })}</sc-if><sc-if value="{{d.noDue}}" hint-placeholder-val="{{ false }}"><span style="font-size: 13px; color: {{t.muted}};">Up to date</span></sc-if>${moveBtn('background: {{t.surf}}; color: {{t.text}};', 36)}</span>
+            <span style="position: relative; display: flex; align-items: center; justify-content: flex-end; gap: 8px; pointer-events: none;"><sc-if value="{{d.canStudy}}" hint-placeholder-val="{{ true }}"><span style="display: flex; pointer-events: auto;">${pill('Flashcards', { href: '{{d.studyHref}}', h: 36 })}</span></sc-if><sc-if value="{{d.noStudy}}" hint-placeholder-val="{{ false }}"><span style="font-size: 13px; color: {{t.muted}};">Up to date</span></sc-if>${moveBtn('background: {{t.surf}}; color: {{t.text}};', 36)}</span>
             ${moveMenu('right: 0; top: 56px;')}
           </div>
-        </sc-for>
+        </sc-for></div>
       </div>
     </sc-if>
     <sc-if value="{{noDecks}}" hint-placeholder-val="{{ false }}"><div style="padding: 48px 24px; border-radius: 20px; background: {{t.surf}}; text-align: center; font-size: 15px; color: {{t.muted}};">{{noDecksLine}}</div></sc-if>
@@ -533,8 +569,8 @@ const webDecks = webRoot(`${sidebar('Library')}
     </div>
     <div style="display: flex; flex-direction: column;">
       <div style="${CARD_COLS} height: 36px; font-size: 12px; font-weight: 600; letter-spacing: .05em; text-transform: uppercase; color: {{t.muted}}; border-bottom: 1px solid {{t.line}};"><span></span><span>Card</span><span>Answer</span><span>Deck</span><span>Tags</span><span>Difficulty</span><span style="text-align: right;">Next</span></div>
-      <sc-for list="{{rows}}" as="r" hint-placeholder-count="8">
-        <a href="{{r.href}}" style="${CARD_COLS} height: 60px; border-bottom: 1px solid {{t.line}}; font-size: 14px;">
+      <div data-sc-list="cards" ref="{{dragList}}" onPointerDown="{{grabCard}}" style="display: flex; flex-direction: column;"><sc-for list="{{rows}}" as="r" hint-placeholder-count="8">
+        <a href="{{r.href}}" data-sc-item="{{r.id}}" data-sc-from="{{r.deckId}}" draggable="false" class="sc-drag" style="${CARD_COLS} height: 60px; border-bottom: 1px solid {{t.line}}; font-size: 14px;">
           <span style="width: 32px; height: 32px; border-radius: 16px; background: {{t.surf}}; display: flex; align-items: center; justify-content: center; font-size: 13px;">{{r.glyph}}</span>
           <span style="min-width: 0; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{r.front}}</span>
           <span style="min-width: 0; color: {{t.muted}}; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{r.back}}</span>
@@ -543,20 +579,25 @@ const webDecks = webRoot(`${sidebar('Library')}
           ${levelTag}
           <span style="font-size: 13px; text-align: right;">{{r.next}}</span>
         </a>
-      </sc-for>
+      </sc-for></div>
     </div>
     <sc-if value="{{hasMore}}" hint-placeholder-val="{{ false }}"><button type="button" onClick="{{showMore}}" style="align-self: center; height: 40px; padding: 0 20px; border: 0; border-radius: 999px; background: {{t.surf}}; color: {{t.text}}; font: inherit; font-size: 14px; font-weight: 600; cursor: pointer;">{{moreLabel}}</button></sc-if>
     <sc-if value="{{noCards}}" hint-placeholder-val="{{ false }}"><div style="padding: 48px 24px; border-radius: 20px; background: {{t.surf}}; text-align: center; font-size: 15px; color: {{t.muted}};">No cards match. Try fewer filters.</div></sc-if>
   </sc-if>
-</main>`);
+</main>
+${folderPopup(false)}
+${moveTray('tray', false)}`, true);
 // The Library's logic, for the web and iPhone boards.
 const libraryLogic = phone => `
 constructor(props) { super(props); this.state = { tag: 'All', view: props.view === 'List' ? 'list' : 'cards', openDeck: props.openTags ? 'cell' : null, moreOpen: !!props.moreTags, moreQ: '', q: '',
-  level: 'all', cardTags: [], deck: '', tagPickOpen: false, tagPickQ: '', deckPickOpen: false, deckPickQ: '', shown: 60, naming: props.naming ? 'new' : null, name: '', moveDeck: props.moveOpen ? 'cell' : null, moveAfter: null }; }
+  level: 'all', cardTags: [], deck: '', tagPickOpen: false, tagPickQ: '', deckPickOpen: false, deckPickQ: '', shown: 60, naming: props.naming ? 'new' : null, name: props.naming ? 'Biology' : '', namingAt: 0,
+  moveDeck: props.moveOpen ? 'cell' : null, moveAfter: null }; }
 renderVals() {
   ${T}${DB_JS}
   ${TAG_JS}
   ${CARD_TAGS_JS}
+  ${LIFT_JS}${phone ? `
+  ${KB_JS}` : ''}
   const p = this.props, s = this.state, tag = s.tag, view = s.view, act = db.act;
   const board = n => '${phone ? 'Phone' : 'Web'}' + n + '.dc.html';
   const folders = db.folders(), folder = p.folder ? folders.find(f => f.id === p.folder) || null : null;
@@ -564,13 +605,18 @@ renderVals() {
   const all = db.decks(), q = (s.q || '').trim().toLowerCase();
   const seg = on => ({ pressed: on ? 'true' : 'false', bg: on ? t.bg : 'transparent', fg: on ? t.text : t.muted, sh: on ? '0 1px 3px rgba(0,0,0,.14)' : 'none' });
   const grad = d => this.gen(d.seed + (d.round ? ' #' + d.round : ''), d.style);
-  // Naming a folder: a new one (maybe for a deck that asked to move into it), or renaming this one.
-  const naming = s.naming, closeNaming = () => this.setState({ naming: null, name: '', moveAfter: null });
-  const saveName = async () => {
-    const name = (s.name || '').trim(); if (!name) return;
-    if (naming === 'rename' && folder) act.renameFolder(folder.id, name); else await act.newFolder(name, s.moveAfter);
+  // Naming a folder in the popup: a new one (maybe for a deck that asked to move into it), or renaming this one.
+  const naming = s.naming, typed = (s.name || '').trim(), mover = s.moveAfter ? all.find(d => d.id === s.moveAfter) : null;
+  const closeNaming = () => this.setState({ naming: null, name: '', moveAfter: null });
+  const openNaming = (kind, moveAfter) => this.setState({ naming: kind, name: kind === 'rename' && folder ? folder.name : '', moveAfter: moveAfter || null, moveDeck: null, namingAt: Date.now() });
+  const saveName = () => {
+    if (!typed) return;
     closeNaming();
+    if (naming === 'rename' && folder) act.renameFolder(folder.id, typed); else act.newFolder(typed, s.moveAfter);
   };
+  // Dragging (drag.mjs): a deck to another spot, onto a folder, or (in a folder) onto the Library link to take it out;
+  // in All cards, a card onto another deck. Menus close when something lifts.
+  const quiet = () => (s.moveDeck || s.openDeck || s.moreOpen || s.tagPickOpen || s.deckPickOpen) && this.setState({ moveDeck: null, openDeck: null, moreOpen: false, tagPickOpen: false, deckPickOpen: false });
   // Decks: in a folder, its decks. At the top, folders and the decks in none, unless a tag or search looks everywhere.
   const hits = q && !cards ? db.searchDecks(q) : null, looking = tag !== 'All' || !!hits;
   const scope = folder ? all.filter(d => d.folder === folder.id) : looking || !folders.length ? all : all.filter(d => !d.folder);
@@ -581,7 +627,7 @@ renderVals() {
   const mq = (s.moreQ || '').trim().toLowerCase(), found = byUse.filter(g => !mq || g.toLowerCase().includes(mq));
   const decks = scope.filter(d => (tag === 'All' || d.tags.includes(tag)) && (!hits || hits.includes(d.id))).map(d => {
     const tg = d.tags, fit = tagFit(tg, 3), open = s.openDeck === d.id, moving = s.moveDeck === d.id, photo = d.image && d.image !== 'mock' ? d.image : '';
-    const slot = i => (fit.vis[i] ? { show: true, ...tagChip(fit.vis[i]) } : { show: false, label: '', bg: 'transparent', fg: t.text });
+    const slot = i => (fit.vis[i] ? { show: true, ...tagChip(fit.vis[i]), pick: () => pickTag(fit.vis[i]) } : { show: false, label: '', bg: 'transparent', fg: t.text, pick: () => {} });
     const move = f => () => { act.moveDeck(d.id, f); this.setState({ moveDeck: null }); };
     // A photo cover takes white words on a dark wash, whatever the gradient would have used.
     const onPhoto = photo ? { ink: '#FFFFFF', glass: 'rgba(0,0,0,.28)', glassLine: 'rgba(255,255,255,.35)', shadow: '0 1px 12px rgba(0,0,0,.35)' } : {};
@@ -592,9 +638,9 @@ renderVals() {
       allTags: tg.map(g => ({ ...tagChip(g), pick: () => pickTag(g) })),
       moveOpen: moving, moveExpanded: moving ? 'true' : 'false', toggleMove: () => this.setState({ moveDeck: moving ? null : d.id, openDeck: null }),
       moveTo: [{ id: null, name: 'No folder' }, ...folders].map(f => ({ label: f.name, on: (d.folder || null) === f.id, pressed: (d.folder || null) === f.id ? 'true' : 'false', pick: move(f.id) })),
-      newFolder: () => this.setState({ moveDeck: null, naming: 'new', name: '', moveAfter: d.id }),
+      newFolder: () => openNaming('new', d.id),
       total: d.totalLabel, ret: d.ret == null ? '—' : d.ret + '%', line: d.totalLabel + ' cards · ' + d.fresh + ' new' + (d.ret == null ? '' : ' · ' + d.ret + '%'),
-      hasDue: d.due > 0, noDue: d.due === 0, dueColor: d.due ? t.text : t.muted, dueLabel: d.due ? String(d.due) : '—',
+      canStudy: d.due > 0 || d.fresh > 0, noStudy: !d.due && !d.fresh, dueColor: d.due ? t.text : t.muted, dueLabel: d.due ? String(d.due) : '—',
       retColor: d.ret == null ? t.muted : d.ret >= 90 ? t.good : d.ret >= 85 ? t.hard : t.again };
   });
   // Folders, each with its first decks' colors fanned out.
@@ -626,13 +672,22 @@ renderVals() {
       .map(([label, on, href]) => ({ label, href, current: on ? 'page' : 'false', ...seg(on) })),
     deckView: !cards, cardsView: cards,
     folders: folderRows, showFolders: atTop && !cards && !looking && folders.length > 0,
-    noDecks: !cards && decks.length === 0, noDecksLine: folder ? 'No decks in this folder yet. Use a deck’s ⋯ button to move it here.' : 'No decks match.',
-    newFolder: () => this.setState({ naming: 'new', name: '', moveAfter: null }),
-    renameFolder: () => this.setState({ naming: 'rename', name: folder ? folder.name : '' }),
+    noDecks: !cards && decks.length === 0, noDecksLine: folder ? 'No decks in this folder yet. Drag a deck onto the folder, or use its ⋯ button.' : 'No decks match.',
+    newFolder: () => openNaming('new'), renameFolder: () => openNaming('rename'),
     removeFolder: () => folder && act.deleteFolder(folder.id),
     naming: { show: !!naming, title: naming === 'rename' ? 'Rename folder' : 'New folder', action: naming === 'rename' ? 'Save' : 'Create', value: s.name || '',
+      hasHint: naming !== 'rename', hint: mover ? '“' + mover.name + '” goes in it.' : 'Then drag decks onto it.',
+      off: typed ? 'false' : 'true', bg: typed ? t.inv : t.surf2, fg: typed ? t.invText : t.muted,
       set: e => this.setState({ name: e && e.target ? e.target.value : '' }), save: saveName, cancel: closeNaming,
-      key: e => { if (e.key === 'Enter') { e.preventDefault(); saveName(); } if (e.key === 'Escape') closeNaming(); } },
+      key: e => { if (e.key === 'Enter') { e.preventDefault(); saveName(); } if (e.key === 'Escape') { e.preventDefault(); closeNaming(); } },
+      // The field is ready to type in when the popup opens (in the app; the canvas draws it focused).
+      ref: el => { if (!el || db.mock || this.namedAt === s.namingAt) return; this.namedAt = s.namingAt; el.focus(); if (naming === 'rename') el.select(); } },
+    drawKb: !!db.mock,${phone ? ' kb,' : ''}
+    dragKey, dragList, trayShow: 'none', tray: all.map(d => ({ id: d.id, name: d.name, base: grad(d).base, bg: t.surf, fg: t.text })),
+    grabDeck: e => this.drag(e, { drops: ['folder:'], ink: t.text, bg: t.bg, lifted: view === 'cards' && !${phone} ? liftTile : liftRow, bottom: ${phone ? 92 : 0}, start: quiet,
+      drop: (id, w) => (w.to ? act.moveDeck(id, w.to.slice(7) || null) : act.reorderDeck(id, w.before)) }),
+    grabCard: e => this.drag(e, { drops: ['deck:'], reorder: false, keep: true, tray: all.length > 1, ink: t.text, bg: t.bg, lifted: liftRow, bottom: ${phone ? 92 : 0}, start: quiet,
+      drop: (id, w) => w.to && act.moveCard(id, w.to.slice(5)) }),
     tagFilters: ['All', ...shownTags].map(n => { const on = n === tag, isAll = n === 'All'; return { label: isAll ? (folder ? 'All' : 'All decks') : n, dot: isAll ? 'transparent' : tagCol(n), dotW: isAll ? '0px' : '8px', dotM: isAll ? '0px' : '8px',
       count: String(isAll ? (folder ? scope.length : all.length) : uses[n] || 0), pressed: on ? 'true' : 'false', bg: on ? t.inv : t.surf, fg: on ? t.invText : t.text, pick: () => pickTag(n) }; }),
     moreMenu: { show: byUse.length > top.length, open: !!s.moreOpen, expanded: s.moreOpen ? 'true' : 'false', query: s.moreQ || '',
@@ -852,9 +907,9 @@ const webDeck = webRoot(`${sidebar('Library')}
     <div style="flex-grow: 1;"></div>
     <label style="display: flex; align-items: center; gap: 8px; width: 260px; height: 36px; padding: 0 14px; box-sizing: border-box; border-radius: 999px; background: {{t.surf}}; color: {{t.muted}};">${svg(I.search, 15)}<span style="position: absolute; left: -9999px;">Search this deck</span><input value="{{query}}" onChange="{{setQuery}}" placeholder="Search this deck" style="flex-grow: 1; border: 0; outline: 0; background: transparent; font: inherit; font-size: 13px; color: {{t.text}};"></label>
   </div>
-  <div style="display: flex; flex-direction: column;">
+  <div data-sc-list="cards" ref="{{dragList}}" onPointerDown="{{grab}}" style="display: flex; flex-direction: column;">
     <sc-for list="{{rows}}" as="r" hint-placeholder-count="6">
-      <a href="{{r.href}}" style="display: grid; grid-template-columns: 36px minmax(0, 1.4fr) minmax(0, 1fr) 190px 100px; gap: 16px; align-items: center; height: 64px; border-bottom: 1px solid {{t.line}}; font-size: 14px;">
+      <a href="{{r.href}}" data-sc-item="{{r.id}}" draggable="false" class="sc-drag" style="display: grid; grid-template-columns: 36px minmax(0, 1.4fr) minmax(0, 1fr) 190px 100px; gap: 16px; align-items: center; height: 64px; border-bottom: 1px solid {{t.line}}; font-size: 14px;">
         <span style="width: 32px; height: 32px; border-radius: 16px; background: {{t.surf}}; display: flex; align-items: center; justify-content: center;">{{r.glyph}}</span>
         <span style="min-width: 0; display: flex; flex-direction: column; gap: 2px;"><span style="font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{r.front}}</span><span style="font-size: 12px; color: {{t.muted}};">{{r.kind}}{{r.aiNote}}</span></span>
         <span style="color: {{t.muted}}; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{r.back}}</span>
@@ -869,12 +924,23 @@ const webDeck = webRoot(`${sidebar('Library')}
       ${deckSettingsBody(false)}
     </aside>
   </sc-if>
-</main>`);
+</main>
+${moveTray('tray', false)}`, true);
+// Dragging a card (drag.mjs, both deck pages): to another spot in the deck, or onto another deck in the Move to tray.
+// The canvas shows the tray open (prop trayOpen), with a card over its first deck.
+const CARD_DRAG_JS = phone => `const others = db.decks().filter(d => d.id !== dk.id), trayOpen = !!this.props.trayOpen;
+  const cardDrag = {
+    dragKey, dragList, trayShow: trayOpen ? 'flex' : 'none',
+    tray: others.map((d, i) => ({ id: d.id, name: d.name, base: this.gen(d.seed + (d.round ? ' #' + d.round : ''), d.style).base, bg: trayOpen && !i ? t.text : t.surf, fg: trayOpen && !i ? t.bg : t.text })),
+    grab: e => this.drag(e, { drops: ['deck:'], tray: others.length > 0, ink: t.text, bg: t.bg, lifted: liftRow, bottom: ${phone ? 92 : 0}, start: () => this.state.tagMenuOpen && this.setState({ tagMenuOpen: false }),
+      drop: (id, w) => (w.to ? db.act.moveCard(id, w.to.slice(5)) : db.act.reorderCard(id, w.before)) }) };`;
 const deckLogic = `
 constructor(props) { super(props); this.state = { filter: 'All', tagMenuOpen: false, tagQ: '', q: '' }; }
 renderVals() {
   ${T}${DB_JS}${COVER_LOGIC}${FORECAST_JS('{ vals: dk.forecast, labels: [], tops: null, names: [] }', 40)}
   ${CARD_TAGS_JS}
+  ${LIFT_JS}
+  ${CARD_DRAG_JS(false)}
   const labels = ['All', 'Basic', 'Fill in the blank', 'Image', 'Audio'];
   const f = this.state.filter, allRows = db.cards(dk.id), q = (this.state.q || '').trim().toLowerCase();
   const glyphs = { text: 'Aa', blank: '_', image: '▢', audio: '♪' };
@@ -886,7 +952,7 @@ renderVals() {
   const rows = allRows.filter(r => (f === 'All' || r.kind === f || r.tags.includes(f)) && (!q || [r.front, r.back, ...r.tags].join(' ').toLowerCase().includes(q)))
     .map(r => ({ ...r, glyph: glyphs[r.icon], aiNote: r.ai ? ' · ' + r.ai : '', ...cardFit(r.tags) }));
   return {
-    t, rows, ...chrome, ...coverVals, query: this.state.q || '', setQuery: e => this.setState({ q: e && e.target ? e.target.value : '' }),
+    t, rows, ...chrome, ...coverVals, ...cardDrag, query: this.state.q || '', setQuery: e => this.setState({ q: e && e.target ? e.target.value : '' }),
     filters: labels.map(l => ({ label: l, pressed: l === f ? 'true' : 'false', bg: l === f ? t.inv : t.surf, fg: l === f ? t.invText : t.text, pick: () => this.setState({ filter: l, tagMenuOpen: false }) })),
     tagBtn: { label: tagOn ? f : 'Tags', pressed: tagOn ? 'true' : 'false', bg: tagOn ? t.inv : t.surf, fg: tagOn ? t.invText : t.text, dot: tagOn ? tagCol(f) : 'transparent', dotW: tagOn ? '8px' : '0px' },
     tagMenu: { open: menuOpen, expanded: menuOpen ? 'true' : 'false', query: this.state.tagQ || '',
@@ -2088,15 +2154,15 @@ const tabBar = active => `<nav style="position: absolute; left: 16px; right: 16p
   ${NAV_P.map(([l, ic, h]) => `<a href="${h}" style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; border-radius: 999px; font-size: 11px; font-weight: 600; ${l === active ? 'background: {{t.inv}}; color: {{t.invText}};' : 'color: {{t.muted}};'}">${svg(I[ic], 20, 2)}${l}</a>`).join('\n  ')}
 </nav>`;
 // A page taller than the phone scrolls under the tab bar (in the app, phone pages are the screen's height).
-const phone = (inner, active, extra = '', h = 844) => `<div style="position: relative; width: 390px; height: ${h}px; box-sizing: border-box; font-family: ${FONT}; background: {{t.bg}}; color: {{t.text}}; overflow: hidden;">
+const phone = (inner, active, extra = '', h = 844) => `<div${/dragKey/.test(extra) || /data-sc-list/.test(inner) ? ' data-sc-board="{{dragKey}}"' : ''} style="position: relative; width: 390px; height: ${h}px; box-sizing: border-box; font-family: ${FONT}; background: {{t.bg}}; color: {{t.text}}; overflow: hidden;">
 <div style="height: 100%; overflow-x: hidden; overflow-y: auto; scrollbar-width: none;">${inner}</div>
 ${active ? tabBar(active) : ''}
 ${extra}
 </div>`;
 // iPhone: the same Library as a list, with the Decks / All cards switch under the title.
-const phoneLibRow = `<a href="{{d.href}}" style="flex-grow: 1; min-width: 0; display: flex; align-items: center; gap: 12px;"><span style="width: 48px; height: 48px; flex-shrink: 0; border-radius: 14px; background: {{d.base}}; overflow: hidden;"><sc-if value="{{d.hasPhoto}}" hint-placeholder-val="{{ false }}"><img src="{{d.photo}}" alt="" style="width: 100%; height: 100%; object-fit: cover;"></sc-if></span><span style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px;"><span style="font-size: 16px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{d.name}}</span><span style="font-size: 13px; color: {{t.muted}}; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{d.line}}</span></span><span style="font-family: ${MONO}; font-size: 15px; color: {{d.dueColor}};">{{d.dueLabel}}</span></a>`;
-const libRound = (ic, label, { href = '', onClick = '', inv = false } = {}) => { const st = `width: 40px; height: 40px; flex-shrink: 0; border: 0; border-radius: 20px; ${inv ? 'background: {{t.inv}}; color: {{t.invText}};' : 'background: {{t.surf}}; color: {{t.text}};'} display: flex; align-items: center; justify-content: center; cursor: pointer;`;
-  return href ? `<a href="${href}" aria-label="${label}" class="sc-press" style="${st}">${svg(I[ic], 18, 2)}</a>` : `<button type="button" onClick="${onClick}" aria-label="${label}" class="sc-press" style="${st}">${svg(I[ic], 18, 2)}</button>`; };
+const phoneLibRow = `<a href="{{d.href}}" draggable="false" style="flex-grow: 1; min-width: 0; display: flex; align-items: center; gap: 12px;"><span style="width: 48px; height: 48px; flex-shrink: 0; border-radius: 14px; background: {{d.base}}; overflow: hidden;"><sc-if value="{{d.hasPhoto}}" hint-placeholder-val="{{ false }}"><img src="{{d.photo}}" alt="" draggable="false" style="width: 100%; height: 100%; object-fit: cover;"></sc-if></span><span style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px;"><span style="font-size: 16px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{d.name}}</span><span style="font-size: 13px; color: {{t.muted}}; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{d.line}}</span></span><span style="font-family: ${MONO}; font-size: 15px; color: {{d.dueColor}};">{{d.dueLabel}}</span></a>`;
+const libRound = (ic, label, { href = '', onClick = '', inv = false, attrs = '' } = {}) => { const st = `width: 40px; height: 40px; flex-shrink: 0; border: 0; border-radius: 20px; ${inv ? 'background: {{t.inv}}; color: {{t.invText}};' : 'background: {{t.surf}}; color: {{t.text}};'} display: flex; align-items: center; justify-content: center; cursor: pointer;`;
+  return href ? `<a href="${href}" aria-label="${label}"${attrs} class="sc-press" style="${st}">${svg(I[ic], 18, 2)}</a>` : `<button type="button" onClick="${onClick}" aria-label="${label}"${attrs} class="sc-press" style="${st}">${svg(I[ic], 18, 2)}</button>`; };
 const phoneLibrary = phone(`<div style="padding: 64px 20px 120px; display: flex; flex-direction: column; gap: 14px;">
   <sc-if value="{{atTop}}" hint-placeholder-val="{{ true }}"><div style="display: flex; align-items: center; gap: 8px;">
     <h1 style="margin: 0; flex-grow: 1; min-width: 0; font-size: 32px; font-weight: 700; letter-spacing: -.03em;">Library</h1>
@@ -2104,22 +2170,21 @@ const phoneLibrary = phone(`<div style="padding: 64px 20px 120px; display: flex;
     ${libRound('plus', 'New deck', { href: 'PhoneNewDeck.dc.html', inv: true })}
   </div></sc-if>
   <sc-if value="{{inFolder}}" hint-placeholder-val="{{ false }}"><div style="display: flex; align-items: center; gap: 8px;">
-    ${libRound('back', 'Library', { href: '{{libraryHref}}' })}<span style="flex-grow: 1;"></span>
+    ${libRound('back', 'Library', { href: '{{libraryHref}}', attrs: ' data-sc-drop="folder:" data-sc-look="chip" draggable="false"' })}<span style="flex-grow: 1;"></span>
     <button type="button" onClick="{{renameFolder}}" class="sc-press" style="height: 40px; padding: 0 16px; border: 0; border-radius: 20px; background: {{t.surf}}; color: {{t.text}}; font: inherit; font-size: 14px; font-weight: 600; cursor: pointer;">Rename</button>
     ${libRound('plus', 'New deck', { href: 'PhoneNewDeck.dc.html', inv: true })}
   </div>
   <h1 style="margin: 0; font-size: 32px; font-weight: 700; letter-spacing: -.03em; overflow-wrap: anywhere;">{{title}}</h1></sc-if>
   <sc-if value="{{atTop}}" hint-placeholder-val="{{ true }}">${libModes(36, 14, true)}</sc-if>
   <label style="display: flex; align-items: center; gap: 10px; height: 44px; padding: 0 16px; box-sizing: border-box; border-radius: 999px; background: {{t.surf}}; color: {{t.muted}};">${svg(I.search, 16)}<span style="position: absolute; left: -9999px;">{{searchHint}}</span><input value="{{query}}" onChange="{{setQuery}}" placeholder="{{searchHint}}" style="flex-grow: 1; min-width: 0; border: 0; outline: 0; background: transparent; font: inherit; font-size: 16px; color: {{t.text}};"></label>
-  ${folderForm(36, 16)}
   <sc-if value="{{deckView}}" hint-placeholder-val="{{ true }}">
     <sc-if value="{{showFolders}}" hint-placeholder-val="{{ true }}">
       <div style="font-size: 13px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: {{t.muted}}; padding: 6px 4px 0;">Folders</div>
       <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px;"><sc-for list="{{folders}}" as="f" hint-placeholder-count="2">${folderTile(132, 60, '16px')}</sc-for></div>
       <div style="font-size: 13px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: {{t.muted}}; padding: 10px 4px 0;">Decks</div>
     </sc-if>
-    <div style="display: flex; flex-direction: column;">
-      <sc-for list="{{decks}}" as="d" hint-placeholder-count="4"><div style="position: relative; display: flex; align-items: center; gap: 8px; min-height: 68px; border-bottom: 1px solid {{t.line}};">${phoneLibRow}${moveBtn('background: transparent; color: {{t.muted}};', 36)}${moveMenu('right: 0; top: 60px;')}</div></sc-for>
+    <div data-sc-list="decks" ref="{{dragList}}" onPointerDown="{{grabDeck}}" style="display: flex; flex-direction: column;">
+      <sc-for list="{{decks}}" as="d" hint-placeholder-count="4"><div data-sc-item="{{d.id}}" class="sc-drag" style="position: relative; display: flex; align-items: center; gap: 8px; min-height: 68px; border-bottom: 1px solid {{t.line}};">${phoneLibRow}${moveBtn('background: transparent; color: {{t.muted}};', 36)}${moveMenu('right: 0; top: 60px;')}</div></sc-for>
     </div>
     <sc-if value="{{inFolder}}" hint-placeholder-val="{{ false }}"><button type="button" onClick="{{removeFolder}}" style="align-self: center; height: 40px; padding: 0 16px; border: 0; border-radius: 999px; background: transparent; color: {{t.again}}; font: inherit; font-size: 14px; font-weight: 600; cursor: pointer;">Remove folder</button></sc-if>
     <sc-if value="{{noDecks}}" hint-placeholder-val="{{ false }}"><div style="padding: 36px 20px; border-radius: 20px; background: {{t.surf}}; text-align: center; font-size: 15px; line-height: 1.4; color: {{t.muted}};">{{noDecksLine}}</div></sc-if>
@@ -2132,9 +2197,9 @@ const phoneLibrary = phone(`<div style="padding: 64px 20px 120px; display: flex;
       ${pickedTags(32)}
     </div>
     <span style="font-size: 13px; color: {{t.muted}}; padding: 2px 4px 0;">{{cardCount}}</span>
-    <div style="display: flex; flex-direction: column;">
+    <div data-sc-list="cards" ref="{{dragList}}" onPointerDown="{{grabCard}}" style="display: flex; flex-direction: column;">
       <sc-for list="{{rows}}" as="r" hint-placeholder-count="6">
-        <a href="{{r.href}}" style="display: flex; flex-direction: column; gap: 6px; padding: 12px 0; border-bottom: 1px solid {{t.line}};">
+        <a href="{{r.href}}" data-sc-item="{{r.id}}" data-sc-from="{{r.deckId}}" draggable="false" class="sc-drag" style="display: flex; flex-direction: column; gap: 6px; padding: 12px 0; border-bottom: 1px solid {{t.line}};">
           <span style="font-size: 15px; font-weight: 500; line-height: 1.35; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">{{r.front}}</span>
           <span style="display: flex; align-items: center; gap: 8px; min-width: 0; font-size: 13px; color: {{t.muted}};"><span style="width: 12px; height: 12px; flex-shrink: 0; border-radius: 4px; background: {{r.swatch}};"></span><span style="min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{r.deckName}}</span>${levelTag}<span style="flex-grow: 1;"></span><span style="flex-shrink: 0;">{{r.next}}</span></span>
         </a>
@@ -2143,7 +2208,8 @@ const phoneLibrary = phone(`<div style="padding: 64px 20px 120px; display: flex;
     <sc-if value="{{hasMore}}" hint-placeholder-val="{{ false }}"><button type="button" onClick="{{showMore}}" style="align-self: center; height: 40px; padding: 0 20px; border: 0; border-radius: 999px; background: {{t.surf}}; color: {{t.text}}; font: inherit; font-size: 14px; font-weight: 600; cursor: pointer;">{{moreLabel}}</button></sc-if>
     <sc-if value="{{noCards}}" hint-placeholder-val="{{ false }}"><div style="padding: 36px 20px; border-radius: 20px; background: {{t.surf}}; text-align: center; font-size: 15px; color: {{t.muted}};">No cards match. Try fewer filters.</div></sc-if>
   </sc-if>
-</div>`, 'Library');
+</div>`, 'Library', `${moveTray('tray', true)}
+${folderPopup(true)}`);
 const pTitle = (txt, right = '') => `<div style="display: flex; align-items: center; justify-content: space-between;"><div style="font-size: 34px; font-weight: 700; letter-spacing: -.03em;">${txt}</div>${right}</div>`;
 const roundBtn = (ic, label, href = '') => href ? `<a href="${href}" aria-label="${label}" style="width: 44px; height: 44px; border-radius: 22px; background: {{t.surf}}; display: flex; align-items: center; justify-content: center;">${svg(I[ic], 18, 2)}</a>` : `<button type="button" aria-label="${label}" style="width: 44px; height: 44px; border: 0; border-radius: 22px; background: {{t.surf}}; color: {{t.text}}; display: flex; align-items: center; justify-content: center; cursor: pointer;">${svg(I[ic], 18, 2)}</button>`;
 // Today's header: your picture on the left (it opens Settings), the title in the middle, and + on the right.
@@ -2248,9 +2314,9 @@ const phoneDeck = phone(`<div style="height: 100%; overflow-y: auto; scrollbar-w
       <sc-for list="{{tiles}}" as="k" hint-placeholder-count="3">${deckTile(false)}</sc-for>
     </div>
     <div style="display: flex; gap: 8px;"><a href="PhoneReview.dc.html" style="flex: 2 1 0; height: 56px; border-radius: 999px; background: {{t.inv}}; color: {{t.invText}}; display: flex; align-items: center; justify-content: center; font-size: 17px; font-weight: 600;">{{studyLabel}}</a><a href="{{learnHref}}" style="flex: 1 1 0; height: 56px; border-radius: 999px; background: {{t.surf}}; display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 17px; font-weight: 600; white-space: nowrap;">${svg(I.sparkle, 17, 2)}{{learnShort}}</a></div>
-    <div style="display: flex; flex-direction: column;">
+    <div data-sc-list="cards" ref="{{dragList}}" onPointerDown="{{grab}}" style="display: flex; flex-direction: column;">
       <sc-for list="{{rows}}" as="r" hint-placeholder-count="4">
-        <a href="{{r.href}}" style="display: flex; flex-direction: column; gap: 3px; padding: 12px 0; border-bottom: 1px solid {{t.line}};"><span style="font-size: 15px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{r.front}}</span><span style="display: flex; align-items: center; gap: 8px; min-width: 0; font-size: 13px; color: {{t.muted}};"><span style="white-space: nowrap;">{{r.kind}} · {{r.next}}</span>${cardTag('c1')}${cardTag('c2')}${cardMore}</span></a>
+        <a href="{{r.href}}" data-sc-item="{{r.id}}" draggable="false" class="sc-drag" style="display: flex; flex-direction: column; gap: 3px; padding: 12px 0; border-bottom: 1px solid {{t.line}};"><span style="font-size: 15px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{r.front}}</span><span style="display: flex; align-items: center; gap: 8px; min-width: 0; font-size: 13px; color: {{t.muted}};"><span style="white-space: nowrap;">{{r.kind}} · {{r.next}}</span>${cardTag('c1')}${cardTag('c2')}${cardMore}</span></a>
       </sc-for>
     </div>
   </div>
@@ -2259,12 +2325,15 @@ const phoneDeck = phone(`<div style="height: 100%; overflow-y: auto; scrollbar-w
   <div role="dialog" aria-label="Deck settings" style="position: absolute; left: 0; right: 0; bottom: 0; top: 56px; box-sizing: border-box; padding: 16px 20px 34px; border-radius: 32px 32px 0 0; background: {{t.bg}}; display: flex; flex-direction: column; gap: 14px;">
     ${deckSettingsBody(true)}
   </div>
-</sc-if>`);
+</sc-if>
+${moveTray('tray', true)}`);
 const phoneDeckLogic = `
 constructor(props) { super(props); this.state = {}; }
 renderVals() { ${T}${DB_JS}${COVER_LOGIC}
   ${CARD_TAGS_JS}
-  return { t, dark: !!this.props.dark, ...coverVals, tiles: coverVals.tiles.map(k => k.label === 'Due now' ? { ...k, label: 'Due' } : k),
+  ${LIFT_JS}
+  ${CARD_DRAG_JS(true)}
+  return { t, dark: !!this.props.dark, ...coverVals, ...cardDrag, tiles: coverVals.tiles.map(k => k.label === 'Due now' ? { ...k, label: 'Due' } : k),
     // Every card (all six sample cards on the canvas, so the page scrolls and shows the cover's parallax); each opens
     // in the editor.
     rows: db.cards(dk.id).map(r => ({ ...r, ...cardFit(r.tags), href: db.mock ? 'PhoneEditor.dc.html' : r.href })),
@@ -3890,25 +3959,27 @@ const legalLogic = `renderVals() { ${T}
 // ---------- write ----------
 const W = 1440, H = 900, PW = 390, PH = 844;
 const files = {
-  'Main': ['Web · Today', webToday, { props: { ...DARK, ...MESH('Iris'), caughtUp: { editor: 'boolean', default: false } }, logic: todayLogic, w: W, h: H }],
+  'Main': ['Web · Today', webToday, { props: { ...DARK, ...MESH('Iris'), caughtUp: { editor: 'boolean', default: false } }, logic: todayLogic, css: DRAG_CSS, w: W, h: H }],
   'WebNewDeck': ['Web · New deck', webNewDeck, { props: { ...DARK, grain: MESH('Iris').grain }, logic: NEW_DECK_LOGIC, css: NUM_CSS + COVER_FADE_CSS, w: W, h: H }],
   'WebImport': ['Web · Import cards', webImport, { props: { ...DARK, grain: MESH('Iris').grain }, logic: importLogic, w: W, h: H }],
-  'WebDecks': ['Web · Library', webDecks, { props: { ...DARK, grain: MESH('Iris').grain, mode: LIB_MODE, folder: LIB_FOLDER, view: { editor: 'enum', default: 'Cards', options: ['Cards', 'List'] }, openTags: { editor: 'boolean', default: false }, moreTags: { editor: 'boolean', default: false } }, logic: decksLogic, w: W, h: H }],
-  'WebLibraryCards': ['Web · Library · all cards (filter by tags and difficulty)', attrOf('WebDecks', W, H, 'mode="cards"'), { logic: darkLogic, w: W, h: H }],
-  'WebLibraryFolder': ['Web · Library · a folder', attrOf('WebDecks', W, H, 'folder="f1"'), { logic: darkLogic, w: W, h: H }],
-  'WebLibraryNewFolder': ['Web · Library · new folder, and a deck’s ⋯ menu', attrOf('WebDecks', W, H, 'naming="{{yes}}" move-open="{{yes}}"'), { logic: darkLogic, w: W, h: H }],
-  'WebDecksTags': ['Web · Library · a deck with 11 tags (+9 shows them all)', attrOf('WebDecks', W, H, 'open-tags="{{yes}}"'), { logic: darkLogic, w: W, h: H }],
-  'WebDecksMoreTags': ['Web · Library · More (find any tag)', attrOf('WebDecks', W, H, 'more-tags="{{yes}}"'), { logic: darkLogic, w: W, h: H }],
-  'WebDecksList': ['Web · Library · list view', listOf('WebDecks', W, H), { logic: 'renderVals() { return {}; }', w: W, h: H }],
+  'WebDecks': ['Web · Library', webDecks, { props: { ...DARK, grain: MESH('Iris').grain, mode: LIB_MODE, folder: LIB_FOLDER, view: { editor: 'enum', default: 'Cards', options: ['Cards', 'List'] }, openTags: { editor: 'boolean', default: false }, moreTags: { editor: 'boolean', default: false } }, logic: decksLogic, css: DRAG_CSS, w: W, h: H }],
+  'WebLibraryCards': ['Web · Library · all cards (filter by tags and difficulty)', attrOf('WebDecks', W, H, 'mode="cards"'), { logic: darkLogic, css: DRAG_CSS, w: W, h: H }],
+  'WebLibraryFolder': ['Web · Library · a folder', attrOf('WebDecks', W, H, 'folder="f1"'), { logic: darkLogic, css: DRAG_CSS, w: W, h: H }],
+  'WebLibraryNewFolder': ['Web · Library · New folder popup', attrOf('WebDecks', W, H, 'naming="{{yes}}"'), { logic: darkLogic, css: DRAG_CSS, w: W, h: H }],
+  'WebLibraryMove': ['Web · Library · a deck’s ⋯ menu (move it to a folder)', attrOf('WebDecks', W, H, 'move-open="{{yes}}"'), { logic: darkLogic, css: DRAG_CSS, w: W, h: H }],
+  'WebDeckMoveTray': ['Web · Deck · Move to tray (while a card is dragged)', attrOf('WebDeck', W, H, 'tray-open="{{yes}}"'), { logic: darkLogic, css: NUM_CSS + DRAG_CSS, w: W, h: H }],
+  'WebDecksTags': ['Web · Library · a deck with 11 tags (+9 shows them all)', attrOf('WebDecks', W, H, 'open-tags="{{yes}}"'), { logic: darkLogic, css: DRAG_CSS, w: W, h: H }],
+  'WebDecksMoreTags': ['Web · Library · More (find any tag)', attrOf('WebDecks', W, H, 'more-tags="{{yes}}"'), { logic: darkLogic, css: DRAG_CSS, w: W, h: H }],
+  'WebDecksList': ['Web · Library · list view', listOf('WebDecks', W, H), { logic: 'renderVals() { return {}; }', css: DRAG_CSS, w: W, h: H }],
   'WebSettings': ['Web · Settings', webSettings, { props: { ...DARK, grain: MESH('Iris').grain, photo: { editor: 'enum', default: 'Color', options: ['Color', 'Google photo'] }, plan: { editor: 'enum', default: 'Pro', options: ['Free', 'Pro', 'Pro, ending'] } }, logic: webSettingsLogic, css: NUM_CSS, w: W, h: H }],
   'IconOptions': ['Web · Icon options', iconOptions, { props: DARK, logic: iconOptionsLogic, w: W, h: H }],
   'WebTodayNew': ['Web · Today · new user', webTodayNew, { props: { ...DARK, ...MESH('Iris') }, logic: emptyLogic(), w: W, h: H }],
-  'WebTodayCaughtUp': ['Web · Today · all caught up', caughtOf('Main', W, H), { logic: darkLogic, w: W, h: H }],
+  'WebTodayCaughtUp': ['Web · Today · all caught up', caughtOf('Main', W, H), { logic: darkLogic, css: DRAG_CSS, w: W, h: H }],
   'WebDecksEmpty': ['Web · Library · no decks yet', webDecksEmpty, { props: { ...DARK, grain: MESH('Iris').grain }, logic: emptyLogic(), w: W, h: H }],
   'WebDeckEmpty': ['Web · Deck · no cards yet', webDeckEmpty, { props: { ...DARK, grain: MESH('Iris').grain }, logic: emptyLogic('Pharmacology'), w: W, h: H }],
   'WebStatsEmpty': ['Web · Stats · no reviews yet', webStatsEmpty, { props: { ...DARK, grain: MESH('Iris').grain }, logic: emptyLogic(), w: W, h: H }],
-  'WebDeck': ['Web · Deck page', webDeck, { props: { ...DARK, grain: MESH('Iris').grain, settingsOpen: { editor: 'boolean', default: false }, settingsTab: { editor: 'enum', default: 'General', options: ['General', 'Studying'] }, tagPicker: { editor: 'boolean', default: false } }, logic: deckLogic, css: NUM_CSS + PARALLAX_CSS, w: W, h: H }],
-  'WebDeckTagPicker': ['Web · Deck settings · Add tag', attrOf('WebDeck', W, H, 'settings-open="{{yes}}" tag-picker="{{yes}}"'), { logic: darkLogic, css: NUM_CSS, w: W, h: H }],
+  'WebDeck': ['Web · Deck page', webDeck, { props: { ...DARK, grain: MESH('Iris').grain, settingsOpen: { editor: 'boolean', default: false }, settingsTab: { editor: 'enum', default: 'General', options: ['General', 'Studying'] }, tagPicker: { editor: 'boolean', default: false } }, logic: deckLogic, css: NUM_CSS + PARALLAX_CSS + DRAG_CSS, w: W, h: H }],
+  'WebDeckTagPicker': ['Web · Deck settings · Add tag', attrOf('WebDeck', W, H, 'settings-open="{{yes}}" tag-picker="{{yes}}"'), { logic: darkLogic, css: NUM_CSS + DRAG_CSS, w: W, h: H }],
   'WebEditor': ['Web · Card editor', webEditor, { props: { ...DARK, cardType: { editor: 'enum', default: 'Basic', options: ['Basic', 'Blank', 'Image', 'Audio'] }, slashDemo: { editor: 'boolean', default: false } }, logic: EDITOR_LOGIC, css: RICH_CSS, w: W, h: H }],
   'WebEditorSlash': ['Web · Card editor · / menu', attrOf('WebEditor', W, H, 'slash-demo="{{yes}}"'), { logic: darkLogic, css: RICH_CSS, w: W, h: H }],
   'WebSignIn': ['Web · Sign in', webSignIn, { props: { ...DARK, grain: MESH('Iris').grain }, logic: signInLogic('', [64, 78, 70, 84]), css: WALL_CSS, w: W, h: H }],
@@ -3921,7 +3992,7 @@ const files = {
   'WebDonePiles': ['Web · Session done · piles', webDonePiles, { props: DARK, logic: donePilesLogic, w: W, h: H }],
   'WebStats': ['Web · Stats', webStats, { props: DARK, logic: statsLogic, w: W, h: H }],
   'WebConnect': ['Web · Connect AI', webConnect, { props: { ...DARK, ...MESH('Apricot') }, logic: connectLogic, w: W, h: H }],
-  'WebTodayDark': ['Web · Today (dark)', darkOf('Main', W, H), { logic: darkLogic, w: W, h: H }],
+  'WebTodayDark': ['Web · Today (dark)', darkOf('Main', W, H), { logic: darkLogic, css: DRAG_CSS, w: W, h: H }],
   'WebReviewDark': ['Web · Review (dark)', darkOf('WebReview', W, H), { logic: darkLogic, css: REVIEW_CSS, w: W, h: H }],
   'WebReviewFour': ['Web · Review · 4 grades', styleOf('WebReview', W, H, 'Four buttons'), { logic: darkLogic, css: REVIEW_CSS, w: W, h: H }],
   'WebReviewCheck': ['Web · Review · ✓ or ✗', styleOf('WebReview', W, H, 'Check or X'), { logic: darkLogic, css: REVIEW_CSS, w: W, h: H }],
@@ -3930,9 +4001,9 @@ const files = {
   'WebReviewPiles': ['Web · Review · Piles', styleOf('WebReview', W, H, 'Piles'), { logic: darkLogic, css: REVIEW_CSS, w: W, h: H }],
   'WebReviewNewPile': ['Web · Review · New pile popup', pileOf('WebReview', W, H), { logic: darkLogic, css: REVIEW_CSS, w: W, h: H }],
   'WebReviewBlank': ['Web · Review · fill in the blank', blankOf('WebReview', W, H), { logic: darkLogic, css: REVIEW_CSS, w: W, h: H }],
-  'WebDeckSettings': ['Web · Deck settings', openOf('WebDeck', W, H), { logic: darkLogic, css: NUM_CSS, w: W, h: H }],
-  'WebDeckSettingsStudy': ['Web · Deck settings · Studying (FSRS)', studyOf('WebDeck', W, H), { logic: darkLogic, css: NUM_CSS, w: W, h: H }],
-  'WebDeckDark': ['Web · Deck page (dark)', darkOf('WebDeck', W, H), { logic: darkLogic, css: NUM_CSS, w: W, h: H }],
+  'WebDeckSettings': ['Web · Deck settings', openOf('WebDeck', W, H), { logic: darkLogic, css: NUM_CSS + DRAG_CSS, w: W, h: H }],
+  'WebDeckSettingsStudy': ['Web · Deck settings · Studying (FSRS)', studyOf('WebDeck', W, H), { logic: darkLogic, css: NUM_CSS + DRAG_CSS, w: W, h: H }],
+  'WebDeckDark': ['Web · Deck page (dark)', darkOf('WebDeck', W, H), { logic: darkLogic, css: NUM_CSS + DRAG_CSS, w: W, h: H }],
   'WebStatsDark': ['Web · Stats (dark)', darkOf('WebStats', W, H), { logic: darkLogic, w: W, h: H }],
   'TopToday': ['Top tabs · Today', topToday, { props: { ...DARK, ...MESH('Iris') }, logic: topTodayLogic, w: W, h: H }],
   'TopDeck': ['Top tabs · Deck', topDeck, { props: DARK, logic: topDeckLogic, w: W, h: H }],
@@ -3951,15 +4022,17 @@ const files = {
   'PhoneTodayCaughtUp': ['iPhone · Today · all caught up', caughtOf('PhoneToday', PW, PH), { logic: darkLogic, w: PW, h: PH }],
   'PhoneDeckEmpty': ['iPhone · Deck · no cards yet', phoneDeckEmpty, { props: { ...DARK, grain: MESH('Iris').grain }, logic: emptyLogic('Pharmacology'), w: PW, h: PH }],
   'PhoneDecksEmpty': ['iPhone · Library · no decks yet', phoneDecksEmpty, { props: { ...DARK, grain: MESH('Iris').grain }, logic: emptyLogic(), w: PW, h: PH }],
-  'PhoneLibrary': ['iPhone · Library', phoneLibrary, { props: { ...DARK, grain: MESH('Iris').grain, mode: LIB_MODE, folder: LIB_FOLDER }, logic: libraryLogic(true), w: PW, h: PH }],
-  'PhoneLibraryCards': ['iPhone · Library · all cards', attrOf('PhoneLibrary', PW, PH, 'mode="cards"'), { logic: darkLogic, w: PW, h: PH }],
-  'PhoneLibraryFolder': ['iPhone · Library · a folder', attrOf('PhoneLibrary', PW, PH, 'folder="f1"'), { logic: darkLogic, w: PW, h: PH }],
+  'PhoneLibrary': ['iPhone · Library', phoneLibrary, { props: { ...DARK, grain: MESH('Iris').grain, mode: LIB_MODE, folder: LIB_FOLDER }, logic: libraryLogic(true), css: DRAG_CSS, w: PW, h: PH }],
+  'PhoneLibraryCards': ['iPhone · Library · all cards', attrOf('PhoneLibrary', PW, PH, 'mode="cards"'), { logic: darkLogic, css: DRAG_CSS, w: PW, h: PH }],
+  'PhoneLibraryFolder': ['iPhone · Library · a folder', attrOf('PhoneLibrary', PW, PH, 'folder="f1"'), { logic: darkLogic, css: DRAG_CSS, w: PW, h: PH }],
+  'PhoneLibraryNewFolder': ['iPhone · Library · New folder popup', attrOf('PhoneLibrary', PW, PH, 'naming="{{yes}}"'), { logic: darkLogic, css: DRAG_CSS, w: PW, h: PH }],
+  'PhoneDeckMoveTray': ['iPhone · Deck · Move to tray (while a card is dragged)', attrOf('PhoneDeck', PW, PH, 'tray-open="{{yes}}"'), { logic: darkLogic, css: NUM_CSS + DRAG_CSS, w: PW, h: PH }],
   'PhoneStatsEmpty': ['iPhone · Stats · no reviews yet', phoneStatsEmpty, { props: { ...DARK, grain: MESH('Iris').grain }, logic: emptyLogic(), w: PW, h: PH }],
   'PhoneNewDeck': ['iPhone · New deck', phoneNewDeck, { props: { ...DARK, grain: MESH('Iris').grain }, logic: NEW_DECK_LOGIC, css: NUM_CSS + COVER_FADE_CSS, w: PW, h: PH }],
   'PhoneInbox': ['iPhone · Check AI cards', phoneInbox, { props: DARK, logic: phoneInboxLogic, css: REVIEW_CSS, w: PW, h: PH }],
-  'PhoneDeck': ['iPhone · Deck page', phoneDeck, { props: { ...DARK, grain: MESH('Iris').grain, settingsOpen: { editor: 'boolean', default: false }, settingsTab: { editor: 'enum', default: 'General', options: ['General', 'Studying'] }, tagPicker: { editor: 'boolean', default: false } }, logic: phoneDeckLogic, css: NUM_CSS + PARALLAX_CSS, w: PW, h: PH }],
-  'PhoneDeckTagPicker': ['iPhone · Deck settings · Add tag', attrOf('PhoneDeck', PW, PH, 'settings-open="{{yes}}" tag-picker="{{yes}}"'), { logic: darkLogic, css: NUM_CSS, w: PW, h: PH }],
-  'PhoneDeckSettingsStudy': ['iPhone · Deck settings · Studying (FSRS)', studyOf('PhoneDeck', PW, PH), { logic: darkLogic, css: NUM_CSS, w: PW, h: PH }],
+  'PhoneDeck': ['iPhone · Deck page', phoneDeck, { props: { ...DARK, grain: MESH('Iris').grain, settingsOpen: { editor: 'boolean', default: false }, settingsTab: { editor: 'enum', default: 'General', options: ['General', 'Studying'] }, tagPicker: { editor: 'boolean', default: false } }, logic: phoneDeckLogic, css: NUM_CSS + PARALLAX_CSS + DRAG_CSS, w: PW, h: PH }],
+  'PhoneDeckTagPicker': ['iPhone · Deck settings · Add tag', attrOf('PhoneDeck', PW, PH, 'settings-open="{{yes}}" tag-picker="{{yes}}"'), { logic: darkLogic, css: NUM_CSS + DRAG_CSS, w: PW, h: PH }],
+  'PhoneDeckSettingsStudy': ['iPhone · Deck settings · Studying (FSRS)', studyOf('PhoneDeck', PW, PH), { logic: darkLogic, css: NUM_CSS + DRAG_CSS, w: PW, h: PH }],
   'PhoneEditor': ['iPhone · Card editor', phoneEditor, { props: { ...DARK, keyboard: { editor: 'boolean', default: true }, textStyles: { editor: 'boolean', default: false }, cardType: { editor: 'enum', default: 'Basic', options: ['Basic', 'Blank', 'Image', 'Audio'] } }, logic: EDITOR_LOGIC, css: RICH_CSS, w: PW, h: PH }],
   'PhoneReview': ['iPhone · Review', phoneReview, { props: { ...DARK, explainOpen: { editor: 'boolean', default: false }, explained: { editor: 'boolean', default: false }, grading: { editor: 'enum', default: 'Four buttons', options: ['Four buttons', 'Check or X', 'Piles'] }, card: { editor: 'enum', default: 'Basic', options: ['Basic', 'Fill in the blank', 'Image', 'Audio'] }, startRevealed: { editor: 'boolean', default: false }, fsrs: { editor: 'boolean', default: true }, progress: { editor: 'enum', default: 'Bar', options: ['Bar', 'Counts', 'None'] }, settingsOpen: { editor: 'boolean', default: false }, newPileOpen: { editor: 'boolean', default: false }, radius: { editor: 'range', default: 32, min: 12, max: 48, step: 2, unit: 'px' } }, logic: REVIEW_LOGIC(64), css: REVIEW_CSS, w: PW, h: PH }],
   'PhoneDone': ['iPhone · Session done', phoneDone, { props: DARK, logic: doneLogic(260, 20), w: PW, h: PH }],
@@ -4010,8 +4083,8 @@ const files = {
   'PhoneReviewNewPile': ['iPhone · Review · New pile popup', pileOf('PhoneReview', PW, PH), { logic: darkLogic, css: REVIEW_CSS, w: PW, h: PH }],
   'PhoneReviewBlank': ['iPhone · Review · fill in the blank', blankOf('PhoneReview', PW, PH), { logic: darkLogic, css: REVIEW_CSS, w: PW, h: PH }],
   'PhoneSettings': ['iPhone · Settings', phoneSettings, { props: { ...DARK, plan: { editor: 'enum', default: 'Pro', options: ['Free', 'Pro', 'Pro, ending'] } }, logic: phoneSettingsLogic, w: PW, h: PHONE_SETTINGS_H }],
-  'PhoneDeckSettings': ['iPhone · Deck settings', openOf('PhoneDeck', PW, PH), { logic: darkLogic, css: NUM_CSS, w: PW, h: PH }],
-  'PhoneDeckDark': ['iPhone · Deck page (dark)', darkOf('PhoneDeck', PW, PH), { logic: darkLogic, css: NUM_CSS, w: PW, h: PH }],
+  'PhoneDeckSettings': ['iPhone · Deck settings', openOf('PhoneDeck', PW, PH), { logic: darkLogic, css: NUM_CSS + DRAG_CSS, w: PW, h: PH }],
+  'PhoneDeckDark': ['iPhone · Deck page (dark)', darkOf('PhoneDeck', PW, PH), { logic: darkLogic, css: NUM_CSS + DRAG_CSS, w: PW, h: PH }],
   'PhoneStatsDark': ['iPhone · Stats (dark)', darkOf('PhoneStats', PW, PH), { logic: darkLogic, w: PW, h: PH }]
 };
 for (const [name, [title, body, opts]] of Object.entries(files)) writeFileSync(OUT + name + '.dc.html', page(title, body, opts));

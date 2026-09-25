@@ -1058,9 +1058,27 @@
       "h": 900,
       "is_interactive": true,
       "page": "sidebar",
-      "title": "Web · Library · new folder, and a deck’s ⋯ menu",
+      "title": "Web · Library · New folder popup",
       "w": 1440,
       "x": 3040,
+      "y": 9240
+    },
+    "WebLibraryMove.dc.html": {
+      "h": 900,
+      "is_interactive": true,
+      "page": "sidebar",
+      "title": "Web · Library · a deck’s ⋯ menu (move it to a folder)",
+      "w": 1440,
+      "x": 6080,
+      "y": 9240
+    },
+    "WebDeckMoveTray.dc.html": {
+      "h": 900,
+      "is_interactive": true,
+      "page": "sidebar",
+      "title": "Web · Deck · Move to tray (while a card is dragged)",
+      "w": 1440,
+      "x": 7600,
       "y": 9240
     },
     "WebReviewExplain.dc.html": {
@@ -1097,6 +1115,24 @@
       "title": "iPhone · Library · a folder",
       "w": 390,
       "x": 940,
+      "y": 5200
+    },
+    "PhoneLibraryNewFolder.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "page": "phone",
+      "title": "iPhone · Library · New folder popup",
+      "w": 390,
+      "x": 1880,
+      "y": 5200
+    },
+    "PhoneDeckMoveTray.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "page": "phone",
+      "title": "iPhone · Deck · Move to tray (while a card is dragged)",
+      "w": 390,
+      "x": 2350,
       "y": 5200
     },
     "PhoneReviewExplain.dc.html": {
@@ -1491,10 +1527,14 @@
     "WebLibraryCards.dc.html",
     "WebLibraryFolder.dc.html",
     "WebLibraryNewFolder.dc.html",
+    "WebLibraryMove.dc.html",
+    "WebDeckMoveTray.dc.html",
     "WebReviewExplain.dc.html",
     "PhoneLibrary.dc.html",
     "PhoneLibraryCards.dc.html",
     "PhoneLibraryFolder.dc.html",
+    "PhoneLibraryNewFolder.dc.html",
+    "PhoneDeckMoveTray.dc.html",
     "PhoneReviewExplain.dc.html"
   ],
   "pages": [
