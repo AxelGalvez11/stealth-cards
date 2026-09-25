@@ -72,7 +72,13 @@ export const mediaLink = (name, uid) => (cloud() ? files.link(uid, name) : Promi
 export const state = () => lib().S;
 // On Free, up to FREE_MEDIA cards can have a picture or a sound (Pro has no limit, and neither does this computer).
 export const MEDIA_FULL = 'Free includes up to ' + FREE_MEDIA + ' pictures and sounds. Go Pro for as many as you like: lucida.cards/pricing';
-export const mediaLeft = () => (lib().pro === false ? Math.max(0, FREE_MEDIA - state().cards.filter(c => c.image || c.audio).length) : Infinity);
+// A picture with hidden parts is one picture, however many boxes (cards) it has.
+export const mediaLeft = () => {
+  if (lib().pro !== false) return Infinity;
+  const seen = new Set();
+  for (const c of state().cards) if (c.image || c.audio) seen.add(c.box != null && c.group ? c.group : c.id);
+  return Math.max(0, FREE_MEDIA - seen.size);
+};
 const id = p => p + Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
 const clean = (x, n = 5000) => String(x ?? '').slice(0, n);
 const cleanTags = t => (Array.isArray(t) ? [...new Set(t.map(x => clean(x, 40).trim()).filter(Boolean))].slice(0, 50) : []);
@@ -86,6 +92,25 @@ export const BG_KINDS = ['deck', 'plain', 'sky', 'sunset', 'photo'];
 const cleanBg = (was, o) => { const b = { kind: 'deck', image: null, ...was, ...pick(o, ['kind', 'image']) }; return { kind: BG_KINDS.includes(b.kind) ? b.kind : 'deck', image: b.image ? clean(b.image, 300) : null }; };
 // The words hidden in a fill-in-the-blank card's [[blanks]] (read the same way the app draws them).
 export const blanks = text => R.blanks(text);
+// Image occlusion: boxes over an image card's picture, each hiding one part, with what's under it (its label). Each box
+// is its own card, like each blank of a fill-in-the-blank card. A box's place and size are fractions of the picture
+// (0 to 1), so it fits the picture at any size; its id keeps the right card with it when boxes change.
+export const MAX_BOXES = 30;
+const unit = v => Math.min(1, Math.max(0, Number.isFinite(+v) ? +v : 0));
+const round4 = v => Math.round(v * 10000) / 10000;
+export function cleanBoxes(list) {
+  const ids = new Set();
+  return (Array.isArray(list) ? list : []).slice(0, MAX_BOXES).map(b => {
+    if (!b || typeof b !== 'object') return null;
+    const x = unit(b.x), y = unit(b.y), w = Math.min(unit(b.w), 1 - x), h = Math.min(unit(b.h), 1 - y);
+    if (w < .005 || h < .005) return null;
+    let bid = /^[A-Za-z0-9_-]{1,24}$/.test(String(b.id || '')) ? String(b.id) : id('b');
+    if (ids.has(bid)) bid = id('b');
+    ids.add(bid);
+    return { id: bid, x: round4(x), y: round4(y), w: round4(w), h: round4(h), label: clean(b.label, 200).replace(/\s+/g, ' ').trim() };
+  }).filter(Boolean);
+}
+const occMode = m => (m === 'all' ? 'all' : 'one');
 
 function makeDeck(o = {}) {
   const S = state(), st = S.settings;
@@ -106,14 +131,51 @@ function makeCards(deck, o, source = 'you') {
     tags: cleanTags(o.tags), image: o.image || null, audio: o.audio || null, speak: clean(o.speak, 500), lang: clean(o.lang, 20), auto: o.auto !== false,
     source: clean(source, 60), pending: !!o.pending, created: Date.now(), srs: newCard(), pile: null };
   const n = kind === 'cloze' ? blanks(base.text).length : 0;
-  const list = kind === 'cloze' && o.clozeMode !== 'one' && n > 1 ? Array.from({ length: n }, (_, i) => ({ ...base, cloze: i })) : [{ ...base, cloze: kind === 'cloze' ? (o.clozeMode === 'one' ? -1 : 0) : null }];
-  const group = kind === 'cloze' ? id('g') : null;
+  // An image card with boxes: one card per box, each asking its own box.
+  const boxes = kind === 'image' ? cleanBoxes(o.boxes) : [];
+  if (kind === 'image') { base.boxes = boxes; base.occ = occMode(o.occ); }
+  const list = kind === 'cloze' && o.clozeMode !== 'one' && n > 1 ? Array.from({ length: n }, (_, i) => ({ ...base, cloze: i }))
+    : boxes.length ? boxes.map(b => ({ ...base, cloze: null, box: b.id })) : [{ ...base, cloze: kind === 'cloze' ? (o.clozeMode === 'one' ? -1 : 0) : null }];
+  const group = kind === 'cloze' || boxes.length ? id('g') : null;
   const cards = list.map(c => ({ ...c, id: id('c'), group }));
   S.cards.push(...cards);
   return cards;
 }
 const DECK_KEYS = ['name', 'tags', 'cover', 'paused', 'grading', 'fsrs', 'goal', 'gapIdx', 'steps', 'perDay', 'piles', 'folder', 'bg'];
-const CARD_KEYS = ['kind', 'front', 'back', 'note', 'text', 'tags', 'image', 'audio', 'speak', 'lang', 'auto', 'pending', 'cloze'];
+const CARD_KEYS = ['kind', 'front', 'back', 'note', 'text', 'tags', 'image', 'audio', 'speak', 'lang', 'auto', 'pending', 'cloze', 'boxes', 'occ'];
+// What every card of one picture with boxes shares (everything but which box it asks, and its reviews).
+const SHARED_KEYS = ['kind', 'front', 'back', 'note', 'tags', 'image', 'lang', 'pending', 'boxes', 'occ'];
+// Keeps a picture's cards in step with its boxes: a new box gets a card, a box that's gone takes its card with it, and
+// every other card keeps its reviews. A plain image card that gets boxes becomes the first box's card; one whose boxes
+// are all gone is a plain image card again.
+function syncBoxes(c, p, before) {
+  const S = state(), boxes = c.boxes || [], had = new Map((before || []).map(b => [b.id, b.label])), occ = c.box != null && !!c.group;
+  const sibs = occ ? S.cards.filter(x => x.group === c.group && x.kind === 'image' && x.box != null) : [c];
+  if (!sibs.includes(c)) sibs.push(c);
+  const shared = pick(p, SHARED_KEYS);
+  for (const x of sibs) Object.assign(x, shared);
+  const keep = new Map();
+  for (const x of sibs) if (x.box != null && boxes.some(b => b.id === x.box) && !keep.has(x.box)) keep.set(x.box, x);
+  const spare = sibs.filter(x => x.box == null && ![...keep.values()].includes(x));
+  if (!boxes.length) {
+    const drop = new Set(sibs.filter(x => x !== c).map(x => x.id));
+    S.cards = S.cards.filter(x => !drop.has(x.id));
+    c.box = null; c.group = null; c.boxes = [];
+    return;
+  }
+  const group = occ ? c.group : id('g');
+  for (const b of boxes) {
+    let x = keep.get(b.id);
+    if (!x && spare.length) { x = spare.shift(); x.box = b.id; }
+    if (!x) { x = { ...c, id: id('c'), box: b.id, srs: newCard(), pile: null, created: Date.now() }; delete x.explain; delete x.quiz; S.cards.push(x); }
+    x.group = group; x.cloze = null;
+    keep.set(b.id, x);
+    // A box that says something new needs a new explanation.
+    if (had.has(b.id) && had.get(b.id) !== b.label) { delete x.explain; delete x.quiz; }
+  }
+  const kept = new Set([...keep.values()].map(x => x.id));
+  S.cards = S.cards.filter(x => !sibs.includes(x) || kept.has(x.id));
+}
 const pick = (o, keys) => Object.fromEntries(Object.entries(o || {}).filter(([k]) => keys.includes(k)));
 
 // AI explanations (ai.mjs, handler.mjs): how many were written today, and saving one on its card. Only the server
@@ -127,7 +189,8 @@ export function useAi(day, limit) {
 export function refundAi(day) { const S = state(); if (S.ai.used && S.ai.used.day === day && S.ai.used.n > 0) { S.ai.used = { day, n: S.ai.used.n - 1 }; save(); } }
 export function saveExplain(cardId, text, by) {
   const c = state().cards.find(x => x.id === cardId); if (!c) return false;
-  const sibs = c.group ? state().cards.filter(x => x.group === c.group) : [c];
+  // A fill-in-the-blank text shares one explanation; each box of a picture has its own answer, so its own explanation.
+  const sibs = c.group && c.kind === 'cloze' ? state().cards.filter(x => x.group === c.group) : [c];
   sibs.forEach(x => { x.explain = { text: clean(text, 2000), by: clean(by, 60), at: Date.now() }; });
   save(); return true;
 }
@@ -202,11 +265,18 @@ function run(a, who) {
       if ('speak' in p) p.speak = clean(p.speak, 500);
       if ('lang' in p) p.lang = clean(p.lang, 20);
       if ('tags' in p) p.tags = cleanTags(p.tags);
+      if ('boxes' in p) p.boxes = cleanBoxes(p.boxes);
+      if ('occ' in p) p.occ = occMode(p.occ);
       const mode = a.patch && a.patch.clozeMode;
       delete p.cloze;
-      const stale = ['front', 'back', 'text'].some(k => k in p && p[k] !== c[k]);
+      const stale = ['front', 'back', 'text'].some(k => k in p && p[k] !== c[k]), before = c.boxes;
       Object.assign(c, p);
       if (stale) for (const x of c.group ? S.cards.filter(y => y.group === c.group) : [c]) { delete x.explain; delete x.quiz; }
+      // A card that stops being an image card leaves its picture, and takes its box with it (as if deleted).
+      if (c.kind !== 'image' && c.box != null) {
+        for (const x of S.cards) if (x !== c && c.group && x.group === c.group && x.boxes) x.boxes = x.boxes.filter(b => b.id !== c.box);
+        c.box = null; c.group = null; delete c.boxes; delete c.occ;
+      }
       // Fill in the blank: every card from the same text changes together, one card per blank (or one for all).
       if (c.kind === 'cloze') {
         const sibs = c.group ? S.cards.filter(x => x.group === c.group) : [c];
@@ -221,6 +291,8 @@ function run(a, who) {
           for (let i = keep.length; i < want; i++) S.cards.push({ ...c, id: id('c'), cloze: i, srs: newCard(), group: c.group, created: Date.now() });
         }
       }
+      // A picture with boxes: every card of it changes together, one card per box.
+      if (c.kind === 'image' && (c.box != null || (c.boxes || []).length)) syncBoxes(c, p, before);
       return { id: c.id };
     }
     // Learn mode questions for cards, written by the learner's own AI app (mcp.mjs): multiple choice with plausible wrong
@@ -242,6 +314,10 @@ function run(a, who) {
     }
     case 'card.delete': {
       const ids = new Set(a.ids || [a.id]);
+      // A box's card going takes its box off the picture, so the picture's other cards stop hiding it.
+      for (const c of S.cards) if (ids.has(c.id) && c.box != null && c.group) {
+        for (const x of S.cards) if (x.group === c.group && !ids.has(x.id) && x.boxes) x.boxes = x.boxes.filter(b => b.id !== c.box);
+      }
       S.cards = S.cards.filter(c => !ids.has(c.id)); S.logs = S.logs.filter(l => !ids.has(l.cardId));
       return { ids: [...ids] };
     }

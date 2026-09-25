@@ -10,8 +10,10 @@ const plain = x => R.plain(String(x || ''), { join: ' ', math: 'show', cloze: tr
 
 // Why a card's answer is right, in a few sentences (a question asked in Learn mode gives more to go on).
 export async function explain(card, { deck = '', question = '' } = {}) {
-  const front = card.kind === 'cloze' ? plain(card.text) : plain(card.front), back = card.kind === 'cloze' ? R.blanks(card.text, { math: 'show' }).join(', ') : plain(card.back);
-  const lines = [deck && 'Deck: ' + deck, 'Card: ' + (front || '(a picture)'), 'Answer: ' + back, card.note && 'Note on the card: ' + plain(card.note), question && question !== front && 'Asked as: ' + question].filter(Boolean);
+  // A box of a picture (image occlusion) asks what's under the box: its label is the answer.
+  const box = card.kind === 'image' && card.box != null ? (card.boxes || []).find(b => b.id === card.box) : null;
+  const front = card.kind === 'cloze' ? plain(card.text) : plain(card.front), back = card.kind === 'cloze' ? R.blanks(card.text, { math: 'show' }).join(', ') : box ? box.label : plain(card.back);
+  const lines = [deck && 'Deck: ' + deck, 'Card: ' + (front || (box ? '(a picture with one part hidden: what is it?)' : '(a picture)')), 'Answer: ' + back, card.note && 'Note on the card: ' + plain(card.note), question && question !== front && 'Asked as: ' + question].filter(Boolean);
   // OPENROUTER_BASE lets tests answer instead of OpenRouter.
   const res = await fetch((process.env.OPENROUTER_BASE || 'https://openrouter.ai/api/v1') + '/chat/completions', {
     method: 'POST', signal: AbortSignal.timeout(30000),

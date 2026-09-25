@@ -3,7 +3,7 @@
 import { writeFileSync, mkdirSync, readFileSync, readdirSync, existsSync } from 'node:fs';
 import { PALETTE_NAMES, PALETTES, flowSvg, grainSvg, grainTile, paletteData } from './surfaces.mjs';
 import { GEN_METHOD } from './generator.mjs';
-import { MOCK_METHOD } from './mock.mjs';
+import { MOCK_METHOD, SAMPLE } from './mock.mjs';
 import { DRAG_METHOD } from './drag.mjs';
 import { WALL_CARDS } from './wall.mjs';
 import { PRIVACY, TERMS, UPDATED } from './legal.mjs';
@@ -980,7 +980,51 @@ renderVals() {
   };
 }`;
 
-const CELL = (w, h) => `<svg width="${w}" height="${h}" viewBox="0 0 220 150" fill="none" stroke="{{t.text}}" stroke-width="2"><ellipse cx="104" cy="80" rx="94" ry="62"/><circle cx="116" cy="74" r="24" fill="{{t.surf}}"/><circle cx="120" cy="70" r="7" fill="{{t.text}}"/><ellipse cx="54" cy="96" rx="16" ry="8"/><ellipse cx="74" cy="46" rx="12" ry="6"/><ellipse cx="158" cy="112" rx="14" ry="7"/><path d="M138 60 L186 22"/><circle cx="194" cy="16" r="12" fill="{{t.inv}}" stroke="none"/><text x="194" y="21" text-anchor="middle" font-size="13" font-weight="700" fill="{{t.invText}}" stroke="none" font-family="Geist, sans-serif">1</text></svg>`;
+// The sample cell diagram (220 x 150). `pointer`: the "1" pointing at the nucleus; a picture with boxes has none.
+const CELL = (w, h, pointer = true) => `<svg width="${w}" height="${h}" viewBox="0 0 220 150" fill="none" stroke="{{t.text}}" stroke-width="2"${pointer ? '' : ' style="display: block;"'}><ellipse cx="104" cy="80" rx="94" ry="62"/><circle cx="116" cy="74" r="24" fill="{{t.surf}}"/><circle cx="120" cy="70" r="7" fill="{{t.text}}"/><ellipse cx="54" cy="96" rx="16" ry="8"/><ellipse cx="74" cy="46" rx="12" ry="6"/><ellipse cx="158" cy="112" rx="14" ry="7"/>${pointer ? '<path d="M138 60 L186 22"/><circle cx="194" cy="16" r="12" fill="{{t.inv}}" stroke="none"/><text x="194" y="21" text-anchor="middle" font-size="13" font-weight="700" fill="{{t.invText}}" stroke="none" font-family="Geist, sans-serif">1</text>' : ''}</svg>`;
+// ---------- Image occlusion (the owner: "image mode for cards doesnt have way to add occlusion box") ----------
+// An image card can hide parts of its picture behind boxes, and each box is its own card, like each blank of a
+// fill-in-the-blank card. A box's place and size are fractions of the picture (0 to 1), so it fits the picture at any
+// size, and each box has a label: what's under it, the answer. "What to hide": only the box being asked (the rest of
+// the picture shows), or every box, with one asked.
+// How the boxes look on a card (review and Learn): the asked box is filled in the inverse color with its number; in
+// "Hide all" the others are gray with theirs. Once the answer shows, the asked box fades to an outline. `c` holds the
+// colors: the asked box (ask, askText), a hidden one (cover, coverText), and the ring that sets them off the picture.
+const OCC_JS = `const occView = (boxes, ask, mode, shown, c) => (boxes || []).map((b, i) => {
+    const asked = i === ask, hide = asked || mode === 'all', pct = v => +(v * 100).toFixed(3) + '%';
+    return { n: hide ? String(i + 1) : '', x: pct(b.x), y: pct(b.y), w: pct(b.w), h: pct(b.h), z: asked ? '2' : '1',
+      bg: asked ? (shown ? 'transparent' : c.ask) : hide ? c.cover : 'transparent', fg: asked ? (shown ? 'transparent' : c.askText) : c.coverText,
+      ring: asked ? 'inset 0 0 0 2.5px ' + c.ask + ', 0 0 0 2px ' + c.ring : hide ? '0 0 0 2px ' + c.ring : 'none',
+      // Only showing the answer fades; covering a new card's box is instant, so its answer never shows through.
+      tr: asked && shown ? 'background-color .45s cubic-bezier(.2,.8,.2,1), color .3s ease' : 'none' };
+  });`;
+const OCC_BOXES = (list, fs) => `<sc-for list="{{${list}}}" as="ob" hint-placeholder-count="3"><span class="sc-occ" style="position: absolute; z-index: {{ob.z}}; left: {{ob.x}}; top: {{ob.y}}; width: {{ob.w}}; height: {{ob.h}}; box-sizing: border-box; border-radius: 6px; background: {{ob.bg}}; color: {{ob.fg}}; box-shadow: {{ob.ring}}; transition: {{ob.tr}}; display: flex; align-items: center; justify-content: center; font-size: ${fs}px; font-weight: 700; line-height: 1;">{{ob.n}}</span></sc-for>`;
+// Reduced motion: the box turns to an outline at once.
+const OCC_VIEW_CSS = '@media (prefers-reduced-motion:reduce){.sc-occ{transition:none!important}}';
+// The editor's corner handles reach further than they look under a finger, mostly outward, so a small box can still
+// be moved from its middle. The picture shows it has focus for keyboard use.
+const OCC_EDIT_CSS = '.sc-occ-h::before,.sc-occ-x::before{content:"";position:absolute;inset:-5px}'
+  + '@media (pointer:coarse){.sc-occ-h[data-occ-h=nw]::before{inset:-16px -3px -3px -16px}.sc-occ-h[data-occ-h=sw]::before{inset:-3px -3px -16px -16px}.sc-occ-h[data-occ-h=se]::before{inset:-3px -16px -16px -3px}.sc-occ-x::before{inset:-10px}}'
+  + '.sc-occ-pic:focus-visible{outline:2px solid currentColor;outline-offset:5px}';
+const occHandle = (c, pos, cursor) => `<span data-occ-h="${c}" class="sc-occ-h" style="position: absolute; ${pos} width: 12px; height: 12px; box-sizing: border-box; border-radius: 6px; background: {{t.bg}}; box-shadow: 0 0 0 2px {{t.inv}}; cursor: ${cursor};"></span>`;
+// The picture in the editor, with its boxes: drag on it to draw one; a picked box shows its corners and a ×.
+const occPicture = h => `<div style="height: ${h}px; box-sizing: border-box; padding: 14px; border-radius: 20px; background: {{t.surf}}; display: flex; align-items: center; justify-content: center;">
+    <div class="sc-occ-pic" ref="{{occ.ref}}" tabindex="0" role="group" aria-label="The picture. Drag on it to hide a part behind a box." style="position: relative; max-width: 100%; line-height: 0; border-radius: 8px; color: {{t.text}}; touch-action: none; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; cursor: crosshair; outline: 0;">
+      <sc-if value="{{img.mock}}" hint-placeholder-val="{{ true }}">${CELL(Math.round((h - 28) * 22 / 15), h - 28, false)}</sc-if>
+      <sc-if value="{{img.url}}" hint-placeholder-val="{{ false }}"><img src="{{img.url}}" alt="" draggable="false" style="display: block; max-width: 100%; max-height: ${h - 28}px; border-radius: 8px; pointer-events: none;"></sc-if>
+      <sc-for list="{{occ.boxes}}" as="b" hint-placeholder-count="3"><div data-occ-box="{{b.id}}" style="position: absolute; z-index: {{b.z}}; left: {{b.x}}; top: {{b.y}}; width: {{b.w}}; height: {{b.h}}; box-sizing: border-box; border-radius: 6px; background: {{b.bg}}; color: {{b.fg}}; box-shadow: {{b.ring}}; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; line-height: 1; cursor: move;">{{b.num}}<sc-if value="{{b.sel}}" hint-placeholder-val="{{ false }}">${occHandle('nw', 'left: -6px; top: -6px;', 'nwse-resize')}${occHandle('sw', 'left: -6px; bottom: -6px;', 'nesw-resize')}${occHandle('se', 'right: -6px; bottom: -6px;', 'nwse-resize')}<button type="button" data-occ-del="1" class="sc-occ-x" onClick="{{b.del}}" aria-label="Remove box {{b.n}}" title="Remove box {{b.n}}" style="position: absolute; {{b.delAt}} width: 24px; height: 24px; padding: 0; border: 0; border-radius: 12px; background: {{t.inv}}; color: {{t.invText}}; box-shadow: 0 0 0 2px {{t.bg}}; display: flex; align-items: center; justify-content: center; cursor: pointer;">${svg(I.close, 10, 2.8)}</button></sc-if></div></sc-for>
+    </div>
+  </div>`;
+// One row per box under the picture: its number (tap to pick the box), what's under it (the card's answer), and ×.
+const occAnswers = `<sc-if value="{{occ.has}}" hint-placeholder-val="{{ true }}"><div style="display: flex; flex-direction: column; gap: 8px;">
+    <span style="font-size: 13px; font-weight: 600;">Answers <span style="font-weight: 400; color: {{t.muted}};">· Each box is its own card. {{occ.hint}}</span></span>
+    <div style="display: flex; flex-direction: column; gap: 6px;"><sc-for list="{{occ.boxes}}" as="b" hint-placeholder-count="3"><div style="height: 34px; box-sizing: border-box; padding: 0 6px; display: flex; align-items: center; gap: 8px; border-radius: 14px; background: {{t.surf}}; box-shadow: {{b.rowRing}}; transition: box-shadow .15s;">
+      <button type="button" onClick="{{b.pick}}" aria-label="Pick box {{b.n}}" aria-pressed="{{b.pressed}}" style="width: 24px; height: 24px; flex-shrink: 0; padding: 0; border: 0; border-radius: 8px; background: {{b.chip}}; color: {{b.chipFg}}; font: inherit; font-size: 12px; font-weight: 700; cursor: pointer;">{{b.n}}</button>
+      <input type="text" value="{{b.label}}" onChange="{{b.setLabel}}" onFocus="{{b.pick}}" onKeyDown="{{b.key}}" data-occ-label="{{b.id}}" placeholder="What’s under box {{b.n}}" aria-label="What’s under box {{b.n}}" maxlength="200" autocomplete="off" style="flex-grow: 1; min-width: 0; height: 100%; padding: 0; border: 0; outline: 0; background: transparent; color: {{t.text}}; font: inherit; font-size: 15px;">
+      <button type="button" onClick="{{b.remove}}" aria-label="Remove box {{b.n}}" title="Remove box {{b.n}}" style="width: 28px; height: 28px; flex-shrink: 0; padding: 0; border: 0; border-radius: 14px; background: transparent; color: {{t.muted}}; display: flex; align-items: center; justify-content: center; cursor: pointer;">${svg(I.close, 12, 2.2)}</button>
+    </div></sc-for></div>
+  </div></sc-if>
+  <sc-if value="{{occ.tip}}" hint-placeholder-val="{{ false }}"><span style="font-size: 13px; line-height: 1.45; color: {{t.muted}};">Drag on the picture to hide a part behind a box. Each box becomes its own card, with what’s under it as the answer.</span></sc-if>`;
 // Card editor: slide-over panel on the deck page
 const TYPE_SEG = `<div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 4px; padding: 4px; border-radius: 999px; background: {{t.surf}};">
   <sc-for list="{{types}}" as="k" hint-placeholder-count="4">
@@ -996,19 +1040,17 @@ const RICH_EDIT = e => `<sc-for list="{{${e}}}" as="rl" hint-placeholder-count="
 const RICH_CSS = '.sc-rich[data-empty="true"]::before{content:attr(data-ph);position:absolute;color:var(--ph);pointer-events:none}';
 // A card field: it shows bold, blanks, and the rest as you type. The editor's logic handles every keystroke.
 const field = (label, key, rows = 3, ph = '') => `<div style="display: flex; flex-direction: column; gap: 8px;"><span style="font-size: 13px; font-weight: 600;">${label}</span><div class="sc-rich" contenteditable="true" role="textbox" aria-multiline="true" aria-label="${label}" spellcheck="true" data-rk="${key}" data-ph="${ph}" data-empty="{{rich.${key}.empty}}" key="{{rich.${key}.key}}" ref="{{rich.${key}.ref}}" style="position: relative; min-height: ${+(rows * 1.45).toFixed(2)}em; max-height: 14.5em; overflow-y: auto; border-radius: 20px; padding: 14px 16px; background: {{t.surf}}; color: {{t.text}}; box-shadow: {{rich.${key}.ring}}; outline: 0; font-size: 15px; line-height: 1.45; white-space: pre-wrap; overflow-wrap: break-word; --ph: {{t.muted}}; transition: box-shadow .15s;">${RICH_EDIT(`rich.${key}.lines`)}</div></div>`;
-// Image occlusion boxes over the diagram (CELL, 250 x 170): box 1 is the one being asked.
-const occBox = (x, y, w, h, n, on) => `<span style="position: absolute; left: ${x}px; top: ${y}px; width: ${w}px; height: ${h}px; box-sizing: border-box; border-radius: 8px; background: ${on ? '{{t.inv}}' : '{{t.surf2}}'}; color: ${on ? '{{t.invText}}' : '{{t.text}}'}; box-shadow: 0 0 0 2px {{t.bg}}; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700;">${n}</span>`;
 const blankPill = word => `<span style="padding: 1px 10px; border-radius: 999px; background: {{t.inv}}; color: {{t.invText}}; font-weight: 600;">${word}</span>`;
-const editorFields = `
+const editorFieldsOf = phone => `
 <sc-if value="{{isBasic}}" hint-placeholder-val="{{ true }}">${field('Front', 'front', 3, 'The question')}${field('Back', 'back', 2, 'The answer')}</sc-if>
 <sc-if value="{{isCloze}}" hint-placeholder-val="{{ false }}">${field('Text', 'text', 3, 'Put [[double brackets]] around the words to hide')}
   <div style="display: flex; flex-direction: column; gap: 8px;"><span style="font-size: 13px; font-weight: 600;">Cards to make</span>${panelSeg('clozeModes', 'Cards to make')}</div>
   ${field('Extra, shown after', 'note', 1)}</sc-if>
-<sc-if value="{{isImage}}" hint-placeholder-val="{{ false }}"><sc-if value="{{img.mock}}" hint-placeholder-val="{{ true }}"><div style="height: 196px; border-radius: 20px; background: {{t.surf}}; display: flex; align-items: center; justify-content: center;"><div style="position: relative; width: 250px; height: 170px;">${CELL(250, 170)}${occBox(107, 64, 50, 40, 1, true)}${occBox(41, 97, 40, 25, 2, false)}${occBox(158, 114, 40, 25, 3, false)}</div></div></sc-if>
-  <sc-if value="{{img.url}}" hint-placeholder-val="{{ false }}"><div style="height: 196px; border-radius: 20px; background: {{t.surf}}; display: flex; align-items: center; justify-content: center; overflow: hidden;"><img src="{{img.url}}" alt="" style="max-width: 100%; max-height: 100%; object-fit: contain;"></div></sc-if>
-  <sc-if value="{{img.none}}" hint-placeholder-val="{{ false }}"><button type="button" onClick="{{pickImage}}" style="height: 196px; border: 1.5px dashed {{t.muted}}; border-radius: 20px; background: transparent; color: {{t.muted}}; font: inherit; font-size: 14px; font-weight: 600; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; cursor: pointer;">${svg(I.image, 22, 1.8)}Add an image</button></sc-if>
-  <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">${smallBtn('Replace image', 'pickImage', 'image')}<sc-if value="{{img.mock}}" hint-placeholder-val="{{ true }}">${smallBtn('Add a box', 'noop', 'plus')}<span style="flex-grow: 1;"></span>${panelSeg('occModes', 'What to hide')}</sc-if></div>
-  ${field('Prompt', 'front', 1, 'What should they name?')}${field('Answer', 'back', 1)}</sc-if>
+<sc-if value="{{isImage}}" hint-placeholder-val="{{ false }}"><sc-if value="{{img.some}}" hint-placeholder-val="{{ true }}">${occPicture(phone ? 240 : 186)}</sc-if>
+  <sc-if value="{{img.none}}" hint-placeholder-val="{{ false }}"><button type="button" onClick="{{pickImage}}" style="height: ${phone ? 240 : 186}px; border: 1.5px dashed {{t.muted}}; border-radius: 20px; background: transparent; color: {{t.muted}}; font: inherit; font-size: 14px; font-weight: 600; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; cursor: pointer;">${svg(I.image, 22, 1.8)}Add an image</button></sc-if>
+  <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">${smallBtn('Replace image', 'pickImage', 'image')}<sc-if value="{{occ.canAdd}}" hint-placeholder-val="{{ true }}">${smallBtn('Add a box', 'addBox', 'plus')}</sc-if><sc-if value="{{occ.has}}" hint-placeholder-val="{{ true }}"><span style="flex-grow: 1;"></span>${panelSeg('occModes', 'What to hide')}</sc-if></div>
+  ${occAnswers}
+  ${field('Prompt', 'front', 1, 'What should they name?')}<sc-if value="{{occ.none}}" hint-placeholder-val="{{ false }}">${field('Answer', 'back', 1)}</sc-if></sc-if>
 <sc-if value="{{isAudio}}" hint-placeholder-val="{{ false }}"><div style="height: 72px; border-radius: 20px; background: {{t.surf}}; display: flex; align-items: center; gap: 14px; padding: 0 16px;"><button type="button" onClick="{{playAudio}}" aria-label="Play" style="width: 40px; height: 40px; flex-shrink: 0; padding: 0; border: 0; border-radius: 20px; background: {{snd.btn}}; color: {{t.invText}}; display: flex; align-items: center; justify-content: center; cursor: pointer;">${svg(I.play, 16)}</button><sc-if value="{{snd.mock}}" hint-placeholder-val="{{ true }}"><div style="flex-grow: 1; min-width: 0; display: flex; align-items: center; gap: 2px; height: 32px;"><sc-for list="{{bars}}" as="b" hint-placeholder-count="64"><div style="flex: 1 1 0; min-width: 1px; border-radius: 1px; background: {{t.text}}; height: {{b.h}};"></div></sc-for></div><span style="font-family: ${MONO}; font-size: 12px; color: {{t.muted}};">0:02</span></sc-if><sc-if value="{{snd.real}}" hint-placeholder-val="{{ false }}"><span style="flex-grow: 1; min-width: 0; font-size: 14px; color: {{snd.fg}}; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{snd.label}}</span></sc-if></div>
   <div style="display: flex; gap: 8px; flex-wrap: wrap;">${smallBtn('{{recLabel}}', 'toggleRecord', 'mic')}${smallBtn('Upload', 'pickAudio', 'upload')}${smallBtn('Read it aloud', 'toggleSpeak', 'audio')}</div>
   <sc-if value="{{speakOn}}" hint-placeholder-val="{{ false }}">${field('Words to read aloud', 'speak', 1, 'What the card says out loud')}</sc-if>
@@ -1032,7 +1074,7 @@ const webEditor = `<div style="position: relative; width: 1440px; height: 900px;
     <div style="display: flex; align-items: center; justify-content: space-between;"><div style="font-size: 22px; font-weight: 600; letter-spacing: -.02em;">{{title}}</div><a href="{{backHref}}" aria-label="Close" style="width: 36px; height: 36px; border-radius: 18px; background: {{t.surf}}; display: flex; align-items: center; justify-content: center;">${svg(I.close, 16, 2)}</a></div>
     ${TYPE_SEG}
     ${WEB_FMT}
-    ${editorFields}
+    <div style="flex-shrink: 1; min-height: 0; overflow-y: auto; scrollbar-width: thin; display: flex; flex-direction: column; gap: 20px;">${editorFieldsOf(false)}</div>
     <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">${chip(svg(I.decks, 12, 2) + '{{deckName}}', 'height: 32px; padding: 0 12px; font-size: 13px; font-weight: 600;')}${TAG_EDIT('cardTags', 'cardPick')}</div>
     <div style="flex-grow: 1;"></div>
     <div style="display: flex; gap: 10px;"><sc-if value="{{canDelete}}" hint-placeholder-val="{{ false }}"><button type="button" onClick="{{remove}}" style="height: 40px; padding: 0 20px; border: 0; border-radius: 999px; background: {{t.againTint}}; color: {{t.again}}; font: inherit; font-size: 14px; font-weight: 600; cursor: pointer;">Delete</button></sc-if><a href="{{backHref}}" style="flex-grow: 1; height: 40px; border-radius: 999px; background: {{t.surf}}; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 600;">Cancel</a><a href="{{backHref}}" onClick="{{save}}" data-key="mod+enter" style="flex-grow: 2; height: 40px; border-radius: 999px; background: {{t.inv}}; color: {{t.invText}}; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 600;">Save card <span style="font-family: ${MONO}; font-size: 12px; opacity: .6; margin-left: 8px;">⌘↵</span></a></div>
@@ -1042,16 +1084,16 @@ const webEditor = `<div style="position: relative; width: 1440px; height: 900px;
 const EDITOR_LOGIC = `
 constructor(props) {
   super(props);
-  this.state = { typing: !!props.keyboard, focus: 'front', styles: !!props.textStyles, occ: 'one' };
+  this.state = { typing: !!props.keyboard, focus: 'front', styles: !!props.textStyles };
   // The card as you write it: its fields, its type, where the caret is, and what Undo steps back to.
   // It lives outside state so fast typing never builds on an old copy.
   this.ed = { edits: {}, type: null, sel: null, pend: null, past: [], future: [], last: '', lastAt: 0, key: 0, restore: false, sig: '' };
   this.els = {};
   this.refFns = {};
 }
-componentDidMount() { this.placeCaret(); this.placeSlash(); }
-componentDidUpdate() { this.placeCaret(); this.placeSlash(); }
-componentWillUnmount() { if (this.onSel) document.removeEventListener('selectionchange', this.onSel); }
+componentDidMount() { this.placeCaret(); this.placeSlash(); this.onDocKey = ev => this.boxKey(ev); document.addEventListener('keydown', this.onDocKey); }
+componentDidUpdate() { this.placeCaret(); this.placeSlash(); this.placeLabel(); }
+componentWillUnmount() { if (this.onSel) document.removeEventListener('selectionchange', this.onSel); if (this.onDocKey) document.removeEventListener('keydown', this.onDocKey); }
 // A saved card opens with what it says; a new one starts empty in the app (the canvas shows a sample).
 doc() {
   const db = this.props.db || this.mock(), e = this.ed;
@@ -1395,6 +1437,121 @@ media(kind) {
   this.toggleRecord();
 }
 pickImage() { (this.props.db || this.mock()).act.pickFile('image').then(url => url && this.commit({ image: url })); }
+// ---------- Image occlusion ----------
+// Drag on the picture to draw a box (or press Add a box). Pick a box to move it, pull a corner to resize it, and take it
+// away with its × (or Delete). Undo steps back through all of it. While you drag, the box follows the pointer; letting
+// go saves it as one step.
+boxes() { const d = this.drag; return d && d.boxes ? d.boxes : this.doc().f.boxes || []; }
+newBoxId() { return 'b' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6); }
+putBoxes(list, kind) { this.commit({ boxes: list.map(b => ({ ...b, x: +b.x.toFixed(4), y: +b.y.toFixed(4), w: +b.w.toFixed(4), h: +b.h.toFixed(4) })) }, { kind: kind || 'box' }); }
+// With a mouse or trackpad, a new box goes straight to its answer; on a phone the keyboard waits until you tap it.
+fine() { return typeof matchMedia === 'function' && matchMedia('(pointer: fine)').matches; }
+occRef() {
+  return this.refFns.$occ || (this.refFns.$occ = el => {
+    if (!el) return;
+    this.occEl = el;
+    if (el.__occ) return;
+    el.__occ = true;
+    el.addEventListener('pointerdown', ev => this.occDown(ev));
+    el.addEventListener('pointermove', ev => this.occMove(ev));
+    el.addEventListener('pointerup', ev => this.occUp(ev, false));
+    el.addEventListener('pointercancel', ev => this.occUp(ev, true));
+    el.addEventListener('dragstart', ev => ev.preventDefault());
+  });
+}
+occDown(ev) {
+  const el = this.occEl;
+  // A phone moves a tap onto a button nearby (like a picked box's ×), so what's under the finger decides, and the ×
+  // takes a box away only when the finger really went down on it.
+  const pt = el && el.ownerDocument.elementFromPoint(ev.clientX, ev.clientY), at = pt && el.contains(pt) ? pt : ev.target;
+  this.delDown = !!at.closest('[data-occ-del]');
+  if (!el || this.delDown || (ev.pointerType === 'mouse' && ev.button !== 0)) return;
+  ev.preventDefault();
+  if (document.activeElement !== el) el.focus({ preventScroll: true });
+  const r = el.getBoundingClientRect();
+  if (!r.width || !r.height) return;
+  const list = this.doc().f.boxes || [], hit = at.closest('[data-occ-h]'), on = at.closest('[data-occ-box]'), sel = this.state.occSel;
+  const d = hit && sel ? { kind: 'size', id: sel, corner: hit.getAttribute('data-occ-h') } : on ? { kind: 'move', id: on.getAttribute('data-occ-box') } : { kind: list.length < 30 ? 'draw' : 'none', id: this.newBoxId() };
+  this.drag = { ...d, r, at: { x: (ev.clientX - r.left) / r.width, y: (ev.clientY - r.top) / r.height }, start: list, moved: false, pid: ev.pointerId, boxes: null };
+  if (d.kind === 'move' && d.id !== sel) this.setState({ occSel: d.id });
+  try { el.setPointerCapture(ev.pointerId); } catch (err) { /* the pointer is already gone */ }
+}
+occMove(ev) {
+  const d = this.drag;
+  if (!d || ev.pointerId !== d.pid || d.kind === 'none') return;
+  const r = d.r, cl = (v, a, b) => Math.min(b, Math.max(a, v));
+  const p = { x: cl((ev.clientX - r.left) / r.width, 0, 1), y: cl((ev.clientY - r.top) / r.height, 0, 1) }, dx = p.x - d.at.x, dy = p.y - d.at.y;
+  if (!d.moved && Math.abs(dx * r.width) < 4 && Math.abs(dy * r.height) < 4) return;
+  d.moved = true;
+  if (d.kind === 'draw') d.boxes = [...d.start, { id: d.id, x: Math.min(d.at.x, p.x), y: Math.min(d.at.y, p.y), w: Math.abs(dx), h: Math.abs(dy), label: '' }];
+  else {
+    const b = d.start.find(x => x.id === d.id);
+    if (!b) return;
+    let n;
+    if (d.kind === 'move') n = { ...b, x: cl(b.x + dx, 0, 1 - b.w), y: cl(b.y + dy, 0, 1 - b.h) };
+    else {
+      // Pulling a corner keeps the opposite corner where it is; a box stays at least 14 points across.
+      const mw = 14 / r.width, mh = 14 / r.height;
+      let x1 = b.x, y1 = b.y, x2 = b.x + b.w, y2 = b.y + b.h;
+      if (d.corner.includes('w')) x1 = cl(x1 + dx, 0, x2 - mw); else x2 = cl(x2 + dx, x1 + mw, 1);
+      if (d.corner.includes('n')) y1 = cl(y1 + dy, 0, y2 - mh); else y2 = cl(y2 + dy, y1 + mh, 1);
+      n = { ...b, x: x1, y: y1, w: x2 - x1, h: y2 - y1 };
+    }
+    d.boxes = d.start.map(x => (x.id === d.id ? n : x));
+  }
+  this.forceUpdate();
+}
+occUp(ev, cancel) {
+  const d = this.drag;
+  if (!d || ev.pointerId !== d.pid) return;
+  this.drag = null;
+  const drawn = d.kind === 'draw' && d.boxes ? d.boxes[d.boxes.length - 1] : null;
+  // A tap on the picture, off the boxes, puts the picked box down; so does a drawing too small to be a box.
+  if (cancel || !d.boxes || (drawn && (drawn.w * d.r.width < 12 || drawn.h * d.r.height < 12))) {
+    if (!cancel && d.kind === 'draw' && this.state.occSel) this.setState({ occSel: null }); else this.forceUpdate();
+    return;
+  }
+  if (drawn && this.fine()) this.ed.labelFocus = drawn.id;
+  this.putBoxes(d.boxes);
+  if (drawn) this.setState({ occSel: drawn.id });
+}
+// Add a box: in the middle, a little lower and to the right of any box already there.
+addBox() {
+  const list = this.doc().f.boxes || [], w = .26, h = .18;
+  if (list.length >= 30) return;
+  let x = .37, y = .41;
+  while (list.some(b => Math.abs(b.x - x) < .02 && Math.abs(b.y - y) < .02) && y < .78) { x = Math.min(1 - w, x + .04); y += .04; }
+  const id = this.newBoxId();
+  if (this.fine()) this.ed.labelFocus = id;
+  this.putBoxes([...list, { id, x, y, w, h, label: '' }]);
+  this.setState({ occSel: id });
+}
+removeBox(id) {
+  this.putBoxes((this.doc().f.boxes || []).filter(b => b.id !== id));
+  if (this.state.occSel === id) this.setState({ occSel: null });
+}
+labelBox(id, label) { this.commit({ boxes: (this.doc().f.boxes || []).map(b => (b.id === id ? { ...b, label: String(label).slice(0, 200) } : b)) }, { kind: 'type:box' + id }); }
+focusLabel(id) {
+  const el = (this.occEl ? this.occEl.ownerDocument : document).querySelector('[data-occ-label="' + id + '"]');
+  if (el) el.focus();
+  return !!el;
+}
+placeLabel() { const id = this.ed.labelFocus; if (id) { this.ed.labelFocus = null; this.focusLabel(id); } }
+// Keys for the picked box (not while typing): Delete or Backspace takes it away, the arrows nudge it (Shift for bigger
+// steps), Esc puts it down. ⌘Z undoes on the picture too.
+boxKey(ev) {
+  const tg = ev.target, id = this.state.occSel;
+  if (ev.defaultPrevented || ev.isComposing || this.doc().ty !== 'Image' || (tg && tg.closest && tg.closest('input, textarea, select, [contenteditable="true"]'))) return;
+  const mod = ev.metaKey || ev.ctrlKey, list = this.doc().f.boxes || [];
+  if (mod && /^z$/i.test(ev.key) && (id || tg === this.occEl)) { ev.preventDefault(); return ev.shiftKey ? this.redo() : this.undo(); }
+  if (!id || mod || ev.altKey || !list.some(b => b.id === id)) return;
+  if (ev.key === 'Delete' || ev.key === 'Backspace') { ev.preventDefault(); return this.removeBox(id); }
+  if (ev.key === 'Escape') { ev.preventDefault(); return this.setState({ occSel: null }); }
+  const st = ev.shiftKey ? .05 : .01, m = { ArrowLeft: [-st, 0], ArrowRight: [st, 0], ArrowUp: [0, -st], ArrowDown: [0, st] }[ev.key];
+  if (!m) return;
+  ev.preventDefault();
+  this.putBoxes(list.map(b => (b.id === id ? { ...b, x: Math.min(1 - b.w, Math.max(0, b.x + m[0])), y: Math.min(1 - b.h, Math.max(0, b.y + m[1])) } : b)), 'type:nudge' + id);
+}
 toggleRecord() {
   const db = this.props.db || this.mock();
   if (this.state.recording) { this.setState({ recording: false }); db.act.record(); return; }
@@ -1416,6 +1573,8 @@ renderVals() {
     e.slash = { k: 'front', at, idx: 0, q: '', pos: { x: '34px', y: '329px' }, demo: true };
   }
   const { saved, ty, f } = this.doc();
+  // A saved box's card opens with its box picked (the canvas shows box 1 picked).
+  if (!('occSel' in s)) s.occSel = db.mock ? 'b1' : saved && saved.box != null ? saved.box : null;
   const kinds = { Basic: 'basic', Blank: 'cloze', Image: 'image', Audio: 'audio' };
   const put = patch => this.commit(patch);
   const dk = db.deck(this.props.deckId), tags = f.tags || [];
@@ -1428,7 +1587,26 @@ renderVals() {
   const nBlanks = R.blanks(f.text || '').length;
   const kind = kinds[ty], fr = R.plain(f.front || '').trim(), bk = R.plain(f.back || '').trim(), said = R.plain(f.speak || '').trim();
   const hasSound = (f.audio && f.audio !== 'mock') || said;
-  const missing = kind === 'basic' ? (!fr ? 'front' : !bk ? 'back' : '') : kind === 'cloze' ? (nBlanks ? '' : 'text') : kind === 'image' ? (!f.image ? 'image' : !bk ? 'back' : '') : (!hasSound ? 'speak' : !bk ? 'back' : '');
+  // Image occlusion: the boxes as they are now (while one is dragged, where it is), the picked one, and each one's answer.
+  // A picture with boxes needs no Answer: each box's label is its card's answer.
+  const bx = this.boxes(), picked = bx.some(b => b.id === s.occSel) ? s.occSel : null, pct = v => +(v * 100).toFixed(3) + '%';
+  const tint = this.props.dark ? 'rgba(255,255,255,.14)' : 'rgba(0,0,0,.08)';
+  const occ = { ref: this.occRef(), has: bx.length > 0, none: !bx.length, canAdd: !!f.image && bx.length < 30, tip: !!f.image && f.image !== 'mock' && !bx.length,
+    hint: f.occ === 'all' ? 'Every box stays hidden while one is asked.' : 'Only the box being asked is hidden.',
+    // The picked box sits on top of the others, so its corners can always be reached.
+    boxes: bx.map((b, i) => { const on = b.id === picked; return { id: b.id, n: String(i + 1), num: on ? '' : String(i + 1), sel: on, pressed: on ? 'true' : 'false', z: on ? '2' : '1',
+      x: pct(b.x), y: pct(b.y), w: pct(b.w), h: pct(b.h), bg: on ? tint : t.surf2, fg: t.text, ring: on ? 'inset 0 0 0 2px ' + t.inv + ', 0 0 0 2px ' + t.bg : '0 0 0 2px ' + t.bg,
+      // The × floats over the middle of the box, clear of its corners: above it, or below it near the picture's top
+      // (inside a box that fills the picture's height).
+      delAt: b.y >= .16 ? 'left: 50%; margin-left: -12px; bottom: calc(100% + 8px);' : b.y + b.h <= .84 ? 'left: 50%; margin-left: -12px; top: calc(100% + 8px);' : 'right: 8px; top: 8px;',
+      rowRing: on ? 'inset 0 0 0 2px ' + t.text : 'none', chip: on ? t.inv : t.bg, chipFg: on ? t.invText : t.text, label: b.label || '',
+      pick: () => { if (this.state.occSel !== b.id) this.setState({ occSel: b.id }); },
+      remove: ev => { if (ev && ev.stopPropagation) ev.stopPropagation(); this.removeBox(b.id); },
+      del: ev => { if (ev && ev.stopPropagation) ev.stopPropagation(); if (ev && ev.detail > 0 && !this.delDown) return; this.delDown = false; this.removeBox(b.id); },
+      setLabel: ev => this.labelBox(b.id, ev && ev.target ? ev.target.value : ''),
+      // Return goes on to the next box's answer.
+      key: ev => { if (!ev || ev.key !== 'Enter' || ev.isComposing) return; ev.preventDefault(); const nx = bx[i + 1]; if (!nx || !this.focusLabel(nx.id)) ev.target.blur(); } }; }) };
+  const missing = kind === 'basic' ? (!fr ? 'front' : !bk ? 'back' : '') : kind === 'cloze' ? (nBlanks ? '' : 'text') : kind === 'image' ? (!f.image ? 'image' : bx.length || bk ? '' : 'back') : (!hasSound ? 'speak' : !bk ? 'back' : '');
   // Back goes where you came from: the review, the Library's All cards, or the deck.
   const backHref = this.props.from === 'review' ? db.href('review', dk.id) : this.props.from === 'library' ? db.href('cards') : dk.href;
   const snd = f.audio === 'mock' ? { mock: true, real: false, btn: t.inv } : { mock: false, real: true, btn: hasSound ? t.inv : t.surf2, fg: hasSound ? t.text : t.muted,
@@ -1464,9 +1642,10 @@ renderVals() {
     fmt,
     // Fill in the blank: one card per blank, or one card with every blank.
     clozeModes: pick2([['each', 'One card per blank · ' + nBlanks], ['one', 'One card, all blanks']], f.clozeMode || 'each', id => put({ clozeMode: id })),
-    // Image cards: hide one part, or all of them.
-    occModes: pick2([['one', 'Hide one'], ['all', 'Hide all']], s.occ, id => this.setState({ occ: id })),
-    img: { mock: f.image === 'mock', url: f.image && f.image !== 'mock' ? f.image : '', none: !f.image },
+    // Image cards: hide only the box being asked, or every box.
+    occModes: pick2([['one', 'Hide one'], ['all', 'Hide all']], f.occ === 'all' ? 'all' : 'one', id => put({ occ: id })),
+    img: { mock: f.image === 'mock', url: f.image && f.image !== 'mock' ? f.image : '', none: !f.image, some: !!f.image },
+    occ, addBox: () => this.addBox(),
     pickImage: () => this.pickImage(),
     snd, recLabel: s.recording ? 'Stop' : 'Record',
     toggleRecord: () => this.toggleRecord(),
@@ -1484,14 +1663,28 @@ renderVals() {
       ev.preventDefault();
       if (missing === 'image') return this.pickImage();
       if (missing) return this.focusField(missing);
-      db.act.saveCard(saved ? saved.id : null, dk.id, { kind, front: f.front, back: f.back, text: f.text, note: f.note, tags, image: f.image || null, audio: f.audio || null, speak: f.speak || '', auto: f.auto !== false, clozeMode: f.clozeMode || 'each' }, backHref);
+      db.act.saveCard(saved ? saved.id : null, dk.id, { kind, front: f.front, back: f.back, text: f.text, note: f.note, tags, image: f.image || null, audio: f.audio || null, speak: f.speak || '', auto: f.auto !== false, clozeMode: f.clozeMode || 'each',
+        ...(kind === 'image' ? { boxes: f.boxes || [], occ: f.occ === 'all' ? 'all' : 'one' } : {}) }, backHref);
     }
   };
 }`;
 
 // ---------- Review (shared by web + phone) ----------
 const WAVE = (h) => `<div style="display: flex; align-items: center; gap: 3px; height: ${h}px;"><sc-for list="{{bars}}" as="b" hint-placeholder-count="44"><div data-anim="1" style="width: 3px; border-radius: 2px; background: {{t.text}}; height: {{b.h}}; animation: {{b.anim}};"></div></sc-for></div>`;
-const faceFront = big => `
+// A picture with boxes fills the card: the picture as big as it fits (its shape is known once it loads), the question
+// under it, and the answer (the box's label), which shows as the box fades to an outline.
+const occFace = big => `<sc-if value="{{card.isOcc}}" hint-placeholder-val="{{ false }}"><div style="position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: ${big ? 14 : 12}px;">
+  <div style="flex: 0 1 auto; min-height: 0; width: 100%; aspect-ratio: {{card.occRatio}}; container-type: size; display: flex; align-items: center; justify-content: center;">
+    <div role="img" aria-label="{{card.occAlt}}" style="position: relative; width: min(100cqw, calc(100cqh * {{card.occRatio}})); aspect-ratio: {{card.occRatio}}; visibility: {{card.occVis}};">
+      <sc-if value="{{card.imageMock}}" hint-placeholder-val="{{ true }}">${CELL('100%', '100%', false)}</sc-if>
+      <sc-if value="{{card.imageUrl}}" hint-placeholder-val="{{ false }}"><img src="{{card.imageUrl}}" alt="" draggable="false" style="position: absolute; inset: 0; width: 100%; height: 100%; border-radius: ${big ? 16 : 14}px;"></sc-if>
+      ${OCC_BOXES('card.occ', big ? 13 : 12)}
+    </div>
+  </div>
+  <div style="font-size: ${big ? 22 : 18}px; font-weight: 500; line-height: 1.3; text-align: center;">${RICH_SHOW('card.occAsk')}</div>
+  <sc-if value="{{card.hasOccLabel}}" hint-placeholder-val="{{ true }}"><div class="{{card.occLabelCls}}" style="visibility: {{card.occLabelVis}}; font-size: ${big ? 30 : 24}px; font-weight: 600; letter-spacing: -.02em; line-height: 1.2; text-align: center;">{{card.occLabel}}</div></sc-if>
+</div></sc-if>`;
+const faceFront = big => `${occFace(big)}
 <sc-if value="{{card.isBasic}}" hint-placeholder-val="{{ true }}"><div style="font-size: ${big ? 38 : 28}px; font-weight: 500; line-height: 1.25; letter-spacing: -.02em;">${RICH_SHOW('card.frontLines')}</div></sc-if>
 <sc-if value="{{card.isCloze}}" hint-placeholder-val="{{ false }}"><div style="font-size: ${big ? 38 : 28}px; font-weight: 500; line-height: 1.45; letter-spacing: -.02em;">${RICH_CLOZE('card.lines', `display: inline-block; padding: 0 ${big ? 16 : 12}px; border-radius: 999px; line-height: 1.3; background: {{blank.bg}}; color: {{blank.fg}}; transition: background-color .3s ease, color .3s ease;`, '{{blank.cls}}')}</div></sc-if>
 <sc-if value="{{card.isImage}}" hint-placeholder-val="{{ false }}"><div style="display: flex; flex-direction: column; align-items: center; gap: 16px;"><sc-if value="{{card.imageMock}}" hint-placeholder-val="{{ true }}">${CELL(big ? 330 : 260, big ? 225 : 178)}</sc-if><sc-if value="{{card.imageUrl}}" hint-placeholder-val="{{ false }}"><img src="{{card.imageUrl}}" alt="" style="max-width: 100%; max-height: ${big ? 250 : 200}px; border-radius: 16px; object-fit: contain;"></sc-if><div style="font-size: ${big ? 24 : 20}px; font-weight: 500;">${RICH_SHOW('card.frontLines')}</div></div></sc-if>
@@ -1503,10 +1696,24 @@ const faceBack = big => `
 // Card view fields: each text as lines with its formatting (blanks hidden until shown), plus image and sound flags.
 // The canvas's sample blanks come as before / blank / after; real cards have their text.
 const CARD_VIEW_JS = `const R = this.rich(), ro = { t, dark: !!this.props.dark };
+  ${OCC_JS}
+  // A picture's shape (width / height), learned once it loads, so its boxes sit right on it.
+  const ratioOf = url => {
+    const RT = Component._ratio || (Component._ratio = {});
+    if (url === 'mock') return 220 / 150;
+    if (!(url in RT)) { RT[url] = 0; const im = new Image(); im.onload = () => { RT[url] = im.naturalWidth / im.naturalHeight || 4 / 3; this.forceUpdate(); }; im.onerror = () => { RT[url] = 4 / 3; this.forceUpdate(); }; im.src = url; }
+    return RT[url];
+  };
   const cardView = (c, rev) => {
     const show = md => R.view(md || '', ro);
     const text = c.text != null ? c.text : (c.before || '') + ' [[' + (c.back || '') + ']] ' + (c.after || '');
-    return { ...c, isBasic: c.kind === 'basic', isCloze: c.kind === 'cloze', isImage: c.kind === 'image', isAudio: c.kind === 'audio',
+    // A picture with boxes asks one box (c.box); a picture without is a plain image card, as before.
+    const oi = c.kind === 'image' && c.image && Array.isArray(c.boxes) ? c.boxes.findIndex(b => b.id === c.box) : -1, ob = oi < 0 ? null : c.boxes[oi], ratio = ob ? ratioOf(c.image) : 0;
+    return { ...c, isBasic: c.kind === 'basic', isCloze: c.kind === 'cloze', isImage: c.kind === 'image' && !ob, isOcc: !!ob, isAudio: c.kind === 'audio',
+      occ: ob ? occView(c.boxes, oi, c.occ, rev, { ask: t.inv, askText: t.invText, cover: t.surf2, coverText: t.muted, ring: t.bg }) : [],
+      occAsk: ob ? show(R.plain(c.front || '').trim() ? c.front : 'What’s under box ' + (oi + 1) + '?') : [], occRatio: String(+(ratio || 4 / 3).toFixed(4)), occVis: ratio ? 'visible' : 'hidden',
+      occLabel: ob ? ob.label || '' : '', hasOccLabel: !!(ob && ob.label), occLabelCls: rev ? 'sc-fade-a' : '', occLabelVis: rev ? 'visible' : 'hidden',
+      occAlt: ob ? 'The picture, with box ' + (oi + 1) + (rev ? ' showing' : ' hidden') : '',
       lines: c.kind === 'cloze' ? R.view(text, { ...ro, cloze: true, ask: c.cloze == null ? -1 : c.cloze, hide: !rev }) : [],
       frontLines: show(c.front), backLines: show(c.back), noteLines: show(c.note),
       imageMock: c.image === 'mock', imageUrl: c.image && c.image !== 'mock' ? c.image : '',
@@ -1573,12 +1780,14 @@ renderVals() {
     radius: r + 'px',
     revealed: rev,
     showFour: rev && mode === 'four', showBinary: rev && mode === 'binary', showPiles: rev && mode === 'piles',
-    // Fill-in-the-blank cards stay put: the blank fills in with a pop instead of the card flipping.
-    flipTransform: rev && !card.isCloze ? 'rotateY(180deg)' : 'rotateY(0deg)',
+    // Fill-in-the-blank cards and pictures with boxes stay put: the blank fills in with a pop, or the box fades to an
+    // outline, instead of the card flipping.
+    flipTransform: rev && !card.isCloze && !card.isOcc ? 'rotateY(180deg)' : 'rotateY(0deg)',
     // After a grade the next card shows up fresh with a small lift, instead of spinning back to its front.
     flipTrans: this.state.moved ? 'none' : 'transform .5s cubic-bezier(.4,0,.2,1)', cardIn: this.state.moved ? (done % 2 ? 'sc-in-a' : 'sc-in-b') : '',
-    flipLabel: card.isCloze ? (rev ? 'Hide the answer' : 'Show the blank') : (rev ? 'Flip back' : 'Flip card'),
-    clozeShown: rev && card.isCloze,
+    flipLabel: card.isCloze ? (rev ? 'Hide the answer' : 'Show the blank') : card.isOcc ? (rev ? 'Hide the answer' : 'Show what’s under the box') : (rev ? 'Flip back' : 'Flip card'),
+    // The note under a card that stays put (clozeShown: fill in the blank, or a picture with boxes) shows with the answer.
+    clozeShown: rev && (card.isCloze || card.isOcc),
     blank: ${BLANK_JS},
     reveal: () => this.setState({ revealed: !rev, moved: false }),
     undo: () => { if (done > 0 || !db.mock) { this.setState({ revealed: true, moved: false }); db.act.undo(); } },
@@ -1614,7 +1823,7 @@ const pileTiles = phoneSize => `<sc-for list="{{piles}}" as="p" hint-placeholder
     </sc-if>`;
 const FACE = (pad, big, back) => `<div style="position: absolute; inset: 0; box-sizing: border-box; padding: ${pad}; display: flex; flex-direction: column; text-align: left; background: {{t.card}}; border: 1px solid {{t.line}}; border-radius: {{radius}}; box-shadow: {{t.shadow}}; backface-visibility: hidden; -webkit-backface-visibility: hidden;${back ? ' transform: rotateY(180deg);' : ''}">
   <div style="min-height: 21px;"></div>
-  <div style="display: flex; flex-direction: column; justify-content: center; flex-grow: 1;">${back ? faceBack(big) : faceFront(big)}</div>
+  <div style="position: relative; display: flex; flex-direction: column; justify-content: center; flex-grow: 1;">${back ? faceBack(big) : faceFront(big)}</div>
   <div style="font-size: 14px; line-height: 1.5; color: {{t.muted}}; min-height: 21px;">${back ? RICH_SHOW('card.noteLines') : `<sc-if value="{{clozeShown}}" hint-placeholder-val="{{ false }}"><span class="sc-fade-a" style="display: block;">${RICH_SHOW('card.noteLines')}</span></sc-if>`}</div>
 </div>`;
 // Explain (V96): once a card is turned over, its corner offers an AI explanation of the answer, which opens over the
@@ -2027,7 +2236,7 @@ const cardTypesCss = `@keyframes scWave{from{transform:scaleY(.3)}to{transform:s
 .sc-in-a{animation:scInA .32s cubic-bezier(.2,.8,.2,1) both}
 .sc-in-b{animation:scInB .32s cubic-bezier(.2,.8,.2,1) both}
 @media (prefers-reduced-motion:reduce){.sc-pop,.sc-fade-a,.sc-fade-b,.sc-in-a,.sc-in-b,[data-anim]{animation:none!important}}`;
-const REVIEW_CSS = cardTypesCss;
+const REVIEW_CSS = cardTypesCss + OCC_VIEW_CSS;
 const cardTypesLogic = `
 constructor(props) { super(props); this.state = { basic: false, blanks: 0, image: false, audio: false, playing: false }; }
 renderVals() {
@@ -2364,7 +2573,7 @@ const phoneEditor = `<div style="position: relative; width: 390px; height: 844px
     <div style="display: flex; align-items: center; justify-content: space-between;"><a href="{{phoneBack}}" style="font-size: 16px; color: {{t.muted}}; min-height: 44px; display: flex; align-items: center;">Cancel</a><span style="font-size: 17px; font-weight: 600;">{{title}}</span><a href="{{phoneBack}}" onClick="{{save}}" style="font-size: 16px; font-weight: 600; min-height: 44px; display: flex; align-items: center;">Save</a></div>
     ${TYPE_SEG}
     <div style="flex-grow: 1; min-height: 0; overflow-y: auto; scrollbar-width: none;"><div style="display: flex; flex-direction: column; gap: 16px;">
-    ${editorFields}
+    ${editorFieldsOf(true)}
     <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">${chip(svg(I.decks, 12, 2) + '{{deckName}}', 'height: 32px; padding: 0 12px; font-size: 13px; font-weight: 600;')}${TAG_EDIT('cardTags', 'cardPick', true)}</div>
     <sc-if value="{{canDelete}}" hint-placeholder-val="{{ false }}"><button type="button" onClick="{{remove}}" style="align-self: flex-start; min-height: 44px; padding: 0; border: 0; background: transparent; color: {{t.again}}; font: inherit; font-size: 14px; font-weight: 600; cursor: pointer;">Delete card</button></sc-if>
     </div></div>
@@ -2949,14 +3158,17 @@ const LEARN_QS = [
   { kind: 'True or false', streak: 0, q: 'What is the role of the ribosome?', claim: 'Copies DNA into mRNA', options: ['True', 'False'], right: 1,
     why: 'Copying DNA into mRNA is transcription, and it happens in the nucleus. Ribosomes translate mRNA into protein.', card: ['What is the role of the ribosome?', 'Translates mRNA into protein'] },
   { kind: 'Fill in the blank', streak: 1, q: 'The ____ is the powerhouse of the cell.', options: ['mitochondrion', 'nucleus', 'ribosome', 'lysosome'], right: 0,
-    why: 'It makes most of the cell’s ATP.', card: ['The ____ is the powerhouse of the cell.', 'mitochondrion'] }
+    why: 'It makes most of the cell’s ATP.', card: ['The ____ is the powerhouse of the cell.', 'mitochondrion'] },
+  // A picture with boxes: which part is under the highlighted box, with the picture's other labels as the choices.
+  { kind: 'Multiple choice', streak: 0, q: 'What’s under box 2?', image: 'mock', occ: { boxes: SAMPLE.BOXES, ask: 1, mode: 'all' }, options: ['Vacuole', 'Mitochondrion', 'Nucleus', 'Lysosome'], right: 1,
+    why: 'The bean-shaped part with folds inside is a mitochondrion. It makes most of the cell’s ATP.', card: ['What’s under box 2?', 'Mitochondrion'] }
 ];
 const LEARN_PAIRS = [['Mitochondrion', 'Makes most of the cell’s ATP'], ['Ribosome', 'Builds proteins from mRNA'], ['Golgi apparatus', 'Packages proteins for export'], ['Nucleus', 'Holds the cell’s DNA'], ['Lysosome', 'Breaks down waste']];
 const LEARN_RIGHT = [3, 0, 4, 2, 1];
 const LEARN_KINDS = [['mc', 'Multiple choice'], ['match', 'Matching'], ['tf', 'True or false'], ['blank', 'Fill in the blank'], ['type', 'Type the answer']];
 // Motion: each question rises in, a right answer pops as its check draws, a wrong one shakes, "+1"
 // floats up by the count when a card is learned, and the end counts up while its ring draws. Reduced motion: none.
-const LEARN_CSS = '@keyframes scQuizIn{from{opacity:0;transform:translateY(6px)}}@keyframes scQA{from{opacity:0;transform:translateY(12px)}}@keyframes scQB{from{opacity:0;transform:translateY(12px)}}'
+const LEARN_CSS = OCC_VIEW_CSS + '@keyframes scQuizIn{from{opacity:0;transform:translateY(6px)}}@keyframes scQA{from{opacity:0;transform:translateY(12px)}}@keyframes scQB{from{opacity:0;transform:translateY(12px)}}'
   + '@keyframes scShake{0%,100%{transform:none}25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}@keyframes scPop{40%{transform:scale(1.025)}}'
   + '@keyframes scPlusA{0%{opacity:0;transform:translateY(6px)}25%{opacity:1}100%{opacity:0;transform:translateY(-16px)}}@keyframes scPlusB{0%{opacity:0;transform:translateY(6px)}25%{opacity:1}100%{opacity:0;transform:translateY(-16px)}}'
   + '.sc-tick path{stroke-dasharray:24;stroke-dashoffset:24;animation:scTick .32s .06s ease forwards}@keyframes scTick{to{stroke-dashoffset:0}}'
@@ -3100,7 +3312,13 @@ const learnExplain = fs => `<sc-if value="{{ex.show}}" hint-placeholder-val="{{ 
     <sc-if value="{{ex.hasNote}}" hint-placeholder-val="{{ false }}"><span style="font-size: 12px; color: {{k.ink2}};">{{ex.note}}</span></sc-if>
   </div></sc-if></sc-if>`;
 const learnWhy = (fs = 17) => `<div style="font-size: ${fs}px; line-height: 1.5;"><span style="font-weight: 700; color: {{verdictColor}};">{{verdict}}</span> {{why}}</div>`;
-const learnImage = h => `<sc-if value="{{hasImage}}" hint-placeholder-val="{{ false }}"><img src="{{image}}" alt="" style="align-self: flex-start; max-width: 100%; max-height: ${h}px; border-radius: 18px; background: {{t.surf}};"></sc-if>`;
+// The card's picture; a picture with boxes shows them, the asked one highlighted, and it turns to an outline once
+// answered.
+const learnImage = h => `<sc-if value="{{hasImage}}" hint-placeholder-val="{{ false }}"><div style="align-self: flex-start; position: relative; max-width: 100%; line-height: 0;"><sc-if value="{{imageMock}}" hint-placeholder-val="{{ false }}"><div style="padding: 10px 14px; border-radius: 18px; background: {{t.surf}};">${CELL(Math.round((h - 20) * 22 / 15), h - 20, false)}</div></sc-if><sc-if value="{{imageUrl}}" hint-placeholder-val="{{ true }}"><img src="{{imageUrl}}" alt="" style="display: block; max-width: 100%; max-height: ${h}px; border-radius: 18px; background: {{t.surf}};"></sc-if><div style="position: absolute; inset: {{occInset}};">${OCC_BOXES('occBoxes', 13)}</div></div></sc-if>`;
+// What learnImage shows: the picture (the canvas's sample diagram, or the card's), and its boxes.
+const LEARN_IMG_JS = `${OCC_JS}
+  const learnImg = (img, o, shown) => ({ hasImage: !!img, imageMock: img === 'mock', imageUrl: img && img !== 'mock' ? img : '', occInset: img === 'mock' ? '10px 14px' : '0',
+    occBoxes: img && o ? occView(o.boxes, o.ask, o.mode, shown, { ask: K.btn, askText: K.btnFg, cover: K.gray, coverText: K.grayInk, ring: t.bg }) : [] });`;
 const learnClaim = fs => `<sc-if value="{{hasClaim}}" hint-placeholder-val="{{ false }}"><div style="padding: 16px 20px; border-radius: 20px; background: {{k.card}}; box-shadow: {{k.shadow}}; font-size: ${fs}px; font-weight: 700; line-height: 1.35;">{{claim}}</div></sc-if>`;
 const webQuizOf = bg => `<div style="position: relative; isolation: isolate; width: 1440px; height: 900px; box-sizing: border-box; display: flex; flex-direction: column; overflow: hidden; font-family: ${FONT}; background: {{t.bg}}; color: {{k.ink}};">
   ${bg}
@@ -3159,7 +3377,8 @@ renderVals() { ${T}${DB_JS}
   }
   const done = pick != null, ok = pick === q.right;
   const ex = explainView(L && L.ex, L ? L.id : 'q' + (this.state.i || 0), q.q, done, ${JSON.stringify(EX_SAMPLE_LEARN)});
-  return { t, ex, dark: !!this.props.dark, ...v, kind: q.kind, question: q.q, hasClaim: !!q.claim, claim: q.claim || '', hasImage: !!(L && L.image), image: L ? L.image : '',
+  ${LEARN_IMG_JS}
+  return { t, ex, dark: !!this.props.dark, ...v, kind: q.kind, question: q.q, hasClaim: !!q.claim, claim: q.claim || '', ...learnImg(L ? L.image : q.image, L ? L.occ : q.occ, done),
     options: q.options.map((label, j) => {
       const right = done && j === q.right, wrong = done && j === pick && j !== q.right, other = done && !right && !wrong;
       return { label, key: String(j + 1), pressed: j === pick ? 'true' : 'false', plain: !right && !wrong, isRight: right, isWrong: wrong,
@@ -3276,7 +3495,8 @@ renderVals() { ${T}${DB_JS}
     v = view(learnedNow ? 19 : 18, 40, 9, 2, learnedNow ? 1 : 0);
   }
   const ex = explainView(L && L.ex, L ? L.id : 'typeq', question, checked, ${JSON.stringify("The Golgi apparatus takes proteins from the rough ER, finishes them with sugar tags, and ships them out in little bubbles called vesicles. Think of it as the cell’s post office: sort, label, send.")});
-  return { t, ex, dark: !!this.props.dark, ...v, kind: 'Type the answer', question, hasImage: !!(L && L.image), image: L ? L.image : '', 
+  ${LEARN_IMG_JS}
+  return { t, ex, dark: !!this.props.dark, ...v, kind: 'Type the answer', question, ...learnImg(L && L.image, L && L.occ, checked), 
     typed, checked, notChecked: !checked, canOverride: checked && !ok, check, override, next,
     setTyped: e => { const x = e && e.target ? e.target.value : ''; if (L) this.state.typed = x; else this.setState({ typed: x, checked: false }); },
     typedKey: e => { if (e && e.key === 'Enter' && !checked) { if (e.preventDefault) e.preventDefault(); check(); } },
@@ -3989,6 +4209,7 @@ const legalLogic = `renderVals() { ${T}
 
 // ---------- write ----------
 const W = 1440, H = 900, PW = 390, PH = 844;
+const EDITOR_CSS = RICH_CSS + OCC_EDIT_CSS;
 const files = {
   'Main': ['Web · Today', webToday, { props: { ...DARK, ...MESH('Iris'), caughtUp: { editor: 'boolean', default: false } }, logic: todayLogic, css: DRAG_CSS, w: W, h: H }],
   'WebNewDeck': ['Web · New deck', webNewDeck, { props: { ...DARK, grain: MESH('Iris').grain }, logic: NEW_DECK_LOGIC, css: NUM_CSS + COVER_FADE_CSS, w: W, h: H }],
@@ -4011,13 +4232,13 @@ const files = {
   'WebStatsEmpty': ['Web · Stats · no reviews yet', webStatsEmpty, { props: { ...DARK, grain: MESH('Iris').grain }, logic: emptyLogic(), w: W, h: H }],
   'WebDeck': ['Web · Deck page', webDeck, { props: { ...DARK, grain: MESH('Iris').grain, settingsOpen: { editor: 'boolean', default: false }, settingsTab: { editor: 'enum', default: 'General', options: ['General', 'Studying'] }, tagPicker: { editor: 'boolean', default: false } }, logic: deckLogic, css: NUM_CSS + PARALLAX_CSS + DRAG_CSS, w: W, h: H }],
   'WebDeckTagPicker': ['Web · Deck settings · Add tag', attrOf('WebDeck', W, H, 'settings-open="{{yes}}" tag-picker="{{yes}}"'), { logic: darkLogic, css: NUM_CSS + DRAG_CSS, w: W, h: H }],
-  'WebEditor': ['Web · Card editor', webEditor, { props: { ...DARK, cardType: { editor: 'enum', default: 'Basic', options: ['Basic', 'Blank', 'Image', 'Audio'] }, slashDemo: { editor: 'boolean', default: false } }, logic: EDITOR_LOGIC, css: RICH_CSS, w: W, h: H }],
-  'WebEditorSlash': ['Web · Card editor · / menu', attrOf('WebEditor', W, H, 'slash-demo="{{yes}}"'), { logic: darkLogic, css: RICH_CSS, w: W, h: H }],
+  'WebEditor': ['Web · Card editor', webEditor, { props: { ...DARK, cardType: { editor: 'enum', default: 'Basic', options: ['Basic', 'Blank', 'Image', 'Audio'] }, slashDemo: { editor: 'boolean', default: false } }, logic: EDITOR_LOGIC, css: EDITOR_CSS, w: W, h: H }],
+  'WebEditorSlash': ['Web · Card editor · / menu', attrOf('WebEditor', W, H, 'slash-demo="{{yes}}"'), { logic: darkLogic, css: EDITOR_CSS, w: W, h: H }],
   'WebSignIn': ['Web · Sign in', webSignIn, { props: { ...DARK, grain: MESH('Iris').grain }, logic: signInLogic('', [64, 78, 70, 84]), css: WALL_CSS, w: W, h: H }],
   'WebSignInCode': ['Web · Sign in · code from email', webSignInCode, { props: { ...DARK, grain: MESH('Iris').grain }, logic: signInLogic('482', [64, 78, 70, 84]), css: WALL_CSS, w: W, h: H }],
-  'WebEditorBlank': ['Web · Card editor · fill in the blank', typeOf('WebEditor', W, H, 'Blank'), { logic: darkLogic, css: RICH_CSS, w: W, h: H }],
-  'WebEditorImage': ['Web · Card editor · image', typeOf('WebEditor', W, H, 'Image'), { logic: darkLogic, css: RICH_CSS, w: W, h: H }],
-  'WebEditorAudio': ['Web · Card editor · audio', typeOf('WebEditor', W, H, 'Audio'), { logic: darkLogic, css: RICH_CSS, w: W, h: H }],
+  'WebEditorBlank': ['Web · Card editor · fill in the blank', typeOf('WebEditor', W, H, 'Blank'), { logic: darkLogic, css: EDITOR_CSS, w: W, h: H }],
+  'WebEditorImage': ['Web · Card editor · image', typeOf('WebEditor', W, H, 'Image'), { logic: darkLogic, css: EDITOR_CSS, w: W, h: H }],
+  'WebEditorAudio': ['Web · Card editor · audio', typeOf('WebEditor', W, H, 'Audio'), { logic: darkLogic, css: EDITOR_CSS, w: W, h: H }],
   'WebReview': ['Web · Review', webReview, { props: { ...DARK, explainOpen: { editor: 'boolean', default: false }, explained: { editor: 'boolean', default: false }, grading: { editor: 'enum', default: 'Four buttons', options: ['Four buttons', 'Check or X', 'Piles'] }, card: { editor: 'enum', default: 'Basic', options: ['Basic', 'Fill in the blank', 'Image', 'Audio'] }, startRevealed: { editor: 'boolean', default: false }, fsrs: { editor: 'boolean', default: true }, progress: { editor: 'enum', default: 'Bar', options: ['Bar', 'Counts', 'None'] }, settingsOpen: { editor: 'boolean', default: false }, newPileOpen: { editor: 'boolean', default: false }, radius: { editor: 'range', default: 32, min: 12, max: 48, step: 2, unit: 'px' } }, logic: REVIEW_LOGIC(64), css: REVIEW_CSS, w: W, h: H }],
   'WebDone': ['Web · Session done', webDone, { props: DARK, logic: doneLogic(300, 22), w: W, h: H }],
   'WebDonePiles': ['Web · Session done · piles', webDonePiles, { props: DARK, logic: donePilesLogic, w: W, h: H }],
@@ -4032,6 +4253,7 @@ const files = {
   'WebReviewPiles': ['Web · Review · Piles', styleOf('WebReview', W, H, 'Piles'), { logic: darkLogic, css: REVIEW_CSS, w: W, h: H }],
   'WebReviewNewPile': ['Web · Review · New pile popup', pileOf('WebReview', W, H), { logic: darkLogic, css: REVIEW_CSS, w: W, h: H }],
   'WebReviewBlank': ['Web · Review · fill in the blank', blankOf('WebReview', W, H), { logic: darkLogic, css: REVIEW_CSS, w: W, h: H }],
+  'WebReviewImage': ['Web · Review · picture with hidden parts (click the card or press Space)', attrOf('WebReview', W, H, 'card="Image"'), { logic: darkLogic, css: REVIEW_CSS, w: W, h: H }],
   'WebDeckSettings': ['Web · Deck settings', openOf('WebDeck', W, H), { logic: darkLogic, css: NUM_CSS + DRAG_CSS, w: W, h: H }],
   'WebDeckSettingsStudy': ['Web · Deck settings · Studying (FSRS)', studyOf('WebDeck', W, H), { logic: darkLogic, css: NUM_CSS + DRAG_CSS, w: W, h: H }],
   'WebDeckDark': ['Web · Deck page (dark)', darkOf('WebDeck', W, H), { logic: darkLogic, css: NUM_CSS + DRAG_CSS, w: W, h: H }],
@@ -4071,7 +4293,7 @@ const files = {
   'PhoneDeck': ['iPhone · Deck page', phoneDeck, { props: { ...DARK, grain: MESH('Iris').grain, settingsOpen: { editor: 'boolean', default: false }, settingsTab: { editor: 'enum', default: 'General', options: ['General', 'Studying'] }, tagPicker: { editor: 'boolean', default: false } }, logic: phoneDeckLogic, css: NUM_CSS + PARALLAX_CSS + DRAG_CSS, w: PW, h: PH }],
   'PhoneDeckTagPicker': ['iPhone · Deck settings · Add tag', attrOf('PhoneDeck', PW, PH, 'settings-open="{{yes}}" tag-picker="{{yes}}"'), { logic: darkLogic, css: NUM_CSS + DRAG_CSS, w: PW, h: PH }],
   'PhoneDeckSettingsStudy': ['iPhone · Deck settings · Studying (FSRS)', studyOf('PhoneDeck', PW, PH), { logic: darkLogic, css: NUM_CSS + DRAG_CSS, w: PW, h: PH }],
-  'PhoneEditor': ['iPhone · Card editor', phoneEditor, { props: { ...DARK, keyboard: { editor: 'boolean', default: true }, textStyles: { editor: 'boolean', default: false }, cardType: { editor: 'enum', default: 'Basic', options: ['Basic', 'Blank', 'Image', 'Audio'] } }, logic: EDITOR_LOGIC, css: RICH_CSS, w: PW, h: PH }],
+  'PhoneEditor': ['iPhone · Card editor', phoneEditor, { props: { ...DARK, keyboard: { editor: 'boolean', default: true }, textStyles: { editor: 'boolean', default: false }, cardType: { editor: 'enum', default: 'Basic', options: ['Basic', 'Blank', 'Image', 'Audio'] } }, logic: EDITOR_LOGIC, css: EDITOR_CSS, w: PW, h: PH }],
   'PhoneReview': ['iPhone · Review', phoneReview, { props: { ...DARK, explainOpen: { editor: 'boolean', default: false }, explained: { editor: 'boolean', default: false }, grading: { editor: 'enum', default: 'Four buttons', options: ['Four buttons', 'Check or X', 'Piles'] }, card: { editor: 'enum', default: 'Basic', options: ['Basic', 'Fill in the blank', 'Image', 'Audio'] }, startRevealed: { editor: 'boolean', default: false }, fsrs: { editor: 'boolean', default: true }, progress: { editor: 'enum', default: 'Bar', options: ['Bar', 'Counts', 'None'] }, settingsOpen: { editor: 'boolean', default: false }, newPileOpen: { editor: 'boolean', default: false }, radius: { editor: 'range', default: 32, min: 12, max: 48, step: 2, unit: 'px' } }, logic: REVIEW_LOGIC(64), css: REVIEW_CSS, w: PW, h: PH }],
   'PhoneDone': ['iPhone · Session done', phoneDone, { props: DARK, logic: doneLogic(260, 20), w: PW, h: PH }],
   'PhoneDonePiles': ['iPhone · Session done · piles', phoneDonePiles, { props: DARK, logic: donePilesLogic, w: PW, h: PH }],
@@ -4120,6 +4342,8 @@ const files = {
   'PhoneReviewPiles': ['iPhone · Review · Piles', styleOf('PhoneReview', PW, PH, 'Piles'), { logic: darkLogic, css: REVIEW_CSS, w: PW, h: PH }],
   'PhoneReviewNewPile': ['iPhone · Review · New pile popup', pileOf('PhoneReview', PW, PH), { logic: darkLogic, css: REVIEW_CSS, w: PW, h: PH }],
   'PhoneReviewBlank': ['iPhone · Review · fill in the blank', blankOf('PhoneReview', PW, PH), { logic: darkLogic, css: REVIEW_CSS, w: PW, h: PH }],
+  'PhoneReviewImage': ['iPhone · Review · picture with hidden parts (tap the card)', attrOf('PhoneReview', PW, PH, 'card="Image"'), { logic: darkLogic, css: REVIEW_CSS, w: PW, h: PH }],
+  'PhoneEditorImage': ['iPhone · Card editor · image with boxes', attrOf('PhoneEditor', PW, PH, 'card-type="Image" keyboard="{{no}}"'), { logic: 'renderVals() { return { yes: true, no: false }; }', css: EDITOR_CSS, w: PW, h: PH }],
   'PhoneSettings': ['iPhone · Settings', phoneSettings, { props: { ...DARK, plan: { editor: 'enum', default: 'Pro', options: ['Free', 'Pro', 'Pro, ending'] } }, logic: phoneSettingsLogic, w: PW, h: PHONE_SETTINGS_H }],
   'PhoneDeckSettings': ['iPhone · Deck settings', openOf('PhoneDeck', PW, PH), { logic: darkLogic, css: NUM_CSS + DRAG_CSS, w: PW, h: PH }],
   'PhoneDeckDark': ['iPhone · Deck page (dark)', darkOf('PhoneDeck', PW, PH), { logic: darkLogic, css: NUM_CSS + DRAG_CSS, w: PW, h: PH }],

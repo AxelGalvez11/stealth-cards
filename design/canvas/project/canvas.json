@@ -416,6 +416,24 @@
       "x": 2350,
       "y": 2600
     },
+    "PhoneReviewImage.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "page": "phone",
+      "title": "iPhone · Review · picture with hidden parts (tap the card)",
+      "w": 390,
+      "x": 3290,
+      "y": 2600
+    },
+    "PhoneEditorImage.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "page": "phone",
+      "title": "iPhone · Card editor · image with boxes (drag on the picture)",
+      "w": 390,
+      "x": 3760,
+      "y": 2600
+    },
     "PhoneReviewCheck.dc.html": {
       "h": 844,
       "is_interactive": true,
@@ -899,6 +917,15 @@
       "title": "Web · Review · fill in the blank (click the card or press Space)",
       "w": 1440,
       "x": 7600,
+      "y": 3960
+    },
+    "WebReviewImage.dc.html": {
+      "h": 900,
+      "is_interactive": true,
+      "page": "sidebar",
+      "title": "Web · Review · picture with hidden parts (click the card or press Space)",
+      "w": 1440,
+      "x": 10640,
       "y": 3960
     },
     "WebReviewCheck.dc.html": {
@@ -1586,6 +1613,7 @@
     "WebReviewSettings.dc.html",
     "WebReviewNewPile.dc.html",
     "WebReviewBlank.dc.html",
+    "WebReviewImage.dc.html",
     "WebSettings.dc.html",
     "WebDecksList.dc.html",
     "IconOptions.dc.html",
@@ -1638,6 +1666,8 @@
     "PhoneReviewSettings.dc.html",
     "PhoneReviewNewPile.dc.html",
     "PhoneReviewBlank.dc.html",
+    "PhoneReviewImage.dc.html",
+    "PhoneEditorImage.dc.html",
     "PhoneSignIn.dc.html",
     "PhoneSignInCode.dc.html",
     "WebTodayNew.dc.html",

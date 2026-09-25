@@ -15,6 +15,7 @@ const deckBy = x => state().decks.find(d => d.id === x) || state().decks.find(d 
 const dueNow = c => c.srs.state !== 'new' && c.srs.due <= Date.now();
 const cardOut = c => ({ id: c.id, deck: (deckBy(c.deckId) || {}).name, kind: c.kind === 'cloze' ? 'fill in the blank' : c.kind, front: c.front || undefined, back: c.back || undefined,
   text: c.text || undefined, note: c.note || undefined, image: c.image || undefined, audio: c.audio || undefined, speak: c.speak || undefined, lang: c.lang || undefined,
+  hidden_part: c.kind === 'image' && c.box != null ? (b => b && { box: c.boxes.indexOf(b) + 1, of: c.boxes.length, answer: b.label || undefined })((c.boxes || []).find(b => b.id === c.box)) || undefined : undefined,
   tags: c.tags.length ? c.tags : undefined, waiting_for_review: c.pending || undefined, quiz_questions: (c.quiz || []).length || undefined, has_explanation: c.explain ? true : undefined,
   next_review: c.srs.state === 'new' ? 'new' : new Date(c.srs.due).toISOString().slice(0, 10) });
 // Card text is short markdown; the app shows it formatted (see rich.js).
