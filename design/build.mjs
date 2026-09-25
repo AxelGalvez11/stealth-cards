@@ -8,7 +8,7 @@ import { WALL_CARDS } from './wall.mjs';
 import { PRIVACY, TERMS, UPDATED } from './legal.mjs';
 import { PRO_LINKS } from '../web/plans.mjs';
 import { G_LOGO, APPLE_LOGO } from './logos.mjs';
-import { silkUri } from './silk.mjs';
+import { scapeUri } from './scape.mjs';
 const MESH_DATA = JSON.stringify(Object.fromEntries(PALETTE_NAMES.map(n => [n, { ...paletteData(n), shadow: PALETTES[n].ink === '#FFFFFF' ? '0 1px 14px rgba(0,0,0,.16)' : 'none' }])));
 // Card text formatting (web/rich.js), copied into every board that shows or edits card text.
 const RICH_SRC = readFileSync(new URL('../web/rich.js', import.meta.url), 'utf8');
@@ -2566,12 +2566,12 @@ const LEARN_K = `const K = this.props.dark
 const learnBar = w => `<div style="${w ? `width: ${w}px;` : 'flex-grow: 1;'} height: 10px; border-radius: 5px; background: {{k.track}}; overflow: hidden; display: flex;"><div style="width: {{doneW}}; background: {{k.bar}}; transition: width .5s cubic-bezier(.2,.8,.2,1);"></div><div style="width: {{partW}}; background: {{k.part}}; transition: width .5s cubic-bezier(.2,.8,.2,1);"></div></div>`;
 const learnPlus = `<sc-if value="{{plusOne}}" hint-placeholder-val="{{ false }}"><span class="sc-plus" aria-hidden="true" style="position: absolute; left: 100%; top: -3px; margin-left: 6px; font-size: 13px; font-weight: 700; color: {{k.bar}}; animation: {{plusAnim}};">+1</span></sc-if>`;
 // The top: stop, progress, and the set, on soft glass chips over the sky.
-const learnTop = back => `<header style="height: 76px; flex-shrink: 0; box-sizing: border-box; padding: 0 32px; display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: center; gap: 16px;">
+const learnTop = (back, chip = false) => `<header style="height: 76px; flex-shrink: 0; box-sizing: border-box; padding: 0 32px; display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: center; gap: 16px;">
     <div style="display: flex;"><a href="${back}" aria-label="Stop for now" title="Stop for now" style="width: 40px; height: 40px; border-radius: 20px; background: {{k.chip}}; display: flex; align-items: center; justify-content: center;">${svg(I.close, 16, 2.2)}</a></div>
-    <div style="display: flex; align-items: center; gap: 14px;">${learnBar(360)}<span role="status" style="position: relative; font-size: 14px; white-space: nowrap;"><span style="font-weight: 700;">{{learned}}</span> of {{total}} learned${learnPlus}</span></div>
+    <div style="display: flex; align-items: center; gap: 14px;${chip ? ' height: 40px; padding: 0 18px; border-radius: 20px; background: {{k.chip}};' : ''}">${learnBar(360)}<span role="status" style="position: relative; font-size: 14px; white-space: nowrap;"><span style="font-weight: 700;">{{learned}}</span> of {{total}} learned${learnPlus}</span></div>
     <div style="display: flex; justify-content: flex-end; min-width: 0;"><span style="height: 34px; padding: 0 14px; display: inline-flex; align-items: center; gap: 6px; border-radius: 999px; background: {{k.chip}}; font-size: 13px; font-weight: 600; white-space: nowrap;">${svg(I.sparkle, 14, 1.8)}<span>Learn · {{setName}}</span></span></div>
   </header>`;
-const learnTopPhone = back => `<div style="display: flex; align-items: center; gap: 12px;"><a href="${back}" aria-label="Stop for now" style="width: 44px; height: 44px; flex-shrink: 0; border-radius: 22px; background: {{k.chip}}; display: flex; align-items: center; justify-content: center;">${svg(I.close, 18, 2)}</a>${learnBar(0)}<span role="status" style="position: relative; font-size: 13px; white-space: nowrap;"><span style="font-weight: 700;">{{learned}}</span>/{{total}}${learnPlus}</span></div>`;
+const learnTopPhone = (back, chip = false) => `<div style="display: flex; align-items: center; gap: 12px;"><a href="${back}" aria-label="Stop for now" style="width: 44px; height: 44px; flex-shrink: 0; border-radius: 22px; background: {{k.chip}}; display: flex; align-items: center; justify-content: center;">${svg(I.close, 18, 2)}</a>${chip ? '<div style="flex-grow: 1; min-width: 0; height: 44px; box-sizing: border-box; padding: 0 16px; border-radius: 22px; background: {{k.chip}}; display: flex; align-items: center; gap: 12px;">' : ''}${learnBar(0)}<span role="status" style="position: relative; font-size: 13px; white-space: nowrap;"><span style="font-weight: 700;">{{learned}}</span>/{{total}}${learnPlus}</span>${chip ? '</div>' : ''}</div>`;
 const quizSeg = list => `<div role="group" style="display: flex; padding: 4px; border-radius: 999px; background: {{t.surf}};"><sc-for list="{{${list}}}" as="o" hint-placeholder-count="4"><button type="button" onClick="{{o.pick}}" aria-pressed="{{o.pressed}}" style="flex: 1 1 0; min-width: 0; height: 38px; padding: 0 6px; border: 0; border-radius: 999px; background: {{o.bg}}; color: {{o.fg}}; box-shadow: {{o.sh}}; font: inherit; font-size: 13px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: pointer;">{{o.label}}</button></sc-for></div>`;
 const quizField = (label, body) => `<div style="display: flex; flex-direction: column; gap: 8px;"><span style="font-size: 13px; font-weight: 600;">${label}</span>${body}</div>`;
 const quizBtn = (label, href, inv, grow, icon = '', click = '') => `<a href="${href}"${click ? ` onClick="{{${click}}}"` : ''} style="flex-grow: ${grow}; height: 52px; border-radius: 999px; background: ${inv ? '{{t.inv}}' : '{{t.surf}}'}; color: ${inv ? '{{t.invText}}' : '{{t.text}}'}; display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 15px; font-weight: 600;">${icon ? svg(I[icon], 16, 2) : ''}${label}</a>`;
@@ -2611,7 +2611,7 @@ const skyLayer = phone => `<div aria-hidden="true" class="sc-demo" style="positi
 const SKY_CSS = '@keyframes scCloud{from{transform:translateX(-28px)}to{transform:translateX(28px)}}@media (prefers-reduced-motion:reduce){.sc-cloud{animation:none!important}}';
 // Learn mode's sky: only the faint blue fade, with no clouds or glow (the owner: "remove the clouds, i only want the
 // faint blue fade", V75). A night sky in dark mode.
-const skyFade = phone => `<div aria-hidden="true" style="position: absolute; left: 0; right: 0; top: 0; height: ${phone ? 600 : 700}px; z-index: -1; pointer-events: none; background: linear-gradient(180deg, {{sky.top}} 0%, {{sky.mid}} 30%, {{sky.low}} 55%, {{t.bg}} 100%);"></div>`;
+const skyFade = (phone, opacity = 1) => `<div aria-hidden="true" style="position: absolute; left: 0; right: 0; top: 0; height: ${phone ? 600 : 700}px; z-index: -1; pointer-events: none; background: linear-gradient(180deg, {{sky.top}} 0%, {{sky.mid}} 30%, {{sky.low}} 55%, {{t.bg}} 100%);${opacity < 1 ? ' opacity: ' + opacity : ''}"></div>`;
 // The sky's colors, for renderVals: daylight, or a night sky in dark mode (the landing page's top, Learn mode's end).
 const SKY = `(this.props.dark ? { top: '#081733', mid: '#0D2148', low: '#0A1530', glow: 'rgba(120,150,255,.16)', cloud: 'rgba(150,170,230,.10)' }
     : { top: '#86BDF3', mid: '#C9E2FB', low: '#EDF5FE', glow: 'rgba(255,255,255,.75)', cloud: 'rgba(255,255,255,.94)' })`;
@@ -2674,34 +2674,37 @@ const learnNext = (h, fs) => `<sc-if value="{{isLast}}" hint-placeholder-val="{{
 const learnWhy = (fs = 17) => `<div style="font-size: ${fs}px; line-height: 1.5;"><span style="font-weight: 700; color: {{verdictColor}};">{{verdict}}</span> {{why}}</div>`;
 const learnImage = h => `<sc-if value="{{hasImage}}" hint-placeholder-val="{{ false }}"><img src="{{image}}" alt="" style="align-self: flex-start; max-width: 100%; max-height: ${h}px; border-radius: 18px; background: {{t.surf}};"></sc-if>`;
 const learnClaim = fs => `<sc-if value="{{hasClaim}}" hint-placeholder-val="{{ false }}"><div style="padding: 16px 20px; border-radius: 20px; background: {{k.card}}; box-shadow: {{k.shadow}}; font-size: ${fs}px; font-weight: 700; line-height: 1.35;">{{claim}}</div></sc-if>`;
-const webQuizOf = bg => `<div style="position: relative; isolation: isolate; width: 1440px; height: 900px; box-sizing: border-box; display: flex; flex-direction: column; overflow: hidden; font-family: ${FONT}; background: {{t.bg}}; color: {{k.ink}};">
+const webQuizOf = (bg, panel = false) => `<div style="position: relative; isolation: isolate; width: 1440px; height: 900px; box-sizing: border-box; display: flex; flex-direction: column; overflow: hidden; font-family: ${FONT}; background: {{t.bg}}; color: {{k.ink}};">
   ${bg}
-  ${learnTop('WebDeck.dc.html')}
-  <main style="flex-grow: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;">
-    <div class="sc-q" style="width: 720px; display: flex; flex-direction: column; gap: 22px; animation: {{qAnim}};">
+  ${learnTop('WebDeck.dc.html', panel)}
+  <main style="flex-grow: 1; display: flex; flex-direction: column; align-items: center; justify-content: ${panel ? 'flex-start; padding-top: 56px' : 'center'};">
+    <div class="sc-q" style="width: 720px; display: flex; flex-direction: column; gap: 22px; animation: {{qAnim}};${panel ? LEARN_PANEL(false) : ''}">
       <h1 style="margin: 0; font-size: 36px; font-weight: 700; line-height: 1.15; letter-spacing: -.03em; text-wrap: pretty;">{{question}}</h1>
       ${learnImage(240)}${learnClaim(20)}
       <div style="display: flex; flex-direction: column; gap: 12px;"><sc-for list="{{options}}" as="o" hint-placeholder-count="4">${learnOption(64, 22, 18)}</sc-for></div>
-      <div style="min-height: 150px;"><sc-if value="{{answered}}" hint-placeholder-val="{{ false }}"><div class="sc-quiz-in" style="display: flex; flex-direction: column; gap: 14px; animation: scQuizIn .3s cubic-bezier(.2,.8,.2,1) both;">
+      <div style="min-height: ${panel ? 0 : 150}px;"><sc-if value="{{answered}}" hint-placeholder-val="{{ false }}"><div class="sc-quiz-in" style="display: flex; flex-direction: column; gap: 14px; animation: scQuizIn .3s cubic-bezier(.2,.8,.2,1) both;">
         ${learnWhy()}
         <div style="display: flex; align-items: flex-end; justify-content: space-between; gap: 20px;">${quizFrom}<div style="flex-shrink: 0; width: 180px;">${learnNext(52, 15)}</div></div>
       </div></sc-if></div>
     </div>
   </main>
 </div>`;
+// The card a question can sit on, like a window over a picture (the sunset idea); its colors come from `k`.
+const LEARN_PANEL = phone => ` box-sizing: content-box; padding: ${phone ? '14px 14px 16px; gap: 12px' : '40px 44px 36px'}; border-radius: ${phone ? 26 : 30}px; background: {{k.panel}}; box-shadow: {{k.panelShadow}};`;
 const webQuiz = webQuizOf(skyFade(false));
-const phoneQuizOf = bg => `<div style="position: relative; isolation: isolate; width: 390px; height: 844px; box-sizing: border-box; padding: 60px 16px 34px; display: flex; flex-direction: column; gap: 18px; overflow: hidden; font-family: ${FONT}; background: {{t.bg}}; color: {{k.ink}};">
+const phoneQuizOf = (bg, panel = false) => `<div style="position: relative; isolation: isolate; width: 390px; height: 844px; box-sizing: border-box; padding: 60px 16px 34px; display: flex; flex-direction: column; gap: ${panel ? 12 : 18}px; overflow: hidden; font-family: ${FONT}; background: {{t.bg}}; color: {{k.ink}};">
   ${bg}
-  ${learnTopPhone('PhoneDeck.dc.html')}
-  <div class="sc-q" style="display: flex; flex-direction: column; gap: 16px; animation: {{qAnim}};">
-    <div style="display: flex; flex-direction: column; gap: 10px; padding: 8px 4px 0;"><div style="font-size: 24px; font-weight: 700; line-height: 1.2; letter-spacing: -.025em; text-wrap: pretty;">{{question}}</div>${learnImage(180)}${learnClaim(18)}</div>
+  ${learnTopPhone('PhoneDeck.dc.html', panel)}
+  <div class="sc-q" style="display: flex; flex-direction: column; gap: 16px; animation: {{qAnim}};${panel ? LEARN_PANEL(true) : ''}">
+    <div style="display: flex; flex-direction: column; gap: 10px; padding: ${panel ? 2 : 8}px 4px 0;"><div style="font-size: 24px; font-weight: 700; line-height: 1.2; letter-spacing: -.025em; text-wrap: pretty;">{{question}}</div>${learnImage(180)}${learnClaim(18)}</div>
     <div style="display: flex; flex-direction: column; gap: 8px;"><sc-for list="{{options}}" as="o" hint-placeholder-count="4">${learnOption(54, 20, 16, 34)}</sc-for></div>
     <sc-if value="{{answered}}" hint-placeholder-val="{{ false }}"><div class="sc-quiz-in" style="display: flex; flex-direction: column; gap: 12px; padding: 0 4px; animation: scQuizIn .3s cubic-bezier(.2,.8,.2,1) both;">${learnWhy(16)}${quizFrom}</div></sc-if>
   </div>
   <div style="flex-grow: 1;"></div>
   <sc-if value="{{answered}}" hint-placeholder-val="{{ false }}"><div style="display: flex; flex-direction: column;">${learnNext(56, 17)}</div></sc-if>
 </div>`;
-const phoneQuiz = phoneQuizOf(skyFade(true));
+// The owner made this one's sky half as strong by hand on the canvas (V87).
+const phoneQuiz = phoneQuizOf(skyFade(true, 0.5));
 const QUIZ_LOGIC = phone => `
 constructor(props) { super(props); this.state = { i: 0, pick: props && props.answered ? 1 : null, gained: 0 }; }
 renderVals() { ${T}${DB_JS}
@@ -3443,23 +3446,23 @@ const LIVE_SETUP_LOGIC = LIVE_LOGIC.replace('  return { t,', '  return { deep: '
 const LIVE_FINAL_LOGIC = LIVE_LOGIC.replace('    r: wrongPick ? {', `    rest: ${JSON.stringify(LIVE_FINAL_REST)}.map(([name, score], i, all) => ({ rank: String(i + 4), name, initial: name[0], score, color: colors[(i + 3) % colors.length], line: i < all.length - 1 ? 'inset 0 -1px 0 rgba(13,21,66,.08)' : 'none', delay: (.8 + i * .08).toFixed(2) + 's' })),
     r: wrongPick ? {`);
 
-// ---------- Learn mode: ideas (canvas only) ----------
-// The owner picked the sky style for Learn mode and asked to try other backgrounds: "faint gradient waves" (V82), the
-// cards' noisy gradient "white with faint color" (V83), then a grainy fold of cloth, "but white, and subtle" (V84), then
-// "make this fainter, could you show me more of these gradient faint designs? i want a wave pattern" (V86). So these are
-// silk (silk.mjs): a white sheet lit from the top left, folded or waved four ways, drawn once as a small picture the page
-// stretches, with film grain on top, drifting slowly like the Today card. At night the page keeps the night sky.
-const SILK_IDEAS = [['Mist', 'fold', 'idea 1: silk fold'], ['Swell', 'swell', 'idea 2: swell, broad waves'], ['Flow', 'flow', 'idea 3: flow, layered waves'], ['Ripple', 'ripple', 'idea 4: ripples, fine waves']];
-const silkPic = Object.fromEntries(SILK_IDEAS.map(([, d]) => [d, { web: silkUri(d, 720, 450), phone: silkUri(d, 390, 844) }]));
-const silkLayer = (phone, design) => {
-  const [w, h] = phone ? [390, 844] : [720, 450];
-  return `<div aria-hidden="true" class="sc-alive" style="position: absolute; inset: 0; z-index: -1; overflow: hidden; pointer-events: none; background: #F9FAFB;"><svg aria-hidden="true" viewBox="0 0 ${w} ${h}" preserveAspectRatio="xMidYMid slice" width="100%" height="100%" style="position: absolute; inset: 0; pointer-events: none;"><image href="${silkPic[design][phone ? 'phone' : 'web']}" width="${w}" height="${h}" preserveAspectRatio="none"/></svg>${grainSvg('{{silkGrain}}', { blend: 'overlay', freq: 0.85, slope: 3.4, id: 'sc-silk-grain' })}</div>`;
+// ---------- Learn mode: an idea (canvas only) ----------
+// The owner picked the sky style for Learn mode and asked to try other backgrounds: faint waves (V82), a white noisy
+// gradient (V83), white silk (V84) and white waves (V86). Then "just remove the white wave gradients, trial something
+// like this" with a grainy sunset over hills, UI windows floating on it (V87). So this is the sunset (scape.mjs): the
+// hills drawn once as a picture the page stretches, strong film grain on top, drifting slowly like the Today card, and
+// the question and answers on a white card, like the windows. At night the page keeps the night sky, with no card.
+const SUNSET_PIC = { web: scapeUri(960, 600), phone: scapeUri(390, 844) };
+const sunsetLayer = phone => {
+  const [w, h] = phone ? [390, 844] : [960, 600];
+  return `<div aria-hidden="true" class="sc-alive" style="position: absolute; inset: 0; z-index: -1; overflow: hidden; pointer-events: none; background: #5E88AC;"><svg aria-hidden="true" viewBox="0 0 ${w} ${h}" preserveAspectRatio="xMidYMid slice" width="100%" height="100%" style="position: absolute; inset: 0; pointer-events: none;"><image href="${SUNSET_PIC[phone ? 'phone' : 'web']}" width="${w}" height="${h}" preserveAspectRatio="none"/></svg>${grainSvg('{{grain}}', { blend: 'overlay', freq: 0.85, slope: 3.4, id: 'sc-sunset-grain' })}</div>`;
 };
-const silkBg = (phone, design) => `<sc-if value="{{light}}" hint-placeholder-val="{{ true }}">${silkLayer(phone, design)}</sc-if><sc-if value="{{dark}}" hint-placeholder-val="{{ false }}">${skyFade(phone)}</sc-if>`;
-// Their logic: the question's, plus the grain. On the pale page the top's track needs a touch of navy to show.
-const SILK_LOGIC = phone => QUIZ_LOGIC(phone).replace('renderVals() {', 'baseVals() {') + `
+const sunsetBg = phone => `<sc-if value="{{light}}" hint-placeholder-val="{{ true }}">${sunsetLayer(phone)}</sc-if><sc-if value="{{dark}}" hint-placeholder-val="{{ false }}">${skyFade(phone)}</sc-if>`;
+// Its logic: the question's, plus the grain, brighter chips over the blue, and the card (none at night).
+const SUNSET_LOGIC = phone => QUIZ_LOGIC(phone).replace('renderVals() {', 'baseVals() {') + `
 renderVals() { const v = this.baseVals(), dark = !!this.props.dark;
-  return { ...v, silkGrain: '.9', light: !dark, dark, k: dark ? v.k : { ...v.k, chip: 'rgba(255,255,255,.75)', track: 'rgba(13,21,66,.08)' } }; }`;
+  return { ...v, grain: '.8', light: !dark, dark, k: dark ? { ...v.k, panel: 'transparent', panelShadow: 'none' }
+    : { ...v.k, chip: 'rgba(255,255,255,.86)', track: 'rgba(13,21,66,.1)', panel: '#FFFFFF', panelShadow: '0 44px 90px -44px rgba(46,20,8,.6), 0 2px 8px rgba(46,20,8,.1)' } }; }`;
 
 // ---------- Pricing (lucida.cards/pricing) ----------
 // Free keeps every card. Pro ($5.99 a month or $39 a year) is for making Lucida yours: AI quizzes, photo covers and
@@ -3630,10 +3633,8 @@ const files = {
   'WebQuizMatch': ['Web · Learn mode · matching', webQuizMatch, { props: DARK, logic: MATCH_LOGIC(false), css: LEARN_CSS, w: W, h: H }],
   'WebQuizType': ['Web · Learn mode · type the answer', webQuizType, { props: DARK, logic: TYPE_LOGIC(false), css: LEARN_CSS, w: W, h: H }],
   'WebQuizDone': ['Web · Learn mode · all learned', webQuizDone, { props: DARK, logic: QUIZ_DONE_LOGIC, css: LEARN_CSS, w: W, h: H }],
-  ...Object.fromEntries(SILK_IDEAS.flatMap(([name, d, title]) => [
-    ['WebQuiz' + name, ['Web · Learn mode · ' + title, webQuizOf(silkBg(false, d)), { props: { ...DARK, answered: { editor: 'boolean', default: false } }, logic: SILK_LOGIC(false), css: LEARN_CSS, w: W, h: H }]],
-    ['PhoneQuiz' + name, ['iPhone · Learn mode · ' + title, phoneQuizOf(silkBg(true, d)), { props: { ...DARK, answered: { editor: 'boolean', default: false } }, logic: SILK_LOGIC(true), css: LEARN_CSS, w: PW, h: PH }]]
-  ])),
+  'WebQuizSunset': ['Web · Learn mode · idea: grainy sunset hills', webQuizOf(sunsetBg(false), true), { props: { ...DARK, answered: { editor: 'boolean', default: false } }, logic: SUNSET_LOGIC(false), css: LEARN_CSS, w: W, h: H }],
+  'PhoneQuizSunset': ['iPhone · Learn mode · idea: grainy sunset hills', phoneQuizOf(sunsetBg(true), true), { props: { ...DARK, answered: { editor: 'boolean', default: false } }, logic: SUNSET_LOGIC(true), css: LEARN_CSS, w: PW, h: PH }],
   'PhoneQuizStart': ['iPhone · Learn mode · start (Pro)', phoneQuizStart(true), { props: DARK, logic: QUIZ_START_LOGIC(true, true), w: PW, h: PH }],
   'PhoneQuizUpgrade': ['iPhone · Learn mode · on Free: go Pro', phoneQuizStart(false), { props: { ...DARK, grain: MESH('Iris').grain }, logic: QUIZ_START_LOGIC(true), w: PW, h: PH }],
   'PhoneQuiz': ['iPhone · Learn mode · choice question', phoneQuiz, { props: { ...DARK, answered: { editor: 'boolean', default: false } }, logic: QUIZ_LOGIC(true), css: LEARN_CSS, w: PW, h: PH }],

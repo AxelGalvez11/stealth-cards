@@ -241,26 +241,8 @@ export default [
   "h": 844
  },
  {
-  "name": "PhoneQuizFlow",
-  "title": "iPhone · Learn mode · idea 3: flow, layered waves",
-  "w": 390,
-  "h": 844
- },
- {
   "name": "PhoneQuizMatch",
   "title": "iPhone · Learn mode · matching",
-  "w": 390,
-  "h": 844
- },
- {
-  "name": "PhoneQuizMist",
-  "title": "iPhone · Learn mode · idea 1: silk fold",
-  "w": 390,
-  "h": 844
- },
- {
-  "name": "PhoneQuizRipple",
-  "title": "iPhone · Learn mode · idea 4: ripples, fine waves",
   "w": 390,
   "h": 844
  },
@@ -271,8 +253,8 @@ export default [
   "h": 844
  },
  {
-  "name": "PhoneQuizSwell",
-  "title": "iPhone · Learn mode · idea 2: swell, broad waves",
+  "name": "PhoneQuizSunset",
+  "title": "iPhone · Learn mode · idea: grainy sunset hills",
   "w": 390,
   "h": 844
  },
@@ -589,26 +571,8 @@ export default [
   "h": 900
  },
  {
-  "name": "WebQuizFlow",
-  "title": "Web · Learn mode · idea 3: flow, layered waves",
-  "w": 1440,
-  "h": 900
- },
- {
   "name": "WebQuizMatch",
   "title": "Web · Learn mode · matching",
-  "w": 1440,
-  "h": 900
- },
- {
-  "name": "WebQuizMist",
-  "title": "Web · Learn mode · idea 1: silk fold",
-  "w": 1440,
-  "h": 900
- },
- {
-  "name": "WebQuizRipple",
-  "title": "Web · Learn mode · idea 4: ripples, fine waves",
   "w": 1440,
   "h": 900
  },
@@ -619,8 +583,8 @@ export default [
   "h": 900
  },
  {
-  "name": "WebQuizSwell",
-  "title": "Web · Learn mode · idea 2: swell, broad waves",
+  "name": "WebQuizSunset",
+  "title": "Web · Learn mode · idea: grainy sunset hills",
   "w": 1440,
   "h": 900
  },
