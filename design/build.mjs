@@ -68,12 +68,20 @@ ${logic}
 // Motion on every board, as the Motion board shows it: a page's content rises in (each part a moment after the one
 // before), pills and buttons press in, deck cards lift under the pointer, empty states float in a soft light with a
 // shine crossing the top card, the Today card's colors drift, the session meter draws in, and forecast bars grow.
+// Switches spring across (the owner: "could you add toggle switch animation"), and side panels and sheets (deck
+// settings, the card editor) slide in over a dimming page (the owner: "add a move in animation for the right sidebar");
+// the app slides them back out as they close (web/app.js, sc-gone).
 // Reduced motion turns all of it off.
 const APP_MOTION_CSS = [
   '@keyframes scRise{from{opacity:0;transform:translateY(14px)}}main>*{animation:scRise .5s cubic-bezier(.2,.8,.2,1) backwards}',
   [2, 3, 4, 5].map(n => `main>*:nth-child(${n}){animation-delay:${((n - 1) * 0.06).toFixed(2)}s}`).join('') + 'main>*:nth-child(n+6){animation-delay:.3s}',
   'button,.sc-press{transition:transform .1s ease}button:active,.sc-press:active{transform:scale(.96)}',
-  '.sc-lift{transition:transform .25s cubic-bezier(.2,.8,.2,1),box-shadow .25s cubic-bezier(.2,.8,.2,1)}.sc-lift:hover{transform:translateY(-4px);box-shadow:0 24px 48px -24px rgba(0,0,0,.45)}',
+  '.sc-sw{transition:background-color .3s ease,transform .1s ease}.sc-sw>span{transition:transform .32s cubic-bezier(.34,1.56,.64,1),background-color .3s ease}',
+  // The owner: "make the hover animation for decks be 1 seconds". It starts right away and eases off, both ways.
+  '.sc-lift{transition:transform 1s ease-out,box-shadow 1s ease-out}.sc-lift:hover{transform:translateY(-4px);box-shadow:0 24px 48px -24px rgba(0,0,0,.45)}',
+  '@keyframes scScrimIn{from{opacity:0}}@keyframes scScrimOut{to{opacity:0}}.sc-scrim{animation:scScrimIn .35s ease backwards}.sc-scrim.sc-gone{animation:scScrimOut .26s ease forwards}',
+  '@keyframes scPanelIn{from{opacity:0;transform:translateX(calc(100% + 12px))}}@keyframes scPanelOut{to{opacity:0;transform:translateX(calc(100% + 12px))}}.sc-panel{animation:scPanelIn .35s cubic-bezier(.2,.8,.2,1) backwards}.sc-panel.sc-gone{animation:scPanelOut .26s cubic-bezier(.4,0,1,1) forwards}',
+  '@keyframes scSheetIn{from{transform:translateY(100%)}}@keyframes scSheetOut{to{transform:translateY(100%)}}.sc-sheet{animation:scSheetIn .35s cubic-bezier(.2,.8,.2,1) backwards}.sc-sheet.sc-gone{animation:scSheetOut .26s cubic-bezier(.4,0,1,1) forwards}',
   '@keyframes scFloat{50%{transform:translateY(-6px)}}@keyframes scSwayA{50%{transform:rotate(-13deg) translateX(-3px)}}@keyframes scSwayB{50%{transform:rotate(10deg) translateX(3px)}}@keyframes scGlow{50%{opacity:.55}}',
   '@keyframes scSheen{0%,58%{transform:translateX(-160%) skewX(-18deg)}86%,100%{transform:translateX(260%) skewX(-18deg)}}',
   '.sc-float{animation:scFloat 6s ease-in-out infinite}.sc-sway-a{animation:scSwayA 6s ease-in-out infinite}.sc-sway-b{animation:scSwayB 6s ease-in-out infinite}.sc-glow{animation:scGlow 6s ease-in-out infinite}',
@@ -83,7 +91,7 @@ const APP_MOTION_CSS = [
   '@keyframes scKnob{from{opacity:0;transform:scale(.3)}}.sc-knob{transform-box:fill-box;transform-origin:center;animation:scKnob .35s .75s cubic-bezier(.34,1.56,.64,1) backwards}',
   '@keyframes scGrow{from{transform:scaleY(0)}}.sc-grow{transform-origin:bottom;animation:scGrow .6s cubic-bezier(.2,.8,.2,1) backwards}',
   Array.from({ length: 13 }, (_, i) => `:nth-child(${i + 2})>.sc-grow{animation-delay:${((i + 1) * 0.04).toFixed(2)}s}`).join(''),
-  '@media (prefers-reduced-motion:reduce){main>*,.sc-float,.sc-sway-a,.sc-sway-b,.sc-glow,.sc-alive>svg,.sc-draw,.sc-knob,.sc-grow{animation:none!important}.sc-sheen{display:none}button:active,.sc-press:active,.sc-lift:hover{transform:none}}'
+  '@media (prefers-reduced-motion:reduce){main>*,.sc-float,.sc-sway-a,.sc-sway-b,.sc-glow,.sc-alive>svg,.sc-draw,.sc-knob,.sc-grow,.sc-scrim,.sc-panel,.sc-sheet{animation:none!important}.sc-sheen{display:none}button:active,.sc-press:active,.sc-lift:hover{transform:none}.sc-sw>span{transition:background-color .3s ease}}'
 ].join('');
 // Dark mode, and its gray look (dim): the app sets both from Settings (Appearance, and Dark mode: Gray or Black).
 const DARK = { dark: { editor: 'boolean', default: false }, dim: { editor: 'boolean', default: false } };
@@ -184,8 +192,9 @@ const stepper = (label, val, dec, inc, stacked = false, num = '') => stacked ? `
   <span style="display: flex; gap: 6px;"><button type="button" onClick="{{${dec}}}" aria-label="Less" style="width: 32px; height: 32px; border: 0; border-radius: 16px; background: {{t.bg}}; color: {{t.text}}; font: inherit; font-size: 18px; font-weight: 600; cursor: pointer;">−</button><button type="button" onClick="{{${inc}}}" aria-label="More" style="width: 32px; height: 32px; border: 0; border-radius: 16px; background: {{t.bg}}; color: {{t.text}}; font: inherit; font-size: 18px; font-weight: 600; cursor: pointer;">+</button></span>
 </div>`;
 
-// On/off switch; `v` names a renderVals object made by sw() below.
-const SWITCH = (v, handler, label) => `<button type="button" role="switch" aria-checked="{{${v}.checked}}" aria-disabled="{{${v}.disabled}}" aria-label="${label}" onClick="{{${handler}}}" style="width: 48px; height: 28px; flex-shrink: 0; padding: 3px; box-sizing: border-box; border: 0; border-radius: 14px; background: {{${v}.track}}; opacity: {{${v}.op}}; cursor: pointer; transition: background .2s;"><span style="display: block; width: 22px; height: 22px; border-radius: 11px; background: {{${v}.knobColor}}; transform: {{${v}.knob}}; transition: transform .2s cubic-bezier(.4,0,.2,1);"></span></button>`;
+// On/off switch; `v` names a renderVals object made by sw() below. Every switch is this one, so they all spring the
+// same way (sc-sw in APP_MOTION_CSS); the app shows the change as you click, before it's saved (web/db.js).
+const SWITCH = (v, handler, label) => `<button type="button" role="switch" aria-checked="{{${v}.checked}}" aria-disabled="{{${v}.disabled}}" aria-label="${label}" onClick="{{${handler}}}" class="sc-sw" style="width: 48px; height: 28px; flex-shrink: 0; padding: 3px; box-sizing: border-box; border: 0; border-radius: 14px; background: {{${v}.track}}; opacity: {{${v}.op}}; cursor: pointer;"><span style="display: block; width: 22px; height: 22px; border-radius: 11px; background: {{${v}.knobColor}}; transform: {{${v}.knob}};"></span></button>`;
 const SW_JS = `const sw = (on, enabled = true) => ({ checked: on ? 'true' : 'false', track: on ? t.inv : t.surf2, knob: on ? 'translateX(20px)' : 'translateX(0)', knobColor: on ? t.invText : t.bg, op: enabled ? '1' : '.4', disabled: enabled ? 'false' : 'true' });`;
 // Small segmented control on a gray surface; `key` names a list made by opts() below.
 const SEG = (key, label, n = 3) => `<div role="group" aria-label="${label}" style="display: flex; gap: 2px; padding: 3px; border-radius: 999px; background: {{t.bg}}; flex-shrink: 0;"><sc-for list="{{${key}}}" as="o" hint-placeholder-count="${n}"><button type="button" onClick="{{o.pick}}" aria-pressed="{{o.pressed}}" style="height: 30px; padding: 0 12px; border: 0; border-radius: 999px; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; white-space: nowrap; background: {{o.bg}}; color: {{o.fg}};">{{o.label}}</button></sc-for></div>`;
@@ -414,21 +423,24 @@ const TAG_JS = `const tagC = { Biology: '#30A46C', Chemistry: '#F76B15', Languag
 const tagSearch = (q, set, ph, h = 40) => `<label style="display: flex; align-items: center; gap: 8px; height: ${h}px; flex-shrink: 0; padding: 0 14px; box-sizing: border-box; border-radius: 999px; background: {{t.surf}}; color: {{t.muted}};">${svg(I.search, 14)}<span style="position: absolute; left: -9999px;">${ph}</span><input value="{{${q}}}" onChange="{{${set}}}" placeholder="${ph}" style="flex-grow: 1; min-width: 0; border: 0; outline: 0; background: transparent; font: inherit; font-size: ${h > 40 ? 16 : 14}px; color: {{t.text}};"></label>`;
 const tagRow = (o, { count = false, h = 38, line = false } = {}) => `<button type="button" onClick="{{${o}.pick}}" aria-pressed="{{${o}.pressed}}" style="height: ${h}px; flex-shrink: 0; padding: 0 ${line ? 4 : 12}px; display: flex; align-items: center; gap: 10px; border: 0; border-radius: ${line ? 0 : 12}px; ${line ? 'border-bottom: 1px solid {{t.line}}; ' : ''}background: transparent; color: {{t.text}}; font: inherit; font-size: ${h > 40 ? 16 : 14}px; text-align: left; cursor: pointer;"><span style="width: ${h > 40 ? 10 : 8}px; height: ${h > 40 ? 10 : 8}px; flex-shrink: 0; border-radius: 5px; background: {{${o}.dot}};"></span><span style="flex-grow: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{${o}.label}}</span>${count ? `<span style="font-family: ${MONO}; font-size: 12px; color: {{t.muted}};">{{${o}.count}}</span>` : ''}<sc-if value="{{${o}.on}}" hint-placeholder-val="{{ false }}"><span style="display: flex;">${svg(I.check, 15, 2.4)}</span></sc-if></button>`;
 const popBox = 'box-sizing: border-box; padding: 8px; border-radius: 22px; background: {{t.bg}}; color: {{t.text}}; box-shadow: 0 18px 48px rgba(0,0,0,.2), 0 0 0 1px {{t.line}}; display: flex; flex-direction: column; gap: 4px;';
+// Menus and popovers carry data-sc-pop, next to the button that opens them (aria-expanded). In the app (web/app.js),
+// Escape or a click outside closes one by pressing that button, and one that would run off the bottom of the window (or
+// of what scrolls it) opens above its button instead, or moves up to fit.
 // Filter by tag: every tag, with how many decks (or cards) have it.
-const tagMenu = (m, pos, { label = 'Filter by tag', find = 'Find a tag', none = 'No tags match' } = {}) => `<sc-if value="{{${m}.open}}" hint-placeholder-val="{{ false }}"><div role="dialog" aria-label="${label}" style="position: absolute; ${pos} z-index: 30; width: 300px; ${popBox}">${tagSearch(m + '.query', m + '.setQuery', find)}<div style="max-height: 304px; overflow-y: auto; scrollbar-width: thin; display: flex; flex-direction: column;"><sc-for list="{{${m}.rows}}" as="o" hint-placeholder-count="6">${tagRow('o', { count: true })}</sc-for><sc-if value="{{${m}.none}}" hint-placeholder-val="{{ false }}"><span style="padding: 10px 12px; font-size: 13px; color: {{t.muted}};">${none}</span></sc-if></div></div></sc-if>`;
+const tagMenu = (m, pos, { label = 'Filter by tag', find = 'Find a tag', none = 'No tags match' } = {}) => `<sc-if value="{{${m}.open}}" hint-placeholder-val="{{ false }}"><div role="dialog" aria-label="${label}" data-sc-pop style="position: absolute; ${pos} z-index: 30; width: 300px; ${popBox}">${tagSearch(m + '.query', m + '.setQuery', find)}<div style="max-height: 304px; overflow-y: auto; scrollbar-width: thin; display: flex; flex-direction: column;"><sc-for list="{{${m}.rows}}" as="o" hint-placeholder-count="6">${tagRow('o', { count: true })}</sc-for><sc-if value="{{${m}.none}}" hint-placeholder-val="{{ false }}"><span style="padding: 10px 12px; font-size: 13px; color: {{t.muted}};">${none}</span></sc-if></div></div></sc-if>`;
 const makeRow = (pk, h = 38) => `<sc-if value="{{${pk}.canMake}}" hint-placeholder-val="{{ false }}"><button type="button" onClick="{{${pk}.make}}" style="height: ${h}px; flex-shrink: 0; padding: 0 12px; display: flex; align-items: center; gap: 10px; border: 0; border-radius: 12px; background: {{t.surf}}; color: {{t.text}}; font: inherit; font-size: ${h > 40 ? 16 : 14}px; font-weight: 600; text-align: left; cursor: pointer;">${svg(I.plus, 13, 2.4)}{{${pk}.makeLabel}}</button></sc-if>`;
-// Tags on a deck or card: x removes one. Add tag opens the picker: a menu on web (above the tags with `up`), its own
-// sheet on iPhone.
+// Tags on a deck or card: x removes one. Add tag opens the picker: a menu on web (always 320 wide, above the tags with
+// `up`; in the card editor it used to shrink to the Add tag button's width), its own sheet on iPhone.
 const TAG_EDIT = (list, pk, phone = false, up = false) => `<div style="${phone ? '' : 'position: relative; '}display: flex; flex-wrap: wrap; gap: 6px;"><sc-for list="{{${list}}}" as="g" hint-placeholder-count="2"><button type="button" onClick="{{g.remove}}" aria-label="Remove tag {{g.label}}" style="height: 32px; padding: 0 10px 0 12px; display: inline-flex; align-items: center; gap: 6px; border: 0; border-radius: 999px; background: {{g.bg}}; color: {{g.fg}}; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer;">{{g.label}}<span style="display: flex; opacity: .7;">${svg(I.close, 10, 2.4)}</span></button></sc-for><button type="button" onClick="{{${pk}.toggle}}" aria-expanded="{{${pk}.expanded}}" style="height: 32px; padding: 0 12px; display: inline-flex; align-items: center; gap: 6px; box-sizing: border-box; border: 1.5px dashed {{t.muted}}; border-radius: 999px; background: transparent; color: {{t.muted}}; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer;">${svg(I.plus, 12, 2.4)}Add tag</button>${phone
   ? `<sc-if value="{{${pk}.open}}" hint-placeholder-val="{{ false }}"><div role="dialog" aria-label="Tags" style="position: absolute; inset: 0; z-index: 30; box-sizing: border-box; padding: 16px 20px 34px; border-radius: 32px 32px 0 0; background: {{t.bg}}; display: flex; flex-direction: column; gap: 12px;"><div style="display: flex; align-items: center; justify-content: space-between;"><span style="font-size: 18px; font-weight: 600;">Tags<span style="margin-left: 8px; font-family: ${MONO}; font-size: 13px; font-weight: 500; color: {{t.muted}};">{{${pk}.count}}</span></span><button type="button" onClick="{{${pk}.close}}" style="height: 36px; padding: 0 16px; border: 0; border-radius: 999px; background: {{t.inv}}; color: {{t.invText}}; font: inherit; font-size: 14px; font-weight: 600; cursor: pointer;">Done</button></div>${tagSearch(pk + '.query', pk + '.setQuery', 'Find or make a tag', 44)}<div style="flex-grow: 1; min-height: 0; overflow-y: auto; scrollbar-width: none; display: flex; flex-direction: column;">${makeRow(pk, 48)}<sc-for list="{{${pk}.options}}" as="o" hint-placeholder-count="8">${tagRow('o', { h: 48, line: true })}</sc-for></div></div></sc-if>`
-  : `<sc-if value="{{${pk}.open}}" hint-placeholder-val="{{ false }}"><div role="dialog" aria-label="Add a tag" style="position: absolute; left: 0; ${up ? 'bottom' : 'top'}: calc(100% + 8px); z-index: 30; width: 320px; max-width: 100%; ${popBox}">${tagSearch(pk + '.query', pk + '.setQuery', 'Find or make a tag')}<div style="max-height: 190px; overflow-y: auto; scrollbar-width: thin; display: flex; flex-direction: column;">${makeRow(pk)}<sc-for list="{{${pk}.options}}" as="o" hint-placeholder-count="5">${tagRow('o')}</sc-for></div></div></sc-if>`}</div>`;
+  : `<sc-if value="{{${pk}.open}}" hint-placeholder-val="{{ false }}"><div role="dialog" aria-label="Add a tag" data-sc-pop style="position: absolute; left: 0; ${up ? 'bottom' : 'top'}: calc(100% + 8px); z-index: 30; width: 320px; ${popBox}">${tagSearch(pk + '.query', pk + '.setQuery', 'Find or make a tag')}<div style="max-height: 190px; overflow-y: auto; scrollbar-width: thin; display: flex; flex-direction: column;">${makeRow(pk)}<sc-for list="{{${pk}.options}}" as="o" hint-placeholder-count="5">${tagRow('o')}</sc-for></div></div></sc-if>`}</div>`;
 const viewBtn = (key, handler, label, icon) => `<button type="button" onClick="{{${handler}}}" aria-label="${label}" aria-pressed="{{${key}.pressed}}" style="width: 42px; height: 36px; border: 0; border-radius: 999px; background: {{${key}.bg}}; color: {{${key}.fg}}; box-shadow: {{${key}.sh}}; display: flex; align-items: center; justify-content: center; cursor: pointer;">${svg(I[icon], 16, 2)}</button>`;
 // One glass chip per tag on a deck's gradient card (a chip in list view). Clicking one shows every deck with that tag,
 // like the chips in the +N menu, instead of opening the deck.
 const glassTag = k => `<sc-if value="{{d.${k}.show}}" hint-placeholder-val="{{ true }}"><button type="button" onClick="{{d.${k}.pick}}" title="Every deck tagged {{d.${k}.label}}" style="height: 26px; padding: 0 11px; display: inline-flex; align-items: center; border: 0; border-radius: 999px; background: {{d.glass}}; box-shadow: inset 0 0 0 1px {{d.glassLine}}; color: inherit; font: inherit; font-size: 12px; font-weight: 600; white-space: nowrap; text-shadow: none; cursor: pointer; pointer-events: auto;">{{d.${k}.label}}</button></sc-if>`;
 const tagSlot = k => `<sc-if value="{{d.${k}.show}}" hint-placeholder-val="{{ true }}"><button type="button" onClick="{{d.${k}.pick}}" title="Every deck tagged {{d.${k}.label}}" style="height: 24px; padding: 0 10px; display: inline-flex; align-items: center; border: 0; border-radius: 999px; background: {{d.${k}.bg}}; color: {{d.${k}.fg}}; font: inherit; font-size: 12px; font-weight: 600; white-space: nowrap; cursor: pointer; pointer-events: auto;">{{d.${k}.label}}</button></sc-if>`;
 // A deck's +N chip opens a menu with all of its tags; pick one to see every deck that has it.
-const deckTagsPop = pos => `<sc-if value="{{d.tagsOpen}}" hint-placeholder-val="{{ false }}"><div role="dialog" aria-label="Tags on {{d.name}}" style="position: absolute; ${pos} z-index: 20; pointer-events: auto; width: 320px; box-sizing: border-box; padding: 16px; border-radius: 24px; background: {{t.bg}}; color: {{t.text}}; box-shadow: 0 18px 48px rgba(0,0,0,.2), 0 0 0 1px {{t.line}}; display: flex; flex-direction: column; gap: 12px; text-shadow: none;">
+const deckTagsPop = pos => `<sc-if value="{{d.tagsOpen}}" hint-placeholder-val="{{ false }}"><div role="dialog" aria-label="Tags on {{d.name}}" data-sc-pop style="position: absolute; ${pos} z-index: 20; pointer-events: auto; width: 320px; box-sizing: border-box; padding: 16px; border-radius: 24px; background: {{t.bg}}; color: {{t.text}}; box-shadow: 0 18px 48px rgba(0,0,0,.2), 0 0 0 1px {{t.line}}; display: flex; flex-direction: column; gap: 12px; text-shadow: none;">
   <div style="display: flex; align-items: center; justify-content: space-between;"><span style="font-size: 14px; font-weight: 600;">{{d.tagCount}}</span><button type="button" onClick="{{d.toggleTags}}" aria-label="Close" style="width: 28px; height: 28px; border: 0; border-radius: 14px; background: {{t.surf}}; color: {{t.text}}; display: flex; align-items: center; justify-content: center; cursor: pointer;">${svg(I.close, 10, 2.4)}</button></div>
   <div style="display: flex; flex-wrap: wrap; gap: 6px;"><sc-for list="{{d.allTags}}" as="g" hint-placeholder-count="6"><button type="button" onClick="{{g.pick}}" style="height: 28px; padding: 0 11px; display: inline-flex; align-items: center; border: 0; border-radius: 999px; background: {{g.bg}}; color: {{g.fg}}; font: inherit; font-size: 12px; font-weight: 600; white-space: nowrap; cursor: pointer;">{{g.label}}</button></sc-for></div>
   <a href="{{d.settingsHref}}" style="align-self: flex-start; font-size: 13px; font-weight: 600; color: {{t.muted}};">Edit tags</a>
@@ -486,7 +498,7 @@ const LIFT_JS = `const liftTile = 'border-radius:20px!important;box-shadow:0 30p
   const liftRow = 'background:' + t.bg + '!important;border-radius:12px!important;border-bottom-color:transparent!important;box-shadow:0 0 0 12px ' + t.bg + ',0 0 0 13px ' + t.line + ',0 24px 48px -12px rgba(0,0,0,' + (this.props.dark ? '.8' : '.25') + ')!important;';
   const dragKey = this.dragKey || (this.dragKey = 'b' + Math.random().toString(36).slice(2, 8)), dragList = el => this.dragList(el);`;
 // A deck's folder menu: into a folder, out of one, or into a new one.
-const moveMenu = pos => `<sc-if value="{{d.moveOpen}}" hint-placeholder-val="{{ false }}"><div role="dialog" aria-label="Move {{d.name}}" style="position: absolute; ${pos} z-index: 25; width: 240px; ${popBox} text-shadow: none;"><span style="padding: 8px 12px 4px; font-size: 12px; font-weight: 600; color: {{t.muted}};">Move to</span><sc-for list="{{d.moveTo}}" as="o" hint-placeholder-count="3"><button type="button" onClick="{{o.pick}}" aria-pressed="{{o.pressed}}" style="height: 38px; flex-shrink: 0; padding: 0 12px; display: flex; align-items: center; gap: 10px; border: 0; border-radius: 12px; background: transparent; color: {{t.text}}; font: inherit; font-size: 14px; text-align: left; cursor: pointer;"><span style="display: flex; color: {{t.muted}};">${svg(I.folder, 16, 1.8)}</span><span style="flex-grow: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{o.label}}</span><sc-if value="{{o.on}}" hint-placeholder-val="{{ false }}"><span style="display: flex;">${svg(I.check, 14, 2.4)}</span></sc-if></button></sc-for><button type="button" onClick="{{d.newFolder}}" style="height: 38px; flex-shrink: 0; padding: 0 12px; display: flex; align-items: center; gap: 10px; border: 0; border-radius: 12px; background: {{t.surf}}; color: {{t.text}}; font: inherit; font-size: 14px; font-weight: 600; text-align: left; cursor: pointer;">${svg(I.plus, 13, 2.4)}New folder</button></div></sc-if>`;
+const moveMenu = pos => `<sc-if value="{{d.moveOpen}}" hint-placeholder-val="{{ false }}"><div role="dialog" aria-label="Move {{d.name}}" data-sc-pop style="position: absolute; ${pos} z-index: 25; width: 240px; ${popBox} text-shadow: none;"><span style="padding: 8px 12px 4px; font-size: 12px; font-weight: 600; color: {{t.muted}};">Move to</span><sc-for list="{{d.moveTo}}" as="o" hint-placeholder-count="3"><button type="button" onClick="{{o.pick}}" aria-pressed="{{o.pressed}}" style="height: 38px; flex-shrink: 0; padding: 0 12px; display: flex; align-items: center; gap: 10px; border: 0; border-radius: 12px; background: transparent; color: {{t.text}}; font: inherit; font-size: 14px; text-align: left; cursor: pointer;"><span style="display: flex; color: {{t.muted}};">${svg(I.folder, 16, 1.8)}</span><span style="flex-grow: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{o.label}}</span><sc-if value="{{o.on}}" hint-placeholder-val="{{ false }}"><span style="display: flex;">${svg(I.check, 14, 2.4)}</span></sc-if></button></sc-for><button type="button" onClick="{{d.newFolder}}" style="height: 38px; flex-shrink: 0; padding: 0 12px; display: flex; align-items: center; gap: 10px; border: 0; border-radius: 12px; background: {{t.surf}}; color: {{t.text}}; font: inherit; font-size: 14px; font-weight: 600; text-align: left; cursor: pointer;">${svg(I.plus, 13, 2.4)}New folder</button></div></sc-if>`;
 const moveBtn = (bg, size = 32) => `<button type="button" onClick="{{d.toggleMove}}" aria-label="Move {{d.name}} to a folder" aria-expanded="{{d.moveExpanded}}" style="width: ${size}px; height: ${size}px; flex-shrink: 0; border: 0; border-radius: ${size / 2}px; ${bg} display: flex; align-items: center; justify-content: center; cursor: pointer; pointer-events: auto;">${svg(I.more, 16, 2)}</button>`;
 // All cards: how hard each one is, as a colored dot and word.
 const levelTag = `<span style="display: inline-flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 600; color: {{r.levelFg}};"><span style="width: 8px; height: 8px; border-radius: 4px; background: {{r.levelFg}};"></span>{{r.level}}</span>`;
@@ -829,7 +841,7 @@ const COVER_LOGIC = `
     perDay: String(perDay), goal: goal + '%', perDayIn: typed('perDay', perDay, n => up({ perDay: n }, true), 'New cards a day'),
     lessDay: () => up({ perDay: Math.max(0, perDay - 5) }), moreDay: () => up({ perDay: Math.min(999, perDay + 5) }),
     lessGoal: () => up({ goal: Math.max(70, goal - 1) }), moreGoal: () => up({ goal: Math.min(97, goal + 1) }),
-    pause: { checked: paused ? 'true' : 'false', track: paused ? t.inv : t.surf2, knob: paused ? 'translateX(20px)' : 'translateX(0)', knobColor: paused ? t.invText : t.bg },
+    pause: sw(paused),
     togglePause: () => up({ paused: !paused }),
     fsrsOn, fsrsSw: sw(fsrsOn, fsrsAllowed), toggleFsrs: () => fsrsAllowed && up({ fsrs: !fsrsOn }),
     fsrsHint: !fsrsAllowed ? 'Piles only sort cards, so there’s nothing to schedule.' : fsrsOn ? 'Picks the best day to bring each card back.' : 'Off: cards don’t get a next review date.',
@@ -854,7 +866,9 @@ const COVER_LOGIC = `
     studyLabel: 'Flashcards', studyCount: String(dk.due || dk.fresh || 0), hasStudyCount: !!(dk.due || dk.fresh), noStudyCount: !(dk.due || dk.fresh),
     studyHref: dk.studyHref, newCardHref: dk.newCardHref
   };`;
-// Deck settings: shared by the web side panel and the iPhone sheet.
+// Deck settings: shared by the web side panel and the iPhone sheet. The web panel sits over the page, not inside its
+// scrolling <main>, so it stays in place however far the page is scrolled. Both come last on their page: the app
+// matches a redrawn page's parts by position, so closing takes the panel's own parts away and they can slide out.
 const smallBtn = (label, handler, icon = '') => `<button type="button" onClick="{{${handler}}}" style="height: 34px; padding: 0 12px; display: inline-flex; align-items: center; gap: 6px; border: 0; border-radius: 999px; background: {{t.surf}}; color: {{t.text}}; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer;">${icon ? svg(I[icon], 14, 2) : ''}${label}</button>`;
 // The background tiles (BG_PICK_JS): in Deck settings, and in the settings of flashcards and Learn mode.
 const bgChooser = (phone, title = 'Background') => `<div style="display: flex; flex-direction: column; gap: 8px;"><span style="font-size: 13px; font-weight: 600;">${title}</span><span style="margin-top: -4px; font-size: 12px; color: {{t.muted}};">Behind Learn mode, flashcards, and Live</span>
@@ -886,7 +900,7 @@ const deckSettingsBody = phone => `<div style="display: flex; align-items: cente
         </div>
         <label style="display: flex; flex-direction: column; gap: 8px;"><span style="font-size: 13px; font-weight: 600;">Name</span><input type="text" value="{{deckName}}" onChange="{{setDeckName}}" style="height: 46px; box-sizing: border-box; padding: 0 16px; border: 0; outline: 0; border-radius: 16px; background: {{t.surf}}; color: {{t.text}}; font: inherit; font-size: 15px;"></label>
         <div style="display: flex; flex-direction: column; gap: 8px;"><span style="font-size: 13px; font-weight: 600;">Tags</span>${TAG_EDIT('deckTags', 'deckPick', phone)}</div>
-        <div style="display: flex; align-items: center; gap: 12px; min-height: 44px;"><span style="flex-grow: 1; display: flex; flex-direction: column; gap: 2px;"><span style="font-size: 14px; font-weight: 600;">Pause this deck</span><span style="font-size: 12px; line-height: 1.35; color: {{t.muted}};">No reminders, and it leaves Today until you turn it back on.</span></span><button type="button" role="switch" aria-checked="{{pause.checked}}" aria-label="Pause this deck" onClick="{{togglePause}}" style="width: 48px; height: 28px; flex-shrink: 0; padding: 3px; box-sizing: border-box; border: 0; border-radius: 14px; background: {{pause.track}}; cursor: pointer; transition: background .2s;"><span style="display: block; width: 22px; height: 22px; border-radius: 11px; background: {{pause.knobColor}}; transform: {{pause.knob}}; transition: transform .2s cubic-bezier(.4,0,.2,1);"></span></button></div>
+        <div style="display: flex; align-items: center; gap: 12px; min-height: 44px;"><span style="flex-grow: 1; display: flex; flex-direction: column; gap: 2px;"><span style="font-size: 14px; font-weight: 600;">Pause this deck</span><span style="font-size: 12px; line-height: 1.35; color: {{t.muted}};">No reminders, and it leaves Today until you turn it back on.</span></span>${SWITCH('pause', 'togglePause', 'Pause this deck')}</div>
         <div style="display: flex; gap: 8px; margin-top: auto;"><button type="button" onClick="{{exportDeck}}" style="flex-grow: 1; height: 44px; border: 0; border-radius: 999px; background: {{t.surf}}; color: {{t.text}}; font: inherit; font-size: 14px; font-weight: 600; cursor: pointer;">Export cards</button><button type="button" onClick="{{deleteDeck}}" style="flex-grow: 1; height: 44px; border: 0; border-radius: 999px; background: {{t.againTint}}; color: {{t.again}}; font: inherit; font-size: 14px; font-weight: 600; cursor: pointer;">Delete deck</button></div>
       </div></sc-if>
       <sc-if value="{{dsStudy}}" hint-placeholder-val="{{ false }}"><div style="display: flex; flex-direction: column; gap: 16px;">
@@ -943,14 +957,14 @@ const webDeck = webRoot(`${sidebar('Library')}
       </a>
     </sc-for>
   </div>
-  <sc-if value="{{settingsOpen}}" hint-placeholder-val="{{ false }}">
-    <div style="position: absolute; inset: 0; background: {{t.dim}};"></div>
-    <aside role="dialog" aria-label="Deck settings" style="position: absolute; top: 12px; right: 12px; bottom: 12px; width: 460px; box-sizing: border-box; padding: 24px; border-radius: 20px; background: {{t.bg}}; box-shadow: 0 24px 64px rgba(0,0,0,.24); display: flex; flex-direction: column; gap: 16px; overflow: hidden;">
-      ${deckSettingsBody(false)}
-    </aside>
-  </sc-if>
 </main>
-${moveTray('tray', false)}`, true);
+${moveTray('tray', false)}
+<sc-if value="{{settingsOpen}}" hint-placeholder-val="{{ false }}">
+  <div class="sc-scrim" style="position: absolute; top: 0; right: 0; bottom: 0; left: 240px; background: {{t.dim}};"></div>
+  <aside role="dialog" aria-label="Deck settings" class="sc-panel" style="position: absolute; top: 12px; right: 12px; bottom: 12px; width: 460px; box-sizing: border-box; padding: 24px; border-radius: 20px; background: {{t.bg}}; box-shadow: 0 24px 64px rgba(0,0,0,.24); display: flex; flex-direction: column; gap: 16px; overflow: hidden;">
+    ${deckSettingsBody(false)}
+  </aside>
+</sc-if>`, true);
 // Dragging a card (drag.mjs, both deck pages): to another spot in the deck, or onto another deck in the Move to tray.
 // The canvas shows the tray open (prop trayOpen), with a card over its first deck.
 const CARD_DRAG_JS = phone => `const others = db.decks().filter(d => d.id !== dk.id), trayOpen = !!this.props.trayOpen;
@@ -1166,8 +1180,8 @@ const EDITOR_CLOSE = `<a href="{{backHref}}" aria-label="Close" style="width: 36
 const EDITOR_ACTIONS = `<div style="display: flex; gap: 10px;"><sc-if value="{{canDelete}}" hint-placeholder-val="{{ false }}"><button type="button" onClick="{{remove}}" style="height: 40px; padding: 0 20px; border: 0; border-radius: 999px; background: {{t.againTint}}; color: {{t.again}}; font: inherit; font-size: 14px; font-weight: 600; cursor: pointer;">Delete</button></sc-if><a href="{{backHref}}" style="flex-grow: 1; height: 40px; border-radius: 999px; background: {{t.surf}}; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 600;">Cancel</a><a href="{{backHref}}" onClick="{{save}}" data-key="mod+enter" style="flex-grow: 2; height: 40px; border-radius: 999px; background: {{t.inv}}; color: {{t.invText}}; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 600;">Save card <span style="font-family: ${MONO}; font-size: 12px; opacity: .6; margin-left: 8px;">⌘↵</span></a></div>`;
 const webEditor = `<div style="position: relative; width: 1440px; height: 900px; overflow: hidden; font-family: ${FONT}; color: {{t.text}};">
   <dc-import name="WebDeck" dark="{{dark}}" dim="{{dim}}" deck-id="{{deckId}}" hint-size="1440px,900px"></dc-import>
-  <div style="position: absolute; inset: 0; background: {{t.dim}};"></div>
-  <aside style="position: absolute; top: 12px; right: 12px; bottom: 12px; width: 520px; box-sizing: border-box; padding: 28px; border-radius: 20px; background: {{t.bg}}; display: flex; flex-direction: column; gap: 20px; box-shadow: 0 24px 64px rgba(0,0,0,.24);">
+  <div class="sc-scrim" style="position: absolute; inset: 0; background: {{t.dim}};"></div>
+  <aside class="sc-panel" style="position: absolute; top: 12px; right: 12px; bottom: 12px; width: 520px; box-sizing: border-box; padding: 28px; border-radius: 20px; background: {{t.bg}}; display: flex; flex-direction: column; gap: 20px; box-shadow: 0 24px 64px rgba(0,0,0,.24);">
     <div style="display: flex; align-items: center; justify-content: space-between;"><div style="font-size: 22px; font-weight: 600; letter-spacing: -.02em;">{{title}}</div>${EDITOR_CLOSE}</div>
     ${TYPE_SEG}
     ${WEB_FMT}
@@ -2208,7 +2222,7 @@ const webConnect = webRoot(`${sidebar('Connect AI')}
       <sc-for list="{{perms}}" as="x" hint-placeholder-count="6">
         <div style="display: flex; align-items: center; gap: 12px; min-height: 60px; border-top: 1px solid {{t.line}};">
           <span style="display: flex; flex-direction: column; gap: 2px; flex-grow: 1;"><span style="font-size: 14px; font-weight: 500;">{{x.label}}</span><span style="font-size: 12px; color: {{t.muted}};">{{x.sub}}</span></span>
-          <button type="button" role="switch" aria-checked="{{x.checked}}" aria-label="{{x.label}}" onClick="{{x.toggle}}" style="width: 48px; height: 28px; padding: 3px; box-sizing: border-box; border: 0; border-radius: 14px; background: {{x.track}}; cursor: pointer; transition: background .2s;"><span style="display: block; width: 22px; height: 22px; border-radius: 11px; background: {{x.knobColor}}; transform: {{x.knob}}; transition: transform .2s cubic-bezier(.4,0,.2,1);"></span></button>
+          ${SWITCH('x', 'x.toggle', '{{x.label}}')}
         </div>
       </sc-for>
     </section>
@@ -2227,7 +2241,8 @@ renderVals() {
     { id: 'check', label: 'Let me check AI cards first', sub: 'They wait in their deck until you keep them' },
     { id: 'del', label: 'Delete cards', sub: 'Removes cards for good' }
   ];
-  const perms = defs.map(d => { const on = ai.perms[d.id]; return { ...d, checked: on ? 'true' : 'false', track: on ? t.inv : t.surf2, knobColor: on ? t.invText : t.bg, knob: on ? 'translateX(20px)' : 'translateX(0)', toggle: () => db.act.setPerm(d.id, !on) }; });
+  ${SW_JS}
+  const perms = defs.map(d => { const on = ai.perms[d.id]; return { ...d, ...sw(on), toggle: () => db.act.setPerm(d.id, !on) }; });
   ${PROVIDERS('ai.clients')}
   // Online, a link that got out can be swapped for a new one; AI apps with the old link lose access.
   const renew = () => { if (db.mock) return this.setState({ renewed: true }); if (!confirm('Make a new link? AI apps using the old one will stop working until you give them the new link.')) return; db.act.newLink().then(() => this.setState({ renewed: true, copied: false })); };
@@ -2411,7 +2426,7 @@ const motion = () => `<div style="width: 1440px; height: ${MOTION_H}px; box-sizi
     ${tile('Light ↔ dark', 'cross-fade · 250 ms', `<div class="m-theme" style="width: 200px; height: 130px; border-radius: 24px; display: flex; flex-direction: column; justify-content: space-between; padding: 18px; box-sizing: border-box; border: 1px solid #EBEBEB;"><span style="font-size: 13px; font-weight: 600;">64 cards due</span><span class="m-theme-btn" style="height: 36px; border-radius: 999px; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 600;">Study</span></div>`)}
     ${tile('Page opens', 'rises 14 px · 500 ms · each part 60 ms later', `<div style="width: 220px; display: flex; flex-direction: column; gap: 10px;"><div class="m-rise1" style="width: 120px; height: 20px; border-radius: 6px; background: #000000;"></div><div class="m-rise2" style="height: 64px; border-radius: 16px; background: #F4F4F4;"></div><div class="m-rise3" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;"><div style="height: 40px; border-radius: 12px; background: #F4F4F4;"></div><div style="height: 40px; border-radius: 12px; background: #F4F4F4;"></div></div></div>`)}
     ${tile('Empty state', 'floats and fans · 6 s · a shine every 5 s', EMPTY_ART(150, 'plus'))}
-    ${tile('Deck card hover', 'lifts 4 px · 250 ms · shadow grows', meshCard('hero', 'width: 200px; height: 132px; border-radius: 20px;', 'height: 100%; box-sizing: border-box; padding: 16px; display: flex; align-items: flex-end; font-size: 15px; font-weight: 600;', 'Cell Biology', 'div', ' class="m-lift"'))}
+    ${tile('Deck card hover', 'lifts 4 px · 1 s · eases out · shadow grows', meshCard('hero', 'width: 200px; height: 132px; border-radius: 20px;', 'height: 100%; box-sizing: border-box; padding: 16px; display: flex; align-items: flex-end; font-size: 15px; font-weight: 600;', 'Cell Biology', 'div', ' class="m-lift"'))}
     ${tile('Today card', 'colors drift · 16 s · back and forth', meshCard('hero', 'width: 240px; height: 132px; border-radius: 20px;', 'height: 100%; box-sizing: border-box; padding: 18px; display: flex; flex-direction: column; justify-content: flex-end; gap: 4px;', '<span style="font-size: 12px; opacity: .8;">Tuesday</span><span style="font-size: 26px; font-weight: 500; letter-spacing: -.03em; line-height: 1;">64 cards due</span>', 'div', ' class="sc-alive"'))}
   </div>
 </div>`;
@@ -2441,8 +2456,8 @@ const motionCss = `.m-flip{animation:flip 3.2s cubic-bezier(.4,0,.2,1) infinite}
 @keyframes themebtn{0%,40%{background:#000000;color:#FFFFFF}50%,90%{background:#FFFFFF;color:#000000}100%{background:#000000;color:#FFFFFF}}
 .m-rise1,.m-rise2,.m-rise3{animation:rise 2.4s cubic-bezier(.2,.8,.2,1) infinite}.m-rise2{animation-delay:.06s}.m-rise3{animation-delay:.12s}
 @keyframes rise{0%{opacity:0;transform:translateY(14px)}21%,85%{opacity:1;transform:none}100%{opacity:0;transform:none}}
-.m-lift{animation:lift 2.4s cubic-bezier(.2,.8,.2,1) infinite}
-@keyframes lift{0%,20%,100%{transform:none;box-shadow:0 8px 20px -14px rgba(0,0,0,.3)}35%,70%{transform:translateY(-4px);box-shadow:0 24px 48px -24px rgba(0,0,0,.45)}}
+.m-lift{animation:lift 5s ease-out infinite}
+@keyframes lift{0%,10%,80%,100%{transform:none;box-shadow:0 8px 20px -14px rgba(0,0,0,.3)}30%,60%{transform:translateY(-4px);box-shadow:0 24px 48px -24px rgba(0,0,0,.45)}}
 @media (prefers-reduced-motion:reduce){[class^="m-"]{animation:none!important}}`;
 
 
@@ -2675,13 +2690,13 @@ const phoneDeck = phone(`<div style="height: 100%; overflow-y: auto; scrollbar-w
       </sc-for>
     </div>
   </div>
-</div></div>`, 'Library', `<sc-if value="{{settingsOpen}}" hint-placeholder-val="{{ false }}">
-  <div style="position: absolute; inset: 0; background: {{t.dim}};"></div>
-  <div role="dialog" aria-label="Deck settings" style="position: absolute; left: 0; right: 0; bottom: 0; top: 56px; box-sizing: border-box; padding: 16px 20px 34px; border-radius: 32px 32px 0 0; background: {{t.bg}}; display: flex; flex-direction: column; gap: 14px;">
+</div></div>`, 'Library', `${moveTray('tray', true)}
+<sc-if value="{{settingsOpen}}" hint-placeholder-val="{{ false }}">
+  <div class="sc-scrim" style="position: absolute; inset: 0; background: {{t.dim}};"></div>
+  <div role="dialog" aria-label="Deck settings" class="sc-sheet" style="position: absolute; left: 0; right: 0; bottom: 0; top: 56px; box-sizing: border-box; padding: 16px 20px 34px; border-radius: 32px 32px 0 0; background: {{t.bg}}; display: flex; flex-direction: column; gap: 14px;">
     ${deckSettingsBody(true)}
   </div>
-</sc-if>
-${moveTray('tray', true)}`);
+</sc-if>`);
 const phoneDeckLogic = `
 constructor(props) { super(props); this.state = {}; }
 renderVals() { ${T}${DB_JS}${COVER_LOGIC}
@@ -2698,8 +2713,8 @@ renderVals() { ${T}${DB_JS}${COVER_LOGIC}
 // the app, the phone shows its own.
 const phoneEditor = `<div style="position: relative; width: 390px; height: 844px; overflow: hidden; font-family: ${FONT}; color: {{t.text}};">
   <dc-import name="PhoneDeck" dark="{{dark}}" dim="{{dim}}" deck-id="{{deckId}}" hint-size="390px,844px"></dc-import>
-  <div style="position: absolute; inset: 0; background: {{t.dim}};"></div>
-  <div style="position: absolute; left: 0; right: 0; bottom: 0; top: 56px; box-sizing: border-box; padding: 10px 20px 34px; border-radius: 36px 36px 0 0; background: {{t.bg}}; display: flex; flex-direction: column; gap: 16px;">
+  <div class="sc-scrim" style="position: absolute; inset: 0; background: {{t.dim}};"></div>
+  <div class="sc-sheet" style="position: absolute; left: 0; right: 0; bottom: 0; top: 56px; box-sizing: border-box; padding: 10px 20px 34px; border-radius: 36px 36px 0 0; background: {{t.bg}}; display: flex; flex-direction: column; gap: 16px;">
     <div style="align-self: center; width: 40px; height: 5px; border-radius: 3px; background: {{t.surf2}};"></div>
     <div style="display: flex; align-items: center; justify-content: space-between;"><a href="{{phoneBack}}" style="font-size: 16px; color: {{t.muted}}; min-height: 44px; display: flex; align-items: center;">Cancel</a><span style="font-size: 17px; font-weight: 600;">{{title}}</span><a href="{{phoneBack}}" onClick="{{save}}" style="font-size: 16px; font-weight: 600; min-height: 44px; display: flex; align-items: center;">Save</a></div>
     ${TYPE_SEG}

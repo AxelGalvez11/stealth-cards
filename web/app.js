@@ -225,6 +225,7 @@ function paint() {
   document.body.style.background = props.dark ? (props.dim ? '#1E1E20' : '#000000') : '#FFFFFF';
   const tpl = document.createElement('template');
   tpl.innerHTML = renderScreen(s, current.key, props).replace(/href="([A-Za-z0-9]+)\.dc\.html"/g, (_, n) => 'href="' + linkFor(n) + '"');
+  const was = tpl.content.querySelector('.sc-panel, .sc-sheet') ? [] : panels();
   morphChildren(app, tpl.content);
   const fns = refs, done = drawn;
   app.querySelectorAll('[data-ref]').forEach(el => fns[el.getAttribute('data-ref')]?.(el));
@@ -232,7 +233,55 @@ function paint() {
     if (mounted.has(c)) c.componentDidUpdate?.();
     else { mounted.add(c); c.componentDidMount?.(); }
   }
+  slideOut(was);
+  placePops();
 }
+// Side panels and sheets (deck settings, the card editor) slide in as they're drawn (sc-panel and sc-sheet in the
+// boards' motion CSS), and slide back out as they close: the one that was open stays on top for a moment, where it
+// was, and leaves (the owner: "add a move in animation for the right sidebar"). Its dimmed backdrop fades with it.
+const panels = () => [...app.querySelectorAll('.sc-panel, .sc-sheet, .sc-scrim')].map(el => ({ el, r: el.getBoundingClientRect() }));
+function slideOut(was) {
+  // Opened again right away: the new one slides in without the old one still leaving on top of it.
+  if (app.querySelector('.sc-panel, .sc-sheet')) return document.querySelectorAll('body > .sc-gone').forEach(g => g.remove());
+  if (!was.length || matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  for (const { el, r } of was) {
+    if (el.isConnected || !r.width) continue;
+    el.inert = true;
+    el.classList.add('sc-gone');
+    Object.assign(el.style, { position: 'fixed', inset: 'auto', left: r.left + 'px', top: r.top + 'px', width: r.width + 'px', height: r.height + 'px', margin: '0', zIndex: '1000', pointerEvents: 'none' });
+    document.body.appendChild(el);
+    el.addEventListener('animationend', e => { if (e.target === el) el.remove(); });
+    setTimeout(() => el.remove(), 600);
+  }
+}
+// Menus and popovers (data-sc-pop, beside the button that opens them) never run off the bottom of the window or of what
+// scrolls them (the owner: "drop down menus need to not clip into bottom of screen"): one that doesn't fit below its
+// button opens above it. With room on neither side, its list gets shorter to fit the roomier side, and one that can't
+// get shorter moves up just enough; on a phone it also moves in from the sides. Redrawing a page resets their style,
+// so this runs after every paint; one that opened upward stays that way while it's open, so it doesn't jump as you type.
+const popBtn = el => el.parentElement.querySelector('[aria-expanded="true"]');
+function placePops() {
+  for (const el of app.querySelectorAll('[data-sc-pop]')) {
+    el.style.translate = el.style.maxHeight = '';
+    const r = el.getBoundingClientRect(), a = (popBtn(el) || el.parentElement).getBoundingClientRect();
+    let top = 0, bottom = innerHeight, left = 0, right = innerWidth;
+    for (let p = el.parentElement; p && p !== document.body; p = p.parentElement) {
+      const cs = getComputedStyle(p);
+      if (cs.overflowX === 'visible' && cs.overflowY === 'visible') continue;
+      const q = p.getBoundingClientRect(), y = q.top + p.clientTop, x = q.left + p.clientLeft;
+      top = Math.max(top, y); bottom = Math.min(bottom, y + p.clientHeight); left = Math.max(left, x); right = Math.min(right, x + p.clientWidth);
+    }
+    top += 8; bottom -= 8;
+    const gap = Math.min(24, Math.max(4, r.top - a.bottom)), k = el.getAttribute('aria-label'), down = bottom - r.top, upRoom = a.top - gap - top;
+    const up = el.scUp === k || (r.height > down && (r.height <= upRoom || upRoom > down)), room = up ? upRoom : down;
+    let h = r.height;
+    if (h > room && room >= 120) { el.style.maxHeight = room + 'px'; if (el.scrollHeight > el.clientHeight + 1) el.style.maxHeight = ''; else h = el.getBoundingClientRect().height; }
+    if (up) el.scUp = k;
+    const y = Math.max(top, Math.min(up ? a.top - gap - h : r.top, bottom - h)), x = r.left < left ? left + 8 : r.right > right ? Math.max(left + 8, right - 8 - r.width) : r.left;
+    if (y !== r.top || x !== r.left) el.style.translate = Math.round(x - r.left) + 'px ' + Math.round(y - r.top) + 'px';
+  }
+}
+addEventListener('resize', placePops);
 async function go(path, push, replace) {
   const url = new URL(path, location.origin);
   if (url.pathname === '/b' && DESIGN) return screenList(push, url);
@@ -256,10 +305,13 @@ async function go(path, push, replace) {
   // A phone board fills a phone's screen; on a wider window (only /b shows one there) it keeps the phone's size.
   app.className = !s.fill ? 'fixed' : s.w === 390 && !narrow.matches ? 'fixed phone' : '';
   app.style.setProperty('--board-h', s.h + 'px');
+  // Leaving the card editor slides it out over the page it goes back to.
+  const was = panels();
   app.textContent = '';
   const deck = current.props.deckId && !db.signedOut && db.raw().decks.find(d => d.id === current.props.deckId);
   document.title = (r.name === 'Main' ? 'Today' : deck && /^(Web|Phone)Deck/.test(r.name) ? deck.name : s.title.replace(/^(Web|iPhone) · /, '').replace(/ page$/, '').replace(/ · .*$/, '')) + ' · Lucida';
   paint();
+  slideOut(was);
   scrollTo(0, 0);
 }
 
@@ -318,6 +370,20 @@ addEventListener('keydown', e => {
   if (!mod && (key === 'space' || key === 'enter') && t.closest && t.closest('button, a')) return;
   const el = [...app.querySelectorAll('[data-key]')].find(x => x.getAttribute('data-key').toLowerCase() === key && x.getClientRects().length);
   if (el) { e.preventDefault(); el.click(); }
+});
+// A menu or popover closes with Escape (even while you type in its search box) or a press anywhere outside it, the way
+// its own button closes it: that button gets pressed (the owner: "i cannot exit the tag adder").
+addEventListener('pointerdown', e => {
+  for (const el of app.querySelectorAll('[data-sc-pop]')) { const b = popBtn(el); if (b && !el.contains(e.target) && !b.contains(e.target)) b.click(); }
+}, true);
+addEventListener('keydown', e => {
+  if (e.key !== 'Escape' || e.defaultPrevented || e.isComposing) return;
+  for (const el of app.querySelectorAll('[data-sc-pop]')) {
+    const b = popBtn(el), inside = el.contains(document.activeElement);
+    if (!b) continue;
+    e.preventDefault(); b.click();
+    if (inside) b.focus();
+  }
 });
 addEventListener('popstate', () => go(location.pathname + location.search, false));
 dark.addEventListener('change', schedule);

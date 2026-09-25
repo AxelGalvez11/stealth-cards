@@ -71,7 +71,9 @@ export async function createDb({ onChange, go }) {
   let session = null; // the review in progress: { key, deckId, pile, started, graded: [{ cardId, rating, pile, was, logId }] }
   let memo = {};
   const changed = () => { memo = {}; onChange(); };
-  const accept = next => { if (next && next.rev >= S.rev) { S = next; changed(); } };
+  // Changes shown before the server has them (see saveNow): each stays on top of any newer copy until it's saved.
+  let mine = [], line = Promise.resolve();
+  const accept = next => { if (next && next.rev >= S.rev) { S = next; mine.forEach(f => f(S)); changed(); } };
   async function send(type, payload = {}) {
     const r = await fetch('/api/action', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ type, ...payload }) });
     if (r.status === 401) { toSignIn(); throw new Error('Signed out'); }
@@ -82,6 +84,19 @@ export async function createDb({ onChange, go }) {
   }
   // Dragging shows its result right away and saves it after; if saving fails, the app goes back to what's saved.
   const saveMove = (type, payload) => send(type, payload).catch(async () => { try { S = await get('/api/state'); changed(); } catch { /* offline */ } });
+  // Switches, settings, and a deck's options work the same way (the owner: "could you add toggle switch animation"; the
+  // switch looked dead while the live site took up to a second to answer, then jumped): `local` makes the change here
+  // at once, and the saves go out one at a time, in order. If one fails, the app goes back to what's saved; offline, it
+  // takes the server's copy at the next check.
+  const saveNow = (type, payload, local) => {
+    mine.push(local); local(S); changed();
+    const out = line.then(() => send(type, payload));
+    line = out.catch(() => {});
+    return out.finally(() => { mine = mine.filter(f => f !== local); }).catch(async () => {
+      try { S = await get('/api/state'); mine.forEach(f => f(S)); changed(); } catch { S.rev = 0; }
+    });
+  };
+  const patchDeck = (id, patch) => s => { const d = s.decks.find(x => x.id === id); if (d) Object.assign(d, patch, patch.cover ? { cover: { ...d.cover, ...patch.cover } } : {}, patch.bg ? { bg: { kind: 'deck', image: null, ...d.bg, ...patch.bg } } : {}); };
   // Cards your AI adds over MCP show up without a reload.
   setInterval(async () => {
     if (document.hidden) return;
@@ -382,7 +397,7 @@ export async function createDb({ onChange, go }) {
     // While you type a name it saves a moment after you stop.
     updateDeck: (id, patch, soft) => {
       // A direct change wins over typing that hasn't saved yet (type 45, then press + right away).
-      if (!soft) { if (typing[id]) for (const k of Object.keys(patch)) delete typing[id][k]; return send('deck.update', { id, patch }); }
+      if (!soft) { if (typing[id]) for (const k of Object.keys(patch)) delete typing[id][k]; return saveNow('deck.update', { id, patch }, patchDeck(id, patch)); }
       const d = deckById(id); if (d) Object.assign(d, patch); changed();
       typing[id] = { ...(typing[id] || {}), ...patch };
       clearTimeout(typingTimer);
@@ -400,7 +415,7 @@ export async function createDb({ onChange, go }) {
     reorderCard: (id, before) => { const c = S.cards.find(x => x.id === id), d = c && deckById(c.deckId); if (!d) return; cardBefore(d, S.cards, c, before || null); changed(); return saveMove('card.move', { id, before: before || null }); },
     moveCard: (id, deckId) => { const c = S.cards.find(x => x.id === id); if (!c || !deckById(deckId) || c.deckId === deckId) return; cardToDeck(S, c, deckId); changed(); return saveMove('card.move', { id, deckId }); },
     // What Learn mode, flashcards, and Live show behind a deck; a photo is uploaded here.
-    setBg: (id, kind) => send('deck.update', { id, patch: { bg: { kind } } }),
+    setBg: (id, kind) => act.updateDeck(id, { bg: { kind } }),
     pickBg: async id => { const url = await act.pickFile('image'); if (url) await send('deck.update', { id, patch: { bg: { kind: 'photo', image: url } } }); },
     exportDeck: id => {
       const d = deckById(id), q = x => '"' + String(x ?? '').replace(/"/g, '""') + '"';
@@ -424,10 +439,10 @@ export async function createDb({ onChange, go }) {
       entry.logId = (await send('review.grade', { cardId, pile: name })).logId;
       if (!queue(session.deckId, session.pile).length) go('/review/done');
     },
-    addPile: (id, name) => { const d = deckById(id); if (d) send('deck.update', { id, patch: { piles: [...(d.piles || []), { name }] } }); },
+    addPile: (id, name) => { const d = deckById(id); if (d) act.updateDeck(id, { piles: [...(d.piles || []), { name }] }); },
     undo: async () => { const e = session && session.graded[session.graded.length - 1]; if (!e || !e.logId) return; session.graded.pop(); await send('review.undo', { logId: e.logId }); },
-    setSettings: patch => send('settings.update', { patch }),
-    setPerm: (id, on) => send('ai.perm', { id, on }),
+    setSettings: patch => saveNow('settings.update', { patch }, s => { Object.assign(s.settings, patch); }),
+    setPerm: (id, on) => saveNow('ai.perm', { id, on }, s => { if (id in s.ai.perms) s.ai.perms[id] = !!on; }),
     copy: text => navigator.clipboard && navigator.clipboard.writeText(text),
     pickFile: async kind => { const f = await choose(kind === 'audio' ? 'audio/*' : 'image/*'); return f ? upload(f) : null; },
     pickText: async () => { const f = await choose('.csv,.tsv,.txt,text/plain,text/csv'); return f ? f.text() : null; },
