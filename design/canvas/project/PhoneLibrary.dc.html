@@ -14,10 +14,10 @@
 body{margin:0;font-family:Geist, -apple-system, system-ui, sans-serif}
 a{color:inherit;text-decoration:none}a:hover{opacity:.8}
 @keyframes scRise{from{opacity:0;transform:translateY(14px)}}main>*{animation:scRise .5s cubic-bezier(.2,.8,.2,1) backwards}main>*:nth-child(2){animation-delay:0.06s}main>*:nth-child(3){animation-delay:0.12s}main>*:nth-child(4){animation-delay:0.18s}main>*:nth-child(5){animation-delay:0.24s}main>*:nth-child(n+6){animation-delay:.3s}button,.sc-press{transition:transform .1s ease}button:active,.sc-press:active{transform:scale(.96)}.sc-lift{transition:transform .25s cubic-bezier(.2,.8,.2,1),box-shadow .25s cubic-bezier(.2,.8,.2,1)}.sc-lift:hover{transform:translateY(-4px);box-shadow:0 24px 48px -24px rgba(0,0,0,.45)}@keyframes scFloat{50%{transform:translateY(-6px)}}@keyframes scSwayA{50%{transform:rotate(-13deg) translateX(-3px)}}@keyframes scSwayB{50%{transform:rotate(10deg) translateX(3px)}}@keyframes scGlow{50%{opacity:.55}}@keyframes scSheen{0%,58%{transform:translateX(-160%) skewX(-18deg)}86%,100%{transform:translateX(260%) skewX(-18deg)}}.sc-float{animation:scFloat 6s ease-in-out infinite}.sc-sway-a{animation:scSwayA 6s ease-in-out infinite}.sc-sway-b{animation:scSwayB 6s ease-in-out infinite}.sc-glow{animation:scGlow 6s ease-in-out infinite}.sc-sheen{position:absolute;top:0;bottom:0;left:0;width:45%;background:linear-gradient(90deg,transparent,rgba(255,255,255,.4),transparent);animation:scSheen 5s cubic-bezier(.4,0,.2,1) infinite;pointer-events:none}@keyframes scDrift{from{transform:scale(1.14) translate(-3%,-2%)}to{transform:scale(1.14) translate(3%,2%)}}.sc-alive>svg:first-of-type{animation:scDrift 16s ease-in-out infinite alternate}@keyframes scDraw{from{stroke-dashoffset:1.02}}.sc-draw{stroke-dasharray:1 2;animation:scDraw .9s cubic-bezier(.2,.8,.2,1) backwards}@keyframes scKnob{from{opacity:0;transform:scale(.3)}}.sc-knob{transform-box:fill-box;transform-origin:center;animation:scKnob .35s .75s cubic-bezier(.34,1.56,.64,1) backwards}@keyframes scGrow{from{transform:scaleY(0)}}.sc-grow{transform-origin:bottom;animation:scGrow .6s cubic-bezier(.2,.8,.2,1) backwards}:nth-child(2)>.sc-grow{animation-delay:0.04s}:nth-child(3)>.sc-grow{animation-delay:0.08s}:nth-child(4)>.sc-grow{animation-delay:0.12s}:nth-child(5)>.sc-grow{animation-delay:0.16s}:nth-child(6)>.sc-grow{animation-delay:0.20s}:nth-child(7)>.sc-grow{animation-delay:0.24s}:nth-child(8)>.sc-grow{animation-delay:0.28s}:nth-child(9)>.sc-grow{animation-delay:0.32s}:nth-child(10)>.sc-grow{animation-delay:0.36s}:nth-child(11)>.sc-grow{animation-delay:0.40s}:nth-child(12)>.sc-grow{animation-delay:0.44s}:nth-child(13)>.sc-grow{animation-delay:0.48s}:nth-child(14)>.sc-grow{animation-delay:0.52s}@media (prefers-reduced-motion:reduce){main>*,.sc-float,.sc-sway-a,.sc-sway-b,.sc-glow,.sc-alive>svg,.sc-draw,.sc-knob,.sc-grow{animation:none!important}.sc-sheen{display:none}button:active,.sc-press:active,.sc-lift:hover{transform:none}}
-
+.sc-drag{-webkit-touch-callout:none;-webkit-user-select:none;user-select:none}.sc-hit:focus-visible{outline:2px solid currentColor;outline-offset:-2px}.sc-row .sc-hit::before{content:"";position:absolute;inset:4px -12px;border-radius:14px;background:currentColor;opacity:0;transition:opacity .15s}.sc-row:hover .sc-hit::before{opacity:.05}@keyframes scTray{from{opacity:0;transform:translateY(18px) scale(.98)}}.sc-tray{animation:scTray .3s cubic-bezier(.2,.8,.2,1)}@keyframes scPop{from{opacity:0;transform:translateY(12px) scale(.97)}}.sc-pop{animation:scPop .26s cubic-bezier(.2,.8,.2,1)}@keyframes scFade{from{opacity:0}}.sc-fade{animation:scFade .2s ease}@media (prefers-reduced-motion:reduce){.sc-tray,.sc-pop,.sc-fade{animation:none}}
 </style>
 </helmet>
-<div style="position: relative; width: 390px; height: 844px; box-sizing: border-box; font-family: Geist, -apple-system, system-ui, sans-serif; background: {{t.bg}}; color: {{t.text}}; overflow: hidden;">
+<div data-sc-board="{{dragKey}}" style="position: relative; width: 390px; height: 844px; box-sizing: border-box; font-family: Geist, -apple-system, system-ui, sans-serif; background: {{t.bg}}; color: {{t.text}}; overflow: hidden;">
 <div style="height: 100%; overflow-x: hidden; overflow-y: auto; scrollbar-width: none;"><div style="padding: 64px 20px 120px; display: flex; flex-direction: column; gap: 14px;">
   <sc-if value="{{atTop}}" hint-placeholder-val="{{ true }}"><div style="display: flex; align-items: center; gap: 8px;">
     <h1 style="margin: 0; flex-grow: 1; min-width: 0; font-size: 32px; font-weight: 700; letter-spacing: -.03em;">Library</h1>
@@ -25,25 +25,24 @@ a{color:inherit;text-decoration:none}a:hover{opacity:.8}
     <a href="PhoneNewDeck.dc.html" aria-label="New deck" class="sc-press" style="width: 40px; height: 40px; flex-shrink: 0; border: 0; border-radius: 20px; background: {{t.inv}}; color: {{t.invText}}; display: flex; align-items: center; justify-content: center; cursor: pointer;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg></a>
   </div></sc-if>
   <sc-if value="{{inFolder}}" hint-placeholder-val="{{ false }}"><div style="display: flex; align-items: center; gap: 8px;">
-    <a href="{{libraryHref}}" aria-label="Library" class="sc-press" style="width: 40px; height: 40px; flex-shrink: 0; border: 0; border-radius: 20px; background: {{t.surf}}; color: {{t.text}}; display: flex; align-items: center; justify-content: center; cursor: pointer;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg></a><span style="flex-grow: 1;"></span>
+    <a href="{{libraryHref}}" aria-label="Library" data-sc-drop="folder:" data-sc-look="chip" draggable="false" class="sc-press" style="width: 40px; height: 40px; flex-shrink: 0; border: 0; border-radius: 20px; background: {{t.surf}}; color: {{t.text}}; display: flex; align-items: center; justify-content: center; cursor: pointer;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg></a><span style="flex-grow: 1;"></span>
     <button type="button" onClick="{{renameFolder}}" class="sc-press" style="height: 40px; padding: 0 16px; border: 0; border-radius: 20px; background: {{t.surf}}; color: {{t.text}}; font: inherit; font-size: 14px; font-weight: 600; cursor: pointer;">Rename</button>
     <a href="PhoneNewDeck.dc.html" aria-label="New deck" class="sc-press" style="width: 40px; height: 40px; flex-shrink: 0; border: 0; border-radius: 20px; background: {{t.inv}}; color: {{t.invText}}; display: flex; align-items: center; justify-content: center; cursor: pointer;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg></a>
   </div>
   <h1 style="margin: 0; font-size: 32px; font-weight: 700; letter-spacing: -.03em; overflow-wrap: anywhere;">{{title}}</h1></sc-if>
   <sc-if value="{{atTop}}" hint-placeholder-val="{{ true }}"><div role="group" aria-label="Show" style="display: flex; gap: 2px; padding: 4px; border-radius: 999px; background: {{t.surf}};"><sc-for list="{{modes}}" as="m" hint-placeholder-count="2"><a href="{{m.href}}" aria-current="{{m.current}}" style="height: 36px; padding: 0 16px; flex: 1 1 0; display: inline-flex; align-items: center; justify-content: center; border-radius: 999px; background: {{m.bg}}; color: {{m.fg}}; box-shadow: {{m.sh}}; font-size: 14px; font-weight: 600; white-space: nowrap;">{{m.label}}</a></sc-for></div></sc-if>
   <label style="display: flex; align-items: center; gap: 10px; height: 44px; padding: 0 16px; box-sizing: border-box; border-radius: 999px; background: {{t.surf}}; color: {{t.muted}};"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg><span style="position: absolute; left: -9999px;">{{searchHint}}</span><input value="{{query}}" onChange="{{setQuery}}" placeholder="{{searchHint}}" style="flex-grow: 1; min-width: 0; border: 0; outline: 0; background: transparent; font: inherit; font-size: 16px; color: {{t.text}};"></label>
-  <sc-if value="{{naming.show}}" hint-placeholder-val="{{ false }}"><div role="group" aria-label="{{naming.title}}" style="display: flex; align-items: center; gap: 8px; box-sizing: border-box; padding: 6px 6px 6px 18px; border-radius: 999px; background: {{t.surf}}; color: {{t.muted}};"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7.5A2.5 2.5 0 0 1 5.5 5h3.6l2 2.2h7.4A2.5 2.5 0 0 1 21 9.7v7.8a2.5 2.5 0 0 1-2.5 2.5h-13A2.5 2.5 0 0 1 3 17.5z"/></svg><input value="{{naming.value}}" onChange="{{naming.set}}" onKeyDown="{{naming.key}}" placeholder="Folder name" aria-label="Folder name" style="flex-grow: 1; min-width: 0; height: 36px; border: 0; outline: 0; background: transparent; font: inherit; font-size: 16px; color: {{t.text}};"><button type="button" onClick="{{naming.cancel}}" style="height: 36px; padding: 0 14px; border: 0; border-radius: 999px; background: transparent; color: {{t.muted}}; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer;">Cancel</button><button type="button" onClick="{{naming.save}}" style="height: 36px; padding: 0 18px; border: 0; border-radius: 999px; background: {{t.inv}}; color: {{t.invText}}; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer;">{{naming.action}}</button></div></sc-if>
   <sc-if value="{{deckView}}" hint-placeholder-val="{{ true }}">
     <sc-if value="{{showFolders}}" hint-placeholder-val="{{ true }}">
       <div style="font-size: 13px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: {{t.muted}}; padding: 6px 4px 0;">Folders</div>
-      <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px;"><sc-for list="{{folders}}" as="f" hint-placeholder-count="2"><a href="{{f.href}}" class="sc-lift" style="position: relative; height: 132px; box-sizing: border-box; padding: 16px; border-radius: 20px; background: {{t.surf}}; display: flex; flex-direction: column; justify-content: space-between; overflow: hidden;">
+      <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px;"><sc-for list="{{folders}}" as="f" hint-placeholder-count="2"><a href="{{f.href}}" data-sc-drop="folder:{{f.id}}" data-sc-look="tile" draggable="false" class="sc-lift" style="position: relative; height: 132px; box-sizing: border-box; padding: 16px; border-radius: 20px; background: {{t.surf}}; display: flex; flex-direction: column; justify-content: space-between; overflow: hidden;">
   <span aria-hidden="true" style="position: relative; height: 49px;"><sc-for list="{{f.swatches}}" as="w" hint-placeholder-count="3"><span style="position: absolute; left: {{w.x}}; top: {{w.y}}; width: 60px; height: 41px; border-radius: 12px; background: {{w.base}}; transform: rotate({{w.r}}); box-shadow: 0 8px 18px -8px rgba(0,0,0,.4), 0 0 0 2px {{t.surf}};"></span></sc-for><sc-if value="{{f.empty}}" hint-placeholder-val="{{ false }}"><span style="position: absolute; left: -2px; top: 2px; color: {{t.muted}};"><svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7.5A2.5 2.5 0 0 1 5.5 5h3.6l2 2.2h7.4A2.5 2.5 0 0 1 21 9.7v7.8a2.5 2.5 0 0 1-2.5 2.5h-13A2.5 2.5 0 0 1 3 17.5z"/></svg></span></sc-if></span>
   <span style="display: flex; flex-direction: column; gap: 3px; min-width: 0;"><span style="font-size: 17px; font-weight: 600; letter-spacing: -.01em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{f.name}}</span><span style="font-size: 13px; color: {{t.muted}};">{{f.line}}</span></span>
 </a></sc-for></div>
       <div style="font-size: 13px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: {{t.muted}}; padding: 10px 4px 0;">Decks</div>
     </sc-if>
-    <div style="display: flex; flex-direction: column;">
-      <sc-for list="{{decks}}" as="d" hint-placeholder-count="4"><div style="position: relative; display: flex; align-items: center; gap: 8px; min-height: 68px; border-bottom: 1px solid {{t.line}};"><a href="{{d.href}}" style="flex-grow: 1; min-width: 0; display: flex; align-items: center; gap: 12px;"><span style="width: 48px; height: 48px; flex-shrink: 0; border-radius: 14px; background: {{d.base}}; overflow: hidden;"><sc-if value="{{d.hasPhoto}}" hint-placeholder-val="{{ false }}"><img src="{{d.photo}}" alt="" style="width: 100%; height: 100%; object-fit: cover;"></sc-if></span><span style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px;"><span style="font-size: 16px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{d.name}}</span><span style="font-size: 13px; color: {{t.muted}}; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{d.line}}</span></span><span style="font-family: 'Geist Mono', ui-monospace, monospace; font-size: 15px; color: {{d.dueColor}};">{{d.dueLabel}}</span></a><button type="button" onClick="{{d.toggleMove}}" aria-label="Move {{d.name}} to a folder" aria-expanded="{{d.moveExpanded}}" style="width: 36px; height: 36px; flex-shrink: 0; border: 0; border-radius: 18px; background: transparent; color: {{t.muted}}; display: flex; align-items: center; justify-content: center; cursor: pointer;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="5" cy="12" r="1.2" fill="currentColor"/><circle cx="12" cy="12" r="1.2" fill="currentColor"/><circle cx="19" cy="12" r="1.2" fill="currentColor"/></svg></button><sc-if value="{{d.moveOpen}}" hint-placeholder-val="{{ false }}"><div role="dialog" aria-label="Move {{d.name}}" style="position: absolute; right: 0; top: 60px; z-index: 25; width: 240px; box-sizing: border-box; padding: 8px; border-radius: 22px; background: {{t.bg}}; color: {{t.text}}; box-shadow: 0 18px 48px rgba(0,0,0,.2), 0 0 0 1px {{t.line}}; display: flex; flex-direction: column; gap: 4px; text-shadow: none;"><span style="padding: 8px 12px 4px; font-size: 12px; font-weight: 600; color: {{t.muted}};">Move to</span><sc-for list="{{d.moveTo}}" as="o" hint-placeholder-count="3"><button type="button" onClick="{{o.pick}}" aria-pressed="{{o.pressed}}" style="height: 38px; flex-shrink: 0; padding: 0 12px; display: flex; align-items: center; gap: 10px; border: 0; border-radius: 12px; background: transparent; color: {{t.text}}; font: inherit; font-size: 14px; text-align: left; cursor: pointer;"><span style="display: flex; color: {{t.muted}};"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7.5A2.5 2.5 0 0 1 5.5 5h3.6l2 2.2h7.4A2.5 2.5 0 0 1 21 9.7v7.8a2.5 2.5 0 0 1-2.5 2.5h-13A2.5 2.5 0 0 1 3 17.5z"/></svg></span><span style="flex-grow: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{o.label}}</span><sc-if value="{{o.on}}" hint-placeholder-val="{{ false }}"><span style="display: flex;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5 9-10"/></svg></span></sc-if></button></sc-for><button type="button" onClick="{{d.newFolder}}" style="height: 38px; flex-shrink: 0; padding: 0 12px; display: flex; align-items: center; gap: 10px; border: 0; border-radius: 12px; background: {{t.surf}}; color: {{t.text}}; font: inherit; font-size: 14px; font-weight: 600; text-align: left; cursor: pointer;"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>New folder</button></div></sc-if></div></sc-for>
+    <div data-sc-list="decks" ref="{{dragList}}" onPointerDown="{{grabDeck}}" style="display: flex; flex-direction: column;">
+      <sc-for list="{{decks}}" as="d" hint-placeholder-count="4"><div data-sc-item="{{d.id}}" class="sc-drag" style="position: relative; display: flex; align-items: center; gap: 8px; min-height: 68px; border-bottom: 1px solid {{t.line}};"><a href="{{d.href}}" draggable="false" style="flex-grow: 1; min-width: 0; display: flex; align-items: center; gap: 12px;"><span style="width: 48px; height: 48px; flex-shrink: 0; border-radius: 14px; background: {{d.base}}; overflow: hidden;"><sc-if value="{{d.hasPhoto}}" hint-placeholder-val="{{ false }}"><img src="{{d.photo}}" alt="" draggable="false" style="width: 100%; height: 100%; object-fit: cover;"></sc-if></span><span style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px;"><span style="font-size: 16px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{d.name}}</span><span style="font-size: 13px; color: {{t.muted}}; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{d.line}}</span></span><span style="font-family: 'Geist Mono', ui-monospace, monospace; font-size: 15px; color: {{d.dueColor}};">{{d.dueLabel}}</span></a><button type="button" onClick="{{d.toggleMove}}" aria-label="Move {{d.name}} to a folder" aria-expanded="{{d.moveExpanded}}" style="width: 36px; height: 36px; flex-shrink: 0; border: 0; border-radius: 18px; background: transparent; color: {{t.muted}}; display: flex; align-items: center; justify-content: center; cursor: pointer; pointer-events: auto;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="5" cy="12" r="1.2" fill="currentColor"/><circle cx="12" cy="12" r="1.2" fill="currentColor"/><circle cx="19" cy="12" r="1.2" fill="currentColor"/></svg></button><sc-if value="{{d.moveOpen}}" hint-placeholder-val="{{ false }}"><div role="dialog" aria-label="Move {{d.name}}" style="position: absolute; right: 0; top: 60px; z-index: 25; width: 240px; box-sizing: border-box; padding: 8px; border-radius: 22px; background: {{t.bg}}; color: {{t.text}}; box-shadow: 0 18px 48px rgba(0,0,0,.2), 0 0 0 1px {{t.line}}; display: flex; flex-direction: column; gap: 4px; text-shadow: none;"><span style="padding: 8px 12px 4px; font-size: 12px; font-weight: 600; color: {{t.muted}};">Move to</span><sc-for list="{{d.moveTo}}" as="o" hint-placeholder-count="3"><button type="button" onClick="{{o.pick}}" aria-pressed="{{o.pressed}}" style="height: 38px; flex-shrink: 0; padding: 0 12px; display: flex; align-items: center; gap: 10px; border: 0; border-radius: 12px; background: transparent; color: {{t.text}}; font: inherit; font-size: 14px; text-align: left; cursor: pointer;"><span style="display: flex; color: {{t.muted}};"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7.5A2.5 2.5 0 0 1 5.5 5h3.6l2 2.2h7.4A2.5 2.5 0 0 1 21 9.7v7.8a2.5 2.5 0 0 1-2.5 2.5h-13A2.5 2.5 0 0 1 3 17.5z"/></svg></span><span style="flex-grow: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{o.label}}</span><sc-if value="{{o.on}}" hint-placeholder-val="{{ false }}"><span style="display: flex;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5 9-10"/></svg></span></sc-if></button></sc-for><button type="button" onClick="{{d.newFolder}}" style="height: 38px; flex-shrink: 0; padding: 0 12px; display: flex; align-items: center; gap: 10px; border: 0; border-radius: 12px; background: {{t.surf}}; color: {{t.text}}; font: inherit; font-size: 14px; font-weight: 600; text-align: left; cursor: pointer;"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>New folder</button></div></sc-if></div></sc-for>
     </div>
     <sc-if value="{{inFolder}}" hint-placeholder-val="{{ false }}"><button type="button" onClick="{{removeFolder}}" style="align-self: center; height: 40px; padding: 0 16px; border: 0; border-radius: 999px; background: transparent; color: {{t.again}}; font: inherit; font-size: 14px; font-weight: 600; cursor: pointer;">Remove folder</button></sc-if>
     <sc-if value="{{noDecks}}" hint-placeholder-val="{{ false }}"><div style="padding: 36px 20px; border-radius: 20px; background: {{t.surf}}; text-align: center; font-size: 15px; line-height: 1.4; color: {{t.muted}};">{{noDecksLine}}</div></sc-if>
@@ -56,9 +55,9 @@ a{color:inherit;text-decoration:none}a:hover{opacity:.8}
       <sc-for list="{{pickedTags}}" as="g" hint-placeholder-count="1"><button type="button" onClick="{{g.remove}}" aria-label="Stop filtering by {{g.label}}" style="height: 32px; flex-shrink: 0; padding: 0 10px 0 12px; display: inline-flex; align-items: center; gap: 6px; border: 0; border-radius: 999px; background: {{g.bg}}; color: {{g.fg}}; font: inherit; font-size: 13px; font-weight: 600; white-space: nowrap; cursor: pointer;">{{g.label}}<span style="display: flex; opacity: .7;"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 6l12 12M18 6L6 18"/></svg></span></button></sc-for>
     </div>
     <span style="font-size: 13px; color: {{t.muted}}; padding: 2px 4px 0;">{{cardCount}}</span>
-    <div style="display: flex; flex-direction: column;">
+    <div data-sc-list="cards" ref="{{dragList}}" onPointerDown="{{grabCard}}" style="display: flex; flex-direction: column;">
       <sc-for list="{{rows}}" as="r" hint-placeholder-count="6">
-        <a href="{{r.href}}" style="display: flex; flex-direction: column; gap: 6px; padding: 12px 0; border-bottom: 1px solid {{t.line}};">
+        <a href="{{r.href}}" data-sc-item="{{r.id}}" data-sc-from="{{r.deckId}}" draggable="false" class="sc-drag" style="display: flex; flex-direction: column; gap: 6px; padding: 12px 0; border-bottom: 1px solid {{t.line}};">
           <span style="font-size: 15px; font-weight: 500; line-height: 1.35; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">{{r.front}}</span>
           <span style="display: flex; align-items: center; gap: 8px; min-width: 0; font-size: 13px; color: {{t.muted}};"><span style="width: 12px; height: 12px; flex-shrink: 0; border-radius: 4px; background: {{r.swatch}};"></span><span style="min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{r.deckName}}</span><span style="display: inline-flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 600; color: {{r.levelFg}};"><span style="width: 8px; height: 8px; border-radius: 4px; background: {{r.levelFg}};"></span>{{r.level}}</span><span style="flex-grow: 1;"></span><span style="flex-shrink: 0;">{{r.next}}</span></span>
         </a>
@@ -74,7 +73,27 @@ a{color:inherit;text-decoration:none}a:hover{opacity:.8}
   <a href="PhoneStats.dc.html" style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; border-radius: 999px; font-size: 11px; font-weight: 600; color: {{t.muted}};"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="4"/><path d="M8 16v-4M12 16V8M16 16v-6"/></svg>Stats</a>
   <a href="PhoneConnect.dc.html" style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; border-radius: 999px; font-size: 11px; font-weight: 600; color: {{t.muted}};"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 14a4 4 0 0 0 5.66 0l3-3a4 4 0 0 0-5.66-5.66l-1 1"/><path d="M14 10a4 4 0 0 0-5.66 0l-3 3a4 4 0 0 0 5.66 5.66l1-1"/></svg>Connect</a>
 </nav>
-
+<div data-sc-tray="1" style="display: {{trayShow}}; position: absolute; left: 12px; right: 12px; bottom: 24px; z-index: 70; pointer-events: none;">
+  <div role="group" aria-label="Move to" class="sc-tray" style="flex-grow: 1; min-width: 0; padding: 14px 14px 16px; border-radius: 28px; box-sizing: border-box; background: {{t.bg}}; color: {{t.text}}; box-shadow: 0 0 0 1px {{t.line}}, 0 24px 64px rgba(0,0,0,.24); display: flex; flex-direction: column; gap: 10px; pointer-events: auto;">
+    <span style="padding: 0 4px; font-size: 12px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: {{t.muted}};">Move to</span>
+    <div style="display: flex; flex-wrap: wrap; gap: 8px; max-height: 184px; overflow: hidden;"><sc-for list="{{tray}}" as="o" hint-placeholder-count="4"><span data-sc-drop="deck:{{o.id}}" data-sc-look="chip" style="max-width: 100%; height: 40px; box-sizing: border-box; padding: 0 14px 0 8px; display: inline-flex; align-items: center; gap: 8px; border-radius: 999px; background: {{o.bg}}; color: {{o.fg}}; font-size: 14px; font-weight: 600; white-space: nowrap;"><span style="width: 24px; height: 24px; flex-shrink: 0; border-radius: 8px; background: {{o.base}};"></span><span style="min-width: 0; overflow: hidden; text-overflow: ellipsis;">{{o.name}}</span></span></sc-for></div>
+  </div>
+</div>
+<sc-if value="{{naming.show}}" hint-placeholder-val="{{ false }}"><div style="position: absolute; inset: 0; z-index: 80;">
+  <div class="sc-fade" onClick="{{naming.cancel}}" style="position: absolute; inset: 0; background: {{t.dim}};"></div>
+  <div role="dialog" aria-modal="true" aria-label="{{naming.title}}" class="sc-pop" style="position: absolute; left: 16px; right: 16px; top: 20%; padding: 20px; border-radius: 28px; box-sizing: border-box; background: {{t.bg}}; color: {{t.text}}; display: flex; flex-direction: column; gap: 16px;">
+    <div style="display: flex; flex-direction: column; gap: 4px;"><span style="font-size: 20px; font-weight: 600; letter-spacing: -.02em;">{{naming.title}}</span><sc-if value="{{naming.hasHint}}" hint-placeholder-val="{{ true }}"><span style="font-size: 14px; line-height: 1.4; color: {{t.muted}};">{{naming.hint}}</span></sc-if></div>
+    <label style="display: flex; align-items: center; gap: 10px; height: 50px; padding: 0 16px; box-sizing: border-box; border-radius: 16px; background: {{t.surf}}; color: {{t.muted}}; box-shadow: inset 0 0 0 2px {{t.text}};"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7.5A2.5 2.5 0 0 1 5.5 5h3.6l2 2.2h7.4A2.5 2.5 0 0 1 21 9.7v7.8a2.5 2.5 0 0 1-2.5 2.5h-13A2.5 2.5 0 0 1 3 17.5z"/></svg><input type="text" value="{{naming.value}}" onChange="{{naming.set}}" onKeyDown="{{naming.key}}" ref="{{naming.ref}}" placeholder="Folder name" aria-label="Folder name" maxlength="80" autocomplete="off" style="flex-grow: 1; min-width: 0; height: 100%; border: 0; outline: 0; background: transparent; font: inherit; font-size: 16px; color: {{t.text}};"></label>
+    <div style="display: flex; gap: 10px;"><button type="button" onClick="{{naming.cancel}}" data-key="escape" style="flex: 1 1 0; height: 48px; border: 0; border-radius: 999px; background: {{t.surf}}; color: {{t.text}}; font: inherit; font-size: 15px; font-weight: 600; cursor: pointer;">Cancel</button><button type="button" onClick="{{naming.save}}" aria-disabled="{{naming.off}}" style="flex: 1 1 0; height: 48px; border: 0; border-radius: 999px; background: {{naming.bg}}; color: {{naming.fg}}; font: inherit; font-size: 15px; font-weight: 600; cursor: pointer; transition: background-color .15s, color .15s;">{{naming.action}}</button></div>
+  </div>
+  <sc-if value="{{drawKb}}" hint-placeholder-val="{{ true }}"><div style="position: absolute; left: 0; right: 0; bottom: 0; color: {{kb.ink}}; font-family: -apple-system, system-ui, sans-serif;"><div aria-hidden="true" style="box-sizing: border-box; padding: 10px 5px 0; border-radius: 26px 26px 44px 44px; background: {{kb.panel}}; display: flex; flex-direction: column; gap: 12px;">
+    <div style="display: grid; grid-template-columns: repeat(10, minmax(0, 1fr)); gap: 6px;"><span style="height: 42px; border-radius: 9px; background: {{kb.key}}; box-shadow: {{kb.edge}}; display: flex; align-items: center; justify-content: center; font-size: 22px; ">Q</span><span style="height: 42px; border-radius: 9px; background: {{kb.key}}; box-shadow: {{kb.edge}}; display: flex; align-items: center; justify-content: center; font-size: 22px; ">W</span><span style="height: 42px; border-radius: 9px; background: {{kb.key}}; box-shadow: {{kb.edge}}; display: flex; align-items: center; justify-content: center; font-size: 22px; ">E</span><span style="height: 42px; border-radius: 9px; background: {{kb.key}}; box-shadow: {{kb.edge}}; display: flex; align-items: center; justify-content: center; font-size: 22px; ">R</span><span style="height: 42px; border-radius: 9px; background: {{kb.key}}; box-shadow: {{kb.edge}}; display: flex; align-items: center; justify-content: center; font-size: 22px; ">T</span><span style="height: 42px; border-radius: 9px; background: {{kb.key}}; box-shadow: {{kb.edge}}; display: flex; align-items: center; justify-content: center; font-size: 22px; ">Y</span><span style="height: 42px; border-radius: 9px; background: {{kb.key}}; box-shadow: {{kb.edge}}; display: flex; align-items: center; justify-content: center; font-size: 22px; ">U</span><span style="height: 42px; border-radius: 9px; background: {{kb.key}}; box-shadow: {{kb.edge}}; display: flex; align-items: center; justify-content: center; font-size: 22px; ">I</span><span style="height: 42px; border-radius: 9px; background: {{kb.key}}; box-shadow: {{kb.edge}}; display: flex; align-items: center; justify-content: center; font-size: 22px; ">O</span><span style="height: 42px; border-radius: 9px; background: {{kb.key}}; box-shadow: {{kb.edge}}; display: flex; align-items: center; justify-content: center; font-size: 22px; ">P</span></div>
+    <div style="display: grid; grid-template-columns: repeat(9, minmax(0, 1fr)); gap: 6px; padding: 0 18px;"><span style="height: 42px; border-radius: 9px; background: {{kb.key}}; box-shadow: {{kb.edge}}; display: flex; align-items: center; justify-content: center; font-size: 22px; ">A</span><span style="height: 42px; border-radius: 9px; background: {{kb.key}}; box-shadow: {{kb.edge}}; display: flex; align-items: center; justify-content: center; font-size: 22px; ">S</span><span style="height: 42px; border-radius: 9px; background: {{kb.key}}; box-shadow: {{kb.edge}}; display: flex; align-items: center; justify-content: center; font-size: 22px; ">D</span><span style="height: 42px; border-radius: 9px; background: {{kb.key}}; box-shadow: {{kb.edge}}; display: flex; align-items: center; justify-content: center; font-size: 22px; ">F</span><span style="height: 42px; border-radius: 9px; background: {{kb.key}}; box-shadow: {{kb.edge}}; display: flex; align-items: center; justify-content: center; font-size: 22px; ">G</span><span style="height: 42px; border-radius: 9px; background: {{kb.key}}; box-shadow: {{kb.edge}}; display: flex; align-items: center; justify-content: center; font-size: 22px; ">H</span><span style="height: 42px; border-radius: 9px; background: {{kb.key}}; box-shadow: {{kb.edge}}; display: flex; align-items: center; justify-content: center; font-size: 22px; ">J</span><span style="height: 42px; border-radius: 9px; background: {{kb.key}}; box-shadow: {{kb.edge}}; display: flex; align-items: center; justify-content: center; font-size: 22px; ">K</span><span style="height: 42px; border-radius: 9px; background: {{kb.key}}; box-shadow: {{kb.edge}}; display: flex; align-items: center; justify-content: center; font-size: 22px; ">L</span></div>
+    <div style="display: grid; grid-template-columns: 1.45fr .1fr repeat(7, minmax(0, 1fr)) .1fr 1.45fr; gap: 6px;"><span style="height: 42px; border-radius: 9px; background: {{kb.key}}; box-shadow: {{kb.edge}}; display: flex; align-items: center; justify-content: center; font-size: 22px; "><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4l8 8h-4.5v7h-7v-7H4z" fill="currentColor"/></svg></span><span></span><span style="height: 42px; border-radius: 9px; background: {{kb.key}}; box-shadow: {{kb.edge}}; display: flex; align-items: center; justify-content: center; font-size: 22px; ">Z</span><span style="height: 42px; border-radius: 9px; background: {{kb.key}}; box-shadow: {{kb.edge}}; display: flex; align-items: center; justify-content: center; font-size: 22px; ">X</span><span style="height: 42px; border-radius: 9px; background: {{kb.key}}; box-shadow: {{kb.edge}}; display: flex; align-items: center; justify-content: center; font-size: 22px; ">C</span><span style="height: 42px; border-radius: 9px; background: {{kb.key}}; box-shadow: {{kb.edge}}; display: flex; align-items: center; justify-content: center; font-size: 22px; ">V</span><span style="height: 42px; border-radius: 9px; background: {{kb.key}}; box-shadow: {{kb.edge}}; display: flex; align-items: center; justify-content: center; font-size: 22px; ">B</span><span style="height: 42px; border-radius: 9px; background: {{kb.key}}; box-shadow: {{kb.edge}}; display: flex; align-items: center; justify-content: center; font-size: 22px; ">N</span><span style="height: 42px; border-radius: 9px; background: {{kb.key}}; box-shadow: {{kb.edge}}; display: flex; align-items: center; justify-content: center; font-size: 22px; ">M</span><span></span><span style="height: 42px; border-radius: 9px; background: {{kb.key}}; box-shadow: {{kb.edge}}; display: flex; align-items: center; justify-content: center; font-size: 22px; "><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5h11a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H9l-6-7z"/><path d="M12 9l6 6M18 9l-6 6"/></svg></span></div>
+    <div style="display: grid; grid-template-columns: 1.15fr 1.15fr 4.7fr 2.1fr; gap: 6px;"><span style="height: 42px; border-radius: 9px; background: {{kb.key}}; box-shadow: {{kb.edge}}; display: flex; align-items: center; justify-content: center; font-size: 22px; font-size: 17px;">123</span><span style="height: 42px; border-radius: 9px; background: {{kb.key}}; box-shadow: {{kb.edge}}; display: flex; align-items: center; justify-content: center; font-size: 22px; "><svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M8.5 14.2a4.4 4.4 0 0 0 7 0"/><circle cx="9" cy="9.8" r="1" fill="currentColor" stroke="none"/><circle cx="15" cy="9.8" r="1" fill="currentColor" stroke="none"/></svg></span><span style="height: 42px; border-radius: 9px; background: {{kb.key}}; box-shadow: {{kb.edge}}; display: flex; align-items: center; justify-content: center; font-size: 22px; "></span><span style="height: 42px; border-radius: 9px; background: {{kb.key}}; box-shadow: {{kb.edge}}; display: flex; align-items: center; justify-content: center; font-size: 22px; "><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6v6a3 3 0 0 1-3 3H5"/><path d="M9 11l-4 4 4 4"/></svg></span></div>
+    <div style="height: 58px; box-sizing: border-box; padding: 6px 22px 0; display: flex; justify-content: space-between;"><svg width="27" height="27" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.6 3.8 5.6 3.8 9s-1.3 6.4-3.8 9M12 3C9.5 5.6 8.2 8.6 8.2 12s1.3 6.4 3.8 9"/></svg><svg width="27" height="27" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg></div>
+  </div></div></sc-if>
+</div></sc-if>
 </div>
 </x-dc>
 <script type="text/x-dc" data-dc-script data-props='{"dark":{"editor":"boolean","default":false},"grain":{"editor":"range","default":0.7,"min":0,"max":1,"step":0.05},"mode":{"editor":"enum","default":"decks","options":["decks","cards"]},"folder":{"editor":"string","default":""},"$preview":{"width":390,"height":844}}'>
@@ -197,21 +216,25 @@ mock() {
   // Folders you make or change here stay on this board.
   const folders = () => m.folders || X.FOLDERS;
   const folderOf = id => (m.moved && id in m.moved ? m.moved[id] : (folders().find(f => (f.decks || []).includes(id)) || {}).id || null);
+  // Decks and cards you drag here keep their new order (and cards their new deck) on this board.
+  const order = m.deckOrder || X.DECKS.map(d => d.id), inOrder = () => order.map(id => X.DECKS.find(d => d.id === id));
+  const before = (list, id, b) => { const l = list.filter(x => x !== id), at = b ? l.indexOf(b) : -1; l.splice(at < 0 ? l.length : at, 0, id); return l; };
+  const cardDeck = m.cardDeck || {}, cardOrder = m.cardOrder || X.CARDS.map(c => c.id);
   return {
     mock: true,
     chrome: () => ({ nav: { today: caught ? '' : '64' }, me: { bg: 'linear-gradient(135deg, #8C9AFC 0%, #4F60E6 100%)', initial: 'A' } }),
     settings: () => st,
     tags: () => [],
-    decks: () => X.DECKS.map((d, i) => ({ ...d, name: d.name, tags: X.TAGS[d.id], seed: d.name, style: null, image: null, totalLabel: d.total, paused: false, folder: folderOf(d.id), bg: { kind: 'deck', image: null },
+    decks: () => inOrder().map(d => ({ d, i: X.DECKS.indexOf(d) })).map(({ d, i }) => ({ ...d, name: d.name, tags: X.TAGS[d.id], seed: d.name, style: null, image: null, totalLabel: d.total, paused: false, folder: folderOf(d.id), bg: { kind: 'deck', image: null },
       due: caught ? 0 : d.due, overdue: caught ? 0 : d.overdue, soon: caught ? (d.soon || [1, 1, 2, 3, 1, 3][i]) : d.soon,
       href: 'WebDeck.dc.html', studyHref: 'WebReview.dc.html', settingsHref: 'WebDeckSettings.dc.html' })),
     deck,
-    folders: () => folders().map(f => { const ds = X.DECKS.filter(d => folderOf(d.id) === f.id);
+    folders: () => folders().map(f => { const ds = inOrder().filter(d => folderOf(d.id) === f.id);
       return { id: f.id, name: f.name, n: ds.length, due: caught ? 0 : ds.reduce((n, d) => n + d.due, 0), decks: ds.map(d => ({ ...d, seed: d.name, style: null, round: 0 })), href: 'WebLibraryFolder.dc.html' }; }),
-    allCards: () => X.ALL_CARDS.map(([deckId, front, back, icon, next, level, tags], i) => { const d = X.DECKS.find(x => x.id === deckId);
+    allCards: () => X.ALL_CARDS.map(([was, front, back, icon, next, level, tags], i) => { const deckId = cardDeck['a' + i] || was, d = X.DECKS.find(x => x.id === deckId);
       return { id: 'a' + i, kind: '', icon, front, back, tags, next, level, deckId, deckName: d.name, seed: d.name, style: null, round: 0, folder: folderOf(deckId), href: 'WebEditor.dc.html' }; }),
     searchDecks: q => X.DECKS.filter(d => d.name.toLowerCase().includes(q)).map(d => d.id),
-    cards: () => X.CARDS.map(r => ({ ...r, href: 'WebEditor.dc.html' })),
+    cards: () => cardOrder.map(id => X.CARDS.find(r => r.id === id)).filter(r => !cardDeck[r.id] || cardDeck[r.id] === 'cell').map(r => ({ ...r, href: 'WebEditor.dc.html' })),
     card: () => null,
     draft: type => ({ tags: ['Energy', 'Exam 1'], front: '', back: '', text: '', note: '', image: null, audio: null, speak: '', auto: true, ...X.DRAFTS[type] }),
     today: () => ({ date: 'Tuesday, September 22', streak: 12, best: 31, due: caught ? 0 : 64, minutes: 11, fresh: 10, next: { day: 'tomorrow', n: 32 },
@@ -243,7 +266,10 @@ mock() {
       newFolder: (name, deckId) => { const id = 'f' + (folders().length + 1) + Date.now().toString(36); set({ folders: [...folders(), { id, name, decks: [] }], ...(deckId ? { moved: { ...(m.moved || {}), [deckId]: id } } : {}) }); return id; },
       renameFolder: (id, name) => set({ folders: folders().map(f => (f.id === id ? { ...f, name } : f)) }),
       deleteFolder: id => set({ folders: folders().filter(f => f.id !== id) }),
-      moveDeck: (id, folder) => set({ moved: { ...(m.moved || {}), [id]: folder || null } }),
+      moveDeck: (id, folder) => folderOf(id) !== (folder || null) && set({ moved: { ...(m.moved || {}), [id]: folder || null }, deckOrder: before(order, id, null) }),
+      reorderDeck: (id, b) => set({ deckOrder: before(order, id, b) }),
+      reorderCard: (id, b) => set({ cardOrder: before(cardOrder, id, b) }),
+      moveCard: (id, deckId) => set({ cardDeck: { ...cardDeck, [id]: deckId } }),
       setBg: (id, kind) => set({ deck: { ...ed, bg: { ...(ed.bg || { kind: 'deck', image: null }), kind } } }),
       pickBg: () => set({ deck: { ...ed, bg: { kind: 'photo', image: 'mock' } } }),
       addDeck: noop, deleteDeck: noop, exportDeck: noop, saveCard: noop, deleteCard: noop, copy: noop, speak: noop, play: noop, importCards: noop, exportAll: noop, resetAll: noop,
@@ -253,9 +279,186 @@ mock() {
   };
 }
 
+drag(e, o) {
+  const ev = e.nativeEvent || e, t = ev.target, doc = t && t.ownerDocument, win = doc && doc.defaultView;
+  if (!win || !t.closest || (ev.pointerType === 'mouse' && ev.button !== 0) || ev.isPrimary === false) return;
+  if (t.closest('button, input, textarea, select, [role="dialog"], [data-sc-nodrag]')) return;
+  const item = t.closest('[data-sc-item]'), list = item && item.closest('[data-sc-list]'), board = list && list.closest('[data-sc-board]');
+  if (!board) return;
+  const G = win.scDrag || (win.scDrag = {});
+  if (G.dragging) return; // a second finger while one drags
+  if (G.stop) G.stop(); // a press that never came up (let go outside the window)
+  if (G.settle) G.settle();
+  const q = s => (win.CSS && win.CSS.escape ? win.CSS.escape(s) : String(s).replace(/["\\]/g, '\\$&'));
+  const B = '[data-sc-board="' + q(board.getAttribute('data-sc-board')) + '"] ', L = B + '[data-sc-list="' + q(list.getAttribute('data-sc-list')) + '"] ';
+  const at = x => L + '[data-sc-item="' + q(x) + '"]';
+  const id = item.getAttribute('data-sc-item'), own = item.getAttribute('data-sc-from'), pid = ev.pointerId, touch = ev.pointerType === 'touch';
+  const x0 = ev.clientX, y0 = ev.clientY, calm = !!(win.matchMedia && win.matchMedia('(prefers-reduced-motion: reduce)').matches);
+  const ease = ' cubic-bezier(.2,.8,.2,1)', sec = n => (calm ? 0 : n) + 's';
+  const sheet = G.sheet && G.sheet.isConnected ? G.sheet : (G.sheet = doc.head.appendChild(doc.createElement('style')));
+  const LOOK = { tile: () => 'translate:0 -4px!important;scale:1.04!important;box-shadow:0 0 0 2px ' + o.ink + ',0 24px 48px -24px rgba(0,0,0,.45)!important;',
+    chip: () => 'background:' + o.ink + '!important;color:' + o.bg + '!important;scale:1.06!important;' };
+  const off = [], on = (el, type, fn, opt = true) => { el.addEventListener(type, fn, opt); off.push(() => el.removeEventListener(type, fn, opt)); };
+  let live = false, leaving = false, still = false, timer = 0, raf = 0, px = x0, py = y0, dx = 0, dy = 0, tx = 0, ty = 0, spot = null, from = -1, to = -1, size = 1;
+  let ids = [], slots = [], k = 1, sc = null, s0 = 0, grid = false, ox = 0, oy = 0, lift = 1;
+  const quit = () => { win.clearTimeout(timer); win.cancelAnimationFrame(raf); off.splice(0).forEach(f => f()); live = false; G.dragging = false; if (G.stop === quit) G.stop = null; };
+  G.stop = quit;
+  // The click that ends a drag doesn't open anything.
+  const noClick = () => { const f = c => { c.preventDefault(); c.stopPropagation(); }; win.addEventListener('click', f, true); win.setTimeout(() => win.removeEventListener('click', f, true), 400); };
+  const scroller = () => {
+    for (let p = list.parentElement; p && p !== doc.body; p = p.parentElement) { const s = win.getComputedStyle(p).overflowY; if ((s === 'auto' || s === 'scroll') && p.scrollHeight > p.clientHeight) return p; }
+    return null;
+  };
+
+  on(win, 'pointermove', m => {
+    if (m.pointerId !== pid) return;
+    px = m.clientX; py = m.clientY;
+    if (!live) {
+      if (m.pointerType === 'mouse' && !m.buttons) { quit(); return; } // the button came up somewhere else
+      const far = Math.hypot(px - x0, py - y0);
+      if (touch) { if (far > 10) quit(); return; } // a swipe: the page scrolls
+      if (far < 6) return;
+      begin();
+    }
+    frame();
+  });
+  on(win, 'pointerup', m => { if (m.pointerId === pid) (live ? land() : quit()); });
+  on(win, 'pointercancel', m => { if (m.pointerId === pid) (live ? back() : quit()); });
+  on(win, 'dragstart', d => d.preventDefault()); // not the browser's own dragging of the link or picture
+  if (touch) { on(win, 'contextmenu', c => c.preventDefault()); timer = win.setTimeout(begin, 350); }
+
+  function begin() {
+    if (live) return;
+    const items = [...doc.querySelectorAll(L + '[data-sc-item]')];
+    ids = items.map(x => x.getAttribute('data-sc-item')); from = to = ids.indexOf(id);
+    if (from < 0) { quit(); return; }
+    live = G.dragging = true; win.clearTimeout(timer);
+    try { doc.documentElement.setPointerCapture(pid); } catch (x) { /* the pointer is already gone */ }
+    try { win.getSelection().removeAllRanges(); } catch (x) { /* nothing was selected */ }
+    if (touch && win.navigator.vibrate) try { win.navigator.vibrate(8); } catch (x) { /* no buzz here */ }
+    const r = items[from].getBoundingClientRect();
+    k = r.width / (items[from].offsetWidth || 1) || 1; // the canvas can show a board zoomed
+    sc = scroller(); s0 = sc ? sc.scrollTop : 0;
+    const b = sc ? sc.getBoundingClientRect() : { left: 0, top: 0 };
+    slots = items.map(x => { const s = x.getBoundingClientRect(); return { x: (s.left - b.left) / k, y: (s.top - b.top) / k + s0, w: s.width / k, h: s.height / k }; });
+    grid = new Set(slots.map(s => Math.round(s.x))).size > 1;
+    ox = (x0 - r.left) / k; oy = (y0 - r.top) / k; lift = grid ? 1.04 : 1; size = lift;
+    on(win, 'keydown', kd => { if (kd.key === 'Escape') { kd.preventDefault(); kd.stopPropagation(); back(); } });
+    on(win, 'blur', back, false);
+    if (o.start) o.start(id);
+    (function roll() { raf = win.requestAnimationFrame(roll); edge(); })();
+    frame();
+  }
+  // Near the top or bottom of the list's scrolling area (above the iPhone's tab bar), it scrolls, faster nearer the edge;
+  // not while it's over a place to drop it, or over the Move to tray.
+  function edge() {
+    if (!sc || still) return;
+    const r = sc.getBoundingClientRect(), low = r.bottom - (o.bottom || 0) * k, band = Math.min(72, r.height / 5);
+    const v = py < r.top + band ? (py - r.top - band) / band : py > low - band ? (py - low + band) / band : 0, was = sc.scrollTop;
+    if (!v) return;
+    sc.scrollTop = was + Math.round(Math.max(-1, Math.min(1, v)) * 16);
+    if (sc.scrollTop !== was) frame();
+  }
+  function frame() {
+    const me = slots[from];
+    dx = (px - x0) / k; dy = (py - y0) / k + ((sc ? sc.scrollTop : 0) - s0);
+    // What's under the pointer: a place to drop it, or else a spot in the list.
+    const under = doc.elementFromPoint(px, py), hit = under && under.closest('[data-sc-drop]'), name = hit ? hit.getAttribute('data-sc-drop') : '';
+    still = !!(under && under.closest('[data-sc-drop], [data-sc-tray]'));
+    spot = hit && hit.closest('[data-sc-board]') === board && name !== 'deck:' + own && (o.drops || []).some(p => name.indexOf(p) === 0) ? hit : null;
+    to = from;
+    if (!spot && o.reorder !== false) {
+      const cx = me.x + me.w / 2 + dx, cy = me.y + me.h / 2 + dy;
+      if (grid) { let near = Infinity; slots.forEach((s, i) => { const d = Math.hypot(s.x + s.w / 2 - cx, s.y + s.h / 2 - cy); if (d < near) { near = d; to = i; } }); }
+      else slots.forEach((s, i) => { const mid = s.y + s.h / 2; if (i > from && cy > mid) to = Math.max(to, i); if (i < from && cy < mid) to = Math.min(to, i); });
+    }
+    // Over a place to drop it, it shrinks and hangs just below the pointer, so the place shows.
+    size = spot ? Math.min(0.45, Math.max(140 / me.w, 28 / me.h)) : lift;
+    tx = dx + (spot ? ox * size + 14 : 0); ty = dy + (spot ? oy * size + 14 : 0);
+    draw();
+  }
+  // The others move out of its way: in a grid, each to the next spot; in a list, by its height.
+  function shifts() {
+    const out = [], me = slots[from];
+    if (to > from) { const gap = from + 1 < slots.length ? slots[from + 1].y - me.y - me.h : 0; for (let i = from + 1; i <= to; i++) out.push(grid ? [i, slots[i - 1].x - slots[i].x, slots[i - 1].y - slots[i].y] : [i, 0, -(me.h + gap)]); }
+    if (to < from) { const gap = from > 0 ? me.y - slots[from - 1].y - slots[from - 1].h : 0; for (let i = to; i < from; i++) out.push(grid ? [i, slots[i + 1].x - slots[i].x, slots[i + 1].y - slots[i].y] : [i, 0, me.h + gap]); }
+    return out;
+  }
+  function draw() {
+    let css = '*{cursor:grabbing!important;-webkit-user-select:none!important;user-select:none!important}'
+      + L + '[data-sc-item]{transition:translate ' + sec(0.25) + ease + '!important}'
+      + B + '[data-sc-drop]{transition:translate ' + sec(0.2) + ease + ',scale ' + sec(0.2) + ease + ',box-shadow .2s,background-color .2s,color .2s!important}'
+      + at(id) + '{position:relative!important;z-index:60!important;pointer-events:none!important;will-change:translate;'
+      + 'transition:scale ' + sec(0.2) + ease + ',opacity .2s,box-shadow .2s' + (leaving ? ',translate ' + sec(0.22) + ease : '') + '!important;'
+      + 'translate:' + tx + 'px ' + ty + 'px!important;scale:' + size + '!important;transform-origin:' + ox + 'px ' + oy + 'px!important;opacity:' + (leaving ? 0 : spot ? 0.9 : 1) + '!important;' + (o.lifted || '') + '}';
+    css += at(id) + ' *{pointer-events:none!important}'; // (its buttons too, so what's under it shows through)
+    shifts().forEach(([i, x, y]) => { css += at(ids[i]) + '{translate:' + x + 'px ' + y + 'px!important}'; });
+    if (o.tray) css += B + '[data-sc-tray]{display:flex!important}' + (own ? B + '[data-sc-drop="deck:' + q(own) + '"]{display:none!important}' : '');
+    if (spot) css += B + '[data-sc-drop="' + q(spot.getAttribute('data-sc-drop')) + '"]{' + (LOOK[spot.getAttribute('data-sc-look')] || LOOK.chip)() + '}';
+    sheet.textContent = css;
+  }
+  function land() {
+    const name = spot && spot.getAttribute('data-sc-drop');
+    quit(); noClick();
+    if (name && !o.keep) {
+      // Into a folder or another deck: it shrinks into the place, then the rest close up behind it.
+      const el = doc.querySelector(at(id)), a = spot.getBoundingClientRect(), v = el ? el.getBoundingClientRect() : a, s1 = 0.12, me = slots[from];
+      tx += (a.left + a.width / 2 - v.left - v.width / 2) / k - (me.w / 2 - ox) * (s1 - size);
+      ty += (a.top + a.height / 2 - v.top - v.height / 2) / k - (me.h / 2 - oy) * (s1 - size);
+      size = s1; leaving = true; draw();
+      win.setTimeout(() => settle(() => o.drop(id, { to: name })), calm ? 0 : 220);
+    } else if (name) settle(() => o.drop(id, { to: name }));
+    else if (to !== from) settle(() => o.drop(id, { before: to > from ? ids[to + 1] || null : ids[to] }));
+    else settle(null);
+  }
+  function back() {
+    if (!live) { quit(); return; }
+    quit(); noClick(); settle(null);
+  }
+  // Makes the change (if there is one), waits for the page to show it, and then moves everything from where it was on
+  // screen to where it is now (with no change, that's back where it started).
+  function settle(change) {
+    const was = {}, box = doc.querySelector(L.trim()) || list;
+    doc.querySelectorAll(L + '[data-sc-item]').forEach(x => { was[x.getAttribute('data-sc-item')] = x.getBoundingClientRect(); });
+    let ran = false, end = 0;
+    const mo = new win.MutationObserver(() => run()), wait = win.setTimeout(() => run(), change ? 600 : 0);
+    const done = () => { win.clearTimeout(end); win.clearTimeout(wait); mo.disconnect(); ran = true; sheet.textContent = ''; if (G.settle === run) G.settle = null; };
+    function run() {
+      if (ran) { done(); return; } // a new drag while this one glides: stop gliding
+      ran = true; mo.disconnect(); win.clearTimeout(wait);
+      sheet.textContent = '';
+      let start = '', glide = '';
+      doc.querySelectorAll(L + '[data-sc-item]').forEach(x => {
+        const n = x.getAttribute('data-sc-item'), a = was[n];
+        if (!a) return;
+        const b = x.getBoundingClientRect(), fx = (a.left - b.left) / k, fy = (a.top - b.top) / k, fs = a.width / (b.width || 1);
+        if (Math.abs(fx) < 0.5 && Math.abs(fy) < 0.5 && Math.abs(fs - 1) < 0.005) return;
+        const me = n === id ? 'position:relative!important;z-index:60!important;' + (o.lifted || '') : '';
+        start += at(n) + '{' + me + 'transform-origin:0 0!important;transition:none!important;translate:' + fx + 'px ' + fy + 'px!important;scale:' + fs + '!important}';
+        glide += at(n) + '{' + me + 'transform-origin:0 0!important;transition:translate ' + sec(0.3) + ease + ',scale ' + sec(0.3) + ease + ',box-shadow .3s!important;translate:0 0!important;scale:1!important' + (n === id ? ';box-shadow:none!important' : '') + '}';
+      });
+      if (!start || calm) { done(); return; }
+      sheet.textContent = start;
+      box.getBoundingClientRect(); // (start from there)
+      sheet.textContent = glide;
+      end = win.setTimeout(done, 330);
+    }
+    G.settle = run;
+    if (!change) { run(); return; }
+    mo.observe(box, { childList: true, subtree: true, attributes: true, characterData: true });
+    change();
+  }
+}
+dragList(el) {
+  if (!el || el.scDragList) return;
+  el.scDragList = true;
+  const win = el.ownerDocument.defaultView;
+  el.addEventListener('touchmove', m => { if (win.scDrag && win.scDrag.dragging && m.cancelable) m.preventDefault(); }, { passive: false });
+}
 
 constructor(props) { super(props); this.state = { tag: 'All', view: props.view === 'List' ? 'list' : 'cards', openDeck: props.openTags ? 'cell' : null, moreOpen: !!props.moreTags, moreQ: '', q: '',
-  level: 'all', cardTags: [], deck: '', tagPickOpen: false, tagPickQ: '', deckPickOpen: false, deckPickQ: '', shown: 60, naming: props.naming ? 'new' : null, name: '', moveDeck: props.moveOpen ? 'cell' : null, moveAfter: null }; }
+  level: 'all', cardTags: [], deck: '', tagPickOpen: false, tagPickQ: '', deckPickOpen: false, deckPickQ: '', shown: 60, naming: props.naming ? 'new' : null, name: props.naming ? 'Biology' : '', namingAt: 0,
+  moveDeck: props.moveOpen ? 'cell' : null, moveAfter: null }; }
 renderVals() {
   const t = this.theme(!!this.props.dark);const db = this.props.db || this.mock(); const chrome = db.chrome();
   const tagC = { Biology: '#30A46C', Chemistry: '#F76B15', Languages: '#3E63DD', MCAT: '#8E4EC6', History: '#AD7F58', 'Computer science': '#12A594', Exam: '#E5484D', 'Year 1': '#0090FF',
@@ -283,6 +486,12 @@ renderVals() {
   };
   const cardSlot = (tags, i) => (tags && tags[i] ? { show: true, ...tagChip(tags[i]) } : { show: false, label: '', bg: 'transparent', fg: t.text });
   const cardFit = tags => { const fit = tagFit(tags, 2); return { c1: cardSlot(fit.vis, 0), c2: cardSlot(fit.vis, 1), cMore: { show: fit.more > 0, label: '+' + fit.more, title: (tags || []).slice(fit.vis.length).join(', ') } }; };
+  const liftTile = 'border-radius:20px!important;box-shadow:0 30px 60px -18px rgba(0,0,0,.5)!important;';
+  const liftRow = 'background:' + t.bg + '!important;border-radius:12px!important;border-bottom-color:transparent!important;box-shadow:0 0 0 12px ' + t.bg + ',0 0 0 13px ' + t.line + ',0 24px 48px -12px rgba(0,0,0,' + (this.props.dark ? '.8' : '.25') + ')!important;';
+  const dragKey = this.dragKey || (this.dragKey = 'b' + Math.random().toString(36).slice(2, 8)), dragList = el => this.dragList(el);
+  const kb = this.props.dark
+    ? { panel: '#2A2A2D', key: '#48484C', ink: '#FFFFFF', edge: '0 1px 0 rgba(0,0,0,.35)', bar: '#2C2C2F', barInk: '#EBEBF0', barLine: 'rgba(255,255,255,.14)', on: '#45454A', barShadow: '0 8px 28px rgba(0,0,0,.5), 0 0 0 .5px rgba(255,255,255,.1)' }
+    : { panel: '#E3E4E9', key: '#FFFFFF', ink: '#000000', edge: '0 1px 0 rgba(0,0,0,.08)', bar: '#FFFFFF', barInk: '#3C3C43', barLine: 'rgba(60,60,67,.16)', on: '#ECECF1', barShadow: '0 8px 28px rgba(0,0,0,.1), 0 0 0 .5px rgba(0,0,0,.06)' };
   const p = this.props, s = this.state, tag = s.tag, view = s.view, act = db.act;
   const board = n => 'Phone' + n + '.dc.html';
   const folders = db.folders(), folder = p.folder ? folders.find(f => f.id === p.folder) || null : null;
@@ -290,13 +499,18 @@ renderVals() {
   const all = db.decks(), q = (s.q || '').trim().toLowerCase();
   const seg = on => ({ pressed: on ? 'true' : 'false', bg: on ? t.bg : 'transparent', fg: on ? t.text : t.muted, sh: on ? '0 1px 3px rgba(0,0,0,.14)' : 'none' });
   const grad = d => this.gen(d.seed + (d.round ? ' #' + d.round : ''), d.style);
-  // Naming a folder: a new one (maybe for a deck that asked to move into it), or renaming this one.
-  const naming = s.naming, closeNaming = () => this.setState({ naming: null, name: '', moveAfter: null });
-  const saveName = async () => {
-    const name = (s.name || '').trim(); if (!name) return;
-    if (naming === 'rename' && folder) act.renameFolder(folder.id, name); else await act.newFolder(name, s.moveAfter);
+  // Naming a folder in the popup: a new one (maybe for a deck that asked to move into it), or renaming this one.
+  const naming = s.naming, typed = (s.name || '').trim(), mover = s.moveAfter ? all.find(d => d.id === s.moveAfter) : null;
+  const closeNaming = () => this.setState({ naming: null, name: '', moveAfter: null });
+  const openNaming = (kind, moveAfter) => this.setState({ naming: kind, name: kind === 'rename' && folder ? folder.name : '', moveAfter: moveAfter || null, moveDeck: null, namingAt: Date.now() });
+  const saveName = () => {
+    if (!typed) return;
     closeNaming();
+    if (naming === 'rename' && folder) act.renameFolder(folder.id, typed); else act.newFolder(typed, s.moveAfter);
   };
+  // Dragging (drag.mjs): a deck to another spot, onto a folder, or (in a folder) onto the Library link to take it out;
+  // in All cards, a card onto another deck. Menus close when something lifts.
+  const quiet = () => (s.moveDeck || s.openDeck || s.moreOpen || s.tagPickOpen || s.deckPickOpen) && this.setState({ moveDeck: null, openDeck: null, moreOpen: false, tagPickOpen: false, deckPickOpen: false });
   // Decks: in a folder, its decks. At the top, folders and the decks in none, unless a tag or search looks everywhere.
   const hits = q && !cards ? db.searchDecks(q) : null, looking = tag !== 'All' || !!hits;
   const scope = folder ? all.filter(d => d.folder === folder.id) : looking || !folders.length ? all : all.filter(d => !d.folder);
@@ -307,7 +521,7 @@ renderVals() {
   const mq = (s.moreQ || '').trim().toLowerCase(), found = byUse.filter(g => !mq || g.toLowerCase().includes(mq));
   const decks = scope.filter(d => (tag === 'All' || d.tags.includes(tag)) && (!hits || hits.includes(d.id))).map(d => {
     const tg = d.tags, fit = tagFit(tg, 3), open = s.openDeck === d.id, moving = s.moveDeck === d.id, photo = d.image && d.image !== 'mock' ? d.image : '';
-    const slot = i => (fit.vis[i] ? { show: true, ...tagChip(fit.vis[i]) } : { show: false, label: '', bg: 'transparent', fg: t.text });
+    const slot = i => (fit.vis[i] ? { show: true, ...tagChip(fit.vis[i]), pick: () => pickTag(fit.vis[i]) } : { show: false, label: '', bg: 'transparent', fg: t.text, pick: () => {} });
     const move = f => () => { act.moveDeck(d.id, f); this.setState({ moveDeck: null }); };
     // A photo cover takes white words on a dark wash, whatever the gradient would have used.
     const onPhoto = photo ? { ink: '#FFFFFF', glass: 'rgba(0,0,0,.28)', glassLine: 'rgba(255,255,255,.35)', shadow: '0 1px 12px rgba(0,0,0,.35)' } : {};
@@ -318,9 +532,9 @@ renderVals() {
       allTags: tg.map(g => ({ ...tagChip(g), pick: () => pickTag(g) })),
       moveOpen: moving, moveExpanded: moving ? 'true' : 'false', toggleMove: () => this.setState({ moveDeck: moving ? null : d.id, openDeck: null }),
       moveTo: [{ id: null, name: 'No folder' }, ...folders].map(f => ({ label: f.name, on: (d.folder || null) === f.id, pressed: (d.folder || null) === f.id ? 'true' : 'false', pick: move(f.id) })),
-      newFolder: () => this.setState({ moveDeck: null, naming: 'new', name: '', moveAfter: d.id }),
+      newFolder: () => openNaming('new', d.id),
       total: d.totalLabel, ret: d.ret == null ? '—' : d.ret + '%', line: d.totalLabel + ' cards · ' + d.fresh + ' new' + (d.ret == null ? '' : ' · ' + d.ret + '%'),
-      hasDue: d.due > 0, noDue: d.due === 0, dueColor: d.due ? t.text : t.muted, dueLabel: d.due ? String(d.due) : '—',
+      canStudy: d.due > 0 || d.fresh > 0, noStudy: !d.due && !d.fresh, dueColor: d.due ? t.text : t.muted, dueLabel: d.due ? String(d.due) : '—',
       retColor: d.ret == null ? t.muted : d.ret >= 90 ? t.good : d.ret >= 85 ? t.hard : t.again };
   });
   // Folders, each with its first decks' colors fanned out.
@@ -352,13 +566,22 @@ renderVals() {
       .map(([label, on, href]) => ({ label, href, current: on ? 'page' : 'false', ...seg(on) })),
     deckView: !cards, cardsView: cards,
     folders: folderRows, showFolders: atTop && !cards && !looking && folders.length > 0,
-    noDecks: !cards && decks.length === 0, noDecksLine: folder ? 'No decks in this folder yet. Use a deck’s ⋯ button to move it here.' : 'No decks match.',
-    newFolder: () => this.setState({ naming: 'new', name: '', moveAfter: null }),
-    renameFolder: () => this.setState({ naming: 'rename', name: folder ? folder.name : '' }),
+    noDecks: !cards && decks.length === 0, noDecksLine: folder ? 'No decks in this folder yet. Drag a deck onto the folder, or use its ⋯ button.' : 'No decks match.',
+    newFolder: () => openNaming('new'), renameFolder: () => openNaming('rename'),
     removeFolder: () => folder && act.deleteFolder(folder.id),
     naming: { show: !!naming, title: naming === 'rename' ? 'Rename folder' : 'New folder', action: naming === 'rename' ? 'Save' : 'Create', value: s.name || '',
+      hasHint: naming !== 'rename', hint: mover ? '“' + mover.name + '” goes in it.' : 'Then drag decks onto it.',
+      off: typed ? 'false' : 'true', bg: typed ? t.inv : t.surf2, fg: typed ? t.invText : t.muted,
       set: e => this.setState({ name: e && e.target ? e.target.value : '' }), save: saveName, cancel: closeNaming,
-      key: e => { if (e.key === 'Enter') { e.preventDefault(); saveName(); } if (e.key === 'Escape') closeNaming(); } },
+      key: e => { if (e.key === 'Enter') { e.preventDefault(); saveName(); } if (e.key === 'Escape') { e.preventDefault(); closeNaming(); } },
+      // The field is ready to type in when the popup opens (in the app; the canvas draws it focused).
+      ref: el => { if (!el || db.mock || this.namedAt === s.namingAt) return; this.namedAt = s.namingAt; el.focus(); if (naming === 'rename') el.select(); } },
+    drawKb: !!db.mock, kb,
+    dragKey, dragList, trayShow: 'none', tray: all.map(d => ({ id: d.id, name: d.name, base: grad(d).base, bg: t.surf, fg: t.text })),
+    grabDeck: e => this.drag(e, { drops: ['folder:'], ink: t.text, bg: t.bg, lifted: view === 'cards' && !true ? liftTile : liftRow, bottom: 92, start: quiet,
+      drop: (id, w) => (w.to ? act.moveDeck(id, w.to.slice(7) || null) : act.reorderDeck(id, w.before)) }),
+    grabCard: e => this.drag(e, { drops: ['deck:'], reorder: false, keep: true, tray: all.length > 1, ink: t.text, bg: t.bg, lifted: liftRow, bottom: 92, start: quiet,
+      drop: (id, w) => w.to && act.moveCard(id, w.to.slice(5)) }),
     tagFilters: ['All', ...shownTags].map(n => { const on = n === tag, isAll = n === 'All'; return { label: isAll ? (folder ? 'All' : 'All decks') : n, dot: isAll ? 'transparent' : tagCol(n), dotW: isAll ? '0px' : '8px', dotM: isAll ? '0px' : '8px',
       count: String(isAll ? (folder ? scope.length : all.length) : uses[n] || 0), pressed: on ? 'true' : 'false', bg: on ? t.inv : t.surf, fg: on ? t.invText : t.text, pick: () => pickTag(n) }; }),
     moreMenu: { show: byUse.length > top.length, open: !!s.moreOpen, expanded: s.moreOpen ? 'true' : 'false', query: s.moreQ || '',

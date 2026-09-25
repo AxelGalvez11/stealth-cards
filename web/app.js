@@ -287,12 +287,15 @@ app.addEventListener('click', e => {
   e.preventDefault();
   go(url.pathname + url.search, true);
 });
-app.addEventListener('mousedown', e => {
-  for (let el = e.target; el && el !== app; el = el.parentElement) {
-    const i = el.getAttribute && el.getAttribute('data-on-mousedown');
-    if (i != null && handlers[i]) { handlers[i](e); if (e.cancelBubble) break; }
-  }
-});
+// onMouseDown, and onPointerDown (where dragging a deck or card starts).
+for (const type of ['mousedown', 'pointerdown']) {
+  app.addEventListener(type, e => {
+    for (let el = e.target; el && el !== app; el = el.parentElement) {
+      const i = el.getAttribute && el.getAttribute('data-on-' + type);
+      if (i != null && handlers[i]) { handlers[i](e); if (e.cancelBubble) break; }
+    }
+  });
+}
 app.addEventListener('input', e => {
   const el = e.target.closest && e.target.closest('[data-on-change]');
   if (el) handlers[el.getAttribute('data-on-change')]?.(e);

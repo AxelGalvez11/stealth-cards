@@ -4,6 +4,7 @@
 // your data here.
 import { preview, waitLabel, dayAt } from './fsrs.js';
 import R from './rich.js';
+import { placeBefore, deckCards, cardBefore, cardToDeck } from './order.js';
 
 const DAY = 86400000, MIN = 60000, GAPS = [30, 90, 180, 365, 730, 1825, 3650];
 const DAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
@@ -72,6 +73,8 @@ export async function createDb({ onChange, go }) {
     accept(j.state);
     return j.result;
   }
+  // Dragging shows its result right away and saves it after; if saving fails, the app goes back to what's saved.
+  const saveMove = (type, payload) => send(type, payload).catch(async () => { try { S = await get('/api/state'); changed(); } catch { /* offline */ } });
   // Cards your AI adds over MCP show up without a reload.
   setInterval(async () => {
     if (document.hidden) return;
@@ -363,7 +366,12 @@ export async function createDb({ onChange, go }) {
     newFolder: async (name, deckId) => { const r = await send('folder.add', { name }); if (deckId) await send('deck.update', { id: deckId, patch: { folder: r.id } }); return r.id; },
     renameFolder: (id, name) => send('folder.update', { id, patch: { name } }),
     deleteFolder: async id => { const f = S.folders.find(x => x.id === id); if (!f || !confirm('Remove the folder “' + f.name + '”? Its decks stay in your library.')) return; await send('folder.delete', { id }); go('/library'); },
-    moveDeck: (id, folder) => send('deck.update', { id, patch: { folder: folder || null } }),
+    // Into a folder (or out, with none): it goes last there. Dragging also puts a deck before another (or last).
+    moveDeck: (id, folder) => { const d = deckById(id); if (!d || (d.folder || null) === (folder || null)) return; d.folder = folder || null; placeBefore(S.decks, d, null); changed(); return saveMove('deck.move', { id, folder: folder || null, before: null }); },
+    reorderDeck: (id, before) => { const d = deckById(id); if (!d) return; placeBefore(S.decks, d, before ? deckById(before) : null); changed(); return saveMove('deck.move', { id, before: before || null }); },
+    // A card dragged on its deck's page, or onto another deck.
+    reorderCard: (id, before) => { const c = S.cards.find(x => x.id === id), d = c && deckById(c.deckId); if (!d) return; cardBefore(d, S.cards, c, before || null); changed(); return saveMove('card.move', { id, before: before || null }); },
+    moveCard: (id, deckId) => { const c = S.cards.find(x => x.id === id); if (!c || !deckById(deckId) || c.deckId === deckId) return; cardToDeck(S, c, deckId); changed(); return saveMove('card.move', { id, deckId }); },
     // What Learn mode, flashcards, and Live show behind a deck; a photo is uploaded here.
     setBg: (id, kind) => send('deck.update', { id, patch: { bg: { kind } } }),
     pickBg: async id => { const url = await act.pickFile('image'); if (url) await send('deck.update', { id, patch: { bg: { kind: 'photo', image: url } } }); },
@@ -501,7 +509,7 @@ export async function createDb({ onChange, go }) {
       return { ...deckRow(d), cover: d.cover, grading: d.grading, fsrs: d.fsrs !== false, goal: d.goal, gapIdx: d.gapIdx ?? 3, steps: d.steps, perDay: d.perDay,
         forecast: forecast(7, [d]).vals, piles: (d.piles || []).map(p => ({ name: p.name, n: cardsOf(d.id).filter(c => c.pile === p.name).length })) };
     },
-    cards: id => cardsOf(id).slice().reverse().map(c => ({ id: c.id, kind: KIND[c.kind], icon: ICON[c.kind], front: listFront(c), back: listBack(c), tags: c.tags, next: nextLabel(c),
+    cards: id => deckCards(deckById(id), S.cards).map(c => ({ id: c.id, kind: KIND[c.kind], icon: ICON[c.kind], front: listFront(c), back: listBack(c), tags: c.tags, next: nextLabel(c),
       ai: byAI(c) ? c.source : '', href: '/deck/' + id + '/card/' + c.id })),
     card: id => { const c = S.cards.find(x => x.id === id); return c ? { ...c, clozeMode: c.cloze === -1 ? 'one' : 'each' } : null; },
     draft: type => ({ kind: { Basic: 'basic', Blank: 'cloze', Image: 'image', Audio: 'audio' }[type] || 'basic', front: '', back: '', text: '', note: '', tags: [], image: null, audio: null, speak: '', auto: true }),

@@ -12,6 +12,7 @@ import { newLink } from './auth.mjs';
 import { FREE_MEDIA } from './plans.mjs';
 import { grade as fsrsGrade, newCard } from './fsrs.js';
 import R from './rich.js';
+import { placeBefore, cardBefore, cardToDeck } from './order.js';
 
 export const DATA = process.env.STEALTH_DATA || fileURLToPath(new URL('../data/', import.meta.url));
 export const MEDIA = join(DATA, 'media');
@@ -155,6 +156,17 @@ function run(a, who) {
       Object.assign(d, p);
       return { id: d.id };
     }
+    // Dragging a deck in the Library: to another spot (just before the deck `before`, or last when it's null), and into
+    // or out of a folder (`folder`: a folder id, or null for none). The Library lists decks in this order (see order.js).
+    case 'deck.move': {
+      const d = findDeck(a.id); if (!d) throw new Error('No such deck');
+      if ('folder' in a) { const f = a.folder ? folderOf(a.folder) : null; if (a.folder && !f) throw new Error('No such folder'); d.folder = f; }
+      if ('before' in a) {
+        const b = a.before == null ? null : S.decks.find(x => x.id === a.before); if (a.before != null && !b) throw new Error('No such deck');
+        placeBefore(S.decks, d, b);
+      }
+      return { id: d.id };
+    }
     case 'folder.add': {
       const f = { id: id('f'), name: clean(a.name, 80).trim() || 'New folder', created: Date.now() };
       S.folders.push(f);
@@ -232,6 +244,17 @@ function run(a, who) {
       const ids = new Set(a.ids || [a.id]);
       S.cards = S.cards.filter(c => !ids.has(c.id)); S.logs = S.logs.filter(l => !ids.has(l.cardId));
       return { ids: [...ids] };
+    }
+    // Dragging a card on its deck's page (just before the card `before`, or last when it's null), or onto another deck
+    // (`deckId`).
+    case 'card.move': {
+      const c = S.cards.find(x => x.id === a.id); if (!c) throw new Error('No such card');
+      if ('deckId' in a) { const d = findDeck(a.deckId); if (!d) throw new Error('No such deck'); if (d.id !== c.deckId) cardToDeck(S, c, d.id); }
+      if ('before' in a) {
+        const b = a.before == null ? null : S.cards.find(x => x.id === a.before && x.deckId === c.deckId); if (a.before != null && !b) throw new Error('No such card');
+        cardBefore(deckOf(c), S.cards, c, b && b.id);
+      }
+      return { id: c.id, deckId: c.deckId };
     }
     case 'review.grade': {
       const c = S.cards.find(x => x.id === a.cardId); if (!c) throw new Error('No such card');
