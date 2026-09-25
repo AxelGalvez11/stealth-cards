@@ -313,6 +313,12 @@ export default [
   "h": 844
  },
  {
+  "name": "PhoneQuizSettings",
+  "title": "iPhone · Learn mode · settings (the deck’s background)",
+  "w": 390,
+  "h": 844
+ },
+ {
   "name": "PhoneQuizStart",
   "title": "iPhone · Learn mode · start (Pro)",
   "w": 390,
@@ -729,6 +735,12 @@ export default [
  {
   "name": "WebQuizMatch",
   "title": "Web · Learn mode · matching",
+  "w": 1440,
+  "h": 900
+ },
+ {
+  "name": "WebQuizSettings",
+  "title": "Web · Learn mode · settings (the deck’s background)",
   "w": 1440,
   "h": 900
  },

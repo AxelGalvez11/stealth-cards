@@ -1,36 +1,11 @@
-<!doctype html>
-<html lang="en">
-<head>
-<meta charset="utf-8">
-<title>Web · Session done · piles</title>
-<script src="./support.js"></script>
-</head>
-<body>
-<x-dc>
-<helmet>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&amp;family=Geist+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
-<style>
-body{margin:0;font-family:Geist, -apple-system, system-ui, sans-serif}
-a{color:inherit;text-decoration:none}a:hover{opacity:.8}
-@keyframes scRise{from{opacity:0;transform:translateY(14px)}}main>*{animation:scRise .5s cubic-bezier(.2,.8,.2,1) backwards}main>*:nth-child(2){animation-delay:0.06s}main>*:nth-child(3){animation-delay:0.12s}main>*:nth-child(4){animation-delay:0.18s}main>*:nth-child(5){animation-delay:0.24s}main>*:nth-child(n+6){animation-delay:.3s}button,.sc-press{transition:transform .1s ease}button:active,.sc-press:active{transform:scale(.96)}.sc-lift{transition:transform .25s cubic-bezier(.2,.8,.2,1),box-shadow .25s cubic-bezier(.2,.8,.2,1)}.sc-lift:hover{transform:translateY(-4px);box-shadow:0 24px 48px -24px rgba(0,0,0,.45)}@keyframes scFloat{50%{transform:translateY(-6px)}}@keyframes scSwayA{50%{transform:rotate(-13deg) translateX(-3px)}}@keyframes scSwayB{50%{transform:rotate(10deg) translateX(3px)}}@keyframes scGlow{50%{opacity:.55}}@keyframes scSheen{0%,58%{transform:translateX(-160%) skewX(-18deg)}86%,100%{transform:translateX(260%) skewX(-18deg)}}.sc-float{animation:scFloat 6s ease-in-out infinite}.sc-sway-a{animation:scSwayA 6s ease-in-out infinite}.sc-sway-b{animation:scSwayB 6s ease-in-out infinite}.sc-glow{animation:scGlow 6s ease-in-out infinite}.sc-sheen{position:absolute;top:0;bottom:0;left:0;width:45%;background:linear-gradient(90deg,transparent,rgba(255,255,255,.4),transparent);animation:scSheen 5s cubic-bezier(.4,0,.2,1) infinite;pointer-events:none}@keyframes scDrift{from{transform:scale(1.14) translate(-3%,-2%)}to{transform:scale(1.14) translate(3%,2%)}}.sc-alive>svg:first-of-type{animation:scDrift 16s ease-in-out infinite alternate}@keyframes scDraw{from{stroke-dashoffset:1.02}}.sc-draw{stroke-dasharray:1 2;animation:scDraw .9s cubic-bezier(.2,.8,.2,1) backwards}@keyframes scKnob{from{opacity:0;transform:scale(.3)}}.sc-knob{transform-box:fill-box;transform-origin:center;animation:scKnob .35s .75s cubic-bezier(.34,1.56,.64,1) backwards}@keyframes scGrow{from{transform:scaleY(0)}}.sc-grow{transform-origin:bottom;animation:scGrow .6s cubic-bezier(.2,.8,.2,1) backwards}:nth-child(2)>.sc-grow{animation-delay:0.04s}:nth-child(3)>.sc-grow{animation-delay:0.08s}:nth-child(4)>.sc-grow{animation-delay:0.12s}:nth-child(5)>.sc-grow{animation-delay:0.16s}:nth-child(6)>.sc-grow{animation-delay:0.20s}:nth-child(7)>.sc-grow{animation-delay:0.24s}:nth-child(8)>.sc-grow{animation-delay:0.28s}:nth-child(9)>.sc-grow{animation-delay:0.32s}:nth-child(10)>.sc-grow{animation-delay:0.36s}:nth-child(11)>.sc-grow{animation-delay:0.40s}:nth-child(12)>.sc-grow{animation-delay:0.44s}:nth-child(13)>.sc-grow{animation-delay:0.48s}:nth-child(14)>.sc-grow{animation-delay:0.52s}@media (prefers-reduced-motion:reduce){main>*,.sc-float,.sc-sway-a,.sc-sway-b,.sc-glow,.sc-alive>svg,.sc-draw,.sc-knob,.sc-grow{animation:none!important}.sc-sheen{display:none}button:active,.sc-press:active,.sc-lift:hover{transform:none}}
-
-</style>
-</helmet>
-<div style="width: 1440px; height: 900px; box-sizing: border-box; display: flex; align-items: center; justify-content: center; font-family: Geist, -apple-system, system-ui, sans-serif; background: {{t.bg}}; color: {{t.text}};">
-  <div style="width: 560px; display: flex; flex-direction: column; align-items: center; gap: 28px; text-align: center;">
-    <div role="list" aria-label="Your piles" style="width: 100%; display: flex; flex-wrap: wrap; gap: 10px;"><sc-for list="{{piles}}" as="p" hint-placeholder-count="3"><a role="listitem" href="{{p.href}}" aria-label="Go over {{p.name}}" title="Go over {{p.name}}" style="flex: 1 1 0; min-width: 0; position: relative; box-sizing: border-box; padding: 22px 20px 20px; border-radius: 28px; background: {{t.surf}}; display: flex; flex-direction: column; gap: 6px; text-align: left; pointer-events: {{p.pe}};"><span style="position: absolute; top: 18px; right: 16px; width: 28px; height: 28px; border-radius: 50%; background: {{t.bg}}; color: {{p.arrow}}; display: flex; align-items: center; justify-content: center;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></span><span style="font-size: 44px; font-weight: 600; letter-spacing: -.03em; line-height: 1;">{{p.count}}</span><span style="font-size: 14px; font-weight: 600; color: {{t.muted}}; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{p.name}}</span><div style="margin-top: 10px; height: 6px; border-radius: 3px; background: {{t.surf2}}; overflow: hidden;"><div style="height: 6px; border-radius: 3px; width: {{p.w}}; background: {{fill}};"></div></div></a></sc-for></div>
-    <div style="display: flex; flex-direction: column; gap: 8px;"><h1 style="margin: 0; font-size: 32px; font-weight: 600; letter-spacing: -.03em;">Session complete</h1><div style="font-size: 16px; color: {{t.muted}};">{{summary}}</div></div>
-    
-    <div style="width: 100%; display: flex; gap: 12px;">
-      <div style="flex-grow: 1; background: {{t.surf}}; border-radius: 16px; padding: 18px; text-align: left; display: flex; flex-direction: column; gap: 4px;"><span style="font-size: 13px; color: {{t.muted}};">Streak</span><span style="font-size: 22px; font-weight: 600;">{{streakLabel}}</span></div>
-      <div style="flex-grow: 1; background: {{t.surf}}; border-radius: 16px; padding: 18px; text-align: left; display: flex; flex-direction: column; gap: 4px;"><span style="font-size: 13px; color: {{t.muted}};">Next review</span><span style="font-size: 22px; font-weight: 600;">{{nextLabel}}</span></div>
-    </div>
-    <div style="width: 100%; display: flex; gap: 10px;"><a href="{{moreHref}}" style="flex-grow: 1; height: 52px; border-radius: 999px; background: {{t.surf}}; display: flex; align-items: center; justify-content: center; font-size: 15px; font-weight: 600;">{{moreLabel}}</a><a href="{{doneHref}}" style="flex-grow: 1; height: 52px; border-radius: 999px; background: {{t.inv}}; color: {{t.invText}}; display: flex; align-items: center; justify-content: center; font-size: 15px; font-weight: 600;">Done</a></div>
-  </div>
-</div>
-</x-dc>
-<script type="text/x-dc" data-dc-script data-props='{"dark":{"editor":"boolean","default":false},"dim":{"editor":"boolean","default":false},"$preview":{"width":1440,"height":900}}'>
+// Made from design/canvas/project/WebQuizSettings.dc.html by design/to-web.mjs. Change the design, not this file.
+export default {
+  name: "WebQuizSettings", title: "Web · Learn mode · settings (the deck’s background)", w: 1440, h: 900, fill: true,
+  props: {},
+  imports: ["WebQuiz"],
+  css: "body{margin:0;font-family:Geist, -apple-system, system-ui, sans-serif}\na{color:inherit;text-decoration:none}a:hover{opacity:.8}\n@keyframes scRise{from{opacity:0;transform:translateY(14px)}}main>*{animation:scRise .5s cubic-bezier(.2,.8,.2,1) backwards}main>*:nth-child(2){animation-delay:0.06s}main>*:nth-child(3){animation-delay:0.12s}main>*:nth-child(4){animation-delay:0.18s}main>*:nth-child(5){animation-delay:0.24s}main>*:nth-child(n+6){animation-delay:.3s}button,.sc-press{transition:transform .1s ease}button:active,.sc-press:active{transform:scale(.96)}.sc-lift{transition:transform .25s cubic-bezier(.2,.8,.2,1),box-shadow .25s cubic-bezier(.2,.8,.2,1)}.sc-lift:hover{transform:translateY(-4px);box-shadow:0 24px 48px -24px rgba(0,0,0,.45)}@keyframes scFloat{50%{transform:translateY(-6px)}}@keyframes scSwayA{50%{transform:rotate(-13deg) translateX(-3px)}}@keyframes scSwayB{50%{transform:rotate(10deg) translateX(3px)}}@keyframes scGlow{50%{opacity:.55}}@keyframes scSheen{0%,58%{transform:translateX(-160%) skewX(-18deg)}86%,100%{transform:translateX(260%) skewX(-18deg)}}.sc-float{animation:scFloat 6s ease-in-out infinite}.sc-sway-a{animation:scSwayA 6s ease-in-out infinite}.sc-sway-b{animation:scSwayB 6s ease-in-out infinite}.sc-glow{animation:scGlow 6s ease-in-out infinite}.sc-sheen{position:absolute;top:0;bottom:0;left:0;width:45%;background:linear-gradient(90deg,transparent,rgba(255,255,255,.4),transparent);animation:scSheen 5s cubic-bezier(.4,0,.2,1) infinite;pointer-events:none}@keyframes scDrift{from{transform:scale(1.14) translate(-3%,-2%)}to{transform:scale(1.14) translate(3%,2%)}}.sc-alive>svg:first-of-type{animation:scDrift 16s ease-in-out infinite alternate}@keyframes scDraw{from{stroke-dashoffset:1.02}}.sc-draw{stroke-dasharray:1 2;animation:scDraw .9s cubic-bezier(.2,.8,.2,1) backwards}@keyframes scKnob{from{opacity:0;transform:scale(.3)}}.sc-knob{transform-box:fill-box;transform-origin:center;animation:scKnob .35s .75s cubic-bezier(.34,1.56,.64,1) backwards}@keyframes scGrow{from{transform:scaleY(0)}}.sc-grow{transform-origin:bottom;animation:scGrow .6s cubic-bezier(.2,.8,.2,1) backwards}:nth-child(2)>.sc-grow{animation-delay:0.04s}:nth-child(3)>.sc-grow{animation-delay:0.08s}:nth-child(4)>.sc-grow{animation-delay:0.12s}:nth-child(5)>.sc-grow{animation-delay:0.16s}:nth-child(6)>.sc-grow{animation-delay:0.20s}:nth-child(7)>.sc-grow{animation-delay:0.24s}:nth-child(8)>.sc-grow{animation-delay:0.28s}:nth-child(9)>.sc-grow{animation-delay:0.32s}:nth-child(10)>.sc-grow{animation-delay:0.36s}:nth-child(11)>.sc-grow{animation-delay:0.40s}:nth-child(12)>.sc-grow{animation-delay:0.44s}:nth-child(13)>.sc-grow{animation-delay:0.48s}:nth-child(14)>.sc-grow{animation-delay:0.52s}@media (prefers-reduced-motion:reduce){main>*,.sc-float,.sc-sway-a,.sc-sway-b,.sc-glow,.sc-alive>svg,.sc-draw,.sc-knob,.sc-grow{animation:none!important}.sc-sheen{display:none}button:active,.sc-press:active,.sc-lift:hover{transform:none}}\n@media (prefers-reduced-motion:reduce){.sc-occ{transition:none!important}}@keyframes scQuizIn{from{opacity:0;transform:translateY(6px)}}@keyframes scQA{from{opacity:0;transform:translateY(12px)}}@keyframes scQB{from{opacity:0;transform:translateY(12px)}}@keyframes scShake{0%,100%{transform:none}25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}@keyframes scPop{40%{transform:scale(1.025)}}@keyframes scPlusA{0%{opacity:0;transform:translateY(6px)}25%{opacity:1}100%{opacity:0;transform:translateY(-16px)}}@keyframes scPlusB{0%{opacity:0;transform:translateY(6px)}25%{opacity:1}100%{opacity:0;transform:translateY(-16px)}}.sc-tick path{stroke-dasharray:24;stroke-dashoffset:24;animation:scTick .32s .06s ease forwards}@keyframes scTick{to{stroke-dashoffset:0}}@property --sc-n{syntax:'<integer>';initial-value:0;inherits:false}.sc-count{--sc-n:var(--to);counter-reset:n var(--sc-n);animation:scCount 1.1s .25s cubic-bezier(.2,.8,.2,1) backwards}.sc-count::after{content:counter(n)}@keyframes scCount{from{--sc-n:0}}@keyframes scLearnIn{from{transform:none}to{transform:translateY(-5px)}}@keyframes scLearnHover{from{transform:translateY(-5px)}to{transform:translateY(-9px)}}@media (prefers-reduced-motion:reduce){.sc-quiz-in,.sc-shake,.sc-q,.sc-count,.sc-plus,.sc-opt{animation:none!important}.sc-tick path{animation:none;stroke-dashoffset:0}}",
+  template: "<div style=\"width: 100%; height: 100vh; overflow: hidden;\"><dc-import name=\"WebQuiz\" settings-open=\"{{yes}}\" hint-size=\"1440px,900px\"></dc-import></div>",
+  Logic: DCLogic => {
 class Component extends DCLogic {
 // Dark mode has two looks, picked in Settings → Dark mode: black (the first one, and still the default) or gray (the
 // owner: "add a darkmode option that is grayish not fully blackedout"). g asks for gray; it only counts when d is on.
@@ -224,16 +199,8 @@ mock() {
   };
 }
 
-renderVals() { const t = this.theme(!!this.props.dark, !!this.props.dim);const db = this.props.db || this.mock(); const chrome = db.chrome();
-  const ss = db.session(), plural = (n, word) => n + ' ' + word + (n === 1 ? '' : 's'), all = Math.max(1, ss.sorted);
-  const ink = this.props.dark ? ['#3A4BB0', '#8C9AFC'] : ['#B0BAFB', '#4353E0'];
-  return { t, ...chrome, fill: 'linear-gradient(90deg, ' + ink[0] + ', ' + ink[1] + ')',
-    // Each pile opens a review of just the cards in it (an empty pile can't be opened).
-    piles: ss.piles.map(p => ({ name: p.name, count: String(p.n), w: Math.round(p.n / all * 100) + '%', href: p.href || 'WebReview.dc.html', pe: p.total === 0 ? 'none' : 'auto', arrow: p.total === 0 ? t.surf2 : t.text })),
-    summary: plural(ss.sorted, 'card') + ' sorted · ' + plural(ss.minutes, 'minute'), summaryShort: ss.sorted + ' sorted · ' + ss.minutes + ' min',
-    streakLabel: plural(ss.streak, 'day'), nextLabel: ss.next, nextShort: ss.next.split(' · ')[0],
-    moreHref: ss.moreHref, moreLabel: ss.moreLabel || 'Study 10 more', doneHref: db.mock ? 'WebDeck.dc.html' : ss.doneHref }; }
+renderVals() { return { yes: true }; }
 }
-</script>
-</body>
-</html>
+return Component;
+  }
+};
