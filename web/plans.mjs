@@ -1,8 +1,9 @@
 // Lucida Pro: where to pay, and where to change or cancel it. Both are Stripe's own pages. The canvas (design/build.mjs)
 // and the server (billing.mjs) read these.
-// Payment links (Stripe → Payment links, product "Lucida Pro": $5.99 a month or $39 a year). The server's /pro page adds
+// Payment links (Stripe → Payment links, product "Lucida Pro": $5.99 a month or $49.99 a year). The server's /pro page adds
 // who is paying (client_reference_id), so the webhook knows whose Pro it is.
-export const PRO_LINKS = { monthly: 'https://buy.stripe.com/fZu7sMaaM2IN8SL7WW4F201', yearly: 'https://buy.stripe.com/fZu8wQ3Mo6Z3b0Tcdc4F200' };
+export const PRO_LINKS = { monthly: 'https://buy.stripe.com/fZu7sMaaM2IN8SL7WW4F201', yearly: 'https://buy.stripe.com/bJe4gA6YA5UZ8SL9104F202' };
+// Yearly was $39 (link …F200, switched off on 2026-09-25 when the owner made it $49.99).
 // Stripe's customer portal (Settings → Billing → Customer portal → login link): Stripe emails a code to the address
 // that paid, then shows the plan, the card, and the invoices, with a button to cancel (Pro then stays on until the end
 // of the time paid for). Its "Return" link goes back to Settings.

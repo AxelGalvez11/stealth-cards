@@ -138,13 +138,13 @@ struct LearnUpgradeSheet: View {
           }
         }
         // Each price is its own button, so paying never picks yearly for you.
-        Text("Yearly works out to $3.25 a month. Cancel anytime.").css(14).foregroundStyle(t.muted)
+        Text("Yearly works out to $4.17 a month. Cancel anytime.").css(14).foregroundStyle(t.muted)
         FlexRow(spacing: 10) {
           Button { UIApplication.shared.open(API.pro("monthly")) } label: {
             Text("$5.99 a month").css(15, .semibold).foregroundStyle(t.text).frame(maxWidth: .infinity).frame(height: 52).background(Capsule().fill(t.surf))
           }.buttonStyle(.press)
           Button { UIApplication.shared.open(API.pro("yearly")) } label: {
-            Text("$39 a year").css(15, .semibold).foregroundStyle(t.invText).frame(maxWidth: .infinity).frame(height: 52).background(Capsule().fill(t.inv))
+            Text("$49.99 a year").css(15, .semibold).foregroundStyle(t.invText).frame(maxWidth: .infinity).frame(height: 52).background(Capsule().fill(t.inv))
           }.buttonStyle(.press)
         }
       }

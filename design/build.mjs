@@ -2957,8 +2957,8 @@ const learnUpgradeBody = (back, pad) => `<a href="${back}" aria-label="Close" st
     <div style="box-sizing: border-box; padding: 0 ${pad}px ${pad}px; margin-top: -6px; display: flex; flex-direction: column; gap: 18px;">
       <div style="display: flex; flex-direction: column; gap: 8px;"><span style="display: flex; align-items: center; gap: 10px; font-size: 26px; font-weight: 600; letter-spacing: -.03em;">Learn every card${PRO_BADGE}</span><span style="font-size: 15px; line-height: 1.5; color: {{t.muted}};">AI turns your cards into questions of every kind, like matching and typing the answer, and keeps going until you know them all.</span></div>
       <div style="display: flex; flex-direction: column; gap: 10px; font-size: 15px;">${['Learn mode with 5 kinds of questions', 'Photo covers and your own colors', 'Unlimited pictures and sounds'].map(x => `<span style="display: flex; align-items: center; gap: 10px;"><span style="width: 22px; height: 22px; flex-shrink: 0; border-radius: 11px; background: linear-gradient(135deg, #7E94FB, #2CB2EA); color: #FFFFFF; display: flex; align-items: center; justify-content: center;">${svg(I.check, 13, 2.6)}</span>${x}</span>`).join('')}</div>
-      <div style="font-size: 14px; color: {{t.muted}};">Yearly works out to $3.25 a month. Cancel anytime.</div>
-      <div style="display: flex; gap: 10px;">${quizBtn('$5.99 a month', '{{monthlyHref}}', false, 1)}${quizBtn('$39 a year', '{{yearlyHref}}', true, 1)}</div>
+      <div style="font-size: 14px; color: {{t.muted}};">Yearly works out to $4.17 a month. Cancel anytime.</div>
+      <div style="display: flex; gap: 10px;">${quizBtn('$5.99 a month', '{{monthlyHref}}', false, 1)}${quizBtn('$49.99 a year', '{{yearlyHref}}', true, 1)}</div>
     </div>`;
 const webQuizStart = pro => `<div style="position: relative; width: 1440px; height: 900px; overflow: hidden; font-family: ${FONT}; color: {{t.text}};">
   <dc-import name="WebDeck" dark="{{dark}}" deck-id="{{deckId}}" hint-size="1440px,900px"></dc-import>
@@ -3806,7 +3806,7 @@ const LIVE_FINAL_LOGIC = LIVE_LOGIC.replace('    r: wrongPick ? {', `    rest: $
     r: wrongPick ? {`);
 
 // ---------- Pricing (lucida.cards/pricing) ----------
-// Free keeps every card. Pro ($5.99 a month or $39 a year) is for making Lucida yours: AI quizzes, photo covers and
+// Free keeps every card. Pro ($5.99 a month or $49.99 a year, since 2026-09-25; it was $39) is for making Lucida yours: AI quizzes, photo covers and
 // your own colors, unlimited pictures and sounds, natural voices. Drawn for computers and phones like the landing page,
 // with the same sky; it isn't on the site yet (it goes live with payments).
 const PLAN_FREE = ['Unlimited decks and cards', 'Your AI makes cards for you', 'Reviews planned by spaced repetition', 'All four card types', 'A color for every deck', 'Up to 100 pictures and sounds', 'Import and export anytime'];
@@ -3831,7 +3831,7 @@ ${skyLayer(phone)}
 <section style="padding: ${phone ? 44 : 80}px ${L.pad}px 0; display: flex; flex-direction: column; align-items: center; text-align: center;">
   <h1 style="margin: 0; font-size: ${phone ? 44 : 72}px; font-weight: 600; line-height: 1; letter-spacing: -.05em; text-wrap: balance;">Simple pricing.</h1>
   ${leadP(L, 'Your cards are always free. Pro is for making Lucida yours.', true)}
-  <div role="group" aria-label="Billing" style="margin-top: ${phone ? 26 : 32}px; display: inline-flex; padding: 4px; border-radius: 999px; background: {{t.bg}}; box-shadow: 0 1px 2px rgba(0,0,0,.06), 0 10px 24px -14px rgba(0,0,0,.25);"><sc-for list="{{billing}}" as="b" hint-placeholder-count="2"><button type="button" onClick="{{b.pick}}" data-plan-pick="{{b.id}}" aria-pressed="{{b.pressed}}" style="height: 40px; padding: 0 18px; display: inline-flex; align-items: center; gap: 8px; border: 0; border-radius: 999px; background: {{b.bg}}; color: {{b.fg}}; font: inherit; font-size: 14px; font-weight: 600; cursor: pointer;">{{b.label}}<sc-if value="{{b.hasTag}}" hint-placeholder-val="{{ false }}"><span style="height: 22px; padding: 0 8px; display: inline-flex; align-items: center; border-radius: 999px; background: {{t.goodTint}}; color: {{t.good}}; font-size: 12px; font-weight: 600;">Save 45%</span></sc-if></button></sc-for></div>
+  <div role="group" aria-label="Billing" style="margin-top: ${phone ? 26 : 32}px; display: inline-flex; padding: 4px; border-radius: 999px; background: {{t.bg}}; box-shadow: 0 1px 2px rgba(0,0,0,.06), 0 10px 24px -14px rgba(0,0,0,.25);"><sc-for list="{{billing}}" as="b" hint-placeholder-count="2"><button type="button" onClick="{{b.pick}}" data-plan-pick="{{b.id}}" aria-pressed="{{b.pressed}}" style="height: 40px; padding: 0 18px; display: inline-flex; align-items: center; gap: 8px; border: 0; border-radius: 999px; background: {{b.bg}}; color: {{b.fg}}; font: inherit; font-size: 14px; font-weight: 600; cursor: pointer;">{{b.label}}<sc-if value="{{b.hasTag}}" hint-placeholder-val="{{ false }}"><span style="height: 22px; padding: 0 8px; display: inline-flex; align-items: center; border-radius: 999px; background: {{t.goodTint}}; color: {{t.good}}; font-size: 12px; font-weight: 600;">Save 30%</span></sc-if></button></sc-for></div>
 </section>
 <section style="padding: ${phone ? 28 : 44}px ${phone ? 16 : L.pad}px 0;">
   <div style="max-width: 960px; margin: 0 auto; display: grid; grid-template-columns: ${phone ? '1fr' : '1fr 1fr'}; gap: ${phone ? 12 : 16}px;">
@@ -3842,7 +3842,7 @@ ${skyLayer(phone)}
       ${planList(PLAN_FREE, 'color: {{t.muted}};')}
     </div>
     ${artCard('pro', `border-radius: ${phone ? 28 : 32}px; box-shadow: 0 24px 56px -28px rgba(20,22,90,.55);`, `height: 100%; box-sizing: border-box; padding: ${pad}px; display: flex; flex-direction: column; gap: 24px;`, `<div><div style="display: flex; align-items: center; gap: 8px; font-size: 20px; font-weight: 600; letter-spacing: -.01em;">${svg(I.sparkle, 18, 1.8)}Pro</div><div style="margin-top: 6px; font-size: 15px; opacity: .8;">Make Lucida yours.</div></div>
-      ${proPlan('yearly', '$39', 'a year', 'That’s $3.25 a month, paid once a year.')}
+      ${proPlan('yearly', '$49.99', 'a year', 'That’s $4.17 a month, paid once a year.')}
       ${proPlan('monthly', '$5.99', 'a month', 'Paid monthly. Cancel anytime.')}
       <div style="display: flex; flex-direction: column; gap: 12px;"><span style="font-size: 14px; opacity: .8;">Everything in Free, plus:</span>${planList(PLAN_PRO, 'color: #FFFFFF;')}</div>`)}
   </div>
