@@ -1,0 +1,918 @@
+// Made from design/canvas/project/WebWelcome.dc.html by design/to-web.mjs. Change the design, not this file.
+export default {
+  name: "WebWelcome", title: "Web · Onboarding · pick your AI", w: 1440, h: 900, fill: true,
+  props: {"dark":false,"dim":false,"step":"Pick AI","ai":"Claude","source":"Anki","lightPage":"#FFFFFF","lightGlow":"#FFFFFF","lightShadow":"#C6D3F2","darkPage":"#131419","darkGlow":"#41475B","darkShadow":"#0A0B10"},
+  imports: [],
+  css: "body{margin:0;font-family:Geist, -apple-system, system-ui, sans-serif}\na{color:inherit;text-decoration:none}a:hover{opacity:.8}\n@keyframes scRise{from{opacity:0;transform:translateY(14px)}}main>*{animation:scRise .5s cubic-bezier(.2,.8,.2,1) backwards}main>*:nth-child(2){animation-delay:0.06s}main>*:nth-child(3){animation-delay:0.12s}main>*:nth-child(4){animation-delay:0.18s}main>*:nth-child(5){animation-delay:0.24s}main>*:nth-child(n+6){animation-delay:.3s}button,.sc-press{transition:transform .1s ease}button:active,.sc-press:active{transform:scale(.96)}.sc-sw{transition:background-color .3s ease,transform .1s ease}.sc-sw>span{transition:transform .32s cubic-bezier(.34,1.56,.64,1),background-color .3s ease}.sc-lift{transition:transform 1s ease-out,box-shadow 1s ease-out}.sc-lift:hover{transform:translateY(-4px);box-shadow:0 24px 48px -24px rgba(0,0,0,.45)}@keyframes scScrimIn{from{opacity:0}}@keyframes scScrimOut{to{opacity:0}}.sc-scrim{animation:scScrimIn .35s ease backwards}.sc-scrim.sc-gone{animation:scScrimOut .26s ease forwards}@keyframes scPanelIn{from{opacity:0;transform:translateX(calc(100% + 12px))}}@keyframes scPanelOut{to{opacity:0;transform:translateX(calc(100% + 12px))}}.sc-panel{animation:scPanelIn .35s cubic-bezier(.2,.8,.2,1) backwards}.sc-panel.sc-gone{animation:scPanelOut .26s cubic-bezier(.4,0,1,1) forwards}@keyframes scSheetIn{from{transform:translateY(100%)}}@keyframes scSheetOut{to{transform:translateY(100%)}}.sc-sheet{animation:scSheetIn .35s cubic-bezier(.2,.8,.2,1) backwards}.sc-sheet.sc-gone{animation:scSheetOut .26s cubic-bezier(.4,0,1,1) forwards}@keyframes scFloat{50%{transform:translateY(-6px)}}@keyframes scSwayA{50%{transform:rotate(-13deg) translateX(-3px)}}@keyframes scSwayB{50%{transform:rotate(10deg) translateX(3px)}}@keyframes scGlow{50%{opacity:.55}}@keyframes scSheen{0%,58%{transform:translateX(-160%) skewX(-18deg)}86%,100%{transform:translateX(260%) skewX(-18deg)}}.sc-float{animation:scFloat 6s ease-in-out infinite}.sc-sway-a{animation:scSwayA 6s ease-in-out infinite}.sc-sway-b{animation:scSwayB 6s ease-in-out infinite}.sc-glow{animation:scGlow 6s ease-in-out infinite}.sc-sheen{position:absolute;top:0;bottom:0;left:0;width:45%;background:linear-gradient(90deg,transparent,rgba(255,255,255,.4),transparent);animation:scSheen 5s cubic-bezier(.4,0,.2,1) infinite;pointer-events:none}@keyframes scDrift{from{transform:scale(1.14) translate(-3%,-2%)}to{transform:scale(1.14) translate(3%,2%)}}.sc-alive>svg:first-of-type{animation:scDrift 16s ease-in-out infinite alternate}@keyframes scDraw{from{stroke-dashoffset:1.02}}.sc-draw{stroke-dasharray:1 2;animation:scDraw .9s cubic-bezier(.2,.8,.2,1) backwards}@keyframes scKnob{from{opacity:0;transform:scale(.3)}}.sc-knob{transform-box:fill-box;transform-origin:center;animation:scKnob .35s .75s cubic-bezier(.34,1.56,.64,1) backwards}@keyframes scGrow{from{transform:scaleY(0)}}.sc-grow{transform-origin:bottom;animation:scGrow .6s cubic-bezier(.2,.8,.2,1) backwards}:nth-child(2)>.sc-grow{animation-delay:0.04s}:nth-child(3)>.sc-grow{animation-delay:0.08s}:nth-child(4)>.sc-grow{animation-delay:0.12s}:nth-child(5)>.sc-grow{animation-delay:0.16s}:nth-child(6)>.sc-grow{animation-delay:0.20s}:nth-child(7)>.sc-grow{animation-delay:0.24s}:nth-child(8)>.sc-grow{animation-delay:0.28s}:nth-child(9)>.sc-grow{animation-delay:0.32s}:nth-child(10)>.sc-grow{animation-delay:0.36s}:nth-child(11)>.sc-grow{animation-delay:0.40s}:nth-child(12)>.sc-grow{animation-delay:0.44s}:nth-child(13)>.sc-grow{animation-delay:0.48s}:nth-child(14)>.sc-grow{animation-delay:0.52s}@media (prefers-reduced-motion:reduce){main>*,.sc-float,.sc-sway-a,.sc-sway-b,.sc-glow,.sc-alive>svg,.sc-draw,.sc-knob,.sc-grow,.sc-scrim,.sc-panel,.sc-sheet{animation:none!important}.sc-sheen{display:none}button:active,.sc-press:active,.sc-lift:hover{transform:none}.sc-sw>span{transition:background-color .3s ease}}\n@keyframes obRing{from{transform:scale(1);opacity:.5}to{transform:scale(3);opacity:0}}.ob-ring{animation:obRing 1.6s cubic-bezier(.2,.8,.2,1) infinite}@keyframes obPop{from{transform:scale(.3);opacity:0}}.ob-pop{animation:obPop .5s cubic-bezier(.34,1.56,.64,1) .12s backwards}@keyframes obFan{from{opacity:0;transform:rotate(0deg) translateY(16px)}}.ob-fan{animation:obFan .7s cubic-bezier(.2,.8,.2,1) backwards}@keyframes obGrain{0%{transform:translate(0,0)}12.5%{transform:translate(-24px,16px)}25%{transform:translate(18px,-28px)}37.5%{transform:translate(-12px,-20px)}50%{transform:translate(28px,12px)}62.5%{transform:translate(-30px,-6px)}75%{transform:translate(8px,26px)}87.5%{transform:translate(-18px,30px)}}.ob-grain{will-change:transform;animation:obGrain .8s steps(1) infinite}@keyframes obIn{from{opacity:0;transform:translateY(6px)}}.ob-in{animation:obIn .35s cubic-bezier(.2,.8,.2,1) backwards}@media (prefers-reduced-motion:reduce){.ob-ring,.ob-pop,.ob-fan,.ob-grain,.ob-in{animation:none!important}.ob-flip{transition:none!important}}",
+  template: "<div style=\"position: relative; width: 100%; height: 100vh; box-sizing: border-box; padding: 96px 0; display: flex; flex-direction: column; justify-content: center; font-family: Geist, -apple-system, system-ui, sans-serif; background: {{t.bg}}; color: {{t.text}}; overflow: hidden;\">\n  <div aria-hidden=\"true\" style=\"position: absolute; inset: 0; z-index: 0; overflow: hidden; pointer-events: none; background: {{aura.base}};\"><canvas ref=\"{{aura.mount}}\" width=\"720\" height=\"450\" style=\"position: absolute; inset: 0; width: 100%; height: 100%; display: block;\"></canvas><svg class=\"ob-grain\" width=\"100%\" height=\"100%\" style=\"position: absolute; left: -48px; top: -48px; width: calc(100% + 96px); height: calc(100% + 96px); mix-blend-mode: {{aura.blend}}; opacity: {{aura.grain}};\"><filter id=\"ob-grain\" x=\"0\" y=\"0\" width=\"100%\" height=\"100%\" color-interpolation-filters=\"sRGB\"><feTurbulence type=\"fractalNoise\" baseFrequency=\".85\" numOctaves=\"3\" stitchTiles=\"stitch\"></feTurbulence><feColorMatrix type=\"saturate\" values=\"0\"></feColorMatrix><feComponentTransfer><feFuncR type=\"linear\" slope=\"{{aura.gs}}\" intercept=\"{{aura.gi}}\"/><feFuncG type=\"linear\" slope=\"{{aura.gs}}\" intercept=\"{{aura.gi}}\"/><feFuncB type=\"linear\" slope=\"{{aura.gs}}\" intercept=\"{{aura.gi}}\"/></feComponentTransfer></filter><rect width=\"100%\" height=\"100%\" filter=\"url(#ob-grain)\"></rect></svg></div>\n  <div style=\"position: absolute; top: 32px; left: 40px;\"><div style=\"display: flex; align-items: center; gap: 9px;\"><svg width=\"15\" height=\"14\" viewBox=\"0 0 33 30.5\" fill=\"currentColor\" aria-hidden=\"true\" style=\"flex-shrink: 0; display: block;\"><circle cx=\"7\" cy=\"7\" r=\"7\"/><circle cx=\"26\" cy=\"7\" r=\"7\"/><circle cx=\"16.5\" cy=\"23.45\" r=\"7\"/></svg><div style=\"font-size: 17px; font-weight: 600; letter-spacing: -.02em;\">Lucida</div></div></div>\n  <sc-if value=\"{{skipToCards}}\" hint-placeholder-val=\"{{ true }}\"><button type=\"button\" onClick=\"{{skip}}\" style=\"position: absolute; top: 34px; right: 40px; display: inline-flex; align-items: center; gap: 4px; border: 0; padding: 0; background: transparent; color: {{t.muted}}; font: inherit; font-size: 14px; cursor: pointer;\">Skip for now<svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M9 6l6 6-6 6\"/></svg></button></sc-if><sc-if value=\"{{skipToToday}}\" hint-placeholder-val=\"{{ false }}\"><a href=\"{{todayHref}}\" onClick=\"{{finish}}\" style=\"position: absolute; top: 34px; right: 40px; display: inline-flex; align-items: center; gap: 4px; border: 0; padding: 0; background: transparent; color: {{t.muted}}; font: inherit; font-size: 14px; cursor: pointer;\">Skip for now<svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M9 6l6 6-6 6\"/></svg></a></sc-if>\n  <main style=\"overflow-y: auto; position: relative; z-index: 1; width: 480px; align-self: center; box-sizing: border-box; padding: 40px; border-radius: 32px; background: {{t.bg}}; box-shadow: {{cardShadow}}; display: flex; flex-direction: column;\"><sc-if value=\"{{isPickAI}}\" hint-placeholder-val=\"{{ true }}\"><div style=\"display: flex; flex-direction: column; gap: 28px;\"><div style=\"display: flex; flex-direction: column; gap: 8px;\"><div style=\"display: flex; align-items: center; gap: 10px; min-height: 28px;\"><span style=\"font-size: 14px; font-weight: 500; color: {{t.muted}};\">Step 1 of 2</span></div><h1 style=\"margin: 0; font-size: 32px; font-weight: 600; line-height: 1.12; letter-spacing: -.03em;\">Connect your AI</h1><p style=\"margin: 0; font-size: 15px; line-height: 1.45; color: {{t.muted}}; text-wrap: pretty;\">Then just ask it for flashcards. They show up here.</p></div><div style=\"display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px;\"><button type=\"button\" onClick=\"{{ai.claude.pick}}\" aria-pressed=\"{{ai.claude.pressed}}\" class=\"sc-press\" style=\"height: 64px; min-width: 0; box-sizing: border-box; padding: 0 14px 0 10px; display: flex; align-items: center; gap: 10px; border: 0; border-radius: 18px; background: {{t.bg}}; box-shadow: {{ai.claude.ring}}; color: {{t.text}}; font: inherit; font-size: 15px; font-weight: 600; text-align: left; cursor: pointer;\"><span style=\"width: 38px; height: 38px; flex-shrink: 0; border-radius: 19px; background: {{t.surf}}; display: flex; align-items: center; justify-content: center;\"><svg width=\"22\" height=\"22\" viewBox=\"0 0 256 257\" aria-hidden=\"true\"><path fill=\"#D97757\" d=\"m50.228 170.321 50.357-28.257.843-2.463-.843-1.361h-2.462l-8.426-.518-28.775-.778-24.952-1.037-24.175-1.296-6.092-1.297L0 125.796l.583-3.759 5.12-3.434 7.324.648 16.202 1.101 24.304 1.685 17.629 1.037 26.118 2.722h4.148l.583-1.685-1.426-1.037-1.101-1.037-25.147-17.045-27.22-18.017-14.258-10.37-7.713-5.25-3.888-4.925-1.685-10.758 7-7.713 9.397.649 2.398.648 9.527 7.323 20.35 15.75L94.817 91.9l3.889 3.24 1.555-1.102.195-.777-1.75-2.917-14.453-26.118-15.425-26.572-6.87-11.018-1.814-6.61c-.648-2.723-1.102-4.991-1.102-7.778l7.972-10.823L71.42 0 82.05 1.426l4.472 3.888 6.61 15.101 10.694 23.786 16.591 32.34 4.861 9.592 2.592 8.879.973 2.722h1.685v-1.556l1.36-18.211 2.528-22.36 2.463-28.776.843-8.1 4.018-9.722 7.971-5.25 6.222 2.981 5.12 7.324-.713 4.73-3.046 19.768-5.962 30.98-3.889 20.739h2.268l2.593-2.593 10.499-13.934 17.628-22.036 7.778-8.749 9.073-9.657 5.833-4.601h11.018l8.1 12.055-3.628 12.443-11.342 14.388-9.398 12.184-13.48 18.147-8.426 14.518.778 1.166 2.01-.194 30.46-6.481 16.462-2.982 19.637-3.37 8.88 4.148.971 4.213-3.5 8.62-20.998 5.184-24.628 4.926-36.682 8.685-.454.324.519.648 16.526 1.555 7.065.389h17.304l32.21 2.398 8.426 5.574 5.055 6.805-.843 5.184-12.962 6.611-17.498-4.148-40.83-9.721-14-3.5h-1.944v1.167l11.666 11.406 21.387 19.314 26.767 24.887 1.36 6.157-3.434 4.86-3.63-.518-23.526-17.693-9.073-7.972-20.545-17.304h-1.36v1.814l4.73 6.935 25.017 37.59 1.296 11.536-1.814 3.76-6.481 2.268-7.13-1.297-14.647-20.544-15.1-23.138-12.185-20.739-1.49.843-7.194 77.448-3.37 3.953-7.778 2.981-6.48-4.925-3.436-7.972 3.435-15.749 4.148-20.544 3.37-16.333 3.046-20.285 1.815-6.74-.13-.454-1.49.194-15.295 20.999-23.267 31.433-18.406 19.702-4.407 1.75-7.648-3.954.713-7.064 4.277-6.286 25.47-32.405 15.36-20.092 9.917-11.6-.065-1.686h-.583L44.07 198.125l-12.055 1.555-5.185-4.86.648-7.972 2.463-2.593 20.35-13.999-.064.065Z\"/></svg></span><span style=\"flex-grow: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;\">Claude</span><span style=\"display: flex; flex-shrink: 0; color: {{t.muted}};\"><svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M9 6l6 6-6 6\"/></svg></span></button><button type=\"button\" onClick=\"{{ai.openai.pick}}\" aria-pressed=\"{{ai.openai.pressed}}\" class=\"sc-press\" style=\"height: 64px; min-width: 0; box-sizing: border-box; padding: 0 14px 0 10px; display: flex; align-items: center; gap: 10px; border: 0; border-radius: 18px; background: {{t.bg}}; box-shadow: {{ai.openai.ring}}; color: {{t.text}}; font: inherit; font-size: 15px; font-weight: 600; text-align: left; cursor: pointer;\"><span style=\"width: 38px; height: 38px; flex-shrink: 0; border-radius: 19px; background: {{t.surf}}; display: flex; align-items: center; justify-content: center;\"><svg width=\"22\" height=\"22\" viewBox=\"96 96 419 419\" aria-hidden=\"true\"><path fill-rule=\"evenodd\" clip-rule=\"evenodd\" fill=\"{{t.text}}\" d=\"M252.794 108.802C289.191 99.0484 326.265 110.305 351.148 135.135C385.113 126.072 422.85 134.862 449.492 161.505C476.136 188.149 484.925 225.888 475.862 259.85V259.854C500.696 284.735 511.95 321.81 502.198 358.207C492.447 394.602 464.161 421.084 430.215 430.217C421.083 464.162 394.603 492.448 358.206 502.199C321.812 511.951 284.734 500.693 259.852 475.864C225.887 484.927 188.15 476.137 161.507 449.495C134.864 422.851 126.073 385.111 135.136 351.149C110.304 326.266 99.0496 289.192 108.801 252.795C118.552 216.4 146.84 189.918 180.784 180.785C189.917 146.841 216.396 118.553 252.794 108.802ZM374.292 407.145C374.292 411.271 372.092 415.086 368.517 417.148L283.723 466.102C302.487 480.585 327.555 486.459 352.217 479.852C386.997 470.532 410.068 439.312 410.555 405.006V317.717C410.555 315.08 409.125 312.621 406.843 311.303L374.292 292.509V407.145ZM251.868 415.897C248.296 417.959 243.893 417.959 240.317 415.897L155.526 366.942C152.366 390.436 159.811 415.08 177.866 433.136H177.863C203.325 458.594 241.896 462.962 271.85 446.232L347.449 402.586C349.735 401.268 351.148 398.8 351.148 396.163V358.579L251.868 415.897ZM368.602 220.628C366.319 219.309 363.474 219.318 361.191 220.637L328.641 239.431L427.921 296.749C431.496 298.811 433.697 302.627 433.697 306.752V404.661C455.622 395.654 473.244 376.881 479.851 352.218C489.169 317.442 473.668 281.85 444.201 264.274L368.602 220.628ZM177.303 206.34C155.377 215.348 137.756 234.122 131.148 258.783C121.832 293.561 137.331 329.153 166.799 346.727L242.398 390.373C244.68 391.692 247.525 391.684 249.807 390.366L282.357 371.572L183.078 314.253C179.504 312.189 177.303 308.375 177.303 304.251V206.34ZM259.849 279.145V331.858L305.5 358.213L351.15 331.858V279.145L305.5 252.789L259.849 279.145ZM327.276 144.9C308.512 130.418 283.445 124.543 258.782 131.15C224.002 140.471 200.931 171.691 200.445 205.995V293.286C200.445 295.923 201.875 298.381 204.158 299.7L236.707 318.493V203.856C236.707 199.731 238.909 195.916 242.483 193.853L327.276 144.9ZM433.137 177.867C407.675 152.407 369.103 148.038 339.149 164.769L263.55 208.415C261.265 209.734 259.852 212.202 259.852 214.838V252.423L359.132 195.105C362.703 193.041 367.108 193.041 370.682 195.105L455.473 244.06C458.635 220.567 451.189 195.922 433.135 177.867H433.137Z\"/></svg></span><span style=\"flex-grow: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;\">ChatGPT</span><span style=\"display: flex; flex-shrink: 0; color: {{t.muted}};\"><svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M9 6l6 6-6 6\"/></svg></span></button><button type=\"button\" onClick=\"{{ai.cursor.pick}}\" aria-pressed=\"{{ai.cursor.pressed}}\" class=\"sc-press\" style=\"height: 64px; min-width: 0; box-sizing: border-box; padding: 0 14px 0 10px; display: flex; align-items: center; gap: 10px; border: 0; border-radius: 18px; background: {{t.bg}}; box-shadow: {{ai.cursor.ring}}; color: {{t.text}}; font: inherit; font-size: 15px; font-weight: 600; text-align: left; cursor: pointer;\"><span style=\"width: 38px; height: 38px; flex-shrink: 0; border-radius: 19px; background: {{t.surf}}; display: flex; align-items: center; justify-content: center;\"><svg width=\"19\" height=\"22\" viewBox=\"0 0 466.73 532.09\" aria-hidden=\"true\"><path fill=\"{{p.cursorInk}}\" d=\"M457.43,125.94L244.42,2.96c-6.84-3.95-15.28-3.95-22.12,0L9.3,125.94c-5.75,3.32-9.3,9.46-9.3,16.11v247.99c0,6.65,3.55,12.79,9.3,16.11l213.01,122.98c6.84,3.95,15.28,3.95,22.12,0l213.01-122.98c5.75-3.32,9.3-9.46,9.3-16.11v-247.99c0-6.65-3.55-12.79-9.3-16.11h-.01ZM444.05,151.99l-205.63,356.16c-1.39,2.4-5.06,1.42-5.06-1.36v-233.21c0-4.66-2.49-8.97-6.53-11.31L24.87,145.67c-2.4-1.39-1.42-5.06,1.36-5.06h411.26c5.84,0,9.49,6.33,6.57,11.39h-.01Z\"/></svg></span><span style=\"flex-grow: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;\">Cursor</span><span style=\"display: flex; flex-shrink: 0; color: {{t.muted}};\"><svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M9 6l6 6-6 6\"/></svg></span></button><button type=\"button\" onClick=\"{{ai.mcp.pick}}\" aria-pressed=\"{{ai.mcp.pressed}}\" class=\"sc-press\" style=\"height: 64px; min-width: 0; box-sizing: border-box; padding: 0 14px 0 10px; display: flex; align-items: center; gap: 10px; border: 0; border-radius: 18px; background: {{t.bg}}; box-shadow: {{ai.mcp.ring}}; color: {{t.text}}; font: inherit; font-size: 15px; font-weight: 600; text-align: left; cursor: pointer;\"><span style=\"width: 38px; height: 38px; flex-shrink: 0; border-radius: 19px; background: {{t.surf}}; display: flex; align-items: center; justify-content: center;\"><svg width=\"22\" height=\"22\" viewBox=\"0 0 24 24\" fill-rule=\"evenodd\" aria-hidden=\"true\"><path fill=\"{{t.text}}\" d=\"M15.688 2.343a2.588 2.588 0 00-3.61 0l-9.626 9.44a.863.863 0 01-1.203 0 .823.823 0 010-1.18l9.626-9.44a4.313 4.313 0 016.016 0 4.116 4.116 0 011.204 3.54 4.3 4.3 0 013.609 1.18l.05.05a4.115 4.115 0 010 5.9l-8.706 8.537a.274.274 0 000 .393l1.788 1.754a.823.823 0 010 1.18.863.863 0 01-1.203 0l-1.788-1.753a1.92 1.92 0 010-2.754l8.706-8.538a2.47 2.47 0 000-3.54l-.05-.049a2.588 2.588 0 00-3.607-.003l-7.172 7.034-.002.002-.098.097a.863.863 0 01-1.204 0 .823.823 0 010-1.18l7.273-7.133a2.47 2.47 0 00-.003-3.537z\"/><path fill=\"{{t.text}}\" d=\"M14.485 4.703a.823.823 0 000-1.18.863.863 0 00-1.204 0l-7.119 6.982a4.115 4.115 0 000 5.9 4.314 4.314 0 006.016 0l7.12-6.982a.823.823 0 000-1.18.863.863 0 00-1.204 0l-7.119 6.982a2.588 2.588 0 01-3.61 0 2.47 2.47 0 010-3.54l7.12-6.982z\"/></svg></span><span style=\"flex-grow: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;\">Other app</span><span style=\"display: flex; flex-shrink: 0; color: {{t.muted}};\"><svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M9 6l6 6-6 6\"/></svg></span></button></div></div></sc-if><sc-if value=\"{{isSteps}}\" hint-placeholder-val=\"{{ false }}\"><div style=\"display: flex; flex-direction: column; gap: 24px;\"><div style=\"display: flex; flex-direction: column; gap: 8px;\"><div style=\"display: flex; align-items: center; gap: 10px; min-height: 28px;\"><span style=\"font-size: 14px; font-weight: 500; color: {{t.muted}};\">Step 1 of 2</span></div><h1 style=\"margin: 0; font-size: 32px; font-weight: 600; line-height: 1.12; letter-spacing: -.03em;\">Connect your AI</h1><p style=\"margin: 0; font-size: 15px; line-height: 1.45; color: {{t.muted}}; text-wrap: pretty;\">Then just ask it for flashcards. They show up here.</p></div><div role=\"group\" aria-label=\"Your AI\" style=\"display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 2px; padding: 4px; border-radius: 999px; background: {{t.surf}};\"><button type=\"button\" onClick=\"{{ai.claude.pick}}\" aria-pressed=\"{{ai.claude.pressed}}\" style=\"height: 36px; min-width: 0; padding: 0 8px; display: flex; align-items: center; justify-content: center; gap: 6px; border: 0; border-radius: 999px; background: {{ai.claude.bg}}; box-shadow: {{ai.claude.sh}}; color: {{ai.claude.fg}}; font: inherit; font-size: 13px; font-weight: 600; white-space: nowrap; cursor: pointer;\"><span style=\"display: flex; flex-shrink: 0; opacity: {{ai.claude.op}};\"><svg width=\"15\" height=\"15\" viewBox=\"0 0 256 257\" aria-hidden=\"true\"><path fill=\"#D97757\" d=\"m50.228 170.321 50.357-28.257.843-2.463-.843-1.361h-2.462l-8.426-.518-28.775-.778-24.952-1.037-24.175-1.296-6.092-1.297L0 125.796l.583-3.759 5.12-3.434 7.324.648 16.202 1.101 24.304 1.685 17.629 1.037 26.118 2.722h4.148l.583-1.685-1.426-1.037-1.101-1.037-25.147-17.045-27.22-18.017-14.258-10.37-7.713-5.25-3.888-4.925-1.685-10.758 7-7.713 9.397.649 2.398.648 9.527 7.323 20.35 15.75L94.817 91.9l3.889 3.24 1.555-1.102.195-.777-1.75-2.917-14.453-26.118-15.425-26.572-6.87-11.018-1.814-6.61c-.648-2.723-1.102-4.991-1.102-7.778l7.972-10.823L71.42 0 82.05 1.426l4.472 3.888 6.61 15.101 10.694 23.786 16.591 32.34 4.861 9.592 2.592 8.879.973 2.722h1.685v-1.556l1.36-18.211 2.528-22.36 2.463-28.776.843-8.1 4.018-9.722 7.971-5.25 6.222 2.981 5.12 7.324-.713 4.73-3.046 19.768-5.962 30.98-3.889 20.739h2.268l2.593-2.593 10.499-13.934 17.628-22.036 7.778-8.749 9.073-9.657 5.833-4.601h11.018l8.1 12.055-3.628 12.443-11.342 14.388-9.398 12.184-13.48 18.147-8.426 14.518.778 1.166 2.01-.194 30.46-6.481 16.462-2.982 19.637-3.37 8.88 4.148.971 4.213-3.5 8.62-20.998 5.184-24.628 4.926-36.682 8.685-.454.324.519.648 16.526 1.555 7.065.389h17.304l32.21 2.398 8.426 5.574 5.055 6.805-.843 5.184-12.962 6.611-17.498-4.148-40.83-9.721-14-3.5h-1.944v1.167l11.666 11.406 21.387 19.314 26.767 24.887 1.36 6.157-3.434 4.86-3.63-.518-23.526-17.693-9.073-7.972-20.545-17.304h-1.36v1.814l4.73 6.935 25.017 37.59 1.296 11.536-1.814 3.76-6.481 2.268-7.13-1.297-14.647-20.544-15.1-23.138-12.185-20.739-1.49.843-7.194 77.448-3.37 3.953-7.778 2.981-6.48-4.925-3.436-7.972 3.435-15.749 4.148-20.544 3.37-16.333 3.046-20.285 1.815-6.74-.13-.454-1.49.194-15.295 20.999-23.267 31.433-18.406 19.702-4.407 1.75-7.648-3.954.713-7.064 4.277-6.286 25.47-32.405 15.36-20.092 9.917-11.6-.065-1.686h-.583L44.07 198.125l-12.055 1.555-5.185-4.86.648-7.972 2.463-2.593 20.35-13.999-.064.065Z\"/></svg></span><span style=\"min-width: 0; overflow: hidden; text-overflow: ellipsis;\">Claude</span></button><button type=\"button\" onClick=\"{{ai.openai.pick}}\" aria-pressed=\"{{ai.openai.pressed}}\" style=\"height: 36px; min-width: 0; padding: 0 8px; display: flex; align-items: center; justify-content: center; gap: 6px; border: 0; border-radius: 999px; background: {{ai.openai.bg}}; box-shadow: {{ai.openai.sh}}; color: {{ai.openai.fg}}; font: inherit; font-size: 13px; font-weight: 600; white-space: nowrap; cursor: pointer;\"><span style=\"display: flex; flex-shrink: 0; opacity: {{ai.openai.op}};\"><svg width=\"15\" height=\"15\" viewBox=\"96 96 419 419\" aria-hidden=\"true\"><path fill-rule=\"evenodd\" clip-rule=\"evenodd\" fill=\"{{t.text}}\" d=\"M252.794 108.802C289.191 99.0484 326.265 110.305 351.148 135.135C385.113 126.072 422.85 134.862 449.492 161.505C476.136 188.149 484.925 225.888 475.862 259.85V259.854C500.696 284.735 511.95 321.81 502.198 358.207C492.447 394.602 464.161 421.084 430.215 430.217C421.083 464.162 394.603 492.448 358.206 502.199C321.812 511.951 284.734 500.693 259.852 475.864C225.887 484.927 188.15 476.137 161.507 449.495C134.864 422.851 126.073 385.111 135.136 351.149C110.304 326.266 99.0496 289.192 108.801 252.795C118.552 216.4 146.84 189.918 180.784 180.785C189.917 146.841 216.396 118.553 252.794 108.802ZM374.292 407.145C374.292 411.271 372.092 415.086 368.517 417.148L283.723 466.102C302.487 480.585 327.555 486.459 352.217 479.852C386.997 470.532 410.068 439.312 410.555 405.006V317.717C410.555 315.08 409.125 312.621 406.843 311.303L374.292 292.509V407.145ZM251.868 415.897C248.296 417.959 243.893 417.959 240.317 415.897L155.526 366.942C152.366 390.436 159.811 415.08 177.866 433.136H177.863C203.325 458.594 241.896 462.962 271.85 446.232L347.449 402.586C349.735 401.268 351.148 398.8 351.148 396.163V358.579L251.868 415.897ZM368.602 220.628C366.319 219.309 363.474 219.318 361.191 220.637L328.641 239.431L427.921 296.749C431.496 298.811 433.697 302.627 433.697 306.752V404.661C455.622 395.654 473.244 376.881 479.851 352.218C489.169 317.442 473.668 281.85 444.201 264.274L368.602 220.628ZM177.303 206.34C155.377 215.348 137.756 234.122 131.148 258.783C121.832 293.561 137.331 329.153 166.799 346.727L242.398 390.373C244.68 391.692 247.525 391.684 249.807 390.366L282.357 371.572L183.078 314.253C179.504 312.189 177.303 308.375 177.303 304.251V206.34ZM259.849 279.145V331.858L305.5 358.213L351.15 331.858V279.145L305.5 252.789L259.849 279.145ZM327.276 144.9C308.512 130.418 283.445 124.543 258.782 131.15C224.002 140.471 200.931 171.691 200.445 205.995V293.286C200.445 295.923 201.875 298.381 204.158 299.7L236.707 318.493V203.856C236.707 199.731 238.909 195.916 242.483 193.853L327.276 144.9ZM433.137 177.867C407.675 152.407 369.103 148.038 339.149 164.769L263.55 208.415C261.265 209.734 259.852 212.202 259.852 214.838V252.423L359.132 195.105C362.703 193.041 367.108 193.041 370.682 195.105L455.473 244.06C458.635 220.567 451.189 195.922 433.135 177.867H433.137Z\"/></svg></span><span style=\"min-width: 0; overflow: hidden; text-overflow: ellipsis;\">ChatGPT</span></button><button type=\"button\" onClick=\"{{ai.cursor.pick}}\" aria-pressed=\"{{ai.cursor.pressed}}\" style=\"height: 36px; min-width: 0; padding: 0 8px; display: flex; align-items: center; justify-content: center; gap: 6px; border: 0; border-radius: 999px; background: {{ai.cursor.bg}}; box-shadow: {{ai.cursor.sh}}; color: {{ai.cursor.fg}}; font: inherit; font-size: 13px; font-weight: 600; white-space: nowrap; cursor: pointer;\"><span style=\"display: flex; flex-shrink: 0; opacity: {{ai.cursor.op}};\"><svg width=\"13\" height=\"15\" viewBox=\"0 0 466.73 532.09\" aria-hidden=\"true\"><path fill=\"{{p.cursorInk}}\" d=\"M457.43,125.94L244.42,2.96c-6.84-3.95-15.28-3.95-22.12,0L9.3,125.94c-5.75,3.32-9.3,9.46-9.3,16.11v247.99c0,6.65,3.55,12.79,9.3,16.11l213.01,122.98c6.84,3.95,15.28,3.95,22.12,0l213.01-122.98c5.75-3.32,9.3-9.46,9.3-16.11v-247.99c0-6.65-3.55-12.79-9.3-16.11h-.01ZM444.05,151.99l-205.63,356.16c-1.39,2.4-5.06,1.42-5.06-1.36v-233.21c0-4.66-2.49-8.97-6.53-11.31L24.87,145.67c-2.4-1.39-1.42-5.06,1.36-5.06h411.26c5.84,0,9.49,6.33,6.57,11.39h-.01Z\"/></svg></span><span style=\"min-width: 0; overflow: hidden; text-overflow: ellipsis;\">Cursor</span></button><button type=\"button\" onClick=\"{{ai.mcp.pick}}\" aria-pressed=\"{{ai.mcp.pressed}}\" style=\"height: 36px; min-width: 0; padding: 0 8px; display: flex; align-items: center; justify-content: center; gap: 6px; border: 0; border-radius: 999px; background: {{ai.mcp.bg}}; box-shadow: {{ai.mcp.sh}}; color: {{ai.mcp.fg}}; font: inherit; font-size: 13px; font-weight: 600; white-space: nowrap; cursor: pointer;\"><span style=\"display: flex; flex-shrink: 0; opacity: {{ai.mcp.op}};\"><svg width=\"15\" height=\"15\" viewBox=\"0 0 24 24\" fill-rule=\"evenodd\" aria-hidden=\"true\"><path fill=\"{{t.text}}\" d=\"M15.688 2.343a2.588 2.588 0 00-3.61 0l-9.626 9.44a.863.863 0 01-1.203 0 .823.823 0 010-1.18l9.626-9.44a4.313 4.313 0 016.016 0 4.116 4.116 0 011.204 3.54 4.3 4.3 0 013.609 1.18l.05.05a4.115 4.115 0 010 5.9l-8.706 8.537a.274.274 0 000 .393l1.788 1.754a.823.823 0 010 1.18.863.863 0 01-1.203 0l-1.788-1.753a1.92 1.92 0 010-2.754l8.706-8.538a2.47 2.47 0 000-3.54l-.05-.049a2.588 2.588 0 00-3.607-.003l-7.172 7.034-.002.002-.098.097a.863.863 0 01-1.204 0 .823.823 0 010-1.18l7.273-7.133a2.47 2.47 0 00-.003-3.537z\"/><path fill=\"{{t.text}}\" d=\"M14.485 4.703a.823.823 0 000-1.18.863.863 0 00-1.204 0l-7.119 6.982a4.115 4.115 0 000 5.9 4.314 4.314 0 006.016 0l7.12-6.982a.823.823 0 000-1.18.863.863 0 00-1.204 0l-7.119 6.982a2.588 2.588 0 01-3.61 0 2.47 2.47 0 010-3.54l7.12-6.982z\"/></svg></span><span style=\"min-width: 0; overflow: hidden; text-overflow: ellipsis;\">Other</span></button></div><div style=\"display: flex; flex-direction: column;\"><sc-if value=\"{{isClaude}}\" hint-placeholder-val=\"{{ true }}\"><div style=\"display: flex; flex-direction: column; gap: 20px;\"><div style=\"display: flex; gap: 14px;\"><span style=\"width: 26px; height: 26px; flex-shrink: 0; border-radius: 13px; background: {{t.surf}}; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 600;\">1</span><div style=\"flex-grow: 1; min-width: 0; padding-top: 3px; display: flex; flex-direction: column; gap: 10px;\"><span style=\"font-size: 15px; font-weight: 600;\">Copy your link</span><div style=\"height: 48px; box-sizing: border-box; padding: 0 5px 0 18px; display: flex; align-items: center; gap: 8px; border-radius: 999px; background: {{t.surf}};\"><span style=\"flex-grow: 1; min-width: 0; font-family: 'Geist Mono', ui-monospace, monospace; font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;\">{{linkShown}}</span><button type=\"button\" onClick=\"{{copyLink}}\" class=\"sc-press\" style=\"height: 38px; flex-shrink: 0; padding: 0 16px; border: 0; border-radius: 999px; background: {{t.inv}}; color: {{t.invText}}; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer;\">{{copyLabel}}</button></div></div></div><div style=\"display: flex; gap: 14px;\"><span style=\"width: 26px; height: 26px; flex-shrink: 0; border-radius: 13px; background: {{t.surf}}; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 600;\">2</span><div style=\"flex-grow: 1; min-width: 0; padding-top: 3px; display: flex; flex-direction: column; gap: 10px;\"><span style=\"font-size: 15px; font-weight: 600;\">Add it to Claude</span><span style=\"font-size: 14px; line-height: 1.5; color: {{t.muted}};\">In <b style=\"font-weight: 600; color: {{t.text}};\">Customize › Connectors</b>, add a custom connector and paste the link.</span><a href=\"{{openHref}}\" target=\"_blank\" rel=\"noopener\" onClick=\"{{openApp}}\" class=\"sc-press\" style=\"align-self: flex-start; height: 38px; box-sizing: border-box; padding: 0 14px 0 16px; display: inline-flex; align-items: center; gap: 8px; border-radius: 999px; background: {{t.bg}}; box-shadow: inset 0 0 0 1px {{t.surf2}}; font-size: 14px; font-weight: 600;\">Open Claude<svg width=\"14\" height=\"14\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M14 4h6v6\"/><path d=\"M20 4l-9 9\"/><path d=\"M19 14v4a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h4\"/></svg></a></div></div></div></sc-if><sc-if value=\"{{isOpenAI}}\" hint-placeholder-val=\"{{ false }}\"><div style=\"display: flex; flex-direction: column; gap: 20px;\"><div style=\"display: flex; gap: 14px;\"><span style=\"width: 26px; height: 26px; flex-shrink: 0; border-radius: 13px; background: {{t.surf}}; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 600;\">1</span><div style=\"flex-grow: 1; min-width: 0; padding-top: 3px; display: flex; flex-direction: column; gap: 10px;\"><span style=\"font-size: 15px; font-weight: 600;\">Copy your link</span><div style=\"height: 48px; box-sizing: border-box; padding: 0 5px 0 18px; display: flex; align-items: center; gap: 8px; border-radius: 999px; background: {{t.surf}};\"><span style=\"flex-grow: 1; min-width: 0; font-family: 'Geist Mono', ui-monospace, monospace; font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;\">{{linkShown}}</span><button type=\"button\" onClick=\"{{copyLink}}\" class=\"sc-press\" style=\"height: 38px; flex-shrink: 0; padding: 0 16px; border: 0; border-radius: 999px; background: {{t.inv}}; color: {{t.invText}}; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer;\">{{copyLabel}}</button></div></div></div><div style=\"display: flex; gap: 14px;\"><span style=\"width: 26px; height: 26px; flex-shrink: 0; border-radius: 13px; background: {{t.surf}}; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 600;\">2</span><div style=\"flex-grow: 1; min-width: 0; padding-top: 3px; display: flex; flex-direction: column; gap: 10px;\"><span style=\"font-size: 15px; font-weight: 600;\">Add it to ChatGPT</span><span style=\"font-size: 14px; line-height: 1.5; color: {{t.muted}};\">In <b style=\"font-weight: 600; color: {{t.text}};\">Settings › Apps</b>, turn on <b style=\"font-weight: 600; color: {{t.text}};\">Developer mode</b>, click <b style=\"font-weight: 600; color: {{t.text}};\">Create</b>, and paste the link. It needs a paid ChatGPT plan.</span><a href=\"{{openHref}}\" target=\"_blank\" rel=\"noopener\" onClick=\"{{openApp}}\" class=\"sc-press\" style=\"align-self: flex-start; height: 38px; box-sizing: border-box; padding: 0 14px 0 16px; display: inline-flex; align-items: center; gap: 8px; border-radius: 999px; background: {{t.bg}}; box-shadow: inset 0 0 0 1px {{t.surf2}}; font-size: 14px; font-weight: 600;\">Open ChatGPT<svg width=\"14\" height=\"14\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M14 4h6v6\"/><path d=\"M20 4l-9 9\"/><path d=\"M19 14v4a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h4\"/></svg></a></div></div></div></sc-if><sc-if value=\"{{isCursor}}\" hint-placeholder-val=\"{{ false }}\"><div style=\"display: flex; flex-direction: column; gap: 20px;\"><div style=\"display: flex; gap: 14px;\"><span style=\"width: 26px; height: 26px; flex-shrink: 0; border-radius: 13px; background: {{t.surf}}; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 600;\">1</span><div style=\"flex-grow: 1; min-width: 0; padding-top: 3px; display: flex; flex-direction: column; gap: 10px;\"><span style=\"font-size: 15px; font-weight: 600;\">Add Lucida to Cursor</span><a href=\"{{cursorHref}}\" onClick=\"{{openApp}}\" class=\"sc-press\" style=\"align-self: flex-start; height: 42px; box-sizing: border-box; padding: 0 18px 0 14px; display: inline-flex; align-items: center; gap: 9px; border-radius: 999px; background: {{t.inv}}; color: {{t.invText}}; font-size: 14px; font-weight: 600;\"><svg width=\"15\" height=\"17\" viewBox=\"0 0 466.73 532.09\" aria-hidden=\"true\"><path fill=\"{{p.cursorOnInv}}\" d=\"M457.43,125.94L244.42,2.96c-6.84-3.95-15.28-3.95-22.12,0L9.3,125.94c-5.75,3.32-9.3,9.46-9.3,16.11v247.99c0,6.65,3.55,12.79,9.3,16.11l213.01,122.98c6.84,3.95,15.28,3.95,22.12,0l213.01-122.98c5.75-3.32,9.3-9.46,9.3-16.11v-247.99c0-6.65-3.55-12.79-9.3-16.11h-.01ZM444.05,151.99l-205.63,356.16c-1.39,2.4-5.06,1.42-5.06-1.36v-233.21c0-4.66-2.49-8.97-6.53-11.31L24.87,145.67c-2.4-1.39-1.42-5.06,1.36-5.06h411.26c5.84,0,9.49,6.33,6.57,11.39h-.01Z\"/></svg>Add to Cursor</a></div></div><div style=\"display: flex; gap: 14px;\"><span style=\"width: 26px; height: 26px; flex-shrink: 0; border-radius: 13px; background: {{t.surf}}; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 600;\">2</span><div style=\"flex-grow: 1; min-width: 0; padding-top: 3px; display: flex; flex-direction: column; gap: 10px;\"><span style=\"font-size: 15px; font-weight: 600;\">Click Install</span><span style=\"font-size: 14px; line-height: 1.5; color: {{t.muted}};\">Cursor opens and asks once. That’s all.</span></div></div></div></sc-if><sc-if value=\"{{isMcp}}\" hint-placeholder-val=\"{{ false }}\"><div style=\"display: flex; flex-direction: column; gap: 20px;\"><div style=\"display: flex; gap: 14px;\"><span style=\"width: 26px; height: 26px; flex-shrink: 0; border-radius: 13px; background: {{t.surf}}; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 600;\">1</span><div style=\"flex-grow: 1; min-width: 0; padding-top: 3px; display: flex; flex-direction: column; gap: 10px;\"><span style=\"font-size: 15px; font-weight: 600;\">Copy your link</span><div style=\"height: 48px; box-sizing: border-box; padding: 0 5px 0 18px; display: flex; align-items: center; gap: 8px; border-radius: 999px; background: {{t.surf}};\"><span style=\"flex-grow: 1; min-width: 0; font-family: 'Geist Mono', ui-monospace, monospace; font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;\">{{linkShown}}</span><button type=\"button\" onClick=\"{{copyLink}}\" class=\"sc-press\" style=\"height: 38px; flex-shrink: 0; padding: 0 16px; border: 0; border-radius: 999px; background: {{t.inv}}; color: {{t.invText}}; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer;\">{{copyLabel}}</button></div></div></div><div style=\"display: flex; gap: 14px;\"><span style=\"width: 26px; height: 26px; flex-shrink: 0; border-radius: 13px; background: {{t.surf}}; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 600;\">2</span><div style=\"flex-grow: 1; min-width: 0; padding-top: 3px; display: flex; flex-direction: column; gap: 10px;\"><span style=\"font-size: 15px; font-weight: 600;\">Paste it in your app</span><span style=\"font-size: 14px; line-height: 1.5; color: {{t.muted}};\">Any app that works with MCP can use it.</span></div></div></div></sc-if></div><div role=\"status\" style=\"height: 44px; flex-shrink: 0; box-sizing: border-box; padding: 0 18px; display: flex; align-items: center; justify-content: center; gap: 12px; border-radius: 999px; background: {{t.surf}}; color: {{t.muted}}; font-size: 14px; font-weight: 500;\"><span style=\"position: relative; width: 9px; height: 9px; flex-shrink: 0;\"><span class=\"ob-ring\" style=\"position: absolute; inset: 0; border-radius: 50%; background: {{t.easy}};\"></span><span style=\"position: absolute; inset: 0; border-radius: 50%; background: {{t.easy}};\"></span></span><span>{{waitLine}}</span></div></div></sc-if><sc-if value=\"{{isConnected}}\" hint-placeholder-val=\"{{ false }}\"><div style=\"display: flex; flex-direction: column; gap: 24px;\">\n  <div style=\"display: flex; flex-direction: column; gap: 8px;\"><div style=\"display: flex; align-items: center; gap: 10px; min-height: 28px;\"><span style=\"font-size: 14px; font-weight: 500; color: {{t.muted}};\">Step 1 of 2</span></div><h1 style=\"margin: 0; display: flex; align-items: center; gap: 12px; font-size: 32px; font-weight: 600; line-height: 1.12; letter-spacing: -.03em;\"><span class=\"ob-pop\" style=\"width: 34px; height: 34px; flex-shrink: 0; border-radius: 50%; background: {{t.good}}; color: #FFFFFF; display: flex; align-items: center; justify-content: center;\"><svg width=\"18\" height=\"18\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M5 12l5 5 9-10\"/></svg></span><span style=\"min-width: 0;\">{{connectedTitle}}</span></h1><p style=\"margin: 0; font-size: 15px; line-height: 1.45; color: {{t.muted}};\">It can make cards for you now.</p></div>\n  <button type=\"button\" onClick=\"{{toCards}}\" class=\"sc-press\" style=\"height: 44px; flex-shrink: 0; border: 0; border-radius: 999px; background: {{t.inv}}; color: {{t.invText}}; font: inherit; font-size: 15px; font-weight: 600; cursor: pointer;\">Continue</button>\n</div></sc-if><sc-if value=\"{{isPickSrc}}\" hint-placeholder-val=\"{{ false }}\"><div style=\"display: flex; flex-direction: column; gap: 28px;\"><div style=\"display: flex; flex-direction: column; gap: 8px;\"><div style=\"display: flex; align-items: center; gap: 10px; min-height: 28px;\"><button type=\"button\" onClick=\"{{back}}\" aria-label=\"Back\" class=\"sc-press\" style=\"width: 28px; height: 28px; flex-shrink: 0; border: 0; border-radius: 14px; background: {{t.surf}}; color: {{t.text}}; display: flex; align-items: center; justify-content: center; cursor: pointer;\"><svg width=\"14\" height=\"14\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M15 18l-6-6 6-6\"/></svg></button><span style=\"font-size: 14px; font-weight: 500; color: {{t.muted}};\">Step 2 of 2</span></div><h1 style=\"margin: 0; font-size: 32px; font-weight: 600; line-height: 1.12; letter-spacing: -.03em;\">Bring your cards</h1><p style=\"margin: 0; font-size: 15px; line-height: 1.45; color: {{t.muted}}; text-wrap: pretty;\">Already have flashcards? Bring them with you.</p></div><div style=\"display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px;\"><button type=\"button\" onClick=\"{{src.anki.pick}}\" aria-pressed=\"{{src.anki.pressed}}\" class=\"sc-press\" style=\"height: 64px; min-width: 0; box-sizing: border-box; padding: 0 14px 0 10px; display: flex; align-items: center; gap: 10px; border: 0; border-radius: 18px; background: {{t.bg}}; box-shadow: {{src.anki.ring}}; color: {{t.text}}; font: inherit; font-size: 15px; font-weight: 600; text-align: left; cursor: pointer;\"><span style=\"width: 38px; height: 38px; flex-shrink: 0; border-radius: 19px; background: {{t.surf}}; display: flex; align-items: center; justify-content: center;\"><svg width=\"19\" height=\"19\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.9\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M12 3.6l2.5 5.2 5.7.8-4.1 4 1 5.7L12 16.6l-5.1 2.7 1-5.7-4.1-4 5.7-.8z\"/></svg></span><span style=\"flex-grow: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;\">Anki</span><span style=\"display: flex; flex-shrink: 0; color: {{t.muted}};\"><svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M9 6l6 6-6 6\"/></svg></span></button><button type=\"button\" onClick=\"{{src.quizlet.pick}}\" aria-pressed=\"{{src.quizlet.pressed}}\" class=\"sc-press\" style=\"height: 64px; min-width: 0; box-sizing: border-box; padding: 0 14px 0 10px; display: flex; align-items: center; gap: 10px; border: 0; border-radius: 18px; background: {{t.bg}}; box-shadow: {{src.quizlet.ring}}; color: {{t.text}}; font: inherit; font-size: 15px; font-weight: 600; text-align: left; cursor: pointer;\"><span style=\"width: 38px; height: 38px; flex-shrink: 0; border-radius: 19px; background: {{t.surf}}; display: flex; align-items: center; justify-content: center;\"><svg width=\"19\" height=\"19\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.9\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><rect x=\"3\" y=\"7\" width=\"14\" height=\"14\" rx=\"3\"/><path d=\"M7 3h11a3 3 0 0 1 3 3v11\"/></svg></span><span style=\"flex-grow: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;\">Quizlet</span><span style=\"display: flex; flex-shrink: 0; color: {{t.muted}};\"><svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M9 6l6 6-6 6\"/></svg></span></button><button type=\"button\" onClick=\"{{src.sheet.pick}}\" aria-pressed=\"{{src.sheet.pressed}}\" class=\"sc-press\" style=\"height: 64px; min-width: 0; box-sizing: border-box; padding: 0 14px 0 10px; display: flex; align-items: center; gap: 10px; border: 0; border-radius: 18px; background: {{t.bg}}; box-shadow: {{src.sheet.ring}}; color: {{t.text}}; font: inherit; font-size: 15px; font-weight: 600; text-align: left; cursor: pointer;\"><span style=\"width: 38px; height: 38px; flex-shrink: 0; border-radius: 19px; background: {{t.surf}}; display: flex; align-items: center; justify-content: center;\"><svg width=\"19\" height=\"19\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.9\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><rect x=\"3.5\" y=\"4.5\" width=\"17\" height=\"15\" rx=\"2.5\"/><path d=\"M3.5 9.5h17M3.5 14.5h17M10 9.5v10\"/></svg></span><span style=\"flex-grow: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;\">Spreadsheet</span><span style=\"display: flex; flex-shrink: 0; color: {{t.muted}};\"><svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M9 6l6 6-6 6\"/></svg></span></button><button type=\"button\" onClick=\"{{src.paste.pick}}\" aria-pressed=\"{{src.paste.pressed}}\" class=\"sc-press\" style=\"height: 64px; min-width: 0; box-sizing: border-box; padding: 0 14px 0 10px; display: flex; align-items: center; gap: 10px; border: 0; border-radius: 18px; background: {{t.bg}}; box-shadow: {{src.paste.ring}}; color: {{t.text}}; font: inherit; font-size: 15px; font-weight: 600; text-align: left; cursor: pointer;\"><span style=\"width: 38px; height: 38px; flex-shrink: 0; border-radius: 19px; background: {{t.surf}}; display: flex; align-items: center; justify-content: center;\"><svg width=\"19\" height=\"19\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.9\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><rect x=\"5.5\" y=\"4.5\" width=\"13\" height=\"16\" rx=\"2.5\"/><path d=\"M9 4.5v-.3a1.7 1.7 0 0 1 1.7-1.7h2.6A1.7 1.7 0 0 1 15 4.2v.3\"/><path d=\"M9 11h6M9 15h4\"/></svg></span><span style=\"flex-grow: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;\">Paste text</span><span style=\"display: flex; flex-shrink: 0; color: {{t.muted}};\"><svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M9 6l6 6-6 6\"/></svg></span></button></div></div></sc-if><sc-if value=\"{{isSrcSteps}}\" hint-placeholder-val=\"{{ false }}\"><div style=\"display: flex; flex-direction: column; gap: 24px;\"><div style=\"display: flex; flex-direction: column; gap: 8px;\"><div style=\"display: flex; align-items: center; gap: 10px; min-height: 28px;\"><button type=\"button\" onClick=\"{{back}}\" aria-label=\"Back\" class=\"sc-press\" style=\"width: 28px; height: 28px; flex-shrink: 0; border: 0; border-radius: 14px; background: {{t.surf}}; color: {{t.text}}; display: flex; align-items: center; justify-content: center; cursor: pointer;\"><svg width=\"14\" height=\"14\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M15 18l-6-6 6-6\"/></svg></button><span style=\"font-size: 14px; font-weight: 500; color: {{t.muted}};\">Step 2 of 2</span></div><h1 style=\"margin: 0; font-size: 32px; font-weight: 600; line-height: 1.12; letter-spacing: -.03em;\">Bring your cards</h1><p style=\"margin: 0; font-size: 15px; line-height: 1.45; color: {{t.muted}}; text-wrap: pretty;\">Already have flashcards? Bring them with you.</p></div><div role=\"group\" aria-label=\"Where your cards are\" style=\"display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 2px; padding: 4px; border-radius: 999px; background: {{t.surf}};\"><button type=\"button\" onClick=\"{{src.anki.pick}}\" aria-pressed=\"{{src.anki.pressed}}\" style=\"height: 36px; min-width: 0; padding: 0 8px; display: flex; align-items: center; justify-content: center; gap: 6px; border: 0; border-radius: 999px; background: {{src.anki.bg}}; box-shadow: {{src.anki.sh}}; color: {{src.anki.fg}}; font: inherit; font-size: 13px; font-weight: 600; white-space: nowrap; cursor: pointer;\"><span style=\"min-width: 0; overflow: hidden; text-overflow: ellipsis;\">Anki</span></button><button type=\"button\" onClick=\"{{src.quizlet.pick}}\" aria-pressed=\"{{src.quizlet.pressed}}\" style=\"height: 36px; min-width: 0; padding: 0 8px; display: flex; align-items: center; justify-content: center; gap: 6px; border: 0; border-radius: 999px; background: {{src.quizlet.bg}}; box-shadow: {{src.quizlet.sh}}; color: {{src.quizlet.fg}}; font: inherit; font-size: 13px; font-weight: 600; white-space: nowrap; cursor: pointer;\"><span style=\"min-width: 0; overflow: hidden; text-overflow: ellipsis;\">Quizlet</span></button><button type=\"button\" onClick=\"{{src.sheet.pick}}\" aria-pressed=\"{{src.sheet.pressed}}\" style=\"height: 36px; min-width: 0; padding: 0 8px; display: flex; align-items: center; justify-content: center; gap: 6px; border: 0; border-radius: 999px; background: {{src.sheet.bg}}; box-shadow: {{src.sheet.sh}}; color: {{src.sheet.fg}}; font: inherit; font-size: 13px; font-weight: 600; white-space: nowrap; cursor: pointer;\"><span style=\"min-width: 0; overflow: hidden; text-overflow: ellipsis;\">Spreadsheet</span></button><button type=\"button\" onClick=\"{{src.paste.pick}}\" aria-pressed=\"{{src.paste.pressed}}\" style=\"height: 36px; min-width: 0; padding: 0 8px; display: flex; align-items: center; justify-content: center; gap: 6px; border: 0; border-radius: 999px; background: {{src.paste.bg}}; box-shadow: {{src.paste.sh}}; color: {{src.paste.fg}}; font: inherit; font-size: 13px; font-weight: 600; white-space: nowrap; cursor: pointer;\"><span style=\"min-width: 0; overflow: hidden; text-overflow: ellipsis;\">Paste text</span></button></div><div style=\"display: flex; flex-direction: column;\"><sc-if value=\"{{isAnki}}\" hint-placeholder-val=\"{{ true }}\"><div style=\"display: flex; flex-direction: column; gap: 16px;\"><span style=\"font-size: 14px; line-height: 1.5; color: {{t.muted}};\">In Anki, click the gear next to a deck, then <b style=\"font-weight: 600; color: {{t.text}};\">Export</b>. Pick <b style=\"font-weight: 600; color: {{t.text}};\">Notes in Plain Text</b>.</span><div onDragOver=\"{{dragOver}}\" onDrop=\"{{dropFile}}\" style=\"height: 188px; box-sizing: border-box; border-radius: 24px; border: 1.5px dashed rgba(128,128,128,.45); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; text-align: center;\"><span style=\"width: 48px; height: 48px; margin-bottom: 4px; border-radius: 24px; background: {{t.surf}}; display: flex; align-items: center; justify-content: center;\"><svg width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M12 15V4M7 9l5-5 5 5\"/><path d=\"M4 15v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3\"/></svg></span><span style=\"font-size: 15px; font-weight: 600;\">Drop your Anki file here</span><button type=\"button\" onClick=\"{{chooseFile}}\" style=\"border: 0; padding: 0; background: transparent; color: {{t.muted}}; font: inherit; font-size: 14px; text-decoration: underline; text-underline-offset: 3px; cursor: pointer;\">or choose a file</button></div></div></sc-if><sc-if value=\"{{isQuizlet}}\" hint-placeholder-val=\"{{ false }}\"><div style=\"display: flex; flex-direction: column; gap: 16px;\"><span style=\"font-size: 14px; line-height: 1.5; color: {{t.muted}};\">On quizlet.com, open your set. Click <b style=\"font-weight: 600; color: {{t.text}};\">⋯</b>, then <b style=\"font-weight: 600; color: {{t.text}};\">Export</b> and <b style=\"font-weight: 600; color: {{t.text}};\">Copy text</b>.</span><textarea rows=\"6\" onChange=\"{{setPaste}}\" placeholder=\"{{pasteHint}}\" aria-label=\"Your cards\" style=\"resize: none; box-sizing: border-box; width: 100%; border: 0; outline: 0; border-radius: 20px; padding: 14px 16px; background: {{t.surf}}; color: {{t.text}}; font-family: 'Geist Mono', ui-monospace, monospace; font-size: 13px; line-height: 1.6;\">{{pasteText}}</textarea><span style=\"min-height: 18px; margin-top: -4px; font-size: 13px; color: {{t.muted}};\">{{pasteFound}}</span><button type=\"button\" onClick=\"{{readPaste}}\" class=\"sc-press\" style=\"height: 44px; flex-shrink: 0; border: 0; border-radius: 999px; background: {{goBg}}; color: {{goFg}}; font: inherit; font-size: 15px; font-weight: 600; cursor: pointer;\">Continue</button></div></sc-if><sc-if value=\"{{isSheet}}\" hint-placeholder-val=\"{{ false }}\"><div style=\"display: flex; flex-direction: column; gap: 16px;\"><span style=\"font-size: 14px; line-height: 1.5; color: {{t.muted}};\">Fronts in the first column, backs in the second. Save it as <b style=\"font-weight: 600; color: {{t.text}};\">CSV</b>.</span><div onDragOver=\"{{dragOver}}\" onDrop=\"{{dropFile}}\" style=\"height: 188px; box-sizing: border-box; border-radius: 24px; border: 1.5px dashed rgba(128,128,128,.45); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; text-align: center;\"><span style=\"width: 48px; height: 48px; margin-bottom: 4px; border-radius: 24px; background: {{t.surf}}; display: flex; align-items: center; justify-content: center;\"><svg width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M12 15V4M7 9l5-5 5 5\"/><path d=\"M4 15v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3\"/></svg></span><span style=\"font-size: 15px; font-weight: 600;\">Drop your CSV file here</span><button type=\"button\" onClick=\"{{chooseFile}}\" style=\"border: 0; padding: 0; background: transparent; color: {{t.muted}}; font: inherit; font-size: 14px; text-decoration: underline; text-underline-offset: 3px; cursor: pointer;\">or choose a file</button></div></div></sc-if><sc-if value=\"{{isPaste}}\" hint-placeholder-val=\"{{ false }}\"><div style=\"display: flex; flex-direction: column; gap: 16px;\"><span style=\"font-size: 14px; line-height: 1.5; color: {{t.muted}};\">One card per line: the front, a comma, then the back.</span><textarea rows=\"6\" onChange=\"{{setPaste}}\" placeholder=\"{{pasteHint}}\" aria-label=\"Your cards\" style=\"resize: none; box-sizing: border-box; width: 100%; border: 0; outline: 0; border-radius: 20px; padding: 14px 16px; background: {{t.surf}}; color: {{t.text}}; font-family: 'Geist Mono', ui-monospace, monospace; font-size: 13px; line-height: 1.6;\">{{pasteText}}</textarea><span style=\"min-height: 18px; margin-top: -4px; font-size: 13px; color: {{t.muted}};\">{{pasteFound}}</span><button type=\"button\" onClick=\"{{readPaste}}\" class=\"sc-press\" style=\"height: 44px; flex-shrink: 0; border: 0; border-radius: 999px; background: {{goBg}}; color: {{goFg}}; font: inherit; font-size: 15px; font-weight: 600; cursor: pointer;\">Continue</button></div></sc-if></div></div></sc-if><sc-if value=\"{{isFound}}\" hint-placeholder-val=\"{{ false }}\"><div style=\"display: flex; flex-direction: column; gap: 24px;\">\n  <div style=\"display: flex; flex-direction: column; gap: 8px;\"><div style=\"display: flex; align-items: center; gap: 10px; min-height: 28px;\"><button type=\"button\" onClick=\"{{back}}\" aria-label=\"Back\" class=\"sc-press\" style=\"width: 28px; height: 28px; flex-shrink: 0; border: 0; border-radius: 14px; background: {{t.surf}}; color: {{t.text}}; display: flex; align-items: center; justify-content: center; cursor: pointer;\"><svg width=\"14\" height=\"14\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M15 18l-6-6 6-6\"/></svg></button><span style=\"font-size: 14px; font-weight: 500; color: {{t.muted}};\">Step 2 of 2</span></div><h1 style=\"margin: 0; font-size: 32px; font-weight: 600; line-height: 1.12; letter-spacing: -.03em;\">{{foundTitle}}</h1></div>\n  <div style=\"box-sizing: border-box; padding: 6px; border-radius: 22px; background: {{t.surf}}; display: flex; flex-direction: column; gap: 4px;\">\n    <div style=\"height: 56px; box-sizing: border-box; padding: 0 6px 0 10px; display: flex; align-items: center; gap: 12px;\"><span style=\"width: 36px; height: 36px; flex-shrink: 0; border-radius: 12px; background: {{t.bg}}; display: flex; align-items: center; justify-content: center;\"><svg width=\"17\" height=\"17\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.9\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z\"/><path d=\"M14 3v5h5\"/></svg></span><span style=\"flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px;\"><span style=\"font-size: 15px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;\">{{fileName}}</span><span style=\"font-size: 13px; color: {{t.muted}};\">{{fileLine}}</span></span><button type=\"button\" onClick=\"{{again}}\" aria-label=\"Choose another file\" class=\"sc-press\" style=\"width: 32px; height: 32px; flex-shrink: 0; border: 0; border-radius: 16px; background: transparent; color: {{t.muted}}; display: flex; align-items: center; justify-content: center; cursor: pointer;\"><svg width=\"14\" height=\"14\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M6 6l12 12M18 6L6 18\"/></svg></button></div>\n    <sc-for list=\"{{decks}}\" as=\"d\" hint-placeholder-count=\"3\"><button type=\"button\" role=\"checkbox\" aria-checked=\"{{d.checked}}\" onClick=\"{{d.toggle}}\" style=\"height: 50px; flex-shrink: 0; box-sizing: border-box; padding: 0 14px 0 12px; display: flex; align-items: center; gap: 12px; border: 0; border-radius: 16px; background: {{t.bg}}; color: {{t.text}}; font: inherit; text-align: left; cursor: pointer;\"><span style=\"width: 30px; height: 22px; flex-shrink: 0; border-radius: 7px; background: {{d.swatch}}; opacity: {{d.fade}};\"></span><span style=\"flex-grow: 1; min-width: 0; font-size: 15px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;\">{{d.name}}</span><span style=\"font-family: 'Geist Mono', ui-monospace, monospace; font-size: 13px; color: {{t.muted}};\">{{d.count}}</span><span style=\"width: 22px; height: 22px; flex-shrink: 0; box-sizing: border-box; border-radius: 7px; background: {{d.box}}; box-shadow: {{d.ring}}; color: {{t.invText}}; display: flex; align-items: center; justify-content: center;\"><span style=\"display: flex; opacity: {{d.tick}};\"><svg width=\"13\" height=\"13\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"3\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M5 12l5 5 9-10\"/></svg></span></span></button></sc-for>\n  </div>\n  <button type=\"button\" onClick=\"{{doImport}}\" class=\"sc-press\" style=\"height: 44px; flex-shrink: 0; border: 0; border-radius: 999px; background: {{importBg}}; color: {{importFg}}; font: inherit; font-size: 15px; font-weight: 600; cursor: pointer;\">{{importLabel}}</button>\n</div></sc-if><sc-if value=\"{{isDone}}\" hint-placeholder-val=\"{{ false }}\"><div style=\"display: flex; flex-direction: column; gap: 24px;\">\n  <div aria-hidden=\"true\" style=\"position: relative; height: 126px;\"><sc-for list=\"{{fan}}\" as=\"c\" hint-placeholder-count=\"3\"><div class=\"ob-fan\" style=\"position: absolute; left: {{c.x}}; top: {{c.y}}; width: 156px; height: 104px; overflow: hidden; border-radius: 16px; color: {{c.ink}}; background: {{c.base}}; transform: rotate({{c.r}}); box-shadow: 0 18px 36px -20px rgba(0,0,0,.6); animation-delay: {{c.delay}};\"><sc-if value=\"{{c.art}}\" hint-placeholder-val=\"{{ false }}\"><div style=\"position: absolute; inset: 0; background: {{c.art}} center / 100% 100% no-repeat;\"></div><div class=\"sc-grain\" style=\"opacity: {{grain}};\"></div></sc-if><sc-if value=\"{{c.live}}\" hint-placeholder-val=\"{{ true }}\"><svg aria-hidden=\"true\" viewBox=\"0 0 100 100\" preserveAspectRatio=\"none\" width=\"100%\" height=\"100%\" style=\"position: absolute; inset: 0; pointer-events: none;\"><defs><filter id=\"{{c.fid}}\" x=\"-60%\" y=\"-60%\" width=\"220%\" height=\"220%\" color-interpolation-filters=\"sRGB\"><feTurbulence type=\"fractalNoise\" baseFrequency=\".018\" numOctaves=\"2\" seed=\"7\" result=\"n\"/><feDisplacementMap in=\"SourceGraphic\" in2=\"n\" scale=\"{{c.disp}}\" xChannelSelector=\"R\" yChannelSelector=\"G\"/><feGaussianBlur stdDeviation=\"{{c.blur}}\"/></filter><filter id=\"{{c.sid}}\" x=\"-60%\" y=\"-60%\" width=\"220%\" height=\"220%\" color-interpolation-filters=\"sRGB\"><feGaussianBlur stdDeviation=\"{{c.sblur}}\"/></filter></defs><g filter=\"url(#{{c.fid}})\"><ellipse cx=\"{{c.b0.x}}\" cy=\"{{c.b0.y}}\" rx=\"{{c.b0.rx}}\" ry=\"{{c.b0.ry}}\" fill=\"{{c.b0.c}}\" transform=\"rotate({{c.b0.r}} {{c.b0.x}} {{c.b0.y}})\"/><ellipse cx=\"{{c.b1.x}}\" cy=\"{{c.b1.y}}\" rx=\"{{c.b1.rx}}\" ry=\"{{c.b1.ry}}\" fill=\"{{c.b1.c}}\" transform=\"rotate({{c.b1.r}} {{c.b1.x}} {{c.b1.y}})\"/><ellipse cx=\"{{c.b2.x}}\" cy=\"{{c.b2.y}}\" rx=\"{{c.b2.rx}}\" ry=\"{{c.b2.ry}}\" fill=\"{{c.b2.c}}\" transform=\"rotate({{c.b2.r}} {{c.b2.x}} {{c.b2.y}})\"/><ellipse cx=\"{{c.b3.x}}\" cy=\"{{c.b3.y}}\" rx=\"{{c.b3.rx}}\" ry=\"{{c.b3.ry}}\" fill=\"{{c.b3.c}}\" transform=\"rotate({{c.b3.r}} {{c.b3.x}} {{c.b3.y}})\"/><ellipse cx=\"{{c.b4.x}}\" cy=\"{{c.b4.y}}\" rx=\"{{c.b4.rx}}\" ry=\"{{c.b4.ry}}\" fill=\"{{c.b4.c}}\" transform=\"rotate({{c.b4.r}} {{c.b4.x}} {{c.b4.y}})\"/><ellipse cx=\"{{c.b5.x}}\" cy=\"{{c.b5.y}}\" rx=\"{{c.b5.rx}}\" ry=\"{{c.b5.ry}}\" fill=\"{{c.b5.c}}\" transform=\"rotate({{c.b5.r}} {{c.b5.x}} {{c.b5.y}})\"/></g><g filter=\"url(#{{c.sid}})\"><ellipse cx=\"{{c.s0.x}}\" cy=\"{{c.s0.y}}\" rx=\"{{c.s0.rx}}\" ry=\"{{c.s0.ry}}\" fill=\"{{c.s0.c}}\" transform=\"rotate({{c.s0.r}} {{c.s0.x}} {{c.s0.y}})\"/><ellipse cx=\"{{c.s1.x}}\" cy=\"{{c.s1.y}}\" rx=\"{{c.s1.rx}}\" ry=\"{{c.s1.ry}}\" fill=\"{{c.s1.c}}\" transform=\"rotate({{c.s1.r}} {{c.s1.x}} {{c.s1.y}})\"/></g></svg><svg aria-hidden=\"true\" width=\"100%\" height=\"100%\" style=\"position: absolute; inset: 0; mix-blend-mode: soft-light; opacity: {{grain}}; pointer-events: none;\"><filter id=\"sc-grain\" x=\"0\" y=\"0\" width=\"100%\" height=\"100%\" color-interpolation-filters=\"sRGB\"><feTurbulence type=\"fractalNoise\" baseFrequency=\"0.85\" numOctaves=\"3\" stitchTiles=\"stitch\"/><feColorMatrix type=\"saturate\" values=\"0\"/><feComponentTransfer><feFuncR type=\"linear\" slope=\"3.4\" intercept=\"-1.2\"/><feFuncG type=\"linear\" slope=\"3.4\" intercept=\"-1.2\"/><feFuncB type=\"linear\" slope=\"3.4\" intercept=\"-1.2\"/></feComponentTransfer></filter><rect width=\"100%\" height=\"100%\" filter=\"url(#sc-grain)\"/></svg></sc-if><div style=\"position: relative; height: 100%; box-sizing: border-box; padding: 12px 14px; display: flex; align-items: flex-end; font-size: 13px; font-weight: 600; letter-spacing: -.01em; text-shadow: {{c.shadow}};\">{{c.name}}</div></div></sc-for></div>\n  <div style=\"display: flex; flex-direction: column; gap: 8px;\"><h1 style=\"margin: 0; font-size: 32px; font-weight: 600; line-height: 1.12; letter-spacing: -.03em;\">You’re all set</h1><p style=\"margin: 0; font-size: 15px; line-height: 1.45; color: {{t.muted}}; text-wrap: pretty;\">{{doneLine}}</p></div>\n  <div style=\"box-sizing: border-box; padding: 2px 16px; border-radius: 20px; background: {{t.surf}}; display: flex; flex-direction: column;\"><sc-for list=\"{{doneRows}}\" as=\"p\" hint-placeholder-count=\"2\"><div style=\"height: 56px; display: flex; align-items: center; gap: 12px; border-top: {{p.line}};\"><span style=\"width: 34px; height: 34px; flex-shrink: 0; border-radius: 17px; background: {{t.bg}}; display: flex; align-items: center; justify-content: center;\"><sc-if value=\"{{p.isClaude}}\" hint-placeholder-val=\"{{ true }}\"><svg width=\"18\" height=\"18\" viewBox=\"0 0 256 257\" aria-hidden=\"true\"><path fill=\"#D97757\" d=\"m50.228 170.321 50.357-28.257.843-2.463-.843-1.361h-2.462l-8.426-.518-28.775-.778-24.952-1.037-24.175-1.296-6.092-1.297L0 125.796l.583-3.759 5.12-3.434 7.324.648 16.202 1.101 24.304 1.685 17.629 1.037 26.118 2.722h4.148l.583-1.685-1.426-1.037-1.101-1.037-25.147-17.045-27.22-18.017-14.258-10.37-7.713-5.25-3.888-4.925-1.685-10.758 7-7.713 9.397.649 2.398.648 9.527 7.323 20.35 15.75L94.817 91.9l3.889 3.24 1.555-1.102.195-.777-1.75-2.917-14.453-26.118-15.425-26.572-6.87-11.018-1.814-6.61c-.648-2.723-1.102-4.991-1.102-7.778l7.972-10.823L71.42 0 82.05 1.426l4.472 3.888 6.61 15.101 10.694 23.786 16.591 32.34 4.861 9.592 2.592 8.879.973 2.722h1.685v-1.556l1.36-18.211 2.528-22.36 2.463-28.776.843-8.1 4.018-9.722 7.971-5.25 6.222 2.981 5.12 7.324-.713 4.73-3.046 19.768-5.962 30.98-3.889 20.739h2.268l2.593-2.593 10.499-13.934 17.628-22.036 7.778-8.749 9.073-9.657 5.833-4.601h11.018l8.1 12.055-3.628 12.443-11.342 14.388-9.398 12.184-13.48 18.147-8.426 14.518.778 1.166 2.01-.194 30.46-6.481 16.462-2.982 19.637-3.37 8.88 4.148.971 4.213-3.5 8.62-20.998 5.184-24.628 4.926-36.682 8.685-.454.324.519.648 16.526 1.555 7.065.389h17.304l32.21 2.398 8.426 5.574 5.055 6.805-.843 5.184-12.962 6.611-17.498-4.148-40.83-9.721-14-3.5h-1.944v1.167l11.666 11.406 21.387 19.314 26.767 24.887 1.36 6.157-3.434 4.86-3.63-.518-23.526-17.693-9.073-7.972-20.545-17.304h-1.36v1.814l4.73 6.935 25.017 37.59 1.296 11.536-1.814 3.76-6.481 2.268-7.13-1.297-14.647-20.544-15.1-23.138-12.185-20.739-1.49.843-7.194 77.448-3.37 3.953-7.778 2.981-6.48-4.925-3.436-7.972 3.435-15.749 4.148-20.544 3.37-16.333 3.046-20.285 1.815-6.74-.13-.454-1.49.194-15.295 20.999-23.267 31.433-18.406 19.702-4.407 1.75-7.648-3.954.713-7.064 4.277-6.286 25.47-32.405 15.36-20.092 9.917-11.6-.065-1.686h-.583L44.07 198.125l-12.055 1.555-5.185-4.86.648-7.972 2.463-2.593 20.35-13.999-.064.065Z\"/></svg></sc-if><sc-if value=\"{{p.isOpenAI}}\" hint-placeholder-val=\"{{ false }}\"><svg width=\"18\" height=\"18\" viewBox=\"96 96 419 419\" aria-hidden=\"true\"><path fill-rule=\"evenodd\" clip-rule=\"evenodd\" fill=\"{{t.text}}\" d=\"M252.794 108.802C289.191 99.0484 326.265 110.305 351.148 135.135C385.113 126.072 422.85 134.862 449.492 161.505C476.136 188.149 484.925 225.888 475.862 259.85V259.854C500.696 284.735 511.95 321.81 502.198 358.207C492.447 394.602 464.161 421.084 430.215 430.217C421.083 464.162 394.603 492.448 358.206 502.199C321.812 511.951 284.734 500.693 259.852 475.864C225.887 484.927 188.15 476.137 161.507 449.495C134.864 422.851 126.073 385.111 135.136 351.149C110.304 326.266 99.0496 289.192 108.801 252.795C118.552 216.4 146.84 189.918 180.784 180.785C189.917 146.841 216.396 118.553 252.794 108.802ZM374.292 407.145C374.292 411.271 372.092 415.086 368.517 417.148L283.723 466.102C302.487 480.585 327.555 486.459 352.217 479.852C386.997 470.532 410.068 439.312 410.555 405.006V317.717C410.555 315.08 409.125 312.621 406.843 311.303L374.292 292.509V407.145ZM251.868 415.897C248.296 417.959 243.893 417.959 240.317 415.897L155.526 366.942C152.366 390.436 159.811 415.08 177.866 433.136H177.863C203.325 458.594 241.896 462.962 271.85 446.232L347.449 402.586C349.735 401.268 351.148 398.8 351.148 396.163V358.579L251.868 415.897ZM368.602 220.628C366.319 219.309 363.474 219.318 361.191 220.637L328.641 239.431L427.921 296.749C431.496 298.811 433.697 302.627 433.697 306.752V404.661C455.622 395.654 473.244 376.881 479.851 352.218C489.169 317.442 473.668 281.85 444.201 264.274L368.602 220.628ZM177.303 206.34C155.377 215.348 137.756 234.122 131.148 258.783C121.832 293.561 137.331 329.153 166.799 346.727L242.398 390.373C244.68 391.692 247.525 391.684 249.807 390.366L282.357 371.572L183.078 314.253C179.504 312.189 177.303 308.375 177.303 304.251V206.34ZM259.849 279.145V331.858L305.5 358.213L351.15 331.858V279.145L305.5 252.789L259.849 279.145ZM327.276 144.9C308.512 130.418 283.445 124.543 258.782 131.15C224.002 140.471 200.931 171.691 200.445 205.995V293.286C200.445 295.923 201.875 298.381 204.158 299.7L236.707 318.493V203.856C236.707 199.731 238.909 195.916 242.483 193.853L327.276 144.9ZM433.137 177.867C407.675 152.407 369.103 148.038 339.149 164.769L263.55 208.415C261.265 209.734 259.852 212.202 259.852 214.838V252.423L359.132 195.105C362.703 193.041 367.108 193.041 370.682 195.105L455.473 244.06C458.635 220.567 451.189 195.922 433.135 177.867H433.137Z\"/></svg></sc-if><sc-if value=\"{{p.isCursor}}\" hint-placeholder-val=\"{{ false }}\"><svg width=\"16\" height=\"18\" viewBox=\"0 0 466.73 532.09\" aria-hidden=\"true\"><path fill=\"{{p.cursorInk}}\" d=\"M457.43,125.94L244.42,2.96c-6.84-3.95-15.28-3.95-22.12,0L9.3,125.94c-5.75,3.32-9.3,9.46-9.3,16.11v247.99c0,6.65,3.55,12.79,9.3,16.11l213.01,122.98c6.84,3.95,15.28,3.95,22.12,0l213.01-122.98c5.75-3.32,9.3-9.46,9.3-16.11v-247.99c0-6.65-3.55-12.79-9.3-16.11h-.01ZM444.05,151.99l-205.63,356.16c-1.39,2.4-5.06,1.42-5.06-1.36v-233.21c0-4.66-2.49-8.97-6.53-11.31L24.87,145.67c-2.4-1.39-1.42-5.06,1.36-5.06h411.26c5.84,0,9.49,6.33,6.57,11.39h-.01Z\"/></svg></sc-if><sc-if value=\"{{p.isMcp}}\" hint-placeholder-val=\"{{ false }}\"><svg width=\"18\" height=\"18\" viewBox=\"0 0 24 24\" fill-rule=\"evenodd\" aria-hidden=\"true\"><path fill=\"{{t.text}}\" d=\"M15.688 2.343a2.588 2.588 0 00-3.61 0l-9.626 9.44a.863.863 0 01-1.203 0 .823.823 0 010-1.18l9.626-9.44a4.313 4.313 0 016.016 0 4.116 4.116 0 011.204 3.54 4.3 4.3 0 013.609 1.18l.05.05a4.115 4.115 0 010 5.9l-8.706 8.537a.274.274 0 000 .393l1.788 1.754a.823.823 0 010 1.18.863.863 0 01-1.203 0l-1.788-1.753a1.92 1.92 0 010-2.754l8.706-8.538a2.47 2.47 0 000-3.54l-.05-.049a2.588 2.588 0 00-3.607-.003l-7.172 7.034-.002.002-.098.097a.863.863 0 01-1.204 0 .823.823 0 010-1.18l7.273-7.133a2.47 2.47 0 00-.003-3.537z\"/><path fill=\"{{t.text}}\" d=\"M14.485 4.703a.823.823 0 000-1.18.863.863 0 00-1.204 0l-7.119 6.982a4.115 4.115 0 000 5.9 4.314 4.314 0 006.016 0l7.12-6.982a.823.823 0 000-1.18.863.863 0 00-1.204 0l-7.119 6.982a2.588 2.588 0 01-3.61 0 2.47 2.47 0 010-3.54l7.12-6.982z\"/></svg></sc-if><sc-if value=\"{{p.isCards}}\" hint-placeholder-val=\"{{ false }}\"><svg width=\"17\" height=\"17\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.9\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><rect x=\"3\" y=\"7\" width=\"14\" height=\"14\" rx=\"3\"/><path d=\"M7 3h11a3 3 0 0 1 3 3v11\"/></svg></sc-if></span><span style=\"flex-grow: 1; min-width: 0; font-size: 15px; font-weight: 600;\">{{p.label}}</span><span style=\"font-size: 14px; font-weight: 500; color: {{p.color}};\">{{p.value}}</span></div></sc-for></div>\n  <sc-if value=\"{{showAsk}}\" hint-placeholder-val=\"{{ true }}\"><div style=\"display: flex; flex-direction: column; gap: 10px;\"><span style=\"font-size: 14px; font-weight: 600;\">{{askHead}}</span><div style=\"display: flex; align-items: flex-start; gap: 12px; box-sizing: border-box; padding: 12px 12px 12px 18px; border-radius: 22px 22px 6px 22px; background: {{t.surf}};\"><span style=\"flex-grow: 1; min-width: 0; padding: 6px 0; font-size: 16px; line-height: 1.4; font-weight: 500; text-wrap: pretty;\">Make 5 flashcards about the Krebs cycle.</span><button type=\"button\" onClick=\"{{copyAsk}}\" aria-label=\"{{askLabel}}\" class=\"sc-press\" style=\"width: 34px; height: 34px; flex-shrink: 0; border: 0; border-radius: 17px; background: {{t.bg}}; color: {{t.text}}; display: flex; align-items: center; justify-content: center; cursor: pointer;\"><sc-if value=\"{{askCopied}}\" hint-placeholder-val=\"{{ false }}\"><svg width=\"15\" height=\"15\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.4\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M5 12l5 5 9-10\"/></svg></sc-if><sc-if value=\"{{askFresh}}\" hint-placeholder-val=\"{{ true }}\"><svg width=\"15\" height=\"15\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><rect x=\"8.5\" y=\"8.5\" width=\"11.5\" height=\"11.5\" rx=\"2.5\"/><path d=\"M15.5 8.5V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v7.5a2 2 0 0 0 2 2h2.5\"/></svg></sc-if></button></div></div></sc-if>\n  <a href=\"{{todayHref}}\" onClick=\"{{finish}}\" class=\"sc-press\" style=\"height: 44px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; border-radius: 999px; background: {{t.inv}}; color: {{t.invText}}; font-size: 15px; font-weight: 600;\">Start studying</a>\n</div></sc-if></main>\n</div>",
+  Logic: DCLogic => {
+class Component extends DCLogic {
+// Dark mode has two looks, picked in Settings → Dark mode: black (the first one, and still the default) or gray (the
+// owner: "add a darkmode option that is grayish not fully blackedout"). g asks for gray; it only counts when d is on.
+// Gray keeps the grade colors, and its muted words still read at WCAG AA on every surface.
+theme(d, g) {
+  if (d && g) return { bg: '#1E1E20', surf: '#2A2A2D', surf2: '#353539', line: '#3A3A3E', text: '#F2F2F2', muted: '#A8A8AD', inv: '#F2F2F2', invText: '#1E1E20', card: '#2A2A2D', shadow: '0 1px 2px rgba(0,0,0,.2), 0 18px 44px -18px rgba(0,0,0,.5)', again: '#F97066', hard: '#FDB022', good: '#47CD89', easy: '#53B1FD', againTint: 'rgba(249,112,102,.16)', goodTint: 'rgba(71,205,137,.16)', hardTint: 'rgba(253,176,34,.16)', dim: 'rgba(0,0,0,.45)' };
+  return d
+    ? { bg: '#000000', surf: '#141414', surf2: '#222222', line: '#262626', text: '#FFFFFF', muted: '#A3A3A3', inv: '#FFFFFF', invText: '#000000', card: '#141414', shadow: 'none', again: '#F97066', hard: '#FDB022', good: '#47CD89', easy: '#53B1FD', againTint: 'rgba(249,112,102,.16)', goodTint: 'rgba(71,205,137,.16)', hardTint: 'rgba(253,176,34,.16)', dim: 'rgba(0,0,0,.7)' }
+    : { bg: '#FFFFFF', surf: '#F4F4F4', surf2: '#E8E8E8', line: '#EBEBEB', text: '#000000', muted: '#666666', inv: '#000000', invText: '#FFFFFF', card: '#FFFFFF', shadow: '0 1px 2px rgba(0,0,0,.04), 0 18px 44px -18px rgba(0,0,0,.18)', again: '#D92D20', hard: '#B54708', good: '#067647', easy: '#175CD3', againTint: '#FDECEA', goodTint: '#E6F4EC', hardTint: '#FDF1E3', dim: 'rgba(0,0,0,.28)' };
+}
+mesh(name, i) {
+  const P = {"Iris":{"base":"linear-gradient(102deg, #C9CCFC 0%, #9CA2FE 17%, #A9B9FF 32%, #BFCEFF 52%, #BACFFF 70%, #8EC5FC 86%, #33B3EC 100%)","ink":"#000000","fid":"sc-flow-iris","sid":"sc-streak-iris","blur":"6","sblur":"2.2","disp":"10","glass":"rgba(255,255,255,.34)","glassLine":"rgba(0,0,0,.22)","shadow":"none","b0":{"c":"#8C98FC","x":14,"y":70,"rx":10,"ry":70,"r":12},"b1":{"c":"#C3D0FF","x":55,"y":40,"rx":12,"ry":80,"r":12},"b2":{"c":"#2CB2EA","x":102,"y":102,"rx":20,"ry":42,"r":18},"b3":{"c":"#C2CCFF","x":88,"y":0,"rx":22,"ry":26,"r":0},"b4":{"c":"#7E94FB","x":6,"y":100,"rx":16,"ry":22,"r":12},"b5":{"c":"#B9CEFF","x":72,"y":60,"rx":10,"ry":70,"r":12},"s0":{"c":"#E6E8FD","x":1,"y":40,"rx":3.2,"ry":70,"r":12},"s1":{"c":"#D3DBFF","x":44,"y":50,"rx":2.6,"ry":80,"r":12}},"Apricot":{"base":"linear-gradient(200deg, #F2AC45 0%, #EE9D3F 28%, #E88C37 52%, #E99038 76%, #EE9A3E 100%)","ink":"#000000","fid":"sc-flow-apricot","sid":"sc-streak-apricot","blur":"7","sblur":"3","disp":"8","glass":"rgba(255,255,255,.34)","glassLine":"rgba(0,0,0,.22)","shadow":"none","b0":{"c":"#E27E2E","x":70,"y":38,"rx":12,"ry":60,"r":-32},"b1":{"c":"#F3AE44","x":92,"y":4,"rx":28,"ry":24,"r":0},"b2":{"c":"#F4BC76","x":10,"y":98,"rx":24,"ry":22,"r":0},"b3":{"c":"#EA9139","x":40,"y":80,"rx":20,"ry":30,"r":-20},"b4":{"c":"#E7862F","x":100,"y":70,"rx":14,"ry":30,"r":0},"b5":{"c":"#F1A640","x":60,"y":0,"rx":18,"ry":14,"r":0},"s0":{"c":"#FAE6BC","x":6,"y":55,"rx":11,"ry":70,"r":-22},"s1":{"c":"#F7D39A","x":20,"y":70,"rx":5,"ry":50,"r":-22}},"Lilac":{"base":"linear-gradient(110deg, #D9CCFA 0%, #C3B2F6 22%, #D8C3F4 45%, #F1CDE3 68%, #F8CDB8 88%, #F6B999 100%)","ink":"#000000","fid":"sc-flow-lilac","sid":"sc-streak-lilac","blur":"6","sblur":"2.2","disp":"10","glass":"rgba(255,255,255,.34)","glassLine":"rgba(0,0,0,.22)","shadow":"none","b0":{"c":"#B7A3F4","x":18,"y":64,"rx":10,"ry":70,"r":14},"b1":{"c":"#E7D3F6","x":50,"y":40,"rx":12,"ry":80,"r":14},"b2":{"c":"#F5B08E","x":100,"y":100,"rx":22,"ry":40,"r":16},"b3":{"c":"#D2C6FA","x":86,"y":0,"rx":22,"ry":24,"r":0},"b4":{"c":"#AE98F2","x":4,"y":100,"rx":16,"ry":22,"r":14},"b5":{"c":"#F4C9D8","x":72,"y":62,"rx":10,"ry":70,"r":14},"s0":{"c":"#F3EDFD","x":2,"y":40,"rx":3,"ry":70,"r":14},"s1":{"c":"#EEDDF8","x":44,"y":50,"rx":2.4,"ry":80,"r":14}},"Mint":{"base":"linear-gradient(105deg, #D7F3E6 0%, #A7E3C9 20%, #BDEBD6 40%, #CFF1DE 60%, #B6E6CD 78%, #7FD0B0 100%)","ink":"#000000","fid":"sc-flow-mint","sid":"sc-streak-mint","blur":"6","sblur":"2.2","disp":"10","glass":"rgba(255,255,255,.34)","glassLine":"rgba(0,0,0,.22)","shadow":"none","b0":{"c":"#8FD8B8","x":16,"y":66,"rx":10,"ry":70,"r":12},"b1":{"c":"#D9F5E6","x":52,"y":40,"rx":12,"ry":80,"r":12},"b2":{"c":"#5FC3A0","x":102,"y":102,"rx":20,"ry":42,"r":18},"b3":{"c":"#E9F7C9","x":88,"y":2,"rx":22,"ry":24,"r":0},"b4":{"c":"#7ACFAD","x":6,"y":100,"rx":16,"ry":22,"r":12},"b5":{"c":"#C3EDD7","x":72,"y":60,"rx":10,"ry":70,"r":12},"s0":{"c":"#F1FBF5","x":2,"y":40,"rx":3,"ry":70,"r":12},"s1":{"c":"#E2F7EB","x":44,"y":50,"rx":2.4,"ry":80,"r":12}},"Aqua":{"base":"linear-gradient(102deg, #D5F1FA 0%, #9EDCF1 18%, #B6E6F5 36%, #C9EEF8 56%, #A6DEF2 74%, #5CC0E6 90%, #2FA7DE 100%)","ink":"#000000","fid":"sc-flow-aqua","sid":"sc-streak-aqua","blur":"6","sblur":"2.2","disp":"10","glass":"rgba(255,255,255,.34)","glassLine":"rgba(0,0,0,.22)","shadow":"none","b0":{"c":"#86D2EE","x":14,"y":68,"rx":10,"ry":70,"r":12},"b1":{"c":"#D0F0FA","x":54,"y":40,"rx":12,"ry":80,"r":12},"b2":{"c":"#2A9FDA","x":102,"y":102,"rx":20,"ry":42,"r":18},"b3":{"c":"#C7EDF9","x":88,"y":0,"rx":22,"ry":26,"r":0},"b4":{"c":"#6CC6EA","x":6,"y":100,"rx":16,"ry":22,"r":12},"b5":{"c":"#B2E4F5","x":72,"y":60,"rx":10,"ry":70,"r":12},"s0":{"c":"#EEFAFD","x":1,"y":40,"rx":3.2,"ry":70,"r":12},"s1":{"c":"#DDF4FB","x":44,"y":50,"rx":2.6,"ry":80,"r":12}},"Rose":{"base":"linear-gradient(200deg, #F9C3CF 0%, #F5A9BB 30%, #EE8CA6 55%, #F29AB0 78%, #F6AFC0 100%)","ink":"#000000","fid":"sc-flow-rose","sid":"sc-streak-rose","blur":"7","sblur":"3","disp":"8","glass":"rgba(255,255,255,.34)","glassLine":"rgba(0,0,0,.22)","shadow":"none","b0":{"c":"#EC7F9C","x":70,"y":38,"rx":12,"ry":60,"r":-32},"b1":{"c":"#FAC6D2","x":92,"y":4,"rx":28,"ry":24,"r":0},"b2":{"c":"#F8C0B4","x":10,"y":98,"rx":24,"ry":22,"r":0},"b3":{"c":"#F09CB1","x":40,"y":80,"rx":20,"ry":30,"r":-20},"b4":{"c":"#EF93AA","x":100,"y":70,"rx":14,"ry":30,"r":0},"b5":{"c":"#F7B6C5","x":60,"y":0,"rx":18,"ry":14,"r":0},"s0":{"c":"#FDE9EE","x":4,"y":52,"rx":8,"ry":64,"r":-20},"s1":{"c":"#FBD6DF","x":16,"y":66,"rx":5,"ry":50,"r":-20}},"Lemon":{"base":"linear-gradient(200deg, #FCE78C 0%, #F9DA6E 30%, #F5C752 55%, #F7CF5E 78%, #F9D86C 100%)","ink":"#000000","fid":"sc-flow-lemon","sid":"sc-streak-lemon","blur":"7","sblur":"3","disp":"8","glass":"rgba(255,255,255,.34)","glassLine":"rgba(0,0,0,.22)","shadow":"none","b0":{"c":"#F2BD45","x":70,"y":38,"rx":12,"ry":60,"r":-32},"b1":{"c":"#FCE891","x":92,"y":4,"rx":28,"ry":24,"r":0},"b2":{"c":"#FBD99A","x":10,"y":98,"rx":24,"ry":22,"r":0},"b3":{"c":"#F6CB5A","x":40,"y":80,"rx":20,"ry":30,"r":-20},"b4":{"c":"#F4C44F","x":100,"y":70,"rx":14,"ry":30,"r":0},"b5":{"c":"#FADF7A","x":60,"y":0,"rx":18,"ry":14,"r":0},"s0":{"c":"#FFF7DA","x":4,"y":52,"rx":8,"ry":64,"r":-20},"s1":{"c":"#FDEDB4","x":16,"y":66,"rx":5,"ry":50,"r":-20}},"Dusk":{"base":"linear-gradient(180deg, #9A92B6 0%, #A58AA6 36%, #AF8599 54%, #C8715F 76%, #DA7A50 100%)","ink":"#FFFFFF","fid":"sc-flow-dusk","sid":"sc-streak-dusk","blur":"9","sblur":"3","disp":"26","glass":"rgba(255,255,255,.12)","glassLine":"rgba(255,255,255,.62)","shadow":"0 1px 14px rgba(0,0,0,.16)","b0":{"c":"#958FB9","x":5,"y":10,"rx":60,"ry":40,"r":0},"b1":{"c":"#AC839E","x":92,"y":18,"rx":50,"ry":36,"r":0},"b2":{"c":"#B0869A","x":50,"y":55,"rx":60,"ry":14,"r":0},"b3":{"c":"#CE505A","x":6,"y":96,"rx":40,"ry":30,"r":0},"b4":{"c":"#F4A04A","x":50,"y":100,"rx":34,"ry":30,"r":0},"b5":{"c":"#D9744C","x":96,"y":92,"rx":34,"ry":28,"r":0},"s0":{"c":"transparent","x":0,"y":0,"rx":0,"ry":0,"r":0},"s1":{"c":"transparent","x":0,"y":0,"rx":0,"ry":0,"r":0}},"Grove":{"base":"linear-gradient(160deg, #2E4A1F 0%, #4E6428 25%, #9A9A3E 50%, #5E7A3A 72%, #1E3A22 100%)","ink":"#FFFFFF","fid":"sc-flow-grove","sid":"sc-streak-grove","blur":"7","sblur":"3","disp":"26","glass":"rgba(255,255,255,.12)","glassLine":"rgba(255,255,255,.62)","shadow":"0 1px 14px rgba(0,0,0,.16)","b0":{"c":"#D9A878","x":70,"y":6,"rx":26,"ry":14,"r":0},"b1":{"c":"#7FB2D6","x":97,"y":30,"rx":16,"ry":26,"r":0},"b2":{"c":"#C8B432","x":40,"y":50,"rx":40,"ry":10,"r":0},"b3":{"c":"#15301A","x":86,"y":94,"rx":36,"ry":22,"r":0},"b4":{"c":"#8FA3AE","x":6,"y":86,"rx":30,"ry":16,"r":0},"b5":{"c":"#22401C","x":6,"y":12,"rx":34,"ry":22,"r":0},"s0":{"c":"transparent","x":0,"y":0,"rx":0,"ry":0,"r":0},"s1":{"c":"transparent","x":0,"y":0,"rx":0,"ry":0,"r":0}},"Forest":{"base":"linear-gradient(180deg, #AEBEC9 0%, #B0C2CF 22%, #A8B7B8 38%, #8A9675 50%, #5E6B3C 61%, #3F4F25 72%, #25391A 86%, #1C3214 100%)","ink":"#FFFFFF","fid":"sc-flow-forest","sid":"sc-streak-forest","blur":"9","sblur":"3","disp":"26","glass":"rgba(255,255,255,.12)","glassLine":"rgba(255,255,255,.62)","shadow":"0 1px 14px rgba(0,0,0,.16)","b0":{"c":"#B3C6D4","x":70,"y":8,"rx":62,"ry":22,"r":0},"b1":{"c":"#909C7C","x":60,"y":50,"rx":46,"ry":7,"r":0},"b2":{"c":"#6F7C4C","x":4,"y":53,"rx":30,"ry":9,"r":0},"b3":{"c":"#203616","x":50,"y":102,"rx":72,"ry":24,"r":0},"b4":{"c":"#2B4319","x":0,"y":80,"rx":30,"ry":18,"r":0},"b5":{"c":"#AAB9BD","x":10,"y":36,"rx":34,"ry":8,"r":0},"s0":{"c":"transparent","x":0,"y":0,"rx":0,"ry":0,"r":0},"s1":{"c":"transparent","x":0,"y":0,"rx":0,"ry":0,"r":0}},"Ember":{"base":"linear-gradient(270deg, #EB840C 0%, #E77C0D 36%, #B8641A 50%, #7A4A22 61%, #5A3A28 72%, #6A3F27 85%, #8B4922 100%)","ink":"#FFFFFF","fid":"sc-flow-ember","sid":"sc-streak-ember","blur":"9","sblur":"3","disp":"26","glass":"rgba(255,255,255,.12)","glassLine":"rgba(255,255,255,.62)","shadow":"0 1px 14px rgba(0,0,0,.16)","b0":{"c":"#E36E0E","x":80,"y":100,"rx":40,"ry":40,"r":0},"b1":{"c":"#F08C10","x":86,"y":4,"rx":36,"ry":36,"r":0},"b2":{"c":"#533728","x":28,"y":45,"rx":13,"ry":75,"r":0},"b3":{"c":"#974B1D","x":0,"y":92,"rx":18,"ry":40,"r":0},"b4":{"c":"#C96A17","x":55,"y":20,"rx":8,"ry":40,"r":0},"b5":{"c":"#E0740E","x":100,"y":60,"rx":20,"ry":30,"r":0},"s0":{"c":"transparent","x":0,"y":0,"rx":0,"ry":0,"r":0},"s1":{"c":"transparent","x":0,"y":0,"rx":0,"ry":0,"r":0}},"Meadow":{"base":"linear-gradient(180deg, #A9CFE0 0%, #7FAE6A 26%, #5E8E3E 38%, #D6C648 50%, #CFE3E6 64%, #5C9450 80%, #3E8480 100%)","ink":"#FFFFFF","fid":"sc-flow-meadow","sid":"sc-streak-meadow","blur":"5","sblur":"3","disp":"26","glass":"rgba(255,255,255,.12)","glassLine":"rgba(255,255,255,.62)","shadow":"0 1px 14px rgba(0,0,0,.16)","b0":{"c":"#2F6230","x":14,"y":40,"rx":38,"ry":10,"r":0},"b1":{"c":"#EDCBA8","x":78,"y":20,"rx":30,"ry":12,"r":0},"b2":{"c":"#E6CB3C","x":46,"y":52,"rx":30,"ry":7,"r":0},"b3":{"c":"#E4EFF3","x":20,"y":68,"rx":30,"ry":10,"r":0},"b4":{"c":"#3F7F3A","x":84,"y":74,"rx":30,"ry":10,"r":0},"b5":{"c":"#9CC8E8","x":94,"y":42,"rx":18,"ry":12,"r":0},"s0":{"c":"transparent","x":0,"y":0,"rx":0,"ry":0,"r":0},"s1":{"c":"transparent","x":0,"y":0,"rx":0,"ry":0,"r":0}},"Ocean":{"base":"linear-gradient(180deg, #CFE2E7 0%, #A2C9D4 28%, #6A9FB3 52%, #33708C 76%, #1B4A66 100%)","ink":"#FFFFFF","fid":"sc-flow-ocean","sid":"sc-streak-ocean","blur":"9","sblur":"3","disp":"26","glass":"rgba(255,255,255,.12)","glassLine":"rgba(255,255,255,.62)","shadow":"0 1px 14px rgba(0,0,0,.16)","b0":{"c":"#E7EFF1","x":72,"y":6,"rx":44,"ry":16,"r":0},"b1":{"c":"#8DBBCB","x":12,"y":32,"rx":40,"ry":10,"r":0},"b2":{"c":"#4E8FA8","x":22,"y":56,"rx":46,"ry":10,"r":0},"b3":{"c":"#2A6482","x":86,"y":70,"rx":42,"ry":14,"r":0},"b4":{"c":"#173F5A","x":30,"y":102,"rx":62,"ry":20,"r":0},"b5":{"c":"#3C7F9B","x":100,"y":46,"rx":24,"ry":10,"r":0},"s0":{"c":"transparent","x":0,"y":0,"rx":0,"ry":0,"r":0},"s1":{"c":"transparent","x":0,"y":0,"rx":0,"ry":0,"r":0}},"Sun":{"base":"linear-gradient(165deg, #F7D84E 0%, #F5C63F 42%, #EFA436 78%, #EA9031 100%)","ink":"#000000","fid":"sc-flow-sun","sid":"sc-streak-sun","blur":"9","sblur":"3","disp":"26","glass":"rgba(255,255,255,.34)","glassLine":"rgba(0,0,0,.22)","shadow":"none","b0":{"c":"#FBE46C","x":14,"y":8,"rx":52,"ry":34,"r":0},"b1":{"c":"#F3B63A","x":70,"y":55,"rx":50,"ry":22,"r":0},"b2":{"c":"#EA8A2E","x":92,"y":100,"rx":46,"ry":30,"r":0},"b3":{"c":"#F8D24A","x":0,"y":70,"rx":30,"ry":24,"r":0},"b4":{"c":"#F9DC5C","x":80,"y":10,"rx":30,"ry":20,"r":0},"b5":{"c":"#EE9C34","x":30,"y":100,"rx":40,"ry":18,"r":0},"s0":{"c":"transparent","x":0,"y":0,"rx":0,"ry":0,"r":0},"s1":{"c":"transparent","x":0,"y":0,"rx":0,"ry":0,"r":0}}};
+  const keys = Object.keys(P);
+  return P[name] || P[keys[(i || 0) % keys.length]];
+}
+gen(seed, mode) {
+  // Starting value picked so the sample decks get a varied set; any value is equally random.
+  let h = 2300790937;
+  for (const ch of String(seed)) { h ^= ch.charCodeAt(0); h = Math.imul(h, 16777619); }
+  let s = h >>> 0;
+  const rnd = () => { s = (s + 0x6D2B79F5) | 0; let t = Math.imul(s ^ (s >>> 15), 1 | s); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
+  const norm = x => ((x % 360) + 360) % 360;
+  const rgb = (hh, ss, ll) => { ss /= 100; ll /= 100; const k = n => (n + hh / 30) % 12; const a = ss * Math.min(ll, 1 - ll); const f = n => ll - a * Math.max(-1, Math.min(k(n) - 3, Math.min(9 - k(n), 1))); return [f(0), f(8), f(4)]; };
+  const lum = ([r, g, b]) => { const L = v => (v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4)); return 0.2126 * L(r) + 0.7152 * L(g) + 0.0722 * L(b); };
+  const hsl = (hh, l, ss) => 'hsl(' + norm(hh).toFixed(0) + ' ' + ss.toFixed(0) + '% ' + Math.max(4, Math.min(97, l)).toFixed(0) + '%)';
+  const id = (h >>> 0).toString(36);
+  let kind = mode, c = 0;
+  if (typeof mode === 'number') { c = mode; kind = c < 0.5 ? 'deep' : 'clear'; }
+  else {
+    if (mode == null || mode === 'mix') kind = rnd() < 0.7 ? 'vivid' : 'deep';
+    c = kind === 'clear' ? 0.76 + rnd() * 0.24 : kind === 'deep' ? 0.02 + rnd() * 0.26 : 0;
+  }
+  if (kind === 'vivid') {
+    // Families from the references, as [hue, saturation, lightness]: main, light, dark, accent, second accent,
+    // fold angle, roundness (0 = long silky folds, 1 = soft round clouds), and how big the accent is.
+    const F = [
+      [[270, 44, 58], [262, 46, 72], [292, 50, 44], [6, 78, 60], [312, 44, 66], 0, 0.1, 1],
+      [[20, 88, 54], [27, 94, 62], [10, 50, 25], [282, 16, 50], [8, 82, 48], -38, 0.15, 1],
+      [[13, 78, 48], [18, 88, 60], [8, 72, 30], [212, 70, 66], [20, 88, 71], 18, 0.85, 1.5],
+      [[199, 82, 46], [195, 80, 58], [210, 86, 29], [348, 76, 82], [350, 70, 76], 58, 0.3, 1.45],
+      [[238, 60, 58], [284, 46, 52], [236, 52, 30], [352, 74, 66], [18, 88, 71], 86, 0.55, 1.2],
+      [[229, 66, 50], [226, 70, 60], [231, 64, 29], [330, 58, 64], [352, 62, 58], -36, 0.35, 1.4],
+      [[318, 58, 46], [326, 64, 60], [290, 52, 26], [24, 92, 58], [18, 88, 72], 12, 0.3, 1.2],
+      [[190, 72, 40], [186, 66, 54], [205, 76, 23], [10, 82, 64], [22, 88, 72], -24, 0.45, 1.35],
+      [[350, 72, 50], [356, 80, 62], [340, 64, 28], [258, 58, 62], [268, 52, 74], 30, 0.4, 1.3],
+      [[248, 54, 48], [252, 60, 63], [246, 56, 26], [20, 90, 70], [8, 78, 62], -12, 0.5, 1.2]
+    ];
+    const fam = Math.floor(rnd() * F.length), [dom, lite, dark, acc, acc2, flow0, round, big] = F[fam];
+    const dh = (rnd() - 0.5) * 14, fx = rnd() < 0.5, fy = rnd() < 0.4;
+    const vc = ([hh, ss, ll], dl = 0) => hsl(hh + dh, ll + dl, ss);
+    const X = x => +(fx ? 100 - x : x).toFixed(1), Y = y => +(fy ? 100 - y : y).toFixed(1);
+    const flow = (flow0 + (rnd() - 0.5) * 14) * (fx !== fy ? -1 : 1);
+    const j = () => (rnd() - 0.5) * 12, k = () => 0.8 + rnd() * 0.4;
+    const blob = (cc, x, y, w, ht, rot = flow) => ({ c: cc, x: X(x + j()), y: Y(y + j()), rx: +(w * k()).toFixed(1), ry: +(ht * k()).toFixed(1), r: +rot.toFixed(1) });
+    let a = 225; if (fx) a = 360 - a; if (fy) a = 180 - a;
+    const o = { base: 'linear-gradient(' + Math.round(norm(a)) + 'deg, ' + vc(lite) + ' 0%, ' + vc(dom) + ' 52%, ' + vc(dark, 6) + ' 100%)',
+      fid: 'sc-gen-' + id, sid: 'sc-gens-' + id, blur: '9', sblur: '5.5', disp: '24', clarity: 0, kind: 'Vivid', fam };
+    o.b0 = blob(vc(acc), 6, 94, (26 + 14 * round) * big, (26 + 14 * round) * big);
+    o.b1 = blob(vc(acc2), 24 * big, 86, (12 + 10 * round) * big, (18 + 8 * round) * big);
+    o.b2 = blob(vc(dark), 18, 36, 8 + 16 * round, 64 - 30 * round);
+    o.b3 = blob(vc(lite, 2), 72, 18, 12 + 14 * round, 60 - 24 * round);
+    o.b4 = blob(vc(dom), 52, 56, 9 + 16 * round, 66 - 30 * round);
+    o.b5 = blob(vc(dark, 8), 90, 88, 10 + 16 * round, 40 - 10 * round);
+    const silk = round < 0.5, none = { c: 'transparent', x: 0, y: 0, rx: 0, ry: 0, r: 0 };
+    o.s0 = silk ? { c: vc(lite, 4), x: X(42 + j()), y: 50, rx: 4.5, ry: 80, r: +flow.toFixed(1) } : none;
+    o.s1 = silk ? { c: vc(dark, 4), x: X(66 + j()), y: 50, rx: 3.5, ry: 80, r: +flow.toFixed(1) } : none;
+    o.ink = '#FFFFFF'; o.glass = 'rgba(255,255,255,.14)'; o.glassLine = 'rgba(255,255,255,.6)'; o.shadow = '0 1px 14px rgba(0,0,0,.18)';
+    return o;
+  }
+  const mix = (a, b) => a + (b - a) * c;
+  let hue = rnd() * 360;
+  // Deep yellows and yellow-greens turn olive and muddy; nudge them to amber or green.
+  if (c < 0.6 && hue > 46 && hue < 100) hue = hue < 73 ? 32 + rnd() * 8 : 118 + rnd() * 20;
+  let hue2 = hue + (rnd() < 0.5 ? -1 : 1) * (16 + rnd() * 30);
+  const n2 = norm(hue2);
+  if (c < 0.6 && n2 > 46 && n2 < 100) hue2 = n2 < 73 ? 28 : 124;
+  const sat = mix(52, 88), lo = mix(16, 62), hi = mix(70, 90);
+  const col = (hh, l, ss) => hsl(hh, l, ss == null ? sat : ss);
+  const tilt = (rnd() - 0.5) * 50;
+  const angle = Math.round(rnd() * 360);
+  const lMid = (lo + hi) / 2;
+  const base = 'linear-gradient(' + angle + 'deg, ' + col(hue, hi) + ' 0%, ' + col(hue, lMid) + ' 45%, ' + col(hue2, mix(lo + 6, lMid)) + ' 100%)';
+  const o = { base, fid: 'sc-gen-' + id, sid: 'sc-gens-' + id,
+    blur: mix(9, 6).toFixed(1), sblur: mix(4, 3).toFixed(1), disp: mix(26, 9).toFixed(0), clarity: c, kind: c < 0.5 ? 'Deep' : 'Clear', hue: Math.round(norm(hue)) };
+  for (let i = 0; i < 6; i++) {
+    const hh = i % 2 ? hue2 : hue, span = (hi - lo) * 0.45, l = rnd() < 0.5 ? lo + rnd() * span : hi - rnd() * span;
+    o['b' + i] = { c: col(hh, l), x: +(rnd() * 100).toFixed(1), y: +(rnd() * 100).toFixed(1),
+      rx: +(mix(34, 11) * (0.7 + rnd() * 0.6)).toFixed(1), ry: +(mix(26, 72) * (0.7 + rnd() * 0.6)).toFixed(1), r: +(tilt * c).toFixed(1) };
+  }
+  for (let i = 0; i < 2; i++) {
+    const on = c > 0.45;
+    o['s' + i] = on ? { c: col(hue, Math.min(95, hi + 4), sat * 0.8), x: +(8 + rnd() * 84).toFixed(1), y: 50, rx: +(1.5 + rnd() * 2 * c).toFixed(1), ry: 80, r: +tilt.toFixed(1) }
+      : { c: 'transparent', x: 0, y: 0, rx: 0, ry: 0, r: 0 };
+  }
+  // Text color: whichever of black or white reads better on the middle of the card.
+  const Lm = lum(rgb(norm(hue), sat, lMid));
+  const white = 1.05 / (Lm + 0.05), black = (Lm + 0.05) / 0.05;
+  const dark = white > black;
+  o.ink = dark ? '#FFFFFF' : '#000000';
+  o.glass = dark ? 'rgba(255,255,255,.12)' : 'rgba(255,255,255,.34)';
+  o.glassLine = dark ? 'rgba(255,255,255,.62)' : 'rgba(0,0,0,.22)';
+  o.shadow = dark ? '0 1px 14px rgba(0,0,0,.16)' : 'none';
+  return o;
+}
+mock() {
+  const p = this.props, m = this.state.$m || {};
+  const set = patch => this.setState({ $m: { ...m, ...patch } });
+  const X = {"DECKS":[{"id":"cell","name":"Cell Biology","total":"412","due":28,"overdue":12,"soon":0,"fresh":10,"ret":91,"ai":38},{"id":"jlpt","name":"Japanese · JLPT N4","total":"1,280","due":19,"overdue":5,"soon":0,"fresh":20,"ret":87,"ai":0},{"id":"orgo","name":"Organic Chemistry","total":"236","due":11,"overdue":0,"soon":0,"fresh":5,"ret":84,"ai":0},{"id":"hist","name":"US History","total":"158","due":6,"overdue":0,"soon":0,"fresh":0,"ret":93,"ai":0},{"id":"sys","name":"System Design","total":"74","due":0,"overdue":0,"soon":1,"fresh":8,"ret":89,"ai":0},{"id":"span","name":"Spanish Verbs","total":"310","due":0,"overdue":0,"soon":3,"fresh":0,"ret":95,"ai":0}],"TAGS":{"cell":["Biology","MCAT","Year 1","BIO 201","Fall 2026","Midterm","Final exam","Pre-med","Lab","Cells","Must know"],"jlpt":["Languages"],"orgo":["Chemistry","MCAT","Year 1","Pre-med","Fall 2026"],"hist":["History"],"sys":["Computer science"],"span":["Languages"]},"CARDS":[{"id":"k1","front":"What does the electron transport chain pump across the inner membrane?","back":"Protons (H⁺)","kind":"Basic","icon":"text","next":"Tomorrow","ai":"","tags":["Energy","Exam 1","Mitochondria","Must know"]},{"id":"k2","front":"The ____ is the powerhouse of the cell.","back":"mitochondrion","kind":"Fill in the blank","icon":"blank","next":"Due now","ai":"Claude","tags":["Organelles","Exam 1"]},{"id":"k3","front":"Name structure 1 on the diagram.","back":"Nucleus","kind":"Image","icon":"image","next":"In 3 days","ai":"Claude","tags":["Organelles","Diagrams"]},{"id":"k4","front":"Which organelle packages proteins for secretion?","back":"Golgi apparatus","kind":"Basic","icon":"text","next":"In 6 days","ai":"","tags":["Organelles"]},{"id":"k5","front":"Say it: ribosome","back":"RY-buh-sohm","kind":"Audio","icon":"audio","next":"Due now","ai":"ChatGPT","tags":["Pronunciation"]},{"id":"k6","front":"What is the role of the ribosome?","back":"Translates mRNA into protein","kind":"Basic","icon":"text","next":"In 12 days","ai":"","tags":["Proteins","Exam 2"]}],"FOLDERS":[{"id":"f1","name":"Languages","decks":["jlpt","span"]},{"id":"f2","name":"Year 1","decks":["orgo","hist"]}],"ALL_CARDS":[["cell","What does the electron transport chain pump across the inner membrane?","Protons (H⁺)","text","Tomorrow","easy",["Energy","Exam 1","Mitochondria","Must know"]],["cell","The ____ is the powerhouse of the cell.","mitochondrion","blank","Due now","hard",["Organelles","Exam 1"]],["jlpt","電車","train (でんしゃ)","text","In 2 days","medium",["Vocabulary"]],["orgo","C₆H₆","Benzene","text","In 5 days","easy",["Aromatics"]],["cell","Name structure 1 on the diagram.","Nucleus","image","In 3 days","medium",["Organelles","Diagrams"]],["hist","Year the Declaration of Independence was signed?","1776","text","In 9 days","easy",["Revolution"]],["span","Yo ____ dos hermanos.","tengo","blank","Due now","hard",["Irregular"]],["sys","What does a load balancer do?","Spreads requests across servers","text","New","new",["Basics"]],["cell","Which organelle packages proteins for secretion?","Golgi apparatus","text","In 6 days","medium",["Organelles"]],["jlpt","学校","school (がっこう)","text","New","new",["Vocabulary"]],["orgo","Markovnikov’s rule says the H goes to…","The carbon with more H’s","text","Due now","hard",["Reactions","Exam 2"]],["cell","Say it: ribosome","RY-buh-sohm","audio","Due now","new",["Pronunciation"]]],"REVIEW":[{"kind":"basic","front":"What does the electron transport chain pump across the inner membrane?","back":"Protons (H⁺), from the matrix into the intermembrane space.","note":"That gradient powers ATP synthase."},{"kind":"cloze","before":"The","after":"is the powerhouse of the cell.","back":"mitochondrion","note":"It makes most of the cell’s ATP."},{"kind":"image","front":"","back":"Nucleus","note":"Holds the cell’s DNA.","image":"mock","boxes":[{"id":"b1","x":0.409,"y":0.32,"w":0.236,"h":0.347,"label":"Nucleus"},{"id":"b2","x":0.164,"y":0.573,"w":0.164,"h":0.133,"label":"Mitochondrion"},{"id":"b3","x":0.645,"y":0.687,"w":0.145,"h":0.12,"label":"Vacuole"}],"box":"b1","occ":"all"},{"kind":"audio","front":"What word do you hear?","back":"train","note":"電 electricity + 車 vehicle.","audio":"mock","backBig":"電車","backSub":"でんしゃ · train"}],"DRAFTS":{"Basic":{"kind":"basic","front":"What does the electron transport chain pump across the inner membrane?","back":"Protons (H⁺), into the intermembrane space."},"Blank":{"kind":"cloze","text":"The [[mitochondrion]] is the powerhouse of the cell, making most of its [[ATP]].","note":"It makes most of the cell’s ATP."},"Image":{"kind":"image","front":"Name the part of the cell.","back":"","image":"mock","boxes":[{"id":"b1","x":0.409,"y":0.32,"w":0.236,"h":0.347,"label":"Nucleus"},{"id":"b2","x":0.164,"y":0.573,"w":0.164,"h":0.133,"label":"Mitochondrion"},{"id":"b3","x":0.645,"y":0.687,"w":0.145,"h":0.12,"label":"Vacuole"}],"occ":"one"},"Audio":{"kind":"audio","back":"電車 (でんしゃ): train","audio":"mock"}},"DUE_7":{"vals":[32,18,24,12,30,8,16],"labels":["Wed","Thu","Fri","Sat","Sun","Mon","Tue"],"tops":null,"names":["tomorrow","Thursday","Friday","Saturday","Sunday","Monday","Tuesday"]},"DUE_14":{"vals":[32,18,24,12,30,8,16,22,14,26,10,20,6,12],"labels":["23","24","25","26","27","28","29","30","1","2","3","4","5","6"],"tops":["W","T","F","S","S","M","T","W","T","F","S","S","M","T"],"names":["tomorrow","Thu 24","Fri 25","Sat 26","Sun 27","Mon 28","Tue 29","Wed 30","Thu, Oct 1","Fri, Oct 2","Sat, Oct 3","Sun, Oct 4","Mon, Oct 5","Tue, Oct 6"]},"BOXES":[{"id":"b1","x":0.409,"y":0.32,"w":0.236,"h":0.347,"label":"Nucleus"},{"id":"b2","x":0.164,"y":0.573,"w":0.164,"h":0.133,"label":"Mitochondrion"},{"id":"b3","x":0.645,"y":0.687,"w":0.145,"h":0.12,"label":"Vacuole"}]}, WAVE = [0.05,0.05,0.05,0.07,0.08,0.11,0.1,0.13,0.16,0.22,0.22,0.21,0.3,0.4,0.38,0.34,0.45,0.59,0.55,0.51,0.57,0.74,0.67,0.7,0.65,0.79,0.7,0.87,0.81,0.74,0.7,0.92,0.85,0.64,0.66,0.82,0.76,0.54,0.52,0.62,0.56,0.38,0.34,0.39,0.35,0.26,0.24,0.21,0.19,0.16,0.15,0.14,0.18,0.25,0.32,0.29,0.29,0.43,0.53,0.47,0.43,0.58,0.7,0.59,0.56,0.62,0.73,0.58,0.64,0.53,0.62,0.5,0.6,0.49,0.43,0.4,0.46,0.37,0.26,0.26,0.28,0.22,0.14,0.13,0.14,0.1,0.07,0.05,0.05,0.05,0.05,0.05,0.05,0.05,0.05,0.05];
+  const caught = !!p.caughtUp;
+  const byName = { 'Four buttons': 'four', 'Check or X': 'binary', 'Piles': 'piles' };
+  const ed = m.deck || {};
+  const deck = () => ({ id: 'cell', name: ed.name ?? 'Cell Biology', tags: ed.tags || X.TAGS.cell, seed: 'Cell Biology', cover: { style: 'mix', round: 0, image: null, ...(ed.cover || {}) },
+    paused: !!ed.paused, grading: ed.grading || byName[p.grading] || 'four', fsrs: ed.fsrs ?? (p.fsrs !== false), goal: ed.goal ?? 90, gapIdx: ed.gapIdx ?? 3, steps: ed.steps || ['1m', '10m'], perDay: ed.perDay ?? 20,
+    total: 412, totalLabel: '412', due: 28, fresh: 10, ret: 91, aiCount: 38, forecast: [28, 14, 20, 9, 24, 6, 12], piles: m.piles || [{ name: 'Know it', n: 18 }, { name: 'Almost', n: 6 }, { name: 'No clue', n: 3 }],
+    href: 'WebDeck.dc.html', studyHref: 'WebReview.dc.html', settingsHref: 'WebDeckSettings.dc.html', newCardHref: 'WebEditor.dc.html', folder: null, bg: ed.bg || { kind: 'deck', image: null } });
+  const idx = m.idx ?? (({ 'Fill in the blank': 1, Image: 2, Audio: 3 })[p.card] || 0);
+  // Profile picture (the Settings boards' photo setting): the Google photo, your own, or the color; the canvas draws
+  // stand-ins for the photos.
+  const st = { name: 'Alex Kim', sub: 'Signed in with Google · alex@gmail.com', signedIn: true, google: true, photo: ({ 'Google photo': 'google', 'Your photo': 'yours' })[p.photo] || 'color', yourPhoto: p.photo === 'Your photo' ? 'mock' : null, color: 0,
+    look: 'system', darkMode: p.dim ? 'gray' : 'black', grads: 'mix', prog: ({ Bar: 'bar', Counts: 'counts', None: 'none' })[p.progress] || 'bar', perDay: 20, goal: 90, grading: 'four', fsrs: true, check: true, reminder: '9:00 AM', ...(m.settings || {}) };
+  const perms = { read: true, text: true, media: true, edit: true, check: true, del: false, ...(m.perms || {}) };
+  const noop = () => {};
+  // Folders you make or change here stay on this board.
+  const folders = () => m.folders || X.FOLDERS;
+  const folderOf = id => (m.moved && id in m.moved ? m.moved[id] : (folders().find(f => (f.decks || []).includes(id)) || {}).id || null);
+  // Decks and cards you drag here keep their new order (and cards their new deck) on this board.
+  const order = m.deckOrder || X.DECKS.map(d => d.id), inOrder = () => order.map(id => X.DECKS.find(d => d.id === id));
+  const before = (list, id, b) => { const l = list.filter(x => x !== id), at = b ? l.indexOf(b) : -1; l.splice(at < 0 ? l.length : at, 0, id); return l; };
+  const cardDeck = m.cardDeck || {}, cardOrder = m.cardOrder || X.CARDS.map(c => c.id);
+  return {
+    mock: true,
+    chrome: () => ({ nav: { today: caught ? '' : '64' }, me: { bg: 'linear-gradient(135deg, #8C9AFC 0%, #4F60E6 100%)', initial: 'A', color: st.photo === 'color', photo: '', sampleGoogle: st.photo === 'google', sampleYours: st.photo === 'yours' } }),
+    settings: () => st,
+    tags: () => [],
+    decks: () => inOrder().map(d => ({ d, i: X.DECKS.indexOf(d) })).map(({ d, i }) => ({ ...d, name: d.name, tags: X.TAGS[d.id], seed: d.name, style: null, image: null, totalLabel: d.total, paused: false, folder: folderOf(d.id), bg: { kind: 'deck', image: null },
+      due: caught ? 0 : d.due, overdue: caught ? 0 : d.overdue, soon: caught ? (d.soon || [1, 1, 2, 3, 1, 3][i]) : d.soon,
+      href: 'WebDeck.dc.html', studyHref: 'WebReview.dc.html', settingsHref: 'WebDeckSettings.dc.html' })),
+    deck,
+    folders: () => folders().map(f => { const ds = inOrder().filter(d => folderOf(d.id) === f.id);
+      return { id: f.id, name: f.name, n: ds.length, due: caught ? 0 : ds.reduce((n, d) => n + d.due, 0), decks: ds.map(d => ({ ...d, seed: d.name, style: null, round: 0 })), href: 'WebLibraryFolder.dc.html' }; }),
+    allCards: () => X.ALL_CARDS.map(([was, front, back, icon, next, level, tags], i) => { const deckId = cardDeck['a' + i] || was, d = X.DECKS.find(x => x.id === deckId);
+      return { id: 'a' + i, kind: '', icon, front, back, tags, next, level, deckId, deckName: d.name, seed: d.name, style: null, round: 0, folder: folderOf(deckId), href: 'WebEditor.dc.html' }; }),
+    searchDecks: q => X.DECKS.filter(d => d.name.toLowerCase().includes(q)).map(d => d.id),
+    cards: () => cardOrder.map(id => X.CARDS.find(r => r.id === id)).filter(r => !cardDeck[r.id] || cardDeck[r.id] === 'cell').map(r => ({ ...r, href: 'WebEditor.dc.html' })),
+    card: () => null,
+    draft: type => ({ tags: ['Energy', 'Exam 1'], front: '', back: '', text: '', note: '', image: null, audio: null, speak: '', auto: true, ...X.DRAFTS[type] }),
+    today: () => ({ date: 'Tuesday, September 22', streak: 12, best: 31, due: caught ? 0 : 64, minutes: 11, fresh: 10, next: { day: 'tomorrow', n: 32 },
+      week: ['M', 'T', 'W', 'T', 'F', 'S', 'S'].map((d, i) => ({ d, done: i < 2, today: i === 1 })), forecast: X.DUE_7, newCardHref: 'WebEditor.dc.html', studyHref: 'WebReview.dc.html' }),
+    review: () => {
+      const c = X.REVIEW[idx % X.REVIEW.length], d = deck(), done = 12 + idx, left = 64 - done;
+      const scale = (Math.pow(d.goal / 100, -2) - 1) / (Math.pow(0.9, -2) - 1), gaps = [30, 90, 180, 365, 730, 1825, 3650], maxGap = gaps[d.gapIdx];
+      const days = b => Math.min(maxGap, Math.max(1, Math.round(b * scale)));
+      const fmt = n => (n < 30 ? n + 'd' : n < 365 ? Math.round(n / 3) / 10 + 'mo' : Math.round(n / 36.5) / 10 + 'y');
+      const hardD = days(2), goodD = Math.min(maxGap, Math.max(hardD + 1, days(4))), easyD = Math.min(maxGap, Math.max(goodD + 1, days(9)));
+      return { empty: false, deckId: 'cell', card: { id: 'r' + idx, ...c }, done, left, total: 64, queue: { basic: 'rev', cloze: 'new', image: 'new', audio: 'learn' }[c.kind],
+        counts: { new: 8, learn: 3, rev: Math.max(left - 11, 0) }, iv: { again: d.steps[0], hard: fmt(hardD), good: fmt(goodD), easy: fmt(easyD) },
+        mode: d.grading, fsrsOn: d.grading !== 'piles' && d.fsrs, piles: d.piles, prog: st.prog, editHref: 'WebEditor.dc.html' };
+    },
+    session: () => ({ pct: 91, goal: 90, cards: 40, minutes: 12, fresh: 3, split: [3, 5, 25, 7], splitW: ['8%', '12%', '62%', '18%'], streak: 13, next: 'Tomorrow · 32', moreHref: 'WebReview.dc.html',
+      sorted: 12, piles: [{ name: 'Know it', n: 7, total: 18 }, { name: 'Almost', n: 3, total: 6 }, { name: 'No clue', n: 2, total: 3 }], onlyPiles: false }),
+    stats: () => ({ streak: 12, best: 31, reviews: '1,284', cards: '2,470', ai: 312, remembered: 90, goal: 90, heat: null, forecast: X.DUE_14,
+      byDeck: X.DECKS.map(d => ({ name: d.name, ret: d.ret })) }),
+    ai: () => ({ url: 'https://app.lucida.cards/mcp/lk_5b1f0c6e9a2d4b7f8e3a1c0d9b8a7f6e2Hq9xWrT4kLm1ZpVb8sNc3Yd7Ga0uEfJ', perms, clients: { claude: true, openai: true, cursor: false, mcp: false }, connected: 'Claude, ChatGPT' }),
+    // Sound: the sample clip, a little way in (paused, or playing on the boards that say so). Play and the waveform work.
+    sound: c => ({ key: c && (c.audio || c.speak) ? 'mock' : '', peaks: WAVE, dur: 2.6, speech: !!c && !c.audio, on: m.playing ?? !!p.playing, frac: m.frac ?? .42, busy: false }),
+    // The Recording boards: a clip being recorded, 3 seconds in.
+    recording: () => ((p.recording && !m.recStop) || m.rec ? { saving: false, levels: Array.from({ length: 70 }, (_, i) => WAVE[(i * 3 + 30) % 96]), level: .55, secs: 3.4 } : null),
+    href: kind => ({ decks: 'WebDecks.dc.html', newDeck: 'WebNewDeck.dc.html', import: 'WebImport.dc.html', connect: 'WebConnect.dc.html', today: 'Main.dc.html' })[kind] || 'Main.dc.html',
+    act: {
+      updateDeck: (id, patch) => set({ deck: { ...ed, ...patch, cover: { ...(ed.cover || {}), ...(patch.cover || {}) } } }),
+      grade: () => set({ idx: idx + 1 }),
+      pile: (id, name) => set({ idx: idx + 1, piles: deck().piles.map(q => (q.name === name ? { ...q, n: q.n + 1 } : q)) }),
+      undo: () => idx > 0 && set({ idx: idx - 1 }),
+      setSettings: patch => set({ settings: { ...(m.settings || {}), ...patch } }),
+      pickPhoto: () => set({ settings: { ...(m.settings || {}), photo: 'yours', yourPhoto: 'mock' } }),
+      removePhoto: () => set({ settings: { ...(m.settings || {}), photo: 'google', yourPhoto: null } }),
+      setPerm: (k, on) => set(k === 'check' ? { perms: { ...(m.perms || {}), check: on }, settings: { ...(m.settings || {}), check: on } } : { perms: { ...(m.perms || {}), [k]: on } }),
+      pickCover: () => set({ deck: { ...ed, cover: { ...(ed.cover || {}), image: 'mock' } } }),
+      newFolder: (name, deckId) => { const id = 'f' + (folders().length + 1) + Date.now().toString(36); set({ folders: [...folders(), { id, name, decks: [] }], ...(deckId ? { moved: { ...(m.moved || {}), [deckId]: id } } : {}) }); return id; },
+      renameFolder: (id, name) => set({ folders: folders().map(f => (f.id === id ? { ...f, name } : f)) }),
+      deleteFolder: id => set({ folders: folders().filter(f => f.id !== id) }),
+      moveDeck: (id, folder) => folderOf(id) !== (folder || null) && set({ moved: { ...(m.moved || {}), [id]: folder || null }, deckOrder: before(order, id, null) }),
+      reorderDeck: (id, b) => set({ deckOrder: before(order, id, b) }),
+      reorderCard: (id, b) => set({ cardOrder: before(cardOrder, id, b) }),
+      moveCard: (id, deckId) => set({ cardDeck: { ...cardDeck, [id]: deckId } }),
+      setBg: (id, kind) => set({ deck: { ...ed, bg: { ...(ed.bg || { kind: 'deck', image: null }), kind } } }),
+      pickBg: () => set({ deck: { ...ed, bg: { kind: 'photo', image: 'mock' } } }),
+      addDeck: noop, deleteDeck: noop, exportDeck: noop, saveCard: noop, deleteCard: noop, copy: noop, speak: noop, play: noop, importCards: noop, exportAll: noop, resetAll: noop,
+      pickFile: () => Promise.resolve(null), pickText: () => Promise.resolve(null), pickSound: () => Promise.resolve(null),
+      record: () => { set((p.recording && !m.recStop) || m.rec ? { rec: false, recStop: true } : { rec: true }); return Promise.resolve(null); },
+      stopRecording: () => set({ rec: false, recStop: true }), watchMic: noop, watchSound: noop,
+      playSound: () => set({ playing: !(m.playing ?? !!p.playing) }), seekSound: (c, f) => { if (f != null) set({ frac: f }); },
+      addPile: (id, name) => set({ piles: [...deck().piles, { name, n: 0 }] })
+    }
+  };
+}
+rich() { return Component._rich || (Component._rich = (function makeRich() {
+  const ORDER = 'khsuibm', WS = /\s/, WORD = /[\p{L}\p{N}_]/u, PUNCT = /[!-/:-@[-`{-~]/;
+  const norm = m => [...new Set(m)].filter(c => ORDER.includes(c)).sort((a, b) => ORDER.indexOf(a) - ORDER.indexOf(b)).join('');
+  const tidy = runs => {
+    const out = [];
+    for (const r of runs) { if (!r.t) continue; const p = out[out.length - 1]; if (p && p.m === r.m) p.t += r.t; else out.push({ t: r.t, m: r.m }); }
+    return out;
+  };
+
+  // ---------- reading ----------
+  const TAGS = [['b', /^<(?:b|strong)>/i, /^<\/(?:b|strong)>/i], ['i', /^<(?:i|em)>/i, /^<\/(?:i|em)>/i], ['u', /^<u>/i, /^<\/u>/i],
+    ['s', /^<(?:s|del|strike)>/i, /^<\/(?:s|del|strike)>/i], ['h', /^<mark>/i, /^<\/mark>/i]];
+  // $x$ is math when the $ hugs the formula: "$5 and $6" stays money.
+  function mathEnd(s, i) {
+    if (!s[i + 1] || WS.test(s[i + 1]) || s[i + 1] === '$') return -1;
+    for (let j = i + 1; j < s.length; j++) {
+      if (s[j] === '\\') { j++; continue; }
+      if (s[j] === '$' && !WS.test(s[j - 1]) && !/\d/.test(s[j + 1] || '')) return j;
+    }
+    return -1;
+  }
+  function inline(s, cloze) {
+    const toks = [];
+    let buf = '';
+    const flush = () => { if (buf) toks.push({ k: 'x', v: buf }); buf = ''; };
+    for (let i = 0; i < s.length;) {
+      const c = s[i], two = s.substr(i, 2);
+      if (two === '\\(') { const j = s.indexOf('\\)', i + 2); if (j > i + 2) { flush(); toks.push({ k: 'm', v: s.slice(i + 2, j) }); i = j + 2; continue; } }
+      if (c === '\\' && i + 1 < s.length && PUNCT.test(s[i + 1])) { buf += s[i + 1]; i += 2; continue; }
+      if (c === '$') { const j = mathEnd(s, i); if (j > 0) { flush(); toks.push({ k: 'm', v: s.slice(i + 1, j).replace(/\\\$/g, '$') }); i = j + 1; continue; } }
+      if (c === '<') {
+        const rest = s.slice(i);
+        let hit = null;
+        for (const [m, o, cl] of TAGS) { const r = rest.match(o) || rest.match(cl); if (r) { hit = { m, role: o.test(r[0]) ? 'open' : 'close', raw: r[0] }; break; } }
+        if (hit) { flush(); toks.push({ k: 'd', ...hit }); i += hit.raw.length; continue; }
+      }
+      if (cloze && (two === '[[' || two === ']]')) { flush(); toks.push({ k: 'd', m: 'k', role: two === '[[' ? 'open' : 'close', raw: two }); i += 2; continue; }
+      const d = two === '**' ? 'b' : two === '~~' ? 's' : two === '==' ? 'h' : c === '*' ? 'i' : '';
+      if (d) { const n = d === 'i' ? 1 : 2; flush(); toks.push({ k: 'd', m: d, role: 'tog', raw: s.substr(i, n), pre: s[i - 1] || '', post: s[i + n] || '' }); i += n; continue; }
+      buf += c; i++;
+    }
+    flush();
+    // Pair each style's start with its end. A start with no end is just text ("5 * 3").
+    const open = {};
+    toks.forEach((t, n) => {
+      if (t.k !== 'd') return;
+      const o = open[t.m];
+      if (t.role === 'open') { if (o == null) open[t.m] = n; return; }
+      if (t.role === 'close') { if (o != null) { t.on = toks[o].on = true; open[t.m] = null; } return; }
+      if (o == null) { if (t.post && !WS.test(t.post)) open[t.m] = n; }
+      else if (t.pre && !WS.test(t.pre)) { t.on = toks[o].on = true; open[t.m] = null; }
+    });
+    const runs = [], on = new Set();
+    for (const t of toks) {
+      const m = [...on].join('');
+      if (t.k === 'x') runs.push({ t: t.v, m: norm(m) });
+      else if (t.k === 'm') runs.push({ t: t.v, m: norm(m + 'm') });
+      else if (!t.on) runs.push({ t: t.raw, m: norm(m) });
+      else if (on.has(t.m)) on.delete(t.m);
+      else on.add(t.m);
+    }
+    return tidy(runs);
+  }
+  const LEAD = [[/^#\s+/, 'h1'], [/^##\s+/, 'h2'], [/^###\s+/, 'h3'], [/^\s*[-*+]\s+/, 'li'], [/^\s*\d{1,3}[.)]\s+/, 'ol']];
+  function parse(md, cloze) {
+    return String(md == null ? '' : md).replace(/\r\n?/g, '\n').split('\n').map(line => {
+      for (const [re, kind] of LEAD) { const b = re.exec(line); if (b) return { kind, runs: inline(line.slice(b[0].length), !!cloze) }; }
+      return { kind: '', runs: inline(line, !!cloze) };
+    });
+  }
+
+  // ---------- writing ----------
+  const MD = { b: ['**', '**'], i: ['*', '*'], s: ['~~', '~~'], h: ['==', '=='], u: ['<u>', '</u>'], k: ['[[', ']]'] };
+  const TAG = { b: ['<b>', '</b>'], i: ['<i>', '</i>'], s: ['<s>', '</s>'], h: ['<mark>', '</mark>'], u: ['<u>', '</u>'], k: ['[[', ']]'] };
+  const escText = (t, safe) => {
+    const s = t.replace(/[\\*$]/g, '\\$&');
+    return safe ? s.replace(/[~=<[\]]/g, '\\$&') : s.replace(/~~/g, '\\~\\~').replace(/==/g, '\\=\\=').replace(/<(?=\/?(?:b|strong|i|em|u|s|del|strike|mark)>)/gi, '\\<');
+  };
+  const mathOut = (t, safe) => (!safe && /^[^\s$](?:[^$]*[^\s$])?$/.test(t) ? '$' + t + '$' : '\\(' + t + '\\)');
+  function writeLine(l, safe) {
+    // Open and close styles around the runs, closing only what has to close. A blank is always
+    // outermost, so a style changing inside it never splits it in two.
+    const ev = [];
+    let stack = [];
+    for (const r of l.runs) {
+      const has = [...r.m.replace('m', '')];
+      const want = [...has.filter(m => m === 'k'), ...stack.filter(m => m !== 'k' && has.includes(m)), ...has.filter(m => m !== 'k' && !stack.includes(m))];
+      let p = 0;
+      while (p < stack.length && p < want.length && stack[p] === want[p]) p++;
+      for (let q = stack.length - 1; q >= p; q--) ev.push({ close: stack[q] });
+      stack = stack.slice(0, p);
+      for (const m of want.slice(p)) { ev.push({ open: m }); stack.push(m); }
+      ev.push({ run: r });
+    }
+    for (let q = stack.length - 1; q >= 0; q--) ev.push({ close: stack[q] });
+    // A style that starts or ends on a space is written as a tag: "**x **" wouldn't read back.
+    const form = [], opens = [];
+    ev.forEach((e, n) => {
+      if (e.open) opens.push(n);
+      else if (e.close) {
+        const o = opens.pop(), txt = ev.slice(o + 1, n).filter(x => x.run).map(x => x.run.t).join('');
+        form[o] = form[n] = safe || /^\s|\s$/.test(txt) ? TAG : MD;
+      }
+    });
+    return ev.map((e, n) => (e.open ? form[n][e.open][0] : e.close ? form[n][e.close][1] : e.run.m.includes('m') ? mathOut(e.run.t, safe) : escText(e.run.t, safe))).join('');
+  }
+  const same = (a, b) => a.length === b.length && a.every((l, i) => (l.kind || '') === (b[i].kind || '') && JSON.stringify(tidy(l.runs)) === JSON.stringify(tidy(b[i].runs)));
+  // Text that only looks like a heading or a list ("# 1" or "1. ") gets a backslash so it stays text.
+  const plainStart = s => s.replace(/^(\s*)([-+]|#{1,3})(?=\s)/, (m, sp, x) => sp + '\\' + x).replace(/^(\s*\d{1,3})([.)])(?=\s)/, (m, d, x) => d + '\\' + x);
+  function write(lines, cloze) {
+    const go = safe => { let n = 0; return lines.map(l => { n = l.kind === 'ol' ? n + 1 : 0; const body = writeLine(l, safe); return l.kind ? prefix(l.kind, n) + body : plainStart(body); }).join('\n'); };
+    const md = go(false);
+    return same(parse(md, cloze), lines) ? md : go(true);
+  }
+  const prefix = (kind, n) => ({ h1: '# ', h2: '## ', h3: '### ', li: '- ', ol: n + '. ' })[kind] || '';
+
+  // ---------- plain text ----------
+  // Runs grouped into blanks and the text between them.
+  function groups(runs) {
+    const out = [];
+    for (const r of runs) {
+      const k = r.m.includes('k'), p = out[out.length - 1];
+      if (p && p.blank === k) { p.runs.push(r); p.text += r.t; } else out.push({ blank: k, runs: [r], text: r.t });
+    }
+    return out;
+  }
+  // o.blank replaces each blank (like "____"); o.join joins the lines (default a line break);
+  // o.math: 'show' writes formulas as they look (π r²) instead of as typed (\pi r^2).
+  const runText = (r, o) => (o.math === 'show' && r.m.includes('m') ? mathText(r.t) : r.t);
+  const plain = (md, o = {}) => parse(md, !!o.cloze).map(l => groups(l.runs).map(g => (g.blank && o.blank != null ? o.blank : g.runs.map(r => runText(r, o)).join(''))).join('')).join(o.join == null ? '\n' : o.join);
+  const blanks = (md, o = {}) => parse(md, true).flatMap(l => groups(l.runs).filter(g => g.blank).map(g => g.runs.map(r => runText(r, o)).join('')));
+  const plainLines = lines => { let n = 0; return lines.map(l => { n = l.kind === 'ol' ? n + 1 : 0; return prefix(l.kind, n) + l.runs.map(r => r.t).join(''); }).join('\n'); };
+
+  // ---------- showing ----------
+  // How each kind of line looks. Headings are sized from the text around them.
+  const LINE = { li: 'display: list-item; list-style: disc outside; margin-left: 1.15em;',
+    h1: 'font-size: 1.35em; font-weight: 700; line-height: 1.25; letter-spacing: -.02em;', h2: 'font-size: 1.18em; font-weight: 700; line-height: 1.3; letter-spacing: -.015em;',
+    h3: 'font-size: 1.05em; font-weight: 600; line-height: 1.35;' };
+  const lineCss = (kind, n) => (kind === 'ol' ? "display: list-item; list-style-type: '" + n + ". '; margin-left: 1.5em;" : LINE[kind] || '');
+  const numbered = lines => { let n = 0; return lines.map(l => (n = l.kind === 'ol' ? n + 1 : 0)); };
+  const MATH_FONT = "font-family: Georgia, 'Times New Roman', serif;";
+  const hl = o => (o.dark ? '#2F3D9A' : '#DCE0FD');
+  function css(m, o, edit) {
+    let s = '';
+    if (m.includes('b')) s += 'font-weight: 700; ';
+    if (m.includes('i')) s += 'font-style: italic; ';
+    const d = [m.includes('u') && 'underline', m.includes('s') && 'line-through'].filter(Boolean).join(' ');
+    if (d) s += 'text-decoration: ' + d + '; text-underline-offset: .15em; ';
+    if (m.includes('h')) s += 'background: ' + hl(o) + '; ';
+    if (m.includes('m') && edit) s += MATH_FONT + ' background: ' + (o.t ? o.t.surf2 : '#E8E8E8') + '; border-radius: 6px; padding: 0 4px; ';
+    return s.trim();
+  }
+  // Math reads like a formula on the card: x^2 → x², \frac{a}{b} → a⁄b, \alpha → α, <= → ≤.
+  const SYM = { alpha: 'α', beta: 'β', gamma: 'γ', delta: 'δ', epsilon: 'ε', varepsilon: 'ε', zeta: 'ζ', eta: 'η', theta: 'θ', vartheta: 'ϑ', iota: 'ι', kappa: 'κ', lambda: 'λ', mu: 'μ',
+    nu: 'ν', xi: 'ξ', pi: 'π', rho: 'ρ', sigma: 'σ', tau: 'τ', upsilon: 'υ', phi: 'φ', varphi: 'φ', chi: 'χ', psi: 'ψ', omega: 'ω', Gamma: 'Γ', Delta: 'Δ', Theta: 'Θ', Lambda: 'Λ',
+    Xi: 'Ξ', Pi: 'Π', Sigma: 'Σ', Upsilon: 'Υ', Phi: 'Φ', Psi: 'Ψ', Omega: 'Ω', times: '×', div: '÷', cdot: '·', pm: '±', mp: '∓', le: '≤', leq: '≤', ge: '≥', geq: '≥', ne: '≠',
+    neq: '≠', approx: '≈', equiv: '≡', sim: '∼', propto: '∝', infty: '∞', partial: '∂', nabla: '∇', sum: '∑', prod: '∏', int: '∫', oint: '∮', to: '→', rightarrow: '→', leftarrow: '←',
+    gets: '←', Rightarrow: '⇒', Leftarrow: '⇐', leftrightarrow: '↔', Leftrightarrow: '⇔', implies: '⇒', iff: '⇔', in: '∈', notin: '∉', ni: '∋', subset: '⊂', subseteq: '⊆',
+    supset: '⊃', supseteq: '⊇', cup: '∪', cap: '∩', emptyset: '∅', varnothing: '∅', forall: '∀', exists: '∃', neg: '¬', land: '∧', wedge: '∧', lor: '∨', vee: '∨', angle: '∠',
+    circ: '∘', degree: '°', perp: '⊥', parallel: '∥', ldots: '…', cdots: '⋯', dots: '…', prime: '′', hbar: 'ℏ', ell: 'ℓ', aleph: 'ℵ', langle: '⟨', rangle: '⟩', mid: '∣',
+    star: '⋆', oplus: '⊕', otimes: '⊗', quad: '\u2003', qquad: '\u2003\u2003', ',': '\u2009', ';': '\u2005', ':': '\u2005', ' ': ' ', '!': '', '{': '{', '}': '}', '%': '%',
+    $: '$', '#': '#', '&': '&', _: '_', '\\': '\\' };
+  const WORDS = ['sin', 'cos', 'tan', 'log', 'ln', 'exp', 'lim', 'min', 'max', 'det', 'sec', 'csc', 'cot', 'arcsin', 'arccos', 'arctan', 'sinh', 'cosh', 'tanh', 'gcd', 'mod'];
+  const ASCII = { '<=': '≤', '>=': '≥', '!=': '≠', '->': '→', '<-': '←', '=>': '⇒', '+-': '±' };
+  function mathBits(s, pos, over, out) {
+    for (let i = 0; i < s.length;) {
+      const arg = () => {
+        while (s[i] === ' ') i++;
+        if (s[i] === '{') { let d = 1, j = i + 1; for (; j < s.length && d; j++) d += s[j] === '{' ? 1 : s[j] === '}' ? -1 : 0; const r = s.slice(i + 1, d ? j : j - 1); i = j; return r; }
+        if (s[i] === '\\') { const m = /^\\([A-Za-z]+|.)/.exec(s.slice(i)); i += m ? m[0].length : 1; return m ? m[0] : ''; }
+        return s[i++] || '';
+      };
+      const c = s[i];
+      if (c === '^' || c === '_') { i++; mathBits(arg(), pos || (c === '^' ? 'sup' : 'sub'), over, out); continue; }
+      if (c === '{' || c === '}') { i++; continue; }
+      if (c === '\\') {
+        const m = /^\\([A-Za-z]+|.)/.exec(s.slice(i)) || ['\\', ''];
+        i += m[0].length;
+        const n = m[1];
+        if (n === 'sqrt') { out.push({ t: '√', pos, over }); mathBits(arg(), pos, true, out); continue; }
+        if (n === 'frac') { const a = arg(), b = arg(); mathBits(a, pos || 'sup', over, out); out.push({ t: '⁄', pos, over }); mathBits(b, pos || 'sub', over, out); continue; }
+        if (/^(text|mathrm|textrm|operatorname)$/.test(n)) { out.push({ t: arg(), pos, over }); continue; }
+        if (/^(mathbf|textbf|boldsymbol)$/.test(n)) { const from = out.length; mathBits(arg(), pos, over, out); for (let q = from; q < out.length; q++) out[q].bold = true; continue; }
+        if (/^(left|right|displaystyle|big|Big)$/.test(n)) continue;
+        if (n in SYM) { out.push({ t: SYM[n], pos, over }); continue; }
+        if (WORDS.includes(n)) { out.push({ t: n, pos, over }); continue; }
+        out.push({ t: '\\' + n, pos, over });
+        continue;
+      }
+      const two = s.substr(i, 2);
+      if (ASCII[two]) { out.push({ t: ASCII[two], pos, over }); i += 2; continue; }
+      if (c === '*') { out.push({ t: '×', pos, over }); i++; continue; }
+      if (c === '-') { out.push({ t: '−', pos, over }); i++; continue; }
+      out.push({ t: c, pos, over, it: /[A-Za-z]/.test(c) });
+      i++;
+    }
+    return out;
+  }
+  // A formula as plain text, with ² and ₂ where there are such letters.
+  const SUP = { 0: '⁰', 1: '¹', 2: '²', 3: '³', 4: '⁴', 5: '⁵', 6: '⁶', 7: '⁷', 8: '⁸', 9: '⁹', '+': '⁺', '−': '⁻', '=': '⁼', '(': '⁽', ')': '⁾', n: 'ⁿ', i: 'ⁱ' };
+  const SUB = { 0: '₀', 1: '₁', 2: '₂', 3: '₃', 4: '₄', 5: '₅', 6: '₆', 7: '₇', 8: '₈', 9: '₉', '+': '₊', '−': '₋', '=': '₌', '(': '₍', ')': '₎' };
+  function mathText(src) {
+    const parts = [];
+    for (const x of mathBits(src, '', false, [])) { const p = parts[parts.length - 1]; if (p && p.pos === x.pos) p.t += x.t; else parts.push({ pos: x.pos, t: x.t }); }
+    return parts.map(x => {
+      if (!x.pos) return x.t;
+      const map = x.pos === 'sup' ? SUP : SUB;
+      if ([...x.t].every(c => map[c])) return [...x.t].map(c => map[c]).join('');
+      return (x.pos === 'sup' ? '^' : '_') + (x.t.length > 1 ? '(' + x.t + ')' : x.t);
+    }).join('');
+  }
+  function mathItems(src, base) {
+    const items = [];
+    for (const x of mathBits(src, '', false, [])) {
+      if (!x.t) continue;
+      const c = [base, MATH_FONT, x.it ? 'font-style: italic;' : '', x.bold ? 'font-weight: 700;' : '',
+        x.pos === 'sup' ? 'font-size: .7em; vertical-align: super; line-height: 0;' : x.pos === 'sub' ? 'font-size: .7em; vertical-align: sub; line-height: 0;' : '',
+        x.over ? 'text-decoration: overline;' : ''].filter(Boolean).join(' ');
+      const p = items[items.length - 1];
+      if (p && p.css === c) p.t += x.t; else items.push({ plain: true, blank: false, t: x.t, css: c, runs: [] });
+    }
+    return items;
+  }
+  const showRun = (r, o) => (r.m.includes('m') ? mathItems(r.t, css(r.m.replace('m', ''), o)) : [{ plain: true, blank: false, t: r.t, css: css(r.m, o), runs: [] }]);
+  // Lines for a card. Fill-in-the-blank: o.ask is the blank being asked (-1 for all of them) and
+  // o.hide hides it; the other blanks read as normal text.
+  function view(md, o = {}) {
+    let n = -1;
+    const lines = parse(md, !!o.cloze), nums = numbered(lines);
+    return lines.map((l, li) => {
+      const items = [];
+      for (const g of groups(l.runs)) {
+        const inner = g.runs.flatMap(r => showRun({ t: r.t, m: r.m.replace('k', '') }, o));
+        if (!g.blank) { items.push(...inner); continue; }
+        n++;
+        if (o.ask != null && o.ask >= 0 && o.ask !== n) { items.push(...inner); continue; }
+        items.push({ plain: false, blank: true, t: '', css: '', runs: o.hide ? [{ plain: true, blank: false, t: '\u2003\u2003\u2003\u2003', css: '', runs: [] }] : inner });
+      }
+      if (!items.length) items.push({ plain: true, blank: false, t: '\u200b', css: '', runs: [] });
+      return { css: lineCss(l.kind, nums[li]), items };
+    });
+  }
+  // Lines for the editor: blanks as pills and math as its formula, so every letter can be edited.
+  const editView = (md, o = {}) => { const lines = parse(md, !!o.cloze), nums = numbered(lines); return lines.map((l, li) => {
+    const items = groups(l.runs).flatMap(g => (g.blank
+      ? [{ plain: false, blank: true, t: '', css: '', edge: '1', runs: g.runs.map(r => ({ t: r.t, css: css(r.m.replace('k', ''), o, true) })) }]
+      : g.runs.map(r => ({ plain: true, blank: false, t: r.t, css: css(r.m, o, true), edge: r.m.includes('m') ? '1' : '', runs: [] }))));
+    return { css: lineCss(l.kind, nums[li]), items, empty: !items.length };
+  }); };
+
+  // ---------- editing ----------
+  // A position counts characters, with one for each line break.
+  const lineLen = l => l.runs.reduce((n, r) => n + r.t.length, 0);
+  const size = lines => lines.reduce((n, l) => n + lineLen(l), 0) + lines.length - 1;
+  const text = lines => lines.map(l => l.runs.map(r => r.t).join('')).join('\n');
+  function at(lines, pos) {
+    let i = 0;
+    while (i < lines.length - 1 && pos > lineLen(lines[i])) { pos -= lineLen(lines[i]) + 1; i++; }
+    return [i, Math.max(0, Math.min(pos, lineLen(lines[i])))];
+  }
+  const posOf = (lines, i, col) => lines.slice(0, i).reduce((n, l) => n + lineLen(l) + 1, 0) + col;
+  const lineAt = (lines, pos) => lines[at(lines, pos)[0]];
+  function cut(runs, col) {
+    const a = [], b = [];
+    let n = 0;
+    for (const r of runs) {
+      const L = r.t.length;
+      if (n + L <= col) a.push(r);
+      else if (n >= col) b.push(r);
+      else { a.push({ t: r.t.slice(0, col - n), m: r.m }); b.push({ t: r.t.slice(col - n), m: r.m }); }
+      n += L;
+    }
+    return [a, b];
+  }
+  function markAt(l, col) {
+    let n = 0;
+    for (const r of l.runs) { if (col < n + r.t.length) return r.m; n += r.t.length; }
+    return null;
+  }
+  // Text to put in: one line per line break, all with the marks m. New lines take kind (bullets and numbers carry on; headings don't).
+  const carry = kind => (kind === 'li' || kind === 'ol' ? kind : '');
+  const frag = (t, m, kind) => String(t).split('\n').map((x, n) => ({ kind: n ? carry(kind) : undefined, runs: x ? [{ t: x, m: norm(m || '') }] : [] }));
+  function replace(lines, a, b, part) {
+    const [i, c] = at(lines, a), [j, d] = at(lines, b);
+    const head = cut(lines[i].runs, c)[0], tail = cut(lines[j].runs, d)[1];
+    const out = part.map((l, n) => ({ kind: n ? l.kind || '' : lines[i].kind, runs: n ? l.runs.slice() : [...head, ...l.runs] }));
+    const last = out[out.length - 1];
+    last.runs = [...last.runs, ...tail];
+    out.forEach(l => { l.runs = tidy(l.runs); });
+    return [...lines.slice(0, i), ...out, ...lines.slice(j + 1)];
+  }
+  function slice(lines, a, b) {
+    const [i, c] = at(lines, a), [j, d] = at(lines, b);
+    return lines.slice(i, j + 1).map((l, n) => {
+      let runs = l.runs;
+      if (n + i === j) runs = cut(runs, d)[0];
+      if (n === 0) runs = cut(runs, c)[1];
+      return { kind: l.kind, runs: tidy(runs) };
+    });
+  }
+  function eachIn(lines, a, b, fn) {
+    const [i, c] = at(lines, a), [j, d] = at(lines, b);
+    return lines.map((l, n) => {
+      if (n < i || n > j) return l;
+      const s = n === i ? c : 0, e = n === j ? d : lineLen(l), [x, rest] = cut(l.runs, s), [y, z] = cut(rest, e - s);
+      return { kind: l.kind, runs: tidy([...x, ...y.map(fn), ...z]) };
+    });
+  }
+  const setMark = (lines, a, b, mark, on) => eachIn(lines, a, b, r => ({ t: r.t, m: norm(on ? r.m + mark : r.m.replace(mark, '')) }));
+  // The marks every character in the range has.
+  function marksIn(lines, a, b) {
+    let common = null;
+    eachIn(lines, a, b, r => { common = common == null ? r.m : [...common].filter(c => r.m.includes(c)).join(''); return r; });
+    return common || '';
+  }
+  // The marks new letters get: the letter before's (blanks and math only carry on inside them).
+  function typingMarks(lines, a, b) {
+    const [i, c] = at(lines, a), l = lines[i];
+    if (a !== b) return markAt(l, c) || '';
+    const before = c > 0 ? markAt(l, c - 1) : null, after = markAt(l, c), base = before != null ? before : after || '';
+    return [...base].filter(ch => !'km'.includes(ch) || ((before || '').includes(ch) && (after || '').includes(ch))).join('');
+  }
+  function wordAt(lines, pos) {
+    const [i, c] = at(lines, pos), t = lines[i].runs.map(r => r.t).join('');
+    if (!(c > 0 && c < t.length && WORD.test(t[c - 1]) && WORD.test(t[c]))) return null;
+    let s = c, e = c;
+    while (s > 0 && WORD.test(t[s - 1])) s--;
+    while (e < t.length && WORD.test(t[e])) e++;
+    const base = posOf(lines, i, 0);
+    return [base + s, base + e];
+  }
+  const allKind = (lines, a, b, kind) => { const [i] = at(lines, a), [j] = at(lines, b); return lines.slice(i, j + 1).every(l => l.kind === kind); };
+  const setKind = (lines, a, b, kind) => { const [i] = at(lines, a), [j] = at(lines, b); return lines.map((l, n) => (n >= i && n <= j ? { kind, runs: l.runs } : l)); };
+  // Shortcuts like a notes app. At the start of a line: "# " heading (## and ### smaller), "- " bullet, "1. " numbers.
+  const LINE_KEYS = [[/^#$/, 'h1'], [/^##$/, 'h2'], [/^###$/, 'h3'], [/^[-*+]$/, 'li'], [/^\d{1,3}[.)]$/, 'ol']];
+  function lineRule(lines, caret) {
+    const [i, c] = at(lines, caret), l = lines[i], t = l.runs.map(r => r.t).join('');
+    if (t[c - 1] !== ' ') return { lines, caret };
+    const hit = LINE_KEYS.find(([re]) => re.test(t.slice(0, c - 1)));
+    if (!hit) return { lines, caret };
+    const base = posOf(lines, i, 0), out = replace(lines, base, base + c, [{ runs: [] }]);
+    out[i] = { kind: hit[1], runs: out[i].runs };
+    return { lines: out, caret: caret - c };
+  }
+  // And as you type: **bold**, *italic* or _italic_, ~~strikethrough~~ or ~strikethrough~, ==highlight==, $math$.
+  const INLINE_KEYS = [[/\*\*([^*\s](?:[^*]*[^*\s])?)\*\*$/, 'b', 2], [/(?:^|[^*\w])\*([^*\s](?:[^*]*[^*\s])?)\*$/, 'i', 1], [/(?:^|[^_\w])_([^_\s](?:[^_]*[^_\s])?)_$/, 'i', 1],
+    [/~~([^~\s](?:[^~]*[^~\s])?)~~$/, 's', 2], [/(?:^|[^~])~([^~\s](?:[^~]*[^~\s])?)~$/, 's', 1], [/==([^=\s](?:[^=]*[^=\s])?)==$/, 'h', 2], [/(?:^|[^$\w\\])\$([^$\s](?:[^$]*[^$\s])?)\$$/, 'm', 1]];
+  function inlineRule(lines, caret) {
+    const [i, c] = at(lines, caret), l = lines[i], t = l.runs.map(r => r.t).join('').slice(0, c);
+    for (const [re, mark, n] of INLINE_KEYS) {
+      const hit = re.exec(t);
+      if (!hit) continue;
+      const w = hit[1].length, s = c - 2 * n - w;
+      if ((markAt(l, s) || '').includes('m') || (markAt(l, c - 1) || '').includes('m')) continue;
+      const base = posOf(lines, i, 0);
+      let out = replace(lines, base + c - n, base + c, [{ runs: [] }]);
+      out = replace(out, base + s, base + s + n, [{ runs: [] }]);
+      return { lines: setMark(out, base + s, base + s + w, mark, true), caret: caret - 2 * n, done: mark };
+    }
+    return { lines, caret };
+  }
+  // On fill-in-the-blank cards, typing [[words]] makes a blank.
+  function autoBlank(lines, caret) {
+    for (let i = 0; i < lines.length; i++) {
+      for (let guard = 0; guard < 20; guard++) {
+        const l = lines[i], t = l.runs.map(r => r.t).join(''), m = /\[\[([^[\]]+?)\]\]/.exec(t);
+        if (!m || (markAt(l, m.index) || '').includes('k')) break;
+        const s = posOf(lines, i, m.index), e = s + m[0].length;
+        lines = replace(lines, e - 2, e, [{ runs: [] }]);
+        lines = replace(lines, s, s + 2, [{ runs: [] }]);
+        lines = setMark(lines, s, e - 4, 'k', true);
+        caret = caret >= e ? caret - 4 : caret > s ? Math.max(s, caret - 2) : caret;
+      }
+    }
+    return { lines, caret };
+  }
+  // One letter before or after a position (whole emoji and accents), or the word next to it.
+  const seg = typeof Intl !== 'undefined' && Intl.Segmenter ? new Intl.Segmenter() : null;
+  function prevChar(t, pos) {
+    if (pos <= 0) return 0;
+    if (seg) { let last = 0; for (const x of seg.segment(t.slice(0, pos))) last = x.index; return last; }
+    const lo = t.charCodeAt(pos - 1);
+    return pos - (lo >= 0xdc00 && lo <= 0xdfff && pos > 1 ? 2 : 1);
+  }
+  function nextChar(t, pos) {
+    if (pos >= t.length) return t.length;
+    if (seg) { const it = seg.segment(t.slice(pos))[Symbol.iterator]().next(); return pos + (it.done ? 1 : it.value.segment.length); }
+    const hi = t.charCodeAt(pos);
+    return pos + (hi >= 0xd800 && hi <= 0xdbff ? 2 : 1);
+  }
+  function wordStart(t, pos) {
+    let p = pos;
+    while (p > 0 && t[p - 1] !== '\n' && WS.test(t[p - 1])) p--;
+    if (p > 0 && WORD.test(t[p - 1])) { while (p > 0 && WORD.test(t[p - 1])) p--; } else if (p > 0) p--;
+    return p;
+  }
+  function wordEnd(t, pos) {
+    let p = pos;
+    while (p < t.length && t[p] !== '\n' && WS.test(t[p])) p++;
+    if (p < t.length && WORD.test(t[p])) { while (p < t.length && WORD.test(t[p])) p++; } else if (p < t.length) p++;
+    return p;
+  }
+
+  // ---------- copy and paste ----------
+  const escHtml = s => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  function toHtml(lines) {
+    const WRAP = { b: 'b', i: 'i', u: 'u', s: 's', h: 'mark' };
+    const run = r => {
+      let h = escHtml(r.t);
+      for (const m of [...r.m].reverse()) h = m === 'm' ? '<span data-sc="m">' + h + '</span>' : m === 'k' ? '<span data-sc="k">' + h + '</span>' : '<' + WRAP[m] + '>' + h + '</' + WRAP[m] + '>';
+      return h;
+    };
+    let out = '', list = '';
+    for (const l of lines) {
+      const body = l.runs.map(run).join('') || '<br>', want = l.kind === 'li' ? 'ul' : l.kind === 'ol' ? 'ol' : '';
+      if (list !== want) { out += (list ? '</' + list + '>' : '') + (want ? '<' + want + '>' : ''); list = want; }
+      out += want ? '<li>' + body + '</li>' : /^h[123]$/.test(l.kind) ? '<' + l.kind + '>' + body + '</' + l.kind + '>' : '<div>' + body + '</div>';
+    }
+    return out + (list ? '</' + list + '>' : '');
+  }
+  // A background that marks words: not white, and not see-through (rgba with alpha 0).
+  const isHl = c => !!c && !/transparent|inherit|initial|none/.test(c) && !/^(#fff(fff)?|white)$/i.test(c.trim()) && !/^rgba?\(\s*255\s*,\s*255\s*,\s*255/.test(c)
+    && !/^rgba\([^,]+,[^,]+,[^,]+,\s*0(\.0+)?\s*\)$/.test(c.trim());
+  // Pasted or imported HTML (web pages, Google Docs, Anki) turned into card text. Keeps the styles cards have.
+  function fromHtml(html, cloze) {
+    if (typeof DOMParser === 'undefined') return String(html).replace(/<br\s*\/?>/gi, '\n').replace(/<[^>]+>/g, '').replace(/&nbsp;/g, ' ').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&');
+    const doc = new DOMParser().parseFromString(String(html), 'text/html');
+    const lines = [{ kind: '', runs: [] }];
+    const cur = () => lines[lines.length - 1];
+    const next = kind => { if (cur().runs.length) lines.push({ kind, runs: [] }); else cur().kind = kind; };
+    const BLOCK = /^(P|DIV|H[1-6]|LI|UL|OL|BLOCKQUOTE|PRE|TR|TABLE|SECTION|ARTICLE|HEADER|FOOTER)$/;
+    const kindOf = node => (node.tagName === 'LI' ? (node.parentElement && node.parentElement.tagName === 'OL' ? 'ol' : 'li') : /^H[123]$/.test(node.tagName) ? node.tagName.toLowerCase() : '');
+    const walk = (node, m) => {
+      if (node.nodeType === 3) { const t = node.nodeValue.replace(/\s+/g, ' '); if (t) cur().runs.push({ t, m: norm(m) }); return; }
+      if (node.nodeType !== 1 || /^(SCRIPT|STYLE|HEAD|TITLE|META|TEMPLATE)$/.test(node.tagName)) return;
+      const tag = node.tagName, st = node.style || {}, fw = st.fontWeight || '';
+      if (tag === 'BR') { lines.push({ kind: '', runs: [] }); return; }
+      let mm = m;
+      if (fw) mm = fw === 'bold' || fw === 'bolder' || +fw >= 600 ? mm + 'b' : mm.replace('b', '');
+      else if (/^(B|STRONG)$/.test(tag)) mm += 'b';
+      if (st.fontStyle) mm = st.fontStyle === 'italic' || st.fontStyle === 'oblique' ? mm + 'i' : mm.replace('i', '');
+      else if (/^(I|EM)$/.test(tag)) mm += 'i';
+      const dec = (st.textDecoration || '') + ' ' + (st.textDecorationLine || '');
+      if (tag === 'U' || /underline/.test(dec)) mm += 'u';
+      if (/^(S|DEL|STRIKE)$/.test(tag) || /line-through/.test(dec)) mm += 's';
+      if (tag === 'MARK' || (tag !== 'BODY' && !BLOCK.test(tag) && isHl(st.backgroundColor))) mm += 'h';
+      const sc = node.getAttribute('data-sc');
+      if (sc === 'm') mm += 'm';
+      if (sc === 'k' && cloze) mm += 'k';
+      const block = BLOCK.test(tag);
+      if (block) next(kindOf(node));
+      node.childNodes.forEach(ch => walk(ch, mm));
+      if (block) next('');
+    };
+    walk(doc.body, '');
+    // Spaces at the edges of lines go, and so do empty lines at the start and end.
+    for (const l of lines) {
+      l.runs = tidy(l.runs);
+      if (l.runs[0]) l.runs[0].t = l.runs[0].t.replace(/^\s+/, '');
+      const z = l.runs[l.runs.length - 1];
+      if (z) z.t = z.t.replace(/\s+$/, '');
+      l.runs = tidy(l.runs);
+    }
+    while (lines.length > 1 && !lines[0].runs.length) lines.shift();
+    while (lines.length > 1 && !lines[lines.length - 1].runs.length) lines.pop();
+    return write(lines, cloze);
+  }
+  const looksHtml = s => /<\/?(b|strong|i|em|u|s|del|strike|mark|br|div|p|span|ul|ol|li|sub|sup|font)\b[^>]*>|&(nbsp|amp|lt|gt|quot|#\d+);/i.test(String(s || ''));
+
+  // ---------- the editor's DOM ----------
+  // The editor draws each line as a <div> of spans (an empty line holds a <br>). Pills and math are marked data-edge="1".
+  function domPos(root, node, off) {
+    const lines = [...root.children];
+    if (node === root) {
+      let n = 0;
+      for (let i = 0; i < Math.min(off, lines.length); i++) n += lines[i].textContent.length + 1;
+      return Math.max(0, off >= lines.length ? n - 1 : n);
+    }
+    let ln = node;
+    while (ln && ln.parentNode !== root) ln = ln.parentNode;
+    if (!ln) return 0;
+    let n = 0;
+    for (const l of lines) { if (l === ln) break; n += l.textContent.length + 1; }
+    const r = document.createRange();
+    try { r.setStart(ln, 0); r.setEnd(node, off); } catch (e) { return n; }
+    return n + r.toString().length;
+  }
+  function inLine(ln, col) {
+    const ts = [], w = document.createTreeWalker(ln, NodeFilter.SHOW_TEXT);
+    for (let t = w.nextNode(); t; t = w.nextNode()) ts.push(t);
+    if (!ts.length) return [ln, 0];
+    const edge = t => t.parentElement && t.parentElement.closest('[data-edge="1"]');
+    const spot = (e, d) => [e.parentNode, [...e.parentNode.childNodes].indexOf(e) + d];
+    for (let n = 0; n < ts.length; n++) {
+      const t = ts[n], L = t.nodeValue.length, e = edge(t);
+      if (n === 0 && col === 0 && e) return spot(e, 0);
+      if (col < L) return [t, col];
+      if (col === L) return !e || (ts[n + 1] && edge(ts[n + 1]) === e) ? [t, L] : spot(e, 1);
+      col -= L;
+    }
+    const t = ts[ts.length - 1];
+    return [t, t.nodeValue.length];
+  }
+  function point(root, pos) {
+    const lines = [...root.children];
+    for (let i = 0; i < lines.length; i++) {
+      const L = lines[i].textContent.length;
+      if (pos <= L || i === lines.length - 1) return inLine(lines[i], Math.max(0, Math.min(pos, L)));
+      pos -= L + 1;
+    }
+    return [root, 0];
+  }
+  function setSel(root, a, b) {
+    const s = document.getSelection(), [n1, o1] = point(root, a), [n2, o2] = point(root, b == null ? a : b);
+    try { s.setBaseAndExtent(n1, o1, n2, o2); } catch (e) { /* the field was redrawn meanwhile */ }
+  }
+
+  return { parse, write, plain, mathText, blanks, plainLines, view, editView, groups, lineLen, size, text, at, posOf, lineAt, frag, carry, replace, slice, setMark, marksIn,
+    typingMarks, wordAt, allKind, setKind, lineRule, inlineRule, autoBlank, prevChar, nextChar, wordStart, wordEnd, toHtml, fromHtml, looksHtml, domPos, pointAt: point, setSel };
+})()); }
+art(p, variant) {
+  const name = p.fid + (variant ? '-' + variant : ''), on = !!(this.props.site || this.props.db) && ["sc-flow-midnight","sc-flow-midnight-wide","sc-gen-1bgiry6","sc-gen-1eyvfay","sc-gen-1h674rq","sc-gen-1iccxh","sc-gen-1madw05","sc-gen-1mheeld","sc-gen-1mukigx","sc-gen-1neye4o","sc-gen-1s1ssqz","sc-gen-1tj9ifj","sc-gen-1ul2ng5","sc-gen-1yac7zp","sc-gen-2xvhhe","sc-gen-5gnrcu","sc-gen-8f1umk","sc-gen-90zkel","sc-gen-favxds","sc-gen-o6z85t","sc-gen-px21tz","sc-gen-qmdzqs","sc-gen-v4yoeu","sc-gen-vwxtrt","sc-gen-ym0akm","sc-gen-yzu3mr"].includes(name);
+  return { ...p, art: on ? 'url(/art/' + name + '.webp)' : '', live: !on };
+}
+constructor(props) { super(props); this.state = {}; }
+componentWillUnmount() { clearTimeout(this.wait); this.stopAura(); }
+// With reduced motion the folds are drawn once, so draw them again when the colors or the mode change.
+componentDidUpdate() { if (this.still && this.cv && !this.raf) this.raf = requestAnimationFrame(this.paint); }
+// The background's colors: the mode's own, or the ones picked in Tweaks.
+auraK() {
+  const P = this.props, mode = P.dark ? 'dark' : 'light', K = { ...{"light":{"base":"#FFFFFF","lit":"#FFFFFF","deep":"#C6D3F2","vig":0.8,"blend":"multiply","grain":".22","gs":"2.2","gi":"-.1","card":"0 0 0 1px rgba(0,0,0,.06), 0 2px 6px rgba(0,0,0,.04), 0 32px 64px -24px rgba(0,0,0,.24)"},"dark":{"base":"#131419","lit":"#41475B","deep":"#0A0B10","vig":0.55,"blend":"overlay","grain":".5","gs":"3","gi":"-1","card":"0 0 0 1px rgba(255,255,255,.08), 0 32px 64px -24px rgba(0,0,0,.8)"}}[mode] };
+  for (const [key, name] of [['base', 'Page'], ['lit', 'Glow'], ['deep', 'Shadow']]) if (this.auraRgb(P[mode + name])) K[key] = P[mode + name];
+  return K;
+}
+// A color as three numbers from 0 to 1, from #rgb, #rrggbb (leaving out any alpha), or rgb(); null if it isn't one.
+auraRgb(c) {
+  const s = String(c ?? '').trim();
+  let m = /^#([0-9a-f]{3,8})$/i.exec(s);
+  if (m && [3, 4, 6, 8].includes(m[1].length)) { const h = m[1].length < 6 ? [...m[1]].map(x => x + x).join('') : m[1]; return [0, 2, 4].map(i => parseInt(h.slice(i, i + 2), 16) / 255); }
+  m = /^rgba?\(\s*([\d.]+)[\s,]+([\d.]+)[\s,]+([\d.]+)/i.exec(s);
+  return m ? [m[1], m[2], m[3]].map(x => Math.min(1, Number(x) / 255)) : null;
+}
+// The background's folds, drawn with WebGL on the canvas the page hands over. Without WebGL the page keeps its plain
+// color and grain.
+aura(el) {
+  if (!el || el === this.cv) return;
+  this.stopAura();
+  let gl = null;
+  try { gl = el.getContext('webgl', { antialias: false, depth: false, stencil: false, powerPreference: 'low-power' }); } catch (e) {}
+  if (!gl) return;
+  const shader = (type, src) => { const x = gl.createShader(type); gl.shaderSource(x, src); gl.compileShader(x); return gl.getShaderParameter(x, gl.COMPILE_STATUS) ? x : null; };
+  const vs = shader(gl.VERTEX_SHADER, 'attribute vec2 a; void main() { gl_Position = vec4(a, 0.0, 1.0); }'), fs = shader(gl.FRAGMENT_SHADER, "#ifdef GL_FRAGMENT_PRECISION_HIGH\nprecision highp float;\n#else\nprecision mediump float;\n#endif\nuniform vec2 R;\nuniform float t, V;\nuniform vec3 B, H, D;\nvec2 h2(vec2 p) {\n  p = vec2(dot(p, vec2(127.1, 311.7)), dot(p, vec2(269.5, 183.3)));\n  return -1.0 + 2.0 * fract(sin(p) * 43758.5453);\n}\nfloat gn(vec2 p) {\n  vec2 i = floor(p), f = fract(p), u = f * f * (3.0 - 2.0 * f);\n  return mix(mix(dot(h2(i), f), dot(h2(i + vec2(1.0, 0.0)), f - vec2(1.0, 0.0)), u.x),\n             mix(dot(h2(i + vec2(0.0, 1.0)), f - vec2(0.0, 1.0)), dot(h2(i + 1.0), f - 1.0), u.x), u.y);\n}\nfloat fbm(vec2 p) {\n  float s = 0.0, a = 0.5;\n  for (int i = 0; i < 3; i++) { s += a * gn(p); p = mat2(1.6, 1.2, -1.2, 1.6) * p; a *= 0.5; }\n  return s;\n}\nvoid main() {\n  vec2 uv = gl_FragCoord.xy / R, p = (gl_FragCoord.xy - 0.5 * R) / R.y;\n  float T = t * 0.07;\n  vec2 q = mat2(0.87, 0.5, -0.5, 0.87) * p * vec2(0.55, 1.3);\n  vec2 w = vec2(fbm(q * 1.2 + vec2(0.8 * T, 0.3 * T)), fbm(q * 1.2 + vec2(4.1, 2.7) - vec2(0.5 * T, 0.7 * T)));\n  float f = fbm(q + 1.5 * w + vec2(0.0, 0.4 * T));\n  float band = 0.5 + 0.5 * sin(7.0 * f + 3.6 * q.y + T);\n  float L = smoothstep(0.12, 0.95, band);\n  L = L * L * (3.0 - 2.0 * L);\n  vec3 c = mix(D, H, L);\n  float v = smoothstep(1.15, 0.15, length((uv - 0.5) * vec2(1.2, 1.0)));\n  gl_FragColor = vec4(mix(B, c, mix(1.0, v, V)), 1.0);\n}");
+  if (!vs || !fs) return;
+  const pr = gl.createProgram(); gl.attachShader(pr, vs); gl.attachShader(pr, fs); gl.linkProgram(pr);
+  if (!gl.getProgramParameter(pr, gl.LINK_STATUS)) return;
+  gl.useProgram(pr);
+  // One triangle that covers the whole canvas.
+  gl.bindBuffer(gl.ARRAY_BUFFER, gl.createBuffer()); gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW);
+  const at = gl.getAttribLocation(pr, 'a'); gl.enableVertexAttribArray(at); gl.vertexAttribPointer(at, 2, gl.FLOAT, false, 0, 0);
+  const u = n => gl.getUniformLocation(pr, n), uR = u('R'), uT = u('t'), uB = u('B'), uH = u('H'), uD = u('D'), uV = u('V');
+  const still = typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
+  // It starts 24 s in, so the first frame already has folds.
+  const t0 = performance.now() - 24000;
+  let last = -1e9;
+  this.cv = el;
+  const frame = now => {
+    this.raf = 0;
+    if (this.cv !== el) return;
+    if (!still) this.raf = requestAnimationFrame(frame);
+    if (!still && now - last < 32) return;
+    last = now;
+    const k = this.auraK();
+    gl.viewport(0, 0, el.width, el.height);
+    gl.uniform2f(uR, el.width, el.height); gl.uniform1f(uT, (now - t0) / 1000); gl.uniform1f(uV, k.vig);
+    gl.uniform3fv(uB, this.auraRgb(k.base)); gl.uniform3fv(uH, this.auraRgb(k.lit)); gl.uniform3fv(uD, this.auraRgb(k.deep));
+    gl.drawArrays(gl.TRIANGLES, 0, 3);
+  };
+  this.paint = frame; this.still = still;
+  this.raf = requestAnimationFrame(frame);
+}
+stopAura() { if (this.raf) cancelAnimationFrame(this.raf); this.raf = 0; this.cv = null; }
+renderVals() { const t = this.theme(!!this.props.dark, !!this.props.dim);const db = this.props.db || this.mock(); const chrome = db.chrome();
+  const splitAt = (l, seps) => { const out = []; let cur = '', q = false, start = true;
+    for (let i = 0; i < l.length; i++) { const ch = l[i];
+      if (q) { if (ch !== '"') cur += ch; else if (l[i + 1] === '"') { cur += '"'; i++; } else q = false; }
+      else if (ch === '"' && start) { q = true; start = false; }
+      else if (seps.includes(ch)) { out.push(cur); cur = ''; start = true; }
+      else { cur += ch; start = false; } }
+    out.push(cur); return out; };
+  const cells = (l, sep) => sep ? splitAt(l, sep) : l.includes('\t') ? l.split('\t') : l.includes(' - ') ? l.split(' - ') : splitAt(l, ',;');
+  const R = this.rich(), cell = x => (R.looksHtml(x) ? R.fromHtml(x) : x.trim());
+  const toCard = ([front, ...rest]) => {
+    const back = rest.filter(Boolean).join(', ');
+    return /\{\{c\d+::/.test(front) ? { kind: 'cloze', text: front.replace(/\{\{c\d+::([\s\S]+?)(?:::[^}]*)?\}\}/g, '[[$1]]'), note: back } : { front, back };
+  };
+  const readCards = (text, name) => {
+    const lines = String(text || '').split(/\r?\n/), head = {};
+    for (const l of lines) { const m = /^#([a-z ]+):(.*)$/i.exec(l.trim()); if (m) head[m[1].toLowerCase()] = m[2].trim(); }
+    const sep = { tab: '\t', comma: ',', semicolon: ';', pipe: '|', colon: ':', space: ' ' }[String(head.separator || '').toLowerCase()] || '';
+    const col = k => (parseInt(head[k + ' column'], 10) || 0) - 1, deckCol = col('deck');
+    const skip = new Set([deckCol, col('notetype'), col('tags'), col('guid')].filter(i => i >= 0));
+    const decks = new Map();
+    for (const l of lines) {
+      if (!l.trim() || l.trim().startsWith('#')) continue;
+      const cs = cells(sep === '\t' ? l : l.trim(), sep), card = toCard(cs.filter((x, i) => !skip.has(i)).map(cell));
+      if (card.kind === 'cloze' ? !R.blanks(card.text).length : !(card.front && card.back)) continue;
+      const deck = (deckCol >= 0 && String(cs[deckCol] || '').split('::').pop().trim()) || name;
+      if (!decks.has(deck)) decks.set(deck, []);
+      decks.get(deck).push(card);
+    }
+    return [...decks];
+  };
+  const s = this.state, P = this.props, A = db.ai(), live = !db.mock;
+  const AIS = [["claude","Claude"],["openai","ChatGPT"],["cursor","Cursor"],["mcp","Other app"]], SRCS = [["anki","Anki"],["quizlet","Quizlet"],["sheet","Spreadsheet"],["paste","Paste text"]];
+  const idOf = (list, name) => (list.find(x => x[1] === name) || list[0])[0], nameOf = (list, id) => (list.find(x => x[0] === id) || list[0])[1];
+  const aiId = s.ai || idOf(AIS, P.ai), srcId = s.src || idOf(SRCS, P.source), aiName = nameOf(AIS, aiId);
+  // How the lines name it: "Claude", or "your app" for another MCP app.
+  const who = aiId === 'mcp' ? 'your app' : aiName, Who = aiId === 'mcp' ? 'Your app' : aiName;
+  let step = s.step || P.step || 'Pick AI';
+  // In the app the AI counts as connected once it has called your link (the MCP link keeps who called).
+  if (step === 'Steps' && live && A.clients && A.clients[aiId]) step = 'Connected';
+  const go = (to, more) => { clearTimeout(this.wait); this.setState({ step: to, ...more }); };
+  const stop = e => { if (e && e.preventDefault) e.preventDefault(); };
+  // On the canvas the AI "connects" a moment after you copy the link or open the app.
+  const soon = () => { if (live) return; clearTimeout(this.wait); this.wait = setTimeout(() => this.setState({ step: 'Connected' }), 2400); };
+  const plural = (n, w) => n.toLocaleString('en-US') + ' ' + w + (n === 1 ? '' : 's');
+  // A choice: its big tile gets a ring once picked (coming back to it), and the switcher raises the one in use.
+  const choice = (id, cur, first, picked, pick) => { const on = id === cur, shown = on && (step !== first || picked);
+    return { pick, pressed: shown ? 'true' : 'false', ring: shown ? 'inset 0 0 0 2px ' + t.text : 'inset 0 0 0 1px ' + t.surf2,
+      bg: on ? t.bg : 'transparent', fg: on ? t.text : t.muted, sh: on ? '0 1px 3px rgba(0,0,0,.14)' : 'none', op: on ? '1' : '.45' }; };
+  const ai = Object.fromEntries(AIS.map(([id]) => [id, choice(id, aiId, 'Pick AI', !!s.ai, () => go('Steps', { ai: id, copied: false }))]));
+  const src = Object.fromEntries(SRCS.map(([id]) => [id, choice(id, srcId, 'Pick source', !!s.src, () => go('Source steps', { src: id }))]));
+  // Step 1. Claude's and ChatGPT's own pages open in a new tab; Cursor installs from its link.
+  const link = A.url, OPEN = { claude: 'https://claude.ai/customize/connectors', openai: 'https://chatgpt.com/#settings' };
+  const copyLink = () => { if (live) db.act.copy(link); this.setState({ copied: true }); soon(); };
+  const openApp = e => { if (live) return; stop(e); soon(); };
+  const ASK = "Make 5 flashcards about the Krebs cycle.";
+  // Step 2. A file you picked or dropped (the canvas's made-up one), or the text in the box, read by readCards: one card
+  // per line, the front and back split by a tab (Anki, Quizlet), a comma or semicolon (CSV), or " - ".
+  const FILES = { anki: ['Biology.txt', [['Cell Biology', 142], ['Genetics', 64], ['Ecology', 42]]], sheet: ['vocab.csv', [['Vocab', 120]]] };
+  const pasteText = s.paste ?? (live ? '' : srcId === 'quizlet' ? 'hablar\tto speak\ncomer\tto eat\nvivir\tto live\ntener\tto have\nhacer\tto do' : 'Capital of Peru, Lima\nLargest ocean, Pacific\nH₂O, Water');
+  const pasteName = srcId === 'quizlet' ? (live ? 'Quizlet set' : 'Spanish verbs') : 'My cards', pastedDecks = readCards(pasteText, pasteName);
+  const pasted = pastedDecks.reduce((a, [, cs]) => a + cs.length, 0);
+  // In the app, what was read: [deck name, its cards] for each deck in it.
+  const read = live && s.file ? s.file.decks : null;
+  const [fileName, fileDecks] = read ? [s.file.name, read.map(([n, cs]) => [n, cs.length])] : FILES[srcId] || [srcId === 'quizlet' ? 'Copied from Quizlet' : 'Pasted text', [[pasteName, pasted]]];
+  const off = s.off || {}, kept = fileDecks.filter(([n]) => !off[n]);
+  const total = kept.reduce((a, [, c]) => a + c, 0), fileTotal = fileDecks.reduce((a, [, c]) => a + c, 0);
+  // Reading a file: its cards, into decks named for the file (vocab.csv makes "vocab") unless it names its own decks.
+  const readFile = f => f && f.text().then(text => this.setState({ step: 'Found', off: {}, file: { name: f.name, decks: readCards(text, f.name.replace(/\.[^.]+$/, '') || 'My cards') } }));
+  // Importing: each deck you kept goes into your Library (into a deck of the same name if you have one), a thousand
+  // cards at a time.
+  const importAll = async () => {
+    if (this.busy) return;
+    this.busy = true; this.forceUpdate();
+    try {
+      for (const [name, cs] of read.filter(([n]) => !off[n])) {
+        const same = db.decks().find(d => d.name.trim().toLowerCase() === name.trim().toLowerCase());
+        let deckId = same ? same.id : '';
+        for (let i = 0; i < cs.length; i += 1000) deckId = await db.act.addCards({ deckId, deckName: name, cards: cs.slice(i, i + 1000) });
+      }
+      db.act.setSettings({ welcomed: true });
+      go('Done');
+    } finally { this.busy = false; this.forceUpdate(); }
+  };
+  const decks = fileDecks.map(([name, n]) => { const on = !off[name]; return { name, count: n.toLocaleString('en-US'), checked: on ? 'true' : 'false', box: on ? t.inv : 'transparent',
+    ring: on ? 'none' : 'inset 0 0 0 1.5px ' + t.muted, tick: on ? '1' : '0', fade: on ? '1' : '.35', swatch: this.gen(name, 'vivid').base, toggle: () => this.setState({ off: { ...off, [name]: on } }) }; });
+  const found = () => go('Found', { off: {} });
+  // All set: up to three of the decks fanned out, and a row for each thing done.
+  const fan = (kept.length ? kept : fileDecks).slice(0, 3).map(([name], i) => ({ name, ...this.art(this.gen(name, 'vivid')), x: [0, 118, 236][i] + 'px', x2: [0, 93, 186][i] + 'px', y: [14, 0, 16][i] + 'px', r: ['-6deg', '1deg', '7deg'][i], delay: (0.1 + i * 0.12).toFixed(2) + 's' }));
+  const cursorInk = P.dark ? '#edecec' : '#26251e', logoOf = id => ({ isClaude: id === 'claude', isOpenAI: id === 'openai', isCursor: id === 'cursor', isMcp: id === 'mcp', cursorInk });
+  const doneRows = [...(s.skippedAI ? [] : [{ label: Who, value: 'Connected', color: t.good, isCards: false, ...logoOf(aiId) }]),
+    { label: plural(total, 'card'), value: 'In ' + plural(kept.length, 'deck'), color: t.muted, isCards: true, ...logoOf('') }].map((r, i) => ({ ...r, line: i ? '1px solid ' + t.line : '0' }));
+  // iPhone: how far the card has turned (it keeps turning forward, half a turn per side) and the bar on top.
+  const connectTitle = aiId === 'mcp' ? 'Connect your app' : 'Connect ' + aiName;
+  const srcTitle = { anki: 'From Anki', quizlet: 'From Quizlet', sheet: 'From a spreadsheet', paste: 'Paste your cards' }[srcId];
+  const foundTitle = plural(fileTotal, 'card') + ' found';
+  const turn = { 'Pick AI': 0, Steps: 180, Connected: 180, 'Pick source': 360, 'Source steps': 540, Found: 540, Done: 720 }[step] || 0;
+  const now = { 'Pick AI': 4, Steps: 18, Connected: 34, 'Pick source': 50, 'Source steps': 66, Found: 82, Done: 100 }[step] || 0;
+  const K = this.auraK();
+  this.mountAura = this.mountAura || (el => this.aura(el));
+  return { t, grain: String(P.grain ?? 0.7), aura: { mount: this.mountAura, base: K.base, blend: K.blend, grain: K.grain, gs: K.gs, gi: K.gi }, cardShadow: K.card,
+    p: { cursorInk, cursorOnInv: t.invText }, ai, src,
+    isPickAI: step === 'Pick AI', isSteps: step === 'Steps', isConnected: step === 'Connected', isPickSrc: step === 'Pick source', isSrcSteps: step === 'Source steps', isFound: step === 'Found', isDone: step === 'Done',
+    isClaude: aiId === 'claude', isOpenAI: aiId === 'openai', isCursor: aiId === 'cursor', isMcp: aiId === 'mcp',
+    isAnki: srcId === 'anki', isQuizlet: srcId === 'quizlet', isSheet: srcId === 'sheet', isPaste: srcId === 'paste',
+    skipToCards: step === 'Pick AI' || step === 'Steps', skipToToday: step === 'Pick source' || step === 'Source steps' || step === 'Found',
+    skip: () => go('Pick source', { skippedAI: true }), todayHref: live ? '/' : 'Main.dc.html',
+    finish: () => { if (live) db.act.setSettings({ welcomed: true }); },
+    back: () => go(step === 'Found' ? 'Source steps' : step === 'Source steps' ? 'Pick source' : step !== 'Steps' && s.ai && !s.skippedAI ? 'Connected' : 'Pick AI'),
+    linkShown: link.replace(/^https?:\/\//, ''), copyLink, copyLabel: s.copied ? 'Copied' : 'Copy', openApp, openHref: OPEN[aiId] || link,
+    cursorHref: 'cursor://anysphere.cursor-deeplink/mcp/install?name=lucida&config=' + encodeURIComponent(btoa(JSON.stringify({ url: link }))),
+    waitLine: 'Waiting for ' + who + '…', connectedTitle: Who + ' is connected',
+    copyAsk: () => { if (live) db.act.copy(ASK); this.setState({ asked: true }); }, askCopied: !!s.asked, askFresh: !s.asked, askLabel: s.asked ? 'Copied' : 'Copy',
+    askHead: 'Try asking ' + who, showAsk: !s.skippedAI,
+    toCards: () => go('Pick source'),
+    chooseFile: () => { if (!live) found(); else db.act.chooseText().then(readFile); }, dragOver: stop,
+    dropFile: e => { stop(e); if (!live) found(); else readFile(e.dataTransfer && e.dataTransfer.files[0]); }, again: () => go('Source steps'),
+    pasteText, setPaste: e => this.setState({ paste: e && e.target ? e.target.value : '' }), pasteHint: srcId === 'quizlet' ? 'Paste what Quizlet copied' : 'Front, back',
+    pasteFound: pasted ? plural(pasted, 'card') + ' found' : String(pasteText).trim() ? 'Put the front and back on one line, split by a comma.' : '',
+    readPaste: () => { if (!pasted) return; if (live) go('Found', { off: {}, file: { name: srcId === 'quizlet' ? 'Copied from Quizlet' : 'Pasted text', decks: pastedDecks } }); else found(); }, goBg: pasted ? t.inv : t.surf2, goFg: pasted ? t.invText : t.muted,
+    foundTitle, fileName, fileLine: plural(fileDecks.length, 'deck'), decks,
+    importLabel: this.busy ? 'Importing…' : total ? 'Import ' + plural(total, 'card') : fileTotal ? 'Pick a deck' : 'No cards found',
+    importBg: total ? t.inv : t.surf2, importFg: total ? t.invText : t.muted,
+    doImport: () => { if (total) { if (live) importAll(); else go('Done'); } },
+    fan, doneRows, doneLine: 'Everything is in your Library, ready to study.',
+    connectTitle, srcTitle, isBox: srcId === 'quizlet' || srcId === 'paste',
+    turn: turn + 'deg', frontShown: turn % 360 === 0 ? 'true' : 'false', backShown: turn % 360 === 0 ? 'false' : 'true',
+    progress: now + '%', progressNow: String(now), canBack: ['Steps', 'Pick source', 'Source steps', 'Found'].includes(step) };
+}
+}
+return Component;
+  }
+};

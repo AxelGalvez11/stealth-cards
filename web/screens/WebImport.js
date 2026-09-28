@@ -728,16 +728,37 @@ renderVals() {
   const t = this.theme(!!this.props.dark, !!this.props.dim);const db = this.props.db || this.mock(); const chrome = db.chrome();
   const s = this.state, decks = db.decks();
   const text = s.text ?? (db.mock ? 'でんしゃ\ttrain\nねこ\tcat\nみず\twater' : '');
-  // One card per line. A tab (Anki, Quizlet), a comma or semicolon (CSV), or " - " splits the front from the back.
-  const cells = l => { if (l.includes('\t')) return l.split('\t'); if (l.includes(' - ')) return l.split(' - ');
-    const out = []; let cur = '', q = false; for (const ch of l) { if (ch === '"') q = !q; else if ((ch === ',' || ch === ';') && !q) { out.push(cur); cur = ''; } else cur += ch; } out.push(cur); return out; };
-  // Anki and other apps export HTML (<b>, <br>): its bold, italics, and line breaks come along. Anki's {{c1::word}} blanks become fill-in-the-blank cards.
+  const splitAt = (l, seps) => { const out = []; let cur = '', q = false, start = true;
+    for (let i = 0; i < l.length; i++) { const ch = l[i];
+      if (q) { if (ch !== '"') cur += ch; else if (l[i + 1] === '"') { cur += '"'; i++; } else q = false; }
+      else if (ch === '"' && start) { q = true; start = false; }
+      else if (seps.includes(ch)) { out.push(cur); cur = ''; start = true; }
+      else { cur += ch; start = false; } }
+    out.push(cur); return out; };
+  const cells = (l, sep) => sep ? splitAt(l, sep) : l.includes('\t') ? l.split('\t') : l.includes(' - ') ? l.split(' - ') : splitAt(l, ',;');
   const R = this.rich(), cell = x => (R.looksHtml(x) ? R.fromHtml(x) : x.trim());
   const toCard = ([front, ...rest]) => {
     const back = rest.filter(Boolean).join(', ');
     return /\{\{c\d+::/.test(front) ? { kind: 'cloze', text: front.replace(/\{\{c\d+::([\s\S]+?)(?:::[^}]*)?\}\}/g, '[[$1]]'), note: back } : { front, back };
   };
-  const cards = String(text).split(/\r?\n/).map(l => l.trim()).filter(l => l && !l.startsWith('#')).map(l => toCard(cells(l).map(cell))).filter(c => (c.kind === 'cloze' ? R.blanks(c.text).length : c.front && c.back));
+  const readCards = (text, name) => {
+    const lines = String(text || '').split(/\r?\n/), head = {};
+    for (const l of lines) { const m = /^#([a-z ]+):(.*)$/i.exec(l.trim()); if (m) head[m[1].toLowerCase()] = m[2].trim(); }
+    const sep = { tab: '\t', comma: ',', semicolon: ';', pipe: '|', colon: ':', space: ' ' }[String(head.separator || '').toLowerCase()] || '';
+    const col = k => (parseInt(head[k + ' column'], 10) || 0) - 1, deckCol = col('deck');
+    const skip = new Set([deckCol, col('notetype'), col('tags'), col('guid')].filter(i => i >= 0));
+    const decks = new Map();
+    for (const l of lines) {
+      if (!l.trim() || l.trim().startsWith('#')) continue;
+      const cs = cells(sep === '\t' ? l : l.trim(), sep), card = toCard(cs.filter((x, i) => !skip.has(i)).map(cell));
+      if (card.kind === 'cloze' ? !R.blanks(card.text).length : !(card.front && card.back)) continue;
+      const deck = (deckCol >= 0 && String(cs[deckCol] || '').split('::').pop().trim()) || name;
+      if (!decks.has(deck)) decks.set(deck, []);
+      decks.get(deck).push(card);
+    }
+    return [...decks];
+  };
+  const cards = readCards(text, '').flatMap(([, cs]) => cs);
   const here = db.mock ? { name: 'Japanese · JLPT N4' } : this.props.deckId ? db.deck(this.props.deckId) : null;
   const deckName = s.deck ?? (here ? here.name : '');
   const plural = (n, w) => n + ' ' + w + (n === 1 ? '' : 's');

@@ -508,6 +508,7 @@ export async function createDb({ onChange, go }) {
     copy: text => navigator.clipboard && navigator.clipboard.writeText(text),
     pickFile: async (kind, side) => { const f = await choose(kind === 'audio' ? 'audio/*' : 'image/*'); return f ? upload(f, kind === 'audio' ? 'audio' : 'image', side) : null; },
     pickText: async () => { const f = await choose('.csv,.tsv,.txt,text/plain,text/csv'); return f ? f.text() : null; },
+    chooseText: () => choose('.csv,.tsv,.txt,text/plain,text/csv'),
     // Sound (sound.js). record() starts recording and gives back { url, wave } once it's stopped (a second call stops it).
     record: () => sound.record(),
     stopRecording: discard => sound.stopRecording(discard),
@@ -522,6 +523,8 @@ export async function createDb({ onChange, go }) {
     speak: (text, lang) => sound.play({ speak: text, lang }, true),
     play: url => { if (url) sound.play({ audio: url }, true); },
     importCards: async o => { const r = await send('data.import', o); go('/deck/' + r.deckId); },
+    // The same, staying on the page (the onboarding): gives back the deck's id.
+    addCards: async o => (await send('data.import', o)).deckId,
     // Learn mode (see above).
     startLearn: (id, set, kinds) => {
       const cs = learnSet(id, set);

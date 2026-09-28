@@ -18,6 +18,9 @@ function resolve(path, q) {
   if (db.signedOut) return path === '/sign-in/code' && db.auth.email() ? { name: P + 'SignInCode' } : path === '/sign-in' ? { name: P + 'SignIn' } : { redirect: '/sign-in' };
   if (path.startsWith('/sign-in')) return { redirect: '/' };
   const deck = /^\/deck\/([^/]+)(\/card(?:\/([^/]+))?|\/import|\/learn)?$/.exec(path);
+  // Your first time in: the welcome (connect your AI, bring your cards) comes before Today.
+  if (path === '/' && !db.settings().welcomed && !db.decks().length) return { redirect: '/welcome' };
+  if (path === '/welcome') return { name: P + 'Welcome' };
   if (path === '/') return { name: db.decks().length ? (narrow.matches ? 'PhoneToday' : 'Main') : P + 'TodayNew' };
   // The Library (it was called Decks): your folders and decks, one folder, or all your cards. Old /decks links land here.
   if (path === '/decks') return { redirect: '/library' };
@@ -74,7 +77,7 @@ function linkFor(name) {
     WebImport: id ? '/deck/' + id + '/import' : '/decks/import', WebDeck: id ? '/deck/' + id : '/library', WebDeckSettings: id ? '/deck/' + id + '?settings=1' : '/library',
     WebEditor: id ? '/deck/' + id + '/card' : db.signedOut ? '/' : db.today().newCardHref, WebReview: id ? '/review/' + id : '/review', WebDone: '/review/done', WebDonePiles: '/review/done',
     WebQuizStart: id ? '/deck/' + id + '/learn' : '/library', PhoneQuizStart: id ? '/deck/' + id + '/learn' : '/library', WebQuizUpgrade: id ? '/deck/' + id + '/learn' : '/library', PhoneQuizUpgrade: id ? '/deck/' + id + '/learn' : '/library', PhoneDeck: id ? '/deck/' + id : '/library', Pricing: 'https://lucida.cards/pricing', PricingPhone: 'https://lucida.cards/pricing',
-    WebStats: '/stats', WebStatsEmpty: '/stats', WebConnect: '/connect', WebSettings: '/settings', WebSignIn: '/sign-in', WebSignInCode: '/sign-in/code', PhoneSignIn: '/sign-in', PhoneSignInCode: '/sign-in/code', PhoneToday: '/', Privacy: '/privacy', Terms: '/terms' };
+    WebStats: '/stats', WebStatsEmpty: '/stats', WebConnect: '/connect', WebWelcome: '/welcome', WebSettings: '/settings', WebSignIn: '/sign-in', WebSignInCode: '/sign-in/code', PhoneSignIn: '/sign-in', PhoneSignInCode: '/sign-in/code', PhoneToday: '/', Privacy: '/privacy', Terms: '/terms' };
   return pages[name] || pages[name.replace(/^Phone/, 'Web')] || '/b/' + name;
 }
 
