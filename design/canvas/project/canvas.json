@@ -254,6 +254,24 @@
       "x": 1410,
       "y": 1300
     },
+    "PhoneDeckGray.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "page": "phone",
+      "title": "iPhone · Deck page (dark, gray)",
+      "w": 390,
+      "x": 2820,
+      "y": 1300
+    },
+    "PhoneDeckMoveTray.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "page": "phone",
+      "title": "iPhone · Deck · Move to tray (while a card is dragged)",
+      "w": 390,
+      "x": 2350,
+      "y": 5200
+    },
     "PhoneDeckSettings.dc.html": {
       "h": 844,
       "is_interactive": true,
@@ -317,6 +335,33 @@
       "x": 1410,
       "y": 0
     },
+    "PhoneEditorAudio.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "page": "phone",
+      "title": "iPhone · Card editor · audio",
+      "w": 390,
+      "x": 1880,
+      "y": 5200
+    },
+    "PhoneEditorImage.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "page": "phone",
+      "title": "iPhone · Card editor · image with boxes (drag on the picture)",
+      "w": 390,
+      "x": 3760,
+      "y": 2600
+    },
+    "PhoneEditorRecording.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "page": "phone",
+      "title": "iPhone · Card editor · recording audio",
+      "w": 390,
+      "x": 2820,
+      "y": 5200
+    },
     "PhoneInbox.dc.html": {
       "h": 844,
       "is_interactive": true,
@@ -325,6 +370,51 @@
       "w": 390,
       "x": 470,
       "y": 0
+    },
+    "PhoneLibrary.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "page": "phone",
+      "title": "iPhone · Library",
+      "w": 390,
+      "x": 0,
+      "y": 5200
+    },
+    "PhoneLibraryCards.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "page": "phone",
+      "title": "iPhone · Library · all cards",
+      "w": 390,
+      "x": 470,
+      "y": 5200
+    },
+    "PhoneLibraryFolder.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "page": "phone",
+      "title": "iPhone · Library · a folder",
+      "w": 390,
+      "x": 940,
+      "y": 5200
+    },
+    "PhoneLibraryGray.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "page": "phone",
+      "title": "iPhone · Library (dark, gray)",
+      "w": 390,
+      "x": 2350,
+      "y": 1300
+    },
+    "PhoneLibraryNewFolder.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "page": "phone",
+      "title": "iPhone · Library · New folder popup",
+      "w": 390,
+      "x": 3290,
+      "y": 5200
     },
     "PhoneNewDeck.dc.html": {
       "h": 844,
@@ -362,14 +452,14 @@
       "x": 2820,
       "y": 1320
     },
-    "PhoneQuizSettings.dc.html": {
+    "PhoneQuizGray.dc.html": {
       "h": 844,
       "is_interactive": true,
-      "page": "quiz",
-      "title": "iPhone · Learn mode · settings (the deck’s background)",
+      "page": "phone",
+      "title": "iPhone · Learn mode (dark, gray)",
       "w": 390,
-      "x": 3290,
-      "y": 1320
+      "x": 3760,
+      "y": 1300
     },
     "PhoneQuizMatch.dc.html": {
       "h": 844,
@@ -378,6 +468,15 @@
       "title": "iPhone · Learn mode · matching (tap a word, then its meaning)",
       "w": 390,
       "x": 1880,
+      "y": 1320
+    },
+    "PhoneQuizSettings.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "page": "quiz",
+      "title": "iPhone · Learn mode · settings (the deck’s background)",
+      "w": 390,
+      "x": 3290,
       "y": 1320
     },
     "PhoneQuizStart.dc.html": {
@@ -416,6 +515,15 @@
       "x": 1880,
       "y": 0
     },
+    "PhoneReviewAudio.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "page": "phone",
+      "title": "iPhone · Review · audio card, playing",
+      "w": 390,
+      "x": 3290,
+      "y": 2600
+    },
     "PhoneReviewBlank.dc.html": {
       "h": 844,
       "is_interactive": true,
@@ -423,24 +531,6 @@
       "title": "iPhone · Review · fill in the blank (tap the card)",
       "w": 390,
       "x": 2350,
-      "y": 2600
-    },
-    "PhoneReviewImage.dc.html": {
-      "h": 844,
-      "is_interactive": true,
-      "page": "phone",
-      "title": "iPhone · Review · picture with hidden parts (tap the card)",
-      "w": 390,
-      "x": 4230,
-      "y": 2600
-    },
-    "PhoneEditorImage.dc.html": {
-      "h": 844,
-      "is_interactive": true,
-      "page": "phone",
-      "title": "iPhone · Card editor · image with boxes (drag on the picture)",
-      "w": 390,
-      "x": 3760,
       "y": 2600
     },
     "PhoneReviewCheck.dc.html": {
@@ -461,6 +551,15 @@
       "x": 940,
       "y": 1300
     },
+    "PhoneReviewExplain.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "page": "phone",
+      "title": "iPhone · Review · Explain (AI explains the answer)",
+      "w": 390,
+      "x": 1410,
+      "y": 5200
+    },
     "PhoneReviewFour.dc.html": {
       "h": 844,
       "is_interactive": true,
@@ -468,6 +567,24 @@
       "title": "iPhone · Review · 4 grades",
       "w": 390,
       "x": 0,
+      "y": 2600
+    },
+    "PhoneReviewGray.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "page": "phone",
+      "title": "iPhone · Review (dark, gray)",
+      "w": 390,
+      "x": 3290,
+      "y": 1300
+    },
+    "PhoneReviewImage.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "page": "phone",
+      "title": "iPhone · Review · picture with hidden parts (tap the card)",
+      "w": 390,
+      "x": 4230,
       "y": 2600
     },
     "PhoneReviewNewPile.dc.html": {
@@ -505,6 +622,15 @@
       "w": 390,
       "x": 4700,
       "y": 0
+    },
+    "PhoneSettingsGray.dc.html": {
+      "h": 1260,
+      "is_interactive": true,
+      "page": "phone",
+      "title": "iPhone · Settings (dark, gray)",
+      "w": 390,
+      "x": 4700,
+      "y": 1300
     },
     "PhoneSignIn.dc.html": {
       "h": 844,
@@ -551,6 +677,15 @@
       "x": 1880,
       "y": 1300
     },
+    "PhoneStatsGray.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "page": "phone",
+      "title": "iPhone · Stats (dark, gray)",
+      "w": 390,
+      "x": 4230,
+      "y": 1300
+    },
     "PhoneToday.dc.html": {
       "h": 844,
       "is_interactive": true,
@@ -578,6 +713,15 @@
       "x": 0,
       "y": 1300
     },
+    "PhoneTodayGray.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "page": "phone",
+      "title": "iPhone · Today (dark, gray)",
+      "w": 390,
+      "x": 1880,
+      "y": 1300
+    },
     "PhoneTodayNew.dc.html": {
       "h": 844,
       "is_interactive": true,
@@ -586,6 +730,69 @@
       "w": 390,
       "x": 0,
       "y": 1300
+    },
+    "PhoneWelcome.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "page": "onboarding",
+      "title": "iPhone · Onboarding · step 1 · pick your AI",
+      "w": 390,
+      "x": 0,
+      "y": 1320
+    },
+    "PhoneWelcomeAnki.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "page": "onboarding",
+      "title": "iPhone · Onboarding · step 2 · from Anki",
+      "w": 390,
+      "x": 1880,
+      "y": 1320
+    },
+    "PhoneWelcomeClaude.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "page": "onboarding",
+      "title": "iPhone · Onboarding · step 1 · connect Claude (waiting for it)",
+      "w": 390,
+      "x": 470,
+      "y": 1320
+    },
+    "PhoneWelcomeConnected.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "page": "onboarding",
+      "title": "iPhone · Onboarding · step 1 · connected, first cards",
+      "w": 390,
+      "x": 940,
+      "y": 1320
+    },
+    "PhoneWelcomeDone.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "page": "onboarding",
+      "title": "iPhone · Onboarding · all set",
+      "w": 390,
+      "x": 2820,
+      "y": 1320
+    },
+    "PhoneWelcomeFound.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "page": "onboarding",
+      "title": "iPhone · Onboarding · step 2 · cards found",
+      "w": 390,
+      "x": 2350,
+      "y": 1320
+    },
+    "PhoneWelcomeImport.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "page": "onboarding",
+      "title": "iPhone · Onboarding · step 2 · bring your cards",
+      "w": 390,
+      "x": 1410,
+      "y": 1320
     },
     "Pricing.dc.html": {
       "h": 1617,
@@ -658,6 +865,51 @@
       "x": 3040,
       "y": 0
     },
+    "WebCardsScreen.dc.html": {
+      "h": 900,
+      "is_interactive": true,
+      "page": "sidebar",
+      "title": "Web · Cards screen · basic card open (Option B, in the app)",
+      "w": 1440,
+      "x": 1520,
+      "y": 11880
+    },
+    "WebCardsScreenBlank.dc.html": {
+      "h": 900,
+      "is_interactive": true,
+      "page": "sidebar",
+      "title": "Web · Cards screen · fill in the blank (Option B, in the app)",
+      "w": 1440,
+      "x": 4560,
+      "y": 11880
+    },
+    "WebCardsScreenDark.dc.html": {
+      "h": 900,
+      "is_interactive": true,
+      "page": "sidebar",
+      "title": "Web · Cards screen · basic card open (dark, Option B, in the app)",
+      "w": 1440,
+      "x": 6080,
+      "y": 11880
+    },
+    "WebCardsScreenImage.dc.html": {
+      "h": 900,
+      "is_interactive": true,
+      "page": "sidebar",
+      "title": "Web · Cards screen · image card with boxes (Option B, in the app)",
+      "w": 1440,
+      "x": 3040,
+      "y": 11880
+    },
+    "WebCardsScreenNew.dc.html": {
+      "h": 900,
+      "is_interactive": true,
+      "page": "sidebar",
+      "title": "Web · Cards screen · writing a new card (Option B, in the app)",
+      "w": 1440,
+      "x": 0,
+      "y": 11880
+    },
     "WebConnect.dc.html": {
       "h": 900,
       "is_interactive": true,
@@ -693,6 +945,24 @@
       "w": 1440,
       "x": 4560,
       "y": 0
+    },
+    "WebDeckGray.dc.html": {
+      "h": 900,
+      "is_interactive": true,
+      "page": "sidebar",
+      "title": "Web · Deck page (dark, gray)",
+      "w": 1440,
+      "x": 12160,
+      "y": 2640
+    },
+    "WebDeckMoveTray.dc.html": {
+      "h": 900,
+      "is_interactive": true,
+      "page": "sidebar",
+      "title": "Web · Deck · Move to tray (while a card is dragged)",
+      "w": 1440,
+      "x": 7600,
+      "y": 9240
     },
     "WebDeckSettings.dc.html": {
       "h": 900,
@@ -802,6 +1072,60 @@
       "x": 7600,
       "y": 5280
     },
+    "WebEditorBig.dc.html": {
+      "h": 900,
+      "is_interactive": true,
+      "page": "sidebar",
+      "title": "Web · Bigger card editor · basic (Option A, not picked)",
+      "w": 1440,
+      "x": 1520,
+      "y": 10560
+    },
+    "WebEditorBigAudio.dc.html": {
+      "h": 900,
+      "is_interactive": true,
+      "page": "sidebar",
+      "title": "Web · Bigger card editor · audio (Option A, not picked)",
+      "w": 1440,
+      "x": 4560,
+      "y": 10560
+    },
+    "WebEditorBigBlank.dc.html": {
+      "h": 900,
+      "is_interactive": true,
+      "page": "sidebar",
+      "title": "Web · Bigger card editor · fill in the blank (Option A, not picked)",
+      "w": 1440,
+      "x": 3040,
+      "y": 10560
+    },
+    "WebEditorBigDark.dc.html": {
+      "h": 900,
+      "is_interactive": true,
+      "page": "sidebar",
+      "title": "Web · Bigger card editor · basic (dark, Option A, not picked)",
+      "w": 1440,
+      "x": 7600,
+      "y": 10560
+    },
+    "WebEditorBigImage.dc.html": {
+      "h": 900,
+      "is_interactive": true,
+      "page": "sidebar",
+      "title": "Web · Bigger card editor · image with boxes (Option A, not picked)",
+      "w": 1440,
+      "x": 0,
+      "y": 10560
+    },
+    "WebEditorBigImageDark.dc.html": {
+      "h": 900,
+      "is_interactive": true,
+      "page": "sidebar",
+      "title": "Web · Bigger card editor · image with boxes (dark, Option A, not picked)",
+      "w": 1440,
+      "x": 6080,
+      "y": 10560
+    },
     "WebEditorBlank.dc.html": {
       "h": 900,
       "is_interactive": true,
@@ -818,6 +1142,15 @@
       "title": "Web · Card editor · image",
       "w": 1440,
       "x": 6080,
+      "y": 5280
+    },
+    "WebEditorRecording.dc.html": {
+      "h": 900,
+      "is_interactive": true,
+      "page": "sidebar",
+      "title": "Web · Card editor · recording audio",
+      "w": 1440,
+      "x": 10640,
       "y": 5280
     },
     "WebEditorSlash.dc.html": {
@@ -837,6 +1170,51 @@
       "w": 1440,
       "x": 7600,
       "y": 1320
+    },
+    "WebLibraryCards.dc.html": {
+      "h": 900,
+      "is_interactive": true,
+      "page": "sidebar",
+      "title": "Web · Library · all cards (filter by tags and difficulty)",
+      "w": 1440,
+      "x": 0,
+      "y": 9240
+    },
+    "WebLibraryFolder.dc.html": {
+      "h": 900,
+      "is_interactive": true,
+      "page": "sidebar",
+      "title": "Web · Library · a folder",
+      "w": 1440,
+      "x": 1520,
+      "y": 9240
+    },
+    "WebLibraryGray.dc.html": {
+      "h": 900,
+      "is_interactive": true,
+      "page": "sidebar",
+      "title": "Web · Library (dark, gray)",
+      "w": 1440,
+      "x": 10640,
+      "y": 2640
+    },
+    "WebLibraryMove.dc.html": {
+      "h": 900,
+      "is_interactive": true,
+      "page": "sidebar",
+      "title": "Web · Library · a deck’s ⋯ menu (move it to a folder)",
+      "w": 1440,
+      "x": 6080,
+      "y": 9240
+    },
+    "WebLibraryNewFolder.dc.html": {
+      "h": 900,
+      "is_interactive": true,
+      "page": "sidebar",
+      "title": "Web · Library · New folder popup",
+      "w": 1440,
+      "x": 3040,
+      "y": 9240
     },
     "WebNewDeck.dc.html": {
       "h": 900,
@@ -874,14 +1252,14 @@
       "x": 9120,
       "y": 0
     },
-    "WebQuizSettings.dc.html": {
+    "WebQuizGray.dc.html": {
       "h": 900,
       "is_interactive": true,
-      "page": "quiz",
-      "title": "Web · Learn mode · settings (the deck’s background)",
+      "page": "sidebar",
+      "title": "Web · Learn mode (dark, gray)",
       "w": 1440,
-      "x": 10640,
-      "y": 0
+      "x": 15200,
+      "y": 2640
     },
     "WebQuizMatch.dc.html": {
       "h": 900,
@@ -890,6 +1268,15 @@
       "title": "Web · Learn mode · matching (tap a word, then its meaning)",
       "w": 1440,
       "x": 6080,
+      "y": 0
+    },
+    "WebQuizSettings.dc.html": {
+      "h": 900,
+      "is_interactive": true,
+      "page": "quiz",
+      "title": "Web · Learn mode · settings (the deck’s background)",
+      "w": 1440,
+      "x": 10640,
       "y": 0
     },
     "WebQuizStart.dc.html": {
@@ -928,6 +1315,15 @@
       "x": 0,
       "y": 1320
     },
+    "WebReviewAudio.dc.html": {
+      "h": 900,
+      "is_interactive": true,
+      "page": "sidebar",
+      "title": "Web · Review · audio card, playing",
+      "w": 1440,
+      "x": 10640,
+      "y": 3960
+    },
     "WebReviewBlank.dc.html": {
       "h": 900,
       "is_interactive": true,
@@ -935,15 +1331,6 @@
       "title": "Web · Review · fill in the blank (click the card or press Space)",
       "w": 1440,
       "x": 7600,
-      "y": 3960
-    },
-    "WebReviewImage.dc.html": {
-      "h": 900,
-      "is_interactive": true,
-      "page": "sidebar",
-      "title": "Web · Review · picture with hidden parts (click the card or press Space)",
-      "w": 1440,
-      "x": 12160,
       "y": 3960
     },
     "WebReviewCheck.dc.html": {
@@ -964,6 +1351,15 @@
       "x": 3040,
       "y": 2640
     },
+    "WebReviewExplain.dc.html": {
+      "h": 900,
+      "is_interactive": true,
+      "page": "sidebar",
+      "title": "Web · Review · Explain (AI explains the answer)",
+      "w": 1440,
+      "x": 4560,
+      "y": 9240
+    },
     "WebReviewFour.dc.html": {
       "h": 900,
       "is_interactive": true,
@@ -971,6 +1367,24 @@
       "title": "Web · Review · Forgot / Hard / Good / Easy",
       "w": 1440,
       "x": 0,
+      "y": 3960
+    },
+    "WebReviewGray.dc.html": {
+      "h": 900,
+      "is_interactive": true,
+      "page": "sidebar",
+      "title": "Web · Review (dark, gray)",
+      "w": 1440,
+      "x": 13680,
+      "y": 2640
+    },
+    "WebReviewImage.dc.html": {
+      "h": 900,
+      "is_interactive": true,
+      "page": "sidebar",
+      "title": "Web · Review · picture with hidden parts (click the card or press Space)",
+      "w": 1440,
+      "x": 12160,
       "y": 3960
     },
     "WebReviewNewPile.dc.html": {
@@ -1008,6 +1422,15 @@
       "w": 1440,
       "x": 0,
       "y": 5280
+    },
+    "WebSettingsGray.dc.html": {
+      "h": 900,
+      "is_interactive": true,
+      "page": "sidebar",
+      "title": "Web · Settings (dark, gray)",
+      "w": 1440,
+      "x": 18240,
+      "y": 2640
     },
     "WebSignIn.dc.html": {
       "h": 900,
@@ -1054,6 +1477,15 @@
       "x": 6080,
       "y": 0
     },
+    "WebStatsGray.dc.html": {
+      "h": 900,
+      "is_interactive": true,
+      "page": "sidebar",
+      "title": "Web · Stats (dark, gray)",
+      "w": 1440,
+      "x": 16720,
+      "y": 2640
+    },
     "WebTodayCaughtUp.dc.html": {
       "h": 900,
       "is_interactive": true,
@@ -1072,123 +1504,6 @@
       "x": 0,
       "y": 2640
     },
-    "WebTodayNew.dc.html": {
-      "h": 900,
-      "is_interactive": true,
-      "page": "empty",
-      "title": "Web · Today · new user",
-      "w": 1440,
-      "x": 0,
-      "y": 0
-    },
-    "WebLibraryCards.dc.html": {
-      "h": 900,
-      "is_interactive": true,
-      "page": "sidebar",
-      "title": "Web · Library · all cards (filter by tags and difficulty)",
-      "w": 1440,
-      "x": 0,
-      "y": 9240
-    },
-    "WebLibraryFolder.dc.html": {
-      "h": 900,
-      "is_interactive": true,
-      "page": "sidebar",
-      "title": "Web · Library · a folder",
-      "w": 1440,
-      "x": 1520,
-      "y": 9240
-    },
-    "WebLibraryNewFolder.dc.html": {
-      "h": 900,
-      "is_interactive": true,
-      "page": "sidebar",
-      "title": "Web · Library · New folder popup",
-      "w": 1440,
-      "x": 3040,
-      "y": 9240
-    },
-    "WebLibraryMove.dc.html": {
-      "h": 900,
-      "is_interactive": true,
-      "page": "sidebar",
-      "title": "Web · Library · a deck’s ⋯ menu (move it to a folder)",
-      "w": 1440,
-      "x": 6080,
-      "y": 9240
-    },
-    "WebDeckMoveTray.dc.html": {
-      "h": 900,
-      "is_interactive": true,
-      "page": "sidebar",
-      "title": "Web · Deck · Move to tray (while a card is dragged)",
-      "w": 1440,
-      "x": 7600,
-      "y": 9240
-    },
-    "WebReviewExplain.dc.html": {
-      "h": 900,
-      "is_interactive": true,
-      "page": "sidebar",
-      "title": "Web · Review · Explain (AI explains the answer)",
-      "w": 1440,
-      "x": 4560,
-      "y": 9240
-    },
-    "PhoneLibrary.dc.html": {
-      "h": 844,
-      "is_interactive": true,
-      "page": "phone",
-      "title": "iPhone · Library",
-      "w": 390,
-      "x": 0,
-      "y": 5200
-    },
-    "PhoneLibraryCards.dc.html": {
-      "h": 844,
-      "is_interactive": true,
-      "page": "phone",
-      "title": "iPhone · Library · all cards",
-      "w": 390,
-      "x": 470,
-      "y": 5200
-    },
-    "PhoneLibraryFolder.dc.html": {
-      "h": 844,
-      "is_interactive": true,
-      "page": "phone",
-      "title": "iPhone · Library · a folder",
-      "w": 390,
-      "x": 940,
-      "y": 5200
-    },
-    "PhoneLibraryNewFolder.dc.html": {
-      "h": 844,
-      "is_interactive": true,
-      "page": "phone",
-      "title": "iPhone · Library · New folder popup",
-      "w": 390,
-      "x": 3290,
-      "y": 5200
-    },
-    "PhoneDeckMoveTray.dc.html": {
-      "h": 844,
-      "is_interactive": true,
-      "page": "phone",
-      "title": "iPhone · Deck · Move to tray (while a card is dragged)",
-      "w": 390,
-      "x": 2350,
-      "y": 5200
-    },
-    "PhoneReviewExplain.dc.html": {
-      "h": 844,
-      "is_interactive": true,
-      "page": "phone",
-      "title": "iPhone · Review · Explain (AI explains the answer)",
-      "w": 390,
-      "x": 1410,
-      "y": 5200
-    },
     "WebTodayGray.dc.html": {
       "h": 900,
       "is_interactive": true,
@@ -1198,266 +1513,229 @@
       "x": 9120,
       "y": 2640
     },
-    "WebLibraryGray.dc.html": {
+    "WebTodayNew.dc.html": {
       "h": 900,
       "is_interactive": true,
-      "page": "sidebar",
-      "title": "Web · Library (dark, gray)",
-      "w": 1440,
-      "x": 10640,
-      "y": 2640
-    },
-    "WebDeckGray.dc.html": {
-      "h": 900,
-      "is_interactive": true,
-      "page": "sidebar",
-      "title": "Web · Deck page (dark, gray)",
-      "w": 1440,
-      "x": 12160,
-      "y": 2640
-    },
-    "WebReviewGray.dc.html": {
-      "h": 900,
-      "is_interactive": true,
-      "page": "sidebar",
-      "title": "Web · Review (dark, gray)",
-      "w": 1440,
-      "x": 13680,
-      "y": 2640
-    },
-    "WebQuizGray.dc.html": {
-      "h": 900,
-      "is_interactive": true,
-      "page": "sidebar",
-      "title": "Web · Learn mode (dark, gray)",
-      "w": 1440,
-      "x": 15200,
-      "y": 2640
-    },
-    "WebStatsGray.dc.html": {
-      "h": 900,
-      "is_interactive": true,
-      "page": "sidebar",
-      "title": "Web · Stats (dark, gray)",
-      "w": 1440,
-      "x": 16720,
-      "y": 2640
-    },
-    "WebSettingsGray.dc.html": {
-      "h": 900,
-      "is_interactive": true,
-      "page": "sidebar",
-      "title": "Web · Settings (dark, gray)",
-      "w": 1440,
-      "x": 18240,
-      "y": 2640
-    },
-    "PhoneTodayGray.dc.html": {
-      "h": 844,
-      "is_interactive": true,
-      "page": "phone",
-      "title": "iPhone · Today (dark, gray)",
-      "w": 390,
-      "x": 1880,
-      "y": 1300
-    },
-    "PhoneLibraryGray.dc.html": {
-      "h": 844,
-      "is_interactive": true,
-      "page": "phone",
-      "title": "iPhone · Library (dark, gray)",
-      "w": 390,
-      "x": 2350,
-      "y": 1300
-    },
-    "PhoneDeckGray.dc.html": {
-      "h": 844,
-      "is_interactive": true,
-      "page": "phone",
-      "title": "iPhone · Deck page (dark, gray)",
-      "w": 390,
-      "x": 2820,
-      "y": 1300
-    },
-    "PhoneReviewGray.dc.html": {
-      "h": 844,
-      "is_interactive": true,
-      "page": "phone",
-      "title": "iPhone · Review (dark, gray)",
-      "w": 390,
-      "x": 3290,
-      "y": 1300
-    },
-    "PhoneQuizGray.dc.html": {
-      "h": 844,
-      "is_interactive": true,
-      "page": "phone",
-      "title": "iPhone · Learn mode (dark, gray)",
-      "w": 390,
-      "x": 3760,
-      "y": 1300
-    },
-    "PhoneStatsGray.dc.html": {
-      "h": 844,
-      "is_interactive": true,
-      "page": "phone",
-      "title": "iPhone · Stats (dark, gray)",
-      "w": 390,
-      "x": 4230,
-      "y": 1300
-    },
-    "PhoneSettingsGray.dc.html": {
-      "h": 1260,
-      "is_interactive": true,
-      "page": "phone",
-      "title": "iPhone · Settings (dark, gray)",
-      "w": 390,
-      "x": 4700,
-      "y": 1300
-    },
-    "PhoneEditorAudio.dc.html": {
-      "h": 844,
-      "is_interactive": true,
-      "page": "phone",
-      "title": "iPhone · Card editor · audio",
-      "w": 390,
-      "x": 1880,
-      "y": 5200
-    },
-    "PhoneEditorRecording.dc.html": {
-      "h": 844,
-      "is_interactive": true,
-      "page": "phone",
-      "title": "iPhone · Card editor · recording audio",
-      "w": 390,
-      "x": 2820,
-      "y": 5200
-    },
-    "PhoneReviewAudio.dc.html": {
-      "h": 844,
-      "is_interactive": true,
-      "page": "phone",
-      "title": "iPhone · Review · audio card, playing",
-      "w": 390,
-      "x": 3290,
-      "y": 2600
-    },
-    "WebEditorRecording.dc.html": {
-      "h": 900,
-      "is_interactive": true,
-      "page": "sidebar",
-      "title": "Web · Card editor · recording audio",
-      "w": 1440,
-      "x": 10640,
-      "y": 5280
-    },
-    "WebReviewAudio.dc.html": {
-      "h": 900,
-      "is_interactive": true,
-      "page": "sidebar",
-      "title": "Web · Review · audio card, playing",
-      "w": 1440,
-      "x": 10640,
-      "y": 3960
-    },
-    "WebEditorBigImage.dc.html": {
-      "h": 900,
-      "is_interactive": true,
-      "page": "sidebar",
-      "title": "Web · Bigger card editor · image with boxes (Option A, not picked)",
+      "page": "empty",
+      "title": "Web · Today · new user",
       "w": 1440,
       "x": 0,
-      "y": 10560
+      "y": 0
     },
-    "WebEditorBig.dc.html": {
+    "WebWelcome.dc.html": {
       "h": 900,
       "is_interactive": true,
-      "page": "sidebar",
-      "title": "Web · Bigger card editor · basic (Option A, not picked)",
+      "page": "onboarding",
+      "title": "Web · Onboarding · step 1 · pick your AI",
       "w": 1440,
-      "x": 1520,
-      "y": 10560
+      "x": 0,
+      "y": 0
     },
-    "WebEditorBigBlank.dc.html": {
+    "WebWelcomeAnki.dc.html": {
       "h": 900,
       "is_interactive": true,
-      "page": "sidebar",
-      "title": "Web · Bigger card editor · fill in the blank (Option A, not picked)",
-      "w": 1440,
-      "x": 3040,
-      "y": 10560
-    },
-    "WebEditorBigAudio.dc.html": {
-      "h": 900,
-      "is_interactive": true,
-      "page": "sidebar",
-      "title": "Web · Bigger card editor · audio (Option A, not picked)",
-      "w": 1440,
-      "x": 4560,
-      "y": 10560
-    },
-    "WebEditorBigImageDark.dc.html": {
-      "h": 900,
-      "is_interactive": true,
-      "page": "sidebar",
-      "title": "Web · Bigger card editor · image with boxes (dark, Option A, not picked)",
+      "page": "onboarding",
+      "title": "Web · Onboarding · step 2 · from Anki",
       "w": 1440,
       "x": 6080,
-      "y": 10560
+      "y": 0
     },
-    "WebEditorBigDark.dc.html": {
+    "WebWelcomeClaude.dc.html": {
       "h": 900,
       "is_interactive": true,
-      "page": "sidebar",
-      "title": "Web · Bigger card editor · basic (dark, Option A, not picked)",
+      "page": "onboarding",
+      "title": "Web · Onboarding · step 1 · connect Claude (waiting for it)",
+      "w": 1440,
+      "x": 1520,
+      "y": 0
+    },
+    "WebWelcomeConnected.dc.html": {
+      "h": 900,
+      "is_interactive": true,
+      "page": "onboarding",
+      "title": "Web · Onboarding · step 1 · connected, first cards",
+      "w": 1440,
+      "x": 3040,
+      "y": 0
+    },
+    "WebWelcomeDone.dc.html": {
+      "h": 900,
+      "is_interactive": true,
+      "page": "onboarding",
+      "title": "Web · Onboarding · all set",
+      "w": 1440,
+      "x": 9120,
+      "y": 0
+    },
+    "WebWelcomeFound.dc.html": {
+      "h": 900,
+      "is_interactive": true,
+      "page": "onboarding",
+      "title": "Web · Onboarding · step 2 · cards found",
       "w": 1440,
       "x": 7600,
-      "y": 10560
+      "y": 0
     },
-    "WebCardsScreenNew.dc.html": {
+    "WebWelcomeImport.dc.html": {
       "h": 900,
       "is_interactive": true,
-      "page": "sidebar",
-      "title": "Web · Cards screen · writing a new card (Option B, in the app)",
-      "w": 1440,
-      "x": 0,
-      "y": 11880
-    },
-    "WebCardsScreen.dc.html": {
-      "h": 900,
-      "is_interactive": true,
-      "page": "sidebar",
-      "title": "Web · Cards screen · basic card open (Option B, in the app)",
-      "w": 1440,
-      "x": 1520,
-      "y": 11880
-    },
-    "WebCardsScreenImage.dc.html": {
-      "h": 900,
-      "is_interactive": true,
-      "page": "sidebar",
-      "title": "Web · Cards screen · image card with boxes (Option B, in the app)",
-      "w": 1440,
-      "x": 3040,
-      "y": 11880
-    },
-    "WebCardsScreenBlank.dc.html": {
-      "h": 900,
-      "is_interactive": true,
-      "page": "sidebar",
-      "title": "Web · Cards screen · fill in the blank (Option B, in the app)",
+      "page": "onboarding",
+      "title": "Web · Onboarding · step 2 · bring your cards",
       "w": 1440,
       "x": 4560,
-      "y": 11880
+      "y": 0
     },
-    "WebCardsScreenDark.dc.html": {
-      "h": 900,
-      "is_interactive": true,
-      "page": "sidebar",
-      "title": "Web · Cards screen · basic card open (dark, Option B, in the app)",
+    "ThemePicker.dc.html": {
+      "x": 0,
+      "y": 0,
       "w": 1440,
-      "x": 6080,
-      "y": 11880
+      "h": 900,
+      "page": "themes",
+      "title": "Web · Settings › Theme"
+    },
+    "ThemeLeather.dc.html": {
+      "x": 0,
+      "y": 1320,
+      "w": 1440,
+      "h": 900,
+      "page": "themes",
+      "title": "Leather · Theme sheet"
+    },
+    "ThemeLeatherLibrary.dc.html": {
+      "x": 1520,
+      "y": 1320,
+      "w": 1440,
+      "h": 900,
+      "page": "themes",
+      "title": "Leather · Web · Library"
+    },
+    "ThemeLeatherReview.dc.html": {
+      "x": 3040,
+      "y": 1320,
+      "w": 1440,
+      "h": 900,
+      "page": "themes",
+      "title": "Leather · Web · Flashcards"
+    },
+    "ThemeLeatherReviewPhone.dc.html": {
+      "x": 4560,
+      "y": 1320,
+      "w": 390,
+      "h": 844,
+      "page": "themes",
+      "title": "Leather · iPhone · Flashcards"
+    },
+    "ThemeLeatherProfilePhone.dc.html": {
+      "x": 5030,
+      "y": 1320,
+      "w": 390,
+      "h": 844,
+      "page": "themes",
+      "title": "Leather · iPhone · Profile"
+    },
+    "ThemeMono.dc.html": {
+      "x": 0,
+      "y": 2640,
+      "w": 1440,
+      "h": 900,
+      "page": "themes",
+      "title": "Monochrome · Theme sheet"
+    },
+    "ThemeMonoLibrary.dc.html": {
+      "x": 1520,
+      "y": 2640,
+      "w": 1440,
+      "h": 900,
+      "page": "themes",
+      "title": "Monochrome · Web · Library"
+    },
+    "ThemeMonoReview.dc.html": {
+      "x": 3040,
+      "y": 2640,
+      "w": 1440,
+      "h": 900,
+      "page": "themes",
+      "title": "Monochrome · Web · Flashcards"
+    },
+    "ThemeMonoReviewPhone.dc.html": {
+      "x": 4560,
+      "y": 2640,
+      "w": 390,
+      "h": 844,
+      "page": "themes",
+      "title": "Monochrome · iPhone · Flashcards"
+    },
+    "ThemeMonoProfilePhone.dc.html": {
+      "x": 5030,
+      "y": 2640,
+      "w": 390,
+      "h": 844,
+      "page": "themes",
+      "title": "Monochrome · iPhone · Profile"
+    },
+    "NetProfile.dc.html": {
+      "x": 0,
+      "y": 0,
+      "w": 1440,
+      "h": 900,
+      "page": "network",
+      "title": "Web · Your profile"
+    },
+    "NetDiscover.dc.html": {
+      "x": 1520,
+      "y": 0,
+      "w": 1440,
+      "h": 900,
+      "page": "network",
+      "title": "Web · Discover"
+    },
+    "NetProfilePhone.dc.html": {
+      "x": 3040,
+      "y": 0,
+      "w": 390,
+      "h": 844,
+      "page": "network",
+      "title": "iPhone · Your profile"
+    },
+    "NetDeck.dc.html": {
+      "x": 0,
+      "y": 1320,
+      "w": 1440,
+      "h": 900,
+      "page": "network",
+      "title": "Web · Public deck"
+    },
+    "NetDeckCopy.dc.html": {
+      "x": 1520,
+      "y": 1320,
+      "w": 1440,
+      "h": 900,
+      "page": "network",
+      "title": "Web · Public deck › Make a copy"
+    },
+    "NetDeckPhone.dc.html": {
+      "x": 3040,
+      "y": 1320,
+      "w": 390,
+      "h": 844,
+      "page": "network",
+      "title": "iPhone · Public deck"
+    },
+    "NetSuggestion.dc.html": {
+      "x": 0,
+      "y": 2640,
+      "w": 1440,
+      "h": 900,
+      "page": "network",
+      "title": "Web · Suggestions (your deck)"
+    },
+    "NetHistory.dc.html": {
+      "x": 1520,
+      "y": 2640,
+      "w": 1440,
+      "h": 900,
+      "page": "network",
+      "title": "Web · History (your deck)"
     }
   },
   "createdOnFiles": {
@@ -1470,6 +1748,42 @@
     "view": "canvas"
   },
   "notes": {
+    "aBigEditor": {
+      "kind": "title1",
+      "maxW": 8000,
+      "page": "sidebar",
+      "text": "Option A: bigger card editor (mockup, not picked)",
+      "w": 240,
+      "x": 0,
+      "y": 10260
+    },
+    "aBigSticky": {
+      "fill": "gray",
+      "page": "sidebar",
+      "size": 40,
+      "text": "Option A · Bigger card editor\nA wide sheet instead of the side panel: pictures get most of the room, and text cards get big front and back fields. Drag boxes, type, and switch types to try it. Not picked: the app uses Option B.",
+      "w": 520,
+      "x": 9120,
+      "y": 10560
+    },
+    "aCardsScreen": {
+      "kind": "title1",
+      "maxW": 7520,
+      "page": "sidebar",
+      "text": "Option B: whole screen, cards on the left (picked, now in the app)",
+      "w": 240,
+      "x": 0,
+      "y": 11580
+    },
+    "aCardsSticky": {
+      "fill": "gray",
+      "page": "sidebar",
+      "size": 40,
+      "text": "Option B · Whole screen, cards on the left (in the app now)\nA screen of its own, opened from the deck: its cards down the left, the one you pick in a big editor on the right. Changes save as you type (a card missing its answer waits, and says so); a new card waits at the top until Add card (⌘↵), which starts the next one. On a computer the app opens it for New card and for any card you click; phones keep the iPhone editor. Click cards, New card, types, and boxes to try it.",
+      "w": 520,
+      "x": 7600,
+      "y": 11880
+    },
     "aDark": {
       "kind": "title1",
       "maxW": 5960,
@@ -1488,6 +1802,15 @@
       "x": 0,
       "y": 3660
     },
+    "aGray": {
+      "kind": "title1",
+      "maxW": 8000,
+      "page": "sidebar",
+      "text": "Dark mode, gray (Settings → Dark mode: Gray)",
+      "w": 240,
+      "x": 9120,
+      "y": 2340
+    },
     "aHome": {
       "kind": "title1",
       "maxW": 5960,
@@ -1496,6 +1819,15 @@
       "w": 240,
       "x": 0,
       "y": -300
+    },
+    "aLibrary": {
+      "kind": "title1",
+      "maxW": 6000,
+      "page": "sidebar",
+      "text": "Library: folders, all cards, and AI explanations",
+      "w": 240,
+      "x": 0,
+      "y": 8940
     },
     "aMore": {
       "kind": "title1",
@@ -1614,6 +1946,24 @@
       "x": 0,
       "y": -300
     },
+    "oPhone": {
+      "kind": "title1",
+      "maxW": 3210,
+      "page": "onboarding",
+      "text": "Onboarding · iPhone (flip card)",
+      "w": 240,
+      "x": 0,
+      "y": 1020
+    },
+    "oWeb": {
+      "kind": "title1",
+      "maxW": 8000,
+      "page": "onboarding",
+      "text": "Onboarding · web",
+      "w": 240,
+      "x": 0,
+      "y": -300
+    },
     "pDark": {
       "kind": "title1",
       "maxW": 3680,
@@ -1631,6 +1981,24 @@
       "w": 240,
       "x": 0,
       "y": 2300
+    },
+    "pGray": {
+      "kind": "title1",
+      "maxW": 3210,
+      "page": "phone",
+      "text": "iPhone, dark and gray",
+      "w": 240,
+      "x": 1880,
+      "y": 1000
+    },
+    "pLibrary": {
+      "kind": "title1",
+      "maxW": 1800,
+      "page": "phone",
+      "text": "iPhone · Library and AI explanations",
+      "w": 240,
+      "x": 0,
+      "y": 4900
     },
     "pSignIn": {
       "kind": "title1",
@@ -1704,77 +2072,59 @@
       "x": 0,
       "y": 1020
     },
-    "aLibrary": {
+    "aThemes0": {
       "kind": "title1",
-      "maxW": 6000,
-      "page": "sidebar",
-      "text": "Library: folders, all cards, and AI explanations",
+      "maxW": 1440,
+      "page": "themes",
+      "text": "Choosing a theme",
       "w": 240,
       "x": 0,
-      "y": 8940
+      "y": -300
     },
-    "pLibrary": {
+    "aThemes1320": {
       "kind": "title1",
-      "maxW": 1800,
-      "page": "phone",
-      "text": "iPhone · Library and AI explanations",
+      "maxW": 5420,
+      "page": "themes",
+      "text": "Leather",
       "w": 240,
       "x": 0,
-      "y": 4900
+      "y": 1020
     },
-    "aGray": {
+    "aThemes2640": {
       "kind": "title1",
-      "maxW": 10560,
-      "page": "sidebar",
-      "text": "Dark mode, gray (Settings → Dark mode: Gray)",
+      "maxW": 5420,
+      "page": "themes",
+      "text": "Monochrome",
       "w": 240,
-      "x": 9120,
+      "x": 0,
       "y": 2340
     },
-    "pGray": {
+    "aNetwork0": {
       "kind": "title1",
-      "maxW": 3210,
-      "page": "phone",
-      "text": "iPhone, dark and gray",
-      "w": 240,
-      "x": 1880,
-      "y": 1000
-    },
-    "aBigEditor": {
-      "kind": "title1",
-      "maxW": 9040,
-      "page": "sidebar",
-      "text": "Option A: bigger card editor (mockup, not picked)",
+      "maxW": 3430,
+      "page": "network",
+      "text": "Profiles and discovery",
       "w": 240,
       "x": 0,
-      "y": 10260
+      "y": -300
     },
-    "aBigSticky": {
-      "fill": "gray",
-      "page": "sidebar",
-      "size": 40,
-      "text": "Option A · Bigger card editor\nA wide sheet instead of the side panel: pictures get most of the room, and text cards get big front and back fields. Drag boxes, type, and switch types to try it. Not picked: the app uses Option B.",
-      "w": 520,
-      "x": 9120,
-      "y": 10560
-    },
-    "aCardsScreen": {
+    "aNetwork1320": {
       "kind": "title1",
-      "maxW": 7520,
-      "page": "sidebar",
-      "text": "Option B: whole screen, cards on the left (picked, now in the app)",
+      "maxW": 3430,
+      "page": "network",
+      "text": "Public decks: study, copy, save, suggest",
       "w": 240,
       "x": 0,
-      "y": 11580
+      "y": 1020
     },
-    "aCardsSticky": {
-      "fill": "gray",
-      "page": "sidebar",
-      "size": 40,
-      "text": "Option B · Whole screen, cards on the left (in the app now)\nA screen of its own, opened from the deck: its cards down the left, the one you pick in a big editor on the right. Changes save as you type (a card missing its answer waits, and says so); a new card waits at the top until Add card (⌘↵), which starts the next one. On a computer the app opens it for New card and for any card you click; phones keep the iPhone editor. Click cards, New card, types, and boxes to try it.",
-      "w": 520,
-      "x": 7600,
-      "y": 11880
+    "aNetwork2640": {
+      "kind": "title1",
+      "maxW": 2960,
+      "page": "network",
+      "text": "Your deck: suggestions and history",
+      "w": 240,
+      "x": 0,
+      "y": 2340
     }
   },
   "order": [
@@ -1939,7 +2289,40 @@
     "WebCardsScreen.dc.html",
     "WebCardsScreenImage.dc.html",
     "WebCardsScreenBlank.dc.html",
-    "WebCardsScreenDark.dc.html"
+    "WebCardsScreenDark.dc.html",
+    "WebWelcome.dc.html",
+    "WebWelcomeClaude.dc.html",
+    "WebWelcomeConnected.dc.html",
+    "WebWelcomeImport.dc.html",
+    "WebWelcomeAnki.dc.html",
+    "WebWelcomeFound.dc.html",
+    "WebWelcomeDone.dc.html",
+    "PhoneWelcome.dc.html",
+    "PhoneWelcomeClaude.dc.html",
+    "PhoneWelcomeConnected.dc.html",
+    "PhoneWelcomeImport.dc.html",
+    "PhoneWelcomeAnki.dc.html",
+    "PhoneWelcomeFound.dc.html",
+    "PhoneWelcomeDone.dc.html",
+    "ThemePicker.dc.html",
+    "ThemeLeather.dc.html",
+    "ThemeLeatherLibrary.dc.html",
+    "ThemeLeatherReview.dc.html",
+    "ThemeLeatherReviewPhone.dc.html",
+    "ThemeLeatherProfilePhone.dc.html",
+    "ThemeMono.dc.html",
+    "ThemeMonoLibrary.dc.html",
+    "ThemeMonoReview.dc.html",
+    "ThemeMonoReviewPhone.dc.html",
+    "ThemeMonoProfilePhone.dc.html",
+    "NetProfile.dc.html",
+    "NetDiscover.dc.html",
+    "NetProfilePhone.dc.html",
+    "NetDeck.dc.html",
+    "NetDeckCopy.dc.html",
+    "NetDeckPhone.dc.html",
+    "NetSuggestion.dc.html",
+    "NetHistory.dc.html"
   ],
   "pages": [
     {
@@ -1985,6 +2368,18 @@
     {
       "id": "live",
       "name": "Live (play with friends)"
+    },
+    {
+      "id": "onboarding",
+      "name": "Onboarding (after sign-in)"
+    },
+    {
+      "id": "themes",
+      "name": "Themes (Leather, Monochrome)"
+    },
+    {
+      "id": "network",
+      "name": "Study network (profiles, sharing)"
     }
   ],
   "title": "Lucida Design"

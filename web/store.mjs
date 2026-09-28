@@ -21,12 +21,14 @@ const GAPS = [30, 90, 180, 365, 730, 1825, 3650];
 
 const fresh = () => ({
   version: 1, rev: 1,
-  settings: { name: '', color: 0, look: 'system', darkMode: 'black', grads: 'mix', prog: 'bar', perDay: 20, goal: 90, grading: 'four', fsrs: true, reminder: '9:00 AM', photo: '', yourPhoto: null },
+  settings: { name: '', color: 0, look: 'system', darkMode: 'black', grads: 'mix', prog: 'bar', perDay: 20, goal: 90, grading: 'four', fsrs: true, reminder: '9:00 AM', photo: '', yourPhoto: null, welcomed: false },
   ai: { perms: { read: true, text: true, media: true, edit: true, check: false, del: false }, clients: {} },
   folders: [], decks: [], cards: [], logs: []
 });
-// Saved data from an older version gets any settings added since.
-const upgrade = d => { const f = fresh(); return { ...f, ...d, settings: { ...f.settings, ...d.settings }, ai: { ...f.ai, ...d.ai, perms: { ...f.ai.perms, ...(d.ai || {}).perms } } }; };
+// Saved data from an older version gets any settings added since. The welcome after your first sign-in (`welcomed`)
+// counts as seen for anyone who already has decks or cards.
+const upgrade = d => { const f = fresh(), was = { welcomed: !!((d.decks || []).length || (d.cards || []).length) };
+  return { ...f, ...d, settings: { ...f.settings, ...was, ...d.settings }, ai: { ...f.ai, ...d.ai, perms: { ...f.ai.perms, ...(d.ai || {}).perms } } }; };
 // The library a request works on: this computer's one, or (online) a copy of the signed-in person's, one per request,
 // so two requests running at once never share a copy. `later` is work to finish before saving.
 const here = { uid: null, S: fresh(), base: null, dirty: false, later: [] };
@@ -364,6 +366,7 @@ function run(a, who) {
       // Profile picture: the Google photo, your own, or your initial on your color ('' until you pick, which shows the
       // Google photo if there is one). Your own is a picture you uploaded to Lucida, so it's always a /media/… path.
       if ('photo' in p && !['', 'google', 'yours', 'color'].includes(p.photo)) throw new Error('No such profile picture');
+      if ('welcomed' in p) p.welcomed = !!p.welcomed;
       if ('yourPhoto' in p && p.yourPhoto !== null && !/^\/media\/[\w-]+\.(png|jpg|gif|webp)$/.test(String(p.yourPhoto))) throw new Error('Your photo has to be a picture you uploaded.');
       Object.assign(S.settings, p); return {};
     }
@@ -377,7 +380,7 @@ function run(a, who) {
     }
     case 'data.reset': {
       // The rev keeps counting up, so every copy of the app sees the reset as the newest data.
-      const next = fresh(); next.ai.clients = S.ai.clients; next.ai.key = S.ai.key; next.rev = S.rev; L.S = next;
+      const next = fresh(); next.ai.clients = S.ai.clients; next.ai.key = S.ai.key; next.rev = S.rev; next.settings.welcomed = true; L.S = next;
       if (cloud()) L.later.push(files.clear(L.uid)); else { rmSync(MEDIA, { recursive: true, force: true }); mkdirSync(MEDIA, { recursive: true }); }
       return {};
     }

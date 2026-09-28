@@ -3597,22 +3597,50 @@ const webImport = `<div style="position: relative; width: 1440px; height: 900px;
     <div style="display: flex; gap: 10px;"><a href="{{backHref}}" style="flex-grow: 1; height: 52px; border-radius: 999px; background: {{t.surf}}; display: flex; align-items: center; justify-content: center; font-size: 15px; font-weight: 600;">Cancel</a><a href="{{backHref}}" onClick="{{doImport}}" style="flex-grow: 2; height: 52px; border-radius: 999px; background: {{importBg}}; color: {{importFg}}; display: flex; align-items: center; justify-content: center; font-size: 15px; font-weight: 600;">{{importLabel}}</a></div>
   </div>
 </div>`;
-const importLogic = `
-constructor(props) { super(props); this.state = {}; }
-renderVals() {
-  ${T}${DB_JS}
-  const s = this.state, decks = db.decks();
-  const text = s.text ?? (db.mock ? 'でんしゃ\\ttrain\\nねこ\\tcat\\nみず\\twater' : '');
-  // One card per line. A tab (Anki, Quizlet), a comma or semicolon (CSV), or " - " splits the front from the back.
-  const cells = l => { if (l.includes('\\t')) return l.split('\\t'); if (l.includes(' - ')) return l.split(' - ');
-    const out = []; let cur = '', q = false; for (const ch of l) { if (ch === '"') q = !q; else if ((ch === ',' || ch === ';') && !q) { out.push(cur); cur = ''; } else cur += ch; } out.push(cur); return out; };
-  // Anki and other apps export HTML (<b>, <br>): its bold, italics, and line breaks come along. Anki's {{c1::word}} blanks become fill-in-the-blank cards.
+// Reading cards from text, for Import and the onboarding. One card per line: a tab (Anki, Quizlet), a comma or semicolon
+// (CSV), or " - " splits the front from the back, and a field in "quotes" can hold a comma. Anki's plain-text export
+// starts with lines like "#separator:tab" and "#deck column:3" that say how to read it: its deck column sorts the cards
+// into their decks (the last part of "Languages::Spanish"), and its note type, tags, and ID columns are left out.
+// Anki and other apps export HTML (<b>, <br>): its bold, italics, and line breaks come along. Anki's {{c1::word}}
+// blanks become fill-in-the-blank cards. readCards(text, name) gives [[deck name, cards]], `name` for cards with no deck.
+const READ_CARDS_JS = `
+  const splitAt = (l, seps) => { const out = []; let cur = '', q = false, start = true;
+    for (let i = 0; i < l.length; i++) { const ch = l[i];
+      if (q) { if (ch !== '"') cur += ch; else if (l[i + 1] === '"') { cur += '"'; i++; } else q = false; }
+      else if (ch === '"' && start) { q = true; start = false; }
+      else if (seps.includes(ch)) { out.push(cur); cur = ''; start = true; }
+      else { cur += ch; start = false; } }
+    out.push(cur); return out; };
+  const cells = (l, sep) => sep ? splitAt(l, sep) : l.includes('\\t') ? l.split('\\t') : l.includes(' - ') ? l.split(' - ') : splitAt(l, ',;');
   const R = this.rich(), cell = x => (R.looksHtml(x) ? R.fromHtml(x) : x.trim());
   const toCard = ([front, ...rest]) => {
     const back = rest.filter(Boolean).join(', ');
     return /\\{\\{c\\d+::/.test(front) ? { kind: 'cloze', text: front.replace(/\\{\\{c\\d+::([\\s\\S]+?)(?:::[^}]*)?\\}\\}/g, '[[$1]]'), note: back } : { front, back };
   };
-  const cards = String(text).split(/\\r?\\n/).map(l => l.trim()).filter(l => l && !l.startsWith('#')).map(l => toCard(cells(l).map(cell))).filter(c => (c.kind === 'cloze' ? R.blanks(c.text).length : c.front && c.back));
+  const readCards = (text, name) => {
+    const lines = String(text || '').split(/\\r?\\n/), head = {};
+    for (const l of lines) { const m = /^#([a-z ]+):(.*)$/i.exec(l.trim()); if (m) head[m[1].toLowerCase()] = m[2].trim(); }
+    const sep = { tab: '\\t', comma: ',', semicolon: ';', pipe: '|', colon: ':', space: ' ' }[String(head.separator || '').toLowerCase()] || '';
+    const col = k => (parseInt(head[k + ' column'], 10) || 0) - 1, deckCol = col('deck');
+    const skip = new Set([deckCol, col('notetype'), col('tags'), col('guid')].filter(i => i >= 0));
+    const decks = new Map();
+    for (const l of lines) {
+      if (!l.trim() || l.trim().startsWith('#')) continue;
+      const cs = cells(sep === '\\t' ? l : l.trim(), sep), card = toCard(cs.filter((x, i) => !skip.has(i)).map(cell));
+      if (card.kind === 'cloze' ? !R.blanks(card.text).length : !(card.front && card.back)) continue;
+      const deck = (deckCol >= 0 && String(cs[deckCol] || '').split('::').pop().trim()) || name;
+      if (!decks.has(deck)) decks.set(deck, []);
+      decks.get(deck).push(card);
+    }
+    return [...decks];
+  };`;
+const importLogic = `
+constructor(props) { super(props); this.state = {}; }
+renderVals() {
+  ${T}${DB_JS}
+  const s = this.state, decks = db.decks();
+  const text = s.text ?? (db.mock ? 'でんしゃ\\ttrain\\nねこ\\tcat\\nみず\\twater' : '');${READ_CARDS_JS}
+  const cards = readCards(text, '').flatMap(([, cs]) => cs);
   const here = db.mock ? { name: 'Japanese · JLPT N4' } : this.props.deckId ? db.deck(this.props.deckId) : null;
   const deckName = s.deck ?? (here ? here.name : '');
   const plural = (n, w) => n + ' ' + w + (n === 1 ? '' : 's');
@@ -4778,6 +4806,436 @@ const legalLogic = `renderVals() { ${T}
   return { t, homeHref: site ? 'https://lucida.cards/' : 'Landing.dc.html', signInHref: site ? 'https://app.lucida.cards/sign-in' : 'WebSignIn.dc.html', startHref: site ? 'https://app.lucida.cards/' : 'WebSignIn.dc.html',
     privacyHref: site ? '/privacy' : 'Privacy.dc.html', termsHref: site ? '/terms' : 'Terms.dc.html', pricingHref: site ? '/pricing' : 'Pricing.dc.html' }; }`;
 
+// ---------- Onboarding: after the first sign-in, connect your AI, then bring your cards ----------
+// The owner (2026-09-24): an onboarding page right after sign-in, "for connecting ai and importing flashcards", full
+// screen. It first had sign-in's card wall beside it; the owner (V98): "remove this whole right side, this is only for
+// sign in", so it's a plain page: one centered column on computers, top to bottom on phones with the main button at the
+// bottom. Two steps, and either one can be skipped:
+//   1. Connect your AI: pick Claude, ChatGPT, Cursor, or another MCP app, then its two steps. The page notices when the
+//      AI first calls your link (the MCP link keeps who called) and says so. The owner, on that screen: "dont prompt
+//      user to act just yet", so the first thing to ask the AI for waits for the last screen.
+//   2. Bring your cards: an Anki deck file, a Quizlet export, a spreadsheet saved as CSV, or pasted text.
+// It ends on "You're all set". One board holds the whole flow (a screen per `step`), so Play clicks through all of it;
+// the other boards open it on one screen each. The canvas fakes what needs the real world: the AI "connects" a moment
+// after you copy the link or open the app, its first cards are made up, and choosing a file finds a made-up Anki file.
+const OB_STEPS = ['Pick AI', 'Steps', 'Connected', 'Pick source', 'Source steps', 'Found', 'Done'];
+// [id, name, short name for the switcher]. The ids are the keys of db.ai().clients.
+const OB_AIS = [['claude', 'Claude', 'Claude'], ['openai', 'ChatGPT', 'ChatGPT'], ['cursor', 'Cursor', 'Cursor'], ['mcp', 'Other app', 'Other']];
+const OB_I = {
+  star: '<path d="M12 3.6l2.5 5.2 5.7.8-4.1 4 1 5.7L12 16.6l-5.1 2.7 1-5.7-4.1-4 5.7-.8z"/>',
+  sheet: '<rect x="3.5" y="4.5" width="17" height="15" rx="2.5"/><path d="M3.5 9.5h17M3.5 14.5h17M10 9.5v10"/>',
+  paste: '<rect x="5.5" y="4.5" width="13" height="16" rx="2.5"/><path d="M9 4.5v-.3a1.7 1.7 0 0 1 1.7-1.7h2.6A1.7 1.7 0 0 1 15 4.2v.3"/><path d="M9 11h6M9 15h4"/>',
+  out: '<path d="M14 4h6v6"/><path d="M20 4l-9 9"/><path d="M19 14v4a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h4"/>',
+  copy: '<rect x="8.5" y="8.5" width="11.5" height="11.5" rx="2.5"/><path d="M15.5 8.5V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v7.5a2 2 0 0 0 2 2h2.5"/>'
+};
+// [id, name, icon]. Anki and Quizlet get plain icons, not their logos.
+const OB_SOURCES = [['anki', 'Anki', OB_I.star], ['quizlet', 'Quizlet', I.decks], ['sheet', 'Spreadsheet', OB_I.sheet], ['paste', 'Paste text', OB_I.paste]];
+const OB_ASK = 'Make 5 flashcards about the Krebs cycle.';
+const OB_SUB1 = 'Then just ask it for flashcards. They show up here.';
+const OB_SUB2 = 'Already have flashcards? Bring them with you.';
+// The page's background, after "Auralis" on 21st.dev. The owner: "use this as background, make it white for light mode
+// and dark gray for dark mode". It's soft folds of light that drift and change shape, a fade at the edges, and fine film
+// grain. A small shader draws the folds at half size (they're soft, so it looks the same for a quarter of the work), about
+// 30 times a second, and holds still with reduced motion. The grain is its own layer on top, and it jumps a little each
+// frame, like film. `deep` is the folds' shadow, `lit` their light, `vig` how much the edges fade to `base`. The steps sit
+// on a card in the page's own color (the owner: "add a card for the middle stuff so its distinguished from from
+// background"), with a hairline edge and a soft shadow (`card`).
+// The owner (2026-09-28): "give the gradient a slight blue color for both iphone and webapp", so the folds' shadow
+// leans a little blue (and in dark mode their light and the page too).
+const OB_AURA = {
+  light: { base: '#FFFFFF', lit: '#FFFFFF', deep: '#C6D3F2', vig: 0.8, blend: 'multiply', grain: '.22', gs: '2.2', gi: '-.1',
+    card: '0 0 0 1px rgba(0,0,0,.06), 0 2px 6px rgba(0,0,0,.04), 0 32px 64px -24px rgba(0,0,0,.24)' },
+  dark: { base: '#131419', lit: '#41475B', deep: '#0A0B10', vig: 0.55, blend: 'overlay', grain: '.5', gs: '3', gi: '-1',
+    card: '0 0 0 1px rgba(255,255,255,.08), 0 32px 64px -24px rgba(0,0,0,.8)' }
+};
+// The folds: gradient noise in three layers (fbm), stretched and leaned across the page, bent by more of itself (domain
+// warping), then turned into broad bands of light with a sine, the way silk folds catch the light.
+const OB_FRAG = `#ifdef GL_FRAGMENT_PRECISION_HIGH
+precision highp float;
+#else
+precision mediump float;
+#endif
+uniform vec2 R;
+uniform float t, V;
+uniform vec3 B, H, D;
+vec2 h2(vec2 p) {
+  p = vec2(dot(p, vec2(127.1, 311.7)), dot(p, vec2(269.5, 183.3)));
+  return -1.0 + 2.0 * fract(sin(p) * 43758.5453);
+}
+float gn(vec2 p) {
+  vec2 i = floor(p), f = fract(p), u = f * f * (3.0 - 2.0 * f);
+  return mix(mix(dot(h2(i), f), dot(h2(i + vec2(1.0, 0.0)), f - vec2(1.0, 0.0)), u.x),
+             mix(dot(h2(i + vec2(0.0, 1.0)), f - vec2(0.0, 1.0)), dot(h2(i + 1.0), f - 1.0), u.x), u.y);
+}
+float fbm(vec2 p) {
+  float s = 0.0, a = 0.5;
+  for (int i = 0; i < 3; i++) { s += a * gn(p); p = mat2(1.6, 1.2, -1.2, 1.6) * p; a *= 0.5; }
+  return s;
+}
+void main() {
+  vec2 uv = gl_FragCoord.xy / R, p = (gl_FragCoord.xy - 0.5 * R) / R.y;
+  float T = t * 0.07;
+  vec2 q = mat2(0.87, 0.5, -0.5, 0.87) * p * vec2(0.55, 1.3);
+  vec2 w = vec2(fbm(q * 1.2 + vec2(0.8 * T, 0.3 * T)), fbm(q * 1.2 + vec2(4.1, 2.7) - vec2(0.5 * T, 0.7 * T)));
+  float f = fbm(q + 1.5 * w + vec2(0.0, 0.4 * T));
+  float band = 0.5 + 0.5 * sin(7.0 * f + 3.6 * q.y + T);
+  float L = smoothstep(0.12, 0.95, band);
+  L = L * L * (3.0 - 2.0 * L);
+  vec3 c = mix(D, H, L);
+  float v = smoothstep(1.15, 0.15, length((uv - 0.5) * vec2(1.2, 1.0)));
+  gl_FragColor = vec4(mix(B, c, mix(1.0, v, V)), 1.0);
+}`;
+// The canvas's pixel size is fixed (half the board), so the app's page updates never resize it, which would clear it.
+// The grain reaches 48px past each edge so its jumps never show an edge.
+const obAura = (w, h) => {
+  const fn = c => `<feFunc${c} type="linear" slope="{{aura.gs}}" intercept="{{aura.gi}}"/>`;
+  return `<div aria-hidden="true" style="position: absolute; inset: 0; z-index: 0; overflow: hidden; pointer-events: none; background: {{aura.base}};"><canvas ref="{{aura.mount}}" width="${w}" height="${h}" style="position: absolute; inset: 0; width: 100%; height: 100%; display: block;"></canvas><svg class="ob-grain" width="100%" height="100%" style="position: absolute; left: -48px; top: -48px; width: calc(100% + 96px); height: calc(100% + 96px); mix-blend-mode: {{aura.blend}}; opacity: {{aura.grain}};"><filter id="ob-grain" x="0" y="0" width="100%" height="100%" color-interpolation-filters="sRGB"><feTurbulence type="fractalNoise" baseFrequency=".85" numOctaves="3" stitchTiles="stitch"></feTurbulence><feColorMatrix type="saturate" values="0"></feColorMatrix><feComponentTransfer>${fn('R')}${fn('G')}${fn('B')}</feComponentTransfer></filter><rect width="100%" height="100%" filter="url(#ob-grain)"></rect></svg></div>`;
+};
+// Sizes on computers, and on phones (m): phones get sign-in's bigger buttons and fields.
+const obZ = m => ({ title: m ? 'font-size: 28px; font-weight: 700;' : 'font-size: 32px; font-weight: 600;', btn: m ? 50 : 44, tile: m ? 60 : 64, field: m ? 50 : 48, seg: m ? 12 : 13, open: m ? 44 : 38 });
+// "Step 1 of 2" over each title; step 2 has a small back button beside it.
+const obEyebrow = (label, back = false) => `<div style="display: flex; align-items: center; gap: 10px; min-height: 28px;">${back ? `<button type="button" onClick="{{back}}" aria-label="Back" class="sc-press" style="width: 28px; height: 28px; flex-shrink: 0; border: 0; border-radius: 14px; background: {{t.surf}}; color: {{t.text}}; display: flex; align-items: center; justify-content: center; cursor: pointer;">${svg(I.back, 14, 2.2)}</button>` : ''}<span style="font-size: 14px; font-weight: 500; color: {{t.muted}};">${label}</span></div>`;
+const obHead = (m, eyebrow, title, sub = '') => `<div style="display: flex; flex-direction: column; gap: 8px;">${eyebrow}<h1 style="margin: 0; ${obZ(m).title} line-height: 1.12; letter-spacing: -.03em;">${title}</h1>${sub ? `<p style="margin: 0; font-size: 15px; line-height: 1.45; color: {{t.muted}}; text-wrap: pretty;">${sub}</p>` : ''}</div>`;
+// The first screen of each step: four big choices, each a logo or icon in a circle and a name.
+const obTile = (m, key, glyph, label) => `<button type="button" onClick="{{${key}.pick}}" aria-pressed="{{${key}.pressed}}" class="sc-press" style="height: ${obZ(m).tile}px; min-width: 0; box-sizing: border-box; padding: 0 ${m ? 12 : 14}px 0 10px; display: flex; align-items: center; gap: 10px; border: 0; border-radius: 18px; background: {{t.bg}}; box-shadow: {{${key}.ring}}; color: {{t.text}}; font: inherit; font-size: 15px; font-weight: 600; text-align: left; cursor: pointer;"><span style="width: 38px; height: 38px; flex-shrink: 0; border-radius: 19px; background: {{t.surf}}; display: flex; align-items: center; justify-content: center;">${glyph}</span><span style="flex-grow: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${label}</span>${m ? '' : `<span style="display: flex; flex-shrink: 0; color: {{t.muted}};">${svg(I.chev, 16, 2)}</span>`}</button>`;
+const obGrid = cells => `<div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px;">${cells.join('')}</div>`;
+const obAiTiles = m => obGrid(OB_AIS.map(([id, name]) => obTile(m, 'ai.' + id, LOGO[id](22), name)));
+const obSrcTiles = m => obGrid(OB_SOURCES.map(([id, name, icon]) => obTile(m, 'src.' + id, svg(icon, 19, 1.9), name)));
+// Once one is picked, the four shrink to a switcher above its steps.
+const obSeg = (m, key, items, label) => `<div role="group" aria-label="${label}" style="display: grid; grid-template-columns: repeat(${items.length}, minmax(0, 1fr)); gap: 2px; padding: 4px; border-radius: 999px; background: {{t.surf}};">${items.map(([id, glyph, text]) => `<button type="button" onClick="{{${key}.${id}.pick}}" aria-pressed="{{${key}.${id}.pressed}}" style="height: 36px; min-width: 0; padding: 0 ${m ? 2 : 8}px; display: flex; align-items: center; justify-content: center; gap: 6px; border: 0; border-radius: 999px; background: {{${key}.${id}.bg}}; box-shadow: {{${key}.${id}.sh}}; color: {{${key}.${id}.fg}}; font: inherit; font-size: ${obZ(m).seg}px; font-weight: 600; white-space: nowrap; cursor: pointer;">${glyph ? `<span style="display: flex; flex-shrink: 0; opacity: {{${key}.${id}.op}};">${glyph}</span>` : ''}<span style="min-width: 0; overflow: hidden; text-overflow: ellipsis;">${text}</span></button>`).join('')}</div>`;
+const obAiSeg = m => obSeg(m, 'ai', OB_AIS.map(([id, , short]) => [id, LOGO[id](15), short]), 'Your AI');
+const obSrcSeg = m => obSeg(m, 'src', OB_SOURCES.map(([id, name]) => [id, '', name]), 'Where your cards are');
+// Numbered steps: a title, then a line on where to click (menu names in bold) and the thing to click.
+const obB = txt => `<b style="font-weight: 600; color: {{t.text}};">${txt}</b>`;
+const obHow = html => `<span style="font-size: 14px; line-height: 1.5; color: {{t.muted}};">${html}</span>`;
+const obStep = (n, title, body) => `<div style="display: flex; gap: 14px;"><span style="width: 26px; height: 26px; flex-shrink: 0; border-radius: 13px; background: {{t.surf}}; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 600;">${n}</span><div style="flex-grow: 1; min-width: 0; padding-top: 3px; display: flex; flex-direction: column; gap: 10px;"><span style="font-size: 15px; font-weight: 600;">${title}</span>${body}</div></div>`;
+const obNote = (icon, txt) => `<span style="display: flex; align-items: center; gap: 8px; font-size: 13px; color: {{t.muted}};"><span style="display: flex; flex-shrink: 0;">${svg(icon, 15, 1.9)}</span><span>${txt}</span></span>`;
+// Your MCP link with Copy: the sample link on the canvas, yours in the app.
+const obLink = m => `<div style="height: ${obZ(m).field}px; box-sizing: border-box; padding: 0 5px 0 18px; display: flex; align-items: center; gap: 8px; border-radius: 999px; background: {{t.surf}};"><span style="flex-grow: 1; min-width: 0; font-family: ${MONO}; font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{linkShown}}</span><button type="button" onClick="{{copyLink}}" class="sc-press" style="height: ${obZ(m).field - 10}px; flex-shrink: 0; padding: 0 16px; border: 0; border-radius: 999px; background: {{t.inv}}; color: {{t.invText}}; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer;">{{copyLabel}}</button></div>`;
+const obOpen = (m, label) => `<a href="{{openHref}}" target="_blank" rel="noopener" onClick="{{openApp}}" class="sc-press" style="align-self: flex-start; height: ${obZ(m).open}px; box-sizing: border-box; padding: 0 14px 0 16px; display: inline-flex; align-items: center; gap: 8px; border-radius: 999px; background: {{t.bg}}; box-shadow: inset 0 0 0 1px {{t.surf2}}; font-size: 14px; font-weight: 600;">${label}${svg(OB_I.out, 14, 2)}</a>`;
+// Cursor installs from a link in one click, so it has no link to copy.
+const obCursor = m => `<a href="{{cursorHref}}" onClick="{{openApp}}" class="sc-press" style="align-self: flex-start; height: ${obZ(m).open + 4}px; box-sizing: border-box; padding: 0 18px 0 14px; display: inline-flex; align-items: center; gap: 9px; border-radius: 999px; background: {{t.inv}}; color: {{t.invText}}; font-size: 14px; font-weight: 600;">${LOGO.cursor(17).replace('{{p.cursorInk}}', '{{p.cursorOnInv}}')}Add to Cursor</a>`;
+// Each app's two steps (the menu names are Claude's and ChatGPT's own, as of 2026-09).
+const obAiSteps = m => {
+  const wrap = (flag, first, body) => `<sc-if value="{{${flag}}}" hint-placeholder-val="{{ ${first} }}"><div style="display: flex; flex-direction: column; gap: 20px;">${body}</div></sc-if>`;
+  const copy = obStep(1, 'Copy your link', obLink(m));
+  return wrap('isClaude', true, copy + obStep(2, 'Add it to Claude', obHow(`In ${obB('Customize › Connectors')}, add a custom connector and paste the link.`) + obOpen(m, 'Open Claude')))
+    + wrap('isOpenAI', false, copy + obStep(2, 'Add it to ChatGPT', obHow(`In ${obB('Settings › Apps')}, turn on ${obB('Developer mode')}, click ${obB('Create')}, and paste the link. It needs a paid ChatGPT plan.`) + obOpen(m, 'Open ChatGPT')))
+    + wrap('isCursor', false, obStep(1, 'Add Lucida to Cursor', obCursor(m)) + obStep(2, 'Click Install', obHow('Cursor opens and asks once. That’s all.')))
+    + wrap('isMcp', false, copy + obStep(2, 'Paste it in your app', obHow('Any app that works with MCP can use it.')));
+};
+// Phones keep the main button (or the waiting pulse) at the bottom of the screen.
+const obPin = m => (m ? 'margin-top: auto; ' : '');
+// Until the AI calls the link: a soft pulse where Continue will be.
+const obWait = m => `<div role="status" style="height: ${obZ(m).btn}px; flex-shrink: 0; ${obPin(m)}box-sizing: border-box; padding: 0 18px; display: flex; align-items: center; justify-content: center; gap: 12px; border-radius: 999px; background: {{t.surf}}; color: {{t.muted}}; font-size: 14px; font-weight: 500;"><span style="position: relative; width: 9px; height: 9px; flex-shrink: 0;"><span class="ob-ring" style="position: absolute; inset: 0; border-radius: 50%; background: {{t.easy}};"></span><span style="position: absolute; inset: 0; border-radius: 50%; background: {{t.easy}};"></span></span><span>{{waitLine}}</span></div>`;
+const obGo = (m, label, handler, bg = '{{t.inv}}', fg = '{{t.invText}}') => `<button type="button" onClick="{{${handler}}}" class="sc-press" style="height: ${obZ(m).btn}px; flex-shrink: 0; ${obPin(m)}border: 0; border-radius: 999px; background: ${bg}; color: ${fg}; font: inherit; font-size: ${m ? 16 : 15}px; font-weight: 600; cursor: pointer;">${label}</button>`;
+// A first thing to ask the AI for, copied with one tap. It's on the last screen (only when an AI is connected): the
+// owner didn't want people sent off to act in the middle of setting up.
+const obAsk = m => `<sc-if value="{{showAsk}}" hint-placeholder-val="{{ true }}"><div style="display: flex; flex-direction: column; gap: 10px;"><span style="font-size: 14px; font-weight: 600;">{{askHead}}</span><div style="display: flex; align-items: flex-start; gap: 12px; box-sizing: border-box; padding: 12px 12px 12px 18px; border-radius: 22px 22px 6px 22px; background: {{t.surf}};"><span style="flex-grow: 1; min-width: 0; padding: 6px 0; font-size: 16px; line-height: 1.4; font-weight: 500; text-wrap: pretty;">${OB_ASK}</span><button type="button" onClick="{{copyAsk}}" aria-label="{{askLabel}}" class="sc-press" style="width: 34px; height: 34px; flex-shrink: 0; border: 0; border-radius: 17px; background: {{t.bg}}; color: {{t.text}}; display: flex; align-items: center; justify-content: center; cursor: pointer;"><sc-if value="{{askCopied}}" hint-placeholder-val="{{ false }}">${svg(I.check, 15, 2.4)}</sc-if><sc-if value="{{askFresh}}" hint-placeholder-val="{{ true }}">${svg(OB_I.copy, 15, 2)}</sc-if></button></div></div></sc-if>`;
+// Connected: a check pops in, then Continue.
+const obConnected = m => `<div style="display: flex; flex-direction: column; gap: ${m ? 20 : 24}px;${m ? ' flex-grow: 1;' : ''}">
+  <div style="display: flex; flex-direction: column; gap: 8px;">${obEyebrow('Step 1 of 2')}<h1 style="margin: 0; display: flex; align-items: center; gap: 12px; ${obZ(m).title} line-height: 1.12; letter-spacing: -.03em;"><span class="ob-pop" style="width: ${m ? 30 : 34}px; height: ${m ? 30 : 34}px; flex-shrink: 0; border-radius: 50%; background: {{t.good}}; color: #FFFFFF; display: flex; align-items: center; justify-content: center;">${svg(I.check, m ? 16 : 18, 2.8)}</span><span style="min-width: 0;">{{connectedTitle}}</span></h1><p style="margin: 0; font-size: 15px; line-height: 1.45; color: {{t.muted}};">It can make cards for you now.</p></div>
+  ${obGo(m, 'Continue', 'toCards')}
+</div>`;
+// A file goes in by drop (computers) or the phone's file picker; Quizlet and pasted text go in a box.
+const obDrop = (m, what) => m
+  ? `<button type="button" onClick="{{chooseFile}}" class="sc-press" style="height: 50px; flex-shrink: 0; ${obPin(m)}border: 0; border-radius: 999px; background: {{t.inv}}; color: {{t.invText}}; display: flex; align-items: center; justify-content: center; gap: 8px; font: inherit; font-size: 16px; font-weight: 600; cursor: pointer;">${svg(I.upload, 17, 2)}Choose ${what}</button>`
+  : `<div onDragOver="{{dragOver}}" onDrop="{{dropFile}}" style="height: 188px; box-sizing: border-box; border-radius: 24px; border: 1.5px dashed rgba(128,128,128,.45); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; text-align: center;"><span style="width: 48px; height: 48px; margin-bottom: 4px; border-radius: 24px; background: {{t.surf}}; display: flex; align-items: center; justify-content: center;">${svg(I.upload, 20, 2)}</span><span style="font-size: 15px; font-weight: 600;">Drop ${what} here</span><button type="button" onClick="{{chooseFile}}" style="border: 0; padding: 0; background: transparent; color: {{t.muted}}; font: inherit; font-size: 14px; text-decoration: underline; text-underline-offset: 3px; cursor: pointer;">or choose a file</button></div>`;
+// Phones get 16px text in the box, or they zoom in when it's tapped.
+const obPasteBox = m => `<textarea rows="${m ? 5 : 6}" onChange="{{setPaste}}" placeholder="{{pasteHint}}" aria-label="Your cards" style="resize: none; box-sizing: border-box; width: 100%; border: 0; outline: 0; border-radius: 20px; padding: 14px 16px; background: {{t.surf}}; color: {{t.text}}; font-family: ${MONO}; font-size: ${m ? 16 : 13}px; line-height: 1.6;">{{pasteText}}</textarea><span style="min-height: 18px; margin-top: -4px; font-size: 13px; color: {{t.muted}};">{{pasteFound}}</span>`;
+const obPaste = m => obPasteBox(m) + obGo(m, 'Continue', 'readPaste', '{{goBg}}', '{{goFg}}');
+const OB_HOW = {
+  anki: obHow(`In Anki, click the gear next to a deck, then ${obB('Export')}. Pick ${obB('Notes in Plain Text')}.`),
+  quizlet: obHow(`On quizlet.com, open your set. Click ${obB('⋯')}, then ${obB('Export')} and ${obB('Copy text')}.`),
+  sheet: obHow(`Fronts in the first column, backs in the second. Save it as ${obB('CSV')}.`),
+  paste: obHow('One card per line: the front, a comma, then the back.')
+};
+const obSrcSteps = m => {
+  const wrap = (flag, first, body) => `<sc-if value="{{${flag}}}" hint-placeholder-val="{{ ${first} }}"><div style="display: flex; flex-direction: column; gap: 16px;${m ? ' flex-grow: 1;' : ''}">${body}</div></sc-if>`;
+  // Phones put the note above the button, which sits at the bottom.
+  return wrap('isAnki', true, OB_HOW.anki + obDrop(m, 'your Anki file'))
+    + wrap('isQuizlet', false, OB_HOW.quizlet + obPaste(m))
+    + wrap('isSheet', false, OB_HOW.sheet + obDrop(m, 'your CSV file'))
+    + wrap('isPaste', false, OB_HOW.paste + obPaste(m));
+};
+// What the file holds: its decks, each on by default; untick one to leave it out.
+const obFound = m => `<div style="display: flex; flex-direction: column; gap: ${m ? 20 : 24}px;${m ? ' flex-grow: 1;' : ''}">
+  ${obHead(m, obEyebrow('Step 2 of 2', true), '{{foundTitle}}')}
+  ${obFoundList(m)}
+  ${obGo(m, '{{importLabel}}', 'doImport', '{{importBg}}', '{{importFg}}')}
+</div>`;
+const obFoundList = m => `<div style="box-sizing: border-box; padding: 6px; border-radius: 22px; background: {{t.surf}}; display: flex; flex-direction: column; gap: 4px;">
+    <div style="height: 56px; box-sizing: border-box; padding: 0 6px 0 10px; display: flex; align-items: center; gap: 12px;"><span style="width: 36px; height: 36px; flex-shrink: 0; border-radius: 12px; background: {{t.bg}}; display: flex; align-items: center; justify-content: center;">${svg(I.file, 17, 1.9)}</span><span style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px;"><span style="font-size: 15px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{fileName}}</span><span style="font-size: 13px; color: {{t.muted}};">{{fileLine}}</span></span><button type="button" onClick="{{again}}" aria-label="Choose another file" class="sc-press" style="width: 32px; height: 32px; flex-shrink: 0; border: 0; border-radius: 16px; background: transparent; color: {{t.muted}}; display: flex; align-items: center; justify-content: center; cursor: pointer;">${svg(I.close, 14, 2.2)}</button></div>
+    <sc-for list="{{decks}}" as="d" hint-placeholder-count="3"><button type="button" role="checkbox" aria-checked="{{d.checked}}" onClick="{{d.toggle}}" style="height: ${m ? 52 : 50}px; flex-shrink: 0; box-sizing: border-box; padding: 0 14px 0 12px; display: flex; align-items: center; gap: 12px; border: 0; border-radius: 16px; background: {{t.bg}}; color: {{t.text}}; font: inherit; text-align: left; cursor: pointer;"><span style="width: 30px; height: 22px; flex-shrink: 0; border-radius: 7px; background: {{d.swatch}}; opacity: {{d.fade}};"></span><span style="flex-grow: 1; min-width: 0; font-size: 15px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{d.name}}</span><span style="font-family: ${MONO}; font-size: 13px; color: {{t.muted}};">{{d.count}}</span><span style="width: 22px; height: 22px; flex-shrink: 0; box-sizing: border-box; border-radius: 7px; background: {{d.box}}; box-shadow: {{d.ring}}; color: {{t.invText}}; display: flex; align-items: center; justify-content: center;"><span style="display: flex; opacity: {{d.tick}};">${svg(I.check, 13, 3)}</span></span></button></sc-for>
+  </div>`;
+// All set: the decks that came in, fanned out, and what was done.
+// `x` names the fan's positions (x2 is narrower, for the iPhone ideas' cards); `go` leaves out the button when it sits
+// under the card instead.
+const obDone = (m, x = 'x', go = true) => { const w = m ? 132 : 156, h = m ? 88 : 104; return `<div style="display: flex; flex-direction: column; gap: ${m ? 20 : 24}px;${m ? ' flex-grow: 1;' : ''}">
+  <div aria-hidden="true" style="position: relative; height: ${h + 22}px;"><sc-for list="{{fan}}" as="c" hint-placeholder-count="3"><div class="ob-fan" style="position: absolute; left: {{c.${x}}}; top: {{c.y}}; width: ${w}px; height: ${h}px; overflow: hidden; border-radius: 16px; color: {{c.ink}}; background: {{c.base}}; transform: rotate({{c.r}}); box-shadow: 0 18px 36px -20px rgba(0,0,0,.6); animation-delay: {{c.delay}};">${ART_LAYERS('c')}<div style="position: relative; height: 100%; box-sizing: border-box; padding: 12px 14px; display: flex; align-items: flex-end; font-size: 13px; font-weight: 600; letter-spacing: -.01em; text-shadow: {{c.shadow}};">{{c.name}}</div></div></sc-for></div>
+  ${obHead(m, '', 'You’re all set', '{{doneLine}}')}
+  <div style="box-sizing: border-box; padding: 2px 16px; border-radius: 20px; background: {{t.surf}}; display: flex; flex-direction: column;"><sc-for list="{{doneRows}}" as="p" hint-placeholder-count="2"><div style="height: 56px; display: flex; align-items: center; gap: 12px; border-top: {{p.line}};"><span style="width: 34px; height: 34px; flex-shrink: 0; border-radius: 17px; background: {{t.bg}}; display: flex; align-items: center; justify-content: center;">${PROVIDER_LOGO(18)}<sc-if value="{{p.isCards}}" hint-placeholder-val="{{ false }}">${svg(I.decks, 17, 1.9)}</sc-if></span><span style="flex-grow: 1; min-width: 0; font-size: 15px; font-weight: 600;">{{p.label}}</span><span style="font-size: 14px; font-weight: 500; color: {{p.color}};">{{p.value}}</span></div></sc-for></div>
+  ${obAsk(m)}
+  ${go ? obStart(m) : ''}
+</div>`; };
+const obStart = m => `<a href="{{todayHref}}" onClick="{{finish}}" class="sc-press" style="height: ${obZ(m).btn}px; flex-shrink: 0; ${obPin(m)}display: flex; align-items: center; justify-content: center; border-radius: 999px; background: {{t.inv}}; color: {{t.invText}}; font-size: ${m ? 16 : 15}px; font-weight: 600;">Start studying</a>`;
+// Every screen of the flow; the board shows the one its `step` names.
+const obScreens = m => {
+  // On phones each screen fills the height, so its main button can sit at the bottom.
+  const grow = m ? ' flex-grow: 1;' : '';
+  const col = (flag, first, gap, body) => `<sc-if value="{{${flag}}}" hint-placeholder-val="{{ ${first} }}"><div style="display: flex; flex-direction: column; gap: ${gap}px;${grow}">${body}</div></sc-if>`;
+  const g = m ? 20 : 24;
+  return col('isPickAI', true, 28, obHead(m, obEyebrow('Step 1 of 2'), 'Connect your AI', OB_SUB1) + obAiTiles(m))
+    + col('isSteps', false, g, obHead(m, obEyebrow('Step 1 of 2'), 'Connect your AI', m ? '' : OB_SUB1) + obAiSeg(m) + `<div style="display: flex; flex-direction: column;">${obAiSteps(m)}</div>` + obWait(m))
+    + `<sc-if value="{{isConnected}}" hint-placeholder-val="{{ false }}">${obConnected(m)}</sc-if>`
+    + col('isPickSrc', false, 28, obHead(m, obEyebrow('Step 2 of 2', true), 'Bring your cards', OB_SUB2) + obSrcTiles(m))
+    + col('isSrcSteps', false, g, obHead(m, obEyebrow('Step 2 of 2', true), 'Bring your cards', m ? '' : OB_SUB2) + obSrcSeg(m) + `<div style="display: flex; flex-direction: column;${grow}">${obSrcSteps(m)}</div>`)
+    + `<sc-if value="{{isFound}}" hint-placeholder-val="{{ false }}">${obFound(m)}</sc-if>`
+    + `<sc-if value="{{isDone}}" hint-placeholder-val="{{ false }}">${obDone(m)}</sc-if>`;
+};
+// Skip, in the top corner: in step 1 it moves on to step 2; in step 2 it goes to Today. On phones it's a small pill.
+const obSkip = m => {
+  const st = m ? 'position: absolute; top: 58px; right: 16px; z-index: 2; height: 36px; box-sizing: border-box; padding: 0 10px 0 14px; border: 0; border-radius: 18px; background: {{t.surf}}; color: {{t.text}}; display: inline-flex; align-items: center; gap: 2px; font: inherit; font-size: 14px; font-weight: 600; cursor: pointer;'
+    : 'position: absolute; top: 34px; right: 40px; display: inline-flex; align-items: center; gap: 4px; border: 0; padding: 0; background: transparent; color: {{t.muted}}; font: inherit; font-size: 14px; cursor: pointer;';
+  const inner = (m ? 'Skip' : 'Skip for now') + svg(I.chev, 16, 2.2);
+  return `<sc-if value="{{skipToCards}}" hint-placeholder-val="{{ true }}"><button type="button" onClick="{{skip}}" style="${st}">${inner}</button></sc-if><sc-if value="{{skipToToday}}" hint-placeholder-val="{{ false }}"><a href="{{todayHref}}" onClick="{{finish}}" style="${st}">${inner}</a></sc-if>`;
+};
+// Computers: the logo and Skip in the top corners, and the steps on a card in the middle of the page (a 400px column).
+const webWelcome = `<div style="position: relative; width: 1440px; height: 900px; box-sizing: border-box; padding: 96px 0; display: flex; flex-direction: column; justify-content: center; font-family: ${FONT}; background: {{t.bg}}; color: {{t.text}}; overflow: hidden;">
+  ${obAura(720, 450)}
+  <div style="position: absolute; top: 32px; left: 40px;">${logo()}</div>
+  ${obSkip(false)}
+  <main style="position: relative; z-index: 1; width: 480px; align-self: center; box-sizing: border-box; padding: 40px; border-radius: 32px; background: {{t.bg}}; box-shadow: {{cardShadow}}; display: flex; flex-direction: column;">${obScreens(false)}</main>
+</div>`;
+// ---- iPhone: a flip card (the owner, 2026-09-25: "for iphone can we have a different onboarding than webapp? like
+// maybe play into the flashcard by adding some to it? make 2 variations of it"; then, of the two, "lets go with iphone
+// idea A", and 2026-09-28 "lets just go with idea A no gradient card"). Same steps and the same logic as the web; only
+// the look differs. It looks like studying: each step
+// asks a question on the front of one big card, with the answers below it where the grade buttons go. Picking one turns
+// the card over to its back: how to do it. The next question turns it over again, so the card keeps flipping forward.
+const OB_Q = { ai: 'Which AI do you use?', src: 'Where are your flashcards now?' };
+const OB_QSUB = 'Connect it once, then just ask it for flashcards.';
+// A question, big, like the front of a card.
+const obQ = (eyebrow, q, sub) => `<div style="display: flex; flex-direction: column; gap: 10px;">${eyebrow}<h1 style="margin: 0; font-size: 30px; font-weight: 700; line-height: 1.12; letter-spacing: -.03em; text-wrap: balance;">${q}</h1><p style="margin: 0; font-size: 15px; line-height: 1.45; color: {{t.muted}}; text-wrap: pretty;">${sub}</p></div>`;
+const obH = title => `<h1 style="margin: 0; font-size: 28px; font-weight: 700; line-height: 1.12; letter-spacing: -.03em;">${title}</h1>`;
+// Connected, in the middle of the card: a check pops in over the name.
+const obYes = `<div style="flex-grow: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; text-align: center;"><span class="ob-pop" style="width: 64px; height: 64px; margin-bottom: 6px; border-radius: 50%; background: {{t.good}}; color: #FFFFFF; display: flex; align-items: center; justify-content: center;">${svg(I.check, 30, 2.8)}</span>${obH('{{connectedTitle}}')}<p style="margin: 0; font-size: 15px; line-height: 1.45; color: {{t.muted}};">It can make cards for you now.</p></div>`;
+// One screen of a card: shown when its step is on, fading in.
+const obShow = (flag, first, gap, body, more = '') => `<sc-if value="{{${flag}}}" hint-placeholder-val="{{ ${first} }}"><div class="ob-in" style="flex-grow: 1; min-height: 0; display: flex; flex-direction: column; gap: ${gap}px;${more}">${body}</div></sc-if>`;
+
+// A. The answers under the card are round like the grade buttons: a logo or icon and a name.
+const obPill = (key, glyph, label) => `<button type="button" onClick="{{${key}.pick}}" aria-pressed="{{${key}.pressed}}" class="sc-press" style="height: 56px; min-width: 0; box-sizing: border-box; padding: 0 14px; display: flex; align-items: center; justify-content: center; gap: 8px; border: 0; border-radius: 999px; background: {{t.bg}}; box-shadow: {{${key}.ring}}, 0 8px 20px -14px rgba(0,0,0,.45); color: {{t.text}}; font: inherit; font-size: 15px; font-weight: 600; cursor: pointer;"><span style="display: flex; flex-shrink: 0;">${glyph}</span><span style="min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${label}</span></button>`;
+const obPills = cells => `<div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px;">${cells.join('')}</div>`;
+const OB_FACE = back => `position: absolute; inset: 0; box-sizing: border-box; padding: 24px 20px; display: flex; flex-direction: column; gap: 20px; overflow: hidden; border-radius: 32px; background: {{t.bg}}; box-shadow: {{cardShadow}}; backface-visibility: hidden; -webkit-backface-visibility: hidden;${back ? ' transform: rotateY(180deg);' : ''}`;
+// The front's question sits in the middle of the card, like a card's front in a review.
+const obFront = (flag, first, eyebrow, q, sub) => obShow(flag, first, 0, `${eyebrow}<div style="flex-grow: 1; display: flex; flex-direction: column; justify-content: center; padding-bottom: 28px;">${obQ('', q, sub)}</div>`);
+const obPasteLike = `<sc-if value="{{isQuizlet}}" hint-placeholder-val="{{ false }}">${OB_HOW.quizlet}${obPasteBox(true)}</sc-if><sc-if value="{{isPaste}}" hint-placeholder-val="{{ false }}">${OB_HOW.paste}${obPasteBox(true)}</sc-if>`;
+const phoneWelcome = `<div style="position: relative; width: 390px; height: 844px; box-sizing: border-box; padding: 60px 16px 34px; display: flex; flex-direction: column; gap: 16px; font-family: ${FONT}; background: {{t.bg}}; color: {{t.text}}; overflow: hidden;">
+  ${obAura(195, 422)}
+  <div style="position: relative; z-index: 1; height: 40px; flex-shrink: 0; display: flex; align-items: center; gap: 12px;">
+    <div style="width: 40px; height: 40px; flex-shrink: 0;"><sc-if value="{{canBack}}" hint-placeholder-val="{{ false }}"><button type="button" onClick="{{back}}" aria-label="Back" class="sc-press" style="width: 40px; height: 40px; border: 0; border-radius: 20px; background: {{t.bg}}; box-shadow: {{cardShadow}}; color: {{t.text}}; display: flex; align-items: center; justify-content: center; cursor: pointer;">${svg(I.back, 16, 2.2)}</button></sc-if></div>
+    <div role="progressbar" aria-label="Setup" aria-valuenow="{{progressNow}}" aria-valuemin="0" aria-valuemax="100" style="flex-grow: 1; height: 6px; border-radius: 3px; background: {{t.surf2}}; overflow: hidden;"><div style="height: 6px; border-radius: 3px; background: {{t.text}}; width: {{progress}}; transition: width .5s cubic-bezier(.2,.8,.2,1);"></div></div>
+    <div style="min-width: 40px; flex-shrink: 0; display: flex; justify-content: flex-end;"><sc-if value="{{skipToCards}}" hint-placeholder-val="{{ true }}"><button type="button" onClick="{{skip}}" class="sc-press" style="height: 36px; padding: 0 16px; border: 0; border-radius: 18px; background: {{t.bg}}; box-shadow: {{cardShadow}}; color: {{t.text}}; font: inherit; font-size: 14px; font-weight: 600; cursor: pointer;">Skip</button></sc-if><sc-if value="{{skipToToday}}" hint-placeholder-val="{{ false }}"><a href="{{todayHref}}" onClick="{{finish}}" class="sc-press" style="height: 36px; box-sizing: border-box; padding: 0 16px; border-radius: 18px; background: {{t.bg}}; box-shadow: {{cardShadow}}; display: flex; align-items: center; font-size: 14px; font-weight: 600;">Skip</a></sc-if></div>
+  </div>
+  <div style="position: relative; z-index: 1; flex-grow: 1; min-height: 0; perspective: 1600px;">
+    <div class="ob-flip" style="position: relative; width: 100%; height: 100%; transform-style: preserve-3d; transition: transform .7s cubic-bezier(.4,0,.2,1); transform: rotateY({{turn}});">
+      <section aria-hidden="{{backShown}}" style="${OB_FACE(false)}">
+        ${obFront('isPickAI', true, obEyebrow('Step 1 of 2'), OB_Q.ai, OB_QSUB)}
+        ${obFront('isPickSrc', false, obEyebrow('Step 2 of 2'), OB_Q.src, OB_SUB2)}
+        ${obShow('isDone', false, 20, obDone(true, 'x2', false))}
+      </section>
+      <section aria-hidden="{{frontShown}}" style="${OB_FACE(true)}">
+        ${obShow('isSteps', false, 20, obHead(true, obEyebrow('Step 1 of 2'), '{{connectTitle}}') + `<div style="display: flex; flex-direction: column;">${obAiSteps(true)}</div>`)}
+        ${obShow('isConnected', false, 0, obYes)}
+        ${obShow('isSrcSteps', false, 16, obHead(true, obEyebrow('Step 2 of 2'), '{{srcTitle}}') + `<sc-if value="{{isAnki}}" hint-placeholder-val="{{ true }}">${OB_HOW.anki}</sc-if><sc-if value="{{isSheet}}" hint-placeholder-val="{{ false }}">${OB_HOW.sheet}</sc-if>${obPasteLike}`)}
+        ${obShow('isFound', false, 20, obHead(true, obEyebrow('Step 2 of 2'), '{{foundTitle}}') + obFoundList(true))}
+      </section>
+    </div>
+  </div>
+  <div style="position: relative; z-index: 1; flex-shrink: 0; display: flex; flex-direction: column;">
+    <sc-if value="{{isPickAI}}" hint-placeholder-val="{{ true }}">${obPills(OB_AIS.map(([id, name]) => obPill('ai.' + id, LOGO[id](20), name)))}</sc-if>
+    <sc-if value="{{isSteps}}" hint-placeholder-val="{{ false }}">${obWait(true)}</sc-if>
+    <sc-if value="{{isConnected}}" hint-placeholder-val="{{ false }}">${obGo(true, 'Continue', 'toCards')}</sc-if>
+    <sc-if value="{{isPickSrc}}" hint-placeholder-val="{{ false }}">${obPills(OB_SOURCES.map(([id, name, icon]) => obPill('src.' + id, svg(icon, 18, 1.9), name)))}</sc-if>
+    <sc-if value="{{isSrcSteps}}" hint-placeholder-val="{{ false }}"><sc-if value="{{isAnki}}" hint-placeholder-val="{{ true }}">${obDrop(true, 'your Anki file')}</sc-if><sc-if value="{{isSheet}}" hint-placeholder-val="{{ false }}">${obDrop(true, 'your CSV file')}</sc-if><sc-if value="{{isBox}}" hint-placeholder-val="{{ false }}">${obGo(true, 'Continue', 'readPaste', '{{goBg}}', '{{goFg}}')}</sc-if></sc-if>
+    <sc-if value="{{isFound}}" hint-placeholder-val="{{ false }}">${obGo(true, '{{importLabel}}', 'doImport', '{{importBg}}', '{{importFg}}')}</sc-if>
+    <sc-if value="{{isDone}}" hint-placeholder-val="{{ false }}">${obStart(true)}</sc-if>
+  </div>
+</div>`;
+
+// The background's colors are in Tweaks (the owner: "allow me to adjust coloring of the moving background"): the page,
+// the folds' light (glow), and their shadow, for each mode. Tweaks change only their own board; the others keep these.
+const obColor = (mode, key) => ({ editor: 'color', default: OB_AURA[mode][key], section: 'Background, ' + mode + ' mode' });
+const OB_PROPS = { ...DARK, step: { editor: 'enum', default: 'Pick AI', options: OB_STEPS },
+  ai: { editor: 'enum', default: 'Claude', options: OB_AIS.map(a => a[1]) }, source: { editor: 'enum', default: 'Anki', options: OB_SOURCES.map(a => a[1]) },
+  lightPage: obColor('light', 'base'), lightGlow: obColor('light', 'lit'), lightShadow: obColor('light', 'deep'),
+  darkPage: obColor('dark', 'base'), darkGlow: obColor('dark', 'lit'), darkShadow: obColor('dark', 'deep') };
+const OB_CSS = '@keyframes obRing{from{transform:scale(1);opacity:.5}to{transform:scale(3);opacity:0}}.ob-ring{animation:obRing 1.6s cubic-bezier(.2,.8,.2,1) infinite}'
+  + '@keyframes obPop{from{transform:scale(.3);opacity:0}}.ob-pop{animation:obPop .5s cubic-bezier(.34,1.56,.64,1) .12s backwards}'
+  + '@keyframes obFan{from{opacity:0;transform:rotate(0deg) translateY(16px)}}.ob-fan{animation:obFan .7s cubic-bezier(.2,.8,.2,1) backwards}'
+  + '@keyframes obGrain{0%{transform:translate(0,0)}12.5%{transform:translate(-24px,16px)}25%{transform:translate(18px,-28px)}37.5%{transform:translate(-12px,-20px)}50%{transform:translate(28px,12px)}62.5%{transform:translate(-30px,-6px)}75%{transform:translate(8px,26px)}87.5%{transform:translate(-18px,30px)}}'
+  + '.ob-grain{will-change:transform;animation:obGrain .8s steps(1) infinite}'
+  // The iPhone card: a screen fades in.
+  + '@keyframes obIn{from{opacity:0;transform:translateY(6px)}}.ob-in{animation:obIn .35s cubic-bezier(.2,.8,.2,1) backwards}'
+  + '@media (prefers-reduced-motion:reduce){.ob-ring,.ob-pop,.ob-fan,.ob-grain,.ob-in{animation:none!important}.ob-flip{transition:none!important}}';
+const OB_LOGIC = m => `${ART_METHOD}
+constructor(props) { super(props); this.state = {}; }
+componentWillUnmount() { clearTimeout(this.wait); this.stopAura(); }
+// With reduced motion the folds are drawn once, so draw them again when the colors or the mode change.
+componentDidUpdate() { if (this.still && this.cv && !this.raf) this.raf = requestAnimationFrame(this.paint); }
+// The background's colors: the mode's own, or the ones picked in Tweaks.
+auraK() {
+  const P = this.props, mode = P.dark ? 'dark' : 'light', K = { ...${JSON.stringify(OB_AURA)}[mode] };
+  for (const [key, name] of [['base', 'Page'], ['lit', 'Glow'], ['deep', 'Shadow']]) if (this.auraRgb(P[mode + name])) K[key] = P[mode + name];
+  return K;
+}
+// A color as three numbers from 0 to 1, from #rgb, #rrggbb (leaving out any alpha), or rgb(); null if it isn't one.
+auraRgb(c) {
+  const s = String(c ?? '').trim();
+  let m = /^#([0-9a-f]{3,8})$/i.exec(s);
+  if (m && [3, 4, 6, 8].includes(m[1].length)) { const h = m[1].length < 6 ? [...m[1]].map(x => x + x).join('') : m[1]; return [0, 2, 4].map(i => parseInt(h.slice(i, i + 2), 16) / 255); }
+  m = /^rgba?\\(\\s*([\\d.]+)[\\s,]+([\\d.]+)[\\s,]+([\\d.]+)/i.exec(s);
+  return m ? [m[1], m[2], m[3]].map(x => Math.min(1, Number(x) / 255)) : null;
+}
+// The background's folds, drawn with WebGL on the canvas the page hands over. Without WebGL the page keeps its plain
+// color and grain.
+aura(el) {
+  if (!el || el === this.cv) return;
+  this.stopAura();
+  let gl = null;
+  try { gl = el.getContext('webgl', { antialias: false, depth: false, stencil: false, powerPreference: 'low-power' }); } catch (e) {}
+  if (!gl) return;
+  const shader = (type, src) => { const x = gl.createShader(type); gl.shaderSource(x, src); gl.compileShader(x); return gl.getShaderParameter(x, gl.COMPILE_STATUS) ? x : null; };
+  const vs = shader(gl.VERTEX_SHADER, 'attribute vec2 a; void main() { gl_Position = vec4(a, 0.0, 1.0); }'), fs = shader(gl.FRAGMENT_SHADER, ${JSON.stringify(OB_FRAG)});
+  if (!vs || !fs) return;
+  const pr = gl.createProgram(); gl.attachShader(pr, vs); gl.attachShader(pr, fs); gl.linkProgram(pr);
+  if (!gl.getProgramParameter(pr, gl.LINK_STATUS)) return;
+  gl.useProgram(pr);
+  // One triangle that covers the whole canvas.
+  gl.bindBuffer(gl.ARRAY_BUFFER, gl.createBuffer()); gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW);
+  const at = gl.getAttribLocation(pr, 'a'); gl.enableVertexAttribArray(at); gl.vertexAttribPointer(at, 2, gl.FLOAT, false, 0, 0);
+  const u = n => gl.getUniformLocation(pr, n), uR = u('R'), uT = u('t'), uB = u('B'), uH = u('H'), uD = u('D'), uV = u('V');
+  const still = typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
+  // It starts 24 s in, so the first frame already has folds.
+  const t0 = performance.now() - 24000;
+  let last = -1e9;
+  this.cv = el;
+  const frame = now => {
+    this.raf = 0;
+    if (this.cv !== el) return;
+    if (!still) this.raf = requestAnimationFrame(frame);
+    if (!still && now - last < 32) return;
+    last = now;
+    const k = this.auraK();
+    gl.viewport(0, 0, el.width, el.height);
+    gl.uniform2f(uR, el.width, el.height); gl.uniform1f(uT, (now - t0) / 1000); gl.uniform1f(uV, k.vig);
+    gl.uniform3fv(uB, this.auraRgb(k.base)); gl.uniform3fv(uH, this.auraRgb(k.lit)); gl.uniform3fv(uD, this.auraRgb(k.deep));
+    gl.drawArrays(gl.TRIANGLES, 0, 3);
+  };
+  this.paint = frame; this.still = still;
+  this.raf = requestAnimationFrame(frame);
+}
+stopAura() { if (this.raf) cancelAnimationFrame(this.raf); this.raf = 0; this.cv = null; }
+renderVals() { ${T}${DB_JS}${READ_CARDS_JS}
+  const s = this.state, P = this.props, A = db.ai(), live = !db.mock;
+  const AIS = ${JSON.stringify(OB_AIS.map(([id, name]) => [id, name]))}, SRCS = ${JSON.stringify(OB_SOURCES.map(([id, name]) => [id, name]))};
+  const idOf = (list, name) => (list.find(x => x[1] === name) || list[0])[0], nameOf = (list, id) => (list.find(x => x[0] === id) || list[0])[1];
+  const aiId = s.ai || idOf(AIS, P.ai), srcId = s.src || idOf(SRCS, P.source), aiName = nameOf(AIS, aiId);
+  // How the lines name it: "Claude", or "your app" for another MCP app.
+  const who = aiId === 'mcp' ? 'your app' : aiName, Who = aiId === 'mcp' ? 'Your app' : aiName;
+  let step = s.step || P.step || 'Pick AI';
+  // In the app the AI counts as connected once it has called your link (the MCP link keeps who called).
+  if (step === 'Steps' && live && A.clients && A.clients[aiId]) step = 'Connected';
+  const go = (to, more) => { clearTimeout(this.wait); this.setState({ step: to, ...more }); };
+  const stop = e => { if (e && e.preventDefault) e.preventDefault(); };
+  // On the canvas the AI "connects" a moment after you copy the link or open the app.
+  const soon = () => { if (live) return; clearTimeout(this.wait); this.wait = setTimeout(() => this.setState({ step: 'Connected' }), 2400); };
+  const plural = (n, w) => n.toLocaleString('en-US') + ' ' + w + (n === 1 ? '' : 's');
+  // A choice: its big tile gets a ring once picked (coming back to it), and the switcher raises the one in use.
+  const choice = (id, cur, first, picked, pick) => { const on = id === cur, shown = on && (step !== first || picked);
+    return { pick, pressed: shown ? 'true' : 'false', ring: shown ? 'inset 0 0 0 2px ' + t.text : 'inset 0 0 0 1px ' + t.surf2,
+      bg: on ? t.bg : 'transparent', fg: on ? t.text : t.muted, sh: on ? '0 1px 3px rgba(0,0,0,.14)' : 'none', op: on ? '1' : '.45' }; };
+  const ai = Object.fromEntries(AIS.map(([id]) => [id, choice(id, aiId, 'Pick AI', !!s.ai, () => go('Steps', { ai: id, copied: false }))]));
+  const src = Object.fromEntries(SRCS.map(([id]) => [id, choice(id, srcId, 'Pick source', !!s.src, () => go('Source steps', { src: id }))]));
+  // Step 1. Claude's and ChatGPT's own pages open in a new tab; Cursor installs from its link.
+  const link = A.url, OPEN = { claude: 'https://claude.ai/customize/connectors', openai: 'https://chatgpt.com/#settings' };
+  const copyLink = () => { if (live) db.act.copy(link); this.setState({ copied: true }); soon(); };
+  const openApp = e => { if (live) return; stop(e); soon(); };
+  const ASK = ${JSON.stringify(OB_ASK)};
+  // Step 2. A file you picked or dropped (the canvas's made-up one), or the text in the box, read by readCards: one card
+  // per line, the front and back split by a tab (Anki, Quizlet), a comma or semicolon (CSV), or " - ".
+  const FILES = { anki: ['Biology.txt', [['Cell Biology', 142], ['Genetics', 64], ['Ecology', 42]]], sheet: ['vocab.csv', [['Vocab', 120]]] };
+  const pasteText = s.paste ?? (live ? '' : srcId === 'quizlet' ? 'hablar\\tto speak\\ncomer\\tto eat\\nvivir\\tto live\\ntener\\tto have\\nhacer\\tto do' : 'Capital of Peru, Lima\\nLargest ocean, Pacific\\nH₂O, Water');
+  const pasteName = srcId === 'quizlet' ? (live ? 'Quizlet set' : 'Spanish verbs') : 'My cards', pastedDecks = readCards(pasteText, pasteName);
+  const pasted = pastedDecks.reduce((a, [, cs]) => a + cs.length, 0);
+  // In the app, what was read: [deck name, its cards] for each deck in it.
+  const read = live && s.file ? s.file.decks : null;
+  const [fileName, fileDecks] = read ? [s.file.name, read.map(([n, cs]) => [n, cs.length])] : FILES[srcId] || [srcId === 'quizlet' ? 'Copied from Quizlet' : 'Pasted text', [[pasteName, pasted]]];
+  const off = s.off || {}, kept = fileDecks.filter(([n]) => !off[n]);
+  const total = kept.reduce((a, [, c]) => a + c, 0), fileTotal = fileDecks.reduce((a, [, c]) => a + c, 0);
+  // Reading a file: its cards, into decks named for the file (vocab.csv makes "vocab") unless it names its own decks.
+  const readFile = f => f && f.text().then(text => this.setState({ step: 'Found', off: {}, file: { name: f.name, decks: readCards(text, f.name.replace(/\\.[^.]+$/, '') || 'My cards') } }));
+  // Importing: each deck you kept goes into your Library (into a deck of the same name if you have one), a thousand
+  // cards at a time.
+  const importAll = async () => {
+    if (this.busy) return;
+    this.busy = true; this.forceUpdate();
+    try {
+      for (const [name, cs] of read.filter(([n]) => !off[n])) {
+        const same = db.decks().find(d => d.name.trim().toLowerCase() === name.trim().toLowerCase());
+        let deckId = same ? same.id : '';
+        for (let i = 0; i < cs.length; i += 1000) deckId = await db.act.addCards({ deckId, deckName: name, cards: cs.slice(i, i + 1000) });
+      }
+      db.act.setSettings({ welcomed: true });
+      go('Done');
+    } finally { this.busy = false; this.forceUpdate(); }
+  };
+  const decks = fileDecks.map(([name, n]) => { const on = !off[name]; return { name, count: n.toLocaleString('en-US'), checked: on ? 'true' : 'false', box: on ? t.inv : 'transparent',
+    ring: on ? 'none' : 'inset 0 0 0 1.5px ' + t.muted, tick: on ? '1' : '0', fade: on ? '1' : '.35', swatch: this.gen(name, 'vivid').base, toggle: () => this.setState({ off: { ...off, [name]: on } }) }; });
+  const found = () => go('Found', { off: {} });
+  // All set: up to three of the decks fanned out, and a row for each thing done.
+  const fan = (kept.length ? kept : fileDecks).slice(0, 3).map(([name], i) => ({ name, ...this.art(this.gen(name, 'vivid')), x: ${m ? '[0, 105, 210]' : '[0, 118, 236]'}[i] + 'px', x2: [0, 93, 186][i] + 'px', y: [14, 0, 16][i] + 'px', r: ['-6deg', '1deg', '7deg'][i], delay: (0.1 + i * 0.12).toFixed(2) + 's' }));
+  const cursorInk = P.dark ? '#edecec' : '#26251e', logoOf = id => ({ isClaude: id === 'claude', isOpenAI: id === 'openai', isCursor: id === 'cursor', isMcp: id === 'mcp', cursorInk });
+  const doneRows = [...(s.skippedAI ? [] : [{ label: Who, value: 'Connected', color: t.good, isCards: false, ...logoOf(aiId) }]),
+    { label: plural(total, 'card'), value: 'In ' + plural(kept.length, 'deck'), color: t.muted, isCards: true, ...logoOf('') }].map((r, i) => ({ ...r, line: i ? '1px solid ' + t.line : '0' }));
+  // iPhone: how far the card has turned (it keeps turning forward, half a turn per side) and the bar on top.
+  const connectTitle = aiId === 'mcp' ? 'Connect your app' : 'Connect ' + aiName;
+  const srcTitle = { anki: 'From Anki', quizlet: 'From Quizlet', sheet: 'From a spreadsheet', paste: 'Paste your cards' }[srcId];
+  const foundTitle = plural(fileTotal, 'card') + ' found';
+  const turn = { 'Pick AI': 0, Steps: 180, Connected: 180, 'Pick source': 360, 'Source steps': 540, Found: 540, Done: 720 }[step] || 0;
+  const now = { 'Pick AI': 4, Steps: 18, Connected: 34, 'Pick source': 50, 'Source steps': 66, Found: 82, Done: 100 }[step] || 0;
+  const K = this.auraK();
+  this.mountAura = this.mountAura || (el => this.aura(el));
+  return { t, grain: String(P.grain ?? 0.7), aura: { mount: this.mountAura, base: K.base, blend: K.blend, grain: K.grain, gs: K.gs, gi: K.gi }, cardShadow: K.card,
+    p: { cursorInk, cursorOnInv: t.invText }, ai, src,
+    isPickAI: step === 'Pick AI', isSteps: step === 'Steps', isConnected: step === 'Connected', isPickSrc: step === 'Pick source', isSrcSteps: step === 'Source steps', isFound: step === 'Found', isDone: step === 'Done',
+    isClaude: aiId === 'claude', isOpenAI: aiId === 'openai', isCursor: aiId === 'cursor', isMcp: aiId === 'mcp',
+    isAnki: srcId === 'anki', isQuizlet: srcId === 'quizlet', isSheet: srcId === 'sheet', isPaste: srcId === 'paste',
+    skipToCards: step === 'Pick AI' || step === 'Steps', skipToToday: step === 'Pick source' || step === 'Source steps' || step === 'Found',
+    skip: () => go('Pick source', { skippedAI: true }), todayHref: live ? '/' : '${m ? 'PhoneToday' : 'Main'}.dc.html',
+    finish: () => { if (live) db.act.setSettings({ welcomed: true }); },
+    back: () => go(step === 'Found' ? 'Source steps' : step === 'Source steps' ? 'Pick source' : step !== 'Steps' && s.ai && !s.skippedAI ? 'Connected' : 'Pick AI'),
+    linkShown: link.replace(/^https?:\\/\\//, ''), copyLink, copyLabel: s.copied ? 'Copied' : 'Copy', openApp, openHref: OPEN[aiId] || link,
+    cursorHref: 'cursor://anysphere.cursor-deeplink/mcp/install?name=lucida&config=' + encodeURIComponent(btoa(JSON.stringify({ url: link }))),
+    waitLine: 'Waiting for ' + who + '…', connectedTitle: Who + ' is connected',
+    copyAsk: () => { if (live) db.act.copy(ASK); this.setState({ asked: true }); }, askCopied: !!s.asked, askFresh: !s.asked, askLabel: s.asked ? 'Copied' : 'Copy',
+    askHead: 'Try asking ' + who, showAsk: !s.skippedAI,
+    toCards: () => go('Pick source'),
+    chooseFile: () => { if (!live) found(); else db.act.chooseText().then(readFile); }, dragOver: stop,
+    dropFile: e => { stop(e); if (!live) found(); else readFile(e.dataTransfer && e.dataTransfer.files[0]); }, again: () => go('Source steps'),
+    pasteText, setPaste: e => this.setState({ paste: e && e.target ? e.target.value : '' }), pasteHint: srcId === 'quizlet' ? 'Paste what Quizlet copied' : 'Front, back',
+    pasteFound: pasted ? plural(pasted, 'card') + ' found' : String(pasteText).trim() ? 'Put the front and back on one line, split by a comma.' : '',
+    readPaste: () => { if (!pasted) return; if (live) go('Found', { off: {}, file: { name: srcId === 'quizlet' ? 'Copied from Quizlet' : 'Pasted text', decks: pastedDecks } }); else found(); }, goBg: pasted ? t.inv : t.surf2, goFg: pasted ? t.invText : t.muted,
+    foundTitle, fileName, fileLine: plural(fileDecks.length, 'deck'), decks,
+    importLabel: this.busy ? 'Importing…' : total ? 'Import ' + plural(total, 'card') : fileTotal ? 'Pick a deck' : 'No cards found',
+    importBg: total ? t.inv : t.surf2, importFg: total ? t.invText : t.muted,
+    doImport: () => { if (total) { if (live) importAll(); else go('Done'); } },
+    fan, doneRows, doneLine: 'Everything is in your Library, ready to study.',
+    connectTitle, srcTitle, isBox: srcId === 'quizlet' || srcId === 'paste',
+    turn: turn + 'deg', frontShown: turn % 360 === 0 ? 'true' : 'false', backShown: turn % 360 === 0 ? 'false' : 'true',
+    progress: now + '%', progressNow: String(now), canBack: ['Steps', 'Pick source', 'Source steps', 'Found'].includes(step) };
+}`;
+
 // ---------- write ----------
 const W = 1440, H = 900, PW = 390, PH = 844;
 // Settings' profile picture, for showing each one on the canvas (Tweaks).
@@ -4947,7 +5405,22 @@ const files = {
   'PhoneReviewGray': ['iPhone · Review (dark, gray)', grayOf('PhoneReview', PW, PH), { logic: darkLogic, css: REVIEW_CSS, w: PW, h: PH }],
   'PhoneQuizGray': ['iPhone · Learn mode (dark, gray)', grayOf('PhoneQuiz', PW, PH), { logic: darkLogic, css: LEARN_CSS, w: PW, h: PH }],
   'PhoneStatsGray': ['iPhone · Stats (dark, gray)', grayOf('PhoneStats', PW, PH), { logic: darkLogic, w: PW, h: PH }],
-  'PhoneSettingsGray': ['iPhone · Settings (dark, gray)', grayOf('PhoneSettings', PW, PHONE_SETTINGS_H), { logic: darkLogic, w: PW, h: PHONE_SETTINGS_H }]
+  'PhoneSettingsGray': ['iPhone · Settings (dark, gray)', grayOf('PhoneSettings', PW, PHONE_SETTINGS_H), { logic: darkLogic, w: PW, h: PHONE_SETTINGS_H }],
+  // Onboarding: WebWelcome and PhoneWelcome hold the whole flow; the others open it on one screen each.
+  'WebWelcome': ['Web · Onboarding · pick your AI', webWelcome, { props: OB_PROPS, logic: OB_LOGIC(false), css: OB_CSS, w: W, h: H }],
+  'WebWelcomeClaude': ['Web · Onboarding · connect Claude', attrOf('WebWelcome', W, H, 'step="Steps"'), { logic: darkLogic, css: OB_CSS, w: W, h: H }],
+  'WebWelcomeConnected': ['Web · Onboarding · connected, first cards', attrOf('WebWelcome', W, H, 'step="Connected"'), { logic: darkLogic, css: OB_CSS, w: W, h: H }],
+  'WebWelcomeImport': ['Web · Onboarding · bring your cards', attrOf('WebWelcome', W, H, 'step="Pick source"'), { logic: darkLogic, css: OB_CSS, w: W, h: H }],
+  'WebWelcomeAnki': ['Web · Onboarding · from Anki', attrOf('WebWelcome', W, H, 'step="Source steps"'), { logic: darkLogic, css: OB_CSS, w: W, h: H }],
+  'WebWelcomeFound': ['Web · Onboarding · cards found', attrOf('WebWelcome', W, H, 'step="Found"'), { logic: darkLogic, css: OB_CSS, w: W, h: H }],
+  'WebWelcomeDone': ['Web · Onboarding · all set', attrOf('WebWelcome', W, H, 'step="Done"'), { logic: darkLogic, css: OB_CSS, w: W, h: H }],
+  'PhoneWelcome': ['iPhone · Onboarding · pick your AI', phoneWelcome, { props: OB_PROPS, logic: OB_LOGIC(true), css: OB_CSS, w: PW, h: PH }],
+  'PhoneWelcomeClaude': ['iPhone · Onboarding · connect Claude', attrOf('PhoneWelcome', PW, PH, 'step="Steps"'), { logic: darkLogic, css: OB_CSS, w: PW, h: PH }],
+  'PhoneWelcomeConnected': ['iPhone · Onboarding · connected, first cards', attrOf('PhoneWelcome', PW, PH, 'step="Connected"'), { logic: darkLogic, css: OB_CSS, w: PW, h: PH }],
+  'PhoneWelcomeImport': ['iPhone · Onboarding · bring your cards', attrOf('PhoneWelcome', PW, PH, 'step="Pick source"'), { logic: darkLogic, css: OB_CSS, w: PW, h: PH }],
+  'PhoneWelcomeAnki': ['iPhone · Onboarding · from Anki', attrOf('PhoneWelcome', PW, PH, 'step="Source steps"'), { logic: darkLogic, css: OB_CSS, w: PW, h: PH }],
+  'PhoneWelcomeFound': ['iPhone · Onboarding · cards found', attrOf('PhoneWelcome', PW, PH, 'step="Found"'), { logic: darkLogic, css: OB_CSS, w: PW, h: PH }],
+  'PhoneWelcomeDone': ['iPhone · Onboarding · all set', attrOf('PhoneWelcome', PW, PH, 'step="Done"'), { logic: darkLogic, css: OB_CSS, w: PW, h: PH }]
 };
 for (const [name, [title, body, opts]] of Object.entries(files)) writeFileSync(OUT + name + '.dc.html', page(title, body, opts));
 

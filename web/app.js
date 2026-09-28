@@ -18,6 +18,9 @@ function resolve(path, q) {
   if (db.signedOut) return path === '/sign-in/code' && db.auth.email() ? { name: P + 'SignInCode' } : path === '/sign-in' ? { name: P + 'SignIn' } : { redirect: '/sign-in' };
   if (path.startsWith('/sign-in')) return { redirect: '/' };
   const deck = /^\/deck\/([^/]+)(\/card(?:\/([^/]+))?|\/import|\/learn)?$/.exec(path);
+  // Your first time in: the welcome (connect your AI, bring your cards) comes before Today.
+  if (path === '/' && !db.settings().welcomed && !db.decks().length) return { redirect: '/welcome' };
+  if (path === '/welcome') return { name: P + 'Welcome' };
   if (path === '/') return { name: db.decks().length ? (narrow.matches ? 'PhoneToday' : 'Main') : P + 'TodayNew' };
   // The Library (it was called Decks): your folders and decks, one folder, or all your cards. Old /decks links land here.
   if (path === '/decks') return { redirect: '/library' };
@@ -77,7 +80,7 @@ function linkFor(name) {
     WebEditor: id ? '/deck/' + id + '/card' : db.signedOut ? '/' : db.today().newCardHref, WebCardsScreenNew: id ? '/deck/' + id + '/card' : db.signedOut ? '/' : db.today().newCardHref,
     WebCardsScreen: id ? '/deck/' + id + '/card' : '/library', WebReview: id ? '/review/' + id : '/review', WebDone: '/review/done', WebDonePiles: '/review/done',
     WebQuizStart: id ? '/deck/' + id + '/learn' : '/library', PhoneQuizStart: id ? '/deck/' + id + '/learn' : '/library', WebQuizUpgrade: id ? '/deck/' + id + '/learn' : '/library', PhoneQuizUpgrade: id ? '/deck/' + id + '/learn' : '/library', PhoneDeck: id ? '/deck/' + id : '/library', Pricing: 'https://lucida.cards/pricing', PricingPhone: 'https://lucida.cards/pricing',
-    WebStats: '/stats', WebStatsEmpty: '/stats', WebConnect: '/connect', WebSettings: '/settings', WebSignIn: '/sign-in', WebSignInCode: '/sign-in/code', PhoneSignIn: '/sign-in', PhoneSignInCode: '/sign-in/code', PhoneToday: '/', Privacy: '/privacy', Terms: '/terms' };
+    WebStats: '/stats', WebStatsEmpty: '/stats', WebConnect: '/connect', WebWelcome: '/welcome', WebSettings: '/settings', WebSignIn: '/sign-in', WebSignInCode: '/sign-in/code', PhoneSignIn: '/sign-in', PhoneSignInCode: '/sign-in/code', PhoneToday: '/', Privacy: '/privacy', Terms: '/terms' };
   return pages[name] || pages[name.replace(/^Phone/, 'Web')] || '/b/' + name;
 }
 
@@ -357,8 +360,8 @@ app.addEventListener('input', e => {
   const el = e.target.closest && e.target.closest('[data-on-change]');
   if (el) handlers[el.getAttribute('data-on-change')]?.(e);
 });
-// onFocus, onBlur, and onKeyDown on a field, like on the canvas.
-for (const [type, attr] of [['focusin', 'data-on-focus'], ['focusout', 'data-on-blur'], ['keydown', 'data-on-keydown']]) {
+// onFocus, onBlur, and onKeyDown on a field, like on the canvas, and onDragOver and onDrop where a file can be dropped.
+for (const [type, attr] of [['focusin', 'data-on-focus'], ['focusout', 'data-on-blur'], ['keydown', 'data-on-keydown'], ['dragover', 'data-on-dragover'], ['drop', 'data-on-drop']]) {
   app.addEventListener(type, e => {
     const el = e.target.closest && e.target.closest('[' + attr + ']');
     if (el) handlers[el.getAttribute(attr)]?.(e);

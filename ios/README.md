@@ -36,5 +36,13 @@ to its own folder and needs no sign-in):
     STEALTH_DATA=/tmp/lucida-test/ PORT=3194 node web/server.mjs
     xcrun simctl launch booted cards.lucida.app -server http://127.0.0.1:3194 -open deck
 
+A new library (not welcomed yet, no decks) opens on the welcome after sign-in (connect your AI, bring your cards;
+`Screens/Welcome.swift`). Its boards are `PhoneWelcome`, `PhoneWelcomeClaude`, `PhoneWelcomeConnected`, `PhoneWelcomeImport`,
+`PhoneWelcomeAnki`, `PhoneWelcomeFound`, and `PhoneWelcomeDone` (and their Dark and Gray twins). Against a server, `-open welcome`
+opens it even on a library that has seen it; `-welcomeAI claude` starts on that AI's steps; `-welcomeFile <path>` reads
+that file as if it was picked (a .csv as a spreadsheet, anything else as an Anki export), and `-welcomeImport` then
+imports it. `-auraOnly` (with a board) shows only its moving background, held still, for comparing with the canvas.
+The background's shader is compiled when the app first shows it (Design/Aura.swift), so building needs no Metal toolchain.
+
 `-open` goes straight to `deck`, `review`, `stats`, `connect`, `settings`, `learn`, `library`, or `cards` (the Library's All
 cards). Give that server `OPENROUTER_API_KEY` (and `OPENROUTER_BASE` pointing at a stand-in, for testing) to try Explain.

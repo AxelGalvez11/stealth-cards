@@ -487,6 +487,48 @@ export default [
   "h": 844
  },
  {
+  "name": "PhoneWelcome",
+  "title": "iPhone · Onboarding · pick your AI",
+  "w": 390,
+  "h": 844
+ },
+ {
+  "name": "PhoneWelcomeAnki",
+  "title": "iPhone · Onboarding · from Anki",
+  "w": 390,
+  "h": 844
+ },
+ {
+  "name": "PhoneWelcomeClaude",
+  "title": "iPhone · Onboarding · connect Claude",
+  "w": 390,
+  "h": 844
+ },
+ {
+  "name": "PhoneWelcomeConnected",
+  "title": "iPhone · Onboarding · connected, first cards",
+  "w": 390,
+  "h": 844
+ },
+ {
+  "name": "PhoneWelcomeDone",
+  "title": "iPhone · Onboarding · all set",
+  "w": 390,
+  "h": 844
+ },
+ {
+  "name": "PhoneWelcomeFound",
+  "title": "iPhone · Onboarding · cards found",
+  "w": 390,
+  "h": 844
+ },
+ {
+  "name": "PhoneWelcomeImport",
+  "title": "iPhone · Onboarding · bring your cards",
+  "w": 390,
+  "h": 844
+ },
+ {
   "name": "Pricing",
   "title": "Pricing · lucida.cards/pricing",
   "w": 1440,
@@ -969,6 +1011,48 @@ export default [
  {
   "name": "WebTodayNew",
   "title": "Web · Today · new user",
+  "w": 1440,
+  "h": 900
+ },
+ {
+  "name": "WebWelcome",
+  "title": "Web · Onboarding · pick your AI",
+  "w": 1440,
+  "h": 900
+ },
+ {
+  "name": "WebWelcomeAnki",
+  "title": "Web · Onboarding · from Anki",
+  "w": 1440,
+  "h": 900
+ },
+ {
+  "name": "WebWelcomeClaude",
+  "title": "Web · Onboarding · connect Claude",
+  "w": 1440,
+  "h": 900
+ },
+ {
+  "name": "WebWelcomeConnected",
+  "title": "Web · Onboarding · connected, first cards",
+  "w": 1440,
+  "h": 900
+ },
+ {
+  "name": "WebWelcomeDone",
+  "title": "Web · Onboarding · all set",
+  "w": 1440,
+  "h": 900
+ },
+ {
+  "name": "WebWelcomeFound",
+  "title": "Web · Onboarding · cards found",
+  "w": 1440,
+  "h": 900
+ },
+ {
+  "name": "WebWelcomeImport",
+  "title": "Web · Onboarding · bring your cards",
   "w": 1440,
   "h": 900
  }

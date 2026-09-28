@@ -52,8 +52,17 @@ enum Generated {
     "youtube": "<rect x=\"2.5\" y=\"5\" width=\"19\" height=\"14\" rx=\"4.5\"/><path d=\"M10 9.2v5.6l4.8-2.8z\" fill=\"currentColor\"/>",
     "instagram": "<rect x=\"3\" y=\"3\" width=\"18\" height=\"18\" rx=\"5.5\"/><circle cx=\"12\" cy=\"12\" r=\"4.2\"/><circle cx=\"17.3\" cy=\"6.7\" r=\".9\" fill=\"currentColor\" stroke=\"none\"/>",
     "facebook": "<circle cx=\"12\" cy=\"12\" r=\"9.5\"/><path d=\"M15.5 7.5h-1.8a2.7 2.7 0 0 0-2.7 2.7v11.3M8.5 13.2h6\"/>",
-    "live": "<circle cx=\"12\" cy=\"12\" r=\"2.2\" fill=\"currentColor\" stroke=\"none\"/><path d=\"M15.8 8.2a5.4 5.4 0 0 1 0 7.6M8.2 15.8a5.4 5.4 0 0 1 0-7.6M18.7 5.3a9.5 9.5 0 0 1 0 13.4M5.3 18.7a9.5 9.5 0 0 1 0-13.4\"/>"
+    "live": "<circle cx=\"12\" cy=\"12\" r=\"2.2\" fill=\"currentColor\" stroke=\"none\"/><path d=\"M15.8 8.2a5.4 5.4 0 0 1 0 7.6M8.2 15.8a5.4 5.4 0 0 1 0-7.6M18.7 5.3a9.5 9.5 0 0 1 0 13.4M5.3 18.7a9.5 9.5 0 0 1 0-13.4\"/>",
+    "star": "<path d=\"M12 3.6l2.5 5.2 5.7.8-4.1 4 1 5.7L12 16.6l-5.1 2.7 1-5.7-4.1-4 5.7-.8z\"/>",
+    "sheet": "<rect x=\"3.5\" y=\"4.5\" width=\"17\" height=\"15\" rx=\"2.5\"/><path d=\"M3.5 9.5h17M3.5 14.5h17M10 9.5v10\"/>",
+    "paste": "<rect x=\"5.5\" y=\"4.5\" width=\"13\" height=\"16\" rx=\"2.5\"/><path d=\"M9 4.5v-.3a1.7 1.7 0 0 1 1.7-1.7h2.6A1.7 1.7 0 0 1 15 4.2v.3\"/><path d=\"M9 11h6M9 15h4\"/>",
+    "out": "<path d=\"M14 4h6v6\"/><path d=\"M20 4l-9 9\"/><path d=\"M19 14v4a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h4\"/>",
+    "copy": "<rect x=\"8.5\" y=\"8.5\" width=\"11.5\" height=\"11.5\" rx=\"2.5\"/><path d=\"M15.5 8.5V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v7.5a2 2 0 0 0 2 2h2.5\"/>"
   ]
+
+  /// The onboarding's moving background (design/build.mjs OB_AURA), light and dark.
+  static let auraLight = Aura(base: RGBA(0xFFFFFF), lit: RGBA(0xFFFFFF), deep: RGBA(0xC6D3F2), vig: 0.8, grain: 0.22, multiply: true, slope: 2.2, intercept: -0.1, card: [Shadow(x: 0, y: 0, blur: 0, spread: 1, color: RGBA(r: 0, g: 0, b: 0, a: 0.06)), Shadow(x: 0, y: 2, blur: 6, spread: 0, color: RGBA(r: 0, g: 0, b: 0, a: 0.04)), Shadow(x: 0, y: 32, blur: 64, spread: -24, color: RGBA(r: 0, g: 0, b: 0, a: 0.24))])
+  static let auraDark = Aura(base: RGBA(0x131419), lit: RGBA(0x41475B), deep: RGBA(0x0A0B10), vig: 0.55, grain: 0.5, multiply: false, slope: 3, intercept: -1, card: [Shadow(x: 0, y: 0, blur: 0, spread: 1, color: RGBA(r: 255, g: 255, b: 255, a: 0.08)), Shadow(x: 0, y: 32, blur: 64, spread: -24, color: RGBA(r: 0, g: 0, b: 0, a: 0.8))])
 
   static let paletteNames: [String] = ["Iris","Apricot","Lilac","Mint","Aqua","Rose","Lemon","Dusk","Grove","Forest","Ember","Meadow","Ocean","Sun"]
   static let palettes: [String: Palette] = [
