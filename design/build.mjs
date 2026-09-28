@@ -677,7 +677,7 @@ renderVals() {
   const matched = base.filter(c => s.level === 'all' || c.level === s.level);
   const glyphs = { text: 'Aa', blank: '_', image: '▢', audio: '♪' };
   const rows = matched.slice(0, s.shown).map(c => ({ ...c, glyph: glyphs[c.icon], level: LV[c.level][0], levelFg: LV[c.level][1], swatch: grad(c).base,
-    href: db.mock ? board('Editor') : c.href, ...cardFit(c.tags) }));
+    href: db.mock ? ${phone ? "'PhoneEditor.dc.html'" : "'WebCardsScreen.dc.html'"} : c.href, ...cardFit(c.tags) }));
   const cardUses = {}; every.forEach(c => c.tags.forEach(g => { cardUses[g] = (cardUses[g] || 0) + 1; }));
   const tq = (s.tagPickQ || '').trim().toLowerCase(), cardTagNames = Object.keys(cardUses).sort((a, b) => cardUses[b] - cardUses[a] || a.localeCompare(b)).filter(g => !tq || g.toLowerCase().includes(tq));
   const dq = (s.deckPickQ || '').trim().toLowerCase();
@@ -1228,10 +1228,10 @@ constructor(props) {
   this.els = {};
   this.refFns = {};
 }
-componentDidMount() { this.placeCaret(); this.placeSlash(); this.onDocKey = ev => this.boxKey(ev); document.addEventListener('keydown', this.onDocKey); }
+componentDidMount() { this.placeCaret(); this.placeSlash(); this.onDocKey = ev => this.boxKey(ev); document.addEventListener('keydown', this.onDocKey); if (this.opened) this.opened(); }
 componentDidUpdate() { this.placeCaret(); this.placeSlash(); this.placeLabel(); }
-// Leaving the editor while it records throws the recording away.
-componentWillUnmount() { if (this.onSel) document.removeEventListener('selectionchange', this.onSel); if (this.onDocKey) document.removeEventListener('keydown', this.onDocKey); const db = this.props.db; if (db && db.recording()) db.act.stopRecording(true); }
+// Leaving the editor while it records throws the recording away. (The cards screen saves what you changed first.)
+componentWillUnmount() { if (this.closing) this.closing(); if (this.onSel) document.removeEventListener('selectionchange', this.onSel); if (this.onDocKey) document.removeEventListener('keydown', this.onDocKey); const db = this.props.db; if (db && db.recording()) db.act.stopRecording(true); }
 // A saved card opens with what it says; a new one starts empty in the app (the canvas shows a sample).
 doc() {
   const db = this.props.db || this.mock(), e = this.ed;
@@ -1256,6 +1256,16 @@ commit(patch, o) {
   if (o.sel) { e.sel = o.sel; e.restore = true; }
   e.pend = o.pend || null;
   this.forceUpdate();
+  if (this.edited) this.edited(e);
+}
+// A picture or sound that finishes uploading after you've gone on to another card (on the cards screen) goes on the card
+// it was picked for.
+commitIn(ed, patch) {
+  if (ed === this.ed) return this.commit(patch);
+  ed.past.push({ edits: ed.edits, type: ed.type, sel: ed.sel }); ed.future = []; ed.last = '';
+  ed.edits = { ...ed.edits, ...patch };
+  this.forceUpdate();
+  if (this.edited) this.edited(ed);
 }
 step(from, to) {
   const e = this.ed;
@@ -1264,6 +1274,7 @@ step(from, to) {
   const p = from.pop();
   e.edits = p.edits; e.type = p.type; e.sel = p.sel; e.restore = !!p.sel; e.pend = null; e.last = '';
   this.forceUpdate();
+  if (this.edited) this.edited(e);
 }
 undo() { this.step(this.ed.past, this.ed.future); }
 redo() { this.step(this.ed.future, this.ed.past); }
@@ -1574,7 +1585,22 @@ media(kind) {
   if (d.ty !== 'Audio') return this.commit({}, { type: 'Audio', kind: 'kind' });
   this.toggleRecord();
 }
-pickImage() { (this.props.db || this.mock()).act.pickFile('image').then(url => url && this.commit({ image: url })); }
+pickImage() { const ed = this.ed; (this.props.db || this.mock()).act.pickFile('image').then(url => url && this.commitIn(ed, { image: url })); }
+// What a card still needs before it can be saved: its front or back, a blank, a picture, or a sound ('' once it's ready).
+// \`boxes\`: how many boxes the picture has right now (one being drawn counts).
+missingOf(ty, f, boxes) {
+  const R = this.rich(), fr = R.plain(f.front || '').trim(), bk = R.plain(f.back || '').trim(), said = R.plain(f.speak || '').trim();
+  if (ty === 'Basic') return !fr ? 'front' : !bk ? 'back' : '';
+  if (ty === 'Blank') return R.blanks(f.text || '').length ? '' : 'text';
+  if (ty === 'Image') return !f.image ? 'image' : (boxes == null ? (f.boxes || []).length : boxes) || bk ? '' : 'back';
+  return (f.audio && f.audio !== 'mock') || said ? (bk ? '' : 'back') : 'speak';
+}
+// The card as Save sends it.
+payload(ty, f) {
+  const kind = { Basic: 'basic', Blank: 'cloze', Image: 'image', Audio: 'audio' }[ty];
+  return { kind, front: f.front, back: f.back, text: f.text, note: f.note, tags: f.tags || [], image: f.image || null, audio: f.audio || null, wave: f.audio ? f.wave || null : null, speak: f.speak || '', auto: f.auto !== false, clozeMode: f.clozeMode || 'each',
+    ...(kind === 'image' ? { boxes: f.boxes || [], occ: f.occ === 'all' ? 'all' : 'one' } : {}) };
+}
 // ---------- Image occlusion ----------
 // Drag on the picture to draw a box (or press Add a box). Pick a box to move it, pull a corner to resize it, and take it
 // away with its × (or Delete). Undo steps back through all of it. While you drag, the box follows the pointer; letting
@@ -1694,7 +1720,8 @@ boxKey(ev) {
 toggleRecord() {
   const db = this.props.db || this.mock();
   if (db.recording()) { db.act.record(); return; }
-  db.act.record().then(clip => { if (clip) this.commit({ audio: clip.url, wave: clip.wave }); });
+  const ed = this.ed;
+  db.act.record().then(clip => { if (clip) this.commitIn(ed, { audio: clip.url, wave: clip.wave }); });
 }
 renderVals() {
   ${T}${DB_JS}
@@ -1713,7 +1740,6 @@ renderVals() {
   const { saved, ty, f } = this.doc();
   // A saved box's card opens with its box picked (the canvas shows box 1 picked).
   if (!('occSel' in s)) s.occSel = db.mock ? 'b1' : saved && saved.box != null ? saved.box : null;
-  const kinds = { Basic: 'basic', Blank: 'cloze', Image: 'image', Audio: 'audio' };
   const put = patch => this.commit(patch);
   const dk = db.deck(this.props.deckId), tags = f.tags || [];
   const pick2 = (list, cur, set) => list.map(([id, label]) => ({ label, pressed: id === cur ? 'true' : 'false', bg: id === cur ? t.bg : 'transparent', fg: id === cur ? t.text : t.muted, sh: id === cur ? '0 1px 3px rgba(0,0,0,.12)' : 'none', pick: () => set(id) }));
@@ -1723,8 +1749,7 @@ renderVals() {
     ring: s.typing && s.focus === k ? 'inset 0 0 0 2px ' + t.text : 'none' });
   const rich = { front: field('front'), back: field('back'), text: field('text', ty === 'Blank'), note: field('note'), speak: field('speak') };
   const nBlanks = R.blanks(f.text || '').length;
-  const kind = kinds[ty], fr = R.plain(f.front || '').trim(), bk = R.plain(f.back || '').trim(), said = R.plain(f.speak || '').trim();
-  const hasSound = (f.audio && f.audio !== 'mock') || said;
+  const said = R.plain(f.speak || '').trim();
   // Image occlusion: the boxes as they are now (while one is dragged, where it is), the picked one, and each one's answer.
   // A picture with boxes needs no Answer: each box's label is its card's answer.
   const bx = this.boxes(), picked = bx.some(b => b.id === s.occSel) ? s.occSel : null, pct = v => +(v * 100).toFixed(3) + '%';
@@ -1744,7 +1769,7 @@ renderVals() {
       setLabel: ev => this.labelBox(b.id, ev && ev.target ? ev.target.value : ''),
       // Return goes on to the next box's answer.
       key: ev => { if (!ev || ev.key !== 'Enter' || ev.isComposing) return; ev.preventDefault(); const nx = bx[i + 1]; if (!nx || !this.focusLabel(nx.id)) ev.target.blur(); } }; }) };
-  const missing = kind === 'basic' ? (!fr ? 'front' : !bk ? 'back' : '') : kind === 'cloze' ? (nBlanks ? '' : 'text') : kind === 'image' ? (!f.image ? 'image' : bx.length || bk ? '' : 'back') : (!hasSound ? 'speak' : !bk ? 'back' : '');
+  const missing = this.missingOf(ty, f, bx.length);
   // Back goes where you came from: the review, the Library's All cards, or the deck.
   const backHref = this.props.from === 'review' ? db.href('review', dk.id) : this.props.from === 'library' ? db.href('cards') : dk.href;
   // The sound: its player (a file's waveform, or the words the device reads aloud) or, while recording, the live waveform
@@ -1804,7 +1829,7 @@ renderVals() {
     pickImage: () => this.pickImage(),
     snd, rec, recLabel: recNow ? 'Stop' : 'Record',
     toggleRecord: () => this.toggleRecord(),
-    pickAudio: () => db.act.pickSound().then(clip => clip && put({ audio: clip.url, wave: clip.wave })),
+    pickAudio: () => { const ed = this.ed; db.act.pickSound().then(clip => clip && this.commitIn(ed, { audio: clip.url, wave: clip.wave })); },
     speakOn: !!s.speakOpen || !!said, toggleSpeak: () => this.setState({ speakOpen: !s.speakOpen }),
     autoSw: sw(f.auto !== false), toggleAuto: () => put({ auto: f.auto === false }), noop: () => {},
     // A card can have any number of tags.
@@ -1817,34 +1842,34 @@ renderVals() {
       ev.preventDefault();
       if (missing === 'image') return this.pickImage();
       if (missing) return this.focusField(missing);
-      db.act.saveCard(saved ? saved.id : null, dk.id, { kind, front: f.front, back: f.back, text: f.text, note: f.note, tags, image: f.image || null, audio: f.audio || null, wave: f.audio ? f.wave || null : null, speak: f.speak || '', auto: f.auto !== false, clozeMode: f.clozeMode || 'each',
-        ...(kind === 'image' ? { boxes: f.boxes || [], occ: f.occ === 'all' ? 'all' : 'one' } : {}) }, backHref);
+      db.act.saveCard(saved ? saved.id : null, dk.id, this.payload(ty, f), backHref);
     }${more}
   };
 }`;
 const EDITOR_LOGIC = editorLogic();
 
-// ---------- Option B: the deck's cards on a screen of their own (a mockup) ----------
+// ---------- Option B: the deck's cards on a screen of their own ----------
 // The owner, after the bigger editor: "for the flashcard adding could you make it a whole new screen mockup, im thinking
 // of a whole new screen where cards are listed on left and the card editor is on right". No sidebar: the deck's cards
 // down the left (search them, or show one kind), and the picked one in the big editor (editorFieldsOf) on the right. A
 // saved card saves as you type, with a quiet Saved, so going from card to card never asks anything (Undo is there for
 // mistakes); a new card sits at the top of the list until Add card (⌘↵) adds it and starts the next one like it.
-// Nothing in the app opens it yet: the deck page still opens the side panel.
+// The owner picked it ("option b, build it"), so on a computer the app opens it for New card and for any card you pick
+// (on the deck page, in All cards, or Edit in a review); phones keep the iPhone editor.
 // A card in the list: its kind, its front (up to two lines) over its back, its tags, and a picture card's picture with
 // its boxes. The picked one is shaded, and the others lightly under the pointer (CARDS_CSS).
 const cardThumb = `<sc-if value="{{r.thumb.show}}" hint-placeholder-val="{{ false }}"><span aria-hidden="true" style="flex-shrink: 0; align-self: center; padding: 4px; border-radius: 10px; background: {{t.bg}}; box-shadow: inset 0 0 0 1px {{t.line}}; line-height: 0;"><span style="position: relative; display: inline-block; line-height: 0; border-radius: 4px; overflow: hidden;"><sc-if value="{{r.thumb.mock}}" hint-placeholder-val="{{ true }}">${CELL(48, 33, false, 4)}</sc-if><sc-if value="{{r.thumb.url}}" hint-placeholder-val="{{ false }}"><img src="{{r.thumb.url}}" alt="" style="display: block; max-width: 56px; max-height: 40px;"></sc-if><sc-for list="{{r.thumb.boxes}}" as="b" hint-placeholder-count="3"><span style="position: absolute; left: {{b.x}}; top: {{b.y}}; width: {{b.w}}; height: {{b.h}}; box-sizing: border-box; border-radius: 2px; background: {{t.surf2}}; box-shadow: 0 0 0 1px {{t.bg}};"></span></sc-for></span></span></sc-if>`;
 const cardRow = `<button type="button" onClick="{{r.pick}}" aria-current="{{r.current}}" class="sc-card-row" style="flex-shrink: 0; width: 100%; box-sizing: border-box; padding: 12px; display: flex; align-items: flex-start; gap: 12px; border: 0; border-radius: 16px; background: {{r.bg}}; color: {{t.text}}; font: inherit; text-align: left; cursor: pointer;">
           <span style="width: 32px; height: 32px; flex-shrink: 0; border-radius: 16px; background: {{r.chip}}; display: flex; align-items: center; justify-content: center; font-size: 14px;">{{r.glyph}}</span>
-          <span style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px;"><span style="font-size: 14px; font-weight: 500; line-height: 1.35; overflow-wrap: anywhere; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden;">{{r.title}}</span><span style="font-size: 13px; line-height: 1.35; color: {{t.muted}}; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{r.sub}}</span><sc-if value="{{r.hasTags}}" hint-placeholder-val="{{ true }}"><span style="margin-top: 5px; display: flex; gap: 6px; min-width: 0; overflow: hidden;">${cardTag('c1')}${cardTag('c2')}${cardMore}</span></sc-if></span>
+          <span style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px;"><span style="font-size: 14px; font-weight: 500; line-height: 1.35; overflow-wrap: anywhere; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden;">{{r.title}}</span><span style="font-size: 13px; line-height: 1.35; color: {{r.subFg}}; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{r.sub}}</span><sc-if value="{{r.hasTags}}" hint-placeholder-val="{{ true }}"><span style="margin-top: 5px; display: flex; gap: 6px; min-width: 0; overflow: hidden;">${cardTag('c1')}${cardTag('c2')}${cardMore}</span></sc-if></span>
           ${cardThumb}
         </button>`;
 const CARDS_CSS = '.sc-card-row[aria-current="false"]:hover{background-color:color-mix(in srgb,currentColor 4%,transparent)!important}.sc-card-row:active{transform:scale(.985)}@media (prefers-reduced-motion:reduce){.sc-card-row:active{transform:none}}';
 const webCards = `<div style="width: 1440px; height: 900px; box-sizing: border-box; display: flex; flex-direction: column; overflow: hidden; font-family: ${FONT}; background: {{t.bg}}; color: {{t.text}};">
   <header style="position: relative; height: 64px; flex-shrink: 0; box-sizing: border-box; padding: 0 20px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid {{t.line}};">
-    <a href="{{backHref}}" style="height: 36px; padding: 0 14px 0 10px; display: inline-flex; align-items: center; gap: 4px; border-radius: 999px; background: {{t.surf}}; font-size: 13px; font-weight: 600;">${svg(I.back, 14, 2.2)}{{deckName}}</a>
+    <a href="{{backHref}}" onClick="{{done}}" style="height: 36px; padding: 0 14px 0 10px; display: inline-flex; align-items: center; gap: 4px; border-radius: 999px; background: {{t.surf}}; font-size: 13px; font-weight: 600;">${svg(I.back, 14, 2.2)}{{deckName}}</a>
     <h1 style="position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); margin: 0; font-size: 15px; font-weight: 600; white-space: nowrap;">Edit cards</h1>
-    <a href="{{backHref}}" style="height: 36px; padding: 0 20px; display: inline-flex; align-items: center; border-radius: 999px; background: {{t.inv}}; color: {{t.invText}}; font-size: 14px; font-weight: 600;">Done</a>
+    <a href="{{backHref}}" onClick="{{done}}" style="height: 36px; padding: 0 20px; display: inline-flex; align-items: center; border-radius: 999px; background: {{t.inv}}; color: {{t.invText}}; font-size: 14px; font-weight: 600;">{{doneLabel}}</a>
   </header>
   <div style="flex-grow: 1; min-height: 0; display: flex;">
     <section aria-label="Cards in {{deckName}}" style="width: 360px; flex-shrink: 0; box-sizing: border-box; border-right: 1px solid {{t.line}}; display: flex; flex-direction: column;">
@@ -1855,11 +1880,12 @@ const webCards = `<div style="width: 1440px; height: 900px; box-sizing: border-b
       </div>
       <div ref="{{listRef}}" style="flex-grow: 1; min-height: 0; overflow-y: auto; scrollbar-width: thin; box-sizing: border-box; padding: 0 16px 16px; display: flex; flex-direction: column; gap: 2px;">
         <sc-for list="{{rows}}" as="r" hint-placeholder-count="6">${cardRow}</sc-for>
+        <sc-if value="{{more.show}}" hint-placeholder-val="{{ false }}"><button type="button" onClick="{{more.go}}" style="flex-shrink: 0; align-self: center; margin-top: 8px; height: 36px; padding: 0 18px; border: 0; border-radius: 999px; background: {{t.surf}}; color: {{t.text}}; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer;">{{more.label}}</button></sc-if>
         <sc-if value="{{none}}" hint-placeholder-val="{{ false }}"><span style="padding: 32px 16px; font-size: 13px; color: {{t.muted}}; text-align: center;">{{noneLabel}}</span></sc-if>
       </div>
     </section>
     <main style="position: relative; flex-grow: 1; min-width: 0; box-sizing: border-box; padding: 24px 28px; display: flex; flex-direction: column; gap: 20px;">
-      <div style="display: flex; align-items: center; gap: 16px;"><div style="flex: 0 1 380px; min-width: 0;">${TYPE_SEG}</div><span style="flex-grow: 1;"></span>${WEB_FMT}</div>
+      <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 12px 16px;"><div style="flex: 0 1 380px; min-width: 300px;">${TYPE_SEG}</div><span style="flex-grow: 1;"></span>${WEB_FMT}</div>
       ${editorFieldsOf(false, true, 300)}
       <div style="display: flex; align-items: center; gap: 12px;">
         <div style="flex-grow: 1; min-width: 0;">${TAG_EDIT('cardTags', 'cardPick', false, true)}</div>
@@ -1873,51 +1899,83 @@ const webCards = `<div style="width: 1440px; height: 900px; box-sizing: border-b
 </div>`;
 // Its logic: the editor's, showing the card picked in the list, and the list's (listVals). Each card keeps its own place
 // in the editor (what you changed, where the caret was, what Undo steps back to), so a card you go back to is as you
-// left it; 'new' is the new card. It's a mockup: cards added or deleted here, and what you change, stay on this screen
-// (on the canvas, like the rest of the sample; the app has no page for it yet).
-const CARDS_LOGIC = editorLogic('this.openCard(db)', ',\n    ...this.listVals({ db, t, saved, missing, R, tagChip, tagFit })') + `
+// left it; 'new' is the new card. In the app a saved card saves itself as you change it (see save), and Add card and
+// Delete change the deck right away. On the canvas, cards added or deleted here, and what you change, stay on this
+// screen, like the rest of the sample.
+const CARDS_LOGIC = editorLogic('this.openCard(db)', ',\n    ...this.listVals({ db, t, saved, missing, R, tagChip, tagFit, backHref })') + `
 fresh(o) { return { ...${ED0}, ...o }; }
 // The sample has no saved cards, so on the canvas each one opens with what its row says (and the sample picture or sound).
 sampleCard(db, r) {
   const kind = { text: 'basic', blank: 'cloze', image: 'image', audio: 'audio' }[r.icon], d = db.draft({ basic: 'Basic', cloze: 'Blank', image: 'Image', audio: 'Audio' }[kind]);
   return { ...d, id: r.id, kind, tags: r.tags, note: '', front: kind === 'cloze' ? '' : r.front, back: kind === 'image' ? '' : r.back, text: kind === 'cloze' ? r.front.replace('____', '[[' + r.back + ']]') : '' };
 }
+// A card you added that the app is still saving (its row has an id of its own until then).
+temp(id) { return (this.added || []).some(c => c.id === id); }
 cardOf(db, id) {
   const a = this.added.find(c => c.id === id), r = !a && db.mock && db.cards().find(x => x.id === id);
   return a || (r ? this.sampleCard(db, r) : db.mock ? null : db.card(id));
 }
-// The deck's cards (their ids and kinds), the ones added here first.
+// The deck's cards (their ids and kinds), the ones added here first. The cards made from one text (one per blank) or one
+// picture (one per box) are one row, as you wrote them. The row goes by the card you're on or changed (else the first
+// of them), so it stays the same row while you edit it.
 cardIds(db) {
-  const icon = { basic: 'text', cloze: 'blank', image: 'image', audio: 'audio' };
-  return [...this.added.map(c => ({ id: c.id, icon: icon[c.kind] })), ...db.cards(db.deck(this.props.deckId).id)].filter(r => !this.gone.includes(r.id));
+  const icon = { basic: 'text', cloze: 'blank', image: 'image', audio: 'audio' }, seen = new Set(), rows = [];
+  for (const r of db.cards(db.deck(this.props.deckId).id)) {
+    if (!r.group) { rows.push(r); continue; }
+    if (seen.has(r.group)) continue;
+    seen.add(r.group);
+    const sibs = db.group(r.id), ids = sibs.map(c => c.id);
+    rows.push({ ...r, id: ids.includes(this.pick) ? this.pick : ids.find(x => this.eds[x]) || this.firstOf(sibs).id });
+  }
+  return [...this.added.map(c => ({ id: c.id, icon: icon[c.kind] })), ...rows].filter(r => !this.gone.includes(r.id));
+}
+// The first card of a text (its first blank) or of a picture (its first box).
+firstOf(sibs) {
+  const bx = (sibs[0].boxes || []).map(b => b.id), at = c => (c.box != null ? bx.indexOf(c.box) : c.cloze == null ? 0 : c.cloze);
+  return sibs.slice().sort((a, b) => at(a) - at(b))[0];
 }
 hasWords(c) { const R = this.rich(); return ['front', 'back', 'text', 'note', 'speak'].some(k => R.plain(c[k] || '').trim()) || !!(c.boxes || []).length; }
 // The card the editor shows (null for the new card). The canvas opens on the first card of the kind it asks for, or on a
-// new card half written, its answer being typed.
+// new card half written, its answer being typed. The app opens on the card you picked (on the deck page, in All cards,
+// or Edit in a review), or on a new card with the caret in it.
 openCard(db) {
   if (!this.eds) {
     this.added = [];
     this.gone = [];
-    const want = { Blank: 'blank', Image: 'image', Audio: 'audio' }[this.props.cardType] || 'text', ids = this.cardIds(db), first = ids.find(r => r.icon === want) || ids[0];
+    this.eds = {};
+    this.timers = {};
+    this.inflight = new Set();
+    const want = { Blank: 'blank', Image: 'image', Audio: 'audio' }[this.props.cardType] || 'text', ids = this.cardIds(db);
+    let first = db.mock ? ids.find(r => r.icon === want) || ids[0] : null;
+    if (!db.mock && this.props.cardId) { const sibs = db.group(this.props.cardId).map(c => c.id); first = ids.find(r => sibs.includes(r.id)) || ids[0]; }
     this.pick = this.props.newCard || !first ? 'new' : first.id;
-    this.eds = { [this.pick]: this.ed };
+    this.eds[this.pick] = this.ed;
     if (this.pick === 'new') {
       this.ed.type = ({ Blank: 'Blank', Image: 'Image', Audio: 'Audio' })[this.props.cardType] || 'Basic';
       this.ed.edits = { front: '', back: '', text: '', note: '', speak: '', boxes: [], ...(db.mock && this.ed.type === 'Basic' ? { front: 'Where in the cell does glycolysis happen?', back: 'In the cytoplasm' } : {}) };
       if (db.mock && this.props.newCard) Object.assign(this.state, { typing: true, focus: 'back' });
     }
   }
+  // A card deleted somewhere else (on your phone, say) gives way to the first card, or a new one.
+  if (!db.mock && this.pick !== 'new' && !this.cardOf(db, this.pick)) {
+    const next = this.cardIds(db)[0];
+    this.pick = next ? next.id : 'new';
+    this.ed = this.eds[this.pick] || (this.eds[this.pick] = this.fresh(next ? {} : { type: 'Basic', edits: { front: '', back: '', text: '', note: '', speak: '', boxes: [] } }));
+  }
   return this.pick === 'new' ? null : this.cardOf(db, this.pick);
 }
-// Picking a card in the list opens it as you left it, with no box picked and the tag picker shut. Leaving a card while
-// it records throws the recording away.
+// Picking a card in the list opens it as you left it, with no box picked and the tag picker shut. The card you leave
+// saves first (in the app), and leaving one while it records throws the recording away.
 pickCard(id) {
   const db = this.props.db || this.mock();
   if (db.recording()) db.act.stopRecording(true);
+  if (id !== this.pick) this.save(this.pick, true);
   this.ed.slash = null;
   if (id === 'new' && this.pick !== 'new') this.back = this.pick;
   this.pick = id;
   this.ed = this.eds[id] || (this.eds[id] = this.fresh());
+  const a = document.activeElement;
+  if (a && a.hasAttribute && a.hasAttribute('data-rk')) a.blur();
   this.setState({ typing: false, occSel: null, speakOpen: false, cpOpen: false, cpQ: '' });
 }
 // A new card starts empty (the canvas's sample draft has words in it), of the same kind and with the same tags as the
@@ -1935,20 +1993,58 @@ openNew() {
   this.pickCard('new');
   this.focusField(this.firstField(this.doc().ty));
 }
-// Add card (⌘↵): the card goes in the deck (at the top of the list here), and the next one starts like it.
+// Add card (⌘↵): the card goes in the deck (at the top of the list), and the next one starts like it.
 addNew(missing) {
   const { f, ty } = this.doc(), tags = f.tags || [];
   if (missing === 'image') return this.pickImage();
   if (missing) return this.focusField(missing);
-  this.added = [{ ...f, kind: { Basic: 'basic', Blank: 'cloze', Image: 'image', Audio: 'audio' }[ty], tags, id: 'n' + Date.now().toString(36) }, ...this.added];
-  this.addedAt = Date.now();
+  this.addDraft();
   this.startNew(ty, tags);
 }
-// Delete: the card goes, and the one under it opens (or the one above, or a new card when none are left). Discard: the
-// new card goes, and the card you were on opens again.
+// The new card goes in the deck. Until the app has saved it, its row is the card as you wrote it; if it can't be saved
+// (say you're offline), it comes back as the new card, so nothing you wrote is lost.
+addDraft() {
+  const db = this.props.db || this.mock(), n = this.eds.new, ty = n.type || 'Basic', f = { ...db.draft(ty), ...n.edits };
+  const card = { ...f, kind: { Basic: 'basic', Blank: 'cloze', Image: 'image', Audio: 'audio' }[ty], tags: f.tags || [], id: 'n' + Date.now().toString(36) };
+  this.added = [card, ...this.added];
+  this.addedAt = Date.now();
+  if (db.mock) return;
+  this.addFailed = false;
+  this.track(db.act.addCard(db.deck(this.props.deckId).id, this.payload(ty, f)).then(r => {
+    const real = r && r.ids && r.ids[0];
+    this.added = this.added.filter(c => c !== card);
+    // What you changed on its row while it was saving carries over, and saves.
+    if (real) {
+      if (this.eds[card.id]) { this.eds[real] = this.eds[card.id]; delete this.eds[card.id]; }
+      if (this.pick === card.id) this.pick = real;
+      if (this.back === card.id) this.back = real;
+      if (this.eds[real]) this.save(real, this.pick !== real);
+    }
+    this.forceUpdate();
+  }, err => {
+    this.added = this.added.filter(c => c !== card);
+    this.addFailed = true;
+    if (err instanceof TypeError) this.offline = true;
+    const cur = this.eds.new;
+    if (!cur || !this.hasWords(cur.edits)) this.eds.new = this.fresh({ type: ty, edits: { ...n.edits } });
+    else if (err instanceof TypeError) alert('You’re offline, so a card you just added didn’t save. Add it again once you’re back online.');
+    if (this.pick === 'new' || this.pick === card.id) { this.pick = 'new'; this.ed = this.eds.new; }
+    this.forceUpdate();
+    throw err;
+  }));
+}
+// Delete: the card goes (every card of its text or picture), and the one under it opens (or the one above, or a new
+// card when none are left). Discard: the new card goes, and the card you were on opens again.
 dropSaved(ids) {
-  const i = ids.indexOf(this.pick), next = ids[i + 1] || ids[i - 1];
-  this.gone = [...this.gone, this.pick];
+  const db = this.props.db || this.mock(), id = this.pick;
+  if (!db.mock) {
+    if (this.temp(id) || !confirm('Delete this card?')) return;
+    clearTimeout(this.timers[id]);
+    delete this.timers[id];
+    this.track(db.act.removeCards(db.group(id).map(c => c.id)).catch(err => { this.gone = this.gone.filter(x => x !== id); this.forceUpdate(); throw err; }));
+  }
+  const i = ids.indexOf(id), next = ids[i + 1] || ids[i - 1];
+  this.gone = [...this.gone, id];
   if (next) this.pickCard(next); else this.startNew('Basic', []);
 }
 discardNew(ids) {
@@ -1956,8 +2052,101 @@ discardNew(ids) {
   const back = ids.includes(this.back) ? this.back : ids[0];
   if (back) this.pickCard(back); else this.startNew('Basic', []);
 }
+// ---------- Saving (the app) ----------
+// A saved card saves itself (the owner picked this screen, where going card to card shouldn't ask anything): a moment
+// after you stop changing it, and at once when you go to another card or leave. It waits while it's missing something
+// (its back, say; the note says what), and a change that would take cards away (a blank or a box gone, or another kind
+// of card) waits until you leave the card, so a slip you undo right away costs no reviews.
+kindNames() { return { basic: 'Basic', cloze: 'Blank', image: 'Image', audio: 'Audio' }; }
+edited(ed) {
+  const db = this.props.db;
+  if (!db || db.mock) return;
+  const id = Object.keys(this.eds).find(k => this.eds[k] === ed);
+  if (!id || id === 'new' || this.temp(id) || this.gone.includes(id)) return;
+  clearTimeout(this.timers[id]);
+  this.timers[id] = setTimeout(() => { delete this.timers[id]; this.save(id, false); this.forceUpdate(); }, 700);
+}
+// \`leaving\`: you're going to another card or off the screen; \`closing\`: the page itself is closing.
+save(id, leaving, closing) {
+  const db = this.props.db;
+  if (!db || db.mock || !id || id === 'new' || this.temp(id) || this.gone.includes(id)) return;
+  clearTimeout(this.timers[id]);
+  delete this.timers[id];
+  const e = this.eds[id], saved = db.card(id);
+  if (!e || !saved) return;
+  const was = this.kindNames()[saved.kind], ty = e.type || was, f = { ...saved, ...e.edits }, body = this.payload(ty, f), sig = JSON.stringify(body);
+  e.hold = '';
+  if (sig === e.sent || sig === JSON.stringify(this.payload(was, saved))) return;
+  if (this.missingOf(ty, f)) { e.hold = 'missing'; return; }
+  if (!leaving && this.cuts(db, saved, ty, f)) { e.hold = 'cuts'; return; }
+  e.sent = sig;
+  e.failed = false;
+  e.busy = (e.busy || 0) + 1;
+  this.track(db.act.updateCard(id, body, closing).catch(err => { if (e.sent === sig) e.sent = ''; e.failed = true; if (err instanceof TypeError) this.offline = true; throw err; })
+    .finally(() => { e.busy--; this.forceUpdate(); }));
+}
+// Whether saving would take cards away: another kind of card, or fewer blanks or boxes than it has cards.
+cuts(db, saved, ty, f) {
+  if (ty !== this.kindNames()[saved.kind]) return true;
+  const sibs = db.group(saved.id);
+  if (ty === 'Blank') { const n = this.rich().blanks(f.text || '').length; return ((f.clozeMode || 'each') === 'one' || n < 2 ? 1 : n) < sibs.length; }
+  if (ty === 'Image') { const ids = new Set((f.boxes || []).map(b => b.id)); return sibs.some(c => c.box != null && !ids.has(c.box)); }
+  return false;
+}
+track(p) { const x = p.catch(() => {}).finally(() => this.inflight.delete(x)); this.inflight.add(x); }
+saveAll(closing) { for (const id of new Set([this.pick, ...Object.keys(this.timers || {})])) this.save(id, true, closing); }
+// What leaving now would lose: changes waiting on something their card is missing, and a new card not added yet
+// (\`draft\`: 'ready' to add, or 'unfinished').
+unsaved() {
+  const db = this.props.db, held = [], n = this.eds && this.eds.new;
+  for (const [id, e] of Object.entries(this.eds || {})) {
+    const saved = id !== 'new' && !this.temp(id) && !this.gone.includes(id) && db.card(id);
+    if (!saved) continue;
+    const was = this.kindNames()[saved.kind], ty = e.type || was, f = { ...saved, ...e.edits };
+    if (this.missingOf(ty, f) && JSON.stringify(this.payload(ty, f)) !== JSON.stringify(this.payload(was, saved))) held.push(id);
+  }
+  const ty = n && (n.type || 'Basic'), draft = !n || !this.hasWords(n.edits) ? '' : this.missingOf(ty, { ...db.draft(ty), ...n.edits }) ? 'unfinished' : 'ready';
+  return { held, draft };
+}
+// Done (and the deck's name at the top): what you changed saves, a finished new card is added, and the screen closes
+// once they're in. It asks first only if something would be lost.
+async leave(href) {
+  const db = this.props.db, u = this.unsaved(), cards = u.held.length;
+  if (cards || u.draft === 'unfinished') {
+    const msg = cards && u.draft === 'unfinished' ? 'Some changes and your new card are missing something, so they won’t be saved. Leave anyway?'
+      : cards ? (cards === 1 ? 'A card you changed is missing something, so the change won’t be saved. Leave anyway?' : cards + ' cards you changed are missing something, so the changes won’t be saved. Leave anyway?')
+      : 'Your new card isn’t finished, so it won’t be added. Leave anyway?';
+    if (!confirm(msg)) return;
+  }
+  this.saveAll(false);
+  if (u.draft === 'ready') this.addDraft();
+  this.offline = false;
+  this.exiting = true;
+  this.forceUpdate();
+  while (this.inflight.size) await Promise.all([...this.inflight]);
+  this.exiting = false;
+  if (this.addFailed || Object.values(this.eds).some(e => e.failed)) {
+    this.forceUpdate();
+    if (this.offline) alert('You’re offline, so this didn’t save. Try Done again once you’re back online.');
+    return;
+  }
+  db.act.go(href);
+}
+// Closing the tab or reloading saves what you changed, and the browser asks first if something would be lost.
+opened() {
+  const db = this.props.db;
+  if (!db || db.mock) return;
+  this.onLeavePage = ev => { this.saveAll(true); const u = this.unsaved(); if (u.held.length || u.draft) { ev.preventDefault(); ev.returnValue = ''; } };
+  addEventListener('beforeunload', this.onLeavePage);
+  if (this.pick === 'new') this.focusField(this.firstField(this.doc().ty));
+  else if (this.listEl) { const r = this.listEl.querySelector('[aria-current="true"]'); if (r) r.scrollIntoView({ block: 'nearest' }); }
+}
+closing() {
+  if (this.onLeavePage) removeEventListener('beforeunload', this.onLeavePage);
+  if (this.eds) this.saveAll(false);
+}
 listVals(o) {
-  const { db, t, saved, missing, R, tagChip, tagFit } = o, s = this.state, id = this.pick;
+  const { db, t, saved, missing, R, tagChip, tagFit, backHref } = o, s = this.state, id = this.pick, e = this.ed;
   ${CARD_TAGS_JS}
   const kinds = { Basic: 'basic', Blank: 'cloze', Image: 'image', Audio: 'audio' }, glyphs = { basic: 'Aa', cloze: '_', image: '▢', audio: '♪' };
   const flat = md => R.plain(md || '', { join: ' ', math: 'show' }), pct = v => +(v * 100).toFixed(3) + '%';
@@ -1966,9 +2155,12 @@ listVals(o) {
   const words = c => (c.kind === 'cloze' ? [R.plain(c.text || '', { cloze: true, blank: '____', join: ' ', math: 'show' }), R.blanks(c.text || '', { math: 'show' }).join(', ')]
     : [flat(c.front) || (c.kind === 'audio' ? flat(c.speak) || 'Audio card' : c.kind === 'image' ? 'Image card' : ''), c.kind === 'image' && (c.boxes || []).length ? c.boxes.map(b => b.label).filter(Boolean).join(', ') : flat(c.back)]);
   // A card as it is now: what's saved, with what you've changed.
-  const latest = (rid, base) => { const e = this.eds[rid] || {}; return { ...base, ...(e.edits || {}), ...(e.type ? { kind: kinds[e.type] } : {}) }; };
-  const row = (rid, c, title, sub) => { const on = rid === id, bx = c.kind === 'image' && c.image ? c.boxes || [] : null;
-    return { title, sub, glyph: glyphs[c.kind], hasTags: !!(c.tags || []).length, ...cardFit(c.tags), current: on ? 'true' : 'false', bg: on ? t.surf : 'transparent', chip: on ? t.bg : t.surf,
+  const latest = (rid, base) => { const x = this.eds[rid] || {}; return { ...base, ...(x.edits || {}), ...(x.type ? { kind: kinds[x.type] } : {}) }; };
+  // A card you left while it was missing something says so on its row: it isn't saved.
+  const needs = { front: 'its front', back: 'its back', text: 'a blank', image: 'a picture', speak: 'a sound' };
+  const heldWhy = (rid, c) => { const x = this.eds[rid]; if (!x || x.hold !== 'missing') return ''; const m = this.missingOf({ basic: 'Basic', cloze: 'Blank', image: 'Image', audio: 'Audio' }[c.kind], c); return m ? 'Not saved: needs ' + (m === 'back' && c.kind !== 'basic' ? 'its answer' : needs[m]) : ''; };
+  const row = (rid, c, title, sub) => { const on = rid === id, bx = c.kind === 'image' && c.image ? c.boxes || [] : null, why = heldWhy(rid, c);
+    return { title, sub: why || sub, subFg: why ? t.again : t.muted, glyph: glyphs[c.kind], hasTags: !!(c.tags || []).length, ...cardFit(c.tags), current: on ? 'true' : 'false', bg: on ? t.surf : 'transparent', chip: on ? t.bg : t.surf,
       thumb: { show: !!bx, mock: c.image === 'mock', url: bx && c.image !== 'mock' ? c.image : '', boxes: (bx || []).map(b => ({ x: pct(b.x), y: pct(b.y), w: pct(b.w), h: pct(b.h) })) },
       pick: () => this.pickCard(rid) }; };
   const q = (s.listQ || '').trim().toLowerCase(), kf = s.listKind || 'all';
@@ -1976,20 +2168,28 @@ listVals(o) {
   const shown = all.filter(x => (kf === 'all' || x.c.kind === kf) && (!q || [x.front, x.back, ...(x.c.tags || [])].join(' ').toLowerCase().includes(q))), ids = shown.map(x => x.id);
   // The new card sits on top while it's open, or while it has words in it.
   const nd = this.eds.new, draft = nd && (id === 'new' || this.hasWords(nd.edits)) ? latest('new', db.draft(nd.type || 'Basic')) : null;
-  // Changing a saved card shows Saving… for a moment, then Saved; adding one shows Added.
-  const since = Date.now() - (this.ed.lastAt || 0), busy = !!saved && since < 900, added = !saved && Date.now() - (this.addedAt || 0) < 2400;
-  if (busy || added) { clearTimeout(this.noteT); this.noteT = setTimeout(() => this.forceUpdate(), busy ? 950 - since : 2450 - Date.now() + this.addedAt); }
-  const n = all.length;
+  // Changing a saved card shows Saving… until it's saved, then Saved; adding one shows Added. (The canvas shows Saving…
+  // for a moment after each change.) A card missing something says what it needs.
+  const since = Date.now() - (e.lastAt || 0), added = !saved && Date.now() - (this.addedAt || 0) < 2400;
+  const busy = !!saved && (db.mock ? since < 900 : this.temp(id) || !!this.timers[id] || (e.busy || 0) > 0);
+  if ((db.mock && busy) || added) { clearTimeout(this.noteT); this.noteT = setTimeout(() => this.forceUpdate(), busy ? 950 - since : 2450 - Date.now() + this.addedAt); }
+  const ask = { front: 'Add the front to save', back: this.doc().ty === 'Basic' ? 'Add the back to save' : 'Add the answer to save', text: 'Add a blank to save', image: 'Add a picture to save', speak: 'Add a sound to save' };
+  const held = !busy && !!saved && e.hold === 'missing' && !!missing, waits = !busy && !!saved && e.hold === 'cuts', failed = !busy && !!saved && !!e.failed;
+  // A long deck lists 200 cards at a time (always down to the one you're on), so typing stays quick.
+  const n = all.length, cap = Math.max(s.listCap || 200, ids.indexOf(id) + 1);
   return {
-    rows: [...(draft ? [row('new', draft, 'New card', words(draft)[0] || 'Not added yet')] : []), ...shown.map(x => row(x.id, x.c, x.front || 'Empty card', x.back))],
+    rows: [...(draft ? [row('new', draft, 'New card', words(draft)[0] || 'Not added yet')] : []), ...shown.slice(0, cap).map(x => row(x.id, x.c, x.front || 'Empty card', x.back))],
+    more: { show: shown.length > cap, label: 'Show ' + Math.min(200, shown.length - cap) + ' more', go: () => this.setState({ listCap: cap + 200 }) },
     none: !shown.length, noneLabel: n ? 'No cards match' : 'No cards yet', countLabel: (shown.length < n ? shown.length + ' of ' : '') + n + (n === 1 ? ' card' : ' cards'),
-    listQuery: s.listQ || '', setListQuery: e => this.setState({ listQ: e && e.target ? e.target.value : '' }),
+    listQuery: s.listQ || '', setListQuery: ev => this.setState({ listQ: ev && ev.target ? ev.target.value : '', listCap: 200 }),
     listKinds: [['all', 'All'], ['basic', 'Basic'], ['cloze', 'Blank'], ['image', 'Image'], ['audio', 'Audio']].map(([k, label]) => { const on = k === kf;
-      return { label, pressed: on ? 'true' : 'false', bg: on ? t.bg : 'transparent', fg: on ? t.text : t.muted, sh: on ? '0 1px 3px rgba(0,0,0,.12)' : 'none', pick: () => this.setState({ listKind: k }) }; }),
+      return { label, pressed: on ? 'true' : 'false', bg: on ? t.bg : 'transparent', fg: on ? t.text : t.muted, sh: on ? '0 1px 3px rgba(0,0,0,.12)' : 'none', pick: () => this.setState({ listKind: k, listCap: 200 }) }; }),
     listRef: el => { this.listEl = el; },
-    note: { show: !!saved || added, done: !busy, label: busy ? 'Saving…' : saved ? 'Saved' : 'Added' },
-    isNew: !saved, newCard: () => this.openNew(), addCard: ev => { if (ev && ev.preventDefault) ev.preventDefault(); this.addNew(missing); },
-    deleteCard: () => this.dropSaved(ids), discard: () => this.discardNew(ids)
+    note: { show: !!saved || added, done: !busy && !held && !waits && !failed, label: busy ? 'Saving…' : !saved ? 'Added' : held ? ask[missing] : waits ? 'Saves when you leave this card' : failed ? 'Not saved yet' : 'Saved' },
+    isNew: !saved, canDelete: !!saved && !this.temp(id), newCard: () => this.openNew(), addCard: ev => { if (ev && ev.preventDefault) ev.preventDefault(); this.addNew(missing); },
+    deleteCard: () => this.dropSaved(ids), discard: () => this.discardNew(ids),
+    done: ev => { if (db.mock) return; if (ev && ev.preventDefault) ev.preventDefault(); if (!this.exiting) this.leave(backHref); },
+    doneLabel: this.exiting ? 'Saving…' : 'Done'
   };
 }`;
 
@@ -2479,7 +2679,7 @@ ${topBar('Decks')}
     <div style="display: flex; flex-direction: column; align-items: center; gap: 12px; text-align: center;">
       <h1 style="margin: 0; font-size: 56px; font-weight: 600; letter-spacing: -.04em; line-height: 1;">Cell Biology</h1>
       <div style="font-size: 15px; color: {{t.muted}};">28 due · 10 new · 91% remembered · 412 cards</div>
-      <div style="display: flex; gap: 10px; padding-top: 8px;">${pill('Add card', { icon: 'plus', href: 'WebEditor.dc.html', h: 52 })}<a href="WebReview.dc.html" style="height: 52px; padding: 0 36px; border-radius: 999px; background: {{t.inv}}; color: {{t.invText}}; display: inline-flex; align-items: center; font-size: 16px; font-weight: 600;">Study now</a></div>
+      <div style="display: flex; gap: 10px; padding-top: 8px;">${pill('Add card', { icon: 'plus', href: 'WebCardsScreenNew.dc.html', h: 52 })}<a href="WebReview.dc.html" style="height: 52px; padding: 0 36px; border-radius: 999px; background: {{t.inv}}; color: {{t.invText}}; display: inline-flex; align-items: center; font-size: 16px; font-weight: 600;">Study now</a></div>
     </div>
     <div style="display: flex; flex-direction: column;">
       <sc-for list="{{rows}}" as="r" hint-placeholder-count="6">
@@ -3357,7 +3557,7 @@ const emptyLogic = (cover = '') => `renderVals() { ${T}${DB_JS}
   return { ${MESH_VALS('Iris')} t, ...chrome, nav: db.mock ? { today: ${cover ? "'64'" : "''"} } : chrome.nav, art: this.mesh('Iris'), art2: this.mesh('Mint'), art3: this.mesh('Apricot'), noop: () => {},
     date: db.today().date, deckName: dk.name, cover: { ...this.gen(dk.seed + (dk.cover.round ? ' #' + dk.cover.round : ''), dk.cover.style), ...(photo ? { ink: '#FFFFFF', shadow: '0 1px 14px rgba(0,0,0,.45)' } : {}) },
     coverIsImage: pic === 'mock', coverHasPhoto: !!photo, coverPhoto: photo,
-    newCardHref: db.mock ? 'WebEditor.dc.html' : dk.newCardHref, importHref: db.href('import', dk.id), connectHref: db.href('connect'),
+    newCardHref: db.mock ? 'WebCardsScreenNew.dc.html' : dk.newCardHref, importHref: db.href('import', dk.id), connectHref: db.href('connect'),
     openSettings: () => { if (!db.mock) db.act.go(dk.settingsHref); } }; }`;
 
 // New deck. The cover starts white. Its colors (generated from the name) fade in over 2 s once you stop typing the name
@@ -4621,11 +4821,11 @@ const files = {
   'WebEditorBigDark': ['Web · Bigger card editor (dark, mockup)', darkOf('WebEditorBig', W, H), { logic: darkLogic, css: EDITOR_CSS, w: W, h: H }],
   'WebEditorBigImageDark': ['Web · Bigger card editor · image with boxes (dark, mockup)', attrOf('WebEditorBig', W, H, 'card-type="Image" dark="{{yes}}"'), { logic: darkLogic, css: EDITOR_CSS, w: W, h: H }],
   // Option B, also a mockup: the deck's cards on a screen of their own (cardType: which card it opens on).
-  'WebCardsScreen': ['Web · Cards screen (Option B mockup)', webCards, { props: { ...DARK, cardType: { editor: 'enum', default: 'Basic', options: ['Basic', 'Blank', 'Image', 'Audio'] }, newCard: { editor: 'boolean', default: false }, recording: { editor: 'boolean', default: false } }, logic: CARDS_LOGIC, css: EDITOR_CSS + CARDS_CSS, w: W, h: H }],
-  'WebCardsScreenNew': ['Web · Cards screen · writing a new card (Option B mockup)', attrOf('WebCardsScreen', W, H, 'new-card="{{yes}}"'), { logic: darkLogic, css: EDITOR_CSS + CARDS_CSS, w: W, h: H }],
-  'WebCardsScreenImage': ['Web · Cards screen · image with boxes (Option B mockup)', typeOf('WebCardsScreen', W, H, 'Image'), { logic: darkLogic, css: EDITOR_CSS + CARDS_CSS, w: W, h: H }],
-  'WebCardsScreenBlank': ['Web · Cards screen · fill in the blank (Option B mockup)', typeOf('WebCardsScreen', W, H, 'Blank'), { logic: darkLogic, css: EDITOR_CSS + CARDS_CSS, w: W, h: H }],
-  'WebCardsScreenDark': ['Web · Cards screen (dark, Option B mockup)', darkOf('WebCardsScreen', W, H), { logic: darkLogic, css: EDITOR_CSS + CARDS_CSS, w: W, h: H }],
+  'WebCardsScreen': ['Web · Edit cards (Option B)', webCards, { props: { ...DARK, cardType: { editor: 'enum', default: 'Basic', options: ['Basic', 'Blank', 'Image', 'Audio'] }, newCard: { editor: 'boolean', default: false }, recording: { editor: 'boolean', default: false } }, logic: CARDS_LOGIC, css: EDITOR_CSS + CARDS_CSS, w: W, h: H }],
+  'WebCardsScreenNew': ['Web · Edit cards · writing a new card (Option B)', attrOf('WebCardsScreen', W, H, 'new-card="{{yes}}"'), { logic: darkLogic, css: EDITOR_CSS + CARDS_CSS, w: W, h: H }],
+  'WebCardsScreenImage': ['Web · Edit cards · image with boxes (Option B)', typeOf('WebCardsScreen', W, H, 'Image'), { logic: darkLogic, css: EDITOR_CSS + CARDS_CSS, w: W, h: H }],
+  'WebCardsScreenBlank': ['Web · Edit cards · fill in the blank (Option B)', typeOf('WebCardsScreen', W, H, 'Blank'), { logic: darkLogic, css: EDITOR_CSS + CARDS_CSS, w: W, h: H }],
+  'WebCardsScreenDark': ['Web · Edit cards (dark, Option B)', darkOf('WebCardsScreen', W, H), { logic: darkLogic, css: EDITOR_CSS + CARDS_CSS, w: W, h: H }],
   'WebReview': ['Web · Review', webReview, { props: { ...DARK, playing: { editor: 'boolean', default: false }, explainOpen: { editor: 'boolean', default: false }, explained: { editor: 'boolean', default: false }, grading: { editor: 'enum', default: 'Four buttons', options: ['Four buttons', 'Check or X', 'Piles'] }, card: { editor: 'enum', default: 'Basic', options: ['Basic', 'Fill in the blank', 'Image', 'Audio'] }, startRevealed: { editor: 'boolean', default: false }, fsrs: { editor: 'boolean', default: true }, progress: { editor: 'enum', default: 'Bar', options: ['Bar', 'Counts', 'None'] }, settingsOpen: { editor: 'boolean', default: false }, newPileOpen: { editor: 'boolean', default: false }, radius: { editor: 'range', default: 32, min: 12, max: 48, step: 2, unit: 'px' } }, logic: REVIEW_LOGIC(64), css: REVIEW_CSS, w: W, h: H }],
   'WebDone': ['Web · Session done', webDone, { props: DARK, logic: doneLogic(300, 22), w: W, h: H }],
   'WebDonePiles': ['Web · Session done · piles', webDonePiles, { props: DARK, logic: donePilesLogic(false), w: W, h: H }],

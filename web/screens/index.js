@@ -536,31 +536,31 @@ export default [
  },
  {
   "name": "WebCardsScreen",
-  "title": "Web · Cards screen (Option B mockup)",
+  "title": "Web · Edit cards (Option B)",
   "w": 1440,
   "h": 900
  },
  {
   "name": "WebCardsScreenBlank",
-  "title": "Web · Cards screen · fill in the blank (Option B mockup)",
+  "title": "Web · Edit cards · fill in the blank (Option B)",
   "w": 1440,
   "h": 900
  },
  {
   "name": "WebCardsScreenDark",
-  "title": "Web · Cards screen (dark, Option B mockup)",
+  "title": "Web · Edit cards (dark, Option B)",
   "w": 1440,
   "h": 900
  },
  {
   "name": "WebCardsScreenImage",
-  "title": "Web · Cards screen · image with boxes (Option B mockup)",
+  "title": "Web · Edit cards · image with boxes (Option B)",
   "w": 1440,
   "h": 900
  },
  {
   "name": "WebCardsScreenNew",
-  "title": "Web · Cards screen · writing a new card (Option B mockup)",
+  "title": "Web · Edit cards · writing a new card (Option B)",
   "w": 1440,
   "h": 900
  },

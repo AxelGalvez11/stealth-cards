@@ -1364,7 +1364,7 @@
       "h": 900,
       "is_interactive": true,
       "page": "sidebar",
-      "title": "Web · Bigger card editor · image with boxes (mockup)",
+      "title": "Web · Bigger card editor · image with boxes (Option A, not picked)",
       "w": 1440,
       "x": 0,
       "y": 10560
@@ -1373,7 +1373,7 @@
       "h": 900,
       "is_interactive": true,
       "page": "sidebar",
-      "title": "Web · Bigger card editor · basic (mockup)",
+      "title": "Web · Bigger card editor · basic (Option A, not picked)",
       "w": 1440,
       "x": 1520,
       "y": 10560
@@ -1382,7 +1382,7 @@
       "h": 900,
       "is_interactive": true,
       "page": "sidebar",
-      "title": "Web · Bigger card editor · fill in the blank (mockup)",
+      "title": "Web · Bigger card editor · fill in the blank (Option A, not picked)",
       "w": 1440,
       "x": 3040,
       "y": 10560
@@ -1391,7 +1391,7 @@
       "h": 900,
       "is_interactive": true,
       "page": "sidebar",
-      "title": "Web · Bigger card editor · audio (mockup)",
+      "title": "Web · Bigger card editor · audio (Option A, not picked)",
       "w": 1440,
       "x": 4560,
       "y": 10560
@@ -1400,7 +1400,7 @@
       "h": 900,
       "is_interactive": true,
       "page": "sidebar",
-      "title": "Web · Bigger card editor · image with boxes (dark, mockup)",
+      "title": "Web · Bigger card editor · image with boxes (dark, Option A, not picked)",
       "w": 1440,
       "x": 6080,
       "y": 10560
@@ -1409,7 +1409,7 @@
       "h": 900,
       "is_interactive": true,
       "page": "sidebar",
-      "title": "Web · Bigger card editor · basic (dark, mockup)",
+      "title": "Web · Bigger card editor · basic (dark, Option A, not picked)",
       "w": 1440,
       "x": 7600,
       "y": 10560
@@ -1418,7 +1418,7 @@
       "h": 900,
       "is_interactive": true,
       "page": "sidebar",
-      "title": "Web · Cards screen · writing a new card (Option B mockup)",
+      "title": "Web · Cards screen · writing a new card (Option B, in the app)",
       "w": 1440,
       "x": 0,
       "y": 11880
@@ -1427,7 +1427,7 @@
       "h": 900,
       "is_interactive": true,
       "page": "sidebar",
-      "title": "Web · Cards screen · basic card open (Option B mockup)",
+      "title": "Web · Cards screen · basic card open (Option B, in the app)",
       "w": 1440,
       "x": 1520,
       "y": 11880
@@ -1436,7 +1436,7 @@
       "h": 900,
       "is_interactive": true,
       "page": "sidebar",
-      "title": "Web · Cards screen · image card with boxes (Option B mockup)",
+      "title": "Web · Cards screen · image card with boxes (Option B, in the app)",
       "w": 1440,
       "x": 3040,
       "y": 11880
@@ -1445,7 +1445,7 @@
       "h": 900,
       "is_interactive": true,
       "page": "sidebar",
-      "title": "Web · Cards screen · fill in the blank (Option B mockup)",
+      "title": "Web · Cards screen · fill in the blank (Option B, in the app)",
       "w": 1440,
       "x": 4560,
       "y": 11880
@@ -1454,7 +1454,7 @@
       "h": 900,
       "is_interactive": true,
       "page": "sidebar",
-      "title": "Web · Cards screen · basic card open (dark, Option B mockup)",
+      "title": "Web · Cards screen · basic card open (dark, Option B, in the app)",
       "w": 1440,
       "x": 6080,
       "y": 11880
@@ -1744,7 +1744,7 @@
       "kind": "title1",
       "maxW": 9040,
       "page": "sidebar",
-      "text": "Option A: bigger card editor (mockup, not in the app yet)",
+      "text": "Option A: bigger card editor (mockup, not picked)",
       "w": 240,
       "x": 0,
       "y": 10260
@@ -1753,7 +1753,7 @@
       "fill": "gray",
       "page": "sidebar",
       "size": 40,
-      "text": "Option A · Bigger card editor\nA wide sheet instead of the side panel: pictures get most of the room, and text cards get big front and back fields. Drag boxes, type, and switch types to try it. The app still opens the panel.",
+      "text": "Option A · Bigger card editor\nA wide sheet instead of the side panel: pictures get most of the room, and text cards get big front and back fields. Drag boxes, type, and switch types to try it. Not picked: the app uses Option B.",
       "w": 520,
       "x": 9120,
       "y": 10560
@@ -1762,7 +1762,7 @@
       "kind": "title1",
       "maxW": 7520,
       "page": "sidebar",
-      "text": "Option B: whole screen, cards on the left (mockup, not in the app yet)",
+      "text": "Option B: whole screen, cards on the left (picked, now in the app)",
       "w": 240,
       "x": 0,
       "y": 11580
@@ -1771,7 +1771,7 @@
       "fill": "gray",
       "page": "sidebar",
       "size": 40,
-      "text": "Option B · Whole screen, cards on the left\nA screen of its own, opened from the deck: its cards down the left, the one you pick in a big editor on the right. Changes save as you type; a new card waits at the top until Add card (⌘↵), which starts the next one. Click cards, New card, types, and boxes to try it. The app still opens the panel.",
+      "text": "Option B · Whole screen, cards on the left (in the app now)\nA screen of its own, opened from the deck: its cards down the left, the one you pick in a big editor on the right. Changes save as you type (a card missing its answer waits, and says so); a new card waits at the top until Add card (⌘↵), which starts the next one. On a computer the app opens it for New card and for any card you click; phones keep the iPhone editor. Click cards, New card, types, and boxes to try it.",
       "w": 520,
       "x": 7600,
       "y": 11880

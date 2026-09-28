@@ -75,8 +75,9 @@ export async function createDb({ onChange, go }) {
   // Changes shown before the server has them (see saveNow): each stays on top of any newer copy until it's saved.
   let mine = [], line = Promise.resolve();
   const accept = next => { if (next && next.rev >= S.rev) { S = next; mine.forEach(f => f(S)); changed(); } };
-  async function send(type, payload = {}) {
-    const r = await fetch('/api/action', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ type, ...payload }) });
+  // `keep`: the save still goes out if the page is closing (the cards screen saving as you leave).
+  async function send(type, payload = {}, keep = false) {
+    const r = await fetch('/api/action', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ type, ...payload }), keepalive: keep });
     if (r.status === 401) { toSignIn(); throw new Error('Signed out'); }
     const j = await r.json();
     if (!r.ok) { alert(j.error || 'Something went wrong.'); throw new Error(j.error); }
@@ -109,6 +110,10 @@ export async function createDb({ onChange, go }) {
   const keyOf = (id, pile) => (id || 'all') + (pile ? '|' + pile : '');
   const reviewHref = (id, pile) => (id ? '/review/' + id : '/review') + (pile ? '?pile=' + encodeURIComponent(pile) : '');
   const cardsOf = id => S.cards.filter(c => c.deckId === id);
+  // Cards by id, and by the text or picture they were made from, until the next change (the cards screen looks up
+  // every card of a deck each time you type).
+  const cardIndex = () => memo.cards || (memo.cards = new Map(S.cards.map(c => [c.id, c])));
+  const groupIndex = () => { if (memo.groups) return memo.groups; const m = memo.groups = new Map(); for (const c of S.cards) if (c.group) (m.get(c.group) || m.set(c.group, []).get(c.group)).push(c); return m; };
   const isLearn = c => c.srs.state === 'learning' || c.srs.state === 'relearning';
   const scheduled = d => d.fsrs !== false && d.grading !== 'piles';
   const seenToday = id => { const t0 = dayAt(now()); return new Set(S.logs.filter(l => l.deckId === id && l.at >= t0).map(l => l.cardId)); };
@@ -484,6 +489,16 @@ export async function createDb({ onChange, go }) {
     pickCover: async id => { const url = await act.pickFile('image'); if (url) await send('deck.update', { id, patch: { cover: { image: url } } }); },
     saveCard: async (id, deckId, o, back) => { if (id) await send('card.update', { id, patch: { ...o, pending: false } }); else await send('card.add', { deckId, ...o }); go(back); },
     deleteCard: async (id, back) => { if (!confirm('Delete this card?')) return; await send('card.delete', { id }); go(back); },
+    // The cards screen (a deck's cards down the left, the one you pick on the right) saves as you type: one save at a
+    // time, in order (`leaving`: the page is closing, so it goes out now). Adding and deleting stay on the screen.
+    updateCard: (id, patch, leaving) => {
+      if (leaving) return send('card.update', { id, patch: { ...patch, pending: false } }, true);
+      const out = line.then(() => send('card.update', { id, patch: { ...patch, pending: false } }));
+      line = out.catch(() => {});
+      return out;
+    },
+    addCard: (deckId, o) => send('card.add', { deckId, ...o }),
+    removeCards: ids => send('card.delete', { ids }),
     grade: async (cardId, rating) => {
       const c = S.cards.find(x => x.id === cardId); if (!c || !session) return;
       const entry = { cardId, rating, was: c.srs.state };
@@ -620,8 +635,10 @@ export async function createDb({ onChange, go }) {
         forecast: forecast(7, [d]).vals, piles: (d.piles || []).map(p => ({ name: p.name, n: cardsOf(d.id).filter(c => c.pile === p.name).length })) };
     },
     cards: id => deckCards(deckById(id), S.cards).map(c => ({ id: c.id, kind: KIND[c.kind], icon: ICON[c.kind], front: listFront(c), back: listBack(c), tags: c.tags, next: nextLabel(c),
-      ai: byAI(c) ? c.source : '', href: '/deck/' + id + '/card/' + c.id })),
-    card: id => { const c = S.cards.find(x => x.id === id); return c ? { ...c, clozeMode: c.cloze === -1 ? 'one' : 'each' } : null; },
+      ai: byAI(c) ? c.source : '', href: '/deck/' + id + '/card/' + c.id, group: c.group || null })),
+    card: id => { const c = cardIndex().get(id); return c ? { ...c, clozeMode: c.cloze === -1 ? 'one' : 'each' } : null; },
+    // The cards made together with this one: every blank of one text, or every box of one picture (just it, alone).
+    group: id => { const c = cardIndex().get(id); return !c ? [] : c.group ? groupIndex().get(c.group) : [c]; },
     draft: type => ({ kind: { Basic: 'basic', Blank: 'cloze', Image: 'image', Audio: 'audio' }[type] || 'basic', front: '', back: '', text: '', note: '', tags: [], image: null, audio: null, speak: '', auto: true, boxes: [], occ: 'one' }),
     today: () => {
       const t = new Date(), live = S.decks.filter(d => !d.paused), sum = k => live.reduce((n, d) => n + deckStat(d)[k], 0);

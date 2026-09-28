@@ -36,9 +36,11 @@ function resolve(path, q) {
     if (deck[2] === '/import') return { name: 'WebImport', props: { deckId: id } };
     // Learn mode starts from a sheet over the deck. It's Pro: on Free the sheet shows what Pro adds instead.
     if (deck[2] === '/learn') return { name: P + (db.pro() ? 'QuizStart' : 'QuizUpgrade'), props: { deckId: id } };
-    // The iPhone editor board starts with its keyboard up, as the canvas shows it; on a phone it starts like the web's,
-    // with no field picked (the phone brings up its own keyboard).
-    if (deck[2]) return { name: P + 'Editor', props: { deckId: id, cardId: deck[3] || '', from: q.get('from') || '', ...(narrow.matches ? { keyboard: false } : {}) } };
+    // Writing and editing cards: on a computer, the deck's cards on a screen of their own (the owner's pick, Option B),
+    // opened on the card you picked or on a new card. The iPhone editor board starts with its keyboard up, as the canvas
+    // shows it; on a phone it starts with no field picked (the phone brings up its own keyboard).
+    if (deck[2]) return narrow.matches ? { name: 'PhoneEditor', props: { deckId: id, cardId: deck[3] || '', from: q.get('from') || '', keyboard: false } }
+      : { name: 'WebCardsScreen', props: { deckId: id, cardId: deck[3] || '', from: q.get('from') || '' } };
     // An empty deck shows its empty page, unless you opened its settings.
     return { name: P + (db.cards(id).length || q.get('settings') === '1' ? 'Deck' : 'DeckEmpty'), props: { deckId: id, settingsOpen: q.get('settings') === '1' } };
   }
@@ -72,7 +74,8 @@ function linkFor(name) {
   const pages = { Main: '/', WebTodayNew: '/', WebTodayCaughtUp: '/', WebDecks: '/library', WebDecksEmpty: '/library', WebDecksList: '/library', WebLibraryCards: '/library/cards', WebNewDeck: '/decks/new',
     PhoneLibrary: '/library', PhoneLibraryCards: '/library/cards', PhoneDecksEmpty: '/library',
     WebImport: id ? '/deck/' + id + '/import' : '/decks/import', WebDeck: id ? '/deck/' + id : '/library', WebDeckSettings: id ? '/deck/' + id + '?settings=1' : '/library',
-    WebEditor: id ? '/deck/' + id + '/card' : db.signedOut ? '/' : db.today().newCardHref, WebReview: id ? '/review/' + id : '/review', WebDone: '/review/done', WebDonePiles: '/review/done',
+    WebEditor: id ? '/deck/' + id + '/card' : db.signedOut ? '/' : db.today().newCardHref, WebCardsScreenNew: id ? '/deck/' + id + '/card' : db.signedOut ? '/' : db.today().newCardHref,
+    WebCardsScreen: id ? '/deck/' + id + '/card' : '/library', WebReview: id ? '/review/' + id : '/review', WebDone: '/review/done', WebDonePiles: '/review/done',
     WebQuizStart: id ? '/deck/' + id + '/learn' : '/library', PhoneQuizStart: id ? '/deck/' + id + '/learn' : '/library', WebQuizUpgrade: id ? '/deck/' + id + '/learn' : '/library', PhoneQuizUpgrade: id ? '/deck/' + id + '/learn' : '/library', PhoneDeck: id ? '/deck/' + id : '/library', Pricing: 'https://lucida.cards/pricing', PricingPhone: 'https://lucida.cards/pricing',
     WebStats: '/stats', WebStatsEmpty: '/stats', WebConnect: '/connect', WebSettings: '/settings', WebSignIn: '/sign-in', WebSignInCode: '/sign-in/code', PhoneSignIn: '/sign-in', PhoneSignInCode: '/sign-in/code', PhoneToday: '/', Privacy: '/privacy', Terms: '/terms' };
   return pages[name] || pages[name.replace(/^Phone/, 'Web')] || '/b/' + name;
@@ -309,7 +312,7 @@ async function go(path, push, replace) {
   const was = panels();
   app.textContent = '';
   const deck = current.props.deckId && !db.signedOut && db.raw().decks.find(d => d.id === current.props.deckId);
-  document.title = (r.name === 'Main' ? 'Today' : deck && /^(Web|Phone)Deck/.test(r.name) ? deck.name : s.title.replace(/^(Web|iPhone) · /, '').replace(/ page$/, '').replace(/ · .*$/, '')) + ' · Lucida';
+  document.title = (r.name === 'Main' ? 'Today' : deck && /^(Web|Phone)Deck/.test(r.name) ? deck.name : s.title.replace(/^(Web|iPhone) · /, '').replace(/ page$/, '').replace(/ · .*$/, '').replace(/ \(.*\)$/, '')) + ' · Lucida';
   paint();
   slideOut(was);
   scrollTo(0, 0);
