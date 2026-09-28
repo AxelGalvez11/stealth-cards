@@ -357,8 +357,8 @@ app.addEventListener('input', e => {
   const el = e.target.closest && e.target.closest('[data-on-change]');
   if (el) handlers[el.getAttribute('data-on-change')]?.(e);
 });
-// onFocus, onBlur, and onKeyDown on a field, like on the canvas.
-for (const [type, attr] of [['focusin', 'data-on-focus'], ['focusout', 'data-on-blur'], ['keydown', 'data-on-keydown']]) {
+// onFocus, onBlur, and onKeyDown on a field, like on the canvas, and onDragOver and onDrop where a file can be dropped.
+for (const [type, attr] of [['focusin', 'data-on-focus'], ['focusout', 'data-on-blur'], ['keydown', 'data-on-keydown'], ['dragover', 'data-on-dragover'], ['drop', 'data-on-drop']]) {
   app.addEventListener(type, e => {
     const el = e.target.closest && e.target.closest('[' + attr + ']');
     if (el) handlers[el.getAttribute(attr)]?.(e);
