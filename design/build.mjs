@@ -1851,9 +1851,9 @@ const webCards = `<div style="width: 1440px; height: 900px; box-sizing: border-b
       <div style="padding: 20px 16px 8px; display: flex; flex-direction: column; gap: 12px;">
         <div style="display: flex; gap: 8px;"><label style="flex-grow: 1; min-width: 0; height: 36px; padding: 0 14px; box-sizing: border-box; display: flex; align-items: center; gap: 8px; border-radius: 999px; background: {{t.surf}}; color: {{t.muted}};">${svg(I.search, 15)}<span style="position: absolute; left: -9999px;">Search cards</span><input value="{{listQuery}}" onChange="{{setListQuery}}" placeholder="Search cards" style="flex-grow: 1; min-width: 0; border: 0; outline: 0; background: transparent; font: inherit; font-size: 13px; color: {{t.text}};"></label><button type="button" onClick="{{newCard}}" style="height: 36px; flex-shrink: 0; padding: 0 16px 0 12px; display: inline-flex; align-items: center; gap: 6px; border: 0; border-radius: 999px; background: {{t.inv}}; color: {{t.invText}}; font: inherit; font-size: 14px; font-weight: 600; cursor: pointer;">${svg(I.plus, 15, 2.2)}New card</button></div>
         <div role="group" aria-label="Kind of card" style="display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 2px; padding: 3px; border-radius: 999px; background: {{t.surf}};"><sc-for list="{{listKinds}}" as="k" hint-placeholder-count="5"><button type="button" onClick="{{k.pick}}" aria-pressed="{{k.pressed}}" style="height: 30px; padding: 0; border: 0; border-radius: 999px; background: {{k.bg}}; color: {{k.fg}}; box-shadow: {{k.sh}}; font: inherit; font-size: 13px; font-weight: 600; white-space: nowrap; cursor: pointer;">{{k.label}}</button></sc-for></div>
-        <span style="padding: 0 4px; font-size: 12px; color: {{t.muted}};">{{countLabel}}</span>
+        <span style="padding: 0 12px; font-size: 12px; color: {{t.muted}};">{{countLabel}}</span>
       </div>
-      <div ref="{{listRef}}" style="flex-grow: 1; min-height: 0; overflow-y: auto; scrollbar-width: thin; box-sizing: border-box; padding: 0 8px 16px; display: flex; flex-direction: column; gap: 2px;">
+      <div ref="{{listRef}}" style="flex-grow: 1; min-height: 0; overflow-y: auto; scrollbar-width: thin; box-sizing: border-box; padding: 0 16px 16px; display: flex; flex-direction: column; gap: 2px;">
         <sc-for list="{{rows}}" as="r" hint-placeholder-count="6">${cardRow}</sc-for>
         <sc-if value="{{none}}" hint-placeholder-val="{{ false }}"><span style="padding: 32px 16px; font-size: 13px; color: {{t.muted}}; text-align: center;">{{noneLabel}}</span></sc-if>
       </div>
@@ -1966,16 +1966,16 @@ listVals(o) {
   const words = c => (c.kind === 'cloze' ? [R.plain(c.text || '', { cloze: true, blank: '____', join: ' ', math: 'show' }), R.blanks(c.text || '', { math: 'show' }).join(', ')]
     : [flat(c.front) || (c.kind === 'audio' ? flat(c.speak) || 'Audio card' : c.kind === 'image' ? 'Image card' : ''), c.kind === 'image' && (c.boxes || []).length ? c.boxes.map(b => b.label).filter(Boolean).join(', ') : flat(c.back)]);
   // A card as it is now: what's saved, with what you've changed.
-  const now = (rid, base) => { const e = this.eds[rid] || {}; return { ...base, ...(e.edits || {}), ...(e.type ? { kind: kinds[e.type] } : {}) }; };
+  const latest = (rid, base) => { const e = this.eds[rid] || {}; return { ...base, ...(e.edits || {}), ...(e.type ? { kind: kinds[e.type] } : {}) }; };
   const row = (rid, c, title, sub) => { const on = rid === id, bx = c.kind === 'image' && c.image ? c.boxes || [] : null;
     return { title, sub, glyph: glyphs[c.kind], hasTags: !!(c.tags || []).length, ...cardFit(c.tags), current: on ? 'true' : 'false', bg: on ? t.surf : 'transparent', chip: on ? t.bg : t.surf,
       thumb: { show: !!bx, mock: c.image === 'mock', url: bx && c.image !== 'mock' ? c.image : '', boxes: (bx || []).map(b => ({ x: pct(b.x), y: pct(b.y), w: pct(b.w), h: pct(b.h) })) },
       pick: () => this.pickCard(rid) }; };
   const q = (s.listQ || '').trim().toLowerCase(), kf = s.listKind || 'all';
-  const all = this.cardIds(db).map(r => { const c = now(r.id, this.cardOf(db, r.id)), [front, back] = words(c); return { id: r.id, c, front, back }; });
+  const all = this.cardIds(db).map(r => { const c = latest(r.id, this.cardOf(db, r.id)), [front, back] = words(c); return { id: r.id, c, front, back }; });
   const shown = all.filter(x => (kf === 'all' || x.c.kind === kf) && (!q || [x.front, x.back, ...(x.c.tags || [])].join(' ').toLowerCase().includes(q))), ids = shown.map(x => x.id);
   // The new card sits on top while it's open, or while it has words in it.
-  const nd = this.eds.new, draft = nd && (id === 'new' || this.hasWords(nd.edits)) ? now('new', db.draft(nd.type || 'Basic')) : null;
+  const nd = this.eds.new, draft = nd && (id === 'new' || this.hasWords(nd.edits)) ? latest('new', db.draft(nd.type || 'Basic')) : null;
   // Changing a saved card shows Saving… for a moment, then Saved; adding one shows Added.
   const since = Date.now() - (this.ed.lastAt || 0), busy = !!saved && since < 900, added = !saved && Date.now() - (this.addedAt || 0) < 2400;
   if (busy || added) { clearTimeout(this.noteT); this.noteT = setTimeout(() => this.forceUpdate(), busy ? 950 - since : 2450 - Date.now() + this.addedAt); }
