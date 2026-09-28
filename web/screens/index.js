@@ -535,6 +535,36 @@ export default [
   "h": 900
  },
  {
+  "name": "WebCardsScreen",
+  "title": "Web · Cards screen (Option B mockup)",
+  "w": 1440,
+  "h": 900
+ },
+ {
+  "name": "WebCardsScreenBlank",
+  "title": "Web · Cards screen · fill in the blank (Option B mockup)",
+  "w": 1440,
+  "h": 900
+ },
+ {
+  "name": "WebCardsScreenDark",
+  "title": "Web · Cards screen (dark, Option B mockup)",
+  "w": 1440,
+  "h": 900
+ },
+ {
+  "name": "WebCardsScreenImage",
+  "title": "Web · Cards screen · image with boxes (Option B mockup)",
+  "w": 1440,
+  "h": 900
+ },
+ {
+  "name": "WebCardsScreenNew",
+  "title": "Web · Cards screen · writing a new card (Option B mockup)",
+  "w": 1440,
+  "h": 900
+ },
+ {
   "name": "WebConnect",
   "title": "Web · Connect AI",
   "w": 1440,
