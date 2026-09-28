@@ -105,13 +105,15 @@ struct RootView: View {
           }
         }
         if let i = a.firstIndex(of: "-sound"), i + 1 < a.count { _ = await store.pickSound(URL(fileURLWithPath: a[i + 1])) }
-        // `-flip fsrs|check|pause`: flips that switch 2 seconds in, as a tap does (checks it moves before the server answers).
-        if let i = a.firstIndex(of: "-flip"), i + 1 < a.count {
+        // `-tap fsrs|check|pause|remove-photo`: taps that switch (or Remove on your photo) 2 seconds in, doing what the
+        // button does (checks a switch moves before the server answers).
+        if let i = a.firstIndex(of: "-tap"), i + 1 < a.count {
           try? await Task.sleep(nanoseconds: 2_000_000_000)
           switch a[i + 1] {
           case "fsrs": store.setSetting(["fsrs": !store.settings.fsrs])
           case "check": store.setCheck(!store.lib.ai.perms.check)
           case "pause": if let d = store.lib.decks.first { store.updateDeck(d.id, ["paused": !d.paused]) }
+          case "remove-photo": store.removePhoto()
           default: break
           }
         }

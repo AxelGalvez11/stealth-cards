@@ -152,7 +152,7 @@ struct MeshCard<Content: View>: View {
 }
 
 /// The on/off switch (48 x 28; black when on). It flips the moment it's tapped (the change saves after, Store.saveNow):
-/// the knob springs across with a slight overshoot while the track fades, like the canvas's sc-sw. With Reduce Motion
+/// the knob springs across with a slight overshoot while the colors fade, like the canvas's sc-sw. With Reduce Motion
 /// the knob doesn't slide; the colors still fade.
 struct Toggle48: View {
   @Environment(\.theme) private var t
@@ -161,23 +161,31 @@ struct Toggle48: View {
   var enabled = true
   let label: String
   let action: () -> Void
+  /// The colors and the knob's place, each changed in its own animation when `on` does.
+  @State private var lit: Bool
+  @State private var knob: Bool
   /// cubic-bezier(.34, 1.56, .64, 1) over 0.32 s for the knob; ease over 0.3 s for the colors.
   static let spring = Animation.timingCurve(0.34, 1.56, 0.64, 1, duration: 0.32)
   static let fade = Animation.timingCurve(0.25, 0.1, 0.25, 1, duration: 0.3)
+  init(on: Bool, enabled: Bool = true, label: String, action: @escaping () -> Void) {
+    self.on = on; self.enabled = enabled; self.label = label; self.action = action
+    _lit = State(initialValue: on); _knob = State(initialValue: on)
+  }
   var body: some View {
     Button(action: action) {
       ZStack(alignment: .leading) {
-        Capsule().fill(on ? t.inv : t.surf2).animation(Toggle48.fade, value: on)
-        Circle().fill(on ? t.invText : t.bg).animation(Toggle48.fade, value: on)
-          .frame(width: 22, height: 22).padding(3)
-          .offset(x: on ? 20 : 0)
-          .animation(still ? nil : Toggle48.spring, value: on)
+        Capsule().fill(lit ? t.inv : t.surf2)
+        Circle().fill(lit ? t.invText : t.bg).frame(width: 22, height: 22).padding(3).offset(x: knob ? 20 : 0)
       }
       .frame(width: 48, height: 28)
       .opacity(enabled ? 1 : 0.4)
     }
     .buttonStyle(.press)
     .disabled(!enabled)
+    .onChange(of: on) { _, v in
+      withAnimation(Toggle48.fade) { lit = v }
+      withAnimation(still ? nil : Toggle48.spring) { knob = v }
+    }
     .accessibilityLabel(label)
     .accessibilityValue(on ? "On" : "Off")
     .accessibilityAddTraits(.isButton)
