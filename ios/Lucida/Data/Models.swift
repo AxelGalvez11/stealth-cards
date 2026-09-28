@@ -70,14 +70,17 @@ struct UserSettings: Decodable {
   /// Your profile picture: "google", "yours", or "color" ("" until you pick one: your Google photo if there is one), and
   /// the photo you uploaded for it (a /media/… link).
   var photo = "", yourPhoto: String? = nil
-  enum CodingKeys: String, CodingKey { case name, color, look, darkMode, grads, prog, perDay, goal, grading, fsrs, reminder, photo, yourPhoto }
+  /// The welcome after your first sign-in is done or skipped (the server says no only for a brand-new library; a server
+  /// that doesn't know about it counts as yes).
+  var welcomed = true
+  enum CodingKeys: String, CodingKey { case name, color, look, darkMode, grads, prog, perDay, goal, grading, fsrs, reminder, photo, yourPhoto, welcomed }
   init() {}
   init(from d: Decoder) throws {
     let c = try d.container(keyedBy: CodingKeys.self)
     name = c.v(.name, ""); color = c.v(.color, 0); look = c.v(.look, "system"); darkMode = c.v(.darkMode, "black") == "gray" ? "gray" : "black"
     grads = c.v(.grads, "mix"); prog = c.v(.prog, "bar")
     perDay = c.v(.perDay, 20); goal = c.v(.goal, 90); grading = c.v(.grading, "four"); fsrs = c.v(.fsrs, true); reminder = c.v(.reminder, "9:00 AM")
-    photo = c.v(.photo, ""); yourPhoto = c.v(.yourPhoto, nil)
+    photo = c.v(.photo, ""); yourPhoto = c.v(.yourPhoto, nil); welcomed = c.v(.welcomed, true)
   }
 }
 
