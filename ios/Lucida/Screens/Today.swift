@@ -12,7 +12,7 @@ struct TodayScreen: View {
       VStack(alignment: .leading, spacing: 18) {
         // Your picture on the left opens Settings; the title sits in the middle, + on the right (todayTitle).
         HStack(spacing: 12) {
-          Button { nav.push(.settings) } label: { Avatar(size: 44, initial: store.avatarInitial, color: store.settings.color) }
+          Button { nav.push(.settings) } label: { Avatar(size: 44, initial: store.avatarInitial, color: store.avatarColor, pic: store.avatar) }
             .buttonStyle(.press).accessibilityLabel("Settings")
           Text("Today").css(34, .bold, ls: -0.03).foregroundStyle(t.text).frame(maxWidth: .infinity).accessibilityAddTraits(.isHeader)
           RoundButton(icon: "plus", label: vm.hasDecks ? "New card" : "New deck") { vm.hasDecks ? nav.newCard(deckId: vm.newCardDeck) : nav.newDeck() }

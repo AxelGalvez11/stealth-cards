@@ -83,15 +83,22 @@ final class API {
     _ = try await request("api/auth/token", method: "POST", json: ["provider": provider, "token": token, "nonce": nonce, "name": name])
   }
 
-  /// Uploads a picture or a recording to your library's storage and returns its link (/media/…).
+  /// Uploads a picture or a recording to your library's storage and returns its link (/media/…). A file over 4 MB is
+  /// turned away first (online nothing over 4.5 MB gets through), with a plain message, like the web app.
   func upload(_ data: Data, type: String) async throws -> String {
+    guard data.count <= Upload.limit else { throw APIError.server(Upload.over) }
     var r = URLRequest(url: API.base.appendingPathComponent("api/media"))
     r.httpMethod = "POST"; r.setValue(type, forHTTPHeaderField: "content-type"); r.httpBody = data
-    let (body, resp) = try await session.data(for: r)
-    guard let http = resp as? HTTPURLResponse else { throw APIError.server("That didn’t upload.") }
+    let body: Data, resp: URLResponse
+    do { (body, resp) = try await session.data(for: r) }
+    catch { throw APIError.server("Couldn’t reach Lucida. Check your connection and try again.") }
+    guard let http = resp as? HTTPURLResponse else { throw APIError.server("That didn’t upload. Try again in a minute.") }
     if http.statusCode == 401 { throw APIError.signedOut }
+    // An error from the host itself (like a file that's too big for it) is a page, not JSON.
     let j = (try? JSONSerialization.jsonObject(with: body)) as? [String: Any]
-    guard (200..<300).contains(http.statusCode), let url = j?["url"] as? String else { throw APIError.server(j?["error"] as? String ?? "That didn’t upload.") }
+    guard (200..<300).contains(http.statusCode), let url = j?["url"] as? String else {
+      throw APIError.server(http.statusCode == 413 ? Upload.over : j?["error"] as? String ?? "That didn’t upload. Try again in a minute.")
+    }
     return url
   }
 

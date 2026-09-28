@@ -135,11 +135,7 @@ extension Store {
     updateDeck(deckId, ["piles": d.piles.map { ["name": $0.name] } + [["name": name]]])
   }
 
-  func setProgress(_ prog: String) {
-    if demo { props.prog = prog; return }
-    lib.settings.prog = prog
-    Task { await send("settings.update", ["patch": ["prog": prog]]) }
-  }
+  func setProgress(_ prog: String) { setSetting(["prog": prog]) }
 
   func hasQueue(_ deckId: String?, pile: String?) -> Bool { demo || !engine.queue(deckId, pile: pile, done: Set(session?.graded.map(\.cardId) ?? [])).isEmpty }
 }

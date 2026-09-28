@@ -464,13 +464,11 @@ struct EditorSheet: View {
     Task { if await store.saveCard(cardId, deckId: deckId ?? "", o) { nav.close() } }
   }
 
-  /// A picked photo goes to your library's storage; the card keeps its link.
+  /// A picked photo goes to your library's storage (made small enough first, or it says why it didn't); the card keeps
+  /// its link.
   private func upload(_ item: PhotosPickerItem?) {
     guard let item, !store.demo else { return }
-    Task {
-      guard let data = try? await item.loadTransferable(type: Data.self), let img = UIImage(data: data), let jpg = img.jpegData(compressionQuality: 0.85) else { return }
-      if let url = try? await store.api.upload(jpg, type: "image/jpeg") { image = url }
-    }
+    Task { if let url = await store.upload(photo: item) { image = url } }
   }
 }
 

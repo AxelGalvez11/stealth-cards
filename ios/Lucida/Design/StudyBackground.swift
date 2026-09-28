@@ -184,7 +184,8 @@ struct BgChooser: View {
               ZStack {
                 switch id {
                 case "deck": ZStack { CSSLinearGradient(angle: d.mesh.angle, stops: d.mesh.paled().stops); Color.white.opacity(0.35) }
-                case "plain": t.bg
+                // Plain draws its own edge, or it would vanish on a panel the page's color.
+                case "plain": t.bg.overlay(RoundedRectangle(cornerRadius: 14, style: .continuous).strokeBorder(t.surf2, lineWidth: 1.5))
                 case "sky": LinearGradient(stops: [.init(color: Color(hex: 0x86BDF3), location: 0), .init(color: Color(hex: 0xC9E2FB), location: 0.45), .init(color: Color(hex: 0xEDF5FE), location: 1)], startPoint: .top, endPoint: .bottom)
                 case "sunset": SunsetFill(dark: false)
                 default:

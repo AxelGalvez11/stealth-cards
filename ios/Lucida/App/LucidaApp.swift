@@ -31,9 +31,11 @@ struct LucidaApp: App {
 
 /// A canvas board to open straight away (design screens), from the launch arguments.
 enum Board {
-  static var requested: String? {
+  static var requested: String? { arg("-board") }
+  /// The launch argument after `name`.
+  static func arg(_ name: String) -> String? {
     let a = ProcessInfo.processInfo.arguments
-    guard let i = a.firstIndex(of: "-board"), i + 1 < a.count else { return nil }
+    guard let i = a.firstIndex(of: name), i + 1 < a.count else { return nil }
     return a[i + 1]
   }
 }
@@ -86,6 +88,30 @@ struct RootView: View {
           case "connect": nav.tab = .connect
           case "settings": nav.path = [.settings]
           case "learn": nav.tab = .library; nav.path = [.deck(first)]; nav.sheet = .learnStart(first)
+          case "decksettings": nav.tab = .library; nav.path = [.deck(first)]; nav.sheet = .deckSettings(first)
+          default: break
+          }
+        }
+        // `-upload profile|cover|bg <file>`: that picture goes up as a picked photo would (your profile photo, or the first
+        // deck's header or background); `-sound <file>`: that sound, as the card editor's Upload would.
+        if let i = a.firstIndex(of: "-upload"), i + 2 < a.count, let data = FileManager.default.contents(atPath: a[i + 2]) {
+          let kind = a[i + 1], first = store.lib.decks.first?.id ?? ""
+          if let url = await store.upload(picture: data, side: kind == "profile" ? Upload.profileSide : Upload.side) {
+            switch kind {
+            case "profile": store.setYourPhoto(url)
+            case "cover": store.setCover(first, url)
+            default: store.setBgPhoto(first, url)
+            }
+          }
+        }
+        if let i = a.firstIndex(of: "-sound"), i + 1 < a.count { _ = await store.pickSound(URL(fileURLWithPath: a[i + 1])) }
+        // `-flip fsrs|check|pause`: flips that switch 2 seconds in, as a tap does (checks it moves before the server answers).
+        if let i = a.firstIndex(of: "-flip"), i + 1 < a.count {
+          try? await Task.sleep(nanoseconds: 2_000_000_000)
+          switch a[i + 1] {
+          case "fsrs": store.setSetting(["fsrs": !store.settings.fsrs])
+          case "check": store.setCheck(!store.lib.ai.perms.check)
+          case "pause": if let d = store.lib.decks.first { store.updateDeck(d.id, ["paused": !d.paused]) }
           default: break
           }
         }
@@ -151,6 +177,13 @@ extension Board {
     case "PhoneQuizSettings": store.props.learnSettings = true; nav.full = .learn("cell")
     case "PhoneSignIn": store.phase = .signedOut
     case "PhoneSignInCode": store.phase = .signedOut; store.signInStep = .code
+    default: break
+    }
+    // The Settings boards' photo setting (their Tweak on the canvas): `-photo "Google photo"` or `-photo "Your photo"`
+    // (Color when it's left out), with the canvas's stand-in for the photo.
+    switch Board.arg("-photo") {
+    case "Google photo": store.props.photo = "google"
+    case "Your photo": store.props.photo = "yours"; store.props.yourPhoto = "mock"
     default: break
     }
     // A full screen (review, session done, Learn mode) opens once the page under it is drawn: a page drawn under one from

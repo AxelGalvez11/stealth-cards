@@ -56,6 +56,10 @@ struct DemoProps {
   var upgrade = false
   /// Settings' plan: "Free", "Pro", or "Pro, ending" (the canvas board's `plan`).
   var plan = "Pro"
+  /// Settings' profile picture (the canvas board's `photo`: Color, Google photo, or Your photo, from `-photo`), as the
+  /// canvas keeps it: the choice ("color", "google", or "yours"), the photo you uploaded ("mock", its stand-in), and
+  /// the circle's color. The canvas's person signed in with Google, so Google photo is always there.
+  var photo = "color", yourPhoto: String? = nil, color = 0
   /// The card editor: which kind of card, and whether you're typing (the keyboard is up).
   var cardType = "Basic"
   var editorTyping = false
@@ -121,6 +125,11 @@ final class Store: ObservableObject {
   let api = API()
   private var poll: Task<Void, Never>?
   private var renameTask: Task<Void, Never>?
+  /// Changes shown before the server has them (saveNow): each stays on top of any newer copy until it's saved. And the
+  /// last of their saves, which the next one waits for.
+  private var mine: [(n: Int, apply: (inout Library) -> Void)] = []
+  private var mineCount = 0
+  private var line: Task<Void, Never>?
 
   init(demo: Bool) {
     self.demo = demo
@@ -160,21 +169,45 @@ final class Store: ObservableObject {
       }
     }
   }
-  func accept(_ next: Library) { if next.rev >= lib.rev { lib = next } }
+  func accept(_ next: Library) { if next.rev >= lib.rev { lib = withMine(next) } }
+  /// A copy of the library with the changes that aren't saved yet on top.
+  private func withMine(_ next: Library) -> Library { var l = next; for m in mine { m.apply(&l) }; return l }
 
   /// One change on the server; the library comes back with it.
   @discardableResult
-  func send(_ type: String, _ payload: [String: Any] = [:]) async -> [String: Any] {
+  func send(_ type: String, _ payload: [String: Any] = [:]) async -> [String: Any] { await sent(type, payload) ?? [:] }
+  /// The same, nil when it didn't save (what went wrong shows, like the web app's alert).
+  func sent(_ type: String, _ payload: [String: Any]) async -> [String: Any]? {
     guard !demo else { return [:] }
     do { let r = try await api.action(type, payload); accept(r.state); return r.result }
-    catch APIError.signedOut { phase = .signedOut; return [:] }
-    catch { self.error = error.localizedDescription; return [:] }
+    catch APIError.signedOut { phase = .signedOut; return nil }
+    catch { self.error = error.localizedDescription; return nil }
+  }
+
+  /// Switches, settings, and a deck's options (db.js saveNow): `local` shows the change here at once, and the saves go
+  /// out one at a time, in order (the owner: the switch "looked dead" while the server took up to a second to answer,
+  /// then jumped). If one fails, the app goes back to what's saved; offline, it takes the server's copy at the next check.
+  func saveNow(_ type: String, _ payload: [String: Any], _ local: @escaping (inout Library) -> Void) {
+    mineCount += 1
+    let n = mineCount, before = line
+    mine.append((n, local))
+    local(&lib)
+    line = Task { [weak self] in
+      await before?.value
+      guard let self else { return }
+      let ok = await self.sent(type, payload) != nil
+      self.mine.removeAll { $0.n == n }
+      guard !ok else { return }
+      if let saved = try? await self.api.state() { self.lib = self.withMine(saved) } else { self.lib.rev = 0 }
+    }
   }
 
   func cardCount(_ id: String) -> Int { demo ? (props.emptyDeck ? 0 : 412) : lib.cards.filter { $0.deckId == id }.count }
 
   /// A change shown right away, before the server answers (the server's copy replaces it when it comes back).
-  func applyLocal(deck id: String, _ patch: [String: Any]) {
+  func applyLocal(deck id: String, _ patch: [String: Any]) { Store.patch(&lib, deck: id, patch) }
+  /// A deck's change (deck.update's patch) made to a copy of the library.
+  static func patch(_ lib: inout Library, deck id: String, _ patch: [String: Any]) {
     guard let i = lib.decks.firstIndex(where: { $0.id == id }) else { return }
     var d = lib.decks[i]
     for (k, v) in patch {

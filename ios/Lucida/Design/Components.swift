@@ -151,24 +151,32 @@ struct MeshCard<Content: View>: View {
   }
 }
 
-/// The on/off switch (48 x 28; black when on).
+/// The on/off switch (48 x 28; black when on). It flips the moment it's tapped (the change saves after, Store.saveNow):
+/// the knob springs across with a slight overshoot while the track fades, like the canvas's sc-sw. With Reduce Motion
+/// the knob doesn't slide; the colors still fade.
 struct Toggle48: View {
   @Environment(\.theme) private var t
+  @Environment(\.accessibilityReduceMotion) private var still
   let on: Bool
   var enabled = true
   let label: String
   let action: () -> Void
+  /// cubic-bezier(.34, 1.56, .64, 1) over 0.32 s for the knob; ease over 0.3 s for the colors.
+  static let spring = Animation.timingCurve(0.34, 1.56, 0.64, 1, duration: 0.32)
+  static let fade = Animation.timingCurve(0.25, 0.1, 0.25, 1, duration: 0.3)
   var body: some View {
     Button(action: action) {
-      ZStack(alignment: on ? .trailing : .leading) {
-        Capsule().fill(on ? t.inv : t.surf2)
-        Circle().fill(on ? t.invText : t.bg).frame(width: 22, height: 22).padding(3)
+      ZStack(alignment: .leading) {
+        Capsule().fill(on ? t.inv : t.surf2).animation(Toggle48.fade, value: on)
+        Circle().fill(on ? t.invText : t.bg).animation(Toggle48.fade, value: on)
+          .frame(width: 22, height: 22).padding(3)
+          .offset(x: on ? 20 : 0)
+          .animation(still ? nil : Toggle48.spring, value: on)
       }
       .frame(width: 48, height: 28)
       .opacity(enabled ? 1 : 0.4)
-      .animation(.std(0.2), value: on)
     }
-    .buttonStyle(.flat)
+    .buttonStyle(.press)
     .disabled(!enabled)
     .accessibilityLabel(label)
     .accessibilityValue(on ? "On" : "Off")

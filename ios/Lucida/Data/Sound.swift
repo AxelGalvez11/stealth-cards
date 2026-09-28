@@ -512,19 +512,19 @@ extension Store {
   /// Throws a recording away (leaving the editor, or another kind of card).
   func discardRecording() { if demo { demoRecording = false } else { Sound.shared.stopRecording(discard: true) } }
 
-  /// A sound file you pick is measured here first, then sent (web/sound.js pick).
+  /// A sound file you pick is measured here first, then sent (web/sound.js pick): as what its bytes say it is (a name
+  /// can be wrong, and the server checks), and not at all when it's over 4 MB.
   func pickSound(_ url: URL) async -> (url: String, wave: Wave?)? {
-    let types = ["mp3": "audio/mpeg", "m4a": "audio/mp4", "mp4": "audio/mp4", "wav": "audio/wav", "wave": "audio/wav", "ogg": "audio/ogg", "oga": "audio/ogg", "webm": "audio/webm"]
-    let ext = url.pathExtension.lowercased()
-    guard let type = types[ext] else { error = "That isn’t a sound Lucida can play (MP3, M4A, WAV, OGG, or WebM)."; return nil }
+    let exts = ["audio/mpeg": "mp3", "audio/mp4": "m4a", "audio/wav": "wav", "audio/ogg": "ogg", "audio/webm": "webm"]
     let scoped = url.startAccessingSecurityScopedResource()
     let data = try? Data(contentsOf: url)
     if scoped { url.stopAccessingSecurityScopedResource() }
     guard let data, !data.isEmpty else { error = "Couldn’t read that file."; return nil }
-    guard data.count <= 20_000_000 else { error = "That file is over 20 MB."; return nil }
+    guard data.count <= Upload.limit else { error = Upload.over; return nil }
+    guard let type = Upload.sniff(data), let ext = exts[type] else { error = "That isn’t a sound Lucida can play (MP3, M4A, WAV, OGG, or WebM)."; return nil }
     let local = FileManager.default.temporaryDirectory.appendingPathComponent("pick-" + UUID().uuidString + "." + ext)
     try? data.write(to: local)
-    let s: SoundShape? = data.count <= 12_000_000 ? await Task.detached { try? WaveCode.shape(of: local) }.value : nil
+    let s: SoundShape? = await Task.detached { try? WaveCode.shape(of: local) }.value
     do {
       let link = try await api.upload(data, type: type)
       Sound.shared.adopt(local, s, as: link)
