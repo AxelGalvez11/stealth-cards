@@ -42,12 +42,14 @@ struct Folder: Decodable, Identifiable {
 
 struct Me: Decodable {
   var email = "", provider = "", name = ""
+  /// The photo on a Google account (an https link, web/auth.mjs); Apple and email sign-ins have none.
+  var picture = ""
   /// Lucida Pro (the server hears it from Stripe, web/billing.mjs), and Stripe's page for changing or cancelling it.
   var plan = Plan(), manage = ""
-  enum CodingKeys: String, CodingKey { case email, provider, name, plan, manage }
+  enum CodingKeys: String, CodingKey { case email, provider, name, picture, plan, manage }
   init(from d: Decoder) throws {
     let c = try d.container(keyedBy: CodingKeys.self)
-    email = c.v(.email, ""); provider = c.v(.provider, ""); name = c.v(.name, ""); plan = c.v(.plan, Plan()); manage = c.v(.manage, "")
+    email = c.v(.email, ""); provider = c.v(.provider, ""); name = c.v(.name, ""); picture = c.v(.picture, ""); plan = c.v(.plan, Plan()); manage = c.v(.manage, "")
   }
 }
 
@@ -65,13 +67,17 @@ struct Plan: Decodable {
 struct UserSettings: Decodable {
   /// look: System, Light, or Dark; darkMode: how dark looks, "gray" or "black" (the default).
   var name = "", color = 0, look = "system", darkMode = "black", grads = "mix", prog = "bar", perDay = 20, goal = 90, grading = "four", fsrs = true, reminder = "9:00 AM"
-  enum CodingKeys: String, CodingKey { case name, color, look, darkMode, grads, prog, perDay, goal, grading, fsrs, reminder }
+  /// Your profile picture: "google", "yours", or "color" ("" until you pick one: your Google photo if there is one), and
+  /// the photo you uploaded for it (a /media/… link).
+  var photo = "", yourPhoto: String? = nil
+  enum CodingKeys: String, CodingKey { case name, color, look, darkMode, grads, prog, perDay, goal, grading, fsrs, reminder, photo, yourPhoto }
   init() {}
   init(from d: Decoder) throws {
     let c = try d.container(keyedBy: CodingKeys.self)
     name = c.v(.name, ""); color = c.v(.color, 0); look = c.v(.look, "system"); darkMode = c.v(.darkMode, "black") == "gray" ? "gray" : "black"
     grads = c.v(.grads, "mix"); prog = c.v(.prog, "bar")
     perDay = c.v(.perDay, 20); goal = c.v(.goal, 90); grading = c.v(.grading, "four"); fsrs = c.v(.fsrs, true); reminder = c.v(.reminder, "9:00 AM")
+    photo = c.v(.photo, ""); yourPhoto = c.v(.yourPhoto, nil)
   }
 }
 

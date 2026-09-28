@@ -110,8 +110,7 @@ extension Store {
       demoDeck = e
       return
     }
-    applyLocal(deck: id, patch)
-    Task { await send("deck.update", ["id": id, "patch": patch]) }
+    saveNow("deck.update", ["id": id, "patch": patch]) { Store.patch(&$0, deck: id, patch) }
   }
 
   // ---------- photos ----------
@@ -122,10 +121,15 @@ extension Store {
   /// A photo of your own behind studying a deck.
   func setBgPhoto(_ id: String, _ url: String) { updateDeck(id, ["bg": ["kind": "photo", "image": url]]) }
 
-  /// A picked photo goes to your library's storage as a JPEG (like the card editor's); its link comes back.
-  func upload(photo item: PhotosPickerItem) async -> String? {
+  /// A picked photo goes to your library's storage (a deck's header or background, a card's picture, your profile
+  /// photo), made small enough first (Upload.jpeg: at most `side` pixels across); its link comes back.
+  func upload(photo item: PhotosPickerItem, side: Int = Upload.side) async -> String? {
     guard !demo else { return "mock" }
-    guard let data = try? await item.loadTransferable(type: Data.self), let img = UIImage(data: data), let jpg = img.jpegData(compressionQuality: 0.85) else {
+    guard let data = try? await item.loadTransferable(type: Data.self) else { error = "That photo didn’t open. Try another one."; return nil }
+    return await upload(picture: data, side: side)
+  }
+  func upload(picture data: Data, side: Int = Upload.side) async -> String? {
+    guard let jpg = await Task.detached(priority: .userInitiated, operation: { Upload.jpeg(data, side: side) }).value else {
       error = "That photo didn’t open. Try another one."; return nil
     }
     do { return try await api.upload(jpg, type: "image/jpeg") }
@@ -134,11 +138,12 @@ extension Store {
   }
 }
 
-/// Picks a photo and uploads it (`done` gets its link). On a design screen there's no picker: `done` gets the canvas's
-/// placeholder right away.
+/// Picks a photo and uploads it (`done` gets its link), at most `side` pixels across. On a design screen there's no
+/// picker: `done` gets the canvas's placeholder right away.
 struct PhotoPicker: ViewModifier {
   @EnvironmentObject private var store: Store
   @Binding var isPresented: Bool
+  var side = Upload.side
   let done: (String) -> Void
   @State private var item: PhotosPickerItem? = nil
   func body(content: Content) -> some View {
@@ -148,12 +153,14 @@ struct PhotoPicker: ViewModifier {
       .onChange(of: item) { _, picked in
         guard let picked else { return }
         item = nil
-        Task { if let url = await store.upload(photo: picked) { done(url) } }
+        Task { if let url = await store.upload(photo: picked, side: side) { done(url) } }
       }
   }
 }
 extension View {
-  func photoPicker(_ isPresented: Binding<Bool>, done: @escaping (String) -> Void) -> some View { modifier(PhotoPicker(isPresented: isPresented, done: done)) }
+  func photoPicker(_ isPresented: Binding<Bool>, side: Int = Upload.side, done: @escaping (String) -> Void) -> some View {
+    modifier(PhotoPicker(isPresented: isPresented, side: side, done: done))
+  }
 }
 
 extension String { var nilIfEmpty: String? { isEmpty ? nil : self } }
@@ -511,16 +518,17 @@ struct DeckSettingsSheet: View {
   }
 }
 
-/// smallBtn: a 34-tall gray pill with an icon.
+/// smallBtn: a 34-tall gray pill with an icon (on a gray panel, the page's color: `bg`).
 struct SmallButton: View {
   @Environment(\.theme) private var t
   let label: String
   var icon: String? = nil
+  var bg: Color? = nil
   let action: () -> Void
   var body: some View {
     Button(action: action) {
       HStack(spacing: 6) { if let icon { Icon(icon, 14, 2) }; Text(label).css(13, .semibold) }
-        .foregroundStyle(t.text).padding(.horizontal, 12).frame(height: 34).background(Capsule().fill(t.surf))
+        .foregroundStyle(t.text).padding(.horizontal, 12).frame(height: 34).background(Capsule().fill(bg ?? t.surf))
     }
     .buttonStyle(.press)
   }
