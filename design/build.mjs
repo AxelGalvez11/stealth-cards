@@ -1150,8 +1150,8 @@ const field = (label, key, rows = 3, ph = '', big = false) => `<div style="${big
 const blankPill = word => `<span style="padding: 1px 10px; border-radius: 999px; background: {{t.inv}}; color: {{t.invText}}; font-weight: 600;">${word}</span>`;
 // The fields for each kind of card, in one column. The big editor (big) sets each kind out in two columns instead: the
 // front and the back side by side (a blank card's text and what's shown after it, a sound and its answer), or the
-// picture as big as it fits, with its answers beside it.
-const editorFieldsOf = (phone, big = false) => {
+// picture as big as it fits, with its answers beside it (`side` wide).
+const editorFieldsOf = (phone, big = false, side = 380) => {
   const col = 'min-height: 0; display: flex; flex-direction: column; gap: 20px;', picH = big ? 0 : phone ? 240 : 186, waveH = big ? 96 : 32;
   const two = (main, side, cols = 'repeat(2, minmax(0, 1fr))') => big ? `<div style="flex: 1 1 0; min-height: 0; display: grid; grid-template-columns: ${cols}; grid-template-rows: minmax(0, 1fr); gap: 28px;"><div style="${col}">${main}</div><div style="${col} overflow-y: auto; scrollbar-width: thin;">${side}</div></div>` : main + side;
   return `
@@ -1163,7 +1163,7 @@ const editorFieldsOf = (phone, big = false) => {
   <sc-if value="{{img.none}}" hint-placeholder-val="{{ false }}"><button type="button" onClick="{{pickImage}}" style="${picH ? `height: ${picH}px;` : 'flex: 1 1 0; min-height: 0;'} border: 1.5px dashed {{t.muted}}; border-radius: 20px; background: transparent; color: {{t.muted}}; font: inherit; font-size: 14px; font-weight: 600; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; cursor: pointer;">${svg(I.image, 22, 1.8)}Add an image</button></sc-if>
   <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">${smallBtn('Replace image', 'pickImage', 'image')}<sc-if value="{{occ.canAdd}}" hint-placeholder-val="{{ true }}">${smallBtn('Add a box', 'addBox', 'plus')}</sc-if><sc-if value="{{occ.has}}" hint-placeholder-val="{{ true }}"><span style="flex-grow: 1;"></span>${panelSeg('occModes', 'What to hide')}</sc-if></div>`, `
   ${occAnswers}
-  ${field('Prompt', 'front', 1, 'What should they name?')}<sc-if value="{{occ.none}}" hint-placeholder-val="{{ false }}">${field('Answer', 'back', 1)}</sc-if>`, 'minmax(0, 1fr) 380px')}</sc-if>
+  ${field('Prompt', 'front', 1, 'What should they name?')}<sc-if value="{{occ.none}}" hint-placeholder-val="{{ false }}">${field('Answer', 'back', 1)}</sc-if>`, `minmax(0, 1fr) ${side}px`)}</sc-if>
 <sc-if value="{{isAudio}}" hint-placeholder-val="{{ false }}">${two(`<div style="${big ? 'flex: 1 1 0; min-height: 0;' : 'height: 72px;'} box-sizing: border-box; border-radius: 20px; background: {{rec.bg}}; display: flex; align-items: center; gap: 14px; padding: 0 16px; transition: background-color .2s;">
   <sc-if value="{{rec.show}}" hint-placeholder-val="{{ false }}"><button type="button" onClick="{{toggleRecord}}" aria-label="{{rec.label}}" style="width: 40px; height: 40px; flex-shrink: 0; padding: 0; border: 0; border-radius: 20px; background: {{rec.btn}}; color: #FFFFFF; display: flex; align-items: center; justify-content: center; cursor: pointer;">${svg(STOP, 16)}</button><div ref="{{rec.ref}}" aria-hidden="true" style="flex-grow: 1; min-width: 0; height: ${waveH}px; overflow: hidden; display: flex; justify-content: flex-end;"><div style="flex-shrink: 0; height: 100%; display: flex; align-items: center; gap: 2px;"><sc-for list="{{rec.bars}}" as="b" hint-placeholder-count="71"><span style="width: 3px; flex-shrink: 0; height: {{b.h}}; border-radius: 2px; background: {{t.text}};"></span></sc-for></div></div><span role="timer" aria-label="Recording time" style="flex-shrink: 0; display: flex; align-items: center; gap: 6px; font-family: ${MONO}; font-size: 12px; color: {{rec.ink}};"><sc-if value="{{rec.on}}" hint-placeholder-val="{{ true }}"><span class="sc-rec-dot" style="width: 7px; height: 7px; border-radius: 4px; background: {{t.again}};"></span></sc-if><span ref="{{rec.timeRef}}">{{rec.time}}</span></span></sc-if>
   <sc-if value="{{snd.show}}" hint-placeholder-val="{{ true }}"><button type="button" onClick="{{snd.toggle}}" aria-label="{{snd.label}}" style="width: 40px; height: 40px; flex-shrink: 0; padding: 0; border: 0; border-radius: 20px; background: {{t.inv}}; color: {{t.invText}}; display: flex; align-items: center; justify-content: center; cursor: pointer;">${playGlyph('snd', 16)}</button>${waveRow('snd', 56, waveH)}<sc-if value="{{snd.hasTime}}" hint-placeholder-val="{{ true }}"><span ref="{{snd.timeRef}}" style="flex-shrink: 0; min-width: 30px; text-align: right; font-family: ${MONO}; font-size: 12px; color: {{t.muted}};">{{snd.time}}</span></sc-if></sc-if>
@@ -1214,13 +1214,17 @@ const webEditorBig = `<div style="position: relative; width: 1440px; height: 900
     ${SLASH_MENU(420)}
   </aside>
 </div>`;
-const EDITOR_LOGIC = `
+// The card as you write it, before any change (the editor's `this.ed`).
+const ED0 = "{ edits: {}, type: null, sel: null, pend: null, past: [], future: [], last: '', lastAt: 0, key: 0, restore: false, sig: '' }";
+// The editor's logic: the side panel's, the iPhone's, and the big editor's. The cards screen (Option B, below) passes
+// `open`, the card it shows (the one picked in its list), and `more`, what it adds to the editor's values.
+const editorLogic = (open = 'this.props.cardId ? db.card(this.props.cardId) : null', more = '') => `
 constructor(props) {
   super(props);
   this.state = { typing: !!props.keyboard, focus: 'front', styles: !!props.textStyles };
   // The card as you write it: its fields, its type, where the caret is, and what Undo steps back to.
   // It lives outside state so fast typing never builds on an old copy.
-  this.ed = { edits: {}, type: null, sel: null, pend: null, past: [], future: [], last: '', lastAt: 0, key: 0, restore: false, sig: '' };
+  this.ed = ${ED0};
   this.els = {};
   this.refFns = {};
 }
@@ -1231,7 +1235,7 @@ componentWillUnmount() { if (this.onSel) document.removeEventListener('selection
 // A saved card opens with what it says; a new one starts empty in the app (the canvas shows a sample).
 doc() {
   const db = this.props.db || this.mock(), e = this.ed;
-  const saved = this.props.cardId ? db.card(this.props.cardId) : null;
+  const saved = ${open};
   const names = { basic: 'Basic', cloze: 'Blank', image: 'Image', audio: 'Audio' };
   const ty = e.type || (saved ? names[saved.kind] : ({ Blank: 'Blank', Image: 'Image', Audio: 'Audio' })[this.props.cardType] || 'Basic');
   return { db, saved, ty, f: { ...(saved || db.draft(ty)), ...e.edits } };
@@ -1815,7 +1819,177 @@ renderVals() {
       if (missing) return this.focusField(missing);
       db.act.saveCard(saved ? saved.id : null, dk.id, { kind, front: f.front, back: f.back, text: f.text, note: f.note, tags, image: f.image || null, audio: f.audio || null, wave: f.audio ? f.wave || null : null, speak: f.speak || '', auto: f.auto !== false, clozeMode: f.clozeMode || 'each',
         ...(kind === 'image' ? { boxes: f.boxes || [], occ: f.occ === 'all' ? 'all' : 'one' } : {}) }, backHref);
+    }${more}
+  };
+}`;
+const EDITOR_LOGIC = editorLogic();
+
+// ---------- Option B: the deck's cards on a screen of their own (a mockup) ----------
+// The owner, after the bigger editor: "for the flashcard adding could you make it a whole new screen mockup, im thinking
+// of a whole new screen where cards are listed on left and the card editor is on right". No sidebar: the deck's cards
+// down the left (search them, or show one kind), and the picked one in the big editor (editorFieldsOf) on the right. A
+// saved card saves as you type, with a quiet Saved, so going from card to card never asks anything (Undo is there for
+// mistakes); a new card sits at the top of the list until Add card (⌘↵) adds it and starts the next one like it.
+// Nothing in the app opens it yet: the deck page still opens the side panel.
+// A card in the list: its kind, its front (up to two lines) over its back, its tags, and a picture card's picture with
+// its boxes. The picked one is shaded, and the others lightly under the pointer (CARDS_CSS).
+const cardThumb = `<sc-if value="{{r.thumb.show}}" hint-placeholder-val="{{ false }}"><span aria-hidden="true" style="flex-shrink: 0; align-self: center; padding: 4px; border-radius: 10px; background: {{t.bg}}; box-shadow: inset 0 0 0 1px {{t.line}}; line-height: 0;"><span style="position: relative; display: inline-block; line-height: 0; border-radius: 4px; overflow: hidden;"><sc-if value="{{r.thumb.mock}}" hint-placeholder-val="{{ true }}">${CELL(48, 33, false, 4)}</sc-if><sc-if value="{{r.thumb.url}}" hint-placeholder-val="{{ false }}"><img src="{{r.thumb.url}}" alt="" style="display: block; max-width: 56px; max-height: 40px;"></sc-if><sc-for list="{{r.thumb.boxes}}" as="b" hint-placeholder-count="3"><span style="position: absolute; left: {{b.x}}; top: {{b.y}}; width: {{b.w}}; height: {{b.h}}; box-sizing: border-box; border-radius: 2px; background: {{t.surf2}}; box-shadow: 0 0 0 1px {{t.bg}};"></span></sc-for></span></span></sc-if>`;
+const cardRow = `<button type="button" onClick="{{r.pick}}" aria-current="{{r.current}}" class="sc-card-row" style="flex-shrink: 0; width: 100%; box-sizing: border-box; padding: 12px; display: flex; align-items: flex-start; gap: 12px; border: 0; border-radius: 16px; background: {{r.bg}}; color: {{t.text}}; font: inherit; text-align: left; cursor: pointer;">
+          <span style="width: 32px; height: 32px; flex-shrink: 0; border-radius: 16px; background: {{r.chip}}; display: flex; align-items: center; justify-content: center; font-size: 14px;">{{r.glyph}}</span>
+          <span style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px;"><span style="font-size: 14px; font-weight: 500; line-height: 1.35; overflow-wrap: anywhere; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden;">{{r.title}}</span><span style="font-size: 13px; line-height: 1.35; color: {{t.muted}}; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{r.sub}}</span><sc-if value="{{r.hasTags}}" hint-placeholder-val="{{ true }}"><span style="margin-top: 5px; display: flex; gap: 6px; min-width: 0; overflow: hidden;">${cardTag('c1')}${cardTag('c2')}${cardMore}</span></sc-if></span>
+          ${cardThumb}
+        </button>`;
+const CARDS_CSS = '.sc-card-row[aria-current="false"]:hover{background-color:color-mix(in srgb,currentColor 4%,transparent)!important}.sc-card-row:active{transform:scale(.985)}@media (prefers-reduced-motion:reduce){.sc-card-row:active{transform:none}}';
+const webCards = `<div style="width: 1440px; height: 900px; box-sizing: border-box; display: flex; flex-direction: column; overflow: hidden; font-family: ${FONT}; background: {{t.bg}}; color: {{t.text}};">
+  <header style="position: relative; height: 64px; flex-shrink: 0; box-sizing: border-box; padding: 0 20px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid {{t.line}};">
+    <a href="{{backHref}}" style="height: 36px; padding: 0 14px 0 10px; display: inline-flex; align-items: center; gap: 4px; border-radius: 999px; background: {{t.surf}}; font-size: 13px; font-weight: 600;">${svg(I.back, 14, 2.2)}{{deckName}}</a>
+    <h1 style="position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); margin: 0; font-size: 15px; font-weight: 600; white-space: nowrap;">Edit cards</h1>
+    <a href="{{backHref}}" style="height: 36px; padding: 0 20px; display: inline-flex; align-items: center; border-radius: 999px; background: {{t.inv}}; color: {{t.invText}}; font-size: 14px; font-weight: 600;">Done</a>
+  </header>
+  <div style="flex-grow: 1; min-height: 0; display: flex;">
+    <section aria-label="Cards in {{deckName}}" style="width: 360px; flex-shrink: 0; box-sizing: border-box; border-right: 1px solid {{t.line}}; display: flex; flex-direction: column;">
+      <div style="padding: 20px 16px 8px; display: flex; flex-direction: column; gap: 12px;">
+        <div style="display: flex; gap: 8px;"><label style="flex-grow: 1; min-width: 0; height: 36px; padding: 0 14px; box-sizing: border-box; display: flex; align-items: center; gap: 8px; border-radius: 999px; background: {{t.surf}}; color: {{t.muted}};">${svg(I.search, 15)}<span style="position: absolute; left: -9999px;">Search cards</span><input value="{{listQuery}}" onChange="{{setListQuery}}" placeholder="Search cards" style="flex-grow: 1; min-width: 0; border: 0; outline: 0; background: transparent; font: inherit; font-size: 13px; color: {{t.text}};"></label><button type="button" onClick="{{newCard}}" style="height: 36px; flex-shrink: 0; padding: 0 16px 0 12px; display: inline-flex; align-items: center; gap: 6px; border: 0; border-radius: 999px; background: {{t.inv}}; color: {{t.invText}}; font: inherit; font-size: 14px; font-weight: 600; cursor: pointer;">${svg(I.plus, 15, 2.2)}New card</button></div>
+        <div role="group" aria-label="Kind of card" style="display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 2px; padding: 3px; border-radius: 999px; background: {{t.surf}};"><sc-for list="{{listKinds}}" as="k" hint-placeholder-count="5"><button type="button" onClick="{{k.pick}}" aria-pressed="{{k.pressed}}" style="height: 30px; padding: 0; border: 0; border-radius: 999px; background: {{k.bg}}; color: {{k.fg}}; box-shadow: {{k.sh}}; font: inherit; font-size: 13px; font-weight: 600; white-space: nowrap; cursor: pointer;">{{k.label}}</button></sc-for></div>
+        <span style="padding: 0 4px; font-size: 12px; color: {{t.muted}};">{{countLabel}}</span>
+      </div>
+      <div ref="{{listRef}}" style="flex-grow: 1; min-height: 0; overflow-y: auto; scrollbar-width: thin; box-sizing: border-box; padding: 0 8px 16px; display: flex; flex-direction: column; gap: 2px;">
+        <sc-for list="{{rows}}" as="r" hint-placeholder-count="6">${cardRow}</sc-for>
+        <sc-if value="{{none}}" hint-placeholder-val="{{ false }}"><span style="padding: 32px 16px; font-size: 13px; color: {{t.muted}}; text-align: center;">{{noneLabel}}</span></sc-if>
+      </div>
+    </section>
+    <main style="position: relative; flex-grow: 1; min-width: 0; box-sizing: border-box; padding: 24px 28px; display: flex; flex-direction: column; gap: 20px;">
+      <div style="display: flex; align-items: center; gap: 16px;"><div style="flex: 0 1 380px; min-width: 0;">${TYPE_SEG}</div><span style="flex-grow: 1;"></span>${WEB_FMT}</div>
+      ${editorFieldsOf(false, true, 300)}
+      <div style="display: flex; align-items: center; gap: 12px;">
+        <div style="flex-grow: 1; min-width: 0;">${TAG_EDIT('cardTags', 'cardPick', false, true)}</div>
+        <sc-if value="{{note.show}}" hint-placeholder-val="{{ true }}"><span role="status" style="margin-right: 4px; display: inline-flex; align-items: center; gap: 6px; font-size: 13px; color: {{t.muted}}; white-space: nowrap;"><sc-if value="{{note.done}}" hint-placeholder-val="{{ true }}">${svg(I.check, 14, 2.2)}</sc-if>{{note.label}}</span></sc-if>
+        <sc-if value="{{canDelete}}" hint-placeholder-val="{{ true }}"><button type="button" onClick="{{deleteCard}}" style="height: 40px; padding: 0 20px; border: 0; border-radius: 999px; background: {{t.againTint}}; color: {{t.again}}; font: inherit; font-size: 14px; font-weight: 600; cursor: pointer;">Delete</button></sc-if>
+        <sc-if value="{{isNew}}" hint-placeholder-val="{{ false }}"><button type="button" onClick="{{discard}}" style="height: 40px; padding: 0 20px; border: 0; border-radius: 999px; background: {{t.surf}}; color: {{t.text}}; font: inherit; font-size: 14px; font-weight: 600; cursor: pointer;">Discard</button><button type="button" onClick="{{addCard}}" data-key="mod+enter" style="height: 40px; padding: 0 22px; display: inline-flex; align-items: center; border: 0; border-radius: 999px; background: {{t.inv}}; color: {{t.invText}}; font: inherit; font-size: 14px; font-weight: 600; cursor: pointer;">Add card <span style="font-family: ${MONO}; font-size: 12px; opacity: .6; margin-left: 8px;">⌘↵</span></button></sc-if>
+      </div>
+      ${SLASH_MENU(420)}
+    </main>
+  </div>
+</div>`;
+// Its logic: the editor's, showing the card picked in the list, and the list's (listVals). Each card keeps its own place
+// in the editor (what you changed, where the caret was, what Undo steps back to), so a card you go back to is as you
+// left it; 'new' is the new card. It's a mockup: cards added or deleted here, and what you change, stay on this screen
+// (on the canvas, like the rest of the sample; the app has no page for it yet).
+const CARDS_LOGIC = editorLogic('this.openCard(db)', ',\n    ...this.listVals({ db, t, saved, missing, R, tagChip, tagFit })') + `
+fresh(o) { return { ...${ED0}, ...o }; }
+// The sample has no saved cards, so on the canvas each one opens with what its row says (and the sample picture or sound).
+sampleCard(db, r) {
+  const kind = { text: 'basic', blank: 'cloze', image: 'image', audio: 'audio' }[r.icon], d = db.draft({ basic: 'Basic', cloze: 'Blank', image: 'Image', audio: 'Audio' }[kind]);
+  return { ...d, id: r.id, kind, tags: r.tags, note: '', front: kind === 'cloze' ? '' : r.front, back: kind === 'image' ? '' : r.back, text: kind === 'cloze' ? r.front.replace('____', '[[' + r.back + ']]') : '' };
+}
+cardOf(db, id) {
+  const a = this.added.find(c => c.id === id), r = !a && db.mock && db.cards().find(x => x.id === id);
+  return a || (r ? this.sampleCard(db, r) : db.mock ? null : db.card(id));
+}
+// The deck's cards (their ids and kinds), the ones added here first.
+cardIds(db) {
+  const icon = { basic: 'text', cloze: 'blank', image: 'image', audio: 'audio' };
+  return [...this.added.map(c => ({ id: c.id, icon: icon[c.kind] })), ...db.cards(db.deck(this.props.deckId).id)].filter(r => !this.gone.includes(r.id));
+}
+hasWords(c) { const R = this.rich(); return ['front', 'back', 'text', 'note', 'speak'].some(k => R.plain(c[k] || '').trim()) || !!(c.boxes || []).length; }
+// The card the editor shows (null for the new card). The canvas opens on the first card of the kind it asks for, or on a
+// new card half written, its answer being typed.
+openCard(db) {
+  if (!this.eds) {
+    this.added = [];
+    this.gone = [];
+    const want = { Blank: 'blank', Image: 'image', Audio: 'audio' }[this.props.cardType] || 'text', ids = this.cardIds(db), first = ids.find(r => r.icon === want) || ids[0];
+    this.pick = this.props.newCard || !first ? 'new' : first.id;
+    this.eds = { [this.pick]: this.ed };
+    if (this.pick === 'new') {
+      this.ed.type = ({ Blank: 'Blank', Image: 'Image', Audio: 'Audio' })[this.props.cardType] || 'Basic';
+      this.ed.edits = { front: '', back: '', text: '', note: '', speak: '', boxes: [], ...(db.mock && this.ed.type === 'Basic' ? { front: 'Where in the cell does glycolysis happen?', back: 'In the cytoplasm' } : {}) };
+      if (db.mock && this.props.newCard) Object.assign(this.state, { typing: true, focus: 'back' });
     }
+  }
+  return this.pick === 'new' ? null : this.cardOf(db, this.pick);
+}
+// Picking a card in the list opens it as you left it, with no box picked and the tag picker shut. Leaving a card while
+// it records throws the recording away.
+pickCard(id) {
+  const db = this.props.db || this.mock();
+  if (db.recording()) db.act.stopRecording(true);
+  this.ed.slash = null;
+  if (id === 'new' && this.pick !== 'new') this.back = this.pick;
+  this.pick = id;
+  this.ed = this.eds[id] || (this.eds[id] = this.fresh());
+  this.setState({ typing: false, occSel: null, speakOpen: false, cpOpen: false, cpQ: '' });
+}
+// A new card starts empty (the canvas's sample draft has words in it), of the same kind and with the same tags as the
+// card you were on, so a run of cards like it is quick to write.
+startNew(type, tags) {
+  this.eds.new = this.fresh({ type, edits: { front: '', back: '', text: '', note: '', speak: '', boxes: [], tags } });
+  this.pickCard('new');
+  this.focusField(this.firstField(type));
+  if (this.listEl) this.listEl.scrollTop = 0;
+}
+// New card: back to the new card if it has words in it, else a new one like the card you're on.
+openNew() {
+  const n = this.eds.new, d = this.doc();
+  if (this.pick !== 'new' && !(n && this.hasWords(n.edits))) return this.startNew(d.ty, d.f.tags || []);
+  this.pickCard('new');
+  this.focusField(this.firstField(this.doc().ty));
+}
+// Add card (⌘↵): the card goes in the deck (at the top of the list here), and the next one starts like it.
+addNew(missing) {
+  const { f, ty } = this.doc(), tags = f.tags || [];
+  if (missing === 'image') return this.pickImage();
+  if (missing) return this.focusField(missing);
+  this.added = [{ ...f, kind: { Basic: 'basic', Blank: 'cloze', Image: 'image', Audio: 'audio' }[ty], tags, id: 'n' + Date.now().toString(36) }, ...this.added];
+  this.addedAt = Date.now();
+  this.startNew(ty, tags);
+}
+// Delete: the card goes, and the one under it opens (or the one above, or a new card when none are left). Discard: the
+// new card goes, and the card you were on opens again.
+dropSaved(ids) {
+  const i = ids.indexOf(this.pick), next = ids[i + 1] || ids[i - 1];
+  this.gone = [...this.gone, this.pick];
+  if (next) this.pickCard(next); else this.startNew('Basic', []);
+}
+discardNew(ids) {
+  delete this.eds.new;
+  const back = ids.includes(this.back) ? this.back : ids[0];
+  if (back) this.pickCard(back); else this.startNew('Basic', []);
+}
+listVals(o) {
+  const { db, t, saved, missing, R, tagChip, tagFit } = o, s = this.state, id = this.pick;
+  ${CARD_TAGS_JS}
+  const kinds = { Basic: 'basic', Blank: 'cloze', Image: 'image', Audio: 'audio' }, glyphs = { basic: 'Aa', cloze: '_', image: '▢', audio: '♪' };
+  const flat = md => R.plain(md || '', { join: ' ', math: 'show' }), pct = v => +(v * 100).toFixed(3) + '%';
+  // What a card's row says, like the deck page's list: its front (a blank card's text, with ____ for its blanks) over
+  // its back (a picture's box labels).
+  const words = c => (c.kind === 'cloze' ? [R.plain(c.text || '', { cloze: true, blank: '____', join: ' ', math: 'show' }), R.blanks(c.text || '', { math: 'show' }).join(', ')]
+    : [flat(c.front) || (c.kind === 'audio' ? flat(c.speak) || 'Audio card' : c.kind === 'image' ? 'Image card' : ''), c.kind === 'image' && (c.boxes || []).length ? c.boxes.map(b => b.label).filter(Boolean).join(', ') : flat(c.back)]);
+  // A card as it is now: what's saved, with what you've changed.
+  const now = (rid, base) => { const e = this.eds[rid] || {}; return { ...base, ...(e.edits || {}), ...(e.type ? { kind: kinds[e.type] } : {}) }; };
+  const row = (rid, c, title, sub) => { const on = rid === id, bx = c.kind === 'image' && c.image ? c.boxes || [] : null;
+    return { title, sub, glyph: glyphs[c.kind], hasTags: !!(c.tags || []).length, ...cardFit(c.tags), current: on ? 'true' : 'false', bg: on ? t.surf : 'transparent', chip: on ? t.bg : t.surf,
+      thumb: { show: !!bx, mock: c.image === 'mock', url: bx && c.image !== 'mock' ? c.image : '', boxes: (bx || []).map(b => ({ x: pct(b.x), y: pct(b.y), w: pct(b.w), h: pct(b.h) })) },
+      pick: () => this.pickCard(rid) }; };
+  const q = (s.listQ || '').trim().toLowerCase(), kf = s.listKind || 'all';
+  const all = this.cardIds(db).map(r => { const c = now(r.id, this.cardOf(db, r.id)), [front, back] = words(c); return { id: r.id, c, front, back }; });
+  const shown = all.filter(x => (kf === 'all' || x.c.kind === kf) && (!q || [x.front, x.back, ...(x.c.tags || [])].join(' ').toLowerCase().includes(q))), ids = shown.map(x => x.id);
+  // The new card sits on top while it's open, or while it has words in it.
+  const nd = this.eds.new, draft = nd && (id === 'new' || this.hasWords(nd.edits)) ? now('new', db.draft(nd.type || 'Basic')) : null;
+  // Changing a saved card shows Saving… for a moment, then Saved; adding one shows Added.
+  const since = Date.now() - (this.ed.lastAt || 0), busy = !!saved && since < 900, added = !saved && Date.now() - (this.addedAt || 0) < 2400;
+  if (busy || added) { clearTimeout(this.noteT); this.noteT = setTimeout(() => this.forceUpdate(), busy ? 950 - since : 2450 - Date.now() + this.addedAt); }
+  const n = all.length;
+  return {
+    rows: [...(draft ? [row('new', draft, 'New card', words(draft)[0] || 'Not added yet')] : []), ...shown.map(x => row(x.id, x.c, x.front || 'Empty card', x.back))],
+    none: !shown.length, noneLabel: n ? 'No cards match' : 'No cards yet', countLabel: (shown.length < n ? shown.length + ' of ' : '') + n + (n === 1 ? ' card' : ' cards'),
+    listQuery: s.listQ || '', setListQuery: e => this.setState({ listQ: e && e.target ? e.target.value : '' }),
+    listKinds: [['all', 'All'], ['basic', 'Basic'], ['cloze', 'Blank'], ['image', 'Image'], ['audio', 'Audio']].map(([k, label]) => { const on = k === kf;
+      return { label, pressed: on ? 'true' : 'false', bg: on ? t.bg : 'transparent', fg: on ? t.text : t.muted, sh: on ? '0 1px 3px rgba(0,0,0,.12)' : 'none', pick: () => this.setState({ listKind: k }) }; }),
+    listRef: el => { this.listEl = el; },
+    note: { show: !!saved || added, done: !busy, label: busy ? 'Saving…' : saved ? 'Saved' : 'Added' },
+    isNew: !saved, newCard: () => this.openNew(), addCard: ev => { if (ev && ev.preventDefault) ev.preventDefault(); this.addNew(missing); },
+    deleteCard: () => this.dropSaved(ids), discard: () => this.discardNew(ids)
   };
 }`;
 
@@ -4446,6 +4620,12 @@ const files = {
   'WebEditorBigAudio': ['Web · Bigger card editor · audio (mockup)', typeOf('WebEditorBig', W, H, 'Audio'), { logic: darkLogic, css: EDITOR_CSS, w: W, h: H }],
   'WebEditorBigDark': ['Web · Bigger card editor (dark, mockup)', darkOf('WebEditorBig', W, H), { logic: darkLogic, css: EDITOR_CSS, w: W, h: H }],
   'WebEditorBigImageDark': ['Web · Bigger card editor · image with boxes (dark, mockup)', attrOf('WebEditorBig', W, H, 'card-type="Image" dark="{{yes}}"'), { logic: darkLogic, css: EDITOR_CSS, w: W, h: H }],
+  // Option B, also a mockup: the deck's cards on a screen of their own (cardType: which card it opens on).
+  'WebCardsScreen': ['Web · Cards screen (Option B mockup)', webCards, { props: { ...DARK, cardType: { editor: 'enum', default: 'Basic', options: ['Basic', 'Blank', 'Image', 'Audio'] }, newCard: { editor: 'boolean', default: false }, recording: { editor: 'boolean', default: false } }, logic: CARDS_LOGIC, css: EDITOR_CSS + CARDS_CSS, w: W, h: H }],
+  'WebCardsScreenNew': ['Web · Cards screen · writing a new card (Option B mockup)', attrOf('WebCardsScreen', W, H, 'new-card="{{yes}}"'), { logic: darkLogic, css: EDITOR_CSS + CARDS_CSS, w: W, h: H }],
+  'WebCardsScreenImage': ['Web · Cards screen · image with boxes (Option B mockup)', typeOf('WebCardsScreen', W, H, 'Image'), { logic: darkLogic, css: EDITOR_CSS + CARDS_CSS, w: W, h: H }],
+  'WebCardsScreenBlank': ['Web · Cards screen · fill in the blank (Option B mockup)', typeOf('WebCardsScreen', W, H, 'Blank'), { logic: darkLogic, css: EDITOR_CSS + CARDS_CSS, w: W, h: H }],
+  'WebCardsScreenDark': ['Web · Cards screen (dark, Option B mockup)', darkOf('WebCardsScreen', W, H), { logic: darkLogic, css: EDITOR_CSS + CARDS_CSS, w: W, h: H }],
   'WebReview': ['Web · Review', webReview, { props: { ...DARK, playing: { editor: 'boolean', default: false }, explainOpen: { editor: 'boolean', default: false }, explained: { editor: 'boolean', default: false }, grading: { editor: 'enum', default: 'Four buttons', options: ['Four buttons', 'Check or X', 'Piles'] }, card: { editor: 'enum', default: 'Basic', options: ['Basic', 'Fill in the blank', 'Image', 'Audio'] }, startRevealed: { editor: 'boolean', default: false }, fsrs: { editor: 'boolean', default: true }, progress: { editor: 'enum', default: 'Bar', options: ['Bar', 'Counts', 'None'] }, settingsOpen: { editor: 'boolean', default: false }, newPileOpen: { editor: 'boolean', default: false }, radius: { editor: 'range', default: 32, min: 12, max: 48, step: 2, unit: 'px' } }, logic: REVIEW_LOGIC(64), css: REVIEW_CSS, w: W, h: H }],
   'WebDone': ['Web · Session done', webDone, { props: DARK, logic: doneLogic(300, 22), w: W, h: H }],
   'WebDonePiles': ['Web · Session done · piles', webDonePiles, { props: DARK, logic: donePilesLogic(false), w: W, h: H }],
