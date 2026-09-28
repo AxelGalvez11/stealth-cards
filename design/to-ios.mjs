@@ -1,5 +1,5 @@
 // Copies what the iPhone app (ios/) shares with the design canvas into Swift: the theme colors, the icons, the gradient
-// palettes (plus the site's Midnight, for the Learn sheet's deep top), tag colors, the sign-in wall's cards, and the canvas's sample data
+// palettes (plus the site's Midnight, for the Learn sheet's deep top), the onboarding's icons and moving background, tag colors, the sign-in wall's cards, and the canvas's sample data
 // (and its sample sound's waveform). Run it after changing any of those.
 import { readFileSync, writeFileSync } from 'node:fs';
 import { PALETTES, PALETTE_NAMES, SITE_PALETTES } from './surfaces.mjs';
@@ -18,6 +18,11 @@ const dark = evalJs(th[1]), light = evalJs(th[2]);
 const gray = evalJs(grab(/if \(d && g\) return (\{ bg: '#[0-9A-Fa-f]{6}'[^}]+\});/, 'the gray theme')[1]);
 // Icons: stroke drawings on a 24 x 24 grid.
 const I = evalJs(grab(/const I = (\{[\s\S]*?\n\});/, 'the icons')[1]);
+// The onboarding's own icons (star, sheet, paste, out, copy) go in with the rest.
+Object.assign(I, evalJs(grab(/const OB_I = (\{[\s\S]*?\n\});/, 'the onboarding icons')[1]));
+// The onboarding's moving background (OB_AURA): the page, the folds' light and shadow, how much the edges fade, the
+// grain (its opacity, blend, and the slope and intercept that set how bright it is), and the card's shadow; per mode.
+const OB_AURA = evalJs(grab(/const OB_AURA = (\{[\s\S]*?\n\});/, 'the onboarding background')[1]);
 // Tag colors.
 const tagC = evalJs(grab(/const tagC = (\{[\s\S]*?\});/, 'tag colors')[1]);
 const tagPal = evalJs(grab(/const tagPal = (\[[^\]]*\]);/, 'the tag palette')[1]);
@@ -75,6 +80,9 @@ enum Generated {
   static let icons: [String: String] = [
 ${Object.entries(I).map(([k, v]) => `    ${str(k)}: ${str(v)}`).join(',\n')}
   ]
+
+  /// The onboarding's moving background (design/build.mjs OB_AURA), light and dark.
+${['light', 'dark'].map(m => { const a = OB_AURA[m]; return `  static let aura${m[0].toUpperCase() + m.slice(1)} = Aura(base: ${color(a.base)}, lit: ${color(a.lit)}, deep: ${color(a.deep)}, vig: ${a.vig}, grain: ${+a.grain}, multiply: ${a.blend === 'multiply'}, slope: ${+a.gs}, intercept: ${+a.gi}, card: ${shadow(a.card)})`; }).join('\n')}
 
   static let paletteNames: [String] = ${str(PALETTE_NAMES)}
   static let palettes: [String: Palette] = [

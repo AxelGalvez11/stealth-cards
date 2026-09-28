@@ -38,6 +38,7 @@ extension Store {
       case "color": s.color = v as? Int ?? s.color
       case "photo": s.photo = v as? String ?? s.photo
       case "yourPhoto": s.yourPhoto = v as? String
+      case "welcomed": s.welcomed = v as? Bool ?? s.welcomed
       default: break
       }
     }

@@ -74,6 +74,8 @@ struct LogoView: View {
   @Environment(\.theme) private var t
   let name: String
   let size: CGFloat
+  /// Cursor's ink when it sits on something else (like a black button); its own by default.
+  var ink: Color? = nil
   var body: some View {
     let logo = Generated.logos[name]!, box = logo.box, w = box[2], h = box[3]
     let width = name == "cursor" ? (size * 0.88).rounded() : size
@@ -83,7 +85,7 @@ struct LogoView: View {
       ctx.scaleBy(x: k, y: k); ctx.translateBy(x: -box[0], y: -box[1])
       for p in logo.paths {
         let path = CGMutablePath(); SVG.addPath(p.d, to: path)
-        let color: Color = p.fill == "text" ? t.text : p.fill == "cursor" ? Color(hex: t.dark ? 0xEDECEC : 0x26251E) : Color(hex: UInt32(p.fill.dropFirst(), radix: 16) ?? 0)
+        let color: Color = p.fill == "text" ? t.text : p.fill == "cursor" ? ink ?? Color(hex: t.dark ? 0xEDECEC : 0x26251E) : Color(hex: UInt32(p.fill.dropFirst(), radix: 16) ?? 0)
         ctx.fill(Path(path), with: .color(color), style: FillStyle(eoFill: p.evenOdd))
       }
     }

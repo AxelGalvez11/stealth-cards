@@ -69,6 +69,9 @@ struct DemoProps {
   var naming: String? = nil
   /// Learn mode with its settings open (PhoneQuizSettings).
   var learnSettings = false
+  /// The onboarding open on this step (PhoneWelcome and its twins: "Pick AI", "Steps", "Connected", "Pick source",
+  /// "Source steps", "Found", or "Done").
+  var welcomeStep = "Pick AI"
 }
 
 struct TodayVM {
@@ -121,6 +124,9 @@ final class Store: ObservableObject {
   /// A deck waiting for "Delete" to be confirmed.
   @Published var confirmDelete: String?
   @Published var phase: Phase = .loading
+  /// The welcome after your first sign-in is showing (Welcome.swift): it opens when your library is new (not welcomed
+  /// yet, no decks) and stays until you finish or skip it, even once cards come in.
+  @Published var welcoming = false
   @Published var error: String?
   let api = API()
   private var poll: Task<Void, Never>?
@@ -153,7 +159,10 @@ final class Store: ObservableObject {
   // ---------- loading and saving ----------
   func load() async {
     guard !demo else { return }
-    do { lib = try await api.state(); phase = .ready; startPolling() }
+    do {
+      lib = try await api.state(); phase = .ready; startPolling()
+      if !lib.settings.welcomed && lib.decks.isEmpty { welcoming = true }
+    }
     catch APIError.signedOut { phase = .signedOut }
     catch { self.error = error.localizedDescription; if phase == .loading { phase = .signedOut } }
   }

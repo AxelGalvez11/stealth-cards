@@ -89,6 +89,8 @@ struct RootView: View {
           case "settings": nav.path = [.settings]
           case "learn": nav.tab = .library; nav.path = [.deck(first)]; nav.sheet = .learnStart(first)
           case "decksettings": nav.tab = .library; nav.path = [.deck(first)]; nav.sheet = .deckSettings(first)
+          // The welcome after the first sign-in, whether or not this library is new.
+          case "welcome": store.welcoming = true
           default: break
           }
         }
@@ -177,6 +179,14 @@ extension Board {
     case "PhoneQuizType": store.demoLearn.screen = "type"; nav.full = .learn("cell")
     case "PhoneQuizDone": store.demoLearn.screen = "done"; nav.full = .learn("cell")
     case "PhoneQuizSettings": store.props.learnSettings = true; nav.full = .learn("cell")
+    // The onboarding, open on one of its steps (the canvas's PhoneWelcome with its `step`).
+    case "PhoneWelcome": store.welcoming = true
+    case "PhoneWelcomeClaude": store.welcoming = true; store.props.welcomeStep = "Steps"
+    case "PhoneWelcomeConnected": store.welcoming = true; store.props.welcomeStep = "Connected"
+    case "PhoneWelcomeImport": store.welcoming = true; store.props.welcomeStep = "Pick source"
+    case "PhoneWelcomeAnki": store.welcoming = true; store.props.welcomeStep = "Source steps"
+    case "PhoneWelcomeFound": store.welcoming = true; store.props.welcomeStep = "Found"
+    case "PhoneWelcomeDone": store.welcoming = true; store.props.welcomeStep = "Done"
     case "PhoneSignIn": store.phase = .signedOut
     case "PhoneSignInCode": store.phase = .signedOut; store.signInStep = .code
     default: break
@@ -196,6 +206,7 @@ extension Board {
 
 /// The tabs, with pages pushed on top of them.
 struct MainView: View {
+  @EnvironmentObject private var store: Store
   @EnvironmentObject private var nav: Nav
   @Environment(\.theme) private var t
 
@@ -225,6 +236,8 @@ struct MainView: View {
       MoveTray()
       if let s = nav.sheet { SheetHost(kind: s).zIndex(5) }
       if let f = nav.full { FullHost(kind: f).zIndex(6).transition(.move(edge: .bottom)) }
+      // The welcome after your first sign-in, over everything until it's done or skipped.
+      if store.welcoming { WelcomeScreen().zIndex(10).transition(.opacity) }
     }
     .ignoresSafeArea(edges: .bottom)
     // A design screen's full screen, over its page once that's drawn (Board.setUp).
