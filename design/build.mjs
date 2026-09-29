@@ -5607,7 +5607,10 @@ const REPORT_JS = `const REASONS = [['wrong', 'Wrong or harmful'], ['spam', 'Spa
     note: repNote, setNote: e => this.setState({ repNote: e && e.target ? e.target.value : '' }), notePh: repReason === 'other' ? 'What’s wrong?' : 'A line about it (if you like)',
     err: this.state.repErr || '', hasErr: !!this.state.repErr, off: repOk ? 'false' : 'true', bg: repOk ? t.inv : t.surf2, fg: repOk ? t.invText : t.muted,
     close: () => this.setState({ rep: null, repSent: false, repErr: '' }),
-    save: () => { if (!repOk || !rep0) return; Promise.resolve(db.act.report({ kind: rep0.kind, id: rep0.id, handle: rep0.kind === 'profile' ? rep0.id : undefined, reason: repReason, note: repNote.trim() })).then(() => this.setState({ repSent: true }), e => this.setState({ repErr: e.message })); } };`;
+    save: () => { if (!repOk || !rep0) return;
+      // Signed out (a public page), sending a report signs in first.
+      if (!db.act.report) { db.act.go('/sign-in?next=' + encodeURIComponent(location.pathname)); return; }
+      Promise.resolve(db.act.report({ kind: rep0.kind, id: rep0.id, handle: rep0.kind === 'profile' ? rep0.id : undefined, reason: repReason, note: repNote.trim() })).then(() => this.setState({ repSent: true }), e => this.setState({ repErr: e.message })); } };`;
 // Get verified (VERIFY_SHEET): `verDefault` opens it on a board. It shows "Waiting for review" once a request is in.
 const VERIFY_JS = `const vst = (db.net && db.net.verify && db.net.verify()) || {};
   const verOn = 'ver' in this.state ? !!this.state.ver : typeof verDefault !== 'undefined' && !!verDefault;
@@ -5618,7 +5621,9 @@ const VERIFY_JS = `const vst = (db.net && db.net.verify && db.net.verify()) || {
     school: verSchool, setSchool: e => this.setState({ verSchool: e && e.target ? e.target.value : '' }), contact: verContact, setContact: e => this.setState({ verContact: e && e.target ? e.target.value : '', verErr: '' }),
     err: this.state.verErr || '', hasErr: !!this.state.verErr, off: verOk ? 'false' : 'true', bg: verOk ? t.inv : t.surf2, fg: verOk ? t.invText : t.muted,
     close: () => this.setState({ ver: false, verSent: false, verErr: '' }),
-    save: () => { if (!verOk) return; Promise.resolve(db.act.askVerify({ role: verRole, school: verSchool.trim(), contact: verContact.trim() })).then(() => this.setState({ verSent: true }), e => this.setState({ verErr: e.message })); } };`;
+    save: () => { if (!verOk) return;
+      if (!db.act.askVerify) { db.act.go('/sign-in?next=' + encodeURIComponent(location.pathname)); return; }
+      Promise.resolve(db.act.askVerify({ role: verRole, school: verSchool.trim(), contact: verContact.trim() })).then(() => this.setState({ verSent: true }), e => this.setState({ verErr: e.message })); } };`;
 // The popup's typing box is ready to type in when it opens (in the app; the canvas draws it open).
 const POP_REF_JS = `const popRef = el => { if (!el || db.mock || this.popFocused === this.state.popN) return; this.popFocused = this.state.popN; el.focus(); if (el.select) el.select(); };`;
 

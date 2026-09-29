@@ -410,7 +410,9 @@ renderVals() {
     school: verSchool, setSchool: e => this.setState({ verSchool: e && e.target ? e.target.value : '' }), contact: verContact, setContact: e => this.setState({ verContact: e && e.target ? e.target.value : '', verErr: '' }),
     err: this.state.verErr || '', hasErr: !!this.state.verErr, off: verOk ? 'false' : 'true', bg: verOk ? t.inv : t.surf2, fg: verOk ? t.invText : t.muted,
     close: () => this.setState({ ver: false, verSent: false, verErr: '' }),
-    save: () => { if (!verOk) return; Promise.resolve(db.act.askVerify({ role: verRole, school: verSchool.trim(), contact: verContact.trim() })).then(() => this.setState({ verSent: true }), e => this.setState({ verErr: e.message })); } };
+    save: () => { if (!verOk) return;
+      if (!db.act.askVerify) { db.act.go('/sign-in?next=' + encodeURIComponent(location.pathname)); return; }
+      Promise.resolve(db.act.askVerify({ role: verRole, school: verSchool.trim(), contact: verContact.trim() })).then(() => this.setState({ verSent: true }), e => this.setState({ verErr: e.message })); } };
   return {
     t, ...chrome, grain: String(this.props.grain ?? 0.7), signedIn: !db.signedOut && !this.props.signedOut, signedOutView: !!db.signedOut || !!this.props.signedOut, homeHref: db.mock ? 'Landing.dc.html' : 'https://lucida.cards/', signInHref: db.mock ? 'WebSignIn.dc.html' : '/sign-in?next=' + encodeURIComponent(location.pathname),
     modes, loading: loading && !bad, tiles, hasClasses: !loading && ks.length > 0, noClasses: !loading && !bad && !ks.length, offline: bad,
