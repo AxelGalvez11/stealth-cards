@@ -42,29 +42,49 @@ const CARDS = [
   { id: 'c5', kind: 'basic', front: 'What inhibits pyruvate dehydrogenase?', back: 'Acetyl-CoA and NADH', tags: [], source: '', trail: [{ w: 'made', at: 1 }, { w: 'edited', by: 'Dev Patel', at: 2 }] },
   { id: 'c6', kind: 'cloze', front: '', back: '', text: 'Km is the substrate concentration at [[half]] Vmax.', tags: ['Enzymes'], source: '', trail: [{ w: 'made', at: 1 }] }
 ];
+// How Maria's MCAT Biochemistry came to be (its page's "How it was made", and its History for someone who isn't her).
 const MADE = [
-  { version: 14, kind: 'suggestion', summary: 'Took 3 changes from Maria Santos', ai: '', at: '2026-09-26T10:00:00Z', by: P.maria, n: 3 },
+  { version: 14, kind: 'suggestion', summary: 'Took 3 changes from Alex Kim', ai: '', at: '2026-09-26T10:00:00Z', by: P.alex, n: 3 },
   { version: 13, kind: 'check', summary: 'Dr. Okafor checked every card', ai: '', at: '2026-09-21T10:00:00Z', by: P.okafor, n: 0 },
-  { version: 12, kind: 'suggestion', summary: 'Took 1 change from Dev Patel', ai: '', at: '2026-09-14T10:00:00Z', by: P.dev, n: 6 },
+  { version: 12, kind: 'suggestion', summary: 'Took 2 changes from Dev Patel', ai: '', at: '2026-09-14T10:00:00Z', by: P.dev, n: 2 },
   { version: 9, kind: 'ai', summary: '38 new cards', ai: 'Claude', at: '2026-08-30T10:00:00Z', by: P.maria, n: 38 },
   { version: 1, kind: 'made', summary: 'Shared 220 cards', ai: 'ChatGPT', at: '2026-08-12T10:00:00Z', by: P.maria, n: 0 }
 ];
 const ch = (card, op, kind, before, after) => ({ card, op, kind, before, after });
-const HISTORY = MADE.map(v => ({ ...v, changes: v.kind === 'suggestion' && v.version === 14 ? [
-  ch('c2', 'edit', 'answer', { kind: 'basic', front: 'Which enzyme is the rate-limiting step of glycolysis?', back: 'Hexokinase' }, { kind: 'basic', front: 'Which enzyme is the rate-limiting step of glycolysis?', back: 'Phosphofructokinase-1 (PFK-1)' }),
-  ch('n1', 'add', 'new', null, { kind: 'basic', front: 'What activates PFK-1?', back: 'AMP and fructose-2,6-bisphosphate' }),
-  ch('c7', 'edit', 'typo', { kind: 'basic', front: 'Where does the citric acid cycle happen?', back: 'In the cytoplasm' }, { kind: 'basic', front: 'Where does the citric acid cycle happen?', back: 'In the mitochondrial matrix' })] : [] }));
+const basic = (front, back) => ({ kind: 'basic', front, back });
+const HISTORY = MADE.map(v => ({ ...v, changes: v.version === 14 ? [
+  ch('c2', 'edit', 'answer', basic('Which enzyme is the rate-limiting step of glycolysis?', 'Hexokinase'), basic('Which enzyme is the rate-limiting step of glycolysis?', 'Phosphofructokinase-1 (PFK-1)')),
+  ch('n1', 'add', 'new', null, basic('What activates PFK-1?', 'AMP and fructose-2,6-bisphosphate')),
+  ch('c7', 'edit', 'typo', basic('Where does the citric acid cycle hapen?', 'In the mitochondrial matrix'), basic('Where does the citric acid cycle happen?', 'In the mitochondrial matrix'))]
+  : v.version === 12 ? [ch('c5', 'edit', 'answer', basic('What inhibits pyruvate dehydrogenase?', 'ATP'), basic('What inhibits pyruvate dehydrogenase?', 'Acetyl-CoA and NADH')),
+    ch('c8', 'remove', 'remove', basic('Glycolysis happens in the mitochondria.', 'False'), null)] : [] }));
+// Your Cell Biology's History (the sample History page): suggestions you took, a teacher's check, cards your AI made
+// for you, and the first version.
+const CELL_HISTORY = [
+  { version: 14, kind: 'suggestion', summary: 'Took 3 changes from Maria Santos', ai: '', at: '2026-09-26T10:00:00Z', by: P.maria, changes: [
+    ch('k7', 'edit', 'answer', basic('Which enzyme is the rate-limiting step of glycolysis?', 'Hexokinase'), basic('Which enzyme is the rate-limiting step of glycolysis?', 'Phosphofructokinase-1 (PFK-1). Hexokinase starts glycolysis but does not limit its rate.')),
+    ch('n1', 'add', 'new', null, basic('What activates PFK-1?', 'AMP and fructose-2,6-bisphosphate.')),
+    ch('k8', 'edit', 'typo', basic('The citric acid cycle happens in the cytoplasm.', ''), basic('The citric acid cycle happens in the mitochondrial matrix.', ''))] },
+  { version: 13, kind: 'check', summary: 'Dr. Okafor checked every card', ai: '', at: '2026-09-21T10:00:00Z', by: P.okafor, changes: [] },
+  { version: 12, kind: 'suggestion', summary: 'Took 1 change from Dev Patel', ai: '', at: '2026-09-14T10:00:00Z', by: P.dev, changes: [
+    ch('k6', 'edit', 'answer', basic('What is the role of the ribosome?', 'Makes lipids'), basic('What is the role of the ribosome?', 'Translates mRNA into protein'))] },
+  { version: 9, kind: 'ai', summary: '3 new cards', ai: 'Claude', at: '2026-08-30T10:00:00Z', by: P.alex, changes: [
+    ch('k2', 'add', 'new', null, { kind: 'cloze', text: 'The [[mitochondrion]] is the powerhouse of the cell.' }),
+    ch('k3', 'add', 'new', null, basic('Name structure 1 on the diagram.', 'Nucleus')),
+    ch('k9', 'add', 'new', null, basic('What does ATP synthase make?', 'ATP, from ADP and phosphate.'))] },
+  { version: 1, kind: 'made', summary: 'Shared 220 cards', ai: 'ChatGPT', at: '2026-08-12T10:00:00Z', by: P.alex, changes: [] }
+];
 const SUGGESTIONS = [
-  { id: 'g1', shared_id: 's1', author_name: 'Maria Santos', author: P.maria, ai: '', message: 'Fixed the glycolysis answers from my TA’s review.', status: 'open', created_at: '2026-09-28T08:00:00Z', deck: { name: 'Cell Biology' }, changes: [
+  { id: 'g1', shared_id: 's9', author_name: 'Maria Santos', person: P.maria, ai: '', message: 'Fixed the glycolysis answers from my TA’s review.', status: 'open', created_at: '2026-09-28T08:00:00Z', deck: { id: 's9', name: 'Cell Biology', url: '/@alexkim/cell-biology' }, changes: [
     { id: 'x1', card: 'c2', op: 'edit', kind: 'answer', status: 'open', before: { kind: 'basic', front: 'Which enzyme is the rate-limiting step of glycolysis?', back: 'Hexokinase' }, after: { kind: 'basic', front: 'Which enzyme is the rate-limiting step of glycolysis?', back: 'Phosphofructokinase-1 (PFK-1). Hexokinase starts glycolysis but does not limit its rate.' } },
     { id: 'x2', card: 'n1', op: 'add', kind: 'new', status: 'open', before: null, after: { kind: 'basic', front: 'What activates PFK-1?', back: 'AMP and fructose-2,6-bisphosphate.' } },
     { id: 'x3', card: 'c7', op: 'edit', kind: 'typo', status: 'open', before: { kind: 'basic', front: 'The citric acid cycle happens in the cytoplasm.', back: '' }, after: { kind: 'basic', front: 'The citric acid cycle happens in the mitochondrial matrix.', back: '' } }] },
-  { id: 'g2', shared_id: 's1', author_name: 'Dev Patel', author: P.dev, ai: 'ChatGPT', message: '', status: 'open', created_at: '2026-09-25T08:00:00Z', deck: { name: 'Cell Biology' }, changes: [
+  { id: 'g2', shared_id: 's9', author_name: 'Dev Patel', person: P.dev, ai: 'ChatGPT', message: '', status: 'open', created_at: '2026-09-25T08:00:00Z', deck: { id: 's9', name: 'Cell Biology', url: '/@alexkim/cell-biology' }, changes: [
     { id: 'x4', card: 'n2', op: 'add', kind: 'new', status: 'open', before: null, after: { kind: 'basic', front: 'What does ATP synthase make?', back: 'ATP, from ADP and phosphate.' } }] }
 ];
 // Suggestions you (Alex) sent to other people's decks, for your profile's Suggestions tab: one waiting, one partly
 // taken, one taken, one skipped. `deck` is the deck they went to, as the server adds it to the ones you sent.
-const sent = (id, key, message, at, statuses) => ({ id, shared_id: DECKS[key].id, author_name: 'Alex Kim', author: P.alex, ai: '', message, created_at: at, status: statuses.includes('open') ? 'open' : 'done',
+const sent = (id, key, message, at, statuses) => ({ id, shared_id: DECKS[key].id, author_name: 'Alex Kim', person: P.alex, ai: '', message, created_at: at, status: statuses.includes('open') ? 'open' : 'done',
   deck: { id: DECKS[key].id, name: DECKS[key].name, url: DECKS[key].url },
   changes: statuses.map((status, i) => ({ id: id + 'x' + i, card: 'c' + (i + 1), op: 'edit', kind: 'answer', status, before: { kind: 'basic', front: 'Card ' + (i + 1), back: 'Before' }, after: { kind: 'basic', front: 'Card ' + (i + 1), back: 'After' } })) });
 const SENT = [
@@ -81,7 +101,7 @@ const NEWS = [
   { id: 5, kind: 'checked', actor_name: 'Dr. Okafor', person: P.okafor, deck: { id: 's12', name: 'Organic Chemistry', url: '/@alexkim/organic-chemistry' }, data: {}, read: true, created_at: '2026-09-21T10:00:00Z' }
 ];
 export const NET_SAMPLE = {
-  P, DECKS, ALEX_DECKS, CARDS, MADE, HISTORY, SUGGESTIONS, SENT, NEWS,
+  P, DECKS, ALEX_DECKS, CARDS, MADE, HISTORY, CELL_HISTORY, SUGGESTIONS, SENT, NEWS,
   PROFILE: { ...P.alex, bio: 'MCAT decks, made with my AI. Suggestions welcome.', school: 'UC Davis', subject: 'Pre-med', followers: 340, following: 86, contributions: 23, featured: ['s9', 's10'], stars: 7360 },
   OTHER: { ...P.maria, bio: 'Biochem TA. I fix what my students trip on.', school: 'UC Davis', subject: 'Biochemistry', followers: 1280, following: 140, contributions: 212, featured: ['s1'], stars: 6400 },
   DISCOVER: { topics: ['MCAT', 'Languages', 'Computer science', 'Chemistry', 'Law', 'History', 'Biology'], sections: [

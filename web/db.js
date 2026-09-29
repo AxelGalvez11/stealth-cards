@@ -606,6 +606,9 @@ export async function createDb({ onChange, go }) {
     },
     addCard: (deckId, o) => send('card.add', { deckId, ...o }),
     removeCards: ids => send('card.delete', { ids }),
+    // Cards your AI made that wait for you (Suggestions): keep them (they join the deck) or toss them, a few at once.
+    keepCards: ids => send('card.keep', { ids }),
+    tossCards: ids => send('card.delete', { ids }),
     grade: async (cardId, rating) => {
       const c = S.cards.find(x => x.id === cardId); if (!c || !session) return;
       const entry = { cardId, rating, was: c.srs.state };
@@ -819,9 +822,10 @@ export async function createDb({ onChange, go }) {
         examDay: d.exam || '', leechAt: leechAt(d), leechAct: leechAct(d),
         forecast: forecast(7, [d]).vals, piles: (d.piles || []).map(p => ({ name: p.name, n: cardsOf(d.id).filter(c => c.pile === p.name).length })) };
     },
+    // `pending`: a card your AI made that waits for you to keep it (Settings → Check AI cards first).
     cards: id => { const d = deckById(id), ro = d && shareOf(d).readOnly;
       return deckCards(d, S.cards).map(c => ({ id: c.id, kind: KIND[c.kind], icon: ICON[c.kind], front: listFront(c), back: listBack(c), tags: c.tags, next: nextLabel(c), paused: !!c.paused,
-        ai: byAI(c) && c.source !== 'shared' ? c.source : '', href: ro ? suggestHref(d, c) : '/deck/' + id + '/card/' + c.id, group: c.group || null })); },
+        ai: byAI(c) && c.source !== 'shared' ? c.source : '', href: ro ? suggestHref(d, c) : '/deck/' + id + '/card/' + c.id, group: c.group || null, pending: !!c.pending, created: c.created || 0 })); },
     // Changes your AI wants to make to your cards, waiting for your OK (Settings: check AI cards and changes first).
     proposals: id => S.cards.filter(c => c.proposal && (!id || c.deckId === id)).map(c => { const p = c.proposal, after = p.remove ? null : { ...c, ...p.patch };
       return { id: c.id, deckId: c.deckId, deckName: (deckById(c.deckId) || {}).name || '', ai: p.ai || 'AI', remove: !!p.remove, before: { q: listFront(c), a: listBack(c) }, after: after ? { q: listFront(after), a: listBack(after) } : null }; }),

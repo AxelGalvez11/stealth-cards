@@ -19,7 +19,14 @@ const PROP_SETS = [
   { tab: 'Memory' }, { tab: 'Weak spots' }, { tab: 'Pace' }, { tab: 'Pace', free: true }, { tab: 'Memory', dark: true, dim: true },
   { settingsOpen: true, settingsTab: 'Studying', free: true }, { settingsOpen: true, settingsTab: 'Studying', free: true, $state: { $m: { deck: { exam: '2026-10-04' } } } }, { settingsOpen: true, settingsTab: 'Studying', stepGoal: true },
   { mode: 'cards', level: 'leech' }, { mode: 'cards', level: 'paused' }, { mode: 'cards', level: 'hard' }, { paused: true }, { cardId: 'k1', paused: true, keyboard: false },
-  { tune: 'Not enough reviews' }, { tune: 'Tuning' }, { tune: 'Off' }, { plan: 'Free' }
+  { tune: 'Not enough reviews' }, { tune: 'Tuning' }, { tune: 'Off' }, { plan: 'Free' },
+  // The study network: a shared deck (yours, one you study, signed out, loading, not shared) with its copy dialog and its
+  // Suggest a change panel in each step, Suggestions for one deck or all of them, and History (opened, going back).
+  { owner: true }, { studying: true }, { copyOpen: true, $state: { cpFolders: true } }, { suggest: 'c2' }, { suggest: 'c3' }, { suggest: 'c4' }, { suggest: 'new' }, { suggest: '1' },
+  { suggest: 'c2', $state: { spRemove: true } }, { suggest: 'new', $state: { spKind: 'cloze' } }, { suggest: 'c2', $state: { spSent: true } }, { signedOut: true }, { loading: true }, { missing: true },
+  { deckTab: 'History' }, { deckTab: 'People' }, { $state: { openCard: 'c1' } }, { owner: true, $state: { openCard: 'c1' } },
+  { deckId: '' }, { pickItem: 'ai' }, { pickItem: 'g1' }, { noSuggestions: true, aiWaiting: false },
+  { someoneElse: true, openVersion: 14 }, { openVersion: 12, confirmVersion: 12 }, { openVersion: 9 }
 ];
 // The study network's pages: loading, signed out, nothing yet, not found, someone else's profile (followed or not),
 // a profile's tabs, Edit profile (with a handle someone has, or one that can't be a handle), and a deck's ⋯ menu.

@@ -154,7 +154,7 @@ export const MOCK_METHOD = String.raw`mock() {
   // Decks and cards you drag here keep their new order (and cards their new deck) on this board.
   const order = m.deckOrder || X.DECKS.map(d => d.id), inOrder = () => order.map(id => X.DECKS.find(d => d.id === id));
   const before = (list, id, b) => { const l = list.filter(x => x !== id), at = b ? l.indexOf(b) : -1; l.splice(at < 0 ? l.length : at, 0, id); return l; };
-  const cardDeck = m.cardDeck || {}, cardOrder = m.cardOrder || X.CARDS.map(c => c.id);
+  const cardDeck = m.cardDeck || {}, cardOrder = m.cardOrder || X.CARDS.map(c => c.id), aiDone = m.aiDone || {};
   // Live's sample room (the boards' props pick what it shows: an empty lobby, a picture question, the answer, the end).
   const livePerson = name => ({ id: 'p' + LS.people.indexOf(name), name, color: LS.people.indexOf(name) % 5 });
   // The sample's QR code (29 by 29 modules), drawn the way web/qr.js draws one, with a margin of 2.
@@ -182,7 +182,9 @@ export const MOCK_METHOD = String.raw`mock() {
     allCards: () => X.ALL_CARDS.map(([was, front, back, icon, next, level, tags], i) => { const deckId = cardDeck['a' + i] || was, d = X.DECKS.find(x => x.id === deckId), id = 'a' + i, paused = pausedIds[id] ?? i === 10;
       return { id, kind: '', icon, front, back, tags, next: paused ? 'Paused' : next, level, deckId, deckName: d.name, seed: d.name, style: null, round: 0, folder: folderOf(deckId), href: 'WebCardsScreen.dc.html', paused, leech: [1, 6, 10].includes(i) }; }),
     searchDecks: q => X.DECKS.filter(d => d.name.toLowerCase().includes(q)).map(d => d.id),
-    cards: () => cardOrder.map(id => X.CARDS.find(r => r.id === id)).filter(r => !cardDeck[r.id] || cardDeck[r.id] === 'cell').map(r => ({ ...r, href: 'WebCardsScreen.dc.html', paused: !!pausedIds[r.id], next: pausedIds[r.id] ? 'Paused' : r.next })),
+    // Prop aiWaiting: the sample's AI cards wait for you to keep or toss them (the Suggestions boards).
+    cards: () => cardOrder.map(id => X.CARDS.find(r => r.id === id)).filter(r => (!cardDeck[r.id] || cardDeck[r.id] === 'cell') && aiDone[r.id] !== 'tossed')
+      .map(r => ({ ...r, href: 'WebCardsScreen.dc.html', paused: !!pausedIds[r.id], next: pausedIds[r.id] ? 'Paused' : r.next, ...(p.aiWaiting && r.ai && !aiDone[r.id] ? { pending: true, next: 'Waiting for you' } : {}) })),
     // A sample card, for the editor boards that open one to edit (their cardId setting).
     card: id => { const r = X.CARDS.find(c => c.id === id); if (!r) return null;
       const kind = { text: 'basic', blank: 'cloze', image: 'image', audio: 'audio' }[r.icon], d = X.DRAFTS[{ basic: 'Basic', cloze: 'Blank', image: 'Image', audio: 'Audio' }[kind]];
@@ -244,6 +246,12 @@ export const MOCK_METHOD = String.raw`mock() {
       const wait = !!p.loading, D = N.DECKS, pick = k => D[k];
       const star = id => (m.stars && id in m.stars ? m.stars[id] : null), follows = m.follows || {};
       const deckCard = d => { const s = star(d.id); return s == null ? d : { ...d, stars: d.stars + (s ? 1 : -1) }; };
+      const picked = s => { const pk = (m.picks || {})[s.id] || {};
+        return { ...s, changes: s.changes.map(c => { const v = pk[c.id] || pk.$all; return v && c.status === 'open' ? { ...c, status: v === 'take' ? 'taken' : 'skipped' } : c; }) }; };
+      const open = () => (wait ? undefined : p.noSuggestions ? [] : N.SUGGESTIONS.map(picked).filter(s => s.changes.some(c => c.status === 'open')));
+      // Going back to a version (on this board) adds a version saying so.
+      const back = list => (m.restored ? [{ version: list[0].version + 1, kind: 'restore', summary: 'Went back to version ' + m.restored, ai: '', at: '2026-09-28T09:58:00Z', by: N.P.alex,
+        changes: list.filter(v => v.version > m.restored).flatMap(v => v.changes).slice(0, 3).map(c => ({ ...c, op: c.op === 'add' ? 'remove' : c.op === 'remove' ? 'add' : 'edit', kind: c.op === 'add' ? 'remove' : c.op === 'remove' ? 'new' : c.kind, before: c.after, after: c.before })) }, ...list] : list);
       const deckPage = () => ({ ...deckCard(D.mcat), helpers: [{ handle: 'devp', name: 'Dev Patel' }], contributors: [{ handle: 'devp', name: 'Dev Patel', n: 6 }, { handle: 'alexkim', name: 'Alex Kim', n: 3 }],
         people: [N.P.maria, N.P.dev, N.P.okafor, N.P.alex], cardsList: N.CARDS, moreCards: 634, made: N.MADE,
         me: p.signedOut ? null : { owner: !!p.owner, helper: false, studying: m.studying || (p.studying ? 'cell' : ''), copied: m.copied || '', watching: !!(m.watching ?? p.watching), starred: star('s1') ?? false, open: p.owner ? 3 : 0 } });
@@ -267,9 +275,11 @@ export const MOCK_METHOD = String.raw`mock() {
             saved: p.empty ? [] : [D.mcat, D.kanji, D.bio2a].map(deckCard), me: { self: true, following: false } };
         },
         deck: () => (wait ? undefined : deckPage()), deckById: () => (wait ? undefined : deckPage()),
-        history: () => (wait ? undefined : { id: 's1', name: 'Cell Biology', url: '/@alexkim/cell-biology', owner: N.P.alex, mine: true, following: 214, versions: N.HISTORY }),
+        // Your Cell Biology's History; prop someoneElse shows Maria's MCAT Biochemistry, which isn't yours.
+        history: () => (wait ? undefined : p.someoneElse ? { id: 's1', name: 'MCAT Biochemistry', url: '/@mariasantos/mcat-biochemistry', owner: N.P.maria, mine: false, following: 300, versions: N.HISTORY }
+          : { id: 's9', name: 'Cell Biology', url: '/@alexkim/cell-biology', owner: N.P.alex, mine: true, following: 214, versions: back(N.CELL_HISTORY) }),
         activity: () => (wait ? undefined : p.empty ? { unread: 0, items: [] } : { unread: m.read ? 0 : 2, items: N.NEWS.map(x => ({ ...x, read: m.read ? true : x.read })) }),
-        suggestions: () => (m.decided ? N.SUGGESTIONS.filter(x => !m.decided[x.id]) : N.SUGGESTIONS), inbox: () => N.SUGGESTIONS, sent: () => (wait ? undefined : p.empty ? [] : N.SENT),
+        suggestions: open, inbox: open, sent: () => (wait ? undefined : p.empty ? [] : N.SENT),
         mine: () => ({ handle: 'alexkim', profile: N.P.alex, decks: [{ id: 's9', slug: 'cell-biology', visibility: 'public', stars: 1300, learners: 214, copies: 86, version: 14, open: 3 }] }),
         drop: noop, act: () => Promise.resolve(null)
       };
@@ -301,8 +311,10 @@ export const MOCK_METHOD = String.raw`mock() {
       addPile: (id, name) => set({ piles: [...deck().piles, { name, n: 0 }] }),
       star: (id, on) => set({ stars: { ...(m.stars || {}), [id]: !!on } }), watch: (id, on) => set({ watching: !!on }),
       follow: (h, on) => set({ follows: { ...(m.follows || {}), [h]: !!on } }), study: () => set({ studying: 'cell' }), copyDeck: () => set({ copied: 'cell' }),
-      decide: id => set({ decided: { ...(m.decided || {}), [id]: true } }), readNews: () => set({ read: true }),
-      suggest: () => Promise.resolve({ id: 'g9' }), restore: noop, checkDeck: noop, ensureProfile: noop,
+      decide: (id, picks) => { set({ picks: { ...(m.picks || {}), [id]: { ...((m.picks || {})[id] || {}), ...picks } } }); return Promise.resolve({}); }, readNews: () => set({ read: true }),
+      suggest: () => Promise.resolve({ id: 'g9', taken: false }), restore: (id, v) => { set({ restored: v }); return Promise.resolve({ changes: 1 }); }, checkDeck: noop,
+      keepCards: ids => { set({ aiDone: { ...aiDone, ...Object.fromEntries(ids.map(x => [x, 'kept'])) } }); return Promise.resolve({}); },
+      tossCards: ids => { set({ aiDone: { ...aiDone, ...Object.fromEntries(ids.map(x => [x, 'tossed'])) } }); return Promise.resolve({}); }, ensureProfile: noop,
       // Someone in the sample already has the handle: it's taken, like the server says.
       updateProfile: patch => {
         const h = patch.handle ? String(patch.handle).toLowerCase() : '';

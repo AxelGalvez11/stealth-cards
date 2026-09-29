@@ -178,10 +178,13 @@ async function cardsById(sharedId, ids) {
   return out;
 }
 // A new version in the deck's History: who made it (and through which AI app), what changed, in plain words. Quick
-// edits by the same person run together as one version, so typing doesn't fill History with steps.
+// edits by the same person run together as one version, so typing doesn't fill History with steps, and so do the
+// changes the owner takes from one person in one sitting (Take it, then Take all), one version crediting them.
+// `summary` can be a function of how many changes the version has.
 async function addVersion(sharedId, changes, { by, ai = '', kind = 'edit', summary = '', joinable = true }) {
   const last = (await rest('/deck_versions?shared_id=eq.' + val(sharedId) + '&select=id,version,author,ai,kind,changes,created_at&order=version.desc&limit=1'))[0];
-  if (joinable && last && last.kind === kind && ['edit', 'ai'].includes(kind) && last.author === (by && by.id) && last.ai === ai && Date.now() - Date.parse(last.created_at) < 30 * MIN) {
+  const words = list => (typeof summary === 'function' ? summary(list.length) : summary || summaryOf(list));
+  if (joinable && last && last.kind === kind && ['edit', 'ai', 'suggestion'].includes(kind) && last.author === (by && by.id) && last.ai === ai && Date.now() - Date.parse(last.created_at) < 30 * MIN) {
     const all = merge(last.changes || [], changes);
     // Changes that undid each other (a typo made and fixed again) leave no version at all.
     if (!all.length) {
@@ -189,12 +192,12 @@ async function addVersion(sharedId, changes, { by, ai = '', kind = 'edit', summa
       await rest('/shared_decks?id=eq.' + val(sharedId), { method: 'PATCH', body: { version: last.version - 1 } });
       return last.version - 1;
     }
-    await rest('/deck_versions?id=eq.' + val(last.id), { method: 'PATCH', body: { changes: all, summary: summary || summaryOf(all) } });
+    await rest('/deck_versions?id=eq.' + val(last.id), { method: 'PATCH', body: { changes: all, summary: words(all) } });
     return last.version;
   }
   for (let n = (last ? last.version : 0) + 1, tries = 0; tries < 5; n++, tries++) {
     try {
-      await rest('/deck_versions', { method: 'POST', body: { shared_id: sharedId, version: n, author: by ? by.id : null, author_name: by ? by.name : '', ai, kind, summary: summary || summaryOf(changes), changes } });
+      await rest('/deck_versions', { method: 'POST', body: { shared_id: sharedId, version: n, author: by ? by.id : null, author_name: by ? by.name : '', ai, kind, summary: words(changes), changes } });
       await rest('/shared_decks?id=eq.' + val(sharedId), { method: 'PATCH', body: { version: n } });
       return n;
     } catch (e) { if (e.status !== 409) throw e; }
@@ -241,7 +244,7 @@ async function publish(uid, d, info = {}) {
   for (const id of removed) { const b = was.get(id); if (b && !b.deleted) diffs.push({ card: id, op: 'remove', before: b.data, after: null, kind: 'remove' }); }
   if (diffs.length && !info.first) {
     const credit = info.credit, owner = info.owner || personOf(await profileOf(uid));
-    if (credit && credit.suggestion) await addVersion(sh.id, diffs, { by: credit, kind: 'suggestion', summary: 'Took ' + plural(diffs.length, 'change') + ' from ' + credit.name, joinable: false });
+    if (credit && credit.suggestion) await addVersion(sh.id, diffs, { by: credit, kind: 'suggestion', summary: n => 'Took ' + plural(n, 'change') + ' from ' + credit.name });
     else if (credit && credit.restore) await addVersion(sh.id, diffs, { by: owner, kind: 'restore', summary: 'Went back to version ' + credit.restore, joinable: false });
     else await addVersion(sh.id, diffs, { by: owner, ai: info.ai || '', kind: info.ai ? 'ai' : 'edit' });
     if (!credit || !credit.quiet) await tellFollowers(sh.id, uid, owner, diffs);
@@ -565,25 +568,27 @@ export async function decide(uid, id, picks = {}, { byHelper = false } = {}) {
 // The suggestions waiting on your decks (or a deck), newest first, and the ones you sent.
 export async function suggestionsFor(uid, { sharedId = '', mine = false, all = false } = {}) {
   const sid = socialId(uid);
-  if (mine) return decksOf(await rest('/suggestions?author=eq.' + val(sid) + '&select=*&order=created_at.desc&limit=100'));
+  if (mine) return withSenders(await rest('/suggestions?author=eq.' + val(sid) + '&select=*&order=created_at.desc&limit=100'));
   if (sharedId) {
     const sh = await sharedRow(sharedId, 'id,owner,helpers,maintained');
     if (!sh) throw err('No such deck', 404);
     const helper = (sh.helpers || []).some(h => h.id === sid);
     if (sh.owner !== sid && !helper) throw err('Only the deck’s owner sees its suggestions.', 403);
-    return rest('/suggestions?shared_id=eq.' + val(sharedId) + (all ? '' : '&status=eq.open') + '&select=*&order=created_at.desc&limit=100');
+    return withSenders(await rest('/suggestions?shared_id=eq.' + val(sharedId) + (all ? '' : '&status=eq.open') + '&select=*&order=created_at.desc&limit=100'));
   }
-  return rest('/suggestions?owner=eq.' + val(sid) + (all ? '' : '&status=eq.open') + '&select=*&order=created_at.desc&limit=100');
+  return withSenders(await rest('/suggestions?owner=eq.' + val(sid) + (all ? '' : '&status=eq.open') + '&select=*&order=created_at.desc&limit=100'));
 }
-// The deck each of your suggestions went to (its name and page; null once it isn't shared), for your profile's
-// Suggestions tab: those decks are other people's, so your library can't name them.
-async function decksOf(rows) {
-  const ids = [...new Set(rows.map(r => r.shared_id).filter(Boolean))];
-  const decks = ids.length ? await rest('/shared_decks?id=in.' + inList(ids) + '&select=id,name,slug,owner') : [];
-  const owners = decks.length ? await rest('/profiles?id=in.' + inList([...new Set(decks.map(d => d.owner))]) + '&select=id,handle') : [];
-  return rows.map(r => {
-    const d = decks.find(x => x.id === r.shared_id), o = d && owners.find(x => x.id === d.owner);
-    return { ...r, deck: d ? { id: d.id, name: d.name, url: o ? urlOf(o.handle, d.slug) : '/d/' + d.id } : null };
+// Who sent each suggestion (their picture, and their name linking to their profile) and which deck it's for, without
+// anyone's account id.
+async function withSenders(rows) {
+  if (!rows.length) return rows;
+  const ids = [...new Set(rows.map(r => r.author).filter(Boolean))], decks = [...new Set(rows.map(r => r.shared_id))];
+  const [people, shared] = await Promise.all([ids.length ? rest('/profiles?id=in.' + inList(ids) + '&select=id,handle,name,avatar,color,verified,kind') : [],
+    rest('/shared_decks?id=in.' + inList(decks) + '&select=id,name,slug,owner')]);
+  const owners = shared.length ? await rest('/profiles?id=in.' + inList([...new Set(shared.map(d => d.owner))]) + '&select=id,handle') : [];
+  return rows.map(({ owner, author, ...r }) => {
+    const d = shared.find(x => x.id === r.shared_id), o = d && owners.find(x => x.id === d.owner);
+    return { ...r, person: face(people.find(x => x.id === author)) || { name: r.author_name }, deck: d ? { id: d.id, name: d.name, url: o ? urlOf(o.handle, d.slug) : '/d/' + d.id } : null };
   });
 }
 
