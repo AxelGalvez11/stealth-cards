@@ -20,7 +20,7 @@ enum WelcomeStep: String, CaseIterable {
 
 /// [id, name, short name]: the ids are Connect's (ConnectVM.clients).
 private let AIS: [(id: String, name: String, short: String)] = [("claude", "Claude", "Claude"), ("openai", "ChatGPT", "ChatGPT"), ("cursor", "Cursor", "Cursor"), ("mcp", "Other app", "Other")]
-private let SOURCES: [(id: String, name: String, icon: String)] = [("anki", "Anki", "star"), ("quizlet", "Quizlet", "decks"), ("sheet", "Spreadsheet", "sheet"), ("paste", "Paste text", "paste")]
+private let SOURCES: [(id: String, name: String, icon: String)] = [("anki", "Anki", "obStar"), ("quizlet", "Quizlet", "decks"), ("sheet", "Spreadsheet", "sheet"), ("paste", "Paste text", "paste")]
 private let ASK = "Make 5 flashcards about the Krebs cycle."
 /// The canvas's made-up file for Anki and a spreadsheet: [deck, cards].
 private let FILES: [String: (String, [(String, Int)])] = ["anki": ("Biology.txt", [("Cell Biology", 142), ("Genetics", 64), ("Ecology", 42)]), "sheet": ("vocab.csv", [("Vocab", 120)])]
@@ -465,7 +465,7 @@ struct WelcomeScreen: View {
           if live { UIPasteboard.general.string = ASK }
           asked = true
         } label: {
-          Icon(asked ? "check" : "copy", 15, asked ? 2.4 : 2).frame(width: 34, height: 34).background(Circle().fill(t.bg))
+          Icon(asked ? "check" : "obCopy", 15, asked ? 2.4 : 2).frame(width: 34, height: 34).background(Circle().fill(t.bg))
         }
         .buttonStyle(.press).accessibilityLabel(asked ? "Copied" : "Copy")
       }

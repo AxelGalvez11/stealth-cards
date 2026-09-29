@@ -18,15 +18,86 @@ struct Library: Decodable {
   var me: Me?
   /// The server has Lucida's own AI set up, so a card can be explained.
   var aiOn: Bool
-  enum CodingKeys: String, CodingKey { case rev, settings, ai, folders, decks, cards, logs, me, aiOn }
+  /// You on the study network, once you have a profile: your handle (web/social.mjs ensureProfile keeps it here).
+  var profile: ProfileRef?
+  enum CodingKeys: String, CodingKey { case rev, settings, ai, folders, decks, cards, logs, me, aiOn, profile }
   init(from d: Decoder) throws {
     let c = try d.container(keyedBy: CodingKeys.self)
     rev = c.v(.rev, 0); settings = c.v(.settings, UserSettings()); ai = c.v(.ai, AIState()); folders = c.v(.folders, [])
-    decks = c.v(.decks, []); cards = c.v(.cards, []); logs = c.v(.logs, []); me = c.v(.me, nil); aiOn = c.v(.aiOn, false)
+    decks = c.v(.decks, []); cards = c.v(.cards, []); logs = c.v(.logs, []); me = c.v(.me, nil); aiOn = c.v(.aiOn, false); profile = c.v(.profile, nil)
   }
   init(rev: Int = 0, settings: UserSettings = UserSettings(), ai: AIState = AIState(), folders: [Folder] = [], decks: [Deck] = [], cards: [Card] = [], logs: [ReviewLog] = [], me: Me? = nil, aiOn: Bool = false) {
     self.rev = rev; self.settings = settings; self.ai = ai; self.folders = folders; self.decks = decks; self.cards = cards; self.logs = logs; self.me = me; self.aiOn = aiOn
   }
+}
+
+/// Your handle on the study network (lucida.cards/@alexkim).
+struct ProfileRef: Decodable {
+  var handle = ""
+  enum CodingKeys: String, CodingKey { case handle }
+  init(handle: String) { self.handle = handle }
+  init(from d: Decoder) throws { handle = try d.container(keyedBy: CodingKeys.self).v(.handle, "") }
+}
+
+/// A deck of yours that's shared (web/social.mjs shareDeck): its shared id, who can see it ("private", "link", or
+/// "public"), and its address's last part (lucida.cards/@you/<slug>).
+struct DeckShare: Decodable {
+  var id = "", vis = "private", slug = ""
+  enum CodingKeys: String, CodingKey { case id, vis, slug }
+  init(id: String, vis: String, slug: String) { self.id = id; self.vis = vis; self.slug = slug }
+  init(from d: Decoder) throws { let c = try d.container(keyedBy: CodingKeys.self); id = c.v(.id, ""); vis = c.v(.vis, "private"); slug = c.v(.slug, "") }
+}
+
+/// A deck from someone else (web/social.mjs addShared): studied as it is ("study": its cards follow theirs) or your
+/// copy ("copy"), whose it is, the owner's changes waiting for a copy, whether a copy gets them, and whether it's still
+/// shared (`gone`: it isn't, so it's yours now).
+struct DeckLink: Decodable {
+  var id = "", mode = "study", slug = ""
+  var owner = LinkOwner()
+  var pending: [PendingChange] = []
+  var updates = true, gone = false
+  enum CodingKeys: String, CodingKey { case id, mode, slug, owner, pending, updates, gone }
+  init(id: String, mode: String, slug: String, owner: LinkOwner, pending: [PendingChange] = [], updates: Bool = true, gone: Bool = false) {
+    self.id = id; self.mode = mode; self.slug = slug; self.owner = owner; self.pending = pending; self.updates = updates; self.gone = gone
+  }
+  init(from d: Decoder) throws {
+    let c = try d.container(keyedBy: CodingKeys.self)
+    id = c.v(.id, ""); mode = c.v(.mode, "study"); slug = c.v(.slug, ""); owner = c.v(.owner, LinkOwner()); pending = c.v(.pending, [])
+    updates = c.v(.updates, true); gone = c.v(.gone, false)
+  }
+}
+struct LinkOwner: Decodable {
+  var name = "", handle = ""
+  enum CodingKeys: String, CodingKey { case name, handle }
+  init(name: String = "", handle: String = "") { self.name = name; self.handle = handle }
+  init(from d: Decoder) throws { let c = try d.container(keyedBy: CodingKeys.self); name = c.v(.name, ""); handle = c.v(.handle, "") }
+}
+/// One of the owner's changes waiting for your copy: its card (the shared card's id), add, edit, or remove, what kind of
+/// change it is (web/social.mjs kindOf), whether you changed that card too, and what the card said before and after.
+struct PendingChange: Decodable {
+  var card = "", op = "edit", kind = "edit", mine = false
+  var before: CardContent?, after: CardContent?
+  enum CodingKeys: String, CodingKey { case card, op, kind, mine, before, after }
+  init(card: String, op: String, kind: String, mine: Bool, before: CardContent?, after: CardContent?) {
+    self.card = card; self.op = op; self.kind = kind; self.mine = mine; self.before = before; self.after = after
+  }
+  init(from d: Decoder) throws {
+    let c = try d.container(keyedBy: CodingKeys.self)
+    card = c.v(.card, ""); op = c.v(.op, "edit"); kind = c.v(.kind, "edit"); mine = c.v(.mine, false); before = c.v(.before, nil); after = c.v(.after, nil)
+  }
+}
+/// What a card says (a shared card's content): enough to show a change in a list.
+struct CardContent: Decodable {
+  var kind = "basic", front = "", back = "", text = ""
+  enum CodingKeys: String, CodingKey { case kind, front, back, text }
+  init(kind: String = "basic", front: String = "", back: String = "", text: String = "") { self.kind = kind; self.front = front; self.back = back; self.text = text }
+  init(from d: Decoder) throws {
+    let c = try d.container(keyedBy: CodingKeys.self)
+    kind = c.v(.kind, "basic"); front = c.v(.front, ""); back = c.v(.back, ""); text = c.v(.text, "")
+  }
+  /// As a list shows it (db.js updatesOf): the question (a blank as ____) and the answer (a blank's words).
+  var question: String { kind == "cloze" ? Rich.plain(text, cloze: true, blank: "____", join: " ", showMath: true) : Rich.plain(front, join: " ", showMath: true) }
+  var answer: String { kind == "cloze" ? Rich.blanks(text, showMath: true).joined(separator: ", ") : Rich.plain(back, join: " ", showMath: true) }
 }
 
 /// A folder of decks in the Library (one level: no folders inside folders). A deck names its folder by id.
@@ -146,13 +217,15 @@ struct Deck: Decodable, Identifiable {
   var folder: String?, bg: DeckBg
   /// Its cards in the order you dragged them into (nil: never rearranged, newest first; see Order.swift).
   var cardOrder: [String]?
-  enum CodingKeys: String, CodingKey { case id, name, tags, created, cover, paused, grading, fsrs, goal, gapIdx, steps, perDay, piles, folder, bg, cardOrder }
+  /// Sharing: how a deck of yours is shared, or whose deck this is (the study network).
+  var share: DeckShare?, link: DeckLink?
+  enum CodingKeys: String, CodingKey { case id, name, tags, created, cover, paused, grading, fsrs, goal, gapIdx, steps, perDay, piles, folder, bg, cardOrder, share, link }
   init(from d: Decoder) throws {
     let c = try d.container(keyedBy: CodingKeys.self)
     id = c.v(.id, UUID().uuidString); name = c.v(.name, "Untitled deck"); tags = c.v(.tags, []); created = c.v(.created, 0)
     cover = c.v(.cover, Cover()); paused = c.v(.paused, false); grading = c.v(.grading, "four"); fsrs = c.v(.fsrs, true)
     goal = c.v(.goal, 90); gapIdx = c.v(.gapIdx, 3); steps = c.v(.steps, ["1m", "10m"]); perDay = c.v(.perDay, 20); piles = c.v(.piles, [])
-    folder = c.v(.folder, nil); bg = c.v(.bg, DeckBg()); cardOrder = c.v(.cardOrder, nil)
+    folder = c.v(.folder, nil); bg = c.v(.bg, DeckBg()); cardOrder = c.v(.cardOrder, nil); share = c.v(.share, nil); link = c.v(.link, nil)
   }
 }
 
@@ -236,7 +309,9 @@ struct Card: Decodable, Identifiable {
   /// Its AI explanation, and the Learn mode questions an AI app wrote for it.
   var explain: Explanation?
   var quiz: [QuizQuestion] = []
-  enum CodingKeys: String, CodingKey { case id, deckId, kind, front, back, note, text, tags, image, audio, wave, speak, lang, auto, source, pending, created, srs, pile, cloze, group, boxes, box, occ, explain, quiz }
+  /// A card of a deck from someone else: the shared card it came from.
+  var origin: String?
+  enum CodingKeys: String, CodingKey { case id, deckId, kind, front, back, note, text, tags, image, audio, wave, speak, lang, auto, source, pending, created, srs, pile, cloze, group, boxes, box, occ, explain, quiz, origin }
   init(from d: Decoder) throws {
     let c = try d.container(keyedBy: CodingKeys.self)
     id = c.v(.id, UUID().uuidString); deckId = c.v(.deckId, ""); kind = c.v(.kind, "basic")
@@ -245,7 +320,7 @@ struct Card: Decodable, Identifiable {
     source = c.v(.source, "you"); pending = c.v(.pending, false); created = c.v(.created, 0); srs = c.v(.srs, SRS())
     pile = c.v(.pile, nil); cloze = c.v(.cloze, nil); group = c.v(.group, nil)
     boxes = c.v(.boxes, []); box = c.v(.box, nil); occ = c.v(.occ, "one")
-    explain = c.v(.explain, nil); quiz = c.v(.quiz, [])
+    explain = c.v(.explain, nil); quiz = c.v(.quiz, []); origin = c.v(.origin, nil)
   }
 }
 

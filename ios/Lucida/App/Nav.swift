@@ -2,11 +2,14 @@
 // sheets over a page (new card, new deck, deck settings, Learn), and full screens (review, session done, Learn mode).
 import SwiftUI
 
-enum Route: Hashable { case settings, deck(String), folder(String), inbox }
+/// Pages pushed on a tab: Settings, a deck, a folder, Check AI cards, someone's profile (`profile("")` is yours), and News.
+enum Route: Hashable { case settings, deck(String), folder(String), inbox, profile(String), news }
 enum SheetKind: Identifiable, Equatable {
   case newDeck, newCard(deckId: String?, cardId: String?), deckSettings(String), learnStart(String)
   /// The New folder popup (maybe for a deck that goes in it), or Rename on a folder's page; `name`: what's typed to start.
   case nameFolder(rename: String?, deck: String?, name: String)
+  /// Edit profile (on your profile), and a copy's changes from the deck it came from (take or skip each).
+  case editProfile, deckUpdates(String)
   var id: String {
     switch self {
     case .newDeck: return "newDeck"
@@ -14,9 +17,14 @@ enum SheetKind: Identifiable, Equatable {
     case .deckSettings(let d): return "settings-" + d
     case .learnStart(let d): return "learn-" + d
     case .nameFolder(let f, let d, _): return "folder-\(f ?? "")-\(d ?? "")"
+    case .editProfile: return "editProfile"
+    case .deckUpdates(let d): return "updates-" + d
     }
   }
 }
+/// A page of the web app shown in the app (for the pages the iPhone app doesn't draw yet: a shared deck's page, its
+/// History, its suggestions).
+struct WebPage: Identifiable { let url: URL; var id: String { url.absoluteString } }
 enum FullKind: Identifiable, Equatable {
   case review(deckId: String?, pile: String?), done, learn(String)
   var id: String {
@@ -38,6 +46,10 @@ final class Nav: ObservableObject {
   @Published var full: FullKind?
   /// A design screen's full screen, waiting for the page under it to be drawn (see MainView).
   var boardFull: FullKind?
+  /// A web page over the app (Safari), for pages the app doesn't have yet.
+  @Published var web: WebPage?
+  /// Edit profile opens once your profile is showing (Settings → Edit profile).
+  var wantsEdit = false
 
   func push(_ r: Route) { path.append(r) }
   func back() { if !path.isEmpty { path.removeLast() } }
@@ -64,4 +76,8 @@ final class Nav: ObservableObject {
     DispatchQueue.main.async { withAnimation(.out(0.35)) { self.full = nil } }
   }
   func pick(_ t: Tab) { path = []; tab = t }
+  /// Someone's profile (`handle` "": yours).
+  func profile(_ handle: String) { push(.profile(handle)) }
+  /// A web app page (`url`: where it opens), for pages the iPhone app doesn't draw yet.
+  func open(_ url: URL?) { if let url { web = WebPage(url: url) } }
 }

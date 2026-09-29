@@ -2,8 +2,10 @@
 import SwiftUI
 
 extension Store {
-  /// Changes a setting: shown at once and saved on the server after (saveNow), or kept on the design screen.
-  func setSetting(_ patch: [String: Any]) {
+  /// Changes a setting: shown at once and saved on the server after (saveNow), or kept on the design screen. The save
+  /// comes back, for waiting on it.
+  @discardableResult
+  func setSetting(_ patch: [String: Any]) -> Task<Void, Never>? {
     if demo {
       for (k, v) in patch {
         switch k {
@@ -19,9 +21,9 @@ extension Store {
         default: break
         }
       }
-      return
+      return nil
     }
-    saveNow("settings.update", ["patch": patch]) { Store.patch(&$0.settings, patch) }
+    return saveNow("settings.update", ["patch": patch]) { Store.patch(&$0.settings, patch) }
   }
   /// A settings.update patch made to a copy of your settings.
   static func patch(_ s: inout UserSettings, _ patch: [String: Any]) {
@@ -39,6 +41,7 @@ extension Store {
       case "photo": s.photo = v as? String ?? s.photo
       case "yourPhoto": s.yourPhoto = v as? String
       case "welcomed": s.welcomed = v as? Bool ?? s.welcomed
+      case "name": s.name = v as? String ?? s.name
       default: break
       }
     }
@@ -92,7 +95,6 @@ struct SettingsScreen: View {
   @EnvironmentObject private var store: Store
   @EnvironmentObject private var nav: Nav
   @State private var account = false
-  @State private var pickingPhoto = false
 
   var body: some View {
     let s = store.settings, demo = store.demo
@@ -122,6 +124,13 @@ struct SettingsScreen: View {
         .buttonStyle(.press)
         .confirmationDialog("Your account", isPresented: $account) {
           Button("Sign out", role: .destructive) { Task { await store.signOut() } }
+        }
+        // Your handle opens your profile; Edit profile opens it with its editor open. Before you have a handle it says
+        // Your profile (opening it makes one).
+        group("Profile") {
+          Button { nav.profile("") } label: { row(store.myHandle.isEmpty ? "Your profile" : "@" + store.myHandle) { value("View profile") } }.buttonStyle(.plain)
+          divider
+          Button { nav.wantsEdit = true; nav.profile("") } label: { row("Edit profile") { value("") } }.buttonStyle(.plain)
         }
         group("Profile picture") { photoPanel }
         planGroup
@@ -156,57 +165,11 @@ struct SettingsScreen: View {
     .debugScroll()
     .ignoresSafeArea()
     .toolbar(.hidden, for: .navigationBar)
-    // Your photo goes up small: it only ever shows small.
-    .photoPicker($pickingPhoto, side: Upload.profileSide) { store.setYourPhoto($0) }
   }
 
-  /// Profile picture (photoPanel on the canvas): Google photo (for Google sign-ins), Your photo, or Color, across the
-  /// row; then your colors, a line about the Google photo, or Change photo and Remove. Picking Your photo before there is
-  /// one opens the photo picker, like Change photo.
+  /// Profile picture (photoPanel on the canvas), on the gray row.
   private var photoPanel: some View {
-    let choice = store.photoChoice, color = store.avatarColor
-    let options = (store.hasGooglePhoto ? [("google", "Google photo")] : []) + [("yours", "Your photo"), ("color", "Color")]
-    return VStack(alignment: .leading, spacing: 12) {
-      HStack(spacing: 2) {
-        ForEach(options, id: \.0) { id, label in
-          let on = id == choice
-          Button { id == "yours" && !store.hasYourPhoto ? (pickingPhoto = true) : store.setSetting(["photo": id]) } label: {
-            Text(label).css(13, .semibold).lineLimit(1).foregroundStyle(on ? t.invText : t.muted)
-              .padding(.horizontal, 8).frame(maxWidth: .infinity).frame(height: 30)
-              .background(Capsule().fill(on ? t.inv : .clear)).contentShape(Capsule())
-          }
-          .buttonStyle(.plain)
-          .accessibilityAddTraits(on ? .isSelected : [])
-        }
-      }
-      .padding(3)
-      .background(Capsule().fill(t.bg))
-      switch choice {
-      case "google":
-        Text("Uses the photo on your Google account. Change it there and it updates here.").css(13, lh: 1.45).foregroundStyle(t.muted)
-          .fixedSize(horizontal: false, vertical: true)
-      case "yours":
-        HStack(spacing: 8) {
-          SmallButton(label: "Change photo", icon: "image", bg: t.bg) { pickingPhoto = true }
-          SmallButton(label: "Remove", bg: t.bg) { store.removePhoto() }
-        }
-      default:
-        HStack(spacing: 10) {
-          ForEach(Avatar.colors.indices, id: \.self) { i in
-            Button { store.setSetting(["color": i]) } label: {
-              Circle().fill(LinearGradient(colors: Avatar.colors[i].map { Color(hex: $0) }, startPoint: .topLeading, endPoint: .bottomTrailing))
-                .frame(width: 34, height: 34)
-                .overlay { if i == color { Circle().strokeBorder(t.text, lineWidth: 2).padding(-4) } }
-            }
-            .buttonStyle(.press)
-            .accessibilityLabel(Avatar.names[i])
-            .accessibilityAddTraits(i == color ? .isSelected : [])
-          }
-        }
-      }
-    }
-    .frame(maxWidth: .infinity, alignment: .leading)
-    .padding(.horizontal, 16).padding(.top, 12).padding(.bottom, 16)
+    PhotoChoices().frame(maxWidth: .infinity, alignment: .leading).padding(.horizontal, 16).padding(.top, 12).padding(.bottom, 16)
   }
 
   /// PLAN: Free with Go Pro, or Pro with when it renews (or ends) and Stripe's page to manage or cancel it (PhoneSettings).
@@ -232,7 +195,7 @@ struct SettingsScreen: View {
       }
     } else {
       group("Plan") {
-        row("Free", sub: "Pro adds Learn mode, photo covers, and more") {
+        row("Free", sub: "Pro adds exam tools, deeper stats, and more") {
           Button { UIApplication.shared.open(URL(string: "https://lucida.cards/pricing")!) } label: {
             Text("Go Pro").css(14, .semibold).foregroundStyle(t.invText).padding(.horizontal, 16).frame(height: 36).background(Capsule().fill(t.inv))
           }
@@ -318,6 +281,60 @@ struct SettingsScreen: View {
     .padding(3)
     .background(Capsule().fill(t.bg))
     .fixedSize()
+  }
+}
+
+/// Your profile picture's choices (photoPanel on the canvas; Settings and Edit profile): Google photo (for Google
+/// sign-ins), Your photo, or Color, across the row; then your colors, a line about the Google photo, or Change photo and
+/// Remove. Picking Your photo before there is one opens the photo picker, like Change photo.
+struct PhotoChoices: View {
+  @Environment(\.theme) private var t
+  @EnvironmentObject private var store: Store
+  @State private var pickingPhoto = false
+  var body: some View {
+    let choice = store.photoChoice, color = store.avatarColor
+    let options = (store.hasGooglePhoto ? [("google", "Google photo")] : []) + [("yours", "Your photo"), ("color", "Color")]
+    VStack(alignment: .leading, spacing: 12) {
+      HStack(spacing: 2) {
+        ForEach(options, id: \.0) { id, label in
+          let on = id == choice
+          Button { if id == "yours" && !store.hasYourPhoto { pickingPhoto = true } else { store.setSetting(["photo": id]) } } label: {
+            Text(label).css(13, .semibold).lineLimit(1).foregroundStyle(on ? t.invText : t.muted)
+              .padding(.horizontal, 8).frame(maxWidth: .infinity).frame(height: 30)
+              .background(Capsule().fill(on ? t.inv : .clear)).contentShape(Capsule())
+          }
+          .buttonStyle(.plain)
+          .accessibilityAddTraits(on ? .isSelected : [])
+        }
+      }
+      .padding(3)
+      .background(Capsule().fill(t.bg))
+      switch choice {
+      case "google":
+        Text("Uses the photo on your Google account. Change it there and it updates here.").css(13, lh: 1.45).foregroundStyle(t.muted)
+          .fixedSize(horizontal: false, vertical: true)
+      case "yours":
+        HStack(spacing: 8) {
+          SmallButton(label: "Change photo", icon: "image", bg: t.bg) { pickingPhoto = true }
+          SmallButton(label: "Remove", bg: t.bg) { store.removePhoto() }
+        }
+      default:
+        HStack(spacing: 10) {
+          ForEach(Avatar.colors.indices, id: \.self) { i in
+            Button { store.setSetting(["color": i]) } label: {
+              Circle().fill(LinearGradient(colors: Avatar.colors[i].map { Color(hex: $0) }, startPoint: .topLeading, endPoint: .bottomTrailing))
+                .frame(width: 34, height: 34)
+                .overlay { if i == color { Circle().strokeBorder(t.text, lineWidth: 2).padding(-4) } }
+            }
+            .buttonStyle(.press)
+            .accessibilityLabel(Avatar.names[i])
+            .accessibilityAddTraits(i == color ? .isSelected : [])
+          }
+        }
+      }
+    }
+    // Your photo goes up small: it only ever shows small.
+    .photoPicker($pickingPhoto, side: Upload.profileSide) { store.setYourPhoto($0) }
   }
 }
 

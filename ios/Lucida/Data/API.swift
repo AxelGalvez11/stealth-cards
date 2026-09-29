@@ -56,6 +56,39 @@ final class API {
   }
 
   func state() async throws -> Library { try JSONDecoder().decode(Library.self, from: try await request("api/state").0) }
+  /// The library after decks you study from other people take their owners' newest changes (the app's first look, and
+  /// coming back after a while away, like the web app).
+  func syncedState() async throws -> Library {
+    var r = URLRequest(url: URL(string: "api/state?sync=1", relativeTo: API.base)!.absoluteURL)
+    r.setValue("application/json", forHTTPHeaderField: "accept")
+    let (data, resp) = try await session.data(for: r)
+    if (resp as? HTTPURLResponse)?.statusCode == 401 { throw APIError.signedOut }
+    return try JSONDecoder().decode(Library.self, from: data)
+  }
+
+  // ---------- the study network (web/net.js) ----------
+  /// A page's answer (`path` may have a query): its status and body, whatever the status.
+  func get(_ path: String) async throws -> (status: Int, data: Data) {
+    var r = URLRequest(url: URL(string: path, relativeTo: API.base)!.absoluteURL)
+    r.setValue("application/json", forHTTPHeaderField: "accept")
+    let (data, resp) = try await session.data(for: r)
+    guard let http = resp as? HTTPURLResponse else { throw APIError.server(API.unreachable) }
+    if http.statusCode == 401 { throw APIError.signedOut }
+    return (http.statusCode, data)
+  }
+  /// A change on the network (/api/social): what it made, and your library after it.
+  func social(_ type: String, _ payload: [String: Any]) async throws -> (result: [String: Any], state: Library?) {
+    var body = payload; body["type"] = type
+    let data: Data, http: HTTPURLResponse
+    do { (data, http) = try await raw("api/social", method: "POST", json: body) }
+    catch APIError.signedOut { throw APIError.signedOut }
+    catch { throw APIError.server(API.unreachable) }
+    let j = (try? JSONSerialization.jsonObject(with: data)) as? [String: Any]
+    guard (200..<300).contains(http.statusCode) else { throw APIError.server(j?["error"] as? String ?? "Something went wrong. Try again.") }
+    struct Reply: Decodable { let state: Library? }
+    return (j?["result"] as? [String: Any] ?? [:], (try? JSONDecoder().decode(Reply.self, from: data))?.state)
+  }
+  static let unreachable = "Couldn’t reach Lucida. Check your connection."
   func rev() async throws -> Int { ((try JSONSerialization.jsonObject(with: try await request("api/rev").0) as? [String: Any])?["rev"] as? Int) ?? 0 }
 
   /// One change (web/store.mjs apply): returns what it made and the library after it.

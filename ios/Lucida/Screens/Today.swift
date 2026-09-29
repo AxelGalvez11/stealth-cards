@@ -10,12 +10,17 @@ struct TodayScreen: View {
     let vm = store.today()
     ScrollView(showsIndicators: false) {
       VStack(alignment: .leading, spacing: 18) {
-        // Your picture on the left opens Settings; the title sits in the middle, + on the right (todayTitle).
-        HStack(spacing: 12) {
-          Button { nav.push(.settings) } label: { Avatar(size: 44, initial: store.avatarInitial, color: store.avatarColor, pic: store.avatar) }
-            .buttonStyle(.press).accessibilityLabel("Settings")
-          Text("Today").css(34, .bold, ls: -0.03).foregroundStyle(t.text).frame(maxWidth: .infinity).accessibilityAddTraits(.isHeader)
-          RoundButton(icon: "plus", label: vm.hasDecks ? "New card" : "New deck") { vm.hasDecks ? nav.newCard(deckId: vm.newCardDeck) : nav.newDeck() }
+        // Your picture on the left opens your profile (whose gear opens Settings); the title sits in the middle of the
+        // screen; news (with how many are new) and + on the right (todayTitle).
+        ZStack {
+          Text("Today").css(34, .bold, ls: -0.03).foregroundStyle(t.text).accessibilityAddTraits(.isHeader)
+          HStack(spacing: 8) {
+            Button { nav.profile("") } label: { Avatar(size: 44, initial: store.avatarInitial, color: store.avatarColor, pic: store.avatar) }
+              .buttonStyle(.press).accessibilityLabel("Your profile")
+            Spacer(minLength: 0)
+            NewsBell(count: store.netUnread()) { nav.push(.news) }
+            RoundButton(icon: "plus", label: vm.hasDecks ? "New card" : "New deck") { vm.hasDecks ? nav.newCard(deckId: vm.newCardDeck) : nav.newDeck() }
+          }
         }
         .frame(height: 44)
         if vm.hasDecks { hero(vm); decks(vm) } else { welcome }
@@ -166,5 +171,28 @@ struct EmptyWeek: View {
     }
     .accessibilityElement(children: .ignore)
     .accessibilityLabel("No study days yet this week")
+  }
+}
+
+/// NEWS_BTN: the bell, with how much news is new in a red dot on its corner (99+ past 99).
+struct NewsBell: View {
+  @Environment(\.theme) private var t
+  let count: Int
+  let action: () -> Void
+  var body: some View {
+    Button(action: action) {
+      Icon("bell", 18, 2).foregroundStyle(t.text).frame(width: 44, height: 44).background(Circle().fill(t.surf))
+        .overlay(alignment: .topTrailing) {
+          if count > 0 {
+            Text(count > 99 ? "99+" : String(count)).css(11, .bold).foregroundStyle(.white).lineLimit(1).fixedSize()
+              .padding(.horizontal, 5).frame(minWidth: 18, minHeight: 18, maxHeight: 18)
+              .background(Capsule().fill(Color(hex: 0xE5484D)))
+              .background(Capsule().fill(t.bg).padding(-2))
+              .offset(x: 3, y: -3)
+          }
+        }
+    }
+    .buttonStyle(.press)
+    .accessibilityLabel(count > 0 ? "News, \(count) new" : "News")
   }
 }
