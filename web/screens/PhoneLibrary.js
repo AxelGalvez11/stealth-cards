@@ -134,6 +134,9 @@ mock() {
     look: 'system', darkMode: p.dim ? 'gray' : 'black', grads: 'mix', prog: ({ Bar: 'bar', Counts: 'counts', None: 'none' })[p.progress] || 'bar', perDay: 20, goal: 90, grading: 'four', fsrs: true, check: true, reminder: '9:00 AM', ...(m.settings || {}) };
   const perms = { read: true, text: true, media: true, edit: true, check: true, del: false, ...(m.perms || {}) };
   const noop = () => {};
+  // In the Library, System Design is shared (Public) and Spanish Verbs is a copy of Maria's deck.
+  const LIB_NET = { sys: { shared: { vis: 'public', id: 's10', url: '/@alexkim/system-design', label: 'Public' } },
+    span: { link: { mode: 'copy', gone: false, id: 's8', owner: { name: 'Maria Santos', handle: 'mariasantos' }, url: '/@mariasantos/spanish-b1', pending: 0, updates: true } } };
   // Folders you make or change here stay on this board.
   const folders = () => m.folders || X.FOLDERS;
   const folderOf = id => (m.moved && id in m.moved ? m.moved[id] : (folders().find(f => (f.decks || []).includes(id)) || {}).id || null);
@@ -148,7 +151,7 @@ mock() {
     tags: () => [],
     decks: () => inOrder().map(d => ({ d, i: X.DECKS.indexOf(d) })).map(({ d, i }) => ({ ...d, name: d.name, tags: X.TAGS[d.id], seed: d.name, style: null, image: null, totalLabel: d.total, paused: false, folder: folderOf(d.id), bg: { kind: 'deck', image: null },
       due: caught ? 0 : d.due, overdue: caught ? 0 : d.overdue, soon: caught ? (d.soon || [1, 1, 2, 3, 1, 3][i]) : d.soon,
-      href: 'WebDeck.dc.html', studyHref: 'WebReview.dc.html', settingsHref: 'WebDeckSettings.dc.html' })),
+      href: 'WebDeck.dc.html', studyHref: 'WebReview.dc.html', settingsHref: 'WebDeckSettings.dc.html', shared: null, link: null, readOnly: false, ...(LIB_NET[d.id] || {}) })),
     deck,
     folders: () => folders().map(f => { const ds = inOrder().filter(d => folderOf(d.id) === f.id);
       return { id: f.id, name: f.name, n: ds.length, due: caught ? 0 : ds.reduce((n, d) => n + d.due, 0), decks: ds.map(d => ({ ...d, seed: d.name, style: null, round: 0 })), href: 'WebLibraryFolder.dc.html' }; }),
@@ -489,6 +492,8 @@ renderVals() {
     const move = f => () => { act.moveDeck(d.id, f); this.setState({ moveDeck: null }); };
     // A photo cover takes white words on a dark wash, whatever the gradient would have used.
     const onPhoto = photo ? { ink: '#FFFFFF', glass: 'rgba(0,0,0,.28)', glassLine: 'rgba(255,255,255,.35)', shadow: '0 1px 12px rgba(0,0,0,.35)' } : {};
+    // Whose it is: a deck you share says how (Public, Link only), a deck from someone says whose.
+    const whose = d.link ? 'From ' + (d.link.owner.name || 'someone') : d.shared ? d.shared.label : '';
     return { ...d, ...grad(d), ...onPhoto, t1: slot(0), t2: slot(1), t3: slot(2), hasPhoto: !!photo, photo,
       href: db.mock ? board('Deck') : d.href, studyHref: db.mock ? board('Review') : d.studyHref,
       more: { show: fit.more > 0, label: '+' + fit.more }, tagCount: tg.length + (tg.length === 1 ? ' tag' : ' tags'), tagsOpen: open, expanded: open ? 'true' : 'false',
@@ -497,7 +502,8 @@ renderVals() {
       moveOpen: moving, moveExpanded: moving ? 'true' : 'false', toggleMove: () => this.setState({ moveDeck: moving ? null : d.id, openDeck: null }),
       moveTo: [{ id: null, name: 'No folder' }, ...folders].map(f => ({ label: f.name, on: (d.folder || null) === f.id, pressed: (d.folder || null) === f.id ? 'true' : 'false', pick: move(f.id) })),
       newFolder: () => openNaming('new', d.id),
-      total: d.totalLabel, ret: d.ret == null ? '—' : d.ret + '%', line: d.totalLabel + ' cards · ' + d.fresh + ' new' + (d.ret == null ? '' : ' · ' + d.ret + '%'),
+      total: d.totalLabel, ret: d.ret == null ? '—' : d.ret + '%', whose, hasWhose: !!whose,
+      line: (whose ? whose + ' · ' : '') + d.totalLabel + (d.total === 1 ? ' card · ' : ' cards · ') + d.fresh + ' new' + (d.ret == null ? '' : ' · ' + d.ret + '%'),
       canStudy: d.due > 0 || d.fresh > 0, noStudy: !d.due && !d.fresh, dueColor: d.due ? t.text : t.muted, dueLabel: d.due ? String(d.due) : '—',
       retColor: d.ret == null ? t.muted : d.ret >= 90 ? t.good : d.ret >= 85 ? t.hard : t.again };
   });

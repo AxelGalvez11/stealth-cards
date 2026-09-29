@@ -640,7 +640,7 @@ const webDecks = webRoot(`${sidebar('Library')}
           <div data-sc-item="{{d.id}}" class="sc-row sc-drag" style="${LIST_COLS} position: relative; height: 64px; border-bottom: 1px solid {{t.line}}; font-size: 14px;">
             <a href="{{d.href}}" aria-label="{{d.name}}" draggable="false" class="sc-hit" style="position: absolute; inset: 0;"></a>
             <span style="width: 36px; height: 36px; border-radius: 12px; background: {{d.base}}; overflow: hidden;"><sc-if value="{{d.hasPhoto}}" hint-placeholder-val="{{ false }}"><img src="{{d.photo}}" alt="" draggable="false" style="width: 100%; height: 100%; object-fit: cover;"></sc-if></span>
-            <span style="font-size: 15px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{d.name}}</span>
+            <span style="min-width: 0; display: flex; flex-direction: column; gap: 2px;"><span style="font-size: 15px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{d.name}}</span><sc-if value="{{d.hasWhose}}" hint-placeholder-val="{{ false }}"><span style="font-size: 12px; color: {{t.muted}}; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{d.whose}}</span></sc-if></span>
             <span style="position: relative; min-width: 0; pointer-events: none;"><span style="display: flex; gap: 6px; min-width: 0; overflow: hidden;">${tagSlot('t1')}${tagSlot('t2')}${tagSlot('t3')}${moreTag('background: {{t.surf}}; color: {{t.muted}};', 24)}</span>${deckTagsPop('left: -12px; top: 34px;')}</span>
             <span style="text-align: right; font-family: ${MONO}; font-size: 15px; color: {{d.dueColor}};">{{d.due}}</span>
             <span style="text-align: right; font-family: ${MONO}; font-size: 14px; color: {{t.muted}};">{{d.total}}</span>
@@ -726,6 +726,8 @@ renderVals() {
     const move = f => () => { act.moveDeck(d.id, f); this.setState({ moveDeck: null }); };
     // A photo cover takes white words on a dark wash, whatever the gradient would have used.
     const onPhoto = photo ? { ink: '#FFFFFF', glass: 'rgba(0,0,0,.28)', glassLine: 'rgba(255,255,255,.35)', shadow: '0 1px 12px rgba(0,0,0,.35)' } : {};
+    // Whose it is: a deck you share says how (Public, Link only), a deck from someone says whose.
+    const whose = d.link ? 'From ' + (d.link.owner.name || 'someone') : d.shared ? d.shared.label : '';
     return { ...d, ...grad(d), ...onPhoto, t1: slot(0), t2: slot(1), t3: slot(2), hasPhoto: !!photo, photo,
       href: db.mock ? board('Deck') : d.href, studyHref: db.mock ? board('Review') : d.studyHref,
       more: { show: fit.more > 0, label: '+' + fit.more }, tagCount: tg.length + (tg.length === 1 ? ' tag' : ' tags'), tagsOpen: open, expanded: open ? 'true' : 'false',
@@ -734,7 +736,8 @@ renderVals() {
       moveOpen: moving, moveExpanded: moving ? 'true' : 'false', toggleMove: () => this.setState({ moveDeck: moving ? null : d.id, openDeck: null }),
       moveTo: [{ id: null, name: 'No folder' }, ...folders].map(f => ({ label: f.name, on: (d.folder || null) === f.id, pressed: (d.folder || null) === f.id ? 'true' : 'false', pick: move(f.id) })),
       newFolder: () => openNaming('new', d.id),
-      total: d.totalLabel, ret: d.ret == null ? '—' : d.ret + '%', line: d.totalLabel + ' cards · ' + d.fresh + ' new' + (d.ret == null ? '' : ' · ' + d.ret + '%'),
+      total: d.totalLabel, ret: d.ret == null ? '—' : d.ret + '%', whose, hasWhose: !!whose,
+      line: (whose ? whose + ' · ' : '') + d.totalLabel + (d.total === 1 ? ' card · ' : ' cards · ') + d.fresh + ' new' + (d.ret == null ? '' : ' · ' + d.ret + '%'),
       canStudy: d.due > 0 || d.fresh > 0, noStudy: !d.due && !d.fresh, dueColor: d.due ? t.text : t.muted, dueLabel: d.due ? String(d.due) : '—',
       retColor: d.ret == null ? t.muted : d.ret >= 90 ? t.good : d.ret >= 85 ? t.hard : t.again };
   });
