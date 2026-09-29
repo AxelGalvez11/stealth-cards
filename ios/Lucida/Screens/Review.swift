@@ -30,12 +30,16 @@ struct ReviewVM {
   var mode = "four", fsrsOn = true, prog = "bar"
   var piles: [(name: String, n: Int)] = []
   var deckId = ""
+  /// Going over cards picked on the Stats page (its name, like "Hardest cards"); empty otherwise.
+  var setName = ""
 }
 
 /// The review in progress (db.js session): which deck or pile, when it started, and every grade in it.
 struct ReviewSession {
   struct Entry { var cardId: String; var rating: Int?; var pile: String?; var was: String; var logId: String? }
   var key: String, deckId: String?, pile: String?
+  /// Cards picked on the Stats page ("hard", "leech", or "tag:Organelles"), across decks.
+  var set: String? = nil
   var started = nowMs()
   var graded: [Entry] = []
 }
@@ -49,7 +53,7 @@ extension Store {
     CardFace(id: "r3", kind: "audio", front: "What word do you hear?", back: "train", note: "電 electricity + 車 vehicle.", audio: "mock", backBig: "電車", backSub: "でんしゃ · train")
   ]
 
-  func review(_ deckId: String?, pile: String?) -> ReviewVM {
+  func review(_ deckId: String?, pile: String?, set: String? = nil) -> ReviewVM {
     if demo {
       let idx = props.cardIndex + demoGraded, c = Store.demoCards[idx % 4], done = 12 + idx, left = 64 - done
       let d = deck("cell"), gaps = GAPS, maxGap = gaps[d.gapIdx]
@@ -61,32 +65,36 @@ extension Store {
                       counts: (8, 3, max(left - 11, 0)), iv: (d.steps.first ?? "1m", fmt(hardD), fmt(goodD), fmt(easyD)),
                       mode: d.grading, fsrsOn: d.grading != "piles" && d.fsrs, prog: props.prog, piles: demoPiles, deckId: "cell")
     }
-    let key = Store.sessionKey(deckId, pile)
-    if session == nil || session!.key != key { session = ReviewSession(key: key, deckId: deckId, pile: pile) }
-    let E = engine, q = E.queue(deckId, pile: pile, done: Set(session!.graded.map(\.cardId))), done = session!.graded.count
+    let key = Store.sessionKey(deckId, pile, set)
+    if session == nil || session!.key != key { session = ReviewSession(key: key, deckId: deckId, pile: pile, set: set) }
+    let E = engine, q = E.queue(deckId, pile: pile, set: set, done: Set(session!.graded.map(\.cardId))), done = session!.graded.count
     let cur = q.first, d = cur?.deck ?? E.deck(deckId) ?? lib.decks.first
     var vm = ReviewVM(done: done, left: q.count, total: done + q.count,
                       counts: (q.filter { $0.lane == "new" }.count, q.filter { $0.lane == "learn" }.count, q.filter { $0.lane == "rev" }.count),
-                      mode: d?.grading ?? "four", prog: lib.settings.prog, deckId: d?.id ?? "")
+                      mode: d?.grading ?? "four", prog: lib.settings.prog, deckId: d?.id ?? "", setName: Engine.setName(set))
     vm.piles = (d?.piles ?? []).map { p in (p.name, E.cards(of: d!.id).filter { $0.pile == p.name }.count) }
     guard let c = cur?.card, let deck = cur?.deck else { vm.empty = true; vm.fsrsOn = false; return vm }
     vm.lane = cur!.lane
     vm.card = Store.face(c)
+    // When the card came up: how long you take to answer it goes with its grade (db.js shown).
+    if shown?.id != c.id { shown = (c.id, nowMs()) }
     if Engine.scheduled(deck) {
-      let now = nowMs(), pv = FSRS.preview(c.srs, now: now, goal: Double(deck.goal) / 100, maxDays: GAPS[min(max(deck.gapIdx, 0), 6)], steps: deck.steps)
+      let now = nowMs(), pv = FSRS.preview(c.srs, now: now, goal: Double(deck.goal) / 100, maxDays: GAPS[min(max(deck.gapIdx, 0), 6)], steps: deck.steps, w: E.tunedW)
       vm.iv = (FSRS.waitLabel(pv[1]!, now), FSRS.waitLabel(pv[2]!, now), FSRS.waitLabel(pv[3]!, now), FSRS.waitLabel(pv[4]!, now))
       vm.fsrsOn = true
     } else { vm.fsrsOn = false }
     return vm
   }
 
-  static func sessionKey(_ deckId: String?, _ pile: String?) -> String { (deckId ?? "all") + (pile.map { "|" + $0 } ?? "") }
+  static func sessionKey(_ deckId: String?, _ pile: String?, _ set: String? = nil) -> String { (deckId ?? "all") + (pile.map { "|" + $0 } ?? "") + (set.map { "#" + $0 } ?? "") }
   /// A review started from a button is a new session, like the web's (X leaves one without the summary, so the next
   /// review of that deck mustn't carry its grades).
-  func startReview(_ deckId: String?, pile: String? = nil) {
+  func startReview(_ deckId: String?, pile: String? = nil, set: String? = nil) {
     guard !demo else { return }
-    session = ReviewSession(key: Store.sessionKey(deckId, pile), deckId: deckId, pile: pile)
+    session = ReviewSession(key: Store.sessionKey(deckId, pile, set), deckId: deckId, pile: pile, set: set)
   }
+  /// How long the card on screen has been there, in milliseconds (nil for a card that isn't the one shown).
+  func shownFor(_ id: String) -> Double? { shown.flatMap { $0.id == id ? nowMs() - $0.at : nil } }
 
   /// A card as review shows it; a fill-in-the-blank card asks one blank (cloze) or all of them (-1).
   static func face(_ c: Card) -> CardFace {
@@ -108,10 +116,12 @@ extension Store {
     let c = lib.cards[i], now = nowMs()
     session?.graded.append(.init(cardId: cardId, rating: rating, pile: nil, was: c.srs.state, logId: nil))
     let at = (session?.graded.count ?? 1) - 1
-    if Engine.scheduled(d) { lib.cards[i].srs = FSRS.preview(c.srs, now: now, goal: Double(d.goal) / 100, maxDays: GAPS[min(max(d.gapIdx, 0), 6)], steps: d.steps)[rating]! }
+    var body: [String: Any] = ["cardId": cardId, "rating": rating]
+    if let ms = shownFor(cardId), ms > 0 { body["ms"] = Int(ms.rounded()) }
+    if Engine.scheduled(d) { lib.cards[i].srs = FSRS.preview(c.srs, now: now, goal: Double(d.goal) / 100, maxDays: GAPS[min(max(d.gapIdx, 0), 6)], steps: d.steps, w: engine.tunedW)[rating]! }
     else { lib.cards[i].srs.reps += 1; lib.cards[i].srs.last = now }
     Task {
-      let r = await send("review.grade", ["cardId": cardId, "rating": rating])
+      let r = await send("review.grade", body)
       if let id = r["logId"] as? String, session != nil, at < session!.graded.count { session!.graded[at].logId = id }
     }
   }
@@ -123,8 +133,10 @@ extension Store {
     session?.graded.append(.init(cardId: cardId, rating: nil, pile: name, was: "pile", logId: nil))
     let at = (session?.graded.count ?? 1) - 1
     lib.cards[i].pile = name
+    var body: [String: Any] = ["cardId": cardId, "pile": name]
+    if let ms = shownFor(cardId), ms > 0 { body["ms"] = Int(ms.rounded()) }
     Task {
-      let r = await send("review.grade", ["cardId": cardId, "pile": name])
+      let r = await send("review.grade", body)
       if let id = r["logId"] as? String, session != nil, at < session!.graded.count { session!.graded[at].logId = id }
     }
   }
@@ -137,7 +149,7 @@ extension Store {
 
   func setProgress(_ prog: String) { setSetting(["prog": prog]) }
 
-  func hasQueue(_ deckId: String?, pile: String?) -> Bool { demo || !engine.queue(deckId, pile: pile, done: Set(session?.graded.map(\.cardId) ?? [])).isEmpty }
+  func hasQueue(_ deckId: String?, pile: String?, set: String? = nil) -> Bool { demo || !engine.queue(deckId, pile: pile, set: set, done: Set(session?.graded.map(\.cardId) ?? [])).isEmpty }
 }
 
 struct ReviewScreen: View {
@@ -146,6 +158,8 @@ struct ReviewScreen: View {
   @EnvironmentObject private var nav: Nav
   let deckId: String?
   let pile: String?
+  /// Cards picked on the Stats page ("hard", "leech", "tag:Organelles"), across decks.
+  var set: String? = nil
   @State private var revealed = false
   /// After a grade the next card comes up fresh (a small lift) instead of spinning back.
   @State private var moved = false
@@ -159,7 +173,7 @@ struct ReviewScreen: View {
   @State private var autoplaying: Task<Void, Never>? = nil
 
   var body: some View {
-    let rv = store.review(deckId, pile: pile)
+    let rv = store.review(deckId, pile: pile, set: set)
     ZStack {
       VStack(spacing: 16) {
         topBar(rv)
@@ -230,7 +244,7 @@ struct ReviewScreen: View {
   private func topBar(_ rv: ReviewVM) -> some View {
     HStack(spacing: 12) {
       // X goes straight back to the deck's page (Today after a review of every deck); every grade is saved already.
-      RoundButton(icon: "close", label: "End review") { nav.leave(to: deckId) }
+      RoundButton(icon: "close", label: "End review") { if set != nil { nav.closeFull() } else { nav.leave(to: deckId) } }
       HStack(spacing: 10) {
         if rv.prog == "bar" {
           GeometryReader { g in

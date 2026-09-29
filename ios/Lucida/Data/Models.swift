@@ -18,11 +18,14 @@ struct Library: Decodable {
   var me: Me?
   /// The server has Lucida's own AI set up, so a card can be explained.
   var aiOn: Bool
-  enum CodingKeys: String, CodingKey { case rev, settings, ai, folders, decks, cards, logs, me, aiOn }
+  /// False on a server started as the Free app (LUCIDA_PLAN=free, or a made-up person on Free); the Pro tools are off.
+  var pro = true
+  enum CodingKeys: String, CodingKey { case rev, settings, ai, folders, decks, cards, logs, me, aiOn, pro }
   init(from d: Decoder) throws {
     let c = try d.container(keyedBy: CodingKeys.self)
     rev = c.v(.rev, 0); settings = c.v(.settings, UserSettings()); ai = c.v(.ai, AIState()); folders = c.v(.folders, [])
     decks = c.v(.decks, []); cards = c.v(.cards, []); logs = c.v(.logs, []); me = c.v(.me, nil); aiOn = c.v(.aiOn, false)
+    pro = c.v(.pro, true)
   }
   init(rev: Int = 0, settings: UserSettings = UserSettings(), ai: AIState = AIState(), folders: [Folder] = [], decks: [Deck] = [], cards: [Card] = [], logs: [ReviewLog] = [], me: Me? = nil, aiOn: Bool = false) {
     self.rev = rev; self.settings = settings; self.ai = ai; self.folders = folders; self.decks = decks; self.cards = cards; self.logs = logs; self.me = me; self.aiOn = aiOn
@@ -73,7 +76,9 @@ struct UserSettings: Decodable {
   /// The welcome after your first sign-in is done or skipped (the server says no only for a brand-new library; a server
   /// that doesn't know about it counts as yes).
   var welcomed = true
-  enum CodingKeys: String, CodingKey { case name, color, look, darkMode, grads, prog, perDay, goal, grading, fsrs, reminder, photo, yourPhoto, welcomed }
+  /// Tune to you (Pro): the FSRS parameters fitted to your own reviews, and whether they're in use (nil: never tuned).
+  var tune: TuneFit? = nil
+  enum CodingKeys: String, CodingKey { case name, color, look, darkMode, grads, prog, perDay, goal, grading, fsrs, reminder, photo, yourPhoto, welcomed, tune }
   init() {}
   init(from d: Decoder) throws {
     let c = try d.container(keyedBy: CodingKeys.self)
@@ -81,6 +86,20 @@ struct UserSettings: Decodable {
     grads = c.v(.grads, "mix"); prog = c.v(.prog, "bar")
     perDay = c.v(.perDay, 20); goal = c.v(.goal, 90); grading = c.v(.grading, "four"); fsrs = c.v(.fsrs, true); reminder = c.v(.reminder, "9:00 AM")
     photo = c.v(.photo, ""); yourPhoto = c.v(.yourPhoto, nil); welcomed = c.v(.welcomed, true)
+    tune = c.v(.tune, nil)
+  }
+}
+
+/// A fit saved in the library (web/store.mjs cleanTune): the 19 parameters, whether they're on, and what they came from.
+struct TuneFit: Decodable, Equatable {
+  var on = false, w: [Double] = [], n = 0, reviews = 0, at: Double = 0
+  var loss: Double?, base: Double?, gain: Double?
+  enum CodingKeys: String, CodingKey { case on, w, n, reviews, at, loss, base, gain }
+  init() {}
+  init(from d: Decoder) throws {
+    let c = try d.container(keyedBy: CodingKeys.self)
+    on = c.v(.on, false); w = c.v(.w, []); n = c.v(.n, 0); reviews = c.v(.reviews, 0); at = c.v(.at, 0)
+    loss = c.v(.loss, nil); base = c.v(.base, nil); gain = c.v(.gain, nil)
   }
 }
 
@@ -142,6 +161,9 @@ struct DeckBg: Decodable, Equatable {
 struct Deck: Decodable, Identifiable {
   var id: String, name: String, tags: [String], created: Double
   var cover: Cover, paused: Bool, grading: String, fsrs: Bool, goal: Int, gapIdx: Int, steps: [String], perDay: Int, piles: [Pile]
+  /// Pro's scheduling tools: an exam day ("2026-10-12", nil for none), and the rule for cards you keep forgetting: after
+  /// how many forgets (3 to 30), and what happens to them ("tag" them Leech, or "pause" them).
+  var exam: String? = nil, leechAt = 8, leechAct = "tag"
   /// Its folder's id (nil: the Library itself), and its study background.
   var folder: String?, bg: DeckBg
   /// Its cards in the order you dragged them into (nil: never rearranged, newest first; see Order.swift).
@@ -152,9 +174,14 @@ struct Deck: Decodable, Identifiable {
     id = c.v(.id, UUID().uuidString); name = c.v(.name, "Untitled deck"); tags = c.v(.tags, []); created = c.v(.created, 0)
     cover = c.v(.cover, Cover()); paused = c.v(.paused, false); grading = c.v(.grading, "four"); fsrs = c.v(.fsrs, true)
     goal = c.v(.goal, 90); gapIdx = c.v(.gapIdx, 3); steps = c.v(.steps, ["1m", "10m"]); perDay = c.v(.perDay, 20); piles = c.v(.piles, [])
+    let pro = try d.container(keyedBy: ProKeys.self)
+    exam = pro.v(.exam, nil); leechAt = pro.v(.leechAt, 8); leechAct = pro.v(.leechAct, "tag")
     folder = c.v(.folder, nil); bg = c.v(.bg, DeckBg()); cardOrder = c.v(.cardOrder, nil)
   }
 }
+
+/// The deck settings Pro added (kept apart from the deck's other keys).
+private enum ProKeys: String, CodingKey { case exam, leechAt, leechAct }
 
 /// A card's memory for FSRS (web/fsrs.js): new, learning, review, or relearning; `due` and `last` are milliseconds.
 struct SRS: Decodable, Equatable {
@@ -223,6 +250,8 @@ struct Card: Decodable, Identifiable {
   /// The sound's waveform, measured once and kept with the card.
   var wave: Wave?
   var speak = "", lang = "", auto = true, source = "you", pending = false
+  /// Paused (Pro's Pause card): it never comes up, and isn't counted anywhere, until it's unpaused.
+  var paused = false
   var created: Double = 0
   var srs = SRS()
   var pile: String?
@@ -236,13 +265,13 @@ struct Card: Decodable, Identifiable {
   /// Its AI explanation, and the Learn mode questions an AI app wrote for it.
   var explain: Explanation?
   var quiz: [QuizQuestion] = []
-  enum CodingKeys: String, CodingKey { case id, deckId, kind, front, back, note, text, tags, image, audio, wave, speak, lang, auto, source, pending, created, srs, pile, cloze, group, boxes, box, occ, explain, quiz }
+  enum CodingKeys: String, CodingKey { case id, deckId, kind, front, back, note, text, tags, image, audio, wave, speak, lang, auto, source, pending, paused, created, srs, pile, cloze, group, boxes, box, occ, explain, quiz }
   init(from d: Decoder) throws {
     let c = try d.container(keyedBy: CodingKeys.self)
     id = c.v(.id, UUID().uuidString); deckId = c.v(.deckId, ""); kind = c.v(.kind, "basic")
     front = c.v(.front, ""); back = c.v(.back, ""); note = c.v(.note, ""); text = c.v(.text, ""); tags = c.v(.tags, [])
     image = c.v(.image, nil); audio = c.v(.audio, nil); wave = c.v(.wave, nil); speak = c.v(.speak, ""); lang = c.v(.lang, ""); auto = c.v(.auto, true)
-    source = c.v(.source, "you"); pending = c.v(.pending, false); created = c.v(.created, 0); srs = c.v(.srs, SRS())
+    source = c.v(.source, "you"); pending = c.v(.pending, false); paused = c.v(.paused, false); created = c.v(.created, 0); srs = c.v(.srs, SRS())
     pile = c.v(.pile, nil); cloze = c.v(.cloze, nil); group = c.v(.group, nil)
     boxes = c.v(.boxes, []); box = c.v(.box, nil); occ = c.v(.occ, "one")
     explain = c.v(.explain, nil); quiz = c.v(.quiz, [])
@@ -262,10 +291,25 @@ struct Occ {
 struct ReviewLog: Decodable, Identifiable {
   var id: String, cardId: String, deckId: String, at: Double
   var was: String?, rating: Int?, pile: String?
-  enum CodingKeys: String, CodingKey { case id, cardId, deckId, at, was, rating, pile }
+  /// How long the card was on screen (milliseconds, at most 3 minutes), for the time stats.
+  var ms: Double?
+  /// A Learn mode answer (`kind` "learn"): the kind of question (mc, tf, blank, match, type) and whether it was right.
+  var kind: String?, q: String?, ok: Bool?
+  /// When the card was reviewed before this (its memory's `last` then), and what this grade did to a card you keep
+  /// forgetting ("tag" or "pause").
+  var prevLast: Double?, leech: String?
+  enum CodingKeys: String, CodingKey { case id, cardId, deckId, at, was, rating, pile, ms, kind, q, ok, prev, leech }
+  private enum PrevKeys: String, CodingKey { case last }
+  init(id: String = UUID().uuidString, cardId: String = "", deckId: String = "", at: Double = 0, was: String? = nil, rating: Int? = nil, pile: String? = nil, ms: Double? = nil,
+       kind: String? = nil, q: String? = nil, ok: Bool? = nil, prevLast: Double? = nil, leech: String? = nil) {
+    self.id = id; self.cardId = cardId; self.deckId = deckId; self.at = at; self.was = was; self.rating = rating; self.pile = pile; self.ms = ms
+    self.kind = kind; self.q = q; self.ok = ok; self.prevLast = prevLast; self.leech = leech
+  }
   init(from d: Decoder) throws {
     let c = try d.container(keyedBy: CodingKeys.self)
     id = c.v(.id, UUID().uuidString); cardId = c.v(.cardId, ""); deckId = c.v(.deckId, ""); at = c.v(.at, 0)
     was = c.v(.was, nil); rating = c.v(.rating, nil); pile = c.v(.pile, nil)
+    ms = c.v(.ms, nil); kind = c.v(.kind, nil); q = c.v(.q, nil); ok = c.v(.ok, nil); leech = c.v(.leech, nil)
+    prevLast = (try? c.nestedContainer(keyedBy: PrevKeys.self, forKey: .prev)).flatMap { $0.v(.last, Double?.none) }
   }
 }

@@ -133,6 +133,8 @@ struct SettingsScreen: View {
           menuRow("Remember goal", "\(s.goal)%", options: ["80%", "85%", "90%", "93%", "95%"]) { store.setSetting(["goal": Int($0.dropLast()) ?? 90]) }
           divider
           row("Schedule with FSRS", sub: "For 4 grades and ✓ / ✗") { Toggle48(on: fsrs, label: "Schedule with FSRS") { store.setSetting(["fsrs": !fsrs]) } }
+          divider
+          TuneRow()
         }
         group("Look") {
           row("Appearance") { seg([("system", "System"), ("light", "Light"), ("dark", "Dark")], look) { store.setSetting(["look": $0]) } }
@@ -232,8 +234,8 @@ struct SettingsScreen: View {
       }
     } else {
       group("Plan") {
-        row("Free", sub: "Pro adds Learn mode, photo covers, and more") {
-          Button { UIApplication.shared.open(URL(string: "https://lucida.cards/pricing")!) } label: {
+        row("Free", sub: "Pro adds exam tools, deeper stats, and more") {
+          Button { UIApplication.shared.open(API.pricing) } label: {
             Text("Go Pro").css(14, .semibold).foregroundStyle(t.invText).padding(.horizontal, 16).frame(height: 36).background(Capsule().fill(t.inv))
           }
           .buttonStyle(.press)

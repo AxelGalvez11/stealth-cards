@@ -34,6 +34,9 @@ struct LearnQuestion: Codable {
   var beforeSeen: Bool? = nil
 }
 
+/// An answer waiting to be logged (the server's learn.log): the card, the kind of question, right or wrong, and how long it took.
+struct LearnAnswer: Codable { var cardId: String, q: String, ok: Bool, ms: Double }
+
 struct LearnSession: Codable {
   var v = 1
   var deckId: String
@@ -48,6 +51,10 @@ struct LearnSession: Codable {
   var done = false, graded = false
   var lastCard: String? = nil
   var st: [String: LearnCard]
+  /// Answers given since the last question, for the stats (sent when you move on), when the question came up, and when the
+  /// last answer was given (an answer's time counts from the later of the two).
+  var answers: [LearnAnswer]? = nil
+  var qAt: Double? = nil, markAt: Double? = nil
 }
 
 /// What a Learn mode screen shows.
@@ -92,7 +99,7 @@ extension Store {
     if let o = Occ(c) { return o.label }
     return (c.kind == "cloze" ? Rich.blanks(c.text, showMath: true).joined(separator: ", ") : Rich.plain(c.back, join: " ", showMath: true)).trimmingCharacters(in: .whitespacesAndNewlines)
   }
-  func learnable(_ c: Card) -> Bool { !c.pending && c.kind != "audio" && !answerOf(c).isEmpty && (c.kind == "image" ? c.image != nil : !learnText(c).isEmpty) }
+  func learnable(_ c: Card) -> Bool { !c.pending && !c.paused && c.kind != "audio" && !answerOf(c).isEmpty && (c.kind == "image" ? c.image != nil : !learnText(c).isEmpty) }
   func isHard(_ c: Card) -> Bool { c.srs.lapses > 0 || c.srs.state == "relearning" || (c.srs.state == "review" && c.srs.d >= 7) }
   private func card(_ id: String) -> Card? { lib.cards.first { $0.id == id } }
 
@@ -149,6 +156,7 @@ extension Store {
   func learnActive(_ id: String) -> Bool { guard let L = learning else { return false }; return L.deckId == id && !L.done }
 
   func startLearn(_ id: String, set: String, kinds: [String]) -> Bool {
+    if var old = learning { sendAnswers(&old) }
     let cs = learnSetCards(id, set)
     guard !cs.isEmpty else { return false }
     let ids = cs.map(\.id).shuffled()
@@ -183,8 +191,19 @@ extension Store {
     if let after, let at = L.queue.firstIndex(of: after) { L.queue.insert(cid, at: at + 1) } else { L.queue.append(cid) }
   }
 
+  /// Sends the answers given since the last question to the server (learn.log), for the stats.
+  private func sendAnswers(_ L: inout LearnSession) {
+    let list = L.answers ?? []
+    guard !list.isEmpty else { return }
+    L.answers = []
+    guard !demo else { return }
+    Task { for a in list { await send("learn.log", ["cardId": a.cardId, "q": a.q, "ok": a.ok, "ms": Int(a.ms.rounded())]) } }
+  }
+
   private func nextQuestion(_ L: inout LearnSession) {
+    sendAnswers(&L)
     let open = L.queue.filter { L.st[$0]?.learned != true }
+    L.qAt = nowMs()
     guard !open.isEmpty else { L.q = nil; L.done = true; L.ended = nowMs(); finishLearn(&L); return }
     let play = Array(open.prefix(Store.learnPlay)), cid = play.first { $0 != L.lastCard } ?? play[0]
     guard let c = card(cid), let s = L.st[cid] else { return }
@@ -218,6 +237,10 @@ extension Store {
 
   private func mark(_ L: inout LearnSession, _ cid: String, _ ok: Bool, _ kind: String) {
     guard var s = L.st[cid] else { return }
+    // Each answer is saved for the stats (right or wrong, the kind of question, and how long it took), once you move on.
+    let t = nowMs()
+    L.answers = (L.answers ?? []) + [LearnAnswer(cardId: cid, q: kind, ok: ok, ms: t - max(L.qAt ?? t, L.markAt ?? 0))]
+    L.markAt = t
     s.tries += 1
     if !s.seen { s.seen = true; if ok { L.firstRight += 1 } }
     s.lastKind = kind
@@ -264,6 +287,7 @@ extension Store {
   func learnOverride() {
     guard var L = learning, var q = L.q, q.type == "type", q.checked == true, q.ok != true, let id = q.id, var s = L.st[id] else { return }
     q.ok = true; s.misses = max(0, s.misses - 1); s.streak = (q.beforeStreak ?? 0) + 1
+    if var a = L.answers, let i = a.lastIndex(where: { $0.cardId == id }) { a[i].ok = true; L.answers = a }
     if q.beforeSeen != true { L.firstRight += 1 }
     if s.streak >= 2 { s.learned = true; L.justLearned += 1 }
     L.st[id] = s; L.q = q

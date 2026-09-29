@@ -52,8 +52,11 @@ struct DemoProps {
   var noStats = false
   /// Settings on the design screen (darkMode: dark mode's look, "gray" on the canvas's Gray boards).
   var look = "system", darkMode = "black", grads = "mix", fsrs = true, check = true
-  /// Learn mode on Free: the upgrade card instead of the start sheet.
-  var upgrade = false
+  /// The board shows the Free app (its `free` setting): Pro's tools give way to what Pro adds.
+  var free = false
+  /// Deck settings opened with the goal already stepped up to 95% (the canvas's stepGoal), Stats on this tab, the Library's
+  /// All cards on this filter ("leech" or "paused"), the card editor on this card, and the Tune to you row's state.
+  var stepGoal = false, statsTab = "Overview", libState = "", editCard: String? = nil, tune = "on"
   /// Settings' plan: "Free", "Pro", or "Pro, ending" (the canvas board's `plan`).
   var plan = "Pro"
   /// Settings' profile picture (the canvas board's `photo`: Color, Google photo, or Your photo, from `-photo`), as the
@@ -91,10 +94,17 @@ final class Store: ObservableObject {
   /// The design screens: sample data, nothing saved.
   let demo: Bool
   @Published var props = DemoProps()
-  @Published var lib = Library() { didSet { allCardsMemo = nil } }
+  @Published var lib = Library() { didSet { allCardsMemo = nil; studyMemo = StudyMemo() } }
+  /// Things the Pro study tools work out from the library (deep stats, review histories, a goal's cost), until it changes.
+  var studyMemo = StudyMemo()
+  /// Tune to you in progress (0 to 1), and what went wrong the last time.
+  @Published var tuning: Double? = nil
+  @Published var tuneError = ""
   /// The Library's All cards, worked out once per change to the library (see libraryCards).
   var allCardsMemo: [LibCard]? = nil
   @Published var demoDeck = DemoDeck()
+  /// Sample cards paused or unpaused on a design screen (the canvas's pausedIds); All cards' Markovnikov card (a10) starts paused.
+  @Published var demoPaused: [String: Bool] = [:]
   @Published var demoGraded = 0
   @Published var demoLearn = DemoLearn()
   @Published var demoPiles: [(name: String, n: Int)] = [("Know it", 18), ("Almost", 6), ("No clue", 3)]
@@ -121,6 +131,8 @@ final class Store: ObservableObject {
   @Published var signInEmail = ""
   /// The review in progress (not published: the library changes with every grade anyway).
   var session: ReviewSession?
+  /// The card on screen in a review, and when it came up: how long you take to answer it goes with its grade.
+  var shown: (id: String, at: Double)?
   /// A deck waiting for "Delete" to be confirmed.
   @Published var confirmDelete: String?
   @Published var phase: Phase = .loading
@@ -150,11 +162,11 @@ final class Store: ObservableObject {
   /// Lucida Pro: from the server (Stripe), or on the design screens the board's setting.
   var plan: Plan {
     guard demo else { return lib.me?.plan ?? Plan() }
-    return props.plan == "Free" ? Plan() : Plan(pro: true, every: "year", until: "2027-09-24T12:00:00Z", ending: props.plan == "Pro, ending")
+    return props.plan == "Free" || props.free ? Plan() : Plan(pro: true, every: "year", until: "2027-09-24T12:00:00Z", ending: props.plan == "Pro, ending")
   }
-  /// Learn mode is Pro; on Free its button opens the upgrade card.
-  /// A copy of the server on your own computer has nobody signed in, and everything is on there (like db.js pro()).
-  var isPro: Bool { demo ? !props.upgrade : lib.me == nil || plan.pro }
+  /// Pro's tools (an exam date, tuning, deep stats): on for Pro. A copy of the server on your own computer has nobody
+  /// signed in, and everything is on there unless it runs as the Free app (like db.js isPro()).
+  var isPro: Bool { demo ? !props.free && props.plan != "Free" : lib.pro && (lib.me == nil || plan.pro) }
 
   // ---------- loading and saving ----------
   func load() async {
@@ -237,6 +249,9 @@ final class Store: ObservableObject {
         if let r = c["round"] as? Int { d.cover.round = r }
         if c.keys.contains("image") { d.cover.image = c["image"] as? String }
       case "folder": d.folder = v as? String
+      case "exam": d.exam = v as? String
+      case "leechAt": d.leechAt = v as? Int ?? d.leechAt
+      case "leechAct": d.leechAct = v as? String ?? d.leechAct
       case "bg":
         let b = v as? [String: Any] ?? [:]
         if let k = b["kind"] as? String { d.bg.kind = k }
@@ -284,7 +299,7 @@ final class Store: ObservableObject {
                      heroMeta: caught ? "Done for today · 13-day streak" : "Due now · 12-day streak", heroTitle: caught ? "All caught up" : "64 cards",
                      heroSub: caught ? "Next review tomorrow · 32 cards" : "About 11 minutes", heroCta: caught ? "Study 10 new cards" : "Start review",
                      heroSize: caught ? 42 : 56,
-                     rows: X.DECKS.prefix(4).enumerated().map { i, d in .init(id: d.id, name: d.name, sub: "\(d.fresh) new · \(d.total) cards", right: caught ? next[i] : String(d.due), mono: !caught, muted: caught) },
+                     rows: X.DECKS.prefix(4).enumerated().map { i, d in .init(id: d.id, name: d.name, sub: i == 0 ? (Store.demoExam(day: Store.sampleExamDay)?.line ?? "") : "\(d.fresh) new · \(d.total) cards", right: caught ? next[i] : String(d.due), mono: !caught, muted: caught) },
                      newCardDeck: "cell")
     }
     let E = engine, td = E.today, caught = td.due == 0
@@ -296,7 +311,7 @@ final class Store: ObservableObject {
     }
     let rows = decks.map { d -> TodayVM.Row in
       let later = d.soon == nil ? (d.fresh > 0 ? "\(d.fresh) new" : "—") : d.soon == 1 ? "Tomorrow" : "In \(d.soon!) days"
-      return .init(id: d.id, name: d.name, sub: "\(d.fresh) new · \(d.totalLabel) cards", right: d.due > 0 ? String(d.due) : later, mono: d.due > 0, muted: d.due == 0)
+      return .init(id: d.id, name: d.name, sub: d.exam?.line ?? "\(d.fresh) new · \(d.totalLabel) cards", right: d.due > 0 ? String(d.due) : later, mono: d.due > 0, muted: d.due == 0)
     }
     let streak = td.streak > 0 ? " · \(td.streak)-day streak" : ""
     return TodayVM(hasDecks: !lib.decks.isEmpty, caught: caught, nothingNew: td.fresh == 0,

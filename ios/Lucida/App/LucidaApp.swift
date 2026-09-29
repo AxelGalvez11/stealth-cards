@@ -66,7 +66,9 @@ struct RootView: View {
     }
     .task {
       if !store.demo {
+        DevSignIn.apply()
         await store.load()
+        Task { try? await Task.sleep(nanoseconds: 5_000_000_000); await store.retuneWhenDue() }
         #if DEBUG
         // `-open review`, `-open deck`, `-open stats`, ...: go straight to a page (for checking screens with real data).
         let a = ProcessInfo.processInfo.arguments
@@ -85,6 +87,8 @@ struct RootView: View {
           case "library": nav.tab = .library
           case "cards": nav.tab = .library; nav.libCards = true
           case "stats": nav.tab = .stats
+          // Stats on one of Pro's tabs: `-open stats -tab Memory` (or Weak spots, Pace).
+          case "statsdeep": nav.tab = .stats; store.props.statsTab = Board.arg("-tab") ?? "Memory"
           case "connect": nav.tab = .connect
           case "settings": nav.path = [.settings]
           case "learn": nav.tab = .library; nav.path = [.deck(first)]; nav.sheet = .learnStart(first)
@@ -138,6 +142,9 @@ extension Board {
     case "PhoneDeckEmpty": store.props.emptyDeck = true; nav.tab = .library; nav.path = [.deck("pharm")]
     case "PhoneDeckSettings": store.props.deckSettings = "general"; nav.tab = .library; nav.path = [.deck("cell")]
     case "PhoneDeckSettingsStudy": store.props.deckSettings = "study"; nav.tab = .library; nav.path = [.deck("cell")]
+    // The goal already stepped up to 95% (its cost counts from 90%), and the Free app's Studying (what Pro adds).
+    case "PhoneDeckSettingsGoal": store.props.deckSettings = "study"; store.props.stepGoal = true; store.demoDeck.goal = 95; nav.tab = .library; nav.path = [.deck("cell")]
+    case "PhoneDeckSettingsStudyFree": store.props.deckSettings = "study"; store.props.free = true; nav.tab = .library; nav.path = [.deck("cell")]
     case "PhoneDeckTagPicker": store.props.deckSettings = "general"; store.props.tagPicker = true; nav.tab = .library; nav.path = [.deck("cell")]
     case "PhoneReview": nav.full = .review(deckId: "cell", pile: nil)
     case "PhoneReviewFour": store.props.revealed = true; nav.full = .review(deckId: "cell", pile: nil)
@@ -149,10 +156,16 @@ extension Board {
     case "PhoneDone": nav.full = .done
     case "PhoneDonePiles": store.props.onlyPiles = true; nav.full = .done
     case "PhoneStats": nav.tab = .stats
+    case "PhoneStatsMemory": store.props.statsTab = "Memory"; nav.tab = .stats
+    case "PhoneStatsWeak": store.props.statsTab = "Weak spots"; nav.tab = .stats
+    case "PhoneStatsPace": store.props.statsTab = "Pace"; nav.tab = .stats
+    case "PhoneStatsUpgrade": store.props.free = true; store.props.statsTab = "Weak spots"; nav.tab = .stats
     case "PhoneStatsEmpty": store.props.noStats = true; nav.tab = .stats
     case "PhoneDecksEmpty": store.props.newUser = true; nav.tab = .library
     case "PhoneLibrary": nav.tab = .library
     case "PhoneLibraryCards": nav.tab = .library; nav.libCards = true
+    // All cards on the ones you keep forgetting (Pause all).
+    case "PhoneLibraryLeeches": nav.tab = .library; nav.libCards = true; store.props.libState = "leech"
     case "PhoneLibraryFolder": nav.tab = .library; nav.path = [.folder("f1")]
     // The New folder popup, with a name typed (the phone's own keyboard is up); it opens once the Library is showing.
     case "PhoneLibraryNewFolder": nav.tab = .library; store.props.naming = "Biology"
@@ -163,8 +176,11 @@ extension Board {
     case "PhoneReviewExplain": store.props.revealed = true; store.props.explainOpen = true; nav.full = .review(deckId: "cell", pile: nil)
     case "PhoneConnect": nav.tab = .connect
     case "PhoneSettings": nav.path = [.settings]
+    case "PhoneSettingsFree": store.props.plan = "Free"; nav.path = [.settings]
     case "PhoneNewDeck": nav.sheet = .newDeck
     case "PhoneEditor": store.props.editorTyping = true; nav.tab = .library; nav.path = [.deck("cell")]; nav.sheet = .newCard(deckId: "cell", cardId: nil)
+    // Editing a card that's paused (Unpause card), from the sample's first card.
+    case "PhoneEditorPaused": store.props.editCard = "k1"; store.demoPaused["k1"] = true; nav.tab = .library; nav.path = [.deck("cell")]; nav.sheet = .newCard(deckId: "cell", cardId: "k1")
     case "PhoneEditorImage": store.props.cardType = "Image"; nav.tab = .library; nav.path = [.deck("cell")]; nav.sheet = .newCard(deckId: "cell", cardId: nil)
     case "PhoneEditorAudio": store.props.cardType = "Audio"; nav.tab = .library; nav.path = [.deck("cell")]; nav.sheet = .newCard(deckId: "cell", cardId: nil)
     case "PhoneEditorRecording": store.props.cardType = "Audio"; store.demoRecording = true; nav.tab = .library; nav.path = [.deck("cell")]; nav.sheet = .newCard(deckId: "cell", cardId: nil)
@@ -172,7 +188,6 @@ extension Board {
     case "PhoneReviewAudio": store.props.cardIndex = 3; store.demoPlaying = true; nav.full = .review(deckId: "cell", pile: nil)
     case "PhoneInbox": nav.path = [.settings, .inbox]
     case "PhoneQuizStart": nav.tab = .library; nav.path = [.deck("cell")]; nav.sheet = .learnStart("cell")
-    case "PhoneQuizUpgrade": store.props.upgrade = true; nav.tab = .library; nav.path = [.deck("cell")]; nav.sheet = .learnStart("cell")
     case "PhoneQuiz": nav.full = .learn("cell")
     case "PhoneQuizAnswered": store.demoLearn.pick = 1; nav.full = .learn("cell")
     case "PhoneQuizMatch": store.demoLearn.screen = "match"; nav.full = .learn("cell")
@@ -191,6 +206,8 @@ extension Board {
     case "PhoneSignInCode": store.phase = .signedOut; store.signInStep = .code
     default: break
     }
+    // The Settings boards' Tune to you state (their `tune` Tweak): `-tune Off`, `-tune "Not enough reviews"`, or `-tune Tuning`.
+    if let k = Board.arg("-tune") { store.props.tune = ["Off": "off", "Not enough reviews": "few", "Tuning": "busy"][k] ?? "on" }
     // The Settings boards' photo setting (their Tweak on the canvas): `-photo "Google photo"` or `-photo "Your photo"`
     // (Color when it's left out), with the canvas's stand-in for the photo.
     switch Board.arg("-photo") {
@@ -269,9 +286,7 @@ struct SheetHost: View {
     case .newDeck: SheetOverlay(top: nil, radius: 36, close: nav.close) { NewDeckSheet(demo: store.demo) }
     case .newCard(let deckId, let cardId): SheetOverlay(top: 56, radius: 36, close: nav.close) { EditorSheet(deckId: deckId ?? store.lib.decks.first?.id, cardId: cardId) }
     case .learnStart(let id):
-      SheetOverlay(top: nil, radius: 36, close: nav.close) {
-        if !store.isPro { LearnUpgradeSheet() } else { LearnStartSheet(deckId: id) }
-      }
+      SheetOverlay(top: nil, radius: 36, close: nav.close) { LearnStartSheet(deckId: id) }
     case .nameFolder(let rename, let deck, let name): FolderPopup(rename: rename, deck: deck, start: name)
     }
   }
@@ -299,6 +314,7 @@ struct FullHost: View {
     Group {
       switch kind {
       case .review(let d, let p): ReviewScreen(deckId: d, pile: p)
+      case .reviewSet(let set): ReviewScreen(deckId: nil, pile: nil, set: set)
       case .done: DoneScreen()
       case .learn(let id): LearnScreen(deckId: id)
       }

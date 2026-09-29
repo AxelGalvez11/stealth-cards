@@ -33,6 +33,8 @@ struct LibCard: Identifiable {
   var deckId = "", deckName = ""
   var mesh: Mesh
   var folder: String? = nil
+  /// Paused (Pro), and a card you keep forgetting (forgotten as often as its deck's rule says).
+  var paused = false, leech = false
 }
 
 extension Store {
@@ -71,8 +73,10 @@ extension Store {
       return X.ALL_CARDS.enumerated().map { i, a in
         // A card dragged onto another deck here lists with that deck.
         let deckId = demoCardDeck["a\(i)"] ?? a.deckId, name = X.DECKS.first { $0.id == deckId }?.name ?? ""
-        return LibCard(id: "a\(i)", front: a.front, back: a.back, tags: a.tags, next: a.next, level: a.level, deckId: deckId, deckName: name,
-                       mesh: Mesh.deck(seed: name), folder: demoFolderOf(deckId))
+        // Three of the sample cards are ones you keep forgetting; Markovnikov's rule is paused (mock.mjs).
+        let paused = isPaused("a\(i)")
+        return LibCard(id: "a\(i)", front: a.front, back: a.back, tags: a.tags, next: paused ? "Paused" : a.next, level: a.level, deckId: deckId, deckName: name,
+                       mesh: Mesh.deck(seed: name), folder: demoFolderOf(deckId), paused: paused, leech: [1, 6, 10].contains(i))
       }
     }
     if let memo = allCardsMemo { return memo }
@@ -85,7 +89,8 @@ extension Store {
     let out = lib.cards.filter { !$0.pending }.reversed().map { c -> LibCard in
       let d = decks[c.deckId]
       return LibCard(id: c.id, front: Store.listFront(c), back: Store.listBack(c), tags: c.tags, next: E.nextLabel(c), level: difficulty(c, deck: d?.deck, last: last[c.id]),
-                     deckId: c.deckId, deckName: d?.deck.name ?? "", mesh: d?.mesh ?? Mesh.deck(seed: ""), folder: d?.deck.folder)
+                     deckId: c.deckId, deckName: d?.deck.name ?? "", mesh: d?.mesh ?? Mesh.deck(seed: ""), folder: d?.deck.folder,
+                     paused: c.paused, leech: Sched.isLeech(c, d?.deck))
     }
     allCardsMemo = out
     return out
@@ -187,6 +192,8 @@ struct LibraryScreen: View {
   @State private var menuQ = ""
   // All cards: how hard, the tags every card must have, a deck or folder ("f:<id>"), and how many are shown.
   @State private var level = "all"
+  /// Cards you keep forgetting ("leech"), or cards you paused ("paused"), on top of how hard they are.
+  @State private var state = ""
   @State private var cardTags: [String] = []
   @State private var pick = ""
   @State private var shown = 60
@@ -203,7 +210,12 @@ struct LibraryScreen: View {
       else { page(decks, folders, folder, cards) }
     }
     .toolbar(.hidden, for: .navigationBar)
-    .onAppear { if store.demo, let n = store.props.naming { store.props.naming = nil; nav.sheet = .nameFolder(rename: nil, deck: nil, name: n) } }
+    .onAppear {
+      if store.demo, let n = store.props.naming { store.props.naming = nil; nav.sheet = .nameFolder(rename: nil, deck: nil, name: n) }
+      if store.demo, !store.props.libState.isEmpty { state = store.props.libState; store.props.libState = "" }
+      // Stats sends you here to see your hardest cards or the ones you keep forgetting.
+      if let want = nav.libFilter { nav.libFilter = nil; if want == "hard" { level = "hard"; state = "" } else { state = want; level = "all" } }
+    }
   }
 
   // ---------- the page ----------
@@ -432,11 +444,29 @@ struct LibraryScreen: View {
         && cardTags.allSatisfy(c.tags.contains)
         && (ql.isEmpty || ([c.front, c.back, c.deckName] + c.tags).joined(separator: " ").lowercased().contains(ql))
     }
-    let matched = base.filter { level == "all" || $0.level == level }
-    levels(base)
+    // Cards you keep forgetting, and cards you paused, filter on top of how hard they are.
+    let inState = { (c: LibCard, k: String) -> Bool in k == "leech" ? c.leech : k == "paused" ? c.paused : true }
+    let lvOk = { (c: LibCard) in level == "all" || c.level == level }
+    let stateCount = { (k: String) in base.filter { lvOk($0) && inState($0, k) }.count }
+    let matched = base.filter { lvOk($0) && inState($0, state) }
+    let toPause = state == "leech" ? matched.filter { !$0.paused } : state == "paused" ? matched : []
+    levels(base.filter { inState($0, state) })
     FlowLayout(spacing: 8, lineSpacing: 8) {
       menuButton("tags", "Tags")
       menuButton("decks", deckOptions(decks, folders).first { $0.id == pick }?.label ?? "All decks")
+      ForEach([("leech", "Keep forgetting", "again"), ("paused", "Paused", "pauseRing")].filter { state == $0.0 || stateCount($0.0) > 0 }, id: \.0) { k, label, icon in
+        let on = state == k
+        Button { state = on ? "" : k; shown = 60 } label: {
+          HStack(spacing: 7) {
+            Icon(icon, 14, 2)
+            Text(label).css(13, .semibold)
+            Text("\(stateCount(k))").css(11, mono: true).opacity(0.6)
+          }
+          .foregroundStyle(on ? t.invText : t.text).padding(.leading, 12).padding(.trailing, 14).frame(height: 36).background(Capsule().fill(on ? t.inv : t.surf))
+        }
+        .buttonStyle(.press)
+        .accessibilityAddTraits(on ? .isSelected : [])
+      }
       ForEach(cardTags, id: \.self) { g in
         let c = Tags.color(g)
         Button { cardTags.removeAll { $0 == g }; shown = 60 } label: {
@@ -447,7 +477,17 @@ struct LibraryScreen: View {
         .accessibilityLabel("Stop filtering by \(g)")
       }
     }
-    Text(grouped(matched.count) + (matched.count == 1 ? " card" : " cards")).css(13).foregroundStyle(t.muted).padding(.horizontal, 4).padding(.top, 2)
+    HStack(spacing: 8) {
+      Text(grouped(matched.count) + (matched.count == 1 ? " card" : " cards")).css(13).foregroundStyle(t.muted)
+      Spacer(minLength: 0)
+      if !toPause.isEmpty {
+        Button { store.pauseCards(toPause.map(\.id), state != "paused") } label: {
+          Text(state == "paused" ? "Unpause all" : "Pause all").css(13, .semibold).foregroundStyle(t.invText).padding(.horizontal, 16).frame(height: 32).background(Capsule().fill(t.inv))
+        }
+        .buttonStyle(.press)
+      }
+    }
+    .frame(minHeight: 24).padding(.horizontal, 4).padding(.top, 2)
     LazyVStack(spacing: 0) {
       ForEach(matched.prefix(shown)) { cardRow($0, decks) }
     }
