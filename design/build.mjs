@@ -3753,7 +3753,8 @@ renderVals() { ${T}${DB_JS}
   return { ${MESH_VALS('Apricot')} t, providers, mcpUrl: ai.url, copyLabel: this.state.copied ? 'Copied' : 'Copy link', copy: () => { db.act.copy(ai.url); this.setState({ copied: true }); } }; }`;
 
 // iPhone Settings, from the gear on Today. Appearance switches this screen right away, and so does Dark mode (gray or
-// black, for whenever the app is dark). The page scrolls; the board is tall enough to show all of it.
+// black, for whenever the app is dark). The page scrolls; the board is tall enough to show all of it: the page's content
+// (on Pro) plus 14, so a row added to Settings adds 53 here (node tests/board-fit.mjs PhoneSettings says if it's cut off).
 const PHONE_SETTINGS_H = 1523;
 const sRow = (label, right, { href = '', sub = '', click = '' } = {}) => {
   const inner = `<span style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px;"><span style="font-size: 16px;">${label}</span>${sub ? `<span style="font-size: 12px; color: {{t.muted}};">${sub}</span>` : ''}</span>${right}`;
