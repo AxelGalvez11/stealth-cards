@@ -3,6 +3,8 @@
 // This file renders those screens with your data (web/db.js), keeps them updated, and moves between them.
 // /b/<Board> shows any canvas board with the canvas's sample data instead.
 import { createDb, afterSignIn } from './db.js';
+import { THEME_KEYS } from './themes/index.js';
+import { loadTheme } from './themes/load.js';
 
 // ---------- pages ----------
 // Which board shows for a page. Some depend on your data: no decks yet shows the new-user Today, and so on.
@@ -118,6 +120,10 @@ function resolve(path, q) {
   if (path === '/stats') return { name: P + (db.hasReviews() ? 'Stats' : 'StatsEmpty') };
   if (path === '/connect') return { name: P + 'Connect' };
   if (path === '/settings') return { name: P + 'Settings' };
+  // Settings › Theme, and each theme's page (where you use it, or Go Pro on Free).
+  if (path === '/settings/theme') return { name: narrow.matches ? 'PhoneThemePicker' : 'ThemePicker' };
+  const th = /^\/settings\/theme\/([a-z]+)$/.exec(path);
+  if (th) return THEME_KEYS.includes(th[1]) ? { name: P + 'Theme', props: { sheet: th[1] } } : { redirect: '/settings/theme' };
   return { redirect: '/' };
 }
 // Links between boards: in the app they go to the matching page (for the deck you're on); on /b they stay on /b.
@@ -131,7 +137,7 @@ function linkFor(name) {
     WebEditor: id ? '/deck/' + id + '/card' : db.signedOut ? '/' : db.today().newCardHref, WebCardsScreenNew: id ? '/deck/' + id + '/card' : db.signedOut ? '/' : db.today().newCardHref,
     WebCardsScreen: id ? '/deck/' + id + '/card' : '/library', WebReview: id ? '/review/' + id : '/review', WebDone: '/review/done', WebDonePiles: '/review/done',
     WebQuizStart: id ? '/deck/' + id + '/learn' : '/library', PhoneQuizStart: id ? '/deck/' + id + '/learn' : '/library', PhoneDeck: id ? '/deck/' + id : '/library', Pricing: 'https://lucida.cards/pricing', PricingPhone: 'https://lucida.cards/pricing',
-    WebStats: '/stats', WebStatsEmpty: '/stats', WebConnect: '/connect', WebWelcome: '/welcome', WebSettings: '/settings', WebSignIn: '/sign-in', WebSignInCode: '/sign-in/code', PhoneSignIn: '/sign-in', PhoneSignInCode: '/sign-in/code', PhoneToday: '/', Privacy: '/privacy', Terms: '/terms',
+    WebStats: '/stats', WebStatsEmpty: '/stats', WebConnect: '/connect', WebWelcome: '/welcome', WebSettings: '/settings', ThemePicker: '/settings/theme', PhoneThemePicker: '/settings/theme', WebTheme: '/settings/theme/lucida', WebSignIn: '/sign-in', WebSignInCode: '/sign-in/code', PhoneSignIn: '/sign-in', PhoneSignInCode: '/sign-in/code', PhoneToday: '/', Privacy: '/privacy', Terms: '/terms',
     WebDiscover: '/discover', WebActivity: '/activity', WebProfile: '/you', WebSuggestions: id ? '/deck/' + id + '/suggestions' : '/suggestions',
     LiveSetup: id ? '/deck/' + id + '/live' : '/library', LiveJoin: '/join',
     WebClasses: '/library/classes', WebClass: current && current.props.code ? '/class/' + current.props.code : '/library/classes', WebAdmin: '/admin' };
@@ -242,6 +248,9 @@ function morph(from, to) {
   if (from.hasAttribute('data-composing')) return;
   for (const a of [...from.attributes]) if (!to.hasAttribute(a.name)) from.removeAttribute(a.name);
   for (const a of [...to.attributes]) if (from.getAttribute(a.name) !== a.value) from.setAttribute(a.name, a.value);
+  // A theme draws into this element itself (web/themes: a study background, a cover, a card's tape), and draws it again
+  // when what it shows changes; a redraw of the page leaves what's in it alone, so its slow drifts keep drifting.
+  if (to.hasAttribute('data-sc-own')) return;
   // Typed text stays put while you type; anything else the screen changes shows up.
   if (document.activeElement !== from) {
     if (from.tagName === 'INPUT' && to.hasAttribute('value') && from.value !== to.getAttribute('value')) from.value = to.getAttribute('value');
@@ -263,6 +272,8 @@ function morphChildren(from, to) {
 
 // ---------- the app ----------
 const app = document.getElementById('app');
+// A board that shows a theme loads its code the first time (on /b too, where boards have no database).
+globalThis.LucidaLoadTheme = key => loadTheme(key, schedule);
 const dark = matchMedia('(prefers-color-scheme: dark)');
 let db = null, current = null, queued = false, navs = 0, lastPath = '';
 // Props every app screen gets: the database, dark mode (from Settings: System, Light, or Dark), and whether dark mode

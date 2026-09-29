@@ -13,6 +13,7 @@ import { sniff } from './sniff.js';
 import { createNet } from './net.js';
 import { createLive } from './live.js';
 import { progressOf, doneOf } from './progress.js';
+import { loadTheme } from './themes/load.js';
 
 const DAY = 86400000, MIN = 60000, GAPS = [30, 90, 180, 365, 730, 1825, 3650];
 const SHORT_MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
@@ -92,6 +93,14 @@ export async function createDb({ onChange, go }) {
   const shownFor = id => (shown && shown.id === id ? now() - shown.at : undefined);
   let memo = {};
   const changed = () => { memo = {}; onChange(); };
+  // Your theme (Pro, Settings › Theme): its key while it applies (you have Pro; on this computer everything is on), or ''
+  // for Lucida's own look. Its code loads the first time a screen needs it (web/themes/load.js), and the screens draw
+  // again once it's here; a theme you already use loads before the first page, so it doesn't flash in.
+  // Pro: the server says (S.pro, false on Free or LUCIDA_PLAN=free), and online the person's plan.
+  const isPro = () => S.pro !== false && (!S.me || !!(S.me.plan && S.me.plan.pro));
+  const theme = () => (isPro() && S.settings.theme && S.settings.theme !== 'lucida' ? S.settings.theme : '');
+  const skinNow = () => { const k = theme(), T = k && globalThis.LucidaThemes && globalThis.LucidaThemes[k]; if (k && !T) loadTheme(k, changed); return T || null; };
+  if (theme()) await Promise.race([loadTheme(theme(), () => {}), new Promise(r => setTimeout(r, 600))]);
   // Changes shown before the server has them (see saveNow): each stays on top of any newer copy until it's saved.
   let mine = [], line = Promise.resolve();
   const accept = next => { if (next && next.rev >= S.rev) { S = next; mine.forEach(f => f(S)); changed(); } };
@@ -153,7 +162,6 @@ export async function createDb({ onChange, go }) {
   const seenToday = id => { const t0 = dayAt(now()); return new Set(S.logs.filter(l => l.deckId === id && l.at >= t0 && !l.kind).map(l => l.cardId)); };
   // Lucida Pro: online, from Stripe (the server's `me.plan`); on this computer everything is on (unless the server was
   // started with LUCIDA_PLAN=free, to check the Free app).
-  const isPro = () => S.pro !== false && (!S.me || !!(S.me.plan && S.me.plan.pro));
   // Your own FSRS parameters (Pro's Tune to you), when they're on.
   const wOf = () => { const t = S.settings.tune; return t && t.on && t.w && isPro() ? t.w : undefined; };
   const rememberedPct = logs => { const r = logs.filter(l => l.rating && l.was === 'review'); return r.length ? Math.round(r.filter(l => l.rating > 1).length / r.length * 100) : null; };
@@ -833,16 +841,20 @@ export async function createDb({ onChange, go }) {
     recording: () => sound.recording(),
     // Your picture wherever it shows (the sidebar, Today on a phone, Settings): your photo, your Google photo, or your
     // initial on your color.
+    // With a theme on, the theme draws the circle and your initial (or a ring around your photo): skinned, art.
     chrome: () => {
-      const due = S.decks.filter(d => !d.paused).reduce((n, d) => n + deckStat(d).due, 0), ph = photoOf();
+      const due = S.decks.filter(d => !d.paused).reduce((n, d) => n + deckStat(d).due, 0), ph = photoOf(), T = skinNow(), color = ph === 'color';
+      const initial = (((S.settings.name || (S.me && S.me.name) || '').trim() || 'You')[0]).toUpperCase();
       const news = net.unread();
-      return { nav: { today: due ? String(due) : '', news: news ? String(news > 99 ? '99+' : news) : '', hasNews: news > 0 }, me: { bg: COLORS[S.settings.color] || COLORS[0], initial: (((S.settings.name || (S.me && S.me.name) || '').trim() || 'You')[0]).toUpperCase(),
-        color: ph === 'color', photo: ph === 'google' ? S.me.picture : ph === 'yours' ? S.settings.yourPhoto : '', href: '/you' } };
+      return { nav: { today: due ? String(due) : '', news: news ? String(news > 99 ? '99+' : news) : '', hasNews: news > 0 }, me: { bg: T && color ? 'transparent' : COLORS[S.settings.color] || COLORS[0], initial,
+        color: color && !T, photo: ph === 'google' ? S.me.picture : ph === 'yours' ? S.settings.yourPhoto : '', href: '/you', skinned: !!T, art: T ? T.me(initial, !color) : null } };
     },
     settings: () => ({ ...S.settings, name: S.settings.name || (S.me && S.me.name) || 'You', sub: S.me ? S.me.email : 'Saved on this computer', signedIn: !!S.me,
       google: !!(S.me && S.me.picture), photo: photoOf(), check: !!S.ai.perms.check }),
     // Lucida Pro: online, from Stripe (the server's `me.plan`); on this computer everything is on.
     pro: isPro,
+    theme,
+    loadTheme: key => loadTheme(key, changed),
     plan: () => (S.me ? { ...(S.me.plan || { pro: false }), manage: S.me.manage || '' } : null),
     tags: () => [...new Set([...S.decks.flatMap(d => d.tags), ...S.cards.flatMap(c => c.tags)])],
     decks: () => S.decks.map(deckRow),

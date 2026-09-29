@@ -9,6 +9,10 @@ import { WALL_CARDS } from './wall.mjs';
 import { PRIVACY, TERMS, UPDATED } from './legal.mjs';
 import { PRO_LINKS } from '../web/plans.mjs';
 import { G_LOGO, APPLE_LOGO } from './logos.mjs';
+import { THEMES } from '../web/themes/index.js';
+import { THEME_KEYS, themeCss, themeFonts, themeStatic } from './themes.mjs';
+// The themes (Pro), for boards' logic: key, board name, short and full names.
+const THEME_LIST = JSON.stringify(THEMES.map(({ key, board, short, name }) => ({ key, board: board || '', short, name })));
 const MESH_DATA = JSON.stringify(Object.fromEntries(PALETTE_NAMES.map(n => [n, { ...paletteData(n), shadow: PALETTES[n].ink === '#FFFFFF' ? '0 1px 14px rgba(0,0,0,.16)' : 'none' }])));
 // Card text formatting (web/rich.js), copied into every board that shows or edits card text.
 const RICH_SRC = readFileSync(new URL('../web/rich.js', import.meta.url), 'utf8');
@@ -19,7 +23,7 @@ mkdirSync(OUT, { recursive: true });
 const FONT = 'Geist, -apple-system, system-ui, sans-serif';
 const MONO = "'Geist Mono', ui-monospace, monospace";
 
-const page = (title, body, { props = {}, logic = '', css = '', w, h }) => `<!doctype html>
+const page = (title, body, { props = {}, logic = '', css = '', w, h, fonts = '' }) => `<!doctype html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
@@ -30,7 +34,7 @@ const page = (title, body, { props = {}, logic = '', css = '', w, h }) => `<!doc
 <x-dc>
 <helmet>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&amp;family=Geist+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&amp;family=Geist+Mono:wght@400;500&amp;${fonts.replace(/&/g, '&amp;')}display=swap" rel="stylesheet">
 <style>
 body{margin:0;font-family:${FONT}}
 a{color:inherit;text-decoration:none}a:hover{opacity:.8}
@@ -56,6 +60,16 @@ mesh(name, i) {
   const keys = Object.keys(P);
   return P[name] || P[keys[(i || 0) % keys.length]];
 }
+// Themes (Pro, Settings › Theme) change four things: deck covers, flashcards, the study background, and your profile
+// picture (web/themes). skin(db) is the theme a board draws with: the one a canvas Theme board names (props.skin), or
+// yours, once its code has loaded (null for Lucida's own look). skinFor(key) is any theme, like a profile owner's.
+skin(db) { return this.skinFor(this.props.skin || (db && db.theme ? db.theme() : '')); }
+skinFor(k) {
+  if (!k || k === 'lucida') return null;
+  const T = globalThis.LucidaThemes || {}, load = (this.props.db && this.props.db.loadTheme) || globalThis.LucidaLoadTheme;
+  if (!T[k] && load) load(k);
+  return T[k] || null;
+}
 ${GEN_METHOD}
 ${MOCK_METHOD}
 ${logic.includes('this.rich(') ? RICH_METHOD : ''}${logic.includes('this.drag(') ? '\n' + DRAG_METHOD : ''}
@@ -79,6 +93,8 @@ const APP_MOTION_CSS = [
   '.sc-sw{transition:background-color .3s ease,transform .1s ease}.sc-sw>span{transition:transform .32s cubic-bezier(.34,1.56,.64,1),background-color .3s ease}',
   // The owner: "make the hover animation for decks be 1 seconds". It starts right away and eases off, both ways.
   '.sc-lift{transition:transform 1s ease-out,box-shadow 1s ease-out}.sc-lift:hover{transform:translateY(-4px);box-shadow:0 24px 48px -24px rgba(0,0,0,.45)}',
+  // A theme's deck cover has its own shadow (a cartoon's hard ink shadow, a glow), under the lift's.
+  '.sk-cover{box-shadow:var(--sk-shadow)}.sk-cover.sc-lift:hover{box-shadow:var(--sk-shadow),0 24px 48px -24px rgba(0,0,0,.45)}',
   '@keyframes scScrimIn{from{opacity:0}}@keyframes scScrimOut{to{opacity:0}}.sc-scrim{animation:scScrimIn .35s ease backwards}.sc-scrim.sc-gone{animation:scScrimOut .26s ease forwards}',
   '@keyframes scPanelIn{from{opacity:0;transform:translateX(calc(100% + 12px))}}@keyframes scPanelOut{to{opacity:0;transform:translateX(calc(100% + 12px))}}.sc-panel{animation:scPanelIn .35s cubic-bezier(.2,.8,.2,1) backwards}.sc-panel.sc-gone{animation:scPanelOut .26s cubic-bezier(.4,0,1,1) forwards}',
   '@keyframes scSheetIn{from{transform:translateY(100%)}}@keyframes scSheetOut{to{transform:translateY(100%)}}.sc-sheet{animation:scSheetIn .35s cubic-bezier(.2,.8,.2,1) backwards}.sc-sheet.sc-gone{animation:scSheetOut .26s cubic-bezier(.4,0,1,1) forwards}',
@@ -115,6 +131,8 @@ const I = {
   close: '<path d="M6 6l12 12M18 6L6 18"/>',
   play: '<path d="M8 5v14l11-7z" fill="currentColor"/>',
   check: '<path d="M5 12l5 5 9-10"/>',
+  lock: '<rect x="5" y="11" width="14" height="10" rx="2.5"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/>',
+  palette: '<path d="M12 3a9 9 0 0 0 0 18c1.4 0 2-1 2-2 0-1.3-1-1.8-1-3 0-1 .8-2 2-2h2.5A3.5 3.5 0 0 0 21 10.5C21 6.4 17 3 12 3z"/><circle cx="7.5" cy="11" r="1.2"/><circle cx="10.5" cy="7" r="1.2"/><circle cx="15" cy="7.5" r="1.2"/>',
   pause: '<rect x="7" y="5" width="3.5" height="14" rx="1" fill="currentColor" stroke="none"/><rect x="13.5" y="5" width="3.5" height="14" rx="1" fill="currentColor" stroke="none"/>',
   shuffle: '<path d="M3 7h3.5c2.2 0 3.4 1.1 4.6 3l1.8 3c1.2 1.9 2.4 3 4.6 3H21M3 17h3.5c1.4 0 2.4-.4 3.3-1.3M14.2 8.3c.9-.9 1.9-1.3 3.3-1.3H21M18 4l3 3-3 3M18 13l3 3-3 3"/>',
   sliders: '<path d="M4 7h9M17 7h3M4 17h3M11 17h9"/><circle cx="15" cy="7" r="2"/><circle cx="9" cy="17" r="2"/>',
@@ -188,7 +206,8 @@ const NAV_A = [['Today', 'today', 'Main.dc.html', '64'], ['Library', 'decks', 'W
 const STAND_IN = (size, label, bg) => `<span role="img" aria-label="${label}" style="width: ${size}px; height: ${size}px; flex-shrink: 0; border-radius: ${size / 2}px; overflow: hidden; background: ${bg}; display: flex;"><svg width="${size}" height="${size}" viewBox="0 0 64 64" aria-hidden="true"><circle cx="32" cy="26" r="11" fill="rgba(255,255,255,.92)"/><path d="M11 64c1.5-12 10-19 21-19s19.5 7 21 19z" fill="rgba(255,255,255,.92)"/></svg></span>`;
 const PHOTO = size => STAND_IN(size, 'Google profile photo', 'linear-gradient(160deg, #FFD9A8 0%, #F59E6B 55%, #D9677A 100%)');
 const YOUR_PHOTO = size => STAND_IN(size, 'Your profile photo', 'linear-gradient(160deg, #B8F0D8 0%, #4FC3B0 50%, #3A7BD5 100%)');
-const AVATAR_ME = size => `<span style="position: relative; width: ${size}px; height: ${size}px; flex-shrink: 0; border-radius: ${size / 2}px; overflow: hidden; background: {{me.bg}}; color: #FFFFFF; display: flex; align-items: center; justify-content: center; font-size: ${Math.round(size * 0.42)}px; font-weight: 600;"><sc-if value="{{me.color}}" hint-placeholder-val="{{ true }}">{{me.initial}}</sc-if><sc-if value="{{me.photo}}" hint-placeholder-val="{{ false }}"><img src="{{me.photo}}" alt="" referrerpolicy="no-referrer" style="position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover;"></sc-if><sc-if value="{{me.sampleGoogle}}" hint-placeholder-val="{{ false }}">${PHOTO(size)}</sc-if><sc-if value="{{me.sampleYours}}" hint-placeholder-val="{{ false }}">${YOUR_PHOTO(size)}</sc-if></span>`;
+// With a theme on (Pro), the theme draws the circle (and your initial on it) or a ring around your photo, over it.
+const AVATAR_ME = size => `<span style="position: relative; width: ${size}px; height: ${size}px; flex-shrink: 0; display: flex;"><span style="position: relative; width: ${size}px; height: ${size}px; flex-shrink: 0; border-radius: ${size / 2}px; overflow: hidden; background: {{me.bg}}; color: #FFFFFF; display: flex; align-items: center; justify-content: center; font-size: ${Math.round(size * 0.42)}px; font-weight: 600;"><sc-if value="{{me.color}}" hint-placeholder-val="{{ true }}">{{me.initial}}</sc-if><sc-if value="{{me.photo}}" hint-placeholder-val="{{ false }}"><img src="{{me.photo}}" alt="" referrerpolicy="no-referrer" style="position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover;"></sc-if><sc-if value="{{me.sampleGoogle}}" hint-placeholder-val="{{ false }}">${PHOTO(size)}</sc-if><sc-if value="{{me.sampleYours}}" hint-placeholder-val="{{ false }}">${YOUR_PHOTO(size)}</sc-if></span><sc-if value="{{me.skinned}}" hint-placeholder-val="{{ false }}"><span ref="{{me.art}}" data-sc-own aria-hidden="true" style="position: absolute; inset: 0; border-radius: 50%; pointer-events: none;"></span></sc-if></span>`;
 // News (the study network: suggestions on your decks, people following you, updates to decks you follow) is the bell
 // by the logo, with how many are new.
 const sidebar = active => `<nav style="width: 240px; flex-shrink: 0; box-sizing: border-box; padding: 24px 16px; display: flex; flex-direction: column; gap: 4px; border-right: 1px solid {{t.line}};">
@@ -286,7 +305,10 @@ const panelSeg = (key, label, n = 2) => `<div role="group" aria-label="${label}"
 const flowLayer = key => flowSvg(k => `{{${key}.${k}}}`);
 const pick = (o, path) => path.split('.').reduce((a, k) => a[k], o);
 const GRAIN_LAYER = grainSvg('{{grain}}', { blend: 'soft-light', freq: 0.85, slope: 3.4, id: 'sc-grain' });
-const meshCard = (key, outer, inner, body, tag = 'div', attrs = '') => `<${tag}${attrs} style="position: relative; overflow: hidden; color: {{${key}.ink}}; background: {{${key}.base}}; ${outer}">${flowLayer(key)}${GRAIN_LAYER}<div style="position: relative; text-shadow: {{${key}.shadow}}; ${inner}">${body}</div></${tag}>`;
+// `skin`: a deck's cover, which a theme (Pro) draws instead of the gradient when {{key.skin}} (its picture comes
+// through the ref {{key.art}}; {{key.plain}} is the gradient's turn).
+const skinArt = key => `<sc-if value="{{${key}.skin}}" hint-placeholder-val="{{ false }}"><div ref="{{${key}.art}}" data-sc-own aria-hidden="true" style="position: absolute; inset: 0; border-radius: inherit; overflow: hidden;"></div></sc-if>`;
+const meshCard = (key, outer, inner, body, tag = 'div', attrs = '', skin = false) => `<${tag}${attrs} style="position: relative; overflow: hidden; color: {{${key}.ink}}; background: {{${key}.base}}; ${outer}">${skin ? `<sc-if value="{{${key}.plain}}" hint-placeholder-val="{{ true }}">${flowLayer(key)}${GRAIN_LAYER}</sc-if>${skinArt(key)}` : flowLayer(key) + GRAIN_LAYER}<div style="position: relative; text-shadow: {{${key}.shadow}}; ${inner}">${body}</div></${tag}>`;
 const glass = 'background: {{hero.glass}}; box-shadow: inset 0 0 0 1.5px {{hero.glassLine}}; color: {{hero.ink}};';
 const MESH = def => ({ gradient: { editor: 'enum', default: def, options: PALETTE_NAMES }, grain: { editor: 'range', default: 0.7, min: 0, max: 1, step: 0.05 } });
 const MESH_VALS = def => `hero: this.mesh(this.props.gradient ?? '${def}'), grain: String(this.props.grain ?? 0.7),`;
@@ -584,6 +606,12 @@ const NET_LOADING = (rows = 3) => `<sc-if value="{{loading}}" hint-placeholder-v
 const NET_MISSING = `<sc-if value="{{missing}}" hint-placeholder-val="{{ false }}"><div style="padding: 64px 24px; border-radius: 24px; background: {{t.surf}}; display: flex; flex-direction: column; align-items: center; gap: 10px; text-align: center;"><span style="font-size: 20px; font-weight: 600;">{{missingTitle}}</span><span style="font-size: 14px; color: {{t.muted}};">{{missingLine}}</span><a href="{{discoverHref}}" style="margin-top: 6px; height: 36px; padding: 0 16px; display: inline-flex; align-items: center; border-radius: 999px; background: {{t.inv}}; color: {{t.invText}}; font-size: 14px; font-weight: 600;">Discover decks</a></div></sc-if>`;
 
 // ---------- Library (was Decks) ----------
+// A theme (Pro) draws a deck's cover (its picture, words, chips, button, and shadow); a deck with its own photo keeps it.
+// SKIN_COVER_JS gives a deck's holes, from S (the board's theme) and C (S.coverOf(deck)); SKIN_THUMB is a Library row's
+// small cover.
+const SKIN_COVER_JS = `const coverSkin = C => (C ? { plain: false, skin: true, art: C.art, base: C.base, ink: C.ink, glass: C.glass, glassLine: C.glassLine, shadow: 'none', titleCss: C.title, btnBg: C.btnBg, btnFg: C.btnFg, coverShadow: C.shadow, coverCls: 'sk-cover' }
+    : { plain: true, skin: false, art: null, titleCss: '', btnBg: '#FFFFFF', btnFg: '#000000', coverShadow: 'none', coverCls: '' });`;
+const SKIN_THUMB = `<sc-if value="{{d.skin}}" hint-placeholder-val="{{ false }}"><span ref="{{d.thumb}}" data-sc-own aria-hidden="true" style="position: relative; display: block; width: 100%; height: 100%;"></span></sc-if>`;
 // The owner (V96): "rename decks to library", folders for decks, and every card in one place to filter by tags and
 // difficulty. One board is the whole Library: your folders and decks, one folder's decks (prop `folder`), or all your
 // cards (prop `mode`). The app gives each its own address: /library, /library/folder/<id>, /library/cards.
@@ -593,7 +621,7 @@ const CARD_COLS = 'display: grid; grid-template-columns: 36px minmax(0, 1.5fr) m
 const libModes = (h, fs = 13, grow = false) => `<div role="group" aria-label="Show" style="display: flex; gap: 2px; padding: 4px; border-radius: 999px; background: {{t.surf}};"><sc-for list="{{modes}}" as="m" hint-placeholder-count="2"><a href="{{m.href}}" aria-current="{{m.current}}" style="height: ${h}px; padding: 0 16px; ${grow ? 'flex: 1 1 0; ' : ''}display: inline-flex; align-items: center; justify-content: center; border-radius: 999px; background: {{m.bg}}; color: {{m.fg}}; box-shadow: {{m.sh}}; font-size: ${fs}px; font-weight: 600; white-space: nowrap;">{{m.label}}</a></sc-for></div>`;
 // A folder: its first decks' colors fanned like cards, its name, and how many decks and due cards are in it.
 const folderTile = (h, w, pad = '18px 20px') => `<a href="{{f.href}}" data-sc-drop="folder:{{f.id}}" data-sc-look="tile" draggable="false" class="sc-lift" style="position: relative; height: ${h}px; box-sizing: border-box; padding: ${pad}; border-radius: 20px; background: {{t.surf}}; display: flex; flex-direction: column; justify-content: space-between; overflow: hidden;">
-  <span aria-hidden="true" style="position: relative; height: ${Math.round(w * .68) + 8}px;"><sc-for list="{{f.swatches}}" as="w" hint-placeholder-count="3"><span style="position: absolute; left: {{w.x}}; top: {{w.y}}; width: ${w}px; height: ${Math.round(w * .68)}px; border-radius: 12px; background: {{w.base}}; transform: rotate({{w.r}}); box-shadow: 0 8px 18px -8px rgba(0,0,0,.4), 0 0 0 2px {{t.surf}};"></span></sc-for><sc-if value="{{f.empty}}" hint-placeholder-val="{{ false }}"><span style="position: absolute; left: -2px; top: 2px; color: {{t.muted}};">${svg(I.folder, 44, 1.5)}</span></sc-if></span>
+  <span aria-hidden="true" style="position: relative; height: ${Math.round(w * .68) + 8}px;"><sc-for list="{{f.swatches}}" as="w" hint-placeholder-count="3"><span style="position: absolute; left: {{w.x}}; top: {{w.y}}; width: ${w}px; height: ${Math.round(w * .68)}px; border-radius: 12px; overflow: hidden; background: {{w.base}}; transform: rotate({{w.r}}); box-shadow: 0 8px 18px -8px rgba(0,0,0,.4), 0 0 0 2px {{t.surf}};"><sc-if value="{{w.skin}}" hint-placeholder-val="{{ false }}"><span ref="{{w.art}}" data-sc-own aria-hidden="true" style="position: absolute; inset: 0;"></span></sc-if></span></sc-for><sc-if value="{{f.empty}}" hint-placeholder-val="{{ false }}"><span style="position: absolute; left: -2px; top: 2px; color: {{t.muted}};">${svg(I.folder, 44, 1.5)}</span></sc-if></span>
   <span style="display: flex; flex-direction: column; gap: 3px; min-width: 0;"><span style="font-size: 17px; font-weight: 600; letter-spacing: -.01em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{f.name}}</span><span style="font-size: 13px; color: {{t.muted}};">{{f.line}}</span></span>
 </a>`;
 // Naming a folder, in a popup over the dimmed page (the owner: "'new folder' button should bring up a popup menu"): a new
@@ -668,18 +696,18 @@ const webDecks = webRoot(`${sidebar('Library')}
     <sc-if value="{{cardView}}" hint-placeholder-val="{{ true }}">
       <div data-sc-list="decks" ref="{{dragList}}" onPointerDown="{{grabDeck}}" style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px;">
         <sc-for list="{{decks}}" as="d" hint-placeholder-count="6"><div data-sc-item="{{d.id}}" class="sc-drag" style="position: relative;">
-          ${meshCard('d', 'border-radius: 20px; height: 240px;', 'height: 100%; box-sizing: border-box; padding: 22px; display: flex; flex-direction: column; justify-content: space-between;', `
+          ${meshCard('d', 'border-radius: 20px; height: 240px; --sk-shadow: {{d.coverShadow}};', 'height: 100%; box-sizing: border-box; padding: 22px; display: flex; flex-direction: column; justify-content: space-between;', `
             <sc-if value="{{d.hasPhoto}}" hint-placeholder-val="{{ false }}"><img src="{{d.photo}}" alt="" draggable="false" style="position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover;"><span style="position: absolute; inset: 0; background: linear-gradient(180deg, rgba(0,0,0,.18) 0%, rgba(0,0,0,0) 35%, rgba(0,0,0,.55) 100%);"></span></sc-if>
             <a href="{{d.href}}" aria-label="{{d.name}}" draggable="false" class="sc-hit" style="position: absolute; inset: 0; border-radius: 20px;"></a>
             <div style="position: relative; display: flex; flex-wrap: wrap; gap: 6px; padding-right: 40px; pointer-events: none;">${glassTag('t1')}${glassTag('t2')}${glassTag('t3')}${moreTag('background: {{d.glass}}; box-shadow: inset 0 0 0 1px {{d.glassLine}}; color: inherit;', 26)}</div>
             <div style="position: relative; display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; pointer-events: none;">
               <span style="display: flex; flex-direction: column; gap: 4px; min-width: 0;">
                 <span style="font-size: 44px; font-weight: 500; letter-spacing: -.035em; line-height: 1;">{{d.due}}<span style="font-size: 15px; letter-spacing: 0; margin-left: 6px; opacity: .85;">due</span></span>
-                <span style="font-size: 19px; font-weight: 600; letter-spacing: -.015em; padding-top: 8px;">{{d.name}}</span>
+                <span style="font-size: 19px; font-weight: 600; letter-spacing: -.015em; padding-top: 8px; {{d.titleCss}}">{{d.name}}</span>
                 <span style="font-size: 13px; opacity: .85;">{{d.line}}</span>
               </span>
-              <a href="{{d.studyHref}}" draggable="false" class="sc-press" style="flex-shrink: 0; height: 36px; padding: 0 18px; display: inline-flex; align-items: center; border-radius: 999px; background: #FFFFFF; color: #000000; font-size: 13px; font-weight: 600; text-shadow: none; pointer-events: auto;">Flashcards</a>
-            </div>`, 'div', ' class="sc-lift"')}
+              <a href="{{d.studyHref}}" draggable="false" class="sc-press" style="flex-shrink: 0; height: 36px; padding: 0 18px; display: inline-flex; align-items: center; border-radius: 999px; background: {{d.btnBg}}; color: {{d.btnFg}}; font-size: 13px; font-weight: 600; text-shadow: none; pointer-events: auto;">Flashcards</a>
+            </div>`, 'div', ' class="sc-lift {{d.coverCls}}"', true)}
           <span style="position: absolute; top: 16px; right: 16px; z-index: 2; color: {{d.ink}};">${moveBtn('background: {{d.glass}}; box-shadow: inset 0 0 0 1px {{d.glassLine}}; color: inherit;')}</span>
           ${moveMenu('right: 12px; top: 56px;')}
           ${deckTagsPop('left: 12px; top: 58px;')}
@@ -692,7 +720,7 @@ const webDecks = webRoot(`${sidebar('Library')}
         <div data-sc-list="decks" ref="{{dragList}}" onPointerDown="{{grabDeck}}" style="display: flex; flex-direction: column;"><sc-for list="{{decks}}" as="d" hint-placeholder-count="6">
           <div data-sc-item="{{d.id}}" class="sc-row sc-drag" style="${LIST_COLS} position: relative; height: 64px; border-bottom: 1px solid {{t.line}}; font-size: 14px;">
             <a href="{{d.href}}" aria-label="{{d.name}}" draggable="false" class="sc-hit" style="position: absolute; inset: 0;"></a>
-            <span style="width: 36px; height: 36px; border-radius: 12px; background: {{d.base}}; overflow: hidden;"><sc-if value="{{d.hasPhoto}}" hint-placeholder-val="{{ false }}"><img src="{{d.photo}}" alt="" draggable="false" style="width: 100%; height: 100%; object-fit: cover;"></sc-if></span>
+            <span style="width: 36px; height: 36px; border-radius: 12px; background: {{d.base}}; overflow: hidden;"><sc-if value="{{d.hasPhoto}}" hint-placeholder-val="{{ false }}"><img src="{{d.photo}}" alt="" draggable="false" style="width: 100%; height: 100%; object-fit: cover;"></sc-if>${SKIN_THUMB}</span>
             <span style="min-width: 0; display: flex; flex-direction: column; gap: 2px;"><span style="font-size: 15px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{d.name}}</span><sc-if value="{{d.hasWhose}}" hint-placeholder-val="{{ false }}"><span style="font-size: 12px; color: {{t.muted}}; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{d.whose}}</span></sc-if></span>
             <span style="position: relative; min-width: 0; pointer-events: none;"><span style="display: flex; gap: 6px; min-width: 0; overflow: hidden;">${tagSlot('t1')}${tagSlot('t2')}${tagSlot('t3')}${moreTag('background: {{t.surf}}; color: {{t.muted}};', 24)}</span>${deckTagsPop('left: -12px; top: 34px;')}</span>
             <span style="text-align: right; font-family: ${MONO}; font-size: 15px; color: {{d.dueColor}};">{{d.due}}</span>
@@ -748,7 +776,8 @@ renderVals() {
   ${CARD_TAGS_JS}
   ${LIFT_JS}${phone ? `
   ${KB_JS}` : ''}
-  const p = this.props, s = this.state, tag = s.tag, view = s.view, act = db.act;
+  ${SKIN_COVER_JS}
+  const p = this.props, s = this.state, tag = s.tag, view = s.view, act = db.act, S = this.skin(db);
   const board = n => '${phone ? 'Phone' : 'Web'}' + n + '.dc.html';
   const folders = db.folders(), folder = p.folder ? folders.find(f => f.id === p.folder) || null : null;
   const cards = p.mode === 'cards' && !folder, atTop = !folder;
@@ -783,7 +812,8 @@ renderVals() {
     const onPhoto = photo ? { ink: '#FFFFFF', glass: 'rgba(0,0,0,.28)', glassLine: 'rgba(255,255,255,.35)', shadow: '0 1px 12px rgba(0,0,0,.35)' } : {};
     // Whose it is: a deck you share says how (Public, Link only), a deck from someone says whose.
     const whose = d.link ? 'From ' + (d.link.owner.name || 'someone') : d.shared ? d.shared.label : '';
-    return { ...d, ...grad(d), ...onPhoto, t1: slot(0), t2: slot(1), t3: slot(2), hasPhoto: !!photo, photo,
+    const C = S && !photo ? S.coverOf(d, 'wide', 19) : null;
+    return { ...d, ...grad(d), ...onPhoto, ...coverSkin(C), thumb: C ? C.artAs('square', ${phone ? 14 : 12}) : null, t1: slot(0), t2: slot(1), t3: slot(2), hasPhoto: !!photo, photo,
       href: db.mock ? board('Deck') : d.href, studyHref: db.mock ? board('Review') : d.studyHref,
       more: { show: fit.more > 0, label: '+' + fit.more }, tagCount: tg.length + (tg.length === 1 ? ' tag' : ' tags'), tagsOpen: open, expanded: open ? 'true' : 'false',
       toggleTags: () => this.setState({ openDeck: open ? null : d.id, moreOpen: false, moveDeck: null }),
@@ -800,7 +830,8 @@ renderVals() {
   const fanned = [['0px', '8px', '-8deg'], ['22px', '4px', '0deg'], ['44px', '0px', '8deg']];
   const folderRows = folders.map(f => ({ ...f, href: db.mock ? board('LibraryFolder') : f.href, empty: !f.decks.length,
     line: f.n + (f.n === 1 ? ' deck' : ' decks') + (f.due ? ' · ' + f.due + ' due' : ''),
-    swatches: f.decks.slice(0, 3).map((d, i) => ({ base: grad(d).base, x: fanned[i][0], y: fanned[i][1], r: fanned[i][2] })) }));
+    swatches: f.decks.slice(0, 3).map((d, i) => { const C = S && !(d.image && d.image !== 'mock') ? S.coverOf(d, 'wide', 12, 12) : null;
+      return { base: C ? C.base : grad(d).base, skin: !!C, art: C ? C.art : null, x: fanned[i][0], y: fanned[i][1], r: fanned[i][2] }; }) }));
   // All cards, filtered by how hard, by tags (every picked one), by deck or folder, and by the search.
   const LV = { new: ['New', t.easy], easy: ['Easy', t.good], medium: ['Medium', t.hard], hard: ['Hard', t.again] };
   const every = cards ? db.allCards() : [];
@@ -903,18 +934,22 @@ const SKY_TILE = 'linear-gradient(180deg, #86BDF3 0%, #C9E2FB 45%, #EDF5FE 100%)
 // into the gray page, and a dusk sunset.
 const SKY_DUSK = { top: '#1B2A48', mid: '#1F2B45', low: '#212637' };
 const SUNSET_DUSK = 'radial-gradient(90% 60% at 88% 100%, rgba(238,142,98,.18), rgba(238,142,98,0) 70%), linear-gradient(180deg, #1F2638 0%, #272C40 35%, #332C3F 65%, #3E2E37 100%)';
-const STUDY_BG_JS = `const studyBg = (dk, dark, dim) => {
+// A theme (Pro; S, the board's theme) has a background of its own, which takes the place of a deck's colors (a deck set
+// to Plain, Sky, Sunset, or its own photo keeps that). It has its own light or dark look, and the page's buttons and
+// words follow it (dark). `phone`: the soft veil under the top and bottom bars is taller.
+const STUDY_BG_JS = `const studyBg = (dk, dark, dim, S, phone) => {
     const b = (dk && dk.bg) || {}, img = b.image || (dk && dk.image) || '';
     const kind = ['deck', 'plain', 'sky', 'sunset', 'photo'].includes(b.kind) && !(b.kind === 'photo' && !img) ? b.kind : 'deck';
     const mesh = this.gen(((dk && dk.seed) || 'Lucida') + (dk && dk.round ? ' #' + dk.round : ''), (dk && dk.style) || 'mix');
+    const skin = !!S && kind === 'deck';
     // On the canvas a photo is a placeholder, so it shows the deck's colors at full strength instead.
-    const photo = kind === 'photo' && img !== 'mock' ? img : '', sample = kind === 'photo' && !photo, faint = kind === 'deck', gray = dark && dim;
+    const photo = kind === 'photo' && img !== 'mock' ? img : '', sample = kind === 'photo' && !photo, faint = kind === 'deck' && !skin, gray = dark && dim;
     // In light mode the deck's colors are one pale hue (the owner: "make the background for flashcards and learn be
     // monochrome and lighter/fainter on light mode"): every fold of its gradient in the deck's main color (the middle of
     // the gradient), light and soft, a pastel wash under the words. Dark and gray keep theirs.
     const mono = faint && !dark, hue = parseInt(mesh.base.split('hsl(')[2]) || 0;
     const pale = c => c.replace(/hsl\\((\\d+) (\\d+)% (\\d+)%\\)/g, (_, h, s, l) => 'hsl(' + hue + ' 50% ' + Math.round(84 + l * .12) + '%)');
-    return { isDeck: faint || sample, isPhoto: !!photo, isSky: kind === 'sky', isSunset: kind === 'sunset', photo,
+    return { isDeck: faint || sample, isPhoto: !!photo, isSky: kind === 'sky', isSunset: kind === 'sunset', photo, skin, art: skin ? S.bg(!!phone) : null, dark: skin ? S.dark : dark,
       mesh: mono ? Object.fromEntries(Object.entries(mesh).map(([k, v]) => [k, typeof v === 'string' ? pale(v) : v && v.c ? { ...v, c: pale(v.c) } : v])) : mesh,
       filter: sample || !dark ? 'none' : gray ? 'saturate(.16) brightness(.34)' : 'saturate(.16) brightness(.42)',
       veil: faint ? (gray ? 'rgba(30,30,32,.45)' : dark ? 'rgba(0,0,0,.3)' : 'rgba(255,255,255,.35)') : photo || sample ? (gray ? 'rgba(30,30,32,.55)' : dark ? 'rgba(0,0,0,.5)' : 'rgba(255,255,255,.38)') : 'rgba(0,0,0,0)',
@@ -927,6 +962,7 @@ const studyBgLayer = `<div aria-hidden="true" style="position: absolute; inset: 
   <sc-if value="{{bg.isPhoto}}" hint-placeholder-val="{{ false }}"><img src="{{bg.photo}}" alt="" style="position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover;"></sc-if>
   <sc-if value="{{bg.isSky}}" hint-placeholder-val="{{ false }}"><div style="position: absolute; left: 0; right: 0; top: 0; height: 700px; background: linear-gradient(180deg, {{bg.skyTop}} 0%, {{bg.skyMid}} 30%, {{bg.skyLow}} 55%, {{t.bg}} 100%);"></div></sc-if>
   <sc-if value="{{bg.isSunset}}" hint-placeholder-val="{{ false }}"><div style="position: absolute; inset: 0; background: {{bg.sunset}};"></div></sc-if>
+  <sc-if value="{{bg.skin}}" hint-placeholder-val="{{ false }}"><div ref="{{bg.art}}" data-sc-own style="position: absolute; inset: 0; overflow: hidden;"></div></sc-if>
   <div style="position: absolute; inset: 0; background: {{bg.veil}};"></div>
   ${grainSvg('{{bg.grain}}', { blend: 'overlay', freq: 0.85, slope: 3.4, id: 'sc-study-grain' })}
 </div>`;
@@ -934,17 +970,18 @@ const studyBgLayer = `<div aria-hidden="true" style="position: absolute; inset: 
 // user to edit background from the review settings when in flashcard or learn mode"): it's saved with the deck, so the
 // page behind changes as soon as one is picked. Colors' tile shows light mode's look, like the Sky and Sunset tiles.
 // Needs STUDY_BG_JS.
-const BG_PICK_JS = `const bgPick = dk => {
+// With a theme on (S), the first choice is the theme's own background instead of the deck's colors.
+const BG_PICK_JS = `const bgPick = (dk, S) => {
     const kind = (dk.bg && dk.bg.kind) || 'deck', image = (dk.bg && dk.bg.image) || (dk.cover && dk.cover.image) || '', photo = image && image !== 'mock' ? image : '', tile = studyBg({ ...dk, bg: { kind: 'deck' } }, false);
-    return { bgTile: { base: tile.mesh.base, veil: tile.veil }, hasBgPhoto: !!photo, bgPhoto: photo, bgIsPhoto: kind === 'photo', uploadBg: () => db.act.pickBg(dk.id),
-      bgOptions: [['deck', 'Colors'], ['plain', 'Plain'], ['sky', 'Sky'], ['sunset', 'Sunset'], ['photo', 'Photo']].map(([id, label]) => { const on = kind === id;
+    return { bgTile: { base: tile.mesh.base, veil: tile.veil, skin: !!S, art: S ? S.ref('bg') : null }, hasBgPhoto: !!photo, bgPhoto: photo, bgIsPhoto: kind === 'photo', uploadBg: () => db.act.pickBg(dk.id),
+      bgOptions: [['deck', S ? 'Theme' : 'Colors'], ['plain', 'Plain'], ['sky', 'Sky'], ['sunset', 'Sunset'], ['photo', 'Photo']].map(([id, label]) => { const on = kind === id;
         return { label, pressed: on ? 'true' : 'false', ring: on ? '0 0 0 2px ' + t.text : 'inset 0 0 0 1px ' + t.line, isDeck: id === 'deck', isPlain: id === 'plain', isSky: id === 'sky', isSunset: id === 'sunset', isPhoto: id === 'photo',
           pick: () => (id === 'photo' && !image ? db.act.pickBg(dk.id) : db.act.setBg(dk.id, id)) }; }) };
   };`;
 // A cover's picture: yours in the app, a placeholder on the canvas.
 const coverPicture = `<sc-if value="{{coverIsImage}}" hint-placeholder-val="{{ false }}"><div style="position: absolute; inset: 0; background: repeating-linear-gradient(135deg, {{t.surf}} 0 14px, {{t.surf2}} 14px 28px); display: flex; align-items: center; justify-content: center; gap: 8px; color: {{t.muted}}; font-size: 14px; font-weight: 500;">${svg(I.image, 18, 1.8)}[Your header image]</div></sc-if>
     <sc-if value="{{coverHasPhoto}}" hint-placeholder-val="{{ false }}"><img src="{{coverPhoto}}" alt="" style="position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover;"></sc-if>`;
-const coverFill = `<sc-if value="{{coverIsGradient}}" hint-placeholder-val="{{ true }}">${meshCard('cover', 'position: absolute; inset: 0;', 'height: 100%;', '')}</sc-if>
+const coverFill = `<sc-if value="{{coverIsGradient}}" hint-placeholder-val="{{ true }}">${meshCard('cover', 'position: absolute; inset: 0;', 'height: 100%;', '', 'div', '', true)}</sc-if>
     ${coverPicture}`;
 // Parallax: as the page scrolls, the deck's cover drifts at half speed behind the header (once the header's top reaches
 // the top, so no gap opens above it). Browsers without scroll-linked animations, and Reduce Motion, keep it still.
@@ -962,9 +999,12 @@ const COVER_LOGIC = `
   const tagList = dk.tags;
   const segOf = (id, cur) => ({ pressed: id === cur ? 'true' : 'false', bg: id === cur ? t.bg : 'transparent', fg: id === cur ? t.text : t.muted, sh: id === cur ? '0 1px 3px rgba(0,0,0,.14)' : 'none' });
   const style = dk.cover.style || 'mix';
-  const cover = this.gen(dk.seed + (dk.cover.round ? ' #' + dk.cover.round : ''), style);
+  const gradient = this.gen(dk.seed + (dk.cover.round ? ' #' + dk.cover.round : ''), style);
   // A header image replaces the gradient: your photo in the app, a placeholder on the canvas.
   const isImage = !!dk.cover.image, photo = isImage && dk.cover.image !== 'mock' ? dk.cover.image : '';
+  // With a theme on (Pro), the theme draws the header instead of the gradient, and letters the deck's name.
+  const S = this.skin(db), C = S && !isImage ? S.coverOf(dk, 'head', 34) : null;
+  const cover = C ? { ...gradient, base: C.base, ink: C.ink, shadow: 'none', plain: false, skin: true, art: C.art } : { ...gradient, plain: true, skin: false, art: null };
   const settingsOpen = cs.deckSettings == null ? !!this.props.settingsOpen : cs.deckSettings;
   ${STUDY_BG_JS}
   ${BG_PICK_JS}
@@ -1042,6 +1082,7 @@ const COVER_LOGIC = `
     grain: String(this.props.grain ?? 0.7),
     cover, coverIsGradient: !isImage, coverIsImage: isImage && !photo, coverHasPhoto: !!photo, coverPhoto: photo, coverHasImage: isImage,
     coverInk: photo ? '#FFFFFF' : isImage ? t.text : cover.ink, coverShadow: photo ? '0 1px 14px rgba(0,0,0,.45)' : isImage ? 'none' : cover.shadow,
+    coverTitle: C ? C.titleAt(34) : '', coverTitleS: C ? C.titleHead(32, dk.name) : '', coverPlain: !C, useCoverLabel: S ? 'Use theme' : 'Use gradient',
     deckName: cs.deckName == null ? dk.name : cs.deckName,
     setDeckName: e => { const v = e && e.target ? e.target.value : cs.deckName; this.setState({ deckName: v }); up({ name: v }, true); },
     nextCover: () => up({ cover: { round: (dk.cover.round || 0) + 1, image: null } }),
@@ -1074,7 +1115,7 @@ const COVER_LOGIC = `
     exportDeck: () => db.act.exportDeck(dk.id), deleteDeck: () => db.act.deleteDeck(dk.id), deleteLabel: lk && !lk.gone ? 'Remove from library' : 'Delete deck',
     // The deck's folder, and its background for Learn mode, flashcards, and Live.
     folderChips: [{ id: null, name: 'No folder' }, ...db.folders()].map(f => { const on = (dk.folder || null) === f.id; return { label: f.name, pressed: on ? 'true' : 'false', bg: on ? t.inv : t.surf, fg: on ? t.invText : t.text, pick: () => db.act.moveDeck(dk.id, f.id) }; }),
-    noFolders: !db.folders().length, ...bgPick(dk),
+    noFolders: !db.folders().length, ...bgPick(dk, S),
     deckLine: plural(dk.total, 'card').replace(String(dk.total), dk.totalLabel) + (lk ? ' · from ' + lk.owner.name : dk.aiCount ? ' · ' + dk.aiCount + ' added by your AI' : ''),
     deckLineShort: plural(dk.total, 'card').replace(String(dk.total), dk.totalLabel) + (dk.aiCount ? ' · ' + dk.aiCount + ' from your AI' : ''),
     // The owner: "learn button needs to be 'learn', flashcards need to have flashcards button". So this one always says
@@ -1090,7 +1131,7 @@ const smallBtn = (label, handler, icon = '', bg = '{{t.surf}}') => `<button type
 // own edge (a tile's ring sits under its fill), or it would vanish on a panel the page's color.
 const bgChooser = (phone, title = 'Background') => `<div style="display: flex; flex-direction: column; gap: 8px;"><span style="font-size: 13px; font-weight: 600;">${title}</span><span style="margin-top: -4px; font-size: 12px; color: {{t.muted}};">Behind Learn mode, flashcards, and Live</span>
           <div role="radiogroup" aria-label="Background" style="display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 8px;"><sc-for list="{{bgOptions}}" as="o" hint-placeholder-count="5"><button type="button" role="radio" aria-checked="{{o.pressed}}" onClick="{{o.pick}}" style="min-width: 0; padding: 0; border: 0; background: transparent; color: {{t.text}}; display: flex; flex-direction: column; gap: 6px; font: inherit; font-size: 12px; font-weight: 600; cursor: pointer;"><span style="position: relative; height: ${phone ? 48 : 54}px; border-radius: 14px; overflow: hidden; box-shadow: {{o.ring}};">
-            <sc-if value="{{o.isDeck}}" hint-placeholder-val="{{ true }}"><span style="position: absolute; inset: 0; background: {{bgTile.base}};"></span><span style="position: absolute; inset: 0; background: {{bgTile.veil}};"></span></sc-if>
+            <sc-if value="{{o.isDeck}}" hint-placeholder-val="{{ true }}"><span style="position: absolute; inset: 0; background: {{bgTile.base}};"></span><span style="position: absolute; inset: 0; background: {{bgTile.veil}};"></span><sc-if value="{{bgTile.skin}}" hint-placeholder-val="{{ false }}"><span ref="{{bgTile.art}}" data-sc-own aria-hidden="true" style="position: absolute; inset: 0; overflow: hidden;"></span></sc-if></sc-if>
             <sc-if value="{{o.isPlain}}" hint-placeholder-val="{{ false }}"><span style="position: absolute; inset: 0; border-radius: inherit; background: {{t.bg}}; box-shadow: inset 0 0 0 1.5px {{t.surf2}};"></span></sc-if>
             <sc-if value="{{o.isSky}}" hint-placeholder-val="{{ false }}"><span style="position: absolute; inset: 0; background: ${SKY_TILE};"></span></sc-if>
             <sc-if value="{{o.isSunset}}" hint-placeholder-val="{{ false }}"><span style="position: absolute; inset: 0; background: ${SUNSET_BG};"></span></sc-if>
@@ -1146,10 +1187,10 @@ const deckSettingsBody = phone => `<div style="display: flex; align-items: cente
       <sc-if value="{{dsGeneral}}" hint-placeholder-val="{{ true }}"><div style="flex-grow: 1; min-height: 0; overflow-y: auto; scrollbar-width: thin; display: flex; flex-direction: column; gap: 14px;">
         <sc-if value="{{canEdit}}" hint-placeholder-val="{{ true }}"><div style="display: flex; flex-direction: column; gap: 8px;"><span style="font-size: 13px; font-weight: 600;">Header</span>
           <div style="position: relative; height: ${phone ? 88 : 108}px; flex-shrink: 0; border-radius: 20px; overflow: hidden;">${coverFill}</div>
-          <div style="display: flex; gap: 6px; flex-wrap: wrap;">${smallBtn('Shuffle', 'nextCover', 'shuffle')}${smallBtn('Upload image', 'uploadCover', 'image')}<sc-if value="{{coverHasImage}}" hint-placeholder-val="{{ false }}">${smallBtn('Use gradient', 'removeCover')}</sc-if></div>
-          <div role="group" aria-label="Gradient style" style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 4px; padding: 4px; border-radius: 999px; background: {{t.surf}};">
+          <div style="display: flex; gap: 6px; flex-wrap: wrap;">${smallBtn('Shuffle', 'nextCover', 'shuffle')}${smallBtn('Upload image', 'uploadCover', 'image')}<sc-if value="{{coverHasImage}}" hint-placeholder-val="{{ false }}">${smallBtn('{{useCoverLabel}}', 'removeCover')}</sc-if></div>
+          <sc-if value="{{coverPlain}}" hint-placeholder-val="{{ true }}"><div role="group" aria-label="Gradient style" style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 4px; padding: 4px; border-radius: 999px; background: {{t.surf}};">
             <sc-for list="{{coverStyles}}" as="m" hint-placeholder-count="3"><button type="button" onClick="{{m.pick}}" aria-pressed="{{m.pressed}}" style="height: 34px; border: 0; border-radius: 999px; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; background: {{m.bg}}; color: {{m.fg}}; box-shadow: {{m.sh}};">{{m.label}}</button></sc-for>
-          </div>
+          </div></sc-if>
         </div></sc-if>
         ${bgChooser(phone)}
         <div style="display: flex; flex-direction: column; gap: 8px;"><span style="font-size: 13px; font-weight: 600;">Folder</span>
@@ -1201,7 +1242,7 @@ const webDeck = webRoot(`${sidebar('Library')}
         </div>
       </div>
       <div style="display: flex; align-items: flex-end; justify-content: space-between; gap: 16px;">
-        <div style="display: flex; flex-direction: column; gap: 6px; min-width: 0; text-shadow: {{coverShadow}};"><h1 style="margin: 0; font-size: 34px; font-weight: 600; letter-spacing: -.035em; line-height: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{deckName}}</h1><div style="font-size: 14px; opacity: .8;">{{deckLine}}</div></div>
+        <div style="display: flex; flex-direction: column; gap: 6px; min-width: 0; text-shadow: {{coverShadow}};"><h1 style="margin: 0; font-size: 34px; font-weight: 600; letter-spacing: -.035em; line-height: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; {{coverTitle}}">{{deckName}}</h1><div style="font-size: 14px; opacity: .8;">{{deckLine}}</div></div>
         <div style="display: flex; gap: 10px; flex-shrink: 0;">
           <sc-if value="{{showLive}}" hint-placeholder-val="{{ false }}"><a href="LiveSetup.dc.html" style="height: 36px; padding: 0 16px; display: inline-flex; align-items: center; gap: 8px; border-radius: 999px; ${onCover} font-size: 14px; font-weight: 600;">${svg(I.live, 15, 2)}Play live</a></sc-if>
           <a href="{{learnHref}}" style="height: 36px; padding: 0 16px; display: inline-flex; align-items: center; gap: 8px; border-radius: 999px; ${onCover} font-size: 14px; font-weight: 600;">${svg(I.sparkle, 15, 2)}{{learnLabel}}</a>
@@ -2491,18 +2532,18 @@ const occFace = big => `<sc-if value="{{card.isOcc}}" hint-placeholder-val="{{ f
   <sc-if value="{{card.hasOccLabel}}" hint-placeholder-val="{{ true }}"><div class="{{card.occLabelCls}}" style="visibility: {{card.occLabelVis}}; font-size: ${big ? 30 : 24}px; font-weight: 600; letter-spacing: -.02em; line-height: 1.2; text-align: center;">{{card.occLabel}}</div></sc-if>
 </div></sc-if>`;
 const faceFront = big => `${occFace(big)}
-<sc-if value="{{card.isBasic}}" hint-placeholder-val="{{ true }}"><div style="font-size: ${big ? 38 : 28}px; font-weight: 500; line-height: 1.25; letter-spacing: -.02em;">${RICH_SHOW('card.frontLines')}</div></sc-if>
-<sc-if value="{{card.isCloze}}" hint-placeholder-val="{{ false }}"><div style="font-size: ${big ? 38 : 28}px; font-weight: 500; line-height: 1.45; letter-spacing: -.02em;">${RICH_CLOZE('card.lines', `display: inline-block; padding: 0 ${big ? 16 : 12}px; border-radius: 999px; line-height: 1.3; background: {{blank.bg}}; color: {{blank.fg}}; transition: background-color .3s ease, color .3s ease;`, '{{blank.cls}}')}</div></sc-if>
+<sc-if value="{{card.isBasic}}" hint-placeholder-val="{{ true }}"><div style="font-size: calc(${big ? 38 : 28}px * var(--sk-fs, 1)); font-weight: 500; line-height: 1.25; letter-spacing: -.02em; {{sk.a}}">${RICH_SHOW('card.frontLines')}</div></sc-if>
+<sc-if value="{{card.isCloze}}" hint-placeholder-val="{{ false }}"><div style="font-size: calc(${big ? 38 : 28}px * var(--sk-fs, 1)); font-weight: 500; line-height: 1.45; letter-spacing: -.02em; {{sk.a}}">${RICH_CLOZE('card.lines', `display: inline-block; padding: 0 ${big ? 16 : 12}px; border-radius: 999px; line-height: 1.3; background: {{blank.bg}}; color: {{blank.fg}}; transition: background-color .3s ease, color .3s ease;`, '{{blank.cls}}')}</div></sc-if>
 <sc-if value="{{card.isImage}}" hint-placeholder-val="{{ false }}"><div style="display: flex; flex-direction: column; align-items: center; gap: 16px;"><sc-if value="{{card.imageMock}}" hint-placeholder-val="{{ true }}">${CELL(big ? 330 : 260, big ? 225 : 178)}</sc-if><sc-if value="{{card.imageUrl}}" hint-placeholder-val="{{ false }}"><img src="{{card.imageUrl}}" alt="" style="max-width: 100%; max-height: ${big ? 250 : 200}px; border-radius: 16px; object-fit: contain;"></sc-if><div style="font-size: ${big ? 24 : 20}px; font-weight: 500;">${RICH_SHOW('card.frontLines')}</div></div></sc-if>
 <sc-if value="{{card.isAudio}}" hint-placeholder-val="{{ false }}"><div style="display: flex; flex-direction: column; align-items: center; gap: ${big ? 24 : 20}px;"><span role="button" aria-label="{{snd.label}}" onClick="{{snd.toggle}}" class="sc-hold" style="width: ${big ? 88 : 76}px; height: ${big ? 88 : 76}px; border-radius: 50%; background: {{t.inv}}; color: {{t.invText}}; display: flex; align-items: center; justify-content: center;">${playGlyph('snd', 30)}</span><div style="width: ${big ? 400 : 272}px; max-width: 100%; display: flex; flex-direction: column; gap: 8px;">${waveRow('snd', 48, big ? 52 : 44, { gap: big ? 4 : 3, grow: false })}<sc-if value="{{snd.hasTime}}" hint-placeholder-val="{{ true }}"><div style="display: flex; justify-content: space-between; font-family: ${MONO}; font-size: 12px; color: {{t.muted}};"><span ref="{{snd.atRef}}">{{snd.at}}</span><span>{{snd.total}}</span></div></sc-if></div><div style="font-size: ${big ? 24 : 20}px; font-weight: 500;">${RICH_SHOW('card.frontLines')}</div></div></sc-if>`;
 const faceBack = big => `
-<sc-if value="{{card.isBasic}}" hint-placeholder-val="{{ true }}"><div style="font-size: ${big ? 32 : 24}px; font-weight: 500; line-height: 1.3; letter-spacing: -.015em;">${RICH_SHOW('card.backLines')}</div></sc-if>
-<sc-if value="{{card.isImage}}" hint-placeholder-val="{{ false }}"><div style="display: flex; flex-direction: column; align-items: center; gap: 16px;"><sc-if value="{{card.imageMock}}" hint-placeholder-val="{{ true }}">${CELL(big ? 330 : 260, big ? 225 : 178)}</sc-if><sc-if value="{{card.imageUrl}}" hint-placeholder-val="{{ false }}"><img src="{{card.imageUrl}}" alt="" style="max-width: 100%; max-height: ${big ? 250 : 200}px; border-radius: 16px; object-fit: contain;"></sc-if><div style="font-size: ${big ? 32 : 26}px; font-weight: 600; letter-spacing: -.02em;">${RICH_SHOW('card.labelLines')}</div></div></sc-if>
-<sc-if value="{{card.isAudio}}" hint-placeholder-val="{{ false }}"><div style="display: flex; flex-direction: column; align-items: center; gap: 8px;"><div style="font-size: ${big ? 64 : 52}px; font-weight: 600; letter-spacing: -.02em;">${RICH_SHOW('card.bigLines')}</div><div style="font-size: ${big ? 22 : 18}px; color: {{t.muted}};">${RICH_SHOW('card.subLines')}</div>
+<sc-if value="{{card.isBasic}}" hint-placeholder-val="{{ true }}"><div style="font-size: calc(${big ? 32 : 24}px * var(--sk-fs, 1)); font-weight: 500; line-height: 1.3; letter-spacing: -.015em; {{sk.a}}">${RICH_SHOW('card.backLines')}</div></sc-if>
+<sc-if value="{{card.isImage}}" hint-placeholder-val="{{ false }}"><div style="display: flex; flex-direction: column; align-items: center; gap: 16px;"><sc-if value="{{card.imageMock}}" hint-placeholder-val="{{ true }}">${CELL(big ? 330 : 260, big ? 225 : 178)}</sc-if><sc-if value="{{card.imageUrl}}" hint-placeholder-val="{{ false }}"><img src="{{card.imageUrl}}" alt="" style="max-width: 100%; max-height: ${big ? 250 : 200}px; border-radius: 16px; object-fit: contain;"></sc-if><div style="font-size: ${big ? 32 : 26}px; font-weight: 600; letter-spacing: -.02em; {{sk.a}}">${RICH_SHOW('card.labelLines')}</div></div></sc-if>
+<sc-if value="{{card.isAudio}}" hint-placeholder-val="{{ false }}"><div style="display: flex; flex-direction: column; align-items: center; gap: 8px;"><div style="font-size: ${big ? 64 : 52}px; font-weight: 600; letter-spacing: -.02em; {{sk.a}}">${RICH_SHOW('card.bigLines')}</div><div style="font-size: ${big ? 22 : 18}px; color: {{t.muted}};">${RICH_SHOW('card.subLines')}</div>
   <div onClick="{{sndBack.hold}}" class="sc-hold" style="margin-top: ${big ? 18 : 14}px; width: ${big ? 300 : 248}px; max-width: 100%; box-sizing: border-box; height: 48px; padding: 0 16px 0 6px; border-radius: 999px; background: {{t.surf}}; display: flex; align-items: center; gap: 12px; cursor: default;"><span role="button" aria-label="{{sndBack.label}}" onClick="{{sndBack.toggle}}" style="width: 36px; height: 36px; flex-shrink: 0; border-radius: 18px; background: {{t.inv}}; color: {{t.invText}}; display: flex; align-items: center; justify-content: center; cursor: pointer;">${playGlyph('sndBack', 14)}</span>${waveRow('sndBack', 36, 24)}<sc-if value="{{sndBack.hasTime}}" hint-placeholder-val="{{ true }}"><span ref="{{sndBack.timeRef}}" style="flex-shrink: 0; font-family: ${MONO}; font-size: 12px; color: {{t.muted}};">{{sndBack.time}}</span></sc-if></div></div></sc-if>`;
 // Card view fields: each text as lines with its formatting (blanks hidden until shown), plus image and sound flags.
 // The canvas's sample blanks come as before / blank / after; real cards have their text.
-const CARD_VIEW_JS = `const R = this.rich(), ro = { t, dark: !!this.props.dark };
+const CARD_VIEW_JS = `const R = this.rich(), ro = this.cardPal || { t, dark: !!this.props.dark };
   ${OCC_JS}
   // A picture's shape (width / height), learned once it loads, so its boxes sit right on it.
   const ratioOf = url => {
@@ -2530,18 +2571,20 @@ const BLANK_JS = `rev ? { text: c.back, bg: t.inv, fg: t.invText, cls: 'sc-pop' 
 const REVIEW_LOGIC = (total, phone = false) => `
 constructor(props) { super(props); this.state = { revealed: !!props.startRevealed, settings: null, pileDraft: props.newPileOpen ? 'Tricky ones' : null, exOpen: !!props.explainOpen, exFor: props.explainOpen ? 'r0' : null }; }
 renderVals() {
-  ${T}${DB_JS}
-  ${KB_JS}
-  ${CARD_VIEW_JS}
+  ${DB_JS}
   ${STUDY_BG_JS}
-  ${BG_PICK_JS}
-  ${EXPLAIN_JS}
   // One deck, all of them, one pile, or a set of cards picked on the Stats page.
   const rv = db.review(this.props.deckId, this.props.pile, this.props.set);
+  // Behind the cards: the background of the deck this card is from, or your theme's; the page's colors follow its look.
+  const S = this.skin(db), dk = db.deck(rv.deckId), bg = studyBg(dk, !!this.props.dark, !!this.props.dim, S, ${phone});
+  const t = this.theme(bg.dark, !!this.props.dim);
+  ${FACE_SKIN_JS(phone ? 'phone' : 'web')}
+  ${KB_JS}
+  ${CARD_VIEW_JS}
+  ${BG_PICK_JS}
+  ${EXPLAIN_JS}
   const rev = this.state.revealed;
   const ex = explainView(rv.ex, rv.card && rv.card.id, '', rev, ${JSON.stringify('It pumps protons (H⁺) out of the matrix into the space between the two membranes. That builds a gradient, like water held behind a dam, and ATP synthase uses the flow back in to make ATP. Remember it as pump uphill first, then cash in on the way down.')});
-  // Behind the cards: the background of the deck this card is from.
-  const dk = db.deck(rv.deckId), bg = studyBg(dk, !!this.props.dark, !!this.props.dim);
   const c = rv.card || { kind: 'basic', front: '', back: '' };
   const card = cardView(c, rev);
   const after = patch => this.setState({ revealed: false, moved: true, ...(patch || {}) });
@@ -2570,7 +2613,7 @@ renderVals() {
   ${SOUND_JS}
   const src = card.isAudio ? c : null, snd = soundView(src, 48, 'front'), sndBack = soundView(src, 36, 'back');
   return {
-    t, bg, ex, kb, card, grades, piles, modes, progs, snd, sndBack,
+    t, bg, ex, kb, card, grades, piles, modes, progs, snd, sndBack, sk, cp,
     showBar: prog === 'bar', showCounts: prog === 'counts',
     cNew: { n: String(n.new), u: u('new') }, cLearn: { n: String(n.learn), u: u('learn') }, cRev: { n: String(n.rev), u: u('rev') },
     countsLabel: n.new + ' new, ' + n.learn + ' learning, ' + n.rev + ' to review',
@@ -2599,12 +2642,12 @@ renderVals() {
     flipLabel: card.isCloze ? (rev ? 'Hide the answer' : 'Show the blank') : card.isOcc ? (rev ? 'Hide the answer' : 'Show what’s under the box') : (rev ? 'Flip back' : 'Flip card'),
     // The note under a card that stays put (clozeShown: fill in the blank, or a picture with boxes) shows with the answer.
     clozeShown: rev && (card.isCloze || card.isOcc),
-    blank: ${BLANK_JS},
+    blank: Fs ? (rev ? { text: c.back, bg: Fs.blankBg, fg: Fs.blankFg, cls: 'sc-pop' } : { text: '\u2003\u2003\u2003\u2003', bg: Fs.blankOff, fg: 'transparent', cls: '' }) : ${BLANK_JS},
     reveal: () => this.setState({ revealed: !rev, moved: false }),
     undo: () => { if (done > 0 || !db.mock) { this.setState({ revealed: true, moved: false }); db.act.undo(); } },
     editHref: rv.editHref, editLabel: rv.editLabel || 'Edit', endHref: db.mock ? '${phone ? 'PhoneDeck' : 'WebDeck'}.dc.html' : rv.endHref,
     // Settings change the background of the deck this card is from; reviewing every deck, it says which deck that is.
-    ...bgPick(dk), bgTitle: db.mock || this.props.deckId ? 'Background' : 'Background for ' + dk.name
+    ...bgPick(dk, S), bgTitle: db.mock || this.props.deckId ? 'Background' : 'Background for ' + dk.name
   };
 }`;
 const progSeg = `<div role="group" aria-label="Progress style" style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 4px; padding: 4px; border-radius: 999px; background: {{t.surf}};">
@@ -2632,11 +2675,21 @@ const pileTiles = phoneSize => `<sc-for list="{{piles}}" as="p" hint-placeholder
     <sc-if value="{{canAddPile}}" hint-placeholder-val="{{ true }}">
       <button type="button" onClick="{{openPile}}" aria-label="New pile" aria-haspopup="dialog" style="width: ${phoneSize ? 52 : 92}px; flex-shrink: 0; box-sizing: border-box; border: 1.5px dashed {{t.muted}}; border-radius: ${phoneSize ? 20 : 24}px; background: transparent; color: {{t.muted}}; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px;">${svg(I.plus, 16, 2.2)}${phoneSize ? '' : 'New pile'}</button>
     </sc-if>`;
-const FACE = (pad, big, back) => `<div style="position: absolute; inset: 0; box-sizing: border-box; padding: ${pad}; display: flex; flex-direction: column; text-align: left; background: {{t.card}}; border: 1px solid {{t.line}}; border-radius: {{radius}}; box-shadow: {{t.shadow}}; backface-visibility: hidden; -webkit-backface-visibility: hidden;${back ? ' transform: rotateY(180deg);' : ''}">
-  <div style="min-height: 21px;"></div>
-  <div style="position: relative; display: flex; flex-direction: column; justify-content: center; flex-grow: 1;">${back ? faceBack(big) : faceFront(big)}</div>
-  <div style="font-size: 14px; line-height: 1.5; color: {{t.muted}}; min-height: 21px;">${back ? RICH_SHOW('card.noteLines') : `<sc-if value="{{clozeShown}}" hint-placeholder-val="{{ false }}"><span class="sc-fade-a" style="display: block;">${RICH_SHOW('card.noteLines')}</span></sc-if>`}</div>
+// With a theme on (Pro), the face takes the theme's look (sk.front / sk.back: its color, edge, shadow, and type) and
+// what the theme draws behind the words (tape, a title bar, a stamp); inside it, the sound player and the like use the
+// card's own colors (cp), which a dark card and a light page don't share.
+const FACE = (pad, big, back) => `<div style="position: absolute; inset: 0; box-sizing: border-box; padding: ${pad}; display: flex; flex-direction: column; text-align: left; background: {{cp.card}}; border: 1px solid {{cp.line}}; border-radius: {{radius}}; box-shadow: {{cp.shadow}}; backface-visibility: hidden; -webkit-backface-visibility: hidden;${back ? ' transform: rotateY(180deg);' : ''} --sk-fs: {{sk.fs}}; {{sk.${back ? 'back' : 'front'}.css}}">
+  <sc-if value="{{sk.on}}" hint-placeholder-val="{{ false }}"><div ref="{{sk.${back ? 'back' : 'front'}.deco}}" data-sc-own aria-hidden="true" style="position: absolute; inset: 0; border-radius: inherit; pointer-events: none;"></div></sc-if>
+  <div style="position: relative; min-height: 21px;"></div>
+  <div style="position: relative; display: flex; flex-direction: column; justify-content: center; flex-grow: 1;">${(back ? faceBack(big) : faceFront(big)).replace(/\{\{t\./g, '{{cp.')}</div>
+  <div style="position: relative; font-size: 14px; line-height: 1.5; color: {{sk.muted}}; min-height: 21px;">${back ? RICH_SHOW('card.noteLines') : `<sc-if value="{{clozeShown}}" hint-placeholder-val="{{ false }}"><span class="sc-fade-a" style="display: block;">${RICH_SHOW('card.noteLines')}</span></sc-if>`}</div>
 </div>`;
+// The face's holes (sk, cp) for a board with a theme S ('web' or 'phone': the size the theme draws it at).
+const FACE_SKIN_JS = at => `const Fs = S ? S.faceOf('front', '${at}') : null, Bs = S ? S.faceOf('back', '${at}') : null;
+  const cp = Fs ? { ...this.theme(Fs.dark, false), text: Fs.ink, muted: Fs.muted } : t;
+  this.cardPal = Fs ? { t: cp, dark: Fs.dark } : null;
+  const sk = Fs ? { on: true, front: { css: Fs.css, deco: Fs.deco }, back: { css: Bs.css, deco: Bs.deco }, a: Fs.a, fs: Fs.fs, muted: Fs.muted }
+    : { on: false, front: { css: '', deco: null }, back: { css: '', deco: null }, a: '', fs: '1', muted: t.muted };`;
 // Explain (V96): once a card is turned over, its corner offers an AI explanation of the answer, which opens over the
 // card. It shows only when Lucida's AI is set up (or the card already has one); Free gets a few a day.
 const explainOver = phone => `<sc-if value="{{ex.show}}" hint-placeholder-val="{{ false }}">
@@ -3385,7 +3438,7 @@ ${active ? tabBar(active) : ''}
 ${extra}
 </div>`;
 // iPhone: the same Library as a list, with the Decks / All cards switch under the title.
-const phoneLibRow = `<a href="{{d.href}}" draggable="false" style="flex-grow: 1; min-width: 0; display: flex; align-items: center; gap: 12px;"><span style="width: 48px; height: 48px; flex-shrink: 0; border-radius: 14px; background: {{d.base}}; overflow: hidden;"><sc-if value="{{d.hasPhoto}}" hint-placeholder-val="{{ false }}"><img src="{{d.photo}}" alt="" draggable="false" style="width: 100%; height: 100%; object-fit: cover;"></sc-if></span><span style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px;"><span style="font-size: 16px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{d.name}}</span><span style="font-size: 13px; color: {{t.muted}}; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{d.line}}</span></span><span style="font-family: ${MONO}; font-size: 15px; color: {{d.dueColor}};">{{d.dueLabel}}</span></a>`;
+const phoneLibRow = `<a href="{{d.href}}" draggable="false" style="flex-grow: 1; min-width: 0; display: flex; align-items: center; gap: 12px;"><span style="width: 48px; height: 48px; flex-shrink: 0; border-radius: 14px; background: {{d.base}}; overflow: hidden;"><sc-if value="{{d.hasPhoto}}" hint-placeholder-val="{{ false }}"><img src="{{d.photo}}" alt="" draggable="false" style="width: 100%; height: 100%; object-fit: cover;"></sc-if>${SKIN_THUMB}</span><span style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px;"><span style="font-size: 16px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{d.name}}</span><span style="font-size: 13px; color: {{t.muted}}; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{d.line}}</span></span><span style="font-family: ${MONO}; font-size: 15px; color: {{d.dueColor}};">{{d.dueLabel}}</span></a>`;
 const libRound = (ic, label, { href = '', onClick = '', inv = false, attrs = '' } = {}) => { const st = `width: 40px; height: 40px; flex-shrink: 0; border: 0; border-radius: 20px; ${inv ? 'background: {{t.inv}}; color: {{t.invText}};' : 'background: {{t.surf}}; color: {{t.text}};'} display: flex; align-items: center; justify-content: center; cursor: pointer;`;
   return href ? `<a href="${href}" aria-label="${label}"${attrs} class="sc-press" style="${st}">${svg(I[ic], 18, 2)}</a>` : `<button type="button" onClick="${onClick}" aria-label="${label}"${attrs} class="sc-press" style="${st}">${svg(I[ic], 18, 2)}</button>`; };
 const phoneLibrary = phone(`<div style="padding: 64px 20px 120px; display: flex; flex-direction: column; gap: 14px;">
@@ -3511,6 +3564,8 @@ renderVals() { ${T}
   const items = ${INBOX_ITEMS}.filter(i => !done[i.id]);
   const c = items[0] || { kind: 'basic', front: '', back: '', note: '' };
   const rev = this.state.revealed;
+  const S = null;
+  ${FACE_SKIN_JS('phone')}
   ${CARD_VIEW_JS}
   const card = cardView({ ...c, image: c.kind === 'image' ? 'mock' : null, backLabel: c.kind === 'image' ? '1 = ' + c.back : '', backBig: c.kind === 'audio' ? '電車' : '', backSub: c.kind === 'audio' ? 'でんしゃ · ' + c.back : undefined }, rev);
   const handle = v => () => this.setState({ revealed: false, moved: true, handled: { ...done, [c.id]: v } });
@@ -3519,7 +3574,7 @@ renderVals() { ${T}
   ${SOUND_JS}
   const src = card.isAudio ? c : null;
   return {
-    t, card, radius: '36px', snd: soundView(src, 48, 'front'), sndBack: soundView(src, 36, 'back'),
+    t, card, sk, cp, radius: '36px', snd: soundView(src, 48, 'front'), sndBack: soundView(src, 36, 'back'),
     reveal: () => this.setState({ revealed: !rev, moved: false }),
     flipTransform: rev && !card.isCloze ? 'rotateY(180deg)' : 'rotateY(0deg)',
     flipTrans: this.state.moved ? 'none' : 'transform .5s cubic-bezier(.4,0,.2,1)', cardIn: this.state.moved ? (Object.keys(done).length % 2 ? 'sc-in-a' : 'sc-in-b') : '',
@@ -3534,11 +3589,11 @@ renderVals() { ${T}
 }`;
 
 const phoneDeck = phone(`<div style="height: 100%; overflow-y: auto; scrollbar-width: none; scroll-timeline: --deck block;"><div style="padding: 0 0 120px; display: flex; flex-direction: column; gap: 16px;">
-  <div style="position: relative; height: 232px; overflow: hidden;">
+  <div style="position: relative; height: 232px; overflow: hidden; container-type: inline-size;">
     ${parallax(232)}
     <div style="position: absolute; inset: 0; box-sizing: border-box; padding: 54px 16px 18px 20px; display: flex; flex-direction: column; justify-content: space-between; color: {{coverInk}};">
       <div style="display: flex; justify-content: space-between;">${coverRound('back', 'Back', 'PhoneToday.dc.html')}<div style="display: flex; gap: 8px;"><sc-if value="{{isShared}}" hint-placeholder-val="{{ false }}"><a href="{{pageHref}}" aria-label="{{shareChip}}" style="width: 40px; height: 40px; border-radius: 20px; ${onCover} display: flex; align-items: center; justify-content: center;">${svg(I.globe, 18, 2)}</a></sc-if>${coverRound('gear', 'Deck settings', '', '{{openSettings}}')}${coverRound('search', 'Search')}<sc-if value="{{canEdit}}" hint-placeholder-val="{{ true }}">${coverRound('plus', 'New card', 'PhoneEditor.dc.html')}</sc-if><sc-if value="{{isStudy}}" hint-placeholder-val="{{ false }}"><a href="{{suggestHref}}" aria-label="Suggest a change" style="width: 40px; height: 40px; border-radius: 20px; ${onCover} display: flex; align-items: center; justify-content: center;">${svg(I.message, 18, 2)}</a></sc-if></div></div>
-      <div style="display: flex; flex-direction: column; gap: 4px; text-shadow: {{coverShadow}};"><div style="font-size: 32px; font-weight: 700; letter-spacing: -.03em; line-height: 1.05; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{deckName}}</div><div style="font-size: 14px; opacity: .8;">{{deckLineShort}}</div></div>
+      <div style="display: flex; flex-direction: column; gap: 4px; text-shadow: {{coverShadow}};"><div style="font-size: 32px; font-weight: 700; letter-spacing: -.03em; line-height: 1.05; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; {{coverTitleS}}">{{deckName}}</div><div style="font-size: 14px; opacity: .8;">{{deckLineShort}}</div></div>
     </div>
   </div>
   <div style="padding: 0 20px; display: flex; flex-direction: column; gap: 16px;">
@@ -3720,6 +3775,8 @@ const S_LINE = '<div style="height: 1px; margin-left: 16px; background: {{t.bg}}
 const sGroup = (title, rows) => `<div style="display: flex; flex-direction: column; gap: 8px;"><span style="padding: 0 4px; font-size: 13px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: {{t.muted}};">${title}</span><div style="border-radius: 24px; background: {{t.surf}}; overflow: hidden;">${rows.join(S_LINE)}</div></div>`;
 // Settings → Plan: Free, with a way to Go Pro; or Pro, when it renews (or ends), and Stripe's page to manage or cancel it.
 // Online only: on your own computer everything is on, so there's no plan to show.
+// Settings › Look › Theme: the theme you use, and on Free, that themes are part of Pro.
+const THEME_ROW = board => sRow(`<span style="display: inline-flex; align-items: center; gap: 8px;"><span>Theme</span><sc-if value="{{themeLocked}}" hint-placeholder-val="{{ false }}">${PRO_BADGE}</sc-if></span>`, sVal('{{themeName}}'), { href: board + '.dc.html' });
 const PRO_PILL = `<a href="{{proHref}}" style="height: 36px; padding: 0 16px; display: inline-flex; align-items: center; border-radius: 999px; background: {{t.inv}}; color: {{t.invText}}; font-size: 14px; font-weight: 600; white-space: nowrap;">Go Pro</a>`;
 const planGroups = `<sc-if value="{{planFree}}" hint-placeholder-val="{{ false }}">${sGroup('Plan', [sRow('Free', PRO_PILL, { sub: 'Pro adds exam tools, deeper stats, and more' })])}</sc-if>
       <sc-if value="{{planPro}}" hint-placeholder-val="{{ true }}">${sGroup('Plan', [
@@ -3752,8 +3809,11 @@ const photoPanel = full => `${full ? SEG('photoOpts', 'Profile picture', 3, true
 // Its values: the picture you picked (the app works out the default: your Google photo if there is one), the choices,
 // and the colors. Picking Your photo before there is one opens the file picker, like Change photo.
 const PHOTO_JS = `const colors = [['Periwinkle', 'linear-gradient(135deg, #8C9AFC 0%, #4F60E6 100%)'], ['Orange', 'linear-gradient(135deg, #FFC857 0%, #EE5A36 100%)'], ['Green', 'linear-gradient(135deg, #7EE0B0 0%, #1F8F5F 100%)'], ['Pink', 'linear-gradient(135deg, #F9A8D4 0%, #D6336C 100%)'], ['Teal', 'linear-gradient(135deg, #7DE3F0 0%, #0E8A9E 100%)'], ['Violet', 'linear-gradient(135deg, #C4A7FF 0%, #7C3AED 100%)']];
-  const photo = st.photo, photoVals = { initial: chrome.me.initial, avatarBg: (colors[st.color] || colors[0])[1], photoColor: photo === 'color', photoGoogle: photo === 'google', photoYours: photo === 'yours', photoPic: photo !== 'color',
-    photoOpts: opts([...(st.google ? [['google', 'Google photo']] : []), ['yours', 'Your photo'], ['color', 'Color']], photo, id => (id === 'yours' && !st.yourPhoto ? db.act.pickPhoto() : set({ photo: id }))),
+  // Settings › Look › Theme: your theme's name (Lucida on Free, where the others are locked).
+  // With a theme on, deck covers are the theme's, so the gradient choice only shows again with Lucida's own look.
+  const themeRow = () => ({ themeLocked: planVals.planFree, themeName: (${THEME_LIST}.find(x => x.key === (planVals.planFree ? 'lucida' : st.theme)) || { short: 'Lucida' }).short, gradsThemed: !planVals.planFree && !!st.theme && st.theme !== 'lucida' });
+  const photo = st.photo, skinned = !!chrome.me.skinned, photoVals = { initial: chrome.me.initial, avatarBg: (colors[st.color] || colors[0])[1], photoColor: photo === 'color' && !skinned, photoGoogle: photo === 'google', photoYours: photo === 'yours', photoPic: photo !== 'color' || skinned,
+    photoOpts: opts([...(st.google ? [['google', 'Google photo']] : []), ['yours', 'Your photo'], ['color', skinned ? 'Theme' : 'Color']], photo, id => (id === 'yours' && !st.yourPhoto ? db.act.pickPhoto() : set({ photo: id }))),
     changePhoto: () => db.act.pickPhoto(), removePhoto: () => db.act.removePhoto(),
     swatches: colors.map(([label, bg], i) => ({ label, bg, pressed: i === st.color ? 'true' : 'false', ring: i === st.color ? '0 0 0 2px ' + t.surf + ', 0 0 0 4px ' + t.text : 'none', pick: () => set({ color: i }) })) };`;
 // Settings → Profile (web and iPhone): your handle, which opens your profile, and Edit profile, which opens it with its
@@ -3774,7 +3834,7 @@ const phoneSettings = phone(`<div style="padding: 64px 20px 34px; display: flex;
     sRow('Schedule with FSRS', SWITCH('fsrsSw', 'toggleFsrs', 'Schedule with FSRS'), { sub: '{{fsrsSub}}' }),
     TUNE_ROW
   ])}
-  ${sGroup('Look', [sRow('Appearance', SEG('looks', 'Appearance')), sRow('Dark mode', SEG('darks', 'Dark mode', 2), { sub: 'When the app is dark' }), sRow('Card gradients', SEG('grads', 'Card gradients'))])}
+  ${sGroup('Look', [sRow('Appearance', SEG('looks', 'Appearance')), sRow('Dark mode', SEG('darks', 'Dark mode', 2), { sub: 'When the app is dark' }), THEME_ROW('PhoneThemePicker'), sRow('<span style="display: flex; flex-direction: column; gap: 2px;"><span>Card gradients</span><sc-if value="{{gradsThemed}}" hint-placeholder-val="{{ false }}"><span style="font-size: 12px; color: {{t.muted}};">With the Lucida theme</span></sc-if></span>', SEG('grads', 'Card gradients'))])}
   ${sGroup('Your AI', [
     sRow('Connected apps', sVal('{{connected}}'), { href: 'PhoneConnect.dc.html' }),
     sRow('Check AI cards first', SWITCH('checkSw', 'toggleCheck', 'Check AI cards first'))
@@ -3802,6 +3862,7 @@ renderVals() {
     // Your account: tap it to sign out (online).
     accountSub: db.mock ? 'Synced on all your devices · just now' : st.sub,
     account: () => { if (!db.mock && st.signedIn && confirm('Sign out of Lucida?')) db.act.signOut(); },
+    ...themeRow(),
     reminder: pickOf(st.reminder, st.reminder, v => set({ reminder: v })),
     perDay: pickOf(st.perDay, String(st.perDay), v => set({ perDay: +v })),
     goal: pickOf(st.goal, st.goal + '%', v => set({ goal: +v })),
@@ -3854,7 +3915,8 @@ const webSettings = webRoot(`${sidebar('You')}
       ${sGroup('Look', [
         sRow('Appearance', SEG('looks', 'Appearance')),
         sRow('Dark mode', SEG('darks', 'Dark mode', 2), { sub: 'When the app is dark' }),
-        `<div style="padding: 10px 16px 16px; display: flex; flex-direction: column; gap: 12px;"><div style="display: flex; align-items: center; gap: 12px;"><span style="flex-grow: 1; font-size: 16px;">Card gradients</span>${SEG('grads', 'Card gradients')}</div><div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px;"><sc-for list="{{gradPreview}}" as="k" hint-placeholder-count="4">${meshCard('k', 'height: 60px; border-radius: 14px;', 'height: 100%; box-sizing: border-box; padding: 8px 10px; display: flex; align-items: flex-end; font-size: 11px; font-weight: 600;', '{{k.name}}')}</sc-for></div></div>`
+        THEME_ROW('ThemePicker'),
+        `<div style="padding: 10px 16px 16px; display: flex; flex-direction: column; gap: 12px;"><div style="display: flex; align-items: center; gap: 12px;"><span style="flex-grow: 1; display: flex; flex-direction: column; gap: 2px;"><span style="font-size: 16px;">Card gradients</span><sc-if value="{{gradsThemed}}" hint-placeholder-val="{{ false }}"><span style="font-size: 12px; color: {{t.muted}};">With the Lucida theme</span></sc-if></span>${SEG('grads', 'Card gradients')}</div><div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px;"><sc-for list="{{gradPreview}}" as="k" hint-placeholder-count="4">${meshCard('k', 'height: 60px; border-radius: 14px;', 'height: 100%; box-sizing: border-box; padding: 8px 10px; display: flex; align-items: flex-end; font-size: 11px; font-weight: 600;', '{{k.name}}')}</sc-for></div></div>`
       ])}
       ${sGroup('Your AI', [
         sRow('Connected apps', sVal('{{connected}}'), { href: 'WebConnect.dc.html' }),
@@ -3882,6 +3944,7 @@ renderVals() {
   return {
     t, ...chrome, grain: String(this.props.grain ?? 0.7), ...planVals, ...photoVals, ...profileVals, tune,
     name: st.name, sub: st.sub, signedIn: st.signedIn,
+    ...themeRow(),
     looks: opts([['system', 'System'], ['light', 'Light'], ['dark', 'Dark']], look, id => set({ look: id })),
     darks: opts([['gray', 'Gray'], ['black', 'Black']], darkMode, id => set({ darkMode: id })),
     grads: opts([['mix', 'Mix'], ['vivid', 'Vivid'], ['deep', 'Deep']], st.grads, id => set({ grads: id })),
@@ -3898,6 +3961,137 @@ renderVals() {
     exportAll: () => db.act.exportAll(), deleteAccount: () => db.act.resetAll(), signOut: () => db.act.signOut && db.act.signOut()
   };
 }`;
+
+// ---------- Themes (Pro): Settings › Theme, and each theme's page ----------
+// Settings › Theme: every theme as a small picture of it (its study background, two deck covers, a card, and your
+// profile picture), tapped for its page, where you use it. A theme changes those four things only; the rest of Lucida
+// stays itself. Lucida's own look is for everyone. On Free the others show a lock, and their pages offer Go Pro (like
+// Learn mode's upgrade card). Your theme is saved with your library (settings.theme), and the app loads its code
+// (web/themes) only once you pick it. On the canvas these boards carry the themes' code (design/themes.mjs).
+// Lucida's own look, drawn like a theme's tile: a soft gray, two gradient covers, a white card, your color's circle.
+const luTile = (W, H) => {
+  const k = W / 208, kv = H / 220, px = n => Math.round(n * k), py = n => Math.round(n * kv), cw = px(76), ch = Math.round(cw * 97 / 76), fw = px(124), fh = Math.round(fw * 80 / 124), av = px(34);
+  const cov = (key, x, y, rot) => `<span style="position: absolute; left: ${x}px; top: ${y}px; width: ${cw}px; height: ${ch}px; border-radius: ${px(12)}px; overflow: hidden; ${rot ? `transform: rotate(${rot}deg);` : ''}">${meshCard(key, 'position: absolute; inset: 0;', 'height: 100%;', '')}</span>`;
+  return `<span style="position: absolute; inset: 0; background: linear-gradient(160deg, #EEEEF2, #DCDDE3);"></span>${cov('lu1', px(16), py(24), 0)}${cov('lu2', px(60), py(40), 7)}
+      <span style="position: absolute; right: ${px(14)}px; bottom: ${py(16)}px; width: ${fw}px; height: ${fh}px; box-sizing: border-box; padding: ${px(9)}px ${px(12)}px; border-radius: ${px(12)}px; background: #FFFFFF; color: #000000; box-shadow: 0 1px 2px rgba(0,0,0,.04), 0 18px 44px -18px rgba(0,0,0,.18); display: flex; align-items: center; font-size: ${Math.max(8, px(12))}px; font-weight: 600; letter-spacing: -.025em; line-height: 1.2;">Mitochondria make…</span>
+      <span style="position: absolute; right: ${px(14)}px; top: ${px(14)}px; width: ${av}px; height: ${av}px; border-radius: 50%; background: {{lu.bg}}; color: #FFFFFF; display: flex; align-items: center; justify-content: center; font-size: ${Math.round(av * 0.42)}px; font-weight: 600;">{{lu.initial}}</span>`;
+};
+// (r: the size of the tick or the empty circle beside the name; a phone's narrow tiles get smaller ones)
+const themeTile = (W, H, fs, gap, r = 16) => `<a href="{{x.href}}" aria-label="{{x.name}}" aria-current="{{x.current}}" class="sc-press" style="width: ${W}px; min-width: 0; display: flex; flex-direction: column; gap: ${gap}px; color: inherit;">
+      <span style="position: relative; isolation: isolate; width: ${W}px; height: ${H}px; border-radius: ${Math.round(W * 20 / 208)}px; overflow: hidden; box-shadow: {{x.ring}}; display: block;">
+        <sc-if value="{{x.lucida}}" hint-placeholder-val="{{ false }}">${luTile(W, H)}</sc-if>
+        <sc-if value="{{x.skin}}" hint-placeholder-val="{{ true }}"><span ref="{{x.art}}" data-sc-own aria-hidden="true" style="position: absolute; inset: 0;"></span></sc-if>
+        <sc-if value="{{x.pro}}" hint-placeholder-val="{{ true }}"><span style="position: absolute; left: ${Math.round(W * 10 / 208)}px; bottom: ${Math.round(W * 10 / 208)}px; height: 17px; padding: 0 7px; border-radius: 999px; background: #000000; color: #FFFFFF; display: inline-flex; align-items: center; font-size: 10px; font-weight: 700;">Pro</span></sc-if>
+      </span>
+      <span style="display: flex; align-items: center; gap: ${r < 16 ? 4 : 6}px; font-size: ${fs}px; font-weight: 600; white-space: nowrap;"><span style="min-width: 0; overflow: hidden; text-overflow: ellipsis;">{{x.name}}</span><span style="flex-grow: 1;"></span><sc-if value="{{x.on}}" hint-placeholder-val="{{ false }}"><span style="width: ${r}px; height: ${r}px; flex-shrink: 0; border-radius: ${r / 2}px; background: {{t.inv}}; color: {{t.invText}}; display: flex; align-items: center; justify-content: center;">${svg(I.check, r < 16 ? 9 : 10, 2.6)}</span></sc-if><sc-if value="{{x.off}}" hint-placeholder-val="{{ true }}"><span style="width: ${r}px; height: ${r}px; flex-shrink: 0; box-sizing: border-box; border-radius: ${r / 2}px; border: 1.5px solid {{ringOff}};"></span></sc-if><sc-if value="{{x.locked}}" hint-placeholder-val="{{ false }}"><span aria-label="Pro" style="display: flex; flex-shrink: 0; color: {{t.muted}};">${svg(I.lock, 14, 2)}</span></sc-if></span>
+    </a>`;
+// On Free: themes are part of Pro (the Learn upgrade card's words), with Go Pro.
+const themeUpgrade = phone => `<sc-if value="{{locked}}" hint-placeholder-val="{{ false }}"><div style="box-sizing: border-box; padding: ${phone ? '16px' : '18px 22px'}; border-radius: ${phone ? 24 : 20}px; background: {{t.surf}}; display: flex; align-items: center; gap: 16px;"><span style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px;"><span style="display: flex; align-items: center; gap: 8px; font-size: 15px; font-weight: 600;"><span>Themes are part of Pro</span>${PRO_BADGE}</span><span style="font-size: 13px; line-height: 1.4; color: {{t.muted}};">Yearly works out to $4.17 a month. Cancel anytime.</span></span><a href="{{proHref}}" class="sc-press" style="height: 36px; padding: 0 16px; flex-shrink: 0; display: inline-flex; align-items: center; border-radius: 999px; background: {{t.inv}}; color: {{t.invText}}; font-size: 14px; font-weight: 600; white-space: nowrap;">Go Pro</a></div></sc-if>`;
+// On Pro: your profile can show your theme to people who visit it (public profiles and decks; on by default).
+const themeOnProfile = phone => `<sc-if value="{{unlocked}}" hint-placeholder-val="{{ true }}"><div style="box-sizing: border-box; padding: ${phone ? '14px 16px' : '18px 22px'}; border-radius: ${phone ? 24 : 20}px; background: {{t.surf}}; display: flex; align-items: center; gap: 16px;"><span style="display: flex; flex-direction: column; gap: 2px; flex-grow: 1; min-width: 0;"><span style="font-size: 15px; font-weight: 600;">Show my theme on my profile</span><span style="font-size: 13px; line-height: 1.4; color: {{t.muted}};">People who visit see your decks the way you do.</span></span>${SWITCH('showSw', 'toggleShow', 'Show my theme on my profile')}</div></sc-if>`;
+const themePicker = webRoot(`${sidebar('You')}
+<main style="flex-grow: 1; box-sizing: border-box; padding: 36px 48px; display: flex; flex-direction: column; gap: 22px; min-width: 0; overflow-y: auto;">
+  <a href="WebSettings.dc.html" style="align-self: flex-start; margin-bottom: -12px; display: inline-flex; align-items: center; gap: 6px; font-size: 14px; color: {{t.muted}};">${svg(I.back, 16, 2)}Settings</a>
+  <h1 style="margin: 0; font-size: 32px; font-weight: 600; letter-spacing: -.03em;">Theme</h1>
+  <div style="margin-top: -10px; font-size: 14px; color: {{t.muted}};">Changes your deck covers, flashcards, study background, and profile picture.</div>
+  <div role="list" aria-label="Themes" style="display: grid; grid-template-columns: repeat(8, 126px); gap: 20px 12px; margin-top: 6px;"><sc-for list="{{themes}}" as="x" hint-placeholder-count="15">${themeTile(126, 168, 12, 8)}</sc-for></div>
+  <div style="width: 1092px; display: flex; flex-direction: column; gap: 12px;">${themeUpgrade(false)}${themeOnProfile(false)}</div>
+</main>`);
+const PHONE_THEMES_H = 1260;
+const phoneThemePicker = phone(`<div style="padding: 64px 20px 34px; display: flex; flex-direction: column; gap: 18px;">
+  <div style="display: flex; align-items: center; gap: 12px;">${roundBtn('back', 'Back', 'PhoneSettings.dc.html')}<div style="flex-grow: 1; font-size: 17px; font-weight: 600; text-align: center;">Theme</div><div style="width: 44px;"></div></div>
+  <div style="font-size: 14px; line-height: 1.45; color: {{t.muted}};">Changes your deck covers, flashcards, study background, and profile picture.</div>
+  <div role="list" aria-label="Themes" style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px 10px;"><sc-for list="{{themes}}" as="x" hint-placeholder-count="15">${themeTile(110, 146, 11.5, 7, 14)}</sc-for></div>
+  ${themeUpgrade(true)}${themeOnProfile(true)}
+</div>`, '', '', PHONE_THEMES_H);
+const themePickerLogic = phone => `
+renderVals() {
+  const db = this.props.db || this.mock(), chrome = db.chrome(), st = db.settings(), t = this.theme(!!this.props.dark, !!this.props.dim);
+  ${SW_JS}
+  ${OPTS_JS}
+  const set = patch => db.act.setSettings(patch);
+  ${PLAN_JS(phone ? 'PricingPhone' : 'Pricing')}
+  ${PHOTO_JS}
+  // On Free the themes are locked (and a Pro theme picked before stays off); on this computer everything is on.
+  const locked = planVals.planFree, cur = locked ? 'lucida' : st.theme || 'lucida';
+  const themes = ${THEME_LIST}.map(x => {
+    const on = x.key === cur, lucida = x.key === 'lucida', S = lucida ? null : this.skinFor(x.key);
+    return { name: x.short, key: x.key, href: db.mock ? (lucida ? '${phone ? 'PhoneTheme' : 'WebTheme'}' : 'Theme' + x.board) + '.dc.html' : '/settings/theme/' + x.key,
+      current: on ? 'true' : 'false', on, off: !on && !(locked && !lucida), locked: locked && !lucida, pro: !lucida, lucida, skin: !!S, art: S ? S.tile(chrome.me.initial) : null,
+      ring: on ? '0 0 0 2px ' + t.bg + ', 0 0 0 4px ' + t.text : '0 0 0 1px ' + t.line };
+  });
+  return { t, ...chrome, grain: String(this.props.grain ?? 0.7), themes, locked, unlocked: !locked, ringOff: this.props.dark ? '#5A5A5E' : '#CFCFCF',
+    lu: { bg: photoVals.avatarBg, initial: chrome.me.initial }, lu1: this.mesh('Iris'), lu2: this.mesh('Apricot'),
+    proHref: db.mock ? '${phone ? 'PricingPhone' : 'Pricing'}.dc.html' : '/pro?plan=yearly',
+    showSw: sw(st.themeProfile !== false), toggleShow: () => set({ themeProfile: st.themeProfile === false }) };
+}`;
+// A theme's page: its study background with a card on it, deck covers (your first decks), the card's front and back,
+// and profile pictures; and Use this theme (Go Pro on Free). Lucida's own page shows the app's own look.
+const SHEET_Q = 'What does the electron transport chain pump across the inner membrane?', SHEET_A = 'Protons (H⁺), from the matrix into the intermembrane space.';
+const sheetLabel = x => `<span style="font-size: 12px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: {{t.muted}};">${x}</span>`;
+// one preview: the theme's (painted into the element), or Lucida's (drawn here)
+const sheetPart = (ref, lucida, css) => `<div style="position: relative; ${css}"><sc-if value="{{sh.skin}}" hint-placeholder-val="{{ true }}"><div ref="{{${ref}}}" data-sc-own aria-hidden="true" style="position: absolute; inset: 0;"></div></sc-if><sc-if value="{{sh.lucida}}" hint-placeholder-val="{{ false }}">${lucida}</sc-if></div>`;
+const luCard = (fs, pad, side) => `<div style="position: absolute; inset: 0; box-sizing: border-box; padding: ${pad}; border-radius: 20px; background: #FFFFFF; color: #000000; box-shadow: 0 0 0 1px rgba(0,0,0,.06), 0 1px 2px rgba(0,0,0,.04), 0 18px 44px -18px rgba(0,0,0,.18); display: flex; flex-direction: column; justify-content: center; gap: 8px; letter-spacing: -.02em;">${side === 'back' ? `<span style="font-size: ${Math.round(fs * 0.5)}px; line-height: 1.35; color: #666666; letter-spacing: 0;">${SHEET_Q}</span><span style="font-size: ${fs}px; font-weight: 600; line-height: 1.2;">${SHEET_A}</span>` : `<span style="font-size: ${fs}px; font-weight: 600; line-height: 1.2;">${SHEET_Q}</span>`}</div>`;
+const sheetCovers = (n, w, h, r, gap) => `<div style="display: flex; gap: ${gap}px;"><sc-for list="{{sh.covers}}" as="c" hint-placeholder-count="${n}"><div style="position: relative; width: ${w}px; height: ${h}px; flex-shrink: 0; border-radius: ${r}px; overflow: hidden; background: {{c.base}}; color: {{c.ink}}; box-shadow: {{c.boxShadow}};"><sc-if value="{{c.plain}}" hint-placeholder-val="{{ false }}">${meshCard('c', 'position: absolute; inset: 0;', 'height: 100%;', '')}</sc-if><sc-if value="{{c.skin}}" hint-placeholder-val="{{ true }}"><div ref="{{c.art}}" data-sc-own aria-hidden="true" style="position: absolute; inset: 0;"></div></sc-if><span style="position: absolute; left: ${Math.round(w * 0.1)}px; right: ${Math.round(w * 0.1)}px; bottom: ${Math.round(w * 0.1)}px; font-size: ${w > 120 ? 16 : 14}px; font-weight: 600; letter-spacing: -.015em; line-height: 1.12; text-shadow: {{c.textShadow}}; {{c.title}}">{{c.name}}</span></div></sc-for></div>`;
+const sheetAvatars = sizes => `<div style="display: flex; align-items: center; gap: 24px;">${sizes.map(s => `<span style="position: relative; width: ${s}px; height: ${s}px; flex-shrink: 0; display: flex;"><sc-if value="{{sh.skin}}" hint-placeholder-val="{{ true }}"><span ref="{{sh.me}}" data-sc-own aria-hidden="true" style="position: absolute; inset: 0; border-radius: 50%;"></span></sc-if><sc-if value="{{sh.lucida}}" hint-placeholder-val="{{ false }}"><span style="width: ${s}px; height: ${s}px; border-radius: 50%; background: {{lu.bg}}; color: #FFFFFF; display: flex; align-items: center; justify-content: center; font-size: ${Math.round(s * 0.42)}px; font-weight: 600;">{{lu.initial}}</span></sc-if></span>`).join('')}</div>`;
+const sheetButton = (h, grow = false) => { const fit = grow ? 'flex-grow: 1; justify-content: center;' : 'flex-shrink: 0;';
+  return `<sc-if value="{{canUse}}" hint-placeholder-val="{{ true }}"><button type="button" onClick="{{use}}" class="sc-press" style="height: ${h}px; padding: 0 22px; ${fit} display: inline-flex; align-items: center; border: 0; border-radius: 999px; background: {{t.inv}}; color: {{t.invText}}; font: inherit; font-size: 15px; font-weight: 600; cursor: pointer; white-space: nowrap;">Use this theme</button></sc-if><sc-if value="{{inUse}}" hint-placeholder-val="{{ false }}"><span role="status" style="height: ${h}px; padding: 0 20px; ${fit} display: inline-flex; align-items: center; gap: 8px; border-radius: 999px; background: {{t.surf}}; font-size: 15px; font-weight: 600; white-space: nowrap;">${svg(I.check, 16, 2.4)}In use</span></sc-if><sc-if value="{{locked}}" hint-placeholder-val="{{ false }}"><a href="{{proHref}}" class="sc-press" style="height: ${h}px; padding: 0 22px; ${fit} display: inline-flex; align-items: center; gap: 8px; border-radius: 999px; background: {{t.inv}}; color: {{t.invText}}; font-size: 15px; font-weight: 600; white-space: nowrap;">${svg(I.lock, 15, 2.2)}Go Pro</a></sc-if>`; };
+const sheetScene = (w, h, cw, ch, fs) => `<div style="position: relative; width: ${w}px; max-width: 100%; height: ${h}px; flex-shrink: 0; border-radius: 28px; overflow: hidden; isolation: isolate;">
+      <sc-if value="{{sh.skin}}" hint-placeholder-val="{{ true }}"><div ref="{{sh.bg}}" data-sc-own aria-hidden="true" style="position: absolute; inset: 0;"></div></sc-if>
+      <sc-if value="{{sh.lucida}}" hint-placeholder-val="{{ false }}"><div style="position: absolute; inset: 0; background: {{lu1.base}};">${flowLayer('lu1')}</div><div style="position: absolute; inset: 0; background: rgba(255,255,255,.55);"></div></sc-if>
+      <div style="position: absolute; left: 50%; top: 50%; width: ${cw}px; height: ${ch}px; transform: translate(-50%, -50%);"><sc-if value="{{sh.skin}}" hint-placeholder-val="{{ true }}"><div ref="{{sh.card}}" data-sc-own aria-hidden="true" style="position: absolute; inset: 0;"></div></sc-if><sc-if value="{{sh.lucida}}" hint-placeholder-val="{{ false }}">${luCard(fs, '28px 30px', 'front')}</sc-if></div>
+    </div>`;
+const webTheme = webRoot(`${sidebar('You')}
+<main style="flex-grow: 1; box-sizing: border-box; padding: 36px 48px; display: flex; flex-direction: column; gap: 22px; min-width: 0; overflow-y: auto;">
+  <a href="ThemePicker.dc.html" style="align-self: flex-start; margin-bottom: -12px; display: inline-flex; align-items: center; gap: 6px; font-size: 14px; color: {{t.muted}};">${svg(I.back, 16, 2)}Theme</a>
+  <div style="display: flex; align-items: center; gap: 16px;"><h1 style="flex-grow: 1; min-width: 0; margin: 0; display: flex; align-items: center; gap: 12px; font-size: 32px; font-weight: 600; letter-spacing: -.03em;"><span>{{sh.name}}</span><sc-if value="{{sh.pro}}" hint-placeholder-val="{{ true }}">${PRO_BADGE}</sc-if></h1>${sheetButton(44)}</div>
+  <div style="display: grid; grid-template-columns: 520px minmax(0, 1fr); gap: 40px; align-items: start;">
+    <div style="display: flex; flex-direction: column; gap: 12px;">${sheetLabel('Study background')}${sheetScene(520, 560, 380, 248, 22)}</div>
+    <div style="display: flex; flex-direction: column; gap: 12px; min-width: 0;">
+      ${sheetLabel('Deck covers')}${sheetCovers(4, 125, 168, 16, 12)}
+      <div style="height: 8px;"></div>${sheetLabel('Flashcard, front and back')}
+      <div style="display: flex; gap: 12px;">${sheetPart('sh.front', luCard(16, '20px 22px', 'front'), 'width: 262px; height: 164px; flex-shrink: 0;')}${sheetPart('sh.back', luCard(16, '20px 22px', 'back'), 'width: 262px; height: 164px; flex-shrink: 0;')}</div>
+      <div style="height: 8px;"></div>${sheetLabel('Profile picture')}${sheetAvatars([96, 56, 36, 28])}
+    </div>
+  </div>
+</main>`);
+const phoneTheme = phone(`<div style="padding: 64px 20px 34px; display: flex; flex-direction: column; gap: 16px;">
+  <div style="display: flex; align-items: center; gap: 12px;">${roundBtn('back', 'Theme', 'PhoneThemePicker.dc.html')}<div style="flex-grow: 1;"></div></div>
+  <div style="display: flex; align-items: center; gap: 10px; font-size: 28px; font-weight: 700; letter-spacing: -.03em;"><span>{{sh.name}}</span><sc-if value="{{sh.pro}}" hint-placeholder-val="{{ true }}">${PRO_BADGE}</sc-if></div>
+  <div style="display: flex;">${sheetButton(48, true)}</div>
+  ${sheetScene(350, 380, 282, 188, 18)}
+  ${sheetLabel('Deck covers')}${sheetCovers(3, 110, 146, 14, 10)}
+  ${sheetLabel('Flashcard, front and back')}
+  <div style="display: flex; flex-direction: column; gap: 10px;">${sheetPart('sh.front', luCard(17, '20px 22px', 'front'), 'height: 172px;')}${sheetPart('sh.back', luCard(17, '20px 22px', 'back'), 'height: 172px;')}</div>
+  ${sheetLabel('Profile picture')}${sheetAvatars([84, 56, 36, 28])}
+</div>`, '', '', PHONE_THEMES_H);
+const themePageLogic = phone => `
+renderVals() {
+  const db = this.props.db || this.mock(), chrome = db.chrome(), st = db.settings(), t = this.theme(!!this.props.dark, !!this.props.dim);
+  ${OPTS_JS}
+  const set = patch => db.act.setSettings(patch);
+  ${PLAN_JS(phone ? 'PricingPhone' : 'Pricing')}
+  ${PHOTO_JS}
+  const list = ${THEME_LIST}, info = list.find(x => x.key === this.props.sheet) || list[0], key = info.key, lucida = key === 'lucida', S = lucida ? null : this.skinFor(key);
+  const locked = planVals.planFree && !lucida, inUse = (planVals.planFree ? 'lucida' : st.theme || 'lucida') === key;
+  // Your first decks (the canvas's sample decks), in this theme's covers; a new library borrows the samples' names.
+  const decks = [...db.decks(), ...['Cell Biology', 'Japanese N4', 'Organic Chemistry', 'US History'].map(name => ({ name, seed: name, round: 0, tags: [] }))].slice(0, ${phone ? 3 : 4});
+  const covers = decks.map(d => { const C = S ? S.coverOf(d, 'tall', 16, 16) : null;
+    const g = this.gen(d.seed + (d.round ? ' #' + d.round : ''), d.style);
+    return { ...g, name: d.name, ...(C ? { base: C.base, ink: C.ink, boxShadow: C.shadow, textShadow: 'none', plain: false, skin: true, art: C.art, title: C.title } : { boxShadow: 'none', textShadow: g.shadow, plain: true, skin: false, art: null, title: '' }) }; });
+  return { t, ...chrome, grain: String(this.props.grain ?? 0.7), lu: { bg: photoVals.avatarBg, initial: chrome.me.initial }, lu1: this.mesh('Iris'),
+    sh: { name: info.name, pro: !lucida, skin: !!S, lucida, covers, bg: S ? S.ref('bg') : null,
+      card: S ? S.card({ q: '${SHEET_Q}', side: 'front', fs: ${phone ? 18 : 22}, r: 22, pad: '${phone ? '24px 26px' : '28px 32px'}' }) : null,
+      front: S ? S.card({ q: '${SHEET_Q}', side: 'front', fs: ${phone ? 18 : 17}, r: 18, pad: '20px 22px' }) : null,
+      back: S ? S.card({ q: '${SHEET_Q}', a: '${SHEET_A}', side: 'back', fs: ${phone ? 18 : 17}, r: 18, pad: '20px 22px' }) : null,
+      me: S ? S.me(chrome.me.initial, false) : null },
+    canUse: !inUse && !locked, inUse, locked, proHref: db.mock ? '${phone ? 'PricingPhone' : 'Pricing'}.dc.html' : '/pro?plan=yearly',
+    use: () => set({ theme: key }) };
+}`;
+// The Themes page of the canvas: each theme on the real screens, one board each, carrying its own theme's code, CSS, and
+// fonts. Their names are the Themes page's (Theme<board>, Theme<board>Library, …).
+const themeOf = (name, w, h, attrs) => `<div style="width: ${w}px; height: ${h}px; overflow: hidden;"><dc-import name="${name}" ${attrs} hint-size="${w}px,${h}px"></dc-import></div>`;
+const withThemes = (keys, logic) => `${themeStatic(keys)}\n${logic}`;
 
 // Icon options for Stats and Connect AI. Pick one in each row; the sidebar on the left shows the picks.
 const STATS_ICONS = [
@@ -4005,10 +4199,10 @@ const webDecksEmpty = webRoot(`${sidebar('Library')}
 const webDeckEmpty = webRoot(`${sidebar('Library')}
 <main style="flex-grow: 1; box-sizing: border-box; padding: 24px 48px 20px; display: flex; flex-direction: column; gap: 20px; min-width: 0;">
   <div style="position: relative; height: 184px; flex-shrink: 0; border-radius: 20px; overflow: hidden;">
-    ${meshCard('cover', 'position: absolute; inset: 0;', 'height: 100%;', '')}${coverPicture}
+    ${meshCard('cover', 'position: absolute; inset: 0;', 'height: 100%;', '', 'div', '', true)}${coverPicture}
     <div style="position: absolute; inset: 0; box-sizing: border-box; padding: 20px 24px 24px 28px; display: flex; flex-direction: column; justify-content: space-between; color: {{cover.ink}};">
       <div style="display: flex; align-items: center; justify-content: space-between;"><a href="WebDecks.dc.html" style="height: 36px; padding: 0 14px 0 10px; display: inline-flex; align-items: center; gap: 4px; border-radius: 999px; ${onCover} font-size: 13px; font-weight: 600;">${svg(I.back, 14, 2.2)}Library</a>${coverBtn('Deck settings', 'openSettings', 'gear')}</div>
-      <div style="display: flex; flex-direction: column; gap: 6px; text-shadow: {{cover.shadow}};"><h1 style="margin: 0; font-size: 34px; font-weight: 600; letter-spacing: -.035em; line-height: 1;">{{deckName}}</h1><div style="font-size: 14px; opacity: .8;">No cards yet</div></div>
+      <div style="display: flex; flex-direction: column; gap: 6px; text-shadow: {{cover.shadow}};"><h1 style="margin: 0; font-size: 34px; font-weight: 600; letter-spacing: -.035em; line-height: 1; {{coverTitle}}">{{deckName}}</h1><div style="font-size: 14px; opacity: .8;">No cards yet</div></div>
     </div>
   </div>
   <div style="flex-grow: 1; display: flex; align-items: center; justify-content: center; padding-bottom: 40px;">
@@ -4039,11 +4233,11 @@ const phoneTodayNew = phone(`<div style="padding: 64px 20px 120px; display: flex
   </div>
 </div>`, 'Today');
 const phoneDeckEmpty = phone(`<div style="height: 100%; box-sizing: border-box; padding: 0 0 120px; display: flex; flex-direction: column;">
-  <div style="position: relative; height: 232px; flex-shrink: 0; overflow: hidden;">
-    ${meshCard('cover', 'position: absolute; inset: 0;', 'height: 100%;', '')}${coverPicture}
+  <div style="position: relative; height: 232px; flex-shrink: 0; overflow: hidden; container-type: inline-size;">
+    ${meshCard('cover', 'position: absolute; inset: 0;', 'height: 100%;', '', 'div', '', true)}${coverPicture}
     <div style="position: absolute; inset: 0; box-sizing: border-box; padding: 54px 16px 18px 20px; display: flex; flex-direction: column; justify-content: space-between; color: {{cover.ink}};">
       <div style="display: flex; justify-content: space-between;">${coverRound('back', 'Back', 'PhoneToday.dc.html')}<div style="display: flex; gap: 8px;">${coverRound('gear', 'Deck settings', '', '{{openSettings}}')}${coverRound('plus', 'New card', 'PhoneEditor.dc.html')}</div></div>
-      <div style="display: flex; flex-direction: column; gap: 4px; text-shadow: {{cover.shadow}};"><div style="font-size: 32px; font-weight: 700; letter-spacing: -.03em; line-height: 1.05; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{deckName}}</div><div style="font-size: 14px; opacity: .8;">No cards yet</div></div>
+      <div style="display: flex; flex-direction: column; gap: 4px; text-shadow: {{cover.shadow}};"><div style="font-size: 32px; font-weight: 700; letter-spacing: -.03em; line-height: 1.05; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; {{coverTitleS}}">{{deckName}}</div><div style="font-size: 14px; opacity: .8;">No cards yet</div></div>
     </div>
   </div>
   <div style="flex-grow: 1; box-sizing: border-box; padding: 0 28px; display: flex; align-items: center; justify-content: center;">
@@ -4074,8 +4268,12 @@ const emptyLogic = (cover = '', phone = false) => `renderVals() { ${T}${DB_JS}
   const dk = db.mock ? { name: '${cover}', seed: '${cover}', cover: { style: null, round: 0, image: null } } : (db.deck(this.props.deckId) || { name: '', seed: '', cover: {} });
   // A new deck's picture shows on its empty page too, with white words over it.
   const pic = dk.cover.image || '', photo = pic !== 'mock' ? pic : '';
+  // With a theme on (Pro), the theme draws the cover, and letters the deck's name.
+  const S = this.skin(db), C = S && !pic && dk.name ? S.coverOf({ ...dk, round: dk.cover.round }, 'head', 34) : null;
   return { ${MESH_VALS('Iris')} t, ...chrome, modes, nav: db.mock ? { today: ${cover ? "'64'" : "''"}, news: '', hasNews: false } : chrome.nav, art: this.mesh('Iris'), art2: this.mesh('Mint'), art3: this.mesh('Apricot'), noop: () => {},
-    date: db.today().date, deckName: dk.name, cover: { ...this.gen(dk.seed + (dk.cover.round ? ' #' + dk.cover.round : ''), dk.cover.style), ...(photo ? { ink: '#FFFFFF', shadow: '0 1px 14px rgba(0,0,0,.45)' } : {}) },
+    date: db.today().date, deckName: dk.name, cover: { ...this.gen(dk.seed + (dk.cover.round ? ' #' + dk.cover.round : ''), dk.cover.style), ...(photo ? { ink: '#FFFFFF', shadow: '0 1px 14px rgba(0,0,0,.45)' } : {}),
+      ...(C ? { base: C.base, ink: C.ink, shadow: 'none', plain: false, skin: true, art: C.art } : { plain: true, skin: false, art: null }) },
+    coverTitle: C ? C.titleAt(34) : '', coverTitleS: C ? C.titleHead(32, dk.name) : '',
     coverIsImage: pic === 'mock', coverHasPhoto: !!photo, coverPhoto: photo,
     newCardHref: db.mock ? 'WebCardsScreenNew.dc.html' : dk.newCardHref, importHref: db.href('import', dk.id), connectHref: db.href('connect'),
     openSettings: () => { if (!db.mock) db.act.go(dk.settingsHref); } }; }`;
@@ -4088,8 +4286,8 @@ const COVER_FADE_CSS = '@keyframes scCoverA{from{opacity:0}to{opacity:1}}@keyfra
 const coverLayer = (key, extra = '') => `<div${extra ? ' class="sc-cover-in"' : ''} style="position: absolute; inset: 0; display: {{${key}Show}}; background: {{${key}.base}};${extra}">${flowLayer(key)}${GRAIN_LAYER}</div>`;
 const newDeckBody = (phone, back, done) => `<div style="display: flex; align-items: center; justify-content: space-between;"><span style="font-size: 22px; font-weight: 600; letter-spacing: -.02em;">New deck</span><a href="${back}" aria-label="Close" style="width: 40px; height: 40px; border-radius: 20px; background: {{t.surf}}; display: flex; align-items: center; justify-content: center;">${svg(I.close, 16, 2)}</a></div>
     <div style="position: relative; height: ${phone ? 132 : 150}px; border-radius: 26px; flex-shrink: 0; overflow: hidden; background: {{t.bg}}; box-shadow: inset 0 0 0 1px {{t.line}}; color: {{coverInk}}; transition: color 2s ease;">
-      ${coverLayer('prev')}${coverLayer('cover', ' animation: {{coverFade}};')}${coverPicture}
-      <div style="position: relative; height: 100%; box-sizing: border-box; padding: 14px 16px 16px 18px; display: flex; flex-direction: column; justify-content: space-between; text-shadow: {{coverShadow}};"><div style="display: flex; justify-content: flex-end; gap: 8px;">${coverBtn('Shuffle', 'shuffle', 'shuffle')}${coverBtn(phone ? 'Image' : 'Upload image', 'pickCover', 'image')}</div><span style="font-size: ${phone ? 22 : 26}px; font-weight: 600; letter-spacing: -.02em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{title}}</span></div>
+      ${coverLayer('prev')}${coverLayer('cover', ' animation: {{coverFade}};')}<sc-if value="{{skinCover.on}}" hint-placeholder-val="{{ false }}"><div ref="{{skinCover.art}}" data-sc-own aria-hidden="true" style="position: absolute; inset: 0; overflow: hidden;"></div></sc-if>${coverPicture}
+      <div style="position: relative; height: 100%; box-sizing: border-box; padding: 14px 16px 16px 18px; display: flex; flex-direction: column; justify-content: space-between; text-shadow: {{coverShadow}};"><div style="display: flex; justify-content: flex-end; gap: 8px;">${coverBtn('Shuffle', 'shuffle', 'shuffle')}${coverBtn(phone ? 'Image' : 'Upload image', 'pickCover', 'image')}</div><span style="font-size: ${phone ? 22 : 26}px; font-weight: 600; letter-spacing: -.02em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; {{${phone ? 'coverTitleS' : 'coverTitle'}}}">{{title}}</span></div>
     </div>
     <label style="display: flex; flex-direction: column; gap: 8px;"><span style="font-size: 13px; font-weight: 600;">Name</span><input type="text" value="{{name}}" onChange="{{setName}}" placeholder="Name your deck" style="height: 48px; box-sizing: border-box; padding: 0 16px; border: 0; outline: 0; border-radius: 16px; background: {{t.surf}}; color: {{t.text}}; font: inherit; font-size: 16px;"></label>
     <div style="display: flex; flex-direction: column; gap: 8px;"><span style="font-size: 13px; font-weight: 600;">Tags</span>${TAG_EDIT('deckTags', 'deckPick', phone)}</div>
@@ -4207,6 +4405,7 @@ renderVals() {
   const seg = (id, cur) => ({ pressed: id === cur ? 'true' : 'false', bg: id === cur ? t.bg : 'transparent', fg: id === cur ? t.text : t.muted, sh: id === cur ? '0 1px 3px rgba(0,0,0,.14)' : 'none' });
   const setTags = next => this.setState({ tags: next, typedTags: true });
   const img = s.image || '', photo = img !== 'mock' ? img : '';
+  const S = this.skin(db), C = S && !img ? S.coverOf({ seed: s.shown ? s.shown.replace(/ #\d+$/, '') : title, name: title, round: s.round, tags }, 'wide', 26) : null;
   ${NUM_JS}
   return {
     t, dark: !!this.props.dark, dim: !!this.props.dim, grain: String(this.props.grain ?? 0.7),
@@ -4214,7 +4413,9 @@ renderVals() {
     coverShow: s.shown ? 'block' : 'none', prevShow: s.prev ? 'block' : 'none', cover: this.gen(s.shown || seedOf(title, s.round), st.grads), prev: this.gen(s.prev || seedOf(title, s.round), st.grads),
     coverFade: s.k % 2 ? 'scCoverA 2s ease-in-out both' : 'scCoverB 2s ease-in-out both',
     coverIsImage: img === 'mock', coverHasPhoto: !!photo, coverPhoto: photo,
-    coverInk: photo ? '#FFFFFF' : img ? t.text : s.shown ? this.gen(s.shown, st.grads).ink : t.text, coverShadow: photo ? '0 1px 14px rgba(0,0,0,.45)' : !img && s.shown ? this.gen(s.shown, st.grads).shadow : 'none',
+    coverInk: photo ? '#FFFFFF' : img ? t.text : C ? C.ink : s.shown ? this.gen(s.shown, st.grads).ink : t.text, coverShadow: photo ? '0 1px 14px rgba(0,0,0,.45)' : !img && s.shown && !C ? this.gen(s.shown, st.grads).shadow : 'none',
+    // With a theme on (Pro), the theme's cover for this name (the one the deck gets), which changes once you stop typing.
+    skinCover: C ? { on: true, art: C.art } : { on: false, art: null }, coverTitle: C ? C.titleAt(26) : '', coverTitleS: C ? C.titleAt(22) : '',
     // A moment after you stop typing a name, its colors fade in.
     setName: e => {
       const v = e && e.target ? e.target.value : s.name;
@@ -4275,9 +4476,9 @@ const LEARN_HOVER = 'scLearnIn .45s cubic-bezier(.2,.8,.2,1) both, scLearnHover 
 // are `k` in renderVals (K below): light, or the same look at night.
 const LEARN_COLORS = ['#4F60E6', '#F2701D', '#0E8FB0', '#E5407E'];
 // In gray dark mode the answer cards sit a step above the gray page, instead of below it.
-const LEARN_K = `const K = this.props.dark && this.props.dim
+const LEARN_K = `const K = sd && this.props.dim
     ? { ink: '#F2F3F7', ink2: 'rgba(242,243,247,.7)', card: '#2D2F36', shadow: '0 10px 24px -16px rgba(0,0,0,.6)', lift: '0 26px 48px -20px rgba(0,0,0,.75)', gray: '#393C45', grayInk: '#A3A9B6', chip: 'rgba(255,255,255,.12)', track: 'rgba(255,255,255,.16)', btn: '#F2F3F7', btnFg: '${LV.navy}', other: 'rgba(255,255,255,.16)', wrong: '#5A606E', bar: '#8C9AFC', part: 'rgba(140,154,252,.42)', check: '${LV.check}' }
-    : this.props.dark
+    : sd
     ? { ink: '#F2F3F7', ink2: 'rgba(242,243,247,.66)', card: '#1B1D24', shadow: '0 10px 24px -16px rgba(0,0,0,.7)', lift: '0 26px 48px -20px rgba(0,0,0,.85)', gray: '#2A2D35', grayInk: '#8E95A3', chip: 'rgba(255,255,255,.1)', track: 'rgba(255,255,255,.14)', btn: '#F2F3F7', btnFg: '${LV.navy}', other: 'rgba(255,255,255,.14)', wrong: '#4A4F5C', bar: '#8C9AFC', part: 'rgba(140,154,252,.4)', check: '${LV.check}' }
     : { ink: '${LV.navy}', ink2: '${LV.ink2}', card: '#FFFFFF', shadow: '${LV.shadow}', lift: '${LV.lift}', gray: '${LV.gray}', grayInk: '${LV.grayInk}', chip: 'rgba(255,255,255,.72)', track: 'rgba(13,21,66,.08)', btn: '${LV.navy}', btnFg: '#FFFFFF', other: 'rgba(13,21,66,.12)', wrong: '${LV.navy}', bar: '${LV.purple}', part: 'rgba(79,96,230,.38)', check: '${LV.check}' };`;
 // Progress through the set: learned (purple), still learning (light purple), not yet (track), with "+1" when one is learned.
@@ -4376,17 +4577,24 @@ renderVals() { ${T}${DB_JS}
     startHref: '${phone ? 'PhoneQuiz' : 'WebQuiz'}.dc.html',
     start: e => { if (db.mock) return; if (e && e.preventDefault) e.preventDefault(); if (n) db.act.startLearn(id, set.id, s.kinds); } }; }`;
 // What every question shows: progress and the motion keys.
-const LEARN_VIEW_JS = `${LEARN_K}
-  ${STUDY_BG_JS}
-  ${BG_PICK_JS}
+// (The deck's background, or your theme's: a theme's background has its own look, and the page's words and buttons
+// follow it, sd.)
+const LEARN_VIEW_JS = phone => `${STUDY_BG_JS}
   const L = db.mock ? null : db.learn() || { learned: 0, total: 1, learning: 0, justLearned: 0, n: 0, setName: '' };
-  const dk = db.deck(L ? L.deckId : this.props.deckId), bg = studyBg(dk, !!this.props.dark, !!this.props.dim);
+  const S = this.skin(db), dk = db.deck(L ? L.deckId : this.props.deckId), bg = studyBg(dk, !!this.props.dark, !!this.props.dim, S, ${!!phone});
+  const sd = bg.dark, t = this.theme(sd, !!this.props.dim);
+  ${LEARN_K}
+  ${BG_PICK_JS}
   const settingsOpen = this.state.settings ?? !!this.props.settingsOpen;
   const view = (learned, total, part, n, just) => ({ k: K, sky: ${SKY}, bg, learned: String(learned), total: String(total), setName: L ? L.setName : 'Exam 1',
     doneW: learned / total * 100 + '%', partW: part / total * 100 + '%', qAnim: (n % 2 ? 'scQA' : 'scQB') + ' .36s cubic-bezier(.2,.8,.2,1) both',
     plusOne: just > 0, plusAnim: (learned % 2 ? 'scPlusA' : 'scPlusB') + ' 1.1s ease both',
     settingsOpen, settingsExpanded: settingsOpen ? 'true' : 'false', settingsBtnBg: settingsOpen ? K.btn : K.chip, settingsBtnFg: settingsOpen ? K.btnFg : K.ink,
-    toggleSettings: () => this.setState({ settings: !settingsOpen }), ...bgPick(dk) });`;
+    toggleSettings: () => this.setState({ settings: !settingsOpen }), ...bgPick(dk, S) });`;
+// With a theme on (Pro), the question sits on the theme's flashcard (qc: its look, and what it draws behind the words).
+const LEARN_CARD_JS = phone => `const qF = S ? S.faceOf('front', '${phone ? 'learnPhone' : 'learn'}') : null;
+  const qc = qF ? { on: true, css: 'padding: ${phone ? '20px' : '28px 32px'}; box-sizing: border-box; ' + qF.css, a: qF.a, deco: qF.deco } : { on: false, css: '', a: '', deco: null };`;
+const learnCardDeco = `<sc-if value="{{qc.on}}" hint-placeholder-val="{{ false }}"><div ref="{{qc.deco}}" data-sc-own aria-hidden="true" style="position: absolute; inset: 0; border-radius: inherit; pointer-events: none;"></div></sc-if>`;
 // A choice question (multiple choice, true or false, fill in the blank): pick, then see why and the card it came from.
 // The answers are white cards with a colored number; the right one rises and hovers with a green check, a wrong pick
 // gets an ×, and after an answer the others go gray.
@@ -4412,14 +4620,14 @@ const learnImage = h => `<sc-if value="{{hasImage}}" hint-placeholder-val="{{ fa
 const LEARN_IMG_JS = `${OCC_JS}
   const learnImg = (img, o, shown) => ({ hasImage: !!img, imageMock: img === 'mock', imageUrl: img && img !== 'mock' ? img : '', occInset: img === 'mock' ? '10px 14px' : '0',
     occBoxes: img && o ? occView(o.boxes, o.ask, o.mode, shown, { ask: K.btn, askText: K.btnFg, cover: K.gray, coverText: K.grayInk, ring: t.bg }) : [] });`;
-const learnClaim = fs => `<sc-if value="{{hasClaim}}" hint-placeholder-val="{{ false }}"><div style="padding: 16px 20px; border-radius: 20px; background: {{k.card}}; box-shadow: {{k.shadow}}; font-size: ${fs}px; font-weight: 700; line-height: 1.35;">{{claim}}</div></sc-if>`;
+const learnClaim = fs => `<sc-if value="{{hasClaim}}" hint-placeholder-val="{{ false }}"><div style="position: relative; padding: 16px 20px; border-radius: 20px; background: {{k.card}}; box-shadow: {{k.shadow}}; font-size: ${fs}px; font-weight: 700; line-height: 1.35;">{{claim}}</div></sc-if>`;
 const webQuizOf = bg => `<div style="position: relative; isolation: isolate; width: 1440px; height: 900px; box-sizing: border-box; display: flex; flex-direction: column; overflow: hidden; font-family: ${FONT}; background: {{t.bg}}; color: {{k.ink}};">
   ${bg}
   ${learnTop('WebDeck.dc.html')}
   <main style="flex-grow: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;">
     <div class="sc-q" style="width: 720px; display: flex; flex-direction: column; gap: 22px; animation: {{qAnim}};">
-      <h1 style="margin: 0; font-size: 36px; font-weight: 700; line-height: 1.15; letter-spacing: -.03em; text-wrap: pretty;">{{question}}</h1>
-      ${learnImage(240)}${learnClaim(20)}
+      <div style="position: relative; display: flex; flex-direction: column; gap: 22px; {{qc.css}}">${learnCardDeco}<h1 style="position: relative; margin: 0; font-size: 36px; font-weight: 700; line-height: 1.15; letter-spacing: -.03em; text-wrap: pretty; {{qc.a}}">{{question}}</h1>
+      ${learnImage(240)}${learnClaim(20)}</div>
       <div style="display: flex; flex-direction: column; gap: 12px;"><sc-for list="{{options}}" as="o" hint-placeholder-count="4">${learnOption(64, 22, 18)}</sc-for></div>
       <div style="min-height: 150px;"><sc-if value="{{answered}}" hint-placeholder-val="{{ false }}"><div class="sc-quiz-in" style="display: flex; flex-direction: column; gap: 14px; animation: scQuizIn .3s cubic-bezier(.2,.8,.2,1) both;">
         ${learnWhy()}
@@ -4435,7 +4643,7 @@ const phoneQuizOf = bg => `<div style="position: relative; isolation: isolate; w
   ${bg}
   ${learnTopPhone('PhoneDeck.dc.html')}
   <div class="sc-q" style="display: flex; flex-direction: column; gap: 16px; animation: {{qAnim}};">
-    <div style="display: flex; flex-direction: column; gap: 10px; padding: 8px 4px 0;"><div style="font-size: 24px; font-weight: 700; line-height: 1.2; letter-spacing: -.025em; text-wrap: pretty;">{{question}}</div>${learnImage(180)}${learnClaim(18)}</div>
+    <div style="position: relative; display: flex; flex-direction: column; gap: 10px; padding: 8px 4px 0; {{qc.css}}">${learnCardDeco}<div style="position: relative; font-size: 24px; font-weight: 700; line-height: 1.2; letter-spacing: -.025em; text-wrap: pretty; {{qc.a}}">{{question}}</div>${learnImage(180)}${learnClaim(18)}</div>
     <div style="display: flex; flex-direction: column; gap: 8px;"><sc-for list="{{options}}" as="o" hint-placeholder-count="4">${learnOption(54, 20, 16, 34)}</sc-for></div>
     <sc-if value="{{answered}}" hint-placeholder-val="{{ false }}"><div class="sc-quiz-in" style="display: flex; flex-direction: column; gap: 12px; padding: 0 4px; animation: scQuizIn .3s cubic-bezier(.2,.8,.2,1) both;">${learnWhy(16)}${learnExplain(15)}${quizFrom}</div></sc-if>
   </div>
@@ -4446,9 +4654,10 @@ const phoneQuizOf = bg => `<div style="position: relative; isolation: isolate; w
 const phoneQuiz = phoneQuizOf(studyBgLayer);
 const QUIZ_LOGIC = phone => `
 constructor(props) { super(props); this.state = { i: 0, pick: props && props.answered ? 1 : null, gained: 0 }; }
-renderVals() { ${T}${DB_JS}
-  ${LEARN_VIEW_JS}
+renderVals() { ${DB_JS}
+  ${LEARN_VIEW_JS(phone)}
   ${EXPLAIN_JS}
+  ${LEARN_CARD_JS(phone)}
   let q, pick, streak, learnedNow, why, v, n, choose, next, last;
   if (L) {
     // The app: the session's current question (web/db.js).
@@ -4473,7 +4682,7 @@ renderVals() { ${T}${DB_JS}
   const done = pick != null, ok = pick === q.right;
   const ex = explainView(L && L.ex, L ? L.id : 'q' + (this.state.i || 0), q.q, done, ${JSON.stringify(EX_SAMPLE_LEARN)});
   ${LEARN_IMG_JS}
-  return { t, ex, dark: !!this.props.dark, ...v, kind: q.kind, question: q.q, hasClaim: !!q.claim, claim: q.claim || '', ...learnImg(L ? L.image : q.image, L ? L.occ : q.occ, done),
+  return { t, ex, qc, dark: !!this.props.dark, ...v, kind: q.kind, question: q.q, hasClaim: !!q.claim, claim: q.claim || '', ...learnImg(L ? L.image : q.image, L ? L.occ : q.occ, done),
     options: q.options.map((label, j) => {
       const right = done && j === q.right, wrong = done && j === pick && j !== q.right, other = done && !right && !wrong;
       return { label, key: String(j + 1), pressed: j === pick ? 'true' : 'false', plain: !right && !wrong, isRight: right, isWrong: wrong,
@@ -4512,8 +4721,8 @@ const phoneQuizMatch = `<div style="position: relative; isolation: isolate; widt
 </div>`;
 const MATCH_LOGIC = phone => `
 constructor(props) { super(props); this.state = { done: [0, 3], sel: 1, wrong: null }; }
-renderVals() { ${T}${DB_JS}
-  ${LEARN_VIEW_JS}
+renderVals() { ${DB_JS}
+  ${LEARN_VIEW_JS(phone)}
   let left, right, doneIds, sel, wrong, pickL, pickR, v, next, last;
   if (L) {
     left = L.left || []; right = L.right || []; doneIds = L.matched || []; sel = L.sel; wrong = L.wrong; last = false;
@@ -4546,8 +4755,8 @@ const webQuizType = `<div style="position: relative; isolation: isolate; width: 
   ${learnTop('WebDeck.dc.html')}
   <main style="flex-grow: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;">
     <div class="sc-q" style="width: 720px; display: flex; flex-direction: column; gap: 20px; animation: {{qAnim}};">
-      <h1 style="margin: 0; font-size: 36px; font-weight: 700; line-height: 1.15; letter-spacing: -.03em; text-wrap: pretty;">{{question}}</h1>
-      ${learnImage(240)}
+      <div style="position: relative; display: flex; flex-direction: column; gap: 20px; {{qc.css}}">${learnCardDeco}<h1 style="position: relative; margin: 0; font-size: 36px; font-weight: 700; line-height: 1.15; letter-spacing: -.03em; text-wrap: pretty; {{qc.a}}">{{question}}</h1>
+      ${learnImage(240)}</div>
       ${typeRow(64, 18)}
       <span style="font-size: 13px; color: {{k.ink2}};">Close spelling counts.</span>
       <div style="min-height: 150px;"><sc-if value="{{checked}}" hint-placeholder-val="{{ true }}"><div class="sc-quiz-in" style="display: flex; flex-direction: column; gap: 14px; animation: scQuizIn .3s cubic-bezier(.2,.8,.2,1) both;">
@@ -4562,7 +4771,7 @@ const phoneQuizType = `<div style="position: relative; isolation: isolate; width
   ${studyBgLayer}
   ${learnTopPhone('PhoneDeck.dc.html')}
   <div class="sc-q" style="display: flex; flex-direction: column; gap: 16px; animation: {{qAnim}};">
-    <div style="display: flex; flex-direction: column; gap: 10px; padding: 8px 4px 0;"><div style="font-size: 24px; font-weight: 700; line-height: 1.2; letter-spacing: -.025em;">{{question}}</div>${learnImage(180)}</div>
+    <div style="position: relative; display: flex; flex-direction: column; gap: 10px; padding: 8px 4px 0; {{qc.css}}">${learnCardDeco}<div style="position: relative; font-size: 24px; font-weight: 700; line-height: 1.2; letter-spacing: -.025em; {{qc.a}}">{{question}}</div>${learnImage(180)}</div>
     ${typeRow(56, 16)}
     <span style="padding: 0 4px; font-size: 13px; color: {{k.ink2}};">Close spelling counts.</span>
     <sc-if value="{{checked}}" hint-placeholder-val="{{ true }}"><div class="sc-quiz-in" style="display: flex; flex-direction: column; gap: 12px; padding: 0 4px; animation: scQuizIn .3s cubic-bezier(.2,.8,.2,1) both;">${learnWhy(16)}${typeOverride}${learnExplain(15)}${quizFrom}</div></sc-if>
@@ -4573,9 +4782,10 @@ const phoneQuizType = `<div style="position: relative; isolation: isolate; width
 </div>`;
 const TYPE_LOGIC = phone => `
 constructor(props) { super(props); this.state = { typed: 'golgi body', checked: true, qid: null }; }
-renderVals() { ${T}${DB_JS}
-  ${LEARN_VIEW_JS}
+renderVals() { ${DB_JS}
+  ${LEARN_VIEW_JS(phone)}
   ${EXPLAIN_JS}
+  ${LEARN_CARD_JS(phone)}
   let typed, checked, ok, question, answer, why, v, check, override, next, last, learnedNow;
   if (L) {
     // A new question clears what you typed for the last one.
@@ -4595,7 +4805,7 @@ renderVals() { ${T}${DB_JS}
   }
   const ex = explainView(L && L.ex, L ? L.id : 'typeq', question, checked, ${JSON.stringify("The Golgi apparatus takes proteins from the rough ER, finishes them with sugar tags, and ships them out in little bubbles called vesicles. Think of it as the cell’s post office: sort, label, send.")});
   ${LEARN_IMG_JS}
-  return { t, ex, dark: !!this.props.dark, ...v, kind: 'Type the answer', question, ...learnImg(L && L.image, L && L.occ, checked), 
+  return { t, ex, qc, dark: !!this.props.dark, ...v, kind: 'Type the answer', question, ...learnImg(L && L.image, L && L.occ, checked), 
     typed, checked, notChecked: !checked, canOverride: checked && !ok, check, override, next,
     setTyped: e => { const x = e && e.target ? e.target.value : ''; if (L) this.state.typed = x; else this.setState({ typed: x, checked: false }); },
     typedKey: e => { if (e && e.key === 'Enter' && !checked) { if (e.preventDefault) e.preventDefault(); check(); } },
@@ -4629,11 +4839,13 @@ const phoneQuizDone = `<div style="position: relative; isolation: isolate; width
   <div style="flex-grow: 1;"></div>
   <div style="width: 100%; display: flex; gap: 10px;">${quizBtn('Learn more', 'PhoneQuizStart.dc.html', false, 1)}${quizBtn('Done', 'PhoneDeck.dc.html', true, 1)}</div>
 </div>`;
-const QUIZ_DONE_LOGIC = `renderVals() { ${T}${DB_JS}
+const QUIZ_DONE_LOGIC = phone => `renderVals() { ${DB_JS}
   const L = db.mock ? { total: 40, setName: 'Exam 1', minutes: 26, firstPct: 88, tries: [{ front: 'Lysosome', back: 'Breaks down waste', n: '4 tries' }, { front: 'What is the role of the ribosome?', back: 'Translates mRNA into protein', n: '3 tries' }] }
     : db.learn() || { total: 0, setName: '', minutes: 0, firstPct: 0, tries: [] };
   ${STUDY_BG_JS}
-  return { t, sky: ${SKY}, bg: studyBg(db.deck(db.mock ? 'cell' : (db.learn() || {}).deckId || this.props.deckId), !!this.props.dark, !!this.props.dim), ring: this.props.dark ? '#8C9AFC' : '#4353E0', total: String(L.total), title: L.total === 1 ? 'You learned it' : 'You learned all ' + L.total + ' cards',
+  // The deck's background, or your theme's, whose look sets the page's colors.
+  const S = this.skin(db), bg = studyBg(db.deck(db.mock ? 'cell' : (db.learn() || {}).deckId || this.props.deckId), !!this.props.dark, !!this.props.dim, S, ${phone}), t = this.theme(bg.dark, !!this.props.dim);
+  return { t, sky: ${SKY}, bg, ring: bg.dark ? '#8C9AFC' : '#4353E0', total: String(L.total), title: L.total === 1 ? 'You learned it' : 'You learned all ' + L.total + ' cards',
     summary: L.setName + ' · ' + L.minutes + ' minute' + (L.minutes === 1 ? '' : 's') + ' · ' + L.firstPct + '% right the first time', summaryShort: L.setName + ' · ' + L.minutes + ' min · ' + L.firstPct + '% first time',
     hasTries: L.tries.length > 0, tries: L.tries }; }`;
 
@@ -7487,14 +7699,14 @@ const files = {
   'WebQuizAnswered': ['Web · Learn mode · answered', attrOf('WebQuiz', W, H, 'answered="{{yes}}"'), { logic: darkLogic, css: LEARN_CSS, w: W, h: H }],
   'WebQuizMatch': ['Web · Learn mode · matching', webQuizMatch, { props: DARK, logic: MATCH_LOGIC(false), css: LEARN_CSS, w: W, h: H }],
   'WebQuizType': ['Web · Learn mode · type the answer', webQuizType, { props: DARK, logic: TYPE_LOGIC(false), css: LEARN_CSS, w: W, h: H }],
-  'WebQuizDone': ['Web · Learn mode · all learned', webQuizDone, { props: DARK, logic: QUIZ_DONE_LOGIC, css: LEARN_CSS, w: W, h: H }],
+  'WebQuizDone': ['Web · Learn mode · all learned', webQuizDone, { props: DARK, logic: QUIZ_DONE_LOGIC(false), css: LEARN_CSS, w: W, h: H }],
   'WebQuizSettings': ['Web · Learn mode · settings (the deck’s background)', attrOf('WebQuiz', W, H, 'settings-open="{{yes}}"'), { logic: darkLogic, css: LEARN_CSS, w: W, h: H }],
   'PhoneQuizStart': ['iPhone · Learn mode · start', phoneQuizStart(), { props: DARK, logic: QUIZ_START_LOGIC(true, true), w: PW, h: PH }],
   'PhoneQuiz': ['iPhone · Learn mode · choice question', phoneQuiz, { props: { ...DARK, answered: { editor: 'boolean', default: false }, settingsOpen: { editor: 'boolean', default: false } }, logic: QUIZ_LOGIC(true), css: LEARN_CSS, w: PW, h: PH }],
   'PhoneQuizAnswered': ['iPhone · Learn mode · answered', attrOf('PhoneQuiz', PW, PH, 'answered="{{yes}}"'), { logic: darkLogic, css: LEARN_CSS, w: PW, h: PH }],
   'PhoneQuizMatch': ['iPhone · Learn mode · matching', phoneQuizMatch, { props: DARK, logic: MATCH_LOGIC(true), css: LEARN_CSS, w: PW, h: PH }],
   'PhoneQuizType': ['iPhone · Learn mode · type the answer', phoneQuizType, { props: DARK, logic: TYPE_LOGIC(true), css: LEARN_CSS, w: PW, h: PH }],
-  'PhoneQuizDone': ['iPhone · Learn mode · all learned', phoneQuizDone, { props: DARK, logic: QUIZ_DONE_LOGIC, css: LEARN_CSS, w: PW, h: PH }],
+  'PhoneQuizDone': ['iPhone · Learn mode · all learned', phoneQuizDone, { props: DARK, logic: QUIZ_DONE_LOGIC(true), css: LEARN_CSS, w: PW, h: PH }],
   'PhoneQuizSettings': ['iPhone · Learn mode · settings (the deck’s background)', attrOf('PhoneQuiz', PW, PH, 'settings-open="{{yes}}"'), { logic: darkLogic, css: LEARN_CSS, w: PW, h: PH }],
   'LiveSetup': ['Live · host · set up', liveSetup, { props: DARK, logic: LIVE_SETUP_LOGIC, w: W, h: H }],
   'LiveLobby': ['Live · big screen · lobby (join code)', liveLobby, { props: { ...DARK, grain: MESH('Iris').grain, empty: { editor: 'boolean', default: false } }, logic: LIVE_HOST_LOGIC, css: LIVE_CSS, w: W, h: H }],
@@ -7699,6 +7911,34 @@ const files = {
   'PhoneClassGray': ['iPhone · Class (dark, gray)', grayOf('PhoneClass', PW, PH), { logic: darkLogic, css: DRAG_CSS, w: PW, h: PH }],
   'PhoneTodayClass': ['iPhone · Today · with assignments from your classes', attrOf('PhoneToday', PW, PH, 'assignments="{{yes}}"'), { logic: darkLogic, w: PW, h: PH }]
 };
+// Themes (Pro): Settings › Theme (web and iPhone, on Pro and on Free), each theme's page, and the Themes page of the
+// canvas: every theme on the real screens (web Library, flashcards, Learn mode, and deck page; iPhone flashcards and
+// Settings, for the profile picture). Each board carries its themes' code, CSS, and fonts (design/themes.mjs).
+const PLAN_PROP = { editor: 'enum', default: 'Pro', options: ['Free', 'Pro', 'Pro, ending'] };
+const THEME_PROP = { editor: 'enum', default: 'hose', options: ['lucida', ...THEME_KEYS] };
+const ALL = { css: themeCss(THEME_KEYS), fonts: themeFonts(THEME_KEYS) };
+Object.assign(files, {
+  'ThemePicker': ['Web · Settings › Theme', themePicker, { props: { ...DARK, grain: MESH('Iris').grain, plan: PLAN_PROP, theme: THEME_PROP }, logic: withThemes(THEME_KEYS, themePickerLogic(false)), ...ALL, w: W, h: H }],
+  'ThemePickerFree': ['Web · Settings › Theme · on Free (locked, Go Pro)', themeOf('ThemePicker', W, H, 'plan="Free" theme="lucida"'), { logic: withThemes(THEME_KEYS, darkLogic), ...ALL, w: W, h: H }],
+  'ThemePickerDark': ['Web · Settings › Theme (dark)', darkOf('ThemePicker', W, H), { logic: withThemes(THEME_KEYS, darkLogic), ...ALL, w: W, h: H }],
+  'PhoneThemePicker': ['iPhone · Settings › Theme', phoneThemePicker, { props: { ...DARK, grain: MESH('Iris').grain, plan: PLAN_PROP, theme: THEME_PROP }, logic: withThemes(THEME_KEYS, themePickerLogic(true)), ...ALL, w: PW, h: PHONE_THEMES_H }],
+  'PhoneThemePickerFree': ['iPhone · Settings › Theme · on Free (locked, Go Pro)', themeOf('PhoneThemePicker', PW, PHONE_THEMES_H, 'plan="Free" theme="lucida"'), { logic: withThemes(THEME_KEYS, darkLogic), ...ALL, w: PW, h: PHONE_THEMES_H }],
+  'WebTheme': ['Web · Settings › Theme › Lucida (a theme’s page)', webTheme, { props: { ...DARK, grain: MESH('Iris').grain, plan: PLAN_PROP, sheet: { editor: 'string', default: '' } }, logic: themePageLogic(false), w: W, h: H }],
+  'PhoneTheme': ['iPhone · Settings › Theme › a theme’s page', phoneTheme, { props: { ...DARK, grain: MESH('Iris').grain, plan: PLAN_PROP, sheet: { editor: 'string', default: 'aero' } }, logic: withThemes(['aero'], themePageLogic(true)), css: themeCss(['aero']), fonts: themeFonts(['aero']), w: PW, h: PHONE_THEMES_H }],
+});
+for (const T of THEMES.filter(x => x.key !== 'lucida')) {
+  const k = T.key, B = 'Theme' + T.board, one = { css: themeCss([k]), fonts: themeFonts([k]) }, logic = withThemes([k], darkLogic), at = attrs => `skin="${k}" ${attrs}`.trim();
+  Object.assign(files, {
+    [B]: [`${T.name} · Settings › Theme › its page`, themeOf('WebTheme', W, H, `sheet="${k}"`), { logic, ...one, w: W, h: H }],
+    [B + 'Free']: [`${T.name} · its page on Free (Go Pro)`, themeOf('WebTheme', W, H, `sheet="${k}" plan="Free"`), { logic, ...one, w: W, h: H }],
+    [B + 'Library']: [`${T.name} · Web · Library`, themeOf('WebDecks', W, H, at('')), { logic, ...one, css: one.css + DRAG_CSS, w: W, h: H }],
+    [B + 'Review']: [`${T.name} · Web · Flashcards`, themeOf('WebReview', W, H, at('start-revealed="{{yes}}"')), { logic, ...one, css: one.css + REVIEW_CSS, w: W, h: H }],
+    [B + 'Learn']: [`${T.name} · Web · Learn mode`, themeOf('WebQuiz', W, H, at('answered="{{yes}}"')), { logic, ...one, css: one.css + LEARN_CSS, w: W, h: H }],
+    [B + 'Deck']: [`${T.name} · Web · Deck page`, themeOf('WebDeck', W, H, at('')), { logic, ...one, css: one.css + NUM_CSS + PARALLAX_CSS + DRAG_CSS, w: W, h: H }],
+    [B + 'ReviewPhone']: [`${T.name} · iPhone · Flashcards`, themeOf('PhoneReview', PW, PH, at('start-revealed="{{yes}}"')), { logic, ...one, css: one.css + REVIEW_CSS, w: PW, h: PH }],
+    [B + 'ProfilePhone']: [`${T.name} · iPhone · Settings (your profile picture)`, themeOf('PhoneSettings', PW, PH, at('')), { logic, ...one, w: PW, h: PH }],
+  });
+}
 for (const [name, [title, body, opts]] of Object.entries(files)) writeFileSync(OUT + name + '.dc.html', page(title, body, opts));
 
 // The canvas layout (where each board sits) lives in canvas/project/canvas.json. It's kept in sync with the live

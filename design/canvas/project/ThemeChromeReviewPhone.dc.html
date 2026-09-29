@@ -1,0 +1,854 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Liquid chrome · iPhone · Flashcards</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&amp;family=Geist+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;font-family:Geist, -apple-system, system-ui, sans-serif}
+a{color:inherit;text-decoration:none}a:hover{opacity:.8}
+@keyframes scRise{from{opacity:0;transform:translateY(14px)}}main>*{animation:scRise .5s cubic-bezier(.2,.8,.2,1) backwards}main>*:nth-child(2){animation-delay:0.06s}main>*:nth-child(3){animation-delay:0.12s}main>*:nth-child(4){animation-delay:0.18s}main>*:nth-child(5){animation-delay:0.24s}main>*:nth-child(n+6){animation-delay:.3s}button,.sc-press{transition:transform .1s ease}button:active,.sc-press:active{transform:scale(.96)}.sc-sw{transition:background-color .3s ease,transform .1s ease}.sc-sw>span{transition:transform .32s cubic-bezier(.34,1.56,.64,1),background-color .3s ease}.sc-lift{transition:transform 1s ease-out,box-shadow 1s ease-out}.sc-lift:hover{transform:translateY(-4px);box-shadow:0 24px 48px -24px rgba(0,0,0,.45)}.sk-cover{box-shadow:var(--sk-shadow)}.sk-cover.sc-lift:hover{box-shadow:var(--sk-shadow),0 24px 48px -24px rgba(0,0,0,.45)}@keyframes scScrimIn{from{opacity:0}}@keyframes scScrimOut{to{opacity:0}}.sc-scrim{animation:scScrimIn .35s ease backwards}.sc-scrim.sc-gone{animation:scScrimOut .26s ease forwards}@keyframes scPanelIn{from{opacity:0;transform:translateX(calc(100% + 12px))}}@keyframes scPanelOut{to{opacity:0;transform:translateX(calc(100% + 12px))}}.sc-panel{animation:scPanelIn .35s cubic-bezier(.2,.8,.2,1) backwards}.sc-panel.sc-gone{animation:scPanelOut .26s cubic-bezier(.4,0,1,1) forwards}@keyframes scSheetIn{from{transform:translateY(100%)}}@keyframes scSheetOut{to{transform:translateY(100%)}}.sc-sheet{animation:scSheetIn .35s cubic-bezier(.2,.8,.2,1) backwards}.sc-sheet.sc-gone{animation:scSheetOut .26s cubic-bezier(.4,0,1,1) forwards}@keyframes scFloat{50%{transform:translateY(-6px)}}@keyframes scSwayA{50%{transform:rotate(-13deg) translateX(-3px)}}@keyframes scSwayB{50%{transform:rotate(10deg) translateX(3px)}}@keyframes scGlow{50%{opacity:.55}}@keyframes scSheen{0%,58%{transform:translateX(-160%) skewX(-18deg)}86%,100%{transform:translateX(260%) skewX(-18deg)}}.sc-float{animation:scFloat 6s ease-in-out infinite}.sc-sway-a{animation:scSwayA 6s ease-in-out infinite}.sc-sway-b{animation:scSwayB 6s ease-in-out infinite}.sc-glow{animation:scGlow 6s ease-in-out infinite}.sc-sheen{position:absolute;top:0;bottom:0;left:0;width:45%;background:linear-gradient(90deg,transparent,rgba(255,255,255,.4),transparent);animation:scSheen 5s cubic-bezier(.4,0,.2,1) infinite;pointer-events:none}@keyframes scDrift{from{transform:scale(1.14) translate(-3%,-2%)}to{transform:scale(1.14) translate(3%,2%)}}.sc-alive>svg:first-of-type{animation:scDrift 16s ease-in-out infinite alternate}@keyframes scDraw{from{stroke-dashoffset:1.02}}.sc-draw{stroke-dasharray:1 2;animation:scDraw .9s cubic-bezier(.2,.8,.2,1) backwards}@keyframes scKnob{from{opacity:0;transform:scale(.3)}}.sc-knob{transform-box:fill-box;transform-origin:center;animation:scKnob .35s .75s cubic-bezier(.34,1.56,.64,1) backwards}@keyframes scGrow{from{transform:scaleY(0)}}.sc-grow{transform-origin:bottom;animation:scGrow .6s cubic-bezier(.2,.8,.2,1) backwards}:nth-child(2)>.sc-grow{animation-delay:0.04s}:nth-child(3)>.sc-grow{animation-delay:0.08s}:nth-child(4)>.sc-grow{animation-delay:0.12s}:nth-child(5)>.sc-grow{animation-delay:0.16s}:nth-child(6)>.sc-grow{animation-delay:0.20s}:nth-child(7)>.sc-grow{animation-delay:0.24s}:nth-child(8)>.sc-grow{animation-delay:0.28s}:nth-child(9)>.sc-grow{animation-delay:0.32s}:nth-child(10)>.sc-grow{animation-delay:0.36s}:nth-child(11)>.sc-grow{animation-delay:0.40s}:nth-child(12)>.sc-grow{animation-delay:0.44s}:nth-child(13)>.sc-grow{animation-delay:0.48s}:nth-child(14)>.sc-grow{animation-delay:0.52s}@media (prefers-reduced-motion:reduce){main>*,.sc-float,.sc-sway-a,.sc-sway-b,.sc-glow,.sc-alive>svg,.sc-draw,.sc-knob,.sc-grow,.sc-scrim,.sc-panel,.sc-sheet{animation:none!important}.sc-sheen{display:none}button:active,.sc-press:active,.sc-lift:hover{transform:none}.sc-sw>span{transition:background-color .3s ease}}
+.sk-grain{position:absolute;inset:0;pointer-events:none;mix-blend-mode:soft-light;opacity:.55;background:url(/_blob/7835d260d8696ad9ac79e85e3d6dfdc0) 0 0/256px 256px}
+.lx-paper{background-image:url(/_blob/9fed834b930367f15ef1c51c1989a61d);background-size:256px 256px;background-blend-mode:soft-light}
+@keyframes sk-float{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
+@keyframes sk-drift{0%{transform:translateX(0)}100%{transform:translateX(20px)}}
+@keyframes sk-twinkle{0%,100%{opacity:.65}50%{opacity:1}}
+.sk-still *{animation:none!important}
+@media (prefers-reduced-motion:reduce){[data-sc-own] *{animation:none!important}}
+.cr-silver{background-image:url(/_blob/a4b26b4c8ff1e803f36decf868fc83a2)}.cr-dark{background-image:url(/_blob/22a2bdaa360c2b9f5df913bc8a6f7c5a)}.cr-pearl{background-image:url(/_blob/1bf41a03f774ac39faef7997322304a9)}.cr-tall{background-image:url(/_blob/15455827df7a6e6bd8ee4876455479e4)}.cr-sphere{background-image:url(/_blob/d19db90c9638a004d63dc334fc36814b);background-size:cover}.sc-wave{outline:0;-webkit-tap-highlight-color:transparent}.sc-wave:focus-visible{box-shadow:0 0 0 2px currentColor;border-radius:8px}.sc-wave span{transition:height .35s cubic-bezier(.2,.8,.2,1)}button:has(.sc-hold:active,.sc-wave:active){transform:none}@keyframes scRecDot{50%{opacity:.25}}.sc-rec-dot{animation:scRecDot 1.2s ease-in-out infinite}@keyframes scPlayed{from{clip-path:inset(0 100% 0 0)}to{clip-path:inset(0 0 0 0)}}@media (prefers-reduced-motion:reduce){.sc-wave span{transition:none}.sc-rec-dot{animation:none}}
+@keyframes scPop{0%{transform:scale(.6) translateY(4px);opacity:0}60%{transform:scale(1.08);opacity:1}100%{transform:none;opacity:1}}
+@keyframes scFadeA{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+@keyframes scFadeB{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+@keyframes scInA{from{opacity:0;transform:translateY(14px) scale(.98)}to{opacity:1;transform:none}}
+@keyframes scInB{from{opacity:0;transform:translateY(14px) scale(.98)}to{opacity:1;transform:none}}
+.sc-pop{animation:scPop .5s cubic-bezier(.34,1.56,.64,1) both}
+.sc-fade-a{animation:scFadeA .4s cubic-bezier(.2,.8,.2,1) both}
+.sc-fade-b{animation:scFadeB .4s cubic-bezier(.2,.8,.2,1) both}
+.sc-in-a{animation:scInA .32s cubic-bezier(.2,.8,.2,1) both}
+.sc-in-b{animation:scInB .32s cubic-bezier(.2,.8,.2,1) both}
+@media (prefers-reduced-motion:reduce){.sc-pop,.sc-fade-a,.sc-fade-b,.sc-in-a,.sc-in-b,[data-anim]{animation:none!important}}@media (prefers-reduced-motion:reduce){.sc-occ{transition:none!important}}
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; overflow: hidden;"><dc-import name="PhoneReview" skin="chrome" start-revealed="{{yes}}" hint-size="390px,844px"></dc-import></div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+// Dark mode has two looks, picked in Settings → Dark mode: black (the first one, and still the default) or gray (the
+// owner: "add a darkmode option that is grayish not fully blackedout"). g asks for gray; it only counts when d is on.
+// Gray keeps the grade colors, and its muted words still read at WCAG AA on every surface.
+theme(d, g) {
+  if (d && g) return { bg: '#1E1E20', surf: '#2A2A2D', surf2: '#353539', line: '#3A3A3E', text: '#F2F2F2', muted: '#A8A8AD', inv: '#F2F2F2', invText: '#1E1E20', card: '#2A2A2D', shadow: '0 1px 2px rgba(0,0,0,.2), 0 18px 44px -18px rgba(0,0,0,.5)', again: '#F97066', hard: '#FDB022', good: '#47CD89', easy: '#53B1FD', againTint: 'rgba(249,112,102,.16)', goodTint: 'rgba(71,205,137,.16)', hardTint: 'rgba(253,176,34,.16)', dim: 'rgba(0,0,0,.45)' };
+  return d
+    ? { bg: '#000000', surf: '#141414', surf2: '#222222', line: '#262626', text: '#FFFFFF', muted: '#A3A3A3', inv: '#FFFFFF', invText: '#000000', card: '#141414', shadow: 'none', again: '#F97066', hard: '#FDB022', good: '#47CD89', easy: '#53B1FD', againTint: 'rgba(249,112,102,.16)', goodTint: 'rgba(71,205,137,.16)', hardTint: 'rgba(253,176,34,.16)', dim: 'rgba(0,0,0,.7)' }
+    : { bg: '#FFFFFF', surf: '#F4F4F4', surf2: '#E8E8E8', line: '#EBEBEB', text: '#000000', muted: '#666666', inv: '#000000', invText: '#FFFFFF', card: '#FFFFFF', shadow: '0 1px 2px rgba(0,0,0,.04), 0 18px 44px -18px rgba(0,0,0,.18)', again: '#D92D20', hard: '#B54708', good: '#067647', easy: '#175CD3', againTint: '#FDECEA', goodTint: '#E6F4EC', hardTint: '#FDF1E3', dim: 'rgba(0,0,0,.28)' };
+}
+mesh(name, i) {
+  const P = {"Iris":{"base":"linear-gradient(102deg, #C9CCFC 0%, #9CA2FE 17%, #A9B9FF 32%, #BFCEFF 52%, #BACFFF 70%, #8EC5FC 86%, #33B3EC 100%)","ink":"#000000","fid":"sc-flow-iris","sid":"sc-streak-iris","blur":"6","sblur":"2.2","disp":"10","glass":"rgba(255,255,255,.34)","glassLine":"rgba(0,0,0,.22)","shadow":"none","b0":{"c":"#8C98FC","x":14,"y":70,"rx":10,"ry":70,"r":12},"b1":{"c":"#C3D0FF","x":55,"y":40,"rx":12,"ry":80,"r":12},"b2":{"c":"#2CB2EA","x":102,"y":102,"rx":20,"ry":42,"r":18},"b3":{"c":"#C2CCFF","x":88,"y":0,"rx":22,"ry":26,"r":0},"b4":{"c":"#7E94FB","x":6,"y":100,"rx":16,"ry":22,"r":12},"b5":{"c":"#B9CEFF","x":72,"y":60,"rx":10,"ry":70,"r":12},"s0":{"c":"#E6E8FD","x":1,"y":40,"rx":3.2,"ry":70,"r":12},"s1":{"c":"#D3DBFF","x":44,"y":50,"rx":2.6,"ry":80,"r":12}},"Apricot":{"base":"linear-gradient(200deg, #F2AC45 0%, #EE9D3F 28%, #E88C37 52%, #E99038 76%, #EE9A3E 100%)","ink":"#000000","fid":"sc-flow-apricot","sid":"sc-streak-apricot","blur":"7","sblur":"3","disp":"8","glass":"rgba(255,255,255,.34)","glassLine":"rgba(0,0,0,.22)","shadow":"none","b0":{"c":"#E27E2E","x":70,"y":38,"rx":12,"ry":60,"r":-32},"b1":{"c":"#F3AE44","x":92,"y":4,"rx":28,"ry":24,"r":0},"b2":{"c":"#F4BC76","x":10,"y":98,"rx":24,"ry":22,"r":0},"b3":{"c":"#EA9139","x":40,"y":80,"rx":20,"ry":30,"r":-20},"b4":{"c":"#E7862F","x":100,"y":70,"rx":14,"ry":30,"r":0},"b5":{"c":"#F1A640","x":60,"y":0,"rx":18,"ry":14,"r":0},"s0":{"c":"#FAE6BC","x":6,"y":55,"rx":11,"ry":70,"r":-22},"s1":{"c":"#F7D39A","x":20,"y":70,"rx":5,"ry":50,"r":-22}},"Lilac":{"base":"linear-gradient(110deg, #D9CCFA 0%, #C3B2F6 22%, #D8C3F4 45%, #F1CDE3 68%, #F8CDB8 88%, #F6B999 100%)","ink":"#000000","fid":"sc-flow-lilac","sid":"sc-streak-lilac","blur":"6","sblur":"2.2","disp":"10","glass":"rgba(255,255,255,.34)","glassLine":"rgba(0,0,0,.22)","shadow":"none","b0":{"c":"#B7A3F4","x":18,"y":64,"rx":10,"ry":70,"r":14},"b1":{"c":"#E7D3F6","x":50,"y":40,"rx":12,"ry":80,"r":14},"b2":{"c":"#F5B08E","x":100,"y":100,"rx":22,"ry":40,"r":16},"b3":{"c":"#D2C6FA","x":86,"y":0,"rx":22,"ry":24,"r":0},"b4":{"c":"#AE98F2","x":4,"y":100,"rx":16,"ry":22,"r":14},"b5":{"c":"#F4C9D8","x":72,"y":62,"rx":10,"ry":70,"r":14},"s0":{"c":"#F3EDFD","x":2,"y":40,"rx":3,"ry":70,"r":14},"s1":{"c":"#EEDDF8","x":44,"y":50,"rx":2.4,"ry":80,"r":14}},"Mint":{"base":"linear-gradient(105deg, #D7F3E6 0%, #A7E3C9 20%, #BDEBD6 40%, #CFF1DE 60%, #B6E6CD 78%, #7FD0B0 100%)","ink":"#000000","fid":"sc-flow-mint","sid":"sc-streak-mint","blur":"6","sblur":"2.2","disp":"10","glass":"rgba(255,255,255,.34)","glassLine":"rgba(0,0,0,.22)","shadow":"none","b0":{"c":"#8FD8B8","x":16,"y":66,"rx":10,"ry":70,"r":12},"b1":{"c":"#D9F5E6","x":52,"y":40,"rx":12,"ry":80,"r":12},"b2":{"c":"#5FC3A0","x":102,"y":102,"rx":20,"ry":42,"r":18},"b3":{"c":"#E9F7C9","x":88,"y":2,"rx":22,"ry":24,"r":0},"b4":{"c":"#7ACFAD","x":6,"y":100,"rx":16,"ry":22,"r":12},"b5":{"c":"#C3EDD7","x":72,"y":60,"rx":10,"ry":70,"r":12},"s0":{"c":"#F1FBF5","x":2,"y":40,"rx":3,"ry":70,"r":12},"s1":{"c":"#E2F7EB","x":44,"y":50,"rx":2.4,"ry":80,"r":12}},"Aqua":{"base":"linear-gradient(102deg, #D5F1FA 0%, #9EDCF1 18%, #B6E6F5 36%, #C9EEF8 56%, #A6DEF2 74%, #5CC0E6 90%, #2FA7DE 100%)","ink":"#000000","fid":"sc-flow-aqua","sid":"sc-streak-aqua","blur":"6","sblur":"2.2","disp":"10","glass":"rgba(255,255,255,.34)","glassLine":"rgba(0,0,0,.22)","shadow":"none","b0":{"c":"#86D2EE","x":14,"y":68,"rx":10,"ry":70,"r":12},"b1":{"c":"#D0F0FA","x":54,"y":40,"rx":12,"ry":80,"r":12},"b2":{"c":"#2A9FDA","x":102,"y":102,"rx":20,"ry":42,"r":18},"b3":{"c":"#C7EDF9","x":88,"y":0,"rx":22,"ry":26,"r":0},"b4":{"c":"#6CC6EA","x":6,"y":100,"rx":16,"ry":22,"r":12},"b5":{"c":"#B2E4F5","x":72,"y":60,"rx":10,"ry":70,"r":12},"s0":{"c":"#EEFAFD","x":1,"y":40,"rx":3.2,"ry":70,"r":12},"s1":{"c":"#DDF4FB","x":44,"y":50,"rx":2.6,"ry":80,"r":12}},"Rose":{"base":"linear-gradient(200deg, #F9C3CF 0%, #F5A9BB 30%, #EE8CA6 55%, #F29AB0 78%, #F6AFC0 100%)","ink":"#000000","fid":"sc-flow-rose","sid":"sc-streak-rose","blur":"7","sblur":"3","disp":"8","glass":"rgba(255,255,255,.34)","glassLine":"rgba(0,0,0,.22)","shadow":"none","b0":{"c":"#EC7F9C","x":70,"y":38,"rx":12,"ry":60,"r":-32},"b1":{"c":"#FAC6D2","x":92,"y":4,"rx":28,"ry":24,"r":0},"b2":{"c":"#F8C0B4","x":10,"y":98,"rx":24,"ry":22,"r":0},"b3":{"c":"#F09CB1","x":40,"y":80,"rx":20,"ry":30,"r":-20},"b4":{"c":"#EF93AA","x":100,"y":70,"rx":14,"ry":30,"r":0},"b5":{"c":"#F7B6C5","x":60,"y":0,"rx":18,"ry":14,"r":0},"s0":{"c":"#FDE9EE","x":4,"y":52,"rx":8,"ry":64,"r":-20},"s1":{"c":"#FBD6DF","x":16,"y":66,"rx":5,"ry":50,"r":-20}},"Lemon":{"base":"linear-gradient(200deg, #FCE78C 0%, #F9DA6E 30%, #F5C752 55%, #F7CF5E 78%, #F9D86C 100%)","ink":"#000000","fid":"sc-flow-lemon","sid":"sc-streak-lemon","blur":"7","sblur":"3","disp":"8","glass":"rgba(255,255,255,.34)","glassLine":"rgba(0,0,0,.22)","shadow":"none","b0":{"c":"#F2BD45","x":70,"y":38,"rx":12,"ry":60,"r":-32},"b1":{"c":"#FCE891","x":92,"y":4,"rx":28,"ry":24,"r":0},"b2":{"c":"#FBD99A","x":10,"y":98,"rx":24,"ry":22,"r":0},"b3":{"c":"#F6CB5A","x":40,"y":80,"rx":20,"ry":30,"r":-20},"b4":{"c":"#F4C44F","x":100,"y":70,"rx":14,"ry":30,"r":0},"b5":{"c":"#FADF7A","x":60,"y":0,"rx":18,"ry":14,"r":0},"s0":{"c":"#FFF7DA","x":4,"y":52,"rx":8,"ry":64,"r":-20},"s1":{"c":"#FDEDB4","x":16,"y":66,"rx":5,"ry":50,"r":-20}},"Dusk":{"base":"linear-gradient(180deg, #9A92B6 0%, #A58AA6 36%, #AF8599 54%, #C8715F 76%, #DA7A50 100%)","ink":"#FFFFFF","fid":"sc-flow-dusk","sid":"sc-streak-dusk","blur":"9","sblur":"3","disp":"26","glass":"rgba(255,255,255,.12)","glassLine":"rgba(255,255,255,.62)","shadow":"0 1px 14px rgba(0,0,0,.16)","b0":{"c":"#958FB9","x":5,"y":10,"rx":60,"ry":40,"r":0},"b1":{"c":"#AC839E","x":92,"y":18,"rx":50,"ry":36,"r":0},"b2":{"c":"#B0869A","x":50,"y":55,"rx":60,"ry":14,"r":0},"b3":{"c":"#CE505A","x":6,"y":96,"rx":40,"ry":30,"r":0},"b4":{"c":"#F4A04A","x":50,"y":100,"rx":34,"ry":30,"r":0},"b5":{"c":"#D9744C","x":96,"y":92,"rx":34,"ry":28,"r":0},"s0":{"c":"transparent","x":0,"y":0,"rx":0,"ry":0,"r":0},"s1":{"c":"transparent","x":0,"y":0,"rx":0,"ry":0,"r":0}},"Grove":{"base":"linear-gradient(160deg, #2E4A1F 0%, #4E6428 25%, #9A9A3E 50%, #5E7A3A 72%, #1E3A22 100%)","ink":"#FFFFFF","fid":"sc-flow-grove","sid":"sc-streak-grove","blur":"7","sblur":"3","disp":"26","glass":"rgba(255,255,255,.12)","glassLine":"rgba(255,255,255,.62)","shadow":"0 1px 14px rgba(0,0,0,.16)","b0":{"c":"#D9A878","x":70,"y":6,"rx":26,"ry":14,"r":0},"b1":{"c":"#7FB2D6","x":97,"y":30,"rx":16,"ry":26,"r":0},"b2":{"c":"#C8B432","x":40,"y":50,"rx":40,"ry":10,"r":0},"b3":{"c":"#15301A","x":86,"y":94,"rx":36,"ry":22,"r":0},"b4":{"c":"#8FA3AE","x":6,"y":86,"rx":30,"ry":16,"r":0},"b5":{"c":"#22401C","x":6,"y":12,"rx":34,"ry":22,"r":0},"s0":{"c":"transparent","x":0,"y":0,"rx":0,"ry":0,"r":0},"s1":{"c":"transparent","x":0,"y":0,"rx":0,"ry":0,"r":0}},"Forest":{"base":"linear-gradient(180deg, #AEBEC9 0%, #B0C2CF 22%, #A8B7B8 38%, #8A9675 50%, #5E6B3C 61%, #3F4F25 72%, #25391A 86%, #1C3214 100%)","ink":"#FFFFFF","fid":"sc-flow-forest","sid":"sc-streak-forest","blur":"9","sblur":"3","disp":"26","glass":"rgba(255,255,255,.12)","glassLine":"rgba(255,255,255,.62)","shadow":"0 1px 14px rgba(0,0,0,.16)","b0":{"c":"#B3C6D4","x":70,"y":8,"rx":62,"ry":22,"r":0},"b1":{"c":"#909C7C","x":60,"y":50,"rx":46,"ry":7,"r":0},"b2":{"c":"#6F7C4C","x":4,"y":53,"rx":30,"ry":9,"r":0},"b3":{"c":"#203616","x":50,"y":102,"rx":72,"ry":24,"r":0},"b4":{"c":"#2B4319","x":0,"y":80,"rx":30,"ry":18,"r":0},"b5":{"c":"#AAB9BD","x":10,"y":36,"rx":34,"ry":8,"r":0},"s0":{"c":"transparent","x":0,"y":0,"rx":0,"ry":0,"r":0},"s1":{"c":"transparent","x":0,"y":0,"rx":0,"ry":0,"r":0}},"Ember":{"base":"linear-gradient(270deg, #EB840C 0%, #E77C0D 36%, #B8641A 50%, #7A4A22 61%, #5A3A28 72%, #6A3F27 85%, #8B4922 100%)","ink":"#FFFFFF","fid":"sc-flow-ember","sid":"sc-streak-ember","blur":"9","sblur":"3","disp":"26","glass":"rgba(255,255,255,.12)","glassLine":"rgba(255,255,255,.62)","shadow":"0 1px 14px rgba(0,0,0,.16)","b0":{"c":"#E36E0E","x":80,"y":100,"rx":40,"ry":40,"r":0},"b1":{"c":"#F08C10","x":86,"y":4,"rx":36,"ry":36,"r":0},"b2":{"c":"#533728","x":28,"y":45,"rx":13,"ry":75,"r":0},"b3":{"c":"#974B1D","x":0,"y":92,"rx":18,"ry":40,"r":0},"b4":{"c":"#C96A17","x":55,"y":20,"rx":8,"ry":40,"r":0},"b5":{"c":"#E0740E","x":100,"y":60,"rx":20,"ry":30,"r":0},"s0":{"c":"transparent","x":0,"y":0,"rx":0,"ry":0,"r":0},"s1":{"c":"transparent","x":0,"y":0,"rx":0,"ry":0,"r":0}},"Meadow":{"base":"linear-gradient(180deg, #A9CFE0 0%, #7FAE6A 26%, #5E8E3E 38%, #D6C648 50%, #CFE3E6 64%, #5C9450 80%, #3E8480 100%)","ink":"#FFFFFF","fid":"sc-flow-meadow","sid":"sc-streak-meadow","blur":"5","sblur":"3","disp":"26","glass":"rgba(255,255,255,.12)","glassLine":"rgba(255,255,255,.62)","shadow":"0 1px 14px rgba(0,0,0,.16)","b0":{"c":"#2F6230","x":14,"y":40,"rx":38,"ry":10,"r":0},"b1":{"c":"#EDCBA8","x":78,"y":20,"rx":30,"ry":12,"r":0},"b2":{"c":"#E6CB3C","x":46,"y":52,"rx":30,"ry":7,"r":0},"b3":{"c":"#E4EFF3","x":20,"y":68,"rx":30,"ry":10,"r":0},"b4":{"c":"#3F7F3A","x":84,"y":74,"rx":30,"ry":10,"r":0},"b5":{"c":"#9CC8E8","x":94,"y":42,"rx":18,"ry":12,"r":0},"s0":{"c":"transparent","x":0,"y":0,"rx":0,"ry":0,"r":0},"s1":{"c":"transparent","x":0,"y":0,"rx":0,"ry":0,"r":0}},"Ocean":{"base":"linear-gradient(180deg, #CFE2E7 0%, #A2C9D4 28%, #6A9FB3 52%, #33708C 76%, #1B4A66 100%)","ink":"#FFFFFF","fid":"sc-flow-ocean","sid":"sc-streak-ocean","blur":"9","sblur":"3","disp":"26","glass":"rgba(255,255,255,.12)","glassLine":"rgba(255,255,255,.62)","shadow":"0 1px 14px rgba(0,0,0,.16)","b0":{"c":"#E7EFF1","x":72,"y":6,"rx":44,"ry":16,"r":0},"b1":{"c":"#8DBBCB","x":12,"y":32,"rx":40,"ry":10,"r":0},"b2":{"c":"#4E8FA8","x":22,"y":56,"rx":46,"ry":10,"r":0},"b3":{"c":"#2A6482","x":86,"y":70,"rx":42,"ry":14,"r":0},"b4":{"c":"#173F5A","x":30,"y":102,"rx":62,"ry":20,"r":0},"b5":{"c":"#3C7F9B","x":100,"y":46,"rx":24,"ry":10,"r":0},"s0":{"c":"transparent","x":0,"y":0,"rx":0,"ry":0,"r":0},"s1":{"c":"transparent","x":0,"y":0,"rx":0,"ry":0,"r":0}},"Sun":{"base":"linear-gradient(165deg, #F7D84E 0%, #F5C63F 42%, #EFA436 78%, #EA9031 100%)","ink":"#000000","fid":"sc-flow-sun","sid":"sc-streak-sun","blur":"9","sblur":"3","disp":"26","glass":"rgba(255,255,255,.34)","glassLine":"rgba(0,0,0,.22)","shadow":"none","b0":{"c":"#FBE46C","x":14,"y":8,"rx":52,"ry":34,"r":0},"b1":{"c":"#F3B63A","x":70,"y":55,"rx":50,"ry":22,"r":0},"b2":{"c":"#EA8A2E","x":92,"y":100,"rx":46,"ry":30,"r":0},"b3":{"c":"#F8D24A","x":0,"y":70,"rx":30,"ry":24,"r":0},"b4":{"c":"#F9DC5C","x":80,"y":10,"rx":30,"ry":20,"r":0},"b5":{"c":"#EE9C34","x":30,"y":100,"rx":40,"ry":18,"r":0},"s0":{"c":"transparent","x":0,"y":0,"rx":0,"ry":0,"r":0},"s1":{"c":"transparent","x":0,"y":0,"rx":0,"ry":0,"r":0}}};
+  const keys = Object.keys(P);
+  return P[name] || P[keys[(i || 0) % keys.length]];
+}
+// Themes (Pro, Settings › Theme) change four things: deck covers, flashcards, the study background, and your profile
+// picture (web/themes). skin(db) is the theme a board draws with: the one a canvas Theme board names (props.skin), or
+// yours, once its code has loaded (null for Lucida's own look). skinFor(key) is any theme, like a profile owner's.
+skin(db) { return this.skinFor(this.props.skin || (db && db.theme ? db.theme() : '')); }
+skinFor(k) {
+  if (!k || k === 'lucida') return null;
+  const T = globalThis.LucidaThemes || {}, load = (this.props.db && this.props.db.loadTheme) || globalThis.LucidaLoadTheme;
+  if (!T[k] && load) load(k);
+  return T[k] || null;
+}
+gen(seed, mode) {
+  // Starting value picked so the sample decks get a varied set; any value is equally random.
+  let h = 2300790937;
+  for (const ch of String(seed)) { h ^= ch.charCodeAt(0); h = Math.imul(h, 16777619); }
+  let s = h >>> 0;
+  const rnd = () => { s = (s + 0x6D2B79F5) | 0; let t = Math.imul(s ^ (s >>> 15), 1 | s); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
+  const norm = x => ((x % 360) + 360) % 360;
+  const rgb = (hh, ss, ll) => { ss /= 100; ll /= 100; const k = n => (n + hh / 30) % 12; const a = ss * Math.min(ll, 1 - ll); const f = n => ll - a * Math.max(-1, Math.min(k(n) - 3, Math.min(9 - k(n), 1))); return [f(0), f(8), f(4)]; };
+  const lum = ([r, g, b]) => { const L = v => (v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4)); return 0.2126 * L(r) + 0.7152 * L(g) + 0.0722 * L(b); };
+  const hsl = (hh, l, ss) => 'hsl(' + norm(hh).toFixed(0) + ' ' + ss.toFixed(0) + '% ' + Math.max(4, Math.min(97, l)).toFixed(0) + '%)';
+  const id = (h >>> 0).toString(36);
+  let kind = mode, c = 0;
+  if (typeof mode === 'number') { c = mode; kind = c < 0.5 ? 'deep' : 'clear'; }
+  else {
+    if (mode == null || mode === 'mix') kind = rnd() < 0.7 ? 'vivid' : 'deep';
+    c = kind === 'clear' ? 0.76 + rnd() * 0.24 : kind === 'deep' ? 0.02 + rnd() * 0.26 : 0;
+  }
+  if (kind === 'vivid') {
+    // Families from the references, as [hue, saturation, lightness]: main, light, dark, accent, second accent,
+    // fold angle, roundness (0 = long silky folds, 1 = soft round clouds), and how big the accent is.
+    const F = [
+      [[270, 44, 58], [262, 46, 72], [292, 50, 44], [6, 78, 60], [312, 44, 66], 0, 0.1, 1],
+      [[20, 88, 54], [27, 94, 62], [10, 50, 25], [282, 16, 50], [8, 82, 48], -38, 0.15, 1],
+      [[13, 78, 48], [18, 88, 60], [8, 72, 30], [212, 70, 66], [20, 88, 71], 18, 0.85, 1.5],
+      [[199, 82, 46], [195, 80, 58], [210, 86, 29], [348, 76, 82], [350, 70, 76], 58, 0.3, 1.45],
+      [[238, 60, 58], [284, 46, 52], [236, 52, 30], [352, 74, 66], [18, 88, 71], 86, 0.55, 1.2],
+      [[229, 66, 50], [226, 70, 60], [231, 64, 29], [330, 58, 64], [352, 62, 58], -36, 0.35, 1.4],
+      [[318, 58, 46], [326, 64, 60], [290, 52, 26], [24, 92, 58], [18, 88, 72], 12, 0.3, 1.2],
+      [[190, 72, 40], [186, 66, 54], [205, 76, 23], [10, 82, 64], [22, 88, 72], -24, 0.45, 1.35],
+      [[350, 72, 50], [356, 80, 62], [340, 64, 28], [258, 58, 62], [268, 52, 74], 30, 0.4, 1.3],
+      [[248, 54, 48], [252, 60, 63], [246, 56, 26], [20, 90, 70], [8, 78, 62], -12, 0.5, 1.2]
+    ];
+    const fam = Math.floor(rnd() * F.length), [dom, lite, dark, acc, acc2, flow0, round, big] = F[fam];
+    const dh = (rnd() - 0.5) * 14, fx = rnd() < 0.5, fy = rnd() < 0.4;
+    const vc = ([hh, ss, ll], dl = 0) => hsl(hh + dh, ll + dl, ss);
+    const X = x => +(fx ? 100 - x : x).toFixed(1), Y = y => +(fy ? 100 - y : y).toFixed(1);
+    const flow = (flow0 + (rnd() - 0.5) * 14) * (fx !== fy ? -1 : 1);
+    const j = () => (rnd() - 0.5) * 12, k = () => 0.8 + rnd() * 0.4;
+    const blob = (cc, x, y, w, ht, rot = flow) => ({ c: cc, x: X(x + j()), y: Y(y + j()), rx: +(w * k()).toFixed(1), ry: +(ht * k()).toFixed(1), r: +rot.toFixed(1) });
+    let a = 225; if (fx) a = 360 - a; if (fy) a = 180 - a;
+    const o = { base: 'linear-gradient(' + Math.round(norm(a)) + 'deg, ' + vc(lite) + ' 0%, ' + vc(dom) + ' 52%, ' + vc(dark, 6) + ' 100%)',
+      fid: 'sc-gen-' + id, sid: 'sc-gens-' + id, blur: '9', sblur: '5.5', disp: '24', clarity: 0, kind: 'Vivid', fam };
+    o.b0 = blob(vc(acc), 6, 94, (26 + 14 * round) * big, (26 + 14 * round) * big);
+    o.b1 = blob(vc(acc2), 24 * big, 86, (12 + 10 * round) * big, (18 + 8 * round) * big);
+    o.b2 = blob(vc(dark), 18, 36, 8 + 16 * round, 64 - 30 * round);
+    o.b3 = blob(vc(lite, 2), 72, 18, 12 + 14 * round, 60 - 24 * round);
+    o.b4 = blob(vc(dom), 52, 56, 9 + 16 * round, 66 - 30 * round);
+    o.b5 = blob(vc(dark, 8), 90, 88, 10 + 16 * round, 40 - 10 * round);
+    const silk = round < 0.5, none = { c: 'transparent', x: 0, y: 0, rx: 0, ry: 0, r: 0 };
+    o.s0 = silk ? { c: vc(lite, 4), x: X(42 + j()), y: 50, rx: 4.5, ry: 80, r: +flow.toFixed(1) } : none;
+    o.s1 = silk ? { c: vc(dark, 4), x: X(66 + j()), y: 50, rx: 3.5, ry: 80, r: +flow.toFixed(1) } : none;
+    o.ink = '#FFFFFF'; o.glass = 'rgba(255,255,255,.14)'; o.glassLine = 'rgba(255,255,255,.6)'; o.shadow = '0 1px 14px rgba(0,0,0,.18)';
+    return o;
+  }
+  const mix = (a, b) => a + (b - a) * c;
+  let hue = rnd() * 360;
+  // Deep yellows and yellow-greens turn olive and muddy; nudge them to amber or green.
+  if (c < 0.6 && hue > 46 && hue < 100) hue = hue < 73 ? 32 + rnd() * 8 : 118 + rnd() * 20;
+  let hue2 = hue + (rnd() < 0.5 ? -1 : 1) * (16 + rnd() * 30);
+  const n2 = norm(hue2);
+  if (c < 0.6 && n2 > 46 && n2 < 100) hue2 = n2 < 73 ? 28 : 124;
+  const sat = mix(52, 88), lo = mix(16, 62), hi = mix(70, 90);
+  const col = (hh, l, ss) => hsl(hh, l, ss == null ? sat : ss);
+  const tilt = (rnd() - 0.5) * 50;
+  const angle = Math.round(rnd() * 360);
+  const lMid = (lo + hi) / 2;
+  const base = 'linear-gradient(' + angle + 'deg, ' + col(hue, hi) + ' 0%, ' + col(hue, lMid) + ' 45%, ' + col(hue2, mix(lo + 6, lMid)) + ' 100%)';
+  const o = { base, fid: 'sc-gen-' + id, sid: 'sc-gens-' + id,
+    blur: mix(9, 6).toFixed(1), sblur: mix(4, 3).toFixed(1), disp: mix(26, 9).toFixed(0), clarity: c, kind: c < 0.5 ? 'Deep' : 'Clear', hue: Math.round(norm(hue)) };
+  for (let i = 0; i < 6; i++) {
+    const hh = i % 2 ? hue2 : hue, span = (hi - lo) * 0.45, l = rnd() < 0.5 ? lo + rnd() * span : hi - rnd() * span;
+    o['b' + i] = { c: col(hh, l), x: +(rnd() * 100).toFixed(1), y: +(rnd() * 100).toFixed(1),
+      rx: +(mix(34, 11) * (0.7 + rnd() * 0.6)).toFixed(1), ry: +(mix(26, 72) * (0.7 + rnd() * 0.6)).toFixed(1), r: +(tilt * c).toFixed(1) };
+  }
+  for (let i = 0; i < 2; i++) {
+    const on = c > 0.45;
+    o['s' + i] = on ? { c: col(hue, Math.min(95, hi + 4), sat * 0.8), x: +(8 + rnd() * 84).toFixed(1), y: 50, rx: +(1.5 + rnd() * 2 * c).toFixed(1), ry: 80, r: +tilt.toFixed(1) }
+      : { c: 'transparent', x: 0, y: 0, rx: 0, ry: 0, r: 0 };
+  }
+  // Text color: whichever of black or white reads better on the middle of the card.
+  const Lm = lum(rgb(norm(hue), sat, lMid));
+  const white = 1.05 / (Lm + 0.05), black = (Lm + 0.05) / 0.05;
+  const dark = white > black;
+  o.ink = dark ? '#FFFFFF' : '#000000';
+  o.glass = dark ? 'rgba(255,255,255,.12)' : 'rgba(255,255,255,.34)';
+  o.glassLine = dark ? 'rgba(255,255,255,.62)' : 'rgba(0,0,0,.22)';
+  o.shadow = dark ? '0 1px 14px rgba(0,0,0,.16)' : 'none';
+  return o;
+}
+mock() {
+  const p = this.props, m = this.state.$m || {};
+  const N = {"P":{"alex":{"handle":"alexkim","name":"Alex Kim","avatar":null,"color":0,"verified":"","kind":"person"},"maria":{"handle":"mariasantos","name":"Maria Santos","avatar":null,"color":3,"verified":"","kind":"person"},"dev":{"handle":"devp","name":"Dev Patel","avatar":null,"color":2,"verified":"","kind":"person"},"jordan":{"handle":"jordanlee","name":"Jordan Lee","avatar":null,"color":1,"verified":"","kind":"person"},"okafor":{"handle":"drokafor","name":"Dr. Okafor","avatar":null,"color":4,"verified":"teacher","kind":"person"},"sam":{"handle":"samr","name":"Sam Rivera","avatar":null,"color":5,"verified":"","kind":"person"},"ucd":{"handle":"ucdavis.bio","name":"UC Davis Biology","avatar":null,"color":0,"verified":"school","kind":"school"}},"DECKS":{"mcat":{"id":"s1","url":"/@mariasantos/mcat-biochemistry","name":"MCAT Biochemistry","description":"Every enzyme, pathway, and number the exam asks. Suggestions welcome.","tags":["MCAT","Biology"],"cover":{"style":"mix","round":0,"seed":"MCAT Biochemistry","image":null},"cards":640,"stars":4200,"learners":214,"copies":86,"version":14,"updated":"2026-09-26T10:00:00Z","visibility":"public","checked":{"name":"Dr. Okafor","handle":"drokafor","current":false},"maintained":"creator","owner":{"handle":"mariasantos","name":"Maria Santos","avatar":null,"color":3,"verified":"","kind":"person"},"theme":""},"kanji":{"id":"s2","url":"/@jordanlee/jlpt-n3-kanji","name":"JLPT N3 Kanji","description":"","tags":["Languages","Japanese"],"cover":{"style":"mix","round":0,"seed":"JLPT N3 Kanji","image":null},"cards":1024,"stars":3100,"learners":1860,"copies":372,"version":3,"updated":"2026-09-26T10:00:00Z","visibility":"public","checked":null,"maintained":"creator","owner":{"handle":"jordanlee","name":"Jordan Lee","avatar":null,"color":1,"verified":"","kind":"person"},"theme":""},"algo":{"id":"s3","url":"/@devp/algorithms","name":"Algorithms","description":"","tags":["Computer science"],"cover":{"style":"mix","round":0,"seed":"Algorithms","image":null},"cards":212,"stars":2700,"learners":1620,"copies":324,"version":3,"updated":"2026-09-26T10:00:00Z","visibility":"public","checked":null,"maintained":"creator","owner":{"handle":"devp","name":"Dev Patel","avatar":null,"color":2,"verified":"","kind":"person"},"theme":""},"pharm":{"id":"s4","url":"/@samr/pharmacology","name":"Pharmacology","description":"","tags":["Pre-med"],"cover":{"style":"mix","round":0,"seed":"Pharmacology","image":null},"cards":388,"stars":1900,"learners":1140,"copies":228,"version":3,"updated":"2026-09-26T10:00:00Z","visibility":"public","checked":null,"maintained":"creator","owner":{"handle":"samr","name":"Sam Rivera","avatar":null,"color":5,"verified":"","kind":"person"},"theme":""},"bio2a":{"id":"s5","url":"/@drokafor/bio-2a-final","name":"BIO 2A · Final","description":"","tags":["Biology"],"cover":{"style":"mix","round":0,"seed":"BIO 2A · Final","image":null},"cards":290,"stars":860,"learners":516,"copies":103,"version":3,"updated":"2026-09-26T10:00:00Z","visibility":"public","checked":{"name":"Dr. Okafor","handle":"drokafor","current":true},"maintained":"creator","owner":{"handle":"drokafor","name":"Dr. Okafor","avatar":null,"color":4,"verified":"teacher","kind":"person"},"theme":""},"law":{"id":"s6","url":"/@samr/constitutional-law","name":"Constitutional Law","description":"","tags":["Law"],"cover":{"style":"mix","round":0,"seed":"Constitutional Law","image":null},"cards":174,"stars":640,"learners":384,"copies":77,"version":3,"updated":"2026-09-26T10:00:00Z","visibility":"public","checked":{"name":"Dr. Okafor","handle":"drokafor","current":true},"maintained":"creator","owner":{"handle":"samr","name":"Sam Rivera","avatar":null,"color":5,"verified":"","kind":"person"},"theme":""},"orgo":{"id":"s7","url":"/@drokafor/organic-reactions","name":"Organic Reactions","description":"","tags":["Chemistry"],"cover":{"style":"mix","round":0,"seed":"Organic Reactions","image":null},"cards":256,"stars":1400,"learners":840,"copies":168,"version":3,"updated":"2026-09-26T10:00:00Z","visibility":"public","checked":{"name":"Dr. Okafor","handle":"drokafor","current":true},"maintained":"creator","owner":{"handle":"drokafor","name":"Dr. Okafor","avatar":null,"color":4,"verified":"teacher","kind":"person"},"theme":""},"spanish":{"id":"s8","url":"/@mariasantos/spanish-b1","name":"Spanish B1","description":"","tags":["Languages"],"cover":{"style":"mix","round":0,"seed":"Spanish B1","image":null},"cards":900,"stars":2200,"learners":1320,"copies":264,"version":3,"updated":"2026-09-26T10:00:00Z","visibility":"public","checked":null,"maintained":"creator","owner":{"handle":"mariasantos","name":"Maria Santos","avatar":null,"color":3,"verified":"","kind":"person"},"theme":""},"cell":{"id":"s9","url":"/@alexkim/cell-biology","name":"Cell Biology","description":"","tags":["Biology","MCAT"],"cover":{"style":"mix","round":0,"seed":"Cell Biology","image":null},"cards":412,"stars":1300,"learners":780,"copies":156,"version":3,"updated":"2026-09-26T10:00:00Z","visibility":"public","checked":null,"maintained":"creator","owner":{"handle":"alexkim","name":"Alex Kim","avatar":null,"color":0,"verified":"","kind":"person"},"theme":""},"sys":{"id":"s10","url":"/@alexkim/system-design","name":"System Design","description":"","tags":["Computer science"],"cover":{"style":"mix","round":0,"seed":"System Design","image":null},"cards":74,"stars":412,"learners":247,"copies":49,"version":3,"updated":"2026-09-26T10:00:00Z","visibility":"public","checked":null,"maintained":"creator","owner":{"handle":"alexkim","name":"Alex Kim","avatar":null,"color":0,"verified":"","kind":"person"},"theme":""},"jp":{"id":"s11","url":"/@alexkim/japanese-n4","name":"Japanese N4","description":"","tags":["Languages"],"cover":{"style":"mix","round":0,"seed":"Japanese N4","image":null},"cards":820,"stars":2400,"learners":1440,"copies":288,"version":3,"updated":"2026-09-26T10:00:00Z","visibility":"public","checked":null,"maintained":"creator","owner":{"handle":"alexkim","name":"Alex Kim","avatar":null,"color":0,"verified":"","kind":"person"},"theme":""},"orgoA":{"id":"s12","url":"/@alexkim/organic-chemistry","name":"Organic Chemistry","description":"","tags":["Chemistry"],"cover":{"style":"mix","round":0,"seed":"Organic Chemistry","image":null},"cards":236,"stars":640,"learners":384,"copies":77,"version":3,"updated":"2026-09-26T10:00:00Z","visibility":"public","checked":{"name":"Dr. Okafor","handle":"drokafor","current":true},"maintained":"creator","owner":{"handle":"alexkim","name":"Alex Kim","avatar":null,"color":0,"verified":"","kind":"person"},"theme":""},"hist":{"id":"s13","url":"/@alexkim/us-history","name":"US History","description":"","tags":["History"],"cover":{"style":"mix","round":0,"seed":"US History","image":null},"cards":158,"stars":205,"learners":123,"copies":25,"version":3,"updated":"2026-09-26T10:00:00Z","visibility":"public","checked":null,"maintained":"creator","owner":{"handle":"alexkim","name":"Alex Kim","avatar":null,"color":0,"verified":"","kind":"person"},"theme":""},"anat":{"id":"s14","url":"/@alexkim/anatomy","name":"Anatomy","description":"","tags":["Biology"],"cover":{"style":"mix","round":0,"seed":"Anatomy","image":null},"cards":530,"stars":980,"learners":588,"copies":118,"version":3,"updated":"2026-09-26T10:00:00Z","visibility":"public","checked":null,"maintained":"creator","owner":{"handle":"alexkim","name":"Alex Kim","avatar":null,"color":0,"verified":"","kind":"person"},"theme":""},"pharmA":{"id":"s15","url":"/@alexkim/pharmacology","name":"Pharmacology","description":"","tags":["Pre-med"],"cover":{"style":"mix","round":0,"seed":"Pharmacology","image":null},"cards":188,"stars":320,"learners":192,"copies":38,"version":3,"updated":"2026-09-26T10:00:00Z","visibility":"public","checked":null,"maintained":"creator","owner":{"handle":"alexkim","name":"Alex Kim","avatar":null,"color":0,"verified":"","kind":"person"},"theme":""},"psych":{"id":"s16","url":"/@alexkim/psych-soc","name":"Psych & Soc","description":"","tags":["MCAT"],"cover":{"style":"mix","round":0,"seed":"Psych & Soc","image":null},"cards":344,"stars":1100,"learners":660,"copies":132,"version":3,"updated":"2026-09-26T10:00:00Z","visibility":"public","checked":null,"maintained":"creator","owner":{"handle":"alexkim","name":"Alex Kim","avatar":null,"color":0,"verified":"","kind":"person"},"theme":""}},"ALEX_DECKS":[{"id":"s9","url":"/@alexkim/cell-biology","name":"Cell Biology","description":"","tags":["Biology","MCAT"],"cover":{"style":"mix","round":0,"seed":"Cell Biology","image":null},"cards":412,"stars":1300,"learners":780,"copies":156,"version":3,"updated":"2026-09-26T10:00:00Z","visibility":"public","checked":null,"maintained":"creator","owner":{"handle":"alexkim","name":"Alex Kim","avatar":null,"color":0,"verified":"","kind":"person"},"theme":"","pinned":true},{"id":"s10","url":"/@alexkim/system-design","name":"System Design","description":"","tags":["Computer science"],"cover":{"style":"mix","round":0,"seed":"System Design","image":null},"cards":74,"stars":412,"learners":247,"copies":49,"version":3,"updated":"2026-09-26T10:00:00Z","visibility":"public","checked":null,"maintained":"creator","owner":{"handle":"alexkim","name":"Alex Kim","avatar":null,"color":0,"verified":"","kind":"person"},"theme":"","pinned":true},{"id":"s11","url":"/@alexkim/japanese-n4","name":"Japanese N4","description":"","tags":["Languages"],"cover":{"style":"mix","round":0,"seed":"Japanese N4","image":null},"cards":820,"stars":2400,"learners":1440,"copies":288,"version":3,"updated":"2026-09-26T10:00:00Z","visibility":"public","checked":null,"maintained":"creator","owner":{"handle":"alexkim","name":"Alex Kim","avatar":null,"color":0,"verified":"","kind":"person"},"theme":"","pinned":false},{"id":"s12","url":"/@alexkim/organic-chemistry","name":"Organic Chemistry","description":"","tags":["Chemistry"],"cover":{"style":"mix","round":0,"seed":"Organic Chemistry","image":null},"cards":236,"stars":640,"learners":384,"copies":77,"version":3,"updated":"2026-09-26T10:00:00Z","visibility":"public","checked":{"name":"Dr. Okafor","handle":"drokafor","current":true},"maintained":"creator","owner":{"handle":"alexkim","name":"Alex Kim","avatar":null,"color":0,"verified":"","kind":"person"},"theme":"","pinned":false},{"id":"s13","url":"/@alexkim/us-history","name":"US History","description":"","tags":["History"],"cover":{"style":"mix","round":0,"seed":"US History","image":null},"cards":158,"stars":205,"learners":123,"copies":25,"version":3,"updated":"2026-09-26T10:00:00Z","visibility":"public","checked":null,"maintained":"creator","owner":{"handle":"alexkim","name":"Alex Kim","avatar":null,"color":0,"verified":"","kind":"person"},"theme":"","pinned":false},{"id":"s14","url":"/@alexkim/anatomy","name":"Anatomy","description":"","tags":["Biology"],"cover":{"style":"mix","round":0,"seed":"Anatomy","image":null},"cards":530,"stars":980,"learners":588,"copies":118,"version":3,"updated":"2026-09-26T10:00:00Z","visibility":"public","checked":null,"maintained":"creator","owner":{"handle":"alexkim","name":"Alex Kim","avatar":null,"color":0,"verified":"","kind":"person"},"theme":"","pinned":false},{"id":"s15","url":"/@alexkim/pharmacology","name":"Pharmacology","description":"","tags":["Pre-med"],"cover":{"style":"mix","round":0,"seed":"Pharmacology","image":null},"cards":188,"stars":320,"learners":192,"copies":38,"version":3,"updated":"2026-09-26T10:00:00Z","visibility":"public","checked":null,"maintained":"creator","owner":{"handle":"alexkim","name":"Alex Kim","avatar":null,"color":0,"verified":"","kind":"person"},"theme":"","pinned":false},{"id":"s16","url":"/@alexkim/psych-soc","name":"Psych & Soc","description":"","tags":["MCAT"],"cover":{"style":"mix","round":0,"seed":"Psych & Soc","image":null},"cards":344,"stars":1100,"learners":660,"copies":132,"version":3,"updated":"2026-09-26T10:00:00Z","visibility":"public","checked":null,"maintained":"creator","owner":{"handle":"alexkim","name":"Alex Kim","avatar":null,"color":0,"verified":"","kind":"person"},"theme":"","pinned":false}],"CARDS":[{"id":"c1","kind":"basic","front":"What does the electron transport chain pump across the inner membrane?","back":"Protons (H⁺)","tags":["Energy"],"source":"","trail":[{"w":"made","at":1}]},{"id":"c2","kind":"basic","front":"Which enzyme is the rate-limiting step of glycolysis?","back":"Phosphofructokinase-1 (PFK-1)","tags":["Glycolysis"],"source":"","trail":[{"w":"made","at":1},{"w":"edited","by":"Maria Santos","at":2}]},{"id":"c3","kind":"cloze","front":"","back":"","text":"The [[citric acid]] cycle produces NADH and FADH₂.","tags":["Krebs"],"source":"Claude","trail":[{"w":"made","ai":"Claude","at":1}]},{"id":"c4","kind":"image","front":"Name the structure marked 1 on the diagram.","back":"Inner membrane","tags":["Diagrams"],"source":"","trail":[{"w":"made","at":1}]},{"id":"c5","kind":"basic","front":"What inhibits pyruvate dehydrogenase?","back":"Acetyl-CoA and NADH","tags":[],"source":"","trail":[{"w":"made","at":1},{"w":"edited","by":"Dev Patel","at":2}]},{"id":"c6","kind":"cloze","front":"","back":"","text":"Km is the substrate concentration at [[half]] Vmax.","tags":["Enzymes"],"source":"","trail":[{"w":"made","at":1}]}],"MADE":[{"version":14,"kind":"suggestion","summary":"Took 3 changes from Alex Kim","ai":"","at":"2026-09-26T10:00:00Z","by":{"handle":"alexkim","name":"Alex Kim","avatar":null,"color":0,"verified":"","kind":"person"},"n":3},{"version":13,"kind":"check","summary":"Dr. Okafor checked every card","ai":"","at":"2026-09-21T10:00:00Z","by":{"handle":"drokafor","name":"Dr. Okafor","avatar":null,"color":4,"verified":"teacher","kind":"person"},"n":0},{"version":12,"kind":"suggestion","summary":"Took 2 changes from Dev Patel","ai":"","at":"2026-09-14T10:00:00Z","by":{"handle":"devp","name":"Dev Patel","avatar":null,"color":2,"verified":"","kind":"person"},"n":2},{"version":9,"kind":"ai","summary":"38 new cards","ai":"Claude","at":"2026-08-30T10:00:00Z","by":{"handle":"mariasantos","name":"Maria Santos","avatar":null,"color":3,"verified":"","kind":"person"},"n":38},{"version":1,"kind":"made","summary":"Shared 220 cards","ai":"ChatGPT","at":"2026-08-12T10:00:00Z","by":{"handle":"mariasantos","name":"Maria Santos","avatar":null,"color":3,"verified":"","kind":"person"},"n":0}],"HISTORY":[{"version":14,"kind":"suggestion","summary":"Took 3 changes from Alex Kim","ai":"","at":"2026-09-26T10:00:00Z","by":{"handle":"alexkim","name":"Alex Kim","avatar":null,"color":0,"verified":"","kind":"person"},"n":3,"changes":[{"card":"c2","op":"edit","kind":"answer","before":{"kind":"basic","front":"Which enzyme is the rate-limiting step of glycolysis?","back":"Hexokinase"},"after":{"kind":"basic","front":"Which enzyme is the rate-limiting step of glycolysis?","back":"Phosphofructokinase-1 (PFK-1)"}},{"card":"n1","op":"add","kind":"new","before":null,"after":{"kind":"basic","front":"What activates PFK-1?","back":"AMP and fructose-2,6-bisphosphate"}},{"card":"c7","op":"edit","kind":"typo","before":{"kind":"basic","front":"Where does the citric acid cycle hapen?","back":"In the mitochondrial matrix"},"after":{"kind":"basic","front":"Where does the citric acid cycle happen?","back":"In the mitochondrial matrix"}}]},{"version":13,"kind":"check","summary":"Dr. Okafor checked every card","ai":"","at":"2026-09-21T10:00:00Z","by":{"handle":"drokafor","name":"Dr. Okafor","avatar":null,"color":4,"verified":"teacher","kind":"person"},"n":0,"changes":[]},{"version":12,"kind":"suggestion","summary":"Took 2 changes from Dev Patel","ai":"","at":"2026-09-14T10:00:00Z","by":{"handle":"devp","name":"Dev Patel","avatar":null,"color":2,"verified":"","kind":"person"},"n":2,"changes":[{"card":"c5","op":"edit","kind":"answer","before":{"kind":"basic","front":"What inhibits pyruvate dehydrogenase?","back":"ATP"},"after":{"kind":"basic","front":"What inhibits pyruvate dehydrogenase?","back":"Acetyl-CoA and NADH"}},{"card":"c8","op":"remove","kind":"remove","before":{"kind":"basic","front":"Glycolysis happens in the mitochondria.","back":"False"},"after":null}]},{"version":9,"kind":"ai","summary":"38 new cards","ai":"Claude","at":"2026-08-30T10:00:00Z","by":{"handle":"mariasantos","name":"Maria Santos","avatar":null,"color":3,"verified":"","kind":"person"},"n":38,"changes":[]},{"version":1,"kind":"made","summary":"Shared 220 cards","ai":"ChatGPT","at":"2026-08-12T10:00:00Z","by":{"handle":"mariasantos","name":"Maria Santos","avatar":null,"color":3,"verified":"","kind":"person"},"n":0,"changes":[]}],"CELL_HISTORY":[{"version":14,"kind":"suggestion","summary":"Took 3 changes from Maria Santos","ai":"","at":"2026-09-26T10:00:00Z","by":{"handle":"mariasantos","name":"Maria Santos","avatar":null,"color":3,"verified":"","kind":"person"},"changes":[{"card":"k7","op":"edit","kind":"answer","before":{"kind":"basic","front":"Which enzyme is the rate-limiting step of glycolysis?","back":"Hexokinase"},"after":{"kind":"basic","front":"Which enzyme is the rate-limiting step of glycolysis?","back":"Phosphofructokinase-1 (PFK-1). Hexokinase starts glycolysis but does not limit its rate."}},{"card":"n1","op":"add","kind":"new","before":null,"after":{"kind":"basic","front":"What activates PFK-1?","back":"AMP and fructose-2,6-bisphosphate."}},{"card":"k8","op":"edit","kind":"typo","before":{"kind":"basic","front":"The citric acid cycle happens in the cytoplasm.","back":""},"after":{"kind":"basic","front":"The citric acid cycle happens in the mitochondrial matrix.","back":""}}]},{"version":13,"kind":"check","summary":"Dr. Okafor checked every card","ai":"","at":"2026-09-21T10:00:00Z","by":{"handle":"drokafor","name":"Dr. Okafor","avatar":null,"color":4,"verified":"teacher","kind":"person"},"changes":[]},{"version":12,"kind":"suggestion","summary":"Took 1 change from Dev Patel","ai":"","at":"2026-09-14T10:00:00Z","by":{"handle":"devp","name":"Dev Patel","avatar":null,"color":2,"verified":"","kind":"person"},"changes":[{"card":"k6","op":"edit","kind":"answer","before":{"kind":"basic","front":"What is the role of the ribosome?","back":"Makes lipids"},"after":{"kind":"basic","front":"What is the role of the ribosome?","back":"Translates mRNA into protein"}}]},{"version":9,"kind":"ai","summary":"3 new cards","ai":"Claude","at":"2026-08-30T10:00:00Z","by":{"handle":"alexkim","name":"Alex Kim","avatar":null,"color":0,"verified":"","kind":"person"},"changes":[{"card":"k2","op":"add","kind":"new","before":null,"after":{"kind":"cloze","text":"The [[mitochondrion]] is the powerhouse of the cell."}},{"card":"k3","op":"add","kind":"new","before":null,"after":{"kind":"basic","front":"Name structure 1 on the diagram.","back":"Nucleus"}},{"card":"k9","op":"add","kind":"new","before":null,"after":{"kind":"basic","front":"What does ATP synthase make?","back":"ATP, from ADP and phosphate."}}]},{"version":1,"kind":"made","summary":"Shared 220 cards","ai":"ChatGPT","at":"2026-08-12T10:00:00Z","by":{"handle":"alexkim","name":"Alex Kim","avatar":null,"color":0,"verified":"","kind":"person"},"changes":[]}],"SUGGESTIONS":[{"id":"g1","shared_id":"s9","author_name":"Maria Santos","person":{"handle":"mariasantos","name":"Maria Santos","avatar":null,"color":3,"verified":"","kind":"person"},"ai":"","message":"Fixed the glycolysis answers from my TA’s review.","status":"open","created_at":"2026-09-28T08:00:00Z","deck":{"id":"s9","name":"Cell Biology","url":"/@alexkim/cell-biology"},"changes":[{"id":"x1","card":"c2","op":"edit","kind":"answer","status":"open","before":{"kind":"basic","front":"Which enzyme is the rate-limiting step of glycolysis?","back":"Hexokinase"},"after":{"kind":"basic","front":"Which enzyme is the rate-limiting step of glycolysis?","back":"Phosphofructokinase-1 (PFK-1). Hexokinase starts glycolysis but does not limit its rate."}},{"id":"x2","card":"n1","op":"add","kind":"new","status":"open","before":null,"after":{"kind":"basic","front":"What activates PFK-1?","back":"AMP and fructose-2,6-bisphosphate."}},{"id":"x3","card":"c7","op":"edit","kind":"typo","status":"open","before":{"kind":"basic","front":"The citric acid cycle happens in the cytoplasm.","back":""},"after":{"kind":"basic","front":"The citric acid cycle happens in the mitochondrial matrix.","back":""}}]},{"id":"g2","shared_id":"s9","author_name":"Dev Patel","person":{"handle":"devp","name":"Dev Patel","avatar":null,"color":2,"verified":"","kind":"person"},"ai":"ChatGPT","message":"","status":"open","created_at":"2026-09-25T08:00:00Z","deck":{"id":"s9","name":"Cell Biology","url":"/@alexkim/cell-biology"},"changes":[{"id":"x4","card":"n2","op":"add","kind":"new","status":"open","before":null,"after":{"kind":"basic","front":"What does ATP synthase make?","back":"ATP, from ADP and phosphate."}}]}],"SENT":[{"id":"g11","shared_id":"s1","author_name":"Alex Kim","person":{"handle":"alexkim","name":"Alex Kim","avatar":null,"color":0,"verified":"","kind":"person"},"ai":"","message":"Two answers my class kept missing.","created_at":"2026-09-27T15:00:00Z","status":"open","deck":{"id":"s1","name":"MCAT Biochemistry","url":"/@mariasantos/mcat-biochemistry"},"changes":[{"id":"g11x0","card":"c1","op":"edit","kind":"answer","status":"open","before":{"kind":"basic","front":"Card 1","back":"Before"},"after":{"kind":"basic","front":"Card 1","back":"After"}},{"id":"g11x1","card":"c2","op":"edit","kind":"answer","status":"open","before":{"kind":"basic","front":"Card 2","back":"Before"},"after":{"kind":"basic","front":"Card 2","back":"After"}}]},{"id":"g12","shared_id":"s4","author_name":"Alex Kim","person":{"handle":"alexkim","name":"Alex Kim","avatar":null,"color":0,"verified":"","kind":"person"},"ai":"","message":"Fixed the doses on the beta blocker cards.","created_at":"2026-09-22T15:00:00Z","status":"done","deck":{"id":"s4","name":"Pharmacology","url":"/@samr/pharmacology"},"changes":[{"id":"g12x0","card":"c1","op":"edit","kind":"answer","status":"taken","before":{"kind":"basic","front":"Card 1","back":"Before"},"after":{"kind":"basic","front":"Card 1","back":"After"}},{"id":"g12x1","card":"c2","op":"edit","kind":"answer","status":"taken","before":{"kind":"basic","front":"Card 2","back":"Before"},"after":{"kind":"basic","front":"Card 2","back":"After"}},{"id":"g12x2","card":"c3","op":"edit","kind":"answer","status":"skipped","before":{"kind":"basic","front":"Card 3","back":"Before"},"after":{"kind":"basic","front":"Card 3","back":"After"}}]},{"id":"g13","shared_id":"s3","author_name":"Alex Kim","person":{"handle":"alexkim","name":"Alex Kim","avatar":null,"color":0,"verified":"","kind":"person"},"ai":"","message":"","created_at":"2026-09-18T15:00:00Z","status":"done","deck":{"id":"s3","name":"Algorithms","url":"/@devp/algorithms"},"changes":[{"id":"g13x0","card":"c1","op":"edit","kind":"answer","status":"taken","before":{"kind":"basic","front":"Card 1","back":"Before"},"after":{"kind":"basic","front":"Card 1","back":"After"}}]},{"id":"g14","shared_id":"s2","author_name":"Alex Kim","person":{"handle":"alexkim","name":"Alex Kim","avatar":null,"color":0,"verified":"","kind":"person"},"ai":"","message":"One reading was off.","created_at":"2026-09-10T15:00:00Z","status":"done","deck":{"id":"s2","name":"JLPT N3 Kanji","url":"/@jordanlee/jlpt-n3-kanji"},"changes":[{"id":"g14x0","card":"c1","op":"edit","kind":"answer","status":"skipped","before":{"kind":"basic","front":"Card 1","back":"Before"},"after":{"kind":"basic","front":"Card 1","back":"After"}}]}],"NEWS":[{"id":1,"kind":"suggestion","actor_name":"Maria Santos","person":{"handle":"mariasantos","name":"Maria Santos","avatar":null,"color":3,"verified":"","kind":"person"},"deck":{"id":"s9","name":"Cell Biology","url":"/@alexkim/cell-biology"},"data":{"n":3,"message":"Fixed the glycolysis answers from my TA’s review."},"read":false,"created_at":"2026-09-28T08:00:00Z"},{"id":2,"kind":"follow","actor_name":"Jordan Lee","person":{"handle":"jordanlee","name":"Jordan Lee","avatar":null,"color":1,"verified":"","kind":"person"},"deck":null,"data":{"handle":"jordanlee"},"read":false,"created_at":"2026-09-28T06:00:00Z"},{"id":3,"kind":"update","actor_name":"Maria Santos","person":{"handle":"mariasantos","name":"Maria Santos","avatar":null,"color":3,"verified":"","kind":"person"},"deck":{"id":"s1","name":"MCAT Biochemistry","url":"/@mariasantos/mcat-biochemistry"},"data":{"summary":"3 new cards, 2 answers fixed","n":5},"read":true,"created_at":"2026-09-26T10:00:00Z"},{"id":4,"kind":"decided","actor_name":"Sam Rivera","person":{"handle":"samr","name":"Sam Rivera","avatar":null,"color":5,"verified":"","kind":"person"},"deck":{"id":"s4","name":"Pharmacology","url":"/@samr/pharmacology"},"data":{"took":2,"skipped":1},"read":true,"created_at":"2026-09-24T10:00:00Z"},{"id":5,"kind":"checked","actor_name":"Dr. Okafor","person":{"handle":"drokafor","name":"Dr. Okafor","avatar":null,"color":4,"verified":"teacher","kind":"person"},"deck":{"id":"s12","name":"Organic Chemistry","url":"/@alexkim/organic-chemistry"},"data":{},"read":true,"created_at":"2026-09-21T10:00:00Z"}],"CLASSES":{"BIOKTZ":{"id":"k1","code":"BIOKTZ","name":"BIO 201","school":"UC Davis","owner":{"handle":"alexkim","name":"Alex Kim","avatar":null,"color":0,"verified":"","kind":"person"},"official":false,"people":8,"decks":3,"me":{"role":"owner","share":false,"asked":true},"helpers":["Dev Patel"],"members":[{"handle":"alexkim","name":"Alex Kim","avatar":null,"color":0,"verified":"","kind":"person","role":"owner","share":false,"joined":"2026-09-01T10:00:00Z","you":true},{"handle":"devp","name":"Dev Patel","avatar":null,"color":2,"verified":"","kind":"person","role":"helper","share":false,"joined":"2026-09-01T10:00:00Z","you":false},{"handle":"mariasantos","name":"Maria Santos","avatar":null,"color":3,"verified":"","kind":"person","role":"member","share":true,"joined":"2026-09-01T10:00:00Z","you":false},{"handle":"samr","name":"Sam Rivera","avatar":null,"color":5,"verified":"","kind":"person","role":"member","share":true,"joined":"2026-09-01T10:00:00Z","you":false},{"handle":"priya","name":"Priya Shah","avatar":null,"color":4,"verified":"","kind":"person","role":"member","share":true,"joined":"2026-09-01T10:00:00Z","you":false},{"handle":"jordanlee","name":"Jordan Lee","avatar":null,"color":1,"verified":"","kind":"person","role":"member","share":false,"joined":"2026-09-01T10:00:00Z","you":false},{"handle":"ninap","name":"Nina Park","avatar":null,"color":5,"verified":"","kind":"person","role":"member","share":true,"joined":"2026-09-01T10:00:00Z","you":false},{"handle":"leom","name":"Leo Martin","avatar":null,"color":1,"verified":"","kind":"person","role":"member","share":false,"joined":"2026-09-01T10:00:00Z","you":false}],"deckList":[{"id":"s21","url":"/@alexkim/cells","name":"Cells","description":"","tags":["Biology"],"cover":{"style":"mix","round":0,"seed":"Cells","image":null},"cards":40,"stars":0,"learners":0,"copies":0,"version":3,"updated":"2026-09-26T10:00:00Z","visibility":"class","checked":null,"maintained":"creator","owner":{"handle":"alexkim","name":"Alex Kim","avatar":null,"color":0,"verified":"","kind":"person"},"theme":"","addedBy":"alexkim","mine":true},{"id":"s22","url":"/@devp/membranes","name":"Membranes","description":"","tags":["Biology"],"cover":{"style":"mix","round":0,"seed":"Membranes","image":null},"cards":36,"stars":0,"learners":0,"copies":0,"version":3,"updated":"2026-09-26T10:00:00Z","visibility":"class","checked":null,"maintained":"creator","owner":{"handle":"devp","name":"Dev Patel","avatar":null,"color":2,"verified":"","kind":"person"},"theme":"","addedBy":"devp","mine":false},{"id":"s9","url":"/@alexkim/cell-biology","name":"Cell Biology","description":"","tags":["Biology","MCAT"],"cover":{"style":"mix","round":0,"seed":"Cell Biology","image":null},"cards":412,"stars":1300,"learners":780,"copies":156,"version":3,"updated":"2026-09-26T10:00:00Z","visibility":"public","checked":null,"maintained":"creator","owner":{"handle":"alexkim","name":"Alex Kim","avatar":null,"color":0,"verified":"","kind":"person"},"theme":"","addedBy":"alexkim","mine":true}],"assignments":[{"id":"a1","sharedId":"s21","goal":"learn","due":"2026-10-02","deck":{"name":"Cells","cover":{"style":"mix","round":0,"seed":"Cells","image":null},"cards":40,"url":"/@alexkim/cells"},"progress":{"mariasantos":{"learned":32,"total":40,"due":3,"remembered":91,"last":"2026-09-28T08:10:00Z","at":"2026-09-28T09:00:00Z"},"samr":{"learned":40,"total":40,"due":0,"remembered":88,"last":"2026-09-27T20:00:00Z","at":"2026-09-28T09:00:00Z"},"priya":{"learned":12,"total":40,"due":5,"remembered":76,"last":"2026-09-25T18:00:00Z","at":"2026-09-28T09:00:00Z"},"ninap":{"learned":0,"total":40,"due":0,"remembered":null,"last":null,"at":"2026-09-28T09:00:00Z"}}},{"id":"a2","sharedId":"s22","goal":"daily","due":"2026-10-09","deck":{"name":"Membranes","cover":{"style":"mix","round":0,"seed":"Membranes","image":null},"cards":36,"url":"/@devp/membranes"},"progress":{"mariasantos":{"learned":20,"total":36,"due":0,"remembered":94,"last":"2026-09-28T08:30:00Z","at":"2026-09-28T09:00:00Z"},"samr":{"learned":18,"total":36,"due":7,"remembered":82,"last":"2026-09-26T21:00:00Z","at":"2026-09-28T09:00:00Z"},"priya":{"learned":9,"total":36,"due":2,"remembered":70,"last":"2026-09-27T17:00:00Z","at":"2026-09-28T09:00:00Z"},"ninap":{"learned":0,"total":36,"due":0,"remembered":null,"last":null,"at":"2026-09-28T09:00:00Z"}}}]},"ORGCHM":{"id":"k2","code":"ORGCHM","name":"Organic Chemistry","school":"UC Davis","owner":{"handle":"drokafor","name":"Dr. Okafor","avatar":null,"color":4,"verified":"teacher","kind":"person"},"official":false,"people":7,"decks":2,"me":{"role":"member","share":false,"asked":false},"helpers":[],"members":[{"handle":"drokafor","name":"Dr. Okafor","avatar":null,"color":4,"verified":"teacher","kind":"person","role":"owner","joined":"2026-09-01T10:00:00Z","you":false},{"handle":"alexkim","name":"Alex Kim","avatar":null,"color":0,"verified":"","kind":"person","role":"member","joined":"2026-09-01T10:00:00Z","you":true},{"handle":"mariasantos","name":"Maria Santos","avatar":null,"color":3,"verified":"","kind":"person","role":"member","joined":"2026-09-01T10:00:00Z","you":false},{"handle":"devp","name":"Dev Patel","avatar":null,"color":2,"verified":"","kind":"person","role":"member","joined":"2026-09-01T10:00:00Z","you":false},{"handle":"omar","name":"Omar Haddad","avatar":null,"color":2,"verified":"","kind":"person","role":"member","joined":"2026-09-01T10:00:00Z","you":false},{"handle":"priya","name":"Priya Shah","avatar":null,"color":4,"verified":"","kind":"person","role":"member","joined":"2026-09-01T10:00:00Z","you":false},{"handle":"jordanlee","name":"Jordan Lee","avatar":null,"color":1,"verified":"","kind":"person","role":"member","joined":"2026-09-01T10:00:00Z","you":false}],"deckList":[{"id":"s23","url":"/@drokafor/chapter-3","name":"Chapter 3","description":"","tags":["Chemistry"],"cover":{"style":"mix","round":0,"seed":"Chapter 3","image":null},"cards":64,"stars":0,"learners":0,"copies":0,"version":3,"updated":"2026-09-26T10:00:00Z","visibility":"class","checked":null,"maintained":"creator","owner":{"handle":"drokafor","name":"Dr. Okafor","avatar":null,"color":4,"verified":"teacher","kind":"person"},"theme":"","addedBy":"drokafor","mine":false},{"id":"s7","url":"/@drokafor/organic-reactions","name":"Organic Reactions","description":"","tags":["Chemistry"],"cover":{"style":"mix","round":0,"seed":"Organic Reactions","image":null},"cards":256,"stars":1400,"learners":840,"copies":168,"version":3,"updated":"2026-09-26T10:00:00Z","visibility":"public","checked":{"name":"Dr. Okafor","handle":"drokafor","current":true},"maintained":"creator","owner":{"handle":"drokafor","name":"Dr. Okafor","avatar":null,"color":4,"verified":"teacher","kind":"person"},"theme":"","addedBy":"drokafor","mine":false}],"assignments":[{"id":"a3","sharedId":"s23","goal":"learn","due":"2026-10-02","deck":{"name":"Chapter 3","cover":{"style":"mix","round":0,"seed":"Chapter 3","image":null},"cards":64,"url":"/@drokafor/chapter-3"}},{"id":"a4","sharedId":"s7","goal":"daily","due":"2026-10-06","deck":{"name":"Organic Reactions","cover":{"style":"mix","round":0,"seed":"Organic Reactions","image":null},"cards":256,"url":"/@drokafor/organic-reactions"}}]},"PREMED":{"id":"k3","code":"PREMED","name":"Pre-med study group","school":"UC Davis","owner":{"handle":"mariasantos","name":"Maria Santos","avatar":null,"color":3,"verified":"","kind":"person"},"official":false,"people":12,"decks":4,"invite":true}},"CLASS_LIST":[{"id":"k1","code":"BIOKTZ","name":"BIO 201","school":"UC Davis","role":"owner","share":false,"owner":{"handle":"alexkim","name":"Alex Kim","avatar":null,"color":0,"verified":"","kind":"person"},"official":false,"people":8,"decks":3,"assignments":2},{"id":"k2","code":"ORGCHM","name":"Organic Chemistry","school":"UC Davis","role":"member","share":false,"owner":{"handle":"drokafor","name":"Dr. Okafor","avatar":null,"color":4,"verified":"teacher","kind":"person"},"official":false,"people":7,"decks":2,"assignments":2},{"id":"k4","code":"JPNFRK","name":"Japanese N4 study group","school":"","role":"helper","share":false,"owner":{"handle":"jordanlee","name":"Jordan Lee","avatar":null,"color":1,"verified":"","kind":"person"},"official":false,"people":5,"decks":1,"assignments":0}],"MY_PROGRESS":{"s23":{"deckId":"orgo","learned":52,"total":64,"due":6,"remembered":88,"last":"2026-09-28T08:00:00Z"},"s7":{"deckId":"orgo","learned":120,"total":256,"due":4,"remembered":91,"last":"2026-09-27T19:00:00Z"}},"ASSIGNED":[{"id":"a3","classId":"k2","className":"Organic Chemistry","code":"ORGCHM","sharedId":"s23","name":"Chapter 3","goal":"learn","due":"2026-10-02","cards":64,"cover":{"style":"mix","round":0,"seed":"Chapter 3","image":null},"progress":{"deckId":"orgo","learned":52,"total":64,"due":6,"remembered":88,"last":"2026-09-28T08:00:00Z"},"done":false},{"id":"a4","classId":"k2","className":"Organic Chemistry","code":"ORGCHM","sharedId":"s7","name":"Organic Reactions","goal":"daily","due":"2026-10-06","cards":256,"cover":{"style":"mix","round":0,"seed":"Organic Reactions","image":null},"progress":{"deckId":"orgo","learned":120,"total":256,"due":4,"remembered":91,"last":"2026-09-27T19:00:00Z"},"done":false}],"ADMIN":{"requests":[{"id":"v1","role":"teacher","school":"UC Davis","contact":"hokafor@ucdavis.edu","at":"2026-09-27T15:00:00Z","person":{"handle":"drokafor","name":"Dr. Okafor","avatar":null,"color":4,"verified":"","kind":"person"}},{"id":"v2","role":"school","school":"Davis Senior High School","contact":"https://dshs.djusd.net/staff","at":"2026-09-28T07:40:00Z","person":{"handle":"davishigh","name":"Davis Senior High","avatar":null,"color":2,"verified":"","kind":"person"}}],"reports":[{"id":"r1","kind":"deck","name":"USMLE Step 1 (all of it)","deck":{"id":"s30","url":"/@samr/usmle-step-1-all-of-it","name":"USMLE Step 1 (all of it)","description":"","tags":[],"cover":{"style":"mix","round":0,"seed":"USMLE Step 1 (all of it)","image":null},"cards":2400,"stars":90,"learners":54,"copies":11,"version":3,"updated":"2026-09-26T10:00:00Z","visibility":"public","checked":null,"maintained":"creator","owner":{"handle":"kaiw","name":"Kai Wong","avatar":null,"color":3,"verified":"","kind":"person"},"theme":""},"person":null,"suggestion":null,"reports":[{"reason":"stolen","note":"These are my Anki cards, word for word.","by":{"handle":"jordanlee","name":"Jordan Lee","avatar":null,"color":1,"verified":"","kind":"person"},"at":"2026-09-28T06:00:00Z"},{"reason":"wrong","note":"","by":{"handle":"samr","name":"Sam Rivera","avatar":null,"color":5,"verified":"","kind":"person"},"at":"2026-09-27T22:00:00Z"}]},{"id":"r2","kind":"profile","name":"Free Answers (@freeanswers)","deck":null,"person":{"handle":"freeanswers","name":"Free Answers","avatar":null,"color":1,"verified":"","kind":"person"},"suggestion":null,"reports":[{"reason":"spam","note":"Every deck links to a site selling answers.","by":{"handle":"mariasantos","name":"Maria Santos","avatar":null,"color":3,"verified":"","kind":"person"},"at":"2026-09-28T05:00:00Z"}]},{"id":"r3","kind":"suggestion","name":"Leo Martin: check my page","deck":null,"person":null,"suggestion":{"author":"Leo Martin","message":"check my page for more","n":12,"first":"Get every answer at my page — link in bio","open":true},"reports":[{"reason":"spam","note":"","by":{"handle":"alexkim","name":"Alex Kim","avatar":null,"color":0,"verified":"","kind":"person"},"at":"2026-09-26T12:00:00Z"}]}]},"PROFILE":{"handle":"alexkim","name":"Alex Kim","avatar":null,"color":0,"verified":"","kind":"person","bio":"MCAT decks, made with my AI. Suggestions welcome.","school":"UC Davis","subject":"Pre-med","followers":340,"following":86,"contributions":23,"featured":["s9","s10"],"stars":7360},"OTHER":{"handle":"mariasantos","name":"Maria Santos","avatar":null,"color":3,"verified":"","kind":"person","bio":"Biochem TA. I fix what my students trip on.","school":"UC Davis","subject":"Biochemistry","followers":1280,"following":140,"contributions":212,"featured":["s1"],"stars":6400},"DISCOVER":{"topics":["MCAT","Languages","Computer science","Chemistry","Law","History","Biology"],"sections":[{"id":"popular","title":"Popular this week","decks":["mcat","kanji","algo","pharm"]},{"id":"checked","title":"Checked by teachers","decks":["bio2a","law","orgo","spanish"]},{"id":"new","title":"New","decks":["pharm","algo","spanish","kanji"]}]}};
+  const set = patch => this.setState({ $m: { ...m, ...patch } });
+  const X = {"DECKS":[{"id":"cell","name":"Cell Biology","total":"412","due":28,"overdue":12,"soon":0,"fresh":10,"ret":91,"ai":38},{"id":"jlpt","name":"Japanese · JLPT N4","total":"1,280","due":19,"overdue":5,"soon":0,"fresh":20,"ret":87,"ai":0},{"id":"orgo","name":"Organic Chemistry","total":"236","due":11,"overdue":0,"soon":0,"fresh":5,"ret":84,"ai":0},{"id":"hist","name":"US History","total":"158","due":6,"overdue":0,"soon":0,"fresh":0,"ret":93,"ai":0},{"id":"sys","name":"System Design","total":"74","due":0,"overdue":0,"soon":1,"fresh":8,"ret":89,"ai":0},{"id":"span","name":"Spanish Verbs","total":"310","due":0,"overdue":0,"soon":3,"fresh":0,"ret":95,"ai":0}],"TAGS":{"cell":["Biology","MCAT","Year 1","BIO 201","Fall 2026","Midterm","Final exam","Pre-med","Lab","Cells","Must know"],"jlpt":["Languages"],"orgo":["Chemistry","MCAT","Year 1","Pre-med","Fall 2026"],"hist":["History"],"sys":["Computer science"],"span":["Languages"]},"CARDS":[{"id":"k1","front":"What does the electron transport chain pump across the inner membrane?","back":"Protons (H⁺)","kind":"Basic","icon":"text","next":"Tomorrow","ai":"","tags":["Energy","Exam 1","Mitochondria","Must know"]},{"id":"k2","front":"The ____ is the powerhouse of the cell.","back":"mitochondrion","kind":"Fill in the blank","icon":"blank","next":"Due now","ai":"Claude","tags":["Organelles","Exam 1"]},{"id":"k3","front":"Name structure 1 on the diagram.","back":"Nucleus","kind":"Image","icon":"image","next":"In 3 days","ai":"Claude","tags":["Organelles","Diagrams"]},{"id":"k4","front":"Which organelle packages proteins for secretion?","back":"Golgi apparatus","kind":"Basic","icon":"text","next":"In 6 days","ai":"","tags":["Organelles"]},{"id":"k5","front":"Say it: ribosome","back":"RY-buh-sohm","kind":"Audio","icon":"audio","next":"Due now","ai":"ChatGPT","tags":["Pronunciation"]},{"id":"k6","front":"What is the role of the ribosome?","back":"Translates mRNA into protein","kind":"Basic","icon":"text","next":"In 12 days","ai":"","tags":["Proteins","Exam 2"]}],"FOLDERS":[{"id":"f1","name":"Languages","decks":["jlpt","span"]},{"id":"f2","name":"Year 1","decks":["orgo","hist"]}],"ALL_CARDS":[["cell","What does the electron transport chain pump across the inner membrane?","Protons (H⁺)","text","Tomorrow","easy",["Energy","Exam 1","Mitochondria","Must know"]],["cell","The ____ is the powerhouse of the cell.","mitochondrion","blank","Due now","hard",["Organelles","Exam 1"]],["jlpt","電車","train (でんしゃ)","text","In 2 days","medium",["Vocabulary"]],["orgo","C₆H₆","Benzene","text","In 5 days","easy",["Aromatics"]],["cell","Name structure 1 on the diagram.","Nucleus","image","In 3 days","medium",["Organelles","Diagrams"]],["hist","Year the Declaration of Independence was signed?","1776","text","In 9 days","easy",["Revolution"]],["span","Yo ____ dos hermanos.","tengo","blank","Due now","hard",["Irregular"]],["sys","What does a load balancer do?","Spreads requests across servers","text","New","new",["Basics"]],["cell","Which organelle packages proteins for secretion?","Golgi apparatus","text","In 6 days","medium",["Organelles"]],["jlpt","学校","school (がっこう)","text","New","new",["Vocabulary"]],["orgo","Markovnikov’s rule says the H goes to…","The carbon with more H’s","text","Due now","hard",["Reactions","Exam 2"]],["cell","Say it: ribosome","RY-buh-sohm","audio","Due now","new",["Pronunciation"]]],"REVIEW":[{"kind":"basic","front":"What does the electron transport chain pump across the inner membrane?","back":"Protons (H⁺), from the matrix into the intermembrane space.","note":"That gradient powers ATP synthase."},{"kind":"cloze","before":"The","after":"is the powerhouse of the cell.","back":"mitochondrion","note":"It makes most of the cell’s ATP."},{"kind":"image","front":"","back":"Nucleus","note":"Holds the cell’s DNA.","image":"mock","boxes":[{"id":"b1","x":0.409,"y":0.32,"w":0.236,"h":0.347,"label":"Nucleus"},{"id":"b2","x":0.164,"y":0.573,"w":0.164,"h":0.133,"label":"Mitochondrion"},{"id":"b3","x":0.645,"y":0.687,"w":0.145,"h":0.12,"label":"Vacuole"}],"box":"b1","occ":"all"},{"kind":"audio","front":"What word do you hear?","back":"train","note":"電 electricity + 車 vehicle.","audio":"mock","backBig":"電車","backSub":"でんしゃ · train"}],"DRAFTS":{"Basic":{"kind":"basic","front":"What does the electron transport chain pump across the inner membrane?","back":"Protons (H⁺), into the intermembrane space."},"Blank":{"kind":"cloze","text":"The [[mitochondrion]] is the powerhouse of the cell, making most of its [[ATP]].","note":"It makes most of the cell’s ATP."},"Image":{"kind":"image","front":"Name the part of the cell.","back":"","image":"mock","boxes":[{"id":"b1","x":0.409,"y":0.32,"w":0.236,"h":0.347,"label":"Nucleus"},{"id":"b2","x":0.164,"y":0.573,"w":0.164,"h":0.133,"label":"Mitochondrion"},{"id":"b3","x":0.645,"y":0.687,"w":0.145,"h":0.12,"label":"Vacuole"}],"occ":"one"},"Audio":{"kind":"audio","back":"電車 (でんしゃ): train","audio":"mock"}},"DUE_7":{"vals":[32,18,24,12,30,8,16],"labels":["Wed","Thu","Fri","Sat","Sun","Mon","Tue"],"tops":null,"names":["tomorrow","Thursday","Friday","Saturday","Sunday","Monday","Tuesday"]},"DUE_14":{"vals":[32,18,24,12,30,8,16,22,14,26,10,20,6,12],"labels":["23","24","25","26","27","28","29","30","1","2","3","4","5","6"],"tops":["W","T","F","S","S","M","T","W","T","F","S","S","M","T"],"names":["tomorrow","Thu 24","Fri 25","Sat 26","Sun 27","Mon 28","Tue 29","Wed 30","Thu, Oct 1","Fri, Oct 2","Sat, Oct 3","Sun, Oct 4","Mon, Oct 5","Tue, Oct 6"]},"BOXES":[{"id":"b1","x":0.409,"y":0.32,"w":0.236,"h":0.347,"label":"Nucleus"},{"id":"b2","x":0.164,"y":0.573,"w":0.164,"h":0.133,"label":"Mitochondrion"},{"id":"b3","x":0.645,"y":0.687,"w":0.145,"h":0.12,"label":"Vacuole"}]}, WAVE = [0.05,0.05,0.05,0.07,0.08,0.11,0.1,0.13,0.16,0.22,0.22,0.21,0.3,0.4,0.38,0.34,0.45,0.59,0.55,0.51,0.57,0.74,0.67,0.7,0.65,0.79,0.7,0.87,0.81,0.74,0.7,0.92,0.85,0.64,0.66,0.82,0.76,0.54,0.52,0.62,0.56,0.38,0.34,0.39,0.35,0.26,0.24,0.21,0.19,0.16,0.15,0.14,0.18,0.25,0.32,0.29,0.29,0.43,0.53,0.47,0.43,0.58,0.7,0.59,0.56,0.62,0.73,0.58,0.64,0.53,0.62,0.5,0.6,0.49,0.43,0.4,0.46,0.37,0.26,0.26,0.28,0.22,0.14,0.13,0.14,0.1,0.07,0.05,0.05,0.05,0.05,0.05,0.05,0.05,0.05,0.05], LS = {"code":"482913","codeShown":"482 913","joinText":"lucida.cards/join","qr":"fe6eb3fc16df906e81eebb74ff75dbad392ec112cd07faaaafe000ee00aa4a689102507264c5110f6292c92ae994e5aa8205a64eebbb7e8ec92a8bb25f5b6bd0336aaf30a6d982e6aa3d94f800760c5ff88aeb704ffd1abaa24f9dd2f085eeb996730495bc2fef3fe98","me":"Jordan","people":["Maya","Jordan","Priya","Leo","Sofia","Ethan","Ana","Kai","Zoe","Omar","Lina","Noah"],"deck":{"name":"Cell Biology","seed":"Cell Biology","style":"mix","round":0,"bg":{"kind":"deck","image":null}},"q":{"text":"Which organelle packages proteins for secretion?","options":["Golgi apparatus","Lysosome","Nucleus","Ribosome"],"right":0,"counts":[7,2,1,2]},"pic":{"text":"What’s under box 2?","options":["Nucleus","Mitochondrion","Vacuole","Lysosome"],"right":1,"counts":[2,8,1,1]},"board":[["Maya",3420,1],["Jordan",3210,2],["Kai",2980,-1],["Priya",2860,0],["Leo",2640,3],["Sofia",2210,-1],["Ethan",1980,0],["Ana",1640,0],["Zoe",1420,1],["Omar",1210,-1],["Lina",980,0],["Noah",620,0]],"final":[["Maya",9610],["Jordan",8940],["Kai",8120],["Priya",7860],["Leo",7420],["Sofia",6980],["Ethan",6540],["Ana",6110]]}, INSIGHTS = {"Week":{"days":7,"reviews":302,"memory":{"retention":{"n":240,"pct":92},"byMonth":false,"trend":[{"start":1783314000000,"pct":86,"n":180},{"start":1783918800000,"pct":88,"n":186},{"start":1784523600000,"pct":87,"n":192},{"start":1785128400000,"pct":89,"n":198},{"start":1785733200000,"pct":90,"n":204},{"start":1786338000000,"pct":88,"n":210},{"start":1786942800000,"pct":91,"n":216},{"start":1787547600000,"pct":90,"n":222},{"start":1788152400000,"pct":92,"n":228},{"start":1788757200000,"pct":91,"n":234},{"start":1789362000000,"pct":93,"n":240},{"start":1789966800000,"pct":91,"n":246}],"byTag":[{"tag":"Vocabulary","pct":92,"n":73,"cards":140},{"tag":"Organelles","pct":88,"n":33,"cards":64},{"tag":"Exam 1","pct":90,"n":28,"cards":40},{"tag":"Energy","pct":93,"n":23,"cards":31},{"tag":"Irregular","pct":76,"n":21,"cards":45},{"tag":"Proteins","pct":84,"n":15,"cards":28},{"tag":"Mitochondria","pct":79,"n":14,"cards":22},{"tag":"Reactions","pct":71,"n":12,"cards":24},{"tag":"Pronunciation","pct":95,"n":9,"cards":18},{"tag":"Aromatics","pct":86,"n":9,"cards":20}],"improved":[{"tag":"Energy","before":85,"after":93,"delta":8,"n":96},{"tag":"Vocabulary","before":88,"after":92,"delta":4,"n":310},{"tag":"Exam 1","before":87,"after":90,"delta":3,"n":120}],"slipping":[{"tag":"Reactions","before":80,"after":71,"delta":-9,"n":52},{"tag":"Irregular","before":82,"after":76,"delta":-6,"n":88},{"tag":"Mitochondria","before":84,"after":79,"delta":-5,"n":58}],"modes":{"cards":{"n":302,"pct":88},"learn":{"n":73,"pct":76}}},"weak":{"weakTags":[{"tag":"Reactions","pct":71,"n":12,"cards":24},{"tag":"Irregular","pct":76,"n":21,"cards":45},{"tag":"Mitochondria","pct":79,"n":14,"cards":22},{"tag":"Proteins","pct":84,"n":15,"cards":28},{"tag":"Aromatics","pct":86,"n":9,"cards":20},{"tag":"Organelles","pct":88,"n":33,"cards":64}],"hardest":[{"id":"h0","deckId":"orgo","front":"Markovnikov’s rule says the H goes to…","back":"The carbon with more H’s","deck":"Organic Chemistry","lapses":9,"d":9.1,"recall":0.62,"href":"WebCardsScreen.dc.html"},{"id":"h1","deckId":"span","front":"Yo ____ dos hermanos.","back":"tengo","deck":"Spanish Verbs","lapses":8,"d":8.7,"recall":0.67,"href":"WebCardsScreen.dc.html"},{"id":"h2","deckId":"cell","front":"The ____ is the powerhouse of the cell.","back":"mitochondrion","deck":"Cell Biology","lapses":8,"d":8.2,"recall":0.72,"href":"WebCardsScreen.dc.html"},{"id":"h3","deckId":"jlpt","front":"電車","back":"train (でんしゃ)","deck":"Japanese · JLPT N4","lapses":5,"d":7.9,"recall":0.77,"href":"WebCardsScreen.dc.html"},{"id":"h4","deckId":"cell","front":"Which organelle packages proteins for secretion?","back":"Golgi apparatus","deck":"Cell Biology","lapses":4,"d":7.4,"recall":0.8200000000000001,"href":"WebCardsScreen.dc.html"}],"leeches":[{"id":"h0","deckId":"orgo","front":"Markovnikov’s rule says the H goes to…","back":"The carbon with more H’s","deck":"Organic Chemistry","lapses":9,"d":9.1,"recall":0.62,"href":"WebCardsScreen.dc.html","paused":true},{"id":"h1","deckId":"span","front":"Yo ____ dos hermanos.","back":"tengo","deck":"Spanish Verbs","lapses":8,"d":8.7,"recall":0.67,"href":"WebCardsScreen.dc.html","paused":false},{"id":"h2","deckId":"cell","front":"The ____ is the powerhouse of the cell.","back":"mitochondrion","deck":"Cell Biology","lapses":8,"d":8.2,"recall":0.72,"href":"WebCardsScreen.dc.html","paused":false}],"forgot":{"n":22,"of":240,"pct":9},"lapseDist":[{"label":"0","n":1420},{"label":"1","n":480},{"label":"2","n":210},{"label":"3–4","n":120},{"label":"5–7","n":46},{"label":"8+","n":12}],"diffDist":[{"label":"1","n":180},{"label":"2","n":320},{"label":"3","n":460},{"label":"4","n":520},{"label":"5","n":410},{"label":"6","n":300},{"label":"7","n":190},{"label":"8","n":110},{"label":"9","n":60}],"studied":2288},"pace":{"time":{"n":302,"perCard":8.2,"perRight":9.4,"rightPerMin":6.4,"minutes":41,"learnN":73,"perQuestion":11.6},"gaps":[{"start":1783314000000,"days":4,"n":120},{"start":1783918800000,"days":5,"n":120},{"start":1784523600000,"days":6,"n":120},{"start":1785128400000,"days":6,"n":120},{"start":1785733200000,"days":8,"n":120},{"start":1786338000000,"days":9,"n":120},{"start":1786942800000,"days":10,"n":120},{"start":1787547600000,"days":12,"n":120},{"start":1788152400000,"days":13,"n":120},{"start":1788757200000,"days":15,"n":120},{"start":1789362000000,"days":16,"n":120},{"start":1789966800000,"days":18,"n":120}],"gapNow":18,"ahead":[{"start":1790053200000,"n":212},{"start":1790658000000,"n":168},{"start":1791262800000,"n":140},{"start":1791867600000,"n":126},{"start":1792472400000,"n":98},{"start":1793077200000,"n":90},{"start":1793685600000,"n":72},{"start":1794290400000,"n":64}],"exams":[{"deckId":"cell","name":"Cell Biology","days":12,"date":"2026-10-04","total":412,"seen":380,"learned":334,"toReview":84,"likely":0.74,"line":"Exam in 12 days · 84 cards to review first"}]}},"Month":{"days":30,"reviews":1284,"memory":{"retention":{"n":1020,"pct":91},"byMonth":false,"trend":[{"start":1783314000000,"pct":86,"n":180},{"start":1783918800000,"pct":88,"n":186},{"start":1784523600000,"pct":87,"n":192},{"start":1785128400000,"pct":89,"n":198},{"start":1785733200000,"pct":90,"n":204},{"start":1786338000000,"pct":88,"n":210},{"start":1786942800000,"pct":91,"n":216},{"start":1787547600000,"pct":90,"n":222},{"start":1788152400000,"pct":92,"n":228},{"start":1788757200000,"pct":91,"n":234},{"start":1789362000000,"pct":93,"n":240},{"start":1789966800000,"pct":91,"n":246}],"byTag":[{"tag":"Vocabulary","pct":92,"n":310,"cards":140},{"tag":"Organelles","pct":88,"n":142,"cards":64},{"tag":"Exam 1","pct":90,"n":120,"cards":40},{"tag":"Energy","pct":93,"n":96,"cards":31},{"tag":"Irregular","pct":76,"n":88,"cards":45},{"tag":"Proteins","pct":84,"n":64,"cards":28},{"tag":"Mitochondria","pct":79,"n":58,"cards":22},{"tag":"Reactions","pct":71,"n":52,"cards":24},{"tag":"Pronunciation","pct":95,"n":40,"cards":18},{"tag":"Aromatics","pct":86,"n":40,"cards":20}],"improved":[{"tag":"Energy","before":85,"after":93,"delta":8,"n":96},{"tag":"Vocabulary","before":88,"after":92,"delta":4,"n":310},{"tag":"Exam 1","before":87,"after":90,"delta":3,"n":120}],"slipping":[{"tag":"Reactions","before":80,"after":71,"delta":-9,"n":52},{"tag":"Irregular","before":82,"after":76,"delta":-6,"n":88},{"tag":"Mitochondria","before":84,"after":79,"delta":-5,"n":58}],"modes":{"cards":{"n":1284,"pct":88},"learn":{"n":310,"pct":76}}},"weak":{"weakTags":[{"tag":"Reactions","pct":71,"n":52,"cards":24},{"tag":"Irregular","pct":76,"n":88,"cards":45},{"tag":"Mitochondria","pct":79,"n":58,"cards":22},{"tag":"Proteins","pct":84,"n":64,"cards":28},{"tag":"Aromatics","pct":86,"n":40,"cards":20},{"tag":"Organelles","pct":88,"n":142,"cards":64}],"hardest":[{"id":"h0","deckId":"orgo","front":"Markovnikov’s rule says the H goes to…","back":"The carbon with more H’s","deck":"Organic Chemistry","lapses":9,"d":9.1,"recall":0.62,"href":"WebCardsScreen.dc.html"},{"id":"h1","deckId":"span","front":"Yo ____ dos hermanos.","back":"tengo","deck":"Spanish Verbs","lapses":8,"d":8.7,"recall":0.67,"href":"WebCardsScreen.dc.html"},{"id":"h2","deckId":"cell","front":"The ____ is the powerhouse of the cell.","back":"mitochondrion","deck":"Cell Biology","lapses":8,"d":8.2,"recall":0.72,"href":"WebCardsScreen.dc.html"},{"id":"h3","deckId":"jlpt","front":"電車","back":"train (でんしゃ)","deck":"Japanese · JLPT N4","lapses":5,"d":7.9,"recall":0.77,"href":"WebCardsScreen.dc.html"},{"id":"h4","deckId":"cell","front":"Which organelle packages proteins for secretion?","back":"Golgi apparatus","deck":"Cell Biology","lapses":4,"d":7.4,"recall":0.8200000000000001,"href":"WebCardsScreen.dc.html"}],"leeches":[{"id":"h0","deckId":"orgo","front":"Markovnikov’s rule says the H goes to…","back":"The carbon with more H’s","deck":"Organic Chemistry","lapses":9,"d":9.1,"recall":0.62,"href":"WebCardsScreen.dc.html","paused":true},{"id":"h1","deckId":"span","front":"Yo ____ dos hermanos.","back":"tengo","deck":"Spanish Verbs","lapses":8,"d":8.7,"recall":0.67,"href":"WebCardsScreen.dc.html","paused":false},{"id":"h2","deckId":"cell","front":"The ____ is the powerhouse of the cell.","back":"mitochondrion","deck":"Cell Biology","lapses":8,"d":8.2,"recall":0.72,"href":"WebCardsScreen.dc.html","paused":false}],"forgot":{"n":92,"of":1020,"pct":9},"lapseDist":[{"label":"0","n":1420},{"label":"1","n":480},{"label":"2","n":210},{"label":"3–4","n":120},{"label":"5–7","n":46},{"label":"8+","n":12}],"diffDist":[{"label":"1","n":180},{"label":"2","n":320},{"label":"3","n":460},{"label":"4","n":520},{"label":"5","n":410},{"label":"6","n":300},{"label":"7","n":190},{"label":"8","n":110},{"label":"9","n":60}],"studied":2288},"pace":{"time":{"n":1284,"perCard":8.2,"perRight":9.4,"rightPerMin":6.4,"minutes":175,"learnN":310,"perQuestion":11.6},"gaps":[{"start":1783314000000,"days":4,"n":120},{"start":1783918800000,"days":5,"n":120},{"start":1784523600000,"days":6,"n":120},{"start":1785128400000,"days":6,"n":120},{"start":1785733200000,"days":8,"n":120},{"start":1786338000000,"days":9,"n":120},{"start":1786942800000,"days":10,"n":120},{"start":1787547600000,"days":12,"n":120},{"start":1788152400000,"days":13,"n":120},{"start":1788757200000,"days":15,"n":120},{"start":1789362000000,"days":16,"n":120},{"start":1789966800000,"days":18,"n":120}],"gapNow":18,"ahead":[{"start":1790053200000,"n":212},{"start":1790658000000,"n":168},{"start":1791262800000,"n":140},{"start":1791867600000,"n":126},{"start":1792472400000,"n":98},{"start":1793077200000,"n":90},{"start":1793685600000,"n":72},{"start":1794290400000,"n":64}],"exams":[{"deckId":"cell","name":"Cell Biology","days":12,"date":"2026-10-04","total":412,"seen":380,"learned":334,"toReview":84,"likely":0.74,"line":"Exam in 12 days · 84 cards to review first"}]}},"Year":{"days":365,"reviews":14854,"memory":{"retention":{"n":11800,"pct":90},"byMonth":true,"trend":[{"start":1759294800000,"pct":84,"n":1152},{"start":1761973200000,"pct":85,"n":1155},{"start":1764568800000,"pct":87,"n":1161},{"start":1767247200000,"pct":86,"n":1158},{"start":1769925600000,"pct":88,"n":1164},{"start":1772344800000,"pct":87,"n":1161},{"start":1775019600000,"pct":89,"n":1167},{"start":1777611600000,"pct":90,"n":1170},{"start":1780290000000,"pct":88,"n":1164},{"start":1782882000000,"pct":90,"n":1170},{"start":1785560400000,"pct":91,"n":1173},{"start":1788238800000,"pct":91,"n":1173}],"byTag":[{"tag":"Vocabulary","pct":92,"n":3586,"cards":140},{"tag":"Organelles","pct":88,"n":1643,"cards":64},{"tag":"Exam 1","pct":90,"n":1388,"cards":40},{"tag":"Energy","pct":93,"n":1111,"cards":31},{"tag":"Irregular","pct":76,"n":1018,"cards":45},{"tag":"Proteins","pct":84,"n":740,"cards":28},{"tag":"Mitochondria","pct":79,"n":671,"cards":22},{"tag":"Reactions","pct":71,"n":602,"cards":24},{"tag":"Pronunciation","pct":95,"n":463,"cards":18},{"tag":"Aromatics","pct":86,"n":463,"cards":20}],"improved":[{"tag":"Energy","before":85,"after":93,"delta":8,"n":96},{"tag":"Vocabulary","before":88,"after":92,"delta":4,"n":310},{"tag":"Exam 1","before":87,"after":90,"delta":3,"n":120}],"slipping":[{"tag":"Reactions","before":80,"after":71,"delta":-9,"n":52},{"tag":"Irregular","before":82,"after":76,"delta":-6,"n":88},{"tag":"Mitochondria","before":84,"after":79,"delta":-5,"n":58}],"modes":{"cards":{"n":14854,"pct":88},"learn":{"n":3586,"pct":76}}},"weak":{"weakTags":[{"tag":"Reactions","pct":71,"n":602,"cards":24},{"tag":"Irregular","pct":76,"n":1018,"cards":45},{"tag":"Mitochondria","pct":79,"n":671,"cards":22},{"tag":"Proteins","pct":84,"n":740,"cards":28},{"tag":"Aromatics","pct":86,"n":463,"cards":20},{"tag":"Organelles","pct":88,"n":1643,"cards":64}],"hardest":[{"id":"h0","deckId":"orgo","front":"Markovnikov’s rule says the H goes to…","back":"The carbon with more H’s","deck":"Organic Chemistry","lapses":9,"d":9.1,"recall":0.62,"href":"WebCardsScreen.dc.html"},{"id":"h1","deckId":"span","front":"Yo ____ dos hermanos.","back":"tengo","deck":"Spanish Verbs","lapses":8,"d":8.7,"recall":0.67,"href":"WebCardsScreen.dc.html"},{"id":"h2","deckId":"cell","front":"The ____ is the powerhouse of the cell.","back":"mitochondrion","deck":"Cell Biology","lapses":8,"d":8.2,"recall":0.72,"href":"WebCardsScreen.dc.html"},{"id":"h3","deckId":"jlpt","front":"電車","back":"train (でんしゃ)","deck":"Japanese · JLPT N4","lapses":5,"d":7.9,"recall":0.77,"href":"WebCardsScreen.dc.html"},{"id":"h4","deckId":"cell","front":"Which organelle packages proteins for secretion?","back":"Golgi apparatus","deck":"Cell Biology","lapses":4,"d":7.4,"recall":0.8200000000000001,"href":"WebCardsScreen.dc.html"}],"leeches":[{"id":"h0","deckId":"orgo","front":"Markovnikov’s rule says the H goes to…","back":"The carbon with more H’s","deck":"Organic Chemistry","lapses":9,"d":9.1,"recall":0.62,"href":"WebCardsScreen.dc.html","paused":true},{"id":"h1","deckId":"span","front":"Yo ____ dos hermanos.","back":"tengo","deck":"Spanish Verbs","lapses":8,"d":8.7,"recall":0.67,"href":"WebCardsScreen.dc.html","paused":false},{"id":"h2","deckId":"cell","front":"The ____ is the powerhouse of the cell.","back":"mitochondrion","deck":"Cell Biology","lapses":8,"d":8.2,"recall":0.72,"href":"WebCardsScreen.dc.html","paused":false}],"forgot":{"n":1062,"of":11800,"pct":9},"lapseDist":[{"label":"0","n":1420},{"label":"1","n":480},{"label":"2","n":210},{"label":"3–4","n":120},{"label":"5–7","n":46},{"label":"8+","n":12}],"diffDist":[{"label":"1","n":180},{"label":"2","n":320},{"label":"3","n":460},{"label":"4","n":520},{"label":"5","n":410},{"label":"6","n":300},{"label":"7","n":190},{"label":"8","n":110},{"label":"9","n":60}],"studied":2288},"pace":{"time":{"n":14854,"perCard":8.2,"perRight":9.4,"rightPerMin":6.4,"minutes":2025,"learnN":3586,"perQuestion":11.6},"gaps":[{"start":1759294800000,"days":3,"n":400},{"start":1761973200000,"days":4,"n":400},{"start":1764568800000,"days":5,"n":400},{"start":1767247200000,"days":6,"n":400},{"start":1769925600000,"days":7,"n":400},{"start":1772344800000,"days":9,"n":400},{"start":1775019600000,"days":10,"n":400},{"start":1777611600000,"days":12,"n":400},{"start":1780290000000,"days":13,"n":400},{"start":1782882000000,"days":15,"n":400},{"start":1785560400000,"days":17,"n":400},{"start":1788238800000,"days":18,"n":400}],"gapNow":18,"ahead":[{"start":1790053200000,"n":212},{"start":1790658000000,"n":168},{"start":1791262800000,"n":140},{"start":1791867600000,"n":126},{"start":1792472400000,"n":98},{"start":1793077200000,"n":90},{"start":1793685600000,"n":72},{"start":1794290400000,"n":64}],"exams":[{"deckId":"cell","name":"Cell Biology","days":12,"date":"2026-10-04","total":412,"seen":380,"learned":334,"toReview":84,"likely":0.74,"line":"Exam in 12 days · 84 cards to review first"}]}}};
+  const caught = !!p.caughtUp;
+  const byName = { 'Four buttons': 'four', 'Check or X': 'binary', 'Piles': 'piles' };
+  const ed = m.deck || {};
+  // Pro's sample: Cell Biology has an exam on Sunday, October 4 (12 days after the sample's Tuesday, September 22), and
+  // the usual rule for cards you keep forgetting. Picking another day here moves it.
+  const MON = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  const examDay = 'exam' in ed ? ed.exam : p.free ? null : '2026-10-04';
+  const examIn = examDay ? Math.round((new Date(examDay + 'T12:00:00') - new Date(2026, 8, 22, 12)) / 86400000) : null;
+  const exam = examDay && examIn >= 0 ? { days: examIn, date: examDay, day: MON[+examDay.slice(5, 7) - 1] + ' ' + +examDay.slice(8, 10), total: 412, seen: 380, learned: 334, toReview: 84, likely: .74,
+    when: examIn === 0 ? 'Exam today' : examIn === 1 ? 'Exam tomorrow' : 'Exam in ' + examIn + ' days', line: (examIn === 0 ? 'Exam today' : examIn === 1 ? 'Exam tomorrow' : 'Exam in ' + examIn + ' days') + ' · 84 cards to review first' } : null;
+  const pausedIds = m.paused || (p.paused ? { k1: true } : {});
+  const deck = () => ({ id: 'cell', name: ed.name ?? 'Cell Biology', tags: ed.tags || X.TAGS.cell, seed: 'Cell Biology', cover: { style: 'mix', round: 0, image: null, ...(ed.cover || {}) },
+    paused: !!ed.paused, grading: ed.grading || byName[p.grading] || 'four', fsrs: ed.fsrs ?? (p.fsrs !== false), goal: ed.goal ?? 90, gapIdx: ed.gapIdx ?? 3, steps: ed.steps || ['1m', '10m'], perDay: ed.perDay ?? 20,
+    total: 412, totalLabel: '412', due: 28, fresh: 10, ret: 91, aiCount: 38, forecast: [28, 14, 20, 9, 24, 6, 12], piles: m.piles || [{ name: 'Know it', n: 18 }, { name: 'Almost', n: 6 }, { name: 'No clue', n: 3 }],
+    href: 'WebDeck.dc.html', studyHref: 'WebReview.dc.html', settingsHref: 'WebDeckSettings.dc.html', newCardHref: 'WebCardsScreenNew.dc.html', folder: null, bg: ed.bg || { kind: 'deck', image: null },
+    exam, examDay: examDay || '', leechAt: ed.leechAt ?? 8, leechAct: ed.leechAct ?? 'tag',
+    // Sharing (Tweaks: shared, linked): shared by you, or from Maria (studied as it is, or a copy with her changes waiting).
+    ...(() => { const sv = m.share ? m.share.vis : p.shared === 'Public' ? 'public' : p.shared === 'Link only' ? 'link' : 'private', lk = m.detached ? '' : p.linked;
+      return { shared: sv !== 'private' && !lk ? { vis: sv, id: 's9', url: '/@alexkim/cell-biology', label: sv === 'public' ? 'Public' : 'Link only' } : null,
+        link: lk ? { mode: lk, gone: false, id: 's1', owner: { name: 'Maria Santos', handle: 'mariasantos' }, url: '/@mariasantos/mcat-biochemistry', pending: lk === 'copy' && !m.took ? 3 : 0, updates: m.upd ?? true } : null,
+        readOnly: lk === 'study' }; })() });
+  const idx = m.idx ?? (({ 'Fill in the blank': 1, Image: 2, Audio: 3 })[p.card] || 0);
+  // Profile picture (the Settings boards' photo setting): the Google photo, your own, or the color; the canvas draws
+  // stand-ins for the photos.
+  const st = { name: 'Alex Kim', sub: 'Signed in with Google · alex@gmail.com', signedIn: true, google: true, photo: ({ 'Google photo': 'google', 'Your photo': 'yours' })[p.photo] || 'color', yourPhoto: p.photo === 'Your photo' ? 'mock' : null, color: 0,
+    look: 'system', darkMode: p.dim ? 'gray' : 'black', grads: 'mix', prog: ({ Bar: 'bar', Counts: 'counts', None: 'none' })[p.progress] || 'bar', perDay: 20, goal: 90, grading: 'four', fsrs: true, check: true, reminder: '9:00 AM',
+    // Settings › Theme (Pro): the Theme boards say which is picked (props.theme).
+    theme: p.theme || 'lucida', themeProfile: true, ...(m.settings || {}) };
+  // Your profile picture in a theme: the theme a board shows (props.skin) or the one picked here (see skin() in build.mjs).
+  const skinned = () => this.skinFor(p.skin || (st.theme !== 'lucida' ? st.theme : ''));
+  const perms = { read: true, text: true, media: true, edit: true, check: true, del: false, ...(m.perms || {}) };
+  const noop = () => {};
+  // In the Library, System Design is shared (Public) and Spanish Verbs is a copy of Maria's deck.
+  const LIB_NET = { sys: { shared: { vis: 'public', id: 's10', url: '/@alexkim/system-design', label: 'Public' } },
+    span: { link: { mode: 'copy', gone: false, id: 's8', owner: { name: 'Maria Santos', handle: 'mariasantos' }, url: '/@mariasantos/spanish-b1', pending: 0, updates: true } } };
+  // Folders you make or change here stay on this board.
+  const folders = () => m.folders || X.FOLDERS;
+  const folderOf = id => (m.moved && id in m.moved ? m.moved[id] : (folders().find(f => (f.decks || []).includes(id)) || {}).id || null);
+  // Decks and cards you drag here keep their new order (and cards their new deck) on this board.
+  const order = m.deckOrder || X.DECKS.map(d => d.id), inOrder = () => order.map(id => X.DECKS.find(d => d.id === id));
+  const before = (list, id, b) => { const l = list.filter(x => x !== id), at = b ? l.indexOf(b) : -1; l.splice(at < 0 ? l.length : at, 0, id); return l; };
+  const cardDeck = m.cardDeck || {}, cardOrder = m.cardOrder || X.CARDS.map(c => c.id), aiDone = m.aiDone || {};
+  // Live's sample room (the boards' props pick what it shows: an empty lobby, a picture question, the answer, the end).
+  const livePerson = name => ({ id: 'p' + LS.people.indexOf(name), name, color: LS.people.indexOf(name) % 5 });
+  // The sample's QR code (29 by 29 modules), drawn the way web/qr.js draws one, with a margin of 2.
+  const liveQr = () => { const bits = [...LS.qr].map(h => parseInt(h, 16).toString(2).padStart(4, '0')).join(''), n = 29; let d = '';
+    for (let y = 0; y < n; y++) for (let x = 0; x < n; x++) if (bits[y * n + x] === '1') d += 'M' + (x + 2) + ' ' + (y + 2) + 'h1v1h-1z';
+    return 'data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 33 33" shape-rendering="crispEdges"><rect width="33" height="33" fill="#FFFFFF"/><path d="' + d + '" fill="#000000"/></svg>'); };
+  const liveQ = p.image ? LS.pic : LS.q;
+  // Jordan's phone: before question 3 he had 2,340 points, and a right answer made it 3,210.
+  const liveRight = !p.wrong && !p.timeUp, jordan = p.final ? 8940 : liveRight ? 3210 : 2340;
+  const liveRows = (p.final ? LS.final : LS.board.map(([name, score]) => [name, name === LS.me ? jordan : score])).slice().sort((a, b) => b[1] - a[1]);
+  return {
+    mock: true,
+    // Pro: on for the canvas's boards, off for the ones that show Free (their free or plan setting).
+    pro: () => !(p.free || p.plan === 'Free'),
+    chrome: () => { const S = skinned(), color = st.photo === 'color';
+      return { nav: { today: caught ? '' : '64', news: m.read ? '' : '2', hasNews: !m.read }, me: { bg: S && color ? 'transparent' : 'linear-gradient(135deg, #8C9AFC 0%, #4F60E6 100%)', initial: 'A', color: color && !S, photo: '', sampleGoogle: st.photo === 'google', sampleYours: st.photo === 'yours',
+        href: 'WebProfile.dc.html', skinned: !!S, art: S ? S.me('A', !color) : null } }; },
+    settings: () => st,
+    theme: () => (st.theme && st.theme !== 'lucida' ? st.theme : ''),
+    tags: () => [],
+    decks: () => inOrder().map(d => ({ d, i: X.DECKS.indexOf(d) })).map(({ d, i }) => ({ ...d, name: d.name, tags: X.TAGS[d.id], seed: d.name, style: null, image: null, totalLabel: d.total, paused: false, folder: folderOf(d.id), bg: { kind: 'deck', image: null },
+      due: caught ? 0 : d.due, overdue: caught ? 0 : d.overdue, soon: caught ? (d.soon || [1, 1, 2, 3, 1, 3][i]) : d.soon, exam: d.id === 'cell' ? exam : null,
+      href: 'WebDeck.dc.html', studyHref: 'WebReview.dc.html', settingsHref: 'WebDeckSettings.dc.html', shared: null, link: null, readOnly: false, ...(LIB_NET[d.id] || {}) })),
+    deck,
+    folders: () => folders().map(f => { const ds = inOrder().filter(d => folderOf(d.id) === f.id);
+      return { id: f.id, name: f.name, n: ds.length, due: caught ? 0 : ds.reduce((n, d) => n + d.due, 0), decks: ds.map(d => ({ ...d, seed: d.name, style: null, round: 0 })), href: 'WebLibraryFolder.dc.html' }; }),
+    // Three of the sample cards are ones you keep forgetting; Markovnikov's rule is paused.
+    allCards: () => X.ALL_CARDS.map(([was, front, back, icon, next, level, tags], i) => { const deckId = cardDeck['a' + i] || was, d = X.DECKS.find(x => x.id === deckId), id = 'a' + i, paused = pausedIds[id] ?? i === 10;
+      return { id, kind: '', icon, front, back, tags, next: paused ? 'Paused' : next, level, deckId, deckName: d.name, seed: d.name, style: null, round: 0, folder: folderOf(deckId), href: 'WebCardsScreen.dc.html', paused, leech: [1, 6, 10].includes(i) }; }),
+    searchDecks: q => X.DECKS.filter(d => d.name.toLowerCase().includes(q)).map(d => d.id),
+    // Prop aiWaiting: the sample's AI cards wait for you to keep or toss them (the Suggestions boards).
+    cards: () => cardOrder.map(id => X.CARDS.find(r => r.id === id)).filter(r => (!cardDeck[r.id] || cardDeck[r.id] === 'cell') && aiDone[r.id] !== 'tossed')
+      .map(r => ({ ...r, href: 'WebCardsScreen.dc.html', paused: !!pausedIds[r.id], next: pausedIds[r.id] ? 'Paused' : r.next, ...(p.aiWaiting && r.ai && !aiDone[r.id] ? { pending: true, next: 'Waiting for you' } : {}) })),
+    // A sample card, for the editor boards that open one to edit (their cardId setting).
+    card: id => { const r = X.CARDS.find(c => c.id === id); if (!r) return null;
+      const kind = { text: 'basic', blank: 'cloze', image: 'image', audio: 'audio' }[r.icon], d = X.DRAFTS[{ basic: 'Basic', cloze: 'Blank', image: 'Image', audio: 'Audio' }[kind]];
+      return { ...d, id, kind, tags: r.tags, note: '', front: kind === 'cloze' ? '' : r.front, back: kind === 'image' ? '' : r.back, text: kind === 'cloze' ? r.front.replace('____', '[[' + r.back + ']]') : '', paused: !!pausedIds[id], clozeMode: 'each' }; },
+    // What a memory goal costs Cell Biology: about 32 reviews a day at 90%.
+    workload: (id, g) => 22 * (Math.pow(0.9, -2) - 1) / (Math.pow(g / 100, -2) - 1) * (2 - g / 100) / 1.1 + 10,
+    // Tune to you, tuned to 1,240 reviews (the Settings boards' tune setting shows the other states).
+    tuneInfo: () => { const k = m.tune || ({ Off: 'off', 'Not enough reviews': 'few', Tuning: 'busy' })[p.tune] || 'on';
+      return { pro: !(p.free || p.plan === 'Free'), on: k === 'on', tuned: k === 'on' || k === 'off', reviews: k === 'few' ? 212 : 1240, need: 400, can: k !== 'few', busy: k === 'busy', progress: .4, error: '', n: 1240 }; },
+    insights: range => INSIGHTS[range] || INSIGHTS.Month,
+    updatesOf: () => (p.linked === 'copy' && !m.took ? [
+      { card: 'u1', op: 'edit', kind: 'answer', mine: false, before: { q: 'Which enzyme is the rate-limiting step of glycolysis?', a: 'Hexokinase' }, after: { q: 'Which enzyme is the rate-limiting step of glycolysis?', a: 'Phosphofructokinase-1 (PFK-1)' } },
+      { card: 'u2', op: 'add', kind: 'new', mine: false, before: null, after: { q: 'What activates PFK-1?', a: 'AMP and fructose-2,6-bisphosphate' } },
+      { card: 'u3', op: 'edit', kind: 'typo', mine: true, before: { q: 'Where is ATP made?', a: 'In the mitochondria (my notes)' }, after: { q: 'Where is ATP made?', a: 'Mostly in the mitochondria' } }] : []),
+    draft: type => ({ tags: ['Energy', 'Exam 1'], front: '', back: '', text: '', note: '', image: null, audio: null, speak: '', auto: true, ...X.DRAFTS[type] }),
+    today: () => ({ date: 'Tuesday, September 22', streak: 12, best: 31, due: caught ? 0 : 64, minutes: 11, fresh: 10, next: { day: 'tomorrow', n: 32 },
+      week: ['M', 'T', 'W', 'T', 'F', 'S', 'S'].map((d, i) => ({ d, done: i < 2, today: i === 1 })), forecast: X.DUE_7, newCardHref: 'WebCardsScreenNew.dc.html', studyHref: 'WebReview.dc.html' }),
+    review: () => {
+      const c = X.REVIEW[idx % X.REVIEW.length], d = deck(), done = 12 + idx, left = 64 - done;
+      const scale = (Math.pow(d.goal / 100, -2) - 1) / (Math.pow(0.9, -2) - 1), gaps = [30, 90, 180, 365, 730, 1825, 3650], maxGap = gaps[d.gapIdx];
+      const days = b => Math.min(maxGap, Math.max(1, Math.round(b * scale)));
+      const fmt = n => (n < 30 ? n + 'd' : n < 365 ? Math.round(n / 3) / 10 + 'mo' : Math.round(n / 36.5) / 10 + 'y');
+      const hardD = days(2), goodD = Math.min(maxGap, Math.max(hardD + 1, days(4))), easyD = Math.min(maxGap, Math.max(goodD + 1, days(9)));
+      return { empty: false, deckId: 'cell', card: { id: 'r' + idx, ...c }, done, left, total: 64, queue: { basic: 'rev', cloze: 'new', image: 'new', audio: 'learn' }[c.kind],
+        counts: { new: 8, learn: 3, rev: Math.max(left - 11, 0) }, iv: { again: d.steps[0], hard: fmt(hardD), good: fmt(goodD), easy: fmt(easyD) },
+        mode: d.grading, fsrsOn: d.grading !== 'piles' && d.fsrs, piles: d.piles, prog: st.prog, editHref: 'WebCardsScreen.dc.html' };
+    },
+    session: () => ({ pct: 91, goal: 90, cards: 40, minutes: 12, fresh: 3, split: [3, 5, 25, 7], splitW: ['8%', '12%', '62%', '18%'], streak: 13, next: 'Tomorrow · 32', moreHref: 'WebReview.dc.html',
+      sorted: 12, piles: [{ name: 'Know it', n: 7, total: 18 }, { name: 'Almost', n: 3, total: 6 }, { name: 'No clue', n: 2, total: 3 }], onlyPiles: false }),
+    stats: () => ({ streak: 12, best: 31, reviews: '1,284', cards: '2,470', ai: 312, remembered: 90, goal: 90, heat: null, forecast: X.DUE_14,
+      byDeck: X.DECKS.map(d => ({ name: d.name, ret: d.ret })) }),
+    ai: () => ({ url: 'https://app.lucida.cards/mcp/lk_5b1f0c6e9a2d4b7f8e3a1c0d9b8a7f6e2Hq9xWrT4kLm1ZpVb8sNc3Yd7Ga0uEfJ', perms, clients: { claude: true, openai: true, cursor: false, mcp: false }, connected: 'Claude, ChatGPT' }),
+    // Sound: the sample clip, a little way in (paused, or playing on the boards that say so). Play and the waveform work.
+    sound: c => ({ key: c && (c.audio || c.speak) ? 'mock' : '', peaks: WAVE, dur: 2.6, speech: !!c && !c.audio, on: m.playing ?? !!p.playing, frac: m.frac ?? .42, busy: false }),
+    // The Recording boards: a clip being recorded, 3 seconds in.
+    recording: () => ((p.recording && !m.recStop) || m.rec ? { saving: false, levels: Array.from({ length: 70 }, (_, i) => WAVE[(i * 3 + 30) % 96]), level: .55, secs: 3.4 } : null),
+    liveSets: () => [{ id: 'new', label: 'New', n: 10 }, { id: 'hard', label: 'Hard', n: 36 }, { id: 'tag:Exam 1', label: 'Exam 1', n: 40 }, { id: 'all', label: 'All', n: 412 }],
+    live: () => { const people = p.empty ? [] : LS.people.map(livePerson);
+      return { code: LS.code, codeShown: LS.codeShown, joinText: LS.joinText, qr: liveQr(), deck: LS.deck, deckId: 'cell', phase: p.final ? 'end' : p.reveal ? 'reveal' : 'question', status: '',
+        people, here: people.length, n: 3, of: 10,
+        q: { text: liveQ.text, options: liveQ.options, right: p.reveal ? liveQ.right : null, counts: p.reveal ? liveQ.counts : null, image: p.image ? 'mock' : '', occ: p.image ? { boxes: X.BOXES, ask: 1, mode: 'all' } : null },
+        answered: 9, playing: 12, got: 7, timer: { left: 14, dur: 20, delay: 0, frac: .3 },
+        board: (p.final ? LS.final : LS.board).map(([name, score, move]) => ({ ...livePerson(name), score, move: p.final ? null : move })), last: false };
+    },
+    join: () => {
+      const pick = p.timeUp ? -1 : p.wrong ? 1 : 0, rank = liveRows.findIndex(r => r[0] === LS.me) + 1;
+      return { form: { code: m.joinCode ?? LS.code, name: m.joinName ?? LS.me, error: p.notFound ? 'No game with that code' : '', busy: false },
+        phase: p.late ? 'late' : p.final ? 'final' : 'waiting', deck: LS.deck, n: 3, of: 10, promo: true,
+        me: { ...livePerson(LS.me), score: p.final ? jordan : 2340, streak: liveRight ? 3 : 0, rank, right: 8, played: 10 },
+        q: { text: LS.q.text, options: LS.q.options, right: LS.q.right }, pick: m.livePick ?? (p.picked ? 1 : null), timer: { left: 14, dur: 20, delay: 0, frac: .7 },
+        result: { ok: liveRight, timeUp: !!p.timeUp, pick: pick >= 0 ? LS.q.options[pick] : '', answer: LS.q.options[LS.q.right], gained: liveRight ? 870 : 0, streak: liveRight ? 3 : 0 },
+        standings: liveRows.map(([name, score]) => ({ ...livePerson(name), score })) };
+    },
+    href: kind => ({ decks: 'WebDecks.dc.html', newDeck: 'WebNewDeck.dc.html', import: 'WebImport.dc.html', connect: 'WebConnect.dc.html', today: 'Main.dc.html', stats: 'WebStats.dc.html' })[kind] || 'Main.dc.html',
+    // The study network (net-sample.mjs): the same answers web/net.js gets from the server. Saving, following and the
+    // like stay on this board. Prop "loading" shows a page before its answer arrives.
+    me: () => { const h = (m.profile && m.profile.handle) || 'alexkim'; return { handle: h, url: '/@' + h, name: st.name }; },
+    // Classes (web/classes.mjs): what Today lists (prop "assignments" shows it), and your own progress on a class deck.
+    assignments: () => (p.assignments ? N.ASSIGNED : []),
+    classProgress: id => N.MY_PROGRESS[id] || null,
+    net: (() => {
+      const wait = !!p.loading, D = N.DECKS, pick = k => D[k];
+      const star = id => (m.stars && id in m.stars ? m.stars[id] : null), follows = m.follows || {};
+      const deckCard = d => { const s = star(d.id); return s == null ? d : { ...d, stars: d.stars + (s ? 1 : -1) }; };
+      const picked = s => { const pk = (m.picks || {})[s.id] || {};
+        return { ...s, changes: s.changes.map(c => { const v = pk[c.id] || pk.$all; return v && c.status === 'open' ? { ...c, status: v === 'take' ? 'taken' : 'skipped' } : c; }) }; };
+      const open = () => (wait ? undefined : p.noSuggestions ? [] : N.SUGGESTIONS.map(picked).filter(s => s.changes.some(c => c.status === 'open')));
+      // Going back to a version (on this board) adds a version saying so.
+      const back = list => (m.restored ? [{ version: list[0].version + 1, kind: 'restore', summary: 'Went back to version ' + m.restored, ai: '', at: '2026-09-28T09:58:00Z', by: N.P.alex,
+        changes: list.filter(v => v.version > m.restored).flatMap(v => v.changes).slice(0, 3).map(c => ({ ...c, op: c.op === 'add' ? 'remove' : c.op === 'remove' ? 'add' : 'edit', kind: c.op === 'add' ? 'remove' : c.op === 'remove' ? 'new' : c.kind, before: c.after, after: c.before })) }, ...list] : list);
+      // A class, as the board's Tweaks and what you do on it make it: sharing answered, helpers picked, people taken out,
+      // decks assigned, an invite taken (it then shows the class as a member sees it).
+      const klass = code => {
+        const k0 = N.CLASSES[code] || N.CLASSES.BIOKTZ, shared = m.classShare || {}, roles = m.roles || {}, out = m.out || {};
+        if (k0.invite) return m.joined ? { ...N.CLASSES.ORGCHM, id: k0.id, code: k0.code, name: k0.name, owner: k0.owner, people: k0.people + 1, me: { role: 'member', share: false, asked: false }, assignments: [] } : k0;
+        const me = k0.id in shared ? { ...k0.me, share: shared[k0.id], asked: true } : p.sharing ? { ...k0.me, share: true, asked: true } : k0.me;
+        const members = k0.members.filter(x => !out[x.handle]).map(x => (roles[x.handle] ? { ...x, role: roles[x.handle] } : x));
+        const decks = (m.takenOut ? k0.deckList.filter(d => !m.takenOut[d.id]) : k0.deckList);
+        const assignments = [...k0.assignments.filter(a => !(m.unassigned || {})[a.id] && decks.some(d => d.id === a.sharedId)), ...(m.assigned || []).filter(a => a.classId === k0.id)];
+        return { ...k0, me, members, people: members.length, deckList: decks, decks: decks.length, assignments, empty: false, ...(p.empty ? { members: members.filter(x => x.role === 'owner'), people: 1, deckList: [], decks: 0, assignments: [] } : {}) };
+      };
+      const deckPage = () => ({ ...deckCard(D.mcat), helpers: [{ handle: 'devp', name: 'Dev Patel' }], contributors: [{ handle: 'devp', name: 'Dev Patel', n: 6 }, { handle: 'alexkim', name: 'Alex Kim', n: 3 }],
+        people: [N.P.maria, N.P.dev, N.P.okafor, N.P.alex], cardsList: N.CARDS, moreCards: 634, made: N.MADE,
+        me: p.signedOut ? null : { owner: !!p.owner, helper: false, studying: m.studying || (p.studying ? 'cell' : ''), copied: m.copied || '', watching: !!(m.watching ?? p.watching), starred: star('s1') ?? false, open: p.owner ? 3 : 0 } });
+      return {
+        signedOut: !!p.signedOut,
+        discover: tag => (wait ? undefined : { topics: N.DISCOVER.topics, tag: tag || '', sections: N.DISCOVER.sections.map(s => ({ ...s, decks: s.decks.map(pick).map(deckCard) })) }),
+        search: q => (wait ? undefined : !String(q || '').trim() ? { q: '', decks: [], people: [] } : { q, decks: [D.mcat, D.bio2a, D.cell].map(deckCard), people: [{ ...N.P.maria, bio: 'Biochem TA', school: 'UC Davis', followers: 1280 }, { ...N.P.okafor, bio: '', school: 'UC Davis', followers: 3400 }] }),
+        // A profile: Maria's for any other handle (prop "following": you follow her), or yours, with what you changed on
+        // this board (your handle, bio, pins). Prop "missing": no one has that name; "empty": nothing shared or saved yet.
+        profile: h => {
+          if (wait) return undefined;
+          if (p.missing) return { missing: true, status: 404, error: 'No one has that name.' };
+          const mine = (m.profile && m.profile.handle) || 'alexkim';
+          if (h && h !== mine) {
+            const was = !!p.following, on = follows[h] ?? was;
+            return { ...N.OTHER, followers: N.OTHER.followers + (on ? 1 : 0) - (was ? 1 : 0), decks: p.empty ? [] : [D.mcat, D.spanish].map(deckCard).map((d, i) => ({ ...d, pinned: !i })), saved: [], me: p.signedOut ? null : { self: false, following: on } };
+          }
+          const pr = { ...N.PROFILE, ...(m.profile || {}), handle: mine }, feat = pr.featured || [];
+          const decks = p.empty ? [] : N.ALEX_DECKS.map(deckCard).map(d => ({ ...d, pinned: feat.includes(d.id) }));
+          return { ...pr, followers: p.empty ? 0 : pr.followers, following: p.empty ? 0 : pr.following, stars: decks.reduce((n, d) => n + d.stars, 0), decks,
+            saved: p.empty ? [] : [D.mcat, D.kanji, D.bio2a].map(deckCard), me: { self: true, following: false } };
+        },
+        deck: () => (wait ? undefined : deckPage()), deckById: () => (wait ? undefined : deckPage()),
+        // Your Cell Biology's History; prop someoneElse shows Maria's MCAT Biochemistry, which isn't yours.
+        history: () => (wait ? undefined : p.someoneElse ? { id: 's1', name: 'MCAT Biochemistry', url: '/@mariasantos/mcat-biochemistry', owner: N.P.maria, mine: false, following: 300, versions: N.HISTORY }
+          : { id: 's9', name: 'Cell Biology', url: '/@alexkim/cell-biology', owner: N.P.alex, mine: true, following: 214, versions: back(N.CELL_HISTORY) }),
+        activity: () => (wait ? undefined : p.empty ? { unread: 0, items: [] } : { unread: m.read ? 0 : 2, items: N.NEWS.map(x => ({ ...x, read: m.read ? true : x.read })) }),
+        suggestions: open, inbox: open, sent: () => (wait ? undefined : p.empty ? [] : N.SENT),
+        mine: () => ({ handle: 'alexkim', profile: N.P.alex, decks: [{ id: 's9', slug: 'cell-biology', visibility: 'public', stars: 1300, learners: 214, copies: 86, version: 14, open: 3 }] }),
+        classes: () => (wait ? undefined : p.empty ? [] : N.CLASS_LIST),
+        klass: code => (wait ? undefined : p.missing ? { missing: true, status: 404 } : klass(code)),
+        verify: () => ({ verified: '', open: !!m.verifySent, declined: false, role: '', school: 'UC Davis' }),
+        admin: () => (wait ? undefined : p.denied ? { missing: true, status: 403 } : p.empty ? { requests: [], reports: [] } : N.ADMIN),
+        drop: noop, act: () => Promise.resolve(null)
+      };
+    })(),
+    act: {
+      updateDeck: (id, patch) => set({ deck: { ...ed, ...patch, cover: { ...(ed.cover || {}), ...(patch.cover || {}) } } }),
+      grade: () => set({ idx: idx + 1 }),
+      pile: (id, name) => set({ idx: idx + 1, piles: deck().piles.map(q => (q.name === name ? { ...q, n: q.n + 1 } : q)) }),
+      undo: () => idx > 0 && set({ idx: idx - 1 }),
+      setSettings: patch => set({ settings: { ...(m.settings || {}), ...patch } }),
+      pickPhoto: () => set({ settings: { ...(m.settings || {}), photo: 'yours', yourPhoto: 'mock' } }),
+      removePhoto: () => set({ settings: { ...(m.settings || {}), photo: 'google', yourPhoto: null } }),
+      setPerm: (k, on) => set(k === 'check' ? { perms: { ...(m.perms || {}), check: on }, settings: { ...(m.settings || {}), check: on } } : { perms: { ...(m.perms || {}), [k]: on } }),
+      pickCover: () => set({ deck: { ...ed, cover: { ...(ed.cover || {}), image: 'mock' } } }),
+      newFolder: (name, deckId) => { const id = 'f' + (folders().length + 1) + Date.now().toString(36); set({ folders: [...folders(), { id, name, decks: [] }], ...(deckId ? { moved: { ...(m.moved || {}), [deckId]: id } } : {}) }); return id; },
+      renameFolder: (id, name) => set({ folders: folders().map(f => (f.id === id ? { ...f, name } : f)) }),
+      deleteFolder: id => set({ folders: folders().filter(f => f.id !== id) }),
+      moveDeck: (id, folder) => folderOf(id) !== (folder || null) && set({ moved: { ...(m.moved || {}), [id]: folder || null }, deckOrder: before(order, id, null) }),
+      reorderDeck: (id, b) => set({ deckOrder: before(order, id, b) }),
+      reorderCard: (id, b) => set({ cardOrder: before(cardOrder, id, b) }),
+      moveCard: (id, deckId) => set({ cardDeck: { ...cardDeck, [id]: deckId } }),
+      setBg: (id, kind) => set({ deck: { ...ed, bg: { ...(ed.bg || { kind: 'deck', image: null }), kind } } }),
+      pickBg: () => set({ deck: { ...ed, bg: { kind: 'photo', image: 'mock' } } }),
+      addDeck: noop, deleteDeck: noop, exportDeck: noop, saveCard: noop, deleteCard: noop, copy: noop, speak: noop, play: noop, importCards: noop, exportAll: noop, resetAll: noop,
+      pickFile: () => Promise.resolve(null), pickText: () => Promise.resolve(null), pickSound: () => Promise.resolve(null),
+      record: () => { set((p.recording && !m.recStop) || m.rec ? { rec: false, recStop: true } : { rec: true }); return Promise.resolve(null); },
+      stopRecording: () => set({ rec: false, recStop: true }), watchMic: noop, watchSound: noop,
+      playSound: () => set({ playing: !(m.playing ?? !!p.playing) }), seekSound: (c, f) => { if (f != null) set({ frac: f }); },
+      addPile: (id, name) => set({ piles: [...deck().piles, { name, n: 0 }] }),
+      star: (id, on) => set({ stars: { ...(m.stars || {}), [id]: !!on } }), watch: (id, on) => set({ watching: !!on }),
+      follow: (h, on) => set({ follows: { ...(m.follows || {}), [h]: !!on } }), study: () => set({ studying: 'cell' }), copyDeck: () => set({ copied: 'cell' }),
+      decide: (id, picks) => { set({ picks: { ...(m.picks || {}), [id]: { ...((m.picks || {})[id] || {}), ...picks } } }); return Promise.resolve({}); }, readNews: () => set({ read: true }),
+      suggest: () => Promise.resolve({ id: 'g9', taken: false }), restore: (id, v) => { set({ restored: v }); return Promise.resolve({ changes: 1 }); }, checkDeck: noop,
+      keepCards: ids => { set({ aiDone: { ...aiDone, ...Object.fromEntries(ids.map(x => [x, 'kept'])) } }); return Promise.resolve({}); },
+      tossCards: ids => { set({ aiDone: { ...aiDone, ...Object.fromEntries(ids.map(x => [x, 'tossed'])) } }); return Promise.resolve({}); }, ensureProfile: noop,
+      // Someone in the sample already has the handle: it's taken, like the server says.
+      updateProfile: patch => {
+        const h = patch.handle ? String(patch.handle).toLowerCase() : '';
+        if (h && Object.values(N.P).some(x => x.handle === h && x.handle !== 'alexkim')) return Promise.reject(new Error('That name is taken. Try another.'));
+        set({ profile: { ...(m.profile || {}), ...patch } });
+        return Promise.resolve({ handle: h || (m.profile && m.profile.handle) || 'alexkim' });
+      },
+      shareDeck: (id, o) => { set({ share: { ...(m.share || { vis: p.shared === 'Public' ? 'public' : p.shared === 'Link only' ? 'link' : 'private' }), ...(o.visibility ? { vis: o.visibility } : {}) } }); return Promise.resolve({}); },
+      detach: () => set({ detached: true }), takeUpdates: () => { set({ took: true }); return Promise.resolve({}); }, copyUpdates: (id, on) => set({ upd: !!on }),
+      // Live: typing on the join board and tapping an answer stay on that board; the rest link to the next board.
+      joinCode: v => set({ joinCode: String(v || '').replace(/\D/g, '').slice(0, 6) }), joinName: v => set({ joinName: String(v || '').slice(0, 20) }), liveAnswer: i => set({ livePick: i }),
+      openLive: noop, liveStart: noop, liveNext: noop, liveAgain: noop, liveClose: noop, joinLive: noop, joinAgain: noop,
+      setExam: (id, day) => set({ deck: { ...ed, exam: day || null } }),
+      pauseCards: (ids, on) => set({ paused: { ...pausedIds, ...Object.fromEntries(ids.map(id => [id, !!on])) } }),
+      tune: () => set({ tune: 'on' }), useTuned: on => set({ tune: on ? 'on' : 'off' }),
+      // Classes: the canvas keeps each change on its board.
+      makeClass: () => Promise.resolve({ code: 'BIOKTZ' }), joinClass: () => { set({ joined: true }); return Promise.resolve({}); },
+      leaveClass: () => Promise.resolve({}), deleteClass: () => Promise.resolve({}), updateClass: () => Promise.resolve({}),
+      shareProgress: (id, on) => { set({ classShare: { ...(m.classShare || {}), [id]: !!on } }); return Promise.resolve({ on: !!on }); },
+      setMember: (id, h, o) => { set(o.remove ? { out: { ...(m.out || {}), [h]: true } } : { roles: { ...(m.roles || {}), [h]: o.role } }); return Promise.resolve({}); },
+      addClassDeck: () => Promise.resolve({}), removeClassDeck: (id, sid) => { set({ takenOut: { ...(m.takenOut || {}), [sid]: true } }); return Promise.resolve({}); },
+      assign: (id, o) => { const d = Object.values(N.CLASSES).flatMap(k => k.deckList || []).find(x => x.id === o.sharedId) || {};
+        set({ assigned: [...(m.assigned || []), { id: 'n' + (m.assigned || []).length, classId: id, sharedId: o.sharedId, goal: o.goal, due: o.due, deck: { name: d.name, cover: d.cover, cards: d.cards, url: d.url }, progress: {} }] }); return Promise.resolve({}); },
+      unassign: (id, a) => { set({ unassigned: { ...(m.unassigned || {}), [a]: true } }); return Promise.resolve({}); },
+      askVerify: () => { set({ verifySent: true }); return Promise.resolve({}); }, report: () => Promise.resolve({}),
+      adminVerify: () => Promise.resolve({}), adminReport: () => Promise.resolve({}), classroom: noop
+    }
+  };
+}
+
+static { /* themes for the canvas */
+  const T = globalThis.LucidaThemes || (globalThis.LucidaThemes = {});
+  if (!T.chrome) {
+// Lucida themes (Pro, Settings › Theme). A theme changes four things only: the flashcard, the study background (behind
+// flashcards and Learn mode), the deck covers, and the profile picture. The rest of the app stays Lucida: the sidebar,
+// buttons, grade buttons, progress bar, chips, menus, and the Geist type. Each theme is a module in this folder (index.js
+// lists them); this kit has what they share: small drawing helpers, and the calls the app's screens make (make()).
+// The same code runs in three places: design/build.mjs reads it for the Themes boards of the design canvas, the canvas
+// runs it inside those boards, and the app loads a theme's module once you pick it (web/themes/load.js). So it has no
+// imports, and every picture it draws is inline markup: inline styles, inline SVG without ids, and pictures only
+// through CSS classes (the canvas takes url() only in a board's own CSS).
+
+// ---------- drawing ----------
+const A = (css, inner = '') => `<span style="position: absolute; ${css}">${inner}</span>`;
+const V = (vb, inner, css = '') => `<svg width="100%" viewBox="${vb}" aria-hidden="true" style="display: block; overflow: visible; ${css}">${inner}</svg>`;
+const R = Math.round;
+const f = n => (Math.round(n * 10) / 10).toString();
+// Where a picture sits: wide = a computer's study screen (drawn at 1440 × 900), tall = a phone's (390 × 844), mid = the
+// theme page's preview (640 × 700), tiny = a Settings › Theme tile or a background tile.
+const lay = (w, h) => (w < 300 ? 'tiny' : w / h > 1.25 ? 'wide' : h / w > 1.5 ? 'tall' : 'mid');
+const VT = 'VT323, ui-monospace, monospace';
+const scrim = (rgb, a = 0.5, to = 62) => A(`left: 0; right: 0; bottom: 0; height: ${to}%; background: linear-gradient(to top, rgba(${rgb},${a}), rgba(${rgb},0));`);
+// Film grain over a picture (the texture is in the kit's CSS below).
+const grain = (op = 0.55, css = '') => `<span class="sk-grain" style="opacity: ${op}; ${css}"></span>`;
+
+// ---------- decks: which cover, and which picture on it ----------
+// A theme has six covers. A deck gets one from its seed (its name when it was made, so renaming it keeps its cover),
+// and Shuffle moves it to the next. The six sample decks of the canvas get six different ones.
+function variant(d) {
+  let h = 2166136261 ^ 66;
+  for (const ch of String(d.seed || d.name || '')) { h ^= ch.charCodeAt(0); h = Math.imul(h, 16777619); }
+  return (((h >>> 0) % 6) + (+(d.round ?? (d.cover && d.cover.round)) || 0)) % 6;
+}
+// The picture on a cover says what the deck is about, from its name and tags; a deck about something else gets its
+// first letter instead ('#' + the letter).
+const KEYS = ['cell', 'cloud', 'torii', 'benzene', 'quill', 'bone'];
+const MOTIF = ['Cell', 'Cloud', 'Torii', 'Benzene', 'Quill', 'Bone'];
+const SUBJECTS = [
+  ['torii', /japan|jlpt|kanji|hiragana|katakana|nihongo|日本/],
+  ['benzene', /chem|organic|molecul|reaction|periodic|benzene|orgo/],
+  ['bone', /anatom|physiol|bone|skelet|medic|nurs|pharm|clinic|surg|health|usmle|nclex|dental|muscle/],
+  ['cell', /bio|cell|gene|dna|micro|ecolog|botan|zoolog|evolution|mcat|organelle/],
+  ['cloud', /comput|system|software|program|coding|\bcode|algorithm|data|network|cloud|\bweb|\bcs\b|devops|sql|python|java|linux|engineer/],
+  ['quill', /histor|literat|english|writ|poem|poet|\blaw\b|legal|civic|govern|philosoph|essay|revolution|ancient/],
+  ['words', /spanish|french|german|italian|portuguese|latin|korean|chinese|mandarin|arabic|russian|vocab|grammar|language|verbs|idiom|toefl|ielts/],
+];
+function subject(d) {
+  const text = [d.name || '', ...(d.tags || [])].join(' ').toLowerCase();
+  for (const [k, re] of SUBJECTS) if (re.test(text)) return k;
+  const ch = String(d.name || '').trim().match(/[\p{L}\p{N}]/u);
+  return '#' + (ch ? ch[0].toUpperCase() : 'L');
+}
+// A deck ready for a theme's cover(): its cover (v), its picture (m), and a name for the canvas's captions.
+const deckLook = d => ({ ...d, v: d.v != null ? d.v : variant(d), m: d.m || subject(d) });
+const di = d => (d.v != null ? d.v : variant(d));
+const mo = d => d.m || subject(d);
+const motifName = k => (k[0] === '#' ? 'Letter ' + k.slice(1) : k === 'words' ? 'Words' : MOTIF[KEYS.indexOf(k)] || k);
+// A long, low cover (a deck page's header on the web, New deck's preview) is a banner.
+const banner = o => o.shape === 'wide' && o.w / o.h > 2.2;
+// Where a banner's picture goes: its middle (cx, cy) and size (s). A deck page's header (o.head) has buttons in its top
+// corners and along its bottom right (Play live, Learn, New card, Flashcards: about half its width), so its picture
+// sits a little left of the middle, a little high; New deck's preview has its buttons top right and the name bottom
+// left, so its picture sits bottom right.
+const bannerSpot = o => (o.head ? { cx: o.w * 0.43, cy: o.h * 0.38, s: o.h * 0.58 } : { cx: o.w * 0.78, cy: o.h * 0.64, s: o.h * 0.52 });
+// A phone deck page's header has its buttons along the top (o.top: how tall that row is), so its picture sits in the
+// lower right, under them.
+const headSpot = o => { const rem = o.h - o.top, s = R(rem * 0.9); return { s, x: R(o.w - s - o.w * 0.045), y: R(o.top + (rem - s) / 2) }; };
+// the main picture spot on a cover: the right side of the wide Library card, the upper middle of portrait covers
+const focal = o => (o.top ? headSpot(o) : banner(o) ? (B => { const s = R(B.s * 0.83); return { s, x: R(B.cx - s / 2), y: R(B.cy - s / 2) }; })(bannerSpot(o)) : o.shape === 'wide' ? { s: R(o.h * 0.5), x: R(o.w - o.h * 0.5 - o.w * 0.06), y: R(o.h * 0.17) } : { s: R(o.w * 0.62), x: R(o.w * 0.19), y: R(o.h * 0.08) });
+
+// ---------- subject pictures (one per deck) ----------
+const LINE = {
+  cell: '<path d="M24 5c10.5 0 19 7.6 19 18.5S34.5 43 24 43 5 35 5 24.5 13.5 5 24 5z"/><circle cx="21" cy="22" r="7.5"/><circle cx="21" cy="22" r="2.4" fill="currentColor" stroke="none"/><path d="M30 33c1.8-3.2 6.4-3.4 7.6-.4 1.2 3-2.6 5.4-5.6 4.4"/><circle cx="33.5" cy="15" r="2.2"/><circle cx="12.5" cy="33" r="1.8"/>',
+  cloud: '<path d="M14 28h21a7.5 7.5 0 0 0 .6-15A11 11 0 0 0 15 11.6 8.2 8.2 0 0 0 14 28z"/><path d="M16 28v6M24.5 28v6M33 28v6"/><rect x="12.5" y="34" width="7" height="7" rx="1.8"/><rect x="21" y="34" width="7" height="7" rx="1.8"/><rect x="29.5" y="34" width="7" height="7" rx="1.8"/>',
+  torii: '<path d="M5 11.5c7 2.4 31 2.4 38 0l-1.2 4.4c-6 1.7-29.6 1.7-35.6 0z"/><path d="M9.5 21.5h29M24 16v5.5M14.5 16v26M33.5 16v26M11.5 42h6M30.5 42h6"/>',
+  benzene: '<path d="M24 6l15.6 9v18L24 42 8.4 33V15z"/><circle cx="24" cy="24" r="8.2"/><path d="M39.6 15l5.4-3.2"/>',
+  quill: '<path d="M40 5C28 6 16.5 16 13 34c9-2.2 22-10 27-29z"/><path d="M13 34L35 10"/><path d="M13 34l-4.5 6.5"/><path d="M19.5 24.8l4 3.4M25.8 18l3.6 3.2"/><path d="M8 43h17"/>',
+  bone: '<path transform="rotate(-38 24 24)" d="M14.9 20.5H33.1A5 5 0 1 1 40.2 24A5 5 0 1 1 33.1 27.5H14.9A5 5 0 1 1 7.8 24A5 5 0 1 1 14.9 20.5Z"/>',
+  // languages: a speech bubble with two lines of words
+  words: '<path d="M9 9h30a4.5 4.5 0 0 1 4.5 4.5v15A4.5 4.5 0 0 1 39 33H23l-9.5 7.5V33H9a4.5 4.5 0 0 1-4.5-4.5v-15A4.5 4.5 0 0 1 9 9z"/><path d="M13 18h22M13 25h13"/>',
+};
+const esc = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+// A subject picture's shapes (viewBox 48), or a deck's first letter set in `font` (for decks about something else).
+const lineOf = (k, font = 'inherit', weight = 700) => LINE[k] || `<text x="24" y="36" text-anchor="middle" font-size="35" font-weight="${weight}" fill="currentColor" stroke="none" style="font-family: ${font};">${esc(k.slice(1))}</text>`;
+const icon = (k, color, w = 2.4, extra = '', font) => V('0 0 48 48', `<g fill="none" stroke="currentColor" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round" ${extra}>${lineOf(k, font)}</g>`, `color: ${color};`);
+// a dark line under a light one, like a chrome tube
+const tube = (k, under, over, w = 2.4, font) => V('0 0 48 48', `<g fill="none" stroke-linecap="round" stroke-linejoin="round"><g stroke="${under}" stroke-width="${w * 2.3}">${lineOf(k, font).replace('fill="currentColor" stroke="none"', `fill="${under}" stroke="${under}"`)}</g><g stroke="currentColor" stroke-width="${w}">${lineOf(k, font)}</g></g>`, `color: ${over};`);
+const spark = fill => `<path d="M20 0Q23.2 16.8 40 20Q23.2 23.2 20 40Q16.8 23.2 0 20Q16.8 16.8 20 0Z" fill="${fill}"/>`;
+// A four-point sparkle. `tw`: it glows softly (a slow 6 s breath, never a blink).
+const sparkle = (x, y, s, fill = '#FFFFFF', d = 0, tw = true) => A(`left: ${R(x)}px; top: ${R(y)}px; width: ${R(s)}px; ${tw ? `animation: sk-twinkle 6s ease-in-out ${d}s infinite;` : ''}`, V('0 0 40 40', spark(fill)));
+const star5 = (cx, cy, r0, k = 0.45) => { let d = ''; for (let i = 0; i < 10; i++) { const a = (-90 + i * 36) * Math.PI / 180, r = i % 2 ? r0 * k : r0; d += (i ? 'L' : 'M') + f(cx + r * Math.cos(a)) + ' ' + f(cy + r * Math.sin(a)); } return d + 'Z'; };
+
+// ---------- flashcards ----------
+// o = { q, a, side, r, pad, fs }. The back shows the question small, then the answer (the theme previews do; the app's
+// own card shows its answer and note).
+function qa(o, s) {
+  const small = o.side === 'back' ? `<span style="position: relative; display: block; margin-bottom: ${R(o.fs * 0.34)}px; font-size: ${Math.max(7, R(o.fs * (s.qs || 0.44)))}px; line-height: 1.35; ${s.q}">${s.qp || ''}${o.q}</span>` : '';
+  return small + `<span style="position: relative; display: block; font-size: ${Math.max(8, R(o.fs * (s.fs || 1)))}px; line-height: ${s.lh || 1.2}; text-wrap: pretty; ${s.a}">${o.side === 'back' ? o.a : o.q}${s.after || ''}</span>`;
+}
+// A theme's card face: `css` styles the face itself (its color, edge, shadow, and type), `deco` is drawn behind its words
+// (tape, a title bar, a stamp), `a` and `q` style the main words and the small ones. ink / muted / paper are its colors.
+const face = (css, deco, s, more = {}) => ({ css, deco: typeof deco === 'function' ? deco : () => deco, a: s.a, q: s.q, fs: s.fs || 1, lh: s.lh, qs: s.qs, qp: s.qp, after: s.after, ...more });
+// A whole card with words on it, for previews (Settings › Theme, the theme's page).
+function cardOf(T, w, h, o) {
+  const F = T.face(w, h, o);
+  return `<div style="position: relative; width: ${w}px; height: ${h}px; box-sizing: border-box; flex-shrink: 0; display: flex; flex-direction: column; justify-content: center; padding: ${o.pad}; ${F.css}">${F.deco()}${qa(o, F)}</div>`;
+}
+
+// ---------- photo themes ----------
+// Their pictures are files (web/themes/img, and the same ones uploaded to the canvas), shown through CSS classes.
+// Each set has a wide and a tall study background and six deck covers.
+const photoAssets = p => Object.fromEntries(['bg-wide', 'bg-tall', 'c0', 'c1', 'c2', 'c3', 'c4', 'c5'].map(k => [`${p}-${k}`, `${p}-${k}.webp`]));
+const photoCss = p => Object.keys(photoAssets(p)).map(k => `.${k}{background:url(%%${k}%%) center/cover no-repeat}`).join('\n');
+const photo = (cls, css = '') => `<span class="${cls}" style="position: absolute; inset: 0; ${css}"></span>`;
+const photoBg = (p, w, h, css = '') => photo(`${p}-bg-${w / h > 1.2 ? 'wide' : 'tall'}`, css);
+// Soft shade at the top (for the tag chips) and the bottom (for the deck name and buttons) of a photo cover.
+const photoScrim = (rgb, o, top = 0.34, bottom = 0.72) =>
+  A(`left: 0; right: 0; top: 0; height: ${o.shape === 'wide' ? 34 : 30}%; background: linear-gradient(180deg, rgba(${rgb},${top}), rgba(${rgb},0));`) +
+  A(`left: 0; right: 0; bottom: 0; height: ${o.shape === 'wide' ? 70 : 62}%; background: linear-gradient(0deg, rgba(${rgb},${bottom}), rgba(${rgb},${R(bottom * 40) / 100}) 45%, rgba(${rgb},0));`);
+// A photo profile picture with the initial on it.
+const photoAvatar = (cls, s, ch, font, ring = 'rgba(255,255,255,.9)', shade = '0,0,0') => `<span class="${cls}" style="position: relative; width: ${s}px; height: ${s}px; flex-shrink: 0; border-radius: 50%; box-shadow: 0 0 0 ${Math.max(1.5, R(s / 28))}px ${ring}, 0 ${Math.max(1, R(s / 24))}px ${Math.max(2, R(s / 7))}px rgba(${shade},.28); display: flex; align-items: center; justify-content: center; overflow: hidden;"><span style="position: absolute; inset: 0; background: radial-gradient(circle at 50% 60%, rgba(${shade},.28), rgba(${shade},0) 70%);"></span><span style="position: relative; font-family: ${font}; font-size: ${R(s * 0.44)}px; font-weight: 600; line-height: 1; color: #FFFFFF; text-shadow: 0 1px ${Math.max(2, R(s / 12))}px rgba(${shade},.55);">${ch}</span></span>`;
+// Around your own photo, a theme draws only a ring (your photo stays as it is).
+const ringFrame = (s, ring, shade = '0,0,0') => `<span style="position: absolute; inset: 0; border-radius: 50%; box-shadow: 0 0 0 ${Math.max(1.5, R(s / 28))}px ${ring}, 0 ${Math.max(1, R(s / 24))}px ${Math.max(2, R(s / 7))}px rgba(${shade},.28); pointer-events: none;"></span>`;
+
+// ---------- CSS every theme uses (pictures come as %%name%% and are filled in with each place's picture links) ----------
+const KIT_ASSETS = { grain: 'grain.webp', paper: 'paper.webp' };
+const KIT_CSS = `.sk-grain{position:absolute;inset:0;pointer-events:none;mix-blend-mode:soft-light;opacity:.55;background:url(%%grain%%) 0 0/256px 256px}
+.lx-paper{background-image:url(%%paper%%);background-size:256px 256px;background-blend-mode:soft-light}
+@keyframes sk-float{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
+@keyframes sk-drift{0%{transform:translateX(0)}100%{transform:translateX(20px)}}
+@keyframes sk-twinkle{0%,100%{opacity:.65}50%{opacity:1}}
+.sk-still *{animation:none!important}
+@media (prefers-reduced-motion:reduce){[data-sc-own] *{animation:none!important}}`;
+
+// ---------- what the app's screens ask a theme ----------
+// Sizes the screens are drawn at. A study background is drawn at its layout's size and scaled to cover the screen,
+// since its pieces sit where the card isn't; the card and the covers are drawn at the size they really are.
+const DESIGN = { wide: [1440, 900], tall: [390, 844], mid: [640, 700] };
+const FACE_AT = { web: { w: 780, h: 480, r: 32, pad: '44px 56px', fs: 32 }, phone: { w: 358, h: 600, r: 28, pad: '26px 22px', fs: 24 }, learn: { w: 720, h: 220, r: 28, pad: '28px 32px', fs: 30 }, learnPhone: { w: 358, h: 200, r: 24, pad: '20px 20px', fs: 22 } };
+// The sample decks on a Settings › Theme tile, and the card.
+const TILE_DECKS = [{ name: 'Cell Biology', v: 0, m: 'cell' }, { name: 'Japanese N4', v: 2, m: 'torii' }];
+// Your initial, as a theme draws it: one letter or digit (a name that starts with something else gets a dot).
+const initial = ch => (String(ch || '').match(/[\p{L}\p{N}]/u) || ['•'])[0];
+const hexA = (c, a) => (/^#[0-9a-f]{6}$/i.test(c) ? 'rgba(' + [1, 3, 5].map(i => parseInt(c.slice(i, i + 2), 16)).join(',') + ',' + a + ')' : c);
+
+function make(T) {
+  // Drawing a part into an element the page leaves to the theme (data-sc-own): drawn again only when what it shows or
+  // its size changes, and when the element's size changes (a window made bigger).
+  const draw = (part, w, h, a) => {
+    if (part === 'bg') {
+      // A small one (a Background tile in settings) is the same picture made small, and holds still.
+      const L = w / h > 1.25 ? 'wide' : h / w > 1.5 ? 'tall' : 'mid', small = w < 300;
+      const veil = a.veil ? A(`inset: 0; background: linear-gradient(180deg, rgba(${T.dark ? '0,0,0' : '255,255,255'},.5) 0, rgba(${T.dark ? '0,0,0' : '255,255,255'},0) ${a.veil === 'phone' ? 130 : 120}px, rgba(${T.dark ? '0,0,0' : '255,255,255'},0) calc(100% - ${a.veil === 'phone' ? 150 : 110}px), rgba(${T.dark ? '0,0,0' : '255,255,255'},.45) 100%);`) : '';
+      const [dw, dh] = DESIGN[L], k = Math.max(w / dw, h / dh);
+      return `<span${small ? ' class="sk-still"' : ''} style="position: absolute; left: 50%; top: 50%; width: ${dw}px; height: ${dh}px; overflow: hidden; transform: translate(-50%, -50%) scale(${k.toFixed(4)});">${T.bg(dw, dh)}</span>` + veil;
+    }
+    if (part === 'deco') return T.face(w, h, { q: '', a: '', side: a.side || 'front', ...(FACE_AT[a.at] || FACE_AT.web), w, h }).deco();
+    if (part === 'cover') {
+      // 'head': a deck page's header. Long and low on the web (a banner); on a phone, with its buttons along the top.
+      const head = a.shape === 'head', o = { w, h, r: a.r ?? 20, big: w > 200, shape: head ? 'wide' : a.shape || 'wide', fs: a.fs };
+      if (head && w / h <= 2.2) o.top = R(h * 0.45);
+      else if (head) o.head = true;
+      const C = T.cover(deckLook(a.d || {}), o);
+      return `<span${C.cls ? ` class="${C.cls}"` : ''} style="position: absolute; inset: 0; background-color: ${C.bg};"></span>${C.draw()}`;
+    }
+    if (part === 'avatar') return a.photo ? (T.frame ? T.frame(w) : '') : T.avatar(w, initial(a.ch));
+    if (part === 'card') return cardOf(T, w, h, { q: a.q || '', a: a.a || '', side: a.side || 'front', r: a.r ?? R(Math.min(w, h) * 0.07), pad: a.pad || `${R(h * 0.12)}px ${R(w * 0.09)}px`, fs: a.fs || R(Math.min(w / 16, h / 7)) });
+    if (part === 'tile') return tile(w, h, a);
+    return '';
+  };
+  // A Settings › Theme tile: the study background, two deck covers, a card, and the profile picture.
+  const tile = (W, H, a) => {
+    const k = W / 208, kv = H / 220, px = n => R(n * k), py = n => R(n * kv);
+    const cw = px(76), ch = R(cw * 97 / 76), fw = px(124), fh = R(fw * 80 / 124);
+    const cov = (d, x, y, rot) => { const C = T.cover(deckLook(d), { w: cw, h: ch, r: px(12), big: false, shape: 'tall' }); return A(`left: ${x}px; top: ${y}px; width: ${cw}px; height: ${ch}px; border-radius: ${px(12)}px; overflow: hidden; box-shadow: ${C.shadow || 'none'}; ${rot ? `transform: rotate(${rot}deg);` : ''}`, `<span${C.cls ? ` class="${C.cls}"` : ''} style="position: absolute; inset: 0; background-color: ${C.bg};"></span>${C.draw()}`); };
+    return T.bg(W, H) + cov(TILE_DECKS[0], px(16), py(24), 0) + cov(TILE_DECKS[1], px(60), py(40), 7)
+      + A(`right: ${px(14)}px; bottom: ${py(16)}px;`, cardOf(T, fw, fh, { q: 'Mitochondria make…', side: 'front', fs: Math.max(8, px(12)), r: px(12), pad: `${px(9)}px ${px(12)}px` }))
+      + A(`right: ${px(14)}px; top: ${px(14)}px;`, T.avatar(px(34), initial(a.ch)));
+  };
+  const paint = (el, part, a = {}) => {
+    if (!el || typeof el.getBoundingClientRect !== 'function') return;
+    el.__skp = [api, part, a];
+    const w = el.clientWidth, h = el.clientHeight;
+    if (!el.__skro && typeof ResizeObserver === 'function') {
+      el.__skro = new ResizeObserver(() => { if (!el.isConnected) { el.__skro.disconnect(); return; } const [S, p, x] = el.__skp; S.paint(el, p, x); });
+      el.__skro.observe(el);
+    }
+    if (!w || !h) return;
+    const sig = [T.key, part, w, h, JSON.stringify(a)].join('|');
+    if (el.__sk === sig && el.firstChild) return;
+    el.__sk = sig;
+    el.innerHTML = draw(part, w, h, a);
+    if (T.mount) T.mount(el);
+  };
+  const api = {
+    key: T.key, name: T.name, short: T.short || T.name, line: T.line, dark: !!T.dark, board: T.board,
+    // A ref for an element the theme draws into: ref="{{…}}" on a data-sc-own element.
+    ref: (part, a = {}) => el => paint(el, part, a),
+    paint,
+    // The study screen's background layer (see studyBg in build.mjs); `dark` above says whether the screen's buttons use
+    // Lucida's dark look. `phone`: the veil under the top and bottom bars is taller.
+    bg: phone => el => paint(el, 'bg', { veil: phone ? 'phone' : 'web' }),
+    // A flashcard face, for a screen's holes: the face's own style, its words' style, its colors, and a ref for what's
+    // drawn behind its words. `at`: web, phone, learn, or learnPhone (the size it's drawn at on the canvas).
+    faceOf(side, at = 'web') {
+      const z = FACE_AT[at] || FACE_AT.web, F = T.face(z.w, z.h, { q: '', a: '', side, r: z.r, pad: z.pad, fs: z.fs });
+      const ink = F.ink || '#000000', paper = F.paper || '#FFFFFF';
+      return { css: 'border: 0; ' + F.css, a: F.a || '', q: F.q || '', ink, paper, muted: F.muted || hexA(ink, 0.6), dark: !!F.dark, fs: String(F.fs || 1),
+        blankBg: ink, blankFg: paper, blankOff: hexA(ink, 0.12), deco: el => paint(el, 'deco', { side, at }) };
+    },
+    // A deck's cover, for a screen's holes: its base color, words (light or dark ink, with the chips and buttons that
+    // go with them), the lettering of its name (`size`: the name's size in px), its shadow, and a ref for its picture.
+    coverOf(d, shape = 'wide', size = 19, r) {
+      const sh = shape === 'head' ? 'wide' : shape, dl = deckLook(d), C = T.cover(dl, { w: sh === 'wide' ? 356 : sh === 'square' ? 48 : 173, h: sh === 'wide' ? 240 : sh === 'square' ? 48 : 206, r: r ?? 20, big: sh !== 'square', shape: sh, fs: size });
+      // (a ref for this cover's picture at another shape: a Library row's thumbnail)
+      const art = (sh, rr) => el => paint(el, 'cover', { d: { seed: dl.seed, name: dl.name, round: dl.round, tags: dl.tags, v: dl.v, m: dl.m }, shape: sh, r: rr, fs: size });
+      const light = C.ink !== 'dark';
+      return { on: true, base: C.bg, ink: light ? '#FFFFFF' : '#111111', sub: light ? 'rgba(255,255,255,.82)' : 'rgba(0,0,0,.62)',
+        glass: light ? 'rgba(255,255,255,.18)' : 'rgba(0,0,0,.07)', glassLine: light ? 'rgba(255,255,255,.3)' : 'rgba(0,0,0,.08)',
+        btnBg: light ? '#FFFFFF' : '#000000', btnFg: light ? '#000000' : '#FFFFFF', shadow: C.shadow || 'none', textShadow: 'none',
+        title: `font-size: ${R(size * (C.ts || 1))}px; ${C.title || ''}`, name: C.name || '',
+        titleAt: n => `font-size: ${R(n * (C.ts || 1))}px; ${C.title || ''}`,
+        // A phone deck page's header (a size container): the name on one line, smaller when it's long (down to 60%).
+        // With a theme whose picture sits right of the name there (T.headArt), a long name takes two lines beside it
+        // instead. T.cw: how wide the theme's letters run, as a share of their size.
+        titleHead: (n, name) => {
+          const big = R(n * (C.ts || 1)), cw = T.cw || 0.54, s = String(name || ''), len = Math.max(1, s.length), cut = T.headArt ? 192 : 40, W = 390 - cut;
+          const word = Math.max(1, ...s.split(/\s+/).map(x => x.length)), one = W / (len * cw);
+          if (!T.headArt || one >= big * 0.82) return `font-size: ${big}px; font-size: clamp(${R(big * 0.6)}px, calc((100cqw - ${cut}px) / ${(len * cw).toFixed(2)}), ${big}px); max-width: calc(100cqw - ${cut}px); ${C.title || ''}`;
+          // (its longest word has to fit a line, with room for wide letters and outlines)
+          const two = Math.max(R(big * 0.6), Math.min(big, R((1.9 * W) / (len * cw)), R(W / (word * cw * 1.15))));
+          return `font-size: ${two}px; max-width: calc(100cqw - ${cut}px); white-space: normal; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; ${C.title || ''}`;
+        },
+        art: art(shape, r), artAs: art };
+    },
+    // Your profile picture: the theme's circle with your initial, or a ring around your photo.
+    me: (ch, photo) => el => paint(el, 'avatar', { ch, photo: !!photo }),
+    tile: ch => el => paint(el, 'tile', { ch }),
+    card: o => el => paint(el, 'card', o),
+    T
+  };
+  return api;
+}
+
+  if (!T.chrome) T.chrome = make((() => {
+
+// Liquid chrome: silver liquid metal, alive on the study background (slowly: it moves at a fifth of its speed, and the
+// ripples are shallow), with frosted glass cards. Deck covers are still pieces of the same metal, each its own color.
+// The metal is drawn with WebGL2, one context for the whole page; without it, the picture under each canvas shows.
+const METALS = [
+  { name: 'Silver', dark: '#0B0C0E', mid: '#8E9298', light: '#F5F7F9', irid: 0.22, chip: 'linear-gradient(135deg, #FFFFFF, #8E9298 45%, #F5F7F9 60%, #55595F)' },
+  { name: 'Gold', dark: '#160C02', mid: '#B0802C', light: '#FFF3C8', irid: 0.06, chip: 'linear-gradient(135deg, #FFF3C8, #B0802C 45%, #FFE9A8 60%, #6B4A12)' },
+  { name: 'Rose', dark: '#1B0B0B', mid: '#B57B73', light: '#FFE8E2', irid: 0.1, chip: 'linear-gradient(135deg, #FFE8E2, #B57B73 45%, #FFD9D0 60%, #6E3F3A)' },
+  { name: 'Cobalt', dark: '#020A24', mid: '#2E5CDB', light: '#E4F0FF', irid: 0.14, chip: 'linear-gradient(135deg, #E4F0FF, #2E5CDB 45%, #BFD5FF 60%, #0B2470)' },
+  { name: 'Oil slick', dark: '#060509', mid: '#6B6577', light: '#F2EFF7', irid: 0.95, chip: 'conic-gradient(from 30deg, #FF8AD8, #8AB6FF, #8AFFD1, #FFE58A, #FF8AD8)' },
+  { name: 'Obsidian', dark: '#000000', mid: '#2E3034', light: '#B5BAC1', irid: 0.2, chip: 'linear-gradient(135deg, #B5BAC1, #2E3034 45%, #8E949C 60%, #000000)' },
+];
+
+const FRAG = `#version 300 es
+precision highp float;
+uniform vec2 uRes; uniform float uTime, uSeed, uUnit, uIrid, uAngle, uK, uSphere;
+uniform vec3 uDark, uMid, uLight;
+out vec4 o;
+float hash(vec2 p){ p = fract(p * vec2(123.34, 456.21)); p += dot(p, p + 45.32); return fract(p.x * p.y); }
+float noise(vec2 p){ vec2 i = floor(p), f = fract(p); vec2 u = f * f * (3. - 2. * f);
+  return mix(mix(hash(i), hash(i + vec2(1., 0.)), u.x), mix(hash(i + vec2(0., 1.)), hash(i + vec2(1., 1.)), u.x), u.y); }
+float fbm(vec2 p){ float s = 0., a = .5; for (int i = 0; i < 3; i++) { s += a * noise(p); p = mat2(1.6, 1.2, -1.2, 1.6) * p + 3.1; a *= .5; } return s; }
+float H(vec2 p){
+  float t = uTime;
+  vec2 q = vec2(fbm(p + vec2(0., .06 * t)), fbm(p + vec2(5.2, 1.3) - .05 * t));
+  vec2 r = vec2(fbm(p + 2.2 * q + vec2(1.7, 9.2) + .035 * t), fbm(p + 2.2 * q + vec2(8.3, 2.8) - .03 * t));
+  float u = dot(p, vec2(cos(uAngle), sin(uAngle)));
+  return sin(6.2831 * u * .9 + 6. * r.x + 2. * q.y) * .6 + .6 * r.y;
+}
+float band(float x, float c, float w, float s){ return 1. / (1. + exp((abs(x - c) - w) / s)); }
+void main(){
+  vec2 fc = gl_FragCoord.xy; fc.y = uRes.y - fc.y;
+  vec2 p = fc / uUnit + uSeed * 7.3;
+  float e = 1.5 / uUnit;
+  float h0 = H(p), hx = H(p + vec2(e, 0.)), hy = H(p + vec2(0., e));
+  vec3 n = normalize(vec3(-(hx - h0) / e * uK, -(hy - h0) / e * uK, 1.));
+  if (uSphere > .5) {
+    vec2 s = (fc / uRes) * 2. - 1.;
+    float d = min(dot(s, s), 1.);
+    n = normalize(vec3(s, sqrt(1. - d)) + vec3(n.xy * .35, 0.));
+  }
+  vec3 rr = vec3(2. * n.z * n.x, 2. * n.z * n.y, 2. * n.z * n.z - 1.);
+  float L = .10 + .06 * (rr.y + 1.);
+  L += .95 * band(rr.y, -.42, .20, .035) * band(rr.x, -.05, .75, .06);
+  L += .70 * band(rr.y, .38, .06, .02);
+  L += .55 * band(rr.x, .62, .10, .03) * band(rr.y, 0., .5, .05);
+  L += .35 * band(rr.x, -.7, .07, .02);
+  L += .45 * pow(max(rr.z, 0.), 6.);
+  L = L / (1. + L * .35) * 1.3;
+  float tilt = clamp((1. - n.z) * 3., 0., 1.);
+  vec3 col = L < .5 ? mix(uDark, uMid, L * 2.) : mix(uMid, uLight, min((L - .5) * 2., 1.));
+  vec3 tint = .5 + .5 * cos(6.2831 * (h0 * .65 + (1. - n.z) * 2.2 + vec3(0., .33, .67)));
+  col = mix(col, col * (.45 + tint * 1.25), uIrid * tilt);
+  col += (hash(fc + fract(uTime)) - .5) * .02;
+  o = vec4(clamp(col, 0., 1.), 1.);
+}`;
+const VERT = `#version 300 es
+in vec2 a; void main(){ gl_Position = vec4(a, 0., 1.); }`;
+
+const hex = h => [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16) / 255);
+const PAL = METALS.map(m => [hex(m.dark), hex(m.mid), hex(m.light), m.irid]);
+
+// A metal tile: a canvas over a picture of the same size. `live` ones move; the others are drawn once.
+const lqTile = ({ metal = 0, live = false, seed = 0, unit = 260, res = 1, angle = -0.5, sphere = false, r = 0, k = 0 } = {}) =>
+  `<canvas data-lq="1"${live ? ' data-live="1"' : ''} data-metal="${metal}"${k ? ` data-k="${k}"` : ''} data-seed="${seed}" data-unit="${unit}" data-res="${res}" data-angle="${angle}"${sphere ? ' data-sphere="1"' : ''} aria-hidden="true" style="position: absolute; inset: 0; width: 100%; height: 100%; display: block; border-radius: ${r}${typeof r === 'number' ? 'px' : ''};"></canvas>`;
+
+// ---------- drawing the metal ----------
+// One WebGL2 context renders every metal canvas on the page in turn and copies each out with drawImage. The moving one
+// (the study background) redraws about 30 times a second while it's on screen and the page is showing; it holds still
+// with Reduce Motion, and stops once it's gone from the page.
+let gl = null, glc = null, U = null, failed = false, raf = 0, last = 0, t0 = 0;
+const roots = new Set();
+function setup() {
+  if (gl || failed) return !!gl;
+  try {
+    glc = document.createElement('canvas');
+    gl = glc.getContext('webgl2', { antialias: false, alpha: false, preserveDrawingBuffer: true });
+  } catch (e) { gl = null; }
+  if (!gl) { failed = true; return false; }
+  const sh = (type, src) => { const s = gl.createShader(type); gl.shaderSource(s, src); gl.compileShader(s); return s; };
+  const pr = gl.createProgram();
+  gl.attachShader(pr, sh(gl.VERTEX_SHADER, VERT));
+  gl.attachShader(pr, sh(gl.FRAGMENT_SHADER, FRAG));
+  gl.linkProgram(pr);
+  if (!gl.getProgramParameter(pr, gl.LINK_STATUS)) { gl = null; failed = true; return false; }
+  gl.useProgram(pr);
+  const buf = gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW);
+  const loc = gl.getAttribLocation(pr, 'a');
+  gl.enableVertexAttribArray(loc);
+  gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
+  U = {};
+  ['uRes', 'uTime', 'uSeed', 'uUnit', 'uIrid', 'uAngle', 'uK', 'uSphere', 'uDark', 'uMid', 'uLight'].forEach(k => { U[k] = gl.getUniformLocation(pr, k); });
+  return true;
+}
+function draw(cv, t) {
+  const dpr = Math.min(window.devicePixelRatio || 1, 2), res = parseFloat(cv.getAttribute('data-res') || '1') * dpr;
+  const w = Math.max(2, Math.round(cv.offsetWidth * res)), h = Math.max(2, Math.round(cv.offsetHeight * res));
+  if (cv.width !== w || cv.height !== h) { cv.width = w; cv.height = h; }
+  if (glc.width < w || glc.height < h) { glc.width = Math.max(glc.width, w); glc.height = Math.max(glc.height, h); }
+  const P = PAL[parseInt(cv.getAttribute('data-metal') || '0', 10)] || PAL[0];
+  gl.viewport(0, 0, w, h);
+  gl.uniform2f(U.uRes, w, h);
+  gl.uniform1f(U.uTime, t);
+  gl.uniform1f(U.uSeed, parseFloat(cv.getAttribute('data-seed') || '0'));
+  gl.uniform1f(U.uUnit, parseFloat(cv.getAttribute('data-unit') || '260') * res);
+  gl.uniform1f(U.uAngle, parseFloat(cv.getAttribute('data-angle') || '-0.5'));
+  gl.uniform1f(U.uK, parseFloat(cv.getAttribute('data-k') || (cv.hasAttribute('data-sphere') ? 0.08 : 0.16)));
+  gl.uniform1f(U.uSphere, cv.hasAttribute('data-sphere') ? 1 : 0);
+  gl.uniform1f(U.uIrid, P[3]);
+  gl.uniform3fv(U.uDark, P[0]); gl.uniform3fv(U.uMid, P[1]); gl.uniform3fv(U.uLight, P[2]);
+  gl.drawArrays(gl.TRIANGLES, 0, 3);
+  cv.getContext('2d').drawImage(glc, 0, glc.height - h, w, h, 0, 0, w, h);
+}
+function frame(ts) {
+  raf = 0;
+  for (const el of roots) if (!el.isConnected) { if (el.__lqIo) el.__lqIo.disconnect(); roots.delete(el); }
+  if (!roots.size) return;
+  const still = typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
+  let moving = false;
+  if (!document.hidden && ts - last >= 33) {
+    last = ts;
+    const t = (ts - t0) / 1000 * 0.22;
+    for (const el of roots) for (const cv of el.querySelectorAll('canvas[data-lq]')) {
+      const live = cv.hasAttribute('data-live') && !still && !cv.closest('.sk-still');
+      if (live && el.__lqOff) { moving = true; continue; }
+      if (!live && cv.__lqDrawn) continue;
+      if (!cv.offsetWidth) continue;
+      draw(cv, live ? t : 3 + parseFloat(cv.getAttribute('data-seed') || '0') * 1.7);
+      cv.__lqDrawn = true;
+      if (live) moving = true;
+    }
+  } else moving = true;
+  for (const el of roots) for (const cv of el.querySelectorAll('canvas[data-lq]')) if (!cv.__lqDrawn || (cv.hasAttribute('data-live') && !still && !cv.closest('.sk-still'))) moving = true;
+  if (moving) raf = requestAnimationFrame(frame);
+}
+function mount(el) {
+  if (typeof document === 'undefined' || !el.querySelector('canvas[data-lq]') || !setup()) return;
+  roots.add(el);
+  if (!el.__lqIo && typeof IntersectionObserver === 'function') {
+    el.__lqIo = new IntersectionObserver(es => { el.__lqOff = !es.some(e => e.isIntersecting); });
+    el.__lqIo.observe(el);
+  }
+  if (!t0) t0 = performance.now();
+  if (!raf) raf = requestAnimationFrame(frame);
+}
+
+// ---------- the theme ----------
+// Six covers, each a piece of one picture of the metal, in its own color.
+const CR = [
+  { cls: 'cr-silver', pos: '18% 30%', size: '260%', name: 'Silver', m: 0, seed: 1 },
+  { cls: 'cr-dark', pos: '70% 20%', size: '240%', name: 'Gold', m: 1, seed: 2 },
+  { cls: 'cr-pearl', pos: '40% 60%', size: '240%', name: 'Cobalt', m: 3, seed: 3 },
+  { cls: 'cr-silver', pos: '85% 75%', size: '220%', name: 'Rose', m: 2, seed: 4 },
+  { cls: 'cr-dark', pos: '20% 85%', size: '260%', name: 'Obsidian', m: 5, seed: 5 },
+  { cls: 'cr-pearl', pos: '85% 20%', size: '260%', name: 'Oil slick', m: 4, seed: 6 },
+];
+const __theme = {
+  key: 'chrome', board: 'Chrome', name: 'Liquid chrome', dark: true, fonts: '',
+  line: 'Silver liquid metal with frosted glass cards.',
+  assets: { 'cr-silver': 'chrome-silver.webp', 'cr-dark': 'chrome-dark.webp', 'cr-pearl': 'chrome-pearl.webp', 'cr-tall': 'chrome-tall.webp', 'cr-sphere': 'chrome-sphere.webp' },
+  css: '.cr-silver{background-image:url(%%cr-silver%%)}.cr-dark{background-image:url(%%cr-dark%%)}.cr-pearl{background-image:url(%%cr-pearl%%)}.cr-tall{background-image:url(%%cr-tall%%)}.cr-sphere{background-image:url(%%cr-sphere%%);background-size:cover}',
+  // The metal moves on the study background (a dark veil over it keeps the words calm); a small tile holds still.
+  bg(w, h) {
+    const big = w > 600, tiny = w < 300;
+    return `<div class="${big ? 'cr-silver' : 'cr-tall'}" style="position: absolute; inset: 0; background-size: cover; background-position: center;"></div>${lqTile({ live: !tiny, seed: 3, unit: big ? 900 : 620, res: big ? 0.5 : 0.75, angle: big ? -0.5 : -1.1, k: 0.08 })}<div style="position: absolute; inset: 0; background: rgba(26,27,30,.42);"></div><div style="position: absolute; inset: 0; background: radial-gradient(ellipse 70% 60% at 50% 48%, rgba(10,10,12,.22), rgba(10,10,12,.04) 70%), linear-gradient(180deg, rgba(0,0,0,.14), rgba(0,0,0,0) 20%, rgba(0,0,0,0) 80%, rgba(0,0,0,.2));"></div>`;
+  },
+  face(w, h, o) {
+    return face(`border-radius: ${o.r}px; border: ${w > 400 ? 2 : 1.5}px solid transparent; background: linear-gradient(160deg, rgba(250,251,253,.74), rgba(232,234,238,.62)) padding-box, linear-gradient(135deg, #FFFFFF 0%, #8C9097 22%, #F5F6F8 44%, #6E7278 64%, #E4E6EA 84%, #A3A6AC 100%) border-box; -webkit-backdrop-filter: blur(26px) saturate(1.3); backdrop-filter: blur(26px) saturate(1.3); color: #111111; box-shadow: inset 0 1px 0 rgba(255,255,255,.9), 0 2px 4px rgba(0,0,0,.18), 0 34px 70px -24px rgba(0,0,0,.65);`,
+      '', { q: 'color: #5C5F66;', qs: 0.44, a: 'font-weight: 600; letter-spacing: -.025em;', lh: 1.18 }, { ink: '#111111', paper: '#EEF0F3', muted: '#5C5F66' });
+  },
+  cover(d, o) {
+    const m = CR[di(d)];
+    return {
+      bg: '#8E9095', ink: 'light', name: m.name,
+      title: 'font-weight: 600; letter-spacing: -.03em; text-shadow: 0 1px 3px rgba(0,0,0,.45);',
+      shadow: '0 1px 2px rgba(0,0,0,.25), 0 16px 32px -14px rgba(0,0,0,.55)',
+      draw: () => `<span class="${m.cls}" style="position: absolute; inset: 0; border-radius: ${o.r}px; background-size: ${m.size} auto; background-position: ${m.pos};"></span>${lqTile({ metal: m.m, seed: m.seed, unit: 420, r: o.r })}<span style="position: absolute; inset: 0; border-radius: ${o.r}px; background: linear-gradient(to top, rgba(8,8,10,.62), rgba(8,8,10,.12) 48%, rgba(8,8,10,0) 70%); box-shadow: inset 0 1px 0 rgba(255,255,255,.7), inset 0 0 0 1px rgba(255,255,255,.28);"></span>`,
+    };
+  },
+  avatar: (s, ch) => `<span class="cr-sphere" style="position: relative; width: ${s}px; height: ${s}px; flex-shrink: 0; border-radius: 50%; box-shadow: 0 ${Math.max(1, s / 30)}px ${Math.max(2, s / 10)}px rgba(0,0,0,.35); display: flex; align-items: center; justify-content: center;">${lqTile({ metal: 0, seed: 9, unit: Math.max(90, s * 2.2), sphere: true, r: '50%' })}<span style="position: relative; font-size: ${R(s * 0.44)}px; font-weight: 700; letter-spacing: -.03em; color: rgba(18,18,20,.82); text-shadow: 0 1px 0 rgba(255,255,255,.75), 0 -1px 0 rgba(0,0,0,.25);">${ch}</span></span>`,
+  // around your photo: a polished silver ring
+  frame: s => { const b = Math.max(2, R(s / 16)); return A(`inset: ${-b}px; border-radius: 50%; padding: ${b}px; background: linear-gradient(135deg, #FFFFFF 0%, #8C9097 26%, #F5F6F8 48%, #6E7278 68%, #E4E6EA 86%, #A3A6AC 100%); -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor; mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); mask-composite: exclude; box-shadow: 0 1px 3px rgba(0,0,0,.3);`); },
+  mount,
+  METALS,
+};
+
+return __theme;
+})());
+  }
+/* end of the themes */ }
+renderVals() { return { yes: true }; }
+}
+</script>
+</body>
+</html>
