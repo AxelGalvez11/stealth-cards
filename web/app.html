@@ -23,6 +23,12 @@ body { font-family: Geist, -apple-system, system-ui, sans-serif; }
 #app.list li { padding: 6px 0; break-inside: avoid; }
 #app.list a { color: inherit; text-decoration: none; font-size: 15px; }
 #app.list a:hover { text-decoration: underline; }
+/* Live's player screens on a computer (a friend can join from one): the screen fills the window, and its content runs
+   down the middle, phone wide. */
+@media (min-width: 761px) { #app:not(.phone) > .sc-live-phone { padding-left: max(20px, calc(50% - 215px)) !important; padding-right: max(20px, calc(50% - 215px)) !important; } }
+/* A phone page that grows with what's on it (signing in, Learn mode, joining a live game), shown inside another board
+   (its other versions on /b), takes that board's height. */
+#app > * [style*="min-height: 100dvh"] { min-height: 100% !important; }
 /* Pages rise in once, when the app opens (web/app.js adds sc-calm after the first page). */
 html.sc-calm #app main > * { animation: none !important; }
 @media (max-width: 760px) {

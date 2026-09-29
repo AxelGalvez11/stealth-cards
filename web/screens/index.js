@@ -67,6 +67,18 @@ export default [
   "h": 844
  },
  {
+  "name": "LiveAnswered",
+  "title": "Live · phone · answer locked in",
+  "w": 390,
+  "h": 844
+ },
+ {
+  "name": "LiveEnded",
+  "title": "Live · phone · the game ended",
+  "w": 390,
+  "h": 844
+ },
+ {
   "name": "LiveFinal",
   "title": "Live · phone · final",
   "w": 390,
@@ -75,6 +87,18 @@ export default [
  {
   "name": "LiveJoin",
   "title": "Live · phone · join",
+  "w": 390,
+  "h": 844
+ },
+ {
+  "name": "LiveJoinNotFound",
+  "title": "Live · phone · join, no game with that code",
+  "w": 390,
+  "h": 844
+ },
+ {
+  "name": "LiveLate",
+  "title": "Live · phone · joined mid-game (plays from the next question)",
   "w": 390,
   "h": 844
  },
@@ -91,6 +115,12 @@ export default [
   "h": 900
  },
  {
+  "name": "LiveLobbyEmpty",
+  "title": "Live · big screen · lobby, nobody in yet",
+  "w": 1440,
+  "h": 900
+ },
+ {
   "name": "LivePodium",
   "title": "Live · big screen · podium",
   "w": 1440,
@@ -103,8 +133,20 @@ export default [
   "h": 900
  },
  {
+  "name": "LiveQuestionImage",
+  "title": "Live · big screen · question with a picture",
+  "w": 1440,
+  "h": 900
+ },
+ {
   "name": "LiveResult",
   "title": "Live · phone · right",
+  "w": 390,
+  "h": 844
+ },
+ {
+  "name": "LiveResultTimeUp",
+  "title": "Live · phone · time’s up (no answer)",
   "w": 390,
   "h": 844
  },

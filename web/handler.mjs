@@ -17,6 +17,7 @@ import { planOf, checkoutUrl, portalUrl, signedBy, onEvent } from './billing.mjs
 import * as social from './social.mjs';
 import { cookies } from './auth.mjs';
 import { isDev } from './store.mjs';
+import { reserve, lookup, release, rtOf, listen, pass } from './rooms.mjs';
 
 const ROOT = fileURLToPath(new URL('.', import.meta.url));
 const TYPES = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.mjs': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8', '.json': 'application/json', '.svg': 'image/svg+xml',
@@ -292,6 +293,37 @@ async function files(req, res, path, root) {
   res.end(body);
 }
 
+// Live (rooms.mjs, web/live.js). Anyone with a game's code may look it up, since players join without an account; on
+// this computer the relay's two routes are open too, like everything here. Opening and closing a room is the host's.
+const LIVE = /^\/api\/live(?:\/(\d{6})(?:\/(events|send))?)?$/;
+const livePublic = (req, m) => !!m && ((req.method === 'GET' && m[1] && !m[2]) || (!cloud() && m[2]));
+async function liveApi(req, res, m, uid) {
+  const [, code, sub] = m;
+  // Online the messages go over Realtime; the relay is only for this computer.
+  if (sub && cloud()) return send(res, 404, { error: 'Not found' });
+  if (sub === 'events' && req.method === 'GET') {
+    const q = new URL(req.url, 'http://x').searchParams, role = q.get('role'), key = String(q.get('key') || '');
+    if (!['host', 'player'].includes(role) || !/^[\w-]{1,40}$/.test(key)) return send(res, 400, { error: 'Bad request' });
+    return listen(req, res, code, role, key);
+  }
+  if (sub === 'send' && req.method === 'POST') {
+    const b = jsonOf(await readBody(req, 64e3));
+    if (!['host', 'player'].includes(b.role) || !/^[a-z]{1,20}$/.test(String(b.event || ''))) return send(res, 400, { error: 'Bad request' });
+    pass(code, b.role, b.event, b.payload && typeof b.payload === 'object' ? b.payload : {});
+    return send(res, 200, { ok: true });
+  }
+  if (code && !sub && req.method === 'GET') {
+    const r = await lookup(code);
+    return r ? send(res, 200, { deck: r.deck, rt: rtOf() }) : send(res, 404, { error: 'No game with that code' });
+  }
+  if (!code && req.method === 'POST') {
+    const b = jsonOf(await readBody(req, 1e4));
+    return send(res, 200, { code: await reserve(uid, b.deck, b.code), rt: rtOf() });
+  }
+  if (code && !sub && req.method === 'DELETE') { await release(uid, code); return send(res, 200, { ok: true }); }
+  return send(res, 404, { error: 'Not found' });
+}
+
 // Runs fn against one library and gives back what it returned, again from the newer copy if another request saved
 // first (like run, below, for work that happens in steps).
 async function inLibrary(uid, fn, opts) {
@@ -384,6 +416,10 @@ export async function handle(req, res) {
       } catch (e) { if (e.status === 401) return denied(); throw e; }
     }
 
+    // Live's public routes, before the sign-in check (players have no account).
+    const live = isApi && LIVE.exec(path);
+    if (livePublic(req, live)) return await liveApi(req, res, live, null);
+
     if (isApi || path.startsWith('/media/')) {
       let uid = null, me = null, user = null;
       if (cloud()) {
@@ -393,6 +429,7 @@ export async function handle(req, res) {
         user = w.user; uid = user.id;
       } else if (devOf(req)) { uid = devOf(req); me = devMe(uid); }
       if (path.startsWith('/media/')) return await media(req, res, path.slice(7), uid);
+      if (live) return await liveApi(req, res, live, uid);
       if (path === '/api/rev' && req.method === 'GET') return send(res, 200, { rev: await revOf(uid) });
       // The app's first load asks Stripe's news afresh, so Pro shows right after paying.
       if (user) me = await meOf(user, path === '/api/state');

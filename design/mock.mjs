@@ -1,3 +1,4 @@
+import { qrMatrix } from '../web/qr.js';
 // Sample data for the canvas. The web app hands every screen its real database (web/db.js) as `this.props.db`;
 // the canvas has none, so boards call this.mock(), which answers the same questions with the sample decks and cards
 // the canvas has always shown. Edits made on a canvas board (a new tag, a grade, a setting) stay on that board.
@@ -66,11 +67,27 @@ export const SAMPLE_WAVE = Array.from({ length: 96 }, (_, i) => {
 });
 
 import { NET_SAMPLE } from './net-sample.mjs';
+// Live (play with friends): a sample room playing Cell Biology, at question 3 of 10, for the Live boards. The phone in
+// the samples is Jordan's. `board` is where everyone stands after question 3 (and how far each moved), `final` the end.
+// Its QR code is real (it opens the join page with the code filled in), kept small here as its modules in hex, row by
+// row; the boards draw it (mock()).
+const LIVE_QR = qrMatrix('https://app.lucida.cards/join/482913').map(r => r.map(Number).join('')).join('').replace(/.{1,4}/g, b => parseInt(b.padEnd(4, '0'), 2).toString(16));
+const LIVE_PEOPLE = ['Maya', 'Jordan', 'Priya', 'Leo', 'Sofia', 'Ethan', 'Ana', 'Kai', 'Zoe', 'Omar', 'Lina', 'Noah'];
+export const LIVE_SAMPLE = {
+  code: '482913', codeShown: '482 913', joinText: 'lucida.cards/join', qr: LIVE_QR, me: 'Jordan', people: LIVE_PEOPLE,
+  deck: { name: 'Cell Biology', seed: 'Cell Biology', style: 'mix', round: 0, bg: { kind: 'deck', image: null } },
+  q: { text: 'Which organelle packages proteins for secretion?', options: ['Golgi apparatus', 'Lysosome', 'Nucleus', 'Ribosome'], right: 0, counts: [7, 2, 1, 2] },
+  // A picture card's question: what's under its second box (the sample diagram's).
+  pic: { text: 'What’s under box 2?', options: ['Nucleus', 'Mitochondrion', 'Vacuole', 'Lysosome'], right: 1, counts: [2, 8, 1, 1] },
+  board: [['Maya', 3420, 1], ['Jordan', 3210, 2], ['Kai', 2980, -1], ['Priya', 2860, 0], ['Leo', 2640, 3], ['Sofia', 2210, -1], ['Ethan', 1980, 0], ['Ana', 1640, 0], ['Zoe', 1420, 1], ['Omar', 1210, -1], ['Lina', 980, 0], ['Noah', 620, 0]],
+  final: [['Maya', 9610], ['Jordan', 8940], ['Kai', 8120], ['Priya', 7860], ['Leo', 7420], ['Sofia', 6980], ['Ethan', 6540], ['Ana', 6110]]
+};
+
 export const MOCK_METHOD = String.raw`mock() {
   const p = this.props, m = this.state.$m || {};
   const N = __NET__;
   const set = patch => this.setState({ $m: { ...m, ...patch } });
-  const X = __SAMPLE__, WAVE = __WAVE__;
+  const X = __SAMPLE__, WAVE = __WAVE__, LS = __LIVE__;
   const caught = !!p.caughtUp;
   const byName = { 'Four buttons': 'four', 'Check or X': 'binary', 'Piles': 'piles' };
   const ed = m.deck || {};
@@ -100,6 +117,16 @@ export const MOCK_METHOD = String.raw`mock() {
   const order = m.deckOrder || X.DECKS.map(d => d.id), inOrder = () => order.map(id => X.DECKS.find(d => d.id === id));
   const before = (list, id, b) => { const l = list.filter(x => x !== id), at = b ? l.indexOf(b) : -1; l.splice(at < 0 ? l.length : at, 0, id); return l; };
   const cardDeck = m.cardDeck || {}, cardOrder = m.cardOrder || X.CARDS.map(c => c.id);
+  // Live's sample room (the boards' props pick what it shows: an empty lobby, a picture question, the answer, the end).
+  const livePerson = name => ({ id: 'p' + LS.people.indexOf(name), name, color: LS.people.indexOf(name) % 5 });
+  // The sample's QR code (29 by 29 modules), drawn the way web/qr.js draws one, with a margin of 2.
+  const liveQr = () => { const bits = [...LS.qr].map(h => parseInt(h, 16).toString(2).padStart(4, '0')).join(''), n = 29; let d = '';
+    for (let y = 0; y < n; y++) for (let x = 0; x < n; x++) if (bits[y * n + x] === '1') d += 'M' + (x + 2) + ' ' + (y + 2) + 'h1v1h-1z';
+    return 'data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 33 33" shape-rendering="crispEdges"><rect width="33" height="33" fill="#FFFFFF"/><path d="' + d + '" fill="#000000"/></svg>'); };
+  const liveQ = p.image ? LS.pic : LS.q;
+  // Jordan's phone: before question 3 he had 2,340 points, and a right answer made it 3,210.
+  const liveRight = !p.wrong && !p.timeUp, jordan = p.final ? 8940 : liveRight ? 3210 : 2340;
+  const liveRows = (p.final ? LS.final : LS.board.map(([name, score]) => [name, name === LS.me ? jordan : score])).slice().sort((a, b) => b[1] - a[1]);
   return {
     mock: true,
     chrome: () => ({ nav: { today: caught ? '' : '64', news: m.read ? '' : '2', hasNews: !m.read }, me: { bg: 'linear-gradient(135deg, #8C9AFC 0%, #4F60E6 100%)', initial: 'A', color: st.photo === 'color', photo: '', sampleGoogle: st.photo === 'google', sampleYours: st.photo === 'yours', href: 'WebProfile.dc.html' } }),
@@ -142,6 +169,23 @@ export const MOCK_METHOD = String.raw`mock() {
     sound: c => ({ key: c && (c.audio || c.speak) ? 'mock' : '', peaks: WAVE, dur: 2.6, speech: !!c && !c.audio, on: m.playing ?? !!p.playing, frac: m.frac ?? .42, busy: false }),
     // The Recording boards: a clip being recorded, 3 seconds in.
     recording: () => ((p.recording && !m.recStop) || m.rec ? { saving: false, levels: Array.from({ length: 70 }, (_, i) => WAVE[(i * 3 + 30) % 96]), level: .55, secs: 3.4 } : null),
+    liveSets: () => [{ id: 'new', label: 'New', n: 10 }, { id: 'hard', label: 'Hard', n: 36 }, { id: 'tag:Exam 1', label: 'Exam 1', n: 40 }, { id: 'all', label: 'All', n: 412 }],
+    live: () => { const people = p.empty ? [] : LS.people.map(livePerson);
+      return { code: LS.code, codeShown: LS.codeShown, joinText: LS.joinText, qr: liveQr(), deck: LS.deck, deckId: 'cell', phase: p.final ? 'end' : p.reveal ? 'reveal' : 'question', status: '',
+        people, here: people.length, n: 3, of: 10,
+        q: { text: liveQ.text, options: liveQ.options, right: p.reveal ? liveQ.right : null, counts: p.reveal ? liveQ.counts : null, image: p.image ? 'mock' : '', occ: p.image ? { boxes: X.BOXES, ask: 1, mode: 'all' } : null },
+        answered: 9, playing: 12, got: 7, timer: { left: 14, dur: 20, delay: 0, frac: .3 },
+        board: (p.final ? LS.final : LS.board).map(([name, score, move]) => ({ ...livePerson(name), score, move: p.final ? null : move })), last: false };
+    },
+    join: () => {
+      const pick = p.timeUp ? -1 : p.wrong ? 1 : 0, rank = liveRows.findIndex(r => r[0] === LS.me) + 1;
+      return { form: { code: m.joinCode ?? LS.code, name: m.joinName ?? LS.me, error: p.notFound ? 'No game with that code' : '', busy: false },
+        phase: p.late ? 'late' : p.final ? 'final' : 'waiting', deck: LS.deck, n: 3, of: 10, promo: true,
+        me: { ...livePerson(LS.me), score: p.final ? jordan : 2340, streak: liveRight ? 3 : 0, rank, right: 8, played: 10 },
+        q: { text: LS.q.text, options: LS.q.options, right: LS.q.right }, pick: m.livePick ?? (p.picked ? 1 : null), timer: { left: 14, dur: 20, delay: 0, frac: .7 },
+        result: { ok: liveRight, timeUp: !!p.timeUp, pick: pick >= 0 ? LS.q.options[pick] : '', answer: LS.q.options[LS.q.right], gained: liveRight ? 870 : 0, streak: liveRight ? 3 : 0 },
+        standings: liveRows.map(([name, score]) => ({ ...livePerson(name), score })) };
+    },
     href: kind => ({ decks: 'WebDecks.dc.html', newDeck: 'WebNewDeck.dc.html', import: 'WebImport.dc.html', connect: 'WebConnect.dc.html', today: 'Main.dc.html' })[kind] || 'Main.dc.html',
     // The study network (net-sample.mjs): the same answers web/net.js gets from the server. Saving, following and the
     // like stay on this board. Prop "loading" shows a page before its answer arrives.
@@ -197,7 +241,10 @@ export const MOCK_METHOD = String.raw`mock() {
       decide: id => set({ decided: { ...(m.decided || {}), [id]: true } }), readNews: () => set({ read: true }),
       suggest: () => Promise.resolve({ id: 'g9' }), restore: noop, checkDeck: noop, updateProfile: patch => set({ profile: { ...(m.profile || {}), ...patch } }), ensureProfile: noop,
       shareDeck: (id, o) => { set({ share: { ...(m.share || { vis: p.shared === 'Public' ? 'public' : p.shared === 'Link only' ? 'link' : 'private' }), ...(o.visibility ? { vis: o.visibility } : {}) } }); return Promise.resolve({}); },
-      detach: () => set({ detached: true }), takeUpdates: () => { set({ took: true }); return Promise.resolve({}); }, copyUpdates: (id, on) => set({ upd: !!on })
+      detach: () => set({ detached: true }), takeUpdates: () => { set({ took: true }); return Promise.resolve({}); }, copyUpdates: (id, on) => set({ upd: !!on }),
+      // Live: typing on the join board and tapping an answer stay on that board; the rest link to the next board.
+      joinCode: v => set({ joinCode: String(v || '').replace(/\D/g, '').slice(0, 6) }), joinName: v => set({ joinName: String(v || '').slice(0, 20) }), liveAnswer: i => set({ livePick: i }),
+      openLive: noop, liveStart: noop, liveNext: noop, liveAgain: noop, liveClose: noop, joinLive: noop, joinAgain: noop
     }
   };
-}`.replace('__SAMPLE__', () => JSON.stringify(SAMPLE)).replace('__WAVE__', () => JSON.stringify(SAMPLE_WAVE)).replace('__NET__', () => JSON.stringify(NET_SAMPLE));
+}`.replace('__SAMPLE__', () => JSON.stringify(SAMPLE)).replace('__WAVE__', () => JSON.stringify(SAMPLE_WAVE)).replace('__NET__', () => JSON.stringify(NET_SAMPLE)).replace('__LIVE__', () => JSON.stringify(LIVE_SAMPLE));

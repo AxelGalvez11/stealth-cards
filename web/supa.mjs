@@ -140,3 +140,32 @@ export const pro = {
   of: (uid, email) => call('/rest/v1/pro?select=subscription,user_id,status,plan,period_end,ending&or=' + encodeURIComponent('(user_id.eq.' + uuid(uid) + (email ? ',and(user_id.is.null,email.eq.' + quoted(String(email).toLowerCase()) + ')' : '') + ')')),
   claim: (subscription, uid) => call('/rest/v1/pro?subscription=eq.' + encodeURIComponent(subscription) + '&user_id=is.null', { method: 'PATCH', headers: { ...json, prefer: 'return=minimal' }, body: JSON.stringify({ user_id: uuid(uid) }) })
 };
+
+// Live (rooms.mjs): each game's 6-digit code, a row in the private `live_rooms` table while the game can be joined.
+// A code already held by another game that hasn't run out is refused (409), so two games never share one.
+const at = t => new Date(t).toISOString();
+const code6 = c => { if (!/^\d{6}$/.test(String(c))) throw new Error('No such room'); return c; };
+export const rooms = {
+  // True when the room is now this host's (false: the code is taken).
+  add: async (code, uid, deck, until) => {
+    try { await call('/rest/v1/live_rooms', { method: 'POST', headers: { ...json, prefer: 'return=minimal' }, body: JSON.stringify({ code: code6(code), host: uuid(uid), deck, expires_at: at(until) }) }); return true; }
+    catch (e) { if (e.status === 409) return false; throw e; }
+  },
+  // Rooms whose time is up make way for new ones.
+  sweep: () => call('/rest/v1/live_rooms?expires_at=lt.' + encodeURIComponent(at(Date.now())), { method: 'DELETE' }),
+  renew: async (code, uid, until) => {
+    const rows = await call('/rest/v1/live_rooms?code=eq.' + code6(code) + '&host=eq.' + uuid(uid), { method: 'PATCH', headers: { ...json, prefer: 'return=representation' }, body: JSON.stringify({ expires_at: at(until) }) });
+    return Array.isArray(rows) && rows.length === 1;
+  },
+  get: async code => ((await call('/rest/v1/live_rooms?code=eq.' + code6(code) + '&expires_at=gt.' + encodeURIComponent(at(Date.now())) + '&select=deck')) || [])[0] || null,
+  remove: (code, uid) => call('/rest/v1/live_rooms?code=eq.' + code6(code) + '&host=eq.' + uuid(uid), { method: 'DELETE' })
+};
+// Live's messages go over Supabase Realtime, straight between the host's and the players' browsers, which connect with
+// the project's public key. That key is made to be shared (the secret one never leaves this server), so it's Lucida's
+// own when none is set. LUCIDA_LIVE_REALTIME (a project URL) tries Realtime from this computer, for testing.
+const LUCIDA_URL = 'https://rlifdwvbspbvmeboadzg.supabase.co', LUCIDA_KEY = 'sb_publishable_Lfh1fJfWYj-x_zeZmG6N8g_0BoUf97w';
+export function realtime() {
+  const url = (base() || env.LUCIDA_LIVE_REALTIME || '').replace(/\/+$/, '');
+  const key = env.SUPABASE_PUBLISHABLE_KEY || env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || env.SUPABASE_ANON_KEY || env.NEXT_PUBLIC_SUPABASE_ANON_KEY || (url === LUCIDA_URL ? LUCIDA_KEY : '');
+  return url && key ? { ws: url.replace(/^http/, 'ws') + '/realtime/v1/websocket', rest: url + '/realtime/v1/api/broadcast', key } : null;
+}

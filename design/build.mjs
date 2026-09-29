@@ -1184,8 +1184,8 @@ renderVals() {
     spark: forecast,
     // Learn mode: start one, or go back to the one you stopped.
     learnHref: db.mock ? 'WebQuizStart.dc.html' : db.learnOn(dk.id) ? '/learn/' + dk.id : '/deck/' + dk.id + '/learn', learnLabel: 'Learn',
-    // Live (play with friends) is on the canvas only until it’s built.
-    showLive: !!db.mock
+    // Live (play with friends): play this deck on a big screen, with friends on their phones.
+    showLive: true
   };
 }`;
 
@@ -4665,49 +4665,39 @@ renderVals() { ${T}
     privacyHref: site ? '/privacy' : 'Privacy.dc.html', termsHref: site ? '/terms' : 'Terms.dc.html', pricingHref: site ? '/pricing' : '${phone ? 'PricingPhone' : 'Pricing'}.dc.html' }; }`;
 
 // ---------- Live (play with friends) ----------
-// A game like Kahoot, for study groups: from any deck, a host opens a room, friends join on their phones with a code
-// and a name (no account), and everyone answers the same questions (Learn mode's multiple choice and true or false).
-// Points for right and fast answers, a leaderboard between questions, and a podium. Canvas only for now: the design,
-// before it's built. The sample room plays Cell Biology.
-const LIVE_Q = { n: 3, of: 10, q: 'Which organelle packages proteins for secretion?', options: ['Golgi apparatus', 'Lysosome', 'Nucleus', 'Ribosome'], right: 0, counts: [7, 2, 1, 2] };
-const LIVE_PEOPLE = ['Maya', 'Jordan', 'Priya', 'Leo', 'Sofia', 'Ethan', 'Ana', 'Kai', 'Zoe', 'Omar', 'Lina', 'Noah'];
-const LIVE_BOARD = [['Maya', 3420, 1], ['Jordan', 3210, 2], ['Kai', 2980, -1], ['Priya', 2860, 0], ['Leo', 2640, 3]];
-// Each answer has a flat color and a shape, the same on the big screen and on phones.
+// A game like Kahoot, for study groups and friends: from a deck, a host opens a room on their computer (the big
+// screen), friends join on their phones with its 6-digit code or its QR code and a name (no account), and everyone
+// answers the same questions: multiple choice from the deck's cards, made the way Learn mode makes them, or the ones the
+// host's AI wrote. Points for right and fast answers, a leaderboard between questions, a podium, and on phones the final
+// leaderboard. The host's page runs the game (web/live.js). The canvas shows a sample room playing Cell Biology,
+// question 3 of 10 (LIVE_SAMPLE in design/mock.mjs), seen on Jordan's phone.
+// Each answer has a shape, the same on the big screen and on phones.
 const LIVE_SHAPES = ['<circle cx="12" cy="12" r="7.5"/>', '<path d="M12 4.5l8.5 15h-17z"/>', '<rect x="5" y="5" width="14" height="14" rx="2.5"/>', '<path d="M12 3.5l8.5 8.5-8.5 8.5-8.5-8.5z"/>'];
 const liveShape = (i, s) => `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">${LIVE_SHAPES[i]}</svg>`;
 // Live's look (the owner's reference, 2026-09-24, then their comments): bright colors and big navy type, like a game.
-// The lobby, the leaderboard, and a phone's join and waiting screens are on the daylight sky; the big screen's question
-// and answer are on white (V74); a phone's answering is blue; green means you got it; yellow means not quite; the end
-// is a faint yellow fading to white (V76). The answers are tiles in vivid gradients. The screens stay bright in dark mode.
+// Behind every screen is the deck's background (its faint colors unless the deck picked another; phones get its colors
+// for a photo, which only the host can load); green means you got it, yellow means not quite, and the end is a faint
+// yellow fading to white (V76). The answers are tiles in vivid gradients. The screens stay bright in dark mode.
 // The four answers: tiles in vivid gradients (the decks' "Vivid" style, generator.mjs), with white words. The owner
 // asked for the deep set in V72, then for "brighter gradients than this" (V76). These seeds give four clearly different
 // colors, blue, purple, orange, and magenta, each dark side on the left behind the words (the 225° angle, unflipped).
 const LIVE_VIVID = ['Live answer 9', 'Live answer 86', 'Live answer 34', 'Live answer 5'];
-// The end's faint sunny color, fading to white like the sky (the owner asked for "faint color" there, V76).
+// The end's faint sunny color, fading to white (the owner asked for "faint color" there, V76).
 const LIVE_SUN = (mid, low) => `linear-gradient(180deg, #FFE08A 0%, #FFF0C2 ${mid}%, #FFF9E8 ${low}%, #FFFFFF 100%)`;
-// The daylight sky (the landing page's, SKY, in daylight), fading to white. `mid` and `low` place its paler bands, in %.
-const liveSky = (mid, low) => `linear-gradient(180deg, #86BDF3 0%, #C9E2FB ${mid}%, #EDF5FE ${low}%, #FFFFFF 100%)`;
 // On white, chips are a faint navy instead of glass.
 const LIVE_TINT = 'rgba(13,21,66,.06)';
-// Players' circles: flat colors dark enough for a white initial.
+// Players' circles: flat colors dark enough for a white initial, one per player in the order they joined.
 const LIVE_COLORS = ['#4F60E6', '#F2701D', '#12A150', '#E5407E', '#0D1542'];
 const navyBtn = (label, href, h = 52, fs = 16, extra = '') => `<a href="${href}" style="height: ${h}px; padding: 0 26px; display: inline-flex; align-items: center; justify-content: center; gap: 8px; border-radius: 999px; background: ${LV.navy}; color: #FFFFFF; font-size: ${fs}px; font-weight: 600; ${extra}">${label}</a>`;
-// A made-up QR code for the design (the real one points at lucida.cards/join/<code>): 25 by 25 modules, three finders.
-const LIVE_QR = (() => {
-  const n = 25, on = new Set(), finder = (x, y) => { for (let i = 0; i < 7; i++) for (let j = 0; j < 7; j++) { const edge = i === 0 || i === 6 || j === 0 || j === 6, core = i >= 2 && i <= 4 && j >= 2 && j <= 4; if (edge || core) on.add((x + i) + ',' + (y + j)); } };
-  finder(0, 0); finder(n - 7, 0); finder(0, n - 7);
-  let seed = 7;
-  for (let x = 0; x < n; x++) for (let y = 0; y < n; y++) {
-    if ((x < 8 && y < 8) || (x > n - 9 && y < 8) || (x < 8 && y > n - 9)) continue;
-    seed = (seed * 9301 + 49297) % 233280; if (seed / 233280 < .46) on.add(x + ',' + y);
-  }
-  return `<svg width="100%" height="100%" viewBox="-2 -2 ${n + 4} ${n + 4}" shape-rendering="crispEdges" aria-label="QR code to join"><rect x="-2" y="-2" width="${n + 4}" height="${n + 4}" fill="#FFFFFF"/>${[...on].map(k => { const [x, y] = k.split(','); return `<rect x="${x}" y="${y}" width="1" height="1" fill="#000000"/>`; }).join('')}</svg>`;
-})();
+// The game's buttons: `click` names what they do in the app; on the canvas they link to the next board instead. `key`
+// presses one from the keyboard (Return, on the big screen).
+const navyAct = (label, href, click, h = 52, fs = 16, extra = '', key = '') => `<a href="${href}" onClick="{{${click}}}"${key ? ` data-key="${key}"` : ''} style="height: ${h}px; padding: 0 26px; display: inline-flex; align-items: center; justify-content: center; gap: 8px; border-radius: 999px; background: ${LV.navy}; color: #FFFFFF; font-size: ${fs}px; font-weight: 600; ${extra}">${label}</a>`;
 // The right answer rises and then hovers above the others, bobbing gently (the owner: no tilt, "make it appear like it is
-// hovering above the rest and that should be an animation", V77). It holds at `a` with Reduce Motion.
-const LIVE_CSS = '@keyframes scTimer{from{stroke-dashoffset:0}to{stroke-dashoffset:1}}@keyframes scJoin{from{opacity:0;transform:scale(.6)}}@keyframes scBar{from{transform:scaleX(0)}}@keyframes scRiseUp{from{opacity:0;transform:translateY(40px)}}@keyframes scFloat2{50%{transform:translateY(-6px)}}@keyframes scPop{from{transform:scale(0)}}'
+// hovering above the rest and that should be an animation", V77). It holds at `a` with Reduce Motion. The timer ring and
+// a phone's time bar run down with the question's time (on the canvas they loop).
+const LIVE_CSS = '@keyframes scTimer{from{stroke-dashoffset:0}to{stroke-dashoffset:1}}@keyframes scTime{from{transform:scaleX(1)}to{transform:scaleX(0)}}@keyframes scJoin{from{opacity:0;transform:scale(.6)}}@keyframes scBar{from{transform:scaleX(0)}}@keyframes scRiseUp{from{opacity:0;transform:translateY(40px)}}@keyframes scFloat2{50%{transform:translateY(-6px)}}@keyframes scPop{from{transform:scale(0)}}'
   + '@keyframes scDealR{from{opacity:0;transform:translate(40px,30px)}}@keyframes scDealL{from{opacity:0;transform:translate(-30px,30px)}}'
-  + HOVER_CSS(-10, -15)
+  + HOVER_CSS(-10, -15) + OCC_VIEW_CSS
   + '@media (prefers-reduced-motion:reduce){.sc-live *{animation:none!important}}';
 // The streak flame's flicker (only the phone's "right" screen has it).
 const FLAME_CSS = '@keyframes scFlame{0%,100%{transform:rotate(-3deg) scale(1,1)}25%{transform:rotate(2deg) scale(1.05,.96)}50%{transform:rotate(-1deg) scale(.97,1.06)}75%{transform:rotate(3deg) scale(1.02,.99)}}@keyframes scFlameCore{0%,100%{transform:scale(1,1);opacity:1}50%{transform:scale(.86,1.14);opacity:.82}}';
@@ -4715,84 +4705,90 @@ const FLAME_CSS = '@keyframes scFlame{0%,100%{transform:rotate(-3deg) scale(1,1)
 // (Words beside a {{hole}} sit in their own span: the canvas wraps each hole in one, and a flex box drops the spaces
 // around it.)
 const liveTimer = (size, stroke, chip = LV.chip) => { const r = (size - stroke) / 2, c = size / 2;
-  return `<div style="position: relative; width: ${size}px; height: ${size}px; border-radius: 50%; background: ${chip};"><svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" aria-hidden="true" style="transform: rotate(-90deg);"><circle cx="${c}" cy="${c}" r="${r}" fill="none" stroke="rgba(13,21,66,.1)" stroke-width="${stroke}"/><circle pathLength="1" cx="${c}" cy="${c}" r="${r}" fill="none" stroke="${LV.purple}" stroke-width="${stroke}" stroke-linecap="round" stroke-dasharray="1" style="animation: scTimer 20s linear infinite;"/></svg><span style="position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: ${Math.round(size / 3)}px; font-weight: 700; font-variant-numeric: tabular-nums;">14</span></div>`; };
+  return `<div role="timer" aria-label="{{timer.label}}" style="position: relative; width: ${size}px; height: ${size}px; border-radius: 50%; background: ${chip};"><svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" aria-hidden="true" style="transform: rotate(-90deg);"><circle cx="${c}" cy="${c}" r="${r}" fill="none" stroke="rgba(13,21,66,.1)" stroke-width="${stroke}"/><circle pathLength="1" cx="${c}" cy="${c}" r="${r}" fill="none" stroke="${LV.purple}" stroke-width="${stroke}" stroke-linecap="round" stroke-dasharray="1" stroke-dashoffset="{{timer.frac}}" style="animation: {{timer.anim}};"/></svg><span style="position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: ${Math.round(size / 3)}px; font-weight: 700; font-variant-numeric: tabular-nums;">{{timer.left}}</span></div>`; };
 const liveTop = (right, chip = LV.chip) => `<header style="height: 96px; flex-shrink: 0; box-sizing: border-box; padding: 0 48px; display: flex; align-items: center; justify-content: space-between; gap: 24px;">
-    <div style="display: flex; align-items: center; gap: 16px;">${logo(30)}<span style="height: 32px; padding: 0 14px; display: inline-flex; align-items: center; border-radius: 999px; background: ${chip}; font-size: 14px; font-weight: 600;"><span>Question {{q.n}} of {{q.of}}</span></span><span style="font-size: 15px; color: ${LV.ink2};">Cell Biology</span></div>
+    <div style="display: flex; align-items: center; gap: 16px; min-width: 0;">${logo(30)}<span style="height: 32px; padding: 0 14px; display: inline-flex; align-items: center; border-radius: 999px; background: ${chip}; font-size: 14px; font-weight: 600; white-space: nowrap;"><span>{{qOf}}</span></span><span style="min-width: 0; font-size: 15px; color: ${LV.ink2}; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{deckName}}</span></div>
     ${right}
   </header>`;
-const liveFoot = `<footer style="height: 56px; flex-shrink: 0; box-sizing: border-box; padding: 0 48px; display: flex; align-items: center; justify-content: space-between; font-size: 15px; color: ${LV.ink2};"><span>Join at <span style="font-weight: 700; color: ${LV.navy};">lucida.cards/join</span> with <span style="font-weight: 700; color: ${LV.navy}; letter-spacing: .06em;">482 913</span></span><span>{{peopleN}} people</span></footer>`;
-const liveRoot = (w, h, extra = '') => `class="sc-live" style="position: relative; isolation: isolate; width: ${w}px; height: ${h}px; box-sizing: border-box; font-family: ${FONT}; background: ${LV.blue}; color: ${LV.navy}; overflow: hidden; ${extra}"`;
+const liveFoot = `<footer style="height: 56px; flex-shrink: 0; box-sizing: border-box; padding: 0 48px; display: flex; align-items: center; justify-content: space-between; font-size: 15px; color: ${LV.ink2};"><span>Join at <span style="font-weight: 700; color: ${LV.navy};">{{joinText}}</span> with <span style="font-weight: 700; color: ${LV.navy}; letter-spacing: .06em;">{{codeShown}}</span></span><span>{{peopleLine}}</span></footer>`;
+// Every Live screen but setting up. A phone's (390 wide) fills a phone, and on a computer its content runs down the
+// middle (sc-live-phone, web/app.html).
+const liveRoot = (w, h, extra = '') => `class="sc-live${w === 390 ? ' sc-live-phone' : ''}" style="position: relative; isolation: isolate; width: ${w}px; height: ${h}px; box-sizing: border-box; font-family: ${FONT}; background: ${LV.blue}; color: ${LV.navy}; overflow: hidden; ${extra}"`;
 // An answer on the big screen: a tile in its vivid gradient, with its shape and words. After the reveal, the right one
-// rises and hovers above the rest with a green check (V77: no tilt); the others keep their gradients, grayed out (V76). Each shows how many picked it. `liveDeep` is the color under a tile (the phones' too).
+// rises and hovers above the rest with a green check (V77: no tilt); the others keep their gradients, grayed out (V76).
+// Each shows how many picked it. A question has two to four answers. `liveDeep` is the color under a tile (the
+// phones' too).
 const liveDeep = i => `<span aria-hidden="true" style="position: absolute; inset: 0; background: {{o${i}.p.base}}; filter: {{o${i}.gfilter}}; transition: filter .35s;">${flowLayer(`o${i}.p`)}</span>${GRAIN_LAYER}`;
-const liveTile = i => `<div style="position: relative; overflow: hidden; height: 150px; border-radius: 28px; color: {{o${i}.fg}}; box-shadow: {{o${i}.shadow}}; transform: {{o${i}.tf}}; animation: {{o${i}.anim}}; transition: color .3s, transform .4s cubic-bezier(.2,.8,.2,1), box-shadow .4s;">${liveDeep(i)}<div style="position: relative; height: 100%; box-sizing: border-box; padding: 0 32px; display: flex; align-items: center; gap: 22px; text-shadow: {{o${i}.ts}};"><span style="width: 60px; height: 60px; flex-shrink: 0; border-radius: 30px; background: {{o${i}.badge}}; box-shadow: {{o${i}.badgeLine}}; display: flex; align-items: center; justify-content: center;">${liveShape(i, 26)}</span><span style="flex-grow: 1; font-size: 34px; font-weight: 700; letter-spacing: -.02em;">{{o${i}.label}}</span><sc-if value="{{o${i}.showCount}}" hint-placeholder-val="{{ false }}"><span style="display: flex; align-items: center; gap: 14px;"><span style="font-size: 30px; font-weight: 700; font-variant-numeric: tabular-nums;">{{o${i}.count}}</span><sc-if value="{{o${i}.right}}" hint-placeholder-val="{{ false }}"><span style="width: 52px; height: 52px; border-radius: 26px; background: ${LV.check}; color: #FFFFFF; display: flex; align-items: center; justify-content: center; animation: scPop .4s cubic-bezier(.2,.8,.2,1) both;">${svg(I.check, 26, 3)}</span></sc-if></span></sc-if></div></div>`;
+const liveTile = i => `<sc-if value="{{o${i}.show}}" hint-placeholder-val="{{ true }}"><div style="position: relative; overflow: hidden; height: {{tileH}}; border-radius: 28px; color: {{o${i}.fg}}; box-shadow: {{o${i}.shadow}}; transform: {{o${i}.tf}}; animation: {{o${i}.anim}}; transition: color .3s, transform .4s cubic-bezier(.2,.8,.2,1), box-shadow .4s;">${liveDeep(i)}<div style="position: relative; height: 100%; box-sizing: border-box; padding: 0 32px; display: flex; align-items: center; gap: 22px; text-shadow: {{o${i}.ts}};"><span style="width: 60px; height: 60px; flex-shrink: 0; border-radius: 30px; background: {{o${i}.badge}}; box-shadow: {{o${i}.badgeLine}}; display: flex; align-items: center; justify-content: center;">${liveShape(i, 26)}</span><span style="flex-grow: 1; min-width: 0; font-size: {{tileFs}}; font-weight: 700; line-height: 1.12; letter-spacing: -.02em; overflow-wrap: anywhere; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; overflow: hidden;">{{o${i}.label}}</span><sc-if value="{{o${i}.showCount}}" hint-placeholder-val="{{ false }}"><span style="display: flex; align-items: center; gap: 14px;"><span style="font-size: 30px; font-weight: 700; font-variant-numeric: tabular-nums;">{{o${i}.count}}</span><sc-if value="{{o${i}.right}}" hint-placeholder-val="{{ false }}"><span style="width: 52px; height: 52px; border-radius: 26px; background: ${LV.check}; color: #FFFFFF; display: flex; align-items: center; justify-content: center; animation: scPop .4s cubic-bezier(.2,.8,.2,1) both;">${svg(I.check, 26, 3)}</span></sc-if></span></sc-if></div></div></sc-if>`;
 const liveTiles = `<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">${[0, 1, 2, 3].map(liveTile).join('')}</div>`;
+// A picture card's picture, on the big screen above the answers (phones show only the question): the asked box
+// highlighted, and an outline once the answer shows. It's as tall as the screen has room for (up to 300px, so a small
+// picture still reads across a room). The canvas draws its sample diagram.
+const livePicture = `<sc-if value="{{pic.has}}" hint-placeholder-val="{{ false }}"><div style="align-self: center; position: relative; line-height: 0; border-radius: 22px; overflow: hidden; background: #FFFFFF; box-shadow: ${LV.shadow};">
+      <sc-if value="{{pic.mock}}" hint-placeholder-val="{{ false }}"><div style="padding: 14px 20px;">${CELL(352, 240, false, 2)}</div></sc-if>
+      <sc-if value="{{pic.url}}" hint-placeholder-val="{{ false }}"><img src="{{pic.url}}" alt="" style="display: block; width: auto; height: clamp(120px, calc(100cqh - 400px), 300px); max-width: min(100cqw, 1200px); object-fit: contain;"></sc-if>
+      <div style="position: absolute; inset: {{pic.inset}};">${OCC_BOXES('pic.boxes', 16)}</div>
+    </div></sc-if>`;
 // The question, on white (the owner asked to go back to it, V74), so the deep gradient answers stand out.
-const liveQuestion = `<div ${liveRoot(1440, 900, 'display: flex; flex-direction: column; background: #FFFFFF;')}>
+const liveAsk = right => `<div ${liveRoot(1440, 900, 'display: flex; flex-direction: column; background: #FFFFFF;')}>
   ${studyBgLayer}
-  ${liveTop(`<div style="display: flex; align-items: center; gap: 20px;"><span style="font-size: 15px; color: ${LV.ink2};"><span style="font-weight: 700; color: ${LV.navy};">9</span> of 12 answered</span>${liveTimer(76, 7, LIVE_TINT)}</div>`, LIVE_TINT)}
-  <main style="flex-grow: 1; box-sizing: border-box; padding: 8px 48px 24px; display: flex; flex-direction: column; justify-content: center; gap: 40px;">
-    <h1 style="margin: 0; text-align: center; font-size: 60px; font-weight: 700; line-height: 1.08; letter-spacing: -.035em; text-wrap: balance;">{{q.q}}</h1>
+  ${liveTop(right, LIVE_TINT)}
+  <main style="flex-grow: 1; min-height: 0; container-type: size; box-sizing: border-box; padding: 8px 48px 24px; display: flex; flex-direction: column; justify-content: center; gap: {{mainGap}};">
+    <h1 style="margin: 0; text-align: center; font-size: {{qSize}}; font-weight: 700; line-height: 1.08; letter-spacing: -.035em; text-wrap: balance; overflow-wrap: anywhere;">{{qText}}</h1>
+    ${livePicture}
     ${liveTiles}
   </main>
   ${liveFoot}
 </div>`;
-// After time's up: the right answer lifts with a check, the rest go gray, and each shows how many picked it. On white,
-// like the question it follows.
-const liveReveal = `<div ${liveRoot(1440, 900, 'display: flex; flex-direction: column; background: #FFFFFF;')}>
-  ${studyBgLayer}
-  ${liveTop(`<div style="display: flex; align-items: center; gap: 14px;"><span style="font-size: 15px; color: ${LV.ink2};"><span style="font-weight: 700; color: ${LV.navy};">7 of 12</span> got it</span>${navyBtn(`{{nextLabel}}${svg(I.chev, 16, 2.4)}`, '{{nextHref}}')}</div>`, LIVE_TINT)}
-  <main style="flex-grow: 1; box-sizing: border-box; padding: 8px 48px 24px; display: flex; flex-direction: column; justify-content: center; gap: 40px;">
-    <h1 style="margin: 0; text-align: center; font-size: 60px; font-weight: 700; line-height: 1.08; letter-spacing: -.035em; text-wrap: balance;">{{q.q}}</h1>
-    ${liveTiles}
-  </main>
-  ${liveFoot}
-</div>`;
-// The leaderboard between questions, on the sky's faint blue fade (the owner, V76): the top five on white cards, how far
-// each moved, and purple bars against the leader.
+const liveQuestion = liveAsk(`<div style="display: flex; align-items: center; gap: 20px;"><span style="font-size: 15px; color: ${LV.ink2};"><span style="font-weight: 700; color: ${LV.navy};">{{answered}}</span> {{answeredOf}}</span>${liveTimer(76, 7, LIVE_TINT)}</div>`);
+// After time's up (or once everyone here has answered): the right answer lifts with a check, the rest go gray, and each
+// shows how many picked it. On white, like the question it follows.
+const liveReveal = liveAsk(`<div style="display: flex; align-items: center; gap: 14px;"><span style="font-size: 15px; color: ${LV.ink2};"><span style="font-weight: 700; color: ${LV.navy};">{{gotText}}</span> got it</span>${navyAct(`{{nextLabel}}${svg(I.chev, 16, 2.4)}`, '{{nextHref}}', 'next', 52, 16, '', 'Enter')}</div>`);
+// The leaderboard between questions: the top five on white cards, how far each moved, and purple bars against the
+// leader.
 const liveLeaderboard = `<div ${liveRoot(1440, 900, 'display: flex; flex-direction: column; background: #FFFFFF;')}>
   ${studyBgLayer}
-  ${liveTop(navyBtn(`Next question${svg(I.chev, 16, 2.4)}`, 'LiveQuestion.dc.html'))}
+  ${liveTop(navyAct(`Next question${svg(I.chev, 16, 2.4)}`, 'LiveQuestion.dc.html', 'next', 52, 16, '', 'Enter'))}
   <main style="flex-grow: 1; box-sizing: border-box; padding: 16px 48px 32px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 28px;">
     <h1 style="margin: 0; font-size: 60px; font-weight: 700; letter-spacing: -.035em;">Leaderboard</h1>
-    <div style="width: 900px; display: flex; flex-direction: column; gap: 12px;"><sc-for list="{{board}}" as="p" hint-placeholder-count="5"><div style="height: 72px; box-sizing: border-box; padding: 0 22px; border-radius: 22px; background: #FFFFFF; box-shadow: ${LV.shadow}; display: flex; align-items: center; gap: 18px; animation: scRiseUp .5s cubic-bezier(.2,.8,.2,1) both; animation-delay: {{p.delay}};"><span style="width: 32px; font-size: 22px; font-weight: 700; font-variant-numeric: tabular-nums; color: ${LV.ink2};">{{p.rank}}</span><span style="width: 44px; height: 44px; flex-shrink: 0; border-radius: 22px; background: {{p.color}}; color: #FFFFFF; display: flex; align-items: center; justify-content: center; font-size: 18px; font-weight: 700;">{{p.initial}}</span><span style="width: 150px; font-size: 22px; font-weight: 700;">{{p.name}}</span><div style="flex-grow: 1; height: 12px; border-radius: 6px; background: rgba(13,21,66,.08); overflow: hidden;"><div style="width: {{p.w}}; height: 100%; border-radius: 6px; background: ${LV.purple}; transform-origin: left; animation: scBar .9s cubic-bezier(.2,.8,.2,1) both;"></div></div><span style="width: 90px; text-align: right; font-size: 22px; font-weight: 700; font-variant-numeric: tabular-nums;">{{p.score}}</span><span style="width: 44px; text-align: right; font-size: 15px; font-weight: 700; color: {{p.moveColor}};">{{p.move}}</span></div></sc-for></div>
+    <div style="width: 900px; max-width: 100%; display: flex; flex-direction: column; gap: 12px;"><sc-for list="{{board}}" as="p" hint-placeholder-count="5"><div style="height: 72px; box-sizing: border-box; padding: 0 22px; border-radius: 22px; background: #FFFFFF; box-shadow: ${LV.shadow}; display: flex; align-items: center; gap: 18px; animation: scRiseUp .5s cubic-bezier(.2,.8,.2,1) both; animation-delay: {{p.delay}};"><span style="width: 32px; font-size: 22px; font-weight: 700; font-variant-numeric: tabular-nums; color: ${LV.ink2};">{{p.rank}}</span><span style="width: 44px; height: 44px; flex-shrink: 0; border-radius: 22px; background: {{p.color}}; color: #FFFFFF; display: flex; align-items: center; justify-content: center; font-size: 18px; font-weight: 700;">{{p.initial}}</span><span style="width: 190px; font-size: 22px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{p.name}}</span><div style="flex-grow: 1; height: 12px; border-radius: 6px; background: rgba(13,21,66,.08); overflow: hidden;"><div style="width: {{p.w}}; height: 100%; border-radius: 6px; background: ${LV.purple}; transform-origin: left; animation: scBar .9s cubic-bezier(.2,.8,.2,1) both;"></div></div><span style="width: 90px; text-align: right; font-size: 22px; font-weight: 700; font-variant-numeric: tabular-nums;">{{p.score}}</span><span style="width: 44px; text-align: right; font-size: 15px; font-weight: 700; color: {{p.moveColor}};">{{p.move}}</span></div></sc-for></div>
   </main>
   ${liveFoot}
 </div>`;
-// The end: a faint yellow fading to white (the owner, V76), with confetti, a flat podium (navy, purple, and blue blocks),
-// and play again.
-const LIVE_PODIUM = [[1, 'Jordan', '8,940', 230, LV.purple, '#FFFFFF'], [0, 'Maya', '9,610', 320, LV.navy, '#FFFFFF'], [2, 'Kai', '8,120', 170, LV.blue, LV.navy]];
+// The end: confetti, a flat podium (navy, purple, and blue blocks), and play again. With fewer than three players,
+// only their places stand.
 const livePodium = `<div ${liveRoot(1440, 900, 'display: flex; flex-direction: column; align-items: center; background: #FFFFFF;')}>
   ${studyBgLayer}
   <div aria-hidden="true" style="position: absolute; inset: 0; pointer-events: none;">${Array.from({ length: 28 }, (_, i) => { const x = (i * 37) % 100, y = (i * 53) % 55, c = [LV.navy, '#FFB020', LV.blue, '#1FC45A', LV.purple][i % 5], s = 6 + (i % 4) * 3; return `<span style="position: absolute; left: ${x}%; top: ${y}%; width: ${s}px; height: ${s}px; border-radius: ${i % 3 ? '50%' : '2px'}; background: ${c}; animation: scFloat2 ${3 + (i % 3)}s ease-in-out -${i % 4}s infinite;"></span>`; }).join('')}</div>
-  <header style="position: relative; width: 100%; height: 96px; box-sizing: border-box; padding: 0 48px; display: flex; align-items: center; justify-content: space-between;">${logo(30)}<span style="font-size: 15px; color: ${LV.ink2};">Cell Biology · final results</span></header>
-  <h1 style="position: relative; margin: 8px 0 0; font-size: 60px; font-weight: 700; letter-spacing: -.035em;">Maya wins!</h1>
-  <div style="position: relative; flex-grow: 1; width: 900px; display: flex; align-items: flex-end; justify-content: center; gap: 18px;">
-    ${LIVE_PODIUM.map(([i, name, score, h, bg, fg]) => `<div style="width: 260px; display: flex; flex-direction: column; align-items: center; gap: 12px; animation: scRiseUp .7s cubic-bezier(.2,.8,.2,1) both; animation-delay: ${[.4, .8, 0][i]}s;"><span style="width: 64px; height: 64px; border-radius: 32px; background: {{c${i}}}; color: #FFFFFF; display: flex; align-items: center; justify-content: center; font-size: 26px; font-weight: 700; box-shadow: 0 0 0 4px #FFFFFF, 0 0 0 6px rgba(13,21,66,.12);">${name[0]}</span><span style="font-size: 24px; font-weight: 700;">${name}</span><span style="font-size: 18px; color: ${LV.ink2}; font-variant-numeric: tabular-nums;">${score}</span><div style="width: 100%; height: ${h}px; box-sizing: border-box; padding-top: 22px; border-radius: 28px 28px 0 0; background: ${bg}; color: ${fg}; display: flex; justify-content: center;"><span style="font-size: 64px; font-weight: 700; letter-spacing: -.04em; line-height: 1;">${i + 1}</span></div></div>`).join('')}
+  <header style="position: relative; width: 100%; height: 96px; box-sizing: border-box; padding: 0 48px; display: flex; align-items: center; justify-content: space-between;">${logo(30)}<span style="font-size: 15px; color: ${LV.ink2};">{{endLine}}</span></header>
+  <h1 style="position: relative; margin: 8px 0 0; font-size: 60px; font-weight: 700; letter-spacing: -.035em;">{{winLine}}</h1>
+  <div style="position: relative; flex-grow: 1; width: 900px; max-width: 100%; display: flex; align-items: flex-end; justify-content: center; gap: 18px;">
+    <sc-for list="{{podium}}" as="w" hint-placeholder-count="3"><div style="width: 260px; display: flex; flex-direction: column; align-items: center; gap: 12px; animation: scRiseUp .7s cubic-bezier(.2,.8,.2,1) both; animation-delay: {{w.delay}};"><span style="width: 64px; height: 64px; border-radius: 32px; background: {{w.color}}; color: #FFFFFF; display: flex; align-items: center; justify-content: center; font-size: 26px; font-weight: 700; box-shadow: 0 0 0 4px #FFFFFF, 0 0 0 6px rgba(13,21,66,.12);">{{w.initial}}</span><span style="max-width: 100%; font-size: 24px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{w.name}}</span><span style="font-size: 18px; color: ${LV.ink2}; font-variant-numeric: tabular-nums;">{{w.score}}</span><div style="width: 100%; height: {{w.h}}; box-sizing: border-box; padding-top: 22px; border-radius: 28px 28px 0 0; background: {{w.bg}}; color: {{w.fg}}; display: flex; justify-content: center;"><span style="font-size: 64px; font-weight: 700; letter-spacing: -.04em; line-height: 1;">{{w.place}}</span></div></div></sc-for>
   </div>
-  <div style="position: relative; width: 100%; height: 108px; box-sizing: border-box; padding: 0 48px; display: flex; align-items: center; justify-content: center; gap: 12px;"><a href="LiveLobby.dc.html" style="height: 52px; padding: 0 26px; display: inline-flex; align-items: center; border-radius: 999px; background: rgba(13,21,66,.07); font-size: 16px; font-weight: 600;">Play again</a>${navyBtn('Done', 'WebDeck.dc.html')}</div>
+  <div style="position: relative; width: 100%; height: 108px; box-sizing: border-box; padding: 0 48px; display: flex; align-items: center; justify-content: center; gap: 12px;"><a href="LiveLobby.dc.html" onClick="{{again}}" style="height: 52px; padding: 0 26px; display: inline-flex; align-items: center; border-radius: 999px; background: rgba(13,21,66,.07); font-size: 16px; font-weight: 600;">Play again</a>${navyAct('Done', 'WebDeck.dc.html', 'done')}</div>
 </div>`;
-// The lobby: on the daylight sky, like before V71 (the owner asked for it back, V74), with the join code big, a QR code,
-// and people popping in as they join.
+// The lobby, with the join code big, a QR code that opens the join page with the code in, and people popping in as they
+// join. Start needs someone in.
 const liveLobby = `<div ${liveRoot(1440, 900, 'display: flex; flex-direction: column; background: #FFFFFF;')}>
   ${studyBgLayer}
-  <header style="height: 96px; flex-shrink: 0; box-sizing: border-box; padding: 0 48px; display: flex; align-items: center; justify-content: space-between;">${logo(30)}<span style="height: 36px; padding: 0 16px; display: inline-flex; align-items: center; gap: 8px; border-radius: 999px; background: ${LV.chip}; font-size: 14px; font-weight: 600;">${svg(I.live, 16, 2)}Cell Biology</span></header>
-  <main style="flex-grow: 1; box-sizing: border-box; padding: 0 48px 48px; display: grid; grid-template-columns: 1fr 380px; gap: 48px; align-items: center;">
-    <div style="display: flex; flex-direction: column; gap: 18px;">
-      <span style="font-size: 30px; font-weight: 500; color: ${LV.ink2};">Join at <span style="font-weight: 700; color: ${LV.navy};">lucida.cards/join</span></span>
-      <span style="font-size: 150px; font-weight: 700; line-height: .95; letter-spacing: .02em; font-variant-numeric: tabular-nums;">482 913</span>
-      <div style="margin-top: 22px; display: flex; flex-wrap: wrap; gap: 10px; max-width: 820px;"><sc-for list="{{people}}" as="p" hint-placeholder-count="12"><span style="height: 44px; padding: 0 18px 0 8px; display: inline-flex; align-items: center; gap: 10px; border-radius: 999px; background: #FFFFFF; box-shadow: ${LV.shadow}; font-size: 18px; font-weight: 700; animation: scJoin .45s cubic-bezier(.2,.8,.2,1) both; animation-delay: {{p.delay}};"><span style="width: 30px; height: 30px; border-radius: 15px; background: {{p.color}}; color: #FFFFFF; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 700;">{{p.initial}}</span>{{p.name}}</span></sc-for></div>
+  <header style="height: 96px; flex-shrink: 0; box-sizing: border-box; padding: 0 48px; display: flex; align-items: center; justify-content: space-between; gap: 24px;">${logo(30)}<span style="min-width: 0; height: 36px; padding: 0 16px; display: inline-flex; align-items: center; gap: 8px; border-radius: 999px; background: ${LV.chip}; font-size: 14px; font-weight: 600;">${svg(I.live, 16, 2)}<span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{deckName}}</span></span></header>
+  <main style="flex-grow: 1; min-height: 0; box-sizing: border-box; padding: 0 48px 48px; display: grid; grid-template-columns: minmax(0, 1fr) 380px; gap: 48px; align-items: center;">
+    <div style="min-width: 0; container-type: inline-size; display: flex; flex-direction: column; gap: 18px;">
+      <span style="font-size: 30px; font-weight: 500; color: ${LV.ink2};">Join at <span style="font-weight: 700; color: ${LV.navy};">{{joinText}}</span></span>
+      <span style="font-size: min(150px, 16.3cqi); font-weight: 700; line-height: .95; letter-spacing: .02em; font-variant-numeric: tabular-nums; white-space: nowrap;">{{codeShown}}</span>
+      <div style="margin-top: 22px; display: flex; flex-wrap: wrap; gap: 10px; max-width: 820px; max-height: 330px; overflow: hidden;"><sc-for list="{{people}}" as="p" hint-placeholder-count="12"><span style="height: 44px; max-width: 260px; box-sizing: border-box; padding: 0 18px 0 8px; display: inline-flex; align-items: center; gap: 10px; border-radius: 999px; background: #FFFFFF; box-shadow: ${LV.shadow}; font-size: 18px; font-weight: 700; animation: scJoin .45s cubic-bezier(.2,.8,.2,1) both; animation-delay: {{p.delay}};"><span style="width: 30px; height: 30px; flex-shrink: 0; border-radius: 15px; background: {{p.color}}; color: #FFFFFF; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 700;">{{p.initial}}</span><span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{p.name}}</span></span></sc-for></div>
     </div>
     <div style="display: flex; flex-direction: column; align-items: center; gap: 22px;">
-      <div style="width: 300px; height: 300px; box-sizing: border-box; padding: 18px; border-radius: 32px; background: #FFFFFF; box-shadow: ${LV.lift}; transform: rotate(3deg);">${LIVE_QR}</div>
-      <span style="font-size: 18px; color: ${LV.ink2};"><span style="font-weight: 700; color: ${LV.navy};">12</span> people in</span>
-      ${navyBtn('Start', 'LiveQuestion.dc.html', 64, 20, 'width: 300px; box-sizing: border-box;')}
+      <div style="width: 300px; height: 300px; box-sizing: border-box; padding: 18px; border-radius: 32px; background: #FFFFFF; box-shadow: ${LV.lift}; transform: rotate(3deg);"><img src="{{qr}}" alt="QR code to join" width="264" height="264" style="display: block; width: 100%; height: 100%;"></div>
+      <span style="font-size: 18px; color: ${LV.ink2};"><span style="font-weight: 700; color: ${LV.navy};">{{peopleN}}</span> {{peopleIn}}</span>
+      ${navyAct('Start', 'LiveQuestion.dc.html', 'start', 64, 20, 'width: 300px; box-sizing: border-box; opacity: {{startOp}}; cursor: {{startCursor}};', 'Enter')}
     </div>
   </main>
 </div>`;
-// Setting up, from a deck: which cards, how many questions, and the time for each.
+// Setting up, from a deck: which cards, how many questions, and the time for each. A deck needs cards that can make
+// questions (two or more with answers).
 const liveSetup = `<div style="position: relative; width: 1440px; height: 900px; overflow: hidden; font-family: ${FONT}; color: {{t.text}};">
-  <dc-import name="WebDeck" dark="{{dark}}" dim="{{dim}}" hint-size="1440px,900px"></dc-import>
+  <dc-import name="WebDeck" dark="{{dark}}" dim="{{dim}}" deck-id="{{deckId}}" hint-size="1440px,900px"></dc-import>
   <div style="position: absolute; inset: 0; background: {{t.dim}};"></div>
   <div role="dialog" aria-label="Play live" style="position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); width: 560px; box-sizing: border-box; padding: 28px; border-radius: 36px; overflow: hidden; background: {{t.bg}}; box-shadow: 0 24px 64px rgba(0,0,0,.24);">
     ${deepTop}
@@ -4800,101 +4796,197 @@ const liveSetup = `<div style="position: relative; width: 1440px; height: 900px;
     ${deepHead('live', 'Play live', 'WebDeck.dc.html', 'Play this deck with friends. They join on their phones with a code, no account needed. Right and fast answers win.')}
     ${quizField('Cards', quizSeg('sets'))}
     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">${quizField('Questions', quizSeg('counts'))}${quizField('Time for each', quizSeg('times'))}</div>
-    <div style="display: flex; gap: 10px;">${quizBtn('Cancel', 'WebDeck.dc.html', false, 1)}${quizBtn('Open the room', 'LiveLobby.dc.html', true, 2, 'live')}</div>
+    <sc-if value="{{noneLine}}" hint-placeholder-val="{{ false }}"><div style="font-size: 13px; line-height: 1.45; color: {{t.muted}};">{{noneLine}}</div></sc-if>
+    <div style="display: flex; gap: 10px;">${quizBtn('Cancel', 'WebDeck.dc.html', false, 1)}<a href="LiveLobby.dc.html" onClick="{{open}}" data-key="Enter" style="flex-grow: 2; height: 52px; border-radius: 999px; background: {{openBg}}; color: {{openFg}}; display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 15px; font-weight: 600; cursor: {{openCursor}};">${svg(I.live, 16, 2)}Open the room</a></div>
     </div>
   </div>
 </div>`;
-// On phones: join with the code and a name, on the daylight sky like the waiting screen after it (the owner asked for
-// it, V74; the same on the web's join page and in the iPhone app once Live is built).
+// On phones: join with the code and a name. From the QR code, the code is filled in. A code with no game, or a name
+// someone in the game has, says so under the fields, in the "not quite" yellow.
 const liveJoin = `<div ${liveRoot(390, 844, 'padding: 72px 20px 34px; display: flex; flex-direction: column; gap: 28px; background: #FFFFFF;')}>
   ${studyBgLayer}
   ${logo(28)}
   <div style="display: flex; flex-direction: column; gap: 10px;"><h1 style="margin: 0; font-size: 36px; font-weight: 700; line-height: 1.08; letter-spacing: -.03em;">Join a live game</h1><span style="font-size: 16px; line-height: 1.45; color: ${LV.ink2};">Type the code on the big screen. No account needed.</span></div>
-  <div style="display: flex; flex-direction: column; gap: 8px;"><span style="font-size: 13px; font-weight: 700;">Code</span><label style="position: relative; display: flex; justify-content: space-between; gap: 6px; cursor: text;"><sc-for list="{{boxes}}" as="b" hint-placeholder-count="6"><span style="flex: 0 1 50px; min-width: 0; height: 58px; border-radius: 14px; background: #FFFFFF; box-shadow: ${LV.shadow}; display: flex; align-items: center; justify-content: center; font-size: 24px; font-weight: 700;">{{b.digit}}</span></sc-for><input type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6" value="{{code}}" onChange="{{setCode}}" aria-label="6-digit code" style="position: absolute; inset: 0; width: 100%; opacity: 0; border: 0; padding: 0; font-size: 16px;"></label></div>
-  <label style="display: flex; flex-direction: column; gap: 8px;"><span style="font-size: 13px; font-weight: 700;">Your name</span><input type="text" value="Maya" aria-label="Your name" style="height: 56px; box-sizing: border-box; padding: 0 20px; border: 0; outline: 0; border-radius: 999px; background: #FFFFFF; box-shadow: ${LV.shadow}; color: ${LV.navy}; font: inherit; font-size: 16px; font-weight: 600;"></label>
+  <div style="display: flex; flex-direction: column; gap: 8px;"><span style="font-size: 13px; font-weight: 700;">Code</span><label style="position: relative; display: flex; justify-content: space-between; gap: 6px; cursor: text;"><sc-for list="{{boxes}}" as="b" hint-placeholder-count="6"><span style="flex: 0 1 50px; min-width: 0; height: 58px; border-radius: 14px; background: #FFFFFF; box-shadow: {{b.ring}}; display: flex; align-items: center; justify-content: center; font-size: 24px; font-weight: 700;">{{b.digit}}</span></sc-for><input type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6" value="{{code}}" onChange="{{setCode}}" onFocus="{{codeIn}}" onBlur="{{codeOut}}" onKeyDown="{{codeKey}}" aria-label="6-digit code" style="position: absolute; inset: 0; width: 100%; opacity: 0; border: 0; padding: 0; font-size: 16px;"></label></div>
+  <label style="display: flex; flex-direction: column; gap: 8px;"><span style="font-size: 13px; font-weight: 700;">Your name</span><input type="text" value="{{name}}" onChange="{{setName}}" onKeyDown="{{nameKey}}" maxlength="20" autocomplete="nickname" enterkeyhint="go" aria-label="Your name" style="height: 56px; box-sizing: border-box; padding: 0 20px; border: 0; outline: 0; border-radius: 999px; background: #FFFFFF; box-shadow: ${LV.shadow}; color: ${LV.navy}; font: inherit; font-size: 16px; font-weight: 600;"></label>
+  <sc-if value="{{error}}" hint-placeholder-val="{{ false }}"><span role="alert" style="align-self: flex-start; min-height: 36px; box-sizing: border-box; margin-top: -12px; padding: 7px 14px; display: inline-flex; align-items: center; border-radius: 18px; background: ${LV.yellow}; font-size: 14px; font-weight: 700; line-height: 1.3;">{{error}}</span></sc-if>
   <div style="flex-grow: 1;"></div>
-  ${navyBtn('Join', 'LiveWaiting.dc.html', 58, 17)}
+  ${navyAct('{{joinLabel}}', 'LiveWaiting.dc.html', 'join', 58, 17, 'flex-shrink: 0; opacity: {{joinOp}};')}
 </div>`;
-// In, and waiting for the host to start, on the daylight sky it had before V71 (the owner asked for it back).
+// In, and waiting for the host to start (or, joining mid-game, for the next question).
 const liveWaiting = `<div ${liveRoot(390, 844, 'padding: 64px 24px 40px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 22px; text-align: center; background: #FFFFFF;')}>
   ${studyBgLayer}
-  <span style="width: 112px; height: 112px; border-radius: 56px; background: ${LV.purple}; color: #FFFFFF; display: flex; align-items: center; justify-content: center; font-size: 48px; font-weight: 700; box-shadow: ${LV.lift}; animation: scFloat2 3s ease-in-out infinite;">M</span>
-  <div style="display: flex; flex-direction: column; gap: 8px;"><div style="font-size: 34px; font-weight: 700; letter-spacing: -.03em;">You’re in, Maya!</div><div style="font-size: 16px; line-height: 1.5; color: ${LV.ink2};">Look for your name on the big screen. The game starts soon.</div></div>
-  <span style="height: 36px; padding: 0 16px; display: inline-flex; align-items: center; gap: 8px; border-radius: 999px; background: #FFFFFF; font-size: 14px; font-weight: 700;">${svg(I.live, 15, 2)}Cell Biology</span>
+  <span style="width: 112px; height: 112px; flex-shrink: 0; border-radius: 56px; background: {{meColor}}; color: #FFFFFF; display: flex; align-items: center; justify-content: center; font-size: 48px; font-weight: 700; box-shadow: ${LV.lift}; animation: scFloat2 3s ease-in-out infinite;">{{meInitial}}</span>
+  <div style="display: flex; flex-direction: column; gap: 8px;"><div style="font-size: 34px; font-weight: 700; letter-spacing: -.03em; overflow-wrap: anywhere;">{{waitTitle}}</div><div style="font-size: 16px; line-height: 1.5; color: ${LV.ink2};">{{waitLine}}</div></div>
+  <span style="max-width: 100%; box-sizing: border-box; height: 36px; padding: 0 16px; display: inline-flex; align-items: center; gap: 8px; border-radius: 999px; background: #FFFFFF; font-size: 14px; font-weight: 700;">${svg(I.live, 15, 2)}<span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{deckName}}</span></span>
 </div>`;
-// Answering on a phone, on white like the big screen's question (V77): the question in big navy type, then four big
-// tiles with the same gradients and shapes as the big screen. The bar at the top is the time left, in Lucida's purple.
+// Answering on a phone, on white like the big screen's question (V77): the question in big navy type, then big tiles
+// with the same gradients and shapes as the big screen. The bar at the top is the time left, in Lucida's purple. Once
+// tapped, the answer is locked in: it keeps its color with a check, and the others fade.
 const liveAnswer = `<div ${liveRoot(390, 844, 'padding: 60px 16px 34px; display: flex; flex-direction: column; gap: 16px; background: #FFFFFF;')}>
   ${studyBgLayer}
-  <div style="display: flex; align-items: center; gap: 12px;"><span style="font-size: 13px; font-weight: 700; color: ${LV.ink2};">3 of 10</span><div style="flex-grow: 1; height: 8px; border-radius: 4px; background: ${LIVE_TINT}; overflow: hidden;"><div style="width: 70%; height: 100%; border-radius: 4px; background: ${LV.purple}; transform-origin: left; animation: scBar 20s linear reverse infinite;"></div></div><span style="font-size: 13px; font-weight: 700; font-variant-numeric: tabular-nums;">14s</span></div>
-  <div style="padding: 8px 4px 6px; font-size: 28px; font-weight: 700; line-height: 1.15; letter-spacing: -.025em;">{{q.q}}</div>
-  <div style="flex-grow: 1; display: grid; grid-template-rows: repeat(4, minmax(0, 1fr)); gap: 10px;">${[0, 1, 2, 3].map(i => `<button type="button" style="position: relative; overflow: hidden; width: 100%; height: 100%; box-sizing: border-box; padding: 0; border: 0; border-radius: 26px; background: none; color: {{o${i}.fg}}; box-shadow: ${LV.shadow}; font: inherit; text-align: left; cursor: pointer;">${liveDeep(i)}<span style="position: relative; height: 100%; box-sizing: border-box; padding: 0 20px; display: flex; align-items: center; gap: 16px; text-shadow: {{o${i}.ts}};"><span style="width: 48px; height: 48px; flex-shrink: 0; border-radius: 24px; background: {{o${i}.badge}}; box-shadow: {{o${i}.badgeLine}}; display: flex; align-items: center; justify-content: center;">${liveShape(i, 22)}</span><span style="font-size: 21px; font-weight: 700;">{{o${i}.label}}</span></span></button>`).join('')}</div>
-  <div style="display: flex; align-items: center; justify-content: space-between; font-size: 14px; color: ${LV.ink2};"><span style="display: flex; align-items: center; gap: 8px; font-weight: 600; color: ${LV.navy};"><span style="width: 24px; height: 24px; border-radius: 12px; background: ${LV.purple}; color: #FFFFFF; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700;">M</span>Maya</span><span style="font-variant-numeric: tabular-nums;"><span style="font-weight: 700; color: ${LV.navy};">2,550</span> points</span></div>
+  <div style="display: flex; align-items: center; gap: 12px;"><span style="font-size: 13px; font-weight: 700; color: ${LV.ink2}; white-space: nowrap;">{{nOf}}</span><div style="flex-grow: 1; height: 8px; border-radius: 4px; background: ${LIVE_TINT}; overflow: hidden;"><div style="width: 100%; height: 100%; border-radius: 4px; background: ${LV.purple}; transform: scaleX({{bar.frac}}); transform-origin: left; animation: {{bar.anim}};"></div></div><span style="min-width: 28px; text-align: right; font-size: 13px; font-weight: 700; font-variant-numeric: tabular-nums;">{{bar.left}}</span></div>
+  <div style="padding: 8px 4px 6px; font-size: {{qSizeP}}; font-weight: 700; line-height: 1.15; letter-spacing: -.025em; overflow-wrap: anywhere;">{{qText}}</div>
+  <div style="flex-grow: 1; min-height: 0; display: grid; grid-template-rows: {{rows}}; gap: 10px;">${[0, 1, 2, 3].map(i => `<sc-if value="{{o${i}.show}}" hint-placeholder-val="{{ true }}"><button type="button" onClick="{{o${i}.pick}}" data-key="${i + 1}" aria-pressed="{{o${i}.pressed}}" style="position: relative; overflow: hidden; width: 100%; height: 100%; box-sizing: border-box; padding: 0; border: 0; border-radius: 26px; background: none; color: {{o${i}.fg}}; box-shadow: {{o${i}.shadow}}; opacity: {{o${i}.op}}; font: inherit; text-align: left; cursor: {{o${i}.cursor}}; transition: opacity .3s;">${liveDeep(i)}<span style="position: relative; height: 100%; box-sizing: border-box; padding: 0 20px; display: flex; align-items: center; gap: 16px; text-shadow: {{o${i}.ts}};"><span style="width: 48px; height: 48px; flex-shrink: 0; border-radius: 24px; background: {{o${i}.badge}}; box-shadow: {{o${i}.badgeLine}}; display: flex; align-items: center; justify-content: center;"><sc-if value="{{o${i}.shape}}" hint-placeholder-val="{{ true }}">${liveShape(i, 22)}</sc-if><sc-if value="{{o${i}.mine}}" hint-placeholder-val="{{ false }}">${svg(I.check, 24, 3)}</sc-if></span><span style="min-width: 0; font-size: {{tileFsP}}; font-weight: 700; line-height: 1.15; overflow-wrap: anywhere; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; overflow: hidden;">{{o${i}.label}}</span></span></button></sc-if>`).join('')}</div>
+  <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; font-size: 14px; color: ${LV.ink2};"><span style="min-width: 0; display: flex; align-items: center; gap: 8px; font-weight: 600; color: ${LV.navy};"><span style="width: 24px; height: 24px; flex-shrink: 0; border-radius: 12px; background: {{meColor}}; color: #FFFFFF; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700;">{{meInitial}}</span><span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{meName}}</span></span><span style="flex-shrink: 0; font-variant-numeric: tabular-nums;"><span style="font-weight: 700; color: ${LV.navy};">{{meScore}}</span> points</span></div>
 </div>`;
 // The streak flame: orange, with a yellow core, flickering from its base (it holds still with Reduce Motion).
 const liveFlame = s => `<svg width="${s}" height="${s}" viewBox="0 0 24 24" aria-hidden="true" style="flex-shrink: 0; overflow: visible; filter: drop-shadow(0 1px 2px rgba(238,90,54,.35));"><defs><linearGradient id="sc-flame" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFB03B"/><stop offset=".55" stop-color="#F7792A"/><stop offset="1" stop-color="#EE5A36"/></linearGradient></defs><g class="sc-flame" style="transform-origin: 12px 21px; animation: scFlame 1.6s ease-in-out infinite;"><path fill="url(#sc-flame)" d="M12 2C12.8 5.2 15 7.1 16.7 9.1C18.2 10.9 19 12.9 19 15.2C19 19.1 15.9 22 12 22C8.1 22 5 19.1 5 15.4C5 13.1 5.9 11.2 7.5 9.7C7.7 11.2 8.4 12.3 9.5 12.9C9.2 9.1 10.1 5.6 12 2Z"/><path fill="#FFD25E" style="transform-origin: 12px 21.6px; animation: scFlameCore .9s ease-in-out infinite;" d="M12 11.5C12.5 13.4 13.8 14.5 14.7 15.7C15.3 16.5 15.6 17.3 15.6 18.2C15.6 20.2 14 21.6 12 21.6C10 21.6 8.4 20.2 8.4 18.3C8.4 16.9 9.1 15.8 10.2 15C10.3 15.8 10.7 16.4 11.3 16.7C11.1 14.9 11.4 13.1 12 11.5Z"/></g></svg>`;
 // After each question on a phone, on a faint color fading to white (the owner: iPhone backgrounds faint, like the big
 // screen, V77). Right: faint green, the answer dealt onto a white card with a green check that hovers, your points, and
-// your streak. Not quite: faint yellow, your pick on a gray card beside the right answer's. Then your place.
+// your streak from two in a row. Not quite: faint yellow, your pick on a gray card beside the right answer's. Time's
+// up (no answer): faint yellow and the right answer. Then your place. The phone stays on this through the leaderboard.
 const LIVE_MINT = (mid, low) => `linear-gradient(180deg, #A3E8BC 0%, #D0F5DD ${mid}%, #EEFCF3 ${low}%, #FFFFFF 100%)`;
 const liveResult = `<div ${liveRoot(390, 844, 'padding: 64px 24px 40px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 22px; text-align: center; background: {{r.bg}};')}>
-  <div style="position: relative; width: 310px; height: 236px;">
-    <sc-if value="{{r.wrong}}" hint-placeholder-val="{{ false }}"><div style="position: absolute; left: -4px; top: 58px; width: 158px; height: 168px; box-sizing: border-box; padding: 18px; border-radius: 28px; background: ${LV.gray}; color: ${LV.grayInk}; display: flex; flex-direction: column; justify-content: space-between; align-items: flex-start; text-align: left; animation: scDealL .5s cubic-bezier(.2,.8,.2,1) both;"><span style="width: 44px; height: 44px; border-radius: 22px; background: ${LV.navy}; color: #FFFFFF; display: flex; align-items: center; justify-content: center;">${svg(I.close, 20, 2.8)}</span><span style="font-size: 22px; font-weight: 700; line-height: 1.12;">{{r.pick}}</span></div></sc-if>
-    <div style="position: absolute; left: {{r.cardX}}; top: 12px; width: 188px; height: 196px; box-sizing: border-box; padding: 20px; border-radius: 30px; background: #FFFFFF; box-shadow: ${LV.lift}; display: flex; flex-direction: column; justify-content: space-between; align-items: flex-start; text-align: left; transform: translateY(-8px); animation: scDealR .55s cubic-bezier(.2,.8,.2,1) .1s backwards, ${HOVER(-8, .65).replace('scLiftIn .45s cubic-bezier(.2,.8,.2,1) 0.65s both, ', '')};"><span style="width: 48px; height: 48px; border-radius: 24px; background: ${LV.check}; color: #FFFFFF; display: flex; align-items: center; justify-content: center;">${svg(I.check, 24, 3)}</span><span style="font-size: 24px; font-weight: 700; line-height: 1.1; letter-spacing: -.01em;">{{r.answer}}</span></div>
+  <div style="position: relative; width: 310px; height: 236px; flex-shrink: 0;">
+    <sc-if value="{{r.wrong}}" hint-placeholder-val="{{ false }}"><div style="position: absolute; left: -4px; top: 58px; width: 158px; height: 168px; box-sizing: border-box; padding: 18px; border-radius: 28px; background: ${LV.gray}; color: ${LV.grayInk}; display: flex; flex-direction: column; justify-content: space-between; align-items: flex-start; text-align: left; animation: scDealL .5s cubic-bezier(.2,.8,.2,1) both;"><span style="width: 44px; height: 44px; flex-shrink: 0; border-radius: 22px; background: ${LV.navy}; color: #FFFFFF; display: flex; align-items: center; justify-content: center;">${svg(I.close, 20, 2.8)}</span><span style="max-width: 100%; font-size: {{r.pickFs}}; font-weight: 700; line-height: 1.12; hyphens: auto; overflow-wrap: anywhere; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; overflow: hidden;">{{r.pick}}</span></div></sc-if>
+    <div style="position: absolute; left: {{r.cardX}}; top: 12px; width: 188px; height: 196px; box-sizing: border-box; padding: 20px; border-radius: 30px; background: #FFFFFF; box-shadow: ${LV.lift}; display: flex; flex-direction: column; justify-content: space-between; align-items: flex-start; text-align: left; transform: translateY(-8px); animation: scDealR .55s cubic-bezier(.2,.8,.2,1) .1s backwards, ${HOVER(-8, .65).replace('scLiftIn .45s cubic-bezier(.2,.8,.2,1) 0.65s both, ', '')};"><span style="width: 48px; height: 48px; flex-shrink: 0; border-radius: 24px; background: ${LV.check}; color: #FFFFFF; display: flex; align-items: center; justify-content: center;">${svg(I.check, 24, 3)}</span><span style="max-width: 100%; font-size: {{r.answerFs}}; font-weight: 700; line-height: 1.1; letter-spacing: -.01em; hyphens: auto; overflow-wrap: anywhere; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; overflow: hidden;">{{r.answer}}</span></div>
   </div>
-  <div style="display: flex; flex-direction: column; gap: 6px;"><div style="font-size: 40px; font-weight: 700; letter-spacing: -.03em;">{{r.title}}</div><div style="font-size: 18px; font-weight: 600;">{{r.line}}</div></div>
-  <sc-if value="{{r.right}}" hint-placeholder-val="{{ true }}"><span style="height: 40px; padding: 0 16px; display: inline-flex; align-items: center; gap: 8px; border-radius: 999px; background: #FFFFFF; box-shadow: ${LV.shadow}; font-size: 15px; font-weight: 700;">${liveFlame(20)}3 in a row</span></sc-if>
+  <div style="display: flex; flex-direction: column; gap: 6px;"><div style="font-size: 40px; font-weight: 700; letter-spacing: -.03em;">{{r.title}}</div><div style="font-size: 18px; font-weight: 600; overflow-wrap: anywhere;">{{r.line}}</div></div>
+  <sc-if value="{{r.flame}}" hint-placeholder-val="{{ true }}"><span style="height: 40px; padding: 0 16px; display: inline-flex; align-items: center; gap: 8px; border-radius: 999px; background: #FFFFFF; box-shadow: ${LV.shadow}; font-size: 15px; font-weight: 700;">${liveFlame(20)}<span>{{r.streakLine}}</span></span></sc-if>
   <span style="font-size: 16px; color: ${LV.ink2};">{{r.place}}</span>
 </div>`;
-// The end on a phone: the final leaderboard, on the faint yellow fading to white (V76). The top three stand on a flat podium (you're marked), everyone
-// else is listed under it, and players without Lucida get a way to make their own cards.
-const LIVE_FINAL_REST = [['Priya', '7,860'], ['Leo', '7,420'], ['Sofia', '6,980'], ['Ethan', '6,540'], ['Ana', '6,110']];
-const LIVE_FINAL_PODIUM = [[1, 'Jordan', '8,940', 88, true, LV.purple, '#FFFFFF'], [0, 'Maya', '9,610', 120, false, LV.navy, '#FFFFFF'], [2, 'Kai', '8,120', 64, false, LV.blue, LV.navy]];
+// The end on a phone: the final leaderboard, on the faint yellow fading to white (V76). The top three stand on a flat
+// podium (you're marked), everyone else is listed under it, and players without Lucida get a way to make their own cards.
 const liveFinal = `<div ${liveRoot(390, 844, 'padding: 64px 20px 34px; display: flex; flex-direction: column; gap: 18px; background: #FFFFFF;')}>
   ${studyBgLayer}
   <div style="display: flex; flex-direction: column; align-items: center; gap: 6px; text-align: center;">
     <span style="font-size: 13px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: ${LV.ink2};">Final results</span>
-    <h1 style="margin: 0; font-size: 34px; font-weight: 700; letter-spacing: -.03em;">You placed 2nd!</h1>
-    <span style="font-size: 15px; color: ${LV.ink2};">8,940 points · 8 of 10 right</span>
+    <h1 style="margin: 0; font-size: 34px; font-weight: 700; letter-spacing: -.03em;">{{f.title}}</h1>
+    <span style="font-size: 15px; color: ${LV.ink2};">{{f.line}}</span>
   </div>
-  <div role="list" aria-label="Top three" style="display: flex; align-items: flex-end; gap: 8px;">
-    ${LIVE_FINAL_PODIUM.map(([i, name, score, h, you, bg, fg]) => `<div role="listitem" aria-label="${i + 1}. ${you ? 'You' : name}, ${score} points" style="flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; align-items: center; gap: 6px; animation: scRiseUp .6s cubic-bezier(.2,.8,.2,1) both; animation-delay: ${[.3, .6, 0][i]}s;"><span style="width: 48px; height: 48px; flex-shrink: 0; border-radius: 24px; background: {{c${i}}}; color: #FFFFFF; display: flex; align-items: center; justify-content: center; font-size: 20px; font-weight: 700;${you ? ` box-shadow: 0 0 0 3px #FFFFFF, 0 0 0 5px ${LV.navy};` : ''}">${name[0]}</span><span style="font-size: 15px; font-weight: 700;">${you ? 'You' : name}</span><span style="font-size: 13px; color: ${LV.ink2}; font-variant-numeric: tabular-nums;">${score}</span><div style="width: 100%; height: ${h}px; box-sizing: border-box; padding-top: 10px; border-radius: 18px 18px 8px 8px; background: ${bg}; color: ${fg}; display: flex; justify-content: center;"><span style="font-size: 26px; font-weight: 700; line-height: 1;">${i + 1}</span></div></div>`).join('')}
+  <div role="list" aria-label="Top three" style="display: flex; align-items: flex-end; justify-content: center; gap: 8px;">
+    <sc-for list="{{f.podium}}" as="w" hint-placeholder-count="3"><div role="listitem" aria-label="{{w.label}}" style="flex: 0 1 112px; min-width: 0; display: flex; flex-direction: column; align-items: center; gap: 6px; animation: scRiseUp .6s cubic-bezier(.2,.8,.2,1) both; animation-delay: {{w.delay}};"><span style="width: 48px; height: 48px; flex-shrink: 0; border-radius: 24px; background: {{w.color}}; color: #FFFFFF; display: flex; align-items: center; justify-content: center; font-size: 20px; font-weight: 700; box-shadow: {{w.ring}};">{{w.initial}}</span><span style="max-width: 100%; font-size: 15px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{w.name}}</span><span style="font-size: 13px; color: ${LV.ink2}; font-variant-numeric: tabular-nums;">{{w.score}}</span><div style="width: 100%; height: {{w.h}}; box-sizing: border-box; padding-top: 10px; border-radius: 18px 18px 8px 8px; background: {{w.bg}}; color: {{w.fg}}; display: flex; justify-content: center;"><span style="font-size: 26px; font-weight: 700; line-height: 1;">{{w.place}}</span></div></div></sc-for>
   </div>
-  <div role="list" aria-label="Everyone else" style="box-sizing: border-box; padding: 2px 16px; border-radius: 22px; background: #FFFFFF; box-shadow: ${LV.shadow}; display: flex; flex-direction: column;">
-    <sc-for list="{{rest}}" as="p" hint-placeholder-count="5"><div role="listitem" style="height: 50px; display: flex; align-items: center; gap: 12px; box-shadow: {{p.line}}; animation: scRiseUp .5s cubic-bezier(.2,.8,.2,1) both; animation-delay: {{p.delay}};"><span style="width: 18px; font-size: 15px; font-weight: 700; font-variant-numeric: tabular-nums; color: ${LV.ink2};">{{p.rank}}</span><span style="width: 32px; height: 32px; flex-shrink: 0; border-radius: 16px; background: {{p.color}}; color: #FFFFFF; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 700;">{{p.initial}}</span><span style="flex-grow: 1; font-size: 16px; font-weight: 600;">{{p.name}}</span><span style="font-size: 15px; color: ${LV.ink2}; font-variant-numeric: tabular-nums;">{{p.score}}</span></div></sc-for>
-  </div>
+  <sc-if value="{{f.hasRest}}" hint-placeholder-val="{{ true }}"><div role="list" aria-label="Everyone else" style="box-sizing: border-box; padding: 2px 16px; border-radius: 22px; background: #FFFFFF; box-shadow: ${LV.shadow}; display: flex; flex-direction: column;">
+    <sc-for list="{{f.rest}}" as="p" hint-placeholder-count="5"><div role="listitem" style="height: 50px; flex-shrink: 0; display: flex; align-items: center; gap: 12px; box-shadow: {{p.line}}; animation: scRiseUp .5s cubic-bezier(.2,.8,.2,1) both; animation-delay: {{p.delay}};"><span style="min-width: 18px; font-size: 15px; font-weight: 700; font-variant-numeric: tabular-nums; color: ${LV.ink2};">{{p.rank}}</span><span style="width: 32px; height: 32px; flex-shrink: 0; border-radius: 16px; background: {{p.color}}; color: #FFFFFF; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 700;">{{p.initial}}</span><span style="flex-grow: 1; min-width: 0; font-size: 16px; font-weight: {{p.weight}}; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{p.name}}</span><span style="font-size: 15px; color: ${LV.ink2}; font-variant-numeric: tabular-nums;">{{p.score}}</span></div></sc-for>
+  </div></sc-if>
   <div style="flex-grow: 1;"></div>
-  <div style="box-sizing: border-box; padding: 14px 14px 14px 18px; border-radius: 22px; background: #FFFFFF; box-shadow: ${LV.shadow}; display: flex; align-items: center; gap: 12px; text-align: left;"><span style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px;"><span style="font-size: 15px; font-weight: 700;">Make your own cards</span><span style="font-size: 13px; line-height: 1.35; color: ${LV.ink2};">Your AI makes them. Lucida plans your reviews.</span></span>${navyBtn('Try free', 'https://lucida.cards', 40, 14, 'flex-shrink: 0; padding: 0 16px;')}</div>
+  <sc-if value="{{f.promo}}" hint-placeholder-val="{{ true }}"><div style="box-sizing: border-box; padding: 14px 14px 14px 18px; border-radius: 22px; background: #FFFFFF; box-shadow: ${LV.shadow}; display: flex; align-items: center; gap: 12px; text-align: left;"><span style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px;"><span style="font-size: 15px; font-weight: 700;">Make your own cards</span><span style="font-size: 13px; line-height: 1.35; color: ${LV.ink2};">Your AI makes them. Lucida plans your reviews.</span></span>${navyBtn('Try free', 'https://lucida.cards', 40, 14, 'flex-shrink: 0; padding: 0 16px;')}</div></sc-if>
 </div>`;
-const LIVE_LOGIC = `
-constructor(props) { super(props); this.state = { set: 'tag', count: 10, time: 20 }; }
-renderVals() { ${T}
+// When the game's over for a phone that isn't on the final leaderboard: the host closed the room, or left and didn't
+// come back.
+const liveEnded = `<div ${liveRoot(390, 844, 'padding: 64px 24px 40px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 26px; text-align: center; background: #FFFFFF;')}>
+  ${studyBgLayer}
+  <span style="width: 96px; height: 96px; flex-shrink: 0; border-radius: 48px; background: #FFFFFF; box-shadow: ${LV.lift}; color: ${LV.navy}; display: flex; align-items: center; justify-content: center;">${svg(I.live, 40, 1.9)}</span>
+  <div style="font-size: 34px; font-weight: 700; letter-spacing: -.03em;">The game ended</div>
+  ${navyAct('Join another game', 'LiveJoin.dc.html', 'again', 56, 17, 'align-self: stretch;')}
+</div>`;
+// The big screen's logic (the lobby, a question, its answer, the leaderboard, and the podium), from db.live(): the game
+// this page runs, or the canvas's sample. The Live screens stay light in dark mode.
+const LIVE_HOST_LOGIC = `
+renderVals() {
+  const t = this.theme(false, false), db = this.props.db || this.mock();
   ${STUDY_BG_JS}
-  const s = this.state, reveal = !!this.props.reveal, Q = ${JSON.stringify(LIVE_Q)}, total = Q.counts.reduce((a, b) => a + b, 0);
+  ${OCC_JS}
+  const LVc = ${JSON.stringify(LV)}, VIVID = ${JSON.stringify(LIVE_VIVID)}, colors = ${JSON.stringify(LIVE_COLORS)};
+  const L = db.live() || { code: '', codeShown: '', joinText: '', qr: '', deck: { name: '', seed: 'Lucida', style: 'mix', round: 0, bg: { kind: 'deck', image: null } }, phase: 'lobby', people: [], here: 0, n: 0, of: 0, q: null, answered: 0, playing: 0, got: 0, timer: { left: 0, dur: 20, delay: 0, frac: 0 }, board: [], last: false, status: '' };
+  const q = L.q || { text: '', options: [], right: null, counts: null, image: '', occ: null }, reveal = q.right != null;
+  const people = n => n === 1 ? '1 person' : n + ' people';
+  const act = fn => e => { if (db.mock) return; if (e && e.preventDefault) e.preventDefault(); fn(); };
+  // Each answer's vivid gradient; after the reveal the right one lifts and the others gray out. Long answers get smaller.
+  const long = Math.max(0, ...q.options.map(o => String(o).length)), pic = !!q.image;
+  const opt = i => { const show = i < q.options.length, lift = reveal && i === q.right, gray = reveal && !lift, p = this.gen(VIVID[i], 'vivid');
+    return { i, p, show, label: show ? q.options[i] : '', count: String(((q.counts || [])[i]) || 0), right: lift, showCount: reveal, gfilter: gray ? 'grayscale(1)' : 'none', fg: p.ink, ts: p.shadow,
+      badge: p.glass, badgeLine: 'inset 0 0 0 1.5px ' + p.glassLine, shadow: lift ? LVc.lift : gray ? 'none' : LVc.shadow, tf: lift ? 'translateY(-10px)' : 'none', anim: lift ? '${HOVER(-10, .1)}' : 'none' }; };
+  const board = L.board, top = board.length ? Math.max(1, board[0].score) : 1, first = board[0];
+  // The podium: second, first, and third, as many as played.
+  const places = [1, 0, 2].filter(i => board[i]).map(i => { const p = board[i];
+    return { place: String(i + 1), name: p.name, initial: (p.name[0] || '?').toUpperCase(), color: colors[p.color % 5], score: p.score.toLocaleString('en-US'), h: [320, 230, 170][i] + 'px',
+      bg: [LVc.navy, LVc.purple, LVc.blue][i], fg: i === 2 ? LVc.navy : '#FFFFFF', delay: [.8, .4, 0][i] + 's' }; });
+  const dur = L.timer.dur, some = L.people.length > 0;
+  return { t, bg: studyBg(L.deck, false, false), grain: String(this.props.grain ?? 0.7),
+    deckName: L.deck.name, codeShown: L.codeShown, joinText: L.joinText, qr: L.qr,
+    peopleN: String(L.people.length), peopleIn: L.people.length === 1 ? 'person in' : 'people in', peopleLine: L.status ? 'Reconnecting…' : people(L.here),
+    people: L.people.map((p, i) => ({ name: p.name, initial: (p.name[0] || '?').toUpperCase(), color: colors[p.color % 5], delay: db.mock ? (i * .12).toFixed(2) + 's' : '0s' })),
+    startOp: some ? '1' : '.4', startCursor: some ? 'pointer' : 'default', start: act(() => db.act.liveStart()),
+    qOf: 'Question ' + L.n + ' of ' + L.of, qText: q.text,
+    qSize: (pic ? Math.min(40, q.text.length > 90 ? 32 : 40) : q.text.length > 160 ? 36 : q.text.length > 90 ? 46 : 60) + 'px', mainGap: pic ? '22px' : '40px',
+    tileH: (pic ? 112 : 150) + 'px', tileFs: (long > 70 ? 22 : long > 40 ? 27 : 34) + 'px',
+    o0: opt(0), o1: opt(1), o2: opt(2), o3: opt(3),
+    pic: { has: pic, mock: q.image === 'mock', url: pic && q.image !== 'mock' ? q.image : '', inset: q.image === 'mock' ? '14px 20px' : '0',
+      boxes: pic && q.occ ? occView(q.occ.boxes, q.occ.ask, q.occ.mode, reveal, { ask: LVc.navy, askText: '#FFFFFF', cover: LVc.gray, coverText: LVc.grayInk, ring: '#FFFFFF' }) : [] },
+    answered: String(L.answered), answeredOf: 'of ' + L.playing + ' answered', gotText: L.got + ' of ' + L.playing,
+    timer: { left: String(L.timer.left), frac: String(L.timer.frac), label: L.timer.left + ' seconds left', anim: db.mock ? 'scTimer ' + dur + 's linear infinite' : 'scTimer ' + dur + 's linear ' + L.timer.delay + 's both' },
+    nextLabel: L.last ? 'Final results' : 'Leaderboard', nextHref: L.last ? 'LivePodium.dc.html' : 'LiveLeaderboard.dc.html', next: act(() => db.act.liveNext()),
+    board: board.slice(0, 5).map((p, i) => ({ rank: String(i + 1), name: p.name, initial: (p.name[0] || '?').toUpperCase(), color: colors[p.color % 5], score: p.score.toLocaleString('en-US'), w: Math.max(0, p.score) / top * 100 + '%',
+      move: p.move > 0 ? '▲ ' + p.move : p.move < 0 ? '▼ ' + -p.move : p.move === 0 ? '–' : '', moveColor: p.move > 0 ? '#12A150' : p.move < 0 ? '#D92D20' : LVc.grayInk, delay: (i * .08).toFixed(2) + 's' })),
+    podium: places, winLine: first ? first.name + ' wins!' : 'Nobody played', endLine: L.deck.name + ' · final results',
+    again: act(() => db.act.liveAgain()), done: act(() => db.act.liveClose()) };
+}`;
+// Setting up (over the deck's page, so it follows dark mode): the deck's cards that can play live, grouped like Learn
+// mode's, and the deep gradient for the card's top.
+const LIVE_SETUP_LOGIC = `
+constructor(props) { super(props); this.state = { set: null, count: 10, time: 20 }; }
+renderVals() { ${T}
+  const db = this.props.db || this.mock(), s = this.state, id = this.props.deckId;
   const seg = (k, cur) => ({ pressed: k === cur ? 'true' : 'false', bg: k === cur ? t.bg : 'transparent', fg: k === cur ? t.text : t.muted, sh: k === cur ? '0 1px 3px rgba(0,0,0,.14)' : 'none' });
-  const LV = ${JSON.stringify(LV)}, VIVID = ${JSON.stringify(LIVE_VIVID)}, colors = ${JSON.stringify(LIVE_COLORS)};
-  // Each answer's vivid gradient; after the reveal the right one lifts and tilts a little, and the others gray out.
-  const opt = i => { const lift = reveal && i === Q.right, gray = reveal && i !== Q.right, p = this.gen(VIVID[i], 'vivid');
-    return { i, p, label: Q.options[i], count: String(Q.counts[i]), right: lift, showCount: reveal, gfilter: gray ? 'grayscale(1)' : 'none', fg: p.ink, ts: p.shadow,
-      badge: p.glass, badgeLine: 'inset 0 0 0 1.5px ' + p.glassLine, shadow: lift ? LV.lift : gray ? 'none' : LV.shadow, tf: lift ? 'translateY(-10px)' : 'none', anim: lift ? '${HOVER(-10, .1)}' : 'none' }; };
-  const wrongPick = !!this.props.wrong;
-  return { t, bg: studyBg({ seed: 'Cell Biology', style: 'mix', bg: { kind: 'deck' } }, false), dark: !!this.props.dark, dim: !!this.props.dim, grain: String(this.props.grain ?? 0.7), q: Q, peopleN: '12',
-    o0: opt(0), o1: opt(1), o2: opt(2), o3: opt(3), c0: colors[0], c1: colors[2], c2: colors[1],
-    nextHref: 'LiveLeaderboard.dc.html', nextLabel: 'Leaderboard',
-    people: ${JSON.stringify(LIVE_PEOPLE)}.map((name, i) => ({ name, initial: name[0], color: colors[i % colors.length], delay: (i * .12).toFixed(2) + 's' })),
-    board: ${JSON.stringify(LIVE_BOARD)}.map(([name, score, move], i) => ({ rank: String(i + 1), name, initial: name[0], color: colors[i % colors.length], score: score.toLocaleString('en-US'), w: score / ${LIVE_BOARD[0][1]} * 100 + '%',
-      move: move > 0 ? '▲ ' + move : move < 0 ? '▼ ' + -move : '–', moveColor: move > 0 ? '#12A150' : move < 0 ? '#D92D20' : LV.grayInk, delay: (i * .08).toFixed(2) + 's' })),
-    r: wrongPick ? { right: false, wrong: true, bg: '${LIVE_SUN(45, 75)}', title: 'Not quite', line: 'It was Golgi apparatus.', place: 'You’re in 5th place', pick: 'Lysosome', answer: 'Golgi apparatus', cardX: '134px' }
-      : { right: true, wrong: false, bg: '${LIVE_MINT(45, 75)}', title: 'Right!', line: '+870 points', place: 'You’re in 2nd place, 140 points behind Maya', pick: '', answer: 'Golgi apparatus', cardX: '61px' },
-    sets: [['new', 'New · 10'], ['hard', 'Hard · 36'], ['tag', 'Exam 1 · 40'], ['all', 'All · 412']].map(([k, label]) => ({ label, ...seg(k, s.set), pick: () => this.setState({ set: k }) })),
-    counts: [5, 10, 20].map(n => ({ label: String(n), ...seg(n, s.count), pick: () => this.setState({ count: n }) })),
-    times: [10, 20, 30].map(n => ({ label: n + 's', ...seg(n, s.time), pick: () => this.setState({ time: n }) })),
-    code: '482913', setCode: () => {}, boxes: '482913'.split('').map(d => ({ digit: d, ring: 'none' })) }; }`;
-// Setting up carries the deep gradient for the card's top.
-const LIVE_SETUP_LOGIC = LIVE_LOGIC.replace('  return { t,', '  return { deep: ' + MIDNIGHT + ', t,');
-// The phone's final leaderboard also lists everyone from 4th place on (white card, hairlines between rows).
-const LIVE_FINAL_LOGIC = LIVE_LOGIC.replace('    r: wrongPick ? {', `    rest: ${JSON.stringify(LIVE_FINAL_REST)}.map(([name, score], i, all) => ({ rank: String(i + 4), name, initial: name[0], score, color: colors[(i + 3) % colors.length], line: i < all.length - 1 ? 'inset 0 -1px 0 rgba(13,21,66,.08)' : 'none', delay: (.8 + i * .08).toFixed(2) + 's' })),
-    r: wrongPick ? {`);
+  const sets = db.liveSets(id), set = sets.find(x => x.id === s.set) || (db.mock ? sets[2] : sets.find(x => x.n > 0) || sets[sets.length - 1]), n = set.n;
+  return { t, deep: ${MIDNIGHT}, dark: !!this.props.dark, dim: !!this.props.dim, deckId: id || '', grain: String(this.props.grain ?? 0.7),
+    sets: sets.map(x => ({ label: x.label + ' · ' + x.n, ...seg(x.id, set.id), pick: () => this.setState({ set: x.id }) })),
+    counts: [5, 10, 20].map(k => ({ label: String(k), ...seg(k, s.count), pick: () => this.setState({ count: k }) })),
+    times: [10, 20, 30].map(k => ({ label: k + 's', ...seg(k, s.time), pick: () => this.setState({ time: k }) })),
+    noneLine: n ? '' : 'Live needs two or more cards with answers. Sound cards don’t play live yet.',
+    openBg: n ? t.inv : t.surf2, openFg: n ? t.invText : t.muted, openCursor: n ? 'pointer' : 'default',
+    open: e => { if (db.mock) return; if (e && e.preventDefault) e.preventDefault(); if (n) db.act.openLive(id, set.id, s.count, s.time); } }; }`;
+// A phone's logic (joining, waiting, answering, each answer's result, the final leaderboard, and the end), from
+// db.join(): this phone's place in the game, or the canvas's sample (Jordan's phone).
+const LIVE_PHONE_LOGIC = `
+constructor(props) { super(props); this.state = { codeFocus: false }; }
+renderVals() {
+  const t = this.theme(false, false), db = this.props.db || this.mock(), P = this.props;
+  ${STUDY_BG_JS}
+  const LVc = ${JSON.stringify(LV)}, VIVID = ${JSON.stringify(LIVE_VIVID)}, colors = ${JSON.stringify(LIVE_COLORS)};
+  const J = db.join(), me = J.me, F = J.form, q = J.q, act = fn => e => { if (db.mock) return; if (e && e.preventDefault) e.preventDefault(); fn(); };
+  const nth = n => n + (n % 100 >= 11 && n % 100 <= 13 ? 'th' : ['th', 'st', 'nd', 'rd'][n % 10] || 'th');
+  const pts = n => n === 1 ? '1 point' : n.toLocaleString('en-US') + ' points';
+  const initial = name => (String(name || '')[0] || '?').toUpperCase();
+  // Joining: the six boxes show the code as it's typed, the next one ringed while the field has focus.
+  const code = F.code, focus = !!this.state.codeFocus;
+  const boxes = [0, 1, 2, 3, 4, 5].map(i => ({ digit: code[i] || '', ring: LVc.shadow + (focus && i === Math.min(code.length, 5) ? ', inset 0 0 0 2px ' + LVc.purple : '') }));
+  const go = () => { if (!db.mock) db.act.joinLive(); };
+  // Answering: a tap locks it in; the time running out ends it.
+  const picked = J.pick != null, over = !db.mock && J.timer.left <= 0, long = Math.max(0, ...q.options.map(o => String(o).length));
+  const opt = i => { const show = i < q.options.length, mine = picked && J.pick === i, faded = (picked && !mine) || (over && !picked), p = this.gen(VIVID[i], 'vivid');
+    return { p, show, label: show ? q.options[i] : '', mine, shape: !mine, pressed: mine ? 'true' : 'false', fg: p.ink, ts: p.shadow, badge: mine ? LVc.check : p.glass, badgeLine: mine ? 'none' : 'inset 0 0 0 1.5px ' + p.glassLine,
+      shadow: faded ? 'none' : LVc.shadow, gfilter: faded ? 'grayscale(1)' : 'none', op: faded ? '.45' : '1', cursor: picked || over ? 'default' : 'pointer', pick: () => { if (!picked && !over) db.act.liveAnswer(i); } }; };
+  // After each question: right, not quite, or time's up, and where you stand.
+  // A right answer also says how far behind the next one up you are (the owner's sample: "You're in 2nd place, 140
+  // points behind Maya").
+  const R = J.result, rows = J.standings, rank = me.rank, ahead = rank > 1 ? rows[rank - 2] : null, gap = ahead ? ahead.score - rows[rank - 1].score : 0, timeUp = R.timeUp, wrong = !R.ok && !timeUp;
+  const place = !rank ? '' : 'You’re in ' + nth(rank) + ' place' + (R.ok && gap > 0 ? ', ' + pts(gap) + ' behind ' + ahead.name : '');
+  // The end: the top three on the podium (you're marked), then everyone else.
+  const podium = [1, 0, 2].filter(i => rows[i]).map(i => { const p = rows[i], you = p.id === me.id;
+    return { place: String(i + 1), name: you ? 'You' : p.name, initial: initial(p.name), color: colors[p.color % 5], score: p.score.toLocaleString('en-US'), h: [120, 88, 64][i] + 'px', label: (i + 1) + '. ' + (you ? 'You' : p.name) + ', ' + pts(p.score),
+      bg: [LVc.navy, LVc.purple, LVc.blue][i], fg: i === 2 ? LVc.navy : '#FFFFFF', ring: you ? '0 0 0 3px #FFFFFF, 0 0 0 5px ' + LVc.navy : 'none', delay: [.6, .3, 0][i] + 's' }; });
+  const rest = rows.slice(3);
+  const late = J.phase === 'late';
+  // The cards after an answer are narrow: a long word gets smaller type instead of breaking.
+  const word = x => Math.max(0, ...String(x || '').split(/\\s+/).map(w => w.length));
+  const fit = (x, sizes, fits) => sizes[fits.findIndex(n => word(x) <= n)] || sizes[sizes.length - 1];
+  return { t, bg: studyBg(J.deck, false, false), grain: String(this.props.grain ?? 0.7), deckName: J.deck.name,
+    // Joining
+    code, boxes, name: F.name, error: F.error, joinLabel: F.busy ? 'Joining…' : 'Join', joinOp: F.busy ? '.6' : '1',
+    setCode: e => db.act.joinCode(e && e.target ? e.target.value : ''), setName: e => db.act.joinName(e && e.target ? e.target.value : ''),
+    codeIn: () => this.setState({ codeFocus: true }), codeOut: () => this.setState({ codeFocus: false }),
+    codeKey: e => { if (e.key === 'Enter') { e.preventDefault(); go(); } }, nameKey: e => { if (e.key === 'Enter') { e.preventDefault(); go(); } },
+    join: act(() => db.act.joinLive()),
+    // Waiting
+    meName: me.name, meInitial: initial(me.name), meColor: colors[(me.color || 0) % 5], meScore: me.score.toLocaleString('en-US'),
+    waitTitle: 'You’re in, ' + me.name + '!', waitLine: late ? 'You’ll play from the next question.' : 'Look for your name on the big screen. The game starts soon.',
+    // Answering
+    nOf: J.n + ' of ' + J.of, qText: q.text, qSizeP: (q.text.length > 160 ? 19 : q.text.length > 90 ? 22 : 28) + 'px', tileFsP: (long > 70 ? 15 : long > 40 ? 17 : 21) + 'px',
+    rows: 'repeat(' + Math.max(2, q.options.length) + ', minmax(0, 1fr))', o0: opt(0), o1: opt(1), o2: opt(2), o3: opt(3),
+    bar: { left: J.timer.left + 's', frac: String(J.timer.frac), anim: db.mock ? 'scTime ' + J.timer.dur + 's linear -6s infinite' : 'scTime ' + J.timer.dur + 's linear ' + J.timer.delay + 's both' },
+    // The answer
+    r: { right: R.ok, wrong, flame: R.ok && R.streak >= 2, streakLine: R.streak + ' in a row', bg: R.ok ? '${LIVE_MINT(45, 75)}' : '${LIVE_SUN(45, 75)}', title: R.ok ? 'Right!' : timeUp ? 'Time’s up' : 'Not quite',
+      line: R.ok ? '+' + pts(R.gained) : 'It was ' + R.answer + '.', place, pick: R.pick, answer: R.answer, cardX: wrong ? '134px' : '61px',
+      answerFs: fit(R.answer, ['24px', '20px', '18px', '16px'], [10, 12, 14]), pickFs: fit(R.pick, ['22px', '19px', '17px', '15px'], [9, 11, 12]) },
+    // The end
+    f: { title: rank ? 'You placed ' + nth(rank) + '!' : 'Final results', line: pts(me.score) + ' · ' + me.right + ' of ' + me.played + ' right', podium, hasRest: rest.length > 0, promo: !!J.promo,
+      rest: rest.map((p, i) => ({ rank: String(i + 4), name: p.id === me.id ? 'You' : p.name, weight: p.id === me.id ? '700' : '600', initial: initial(p.name), score: p.score.toLocaleString('en-US'), color: colors[p.color % 5], line: i < rest.length - 1 ? 'inset 0 -1px 0 rgba(13,21,66,.08)' : 'none', delay: (.8 + Math.min(i, 8) * .08).toFixed(2) + 's' })) },
+    again: act(() => db.act.joinAgain()) };
+}`;
 
 // ---------- Pricing (lucida.cards/pricing) ----------
 // Free keeps every card. Pro ($5.99 a month or $49.99 a year, since 2026-09-25; it was $39) is for making Lucida yours: AI quizzes, photo covers and
@@ -5613,17 +5705,24 @@ const files = {
   'PhoneQuizDone': ['iPhone · Learn mode · all learned', phoneQuizDone, { props: DARK, logic: QUIZ_DONE_LOGIC, css: LEARN_CSS, w: PW, h: PH }],
   'PhoneQuizSettings': ['iPhone · Learn mode · settings (the deck’s background)', attrOf('PhoneQuiz', PW, PH, 'settings-open="{{yes}}"'), { logic: darkLogic, css: LEARN_CSS, w: PW, h: PH }],
   'LiveSetup': ['Live · host · set up', liveSetup, { props: DARK, logic: LIVE_SETUP_LOGIC, w: W, h: H }],
-  'LiveLobby': ['Live · big screen · lobby (join code)', liveLobby, { props: DARK, logic: LIVE_LOGIC, css: LIVE_CSS, w: W, h: H }],
-  'LiveQuestion': ['Live · big screen · question', liveQuestion, { props: { ...DARK, grain: MESH('Iris').grain }, logic: LIVE_LOGIC, css: LIVE_CSS, w: W, h: H }],
-  'LiveReveal': ['Live · big screen · answer', liveReveal, { props: { ...DARK, grain: MESH('Iris').grain, reveal: { editor: 'boolean', default: true } }, logic: LIVE_LOGIC, css: LIVE_CSS, w: W, h: H }],
-  'LiveLeaderboard': ['Live · big screen · leaderboard', liveLeaderboard, { props: DARK, logic: LIVE_LOGIC, css: LIVE_CSS, w: W, h: H }],
-  'LivePodium': ['Live · big screen · podium', livePodium, { props: { ...DARK, grain: MESH('Iris').grain }, logic: LIVE_LOGIC, css: LIVE_CSS, w: W, h: H }],
-  'LiveJoin': ['Live · phone · join', liveJoin, { props: DARK, logic: LIVE_LOGIC, w: PW, h: PH }],
-  'LiveWaiting': ['Live · phone · waiting', liveWaiting, { props: DARK, logic: LIVE_LOGIC, css: LIVE_CSS, w: PW, h: PH }],
-  'LiveAnswer': ['Live · phone · answer', liveAnswer, { props: { ...DARK, grain: MESH('Iris').grain }, logic: LIVE_LOGIC, css: LIVE_CSS, w: PW, h: PH }],
-  'LiveResult': ['Live · phone · right', liveResult, { props: { ...DARK, wrong: { editor: 'boolean', default: false } }, logic: LIVE_LOGIC, css: LIVE_CSS + FLAME_CSS, w: PW, h: PH }],
-  'LiveResultWrong': ['Live · phone · not quite', attrOf('LiveResult', PW, PH, 'wrong="{{yes}}"'), { logic: darkLogic, css: LIVE_CSS, w: PW, h: PH }],
-  'LiveFinal': ['Live · phone · final', liveFinal, { props: { ...DARK, grain: MESH('Iris').grain }, logic: LIVE_FINAL_LOGIC, css: LIVE_CSS, w: PW, h: PH }],
+  'LiveLobby': ['Live · big screen · lobby (join code)', liveLobby, { props: { ...DARK, grain: MESH('Iris').grain, empty: { editor: 'boolean', default: false } }, logic: LIVE_HOST_LOGIC, css: LIVE_CSS, w: W, h: H }],
+  'LiveLobbyEmpty': ['Live · big screen · lobby, nobody in yet', attrOf('LiveLobby', W, H, 'empty="{{yes}}"'), { logic: darkLogic, css: LIVE_CSS, w: W, h: H }],
+  'LiveQuestion': ['Live · big screen · question', liveQuestion, { props: { ...DARK, grain: MESH('Iris').grain, image: { editor: 'boolean', default: false } }, logic: LIVE_HOST_LOGIC, css: LIVE_CSS, w: W, h: H }],
+  'LiveQuestionImage': ['Live · big screen · question with a picture', attrOf('LiveQuestion', W, H, 'image="{{yes}}"'), { logic: darkLogic, css: LIVE_CSS, w: W, h: H }],
+  'LiveReveal': ['Live · big screen · answer', liveReveal, { props: { ...DARK, grain: MESH('Iris').grain, reveal: { editor: 'boolean', default: true }, image: { editor: 'boolean', default: false } }, logic: LIVE_HOST_LOGIC, css: LIVE_CSS, w: W, h: H }],
+  'LiveLeaderboard': ['Live · big screen · leaderboard', liveLeaderboard, { props: { ...DARK, grain: MESH('Iris').grain }, logic: LIVE_HOST_LOGIC, css: LIVE_CSS, w: W, h: H }],
+  'LivePodium': ['Live · big screen · podium', livePodium, { props: { ...DARK, grain: MESH('Iris').grain, final: { editor: 'boolean', default: true } }, logic: LIVE_HOST_LOGIC, css: LIVE_CSS, w: W, h: H }],
+  'LiveJoin': ['Live · phone · join', liveJoin, { props: { ...DARK, grain: MESH('Iris').grain, notFound: { editor: 'boolean', default: false } }, logic: LIVE_PHONE_LOGIC, css: LIVE_CSS, w: PW, h: PH }],
+  'LiveJoinNotFound': ['Live · phone · join, no game with that code', attrOf('LiveJoin', PW, PH, 'not-found="{{yes}}"'), { logic: darkLogic, css: LIVE_CSS, w: PW, h: PH }],
+  'LiveWaiting': ['Live · phone · waiting', liveWaiting, { props: { ...DARK, grain: MESH('Iris').grain, late: { editor: 'boolean', default: false } }, logic: LIVE_PHONE_LOGIC, css: LIVE_CSS, w: PW, h: PH }],
+  'LiveLate': ['Live · phone · joined mid-game (plays from the next question)', attrOf('LiveWaiting', PW, PH, 'late="{{yes}}"'), { logic: darkLogic, css: LIVE_CSS, w: PW, h: PH }],
+  'LiveAnswer': ['Live · phone · answer', liveAnswer, { props: { ...DARK, grain: MESH('Iris').grain, picked: { editor: 'boolean', default: false } }, logic: LIVE_PHONE_LOGIC, css: LIVE_CSS, w: PW, h: PH }],
+  'LiveAnswered': ['Live · phone · answer locked in', attrOf('LiveAnswer', PW, PH, 'picked="{{yes}}"'), { logic: darkLogic, css: LIVE_CSS, w: PW, h: PH }],
+  'LiveResult': ['Live · phone · right', liveResult, { props: { ...DARK, wrong: { editor: 'boolean', default: false }, timeUp: { editor: 'boolean', default: false } }, logic: LIVE_PHONE_LOGIC, css: LIVE_CSS + FLAME_CSS, w: PW, h: PH }],
+  'LiveResultWrong': ['Live · phone · not quite', attrOf('LiveResult', PW, PH, 'wrong="{{yes}}"'), { logic: darkLogic, css: LIVE_CSS + FLAME_CSS, w: PW, h: PH }],
+  'LiveResultTimeUp': ['Live · phone · time’s up (no answer)', attrOf('LiveResult', PW, PH, 'time-up="{{yes}}"'), { logic: darkLogic, css: LIVE_CSS + FLAME_CSS, w: PW, h: PH }],
+  'LiveFinal': ['Live · phone · final', liveFinal, { props: { ...DARK, grain: MESH('Iris').grain, final: { editor: 'boolean', default: true } }, logic: LIVE_PHONE_LOGIC, css: LIVE_CSS, w: PW, h: PH }],
+  'LiveEnded': ['Live · phone · the game ended', liveEnded, { props: { ...DARK, grain: MESH('Iris').grain }, logic: LIVE_PHONE_LOGIC, css: LIVE_CSS, w: PW, h: PH }],
   'Pricing': ['Pricing · lucida.cards/pricing', pricing(LAND.web, W, PRICING_H), { props: { ...DARK, grain: MESH('Iris').grain }, logic: pricingLogic(false), css: SKY_CSS, w: W, h: PRICING_H }],
   'PricingPhone': ['Pricing · lucida.cards/pricing on a phone', pricing(LAND.phone, PW, PRICING_PHONE_H), { props: { ...DARK, grain: MESH('Iris').grain }, logic: pricingLogic(true), css: SKY_CSS, w: PW, h: PRICING_PHONE_H }],
   'Privacy': ['Privacy Policy · lucida.cards/privacy', legalPage(PRIVACY, LEGAL_H.Privacy), { props: DARK, logic: legalLogic, w: W, h: LEGAL_H.Privacy }],

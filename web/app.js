@@ -26,6 +26,15 @@ function network(path, q, P) {
 function resolve(path, q) {
   if (path.startsWith('/b/')) return DESIGN ? { name: decodeURIComponent(path.slice(3)), design: true } : { redirect: '/' };
   const P = narrow.matches ? 'Phone' : 'Web';
+  // Live, for players: the join page, and a game's screens on their phone (the host's page runs the game). Friends
+  // join without an account, so these open signed out too; a game this phone isn't in starts at the join page.
+  const jn = /^\/(join|play)(?:\/(\d{6}))?$/.exec(path);
+  if (jn) {
+    const J = db.joinAt(jn[1], jn[2] || '');
+    if (jn[1] === 'join') return { name: 'LiveJoin' };
+    if (!J) return { redirect: '/join' + (jn[2] ? '/' + jn[2] : '') };
+    return { name: { answer: 'LiveAnswer', result: 'LiveResult', final: 'LiveFinal', ended: 'LiveEnded' }[J.phase] || 'LiveWaiting' };
+  }
   const net = network(path, q, P);
   // Online and signed out: only the sign-in pages (and the code page once a code is on its way), and the study
   // network's pages anyone can open.
@@ -36,7 +45,14 @@ function resolve(path, q) {
   if (path === '/activity') return { name: P + 'Activity' };
   if (path === '/suggestions') return { name: P + 'Suggestions', props: { deckId: '' } };
   if (path.startsWith('/sign-in')) return { redirect: '/' };
-  const deck = /^\/deck\/([^/]+)(\/card(?:\/([^/]+))?|\/import|\/learn|\/suggestions)?$/.exec(path);
+  // Live, for the host: the big screen shows the game this tab is running, in whatever phase it's in.
+  const lv = /^\/live\/(\d{6})$/.exec(path);
+  if (lv) {
+    const L = db.live();
+    if (!L || L.code !== lv[1]) return { redirect: '/' };
+    return { name: { question: 'LiveQuestion', reveal: 'LiveReveal', board: 'LiveLeaderboard', end: 'LivePodium' }[L.phase] || 'LiveLobby', props: { deckId: L.deckId } };
+  }
+  const deck = /^\/deck\/([^/]+)(\/card(?:\/([^/]+))?|\/import|\/learn|\/suggestions|\/live)?$/.exec(path);
   // Your first time in: the welcome (connect your AI, bring your cards) comes before Today.
   if (path === '/' && !db.settings().welcomed && !db.decks().length) return { redirect: '/welcome' };
   if (path === '/welcome') return { name: P + 'Welcome' };
@@ -61,6 +77,8 @@ function resolve(path, q) {
     if (deck[2] === '/import') return dRow && dRow.readOnly ? { redirect: '/deck/' + id } : { name: 'WebImport', props: { deckId: id } };
     // Suggestions people sent for this deck (it's shared), to take or skip.
     if (deck[2] === '/suggestions') return { name: P + 'Suggestions', props: { deckId: id } };
+    // Playing a deck live needs a big screen, so it starts from a computer.
+    if (deck[2] === '/live') return narrow.matches ? { redirect: '/deck/' + id } : { name: 'LiveSetup', props: { deckId: id } };
     // Learn mode starts from a sheet over the deck. It's Pro: on Free the sheet shows what Pro adds instead.
     if (deck[2] === '/learn') return { name: P + (db.pro() ? 'QuizStart' : 'QuizUpgrade'), props: { deckId: id } };
     // Writing and editing cards: on a computer, the deck's cards on a screen of their own (the owner's pick, Option B),
@@ -105,7 +123,10 @@ function linkFor(name) {
     WebCardsScreen: id ? '/deck/' + id + '/card' : '/library', WebReview: id ? '/review/' + id : '/review', WebDone: '/review/done', WebDonePiles: '/review/done',
     WebQuizStart: id ? '/deck/' + id + '/learn' : '/library', PhoneQuizStart: id ? '/deck/' + id + '/learn' : '/library', WebQuizUpgrade: id ? '/deck/' + id + '/learn' : '/library', PhoneQuizUpgrade: id ? '/deck/' + id + '/learn' : '/library', PhoneDeck: id ? '/deck/' + id : '/library', Pricing: 'https://lucida.cards/pricing', PricingPhone: 'https://lucida.cards/pricing',
     WebStats: '/stats', WebStatsEmpty: '/stats', WebConnect: '/connect', WebWelcome: '/welcome', WebSettings: '/settings', WebSignIn: '/sign-in', WebSignInCode: '/sign-in/code', PhoneSignIn: '/sign-in', PhoneSignInCode: '/sign-in/code', PhoneToday: '/', Privacy: '/privacy', Terms: '/terms',
-    WebDiscover: '/discover', WebActivity: '/activity', WebProfile: '/you', WebSuggestions: id ? '/deck/' + id + '/suggestions' : '/suggestions' };
+    WebDiscover: '/discover', WebActivity: '/activity', WebProfile: '/you', WebSuggestions: id ? '/deck/' + id + '/suggestions' : '/suggestions',
+    LiveSetup: id ? '/deck/' + id + '/live' : '/library', LiveJoin: '/join' };
+  // Live's screens follow the game (their buttons act on it), so a link to one stays on the game's page.
+  if (/^Live/.test(name) && !pages[name]) return current ? current.path : '/';
   return pages[name] || pages[name.replace(/^Phone/, 'Web')] || '/b/' + name;
 }
 
@@ -252,8 +273,9 @@ function paint() {
   }
   handlers = []; refs = []; drawn = [];
   const s = loaded[current.name], props = { ...s.props, ...current.props, ...base() };
-  // The page behind the screen: the boards' background (theme(): white, black, or gray #1E1E20).
-  document.body.style.background = props.dark ? (props.dim ? '#1E1E20' : '#000000') : '#FFFFFF';
+  // The page behind the screen: the boards' background (theme(): white, black, or gray #1E1E20). Live's screens stay
+  // bright in dark mode (all but setting up, which sits over the deck's page).
+  document.body.style.background = props.dark && !/^Live(?!Setup)/.test(current.name) ? (props.dim ? '#1E1E20' : '#000000') : '#FFFFFF';
   const tpl = document.createElement('template');
   tpl.innerHTML = renderScreen(s, current.key, props).replace(/href="([A-Za-z0-9]+)\.dc\.html"/g, (_, n) => 'href="' + linkFor(n) + '"');
   const was = tpl.content.querySelector('.sc-panel, .sc-sheet') ? [] : panels();
@@ -333,8 +355,10 @@ async function go(path, push, replace) {
   document.documentElement.classList.toggle('sc-calm', navs > 1);
   for (const c of instances.values()) c.componentWillUnmount?.();
   instances.clear();
-  // A phone board fills a phone's screen; on a wider window (only /b shows one there) it keeps the phone's size.
-  app.className = !s.fill ? 'fixed' : s.w === 390 && !narrow.matches ? 'fixed phone' : '';
+  // A phone board fills a phone's screen; on a wider window (only /b shows one there) it keeps the phone's size. Live's
+  // player screens can open on a computer too: there they fill the window, their content down the middle.
+  const livePhone = /^Live/.test(r.name) && s.w === 390 && !r.design;
+  app.className = !s.fill ? 'fixed' : s.w === 390 && !narrow.matches && !livePhone ? 'fixed phone' : '';
   app.style.setProperty('--board-h', s.h + 'px');
   // Leaving the card editor slides it out over the page it goes back to.
   const was = panels();

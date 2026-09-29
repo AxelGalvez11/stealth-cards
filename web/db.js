@@ -8,6 +8,7 @@ import { placeBefore, deckCards, cardBefore, cardToDeck } from './order.js';
 import { createSound } from './sound.js';
 import { sniff } from './sniff.js';
 import { createNet } from './net.js';
+import { createLive } from './live.js';
 
 const DAY = 86400000, MIN = 60000, GAPS = [30, 90, 180, 365, 730, 1825, 3650];
 const DAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
@@ -25,7 +26,10 @@ const occOf = c => {
   return i < 0 ? null : { boxes: c.boxes, i, n: i + 1, label: String(c.boxes[i].label || '').trim(), mode: c.occ === 'all' ? 'all' : 'one' };
 };
 
-// Online, nobody is signed in yet: only the sign-in pages work. The email waits in this tab while you get the code.
+// Playing Live on a phone (web/live.js): join a game with its code and a name, and tap answers. It needs no account.
+const playerActs = (p, go) => ({ joinCode: v => p.setCode(v), joinName: v => p.setName(v), joinLive: () => p.join(), liveAnswer: i => p.answer(i), joinAgain: () => { p.reset(); go('/join'); } });
+// Online, nobody is signed in yet: only the sign-in pages work, and Live's pages for players. The email waits in this
+// tab while you get the code.
 function signedOut(go, onChange = () => {}) {
   const q = new URLSearchParams(location.search), keep = sessionStorage;
   let email = ''; try { email = keep.getItem('lucida.email') || ''; } catch {}
@@ -50,8 +54,10 @@ function signedOut(go, onChange = () => {}) {
   // Signed out, the pages anyone can open (a shared deck, a profile, Discover) still work; anything that changes something
   // signs you in first and comes back.
   const net = createNet({ signedOut: true, go, changed: onChange });
+  const live = createLive({ onChange, go, signedOut: true }).player;
   return { signedOut: true, mock: false, auth, net, settings: () => ({ look: 'system' }), me: () => null, decks: () => [], folders: () => [],
-    chrome: () => ({ nav: { today: '', news: '', hasNews: false }, me: { bg: COLORS[0], initial: '', color: true, photo: '', href: '/sign-in' } }), act: { go } };
+    chrome: () => ({ nav: { today: '', news: '', hasNews: false }, me: { bg: COLORS[0], initial: '', color: true, photo: '', href: '/sign-in' } }),
+    join: () => live.view(), joinAt: (kind, code) => live.at(kind, code), act: { go, ...playerActs(live, go) } };
 }
 // The page to open once you're signed in, if signing in started somewhere (asked once, then forgotten).
 export function afterSignIn() {
@@ -107,6 +113,8 @@ export async function createDb({ onChange, go }) {
   // The study network (web/net.js): shared decks, profiles, Discover, suggestions, History, news.
   const net = createNet({ accept, changed, go });
   const handle = () => (S.profile && S.profile.handle) || '';
+  // Live: hosting a game from this page, and playing one.
+  const live = createLive({ onChange: () => changed(), go });
   const patchDeck = (id, patch) => s => { const d = s.decks.find(x => x.id === id); if (d) Object.assign(d, patch, patch.cover ? { cover: { ...d.cover, ...patch.cover } } : {}, patch.bg ? { bg: { kind: 'deck', image: null, ...d.bg, ...patch.bg } } : {}); };
   // Cards your AI adds over MCP show up without a reload.
   setInterval(async () => {
@@ -453,6 +461,24 @@ export async function createDb({ onChange, go }) {
     const parts = [answer, ...String(answer).split(/[,;/]|\bor\b/), inParens].filter(Boolean).map(norm).filter(Boolean);
     return parts.some(p => p === t || lev(p, t) <= Math.max(p.length > 4 ? 1 : 0, Math.floor(p.length / 7)));
   }
+  // ---------- Live ----------
+  // A card plays live when it can make a fair question: it has an answer, and there are wrong answers to go with it
+  // (other cards' answers, or ones the learner's AI wrote). Sound cards don't play (a room can't all hear one phone).
+  // The deck's different answers are counted once, since setting up asks about every card.
+  const answersIn = id => memo['a' + id] || (memo['a' + id] = new Set(cardsOf(id).filter(learnable).map(c => answerOf(c).toLowerCase())));
+  const liveable = c => learnable(c) && (aiQuiz(c, 'choice').length > 0 || aiQuiz(c, 'true_false').length > 0 || answersIn(c.deckId).size > 1);
+  // One question per card: most of the time the AI's own question when the card has one, else the card's words with up
+  // to three other answers from the deck. A picture shows on the big screen, with its box.
+  function liveQuestion(c) {
+    const o = occOf(c), pic = c.kind === 'image' && c.image ? { image: c.image, occ: o ? { boxes: o.boxes, ask: o.i, mode: o.mode } : null } : { image: '', occ: null };
+    const ai = aiQuiz(c, 'choice'), tf = aiQuiz(c, 'true_false'), own = distractors(c, 3);
+    if (ai.length && (Math.random() < .8 || !own.length)) { const x = oneOf(ai), options = shuffle([x.answer, ...x.wrong.slice(0, 3)]); return { text: x.question, options, right: options.indexOf(x.answer), ...pic }; }
+    if (!own.length && tf.length) { const x = oneOf(tf); return { text: x.question, options: ['True', 'False'], right: x.answer === 'true' ? 0 : 1, ...pic }; }
+    const options = shuffle([answerOf(c), ...own]);
+    // A box says which box it asks, since phones don't show the picture.
+    return { text: o ? boxAsk(c, o) : learnText(c) || 'What’s in the picture?', options, right: options.indexOf(answerOf(c)), ...pic };
+  }
+  const liveQuestions = (id, set, count) => shuffle(learnSet(id, set).filter(liveable)).slice(0, count).map(liveQuestion);
   const learnDeckLabel = L => (L.set.startsWith('tag:') ? L.set.slice(4) : { new: 'New cards', hard: 'Hard cards', all: 'All cards' }[L.set]);
   function learnView() {
     if (!learnOk()) return null;
@@ -644,6 +670,19 @@ export async function createDb({ onChange, go }) {
     readNews: ids => net.act('news.read', { ids }),
     updateProfile: patch => net.act('profile.update', { patch }),
     ensureProfile: () => net.act('profile.ensure'),
+    // Live: open a room for a deck's cards (`set` as in Learn mode, up to `count` questions, `time` seconds each), then
+    // run the game from the big screen.
+    openLive: async (id, set, count, time) => {
+      const d = deckById(id), qs = d ? liveQuestions(id, set, count) : [];
+      if (!qs.length) return;
+      try { await live.host.open({ deckId: id, deck: { name: d.name, seed: d.cover.seed || d.name, style: d.cover.style || 'mix', round: d.cover.round || 0, bg: d.bg || { kind: 'deck', image: null } }, qs, set, count, time }); }
+      catch (e) { alert(e.message || 'Couldn’t open a room. Try again.'); }
+    },
+    liveStart: () => live.host.start(),
+    liveNext: () => live.host.next(),
+    liveAgain: () => { const G = live.host.game(); if (G) live.host.again(liveQuestions(G.deckId, G.set, G.count)); },
+    liveClose: () => live.host.close(),
+    ...playerActs(live.player, go),
     go
   };
 
@@ -735,6 +774,17 @@ export async function createDb({ onChange, go }) {
         .filter(([k, , n]) => n > 0 || k === 'all').map(([k, label, n]) => ({ id: k, label, n }));
     },
     learnOn: id => !!(learnOk() && learning.deckId === id && !learning.done),
+    // Live: the cards a deck can play live (like learnSets), the big screen's game, and a phone's.
+    liveSets: id => {
+      const cs = cardsOf(id).filter(liveable), uses = {};
+      cs.forEach(c => c.tags.forEach(g => { uses[g] = (uses[g] || 0) + 1; }));
+      const tag = Object.keys(uses).sort((a, b) => uses[b] - uses[a])[0];
+      return [['new', 'New', cs.filter(c => c.srs.state === 'new').length], ['hard', 'Hard', cs.filter(isHard).length], ...(tag ? [['tag:' + tag, tag, uses[tag]]] : []), ['all', 'All', cs.length]]
+        .filter(([k, , n]) => n > 0 || k === 'all').map(([k, label, n]) => ({ id: k, label, n }));
+    },
+    live: () => live.host.view(),
+    join: () => live.player.view(),
+    joinAt: (kind, code) => live.player.at(kind, code),
     startReview: (id, pile) => { session = { key: keyOf(id, pile), deckId: id || null, pile: pile || null, started: now(), graded: [] }; },
     session: () => {
       const g = session ? session.graded : [], rated = g.filter(x => x.rating);
