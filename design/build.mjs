@@ -3754,7 +3754,7 @@ renderVals() { ${T}${DB_JS}
 
 // iPhone Settings, from the gear on Today. Appearance switches this screen right away, and so does Dark mode (gray or
 // black, for whenever the app is dark). The page scrolls; the board is tall enough to show all of it.
-const PHONE_SETTINGS_H = 1470;
+const PHONE_SETTINGS_H = 1523;
 const sRow = (label, right, { href = '', sub = '', click = '' } = {}) => {
   const inner = `<span style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px;"><span style="font-size: 16px;">${label}</span>${sub ? `<span style="font-size: 12px; color: {{t.muted}};">${sub}</span>` : ''}</span>${right}`;
   const st = 'min-height: 52px; box-sizing: border-box; padding: 8px 16px; display: flex; align-items: center; gap: 12px;';
@@ -3805,11 +3805,15 @@ const PHOTO_JS = `const colors = [['Periwinkle', 'linear-gradient(135deg, #8C9AF
     photoOpts: opts([...(st.google ? [['google', 'Google photo']] : []), ['yours', 'Your photo'], ['color', 'Color']], photo, id => (id === 'yours' && !st.yourPhoto ? db.act.pickPhoto() : set({ photo: id }))),
     changePhoto: () => db.act.pickPhoto(), removePhoto: () => db.act.removePhoto(),
     swatches: colors.map(([label, bg], i) => ({ label, bg, pressed: i === st.color ? 'true' : 'false', ring: i === st.color ? '0 0 0 2px ' + t.surf + ', 0 0 0 4px ' + t.text : 'none', pick: () => set({ color: i }) })) };`;
-// Settings → Profile (web and iPhone): your handle, which opens your profile, and Edit profile, which opens it with its
-// editor open. Before you have a handle it says Your profile (opening it makes one).
-const SETTINGS_PROFILE = board => sGroup('Profile', [sRow('{{profileLabel}}', sVal('View profile'), { href: board + '.dc.html' }), sRow('Edit profile', sVal(''), { href: '{{editProfileHref}}' })]);
-const PROFILE_ROW_JS = board => `const you = (db.me && db.me()) || {}, profileVals = { profileLabel: you.handle ? '@' + you.handle : 'Your profile',
-    editProfileHref: db.mock ? '${board}Edit.dc.html' : you.handle ? '/@' + you.handle + '?edit=1' : '/you?edit=1' };`;
+// Settings → Profile (web and iPhone): your handle, which opens your profile, Edit profile, which opens it with its editor
+// open, and Get verified (teachers and schools; it opens the request, /verify), which says Verified teacher (or school), with
+// the check and no link, once you are. Before you have a handle it says Your profile (opening it makes one).
+const SETTINGS_PROFILE = board => sGroup('Profile', [sRow('{{profileLabel}}', sVal('View profile'), { href: board + '.dc.html' }), sRow('Edit profile', sVal(''), { href: '{{editProfileHref}}' }),
+  `<sc-if value="{{verifyGet}}" hint-placeholder-val="{{ true }}">${sRow('Get verified', sVal('{{verifyValue}}'), { href: '{{verifyHref}}' })}</sc-if><sc-if value="{{verifyDone}}" hint-placeholder-val="{{ false }}">${sRow('{{verifiedLabel}}', `<span title="Verified" style="display: flex; color: #3E63DD;">${svg(I.shield, 20, 2)}</span>`)}</sc-if>`]);
+const PROFILE_ROW_JS = board => `const you = (db.me && db.me()) || {}, vst = (db.net && db.net.verify && db.net.verify()) || {}, profileVals = { profileLabel: you.handle ? '@' + you.handle : 'Your profile',
+    editProfileHref: db.mock ? '${board}Edit.dc.html' : you.handle ? '/@' + you.handle + '?edit=1' : '/you?edit=1',
+    verifyGet: !vst.verified, verifyDone: !!vst.verified, verifyValue: vst.open ? 'Waiting for review' : '', verifiedLabel: vst.verified === 'school' ? 'Verified school' : 'Verified teacher',
+    verifyHref: db.mock ? '${board.replace('Profile', 'ClassVerify')}.dc.html' : '/verify' };`;
 const phoneSettings = phone(`<div style="padding: 64px 20px 34px; display: flex; flex-direction: column; gap: 18px;">
   <div style="display: flex; align-items: center; gap: 12px;">${roundBtn('back', 'Back', 'PhoneToday.dc.html')}<div style="flex-grow: 1; font-size: 17px; font-weight: 600; text-align: center;">Settings</div><div style="width: 44px;"></div></div>
   <button type="button" onClick="{{account}}" style="width: 100%; border: 0; border-radius: 24px; background: {{t.surf}}; padding: 14px 16px; display: flex; align-items: center; gap: 14px; color: inherit; font: inherit; text-align: left; cursor: pointer;">${AVATAR_ME(44)}<span style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px;"><span style="font-size: 16px; font-weight: 600;">Your account</span><span style="font-size: 13px; color: {{t.muted}}; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{accountSub}}</span></span><span style="display: flex; color: {{t.muted}};">${svg(I.chev, 14, 2.2)}</span></button>
@@ -7405,8 +7409,9 @@ const files = {
   'WebDecksTags': ['Web · Library · a deck with 11 tags (+9 shows them all)', attrOf('WebDecks', W, H, 'open-tags="{{yes}}"'), { logic: darkLogic, css: DRAG_CSS, w: W, h: H }],
   'WebDecksMoreTags': ['Web · Library · More (find any tag)', attrOf('WebDecks', W, H, 'more-tags="{{yes}}"'), { logic: darkLogic, css: DRAG_CSS, w: W, h: H }],
   'WebDecksList': ['Web · Library · list view', listOf('WebDecks', W, H), { logic: 'renderVals() { return {}; }', css: DRAG_CSS, w: W, h: H }],
-  'WebSettings': ['Web · Settings', webSettings, { props: { ...DARK, grain: MESH('Iris').grain, photo: PHOTO_PROP, plan: { editor: 'enum', default: 'Pro', options: ['Free', 'Pro', 'Pro, ending'] }, tune: TUNE_PROP }, logic: webSettingsLogic, css: NUM_CSS, w: W, h: H }],
+  'WebSettings': ['Web · Settings', webSettings, { props: { ...DARK, grain: MESH('Iris').grain, photo: PHOTO_PROP, plan: { editor: 'enum', default: 'Pro', options: ['Free', 'Pro', 'Pro, ending'] }, tune: TUNE_PROP, verified: VERIFIED_PROP }, logic: webSettingsLogic, css: NUM_CSS, w: W, h: H }],
   'WebSettingsFree': ['Web · Settings · on Free (Tune to you is Pro)', attrOf('WebSettings', W, H, 'plan="Free"'), { logic: darkLogic, css: NUM_CSS, w: W, h: H }],
+  'WebSettingsVerified': ['Web · Settings · a verified teacher (Get verified says Verified teacher)', attrOf('WebSettings', W, H, 'verified="Teacher"'), { logic: darkLogic, css: NUM_CSS, w: W, h: H }],
   'IconOptions': ['Web · Icon options', iconOptions, { props: DARK, logic: iconOptionsLogic, w: W, h: H }],
   'WebTodayNew': ['Web · Today · new user', webTodayNew, { props: { ...DARK, ...MESH('Iris') }, logic: emptyLogic(), w: W, h: H }],
   'WebTodayCaughtUp': ['Web · Today · all caught up', caughtOf('Main', W, H), { logic: darkLogic, css: DRAG_CSS, w: W, h: H }],
@@ -7583,7 +7588,8 @@ const files = {
   'PhoneReviewImage': ['iPhone · Review · picture with hidden parts (tap the card)', attrOf('PhoneReview', PW, PH, 'card="Image"'), { logic: darkLogic, css: REVIEW_CSS, w: PW, h: PH }],
   'PhoneEditorImage': ['iPhone · Card editor · image with boxes', attrOf('PhoneEditor', PW, PH, 'card-type="Image" keyboard="{{no}}"'), { logic: 'renderVals() { return { yes: true, no: false }; }', css: EDITOR_CSS, w: PW, h: PH }],
   'PhoneSettingsFree': ['iPhone · Settings · on Free (Tune to you is Pro)', attrOf('PhoneSettings', PW, PHONE_SETTINGS_H, 'plan="Free"'), { logic: darkLogic, w: PW, h: PHONE_SETTINGS_H }],
-  'PhoneSettings': ['iPhone · Settings', phoneSettings, { props: { ...DARK, photo: PHOTO_PROP, plan: { editor: 'enum', default: 'Pro', options: ['Free', 'Pro', 'Pro, ending'] }, tune: TUNE_PROP }, logic: phoneSettingsLogic, w: PW, h: PHONE_SETTINGS_H }],
+  'PhoneSettingsVerified': ['iPhone · Settings · a verified teacher (Get verified says Verified teacher)', attrOf('PhoneSettings', PW, PHONE_SETTINGS_H, 'verified="Teacher"'), { logic: darkLogic, w: PW, h: PHONE_SETTINGS_H }],
+  'PhoneSettings': ['iPhone · Settings', phoneSettings, { props: { ...DARK, photo: PHOTO_PROP, plan: { editor: 'enum', default: 'Pro', options: ['Free', 'Pro', 'Pro, ending'] }, tune: TUNE_PROP, verified: VERIFIED_PROP }, logic: phoneSettingsLogic, w: PW, h: PHONE_SETTINGS_H }],
   'PhoneDeckSettings': ['iPhone · Deck settings', openOf('PhoneDeck', PW, PH), { logic: darkLogic, css: NUM_CSS + DRAG_CSS, w: PW, h: PH }],
   'PhoneDeckDark': ['iPhone · Deck page (dark)', darkOf('PhoneDeck', PW, PH), { logic: darkLogic, css: NUM_CSS + DRAG_CSS, w: PW, h: PH }],
   'PhoneStatsDark': ['iPhone · Stats (dark)', darkOf('PhoneStats', PW, PH), { logic: darkLogic, w: PW, h: PH }],

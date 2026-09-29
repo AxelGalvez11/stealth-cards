@@ -802,19 +802,25 @@ export default [
   "name": "PhoneSettings",
   "title": "iPhone · Settings",
   "w": 390,
-  "h": 1470
+  "h": 1523
  },
  {
   "name": "PhoneSettingsFree",
   "title": "iPhone · Settings · on Free (Tune to you is Pro)",
   "w": 390,
-  "h": 1470
+  "h": 1523
  },
  {
   "name": "PhoneSettingsGray",
   "title": "iPhone · Settings (dark, gray)",
   "w": 390,
-  "h": 1470
+  "h": 1523
+ },
+ {
+  "name": "PhoneSettingsVerified",
+  "title": "iPhone · Settings · a verified teacher (Get verified says Verified teacher)",
+  "w": 390,
+  "h": 1523
  },
  {
   "name": "PhoneSignIn",
@@ -1899,6 +1905,12 @@ export default [
  {
   "name": "WebSettingsGray",
   "title": "Web · Settings (dark, gray)",
+  "w": 1440,
+  "h": 900
+ },
+ {
+  "name": "WebSettingsVerified",
+  "title": "Web · Settings · a verified teacher (Get verified says Verified teacher)",
   "w": 1440,
   "h": 900
  },
