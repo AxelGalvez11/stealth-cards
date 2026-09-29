@@ -143,6 +143,8 @@ const I = {
   file: '<path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/>',
   arrowUp: '<path d="M12 19V5M6 11l6-6 6 6"/>',
   folder: '<path d="M3 7.5A2.5 2.5 0 0 1 5.5 5h3.6l2 2.2h7.4A2.5 2.5 0 0 1 21 9.7v7.8a2.5 2.5 0 0 1-2.5 2.5h-13A2.5 2.5 0 0 1 3 17.5z"/>',
+  // Pinning a deck to your profile.
+  pin: '<path d="M9 3.5h6l-1 5.5 3.5 3.5v2h-11v-2L10 9z"/><path d="M12 14.5V21"/>',
   // Where Lucida posts (the landing and legal footers).
   tiktok: '<path d="M15.5 3c.4 2.7 2.3 4.6 5 5"/><path d="M15.5 3v11.8a4.3 4.3 0 1 1-4.3-4.3"/>',
   youtube: '<rect x="2.5" y="5" width="19" height="14" rx="4.5"/><path d="M10 9.2v5.6l4.8-2.8z" fill="currentColor"/>',
@@ -3139,8 +3141,10 @@ const phoneLibrary = phone(`<div style="padding: 64px 20px 120px; display: flex;
 ${folderPopup(true)}`);
 const pTitle = (txt, right = '') => `<div style="display: flex; align-items: center; justify-content: space-between;"><div style="font-size: 34px; font-weight: 700; letter-spacing: -.03em;">${txt}</div>${right}</div>`;
 const roundBtn = (ic, label, href = '') => href ? `<a href="${href}" aria-label="${label}" style="width: 44px; height: 44px; border-radius: 22px; background: {{t.surf}}; display: flex; align-items: center; justify-content: center;">${svg(I[ic], 18, 2)}</a>` : `<button type="button" aria-label="${label}" style="width: 44px; height: 44px; border: 0; border-radius: 22px; background: {{t.surf}}; color: {{t.text}}; display: flex; align-items: center; justify-content: center; cursor: pointer;">${svg(I[ic], 18, 2)}</button>`;
-// Today's header: your picture on the left (it opens Settings), the title in the middle, and + on the right.
-const todayTitle = (label, href) => `<div style="display: flex; align-items: center; gap: 12px;"><a href="PhoneSettings.dc.html" aria-label="Settings" style="display: flex; flex-shrink: 0; border-radius: 22px;">${AVATAR_ME(44)}</a><h1 style="flex-grow: 1; margin: 0; font-size: 34px; font-weight: 700; letter-spacing: -.03em; text-align: center;">Today</h1>${roundBtn('plus', label, href)}</div>`;
+// Today's header: your picture on the left (it opens your profile, whose gear opens Settings, like "You" in the web's
+// sidebar), the title in the middle of the screen, and news (with how many are new) and + on the right.
+const NEWS_BTN = `<a href="PhoneActivity.dc.html" aria-label="News" style="position: relative; width: 44px; height: 44px; flex-shrink: 0; border-radius: 22px; background: {{t.surf}}; display: flex; align-items: center; justify-content: center;">${svg(I.bell, 18, 2)}<sc-if value="{{nav.hasNews}}" hint-placeholder-val="{{ true }}"><span style="position: absolute; top: -3px; right: -3px; min-width: 18px; height: 18px; padding: 0 5px; box-sizing: border-box; border-radius: 9px; background: #E5484D; color: #FFFFFF; box-shadow: 0 0 0 2px {{t.bg}}; font-size: 11px; font-weight: 700; line-height: 18px; text-align: center;">{{nav.news}}</span></sc-if></a>`;
+const todayTitle = (label, href) => `<div style="display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: center; gap: 12px;"><a href="PhoneProfile.dc.html" aria-label="Your profile" style="justify-self: start; display: flex; border-radius: 22px;">${AVATAR_ME(44)}</a><h1 style="margin: 0; font-size: 34px; font-weight: 700; letter-spacing: -.03em; text-align: center;">Today</h1><div style="justify-self: end; display: flex; gap: 8px;">${NEWS_BTN}${roundBtn('plus', label, href)}</div></div>`;
 const phoneToday = phone(`<div style="padding: 64px 20px 120px; display: flex; flex-direction: column; gap: 18px;">
   ${todayTitle('New card', 'PhoneEditor.dc.html')}
   ${meshCard('hero', 'display: block; border-radius: 32px;', 'box-sizing: border-box; padding: 24px; display: flex; flex-direction: column; gap: 18px;', `
@@ -3394,7 +3398,7 @@ renderVals() { ${T}${DB_JS}
 
 // iPhone Settings, from the gear on Today. Appearance switches this screen right away, and so does Dark mode (gray or
 // black, for whenever the app is dark). The page scrolls; the board is tall enough to show all of it.
-const PHONE_SETTINGS_H = 1260;
+const PHONE_SETTINGS_H = 1410;
 const sRow = (label, right, { href = '', sub = '', click = '' } = {}) => {
   const inner = `<span style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px;"><span style="font-size: 16px;">${label}</span>${sub ? `<span style="font-size: 12px; color: {{t.muted}};">${sub}</span>` : ''}</span>${right}`;
   const st = 'min-height: 52px; box-sizing: border-box; padding: 8px 16px; display: flex; align-items: center; gap: 12px;';
@@ -3437,9 +3441,15 @@ const PHOTO_JS = `const colors = [['Periwinkle', 'linear-gradient(135deg, #8C9AF
     photoOpts: opts([...(st.google ? [['google', 'Google photo']] : []), ['yours', 'Your photo'], ['color', 'Color']], photo, id => (id === 'yours' && !st.yourPhoto ? db.act.pickPhoto() : set({ photo: id }))),
     changePhoto: () => db.act.pickPhoto(), removePhoto: () => db.act.removePhoto(),
     swatches: colors.map(([label, bg], i) => ({ label, bg, pressed: i === st.color ? 'true' : 'false', ring: i === st.color ? '0 0 0 2px ' + t.surf + ', 0 0 0 4px ' + t.text : 'none', pick: () => set({ color: i }) })) };`;
+// Settings → Profile (web and iPhone): your handle, which opens your profile, and Edit profile, which opens it with its
+// editor open. Before you have a handle it says Your profile (opening it makes one).
+const SETTINGS_PROFILE = board => sGroup('Profile', [sRow('{{profileLabel}}', sVal('View profile'), { href: board + '.dc.html' }), sRow('Edit profile', sVal(''), { href: '{{editProfileHref}}' })]);
+const PROFILE_ROW_JS = board => `const you = (db.me && db.me()) || {}, profileVals = { profileLabel: you.handle ? '@' + you.handle : 'Your profile',
+    editProfileHref: db.mock ? '${board}Edit.dc.html' : you.handle ? '/@' + you.handle + '?edit=1' : '/you?edit=1' };`;
 const phoneSettings = phone(`<div style="padding: 64px 20px 34px; display: flex; flex-direction: column; gap: 18px;">
   <div style="display: flex; align-items: center; gap: 12px;">${roundBtn('back', 'Back', 'PhoneToday.dc.html')}<div style="flex-grow: 1; font-size: 17px; font-weight: 600; text-align: center;">Settings</div><div style="width: 44px;"></div></div>
   <button type="button" onClick="{{account}}" style="width: 100%; border: 0; border-radius: 24px; background: {{t.surf}}; padding: 14px 16px; display: flex; align-items: center; gap: 14px; color: inherit; font: inherit; text-align: left; cursor: pointer;">${AVATAR_ME(44)}<span style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px;"><span style="font-size: 16px; font-weight: 600;">Your account</span><span style="font-size: 13px; color: {{t.muted}}; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{accountSub}}</span></span><span style="display: flex; color: {{t.muted}};">${svg(I.chev, 14, 2.2)}</span></button>
+  ${SETTINGS_PROFILE('PhoneProfile')}
   ${sGroup('Profile picture', [`<div style="padding: 12px 16px 16px; display: flex; flex-direction: column; gap: 12px;">${photoPanel(true)}</div>`])}
   ${planGroups}
   ${sGroup('Studying', [
@@ -3469,8 +3479,9 @@ renderVals() {
   const pickOf = (cur, label, save) => ({ label, set: e => save(e.target.value), ref: el => { if (el && el.value !== String(cur)) el.value = String(cur); } });
   ${PLAN_JS('PricingPhone')}
   ${PHOTO_JS}
+  ${PROFILE_ROW_JS('PhoneProfile')}
   return {
-    t, ...chrome, ...planVals, ...photoVals,
+    t, ...chrome, ...planVals, ...photoVals, ...profileVals,
     // Your account: tap it to sign out (online).
     accountSub: db.mock ? 'Synced on all your devices · just now' : st.sub,
     account: () => { if (!db.mock && st.signedIn && confirm('Sign out of Lucida?')) db.act.signOut(); },
@@ -3521,6 +3532,7 @@ const webSettings = webRoot(`${sidebar('You')}
       ])}
     </div>
     <div style="display: flex; flex-direction: column; gap: 24px;">
+      ${SETTINGS_PROFILE('WebProfile')}
       ${planGroups}
       ${sGroup('Look', [
         sRow('Appearance', SEG('looks', 'Appearance')),
@@ -3547,8 +3559,9 @@ renderVals() {
   const piles = st.grading === 'piles';
   ${PLAN_JS('Pricing')}
   ${PHOTO_JS}
+  ${PROFILE_ROW_JS('WebProfile')}
   return {
-    t, ...chrome, grain: String(this.props.grain ?? 0.7), ...planVals, ...photoVals,
+    t, ...chrome, grain: String(this.props.grain ?? 0.7), ...planVals, ...photoVals, ...profileVals,
     name: st.name, sub: st.sub, signedIn: st.signedIn,
     looks: opts([['system', 'System'], ['light', 'Light'], ['dark', 'Dark']], look, id => set({ look: id })),
     darks: opts([['gray', 'Gray'], ['black', 'Black']], darkMode, id => set({ darkMode: id })),
@@ -5563,12 +5576,318 @@ const phoneDiscover = phone(`<div style="padding: 64px 20px 120px; display: flex
   <sc-if value="{{offline}}" hint-placeholder-val="{{ false }}"><div style="padding: 40px 20px; border-radius: 22px; background: {{t.surf}}; text-align: center; font-size: 15px; color: {{t.muted}};">Couldn’t reach Lucida.</div></sc-if>
 </div>`, 'Discover');
 
+// ---------- Profiles and news ----------
+// A profile (lucida.cards/@alexkim): someone's picture, name, what they study, their bio, their numbers (decks,
+// followers, following, and saves: the stars on all their decks), and the decks they share, pinned ones first. Your own
+// adds Edit profile, the decks you saved, and the suggestions you sent with what became of them. /you is your own: the
+// first time, it's made (the handle comes from your name) and the page moves to its address.
+const PROFILE_LOGIC = phone => `
+constructor(props) { super(props); this.state = {}; }
+componentWillUnmount() { clearTimeout(this.copiedT); }
+renderVals() {
+  ${T}${DB_JS}${NET_JS}
+  ${OPTS_JS}
+  const p = this.props, s = this.state, you = (db.me && db.me()) || {}, out = !!db.signedOut || !!p.signedOut;
+  const B = n => '${phone ? 'Phone' : 'Web'}' + n, oops = e => (e && e.message) || 'Something went wrong. Try again.';
+  const h = String(p.handle || (out ? '' : you.handle) || '').toLowerCase();
+  // /you before you have a handle: your profile is made once, then the page opens its address. (The app also moves
+  // there by itself as soon as it hears the handle; this is in case it doesn't.)
+  const making = !h && !!p.self && !out;
+  if (making && !db.mock && !this.making) {
+    this.making = true;
+    Promise.resolve(db.act.ensureProfile()).then(r => setTimeout(() => { if (r && r.handle && location.pathname === '/you') db.act.go('/@' + r.handle + (p.editOpen ? '?edit=1' : ''), true); }, 0))
+      .catch(e => this.setState({ makeErr: oops(e) }));
+  }
+  const data = h ? db.net.profile(h) : undefined;
+  const missing = !!(data && data.missing), offline = !!(data && data.offline), ok = !!data && !missing && !offline;
+  const self = !out && (ok && data.me ? !!data.me.self : making || (!!h && h === you.handle));
+  // What you change (a follow, a pin, your bio) shows at once, and stays while it's saving and until the answer from
+  // after the last save arrives (until then the page has the answer from before, the same object: web/net.js).
+  const over = this.over && (this.busy > 0 || this.over.data === data) ? this.over.patch : {};
+  const change = (patch, save) => {
+    this.over = { patch: { ...over, ...patch }, data: null }; this.busy = (this.busy || 0) + 1; this.setState({ err: '', menu: null });
+    Promise.resolve(save()).then(() => { if (!--this.busy && this.over) this.over.data = db.net.profile(h); this.forceUpdate(); },
+      e => { this.busy--; this.over = null; this.setState({ err: oops(e) }); });
+  };
+  const pr = ok ? { ...data, ...over } : {};
+  // Your own picture and name are the ones in Settings, so they show here as soon as you change them.
+  const st = (db.settings && db.settings()) || {}, who = person(pr), name = (self && st.name) || pr.name || '';
+  const following = !!(pr.me && pr.me.following), followers = +pr.followers || 0;
+  const toggleFollow = () => { const on = !following; change({ me: { ...(pr.me || {}), following: on }, followers: Math.max(0, followers + (on ? 1 : -1)) }, () => db.act.follow(pr.handle, on)); };
+  // Pinned decks come first, in the order you pinned them (up to 3).
+  const feat = Array.isArray(pr.featured) ? pr.featured : [];
+  const setPins = next => change({ featured: next }, () => db.act.updateProfile({ featured: next }));
+  const rank = d => { const i = feat.indexOf(d.id); return i < 0 ? 99 : i; };
+  const list = (pr.decks || []).map((d, i) => ({ d, i })).sort((a, b) => rank(a.d) - rank(b.d) || a.i - b.i).map(x => x.d);
+  const menu = s.menu !== undefined ? s.menu : p.pinOpen && self && list[0] ? list[0].id : null;
+  const decks = list.map((d, i) => {
+    const pinned = feat.includes(d.id), x = netDeck({ ...d, pinned }), open = self && menu === d.id;
+    // On your own profile, a deck only people with its link can open says so.
+    const linkOnly = self && d.visibility === 'link' && !x.hasBadge;
+    return { ...x, ...(linkOnly ? { badge: 'Link only', hasBadge: true, badgeShield: false } : {}), href: goTo(d.url, B('PublicDeck')),
+      pinned, canPin: !pinned && feat.length < 3, pinFull: !pinned && feat.length >= 3, leftCol: i % 2 === 0, rightCol: i % 2 === 1,
+      menuOpen: open, menuExpanded: open ? 'true' : 'false', toggleMenu: () => this.setState({ menu: open ? null : d.id }),
+      pin: () => setPins([...feat, d.id].slice(0, 3)), unpin: () => setPins(feat.filter(id => id !== d.id)) };
+  });
+  const saved = (self ? pr.saved || [] : []).map(d => { const x = netDeck(d); return { ...x, href: goTo(d.url, B('PublicDeck')), owner: { ...x.owner, href: goTo(x.owner.handle ? '/@' + x.owner.handle : '', B('ProfileOther')) } }; });
+  // The suggestions you sent: waiting, taken, partly taken, or skipped.
+  const sentData = self ? db.net.sent() : [], sentList = Array.isArray(sentData) ? sentData : [];
+  const sentRows = sentList.map(g => {
+    const ch = g.changes || [], n = ch.length, took = ch.filter(c => c.status === 'taken').length, waiting = ch.some(c => c.status === 'open'), dk = g.deck || null;
+    const tone = waiting ? [t.hardTint, t.hard] : took ? [t.goodTint, t.good] : [t.surf, t.muted];
+    return { id: g.id, deck: dk ? dk.name : 'A deck that isn’t shared now', href: goTo(dk ? dk.url : '/d/' + g.shared_id, B('PublicDeck')), base: this.gen(dk ? dk.name : 'Lucida', 'mix').base,
+      line: [n === 1 ? '1 change' : n + ' changes', g.message || ''].filter(Boolean).join(' · '), when: ago(g.created_at),
+      status: waiting ? 'Waiting' : took === n && n ? 'Taken' : took ? took + ' of ' + n + ' taken' : 'Skipped', stBg: tone[0], stFg: tone[1] };
+  });
+  const tab = self ? s.tab || p.tab || 'Decks' : 'Decks';
+  const tabOf = (id, n) => ({ n: n == null ? '' : kfmt(n), sel: tab === id ? 'true' : 'false', fg: tab === id ? t.text : t.muted, bar: tab === id ? t.text : 'transparent', pick: () => this.setState({ tab: id, menu: null }) });
+  const stars = pr.stars ?? (pr.decks || []).reduce((n, d) => n + (+d.stars || 0), 0), n1 = (n, one, many) => (n === 1 ? one : many);
+  // Share copies the profile's link, and says so for a moment.
+  const link = (db.mock ? 'https://app.lucida.cards' : location.origin) + '/@' + (pr.handle || h);
+  const share = () => {
+    try { const r = db.act.copy ? db.act.copy(link) : navigator.clipboard && navigator.clipboard.writeText(link); if (r && r.catch) r.catch(() => {}); } catch (e) { /* no clipboard here */ }
+    clearTimeout(this.copiedT); this.copiedT = setTimeout(() => this.setState({ copied: false }), 2000); this.setState({ copied: true });
+  };
+  // Edit profile: your name (the one in Settings), handle, bio, school, and subject, and your picture (Settings' own
+  // controls, which save as you pick). Save sends the rest; a handle someone has says so under the handle.
+  const set = patch => db.act.setSettings(patch);
+  ${PHOTO_JS}
+  const editing = self && ok && (s.editing ?? !!p.editOpen);
+  const was = { name, handle: pr.handle || h, bio: pr.bio || '', school: pr.school || '', subject: pr.subject || '' };
+  const dr = { ...was, ...(p.editHandle ? { handle: p.editHandle } : {}), ...(s.draft || {}) };
+  const hv = String(dr.handle || '').trim().replace(/^@+/, '').toLowerCase(), handleOk = /^[a-z0-9_.]{3,30}$/.test(hv);
+  const handleMsg = !handleOk ? 'Use 3 to 30 letters, numbers, dots, or underscores.' : s.handleErr ?? (p.editError || '');
+  const field = k => e => this.setState({ draft: { ...(this.state.draft || {}), [k]: e && e.target ? e.target.value : '' }, ...(k === 'handle' ? { handleErr: '' } : {}) });
+  const cleanUrl = () => { if (!db.mock && /[?&]edit=1/.test(location.search)) history.replaceState(null, '', location.pathname); };
+  // Closing also brings your public picture up to date with the one you picked.
+  const closeEdit = () => { this.setState({ editing: false, draft: null, handleErr: null, saveErr: '' }); cleanUrl(); if (!db.mock) Promise.resolve(db.act.ensureProfile()).catch(() => {}); };
+  const busy = !!s.saving, off = busy || !handleOk;
+  const saveEdit = () => {
+    if (off) return;
+    const patch = {}, nm = String(dr.name || '').trim().slice(0, 60);
+    for (const k of ['bio', 'school', 'subject']) if (dr[k] !== was[k]) patch[k] = dr[k];
+    if (hv !== was.handle) patch.handle = hv;
+    this.setState({ saving: true, saveErr: '', handleErr: null });
+    Promise.resolve(nm && nm !== was.name ? db.act.setSettings({ name: nm }) : null).then(() => db.act.updateProfile(patch)).then(r => {
+      this.over = { patch: { ...over, ...patch, name: nm || was.name }, data: db.net.profile(h) };
+      this.setState({ saving: false, editing: false, draft: null }); cleanUrl();
+      if (r && r.handle && r.handle !== h && !db.mock) db.act.go('/@' + r.handle, true);
+    }).catch(e => { const m = oops(e); this.setState(/taken|letters, numbers/i.test(m) ? { saving: false, handleErr: m } : { saving: false, saveErr: m }); });
+  };
+  const hasLine = !!(pr.subject || pr.school), err = s.err || '';
+  return {
+    t, ...chrome, ${NET_VALS} ...photoVals,
+    sideSelf: !out && self, sideOther: !out && !self,
+    loading: !data && !s.makeErr && !!(h || making), missing, offline, ok, self, notSelf: !self, who, name, at: h ? '@' + h : '', hasLine, line: [pr.subject, pr.school].filter(Boolean).join(' · '),
+    hasBio: !!pr.bio, bio: pr.bio || '',
+    counts: [{ n: kfmt(decks.length), word: n1(decks.length, 'deck', 'decks') }, { n: kfmt(followers), word: n1(followers, 'follower', 'followers') }, { n: kfmt(pr.following), word: 'following' }, { n: kfmt(stars), word: n1(stars, 'save', 'saves') }],
+    counts3: [{ n: kfmt(decks.length), label: 'Decks' }, { n: kfmt(followers), label: 'Followers' }, { n: kfmt(pr.following), label: 'Following' }],
+    canFollow: ok && !self && !out, followSignIn: ok && out, toggleFollow, followLabel: following ? 'Following' : 'Follow', followPressed: following ? 'true' : 'false',
+    followBg: following ? t.surf : t.inv, followFg: following ? t.text : t.invText,
+    share, copied: !!s.copied, notCopied: !s.copied, shareLabel: s.copied ? 'Link copied' : 'Share', shareLong: s.copied ? 'Link copied' : 'Share profile',
+    hasErr: !!err, err, makeFailed: !!s.makeErr, makeErr: s.makeErr || '', retryMake: () => { this.making = false; this.setState({ makeErr: '' }); },
+    tabs: { decks: tabOf('Decks', decks.length), saved: tabOf('Saved', saved.length), sugg: tabOf('Suggestions', sentData === undefined ? null : sentList.length) },
+    decks, showDecks: tab === 'Decks' && decks.length > 0, noDecks: tab === 'Decks' && !decks.length,
+    saved, showSaved: tab === 'Saved' && saved.length > 0, noSaved: tab === 'Saved' && !saved.length,
+    sentRows, sentLoading: tab === 'Suggestions' && sentData === undefined, showSent: tab === 'Suggestions' && sentRows.length > 0, noSent: tab === 'Suggestions' && sentData !== undefined && !sentRows.length,
+    missingTitle: 'No one has that name', missingLine: '@' + h, discoverHref: goTo('/discover', B('Discover')), backHref: goTo('/discover', B('Discover')),
+    editing, openEdit: () => this.setState({ editing: true, draft: null, handleErr: null, saveErr: '', menu: null }), closeEdit, saveEdit,
+    draft: dr, setName: field('name'), setHandle: field('handle'), setBio: field('bio'), setSchool: field('school'), setSubject: field('subject'),
+    bioCount: String(dr.bio || '').length + '/160', hasHandleMsg: !!handleMsg, handleMsg, handleInvalid: handleMsg ? 'true' : 'false', handleRing: handleMsg ? 'inset 0 0 0 2px ' + t.again : 'none',
+    hasSaveErr: !!s.saveErr, saveErr: s.saveErr || '', saveOff: off ? 'true' : 'false', saveLabel: busy ? 'Saving…' : 'Save',
+    saveBg: off ? t.surf2 : t.inv, saveFg: off ? t.muted : t.invText, saveInk: off ? t.muted : t.text
+  };
+}`;
+// Your own profile lights up "You" in the sidebar; someone else's lights up nothing.
+const SIDE_ONE = `<sc-if value="{{signedIn}}" hint-placeholder-val="{{ true }}">${sidebar('Profile')}</sc-if>`;
+const profileRoot = (inner, extra) => { const html = netRoot('Profile', inner, extra); if (!html.includes(SIDE_ONE)) throw new Error('profileRoot: netRoot changed');
+  return html.replace(SIDE_ONE, `<sc-if value="{{sideSelf}}" hint-placeholder-val="{{ true }}">${sidebar('Profile')}</sc-if><sc-if value="{{sideOther}}" hint-placeholder-val="{{ false }}">${sidebar('')}</sc-if>`); };
+// A tab of your profile: its icon, its name, and how many (on the iPhone, just the icon).
+const PROFILE_TAB = (k, icon, label, phone) => phone
+  ? `<button type="button" role="tab" onClick="{{tabs.${k}.pick}}" aria-selected="{{tabs.${k}.sel}}" aria-label="${label}" style="height: 48px; margin-bottom: -1px; border: 0; border-bottom: 2px solid {{tabs.${k}.bar}}; background: transparent; color: {{tabs.${k}.fg}}; display: flex; align-items: center; justify-content: center; cursor: pointer;">${svg(I[icon], 21, 1.8)}</button>`
+  : `<button type="button" role="tab" onClick="{{tabs.${k}.pick}}" aria-selected="{{tabs.${k}.sel}}" style="height: 44px; margin-bottom: -1px; padding: 0 2px; display: inline-flex; align-items: center; gap: 8px; border: 0; border-bottom: 2px solid {{tabs.${k}.bar}}; background: transparent; color: {{tabs.${k}.fg}}; font: inherit; font-size: 15px; font-weight: 600; cursor: pointer;">${svg(I[icon], 16, 1.8)}${label}<span style="font-family: ${MONO}; font-size: 12px; font-weight: 500; color: {{t.muted}};">{{tabs.${k}.n}}</span></button>`;
+// ⋯ on one of your decks: pin it to your profile (up to 3), or unpin it.
+const MENU_ITEM = 'height: 38px; flex-shrink: 0; padding: 0 12px; display: flex; align-items: center; gap: 10px; border: 0; border-radius: 12px; background: transparent; color: {{t.text}}; font: inherit; font-size: 14px; text-align: left; cursor: pointer;';
+const PIN_BTN = size => `<button type="button" onClick="{{d.toggleMenu}}" aria-label="More for {{d.name}}" aria-expanded="{{d.menuExpanded}}" style="position: absolute; top: 12px; right: 12px; width: ${size}px; height: ${size}px; border: 0; border-radius: ${size / 2}px; background: {{d.glass}}; box-shadow: inset 0 0 0 1px {{d.glassLine}}; color: {{d.ink}}; display: flex; align-items: center; justify-content: center; cursor: pointer; backdrop-filter: blur(8px);">${svg(I.more, 16, 2)}</button>`;
+const PIN_MENU = pos => `<sc-if value="{{d.menuOpen}}" hint-placeholder-val="{{ false }}"><div role="dialog" aria-label="{{d.name}}" data-sc-pop style="position: absolute; ${pos} z-index: 25; width: 230px; ${popBox}">
+  <sc-if value="{{d.pinned}}" hint-placeholder-val="{{ false }}"><button type="button" onClick="{{d.unpin}}" style="${MENU_ITEM}"><span style="display: flex; color: {{t.muted}};">${svg(I.pin, 16, 1.8)}</span>Unpin</button></sc-if>
+  <sc-if value="{{d.canPin}}" hint-placeholder-val="{{ true }}"><button type="button" onClick="{{d.pin}}" style="${MENU_ITEM}"><span style="display: flex; color: {{t.muted}};">${svg(I.pin, 16, 1.8)}</span>Pin to profile</button></sc-if>
+  <sc-if value="{{d.pinFull}}" hint-placeholder-val="{{ false }}"><span aria-disabled="true" style="padding: 9px 12px; display: flex; gap: 10px; color: {{t.muted}};"><span style="display: flex; padding-top: 1px;">${svg(I.pin, 16, 1.8)}</span><span style="display: flex; flex-direction: column; gap: 2px;"><span style="font-size: 14px;">Pin to profile</span><span style="font-size: 12px;">3 pinned already</span></span></span></sc-if>
+</div></sc-if>`;
+// A tab with nothing in it yet, and what to do about it.
+const PROFILE_EMPTY = (on, text, action = '', phone = false) => `<sc-if value="{{${on}}}" hint-placeholder-val="{{ false }}"><div style="padding: ${phone ? '40px 20px' : '56px 24px'}; border-radius: ${phone ? 22 : 24}px; background: {{t.surf}}; display: flex; flex-direction: column; align-items: center; gap: 14px; text-align: center; font-size: 15px; color: {{t.muted}};"><span>${text}</span>${action}</div></sc-if>`;
+const PROFILE_EMPTIES = (phone, P) => `${PROFILE_EMPTY('noDecks', 'No public decks yet', `<sc-if value="{{self}}" hint-placeholder-val="{{ true }}">${pill('Open Library', { inv: true, href: P + (phone ? 'Library' : 'Decks') + '.dc.html' })}</sc-if>`, phone)}
+  ${PROFILE_EMPTY('noSaved', 'No saved decks yet', pill('Discover decks', { inv: true, href: P + 'Discover.dc.html' }), phone)}
+  ${PROFILE_EMPTY('noSent', 'No suggestions yet', '', phone)}`;
+// The suggestions you sent, each with its deck's color, what you said, when, and what became of it.
+const SENT_ROWS = phone => `<sc-if value="{{sentLoading}}" hint-placeholder-val="{{ false }}"><div aria-label="Loading" style="height: 120px; border-radius: 20px; background: {{t.surf}};"></div></sc-if>
+  <sc-if value="{{showSent}}" hint-placeholder-val="{{ false }}"><div style="display: flex; flex-direction: column;"><sc-for list="{{sentRows}}" as="g" hint-placeholder-count="4"><a href="{{g.href}}" style="display: flex; align-items: center; gap: ${phone ? 12 : 16}px; min-height: ${phone ? 64 : 68}px; padding: 10px 0; box-sizing: border-box; border-bottom: 1px solid {{t.line}};">
+    <span style="width: ${phone ? 36 : 40}px; height: ${phone ? 36 : 40}px; flex-shrink: 0; border-radius: 12px; background: {{g.base}};"></span>
+    <span style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px;"><span style="font-size: 15px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{g.deck}}</span><span style="font-size: 13px; color: {{t.muted}}; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{g.line}}</span></span>
+    ${phone ? '' : '<span style="flex-shrink: 0; font-size: 13px; color: {{t.muted}};">{{g.when}}</span>'}
+    <span style="flex-shrink: 0; height: 26px; padding: 0 10px; display: inline-flex; align-items: center; border-radius: 999px; background: {{g.stBg}}; color: {{g.stFg}}; font-size: 12px; font-weight: 600; white-space: nowrap;">{{g.status}}</span>
+  </a></sc-for></div></sc-if>`;
+// While a profile loads: soft gray shapes where its picture, name, and decks will be.
+const PROFILE_LOADING = phone => { const b = (w, h, r) => `<div style="width: ${w}; height: ${h}px; flex-shrink: 0; border-radius: ${r}px; background: {{t.surf}};"></div>`;
+  return `<sc-if value="{{loading}}" hint-placeholder-val="{{ false }}"><div aria-label="Loading" style="display: flex; flex-direction: column; gap: ${phone ? 16 : 24}px;">${phone
+    ? `<div style="display: flex; align-items: center; gap: 20px;">${b('84px', 84, 42)}<div style="flex-grow: 1; display: flex; flex-direction: column; gap: 10px;">${b('100%', 18, 9)}${b('70%', 14, 7)}</div></div>${b('55%', 16, 8)}${b('100%', 44, 22)}<div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px;">${b('100%', 220, 20)}${b('100%', 220, 20)}</div>`
+    : `<div style="display: flex; align-items: center; gap: 28px;">${b('112px', 112, 56)}<div style="display: flex; flex-direction: column; gap: 12px;">${b('280px', 34, 12)}${b('420px', 16, 8)}${b('340px', 16, 8)}</div></div><div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 18px;">${b('100%', 300, 20).repeat(4)}</div>`}</div></sc-if>`; };
+// Not found, offline, and making your profile didn't work.
+const PROFILE_TROUBLE = phone => `${NET_MISSING}
+  <sc-if value="{{offline}}" hint-placeholder-val="{{ false }}"><div style="padding: ${phone ? '40px 20px' : '56px 24px'}; border-radius: 24px; background: {{t.surf}}; text-align: center; font-size: 15px; color: {{t.muted}};">Couldn’t reach Lucida. Check your connection.</div></sc-if>
+  <sc-if value="{{makeFailed}}" hint-placeholder-val="{{ false }}"><div style="padding: ${phone ? '40px 20px' : '56px 24px'}; border-radius: 24px; background: {{t.surf}}; display: flex; flex-direction: column; align-items: center; gap: 14px; text-align: center; font-size: 15px; color: {{t.muted}};"><span>{{makeErr}}</span>${pill('Try again', { inv: true, onClick: '{{retryMake}}' })}</div></sc-if>`;
+// Edit profile's fields (the web's side panel and the iPhone's sheet).
+const PROFILE_FIELDS = phone => {
+  const fs = phone ? 16 : 15, box = `box-sizing: border-box; border: 0; outline: 0; border-radius: 16px; background: {{t.surf}}; color: {{t.text}}; font: inherit; font-size: ${fs}px;`;
+  const label = txt => `<span style="font-size: 13px; font-weight: 600;">${txt}</span>`;
+  const line = (txt, key, set, max, extra = '') => `<label style="display: flex; flex-direction: column; gap: 8px;">${label(txt)}<input type="text" value="{{draft.${key}}}" onChange="{{${set}}}" maxlength="${max}"${extra} style="height: 46px; padding: 0 16px; ${box}"></label>`;
+  // Your picture beside its choices; on the iPhone, above them (three choices need the whole width there).
+  return `<div style="padding: 16px; border-radius: 20px; background: {{t.surf}}; display: flex; ${phone ? 'flex-direction: column; align-items: center;' : 'align-items: flex-start;'} gap: 14px;">${AVATAR_ME(phone ? 64 : 56)}<div style="${phone ? 'align-self: stretch;' : 'flex-grow: 1;'} min-width: 0; display: flex; flex-direction: column; gap: 12px;">${photoPanel(true)}</div></div>
+      ${line('Name', 'name', 'setName', 60, ' autocomplete="name"')}
+      <label style="display: flex; flex-direction: column; gap: 8px;">${label('Handle')}<span style="height: 46px; padding: 0 16px; display: flex; align-items: center; gap: 1px; box-shadow: {{handleRing}}; ${box}"><span aria-hidden="true" style="color: {{t.muted}};">@</span><input type="text" value="{{draft.handle}}" onChange="{{setHandle}}" maxlength="31" autocomplete="off" autocapitalize="none" spellcheck="false" aria-invalid="{{handleInvalid}}" aria-label="Handle" style="flex-grow: 1; min-width: 0; height: 100%; padding: 0; border: 0; outline: 0; background: transparent; color: {{t.text}}; font: inherit;"></span><sc-if value="{{hasHandleMsg}}" hint-placeholder-val="{{ false }}"><span role="alert" style="font-size: 13px; color: {{t.again}};">{{handleMsg}}</span></sc-if></label>
+      <label style="display: flex; flex-direction: column; gap: 8px;"><span style="display: flex; align-items: baseline; justify-content: space-between; gap: 8px;">${label('Bio')}<span style="font-family: ${MONO}; font-size: 12px; color: {{t.muted}};">{{bioCount}}</span></span><textarea rows="3" onChange="{{setBio}}" maxlength="160" style="resize: none; padding: 12px 16px; line-height: 1.45; ${box}">{{draft.bio}}</textarea></label>
+      ${line('School', 'school', 'setSchool', 60, ' autocomplete="organization"')}
+      ${line('Subject or course', 'subject', 'setSubject', 60)}`;
+};
+const PROFILE_SAVE_ERR = `<sc-if value="{{hasSaveErr}}" hint-placeholder-val="{{ false }}"><span role="alert" style="font-size: 13px; color: {{t.again}};">{{saveErr}}</span></sc-if>`;
+const EDIT_PANEL = `<sc-if value="{{editing}}" hint-placeholder-val="{{ false }}">
+  <div class="sc-scrim" onClick="{{closeEdit}}" style="position: absolute; top: 0; right: 0; bottom: 0; left: 240px; z-index: 50; background: {{t.dim}};"></div>
+  <aside role="dialog" aria-label="Edit profile" class="sc-panel" style="position: absolute; top: 12px; right: 12px; bottom: 12px; z-index: 51; width: 460px; box-sizing: border-box; padding: 24px; border-radius: 20px; background: {{t.bg}}; box-shadow: 0 24px 64px rgba(0,0,0,.24); display: flex; flex-direction: column; gap: 16px; overflow: hidden;">
+    <div style="display: flex; align-items: center; justify-content: space-between;"><span style="font-size: 20px; font-weight: 600; letter-spacing: -.01em;">Edit profile</span><button type="button" onClick="{{closeEdit}}" aria-label="Close" style="width: 36px; height: 36px; border: 0; border-radius: 18px; background: {{t.surf}}; color: {{t.text}}; display: flex; align-items: center; justify-content: center; cursor: pointer;">${svg(I.close, 14, 2.2)}</button></div>
+    <div style="flex-grow: 1; min-height: 0; overflow-y: auto; scrollbar-width: thin; display: flex; flex-direction: column; gap: 14px;">${PROFILE_FIELDS(false)}</div>
+    ${PROFILE_SAVE_ERR}
+    <div style="display: flex; gap: 8px;"><button type="button" onClick="{{closeEdit}}" data-key="escape" style="flex: 1 1 0; height: 44px; border: 0; border-radius: 999px; background: {{t.surf}}; color: {{t.text}}; font: inherit; font-size: 14px; font-weight: 600; cursor: pointer;">Cancel</button><button type="button" onClick="{{saveEdit}}" data-key="mod+enter" aria-disabled="{{saveOff}}" style="flex: 1 1 0; height: 44px; border: 0; border-radius: 999px; background: {{saveBg}}; color: {{saveFg}}; font: inherit; font-size: 14px; font-weight: 600; cursor: pointer; transition: background-color .15s, color .15s;">{{saveLabel}}</button></div>
+  </aside>
+</sc-if>`;
+const EDIT_SHEET = `<sc-if value="{{editing}}" hint-placeholder-val="{{ false }}">
+  <div class="sc-scrim" onClick="{{closeEdit}}" style="position: absolute; inset: 0; z-index: 50; background: {{t.dim}};"></div>
+  <div role="dialog" aria-label="Edit profile" class="sc-sheet" style="position: absolute; left: 0; right: 0; bottom: 0; top: 56px; z-index: 51; box-sizing: border-box; padding: 10px 20px 34px; border-radius: 36px 36px 0 0; background: {{t.bg}}; display: flex; flex-direction: column; gap: 14px;">
+    <div style="align-self: center; width: 40px; height: 5px; border-radius: 3px; background: {{t.surf2}};"></div>
+    <div style="display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: center;"><button type="button" onClick="{{closeEdit}}" style="justify-self: start; min-height: 44px; padding: 0; border: 0; background: transparent; color: {{t.muted}}; font: inherit; font-size: 16px; cursor: pointer;">Cancel</button><span style="font-size: 17px; font-weight: 600;">Edit profile</span><button type="button" onClick="{{saveEdit}}" aria-disabled="{{saveOff}}" style="justify-self: end; min-height: 44px; padding: 0; border: 0; background: transparent; color: {{saveInk}}; font: inherit; font-size: 16px; font-weight: 600; cursor: pointer;">{{saveLabel}}</button></div>
+    <div style="flex-grow: 1; min-height: 0; overflow-y: auto; scrollbar-width: none; display: flex; flex-direction: column; gap: 14px;">${PROFILE_FIELDS(true)}${PROFILE_SAVE_ERR}</div>
+  </div>
+</sc-if>`;
+const webProfile = profileRoot(`
+    ${PROFILE_LOADING(false)}
+    ${PROFILE_TROUBLE(false)}
+    <sc-if value="{{ok}}" hint-placeholder-val="{{ true }}">
+      <div style="display: flex; align-items: flex-start; gap: 28px;">
+        <sc-if value="{{self}}" hint-placeholder-val="{{ true }}">${AVATAR_ME(112)}</sc-if><sc-if value="{{notSelf}}" hint-placeholder-val="{{ false }}">${PERSON_AV('who', 112)}</sc-if>
+        <div style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 10px; padding-top: 6px;">
+          <div style="display: flex; align-items: center; gap: 12px; min-width: 0;"><h1 style="margin: 0; min-width: 0; font-size: 32px; font-weight: 600; letter-spacing: -.03em; line-height: 1.15; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{name}}</h1>${VERIFIED('who')}<span style="flex-shrink: 0; font-size: 15px; color: {{t.muted}};">{{at}}</span></div>
+          <sc-if value="{{hasLine}}" hint-placeholder-val="{{ true }}"><span style="margin-top: -2px; font-size: 14px; color: {{t.muted}};">{{line}}</span></sc-if>
+          <sc-if value="{{hasBio}}" hint-placeholder-val="{{ true }}"><p style="margin: 0; max-width: 640px; font-size: 15px; line-height: 1.45; white-space: pre-line; overflow-wrap: anywhere;">{{bio}}</p></sc-if>
+          <div style="display: flex; flex-wrap: wrap; gap: 22px; padding-top: 2px; font-size: 14px; color: {{t.muted}};"><sc-for list="{{counts}}" as="c" hint-placeholder-count="4"><span><span style="font-weight: 600; color: {{t.text}};">{{c.n}}</span> {{c.word}}</span></sc-for></div>
+        </div>
+        <div style="flex-shrink: 0; display: flex; align-items: center; gap: 10px;">
+          <sc-if value="{{self}}" hint-placeholder-val="{{ true }}">${pill('Edit profile', { icon: 'pencil', onClick: '{{openEdit}}' })}</sc-if>
+          <sc-if value="{{canFollow}}" hint-placeholder-val="{{ false }}"><button type="button" onClick="{{toggleFollow}}" aria-pressed="{{followPressed}}" class="sc-press" style="height: 36px; padding: 0 20px; display: inline-flex; align-items: center; border: 0; border-radius: 999px; background: {{followBg}}; color: {{followFg}}; font: inherit; font-size: 14px; font-weight: 600; cursor: pointer; transition: background-color .15s, color .15s;">{{followLabel}}</button></sc-if>
+          <sc-if value="{{followSignIn}}" hint-placeholder-val="{{ false }}">${pill('Follow', { inv: true, href: '{{signInHref}}' })}</sc-if>
+          <button type="button" onClick="{{share}}" class="sc-press" style="height: 36px; padding: 0 16px; display: inline-flex; align-items: center; gap: 8px; border: 0; border-radius: 999px; background: {{t.surf}}; color: {{t.text}}; font: inherit; font-size: 14px; font-weight: 600; cursor: pointer;"><sc-if value="{{copied}}" hint-placeholder-val="{{ false }}">${svg(I.check, 16, 2)}</sc-if><sc-if value="{{notCopied}}" hint-placeholder-val="{{ true }}">${svg(I.share, 16, 2)}</sc-if>{{shareLabel}}</button>
+        </div>
+      </div>
+      <sc-if value="{{hasErr}}" hint-placeholder-val="{{ false }}"><span role="alert" style="margin-top: -12px; font-size: 13px; color: {{t.again}};">{{err}}</span></sc-if>
+      <div role="tablist" aria-label="Profile" style="display: flex; gap: 28px; border-bottom: 1px solid {{t.line}};">${PROFILE_TAB('decks', 'grid', 'Decks')}<sc-if value="{{self}}" hint-placeholder-val="{{ true }}">${PROFILE_TAB('saved', 'star', 'Saved')}${PROFILE_TAB('sugg', 'message', 'Suggestions')}</sc-if></div>
+      <sc-if value="{{showDecks}}" hint-placeholder-val="{{ true }}"><div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 18px;"><sc-for list="{{decks}}" as="d" hint-placeholder-count="8"><div style="position: relative; min-width: 0;">${NET_TILE('d', 300)}<sc-if value="{{self}}" hint-placeholder-val="{{ true }}">${PIN_BTN(32)}${PIN_MENU('right: 12px; top: 52px;')}</sc-if></div></sc-for></div></sc-if>
+      <sc-if value="{{showSaved}}" hint-placeholder-val="{{ false }}"><div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 18px;"><sc-for list="{{saved}}" as="d" hint-placeholder-count="3"><div style="display: flex; flex-direction: column; gap: 10px; min-width: 0;">${NET_TILE('d', 260)}<a href="{{d.owner.href}}" style="display: flex; align-items: center; gap: 8px; min-width: 0; font-size: 13px;">${PERSON_AV('d.owner', 22)}<span style="font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{d.owner.name}}</span>${VERIFIED('d.owner')}<span style="margin-left: auto; flex-shrink: 0; color: {{t.muted}};">{{d.cardsLine}}</span></a></div></sc-for></div></sc-if>
+      ${SENT_ROWS(false)}
+      ${PROFILE_EMPTIES(false, 'Web')}
+    </sc-if>`, EDIT_PANEL);
+const phoneProfile = phone(`<div style="padding: 64px 20px 120px; display: flex; flex-direction: column; gap: 16px;">
+  <div style="display: flex; align-items: center; gap: 10px;">
+    <sc-if value="{{notSelf}}" hint-placeholder-val="{{ false }}"><a href="{{backHref}}" aria-label="Back" style="width: 44px; height: 44px; flex-shrink: 0; border-radius: 22px; background: {{t.surf}}; display: flex; align-items: center; justify-content: center;">${svg(I.back, 18, 2)}</a></sc-if>
+    <span style="flex-grow: 1; min-width: 0; font-size: 20px; font-weight: 700; letter-spacing: -.02em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{at}}</span>
+    <sc-if value="{{ok}}" hint-placeholder-val="{{ true }}"><button type="button" onClick="{{share}}" aria-label="Share profile" class="sc-press" style="width: 44px; height: 44px; flex-shrink: 0; border: 0; border-radius: 22px; background: {{t.surf}}; color: {{t.text}}; display: flex; align-items: center; justify-content: center; cursor: pointer;">${svg(I.share, 18, 2)}</button></sc-if>
+    <sc-if value="{{self}}" hint-placeholder-val="{{ true }}"><a href="PhoneSettings.dc.html" aria-label="Settings" class="sc-press" style="width: 44px; height: 44px; flex-shrink: 0; border-radius: 22px; background: {{t.surf}}; display: flex; align-items: center; justify-content: center;">${svg(I.gear, 18, 2)}</a></sc-if>
+  </div>
+  ${PROFILE_LOADING(true)}
+  ${PROFILE_TROUBLE(true)}
+  <sc-if value="{{ok}}" hint-placeholder-val="{{ true }}">
+    <div style="display: flex; align-items: center; gap: 20px;">
+      <sc-if value="{{self}}" hint-placeholder-val="{{ true }}">${AVATAR_ME(84)}</sc-if><sc-if value="{{notSelf}}" hint-placeholder-val="{{ false }}">${PERSON_AV('who', 84)}</sc-if>
+      <div style="flex-grow: 1; min-width: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); text-align: center;"><sc-for list="{{counts3}}" as="c" hint-placeholder-count="3"><span style="display: flex; flex-direction: column; gap: 2px;"><span style="font-size: 18px; font-weight: 700;">{{c.n}}</span><span style="font-size: 13px; color: {{t.muted}};">{{c.label}}</span></span></sc-for></div>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 3px;">
+      <span style="display: flex; align-items: center; gap: 6px; min-width: 0; font-size: 16px; font-weight: 600;"><span style="min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{name}}</span>${VERIFIED('who')}</span>
+      <sc-if value="{{hasLine}}" hint-placeholder-val="{{ true }}"><span style="font-size: 14px; color: {{t.muted}};">{{line}}</span></sc-if>
+      <sc-if value="{{hasBio}}" hint-placeholder-val="{{ true }}"><span style="font-size: 15px; line-height: 1.4; white-space: pre-line; overflow-wrap: anywhere;">{{bio}}</span></sc-if>
+    </div>
+    <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px;">
+      <sc-if value="{{self}}" hint-placeholder-val="{{ true }}"><button type="button" onClick="{{openEdit}}" class="sc-press" style="height: 44px; border: 0; border-radius: 999px; background: {{t.surf}}; color: {{t.text}}; font: inherit; font-size: 15px; font-weight: 600; cursor: pointer;">Edit profile</button></sc-if>
+      <sc-if value="{{canFollow}}" hint-placeholder-val="{{ false }}"><button type="button" onClick="{{toggleFollow}}" aria-pressed="{{followPressed}}" class="sc-press" style="height: 44px; border: 0; border-radius: 999px; background: {{followBg}}; color: {{followFg}}; font: inherit; font-size: 15px; font-weight: 600; cursor: pointer; transition: background-color .15s, color .15s;">{{followLabel}}</button></sc-if>
+      <sc-if value="{{followSignIn}}" hint-placeholder-val="{{ false }}"><a href="{{signInHref}}" class="sc-press" style="height: 44px; border-radius: 999px; background: {{t.inv}}; color: {{t.invText}}; display: flex; align-items: center; justify-content: center; font-size: 15px; font-weight: 600;">Follow</a></sc-if>
+      <button type="button" onClick="{{share}}" class="sc-press" style="height: 44px; border: 0; border-radius: 999px; background: {{t.surf}}; color: {{t.text}}; font: inherit; font-size: 15px; font-weight: 600; cursor: pointer;">{{shareLong}}</button>
+    </div>
+    <sc-if value="{{hasErr}}" hint-placeholder-val="{{ false }}"><span role="alert" style="font-size: 13px; color: {{t.again}};">{{err}}</span></sc-if>
+    <sc-if value="{{self}}" hint-placeholder-val="{{ true }}"><div role="tablist" aria-label="Profile" style="margin: 0 -20px; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); border-bottom: 1px solid {{t.line}};">${PROFILE_TAB('decks', 'grid', 'Decks', true)}${PROFILE_TAB('saved', 'star', 'Saved', true)}${PROFILE_TAB('sugg', 'message', 'Suggestions', true)}</div></sc-if>
+    <sc-if value="{{notSelf}}" hint-placeholder-val="{{ false }}"><div style="margin: 0 -20px; height: 1px; background: {{t.line}};"></div></sc-if>
+    <sc-if value="{{showDecks}}" hint-placeholder-val="{{ true }}"><div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px;"><sc-for list="{{decks}}" as="d" hint-placeholder-count="4"><div style="position: relative; min-width: 0;">${NET_TILE('d', 220, 18)}<sc-if value="{{self}}" hint-placeholder-val="{{ true }}">${PIN_BTN(30)}<sc-if value="{{d.leftCol}}" hint-placeholder-val="{{ true }}">${PIN_MENU('left: 8px; top: 48px;')}</sc-if><sc-if value="{{d.rightCol}}" hint-placeholder-val="{{ false }}">${PIN_MENU('right: 8px; top: 48px;')}</sc-if></sc-if></div></sc-for></div></sc-if>
+    <sc-if value="{{showSaved}}" hint-placeholder-val="{{ false }}"><div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px;"><sc-for list="{{saved}}" as="d" hint-placeholder-count="3"><div style="display: flex; flex-direction: column; gap: 8px; min-width: 0;">${NET_TILE('d', 200, 18)}<a href="{{d.owner.href}}" style="display: flex; align-items: center; gap: 6px; min-width: 0; font-size: 12px;">${PERSON_AV('d.owner', 20)}<span style="font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{d.owner.name}}</span>${VERIFIED('d.owner')}</a></div></sc-for></div></sc-if>
+    ${SENT_ROWS(true)}
+    ${PROFILE_EMPTIES(true, 'Phone')}
+  </sc-if>
+</div>`, 'You', EDIT_SHEET);
+
+// News: suggestions on your decks, people following you, new versions of decks you follow, what owners did with your
+// suggestions, and teachers checking your decks. What's new has a dot; opening the page marks it read a moment later.
+const NEWS_LOGIC = phone => `
+componentWillUnmount() { clearTimeout(this.readT); }
+renderVals() {
+  ${T}${DB_JS}${NET_JS}
+  const B = n => '${phone ? 'Phone' : 'Web'}' + n;
+  const data = db.net.activity(), bad = !!(data && (data.missing || data.offline)), list = (data && !bad && data.items) || [];
+  // What was new when you opened the page keeps its dot while you're here, though it's marked read (and the bell's
+  // count goes) a moment after you open it.
+  if (data && !bad && !this.fresh) this.fresh = new Set(list.filter(x => !x.read).map(x => x.id));
+  if (data && !bad && data.unread && !db.mock && !this.readT) this.readT = setTimeout(() => Promise.resolve(db.act.readNews()).catch(() => {}), 1500);
+  const lib = db.mock ? [] : db.decks();
+  const items = list.map(x => {
+    const d = x.data || {}, dk = x.deck || {}, n = +d.n || 0, took = +d.took || 0, skipped = +d.skipped || 0;
+    const who = person(x.person || { name: x.actor_name }), actor = x.actor_name || who.name || 'Someone';
+    const did = took && skipped ? 'took ' + took + ' of your changes to' : took ? (took === 1 ? 'took your change to' : 'took your ' + took + ' changes to') : skipped === 1 ? 'skipped your change to' : 'skipped your changes to';
+    const words = { suggestion: [actor, 'suggested ' + (n === 1 ? 'a change' : n + ' changes') + ' to', dk.name || ''], follow: [actor, 'followed you', ''],
+      update: [dk.name || 'A deck you follow', 'has ' + (d.summary || 'changes'), ''], decided: [actor, did, dk.name || ''], checked: [actor, 'checked', dk.name || ''] }[x.kind] || [actor, '', dk.name || ''];
+    // A suggestion opens your deck's suggestions (your library's deck shared as that one); a follow, their profile.
+    const mine = x.kind === 'suggestion' && dk.id ? lib.find(y => y.shared && y.shared.id === dk.id) : null;
+    const href = x.kind === 'follow' ? goTo('/@' + (who.handle || d.handle || ''), B('ProfileOther')) : mine ? goTo('/deck/' + mine.id + '/suggestions', B('Suggestions'))
+      : goTo(dk.url || '', x.kind === 'suggestion' ? B('Suggestions') : B('PublicDeck'));
+    const isNew = !x.read || (!!this.fresh && this.fresh.has(x.id));
+    return { id: String(x.id), who, lead: words[0], mid: words[1], tail: words[2], hasNote: x.kind === 'suggestion' && !!d.message, note: d.message || '', when: ago(x.created_at), isNew, dot: isNew ? '#3E63DD' : 'transparent', href };
+  });
+  return { t, ...chrome, ${NET_VALS} loading: data === undefined, offline: bad, items, hasItems: items.length > 0, nothing: !!data && !bad && !items.length };
+}`;
+const NEWS_ROW = phone => `<a href="{{n.href}}" style="display: flex; align-items: center; gap: ${phone ? 12 : 14}px; min-height: ${phone ? 68 : 72}px; padding: 12px 0; box-sizing: border-box; border-bottom: 1px solid {{t.line}};">
+    ${PERSON_AV('n.who', 40)}
+    <span style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px;">
+      <span style="font-size: 15px; line-height: 1.4;"><span style="font-weight: 600;">{{n.lead}}</span> {{n.mid}} <span style="font-weight: 600;">{{n.tail}}</span><sc-if value="{{n.isNew}}" hint-placeholder-val="{{ false }}"><span style="position: absolute; left: -9999px;">New</span></sc-if></span>
+      <sc-if value="{{n.hasNote}}" hint-placeholder-val="{{ false }}"><span style="font-size: 13px; color: {{t.muted}}; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{n.note}}</span></sc-if>
+    </span>
+    <span style="flex-shrink: 0; font-size: ${phone ? 12 : 13}px; color: {{t.muted}};">{{n.when}}</span>
+    <span aria-hidden="true" style="width: 8px; height: 8px; flex-shrink: 0; border-radius: 4px; background: {{n.dot}};"></span>
+  </a>`;
+const NEWS_EMPTY = phone => `<sc-if value="{{nothing}}" hint-placeholder-val="{{ false }}"><div style="padding: ${phone ? '40px 20px' : '56px 24px'}; border-radius: ${phone ? 22 : 24}px; background: {{t.surf}}; text-align: center; font-size: 15px; color: {{t.muted}};">Nothing new</div></sc-if>
+  <sc-if value="{{offline}}" hint-placeholder-val="{{ false }}"><div style="padding: ${phone ? '40px 20px' : '56px 24px'}; border-radius: ${phone ? 22 : 24}px; background: {{t.surf}}; text-align: center; font-size: 15px; color: {{t.muted}};">Couldn’t reach Lucida. Check your connection.</div></sc-if>`;
+const webActivity = netRoot('News', `
+    <h1 style="margin: 0; font-size: 32px; font-weight: 600; letter-spacing: -.03em;">News</h1>
+    ${NET_LOADING(3)}
+    <sc-if value="{{hasItems}}" hint-placeholder-val="{{ true }}"><div style="max-width: 800px; display: flex; flex-direction: column;"><sc-for list="{{items}}" as="n" hint-placeholder-count="5">${NEWS_ROW(false)}</sc-for></div></sc-if>
+    ${NEWS_EMPTY(false)}`);
+const phoneActivity = phone(`<div style="padding: 64px 20px 34px; display: flex; flex-direction: column; gap: 16px;">
+  <div style="display: flex; align-items: center; gap: 12px;">${roundBtn('back', 'Back', 'PhoneToday.dc.html')}<div style="flex-grow: 1; font-size: 17px; font-weight: 600; text-align: center;">News</div><div style="width: 44px;"></div></div>
+  ${NET_LOADING(3)}
+  <sc-if value="{{hasItems}}" hint-placeholder-val="{{ true }}"><div style="display: flex; flex-direction: column;"><sc-for list="{{items}}" as="n" hint-placeholder-count="5">${NEWS_ROW(true)}</sc-for></div></sc-if>
+  ${NEWS_EMPTY(true)}
+</div>`, '');
+
 // ---------- write ----------
 const W = 1440, H = 900, PW = 390, PH = 844;
 // A deck page's sharing on the canvas (Tweaks): shared by you, or from someone else (studied as it is, or a copy).
 const SHARE_PROPS = { shared: { editor: 'enum', default: '', options: ['', 'Link only', 'Public'] }, linked: { editor: 'enum', default: '', options: ['', 'study', 'copy'] }, updatesOpen: { editor: 'boolean', default: false } };
 // Settings' profile picture, for showing each one on the canvas (Tweaks).
 const PHOTO_PROP = { editor: 'enum', default: 'Color', options: ['Color', 'Google photo', 'Your photo'] };
+// A profile's settings on the canvas: which tab, Edit profile open, loading, signed out, and nothing shared yet.
+const BOOL = { editor: 'boolean', default: false };
+const PROFILE_PROPS = { ...DARK, grain: MESH('Iris').grain, tab: { editor: 'enum', default: 'Decks', options: ['Decks', 'Saved', 'Suggestions'] }, editOpen: BOOL, loading: BOOL, signedOut: BOOL, empty: BOOL };
 const EDITOR_CSS = RICH_CSS + OCC_EDIT_CSS;
 const files = {
   'Main': ['Web · Today', webToday, { props: { ...DARK, ...MESH('Iris'), caughtUp: { editor: 'boolean', default: false } }, logic: todayLogic, css: DRAG_CSS, w: W, h: H }],
@@ -5773,7 +6092,42 @@ const files = {
   'WebDiscoverSearch': ['Web · Discover · search', attrOf('WebDiscover', W, H, 'q="bio"'), { logic: darkLogic, w: W, h: H }],
   'WebDiscoverSignedOut': ['Web · Discover · signed out (anyone can look)', attrOf('WebDiscover', W, H, 'signed-out="{{yes}}"'), { logic: darkLogic, w: W, h: H }],
   'PhoneDiscover': ['iPhone · Discover', phoneDiscover, { props: { ...DARK, grain: MESH('Iris').grain, loading: { editor: 'boolean', default: false }, signedOut: { editor: 'boolean', default: false } }, logic: DISCOVER_LOGIC(true), w: PW, h: PH }],
-  'PhoneDiscoverSearch': ['iPhone · Discover · search', attrOf('PhoneDiscover', PW, PH, 'q="bio"'), { logic: darkLogic, w: PW, h: PH }]
+  'PhoneDiscoverSearch': ['iPhone · Discover · search', attrOf('PhoneDiscover', PW, PH, 'q="bio"'), { logic: darkLogic, w: PW, h: PH }],
+  // Profiles (yours, and someone else's by handle) and news.
+  'WebProfile': ['Web · Profile (yours)', webProfile, { props: PROFILE_PROPS, logic: PROFILE_LOGIC(false), w: W, h: H }],
+  'WebProfileOther': ['Web · Profile · someone else’s', attrOf('WebProfile', W, H, 'handle="mariasantos"'), { logic: darkLogic, w: W, h: H }],
+  'WebProfileFollowing': ['Web · Profile · someone you follow', attrOf('WebProfile', W, H, 'handle="mariasantos" following="{{yes}}"'), { logic: darkLogic, w: W, h: H }],
+  'WebProfileEdit': ['Web · Profile · Edit profile', attrOf('WebProfile', W, H, 'edit-open="{{yes}}"'), { logic: darkLogic, w: W, h: H }],
+  'WebProfileEditTaken': ['Web · Profile · Edit profile · a handle someone has', attrOf('WebProfile', W, H, 'edit-open="{{yes}}" edit-handle="mariasantos" edit-error="That name is taken. Try another."'), { logic: darkLogic, w: W, h: H }],
+  'WebProfilePin': ['Web · Profile · a deck’s ⋯ menu (pin it to your profile)', attrOf('WebProfile', W, H, 'pin-open="{{yes}}"'), { logic: darkLogic, w: W, h: H }],
+  'WebProfileSaved': ['Web · Profile · Saved', attrOf('WebProfile', W, H, 'tab="Saved"'), { logic: darkLogic, w: W, h: H }],
+  'WebProfileSuggestions': ['Web · Profile · Suggestions you sent', attrOf('WebProfile', W, H, 'tab="Suggestions"'), { logic: darkLogic, w: W, h: H }],
+  'WebProfileEmpty': ['Web · Profile · nothing shared yet', attrOf('WebProfile', W, H, 'empty="{{yes}}"'), { logic: darkLogic, w: W, h: H }],
+  'WebProfileLoading': ['Web · Profile · loading', attrOf('WebProfile', W, H, 'loading="{{yes}}"'), { logic: darkLogic, w: W, h: H }],
+  'WebProfileMissing': ['Web · Profile · no one has that name', attrOf('WebProfile', W, H, 'handle="nobody" missing="{{yes}}"'), { logic: darkLogic, w: W, h: H }],
+  'WebProfileSignedOut': ['Web · Profile · signed out (anyone can look)', attrOf('WebProfile', W, H, 'handle="mariasantos" signed-out="{{yes}}"'), { logic: darkLogic, w: W, h: H }],
+  'WebProfileDark': ['Web · Profile (dark)', darkOf('WebProfile', W, H), { logic: darkLogic, w: W, h: H }],
+  'WebProfileGray': ['Web · Profile (dark, gray)', grayOf('WebProfile', W, H), { logic: darkLogic, w: W, h: H }],
+  'WebActivity': ['Web · News', webActivity, { props: { ...DARK, loading: BOOL, empty: BOOL }, logic: NEWS_LOGIC(false), w: W, h: H }],
+  'WebActivityEmpty': ['Web · News · nothing new', attrOf('WebActivity', W, H, 'empty="{{yes}}"'), { logic: darkLogic, w: W, h: H }],
+  'WebActivityDark': ['Web · News (dark)', darkOf('WebActivity', W, H), { logic: darkLogic, w: W, h: H }],
+  'WebActivityGray': ['Web · News (dark, gray)', grayOf('WebActivity', W, H), { logic: darkLogic, w: W, h: H }],
+  'PhoneProfile': ['iPhone · Profile (yours)', phoneProfile, { props: PROFILE_PROPS, logic: PROFILE_LOGIC(true), w: PW, h: PH }],
+  'PhoneProfileOther': ['iPhone · Profile · someone else’s', attrOf('PhoneProfile', PW, PH, 'handle="mariasantos"'), { logic: darkLogic, w: PW, h: PH }],
+  'PhoneProfileFollowing': ['iPhone · Profile · someone you follow', attrOf('PhoneProfile', PW, PH, 'handle="mariasantos" following="{{yes}}"'), { logic: darkLogic, w: PW, h: PH }],
+  'PhoneProfileEdit': ['iPhone · Profile · Edit profile', attrOf('PhoneProfile', PW, PH, 'edit-open="{{yes}}"'), { logic: darkLogic, w: PW, h: PH }],
+  'PhoneProfileSaved': ['iPhone · Profile · Saved', attrOf('PhoneProfile', PW, PH, 'tab="Saved"'), { logic: darkLogic, w: PW, h: PH }],
+  'PhoneProfileSuggestions': ['iPhone · Profile · Suggestions you sent', attrOf('PhoneProfile', PW, PH, 'tab="Suggestions"'), { logic: darkLogic, w: PW, h: PH }],
+  'PhoneProfileEmpty': ['iPhone · Profile · nothing shared yet', attrOf('PhoneProfile', PW, PH, 'empty="{{yes}}"'), { logic: darkLogic, w: PW, h: PH }],
+  'PhoneProfileLoading': ['iPhone · Profile · loading', attrOf('PhoneProfile', PW, PH, 'loading="{{yes}}"'), { logic: darkLogic, w: PW, h: PH }],
+  'PhoneProfileMissing': ['iPhone · Profile · no one has that name', attrOf('PhoneProfile', PW, PH, 'handle="nobody" missing="{{yes}}"'), { logic: darkLogic, w: PW, h: PH }],
+  'PhoneProfileSignedOut': ['iPhone · Profile · signed out (anyone can look)', attrOf('PhoneProfile', PW, PH, 'handle="mariasantos" signed-out="{{yes}}"'), { logic: darkLogic, w: PW, h: PH }],
+  'PhoneProfileDark': ['iPhone · Profile (dark)', darkOf('PhoneProfile', PW, PH), { logic: darkLogic, w: PW, h: PH }],
+  'PhoneProfileGray': ['iPhone · Profile (dark, gray)', grayOf('PhoneProfile', PW, PH), { logic: darkLogic, w: PW, h: PH }],
+  'PhoneActivity': ['iPhone · News', phoneActivity, { props: { ...DARK, loading: BOOL, empty: BOOL }, logic: NEWS_LOGIC(true), w: PW, h: PH }],
+  'PhoneActivityEmpty': ['iPhone · News · nothing new', attrOf('PhoneActivity', PW, PH, 'empty="{{yes}}"'), { logic: darkLogic, w: PW, h: PH }],
+  'PhoneActivityDark': ['iPhone · News (dark)', darkOf('PhoneActivity', PW, PH), { logic: darkLogic, w: PW, h: PH }],
+  'PhoneActivityGray': ['iPhone · News (dark, gray)', grayOf('PhoneActivity', PW, PH), { logic: darkLogic, w: PW, h: PH }]
 };
 for (const [name, [title, body, opts]] of Object.entries(files)) writeFileSync(OUT + name + '.dc.html', page(title, body, opts));
 

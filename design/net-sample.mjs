@@ -62,6 +62,17 @@ const SUGGESTIONS = [
   { id: 'g2', shared_id: 's1', author_name: 'Dev Patel', author: P.dev, ai: 'ChatGPT', message: '', status: 'open', created_at: '2026-09-25T08:00:00Z', deck: { name: 'Cell Biology' }, changes: [
     { id: 'x4', card: 'n2', op: 'add', kind: 'new', status: 'open', before: null, after: { kind: 'basic', front: 'What does ATP synthase make?', back: 'ATP, from ADP and phosphate.' } }] }
 ];
+// Suggestions you (Alex) sent to other people's decks, for your profile's Suggestions tab: one waiting, one partly
+// taken, one taken, one skipped. `deck` is the deck they went to, as the server adds it to the ones you sent.
+const sent = (id, key, message, at, statuses) => ({ id, shared_id: DECKS[key].id, author_name: 'Alex Kim', author: P.alex, ai: '', message, created_at: at, status: statuses.includes('open') ? 'open' : 'done',
+  deck: { id: DECKS[key].id, name: DECKS[key].name, url: DECKS[key].url },
+  changes: statuses.map((status, i) => ({ id: id + 'x' + i, card: 'c' + (i + 1), op: 'edit', kind: 'answer', status, before: { kind: 'basic', front: 'Card ' + (i + 1), back: 'Before' }, after: { kind: 'basic', front: 'Card ' + (i + 1), back: 'After' } })) });
+const SENT = [
+  sent('g11', 'mcat', 'Two answers my class kept missing.', '2026-09-27T15:00:00Z', ['open', 'open']),
+  sent('g12', 'pharm', 'Fixed the doses on the beta blocker cards.', '2026-09-22T15:00:00Z', ['taken', 'taken', 'skipped']),
+  sent('g13', 'algo', '', '2026-09-18T15:00:00Z', ['taken']),
+  sent('g14', 'kanji', 'One reading was off.', '2026-09-10T15:00:00Z', ['skipped'])
+];
 const NEWS = [
   { id: 1, kind: 'suggestion', actor_name: 'Maria Santos', person: P.maria, deck: { id: 's9', name: 'Cell Biology', url: '/@alexkim/cell-biology' }, data: { n: 3, message: 'Fixed the glycolysis answers from my TA’s review.' }, read: false, created_at: '2026-09-28T08:00:00Z' },
   { id: 2, kind: 'follow', actor_name: 'Jordan Lee', person: P.jordan, deck: null, data: { handle: 'jordanlee' }, read: false, created_at: '2026-09-28T06:00:00Z' },
@@ -70,7 +81,7 @@ const NEWS = [
   { id: 5, kind: 'checked', actor_name: 'Dr. Okafor', person: P.okafor, deck: { id: 's12', name: 'Organic Chemistry', url: '/@alexkim/organic-chemistry' }, data: {}, read: true, created_at: '2026-09-21T10:00:00Z' }
 ];
 export const NET_SAMPLE = {
-  P, DECKS, ALEX_DECKS, CARDS, MADE, HISTORY, SUGGESTIONS, NEWS,
+  P, DECKS, ALEX_DECKS, CARDS, MADE, HISTORY, SUGGESTIONS, SENT, NEWS,
   PROFILE: { ...P.alex, bio: 'MCAT decks, made with my AI. Suggestions welcome.', school: 'UC Davis', subject: 'Pre-med', followers: 340, following: 86, contributions: 23, featured: ['s9', 's10'], stars: 7360 },
   OTHER: { ...P.maria, bio: 'Biochem TA. I fix what my students trip on.', school: 'UC Davis', subject: 'Biochemistry', followers: 1280, following: 140, contributions: 212, featured: ['s1'], stars: 6400 },
   DISCOVER: { topics: ['MCAT', 'Languages', 'Computer science', 'Chemistry', 'Law', 'History', 'Biology'], sections: [

@@ -16,7 +16,7 @@ const narrow = matchMedia('(max-width: 760px)');
 function network(path, q, P) {
   if (path === '/discover') return { name: P + 'Discover', props: { tag: q.get('topic') || '', q: q.get('q') || '' } };
   const m = /^\/@([A-Za-z0-9_.]{3,30})(?:\/([A-Za-z0-9-]{1,60})(\/history)?)?\/?$/.exec(path);
-  if (m && !m[2]) return { name: P + 'Profile', props: { handle: m[1].toLowerCase() } };
+  if (m && !m[2]) return { name: P + 'Profile', props: { handle: m[1].toLowerCase(), editOpen: q.get('edit') === '1' } };
   if (m && m[3]) return { name: P + 'History', props: { handle: m[1].toLowerCase(), slug: m[2].toLowerCase() } };
   if (m) return { name: P + 'PublicDeck', props: { handle: m[1].toLowerCase(), slug: m[2].toLowerCase(), copyOpen: q.get('copy') === '1', suggest: q.get('suggest') || '' } };
   const d = /^\/d\/(s[a-z0-9]{4,40})$/.exec(path);
@@ -40,8 +40,9 @@ function resolve(path, q) {
   // network's pages anyone can open.
   if (db.signedOut) return net ? { ...net, props: { ...net.props, signedOut: true } } : path === '/sign-in/code' && db.auth.email() ? { name: P + 'SignInCode' } : path === '/sign-in' ? { name: P + 'SignIn' } : { redirect: '/sign-in' };
   if (net) return net;
-  // You: your profile (it's made the first time you open it).
-  if (path === '/you') return db.me().handle ? { redirect: '/@' + db.me().handle } : { name: P + 'Profile', props: { handle: '', self: true } };
+  // You: your profile (it's made the first time you open it). ?edit=1 (Settings → Edit profile) opens it to edit.
+  const edit = q.get('edit') === '1';
+  if (path === '/you') return db.me().handle ? { redirect: '/@' + db.me().handle + (edit ? '?edit=1' : '') } : { name: P + 'Profile', props: { handle: '', self: true, editOpen: edit } };
   if (path === '/activity') return { name: P + 'Activity' };
   if (path === '/suggestions') return { name: P + 'Suggestions', props: { deckId: '' } };
   if (path.startsWith('/sign-in')) return { redirect: '/' };
@@ -343,7 +344,9 @@ async function go(path, push, replace) {
   const rvm = /^\/review(?:\/([^/]+))?$/.exec(url.pathname), pile = url.searchParams.get('pile') || '';
   if (rvm && rvm[1] !== 'done' && !/from=review/.test(lastPath) && (!/^\/review/.test(lastPath) || (pile && lastPath.startsWith('/review/done')))) db.startReview(rvm[1] || '', pile);
   const r = resolve(url.pathname, url.searchParams);
-  if (r.redirect) return go(r.redirect, false, true);
+  // A link that lands somewhere else (You → /you → /@alexkim) still adds a page to history, so Back returns to the
+  // page you clicked it on; opening an address that moves, or a link that lands back on this page, takes its place.
+  if (r.redirect) { const here = r.redirect === location.pathname + location.search; return go(r.redirect, push && !here, !push || here); }
   try { await load(r.name); } catch { return go('/', false, true); }
   if (push) history.pushState(null, '', url.pathname + url.search);
   else if (replace) history.replaceState(null, '', url.pathname + url.search);
@@ -444,7 +447,8 @@ addEventListener('popstate', () => go(location.pathname + location.search, false
 dark.addEventListener('change', schedule);
 narrow.addEventListener('change', schedule);
 
-db = await createDb({ onChange: schedule, go: path => go(path, true) });
+// `replace`: the new page takes the old one's place in history (your profile's address after you change your handle).
+db = await createDb({ onChange: schedule, go: (path, replace) => go(path, !replace, !!replace) });
 // Just signed in on the way somewhere (like going Pro): go there now.
 const next = db.signedOut ? '' : afterSignIn();
 if (next) location.assign(next);

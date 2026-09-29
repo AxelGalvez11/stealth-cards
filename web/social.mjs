@@ -565,7 +565,7 @@ export async function decide(uid, id, picks = {}, { byHelper = false } = {}) {
 // The suggestions waiting on your decks (or a deck), newest first, and the ones you sent.
 export async function suggestionsFor(uid, { sharedId = '', mine = false, all = false } = {}) {
   const sid = socialId(uid);
-  if (mine) return rest('/suggestions?author=eq.' + val(sid) + '&select=*&order=created_at.desc&limit=100');
+  if (mine) return decksOf(await rest('/suggestions?author=eq.' + val(sid) + '&select=*&order=created_at.desc&limit=100'));
   if (sharedId) {
     const sh = await sharedRow(sharedId, 'id,owner,helpers,maintained');
     if (!sh) throw err('No such deck', 404);
@@ -574,6 +574,17 @@ export async function suggestionsFor(uid, { sharedId = '', mine = false, all = f
     return rest('/suggestions?shared_id=eq.' + val(sharedId) + (all ? '' : '&status=eq.open') + '&select=*&order=created_at.desc&limit=100');
   }
   return rest('/suggestions?owner=eq.' + val(sid) + (all ? '' : '&status=eq.open') + '&select=*&order=created_at.desc&limit=100');
+}
+// The deck each of your suggestions went to (its name and page; null once it isn't shared), for your profile's
+// Suggestions tab: those decks are other people's, so your library can't name them.
+async function decksOf(rows) {
+  const ids = [...new Set(rows.map(r => r.shared_id).filter(Boolean))];
+  const decks = ids.length ? await rest('/shared_decks?id=in.' + inList(ids) + '&select=id,name,slug,owner') : [];
+  const owners = decks.length ? await rest('/profiles?id=in.' + inList([...new Set(decks.map(d => d.owner))]) + '&select=id,handle') : [];
+  return rows.map(r => {
+    const d = decks.find(x => x.id === r.shared_id), o = d && owners.find(x => x.id === d.owner);
+    return { ...r, deck: d ? { id: d.id, name: d.name, url: o ? urlOf(o.handle, d.slug) : '/d/' + d.id } : null };
+  });
 }
 
 // ---------- history ----------

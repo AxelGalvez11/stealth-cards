@@ -187,6 +187,30 @@ export default [
   "h": 1260
  },
  {
+  "name": "PhoneActivity",
+  "title": "iPhone · News",
+  "w": 390,
+  "h": 844
+ },
+ {
+  "name": "PhoneActivityDark",
+  "title": "iPhone · News (dark)",
+  "w": 390,
+  "h": 844
+ },
+ {
+  "name": "PhoneActivityEmpty",
+  "title": "iPhone · News · nothing new",
+  "w": 390,
+  "h": 844
+ },
+ {
+  "name": "PhoneActivityGray",
+  "title": "iPhone · News (dark, gray)",
+  "w": 390,
+  "h": 844
+ },
+ {
   "name": "PhoneConnect",
   "title": "iPhone · Connect AI",
   "w": 390,
@@ -361,6 +385,78 @@ export default [
   "h": 844
  },
  {
+  "name": "PhoneProfile",
+  "title": "iPhone · Profile (yours)",
+  "w": 390,
+  "h": 844
+ },
+ {
+  "name": "PhoneProfileDark",
+  "title": "iPhone · Profile (dark)",
+  "w": 390,
+  "h": 844
+ },
+ {
+  "name": "PhoneProfileEdit",
+  "title": "iPhone · Profile · Edit profile",
+  "w": 390,
+  "h": 844
+ },
+ {
+  "name": "PhoneProfileEmpty",
+  "title": "iPhone · Profile · nothing shared yet",
+  "w": 390,
+  "h": 844
+ },
+ {
+  "name": "PhoneProfileFollowing",
+  "title": "iPhone · Profile · someone you follow",
+  "w": 390,
+  "h": 844
+ },
+ {
+  "name": "PhoneProfileGray",
+  "title": "iPhone · Profile (dark, gray)",
+  "w": 390,
+  "h": 844
+ },
+ {
+  "name": "PhoneProfileLoading",
+  "title": "iPhone · Profile · loading",
+  "w": 390,
+  "h": 844
+ },
+ {
+  "name": "PhoneProfileMissing",
+  "title": "iPhone · Profile · no one has that name",
+  "w": 390,
+  "h": 844
+ },
+ {
+  "name": "PhoneProfileOther",
+  "title": "iPhone · Profile · someone else’s",
+  "w": 390,
+  "h": 844
+ },
+ {
+  "name": "PhoneProfileSaved",
+  "title": "iPhone · Profile · Saved",
+  "w": 390,
+  "h": 844
+ },
+ {
+  "name": "PhoneProfileSignedOut",
+  "title": "iPhone · Profile · signed out (anyone can look)",
+  "w": 390,
+  "h": 844
+ },
+ {
+  "name": "PhoneProfileSuggestions",
+  "title": "iPhone · Profile · Suggestions you sent",
+  "w": 390,
+  "h": 844
+ },
+ {
   "name": "PhoneQuiz",
   "title": "iPhone · Learn mode · choice question",
   "w": 390,
@@ -490,13 +586,13 @@ export default [
   "name": "PhoneSettings",
   "title": "iPhone · Settings",
   "w": 390,
-  "h": 1260
+  "h": 1410
  },
  {
   "name": "PhoneSettingsGray",
   "title": "iPhone · Settings (dark, gray)",
   "w": 390,
-  "h": 1260
+  "h": 1410
  },
  {
   "name": "PhoneSignIn",
@@ -651,6 +747,30 @@ export default [
  {
   "name": "TopTodayDark",
   "title": "Top tabs · Today (dark)",
+  "w": 1440,
+  "h": 900
+ },
+ {
+  "name": "WebActivity",
+  "title": "Web · News",
+  "w": 1440,
+  "h": 900
+ },
+ {
+  "name": "WebActivityDark",
+  "title": "Web · News (dark)",
+  "w": 1440,
+  "h": 900
+ },
+ {
+  "name": "WebActivityEmpty",
+  "title": "Web · News · nothing new",
+  "w": 1440,
+  "h": 900
+ },
+ {
+  "name": "WebActivityGray",
+  "title": "Web · News (dark, gray)",
   "w": 1440,
   "h": 900
  },
@@ -951,6 +1071,90 @@ export default [
  {
   "name": "WebNewDeck",
   "title": "Web · New deck",
+  "w": 1440,
+  "h": 900
+ },
+ {
+  "name": "WebProfile",
+  "title": "Web · Profile (yours)",
+  "w": 1440,
+  "h": 900
+ },
+ {
+  "name": "WebProfileDark",
+  "title": "Web · Profile (dark)",
+  "w": 1440,
+  "h": 900
+ },
+ {
+  "name": "WebProfileEdit",
+  "title": "Web · Profile · Edit profile",
+  "w": 1440,
+  "h": 900
+ },
+ {
+  "name": "WebProfileEditTaken",
+  "title": "Web · Profile · Edit profile · a handle someone has",
+  "w": 1440,
+  "h": 900
+ },
+ {
+  "name": "WebProfileEmpty",
+  "title": "Web · Profile · nothing shared yet",
+  "w": 1440,
+  "h": 900
+ },
+ {
+  "name": "WebProfileFollowing",
+  "title": "Web · Profile · someone you follow",
+  "w": 1440,
+  "h": 900
+ },
+ {
+  "name": "WebProfileGray",
+  "title": "Web · Profile (dark, gray)",
+  "w": 1440,
+  "h": 900
+ },
+ {
+  "name": "WebProfileLoading",
+  "title": "Web · Profile · loading",
+  "w": 1440,
+  "h": 900
+ },
+ {
+  "name": "WebProfileMissing",
+  "title": "Web · Profile · no one has that name",
+  "w": 1440,
+  "h": 900
+ },
+ {
+  "name": "WebProfileOther",
+  "title": "Web · Profile · someone else’s",
+  "w": 1440,
+  "h": 900
+ },
+ {
+  "name": "WebProfilePin",
+  "title": "Web · Profile · a deck’s ⋯ menu (pin it to your profile)",
+  "w": 1440,
+  "h": 900
+ },
+ {
+  "name": "WebProfileSaved",
+  "title": "Web · Profile · Saved",
+  "w": 1440,
+  "h": 900
+ },
+ {
+  "name": "WebProfileSignedOut",
+  "title": "Web · Profile · signed out (anyone can look)",
+  "w": 1440,
+  "h": 900
+ },
+ {
+  "name": "WebProfileSuggestions",
+  "title": "Web · Profile · Suggestions you sent",
   "w": 1440,
   "h": 900
  },
