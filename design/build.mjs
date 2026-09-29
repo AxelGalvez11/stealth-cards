@@ -5484,7 +5484,7 @@ const PD_STORY = `<div style="position: relative; display: flex; flex-direction:
       </div>`;
 // Copy to your library: its name, a folder, and whether to get the owner's changes later.
 const COPY_FORM = phone => `<div style="display: flex; align-items: center; gap: 14px;"><span style="position: relative; width: 56px; height: 56px; flex-shrink: 0; border-radius: 14px; overflow: hidden; background: {{cv.base}};">${flowLayer('cv')}<sc-if value="{{cv.hasPhoto}}" hint-placeholder-val="{{ false }}"><img src="{{cv.photo}}" alt="" style="position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover;"></sc-if></span><span style="min-width: 0; display: flex; flex-direction: column; gap: 3px;"><span style="font-size: ${phone ? 20 : 22}px; font-weight: 600; letter-spacing: -.02em;">Copy to your library</span><span style="font-size: 14px; color: {{t.muted}}; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{cp.from}}</span></span></div>
-    <label style="display: flex; flex-direction: column; gap: 8px;"><span style="font-size: 13px; font-weight: 600;">Name</span><input type="text" value="{{cp.name}}" onChange="{{cp.setName}}" ref="{{cp.nameRef}}" aria-label="Name" maxlength="120" autocomplete="off" style="height: 50px; box-sizing: border-box; padding: 0 16px; border: 0; outline: 0; border-radius: 16px; background: {{t.bg}}; box-shadow: inset 0 0 0 2px {{t.text}}; color: {{t.text}}; font: inherit; font-size: 16px;"></label>
+    <label style="display: flex; flex-direction: column; gap: 8px;"><span style="font-size: 13px; font-weight: 600;">Name</span><input type="text" value="{{cp.name}}" onChange="{{cp.setName}}" onKeyDown="{{cp.nameKey}}" ref="{{cp.nameRef}}" aria-label="Name" maxlength="120" autocomplete="off" style="height: 50px; box-sizing: border-box; padding: 0 16px; border: 0; outline: 0; border-radius: 16px; background: {{t.bg}}; box-shadow: inset 0 0 0 2px {{t.text}}; color: {{t.text}}; font: inherit; font-size: 16px;"></label>
     <div style="display: flex; flex-direction: column; gap: 8px;"><span style="font-size: 13px; font-weight: 600;">Folder</span><div style="position: relative;"><button type="button" onClick="{{cp.toggleFolders}}" aria-expanded="{{cp.foldersExpanded}}" aria-label="Folder: {{cp.folderLabel}}" style="width: 100%; height: 50px; box-sizing: border-box; padding: 0 16px; border: 0; border-radius: 16px; background: {{t.surf}}; color: {{t.text}}; font: inherit; font-size: 16px; display: flex; align-items: center; justify-content: space-between; gap: 10px; cursor: pointer;"><span>{{cp.folderLabel}}</span>${svg(I.chevDown, 16, 2)}</button>
       <sc-if value="{{cp.foldersOpen}}" hint-placeholder-val="{{ false }}"><div role="listbox" aria-label="Folders" data-sc-pop style="position: absolute; left: 0; right: 0; top: calc(100% + 6px); z-index: 5; box-sizing: border-box; padding: 6px; border-radius: 18px; background: {{t.bg}}; box-shadow: 0 0 0 1px {{t.line}}, 0 18px 44px rgba(0,0,0,.18); display: flex; flex-direction: column; gap: 2px; max-height: 232px; overflow-y: auto;"><sc-for list="{{cp.folders}}" as="f" hint-placeholder-count="3"><button type="button" role="option" aria-selected="{{f.sel}}" onClick="{{f.pick}}" style="height: 42px; flex-shrink: 0; padding: 0 12px; border: 0; border-radius: 12px; background: {{f.bg}}; color: {{t.text}}; font: inherit; font-size: 15px; text-align: left; display: flex; align-items: center; gap: 10px; cursor: pointer;">${svg(I.folder, 16, 1.8)}<span>{{f.name}}</span></button></sc-for></div></sc-if></div></div>
     <div style="display: flex; align-items: center; gap: 12px;"><span style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px;"><span style="font-size: 15px; font-weight: 600;">{{cp.updatesLabel}}</span><span style="font-size: 13px; color: {{t.muted}};">You choose which changes to take.</span></span>${SWITCH('cp.updatesSw', 'cp.toggleUpdates', 'Get the owner’s updates')}</div>
@@ -5497,8 +5497,8 @@ const SP_ADD = `<button type="button" onClick="{{sp.add}}" aria-disabled="{{sp.a
 // Suggest a change: pick a card (search the deck) or start a new one, change its words or take it out, add it to your
 // changes, and send them all with a line saying why. Shared by the web panel and the iPhone sheet.
 const SUGGEST_BODY = phone => `<div style="display: flex; align-items: center; justify-content: space-between; gap: 12px;"><span style="font-size: ${phone ? 18 : 20}px; font-weight: 600; letter-spacing: -.01em;">Suggest a change</span>${phone
-    ? '<button type="button" onClick="{{sp.close}}" style="height: 36px; padding: 0 16px; border: 0; border-radius: 999px; background: {{t.surf}}; color: {{t.text}}; font: inherit; font-size: 14px; font-weight: 600; cursor: pointer;">Cancel</button>'
-    : `<button type="button" onClick="{{sp.close}}" aria-label="Close" style="width: 36px; height: 36px; border: 0; border-radius: 18px; background: {{t.surf}}; color: {{t.text}}; display: flex; align-items: center; justify-content: center; cursor: pointer;">${svg(I.close, 14, 2.2)}</button>`}</div>
+    ? '<button type="button" onClick="{{sp.close}}" data-key="escape" style="height: 36px; padding: 0 16px; border: 0; border-radius: 999px; background: {{t.surf}}; color: {{t.text}}; font: inherit; font-size: 14px; font-weight: 600; cursor: pointer;">Cancel</button>'
+    : `<button type="button" onClick="{{sp.close}}" data-key="escape" aria-label="Close" style="width: 36px; height: 36px; border: 0; border-radius: 18px; background: {{t.surf}}; color: {{t.text}}; display: flex; align-items: center; justify-content: center; cursor: pointer;">${svg(I.close, 14, 2.2)}</button>`}</div>
     <sc-if value="{{sp.sent}}" hint-placeholder-val="{{ false }}"><div style="flex-grow: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; text-align: center;"><span style="width: 64px; height: 64px; border-radius: 32px; background: {{t.inv}}; color: {{t.invText}}; display: flex; align-items: center; justify-content: center;">${svg(I.check, 28, 2.4)}</span><span role="status" style="font-size: 20px; font-weight: 600; letter-spacing: -.01em;">{{sp.sentTitle}}</span></div>
       <button type="button" onClick="{{sp.close}}" class="sc-press" style="height: 48px; flex-shrink: 0; border: 0; border-radius: 999px; background: {{t.inv}}; color: {{t.invText}}; font: inherit; font-size: 15px; font-weight: 600; cursor: pointer;">Done</button></sc-if>
     <sc-if value="{{sp.editing}}" hint-placeholder-val="{{ true }}"><div style="flex-grow: 1; min-height: 0; overflow-y: auto; scrollbar-width: thin; margin: 0 -4px; padding: 2px 4px; display: flex; flex-direction: column; gap: 14px;">
@@ -5627,16 +5627,16 @@ renderVals() {
   // Copy to your library.
   const folders = (db.folders ? db.folders() : []).map(f => ({ id: f.id, name: f.name })), folderId = st.cpFolder ?? '';
   const cpOpen = learner && (st.cpOpen ?? !!p.copyOpen), cpName = st.cpName ?? d.name, updates = st.cpUpdates ?? true;
+  const saveCopy = async () => { const name = String(this.state.cpName ?? d.name).trim(); if (!name || this.state.cpBusy) return; set({ cpBusy: true, cpErr: '', cpFolders: false });
+    try { await db.act.copyDeck(d.id, { name, folder: this.state.cpFolder || null, updates: this.state.cpUpdates ?? true }); this.setState({ cpBusy: false, cpOpen: false }); }
+    catch (e) { this.setState({ cpBusy: false, cpErr: fail(e) }); } };
   const cp = {
     open: cpOpen, from: cardsLine + ' from ' + ownerName, name: cpName, setName: e => set({ cpName: val(e) }),
     nameRef: el => { if (!el || db.mock || !this.state.cpAt || this.cpFocus === this.state.cpAt) return; this.cpFocus = this.state.cpAt; el.focus(); el.select(); },
     folderLabel: (folders.find(f => f.id === folderId) || {}).name || 'No folder', foldersOpen: !!st.cpFolders, foldersExpanded: st.cpFolders ? 'true' : 'false', toggleFolders: () => set({ cpFolders: !st.cpFolders }),
     folders: [{ id: '', name: 'No folder' }, ...folders].map(f => ({ name: f.name, sel: f.id === folderId ? 'true' : 'false', bg: f.id === folderId ? t.surf : 'transparent', pick: () => set({ cpFolder: f.id, cpFolders: false }) })),
     updatesLabel: 'Get ' + firstName(ownerName) + '’s updates', updatesSw: sw(updates), toggleUpdates: () => set({ cpUpdates: !updates }),
-    cancel: () => set({ cpOpen: false, cpFolders: false, cpErr: '' }),
-    save: async () => { const name = String(this.state.cpName ?? d.name).trim(); if (!name || this.state.cpBusy) return; set({ cpBusy: true, cpErr: '', cpFolders: false });
-      try { await db.act.copyDeck(d.id, { name, folder: this.state.cpFolder || null, updates: this.state.cpUpdates ?? true }); this.setState({ cpBusy: false, cpOpen: false }); }
-      catch (e) { this.setState({ cpBusy: false, cpErr: fail(e) }); } },
+    cancel: () => set({ cpOpen: false, cpFolders: false, cpErr: '' }), save: saveCopy, nameKey: e => { if (e.key === 'Enter') { e.preventDefault(); saveCopy(); } },
     action: st.cpBusy ? 'Copying…' : 'Copy deck', off: String(cpName).trim() && !st.cpBusy ? 'false' : 'true', op: String(cpName).trim() ? '1' : '.4', hasError: !!st.cpErr, error: st.cpErr || ''
   };
   const busy = st.busy || '';
@@ -5655,7 +5655,7 @@ renderVals() {
     editHref: goTo(deckHref, B + 'Deck'), suggestionsHref: goTo(mine ? '/deck/' + mine.id + '/suggestions' : '/suggestions', B + 'Suggestions'), shareHref: goTo(mine ? deckHref + '?settings=1' : deckHref, B + 'DeckSettings'),
     suggestionsLabel: me && me.open ? 'Suggestions · ' + me.open : 'Suggestions', openCount: String((me && me.open) || ''), hasOpen: !!(me && me.open),
     linkLabel: st.linkCopied ? 'Copied' : 'Copy link',
-    copyLink: () => { ${phone ? "if (!db.mock && navigator.share) { navigator.share({ title: d.name, url: shareUrl }).catch(() => {}); return; } " : ''}if (db.act.copy) db.act.copy(shareUrl); set({ linkCopied: true }); clearTimeout(this.copiedT); this.copiedT = setTimeout(() => this.setState({ linkCopied: false }), 1600); },
+    copyLink: () => { ${phone ? "if (!db.mock && navigator.share) { navigator.share({ title: d.name, url: shareUrl }).catch(() => {}); return; } " : ''}if (db.act.copy) Promise.resolve(db.act.copy(shareUrl)).catch(() => {}); set({ linkCopied: true }); clearTimeout(this.copiedT); this.copiedT = setTimeout(() => this.setState({ linkCopied: false }), 1600); },
     hasError: !!st.error, error: st.error || '',
     tabs: [['Cards', kfmt(d.cards)], ['History', ''], ['People', peopleRows.length ? String(peopleRows.length) : '']].map(([id, count]) => ({ label: id, count, hasCount: !!count, sel: tab === id ? 'true' : 'false',
       fg: tab === id ? t.text : t.muted, bar: tab === id ? 'inset 0 -2px 0 ' + t.text : 'none', pick: () => set({ tab: id }) })),
@@ -5806,7 +5806,10 @@ renderVals() {
   for (const x of scan) {
     const by = {};
     (db.cards ? db.cards(x.id) : []).filter(c => c.pending && !aiDone[c.id]).forEach(c => { const k = c.ai || 'Your AI'; (by[k] = by[k] || []).push(c); });
-    Object.keys(by).forEach(ai => aiItems.push({ key: 'ai:' + x.id + ':' + ai, kind: 'ai', ai, deckName: x.name, cards: by[ai], at: Math.max(0, ...by[ai].map(c => c.created || 0)) }));
+    // A text with blanks (or a picture with boxes) is several cards made together: it's kept or tossed as one.
+    Object.keys(by).forEach(ai => { const groups = [], at = {};
+      by[ai].forEach(c => { const g = c.group || c.id; if (!(g in at)) { at[g] = groups.length; groups.push({ ...c, ids: [] }); } groups[at[g]].ids.push(c.id); });
+      aiItems.push({ key: 'ai:' + x.id + ':' + ai, kind: 'ai', ai, deckName: x.name, cards: groups, at: Math.max(0, ...by[ai].map(c => c.created || 0)) }); });
   }
   const keep = async (ids, how) => { if (!ids.length || this.state.busy) return; set({ busy: true, err: '', aiDone: { ...aiDone, ...Object.fromEntries(ids.map(x => [x, how])) } });
     try { await (how === 'kept' ? db.act.keepCards(ids) : db.act.tossCards(ids)); this.setState({ busy: false }); }
@@ -5823,9 +5826,9 @@ renderVals() {
   const items = [
     ...aiItems.map(a => ({ ...a, ...whoOf(a.ai), title: a.ai + ', through your link', line: plural(a.cards.length, 'new card') + (deckId ? '' : ' · ' + a.deckName), when: a.at ? brief(new Date(a.at).toISOString()) : '',
       head: a.ai + ' added ' + plural(a.cards.length, 'card'), message: 'Through your link' + (deckId ? '' : ' · ' + a.deckName), takeAllLabel: 'Keep all ' + a.cards.length, skipAllLabel: 'Toss all', many: a.cards.length > 1,
-      takeAll: () => keep(a.cards.map(c => c.id), 'kept'), skipAll: () => keep(a.cards.map(c => c.id), 'tossed'),
+      takeAll: () => keep(a.cards.flatMap(c => c.ids), 'kept'), skipAll: () => keep(a.cards.flatMap(c => c.ids), 'tossed'),
       changes: a.cards.map(c => ({ label: 'New card', context: c.kind || 'Card', hasContext: true, before: '', hasBefore: false, after: c.back ? 'Q: ' + c.front + '  A: ' + c.back : c.front, hasAfter: true, op: '1',
-        open: true, decided: false, state: '', stateColor: t.muted, takeLabel: 'Keep', skipLabel: 'Toss', take: () => keep([c.id], 'kept'), skip: () => keep([c.id], 'tossed') })) })),
+        open: true, decided: false, state: '', stateColor: t.muted, takeLabel: 'Keep', skipLabel: 'Toss', take: () => keep(c.ids, 'kept'), skip: () => keep(c.ids, 'tossed') })) })),
     ...list.map(s => ({ s, open: (s.changes || []).filter(c => statusOf(c) === 'open') })).filter(x => x.open.length).map(({ s, open }) => {
       const who = s.ai ? s.ai + ', through ' + firstName(s.author_name) + '’s link' : s.author_name || 'Someone', deckName = deckOf(s);
       return { key: s.id, kind: 'suggestion', ...(s.ai ? whoOf(s.ai) : whoOf('', s.person || { name: s.author_name })), title: who, line: plural(open.length, 'change') + (deckId || !deckName ? '' : ' · ' + deckName), when: brief(s.created_at),
@@ -5886,6 +5889,10 @@ const phoneSuggestions = phone(`<div style="padding: 64px 20px 120px; display: f
 // the owner can go back to any version (it's done as a new version, so going back can be undone too).
 const HISTORY_LOGIC = phone => `
 constructor(props) { super(props); this.state = {}; }
+componentDidMount() { this.named(); }
+componentDidUpdate() { this.named(); }
+// The browser's tab says whose History this is.
+named() { const db = this.props.db, n = this.deckName ? 'History · ' + this.deckName + ' · Lucida' : ''; if (db && !db.mock && n && document.title !== n) document.title = n; }
 renderVals() {
   ${T}${DB_JS}${NET_JS}${NETX_JS}
   const p = this.props, st = this.state, set = patch => this.setState(patch), B = '${phone ? 'Phone' : 'Web'}', out = !!db.signedOut || !!p.signedOut;
@@ -5895,6 +5902,7 @@ renderVals() {
   if (fresh !== undefined) this.h = fresh;
   const h = fresh === undefined ? this.h : fresh, loading = h === undefined, bad = !!(h && (h.missing || h.offline)), ready = !loading && !bad;
   const H = ready ? h : { id: '', name: '', url: '', versions: [], following: 0, mine: false };
+  this.deckName = H.name || '';
   const mine = ready && !!H.mine && !out;
   const lib = mine && !db.mock && db.decks ? db.decks().find(x => x.shared && x.shared.id === H.id) : null;
   const num = x => (x == null || x === '' ? null : +x), openV = st.openV ?? num(p.openVersion), askV = st.askV ?? num(p.confirmVersion), busy = !!st.busy;

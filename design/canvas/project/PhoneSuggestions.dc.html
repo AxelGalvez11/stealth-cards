@@ -900,7 +900,10 @@ renderVals() {
   for (const x of scan) {
     const by = {};
     (db.cards ? db.cards(x.id) : []).filter(c => c.pending && !aiDone[c.id]).forEach(c => { const k = c.ai || 'Your AI'; (by[k] = by[k] || []).push(c); });
-    Object.keys(by).forEach(ai => aiItems.push({ key: 'ai:' + x.id + ':' + ai, kind: 'ai', ai, deckName: x.name, cards: by[ai], at: Math.max(0, ...by[ai].map(c => c.created || 0)) }));
+    // A text with blanks (or a picture with boxes) is several cards made together: it's kept or tossed as one.
+    Object.keys(by).forEach(ai => { const groups = [], at = {};
+      by[ai].forEach(c => { const g = c.group || c.id; if (!(g in at)) { at[g] = groups.length; groups.push({ ...c, ids: [] }); } groups[at[g]].ids.push(c.id); });
+      aiItems.push({ key: 'ai:' + x.id + ':' + ai, kind: 'ai', ai, deckName: x.name, cards: groups, at: Math.max(0, ...by[ai].map(c => c.created || 0)) }); });
   }
   const keep = async (ids, how) => { if (!ids.length || this.state.busy) return; set({ busy: true, err: '', aiDone: { ...aiDone, ...Object.fromEntries(ids.map(x => [x, how])) } });
     try { await (how === 'kept' ? db.act.keepCards(ids) : db.act.tossCards(ids)); this.setState({ busy: false }); }
@@ -917,9 +920,9 @@ renderVals() {
   const items = [
     ...aiItems.map(a => ({ ...a, ...whoOf(a.ai), title: a.ai + ', through your link', line: plural(a.cards.length, 'new card') + (deckId ? '' : ' · ' + a.deckName), when: a.at ? brief(new Date(a.at).toISOString()) : '',
       head: a.ai + ' added ' + plural(a.cards.length, 'card'), message: 'Through your link' + (deckId ? '' : ' · ' + a.deckName), takeAllLabel: 'Keep all ' + a.cards.length, skipAllLabel: 'Toss all', many: a.cards.length > 1,
-      takeAll: () => keep(a.cards.map(c => c.id), 'kept'), skipAll: () => keep(a.cards.map(c => c.id), 'tossed'),
+      takeAll: () => keep(a.cards.flatMap(c => c.ids), 'kept'), skipAll: () => keep(a.cards.flatMap(c => c.ids), 'tossed'),
       changes: a.cards.map(c => ({ label: 'New card', context: c.kind || 'Card', hasContext: true, before: '', hasBefore: false, after: c.back ? 'Q: ' + c.front + '  A: ' + c.back : c.front, hasAfter: true, op: '1',
-        open: true, decided: false, state: '', stateColor: t.muted, takeLabel: 'Keep', skipLabel: 'Toss', take: () => keep([c.id], 'kept'), skip: () => keep([c.id], 'tossed') })) })),
+        open: true, decided: false, state: '', stateColor: t.muted, takeLabel: 'Keep', skipLabel: 'Toss', take: () => keep(c.ids, 'kept'), skip: () => keep(c.ids, 'tossed') })) })),
     ...list.map(s => ({ s, open: (s.changes || []).filter(c => statusOf(c) === 'open') })).filter(x => x.open.length).map(({ s, open }) => {
       const who = s.ai ? s.ai + ', through ' + firstName(s.author_name) + '’s link' : s.author_name || 'Someone', deckName = deckOf(s);
       return { key: s.id, kind: 'suggestion', ...(s.ai ? whoOf(s.ai) : whoOf('', s.person || { name: s.author_name })), title: who, line: plural(open.length, 'change') + (deckId || !deckName ? '' : ' · ' + deckName), when: brief(s.created_at),

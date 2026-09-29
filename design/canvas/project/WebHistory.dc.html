@@ -834,6 +834,10 @@ rich() { return Component._rich || (Component._rich = (function makeRich() {
 })()); }
 
 constructor(props) { super(props); this.state = {}; }
+componentDidMount() { this.named(); }
+componentDidUpdate() { this.named(); }
+// The browser's tab says whose History this is.
+named() { const db = this.props.db, n = this.deckName ? 'History · ' + this.deckName + ' · Lucida' : ''; if (db && !db.mock && n && document.title !== n) document.title = n; }
 renderVals() {
   const t = this.theme(!!this.props.dark, !!this.props.dim);const db = this.props.db || this.mock(); const chrome = db.chrome();const PC = ["linear-gradient(135deg, #8C9AFC 0%, #4F60E6 100%)","linear-gradient(135deg, #FFC857 0%, #EE5A36 100%)","linear-gradient(135deg, #7EE0B0 0%, #1F8F5F 100%)","linear-gradient(135deg, #F9A8D4 0%, #D6336C 100%)","linear-gradient(135deg, #7DE3F0 0%, #0E8A9E 100%)","linear-gradient(135deg, #C4A7FF 0%, #7C3AED 100%)"];
   const goTo = (url, board) => (db.mock ? board + '.dc.html' : url || '/');
@@ -911,6 +915,7 @@ renderVals() {
   if (fresh !== undefined) this.h = fresh;
   const h = fresh === undefined ? this.h : fresh, loading = h === undefined, bad = !!(h && (h.missing || h.offline)), ready = !loading && !bad;
   const H = ready ? h : { id: '', name: '', url: '', versions: [], following: 0, mine: false };
+  this.deckName = H.name || '';
   const mine = ready && !!H.mine && !out;
   const lib = mine && !db.mock && db.decks ? db.decks().find(x => x.shared && x.shared.id === H.id) : null;
   const num = x => (x == null || x === '' ? null : +x), openV = st.openV ?? num(p.openVersion), askV = st.askV ?? num(p.confirmVersion), busy = !!st.busy;
