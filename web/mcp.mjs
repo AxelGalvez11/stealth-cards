@@ -1,9 +1,11 @@
 // The MCP link: Claude, Cursor, or any app that speaks MCP can read and add cards. On this computer it's
 // http://localhost:3000/mcp; online each person has their own link (see handler.mjs), so an AI only sees their cards.
 // What an AI may do is set on the Connect AI page; tools it isn't allowed to use aren't offered.
-import { apply, state, blanks, mediaLeft, MEDIA_FULL, BG_KINDS } from './store.mjs';
+import { apply, state, blanks, mediaLeft, MEDIA_FULL, BG_KINDS, isPro, tunedW } from './store.mjs';
 import * as social from './social.mjs';
 import { dayAt } from './fsrs.js';
+import { isDue, scheduled, examStatus } from './sched.js';
+import { insights, history } from './insights.js';
 import { fetchMedia, speechFile } from './media.mjs';
 import R from './rich.js';
 
@@ -13,11 +15,18 @@ const sessions = new Map(), lastClient = new Map();
 const text = s => ({ content: [{ type: 'text', text: typeof s === 'string' ? s : JSON.stringify(s, null, 2) }] });
 const fail = s => ({ content: [{ type: 'text', text: s }], isError: true });
 const deckBy = x => state().decks.find(d => d.id === x) || state().decks.find(d => d.name.toLowerCase() === String(x || '').trim().toLowerCase());
-const dueNow = c => c.srs.state !== 'new' && c.srs.due <= Date.now();
+// Due now, the way the app sees it: paused cards never are, and an exam date brings cards up early (sched.js).
+const dueNow = c => { const d = deckBy(c.deckId); return scheduled(d) ? isDue(c, d, Date.now()) : false; };
+const isNew = c => c.srs.state === 'new' && !c.paused && !c.pending;
+// Pro's deeper tools answer this on Free.
+const PRO_TOOL = 'This is part of Lucida Pro. The learner can go Pro at lucida.cards/pricing to get it.';
+const day = t => { const d = new Date(t); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); };
+const examOut = d => { const x = d.exam && examStatus(state().cards.filter(c => c.deckId === d.id), d, Date.now()); return x ? { date: d.exam, days_left: x.days, cards_to_review_first: x.toReview, not_studied_yet: x.total - x.seen } : undefined; };
+const forgotten = c => ((c.srs.lapses || 0) ? c.srs.lapses : undefined);
 const cardOut = c => ({ id: c.id, deck: (deckBy(c.deckId) || {}).name, kind: c.kind === 'cloze' ? 'fill in the blank' : c.kind, front: c.front || undefined, back: c.back || undefined,
   text: c.text || undefined, note: c.note || undefined, image: c.image || undefined, audio: c.audio || undefined, speak: c.speak || undefined, lang: c.lang || undefined,
   hidden_part: c.kind === 'image' && c.box != null ? (b => b && { box: c.boxes.indexOf(b) + 1, of: c.boxes.length, answer: b.label || undefined })((c.boxes || []).find(b => b.id === c.box)) || undefined : undefined,
-  tags: c.tags.length ? c.tags : undefined, waiting_for_review: c.pending || undefined, quiz_questions: (c.quiz || []).length || undefined, has_explanation: c.explain ? true : undefined,
+  tags: c.tags.length ? c.tags : undefined, waiting_for_review: c.pending || undefined, paused: c.paused || undefined, quiz_questions: (c.quiz || []).length || undefined, has_explanation: c.explain ? true : undefined,
   next_review: c.srs.state === 'new' ? 'new' : new Date(c.srs.due).toISOString().slice(0, 10) });
 // Card text is short markdown; the app shows it formatted (see rich.js).
 const FORMAT = 'Can use **bold**, *italic*, <u>underline</u>, ~~strikethrough~~, ==highlight==, $math$ in LaTeX (like $x^2$ or $\\frac{a}{b}$), and lines that start with "# " (a heading; ## and ### are smaller), "- " (a bullet), or "1. " (a numbered list).';
@@ -63,24 +72,50 @@ async function speakFile(words, lang, notes) {
 
 const TOOLS = [
   { name: 'list_decks', perm: 'read', description: 'List the decks with how many cards each has and how many are due.', inputSchema: { type: 'object', properties: {} },
-    run: () => text(state().decks.map(d => { const cs = state().cards.filter(c => c.deckId === d.id); return { id: d.id, name: d.name, folder: folderName(d), tags: d.tags, cards: cs.length, due: cs.filter(dueNow).length, new: cs.filter(c => c.srs.state === 'new').length,
-      shared: d.share && d.share.vis !== 'private' ? (d.share.vis === 'public' ? 'public' : 'link only') : undefined,
-      from: d.link && !d.link.gone ? { owner: d.link.owner && d.link.owner.name, as: d.link.mode === 'study' ? 'studied as it is (suggest changes with suggest_changes)' : 'the learner’s own copy' } : undefined }; })) },
+    run: () => text(state().decks.map(d => { const cs = state().cards.filter(c => c.deckId === d.id), paused = cs.filter(c => c.paused).length;
+      return { id: d.id, name: d.name, folder: folderName(d), tags: d.tags, cards: cs.length, due: cs.filter(dueNow).length, new: cs.filter(isNew).length, paused: paused || undefined, exam: examOut(d),
+        shared: d.share && d.share.vis !== 'private' ? (d.share.vis === 'public' ? 'public' : 'link only') : undefined,
+        from: d.link && !d.link.gone ? { owner: d.link.owner && d.link.owner.name, as: d.link.mode === 'study' ? 'studied as it is (suggest changes with suggest_changes)' : 'the learner’s own copy' } : undefined }; })) },
   { name: 'list_cards', perm: 'read', description: 'List or search the cards in a deck (or in every deck).', inputSchema: { type: 'object', properties: { deck: { type: 'string', description: 'Deck name or id. Leave out for every deck.' }, search: { type: 'string' }, limit: { type: 'number', description: 'Up to 500. Default 50.' } } },
     run: a => { const d = a.deck ? deckBy(a.deck) : null; if (a.deck && !d) return fail('No deck called ' + a.deck);
       const q = String(a.search || '').toLowerCase();
       const cs = state().cards.filter(c => (!d || c.deckId === d.id) && (!q || [c.front, c.back, c.text, c.note, ...c.tags].join(' ').toLowerCase().includes(q)));
       return text({ total: cs.length, cards: cs.slice(0, Math.min(500, a.limit || 50)).map(cardOut) }); } },
-  { name: 'get_due_cards', perm: 'read', description: 'Cards that are due for review now, to quiz the learner.', inputSchema: { type: 'object', properties: { deck: { type: 'string' }, limit: { type: 'number' } } },
+  { name: 'get_due_cards', perm: 'read', description: 'Cards that are due for review now, to quiz the learner. Paused cards never are; before an exam date, cards the learner would forget by then are due early.', inputSchema: { type: 'object', properties: { deck: { type: 'string' }, limit: { type: 'number' } } },
     run: a => { const d = a.deck ? deckBy(a.deck) : null; const cs = state().cards.filter(c => (!d || c.deckId === d.id) && dueNow(c)); return text({ due: cs.length, cards: cs.slice(0, a.limit || 20).map(cardOut) }); } },
-  { name: 'get_stats', perm: 'read', description: 'How studying is going: reviews, what is remembered, streak, and totals.', inputSchema: { type: 'object', properties: {} },
-    run: () => { const S = state(), since = Date.now() - 30 * 86400000, logs = S.logs.filter(l => l.at >= since && l.rating && l.was === 'review');
+  { name: 'get_stats', perm: 'read', description: 'How studying is going: reviews, what is remembered, streak, and totals. With Lucida Pro, also how often cards are forgotten, time per card, cards forgotten too often, exam readiness, and whether scheduling is tuned to the learner.', inputSchema: { type: 'object', properties: {} },
+    run: () => { const S = state(), since = Date.now() - 30 * 86400000, logs = S.logs.filter(l => l.at >= since && l.rating && l.was === 'review' && !l.kind);
       const days = new Set(S.logs.map(l => dayAt(l.at)));
       let streak = 0, t = dayAt(Date.now());
       if (!days.has(t)) t = dayAt(t, -1);
       while (days.has(t)) { streak++; t = dayAt(t, -1); }
-      return text({ decks: S.decks.length, cards: S.cards.length, reviews_last_30_days: S.logs.filter(l => l.at >= since).length,
-        remembered_last_30_days: logs.length ? Math.round(logs.filter(l => l.rating > 1).length / logs.length * 100) + '%' : 'no reviews yet', streak_days: streak }); } },
+      const out = { decks: S.decks.length, cards: S.cards.length, reviews_last_30_days: S.logs.filter(l => l.at >= since && !l.kind).length,
+        remembered_last_30_days: logs.length ? Math.round(logs.filter(l => l.rating > 1).length / logs.length * 100) + '%' : 'no reviews yet', streak_days: streak,
+        paused_cards: S.cards.filter(c => c.paused).length };
+      if (!isPro()) return text(out);
+      const x = insights(S, { days: 30 }), tm = x.pace.time, tune = S.settings.tune;
+      return text({ ...out, forgot_last_30_days: x.weak.forgot.of ? x.weak.forgot.pct + '% of reviews of learned cards' : 'no reviews yet',
+        seconds_per_card: tm.perCard == null ? undefined : Math.round(tm.perCard * 10) / 10, right_answers_per_minute: tm.rightPerMin == null ? undefined : Math.round(tm.rightPerMin * 10) / 10,
+        learn_mode_right: x.memory.modes.learn.n ? x.memory.modes.learn.pct + '% of ' + x.memory.modes.learn.n + ' answers' : undefined,
+        cards_forgotten_too_often: x.weak.leeches.length, typical_gap_days: x.pace.gapNow == null ? undefined : Math.round(x.pace.gapNow),
+        reviews_next_7_days: x.pace.ahead[0].n, exams: x.pace.exams.length ? x.pace.exams.map(e => ({ deck: e.name, date: e.date, days_left: e.days, cards_to_review_first: e.toReview, seen: e.seen + ' of ' + e.total, likely_to_remember: Math.round(e.likely * 100) + '%' })) : undefined,
+        scheduling: tunedW() ? 'tuned to the learner’s ' + (tune.reviews || tune.n) + ' reviews' : 'standard FSRS parameters' }); } },
+  { name: 'get_weak_spots', perm: 'read', pro: true, description: 'What the learner is weakest at, to quiz them on it or fix the cards: the tags remembered least, the hardest cards (forgotten most, most difficult), and cards forgotten so often they may need rewording (leeches; some may be paused). Every card has its id, for update_card or add_quiz. Lucida Pro.',
+    inputSchema: { type: 'object', properties: { deck: { type: 'string', description: 'Deck name or id. Leave out for every deck.' }, days: { type: 'number', description: 'How far back to look at reviews for the tags, 7 to 365. Default 90.' }, limit: { type: 'number', description: 'Cards in each list, up to 50. Default 10.' } } },
+    run: a => {
+      const d = a.deck ? deckBy(a.deck) : null; if (a.deck && !d) return fail('No deck called ' + a.deck);
+      const S = state(), n = Math.min(50, Math.max(1, Math.round(a.limit || 10))), x = insights(S, { days: Math.min(365, Math.max(7, Math.round(a.days || 90))), deckId: d && d.id });
+      const cardBy = id => S.cards.find(c => c.id === id);
+      return text({ forgot: x.weak.forgot.of ? x.weak.forgot.pct + '% of ' + x.weak.forgot.of + ' reviews of learned cards' : 'no reviews of learned cards yet',
+        weakest_tags: x.weak.weakTags.map(g => ({ tag: g.tag, remembered: g.pct + '%', reviews: g.n, cards: g.cards })),
+        hardest_cards: x.weak.hardest.slice(0, n).map(h => ({ ...cardOut(cardBy(h.id)), forgotten: h.lapses, difficulty: h.d, remember_now: h.recall == null ? undefined : Math.round(h.recall * 100) + '%' })),
+        leeches: x.weak.leeches.slice(0, n).map(h => ({ ...cardOut(cardBy(h.id)), forgotten: h.lapses })), leech_count: x.weak.leeches.length }); } },
+  { name: 'get_review_history', perm: 'read', pro: true, description: 'The learner’s recent reviews, summarized day by day and deck by deck: reviews, percent right, minutes, new cards learned, and Learn mode answers. Lucida Pro.',
+    inputSchema: { type: 'object', properties: { deck: { type: 'string', description: 'Deck name or id. Leave out for every deck.' }, days: { type: 'number', description: 'How many days back, 1 to 365. Default 30.' } } },
+    run: a => {
+      const d = a.deck ? deckBy(a.deck) : null; if (a.deck && !d) return fail('No deck called ' + a.deck);
+      const h = history(state(), { days: a.days || 30, deckId: d && d.id }), name = id => (deckBy(id) || {}).name || 'A deleted deck';
+      return text({ total: h.total, by_day: h.days.map(x => ({ date: day(x.day), ...x, day: undefined })), by_deck: h.decks.map(x => ({ deck: name(x.deckId), ...x, deckId: undefined })) }); } },
   { name: 'create_deck', perm: 'text', description: 'Make a new deck, optionally in a folder and with a cover picture.', inputSchema: { type: 'object', properties: { name: { type: 'string' }, tags: { type: 'array', items: { type: 'string' } }, folder: FOLDER, cover_image: COVER, files: FILES }, required: ['name'] },
     meta: { 'openai/fileParams': ['files'] },
     run: async (a, who, ctx) => {
@@ -241,13 +276,15 @@ async function handle(m, sid, ctx) {
           serverInfo: { name: 'lucida', title: 'Lucida', version: '0.1.0' },
           instructions: 'Lucida holds the learner’s flashcards. Use list_decks first. Make clear, short cards with one idea each; use cloze cards with [[blanks]] for facts inside sentences. ' + FORMAT +
             ' Image cards show a picture: a link, a file the learner uploaded in the chat, or a file on this computer. Audio cards read words aloud (put them in "speak" and the language in "lang"); use them for languages and pronunciation.' +
-            ' Learn mode quizzes the learner on a deck: add_quiz gives cards better questions (multiple choice with plausible wrong answers, or true or false) and an explanation. Decks can sit in folders and have a cover picture and a background (update_deck).' });
+            ' Learn mode quizzes the learner on a deck: add_quiz gives cards better questions (multiple choice with plausible wrong answers, or true or false) and an explanation. Decks can sit in folders and have a cover picture and a background (update_deck).' +
+            ' To help with what the learner finds hard, get_weak_spots lists their weakest tags and hardest cards (with ids to quiz them or fix the cards), and get_review_history sums up their recent reviews.' });
       }
       case 'ping': return ok({});
       case 'tools/list': return ok({ tools: allowed().map(({ name, description, inputSchema, meta }) => ({ name, description, inputSchema, ...(meta ? { _meta: meta } : {}) })) });
       case 'tools/call': {
         const p = m.params || {}, t = allowed().find(x => x.name === p.name);
         if (!t) return ok(fail(TOOLS.some(x => x.name === p.name) ? 'The learner turned this off on the Connect AI page.' : 'Unknown tool ' + p.name));
+        if (t.pro && !isPro()) return ok(fail(PRO_TOOL));
         return ok(await t.run(p.arguments || {}, sessions.get(sid) || lastClient.get(ctx.uid || '') || 'AI', ctx));
       }
       default: return err(-32601, 'Method not found: ' + m.method);

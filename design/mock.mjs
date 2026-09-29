@@ -82,19 +82,57 @@ export const LIVE_SAMPLE = {
   board: [['Maya', 3420, 1], ['Jordan', 3210, 2], ['Kai', 2980, -1], ['Priya', 2860, 0], ['Leo', 2640, 3], ['Sofia', 2210, -1], ['Ethan', 1980, 0], ['Ana', 1640, 0], ['Zoe', 1420, 1], ['Omar', 1210, -1], ['Lina', 980, 0], ['Noah', 620, 0]],
   final: [['Maya', 9610], ['Jordan', 8940], ['Kai', 8120], ['Priya', 7860], ['Leo', 7420], ['Sofia', 6980], ['Ethan', 6540], ['Ana', 6110]]
 };
+// Deep stats (Pro), as db.insights(range) gives them (web/insights.js): the sample decks' memory by week and by tag,
+// weak spots, and pace, around the sample's Tuesday, September 22, 2026. Kept out of SAMPLE, which the iPhone app copies.
+const WEEK = 7 * 86400000, MONDAY = new Date(2026, 8, 21).getTime();
+const weeks = vals => vals.map((v, i) => ({ start: MONDAY - (vals.length - 1 - i) * WEEK, ...v }));
+const months = vals => vals.map((v, i) => ({ start: new Date(2026, 8 - (vals.length - 1 - i), 1).getTime(), ...v }));
+const TAGS_SEEN = [['Vocabulary', 92, 310, 140], ['Organelles', 88, 142, 64], ['Exam 1', 90, 120, 40], ['Energy', 93, 96, 31], ['Irregular', 76, 88, 45], ['Proteins', 84, 64, 28], ['Mitochondria', 79, 58, 22], ['Reactions', 71, 52, 24], ['Pronunciation', 95, 40, 18], ['Aromatics', 86, 40, 20]]
+  .map(([tag, pct, n, cards]) => ({ tag, pct, n, cards }));
+const HARD = [['orgo', 'Markovnikov’s rule says the H goes to…', 'The carbon with more H’s', 'Organic Chemistry', 9, 9.1], ['span', 'Yo ____ dos hermanos.', 'tengo', 'Spanish Verbs', 8, 8.7],
+  ['cell', 'The ____ is the powerhouse of the cell.', 'mitochondrion', 'Cell Biology', 8, 8.2], ['jlpt', '電車', 'train (でんしゃ)', 'Japanese · JLPT N4', 5, 7.9], ['cell', 'Which organelle packages proteins for secretion?', 'Golgi apparatus', 'Cell Biology', 4, 7.4]]
+  .map(([deckId, front, back, deck, lapses, d], i) => ({ id: 'h' + i, deckId, front, back, deck, lapses, d, recall: .62 + i * .05, href: 'WebCardsScreen.dc.html' }));
+const insightsOf = range => {
+  const year = range === 'Year', n = { Week: 240, Month: 1020, Year: 11800 }[range] || 1020, scale = x => Math.round(x * n / 1020);
+  return { days: { Week: 7, Month: 30, Year: 365 }[range] || 30, reviews: scale(1284),
+    memory: { retention: { n, pct: { Week: 92, Month: 91, Year: 90 }[range] || 91 }, byMonth: year,
+      trend: year ? months([84, 85, 87, 86, 88, 87, 89, 90, 88, 90, 91, 91].map(pct => ({ pct, n: 900 + pct * 3 }))) : weeks([86, 88, 87, 89, 90, 88, 91, 90, 92, 91, 93, 91].map((pct, i) => ({ pct, n: 180 + i * 6 }))),
+      byTag: TAGS_SEEN.map(g => ({ ...g, n: Math.max(5, scale(g.n)) })),
+      improved: [{ tag: 'Energy', before: 85, after: 93, delta: 8, n: 96 }, { tag: 'Vocabulary', before: 88, after: 92, delta: 4, n: 310 }, { tag: 'Exam 1', before: 87, after: 90, delta: 3, n: 120 }],
+      slipping: [{ tag: 'Reactions', before: 80, after: 71, delta: -9, n: 52 }, { tag: 'Irregular', before: 82, after: 76, delta: -6, n: 88 }, { tag: 'Mitochondria', before: 84, after: 79, delta: -5, n: 58 }],
+      modes: { cards: { n: scale(1284), pct: 88 }, learn: { n: scale(310), pct: 76 } } },
+    weak: { weakTags: TAGS_SEEN.slice().sort((a, b) => a.pct - b.pct).slice(0, 6).map(g => ({ ...g, n: Math.max(5, scale(g.n)) })), hardest: HARD,
+      leeches: [HARD[0], HARD[1], HARD[2]].map((h, i) => ({ ...h, paused: i === 0 })), forgot: { n: Math.round(n * .09), of: n, pct: 9 },
+      lapseDist: [['0', 1420], ['1', 480], ['2', 210], ['3–4', 120], ['5–7', 46], ['8+', 12]].map(([label, c]) => ({ label, n: c })),
+      diffDist: [180, 320, 460, 520, 410, 300, 190, 110, 60].map((c, i) => ({ label: String(i + 1), n: c })), studied: 2288 },
+    pace: { time: { n: scale(1284), perCard: 8.2, perRight: 9.4, rightPerMin: 6.4, minutes: scale(175), learnN: scale(310), perQuestion: 11.6 },
+      gaps: year ? months([3, 4, 5, 6, 7, 9, 10, 12, 13, 15, 17, 18].map(days => ({ days, n: 400 }))) : weeks([4, 5, 6, 6, 8, 9, 10, 12, 13, 15, 16, 18].map(days => ({ days, n: 120 }))), gapNow: 18,
+      ahead: [212, 168, 140, 126, 98, 90, 72, 64].map((c, i) => ({ start: new Date(2026, 8, 22 + i * 7).getTime(), n: c })),
+      exams: [{ deckId: 'cell', name: 'Cell Biology', days: 12, date: '2026-10-04', total: 412, seen: 380, learned: 334, toReview: 84, likely: .74, line: 'Exam in 12 days · 84 cards to review first' }] } };
+};
+export const SAMPLE_INSIGHTS = Object.fromEntries(['Week', 'Month', 'Year'].map(r => [r, insightsOf(r)]));
 
 export const MOCK_METHOD = String.raw`mock() {
   const p = this.props, m = this.state.$m || {};
   const N = __NET__;
   const set = patch => this.setState({ $m: { ...m, ...patch } });
-  const X = __SAMPLE__, WAVE = __WAVE__, LS = __LIVE__;
+  const X = __SAMPLE__, WAVE = __WAVE__, LS = __LIVE__, INSIGHTS = __INSIGHTS__;
   const caught = !!p.caughtUp;
   const byName = { 'Four buttons': 'four', 'Check or X': 'binary', 'Piles': 'piles' };
   const ed = m.deck || {};
+  // Pro's sample: Cell Biology has an exam on Sunday, October 4 (12 days after the sample's Tuesday, September 22), and
+  // the usual rule for cards you keep forgetting. Picking another day here moves it.
+  const MON = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  const examDay = 'exam' in ed ? ed.exam : p.free ? null : '2026-10-04';
+  const examIn = examDay ? Math.round((new Date(examDay + 'T12:00:00') - new Date(2026, 8, 22, 12)) / 86400000) : null;
+  const exam = examDay && examIn >= 0 ? { days: examIn, date: examDay, day: MON[+examDay.slice(5, 7) - 1] + ' ' + +examDay.slice(8, 10), total: 412, seen: 380, learned: 334, toReview: 84, likely: .74,
+    when: examIn === 0 ? 'Exam today' : examIn === 1 ? 'Exam tomorrow' : 'Exam in ' + examIn + ' days', line: (examIn === 0 ? 'Exam today' : examIn === 1 ? 'Exam tomorrow' : 'Exam in ' + examIn + ' days') + ' · 84 cards to review first' } : null;
+  const pausedIds = m.paused || (p.paused ? { k1: true } : {});
   const deck = () => ({ id: 'cell', name: ed.name ?? 'Cell Biology', tags: ed.tags || X.TAGS.cell, seed: 'Cell Biology', cover: { style: 'mix', round: 0, image: null, ...(ed.cover || {}) },
     paused: !!ed.paused, grading: ed.grading || byName[p.grading] || 'four', fsrs: ed.fsrs ?? (p.fsrs !== false), goal: ed.goal ?? 90, gapIdx: ed.gapIdx ?? 3, steps: ed.steps || ['1m', '10m'], perDay: ed.perDay ?? 20,
     total: 412, totalLabel: '412', due: 28, fresh: 10, ret: 91, aiCount: 38, forecast: [28, 14, 20, 9, 24, 6, 12], piles: m.piles || [{ name: 'Know it', n: 18 }, { name: 'Almost', n: 6 }, { name: 'No clue', n: 3 }],
     href: 'WebDeck.dc.html', studyHref: 'WebReview.dc.html', settingsHref: 'WebDeckSettings.dc.html', newCardHref: 'WebCardsScreenNew.dc.html', folder: null, bg: ed.bg || { kind: 'deck', image: null },
+    exam, examDay: examDay || '', leechAt: ed.leechAt ?? 8, leechAct: ed.leechAct ?? 'tag',
     // Sharing (Tweaks: shared, linked): shared by you, or from Maria (studied as it is, or a copy with her changes waiting).
     ...(() => { const sv = m.share ? m.share.vis : p.shared === 'Public' ? 'public' : p.shared === 'Link only' ? 'link' : 'private', lk = m.detached ? '' : p.linked;
       return { shared: sv !== 'private' && !lk ? { vis: sv, id: 's9', url: '/@alexkim/cell-biology', label: sv === 'public' ? 'Public' : 'Link only' } : null,
@@ -129,20 +167,32 @@ export const MOCK_METHOD = String.raw`mock() {
   const liveRows = (p.final ? LS.final : LS.board.map(([name, score]) => [name, name === LS.me ? jordan : score])).slice().sort((a, b) => b[1] - a[1]);
   return {
     mock: true,
+    // Pro: on for the canvas's boards, off for the ones that show Free (their free or plan setting).
+    pro: () => !(p.free || p.plan === 'Free'),
     chrome: () => ({ nav: { today: caught ? '' : '64', news: m.read ? '' : '2', hasNews: !m.read }, me: { bg: 'linear-gradient(135deg, #8C9AFC 0%, #4F60E6 100%)', initial: 'A', color: st.photo === 'color', photo: '', sampleGoogle: st.photo === 'google', sampleYours: st.photo === 'yours', href: 'WebProfile.dc.html' } }),
     settings: () => st,
     tags: () => [],
     decks: () => inOrder().map(d => ({ d, i: X.DECKS.indexOf(d) })).map(({ d, i }) => ({ ...d, name: d.name, tags: X.TAGS[d.id], seed: d.name, style: null, image: null, totalLabel: d.total, paused: false, folder: folderOf(d.id), bg: { kind: 'deck', image: null },
-      due: caught ? 0 : d.due, overdue: caught ? 0 : d.overdue, soon: caught ? (d.soon || [1, 1, 2, 3, 1, 3][i]) : d.soon,
+      due: caught ? 0 : d.due, overdue: caught ? 0 : d.overdue, soon: caught ? (d.soon || [1, 1, 2, 3, 1, 3][i]) : d.soon, exam: d.id === 'cell' ? exam : null,
       href: 'WebDeck.dc.html', studyHref: 'WebReview.dc.html', settingsHref: 'WebDeckSettings.dc.html', shared: null, link: null, readOnly: false, ...(LIB_NET[d.id] || {}) })),
     deck,
     folders: () => folders().map(f => { const ds = inOrder().filter(d => folderOf(d.id) === f.id);
       return { id: f.id, name: f.name, n: ds.length, due: caught ? 0 : ds.reduce((n, d) => n + d.due, 0), decks: ds.map(d => ({ ...d, seed: d.name, style: null, round: 0 })), href: 'WebLibraryFolder.dc.html' }; }),
-    allCards: () => X.ALL_CARDS.map(([was, front, back, icon, next, level, tags], i) => { const deckId = cardDeck['a' + i] || was, d = X.DECKS.find(x => x.id === deckId);
-      return { id: 'a' + i, kind: '', icon, front, back, tags, next, level, deckId, deckName: d.name, seed: d.name, style: null, round: 0, folder: folderOf(deckId), href: 'WebCardsScreen.dc.html' }; }),
+    // Three of the sample cards are ones you keep forgetting; Markovnikov's rule is paused.
+    allCards: () => X.ALL_CARDS.map(([was, front, back, icon, next, level, tags], i) => { const deckId = cardDeck['a' + i] || was, d = X.DECKS.find(x => x.id === deckId), id = 'a' + i, paused = pausedIds[id] ?? i === 10;
+      return { id, kind: '', icon, front, back, tags, next: paused ? 'Paused' : next, level, deckId, deckName: d.name, seed: d.name, style: null, round: 0, folder: folderOf(deckId), href: 'WebCardsScreen.dc.html', paused, leech: [1, 6, 10].includes(i) }; }),
     searchDecks: q => X.DECKS.filter(d => d.name.toLowerCase().includes(q)).map(d => d.id),
-    cards: () => cardOrder.map(id => X.CARDS.find(r => r.id === id)).filter(r => !cardDeck[r.id] || cardDeck[r.id] === 'cell').map(r => ({ ...r, href: 'WebCardsScreen.dc.html' })),
-    card: () => null,
+    cards: () => cardOrder.map(id => X.CARDS.find(r => r.id === id)).filter(r => !cardDeck[r.id] || cardDeck[r.id] === 'cell').map(r => ({ ...r, href: 'WebCardsScreen.dc.html', paused: !!pausedIds[r.id], next: pausedIds[r.id] ? 'Paused' : r.next })),
+    // A sample card, for the editor boards that open one to edit (their cardId setting).
+    card: id => { const r = X.CARDS.find(c => c.id === id); if (!r) return null;
+      const kind = { text: 'basic', blank: 'cloze', image: 'image', audio: 'audio' }[r.icon], d = X.DRAFTS[{ basic: 'Basic', cloze: 'Blank', image: 'Image', audio: 'Audio' }[kind]];
+      return { ...d, id, kind, tags: r.tags, note: '', front: kind === 'cloze' ? '' : r.front, back: kind === 'image' ? '' : r.back, text: kind === 'cloze' ? r.front.replace('____', '[[' + r.back + ']]') : '', paused: !!pausedIds[id], clozeMode: 'each' }; },
+    // What a memory goal costs Cell Biology: about 32 reviews a day at 90%.
+    workload: (id, g) => 22 * (Math.pow(0.9, -2) - 1) / (Math.pow(g / 100, -2) - 1) * (2 - g / 100) / 1.1 + 10,
+    // Tune to you, tuned to 1,240 reviews (the Settings boards' tune setting shows the other states).
+    tuneInfo: () => { const k = m.tune || ({ Off: 'off', 'Not enough reviews': 'few', Tuning: 'busy' })[p.tune] || 'on';
+      return { pro: !(p.free || p.plan === 'Free'), on: k === 'on', tuned: k === 'on' || k === 'off', reviews: k === 'few' ? 212 : 1240, need: 400, can: k !== 'few', busy: k === 'busy', progress: .4, error: '', n: 1240 }; },
+    insights: range => INSIGHTS[range] || INSIGHTS.Month,
     updatesOf: () => (p.linked === 'copy' && !m.took ? [
       { card: 'u1', op: 'edit', kind: 'answer', mine: false, before: { q: 'Which enzyme is the rate-limiting step of glycolysis?', a: 'Hexokinase' }, after: { q: 'Which enzyme is the rate-limiting step of glycolysis?', a: 'Phosphofructokinase-1 (PFK-1)' } },
       { card: 'u2', op: 'add', kind: 'new', mine: false, before: null, after: { q: 'What activates PFK-1?', a: 'AMP and fructose-2,6-bisphosphate' } },
@@ -186,7 +236,7 @@ export const MOCK_METHOD = String.raw`mock() {
         result: { ok: liveRight, timeUp: !!p.timeUp, pick: pick >= 0 ? LS.q.options[pick] : '', answer: LS.q.options[LS.q.right], gained: liveRight ? 870 : 0, streak: liveRight ? 3 : 0 },
         standings: liveRows.map(([name, score]) => ({ ...livePerson(name), score })) };
     },
-    href: kind => ({ decks: 'WebDecks.dc.html', newDeck: 'WebNewDeck.dc.html', import: 'WebImport.dc.html', connect: 'WebConnect.dc.html', today: 'Main.dc.html' })[kind] || 'Main.dc.html',
+    href: kind => ({ decks: 'WebDecks.dc.html', newDeck: 'WebNewDeck.dc.html', import: 'WebImport.dc.html', connect: 'WebConnect.dc.html', today: 'Main.dc.html', stats: 'WebStats.dc.html' })[kind] || 'Main.dc.html',
     // The study network (net-sample.mjs): the same answers web/net.js gets from the server. Saving, following and the
     // like stay on this board. Prop "loading" shows a page before its answer arrives.
     me: () => { const h = (m.profile && m.profile.handle) || 'alexkim'; return { handle: h, url: '/@' + h, name: st.name }; },
@@ -264,7 +314,10 @@ export const MOCK_METHOD = String.raw`mock() {
       detach: () => set({ detached: true }), takeUpdates: () => { set({ took: true }); return Promise.resolve({}); }, copyUpdates: (id, on) => set({ upd: !!on }),
       // Live: typing on the join board and tapping an answer stay on that board; the rest link to the next board.
       joinCode: v => set({ joinCode: String(v || '').replace(/\D/g, '').slice(0, 6) }), joinName: v => set({ joinName: String(v || '').slice(0, 20) }), liveAnswer: i => set({ livePick: i }),
-      openLive: noop, liveStart: noop, liveNext: noop, liveAgain: noop, liveClose: noop, joinLive: noop, joinAgain: noop
+      openLive: noop, liveStart: noop, liveNext: noop, liveAgain: noop, liveClose: noop, joinLive: noop, joinAgain: noop,
+      setExam: (id, day) => set({ deck: { ...ed, exam: day || null } }),
+      pauseCards: (ids, on) => set({ paused: { ...pausedIds, ...Object.fromEntries(ids.map(id => [id, !!on])) } }),
+      tune: () => set({ tune: 'on' }), useTuned: on => set({ tune: on ? 'on' : 'off' })
     }
   };
-}`.replace('__SAMPLE__', () => JSON.stringify(SAMPLE)).replace('__WAVE__', () => JSON.stringify(SAMPLE_WAVE)).replace('__NET__', () => JSON.stringify(NET_SAMPLE)).replace('__LIVE__', () => JSON.stringify(LIVE_SAMPLE));
+}`.replace('__SAMPLE__', () => JSON.stringify(SAMPLE)).replace('__WAVE__', () => JSON.stringify(SAMPLE_WAVE)).replace('__NET__', () => JSON.stringify(NET_SAMPLE)).replace('__LIVE__', () => JSON.stringify(LIVE_SAMPLE)).replace('__INSIGHTS__', () => JSON.stringify(SAMPLE_INSIGHTS));

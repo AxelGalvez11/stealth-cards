@@ -165,7 +165,10 @@ const I = {
   message: '<path d="M5 5h14a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H9l-4 3.5V6a1 1 0 0 1 1-1z"/>',
   link: '<path d="M10 14a4 4 0 0 0 5.66 0l3-3a4 4 0 0 0-5.66-5.66l-1 1"/><path d="M14 10a4 4 0 0 0-5.66 0l-3 3a4 4 0 0 0 5.66 5.66l1-1"/>',
   lock: '<rect x="5" y="10.5" width="14" height="10" rx="2.5"/><path d="M8 10.5V8a4 4 0 0 1 8 0v2.5"/>',
-  user: '<circle cx="12" cy="8.5" r="3.8"/><path d="M4.5 20c.9-3.9 3.8-6 7.5-6s6.6 2.1 7.5 6"/>'
+  user: '<circle cx="12" cy="8.5" r="3.8"/><path d="M4.5 20c.9-3.9 3.8-6 7.5-6s6.6 2.1 7.5 6"/>',
+  calendar: '<rect x="3" y="5" width="18" height="16" rx="3"/><path d="M3 10h18M8 3v4M16 3v4"/>',
+  pauseRing: '<circle cx="12" cy="12" r="9"/><path d="M10 9v6M14 9v6"/>',
+  again: '<path d="M20 12a8 8 0 1 1-2.34-5.66"/><path d="M20 4v4h-4"/>'
 };
 
 // The mark: three dots, two above and one below, in the text color. The viewBox hugs the ink, so `h` is its real height.
@@ -200,6 +203,8 @@ const pill = (label, { inv = false, href = '', icon = '', h = 36, onClick = '' }
   const inner = `${icon ? svg(I[icon], 16, 2) : ''}${label}`;
   return href ? `<a href="${href}" class="sc-press" style="${st}">${inner}</a>` : `<button type="button"${onClick ? ` onClick="${onClick}"` : ''} class="sc-press" style="${st}">${inner}</button>`;
 };
+// The Pro badge, beside what Pro adds (Settings → Plan, Learn mode and Pro scheduling on Free).
+const PRO_BADGE = '<span style="height: 22px; padding: 0 9px; display: inline-flex; align-items: center; border-radius: 999px; background: linear-gradient(90deg, #7E94FB, #2CB2EA); color: #FFFFFF; font-size: 12px; font-weight: 700; letter-spacing: .01em;">Pro</span>';
 const eyebrow = txt => `<div style="font-size: 12px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: {{t.muted}};">${txt}</div>`;
 const chip = (txt, extra = '') => `<span style="display: inline-flex; align-items: center; gap: 6px; height: 26px; padding: 0 10px; border-radius: 999px; background: {{t.surf}}; font-size: 12px; font-weight: 500; ${extra}">${txt}</span>`;
 // The grading-style switcher (web: compact pill in the header; phone: full-width row).
@@ -357,6 +362,7 @@ const webToday = webRoot(`${sidebar('Today')}
         <div class="sc-row" style="position: relative; display: flex; align-items: center; gap: 16px; height: 56px; border-bottom: 1px solid {{t.line}};">
           <a href="{{d.href}}" aria-label="{{d.name}}" class="sc-hit" style="position: absolute; inset: 0;"></a>
           <span style="flex-grow: 1; min-width: 0; font-size: 15px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{d.name}}</span>
+          <sc-if value="{{d.hasExam}}" hint-placeholder-val="{{ false }}"><span style="flex-shrink: 0; display: inline-flex; align-items: center; gap: 6px; font-size: 13px; color: {{t.muted}}; white-space: nowrap;">${svg(I.calendar, 14, 2)}<span>{{d.examLine}}</span></span></sc-if>
           <span style="flex-shrink: 0; height: 26px; padding: 0 10px; display: inline-flex; align-items: center; border-radius: 999px; font-size: 12px; font-weight: 600; background: {{d.tagBg}}; color: {{d.tagFg}};">{{d.tag}}</span>
           <span style="flex-shrink: 0; width: 40px; text-align: right; font-family: ${MONO}; font-size: 15px; color: {{d.countColor}};">{{d.due}}</span>
           <span style="position: relative; flex-shrink: 0; width: 100px; display: flex; justify-content: flex-end; pointer-events: none;">
@@ -402,7 +408,8 @@ renderVals() {
       : d.soon == null ? { tag: d.fresh ? d.fresh + ' new' : 'No cards yet', tagBg: t.surf, tagFg: t.muted }
       : { tag: d.soon === 1 ? 'Next: tomorrow' : 'Next: in ' + d.soon + ' days', tagBg: t.surf, tagFg: t.muted };
     // Flashcards whenever there's something to study (cards due, or new ones to learn).
-    return { ...d, ...tag, canStudy: d.due > 0 || d.fresh > 0, noStudy: !d.due && !d.fresh, countColor: d.due ? t.text : t.muted };
+    // A deck with an exam coming says so (the owner's note: "Exam in 12 days · 84 cards to review first").
+    return { ...d, ...tag, canStudy: d.due > 0 || d.fresh > 0, noStudy: !d.due && !d.fresh, countColor: d.due ? t.text : t.muted, hasExam: !!d.exam, examLine: d.exam ? d.exam.line : '' };
   });
   return {
     ${MESH_VALS('Iris')}
@@ -587,6 +594,10 @@ const moveBtn = (bg, size = 32) => `<button type="button" onClick="{{d.toggleMov
 // All cards: how hard each one is, as a colored dot and word.
 const levelTag = `<span style="display: inline-flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 600; color: {{r.levelFg}};"><span style="width: 8px; height: 8px; border-radius: 4px; background: {{r.levelFg}};"></span>{{r.level}}</span>`;
 const levelSeg = (h, fs = 13, tight = false) => `<div role="group" aria-label="Difficulty" style="display: flex; gap: 2px; padding: 4px; border-radius: 999px; background: {{t.surf}}; max-width: 100%; overflow-x: auto; scrollbar-width: none;"><sc-for list="{{levels}}" as="l" hint-placeholder-count="5"><button type="button" onClick="{{l.pick}}" aria-pressed="{{l.pressed}}" style="height: ${h}px; ${tight ? 'flex: 1 1 auto; padding: 0 6px; justify-content: center; gap: 4px;' : 'flex-shrink: 0; padding: 0 12px; gap: 7px;'} display: inline-flex; align-items: center; border: 0; border-radius: 999px; background: {{l.bg}}; color: {{l.fg}}; box-shadow: {{l.sh}}; font: inherit; font-size: ${fs}px; font-weight: 600; white-space: nowrap; cursor: pointer;"><span style="width: {{l.dotW}}; height: 8px; border-radius: 4px; background: {{l.dot}};"></span>{{l.label}}<span style="font-family: ${MONO}; font-size: 11px; opacity: .6;">{{l.count}}</span></button></sc-for></div>`;
+// All cards: the cards you keep forgetting, and the ones you paused, each a filter of its own (shown once there are
+// some); and, filtered to one of them, pausing or unpausing them all.
+const stateChips = h => `<sc-for list="{{states}}" as="x" hint-placeholder-count="2"><button type="button" onClick="{{x.pick}}" aria-pressed="{{x.pressed}}" style="height: ${h}px; flex-shrink: 0; padding: 0 14px 0 12px; display: inline-flex; align-items: center; gap: 7px; border: 0; border-radius: 999px; background: {{x.bg}}; color: {{x.fg}}; font: inherit; font-size: 13px; font-weight: 600; white-space: nowrap; cursor: pointer;"><sc-if value="{{x.isLeech}}" hint-placeholder-val="{{ true }}">${svg(I.again, 14, 2)}</sc-if><sc-if value="{{x.isPaused}}" hint-placeholder-val="{{ false }}">${svg(I.pauseRing, 14, 2)}</sc-if><span>{{x.label}}</span><span style="font-family: ${MONO}; font-size: 11px; opacity: .6;">{{x.count}}</span></button></sc-for>`;
+const bulkBtn = h => `<sc-if value="{{bulk.show}}" hint-placeholder-val="{{ false }}"><button type="button" onClick="{{bulk.go}}" class="sc-press" style="height: ${h}px; flex-shrink: 0; padding: 0 16px; border: 0; border-radius: 999px; background: {{t.inv}}; color: {{t.invText}}; font: inherit; font-size: 13px; font-weight: 600; white-space: nowrap; cursor: pointer;">{{bulk.label}}</button></sc-if>`;
 // Picked tags, each with an x; and the menus to add a tag or pick a deck.
 const pickedTags = h => `<sc-for list="{{pickedTags}}" as="g" hint-placeholder-count="1"><button type="button" onClick="{{g.remove}}" aria-label="Stop filtering by {{g.label}}" style="height: ${h}px; flex-shrink: 0; padding: 0 10px 0 12px; display: inline-flex; align-items: center; gap: 6px; border: 0; border-radius: 999px; background: {{g.bg}}; color: {{g.fg}}; font: inherit; font-size: 13px; font-weight: 600; white-space: nowrap; cursor: pointer;">{{g.label}}<span style="display: flex; opacity: .7;">${svg(I.close, 10, 2.4)}</span></button></sc-for>`;
 const menuBtn = (m, label, h) => `<button type="button" onClick="{{${m}.toggle}}" aria-expanded="{{${m}.expanded}}" style="height: ${h}px; flex-shrink: 0; padding: 0 12px 0 14px; display: inline-flex; align-items: center; gap: 6px; border: 0; border-radius: 999px; background: {{t.surf}}; color: {{t.text}}; font: inherit; font-size: 13px; font-weight: 600; white-space: nowrap; cursor: pointer;">${label}${svg(I.chevDown, 14, 2)}</button>`;
@@ -661,7 +672,9 @@ const webDecks = webRoot(`${sidebar('Library')}
       <div style="position: relative;">${menuBtn('tagPick', 'Tags', 40)}${tagMenu('tagPick', 'left: 0; top: 48px;')}</div>
       ${pickedTags(32)}
       <div style="position: relative;">${menuBtn('deckPick', '{{deckPick.label}}', 40)}${tagMenu('deckPick', 'left: 0; top: 48px;', { label: 'Filter by deck', find: 'Find a deck or folder', none: 'No decks match' })}</div>
+      ${stateChips(40)}
       <span style="flex-grow: 1;"></span>
+      ${bulkBtn(36)}
       <span style="font-size: 13px; color: {{t.muted}};">{{cardCount}}</span>
     </div>
     <div style="display: flex; flex-direction: column;">
@@ -687,7 +700,7 @@ ${moveTray('tray', false)}`, true);
 // The Library's logic, for the web and iPhone boards.
 const libraryLogic = phone => `
 constructor(props) { super(props); this.state = { tag: 'All', view: props.view === 'List' ? 'list' : 'cards', openDeck: props.openTags ? 'cell' : null, moreOpen: !!props.moreTags, moreQ: '', q: '',
-  level: 'all', cardTags: [], deck: '', tagPickOpen: false, tagPickQ: '', deckPickOpen: false, deckPickQ: '', shown: 60, naming: props.naming ? 'new' : null, name: props.naming ? 'Biology' : '', namingAt: 0,
+  level: ['new', 'easy', 'medium', 'hard'].includes(props.level) ? props.level : 'all', state: ['leech', 'paused'].includes(props.level) ? props.level : '', cardTags: [], deck: '', tagPickOpen: false, tagPickQ: '', deckPickOpen: false, deckPickQ: '', shown: 60, naming: props.naming ? 'new' : null, name: props.naming ? 'Biology' : '', namingAt: 0,
   moveDeck: props.moveOpen ? 'cell' : null, moveAfter: null }; }
 renderVals() {
   ${T}${DB_JS}
@@ -754,8 +767,12 @@ renderVals() {
   const picked = s.cardTags || [], pick = s.deck || '';
   const inPick = c => !pick || (pick.startsWith('f:') ? c.folder === pick.slice(2) : c.deckId === pick);
   const base = every.filter(c => inPick(c) && picked.every(g => c.tags.includes(g)) && (!q || [c.front, c.back, c.deckName, ...c.tags].join(' ').toLowerCase().includes(q)));
-  const count = k => base.filter(c => k === 'all' || c.level === k).length;
-  const matched = base.filter(c => s.level === 'all' || c.level === s.level);
+  // Cards you keep forgetting, and cards you paused, filter on top of how hard they are.
+  const inState = (c, k) => (k === 'leech' ? !!c.leech : k === 'paused' ? !!c.paused : true), lvOk = c => s.level === 'all' || c.level === s.level;
+  const count = k => base.filter(c => (k === 'all' || c.level === k) && inState(c, s.state)).length;
+  const stateCount = k => base.filter(c => lvOk(c) && inState(c, k)).length;
+  const matched = base.filter(c => lvOk(c) && inState(c, s.state));
+  const toPause = s.state === 'leech' ? matched.filter(c => !c.paused) : s.state === 'paused' ? matched : [];
   const glyphs = { text: 'Aa', blank: '_', image: '▢', audio: '♪' };
   const rows = matched.slice(0, s.shown).map(c => ({ ...c, glyph: glyphs[c.icon], level: LV[c.level][0], levelFg: LV[c.level][1], swatch: grad(c).base,
     href: db.mock ? ${phone ? "'PhoneEditor.dc.html'" : "'WebCardsScreen.dc.html'"} : c.href, ...cardFit(c.tags) }));
@@ -796,6 +813,9 @@ renderVals() {
     cardView: view === 'cards', listView: view === 'list',
     vCards: seg(view === 'cards'), vList: seg(view === 'list'),
     showCards: () => this.setState({ view: 'cards' }), showList: () => this.setState({ view: 'list' }),
+    states: [['leech', 'Keep forgetting'], ['paused', 'Paused']].filter(([k]) => s.state === k || stateCount(k) > 0).map(([k, label]) => { const on = s.state === k;
+      return { label, count: String(stateCount(k)), isLeech: k === 'leech', isPaused: k === 'paused', pressed: on ? 'true' : 'false', bg: on ? t.inv : t.surf, fg: on ? t.invText : t.text, pick: () => this.setState({ state: on ? '' : k, shown: 60 }) }; }),
+    bulk: { show: toPause.length > 0, label: s.state === 'paused' ? 'Unpause all' : 'Pause all', go: () => act.pauseCards(toPause.map(c => c.id), s.state !== 'paused') },
     levels: ['all', 'new', 'easy', 'medium', 'hard'].map(k => { const on = s.level === k; return { label: k === 'all' ? 'All' : LV[k][0], count: String(count(k)), dot: k === 'all' ? 'transparent' : LV[k][1], dotW: k === 'all' ? '0px' : '8px',
       pick: () => this.setState({ level: k, shown: 60 }), ...seg(on) }; }),
     tagPick: { open: !!s.tagPickOpen, expanded: s.tagPickOpen ? 'true' : 'false', query: s.tagPickQ || '', toggle: () => this.setState({ tagPickOpen: !s.tagPickOpen, tagPickQ: '', deckPickOpen: false }),
@@ -961,6 +981,22 @@ const COVER_LOGIC = `
       before: u.before ? u.before.q + (u.before.a ? ' — ' + u.before.a : '') : '', after: u.after ? u.after.q + (u.after.a ? ' — ' + u.after.a : '') : '',
       take: () => take(u.card, 'take'), skip: () => take(u.card, 'skip') }))
   };
+  // Pro scheduling (Studying): the goal's reviews a day, three goals to compare, an exam date, and the rule for cards you
+  // keep forgetting. The change in reviews a day counts from the goal the settings opened with (the canvas's stepGoal
+  // board shows it stepped from 90% to 95%).
+  const pro = db.pro(), stepped = db.mock && !!this.props.stepGoal && cs.goalStepped == null;
+  const goalNow = stepped ? 95 : goal;
+  if (this.goalFrom == null) this.goalFrom = stepped ? 90 : goal;
+  const perDayOf = g => Math.round(db.workload(dk.id, g)), costNow = perDayOf(goalNow), change = costNow - perDayOf(this.goalFrom);
+  const planVals = { show: pro && fsrsOn,
+    presets: [['Relaxed', 85], ['Balanced', 90], ['Intense', 95]].map(([label, g]) => { const on = goalNow === g;
+      return { label, sub: g + '% · ' + perDayOf(g) + ' a day', pressed: on ? 'true' : 'false', bg: on ? t.inv : t.surf, fg: on ? t.invText : t.text, pick: () => { this.setState({ goalStepped: true }); up({ goal: g }); } }; }),
+    line: db.workload(dk.id, goalNow) < 0.5 ? 'Under 1 review a day' : 'About ' + plural(costNow, 'review') + ' a day', hasDelta: goalNow !== this.goalFrom && change !== 0, delta: (change > 0 ? '+' : '−') + Math.abs(change) + ' a day' };
+  const ex = dk.exam, pad = n => String(n).padStart(2, '0'), d0 = new Date(), todayIso = d0.getFullYear() + '-' + pad(d0.getMonth() + 1) + '-' + pad(d0.getDate());
+  const examVals = { on: !!dk.examDay, none: !dk.examDay, pick: pro, fixed: !pro, value: dk.examDay || '', min: todayIso, day: ex ? ex.day : dk.examDay, line: ex ? ex.line : 'This exam has passed',
+    set: e => { const v = e && e.target ? e.target.value : ''; if (v) up({ exam: v }); },
+    open: e => { try { if (e && e.target && e.target.showPicker) e.target.showPicker(); } catch (err) { /* the browser opens its own */ } },
+    clear: () => up({ exam: null }) };
   const coverVals = {
     grain: String(this.props.grain ?? 0.7),
     cover, coverIsGradient: !isImage, coverIsImage: isImage && !photo, coverHasPhoto: !!photo, coverPhoto: photo, coverHasImage: isImage,
@@ -970,12 +1006,16 @@ const COVER_LOGIC = `
     nextCover: () => up({ cover: { round: (dk.cover.round || 0) + 1, image: null } }),
     uploadCover: () => db.act.pickCover(dk.id),
     removeCover: () => up({ cover: { image: null } }),
-    settingsOpen, openSettings: () => this.setState({ deckSettings: true }), closeSettings: () => this.setState({ deckSettings: false }),
+    settingsOpen, openSettings: () => { this.goalFrom = null; this.setState({ deckSettings: true }); }, closeSettings: () => { this.goalFrom = null; this.setState({ deckSettings: false }); },
     coverStyles: [['mix', 'Mix'], ['vivid', 'Vivid'], ['deep', 'Deep']].map(([id, label]) => ({ label, long: label, ...segOf(id, style), pick: () => up({ cover: { style: id, image: null } }) })),
     modes: [['four', 'Forgot · Hard · Good · Easy', '4 grades'], ['binary', 'Check or X', '✓ / ✗'], ['piles', 'Piles', 'Piles']].map(([id, long, short]) => ({ label: short, long, ...segOf(id, grading), pick: () => up({ grading: id }) })),
-    perDay: String(perDay), goal: goal + '%', perDayIn: typed('perDay', perDay, n => up({ perDay: n }, true), 'New cards a day'),
+    perDay: String(perDay), goal: goalNow + '%', perDayIn: typed('perDay', perDay, n => up({ perDay: n }, true), 'New cards a day'),
     lessDay: () => up({ perDay: Math.max(0, perDay - 5) }), moreDay: () => up({ perDay: Math.min(999, perDay + 5) }),
-    lessGoal: () => up({ goal: Math.max(70, goal - 1) }), moreGoal: () => up({ goal: Math.min(97, goal + 1) }),
+    lessGoal: () => { this.setState({ goalStepped: true }); up({ goal: Math.max(70, goalNow - 1) }); }, moreGoal: () => { this.setState({ goalStepped: true }); up({ goal: Math.min(97, goalNow + 1) }); },
+    plan: planVals, exam: examVals, proOn: pro && fsrsOn, proTeaser: !pro && fsrsOn, examLeft: !pro && fsrsOn && !!dk.examDay, proHref: db.mock ? 'Pricing.dc.html' : 'https://lucida.cards/pricing',
+    leechN: String(dk.leechAt), lessLeech: () => up({ leechAt: Math.max(3, dk.leechAt - 1) }), moreLeech: () => up({ leechAt: Math.min(30, dk.leechAt + 1) }),
+    leechActs: [['tag', 'Tag it “Leech”'], ['pause', 'Pause it']].map(([id, label]) => ({ label, ...segOf(id, dk.leechAct), pick: () => up({ leechAct: id }) })),
+    examShow: !!ex, examLine: ex ? ex.line : '',
     pause: sw(paused),
     togglePause: () => up({ paused: !paused }),
     fsrsOn, fsrsSw: sw(fsrsOn, fsrsAllowed), toggleFsrs: () => fsrsAllowed && up({ fsrs: !fsrsOn }),
@@ -1044,6 +1084,20 @@ const deckShareBody = phone => `<sc-if value="{{isLinked}}" hint-placeholder-val
           <sc-if value="{{hasHelpers}}" hint-placeholder-val="{{ true }}"><div style="display: flex; align-items: center; gap: 12px; min-height: 44px;"><span style="flex-grow: 1; font-size: 14px; font-weight: 600;">Helpers take suggestions too</span>${SWITCH('communitySw', 'toggleCommunity', 'Helpers take suggestions too')}</div></sc-if>
         </sc-if>
         </sc-if>`;
+// ---------- Pro scheduling, in Deck settings → Studying ----------
+// Three memory goals to compare, each with its reviews a day (tap one to use it), and under the goal what it costs: about
+// how many reviews a day it means for this deck, and how that changed since you opened the settings.
+const GOAL_PLANS = `<sc-if value="{{plan.show}}" hint-placeholder-val="{{ true }}"><div role="radiogroup" aria-label="Memory goal" style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px;"><sc-for list="{{plan.presets}}" as="p" hint-placeholder-count="3"><button type="button" role="radio" aria-checked="{{p.pressed}}" onClick="{{p.pick}}" class="sc-press" style="min-width: 0; padding: 10px 12px; border: 0; border-radius: 16px; background: {{p.bg}}; color: {{p.fg}}; display: flex; flex-direction: column; align-items: flex-start; gap: 2px; font: inherit; text-align: left; cursor: pointer;"><span style="font-size: 13px; font-weight: 600;">{{p.label}}</span><span style="max-width: 100%; font-size: 12px; opacity: .72; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{p.sub}}</span></button></sc-for></div></sc-if>`;
+const GOAL_COST = `<sc-if value="{{plan.show}}" hint-placeholder-val="{{ true }}"><div role="status" style="display: flex; align-items: center; gap: 8px; min-height: 24px; font-size: 13px;"><span>{{plan.line}}</span><sc-if value="{{plan.hasDelta}}" hint-placeholder-val="{{ false }}"><span style="height: 22px; padding: 0 9px; display: inline-flex; align-items: center; border-radius: 999px; background: {{t.surf}}; color: {{t.muted}}; font-size: 12px; font-weight: 600; font-variant-numeric: tabular-nums; white-space: nowrap;">{{plan.delta}}</span></sc-if></div></sc-if>`;
+// An exam date: pick a day (the phone's or browser's own date picker, under the pill), change it, or take it off; and how
+// the deck stands for it.
+const examPill = (label, extra = '') => `<label class="sc-press" style="position: relative; height: 34px; padding: 0 14px; display: inline-flex; align-items: center; gap: 6px; border-radius: 999px; background: {{t.surf}}; font-size: 13px; font-weight: 600; white-space: nowrap; cursor: pointer; overflow: hidden;">${svg(I.calendar, 14, 2)}<span>${label}</span><input type="date" value="{{exam.value}}" min="{{exam.min}}" onChange="{{exam.set}}" onClick="{{exam.open}}" aria-label="Exam date" style="position: absolute; inset: 0; width: 100%; height: 100%; box-sizing: border-box; margin: 0; padding: 0; border: 0; opacity: 0; font-size: 16px; cursor: pointer;${extra}"></label>`;
+// On Free, a deck that still has an exam (from when it was Pro) shows its day, which can only be taken off.
+const EXAM_ROW = `<div style="display: flex; flex-direction: column; gap: 6px;"><div style="display: flex; align-items: center; gap: 8px; min-height: 36px;"><span style="flex-grow: 1; font-size: 14px; font-weight: 600;">Exam date</span><sc-if value="{{exam.none}}" hint-placeholder-val="{{ false }}">${examPill('Add a date')}</sc-if><sc-if value="{{exam.on}}" hint-placeholder-val="{{ true }}"><sc-if value="{{exam.pick}}" hint-placeholder-val="{{ true }}">${examPill('{{exam.day}}')}</sc-if><sc-if value="{{exam.fixed}}" hint-placeholder-val="{{ false }}"><span style="height: 34px; padding: 0 14px; display: inline-flex; align-items: center; gap: 6px; border-radius: 999px; background: {{t.surf}}; font-size: 13px; font-weight: 600; white-space: nowrap;">${svg(I.calendar, 14, 2)}<span>{{exam.day}}</span></span></sc-if><button type="button" onClick="{{exam.clear}}" aria-label="Remove the exam date" style="width: 34px; height: 34px; flex-shrink: 0; border: 0; border-radius: 17px; background: {{t.surf}}; color: {{t.text}}; display: flex; align-items: center; justify-content: center; cursor: pointer;">${svg(I.close, 12, 2.4)}</button></sc-if></div><sc-if value="{{exam.on}}" hint-placeholder-val="{{ true }}"><span style="font-size: 12px; line-height: 1.4; color: {{t.muted}};">{{exam.line}}</span></sc-if></div>`;
+// Cards you keep forgetting: how many forgets make one, and whether it gets the Leech tag or is paused.
+const LEECH_ROW = `<div style="display: flex; flex-direction: column; gap: 8px;"><span style="font-size: 14px; font-weight: 600;">Cards you keep forgetting</span><div style="display: flex; align-items: center; gap: 10px;"><span style="font-size: 13px; color: {{t.muted}};">After</span>${miniStep('leechN', 'lessLeech', 'moreLeech', '{{t.surf}}')}<span style="font-size: 13px; color: {{t.muted}};">forgets</span></div>${panelSeg('leechActs', 'What happens to them', 2)}</div>`;
+// On Free: what Pro adds here.
+const STUDY_TEASER = `<div style="padding: 16px 18px; border-radius: 20px; background: {{t.surf}}; display: flex; flex-direction: column; gap: 8px;"><span style="display: flex; align-items: center; gap: 8px; font-size: 15px; font-weight: 600;">Plan your reviews${PRO_BADGE}</span><span style="font-size: 13px; line-height: 1.45; color: {{t.muted}};">See how many reviews a day each goal means, set an exam date, and choose what happens to cards you keep forgetting.</span><a href="{{proHref}}" class="sc-press" style="align-self: flex-start; margin-top: 4px; height: 36px; padding: 0 16px; display: inline-flex; align-items: center; border-radius: 999px; background: {{t.inv}}; color: {{t.invText}}; font-size: 14px; font-weight: 600;">Go Pro</a></div>`;
 const deckSettingsBody = phone => `<div style="display: flex; align-items: center; justify-content: space-between;"><span style="font-size: ${phone ? 18 : 20}px; font-weight: 600; letter-spacing: -.01em;">Deck settings</span>${phone
     ? `<button type="button" onClick="{{closeSettings}}" style="height: 36px; padding: 0 16px; border: 0; border-radius: 999px; background: {{t.inv}}; color: {{t.invText}}; font: inherit; font-size: 14px; font-weight: 600; cursor: pointer;">Done</button>`
     : `<button type="button" onClick="{{closeSettings}}" aria-label="Close settings" style="width: 36px; height: 36px; border: 0; border-radius: 18px; background: {{t.surf}}; color: {{t.text}}; display: flex; align-items: center; justify-content: center; cursor: pointer;">${svg(I.close, 14, 2.2)}</button>`}</div>
@@ -1066,11 +1120,14 @@ const deckSettingsBody = phone => `<div style="display: flex; align-items: cente
         <div style="display: flex; align-items: center; gap: 12px; min-height: 44px;"><span style="flex-grow: 1; display: flex; flex-direction: column; gap: 2px;"><span style="font-size: 14px; font-weight: 600;">Pause this deck</span><span style="font-size: 12px; line-height: 1.35; color: {{t.muted}};">No reminders, and it leaves Today until you turn it back on.</span></span>${SWITCH('pause', 'togglePause', 'Pause this deck')}</div>
         <div style="display: flex; gap: 8px; margin-top: auto;"><button type="button" onClick="{{exportDeck}}" style="flex-grow: 1; height: 44px; border: 0; border-radius: 999px; background: {{t.surf}}; color: {{t.text}}; font: inherit; font-size: 14px; font-weight: 600; cursor: pointer;">Export cards</button><button type="button" onClick="{{deleteDeck}}" style="flex-grow: 1; height: 44px; border: 0; border-radius: 999px; background: {{t.againTint}}; color: {{t.again}}; font: inherit; font-size: 14px; font-weight: 600; cursor: pointer;">{{deleteLabel}}</button></div>
       </div></sc-if>
-      <sc-if value="{{dsStudy}}" hint-placeholder-val="{{ false }}"><div style="display: flex; flex-direction: column; gap: 16px;">
+      <sc-if value="{{dsStudy}}" hint-placeholder-val="{{ false }}"><div style="flex-grow: 1; min-height: 0; overflow-y: auto; scrollbar-width: thin; display: flex; flex-direction: column; gap: 16px;">
         <div style="display: flex; flex-direction: column; gap: 8px;"><span style="font-size: 13px; font-weight: 600;">Grade with</span>${modeSeg(true)}</div>
         <div style="display: flex; align-items: center; gap: 12px;"><span style="flex-grow: 1; display: flex; flex-direction: column; gap: 2px;"><span style="font-size: 14px; font-weight: 600;">Schedule with FSRS</span><span style="font-size: 12px; line-height: 1.35; color: {{t.muted}};">{{fsrsHint}}</span></span>${SWITCH('fsrsSw', 'toggleFsrs', 'Schedule with FSRS')}</div>
-        <sc-if value="{{fsrsOn}}" hint-placeholder-val="{{ true }}"><div style="display: flex; flex-direction: column; gap: 12px;"><div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px;">${stepper('Remember goal', 'goal', 'lessGoal', 'moreGoal', true)}${stepper('Longest gap', 'gapLabel', 'lessGap', 'moreGap', true)}</div>${STEPS_ROW}</div></sc-if>
+        <sc-if value="{{fsrsOn}}" hint-placeholder-val="{{ true }}"><div style="display: flex; flex-direction: column; gap: 12px;">${GOAL_PLANS}<div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px;">${stepper('Remember goal', 'goal', 'lessGoal', 'moreGoal', true)}${stepper('Longest gap', 'gapLabel', 'lessGap', 'moreGap', true)}</div>${GOAL_COST}${STEPS_ROW}</div></sc-if>
         <div style="display: flex; align-items: center; gap: 12px; min-height: 44px;"><span style="flex-grow: 1; display: flex; flex-direction: column; gap: 2px;"><span style="font-size: 14px; font-weight: 600;">New cards a day</span><span style="font-size: 12px; color: {{t.muted}};">Unseen cards added each day</span></span>${miniStep('perDay', 'lessDay', 'moreDay', '{{t.surf}}', 'perDayIn')}</div>
+        <sc-if value="{{proOn}}" hint-placeholder-val="{{ true }}">${EXAM_ROW}${LEECH_ROW}</sc-if>
+        <sc-if value="{{examLeft}}" hint-placeholder-val="{{ false }}">${EXAM_ROW}</sc-if>
+        <sc-if value="{{proTeaser}}" hint-placeholder-val="{{ false }}">${STUDY_TEASER}</sc-if>
       </div></sc-if>
       <sc-if value="{{dsShare}}" hint-placeholder-val="{{ false }}"><div style="flex-grow: 1; min-height: 0; overflow-y: auto; scrollbar-width: thin; display: flex; flex-direction: column; gap: 16px;">${deckShareBody(phone)}</div></sc-if>`;
 
@@ -1084,6 +1141,9 @@ const deckUpdatesBody = phone => `<div style="display: flex; align-items: center
       <sc-if value="{{u.hasAfter}}" hint-placeholder-val="{{ true }}"><div style="padding: 10px 14px; border-radius: 12px; background: {{t.goodTint}}; color: {{t.good}}; font-size: 14px; line-height: 1.4;">{{u.after}}</div></sc-if>
       <div style="display: flex; gap: 8px; justify-content: flex-end;"><sc-if value="{{u.notMine}}" hint-placeholder-val="{{ true }}">${smallBtn('Skip', 'u.skip')}${smallBtn('Take it', 'u.take', 'check', '{{t.inv}}').replace('color: {{t.text}}', 'color: {{t.invText}}')}</sc-if><sc-if value="{{u.mine}}" hint-placeholder-val="{{ false }}">${smallBtn('Keep mine', 'u.skip')}${smallBtn('Take theirs', 'u.take', '', '{{t.inv}}').replace('color: {{t.text}}', 'color: {{t.invText}}')}</sc-if></div>
     </div></sc-for></div>`;
+
+// A deck's exam, in a word under its numbers (web and iPhone deck pages).
+const examLine = (fs, mt = 0) => `<sc-if value="{{examShow}}" hint-placeholder-val="{{ true }}"><div role="note" style="${mt ? `margin-top: ${mt}px; ` : ''}display: flex; align-items: center; gap: 8px; font-size: ${fs}px; color: {{t.muted}};"><span style="display: flex; color: {{t.text}};">${svg(I.calendar, fs + 2, 2)}</span><span>{{examLine}}</span></div></sc-if>`;
 // How many cards wait for Flashcards today, as a small round count inside its button.
 const STUDY_COUNT = (h, bg, fg) => `<span style="min-width: ${h}px; height: ${h}px; padding: 0 7px; box-sizing: border-box; display: inline-flex; align-items: center; justify-content: center; border-radius: ${h / 2}px; background: ${bg}; color: ${fg}; font-family: ${MONO}; font-size: ${h > 22 ? 13 : 12}px; font-weight: 600;">{{studyCount}}</span>`;
 const webDeck = webRoot(`${sidebar('Library')}
@@ -1118,6 +1178,7 @@ const webDeck = webRoot(`${sidebar('Library')}
     </sc-for>
     <div style="border-radius: 16px; height: 104px; box-sizing: border-box; padding: 18px 20px; background: {{t.surf}}; display: flex; flex-direction: column; justify-content: space-between;"><span style="font-size: 13px; font-weight: 500; color: {{t.muted}};">Due next 7 days</span><div style="display: flex; align-items: flex-end; gap: 6px; height: 36px;"><sc-for list="{{spark}}" as="s" hint-placeholder-count="7"><div style="flex-grow: 1; border-radius: 4px; background: {{s.c}}; height: {{s.h}};"></div></sc-for></div></div>
   </div>
+  ${examLine(14, -4)}
   <div style="display: flex; align-items: center; gap: 8px;">
     <sc-for list="{{filters}}" as="f" hint-placeholder-count="6">
       <button type="button" onClick="{{f.pick}}" aria-pressed="{{f.pressed}}" style="height: 36px; padding: 0 16px; display: inline-flex; align-items: center; border: 0; border-radius: 999px; font: inherit; font-size: 13px; font-weight: 500; cursor: pointer; background: {{f.bg}}; color: {{f.fg}};">{{f.label}}</button>
@@ -1948,7 +2009,7 @@ renderVals() {
       key: ev => { if (!ev || ev.key !== 'Enter' || ev.isComposing) return; ev.preventDefault(); const nx = bx[i + 1]; if (!nx || !this.focusLabel(nx.id)) ev.target.blur(); } }; }) };
   const missing = this.missingOf(ty, f, bx.length);
   // Back goes where you came from: the review, the Library's All cards, or the deck.
-  const backHref = this.props.from === 'review' ? db.href('review', dk.id) : this.props.from === 'library' ? db.href('cards') : dk.href;
+  const backHref = this.props.from === 'review' ? db.href('review', dk.id) : this.props.from === 'library' ? db.href('cards') : this.props.from === 'stats' ? db.href('stats') : dk.href;
   // The sound: its player (a file's waveform, or the words the device reads aloud) or, while recording, the live waveform
   // (the newest bar at the right), how long it's been, and Stop.
   ${SOUND_JS}
@@ -2014,6 +2075,10 @@ renderVals() {
     // Opening the picker puts the keyboard away.
     cardPick: (() => { const q = tagPicker(tags, next => put({ tags: next }), 'cp', db.mock ? null : db.tags()); return { ...q, toggle: () => this.setState({ cpOpen: !q.open, cpQ: '', typing: false }) }; })(),
     canDelete: !!saved, remove: () => db.act.deleteCard(saved.id, backHref),
+    // Pausing a card (every card of its text or picture): it doesn't come up until it's unpaused.
+    pausedNow: saved && saved.paused ? 'true' : 'false', pauseLabel: saved && saved.paused ? 'Unpause' : 'Pause', pauseCardLabel: saved && saved.paused ? 'Unpause card' : 'Pause card',
+    pauseBg: saved && saved.paused ? t.inv : t.surf, pauseFg: saved && saved.paused ? t.invText : t.text,
+    togglePause: () => { if (saved) db.act.pauseCards(db.mock ? [saved.id] : db.group(saved.id).map(c => c.id), !saved.paused); },
     save: ev => {
       if (db.mock) return;
       ev.preventDefault();
@@ -2067,7 +2132,7 @@ const webCards = `<div style="width: 1440px; height: 900px; box-sizing: border-b
       <div style="display: flex; align-items: center; gap: 12px;">
         <div style="flex-grow: 1; min-width: 0;">${TAG_EDIT('cardTags', 'cardPick', false, true)}</div>
         <sc-if value="{{note.show}}" hint-placeholder-val="{{ true }}"><span role="status" style="margin-right: 4px; display: inline-flex; align-items: center; gap: 6px; font-size: 13px; color: {{t.muted}}; white-space: nowrap;"><sc-if value="{{note.done}}" hint-placeholder-val="{{ true }}">${svg(I.check, 14, 2.2)}</sc-if>{{note.label}}</span></sc-if>
-        <sc-if value="{{canDelete}}" hint-placeholder-val="{{ true }}"><button type="button" onClick="{{deleteCard}}" style="height: 40px; padding: 0 20px; border: 0; border-radius: 999px; background: {{t.againTint}}; color: {{t.again}}; font: inherit; font-size: 14px; font-weight: 600; cursor: pointer;">Delete</button></sc-if>
+        <sc-if value="{{canDelete}}" hint-placeholder-val="{{ true }}"><button type="button" onClick="{{togglePause}}" aria-pressed="{{pausedNow}}" style="height: 40px; padding: 0 18px 0 14px; display: inline-flex; align-items: center; gap: 7px; border: 0; border-radius: 999px; background: {{pauseBg}}; color: {{pauseFg}}; font: inherit; font-size: 14px; font-weight: 600; cursor: pointer;">${svg(I.pauseRing, 16, 2)}<span>{{pauseLabel}}</span></button><button type="button" onClick="{{deleteCard}}" style="height: 40px; padding: 0 20px; border: 0; border-radius: 999px; background: {{t.againTint}}; color: {{t.again}}; font: inherit; font-size: 14px; font-weight: 600; cursor: pointer;">Delete</button></sc-if>
         <sc-if value="{{isNew}}" hint-placeholder-val="{{ false }}"><button type="button" onClick="{{discard}}" style="height: 40px; padding: 0 20px; border: 0; border-radius: 999px; background: {{t.surf}}; color: {{t.text}}; font: inherit; font-size: 14px; font-weight: 600; cursor: pointer;">Discard</button><button type="button" onClick="{{addCard}}" data-key="mod+enter" style="height: 40px; padding: 0 22px; display: inline-flex; align-items: center; border: 0; border-radius: 999px; background: {{t.inv}}; color: {{t.invText}}; font: inherit; font-size: 14px; font-weight: 600; cursor: pointer;">Add card <span style="font-family: ${MONO}; font-size: 12px; opacity: .6; margin-left: 8px;">⌘↵</span></button></sc-if>
       </div>
       ${SLASH_MENU(420)}
@@ -2084,7 +2149,7 @@ fresh(o) { return { ...${ED0}, ...o }; }
 // The sample has no saved cards, so on the canvas each one opens with what its row says (and the sample picture or sound).
 sampleCard(db, r) {
   const kind = { text: 'basic', blank: 'cloze', image: 'image', audio: 'audio' }[r.icon], d = db.draft({ basic: 'Basic', cloze: 'Blank', image: 'Image', audio: 'Audio' }[kind]);
-  return { ...d, id: r.id, kind, tags: r.tags, note: '', front: kind === 'cloze' ? '' : r.front, back: kind === 'image' ? '' : r.back, text: kind === 'cloze' ? r.front.replace('____', '[[' + r.back + ']]') : '' };
+  return { ...d, id: r.id, kind, tags: r.tags, note: '', front: kind === 'cloze' ? '' : r.front, back: kind === 'image' ? '' : r.back, text: kind === 'cloze' ? r.front.replace('____', '[[' + r.back + ']]') : '', paused: !!r.paused };
 }
 // A card you added that the app is still saving (its row has an id of its own until then).
 temp(id) { return (this.added || []).some(c => c.id === id); }
@@ -2337,7 +2402,7 @@ listVals(o) {
   const needs = { front: 'its front', back: 'its back', text: 'a blank', image: 'a picture', speak: 'a sound' };
   const heldWhy = (rid, c) => { const x = this.eds[rid]; if (!x || x.hold !== 'missing') return ''; const m = this.missingOf({ basic: 'Basic', cloze: 'Blank', image: 'Image', audio: 'Audio' }[c.kind], c); return m ? 'Not saved: needs ' + (m === 'back' && c.kind !== 'basic' ? 'its answer' : needs[m]) : ''; };
   const row = (rid, c, title, sub) => { const on = rid === id, bx = c.kind === 'image' && c.image ? c.boxes || [] : null, why = heldWhy(rid, c);
-    return { title, sub: why || sub, subFg: why ? t.again : t.muted, glyph: glyphs[c.kind], hasTags: !!(c.tags || []).length, ...cardFit(c.tags), current: on ? 'true' : 'false', bg: on ? t.surf : 'transparent', chip: on ? t.bg : t.surf,
+    return { title, sub: why || (c.paused ? 'Paused' + (sub ? ' · ' + sub : '') : sub), subFg: why ? t.again : t.muted, glyph: glyphs[c.kind], hasTags: !!(c.tags || []).length, ...cardFit(c.tags), current: on ? 'true' : 'false', bg: on ? t.surf : 'transparent', chip: on ? t.bg : t.surf,
       thumb: { show: !!bx, mock: c.image === 'mock', url: bx && c.image !== 'mock' ? c.image : '', boxes: (bx || []).map(b => ({ x: pct(b.x), y: pct(b.y), w: pct(b.w), h: pct(b.h) })) },
       pick: () => this.pickCard(rid) }; };
   const q = (s.listQ || '').trim().toLowerCase(), kf = s.listKind || 'all';
@@ -2430,7 +2495,8 @@ renderVals() {
   ${STUDY_BG_JS}
   ${BG_PICK_JS}
   ${EXPLAIN_JS}
-  const rv = db.review(this.props.deckId, this.props.pile);
+  // One deck, all of them, one pile, or a set of cards picked on the Stats page.
+  const rv = db.review(this.props.deckId, this.props.pile, this.props.set);
   const rev = this.state.revealed;
   const ex = explainView(rv.ex, rv.card && rv.card.id, '', rev, ${JSON.stringify('It pumps protons (H⁺) out of the matrix into the space between the two membranes. That builds a gradient, like water held behind a dam, and ATP synthase uses the flow back in to make ATP. Remember it as pump uphill first, then cash in on the way down.')});
   // Behind the cards: the background of the deck this card is from.
@@ -2679,14 +2745,199 @@ const HEAT_LOGIC = weeks => `
   const cell = lv => ({ c: scale[lv], edge: lv ? 'none' : 'inset 0 0 0 1px ' + t.line });
   const heat = Array.from({ length: ${weeks} * 7 }, (_, i) => { const v = (i * 37 + (i % 7) * 11) % 13; return cell(v < 3 ? 0 : v < 6 ? 1 : v < 9 ? 2 : v < 11 ? 3 : 4); });
   const legend = [0, 1, 2, 3, 4].map(cell);`;
+// ---------- Deep stats (Pro) ----------
+// Past Overview, the Stats page's tabs answer the owner's note ("what am I weak at, why, and what should I study
+// next?"): Memory (what you remember, week by week and by tag, and what's improving or slipping), Weak spots (your
+// weakest tags and hardest cards, each with a way to study just those), and Pace (time per card, the reviews coming up,
+// how your gaps grow, and how ready you are for an exam). Calm boxes with one idea each, and a plain line when there
+// isn't enough to show yet. On Free, those tabs show what Pro adds.
+const statBox = (inner, extra = '', phone = false) => `<div style="background: {{t.surf}}; border-radius: ${phone ? 28 : 18}px; padding: ${phone ? '18px' : '22px 24px'}; box-sizing: border-box; display: flex; flex-direction: column; gap: ${phone ? 12 : 14}px; min-width: 0; ${extra}">${inner}</div>`;
+const boxHead = (title, sub = '', phone = false) => phone
+  ? `<div style="display: flex; flex-direction: column; gap: 2px;"><span style="font-size: 15px; font-weight: 600;">${title}</span>${sub ? `<span style="font-size: 12px; color: {{t.muted}};">${sub}</span>` : ''}</div>`
+  : `<div style="display: flex; align-items: baseline; justify-content: space-between; gap: 12px;"><span style="font-size: 16px; font-weight: 600; white-space: nowrap;">${title}</span>${sub ? `<span style="min-width: 0; font-size: 13px; color: {{t.muted}}; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${sub}</span>` : ''}</div>`;
+// A box with too little to show says so, in a line.
+const boxEmpty = k => `<sc-if value="{{${k}.empty}}" hint-placeholder-val="{{ false }}"><div style="flex-grow: 1; min-height: 72px; display: flex; align-items: center; justify-content: center; padding: 8px 16px; text-align: center; font-size: 14px; line-height: 1.45; color: {{t.muted}};">{{${k}.emptyLine}}</div></sc-if>`;
+const statTiles = (key, cols, phone) => `<div style="display: grid; grid-template-columns: repeat(${cols}, minmax(0, 1fr)); gap: ${phone ? 8 : 12}px;"><sc-for list="{{${key}}}" as="k" hint-placeholder-count="4"><div style="background: {{t.surf}}; border-radius: ${phone ? 24 : 18}px; padding: ${phone ? 16 : 22}px; display: flex; flex-direction: column; gap: ${phone ? 2 : 6}px; min-width: 0;"><span style="font-size: ${phone ? 12 : 13}px; color: {{t.muted}}; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{k.label}}</span><span style="font-size: ${phone ? 26 : 32}px; font-weight: ${phone ? 700 : 600}; letter-spacing: -.035em; line-height: 1.05; color: {{k.color}}; white-space: nowrap;">{{k.value}}</span><span style="font-size: ${phone ? 12 : 13}px; color: {{t.muted}}; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{k.sub}}</span></div></sc-for></div>`;
+// Upright bars, each with its value on top and its label under; `goal` names the height of a dashed goal line.
+const vBars = (key, n, gap, H, goal = '') => `<div style="display: flex; flex-direction: column; gap: 6px;">
+  <div style="position: relative; height: ${H + 18}px; display: flex; align-items: flex-end; gap: ${gap}px;">${goal ? `<span aria-hidden="true" style="position: absolute; left: 0; right: 0; bottom: {{${goal}}}; border-top: 1.5px dashed {{t.text}}; opacity: .28;"></span>` : ''}<sc-for list="{{${key}}}" as="b" hint-placeholder-count="${n}"><div style="flex: 1 1 0; min-width: 0; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; gap: 4px;"><span style="font-family: ${MONO}; font-size: 11px; font-weight: 600; color: {{b.strong}}; white-space: nowrap;">{{b.v}}</span><div class="sc-grow" style="width: 100%; border-radius: 6px; background: {{b.c}}; height: {{b.h}};"></div></div></sc-for></div>
+  <div style="display: flex; gap: ${gap}px;"><sc-for list="{{${key}}}" as="b" hint-placeholder-count="${n}"><span style="flex: 1 1 0; min-width: 0; text-align: center; font-size: 11px; color: {{b.strong}}; font-weight: {{b.weight}}; white-space: nowrap; overflow: hidden;">{{b.label}}</span></sc-for></div>
+</div>`;
+// A tag's memory as a bar, with the goal marked; `study` adds its Study button.
+const tagBar = (study, phone) => `<div style="display: flex; align-items: center; gap: ${phone ? 10 : 12}px; min-height: ${phone ? 40 : 36}px; font-size: 14px;">
+  <span style="width: ${phone ? 96 : 128}px; flex-shrink: 0; min-width: 0; display: flex; align-items: center; gap: 8px;"><span style="width: 8px; height: 8px; flex-shrink: 0; border-radius: 4px; background: {{g.dot}};"></span><span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{g.label}}</span></span>
+  <span style="position: relative; flex-grow: 1; height: 8px; border-radius: 4px; background: {{t.surf2}};"><span style="position: absolute; left: 0; top: 0; bottom: 0; border-radius: 4px; background: {{g.bar}}; width: {{g.w}};"></span><span style="position: absolute; left: {{goalLeft}}; top: -4px; width: 2px; height: 16px; margin-left: -1px; border-radius: 1px; background: {{t.text}}; opacity: .35;"></span></span>
+  <span style="width: 40px; flex-shrink: 0; text-align: right; font-family: ${MONO}; font-size: 13px; font-weight: 600; color: {{g.color}};">{{g.pct}}</span>${phone ? '' : `
+  <span style="width: 80px; flex-shrink: 0; text-align: right; font-size: 12px; color: {{t.muted}}; white-space: nowrap;">{{g.n}}</span>`}${study ? `
+  <a href="{{g.studyHref}}" class="sc-press" style="flex-shrink: 0; height: 30px; padding: 0 12px; display: inline-flex; align-items: center; border-radius: 999px; background: {{t.bg}}; font-size: 12px; font-weight: 600;">Study</a>` : ''}
+</div>`;
+// A card among your hardest: its front, and its deck and how often it was forgotten.
+const hardRow = `<a href="{{h.href}}" style="display: flex; flex-direction: column; justify-content: center; gap: 2px; min-height: 52px; border-top: 1px solid {{t.line}};"><span style="font-size: 14px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{h.front}}</span><span style="font-size: 12px; color: {{t.muted}}; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{h.sub}}</span></a>`;
+const smallPill = (label, href, inv = false) => `<a href="${href}" class="sc-press" style="flex-shrink: 0; height: 32px; padding: 0 14px; display: inline-flex; align-items: center; border-radius: 999px; background: ${inv ? '{{t.inv}}' : '{{t.bg}}'}; color: ${inv ? '{{t.invText}}' : '{{t.text}}'}; font-size: 13px; font-weight: 600; white-space: nowrap;">${label}</a>`;
+// A small histogram (bars only, labels under).
+const miniHist = (key, n, H) => `<div style="display: flex; flex-direction: column; gap: 6px;"><div style="height: ${H}px; display: flex; align-items: flex-end; gap: 4px;"><sc-for list="{{${key}}}" as="b" hint-placeholder-count="${n}"><div class="sc-grow" title="{{b.title}}" style="flex: 1 1 0; min-width: 0; border-radius: 4px; background: {{b.c}}; height: {{b.h}};"></div></sc-for></div><div style="display: flex; gap: 4px;"><sc-for list="{{${key}}}" as="b" hint-placeholder-count="${n}"><span style="flex: 1 1 0; min-width: 0; text-align: center; font-family: ${MONO}; font-size: 10px; color: {{t.muted}}; white-space: nowrap; overflow: hidden;">{{b.label}}</span></sc-for></div></div>`;
+// Which decks the cards you keep forgetting are in.
+const LEECH_DECKS = `<div style="display: flex; flex-direction: column;"><sc-for list="{{weak.leech.decks}}" as="x" hint-placeholder-count="3"><div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 34px; border-top: 1px solid {{t.line}}; font-size: 14px;"><span style="min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{x.name}}</span><span style="font-family: ${MONO}; font-size: 13px; font-weight: 600;">{{x.n}}</span></div></sc-for></div>`;
+const bigNum = (v, sub) => `<div style="display: flex; align-items: baseline; gap: 8px; min-width: 0;"><span style="font-size: 34px; font-weight: 600; letter-spacing: -.035em; line-height: 1;">${v}</span><span style="min-width: 0; font-size: 13px; color: {{t.muted}}; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${sub}</span></div>`;
+const moveList = (key, title, ink) => `<div style="display: flex; flex-direction: column; gap: 4px; min-width: 0;"><span style="font-size: 13px; font-weight: 600; color: {{t.${ink}}};">${title}</span><sc-for list="{{${key}}}" as="m" hint-placeholder-count="3"><div style="display: flex; align-items: center; gap: 8px; min-height: 32px; font-size: 14px;"><span style="width: 8px; height: 8px; flex-shrink: 0; border-radius: 4px; background: {{m.dot}};"></span><span style="flex-grow: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{m.label}}</span><span style="flex-shrink: 0; font-family: ${MONO}; font-size: 12px; color: {{t.muted}}; white-space: nowrap;">{{m.span}}</span><span style="width: 36px; flex-shrink: 0; text-align: right; font-family: ${MONO}; font-size: 12px; font-weight: 600; color: {{t.${ink}}};">{{m.delta}}</span></div></sc-for></div>`;
+const MOVES = `<sc-if value="{{mem.moves.some}}" hint-placeholder-val="{{ true }}"><div style="display: flex; flex-direction: column; gap: 14px;">${moveList('mem.moves.up', 'Most improved', 'good')}${moveList('mem.moves.down', 'Slipping', 'again')}</div></sc-if>`;
+// An exam's readiness: cards seen, learned, and how much you'd remember on the day.
+const examBlock = phone => `<div style="display: flex; flex-direction: column; gap: 10px; padding-top: 4px;"><div style="display: flex; ${phone ? 'flex-direction: column; gap: 2px;' : 'align-items: baseline; justify-content: space-between; gap: 12px;'}"><span style="font-size: 15px; font-weight: 600;">{{e.name}}</span><span style="font-size: 13px; color: {{t.muted}};">{{e.line}}</span></div><div style="display: grid; grid-template-columns: repeat(${phone ? 1 : 3}, minmax(0, 1fr)); gap: ${phone ? 10 : 20}px;"><sc-for list="{{e.stats}}" as="k" hint-placeholder-count="3"><div style="display: flex; flex-direction: column; gap: 6px;"><span style="display: flex; justify-content: space-between; gap: 8px; font-size: 13px;"><span style="color: {{t.muted}};">{{k.label}}</span><span style="font-family: ${MONO}; font-weight: 600;">{{k.pct}}</span></span><span style="position: relative; height: 8px; border-radius: 4px; background: {{t.surf2}};"><span style="position: absolute; left: 0; top: 0; bottom: 0; border-radius: 4px; background: {{k.c}}; width: {{k.w}};"></span></span></div></sc-for></div></div>`;
+const statTabs = (h, full) => `<div role="tablist" aria-label="Stats" style="display: flex; gap: 2px; padding: 4px; border-radius: 999px; background: {{t.surf}};"><sc-for list="{{tabs}}" as="m" hint-placeholder-count="4"><button type="button" role="tab" aria-selected="{{m.current}}" onClick="{{m.pick}}" style="height: ${h}px; ${full ? 'flex: 1 1 0; min-width: 0; padding: 0 4px;' : 'padding: 0 16px;'} border: 0; border-radius: 999px; background: {{m.bg}}; color: {{m.fg}}; box-shadow: {{m.sh}}; font: inherit; font-size: 13px; font-weight: 600; white-space: nowrap; cursor: pointer;">{{m.label}}</button></sc-for></div>`;
+// On Free: a sky with a few of Pro's numbers floating in it, what the tabs show, and the two prices.
+const statsSky = (h, s) => `<div aria-hidden="true" style="position: relative; height: ${h}px; background: linear-gradient(180deg, {{sky.top}} 0%, {{sky.mid}} 58%, {{sky.low}} 82%, {{t.bg}} 100%); overflow: hidden;">
+    <div style="position: absolute; left: 50%; top: 54%; transform: translate(-50%, -50%) scale(${s}); display: flex; align-items: center; gap: 14px; color: #000000;">
+      <div style="width: 150px; box-sizing: border-box; padding: 14px 16px; border-radius: 18px; background: #FFFFFF; box-shadow: 0 16px 32px -16px rgba(20,22,90,.45); transform: rotate(-5deg); display: flex; flex-direction: column; gap: 8px;"><span style="font-size: 13px; font-weight: 600;">Reactions</span><span style="position: relative; height: 7px; border-radius: 4px; background: #EDEDED;"><span style="position: absolute; left: 0; top: 0; bottom: 0; width: 71%; border-radius: 4px; background: #E5484D;"></span></span><span style="font-family: ${MONO}; font-size: 12px; font-weight: 600; color: #D92D20;">71%</span></div>
+      <div style="width: 120px; height: 96px; box-sizing: border-box; padding: 14px; border-radius: 18px; background: #FFFFFF; box-shadow: 0 16px 32px -16px rgba(20,22,90,.45); display: flex; align-items: flex-end; gap: 6px;">${[40, 58, 50, 72, 88].map(v => `<span style="flex: 1 1 0; height: ${v}%; border-radius: 4px; background: #7282F0;"></span>`).join('')}</div>
+      <div style="width: 120px; box-sizing: border-box; padding: 14px 16px; border-radius: 18px; background: #FFFFFF; box-shadow: 0 16px 32px -16px rgba(20,22,90,.45); transform: rotate(5deg); display: flex; flex-direction: column; gap: 2px;"><span style="font-size: 26px; font-weight: 600; letter-spacing: -.03em;">8.2 s</span><span style="font-size: 12px; color: #666666;">a card</span></div>
+    </div>
+  </div>`;
+// Each price is its own button, like Learn mode's (the owner: "the pricing is confusing because it only has the yearly
+// subscription no monthly option").
+const priceBtn = (label, href, inv) => `<a href="${href}" class="sc-press" style="flex: 1 1 0; height: 52px; border-radius: 999px; background: ${inv ? '{{t.inv}}' : '{{t.surf}}'}; color: ${inv ? '{{t.invText}}' : '{{t.text}}'}; display: flex; align-items: center; justify-content: center; font-size: 15px; font-weight: 600;">${label}</a>`;
+// The sky behind it (Learn mode's on Free has the same one): day, night, or dusk for gray dark mode.
+const STATS_SKY = `(this.props.dark && this.props.dim ? { top: '${SKY_DUSK.top}', mid: '${SKY_DUSK.mid}', low: '${SKY_DUSK.low}' } : this.props.dark ? { top: '#081733', mid: '#0D2148', low: '#0A1530' } : { top: '#86BDF3', mid: '#C9E2FB', low: '#EDF5FE' })`;
+const statsUpgradeBody = (pad, fs = 26) => `<div style="box-sizing: border-box; padding: 0 ${pad}px ${pad}px; margin-top: -6px; display: flex; flex-direction: column; gap: 18px;">
+      <div style="display: flex; flex-direction: column; gap: 8px;"><span style="display: flex; align-items: center; gap: 10px; font-size: ${fs}px; font-weight: 600; letter-spacing: -.03em; white-space: nowrap;">See what you’re weak at${PRO_BADGE}</span><span style="font-size: 15px; line-height: 1.5; color: {{t.muted}};">What you remember, what you’re weak at and why, and what to study next.</span></div>
+      <div style="display: flex; flex-direction: column; gap: 10px; font-size: 15px;">${['Memory by deck, tag, and week', 'Your weakest tags and hardest cards', 'Time per card and exam readiness'].map(x => `<span style="display: flex; align-items: center; gap: 10px;"><span style="width: 22px; height: 22px; flex-shrink: 0; border-radius: 11px; background: linear-gradient(135deg, #7E94FB, #2CB2EA); color: #FFFFFF; display: flex; align-items: center; justify-content: center;">${svg(I.check, 13, 2.6)}</span>${x}</span>`).join('')}</div>
+      <div style="font-size: 14px; color: {{t.muted}};">Yearly works out to $4.17 a month. Cancel anytime.</div>
+      <div style="display: flex; gap: 10px;">${priceBtn('$5.99 a month', '{{monthlyHref}}', false)}${priceBtn('$49.99 a year', '{{yearlyHref}}', true)}</div>
+    </div>`;
+
+// The deep tabs, on the web.
+const WEB_DEEP = `<sc-if value="{{isMemory}}" hint-placeholder-val="{{ false }}">
+    ${statTiles('mem.tiles', 4, false)}
+    ${statBox(boxHead('{{mem.trendTitle}}', '{{mem.trendSub}}') + boxEmpty('mem.trend') + `<sc-if value="{{mem.trend.some}}" hint-placeholder-val="{{ true }}">${vBars('mem.trend.bars', 12, 10, 150, 'mem.goalAt')}</sc-if>`, 'flex-shrink: 0;')}
+    <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; flex-grow: 1; min-height: 0;">
+      ${statBox(boxHead('Remembered, by tag', '{{goalNote}}') + boxEmpty('mem.tags') + `<div style="display: flex; flex-direction: column; gap: 2px;"><sc-for list="{{mem.tags.rows}}" as="g" hint-placeholder-count="6">${tagBar(false, false)}</sc-for></div>`)}
+      ${statBox(boxHead('This month against last', 'By tag') + boxEmpty('mem.moves') + MOVES)}
+    </div>
+  </sc-if>
+  <sc-if value="{{isWeak}}" hint-placeholder-val="{{ false }}">
+    <div style="display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); gap: 12px; flex-shrink: 0;">
+      ${statBox(boxHead('Weakest tags', 'Remembered least') + boxEmpty('weak.tags') + `<div style="display: flex; flex-direction: column; gap: 2px;"><sc-for list="{{weak.tags.rows}}" as="g" hint-placeholder-count="6">${tagBar(true, false)}</sc-for></div>`, 'height: 372px;')}
+      ${statBox(`<div style="display: flex; align-items: center; justify-content: space-between; gap: 12px;"><span style="font-size: 16px; font-weight: 600;">Hardest cards</span><sc-if value="{{weak.hard.some}}" hint-placeholder-val="{{ true }}"><span style="display: flex; gap: 8px;">${smallPill('See all', '{{weak.hard.allHref}}')}${smallPill('Study these', '{{weak.hard.studyHref}}', true)}</span></sc-if></div>` + boxEmpty('weak.hard') + `<div style="display: flex; flex-direction: column;"><sc-for list="{{weak.hard.rows}}" as="h" hint-placeholder-count="5">${hardRow}</sc-for></div>`, 'height: 372px;')}
+    </div>
+    <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; flex-grow: 1; min-height: 0;">
+      ${statBox(boxHead('Forgotten often') + boxEmpty('weak.forgot') + `<sc-if value="{{weak.forgot.some}}" hint-placeholder-val="{{ true }}">${bigNum('{{weak.forgot.big}}', '{{weak.forgot.sub}}')}<div style="margin-top: auto;">${miniHist('weak.forgot.bars', 6, 120)}</div><span style="font-size: 12px; color: {{t.muted}};">Cards by times forgotten</span></sc-if>`)}
+      ${statBox(boxHead('How hard your cards are') + boxEmpty('weak.diff') + `<sc-if value="{{weak.diff.some}}" hint-placeholder-val="{{ true }}"><div style="margin-top: auto;">${miniHist('weak.diff.bars', 9, 150)}</div><div style="display: flex; justify-content: space-between; font-size: 12px; color: {{t.muted}};"><span>Easy</span><span>Hard</span></div></sc-if>`)}
+      ${statBox(boxHead('Cards you keep forgetting') + `${bigNum('{{weak.leech.big}}', '{{weak.leech.sub}}')}<sc-if value="{{weak.leech.some}}" hint-placeholder-val="{{ true }}">${LEECH_DECKS}<div style="margin-top: auto; display: flex; gap: 8px;">${smallPill('See them', '{{weak.leech.seeHref}}')}<sc-if value="{{weak.leech.canStudy}}" hint-placeholder-val="{{ true }}">${smallPill('Study them', '{{weak.leech.studyHref}}', true)}</sc-if></div></sc-if>`)}
+    </div>
+  </sc-if>
+  <sc-if value="{{isPace}}" hint-placeholder-val="{{ false }}">
+    ${statTiles('pace.tiles', 4, false)}
+    <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; flex-shrink: 0;">
+      ${statBox(boxHead('Reviews coming up', '{{pace.aheadSub}}') + boxEmpty('pace.ahead') + `<sc-if value="{{pace.ahead.some}}" hint-placeholder-val="{{ true }}">${vBars('pace.ahead.bars', 8, 12, 130)}</sc-if>`)}
+      ${statBox(boxHead('How your gaps are growing', '{{pace.gapSub}}') + boxEmpty('pace.gaps') + `<sc-if value="{{pace.gaps.some}}" hint-placeholder-val="{{ true }}">${vBars('pace.gaps.bars', 12, 8, 130)}</sc-if>`)}
+    </div>
+    ${statBox(boxHead('Exams') + boxEmpty('pace.exams') + `<sc-for list="{{pace.exams.rows}}" as="e" hint-placeholder-count="1">${examBlock(false)}</sc-for>`, 'flex-shrink: 0;')}
+  </sc-if>
+  <sc-if value="{{upgrade}}" hint-placeholder-val="{{ false }}"><div style="flex-grow: 1; display: flex; align-items: center; justify-content: center;"><div role="region" aria-label="Deep stats" style="width: 560px; border-radius: 36px; overflow: hidden; background: {{t.bg}}; box-shadow: 0 0 0 1px {{t.line}}, 0 24px 64px -28px rgba(0,0,0,.3);">${statsSky(220, 1)}${statsUpgradeBody(32)}</div></div></sc-if>`;
+
+// The deep tabs, on the iPhone: the same boxes, one under another.
+const PHONE_DEEP = `<sc-if value="{{isMemory}}" hint-placeholder-val="{{ false }}">
+    ${statTiles('mem.tiles', 2, true)}
+    ${statBox(boxHead('{{mem.trendTitle}}', '{{mem.trendSub}}', true) + boxEmpty('mem.trend') + `<sc-if value="{{mem.trend.some}}" hint-placeholder-val="{{ true }}">${vBars('mem.trend.bars', 8, 6, 100, 'mem.goalAt')}</sc-if>`, '', true)}
+    ${statBox(boxHead('Remembered, by tag', '{{goalNote}}', true) + boxEmpty('mem.tags') + `<div style="display: flex; flex-direction: column;"><sc-for list="{{mem.tags.rows}}" as="g" hint-placeholder-count="5">${tagBar(false, true)}</sc-for></div>`, '', true)}
+    ${statBox(boxHead('This month against last', 'By tag', true) + boxEmpty('mem.moves') + MOVES, '', true)}
+  </sc-if>
+  <sc-if value="{{isWeak}}" hint-placeholder-val="{{ false }}">
+    ${statBox(boxHead('Weakest tags', 'Remembered least', true) + boxEmpty('weak.tags') + `<div style="display: flex; flex-direction: column;"><sc-for list="{{weak.tags.rows}}" as="g" hint-placeholder-count="5">${tagBar(true, true)}</sc-for></div>`, '', true)}
+    ${statBox(boxHead('Hardest cards', '', true) + boxEmpty('weak.hard') + `<div style="display: flex; flex-direction: column;"><sc-for list="{{weak.hard.rows}}" as="h" hint-placeholder-count="4">${hardRow}</sc-for></div><sc-if value="{{weak.hard.some}}" hint-placeholder-val="{{ true }}"><div style="display: flex; gap: 8px;">${smallPill('Study these', '{{weak.hard.studyHref}}', true)}${smallPill('See all', '{{weak.hard.allHref}}')}</div></sc-if>`, '', true)}
+    ${statBox(boxHead('Cards you keep forgetting', '', true) + `${bigNum('{{weak.leech.big}}', '{{weak.leech.sub}}')}<sc-if value="{{weak.leech.some}}" hint-placeholder-val="{{ true }}">${LEECH_DECKS}<div style="display: flex; gap: 8px;"><sc-if value="{{weak.leech.canStudy}}" hint-placeholder-val="{{ true }}">${smallPill('Study them', '{{weak.leech.studyHref}}', true)}</sc-if>${smallPill('See them', '{{weak.leech.seeHref}}')}</div></sc-if>`, '', true)}
+    ${statBox(boxHead('Forgotten often', '', true) + boxEmpty('weak.forgot') + `<sc-if value="{{weak.forgot.some}}" hint-placeholder-val="{{ true }}">${bigNum('{{weak.forgot.big}}', '{{weak.forgot.sub}}')}${miniHist('weak.forgot.bars', 6, 60)}<span style="font-size: 12px; color: {{t.muted}};">Cards by times forgotten</span></sc-if>`, '', true)}
+    ${statBox(boxHead('How hard your cards are', '', true) + boxEmpty('weak.diff') + `<sc-if value="{{weak.diff.some}}" hint-placeholder-val="{{ true }}">${miniHist('weak.diff.bars', 9, 70)}<div style="display: flex; justify-content: space-between; font-size: 12px; color: {{t.muted}};"><span>Easy</span><span>Hard</span></div></sc-if>`, '', true)}
+  </sc-if>
+  <sc-if value="{{isPace}}" hint-placeholder-val="{{ false }}">
+    ${statTiles('pace.tiles', 2, true)}
+    ${statBox(boxHead('Reviews coming up', '{{pace.aheadSub}}', true) + boxEmpty('pace.ahead') + `<sc-if value="{{pace.ahead.some}}" hint-placeholder-val="{{ true }}">${vBars('pace.ahead.bars', 8, 6, 90)}</sc-if>`, '', true)}
+    ${statBox(boxHead('How your gaps are growing', '{{pace.gapSub}}', true) + boxEmpty('pace.gaps') + `<sc-if value="{{pace.gaps.some}}" hint-placeholder-val="{{ true }}">${vBars('pace.gaps.bars', 8, 6, 90)}</sc-if>`, '', true)}
+    ${statBox(boxHead('Exams', '', true) + boxEmpty('pace.exams') + `<sc-for list="{{pace.exams.rows}}" as="e" hint-placeholder-count="1">${examBlock(true)}</sc-for>`, '', true)}
+  </sc-if>
+  <sc-if value="{{upgrade}}" hint-placeholder-val="{{ false }}"><div role="region" aria-label="Deep stats" style="border-radius: 32px; overflow: hidden; background: {{t.bg}}; box-shadow: 0 0 0 1px {{t.line}};">${statsSky(170, .66)}${statsUpgradeBody(20, 22)}</div></sc-if>`;
+
+// Their values: the tabs, and each deep tab's numbers in words (db.insights, or the canvas's sample).
+const DEEP_JS = phone => `
+  const tab = this.state.tab || this.props.tab || 'Overview', pro = db.pro(), deep = tab !== 'Overview';
+  const board = n => '${phone ? 'Phone' : 'Web'}' + n + '.dc.html';
+  const seg = on => ({ current: on ? 'true' : 'false', bg: on ? t.bg : 'transparent', fg: on ? t.text : t.muted, sh: on ? '0 1px 3px rgba(0,0,0,.14)' : 'none' });
+  const tabs = ['Overview', 'Memory', 'Weak spots', 'Pace'].map(l => ({ label: l, ...seg(l === tab), pick: () => this.setState({ tab: l }) }));
+  const MON = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  const dayName = ts => { const d = new Date(ts); return MON[d.getMonth()] + ' ' + d.getDate(); }, monthName = ts => MON[new Date(ts).getMonth()];
+  // Week labels name the month only where it changes (Aug 3, 10, 17, 24, 31, Sep 7), so twelve fit side by side.
+  const weekName = (list, i) => { const d = new Date(list[i].start), was = i ? new Date(list[i - 1].start) : null; return !was || was.getMonth() !== d.getMonth() ? dayName(list[i].start) : String(d.getDate()); };
+  const num = v => Number(v).toLocaleString('en-US'), secs = v => (v == null ? '—' : (v < 10 ? Math.round(v * 10) / 10 : Math.round(v)) + ' s');
+  const bar = v => (v == null ? 'transparent' : v >= goal ? '#30A46C' : v >= goal - 5 ? '#F5A524' : '#E5484D'), ink = v => (v == null ? t.muted : v >= goal ? t.good : v >= goal - 5 ? t.hard : t.again);
+  const fcs = this.props.dark ? ['#2A3374', '#3A4BB0', '#5569E4', '#8C9AFC'] : ['#C9CFFC', '#9DA9F8', '#7282F0', '#4353E0'];
+  const shade = (v, top) => fcs[!top ? 0 : v >= top ? 3 : v >= top * .66 ? 2 : v >= top * .33 ? 1 : 0];
+  const X = deep && pro ? db.insights(rg) : null;
+  const deepVals = {};
+  if (X) {
+    const m = X.memory, w = X.weak, p = X.pace, span = { Week: 'This week', Month: 'This month', Year: 'This year' }[rg];
+    // Memory: remembered week by week (month by month for a year), from a floor under the lowest week so the
+    // differences show.
+    const tr = m.trend.slice(${phone ? -8 : -12}), vis = tr.filter(b => b.pct != null).map(b => b.pct), lo = vis.length ? Math.max(0, Math.min(70, Math.floor((Math.min(...vis) - 8) / 10) * 10)) : 50, H = ${phone ? 100 : 150};
+    const tagRow = g => ({ ...tagChip(g.tag), pct: g.pct + '%', w: g.pct + '%', bar: bar(g.pct), color: ink(g.pct), n: num(g.n) + (g.n === 1 ? ' review' : ' reviews'),
+      studyHref: db.mock ? board('Review') : '/review?set=' + encodeURIComponent('tag:' + g.tag) });
+    const move = x => ({ label: x.tag, dot: tagCol(x.tag), span: x.before + ' → ' + x.after + '%', delta: (x.delta > 0 ? '+' : '−') + Math.abs(x.delta) });
+    Object.assign(deepVals, { mem: {
+      tiles: [{ label: 'Remembered', value: m.retention.pct == null ? '—' : m.retention.pct + '%', sub: 'Goal: ' + goal + '%', color: ink(m.retention.pct) },
+        { label: 'Reviews of learned cards', value: num(m.retention.n), sub: span, color: t.text },
+        { label: 'Flashcards', value: m.modes.cards.pct == null ? '—' : m.modes.cards.pct + '%', sub: m.modes.cards.n ? 'Right · ' + num(m.modes.cards.n) + ' answers' : 'No answers yet', color: t.text },
+        { label: 'Learn mode', value: m.modes.learn.pct == null ? '—' : m.modes.learn.pct + '%', sub: m.modes.learn.n ? 'Right · ' + num(m.modes.learn.n) + ' answers' : 'No answers yet', color: t.text }],
+      trendTitle: m.byMonth ? 'Remembered, month by month' : 'Remembered, week by week', trendSub: m.byMonth ? 'The last ${phone ? 8 : 12} months' : 'The last ${phone ? 8 : 12} weeks',
+      trend: { some: vis.length > 0, empty: !vis.length, emptyLine: 'This fills in as you review cards you’ve learned.',
+        bars: tr.map((b, i) => ({ v: b.pct == null ? '' : b.pct + '%', h: b.pct == null ? '0px' : Math.max(6, Math.round((b.pct - lo) / (100 - lo) * H)) + 'px', c: bar(b.pct),
+          label: m.byMonth ? monthName(b.start) : weekName(tr, i), strong: i === tr.length - 1 ? t.text : t.muted, weight: i === tr.length - 1 ? '600' : '400' })) },
+      goalAt: Math.max(0, Math.round((goal - lo) / (100 - lo) * H)) + 'px',
+      tags: { empty: !m.byTag.length, emptyLine: 'Tag your cards to see which topics you remember best.', rows: m.byTag.slice(0, ${phone ? 5 : 7}).map(tagRow) },
+      moves: { some: m.improved.length + m.slipping.length > 0, empty: !(m.improved.length + m.slipping.length), emptyLine: 'Shows up after two months of reviews on the same tags.', up: m.improved.map(move), down: m.slipping.map(move) } } });
+    // Weak spots: the weakest tags and hardest cards (each with a way to study just those), how often cards are
+    // forgotten, how hard they are, and the ones you keep forgetting.
+    const hmax = Math.max(1, ...w.lapseDist.map(b => b.n)), dmax = Math.max(1, ...w.diffDist.map(b => b.n)), paused = w.leeches.filter(c => c.paused).length;
+    Object.assign(deepVals, { weak: {
+      tags: { empty: !w.weakTags.length, emptyLine: 'Tag your cards to see which topics are weakest.', rows: w.weakTags.slice(0, ${phone ? 5 : 6}).map(tagRow) },
+      hard: { some: w.hardest.length > 0, empty: !w.hardest.length, emptyLine: 'None yet. Cards show up here once you forget them.', studyHref: db.mock ? board('Review') : '/review?set=hard', allHref: db.mock ? board('LibraryCards') : '/library/cards?level=hard',
+        rows: w.hardest.slice(0, ${phone ? 4 : 5}).map(h => ({ front: h.front, sub: h.deck + ' · ' + (h.lapses ? 'forgot ' + h.lapses + (h.lapses === 1 ? ' time' : ' times') : 'difficulty ' + h.d), href: db.mock ? board('${phone ? 'Editor' : 'CardsScreen'}') : h.href })) },
+      forgot: { some: w.forgot.of > 0, empty: !w.forgot.of, emptyLine: 'Shows up once you review cards you’ve learned.', big: w.forgot.pct == null ? '—' : w.forgot.pct + '%', sub: 'of ' + num(w.forgot.of) + ' reviews',
+        bars: w.lapseDist.map(b => ({ label: b.label, title: b.label + ': ' + num(b.n) + ' cards', h: Math.max(3, Math.round(b.n / hmax * ${phone ? 60 : 120})) + 'px', c: b.label === '0' ? t.surf2 : shade(b.n, hmax) })) },
+      diff: { some: w.studied > 0, empty: !w.studied, emptyLine: 'Shows up once you’ve studied some cards.',
+        bars: w.diffDist.map(b => ({ label: b.label, title: 'Difficulty ' + b.label + ': ' + num(b.n) + ' cards', h: Math.max(3, Math.round(b.n / dmax * ${phone ? 70 : 150})) + 'px', c: shade(b.n, dmax) })) },
+      leech: { some: w.leeches.length > 0, big: num(w.leeches.length), sub: !w.leeches.length ? 'None right now' : paused ? paused + ' paused' : '', canStudy: w.leeches.some(c => !c.paused),
+        decks: Object.entries(w.leeches.reduce((a, c) => ({ ...a, [c.deck]: (a[c.deck] || 0) + 1 }), {})).sort((a, b) => b[1] - a[1]).slice(0, 3).map(([name, n]) => ({ name, n: String(n) })),
+        seeHref: db.mock ? board('LibraryCards') : '/library/cards?level=leech', studyHref: db.mock ? board('Review') : '/review?set=leech' } } });
+    // Pace: time per card, what's coming, how your gaps grow, and any exams.
+    const tm = p.time, timed = tm.n >= 5, amax = Math.max(1, ...p.ahead.map(b => b.n)), gs = p.gaps.slice(${phone ? -8 : -12}), gv = gs.filter(b => b.days != null), gmax = Math.max(1, ...gv.map(b => b.days));
+    Object.assign(deepVals, { pace: {
+      tiles: [{ label: 'Time per card', value: timed ? secs(tm.perCard) : '—', sub: timed ? num(tm.n) + ' cards timed' : 'Starts with your next review', color: t.text },
+        { label: 'Per right answer', value: timed ? secs(tm.perRight) : '—', sub: timed ? num(Math.round(tm.minutes)) + ' minutes in all' : '', color: t.text },
+        { label: 'Right answers a minute', value: timed && tm.rightPerMin != null ? String(Math.round(tm.rightPerMin * 10) / 10) : '—', sub: span, color: t.text },
+        { label: 'Learn mode', value: tm.learnN ? secs(tm.perQuestion) : '—', sub: tm.learnN ? 'A question' : 'No answers yet', color: t.text }],
+      aheadSub: num(p.ahead.reduce((a, b) => a + b.n, 0)) + ' in the next 8 weeks',
+      ahead: { some: p.ahead.some(b => b.n), empty: !p.ahead.some(b => b.n), emptyLine: 'Nothing coming up yet.',
+        bars: p.ahead.map((b, i) => ({ v: num(b.n), h: Math.max(4, Math.round(b.n / amax * ${phone ? 90 : 130})) + 'px', c: shade(b.n, amax), label: i ? weekName(p.ahead, i) : ${phone ? "'Now'" : "'This week'"}, strong: i ? t.muted : t.text, weight: i ? '400' : '600' })) },
+      gapSub: 'The typical wait before a review',
+      gaps: { some: gv.length > 0, empty: !gv.length, emptyLine: 'This fills in as you review cards you’ve learned.',
+        bars: gs.map((b, i) => ({ v: b.days == null ? '' : Math.round(b.days) + 'd', h: b.days == null ? '0px' : Math.max(4, Math.round(b.days / gmax * ${phone ? 90 : 130})) + 'px', c: b.days == null ? 'transparent' : shade(b.days, gmax),
+          label: m.byMonth ? monthName(b.start) : weekName(gs, i), strong: i === gs.length - 1 ? t.text : t.muted, weight: i === gs.length - 1 ? '600' : '400' })) },
+      exams: { empty: !p.exams.length, emptyLine: 'No exams coming up. Add an exam date in a deck’s settings.',
+        rows: p.exams.map(e => ({ name: e.name, line: e.line, stats: [['Seen', e.total ? e.seen / e.total : 0], ['Learned', e.total ? e.learned / e.total : 0], ['Likely to remember', e.likely]]
+          .map(([label, v]) => ({ label, pct: Math.round(v * 100) + '%', w: Math.round(v * 100) + '%', c: label === 'Likely to remember' ? bar(Math.round(v * 100)) : '#7282F0' })) })) } } });
+  }
+  const upgrade = deep && !pro;
+  Object.assign(deepVals, { tabs, tab, isOverview: !deep, isMemory: deep && pro && tab === 'Memory', isWeak: deep && pro && tab === 'Weak spots', isPace: deep && pro && tab === 'Pace', upgrade,
+    sky: ${STATS_SKY}, monthlyHref: db.mock ? '${phone ? 'PricingPhone' : 'Pricing'}.dc.html' : '/pro?plan=monthly', yearlyHref: db.mock ? '${phone ? 'PricingPhone' : 'Pricing'}.dc.html' : '/pro?plan=yearly' });`;
 const webStats = webRoot(`${sidebar('Stats')}
 <main style="flex-grow: 1; box-sizing: border-box; padding: 36px 48px; display: flex; flex-direction: column; gap: 24px; min-width: 0;">
-  <div style="display: flex; align-items: center;">
-    <h1 style="margin: 0; font-size: 32px; font-weight: 600; letter-spacing: -.03em; flex-grow: 1;">Stats</h1>
+  <div style="display: flex; align-items: center; gap: 12px;">
+    <h1 style="margin: 0; font-size: 32px; font-weight: 600; letter-spacing: -.03em;">Stats</h1>
+    <span style="margin-left: 10px; display: flex;">${statTabs(32, false)}</span>
+    <span style="flex-grow: 1;"></span>
     <div style="display: flex; gap: 4px; padding: 4px; border-radius: 999px; background: {{t.surf}};">
       <sc-for list="{{ranges}}" as="r" hint-placeholder-count="3"><button type="button" onClick="{{r.pick}}" style="height: 36px; padding: 0 18px; border: 0; border-radius: 999px; font: inherit; font-size: 13px; font-weight: 500; cursor: pointer; background: {{r.bg}}; color: {{r.fg}};">{{r.label}}</button></sc-for>
     </div>
   </div>
+  <sc-if value="{{isOverview}}" hint-placeholder-val="{{ true }}">
   <div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px;">
     <sc-for list="{{kpis}}" as="k" hint-placeholder-count="4">
       <div style="background: {{t.surf}}; border-radius: 18px; padding: 22px; display: flex; flex-direction: column; gap: 6px;"><span style="font-size: 13px; color: {{t.muted}};">{{k.label}}</span><span style="font-size: 32px; font-weight: 600; letter-spacing: -.035em; line-height: 1.05;">{{k.value}}</span><span style="font-size: 13px; color: {{t.muted}};">{{k.sub}}</span></div>
@@ -2713,23 +2964,27 @@ const webStats = webRoot(`${sidebar('Stats')}
       </sc-for>
     </div>
   </div>
+  </sc-if>
+  ${WEB_DEEP}
 </main>`);
 const statsLogic = `
-constructor(props) { super(props); this.state = { range: 'Month', sort: 'most' }; }
+constructor(props) { super(props); this.state = { range: 'Month', sort: 'most', tab: null }; }
 renderVals() {
   ${T}${DB_JS}
   const rg = this.state.range, sort = this.state.sort, st = db.stats(rg);
   ${HEAT_LOGIC(38)}
   ${FORECAST_JS('st.forecast', 140)}
   ${OPTS_JS}
+  ${TAG_JS}
   const plural = (n, w) => n + ' ' + w + (n === 1 ? '' : 's'), goal = st.goal;
+  ${DEEP_JS(false)}
   // Remembered, by deck: most or least first. Green at or above your goal, amber close to it, red below.
   const val = d => (d.ret == null ? -1 : d.ret);
   const decks = st.byDeck.slice().sort((a, b) => (sort === 'most' ? val(b) - val(a) : (a.ret == null) - (b.ret == null) || val(a) - val(b)))
     .map(d => { const v = d.ret, k = v == null ? 'none' : v >= goal ? 'good' : v >= goal - 5 ? 'hard' : 'again';
       return { name: d.name, ret: v == null ? '—' : v + '%', w: v == null ? '0%' : v + '%', color: v == null ? t.muted : t[k], bar: { good: '#30A46C', hard: '#F5A524', again: '#E5484D', none: 'transparent' }[k] }; });
   return {
-    t, ...chrome, heat: st.heat ? st.heat.map(cell) : heat, legend, forecast, dueTotal, busy, decks,
+    t, ...chrome, ...deepVals, heat: st.heat ? st.heat.map(cell) : heat, legend, forecast, dueTotal, busy, decks,
     ranges: ['Week', 'Month', 'Year'].map(l => ({ label: l, bg: l === rg ? t.bg : 'transparent', fg: l === rg ? t.text : t.muted, pick: () => this.setState({ range: l }) })),
     kpis: [{ label: 'Streak', value: plural(st.streak, 'day'), sub: 'Best: ' + plural(st.best, 'day') }, { label: 'Reviews', value: st.reviews, sub: { Week: 'This week', Month: 'This month', Year: 'This year' }[rg] },
       { label: 'Remembered', value: st.remembered == null ? '—' : st.remembered + '%', sub: 'Goal: ' + goal + '%' }, { label: 'Cards', value: st.cards, sub: st.ai + ' made by AI' }],
@@ -3123,9 +3378,10 @@ const phoneLibrary = phone(`<div style="padding: 64px 20px 120px; display: flex;
     <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
       <div style="position: relative;">${menuBtn('tagPick', 'Tags', 36)}${tagMenu('tagPick', 'left: 0; top: 44px;')}</div>
       <div style="position: relative;">${menuBtn('deckPick', '{{deckPick.label}}', 36)}${tagMenu('deckPick', 'left: 0; top: 44px;', { label: 'Filter by deck', find: 'Find a deck or folder', none: 'No decks match' })}</div>
+      ${stateChips(36)}
       ${pickedTags(32)}
     </div>
-    <span style="font-size: 13px; color: {{t.muted}}; padding: 2px 4px 0;">{{cardCount}}</span>
+    <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; min-height: 24px; padding: 2px 4px 0;"><span style="font-size: 13px; color: {{t.muted}};">{{cardCount}}</span>${bulkBtn(32)}</div>
     <div data-sc-list="cards" ref="{{dragList}}" onPointerDown="{{grabCard}}" style="display: flex; flex-direction: column;">
       <sc-for list="{{rows}}" as="r" hint-placeholder-count="6">
         <a href="{{r.href}}" data-sc-item="{{r.id}}" data-sc-from="{{r.deckId}}" draggable="false" class="sc-drag" style="display: flex; flex-direction: column; gap: 6px; padding: 12px 0; border-bottom: 1px solid {{t.line}};">
@@ -3154,7 +3410,7 @@ const phoneToday = phone(`<div style="padding: 64px 20px 120px; display: flex; f
   <div style="font-size: 13px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: {{t.muted}}; padding: 6px 4px 0;">Decks</div>
   <div style="display: flex; flex-direction: column;">
     <sc-for list="{{decks}}" as="d" hint-placeholder-count="4">
-      <a href="{{d.href}}" style="display: flex; align-items: center; gap: 12px; min-height: 58px; border-bottom: 1px solid {{t.line}};"><span style="flex-grow: 1; display: flex; flex-direction: column; gap: 2px;"><span style="font-size: 16px; font-weight: 500;">{{d.name}}</span><span style="font-size: 13px; color: {{t.muted}};">{{d.fresh}} new · {{d.total}} cards</span></span><span style="font-family: {{d.rightFont}}; font-size: {{d.rightSize}}; color: {{d.rightColor}};">{{d.right}}</span></a>
+      <a href="{{d.href}}" style="display: flex; align-items: center; gap: 12px; min-height: 58px; border-bottom: 1px solid {{t.line}};"><span style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px;"><span style="font-size: 16px; font-weight: 500;">{{d.name}}</span><span style="font-size: 13px; color: {{t.muted}}; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{d.sub}}</span></span><span style="font-family: {{d.rightFont}}; font-size: {{d.rightSize}}; color: {{d.rightColor}};">{{d.right}}</span></a>
     </sc-for>
   </div>
 </div>`, 'Today');
@@ -3167,11 +3423,11 @@ const phoneDecksLogic = `renderVals() { ${T}${DB_JS}
     return { ${MESH_VALS('Iris')} t, ...chrome, heroHref: 'PhoneReview.dc.html',
       heroMeta: caught ? 'Done for today · 13-day streak' : 'Due now · 12-day streak', heroTitle: caught ? 'All caught up' : '64 cards', heroSize: caught ? '42px' : '56px',
       heroSub: caught ? 'Next review tomorrow · 32 cards' : 'About 11 minutes', heroCta: caught ? 'Study 10 new cards' : 'Start review',
-      decks: ${DECKS}.slice(0, 4).map((d, i) => ({ ...row(d, caught ? next[i] : String(d.due), caught), href: 'PhoneDeck.dc.html' })) };
+      decks: ${DECKS}.slice(0, 4).map((d, i) => ({ ...row(d, caught ? next[i] : String(d.due), caught), sub: i ? d.fresh + ' new · ' + d.total + ' cards' : 'Exam in 12 days · 84 cards to review first', href: 'PhoneDeck.dc.html' })) };
   }
   const td = db.today(), caught = !td.due, plural = (n, w) => n + ' ' + w + (n === 1 ? '' : 's');
   const decks = db.decks().filter(d => !d.paused).sort((a, b) => (b.overdue - a.overdue) || (b.due - a.due) || ((a.soon ?? 1e9) - (b.soon ?? 1e9)))
-    .map(d => row({ ...d, total: d.totalLabel }, d.due ? String(d.due) : d.soon == null ? (d.fresh ? d.fresh + ' new' : '—') : d.soon === 1 ? 'Tomorrow' : 'In ' + d.soon + ' days', !d.due));
+    .map(d => row({ ...d, total: d.totalLabel, sub: d.exam ? d.exam.line : d.fresh + ' new · ' + d.totalLabel + ' cards' }, d.due ? String(d.due) : d.soon == null ? (d.fresh ? d.fresh + ' new' : '—') : d.soon === 1 ? 'Tomorrow' : 'In ' + d.soon + ' days', !d.due));
   return { ${MESH_VALS('Iris')} t, ...chrome, decks,
     heroMeta: (caught ? 'Done for today' : 'Due now') + (td.streak ? ' · ' + td.streak + '-day streak' : ''),
     heroTitle: caught ? 'All caught up' : plural(td.due, 'card'), heroSize: caught ? '42px' : '56px',
@@ -3247,6 +3503,7 @@ const phoneDeck = phone(`<div style="height: 100%; overflow-y: auto; scrollbar-w
     <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px;">
       <sc-for list="{{tiles}}" as="k" hint-placeholder-count="3">${deckTile(false)}</sc-for>
     </div>
+    ${examLine(14)}
     <div style="display: flex; gap: 8px;"><a href="PhoneReview.dc.html" style="flex: 2 1 0; height: 56px; border-radius: 999px; background: {{t.inv}}; color: {{t.invText}}; display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 17px; font-weight: 600; white-space: nowrap;">${svg(I.decks, 17, 2)}<span>{{studyLabel}}</span><sc-if value="{{hasStudyCount}}" hint-placeholder-val="{{ true }}">${STUDY_COUNT(24, 'rgba(128,128,128,.32)', 'inherit')}</sc-if></a><a href="{{learnHref}}" style="flex: 1 1 0; height: 56px; border-radius: 999px; background: {{t.surf}}; display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 17px; font-weight: 600; white-space: nowrap;">${svg(I.sparkle, 17, 2)}{{learnShort}}</a></div>
     <div data-sc-list="cards" ref="{{dragList}}" onPointerDown="{{grab}}" style="display: flex; flex-direction: column;">
       <sc-for list="{{rows}}" as="r" hint-placeholder-count="4">
@@ -3291,7 +3548,7 @@ const phoneEditor = `<div style="position: relative; width: 390px; height: 844px
     <div style="flex-grow: 1; min-height: 0; overflow-y: auto; scrollbar-width: none;"><div style="display: flex; flex-direction: column; gap: 16px;">
     ${editorFieldsOf(true)}
     <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">${chip(svg(I.decks, 12, 2) + '{{deckName}}', 'height: 32px; padding: 0 12px; font-size: 13px; font-weight: 600;')}${TAG_EDIT('cardTags', 'cardPick', true)}</div>
-    <sc-if value="{{canDelete}}" hint-placeholder-val="{{ false }}"><button type="button" onClick="{{remove}}" style="align-self: flex-start; min-height: 44px; padding: 0; border: 0; background: transparent; color: {{t.again}}; font: inherit; font-size: 14px; font-weight: 600; cursor: pointer;">Delete card</button></sc-if>
+    <sc-if value="{{canDelete}}" hint-placeholder-val="{{ false }}"><div style="display: flex; align-items: center; gap: 24px;"><button type="button" onClick="{{togglePause}}" aria-pressed="{{pausedNow}}" style="min-height: 44px; padding: 0; border: 0; background: transparent; color: {{t.text}}; display: inline-flex; align-items: center; gap: 7px; font: inherit; font-size: 14px; font-weight: 600; cursor: pointer;">${svg(I.pauseRing, 16, 2)}<span>{{pauseCardLabel}}</span></button><button type="button" onClick="{{remove}}" style="min-height: 44px; padding: 0; border: 0; background: transparent; color: {{t.again}}; font: inherit; font-size: 14px; font-weight: 600; cursor: pointer;">Delete card</button></div></sc-if>
     </div></div>
   </div>
   <sc-if value="{{drawKb}}" hint-placeholder-val="{{ true }}">${KEYBOARD(FMT_BAR)}</sc-if>
@@ -3357,6 +3614,8 @@ const phoneDonePiles = phoneDone.replace(/<div style="display: flex; flex-direct
 
 const phoneStats = phone(`<div style="padding: 64px 20px 120px; display: flex; flex-direction: column; gap: 14px;">
   ${pTitle('Stats')}
+  ${statTabs(34, true)}
+  <sc-if value="{{isOverview}}" hint-placeholder-val="{{ true }}">
   <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px;">
     <sc-for list="{{kpis}}" as="k" hint-placeholder-count="4"><div style="background: {{t.surf}}; border-radius: 24px; padding: 16px; display: flex; flex-direction: column; gap: 2px;"><span style="font-size: 12px; color: {{t.muted}};">{{k.label}}</span><span style="font-size: 28px; font-weight: 700; letter-spacing: -.03em;">{{k.value}}</span></div></sc-for>
   </div>
@@ -3367,12 +3626,16 @@ const phoneStats = phone(`<div style="padding: 64px 20px 120px; display: flex; f
     ${DUE_HEAD('Next 7 days', true)}
     ${DUE_BARS(7, 6, 6)}
   </div>
+  </sc-if>
+  ${PHONE_DEEP}
 </div>`, 'Stats');
 // Your last 30 days, the last 17 weeks of study days, and the cards due each day this week (the canvas: its sample).
 const phoneStatsLogic = `renderVals() { ${T}${DB_JS}
-  const st = db.stats('Month'), plural = (n, w) => n + ' ' + w + (n === 1 ? '' : 's');
+  const rg = 'Month', st = db.stats(rg), plural = (n, w) => n + ' ' + w + (n === 1 ? '' : 's'), goal = st.goal;
   ${HEAT_LOGIC(17)}${FORECAST_JS('db.today().forecast', 60)}
-  return { t, heat: st.heat ? st.heat.slice(-17 * 7).map(cell) : heat, legend, forecast, dueTotal, busy,
+  ${TAG_JS}
+  ${DEEP_JS(true)}
+  return { t, ...deepVals, goalNote: 'The line marks your ' + goal + '% goal', goalLeft: goal + '%', heat: st.heat ? st.heat.slice(-17 * 7).map(cell) : heat, legend, forecast, dueTotal, busy,
     kpis: [{ label: 'Streak', value: plural(st.streak, 'day') }, { label: 'Remembered', value: st.remembered == null ? '—' : st.remembered + '%' }, { label: 'Reviews', value: st.reviews }, { label: 'Cards', value: st.cards }] }; }`;
 
 const phoneConnect = phone(`<div style="padding: 64px 20px 120px; display: flex; flex-direction: column; gap: 16px;">
@@ -3398,7 +3661,7 @@ renderVals() { ${T}${DB_JS}
 
 // iPhone Settings, from the gear on Today. Appearance switches this screen right away, and so does Dark mode (gray or
 // black, for whenever the app is dark). The page scrolls; the board is tall enough to show all of it.
-const PHONE_SETTINGS_H = 1410;
+const PHONE_SETTINGS_H = 1470;
 const sRow = (label, right, { href = '', sub = '', click = '' } = {}) => {
   const inner = `<span style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px;"><span style="font-size: 16px;">${label}</span>${sub ? `<span style="font-size: 12px; color: {{t.muted}};">${sub}</span>` : ''}</span>${right}`;
   const st = 'min-height: 52px; box-sizing: border-box; padding: 8px 16px; display: flex; align-items: center; gap: 12px;';
@@ -3411,7 +3674,6 @@ const sVal = v => `<span style="display: flex; align-items: center; gap: 6px; fo
 const sPick = (label, k, options) => `<div style="position: relative;">${sRow(label, sVal(`{{${k}.label}}`))}<select onChange="{{${k}.set}}" ref="{{${k}.ref}}" aria-label="${label}" style="position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; border: 0; font-size: 16px; cursor: pointer;">${options.map(([v, l]) => `<option value="${v}">${l}</option>`).join('')}</select></div>`;
 const S_LINE = '<div style="height: 1px; margin-left: 16px; background: {{t.bg}};"></div>';
 const sGroup = (title, rows) => `<div style="display: flex; flex-direction: column; gap: 8px;"><span style="padding: 0 4px; font-size: 13px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: {{t.muted}};">${title}</span><div style="border-radius: 24px; background: {{t.surf}}; overflow: hidden;">${rows.join(S_LINE)}</div></div>`;
-const PRO_BADGE = '<span style="height: 22px; padding: 0 9px; display: inline-flex; align-items: center; border-radius: 999px; background: linear-gradient(90deg, #7E94FB, #2CB2EA); color: #FFFFFF; font-size: 12px; font-weight: 700; letter-spacing: .01em;">Pro</span>';
 // Settings → Plan: Free, with a way to Go Pro; or Pro, when it renews (or ends), and Stripe's page to manage or cancel it.
 // Online only: on your own computer everything is on, so there's no plan to show.
 const PRO_PILL = `<a href="{{proHref}}" style="height: 36px; padding: 0 16px; display: inline-flex; align-items: center; border-radius: 999px; background: {{t.inv}}; color: {{t.invText}}; font-size: 14px; font-weight: 600; white-space: nowrap;">Go Pro</a>`;
@@ -3421,6 +3683,15 @@ const planGroups = `<sc-if value="{{planFree}}" hint-placeholder-val="{{ false }
         sRow('Manage plan', sVal(''), { href: '{{manageHref}}' }),
         `<sc-if value="{{planRenews}}" hint-placeholder-val="{{ true }}">${sRow('<span style="color: {{t.again}};">Cancel Pro</span>', '', { href: '{{manageHref}}' })}</sc-if><sc-if value="{{planEnding}}" hint-placeholder-val="{{ false }}">${sRow('Keep Pro', sVal(''), { href: '{{manageHref}}' })}</sc-if>`
       ])}</sc-if>`;
+// Settings → Studying → Tune to you (Pro): fits the schedule to your own reviews once there are enough, and switches
+// back to the standard one. On Free it shows the Pro badge and Go Pro.
+const TUNE_ROW = sRow('<span style="display: inline-flex; align-items: center; gap: 8px;"><span>Tune to you</span><sc-if value="{{tune.free}}" hint-placeholder-val="{{ false }}">' + PRO_BADGE + '</sc-if></span>',
+  `<sc-if value="{{tune.pro}}" hint-placeholder-val="{{ true }}">${SWITCH('tune', 'tune.toggle', 'Tune to you')}</sc-if><sc-if value="{{tune.free}}" hint-placeholder-val="{{ false }}">${PRO_PILL}</sc-if>`, { sub: '{{tune.sub}}' });
+const TUNE_JS = `const ti = db.tuneInfo(), n2 = n => Number(n).toLocaleString('en-US'), tuneOk = ti.pro && !ti.busy && (ti.can || ti.tuned);
+  const tune = { ...sw(ti.on || ti.busy, tuneOk), pro: ti.pro, free: !ti.pro,
+    sub: !ti.pro ? 'Fit the schedule to your own reviews' : ti.busy ? 'Tuning… ' + Math.round(ti.progress * 100) + '%' : ti.error ? ti.error : ti.on ? 'Tuned to your ' + n2(ti.n) + ' reviews'
+      : ti.tuned ? 'Off: the standard schedule' : ti.can ? 'Fit the schedule to your ' + n2(ti.reviews) + ' reviews' : 'After ' + n2(ti.need) + ' reviews · you have ' + n2(ti.reviews),
+    toggle: () => { if (tuneOk) db.act.useTuned(!ti.on); } };`;
 // The plan's values for renderVals: the app's plan (db.plan()), or on the canvas the board's `plan` setting.
 const PLAN_JS = pricingBoard => `const planOf = { Free: { pro: false }, Pro: { pro: true, every: 'year', until: '2027-09-24T12:00:00Z', ending: false, manage: '#' }, 'Pro, ending': { pro: true, every: 'year', until: '2027-09-24T12:00:00Z', ending: true, manage: '#' } };
   const plan = db.mock ? planOf[this.props.plan] || planOf.Pro : db.plan && db.plan();
@@ -3456,7 +3727,8 @@ const phoneSettings = phone(`<div style="padding: 64px 20px 34px; display: flex;
     sPick('Daily reminder', 'reminder', ['7:00 AM', '8:00 AM', '9:00 AM', '12:00 PM', '6:00 PM', '8:00 PM', '9:00 PM'].map(x => [x, x])),
     sPick('New cards a day', 'perDay', [0, 5, 10, 15, 20, 30, 50].map(n => [n, n])),
     sPick('Remember goal', 'goal', [80, 85, 90, 93, 95].map(n => [n, n + '%'])),
-    sRow('Schedule with FSRS', SWITCH('fsrsSw', 'toggleFsrs', 'Schedule with FSRS'), { sub: '{{fsrsSub}}' })
+    sRow('Schedule with FSRS', SWITCH('fsrsSw', 'toggleFsrs', 'Schedule with FSRS'), { sub: '{{fsrsSub}}' }),
+    TUNE_ROW
   ])}
   ${sGroup('Look', [sRow('Appearance', SEG('looks', 'Appearance')), sRow('Dark mode', SEG('darks', 'Dark mode', 2), { sub: 'When the app is dark' }), sRow('Card gradients', SEG('grads', 'Card gradients'))])}
   ${sGroup('Your AI', [
@@ -3480,8 +3752,9 @@ renderVals() {
   ${PLAN_JS('PricingPhone')}
   ${PHOTO_JS}
   ${PROFILE_ROW_JS('PhoneProfile')}
+  ${TUNE_JS}
   return {
-    t, ...chrome, ...planVals, ...photoVals, ...profileVals,
+    t, ...chrome, ...planVals, ...photoVals, ...profileVals, tune,
     // Your account: tap it to sign out (online).
     accountSub: db.mock ? 'Synced on all your devices · just now' : st.sub,
     account: () => { if (!db.mock && st.signedIn && confirm('Sign out of Lucida?')) db.act.signOut(); },
@@ -3543,6 +3816,7 @@ const webSettings = webRoot(`${sidebar('You')}
         sRow('Connected apps', sVal('{{connected}}'), { href: 'WebConnect.dc.html' }),
         sRow('Check AI cards first', SWITCH('checkSw', 'toggleCheck', 'Check AI cards first'), { sub: 'New cards and changes wait until you keep them' })
       ])}
+      ${sGroup('Schedule', [TUNE_ROW])}
     </div>
   </div>
 </main>`);
@@ -3560,8 +3834,9 @@ renderVals() {
   ${PLAN_JS('Pricing')}
   ${PHOTO_JS}
   ${PROFILE_ROW_JS('WebProfile')}
+  ${TUNE_JS}
   return {
-    t, ...chrome, grain: String(this.props.grain ?? 0.7), ...planVals, ...photoVals, ...profileVals,
+    t, ...chrome, grain: String(this.props.grain ?? 0.7), ...planVals, ...photoVals, ...profileVals, tune,
     name: st.name, sub: st.sub, signedIn: st.signedIn,
     looks: opts([['system', 'System'], ['light', 'Light'], ['dark', 'Dark']], look, id => set({ look: id })),
     darks: opts([['gray', 'Gray'], ['black', 'Black']], darkMode, id => set({ darkMode: id })),
@@ -5870,13 +6145,21 @@ const PHOTO_PROP = { editor: 'enum', default: 'Color', options: ['Color', 'Googl
 // A profile's settings on the canvas: which tab, Edit profile open, loading, signed out, and nothing shared yet.
 const BOOL = { editor: 'boolean', default: false };
 const PROFILE_PROPS = { ...DARK, grain: MESH('Iris').grain, tab: { editor: 'enum', default: 'Decks', options: ['Decks', 'Saved', 'Suggestions'] }, editOpen: BOOL, loading: BOOL, signedOut: BOOL, empty: BOOL };
+// Pro's states on the canvas: Free (what Pro adds), the Stats page's tabs, All cards' filters, a paused card, and Tune to
+// you's states in Settings. Deck settings can open with the goal stepped from 90% to 95%.
+const FREE_PROP = { editor: 'boolean', default: false };
+const PRO_DECK_PROPS = { free: FREE_PROP, stepGoal: { editor: 'boolean', default: false } };
+const STATS_PROPS = { tab: { editor: 'enum', default: 'Overview', options: ['Overview', 'Memory', 'Weak spots', 'Pace'] }, free: FREE_PROP };
+const LEVEL_PROP = { editor: 'enum', default: 'all', options: ['all', 'new', 'easy', 'medium', 'hard', 'leech', 'paused'] };
+const TUNE_PROP = { editor: 'enum', default: 'On', options: ['On', 'Off', 'Not enough reviews', 'Tuning'] };
 const EDITOR_CSS = RICH_CSS + OCC_EDIT_CSS;
 const files = {
   'Main': ['Web · Today', webToday, { props: { ...DARK, ...MESH('Iris'), caughtUp: { editor: 'boolean', default: false } }, logic: todayLogic, css: DRAG_CSS, w: W, h: H }],
   'WebNewDeck': ['Web · New deck', webNewDeck, { props: { ...DARK, grain: MESH('Iris').grain }, logic: NEW_DECK_LOGIC, css: NUM_CSS + COVER_FADE_CSS, w: W, h: H }],
   'WebImport': ['Web · Import cards', webImport, { props: { ...DARK, grain: MESH('Iris').grain }, logic: importLogic, w: W, h: H }],
-  'WebDecks': ['Web · Library', webDecks, { props: { ...DARK, grain: MESH('Iris').grain, mode: LIB_MODE, folder: LIB_FOLDER, view: { editor: 'enum', default: 'Cards', options: ['Cards', 'List'] }, openTags: { editor: 'boolean', default: false }, moreTags: { editor: 'boolean', default: false } }, logic: decksLogic, css: DRAG_CSS, w: W, h: H }],
+  'WebDecks': ['Web · Library', webDecks, { props: { ...DARK, grain: MESH('Iris').grain, mode: LIB_MODE, folder: LIB_FOLDER, level: LEVEL_PROP, view: { editor: 'enum', default: 'Cards', options: ['Cards', 'List'] }, openTags: { editor: 'boolean', default: false }, moreTags: { editor: 'boolean', default: false } }, logic: decksLogic, css: DRAG_CSS, w: W, h: H }],
   'WebLibraryCards': ['Web · Library · all cards (filter by tags and difficulty)', attrOf('WebDecks', W, H, 'mode="cards"'), { logic: darkLogic, css: DRAG_CSS, w: W, h: H }],
+  'WebLibraryLeeches': ['Web · Library · all cards · cards you keep forgetting (Pause all)', attrOf('WebDecks', W, H, 'mode="cards" level="leech"'), { logic: darkLogic, css: DRAG_CSS, w: W, h: H }],
   'WebLibraryFolder': ['Web · Library · a folder', attrOf('WebDecks', W, H, 'folder="f1"'), { logic: darkLogic, css: DRAG_CSS, w: W, h: H }],
   'WebLibraryNewFolder': ['Web · Library · New folder popup', attrOf('WebDecks', W, H, 'naming="{{yes}}"'), { logic: darkLogic, css: DRAG_CSS, w: W, h: H }],
   'WebLibraryMove': ['Web · Library · a deck’s ⋯ menu (move it to a folder)', attrOf('WebDecks', W, H, 'move-open="{{yes}}"'), { logic: darkLogic, css: DRAG_CSS, w: W, h: H }],
@@ -5884,14 +6167,15 @@ const files = {
   'WebDecksTags': ['Web · Library · a deck with 11 tags (+9 shows them all)', attrOf('WebDecks', W, H, 'open-tags="{{yes}}"'), { logic: darkLogic, css: DRAG_CSS, w: W, h: H }],
   'WebDecksMoreTags': ['Web · Library · More (find any tag)', attrOf('WebDecks', W, H, 'more-tags="{{yes}}"'), { logic: darkLogic, css: DRAG_CSS, w: W, h: H }],
   'WebDecksList': ['Web · Library · list view', listOf('WebDecks', W, H), { logic: 'renderVals() { return {}; }', css: DRAG_CSS, w: W, h: H }],
-  'WebSettings': ['Web · Settings', webSettings, { props: { ...DARK, grain: MESH('Iris').grain, photo: PHOTO_PROP, plan: { editor: 'enum', default: 'Pro', options: ['Free', 'Pro', 'Pro, ending'] } }, logic: webSettingsLogic, css: NUM_CSS, w: W, h: H }],
+  'WebSettings': ['Web · Settings', webSettings, { props: { ...DARK, grain: MESH('Iris').grain, photo: PHOTO_PROP, plan: { editor: 'enum', default: 'Pro', options: ['Free', 'Pro', 'Pro, ending'] }, tune: TUNE_PROP }, logic: webSettingsLogic, css: NUM_CSS, w: W, h: H }],
+  'WebSettingsFree': ['Web · Settings · on Free (Tune to you is Pro)', attrOf('WebSettings', W, H, 'plan="Free"'), { logic: darkLogic, css: NUM_CSS, w: W, h: H }],
   'IconOptions': ['Web · Icon options', iconOptions, { props: DARK, logic: iconOptionsLogic, w: W, h: H }],
   'WebTodayNew': ['Web · Today · new user', webTodayNew, { props: { ...DARK, ...MESH('Iris') }, logic: emptyLogic(), w: W, h: H }],
   'WebTodayCaughtUp': ['Web · Today · all caught up', caughtOf('Main', W, H), { logic: darkLogic, css: DRAG_CSS, w: W, h: H }],
   'WebDecksEmpty': ['Web · Library · no decks yet', webDecksEmpty, { props: { ...DARK, grain: MESH('Iris').grain }, logic: emptyLogic(), w: W, h: H }],
   'WebDeckEmpty': ['Web · Deck · no cards yet', webDeckEmpty, { props: { ...DARK, grain: MESH('Iris').grain }, logic: emptyLogic('Pharmacology'), w: W, h: H }],
   'WebStatsEmpty': ['Web · Stats · no reviews yet', webStatsEmpty, { props: { ...DARK, grain: MESH('Iris').grain }, logic: emptyLogic(), w: W, h: H }],
-  'WebDeck': ['Web · Deck page', webDeck, { props: { ...DARK, grain: MESH('Iris').grain, settingsOpen: { editor: 'boolean', default: false }, settingsTab: { editor: 'enum', default: 'General', options: ['General', 'Studying', 'Sharing'] }, tagPicker: { editor: 'boolean', default: false }, ...SHARE_PROPS }, logic: deckLogic, css: NUM_CSS + PARALLAX_CSS + DRAG_CSS, w: W, h: H }],
+  'WebDeck': ['Web · Deck page', webDeck, { props: { ...DARK, grain: MESH('Iris').grain, settingsOpen: { editor: 'boolean', default: false }, settingsTab: { editor: 'enum', default: 'General', options: ['General', 'Studying', 'Sharing'] }, tagPicker: { editor: 'boolean', default: false }, ...SHARE_PROPS, ...PRO_DECK_PROPS }, logic: deckLogic, css: NUM_CSS + PARALLAX_CSS + DRAG_CSS, w: W, h: H }],
   'WebDeckTagPicker': ['Web · Deck settings · Add tag', attrOf('WebDeck', W, H, 'settings-open="{{yes}}" tag-picker="{{yes}}"'), { logic: darkLogic, css: NUM_CSS + DRAG_CSS, w: W, h: H }],
   'WebEditor': ['Web · Card editor', webEditor, { props: { ...DARK, cardType: { editor: 'enum', default: 'Basic', options: ['Basic', 'Blank', 'Image', 'Audio'] }, recording: { editor: 'boolean', default: false }, slashDemo: { editor: 'boolean', default: false } }, logic: EDITOR_LOGIC, css: EDITOR_CSS, w: W, h: H }],
   'WebEditorSlash': ['Web · Card editor · / menu', attrOf('WebEditor', W, H, 'slash-demo="{{yes}}"'), { logic: darkLogic, css: EDITOR_CSS, w: W, h: H }],
@@ -5909,15 +6193,20 @@ const files = {
   'WebEditorBigDark': ['Web · Bigger card editor (dark, mockup)', darkOf('WebEditorBig', W, H), { logic: darkLogic, css: EDITOR_CSS, w: W, h: H }],
   'WebEditorBigImageDark': ['Web · Bigger card editor · image with boxes (dark, mockup)', attrOf('WebEditorBig', W, H, 'card-type="Image" dark="{{yes}}"'), { logic: darkLogic, css: EDITOR_CSS, w: W, h: H }],
   // Option B, also a mockup: the deck's cards on a screen of their own (cardType: which card it opens on).
-  'WebCardsScreen': ['Web · Edit cards (Option B)', webCards, { props: { ...DARK, cardType: { editor: 'enum', default: 'Basic', options: ['Basic', 'Blank', 'Image', 'Audio'] }, newCard: { editor: 'boolean', default: false }, recording: { editor: 'boolean', default: false } }, logic: CARDS_LOGIC, css: EDITOR_CSS + CARDS_CSS, w: W, h: H }],
+  'WebCardsScreen': ['Web · Edit cards (Option B)', webCards, { props: { ...DARK, cardType: { editor: 'enum', default: 'Basic', options: ['Basic', 'Blank', 'Image', 'Audio'] }, newCard: { editor: 'boolean', default: false }, recording: { editor: 'boolean', default: false }, paused: { editor: 'boolean', default: false } }, logic: CARDS_LOGIC, css: EDITOR_CSS + CARDS_CSS, w: W, h: H }],
   'WebCardsScreenNew': ['Web · Edit cards · writing a new card (Option B)', attrOf('WebCardsScreen', W, H, 'new-card="{{yes}}"'), { logic: darkLogic, css: EDITOR_CSS + CARDS_CSS, w: W, h: H }],
   'WebCardsScreenImage': ['Web · Edit cards · image with boxes (Option B)', typeOf('WebCardsScreen', W, H, 'Image'), { logic: darkLogic, css: EDITOR_CSS + CARDS_CSS, w: W, h: H }],
   'WebCardsScreenBlank': ['Web · Edit cards · fill in the blank (Option B)', typeOf('WebCardsScreen', W, H, 'Blank'), { logic: darkLogic, css: EDITOR_CSS + CARDS_CSS, w: W, h: H }],
   'WebCardsScreenDark': ['Web · Edit cards (dark, Option B)', darkOf('WebCardsScreen', W, H), { logic: darkLogic, css: EDITOR_CSS + CARDS_CSS, w: W, h: H }],
+  'WebCardsScreenPaused': ['Web · Edit cards · a paused card (Unpause)', attrOf('WebCardsScreen', W, H, 'paused="{{yes}}"'), { logic: darkLogic, css: EDITOR_CSS + CARDS_CSS, w: W, h: H }],
   'WebReview': ['Web · Review', webReview, { props: { ...DARK, playing: { editor: 'boolean', default: false }, explainOpen: { editor: 'boolean', default: false }, explained: { editor: 'boolean', default: false }, grading: { editor: 'enum', default: 'Four buttons', options: ['Four buttons', 'Check or X', 'Piles'] }, card: { editor: 'enum', default: 'Basic', options: ['Basic', 'Fill in the blank', 'Image', 'Audio'] }, startRevealed: { editor: 'boolean', default: false }, fsrs: { editor: 'boolean', default: true }, progress: { editor: 'enum', default: 'Bar', options: ['Bar', 'Counts', 'None'] }, settingsOpen: { editor: 'boolean', default: false }, newPileOpen: { editor: 'boolean', default: false }, radius: { editor: 'range', default: 32, min: 12, max: 48, step: 2, unit: 'px' } }, logic: REVIEW_LOGIC(64), css: REVIEW_CSS, w: W, h: H }],
   'WebDone': ['Web · Session done', webDone, { props: DARK, logic: doneLogic(300, 22), w: W, h: H }],
   'WebDonePiles': ['Web · Session done · piles', webDonePiles, { props: DARK, logic: donePilesLogic(false), w: W, h: H }],
-  'WebStats': ['Web · Stats', webStats, { props: DARK, logic: statsLogic, w: W, h: H }],
+  'WebStats': ['Web · Stats', webStats, { props: { ...DARK, ...STATS_PROPS }, logic: statsLogic, w: W, h: H }],
+  'WebStatsMemory': ['Web · Stats · Memory (Pro)', attrOf('WebStats', W, H, 'tab="Memory"'), { logic: darkLogic, w: W, h: H }],
+  'WebStatsWeak': ['Web · Stats · Weak spots (Pro)', attrOf('WebStats', W, H, 'tab="Weak spots"'), { logic: darkLogic, w: W, h: H }],
+  'WebStatsPace': ['Web · Stats · Pace (Pro)', attrOf('WebStats', W, H, 'tab="Pace"'), { logic: darkLogic, w: W, h: H }],
+  'WebStatsUpgrade': ['Web · Stats · on Free: go Pro for deep stats', attrOf('WebStats', W, H, 'tab="Weak spots" free="{{yes}}"'), { logic: darkLogic, w: W, h: H }],
   'WebConnect': ['Web · Connect AI', webConnect, { props: { ...DARK, ...MESH('Apricot') }, logic: connectLogic, w: W, h: H }],
   'WebTodayDark': ['Web · Today (dark)', darkOf('Main', W, H), { logic: darkLogic, css: DRAG_CSS, w: W, h: H }],
   'WebReviewDark': ['Web · Review (dark)', darkOf('WebReview', W, H), { logic: darkLogic, css: REVIEW_CSS, w: W, h: H }],
@@ -5939,14 +6228,18 @@ const files = {
   'WebDeckCopy': ['Web · Deck page · your copy, with the owner’s changes waiting', attrOf('WebDeck', W, H, 'linked="copy"'), { logic: darkLogic, css: NUM_CSS + DRAG_CSS, w: W, h: H }],
   'WebDeckUpdates': ['Web · Deck page · your copy · the owner’s changes (take or skip)', attrOf('WebDeck', W, H, 'linked="copy" updates-open="{{yes}}"'), { logic: darkLogic, css: NUM_CSS + DRAG_CSS, w: W, h: H }],
   'WebDeckSettingsFrom': ['Web · Deck settings · Sharing (a deck you study)', attrOf('WebDeck', W, H, 'settings-open="{{yes}}" settings-tab="Sharing" linked="study"'), { logic: darkLogic, css: NUM_CSS + DRAG_CSS, w: W, h: H }],
+  'WebDeckSettingsGoal': ['Web · Deck settings · Studying · goal raised to 95% (reviews a day)', attrOf('WebDeck', W, H, 'settings-open="{{yes}}" settings-tab="Studying" step-goal="{{yes}}"'), { logic: darkLogic, css: NUM_CSS + DRAG_CSS, w: W, h: H }],
+  'WebDeckSettingsStudyFree': ['Web · Deck settings · Studying · on Free (what Pro adds)', attrOf('WebDeck', W, H, 'settings-open="{{yes}}" settings-tab="Studying" free="{{yes}}"'), { logic: darkLogic, css: NUM_CSS + DRAG_CSS, w: W, h: H }],
   'WebDeckDark': ['Web · Deck page (dark)', darkOf('WebDeck', W, H), { logic: darkLogic, css: NUM_CSS + DRAG_CSS, w: W, h: H }],
   'WebStatsDark': ['Web · Stats (dark)', darkOf('WebStats', W, H), { logic: darkLogic, w: W, h: H }],
+  'WebStatsWeakDark': ['Web · Stats · Weak spots (dark)', `<div style="width: ${W}px; height: ${H}px; overflow: hidden; background: #000000;"><dc-import name="WebStats" tab="Weak spots" dark="{{yes}}" hint-size="${W}px,${H}px"></dc-import></div>`, { logic: darkLogic, w: W, h: H }],
   'WebTodayGray': ['Web · Today (dark, gray)', grayOf('Main', W, H), { logic: darkLogic, css: DRAG_CSS, w: W, h: H }],
   'WebLibraryGray': ['Web · Library (dark, gray)', grayOf('WebDecks', W, H), { logic: darkLogic, css: DRAG_CSS, w: W, h: H }],
   'WebDeckGray': ['Web · Deck page (dark, gray)', grayOf('WebDeck', W, H), { logic: darkLogic, css: NUM_CSS + DRAG_CSS, w: W, h: H }],
   'WebReviewGray': ['Web · Review (dark, gray)', grayOf('WebReview', W, H), { logic: darkLogic, css: REVIEW_CSS, w: W, h: H }],
   'WebQuizGray': ['Web · Learn mode (dark, gray)', grayOf('WebQuiz', W, H), { logic: darkLogic, css: LEARN_CSS, w: W, h: H }],
   'WebStatsGray': ['Web · Stats (dark, gray)', grayOf('WebStats', W, H), { logic: darkLogic, w: W, h: H }],
+  'WebStatsPaceGray': ['Web · Stats · Pace (dark, gray)', `<div style="width: ${W}px; height: ${H}px; overflow: hidden; background: #1E1E20;"><dc-import name="WebStats" tab="Pace" dark="{{yes}}" dim="{{yes}}" hint-size="${W}px,${H}px"></dc-import></div>`, { logic: darkLogic, w: W, h: H }],
   'WebSettingsGray': ['Web · Settings (dark, gray)', grayOf('WebSettings', W, H), { logic: darkLogic, css: NUM_CSS, w: W, h: H }],
   'TopToday': ['Top tabs · Today', topToday, { props: { ...DARK, ...MESH('Iris') }, logic: topTodayLogic, w: W, h: H }],
   'TopDeck': ['Top tabs · Deck', topDeck, { props: DARK, logic: topDeckLogic, w: W, h: H }],
@@ -5965,24 +6258,28 @@ const files = {
   'PhoneTodayCaughtUp': ['iPhone · Today · all caught up', caughtOf('PhoneToday', PW, PH), { logic: darkLogic, w: PW, h: PH }],
   'PhoneDeckEmpty': ['iPhone · Deck · no cards yet', phoneDeckEmpty, { props: { ...DARK, grain: MESH('Iris').grain }, logic: emptyLogic('Pharmacology'), w: PW, h: PH }],
   'PhoneDecksEmpty': ['iPhone · Library · no decks yet', phoneDecksEmpty, { props: { ...DARK, grain: MESH('Iris').grain }, logic: emptyLogic(), w: PW, h: PH }],
-  'PhoneLibrary': ['iPhone · Library', phoneLibrary, { props: { ...DARK, grain: MESH('Iris').grain, mode: LIB_MODE, folder: LIB_FOLDER }, logic: libraryLogic(true), css: DRAG_CSS, w: PW, h: PH }],
+  'PhoneLibrary': ['iPhone · Library', phoneLibrary, { props: { ...DARK, grain: MESH('Iris').grain, mode: LIB_MODE, folder: LIB_FOLDER, level: LEVEL_PROP }, logic: libraryLogic(true), css: DRAG_CSS, w: PW, h: PH }],
   'PhoneLibraryCards': ['iPhone · Library · all cards', attrOf('PhoneLibrary', PW, PH, 'mode="cards"'), { logic: darkLogic, css: DRAG_CSS, w: PW, h: PH }],
+  'PhoneLibraryLeeches': ['iPhone · Library · all cards · cards you keep forgetting (Pause all)', attrOf('PhoneLibrary', PW, PH, 'mode="cards" level="leech"'), { logic: darkLogic, css: DRAG_CSS, w: PW, h: PH }],
   'PhoneLibraryFolder': ['iPhone · Library · a folder', attrOf('PhoneLibrary', PW, PH, 'folder="f1"'), { logic: darkLogic, css: DRAG_CSS, w: PW, h: PH }],
   'PhoneLibraryNewFolder': ['iPhone · Library · New folder popup', attrOf('PhoneLibrary', PW, PH, 'naming="{{yes}}"'), { logic: darkLogic, css: DRAG_CSS, w: PW, h: PH }],
   'PhoneDeckMoveTray': ['iPhone · Deck · Move to tray (while a card is dragged)', attrOf('PhoneDeck', PW, PH, 'tray-open="{{yes}}"'), { logic: darkLogic, css: NUM_CSS + DRAG_CSS, w: PW, h: PH }],
   'PhoneStatsEmpty': ['iPhone · Stats · no reviews yet', phoneStatsEmpty, { props: { ...DARK, grain: MESH('Iris').grain }, logic: emptyLogic(), w: PW, h: PH }],
   'PhoneNewDeck': ['iPhone · New deck', phoneNewDeck, { props: { ...DARK, grain: MESH('Iris').grain }, logic: NEW_DECK_LOGIC, css: NUM_CSS + COVER_FADE_CSS, w: PW, h: PH }],
   'PhoneInbox': ['iPhone · Check AI cards', phoneInbox, { props: DARK, logic: phoneInboxLogic, css: REVIEW_CSS, w: PW, h: PH }],
-  'PhoneDeck': ['iPhone · Deck page', phoneDeck, { props: { ...DARK, grain: MESH('Iris').grain, settingsOpen: { editor: 'boolean', default: false }, settingsTab: { editor: 'enum', default: 'General', options: ['General', 'Studying', 'Sharing'] }, tagPicker: { editor: 'boolean', default: false }, ...SHARE_PROPS }, logic: phoneDeckLogic, css: NUM_CSS + PARALLAX_CSS + DRAG_CSS, w: PW, h: PH }],
+  'PhoneDeck': ['iPhone · Deck page', phoneDeck, { props: { ...DARK, grain: MESH('Iris').grain, settingsOpen: { editor: 'boolean', default: false }, settingsTab: { editor: 'enum', default: 'General', options: ['General', 'Studying', 'Sharing'] }, tagPicker: { editor: 'boolean', default: false }, ...SHARE_PROPS, ...PRO_DECK_PROPS }, logic: phoneDeckLogic, css: NUM_CSS + PARALLAX_CSS + DRAG_CSS, w: PW, h: PH }],
   'PhoneDeckTagPicker': ['iPhone · Deck settings · Add tag', attrOf('PhoneDeck', PW, PH, 'settings-open="{{yes}}" tag-picker="{{yes}}"'), { logic: darkLogic, css: NUM_CSS + DRAG_CSS, w: PW, h: PH }],
   'PhoneDeckSettingsStudy': ['iPhone · Deck settings · Studying (FSRS)', studyOf('PhoneDeck', PW, PH), { logic: darkLogic, css: NUM_CSS + DRAG_CSS, w: PW, h: PH }],
+  'PhoneDeckSettingsGoal': ['iPhone · Deck settings · Studying · goal raised to 95% (reviews a day)', attrOf('PhoneDeck', PW, PH, 'settings-open="{{yes}}" settings-tab="Studying" step-goal="{{yes}}"'), { logic: darkLogic, css: NUM_CSS + DRAG_CSS, w: PW, h: PH }],
+  'PhoneDeckSettingsStudyFree': ['iPhone · Deck settings · Studying · on Free (what Pro adds)', attrOf('PhoneDeck', PW, PH, 'settings-open="{{yes}}" settings-tab="Studying" free="{{yes}}"'), { logic: darkLogic, css: NUM_CSS + DRAG_CSS, w: PW, h: PH }],
   'PhoneDeckSettingsShare': ['iPhone · Deck settings · Sharing (a public deck)', attrOf('PhoneDeck', PW, PH, 'settings-open="{{yes}}" settings-tab="Sharing" shared="Public"'), { logic: darkLogic, css: NUM_CSS + DRAG_CSS, w: PW, h: PH }],
   'PhoneDeckStudied': ['iPhone · Deck page · a deck you study from someone else', attrOf('PhoneDeck', PW, PH, 'linked="study"'), { logic: darkLogic, css: NUM_CSS + DRAG_CSS, w: PW, h: PH }],
   'PhoneDeckCopy': ['iPhone · Deck page · your copy, with the owner’s changes waiting', attrOf('PhoneDeck', PW, PH, 'linked="copy"'), { logic: darkLogic, css: NUM_CSS + DRAG_CSS, w: PW, h: PH }],
   'PhoneDeckUpdates': ['iPhone · Deck page · your copy · the owner’s changes (take or skip)', attrOf('PhoneDeck', PW, PH, 'linked="copy" updates-open="{{yes}}"'), { logic: darkLogic, css: NUM_CSS + DRAG_CSS, w: PW, h: PH }],
-  'PhoneEditor': ['iPhone · Card editor', phoneEditor, { props: { ...DARK, keyboard: { editor: 'boolean', default: true }, textStyles: { editor: 'boolean', default: false }, cardType: { editor: 'enum', default: 'Basic', options: ['Basic', 'Blank', 'Image', 'Audio'] }, recording: { editor: 'boolean', default: false } }, logic: EDITOR_LOGIC, css: EDITOR_CSS, w: PW, h: PH }],
+  'PhoneEditor': ['iPhone · Card editor', phoneEditor, { props: { ...DARK, keyboard: { editor: 'boolean', default: true }, textStyles: { editor: 'boolean', default: false }, cardType: { editor: 'enum', default: 'Basic', options: ['Basic', 'Blank', 'Image', 'Audio'] }, recording: { editor: 'boolean', default: false }, cardId: { editor: 'string', default: '' }, paused: { editor: 'boolean', default: false } }, logic: EDITOR_LOGIC, css: EDITOR_CSS, w: PW, h: PH }],
   'PhoneEditorAudio': ['iPhone · Card editor · audio', attrOf('PhoneEditor', PW, PH, 'card-type="Audio" keyboard="{{no}}"'), { logic: yesNoLogic, css: EDITOR_CSS, w: PW, h: PH }],
   'PhoneEditorRecording': ['iPhone · Card editor · recording audio', attrOf('PhoneEditor', PW, PH, 'card-type="Audio" keyboard="{{no}}" recording="{{yes}}"'), { logic: yesNoLogic, css: EDITOR_CSS, w: PW, h: PH }],
+  'PhoneEditorPaused': ['iPhone · Card editor · editing a paused card (Unpause card)', attrOf('PhoneEditor', PW, PH, 'card-id="k1" paused="{{yes}}" keyboard="{{no}}"'), { logic: yesNoLogic, css: EDITOR_CSS, w: PW, h: PH }],
   'PhoneReview': ['iPhone · Review', phoneReview, { props: { ...DARK, playing: { editor: 'boolean', default: false }, explainOpen: { editor: 'boolean', default: false }, explained: { editor: 'boolean', default: false }, grading: { editor: 'enum', default: 'Four buttons', options: ['Four buttons', 'Check or X', 'Piles'] }, card: { editor: 'enum', default: 'Basic', options: ['Basic', 'Fill in the blank', 'Image', 'Audio'] }, startRevealed: { editor: 'boolean', default: false }, fsrs: { editor: 'boolean', default: true }, progress: { editor: 'enum', default: 'Bar', options: ['Bar', 'Counts', 'None'] }, settingsOpen: { editor: 'boolean', default: false }, newPileOpen: { editor: 'boolean', default: false }, radius: { editor: 'range', default: 32, min: 12, max: 48, step: 2, unit: 'px' } }, logic: REVIEW_LOGIC(64, true), css: REVIEW_CSS, w: PW, h: PH }],
   'PhoneDone': ['iPhone · Session done', phoneDone, { props: DARK, logic: doneLogic(260, 20, true), w: PW, h: PH }],
   'PhoneDonePiles': ['iPhone · Session done · piles', phoneDonePiles, { props: DARK, logic: donePilesLogic(true), w: PW, h: PH }],
@@ -6027,7 +6324,13 @@ const files = {
   'Privacy': ['Privacy Policy · lucida.cards/privacy', legalPage(PRIVACY, LEGAL_H.Privacy), { props: DARK, logic: legalLogic, w: W, h: LEGAL_H.Privacy }],
   'Terms': ['Terms of Service · lucida.cards/terms', legalPage(TERMS, LEGAL_H.Terms), { props: DARK, logic: legalLogic, w: W, h: LEGAL_H.Terms }],
   'LandingPhone': ['Landing page · lucida.cards on a phone', landing(LAND.phone, PW, LANDING_PHONE_H), { props: { ...DARK, grain: MESH('Iris').grain }, logic: landingLogic(true), css: WALL_CSS + DEMO_CSS + SKY_CSS, w: PW, h: LANDING_PHONE_H }],
-  'PhoneStats': ['iPhone · Stats', phoneStats, { props: DARK, logic: phoneStatsLogic, w: PW, h: PH }],
+  'PhoneStats': ['iPhone · Stats', phoneStats, { props: { ...DARK, ...STATS_PROPS }, logic: phoneStatsLogic, w: PW, h: PH }],
+  'PhoneStatsMemory': ['iPhone · Stats · Memory (Pro)', attrOf('PhoneStats', PW, PH, 'tab="Memory"'), { logic: darkLogic, w: PW, h: PH }],
+  'PhoneStatsWeak': ['iPhone · Stats · Weak spots (Pro)', attrOf('PhoneStats', PW, PH, 'tab="Weak spots"'), { logic: darkLogic, w: PW, h: PH }],
+  'PhoneStatsPace': ['iPhone · Stats · Pace (Pro)', attrOf('PhoneStats', PW, PH, 'tab="Pace"'), { logic: darkLogic, w: PW, h: PH }],
+  'PhoneStatsUpgrade': ['iPhone · Stats · on Free: go Pro for deep stats', attrOf('PhoneStats', PW, PH, 'tab="Weak spots" free="{{yes}}"'), { logic: darkLogic, w: PW, h: PH }],
+  'PhoneStatsWeakDark': ['iPhone · Stats · Weak spots (dark)', `<div style="width: ${PW}px; height: ${PH}px; overflow: hidden; background: #000000;"><dc-import name="PhoneStats" tab="Weak spots" dark="{{yes}}" hint-size="${PW}px,${PH}px"></dc-import></div>`, { logic: darkLogic, w: PW, h: PH }],
+  'PhoneStatsPaceGray': ['iPhone · Stats · Pace (dark, gray)', `<div style="width: ${PW}px; height: ${PH}px; overflow: hidden; background: #1E1E20;"><dc-import name="PhoneStats" tab="Pace" dark="{{yes}}" dim="{{yes}}" hint-size="${PW}px,${PH}px"></dc-import></div>`, { logic: darkLogic, w: PW, h: PH }],
   'PhoneConnect': ['iPhone · Connect AI', phoneConnect, { props: { ...DARK, ...MESH('Apricot') }, logic: phoneConnectLogic, w: PW, h: PH }],
   'PhoneTodayDark': ['iPhone · Today (dark)', darkOf('PhoneToday', PW, PH), { logic: darkLogic, w: PW, h: PH }],
   'PhoneReviewDark': ['iPhone · Review (dark)', darkOf('PhoneReview', PW, PH), { logic: darkLogic, css: REVIEW_CSS, w: PW, h: PH }],
@@ -6041,7 +6344,8 @@ const files = {
   'PhoneReviewAudio': ['iPhone · Review · audio card, playing', attrOf('PhoneReview', PW, PH, 'card="Audio" playing="{{yes}}"'), { logic: darkLogic, css: REVIEW_CSS, w: PW, h: PH }],
   'PhoneReviewImage': ['iPhone · Review · picture with hidden parts (tap the card)', attrOf('PhoneReview', PW, PH, 'card="Image"'), { logic: darkLogic, css: REVIEW_CSS, w: PW, h: PH }],
   'PhoneEditorImage': ['iPhone · Card editor · image with boxes', attrOf('PhoneEditor', PW, PH, 'card-type="Image" keyboard="{{no}}"'), { logic: 'renderVals() { return { yes: true, no: false }; }', css: EDITOR_CSS, w: PW, h: PH }],
-  'PhoneSettings': ['iPhone · Settings', phoneSettings, { props: { ...DARK, photo: PHOTO_PROP, plan: { editor: 'enum', default: 'Pro', options: ['Free', 'Pro', 'Pro, ending'] } }, logic: phoneSettingsLogic, w: PW, h: PHONE_SETTINGS_H }],
+  'PhoneSettingsFree': ['iPhone · Settings · on Free (Tune to you is Pro)', attrOf('PhoneSettings', PW, PHONE_SETTINGS_H, 'plan="Free"'), { logic: darkLogic, w: PW, h: PHONE_SETTINGS_H }],
+  'PhoneSettings': ['iPhone · Settings', phoneSettings, { props: { ...DARK, photo: PHOTO_PROP, plan: { editor: 'enum', default: 'Pro', options: ['Free', 'Pro', 'Pro, ending'] }, tune: TUNE_PROP }, logic: phoneSettingsLogic, w: PW, h: PHONE_SETTINGS_H }],
   'PhoneDeckSettings': ['iPhone · Deck settings', openOf('PhoneDeck', PW, PH), { logic: darkLogic, css: NUM_CSS + DRAG_CSS, w: PW, h: PH }],
   'PhoneDeckDark': ['iPhone · Deck page (dark)', darkOf('PhoneDeck', PW, PH), { logic: darkLogic, css: NUM_CSS + DRAG_CSS, w: PW, h: PH }],
   'PhoneStatsDark': ['iPhone · Stats (dark)', darkOf('PhoneStats', PW, PH), { logic: darkLogic, w: PW, h: PH }],
