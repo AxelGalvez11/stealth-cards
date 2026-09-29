@@ -68,6 +68,11 @@ final class StudyNetworkTests: XCTestCase {
   private func buttonStarting(_ app: XCUIApplication, _ words: String) -> XCUIElement {
     app.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", words)).firstMatch
   }
+  /// The button with this label that a finger can reach now (a dialog's, not the one it covers).
+  private func reachable(_ app: XCUIApplication, _ label: String) -> XCUIElement {
+    let all = app.buttons.matching(NSPredicate(format: "label == %@", label)).allElementsBoundByIndex
+    return all.last { $0.isHittable } ?? app.buttons[label].firstMatch
+  }
   /// The lowest button with this label on screen (in a sheet or on a pushed page, not the page under it).
   private func lowest(_ app: XCUIApplication, _ label: String, starting: Bool = false) -> XCUIElement {
     let all = app.buttons.matching(NSPredicate(format: starting ? "label BEGINSWITH %@" : "label == %@", label)).allElementsBoundByIndex
@@ -252,16 +257,19 @@ final class StudyNetworkTests: XCTestCase {
     check(wait(button(app, "Cancel")), "Settings → Edit profile opens the editor")
     button(app, "Cancel").tap()
     check(gone(button(app, "Cancel")), "Cancel closes it")
+    // The sheet's dimmed backdrop takes taps while it slides away.
+    Thread.sleep(forTimeInterval: 0.8)
 
     // The learner takes the studied deck out of the library (Deck settings: Remove from library, then its confirm).
     button(app, "Library").tap()
+    if !wait(button(app, "New folder"), 3) { button(app, "Library").tap() }
     let studiedRow = any(app, "From Maria Santos")
     check(wait(studiedRow), "the studied deck is in the Library")
     studiedRow.tap()
     button(app, "Deck settings").tap()
     button(app, "Remove from library").tap()
     check(wait(app.staticTexts["Remove “MCAT Biochemistry” from your library? Your progress on it goes too."]), "Remove from library asks first, in plain words")
-    lowest(app, "Remove from library").tap()
+    reachable(app, "Remove from library").tap()
     check(gone(any(app, "From Maria Santos"), 10), "and the deck leaves the Library")
     check(!((state(learner)["decks"] as? [[String: Any]]) ?? []).contains { $0["id"] as? String == studied }, "the server has it gone too")
 
