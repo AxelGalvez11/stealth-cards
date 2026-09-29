@@ -682,7 +682,9 @@ export async function follow(uid, me, handle, on) {
   if (them.id === p.id) throw err('That’s you.');
   if (on) {
     await rest('/follows', { method: 'POST', prefer: 'resolution=ignore-duplicates', body: { follower: p.id, followee: them.id } });
-    await notify([{ user_id: them.id, kind: 'follow', actor: p.id, actor_name: p.name, data: { handle: p.handle } }]);
+    // Unfollowing and following again stays quiet: they hear about the same person once a week at most.
+    const lately = await rest('/notifications?user_id=eq.' + val(them.id) + '&kind=eq.follow&actor=eq.' + val(p.id) + '&created_at=gt.' + val(new Date(Date.now() - 7 * DAY).toISOString()) + '&select=id&limit=1');
+    if (!lately.length) await notify([{ user_id: them.id, kind: 'follow', actor: p.id, actor_name: p.name, data: { handle: p.handle } }]);
   } else await rest('/follows?follower=eq.' + val(p.id) + '&followee=eq.' + val(them.id), { method: 'DELETE' });
   await recountPeople(p.id);
   return recountPeople(them.id);
