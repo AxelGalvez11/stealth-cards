@@ -3701,7 +3701,7 @@ const webTodayNew = webRoot(`${sidebar('Today')}
 </main>`);
 const webDecksEmpty = webRoot(`${sidebar('Library')}
 <main style="flex-grow: 1; box-sizing: border-box; padding: 36px 48px; display: flex; flex-direction: column; gap: 28px; min-width: 0;">
-  <div style="display: flex; align-items: center; gap: 12px;"><h1 style="margin: 0; font-size: 32px; font-weight: 600; letter-spacing: -.03em; flex-grow: 1;">Library</h1>${pill('New deck', { inv: true, icon: 'plus', href: 'WebNewDeck.dc.html' })}</div>
+  <div style="display: flex; align-items: center; gap: 12px;"><h1 style="margin: 0; font-size: 32px; font-weight: 600; letter-spacing: -.03em;">Library</h1><span style="margin-left: 10px; display: flex;">${libModes(32)}</span><span style="flex-grow: 1;"></span>${pill('New deck', { inv: true, icon: 'plus', href: 'WebNewDeck.dc.html' })}</div>
   <div style="flex-grow: 1; display: flex; align-items: center; justify-content: center; padding-bottom: 60px;">
     ${emptyBlock({ art: EMPTY_ART(170, 'plus'), title: 'No decks yet', body: 'Make one, bring your cards from Anki or Quizlet, or let your AI make them for you.', actions: webActions(pill('New deck', { inv: true, icon: 'plus', href: 'WebNewDeck.dc.html' }) + pill('Import cards', { icon: 'upload', href: 'WebImport.dc.html' }) + pill('Connect your AI', { icon: 'connect', href: 'WebConnect.dc.html' })) })}
   </div>
@@ -3757,6 +3757,7 @@ const phoneDeckEmpty = phone(`<div style="height: 100%; box-sizing: border-box; 
 // The Decks tab before there are any decks.
 const phoneDecksEmpty = phone(`<div style="height: 100%; box-sizing: border-box; padding: 64px 20px 120px; display: flex; flex-direction: column; gap: 14px;">
   ${pTitle('Library', roundBtn('plus', 'New deck', 'PhoneNewDeck.dc.html'))}
+  ${libModes(36, 14, true)}
   <div style="flex-grow: 1; box-sizing: border-box; padding: 0 8px 20px; display: flex; align-items: center; justify-content: center;">
     ${emptyBlock({ art: EMPTY_ART(150, 'plus'), title: 'No decks yet', size: 22, body: 'Make one, bring your cards from Anki or Quizlet, or let your AI make them for you.', actions: phoneActionRow(phoneBtn('New deck', 'PhoneNewDeck.dc.html', 'plus', true), phoneBtn2('Import cards', 'PhoneDecksEmpty.dc.html', 'upload'), phoneBtn2('Connect AI', 'PhoneConnect.dc.html', 'connect')) })}
   </div>
@@ -3768,12 +3769,16 @@ const phoneStatsEmpty = phone(`<div style="height: 100%; box-sizing: border-box;
     ${emptyBlock({ art: EMPTY_ART(130, 'stats'), title: 'No stats yet', size: 22, body: 'Your streak, study days, and how much you remember show up after your first review.', actions: `<a href="PhoneNewDeck.dc.html" style="height: 48px; padding: 0 22px; border-radius: 999px; background: {{t.inv}}; color: {{t.invText}}; display: flex; align-items: center; gap: 8px; font-size: 15px; font-weight: 600;">${svg(I.plus, 16, 2)}Make a deck</a>` })}
   </div>
 </div>`, 'Stats');
-const emptyLogic = (cover = '') => `renderVals() { ${T}${DB_JS}
+// \`phone\`: the iPhone board (the Library's Decks · All cards · Classes switch links to the iPhone boards on the canvas).
+const emptyLogic = (cover = '', phone = false) => `renderVals() { ${T}${DB_JS}
+  // The Library with no decks yet still has its switch, so Classes are there before the first deck (web/classes.mjs).
+  const modes = [['Decks', '${phone ? 'PhoneLibrary' : 'WebDecks'}', '/library'], ['All cards', '${phone ? 'PhoneLibraryCards' : 'WebLibraryCards'}', '/library/cards'], ['Classes', '${phone ? 'PhoneClasses' : 'WebClasses'}', '/library/classes']]
+    .map(([label, b, href], i) => ({ label, href: db.mock ? b + '.dc.html' : href, current: !i ? 'page' : 'false', bg: !i ? t.bg : 'transparent', fg: !i ? t.text : t.muted, sh: !i ? '0 1px 3px rgba(0,0,0,.14)' : 'none' }));
   // On the canvas these boards show a brand-new account, so the Today count stays hidden (except on the empty deck).
   const dk = db.mock ? { name: '${cover}', seed: '${cover}', cover: { style: null, round: 0, image: null } } : (db.deck(this.props.deckId) || { name: '', seed: '', cover: {} });
   // A new deck's picture shows on its empty page too, with white words over it.
   const pic = dk.cover.image || '', photo = pic !== 'mock' ? pic : '';
-  return { ${MESH_VALS('Iris')} t, ...chrome, nav: db.mock ? { today: ${cover ? "'64'" : "''"}, news: '', hasNews: false } : chrome.nav, art: this.mesh('Iris'), art2: this.mesh('Mint'), art3: this.mesh('Apricot'), noop: () => {},
+  return { ${MESH_VALS('Iris')} t, ...chrome, modes, nav: db.mock ? { today: ${cover ? "'64'" : "''"}, news: '', hasNews: false } : chrome.nav, art: this.mesh('Iris'), art2: this.mesh('Mint'), art3: this.mesh('Apricot'), noop: () => {},
     date: db.today().date, deckName: dk.name, cover: { ...this.gen(dk.seed + (dk.cover.round ? ' #' + dk.cover.round : ''), dk.cover.style), ...(photo ? { ink: '#FFFFFF', shadow: '0 1px 14px rgba(0,0,0,.45)' } : {}) },
     coverIsImage: pic === 'mock', coverHasPhoto: !!photo, coverPhoto: photo,
     newCardHref: db.mock ? 'WebCardsScreenNew.dc.html' : dk.newCardHref, importHref: db.href('import', dk.id), connectHref: db.href('connect'),
@@ -5551,14 +5556,14 @@ const cPhonePop = (k, body, kb = false) => `<sc-if value="{{${k}.show}}" hint-pl
   <sc-if value="{{drawKb}}" hint-placeholder-val="{{ true }}">${KEYBOARD()}</sc-if>` : ''}
 </div></sc-if>`;
 const cPanel = (open, label, body) => `<sc-if value="{{${open}}}" hint-placeholder-val="{{ false }}">
-  <div class="sc-scrim" onClick="{{closePanel}}" style="position: absolute; top: 0; right: 0; bottom: 0; left: 240px; background: {{t.dim}};"></div>
-  <aside role="dialog" aria-label="${label}" class="sc-panel" style="position: absolute; top: 12px; right: 12px; bottom: 12px; width: 460px; box-sizing: border-box; padding: 24px; border-radius: 20px; background: {{t.bg}}; box-shadow: 0 24px 64px rgba(0,0,0,.24); display: flex; flex-direction: column; gap: 16px; overflow: hidden;">
+  <div class="sc-scrim" onClick="{{closePanel}}" style="position: absolute; top: 0; right: 0; bottom: 0; left: 240px; z-index: 60; background: {{t.dim}};"></div>
+  <aside role="dialog" aria-label="${label}" class="sc-panel" style="position: absolute; top: 12px; right: 12px; bottom: 12px; z-index: 61; width: 460px; box-sizing: border-box; padding: 24px; border-radius: 20px; background: {{t.bg}}; box-shadow: 0 24px 64px rgba(0,0,0,.24); display: flex; flex-direction: column; gap: 16px; overflow: hidden;">
     ${body}
   </aside>
 </sc-if>`;
 const cSheet = (open, label, body, close, full = true) => `<sc-if value="{{${open}}}" hint-placeholder-val="{{ false }}">
-  <div class="sc-scrim" onClick="{{${close}}}" style="position: absolute; inset: 0; background: {{t.dim}};"></div>
-  <div role="dialog" aria-label="${label}" class="sc-sheet" style="position: absolute; left: 0; right: 0; bottom: 0; ${full ? 'top: 56px;' : 'max-height: calc(100% - 56px);'} box-sizing: border-box; padding: 20px 20px 34px; border-radius: 32px 32px 0 0; background: {{t.bg}}; display: flex; flex-direction: column; gap: 14px; overflow: hidden;">
+  <div class="sc-scrim" onClick="{{${close}}}" style="position: absolute; inset: 0; z-index: 60; background: {{t.dim}};"></div>
+  <div role="dialog" aria-label="${label}" class="sc-sheet" style="position: absolute; left: 0; right: 0; bottom: 0; z-index: 61; ${full ? 'top: 56px;' : 'max-height: calc(100% - 56px);'} box-sizing: border-box; padding: 20px 20px 34px; border-radius: 32px 32px 0 0; background: {{t.bg}}; display: flex; flex-direction: column; gap: 14px; overflow: hidden;">
     ${body}
   </div>
 </sc-if>`;
@@ -5836,7 +5841,7 @@ const ASG_ROW = phone => `<div class="sc-row" style="position: relative; display
         <span style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; pointer-events: none;"><span style="font-size: 15px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{a.name}}</span><span style="font-size: ${phone ? 12 : 13}px; color: {{t.muted}}; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{a.sub}}</span>${phone ? '<span style="font-size: 12px; font-weight: 600; color: {{a.rightColor}};">{{a.right}}</span>' : ''}</span>
         ${phone ? '' : '<span style="flex-shrink: 0; font-size: 14px; font-weight: 600; color: {{a.rightColor}}; pointer-events: none;">{{a.right}}</span>'}
         <sc-if value="{{a.canStudy}}" hint-placeholder-val="{{ false }}"><span style="position: relative; display: flex;"><sc-if value="{{a.inLib}}" hint-placeholder-val="{{ true }}"><a href="{{a.studyHref}}" class="sc-press" style="height: 34px; padding: 0 14px; display: inline-flex; align-items: center; border-radius: 999px; background: {{t.surf}}; font-size: 13px; font-weight: 600;">Study</a></sc-if><sc-if value="{{a.notInLib}}" hint-placeholder-val="{{ false }}">${smallBtn('Study', 'a.study')}</sc-if></span></sc-if>
-        <sc-if value="{{a.canManage}}" hint-placeholder-val="{{ false }}"><div style="position: relative;">${moreBtn('a', 'More for {{a.name}}')}${cMenu('a', 'right: 0; top: 40px;')}</div></sc-if>
+        <sc-if value="{{a.canManage}}" hint-placeholder-val="{{ false }}"><div style="position: relative;">${moreBtn('a', 'More for the {{a.name}} assignment')}${cMenu('a', 'right: 0; top: 40px;')}</div></sc-if>
       </div>`;
 const ASSIGNMENTS = phone => `<section style="display: flex; flex-direction: column;">
       <span style="font-size: ${phone ? 17 : 18}px; font-weight: 600; letter-spacing: -.01em; padding-bottom: 4px;">Assignments</span>
@@ -5861,7 +5866,7 @@ const PROGRESS = phone => `<sc-if value="{{showProg}}" hint-placeholder-val="{{ 
     </section></sc-if>`;
 const DECK_CELL = phone => `<div style="position: relative; display: flex; flex-direction: column; gap: ${phone ? 8 : 10}px; min-width: 0;">
         ${NET_TILE('d', phone ? 160 : 170, phone ? 17 : 20)}
-        <div style="position: absolute; top: ${phone ? 10 : 12}px; right: ${phone ? 10 : 12}px; z-index: 2;">${moreBtn('d', 'More for {{d.name}}', 32, true)}${cMenu('d', 'right: 0; top: 40px;')}</div>
+        <div style="position: absolute; top: ${phone ? 10 : 12}px; right: ${phone ? 10 : 12}px;">${moreBtn('d', 'More for {{d.name}}', 32, true)}${cMenu('d', 'right: 0; top: 40px;')}</div>
         <div style="display: flex; align-items: center; gap: 8px; min-width: 0;">
           <a href="{{d.owner.href}}" style="flex-grow: 1; min-width: 0; display: flex; align-items: center; gap: 8px; font-size: 13px;">${PERSON_AV('d.owner', phone ? 20 : 22)}<span style="min-width: 0; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{d.owner.name}}</span>${phone ? '' : VERIFIED('d.owner')}</a>
           <sc-if value="{{d.canStudy}}" hint-placeholder-val="{{ false }}">${smallBtn('Study', 'd.study')}</sc-if>
@@ -6136,7 +6141,7 @@ const files = {
   'PhoneTodayNew': ['iPhone · Today · new user', phoneTodayNew, { props: { ...DARK, ...MESH('Iris') }, logic: emptyLogic(), w: PW, h: PH }],
   'PhoneTodayCaughtUp': ['iPhone · Today · all caught up', caughtOf('PhoneToday', PW, PH), { logic: darkLogic, w: PW, h: PH }],
   'PhoneDeckEmpty': ['iPhone · Deck · no cards yet', phoneDeckEmpty, { props: { ...DARK, grain: MESH('Iris').grain }, logic: emptyLogic('Pharmacology'), w: PW, h: PH }],
-  'PhoneDecksEmpty': ['iPhone · Library · no decks yet', phoneDecksEmpty, { props: { ...DARK, grain: MESH('Iris').grain }, logic: emptyLogic(), w: PW, h: PH }],
+  'PhoneDecksEmpty': ['iPhone · Library · no decks yet', phoneDecksEmpty, { props: { ...DARK, grain: MESH('Iris').grain }, logic: emptyLogic('', true), w: PW, h: PH }],
   'PhoneLibrary': ['iPhone · Library', phoneLibrary, { props: { ...DARK, grain: MESH('Iris').grain, mode: LIB_MODE, folder: LIB_FOLDER }, logic: libraryLogic(true), css: DRAG_CSS, w: PW, h: PH }],
   'PhoneLibraryCards': ['iPhone · Library · all cards', attrOf('PhoneLibrary', PW, PH, 'mode="cards"'), { logic: darkLogic, css: DRAG_CSS, w: PW, h: PH }],
   'PhoneLibraryFolder': ['iPhone · Library · a folder', attrOf('PhoneLibrary', PW, PH, 'folder="f1"'), { logic: darkLogic, css: DRAG_CSS, w: PW, h: PH }],
@@ -6247,6 +6252,7 @@ const files = {
   'WebClassesNew': ['Web · Library · Classes · New class', attrOf('WebClasses', W, H, 'new-open="{{yes}}"'), { logic: darkLogic, css: DRAG_CSS, w: W, h: H }],
   'WebClassesJoin': ['Web · Library · Classes · Join a class (with its code)', attrOf('WebClasses', W, H, 'join-open="{{yes}}"'), { logic: darkLogic, css: DRAG_CSS, w: W, h: H }],
   'WebClassesDark': ['Web · Library · Classes (dark)', darkOf('WebClasses', W, H), { logic: darkLogic, css: DRAG_CSS, w: W, h: H }],
+  'WebClassesLoading': ['Web · Library · Classes · loading', attrOf('WebClasses', W, H, 'loading="{{yes}}"'), { logic: darkLogic, css: DRAG_CSS, w: W, h: H }],
   'WebClass': ['Web · Class · yours (assignments, progress, decks, people)', webClass, { props: CLASS_PROPS, logic: CLASS_LOGIC(false), css: DRAG_CSS, w: W, h: H }],
   'WebClassMember': ['Web · Class · one you joined (asked once: share your progress?)', attrOf('WebClass', W, H, 'view="Member"'), { logic: darkLogic, css: DRAG_CSS, w: W, h: H }],
   'WebClassMemberSharing': ['Web · Class · one you joined, sharing your progress', attrOf('WebClass', W, H, 'view="Member" sharing="{{yes}}"'), { logic: darkLogic, css: DRAG_CSS, w: W, h: H }],
@@ -6263,13 +6269,16 @@ const files = {
   'WebClassGray': ['Web · Class (dark, gray)', grayOf('WebClass', W, H), { logic: darkLogic, css: DRAG_CSS, w: W, h: H }],
   'WebClassMemberDark': ['Web · Class · one you joined (dark)', attrOf('WebClass', W, H, 'view="Member" dark="{{yes}}"'), { logic: darkLogic, css: DRAG_CSS, w: W, h: H }],
   'WebTodayClass': ['Web · Today · with assignments from your classes', attrOf('Main', W, H, 'assignments="{{yes}}"'), { logic: darkLogic, css: DRAG_CSS, w: W, h: H }],
-  'WebAdmin': ['Web · Admin · verification requests', webAdmin, { props: { ...DARK, grain: MESH('Iris').grain, tab: { editor: 'enum', default: 'Verification', options: ['Verification', 'Reports'] }, loading: { editor: 'boolean', default: false }, denied: { editor: 'boolean', default: false } }, logic: ADMIN_LOGIC, w: W, h: H }],
+  'WebAdmin': ['Web · Admin · verification requests', webAdmin, { props: { ...DARK, grain: MESH('Iris').grain, tab: { editor: 'enum', default: 'Verification', options: ['Verification', 'Reports'] }, loading: { editor: 'boolean', default: false }, empty: { editor: 'boolean', default: false }, denied: { editor: 'boolean', default: false } }, logic: ADMIN_LOGIC, w: W, h: H }],
+  'WebAdminEmpty': ['Web · Admin · nothing waiting', attrOf('WebAdmin', W, H, 'empty="{{yes}}"'), { logic: darkLogic, w: W, h: H }],
+  'WebAdminDenied': ['Web · Admin · someone who isn’t an admin', attrOf('WebAdmin', W, H, 'denied="{{yes}}"'), { logic: darkLogic, w: W, h: H }],
   'WebAdminReports': ['Web · Admin · reports', attrOf('WebAdmin', W, H, 'tab="Reports"'), { logic: darkLogic, w: W, h: H }],
   'WebAdminDark': ['Web · Admin (dark)', darkOf('WebAdmin', W, H), { logic: darkLogic, w: W, h: H }],
   'PhoneClasses': ['iPhone · Library · Classes', phoneClasses, { props: CLASSES_PROPS, logic: CLASSES_LOGIC(true), css: DRAG_CSS, w: PW, h: PH }],
   'PhoneClassesEmpty': ['iPhone · Library · Classes · none yet', attrOf('PhoneClasses', PW, PH, 'empty="{{yes}}"'), { logic: darkLogic, css: DRAG_CSS, w: PW, h: PH }],
   'PhoneClassesNew': ['iPhone · Library · Classes · New class', attrOf('PhoneClasses', PW, PH, 'new-open="{{yes}}"'), { logic: darkLogic, css: DRAG_CSS, w: PW, h: PH }],
   'PhoneClassesJoin': ['iPhone · Library · Classes · Join a class', attrOf('PhoneClasses', PW, PH, 'join-open="{{yes}}"'), { logic: darkLogic, css: DRAG_CSS, w: PW, h: PH }],
+  'PhoneClassesDark': ['iPhone · Library · Classes (dark)', darkOf('PhoneClasses', PW, PH), { logic: darkLogic, css: DRAG_CSS, w: PW, h: PH }],
   'PhoneClass': ['iPhone · Class · yours', phoneClass, { props: CLASS_PROPS, logic: CLASS_LOGIC(true), css: DRAG_CSS, w: PW, h: PH }],
   'PhoneClassMember': ['iPhone · Class · one you joined (asked once: share your progress?)', attrOf('PhoneClass', PW, PH, 'view="Member"'), { logic: darkLogic, css: DRAG_CSS, w: PW, h: PH }],
   'PhoneClassNew': ['iPhone · Class · just made', attrOf('PhoneClass', PW, PH, 'empty="{{yes}}"'), { logic: darkLogic, css: DRAG_CSS, w: PW, h: PH }],
@@ -6280,6 +6289,7 @@ const files = {
   'PhoneClassInvite': ['iPhone · Class · its invite link', attrOf('PhoneClass', PW, PH, 'view="Invite"'), { logic: darkLogic, css: DRAG_CSS, w: PW, h: PH }],
   'PhoneClassInviteSignedOut': ['iPhone · Class · its invite link, signed out', attrOf('PhoneClass', PW, PH, 'view="Invite" signed-out="{{yes}}"'), { logic: darkLogic, css: DRAG_CSS, w: PW, h: PH }],
   'PhoneClassLoading': ['iPhone · Class · loading', attrOf('PhoneClass', PW, PH, 'loading="{{yes}}"'), { logic: darkLogic, css: DRAG_CSS, w: PW, h: PH }],
+  'PhoneClassMissing': ['iPhone · Class · no class has that code', attrOf('PhoneClass', PW, PH, 'missing="{{yes}}"'), { logic: darkLogic, css: DRAG_CSS, w: PW, h: PH }],
   'PhoneClassDark': ['iPhone · Class (dark)', darkOf('PhoneClass', PW, PH), { logic: darkLogic, css: DRAG_CSS, w: PW, h: PH }],
   'PhoneClassGray': ['iPhone · Class (dark, gray)', grayOf('PhoneClass', PW, PH), { logic: darkLogic, css: DRAG_CSS, w: PW, h: PH }],
   'PhoneTodayClass': ['iPhone · Today · with assignments from your classes', attrOf('PhoneToday', PW, PH, 'assignments="{{yes}}"'), { logic: darkLogic, w: PW, h: PH }]

@@ -267,7 +267,7 @@ mock() {
         classes: () => (wait ? undefined : p.empty ? [] : N.CLASS_LIST),
         klass: code => (wait ? undefined : p.missing ? { missing: true, status: 404 } : klass(code)),
         verify: () => ({ verified: '', open: !!m.verifySent, declined: false, role: '', school: 'UC Davis' }),
-        admin: () => (wait ? undefined : p.denied ? { missing: true, status: 403 } : N.ADMIN),
+        admin: () => (wait ? undefined : p.denied ? { missing: true, status: 403 } : p.empty ? { requests: [], reports: [] } : N.ADMIN),
         drop: noop, act: () => Promise.resolve(null)
       };
     })(),
@@ -318,11 +318,14 @@ mock() {
 }
 
 renderVals() { const t = this.theme(!!this.props.dark, !!this.props.dim);const db = this.props.db || this.mock(); const chrome = db.chrome();
+  // The Library with no decks yet still has its switch, so Classes are there before the first deck (web/classes.mjs).
+  const modes = [['Decks', 'WebDecks', '/library'], ['All cards', 'WebLibraryCards', '/library/cards'], ['Classes', 'WebClasses', '/library/classes']]
+    .map(([label, b, href], i) => ({ label, href: db.mock ? b + '.dc.html' : href, current: !i ? 'page' : 'false', bg: !i ? t.bg : 'transparent', fg: !i ? t.text : t.muted, sh: !i ? '0 1px 3px rgba(0,0,0,.14)' : 'none' }));
   // On the canvas these boards show a brand-new account, so the Today count stays hidden (except on the empty deck).
   const dk = db.mock ? { name: 'Pharmacology', seed: 'Pharmacology', cover: { style: null, round: 0, image: null } } : (db.deck(this.props.deckId) || { name: '', seed: '', cover: {} });
   // A new deck's picture shows on its empty page too, with white words over it.
   const pic = dk.cover.image || '', photo = pic !== 'mock' ? pic : '';
-  return { hero: this.mesh(this.props.gradient ?? 'Iris'), grain: String(this.props.grain ?? 0.7), t, ...chrome, nav: db.mock ? { today: '64', news: '', hasNews: false } : chrome.nav, art: this.mesh('Iris'), art2: this.mesh('Mint'), art3: this.mesh('Apricot'), noop: () => {},
+  return { hero: this.mesh(this.props.gradient ?? 'Iris'), grain: String(this.props.grain ?? 0.7), t, ...chrome, modes, nav: db.mock ? { today: '64', news: '', hasNews: false } : chrome.nav, art: this.mesh('Iris'), art2: this.mesh('Mint'), art3: this.mesh('Apricot'), noop: () => {},
     date: db.today().date, deckName: dk.name, cover: { ...this.gen(dk.seed + (dk.cover.round ? ' #' + dk.cover.round : ''), dk.cover.style), ...(photo ? { ink: '#FFFFFF', shadow: '0 1px 14px rgba(0,0,0,.45)' } : {}) },
     coverIsImage: pic === 'mock', coverHasPhoto: !!photo, coverPhoto: photo,
     newCardHref: db.mock ? 'WebCardsScreenNew.dc.html' : dk.newCardHref, importHref: db.href('import', dk.id), connectHref: db.href('connect'),

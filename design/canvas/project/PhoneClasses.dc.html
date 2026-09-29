@@ -59,8 +59,8 @@ a{color:inherit;text-decoration:none}a:hover{opacity:.8}
   </div></div></sc-if>
 </div></sc-if>
 <sc-if value="{{ver.show}}" hint-placeholder-val="{{ false }}">
-  <div class="sc-scrim" onClick="{{ver.close}}" style="position: absolute; inset: 0; background: {{t.dim}};"></div>
-  <div role="dialog" aria-label="Get verified" class="sc-sheet" style="position: absolute; left: 0; right: 0; bottom: 0; max-height: calc(100% - 56px); box-sizing: border-box; padding: 20px 20px 34px; border-radius: 32px 32px 0 0; background: {{t.bg}}; display: flex; flex-direction: column; gap: 14px; overflow: hidden;">
+  <div class="sc-scrim" onClick="{{ver.close}}" style="position: absolute; inset: 0; z-index: 60; background: {{t.dim}};"></div>
+  <div role="dialog" aria-label="Get verified" class="sc-sheet" style="position: absolute; left: 0; right: 0; bottom: 0; z-index: 61; max-height: calc(100% - 56px); box-sizing: border-box; padding: 20px 20px 34px; border-radius: 32px 32px 0 0; background: {{t.bg}}; display: flex; flex-direction: column; gap: 14px; overflow: hidden;">
     <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px;"><span style="font-size: 22px; font-weight: 600; letter-spacing: -.02em;">Get verified</span><button type="button" onClick="{{ver.close}}" aria-label="Close" style="width: 36px; height: 36px; flex-shrink: 0; border: 0; border-radius: 18px; background: {{t.surf}}; color: {{t.text}}; display: flex; align-items: center; justify-content: center; cursor: pointer;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
     <sc-if value="{{ver.asking}}" hint-placeholder-val="{{ true }}"><div style="display: flex; flex-direction: column; gap: 12px;">
       <div role="group" aria-label="Teacher or school" style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px; padding: 4px; border-radius: 999px; background: {{t.surf}};"><sc-for list="{{ver.roles}}" as="o" hint-placeholder-count="2"><button type="button" onClick="{{o.pick}}" aria-pressed="{{o.pressed}}" style="height: 34px; padding: 0 10px; border: 0; border-radius: 999px; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; white-space: nowrap; background: {{o.bg}}; color: {{o.fg}}; box-shadow: {{o.sh}};">{{o.label}}</button></sc-for></div>
@@ -291,7 +291,7 @@ mock() {
         classes: () => (wait ? undefined : p.empty ? [] : N.CLASS_LIST),
         klass: code => (wait ? undefined : p.missing ? { missing: true, status: 404 } : klass(code)),
         verify: () => ({ verified: '', open: !!m.verifySent, declined: false, role: '', school: 'UC Davis' }),
-        admin: () => (wait ? undefined : p.denied ? { missing: true, status: 403 } : N.ADMIN),
+        admin: () => (wait ? undefined : p.denied ? { missing: true, status: 403 } : p.empty ? { requests: [], reports: [] } : N.ADMIN),
         drop: noop, act: () => Promise.resolve(null)
       };
     })(),

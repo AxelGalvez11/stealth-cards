@@ -199,6 +199,12 @@ export default [
   "h": 844
  },
  {
+  "name": "PhoneClassMissing",
+  "title": "iPhone · Class · no class has that code",
+  "w": 390,
+  "h": 844
+ },
+ {
   "name": "PhoneClassNew",
   "title": "iPhone · Class · just made",
   "w": 390,
@@ -219,6 +225,12 @@ export default [
  {
   "name": "PhoneClasses",
   "title": "iPhone · Library · Classes",
+  "w": 390,
+  "h": 844
+ },
+ {
+  "name": "PhoneClassesDark",
+  "title": "iPhone · Library · Classes (dark)",
   "w": 390,
   "h": 844
  },
@@ -727,6 +739,18 @@ export default [
   "h": 900
  },
  {
+  "name": "WebAdminDenied",
+  "title": "Web · Admin · someone who isn’t an admin",
+  "w": 1440,
+  "h": 900
+ },
+ {
+  "name": "WebAdminEmpty",
+  "title": "Web · Admin · nothing waiting",
+  "w": 1440,
+  "h": 900
+ },
+ {
   "name": "WebAdminReports",
   "title": "Web · Admin · reports",
   "w": 1440,
@@ -873,6 +897,12 @@ export default [
  {
   "name": "WebClassesJoin",
   "title": "Web · Library · Classes · Join a class (with its code)",
+  "w": 1440,
+  "h": 900
+ },
+ {
+  "name": "WebClassesLoading",
+  "title": "Web · Library · Classes · loading",
   "w": 1440,
   "h": 900
  },

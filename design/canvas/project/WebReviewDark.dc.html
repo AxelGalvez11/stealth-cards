@@ -247,7 +247,7 @@ mock() {
         classes: () => (wait ? undefined : p.empty ? [] : N.CLASS_LIST),
         klass: code => (wait ? undefined : p.missing ? { missing: true, status: 404 } : klass(code)),
         verify: () => ({ verified: '', open: !!m.verifySent, declined: false, role: '', school: 'UC Davis' }),
-        admin: () => (wait ? undefined : p.denied ? { missing: true, status: 403 } : N.ADMIN),
+        admin: () => (wait ? undefined : p.denied ? { missing: true, status: 403 } : p.empty ? { requests: [], reports: [] } : N.ADMIN),
         drop: noop, act: () => Promise.resolve(null)
       };
     })(),

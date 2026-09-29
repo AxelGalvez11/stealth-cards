@@ -64,7 +64,7 @@ a{color:inherit;text-decoration:none}a:hover{opacity:.8}
 </main>
 </div>
 </x-dc>
-<script type="text/x-dc" data-dc-script data-props='{"dark":{"editor":"boolean","default":false},"dim":{"editor":"boolean","default":false},"grain":{"editor":"range","default":0.7,"min":0,"max":1,"step":0.05},"tab":{"editor":"enum","default":"Verification","options":["Verification","Reports"]},"loading":{"editor":"boolean","default":false},"denied":{"editor":"boolean","default":false},"$preview":{"width":1440,"height":900}}'>
+<script type="text/x-dc" data-dc-script data-props='{"dark":{"editor":"boolean","default":false},"dim":{"editor":"boolean","default":false},"grain":{"editor":"range","default":0.7,"min":0,"max":1,"step":0.05},"tab":{"editor":"enum","default":"Verification","options":["Verification","Reports"]},"loading":{"editor":"boolean","default":false},"empty":{"editor":"boolean","default":false},"denied":{"editor":"boolean","default":false},"$preview":{"width":1440,"height":900}}'>
 class Component extends DCLogic {
 // Dark mode has two looks, picked in Settings → Dark mode: black (the first one, and still the default) or gray (the
 // owner: "add a darkmode option that is grayish not fully blackedout"). g asks for gray; it only counts when d is on.
@@ -281,7 +281,7 @@ mock() {
         classes: () => (wait ? undefined : p.empty ? [] : N.CLASS_LIST),
         klass: code => (wait ? undefined : p.missing ? { missing: true, status: 404 } : klass(code)),
         verify: () => ({ verified: '', open: !!m.verifySent, declined: false, role: '', school: 'UC Davis' }),
-        admin: () => (wait ? undefined : p.denied ? { missing: true, status: 403 } : N.ADMIN),
+        admin: () => (wait ? undefined : p.denied ? { missing: true, status: 403 } : p.empty ? { requests: [], reports: [] } : N.ADMIN),
         drop: noop, act: () => Promise.resolve(null)
       };
     })(),
