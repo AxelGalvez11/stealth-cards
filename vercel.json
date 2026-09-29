@@ -95,6 +95,10 @@
       "destination": "/api/index"
     },
     {
+      "source": "/class/:code",
+      "destination": "/api/index"
+    },
+    {
       "source": "/((?!.*\\.).*)",
       "destination": "/app.html"
     }
