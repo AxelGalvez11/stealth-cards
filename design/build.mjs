@@ -6333,7 +6333,7 @@ const pdBtn = (inner, { onClick = '', href = '', inv = false, extra = '', attrs 
   return href ? `<a href="${href}" class="sc-press"${attrs} style="${st}">${inner}</a>` : `<button type="button" onClick="${onClick}" class="sc-press"${attrs} style="${st}">${inner}</button>`;
 };
 // A verified teacher's answer once they've checked the deck: not a button (it stays until the deck changes again).
-const CHECKED_BY_YOU = phone => `<span role="status" style="height: ${phone ? 48 : 44}px; padding: 0 ${phone ? 20 : 20}px; display: inline-flex; align-items: center; justify-content: center; gap: 8px; border-radius: 999px; background: {{t.surf}}; color: {{t.text}}; font-size: ${phone ? 16 : 15}px; font-weight: 600; white-space: nowrap;"><span style="display: flex; color: #3E63DD;">${svg(I.shield, 16, 2)}</span><span>Checked by you</span></span>`;
+const CHECKED_BY_YOU = phone => `<span role="status" style="height: ${phone ? 48 : 44}px; padding: 0 20px; display: inline-flex; align-items: center; justify-content: center; gap: 8px; border-radius: 999px; background: {{t.surf}}; color: {{t.text}}; font-size: ${phone ? 16 : 15}px; font-weight: 600; white-space: nowrap;"><span style="display: flex; color: #3E63DD;">${svg(I.shield, 16, 2)}</span><span>Checked by you</span></span>`;
 // iPhone: round buttons beside Study.
 const pdRound = (inner, label, { onClick = '', href = '', attrs = '' } = {}) => {
   const st = 'position: relative; width: 56px; height: 56px; flex-shrink: 0; border: 0; border-radius: 28px; background: {{t.surf}}; color: {{t.text}}; display: flex; align-items: center; justify-content: center; cursor: pointer;';
