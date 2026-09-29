@@ -443,12 +443,13 @@ renderVals() {
     const words = { suggestion: [actor, 'suggested ' + (n === 1 ? 'a change' : n + ' changes') + ' to', dk.name || ''], follow: [actor, 'followed you', ''],
       update: [dk.name || 'A deck you follow', 'has ' + (d.summary || 'changes'), ''], decided: [actor, did, dk.name || ''], checked: [actor, 'checked', dk.name || ''],
       verified: ['You’re verified', 'as a ' + (d.role === 'school' ? 'school' : 'teacher'), ''], hidden: [dk.name || d.name || 'A deck of yours', 'was hidden after a report', ''] }[x.kind] || [actor, '', dk.name || ''];
-    // A suggestion opens your deck's suggestions (your library's deck shared as that one); a follow, their profile.
+    // A suggestion opens your deck's suggestions (your library's deck shared as that one), or for a helper (the deck isn't
+    // theirs) their Suggestions, where every deck they help with waits; a follow, their profile.
     const mine = x.kind === 'suggestion' && dk.id ? lib.find(y => y.shared && y.shared.id === dk.id) : null;
     // Lucida's own news (verified, hidden) has no person: it shows Lucida's mark. Being verified opens your profile (where
     // the check is); a hidden deck opens its page.
     const href = x.kind === 'follow' ? goTo('/@' + (who.handle || d.handle || ''), B('ProfileOther')) : x.kind === 'verified' ? goTo('/you', B('Profile')) : mine ? goTo('/deck/' + mine.id + '/suggestions', B('Suggestions'))
-      : goTo(dk.url || '', x.kind === 'suggestion' ? B('Suggestions') : B('PublicDeck'));
+      : x.kind === 'suggestion' ? goTo('/suggestions', B('Suggestions')) : goTo(dk.url || '', B('PublicDeck'));
     const isNew = !x.read || (!!this.fresh && this.fresh.has(x.id)), system = x.kind === 'verified' || x.kind === 'hidden';
     return { id: String(x.id), who, system, human: !system, lead: words[0], mid: words[1], tail: words[2], hasNote: x.kind === 'suggestion' && !!d.message, note: d.message || '', when: ago(x.created_at), isNew, dot: isNew ? '#3E63DD' : 'transparent', href };
   });

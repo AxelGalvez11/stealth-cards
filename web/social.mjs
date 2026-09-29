@@ -518,7 +518,9 @@ export async function suggest(uid, me, sharedId, { message = '', changes = [] } 
     await inLibraryOf(sh.owner, () => decide(sh.owner, s.id, { $all: 'take' }, { byHelper: true }));
     return { id: s.id, taken: true };
   }
-  await notify([{ user_id: sh.owner, kind: 'suggestion', actor: author.id, actor_name: author.name + (s.ai ? ' (' + s.ai + ')' : ''), shared_id: sharedId, data: { n: out.length, message: s.message, id: s.id } }]);
+  // The owner hears, and so do the helpers of a deck kept up by the community (they can take it or skip it too).
+  const to = [sh.owner, ...(sh.maintained === 'community' ? (sh.helpers || []).map(h => h.id) : [])].filter((id, i, a) => id && id !== author.id && a.indexOf(id) === i);
+  await notify(to.map(user_id => ({ user_id, kind: 'suggestion', actor: author.id, actor_name: author.name + (s.ai ? ' (' + s.ai + ')' : ''), shared_id: sharedId, data: { n: out.length, message: s.message, id: s.id } })));
   return { id: s.id, taken: false };
 }
 // Runs fn in someone else's library (a helper's change going into the owner's deck), again from the newer copy if the
