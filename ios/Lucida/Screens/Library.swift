@@ -13,8 +13,10 @@ struct LibDeck: Identifiable {
   var photo: String? = nil
   var folder: String? = nil
   var due = 0, fresh = 0, totalLabel = "0", ret: Int? = nil, paused = false
-  /// "412 cards · 10 new · 91%"
-  var line: String { totalLabel + " cards · \(fresh) new" + (ret.map { " · \($0)%" } ?? "") }
+  /// How many cards, and whose it is: "Public" or "Link only" for a deck you share, "From <name>" for someone else's.
+  var total = 0, whose = ""
+  /// "Public · 412 cards · 10 new · 91%" (one card says card).
+  var line: String { (whose.isEmpty ? "" : whose + " · ") + totalLabel + (total == 1 ? " card · " : " cards · ") + "\(fresh) new" + (ret.map { " · \($0)%" } ?? "") }
 }
 
 /// A folder and the decks in it (db.js folders).
@@ -47,14 +49,17 @@ extension Store {
     if demo {
       if props.newUser { return [] }
       let X = Sample.shared
+      // In the sample, System Design is shared (Public) and Spanish Verbs is a copy of Maria's deck (mock.mjs LIB_NET).
+      let whose = ["sys": "Public", "span": "From Maria Santos"]
       return demoDeckOrder.compactMap { id in X.DECKS.first { $0.id == id } }.map { d in
         LibDeck(id: d.id, name: d.name, tags: X.TAGS[d.id] ?? [], mesh: Mesh.deck(seed: d.name), folder: demoFolderOf(d.id),
-                due: props.caughtUp ? 0 : d.due, fresh: d.fresh, totalLabel: d.total, ret: d.ret)
+                due: props.caughtUp ? 0 : d.due, fresh: d.fresh, totalLabel: d.total, ret: d.ret, total: Int(d.total) ?? 0, whose: whose[d.id] ?? "")
       }
     }
+    let byId = Dictionary(lib.decks.map { ($0.id, $0) }, uniquingKeysWith: { a, _ in a })
     return engine.decks.map { d in
       LibDeck(id: d.id, name: d.name, tags: d.tags, mesh: d.mesh, photo: d.image == "mock" ? nil : d.image, folder: d.folder,
-              due: d.due, fresh: d.fresh, totalLabel: d.totalLabel, ret: d.ret, paused: d.paused)
+              due: d.due, fresh: d.fresh, totalLabel: d.totalLabel, ret: d.ret, paused: d.paused, total: d.total, whose: byId[d.id].map { sharing($0).whose } ?? "")
     }
   }
 
@@ -274,7 +279,7 @@ struct LibraryScreen: View {
   private func search(_ hint: String) -> some View {
     HStack(spacing: 10) {
       Icon("search", 16, 1.8).foregroundStyle(t.muted)
-      TextField("", text: $q, prompt: Text(hint).foregroundStyle(t.muted))
+      TextField("", text: $q, prompt: Text(hint).foregroundStyle(PLACEHOLDER))
         .font(.geist(16)).foregroundStyle(t.text).textInputAutocapitalization(.never).autocorrectionDisabled().submitLabel(.search)
         .padding(.leading, 2)
         .onChange(of: q) { _, _ in shown = 60 }

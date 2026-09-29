@@ -46,15 +46,17 @@ struct RoundButton: View {
   }
 }
 
-/// coverRound: the round buttons on a deck's header (frosted white, in dark mode too).
+/// coverRound: the round buttons on a deck's header (frosted white, in dark mode too); its page and Suggest a change
+/// are a little smaller (40).
 struct CoverButton: View {
   let icon: String, label: String
+  var size: CGFloat = 44
   let action: () -> Void
   var body: some View {
     Button(action: action) {
       Icon(icon, 18, 2)
         .foregroundStyle(Color.black)
-        .frame(width: 44, height: 44)
+        .frame(width: size, height: size)
         .background(Circle().fill(.ultraThinMaterial).environment(\.colorScheme, .light))
         .background(Circle().fill(Color.white.opacity(0.62)))
         .overlay(Circle().strokeBorder(Color.black.opacity(0.08), lineWidth: 1))
@@ -75,16 +77,16 @@ struct Eyebrow: View {
   }
 }
 
-/// The tabs. The Library was called Decks (it keeps the Decks icon).
-enum Tab: String, CaseIterable { case today = "Today", library = "Library", stats = "Stats", connect = "Connect" }
+/// The tabs (NAV_P). The Library was called Decks (it keeps the Decks icon).
+enum Tab: String, CaseIterable { case today = "Today", library = "Library", discover = "Discover", stats = "Stats", connect = "Connect" }
 
 /// The floating tab bar: a gray pill, 64 tall, 16 in from the sides and 28 up from the bottom; the current tab is a
-/// black pill.
+/// black pill (none on a profile).
 struct TabBar: View {
   @Environment(\.theme) private var t
-  let active: Tab
+  let active: Tab?
   let pick: (Tab) -> Void
-  private let icons: [Tab: String] = [.today: "today", .library: "decks", .stats: "stats", .connect: "connect"]
+  private let icons: [Tab: String] = [.today: "today", .library: "decks", .discover: "compass", .stats: "stats", .connect: "connect"]
   var body: some View {
     HStack(spacing: 4) {
       ForEach(Tab.allCases, id: \.self) { tab in

@@ -1,4 +1,4 @@
-// iPhone · Learn mode (PhoneQuizStart, PhoneQuizUpgrade, PhoneQuiz, PhoneQuizAnswered, PhoneQuizMatch, PhoneQuizType,
+// iPhone · Learn mode (PhoneQuizStart, PhoneQuiz, PhoneQuizAnswered, PhoneQuizMatch, PhoneQuizType,
 // PhoneQuizDone, PhoneQuizSettings): pick the cards and kinds of questions, then answer until every card is learned. X
 // stops for now and goes back to the deck's page; the gear by it picks the deck's background.
 import SwiftUI
@@ -110,96 +110,6 @@ enum Scrim {
   static let curve: [(at: Double, alpha: Double)] = [(0, 1), (0.081, 0.987), (0.155, 0.951), (0.225, 0.896), (0.29, 0.825), (0.353, 0.741), (0.412, 0.648), (0.471, 0.55), (0.529, 0.45), (0.588, 0.352), (0.647, 0.259), (0.71, 0.175), (0.775, 0.104), (0.845, 0.049), (0.919, 0.013), (1, 0)]
   static func mask(from: Double) -> LinearGradient {
     LinearGradient(stops: curve.map { .init(color: .black.opacity($0.alpha), location: from + (1 - from) * $0.at) }, startPoint: .top, endPoint: .bottom)
-  }
-}
-
-/// On Free (once Pro can be bought), Learn opens this instead: a sky, two matched cards, what Pro adds, the price.
-struct LearnUpgradeSheet: View {
-  @Environment(\.theme) private var t
-  @EnvironmentObject private var nav: Nav
-  var body: some View {
-    VStack(spacing: 0) {
-      SkyTop(height: 200, cardW: 132, cardH: 88)
-      VStack(alignment: .leading, spacing: 18) {
-        VStack(alignment: .leading, spacing: 8) {
-          HStack(spacing: 10) {
-            Text("Learn every card").css(26, .semibold, ls: -0.03)
-            Text("Pro").css(12, .bold, ls: 0.01).foregroundStyle(.white).padding(.horizontal, 9).frame(height: 22)
-              .background(Capsule().fill(LinearGradient(colors: [Color(hex: 0x7E94FB), Color(hex: 0x2CB2EA)], startPoint: .leading, endPoint: .trailing)))
-          }
-          Text("AI turns your cards into questions of every kind, like matching and typing the answer, and keeps going until you know them all.").css(15, lh: 1.5).foregroundStyle(t.muted)
-        }
-        VStack(alignment: .leading, spacing: 10) {
-          ForEach(["Learn mode with 5 kinds of questions", "Photo covers and your own colors", "Unlimited pictures and sounds"], id: \.self) { x in
-            HStack(spacing: 10) {
-              Icon("check", 13, 2.6).foregroundStyle(.white).frame(width: 22, height: 22)
-                .background(Circle().fill(LinearGradient(colors: [Color(hex: 0x7E94FB), Color(hex: 0x2CB2EA)], startPoint: .topLeading, endPoint: .bottomTrailing)))
-              Text(x).css(15)
-            }
-          }
-        }
-        // Each price is its own button, so paying never picks yearly for you.
-        Text("Yearly works out to $4.17 a month. Cancel anytime.").css(14).foregroundStyle(t.muted)
-        FlexRow(spacing: 10) {
-          Button { UIApplication.shared.open(API.pro("monthly")) } label: {
-            Text("$5.99 a month").css(15, .semibold).foregroundStyle(t.text).frame(maxWidth: .infinity).frame(height: 52).background(Capsule().fill(t.surf))
-          }.buttonStyle(.press)
-          Button { UIApplication.shared.open(API.pro("yearly")) } label: {
-            Text("$49.99 a year").css(15, .semibold).foregroundStyle(t.invText).frame(maxWidth: .infinity).frame(height: 52).background(Capsule().fill(t.inv))
-          }.buttonStyle(.press)
-        }
-      }
-      .foregroundStyle(t.text)
-      .padding(.horizontal, 20).padding(.bottom, 20).padding(.top, -6)
-    }
-    .padding(.bottom, 14)
-    .overlay(alignment: .topTrailing) {
-      Button(action: nav.close) { Icon("close", 16, 2).foregroundStyle(.black).frame(width: 40, height: 40).background(Circle().fill(Color.white.opacity(0.7))) }
-        .buttonStyle(.press).accessibilityLabel("Close").padding(16)
-    }
-  }
-}
-
-/// A sky with soft clouds, and two matched cards on it (the upgrade card's top).
-struct SkyTop: View {
-  @Environment(\.theme) private var t
-  let height: CGFloat, cardW: CGFloat, cardH: CGFloat
-  var body: some View {
-    let sky = t.gray ? (top: 0x1B2A48, mid: 0x1F2B45, low: 0x212637, cloud: Color(hex: 0x96AAE6, opacity: 0.12))
-      : t.dark ? (top: 0x081733, mid: 0x0D2148, low: 0x0A1530, cloud: Color(hex: 0x96AAE6, opacity: 0.10)) : (top: 0x86BDF3, mid: 0xC9E2FB, low: 0xEDF5FE, cloud: Color(hex: 0xFFFFFF, opacity: 0.94))
-    // Soft clouds: three puffs of three blobs each, and the sky's gradient, drawn in one canvas.
-    let stops: [Gradient.Stop] = [.init(color: Color(hex: UInt32(sky.top)), location: 0), .init(color: Color(hex: UInt32(sky.mid)), location: 0.58), .init(color: Color(hex: UInt32(sky.low)), location: 0.82), .init(color: t.bg, location: 1)]
-    Canvas { ctx, size in
-      ctx.fill(Path(CGRect(origin: .zero, size: size)), with: .linearGradient(Gradient(stops: stops), startPoint: .zero, endPoint: CGPoint(x: 0, y: size.height)))
-      for c in [(-8.0, 18.0, 190.0, 70.0), (58, 6, 210, 76), (70, 58, 170, 60)] {
-        let ox = size.width * c.0 / 100, oy = size.height * c.1 / 100
-        for p in [(0.0, 30.0, 60.0, 70.0), (24, 0, 56, 88), (46, 24, 54, 76)] {
-          let r = CGRect(x: ox + c.2 * p.0 / 100, y: oy + c.3 * p.1 / 100, width: c.2 * p.2 / 100, height: c.3 * p.3 / 100)
-          ctx.drawLayer { l in
-            l.translateBy(x: r.midX, y: r.midY); l.scaleBy(x: r.width / 2, y: r.height / 2)
-            l.fill(Path(ellipseIn: CGRect(x: -1, y: -1, width: 2, height: 2)),
-                   with: .radialGradient(Gradient(stops: [.init(color: sky.cloud, location: 0.4), .init(color: sky.cloud.opacity(0), location: 1)]), center: .zero, startRadius: 0, endRadius: 1))
-          }
-        }
-      }
-    }
-    .frame(maxWidth: .infinity).frame(height: height)
-    .overlay(alignment: .center) {
-      HStack(spacing: 14) {
-        MeshCard(mesh: .palette("Iris"), radius: 18) {
-          Text("Golgi apparatus").css((cardW / 9.5).rounded(), .semibold, ls: -0.01).multilineTextAlignment(.center).padding(12).frame(width: cardW, height: cardH)
-        }
-        .rotationEffect(.degrees(-6)).shadow(color: Color(hex: 0x14165A, opacity: 0.45), radius: 8, y: 16)
-        Icon("check", 18, 2.6).foregroundStyle(Color(hex: 0x067647)).frame(width: 34, height: 34).background(Circle().fill(.white)).shadow(color: .black.opacity(0.3), radius: 5, y: 6)
-        MeshCard(mesh: .palette("Mint"), radius: 18) {
-          Text("Packages proteins for export").css((cardW / 11).rounded(), .semibold, lh: 1.25).multilineTextAlignment(.center).padding(12).frame(width: cardW, height: cardH)
-        }
-        .rotationEffect(.degrees(5)).shadow(color: Color(hex: 0x14165A, opacity: 0.45), radius: 8, y: 16)
-      }
-      .offset(y: height * 0.04)
-    }
-    .clipped()
-    .accessibilityHidden(true)
   }
 }
 

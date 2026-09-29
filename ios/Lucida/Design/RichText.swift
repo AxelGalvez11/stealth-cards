@@ -178,6 +178,8 @@ struct LabelText: UIViewRepresentable {
   /// Cut off after `lines` with …, at the lines' exact height (like -webkit-line-clamp): other fonts filling in for
   /// missing letters, like CJK, don't make the lines taller.
   var clamp = false
+  /// Exactly as tall as its lines (not rounded up to a whole point), like the browser's lines.
+  var exact = false
   func makeUIView(context: Context) -> UILabel {
     let l = UILabel()
     l.numberOfLines = lines; l.lineBreakMode = .byWordWrapping; l.lineBreakStrategy = []; l.backgroundColor = .clear
@@ -192,7 +194,7 @@ struct LabelText: UIViewRepresentable {
   func sizeThatFits(_ proposal: ProposedViewSize, uiView: UILabel, context: Context) -> CGSize? {
     let w = proposal.width ?? 10_000
     let s = uiView.sizeThatFits(CGSize(width: w, height: .greatestFiniteMagnitude))
-    return CGSize(width: min(w, ceil(s.width)), height: clamp ? s.height : ceil(s.height))
+    return CGSize(width: min(w, ceil(s.width)), height: clamp || exact ? s.height : ceil(s.height))
   }
 }
 

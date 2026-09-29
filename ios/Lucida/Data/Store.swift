@@ -52,8 +52,6 @@ struct DemoProps {
   var noStats = false
   /// Settings on the design screen (darkMode: dark mode's look, "gray" on the canvas's Gray boards).
   var look = "system", darkMode = "black", grads = "mix", fsrs = true, check = true
-  /// Learn mode on Free: the upgrade card instead of the start sheet.
-  var upgrade = false
   /// Settings' plan: "Free", "Pro", or "Pro, ending" (the canvas board's `plan`).
   var plan = "Pro"
   /// Settings' profile picture (the canvas board's `photo`: Color, Google photo, or Your photo, from `-photo`), as the
@@ -72,6 +70,15 @@ struct DemoProps {
   /// The onboarding open on this step (PhoneWelcome and its twins: "Pick AI", "Steps", "Connected", "Pick source",
   /// "Source steps", "Found", or "Done").
   var welcomeStep = "Pick AI"
+  /// The study network's boards: a page before its answer arrives (`loading`), nothing shared or new yet (`empty`), no
+  /// one with that name (`missing`), you follow Maria (`following`), Edit profile open, your profile's tab, and
+  /// Discover's search.
+  var netLoading = false, netEmpty = false, missing = false, following = false, editOpen = false
+  var profileTab = "Decks"
+  var q = ""
+  /// The sample deck's sharing (the deck page's Tweaks): "Link only" or "Public" (yours, shared), or from Maria:
+  /// "study" (as it is) or "copy" (with her changes waiting); and the changes' sheet open.
+  var shared = "", linked = "", updatesOpen = false
 }
 
 struct TodayVM {
@@ -97,6 +104,14 @@ final class Store: ObservableObject {
   @Published var demoDeck = DemoDeck()
   @Published var demoGraded = 0
   @Published var demoLearn = DemoLearn()
+  /// What a design screen changed on the study network (Net.swift).
+  @Published var demoNet = DemoNet()
+  /// The study network's answers (Net.swift, like web/net.js).
+  let netCache = NetCache()
+  /// What you changed on a profile, shown before the server's answer has it (Profile.swift), by handle.
+  @Published var profileOver: [String: ProfileOver] = [:]
+  /// When the app went to the background (coming back after ten minutes brings shared decks up to date).
+  var away: Date? = nil
   @Published var demoPiles: [(name: String, n: Int)] = [("Know it", 18), ("Almost", 6), ("No clue", 3)]
   /// The design screens' sample sound: playing or not, how far in, and a recording under way.
   @Published var demoPlaying = false
@@ -152,15 +167,24 @@ final class Store: ObservableObject {
     guard demo else { return lib.me?.plan ?? Plan() }
     return props.plan == "Free" ? Plan() : Plan(pro: true, every: "year", until: "2027-09-24T12:00:00Z", ending: props.plan == "Pro, ending")
   }
-  /// Learn mode is Pro; on Free its button opens the upgrade card.
-  /// A copy of the server on your own computer has nobody signed in, and everything is on there (like db.js pro()).
-  var isPro: Bool { demo ? !props.upgrade : lib.me == nil || plan.pro }
+  /// Pro (the plan's own tools: exam dates, deeper stats, unlimited pictures and sounds). A copy of the server on your
+  /// own computer has nobody signed in, and everything is on there (like db.js pro()).
+  var isPro: Bool { demo ? props.plan != "Free" : lib.me == nil || plan.pro }
 
   // ---------- loading and saving ----------
   func load() async {
     guard !demo else { return }
+    #if DEBUG
+    // `-dev <name>`: one of the made-up people on a copy of the server on this Mac (its lc_dev cookie), for trying the
+    // study network as several people.
+    if let name = Board.arg("-dev"), let host = API.base.host,
+       let c = HTTPCookie(properties: [.name: "lc_dev", .value: name, .domain: host, .path: "/", .expires: Date().addingTimeInterval(86400)]) {
+      HTTPCookieStorage.shared.setCookie(c)
+    }
+    #endif
     do {
-      lib = try await api.state(); phase = .ready; startPolling()
+      // Decks you study from other people take their owners' newest changes as the app opens.
+      lib = try await api.syncedState(); phase = .ready; startPolling()
       if !lib.settings.welcomed && lib.decks.isEmpty { welcoming = true }
     }
     catch APIError.signedOut { phase = .signedOut }
@@ -179,6 +203,14 @@ final class Store: ObservableObject {
     }
   }
   func accept(_ next: Library) { if next.rev >= lib.rev { lib = withMine(next) } }
+  /// Back after ten minutes or more away: decks you study from other people get their owners' newest changes, and the
+  /// network's answers are asked for again (web/db.js).
+  func cameBack() {
+    guard !demo, phase == .ready, let a = away else { away = nil; return }
+    away = nil
+    guard Date().timeIntervalSince(a) > 600 else { return }
+    Task { if let next = try? await api.syncedState() { accept(next); netDrop(); objectWillChange.send() } }
+  }
   /// A copy of the library with the changes that aren't saved yet on top.
   private func withMine(_ next: Library) -> Library { var l = next; for m in mine { m.apply(&l) }; return l }
 
@@ -196,12 +228,13 @@ final class Store: ObservableObject {
   /// Switches, settings, and a deck's options (db.js saveNow): `local` shows the change here at once, and the saves go
   /// out one at a time, in order (the owner: the switch "looked dead" while the server took up to a second to answer,
   /// then jumped). If one fails, the app goes back to what's saved; offline, it takes the server's copy at the next check.
-  func saveNow(_ type: String, _ payload: [String: Any], _ local: @escaping (inout Library) -> Void) {
+  @discardableResult
+  func saveNow(_ type: String, _ payload: [String: Any], _ local: @escaping (inout Library) -> Void) -> Task<Void, Never> {
     mineCount += 1
     let n = mineCount, before = line
     mine.append((n, local))
     local(&lib)
-    line = Task { [weak self] in
+    let task = Task { [weak self] in
       await before?.value
       guard let self else { return }
       let ok = await self.sent(type, payload) != nil
@@ -209,6 +242,8 @@ final class Store: ObservableObject {
       guard !ok else { return }
       if let saved = try? await self.api.state() { self.lib = self.withMine(saved) } else { self.lib.rev = 0 }
     }
+    line = task
+    return task
   }
 
   func cardCount(_ id: String) -> Int { demo ? (props.emptyDeck ? 0 : 412) : lib.cards.filter { $0.deckId == id }.count }

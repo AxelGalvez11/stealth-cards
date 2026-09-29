@@ -1,10 +1,11 @@
 // Copies what the iPhone app (ios/) shares with the design canvas into Swift: the theme colors, the icons, the gradient
 // palettes (plus the site's Midnight, for the Learn sheet's deep top), the onboarding's icons and moving background, tag colors, the sign-in wall's cards, and the canvas's sample data
-// (and its sample sound's waveform). Run it after changing any of those.
+// (its sample sound's waveform, and the study network's sample: net-sample.mjs). Run it after changing any of those.
 import { readFileSync, writeFileSync } from 'node:fs';
 import { PALETTES, PALETTE_NAMES, SITE_PALETTES } from './surfaces.mjs';
 import { WALL_CARDS } from './wall.mjs';
 import { SAMPLE, SAMPLE_WAVE } from './mock.mjs';
+import { NET_SAMPLE } from './net-sample.mjs';
 import { G_LOGO, APPLE_LOGO } from './logos.mjs';
 
 const OUT = new URL('../ios/Lucida/Design/Generated.swift', import.meta.url);
@@ -18,8 +19,9 @@ const dark = evalJs(th[1]), light = evalJs(th[2]);
 const gray = evalJs(grab(/if \(d && g\) return (\{ bg: '#[0-9A-Fa-f]{6}'[^}]+\});/, 'the gray theme')[1]);
 // Icons: stroke drawings on a 24 x 24 grid.
 const I = evalJs(grab(/const I = (\{[\s\S]*?\n\});/, 'the icons')[1]);
-// The onboarding's own icons (star, sheet, paste, out, copy) go in with the rest.
-Object.assign(I, evalJs(grab(/const OB_I = (\{[\s\S]*?\n\});/, 'the onboarding icons')[1]));
+// The onboarding's own icons (star, sheet, paste, out, copy) go in with the rest; the two whose names the app's icons
+// already use (star and copy, drawn a little differently) as obStar and obCopy.
+for (const [k, v] of Object.entries(evalJs(grab(/const OB_I = (\{[\s\S]*?\n\});/, 'the onboarding icons')[1]))) I[k in I ? 'ob' + k[0].toUpperCase() + k.slice(1) : k] = v;
 // The onboarding's moving background (OB_AURA): the page, the folds' light and shadow, how much the edges fade, the
 // grain (its opacity, blend, and the slope and intercept that set how bright it is), and the card's shadow; per mode.
 const OB_AURA = evalJs(grab(/const OB_AURA = (\{[\s\S]*?\n\});/, 'the onboarding background')[1]);
@@ -105,6 +107,9 @@ ${Object.entries(logos).map(([k, v]) => `    ${str(k)}: (${str(v.vb)}, [${v.path
 
   /// The canvas's sample data (design/mock.mjs), for the demo screens.
   static let sampleJSON = ${str(JSON.stringify(SAMPLE))}
+
+  /// The study network's sample data (design/net-sample.mjs): people, shared decks, Discover, profiles, and news.
+  static let netSampleJSON = ${str(JSON.stringify(NET_SAMPLE))}
 
   /// The sample sound's waveform (design/mock.mjs SAMPLE_WAVE): 96 peaks, 0 to 1.
   static let sampleWave: [Double] = ${str(SAMPLE_WAVE)}

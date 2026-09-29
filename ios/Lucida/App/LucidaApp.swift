@@ -44,6 +44,7 @@ struct RootView: View {
   @EnvironmentObject private var store: Store
   @EnvironmentObject private var nav: Nav
   @Environment(\.colorScheme) private var scheme
+  @Environment(\.scenePhase) private var scenePhase
 
   var body: some View {
     let look = store.demo ? store.props.look : store.settings.look
@@ -60,6 +61,8 @@ struct RootView: View {
     }
     .environment(\.theme, t)
     .preferredColorScheme(dark ? .dark : .light)
+    // Back after a while away: decks you study from other people get their owners' newest changes.
+    .onChange(of: scenePhase) { _, p in if p == .background { store.away = Date() } else if p == .active { store.cameBack() } }
     // What went wrong saving a change or uploading a photo, like the web app's alert.
     .alert(store.error ?? "", isPresented: Binding(get: { store.error != nil && store.phase == .ready }, set: { if !$0 { store.error = nil } })) {
       Button("OK", role: .cancel) {}
@@ -87,10 +90,17 @@ struct RootView: View {
           case "stats": nav.tab = .stats
           case "connect": nav.tab = .connect
           case "settings": nav.path = [.settings]
+          case "discover": nav.tab = .discover
+          case "news": nav.path = [.news]
+          case "profile": nav.path = [.profile("")]
           case "learn": nav.tab = .library; nav.path = [.deck(first)]; nav.sheet = .learnStart(first)
           case "decksettings": nav.tab = .library; nav.path = [.deck(first)]; nav.sheet = .deckSettings(first)
           // The welcome after the first sign-in, whether or not this library is new.
           case "welcome": store.welcoming = true
+          // `profile:<handle>`: someone's profile; `deck:<name>`: the deck with that name.
+          case let o where o.hasPrefix("profile:"): nav.path = [.profile(String(o.dropFirst(8)))]
+          case let o where o.hasPrefix("deck:"):
+            if let d = store.lib.decks.first(where: { $0.name == String(o.dropFirst(5)) }) { nav.tab = .library; nav.path = [.deck(d.id)] }
           default: break
           }
         }
@@ -172,7 +182,6 @@ extension Board {
     case "PhoneReviewAudio": store.props.cardIndex = 3; store.demoPlaying = true; nav.full = .review(deckId: "cell", pile: nil)
     case "PhoneInbox": nav.path = [.settings, .inbox]
     case "PhoneQuizStart": nav.tab = .library; nav.path = [.deck("cell")]; nav.sheet = .learnStart("cell")
-    case "PhoneQuizUpgrade": store.props.upgrade = true; nav.tab = .library; nav.path = [.deck("cell")]; nav.sheet = .learnStart("cell")
     case "PhoneQuiz": nav.full = .learn("cell")
     case "PhoneQuizAnswered": store.demoLearn.pick = 1; nav.full = .learn("cell")
     case "PhoneQuizMatch": store.demoLearn.screen = "match"; nav.full = .learn("cell")
@@ -187,6 +196,24 @@ extension Board {
     case "PhoneWelcomeAnki": store.welcoming = true; store.props.welcomeStep = "Source steps"
     case "PhoneWelcomeFound": store.welcoming = true; store.props.welcomeStep = "Found"
     case "PhoneWelcomeDone": store.welcoming = true; store.props.welcomeStep = "Done"
+    // The study network: Discover, profiles (yours and Maria's), News, and the sample deck shared or from Maria.
+    case "PhoneDiscover": nav.tab = .discover
+    case "PhoneDiscoverSearch": nav.tab = .discover; store.props.q = "bio"
+    case "PhoneProfile": nav.path = [.profile("")]
+    case "PhoneProfileOther": nav.path = [.profile("mariasantos")]
+    case "PhoneProfileFollowing": store.props.following = true; nav.path = [.profile("mariasantos")]
+    case "PhoneProfileEdit": store.props.editOpen = true; nav.path = [.profile("")]
+    case "PhoneProfileSaved": store.props.profileTab = "Saved"; nav.path = [.profile("")]
+    case "PhoneProfileSuggestions": store.props.profileTab = "Suggestions"; nav.path = [.profile("")]
+    case "PhoneProfileEmpty": store.props.netEmpty = true; nav.path = [.profile("")]
+    case "PhoneProfileLoading": store.props.netLoading = true; nav.path = [.profile("")]
+    case "PhoneProfileMissing": store.props.missing = true; nav.path = [.profile("nobody")]
+    case "PhoneActivity": nav.path = [.news]
+    case "PhoneActivityEmpty": store.props.netEmpty = true; nav.path = [.news]
+    case "PhoneDeckStudied": store.props.linked = "study"; nav.tab = .library; nav.path = [.deck("cell")]
+    case "PhoneDeckCopy": store.props.linked = "copy"; nav.tab = .library; nav.path = [.deck("cell")]
+    case "PhoneDeckUpdates": store.props.linked = "copy"; nav.tab = .library; nav.path = [.deck("cell")]; nav.sheet = .deckUpdates("cell")
+    case "PhoneDeckSettingsShare": store.props.shared = "Public"; store.props.deckSettings = "share"; nav.tab = .library; nav.path = [.deck("cell")]
     case "PhoneSignIn": store.phase = .signedOut
     case "PhoneSignInCode": store.phase = .signedOut; store.signInStep = .code
     default: break
@@ -224,13 +251,16 @@ struct MainView: View {
               case .deck(let id): DeckScreen(id: id)
               case .folder(let id): LibraryScreen(folderId: id)
               case .inbox: InboxScreen()
+              case .profile(let h): ProfileScreen(handle: h)
+              case .news: NewsScreen()
               }
             }
             .toolbar(.hidden, for: .navigationBar)
             .containerBackground(t.bg, for: .navigation)
           }
       }
-      if showsTabBar { TabBar(active: nav.tab, pick: nav.pick) }
+      // A profile lights up no tab (it's no tab's page).
+      if showsTabBar { TabBar(active: { if case .profile = nav.path.last { return nil }; return nav.tab }(), pick: nav.pick) }
       // A deck or card being dragged, over the page and the tab bar; and the Move to tray over it while a card is.
       DragGhost()
       MoveTray()
@@ -240,6 +270,8 @@ struct MainView: View {
       if store.welcoming { WelcomeScreen().zIndex(10).transition(.opacity) }
     }
     .ignoresSafeArea(edges: .bottom)
+    // A page of the web app, over the app (the pages the iPhone app doesn't draw yet).
+    .sheet(item: $nav.web) { SafariView(url: $0.url).ignoresSafeArea() }
     // A design screen's full screen, over its page once that's drawn (Board.setUp).
     .task { if let f = nav.boardFull { nav.boardFull = nil; try? await Task.sleep(nanoseconds: 100_000_000); nav.full = f } }
   }
@@ -248,13 +280,14 @@ struct MainView: View {
     switch nav.tab {
     case .today: TodayScreen()
     case .library: LibraryScreen()
+    case .discover: DiscoverScreen()
     case .stats: StatsScreen()
     case .connect: ConnectScreen()
     }
   }
-  /// Pages the canvas draws without the tab bar: Settings and Check AI cards.
+  /// Pages the canvas draws without the tab bar: Settings, Check AI cards, and News.
   private var showsTabBar: Bool {
-    switch nav.path.last { case .none, .deck, .folder: return true; default: return false }
+    switch nav.path.last { case .none, .deck, .folder, .profile: return true; default: return false }
   }
 }
 
@@ -268,11 +301,11 @@ struct SheetHost: View {
     case .deckSettings(let id): DeckSettingsHost(id: id)
     case .newDeck: SheetOverlay(top: nil, radius: 36, close: nav.close) { NewDeckSheet(demo: store.demo) }
     case .newCard(let deckId, let cardId): SheetOverlay(top: 56, radius: 36, close: nav.close) { EditorSheet(deckId: deckId ?? store.lib.decks.first?.id, cardId: cardId) }
-    case .learnStart(let id):
-      SheetOverlay(top: nil, radius: 36, close: nav.close) {
-        if !store.isPro { LearnUpgradeSheet() } else { LearnStartSheet(deckId: id) }
-      }
+    // Learn mode is free for everyone (the owner, 2026-09-29).
+    case .learnStart(let id): SheetOverlay(top: nil, radius: 36, close: nav.close) { LearnStartSheet(deckId: id) }
     case .nameFolder(let rename, let deck, let name): FolderPopup(rename: rename, deck: deck, start: name)
+    case .editProfile: SheetOverlay(top: 56, radius: 36, close: nav.close) { EditProfileSheet() }
+    case .deckUpdates(let id): SheetOverlay(top: 56, close: nav.close) { DeckUpdatesSheet(deckId: id) }
     }
   }
 }
@@ -284,10 +317,20 @@ struct DeckSettingsHost: View {
   @State private var tab = "general"
   @State private var tagPicker = false
   var body: some View {
+    let d = store.deck(id), linked = d.sharing.linked
+    // Like the web's confirm: a deck from someone leaves your library (your progress on it goes too); your own is
+    // deleted with its cards.
+    let ask = linked ? "Remove “\(d.name)” from your library? Your progress on it goes too."
+      : "Delete “\(d.name)” and its \(plural(store.cardCount(id), "card"))? This can’t be undone."
     SheetOverlay(top: 56, close: nav.close) {
-      DeckSettingsSheet(d: store.deck(id), tab: $tab, tagPicker: $tagPicker, close: nav.close)
+      DeckSettingsSheet(d: d, tab: $tab, tagPicker: $tagPicker, close: nav.close)
     }
     .onAppear { if store.demo { tab = store.props.deckSettings ?? "general"; tagPicker = store.props.tagPicker } }
+    .confirmationDialog(ask, isPresented: Binding(get: { store.confirmDelete == id }, set: { if !$0 { store.confirmDelete = nil } }), titleVisibility: .visible) {
+      Button(linked ? "Remove from library" : "Delete deck", role: .destructive) {
+        Task { await store.deleteDeck(id); nav.close(); nav.pick(.library) }
+      }
+    }
   }
 }
 

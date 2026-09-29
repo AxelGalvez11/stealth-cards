@@ -4,7 +4,11 @@
 import SwiftUI
 import PhotosUI
 
-struct CardRowVM: Identifiable { let id: String; let front: String; let meta: String; let tags: [String] }
+struct CardRowVM: Identifiable {
+  let id: String; let front: String; let meta: String; let tags: [String]
+  /// A card of a deck from someone else: the shared card it came from (a fix is suggested on it).
+  var origin: String? = nil
+}
 
 struct DeckVM {
   var id = "", name = "", seed = ""
@@ -24,6 +28,8 @@ struct DeckVM {
   var folder: String? = nil
   var folders: [(id: String, name: String)] = []
   var bg = DeckBg()
+  /// Shared by you, or from someone else (the study network).
+  var sharing = DeckSharing()
   var mesh: Mesh { Mesh.deck(seed: seed, round: round, style: style) }
   var hasImage: Bool { image != nil }
   /// A photo of your own for the header (not the canvas's placeholder).
@@ -54,7 +60,7 @@ extension Store {
                        .map { CardRowVM(id: $0.id, front: $0.front, meta: $0.kind + " · " + $0.next, tags: $0.tags) },
                      tags: e.tags ?? X.TAGS["cell"] ?? [], allTags: Array(Generated.tagColors.keys),
                      paused: e.paused, grading: e.grading ?? props.grading, fsrs: e.fsrs, goal: e.goal, gapIdx: e.gapIdx, steps: e.steps, perDay: e.perDay,
-                     folder: demoFolderOf("cell"), folders: demoFolders.map { ($0.id, $0.name) }, bg: e.bg)
+                     folder: demoFolderOf("cell"), folders: demoFolders.map { ($0.id, $0.name) }, bg: e.bg, sharing: demoSharing())
       return d
     }
     let E = engine
@@ -65,9 +71,9 @@ extension Store {
     return DeckVM(id: d.id, name: d.name, seed: d.cover.seed ?? d.name, style: d.cover.style ?? "mix", round: d.cover.round, image: d.cover.image,
                   lineShort: total + (st.aiCount > 0 ? " · \(st.aiCount) from your AI" : ""), due: st.due, fresh: st.fresh, ret: st.ret,
                   studyCount: st.due > 0 ? st.due : st.fresh, resume: learnOn(id),
-                  rows: cards.map { c in CardRowVM(id: c.id, front: Store.listFront(c), meta: (KIND_LABEL[c.kind] ?? "Basic") + " · " + E.nextLabel(c), tags: c.tags) },
+                  rows: cards.map { c in CardRowVM(id: c.id, front: Store.listFront(c), meta: (KIND_LABEL[c.kind] ?? "Basic") + " · " + E.nextLabel(c), tags: c.tags, origin: c.origin) },
                   tags: d.tags, allTags: E.tags, paused: d.paused, grading: d.grading, fsrs: d.fsrs, goal: d.goal, gapIdx: d.gapIdx, steps: d.steps, perDay: d.perDay,
-                  folder: d.folder, folders: lib.folders.map { ($0.id, $0.name) }, bg: d.bg)
+                  folder: d.folder, folders: lib.folders.map { ($0.id, $0.name) }, bg: d.bg, sharing: sharing(d))
   }
 
   /// How a card reads in a list: its words without formatting; a blank reads "____", and a box of a picture "What’s under
@@ -196,12 +202,16 @@ struct DeckScreen: View {
             .offset(y: y < 0 ? -y / 2 : 0)
         }
       VStack(alignment: .leading, spacing: 0) {
-        HStack(spacing: 8) {
+        // Top-aligned, like the board's row (its page and Suggest a change are 40, the rest 44).
+        HStack(alignment: .top, spacing: 8) {
           CoverButton(icon: "back", label: "Back") { nav.back() }
           Spacer()
+          // A deck you share: its page. One you study from someone: Suggest a change instead of New card.
+          if let sh = d.sharing.shared { CoverButton(icon: "globe", label: sh.label, size: 40) { nav.open(store.webURL(sh.url)) } }
           CoverButton(icon: "gear", label: "Deck settings") { withAnimation(.out(0.35)) { nav.sheet = .deckSettings(d.id) } }
           if !d.rows.isEmpty { CoverButton(icon: "search", label: "Search") {} }
-          CoverButton(icon: "plus", label: "New card") { nav.newCard(deckId: d.id) }
+          if !d.sharing.readOnly { CoverButton(icon: "plus", label: "New card") { nav.newCard(deckId: d.id) } }
+          if d.sharing.readOnly, let lk = d.sharing.link { CoverButton(icon: "message", label: "Suggest a change", size: 40) { nav.open(store.webURL(lk.url + "?suggest=1")) } }
         }
         .padding(.top, Screen.top(54))
         Spacer(minLength: 0)
@@ -234,6 +244,19 @@ struct DeckScreen: View {
       VStack(spacing: 16) {
         header(d, sub: d.lineShort)
         VStack(spacing: 16) {
+          if d.sharing.linked, let lk = d.sharing.link { fromRow(d, lk) }
+          let upd = d.sharing.isCopy ? max(store.deckUpdates(d.id).count, d.sharing.link?.pending ?? 0) : 0
+          if upd > 0, let lk = d.sharing.link {
+            Button { withAnimation(.out(0.35)) { nav.sheet = .deckUpdates(d.id) } } label: {
+              HStack(spacing: 10) {
+                Text(lk.owner.name + " changed " + plural(upd, "card")).css(15, .semibold).foregroundStyle(t.text).lineLimit(1).frame(maxWidth: .infinity, alignment: .leading)
+                Text("See changes").css(14, .semibold).foregroundStyle(t.muted).fixedSize()
+              }
+              .padding(.horizontal, 16).frame(height: 56)
+              .background(RoundedRectangle(cornerRadius: 18, style: .continuous).fill(t.surf))
+            }
+            .buttonStyle(.press)
+          }
           HStack(spacing: 8) {
             tile("Due", String(d.due), t.text)
             tile("New", String(d.fresh), t.text)
@@ -253,7 +276,7 @@ struct DeckScreen: View {
             .buttonStyle(.press)
             .frame(maxWidth: .infinity)
             .layoutPriority(2)
-            Button { nav.learn(deckId: d.id, resume: store.isPro && d.resume) } label: {
+            Button { nav.learn(deckId: d.id, resume: d.resume) } label: {
               HStack(spacing: 8) { Icon("sparkle", 17, 2); Text(d.learnLabel).css(17, .semibold).lineLimit(1).fixedSize() }
                 .foregroundStyle(t.text).frame(maxWidth: .infinity).frame(height: 56).background(Capsule().fill(t.surf))
             }
@@ -263,7 +286,10 @@ struct DeckScreen: View {
           let list = board + "/cards", ids = d.rows.map(\.id)
           VStack(spacing: 0) {
             ForEach(d.rows) { r in
-              let open = { nav.newCard(deckId: d.id, cardId: store.demo ? nil : r.id) }
+              // A card of a deck you study as it is opens Suggest a change on it (on its deck's page).
+              let open = d.sharing.readOnly && d.sharing.link != nil
+                ? { nav.open(store.webURL(d.sharing.link!.url + "?suggest=" + (r.origin ?? "1").addingPercentEncoding(withAllowedCharacters: .alphanumerics)!)) }
+                : { nav.newCard(deckId: d.id, cardId: store.demo ? nil : r.id) }
               row(r)
                 .overlay(alignment: .bottom) { Rectangle().fill(t.line).frame(height: 1) }
                 .accessibilityElement(children: .combine)
@@ -280,6 +306,20 @@ struct DeckScreen: View {
       .dragScroller(drag, board: board)
     }
     .ignoresSafeArea(edges: .top)
+  }
+
+  /// Whose deck it is: their picture and name (tap: its page).
+  private func fromRow(_ d: DeckVM, _ lk: DeckSharing.Linked) -> some View {
+    Button { nav.open(store.webURL(lk.url)) } label: {
+      HStack(spacing: 10) {
+        PersonAvatar(p: d.sharing.ownerFace, size: 28)
+        Text("From " + lk.owner.name).css(14, .semibold).foregroundStyle(t.text).lineLimit(1).frame(maxWidth: .infinity, alignment: .leading)
+        Icon("chev", 16, 2).foregroundStyle(t.muted)
+      }
+      .frame(minHeight: 44)
+      .contentShape(Rectangle())
+    }
+    .buttonStyle(.flat)
   }
 
   /// A card goes to another spot in the deck, or onto another deck in the Move to tray (it leaves this page).
@@ -339,8 +379,9 @@ struct DeckScreen: View {
   }
 }
 
-/// Deck settings (deckSettingsBody, phone): General (header, name, tags, pause, export, delete) and Studying (grading,
-/// FSRS, goal, longest gap, learning steps, new cards a day).
+/// Deck settings (deckSettingsBody, phone): General (header, name, tags, pause, export, delete), Studying (grading,
+/// FSRS, goal, longest gap, learning steps, new cards a day), and Sharing (DeckShare.swift). A deck you study from
+/// someone keeps its name, tags, and header theirs, and leaves your library instead of being deleted.
 struct DeckSettingsSheet: View {
   @Environment(\.theme) private var t
   @EnvironmentObject private var store: Store
@@ -362,8 +403,12 @@ struct DeckSettingsSheet: View {
           Spacer()
           SheetDone(action: close)
         }
-        Segmented(options: [("general", "General"), ("study", "Studying")], current: tab, height: 36, size: 14) { tab = $0 }
-        if tab == "general" { general } else { studying }
+        Segmented(options: [("general", "General"), ("study", "Studying"), ("share", "Sharing")], current: tab, height: 36, size: 14) { tab = $0 }
+        switch tab {
+        case "study": studying
+        case "share": DeckShareTab(d: d)
+        default: general
+        }
       }
       .padding(.top, 16).padding(.horizontal, 20).padding(.bottom, 34)
       .foregroundStyle(t.text)
@@ -381,18 +426,20 @@ struct DeckSettingsSheet: View {
     GeometryReader { g in
       ScrollView(showsIndicators: false) {
         VStack(alignment: .leading, spacing: 14) {
-          header
+          if !d.sharing.readOnly { header }
           BgChooser(deckId: d.id)
           folder
-          VStack(alignment: .leading, spacing: 8) {
-            label("Name")
-            TextField("", text: Binding(get: { name ?? d.name }, set: { name = $0; store.renameDeck(d.id, $0) }))
-              .font(.geist(15)).padding(.horizontal, 16).frame(height: 46)
-              .background(RoundedRectangle(cornerRadius: 16, style: .continuous).fill(t.surf))
-          }
-          VStack(alignment: .leading, spacing: 8) {
-            label("Tags")
-            TagEditor(tags: d.tags, remove: { g in store.updateDeck(d.id, ["tags": d.tags.filter { $0 != g }]) }, add: { tagPicker = true })
+          if !d.sharing.readOnly {
+            VStack(alignment: .leading, spacing: 8) {
+              label("Name")
+              TextField("", text: Binding(get: { name ?? d.name }, set: { name = $0; store.renameDeck(d.id, $0) }))
+                .font(.geist(15)).padding(.horizontal, 16).frame(height: 46)
+                .background(RoundedRectangle(cornerRadius: 16, style: .continuous).fill(t.surf))
+            }
+            VStack(alignment: .leading, spacing: 8) {
+              label("Tags")
+              TagEditor(tags: d.tags, remove: { g in store.updateDeck(d.id, ["tags": d.tags.filter { $0 != g }]) }, add: { tagPicker = true })
+            }
           }
           HStack(spacing: 12) {
             VStack(alignment: .leading, spacing: 2) {
@@ -410,7 +457,8 @@ struct DeckSettingsSheet: View {
             }
             .buttonStyle(.press)
             Button { store.confirmDelete = d.id } label: {
-              Text("Delete deck").css(14, .semibold).foregroundStyle(t.again).frame(maxWidth: .infinity).frame(height: 44).background(Capsule().fill(t.againTint))
+              Text(d.sharing.linked ? "Remove from library" : "Delete deck").css(14, .semibold).foregroundStyle(t.again).lineLimit(1)
+                .frame(maxWidth: .infinity).frame(height: 44).background(Capsule().fill(t.againTint))
             }
             .buttonStyle(.press)
           }
