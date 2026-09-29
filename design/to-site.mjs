@@ -105,7 +105,7 @@ if ('IntersectionObserver' in window) {
 {
   const pw = board('Pricing', { site: true, dark: false }), pp = board('PricingPhone', { site: true, dark: false });
   pp.html = pp.html.replace(/\sid="([^"]+)"/g, ' id="$1-m"').replace(/url\(#([^)]+)\)/g, 'url(#$1-m)');
-  write('pricing.html', head('Pricing · Lucida', 'Lucida is free, with unlimited decks and cards. Pro adds Learn mode, photo covers, your own colors, and unlimited pictures and sounds.', 'https://lucida.cards/pricing', `/* Phones get the phone board. */
+  write('pricing.html', head('Pricing · Lucida', 'Lucida is free, with unlimited decks and cards, Learn mode, and sharing. Pro adds exam tools, stats on what you’re weak at, themes, and unlimited pictures and sounds.', 'https://lucida.cards/pricing', `/* Phones get the phone board. */
 .phone { display: none; }
 @media (max-width: 760px) { .computer { display: none; } .phone { display: block; } }
 ${pw.css.includes(pp.css) ? pw.css : pw.css + '\n' + pp.css}

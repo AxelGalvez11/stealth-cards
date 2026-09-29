@@ -80,8 +80,8 @@ function resolve(path, q) {
     if (deck[2] === '/suggestions') return { name: P + 'Suggestions', props: { deckId: id } };
     // Playing a deck live needs a big screen, so it starts from a computer.
     if (deck[2] === '/live') return narrow.matches ? { redirect: '/deck/' + id } : { name: 'LiveSetup', props: { deckId: id } };
-    // Learn mode starts from a sheet over the deck. It's Pro: on Free the sheet shows what Pro adds instead.
-    if (deck[2] === '/learn') return { name: P + (db.pro() ? 'QuizStart' : 'QuizUpgrade'), props: { deckId: id } };
+    // Learn mode starts from a sheet over the deck.
+    if (deck[2] === '/learn') return { name: P + 'QuizStart', props: { deckId: id } };
     // Writing and editing cards: on a computer, the deck's cards on a screen of their own (the owner's pick, Option B),
     // opened on the card you picked or on a new card. The iPhone editor board starts with its keyboard up, as the canvas
     // shows it; on a phone it starts with no field picked (the phone brings up its own keyboard).
@@ -93,7 +93,6 @@ function resolve(path, q) {
   // A Learn mode session: the board for its current question, or the end once every card is learned.
   const ln = /^\/learn\/([^/]+)$/.exec(path);
   if (ln) {
-    if (!db.pro()) return { redirect: '/deck/' + ln[1] + '/learn' };
     const L = db.learn();
     if (!L || L.deckId !== ln[1]) return { redirect: '/deck/' + ln[1] + '/learn' };
     return { name: P + (L.done === true ? 'QuizDone' : { match: 'QuizMatch', type: 'QuizType' }[L.type] || 'Quiz'), props: { deckId: ln[1] } };
@@ -122,7 +121,7 @@ function linkFor(name) {
     WebImport: id ? '/deck/' + id + '/import' : '/decks/import', WebDeck: id ? '/deck/' + id : '/library', WebDeckSettings: id ? '/deck/' + id + '?settings=1' : '/library',
     WebEditor: id ? '/deck/' + id + '/card' : db.signedOut ? '/' : db.today().newCardHref, WebCardsScreenNew: id ? '/deck/' + id + '/card' : db.signedOut ? '/' : db.today().newCardHref,
     WebCardsScreen: id ? '/deck/' + id + '/card' : '/library', WebReview: id ? '/review/' + id : '/review', WebDone: '/review/done', WebDonePiles: '/review/done',
-    WebQuizStart: id ? '/deck/' + id + '/learn' : '/library', PhoneQuizStart: id ? '/deck/' + id + '/learn' : '/library', WebQuizUpgrade: id ? '/deck/' + id + '/learn' : '/library', PhoneQuizUpgrade: id ? '/deck/' + id + '/learn' : '/library', PhoneDeck: id ? '/deck/' + id : '/library', Pricing: 'https://lucida.cards/pricing', PricingPhone: 'https://lucida.cards/pricing',
+    WebQuizStart: id ? '/deck/' + id + '/learn' : '/library', PhoneQuizStart: id ? '/deck/' + id + '/learn' : '/library', PhoneDeck: id ? '/deck/' + id : '/library', Pricing: 'https://lucida.cards/pricing', PricingPhone: 'https://lucida.cards/pricing',
     WebStats: '/stats', WebStatsEmpty: '/stats', WebConnect: '/connect', WebWelcome: '/welcome', WebSettings: '/settings', WebSignIn: '/sign-in', WebSignInCode: '/sign-in/code', PhoneSignIn: '/sign-in', PhoneSignInCode: '/sign-in/code', PhoneToday: '/', Privacy: '/privacy', Terms: '/terms',
     WebDiscover: '/discover', WebActivity: '/activity', WebProfile: '/you', WebSuggestions: id ? '/deck/' + id + '/suggestions' : '/suggestions',
     LiveSetup: id ? '/deck/' + id + '/live' : '/library', LiveJoin: '/join' };

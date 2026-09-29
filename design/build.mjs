@@ -3415,7 +3415,7 @@ const PRO_BADGE = '<span style="height: 22px; padding: 0 9px; display: inline-fl
 // Settings → Plan: Free, with a way to Go Pro; or Pro, when it renews (or ends), and Stripe's page to manage or cancel it.
 // Online only: on your own computer everything is on, so there's no plan to show.
 const PRO_PILL = `<a href="{{proHref}}" style="height: 36px; padding: 0 16px; display: inline-flex; align-items: center; border-radius: 999px; background: {{t.inv}}; color: {{t.invText}}; font-size: 14px; font-weight: 600; white-space: nowrap;">Go Pro</a>`;
-const planGroups = `<sc-if value="{{planFree}}" hint-placeholder-val="{{ false }}">${sGroup('Plan', [sRow('Free', PRO_PILL, { sub: 'Pro adds Learn mode, photo covers, and more' })])}</sc-if>
+const planGroups = `<sc-if value="{{planFree}}" hint-placeholder-val="{{ false }}">${sGroup('Plan', [sRow('Free', PRO_PILL, { sub: 'Pro adds exam tools, deeper stats, and more' })])}</sc-if>
       <sc-if value="{{planPro}}" hint-placeholder-val="{{ true }}">${sGroup('Plan', [
         sRow(`<span style="display: inline-flex; align-items: center; gap: 8px;">Lucida ${PRO_BADGE}</span>`, '', { sub: '{{planSub}}' }),
         sRow('Manage plan', sVal(''), { href: '{{manageHref}}' }),
@@ -3918,8 +3918,8 @@ const HOVER = (a, delay) => `scLiftIn .45s cubic-bezier(.2,.8,.2,1) ${delay}s bo
 // ---------- Learn mode ----------
 // Learn a set of cards until you know every one. Each card is asked in different ways (multiple choice, true or false,
 // matching, filling in its blank, typing the answer); it's learned after two right answers in a row, asked two ways,
-// and a card you miss comes back a few questions later (web/db.js runs a session). It's Pro: on Free the Learn button
-// opens the upgrade card instead. On the canvas the boards show a sample session: the 40 cards tagged Exam 1 in Cell
+// and a card you miss comes back a few questions later (web/db.js runs a session). It's free (the owner, 2026-09-29:
+// "make learn mode free"): the questions come from the cards and the learner's own AI, so it costs nothing. On the canvas the boards show a sample session: the 40 cards tagged Exam 1 in Cell
 // Biology, 18 learned so far.
 const LEARN_QS = [
   { kind: 'Multiple choice', streak: 1, q: 'A drug makes the inner mitochondrial membrane leak protons. What happens to the cell’s ATP output?', options: ['It drops', 'It rises', 'It stays the same', 'Only glycolysis stops'], right: 0,
@@ -4025,36 +4025,18 @@ const SKY_CSS = '@keyframes scCloud{from{transform:translateX(-28px)}to{transfor
 const SKY = `(this.props.dark && this.props.dim ? { top: '${SKY_DUSK.top}', mid: '${SKY_DUSK.mid}', low: '${SKY_DUSK.low}', glow: 'rgba(120,150,255,.16)', cloud: 'rgba(150,170,230,.12)' }
     : this.props.dark ? { top: '#081733', mid: '#0D2148', low: '#0A1530', glow: 'rgba(120,150,255,.16)', cloud: 'rgba(150,170,230,.10)' }
     : { top: '#86BDF3', mid: '#C9E2FB', low: '#EDF5FE', glow: 'rgba(255,255,255,.75)', cloud: 'rgba(255,255,255,.94)' })`;
-// On Free (once Pro can be bought), the Learn button opens this: a sky, two matched cards, what Pro adds, the price.
-const skyTop = (h, cw, ch) => `<div aria-hidden="true" style="position: relative; height: ${h}px; background: linear-gradient(180deg, {{sky.top}} 0%, {{sky.mid}} 58%, {{sky.low}} 82%, {{t.bg}} 100%); overflow: hidden;">
-      ${[[-8, 18, 190, 70], [58, 6, 210, 76], [70, 58, 170, 60]].map(([x, y, w, hh]) => `<div style="position: absolute; left: ${x}%; top: ${y}%; width: ${w}px; height: ${hh}px;">${[[0, 30, 60, 70], [24, 0, 56, 88], [46, 24, 54, 76]].map(([l, t, pw, ph]) => `<span style="position: absolute; left: ${l}%; top: ${t}%; width: ${pw}%; height: ${ph}%; background: radial-gradient(closest-side, {{sky.cloud}} 40%, transparent);"></span>`).join('')}</div>`).join('')}
-      <div style="position: absolute; left: 50%; top: 54%; transform: translate(-50%, -50%); display: flex; align-items: center; gap: 14px;">
-        ${meshCard('m1', `width: ${cw}px; height: ${ch}px; border-radius: 18px; transform: rotate(-6deg); box-shadow: 0 16px 32px -16px rgba(20,22,90,.45);`, 'height: 100%; box-sizing: border-box; padding: 12px; display: flex; align-items: center; justify-content: center; text-align: center;', `<span style="font-size: ${Math.round(cw / 9.5)}px; font-weight: 600; letter-spacing: -.01em;">Golgi apparatus</span>`)}
-        <span style="width: 34px; height: 34px; flex-shrink: 0; border-radius: 17px; background: #FFFFFF; color: #067647; box-shadow: 0 6px 16px -6px rgba(0,0,0,.3); display: flex; align-items: center; justify-content: center;">${svg(I.check, 18, 2.6)}</span>
-        ${meshCard('m2', `width: ${cw}px; height: ${ch}px; border-radius: 18px; transform: rotate(5deg); box-shadow: 0 16px 32px -16px rgba(20,22,90,.45);`, 'height: 100%; box-sizing: border-box; padding: 12px; display: flex; align-items: center; justify-content: center; text-align: center;', `<span style="font-size: ${Math.round(cw / 11)}px; font-weight: 600; line-height: 1.25;">Packages proteins for export</span>`)}
-      </div>
-    </div>`;
-// Each price is its own button, so paying never picks yearly for you (the owner: "the pricing is confusing because
-// it only has the yearly subscription no monthly option").
-const learnUpgradeBody = (back, pad) => `<a href="${back}" aria-label="Close" style="position: absolute; top: 16px; right: 16px; z-index: 1; width: 40px; height: 40px; border-radius: 20px; background: rgba(255,255,255,.7); color: #000000; display: flex; align-items: center; justify-content: center;">${svg(I.close, 16, 2)}</a>
-    <div style="box-sizing: border-box; padding: 0 ${pad}px ${pad}px; margin-top: -6px; display: flex; flex-direction: column; gap: 18px;">
-      <div style="display: flex; flex-direction: column; gap: 8px;"><span style="display: flex; align-items: center; gap: 10px; font-size: 26px; font-weight: 600; letter-spacing: -.03em;">Learn every card${PRO_BADGE}</span><span style="font-size: 15px; line-height: 1.5; color: {{t.muted}};">AI turns your cards into questions of every kind, like matching and typing the answer, and keeps going until you know them all.</span></div>
-      <div style="display: flex; flex-direction: column; gap: 10px; font-size: 15px;">${['Learn mode with 5 kinds of questions', 'Photo covers and your own colors', 'Unlimited pictures and sounds'].map(x => `<span style="display: flex; align-items: center; gap: 10px;"><span style="width: 22px; height: 22px; flex-shrink: 0; border-radius: 11px; background: linear-gradient(135deg, #7E94FB, #2CB2EA); color: #FFFFFF; display: flex; align-items: center; justify-content: center;">${svg(I.check, 13, 2.6)}</span>${x}</span>`).join('')}</div>
-      <div style="font-size: 14px; color: {{t.muted}};">Yearly works out to $4.17 a month. Cancel anytime.</div>
-      <div style="display: flex; gap: 10px;">${quizBtn('$5.99 a month', '{{monthlyHref}}', false, 1)}${quizBtn('$49.99 a year', '{{yearlyHref}}', true, 1)}</div>
-    </div>`;
-const webQuizStart = pro => `<div style="position: relative; width: 1440px; height: 900px; overflow: hidden; font-family: ${FONT}; color: {{t.text}};">
+const webQuizStart = () => `<div style="position: relative; width: 1440px; height: 900px; overflow: hidden; font-family: ${FONT}; color: {{t.text}};">
   <dc-import name="WebDeck" dark="{{dark}}" dim="{{dim}}" deck-id="{{deckId}}" hint-size="1440px,900px"></dc-import>
   <div style="position: absolute; inset: 0; background: {{t.dim}};"></div>
-  <div role="dialog" aria-label="Learn mode" style="position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); width: 560px; box-sizing: border-box; border-radius: 36px; overflow: hidden; background: {{t.bg}}; box-shadow: 0 24px 64px rgba(0,0,0,.24); ${pro ? 'padding: 28px;' : ''}">
-    ${pro ? deepTop + '<div style="position: relative; display: flex; flex-direction: column; gap: 20px;">' + learnStartBody('WebDeck.dc.html', '{{startHref}}', true) + '</div>' : skyTop(236, 168, 108) + learnUpgradeBody('WebDeck.dc.html', 32)}
+  <div role="dialog" aria-label="Learn mode" style="position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); width: 560px; box-sizing: border-box; border-radius: 36px; overflow: hidden; background: {{t.bg}}; box-shadow: 0 24px 64px rgba(0,0,0,.24); padding: 28px;">
+    ${deepTop + '<div style="position: relative; display: flex; flex-direction: column; gap: 20px;">' + learnStartBody('WebDeck.dc.html', '{{startHref}}', true) + '</div>'}
   </div>
 </div>`;
-const phoneQuizStart = pro => `<div style="position: relative; width: 390px; height: 844px; overflow: hidden; font-family: ${FONT}; color: {{t.text}};">
+const phoneQuizStart = () => `<div style="position: relative; width: 390px; height: 844px; overflow: hidden; font-family: ${FONT}; color: {{t.text}};">
   <dc-import name="PhoneDeck" dark="{{dark}}" dim="{{dim}}" deck-id="{{deckId}}" hint-size="390px,844px"></dc-import>
   <div style="position: absolute; inset: 0; background: {{t.dim}};"></div>
-  <div role="dialog" aria-label="Learn mode" style="position: absolute; left: 0; right: 0; bottom: 0; box-sizing: border-box; border-radius: 36px 36px 0 0; overflow: hidden; background: {{t.bg}}; ${pro ? 'padding: 10px 20px 34px;' : 'padding-bottom: 14px;'}">
-    ${pro ? deepTopOf(354, 64) + '<div style="position: relative; display: flex; flex-direction: column; gap: 18px;"><div style="align-self: center; width: 40px; height: 5px; border-radius: 3px; background: rgba(255,255,255,.45);"></div>' + learnStartBody('PhoneDeck.dc.html', '{{startHref}}', true) + '</div>' : skyTop(200, 132, 88) + learnUpgradeBody('PhoneDeck.dc.html', 20)}
+  <div role="dialog" aria-label="Learn mode" style="position: absolute; left: 0; right: 0; bottom: 0; box-sizing: border-box; border-radius: 36px 36px 0 0; overflow: hidden; background: {{t.bg}}; padding: 10px 20px 34px;">
+    ${deepTopOf(354, 64) + '<div style="position: relative; display: flex; flex-direction: column; gap: 18px;"><div style="align-self: center; width: 40px; height: 5px; border-radius: 3px; background: rgba(255,255,255,.45);"></div>' + learnStartBody('PhoneDeck.dc.html', '{{startHref}}', true) + '</div>'}
   </div>
 </div>`;
 // `deep`: the start card's deep top (web and iPhone).
@@ -4064,8 +4046,7 @@ renderVals() { ${T}${DB_JS}
   const s = this.state, id = this.props.deckId, seg = (k, cur) => ({ pressed: k === cur ? 'true' : 'false', bg: k === cur ? t.bg : 'transparent', fg: k === cur ? t.text : t.muted, sh: k === cur ? '0 1px 3px rgba(0,0,0,.14)' : 'none' });
   const sets = db.mock ? [{ id: 'new', label: 'New', n: 10 }, { id: 'hard', label: 'Hard', n: 36 }, { id: 'tag:Exam 1', label: 'Exam 1', n: 40 }, { id: 'all', label: 'All', n: 412 }] : db.learnSets(id);
   const set = sets.find(x => x.id === s.set) || (db.mock ? sets[2] : sets.find(x => x.n > 0) || sets[sets.length - 1]), n = set.n, mins = Math.max(1, Math.round(n * .6));
-  return { t, dark: !!this.props.dark, dim: !!this.props.dim, deckId: id || '', sky: ${SKY}, grain: String(this.props.grain ?? 0.7), m1: this.mesh('Iris'), m2: this.mesh('Mint'), ${deep ? 'deep: ' + MIDNIGHT + ', ' : ''}monthlyHref: db.mock ? '${phone ? 'PricingPhone' : 'Pricing'}.dc.html' : '/pro?plan=monthly', yearlyHref: db.mock ? '${phone ? 'PricingPhone' : 'Pricing'}.dc.html' : '/pro?plan=yearly',
-    sets: sets.map(x => ({ label: x.label + ' · ' + x.n, ...seg(x.id, set.id), pick: () => this.setState({ set: x.id }) })),
+  return { t, dark: !!this.props.dark, dim: !!this.props.dim, deckId: id || '', sky: ${SKY}, grain: String(this.props.grain ?? 0.7), m1: this.mesh('Iris'), m2: this.mesh('Mint'), ${deep ? 'deep: ' + MIDNIGHT + ', ' : ''}sets: sets.map(x => ({ label: x.label + ' · ' + x.n, ...seg(x.id, set.id), pick: () => this.setState({ set: x.id }) })),
     kinds: ${JSON.stringify(LEARN_KINDS)}.map(([k, label]) => { const on = s.kinds.includes(k); return { label, on, pressed: on ? 'true' : 'false', bg: on ? t.inv : t.surf, fg: on ? t.invText : t.text, pick: () => this.setState({ kinds: on && s.kinds.length > 1 ? s.kinds.filter(x => x !== k) : on ? s.kinds : [...s.kinds, k] }) }; }),
     goalLine: n ? 'Learn all ' + n + ' card' + (n === 1 ? '' : 's') + ', about ' + (mins >= 90 ? Math.round(mins / 60) + ' hours over a few sessions' : mins + ' minute' + (mins === 1 ? '' : 's')) + '. You can stop anytime and pick up where you left off.' : 'This deck has no cards to learn yet. Picture and text cards work; sound cards come later.',
     startHref: '${phone ? 'PhoneQuiz' : 'WebQuiz'}.dc.html',
@@ -5002,11 +4983,12 @@ renderVals() {
 }`;
 
 // ---------- Pricing (lucida.cards/pricing) ----------
-// Free keeps every card. Pro ($5.99 a month or $49.99 a year, since 2026-09-25; it was $39) is for making Lucida yours: AI quizzes, photo covers and
-// your own colors, unlimited pictures and sounds, natural voices. Drawn for computers and phones like the landing page,
-// with the same sky; it isn't on the site yet (it goes live with payments).
-const PLAN_FREE = ['Unlimited decks and cards', 'Your AI makes cards for you', 'Reviews planned by spaced repetition', 'All four card types', 'A color for every deck', 'Up to 100 pictures and sounds', 'Import and export anytime'];
-const PLAN_PRO = ['Learn mode with AI questions', 'Photo covers and your own colors', 'Unlimited pictures and sounds', 'Natural voices for sound cards', 'Early access to new features'];
+// Free keeps every card, Learn mode, and sharing. Pro ($5.99 a month or $49.99 a year, since 2026-09-25; it was $39) is
+// the power tools for a student with thousands of cards and an exam coming (the owner picked this 2026-09-29, and made
+// Learn mode free): exam tools, stats on what you're weak at, unlimited pictures and sounds, themes, stats on decks you
+// share, more explanations. Drawn for computers and phones like the landing page, with the same sky.
+const PLAN_FREE = ['Unlimited decks and cards', 'Your AI makes cards and quizzes for you', 'Reviews planned by spaced repetition', 'Learn mode', 'Share decks and study anyone’s', 'Live games with friends', 'Up to 100 pictures and sounds', 'Import and export anytime'];
+const PLAN_PRO = ['Exam dates: ready in time for the test', 'Stats on what you’re weak at', 'Unlimited pictures and sounds', 'Themes for cards, covers and your profile', 'The hardest cards on decks you share', 'Photo covers and your own colors', 'Natural voices for sound cards', 'More AI explanations'];
 const PRICING_FAQ = [
   ['Do I need Pro for my AI to make cards?', 'No. On Free, your AI can make as many cards as you want.'],
   ['What happens to my cards if I stop Pro?', 'Nothing. Every deck and card stays yours. Only the Pro extras switch off.'],
@@ -5052,7 +5034,7 @@ ${skyLayer(phone)}
 <div style="height: ${phone ? 72 : 112}px;"></div>
 ${landFooter(phone)}
 </div>`; };
-const PRICING_H = 1617, PRICING_PHONE_H = 2191;
+const PRICING_H = 1678, PRICING_PHONE_H = 2319;
 // Pro's Stripe payment links are in web/plans.mjs. While they're empty the site says "Pro is coming soon"; once both are
 // set, Go Pro goes through the app's /pro page (it signs you in first, then opens Stripe's checkout knowing who's
 // paying). The site had only yearly with a "Pay $5.99 monthly instead" link, and the owner found it confusing ("it only
@@ -6007,16 +5989,14 @@ const files = {
   'PhoneSignIn': ['iPhone · Sign in', phoneSignIn, { props: { ...DARK, grain: MESH('Iris').grain }, logic: signInLogic('', [50, 60, 55, 65], PHONE_K), css: WALL_CSS, w: PW, h: PH }],
   'PhoneSignInCode': ['iPhone · Sign in · code from email', phoneSignInCode, { props: DARK, logic: signInLogic('482'), w: PW, h: PH }],
   'Landing': ['Landing page · lucida.cards', landing(LAND.web, W, LANDING_H), { props: { ...DARK, grain: MESH('Iris').grain }, logic: landingLogic(false), css: WALL_CSS + DEMO_CSS + SKY_CSS, w: W, h: LANDING_H }],
-  'WebQuizStart': ['Web · Learn mode · start (Pro)', webQuizStart(true), { props: DARK, logic: QUIZ_START_LOGIC(false, true), w: W, h: H }],
-  'WebQuizUpgrade': ['Web · Learn mode · on Free: go Pro', webQuizStart(false), { props: { ...DARK, grain: MESH('Iris').grain }, logic: QUIZ_START_LOGIC(false), w: W, h: H }],
+  'WebQuizStart': ['Web · Learn mode · start', webQuizStart(), { props: DARK, logic: QUIZ_START_LOGIC(false, true), w: W, h: H }],
   'WebQuiz': ['Web · Learn mode · choice question', webQuiz, { props: { ...DARK, answered: { editor: 'boolean', default: false }, settingsOpen: { editor: 'boolean', default: false } }, logic: QUIZ_LOGIC(false), css: LEARN_CSS, w: W, h: H }],
   'WebQuizAnswered': ['Web · Learn mode · answered', attrOf('WebQuiz', W, H, 'answered="{{yes}}"'), { logic: darkLogic, css: LEARN_CSS, w: W, h: H }],
   'WebQuizMatch': ['Web · Learn mode · matching', webQuizMatch, { props: DARK, logic: MATCH_LOGIC(false), css: LEARN_CSS, w: W, h: H }],
   'WebQuizType': ['Web · Learn mode · type the answer', webQuizType, { props: DARK, logic: TYPE_LOGIC(false), css: LEARN_CSS, w: W, h: H }],
   'WebQuizDone': ['Web · Learn mode · all learned', webQuizDone, { props: DARK, logic: QUIZ_DONE_LOGIC, css: LEARN_CSS, w: W, h: H }],
   'WebQuizSettings': ['Web · Learn mode · settings (the deck’s background)', attrOf('WebQuiz', W, H, 'settings-open="{{yes}}"'), { logic: darkLogic, css: LEARN_CSS, w: W, h: H }],
-  'PhoneQuizStart': ['iPhone · Learn mode · start (Pro)', phoneQuizStart(true), { props: DARK, logic: QUIZ_START_LOGIC(true, true), w: PW, h: PH }],
-  'PhoneQuizUpgrade': ['iPhone · Learn mode · on Free: go Pro', phoneQuizStart(false), { props: { ...DARK, grain: MESH('Iris').grain }, logic: QUIZ_START_LOGIC(true), w: PW, h: PH }],
+  'PhoneQuizStart': ['iPhone · Learn mode · start', phoneQuizStart(), { props: DARK, logic: QUIZ_START_LOGIC(true, true), w: PW, h: PH }],
   'PhoneQuiz': ['iPhone · Learn mode · choice question', phoneQuiz, { props: { ...DARK, answered: { editor: 'boolean', default: false }, settingsOpen: { editor: 'boolean', default: false } }, logic: QUIZ_LOGIC(true), css: LEARN_CSS, w: PW, h: PH }],
   'PhoneQuizAnswered': ['iPhone · Learn mode · answered', attrOf('PhoneQuiz', PW, PH, 'answered="{{yes}}"'), { logic: darkLogic, css: LEARN_CSS, w: PW, h: PH }],
   'PhoneQuizMatch': ['iPhone · Learn mode · matching', phoneQuizMatch, { props: DARK, logic: MATCH_LOGIC(true), css: LEARN_CSS, w: PW, h: PH }],

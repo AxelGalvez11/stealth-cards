@@ -494,19 +494,13 @@ export default [
  },
  {
   "name": "PhoneQuizStart",
-  "title": "iPhone · Learn mode · start (Pro)",
+  "title": "iPhone · Learn mode · start",
   "w": 390,
   "h": 844
  },
  {
   "name": "PhoneQuizType",
   "title": "iPhone · Learn mode · type the answer",
-  "w": 390,
-  "h": 844
- },
- {
-  "name": "PhoneQuizUpgrade",
-  "title": "iPhone · Learn mode · on Free: go Pro",
   "w": 390,
   "h": 844
  },
@@ -706,13 +700,13 @@ export default [
   "name": "Pricing",
   "title": "Pricing · lucida.cards/pricing",
   "w": 1440,
-  "h": 1617
+  "h": 1678
  },
  {
   "name": "PricingPhone",
   "title": "Pricing · lucida.cards/pricing on a phone",
   "w": 390,
-  "h": 2191
+  "h": 2319
  },
  {
   "name": "Privacy",
@@ -1196,19 +1190,13 @@ export default [
  },
  {
   "name": "WebQuizStart",
-  "title": "Web · Learn mode · start (Pro)",
+  "title": "Web · Learn mode · start",
   "w": 1440,
   "h": 900
  },
  {
   "name": "WebQuizType",
   "title": "Web · Learn mode · type the answer",
-  "w": 1440,
-  "h": 900
- },
- {
-  "name": "WebQuizUpgrade",
-  "title": "Web · Learn mode · on Free: go Pro",
   "w": 1440,
   "h": 900
  },
