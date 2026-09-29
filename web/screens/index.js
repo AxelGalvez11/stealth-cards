@@ -193,6 +193,12 @@ export default [
   "h": 844
  },
  {
+  "name": "PhoneDeckSettingsStudyFree",
+  "title": "iPhone · Deck settings · Studying · on Free (what Pro adds)",
+  "w": 390,
+  "h": 844
+ },
+ {
   "name": "PhoneDeckTagPicker",
   "title": "iPhone · Deck settings · Add tag",
   "w": 390,
@@ -235,6 +241,12 @@ export default [
   "h": 844
  },
  {
+  "name": "PhoneEditorPaused",
+  "title": "iPhone · Card editor · editing a paused card (Unpause card)",
+  "w": 390,
+  "h": 844
+ },
+ {
   "name": "PhoneEditorRecording",
   "title": "iPhone · Card editor · recording audio",
   "w": 390,
@@ -267,6 +279,12 @@ export default [
  {
   "name": "PhoneLibraryGray",
   "title": "iPhone · Library (dark, gray)",
+  "w": 390,
+  "h": 844
+ },
+ {
+  "name": "PhoneLibraryLeeches",
+  "title": "iPhone · Library · all cards · cards you keep forgetting (Pause all)",
   "w": 390,
   "h": 844
  },
@@ -412,13 +430,13 @@ export default [
   "name": "PhoneSettings",
   "title": "iPhone · Settings",
   "w": 390,
-  "h": 1260
+  "h": 1320
  },
  {
   "name": "PhoneSettingsGray",
   "title": "iPhone · Settings (dark, gray)",
   "w": 390,
-  "h": 1260
+  "h": 1320
  },
  {
   "name": "PhoneSignIn",
@@ -453,6 +471,30 @@ export default [
  {
   "name": "PhoneStatsGray",
   "title": "iPhone · Stats (dark, gray)",
+  "w": 390,
+  "h": 844
+ },
+ {
+  "name": "PhoneStatsMemory",
+  "title": "iPhone · Stats · Memory (Pro)",
+  "w": 390,
+  "h": 844
+ },
+ {
+  "name": "PhoneStatsPace",
+  "title": "iPhone · Stats · Pace (Pro)",
+  "w": 390,
+  "h": 844
+ },
+ {
+  "name": "PhoneStatsUpgrade",
+  "title": "iPhone · Stats · on Free: go Pro for deep stats",
+  "w": 390,
+  "h": 844
+ },
+ {
+  "name": "PhoneStatsWeak",
+  "title": "iPhone · Stats · Weak spots (Pro)",
   "w": 390,
   "h": 844
  },
@@ -607,6 +649,12 @@ export default [
   "h": 900
  },
  {
+  "name": "WebCardsScreenPaused",
+  "title": "Web · Edit cards · a paused card (Unpause)",
+  "w": 1440,
+  "h": 900
+ },
+ {
   "name": "WebConnect",
   "title": "Web · Connect AI",
   "w": 1440,
@@ -649,8 +697,20 @@ export default [
   "h": 900
  },
  {
+  "name": "WebDeckSettingsGoal",
+  "title": "Web · Deck settings · Studying · goal raised to 95% (reviews a day)",
+  "w": 1440,
+  "h": 900
+ },
+ {
   "name": "WebDeckSettingsStudy",
   "title": "Web · Deck settings · Studying (FSRS)",
+  "w": 1440,
+  "h": 900
+ },
+ {
+  "name": "WebDeckSettingsStudyFree",
+  "title": "Web · Deck settings · Studying · on Free (what Pro adds)",
   "w": 1440,
   "h": 900
  },
@@ -795,6 +855,12 @@ export default [
  {
   "name": "WebLibraryGray",
   "title": "Web · Library (dark, gray)",
+  "w": 1440,
+  "h": 900
+ },
+ {
+  "name": "WebLibraryLeeches",
+  "title": "Web · Library · all cards · cards you keep forgetting (Pause all)",
   "w": 1440,
   "h": 900
  },
@@ -949,6 +1015,12 @@ export default [
   "h": 900
  },
  {
+  "name": "WebSettingsFree",
+  "title": "Web · Settings · on Free (Tune to you is Pro)",
+  "w": 1440,
+  "h": 900
+ },
+ {
   "name": "WebSettingsGray",
   "title": "Web · Settings (dark, gray)",
   "w": 1440,
@@ -987,6 +1059,42 @@ export default [
  {
   "name": "WebStatsGray",
   "title": "Web · Stats (dark, gray)",
+  "w": 1440,
+  "h": 900
+ },
+ {
+  "name": "WebStatsMemory",
+  "title": "Web · Stats · Memory (Pro)",
+  "w": 1440,
+  "h": 900
+ },
+ {
+  "name": "WebStatsPace",
+  "title": "Web · Stats · Pace (Pro)",
+  "w": 1440,
+  "h": 900
+ },
+ {
+  "name": "WebStatsPaceGray",
+  "title": "Web · Stats · Pace (dark, gray)",
+  "w": 1440,
+  "h": 900
+ },
+ {
+  "name": "WebStatsUpgrade",
+  "title": "Web · Stats · on Free: go Pro for deep stats",
+  "w": 1440,
+  "h": 900
+ },
+ {
+  "name": "WebStatsWeak",
+  "title": "Web · Stats · Weak spots (Pro)",
+  "w": 1440,
+  "h": 900
+ },
+ {
+  "name": "WebStatsWeakDark",
+  "title": "Web · Stats · Weak spots (dark)",
   "w": 1440,
   "h": 900
  },

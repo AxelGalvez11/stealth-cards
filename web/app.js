@@ -29,7 +29,8 @@ function resolve(path, q) {
     if (lib[2] && !db.raw().folders.some(f => f.id === lib[2])) return { redirect: '/library' };
     const empty = !db.decks().length && !db.raw().folders.length;
     if (empty && !lib[1] && !lib[2]) return { name: P + 'DecksEmpty' };
-    return { name: narrow.matches ? 'PhoneLibrary' : 'WebDecks', props: { mode: lib[1] ? 'cards' : 'decks', folder: lib[2] || '' } };
+    // All cards can open filtered (the Stats page links to your hardest cards and the ones you keep forgetting).
+    return { name: narrow.matches ? 'PhoneLibrary' : 'WebDecks', props: { mode: lib[1] ? 'cards' : 'decks', folder: lib[2] || '', level: lib[1] ? q.get('level') || '' : '' } };
   }
   if (path === '/decks/new') return { name: P + 'NewDeck' };
   if (path === '/decks/import') return { name: 'WebImport' };
@@ -55,12 +56,13 @@ function resolve(path, q) {
     if (!L || L.deckId !== ln[1]) return { redirect: '/deck/' + ln[1] + '/learn' };
     return { name: P + (L.done === true ? 'QuizDone' : { match: 'QuizMatch', type: 'QuizType' }[L.type] || 'Quiz'), props: { deckId: ln[1] } };
   }
+  // A review: of every deck, one deck, one of its piles, or a set of cards from the Stats page (?set=hard, leech, tag:…).
   const rv = /^\/review(?:\/([^/]+))?$/.exec(path);
   if (rv && rv[1] !== 'done') {
-    const id = rv[1] || '', pile = q.get('pile') || '';
+    const id = rv[1] || '', pile = q.get('pile') || '', set = q.get('set') || '';
     if (id && !db.raw().decks.some(d => d.id === id)) return { redirect: '/library' };
-    if (!db.hasQueue(id, pile)) return { redirect: db.session().cards ? '/review/done' : id ? '/deck/' + id : '/' };
-    return { name: P + 'Review', props: { deckId: id, pile } };
+    if (!db.hasQueue(id, pile, set)) return { redirect: db.session().cards ? '/review/done' : set ? '/stats' : id ? '/deck/' + id : '/' };
+    return { name: P + 'Review', props: { deckId: id, pile, set } };
   }
   // Sorting into piles doesn't grade, so that session ends on its own page.
   if (path === '/review/done') return { name: P + (db.session().onlyPiles ? 'DonePiles' : 'Done') };
@@ -293,8 +295,8 @@ async function go(path, push, replace) {
   if (url.pathname === '/b' && DESIGN) return screenList(push, url);
   // A review started from somewhere else is a new session (coming back from editing a card keeps it),
   // and so is going over a pile from the Session done page.
-  const rvm = /^\/review(?:\/([^/]+))?$/.exec(url.pathname), pile = url.searchParams.get('pile') || '';
-  if (rvm && rvm[1] !== 'done' && !/from=review/.test(lastPath) && (!/^\/review/.test(lastPath) || (pile && lastPath.startsWith('/review/done')))) db.startReview(rvm[1] || '', pile);
+  const rvm = /^\/review(?:\/([^/]+))?$/.exec(url.pathname), pile = url.searchParams.get('pile') || '', set = url.searchParams.get('set') || '';
+  if (rvm && rvm[1] !== 'done' && !/from=review/.test(lastPath) && (!/^\/review/.test(lastPath) || ((pile || set) && lastPath.startsWith('/review/done')))) db.startReview(rvm[1] || '', pile, set);
   const r = resolve(url.pathname, url.searchParams);
   if (r.redirect) return go(r.redirect, false, true);
   try { await load(r.name); } catch { return go('/', false, true); }
