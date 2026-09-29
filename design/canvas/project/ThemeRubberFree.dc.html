@@ -649,7 +649,8 @@ const __theme = {
         // A wide header gets its character on the right, clear of the buttons in its corners.
         const wideArt = banner(o) ? `left: ${R(o.w * BANNER_X - o.h * 0.45)}px; top: 5%; width: ${R(o.h * 0.9)}px;` : art;
         return `<span style="position: absolute; inset: -40%; background: repeating-conic-gradient(from 0deg at ${banner(o) ? R(BANNER_X * 100) + '% 50%' : shape === 'wide' ? '75% 45%' : '62% 38%'}, rgba(255,255,255,.22) 0deg 9deg, rgba(255,255,255,0) 9deg 18deg);"></span>`
-          + (shape === 'square' ? '' : A(`left: 7%; top: 9%; width: ${banner(o) ? R(o.h * 0.14) + 'px' : shape === 'wide' ? '7%' : '13%'};`, svg40(star(20, 20, 17, '#FFFFFF', 2.6))) + A(`left: ${banner(o) ? R(BANNER_X * 100 - 12) : shape === 'wide' ? 44 : 30}%; top: ${shape === 'wide' ? 10 : 30}%; width: ${banner(o) ? R(o.h * 0.08) + 'px' : shape === 'wide' ? '4%' : '8%'};`, svg40(sparkle(20, 20, 20, '#FFFFFF'))))
+          // (a wide cover's top left has the deck's tags on it, so its star goes low, by the character)
+          + (shape === 'square' ? '' : A(shape === 'wide' && !banner(o) ? 'left: 45%; top: 58%; width: 6%; transform: rotate(-10deg);' : `left: 7%; top: 9%; width: ${banner(o) ? R(o.h * 0.14) + 'px' : '13%'};`, svg40(star(20, 20, 17, '#FFFFFF', 2.6))) + A(`left: ${banner(o) ? R(BANNER_X * 100 - 12) : shape === 'wide' ? 44 : 30}%; top: ${shape === 'wide' ? 10 : 30}%; width: ${banner(o) ? R(o.h * 0.08) + 'px' : shape === 'wide' ? '4%' : '8%'};`, svg40(sparkle(20, 20, 20, '#FFFFFF'))))
           + A(wideArt, charSvg(ch)) + A(`inset: 0; border-radius: ${r}px; box-shadow: inset 0 0 0 ${big ? 3.5 : 3}px ${INK};`);
       },
     };
