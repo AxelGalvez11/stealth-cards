@@ -174,9 +174,7 @@ struct DeckShareTab: View {
       }
       .buttonStyle(.press)
     }
-    // 34 tall, as the board draws it: its 46 shrinks to the Copy link button's height, because the Sharing tab's
-    // column is taller than the sheet (a flex item's shrink; the web does the same).
-    .padding(.leading, 16).padding(.trailing, 6).frame(height: 34)
+    .padding(.leading, 16).padding(.trailing, 6).frame(height: 46)
     .background(RoundedRectangle(cornerRadius: 16, style: .continuous).fill(t.surf))
     if let row {
       Text([NetFmt.k(row.learners) + " studying", NetFmt.k(row.copies) + (row.copies == 1 ? " copy" : " copies"), NetFmt.k(row.stars) + (row.stars == 1 ? " save" : " saves")].joined(separator: " · "))

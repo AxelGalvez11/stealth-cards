@@ -24,7 +24,8 @@ const COLORS = ['linear-gradient(135deg, #8C9AFC 0%, #4F60E6 100%)', 'linear-gra
 const KIND = { basic: 'Basic', cloze: 'Fill in the blank', image: 'Image', audio: 'Audio' };
 const ICON = { basic: 'text', cloze: 'blank', image: 'image', audio: 'audio' };
 const plural = (n, w) => n + ' ' + w + (n === 1 ? '' : 's');
-const byAI = c => c.source && c.source !== 'you' && c.source !== 'import';
+// Cards your AI made. Cards from someone else's deck (studied or copied: they have an origin) are theirs, whoever made them.
+const byAI = c => c.source && c.source !== 'you' && c.source !== 'import' && c.source !== 'shared' && !c.origin;
 // A picture with parts hidden (image occlusion): each box is its own card, which asks one box. Null for other cards.
 const occOf = c => {
   if (!c || c.kind !== 'image' || c.box == null || !Array.isArray(c.boxes)) return null;
