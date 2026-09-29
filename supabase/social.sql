@@ -147,6 +147,18 @@ create table if not exists public.notifications (
 create index if not exists notifications_user on public.notifications (user_id, created_at desc);
 create index if not exists notifications_unread on public.notifications (user_id) where not read;
 
+-- How learners do on a shared deck's cards, without names on screen: one row per learner and card with their totals,
+-- which only that learner's own reviews rewrite. The deck's owner sees them added up (social.mjs creatorStats).
+create table if not exists public.card_stats (
+  shared_id text not null references public.shared_decks on delete cascade,
+  user_id uuid not null references public.profiles on delete cascade,
+  card_id text not null,
+  reviews integer not null default 0,
+  misses integer not null default 0,
+  updated_at timestamptz not null default now(),
+  primary key (shared_id, user_id, card_id)
+);
+
 alter table public.profiles enable row level security;
 alter table public.shared_decks enable row level security;
 alter table public.shared_cards enable row level security;
@@ -156,7 +168,8 @@ alter table public.follows enable row level security;
 alter table public.stars enable row level security;
 alter table public.subscriptions enable row level security;
 alter table public.notifications enable row level security;
-revoke all on public.profiles, public.shared_decks, public.shared_cards, public.deck_versions, public.suggestions, public.follows, public.stars, public.subscriptions, public.notifications from anon, authenticated;
+alter table public.card_stats enable row level security;
+revoke all on public.profiles, public.shared_decks, public.shared_cards, public.deck_versions, public.suggestions, public.follows, public.stars, public.subscriptions, public.notifications, public.card_stats from anon, authenticated;
 
 -- Pictures and sound anyone may see: a shared deck's cards and public profile pictures (supa.mjs publicMedia). The
 -- server copies them here from the person's private `media` folder.

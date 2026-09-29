@@ -43,6 +43,7 @@ export function createNet({ accept = () => {}, changed = () => {}, signedOut = f
     inbox: () => (signedOut ? [] : get('/api/social/suggestions')),
     sent: () => (signedOut ? [] : get('/api/social/suggestions?mine=1')),
     mine: () => (signedOut ? null : get('/api/social/mine', 30000)),
+    stats: id => (signedOut ? null : get('/api/social/stats?id=' + enc(id || ''), 60000)),
     act, drop
   };
 }

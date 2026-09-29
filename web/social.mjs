@@ -13,7 +13,7 @@
 // to data/social.json (localrest.mjs). A person's own decks and cards stay in their library (store.mjs); a shared deck
 // is a copy of the deck's cards in shared_cards, refreshed each time the owner's changes are saved.
 import { rest, val, qval, inList, like, publicMedia, cloud } from './supa.mjs';
-import { state, saved, onSave, afterSaving, withLibrary, withCredit, apply, uidOf, makeDeck, newId, isDev } from './store.mjs';
+import { state, saved, onSave, onReviewed, afterSaving, withLibrary, withCredit, apply, uidOf, makeDeck, newId, isDev } from './store.mjs';
 import { deckCards } from './order.js';
 import { newCard } from './fsrs.js';
 import { createHash } from 'node:crypto';
@@ -772,6 +772,22 @@ export async function search(q, viewer) {
   return { q: words, decks: await withOwners(rows), people: people.map(p => ({ ...face(p), bio: p.bio || '', school: p.school || '', followers: p.followers || 0 })) };
 }
 // Your shared decks and the decks you study, for your library's sharing labels and the pages that open them.
+// How people do on your shared deck's cards, without names: one row per learner and card with their totals (a learner
+// only ever rewrites their own row), added up here. The hardest cards are the ones missed most, once seen 3 times.
+onReviewed(r => rest('/card_stats', { method: 'POST', prefer: 'resolution=merge-duplicates', body: { shared_id: r.sharedId, user_id: socialId(uidOf()), card_id: r.card, reviews: r.reviews, misses: r.misses, updated_at: nowIso() } }));
+export async function creatorStats(uid, sharedId) {
+  const sh = await sharedRow(sharedId, 'id,owner,helpers');
+  const sid = socialId(uid);
+  if (!sh || (sh.owner !== sid && !(sh.helpers || []).some(h => h.id === sid))) throw Object.assign(new Error('Only its owner sees this.'), { status: 403 });
+  const rows = await rest('/card_stats?shared_id=eq.' + val(sharedId) + '&select=user_id,card_id,reviews,misses&limit=50000');
+  const by = new Map(), people = new Set();
+  for (const r of rows) { people.add(r.user_id); const t = by.get(r.card_id) || { reviews: 0, misses: 0 }; t.reviews += r.reviews; t.misses += r.misses; by.set(r.card_id, t); }
+  const top = [...by].filter(([, t]) => t.reviews >= 3 && t.misses).sort((a, b) => b[1].misses / b[1].reviews - a[1].misses / a[1].reviews || b[1].reviews - a[1].reviews).slice(0, 5);
+  const cards = top.length ? await cardsById(sharedId, top.map(([id]) => id)) : new Map();
+  const text = d => String(d.front || d.text || '').replace(/\[\[(.+?)\]\]/g, '___').replace(/<[^>]+>/g, '').trim() || 'A card';
+  return { learners: people.size, reviews: rows.reduce((n, r) => n + r.reviews, 0),
+    hardest: top.map(([id, t]) => { const c = cards.get(id); return c && !c.deleted ? { card: id, text: text(c.data || {}), missed: Math.round(100 * t.misses / t.reviews), reviews: t.reviews } : null; }).filter(Boolean) };
+}
 export async function mine(uid) {
   const sid = socialId(uid);
   const p = await profileOf(sid);

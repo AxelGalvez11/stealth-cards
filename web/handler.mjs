@@ -80,7 +80,8 @@ async function publicApi(req, res, path, viewer) {
 // several people at once. Never online, and only for this computer's own address.
 const LOCAL_HOST = req => /^(localhost|127\.0\.0\.1)(:\d+)?$/.test(String(req.headers.host || ''));
 const devOf = req => { const n = cookies(req).lc_dev; return !cloud() && LOCAL_HOST(req) && n && isDev('dev_' + n) ? 'dev_' + n : null; };
-const devMe = uid => ({ email: uid.slice(4) + '@dev.local', provider: 'dev', name: uid.slice(4, 5).toUpperCase() + uid.slice(5), picture: '', plan: { pro: true }, manage: '', dev: true });
+// Made-up people have Pro, except those whose name starts with "free" (for trying the Free plan).
+const devMe = uid => ({ email: uid.slice(4) + '@dev.local', provider: 'dev', name: uid.slice(4, 5).toUpperCase() + uid.slice(5), picture: '', plan: { pro: !uid.startsWith('dev_free') }, manage: '', dev: true });
 // A public page (a deck or a profile) is the app's own page, told what it's about, so search engines and link previews
 // read the deck's name and cards even before the app draws them.
 const escHtml = v => String(v ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
@@ -117,6 +118,10 @@ async function api(req, res, path, body, me, uid) {
   }
   if (path === '/api/social/activity' && req.method === 'GET') return send(res, 200, await social.activity(uid));
   if (path === '/api/social/mine' && req.method === 'GET') return send(res, 200, await social.mine(uid));
+  if (path === '/api/social/stats' && req.method === 'GET') {
+    try { return send(res, 200, await social.creatorStats(uid, new URL(req.url, 'http://x').searchParams.get('id') || '')); }
+    catch (e) { return send(res, e.status || 400, { error: e.message }); }
+  }
   if (path === '/api/social/unread' && req.method === 'GET') return send(res, 200, { unread: await social.unreadCount(uid).catch(() => 0) });
   if (path === '/api/social/suggestions' && req.method === 'GET') {
     const q = new URL(req.url, 'http://x').searchParams;

@@ -61,6 +61,10 @@ async function beforeSave(L) {
 // Work that must happen only once the library really saved (a suggestion marked as taken, news sent), since a save
 // that loses a race runs the whole request again from the newer copy.
 export const afterSaving = fn => { lib().after.push(fn); };
+// Reviews of a card from someone else's deck: its owner sees, without names, which cards people miss most
+// (social.mjs counts them). Each call has this learner's totals for the card, so counting it again changes nothing.
+const reviewHooks = [];
+export const onReviewed = fn => { reviewHooks.push(fn); };
 async function afterSave(L) { const list = L.after; L.after = []; for (const fn of list) await fn(); }
 export function load() {
   if (cloud()) return here.S;
@@ -452,6 +456,10 @@ function run(a, who) {
         else c.srs = { ...c.srs, reps: (c.srs.reps || 0) + 1, last: now };
       }
       S.logs.push(log);
+      if (d.link && c.origin && log.rating && reviewHooks.length) {
+        const mine = S.logs.filter(l => l.cardId === c.id && l.rating), r = { sharedId: d.link.id, card: c.origin, reviews: mine.length, misses: mine.filter(l => l.rating === 1).length };
+        afterSaving(() => Promise.all(reviewHooks.map(f => f(r))).catch(() => {}));
+      }
       return { logId: log.id };
     }
     case 'review.undo': {

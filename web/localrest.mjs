@@ -16,6 +16,7 @@ export const TABLES = {
   follows: { key: ['follower', 'followee'], defaults: () => ({ created_at: now() }) },
   stars: { key: ['user_id', 'shared_id'], defaults: () => ({ created_at: now() }) },
   subscriptions: { key: ['user_id', 'shared_id', 'deck_id'], defaults: () => ({ mode: 'study', updates: true, last_seen: now(), created_at: now() }) },
+  card_stats: { key: ['shared_id', 'user_id', 'card_id'], defaults: () => ({ reviews: 0, misses: 0, updated_at: now() }) },
   notifications: { key: ['id'], serial: 'id', defaults: () => ({ actor: null, actor_name: '', shared_id: null, data: {}, read: false, created_at: now() }) }
 };
 
