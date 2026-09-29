@@ -253,6 +253,24 @@ export default [
   "h": 844
  },
  {
+  "name": "PhoneHistory",
+  "title": "iPhone · History",
+  "w": 390,
+  "h": 844
+ },
+ {
+  "name": "PhoneHistoryDark",
+  "title": "iPhone · History · dark",
+  "w": 390,
+  "h": 844
+ },
+ {
+  "name": "PhoneHistoryOpen",
+  "title": "iPhone · History · a version opened",
+  "w": 390,
+  "h": 844
+ },
+ {
   "name": "PhoneInbox",
   "title": "iPhone · Check AI cards",
   "w": 390,
@@ -291,6 +309,60 @@ export default [
  {
   "name": "PhoneNewDeck",
   "title": "iPhone · New deck",
+  "w": 390,
+  "h": 844
+ },
+ {
+  "name": "PhonePublicDeck",
+  "title": "iPhone · Shared deck page",
+  "w": 390,
+  "h": 844
+ },
+ {
+  "name": "PhonePublicDeckCopy",
+  "title": "iPhone · Shared deck page · Make a copy",
+  "w": 390,
+  "h": 844
+ },
+ {
+  "name": "PhonePublicDeckDark",
+  "title": "iPhone · Shared deck page · dark",
+  "w": 390,
+  "h": 844
+ },
+ {
+  "name": "PhonePublicDeckGray",
+  "title": "iPhone · Shared deck page · gray",
+  "w": 390,
+  "h": 844
+ },
+ {
+  "name": "PhonePublicDeckOwner",
+  "title": "iPhone · Shared deck page · your own deck",
+  "w": 390,
+  "h": 844
+ },
+ {
+  "name": "PhonePublicDeckSignedOut",
+  "title": "iPhone · Shared deck page · signed out",
+  "w": 390,
+  "h": 844
+ },
+ {
+  "name": "PhonePublicDeckStudying",
+  "title": "iPhone · Shared deck page · a deck you study",
+  "w": 390,
+  "h": 844
+ },
+ {
+  "name": "PhonePublicDeckSuggest",
+  "title": "iPhone · Shared deck page · Suggest a change, on a card",
+  "w": 390,
+  "h": 844
+ },
+ {
+  "name": "PhonePublicDeckSuggestNew",
+  "title": "iPhone · Shared deck page · Suggest a change, a new card",
   "w": 390,
   "h": 844
  },
@@ -465,6 +537,30 @@ export default [
  {
   "name": "PhoneStatsGray",
   "title": "iPhone · Stats (dark, gray)",
+  "w": 390,
+  "h": 844
+ },
+ {
+  "name": "PhoneSuggestions",
+  "title": "iPhone · Suggestions",
+  "w": 390,
+  "h": 844
+ },
+ {
+  "name": "PhoneSuggestionsDark",
+  "title": "iPhone · Suggestions · dark",
+  "w": 390,
+  "h": 844
+ },
+ {
+  "name": "PhoneSuggestionsEmpty",
+  "title": "iPhone · Suggestions · none",
+  "w": 390,
+  "h": 844
+ },
+ {
+  "name": "PhoneSuggestionsOpen",
+  "title": "iPhone · Suggestions · one opened",
   "w": 390,
   "h": 844
  },
@@ -805,6 +901,42 @@ export default [
   "h": 900
  },
  {
+  "name": "WebHistory",
+  "title": "Web · History (your deck)",
+  "w": 1440,
+  "h": 900
+ },
+ {
+  "name": "WebHistoryDark",
+  "title": "Web · History · dark",
+  "w": 1440,
+  "h": 900
+ },
+ {
+  "name": "WebHistoryGoBack",
+  "title": "Web · History · going back to a version",
+  "w": 1440,
+  "h": 900
+ },
+ {
+  "name": "WebHistoryGray",
+  "title": "Web · History · gray",
+  "w": 1440,
+  "h": 900
+ },
+ {
+  "name": "WebHistoryOpen",
+  "title": "Web · History · a version opened",
+  "w": 1440,
+  "h": 900
+ },
+ {
+  "name": "WebHistoryOther",
+  "title": "Web · History · someone else’s deck",
+  "w": 1440,
+  "h": 900
+ },
+ {
   "name": "WebImport",
   "title": "Web · Import cards",
   "w": 1440,
@@ -843,6 +975,84 @@ export default [
  {
   "name": "WebNewDeck",
   "title": "Web · New deck",
+  "w": 1440,
+  "h": 900
+ },
+ {
+  "name": "WebPublicDeck",
+  "title": "Web · Shared deck page",
+  "w": 1440,
+  "h": 900
+ },
+ {
+  "name": "WebPublicDeckCopy",
+  "title": "Web · Shared deck page · Make a copy",
+  "w": 1440,
+  "h": 900
+ },
+ {
+  "name": "WebPublicDeckDark",
+  "title": "Web · Shared deck page · dark",
+  "w": 1440,
+  "h": 900
+ },
+ {
+  "name": "WebPublicDeckGray",
+  "title": "Web · Shared deck page · gray",
+  "w": 1440,
+  "h": 900
+ },
+ {
+  "name": "WebPublicDeckHistory",
+  "title": "Web · Shared deck page · History",
+  "w": 1440,
+  "h": 900
+ },
+ {
+  "name": "WebPublicDeckLoading",
+  "title": "Web · Shared deck page · loading",
+  "w": 1440,
+  "h": 900
+ },
+ {
+  "name": "WebPublicDeckMissing",
+  "title": "Web · Shared deck page · not shared",
+  "w": 1440,
+  "h": 900
+ },
+ {
+  "name": "WebPublicDeckOwner",
+  "title": "Web · Shared deck page · your own deck",
+  "w": 1440,
+  "h": 900
+ },
+ {
+  "name": "WebPublicDeckPeople",
+  "title": "Web · Shared deck page · People",
+  "w": 1440,
+  "h": 900
+ },
+ {
+  "name": "WebPublicDeckSignedOut",
+  "title": "Web · Shared deck page · signed out (anyone can look)",
+  "w": 1440,
+  "h": 900
+ },
+ {
+  "name": "WebPublicDeckStudying",
+  "title": "Web · Shared deck page · a deck you study",
+  "w": 1440,
+  "h": 900
+ },
+ {
+  "name": "WebPublicDeckSuggest",
+  "title": "Web · Shared deck page · Suggest a change, on a card",
+  "w": 1440,
+  "h": 900
+ },
+ {
+  "name": "WebPublicDeckSuggestNew",
+  "title": "Web · Shared deck page · Suggest a change, a new card",
   "w": 1440,
   "h": 900
  },
@@ -1017,6 +1227,42 @@ export default [
  {
   "name": "WebStatsGray",
   "title": "Web · Stats (dark, gray)",
+  "w": 1440,
+  "h": 900
+ },
+ {
+  "name": "WebSuggestions",
+  "title": "Web · Suggestions (for one deck)",
+  "w": 1440,
+  "h": 900
+ },
+ {
+  "name": "WebSuggestionsAI",
+  "title": "Web · Suggestions · your AI’s cards",
+  "w": 1440,
+  "h": 900
+ },
+ {
+  "name": "WebSuggestionsAll",
+  "title": "Web · Suggestions · every deck",
+  "w": 1440,
+  "h": 900
+ },
+ {
+  "name": "WebSuggestionsDark",
+  "title": "Web · Suggestions · dark",
+  "w": 1440,
+  "h": 900
+ },
+ {
+  "name": "WebSuggestionsEmpty",
+  "title": "Web · Suggestions · none",
+  "w": 1440,
+  "h": 900
+ },
+ {
+  "name": "WebSuggestionsGray",
+  "title": "Web · Suggestions · gray",
   "w": 1440,
   "h": 900
  },

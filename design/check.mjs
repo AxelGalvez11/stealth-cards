@@ -14,7 +14,14 @@ const PROP_SETS = [
   { $state: { moreOpen: true, moreQ: 'zz' } }, { $state: { tag: 'Must know' } }, { $state: { tagMenuOpen: true, tagQ: 'ex', filter: 'Organelles' } },
   { settingsOpen: true, $state: { dpOpen: true, dpQ: 'Pharm' } }, { $state: { cpOpen: true, cpQ: 'new tag' } }, { slashDemo: true }, { site: true },
   { naming: true }, { naming: true, dark: true, folder: 'f1' }, { moveOpen: true }, { mode: 'cards' }, { folder: 'f1', view: 'List' },
-  { newCard: true, $state: { listQ: 'zz' } }
+  { newCard: true, $state: { listQ: 'zz' } },
+  // The study network: a shared deck (yours, one you study, signed out, loading, not shared) with its copy dialog and its
+  // Suggest a change panel in each step, Suggestions for one deck or all of them, and History (opened, going back).
+  { owner: true }, { studying: true }, { copyOpen: true, $state: { cpFolders: true } }, { suggest: 'c2' }, { suggest: 'c3' }, { suggest: 'c4' }, { suggest: 'new' }, { suggest: '1' },
+  { suggest: 'c2', $state: { spRemove: true } }, { suggest: 'new', $state: { spKind: 'cloze' } }, { suggest: 'c2', $state: { spSent: true } }, { signedOut: true }, { loading: true }, { missing: true },
+  { deckTab: 'History' }, { deckTab: 'People' }, { $state: { openCard: 'c1' } }, { owner: true, $state: { openCard: 'c1' } },
+  { deckId: '' }, { pickItem: 'ai' }, { pickItem: 'g1' }, { noSuggestions: true, aiWaiting: false },
+  { someoneElse: true, openVersion: 14 }, { openVersion: 12, confirmVersion: 12 }, { openVersion: 9 }
 ];
 
 function walk(str, sc, miss) {

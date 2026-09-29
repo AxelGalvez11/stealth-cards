@@ -5364,6 +5364,613 @@ const phoneDiscover = phone(`<div style="padding: 64px 20px 120px; display: flex
   <sc-if value="{{offline}}" hint-placeholder-val="{{ false }}"><div style="padding: 40px 20px; border-radius: 22px; background: {{t.surf}}; text-align: center; font-size: 15px; color: {{t.muted}};">Couldn’t reach Lucida.</div></sc-if>
 </div>`, 'Discover');
 
+// ---------- A shared deck's page, suggesting changes, Suggestions, and History ----------
+// A shared deck's page is what anyone opens from Discover, a profile, or a link (lucida.cards/@mariasantos/mcat-biochemistry):
+// its cover and badges, what you can do with it (Study, Make a copy, Save, Suggest a change, Get updates; its owner gets
+// Edit in your library, Suggestions, and Share settings instead), its cards, History, and People, and how it was made.
+// Suggest a change opens a panel (a sheet on the iPhone): fix a card's words, take a card out, or add cards, several in
+// one go, then send them to the owner. The owner takes or skips each change on Suggestions, where the cards their own
+// AI made wait for them too, and every version of a shared deck is on its History, where the owner can go back to one.
+const NETX_CSS = '@keyframes scPop{from{opacity:0;transform:translateY(12px) scale(.97)}}.sc-pop{animation:scPop .26s cubic-bezier(.2,.8,.2,1)}@keyframes scFade{from{opacity:0}}.sc-fade{animation:scFade .2s ease}@media (prefers-reduced-motion:reduce){.sc-pop,.sc-fade{animation:none}}';
+// For the logic of these pages (after NET_JS): names, times, a card's words, what a change did, and what a version was,
+// in plain words. The canvas counts time from its sample's own morning, so it reads like the app does.
+const NETX_JS = `const RT = this.rich(), flat = x => RT.plain(String(x || ''), { join: ' ', math: 'show' }).replace(/\\s+/g, ' ').trim();
+  const firstName = n => { n = String(n || '').trim(); return /^(dr|prof|mr|mrs|ms)\\.?\\s/i.test(n) ? n : n.split(/\\s+/)[0] || n; };
+  const plural = (n, w, ws) => n + ' ' + (n === 1 ? w : ws || w + 's');
+  const val = e => (e && e.target ? e.target.value : '');
+  const NOW = db.mock ? Date.parse('2026-09-28T10:00:00Z') : Date.now(), MON = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  const since = iso => { const x = Date.parse(iso || ''); return x ? Math.max(0, Math.round((NOW - x) / 60000)) : null; };
+  const day = iso => { const x = new Date(iso); return MON[x.getMonth()] + ' ' + x.getDate(); };
+  const rel = iso => { const m = since(iso); if (m == null) return ''; if (m < 1) return 'Just now'; if (m < 60) return m + ' min ago'; const h = Math.round(m / 60); if (h < 24) return h + 'h ago';
+    const dd = Math.round(h / 24); return dd === 1 ? 'Yesterday' : dd < 7 ? dd + ' days ago' : dd < 14 ? '1 week ago' : dd < 28 ? Math.round(dd / 7) + ' weeks ago' : day(iso); };
+  const brief = iso => { const m = since(iso); if (m == null) return ''; if (m < 60) return Math.max(1, m) + 'm'; const h = Math.round(m / 60); if (h < 24) return h + 'h'; const dd = Math.round(h / 24); return dd === 1 ? 'Yesterday' : dd < 7 ? dd + 'd' : day(iso); };
+  const KINDS = { basic: 'Basic', cloze: 'Fill in the blank', image: 'Image', audio: 'Audio' };
+  // A card's question and answer as plain words: a question shows its blanks as ____, a change shows them [in brackets].
+  const boxLabel = c => { const b = (c.boxes || []).find(x => x.id === c.box); return b ? String(b.label || '').trim() : ''; };
+  const askOf = c => { c = c || {}; if (c.kind === 'cloze') return RT.plain(String(c.text || ''), { join: ' ', math: 'show', cloze: true, blank: '____' }).replace(/\\s+/g, ' ').trim();
+    return flat(c.front) || (c.box != null ? 'What’s under the box?' : c.kind === 'image' ? 'Picture' : c.kind === 'audio' ? flat(c.speak) || 'Sound' : ''); };
+  const answerOf = c => { c = c || {}; return c.kind === 'cloze' ? RT.blanks(String(c.text || ''), { math: 'show' }).join(', ') : c.box != null ? boxLabel(c) : flat(c.back); };
+  const wordsOf = c => { if (!c) return ''; if (c.kind === 'cloze') return flat(c.text).replace(/\\[\\[([^\\]]*)\\]\\]/g, '[$1]'); const a = askOf(c), b = answerOf(c); return b ? 'Q: ' + a + '  A: ' + b : a; };
+  // An AI app's round picture: its spark (Claude's in its orange).
+  const aiBg = n => (/claude/i.test(n || '') ? '#D97757' : t.inv), aiInk = n => (/claude/i.test(n || '') ? '#FFFFFF' : t.invText);
+  const whoOf = (ai, p) => (ai ? { isAI: true, isPerson: false, aiName: ai, aiBg: aiBg(ai), aiInk: aiInk(ai), who: person({ name: ai }) } : { isAI: false, isPerson: true, aiName: '', aiBg: '', aiInk: '', who: person(p) });
+  // What one change does to a card, for Suggestions and History: its kind, the card it's on, and the words before and after.
+  const CHANGE = { new: 'New card', answer: 'Answer', question: 'Question', typo: 'Typo', media: 'Picture or sound', edit: 'Note or tags', remove: 'Remove' };
+  const WORDS = { new: ['new card', 'new cards'], answer: ['answer fixed', 'answers fixed'], question: ['question reworded', 'questions reworded'], typo: ['small fix', 'small fixes'], media: ['new picture or sound', 'new pictures or sounds'], edit: ['note or tag changed', 'notes or tags changed'], remove: ['card removed', 'cards removed'] };
+  const sumOf = list => { const n = {}; (list || []).forEach(c => { n[c.kind] = (n[c.kind] || 0) + 1; }); const s = Object.keys(WORDS).filter(k => n[k]).map(k => n[k] + ' ' + WORDS[k][n[k] === 1 ? 0 : 1]).join(', '); return s.charAt(0).toUpperCase() + s.slice(1); };
+  const changeView = ch => {
+    const b = ch.before || null, a = ch.after || null, k = ch.kind || (ch.op === 'add' ? 'new' : ch.op === 'remove' ? 'remove' : 'edit');
+    let before = '', after = '', context = '';
+    if (k === 'new') after = wordsOf(a);
+    else if (k === 'remove') before = wordsOf(b);
+    else if (b && a && b.kind !== a.kind) { before = wordsOf(b); after = wordsOf(a); }
+    else if (k === 'answer') { context = askOf(a); before = answerOf(b); after = answerOf(a); }
+    else if (k === 'question') { before = askOf(b); after = askOf(a); }
+    else if (k === 'typo') { const q0 = askOf(b), q1 = askOf(a); if (q0 !== q1) { before = q0; after = q1; } else { context = q1; before = answerOf(b); after = answerOf(a); } }
+    else if (k === 'media') { context = askOf(a); after = a && (a.image || a.audio) ? 'New picture or sound' : 'Picture or sound taken out'; }
+    else { context = askOf(a); before = flat(b && b.note) || ((b && b.tags) || []).join(', '); after = flat(a && a.note) || ((a && a.tags) || []).join(', '); }
+    return { label: CHANGE[k] || 'Change', context, hasContext: !!context, before, after, hasBefore: !!before, hasAfter: !!after };
+  };
+  // A version, as History titles it ("Took 3 changes from Maria Santos") and as a deck's story tells it ("Maria Santos
+  // made it with ChatGPT"), with who made it: a person, or the AI app that worked for them.
+  const versionView = v => {
+    const by = v.by || { name: 'Someone' }, name = by.name || 'Someone', ai = v.ai || '', list = v.changes || null, n = list ? list.length : v.n || 0;
+    const allNew = list ? list.length > 0 && list.every(c => c.op === 'add') : /^\\d+ new cards?$/.test(v.summary || '');
+    let title = v.summary || '', sub = list ? sumOf(list) : '', who = name, what = '';
+    if (v.kind === 'made') { title = name + ' made it' + (ai ? ' with ' + ai : ''); what = 'made it' + (ai ? ' with ' + ai : ''); sub = v.summary || ''; }
+    else if (v.kind === 'ai') { who = ai || 'An AI app'; what = (allNew ? 'added ' : 'changed ') + plural(n, 'card') + ' for ' + firstName(name); title = who + ' ' + (allNew ? 'added ' : 'changed ') + plural(n, 'card'); sub = 'Through ' + firstName(name) + '’s AI link'; }
+    else if (v.kind === 'suggestion') { title = v.summary || 'Took ' + plural(n, 'change') + ' from ' + name; what = 'suggested ' + plural(n, 'change'); }
+    else if (v.kind === 'check') { title = name + ' checked every card'; what = 'checked every card'; sub = 'Marked as checked'; }
+    else if (v.kind === 'restore') { title = v.summary || 'Went back'; what = title.charAt(0).toLowerCase() + title.slice(1); }
+    else { title = name + ' changed ' + plural(n, 'card'); what = 'changed ' + plural(n, 'card'); if (!sub) sub = v.summary || ''; }
+    const linked = v.kind !== 'ai' && !!by.handle;
+    return { ...(v.kind === 'ai' ? whoOf(ai || 'AI', null) : whoOf('', by)), withAI: v.kind === 'made' && !!ai, badgeBg: aiBg(ai), badgeInk: aiInk(ai), label: 'v' + v.version, version: v.version,
+      title, sub, hasSub: !!sub, whoName: who, what, when: rel(v.at), whoHref: linked ? goTo('/@' + by.handle, 'WebProfile') : '', hasHref: linked, noHref: !linked };
+  };
+  const inkOf = this.props.dark ? { before: '#FDA29B', after: '#75E0A7' } : { before: '#912018', after: '#085D3A' };`;
+// Round pictures: a person's, or an AI app's spark; a version made with an AI app has its spark in the corner too.
+const WHO_AV = (k, s) => `<sc-if value="{{${k}.isAI}}" hint-placeholder-val="{{ false }}"><span title="{{${k}.aiName}}" style="width: ${s}px; height: ${s}px; flex-shrink: 0; border-radius: ${s / 2}px; background: {{${k}.aiBg}}; color: {{${k}.aiInk}}; display: inline-flex; align-items: center; justify-content: center;">${svg(I.sparkle, Math.round(s * .56), 2)}</span></sc-if><sc-if value="{{${k}.isPerson}}" hint-placeholder-val="{{ true }}">${PERSON_AV(k + '.who', s)}</sc-if>`;
+const VER_AV = (k, s) => `<span style="position: relative; display: inline-flex; flex-shrink: 0;">${WHO_AV(k, s)}<sc-if value="{{${k}.withAI}}" hint-placeholder-val="{{ false }}"><span style="position: absolute; right: -${Math.round(s * .28)}px; bottom: -3px; width: ${Math.round(s * .58)}px; height: ${Math.round(s * .58)}px; border-radius: 50%; background: {{${k}.badgeBg}}; color: {{${k}.badgeInk}}; box-shadow: 0 0 0 2px {{t.bg}}; display: flex; align-items: center; justify-content: center;">${svg(I.sparkle, Math.round(s * .34), 2.2)}</span></sc-if></span>`;
+// A change: its kind, the card it's on, the words before (struck, on light red) and after (on light green), and, where
+// the owner decides, Skip and Take it (Toss and Keep for their AI's cards).
+const CHANGE_CARD = (k, phone, decide = true) => `<div style="border-radius: 20px; background: {{t.bg}}; box-shadow: inset 0 0 0 1px {{t.line}}; padding: ${phone ? '14px 16px' : '16px 20px 18px'}; display: flex; flex-direction: column; gap: 12px; opacity: {{${k}.op}};">
+          <div style="display: flex; align-items: center; gap: 10px; min-height: 32px;"><span style="flex-shrink: 0; height: 24px; padding: 0 9px; display: inline-flex; align-items: center; border-radius: 999px; background: {{t.surf}}; font-size: 12px; font-weight: 600;">{{${k}.label}}</span><span style="flex-grow: 1; min-width: 0; font-size: 13px; color: {{t.muted}}; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{${k}.context}}</span>${decide && !phone ? `
+            <sc-if value="{{${k}.open}}" hint-placeholder-val="{{ true }}"><span style="display: flex; gap: 8px; flex-shrink: 0;"><button type="button" onClick="{{${k}.skip}}" class="sc-press" style="height: 32px; padding: 0 14px; border: 0; border-radius: 999px; background: {{t.surf}}; color: {{t.text}}; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer;"><span>{{${k}.skipLabel}}</span></button><button type="button" onClick="{{${k}.take}}" class="sc-press" style="height: 32px; padding: 0 14px 0 12px; border: 0; border-radius: 999px; background: {{t.inv}}; color: {{t.invText}}; font: inherit; font-size: 13px; font-weight: 600; display: inline-flex; align-items: center; gap: 6px; cursor: pointer;">${svg(I.check, 14, 2.4)}<span>{{${k}.takeLabel}}</span></button></span></sc-if>` : ''}${decide ? `
+            <sc-if value="{{${k}.decided}}" hint-placeholder-val="{{ false }}"><span style="flex-shrink: 0; font-size: 13px; font-weight: 600; color: {{${k}.stateColor}};">{{${k}.state}}</span></sc-if>` : ''}</div>
+          <sc-if value="{{${k}.hasBefore}}" hint-placeholder-val="{{ true }}"><div style="padding: 12px 16px; border-radius: 14px; background: {{t.againTint}}; color: {{ink.before}}; font-size: 14px; line-height: 1.45; text-decoration: line-through; overflow-wrap: anywhere;">{{${k}.before}}</div></sc-if>
+          <sc-if value="{{${k}.hasAfter}}" hint-placeholder-val="{{ true }}"><div style="padding: 12px 16px; border-radius: 14px; background: {{t.goodTint}}; color: {{ink.after}}; font-size: 14px; line-height: 1.45; overflow-wrap: anywhere;">{{${k}.after}}</div></sc-if>${decide && phone ? `
+          <sc-if value="{{${k}.open}}" hint-placeholder-val="{{ true }}"><div style="display: flex; gap: 8px;"><button type="button" onClick="{{${k}.skip}}" class="sc-press" style="flex: 1 1 0; height: 44px; border: 0; border-radius: 999px; background: {{t.surf}}; color: {{t.text}}; font: inherit; font-size: 15px; font-weight: 600; cursor: pointer;"><span>{{${k}.skipLabel}}</span></button><button type="button" onClick="{{${k}.take}}" class="sc-press" style="flex: 1 1 0; height: 44px; border: 0; border-radius: 999px; background: {{t.inv}}; color: {{t.invText}}; font: inherit; font-size: 15px; font-weight: 600; display: inline-flex; align-items: center; justify-content: center; gap: 6px; cursor: pointer;">${svg(I.check, 16, 2.4)}<span>{{${k}.takeLabel}}</span></button></div></sc-if>` : ''}
+        </div>`;
+
+// ----- the deck's page -----
+const PD_BTN = 'height: 44px; padding: 0 20px; display: inline-flex; align-items: center; justify-content: center; gap: 8px; border: 0; border-radius: 999px; font: inherit; font-size: 15px; font-weight: 600; white-space: nowrap; cursor: pointer;';
+const pdBtn = (inner, { onClick = '', href = '', inv = false, extra = '', attrs = '' } = {}) => {
+  const st = PD_BTN + (inv ? ' background: {{t.inv}}; color: {{t.invText}};' : ' background: {{t.surf}}; color: {{t.text}};') + extra;
+  return href ? `<a href="${href}" class="sc-press"${attrs} style="${st}">${inner}</a>` : `<button type="button" onClick="${onClick}" class="sc-press"${attrs} style="${st}">${inner}</button>`;
+};
+// iPhone: round buttons beside Study.
+const pdRound = (inner, label, { onClick = '', href = '', attrs = '' } = {}) => {
+  const st = 'position: relative; width: 56px; height: 56px; flex-shrink: 0; border: 0; border-radius: 28px; background: {{t.surf}}; color: {{t.text}}; display: flex; align-items: center; justify-content: center; cursor: pointer;';
+  return href ? `<a href="${href}" aria-label="${label}" class="sc-press"${attrs} style="${st}">${inner}</a>` : `<button type="button" onClick="${onClick}" aria-label="${label}" class="sc-press"${attrs} style="${st}">${inner}</button>`;
+};
+const STAR_ICON = s => `<sc-if value="{{starred}}" hint-placeholder-val="{{ false }}">${svg(I.starOn, s, 2)}</sc-if><sc-if value="{{notStarred}}" hint-placeholder-val="{{ true }}">${svg(I.star, s, 2)}</sc-if>`;
+const PD_BADGE = k => `<span style="height: 28px; padding: 0 11px; display: inline-flex; align-items: center; gap: 6px; border-radius: 999px; background: rgba(0,0,0,.28); color: #FFFFFF; font-size: 12px; font-weight: 600; text-shadow: none; white-space: nowrap; -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);"><sc-if value="{{${k}.shield}}" hint-placeholder-val="{{ true }}">${svg(I.shield, 13, 2)}</sc-if><sc-if value="{{${k}.people}}" hint-placeholder-val="{{ false }}">${svg(I.people, 13, 2)}</sc-if><span>{{${k}.label}}</span></span>`;
+// The deck's cover: its gradient, or its picture under a soft shade so the words on it read.
+const PD_COVER = `${flowLayer('cv')}${GRAIN_LAYER}<sc-if value="{{cv.hasPhoto}}" hint-placeholder-val="{{ false }}"><img src="{{cv.photo}}" alt="" style="position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover;"><span style="position: absolute; inset: 0; background: linear-gradient(180deg, rgba(0,0,0,.12) 0%, rgba(0,0,0,.55) 100%);"></span></sc-if>`;
+const PD_OWNER_LINE = av => `<div style="display: flex; align-items: center; gap: 8px; min-width: 0; font-size: 14px;"><a href="{{owner.href}}" style="display: inline-flex; align-items: center; gap: 8px; flex-shrink: 0; font-weight: 600;">${PERSON_AV('owner', av)}<span>{{owner.name}}</span></a><span style="opacity: .85; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{metaLine}}</span></div>`;
+const PD_TABS = `<div role="tablist" aria-label="This deck" style="display: flex; gap: 28px; box-shadow: inset 0 -1px 0 {{t.line}};"><sc-for list="{{tabs}}" as="x" hint-placeholder-count="3"><button type="button" role="tab" aria-selected="{{x.sel}}" onClick="{{x.pick}}" style="height: 44px; padding: 0; border: 0; background: transparent; box-shadow: {{x.bar}}; color: {{x.fg}}; font: inherit; font-size: 14px; font-weight: 600; display: inline-flex; align-items: center; gap: 8px; cursor: pointer;"><span>{{x.label}}</span><sc-if value="{{x.hasCount}}" hint-placeholder-val="{{ true }}"><span style="font-family: ${MONO}; font-size: 12px; font-weight: 500; color: {{t.muted}};">{{x.count}}</span></sc-if></button></sc-for></div>`;
+// Cards: each one's question, its kind and how it was made, and who made it; pressing one shows its answer.
+const PD_CARDS = phone => `<sc-if value="{{tabCards}}" hint-placeholder-val="{{ true }}"><div style="display: flex; flex-direction: column;">
+        <sc-for list="{{rows}}" as="c" hint-placeholder-count="${phone ? 5 : 6}"><div style="border-bottom: 1px solid {{t.line}};">
+          <button type="button" onClick="{{c.toggle}}" aria-expanded="{{c.expanded}}" style="width: 100%; min-height: 60px; padding: 10px 0; border: 0; background: transparent; color: {{t.text}}; font: inherit; text-align: left; display: flex; align-items: center; gap: 16px; cursor: pointer;"><span style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px;"><span style="font-size: 15px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{c.ask}}</span><span style="font-size: ${phone ? 13 : 12}px; color: {{t.muted}}; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{c.line}}</span></span>${WHO_AV('c', 24)}</button>
+          <sc-if value="{{c.open}}" hint-placeholder-val="{{ false }}"><div style="padding: 0 40px 14px 0; display: flex; flex-direction: column; align-items: flex-start; gap: 10px;"><span style="font-size: 14px; line-height: 1.45; color: {{t.muted}}; overflow-wrap: anywhere;">{{c.answer}}</span><sc-if value="{{c.canSuggest}}" hint-placeholder-val="{{ true }}"><button type="button" onClick="{{c.suggest}}" class="sc-press" style="height: 32px; padding: 0 12px; border: 0; border-radius: 999px; background: {{t.surf}}; color: {{t.text}}; font: inherit; font-size: 13px; font-weight: 600; display: inline-flex; align-items: center; gap: 6px; cursor: pointer;">${svg(I.message, 14, 2)}Suggest a change</button></sc-if><sc-if value="{{c.canEdit}}" hint-placeholder-val="{{ false }}"><a href="{{c.editHref}}" class="sc-press" style="height: 32px; padding: 0 12px; border-radius: 999px; background: {{t.surf}}; font-size: 13px; font-weight: 600; display: inline-flex; align-items: center; gap: 6px;">${svg(I.pencil, 14, 2)}Edit</a></sc-if></div></sc-if>
+        </div></sc-for>
+        <sc-if value="{{hasMoreRows}}" hint-placeholder-val="{{ false }}"><button type="button" onClick="{{showMore}}" class="sc-press" style="margin-top: 14px; align-self: flex-start; height: 36px; padding: 0 16px; border: 0; border-radius: 999px; background: {{t.surf}}; color: {{t.text}}; font: inherit; font-size: 14px; font-weight: 600; cursor: pointer;">Show more</button></sc-if>
+        <sc-if value="{{hasMoreCards}}" hint-placeholder-val="{{ true }}"><div style="padding: 16px 0 4px; font-size: 13px; color: {{t.muted}};">{{moreLine}}</div></sc-if>
+        <sc-if value="{{noCards}}" hint-placeholder-val="{{ false }}"><div style="padding: 24px 0; font-size: 14px; color: {{t.muted}};">No cards yet.</div></sc-if>
+      </div></sc-if>`;
+// History, the latest versions (all of them on the History page).
+const PD_HISTORY = phone => `<sc-if value="{{tabHistory}}" hint-placeholder-val="{{ false }}"><div style="display: flex; flex-direction: column;">
+        <sc-for list="{{recent}}" as="v" hint-placeholder-count="4"><div style="display: flex; align-items: center; gap: 12px; min-height: 64px; padding: 8px 0; border-bottom: 1px solid {{t.line}};">${phone ? '' : `<span style="width: 36px; flex-shrink: 0; font-family: ${MONO}; font-size: 12px; color: {{t.muted}};">{{v.label}}</span>`}${VER_AV('v', 32)}<span style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px;"><span style="font-size: 14px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{v.title}}</span><span style="font-size: 12px; color: {{t.muted}}; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{v.line}}</span></span>${phone ? '' : '<span style="flex-shrink: 0; font-size: 13px; color: {{t.muted}};">{{v.when}}</span>'}</div></sc-for>
+        <a href="{{historyHref}}" class="sc-press" style="margin-top: 14px; align-self: flex-start; height: 36px; padding: 0 16px; display: inline-flex; align-items: center; border-radius: 999px; background: {{t.surf}}; font-size: 14px; font-weight: 600;">See all</a>
+      </div></sc-if>`;
+// People: the owner, helpers, everyone whose changes are in it, and the teacher who checked it.
+const PD_PEOPLE = `<sc-if value="{{tabPeople}}" hint-placeholder-val="{{ false }}"><div style="display: flex; flex-direction: column;">
+        <sc-for list="{{peopleRows}}" as="x" hint-placeholder-count="4"><a href="{{x.href}}" style="display: flex; align-items: center; gap: 12px; min-height: 64px; border-bottom: 1px solid {{t.line}};">${PERSON_AV('x', 36)}<span style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px;"><span style="display: flex; align-items: center; gap: 6px; font-size: 15px; font-weight: 600;"><span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{x.name}}</span>${VERIFIED('x')}</span><span style="font-size: 12px; color: {{t.muted}};">{{x.at}}</span></span><span style="flex-shrink: 0; font-size: 13px; color: {{t.muted}};">{{x.role}}</span></a></sc-for>
+      </div></sc-if>`;
+// How it was made: the deck's story, from its first version.
+const PD_STORY = `<div style="position: relative; display: flex; flex-direction: column; gap: 20px;"><span aria-hidden="true" style="position: absolute; left: 13px; top: 16px; bottom: 16px; width: 2px; border-radius: 1px; background: {{t.line}};"></span>
+        <sc-for list="{{story}}" as="v" hint-placeholder-count="4"><div style="position: relative; display: flex; gap: 12px;">${VER_AV('v', 28)}<span style="min-width: 0; padding-top: 3px; display: flex; flex-direction: column; gap: 3px;"><span style="font-size: 14px; line-height: 1.35;"><sc-if value="{{v.hasHref}}" hint-placeholder-val="{{ true }}"><a href="{{v.whoHref}}" style="font-weight: 600;">{{v.whoName}}</a></sc-if><sc-if value="{{v.noHref}}" hint-placeholder-val="{{ false }}"><span style="font-weight: 600;">{{v.whoName}}</span></sc-if> <span>{{v.what}}</span></span><span style="font-size: 12px; color: {{t.muted}};">{{v.line}}</span></span></div></sc-for>
+      </div>`;
+// Copy to your library: its name, a folder, and whether to get the owner's changes later.
+const COPY_FORM = phone => `<div style="display: flex; align-items: center; gap: 14px;"><span style="position: relative; width: 56px; height: 56px; flex-shrink: 0; border-radius: 14px; overflow: hidden; background: {{cv.base}};">${flowLayer('cv')}<sc-if value="{{cv.hasPhoto}}" hint-placeholder-val="{{ false }}"><img src="{{cv.photo}}" alt="" style="position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover;"></sc-if></span><span style="min-width: 0; display: flex; flex-direction: column; gap: 3px;"><span style="font-size: ${phone ? 20 : 22}px; font-weight: 600; letter-spacing: -.02em;">Copy to your library</span><span style="font-size: 14px; color: {{t.muted}}; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{cp.from}}</span></span></div>
+    <label style="display: flex; flex-direction: column; gap: 8px;"><span style="font-size: 13px; font-weight: 600;">Name</span><input type="text" value="{{cp.name}}" onChange="{{cp.setName}}" ref="{{cp.nameRef}}" aria-label="Name" maxlength="120" autocomplete="off" style="height: 50px; box-sizing: border-box; padding: 0 16px; border: 0; outline: 0; border-radius: 16px; background: {{t.bg}}; box-shadow: inset 0 0 0 2px {{t.text}}; color: {{t.text}}; font: inherit; font-size: 16px;"></label>
+    <div style="display: flex; flex-direction: column; gap: 8px;"><span style="font-size: 13px; font-weight: 600;">Folder</span><div style="position: relative;"><button type="button" onClick="{{cp.toggleFolders}}" aria-expanded="{{cp.foldersExpanded}}" aria-label="Folder: {{cp.folderLabel}}" style="width: 100%; height: 50px; box-sizing: border-box; padding: 0 16px; border: 0; border-radius: 16px; background: {{t.surf}}; color: {{t.text}}; font: inherit; font-size: 16px; display: flex; align-items: center; justify-content: space-between; gap: 10px; cursor: pointer;"><span>{{cp.folderLabel}}</span>${svg(I.chevDown, 16, 2)}</button>
+      <sc-if value="{{cp.foldersOpen}}" hint-placeholder-val="{{ false }}"><div role="listbox" aria-label="Folders" data-sc-pop style="position: absolute; left: 0; right: 0; top: calc(100% + 6px); z-index: 5; box-sizing: border-box; padding: 6px; border-radius: 18px; background: {{t.bg}}; box-shadow: 0 0 0 1px {{t.line}}, 0 18px 44px rgba(0,0,0,.18); display: flex; flex-direction: column; gap: 2px; max-height: 232px; overflow-y: auto;"><sc-for list="{{cp.folders}}" as="f" hint-placeholder-count="3"><button type="button" role="option" aria-selected="{{f.sel}}" onClick="{{f.pick}}" style="height: 42px; flex-shrink: 0; padding: 0 12px; border: 0; border-radius: 12px; background: {{f.bg}}; color: {{t.text}}; font: inherit; font-size: 15px; text-align: left; display: flex; align-items: center; gap: 10px; cursor: pointer;">${svg(I.folder, 16, 1.8)}<span>{{f.name}}</span></button></sc-for></div></sc-if></div></div>
+    <div style="display: flex; align-items: center; gap: 12px;"><span style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px;"><span style="font-size: 15px; font-weight: 600;">{{cp.updatesLabel}}</span><span style="font-size: 13px; color: {{t.muted}};">You choose which changes to take.</span></span>${SWITCH('cp.updatesSw', 'cp.toggleUpdates', 'Get the owner’s updates')}</div>
+    <sc-if value="{{cp.hasError}}" hint-placeholder-val="{{ false }}"><span role="alert" style="font-size: 13px; color: {{t.again}};">{{cp.error}}</span></sc-if>
+    <div style="display: flex; ${phone ? '' : 'justify-content: flex-end; '}gap: 10px;"><button type="button" onClick="{{cp.cancel}}" data-key="escape" class="sc-press" style="${phone ? 'flex: 1 1 0; ' : ''}height: 48px; padding: 0 22px; border: 0; border-radius: 999px; background: {{t.surf}}; color: {{t.text}}; font: inherit; font-size: 15px; font-weight: 600; cursor: pointer;">Cancel</button><button type="button" onClick="{{cp.save}}" aria-disabled="{{cp.off}}" class="sc-press" style="${phone ? 'flex: 1 1 0; ' : ''}height: 48px; padding: 0 24px; border: 0; border-radius: 999px; background: {{t.inv}}; color: {{t.invText}}; opacity: {{cp.op}}; font: inherit; font-size: 15px; font-weight: 600; cursor: pointer;"><span>{{cp.action}}</span></button></div>`;
+// A field for a card's words while suggesting a change.
+const SP_FIELD = (label, v, fn, rows, ph = '') => `<label style="display: flex; flex-direction: column; gap: 6px;"><span style="font-size: 13px; font-weight: 600;">${label}</span><textarea rows="${rows}" onChange="{{${fn}}}" placeholder="${ph}" aria-label="${label}" style="resize: none; box-sizing: border-box; width: 100%; border: 0; outline: 0; border-radius: 16px; padding: 12px 14px; background: {{t.surf}}; color: {{t.text}}; font: inherit; font-size: 15px; line-height: 1.45;">{{${v}}}</textarea></label>`;
+const SP_BACK = `<button type="button" onClick="{{sp.back}}" aria-label="Back to the cards" class="sc-press" style="width: 32px; height: 32px; flex-shrink: 0; border: 0; border-radius: 16px; background: {{t.surf}}; color: {{t.text}}; display: flex; align-items: center; justify-content: center; cursor: pointer;">${svg(I.back, 14, 2.2)}</button>`;
+const SP_ADD = `<button type="button" onClick="{{sp.add}}" aria-disabled="{{sp.addOff}}" class="sc-press" style="height: 44px; flex-shrink: 0; border: 0; border-radius: 999px; background: {{t.surf}}; color: {{t.text}}; opacity: {{sp.addOp}}; font: inherit; font-size: 14px; font-weight: 600; display: inline-flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer;">${svg(I.plus, 15, 2.2)}<span>{{sp.addLabel}}</span></button>`;
+// Suggest a change: pick a card (search the deck) or start a new one, change its words or take it out, add it to your
+// changes, and send them all with a line saying why. Shared by the web panel and the iPhone sheet.
+const SUGGEST_BODY = phone => `<div style="display: flex; align-items: center; justify-content: space-between; gap: 12px;"><span style="font-size: ${phone ? 18 : 20}px; font-weight: 600; letter-spacing: -.01em;">Suggest a change</span>${phone
+    ? '<button type="button" onClick="{{sp.close}}" style="height: 36px; padding: 0 16px; border: 0; border-radius: 999px; background: {{t.surf}}; color: {{t.text}}; font: inherit; font-size: 14px; font-weight: 600; cursor: pointer;">Cancel</button>'
+    : `<button type="button" onClick="{{sp.close}}" aria-label="Close" style="width: 36px; height: 36px; border: 0; border-radius: 18px; background: {{t.surf}}; color: {{t.text}}; display: flex; align-items: center; justify-content: center; cursor: pointer;">${svg(I.close, 14, 2.2)}</button>`}</div>
+    <sc-if value="{{sp.sent}}" hint-placeholder-val="{{ false }}"><div style="flex-grow: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; text-align: center;"><span style="width: 64px; height: 64px; border-radius: 32px; background: {{t.inv}}; color: {{t.invText}}; display: flex; align-items: center; justify-content: center;">${svg(I.check, 28, 2.4)}</span><span role="status" style="font-size: 20px; font-weight: 600; letter-spacing: -.01em;">{{sp.sentTitle}}</span></div>
+      <button type="button" onClick="{{sp.close}}" class="sc-press" style="height: 48px; flex-shrink: 0; border: 0; border-radius: 999px; background: {{t.inv}}; color: {{t.invText}}; font: inherit; font-size: 15px; font-weight: 600; cursor: pointer;">Done</button></sc-if>
+    <sc-if value="{{sp.editing}}" hint-placeholder-val="{{ true }}"><div style="flex-grow: 1; min-height: 0; overflow-y: auto; scrollbar-width: thin; margin: 0 -4px; padding: 2px 4px; display: flex; flex-direction: column; gap: 14px;">
+      <sc-if value="{{sp.picking}}" hint-placeholder-val="{{ true }}"><div style="display: flex; gap: 8px;"><label style="flex-grow: 1; min-width: 0; height: 44px; box-sizing: border-box; padding: 0 14px; border-radius: 999px; background: {{t.surf}}; color: {{t.muted}}; display: flex; align-items: center; gap: 8px;">${svg(I.search, 15)}<input value="{{sp.q}}" onChange="{{sp.setQ}}" placeholder="Find a card to fix" aria-label="Find a card to fix" style="flex-grow: 1; min-width: 0; border: 0; outline: 0; background: transparent; color: {{t.text}}; font: inherit; font-size: ${phone ? 16 : 14}px;"></label><button type="button" onClick="{{sp.startNew}}" class="sc-press" style="height: 44px; flex-shrink: 0; padding: 0 16px; border: 0; border-radius: 999px; background: {{t.surf}}; color: {{t.text}}; font: inherit; font-size: 14px; font-weight: 600; display: inline-flex; align-items: center; gap: 6px; cursor: pointer;">${svg(I.plus, 15, 2.2)}New card</button></div>
+        <div style="display: flex; flex-direction: column;"><sc-for list="{{sp.found}}" as="c" hint-placeholder-count="5"><button type="button" onClick="{{c.pick}}" style="width: 100%; padding: 11px 2px; border: 0; border-bottom: 1px solid {{t.line}}; background: transparent; color: {{t.text}}; font: inherit; text-align: left; display: flex; flex-direction: column; gap: 2px; cursor: pointer;"><span style="max-width: 100%; font-size: 14px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{c.ask}}</span><span style="font-size: 12px; color: {{t.muted}};">{{c.kind}}</span></button></sc-for>
+          <sc-if value="{{sp.noneFound}}" hint-placeholder-val="{{ false }}"><span style="padding: 12px 2px; font-size: 14px; color: {{t.muted}};">No card has those words.</span></sc-if></div></sc-if>
+      <sc-if value="{{sp.onCard}}" hint-placeholder-val="{{ false }}"><div style="display: flex; flex-direction: column; gap: 12px;">
+        <div style="display: flex; align-items: center; gap: 8px;">${SP_BACK}<span style="flex-grow: 1; min-width: 0; font-size: 13px; color: {{t.muted}};">{{sp.cardKind}}</span><button type="button" onClick="{{sp.toggleRemove}}" aria-pressed="{{sp.removePressed}}" class="sc-press" style="height: 32px; flex-shrink: 0; padding: 0 12px; border: 0; border-radius: 999px; background: {{sp.removeBg}}; color: {{sp.removeFg}}; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer;">Remove this card</button></div>
+        <sc-if value="{{sp.removing}}" hint-placeholder-val="{{ false }}"><div style="padding: 12px 16px; border-radius: 14px; background: {{t.againTint}}; color: {{ink.before}}; font-size: 14px; line-height: 1.45; text-decoration: line-through;">{{sp.cardWords}}</div></sc-if>
+        <sc-if value="{{sp.fixCloze}}" hint-placeholder-val="{{ false }}">${SP_FIELD('Text', 'sp.text', 'sp.setText', 4)}</sc-if>
+        <sc-if value="{{sp.fixFront}}" hint-placeholder-val="{{ true }}">${SP_FIELD('Front', 'sp.front', 'sp.setFront', 2)}</sc-if>
+        <sc-if value="{{sp.fixBack}}" hint-placeholder-val="{{ true }}">${SP_FIELD('Back', 'sp.backText', 'sp.setBack', 3)}</sc-if>
+        ${SP_ADD}
+      </div></sc-if>
+      <sc-if value="{{sp.onNew}}" hint-placeholder-val="{{ false }}"><div style="display: flex; flex-direction: column; gap: 12px;">
+        <div style="display: flex; align-items: center; gap: 8px;">${SP_BACK}<span style="flex-grow: 1; min-width: 0; font-size: 15px; font-weight: 600;">New card</span><div role="group" aria-label="Kind of card" style="display: flex; gap: 2px; padding: 3px; border-radius: 999px; background: {{t.surf}}; flex-shrink: 0;"><sc-for list="{{sp.kinds}}" as="o" hint-placeholder-count="2"><button type="button" onClick="{{o.pick}}" aria-pressed="{{o.pressed}}" style="height: 30px; padding: 0 12px; border: 0; border-radius: 999px; background: {{o.bg}}; color: {{o.fg}}; box-shadow: {{o.sh}}; font: inherit; font-size: 13px; font-weight: 600; white-space: nowrap; cursor: pointer;">{{o.label}}</button></sc-for></div></div>
+        <sc-if value="{{sp.newCloze}}" hint-placeholder-val="{{ false }}">${SP_FIELD('Text', 'sp.text', 'sp.setText', 4, 'The [[mitochondrion]] makes most of the cell’s ATP.')}</sc-if>
+        <sc-if value="{{sp.newBasic}}" hint-placeholder-val="{{ true }}">${SP_FIELD('Front', 'sp.front', 'sp.setFront', 2, 'Question')}${SP_FIELD('Back', 'sp.backText', 'sp.setBack', 3, 'Answer')}</sc-if>
+        ${SP_ADD}
+      </div></sc-if>
+      <sc-if value="{{sp.hasDrafts}}" hint-placeholder-val="{{ false }}"><div style="display: flex; flex-direction: column; gap: 8px;"><span style="font-size: 13px; font-weight: 600;">{{sp.draftsTitle}}</span><sc-for list="{{sp.drafts}}" as="x" hint-placeholder-count="2"><div style="display: flex; align-items: center; gap: 10px; min-height: 48px; padding: 0 6px 0 12px; border-radius: 14px; background: {{t.surf}};"><span style="flex-shrink: 0; height: 24px; padding: 0 9px; display: inline-flex; align-items: center; border-radius: 999px; background: {{t.bg}}; font-size: 12px; font-weight: 600;">{{x.label}}</span><span style="flex-grow: 1; min-width: 0; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{x.words}}</span><button type="button" onClick="{{x.remove}}" aria-label="Take this change out" style="width: 32px; height: 32px; flex-shrink: 0; border: 0; border-radius: 16px; background: transparent; color: {{t.muted}}; display: flex; align-items: center; justify-content: center; cursor: pointer;">${svg(I.close, 12, 2.4)}</button></div></sc-for></div></sc-if>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 10px; flex-shrink: 0;">
+      <input type="text" value="{{sp.why}}" onChange="{{sp.setWhy}}" placeholder="Why? (optional)" aria-label="Why?" maxlength="280" style="height: 46px; box-sizing: border-box; padding: 0 16px; border: 0; outline: 0; border-radius: 16px; background: {{t.surf}}; color: {{t.text}}; font: inherit; font-size: ${phone ? 16 : 15}px;">
+      <sc-if value="{{sp.hasError}}" hint-placeholder-val="{{ false }}"><span role="alert" style="font-size: 13px; color: {{t.again}};">{{sp.error}}</span></sc-if>
+      <button type="button" onClick="{{sp.send}}" aria-disabled="{{sp.sendOff}}" class="sc-press" style="height: 48px; border: 0; border-radius: 999px; background: {{t.inv}}; color: {{t.invText}}; opacity: {{sp.sendOp}}; font: inherit; font-size: 15px; font-weight: 600; cursor: pointer;"><span>{{sp.sendLabel}}</span></button>
+    </div></sc-if>`;
+const PUBLIC_DECK_LOGIC = phone => `
+constructor(props) { super(props); this.state = {}; }
+componentDidMount() { this.named(); }
+componentDidUpdate() { this.named(); }
+// The browser's tab says which deck this is.
+named() { const db = this.props.db; if (db && !db.mock && this.deckName && document.title !== this.deckName + ' · Lucida') document.title = this.deckName + ' · Lucida'; }
+renderVals() {
+  ${T}${DB_JS}${NET_JS}${SW_JS}${NETX_JS}
+  const p = this.props, st = this.state, set = patch => this.setState(patch), B = '${phone ? 'Phone' : 'Web'}', out = !!db.signedOut || !!p.signedOut;
+  const fresh = p.missing ? { missing: true } : p.id ? db.net.deckById(p.id) : db.net.deck(p.handle, p.slug);
+  // While a newer answer is on its way (after Save, Get updates, …), the page keeps showing the one it has.
+  if (fresh !== undefined) this.page = fresh;
+  const page = fresh === undefined ? this.page : fresh, loading = page === undefined, bad = !!(page && (page.missing || page.offline)), ready = !loading && !bad;
+  const d = ready ? page : { id: '', name: '', cards: 0, stars: 0, version: 1, cover: {}, cardsList: [], made: [], people: [], helpers: [], contributors: [], owner: null, me: null };
+  this.deckName = ready ? d.name : '';
+  const me = ready && !out ? d.me : null, owns = !!(me && me.owner), learner = !!me && !owns, ownerName = (d.owner && d.owner.name) || '', owner = person(d.owner);
+  const fail = e => (e && e.message) || 'Something went wrong. Try again.';
+  // The cover, and its badges: a teacher's check, a school's deck, and who keeps it up.
+  const nd = netDeck(d), cv = { ...nd, ink: nd.photo ? '#FFFFFF' : nd.ink, shadow: nd.photo ? '0 1px 14px rgba(0,0,0,.45)' : nd.shadow };
+  const checkedAt = (d.made || []).find(v => v.kind === 'check'), school = !!d.owner && (d.owner.kind === 'school' || d.owner.verified === 'school');
+  const badges = !ready ? [] : [
+    ...(d.checked ? [{ label: 'Checked by ' + d.checked.name + (d.checked.current ? '' : checkedAt ? ' at version ' + checkedAt.version : ' earlier'), shield: true, people: false }] : []),
+    ...(school ? [{ label: ownerName, shield: true, people: false }] : []),
+    { label: d.maintained === 'community' ? 'Kept up by the community' : 'Kept up by ' + firstName(ownerName), shield: false, people: true }];
+  const upd = rel(d.updated), cardsLine = kfmt(d.cards) + (d.cards === 1 ? ' card' : ' cards');
+  // What you've done with it decides the buttons. Saving and getting updates show as you press them.
+  const starOn = st.star ?? !!(me && me.starred), stars = Math.max(0, (d.stars || 0) + (me ? (starOn ? 1 : 0) - (me.starred ? 1 : 0) : 0));
+  const watchOn = st.watch ?? !!(me && me.watching), studying = (me && me.studying) || '', copied = (me && me.copied) || '';
+  const toggle = (key, fn, on) => async () => { if (!me) return; set({ [key]: on, error: '' }); try { await fn(on); } catch (e) { this.setState({ [key]: undefined, error: fail(e) }); } };
+  const mine = owns && !db.mock && db.decks ? db.decks().find(x => x.shared && x.shared.id === d.id) : null, deckHref = mine ? '/deck/' + mine.id : '/library';
+  const shareUrl = (db.mock ? 'https://app.lucida.cards' : location.origin) + (d.url || '');
+  // The cards, each with how it was made: who added it (a person, or their AI app) and who changed it last.
+  const byName = {}; [...(d.people || []), d.owner].filter(Boolean).forEach(x => { byName[x.name] = x; });
+  const touch = c => {
+    const steps = c.trail || [], ed = steps.slice().reverse().find(s => s.w === 'edited'), mk = steps.find(s => s.w === 'made' || s.w === 'imported');
+    const src = c.source && !['you', 'import', 'shared', 'suggestion'].includes(c.source) ? c.source : '';
+    if (ed) { const ai = ed.ai || '', nm = ed.by || (ai ? '' : ownerName); return { note: 'Edited by ' + (ai || firstName(nm)), ai, name: nm }; }
+    if (mk && (mk.ai || mk.by)) return { note: 'Added by ' + (mk.ai || firstName(mk.by)), ai: mk.ai || '', name: mk.by || '' };
+    if (src) return { note: 'Added by ' + src, ai: src, name: '' };
+    return { note: '', ai: '', name: ownerName };
+  };
+  const list = d.cardsList || [], limit = st.limit || ${phone ? 40 : 80}, openCard = st.openCard || '';
+  const rows = list.slice(0, limit).map(c => { const w = touch(c);
+    return { id: c.id, ask: askOf(c) || 'Card', answer: answerOf(c) || '—', line: (KINDS[c.kind] || 'Card') + (w.note ? ' · ' + w.note : ''), ...whoOf(w.ai, byName[w.name] || { name: w.name || ownerName }),
+      open: openCard === c.id, expanded: openCard === c.id ? 'true' : 'false', toggle: () => set({ openCard: openCard === c.id ? '' : c.id }),
+      canSuggest: learner, suggest: () => openSuggest(c.id), canEdit: owns, editHref: goTo(mine ? '/deck/' + mine.id + '/card/' + c.id : deckHref, ${phone ? "'PhoneEditor'" : "'WebCardsScreen'"}) }; });
+  // People: the owner, helpers, everyone whose changes it took, and the teacher who checked it.
+  const faceOf = h => (d.people || []).find(x => x.handle === h.handle) || h, seen = new Set(), peopleRows = [];
+  const addPerson = (x, role) => { if (!x || !x.handle || seen.has(x.handle)) return; seen.add(x.handle); peopleRows.push({ ...person(faceOf(x)), role }); };
+  addPerson(d.owner, 'Owner'); (d.helpers || []).forEach(h => addPerson(h, 'Helper')); (d.contributors || []).forEach(h => addPerson(h, plural(h.n || 0, 'change')));
+  if (d.checked) addPerson(d.checked, checkedAt ? 'Checked version ' + checkedAt.version : 'Checked it');
+  const tab = st.tab || p.deckTab || 'Cards';
+  // The story: its first version, then the latest few.
+  const made = (d.made || []).slice().reverse(), firstV = made.find(v => v.kind === 'made'), story = [firstV, ...made.filter(v => v !== firstV).slice(-4)].filter(Boolean)
+    .map(v => ({ ...versionView(v), line: 'Version ' + v.version + (v.at ? ' · ' + (v.kind === 'made' ? day(v.at) : rel(v.at)) : '') }));
+  // Suggest a change: opened from its button, from a card, or by the link (?suggest=<card>, where the card can also be
+  // one in your own library that came from this deck).
+  const findCard = id => { if (!id) return null; const c = list.find(x => x.id === id); if (c) return c; const own = !db.mock && db.card ? db.card(id) : null; return (own && own.origin && list.find(x => x.id === own.origin)) || null; };
+  const start = String(p.suggest || ''), startCard = findCard(start), sample = db.mock && start === 'new';
+  const spOpen = learner && (st.spOpen ?? !!start), step = st.spStep || (start === 'new' ? 'new' : startCard ? 'card' : 'pick');
+  const card = step === 'card' ? (st.spCard ? list.find(x => x.id === st.spCard) : startCard) || null : null;
+  const drafts = st.drafts || (sample ? [{ op: 'edit', card: 'c2', after: { front: 'Which enzyme is the rate-limiting step of glycolysis?', back: 'Phosphofructokinase-1 (PFK-1). Hexokinase starts glycolysis but does not limit its rate.' } }] : []);
+  const f0 = card ? { front: card.front || '', back: card.back || '', text: card.text || '' } : sample && st.spStep == null ? { front: 'What activates PFK-1?', back: 'AMP and fructose-2,6-bisphosphate.', text: '' } : { front: '', back: '', text: '' };
+  const front = st.spFront ?? f0.front, back = st.spBack ?? f0.back, text = st.spText ?? f0.text, newKind = st.spKind || 'basic', removing = !!st.spRemove;
+  const cloze = !!card && card.kind === 'cloze', boxCard = !!card && card.box != null;
+  // The change being written: a card's new words, the card taken out, or a new card (a text with blanks needs a [[blank]]).
+  const current = step === 'card' && card ? (removing ? { op: 'remove', card: card.id } : (() => { const after = cloze ? { text } : boxCard ? { front } : { front, back };
+      return Object.keys(after).some(k => String(after[k]).trim() !== String(card[k] || '').trim()) ? { op: 'edit', card: card.id, after } : null; })())
+    : step === 'new' ? (newKind === 'cloze' ? (/\\[\\[[^\\]]+\\]\\]/.test(text) ? { op: 'add', after: { kind: 'cloze', text } } : null) : String(front).trim() ? { op: 'add', after: { kind: 'basic', front, back } } : null) : null;
+  const draftView = x => { const c = x.card ? list.find(y => y.id === x.card) : null;
+    if (x.op === 'add') return { label: 'New card', words: askOf(x.after) || wordsOf(x.after) };
+    if (x.op === 'remove') return { label: 'Remove', words: askOf(c) };
+    const a = { ...(c || {}), ...x.after }; return { label: answerOf(c) !== answerOf(a) ? 'Answer' : askOf(c) !== askOf(a) ? 'Question' : 'Edit', words: askOf(a) }; };
+  const fresh0 = { spFront: undefined, spBack: undefined, spText: undefined, spRemove: false };
+  const openSuggest = id => set({ spOpen: true, spStep: id ? 'card' : 'pick', spCard: id || '', ...fresh0, spSent: false, spErr: '' });
+  const q = String(st.spQ || '').trim().toLowerCase(), found = list.filter(c => !q || (askOf(c) + ' ' + answerOf(c)).toLowerCase().includes(q)).slice(0, 40);
+  const sending = !!st.spBusy, all = [...drafts, ...(current ? [current] : [])];
+  const sp = {
+    open: spOpen, sent: !!st.spSent, editing: !st.spSent, sentTitle: st.spTaken ? 'It’s in the deck now.' : 'Sent. ' + firstName(ownerName) + ' will see it.',
+    close: () => set({ spOpen: false, spSent: false, spErr: '' }), back: () => set({ spStep: 'pick', ...fresh0 }),
+    picking: step === 'pick' || (step === 'card' && !card), onCard: step === 'card' && !!card, onNew: step === 'new',
+    q: st.spQ || '', setQ: e => set({ spQ: val(e) }), noneFound: !found.length,
+    found: found.map(c => ({ ask: askOf(c) || 'Card', kind: KINDS[c.kind] || 'Card', pick: () => set({ spStep: 'card', spCard: c.id, ...fresh0 }) })),
+    startNew: () => set({ spStep: 'new', ...fresh0, spKind: 'basic' }),
+    cardKind: card ? KINDS[card.kind] || 'Card' : '', cardWords: card ? wordsOf(card) : '',
+    removing, removePressed: removing ? 'true' : 'false', removeBg: removing ? t.again : t.surf, removeFg: removing ? '#FFFFFF' : t.text, toggleRemove: () => set({ spRemove: !removing }),
+    fixCloze: !removing && cloze, fixFront: !removing && !cloze, fixBack: !removing && !cloze && !boxCard,
+    front, backText: back, text, setFront: e => set({ spFront: val(e) }), setBack: e => set({ spBack: val(e) }), setText: e => set({ spText: val(e) }),
+    kinds: [['basic', 'Basic'], ['cloze', 'Fill in the blank']].map(([id, label]) => ({ label, pressed: id === newKind ? 'true' : 'false', bg: id === newKind ? t.bg : 'transparent', fg: id === newKind ? t.text : t.muted, sh: id === newKind ? '0 1px 3px rgba(0,0,0,.14)' : 'none', pick: () => set({ spKind: id }) })),
+    newCloze: newKind === 'cloze', newBasic: newKind !== 'cloze',
+    add: () => { if (current) set({ drafts: [...drafts, current], spStep: 'pick', spQ: '', ...fresh0 }); }, addOff: current ? 'false' : 'true', addOp: current ? '1' : '.4', addLabel: step === 'new' ? 'Add this card' : 'Add this change',
+    hasDrafts: drafts.length > 0, draftsTitle: 'Your changes · ' + drafts.length, drafts: drafts.map((x, i) => ({ ...draftView(x), remove: () => set({ drafts: drafts.filter((_, j) => j !== i) }) })),
+    why: st.why ?? '', setWhy: e => set({ why: val(e) }),
+    send: async () => { if (!all.length || this.state.spBusy) return; set({ spBusy: true, spErr: '' });
+      try { const r = await db.act.suggest(d.id, all, String(this.state.why || '').trim()); this.setState({ spBusy: false, spSent: true, spTaken: !!(r && r.taken), drafts: [], spStep: 'pick', spQ: '', why: '', ...fresh0 }); }
+      catch (e) { this.setState({ spBusy: false, spErr: fail(e) }); } },
+    sendOff: all.length && !sending ? 'false' : 'true', sendOp: all.length ? '1' : '.4', sendLabel: sending ? 'Sending…' : 'Send to ' + firstName(ownerName), hasError: !!st.spErr, error: st.spErr || ''
+  };
+  // Copy to your library.
+  const folders = (db.folders ? db.folders() : []).map(f => ({ id: f.id, name: f.name })), folderId = st.cpFolder ?? '';
+  const cpOpen = learner && (st.cpOpen ?? !!p.copyOpen), cpName = st.cpName ?? d.name, updates = st.cpUpdates ?? true;
+  const cp = {
+    open: cpOpen, from: cardsLine + ' from ' + ownerName, name: cpName, setName: e => set({ cpName: val(e) }),
+    nameRef: el => { if (!el || db.mock || !this.state.cpAt || this.cpFocus === this.state.cpAt) return; this.cpFocus = this.state.cpAt; el.focus(); el.select(); },
+    folderLabel: (folders.find(f => f.id === folderId) || {}).name || 'No folder', foldersOpen: !!st.cpFolders, foldersExpanded: st.cpFolders ? 'true' : 'false', toggleFolders: () => set({ cpFolders: !st.cpFolders }),
+    folders: [{ id: '', name: 'No folder' }, ...folders].map(f => ({ name: f.name, sel: f.id === folderId ? 'true' : 'false', bg: f.id === folderId ? t.surf : 'transparent', pick: () => set({ cpFolder: f.id, cpFolders: false }) })),
+    updatesLabel: 'Get ' + firstName(ownerName) + '’s updates', updatesSw: sw(updates), toggleUpdates: () => set({ cpUpdates: !updates }),
+    cancel: () => set({ cpOpen: false, cpFolders: false, cpErr: '' }),
+    save: async () => { const name = String(this.state.cpName ?? d.name).trim(); if (!name || this.state.cpBusy) return; set({ cpBusy: true, cpErr: '', cpFolders: false });
+      try { await db.act.copyDeck(d.id, { name, folder: this.state.cpFolder || null, updates: this.state.cpUpdates ?? true }); this.setState({ cpBusy: false, cpOpen: false }); }
+      catch (e) { this.setState({ cpBusy: false, cpErr: fail(e) }); } },
+    action: st.cpBusy ? 'Copying…' : 'Copy deck', off: String(cpName).trim() && !st.cpBusy ? 'false' : 'true', op: String(cpName).trim() ? '1' : '.4', hasError: !!st.cpErr, error: st.cpErr || ''
+  };
+  const busy = st.busy || '';
+  return {
+    t, ...chrome, ${NET_VALS} ink: inkOf,
+    loading: loading && !p.missing, missing: bad, ready, notReady: !ready, missingTitle: 'This deck isn’t here', missingLine: 'It may be private now, or the link is wrong.', discoverHref: goTo('/discover', B + 'Discover'),
+    deck: { name: d.name }, cv, owner, badges, hasBadge: badges.length > 0, badge: badges[0] || { label: '', shield: false, people: false },
+    metaLine: '· ' + cardsLine + ' · Version ' + d.version + (upd ? ' · Updated ' + (/^(Just|Yesterday)/.test(upd) ? upd.toLowerCase() : upd) : ''), metaShort: '· ' + cardsLine + ' · v' + d.version,
+    asLearner: learner, asOwner: owns, asVisitor: ready && out, signInPhone: db.mock ? 'PhoneSignIn.dc.html' : '/sign-in?next=' + encodeURIComponent(location.pathname),
+    notStudying: !studying, isStudying: !!studying, studyingHref: goTo('/deck/' + studying, B + 'Deck'), studyLabel: busy === 'study' ? 'Adding…' : 'Study',
+    study: async () => { if (this.state.busy || !me) return; set({ busy: 'study', error: '' }); try { await db.act.study(d.id); this.setState({ busy: '' }); } catch (e) { this.setState({ busy: '', error: fail(e) }); } },
+    notCopied: !copied, isCopied: !!copied, copiedHref: goTo('/deck/' + copied, B + 'Deck'), openCopy: () => set({ cpOpen: true, cpAt: Date.now(), cpErr: '', cpName: undefined, cpFolders: false }),
+    starred: starOn, notStarred: !starOn, starPressed: starOn ? 'true' : 'false', saveLabel: (starOn ? 'Saved · ' : 'Save · ') + kfmt(stars), saveShort: kfmt(stars), toggleStar: toggle('star', on => db.act.star(d.id, on), !starOn),
+    showWatch: learner && !studying, watchPressed: watchOn ? 'true' : 'false', watchLabel: watchOn ? 'Getting updates' : 'Get updates', watching: watchOn, notWatching: !watchOn, toggleWatch: toggle('watch', on => db.act.watch(d.id, on), !watchOn),
+    openSuggestAny: () => openSuggest(''),
+    editHref: goTo(deckHref, B + 'Deck'), suggestionsHref: goTo(mine ? '/deck/' + mine.id + '/suggestions' : '/suggestions', B + 'Suggestions'), shareHref: goTo(mine ? deckHref + '?settings=1' : deckHref, B + 'DeckSettings'),
+    suggestionsLabel: me && me.open ? 'Suggestions · ' + me.open : 'Suggestions', openCount: String((me && me.open) || ''), hasOpen: !!(me && me.open),
+    linkLabel: st.linkCopied ? 'Copied' : 'Copy link',
+    copyLink: () => { ${phone ? "if (!db.mock && navigator.share) { navigator.share({ title: d.name, url: shareUrl }).catch(() => {}); return; } " : ''}if (db.act.copy) db.act.copy(shareUrl); set({ linkCopied: true }); clearTimeout(this.copiedT); this.copiedT = setTimeout(() => this.setState({ linkCopied: false }), 1600); },
+    hasError: !!st.error, error: st.error || '',
+    tabs: [['Cards', kfmt(d.cards)], ['History', ''], ['People', peopleRows.length ? String(peopleRows.length) : '']].map(([id, count]) => ({ label: id, count, hasCount: !!count, sel: tab === id ? 'true' : 'false',
+      fg: tab === id ? t.text : t.muted, bar: tab === id ? 'inset 0 -2px 0 ' + t.text : 'none', pick: () => set({ tab: id }) })),
+    tabCards: tab === 'Cards', tabHistory: tab === 'History', tabPeople: tab === 'People',
+    rows, noCards: ready && !list.length, hasMoreRows: list.length > limit, showMore: () => set({ limit: limit + 100 }),
+    hasMoreCards: list.length <= limit && d.moreCards > 0, moreLine: '+ ' + kfmt(d.moreCards || 0) + ' more cards',
+    recent: (d.made || []).slice(0, 5).map(v => { const x = versionView(v); return { ...x, line: ${phone ? "x.label + ' · ' + x.when" : 'x.sub'} }; }), historyHref: goTo((d.url || '') + '/history', B + 'History'),
+    peopleRows, story, sp, cp, backHref: goTo('/discover', B + 'Discover')
+  };
+}`;
+const webPublicDeck = netRoot('Discover', `
+    ${NET_LOADING(2)}
+    ${NET_MISSING}
+    <sc-if value="{{ready}}" hint-placeholder-val="{{ true }}">
+    <div style="position: relative; height: 250px; flex-shrink: 0; border-radius: 32px; overflow: hidden; color: {{cv.ink}}; background: {{cv.base}};">${PD_COVER}
+      <div style="position: absolute; inset: 0; box-sizing: border-box; padding: 28px 32px 30px; display: flex; flex-direction: column; justify-content: space-between; text-shadow: {{cv.shadow}};">
+        <div style="display: flex; flex-wrap: wrap; gap: 8px; min-height: 28px;"><sc-for list="{{badges}}" as="b" hint-placeholder-count="2">${PD_BADGE('b')}</sc-for></div>
+        <div style="display: flex; flex-direction: column; gap: 14px; min-width: 0;"><h1 style="margin: 0; font-size: 44px; font-weight: 700; letter-spacing: -.035em; line-height: 1.05; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{deck.name}}</h1>${PD_OWNER_LINE(24)}</div>
+      </div>
+    </div>
+    <div style="display: flex; align-items: center; gap: 10px;">
+      <sc-if value="{{asLearner}}" hint-placeholder-val="{{ true }}">
+        <sc-if value="{{notStudying}}" hint-placeholder-val="{{ true }}">${pdBtn('<span>{{studyLabel}}</span>', { onClick: '{{study}}', inv: true, extra: ' padding: 0 28px;' })}</sc-if>
+        <sc-if value="{{isStudying}}" hint-placeholder-val="{{ false }}">${pdBtn(svg(I.check, 16, 2.4) + 'Studying', { href: '{{studyingHref}}', inv: true })}</sc-if>
+        <sc-if value="{{notCopied}}" hint-placeholder-val="{{ true }}">${pdBtn(svg(I.copy, 16, 2) + 'Make a copy', { onClick: '{{openCopy}}' })}</sc-if>
+        <sc-if value="{{isCopied}}" hint-placeholder-val="{{ false }}">${pdBtn(svg(I.copy, 16, 2) + 'Your copy', { href: '{{copiedHref}}' })}</sc-if>
+        ${pdBtn(STAR_ICON(16) + '<span>{{saveLabel}}</span>', { onClick: '{{toggleStar}}', attrs: ' aria-pressed="{{starPressed}}"' })}
+        ${pdBtn(svg(I.message, 16, 2) + 'Suggest a change', { onClick: '{{openSuggestAny}}' })}
+      </sc-if>
+      <sc-if value="{{asOwner}}" hint-placeholder-val="{{ false }}">
+        ${pdBtn(svg(I.pencil, 16, 2) + 'Edit in your library', { href: '{{editHref}}', inv: true })}
+        ${pdBtn(svg(I.message, 16, 2) + '<span>{{suggestionsLabel}}</span>', { href: '{{suggestionsHref}}' })}
+        ${pdBtn(svg(I.gear, 16, 2) + 'Share settings', { href: '{{shareHref}}' })}
+      </sc-if>
+      <sc-if value="{{asVisitor}}" hint-placeholder-val="{{ false }}">
+        ${pdBtn('Study', { href: '{{signInHref}}', inv: true, extra: ' padding: 0 28px;' })}
+        ${pdBtn(svg(I.copy, 16, 2) + 'Make a copy', { href: '{{signInHref}}' })}
+        ${pdBtn(svg(I.star, 16, 2) + '<span>{{saveLabel}}</span>', { href: '{{signInHref}}' })}
+        ${pdBtn(svg(I.message, 16, 2) + 'Suggest a change', { href: '{{signInHref}}' })}
+      </sc-if>
+      <span style="flex-grow: 1;"></span>
+      <sc-if value="{{showWatch}}" hint-placeholder-val="{{ true }}">${pdBtn(svg(I.bell, 16, 2) + '<span>{{watchLabel}}</span>', { onClick: '{{toggleWatch}}', attrs: ' aria-pressed="{{watchPressed}}"' })}</sc-if>
+      <sc-if value="{{asVisitor}}" hint-placeholder-val="{{ false }}">${pdBtn(svg(I.bell, 16, 2) + 'Get updates', { href: '{{signInHref}}' })}</sc-if>
+      <sc-if value="{{asOwner}}" hint-placeholder-val="{{ false }}">${pdBtn(svg(I.link, 16, 2) + '<span>{{linkLabel}}</span>', { onClick: '{{copyLink}}' })}</sc-if>
+    </div>
+    <sc-if value="{{hasError}}" hint-placeholder-val="{{ false }}"><div role="alert" style="margin-top: -12px; font-size: 13px; color: {{t.again}};">{{error}}</div></sc-if>
+    <div style="display: flex; gap: 40px; align-items: flex-start;">
+      <section style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column;">
+        ${PD_TABS}
+        ${PD_CARDS(false)}
+        ${PD_HISTORY(false)}
+        ${PD_PEOPLE}
+      </section>
+      <aside style="width: 320px; flex-shrink: 0; display: flex; flex-direction: column; gap: 18px; padding-top: 14px;">${eyebrow('How it was made')}${PD_STORY}</aside>
+    </div>
+    </sc-if>`, `<sc-if value="{{cp.open}}" hint-placeholder-val="{{ false }}"><div style="position: absolute; inset: 0; z-index: 80; display: flex; align-items: center; justify-content: center;">
+  <div class="sc-fade" onClick="{{cp.cancel}}" style="position: absolute; inset: 0; background: {{t.dim}};"></div>
+  <div role="dialog" aria-modal="true" aria-label="Copy to your library" class="sc-pop" style="position: relative; width: 480px; box-sizing: border-box; padding: 28px; border-radius: 32px; background: {{t.bg}}; color: {{t.text}}; box-shadow: 0 24px 64px rgba(0,0,0,.24); display: flex; flex-direction: column; gap: 18px;">
+    ${COPY_FORM(false)}
+  </div>
+</div></sc-if>
+<sc-if value="{{sp.open}}" hint-placeholder-val="{{ false }}">
+  <div class="sc-scrim" onClick="{{sp.close}}" style="position: absolute; top: 0; right: 0; bottom: 0; left: 240px; background: {{t.dim}};"></div>
+  <aside role="dialog" aria-label="Suggest a change" class="sc-panel" style="position: absolute; top: 12px; right: 12px; bottom: 12px; width: 480px; box-sizing: border-box; padding: 24px; border-radius: 20px; background: {{t.bg}}; box-shadow: 0 24px 64px rgba(0,0,0,.24); display: flex; flex-direction: column; gap: 16px; overflow: hidden;">
+    ${SUGGEST_BODY(false)}
+  </aside>
+</sc-if>`);
+const phonePublicDeck = phone(`<div style="padding: 0 0 120px; display: flex; flex-direction: column; gap: 16px;">
+  <sc-if value="{{notReady}}" hint-placeholder-val="{{ false }}"><div style="padding: 64px 20px 0; display: flex; flex-direction: column; gap: 16px;">${roundBtn('back', 'Back', '{{backHref}}')}${NET_LOADING(2)}${NET_MISSING}</div></sc-if>
+  <sc-if value="{{ready}}" hint-placeholder-val="{{ true }}">
+  <div style="position: relative; height: 300px; flex-shrink: 0; overflow: hidden; color: {{cv.ink}}; background: {{cv.base}};">${PD_COVER}
+    <div style="position: absolute; inset: 0; box-sizing: border-box; padding: 54px 16px 20px 20px; display: flex; flex-direction: column; justify-content: space-between;">
+      <div style="display: flex; align-items: center; justify-content: space-between;">${coverRound('back', 'Back', '{{backHref}}')}<div style="display: flex; gap: 8px;">
+        <sc-if value="{{signedIn}}" hint-placeholder-val="{{ true }}">${coverRound('share', 'Share', '', '{{copyLink}}')}</sc-if>
+        <sc-if value="{{showWatch}}" hint-placeholder-val="{{ true }}"><button type="button" onClick="{{toggleWatch}}" aria-pressed="{{watchPressed}}" aria-label="{{watchLabel}}" style="width: 44px; height: 44px; border: 0; border-radius: 22px; ${onCover} display: flex; align-items: center; justify-content: center; cursor: pointer;"><sc-if value="{{notWatching}}" hint-placeholder-val="{{ true }}">${svg(I.bell, 18, 2)}</sc-if><sc-if value="{{watching}}" hint-placeholder-val="{{ false }}"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${I.bell}</svg></sc-if></button></sc-if>
+        <sc-if value="{{signedOutView}}" hint-placeholder-val="{{ false }}"><a href="{{signInPhone}}" style="height: 44px; padding: 0 18px; display: inline-flex; align-items: center; border-radius: 999px; ${onCover} font-size: 15px; font-weight: 600;">Sign in</a></sc-if>
+      </div></div>
+      <div style="display: flex; flex-direction: column; align-items: flex-start; gap: 8px; min-width: 0; text-shadow: {{cv.shadow}};">
+        <sc-if value="{{hasBadge}}" hint-placeholder-val="{{ true }}">${PD_BADGE('badge')}</sc-if>
+        <div style="max-width: 100%; font-size: 32px; font-weight: 700; letter-spacing: -.03em; line-height: 1.05; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;">{{deck.name}}</div>
+        <div style="display: flex; align-items: center; gap: 8px; max-width: 100%; min-width: 0; font-size: 14px;"><a href="{{owner.href}}" style="display: inline-flex; align-items: center; gap: 8px; flex-shrink: 0; font-weight: 600;">${PERSON_AV('owner', 22)}<span>{{owner.name}}</span></a><span style="opacity: .85; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{metaShort}}</span></div>
+      </div>
+    </div>
+  </div>
+  <div style="padding: 0 20px; display: flex; flex-direction: column; gap: 16px;">
+    <sc-if value="{{asLearner}}" hint-placeholder-val="{{ true }}"><div style="display: flex; gap: 10px;">
+      <sc-if value="{{notStudying}}" hint-placeholder-val="{{ true }}"><button type="button" onClick="{{study}}" class="sc-press" style="flex-grow: 1; min-width: 0; height: 56px; border: 0; border-radius: 999px; background: {{t.inv}}; color: {{t.invText}}; font: inherit; font-size: 17px; font-weight: 600; cursor: pointer;"><span>{{studyLabel}}</span></button></sc-if>
+      <sc-if value="{{isStudying}}" hint-placeholder-val="{{ false }}"><a href="{{studyingHref}}" class="sc-press" style="flex-grow: 1; min-width: 0; height: 56px; border-radius: 999px; background: {{t.inv}}; color: {{t.invText}}; display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 17px; font-weight: 600;">${svg(I.check, 18, 2.4)}Studying</a></sc-if>
+      <sc-if value="{{notCopied}}" hint-placeholder-val="{{ true }}">${pdRound(svg(I.copy, 20, 2), 'Make a copy', { onClick: '{{openCopy}}' })}</sc-if>
+      <sc-if value="{{isCopied}}" hint-placeholder-val="{{ false }}">${pdRound(svg(I.copy, 20, 2), 'Your copy', { href: '{{copiedHref}}' })}</sc-if>
+      ${pdRound(STAR_ICON(20), 'Save', { onClick: '{{toggleStar}}', attrs: ' aria-pressed="{{starPressed}}"' })}
+      ${pdRound(svg(I.message, 20, 2), 'Suggest a change', { onClick: '{{openSuggestAny}}' })}
+    </div></sc-if>
+    <sc-if value="{{asOwner}}" hint-placeholder-val="{{ false }}"><div style="display: flex; gap: 10px;">
+      <a href="{{editHref}}" class="sc-press" style="flex-grow: 1; min-width: 0; height: 56px; border-radius: 999px; background: {{t.inv}}; color: {{t.invText}}; display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 17px; font-weight: 600;">${svg(I.pencil, 18, 2)}Edit</a>
+      ${pdRound(svg(I.message, 20, 2) + `<sc-if value="{{hasOpen}}" hint-placeholder-val="{{ true }}"><span style="position: absolute; top: 4px; right: 2px; min-width: 18px; height: 18px; padding: 0 5px; box-sizing: border-box; border-radius: 9px; background: #E5484D; color: #FFFFFF; font-size: 11px; font-weight: 700; line-height: 18px; text-align: center;">{{openCount}}</span></sc-if>`, 'Suggestions', { href: '{{suggestionsHref}}' })}
+      ${pdRound(svg(I.gear, 20, 2), 'Share settings', { href: '{{shareHref}}' })}
+    </div></sc-if>
+    <sc-if value="{{asVisitor}}" hint-placeholder-val="{{ false }}"><div style="display: flex; gap: 10px;">
+      <a href="{{signInPhone}}" class="sc-press" style="flex-grow: 1; min-width: 0; height: 56px; border-radius: 999px; background: {{t.inv}}; color: {{t.invText}}; display: flex; align-items: center; justify-content: center; font-size: 17px; font-weight: 600;">Study</a>
+      ${pdRound(svg(I.copy, 20, 2), 'Make a copy', { href: '{{signInPhone}}' })}${pdRound(svg(I.star, 20, 2), 'Save', { href: '{{signInPhone}}' })}${pdRound(svg(I.message, 20, 2), 'Suggest a change', { href: '{{signInPhone}}' })}
+    </div></sc-if>
+    <sc-if value="{{hasError}}" hint-placeholder-val="{{ false }}"><div role="alert" style="margin-top: -6px; font-size: 13px; color: {{t.again}};">{{error}}</div></sc-if>
+    <div style="display: flex; flex-direction: column;">
+      ${PD_TABS}
+      ${PD_CARDS(true)}
+      ${PD_HISTORY(true)}
+      ${PD_PEOPLE}
+    </div>
+  </div>
+  </sc-if>
+</div>`, '', `<sc-if value="{{signedIn}}" hint-placeholder-val="{{ true }}">${tabBar('Discover')}</sc-if>
+<sc-if value="{{cp.open}}" hint-placeholder-val="{{ false }}">
+  <div class="sc-scrim" onClick="{{cp.cancel}}" style="position: absolute; inset: 0; background: {{t.dim}};"></div>
+  <div role="dialog" aria-label="Copy to your library" class="sc-sheet" style="position: absolute; left: 0; right: 0; bottom: 0; box-sizing: border-box; padding: 22px 20px 34px; border-radius: 32px 32px 0 0; background: {{t.bg}}; display: flex; flex-direction: column; gap: 16px;">
+    ${COPY_FORM(true)}
+  </div>
+</sc-if>
+<sc-if value="{{sp.open}}" hint-placeholder-val="{{ false }}">
+  <div class="sc-scrim" onClick="{{sp.close}}" style="position: absolute; inset: 0; background: {{t.dim}};"></div>
+  <div role="dialog" aria-label="Suggest a change" class="sc-sheet" style="position: absolute; left: 0; right: 0; bottom: 0; top: 56px; box-sizing: border-box; padding: 16px 20px 34px; border-radius: 32px 32px 0 0; background: {{t.bg}}; display: flex; flex-direction: column; gap: 14px;">
+    ${SUGGEST_BODY(true)}
+  </div>
+</sc-if>`);
+
+// ----- Suggestions -----
+// For one of your decks, or all of them: who suggested what (and the cards your own AI made, waiting for you first),
+// and the picked one's changes, each to take or skip.
+const SUGGESTIONS_LOGIC = phone => `
+constructor(props) { super(props); this.state = {}; }
+renderVals() {
+  ${T}${DB_JS}${NET_JS}${NETX_JS}
+  const p = this.props, st = this.state, set = patch => this.setState(patch), B = '${phone ? 'Phone' : 'Web'}', fail = e => (e && e.message) || 'Something went wrong. Try again.';
+  // One deck's suggestions (/deck/<id>/suggestions), or every deck's (/suggestions). On the canvas it's your shared Cell
+  // Biology, unless a board asks for every deck (deck-id="").
+  const deckId = p.deckId ?? (db.mock ? 'cell' : ''), dk = deckId && db.deck ? db.deck(deckId) : null;
+  const sid = dk && dk.shared ? dk.shared.id : db.mock && deckId ? 's9' : '';
+  const fresh = p.noSuggestions ? [] : deckId ? (sid ? db.net.suggestions(sid) : []) : db.net.inbox();
+  if (fresh !== undefined) this.list = fresh;
+  const got = fresh === undefined ? this.list : fresh, loading = got === undefined, list = Array.isArray(got) ? got : [];
+  // A change decided here a moment ago shows that way until the server's answer comes back.
+  const local = st.local || {}, statusOf = c => local[c.id] || c.status || 'open', busy = !!st.busy;
+  const libDecks = db.decks ? db.decks() : [];
+  const deckOf = s => (s.deck && s.deck.name) || (libDecks.find(x => x.shared && x.shared.id === s.shared_id) || {}).name || '';
+  // Your AI's cards waiting for you (Settings → Check AI cards first), by deck and by app. The canvas's sample cards are
+  // all Cell Biology's.
+  const aiDone = st.aiDone || {}, scan = deckId ? (dk && dk.id ? [dk] : []) : db.mock ? libDecks.slice(0, 1) : libDecks, aiItems = [];
+  for (const x of scan) {
+    const by = {};
+    (db.cards ? db.cards(x.id) : []).filter(c => c.pending && !aiDone[c.id]).forEach(c => { const k = c.ai || 'Your AI'; (by[k] = by[k] || []).push(c); });
+    Object.keys(by).forEach(ai => aiItems.push({ key: 'ai:' + x.id + ':' + ai, kind: 'ai', ai, deckName: x.name, cards: by[ai], at: Math.max(0, ...by[ai].map(c => c.created || 0)) }));
+  }
+  const keep = async (ids, how) => { if (!ids.length || this.state.busy) return; set({ busy: true, err: '', aiDone: { ...aiDone, ...Object.fromEntries(ids.map(x => [x, how])) } });
+    try { await (how === 'kept' ? db.act.keepCards(ids) : db.act.tossCards(ids)); this.setState({ busy: false }); }
+    catch (e) { const back = { ...(this.state.aiDone || {}) }; ids.forEach(x => delete back[x]); this.setState({ busy: false, aiDone: back, err: fail(e) }); } };
+  const decide = async (s, picks) => {
+    const ids = s.changes.filter(c => statusOf(c) === 'open' && (picks.$all || picks[c.id])).map(c => c.id);
+    if (!ids.length || this.state.busy) return;
+    const after = { ...local, ...Object.fromEntries(ids.map(x => [x, (picks[x] || picks.$all) === 'take' ? 'taken' : 'skipped'])) };
+    const left = s.changes.filter(c => (after[c.id] || c.status || 'open') === 'open').length, took = s.changes.filter(c => (after[c.id] || c.status) === 'taken').length;
+    set({ busy: true, err: '', note: '', local: after });
+    try { await db.act.decide(s.id, picks); this.setState({ busy: false, note: left ? '' : took ? 'Took ' + plural(took, 'change') + ' from ' + (s.author_name || 'them') + '.' : 'Skipped ' + (s.author_name || 'their') + '’s changes.' }); }
+    catch (e) { const back = { ...(this.state.local || {}) }; ids.forEach(x => delete back[x]); this.setState({ busy: false, local: back, err: fail(e) }); }
+  };
+  const items = [
+    ...aiItems.map(a => ({ ...a, ...whoOf(a.ai), title: a.ai + ', through your link', line: plural(a.cards.length, 'new card') + (deckId ? '' : ' · ' + a.deckName), when: a.at ? brief(new Date(a.at).toISOString()) : '',
+      head: a.ai + ' added ' + plural(a.cards.length, 'card'), message: 'Through your link' + (deckId ? '' : ' · ' + a.deckName), takeAllLabel: 'Keep all ' + a.cards.length, skipAllLabel: 'Toss all', many: a.cards.length > 1,
+      takeAll: () => keep(a.cards.map(c => c.id), 'kept'), skipAll: () => keep(a.cards.map(c => c.id), 'tossed'),
+      changes: a.cards.map(c => ({ label: 'New card', context: c.kind || 'Card', hasContext: true, before: '', hasBefore: false, after: c.back ? 'Q: ' + c.front + '  A: ' + c.back : c.front, hasAfter: true, op: '1',
+        open: true, decided: false, state: '', stateColor: t.muted, takeLabel: 'Keep', skipLabel: 'Toss', take: () => keep([c.id], 'kept'), skip: () => keep([c.id], 'tossed') })) })),
+    ...list.map(s => ({ s, open: (s.changes || []).filter(c => statusOf(c) === 'open') })).filter(x => x.open.length).map(({ s, open }) => {
+      const who = s.ai ? s.ai + ', through ' + firstName(s.author_name) + '’s link' : s.author_name || 'Someone', deckName = deckOf(s);
+      return { key: s.id, kind: 'suggestion', ...(s.ai ? whoOf(s.ai) : whoOf('', s.person || { name: s.author_name })), title: who, line: plural(open.length, 'change') + (deckId || !deckName ? '' : ' · ' + deckName), when: brief(s.created_at),
+        head: who + ' suggested ' + plural(open.length, 'change'), message: s.message ? '“' + s.message + '”' : deckId || !deckName ? '' : deckName, takeAllLabel: 'Take all ' + open.length, skipAllLabel: 'Skip all', many: open.length > 1,
+        takeAll: () => decide(s, { $all: 'take' }), skipAll: () => decide(s, { $all: 'skip' }),
+        changes: s.changes.map(c => { const x = statusOf(c);
+          return { ...changeView(c), open: x === 'open', decided: x !== 'open', op: x === 'open' ? '1' : '.55', state: ({ taken: 'Taken', skipped: 'Skipped', gone: 'That card is gone' })[x] || '', stateColor: x === 'taken' ? t.good : t.muted,
+            takeLabel: 'Take it', skipLabel: 'Skip', take: () => decide(s, { [c.id]: 'take' }), skip: () => decide(s, { [c.id]: 'skip' }) }; }) }; })];
+  const want = st.sel ?? p.pickItem ?? '';
+  const cur = items.find(i => i.key === want) || (want === 'ai' ? items.find(i => i.kind === 'ai') : null) || ${phone ? 'null' : "items.find(i => i.kind === 'suggestion') || items[0] || null"};
+  const empty = !loading && !items.length;
+  return {
+    t, ...chrome, ${NET_VALS} ink: inkOf, loading: loading && !items.length, empty, ready: !!items.length,
+    hasBack: !!deckId, backHref: goTo('/deck/' + deckId, B + 'Deck'), backLabel: dk ? dk.name : '', count: String(items.length), hasCount: items.length > 0,
+    items: items.map(i => ({ ...i, sel: cur && i.key === cur.key ? 'true' : 'false', bg: cur && i.key === cur.key ? t.surf : 'transparent', pick: () => set({ sel: i.key, err: '', note: '' }) })),
+    cur: cur || { head: '', message: '', changes: [], takeAll: () => {}, skipAll: () => {}, takeAllLabel: '', skipAllLabel: '', many: false, isAI: false, isPerson: true, who: person({}), aiBg: '', aiInk: '', aiName: '' },
+    hasCur: !!cur, hasMessage: !!(cur && cur.message), listView: ${phone ? '!cur' : 'true'}, detailView: !!cur, closeItem: () => set({ sel: '', err: '', note: '' }),
+    hasNote: !!st.note, note: st.note || '', hasErr: !!st.err, err: st.err || '', busyOp: busy ? '.6' : '1'
+  };
+}`;
+const webSuggestions = netRoot('Library', `
+    <div style="display: flex; flex-direction: column; gap: 10px;">
+      <sc-if value="{{hasBack}}" hint-placeholder-val="{{ true }}"><a href="{{backHref}}" style="align-self: flex-start; display: inline-flex; align-items: center; gap: 6px; font-size: 14px; color: {{t.muted}};">${svg(I.back, 14, 2)}<span>{{backLabel}}</span></a></sc-if>
+      <div style="display: flex; align-items: baseline; gap: 10px;"><h1 style="margin: 0; font-size: 32px; font-weight: 600; letter-spacing: -.03em;">Suggestions</h1><sc-if value="{{hasCount}}" hint-placeholder-val="{{ true }}"><span style="font-family: ${MONO}; font-size: 14px; color: {{t.muted}};">{{count}}</span></sc-if></div>
+    </div>
+    ${NET_LOADING(2)}
+    <sc-if value="{{empty}}" hint-placeholder-val="{{ false }}"><div style="padding: 64px 24px; border-radius: 24px; background: {{t.surf}}; text-align: center; font-size: 15px; color: {{t.muted}};">No suggestions right now</div></sc-if>
+    <sc-if value="{{ready}}" hint-placeholder-val="{{ true }}"><div style="display: flex; gap: 32px; align-items: flex-start;">
+      <div role="listbox" aria-label="Suggestions" style="width: 330px; flex-shrink: 0; display: flex; flex-direction: column; gap: 4px;"><sc-for list="{{items}}" as="i" hint-placeholder-count="3"><button type="button" role="option" aria-selected="{{i.sel}}" onClick="{{i.pick}}" style="width: 100%; min-height: 62px; box-sizing: border-box; padding: 10px 14px; border: 0; border-radius: 18px; background: {{i.bg}}; color: {{t.text}}; font: inherit; text-align: left; display: flex; align-items: center; gap: 12px; cursor: pointer;">${WHO_AV('i', 36)}<span style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px;"><span style="font-size: 14px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{i.title}}</span><span style="font-size: 13px; color: {{t.muted}}; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{i.line}}</span></span><span style="flex-shrink: 0; font-size: 12px; color: {{t.muted}};">{{i.when}}</span></button></sc-for></div>
+      <sc-if value="{{hasCur}}" hint-placeholder-val="{{ true }}"><section style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 12px; opacity: {{busyOp}};">
+        <div style="display: flex; align-items: center; gap: 12px; min-height: 44px;">${WHO_AV('cur', 40)}<span style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px;"><span style="font-size: 17px; font-weight: 600; letter-spacing: -.01em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{cur.head}}</span><sc-if value="{{hasMessage}}" hint-placeholder-val="{{ true }}"><span style="font-size: 14px; color: {{t.muted}}; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{cur.message}}</span></sc-if></span>
+          <sc-if value="{{cur.many}}" hint-placeholder-val="{{ true }}"><span style="display: flex; gap: 8px; flex-shrink: 0;"><button type="button" onClick="{{cur.skipAll}}" class="sc-press" style="height: 40px; padding: 0 18px; border: 0; border-radius: 999px; background: {{t.surf}}; color: {{t.text}}; font: inherit; font-size: 14px; font-weight: 600; cursor: pointer;"><span>{{cur.skipAllLabel}}</span></button><button type="button" onClick="{{cur.takeAll}}" class="sc-press" style="height: 40px; padding: 0 18px 0 16px; border: 0; border-radius: 999px; background: {{t.inv}}; color: {{t.invText}}; font: inherit; font-size: 14px; font-weight: 600; display: inline-flex; align-items: center; gap: 7px; cursor: pointer;">${svg(I.check, 15, 2.4)}<span>{{cur.takeAllLabel}}</span></button></span></sc-if></div>
+        <sc-if value="{{hasErr}}" hint-placeholder-val="{{ false }}"><span role="alert" style="font-size: 13px; color: {{t.again}};">{{err}}</span></sc-if>
+        <sc-for list="{{cur.changes}}" as="c" hint-placeholder-count="3">${CHANGE_CARD('c', false)}</sc-for>
+      </section></sc-if>
+    </div></sc-if>
+    <sc-if value="{{hasNote}}" hint-placeholder-val="{{ false }}"><span role="status" style="font-size: 14px; color: {{t.muted}};">{{note}}</span></sc-if>`);
+const phoneSuggestions = phone(`<div style="padding: 64px 20px 120px; display: flex; flex-direction: column; gap: 16px;">
+  <sc-if value="{{listView}}" hint-placeholder-val="{{ true }}">
+    <div style="display: flex; align-items: center; gap: 12px;"><sc-if value="{{hasBack}}" hint-placeholder-val="{{ true }}">${roundBtn('back', 'Back', '{{backHref}}')}</sc-if><h1 style="margin: 0; flex-grow: 1; min-width: 0; font-size: 32px; font-weight: 700; letter-spacing: -.03em;">Suggestions</h1><sc-if value="{{hasCount}}" hint-placeholder-val="{{ true }}"><span style="font-family: ${MONO}; font-size: 15px; color: {{t.muted}};">{{count}}</span></sc-if></div>
+    <sc-if value="{{hasBack}}" hint-placeholder-val="{{ true }}"><span style="margin-top: -8px; font-size: 15px; color: {{t.muted}};">{{backLabel}}</span></sc-if>
+    ${NET_LOADING(2)}
+    <sc-if value="{{empty}}" hint-placeholder-val="{{ false }}"><div style="padding: 48px 20px; border-radius: 22px; background: {{t.surf}}; text-align: center; font-size: 15px; color: {{t.muted}};">No suggestions right now</div></sc-if>
+    <sc-if value="{{hasNote}}" hint-placeholder-val="{{ false }}"><span role="status" style="font-size: 14px; color: {{t.muted}};">{{note}}</span></sc-if>
+    <div style="display: flex; flex-direction: column;"><sc-for list="{{items}}" as="i" hint-placeholder-count="3"><button type="button" onClick="{{i.pick}}" style="width: 100%; min-height: 72px; padding: 12px 0; border: 0; border-bottom: 1px solid {{t.line}}; background: transparent; color: {{t.text}}; font: inherit; text-align: left; display: flex; align-items: center; gap: 12px; cursor: pointer;">${WHO_AV('i', 44)}<span style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px;"><span style="font-size: 16px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{i.title}}</span><span style="font-size: 14px; color: {{t.muted}}; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{i.line}}</span></span><span style="flex-shrink: 0; font-size: 13px; color: {{t.muted}};">{{i.when}}</span></button></sc-for></div>
+  </sc-if>
+  <sc-if value="{{detailView}}" hint-placeholder-val="{{ false }}">
+    <div style="display: flex; align-items: center; gap: 12px;"><button type="button" onClick="{{closeItem}}" aria-label="Back to suggestions" style="width: 44px; height: 44px; flex-shrink: 0; border: 0; border-radius: 22px; background: {{t.surf}}; color: {{t.text}}; display: flex; align-items: center; justify-content: center; cursor: pointer;">${svg(I.back, 18, 2)}</button>${WHO_AV('cur', 40)}<span style="flex-grow: 1; min-width: 0; font-size: 17px; font-weight: 600; line-height: 1.25;">{{cur.head}}</span></div>
+    <sc-if value="{{hasMessage}}" hint-placeholder-val="{{ true }}"><span style="font-size: 15px; line-height: 1.4; color: {{t.muted}};">{{cur.message}}</span></sc-if>
+    <sc-if value="{{cur.many}}" hint-placeholder-val="{{ true }}"><div style="display: flex; gap: 8px;"><button type="button" onClick="{{cur.skipAll}}" class="sc-press" style="flex: 1 1 0; height: 48px; border: 0; border-radius: 999px; background: {{t.surf}}; color: {{t.text}}; font: inherit; font-size: 15px; font-weight: 600; cursor: pointer;"><span>{{cur.skipAllLabel}}</span></button><button type="button" onClick="{{cur.takeAll}}" class="sc-press" style="flex: 1 1 0; height: 48px; border: 0; border-radius: 999px; background: {{t.inv}}; color: {{t.invText}}; font: inherit; font-size: 15px; font-weight: 600; display: inline-flex; align-items: center; justify-content: center; gap: 7px; cursor: pointer;">${svg(I.check, 16, 2.4)}<span>{{cur.takeAllLabel}}</span></button></div></sc-if>
+    <sc-if value="{{hasErr}}" hint-placeholder-val="{{ false }}"><span role="alert" style="font-size: 13px; color: {{t.again}};">{{err}}</span></sc-if>
+    <div style="display: flex; flex-direction: column; gap: 12px; opacity: {{busyOp}};"><sc-for list="{{cur.changes}}" as="c" hint-placeholder-count="3">${CHANGE_CARD('c', true)}</sc-for></div>
+  </sc-if>
+</div>`, '', `<sc-if value="{{listView}}" hint-placeholder-val="{{ true }}">${tabBar('Library')}</sc-if>`);
+
+// ----- History -----
+// Every version of a shared deck, newest first: who made it, what changed, and when; See changes lists the changes, and
+// the owner can go back to any version (it's done as a new version, so going back can be undone too).
+const HISTORY_LOGIC = phone => `
+constructor(props) { super(props); this.state = {}; }
+renderVals() {
+  ${T}${DB_JS}${NET_JS}${NETX_JS}
+  const p = this.props, st = this.state, set = patch => this.setState(patch), B = '${phone ? 'Phone' : 'Web'}', out = !!db.signedOut || !!p.signedOut;
+  // The History page's address names the deck (/@maria/mcat-biochemistry/history): its page gives its id.
+  const pg = p.missing ? { missing: true } : db.mock || p.id ? { id: p.id || 's9' } : db.net.deck(p.handle, p.slug);
+  const gone = !!(pg && (pg.missing || pg.offline)), fresh = gone ? { missing: true } : pg ? db.net.history(pg.id) : undefined;
+  if (fresh !== undefined) this.h = fresh;
+  const h = fresh === undefined ? this.h : fresh, loading = h === undefined, bad = !!(h && (h.missing || h.offline)), ready = !loading && !bad;
+  const H = ready ? h : { id: '', name: '', url: '', versions: [], following: 0, mine: false };
+  const mine = ready && !!H.mine && !out;
+  const lib = mine && !db.mock && db.decks ? db.decks().find(x => x.shared && x.shared.id === H.id) : null;
+  const num = x => (x == null || x === '' ? null : +x), openV = st.openV ?? num(p.openVersion), askV = st.askV ?? num(p.confirmVersion), busy = !!st.busy;
+  const goBack = v => async () => { if (this.state.busy) return; set({ busy: true, err: '', note: '' });
+    try { await db.act.restore(H.id, v); this.setState({ busy: false, askV: null, openV: -1, note: 'Went back to version ' + v + '.' }); }
+    catch (e) { this.setState({ busy: false, err: (e && e.message) || 'Something went wrong. Try again.' }); } };
+  const versions = H.versions.map((v, i) => {
+    const x = versionView(v), has = (v.changes || []).length > 0, latest = i === 0, isOpen = has && openV === v.version, canBack = mine && !latest, asking = canBack && askV === v.version;
+    return { ...x, latest, dotBg: latest ? t.text : t.bg, bg: latest ? t.surf : t.bg, pillBg: latest ? t.bg : t.surf, ring: latest ? 'none' : 'inset 0 0 0 1px ' + t.line, line: x.hasSub ? x.sub : '', meta: x.label + ' · ' + x.when,
+      hasChanges: has, open: isOpen, expanded: isOpen ? 'true' : 'false', seeLabel: isOpen ? 'Hide changes' : 'See changes', toggle: () => set({ openV: isOpen ? -1 : v.version, askV: null }),
+      changes: isOpen ? v.changes.map(c => ({ ...changeView(c), op: '1' })) : [],
+      showBack: canBack && !asking && isOpen, backInline: canBack && !asking && !has, asking, askLine: 'Go back to version ' + v.version + '?', askBack: () => set({ askV: v.version, err: '' }), cancelBack: () => set({ askV: null }),
+      goBack: goBack(v.version), goLabel: busy ? 'Going back…' : 'Go back', hasTail: isOpen || asking };
+  });
+  const n = H.following || 0;
+  return {
+    t, ...chrome, ${NET_VALS} ink: inkOf, mineNav: !out && mine, otherNav: !out && !mine,
+    loading: loading && !p.missing, missing: bad, ready, missingTitle: 'This deck isn’t here', missingLine: 'It may be private now, or the link is wrong.', discoverHref: goTo('/discover', B + 'Discover'),
+    backHref: lib ? '/deck/' + lib.id : goTo(H.url || '/discover', B + (mine ? 'Deck' : 'PublicDeck')), backLabel: H.name || 'Back', hasFollowing: n > 0,
+    followLine: plural(n, 'person', 'people') + (n === 1 ? ' gets' : ' get') + ' these updates', subLine: [H.name, n ? plural(n, 'person', 'people') + (n === 1 ? ' gets' : ' get') + ' these updates' : ''].filter(Boolean).join(' · '),
+    versions, noVersions: ready && !versions.length, hasNote: !!st.note, note: st.note || '', hasErr: !!st.err, err: st.err || ''
+  };
+}`;
+// The page shell (netRoot) with the sidebar showing where you are: Library for your own deck's History, Discover for
+// someone else's.
+const historyRoot = inner => netRoot('Library', inner).replace(`<sc-if value="{{signedIn}}" hint-placeholder-val="{{ true }}">${sidebar('Library')}</sc-if>`,
+  `<sc-if value="{{mineNav}}" hint-placeholder-val="{{ true }}">${sidebar('Library')}</sc-if><sc-if value="{{otherNav}}" hint-placeholder-val="{{ false }}">${sidebar('Discover')}</sc-if>`);
+const HISTORY_TAIL = phone => `<sc-if value="{{v.hasTail}}" hint-placeholder-val="{{ false }}"><div style="display: flex; flex-direction: column; gap: 12px; ${phone ? '' : 'padding-left: 52px;'}">
+          <sc-for list="{{v.changes}}" as="c" hint-placeholder-count="2">${CHANGE_CARD('c', phone, false)}</sc-for>
+          <sc-if value="{{v.showBack}}" hint-placeholder-val="{{ true }}"><button type="button" onClick="{{v.askBack}}" class="sc-press" style="align-self: flex-start; height: 36px; padding: 0 16px; border: 0; border-radius: 999px; background: {{t.surf}}; color: {{t.text}}; font: inherit; font-size: 14px; font-weight: 600; display: inline-flex; align-items: center; gap: 8px; cursor: pointer;">${svg(I.history, 15, 2)}Go back to this version</button></sc-if>
+          <sc-if value="{{v.asking}}" hint-placeholder-val="{{ false }}"><div role="alertdialog" aria-label="{{v.askLine}}" style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding: 12px 12px 12px 16px; border-radius: 16px; background: {{t.surf}};"><span style="flex-grow: 1; font-size: 14px; font-weight: 600;">{{v.askLine}}</span><button type="button" onClick="{{v.cancelBack}}" class="sc-press" style="height: 36px; padding: 0 16px; border: 0; border-radius: 999px; background: {{t.bg}}; color: {{t.text}}; font: inherit; font-size: 14px; font-weight: 600; cursor: pointer;">Cancel</button><button type="button" onClick="{{v.goBack}}" class="sc-press" style="height: 36px; padding: 0 16px; border: 0; border-radius: 999px; background: {{t.inv}}; color: {{t.invText}}; font: inherit; font-size: 14px; font-weight: 600; cursor: pointer;"><span>{{v.goLabel}}</span></button></div></sc-if>
+        </div></sc-if>`;
+const webHistory = historyRoot(`
+    <div style="display: flex; flex-direction: column; gap: 10px;">
+      <sc-if value="{{ready}}" hint-placeholder-val="{{ true }}"><a href="{{backHref}}" style="align-self: flex-start; display: inline-flex; align-items: center; gap: 6px; font-size: 14px; color: {{t.muted}};">${svg(I.back, 14, 2)}<span>{{backLabel}}</span></a></sc-if>
+      <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 16px;"><h1 style="margin: 0; font-size: 32px; font-weight: 600; letter-spacing: -.03em;">History</h1><sc-if value="{{hasFollowing}}" hint-placeholder-val="{{ true }}"><span style="font-size: 14px; color: {{t.muted}};">{{followLine}}</span></sc-if></div>
+    </div>
+    ${NET_LOADING(3)}
+    ${NET_MISSING}
+    <sc-if value="{{hasNote}}" hint-placeholder-val="{{ false }}"><span role="status" style="margin-top: -8px; font-size: 14px; color: {{t.muted}};">{{note}}</span></sc-if>
+    <sc-if value="{{hasErr}}" hint-placeholder-val="{{ false }}"><span role="alert" style="margin-top: -8px; font-size: 13px; color: {{t.again}};">{{err}}</span></sc-if>
+    <sc-if value="{{ready}}" hint-placeholder-val="{{ true }}"><div style="display: flex; flex-direction: column; max-width: 880px;">
+      <sc-for list="{{versions}}" as="v" hint-placeholder-count="5"><div style="display: grid; grid-template-columns: 56px 24px minmax(0, 1fr); column-gap: 16px;">
+        <span style="padding-top: 25px; font-family: ${MONO}; font-size: 13px; color: {{t.muted}};">{{v.label}}</span>
+        <span aria-hidden="true" style="position: relative;"><span style="position: absolute; left: 5px; top: 28px; width: 10px; height: 10px; border-radius: 7px; background: {{v.dotBg}}; box-shadow: 0 0 0 2px {{t.text}};"></span><span style="position: absolute; left: 10px; top: 44px; bottom: -4px; width: 2px; margin-left: -1px; background: {{t.line}};"></span></span>
+        <div style="margin-bottom: 20px; padding: 16px 20px; border-radius: 20px; background: {{v.bg}}; box-shadow: {{v.ring}}; display: flex; flex-direction: column; gap: 14px;">
+          <div style="display: flex; align-items: center; gap: 14px; min-height: 36px;">${VER_AV('v', 36)}<span style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px;"><span style="font-size: 15px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{v.title}}</span><sc-if value="{{v.hasSub}}" hint-placeholder-val="{{ true }}"><span style="font-size: 13px; color: {{t.muted}}; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{v.sub}}</span></sc-if></span><span style="flex-shrink: 0; font-size: 13px; color: {{t.muted}};">{{v.when}}</span><sc-if value="{{v.hasChanges}}" hint-placeholder-val="{{ true }}"><button type="button" onClick="{{v.toggle}}" aria-expanded="{{v.expanded}}" style="flex-shrink: 0; height: 32px; padding: 0 4px; border: 0; background: transparent; color: {{t.text}}; font: inherit; font-size: 14px; font-weight: 600; cursor: pointer;"><span>{{v.seeLabel}}</span></button></sc-if><sc-if value="{{v.backInline}}" hint-placeholder-val="{{ false }}"><button type="button" onClick="{{v.askBack}}" style="flex-shrink: 0; height: 32px; padding: 0 4px; border: 0; background: transparent; color: {{t.text}}; font: inherit; font-size: 14px; font-weight: 600; cursor: pointer;">Go back to this version</button></sc-if></div>
+          ${HISTORY_TAIL(false)}
+        </div>
+      </div></sc-for>
+      <sc-if value="{{noVersions}}" hint-placeholder-val="{{ false }}"><div style="padding: 48px 24px; border-radius: 24px; background: {{t.surf}}; text-align: center; font-size: 15px; color: {{t.muted}};">No versions yet</div></sc-if>
+    </div></sc-if>`);
+const phoneHistory = phone(`<div style="padding: 64px 20px 120px; display: flex; flex-direction: column; gap: 16px;">
+  <div style="display: flex; align-items: center; gap: 12px;">${roundBtn('back', 'Back', '{{backHref}}')}<h1 style="margin: 0; flex-grow: 1; font-size: 32px; font-weight: 700; letter-spacing: -.03em;">History</h1></div>
+  <sc-if value="{{ready}}" hint-placeholder-val="{{ true }}"><span style="margin-top: -6px; font-size: 14px; color: {{t.muted}};">{{subLine}}</span></sc-if>
+  ${NET_LOADING(3)}
+  ${NET_MISSING}
+  <sc-if value="{{hasNote}}" hint-placeholder-val="{{ false }}"><span role="status" style="font-size: 14px; color: {{t.muted}};">{{note}}</span></sc-if>
+  <sc-if value="{{hasErr}}" hint-placeholder-val="{{ false }}"><span role="alert" style="font-size: 13px; color: {{t.again}};">{{err}}</span></sc-if>
+  <sc-if value="{{ready}}" hint-placeholder-val="{{ true }}"><div style="display: flex; flex-direction: column; gap: 12px;">
+    <sc-for list="{{versions}}" as="v" hint-placeholder-count="5"><div style="padding: 14px 16px; border-radius: 20px; background: {{v.bg}}; box-shadow: {{v.ring}}; display: flex; flex-direction: column; gap: 12px;">
+      <div style="display: flex; align-items: center; gap: 12px;">${VER_AV('v', 36)}<span style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px;"><span style="font-size: 15px; font-weight: 600; line-height: 1.3;">{{v.title}}</span><sc-if value="{{v.hasSub}}" hint-placeholder-val="{{ true }}"><span style="font-size: 13px; line-height: 1.3; color: {{t.muted}};">{{v.sub}}</span></sc-if><span style="font-size: 12px; color: {{t.muted}};">{{v.meta}}</span></span></div>
+      <sc-if value="{{v.hasChanges}}" hint-placeholder-val="{{ true }}"><button type="button" onClick="{{v.toggle}}" aria-expanded="{{v.expanded}}" class="sc-press" style="align-self: flex-start; height: 36px; padding: 0 16px; border: 0; border-radius: 999px; background: {{v.pillBg}}; color: {{t.text}}; font: inherit; font-size: 14px; font-weight: 600; cursor: pointer;"><span>{{v.seeLabel}}</span></button></sc-if>
+      <sc-if value="{{v.backInline}}" hint-placeholder-val="{{ false }}"><button type="button" onClick="{{v.askBack}}" class="sc-press" style="align-self: flex-start; height: 36px; padding: 0 16px; border: 0; border-radius: 999px; background: {{v.pillBg}}; color: {{t.text}}; font: inherit; font-size: 14px; font-weight: 600; display: inline-flex; align-items: center; gap: 8px; cursor: pointer;">${svg(I.history, 15, 2)}Go back to this version</button></sc-if>
+      ${HISTORY_TAIL(true)}
+    </div></sc-for>
+    <sc-if value="{{noVersions}}" hint-placeholder-val="{{ false }}"><div style="padding: 40px 20px; border-radius: 22px; background: {{t.surf}}; text-align: center; font-size: 15px; color: {{t.muted}};">No versions yet</div></sc-if>
+  </div></sc-if>
+</div>`, '', `<sc-if value="{{mineNav}}" hint-placeholder-val="{{ true }}">${tabBar('Library')}</sc-if><sc-if value="{{otherNav}}" hint-placeholder-val="{{ false }}">${tabBar('Discover')}</sc-if>`);
+
+// What the canvas's Tweaks can change on these boards (the app passes the rest: which deck, ?copy=1, ?suggest=…).
+const bool = (d = false) => ({ editor: 'boolean', default: d });
+const PD_PROPS = { ...DARK, grain: MESH('Iris').grain, loading: bool(), signedOut: bool(), owner: bool(), studying: bool(), copyOpen: bool(), missing: bool(), deckTab: { editor: 'enum', default: 'Cards', options: ['Cards', 'History', 'People'] } };
+const SG_PROPS = { ...DARK, loading: bool(), aiWaiting: bool(true), noSuggestions: bool() };
+const HI_PROPS = { ...DARK, loading: bool(), missing: bool(), signedOut: bool(), someoneElse: bool() };
+
 // ---------- write ----------
 const W = 1440, H = 900, PW = 390, PH = 844;
 // Settings' profile picture, for showing each one on the canvas (Tweaks).
@@ -5554,7 +6161,49 @@ const files = {
   'WebDiscoverSearch': ['Web · Discover · search', attrOf('WebDiscover', W, H, 'q="bio"'), { logic: darkLogic, w: W, h: H }],
   'WebDiscoverSignedOut': ['Web · Discover · signed out (anyone can look)', attrOf('WebDiscover', W, H, 'signed-out="{{yes}}"'), { logic: darkLogic, w: W, h: H }],
   'PhoneDiscover': ['iPhone · Discover', phoneDiscover, { props: { ...DARK, grain: MESH('Iris').grain, loading: { editor: 'boolean', default: false }, signedOut: { editor: 'boolean', default: false } }, logic: DISCOVER_LOGIC(true), w: PW, h: PH }],
-  'PhoneDiscoverSearch': ['iPhone · Discover · search', attrOf('PhoneDiscover', PW, PH, 'q="bio"'), { logic: darkLogic, w: PW, h: PH }]
+  'PhoneDiscoverSearch': ['iPhone · Discover · search', attrOf('PhoneDiscover', PW, PH, 'q="bio"'), { logic: darkLogic, w: PW, h: PH }],
+  // A shared deck's page, suggesting changes, Suggestions, and History.
+  'WebPublicDeck': ['Web · Shared deck page', webPublicDeck, { props: PD_PROPS, logic: PUBLIC_DECK_LOGIC(false), css: NETX_CSS, w: W, h: H }],
+  'WebPublicDeckStudying': ['Web · Shared deck page · a deck you study', attrOf('WebPublicDeck', W, H, 'studying="{{yes}}"'), { logic: darkLogic, w: W, h: H }],
+  'WebPublicDeckOwner': ['Web · Shared deck page · your own deck', attrOf('WebPublicDeck', W, H, 'owner="{{yes}}"'), { logic: darkLogic, w: W, h: H }],
+  'WebPublicDeckCopy': ['Web · Shared deck page · Make a copy', attrOf('WebPublicDeck', W, H, 'copy-open="{{yes}}"'), { logic: darkLogic, w: W, h: H }],
+  'WebPublicDeckSuggest': ['Web · Shared deck page · Suggest a change, on a card', attrOf('WebPublicDeck', W, H, 'suggest="c2"'), { logic: darkLogic, w: W, h: H }],
+  'WebPublicDeckSuggestNew': ['Web · Shared deck page · Suggest a change, a new card', attrOf('WebPublicDeck', W, H, 'suggest="new"'), { logic: darkLogic, w: W, h: H }],
+  'WebPublicDeckHistory': ['Web · Shared deck page · History', attrOf('WebPublicDeck', W, H, 'deck-tab="History"'), { logic: darkLogic, w: W, h: H }],
+  'WebPublicDeckPeople': ['Web · Shared deck page · People', attrOf('WebPublicDeck', W, H, 'deck-tab="People"'), { logic: darkLogic, w: W, h: H }],
+  'WebPublicDeckSignedOut': ['Web · Shared deck page · signed out (anyone can look)', attrOf('WebPublicDeck', W, H, 'signed-out="{{yes}}"'), { logic: darkLogic, w: W, h: H }],
+  'WebPublicDeckLoading': ['Web · Shared deck page · loading', attrOf('WebPublicDeck', W, H, 'loading="{{yes}}"'), { logic: darkLogic, w: W, h: H }],
+  'WebPublicDeckMissing': ['Web · Shared deck page · not shared', attrOf('WebPublicDeck', W, H, 'missing="{{yes}}"'), { logic: darkLogic, w: W, h: H }],
+  'WebPublicDeckDark': ['Web · Shared deck page · dark', darkOf('WebPublicDeck', W, H), { logic: darkLogic, w: W, h: H }],
+  'WebPublicDeckGray': ['Web · Shared deck page · gray', grayOf('WebPublicDeck', W, H), { logic: darkLogic, w: W, h: H }],
+  'PhonePublicDeck': ['iPhone · Shared deck page', phonePublicDeck, { props: PD_PROPS, logic: PUBLIC_DECK_LOGIC(true), css: NETX_CSS, w: PW, h: PH }],
+  'PhonePublicDeckStudying': ['iPhone · Shared deck page · a deck you study', attrOf('PhonePublicDeck', PW, PH, 'studying="{{yes}}"'), { logic: darkLogic, w: PW, h: PH }],
+  'PhonePublicDeckOwner': ['iPhone · Shared deck page · your own deck', attrOf('PhonePublicDeck', PW, PH, 'owner="{{yes}}"'), { logic: darkLogic, w: PW, h: PH }],
+  'PhonePublicDeckCopy': ['iPhone · Shared deck page · Make a copy', attrOf('PhonePublicDeck', PW, PH, 'copy-open="{{yes}}"'), { logic: darkLogic, w: PW, h: PH }],
+  'PhonePublicDeckSuggest': ['iPhone · Shared deck page · Suggest a change, on a card', attrOf('PhonePublicDeck', PW, PH, 'suggest="c2"'), { logic: darkLogic, w: PW, h: PH }],
+  'PhonePublicDeckSuggestNew': ['iPhone · Shared deck page · Suggest a change, a new card', attrOf('PhonePublicDeck', PW, PH, 'suggest="new"'), { logic: darkLogic, w: PW, h: PH }],
+  'PhonePublicDeckSignedOut': ['iPhone · Shared deck page · signed out', attrOf('PhonePublicDeck', PW, PH, 'signed-out="{{yes}}"'), { logic: darkLogic, w: PW, h: PH }],
+  'PhonePublicDeckDark': ['iPhone · Shared deck page · dark', darkOf('PhonePublicDeck', PW, PH), { logic: darkLogic, w: PW, h: PH }],
+  'PhonePublicDeckGray': ['iPhone · Shared deck page · gray', grayOf('PhonePublicDeck', PW, PH), { logic: darkLogic, w: PW, h: PH }],
+  'WebSuggestions': ['Web · Suggestions (for one deck)', webSuggestions, { props: SG_PROPS, logic: SUGGESTIONS_LOGIC(false), w: W, h: H }],
+  'WebSuggestionsAll': ['Web · Suggestions · every deck', attrOf('WebSuggestions', W, H, 'deck-id=""'), { logic: darkLogic, w: W, h: H }],
+  'WebSuggestionsAI': ['Web · Suggestions · your AI’s cards', attrOf('WebSuggestions', W, H, 'pick-item="ai"'), { logic: darkLogic, w: W, h: H }],
+  'WebSuggestionsEmpty': ['Web · Suggestions · none', attrOf('WebSuggestions', W, H, 'no-suggestions="{{yes}}" ai-waiting="{{no}}"'), { logic: yesNoLogic, w: W, h: H }],
+  'WebSuggestionsDark': ['Web · Suggestions · dark', darkOf('WebSuggestions', W, H), { logic: darkLogic, w: W, h: H }],
+  'WebSuggestionsGray': ['Web · Suggestions · gray', grayOf('WebSuggestions', W, H), { logic: darkLogic, w: W, h: H }],
+  'PhoneSuggestions': ['iPhone · Suggestions', phoneSuggestions, { props: SG_PROPS, logic: SUGGESTIONS_LOGIC(true), w: PW, h: PH }],
+  'PhoneSuggestionsOpen': ['iPhone · Suggestions · one opened', attrOf('PhoneSuggestions', PW, PH, 'pick-item="g1"'), { logic: darkLogic, w: PW, h: PH }],
+  'PhoneSuggestionsEmpty': ['iPhone · Suggestions · none', attrOf('PhoneSuggestions', PW, PH, 'no-suggestions="{{yes}}" ai-waiting="{{no}}"'), { logic: yesNoLogic, w: PW, h: PH }],
+  'PhoneSuggestionsDark': ['iPhone · Suggestions · dark', attrOf('PhoneSuggestions', PW, PH, 'pick-item="g1" dark="{{yes}}"'), { logic: darkLogic, w: PW, h: PH }],
+  'WebHistory': ['Web · History (your deck)', webHistory, { props: HI_PROPS, logic: HISTORY_LOGIC(false), w: W, h: H }],
+  'WebHistoryOpen': ['Web · History · a version opened', attrOf('WebHistory', W, H, 'open-version="14"'), { logic: darkLogic, w: W, h: H }],
+  'WebHistoryGoBack': ['Web · History · going back to a version', attrOf('WebHistory', W, H, 'open-version="12" confirm-version="12"'), { logic: darkLogic, w: W, h: H }],
+  'WebHistoryOther': ['Web · History · someone else’s deck', attrOf('WebHistory', W, H, 'someone-else="{{yes}}" open-version="14"'), { logic: darkLogic, w: W, h: H }],
+  'WebHistoryDark': ['Web · History · dark', attrOf('WebHistory', W, H, 'open-version="14" dark="{{yes}}"'), { logic: darkLogic, w: W, h: H }],
+  'WebHistoryGray': ['Web · History · gray', attrOf('WebHistory', W, H, 'open-version="14" dark="{{yes}}" dim="{{yes}}"'), { logic: darkLogic, w: W, h: H }],
+  'PhoneHistory': ['iPhone · History', phoneHistory, { props: HI_PROPS, logic: HISTORY_LOGIC(true), w: PW, h: PH }],
+  'PhoneHistoryOpen': ['iPhone · History · a version opened', attrOf('PhoneHistory', PW, PH, 'open-version="14"'), { logic: darkLogic, w: PW, h: PH }],
+  'PhoneHistoryDark': ['iPhone · History · dark', attrOf('PhoneHistory', PW, PH, 'open-version="14" dark="{{yes}}"'), { logic: darkLogic, w: PW, h: PH }]
 };
 for (const [name, [title, body, opts]] of Object.entries(files)) writeFileSync(OUT + name + '.dc.html', page(title, body, opts));
 

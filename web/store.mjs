@@ -402,6 +402,12 @@ function run(a, who) {
       }
       return { questions: n };
     }
+    // Keeping cards your AI made that waited for you (Suggestions), several in one save.
+    case 'card.keep': {
+      const ids = new Set(a.ids || [a.id]);
+      for (const c of S.cards) if (ids.has(c.id) && c.pending) { if (readOnly(deckOf(c))) throw notYours(deckOf(c)); c.pending = false; trailStep(c, 'checked', who); touch(c.deckId, who); }
+      return { ids: [...ids] };
+    }
     case 'card.delete': {
       const ids = new Set(a.ids || [a.id]);
       for (const c of S.cards) if (ids.has(c.id)) { if (readOnly(deckOf(c))) throw notYours(deckOf(c)); touch(c.deckId, who); }

@@ -554,15 +554,28 @@ export async function decide(uid, id, picks = {}, { byHelper = false } = {}) {
 // The suggestions waiting on your decks (or a deck), newest first, and the ones you sent.
 export async function suggestionsFor(uid, { sharedId = '', mine = false, all = false } = {}) {
   const sid = socialId(uid);
-  if (mine) return rest('/suggestions?author=eq.' + val(sid) + '&select=*&order=created_at.desc&limit=100');
+  if (mine) return withSenders(await rest('/suggestions?author=eq.' + val(sid) + '&select=*&order=created_at.desc&limit=100'));
   if (sharedId) {
     const sh = await sharedRow(sharedId, 'id,owner,helpers,maintained');
     if (!sh) throw err('No such deck', 404);
     const helper = (sh.helpers || []).some(h => h.id === sid);
     if (sh.owner !== sid && !helper) throw err('Only the deck’s owner sees its suggestions.', 403);
-    return rest('/suggestions?shared_id=eq.' + val(sharedId) + (all ? '' : '&status=eq.open') + '&select=*&order=created_at.desc&limit=100');
+    return withSenders(await rest('/suggestions?shared_id=eq.' + val(sharedId) + (all ? '' : '&status=eq.open') + '&select=*&order=created_at.desc&limit=100'));
   }
-  return rest('/suggestions?owner=eq.' + val(sid) + (all ? '' : '&status=eq.open') + '&select=*&order=created_at.desc&limit=100');
+  return withSenders(await rest('/suggestions?owner=eq.' + val(sid) + (all ? '' : '&status=eq.open') + '&select=*&order=created_at.desc&limit=100'));
+}
+// Who sent each suggestion (their picture, and their name linking to their profile) and which deck it's for, without
+// anyone's account id.
+async function withSenders(rows) {
+  if (!rows.length) return rows;
+  const ids = [...new Set(rows.map(r => r.author).filter(Boolean))], decks = [...new Set(rows.map(r => r.shared_id))];
+  const [people, shared] = await Promise.all([ids.length ? rest('/profiles?id=in.' + inList(ids) + '&select=id,handle,name,avatar,color,verified,kind') : [],
+    rest('/shared_decks?id=in.' + inList(decks) + '&select=id,name,slug,owner')]);
+  const owners = shared.length ? await rest('/profiles?id=in.' + inList([...new Set(shared.map(d => d.owner))]) + '&select=id,handle') : [];
+  return rows.map(({ owner, author, ...r }) => {
+    const d = shared.find(x => x.id === r.shared_id), o = d && owners.find(x => x.id === d.owner);
+    return { ...r, person: face(people.find(x => x.id === author)) || { name: r.author_name }, deck: d ? { id: d.id, name: d.name, url: o ? urlOf(o.handle, d.slug) : '/d/' + d.id } : null };
+  });
 }
 
 // ---------- history ----------

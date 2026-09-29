@@ -522,6 +522,9 @@ export async function createDb({ onChange, go }) {
     },
     addCard: (deckId, o) => send('card.add', { deckId, ...o }),
     removeCards: ids => send('card.delete', { ids }),
+    // Cards your AI made that wait for you (Suggestions): keep them (they join the deck) or toss them, a few at once.
+    keepCards: ids => send('card.keep', { ids }),
+    tossCards: ids => send('card.delete', { ids }),
     grade: async (cardId, rating) => {
       const c = S.cards.find(x => x.id === cardId); if (!c || !session) return;
       const entry = { cardId, rating, was: c.srs.state };
@@ -679,8 +682,9 @@ export async function createDb({ onChange, go }) {
       return { ...deckRow(d), cover: d.cover, grading: d.grading, fsrs: d.fsrs !== false, goal: d.goal, gapIdx: d.gapIdx ?? 3, steps: d.steps, perDay: d.perDay,
         forecast: forecast(7, [d]).vals, piles: (d.piles || []).map(p => ({ name: p.name, n: cardsOf(d.id).filter(c => c.pile === p.name).length })) };
     },
+    // `pending`: a card your AI made that waits for you to keep it (Settings → Check AI cards first).
     cards: id => deckCards(deckById(id), S.cards).map(c => ({ id: c.id, kind: KIND[c.kind], icon: ICON[c.kind], front: listFront(c), back: listBack(c), tags: c.tags, next: nextLabel(c),
-      ai: byAI(c) ? c.source : '', href: '/deck/' + id + '/card/' + c.id, group: c.group || null })),
+      ai: byAI(c) ? c.source : '', href: '/deck/' + id + '/card/' + c.id, group: c.group || null, pending: !!c.pending, created: c.created || 0 })),
     card: id => { const c = cardIndex().get(id); return c ? { ...c, clozeMode: c.cloze === -1 ? 'one' : 'each' } : null; },
     // The cards made together with this one: every blank of one text, or every box of one picture (just it, alone).
     group: id => { const c = cardIndex().get(id); return !c ? [] : c.group ? groupIndex().get(c.group) : [c]; },
