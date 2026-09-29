@@ -2317,7 +2317,8 @@ renderVals() {
   ${STUDY_BG_JS}
   ${BG_PICK_JS}
   ${EXPLAIN_JS}
-  const rv = db.review(this.props.deckId, this.props.pile);
+  // One deck, all of them, one pile, or a set of cards picked on the Stats page.
+  const rv = db.review(this.props.deckId, this.props.pile, this.props.set);
   const rev = this.state.revealed;
   const ex = explainView(rv.ex, rv.card && rv.card.id, '', rev, ${JSON.stringify('It pumps protons (H⁺) out of the matrix into the space between the two membranes. That builds a gradient, like water held behind a dam, and ATP synthase uses the flow back in to make ATP. Remember it as pump uphill first, then cash in on the way down.')});
   // Behind the cards: the background of the deck this card is from.
