@@ -25,9 +25,11 @@ for (const file of readdirSync(SRC).filter(f => f.endsWith('.dc.html')).sort()) 
   // screen's height and scroll inside (like the iPhone app), so the tab bar, sheets, and anything pinned to the bottom
   // stay on screen. Inside another board (a page behind a sheet, or the dark and other versions on /b), a page takes
   // that board's height instead.
-  const grow = ['PhoneSignIn', 'PhoneSignInCode', 'PhoneQuizStart', 'PhoneQuizUpgrade', 'PhoneQuiz', 'PhoneQuizMatch', 'PhoneQuizType', 'PhoneQuizDone'];
+  // Live's player screens fill the phone the same way: joining and the final leaderboard grow, the rest fit the screen.
+  const grow = ['PhoneSignIn', 'PhoneSignInCode', 'PhoneQuizStart', 'PhoneQuizUpgrade', 'PhoneQuiz', 'PhoneQuizMatch', 'PhoneQuizType', 'PhoneQuizDone', 'LiveJoin', 'LiveFinal'];
   const phoneFill = [...grow, 'PhoneToday', 'PhoneTodayNew', 'PhoneDeck', 'PhoneDeckEmpty', 'PhoneEditor', 'PhoneReview', 'PhoneDone', 'PhoneDonePiles',
-    'PhoneStats', 'PhoneStatsEmpty', 'PhoneConnect', 'PhoneSettings', 'PhoneNewDeck', 'PhoneLibrary', 'PhoneDecksEmpty', 'PhoneWelcome'].includes(name), fill = (w === 1440 && h === 900) || phoneFill;
+    'PhoneStats', 'PhoneStatsEmpty', 'PhoneConnect', 'PhoneSettings', 'PhoneNewDeck', 'PhoneLibrary', 'PhoneDecksEmpty', 'PhoneWelcome',
+    'LiveWaiting', 'LiveAnswer', 'LiveResult', 'LiveEnded'].includes(name), fill = (w === 1440 && h === 900) || phoneFill;
   if (phoneFill) template = template.replace(/width: 390px; height: \d+px;/, grow.includes(name) ? 'width: 100%; min-height: 100vh; min-height: 100dvh;' : 'width: 100%; height: 100vh; height: 100dvh; min-height: 100%; max-height: 100%;');
   else if (fill) {
     template = template.replace('width: 1440px; height: 900px;', 'width: 100%; height: 100vh;');
