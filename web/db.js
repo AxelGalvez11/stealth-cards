@@ -742,9 +742,7 @@ export async function createDb({ onChange, go }) {
       const due = sum('due'), fresh = sum('fresh'), { streak, best, days } = streaks(), monday = dayAt(t, -((t.getDay() + 6) % 7)), today = dayAt(t);
       return { date: DAYS[t.getDay()] + ', ' + MONTHS[t.getMonth()] + ' ' + t.getDate(), streak, best, due, minutes: Math.max(1, Math.round(due * 10 / 60)), fresh, next: nextDue(),
         week: ['M', 'T', 'W', 'T', 'F', 'S', 'S'].map((d, i) => ({ d, done: days.has(dayAt(monday, i)), today: dayAt(monday, i) === today })),
-        forecast: forecast(7, live), newCardHref: S.decks[0] ? '/deck/' + S.decks[0].id + '/card' : '/decks/new', studyHref: '/review',
-        // Decks with an exam coming up, soonest first.
-        exams: live.map(d => ({ d, x: deckStat(d).exam })).filter(e => e.x).sort((a, b) => a.x.days - b.x.days).map(({ d, x }) => ({ id: d.id, name: d.name, line: x.line, href: '/deck/' + d.id })) };
+        forecast: forecast(7, live), newCardHref: S.decks[0] ? '/deck/' + S.decks[0].id + '/card' : '/decks/new', studyHref: '/review' };
     },
     review: (id, pile, set) => {
       const key = keyOf(id, pile, set);
