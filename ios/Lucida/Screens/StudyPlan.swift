@@ -95,8 +95,7 @@ struct StudyPro: View {
   private var teaser: some View {
     VStack(alignment: .leading, spacing: 8) {
       HStack(spacing: 8) { Text("Plan your reviews").css(15, .semibold); ProBadge() }
-      Text("See how many reviews a day each goal means, set an exam date, and choose what happens to cards you keep forgetting.").css(13, lh: 1.45).foregroundStyle(t.muted)
-        .fixedSize(horizontal: false, vertical: true)
+      WebText(text: "See how many reviews a day each goal means, set an exam date, and choose what happens to cards you keep forgetting.", size: 13, lh: 1.45, color: t.muted)
       Button { UIApplication.shared.open(API.pricing) } label: {
         Text("Go Pro").css(14, .semibold).foregroundStyle(t.invText).padding(.horizontal, 16).frame(height: 36).background(Capsule().fill(t.inv))
       }

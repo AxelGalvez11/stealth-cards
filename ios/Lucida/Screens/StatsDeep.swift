@@ -31,6 +31,20 @@ struct DeepStyle {
   }
 }
 
+/// Words that wrap the way a browser wraps them (SwiftUI's Text moves a lone last word down to the line above; this doesn't).
+struct WebText: View {
+  @Environment(\.theme) private var t
+  let text: String
+  let size: CGFloat
+  var weight: Font.Weight = .regular
+  /// The line height, a multiple of the size (1.3 is CSS "normal").
+  var lh: CGFloat = GEIST_LINE
+  var color: Color? = nil
+  var body: some View {
+    LabelText(text: Rich.nsText([Rich.Run(t: text, m: "")], size: size, weight: weight, lh: lh, color: UIColor(color ?? t.text), dark: t.dark))
+  }
+}
+
 /// A card on the Stats page: a title (and a line under it), then what it holds (deepCard).
 struct StatsCard<Content: View>: View {
   @Environment(\.theme) private var t
@@ -418,7 +432,7 @@ struct StatsUpgrade: View {
       VStack(alignment: .leading, spacing: 18) {
         VStack(alignment: .leading, spacing: 8) {
           HStack(spacing: 10) { Text("See what you’re weak at").css(22, .semibold, ls: -0.03).lineLimit(1).fixedSize(); ProBadge() }
-          Text("What you remember, what you’re weak at and why, and what to study next.").css(15, lh: 1.5).foregroundStyle(t.muted).fixedSize(horizontal: false, vertical: true)
+          WebText(text: "What you remember, what you’re weak at and why, and what to study next.", size: 15, lh: 1.5, color: t.muted)
         }
         VStack(alignment: .leading, spacing: 10) {
           ForEach(["Memory by deck, tag, and week", "Your weakest tags and hardest cards", "Time per card and exam readiness"], id: \.self) { x in
@@ -429,7 +443,7 @@ struct StatsUpgrade: View {
             }
           }
         }
-        Text("Yearly works out to $4.17 a month. Cancel anytime.").css(14).foregroundStyle(t.muted).fixedSize(horizontal: false, vertical: true)
+        WebText(text: "Yearly works out to $4.17 a month. Cancel anytime.", size: 14, color: t.muted)
         // Each price is its own button, so paying never picks yearly for you.
         HStack(spacing: 10) {
           Button { UIApplication.shared.open(API.pro("monthly")) } label: {

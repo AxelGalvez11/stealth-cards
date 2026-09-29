@@ -284,7 +284,8 @@ struct SettingsScreen: View {
     HStack(spacing: 12) {
       VStack(alignment: .leading, spacing: 2) {
         Text(label).css(16).foregroundStyle(color ?? t.text)
-        if let sub { Text(sub).css(12).foregroundStyle(t.muted) }
+        // (Wrapped like a browser: SwiftUI's Text would move a lone last word down.)
+        if let sub { WebText(text: sub, size: 12, color: t.muted) }
       }
       .frame(maxWidth: .infinity, alignment: .leading)
       right()
