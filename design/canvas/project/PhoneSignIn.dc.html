@@ -288,7 +288,7 @@ mock() {
         const assignments = [...k0.assignments.filter(a => !(m.unassigned || {})[a.id] && decks.some(d => d.id === a.sharedId)), ...(m.assigned || []).filter(a => a.classId === k0.id)];
         return { ...k0, me, members, people: members.length, deckList: decks, decks: decks.length, assignments, empty: false, ...(p.empty ? { members: members.filter(x => x.role === 'owner'), people: 1, deckList: [], decks: 0, assignments: [] } : {}) };
       };
-      const deckPage = () => ({ ...deckCard(D.mcat), helpers: [{ handle: 'devp', name: 'Dev Patel' }], contributors: [{ handle: 'devp', name: 'Dev Patel', n: 6 }, { handle: 'alexkim', name: 'Alex Kim', n: 3 }],
+      const deckPage = () => ({ ...deckCard(D.mcat), ...(m.checked ? { checked: { name: 'Alex Kim', handle: 'alexkim', current: true } } : {}), helpers: [{ handle: 'devp', name: 'Dev Patel' }], contributors: [{ handle: 'devp', name: 'Dev Patel', n: 6 }, { handle: 'alexkim', name: 'Alex Kim', n: 3 }],
         people: [N.P.maria, N.P.dev, N.P.okafor, N.P.alex], cardsList: N.CARDS, moreCards: 634, made: N.MADE,
         me: p.signedOut ? null : { owner: !!p.owner, helper: false, studying: m.studying || (p.studying ? 'cell' : ''), copied: m.copied || '', watching: !!(m.watching ?? p.watching), starred: star('s1') ?? false, open: p.owner ? 3 : 0 } });
       return {
@@ -319,7 +319,7 @@ mock() {
         mine: () => ({ handle: 'alexkim', profile: N.P.alex, decks: [{ id: 's9', slug: 'cell-biology', visibility: 'public', stars: 1300, learners: 214, copies: 86, version: 14, open: 3 }] }),
         classes: () => (wait ? undefined : p.empty ? [] : N.CLASS_LIST),
         klass: code => (wait ? undefined : p.missing ? { missing: true, status: 404 } : klass(code)),
-        verify: () => ({ verified: '', open: !!m.verifySent, declined: false, role: '', school: 'UC Davis' }),
+        verify: () => ({ verified: ({ Teacher: 'teacher', School: 'school' })[p.verified] || '', open: p.verified === 'Waiting for review' || !!m.verifySent, declined: false, role: '', school: 'UC Davis' }),
         admin: () => (wait ? undefined : p.denied ? { missing: true, status: 403 } : p.empty ? { requests: [], reports: [] } : N.ADMIN),
         drop: noop, act: () => Promise.resolve(null)
       };
@@ -352,7 +352,7 @@ mock() {
       star: (id, on) => set({ stars: { ...(m.stars || {}), [id]: !!on } }), watch: (id, on) => set({ watching: !!on }),
       follow: (h, on) => set({ follows: { ...(m.follows || {}), [h]: !!on } }), study: () => set({ studying: 'cell' }), copyDeck: () => set({ copied: 'cell' }),
       decide: (id, picks) => { set({ picks: { ...(m.picks || {}), [id]: { ...((m.picks || {})[id] || {}), ...picks } } }); return Promise.resolve({}); }, readNews: () => set({ read: true }),
-      suggest: () => Promise.resolve({ id: 'g9', taken: false }), restore: (id, v) => { set({ restored: v }); return Promise.resolve({ changes: 1 }); }, checkDeck: noop,
+      suggest: () => Promise.resolve({ id: 'g9', taken: false }), restore: (id, v) => { set({ restored: v }); return Promise.resolve({ changes: 1 }); }, checkDeck: () => { set({ checked: true }); return Promise.resolve({}); },
       keepCards: ids => { set({ aiDone: { ...aiDone, ...Object.fromEntries(ids.map(x => [x, 'kept'])) } }); return Promise.resolve({}); },
       tossCards: ids => { set({ aiDone: { ...aiDone, ...Object.fromEntries(ids.map(x => [x, 'tossed'])) } }); return Promise.resolve({}); }, ensureProfile: noop,
       // Someone in the sample already has the handle: it's taken, like the server says.

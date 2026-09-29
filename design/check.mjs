@@ -39,6 +39,10 @@ PROP_SETS.push({ report: true }, { report: true, signedOut: true }, { report: tr
   { $state: { rep: { kind: 'deck', id: 's1', name: 'MCAT Biochemistry' }, repReason: 'other', repNote: '', repErr: 'Say what’s wrong.' } },
   { $state: { rep: { kind: 'profile', id: 'mariasantos', name: 'Maria Santos' }, repReason: 'spam', repSent: true } },
   { pickItem: 'g1', $state: { rep: { kind: 'suggestion', id: 'g1', name: 'Maria Santos' }, repReason: 'stolen', repNote: 'Mine' } });
+// A verified teacher's or school's shared deck page (Check this deck, pressing it, one being pressed, on their own deck,
+// signed out), and your verification in Settings.
+PROP_SETS.push({ verified: 'Teacher' }, { verified: 'School' }, { verified: 'Teacher', $state: { $m: { checked: true } } }, { verified: 'Teacher', $state: { busy: 'check', error: 'That didn’t save.' } },
+  { verified: 'Teacher', owner: true }, { verified: 'Teacher', signedOut: true }, { verified: 'Waiting for review' }, { verified: 'Teacher', $state: { checkedAt: 14 } }, { verified: 'Teacher', dark: true });
 
 function walk(str, sc, miss) {
   let i = 0;

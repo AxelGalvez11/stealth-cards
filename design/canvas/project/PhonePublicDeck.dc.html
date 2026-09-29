@@ -45,6 +45,8 @@ a{color:inherit;text-decoration:none}a:hover{opacity:.8}
       <button type="button" onClick="{{toggleStar}}" aria-label="Save" class="sc-press" aria-pressed="{{starPressed}}" style="position: relative; width: 56px; height: 56px; flex-shrink: 0; border: 0; border-radius: 28px; background: {{t.surf}}; color: {{t.text}}; display: flex; align-items: center; justify-content: center; cursor: pointer;"><sc-if value="{{starred}}" hint-placeholder-val="{{ false }}"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3.8l2.5 5.1 5.6.8-4 3.9.9 5.6-5-2.6-5 2.6.9-5.6-4-3.9 5.6-.8z" fill="currentColor"/></svg></sc-if><sc-if value="{{notStarred}}" hint-placeholder-val="{{ true }}"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3.8l2.5 5.1 5.6.8-4 3.9.9 5.6-5-2.6-5 2.6.9-5.6-4-3.9 5.6-.8z"/></svg></sc-if></button>
       <button type="button" onClick="{{openSuggestAny}}" aria-label="Suggest a change" class="sc-press" style="position: relative; width: 56px; height: 56px; flex-shrink: 0; border: 0; border-radius: 28px; background: {{t.surf}}; color: {{t.text}}; display: flex; align-items: center; justify-content: center; cursor: pointer;"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 5h14a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H9l-4 3.5V6a1 1 0 0 1 1-1z"/></svg></button>
     </div></sc-if>
+    <sc-if value="{{canCheck}}" hint-placeholder-val="{{ false }}"><button type="button" onClick="{{checkIt}}" class="sc-press" style="height: 48px; border: 0; border-radius: 999px; background: {{t.surf}}; color: {{t.text}}; font: inherit; font-size: 16px; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 3v5.5c0 4.3-2.9 8-7 9.5-4.1-1.5-7-5.2-7-9.5V6z"/><path d="M9 12l2 2 4-4.5"/></svg><span>{{checkLabel}}</span></button></sc-if>
+    <sc-if value="{{mineChecked}}" hint-placeholder-val="{{ false }}"><span role="status" style="height: 48px; padding: 0 20px; display: inline-flex; align-items: center; justify-content: center; gap: 8px; border-radius: 999px; background: {{t.surf}}; color: {{t.text}}; font-size: 16px; font-weight: 600; white-space: nowrap;"><span style="display: flex; color: #3E63DD;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 3v5.5c0 4.3-2.9 8-7 9.5-4.1-1.5-7-5.2-7-9.5V6z"/><path d="M9 12l2 2 4-4.5"/></svg></span><span>Checked by you</span></span></sc-if>
     <sc-if value="{{asOwner}}" hint-placeholder-val="{{ false }}"><div style="display: flex; gap: 10px;">
       <a href="{{editHref}}" class="sc-press" style="flex-grow: 1; min-width: 0; height: 56px; border-radius: 999px; background: {{t.inv}}; color: {{t.invText}}; display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 17px; font-weight: 600;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15.5 5.5l3 3L9 18H6v-3z"/><path d="M13.5 7.5l3 3"/></svg>Edit</a>
       <a href="{{suggestionsHref}}" aria-label="Suggestions" class="sc-press" style="position: relative; width: 56px; height: 56px; flex-shrink: 0; border: 0; border-radius: 28px; background: {{t.surf}}; color: {{t.text}}; display: flex; align-items: center; justify-content: center; cursor: pointer;"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 5h14a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H9l-4 3.5V6a1 1 0 0 1 1-1z"/></svg><sc-if value="{{hasOpen}}" hint-placeholder-val="{{ true }}"><span style="position: absolute; top: 4px; right: 2px; min-width: 18px; height: 18px; padding: 0 5px; box-sizing: border-box; border-radius: 9px; background: #E5484D; color: #FFFFFF; font-size: 11px; font-weight: 700; line-height: 18px; text-align: center;">{{openCount}}</span></sc-if></a>
@@ -145,7 +147,7 @@ a{color:inherit;text-decoration:none}a:hover{opacity:.8}
 </sc-if>
 </div>
 </x-dc>
-<script type="text/x-dc" data-dc-script data-props='{"dark":{"editor":"boolean","default":false},"dim":{"editor":"boolean","default":false},"grain":{"editor":"range","default":0.7,"min":0,"max":1,"step":0.05},"loading":{"editor":"boolean","default":false},"signedOut":{"editor":"boolean","default":false},"owner":{"editor":"boolean","default":false},"studying":{"editor":"boolean","default":false},"copyOpen":{"editor":"boolean","default":false},"missing":{"editor":"boolean","default":false},"report":{"editor":"boolean","default":false},"deckTab":{"editor":"enum","default":"Cards","options":["Cards","History","People"]},"$preview":{"width":390,"height":844}}'>
+<script type="text/x-dc" data-dc-script data-props='{"dark":{"editor":"boolean","default":false},"dim":{"editor":"boolean","default":false},"grain":{"editor":"range","default":0.7,"min":0,"max":1,"step":0.05},"loading":{"editor":"boolean","default":false},"signedOut":{"editor":"boolean","default":false},"owner":{"editor":"boolean","default":false},"studying":{"editor":"boolean","default":false},"copyOpen":{"editor":"boolean","default":false},"missing":{"editor":"boolean","default":false},"report":{"editor":"boolean","default":false},"verified":{"editor":"enum","default":"","options":["","Waiting for review","Teacher","School"]},"deckTab":{"editor":"enum","default":"Cards","options":["Cards","History","People"]},"$preview":{"width":390,"height":844}}'>
 class Component extends DCLogic {
 // Dark mode has two looks, picked in Settings → Dark mode: black (the first one, and still the default) or gray (the
 // owner: "add a darkmode option that is grayish not fully blackedout"). g asks for gray; it only counts when d is on.
@@ -404,7 +406,7 @@ mock() {
         const assignments = [...k0.assignments.filter(a => !(m.unassigned || {})[a.id] && decks.some(d => d.id === a.sharedId)), ...(m.assigned || []).filter(a => a.classId === k0.id)];
         return { ...k0, me, members, people: members.length, deckList: decks, decks: decks.length, assignments, empty: false, ...(p.empty ? { members: members.filter(x => x.role === 'owner'), people: 1, deckList: [], decks: 0, assignments: [] } : {}) };
       };
-      const deckPage = () => ({ ...deckCard(D.mcat), helpers: [{ handle: 'devp', name: 'Dev Patel' }], contributors: [{ handle: 'devp', name: 'Dev Patel', n: 6 }, { handle: 'alexkim', name: 'Alex Kim', n: 3 }],
+      const deckPage = () => ({ ...deckCard(D.mcat), ...(m.checked ? { checked: { name: 'Alex Kim', handle: 'alexkim', current: true } } : {}), helpers: [{ handle: 'devp', name: 'Dev Patel' }], contributors: [{ handle: 'devp', name: 'Dev Patel', n: 6 }, { handle: 'alexkim', name: 'Alex Kim', n: 3 }],
         people: [N.P.maria, N.P.dev, N.P.okafor, N.P.alex], cardsList: N.CARDS, moreCards: 634, made: N.MADE,
         me: p.signedOut ? null : { owner: !!p.owner, helper: false, studying: m.studying || (p.studying ? 'cell' : ''), copied: m.copied || '', watching: !!(m.watching ?? p.watching), starred: star('s1') ?? false, open: p.owner ? 3 : 0 } });
       return {
@@ -435,7 +437,7 @@ mock() {
         mine: () => ({ handle: 'alexkim', profile: N.P.alex, decks: [{ id: 's9', slug: 'cell-biology', visibility: 'public', stars: 1300, learners: 214, copies: 86, version: 14, open: 3 }] }),
         classes: () => (wait ? undefined : p.empty ? [] : N.CLASS_LIST),
         klass: code => (wait ? undefined : p.missing ? { missing: true, status: 404 } : klass(code)),
-        verify: () => ({ verified: '', open: !!m.verifySent, declined: false, role: '', school: 'UC Davis' }),
+        verify: () => ({ verified: ({ Teacher: 'teacher', School: 'school' })[p.verified] || '', open: p.verified === 'Waiting for review' || !!m.verifySent, declined: false, role: '', school: 'UC Davis' }),
         admin: () => (wait ? undefined : p.denied ? { missing: true, status: 403 } : p.empty ? { requests: [], reports: [] } : N.ADMIN),
         drop: noop, act: () => Promise.resolve(null)
       };
@@ -468,7 +470,7 @@ mock() {
       star: (id, on) => set({ stars: { ...(m.stars || {}), [id]: !!on } }), watch: (id, on) => set({ watching: !!on }),
       follow: (h, on) => set({ follows: { ...(m.follows || {}), [h]: !!on } }), study: () => set({ studying: 'cell' }), copyDeck: () => set({ copied: 'cell' }),
       decide: (id, picks) => { set({ picks: { ...(m.picks || {}), [id]: { ...((m.picks || {})[id] || {}), ...picks } } }); return Promise.resolve({}); }, readNews: () => set({ read: true }),
-      suggest: () => Promise.resolve({ id: 'g9', taken: false }), restore: (id, v) => { set({ restored: v }); return Promise.resolve({ changes: 1 }); }, checkDeck: noop,
+      suggest: () => Promise.resolve({ id: 'g9', taken: false }), restore: (id, v) => { set({ restored: v }); return Promise.resolve({ changes: 1 }); }, checkDeck: () => { set({ checked: true }); return Promise.resolve({}); },
       keepCards: ids => { set({ aiDone: { ...aiDone, ...Object.fromEntries(ids.map(x => [x, 'kept'])) } }); return Promise.resolve({}); },
       tossCards: ids => { set({ aiDone: { ...aiDone, ...Object.fromEntries(ids.map(x => [x, 'tossed'])) } }); return Promise.resolve({}); }, ensureProfile: noop,
       // Someone in the sample already has the handle: it's taken, like the server says.
@@ -1202,7 +1204,8 @@ renderVals() {
     action: st.cpBusy ? 'Copying…' : 'Copy deck', off: String(cpName).trim() && !st.cpBusy ? 'false' : 'true', op: String(cpName).trim() ? '1' : '.4', hasError: !!st.cpErr, error: st.cpErr || ''
   };
   const busy = st.busy || '';
-  // Report this deck (anyone but its owner; signed out, sending it signs you in first).
+  // Report this deck (anyone but its owner; signed out, sending it signs you in first). Check this deck is for a verified
+  // teacher or school, on a deck whose check isn't current; it then says "Checked by you", until the deck changes again.
   const repDefault = p.report && ready ? { kind: 'deck', id: d.id, name: d.name } : null;
   const REASONS = [['wrong', 'Wrong or harmful'], ['spam', 'Spam'], ['stolen', 'Someone else’s work'], ['other', 'Other']];
   const rep0 = 'rep' in this.state ? this.state.rep : (typeof repDefault === 'undefined' ? null : repDefault);
@@ -1218,9 +1221,15 @@ renderVals() {
       // Signed out (a public page), sending a report signs in first.
       if (!db.act.report) { db.act.go('/sign-in?next=' + encodeURIComponent(location.pathname)); return; }
       Promise.resolve(db.act.report({ kind: rep0.kind, id: rep0.id, handle: rep0.kind === 'profile' ? rep0.id : undefined, reason: repReason, note: repNote.trim() })).then(() => this.setState({ repSent: true }), e => this.setState({ repErr: e.message })); } };
+  const you = !out && db.me ? db.me() : null, vs = (!out && db.net.verify && db.net.verify()) || {};
+  const checkedNow = d.checked && d.checked.current, checker = learner && !!vs.verified;
+  const mineChecked = learner && (st.checkedAt === d.version || (!!checkedNow && !!you && !!you.handle && d.checked.handle === you.handle));
+  const checkIt = async () => { if (this.state.busy || !checker) return; set({ busy: 'check', error: '' });
+    try { await db.act.checkDeck(d.id); this.setState({ busy: '', checkedAt: d.version }); } catch (e) { this.setState({ busy: '', error: fail(e) }); } };
   return {
     t, ...chrome, grain: String(this.props.grain ?? 0.7), signedIn: !db.signedOut && !this.props.signedOut, signedOutView: !!db.signedOut || !!this.props.signedOut, homeHref: db.mock ? 'Landing.dc.html' : 'https://lucida.cards/', signInHref: db.mock ? 'WebSignIn.dc.html' : '/sign-in?next=' + encodeURIComponent(location.pathname), ink: inkOf,
     canReport: ready && !owns, reportIt: () => openReport('deck', d.id, d.name), rep,
+    canCheck: checker && !checkedNow && !mineChecked, mineChecked, checkLabel: busy === 'check' ? 'Checking…' : 'Check this deck', checkIt,
     loading: loading && !p.missing, missing: bad, ready, notReady: !ready, missingTitle: 'This deck isn’t here', missingLine: 'It may be private now, or the link is wrong.', discoverHref: goTo('/discover', B + 'Discover'),
     deck: { name: d.name }, cv, owner, badges, hasBadge: badges.length > 0, badge: badges[0] || { label: '', shield: false, people: false },
     metaLine: '· ' + cardsLine + ' · Version ' + d.version + (upd ? ' · Updated ' + (/^(Just|Yesterday)/.test(upd) ? upd.toLowerCase() : upd) : ''), metaShort: '· ' + cardsLine + ' · v' + d.version,

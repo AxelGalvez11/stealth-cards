@@ -6324,6 +6324,8 @@ const pdBtn = (inner, { onClick = '', href = '', inv = false, extra = '', attrs 
   const st = PD_BTN + (inv ? ' background: {{t.inv}}; color: {{t.invText}};' : ' background: {{t.surf}}; color: {{t.text}};') + extra;
   return href ? `<a href="${href}" class="sc-press"${attrs} style="${st}">${inner}</a>` : `<button type="button" onClick="${onClick}" class="sc-press"${attrs} style="${st}">${inner}</button>`;
 };
+// A verified teacher's answer once they've checked the deck: not a button (it stays until the deck changes again).
+const CHECKED_BY_YOU = phone => `<span role="status" style="height: ${phone ? 48 : 44}px; padding: 0 ${phone ? 20 : 20}px; display: inline-flex; align-items: center; justify-content: center; gap: 8px; border-radius: 999px; background: {{t.surf}}; color: {{t.text}}; font-size: ${phone ? 16 : 15}px; font-weight: 600; white-space: nowrap;"><span style="display: flex; color: #3E63DD;">${svg(I.shield, 16, 2)}</span><span>Checked by you</span></span>`;
 // iPhone: round buttons beside Study.
 const pdRound = (inner, label, { onClick = '', href = '', attrs = '' } = {}) => {
   const st = 'position: relative; width: 56px; height: 56px; flex-shrink: 0; border: 0; border-radius: 28px; background: {{t.surf}}; color: {{t.text}}; display: flex; align-items: center; justify-content: center; cursor: pointer;';
@@ -6516,12 +6518,19 @@ renderVals() {
     action: st.cpBusy ? 'Copying…' : 'Copy deck', off: String(cpName).trim() && !st.cpBusy ? 'false' : 'true', op: String(cpName).trim() ? '1' : '.4', hasError: !!st.cpErr, error: st.cpErr || ''
   };
   const busy = st.busy || '';
-  // Report this deck (anyone but its owner; signed out, sending it signs you in first).
+  // Report this deck (anyone but its owner; signed out, sending it signs you in first). Check this deck is for a verified
+  // teacher or school, on a deck whose check isn't current; it then says "Checked by you", until the deck changes again.
   const repDefault = p.report && ready ? { kind: 'deck', id: d.id, name: d.name } : null;
   ${REPORT_JS}
+  const you = !out && db.me ? db.me() : null, vs = (!out && db.net.verify && db.net.verify()) || {};
+  const checkedNow = d.checked && d.checked.current, checker = learner && !!vs.verified;
+  const mineChecked = learner && (st.checkedAt === d.version || (!!checkedNow && !!you && !!you.handle && d.checked.handle === you.handle));
+  const checkIt = async () => { if (this.state.busy || !checker) return; set({ busy: 'check', error: '' });
+    try { await db.act.checkDeck(d.id); this.setState({ busy: '', checkedAt: d.version }); } catch (e) { this.setState({ busy: '', error: fail(e) }); } };
   return {
     t, ...chrome, ${NET_VALS} ink: inkOf,
     canReport: ready && !owns, reportIt: () => openReport('deck', d.id, d.name), rep,
+    canCheck: checker && !checkedNow && !mineChecked, mineChecked, checkLabel: busy === 'check' ? 'Checking…' : 'Check this deck', checkIt,
     loading: loading && !p.missing, missing: bad, ready, notReady: !ready, missingTitle: 'This deck isn’t here', missingLine: 'It may be private now, or the link is wrong.', discoverHref: goTo('/discover', B + 'Discover'),
     deck: { name: d.name }, cv, owner, badges, hasBadge: badges.length > 0, badge: badges[0] || { label: '', shield: false, people: false },
     metaLine: '· ' + cardsLine + ' · Version ' + d.version + (upd ? ' · Updated ' + (/^(Just|Yesterday)/.test(upd) ? upd.toLowerCase() : upd) : ''), metaShort: '· ' + cardsLine + ' · v' + d.version,
@@ -6577,6 +6586,8 @@ const webPublicDeck = netRoot('Discover', `
         ${pdBtn(svg(I.message, 16, 2) + 'Suggest a change', { href: '{{signInHref}}' })}
       </sc-if>
       <div style="margin-left: auto; display: flex; align-items: center; gap: 10px;">
+        <sc-if value="{{canCheck}}" hint-placeholder-val="{{ false }}">${pdBtn(svg(I.shield, 16, 2) + '<span>{{checkLabel}}</span>', { onClick: '{{checkIt}}' })}</sc-if>
+        <sc-if value="{{mineChecked}}" hint-placeholder-val="{{ false }}">${CHECKED_BY_YOU(false)}</sc-if>
         <sc-if value="{{showWatch}}" hint-placeholder-val="{{ true }}">${pdBtn(svg(I.bell, 16, 2) + '<span>{{watchLabel}}</span>', { onClick: '{{toggleWatch}}', attrs: ' aria-pressed="{{watchPressed}}"' })}</sc-if>
         <sc-if value="{{asVisitor}}" hint-placeholder-val="{{ false }}">${pdBtn(svg(I.bell, 16, 2) + 'Get updates', { href: '{{signInHref}}' })}</sc-if>
         <sc-if value="{{asOwner}}" hint-placeholder-val="{{ false }}">${pdBtn(svg(I.link, 16, 2) + '<span>{{linkLabel}}</span>', { onClick: '{{copyLink}}' })}</sc-if>
@@ -6633,6 +6644,8 @@ const phonePublicDeck = phone(`<div style="padding: 0 0 120px; display: flex; fl
       ${pdRound(STAR_ICON(20), 'Save', { onClick: '{{toggleStar}}', attrs: ' aria-pressed="{{starPressed}}"' })}
       ${pdRound(svg(I.message, 20, 2), 'Suggest a change', { onClick: '{{openSuggestAny}}' })}
     </div></sc-if>
+    <sc-if value="{{canCheck}}" hint-placeholder-val="{{ false }}"><button type="button" onClick="{{checkIt}}" class="sc-press" style="height: 48px; border: 0; border-radius: 999px; background: {{t.surf}}; color: {{t.text}}; font: inherit; font-size: 16px; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer;">${svg(I.shield, 16, 2)}<span>{{checkLabel}}</span></button></sc-if>
+    <sc-if value="{{mineChecked}}" hint-placeholder-val="{{ false }}">${CHECKED_BY_YOU(true)}</sc-if>
     <sc-if value="{{asOwner}}" hint-placeholder-val="{{ false }}"><div style="display: flex; gap: 10px;">
       <a href="{{editHref}}" class="sc-press" style="flex-grow: 1; min-width: 0; height: 56px; border-radius: 999px; background: {{t.inv}}; color: {{t.invText}}; display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 17px; font-weight: 600;">${svg(I.pencil, 18, 2)}Edit</a>
       ${pdRound(svg(I.message, 20, 2) + `<sc-if value="{{hasOpen}}" hint-placeholder-val="{{ true }}"><span style="position: absolute; top: 4px; right: 2px; min-width: 18px; height: 18px; padding: 0 5px; box-sizing: border-box; border-radius: 9px; background: #E5484D; color: #FFFFFF; font-size: 11px; font-weight: 700; line-height: 18px; text-align: center;">{{openCount}}</span></sc-if>`, 'Suggestions', { href: '{{suggestionsHref}}' })}
@@ -6866,7 +6879,9 @@ const phoneHistory = phone(`<div style="padding: 64px 20px 120px; display: flex;
 
 // What the canvas's Tweaks can change on these boards (the app passes the rest: which deck, ?copy=1, ?suggest=…).
 const bool = (d = false) => ({ editor: 'boolean', default: d });
-const PD_PROPS = { ...DARK, grain: MESH('Iris').grain, loading: bool(), signedOut: bool(), owner: bool(), studying: bool(), copyOpen: bool(), missing: bool(), report: bool(), deckTab: { editor: 'enum', default: 'Cards', options: ['Cards', 'History', 'People'] } };
+// Your verification, for the boards that show it (a verified teacher sees Check this deck; Settings says Verified teacher).
+const VERIFIED_PROP = { editor: 'enum', default: '', options: ['', 'Waiting for review', 'Teacher', 'School'] };
+const PD_PROPS = { ...DARK, grain: MESH('Iris').grain, loading: bool(), signedOut: bool(), owner: bool(), studying: bool(), copyOpen: bool(), missing: bool(), report: bool(), verified: VERIFIED_PROP, deckTab: { editor: 'enum', default: 'Cards', options: ['Cards', 'History', 'People'] } };
 const SG_PROPS = { ...DARK, loading: bool(), aiWaiting: bool(true), noSuggestions: bool(), report: bool() };
 const HI_PROPS = { ...DARK, loading: bool(), missing: bool(), signedOut: bool(), someoneElse: bool() };
 // ---------- Classes ----------
@@ -7643,6 +7658,7 @@ const files = {
   'WebPublicDeckOwner': ['Web · Shared deck page · your own deck', attrOf('WebPublicDeck', W, H, 'owner="{{yes}}"'), { logic: darkLogic, w: W, h: H }],
   'WebPublicDeckCopy': ['Web · Shared deck page · Make a copy', attrOf('WebPublicDeck', W, H, 'copy-open="{{yes}}"'), { logic: darkLogic, w: W, h: H }],
   'WebPublicDeckReport': ['Web · Shared deck page · Report', attrOf('WebPublicDeck', W, H, 'report="{{yes}}"'), { logic: darkLogic, w: W, h: H }],
+  'WebPublicDeckCheck': ['Web · Shared deck page · a verified teacher’s view (Check this deck)', attrOf('WebPublicDeck', W, H, 'verified="Teacher"'), { logic: darkLogic, w: W, h: H }],
   'WebPublicDeckSuggest': ['Web · Shared deck page · Suggest a change, on a card', attrOf('WebPublicDeck', W, H, 'suggest="c2"'), { logic: darkLogic, w: W, h: H }],
   'WebPublicDeckSuggestNew': ['Web · Shared deck page · Suggest a change, a new card', attrOf('WebPublicDeck', W, H, 'suggest="new"'), { logic: darkLogic, w: W, h: H }],
   'WebPublicDeckHistory': ['Web · Shared deck page · History', attrOf('WebPublicDeck', W, H, 'deck-tab="History"'), { logic: darkLogic, w: W, h: H }],
@@ -7657,6 +7673,7 @@ const files = {
   'PhonePublicDeckOwner': ['iPhone · Shared deck page · your own deck', attrOf('PhonePublicDeck', PW, PH, 'owner="{{yes}}"'), { logic: darkLogic, w: PW, h: PH }],
   'PhonePublicDeckCopy': ['iPhone · Shared deck page · Make a copy', attrOf('PhonePublicDeck', PW, PH, 'copy-open="{{yes}}"'), { logic: darkLogic, w: PW, h: PH }],
   'PhonePublicDeckReport': ['iPhone · Shared deck page · Report', attrOf('PhonePublicDeck', PW, PH, 'report="{{yes}}"'), { logic: darkLogic, w: PW, h: PH }],
+  'PhonePublicDeckCheck': ['iPhone · Shared deck page · a verified teacher’s view (Check this deck)', attrOf('PhonePublicDeck', PW, PH, 'verified="Teacher"'), { logic: darkLogic, w: PW, h: PH }],
   'PhonePublicDeckSuggest': ['iPhone · Shared deck page · Suggest a change, on a card', attrOf('PhonePublicDeck', PW, PH, 'suggest="c2"'), { logic: darkLogic, w: PW, h: PH }],
   'PhonePublicDeckSuggestNew': ['iPhone · Shared deck page · Suggest a change, a new card', attrOf('PhonePublicDeck', PW, PH, 'suggest="new"'), { logic: darkLogic, w: PW, h: PH }],
   'PhonePublicDeckSignedOut': ['iPhone · Shared deck page · signed out', attrOf('PhonePublicDeck', PW, PH, 'signed-out="{{yes}}"'), { logic: darkLogic, w: PW, h: PH }],
