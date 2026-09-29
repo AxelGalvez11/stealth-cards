@@ -70,6 +70,8 @@ struct RootView: View {
         await store.load()
         Task { try? await Task.sleep(nanoseconds: 5_000_000_000); await store.retuneWhenDue() }
         #if DEBUG
+        // `-check pause|exam|grade|learn|tune|free`: an end-to-end check of the Pro tools against the server (DebugChecks.swift).
+        if let name = DebugChecks.requested { await DebugChecks.run(name, store) }
         // `-open review`, `-open deck`, `-open stats`, ...: go straight to a page (for checking screens with real data).
         let a = ProcessInfo.processInfo.arguments
         if let i = a.firstIndex(of: "-open"), i + 1 < a.count {
