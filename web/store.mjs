@@ -10,28 +10,33 @@ import { join } from 'node:path';
 import { cloud, library, files } from './supa.mjs';
 import { newLink } from './auth.mjs';
 import { FREE_MEDIA } from './plans.mjs';
-import { grade as fsrsGrade, newCard } from './fsrs.js';
+import { grade as fsrsGrade, newCard, cleanW } from './fsrs.js';
+import { GAPS, LEECH_AT, LEECH_TAG, leechAt, leechAct, scheduled } from './sched.js';
 import R from './rich.js';
 import { placeBefore, cardBefore, cardToDeck } from './order.js';
 
 export const DATA = process.env.STEALTH_DATA || fileURLToPath(new URL('../data/', import.meta.url));
 export const MEDIA = join(DATA, 'media');
 const FILE = join(DATA, 'stealth-cards.json');
-const GAPS = [30, 90, 180, 365, 730, 1825, 3650];
 
 const fresh = () => ({
   version: 1, rev: 1,
-  settings: { name: '', color: 0, look: 'system', darkMode: 'black', grads: 'mix', prog: 'bar', perDay: 20, goal: 90, grading: 'four', fsrs: true, reminder: '9:00 AM', photo: '', yourPhoto: null, welcomed: false },
+  settings: { name: '', color: 0, look: 'system', darkMode: 'black', grads: 'mix', prog: 'bar', perDay: 20, goal: 90, grading: 'four', fsrs: true, reminder: '9:00 AM', photo: '', yourPhoto: null, welcomed: false, tune: null },
   ai: { perms: { read: true, text: true, media: true, edit: true, check: false, del: false }, clients: {} },
   folders: [], decks: [], cards: [], logs: []
 });
 // Saved data from an older version gets any settings added since. The welcome after your first sign-in (`welcomed`)
 // counts as seen for anyone who already has decks or cards.
+// Decks get the settings added since too (no exam date, and the usual rule for cards you keep forgetting).
 const upgrade = d => { const f = fresh(), was = { welcomed: !!((d.decks || []).length || (d.cards || []).length) };
-  return { ...f, ...d, settings: { ...f.settings, ...was, ...d.settings }, ai: { ...f.ai, ...d.ai, perms: { ...f.ai.perms, ...(d.ai || {}).perms } } }; };
+  return { ...f, ...d, settings: { ...f.settings, ...was, ...d.settings }, ai: { ...f.ai, ...d.ai, perms: { ...f.ai.perms, ...(d.ai || {}).perms } },
+    decks: (d.decks || f.decks).map(x => ({ ...DECK_NEW, ...x })) }; };
+const DECK_NEW = { exam: null, leechAt: LEECH_AT, leechAct: 'tag' };
 // The library a request works on: this computer's one, or (online) a copy of the signed-in person's, one per request,
 // so two requests running at once never share a copy. `later` is work to finish before saving.
-const here = { uid: null, S: fresh(), base: null, dirty: false, later: [] };
+// LUCIDA_PLAN=free shows this computer's app as it is on Free (everything is Pro here otherwise), for checking the Free
+// screens; online, `pro` comes from the person's plan.
+const here = { uid: null, S: fresh(), base: null, dirty: false, later: [], pro: !cloud() && process.env.LUCIDA_PLAN === 'free' ? false : undefined };
 const current = new AsyncLocalStorage();
 const lib = () => current.getStore() || here;
 export function load() {
@@ -72,6 +77,11 @@ export const readMedia = name => (cloud() ? files.get(lib().uid, name) : readFil
 export const hasMedia = name => (cloud() ? files.has(lib().uid, name) : access(join(MEDIA, name)).then(() => true, () => false));
 export const mediaLink = (name, uid) => (cloud() ? files.link(uid, name) : Promise.resolve(null));
 export const state = () => lib().S;
+// Pro's scheduling tools (an exam date, tuning, the rule for cards you keep forgetting) and deep stats: on for Pro and on
+// this computer, off on Free.
+export const isPro = () => lib().pro !== false;
+const PRO_ONLY = ' part of Lucida Pro: lucida.cards/pricing';
+const needPro = what => { if (!isPro()) throw new Error(what + PRO_ONLY); };
 // On Free, up to FREE_MEDIA cards can have a picture or a sound (Pro has no limit, and neither does this computer).
 export const MEDIA_FULL = 'Free includes up to ' + FREE_MEDIA + ' pictures and sounds. Go Pro for as many as you like: lucida.cards/pricing';
 // A picture with hidden parts is one picture, however many boxes (cards) it has.
@@ -81,6 +91,8 @@ export const mediaLeft = () => {
   for (const c of state().cards) if (c.image || c.audio) seen.add(c.box != null && c.group ? c.group : c.id);
   return Math.max(0, FREE_MEDIA - seen.size);
 };
+// Your own FSRS parameters, when you've tuned them and they're on (Pro); otherwise the standard ones (undefined).
+export const tunedW = () => { const t = state().settings.tune; return t && t.on && t.w && isPro() ? t.w : undefined; };
 const id = p => p + Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
 const clean = (x, n = 5000) => String(x ?? '').slice(0, n);
 const cleanTags = t => (Array.isArray(t) ? [...new Set(t.map(x => clean(x, 40).trim()).filter(Boolean))].slice(0, 50) : []);
@@ -123,7 +135,7 @@ function makeDeck(o = {}) {
     grading: ['four', 'binary', 'piles'].includes(o.grading) ? o.grading : st.grading, fsrs: o.fsrs ?? st.fsrs,
     goal: Math.min(97, Math.max(70, +o.goal || st.goal)), gapIdx: 3, steps: ['1m', '10m'],
     perDay: Math.min(999, Math.max(0, Math.round(o.perDay ?? st.perDay) || 0)), piles: [{ name: 'Know it' }, { name: 'Almost' }, { name: 'No clue' }],
-    folder: folderOf(o.folder), bg: cleanBg(null, o.bg) };
+    folder: folderOf(o.folder), bg: cleanBg(null, o.bg), ...DECK_NEW };
   S.decks.push(d);
   return d;
 }
@@ -145,7 +157,18 @@ function makeCards(deck, o, source = 'you') {
   S.cards.push(...cards);
   return cards;
 }
-const DECK_KEYS = ['name', 'tags', 'cover', 'paused', 'grading', 'fsrs', 'goal', 'gapIdx', 'steps', 'perDay', 'piles', 'folder', 'bg'];
+const DECK_KEYS = ['name', 'tags', 'cover', 'paused', 'grading', 'fsrs', 'goal', 'gapIdx', 'steps', 'perDay', 'piles', 'folder', 'bg', 'exam', 'leechAt', 'leechAct'];
+// An exam day is a real calendar day, written 2026-10-12.
+const cleanDay = x => { const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(x || '')); if (!m) return null; const t = new Date(+m[1], +m[2] - 1, +m[3]); return t.getMonth() === +m[2] - 1 && t.getDate() === +m[3] ? m[0] : null; };
+// Tuned parameters as they're saved (tune.js made them): { on, w, n (reviews they came from), at, loss, base }.
+const cleanTune = (was, t) => {
+  if (t == null) return null;
+  const x = { ...(was || {}), ...pick(t, ['on', 'w', 'n', 'reviews', 'at', 'loss', 'base', 'gain']) };
+  const w = x.w == null ? null : cleanW(x.w);
+  if (x.w != null && !w) throw new Error('Those tuned settings don’t look right.');
+  const num = v => (Number.isFinite(+v) ? +v : null);
+  return { on: !!x.on && !!w, w, n: Math.max(0, Math.round(+x.n) || 0), reviews: Math.max(0, Math.round(+x.reviews) || 0), at: num(x.at) || Date.now(), loss: num(x.loss), base: num(x.base), gain: num(x.gain) };
+};
 const CARD_KEYS = ['kind', 'front', 'back', 'note', 'text', 'tags', 'image', 'audio', 'wave', 'speak', 'lang', 'auto', 'pending', 'cloze', 'boxes', 'occ'];
 // What every card of one picture with boxes shares (everything but which box it asks, and its reviews).
 const SHARED_KEYS = ['kind', 'front', 'back', 'note', 'tags', 'image', 'lang', 'pending', 'boxes', 'occ'];
@@ -220,6 +243,10 @@ function run(a, who) {
       if ('cover' in p) p.cover = { ...d.cover, ...pick(p.cover, ['style', 'round', 'image']) };
       if ('folder' in p) { const f = p.folder ? folderOf(p.folder) : null; if (p.folder && !f) throw new Error('No such folder'); p.folder = f; }
       if ('bg' in p) p.bg = cleanBg(d.bg, p.bg);
+      // Pro: an exam date, and what happens to cards you keep forgetting. Taking an exam date off works on any plan.
+      if ('exam' in p) { if (p.exam) needPro('Exam dates are'); p.exam = p.exam ? cleanDay(p.exam) : null; if (a.patch.exam && !p.exam) throw new Error('That isn’t a date.'); }
+      if ('leechAt' in p) { needPro('Changing when a card counts as forgotten too often is'); p.leechAt = Math.min(30, Math.max(3, Math.round(+p.leechAt) || LEECH_AT)); }
+      if ('leechAct' in p) { needPro('Changing what happens to cards you keep forgetting is'); p.leechAct = p.leechAct === 'pause' ? 'pause' : 'tag'; }
       Object.assign(d, p);
       return { id: d.id };
     }
@@ -328,6 +355,15 @@ function run(a, who) {
       S.cards = S.cards.filter(c => !ids.has(c.id)); S.logs = S.logs.filter(l => !ids.has(l.cardId));
       return { ids: [...ids] };
     }
+    // Pausing cards: they never come up (flashcards, Learn mode, AI apps' due cards) until they're unpaused. Their
+    // memory stays as it was.
+    case 'card.pause': {
+      const ids = new Set(Array.isArray(a.ids) ? a.ids : [a.id]);
+      let n = 0;
+      for (const c of S.cards) if (ids.has(c.id)) { c.paused = !!a.on; n++; }
+      if (!n) throw new Error('No such card');
+      return { n };
+    }
     // Dragging a card on its deck's page (just before the card `before`, or last when it's null), or onto another deck
     // (`deckId`).
     case 'card.move': {
@@ -339,25 +375,47 @@ function run(a, who) {
       }
       return { id: c.id, deckId: c.deckId };
     }
+    // A grade: the card's next review (FSRS, with your own tuned parameters on Pro), and a log of it, with how long the
+    // card was on screen (`ms`, up to 3 minutes, for the time stats). A card forgotten once too often gets the Leech tag,
+    // or is paused, as its deck says (`leech` on the log, so Undo puts it back).
     case 'review.grade': {
       const c = S.cards.find(x => x.id === a.cardId); if (!c) throw new Error('No such card');
       const d = deckOf(c), now = Date.now(), log = { id: id('l'), cardId: c.id, deckId: c.deckId, at: now, prev: c.srs, prevPile: c.pile, was: c.srs.state };
+      if (Number.isFinite(+a.ms) && +a.ms > 0) log.ms = Math.min(180000, Math.round(+a.ms));
       if (a.pile != null) { c.pile = clean(a.pile, 60); log.pile = c.pile; }
       else {
         const g = Math.min(4, Math.max(1, Math.round(+a.rating || 3)));
         log.rating = g;
-        if (d.fsrs !== false && d.grading !== 'piles') c.srs = fsrsGrade(c.srs, g, now, { goal: d.goal / 100, maxDays: GAPS[d.gapIdx ?? 3], steps: d.steps });
+        if (scheduled(d)) c.srs = fsrsGrade(c.srs, g, now, { goal: d.goal / 100, maxDays: GAPS[d.gapIdx ?? 3], steps: d.steps, w: tunedW() });
         else c.srs = { ...c.srs, reps: (c.srs.reps || 0) + 1, last: now };
+        const at = leechAt(d);
+        if (scheduled(d) && (log.prev.lapses || 0) < at && (c.srs.lapses || 0) >= at) {
+          if (leechAct(d) === 'pause') { if (!c.paused) { c.paused = true; log.leech = 'pause'; } }
+          else if (!c.tags.includes(LEECH_TAG)) { c.tags = cleanTags([...c.tags, LEECH_TAG]); log.leech = 'tag'; }
+        }
       }
       S.logs.push(log);
       return { logId: log.id };
     }
     case 'review.undo': {
-      const log = a.logId ? S.logs.find(l => l.id === a.logId) : S.logs[S.logs.length - 1]; if (!log) throw new Error('Nothing to undo');
+      const log = a.logId ? S.logs.find(l => l.id === a.logId) : S.logs.filter(l => !l.kind).pop(); if (!log) throw new Error('Nothing to undo');
       const c = S.cards.find(x => x.id === log.cardId);
-      if (c) { c.srs = log.prev; c.pile = log.prevPile ?? null; }
+      if (c) {
+        c.srs = log.prev; c.pile = log.prevPile ?? null;
+        if (log.leech === 'pause') c.paused = false;
+        if (log.leech === 'tag') c.tags = c.tags.filter(g => g !== LEECH_TAG);
+      }
       S.logs = S.logs.filter(l => l !== log);
       return { cardId: log.cardId };
+    }
+    // A Learn mode answer, for the stats (right or wrong, which kind of question, how long it took). It doesn't change
+    // when the card comes back; learning a new card does, once the session is done.
+    case 'learn.log': {
+      const c = S.cards.find(x => x.id === a.cardId); if (!c) throw new Error('No such card');
+      const log = { id: id('l'), cardId: c.id, deckId: c.deckId, at: Date.now(), kind: 'learn', q: ['mc', 'tf', 'blank', 'match', 'type'].includes(a.q) ? a.q : 'mc', ok: !!a.ok };
+      if (Number.isFinite(+a.ms) && +a.ms > 0) log.ms = Math.min(180000, Math.round(+a.ms));
+      S.logs.push(log);
+      return { logId: log.id };
     }
     case 'settings.update': {
       const p = pick(a.patch, Object.keys(fresh().settings));
@@ -367,6 +425,9 @@ function run(a, who) {
       // Google photo if there is one). Your own is a picture you uploaded to Lucida, so it's always a /media/… path.
       if ('photo' in p && !['', 'google', 'yours', 'color'].includes(p.photo)) throw new Error('No such profile picture');
       if ('welcomed' in p) p.welcomed = !!p.welcomed;
+      // Tune to you (Pro): the parameters fitted to your reviews, and whether they're in use. Going back to the standard
+      // parameters works on any plan.
+      if ('tune' in p) { if (p.tune && (p.tune.on || p.tune.w)) needPro('Tuning to your reviews is'); p.tune = cleanTune(S.settings.tune, p.tune); }
       if ('yourPhoto' in p && p.yourPhoto !== null && !/^\/media\/[\w-]+\.(png|jpg|gif|webp)$/.test(String(p.yourPhoto))) throw new Error('Your photo has to be a picture you uploaded.');
       Object.assign(S.settings, p); return {};
     }

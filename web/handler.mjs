@@ -5,7 +5,7 @@
 import { readFile, stat } from 'node:fs/promises';
 import { extname, join, normalize, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { state, apply, withLibrary, revOf, putMedia, mediaLink, MEDIA, aiLeft, useAi, refundAi, saveExplain } from './store.mjs';
+import { state, apply, withLibrary, revOf, putMedia, mediaLink, MEDIA, aiLeft, useAi, refundAi, saveExplain, isPro } from './store.mjs';
 import { aiReady, explain } from './ai.mjs';
 import { FREE_EXPLAINS, PRO_EXPLAINS } from './plans.mjs';
 import { mcp } from './mcp.mjs';
@@ -40,8 +40,9 @@ const held = () => {
   let head = [200, {}], body = '';
   return { writeHead(code, h) { head = [code, h || {}]; return this; }, end(b) { body = b ?? ''; return this; }, sendTo(res) { res.writeHead(head[0], head[1]); res.end(body); } };
 };
-// What the app gets: the library, plus who is signed in (online).
-const view = me => ({ ...state(), me, aiOn: aiReady() });
+// What the app gets: the library, plus who is signed in (online), and whether Pro is on (so this computer can show the
+// Free app too, with LUCIDA_PLAN=free; see store.mjs).
+const view = me => ({ ...state(), me, aiOn: aiReady(), pro: isPro() });
 
 async function api(req, res, path, body, me) {
   if (path === '/api/state' && req.method === 'GET') return send(res, 200, view(me));
