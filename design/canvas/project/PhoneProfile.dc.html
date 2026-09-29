@@ -388,19 +388,22 @@ renderVals() {
   const data = h ? db.net.profile(h) : undefined;
   const missing = !!(data && data.missing), offline = !!(data && data.offline), ok = !!data && !missing && !offline;
   const self = !out && (ok && data.me ? !!data.me.self : making || (!!h && h === you.handle));
-  // What you just changed (a follow, a pin, your bio) shows at once and stays until the fresh answer arrives: the
-  // answer from before the change is the same object until then (web/net.js).
-  const over = this.over && this.over.data === data ? this.over.patch : {};
-  const keep = patch => { this.over = { data, patch: { ...over, ...patch } }; };
+  // What you change (a follow, a pin, your bio) shows at once, and stays while it's saving and until the answer from
+  // after the last save arrives (until then the page has the answer from before, the same object: web/net.js).
+  const over = this.over && (this.busy > 0 || this.over.data === data) ? this.over.patch : {};
+  const change = (patch, save) => {
+    this.over = { patch: { ...over, ...patch }, data: null }; this.busy = (this.busy || 0) + 1; this.setState({ err: '', menu: null });
+    Promise.resolve(save()).then(() => { if (!--this.busy && this.over) this.over.data = db.net.profile(h); this.forceUpdate(); },
+      e => { this.busy--; this.over = null; this.setState({ err: oops(e) }); });
+  };
   const pr = ok ? { ...data, ...over } : {};
   // Your own picture and name are the ones in Settings, so they show here as soon as you change them.
   const st = (db.settings && db.settings()) || {}, who = person(pr), name = (self && st.name) || pr.name || '';
-  const fol = !!(pr.me && pr.me.following), fo = this.fo && this.fo.data === data ? this.fo.on : null, following = fo == null ? fol : fo;
-  const followers = (+pr.followers || 0) + (fo == null || fo === fol ? 0 : fo ? 1 : -1);
-  const toggleFollow = () => { const on = !following; this.fo = { data, on }; this.setState({ err: '' }); Promise.resolve(db.act.follow(pr.handle, on)).catch(e => { this.fo = null; this.setState({ err: oops(e) }); }); };
+  const following = !!(pr.me && pr.me.following), followers = +pr.followers || 0;
+  const toggleFollow = () => { const on = !following; change({ me: { ...(pr.me || {}), following: on }, followers: Math.max(0, followers + (on ? 1 : -1)) }, () => db.act.follow(pr.handle, on)); };
   // Pinned decks come first, in the order you pinned them (up to 3).
   const feat = Array.isArray(pr.featured) ? pr.featured : [];
-  const setPins = next => { keep({ featured: next }); this.setState({ menu: null, err: '' }); Promise.resolve(db.act.updateProfile({ featured: next })).catch(e => { this.over = null; this.setState({ err: oops(e) }); }); };
+  const setPins = next => change({ featured: next }, () => db.act.updateProfile({ featured: next }));
   const rank = d => { const i = feat.indexOf(d.id); return i < 0 ? 99 : i; };
   const list = (pr.decks || []).map((d, i) => ({ d, i })).sort((a, b) => rank(a.d) - rank(b.d) || a.i - b.i).map(x => x.d);
   const menu = s.menu !== undefined ? s.menu : p.pinOpen && self && list[0] ? list[0].id : null;
@@ -457,7 +460,7 @@ renderVals() {
     if (hv !== was.handle) patch.handle = hv;
     this.setState({ saving: true, saveErr: '', handleErr: null });
     Promise.resolve(nm && nm !== was.name ? db.act.setSettings({ name: nm }) : null).then(() => db.act.updateProfile(patch)).then(r => {
-      keep({ ...patch, name: nm || was.name });
+      this.over = { patch: { ...over, ...patch, name: nm || was.name }, data: db.net.profile(h) };
       this.setState({ saving: false, editing: false, draft: null }); cleanUrl();
       if (r && r.handle && r.handle !== h && !db.mock) db.act.go('/@' + r.handle, true);
     }).catch(e => { const m = oops(e); this.setState(/taken|letters, numbers/i.test(m) ? { saving: false, handleErr: m } : { saving: false, saveErr: m }); });
