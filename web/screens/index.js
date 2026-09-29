@@ -589,6 +589,12 @@ export default [
   "h": 844
  },
  {
+  "name": "PhoneProfileReport",
+  "title": "iPhone · Profile · someone else’s · Report",
+  "w": 390,
+  "h": 844
+ },
+ {
   "name": "PhoneProfileSaved",
   "title": "iPhone · Profile · Saved",
   "w": 390,
@@ -613,6 +619,12 @@ export default [
   "h": 844
  },
  {
+  "name": "PhonePublicDeckCheck",
+  "title": "iPhone · Shared deck page · a verified teacher’s view (Check this deck)",
+  "w": 390,
+  "h": 844
+ },
+ {
   "name": "PhonePublicDeckCopy",
   "title": "iPhone · Shared deck page · Make a copy",
   "w": 390,
@@ -633,6 +645,12 @@ export default [
  {
   "name": "PhonePublicDeckOwner",
   "title": "iPhone · Shared deck page · your own deck",
+  "w": 390,
+  "h": 844
+ },
+ {
+  "name": "PhonePublicDeckReport",
+  "title": "iPhone · Shared deck page · Report",
   "w": 390,
   "h": 844
  },
@@ -705,12 +723,6 @@ export default [
  {
   "name": "PhoneQuizType",
   "title": "iPhone · Learn mode · type the answer",
-  "w": 390,
-  "h": 844
- },
- {
-  "name": "PhoneQuizUpgrade",
-  "title": "iPhone · Learn mode · on Free: go Pro",
   "w": 390,
   "h": 844
  },
@@ -790,19 +802,25 @@ export default [
   "name": "PhoneSettings",
   "title": "iPhone · Settings",
   "w": 390,
-  "h": 1470
+  "h": 1562
  },
  {
   "name": "PhoneSettingsFree",
   "title": "iPhone · Settings · on Free (Tune to you is Pro)",
   "w": 390,
-  "h": 1470
+  "h": 1562
  },
  {
   "name": "PhoneSettingsGray",
   "title": "iPhone · Settings (dark, gray)",
   "w": 390,
-  "h": 1470
+  "h": 1562
+ },
+ {
+  "name": "PhoneSettingsVerified",
+  "title": "iPhone · Settings · a verified teacher (Get verified says Verified teacher)",
+  "w": 390,
+  "h": 1562
  },
  {
   "name": "PhoneSignIn",
@@ -897,6 +915,12 @@ export default [
  {
   "name": "PhoneSuggestionsOpen",
   "title": "iPhone · Suggestions · one opened",
+  "w": 390,
+  "h": 844
+ },
+ {
+  "name": "PhoneSuggestionsReport",
+  "title": "iPhone · Suggestions · Report",
   "w": 390,
   "h": 844
  },
@@ -2341,6 +2365,12 @@ export default [
   "h": 900
  },
  {
+  "name": "WebProfileReport",
+  "title": "Web · Profile · someone else’s · Report",
+  "w": 1440,
+  "h": 900
+ },
+ {
   "name": "WebProfileSaved",
   "title": "Web · Profile · Saved",
   "w": 1440,
@@ -2361,6 +2391,12 @@ export default [
  {
   "name": "WebPublicDeck",
   "title": "Web · Shared deck page",
+  "w": 1440,
+  "h": 900
+ },
+ {
+  "name": "WebPublicDeckCheck",
+  "title": "Web · Shared deck page · a verified teacher’s view (Check this deck)",
   "w": 1440,
   "h": 900
  },
@@ -2409,6 +2445,12 @@ export default [
  {
   "name": "WebPublicDeckPeople",
   "title": "Web · Shared deck page · People",
+  "w": 1440,
+  "h": 900
+ },
+ {
+  "name": "WebPublicDeckReport",
+  "title": "Web · Shared deck page · Report",
   "w": 1440,
   "h": 900
  },
@@ -2481,12 +2523,6 @@ export default [
  {
   "name": "WebQuizType",
   "title": "Web · Learn mode · type the answer",
-  "w": 1440,
-  "h": 900
- },
- {
-  "name": "WebQuizUpgrade",
-  "title": "Web · Learn mode · on Free: go Pro",
   "w": 1440,
   "h": 900
  },
@@ -2577,6 +2613,12 @@ export default [
  {
   "name": "WebSettingsGray",
   "title": "Web · Settings (dark, gray)",
+  "w": 1440,
+  "h": 900
+ },
+ {
+  "name": "WebSettingsVerified",
+  "title": "Web · Settings · a verified teacher (Get verified says Verified teacher)",
   "w": 1440,
   "h": 900
  },
@@ -2685,6 +2727,12 @@ export default [
  {
   "name": "WebSuggestionsGray",
   "title": "Web · Suggestions · gray",
+  "w": 1440,
+  "h": 900
+ },
+ {
+  "name": "WebSuggestionsReport",
+  "title": "Web · Suggestions · Report",
   "w": 1440,
   "h": 900
  },

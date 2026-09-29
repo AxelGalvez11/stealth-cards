@@ -98,7 +98,9 @@ const NEWS = [
   { id: 2, kind: 'follow', actor_name: 'Jordan Lee', person: P.jordan, deck: null, data: { handle: 'jordanlee' }, read: false, created_at: '2026-09-28T06:00:00Z' },
   { id: 3, kind: 'update', actor_name: 'Maria Santos', person: P.maria, deck: { id: 's1', name: 'MCAT Biochemistry', url: '/@mariasantos/mcat-biochemistry' }, data: { summary: '3 new cards, 2 answers fixed', n: 5 }, read: true, created_at: '2026-09-26T10:00:00Z' },
   { id: 4, kind: 'decided', actor_name: 'Sam Rivera', person: P.sam, deck: { id: 's4', name: 'Pharmacology', url: '/@samr/pharmacology' }, data: { took: 2, skipped: 1 }, read: true, created_at: '2026-09-24T10:00:00Z' },
-  { id: 5, kind: 'checked', actor_name: 'Dr. Okafor', person: P.okafor, deck: { id: 's12', name: 'Organic Chemistry', url: '/@alexkim/organic-chemistry' }, data: {}, read: true, created_at: '2026-09-21T10:00:00Z' }
+  { id: 6, kind: 'hidden', actor_name: 'Lucida', person: null, deck: { id: 's13', name: 'US History', url: '/@alexkim/us-history' }, data: { name: 'US History' }, read: true, created_at: '2026-09-23T10:00:00Z' },
+  { id: 5, kind: 'checked', actor_name: 'Dr. Okafor', person: P.okafor, deck: { id: 's12', name: 'Organic Chemistry', url: '/@alexkim/organic-chemistry' }, data: {}, read: true, created_at: '2026-09-21T10:00:00Z' },
+  { id: 7, kind: 'verified', actor_name: 'Lucida', person: null, deck: null, data: { role: 'teacher' }, read: true, created_at: '2026-09-19T10:00:00Z' }
 ];
 // Classes (web/classes.mjs). BIO 201 is yours (you made it; Dev helps); Organic Chemistry is Dr. Okafor's, and you're in
 // it; the pre-med study group is Maria's, an invite you haven't taken. On the canvas, today is Monday, September 28.

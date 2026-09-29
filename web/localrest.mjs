@@ -68,6 +68,12 @@ function test(row, col, expr) {
     case 'in': { if (!/^\(.*\)$/.test(raw)) throw fail(400, 'in needs (…)'); const list = splitTop(raw.slice(1, -1)).map(unquote); ok = v != null && list.includes(String(v)); break; }
     // Array columns: contains every one of these ({a,b}), or has any of them (ov).
     case 'cs': case 'ov': {
+      // A jsonb column of objects (a deck's helpers): cs.[{"id":"x"}] holds when the column has an object with all of those fields.
+      if (op === 'cs' && raw.startsWith('[')) {
+        let want; try { want = JSON.parse(raw); } catch { throw fail(400, 'cs needs JSON'); }
+        const holds = (a, b) => (b && typeof b === 'object' ? (Array.isArray(b) ? Array.isArray(a) && b.every(y => a.some(x => holds(x, y))) : !!a && typeof a === 'object' && !Array.isArray(a) && Object.keys(b).every(k => k in a && holds(a[k], b[k]))) : a === b);
+        ok = holds(v, want); break;
+      }
       if (!/^\{.*\}$/.test(raw)) throw fail(400, op + ' needs {…}');
       const list = splitTop(raw.slice(1, -1)).map(unquote), have = Array.isArray(v) ? v.map(String) : [];
       ok = op === 'cs' ? list.every(x => have.includes(x)) : list.some(x => have.includes(x)); break;

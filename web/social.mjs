@@ -589,7 +589,11 @@ export async function suggestionsFor(uid, { sharedId = '', mine = false, all = f
     if (sh.owner !== sid && !helper) throw err('Only the deck’s owner sees its suggestions.', 403);
     return withSenders(await rest('/suggestions?shared_id=eq.' + val(sharedId) + (all ? '' : '&status=eq.open') + '&select=*&order=created_at.desc&limit=100'));
   }
-  return withSenders(await rest('/suggestions?owner=eq.' + val(sid) + (all ? '' : '&status=eq.open') + '&select=*&order=created_at.desc&limit=100'));
+  // Every deck's: the ones on your decks, and on community decks where you're a helper (their owners let helpers take or
+  // skip suggestions, see decide()).
+  const helped = (await rest('/shared_decks?maintained=eq.community&helpers=cs.' + encodeURIComponent(JSON.stringify([{ id: sid }])) + '&select=id&limit=200')).map(x => x.id);
+  const whose = helped.length ? 'or=' + encodeURIComponent('(owner.eq.' + qvalRaw(sid) + ',shared_id.in.(' + helped.map(qvalRaw).join(',') + '))') : 'owner=eq.' + val(sid);
+  return withSenders(await rest('/suggestions?' + whose + (all ? '' : '&status=eq.open') + '&select=*&order=created_at.desc&limit=100'));
 }
 // Who sent each suggestion (their picture, and their name linking to their profile) and which deck it's for, without
 // anyone's account id.
@@ -682,7 +686,9 @@ export async function follow(uid, me, handle, on) {
   if (them.id === p.id) throw err('That’s you.');
   if (on) {
     await rest('/follows', { method: 'POST', prefer: 'resolution=ignore-duplicates', body: { follower: p.id, followee: them.id } });
-    await notify([{ user_id: them.id, kind: 'follow', actor: p.id, actor_name: p.name, data: { handle: p.handle } }]);
+    // Unfollowing and following again stays quiet: they hear about the same person once a week at most.
+    const lately = await rest('/notifications?user_id=eq.' + val(them.id) + '&kind=eq.follow&actor=eq.' + val(p.id) + '&created_at=gt.' + val(new Date(Date.now() - 7 * DAY).toISOString()) + '&select=id&limit=1');
+    if (!lately.length) await notify([{ user_id: them.id, kind: 'follow', actor: p.id, actor_name: p.name, data: { handle: p.handle } }]);
   } else await rest('/follows?follower=eq.' + val(p.id) + '&followee=eq.' + val(them.id), { method: 'DELETE' });
   await recountPeople(p.id);
   return recountPeople(them.id);
