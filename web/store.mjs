@@ -388,8 +388,10 @@ function run(a, who) {
         log.rating = g;
         if (scheduled(d)) c.srs = fsrsGrade(c.srs, g, now, { goal: d.goal / 100, maxDays: GAPS[d.gapIdx ?? 3], steps: d.steps, w: tunedW() });
         else c.srs = { ...c.srs, reps: (c.srs.reps || 0) + 1, last: now };
-        const at = leechAt(d);
-        if (scheduled(d) && (log.prev.lapses || 0) < at && (c.srs.lapses || 0) >= at) {
+        // Like Anki: at the rule's count, and again every half of it after (so a card unpaused, or one already past a
+        // lowered count, is caught at its next few forgets).
+        const at = leechAt(d), n = c.srs.lapses || 0;
+        if (scheduled(d) && n > (log.prev.lapses || 0) && n >= at && (n - at) % Math.ceil(at / 2) === 0) {
           if (leechAct(d) === 'pause') { if (!c.paused) { c.paused = true; log.leech = 'pause'; } }
           else if (!c.tags.includes(LEECH_TAG)) { c.tags = cleanTags([...c.tags, LEECH_TAG]); log.leech = 'tag'; }
         }

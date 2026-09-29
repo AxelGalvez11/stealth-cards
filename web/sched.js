@@ -11,15 +11,15 @@ export const scheduled = d => !!d && d.fsrs !== false && d.grading !== 'piles';
 
 // ---------- cards you keep forgetting ----------
 // After this many forgets a card is marked (Anki calls them leeches), and gets the Leech tag or is paused, as its deck
-// says. Only forgetting a card you'd learned counts (not a slip while it's still being learned).
+// says (store.mjs), then again every half that many forgets. Only forgetting a card you'd learned counts (not a slip
+// while it's still being learned).
 export const LEECH_AT = 8, LEECH_TAG = 'Leech';
 export const leechAt = d => Math.round((d && +d.leechAt) || LEECH_AT);
 export const leechAct = d => (d && d.leechAct === 'pause' ? 'pause' : 'tag');
 export const isLeech = (c, d) => scheduled(d) && (c.srs.lapses || 0) >= leechAt(d);
 
 // ---------- memory ----------
-// How likely you are to remember a card at time `t`: 1 for a card you haven't forgotten yet today, null before its
-// first review.
+// How likely you are to remember a card at time `t` (1 right after a review), or null before its first review.
 export const recallAt = (c, t) => (c.srs.state === 'new' || !(c.srs.s > 0) ? null : recall(Math.max(0, (t - (c.srs.last || t)) / DAY), c.srs.s));
 
 // ---------- exam date ----------
@@ -86,7 +86,7 @@ export function examStatus(cards, d, now) {
 // comes back about once per gap (the gap at which your memory of it falls to the goal, up to the deck's longest gap),
 // a forgotten one about once more, and the deck's new cards a day start on top. It's the steady rate, cheap enough to
 // work out again at every step of the goal.
-export function workload(cards, d, goal, now) {
+export function workload(cards, d, goal) {
   const maxDays = GAPS[d.gapIdx ?? 3];
   let rate = 0, left = 0;
   for (const c of cards) {
@@ -97,5 +97,3 @@ export function workload(cards, d, goal, now) {
   }
   return rate * (2 - goal) + Math.min(d.perDay || 0, left);
 }
-// Three goals to compare, each with its reviews a day.
-export const PRESETS = [['relaxed', 'Relaxed', 85], ['balanced', 'Balanced', 90], ['intense', 'Intense', 95]];

@@ -3,7 +3,7 @@
 // canvas's sample data answers (design/mock.mjs), so the same screens run on both: sample data on the canvas,
 // your data here.
 import { preview, waitLabel, dayAt, W } from './fsrs.js';
-import { scheduled, isDue, dueDay, examIn, examStatus, workload, PRESETS, isLeech, leechAt, leechAct, recallAt } from './sched.js';
+import { scheduled, isDue, dueDay, examStatus, workload, isLeech, leechAt, leechAct, recallAt } from './sched.js';
 import { insights, isGrade } from './insights.js';
 import { histories, TUNE_MIN, TUNE_ITEMS } from './tune.js';
 import R from './rich.js';
@@ -795,7 +795,7 @@ export async function createDb({ onChange, go }) {
     },
     hasReviews: () => S.logs.length > 0,
     // About how many reviews a day a memory goal (a percent) means for a deck (sched.js).
-    workload: (id, goal) => { const d = deckById(id), k = 'wl' + id + ':' + goal; return !d ? 0 : memo[k] ?? (memo[k] = workload(cardsOf(id), d, goal / 100, now())); },
+    workload: (id, goal) => { const d = deckById(id), k = 'wl' + id + ':' + goal; return !d ? 0 : memo[k] ?? (memo[k] = workload(cardsOf(id), d, goal / 100)); },
     // Tune to you: whether there are enough reviews, whether it's on, and how it's going.
     tuneInfo: () => {
       const t = S.settings.tune, h = memo.hist || (memo.hist = histories(S));
