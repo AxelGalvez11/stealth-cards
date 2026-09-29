@@ -253,7 +253,10 @@ function createHost({ onChange, go }) {
     if (!stay) go('/deck/' + was.deckId);
     else changed();
   }
-  if (G) attach();
+  // The room's code stays good for a few more hours: renewed when a game starts, on Play again, and on a reload (which
+  // also brings it back if this computer's server restarted meanwhile).
+  const keep = () => { if (G) api('POST', '/api/live', { deck: G.deck.name, code: G.code }).catch(() => {}); };
+  if (G) { attach(); keep(); }
 
   return {
     // The big screen's view (null when there's no game here).
@@ -284,7 +287,7 @@ function createHost({ onChange, go }) {
       G = { v: 1, code: r.code, rt: r.rt || null, deckId, deck, set, count, time, game: rid('g'), qs, phase: 'lobby', qi: -1, start: 0, deadline: 0, players: [], answers: {}, counts: null, prev: null };
       save(); attach(); changed(); go('/live/' + G.code);
     },
-    start() { if (G && G.phase === 'lobby' && G.players.length) ask(0); },
+    start() { if (G && G.phase === 'lobby' && G.players.length) { keep(); ask(0); } },
     // On from the answer to the leaderboard (or the podium after the last question), and on to the next question.
     next() {
       if (!G) return;
@@ -297,9 +300,7 @@ function createHost({ onChange, go }) {
       if (!G || !qs.length) return;
       Object.assign(G, { qs, game: rid('g'), phase: 'lobby', qi: -1, answers: {}, counts: null, prev: null });
       for (const p of G.players) Object.assign(p, { score: 0, streak: 0, right: 0, gained: 0, pick: -1, since: 0 });
-      save(); tell(); changed();
-      // The room's code stays good for a few more hours.
-      api('POST', '/api/live', { deck: G.deck.name, code: G.code }).catch(() => {});
+      save(); tell(); changed(); keep();
     },
     // Done: the room closes (phones still on the final leaderboard keep it) and it's back to the deck.
     close: () => close(false)

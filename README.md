@@ -28,6 +28,12 @@ Supabase settings sign-in needs (Supabase dashboard → Authentication), all set
 - URL Configuration: Site URL `https://app.lucida.cards`, and Redirect URLs `https://app.lucida.cards/**`, `https://lucida-eight.vercel.app/**`, `http://localhost:3000/**`.
 - Sign In / Providers: turn on Google and Apple with their own client ids (Google Cloud and Apple Developer). Until then, those buttons say they aren't set up yet.
 
+## Live (play with friends)
+
+- From a deck on a computer, **Play live** opens a room (`/live/<code>`): the big screen shows a 6-digit code and a QR code, friends join on their phones at lucida.cards/join (or `/join/<code>` from the QR code) with a name and no account, and everyone answers the same questions, made from the deck's cards the way Learn mode makes them (or the questions the person's AI wrote). Points for right and fast answers, a leaderboard between questions, a podium, and the final leaderboard on each phone.
+- The host's page runs the game (`web/live.js`): the questions, the time, and the points. It's kept in that tab, so a reload picks up where it was. Phones only send what was tapped; a phone that reloads, or the same name on another phone, gets its points back.
+- Online, the messages go straight between the browsers over Supabase Realtime (public broadcast channels, with the project's public key), and each room's code is a row in the `live_rooms` table (`supabase/live_rooms.sql`) while it can be joined. On your computer the rooms stay in memory and the local server passes the messages along (`web/rooms.mjs`). `LUCIDA_LIVE_REALTIME=<Supabase project URL>` tries Realtime from your computer instead.
+
 ## Your data and AI apps
 
 - Decks, cards, and reviews are saved in `data/` on this computer (not in git). Settings → Your data exports or deletes them.

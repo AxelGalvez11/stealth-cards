@@ -438,7 +438,9 @@ export async function createDb({ onChange, go }) {
   // ---------- Live ----------
   // A card plays live when it can make a fair question: it has an answer, and there are wrong answers to go with it
   // (other cards' answers, or ones the learner's AI wrote). Sound cards don't play (a room can't all hear one phone).
-  const liveable = c => learnable(c) && (aiQuiz(c, 'choice').length > 0 || aiQuiz(c, 'true_false').length > 0 || distractors(c, 1).length > 0);
+  // The deck's different answers are counted once, since setting up asks about every card.
+  const answersIn = id => memo['a' + id] || (memo['a' + id] = new Set(cardsOf(id).filter(learnable).map(c => answerOf(c).toLowerCase())));
+  const liveable = c => learnable(c) && (aiQuiz(c, 'choice').length > 0 || aiQuiz(c, 'true_false').length > 0 || answersIn(c.deckId).size > 1);
   // One question per card: most of the time the AI's own question when the card has one, else the card's words with up
   // to three other answers from the deck. A picture shows on the big screen, with its box.
   function liveQuestion(c) {
