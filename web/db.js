@@ -51,7 +51,7 @@ function signedOut(go, onChange = () => {}) {
   // signs you in first and comes back.
   const net = createNet({ signedOut: true, go, changed: onChange });
   return { signedOut: true, mock: false, auth, net, settings: () => ({ look: 'system' }), me: () => null, decks: () => [], folders: () => [],
-    chrome: () => ({ nav: { today: '' }, me: { bg: COLORS[0], initial: '', color: true, photo: '' } }), act: { go } };
+    chrome: () => ({ nav: { today: '', news: '', hasNews: false }, me: { bg: COLORS[0], initial: '', color: true, photo: '', href: '/sign-in' } }), act: { go } };
 }
 // The page to open once you're signed in, if signing in started somewhere (asked once, then forgotten).
 export function afterSignIn() {
@@ -652,8 +652,9 @@ export async function createDb({ onChange, go }) {
     // initial on your color.
     chrome: () => {
       const due = S.decks.filter(d => !d.paused).reduce((n, d) => n + deckStat(d).due, 0), ph = photoOf();
-      return { nav: { today: due ? String(due) : '' }, me: { bg: COLORS[S.settings.color] || COLORS[0], initial: (((S.settings.name || (S.me && S.me.name) || '').trim() || 'You')[0]).toUpperCase(),
-        color: ph === 'color', photo: ph === 'google' ? S.me.picture : ph === 'yours' ? S.settings.yourPhoto : '' } };
+      const news = net.unread();
+      return { nav: { today: due ? String(due) : '', news: news ? String(news > 99 ? '99+' : news) : '', hasNews: news > 0 }, me: { bg: COLORS[S.settings.color] || COLORS[0], initial: (((S.settings.name || (S.me && S.me.name) || '').trim() || 'You')[0]).toUpperCase(),
+        color: ph === 'color', photo: ph === 'google' ? S.me.picture : ph === 'yours' ? S.settings.yourPhoto : '', href: '/you' } };
     },
     settings: () => ({ ...S.settings, name: S.settings.name || (S.me && S.me.name) || 'You', sub: S.me ? S.me.email : 'Saved on this computer', signedIn: !!S.me,
       google: !!(S.me && S.me.picture), photo: photoOf(), check: !!S.ai.perms.check }),

@@ -205,6 +205,18 @@ export default [
   "h": 844
  },
  {
+  "name": "PhoneDiscover",
+  "title": "iPhone · Discover",
+  "w": 390,
+  "h": 844
+ },
+ {
+  "name": "PhoneDiscoverSearch",
+  "title": "iPhone · Discover · search",
+  "w": 390,
+  "h": 844
+ },
+ {
   "name": "PhoneDone",
   "title": "iPhone · Session done",
   "w": 390,
@@ -687,6 +699,24 @@ export default [
  {
   "name": "WebDecksTags",
   "title": "Web · Library · a deck with 11 tags (+9 shows them all)",
+  "w": 1440,
+  "h": 900
+ },
+ {
+  "name": "WebDiscover",
+  "title": "Web · Discover",
+  "w": 1440,
+  "h": 900
+ },
+ {
+  "name": "WebDiscoverSearch",
+  "title": "Web · Discover · search",
+  "w": 1440,
+  "h": 900
+ },
+ {
+  "name": "WebDiscoverSignedOut",
+  "title": "Web · Discover · signed out (anyone can look)",
   "w": 1440,
   "h": 900
  },

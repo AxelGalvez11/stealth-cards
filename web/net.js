@@ -37,6 +37,8 @@ export function createNet({ accept = () => {}, changed = () => {}, signedOut = f
     search: q => (String(q || '').trim() ? get('/api/public/search?q=' + enc(String(q).trim()), 60000) : { q: '', decks: [], people: [] }),
     history: id => get('/api/public/history?id=' + enc(id || '')),
     activity: () => (signedOut ? { unread: 0, items: [] } : get('/api/social/activity', 15000)),
+    // How much news is new, for the bell (a small question, asked at most once a minute).
+    unread: () => { if (signedOut) return 0; const n = get('/api/social/unread', 60000); return (n && n.unread) || 0; },
     suggestions: id => (signedOut ? [] : get('/api/social/suggestions?id=' + enc(id || ''))),
     inbox: () => (signedOut ? [] : get('/api/social/suggestions')),
     sent: () => (signedOut ? [] : get('/api/social/suggestions?mine=1')),

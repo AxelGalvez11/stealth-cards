@@ -65,8 +65,10 @@ export const SAMPLE_WAVE = Array.from({ length: 96 }, (_, i) => {
   return Math.round(Math.max(.05, env * grain) * 100) / 100;
 });
 
+import { NET_SAMPLE } from './net-sample.mjs';
 export const MOCK_METHOD = String.raw`mock() {
   const p = this.props, m = this.state.$m || {};
+  const N = __NET__;
   const set = patch => this.setState({ $m: { ...m, ...patch } });
   const X = __SAMPLE__, WAVE = __WAVE__;
   const caught = !!p.caughtUp;
@@ -92,7 +94,7 @@ export const MOCK_METHOD = String.raw`mock() {
   const cardDeck = m.cardDeck || {}, cardOrder = m.cardOrder || X.CARDS.map(c => c.id);
   return {
     mock: true,
-    chrome: () => ({ nav: { today: caught ? '' : '64' }, me: { bg: 'linear-gradient(135deg, #8C9AFC 0%, #4F60E6 100%)', initial: 'A', color: st.photo === 'color', photo: '', sampleGoogle: st.photo === 'google', sampleYours: st.photo === 'yours' } }),
+    chrome: () => ({ nav: { today: caught ? '' : '64', news: m.read ? '' : '2', hasNews: !m.read }, me: { bg: 'linear-gradient(135deg, #8C9AFC 0%, #4F60E6 100%)', initial: 'A', color: st.photo === 'color', photo: '', sampleGoogle: st.photo === 'google', sampleYours: st.photo === 'yours', href: 'WebProfile.dc.html' } }),
     settings: () => st,
     tags: () => [],
     decks: () => inOrder().map(d => ({ d, i: X.DECKS.indexOf(d) })).map(({ d, i }) => ({ ...d, name: d.name, tags: X.TAGS[d.id], seed: d.name, style: null, image: null, totalLabel: d.total, paused: false, folder: folderOf(d.id), bg: { kind: 'deck', image: null },
@@ -129,6 +131,30 @@ export const MOCK_METHOD = String.raw`mock() {
     // The Recording boards: a clip being recorded, 3 seconds in.
     recording: () => ((p.recording && !m.recStop) || m.rec ? { saving: false, levels: Array.from({ length: 70 }, (_, i) => WAVE[(i * 3 + 30) % 96]), level: .55, secs: 3.4 } : null),
     href: kind => ({ decks: 'WebDecks.dc.html', newDeck: 'WebNewDeck.dc.html', import: 'WebImport.dc.html', connect: 'WebConnect.dc.html', today: 'Main.dc.html' })[kind] || 'Main.dc.html',
+    // The study network (net-sample.mjs): the same answers web/net.js gets from the server. Saving, following and the
+    // like stay on this board. Prop "loading" shows a page before its answer arrives.
+    me: () => ({ handle: 'alexkim', url: '/@alexkim', name: 'Alex Kim' }),
+    net: (() => {
+      const wait = !!p.loading, D = N.DECKS, pick = k => D[k];
+      const star = id => (m.stars && id in m.stars ? m.stars[id] : null), follows = m.follows || {};
+      const deckCard = d => { const s = star(d.id); return s == null ? d : { ...d, stars: d.stars + (s ? 1 : -1) }; };
+      const deckPage = () => ({ ...deckCard(D.mcat), helpers: [{ handle: 'devp', name: 'Dev Patel' }], contributors: [{ handle: 'devp', name: 'Dev Patel', n: 6 }, { handle: 'alexkim', name: 'Alex Kim', n: 3 }],
+        people: [N.P.maria, N.P.dev, N.P.okafor, N.P.alex], cardsList: N.CARDS, moreCards: 634, made: N.MADE,
+        me: p.signedOut ? null : { owner: !!p.owner, helper: false, studying: m.studying || (p.studying ? 'cell' : ''), copied: m.copied || '', watching: !!(m.watching ?? p.watching), starred: star('s1') ?? false, open: p.owner ? 3 : 0 } });
+      return {
+        signedOut: !!p.signedOut,
+        discover: tag => (wait ? undefined : { topics: N.DISCOVER.topics, tag: tag || '', sections: N.DISCOVER.sections.map(s => ({ ...s, decks: s.decks.map(pick).map(deckCard) })) }),
+        search: q => (wait ? undefined : !String(q || '').trim() ? { q: '', decks: [], people: [] } : { q, decks: [D.mcat, D.bio2a, D.cell].map(deckCard), people: [{ ...N.P.maria, bio: 'Biochem TA', school: 'UC Davis', followers: 1280 }, { ...N.P.okafor, bio: '', school: 'UC Davis', followers: 3400 }] }),
+        profile: h => (wait ? undefined : h && h !== 'alexkim' ? { ...N.OTHER, decks: [D.mcat, D.spanish].map(deckCard).map((d, i) => ({ ...d, pinned: !i })), saved: [], me: { self: false, following: follows[h] ?? false } }
+          : { ...N.PROFILE, decks: N.ALEX_DECKS.map(deckCard), saved: [D.mcat, D.kanji, D.bio2a].map(deckCard), me: { self: true, following: false } }),
+        deck: () => (wait ? undefined : deckPage()), deckById: () => (wait ? undefined : deckPage()),
+        history: () => (wait ? undefined : { id: 's1', name: 'Cell Biology', url: '/@alexkim/cell-biology', owner: N.P.alex, mine: true, following: 214, versions: N.HISTORY }),
+        activity: () => ({ unread: 2, items: N.NEWS.map(x => ({ ...x, read: m.read ? true : x.read })) }),
+        suggestions: () => (m.decided ? N.SUGGESTIONS.filter(x => !m.decided[x.id]) : N.SUGGESTIONS), inbox: () => N.SUGGESTIONS, sent: () => N.SUGGESTIONS.slice(0, 1),
+        mine: () => ({ handle: 'alexkim', profile: N.P.alex, decks: [{ id: 's9', slug: 'cell-biology', visibility: 'public', stars: 1300, learners: 214, copies: 86, version: 14, open: 3 }] }),
+        drop: noop, act: () => Promise.resolve(null)
+      };
+    })(),
     act: {
       updateDeck: (id, patch) => set({ deck: { ...ed, ...patch, cover: { ...(ed.cover || {}), ...(patch.cover || {}) } } }),
       grade: () => set({ idx: idx + 1 }),
@@ -153,7 +179,12 @@ export const MOCK_METHOD = String.raw`mock() {
       record: () => { set((p.recording && !m.recStop) || m.rec ? { rec: false, recStop: true } : { rec: true }); return Promise.resolve(null); },
       stopRecording: () => set({ rec: false, recStop: true }), watchMic: noop, watchSound: noop,
       playSound: () => set({ playing: !(m.playing ?? !!p.playing) }), seekSound: (c, f) => { if (f != null) set({ frac: f }); },
-      addPile: (id, name) => set({ piles: [...deck().piles, { name, n: 0 }] })
+      addPile: (id, name) => set({ piles: [...deck().piles, { name, n: 0 }] }),
+      star: (id, on) => set({ stars: { ...(m.stars || {}), [id]: !!on } }), watch: (id, on) => set({ watching: !!on }),
+      follow: (h, on) => set({ follows: { ...(m.follows || {}), [h]: !!on } }), study: () => set({ studying: 'cell' }), copyDeck: () => set({ copied: 'cell' }),
+      decide: id => set({ decided: { ...(m.decided || {}), [id]: true } }), readNews: () => set({ read: true }),
+      suggest: () => Promise.resolve({ id: 'g9' }), restore: noop, checkDeck: noop, updateProfile: patch => set({ profile: { ...(m.profile || {}), ...patch } }), ensureProfile: noop,
+      shareDeck: (id, o) => set({ share: { ...(m.share || { vis: 'private' }), ...(o.visibility ? { vis: o.visibility } : {}), ...o } }), detach: noop, takeUpdates: () => set({ took: true })
     }
   };
-}`.replace('__SAMPLE__', () => JSON.stringify(SAMPLE)).replace('__WAVE__', () => JSON.stringify(SAMPLE_WAVE));
+}`.replace('__SAMPLE__', () => JSON.stringify(SAMPLE)).replace('__WAVE__', () => JSON.stringify(SAMPLE_WAVE)).replace('__NET__', () => JSON.stringify(NET_SAMPLE));

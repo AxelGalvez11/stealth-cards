@@ -11,13 +11,32 @@ const DESIGN = ['localhost', '127.0.0.1'].includes(location.hostname);
 // Phones get the iPhone boards, which fill the screen (design/to-web.mjs). Importing cards has no iPhone board, so phones
 // get the web's.
 const narrow = matchMedia('(max-width: 760px)');
+// The study network's pages (web/net.js): Discover, a profile (/@alexkim), a shared deck (/@alexkim/cell-biology, or its
+// lasting link /d/<id>), and a deck's History. Anyone can open them, signed in or not.
+function network(path, q, P) {
+  if (path === '/discover') return { name: P + 'Discover', props: { tag: q.get('topic') || '', q: q.get('q') || '' } };
+  const m = /^\/@([A-Za-z0-9_.]{3,30})(?:\/([A-Za-z0-9-]{1,60})(\/history)?)?\/?$/.exec(path);
+  if (m && !m[2]) return { name: P + 'Profile', props: { handle: m[1].toLowerCase() } };
+  if (m && m[3]) return { name: P + 'History', props: { handle: m[1].toLowerCase(), slug: m[2].toLowerCase() } };
+  if (m) return { name: P + 'PublicDeck', props: { handle: m[1].toLowerCase(), slug: m[2].toLowerCase(), copyOpen: q.get('copy') === '1', suggest: q.get('suggest') || '' } };
+  const d = /^\/d\/(s[a-z0-9]{4,40})$/.exec(path);
+  if (d) return { name: P + 'PublicDeck', props: { id: d[1], copyOpen: q.get('copy') === '1', suggest: q.get('suggest') || '' } };
+  return null;
+}
 function resolve(path, q) {
   if (path.startsWith('/b/')) return DESIGN ? { name: decodeURIComponent(path.slice(3)), design: true } : { redirect: '/' };
   const P = narrow.matches ? 'Phone' : 'Web';
-  // Online and signed out: only the sign-in pages (and the code page once a code is on its way).
-  if (db.signedOut) return path === '/sign-in/code' && db.auth.email() ? { name: P + 'SignInCode' } : path === '/sign-in' ? { name: P + 'SignIn' } : { redirect: '/sign-in' };
+  const net = network(path, q, P);
+  // Online and signed out: only the sign-in pages (and the code page once a code is on its way), and the study
+  // network's pages anyone can open.
+  if (db.signedOut) return net ? { ...net, props: { ...net.props, signedOut: true } } : path === '/sign-in/code' && db.auth.email() ? { name: P + 'SignInCode' } : path === '/sign-in' ? { name: P + 'SignIn' } : { redirect: '/sign-in' };
+  if (net) return net;
+  // You: your profile (it's made the first time you open it).
+  if (path === '/you') return db.me().handle ? { redirect: '/@' + db.me().handle } : { name: P + 'Profile', props: { handle: '', self: true } };
+  if (path === '/activity') return { name: P + 'Activity' };
+  if (path === '/suggestions') return { name: P + 'Suggestions', props: { deckId: '' } };
   if (path.startsWith('/sign-in')) return { redirect: '/' };
-  const deck = /^\/deck\/([^/]+)(\/card(?:\/([^/]+))?|\/import|\/learn)?$/.exec(path);
+  const deck = /^\/deck\/([^/]+)(\/card(?:\/([^/]+))?|\/import|\/learn|\/suggestions)?$/.exec(path);
   // Your first time in: the welcome (connect your AI, bring your cards) comes before Today.
   if (path === '/' && !db.settings().welcomed && !db.decks().length) return { redirect: '/welcome' };
   if (path === '/welcome') return { name: P + 'Welcome' };
@@ -37,6 +56,8 @@ function resolve(path, q) {
     const id = deck[1];
     if (!db.raw().decks.some(d => d.id === id)) return { redirect: '/library' };
     if (deck[2] === '/import') return { name: 'WebImport', props: { deckId: id } };
+    // Suggestions people sent for this deck (it's shared), to take or skip.
+    if (deck[2] === '/suggestions') return { name: P + 'Suggestions', props: { deckId: id } };
     // Learn mode starts from a sheet over the deck. It's Pro: on Free the sheet shows what Pro adds instead.
     if (deck[2] === '/learn') return { name: P + (db.pro() ? 'QuizStart' : 'QuizUpgrade'), props: { deckId: id } };
     // Writing and editing cards: on a computer, the deck's cards on a screen of their own (the owner's pick, Option B),
@@ -80,7 +101,8 @@ function linkFor(name) {
     WebEditor: id ? '/deck/' + id + '/card' : db.signedOut ? '/' : db.today().newCardHref, WebCardsScreenNew: id ? '/deck/' + id + '/card' : db.signedOut ? '/' : db.today().newCardHref,
     WebCardsScreen: id ? '/deck/' + id + '/card' : '/library', WebReview: id ? '/review/' + id : '/review', WebDone: '/review/done', WebDonePiles: '/review/done',
     WebQuizStart: id ? '/deck/' + id + '/learn' : '/library', PhoneQuizStart: id ? '/deck/' + id + '/learn' : '/library', WebQuizUpgrade: id ? '/deck/' + id + '/learn' : '/library', PhoneQuizUpgrade: id ? '/deck/' + id + '/learn' : '/library', PhoneDeck: id ? '/deck/' + id : '/library', Pricing: 'https://lucida.cards/pricing', PricingPhone: 'https://lucida.cards/pricing',
-    WebStats: '/stats', WebStatsEmpty: '/stats', WebConnect: '/connect', WebWelcome: '/welcome', WebSettings: '/settings', WebSignIn: '/sign-in', WebSignInCode: '/sign-in/code', PhoneSignIn: '/sign-in', PhoneSignInCode: '/sign-in/code', PhoneToday: '/', Privacy: '/privacy', Terms: '/terms' };
+    WebStats: '/stats', WebStatsEmpty: '/stats', WebConnect: '/connect', WebWelcome: '/welcome', WebSettings: '/settings', WebSignIn: '/sign-in', WebSignInCode: '/sign-in/code', PhoneSignIn: '/sign-in', PhoneSignInCode: '/sign-in/code', PhoneToday: '/', Privacy: '/privacy', Terms: '/terms',
+    WebDiscover: '/discover', WebActivity: '/activity', WebProfile: '/you', WebSuggestions: id ? '/deck/' + id + '/suggestions' : '/suggestions' };
   return pages[name] || pages[name.replace(/^Phone/, 'Web')] || '/b/' + name;
 }
 

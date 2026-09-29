@@ -116,6 +116,7 @@ async function api(req, res, path, body, me, uid) {
   }
   if (path === '/api/social/activity' && req.method === 'GET') return send(res, 200, await social.activity(uid));
   if (path === '/api/social/mine' && req.method === 'GET') return send(res, 200, await social.mine(uid));
+  if (path === '/api/social/unread' && req.method === 'GET') return send(res, 200, { unread: await social.unreadCount(uid).catch(() => 0) });
   if (path === '/api/social/suggestions' && req.method === 'GET') {
     const q = new URL(req.url, 'http://x').searchParams;
     try { return send(res, 200, await social.suggestionsFor(uid, { sharedId: q.get('id') || '', mine: q.get('mine') === '1', all: q.get('all') === '1' })); }
