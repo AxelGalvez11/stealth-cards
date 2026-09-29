@@ -2787,7 +2787,7 @@ renderVals() {
     { id: 'text', label: 'Write text and fill-in-the-blank', sub: 'Adds new cards to your decks' },
     { id: 'media', label: 'Write image and audio cards', sub: 'Adds pictures and sound to cards' },
     { id: 'edit', label: 'Edit cards', sub: 'Fixes typos and updates answers' },
-    { id: 'check', label: 'Let me check AI cards first', sub: 'They wait in their deck until you keep them' },
+    { id: 'check', label: 'Let me check AI cards first', sub: 'New cards and changes wait until you keep them' },
     { id: 'del', label: 'Delete cards', sub: 'Removes cards for good' }
   ];
   ${SW_JS}
@@ -3520,7 +3520,7 @@ const webSettings = webRoot(`${sidebar('You')}
       ])}
       ${sGroup('Your AI', [
         sRow('Connected apps', sVal('{{connected}}'), { href: 'WebConnect.dc.html' }),
-        sRow('Check AI cards first', SWITCH('checkSw', 'toggleCheck', 'Check AI cards first'), { sub: 'They wait in their deck until you keep them' })
+        sRow('Check AI cards first', SWITCH('checkSw', 'toggleCheck', 'Check AI cards first'), { sub: 'New cards and changes wait until you keep them' })
       ])}
     </div>
   </div>

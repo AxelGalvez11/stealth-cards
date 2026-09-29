@@ -2,6 +2,7 @@
 // http://localhost:3000/mcp; online each person has their own link (see handler.mjs), so an AI only sees their cards.
 // What an AI may do is set on the Connect AI page; tools it isn't allowed to use aren't offered.
 import { apply, state, blanks, mediaLeft, MEDIA_FULL, BG_KINDS } from './store.mjs';
+import * as social from './social.mjs';
 import { dayAt } from './fsrs.js';
 import { fetchMedia, speechFile } from './media.mjs';
 import R from './rich.js';
@@ -62,7 +63,9 @@ async function speakFile(words, lang, notes) {
 
 const TOOLS = [
   { name: 'list_decks', perm: 'read', description: 'List the decks with how many cards each has and how many are due.', inputSchema: { type: 'object', properties: {} },
-    run: () => text(state().decks.map(d => { const cs = state().cards.filter(c => c.deckId === d.id); return { id: d.id, name: d.name, folder: folderName(d), tags: d.tags, cards: cs.length, due: cs.filter(dueNow).length, new: cs.filter(c => c.srs.state === 'new').length }; })) },
+    run: () => text(state().decks.map(d => { const cs = state().cards.filter(c => c.deckId === d.id); return { id: d.id, name: d.name, folder: folderName(d), tags: d.tags, cards: cs.length, due: cs.filter(dueNow).length, new: cs.filter(c => c.srs.state === 'new').length,
+      shared: d.share && d.share.vis !== 'private' ? (d.share.vis === 'public' ? 'public' : 'link only') : undefined,
+      from: d.link && !d.link.gone ? { owner: d.link.owner && d.link.owner.name, as: d.link.mode === 'study' ? 'studied as it is (suggest changes with suggest_changes)' : 'the learner’s own copy' } : undefined }; })) },
   { name: 'list_cards', perm: 'read', description: 'List or search the cards in a deck (or in every deck).', inputSchema: { type: 'object', properties: { deck: { type: 'string', description: 'Deck name or id. Leave out for every deck.' }, search: { type: 'string' }, limit: { type: 'number', description: 'Up to 500. Default 50.' } } },
     run: a => { const d = a.deck ? deckBy(a.deck) : null; if (a.deck && !d) return fail('No deck called ' + a.deck);
       const q = String(a.search || '').toLowerCase();
@@ -138,6 +141,8 @@ const TOOLS = [
     meta: { 'openai/fileParams': ['files'] },
     run: async (a, who, ctx) => {
       const c = state().cards.find(x => x.id === a.id); if (!c) return fail('There’s no card with id ' + a.id);
+      const dk = deckBy(c.deckId);
+      if (dk && dk.link && dk.link.mode === 'study' && !dk.link.gone) return fail('This deck is ' + dk.link.owner.name + '’s: use suggest_changes to suggest the fix.');
       const patch = {};
       for (const k of ['front', 'back', 'text', 'note', 'tags', 'speak', 'lang']) if (a[k] !== undefined) patch[k] = a[k];
       // A basic card becomes an image card with a picture, or an audio card with sound.
@@ -155,6 +160,8 @@ const TOOLS = [
         apply({ type: 'card.update', id: a.id, patch }, who);
         return text('Updated the card.' + [...notes].map(n => ' ' + n).join(''));
       }
+      // "Let me check AI cards and changes first": the change waits on the card until the learner keeps it.
+      if (state().ai.perms.check && !c.pending) { apply({ type: 'card.propose', id: a.id, patch }, who); return text('The change waits for the learner to keep it.'); }
       apply({ type: 'card.update', id: a.id, patch }, who);
       return text('Updated the card.');
     } },
@@ -170,7 +177,51 @@ const TOOLS = [
       explanation: { type: 'string', description: 'Optional: two to four plain sentences explaining the card’s answer.' } }, required: ['card'] } } }, required: ['quizzes'] },
     run: (a, who) => { const r = apply({ type: 'card.quiz', quizzes: a.quizzes }, who); return r.questions || (a.quizzes || []).some(q => q.explanation) ? text('Saved ' + r.questions + ' question' + (r.questions === 1 ? '' : 's') + '. Learn mode uses them next time.') : fail('None of those questions could be used. Check the card ids, and give each choice question three wrong answers.'); } },
   { name: 'delete_cards', perm: 'del', description: 'Delete cards for good.', inputSchema: { type: 'object', properties: { ids: { type: 'array', items: { type: 'string' }, minItems: 1 } }, required: ['ids'] },
-    run: (a, who) => text(apply({ type: 'card.delete', ids: a.ids }, who)) }
+    run: (a, who) => {
+      const cs = (a.ids || []).map(id => state().cards.find(c => c.id === id)).filter(Boolean), theirs = cs.map(c => deckBy(c.deckId)).find(d => d && d.link && d.link.mode === 'study' && !d.link.gone);
+      if (theirs) return fail('Those cards are in ' + theirs.link.owner.name + '’s deck: use suggest_changes to suggest removing them.');
+      if (state().ai.perms.check) { const kept = cs.filter(c => !c.pending); for (const c of kept) apply({ type: 'card.propose', id: c.id, remove: true }, who); const rest = cs.filter(c => c.pending).map(c => c.id); if (rest.length) apply({ type: 'card.delete', ids: rest }, who); return text((kept.length ? kept.length + ' wait for the learner to agree. ' : '') + (rest.length ? 'Deleted ' + rest.length + '.' : '')); }
+      return text(apply({ type: 'card.delete', ids: a.ids }, who));
+    } },
+  // The study network (social.mjs): decks other people share. The learner can study one as it is, or copy it; on a deck
+  // from someone else, an AI can only suggest changes, which the owner takes or skips.
+  { name: 'search_shared_decks', perm: 'read', description: 'Find decks other people share on Lucida (public decks), by words or a topic. Leave both out for popular ones. study_shared_deck adds one to the learner’s library.',
+    inputSchema: { type: 'object', properties: { query: { type: 'string' }, topic: { type: 'string', description: 'A topic (a tag), like "MCAT" or "Spanish".' } } },
+    run: async (a, who, ctx) => {
+      const r = a.query ? await social.search(a.query, ctx.uid) : await social.discover(ctx.uid, { tag: a.topic || '' });
+      const list = a.query ? r.decks : (r.sections[0] || { decks: [] }).decks;
+      return text(list.map(d => ({ id: d.id, name: d.name, by: d.owner ? d.owner.name + ' (@' + d.owner.handle + ')' : undefined, cards: d.cards, saves: d.stars, studying: d.learners, checked_by_a_teacher: !!d.checked || undefined, about: d.description || undefined, link: 'https://lucida.cards' + d.url })));
+    } },
+  { name: 'get_shared_deck', perm: 'read', description: 'A shared deck’s cards (up to 100) and who made it, by its id (from search_shared_decks) or its link.',
+    inputSchema: { type: 'object', properties: { id: { type: 'string', description: 'Its id, or its link (lucida.cards/@name/deck).' } }, required: ['id'] },
+    run: async (a, who, ctx) => {
+      const m = /@([a-z0-9_.]{3,30})\/([a-z0-9-]{1,60})/i.exec(String(a.id)), id = (/\b(s[a-z0-9]{6,40})\b/.exec(String(a.id)) || [])[1];
+      const p = await social.deckPage(m ? { handle: m[1], slug: m[2] } : { id: id || a.id }, ctx.uid);
+      if (!p) return fail('That deck isn’t shared.');
+      return text({ id: p.id, name: p.name, by: p.owner && p.owner.name, about: p.description || undefined, cards: p.cards, version: p.version, learner: p.me ? { studying: !!p.me.studying, copied: !!p.me.copied, saved: p.me.starred } : undefined,
+        sample: p.cardsList.slice(0, 100).map(c => ({ id: c.id, kind: c.kind === 'cloze' ? 'fill in the blank' : c.kind, front: c.front || undefined, back: c.back || undefined, text: c.text || undefined })) });
+    } },
+  { name: 'study_shared_deck', perm: 'text', description: 'Add a shared deck to the learner’s library. By default they study it as it is: its cards follow the owner’s changes, and changes to it are suggested with suggest_changes. With copy: true it is the learner’s own copy to change.',
+    inputSchema: { type: 'object', properties: { id: { type: 'string', description: 'The shared deck’s id (from search_shared_decks).' }, copy: { type: 'boolean' }, name: { type: 'string', description: 'A name for a copy.' } }, required: ['id'] },
+    run: async (a, who, ctx) => { const r = await social.addShared(ctx.uid, null, a.id, { copy: !!a.copy, name: a.name || '', updates: true }); return text((a.copy ? 'Copied it into the library' : 'Added it to the library') + '. Deck id: ' + r.deckId + '.'); } },
+  { name: 'suggest_changes', perm: 'text', description: 'Suggest changes to a deck the learner has from someone else (list_decks shows "from"): fix a card, add cards, or take one out. Nothing changes until the owner takes it. Say why in "message".',
+    inputSchema: { type: 'object', properties: {
+      deck: { type: 'string', description: 'The deck’s name or id in the learner’s library.' }, message: { type: 'string' },
+      changes: { type: 'array', minItems: 1, items: { type: 'object', properties: { card: { type: 'string', description: 'The card’s id (from list_cards). Leave out to add a new card.' }, remove: { type: 'boolean', description: 'true to suggest taking the card out.' },
+        kind: { type: 'string', enum: ['basic', 'cloze'] }, front: { type: 'string' }, back: { type: 'string' }, text: { type: 'string', description: 'For fill in the blank, with [[blanks]].' }, note: { type: 'string' } } } } }, required: ['deck', 'changes'] },
+    run: async (a, who, ctx) => {
+      const d = deckBy(a.deck);
+      if (!d) return fail('No deck called ' + a.deck);
+      if (!d.link || d.link.gone) return fail('This is the learner’s own deck: change it directly (update_card, add_cards).');
+      const changes = (a.changes || []).map(c => {
+        const mine = c.card && state().cards.find(x => x.id === c.card && x.deckId === d.id), after = {};
+        for (const k of ['kind', 'front', 'back', 'text', 'note']) if (c[k] != null) after[k] = c[k];
+        return c.card ? (mine && mine.origin ? { op: c.remove ? 'remove' : 'edit', card: mine.origin, after } : null) : { op: 'add', after };
+      }).filter(Boolean);
+      if (!changes.length) return fail('None of those cards are in ' + d.name + '.');
+      const r = await social.suggest(ctx.uid, null, d.link.id, { message: a.message || '', changes }, who);
+      return text(r.taken ? 'The learner helps keep this deck, so the changes went straight in.' : 'Sent to ' + d.link.owner.name + '. Nothing changes until they take it.');
+    } }
 ];
 const allowed = () => TOOLS.filter(t => state().ai.perms[t.perm]);
 const nameOf = info => { const n = String((info && info.name) || 'MCP app'); return /claude/i.test(n) ? 'Claude' : /openai|chatgpt/i.test(n) ? 'ChatGPT' : /cursor/i.test(n) ? 'Cursor' : n; };

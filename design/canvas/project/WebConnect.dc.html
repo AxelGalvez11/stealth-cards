@@ -312,7 +312,7 @@ renderVals() {
     { id: 'text', label: 'Write text and fill-in-the-blank', sub: 'Adds new cards to your decks' },
     { id: 'media', label: 'Write image and audio cards', sub: 'Adds pictures and sound to cards' },
     { id: 'edit', label: 'Edit cards', sub: 'Fixes typos and updates answers' },
-    { id: 'check', label: 'Let me check AI cards first', sub: 'They wait in their deck until you keep them' },
+    { id: 'check', label: 'Let me check AI cards first', sub: 'New cards and changes wait until you keep them' },
     { id: 'del', label: 'Delete cards', sub: 'Removes cards for good' }
   ];
   const sw = (on, enabled = true) => ({ checked: on ? 'true' : 'false', track: on ? t.inv : t.surf2, knob: on ? 'translateX(20px)' : 'translateX(0)', knobColor: on ? t.invText : t.bg, op: enabled ? '1' : '.4', disabled: enabled ? 'false' : 'true' });

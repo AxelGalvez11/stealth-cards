@@ -386,6 +386,20 @@ function run(a, who) {
       if (c.kind === 'image' && (c.box != null || (c.boxes || []).length)) syncBoxes(c, p, before);
       return { id: c.id };
     }
+    // An AI's change to one of your cards, waiting for you ("Let me check AI cards and changes first"): new words, or
+    // taking it out. Keeping it makes the change (card.proposal with take); tossing it leaves the card as it was.
+    case 'card.propose': {
+      const c = S.cards.find(x => x.id === a.id); if (!c) throw new Error('No such card');
+      c.proposal = a.remove ? { remove: true, ai: clean(who, 60), at: Date.now() } : { patch: pick(a.patch, CARD_KEYS.filter(k => k !== 'pending')), ai: clean(who, 60), at: Date.now() };
+      return { id: c.id };
+    }
+    case 'card.proposal': {
+      const c = S.cards.find(x => x.id === a.id); if (!c || !c.proposal) throw new Error('That change is gone');
+      const p = c.proposal; delete c.proposal;
+      if (!a.take) return { id: c.id };
+      if (p.remove) return run({ type: 'card.delete', id: c.id }, p.ai || who);
+      return run({ type: 'card.update', id: c.id, patch: p.patch }, p.ai || who);
+    }
     // Learn mode questions for cards, written by the learner's own AI app (mcp.mjs): multiple choice with plausible wrong
     // answers, or true-or-false statements, each with a why. An app can also leave an explanation for Explain.
     case 'card.quiz': {

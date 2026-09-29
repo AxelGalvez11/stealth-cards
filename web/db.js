@@ -632,6 +632,8 @@ export async function createDb({ onChange, go }) {
     detach: deckId => net.act('deck.detach', { deckId }),
     takeUpdates: (deckId, picks) => net.act('deck.updates', { deckId, picks }),
     copyUpdates: (deckId, on) => net.act('deck.copyUpdates', { deckId, on }),
+    // Keep or toss a change your AI wants to make to a card.
+    decideProposal: (id, take) => send('card.proposal', { id, take: !!take }),
     star: (id, on) => net.act('deck.star', { id, on }),
     watch: (id, on) => net.act('deck.watch', { id, on }),
     checkDeck: id => net.act('deck.check', { id }),
@@ -687,6 +689,9 @@ export async function createDb({ onChange, go }) {
     cards: id => { const d = deckById(id), ro = d && shareOf(d).readOnly;
       return deckCards(d, S.cards).map(c => ({ id: c.id, kind: KIND[c.kind], icon: ICON[c.kind], front: listFront(c), back: listBack(c), tags: c.tags, next: nextLabel(c),
         ai: byAI(c) && c.source !== 'shared' ? c.source : '', href: ro ? suggestHref(d, c) : '/deck/' + id + '/card/' + c.id, group: c.group || null })); },
+    // Changes your AI wants to make to your cards, waiting for your OK (Settings: check AI cards and changes first).
+    proposals: id => S.cards.filter(c => c.proposal && (!id || c.deckId === id)).map(c => { const p = c.proposal, after = p.remove ? null : { ...c, ...p.patch };
+      return { id: c.id, deckId: c.deckId, deckName: (deckById(c.deckId) || {}).name || '', ai: p.ai || 'AI', remove: !!p.remove, before: { q: listFront(c), a: listBack(c) }, after: after ? { q: listFront(after), a: listBack(after) } : null }; }),
     // A copy's waiting changes from the deck it came from (see social.mjs sync), as the updates panel lists them.
     updatesOf: id => { const d = deckById(id); if (!d || !d.link || d.link.gone) return [];
       const words = x => (x ? (x.kind === 'cloze' ? R.plain(x.text, { cloze: true, blank: '____', join: ' ', math: 'show' }) : flat(x.front)) : '');
