@@ -6,7 +6,7 @@ const F = "'Space Grotesk', system-ui, sans-serif";
 const WIDE = "Unbounded, 'Space Grotesk', system-ui, sans-serif";
 const NAMES = ['Dolphin', 'Clouds', 'Statue', 'Sunset', 'Palms', 'Moon'];
 export default {
-  key: 'vapordolphins', board: 'VaporDolphins', name: 'Vaporwave · Dolphins', short: 'Vapor dolphins', dark: false, fonts: 'family=Space+Grotesk:wght@400;500;600&family=Unbounded:wght@500&',
+  key: 'vapordolphins', board: 'VaporDolphins', name: 'Vaporwave · Dolphins', short: 'Vapor dolphins', dark: false, cw: 0.71, fonts: 'family=Space+Grotesk:wght@400;500;600&family=Unbounded:wght@500&',
   line: 'Dreamy pink skies, flying dolphins, and a lavender sea.',
   assets: photoAssets('vpd'), css: photoCss('vpd'),
   bg: (w, h) => photoBg('vpd', w, h),

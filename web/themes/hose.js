@@ -1,4 +1,4 @@
-import { A, R, di, mo, motifName, lay, face, banner, BANNER_X } from './kit.js';
+import { A, R, di, mo, motifName, lay, face, banner, bannerSpot, headSpot } from './kit.js';
 
 // Rubber hose: a 1930s cartoon. Thick ink outlines, pie-cut eyes, white gloves, and Lu, the flashcard mascot. Covers
 // are sunbursts with a character for the deck's subject; the card is plain cream with a hard ink shadow.
@@ -152,7 +152,7 @@ const OUT_S = `text-shadow: 1.5px 0 ${INK}, -1.5px 0 ${INK}, 0 1.5px ${INK}, 0 -
 const svg40 = inner => `<svg width="100%" viewBox="0 0 40 40" style="display: block; overflow: visible;">${inner}</svg>`;
 
 export default {
-  key: 'hose', board: 'Rubber', name: 'Rubber hose', dark: false, fonts: 'family=Titan+One&family=Fredoka:wght@400;500;600;700&',
+  key: 'hose', board: 'Rubber', name: 'Rubber hose', dark: false, headArt: true, cw: 0.62, fonts: 'family=Titan+One&family=Fredoka:wght@400;500;600;700&',
   line: '1930s cartoon: thick outlines, pie-cut eyes, white gloves, and Lu the flashcard.',
   assets: { doodle: 'doodle.svg' },
   css: `.rh-bg{background-color:${RH.peach};background-image:url(%%doodle%%);background-size:360px 360px}
@@ -171,7 +171,8 @@ export default {
   face(w, h, o) {
     const bw = w > 400 ? 4 : 3, sh = w > 400 ? 9 : w > 250 ? 6 : 4;
     return face(`border-radius: ${o.r}px; background-color: ${RH.cream}; color: ${INK}; box-shadow: inset 0 0 0 ${bw}px ${INK}, ${sh}px ${sh}px 0 ${INK}; font-family: ${FRED};`,
-      () => (w > 250 ? A(`right: ${R(w * 0.04)}px; top: ${-R(w * 0.035)}px; width: ${R(w * 0.1)}px; transform: rotate(14deg);`, svg40(star(20, 20, 17, RH.yellow, 2.4))) : ''),
+      // (on its top left corner: the top right is where Explain goes)
+      () => (w > 250 ? A(`left: ${-R(w * 0.03)}px; top: ${-R(w * 0.04)}px; width: ${R(w * 0.1)}px; transform: rotate(-14deg);`, svg40(star(20, 20, 17, RH.yellow, 2.4))) : ''),
       { q: 'font-weight: 500; color: #7A5E4C;', qs: 0.46, a: 'font-weight: 600;' }, { ink: INK, paper: RH.cream, muted: '#7A5E4C' });
   },
   cover(d, o) {
@@ -183,10 +184,12 @@ export default {
       draw() {
         const art = shape === 'wide' ? 'right: 10%; top: 13%; width: 40%;' : shape === 'square' ? 'left: 8%; top: 10%; width: 84%;' : 'right: -2%; top: 5%; width: 70%;';
         // A wide header gets its character on the right, clear of the buttons in its corners.
-        const wideArt = banner(o) ? `left: ${R(o.w * BANNER_X - o.h * 0.45)}px; top: 5%; width: ${R(o.h * 0.9)}px;` : art;
-        return `<span style="position: absolute; inset: -40%; background: repeating-conic-gradient(from 0deg at ${banner(o) ? R(BANNER_X * 100) + '% 50%' : shape === 'wide' ? '75% 45%' : '62% 38%'}, rgba(255,255,255,.22) 0deg 9deg, rgba(255,255,255,0) 9deg 18deg);"></span>`
+        // (on a phone deck page's header, under the buttons along its top)
+        const HS = o.top && headSpot(o), BS = banner(o) && bannerSpot(o), cw = BS && R(BS.s * 1.35), at = (x, y) => `${R(((x / o.w) + 0.4) / 1.8 * 100)}% ${R(((y / o.h) + 0.4) / 1.8 * 100)}%`;
+        const wideArt = HS ? `left: ${R(HS.x - HS.s * 0.05)}px; top: ${R(HS.y - HS.s * 0.08)}px; width: ${R(HS.s * 1.1)}px;` : BS ? `left: ${R(BS.cx - cw / 2)}px; top: ${R(BS.cy - cw / 2)}px; width: ${cw}px;` : art;
+        return `<span style="position: absolute; inset: -40%; background: repeating-conic-gradient(from 0deg at ${HS ? at(HS.x + HS.s / 2, HS.y + HS.s / 2) : BS ? at(BS.cx, BS.cy) : shape === 'wide' ? '75% 45%' : '62% 38%'}, rgba(255,255,255,.22) 0deg 9deg, rgba(255,255,255,0) 9deg 18deg);"></span>`
           // (a wide cover's top left has the deck's tags on it, so its star goes low, by the character)
-          + (shape === 'square' ? '' : A(shape === 'wide' && !banner(o) ? 'left: 45%; top: 58%; width: 6%; transform: rotate(-10deg);' : `left: 7%; top: 9%; width: ${banner(o) ? R(o.h * 0.14) + 'px' : '13%'};`, svg40(star(20, 20, 17, '#FFFFFF', 2.6))) + A(`left: ${banner(o) ? R(BANNER_X * 100 - 12) : shape === 'wide' ? 44 : 30}%; top: ${shape === 'wide' ? 10 : 30}%; width: ${banner(o) ? R(o.h * 0.08) + 'px' : shape === 'wide' ? '4%' : '8%'};`, svg40(sparkle(20, 20, 20, '#FFFFFF'))))
+          + (shape === 'square' ? '' : A(HS ? `left: ${R(HS.x - HS.s * 0.3)}px; top: ${R(HS.y + HS.s * 0.02)}px; width: 6%; transform: rotate(-10deg);` : shape === 'wide' && !banner(o) ? 'left: 45%; top: 58%; width: 6%; transform: rotate(-10deg);' : `left: 7%; top: 9%; width: ${banner(o) ? R(o.h * 0.14) + 'px' : '13%'};`, svg40(star(20, 20, 17, '#FFFFFF', 2.6))) + A(`left: ${BS ? (o.head ? R((BS.cx / o.w) * 100 + 14) : 40) : shape === 'wide' ? 44 : 30}%; top: ${shape === 'wide' ? 10 : 30}%; width: ${banner(o) ? R(o.h * 0.08) + 'px' : shape === 'wide' ? '4%' : '8%'};`, svg40(sparkle(20, 20, 20, '#FFFFFF'))))
           + A(wideArt, charSvg(ch)) + A(`inset: 0; border-radius: ${r}px; box-shadow: inset 0 0 0 ${big ? 3.5 : 3}px ${INK};`);
       },
     };

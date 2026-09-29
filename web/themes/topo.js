@@ -301,7 +301,7 @@ function coverTerrain(i, w, h, cx, cy, s, wide) {
   ][i];
 }
 function coverMap(i, o) {
-  const P = TP_C[i], w = o.w, h = o.h, wide = o.shape === 'wide', F = focal(o), cx = F.x + F.s / 2, cy = wide ? h * 0.34 : F.y + F.s / 2 + F.s * 0.04, small = w < 100;
+  const P = TP_C[i], w = o.w, h = o.h, wide = o.shape === 'wide', F = focal(o), cx = F.x + F.s / 2, cy = o.top || (wide && w / h > 2.2) ? F.y + F.s / 2 : wide ? h * 0.34 : F.y + F.s / 2 + F.s * 0.04, small = w < 100;
   const n = small ? 12 : wide ? 22 : 18, cs = small ? 3 : w > 250 ? 5 : 4;
   const M = contour(coverTerrain(i, w, h, cx, cy, F.s, wide), w, h, { cs, n, tol: small ? 0.3 : 0.35 });
   const top = i === 5 ? { x: cx, y: cy, z: at(M.G, cx, cy) } : peakNear(M.G, cx, cy, F.s * 0.26) || { x: cx, y: cy, z: 1 };
@@ -317,7 +317,7 @@ function coverMap(i, o) {
 }
 
 export default {
-  key: 'topo', board: 'Topo', name: 'Topographic', dark: false,
+  key: 'topo', board: 'Topo', name: 'Topographic', dark: false, headArt: true,
   fonts: 'family=Barlow:ital,wght@0,400;0,500;0,600;0,700;1,500&family=DM+Mono:wght@400;500&',
   line: 'Contour lines in quiet ink, like a finely printed trail map.',
   bg(w, h) {

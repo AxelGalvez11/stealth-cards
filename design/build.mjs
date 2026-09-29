@@ -861,7 +861,7 @@ const COVER_LOGIC = `
   // A header image replaces the gradient: your photo in the app, a placeholder on the canvas.
   const isImage = !!dk.cover.image, photo = isImage && dk.cover.image !== 'mock' ? dk.cover.image : '';
   // With a theme on (Pro), the theme draws the header instead of the gradient, and letters the deck's name.
-  const S = this.skin(db), C = S && !isImage ? S.coverOf(dk, 'wide', 34) : null;
+  const S = this.skin(db), C = S && !isImage ? S.coverOf(dk, 'head', 34) : null;
   const cover = C ? { ...gradient, base: C.base, ink: C.ink, shadow: 'none', plain: false, skin: true, art: C.art } : { ...gradient, plain: true, skin: false, art: null };
   const settingsOpen = cs.deckSettings == null ? !!this.props.settingsOpen : cs.deckSettings;
   ${STUDY_BG_JS}
@@ -878,7 +878,7 @@ const COVER_LOGIC = `
     grain: String(this.props.grain ?? 0.7),
     cover, coverIsGradient: !isImage, coverIsImage: isImage && !photo, coverHasPhoto: !!photo, coverPhoto: photo, coverHasImage: isImage,
     coverInk: photo ? '#FFFFFF' : isImage ? t.text : cover.ink, coverShadow: photo ? '0 1px 14px rgba(0,0,0,.45)' : isImage ? 'none' : cover.shadow,
-    coverTitle: C ? C.titleAt(34) : '', coverTitleS: C ? C.titleAt(32) : '', coverPlain: !C, useCoverLabel: S ? 'Use theme' : 'Use gradient',
+    coverTitle: C ? C.titleAt(34) : '', coverTitleS: C ? C.titleHead(32, dk.name) : '', coverPlain: !C, useCoverLabel: S ? 'Use theme' : 'Use gradient',
     deckName: cs.deckName == null ? dk.name : cs.deckName,
     setDeckName: e => { const v = e && e.target ? e.target.value : cs.deckName; this.setState({ deckName: v }); up({ name: v }, true); },
     nextCover: () => up({ cover: { round: (dk.cover.round || 0) + 1, image: null } }),
@@ -3110,7 +3110,7 @@ renderVals() { ${T}
 }`;
 
 const phoneDeck = phone(`<div style="height: 100%; overflow-y: auto; scrollbar-width: none; scroll-timeline: --deck block;"><div style="padding: 0 0 120px; display: flex; flex-direction: column; gap: 16px;">
-  <div style="position: relative; height: 232px; overflow: hidden;">
+  <div style="position: relative; height: 232px; overflow: hidden; container-type: inline-size;">
     ${parallax(232)}
     <div style="position: absolute; inset: 0; box-sizing: border-box; padding: 54px 16px 18px 20px; display: flex; flex-direction: column; justify-content: space-between; color: {{coverInk}};">
       <div style="display: flex; justify-content: space-between;">${coverRound('back', 'Back', 'PhoneToday.dc.html')}<div style="display: flex; gap: 8px;">${coverRound('gear', 'Deck settings', '', '{{openSettings}}')}${coverRound('search', 'Search')}${coverRound('plus', 'New card', 'PhoneEditor.dc.html')}</div></div>
@@ -3308,7 +3308,8 @@ const photoPanel = full => `${full ? SEG('photoOpts', 'Profile picture', 3, true
 // and the colors. Picking Your photo before there is one opens the file picker, like Change photo.
 const PHOTO_JS = `const colors = [['Periwinkle', 'linear-gradient(135deg, #8C9AFC 0%, #4F60E6 100%)'], ['Orange', 'linear-gradient(135deg, #FFC857 0%, #EE5A36 100%)'], ['Green', 'linear-gradient(135deg, #7EE0B0 0%, #1F8F5F 100%)'], ['Pink', 'linear-gradient(135deg, #F9A8D4 0%, #D6336C 100%)'], ['Teal', 'linear-gradient(135deg, #7DE3F0 0%, #0E8A9E 100%)'], ['Violet', 'linear-gradient(135deg, #C4A7FF 0%, #7C3AED 100%)']];
   // Settings › Look › Theme: your theme's name (Lucida on Free, where the others are locked).
-  const themeRow = () => ({ themeLocked: planVals.planFree, themeName: (${THEME_LIST}.find(x => x.key === (planVals.planFree ? 'lucida' : st.theme)) || { short: 'Lucida' }).short });
+  // With a theme on, deck covers are the theme's, so the gradient choice only shows again with Lucida's own look.
+  const themeRow = () => ({ themeLocked: planVals.planFree, themeName: (${THEME_LIST}.find(x => x.key === (planVals.planFree ? 'lucida' : st.theme)) || { short: 'Lucida' }).short, gradsThemed: !planVals.planFree && !!st.theme && st.theme !== 'lucida' });
   const photo = st.photo, skinned = !!chrome.me.skinned, photoVals = { initial: chrome.me.initial, avatarBg: (colors[st.color] || colors[0])[1], photoColor: photo === 'color' && !skinned, photoGoogle: photo === 'google', photoYours: photo === 'yours', photoPic: photo !== 'color' || skinned,
     photoOpts: opts([...(st.google ? [['google', 'Google photo']] : []), ['yours', 'Your photo'], ['color', skinned ? 'Theme' : 'Color']], photo, id => (id === 'yours' && !st.yourPhoto ? db.act.pickPhoto() : set({ photo: id }))),
     changePhoto: () => db.act.pickPhoto(), removePhoto: () => db.act.removePhoto(),
@@ -3324,7 +3325,7 @@ const phoneSettings = phone(`<div style="padding: 64px 20px 34px; display: flex;
     sPick('Remember goal', 'goal', [80, 85, 90, 93, 95].map(n => [n, n + '%'])),
     sRow('Schedule with FSRS', SWITCH('fsrsSw', 'toggleFsrs', 'Schedule with FSRS'), { sub: '{{fsrsSub}}' })
   ])}
-  ${sGroup('Look', [sRow('Appearance', SEG('looks', 'Appearance')), sRow('Dark mode', SEG('darks', 'Dark mode', 2), { sub: 'When the app is dark' }), THEME_ROW('PhoneThemePicker'), sRow('Card gradients', SEG('grads', 'Card gradients'))])}
+  ${sGroup('Look', [sRow('Appearance', SEG('looks', 'Appearance')), sRow('Dark mode', SEG('darks', 'Dark mode', 2), { sub: 'When the app is dark' }), THEME_ROW('PhoneThemePicker'), sRow('<span style="display: flex; flex-direction: column; gap: 2px;"><span>Card gradients</span><sc-if value="{{gradsThemed}}" hint-placeholder-val="{{ false }}"><span style="font-size: 12px; color: {{t.muted}};">With the Lucida theme</span></sc-if></span>', SEG('grads', 'Card gradients'))])}
   ${sGroup('Your AI', [
     sRow('Connected apps', sVal('{{connected}}'), { href: 'PhoneConnect.dc.html' }),
     sRow('Check AI cards first', SWITCH('checkSw', 'toggleCheck', 'Check AI cards first'))
@@ -3403,7 +3404,7 @@ const webSettings = webRoot(`${sidebar('You')}
         sRow('Appearance', SEG('looks', 'Appearance')),
         sRow('Dark mode', SEG('darks', 'Dark mode', 2), { sub: 'When the app is dark' }),
         THEME_ROW('ThemePicker'),
-        `<div style="padding: 10px 16px 16px; display: flex; flex-direction: column; gap: 12px;"><div style="display: flex; align-items: center; gap: 12px;"><span style="flex-grow: 1; font-size: 16px;">Card gradients</span>${SEG('grads', 'Card gradients')}</div><div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px;"><sc-for list="{{gradPreview}}" as="k" hint-placeholder-count="4">${meshCard('k', 'height: 60px; border-radius: 14px;', 'height: 100%; box-sizing: border-box; padding: 8px 10px; display: flex; align-items: flex-end; font-size: 11px; font-weight: 600;', '{{k.name}}')}</sc-for></div></div>`
+        `<div style="padding: 10px 16px 16px; display: flex; flex-direction: column; gap: 12px;"><div style="display: flex; align-items: center; gap: 12px;"><span style="flex-grow: 1; display: flex; flex-direction: column; gap: 2px;"><span style="font-size: 16px;">Card gradients</span><sc-if value="{{gradsThemed}}" hint-placeholder-val="{{ false }}"><span style="font-size: 12px; color: {{t.muted}};">With the Lucida theme</span></sc-if></span>${SEG('grads', 'Card gradients')}</div><div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px;"><sc-for list="{{gradPreview}}" as="k" hint-placeholder-count="4">${meshCard('k', 'height: 60px; border-radius: 14px;', 'height: 100%; box-sizing: border-box; padding: 8px 10px; display: flex; align-items: flex-end; font-size: 11px; font-weight: 600;', '{{k.name}}')}</sc-for></div></div>`
       ])}
       ${sGroup('Your AI', [
         sRow('Connected apps', sVal('{{connected}}'), { href: 'WebConnect.dc.html' }),
@@ -3460,13 +3461,14 @@ const luTile = (W, H) => {
       <span style="position: absolute; right: ${px(14)}px; bottom: ${py(16)}px; width: ${fw}px; height: ${fh}px; box-sizing: border-box; padding: ${px(9)}px ${px(12)}px; border-radius: ${px(12)}px; background: #FFFFFF; color: #000000; box-shadow: 0 1px 2px rgba(0,0,0,.04), 0 18px 44px -18px rgba(0,0,0,.18); display: flex; align-items: center; font-size: ${Math.max(8, px(12))}px; font-weight: 600; letter-spacing: -.025em; line-height: 1.2;">Mitochondria make…</span>
       <span style="position: absolute; right: ${px(14)}px; top: ${px(14)}px; width: ${av}px; height: ${av}px; border-radius: 50%; background: {{lu.bg}}; color: #FFFFFF; display: flex; align-items: center; justify-content: center; font-size: ${Math.round(av * 0.42)}px; font-weight: 600;">{{lu.initial}}</span>`;
 };
-const themeTile = (W, H, fs, gap) => `<a href="{{x.href}}" aria-label="{{x.name}}" aria-current="{{x.current}}" class="sc-press" style="width: ${W}px; min-width: 0; display: flex; flex-direction: column; gap: ${gap}px; color: inherit;">
+// (r: the size of the tick or the empty circle beside the name; a phone's narrow tiles get smaller ones)
+const themeTile = (W, H, fs, gap, r = 16) => `<a href="{{x.href}}" aria-label="{{x.name}}" aria-current="{{x.current}}" class="sc-press" style="width: ${W}px; min-width: 0; display: flex; flex-direction: column; gap: ${gap}px; color: inherit;">
       <span style="position: relative; isolation: isolate; width: ${W}px; height: ${H}px; border-radius: ${Math.round(W * 20 / 208)}px; overflow: hidden; box-shadow: {{x.ring}}; display: block;">
         <sc-if value="{{x.lucida}}" hint-placeholder-val="{{ false }}">${luTile(W, H)}</sc-if>
         <sc-if value="{{x.skin}}" hint-placeholder-val="{{ true }}"><span ref="{{x.art}}" data-sc-own aria-hidden="true" style="position: absolute; inset: 0;"></span></sc-if>
         <sc-if value="{{x.pro}}" hint-placeholder-val="{{ true }}"><span style="position: absolute; left: ${Math.round(W * 10 / 208)}px; bottom: ${Math.round(W * 10 / 208)}px; height: 17px; padding: 0 7px; border-radius: 999px; background: #000000; color: #FFFFFF; display: inline-flex; align-items: center; font-size: 10px; font-weight: 700;">Pro</span></sc-if>
       </span>
-      <span style="display: flex; align-items: center; gap: 6px; font-size: ${fs}px; font-weight: 600; white-space: nowrap;"><span style="min-width: 0; overflow: hidden; text-overflow: ellipsis;">{{x.name}}</span><span style="flex-grow: 1;"></span><sc-if value="{{x.on}}" hint-placeholder-val="{{ false }}"><span style="width: 16px; height: 16px; flex-shrink: 0; border-radius: 8px; background: {{t.inv}}; color: {{t.invText}}; display: flex; align-items: center; justify-content: center;">${svg(I.check, 10, 2.6)}</span></sc-if><sc-if value="{{x.off}}" hint-placeholder-val="{{ true }}"><span style="width: 16px; height: 16px; flex-shrink: 0; box-sizing: border-box; border-radius: 8px; border: 1.5px solid {{ringOff}};"></span></sc-if><sc-if value="{{x.locked}}" hint-placeholder-val="{{ false }}"><span aria-label="Pro" style="display: flex; flex-shrink: 0; color: {{t.muted}};">${svg(I.lock, 14, 2)}</span></sc-if></span>
+      <span style="display: flex; align-items: center; gap: ${r < 16 ? 4 : 6}px; font-size: ${fs}px; font-weight: 600; white-space: nowrap;"><span style="min-width: 0; overflow: hidden; text-overflow: ellipsis;">{{x.name}}</span><span style="flex-grow: 1;"></span><sc-if value="{{x.on}}" hint-placeholder-val="{{ false }}"><span style="width: ${r}px; height: ${r}px; flex-shrink: 0; border-radius: ${r / 2}px; background: {{t.inv}}; color: {{t.invText}}; display: flex; align-items: center; justify-content: center;">${svg(I.check, r < 16 ? 9 : 10, 2.6)}</span></sc-if><sc-if value="{{x.off}}" hint-placeholder-val="{{ true }}"><span style="width: ${r}px; height: ${r}px; flex-shrink: 0; box-sizing: border-box; border-radius: ${r / 2}px; border: 1.5px solid {{ringOff}};"></span></sc-if><sc-if value="{{x.locked}}" hint-placeholder-val="{{ false }}"><span aria-label="Pro" style="display: flex; flex-shrink: 0; color: {{t.muted}};">${svg(I.lock, 14, 2)}</span></sc-if></span>
     </a>`;
 // On Free: themes are part of Pro (the Learn upgrade card's words), with Go Pro.
 const themeUpgrade = phone => `<sc-if value="{{locked}}" hint-placeholder-val="{{ false }}"><div style="box-sizing: border-box; padding: ${phone ? '16px' : '18px 22px'}; border-radius: ${phone ? 24 : 20}px; background: {{t.surf}}; display: flex; align-items: center; gap: 16px;"><span style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px;"><span style="display: flex; align-items: center; gap: 8px; font-size: 15px; font-weight: 600;"><span>Themes are part of Pro</span>${PRO_BADGE}</span><span style="font-size: 13px; line-height: 1.4; color: {{t.muted}};">Yearly works out to $4.17 a month. Cancel anytime.</span></span><a href="{{proHref}}" class="sc-press" style="height: 36px; padding: 0 16px; flex-shrink: 0; display: inline-flex; align-items: center; border-radius: 999px; background: {{t.inv}}; color: {{t.invText}}; font-size: 14px; font-weight: 600; white-space: nowrap;">Go Pro</a></div></sc-if>`;
@@ -3484,7 +3486,7 @@ const PHONE_THEMES_H = 1260;
 const phoneThemePicker = phone(`<div style="padding: 64px 20px 34px; display: flex; flex-direction: column; gap: 18px;">
   <div style="display: flex; align-items: center; gap: 12px;">${roundBtn('back', 'Back', 'PhoneSettings.dc.html')}<div style="flex-grow: 1; font-size: 17px; font-weight: 600; text-align: center;">Theme</div><div style="width: 44px;"></div></div>
   <div style="font-size: 14px; line-height: 1.45; color: {{t.muted}};">Changes your deck covers, flashcards, study background, and profile picture.</div>
-  <div role="list" aria-label="Themes" style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px 10px;"><sc-for list="{{themes}}" as="x" hint-placeholder-count="15">${themeTile(110, 146, 12, 7)}</sc-for></div>
+  <div role="list" aria-label="Themes" style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px 10px;"><sc-for list="{{themes}}" as="x" hint-placeholder-count="15">${themeTile(110, 146, 11.5, 7, 14)}</sc-for></div>
   ${themeUpgrade(true)}${themeOnProfile(true)}
 </div>`, '', '', PHONE_THEMES_H);
 const themePickerLogic = phone => `
@@ -3716,7 +3718,7 @@ const phoneTodayNew = phone(`<div style="padding: 64px 20px 120px; display: flex
   </div>
 </div>`, 'Today');
 const phoneDeckEmpty = phone(`<div style="height: 100%; box-sizing: border-box; padding: 0 0 120px; display: flex; flex-direction: column;">
-  <div style="position: relative; height: 232px; flex-shrink: 0; overflow: hidden;">
+  <div style="position: relative; height: 232px; flex-shrink: 0; overflow: hidden; container-type: inline-size;">
     ${meshCard('cover', 'position: absolute; inset: 0;', 'height: 100%;', '', 'div', '', true)}${coverPicture}
     <div style="position: absolute; inset: 0; box-sizing: border-box; padding: 54px 16px 18px 20px; display: flex; flex-direction: column; justify-content: space-between; color: {{cover.ink}};">
       <div style="display: flex; justify-content: space-between;">${coverRound('back', 'Back', 'PhoneToday.dc.html')}<div style="display: flex; gap: 8px;">${coverRound('gear', 'Deck settings', '', '{{openSettings}}')}${coverRound('plus', 'New card', 'PhoneEditor.dc.html')}</div></div>
@@ -3747,11 +3749,11 @@ const emptyLogic = (cover = '') => `renderVals() { ${T}${DB_JS}
   // A new deck's picture shows on its empty page too, with white words over it.
   const pic = dk.cover.image || '', photo = pic !== 'mock' ? pic : '';
   // With a theme on (Pro), the theme draws the cover, and letters the deck's name.
-  const S = this.skin(db), C = S && !pic && dk.name ? S.coverOf({ ...dk, round: dk.cover.round }, 'wide', 34) : null;
+  const S = this.skin(db), C = S && !pic && dk.name ? S.coverOf({ ...dk, round: dk.cover.round }, 'head', 34) : null;
   return { ${MESH_VALS('Iris')} t, ...chrome, nav: db.mock ? { today: ${cover ? "'64'" : "''"} } : chrome.nav, art: this.mesh('Iris'), art2: this.mesh('Mint'), art3: this.mesh('Apricot'), noop: () => {},
     date: db.today().date, deckName: dk.name, cover: { ...this.gen(dk.seed + (dk.cover.round ? ' #' + dk.cover.round : ''), dk.cover.style), ...(photo ? { ink: '#FFFFFF', shadow: '0 1px 14px rgba(0,0,0,.45)' } : {}),
       ...(C ? { base: C.base, ink: C.ink, shadow: 'none', plain: false, skin: true, art: C.art } : { plain: true, skin: false, art: null }) },
-    coverTitle: C ? C.titleAt(34) : '', coverTitleS: C ? C.titleAt(32) : '',
+    coverTitle: C ? C.titleAt(34) : '', coverTitleS: C ? C.titleHead(32, dk.name) : '',
     coverIsImage: pic === 'mock', coverHasPhoto: !!photo, coverPhoto: photo,
     newCardHref: db.mock ? 'WebCardsScreenNew.dc.html' : dk.newCardHref, importHref: db.href('import', dk.id), connectHref: db.href('connect'),
     openSettings: () => { if (!db.mock) db.act.go(dk.settingsHref); } }; }`;

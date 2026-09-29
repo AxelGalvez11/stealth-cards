@@ -1,4 +1,4 @@
-import { A, R, f, di, mo, motifName, lay, scrim, icon, face, banner, BANNER_X } from './kit.js';
+import { A, R, f, di, mo, motifName, lay, scrim, icon, face, banner, bannerSpot, headSpot } from './kit.js';
 
 // Terminal: a modern terminal app (Ghostty, Warp, a refined iTerm). Graphite glass, soft color glow, crisp mono type.
 const TF = "'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace";
@@ -39,7 +39,7 @@ function win(P, k, cmdw, x, y, ww, wh) {
 }
 
 export default {
-  key: 'terminal', board: 'Terminal', name: 'Terminal', dark: true, fonts: 'family=JetBrains+Mono:ital,wght@0,400;0,500;0,600;0,700;1,400&',
+  key: 'terminal', board: 'Terminal', name: 'Terminal', dark: true, headArt: true, cw: 0.58, fonts: 'family=JetBrains+Mono:ital,wght@0,400;0,500;0,600;0,700;1,400&',
   line: 'A modern terminal: graphite glass, a soft color glow, and crisp mono type.',
   bg(w, h) {
     const L = lay(w, h);
@@ -79,10 +79,11 @@ export default {
       shadow: '0 1px 2px rgba(0,0,0,.3), 0 14px 30px -14px rgba(0,0,0,.7)',
       draw() {
         let ww, wh, x, y;
-        if (banner(o)) { ww = R(h * 0.9); wh = R(h * 0.52); x = R(w * BANNER_X - ww / 2); y = R(h * 0.2); }
+        if (o.top) { const HS = headSpot(o); wh = R(HS.s * 0.8); ww = R(wh * 1.55); x = R(w - ww - w * 0.045); y = R(HS.y + (HS.s - wh) / 2); }
+        else if (banner(o)) { const B = bannerSpot(o); ww = R(B.s * 1.5); wh = R(B.s * 0.87); x = R(B.cx - ww / 2); y = R(B.cy - wh / 2); }
         else if (wide) { ww = R(w * 0.49); wh = R(h * 0.43); x = w - ww - R(w * 0.062); y = R(h * 0.21); }
         else { ww = R(w * (tiny ? 0.7 : 0.68)); wh = R(ww * (tiny ? 0.8 : 0.75)); x = R((w - ww) / 2); y = tiny ? R((h - wh) * 0.4) : Math.max(R(h * 0.19), 40); }
-        const gx = banner(o) ? R(BANNER_X * 100) + '%' : wide ? '76%' : '50%', gy = wide ? '42%' : tiny ? '45%' : '38%';
+        const BS = banner(o) && bannerSpot(o), gx = o.top ? '78%' : BS ? R((BS.cx / w) * 100) + '%' : wide ? '76%' : '50%', gy = o.top ? '72%' : BS ? R((BS.cy / h) * 100) + '%' : wide ? '42%' : tiny ? '45%' : '38%';
         const light = `radial-gradient(circle at ${gx} ${gy}, ${rgba(P.ac, 0.5)} 0, ${rgba(P.ac, 0.3)} ${wide ? 14 : 18}%, ${rgba(P.ac, 0.1)} ${wide ? 32 : 40}%, ${rgba(P.ac, 0)} ${wide ? 54 : 66}%), radial-gradient(ellipse at 0% 0%, ${rgba(P.a2, 0.28)}, ${rgba(P.a2, 0.1)} 30%, ${rgba(P.a2, 0)} 60%)`;
         const pic = sq ? A(`left: 22%; top: 22%; width: 56%; filter: drop-shadow(0 0 3px ${rgba(P.ac, 0.6)});`, icon(k, P.ac, 3, '', TF)) : win(P, k, cmdOf(k, d), x, y, ww, wh);
         return A(`inset: 0; background: ${light}, linear-gradient(155deg, ${P.top} 0%, ${P.base} 50%, ${P.deep} 100%);`) +

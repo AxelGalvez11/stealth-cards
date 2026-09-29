@@ -1,4 +1,4 @@
-import { A, V, R, f, di, mo, motifName, lay, focal, scrim, icon, sparkle, star5, face, banner, BANNER_X } from './kit.js';
+import { A, V, R, f, di, mo, motifName, lay, focal, scrim, icon, sparkle, star5, face, banner, bannerSpot } from './kit.js';
 
 // Dreamcore: soft pastel dreams, with clouds, a checkerboard floor, and a door to nowhere.
 const DR_F = "Quicksand, 'Varela Round', system-ui, sans-serif";
@@ -19,7 +19,7 @@ const DR_C = [
   { name: 'Cloud nine', sky: 'linear-gradient(180deg, #8FCBFF 0%, #CFE8FF 55%, #F2F9FF 100%)', floor: '#FFF1A8', obj: 'star' },
 ];
 export default {
-  key: 'dreamcore', board: 'Dreamcore', name: 'Dreamcore', dark: false, fonts: 'family=Quicksand:wght@500;600;700&',
+  key: 'dreamcore', board: 'Dreamcore', name: 'Dreamcore', dark: false, headArt: true, fonts: 'family=Quicksand:wght@500;600;700&',
   line: 'Soft pastel dreams: clouds, a checkerboard floor, and a door to nowhere.',
   bg(w, h) {
     const L = lay(w, h), hz = { wide: 0.68, tall: 0.84, mid: 0.72, tiny: 0.72 }[L];
@@ -45,10 +45,11 @@ export default {
       shadow: '0 0 0 1px rgba(255,255,255,.7), 0 0 28px rgba(255,190,230,.6)',
       draw() {
         const obj = { door: () => door(F.x + F.s * 0.3, F.y + F.s * 0.02, F.s * 0.4, false), cloud: () => cloud(F.x, F.y + F.s * 0.2, F.s, 0, false), moon: () => moon(F.x + F.s * 0.2, F.y + F.s * 0.05, F.s * 0.56), stairs: () => stairs(F.x + F.s * 0.12, F.y + F.s * 0.04, F.s * 0.72), rainbow: () => rainbow(F.x, F.y + F.s * 0.16, F.s), star: () => A(`left: ${R(F.x + F.s * 0.16)}px; top: ${R(F.y + F.s * 0.04)}px; width: ${R(F.s * 0.68)}px; filter: drop-shadow(0 0 ${R(F.s * 0.08)}px rgba(255,246,190,.95));`, V('0 0 40 40', `<path d="${star5(20, 20, 19, 0.5)}" fill="#FFF3A6" stroke="#FFFFFF" stroke-width="1.5" stroke-linejoin="round"/>`)) }[P.obj]();
-        const ic = tiny ? '' : A(`left: ${R(banner(o) ? w * BANNER_X - h * 0.5 : wide ? w * 0.4 : w * 0.66)}px; top: ${R(wide ? h * 0.3 : h * 0.34)}px; width: ${R(wide ? h * 0.18 : w * 0.24)}px; filter: drop-shadow(0 1px 2px rgba(106,74,142,.55)) drop-shadow(0 0 ${R(w * 0.02)}px rgba(255,255,255,.95));`, icon(k, '#FFFFFF', 3, '', DR_F));
+        const BS = banner(o) && bannerSpot(o);
+        const ic = tiny ? '' : A(`left: ${R(BS ? BS.cx - BS.s * 0.95 : wide ? w * 0.4 : w * 0.66)}px; top: ${R(BS ? BS.cy - BS.s * 0.3 : wide ? h * 0.3 : h * 0.34)}px; width: ${R(wide ? h * 0.18 : w * 0.24)}px; filter: drop-shadow(0 1px 2px rgba(106,74,142,.55)) drop-shadow(0 0 ${R(w * 0.02)}px rgba(255,255,255,.95));`, icon(k, '#FFFFFF', 3, '', DR_F));
         // on a banner, clouds and sparkles keep the size they have on a Library card
         const u = banner(o) ? h * 1.49 : w;
-        return `<span style="position: absolute; inset: 0; background: ${P.sky};"></span>${checker('60%', Math.max(10, u * 0.12), Math.max(90, h * 0.8), P.floor)}${tiny ? '' : cloud(-u * 0.1, h * 0.04, u * 0.5, 1, false) + cloud(w - u * 0.4, h * 0.46, u * 0.46, 3, false)}${obj}${ic}${tiny ? '' : sparkle(u * 0.08, h * 0.42, u * 0.05, '#FFFFFF', 0, false) + sparkle(banner(o) ? w * 0.5 : w * 0.52, h * 0.14, u * 0.045, '#FFFFFF', 0, false)}${scrim('255,255,255', 0.7, 50)}`;
+        return `<span style="position: absolute; inset: 0; background: ${P.sky};"></span>${checker('60%', Math.max(10, u * 0.12), Math.max(90, h * 0.8), P.floor)}${tiny ? '' : cloud(-u * 0.1, h * 0.04, u * 0.5, 1, false) + cloud(w - u * 0.4, h * 0.46, u * 0.46, 3, false)}${obj}${ic}${tiny ? '' : sparkle(u * 0.08, h * 0.42, u * 0.05, '#FFFFFF', 0, false) + sparkle(BS ? (o.head ? BS.cx + BS.s * 0.8 : w * 0.42) : w * 0.52, h * 0.14, u * 0.045, '#FFFFFF', 0, false)}${scrim('255,255,255', 0.7, 50)}`;
       },
     };
   },

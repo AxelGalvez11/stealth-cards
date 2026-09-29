@@ -571,7 +571,7 @@ renderVals() {
   // A header image replaces the gradient: your photo in the app, a placeholder on the canvas.
   const isImage = !!dk.cover.image, photo = isImage && dk.cover.image !== 'mock' ? dk.cover.image : '';
   // With a theme on (Pro), the theme draws the header instead of the gradient, and letters the deck's name.
-  const S = this.skin(db), C = S && !isImage ? S.coverOf(dk, 'wide', 34) : null;
+  const S = this.skin(db), C = S && !isImage ? S.coverOf(dk, 'head', 34) : null;
   const cover = C ? { ...gradient, base: C.base, ink: C.ink, shadow: 'none', plain: false, skin: true, art: C.art } : { ...gradient, plain: true, skin: false, art: null };
   const settingsOpen = cs.deckSettings == null ? !!this.props.settingsOpen : cs.deckSettings;
   const studyBg = (dk, dark, dim, S, phone) => {
@@ -612,7 +612,7 @@ renderVals() {
     grain: String(this.props.grain ?? 0.7),
     cover, coverIsGradient: !isImage, coverIsImage: isImage && !photo, coverHasPhoto: !!photo, coverPhoto: photo, coverHasImage: isImage,
     coverInk: photo ? '#FFFFFF' : isImage ? t.text : cover.ink, coverShadow: photo ? '0 1px 14px rgba(0,0,0,.45)' : isImage ? 'none' : cover.shadow,
-    coverTitle: C ? C.titleAt(34) : '', coverTitleS: C ? C.titleAt(32) : '', coverPlain: !C, useCoverLabel: S ? 'Use theme' : 'Use gradient',
+    coverTitle: C ? C.titleAt(34) : '', coverTitleS: C ? C.titleHead(32, dk.name) : '', coverPlain: !C, useCoverLabel: S ? 'Use theme' : 'Use gradient',
     deckName: cs.deckName == null ? dk.name : cs.deckName,
     setDeckName: e => { const v = e && e.target ? e.target.value : cs.deckName; this.setState({ deckName: v }); up({ name: v }, true); },
     nextCover: () => up({ cover: { round: (dk.cover.round || 0) + 1, image: null } }),

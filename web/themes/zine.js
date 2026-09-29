@@ -1,4 +1,4 @@
-import { A, V, R, f, di, mo, motifName, lay, lineOf, face, grain, banner, BANNER_X } from './kit.js';
+import { A, V, R, f, di, mo, motifName, lay, lineOf, face, grain, banner, bannerSpot, headSpot } from './kit.js';
 
 // Zine collage: a photocopied DIY zine. Off-white copy paper, black toner and a few riso-bright spot colors, cut and
 // pasted with torn edges, masking tape, halftone dots, ransom-note letters, staples and marker scribbles.
@@ -175,7 +175,7 @@ const COMP = [
 const masthead = (x, y, size, seed) => A(`left: ${R(x)}px; top: ${R(y)}px; display: flex; align-items: center; filter: drop-shadow(1px 1.5px 0 rgba(0,0,0,.2));`, ransom('STUDY', size, seed, [0, 1, 2, 4, 3]));
 
 export default {
-  key: 'zine', board: 'Zine', name: 'Zine collage', dark: false,
+  key: 'zine', board: 'Zine', name: 'Zine collage', dark: false, headArt: true,
   fonts: 'family=Special+Elite&family=Courier+Prime:wght@400;700&family=Archivo:wdth,wght@75..100,700..900&family=Abril+Fatface&family=Permanent+Marker&',
   line: 'A photocopied DIY zine: torn paper, masking tape, halftone dots, and ransom-note letters.',
   bg(w, h) {
@@ -253,7 +253,8 @@ export default {
   },
   cover(d, o) {
     const i = di(d), P = ZC[i], w = o.w, h = o.h, wide = o.shape === 'wide', sq = o.shape === 'square', tiny = w < 100;
-    const B = banner(o) ? { x: w * BANNER_X - h * 0.6, y: h * 0.12, w: h * 1.2, h: h * 0.78 } : wide ? { x: w * 0.49, y: h * 0.16, w: w * 0.51, h: h * 0.52 } : sq ? { x: 0, y: 0, w, h } : { x: 0, y: 0, w, h: h * 0.64 };
+    const HS = o.top && headSpot(o);
+    const B = HS ? { x: w - HS.s * 1.3 - w * 0.03, y: HS.y - HS.s * 0.04, w: HS.s * 1.3, h: HS.s * 1.02 } : banner(o) ? (S => ({ x: S.cx - S.s, y: S.cy - S.s * 0.65, w: S.s * 2, h: S.s * 1.3 }))(bannerSpot(o)) : wide ? { x: w * 0.49, y: h * 0.16, w: w * 0.51, h: h * 0.52 } : sq ? { x: 0, y: 0, w, h } : { x: 0, y: 0, w, h: h * 0.64 };
     const S = Math.min(B.w, B.h);
     const c = { B, S, w, h, wide, tiny, sq, X: u => B.x + u * B.w, Y: v => B.y + v * B.h, seed: i * 97 + R(w), amp: tiny ? 1.4 : Math.max(1.6, S * 0.024), dot: Math.max(3, S * 0.055), k: mo(d) };
     c.lift = tiny ? 0.5 : 1;

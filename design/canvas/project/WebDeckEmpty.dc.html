@@ -270,11 +270,11 @@ renderVals() { const t = this.theme(!!this.props.dark, !!this.props.dim);const d
   // A new deck's picture shows on its empty page too, with white words over it.
   const pic = dk.cover.image || '', photo = pic !== 'mock' ? pic : '';
   // With a theme on (Pro), the theme draws the cover, and letters the deck's name.
-  const S = this.skin(db), C = S && !pic && dk.name ? S.coverOf({ ...dk, round: dk.cover.round }, 'wide', 34) : null;
+  const S = this.skin(db), C = S && !pic && dk.name ? S.coverOf({ ...dk, round: dk.cover.round }, 'head', 34) : null;
   return { hero: this.mesh(this.props.gradient ?? 'Iris'), grain: String(this.props.grain ?? 0.7), t, ...chrome, nav: db.mock ? { today: '64' } : chrome.nav, art: this.mesh('Iris'), art2: this.mesh('Mint'), art3: this.mesh('Apricot'), noop: () => {},
     date: db.today().date, deckName: dk.name, cover: { ...this.gen(dk.seed + (dk.cover.round ? ' #' + dk.cover.round : ''), dk.cover.style), ...(photo ? { ink: '#FFFFFF', shadow: '0 1px 14px rgba(0,0,0,.45)' } : {}),
       ...(C ? { base: C.base, ink: C.ink, shadow: 'none', plain: false, skin: true, art: C.art } : { plain: true, skin: false, art: null }) },
-    coverTitle: C ? C.titleAt(34) : '', coverTitleS: C ? C.titleAt(32) : '',
+    coverTitle: C ? C.titleAt(34) : '', coverTitleS: C ? C.titleHead(32, dk.name) : '',
     coverIsImage: pic === 'mock', coverHasPhoto: !!photo, coverPhoto: photo,
     newCardHref: db.mock ? 'WebCardsScreenNew.dc.html' : dk.newCardHref, importHref: db.href('import', dk.id), connectHref: db.href('connect'),
     openSettings: () => { if (!db.mock) db.act.go(dk.settingsHref); } }; }

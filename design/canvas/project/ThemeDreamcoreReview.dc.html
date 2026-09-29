@@ -19,6 +19,7 @@ a{color:inherit;text-decoration:none}a:hover{opacity:.8}
 @keyframes sk-float{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
 @keyframes sk-drift{0%{transform:translateX(0)}100%{transform:translateX(20px)}}
 @keyframes sk-twinkle{0%,100%{opacity:.65}50%{opacity:1}}
+.sk-still *{animation:none!important}
 @media (prefers-reduced-motion:reduce){[data-sc-own] *{animation:none!important}}.sc-wave{outline:0;-webkit-tap-highlight-color:transparent}.sc-wave:focus-visible{box-shadow:0 0 0 2px currentColor;border-radius:8px}.sc-wave span{transition:height .35s cubic-bezier(.2,.8,.2,1)}button:has(.sc-hold:active,.sc-wave:active){transform:none}@keyframes scRecDot{50%{opacity:.25}}.sc-rec-dot{animation:scRecDot 1.2s ease-in-out infinite}@keyframes scPlayed{from{clip-path:inset(0 100% 0 0)}to{clip-path:inset(0 0 0 0)}}@media (prefers-reduced-motion:reduce){.sc-wave span{transition:none}.sc-rec-dot{animation:none}}
 @keyframes scPop{0%{transform:scale(.6) translateY(4px);opacity:0}60%{transform:scale(1.08);opacity:1}100%{transform:none;opacity:1}}
 @keyframes scFadeA{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
@@ -307,12 +308,18 @@ const deckLook = d => ({ ...d, v: d.v != null ? d.v : variant(d), m: d.m || subj
 const di = d => (d.v != null ? d.v : variant(d));
 const mo = d => d.m || subject(d);
 const motifName = k => (k[0] === '#' ? 'Letter ' + k.slice(1) : k === 'words' ? 'Words' : MOTIF[KEYS.indexOf(k)] || k);
-// A long, low cover (a deck page's header, New deck's preview) is a banner: its picture sits a little right of the
-// middle, clear of the buttons in its corners.
+// A long, low cover (a deck page's header on the web, New deck's preview) is a banner.
 const banner = o => o.shape === 'wide' && o.w / o.h > 2.2;
-const BANNER_X = 0.64;
+// Where a banner's picture goes: its middle (cx, cy) and size (s). A deck page's header (o.head) has buttons in its top
+// corners and along its bottom right (Play live, Learn, New card, Flashcards: about half its width), so its picture
+// sits a little left of the middle, a little high; New deck's preview has its buttons top right and the name bottom
+// left, so its picture sits bottom right.
+const bannerSpot = o => (o.head ? { cx: o.w * 0.43, cy: o.h * 0.38, s: o.h * 0.58 } : { cx: o.w * 0.78, cy: o.h * 0.64, s: o.h * 0.52 });
+// A phone deck page's header has its buttons along the top (o.top: how tall that row is), so its picture sits in the
+// lower right, under them.
+const headSpot = o => { const rem = o.h - o.top, s = R(rem * 0.9); return { s, x: R(o.w - s - o.w * 0.045), y: R(o.top + (rem - s) / 2) }; };
 // the main picture spot on a cover: the right side of the wide Library card, the upper middle of portrait covers
-const focal = o => (banner(o) ? { s: R(o.h * 0.5), x: R(o.w * BANNER_X - o.h * 0.25), y: R(o.h * 0.25) } : o.shape === 'wide' ? { s: R(o.h * 0.5), x: R(o.w - o.h * 0.5 - o.w * 0.06), y: R(o.h * 0.17) } : { s: R(o.w * 0.62), x: R(o.w * 0.19), y: R(o.h * 0.08) });
+const focal = o => (o.top ? headSpot(o) : banner(o) ? (B => { const s = R(B.s * 0.83); return { s, x: R(B.cx - s / 2), y: R(B.cy - s / 2) }; })(bannerSpot(o)) : o.shape === 'wide' ? { s: R(o.h * 0.5), x: R(o.w - o.h * 0.5 - o.w * 0.06), y: R(o.h * 0.17) } : { s: R(o.w * 0.62), x: R(o.w * 0.19), y: R(o.h * 0.08) });
 
 // ---------- subject pictures (one per deck) ----------
 const LINE = {
@@ -375,6 +382,7 @@ const KIT_CSS = `.sk-grain{position:absolute;inset:0;pointer-events:none;mix-ble
 @keyframes sk-float{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
 @keyframes sk-drift{0%{transform:translateX(0)}100%{transform:translateX(20px)}}
 @keyframes sk-twinkle{0%,100%{opacity:.65}50%{opacity:1}}
+.sk-still *{animation:none!important}
 @media (prefers-reduced-motion:reduce){[data-sc-own] *{animation:none!important}}`;
 
 // ---------- what the app's screens ask a theme ----------
@@ -393,15 +401,19 @@ function make(T) {
   // its size changes, and when the element's size changes (a window made bigger).
   const draw = (part, w, h, a) => {
     if (part === 'bg') {
-      const L = lay(w, h);
+      // A small one (a Background tile in settings) is the same picture made small, and holds still.
+      const L = w / h > 1.25 ? 'wide' : h / w > 1.5 ? 'tall' : 'mid', small = w < 300;
       const veil = a.veil ? A(`inset: 0; background: linear-gradient(180deg, rgba(${T.dark ? '0,0,0' : '255,255,255'},.5) 0, rgba(${T.dark ? '0,0,0' : '255,255,255'},0) ${a.veil === 'phone' ? 130 : 120}px, rgba(${T.dark ? '0,0,0' : '255,255,255'},0) calc(100% - ${a.veil === 'phone' ? 150 : 110}px), rgba(${T.dark ? '0,0,0' : '255,255,255'},.45) 100%);`) : '';
-      if (L === 'tiny') return T.bg(w, h) + veil;
       const [dw, dh] = DESIGN[L], k = Math.max(w / dw, h / dh);
-      return `<span style="position: absolute; left: 50%; top: 50%; width: ${dw}px; height: ${dh}px; overflow: hidden; transform: translate(-50%, -50%) scale(${k.toFixed(4)});">${T.bg(dw, dh)}</span>` + veil;
+      return `<span${small ? ' class="sk-still"' : ''} style="position: absolute; left: 50%; top: 50%; width: ${dw}px; height: ${dh}px; overflow: hidden; transform: translate(-50%, -50%) scale(${k.toFixed(4)});">${T.bg(dw, dh)}</span>` + veil;
     }
     if (part === 'deco') return T.face(w, h, { q: '', a: '', side: a.side || 'front', ...(FACE_AT[a.at] || FACE_AT.web), w, h }).deco();
     if (part === 'cover') {
-      const C = T.cover(deckLook(a.d || {}), { w, h, r: a.r ?? 20, big: w > 200, shape: a.shape || 'wide', fs: a.fs });
+      // 'head': a deck page's header. Long and low on the web (a banner); on a phone, with its buttons along the top.
+      const head = a.shape === 'head', o = { w, h, r: a.r ?? 20, big: w > 200, shape: head ? 'wide' : a.shape || 'wide', fs: a.fs };
+      if (head && w / h <= 2.2) o.top = R(h * 0.45);
+      else if (head) o.head = true;
+      const C = T.cover(deckLook(a.d || {}), o);
       return `<span${C.cls ? ` class="${C.cls}"` : ''} style="position: absolute; inset: 0; background-color: ${C.bg};"></span>${C.draw()}`;
     }
     if (part === 'avatar') return a.photo ? (T.frame ? T.frame(w) : '') : T.avatar(w, initial(a.ch));
@@ -452,7 +464,7 @@ function make(T) {
     // A deck's cover, for a screen's holes: its base color, words (light or dark ink, with the chips and buttons that
     // go with them), the lettering of its name (`size`: the name's size in px), its shadow, and a ref for its picture.
     coverOf(d, shape = 'wide', size = 19, r) {
-      const dl = deckLook(d), C = T.cover(dl, { w: shape === 'wide' ? 356 : shape === 'square' ? 48 : 173, h: shape === 'wide' ? 240 : shape === 'square' ? 48 : 206, r: r ?? 20, big: shape !== 'square', shape, fs: size });
+      const sh = shape === 'head' ? 'wide' : shape, dl = deckLook(d), C = T.cover(dl, { w: sh === 'wide' ? 356 : sh === 'square' ? 48 : 173, h: sh === 'wide' ? 240 : sh === 'square' ? 48 : 206, r: r ?? 20, big: sh !== 'square', shape: sh, fs: size });
       // (a ref for this cover's picture at another shape: a Library row's thumbnail)
       const art = (sh, rr) => el => paint(el, 'cover', { d: { seed: dl.seed, name: dl.name, round: dl.round, tags: dl.tags, v: dl.v, m: dl.m }, shape: sh, r: rr, fs: size });
       const light = C.ink !== 'dark';
@@ -460,7 +472,19 @@ function make(T) {
         glass: light ? 'rgba(255,255,255,.18)' : 'rgba(0,0,0,.07)', glassLine: light ? 'rgba(255,255,255,.3)' : 'rgba(0,0,0,.08)',
         btnBg: light ? '#FFFFFF' : '#000000', btnFg: light ? '#000000' : '#FFFFFF', shadow: C.shadow || 'none', textShadow: 'none',
         title: `font-size: ${R(size * (C.ts || 1))}px; ${C.title || ''}`, name: C.name || '',
-        titleAt: n => `font-size: ${R(n * (C.ts || 1))}px; ${C.title || ''}`, art: art(shape, r), artAs: art };
+        titleAt: n => `font-size: ${R(n * (C.ts || 1))}px; ${C.title || ''}`,
+        // A phone deck page's header (a size container): the name on one line, smaller when it's long (down to 60%).
+        // With a theme whose picture sits right of the name there (T.headArt), a long name takes two lines beside it
+        // instead. T.cw: how wide the theme's letters run, as a share of their size.
+        titleHead: (n, name) => {
+          const big = R(n * (C.ts || 1)), cw = T.cw || 0.54, s = String(name || ''), len = Math.max(1, s.length), cut = T.headArt ? 192 : 40, W = 390 - cut;
+          const word = Math.max(1, ...s.split(/\s+/).map(x => x.length)), one = W / (len * cw);
+          if (!T.headArt || one >= big * 0.82) return `font-size: ${big}px; font-size: clamp(${R(big * 0.6)}px, calc((100cqw - ${cut}px) / ${(len * cw).toFixed(2)}), ${big}px); max-width: calc(100cqw - ${cut}px); ${C.title || ''}`;
+          // (its longest word has to fit a line, with room for wide letters and outlines)
+          const two = Math.max(R(big * 0.6), Math.min(big, R((1.9 * W) / (len * cw)), R(W / (word * cw * 1.15))));
+          return `font-size: ${two}px; max-width: calc(100cqw - ${cut}px); white-space: normal; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; ${C.title || ''}`;
+        },
+        art: art(shape, r), artAs: art };
     },
     // Your profile picture: the theme's circle with your initial, or a ring around your photo.
     me: (ch, photo) => el => paint(el, 'avatar', { ch, photo: !!photo }),
@@ -492,7 +516,7 @@ const DR_C = [
   { name: 'Cloud nine', sky: 'linear-gradient(180deg, #8FCBFF 0%, #CFE8FF 55%, #F2F9FF 100%)', floor: '#FFF1A8', obj: 'star' },
 ];
 const __theme = {
-  key: 'dreamcore', board: 'Dreamcore', name: 'Dreamcore', dark: false, fonts: 'family=Quicksand:wght@500;600;700&',
+  key: 'dreamcore', board: 'Dreamcore', name: 'Dreamcore', dark: false, headArt: true, fonts: 'family=Quicksand:wght@500;600;700&',
   line: 'Soft pastel dreams: clouds, a checkerboard floor, and a door to nowhere.',
   bg(w, h) {
     const L = lay(w, h), hz = { wide: 0.68, tall: 0.84, mid: 0.72, tiny: 0.72 }[L];
@@ -518,10 +542,11 @@ const __theme = {
       shadow: '0 0 0 1px rgba(255,255,255,.7), 0 0 28px rgba(255,190,230,.6)',
       draw() {
         const obj = { door: () => door(F.x + F.s * 0.3, F.y + F.s * 0.02, F.s * 0.4, false), cloud: () => cloud(F.x, F.y + F.s * 0.2, F.s, 0, false), moon: () => moon(F.x + F.s * 0.2, F.y + F.s * 0.05, F.s * 0.56), stairs: () => stairs(F.x + F.s * 0.12, F.y + F.s * 0.04, F.s * 0.72), rainbow: () => rainbow(F.x, F.y + F.s * 0.16, F.s), star: () => A(`left: ${R(F.x + F.s * 0.16)}px; top: ${R(F.y + F.s * 0.04)}px; width: ${R(F.s * 0.68)}px; filter: drop-shadow(0 0 ${R(F.s * 0.08)}px rgba(255,246,190,.95));`, V('0 0 40 40', `<path d="${star5(20, 20, 19, 0.5)}" fill="#FFF3A6" stroke="#FFFFFF" stroke-width="1.5" stroke-linejoin="round"/>`)) }[P.obj]();
-        const ic = tiny ? '' : A(`left: ${R(banner(o) ? w * BANNER_X - h * 0.5 : wide ? w * 0.4 : w * 0.66)}px; top: ${R(wide ? h * 0.3 : h * 0.34)}px; width: ${R(wide ? h * 0.18 : w * 0.24)}px; filter: drop-shadow(0 1px 2px rgba(106,74,142,.55)) drop-shadow(0 0 ${R(w * 0.02)}px rgba(255,255,255,.95));`, icon(k, '#FFFFFF', 3, '', DR_F));
+        const BS = banner(o) && bannerSpot(o);
+        const ic = tiny ? '' : A(`left: ${R(BS ? BS.cx - BS.s * 0.95 : wide ? w * 0.4 : w * 0.66)}px; top: ${R(BS ? BS.cy - BS.s * 0.3 : wide ? h * 0.3 : h * 0.34)}px; width: ${R(wide ? h * 0.18 : w * 0.24)}px; filter: drop-shadow(0 1px 2px rgba(106,74,142,.55)) drop-shadow(0 0 ${R(w * 0.02)}px rgba(255,255,255,.95));`, icon(k, '#FFFFFF', 3, '', DR_F));
         // on a banner, clouds and sparkles keep the size they have on a Library card
         const u = banner(o) ? h * 1.49 : w;
-        return `<span style="position: absolute; inset: 0; background: ${P.sky};"></span>${checker('60%', Math.max(10, u * 0.12), Math.max(90, h * 0.8), P.floor)}${tiny ? '' : cloud(-u * 0.1, h * 0.04, u * 0.5, 1, false) + cloud(w - u * 0.4, h * 0.46, u * 0.46, 3, false)}${obj}${ic}${tiny ? '' : sparkle(u * 0.08, h * 0.42, u * 0.05, '#FFFFFF', 0, false) + sparkle(banner(o) ? w * 0.5 : w * 0.52, h * 0.14, u * 0.045, '#FFFFFF', 0, false)}${scrim('255,255,255', 0.7, 50)}`;
+        return `<span style="position: absolute; inset: 0; background: ${P.sky};"></span>${checker('60%', Math.max(10, u * 0.12), Math.max(90, h * 0.8), P.floor)}${tiny ? '' : cloud(-u * 0.1, h * 0.04, u * 0.5, 1, false) + cloud(w - u * 0.4, h * 0.46, u * 0.46, 3, false)}${obj}${ic}${tiny ? '' : sparkle(u * 0.08, h * 0.42, u * 0.05, '#FFFFFF', 0, false) + sparkle(BS ? (o.head ? BS.cx + BS.s * 0.8 : w * 0.42) : w * 0.52, h * 0.14, u * 0.045, '#FFFFFF', 0, false)}${scrim('255,255,255', 0.7, 50)}`;
       },
     };
   },

@@ -1,4 +1,4 @@
-import { A, R, f, di, mo, motifName, lay, icon, face, grain, banner, BANNER_X } from './kit.js';
+import { A, R, f, di, mo, motifName, lay, icon, face, grain, banner, bannerSpot, headSpot } from './kit.js';
 
 // Risograph
 // Two or three spot inks on off-white paper. Inks overprint (multiply), one plate sits a little out of register,
@@ -37,7 +37,7 @@ const print = (inks, { g = 0.7, sp = 1, c = PAPER } = {}) => `<span style="posit
 const mottle = spots => A(`inset: 0; background: ${spots.map(([x, y, rx, ry, a]) => `radial-gradient(ellipse ${rx}% ${ry}% at ${x}% ${y}%, rgba(243,238,227,${a}), rgba(243,238,227,0))`).join(', ')};`);
 
 export default {
-  key: 'riso', board: 'Riso', name: 'Risograph', dark: false,
+  key: 'riso', board: 'Riso', name: 'Risograph', dark: false, headArt: true,
   fonts: 'family=Bricolage+Grotesque:opsz,wght@12..96,400..800&family=Instrument+Sans:wght@400..700&',
   line: 'Spot inks on off-white paper: overprinted shapes, halftone dots, and plates a little out of register.',
   css: `.riso-speck{position:absolute;inset:0;pointer-events:none;background-image:radial-gradient(circle at 23% 31%,${PAPER} 0 .45px,transparent 1px),radial-gradient(circle at 71% 64%,${PAPER} 0 .4px,transparent .9px),radial-gradient(circle at 42% 83%,${PAPER} 0 .6px,transparent 1.15px),radial-gradient(circle at 88% 12%,${PAPER} 0 .35px,transparent .85px),radial-gradient(circle at 12% 70%,${PAPER} 0 .5px,transparent 1.05px);background-size:17px 19px,23px 29px,31px 37px,41px 13px,47px 53px}`,
@@ -85,7 +85,8 @@ export default {
       shadow: '0 0 0 1px rgba(90,70,40,.08), 0 1px 2px rgba(90,70,40,.16), 0 14px 26px -16px rgba(90,60,30,.45)',
       draw() {
         // the picture square: upper right on the wide Library card (bleeding off the corner), upper middle on portrait covers
-        const F = banner(o) ? { cx: w * BANNER_X, cy: h * 0.42, s: h * 0.6 } : wide ? { cx: w - h * 0.31, cy: h * 0.26, s: h * 0.5 } : sq ? { cx: w * 0.5, cy: w * 0.5, s: w * 0.9 } : { cx: w * 0.54, cy: h * 0.33, s: w * 0.7 };
+        const HS = o.top && headSpot(o);
+        const F = HS ? { cx: HS.x + HS.s / 2, cy: HS.y + HS.s / 2, s: HS.s } : banner(o) ? bannerSpot(o) : wide ? { cx: w - h * 0.31, cy: h * 0.26, s: h * 0.5 } : sq ? { cx: w * 0.5, cy: w * 0.5, s: w * 0.9 } : { cx: w * 0.54, cy: h * 0.33, s: w * 0.7 };
         const u = F.s, X = q => F.cx + q * u, Y = q => F.cy + q * u, off = Math.max(1, u * 0.022), p = Math.max(3.2, u * 0.052);
         const G = { X, Y, u, off, p, wide, a: P.a, b: P.b };
         const [ix, iy, is] = (wide && P.icw) || P.ic;

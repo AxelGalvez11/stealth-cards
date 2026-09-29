@@ -124,7 +124,7 @@ function frame(ts) {
     last = ts;
     const t = (ts - t0) / 1000 * 0.22;
     for (const el of roots) for (const cv of el.querySelectorAll('canvas[data-lq]')) {
-      const live = cv.hasAttribute('data-live') && !still;
+      const live = cv.hasAttribute('data-live') && !still && !cv.closest('.sk-still');
       if (live && el.__lqOff) { moving = true; continue; }
       if (!live && cv.__lqDrawn) continue;
       if (!cv.offsetWidth) continue;
@@ -133,7 +133,7 @@ function frame(ts) {
       if (live) moving = true;
     }
   } else moving = true;
-  for (const el of roots) for (const cv of el.querySelectorAll('canvas[data-lq]')) if (!cv.__lqDrawn || (cv.hasAttribute('data-live') && !still)) moving = true;
+  for (const el of roots) for (const cv of el.querySelectorAll('canvas[data-lq]')) if (!cv.__lqDrawn || (cv.hasAttribute('data-live') && !still && !cv.closest('.sk-still'))) moving = true;
   if (moving) raf = requestAnimationFrame(frame);
 }
 function mount(el) {

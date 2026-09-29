@@ -1,4 +1,4 @@
-import { A, R, f, di, mo, motifName, lay, icon, face, grain, banner, BANNER_X } from './kit.js';
+import { A, R, f, di, mo, motifName, lay, icon, face, grain, banner, bannerSpot, headSpot } from './kit.js';
 
 // Frosted glass: soft orbs of colored light on an airy white, seen through panes of frosted glass (in the spirit of
 // visionOS and iOS liquid glass). About color and light, not metal.
@@ -44,7 +44,7 @@ const GL_C = [
 ];
 
 export default {
-  key: 'glass', board: 'Glass', name: 'Frosted glass', dark: false, fonts: 'family=Plus+Jakarta+Sans:wght@400;500;600;700;800&',
+  key: 'glass', board: 'Glass', name: 'Frosted glass', dark: false, headArt: true, fonts: 'family=Plus+Jakarta+Sans:wght@400;500;600;700;800&',
   line: 'Soft orbs of colored light behind panes of frosted glass. Bright, airy, and clean.',
   css: '@keyframes glass-drift{0%{transform:translate(0,0)}100%{transform:translate(46px,28px)}}',
   bg(w, h) {
@@ -66,7 +66,8 @@ export default {
       shadow: `0 1px 2px rgba(${P.deep},.1), 0 16px 32px -16px rgba(${P.deep},.5)`,
       draw() {
         // the glass tile that holds the subject: upper right on the library card, upper middle on portrait covers
-        const T = banner(o) ? { s: R(h * 0.5), x: R(w * BANNER_X - h * 0.25), y: R(h * 0.22) } : wide ? { s: R(h * 0.34), x: R(w - 24 - h * 0.34), y: R(h * 0.2) } : sq ? { s: R(w * 0.66), x: R(w * 0.17), y: R(w * 0.17) } : { s: R(w * 0.5), x: R(w * 0.25), y: R(h * (tiny ? 0.14 : 0.2)) };
+        const HS = o.top && headSpot(o);
+        const T = HS ? { s: R(HS.s * 0.78), x: R(HS.x + HS.s * 0.12), y: R(HS.y + HS.s * 0.11) } : banner(o) ? (B => { const s = R(B.s * 0.83); return { s, x: R(B.cx - s / 2), y: R(B.cy - s / 2) }; })(bannerSpot(o)) : wide ? { s: R(h * 0.34), x: R(w - 24 - h * 0.34), y: R(h * 0.2) } : sq ? { s: R(w * 0.66), x: R(w * 0.17), y: R(w * 0.17) } : { s: R(w * 0.5), x: R(w * 0.25), y: R(h * (tiny ? 0.14 : 0.2)) };
         const tr = R(T.s * 0.3);
         const orbs = wide
           ? orb(T.x + T.s * 0.18, T.y + T.s * 0.2, h * 0.58, P.a, 0.08) + orb(T.x + T.s * 1.02, T.y + T.s * 1.0, h * 0.4, P.b, 0.09) + orb(w * 0.04, -h * 0.02, h * 0.5, P.c, 0.1, 0.55)

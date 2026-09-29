@@ -1,4 +1,4 @@
-import { A, R, f, KEYS, di, mo, motifName, lay, face, banner, BANNER_X } from './kit.js';
+import { A, R, f, KEYS, di, mo, motifName, lay, face, banner, bannerSpot } from './kit.js';
 
 // Swiss poster (International Typographic Style): a strict grid, flush-left bold grotesk, big numerals,
 // circles, bars, arcs, and diagonals in signal red, black, and off-white, plus one accent per deck.
@@ -128,8 +128,10 @@ const letterPoster = (ch, P) => { const on = P.ink === 'light' ? '#FFFFFF' : INK
   return circ(72, 24, 19, dot) + ring(72, 24, 24.5, on, 1, true) + rect(6, 4, 28, 3.2, on) + text(3, 69, 74, ch, on, 800, -0.06); };
 // where the unit poster goes on each cover shape: [x, y, scale] (wide y-shift per deck keeps the ⋯ button clear)
 const WIDE_DY = [2, 8, 22, 2, 34, 34];
-function place(i, w, h, s) {
-  if (s === 'wide' && w / h > 2.2) return [w * BANNER_X - h * 0.64, h * 0.06, h * 0.88 / 70];
+function place(i, w, h, s, top, o) {
+  // (a phone deck page's header: under its buttons, on the right)
+  if (s === 'wide' && top) { const rem = h - top, sc = (rem * 0.84) / 70; return [w - 100 * sc - w * 0.02, top + (rem - 70 * sc) / 2, sc]; }
+  if (s === 'wide' && w / h > 2.2) { const B = bannerSpot(o), sc = (B.s * 1.2) / 70; return [B.cx - 50 * sc, B.cy - 35 * sc, sc]; }
   if (s === 'wide') return [w * 0.42, 10 + WIDE_DY[i], (w * 0.58) / 100];
   if (s === 'square') return [-w * 0.13, w * 0.06, w / 76];
   return [0, 0, w / 100];
@@ -145,7 +147,7 @@ function cover(d, o) {
     title: `font-family: ${SW}; font-weight: 800; letter-spacing: -.02em; color: ${P.ink === 'light' ? '#FFFFFF' : INK};`, ts: 1.08,
     shadow: '0 1px 1px rgba(20,20,20,.12), 0 10px 24px -14px rgba(20,20,20,.45)',
     draw() {
-      const [x, y, sc] = place(i, w, h, s);
+      const [x, y, sc] = place(i, w, h, s, o.top, o);
       const g = tiny ? '' : grid(w, h, s === 'wide' ? 6 : 4, R(s === 'wide' ? 24 : w * 0.096), R(w * 0.03), P.ink === 'light' ? 'rgba(255,255,255,.08)' : GRID_INK);
       return `<span class="lx-paper" style="position: absolute; inset: 0; background-color: ${P.bg};"></span>${svg(w, h, g + `<g transform="translate(${f(x)} ${f(y)}) scale(${sc.toFixed(4)})">${known ? COMP[i]() : letterPoster(letterOf(d, k), P)}</g>`)}`;
     },
@@ -156,7 +158,7 @@ function cover(d, o) {
 const avatar = (s, ch) => `<span style="position: relative; width: ${s}px; height: ${s}px; flex-shrink: 0; box-sizing: border-box; border-radius: 50%; background: ${RED}; display: flex; align-items: center; justify-content: center; overflow: hidden;"><span style="position: absolute; inset: ${f(s * 0.085)}px; border-radius: 50%; box-shadow: inset 0 0 0 ${f(Math.max(1, s / 60))}px ${INK};"></span><span style="position: relative; font-family: ${SW}; font-size: ${R(s * 0.44)}px; font-weight: 800; line-height: 1; letter-spacing: -.02em; color: #FFFFFF; transform: translate(${f(-s * 0.015)}px, ${f(s * 0.01)}px);">${ch}</span></span>`;
 
 export default {
-  key: 'swiss', board: 'Swiss', name: 'Swiss poster', dark: false,
+  key: 'swiss', board: 'Swiss', name: 'Swiss poster', dark: false, headArt: true,
   fonts: 'family=Inter+Tight:wght@500;600;700;800&',
   line: '1950s Swiss posters: a strict grid, bold grotesk type, red circles, and black bars.',
   bg: studyBg, face: cardFace, cover, avatar,
