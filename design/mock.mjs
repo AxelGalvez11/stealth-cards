@@ -133,7 +133,7 @@ export const MOCK_METHOD = String.raw`mock() {
     href: kind => ({ decks: 'WebDecks.dc.html', newDeck: 'WebNewDeck.dc.html', import: 'WebImport.dc.html', connect: 'WebConnect.dc.html', today: 'Main.dc.html' })[kind] || 'Main.dc.html',
     // The study network (net-sample.mjs): the same answers web/net.js gets from the server. Saving, following and the
     // like stay on this board. Prop "loading" shows a page before its answer arrives.
-    me: () => ({ handle: 'alexkim', url: '/@alexkim', name: 'Alex Kim' }),
+    me: () => { const h = (m.profile && m.profile.handle) || 'alexkim'; return { handle: h, url: '/@' + h, name: st.name }; },
     net: (() => {
       const wait = !!p.loading, D = N.DECKS, pick = k => D[k];
       const star = id => (m.stars && id in m.stars ? m.stars[id] : null), follows = m.follows || {};
@@ -145,12 +145,25 @@ export const MOCK_METHOD = String.raw`mock() {
         signedOut: !!p.signedOut,
         discover: tag => (wait ? undefined : { topics: N.DISCOVER.topics, tag: tag || '', sections: N.DISCOVER.sections.map(s => ({ ...s, decks: s.decks.map(pick).map(deckCard) })) }),
         search: q => (wait ? undefined : !String(q || '').trim() ? { q: '', decks: [], people: [] } : { q, decks: [D.mcat, D.bio2a, D.cell].map(deckCard), people: [{ ...N.P.maria, bio: 'Biochem TA', school: 'UC Davis', followers: 1280 }, { ...N.P.okafor, bio: '', school: 'UC Davis', followers: 3400 }] }),
-        profile: h => (wait ? undefined : h && h !== 'alexkim' ? { ...N.OTHER, decks: [D.mcat, D.spanish].map(deckCard).map((d, i) => ({ ...d, pinned: !i })), saved: [], me: { self: false, following: follows[h] ?? false } }
-          : { ...N.PROFILE, decks: N.ALEX_DECKS.map(deckCard), saved: [D.mcat, D.kanji, D.bio2a].map(deckCard), me: { self: true, following: false } }),
+        // A profile: Maria's for any other handle (prop "following": you follow her), or yours, with what you changed on
+        // this board (your handle, bio, pins). Prop "missing": no one has that name; "empty": nothing shared or saved yet.
+        profile: h => {
+          if (wait) return undefined;
+          if (p.missing) return { missing: true, status: 404, error: 'No one has that name.' };
+          const mine = (m.profile && m.profile.handle) || 'alexkim';
+          if (h && h !== mine) {
+            const was = !!p.following, on = follows[h] ?? was;
+            return { ...N.OTHER, followers: N.OTHER.followers + (on ? 1 : 0) - (was ? 1 : 0), decks: p.empty ? [] : [D.mcat, D.spanish].map(deckCard).map((d, i) => ({ ...d, pinned: !i })), saved: [], me: p.signedOut ? null : { self: false, following: on } };
+          }
+          const pr = { ...N.PROFILE, ...(m.profile || {}), handle: mine }, feat = pr.featured || [];
+          const decks = p.empty ? [] : N.ALEX_DECKS.map(deckCard).map(d => ({ ...d, pinned: feat.includes(d.id) }));
+          return { ...pr, followers: p.empty ? 0 : pr.followers, following: p.empty ? 0 : pr.following, stars: decks.reduce((n, d) => n + d.stars, 0), decks,
+            saved: p.empty ? [] : [D.mcat, D.kanji, D.bio2a].map(deckCard), me: { self: true, following: false } };
+        },
         deck: () => (wait ? undefined : deckPage()), deckById: () => (wait ? undefined : deckPage()),
         history: () => (wait ? undefined : { id: 's1', name: 'Cell Biology', url: '/@alexkim/cell-biology', owner: N.P.alex, mine: true, following: 214, versions: N.HISTORY }),
-        activity: () => ({ unread: 2, items: N.NEWS.map(x => ({ ...x, read: m.read ? true : x.read })) }),
-        suggestions: () => (m.decided ? N.SUGGESTIONS.filter(x => !m.decided[x.id]) : N.SUGGESTIONS), inbox: () => N.SUGGESTIONS, sent: () => N.SUGGESTIONS.slice(0, 1),
+        activity: () => (wait ? undefined : p.empty ? { unread: 0, items: [] } : { unread: m.read ? 0 : 2, items: N.NEWS.map(x => ({ ...x, read: m.read ? true : x.read })) }),
+        suggestions: () => (m.decided ? N.SUGGESTIONS.filter(x => !m.decided[x.id]) : N.SUGGESTIONS), inbox: () => N.SUGGESTIONS, sent: () => (wait ? undefined : p.empty ? [] : N.SENT),
         mine: () => ({ handle: 'alexkim', profile: N.P.alex, decks: [{ id: 's9', slug: 'cell-biology', visibility: 'public', stars: 1300, learners: 214, copies: 86, version: 14, open: 3 }] }),
         drop: noop, act: () => Promise.resolve(null)
       };
@@ -183,7 +196,14 @@ export const MOCK_METHOD = String.raw`mock() {
       star: (id, on) => set({ stars: { ...(m.stars || {}), [id]: !!on } }), watch: (id, on) => set({ watching: !!on }),
       follow: (h, on) => set({ follows: { ...(m.follows || {}), [h]: !!on } }), study: () => set({ studying: 'cell' }), copyDeck: () => set({ copied: 'cell' }),
       decide: id => set({ decided: { ...(m.decided || {}), [id]: true } }), readNews: () => set({ read: true }),
-      suggest: () => Promise.resolve({ id: 'g9' }), restore: noop, checkDeck: noop, updateProfile: patch => set({ profile: { ...(m.profile || {}), ...patch } }), ensureProfile: noop,
+      suggest: () => Promise.resolve({ id: 'g9' }), restore: noop, checkDeck: noop, ensureProfile: noop,
+      // Someone in the sample already has the handle: it's taken, like the server says.
+      updateProfile: patch => {
+        const h = patch.handle ? String(patch.handle).toLowerCase() : '';
+        if (h && Object.values(N.P).some(x => x.handle === h && x.handle !== 'alexkim')) return Promise.reject(new Error('That name is taken. Try another.'));
+        set({ profile: { ...(m.profile || {}), ...patch } });
+        return Promise.resolve({ handle: h || (m.profile && m.profile.handle) || 'alexkim' });
+      },
       shareDeck: (id, o) => set({ share: { ...(m.share || { vis: 'private' }), ...(o.visibility ? { vis: o.visibility } : {}), ...o } }), detach: noop, takeUpdates: () => set({ took: true })
     }
   };

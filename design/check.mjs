@@ -16,6 +16,11 @@ const PROP_SETS = [
   { naming: true }, { naming: true, dark: true, folder: 'f1' }, { moveOpen: true }, { mode: 'cards' }, { folder: 'f1', view: 'List' },
   { newCard: true, $state: { listQ: 'zz' } }
 ];
+// The study network's pages: loading, signed out, nothing yet, not found, someone else's profile (followed or not),
+// a profile's tabs, Edit profile (with a handle someone has, or one that can't be a handle), and a deck's ⋯ menu.
+PROP_SETS.push({ loading: true }, { signedOut: true }, { empty: true }, { missing: true }, { handle: 'mariasantos' }, { handle: 'mariasantos', following: true },
+  { handle: 'mariasantos', signedOut: true }, { tab: 'Saved' }, { tab: 'Suggestions' }, { tab: 'Saved', empty: true }, { tab: 'Suggestions', empty: true }, { tab: 'Suggestions', loading: true },
+  { editOpen: true }, { editOpen: true, editHandle: 'mariasantos', editError: 'That name is taken. Try another.' }, { editOpen: true, editHandle: 'no spaces' }, { pinOpen: true }, { self: true, handle: '' });
 
 function walk(str, sc, miss) {
   let i = 0;
