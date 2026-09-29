@@ -96,11 +96,15 @@ export async function createDb({ onChange, go }) {
   let mine = [], line = Promise.resolve();
   const accept = next => { if (next && next.rev >= S.rev) { S = next; mine.forEach(f => f(S)); changed(); } };
   // `keep`: the save still goes out if the page is closing (the cards screen saving as you leave).
-  async function send(type, payload = {}, keep = false) {
-    const r = await fetch('/api/action', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ type, ...payload }), keepalive: keep });
+  // `quiet`: for a page that shows the error itself (Suggestions, keeping or tossing your AI's cards): no alert, and the
+  // rejection's message is a plain sentence for the page to show.
+  async function send(type, payload = {}, keep = false, quiet = false) {
+    let r;
+    try { r = await fetch('/api/action', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ type, ...payload }), keepalive: keep }); }
+    catch (e) { throw quiet ? new Error('Couldn’t reach Lucida. Check your connection and try again.') : e; }
     if (r.status === 401) { toSignIn(); throw new Error('Signed out'); }
-    const j = await r.json();
-    if (!r.ok) { alert(j.error || 'Something went wrong.'); throw new Error(j.error); }
+    const j = quiet ? await r.json().catch(() => ({})) : await r.json();
+    if (!r.ok) { if (!quiet) alert(j.error || 'Something went wrong.'); throw new Error(j.error || (quiet ? 'Something went wrong. Try again.' : '')); }
     accept(j.state);
     return j.result;
   }
@@ -617,9 +621,10 @@ export async function createDb({ onChange, go }) {
     },
     addCard: (deckId, o) => send('card.add', { deckId, ...o }),
     removeCards: ids => send('card.delete', { ids }),
-    // Cards your AI made that wait for you (Suggestions): keep them (they join the deck) or toss them, a few at once.
-    keepCards: ids => send('card.keep', { ids }),
-    tossCards: ids => send('card.delete', { ids }),
+    // Cards your AI made that wait for you (Suggestions): keep them (they join the deck) or toss them, a few at once. If it
+    // fails, the page says so where you are, not in an alert.
+    keepCards: ids => send('card.keep', { ids }, false, true),
+    tossCards: ids => send('card.delete', { ids }, false, true),
     grade: async (cardId, rating) => {
       const c = S.cards.find(x => x.id === cardId); if (!c || !session) return;
       const entry = { cardId, rating, was: c.srs.state };
