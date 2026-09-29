@@ -33,6 +33,12 @@ const PROP_SETS = [
 PROP_SETS.push({ loading: true }, { signedOut: true }, { empty: true }, { missing: true }, { handle: 'mariasantos' }, { handle: 'mariasantos', following: true },
   { handle: 'mariasantos', signedOut: true }, { tab: 'Saved' }, { tab: 'Suggestions' }, { tab: 'Saved', empty: true }, { tab: 'Suggestions', empty: true }, { tab: 'Suggestions', loading: true },
   { editOpen: true }, { editOpen: true, editHandle: 'mariasantos', editError: 'That name is taken. Try another.' }, { editOpen: true, editHandle: 'no spaces' }, { pinOpen: true }, { self: true, handle: '' });
+// Report on the deck, profile, and Suggestions pages: the sheet open, a line needed for Other and the error that says so,
+// and the thank-you.
+PROP_SETS.push({ report: true }, { report: true, signedOut: true }, { report: true, handle: 'mariasantos' }, { report: true, pickItem: 'g1' }, { report: true, deckId: '' },
+  { $state: { rep: { kind: 'deck', id: 's1', name: 'MCAT Biochemistry' }, repReason: 'other', repNote: '', repErr: 'Say what’s wrong.' } },
+  { $state: { rep: { kind: 'profile', id: 'mariasantos', name: 'Maria Santos' }, repReason: 'spam', repSent: true } },
+  { pickItem: 'g1', $state: { rep: { kind: 'suggestion', id: 'g1', name: 'Maria Santos' }, repReason: 'stolen', repNote: 'Mine' } });
 
 function walk(str, sc, miss) {
   let i = 0;
