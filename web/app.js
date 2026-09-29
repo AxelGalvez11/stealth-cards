@@ -320,8 +320,8 @@ async function go(path, push, replace) {
   if (rvm && rvm[1] !== 'done' && !/from=review/.test(lastPath) && (!/^\/review/.test(lastPath) || (pile && lastPath.startsWith('/review/done')))) db.startReview(rvm[1] || '', pile);
   const r = resolve(url.pathname, url.searchParams);
   // A link that lands somewhere else (You → /you → /@alexkim) still adds a page to history, so Back returns to the
-  // page you clicked it on; opening an address that moves just takes its place.
-  if (r.redirect) return go(r.redirect, push, !push);
+  // page you clicked it on; opening an address that moves, or a link that lands back on this page, takes its place.
+  if (r.redirect) { const here = r.redirect === location.pathname + location.search; return go(r.redirect, push && !here, !push || here); }
   try { await load(r.name); } catch { return go('/', false, true); }
   if (push) history.pushState(null, '', url.pathname + url.search);
   else if (replace) history.replaceState(null, '', url.pathname + url.search);
