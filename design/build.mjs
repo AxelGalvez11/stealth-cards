@@ -163,7 +163,12 @@ const I = {
   message: '<path d="M5 5h14a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H9l-4 3.5V6a1 1 0 0 1 1-1z"/>',
   link: '<path d="M10 14a4 4 0 0 0 5.66 0l3-3a4 4 0 0 0-5.66-5.66l-1 1"/><path d="M14 10a4 4 0 0 0-5.66 0l-3 3a4 4 0 0 0 5.66 5.66l1-1"/>',
   lock: '<rect x="5" y="10.5" width="14" height="10" rx="2.5"/><path d="M8 10.5V8a4 4 0 0 1 8 0v2.5"/>',
-  user: '<circle cx="12" cy="8.5" r="3.8"/><path d="M4.5 20c.9-3.9 3.8-6 7.5-6s6.6 2.1 7.5 6"/>'
+  user: '<circle cx="12" cy="8.5" r="3.8"/><path d="M4.5 20c.9-3.9 3.8-6 7.5-6s6.6 2.1 7.5 6"/>',
+  // Classes: joining one, a due date, a school, and reporting something.
+  enter: '<path d="M14 4h3.5A2.5 2.5 0 0 1 20 6.5v11a2.5 2.5 0 0 1-2.5 2.5H14"/><path d="M9.5 16l4-4-4-4M13.5 12H4"/>',
+  calendar: '<rect x="3.5" y="5" width="17" height="15.5" rx="3"/><path d="M8 3v4M16 3v4M3.5 10h17"/>',
+  cap: '<path d="M2.5 9.5L12 5l9.5 4.5L12 14z"/><path d="M6.5 11.5V16c0 1.3 2.5 3 5.5 3s5.5-1.7 5.5-3v-4.5M21.5 9.5v5"/>',
+  flag: '<path d="M5.5 21V4.5M5.5 4.5h11l-2.2 4 2.2 4h-11"/>'
 };
 
 // The mark: three dots, two above and one below, in the text color. The viewBox hugs the ink, so `h` is its real height.
@@ -334,6 +339,40 @@ const DUE_BARS = (n, gap, radius, twoLine = false) => `<div style="flex-grow: 1;
       </div>
       <div style="display: flex; align-items: center; gap: 8px; font-size: 12px; color: {{t.muted}};"><span style="width: 10px; height: 10px; border-radius: 3px; background: {{busy.c}};"></span>{{busy.text}}</div>`;
 
+// ---------- Classes: dates, and what Today shows of them (the rest is in the Classes section, after Discover) ----------
+// Dates (for boards that show assignments): "due Friday", "until Oct 6" (review what's due each day, until then), "was
+// due Friday". They count from today; on the canvas, from Monday, September 28, so its boards always read the same.
+const CLASS_JS = `const DAYS7 = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'], MON3 = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  const todayAt = db.mock ? new Date(2026, 8, 28).getTime() : new Date(new Date().getFullYear(), new Date().getMonth(), new Date().getDate()).getTime();
+  const addDays = n => { const d = new Date(todayAt); return new Date(d.getFullYear(), d.getMonth(), d.getDate() + n).getTime(); };
+  const dateAt = v => { const x = String(v || '').split('-').map(Number); return new Date(x[0] || 2026, (x[1] || 1) - 1, x[2] || 1).getTime(); };
+  const isoDay = at => { const d = new Date(at); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); };
+  const dayWord = v => { const at = dateAt(v), n = Math.round((at - todayAt) / 86400000), d = new Date(at);
+    return n === 0 ? 'today' : n === 1 ? 'tomorrow' : n === -1 ? 'yesterday' : Math.abs(n) < 7 ? DAYS7[d.getDay()] : MON3[d.getMonth()] + ' ' + d.getDate(); };
+  const dueWord = (goal, v) => (dateAt(v) < todayAt ? 'was due ' : goal === 'daily' ? 'until ' : 'due ') + dayWord(v);
+  const goalWord = g => (g === 'daily' ? 'Review what’s due' : 'Learn every card');
+  const nOf = (n, w, ws) => n + ' ' + (n === 1 ? w : ws || w + 's');
+  const andList = a => (a.length < 2 ? a.join('') : a.length === 2 ? a.join(' and ') : a.slice(0, -1).join(', ') + ', and ' + a[a.length - 1]);
+  // What's left for you on an assignment, from your own cards: 12 cards left, 4 to review, Caught up, Done.
+  const leftWord = (a, pr) => (!pr ? (a.goal === 'daily' ? 'Not started' : nOf(a.cards || 0, 'card'))
+    : a.goal === 'daily' ? (!pr.learned ? 'Not started' : pr.due ? pr.due + ' to review' : 'Caught up') : pr.total && pr.learned >= pr.total ? 'Done' : nOf(Math.max(0, pr.total - pr.learned), 'card') + ' left');
+  const isDone = (a, pr) => !!pr && (a.goal === 'daily' ? pr.learned > 0 && !pr.due : pr.total > 0 && pr.learned >= pr.total);`;
+// ---------- Today: what your classes assigned ----------
+// A calm row each, soonest first: "Chapter 3 · due Friday · 12 cards left", the class's name on the right. It opens the
+// deck (or the class, until you study it). The canvas shows them on WebTodayClass and PhoneTodayClass (prop assignments).
+const TODAY_ASSIGN_JS = phone => `${CLASS_JS}
+  const assignRows = (db.assignments ? db.assignments() : []).map(a => { const g = this.gen((a.cover && a.cover.seed) || a.name, (a.cover && a.cover.style) || 'mix'), left = leftWord(a, a.progress), done = isDone(a, a.progress), when = dueWord(a.goal, a.due);
+    return { name: a.name, className: a.className, text: a.name + ' · ' + when + ' · ' + left, sub: when + ' · ' + a.className, left, dot: g.base, textColor: done ? t.muted : t.text, leftColor: done ? t.good : t.text,
+      href: db.mock ? '${phone ? 'PhoneDeck' : 'WebDeck'}.dc.html' : a.progress ? '/deck/' + a.progress.deckId : '/class/' + a.code }; });`;
+const TODAY_ASSIGN_WEB = `<sc-if value="{{hasAssignments}}" hint-placeholder-val="{{ false }}"><div style="display: flex; flex-direction: column; gap: 6px;">
+      ${eyebrow('Assignments')}
+      <sc-for list="{{assignments}}" as="a" hint-placeholder-count="2"><a href="{{a.href}}" style="display: flex; align-items: center; gap: 14px; height: 56px; border-bottom: 1px solid {{t.line}};"><span style="width: 10px; height: 10px; flex-shrink: 0; border-radius: 5px; background: {{a.dot}};"></span><span style="flex-grow: 1; min-width: 0; font-size: 15px; font-weight: 500; color: {{a.textColor}}; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{a.text}}</span><span style="flex-shrink: 0; font-size: 13px; color: {{t.muted}};">{{a.className}}</span></a></sc-for>
+    </div></sc-if>`;
+const TODAY_ASSIGN_PHONE = `<sc-if value="{{hasAssignments}}" hint-placeholder-val="{{ false }}"><div style="display: flex; flex-direction: column;">
+    <div style="font-size: 13px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: {{t.muted}}; padding: 6px 4px 4px;">Assignments</div>
+    <sc-for list="{{assignments}}" as="a" hint-placeholder-count="2"><a href="{{a.href}}" style="display: flex; align-items: center; gap: 12px; min-height: 58px; border-bottom: 1px solid {{t.line}};"><span style="width: 10px; height: 10px; flex-shrink: 0; border-radius: 5px; background: {{a.dot}};"></span><span style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px;"><span style="font-size: 16px; font-weight: 500; color: {{a.textColor}}; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{a.name}}</span><span style="font-size: 13px; color: {{t.muted}}; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{a.sub}}</span></span><span style="flex-shrink: 0; font-size: 14px; font-weight: 600; color: {{a.leftColor}};">{{a.left}}</span></a></sc-for>
+  </div></sc-if>`;
+
 // Main = Web Today
 const webToday = webRoot(`${sidebar('Today')}
 <main style="flex-grow: 1; box-sizing: border-box; padding: 36px 48px; display: flex; gap: 40px;">
@@ -349,6 +388,7 @@ const webToday = webRoot(`${sidebar('Today')}
         <a href="{{heroHref}}" style="height: 36px; padding: 0 24px; display: inline-flex; align-items: center; border-radius: 999px; background: #FFFFFF; color: #000000; font-size: 14px; font-weight: 600;">{{heroCta}}</a>
       </div>`, 'div', ' class="sc-alive"')}
 
+    ${TODAY_ASSIGN_WEB}
     <div style="display: flex; flex-direction: column; gap: 6px;">
       <div style="display: flex; align-items: center; justify-content: space-between;">${eyebrow('Decks')}<span style="font-size: 12px; color: {{t.muted}};">Most urgent first</span></div>
       <sc-for list="{{decks}}" as="d" hint-placeholder-count="6">
@@ -387,6 +427,7 @@ const webToday = webRoot(`${sidebar('Today')}
 const todayLogic = `
 renderVals() {
   ${T}${DB_JS}
+  ${TODAY_ASSIGN_JS(false)}
   const td = db.today();
   ${FORECAST_JS('td.forecast', 64)}
   const streak = 'linear-gradient(135deg, #FFC857 0%, #F58A3A 55%, #EE5A36 100%)';
@@ -413,7 +454,7 @@ renderVals() {
     heroCta: caught ? (td.fresh ? 'Study ' + plural(td.fresh, 'new card') : 'Add cards') : 'Study all',
     heroHref: caught && !td.fresh ? td.newCardHref : td.studyHref, newCardHref: td.newCardHref,
     week: td.week.map(w => ({ d: w.d, done: w.done, fill: w.done ? streak : t.surf2, ring: w.today ? '0 0 0 2px ' + t.surf + ', 0 0 0 4px #F58A3A' : 'none', labelColor: w.today ? t.text : t.muted, weight: w.today ? '600' : '400' })),
-    forecast, dueTotal, busy
+    forecast, dueTotal, busy, assignments: assignRows, hasAssignments: assignRows.length > 0
   };
 }`;
 
@@ -498,7 +539,7 @@ const NET_JS = `const PC = ${JSON.stringify(PERSON_COLORS)};
     if (m < 1) return 'Just now'; if (m < 60) return m + ' min ago'; const h = Math.round(m / 60); if (h < 24) return h + 'h ago'; const dd = Math.round(h / 24); if (dd === 1) return 'Yesterday'; if (dd < 7) return dd + ' days ago';
     const d = new Date(t); return MONTHS3[d.getMonth()] + ' ' + d.getDate(); };
   const netDeck = d => { d = d || {}; const cv = d.cover || {}, pal = this.gen((cv.seed || d.name || 'Lucida') + (cv.round ? ' #' + cv.round : ''), cv.style || 'mix'), photo = cv.image && cv.image !== 'mock' ? cv.image : '';
-    const badge = d.checked ? 'Checked' : d.owner && (d.owner.kind === 'school' || d.owner.verified === 'school') ? d.owner.name : d.pinned ? 'Pinned' : '';
+    const badge = d.checked ? 'Checked' : d.owner && (d.owner.kind === 'school' || d.owner.verified === 'school') ? 'Official · ' + d.owner.name : d.pinned ? 'Pinned' : '';
     const cardsLine = kfmt(d.cards) + (d.cards === 1 ? ' card' : ' cards');
     return { ...pal, id: d.id || '', name: d.name || '', href: goTo(d.url, 'WebPublicDeck'), stats: kfmt(d.stars) + '   ' + cardsLine, cardsLine, stars: kfmt(d.stars),
       owner: person(d.owner), photo, hasPhoto: !!photo, badge, hasBadge: !!badge, badgeShield: !!d.checked || (!!d.owner && d.owner.kind === 'school') }; };`;
@@ -763,7 +804,7 @@ renderVals() {
   return {
     t, ...chrome, grain: String(this.props.grain ?? 0.7), decks, title, atTop, inFolder: !!folder, libraryHref: db.mock ? board('Decks') : '/library',
     query: s.q || '', setQuery: e => this.setState({ q: e && e.target ? e.target.value : '', shown: 60 }), searchHint: cards ? 'Search all cards' : folder ? 'Search this folder' : 'Search decks and cards',
-    modes: [['Decks', !cards, db.mock ? board('Decks') : '/library'], ['All cards', cards, db.mock ? board('LibraryCards') : '/library/cards']]
+    modes: [['Decks', !cards, db.mock ? board('Decks') : '/library'], ['All cards', cards, db.mock ? board('LibraryCards') : '/library/cards'], ['Classes', false, db.mock ? board('Classes') : '/library/classes']]
       .map(([label, on, href]) => ({ label, href, current: on ? 'page' : 'false', ...seg(on) })),
     deckView: !cards, cardsView: cards,
     folders: folderRows, showFolders: atTop && !cards && !looking && folders.length > 0,
@@ -915,7 +956,8 @@ const COVER_LOGIC = `
   // whose it is, and (a copy) their changes waiting for you.
   const shr = dk.shared || null, lk = dk.link || null, ro = !!dk.readOnly, linked = !!(lk && !lk.gone);
   const netMine = !db.mock && db.net ? db.net.mine() : null, netRow = netMine && netMine.decks && shr ? netMine.decks.find(x => x.id === shr.id) : null;
-  const vis = shr ? shr.vis : 'private', onSite = db.mock || /(^|\\.)lucida\\.cards$/.test(location.hostname);
+  // A deck in a class and nowhere else (visibility 'class', web/classes.mjs) is Private here, and its classes see it.
+  const vis0 = shr ? shr.vis : 'private', vis = vis0 === 'class' ? 'private' : vis0, onSite = db.mock || /(^|\\.)lucida\\.cards$/.test(location.hostname);
   const shareUrl = shr ? (onSite ? 'https://lucida.cards' : location.origin) + shr.url : '';
   const helperList = (netRow && netRow.helpers) || (db.mock ? [{ handle: 'devp', name: 'Dev Patel' }] : []);
   const shareSet = o => db.act.shareDeck(dk.id, o).then(r => { this.setState({ shareErr: '' }); return r; }, e => { this.setState({ shareErr: e.message }); throw e; });
@@ -927,7 +969,7 @@ const COVER_LOGIC = `
   const shareVals = {
     canShare: !ro, isShared: !!shr, notShared: !shr && !linked, isLinked: linked, isStudy: ro, isCopy: !!(linked && lk.mode === 'copy'), isGone: !!(lk && lk.gone),
     visOpts: [['private', 'Private'], ['link', 'Link only'], ['public', 'Public']].map(([id, label]) => ({ label, ...segOf(id, vis), pick: () => id !== vis && shareSet({ visibility: id }).catch(() => {}) })),
-    visLine: { private: 'Only you.', link: 'Anyone with the link.', public: 'On your profile and in Discover.' }[vis],
+    visLine: vis0 === 'class' ? 'Only you and your classes.' : { private: 'Only you.', link: 'Anyone with the link.', public: 'On your profile and in Discover.' }[vis],
     shareLink: shareUrl.replace(/^https?:\\/\\//, ''), copyLabel: cs.copied ? 'Copied' : 'Copy link',
     copyShareLink: () => { db.act.copy(shareUrl); this.setState({ copied: true }); clearTimeout(this.copiedT); this.copiedT = setTimeout(() => this.setState({ copied: false }), 1600); },
     aboutText: cs.about ?? (netRow ? netRow.description || '' : db.mock ? 'For BIO 201. Suggestions welcome.' : ''), setAbout: e => this.setState({ about: e && e.target ? e.target.value : '' }),
@@ -3138,6 +3180,7 @@ const phoneToday = phone(`<div style="padding: 64px 20px 120px; display: flex; f
     <span style="height: 56px;"></span>
     <span style="display: flex; flex-direction: column; gap: 4px;"><span style="font-size: 14px; opacity: .85;">{{heroMeta}}</span><span style="font-size: {{heroSize}}; font-weight: 600; letter-spacing: -.045em; line-height: 1;">{{heroTitle}}</span><span style="font-size: 14px; opacity: .85;">{{heroSub}}</span></span>
     <span style="height: 52px; border-radius: 999px; background: #FFFFFF; color: #000000; display: flex; align-items: center; justify-content: center; font-size: 16px; font-weight: 600; text-shadow: none;">{{heroCta}}</span>`, 'a', ' href="{{heroHref}}"')}
+  ${TODAY_ASSIGN_PHONE}
   <div style="font-size: 13px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: {{t.muted}}; padding: 6px 4px 0;">Decks</div>
   <div style="display: flex; flex-direction: column;">
     <sc-for list="{{decks}}" as="d" hint-placeholder-count="4">
@@ -3147,11 +3190,13 @@ const phoneToday = phone(`<div style="padding: 64px 20px 120px; display: flex; f
 </div>`, 'Today');
 // Your day on the Iris card, then your decks, most urgent first (like the web's Today). The canvas shows its sample day.
 const phoneDecksLogic = `renderVals() { ${T}${DB_JS}
+  ${TODAY_ASSIGN_JS(true)}
+  const assignVals = { assignments: assignRows, hasAssignments: assignRows.length > 0 };
   // A deck's count on the right: cards due now, or (muted) when it's next due.
   const row = (d, right, later) => ({ ...d, right, rightColor: later ? t.muted : t.text, rightFont: later ? 'inherit' : "${MONO}", rightSize: later ? '14px' : '15px' });
   if (db.mock) {
     const caught = !!this.props.caughtUp, next = ['Tomorrow', 'Tomorrow', 'In 2 days', 'In 3 days'];
-    return { ${MESH_VALS('Iris')} t, ...chrome, heroHref: 'PhoneReview.dc.html',
+    return { ${MESH_VALS('Iris')} t, ...chrome, ...assignVals, heroHref: 'PhoneReview.dc.html',
       heroMeta: caught ? 'Done for today · 13-day streak' : 'Due now · 12-day streak', heroTitle: caught ? 'All caught up' : '64 cards', heroSize: caught ? '42px' : '56px',
       heroSub: caught ? 'Next review tomorrow · 32 cards' : 'About 11 minutes', heroCta: caught ? 'Study 10 new cards' : 'Start review',
       decks: ${DECKS}.slice(0, 4).map((d, i) => ({ ...row(d, caught ? next[i] : String(d.due), caught), href: 'PhoneDeck.dc.html' })) };
@@ -3159,7 +3204,7 @@ const phoneDecksLogic = `renderVals() { ${T}${DB_JS}
   const td = db.today(), caught = !td.due, plural = (n, w) => n + ' ' + w + (n === 1 ? '' : 's');
   const decks = db.decks().filter(d => !d.paused).sort((a, b) => (b.overdue - a.overdue) || (b.due - a.due) || ((a.soon ?? 1e9) - (b.soon ?? 1e9)))
     .map(d => row({ ...d, total: d.totalLabel }, d.due ? String(d.due) : d.soon == null ? (d.fresh ? d.fresh + ' new' : '—') : d.soon === 1 ? 'Tomorrow' : 'In ' + d.soon + ' days', !d.due));
-  return { ${MESH_VALS('Iris')} t, ...chrome, decks,
+  return { ${MESH_VALS('Iris')} t, ...chrome, ...assignVals, decks,
     heroMeta: (caught ? 'Done for today' : 'Due now') + (td.streak ? ' · ' + td.streak + '-day streak' : ''),
     heroTitle: caught ? 'All caught up' : plural(td.due, 'card'), heroSize: caught ? '42px' : '56px',
     heroSub: caught ? (td.next ? 'Next review ' + td.next.day + ' · ' + plural(td.next.n, 'card') : 'Nothing scheduled yet') : 'About ' + plural(td.minutes, 'minute'),
@@ -5462,15 +5507,544 @@ const phoneDiscover = phone(`<div style="padding: 64px 20px 120px; display: flex
   <sc-if value="{{offline}}" hint-placeholder-val="{{ false }}"><div style="padding: 40px 20px; border-radius: 22px; background: {{t.surf}}; text-align: center; font-size: 15px; color: {{t.muted}};">Couldn’t reach Lucida.</div></sc-if>
 </div>`, 'Discover');
 
+// ---------- Classes ----------
+// The owner's note: "Schools / organizations", as a study group that a teacher can also run (the owner: Lucida is for
+// "study groups and friends, not teachers"). Classes are the Library's third view (Decks · All cards · Classes): the
+// sidebar keeps its five places and the iPhone its five tabs, and people mostly arrive by an invite link anyway, with
+// their assignments on Today. A class page has its assignments, decks, and people; its owner and helpers also see the
+// progress of each member who shares it. /class/<code> is its invite too: one tap to join, then one question, once.
+// Data (web/classes.mjs): db.net.classes(), db.net.klass(code) (undefined while it loads), and your own progress on a
+// class's deck, db.classProgress(sharedId), worked out from your own cards (web/progress.js).
+// A small badge on a gradient (the badges of NET_TILE).
+const GLASS_CHIP = inner => `<span style="height: 24px; padding: 0 9px; display: inline-flex; align-items: center; gap: 5px; border-radius: 999px; background: rgba(0,0,0,.28); color: #FFFFFF; font-size: 11px; font-weight: 600; text-shadow: none; backdrop-filter: blur(8px);">${inner}</span>`;
+// A class as a tile: its colors (from its name), a badge (Yours, Helper, Official), what's left to do, its name, and
+// its school and people.
+const CLASS_TILE = (k, h, name = 24) => `<a href="{{${k}.href}}" class="sc-lift" style="position: relative; display: block; height: ${h}px; border-radius: 20px; overflow: hidden; color: {{${k}.ink}}; background: {{${k}.base}};">${flowLayer(k)}${GRAIN_LAYER}
+    <span style="position: absolute; inset: 0; box-sizing: border-box; padding: 16px 18px; display: flex; flex-direction: column; justify-content: space-between; text-shadow: {{${k}.shadow}};">
+      <span style="display: flex; gap: 6px; min-height: 24px;"><sc-if value="{{${k}.hasBadge}}" hint-placeholder-val="{{ true }}">${GLASS_CHIP(`<sc-if value="{{${k}.official}}" hint-placeholder-val="{{ false }}">${svg(I.shield, 12, 2)}</sc-if><span>{{${k}.badge}}</span>`)}</sc-if><sc-if value="{{${k}.hasToDo}}" hint-placeholder-val="{{ false }}">${GLASS_CHIP(`<span>{{${k}.toDo}}</span>`)}</sc-if></span>
+      <span style="display: flex; flex-direction: column; gap: 4px; min-width: 0;"><span style="font-size: ${name}px; font-weight: 600; letter-spacing: -.02em; line-height: 1.1; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;">{{${k}.name}}</span><span style="font-size: 13px; opacity: .88; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{${k}.line}}</span></span>
+    </span></a>`;
+// Buttons for a class's pages. `bg` is for a button on a gray card, where the usual gray pill wouldn't show.
+const cBtn = (label, handler, { inv = false, icon = '', h = 36, bg = '{{t.bg}}', grow = false } = {}) => `<button type="button" onClick="{{${handler}}}" class="sc-press" style="height: ${h}px; padding: 0 ${h >= 44 ? 20 : 14}px; ${grow ? 'flex: 1 1 0; min-width: 0; ' : 'flex-shrink: 0; '}display: inline-flex; align-items: center; justify-content: center; gap: 8px; border: 0; border-radius: 999px; ${inv ? 'background: {{t.inv}}; color: {{t.invText}};' : `background: ${bg}; color: {{t.text}};`} font: inherit; font-size: ${h >= 44 ? 15 : 14}px; font-weight: 600; white-space: nowrap; cursor: pointer;">${icon ? svg(I[icon], 15, 2) : ''}<span>${label}</span></button>`;
+const dangerBtn = (label, handler) => `<button type="button" onClick="{{${handler}}}" class="sc-press" style="height: 34px; padding: 0 14px; border: 0; border-radius: 999px; background: {{t.againTint}}; color: {{t.again}}; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer;">${label}</button>`;
+const closeX = handler => `<button type="button" onClick="{{${handler}}}" aria-label="Close" style="width: 36px; height: 36px; flex-shrink: 0; border: 0; border-radius: 18px; background: {{t.surf}}; color: {{t.text}}; display: flex; align-items: center; justify-content: center; cursor: pointer;">${svg(I.close, 14, 2.2)}</button>`;
+// ⋯ and its menu (a popover beside the button, so a click outside or Escape closes it; web/app.js).
+// `glass`: on a deck's cover, like the Library's deck tiles.
+const moreBtn = (k, label, size = 32, glass = false) => `<button type="button" onClick="{{${k}.toggle}}" aria-label="${label}" aria-expanded="{{${k}.expanded}}" style="width: ${size}px; height: ${size}px; flex-shrink: 0; border: 0; border-radius: ${size / 2}px; ${glass ? 'background: rgba(0,0,0,.28); color: #FFFFFF; -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);' : 'background: transparent; color: {{t.muted}};'} display: flex; align-items: center; justify-content: center; cursor: pointer;">${svg(I.more, 16, 2)}</button>`;
+const cMenu = (k, pos) => `<sc-if value="{{${k}.menuOpen}}" hint-placeholder-val="{{ false }}"><div role="menu" data-sc-pop style="position: absolute; ${pos} z-index: 30; width: 250px; ${popBox}"><sc-for list="{{${k}.menu}}" as="o" hint-placeholder-count="2"><button type="button" role="menuitem" onClick="{{o.pick}}" style="height: 40px; flex-shrink: 0; padding: 0 12px; border: 0; border-radius: 12px; background: transparent; color: {{o.fg}}; font: inherit; font-size: 14px; text-align: left; cursor: pointer;">{{o.label}}</button></sc-for></div></sc-if>`;
+const cField = (value, onChange, placeholder, label, { icon = '', mono = false, type = 'text', attrs = '' } = {}) => `<label style="display: flex; align-items: center; gap: 10px; height: 50px; flex-shrink: 0; padding: 0 16px; box-sizing: border-box; border-radius: 16px; background: {{t.surf}}; color: {{t.muted}};">${icon ? svg(I[icon], 18, 1.8) : ''}<input type="${type}" value="{{${value}}}" onChange="{{${onChange}}}" placeholder="${placeholder}" aria-label="${label}" autocomplete="off"${attrs} style="flex-grow: 1; min-width: 0; height: 100%; border: 0; outline: 0; background: transparent; font: inherit; font-size: 16px; color: {{t.text}};${mono ? ` font-family: ${MONO}; font-size: 20px; letter-spacing: .18em; text-transform: uppercase;` : ''}"></label>`;
+const errLine = k => `<sc-if value="{{${k}.hasErr}}" hint-placeholder-val="{{ false }}"><span role="alert" style="font-size: 13px; line-height: 1.4; color: {{t.again}};">{{${k}.err}}</span></sc-if>`;
+const twoBtns = (k, action) => `<div style="display: flex; gap: 10px; flex-shrink: 0;"><button type="button" onClick="{{${k}.close}}" data-key="escape" style="flex: 1 1 0; height: 48px; border: 0; border-radius: 999px; background: {{t.surf}}; color: {{t.text}}; font: inherit; font-size: 15px; font-weight: 600; cursor: pointer;">Cancel</button><button type="button" onClick="{{${k}.save}}" aria-disabled="{{${k}.off}}" style="flex: 1 1 0; height: 48px; border: 0; border-radius: 999px; background: {{${k}.bg}}; color: {{${k}.fg}}; font: inherit; font-size: 15px; font-weight: 600; cursor: pointer; transition: background-color .15s, color .15s;">${action}</button></div>`;
+// Windows over a page: a centered popup (web), a small popup above the keyboard (iPhone), a side panel (web), and a
+// sheet from the bottom (iPhone; `full` sheets reach near the top).
+const cDialog = (k, body, w = 440) => `<sc-if value="{{${k}.show}}" hint-placeholder-val="{{ false }}"><div style="position: absolute; inset: 0; z-index: 80; display: flex; align-items: center; justify-content: center;">
+  <div class="sc-fade" onClick="{{${k}.close}}" style="position: absolute; inset: 0; background: {{t.dim}};"></div>
+  <div role="dialog" aria-modal="true" aria-label="{{${k}.title}}" class="sc-pop" style="position: relative; width: ${w}px; max-height: calc(100% - 48px); overflow-y: auto; box-sizing: border-box; padding: 28px; border-radius: 32px; background: {{t.bg}}; color: {{t.text}}; box-shadow: 0 24px 64px rgba(0,0,0,.24); display: flex; flex-direction: column; gap: 16px;">
+    ${body}
+  </div>
+</div></sc-if>`;
+const cPhonePop = (k, body, kb = false) => `<sc-if value="{{${k}.show}}" hint-placeholder-val="{{ false }}"><div style="position: absolute; inset: 0; z-index: 80;">
+  <div class="sc-fade" onClick="{{${k}.close}}" style="position: absolute; inset: 0; background: {{t.dim}};"></div>
+  <div role="dialog" aria-modal="true" aria-label="{{${k}.title}}" class="sc-pop" style="position: absolute; left: 16px; right: 16px; top: ${kb ? '12%' : '18%'}; box-sizing: border-box; padding: 20px; border-radius: 28px; background: {{t.bg}}; color: {{t.text}}; display: flex; flex-direction: column; gap: 14px;">
+    ${body}
+  </div>${kb ? `
+  <sc-if value="{{drawKb}}" hint-placeholder-val="{{ true }}">${KEYBOARD()}</sc-if>` : ''}
+</div></sc-if>`;
+const cPanel = (open, label, body) => `<sc-if value="{{${open}}}" hint-placeholder-val="{{ false }}">
+  <div class="sc-scrim" onClick="{{closePanel}}" style="position: absolute; top: 0; right: 0; bottom: 0; left: 240px; background: {{t.dim}};"></div>
+  <aside role="dialog" aria-label="${label}" class="sc-panel" style="position: absolute; top: 12px; right: 12px; bottom: 12px; width: 460px; box-sizing: border-box; padding: 24px; border-radius: 20px; background: {{t.bg}}; box-shadow: 0 24px 64px rgba(0,0,0,.24); display: flex; flex-direction: column; gap: 16px; overflow: hidden;">
+    ${body}
+  </aside>
+</sc-if>`;
+const cSheet = (open, label, body, close, full = true) => `<sc-if value="{{${open}}}" hint-placeholder-val="{{ false }}">
+  <div class="sc-scrim" onClick="{{${close}}}" style="position: absolute; inset: 0; background: {{t.dim}};"></div>
+  <div role="dialog" aria-label="${label}" class="sc-sheet" style="position: absolute; left: 0; right: 0; bottom: 0; ${full ? 'top: 56px;' : 'max-height: calc(100% - 56px);'} box-sizing: border-box; padding: 20px 20px 34px; border-radius: 32px 32px 0 0; background: {{t.bg}}; display: flex; flex-direction: column; gap: 14px; overflow: hidden;">
+    ${body}
+  </div>
+</sc-if>`;
+
+// Making a class (a name, and a school if you like), joining one with its code, or renaming one: one popup, `pop`.
+const CLASS_FORM = `<span style="font-size: 22px; font-weight: 600; letter-spacing: -.02em;">{{pop.title}}</span>
+    <sc-if value="{{pop.naming}}" hint-placeholder-val="{{ true }}">${cField('pop.name', 'pop.setName', 'Name, like BIO 201', 'Class name', { icon: 'people', attrs: ' maxlength="60" onKeyDown="{{pop.key}}" ref="{{pop.ref}}"' })}${cField('pop.school', 'pop.setSchool', 'School (if you like)', 'School', { icon: 'cap', attrs: ' maxlength="60" onKeyDown="{{pop.key}}"' })}</sc-if>
+    <sc-if value="{{pop.joining}}" hint-placeholder-val="{{ false }}">${cField('pop.code', 'pop.setCode', 'Code', 'Class code', { icon: 'enter', mono: true, attrs: ' maxlength="6" autocapitalize="characters" spellcheck="false" onKeyDown="{{pop.key}}" ref="{{pop.ref}}"' })}</sc-if>
+    ${errLine('pop')}
+    ${twoBtns('pop', '{{pop.action}}')}`;
+// Asking to be verified: teacher or school, the school, and a school email or a link that shows you there.
+const VERIFY_BODY = `<div style="display: flex; align-items: center; justify-content: space-between; gap: 12px;"><span style="font-size: 22px; font-weight: 600; letter-spacing: -.02em;">Get verified</span>${closeX('ver.close')}</div>
+    <sc-if value="{{ver.asking}}" hint-placeholder-val="{{ true }}"><div style="display: flex; flex-direction: column; gap: 12px;">
+      ${panelSeg('ver.roles', 'Teacher or school', 2)}
+      ${cField('ver.school', 'ver.setSchool', 'School', 'School', { icon: 'cap', attrs: ' maxlength="80"' })}
+      ${cField('ver.contact', 'ver.setContact', 'School email, or a link that shows you there', 'School email or link', { icon: 'link', attrs: ' maxlength="200" autocapitalize="off" spellcheck="false"' })}
+      ${errLine('ver')}
+      ${twoBtns('ver', 'Send')}
+    </div></sc-if>
+    <sc-if value="{{ver.waiting}}" hint-placeholder-val="{{ false }}"><div style="display: flex; flex-direction: column; gap: 14px;"><div style="padding: 18px; border-radius: 20px; background: {{t.surf}}; display: flex; align-items: center; gap: 12px;"><span style="display: flex; color: #3E63DD;">${svg(I.shield, 22, 2)}</span><span style="display: flex; flex-direction: column; gap: 2px;"><span style="font-size: 15px; font-weight: 600;">Waiting for review</span><span style="font-size: 13px; color: {{t.muted}};">We’ll let you know.</span></span></div><button type="button" onClick="{{ver.close}}" style="height: 48px; border: 0; border-radius: 999px; background: {{t.inv}}; color: {{t.invText}}; font: inherit; font-size: 15px; font-weight: 600; cursor: pointer;">Done</button></div></sc-if>`;
+// Reporting a deck, a person, or a suggestion: a reason, and a line (needed for Other). Pages that report something
+// include REPORT_JS in their logic (it reads this.state, and `repDefault` for a board that shows it open) and this
+// sheet in their markup (REPORT_SHEET), then call openReport('deck' | 'profile' | 'suggestion', id, name).
+const REPORT_BODY = `<div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 12px;"><span style="display: flex; flex-direction: column; gap: 4px; min-width: 0;"><span style="font-size: 22px; font-weight: 600; letter-spacing: -.02em;">{{rep.title}}</span><span style="font-size: 14px; color: {{t.muted}}; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{rep.what}}</span></span>${closeX('rep.close')}</div>
+    <sc-if value="{{rep.asking}}" hint-placeholder-val="{{ true }}"><div style="display: flex; flex-direction: column; gap: 12px;">
+      <div role="radiogroup" aria-label="Why" style="display: flex; flex-direction: column; gap: 6px;"><sc-for list="{{rep.reasons}}" as="o" hint-placeholder-count="4"><button type="button" role="radio" aria-checked="{{o.pressed}}" onClick="{{o.pick}}" style="height: 50px; flex-shrink: 0; padding: 0 16px; display: flex; align-items: center; gap: 12px; border: 0; border-radius: 16px; background: {{t.surf}}; box-shadow: {{o.ring}}; color: {{t.text}}; font: inherit; font-size: 15px; font-weight: 500; text-align: left; cursor: pointer;"><span style="width: 18px; height: 18px; flex-shrink: 0; box-sizing: border-box; border-radius: 9px; border: {{o.dot}};"></span><span>{{o.label}}</span></button></sc-for></div>
+      ${cField('rep.note', 'rep.setNote', '{{rep.notePh}}', 'A line about it', { attrs: ' maxlength="280"' })}
+      ${errLine('rep')}
+      ${twoBtns('rep', 'Send')}
+    </div></sc-if>
+    <sc-if value="{{rep.sent}}" hint-placeholder-val="{{ false }}"><div style="display: flex; flex-direction: column; gap: 14px;"><div style="padding: 18px; border-radius: 20px; background: {{t.surf}}; display: flex; align-items: center; gap: 12px;"><span style="display: flex;">${svg(I.check, 20, 2.4)}</span><span style="font-size: 15px; font-weight: 600;">Thanks. We’ll take a look.</span></div><button type="button" onClick="{{rep.close}}" style="height: 48px; border: 0; border-radius: 999px; background: {{t.inv}}; color: {{t.invText}}; font: inherit; font-size: 15px; font-weight: 600; cursor: pointer;">Done</button></div></sc-if>`;
+const REPORT_SHEET = phone => (phone ? cSheet('rep.show', 'Report', REPORT_BODY, 'rep.close', false) : cDialog('rep', REPORT_BODY, 460));
+const VERIFY_SHEET = phone => (phone ? cSheet('ver.show', 'Get verified', VERIFY_BODY, 'ver.close', false) : cDialog('ver', VERIFY_BODY, 460));
+const REPORT_JS = `const REASONS = [['wrong', 'Wrong or harmful'], ['spam', 'Spam'], ['stolen', 'Someone else’s work'], ['other', 'Other']];
+  const rep0 = 'rep' in this.state ? this.state.rep : (typeof repDefault === 'undefined' ? null : repDefault);
+  const openReport = (kind, id, name) => this.setState({ rep: { kind, id, name }, repReason: '', repNote: '', repSent: false, repErr: '' });
+  const repReason = this.state.repReason || '', repNote = this.state.repNote || '', repOk = !!repReason && (repReason !== 'other' || !!repNote.trim());
+  const rep = { show: !!rep0, title: rep0 ? ({ deck: 'Report this deck', profile: 'Report this person', suggestion: 'Report this suggestion' })[rep0.kind] || 'Report' : '', what: rep0 ? rep0.name || '' : '',
+    asking: !!rep0 && !this.state.repSent, sent: !!rep0 && !!this.state.repSent,
+    reasons: REASONS.map(([id, label]) => { const on = id === repReason; return { label, pressed: on ? 'true' : 'false', ring: on ? '0 0 0 2px ' + t.text : 'none', dot: on ? '6px solid ' + t.text : '2px solid ' + t.muted, pick: () => this.setState({ repReason: id, repErr: '' }) }; }),
+    note: repNote, setNote: e => this.setState({ repNote: e && e.target ? e.target.value : '' }), notePh: repReason === 'other' ? 'What’s wrong?' : 'A line about it (if you like)',
+    err: this.state.repErr || '', hasErr: !!this.state.repErr, off: repOk ? 'false' : 'true', bg: repOk ? t.inv : t.surf2, fg: repOk ? t.invText : t.muted,
+    close: () => this.setState({ rep: null, repSent: false, repErr: '' }),
+    save: () => { if (!repOk || !rep0) return; Promise.resolve(db.act.report({ kind: rep0.kind, id: rep0.id, handle: rep0.kind === 'profile' ? rep0.id : undefined, reason: repReason, note: repNote.trim() })).then(() => this.setState({ repSent: true }), e => this.setState({ repErr: e.message })); } };`;
+// Get verified (VERIFY_SHEET): `verDefault` opens it on a board. It shows "Waiting for review" once a request is in.
+const VERIFY_JS = `const vst = (db.net && db.net.verify && db.net.verify()) || {};
+  const verOn = 'ver' in this.state ? !!this.state.ver : typeof verDefault !== 'undefined' && !!verDefault;
+  const openVerify = () => this.setState({ ver: true, verSent: false, verErr: '' });
+  const verRole = this.state.verRole || 'teacher', verSchool = this.state.verSchool ?? (vst.school || ''), verContact = this.state.verContact || '', verOk = verSchool.trim().length > 1 && !!verContact.trim();
+  const ver = { show: verOn, title: 'Get verified', asking: verOn && !vst.open && !this.state.verSent, waiting: verOn && (!!vst.open || !!this.state.verSent),
+    roles: [['teacher', 'I’m a teacher'], ['school', 'We’re a school']].map(([id, label]) => ({ label, pressed: id === verRole ? 'true' : 'false', bg: id === verRole ? t.bg : 'transparent', fg: id === verRole ? t.text : t.muted, sh: id === verRole ? '0 1px 3px rgba(0,0,0,.14)' : 'none', pick: () => this.setState({ verRole: id }) })),
+    school: verSchool, setSchool: e => this.setState({ verSchool: e && e.target ? e.target.value : '' }), contact: verContact, setContact: e => this.setState({ verContact: e && e.target ? e.target.value : '', verErr: '' }),
+    err: this.state.verErr || '', hasErr: !!this.state.verErr, off: verOk ? 'false' : 'true', bg: verOk ? t.inv : t.surf2, fg: verOk ? t.invText : t.muted,
+    close: () => this.setState({ ver: false, verSent: false, verErr: '' }),
+    save: () => { if (!verOk) return; Promise.resolve(db.act.askVerify({ role: verRole, school: verSchool.trim(), contact: verContact.trim() })).then(() => this.setState({ verSent: true }), e => this.setState({ verErr: e.message })); } };`;
+// The popup's typing box is ready to type in when it opens (in the app; the canvas draws it open).
+const POP_REF_JS = `const popRef = el => { if (!el || db.mock || this.popFocused === this.state.popN) return; this.popFocused = this.state.popN; el.focus(); if (el.select) el.select(); };`;
+
+// ---------- Library → Classes ----------
+const CLASSES_LOGIC = phone => `
+constructor(props) { super(props); this.state = { popN: 0 }; }
+renderVals() {
+  ${T}${DB_JS}${NET_JS}${CLASS_JS}${phone ? KB_JS : ''}
+  ${POP_REF_JS}
+  const p = this.props, s = this.state, B = '${phone ? 'Phone' : 'Web'}';
+  const list = db.net.classes(), loading = list === undefined, bad = !loading && !Array.isArray(list), ks = Array.isArray(list) ? list : [];
+  const todo = db.assignments ? db.assignments() : [];
+  const tiles = ks.map(k => { const g = this.gen(k.name || 'Class', 'mix'), n = todo.filter(a => a.classId === k.id && !a.done).length;
+    const badge = k.role === 'owner' ? 'Yours' : k.role === 'helper' ? 'Helper' : k.official ? 'Official' : '';
+    return { ...g, name: k.name, href: goTo('/class/' + k.code, B + 'Class'), line: [k.school, nOf(k.people, 'person', 'people')].filter(Boolean).join(' · '), badge, hasBadge: !!badge, official: badge === 'Official',
+      toDo: n ? nOf(n, 'assignment') : '', hasToDo: n > 0, owner: person(k.owner), decksLine: nOf(k.decks, 'deck') }; });
+  const seg = on => ({ current: on ? 'page' : 'false', bg: on ? t.bg : 'transparent', fg: on ? t.text : t.muted, sh: on ? '0 1px 3px rgba(0,0,0,.14)' : 'none' });
+  const modes = [['Decks', db.mock ? '${phone ? 'PhoneLibrary' : 'WebDecks'}.dc.html' : '/library'], ['All cards', db.mock ? '${phone ? 'PhoneLibraryCards' : 'WebLibraryCards'}.dc.html' : '/library/cards'], ['Classes', db.mock ? B + 'Classes.dc.html' : '/library/classes']]
+    .map(([label, href]) => ({ label, href, ...seg(label === 'Classes') }));
+  // New class, or Join a class with its code.
+  const kind = 'pop' in s ? s.pop : p.newOpen ? 'new' : p.joinOpen ? 'join' : '';
+  const nm = s.popName ?? (p.newOpen && db.mock ? 'BIO 201' : ''), sc = s.popSchool ?? (p.newOpen && db.mock ? 'UC Davis' : ''), cd = s.popCode ?? (p.joinOpen && db.mock ? 'BIOKTZ' : '');
+  const popOk = kind === 'join' ? /^[A-Z]{6}$/.test(cd) : !!nm.trim();
+  const open = k => this.setState({ pop: k, popName: '', popSchool: '', popCode: '', popErr: '', popN: (s.popN || 0) + 1 });
+  const closePop = () => this.setState({ pop: '', popErr: '' });
+  const savePop = () => { if (!popOk || s.popBusy) return; this.setState({ popBusy: true, popErr: '' });
+    Promise.resolve(kind === 'join' ? db.act.joinClass(cd) : db.act.makeClass({ name: nm.trim(), school: sc.trim() })).then(() => this.setState({ pop: '', popBusy: false }), e => this.setState({ popErr: e.message, popBusy: false })); };
+  const pop = { show: !!kind, naming: kind === 'new', joining: kind === 'join', title: kind === 'join' ? 'Join a class' : 'New class', action: kind === 'join' ? 'Join' : 'Create',
+    name: nm, school: sc, code: cd, setName: e => this.setState({ popName: e && e.target ? e.target.value : '' }), setSchool: e => this.setState({ popSchool: e && e.target ? e.target.value : '' }),
+    setCode: e => { const v = String(e && e.target ? e.target.value : '').toUpperCase().replace(/[^A-Z]/g, '').slice(0, 6); if (e && e.target && e.target.value !== v) e.target.value = v; this.setState({ popCode: v, popErr: '' }); },
+    err: s.popErr || '', hasErr: !!s.popErr, off: popOk ? 'false' : 'true', bg: popOk ? t.inv : t.surf2, fg: popOk ? t.invText : t.muted, close: closePop, save: savePop, ref: popRef,
+    key: e => { if (e.key === 'Enter') { e.preventDefault(); savePop(); } if (e.key === 'Escape') { e.preventDefault(); closePop(); } } };
+  const verDefault = !!p.verifyOpen;
+  ${VERIFY_JS}
+  return {
+    t, ...chrome, ${NET_VALS}
+    modes, loading: loading && !bad, tiles, hasClasses: !loading && ks.length > 0, noClasses: !loading && !bad && !ks.length, offline: bad,
+    openNew: () => open('new'), openJoin: () => open('join'), pop, ver, drawKb: !!db.mock${phone ? ', kb' : ''}
+  };
+}`;
+const classesEmpty = `<sc-if value="{{noClasses}}" hint-placeholder-val="{{ false }}"><div style="padding: 72px 24px; border-radius: 24px; background: {{t.surf}}; display: flex; flex-direction: column; align-items: center; gap: 18px; text-align: center;"><span style="width: 56px; height: 56px; border-radius: 28px; background: {{t.bg}}; display: flex; align-items: center; justify-content: center;">${svg(I.people, 26, 1.8)}</span><span style="font-size: 20px; font-weight: 600;">No classes yet</span><div style="display: flex; gap: 8px; flex-wrap: wrap; justify-content: center;">${cBtn('Join a class', 'openJoin', { icon: 'enter' })}${cBtn('New class', 'openNew', { inv: true, icon: 'plus' })}</div></div></sc-if>
+  <sc-if value="{{offline}}" hint-placeholder-val="{{ false }}"><div style="padding: 48px 24px; border-radius: 24px; background: {{t.surf}}; text-align: center; font-size: 15px; color: {{t.muted}};">Couldn’t reach Lucida. Check your connection.</div></sc-if>`;
+const webClasses = netRoot('Library', `
+    <div style="display: flex; align-items: center; gap: 12px;">
+      <h1 style="margin: 0; font-size: 32px; font-weight: 600; letter-spacing: -.03em;">Library</h1>
+      <span style="margin-left: 10px; display: flex;">${libModes(32)}</span>
+      <span style="flex-grow: 1;"></span>
+      ${pill('Join a class', { icon: 'enter', onClick: '{{openJoin}}' })}
+      ${pill('New class', { inv: true, icon: 'plus', onClick: '{{openNew}}' })}
+    </div>
+    ${NET_LOADING(1)}
+    <sc-if value="{{hasClasses}}" hint-placeholder-val="{{ true }}"><div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px;"><sc-for list="{{tiles}}" as="k" hint-placeholder-count="3"><div style="display: flex; flex-direction: column; gap: 10px; min-width: 0;">${CLASS_TILE('k', 200)}<a href="{{k.owner.href}}" style="display: flex; align-items: center; gap: 8px; min-width: 0; font-size: 13px;">${PERSON_AV('k.owner', 22)}<span style="font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{k.owner.name}}</span>${VERIFIED('k.owner')}<span style="margin-left: auto; flex-shrink: 0; color: {{t.muted}};">{{k.decksLine}}</span></a></div></sc-for></div></sc-if>
+    ${classesEmpty}`, `${cDialog('pop', CLASS_FORM)}
+${VERIFY_SHEET(false)}`);
+const phoneClasses = phone(`<div style="padding: 64px 20px 120px; display: flex; flex-direction: column; gap: 14px;">
+  <div style="display: flex; align-items: center; gap: 8px;">
+    <h1 style="margin: 0; flex-grow: 1; min-width: 0; font-size: 32px; font-weight: 700; letter-spacing: -.03em;">Library</h1>
+    ${libRound('enter', 'Join a class', { onClick: '{{openJoin}}' })}
+    ${libRound('plus', 'New class', { onClick: '{{openNew}}', inv: true })}
+  </div>
+  ${libModes(36, 14, true)}
+  ${NET_LOADING(1)}
+  <sc-if value="{{hasClasses}}" hint-placeholder-val="{{ true }}"><div style="display: flex; flex-direction: column; gap: 14px;"><sc-for list="{{tiles}}" as="k" hint-placeholder-count="3"><div style="display: flex; flex-direction: column; gap: 8px;">${CLASS_TILE('k', 150, 22)}<a href="{{k.owner.href}}" style="display: flex; align-items: center; gap: 8px; min-width: 0; padding: 0 2px; font-size: 13px;">${PERSON_AV('k.owner', 20)}<span style="font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{k.owner.name}}</span>${VERIFIED('k.owner')}<span style="margin-left: auto; flex-shrink: 0; color: {{t.muted}};">{{k.decksLine}}</span></a></div></sc-for></div></sc-if>
+  ${classesEmpty}
+</div>`, 'Library', `${cPhonePop('pop', CLASS_FORM, true)}
+${VERIFY_SHEET(true)}`);
+
+// ---------- A class ----------
+const PROG_COLS = 'display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1.5fr) 110px 120px; gap: 16px; align-items: center;';
+const CLASS_LOGIC = phone => `
+constructor(props) { super(props); this.state = { popN: 0 }; }
+renderVals() {
+  ${T}${DB_JS}${NET_JS}${SW_JS}${CLASS_JS}${phone ? KB_JS : ''}
+  ${POP_REF_JS}
+  const p = this.props, s = this.state, B = '${phone ? 'Phone' : 'Web'}';
+  const code = String(p.code || ({ Member: 'ORGCHM', Invite: 'PREMED' })[p.view] || 'BIOKTZ').toUpperCase();
+  const data = db.net.klass(code), loading = data === undefined, missing = !loading && !!(data && (data.missing || data.offline));
+  const k = !loading && !missing && data ? data : null, invite = !!(k && k.invite), inClass = !!(k && !k.invite);
+  const me = (k && k.me) || {}, role = me.role || '', staff = role === 'owner' || role === 'helper', owner = role === 'owner';
+  const fail = e => this.setState({ err: (e && e.message) || 'Something went wrong. Try again.' });
+  const run = (f, then) => { this.setState({ err: '' }); return Promise.resolve().then(f).then(r => { if (then) then(r); return r; }, fail); };
+  const signedOut = !!db.signedOut || !!p.signedOut, you = !signedOut && db.me && db.me() ? db.me() : { handle: '' };
+  const onSite = !db.mock && /(^|\\.)lucida\\.cards$/.test(location.hostname);
+  const inviteUrl = (db.mock || onSite ? 'https://app.lucida.cards' : location.origin) + '/class/' + code;
+  const pageUrl = d => (db.mock || onSite ? 'https://lucida.cards' : location.origin) + (d.url || '');
+  const people = (k && k.members) || [], learners = people.filter(x => x.role === 'member'), decks = (k && k.deckList) || [];
+  const ownerP = person(k && k.owner), seers = [ownerP.name, ...((k && k.helpers) || [])].filter(Boolean);
+  const mineOf = id => (db.classProgress ? db.classProgress(id) : null);
+  const libDecks = !db.mock && db.decks ? db.decks() : [];
+  const verDefault = !!p.verify;
+  ${VERIFY_JS}
+  const verified = !!vst.verified;
+  const repDefault = p.report && decks[0] ? { kind: 'deck', id: decks[0].id, name: decks[0].name } : null;
+  ${REPORT_JS}
+  // One ⋯ menu open at a time.
+  const menuKey = s.menu || '', closeMenu = () => this.setState({ menu: '' });
+  const menuOf = key => ({ menuOpen: menuKey === key, expanded: menuKey === key ? 'true' : 'false', toggle: () => this.setState({ menu: menuKey === key ? '' : key }) });
+  const item = (label, f, danger) => ({ label, fg: danger ? t.again : t.text, pick: () => { closeMenu(); f(); } });
+
+  // Assignments: for the owner and helpers, how many who share are done; for a member, what's left for them.
+  const asgList = (k && k.assignments) || [];
+  const asg = asgList.map(a => {
+    const pal = this.gen((a.deck.cover && a.deck.cover.seed) || a.deck.name, (a.deck.cover && a.deck.cover.style) || 'mix'), mine = staff ? null : mineOf(a.sharedId), g = { goal: a.goal, cards: a.deck.cards };
+    const sharing = learners.filter(x => x.share), doneN = sharing.filter(x => isDone(a, (a.progress || {})[x.handle])).length, done = !staff && isDone(a, mine);
+    return { id: a.id, name: a.deck.name, base: pal.base, sub: goalWord(a.goal) + ' · ' + dueWord(a.goal, a.due),
+      right: staff ? (sharing.length ? doneN + ' of ' + sharing.length + ' done' : '') : leftWord(g, mine), rightColor: done ? t.good : staff ? t.muted : t.text,
+      href: mine ? goTo('/deck/' + mine.deckId, B + 'Deck') : goTo(a.deck.url, B + 'PublicDeck'),
+      canStudy: role === 'member' && !done, inLib: !!mine, notInLib: !mine, studyHref: mine ? goTo('/review/' + mine.deckId, B + 'Review') : '',
+      study: () => run(() => db.act.study(a.sharedId)), canManage: staff, ...menuOf('a:' + a.id), menu: [item('Remove assignment', () => run(() => db.act.unassign(k.id, a.id)), true)] };
+  });
+  // Progress, one assignment at a time: members who share it, then the ones who don't ("Not shared").
+  const selA = asgList.find(a => a.id === s.sel) || asgList[0] || null;
+  const cell = x => { const pr = selA && (selA.progress || {})[x.handle], P0 = person(x);
+    if (!x.share) return { ...P0, isBar: false, word: 'Not shared', wordColor: t.muted, pct: '0%', barColor: t.surf2, remembered: '', remColor: t.muted, last: '', hasMeta: false, meta: '' };
+    if (!pr) return { ...P0, isBar: false, word: 'Not started', wordColor: t.muted, pct: '0%', barColor: t.surf2, remembered: '—', remColor: t.muted, last: '—', hasMeta: false, meta: '' };
+    const done = isDone(selA, pr), daily = selA.goal === 'daily', rem = pr.remembered == null ? '—' : pr.remembered + '%', last = pr.last ? ago(pr.last) : '—';
+    return { ...P0, isBar: !daily, pct: (pr.total ? Math.round(pr.learned / pr.total * 100) : 0) + '%', barColor: done ? t.good : t.text,
+      word: daily ? (!pr.learned ? 'Not started' : pr.due ? pr.due + ' to review' : 'Caught up') : pr.learned + ' of ' + pr.total, wordColor: daily ? (!pr.learned ? t.muted : pr.due ? t.hard : t.good) : done ? t.good : t.text,
+      remembered: rem, remColor: pr.remembered == null ? t.muted : pr.remembered >= 90 ? t.good : pr.remembered >= 80 ? t.hard : t.again, last,
+      hasMeta: pr.remembered != null || !!pr.last, meta: [pr.remembered == null ? '' : 'Remembered ' + rem, pr.last ? last : ''].filter(Boolean).join(' · ') };
+  };
+  const progRows = selA ? [...learners.filter(x => x.share), ...learners.filter(x => !x.share)].map(cell) : [];
+  const selChips = asgList.map(a => { const on = selA && a.id === selA.id; return { label: a.deck.name, pressed: on ? 'true' : 'false', bg: on ? t.inv : t.surf, fg: on ? t.invText : t.text, pick: () => this.setState({ sel: a.id }) }; });
+
+  // The class's decks: Study one (it joins your library, like any shared deck), or open yours.
+  const deckTiles = decks.map(d => {
+    const nd = netDeck(d), lib = libDecks.find(x => x.link && x.link.id === d.id && !x.link.gone), own = libDecks.find(x => x.shared && x.shared.id === d.id);
+    const isOwn = !!own || (!!d.owner && !!you.handle && d.owner.handle === you.handle), inLib = !isOwn && (!!lib || (db.mock && !!mineOf(d.id)));
+    const menu = [...(owner || (staff && d.mine) ? [item('Take out of class', () => run(() => db.act.removeClassDeck(k.id, d.id)), true)] : []),
+      ...(verified && !isOwn && !(d.checked && d.checked.current) ? [item('Check this deck', () => run(() => db.act.checkDeck(d.id)))] : []),
+      item('Share to Google Classroom', () => db.act.classroom(pageUrl(d), d.name)), ...(!isOwn ? [item('Report', () => openReport('deck', d.id, d.name))] : [])];
+    return { ...nd, canStudy: !isOwn && !inLib && !signedOut, study: () => run(() => db.act.study(d.id)), inLib: isOwn || inLib, libLabel: isOwn ? 'Yours' : 'Studying',
+      libHref: own ? goTo('/deck/' + own.id, B + 'Deck') : lib ? goTo('/deck/' + lib.id, B + 'Deck') : goTo('/library', B + 'Deck'), ...menuOf('d:' + d.id), menu };
+  });
+  // People: the owner picks helpers; the owner and helpers can take someone out.
+  const shown = s.allPeople ? people.length : ${phone ? 6 : 8};
+  const peopleRows = people.slice(0, shown).map(x => {
+    const canManage = staff && !x.you && x.role !== 'owner' && (owner || x.role === 'member');
+    return { ...person(x), roleLabel: x.you ? 'You' : x.role === 'owner' ? 'Owner' : x.role === 'helper' ? 'Helper' : '', hasRole: !!x.you || x.role !== 'member', canManage, ...menuOf('p:' + x.handle),
+      menu: [...(owner && x.role === 'member' ? [item('Make a helper', () => run(() => db.act.setMember(k.id, x.handle, { role: 'helper' })))] : []),
+        ...(owner && x.role === 'helper' ? [item('Make a member', () => run(() => db.act.setMember(k.id, x.handle, { role: 'member' })))] : []),
+        item('Take out of class', () => run(() => db.act.setMember(k.id, x.handle, { remove: true, name: x.name })), true)] };
+  });
+
+  // Add a deck (your own decks, not ones you study from someone), and Assign one (a goal and a date).
+  const panel = 'panel' in s ? s.panel : ({ 'Add a deck': 'add', Assign: 'assign' })[p.panel] || '';
+  const closePanel = () => this.setState({ panel: '', err: '' });
+  const inIt = new Set(decks.map(d => d.id)), added = s.added || {};
+  const addRows = (db.decks ? db.decks() : []).filter(d => !d.readOnly).map(d => { const g = this.gen((d.seed || d.name) + (d.round ? ' #' + d.round : ''), d.style), n = +String(d.total).replace(/\\D/g, '') || 0;
+    const on = !!added[d.id] || !!(d.shared && inIt.has(d.shared.id)) || (db.mock && decks.some(x => x.name === d.name));
+    return { name: d.name, base: g.base, line: n === 1 ? '1 card' : (d.totalLabel || n) + ' cards', added: on, canAdd: !on,
+      add: () => run(() => db.act.addClassDeck(k.id, d.id), () => this.setState({ added: { ...(this.state.added || {}), [d.id]: true } })) }; });
+  const pickId = decks.some(d => d.id === s.pick) ? s.pick : (decks[0] || {}).id || '', goal = s.goal || 'learn', dueV = s.due || isoDay(addDays(7));
+  const friday = addDays(((5 - new Date(todayAt).getDay() + 7) % 7) || 7), okAssign = !!pickId && !!dueV;
+  // Rename (the owner): the same popup as New class.
+  const rn = s.renName ?? ((k && k.name) || ''), rs = s.renSchool ?? ((k && k.school) || '');
+  const pop = { show: !!s.ren, naming: true, joining: false, title: 'Rename class', action: 'Save', name: rn, school: rs, code: '',
+    setName: e => this.setState({ renName: e && e.target ? e.target.value : '' }), setSchool: e => this.setState({ renSchool: e && e.target ? e.target.value : '' }), setCode: () => {},
+    err: '', hasErr: false, off: rn.trim() ? 'false' : 'true', bg: rn.trim() ? t.inv : t.surf2, fg: rn.trim() ? t.invText : t.muted, ref: popRef,
+    close: () => this.setState({ ren: false }), save: () => rn.trim() && run(() => db.act.updateClass(k.id, { name: rn.trim(), school: rs.trim() }), () => this.setState({ ren: false })),
+    key: e => { if (e.key === 'Enter') { e.preventDefault(); if (rn.trim()) run(() => db.act.updateClass(k.id, { name: rn.trim(), school: rs.trim() }), () => this.setState({ ren: false })); } if (e.key === 'Escape') { e.preventDefault(); this.setState({ ren: false }); } } };
+  const inv = this.gen((k && k.name) || 'Class', 'mix');
+  return {
+    t, ...chrome, ${NET_VALS}
+    loading, missing, missingHref: signedOut ? (db.mock ? 'WebSignIn.dc.html' : '/sign-in') : goTo('/library/classes', B + 'Classes'), missingAction: signedOut ? 'Sign in' : 'Your classes',
+    isInvite: invite, inClass, inv, name: (k && k.name) || '', school: (k && k.school) || '', official: !!(k && k.official), ownerP,
+    subLine: k ? '· ' + [k.school, nOf(k.people, 'person', 'people')].filter(Boolean).join(' · ') : '', inviteLine: k ? nOf(k.people, 'person', 'people') + ' · ' + nOf(k.decks, 'deck') : '',
+    joinClass: () => run(() => db.act.joinClass(code)), joinLabel: 'Join',
+    classesHref: goTo('/library/classes', B + 'Classes'), isStaff: staff, isOwner: owner, isMember: role === 'member', canLeave: inClass && !owner,
+    err: s.err || '', hasErr: !!s.err,
+    askShare: role === 'member' && !me.asked, askTitle: 'Share your progress with ' + andList(seers) + '?',
+    shareYes: () => run(() => db.act.shareProgress(k.id, true)), shareNo: () => run(() => db.act.shareProgress(k.id, false)),
+    shareSw: sw(!!me.share), toggleShare: () => run(() => db.act.shareProgress(k.id, !me.share)), shareWith: 'With ' + andList(seers),
+    asg, noAsg: inClass && !asg.length, noAsgLine: 'Nothing assigned yet.',
+    showProg: staff && asg.length > 0, selChips, progHead: selA && selA.goal === 'daily' ? 'Today' : 'Learned', hasProg: staff && !!selA && learners.length > 0, progRows,
+    progEmpty: staff && !!selA && !learners.length,
+    deckTiles, hasDecks: decks.length > 0, noDecks: inClass && !decks.length, noDecksLine: 'No decks in this class yet.',
+    code, inviteLink: inviteUrl.replace(/^https?:\\/\\//, ''), copyLabel: s.copied ? 'Copied' : 'Copy invite link',
+    copyInvite: () => { db.act.copy(inviteUrl); this.setState({ copied: true }); clearTimeout(this.copiedT); this.copiedT = setTimeout(() => this.setState({ copied: false }), 1600); },
+    toClassroom: () => db.act.classroom(inviteUrl, 'Join ' + ((k && k.name) || 'my class') + ' on Lucida'),
+    showVerify: staff && !verified, verifyLabel: vst.open ? 'Waiting for review' : 'Get verified', openVerify,
+    peopleN: String(people.length), peopleRows, morePeople: people.length > shown, morePeopleLabel: 'Show all ' + people.length, showAllPeople: () => this.setState({ allPeople: true }),
+    openRename: () => this.setState({ ren: true, renName: (k && k.name) || '', renSchool: (k && k.school) || '', popN: (s.popN || 0) + 1 }),
+    deleteClass: () => run(() => db.act.deleteClass(k.id, k.name)), leaveClass: () => run(() => db.act.leaveClass(k.id, k.name)),
+    panelAdd: panel === 'add', panelAssign: panel === 'assign', closePanel, openAdd: () => this.setState({ panel: 'add', err: '', added: {} }), openAssign: () => this.setState({ panel: 'assign', err: '' }),
+    addRows, noOwnDecks: !addRows.length,
+    pickRows: decks.map(d => { const on = d.id === pickId; return { name: d.name, base: netDeck(d).base, cardsLine: netDeck(d).cardsLine, on, pressed: on ? 'true' : 'false', ring: on ? '0 0 0 2px ' + t.text : 'none', pick: () => this.setState({ pick: d.id }) }; }),
+    noClassDecks: !decks.length,
+    goalOpts: [['learn', 'Learn every card'], ['daily', 'Review what’s due']].map(([id, label]) => ({ label, pressed: id === goal ? 'true' : 'false', bg: id === goal ? t.bg : 'transparent', fg: id === goal ? t.text : t.muted, sh: id === goal ? '0 1px 3px rgba(0,0,0,.14)' : 'none', pick: () => this.setState({ goal: id }) })),
+    dueLabel: goal === 'daily' ? 'Until' : 'Due',
+    dueChips: [['Tomorrow', addDays(1)], ['Friday', friday], ['In a week', addDays(7)], ['In 2 weeks', addDays(14)]].map(([label, at]) => { const v = isoDay(at), on = v === dueV; return { label, pressed: on ? 'true' : 'false', bg: on ? t.inv : t.surf, fg: on ? t.invText : t.text, pick: () => this.setState({ due: v }) }; }),
+    dueValue: dueV, dueMin: isoDay(todayAt), setDue: e => this.setState({ due: e && e.target ? e.target.value : '' }), scheme: p.dark ? 'dark' : 'light',
+    assignOff: okAssign ? 'false' : 'true', assignBg: okAssign ? t.inv : t.surf2, assignFg: okAssign ? t.invText : t.muted,
+    doAssign: () => okAssign && run(() => db.act.assign(k.id, { sharedId: pickId, goal, due: dueV }), () => this.setState({ panel: '', sel: '' })),
+    rep, ver, pop, drawKb: !!db.mock${phone ? ', kb' : ''}
+  };
+}`;
+// Not there: a mistyped code, or a class that was deleted.
+const CLASS_MISSING = `<sc-if value="{{missing}}" hint-placeholder-val="{{ false }}"><div style="padding: 64px 24px; border-radius: 24px; background: {{t.surf}}; display: flex; flex-direction: column; align-items: center; gap: 10px; text-align: center;"><span style="font-size: 20px; font-weight: 600;">No class has that code</span><span style="font-size: 14px; color: {{t.muted}};">Check the link, or ask for a new one.</span><a href="{{missingHref}}" style="margin-top: 6px; height: 36px; padding: 0 16px; display: inline-flex; align-items: center; border-radius: 999px; background: {{t.inv}}; color: {{t.invText}}; font-size: 14px; font-weight: 600;">{{missingAction}}</a></div></sc-if>`;
+// The invite: the class's colors, whose it is, how many people and decks, and Join (or Sign in to join).
+const INVITE = phone => `<sc-if value="{{isInvite}}" hint-placeholder-val="{{ false }}"><div style="flex-grow: 1; display: flex; align-items: ${phone ? 'stretch' : 'center'}; justify-content: center;${phone ? ' padding-top: 12px;' : ' padding-bottom: 48px;'}">
+  <div style="width: ${phone ? '100%' : '460px'}; display: flex; flex-direction: column; gap: 18px;">
+    <div style="position: relative; height: ${phone ? 220 : 260}px; border-radius: 28px; overflow: hidden; color: {{inv.ink}}; background: {{inv.base}};">${flowLayer('inv')}${GRAIN_LAYER}<div style="position: absolute; inset: 0; box-sizing: border-box; padding: 22px 24px; display: flex; flex-direction: column; justify-content: space-between; text-shadow: {{inv.shadow}};"><span style="display: flex; min-height: 24px;"><sc-if value="{{official}}" hint-placeholder-val="{{ false }}">${GLASS_CHIP(svg(I.shield, 12, 2) + '<span>Official</span>')}</sc-if></span><span style="display: flex; flex-direction: column; gap: 6px; min-width: 0;"><span style="font-size: ${phone ? 32 : 40}px; font-weight: 600; letter-spacing: -.03em; line-height: 1.05;">{{name}}</span><span style="font-size: 15px; opacity: .88;">{{school}}</span></span></div></div>
+    <a href="{{ownerP.href}}" style="display: flex; align-items: center; gap: 12px; min-width: 0;">${PERSON_AV('ownerP', 40)}<span style="min-width: 0; display: flex; flex-direction: column; gap: 2px;"><span style="display: flex; align-items: center; gap: 6px; font-size: 15px; font-weight: 600;"><span>{{ownerP.name}}</span>${VERIFIED('ownerP')}</span><span style="font-size: 13px; color: {{t.muted}};">{{inviteLine}}</span></span></a>
+    <sc-if value="{{signedIn}}" hint-placeholder-val="{{ true }}"><button type="button" onClick="{{joinClass}}" class="sc-press" style="height: 52px; border: 0; border-radius: 999px; background: {{t.inv}}; color: {{t.invText}}; font: inherit; font-size: 16px; font-weight: 600; cursor: pointer;">{{joinLabel}}</button></sc-if>
+    <sc-if value="{{signedOutView}}" hint-placeholder-val="{{ false }}"><a href="{{signInHref}}" class="sc-press" style="height: 52px; border-radius: 999px; background: {{t.inv}}; color: {{t.invText}}; display: flex; align-items: center; justify-content: center; font-size: 16px; font-weight: 600;">Sign in to join</a></sc-if>
+    <sc-if value="{{hasErr}}" hint-placeholder-val="{{ false }}"><span role="alert" style="text-align: center; font-size: 14px; color: {{t.again}};">{{err}}</span></sc-if>
+  </div>
+</div></sc-if>`;
+// Asked once, right after joining: share your progress with the class's owner (and helpers)? Off unless you say so.
+const ASK_SHARE = phone => `<sc-if value="{{askShare}}" hint-placeholder-val="{{ false }}"><div style="padding: ${phone ? '18px' : '20px 22px'}; border-radius: 22px; background: {{t.surf}}; display: flex; ${phone ? 'flex-direction: column; gap: 14px;' : 'align-items: center; gap: 16px;'}">
+      <span style="display: flex; align-items: center; gap: 14px; ${phone ? '' : 'flex-grow: 1; '}min-width: 0;"><span style="width: 44px; height: 44px; flex-shrink: 0; border-radius: 22px; background: {{t.bg}}; display: flex; align-items: center; justify-content: center;">${svg(I.stats, 20, 1.8)}</span><span style="min-width: 0; display: flex; flex-direction: column; gap: 3px;"><span style="font-size: 16px; font-weight: 600; line-height: 1.3;">{{askTitle}}</span><span style="font-size: 13px; line-height: 1.4; color: {{t.muted}};">How far you are and when you studied. Never your answers.</span></span></span>
+      <div style="display: flex; gap: 8px;${phone ? '' : ' flex-shrink: 0;'}">${cBtn('Not now', 'shareNo', { grow: phone, h: phone ? 44 : 36 })}${cBtn('Share', 'shareYes', { inv: true, grow: phone, h: phone ? 44 : 36 })}</div>
+    </div></sc-if>`;
+const CLASS_ERR = `<sc-if value="{{hasErr}}" hint-placeholder-val="{{ false }}"><div role="alert" style="padding: 12px 16px; border-radius: 16px; background: {{t.againTint}}; color: {{t.again}}; font-size: 14px;">{{err}}</div></sc-if>`;
+// An assignment's row: its deck's colors, name, goal and date, and how it's going (with Study for a member).
+const ASG_ROW = phone => `<div class="sc-row" style="position: relative; display: flex; align-items: center; gap: ${phone ? 12 : 14}px; min-height: ${phone ? 64 : 68}px; border-bottom: 1px solid {{t.line}};">
+        <a href="{{a.href}}" aria-label="{{a.name}}" class="sc-hit" style="position: absolute; inset: 0;"></a>
+        <span style="width: ${phone ? 36 : 40}px; height: ${phone ? 36 : 40}px; flex-shrink: 0; border-radius: 12px; background: {{a.base}}; pointer-events: none;"></span>
+        <span style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; pointer-events: none;"><span style="font-size: 15px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{a.name}}</span><span style="font-size: ${phone ? 12 : 13}px; color: {{t.muted}}; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{a.sub}}</span>${phone ? '<span style="font-size: 12px; font-weight: 600; color: {{a.rightColor}};">{{a.right}}</span>' : ''}</span>
+        ${phone ? '' : '<span style="flex-shrink: 0; font-size: 14px; font-weight: 600; color: {{a.rightColor}}; pointer-events: none;">{{a.right}}</span>'}
+        <sc-if value="{{a.canStudy}}" hint-placeholder-val="{{ false }}"><span style="position: relative; display: flex;"><sc-if value="{{a.inLib}}" hint-placeholder-val="{{ true }}"><a href="{{a.studyHref}}" class="sc-press" style="height: 34px; padding: 0 14px; display: inline-flex; align-items: center; border-radius: 999px; background: {{t.surf}}; font-size: 13px; font-weight: 600;">Study</a></sc-if><sc-if value="{{a.notInLib}}" hint-placeholder-val="{{ false }}">${smallBtn('Study', 'a.study')}</sc-if></span></sc-if>
+        <sc-if value="{{a.canManage}}" hint-placeholder-val="{{ false }}"><div style="position: relative;">${moreBtn('a', 'More for {{a.name}}')}${cMenu('a', 'right: 0; top: 40px;')}</div></sc-if>
+      </div>`;
+const ASSIGNMENTS = phone => `<section style="display: flex; flex-direction: column;">
+      <span style="font-size: ${phone ? 17 : 18}px; font-weight: 600; letter-spacing: -.01em; padding-bottom: 4px;">Assignments</span>
+      <sc-for list="{{asg}}" as="a" hint-placeholder-count="2">${ASG_ROW(phone)}</sc-for>
+      <sc-if value="{{noAsg}}" hint-placeholder-val="{{ false }}"><div style="padding: 16px 0; font-size: 14px; color: {{t.muted}};">{{noAsgLine}}</div></sc-if>
+    </section>`;
+const PROG_CHIPS = `<div role="group" aria-label="Assignment" style="display: flex; gap: 6px; flex-wrap: wrap;"><sc-for list="{{selChips}}" as="c" hint-placeholder-count="2"><button type="button" onClick="{{c.pick}}" aria-pressed="{{c.pressed}}" style="height: 32px; padding: 0 12px; border: 0; border-radius: 999px; background: {{c.bg}}; color: {{c.fg}}; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; white-space: nowrap;">{{c.label}}</button></sc-for></div>`;
+const PROG_BAR = `<span style="flex-grow: 1; min-width: 40px; height: 8px; border-radius: 4px; background: {{t.surf2}}; overflow: hidden;"><span style="display: block; height: 100%; width: {{r.pct}}; border-radius: 4px; background: {{r.barColor}};"></span></span>`;
+const PROGRESS = phone => `<sc-if value="{{showProg}}" hint-placeholder-val="{{ true }}"><section style="display: flex; flex-direction: column; gap: 12px;">
+      <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;"><span style="font-size: ${phone ? 17 : 18}px; font-weight: 600; letter-spacing: -.01em;">Progress</span>${PROG_CHIPS}</div>
+      <sc-if value="{{hasProg}}" hint-placeholder-val="{{ true }}"><div style="display: flex; flex-direction: column;">${phone ? `
+        <sc-for list="{{progRows}}" as="r" hint-placeholder-count="5"><a href="{{r.href}}" style="display: flex; align-items: center; gap: 12px; min-height: 60px; padding: 8px 0; box-sizing: border-box; border-bottom: 1px solid {{t.line}};">${PERSON_AV('r', 32)}<span style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px;"><span style="display: flex; align-items: center; gap: 8px; min-width: 0;"><span style="min-width: 0; font-size: 15px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{r.name}}</span><span style="margin-left: auto; flex-shrink: 0; font-size: 13px; font-weight: 600; color: {{r.wordColor}};">{{r.word}}</span></span><sc-if value="{{r.isBar}}" hint-placeholder-val="{{ true }}"><span style="display: flex;">${PROG_BAR}</span></sc-if><sc-if value="{{r.hasMeta}}" hint-placeholder-val="{{ true }}"><span style="font-size: 12px; color: {{t.muted}};">{{r.meta}}</span></sc-if></span></a></sc-for>` : `
+        <div style="${PROG_COLS} height: 32px; font-size: 12px; font-weight: 600; letter-spacing: .05em; text-transform: uppercase; color: {{t.muted}}; border-bottom: 1px solid {{t.line}};"><span>Name</span><span>{{progHead}}</span><span style="text-align: right;">Remembered</span><span style="text-align: right;">Last studied</span></div>
+        <sc-for list="{{progRows}}" as="r" hint-placeholder-count="5"><div style="${PROG_COLS} min-height: 56px; border-bottom: 1px solid {{t.line}}; font-size: 14px;">
+          <a href="{{r.href}}" style="display: flex; align-items: center; gap: 10px; min-width: 0;">${PERSON_AV('r', 28)}<span style="font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{r.name}}</span></a>
+          <span style="display: flex; align-items: center; gap: 10px; min-width: 0;"><sc-if value="{{r.isBar}}" hint-placeholder-val="{{ true }}">${PROG_BAR}</sc-if><span style="flex-shrink: 0; font-size: 13px; font-weight: 600; color: {{r.wordColor}}; white-space: nowrap;">{{r.word}}</span></span>
+          <span style="text-align: right; font-family: ${MONO}; font-weight: 600; color: {{r.remColor}};">{{r.remembered}}</span>
+          <span style="text-align: right; font-size: 13px; color: {{t.muted}};">{{r.last}}</span>
+        </div></sc-for>`}
+      </div></sc-if>
+      <sc-if value="{{progEmpty}}" hint-placeholder-val="{{ false }}"><div style="padding: 16px 0; font-size: 14px; color: {{t.muted}};">No members yet.</div></sc-if>
+    </section></sc-if>`;
+const DECK_CELL = phone => `<div style="position: relative; display: flex; flex-direction: column; gap: ${phone ? 8 : 10}px; min-width: 0;">
+        ${NET_TILE('d', phone ? 160 : 170, phone ? 17 : 20)}
+        <div style="position: absolute; top: ${phone ? 10 : 12}px; right: ${phone ? 10 : 12}px; z-index: 2;">${moreBtn('d', 'More for {{d.name}}', 32, true)}${cMenu('d', 'right: 0; top: 40px;')}</div>
+        <div style="display: flex; align-items: center; gap: 8px; min-width: 0;">
+          <a href="{{d.owner.href}}" style="flex-grow: 1; min-width: 0; display: flex; align-items: center; gap: 8px; font-size: 13px;">${PERSON_AV('d.owner', phone ? 20 : 22)}<span style="min-width: 0; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{d.owner.name}}</span>${phone ? '' : VERIFIED('d.owner')}</a>
+          <sc-if value="{{d.canStudy}}" hint-placeholder-val="{{ false }}">${smallBtn('Study', 'd.study')}</sc-if>
+          <sc-if value="{{d.inLib}}" hint-placeholder-val="{{ true }}"><a href="{{d.libHref}}" style="flex-shrink: 0; height: 34px; padding: 0 12px; display: inline-flex; align-items: center; border-radius: 999px; background: {{t.surf}}; font-size: 13px; font-weight: 600; white-space: nowrap;">{{d.libLabel}}</a></sc-if>
+        </div>
+      </div>`;
+const DECKS_SECTION = phone => `<section style="display: flex; flex-direction: column; gap: 14px;">
+      <span style="font-size: ${phone ? 17 : 18}px; font-weight: 600; letter-spacing: -.01em;">Decks</span>
+      <sc-if value="{{hasDecks}}" hint-placeholder-val="{{ true }}"><div style="display: grid; grid-template-columns: repeat(${phone ? 2 : 3}, minmax(0, 1fr)); gap: ${phone ? 12 : 16}px;"><sc-for list="{{deckTiles}}" as="d" hint-placeholder-count="3">${DECK_CELL(phone)}</sc-for></div></sc-if>
+      <sc-if value="{{noDecks}}" hint-placeholder-val="{{ false }}"><div style="padding: 32px 20px; border-radius: 20px; background: {{t.surf}}; display: flex; flex-direction: column; align-items: center; gap: 12px; text-align: center;"><span style="font-size: 15px; color: {{t.muted}};">{{noDecksLine}}</span><sc-if value="{{isStaff}}" hint-placeholder-val="{{ true }}">${cBtn('Add a deck', 'openAdd', { inv: true, icon: 'plus' })}</sc-if></div></sc-if>
+    </section>`;
+// The side of the page: the invite (its code, Copy invite link, Share to Google Classroom), sharing your progress (a
+// member), Get verified (the owner or a helper, until they are), the people, and renaming, deleting, or leaving.
+const CLASS_SIDE = phone => `<div style="padding: 20px; border-radius: 24px; background: {{t.surf}}; display: flex; flex-direction: column; gap: 10px;">
+        <span style="font-size: 13px; font-weight: 600; color: {{t.muted}};">Invite</span>
+        <span style="font-family: ${MONO}; font-size: 34px; font-weight: 500; letter-spacing: .14em; line-height: 1.1;">{{code}}</span>
+        <span style="font-size: 13px; color: {{t.muted}}; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{inviteLink}}</span>
+        <div style="display: flex; flex-direction: column; gap: 8px; padding-top: 4px;">${cBtn('{{copyLabel}}', 'copyInvite', { inv: true, icon: 'link', h: phone ? 44 : 40 })}${cBtn('Share to Google Classroom', 'toClassroom', { icon: 'share', h: phone ? 44 : 40 })}</div>
+      </div>
+      <sc-if value="{{isMember}}" hint-placeholder-val="{{ false }}"><div style="padding: 16px 18px; border-radius: 20px; background: {{t.surf}}; display: flex; align-items: center; gap: 12px;"><span style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px;"><span style="font-size: 14px; font-weight: 600;">Share my progress</span><span style="font-size: 12px; color: {{t.muted}};">{{shareWith}}</span></span>${SWITCH('shareSw', 'toggleShare', 'Share my progress')}</div></sc-if>
+      <sc-if value="{{showVerify}}" hint-placeholder-val="{{ true }}"><button type="button" onClick="{{openVerify}}" style="height: 52px; flex-shrink: 0; padding: 0 16px; border: 0; border-radius: 18px; background: {{t.surf}}; color: {{t.text}}; display: flex; align-items: center; gap: 10px; font: inherit; font-size: 14px; font-weight: 600; text-align: left; cursor: pointer;"><span style="display: flex; color: #3E63DD;">${svg(I.shield, 16, 2)}</span><span style="flex-grow: 1;">{{verifyLabel}}</span><span style="display: flex; color: {{t.muted}};">${svg(I.chev, 14, 2)}</span></button></sc-if>
+      <div style="display: flex; flex-direction: column; padding-top: 4px;">
+        <div style="display: flex; align-items: baseline; justify-content: space-between; padding: 0 2px 6px;"><span style="font-size: ${phone ? 17 : 18}px; font-weight: 600; letter-spacing: -.01em;">People</span><span style="font-family: ${MONO}; font-size: 13px; color: {{t.muted}};">{{peopleN}}</span></div>
+        <sc-for list="{{peopleRows}}" as="x" hint-placeholder-count="5"><div style="position: relative; display: flex; align-items: center; gap: 10px; height: ${phone ? 52 : 48}px;">
+          <a href="{{x.href}}" style="flex-grow: 1; min-width: 0; display: flex; align-items: center; gap: 10px;">${PERSON_AV('x', 32)}<span style="min-width: 0; font-size: ${phone ? 15 : 14}px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{x.name}}</span>${VERIFIED('x')}</a>
+          <sc-if value="{{x.hasRole}}" hint-placeholder-val="{{ false }}"><span style="flex-shrink: 0; font-size: 12px; font-weight: 600; color: {{t.muted}};">{{x.roleLabel}}</span></sc-if>
+          <sc-if value="{{x.canManage}}" hint-placeholder-val="{{ false }}"><div style="position: relative;">${moreBtn('x', 'More for {{x.name}}')}${cMenu('x', 'right: 0; top: 40px;')}</div></sc-if>
+        </div></sc-for>
+        <sc-if value="{{morePeople}}" hint-placeholder-val="{{ false }}"><button type="button" onClick="{{showAllPeople}}" style="align-self: flex-start; height: 34px; margin-top: 4px; padding: 0 12px; border: 0; border-radius: 999px; background: {{t.surf}}; color: {{t.text}}; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer;">{{morePeopleLabel}}</button></sc-if>
+      </div>
+      <div style="display: flex; gap: 8px; flex-wrap: wrap; padding-top: 6px;">
+        <sc-if value="{{isOwner}}" hint-placeholder-val="{{ true }}">${smallBtn('Rename', 'openRename', 'pencil')}${dangerBtn('Delete class', 'deleteClass')}</sc-if>
+        <sc-if value="{{canLeave}}" hint-placeholder-val="{{ false }}">${dangerBtn('Leave class', 'leaveClass')}</sc-if>
+      </div>`;
+const ADD_BODY = phone => `<div style="display: flex; align-items: center; justify-content: space-between; gap: 12px;"><span style="font-size: ${phone ? 18 : 20}px; font-weight: 600; letter-spacing: -.01em;">Add a deck</span>${closeX('closePanel')}</div>
+    <div style="flex-grow: 1; min-height: 0; overflow-y: auto; scrollbar-width: thin; display: flex; flex-direction: column;">
+      <sc-for list="{{addRows}}" as="d" hint-placeholder-count="4"><div style="display: flex; align-items: center; gap: 12px; min-height: 64px; border-bottom: 1px solid {{t.line}};"><span style="width: 40px; height: 40px; flex-shrink: 0; border-radius: 12px; background: {{d.base}};"></span><span style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px;"><span style="font-size: 15px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{d.name}}</span><span style="font-size: 13px; color: {{t.muted}};">{{d.line}}</span></span><sc-if value="{{d.added}}" hint-placeholder-val="{{ false }}"><span style="flex-shrink: 0; display: inline-flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 600; color: {{t.muted}};">${svg(I.check, 14, 2.4)}Added</span></sc-if><sc-if value="{{d.canAdd}}" hint-placeholder-val="{{ true }}">${smallBtn('Add', 'd.add', 'plus')}</sc-if></div></sc-for>
+      <sc-if value="{{noOwnDecks}}" hint-placeholder-val="{{ false }}"><div style="padding: 32px 8px; text-align: center; font-size: 14px; color: {{t.muted}};">No decks of yours yet.</div></sc-if>
+    </div>
+    ${CLASS_ERR}`;
+const ASSIGN_BODY = phone => `<div style="display: flex; align-items: center; justify-content: space-between; gap: 12px;"><span style="font-size: ${phone ? 18 : 20}px; font-weight: 600; letter-spacing: -.01em;">Assign a deck</span>${closeX('closePanel')}</div>
+    <div style="flex-grow: 1; min-height: 0; overflow-y: auto; scrollbar-width: thin; display: flex; flex-direction: column; gap: 18px;">
+      <div style="display: flex; flex-direction: column; gap: 8px;"><span style="font-size: 13px; font-weight: 600;">Deck</span>
+        <div role="radiogroup" aria-label="Deck" style="display: flex; flex-direction: column; gap: 6px;"><sc-for list="{{pickRows}}" as="d" hint-placeholder-count="3"><button type="button" role="radio" aria-checked="{{d.pressed}}" onClick="{{d.pick}}" style="min-height: 56px; flex-shrink: 0; padding: 8px 14px 8px 8px; display: flex; align-items: center; gap: 12px; border: 0; border-radius: 16px; background: {{t.surf}}; box-shadow: {{d.ring}}; color: {{t.text}}; font: inherit; text-align: left; cursor: pointer;"><span style="width: 40px; height: 40px; flex-shrink: 0; border-radius: 12px; background: {{d.base}};"></span><span style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px;"><span style="font-size: 15px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{d.name}}</span><span style="font-size: 13px; color: {{t.muted}};">{{d.cardsLine}}</span></span><sc-if value="{{d.on}}" hint-placeholder-val="{{ false }}"><span style="display: flex;">${svg(I.check, 16, 2.4)}</span></sc-if></button></sc-for></div>
+        <sc-if value="{{noClassDecks}}" hint-placeholder-val="{{ false }}"><span style="font-size: 13px; color: {{t.muted}};">Add a deck to the class first.</span></sc-if></div>
+      <div style="display: flex; flex-direction: column; gap: 8px;"><span style="font-size: 13px; font-weight: 600;">Goal</span>${panelSeg('goalOpts', 'Goal', 2)}</div>
+      <div style="display: flex; flex-direction: column; gap: 8px;"><span style="font-size: 13px; font-weight: 600;">{{dueLabel}}</span>
+        <div style="display: flex; gap: 6px; flex-wrap: wrap;"><sc-for list="{{dueChips}}" as="c" hint-placeholder-count="4"><button type="button" onClick="{{c.pick}}" aria-pressed="{{c.pressed}}" style="height: 34px; padding: 0 14px; border: 0; border-radius: 999px; background: {{c.bg}}; color: {{c.fg}}; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer;">{{c.label}}</button></sc-for></div>
+        <label style="display: flex; align-items: center; gap: 10px; height: 48px; padding: 0 16px; box-sizing: border-box; border-radius: 16px; background: {{t.surf}}; color: {{t.muted}};">${svg(I.calendar, 18, 1.8)}<input type="date" value="{{dueValue}}" min="{{dueMin}}" onChange="{{setDue}}" aria-label="Date" style="flex-grow: 1; min-width: 0; height: 100%; border: 0; outline: 0; background: transparent; font: inherit; font-size: 15px; color: {{t.text}}; color-scheme: {{scheme}};"></label>
+      </div>
+    </div>
+    ${CLASS_ERR}
+    <button type="button" onClick="{{doAssign}}" aria-disabled="{{assignOff}}" style="height: 52px; flex-shrink: 0; border: 0; border-radius: 999px; background: {{assignBg}}; color: {{assignFg}}; font: inherit; font-size: 16px; font-weight: 600; cursor: pointer;">Assign</button>`;
+const webClass = netRoot('Library', `
+    ${NET_LOADING(2)}
+    ${CLASS_MISSING}
+    ${INVITE(false)}
+    <sc-if value="{{inClass}}" hint-placeholder-val="{{ true }}">
+      <a href="{{classesHref}}" style="align-self: flex-start; margin: -6px 0 -12px -10px; height: 32px; padding: 0 14px 0 8px; display: inline-flex; align-items: center; gap: 6px; border-radius: 999px; font-size: 14px; color: {{t.muted}};">${svg(I.back, 16, 2)}Classes</a>
+      <div style="display: flex; align-items: flex-end; gap: 16px;">
+        <div style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 10px;">
+          <div style="display: flex; align-items: center; gap: 12px; min-width: 0;"><h1 style="margin: 0; font-size: 32px; font-weight: 600; letter-spacing: -.03em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{name}}</h1><sc-if value="{{official}}" hint-placeholder-val="{{ false }}">${chip(svg(I.shield, 12, 2) + '<span>Official</span>', 'flex-shrink: 0; color: #3E63DD;')}</sc-if></div>
+          <div style="display: flex; align-items: center; gap: 8px; min-width: 0; font-size: 14px; color: {{t.muted}};"><a href="{{ownerP.href}}" style="display: flex; align-items: center; gap: 8px; flex-shrink: 0; color: {{t.text}}; font-weight: 600;">${PERSON_AV('ownerP', 22)}<span>{{ownerP.name}}</span></a>${VERIFIED('ownerP')}<span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{subLine}}</span></div>
+        </div>
+        <sc-if value="{{isStaff}}" hint-placeholder-val="{{ true }}"><div style="display: flex; gap: 8px; flex-shrink: 0;">${pill('Add a deck', { icon: 'plus', onClick: '{{openAdd}}' })}${pill('Assign', { inv: true, icon: 'calendar', onClick: '{{openAssign}}' })}</div></sc-if>
+      </div>
+      <div style="display: flex; gap: 32px; align-items: flex-start;">
+        <div style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 30px;">
+          ${CLASS_ERR}
+          ${ASK_SHARE(false)}
+          ${ASSIGNMENTS(false)}
+          ${PROGRESS(false)}
+          ${DECKS_SECTION(false)}
+        </div>
+        <aside style="width: 332px; flex-shrink: 0; display: flex; flex-direction: column; gap: 14px;">
+          ${CLASS_SIDE(false)}
+        </aside>
+      </div>
+    </sc-if>`, `${cPanel('panelAdd', 'Add a deck', ADD_BODY(false))}
+${cPanel('panelAssign', 'Assign a deck', ASSIGN_BODY(false))}
+${cDialog('pop', CLASS_FORM)}
+${REPORT_SHEET(false)}
+${VERIFY_SHEET(false)}`);
+const phoneClass = phone(`<div style="padding: 60px 20px 120px; display: flex; flex-direction: column; gap: 18px;">
+  ${NET_LOADING(2)}
+  ${CLASS_MISSING}
+  <sc-if value="{{isInvite}}" hint-placeholder-val="{{ false }}"><div style="display: flex; align-items: center; gap: 8px;">${libRound('back', 'Classes', { href: '{{classesHref}}' })}</div></sc-if>
+  ${INVITE(true)}
+  <sc-if value="{{inClass}}" hint-placeholder-val="{{ true }}">
+    <div style="display: flex; align-items: center; gap: 8px;">${libRound('back', 'Classes', { href: '{{classesHref}}' })}<span style="flex-grow: 1;"></span><sc-if value="{{isStaff}}" hint-placeholder-val="{{ true }}">${libRound('plus', 'Add a deck', { onClick: '{{openAdd}}' })}${libRound('calendar', 'Assign', { onClick: '{{openAssign}}', inv: true })}</sc-if></div>
+    <div style="display: flex; flex-direction: column; gap: 8px;">
+      <div style="display: flex; align-items: center; gap: 10px;"><h1 style="margin: 0; min-width: 0; font-size: 32px; font-weight: 700; letter-spacing: -.03em; line-height: 1.1; overflow-wrap: anywhere;">{{name}}</h1><sc-if value="{{official}}" hint-placeholder-val="{{ false }}"><span style="display: flex; color: #3E63DD;">${svg(I.shield, 20, 2)}</span></sc-if></div>
+      <div style="display: flex; align-items: center; gap: 8px; min-width: 0; font-size: 14px; color: {{t.muted}};"><a href="{{ownerP.href}}" style="display: flex; align-items: center; gap: 8px; flex-shrink: 0; color: {{t.text}}; font-weight: 600;">${PERSON_AV('ownerP', 22)}<span>{{ownerP.name}}</span></a>${VERIFIED('ownerP')}<span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{subLine}}</span></div>
+    </div>
+    ${CLASS_ERR}
+    ${ASK_SHARE(true)}
+    ${ASSIGNMENTS(true)}
+    ${PROGRESS(true)}
+    ${DECKS_SECTION(true)}
+    ${CLASS_SIDE(true)}
+  </sc-if>
+</div>`, 'Library', `${cSheet('panelAdd', 'Add a deck', ADD_BODY(true), 'closePanel')}
+${cSheet('panelAssign', 'Assign a deck', ASSIGN_BODY(true), 'closePanel')}
+${cPhonePop('pop', CLASS_FORM, true)}
+${REPORT_SHEET(true)}
+${VERIFY_SHEET(true)}`);
+
+// ---------- Admin ----------
+// Lucida's own team (LUCIDA_ADMINS; on this computer, /dev/as/admin): verification requests to approve or turn down,
+// and reports (one row per thing reported, with every report about it) to hide or dismiss. A big-screen page only.
+const ADMIN_LOGIC = `
+constructor(props) { super(props); this.state = {}; }
+renderVals() {
+  ${T}${DB_JS}${NET_JS}${CLASS_JS}
+  const p = this.props, s = this.state, tab = s.tab || (p.tab === 'Reports' ? 'reports' : 'verify');
+  const data = db.net.admin(), loading = data === undefined, denied = !loading && !!(data && (data.missing || data.offline || data.error));
+  const d = !loading && !denied && data ? data : { requests: [], reports: [] }, gone = s.gone || {}, busy = s.busy || {};
+  const decide = (key, f) => { if (busy[key]) return; this.setState({ busy: { ...busy, [key]: true }, err: '' });
+    Promise.resolve().then(f).then(() => this.setState({ gone: { ...(this.state.gone || {}), [key]: true } }), e => this.setState({ err: e.message })).then(() => this.setState({ busy: { ...(this.state.busy || {}), [key]: false } })); };
+  const REASON = { wrong: 'Wrong or harmful', spam: 'Spam', stolen: 'Someone else’s work', other: 'Other' };
+  const reqs = (d.requests || []).filter(r => !gone[r.id]).map(r => ({ ...person(r.person), roleLabel: r.role === 'school' ? 'School' : 'Teacher', school: r.school, contact: r.contact,
+    contactHref: /^https?:/i.test(r.contact) ? r.contact : 'mailto:' + r.contact, when: ago(r.at),
+    approve: () => decide(r.id, () => db.act.adminVerify(r.id, 'approve')), decline: () => decide(r.id, () => db.act.adminVerify(r.id, 'decline')) }));
+  const reps = (d.reports || []).filter(g => !gone[g.id]).map(g => { const sug = g.suggestion || { author: '', message: '', first: '', n: 0 };
+    return { isDeck: g.kind === 'deck' && !!g.deck, isPerson: g.kind === 'profile' && !!g.person, isSug: g.kind === 'suggestion', deck: netDeck(g.deck || {}), who: person(g.person || {}),
+      sugAuthor: sug.author, sugLine: [sug.message ? '“' + sug.message + '”' : '', sug.first].filter(Boolean).join(' · ') || nOf(sug.n || 0, 'change'),
+      kindLabel: ({ deck: 'Deck', profile: 'Person', suggestion: 'Suggestion' })[g.kind] || 'Report', name: g.name, countLabel: nOf(g.reports.length, 'report'),
+      rows: g.reports.map(r => ({ reason: REASON[r.reason] || 'Other', note: r.note ? '“' + r.note + '”' : '', hasNote: !!r.note, by: ((r.by && r.by.name) || 'Someone') + ' · ' + ago(r.at) })),
+      hideLabel: g.kind === 'profile' ? 'Hide their decks' : g.kind === 'suggestion' ? 'Remove suggestion' : 'Hide deck',
+      hide: () => decide(g.id, () => db.act.adminReport(g.id, g.kind === 'suggestion' ? 'remove' : 'hide')), dismiss: () => decide(g.id, () => db.act.adminReport(g.id, 'dismiss')) }; });
+  const ready = !loading && !denied;
+  return { t, ...chrome, grain: String(this.props.grain ?? 0.7), loading, denied, ready,
+    tabs: [['verify', 'Verification', reqs.length], ['reports', 'Reports', reps.length]].map(([id, label, n]) => { const on = id === tab; return { label, count: String(n), pressed: on ? 'true' : 'false', bg: on ? t.bg : 'transparent', fg: on ? t.text : t.muted, sh: on ? '0 1px 3px rgba(0,0,0,.14)' : 'none', pick: () => this.setState({ tab: id }) }; }),
+    onVerify: ready && tab === 'verify', onReports: ready && tab === 'reports', reqs, reps, noReqs: ready && tab === 'verify' && !reqs.length, noReps: ready && tab === 'reports' && !reps.length,
+    err: s.err || '', hasErr: !!s.err };
+}`;
+const webAdmin = webRoot(`${sidebar('')}
+<main style="flex-grow: 1; box-sizing: border-box; padding: 36px 48px; display: flex; flex-direction: column; gap: 22px; min-width: 0; overflow-y: auto;">
+  <div style="display: flex; align-items: center; gap: 12px;"><h1 style="margin: 0; font-size: 32px; font-weight: 600; letter-spacing: -.03em;">Admin</h1>
+    <sc-if value="{{ready}}" hint-placeholder-val="{{ true }}"><div role="tablist" aria-label="Admin" style="margin-left: 10px; display: flex; gap: 2px; padding: 4px; border-radius: 999px; background: {{t.surf}};"><sc-for list="{{tabs}}" as="m" hint-placeholder-count="2"><button type="button" role="tab" aria-selected="{{m.pressed}}" onClick="{{m.pick}}" style="height: 32px; padding: 0 16px; display: inline-flex; align-items: center; gap: 8px; border: 0; border-radius: 999px; background: {{m.bg}}; color: {{m.fg}}; box-shadow: {{m.sh}}; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer;"><span>{{m.label}}</span><span style="font-family: ${MONO}; font-size: 11px; opacity: .6;">{{m.count}}</span></button></sc-for></div></sc-if></div>
+  ${NET_LOADING(2)}
+  <sc-if value="{{denied}}" hint-placeholder-val="{{ false }}"><div style="padding: 64px 24px; border-radius: 24px; background: {{t.surf}}; text-align: center; font-size: 15px; color: {{t.muted}};">Only Lucida’s team can open this page.</div></sc-if>
+  ${CLASS_ERR}
+  <sc-if value="{{onVerify}}" hint-placeholder-val="{{ true }}"><div style="display: flex; flex-direction: column; gap: 12px;"><sc-for list="{{reqs}}" as="r" hint-placeholder-count="2"><div style="padding: 18px 20px; border-radius: 20px; box-shadow: inset 0 0 0 1px {{t.line}}; display: flex; align-items: center; gap: 16px;">
+    <a href="{{r.href}}" style="display: flex;">${PERSON_AV('r', 44)}</a>
+    <div style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px;">
+      <div style="display: flex; align-items: center; gap: 10px; min-width: 0;"><a href="{{r.href}}" style="min-width: 0; font-size: 16px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{r.name}}</a><span style="flex-shrink: 0; font-size: 13px; color: {{t.muted}};">{{r.at}}</span>${chip('{{r.roleLabel}}', 'flex-shrink: 0;')}</div>
+      <div style="display: flex; align-items: center; gap: 16px; min-width: 0; font-size: 14px;"><span style="display: inline-flex; align-items: center; gap: 6px; flex-shrink: 0; color: {{t.muted}};">${svg(I.cap, 15, 1.8)}<span style="color: {{t.text}};">{{r.school}}</span></span><a href="{{r.contactHref}}" target="_blank" rel="noopener" style="display: inline-flex; align-items: center; gap: 6px; min-width: 0; color: {{t.muted}};">${svg(I.link, 15, 1.8)}<span style="font-family: ${MONO}; font-size: 13px; color: {{t.text}}; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{r.contact}}</span></a><span style="flex-shrink: 0; font-size: 13px; color: {{t.muted}};">{{r.when}}</span></div>
+    </div>
+    <div style="display: flex; gap: 8px; flex-shrink: 0;">${pill('Turn down', { onClick: '{{r.decline}}' })}${pill('Approve', { inv: true, icon: 'check', onClick: '{{r.approve}}' })}</div>
+  </div></sc-for>
+  <sc-if value="{{noReqs}}" hint-placeholder-val="{{ false }}"><div style="padding: 56px 24px; border-radius: 24px; background: {{t.surf}}; text-align: center; font-size: 15px; color: {{t.muted}};">No requests waiting.</div></sc-if></div></sc-if>
+  <sc-if value="{{onReports}}" hint-placeholder-val="{{ false }}"><div style="display: flex; flex-direction: column; gap: 12px;"><sc-for list="{{reps}}" as="g" hint-placeholder-count="3"><div style="padding: 18px 20px; border-radius: 20px; box-shadow: inset 0 0 0 1px {{t.line}}; display: flex; gap: 20px; align-items: flex-start;">
+    <div style="width: 200px; flex-shrink: 0;">
+      <sc-if value="{{g.isDeck}}" hint-placeholder-val="{{ true }}">${NET_TILE('g.deck', 130, 17)}</sc-if>
+      <sc-if value="{{g.isPerson}}" hint-placeholder-val="{{ false }}"><a href="{{g.who.href}}" style="height: 130px; box-sizing: border-box; padding: 16px; border-radius: 20px; background: {{t.surf}}; display: flex; flex-direction: column; justify-content: space-between;">${PERSON_AV('g.who', 44)}<span style="display: flex; flex-direction: column; gap: 2px; min-width: 0;"><span style="font-size: 15px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{g.who.name}}</span><span style="font-size: 13px; color: {{t.muted}};">{{g.who.at}}</span></span></a></sc-if>
+      <sc-if value="{{g.isSug}}" hint-placeholder-val="{{ false }}"><div style="height: 130px; box-sizing: border-box; padding: 14px 16px; border-radius: 20px; background: {{t.surf}}; display: flex; flex-direction: column; gap: 6px; overflow: hidden;"><span style="display: flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 600;">${svg(I.message, 14, 2)}<span>{{g.sugAuthor}}</span></span><span style="font-size: 13px; line-height: 1.4; color: {{t.muted}}; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical;">{{g.sugLine}}</span></div></sc-if>
+    </div>
+    <div style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 10px;">
+      <div style="display: flex; align-items: center; gap: 10px; min-width: 0;">${chip('{{g.kindLabel}}', 'flex-shrink: 0;')}<span style="min-width: 0; font-size: 16px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{g.name}}</span><span style="margin-left: auto; flex-shrink: 0; font-size: 13px; color: {{t.muted}};">{{g.countLabel}}</span></div>
+      <sc-for list="{{g.rows}}" as="r" hint-placeholder-count="2"><div style="display: flex; align-items: baseline; gap: 10px; min-width: 0; font-size: 14px; line-height: 1.4;"><span style="flex-shrink: 0; height: 24px; padding: 0 9px; display: inline-flex; align-items: center; border-radius: 999px; background: {{t.againTint}}; color: {{t.again}}; font-size: 12px; font-weight: 600;">{{r.reason}}</span><sc-if value="{{r.hasNote}}" hint-placeholder-val="{{ true }}"><span style="min-width: 0;">{{r.note}}</span></sc-if><span style="margin-left: auto; flex-shrink: 0; font-size: 13px; color: {{t.muted}};">{{r.by}}</span></div></sc-for>
+      <div style="display: flex; gap: 8px; justify-content: flex-end; padding-top: 4px;">${pill('Dismiss', { onClick: '{{g.dismiss}}' })}<button type="button" onClick="{{g.hide}}" class="sc-press" style="height: 36px; padding: 0 16px; border: 0; border-radius: 999px; background: {{t.againTint}}; color: {{t.again}}; font: inherit; font-size: 14px; font-weight: 600; cursor: pointer;">{{g.hideLabel}}</button></div>
+    </div>
+  </div></sc-for>
+  <sc-if value="{{noReps}}" hint-placeholder-val="{{ false }}"><div style="padding: 56px 24px; border-radius: 24px; background: {{t.surf}}; text-align: center; font-size: 15px; color: {{t.muted}};">No reports waiting.</div></sc-if></div></sc-if>
+</main>`);
+
 // ---------- write ----------
 const W = 1440, H = 900, PW = 390, PH = 844;
 // A deck page's sharing on the canvas (Tweaks): shared by you, or from someone else (studied as it is, or a copy).
 const SHARE_PROPS = { shared: { editor: 'enum', default: '', options: ['', 'Link only', 'Public'] }, linked: { editor: 'enum', default: '', options: ['', 'study', 'copy'] }, updatesOpen: { editor: 'boolean', default: false } };
+// A class's boards on the canvas (Tweaks): which class (yours, one you joined, or an invite you haven't taken), sharing
+// your progress, a class with nothing in it yet, a panel or sheet open, and the loading, missing, and signed-out looks.
+const CLASS_PROPS = { ...DARK, grain: MESH('Iris').grain, view: { editor: 'enum', default: 'Yours', options: ['Yours', 'Member', 'Invite'] }, sharing: { editor: 'boolean', default: false }, empty: { editor: 'boolean', default: false },
+  panel: { editor: 'enum', default: '', options: ['', 'Add a deck', 'Assign'] }, report: { editor: 'boolean', default: false }, verify: { editor: 'boolean', default: false },
+  loading: { editor: 'boolean', default: false }, missing: { editor: 'boolean', default: false }, signedOut: { editor: 'boolean', default: false }, code: { editor: 'string', default: '' } };
+const CLASSES_PROPS = { ...DARK, grain: MESH('Iris').grain, loading: { editor: 'boolean', default: false }, empty: { editor: 'boolean', default: false }, newOpen: { editor: 'boolean', default: false },
+  joinOpen: { editor: 'boolean', default: false }, verifyOpen: { editor: 'boolean', default: false } };
 // Settings' profile picture, for showing each one on the canvas (Tweaks).
 const PHOTO_PROP = { editor: 'enum', default: 'Color', options: ['Color', 'Google photo', 'Your photo'] };
 const EDITOR_CSS = RICH_CSS + OCC_EDIT_CSS;
 const files = {
-  'Main': ['Web · Today', webToday, { props: { ...DARK, ...MESH('Iris'), caughtUp: { editor: 'boolean', default: false } }, logic: todayLogic, css: DRAG_CSS, w: W, h: H }],
+  'Main': ['Web · Today', webToday, { props: { ...DARK, ...MESH('Iris'), caughtUp: { editor: 'boolean', default: false }, assignments: { editor: 'boolean', default: false } }, logic: todayLogic, css: DRAG_CSS, w: W, h: H }],
   'WebNewDeck': ['Web · New deck', webNewDeck, { props: { ...DARK, grain: MESH('Iris').grain }, logic: NEW_DECK_LOGIC, css: NUM_CSS + COVER_FADE_CSS, w: W, h: H }],
   'WebImport': ['Web · Import cards', webImport, { props: { ...DARK, grain: MESH('Iris').grain }, logic: importLogic, w: W, h: H }],
   'WebDecks': ['Web · Library', webDecks, { props: { ...DARK, grain: MESH('Iris').grain, mode: LIB_MODE, folder: LIB_FOLDER, view: { editor: 'enum', default: 'Cards', options: ['Cards', 'List'] }, openTags: { editor: 'boolean', default: false }, moreTags: { editor: 'boolean', default: false } }, logic: decksLogic, css: DRAG_CSS, w: W, h: H }],
@@ -5558,7 +6132,7 @@ const files = {
   'Generated': ['Generated gradients', generatedBoard, { props: { grain: MESH('Iris').grain }, logic: generatedLogic, w: W, h: H }],
   'Gallery': ['Gradient cards', galleryBoard, { props: { grain: MESH('Iris').grain }, logic: galleryLogic, w: W, h: H }],
   'Motion': ['Motion', motion(), { props: { grain: MESH('Iris').grain }, logic: `renderVals() { return { t: this.theme(false), grain: String(this.props.grain ?? 0.7), hero: this.mesh('Iris'), art: this.mesh('Iris'), art2: this.mesh('Mint'), art3: this.mesh('Apricot') }; }`, css: motionCss, w: W, h: MOTION_H }],
-  'PhoneToday': ['iPhone · Today', phoneToday, { props: { ...DARK, ...MESH('Iris'), caughtUp: { editor: 'boolean', default: false } }, logic: phoneDecksLogic, w: PW, h: PH }],
+  'PhoneToday': ['iPhone · Today', phoneToday, { props: { ...DARK, ...MESH('Iris'), caughtUp: { editor: 'boolean', default: false }, assignments: { editor: 'boolean', default: false } }, logic: phoneDecksLogic, w: PW, h: PH }],
   'PhoneTodayNew': ['iPhone · Today · new user', phoneTodayNew, { props: { ...DARK, ...MESH('Iris') }, logic: emptyLogic(), w: PW, h: PH }],
   'PhoneTodayCaughtUp': ['iPhone · Today · all caught up', caughtOf('PhoneToday', PW, PH), { logic: darkLogic, w: PW, h: PH }],
   'PhoneDeckEmpty': ['iPhone · Deck · no cards yet', phoneDeckEmpty, { props: { ...DARK, grain: MESH('Iris').grain }, logic: emptyLogic('Pharmacology'), w: PW, h: PH }],
@@ -5665,7 +6239,50 @@ const files = {
   'WebDiscoverSearch': ['Web · Discover · search', attrOf('WebDiscover', W, H, 'q="bio"'), { logic: darkLogic, w: W, h: H }],
   'WebDiscoverSignedOut': ['Web · Discover · signed out (anyone can look)', attrOf('WebDiscover', W, H, 'signed-out="{{yes}}"'), { logic: darkLogic, w: W, h: H }],
   'PhoneDiscover': ['iPhone · Discover', phoneDiscover, { props: { ...DARK, grain: MESH('Iris').grain, loading: { editor: 'boolean', default: false }, signedOut: { editor: 'boolean', default: false } }, logic: DISCOVER_LOGIC(true), w: PW, h: PH }],
-  'PhoneDiscoverSearch': ['iPhone · Discover · search', attrOf('PhoneDiscover', PW, PH, 'q="bio"'), { logic: darkLogic, w: PW, h: PH }]
+  'PhoneDiscoverSearch': ['iPhone · Discover · search', attrOf('PhoneDiscover', PW, PH, 'q="bio"'), { logic: darkLogic, w: PW, h: PH }],
+  // Classes (web/classes.mjs): the Library's Classes view, a class (yours, or one you're in), its invite, what Today
+  // lists, and the admin page.
+  'WebClasses': ['Web · Library · Classes', webClasses, { props: CLASSES_PROPS, logic: CLASSES_LOGIC(false), css: DRAG_CSS, w: W, h: H }],
+  'WebClassesEmpty': ['Web · Library · Classes · none yet', attrOf('WebClasses', W, H, 'empty="{{yes}}"'), { logic: darkLogic, css: DRAG_CSS, w: W, h: H }],
+  'WebClassesNew': ['Web · Library · Classes · New class', attrOf('WebClasses', W, H, 'new-open="{{yes}}"'), { logic: darkLogic, css: DRAG_CSS, w: W, h: H }],
+  'WebClassesJoin': ['Web · Library · Classes · Join a class (with its code)', attrOf('WebClasses', W, H, 'join-open="{{yes}}"'), { logic: darkLogic, css: DRAG_CSS, w: W, h: H }],
+  'WebClassesDark': ['Web · Library · Classes (dark)', darkOf('WebClasses', W, H), { logic: darkLogic, css: DRAG_CSS, w: W, h: H }],
+  'WebClass': ['Web · Class · yours (assignments, progress, decks, people)', webClass, { props: CLASS_PROPS, logic: CLASS_LOGIC(false), css: DRAG_CSS, w: W, h: H }],
+  'WebClassMember': ['Web · Class · one you joined (asked once: share your progress?)', attrOf('WebClass', W, H, 'view="Member"'), { logic: darkLogic, css: DRAG_CSS, w: W, h: H }],
+  'WebClassMemberSharing': ['Web · Class · one you joined, sharing your progress', attrOf('WebClass', W, H, 'view="Member" sharing="{{yes}}"'), { logic: darkLogic, css: DRAG_CSS, w: W, h: H }],
+  'WebClassNew': ['Web · Class · just made (no decks or people yet)', attrOf('WebClass', W, H, 'empty="{{yes}}"'), { logic: darkLogic, css: DRAG_CSS, w: W, h: H }],
+  'WebClassAddDeck': ['Web · Class · Add a deck', attrOf('WebClass', W, H, 'panel="Add a deck"'), { logic: darkLogic, css: DRAG_CSS, w: W, h: H }],
+  'WebClassAssign': ['Web · Class · Assign a deck', attrOf('WebClass', W, H, 'panel="Assign"'), { logic: darkLogic, css: DRAG_CSS, w: W, h: H }],
+  'WebClassReport': ['Web · Class · Report a deck', attrOf('WebClass', W, H, 'view="Member" sharing="{{yes}}" report="{{yes}}"'), { logic: darkLogic, css: DRAG_CSS, w: W, h: H }],
+  'WebClassVerify': ['Web · Class · Get verified', attrOf('WebClass', W, H, 'verify="{{yes}}"'), { logic: darkLogic, css: DRAG_CSS, w: W, h: H }],
+  'WebClassInvite': ['Web · Class · its invite link (join with a tap)', attrOf('WebClass', W, H, 'view="Invite"'), { logic: darkLogic, css: DRAG_CSS, w: W, h: H }],
+  'WebClassInviteSignedOut': ['Web · Class · its invite link, signed out', attrOf('WebClass', W, H, 'view="Invite" signed-out="{{yes}}"'), { logic: darkLogic, css: DRAG_CSS, w: W, h: H }],
+  'WebClassLoading': ['Web · Class · loading', attrOf('WebClass', W, H, 'loading="{{yes}}"'), { logic: darkLogic, css: DRAG_CSS, w: W, h: H }],
+  'WebClassMissing': ['Web · Class · no class has that code', attrOf('WebClass', W, H, 'missing="{{yes}}"'), { logic: darkLogic, css: DRAG_CSS, w: W, h: H }],
+  'WebClassDark': ['Web · Class (dark)', darkOf('WebClass', W, H), { logic: darkLogic, css: DRAG_CSS, w: W, h: H }],
+  'WebClassGray': ['Web · Class (dark, gray)', grayOf('WebClass', W, H), { logic: darkLogic, css: DRAG_CSS, w: W, h: H }],
+  'WebClassMemberDark': ['Web · Class · one you joined (dark)', attrOf('WebClass', W, H, 'view="Member" dark="{{yes}}"'), { logic: darkLogic, css: DRAG_CSS, w: W, h: H }],
+  'WebTodayClass': ['Web · Today · with assignments from your classes', attrOf('Main', W, H, 'assignments="{{yes}}"'), { logic: darkLogic, css: DRAG_CSS, w: W, h: H }],
+  'WebAdmin': ['Web · Admin · verification requests', webAdmin, { props: { ...DARK, grain: MESH('Iris').grain, tab: { editor: 'enum', default: 'Verification', options: ['Verification', 'Reports'] }, loading: { editor: 'boolean', default: false }, denied: { editor: 'boolean', default: false } }, logic: ADMIN_LOGIC, w: W, h: H }],
+  'WebAdminReports': ['Web · Admin · reports', attrOf('WebAdmin', W, H, 'tab="Reports"'), { logic: darkLogic, w: W, h: H }],
+  'WebAdminDark': ['Web · Admin (dark)', darkOf('WebAdmin', W, H), { logic: darkLogic, w: W, h: H }],
+  'PhoneClasses': ['iPhone · Library · Classes', phoneClasses, { props: CLASSES_PROPS, logic: CLASSES_LOGIC(true), css: DRAG_CSS, w: PW, h: PH }],
+  'PhoneClassesEmpty': ['iPhone · Library · Classes · none yet', attrOf('PhoneClasses', PW, PH, 'empty="{{yes}}"'), { logic: darkLogic, css: DRAG_CSS, w: PW, h: PH }],
+  'PhoneClassesNew': ['iPhone · Library · Classes · New class', attrOf('PhoneClasses', PW, PH, 'new-open="{{yes}}"'), { logic: darkLogic, css: DRAG_CSS, w: PW, h: PH }],
+  'PhoneClassesJoin': ['iPhone · Library · Classes · Join a class', attrOf('PhoneClasses', PW, PH, 'join-open="{{yes}}"'), { logic: darkLogic, css: DRAG_CSS, w: PW, h: PH }],
+  'PhoneClass': ['iPhone · Class · yours', phoneClass, { props: CLASS_PROPS, logic: CLASS_LOGIC(true), css: DRAG_CSS, w: PW, h: PH }],
+  'PhoneClassMember': ['iPhone · Class · one you joined (asked once: share your progress?)', attrOf('PhoneClass', PW, PH, 'view="Member"'), { logic: darkLogic, css: DRAG_CSS, w: PW, h: PH }],
+  'PhoneClassNew': ['iPhone · Class · just made', attrOf('PhoneClass', PW, PH, 'empty="{{yes}}"'), { logic: darkLogic, css: DRAG_CSS, w: PW, h: PH }],
+  'PhoneClassAddDeck': ['iPhone · Class · Add a deck', attrOf('PhoneClass', PW, PH, 'panel="Add a deck"'), { logic: darkLogic, css: DRAG_CSS, w: PW, h: PH }],
+  'PhoneClassAssign': ['iPhone · Class · Assign a deck', attrOf('PhoneClass', PW, PH, 'panel="Assign"'), { logic: darkLogic, css: DRAG_CSS, w: PW, h: PH }],
+  'PhoneClassReport': ['iPhone · Class · Report a deck', attrOf('PhoneClass', PW, PH, 'view="Member" sharing="{{yes}}" report="{{yes}}"'), { logic: darkLogic, css: DRAG_CSS, w: PW, h: PH }],
+  'PhoneClassVerify': ['iPhone · Class · Get verified', attrOf('PhoneClass', PW, PH, 'verify="{{yes}}"'), { logic: darkLogic, css: DRAG_CSS, w: PW, h: PH }],
+  'PhoneClassInvite': ['iPhone · Class · its invite link', attrOf('PhoneClass', PW, PH, 'view="Invite"'), { logic: darkLogic, css: DRAG_CSS, w: PW, h: PH }],
+  'PhoneClassInviteSignedOut': ['iPhone · Class · its invite link, signed out', attrOf('PhoneClass', PW, PH, 'view="Invite" signed-out="{{yes}}"'), { logic: darkLogic, css: DRAG_CSS, w: PW, h: PH }],
+  'PhoneClassLoading': ['iPhone · Class · loading', attrOf('PhoneClass', PW, PH, 'loading="{{yes}}"'), { logic: darkLogic, css: DRAG_CSS, w: PW, h: PH }],
+  'PhoneClassDark': ['iPhone · Class (dark)', darkOf('PhoneClass', PW, PH), { logic: darkLogic, css: DRAG_CSS, w: PW, h: PH }],
+  'PhoneClassGray': ['iPhone · Class (dark, gray)', grayOf('PhoneClass', PW, PH), { logic: darkLogic, css: DRAG_CSS, w: PW, h: PH }],
+  'PhoneTodayClass': ['iPhone · Today · with assignments from your classes', attrOf('PhoneToday', PW, PH, 'assignments="{{yes}}"'), { logic: darkLogic, w: PW, h: PH }]
 };
 for (const [name, [title, body, opts]] of Object.entries(files)) writeFileSync(OUT + name + '.dc.html', page(title, body, opts));
 

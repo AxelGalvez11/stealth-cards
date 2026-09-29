@@ -69,8 +69,61 @@ const NEWS = [
   { id: 4, kind: 'decided', actor_name: 'Sam Rivera', person: P.sam, deck: { id: 's4', name: 'Pharmacology', url: '/@samr/pharmacology' }, data: { took: 2, skipped: 1 }, read: true, created_at: '2026-09-24T10:00:00Z' },
   { id: 5, kind: 'checked', actor_name: 'Dr. Okafor', person: P.okafor, deck: { id: 's12', name: 'Organic Chemistry', url: '/@alexkim/organic-chemistry' }, data: {}, read: true, created_at: '2026-09-21T10:00:00Z' }
 ];
+// Classes (web/classes.mjs). BIO 201 is yours (you made it; Dev helps); Organic Chemistry is Dr. Okafor's, and you're in
+// it; the pre-med study group is Maria's, an invite you haven't taken. On the canvas, today is Monday, September 28.
+const X = { priya: { handle: 'priya', name: 'Priya Shah', avatar: null, color: 4, verified: '', kind: 'person' }, leo: { handle: 'leom', name: 'Leo Martin', avatar: null, color: 1, verified: '', kind: 'person' },
+  nina: { handle: 'ninap', name: 'Nina Park', avatar: null, color: 5, verified: '', kind: 'person' }, omar: { handle: 'omar', name: 'Omar Haddad', avatar: null, color: 2, verified: '', kind: 'person' } };
+const CDECKS = { cells: deck('s21', 'alex', 'Cells', 40, 0, { visibility: 'class', tags: ['Biology'] }), membranes: deck('s22', 'dev', 'Membranes', 36, 0, { visibility: 'class', tags: ['Biology'] }),
+  ch3: deck('s23', 'okafor', 'Chapter 3', 64, 0, { visibility: 'class', tags: ['Chemistry'] }) };
+const inClass = (p, role, share) => ({ ...p, role, ...(share == null ? {} : { share }), joined: '2026-09-01T10:00:00Z', you: p.handle === 'alexkim' });
+const prog = (learned, total, due, remembered, last) => ({ learned, total, due, remembered, last, at: '2026-09-28T09:00:00Z' });
+const CLASSES = {
+  BIOKTZ: { id: 'k1', code: 'BIOKTZ', name: 'BIO 201', school: 'UC Davis', owner: P.alex, official: false, people: 8, decks: 3,
+    me: { role: 'owner', share: false, asked: true }, helpers: ['Dev Patel'],
+    members: [inClass(P.alex, 'owner', false), inClass(P.dev, 'helper', false), inClass(P.maria, 'member', true), inClass(P.sam, 'member', true), inClass(X.priya, 'member', true), inClass(P.jordan, 'member', false), inClass(X.nina, 'member', true), inClass(X.leo, 'member', false)],
+    deckList: [{ ...CDECKS.cells, addedBy: 'alexkim', mine: true }, { ...CDECKS.membranes, addedBy: 'devp', mine: false }, { ...DECKS.cell, addedBy: 'alexkim', mine: true }],
+    assignments: [
+      { id: 'a1', sharedId: 's21', goal: 'learn', due: '2026-10-02', deck: { name: 'Cells', cover: CDECKS.cells.cover, cards: 40, url: CDECKS.cells.url },
+        progress: { mariasantos: prog(32, 40, 3, 91, '2026-09-28T08:10:00Z'), samr: prog(40, 40, 0, 88, '2026-09-27T20:00:00Z'), priya: prog(12, 40, 5, 76, '2026-09-25T18:00:00Z'), ninap: prog(0, 40, 0, null, null) } },
+      { id: 'a2', sharedId: 's22', goal: 'daily', due: '2026-10-09', deck: { name: 'Membranes', cover: CDECKS.membranes.cover, cards: 36, url: CDECKS.membranes.url },
+        progress: { mariasantos: prog(20, 36, 0, 94, '2026-09-28T08:30:00Z'), samr: prog(18, 36, 7, 82, '2026-09-26T21:00:00Z'), priya: prog(9, 36, 2, 70, '2026-09-27T17:00:00Z'), ninap: prog(0, 36, 0, null, null) } }] },
+  ORGCHM: { id: 'k2', code: 'ORGCHM', name: 'Organic Chemistry', school: 'UC Davis', owner: P.okafor, official: false, people: 7, decks: 2,
+    me: { role: 'member', share: false, asked: false }, helpers: [],
+    members: [inClass(P.okafor, 'owner'), inClass(P.alex, 'member'), inClass(P.maria, 'member'), inClass(P.dev, 'member'), inClass(X.omar, 'member'), inClass(X.priya, 'member'), inClass(P.jordan, 'member')],
+    deckList: [{ ...CDECKS.ch3, addedBy: 'drokafor', mine: false }, { ...DECKS.orgo, addedBy: 'drokafor', mine: false }],
+    assignments: [
+      { id: 'a3', sharedId: 's23', goal: 'learn', due: '2026-10-02', deck: { name: 'Chapter 3', cover: CDECKS.ch3.cover, cards: 64, url: CDECKS.ch3.url } },
+      { id: 'a4', sharedId: 's7', goal: 'daily', due: '2026-10-06', deck: { name: 'Organic Reactions', cover: DECKS.orgo.cover, cards: 256, url: DECKS.orgo.url } }] },
+  PREMED: { id: 'k3', code: 'PREMED', name: 'Pre-med study group', school: 'UC Davis', owner: P.maria, official: false, people: 12, decks: 4, invite: true }
+};
+// Your own progress on the class decks you study (worked out in your library): Chapter 3 has 12 cards left.
+const MY_PROGRESS = { s23: { deckId: 'orgo', learned: 52, total: 64, due: 6, remembered: 88, last: '2026-09-28T08:00:00Z' }, s7: { deckId: 'orgo', learned: 120, total: 256, due: 4, remembered: 91, last: '2026-09-27T19:00:00Z' } };
+const CLASS_LIST = [
+  { id: 'k1', code: 'BIOKTZ', name: 'BIO 201', school: 'UC Davis', role: 'owner', share: false, owner: P.alex, official: false, people: 8, decks: 3, assignments: 2 },
+  { id: 'k2', code: 'ORGCHM', name: 'Organic Chemistry', school: 'UC Davis', role: 'member', share: false, owner: P.okafor, official: false, people: 7, decks: 2, assignments: 2 },
+  { id: 'k4', code: 'JPNFRK', name: 'Japanese N4 study group', school: '', role: 'helper', share: false, owner: P.jordan, official: false, people: 5, decks: 1, assignments: 0 }
+];
+// What Today lists for you (the classes you're a member of).
+const ASSIGNED = [
+  { id: 'a3', classId: 'k2', className: 'Organic Chemistry', code: 'ORGCHM', sharedId: 's23', name: 'Chapter 3', goal: 'learn', due: '2026-10-02', cards: 64, cover: CDECKS.ch3.cover, progress: MY_PROGRESS.s23, done: false },
+  { id: 'a4', classId: 'k2', className: 'Organic Chemistry', code: 'ORGCHM', sharedId: 's7', name: 'Organic Reactions', goal: 'daily', due: '2026-10-06', cards: 256, cover: DECKS.orgo.cover, progress: MY_PROGRESS.s7, done: false }
+];
+// The admin page: two verification requests, and reports about a deck, a profile, and a suggestion.
+const KAI = { handle: 'kaiw', name: 'Kai Wong', avatar: null, color: 3, verified: '', kind: 'person' };
+const ADMIN = {
+  requests: [
+    { id: 'v1', role: 'teacher', school: 'UC Davis', contact: 'hokafor@ucdavis.edu', at: '2026-09-27T15:00:00Z', person: { ...P.okafor, verified: '' } },
+    { id: 'v2', role: 'school', school: 'Davis Senior High School', contact: 'https://dshs.djusd.net/staff', at: '2026-09-28T07:40:00Z', person: { handle: 'davishigh', name: 'Davis Senior High', avatar: null, color: 2, verified: '', kind: 'person' } }],
+  reports: [
+    { id: 'r1', kind: 'deck', name: 'USMLE Step 1 (all of it)', deck: deck('s30', 'sam', 'USMLE Step 1 (all of it)', 2400, 90, { owner: KAI }), person: null, suggestion: null,
+      reports: [{ reason: 'stolen', note: 'These are my Anki cards, word for word.', by: P.jordan, at: '2026-09-28T06:00:00Z' }, { reason: 'wrong', note: '', by: P.sam, at: '2026-09-27T22:00:00Z' }] },
+    { id: 'r2', kind: 'profile', name: 'Free Answers (@freeanswers)', deck: null, person: { handle: 'freeanswers', name: 'Free Answers', avatar: null, color: 1, verified: '', kind: 'person' }, suggestion: null,
+      reports: [{ reason: 'spam', note: 'Every deck links to a site selling answers.', by: P.maria, at: '2026-09-28T05:00:00Z' }] },
+    { id: 'r3', kind: 'suggestion', name: 'Leo Martin: check my page', deck: null, person: null, suggestion: { author: 'Leo Martin', message: 'check my page for more', n: 12, first: 'Get every answer at my page — link in bio', open: true },
+      reports: [{ reason: 'spam', note: '', by: P.alex, at: '2026-09-26T12:00:00Z' }] }]
+};
 export const NET_SAMPLE = {
-  P, DECKS, ALEX_DECKS, CARDS, MADE, HISTORY, SUGGESTIONS, NEWS,
+  P, DECKS, ALEX_DECKS, CARDS, MADE, HISTORY, SUGGESTIONS, NEWS, CLASSES, CLASS_LIST, MY_PROGRESS, ASSIGNED, ADMIN,
   PROFILE: { ...P.alex, bio: 'MCAT decks, made with my AI. Suggestions welcome.', school: 'UC Davis', subject: 'Pre-med', followers: 340, following: 86, contributions: 23, featured: ['s9', 's10'], stars: 7360 },
   OTHER: { ...P.maria, bio: 'Biochem TA. I fix what my students trip on.', school: 'UC Davis', subject: 'Biochemistry', followers: 1280, following: 140, contributions: 212, featured: ['s1'], stars: 6400 },
   DISCOVER: { topics: ['MCAT', 'Languages', 'Computer science', 'Chemistry', 'Law', 'History', 'Biology'], sections: [

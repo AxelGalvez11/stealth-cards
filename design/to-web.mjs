@@ -28,7 +28,7 @@ for (const file of readdirSync(SRC).filter(f => f.endsWith('.dc.html')).sort()) 
   const grow = ['PhoneSignIn', 'PhoneSignInCode', 'PhoneQuizStart', 'PhoneQuizUpgrade', 'PhoneQuiz', 'PhoneQuizMatch', 'PhoneQuizType', 'PhoneQuizDone'];
   const phoneFill = [...grow, 'PhoneToday', 'PhoneTodayNew', 'PhoneDeck', 'PhoneDeckEmpty', 'PhoneEditor', 'PhoneReview', 'PhoneDone', 'PhoneDonePiles',
     'PhoneStats', 'PhoneStatsEmpty', 'PhoneConnect', 'PhoneSettings', 'PhoneNewDeck', 'PhoneLibrary', 'PhoneDecksEmpty', 'PhoneWelcome',
-    'PhoneDiscover', 'PhoneProfile', 'PhonePublicDeck', 'PhoneHistory', 'PhoneSuggestions', 'PhoneActivity'].includes(name), fill = (w === 1440 && h === 900) || phoneFill;
+    'PhoneDiscover', 'PhoneProfile', 'PhonePublicDeck', 'PhoneHistory', 'PhoneSuggestions', 'PhoneActivity', 'PhoneClasses', 'PhoneClass'].includes(name), fill = (w === 1440 && h === 900) || phoneFill;
   if (phoneFill) template = template.replace(/width: 390px; height: \d+px;/, grow.includes(name) ? 'width: 100%; min-height: 100vh; min-height: 100dvh;' : 'width: 100%; height: 100vh; height: 100dvh; min-height: 100%; max-height: 100%;');
   else if (fill) {
     template = template.replace('width: 1440px; height: 900px;', 'width: 100%; height: 100vh;');

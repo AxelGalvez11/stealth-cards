@@ -143,10 +143,24 @@ export const MOCK_METHOD = String.raw`mock() {
     // The study network (net-sample.mjs): the same answers web/net.js gets from the server. Saving, following and the
     // like stay on this board. Prop "loading" shows a page before its answer arrives.
     me: () => ({ handle: 'alexkim', url: '/@alexkim', name: 'Alex Kim' }),
+    // Classes (web/classes.mjs): what Today lists (prop "assignments" shows it), and your own progress on a class deck.
+    assignments: () => (p.assignments ? N.ASSIGNED : []),
+    classProgress: id => N.MY_PROGRESS[id] || null,
     net: (() => {
       const wait = !!p.loading, D = N.DECKS, pick = k => D[k];
       const star = id => (m.stars && id in m.stars ? m.stars[id] : null), follows = m.follows || {};
       const deckCard = d => { const s = star(d.id); return s == null ? d : { ...d, stars: d.stars + (s ? 1 : -1) }; };
+      // A class, as the board's Tweaks and what you do on it make it: sharing answered, helpers picked, people taken out,
+      // decks assigned, an invite taken (it then shows the class as a member sees it).
+      const klass = code => {
+        const k0 = N.CLASSES[code] || N.CLASSES.BIOKTZ, shared = m.classShare || {}, roles = m.roles || {}, out = m.out || {};
+        if (k0.invite) return m.joined ? { ...N.CLASSES.ORGCHM, id: k0.id, code: k0.code, name: k0.name, owner: k0.owner, people: k0.people + 1, me: { role: 'member', share: false, asked: false }, assignments: [] } : k0;
+        const me = k0.id in shared ? { ...k0.me, share: shared[k0.id], asked: true } : p.sharing ? { ...k0.me, share: true, asked: true } : k0.me;
+        const members = k0.members.filter(x => !out[x.handle]).map(x => (roles[x.handle] ? { ...x, role: roles[x.handle] } : x));
+        const decks = (m.takenOut ? k0.deckList.filter(d => !m.takenOut[d.id]) : k0.deckList);
+        const assignments = [...k0.assignments.filter(a => !(m.unassigned || {})[a.id] && decks.some(d => d.id === a.sharedId)), ...(m.assigned || []).filter(a => a.classId === k0.id)];
+        return { ...k0, me, members, people: members.length, deckList: decks, decks: decks.length, assignments, empty: false, ...(p.empty ? { members: members.filter(x => x.role === 'owner'), people: 1, deckList: [], decks: 0, assignments: [] } : {}) };
+      };
       const deckPage = () => ({ ...deckCard(D.mcat), helpers: [{ handle: 'devp', name: 'Dev Patel' }], contributors: [{ handle: 'devp', name: 'Dev Patel', n: 6 }, { handle: 'alexkim', name: 'Alex Kim', n: 3 }],
         people: [N.P.maria, N.P.dev, N.P.okafor, N.P.alex], cardsList: N.CARDS, moreCards: 634, made: N.MADE,
         me: p.signedOut ? null : { owner: !!p.owner, helper: false, studying: m.studying || (p.studying ? 'cell' : ''), copied: m.copied || '', watching: !!(m.watching ?? p.watching), starred: star('s1') ?? false, open: p.owner ? 3 : 0 } });
@@ -161,6 +175,10 @@ export const MOCK_METHOD = String.raw`mock() {
         activity: () => ({ unread: 2, items: N.NEWS.map(x => ({ ...x, read: m.read ? true : x.read })) }),
         suggestions: () => (m.decided ? N.SUGGESTIONS.filter(x => !m.decided[x.id]) : N.SUGGESTIONS), inbox: () => N.SUGGESTIONS, sent: () => N.SUGGESTIONS.slice(0, 1),
         mine: () => ({ handle: 'alexkim', profile: N.P.alex, decks: [{ id: 's9', slug: 'cell-biology', visibility: 'public', stars: 1300, learners: 214, copies: 86, version: 14, open: 3 }] }),
+        classes: () => (wait ? undefined : p.empty ? [] : N.CLASS_LIST),
+        klass: code => (wait ? undefined : p.missing ? { missing: true, status: 404 } : klass(code)),
+        verify: () => ({ verified: '', open: !!m.verifySent, declined: false, role: '', school: 'UC Davis' }),
+        admin: () => (wait ? undefined : p.denied ? { missing: true, status: 403 } : N.ADMIN),
         drop: noop, act: () => Promise.resolve(null)
       };
     })(),
@@ -194,7 +212,18 @@ export const MOCK_METHOD = String.raw`mock() {
       decide: id => set({ decided: { ...(m.decided || {}), [id]: true } }), readNews: () => set({ read: true }),
       suggest: () => Promise.resolve({ id: 'g9' }), restore: noop, checkDeck: noop, updateProfile: patch => set({ profile: { ...(m.profile || {}), ...patch } }), ensureProfile: noop,
       shareDeck: (id, o) => { set({ share: { ...(m.share || { vis: p.shared === 'Public' ? 'public' : p.shared === 'Link only' ? 'link' : 'private' }), ...(o.visibility ? { vis: o.visibility } : {}) } }); return Promise.resolve({}); },
-      detach: () => set({ detached: true }), takeUpdates: () => { set({ took: true }); return Promise.resolve({}); }, copyUpdates: (id, on) => set({ upd: !!on })
+      detach: () => set({ detached: true }), takeUpdates: () => { set({ took: true }); return Promise.resolve({}); }, copyUpdates: (id, on) => set({ upd: !!on }),
+      // Classes: the canvas keeps each change on its board.
+      makeClass: () => Promise.resolve({ code: 'BIOKTZ' }), joinClass: () => { set({ joined: true }); return Promise.resolve({}); },
+      leaveClass: () => Promise.resolve({}), deleteClass: () => Promise.resolve({}), updateClass: () => Promise.resolve({}),
+      shareProgress: (id, on) => { set({ classShare: { ...(m.classShare || {}), [id]: !!on } }); return Promise.resolve({ on: !!on }); },
+      setMember: (id, h, o) => { set(o.remove ? { out: { ...(m.out || {}), [h]: true } } : { roles: { ...(m.roles || {}), [h]: o.role } }); return Promise.resolve({}); },
+      addClassDeck: () => Promise.resolve({}), removeClassDeck: (id, sid) => { set({ takenOut: { ...(m.takenOut || {}), [sid]: true } }); return Promise.resolve({}); },
+      assign: (id, o) => { const d = Object.values(N.CLASSES).flatMap(k => k.deckList || []).find(x => x.id === o.sharedId) || {};
+        set({ assigned: [...(m.assigned || []), { id: 'n' + (m.assigned || []).length, classId: id, sharedId: o.sharedId, goal: o.goal, due: o.due, deck: { name: d.name, cover: d.cover, cards: d.cards, url: d.url }, progress: {} }] }); return Promise.resolve({}); },
+      unassign: (id, a) => { set({ unassigned: { ...(m.unassigned || {}), [a]: true } }); return Promise.resolve({}); },
+      askVerify: () => { set({ verifySent: true }); return Promise.resolve({}); }, report: () => Promise.resolve({}),
+      adminVerify: () => Promise.resolve({}), adminReport: () => Promise.resolve({}), classroom: noop
     }
   };
 }`.replace('__SAMPLE__', () => JSON.stringify(SAMPLE)).replace('__WAVE__', () => JSON.stringify(SAMPLE_WAVE)).replace('__NET__', () => JSON.stringify(NET_SAMPLE));

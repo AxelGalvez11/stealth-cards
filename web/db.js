@@ -8,6 +8,7 @@ import { placeBefore, deckCards, cardBefore, cardToDeck } from './order.js';
 import { createSound } from './sound.js';
 import { sniff } from './sniff.js';
 import { createNet } from './net.js';
+import { progressOf, doneOf } from './progress.js';
 
 const DAY = 86400000, MIN = 60000, GAPS = [30, 90, 180, 365, 730, 1825, 3650];
 const DAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
@@ -156,13 +157,22 @@ export async function createDb({ onChange, go }) {
   // Sharing, on a deck of yours: who can see it (Link only or Public) and its page. On a deck from someone else: whose it
   // is, whether you study it as it is (readOnly: its cards follow theirs) or made a copy, and the owner's changes waiting.
   const shareOf = d => {
-    const sh = d.share && d.share.vis !== 'private' ? { vis: d.share.vis, id: d.share.id, url: handle() ? '/@' + handle() + '/' + d.share.slug : '/d/' + d.share.id, label: d.share.vis === 'public' ? 'Public' : 'Link only' } : null;
+    const sh = d.share && d.share.vis !== 'private' ? { vis: d.share.vis, id: d.share.id, url: handle() ? '/@' + handle() + '/' + d.share.slug : '/d/' + d.share.id, label: { public: 'Public', link: 'Link only', class: 'Class' }[d.share.vis] || 'Link only' } : null;
     const k = d.link ? { mode: d.link.mode, gone: !!d.link.gone, id: d.link.id, owner: d.link.owner || { name: '', handle: '' }, url: d.link.owner && d.link.owner.handle ? '/@' + d.link.owner.handle + '/' + d.link.slug : '/d/' + d.link.id,
       pending: d.link.gone ? 0 : (d.link.pending || []).length, updates: !!d.link.updates } : null;
     return { shared: sh, link: k, readOnly: !!(k && k.mode === 'study' && !k.gone) };
   };
   // A card of a deck you study as it is: fixing it means suggesting the fix to its owner, on the deck's page.
   const suggestHref = (d, c) => shareOf(d).link.url + '?suggest=' + encodeURIComponent((c && c.origin) || '1');
+  // Classes (web/classes.mjs). The classes you're in come with your library (S.classes, brought up to date when the app
+  // opens), so Today shows your assignments right away; your progress on each is worked out here, from your own cards
+  // (web/progress.js), the same way the server sends it to a class you share it with.
+  const classDeck = sharedId => S.decks.find(d => d.link && d.link.id === sharedId && !d.link.gone);
+  const classProgress = sharedId => { const d = classDeck(sharedId); return d ? { deckId: d.id, ...progressOf(d, S.cards, S.logs) } : null; };
+  // After a study session, a class you share your progress with hears how far you got, without waiting for the app to
+  // open again.
+  const classSync = () => { if ((S.classes || []).some(k => k.role === 'member' && k.share && k.assignments.length))
+    fetch('/api/social', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ type: 'class.sync' }) }).catch(() => {}); };
   const deckRow = d => {
     const st = deckStat(d);
     return { id: d.id, name: d.name, tags: d.tags, seed: d.cover.seed || d.name, style: d.cover.style, round: d.cover.round, image: d.cover.image, paused: d.paused,
@@ -442,6 +452,7 @@ export async function createDb({ onChange, go }) {
     if (L.graded) return;
     L.graded = true; saveLearn();
     for (const cid of L.ids) { const c = cardById(cid); if (c && c.srs.state === 'new') { try { await send('review.grade', { cardId: cid, rating: L.st[cid].misses ? 2 : 3 }); } catch { /* shown already */ } } }
+    classSync();
   }
   // Spelling that's close enough counts: case, accents, a missing "the", and a typo or two in a longer word.
   const norm = x => String(x).toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/\([^)]*\)/g, ' ').replace(/[^\p{L}\p{N}]+/gu, ' ').replace(/\b(the|a|an)\b/g, ' ').replace(/\s+/g, ' ').trim();
@@ -531,14 +542,14 @@ export async function createDb({ onChange, go }) {
       const entry = { cardId, rating, was: c.srs.state };
       session.graded.push(entry);
       entry.logId = (await send('review.grade', { cardId, rating })).logId;
-      if (!queue(session.deckId, session.pile).length) go('/review/done');
+      if (!queue(session.deckId, session.pile).length) { classSync(); go('/review/done'); }
     },
     pile: async (cardId, name) => {
       if (!session) return;
       const entry = { cardId, pile: name, was: 'pile' };
       session.graded.push(entry);
       entry.logId = (await send('review.grade', { cardId, pile: name })).logId;
-      if (!queue(session.deckId, session.pile).length) go('/review/done');
+      if (!queue(session.deckId, session.pile).length) { classSync(); go('/review/done'); }
     },
     addPile: (id, name) => { const d = deckById(id); if (d) act.updateDeck(id, { piles: [...(d.piles || []), { name }] }); },
     undo: async () => { const e = session && session.graded[session.graded.length - 1]; if (!e || !e.logId) return; session.graded.pop(); await send('review.undo', { logId: e.logId }); },
@@ -642,12 +653,43 @@ export async function createDb({ onChange, go }) {
     readNews: ids => net.act('news.read', { ids }),
     updateProfile: patch => net.act('profile.update', { patch }),
     ensureProfile: () => net.act('profile.ensure'),
+    // Classes (web/classes.mjs). Like the network's actions, each gives back what the server said (the pages show its
+    // errors); making or joining a class goes to it, and leaving or deleting one goes back to your classes.
+    makeClass: async o => { const r = await net.act('class.make', o); if (r && r.code) go('/class/' + r.code); return r; },
+    joinClass: async code => { const r = await net.act('class.join', { code }); if (r && r.code) go('/class/' + r.code); return r; },
+    leaveClass: async (id, name) => { if (!confirm('Leave “' + name + '”? The decks you study from it stay in your library.')) return null; const r = await net.act('class.leave', { id }); go('/library/classes'); return r; },
+    deleteClass: async (id, name) => { if (!confirm('Delete “' + name + '”? Everyone in it keeps the decks they study.')) return null; const r = await net.act('class.delete', { id }); go('/library/classes'); return r; },
+    updateClass: (id, patch) => net.act('class.update', { id, patch }),
+    setMember: (id, handle, o) => (o && o.remove && o.name && !confirm('Take ' + o.name + ' out of the class?') ? Promise.resolve(null) : net.act('class.member', { id, handle, role: o && o.role, remove: !!(o && o.remove) })),
+    shareProgress: (id, on) => net.act('class.share', { id, on }),
+    addClassDeck: (id, deckId) => net.act('class.addDeck', { id, deckId }),
+    removeClassDeck: (id, sharedId) => net.act('class.removeDeck', { id, sharedId }),
+    assign: (id, o) => net.act('class.assign', { id, ...o }),
+    unassign: (id, assignment) => net.act('class.unassign', { id, assignment }),
+    askVerify: o => net.act('verify.ask', o),
+    report: o => net.act('report.send', o),
+    adminVerify: (id, pick) => net.act('admin.verify', { id, pick }),
+    adminReport: (id, pick) => net.act('admin.report', { id, pick }),
+    // Google Classroom's own share page, in a new tab: a class's invite link, or a class deck's page.
+    classroom: (url, title) => window.open('https://classroom.google.com/share?url=' + encodeURIComponent(url) + '&title=' + encodeURIComponent(title || ''), '_blank', 'noopener'),
     go
   };
 
   return {
     mock: false, act, net,
     raw: () => S,
+    // Your classes as your library has them; your progress on a class's deck (null until you study it); and what Today
+    // lists: the assignments of the classes you're a member of, soonest first. A done one stays until its date passes,
+    // one that isn't done until two weeks after.
+    classes: () => S.classes || [],
+    classProgress,
+    assignments: () => {
+      const t0 = dayAt(now());
+      return (S.classes || []).filter(k => k.role === 'member').flatMap(k => k.assignments.map(a => {
+        const [y, mo, dd] = String(a.due).split('-').map(Number), at = new Date(y, (mo || 1) - 1, dd || 1).getTime(), p = classProgress(a.sharedId);
+        return { ...a, classId: k.id, className: k.name, code: k.code, progress: p, done: doneOf(a.goal, p), at };
+      })).filter(a => a.at >= t0 || (!a.done && a.at >= t0 - 14 * DAY)).sort((x, y) => x.at - y.at);
+    },
     // You on the study network: your handle and your profile's page (once you have one).
     me: () => ({ handle: handle(), url: handle() ? '/@' + handle() : '', name: S.settings.name || (S.me && S.me.name) || 'You' }),
     // A clip's waveform and where it's at (sound.js), and the recording under way, if there is one.

@@ -43,6 +43,12 @@ export function createNet({ accept = () => {}, changed = () => {}, signedOut = f
     inbox: () => (signedOut ? [] : get('/api/social/suggestions')),
     sent: () => (signedOut ? [] : get('/api/social/suggestions?mine=1')),
     mine: () => (signedOut ? null : get('/api/social/mine', 30000)),
+    // Classes (web/classes.mjs): yours, one class's page (or its invite, for anyone), whether you're verified, and the
+    // admin page (only for admins; anyone else gets { missing }).
+    classes: () => (signedOut ? [] : get('/api/classes')),
+    klass: code => get('/api/public/class?code=' + enc(code || '')),
+    verify: () => (signedOut ? null : get('/api/verify', 60000)),
+    admin: () => (signedOut ? { missing: true, status: 401 } : get('/api/admin', 10000)),
     act, drop
   };
 }

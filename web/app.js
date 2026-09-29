@@ -21,6 +21,9 @@ function network(path, q, P) {
   if (m) return { name: P + 'PublicDeck', props: { handle: m[1].toLowerCase(), slug: m[2].toLowerCase(), copyOpen: q.get('copy') === '1', suggest: q.get('suggest') || '' } };
   const d = /^\/d\/(s[a-z0-9]{4,40})$/.exec(path);
   if (d) return { name: P + 'PublicDeck', props: { id: d[1], copyOpen: q.get('copy') === '1', suggest: q.get('suggest') || '' } };
+  // A class's invite link (web/classes.mjs): anyone can open it, and the people in it see the class.
+  const k = /^\/class\/([A-Za-z]{6})\/?$/.exec(path);
+  if (k) return { name: P + 'Class', props: { code: k[1].toUpperCase() } };
   return null;
 }
 function resolve(path, q) {
@@ -43,6 +46,10 @@ function resolve(path, q) {
   if (path === '/') return { name: db.decks().length ? (narrow.matches ? 'PhoneToday' : 'Main') : P + 'TodayNew' };
   // The Library (it was called Decks): your folders and decks, one folder, or all your cards. Old /decks links land here.
   if (path === '/decks') return { redirect: '/library' };
+  // Your classes are the Library's third view (web/classes.mjs); /verify opens Get verified over them.
+  if (path === '/library/classes' || path === '/verify') return { name: P + 'Classes', props: { newOpen: q.get('new') === '1', joinOpen: q.get('join') === '1', verifyOpen: path === '/verify' } };
+  // The admin page: verification requests and reports. It's made for a big screen, so phones get it too.
+  if (path === '/admin') return { name: 'WebAdmin' };
   const lib = /^\/library(?:\/(cards)|\/folder\/([^/]+))?$/.exec(path);
   if (lib) {
     if (lib[2] && !db.raw().folders.some(f => f.id === lib[2])) return { redirect: '/library' };
@@ -105,7 +112,8 @@ function linkFor(name) {
     WebCardsScreen: id ? '/deck/' + id + '/card' : '/library', WebReview: id ? '/review/' + id : '/review', WebDone: '/review/done', WebDonePiles: '/review/done',
     WebQuizStart: id ? '/deck/' + id + '/learn' : '/library', PhoneQuizStart: id ? '/deck/' + id + '/learn' : '/library', WebQuizUpgrade: id ? '/deck/' + id + '/learn' : '/library', PhoneQuizUpgrade: id ? '/deck/' + id + '/learn' : '/library', PhoneDeck: id ? '/deck/' + id : '/library', Pricing: 'https://lucida.cards/pricing', PricingPhone: 'https://lucida.cards/pricing',
     WebStats: '/stats', WebStatsEmpty: '/stats', WebConnect: '/connect', WebWelcome: '/welcome', WebSettings: '/settings', WebSignIn: '/sign-in', WebSignInCode: '/sign-in/code', PhoneSignIn: '/sign-in', PhoneSignInCode: '/sign-in/code', PhoneToday: '/', Privacy: '/privacy', Terms: '/terms',
-    WebDiscover: '/discover', WebActivity: '/activity', WebProfile: '/you', WebSuggestions: id ? '/deck/' + id + '/suggestions' : '/suggestions' };
+    WebDiscover: '/discover', WebActivity: '/activity', WebProfile: '/you', WebSuggestions: id ? '/deck/' + id + '/suggestions' : '/suggestions',
+    WebClasses: '/library/classes', WebClass: current && current.props.code ? '/class/' + current.props.code : '/library/classes', WebAdmin: '/admin' };
   return pages[name] || pages[name.replace(/^Phone/, 'Web')] || '/b/' + name;
 }
 
