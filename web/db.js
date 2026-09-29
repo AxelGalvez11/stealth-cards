@@ -447,7 +447,8 @@ export async function createDb({ onChange, go }) {
     if (ai.length && (Math.random() < .8 || !own.length)) { const x = oneOf(ai), options = shuffle([x.answer, ...x.wrong.slice(0, 3)]); return { text: x.question, options, right: options.indexOf(x.answer), ...pic }; }
     if (!own.length && tf.length) { const x = oneOf(tf); return { text: x.question, options: ['True', 'False'], right: x.answer === 'true' ? 0 : 1, ...pic }; }
     const options = shuffle([answerOf(c), ...own]);
-    return { text: learnText(c) || 'What’s in the picture?', options, right: options.indexOf(answerOf(c)), ...pic };
+    // A box says which box it asks, since phones don't show the picture.
+    return { text: o ? boxAsk(c, o) : learnText(c) || 'What’s in the picture?', options, right: options.indexOf(answerOf(c)), ...pic };
   }
   const liveQuestions = (id, set, count) => shuffle(learnSet(id, set).filter(liveable)).slice(0, count).map(liveQuestion);
   const learnDeckLabel = L => (L.set.startsWith('tag:') ? L.set.slice(4) : { new: 'New cards', hard: 'Hard cards', all: 'All cards' }[L.set]);
