@@ -108,10 +108,10 @@ struct DeckShareTab: View {
               Segmented(options: [("private", "Private"), ("link", "Link only"), ("public", "Public")], current: vis, hPad: 10) { id in
                 if id != vis { set(["visibility": id]) }
               }
-              Text(["private": "Only you.", "link": "Anyone with the link.", "public": "On your profile and in Discover."][vis] ?? "").css(12).foregroundStyle(t.muted)
+              Text(["private": "Only you.", "link": "Anyone with the link.", "public": "On your profile and in Discover."][vis] ?? "").css(12).foregroundStyle(t.muted).line(12)
             }
             if let shr { sharedParts(shr, row: row, helpers: helpers, openN: openN, proxy: proxy) }
-            else if !shareErr.isEmpty { Text(shareErr).css(13).foregroundStyle(t.again) }
+            else if !shareErr.isEmpty { CSSText(shareErr, 13, color: t.again) }
           }
         }
         .padding(.bottom, keyboard.height > 0 ? keyboard.height : 0)
@@ -126,7 +126,7 @@ struct DeckShareTab: View {
     .onDisappear { copiedTask?.cancel(); if focus == "about", let a = about { set(["description": a]) } }
   }
 
-  private func label(_ s: String) -> some View { Text(s).css(13, .semibold) }
+  private func label(_ s: String) -> some View { Text(s).css(13, .semibold).line(13) }
 
   /// Whose it is (tap: its page), and for a deck you study, Suggest a change and Make it my own; a copy's Get updates.
   @ViewBuilder private func from(_ s: DeckSharing, _ lk: DeckSharing.Linked) -> some View {
@@ -135,8 +135,8 @@ struct DeckShareTab: View {
         HStack(spacing: 12) {
           PersonAvatar(p: s.ownerFace, size: 36)
           VStack(alignment: .leading, spacing: 2) {
-            Text((lk.mode == "copy" ? "Copied from " : "From ") + lk.owner.name).css(14, .semibold).foregroundStyle(t.text)
-            Text(lk.gone ? "No longer shared. It’s yours now." : s.readOnly ? "You study it as it is." : "Your copy.").css(12).foregroundStyle(t.muted)
+            Text((lk.mode == "copy" ? "Copied from " : "From ") + lk.owner.name).css(14, .semibold).foregroundStyle(t.text).lineLimit(1).line(14)
+            Text(lk.gone ? "No longer shared. It’s yours now." : s.readOnly ? "You study it as it is." : "Your copy.").css(12).foregroundStyle(t.muted).lineLimit(1).line(12)
           }
           Spacer(minLength: 0)
         }
@@ -160,7 +160,7 @@ struct DeckShareTab: View {
       }
       .frame(minHeight: 44)
     }
-    if s.readOnly && !shareErr.isEmpty { Text(shareErr).css(13).foregroundStyle(t.again) }
+    if s.readOnly && !shareErr.isEmpty { CSSText(shareErr, 13, color: t.again) }
   }
 
   @ViewBuilder private func sharedParts(_ shr: DeckSharing.Shared, row: MinePage.Row?, helpers: [LinkOwner], openN: Int, proxy: ScrollViewProxy) -> some View {
@@ -173,11 +173,13 @@ struct DeckShareTab: View {
       }
       .buttonStyle(.press)
     }
-    .padding(.leading, 16).padding(.trailing, 6).frame(height: 46)
+    // 34 tall, as the board draws it: its 46 shrinks to the Copy link button's height, because the Sharing tab's
+    // column is taller than the sheet (a flex item's shrink; the web does the same).
+    .padding(.leading, 16).padding(.trailing, 6).frame(height: 34)
     .background(RoundedRectangle(cornerRadius: 16, style: .continuous).fill(t.surf))
     if let row {
       Text([NetFmt.k(row.learners) + " studying", NetFmt.k(row.copies) + (row.copies == 1 ? " copy" : " copies"), NetFmt.k(row.stars) + (row.stars == 1 ? " save" : " saves")].joined(separator: " · "))
-        .css(13).foregroundStyle(t.muted)
+        .css(13).foregroundStyle(t.muted).lineLimit(1).line(13)
     }
     // The hardest cards (Pro): the ones people miss most, counted without names.
     if store.isPro {
@@ -212,18 +214,19 @@ struct DeckShareTab: View {
     }
     VStack(alignment: .leading, spacing: 8) {
       label("About this deck")
-      TextField("", text: Binding(get: { about ?? row?.description ?? "" }, set: { about = String($0.prefix(300)) }), prompt: Text("What it covers, who it’s for").foregroundStyle(t.muted), axis: .vertical)
+      TextField("", text: Binding(get: { about ?? row?.description ?? "" }, set: { about = String($0.prefix(300)) }), prompt: Text("What it covers, who it’s for").foregroundStyle(PLACEHOLDER), axis: .vertical)
         .lineLimit(2, reservesSpace: true)
         .font(.geist(16)).foregroundStyle(t.text).lineSpacing(16 * 1.4 - 16 * GEIST_LINE)
         .focused($focus, equals: "about")
-        .padding(.horizontal, 16).padding(.vertical, 12)
+        // A textarea's lines are 1.4 times the size, with half the extra above the first and below the last.
+        .padding(.horizontal, 16).padding(.vertical, 12 + (16 * 1.4 - 16 * GEIST_LINE) / 2)
         .background(RoundedRectangle(cornerRadius: 16, style: .continuous).fill(t.surf))
         .accessibilityLabel("About this deck")
     }
     .id("about")
     VStack(alignment: .leading, spacing: 8) {
       label("Helpers")
-      Text("They fix cards directly.").css(12).foregroundStyle(t.muted).padding(.top, -4)
+      Text("They fix cards directly.").css(12).foregroundStyle(t.muted).line(12).padding(.top, -4)
       if !helpers.isEmpty {
         FlowLayout(spacing: 6, lineSpacing: 6) {
           ForEach(helpers, id: \.handle) { h in
@@ -237,7 +240,7 @@ struct DeckShareTab: View {
         }
       }
       HStack(spacing: 6) {
-        TextField("", text: $helperQ, prompt: Text("@name").foregroundStyle(t.muted))
+        TextField("", text: $helperQ, prompt: Text("@name").foregroundStyle(PLACEHOLDER))
           .font(.geist(16)).foregroundStyle(t.text).textInputAutocapitalization(.never).autocorrectionDisabled()
           .focused($focus, equals: "helper")
           .submitLabel(.done).onSubmit { addHelper(helpers) }
@@ -247,7 +250,7 @@ struct DeckShareTab: View {
           .accessibilityLabel("Add a helper")
         SmallButton(label: "Add", icon: "plus") { addHelper(helpers) }
       }
-      if !shareErr.isEmpty { Text(shareErr).css(13).foregroundStyle(t.again) }
+      if !shareErr.isEmpty { CSSText(shareErr, 13, color: t.again) }
     }
     .id("helper")
     if !helpers.isEmpty {
@@ -298,7 +301,7 @@ struct DeckUpdatesSheet: View {
     let n = rows.count > 0 ? rows.count : (store.demo ? 0 : store.lib.decks.first { $0.id == deckId }?.link?.pending.count ?? 0)
     VStack(alignment: .leading, spacing: 14) {
       HStack(spacing: 12) {
-        Text("Changes from " + owner).css(18, .semibold, ls: -0.01).lineLimit(1).frame(maxWidth: .infinity, alignment: .leading)
+        Text("Changes from " + owner).css(18, .semibold, ls: -0.01).lineLimit(1).line(18).frame(maxWidth: .infinity, alignment: .leading)
         Button(action: nav.close) { Icon("close", 14, 2.2).foregroundStyle(t.text).frame(width: 36, height: 36).background(Circle().fill(t.surf)) }
           .buttonStyle(.press).accessibilityLabel("Close")
       }
@@ -306,7 +309,7 @@ struct DeckUpdatesSheet: View {
         Pill(label: "Skip all") { pick(["$all": "skip"], close: true) }
         Pill(label: "Take all \(n)", icon: "check", inv: true) { pick(["$all": "take"], close: true) }
       }
-      if !err.isEmpty { Text(err).css(13).foregroundStyle(t.again) }
+      if !err.isEmpty { CSSText(err, 13, color: t.again) }
       ScrollView(showsIndicators: false) {
         VStack(spacing: 12) {
           ForEach(rows) { u in change(u) }
@@ -322,15 +325,15 @@ struct DeckUpdatesSheet: View {
     VStack(alignment: .leading, spacing: 10) {
       HStack(spacing: 8) {
         Text(UPDATE_KIND[u.kind] ?? "Change").css(12, .semibold).padding(.horizontal, 9).frame(height: 24).background(Capsule().fill(t.surf))
-        if u.mine { Text("You changed it too").css(12, .semibold).foregroundStyle(t.hard) }
+        if u.mine { Text("You changed it too").css(12, .semibold).foregroundStyle(t.hard).line(12) }
       }
       if let b = u.before, u.op != "add" {
-        Text(b).css(14, lh: 1.4).strikethrough().foregroundStyle(t.again).frame(maxWidth: .infinity, alignment: .leading)
+        CSSText(b, 14, lh: 1.4, color: t.again, strike: true).frame(maxWidth: .infinity, alignment: .leading)
           .padding(.horizontal, 14).padding(.vertical, 10)
           .background(RoundedRectangle(cornerRadius: 12, style: .continuous).fill(t.againTint))
       }
       if let a = u.after {
-        Text(a).css(14, lh: 1.4).foregroundStyle(t.good).frame(maxWidth: .infinity, alignment: .leading)
+        CSSText(a, 14, lh: 1.4, color: t.good).frame(maxWidth: .infinity, alignment: .leading)
           .padding(.horizontal, 14).padding(.vertical, 10)
           .background(RoundedRectangle(cornerRadius: 12, style: .continuous).fill(t.goodTint))
       }

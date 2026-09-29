@@ -62,13 +62,12 @@ struct NewsScreen: View {
     }()
     let isNew = !x.read || (fresh?.contains(x.id) ?? false)
     let note = x.kind == "suggestion" ? d?.message ?? "" : ""
-    let sentence = Text(words.0).font(.geist(15, .semibold)) + Text(" " + words.1 + " ") + Text(words.2).font(.geist(15, .semibold))
     return Button { open(x, who: who) } label: {
       HStack(spacing: 12) {
         PersonAvatar(p: who, size: 40)
         VStack(alignment: .leading, spacing: 3) {
-          sentence.css(15, lh: 1.4).fixedSize(horizontal: false, vertical: true)
-          if !note.isEmpty { Text(note).css(13).foregroundStyle(t.muted).lineLimit(1) }
+          CSSText(parts: [(words.0, .semibold), (" " + words.1 + " ", .regular), (words.2, .semibold)], 15, lh: 1.4, color: t.text)
+          if !note.isEmpty { Text(note).css(13).foregroundStyle(t.muted).lineLimit(1).line(13) }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         Text(NetFmt.ago(x.created, demo: store.demo)).css(12).foregroundStyle(t.muted).fixedSize()

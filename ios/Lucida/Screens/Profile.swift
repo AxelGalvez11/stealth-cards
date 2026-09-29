@@ -90,11 +90,11 @@ struct ProfileScreen: View {
         header(h, ok: pr != nil, isSelf: isSelf)
         if loading { loadingLook }
         if missing { NetMissing(title: "No one has that name", line: "@" + h) { nav.pick(.discover) } }
-        if offline { box { Text("Couldn’t reach Lucida. Check your connection.").css(15).foregroundStyle(t.muted) } }
+        if offline { box { CSSText("Couldn’t reach Lucida. Check your connection.", 15, color: t.muted, align: .center) } }
         if !makeErr.isEmpty {
           box {
             VStack(spacing: 14) {
-              Text(makeErr).css(15).foregroundStyle(t.muted)
+              CSSText(makeErr, 15, color: t.muted, align: .center)
               Pill(label: "Try again", inv: true) { makeErr = ""; making = false; make(makingNow) }
             }
           }
@@ -137,7 +137,7 @@ struct ProfileScreen: View {
   private func header(_ h: String, ok: Bool, isSelf: Bool) -> some View {
     HStack(spacing: 10) {
       if !isSelf { RoundButton(icon: "back", label: "Back") { nav.back() } }
-      Text(h.isEmpty ? "" : "@" + h).css(20, .bold, ls: -0.02).foregroundStyle(t.text).lineLimit(1).truncationMode(.tail)
+      Text(h.isEmpty ? "" : "@" + h).css(20, .bold, ls: -0.02).foregroundStyle(t.text).lineLimit(1).truncationMode(.tail).line(20)
         .frame(maxWidth: .infinity, alignment: .leading)
       if ok { RoundButton(icon: "share", label: "Share profile") { share(h) } }
       if isSelf { RoundButton(icon: "gear", label: "Settings") { nav.push(.settings) } }
@@ -171,9 +171,9 @@ struct ProfileScreen: View {
         .frame(maxWidth: .infinity)
       }
       VStack(alignment: .leading, spacing: 3) {
-        HStack(spacing: 6) { Text(name).css(16, .semibold).lineLimit(1); VerifiedMark(p: pr.person) }
-        if !line.isEmpty { Text(line).css(14).foregroundStyle(t.muted) }
-        if !pr.bio.isEmpty { Text(pr.bio).css(15, lh: 1.4).fixedSize(horizontal: false, vertical: true) }
+        HStack(spacing: 6) { Text(name).css(16, .semibold).lineLimit(1); VerifiedMark(p: pr.person) }.line(16)
+        if !line.isEmpty { CSSText(line, 14, color: t.muted) }
+        if !pr.bio.isEmpty { CSSText(pr.bio, 15, lh: 1.4, color: t.text) }
       }
       .foregroundStyle(t.text)
       HStack(spacing: 8) {
@@ -181,7 +181,7 @@ struct ProfileScreen: View {
         else { wide(following ? "Following" : "Follow", inv: !following) { toggleFollow(pr, h: h) }.accessibilityAddTraits(following ? .isSelected : []) }
         wide(copied ? "Link copied" : "Share profile") { share(h) }
       }
-      if !err.isEmpty { Text(err).css(13).foregroundStyle(t.again).accessibilityAddTraits(.isStaticText) }
+      if !err.isEmpty { CSSText(err, 13, color: t.again) }
       if isSelf { tabs(current) } else { Rectangle().fill(t.line).frame(height: 1).padding(.horizontal, -20) }
       switch current {
       case "Saved":
@@ -197,8 +197,8 @@ struct ProfileScreen: View {
 
   private func count(_ n: String, _ label: String) -> some View {
     VStack(spacing: 2) {
-      Text(n).css(18, .bold).foregroundStyle(t.text)
-      Text(label).css(13).foregroundStyle(t.muted)
+      Text(n).css(18, .bold).foregroundStyle(t.text).line(18)
+      Text(label).css(13).foregroundStyle(t.muted).lineLimit(1).line(13)
     }
     .frame(maxWidth: .infinity)
     .accessibilityElement(children: .combine)
@@ -332,8 +332,8 @@ struct ProfileScreen: View {
       HStack(spacing: 12) {
         CSSLinearGradient(angle: mesh.angle, stops: mesh.stops).frame(width: 36, height: 36).clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
         VStack(alignment: .leading, spacing: 3) {
-          Text(deck).css(15, .semibold).foregroundStyle(t.text).lineLimit(1)
-          Text(line).css(13).foregroundStyle(t.muted).lineLimit(1)
+          Text(deck).css(15, .semibold).foregroundStyle(t.text).lineLimit(1).line(15)
+          Text(line).css(13).foregroundStyle(t.muted).lineLimit(1).line(13)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         Text(status).css(12, .semibold).lineLimit(1).fixedSize().foregroundStyle(tone.1).padding(.horizontal, 10).frame(height: 26).background(Capsule().fill(tone.0))
@@ -349,7 +349,7 @@ struct ProfileScreen: View {
   /// A tab with nothing in it yet, and what to do about it.
   private func empty<Action: View>(_ text: String, @ViewBuilder action: () -> Action) -> some View {
     VStack(spacing: 14) {
-      Text(text).css(15).foregroundStyle(t.muted)
+      CSSText(text, 15, color: t.muted, align: .center)
       action()
     }
     .multilineTextAlignment(.center)
@@ -485,7 +485,7 @@ struct EditProfileSheet: View {
               .padding(.horizontal, 16).frame(height: 46)
               .background(RoundedRectangle(cornerRadius: 16, style: .continuous).fill(t.surf))
               .overlay(RoundedRectangle(cornerRadius: 16, style: .continuous).strokeBorder(handleMsg.isEmpty ? .clear : t.again, lineWidth: 2))
-              if !handleMsg.isEmpty { Text(handleMsg).css(13).foregroundStyle(t.again).accessibilityAddTraits(.isStaticText) }
+              if !handleMsg.isEmpty { CSSText(handleMsg, 13, color: t.again).accessibilityAddTraits(.isStaticText) }
             }
             .id("handle")
             VStack(alignment: .leading, spacing: 8) {
@@ -496,16 +496,17 @@ struct EditProfileSheet: View {
               }
               TextField("", text: binding("bio", value, max: 160), axis: .vertical)
                 .lineLimit(3, reservesSpace: true)
-                .font(.geist(16)).foregroundStyle(t.text).lineSpacing(16 * 1.45 - 16 * GEIST_LINE)
+                // The board's lines are the browser's own (its `font: inherit` comes after the line height).
+                .font(.geist(16)).foregroundStyle(t.text).lineSpacing(normalLine(16) - 16 * GEIST_LINE)
                 .focused($focus, equals: "bio")
-                .padding(.horizontal, 16).padding(.vertical, 12)
+                .padding(.horizontal, 16).padding(.vertical, 12 + (normalLine(16) - 16 * GEIST_LINE) / 2)
                 .background(RoundedRectangle(cornerRadius: 16, style: .continuous).fill(t.surf))
                 .accessibilityLabel("Bio")
             }
             .id("bio")
             line("School", "school", value, max: 60).id("school")
             line("Subject or course", "subject", value, max: 60).id("subject")
-            if !saveErr.isEmpty { Text(saveErr).css(13).foregroundStyle(t.again) }
+            if !saveErr.isEmpty { CSSText(saveErr, 13, color: t.again) }
           }
           .padding(.bottom, keyboard.height > 0 ? keyboard.height : 0)
         }
@@ -520,7 +521,7 @@ struct EditProfileSheet: View {
     .padding(.top, 10).padding(.horizontal, 20).padding(.bottom, 34)
   }
 
-  private func label(_ s: String) -> some View { Text(s).css(13, .semibold) }
+  private func label(_ s: String) -> some View { Text(s).css(13, .semibold).line(13) }
   private func handleValue(_ s: String) -> String {
     var v = s.trimmingCharacters(in: .whitespacesAndNewlines)
     while v.hasPrefix("@") { v.removeFirst() }

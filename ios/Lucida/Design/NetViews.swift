@@ -60,6 +60,7 @@ struct NetTile: View {
             Text(d.stars).css(12)
             Text(d.cardsLine).css(12).padding(.leading, 6)
           }
+          .line(12)
           .lineLimit(1)
           .opacity(0.88)
         }
@@ -73,6 +74,41 @@ struct NetTile: View {
     .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
     .accessibilityElement(children: .ignore)
     .accessibilityLabel([d.name, d.badge, d.stars + " saves", d.cardsLine].filter { !$0.isEmpty }.joined(separator: ", "))
+  }
+}
+
+/// Words that may wrap, set like the browser sets them: its line breaks (no lone last word moved down), and each line
+/// exactly `lh` times the size (normal: the browser's own, normalLine). `parts` can have more than one weight.
+struct CSSText: View {
+  var parts: [(String, Font.Weight)]
+  var size: CGFloat
+  var lh: CGFloat? = nil
+  var color: Color
+  var ls: CGFloat = 0
+  var lines = 0
+  var align: NSTextAlignment = .left
+  /// Struck through (a change's old words).
+  var strike = false
+  init(_ text: String, _ size: CGFloat, _ weight: Font.Weight = .regular, lh: CGFloat? = nil, color: Color, ls: CGFloat = 0, lines: Int = 0, align: NSTextAlignment = .left, strike: Bool = false) {
+    parts = [(text, weight)]; self.size = size; self.lh = lh; self.color = color; self.ls = ls; self.lines = lines; self.align = align; self.strike = strike
+  }
+  init(parts: [(String, Font.Weight)], _ size: CGFloat, lh: CGFloat? = nil, color: Color) { self.parts = parts; self.size = size; self.lh = lh; self.color = color }
+  var body: some View {
+    let L = size * (lh ?? normalLine(size) / size), shift = (L - size * GEIST_LINE) / 2
+    let para = NSMutableParagraphStyle()
+    para.minimumLineHeight = L; para.maximumLineHeight = L; para.lineBreakMode = .byWordWrapping; para.lineBreakStrategy = []; para.alignment = align
+    let out = NSMutableAttributedString()
+    for (t0, w) in parts {
+      // A browser can break a line after a hyphen inside a word (fructose-|2,6-bisphosphate); UIKit doesn't, unless a
+      // zero-width space says it may.
+      let t = t0.replacingOccurrences(of: "(?<=\\p{L})-(?=[\\p{L}\\p{N}])", with: "-\u{200B}", options: .regularExpression)
+      var a: [NSAttributedString.Key: Any] = [.paragraphStyle: para, .foregroundColor: UIColor(color), .baselineOffset: shift, .font: Rich.geist(w, size)]
+      // A kern of 0 would switch off the font's own kerning, which browsers keep.
+      if ls != 0 { a[.kern] = ls * size }
+      if strike { a[.strikethroughStyle] = NSUnderlineStyle.single.rawValue }
+      out.append(NSAttributedString(string: t, attributes: a))
+    }
+    return LabelText(text: out, lines: lines, clamp: lines > 0, exact: true)
   }
 }
 
@@ -114,7 +150,7 @@ struct NetNote: View {
   let text: String
   var radius: CGFloat = 22
   var body: some View {
-    Text(text).css(15).foregroundStyle(t.muted).multilineTextAlignment(.center)
+    CSSText(text, 15, color: t.muted, align: .center)
       .frame(maxWidth: .infinity).padding(.horizontal, 20).padding(.vertical, 40)
       .background(RoundedRectangle(cornerRadius: radius, style: .continuous).fill(t.surf))
   }
@@ -127,8 +163,8 @@ struct NetMissing: View {
   let discover: () -> Void
   var body: some View {
     VStack(spacing: 10) {
-      Text(title).css(20, .semibold)
-      Text(line).css(14).foregroundStyle(t.muted)
+      Text(title).css(20, .semibold).line(20)
+      Text(line).css(14).foregroundStyle(t.muted).line(14)
       Button(action: discover) {
         Text("Discover decks").css(14, .semibold).foregroundStyle(t.invText).padding(.horizontal, 16).frame(height: 36).background(Capsule().fill(t.inv))
       }

@@ -279,7 +279,7 @@ struct LibraryScreen: View {
   private func search(_ hint: String) -> some View {
     HStack(spacing: 10) {
       Icon("search", 16, 1.8).foregroundStyle(t.muted)
-      TextField("", text: $q, prompt: Text(hint).foregroundStyle(t.muted))
+      TextField("", text: $q, prompt: Text(hint).foregroundStyle(PLACEHOLDER))
         .font(.geist(16)).foregroundStyle(t.text).textInputAutocapitalization(.never).autocorrectionDisabled().submitLabel(.search)
         .padding(.leading, 2)
         .onChange(of: q) { _, _ in shown = 60 }

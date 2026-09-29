@@ -20,14 +20,14 @@ struct DiscoverScreen: View {
     let hits = found?.value ?? SearchPage()
     ScrollView(showsIndicators: false) {
       VStack(alignment: .leading, spacing: 16) {
-        Text("Discover").css(32, .semibold, ls: -0.03).foregroundStyle(t.text).accessibilityAddTraits(.isHeader)
+        Text("Discover").css(32, .semibold, ls: -0.03).line(32).foregroundStyle(t.text).accessibilityAddTraits(.isHeader)
         search
         if !searching { topics(["" ] + (disc?.value?.topics ?? [])) }
         if loading && !bad { NetLoading(rows: 2) }
         if !searching && !loading && !bad {
           ForEach(sections, id: \.id) { x in
             VStack(alignment: .leading, spacing: 12) {
-              Text(x.title).css(17, .semibold).foregroundStyle(t.text)
+              Text(x.title).css(17, .semibold).lineLimit(1).line(17).foregroundStyle(t.text)
               grid(x.decks, owners: true)
             }
           }
@@ -37,7 +37,7 @@ struct DiscoverScreen: View {
           if !hits.people.isEmpty { people(hits.people) }
           if !hits.decks.isEmpty {
             VStack(alignment: .leading, spacing: 12) {
-              Text("Decks").css(17, .semibold).foregroundStyle(t.text)
+              Text("Decks").css(17, .semibold).line(17).foregroundStyle(t.text)
               grid(hits.decks.map { TileVM($0) }, owners: false)
             }
           }
@@ -55,7 +55,7 @@ struct DiscoverScreen: View {
   private var search: some View {
     HStack(spacing: 10) {
       Icon("search", 16, 1.8).foregroundStyle(t.muted)
-      TextField("", text: $q, prompt: Text("Search decks and people").foregroundStyle(t.muted))
+      TextField("", text: $q, prompt: Text("Search decks and people").foregroundStyle(PLACEHOLDER))
         .font(.geist(16)).foregroundStyle(t.text).textInputAutocapitalization(.never).autocorrectionDisabled().submitLabel(.search)
         .accessibilityLabel("Search decks and people")
       if !q.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
@@ -107,14 +107,14 @@ struct DiscoverScreen: View {
 
   private func people(_ list: [NetPerson]) -> some View {
     VStack(alignment: .leading, spacing: 0) {
-      Text("People").css(17, .semibold).foregroundStyle(t.text).padding(.bottom, 6)
+      Text("People").css(17, .semibold).line(17).foregroundStyle(t.text).padding(.bottom, 6)
       ForEach(list, id: \.handle) { p in
         Button { nav.profile(p.handle) } label: {
           HStack(spacing: 12) {
             PersonAvatar(p: p, size: 40)
             VStack(alignment: .leading, spacing: 2) {
-              HStack(spacing: 6) { Text(p.name).css(16, .semibold).lineLimit(1); VerifiedMark(p: p) }
-              Text("@" + p.handle).css(13).foregroundStyle(t.muted).lineLimit(1)
+              HStack(spacing: 6) { Text(p.name).css(16, .semibold).lineLimit(1); VerifiedMark(p: p) }.line(16)
+              Text("@" + p.handle).css(13).foregroundStyle(t.muted).lineLimit(1).line(13)
             }
             Spacer(minLength: 0)
           }

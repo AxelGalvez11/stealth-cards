@@ -109,7 +109,16 @@ extension View {
 extension View {
   /// One line whose CSS line-height is `h` points (like line-height: 1): the text keeps its size, centered in that height.
   func lineBox(_ h: CGFloat) -> some View { fixedSize(horizontal: false, vertical: true).frame(height: h) }
+  /// One line as tall as the browser makes it with line-height normal (normalLine).
+  func line(_ size: CGFloat) -> some View { lineBox(normalLine(size)) }
 }
+
+/// The height a browser gives a line of Geist with line-height normal: its ascent and descent, each rounded to whole
+/// points (41 at 32px, 21 at 16px; SwiftUI's own line is 1.3 times the size).
+func normalLine(_ size: CGFloat) -> CGFloat { (size * 1.005).rounded() + (size * 0.295).rounded() }
+
+/// The browser's own color for a field's hint (placeholder), which the boards keep in every mode.
+let PLACEHOLDER = Color(hex: 0x757575)
 
 extension Text {
   /// Letter-spacing in em, like the boards' letter-spacing.

@@ -202,7 +202,8 @@ struct DeckScreen: View {
             .offset(y: y < 0 ? -y / 2 : 0)
         }
       VStack(alignment: .leading, spacing: 0) {
-        HStack(spacing: 8) {
+        // Top-aligned, like the board's row (its page and Suggest a change are 40, the rest 44).
+        HStack(alignment: .top, spacing: 8) {
           CoverButton(icon: "back", label: "Back") { nav.back() }
           Spacer()
           // A deck you share: its page. One you study from someone: Suggest a change instead of New card.
