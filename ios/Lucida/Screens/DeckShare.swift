@@ -215,7 +215,7 @@ struct DeckShareTab: View {
     }
     VStack(alignment: .leading, spacing: 8) {
       label("About this deck")
-      TextField("", text: Binding(get: { about ?? row?.description ?? "" }, set: { about = String($0.prefix(300)) }), prompt: Text("What it covers, who it’s for").foregroundStyle(PLACEHOLDER), axis: .vertical)
+      TextField("", text: Binding(get: { about ?? row?.description ?? "" }, set: { about = $0.limited(300) }), prompt: Text("What it covers, who it’s for").foregroundStyle(PLACEHOLDER), axis: .vertical)
         .lineLimit(2, reservesSpace: true)
         .font(.geist(16)).foregroundStyle(t.text).lineSpacing(16 * 1.4 - 16 * GEIST_LINE)
         .focused($focus, equals: "about")

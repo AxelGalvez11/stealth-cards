@@ -68,9 +68,9 @@ final class StudyNetworkTests: XCTestCase {
   private func buttonStarting(_ app: XCUIApplication, _ words: String) -> XCUIElement {
     app.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", words)).firstMatch
   }
-  /// The lowest button with this label on screen (in a sheet, not the page under it).
-  private func lowest(_ app: XCUIApplication, _ label: String) -> XCUIElement {
-    let all = app.buttons.matching(NSPredicate(format: "label == %@", label)).allElementsBoundByIndex
+  /// The lowest button with this label on screen (in a sheet or on a pushed page, not the page under it).
+  private func lowest(_ app: XCUIApplication, _ label: String, starting: Bool = false) -> XCUIElement {
+    let all = app.buttons.matching(NSPredicate(format: starting ? "label BEGINSWITH %@" : "label == %@", label)).allElementsBoundByIndex
     return all.max { $0.frame.minY < $1.frame.minY } ?? app.buttons[label].firstMatch
   }
   private func wait(_ e: XCUIElement, _ s: TimeInterval = 8) -> Bool { e.waitForExistence(timeout: s) }
@@ -166,7 +166,8 @@ final class StudyNetworkTests: XCTestCase {
     let top = { (w: String) in app.staticTexts.matching(NSPredicate(format: "label BEGINSWITH %@", w)).allElementsBoundByIndex.map(\.frame.minY).min() ?? .infinity }
     let enzymeFirst = top("Which enzyme") < top("Where does")
     app.buttons["Take it"].firstMatch.tap()
-    check(wait(any(app, "Maria Santos changed 1 card")) || wait(button(app, "Skip")), "one change taken, one left")
+    // Only once the first is taken (one left: Take all 1) is the Skip on screen the other change's.
+    check(wait(button(app, "Take all 1")), "one change taken, one left")
     app.buttons["Skip"].firstMatch.tap()
     check(gone(app.staticTexts["Changes from Maria Santos"]), "skipping the last one closes the changes")
     check(gone(any(app, "changed 1 card")), "and the banner goes")
@@ -181,8 +182,13 @@ final class StudyNetworkTests: XCTestCase {
     let bell = button(app, "News, 1 new")
     check(wait(bell, 10), "the bell on Today counts the news")
     bell.tap()
-    check(wait(any(app, "Bob Stone followed you"), 10), "News says Bob Stone followed you")
+    let news = any(app, "Bob Stone followed you")
+    check(wait(news, 10), "News says Bob Stone followed you")
     Thread.sleep(forTimeInterval: 2.5)
+    news.tap()
+    let learnerAt = (state(learner)["profile"] as? [String: Any])?["handle"] as? String ?? ""
+    check(wait(app.staticTexts["@" + learnerAt]), "a follow opens the follower's profile")
+    button(app, "Back").tap()
     button(app, "Back").tap()
     check(wait(button(app, "News"), 10), "News is read a moment after opening it (the count goes)")
     button(app, "Your profile").tap()
@@ -228,8 +234,11 @@ final class StudyNetworkTests: XCTestCase {
     typeInto(field, "b", clear: 30)
     check(wait(app.staticTexts["Use 3 to 30 letters, numbers, dots, or underscores."]), "a handle that isn't one says so as you type")
     typeInto(field, ownerHandle, clear: 5)
+    let taken = app.staticTexts["That name is taken. Try another."]
+    check(wait(taken), "a handle someone has says so as you type: That name is taken. Try another.")
     button(app, "Save").tap()
-    check(wait(app.staticTexts["That name is taken. Try another."]), "a handle someone has: That name is taken. Try another.")
+    Thread.sleep(forTimeInterval: 1)
+    check(taken.exists && button(app, "Cancel").exists, "and Save doesn't take it (the server says the same)")
     let fresh = "bob.studies" + run
     typeInto(field, fresh, clear: ownerHandle.count + 2)
     button(app, "Save").tap()
@@ -238,8 +247,23 @@ final class StudyNetworkTests: XCTestCase {
     check((state(learner)["profile"] as? [String: Any])?["handle"] as? String == fresh, "the server has it")
     button(app, "Settings").tap()
     check(wait(buttonStarting(app, "@" + fresh)), "Settings → Profile shows @\(fresh)")
-    buttonStarting(app, "Edit profile").tap()
+    // Settings' own row (the profile's Edit profile button is still there under the page, higher up).
+    lowest(app, "Edit profile", starting: true).tap()
     check(wait(button(app, "Cancel")), "Settings → Edit profile opens the editor")
+    button(app, "Cancel").tap()
+    check(gone(button(app, "Cancel")), "Cancel closes it")
+
+    // The learner takes the studied deck out of the library (Deck settings: Remove from library, then its confirm).
+    button(app, "Library").tap()
+    let studiedRow = any(app, "From Maria Santos")
+    check(wait(studiedRow), "the studied deck is in the Library")
+    studiedRow.tap()
+    button(app, "Deck settings").tap()
+    button(app, "Remove from library").tap()
+    check(wait(app.staticTexts["Remove “MCAT Biochemistry” from your library? Your progress on it goes too."]), "Remove from library asks first, in plain words")
+    lowest(app, "Remove from library").tap()
+    check(gone(any(app, "From Maria Santos"), 10), "and the deck leaves the Library")
+    check(!((state(learner)["decks"] as? [[String: Any]]) ?? []).contains { $0["id"] as? String == studied }, "the server has it gone too")
 
     print("Study network: \(passed) passed, \(failed) failed")
   }

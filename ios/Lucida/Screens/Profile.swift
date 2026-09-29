@@ -441,6 +441,8 @@ struct EditProfileSheet: View {
   @State private var handleErr: String? = nil
   @State private var saveErr = ""
   @State private var saving = false
+  /// Whether someone has the handle being typed, asked a moment after you stop typing.
+  @State private var checking: Task<Void, Never>? = nil
   @FocusState private var focus: String?
 
   var body: some View {
@@ -492,7 +494,7 @@ struct EditProfileSheet: View {
               HStack(alignment: .firstTextBaseline) {
                 label("Bio")
                 Spacer()
-                Text("\(value("bio").count)/160").css(12, mono: true).foregroundStyle(t.muted)
+                Text("\(value("bio").utf16.count)/160").css(12, mono: true).foregroundStyle(t.muted)
               }
               TextField("", text: binding("bio", value, max: 160), axis: .vertical)
                 .lineLimit(3, reservesSpace: true)
@@ -519,6 +521,23 @@ struct EditProfileSheet: View {
     }
     .foregroundStyle(t.text)
     .padding(.top, 10).padding(.horizontal, 20).padding(.bottom, 34)
+    .onChange(of: hv) { _, v in check(v, was: was["handle"] ?? "", ok: handleOk) }
+    .onDisappear { checking?.cancel() }
+  }
+
+  /// A handle someone has says so as you type (the server's own words), a moment after you stop.
+  private func check(_ v: String, was: String, ok: Bool) {
+    checking?.cancel()
+    guard ok, v != was else { return }
+    checking = Task {
+      try? await Task.sleep(nanoseconds: 450_000_000)
+      guard !Task.isCancelled else { return }
+      let taken: Bool
+      if store.demo { taken = NetSample.shared.P.values.contains { $0.handle == v && $0.handle != "alexkim" } }
+      else { taken = ((try? await store.api.get("api/public/profile?h=" + v))?.status ?? 404) == 200 }
+      guard !Task.isCancelled, handleValue(draft["handle"] ?? was) == v else { return }
+      if taken { handleErr = "That name is taken. Try another." }
+    }
   }
 
   private func label(_ s: String) -> some View { Text(s).css(13, .semibold).line(13) }
@@ -529,7 +548,7 @@ struct EditProfileSheet: View {
   }
   private func binding(_ k: String, _ value: @escaping (String) -> String, max: Int) -> Binding<String> {
     Binding(get: { value(k) }, set: { v in
-      draft[k] = String(v.prefix(max))
+      draft[k] = v.limited(max)
       if k == "handle" { handleErr = nil }
     })
   }
@@ -576,5 +595,15 @@ struct EditProfileSheet: View {
         if m.range(of: "taken|letters, numbers", options: [.regularExpression, .caseInsensitive]) != nil { handleErr = m } else { saveErr = m }
       }
     }
+  }
+}
+
+extension String {
+  /// At most `n` UTF-16 units, like a web field's maxlength (without cutting a letter in two).
+  func limited(_ n: Int) -> String {
+    guard utf16.count > n else { return self }
+    var out = ""
+    for ch in self { if out.utf16.count + String(ch).utf16.count > n { break }; out.append(ch) }
+    return out
   }
 }
