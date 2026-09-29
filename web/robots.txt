@@ -1,0 +1,6 @@
+User-agent: *
+Allow: /
+Disallow: /api/
+Disallow: /mcp
+Disallow: /media/
+Sitemap: https://app.lucida.cards/sitemap.xml
