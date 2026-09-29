@@ -4,11 +4,14 @@
 // kept for a little while, and anything you change drops them so the next look is fresh.
 const enc = encodeURIComponent;
 export function createNet({ accept = () => {}, changed = () => {}, signedOut = false, go = () => {} } = {}) {
+  // `gen` counts changes. An answer from before the last change is asked for again, but it stays on the page until the
+  // fresh one arrives, so a page doesn't flash its loading look after every follow, save, or pin.
   const cache = new Map();
+  let gen = 0;
   function get(url, ttl = 20000) {
     const e = cache.get(url);
-    if (e && (e.busy || Date.now() - e.at < ttl)) return e.data;
-    const entry = { data: e ? e.data : undefined, at: 0, busy: true };
+    if (e && e.gen === gen && (e.busy || Date.now() - e.at < ttl)) return e.data;
+    const entry = { data: e ? e.data : undefined, at: 0, busy: true, gen };
     cache.set(url, entry);
     fetch(url, { cache: 'no-store' })
       .then(async r => { const j = await r.json().catch(() => null); entry.data = r.ok ? j : { missing: true, status: r.status, error: (j && j.error) || '' }; })
@@ -16,7 +19,7 @@ export function createNet({ accept = () => {}, changed = () => {}, signedOut = f
       .finally(() => { entry.busy = false; entry.at = Date.now(); changed(); });
     return entry.data;
   }
-  const drop = () => { cache.clear(); };
+  const drop = () => { gen++; };
   // A change (sharing, studying, following…). Signed out, it goes to signing in first, then back to this page.
   async function act(type, payload = {}) {
     if (signedOut) { go('/sign-in?next=' + enc(location.pathname)); return null; }
