@@ -6,7 +6,7 @@ import { readFileSync, writeFileSync, renameSync, mkdirSync, existsSync, rmSync 
 import { readFile, writeFile, access } from 'node:fs/promises';
 import { AsyncLocalStorage } from 'node:async_hooks';
 import { fileURLToPath } from 'node:url';
-import { join } from 'node:path';
+import { join, dirname } from 'node:path';
 import { cloud, library, files } from './supa.mjs';
 import { newLink } from './auth.mjs';
 import { FREE_MEDIA } from './plans.mjs';
@@ -30,10 +30,38 @@ const fresh = () => ({
 const upgrade = d => { const f = fresh(), was = { welcomed: !!((d.decks || []).length || (d.cards || []).length) };
   return { ...f, ...d, settings: { ...f.settings, ...was, ...d.settings }, ai: { ...f.ai, ...d.ai, perms: { ...f.ai.perms, ...(d.ai || {}).perms } } }; };
 // The library a request works on: this computer's one, or (online) a copy of the signed-in person's, one per request,
-// so two requests running at once never share a copy. `later` is work to finish before saving.
-const here = { uid: null, S: fresh(), base: null, dirty: false, later: [] };
+// so two requests running at once never share a copy. `later` is work to finish before saving; `touched` is the decks
+// a request changed, for sharing their new cards once the save is done (see onSaved).
+const here = { uid: null, S: fresh(), base: null, dirty: false, later: [], after: [], touched: new Map(), file: FILE };
 const current = new AsyncLocalStorage();
 const lib = () => current.getStore() || here;
+// On this computer, a made-up person (web/handler.mjs: /dev/as/<name>, only on localhost) has a library of their own in
+// data/users/, so sharing, suggestions and follows can be tried with several people at once. Their ids start "dev_".
+export const isDev = uid => typeof uid === 'string' && /^dev_[a-z0-9]{1,24}$/.test(uid);
+const devLibs = new Map();
+function devLib(uid) {
+  if (!devLibs.has(uid)) {
+    const file = join(DATA, 'users', uid.slice(4) + '.json');
+    let S = fresh();
+    try { if (existsSync(file)) S = upgrade(JSON.parse(readFileSync(file, 'utf8'))); } catch { /* a broken file starts over */ }
+    devLibs.set(uid, { uid, S, base: null, dirty: false, later: [], after: [], touched: new Map(), file });
+  }
+  return devLibs.get(uid);
+}
+// Work that runs once a request's changes are made, just before its library is saved: social.mjs shares a changed
+// deck's new cards this way, and what it shared is saved with the library. If the save loses a race, the request runs
+// again from the newer copy, and sharing the same cards again changes nothing.
+const saveHooks = [];
+export const onSave = fn => { saveHooks.push(fn); };
+async function beforeSave(L) {
+  if (!L.touched.size) return;
+  for (const fn of saveHooks) await fn(L);
+  L.touched = new Map();
+}
+// Work that must happen only once the library really saved (a suggestion marked as taken, news sent), since a save
+// that loses a race runs the whole request again from the newer copy.
+export const afterSaving = fn => { lib().after.push(fn); };
+async function afterSave(L) { const list = L.after; L.after = []; for (const fn of list) await fn(); }
 export function load() {
   if (cloud()) return here.S;
   mkdirSync(MEDIA, { recursive: true });
@@ -44,8 +72,11 @@ export function load() {
 // should run it again. A first visit makes the library (and its personal MCP link), unless `existing` says it must
 // already be there (an AI app's link can't make one). `pro`: whether they have Pro (false means Free).
 export async function withLibrary(uid, fn, { existing = false, pro } = {}) {
-  if (!cloud()) { await fn(); return true; }
-  const L = { uid, S: null, base: null, dirty: false, later: [], pro };
+  if (!cloud()) {
+    const L = isDev(uid) ? devLib(uid) : here;
+    return current.run(L, async () => { L.touched = new Map(); L.later = []; L.after = []; await fn(); await Promise.all(L.later); await beforeSave(L); await afterSave(L); return true; });
+  }
+  const L = { uid, S: null, base: null, dirty: false, later: [], after: [], touched: new Map(), pro };
   return current.run(L, async () => {
     const row = await library.load(uid);
     if (!row && existing) throw Object.assign(new Error('No such library'), { status: 401 });
@@ -53,19 +84,27 @@ export async function withLibrary(uid, fn, { existing = false, pro } = {}) {
     if (!L.S.ai.key) makeLink(L);
     await fn();
     await Promise.all(L.later);
-    if (!L.dirty) return true;
-    return L.base == null ? library.create(uid, L.S) : library.update(uid, L.S, L.base);
+    await beforeSave(L);
+    const ok = !L.dirty || (L.base == null ? await library.create(uid, L.S) : await library.update(uid, L.S, L.base));
+    if (ok) await afterSave(L);
+    return ok;
   });
 }
 // The rev of uid's library without loading it (the app asks every few seconds whether anything changed).
-export const revOf = async uid => (cloud() ? (await library.rev(uid)) ?? 0 : here.S.rev);
+export const revOf = async uid => (cloud() ? (await library.rev(uid)) ?? 0 : isDev(uid) ? devLib(uid).S.rev : here.S.rev);
+// Whose library this request works on (null on this computer, unless it's a made-up person).
+export const uidOf = () => lib().uid;
 function makeLink(L) { L.S.ai.key = newLink(L.uid); L.dirty = true; }
 const save = () => {
   const L = lib();
   L.S.rev++;
   if (cloud()) { L.dirty = true; return; }
-  const tmp = FILE + '.tmp'; writeFileSync(tmp, JSON.stringify(L.S)); renameSync(tmp, FILE);
+  const file = L.file || FILE, tmp = file + '.tmp';
+  mkdirSync(dirname(file), { recursive: true }); writeFileSync(tmp, JSON.stringify(L.S)); renameSync(tmp, file);
 };
+// For changes made outside apply() (social.mjs: studying or copying a shared deck, its updates arriving): saves them
+// like any other change.
+export const saved = () => save();
 // Pictures and sound for cards: in data/media here, in the person's folder of the Supabase bucket online.
 export const putMedia = (name, buf, type) => (cloud() ? files.put(lib().uid, name, buf, type) : writeFile(join(MEDIA, name), buf));
 export const readMedia = name => (cloud() ? files.get(lib().uid, name) : readFile(join(MEDIA, name)).catch(() => null));
@@ -78,10 +117,13 @@ export const MEDIA_FULL = 'Free includes up to ' + FREE_MEDIA + ' pictures and s
 export const mediaLeft = () => {
   if (lib().pro !== false) return Infinity;
   const seen = new Set();
-  for (const c of state().cards) if (c.image || c.audio) seen.add(c.box != null && c.group ? c.group : c.id);
+  // Only pictures and sound they uploaded count: a shared deck's are the owner's (they come as public links).
+  const own = x => typeof x === 'string' && !/^https?:/.test(x);
+  for (const c of state().cards) if (own(c.image) || own(c.audio)) seen.add(c.box != null && c.group ? c.group : c.id);
   return Math.max(0, FREE_MEDIA - seen.size);
 };
 const id = p => p + Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+export const newId = id;
 const clean = (x, n = 5000) => String(x ?? '').slice(0, n);
 const cleanTags = t => (Array.isArray(t) ? [...new Set(t.map(x => clean(x, 40).trim()).filter(Boolean))].slice(0, 50) : []);
 const findDeck = x => state().decks.find(d => d.id === x) || state().decks.find(d => d.name.toLowerCase() === String(x || '').toLowerCase());
@@ -116,7 +158,7 @@ export function cleanBoxes(list) {
 }
 const occMode = m => (m === 'all' ? 'all' : 'one');
 
-function makeDeck(o = {}) {
+export function makeDeck(o = {}) {
   const S = state(), st = S.settings;
   const d = { id: id('d'), name: clean(o.name, 120).trim() || 'Untitled deck', tags: cleanTags(o.tags), created: Date.now(),
     cover: { style: o.style || st.grads || 'mix', round: +o.round || 0, image: o.image || null, seed: clean(o.name, 120).trim() || 'Untitled deck' }, paused: false,
@@ -133,7 +175,8 @@ function makeCards(deck, o, source = 'you') {
   const kind = ['basic', 'cloze', 'image', 'audio'].includes(o.kind) ? o.kind : 'basic';
   const base = { deckId: deck.id, kind, front: clean(o.front), back: clean(o.back), note: clean(o.note, 2000), text: clean(o.text),
     tags: cleanTags(o.tags), image: o.image || null, audio: o.audio || null, wave: o.audio ? cleanWave(o.wave) : null, speak: clean(o.speak, 500), lang: clean(o.lang, 20), auto: o.auto !== false,
-    source: clean(source, 60), pending: !!o.pending, created: Date.now(), srs: newCard(), pile: null };
+    source: clean(source, 60), pending: !!o.pending, created: Date.now(), srs: newCard(), pile: null, trail: [] };
+  trailStep(base, source === 'import' ? 'imported' : 'made', source);
   const n = kind === 'cloze' ? blanks(base.text).length : 0;
   // An image card with boxes: one card per box, each asking its own box.
   const boxes = kind === 'image' ? cleanBoxes(o.boxes) : [];
@@ -141,7 +184,7 @@ function makeCards(deck, o, source = 'you') {
   const list = kind === 'cloze' && o.clozeMode !== 'one' && n > 1 ? Array.from({ length: n }, (_, i) => ({ ...base, cloze: i }))
     : boxes.length ? boxes.map(b => ({ ...base, cloze: null, box: b.id })) : [{ ...base, cloze: kind === 'cloze' ? (o.clozeMode === 'one' ? -1 : 0) : null }];
   const group = kind === 'cloze' || boxes.length ? id('g') : null;
-  const cards = list.map(c => ({ ...c, id: id('c'), group }));
+  const cards = list.map(c => ({ ...c, id: id('c'), group, trail: (c.trail || []).map(x => ({ ...x })) }));
   S.cards.push(...cards);
   return cards;
 }
@@ -199,6 +242,33 @@ export function saveExplain(cardId, text, by) {
   save(); return true;
 }
 
+// A deck someone else shares, which you study as it is (social.mjs): its cards follow the owner's, so you can't change
+// them here; you suggest a change instead. Only your own study settings for it are yours to change. A copy
+// (link.mode 'copy') is yours to change, and so is a deck its owner stopped sharing (link.gone).
+const readOnly = d => !!(d && d.link && d.link.mode === 'study' && !d.link.gone);
+const LOCAL_DECK_KEYS = ['paused', 'grading', 'fsrs', 'goal', 'gapIdx', 'steps', 'perDay', 'piles', 'folder', 'bg'];
+const notYours = d => new Error('This deck is ' + ((d.link.owner && d.link.owner.name) || 'someone else') + '’s. Suggest a change instead.');
+// What a request changed, deck by deck, and who to credit (an AI app, or the person whose suggestion the owner took),
+// for sharing the new cards after the save (onSaved).
+function touch(deckId, who) {
+  const L = lib();
+  if (!deckId || L.touched.has(deckId)) return;
+  L.touched.set(deckId, { ai: who && !['you', 'import'].includes(who) ? who : '', credit: L.credit || null });
+}
+// How a card came to be, newest last, a few steps long: made (by you, your AI, or an import), checked (you kept a card
+// your AI made), edited, or taken from someone's suggestion. Public decks show it ("Added by Claude · Edited by Maria").
+const trailStep = (c, what, who) => {
+  const credit = lib().credit, step = { w: what, at: Date.now() };
+  if (credit) { step.by = credit.name; if (credit.ai) step.ai = credit.ai; }
+  else if (who && !['you', 'import'].includes(who)) step.ai = clean(who, 60);
+  const last = (c.trail || [])[(c.trail || []).length - 1];
+  // Editing the same card again and again is one step.
+  if (last && last.w === what && what === 'edited' && last.by === step.by && last.ai === step.ai) { last.at = step.at; return; }
+  c.trail = [...(c.trail || []), step].slice(-8);
+};
+// Credit for changes made on someone's behalf (social.mjs takes a suggestion this way): who they came from.
+export async function withCredit(credit, fn) { const L = lib(), was = L.credit; L.credit = credit; try { return await fn(); } finally { L.credit = was; } }
+
 // Every change goes through here. Returns what the action made (ids), or throws with a message people can read.
 export function apply(a, who = 'you') {
   const out = run(a, who);
@@ -211,7 +281,8 @@ function run(a, who) {
     case 'deck.add': return { id: makeDeck(a).id };
     case 'deck.update': {
       const d = findDeck(a.id); if (!d) throw new Error('No such deck');
-      const p = pick(a.patch, DECK_KEYS);
+      const p = pick(a.patch, readOnly(d) ? LOCAL_DECK_KEYS : DECK_KEYS);
+      if (['name', 'tags', 'cover'].some(k => k in p)) touch(d.id, who);
       if ('name' in p) p.name = clean(p.name, 120);
       if ('tags' in p) p.tags = cleanTags(p.tags);
       if ('goal' in p) p.goal = Math.min(97, Math.max(70, +p.goal || 90));
@@ -254,16 +325,23 @@ function run(a, who) {
     case 'deck.delete': {
       const d = findDeck(a.id); if (!d) throw new Error('No such deck');
       S.decks = S.decks.filter(x => x !== d); S.cards = S.cards.filter(c => c.deckId !== d.id); S.logs = S.logs.filter(l => l.deckId !== d.id);
+      // A shared deck stops being shared when it goes (people who copied it keep their copies).
+      if (d.share) L.touched.set(d.id, { gone: d.share.id });
       return { id: d.id };
     }
     case 'card.add': {
       if ((a.image || a.audio) && mediaLeft() < 1) throw new Error(MEDIA_FULL);
       const d = findDeck(a.deckId) || (a.deckName ? makeDeck({ name: a.deckName }) : null); if (!d) throw new Error('No such deck');
+      if (readOnly(d)) throw notYours(d);
+      touch(d.id, who);
       return { ids: makeCards(d, a, who).map(c => c.id), deckId: d.id };
     }
     case 'card.update': {
       const c = S.cards.find(x => x.id === a.id); if (!c) throw new Error('No such card');
+      // A shared deck's card only takes the shape of its sound, measured on this device (web/db.js).
+      if (readOnly(deckOf(c)) && Object.keys(a.patch || {}).some(k => k !== 'wave')) throw notYours(deckOf(c));
       const p = pick(a.patch, CARD_KEYS);
+      const kept = c.pending && p.pending === false;
       if ((p.image || p.audio) && !(c.image || c.audio) && mediaLeft() < 1) throw new Error(MEDIA_FULL);
       for (const k of ['front', 'back', 'text']) if (k in p) p[k] = clean(p[k]);
       if ('speak' in p) p.speak = clean(p.speak, 500);
@@ -277,7 +355,11 @@ function run(a, who) {
       const mode = a.patch && a.patch.clozeMode;
       delete p.cloze;
       const stale = ['front', 'back', 'text'].some(k => k in p && p[k] !== c[k]), before = c.boxes;
+      const edited = ['kind', 'front', 'back', 'note', 'text', 'image', 'audio', 'speak', 'boxes', 'occ'].some(k => k in p && JSON.stringify(p[k]) !== JSON.stringify(c[k]));
       Object.assign(c, p);
+      if (kept) trailStep(c, 'checked', who);
+      if (edited) trailStep(c, 'edited', who);
+      if (kept || edited || 'tags' in p) touch(c.deckId, who);
       if (stale) for (const x of c.group ? S.cards.filter(y => y.group === c.group) : [c]) { delete x.explain; delete x.quiz; }
       // A card that stops being an image card leaves its picture, and takes its box with it (as if deleted).
       if (c.kind !== 'image' && c.box != null) {
@@ -316,11 +398,13 @@ function run(a, who) {
         }).filter(Boolean).slice(0, 5);
         if (list.length) { c.quiz = list; n += list.length; }
         if (q.explanation) c.explain = { text: clean(q.explanation, 2000).trim(), by: clean(who, 60), at: Date.now() };
+        if (list.length || q.explanation) touch(c.deckId, who);
       }
       return { questions: n };
     }
     case 'card.delete': {
       const ids = new Set(a.ids || [a.id]);
+      for (const c of S.cards) if (ids.has(c.id)) { if (readOnly(deckOf(c))) throw notYours(deckOf(c)); touch(c.deckId, who); }
       // A box's card going takes its box off the picture, so the picture's other cards stop hiding it.
       for (const c of S.cards) if (ids.has(c.id) && c.box != null && c.group) {
         for (const x of S.cards) if (x.group === c.group && !ids.has(x.id) && x.boxes) x.boxes = x.boxes.filter(b => b.id !== c.box);
@@ -332,6 +416,8 @@ function run(a, who) {
     // (`deckId`).
     case 'card.move': {
       const c = S.cards.find(x => x.id === a.id); if (!c) throw new Error('No such card');
+      if (readOnly(deckOf(c)) || ('deckId' in a && readOnly(findDeck(a.deckId)))) throw notYours(readOnly(deckOf(c)) ? deckOf(c) : findDeck(a.deckId));
+      touch(c.deckId, who); if ('deckId' in a) touch((findDeck(a.deckId) || {}).id, who);
       if ('deckId' in a) { const d = findDeck(a.deckId); if (!d) throw new Error('No such deck'); if (d.id !== c.deckId) cardToDeck(S, c, d.id); }
       if ('before' in a) {
         const b = a.before == null ? null : S.cards.find(x => x.id === a.before && x.deckId === c.deckId); if (a.before != null && !b) throw new Error('No such card');
@@ -374,11 +460,15 @@ function run(a, who) {
     case 'ai.client': { const n = clean(a.name, 80) || 'MCP app'; S.ai.clients[n] = { name: n, version: clean(a.version, 40), seen: Date.now() }; return {}; }
     case 'data.import': {
       const d = findDeck(a.deckId) || makeDeck({ name: a.deckName || 'Imported cards' });
+      if (readOnly(d)) throw notYours(d);
+      touch(d.id, 'import');
       const list = (a.cards || []).slice(0, 5000).filter(x => x && (x.front || x.text));
       list.forEach(x => makeCards(d, x, 'import'));
       return { deckId: d.id, count: list.length };
     }
     case 'data.reset': {
+      // Shared decks stop being shared (copies people made keep working).
+      for (const d of S.decks) if (d.share) L.touched.set(d.id, { gone: d.share.id });
       // The rev keeps counting up, so every copy of the app sees the reset as the newest data.
       const next = fresh(); next.ai.clients = S.ai.clients; next.ai.key = S.ai.key; next.rev = S.rev; next.settings.welcomed = true; L.S = next;
       if (cloud()) L.later.push(files.clear(L.uid)); else { rmSync(MEDIA, { recursive: true, force: true }); mkdirSync(MEDIA, { recursive: true }); }

@@ -3,6 +3,8 @@
 // Supabase Auth. Used when SUPABASE_URL and a secret key are set (Vercel gets them from the Supabase integration); on
 // your computer the app saves to data/ instead (see store.mjs) and nobody signs in.
 // Plain fetch calls to Supabase's REST, Storage, and Auth APIs, so there are still no packages to install.
+import { fileURLToPath } from 'node:url';
+import { localRest } from './localrest.mjs';
 const env = process.env;
 const base = () => (env.SUPABASE_URL || env.NEXT_PUBLIC_SUPABASE_URL || '').replace(/\/+$/, '');
 const secret = () => env.SUPABASE_SECRET_KEY || env.SUPABASE_SERVICE_ROLE_KEY || '';
@@ -75,6 +77,54 @@ export const auth = {
   idToken: (provider, id_token, nonce) => authCall('/token?grant_type=id_token', { provider, id_token, nonce }),
   // Apple sends the person's name only the first time, and not in the token, so it's saved to their account.
   setName: (token, name) => call('/auth/v1/user', { method: 'PUT', key: publicKey(), headers: { ...json, authorization: 'Bearer ' + token }, body: JSON.stringify({ data: { full_name: name } }) })
+};
+
+// The study network's tables (social.mjs): profiles, shared decks and their cards, versions, suggestions, follows,
+// saves, and news. Online they're Supabase tables only this server's secret key can reach (supabase/social.sql); on
+// this computer the same calls go to data/social.json (localrest.mjs). `path` is PostgREST's, like
+// "/profiles?handle=eq.alex&select=id,name". Gives back the rows (or null), or with `count` { rows, total }.
+let here = null;
+const localDb = () => here || (here = localRest(env.STEALTH_DATA || fileURLToPath(new URL('../data/', import.meta.url))));
+export async function rest(path, { method = 'GET', body, prefer = '', count = false } = {}) {
+  const pref = [prefer, count ? 'count=exact' : ''].filter(Boolean).join(',');
+  let status, range, rows;
+  if (!cloud()) {
+    const r = localDb().call('/rest/v1' + path, { method, headers: { prefer: pref }, body: body == null ? undefined : JSON.stringify(body) });
+    rows = r.body; range = r.headers['content-range'] || ''; status = r.status;
+  } else {
+    const r = await call('/rest/v1' + path, { method, headers: { ...(body == null ? {} : json), ...(pref ? { prefer: pref } : {}) }, body: body == null ? undefined : JSON.stringify(body), raw: true });
+    const text = await r.text();
+    rows = text ? JSON.parse(text) : null; range = r.headers.get('content-range') || ''; status = r.status;
+  }
+  if (!count) return rows;
+  const total = +(range.split('/')[1] || 0) || 0;
+  return { rows: rows || [], total, status };
+}
+// A value in a PostgREST filter (?handle=eq.<val>). Inside or=(…) and in.(…) a value is quoted instead (qval), so
+// commas, dots and parentheses in someone's words can't change the query.
+export const val = s => encodeURIComponent(String(s ?? ''));
+export const qval = s => { const v = String(s ?? ''); return /^[\w-]+$/.test(v) ? encodeURIComponent(v) : encodeURIComponent('"' + v.replace(/["\\]/g, '\\$&') + '"'); };
+export const inList = list => '(' + list.map(qval).join(',') + ')';
+// ilike patterns: * is the wildcard; the words someone types can't add their own.
+export const like = s => encodeURIComponent('"*' + String(s ?? '').replace(/[*%,()"\\]/g, ' ').replace(/\s+/g, ' ').trim() + '*"');
+
+// Pictures and sound that anyone may see (a shared deck's cards, a public profile picture): copied from the person's
+// private folder into the public `shared` bucket, at the same name. On this computer every picture is already served
+// to whoever opens the app, so they stay where they are.
+export const publicMedia = {
+  on: () => cloud(),
+  url: (uid, name) => base() + '/storage/v1/object/public/shared/' + uuid(uid) + '/' + encodeURIComponent(name),
+  publish: async (uid, name) => {
+    try { await call('/storage/v1/object/copy', { method: 'POST', headers: json, body: JSON.stringify({ bucketId: 'media', sourceKey: uuid(uid) + '/' + name, destinationBucket: 'shared', destinationKey: uuid(uid) + '/' + name }) }); }
+    catch (e) {
+      // Already public (copied before) is fine; anything else falls back to reading it and writing it again.
+      if (e.status === 409 || /already exists|Duplicate/i.test(e.body || '')) return publicMedia.url(uid, name);
+      const buf = await files.get(uid, name);
+      if (!buf) return null;
+      await call('/storage/v1/object/shared/' + uuid(uid) + '/' + encodeURIComponent(name), { method: 'POST', headers: { 'content-type': 'application/octet-stream', 'x-upsert': 'true' }, body: buf });
+    }
+    return publicMedia.url(uid, name);
+  }
 };
 
 // Lucida Pro (see billing.mjs): one row per Stripe subscription in the private `pro` table. Stripe's webhook writes

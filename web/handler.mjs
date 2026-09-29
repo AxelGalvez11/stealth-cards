@@ -14,6 +14,9 @@ import { cloud, auth } from './supa.mjs';
 import { who, forget, accessToken, sessionCookies, clearCookies, pkce, verifier, clearPkce, linkOwner, sameLink,
   GOOGLE_ID, APPLE_ID, oauthStart, oauthNonce, oauthDone, googleUrl, appleUrl, appleName } from './auth.mjs';
 import { planOf, checkoutUrl, portalUrl, signedBy, onEvent } from './billing.mjs';
+import * as social from './social.mjs';
+import { cookies } from './auth.mjs';
+import { isDev } from './store.mjs';
 
 const ROOT = fileURLToPath(new URL('.', import.meta.url));
 const TYPES = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.mjs': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8', '.json': 'application/json', '.svg': 'image/svg+xml',
@@ -42,9 +45,82 @@ const held = () => {
 };
 // What the app gets: the library, plus who is signed in (online).
 const view = me => ({ ...state(), me, aiOn: aiReady() });
+// The study network's actions (see social.mjs), each run in the signed-in person's library.
+const SOCIAL = {
+  'profile.ensure': (uid, me) => social.ensureProfile(uid, me).then(p => ({ handle: p.handle })),
+  'profile.update': (uid, me, a) => social.updateProfile(uid, me, a.patch || {}).then(p => ({ handle: p.handle })),
+  'deck.share': (uid, me, a) => social.shareDeck(uid, me, a.deckId, a),
+  'deck.study': (uid, me, a) => social.addShared(uid, me, a.id),
+  'deck.copy': (uid, me, a) => social.addShared(uid, me, a.id, { copy: true, name: a.name, folder: a.folder, updates: a.updates !== false }),
+  'deck.detach': (uid, me, a) => social.detach(uid, a.deckId),
+  'deck.updates': (uid, me, a) => social.takeUpdates(a.deckId, a.picks || {}),
+  'deck.star': (uid, me, a) => social.star(uid, me, a.id, !!a.on),
+  'deck.watch': (uid, me, a) => social.watch(uid, me, a.id, !!a.on),
+  'deck.check': (uid, me, a) => social.check(uid, me, a.id),
+  'user.follow': (uid, me, a) => social.follow(uid, me, a.handle, !!a.on),
+  'suggestion.send': (uid, me, a) => social.suggest(uid, me, a.id, { message: a.message, changes: a.changes }),
+  'suggestion.decide': (uid, me, a) => social.decide(uid, a.id, a.picks || {}),
+  'version.restore': (uid, me, a) => social.restore(uid, a.id, a.version),
+  'news.read': (uid, me, a) => social.markRead(uid, a.ids)
+};
+// Pages anyone can open, signed in or not: a shared deck, a profile, a deck's History, Discover, and search. Signed in,
+// they also say what you've done with them (studying, saved, following).
+async function publicApi(req, res, path, viewer) {
+  const q = new URL(req.url, 'http://x').searchParams;
+  const out = (data, none) => (data ? send(res, 200, data) : send(res, 404, { error: none }));
+  if (path === '/api/public/deck') return out(await social.deckPage({ handle: q.get('h'), slug: q.get('s'), id: q.get('id') }, viewer), 'This deck isn’t shared.');
+  if (path === '/api/public/profile') return out(await social.profilePage(q.get('h'), viewer), 'No one has that name.');
+  if (path === '/api/public/history') return out(await social.historyPage(q.get('id'), viewer), 'This deck isn’t shared.');
+  if (path === '/api/public/discover') return send(res, 200, await social.discover(viewer, { tag: q.get('tag') || '' }));
+  if (path === '/api/public/search') return send(res, 200, await social.search(q.get('q') || '', viewer));
+  return send(res, 404, { error: 'Not found' });
+}
+// A made-up person on this computer (the lc_dev cookie; /dev/as/<name> sets it), for trying the study network with
+// several people at once. Never online, and only for this computer's own address.
+const LOCAL_HOST = req => /^(localhost|127\.0\.0\.1)(:\d+)?$/.test(String(req.headers.host || ''));
+const devOf = req => { const n = cookies(req).lc_dev; return !cloud() && LOCAL_HOST(req) && n && isDev('dev_' + n) ? 'dev_' + n : null; };
+const devMe = uid => ({ email: uid.slice(4) + '@dev.local', provider: 'dev', name: uid.slice(4, 5).toUpperCase() + uid.slice(5), picture: '', plan: { pro: true }, manage: '', dev: true });
+// A public page (a deck or a profile) is the app's own page, told what it's about, so search engines and link previews
+// read the deck's name and cards even before the app draws them.
+const escHtml = v => String(v ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+async function publicPage(req, res, path) {
+  const m = await social.metaFor(path).catch(e => { console.error('meta', e); return null; });
+  let html = await readFile(join(ROOT, 'app.html'), 'utf8').catch(() => null);
+  if (!html) return send(res, 404, 'Not found', 'text/plain');
+  if (m) {
+    const origin = originOf(req), url = origin + (m.url || path);
+    const head = `<title>${escHtml(m.title)}</title>\n<meta name="description" content="${escHtml(m.description)}">\n<link rel="canonical" href="${escHtml(url)}">\n<meta property="og:title" content="${escHtml(m.title)}">\n<meta property="og:description" content="${escHtml(m.description)}">\n<meta property="og:url" content="${escHtml(url)}">\n<meta property="og:type" content="website">${m.noindex || m.status === 404 ? '\n<meta name="robots" content="noindex">' : ''}`;
+    html = html.replace(/<title>[^<]*<\/title>/, head);
+    // What the page is, in plain HTML, for anything that doesn't run the app (it's replaced as soon as the app starts).
+    const list = m.cards ? '<ol>' + m.cards.map(c => '<li>' + escHtml(String(c.front || c.text || '').replace(/\[\[|\]\]/g, '')) + (c.back ? ' — ' + escHtml(c.back) : '') + '</li>').join('') + '</ol>'
+      : m.decks ? '<ul>' + m.decks.map(d => '<li><a href="' + escHtml(d.url) + '">' + escHtml(d.name) + '</a> · ' + d.cards + ' cards</li>').join('') + '</ul>' : '';
+    html = html.replace('<div id="app"', '<noscript><h1>' + escHtml(m.title) + '</h1><p>' + escHtml(m.description) + '</p>' + list + '</noscript><div id="app"');
+  }
+  res.writeHead(m && m.status === 404 ? 404 : 200, { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-store' });
+  res.end(html);
+}
 
-async function api(req, res, path, body, me) {
-  if (path === '/api/state' && req.method === 'GET') return send(res, 200, view(me));
+async function api(req, res, path, body, me, uid) {
+  if (path === '/api/state' && req.method === 'GET') {
+    // Decks you study from someone else take the owner's newest changes when the app opens (and comes back to the front).
+    if (new URL(req.url, 'http://x').searchParams.get('sync') === '1') await social.sync(uid).catch(e => console.error('sync', e));
+    return send(res, 200, view(me));
+  }
+  // The study network (social.mjs): sharing, studying and copying decks, suggestions, follows, saves, news. Changes to
+  // your library come back with it, like /api/action.
+  if (path === '/api/social' && req.method === 'POST') {
+    const a = jsonOf(body), fn = SOCIAL[a.type];
+    if (!fn) return send(res, 400, { error: 'Unknown action ' + a.type });
+    try { const result = await fn(uid, me, a); return send(res, 200, { result, state: view(me) }); }
+    catch (e) { if (e.status >= 500 || !e.status && !/^[A-Z]/.test(e.message)) console.error(e); return send(res, e.status && e.status < 500 ? e.status : 400, { error: e.message }); }
+  }
+  if (path === '/api/social/activity' && req.method === 'GET') return send(res, 200, await social.activity(uid));
+  if (path === '/api/social/mine' && req.method === 'GET') return send(res, 200, await social.mine(uid));
+  if (path === '/api/social/suggestions' && req.method === 'GET') {
+    const q = new URL(req.url, 'http://x').searchParams;
+    try { return send(res, 200, await social.suggestionsFor(uid, { sharedId: q.get('id') || '', mine: q.get('mine') === '1', all: q.get('all') === '1' })); }
+    catch (e) { return send(res, e.status || 400, { error: e.message }); }
+  }
   if (path === '/api/action' && req.method === 'POST') {
     try { const result = apply(JSON.parse(body)); return send(res, 200, { result, state: view(me) }); }
     catch (e) { return send(res, 400, { error: e.message }); }
@@ -261,6 +337,21 @@ export async function handle(req, res) {
     if (process.env.VERCEL && !cloud() && (isApi || isMcp || isAuth)) return send(res, 503, { error: 'Lucida isn’t connected to its database yet, so nothing can be saved.' });
     if (path === '/api/stripe' && req.method === 'POST') return await stripe(req, res);
     if (path === '/pro' && req.method === 'GET') return await upgrade(req, res);
+    // Trying the study network on this computer as someone else: /dev/as/maria (and /dev/as/ to be yourself again).
+    if (path.startsWith('/dev/as') && req.method === 'GET') {
+      if (cloud() || !LOCAL_HOST(req)) return send(res, 404, 'Not found', 'text/plain');
+      const n = path.slice(8).toLowerCase().replace(/[^a-z0-9]/g, '').slice(0, 24);
+      res.writeHead(302, { location: '/', 'set-cookie': 'lc_dev=' + n + '; Path=/; HttpOnly; SameSite=Lax; Max-Age=' + (n ? 86400 * 30 : 0), 'cache-control': 'no-store' });
+      return res.end();
+    }
+    if (req.method === 'GET' && (/^\/@[A-Za-z0-9_.]{3,30}(\/[A-Za-z0-9-]{1,60})?\/?$/.test(path) || /^\/d\/s[a-z0-9]{4,40}$/.test(path))) return await publicPage(req, res, path);
+    if (path === '/sitemap.xml' && req.method === 'GET') { res.writeHead(200, { 'content-type': 'application/xml; charset=utf-8', 'cache-control': 'public, max-age=3600' }); return res.end(await social.sitemap(originOf(req))); }
+    if (path.startsWith('/api/public/') && req.method === 'GET') {
+      let viewer = devOf(req);
+      if (cloud()) { const w = await who(req).catch(() => ({ user: null, set: [] })); if (w.set.length) res.setHeader('set-cookie', w.set); viewer = w.user ? w.user.id : null; }
+      else if (!viewer) viewer = 'local';
+      try { return await publicApi(req, res, path, viewer); } catch (e) { console.error(e); return send(res, 500, { error: 'Something went wrong. Try again.' }); }
+    }
     if ((isApi || isMcp) && !sameSite(req)) return send(res, 403, { error: 'Forbidden' });
 
     if (isAuth) {
@@ -293,14 +384,14 @@ export async function handle(req, res) {
         if (w.set.length) res.setHeader('set-cookie', w.set);
         if (!w.user) return send(res, 401, { error: 'Sign in to Lucida.', signIn: true });
         user = w.user; uid = user.id;
-      }
+      } else if (devOf(req)) { uid = devOf(req); me = devMe(uid); }
       if (path.startsWith('/media/')) return await media(req, res, path.slice(7), uid);
       if (path === '/api/rev' && req.method === 'GET') return send(res, 200, { rev: await revOf(uid) });
       // The app's first load asks Stripe's news afresh, so Pro shows right after paying.
       if (user) me = await meOf(user, path === '/api/state');
       const body = req.method === 'POST' ? await readBody(req, path === '/api/media' ? 20e6 : 5e6) : null;
       if (path === '/api/explain' && req.method === 'POST') return await explainReq(res, uid, me, jsonOf(body));
-      return await run(res, uid, out => api(req, out, path, body, me), { pro: me ? me.plan.pro : undefined });
+      return await run(res, uid, out => api(req, out, path, body, me, uid), { pro: me ? me.plan.pro : undefined });
     }
     return await files(req, res, path, ROOT);
   } catch (e) { send(res, /Too big/.test(e.message) ? 413 : 500, { error: /Too big/.test(e.message) ? 'That file is too big.' : 'Something went wrong. Try again.' }); console.error(e); }

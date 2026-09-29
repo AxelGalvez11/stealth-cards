@@ -7,6 +7,7 @@ import R from './rich.js';
 import { placeBefore, deckCards, cardBefore, cardToDeck } from './order.js';
 import { createSound } from './sound.js';
 import { sniff } from './sniff.js';
+import { createNet } from './net.js';
 
 const DAY = 86400000, MIN = 60000, GAPS = [30, 90, 180, 365, 730, 1825, 3650];
 const DAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
@@ -25,7 +26,7 @@ const occOf = c => {
 };
 
 // Online, nobody is signed in yet: only the sign-in pages work. The email waits in this tab while you get the code.
-function signedOut(go) {
+function signedOut(go, onChange = () => {}) {
   const q = new URLSearchParams(location.search), keep = sessionStorage;
   let email = ''; try { email = keep.getItem('lucida.email') || ''; } catch {}
   const post = async (url, body) => {
@@ -46,7 +47,11 @@ function signedOut(go) {
     done: () => { try { keep.removeItem('lucida.email'); } catch {} location.assign(afterSignIn() || '/'); },
     go
   };
-  return { signedOut: true, mock: false, auth, settings: () => ({ look: 'system' }), act: { go } };
+  // Signed out, the pages anyone can open (a shared deck, a profile, Discover) still work; anything that changes something
+  // signs you in first and comes back.
+  const net = createNet({ signedOut: true, go, changed: onChange });
+  return { signedOut: true, mock: false, auth, net, settings: () => ({ look: 'system' }), me: () => null, decks: () => [], folders: () => [],
+    chrome: () => ({ nav: { today: '' }, me: { bg: COLORS[0], initial: '', color: true, photo: '' } }), act: { go } };
 }
 // The page to open once you're signed in, if signing in started somewhere (asked once, then forgotten).
 export function afterSignIn() {
@@ -58,8 +63,9 @@ const toSignIn = () => location.assign('/sign-in');
 
 export async function createDb({ onChange, go }) {
   const get = async url => { const r = await fetch(url, { cache: 'no-store' }); if (r.status === 401) { toSignIn(); throw new Error('Signed out'); } return r.json(); };
-  const first = await fetch('/api/state', { cache: 'no-store' });
-  if (first.status === 401) return signedOut(go);
+  // Opening the app also brings decks you study from other people up to date (their owners' newest changes).
+  const first = await fetch('/api/state?sync=1', { cache: 'no-store' });
+  if (first.status === 401) return signedOut(go, onChange);
   let S = await first.json();
   // Back from paying for Pro: Stripe's news can land a moment after you do, so ask again for a little while.
   if (new URLSearchParams(location.search).get('welcome') === 'pro' && S.me && !(S.me.plan && S.me.plan.pro)) {
@@ -98,12 +104,21 @@ export async function createDb({ onChange, go }) {
       try { S = await get('/api/state'); mine.forEach(f => f(S)); changed(); } catch { S.rev = 0; }
     });
   };
+  // The study network (web/net.js): shared decks, profiles, Discover, suggestions, History, news.
+  const net = createNet({ accept, changed, go });
+  const handle = () => (S.profile && S.profile.handle) || '';
   const patchDeck = (id, patch) => s => { const d = s.decks.find(x => x.id === id); if (d) Object.assign(d, patch, patch.cover ? { cover: { ...d.cover, ...patch.cover } } : {}, patch.bg ? { bg: { kind: 'deck', image: null, ...d.bg, ...patch.bg } } : {}); };
   // Cards your AI adds over MCP show up without a reload.
   setInterval(async () => {
     if (document.hidden) return;
     try { const { rev } = await get('/api/rev'); if (rev > S.rev) accept(await get('/api/state')); } catch { /* the server is restarting */ }
   }, 2000);
+  // Back after ten minutes or more away: decks you study from other people get their owners' newest changes.
+  let away = 0;
+  document.addEventListener('visibilitychange', async () => {
+    if (document.hidden) { away = Date.now(); return; }
+    if (away && Date.now() - away > 10 * MIN) { away = 0; try { accept(await get('/api/state?sync=1')); net.drop(); changed(); } catch { /* offline */ } }
+  });
 
   const now = () => Date.now();
   const deckById = id => S.decks.find(d => d.id === id);
@@ -138,12 +153,20 @@ export async function createDb({ onChange, go }) {
     return (memo['s' + d.id] = { due, overdue, fresh, soon, next, total: all.length, aiCount: all.filter(byAI).length,
       ret: rememberedPct(S.logs.filter(l => l.deckId === d.id && l.at >= t - 30 * DAY)) });
   }
+  // Sharing, on a deck of yours: who can see it (Link only or Public) and its page. On a deck from someone else: whose it
+  // is, whether you study it as it is (readOnly: its cards follow theirs) or made a copy, and the owner's changes waiting.
+  const shareOf = d => {
+    const sh = d.share && d.share.vis !== 'private' ? { vis: d.share.vis, id: d.share.id, url: handle() ? '/@' + handle() + '/' + d.share.slug : '/d/' + d.share.id, label: d.share.vis === 'public' ? 'Public' : 'Link only' } : null;
+    const k = d.link ? { mode: d.link.mode, gone: !!d.link.gone, id: d.link.id, owner: d.link.owner || { name: '', handle: '' }, url: d.link.owner && d.link.owner.handle ? '/@' + d.link.owner.handle + '/' + d.link.slug : '/d/' + d.link.id,
+      pending: d.link.gone ? 0 : (d.link.pending || []).length, updates: !!d.link.updates } : null;
+    return { shared: sh, link: k, readOnly: !!(k && k.mode === 'study' && !k.gone) };
+  };
   const deckRow = d => {
     const st = deckStat(d);
     return { id: d.id, name: d.name, tags: d.tags, seed: d.cover.seed || d.name, style: d.cover.style, round: d.cover.round, image: d.cover.image, paused: d.paused,
       folder: d.folder || null, bg: d.bg || { kind: 'deck', image: null },
       total: st.total, totalLabel: st.total.toLocaleString('en-US'), due: st.due, overdue: st.overdue, soon: st.soon, fresh: st.fresh, ret: st.ret, aiCount: st.aiCount,
-      href: '/deck/' + d.id, studyHref: '/review/' + d.id, settingsHref: '/deck/' + d.id + '?settings=1', newCardHref: '/deck/' + d.id + '/card' };
+      href: '/deck/' + d.id, studyHref: '/review/' + d.id, settingsHref: '/deck/' + d.id + '?settings=1', newCardHref: '/deck/' + d.id + '/card', ...shareOf(d) };
   };
 
   // Days ahead: how many review cards come due each day (1 = tomorrow).
@@ -598,12 +621,30 @@ export async function createDb({ onChange, go }) {
     },
     // A new link for AI apps; the old one stops working (for a link that got out).
     newLink: () => send('ai.link'),
+    // The study network (see web/social.mjs). Each gives back what the server said, and the screens redraw.
+    shareDeck: (deckId, o) => net.act('deck.share', { deckId, ...o }),
+    study: async id => { const r = await net.act('deck.study', { id }); if (r && r.deckId) go('/deck/' + r.deckId); return r; },
+    copyDeck: async (id, o = {}) => { const r = await net.act('deck.copy', { id, ...o }); if (r && r.deckId) go('/deck/' + r.deckId); return r; },
+    detach: deckId => net.act('deck.detach', { deckId }),
+    takeUpdates: (deckId, picks) => net.act('deck.updates', { deckId, picks }),
+    star: (id, on) => net.act('deck.star', { id, on }),
+    watch: (id, on) => net.act('deck.watch', { id, on }),
+    checkDeck: id => net.act('deck.check', { id }),
+    follow: (h, on) => net.act('user.follow', { handle: h, on }),
+    suggest: (id, changes, message) => net.act('suggestion.send', { id, changes, message }),
+    decide: (id, picks) => net.act('suggestion.decide', { id, picks }),
+    restore: (id, version) => net.act('version.restore', { id, version }),
+    readNews: ids => net.act('news.read', { ids }),
+    updateProfile: patch => net.act('profile.update', { patch }),
+    ensureProfile: () => net.act('profile.ensure'),
     go
   };
 
   return {
-    mock: false, act,
+    mock: false, act, net,
     raw: () => S,
+    // You on the study network: your handle and your profile's page (once you have one).
+    me: () => ({ handle: handle(), url: handle() ? '/@' + handle() : '', name: S.settings.name || (S.me && S.me.name) || 'You' }),
     // A clip's waveform and where it's at (sound.js), and the recording under way, if there is one.
     sound: c => sound.view(c),
     recording: () => sound.recording(),
