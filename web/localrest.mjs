@@ -1,6 +1,7 @@
 // On this computer there's no Supabase, so the study network's tables (profiles, shared decks, versions, suggestions,
-// follows, saves, and news; see social.mjs) live in data/social.json, and this answers the same calls Supabase's REST
-// API (PostgREST) would: the same paths, filters, and headers. So social.mjs runs unchanged here and online. It knows
+// follows, saves, and news, see social.mjs; classes, verification and reports, see classes.mjs) live in data/social.json,
+// and this answers the same calls Supabase's REST API (PostgREST) would: the same paths, filters, and headers. So
+// social.mjs runs unchanged here and online. It knows
 // only what social.mjs asks, and says so when asked anything else, so nothing works here that wouldn't online.
 import { readFileSync, writeFileSync, renameSync, existsSync, mkdirSync } from 'node:fs';
 import { join } from 'node:path';
@@ -16,7 +17,16 @@ export const TABLES = {
   follows: { key: ['follower', 'followee'], defaults: () => ({ created_at: now() }) },
   stars: { key: ['user_id', 'shared_id'], defaults: () => ({ created_at: now() }) },
   subscriptions: { key: ['user_id', 'shared_id', 'deck_id'], defaults: () => ({ mode: 'study', updates: true, last_seen: now(), created_at: now() }) },
-  notifications: { key: ['id'], serial: 'id', defaults: () => ({ actor: null, actor_name: '', shared_id: null, data: {}, read: false, created_at: now() }) }
+  notifications: { key: ['id'], serial: 'id', defaults: () => ({ actor: null, actor_name: '', shared_id: null, data: {}, read: false, created_at: now() }) },
+  // Classes, verification, and reports (classes.mjs, supabase/classes.sql). Nothing here deletes in a chain the way
+  // Supabase's "on delete cascade" does, so classes.mjs deletes a class's rows itself.
+  classes: { key: ['id'], unique: [['code']], defaults: () => ({ name: '', school: '', created_at: now(), updated_at: now() }) },
+  class_members: { key: ['class_id', 'user_id'], defaults: () => ({ role: 'member', share_progress: false, asked: false, joined_at: now() }) },
+  class_decks: { key: ['class_id', 'shared_id'], defaults: () => ({ added_by: null, created_at: now() }) },
+  assignments: { key: ['id'], defaults: () => ({ goal: 'learn', created_by: null, created_at: now() }) },
+  class_progress: { key: ['assignment_id', 'user_id'], defaults: () => ({ learned: 0, total: 0, due: 0, remembered: null, last_at: null, updated_at: now() }) },
+  verify_requests: { key: ['id'], defaults: () => ({ role: 'teacher', school: '', contact: '', status: 'open', created_at: now(), decided_at: null, decided_by: '' }) },
+  reports: { key: ['id'], defaults: () => ({ target_name: '', reason: 'other', note: '', reporter: null, status: 'open', created_at: now(), decided_at: null }) }
 };
 
 const fail = (status, message) => Object.assign(new Error('Supabase ' + status + ': ' + message), { status, body: JSON.stringify({ message }) });

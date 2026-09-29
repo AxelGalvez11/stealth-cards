@@ -9,6 +9,7 @@
 // - Anyone can suggest a change; nothing changes until the owner takes it. Helpers the owner picks edit directly.
 // - An AI app works for one person: on your own deck it edits like you do; on someone else's it can only suggest.
 // - Every change is a version in History, with who made it; you can go back to any version.
+// - A class (classes.mjs) sees the decks added to it, even ones that are otherwise private.
 // The tables are Supabase's (supabase/social.sql), reached through supa.mjs rest(); on this computer the same calls go
 // to data/social.json (localrest.mjs). A person's own decks and cards stay in their library (store.mjs); a shared deck
 // is a copy of the deck's cards in shared_cards, refreshed each time the owner's changes are saved.
@@ -288,7 +289,9 @@ export async function shareDeck(uid, me, deckId, o = {}) {
   if (!d) throw err('No such deck');
   if (d.link && d.link.mode === 'study' && !d.link.gone) throw err('This deck is ' + d.link.owner.name + '’s. Make a copy to share your own version.');
   const owner = await ensureProfile(uid, me, S), sid = owner.id;
-  const vis = ['private', 'link', 'public'].includes(o.visibility) ? o.visibility : d.share ? d.share.vis : 'link';
+  let vis = ['private', 'link', 'public', 'class'].includes(o.visibility) ? o.visibility : d.share ? d.share.vis : 'link';
+  // A deck in a class (classes.mjs) stays seen by its classes when it's otherwise private: that's visibility 'class'.
+  if (vis === 'private' && d.share && (await rest('/class_decks?shared_id=eq.' + val(d.share.id) + '&select=class_id&limit=1')).length) vis = 'class';
   const extra = {};
   if ('description' in o) extra.description = clean(o.description, 300).trim();
   if ('maintained' in o) extra.maintained = o.maintained === 'community' ? 'community' : 'creator';
@@ -325,7 +328,14 @@ async function helpersFrom(list, owner) {
 
 // ---------- studying and copying ----------
 const OPEN = ['link', 'public'];
-const canSee = (sh, uid) => sh && (OPEN.includes(sh.visibility) || sh.owner === uid);
+// A deck shared with a class (visibility 'class', see classes.mjs) is seen only by the people in a class it's in.
+export async function classSees(sharedId, uid) {
+  if (!uid) return false;
+  const rows = await rest('/class_decks?shared_id=eq.' + val(sharedId) + '&select=class_id&limit=500');
+  if (!rows.length) return false;
+  return (await rest('/class_members?user_id=eq.' + val(uid) + '&class_id=in.' + inList(rows.map(r => r.class_id)) + '&select=class_id&limit=1')).length > 0;
+}
+export const canSee = async (sh, uid) => !!sh && (OPEN.includes(sh.visibility) || sh.owner === uid || (sh.visibility === 'class' && await classSees(sh.id, uid)));
 // A shared card, as a card in your library: the owner's content, with your own fresh schedule. `origin` ties it to the
 // shared card, and `base` remembers what it said, so a copy can tell your edits from the owner's.
 const fromShared = (r, deckId) => {
@@ -348,7 +358,7 @@ async function countFollowing(sharedId) {
 export async function addShared(uid, me, sharedId, { copy = false, name = '', folder = null, updates = true } = {}) {
   const sid = socialId(uid), S = state();
   const sh = await sharedRow(sharedId);
-  if (!canSee(sh, sid)) throw err('This deck isn’t shared anymore.', 404);
+  if (!(await canSee(sh, sid))) throw err('This deck isn’t shared anymore.', 404);
   if (sh.owner === sid) throw err('It’s already your deck.');
   const had = S.decks.find(d => d.link && d.link.id === sharedId && d.link.mode === (copy ? 'copy' : 'study') && !d.link.gone);
   if (had && !copy) return { deckId: had.id };
@@ -376,10 +386,13 @@ export async function sync(uid) {
   if (!linked.length) return 0;
   const ids = [...new Set(linked.map(d => d.link.id))];
   const rows = await rest('/shared_decks?id=in.' + inList(ids) + '&select=id,rev,visibility,name,tags,cover,slug,owner');
+  // A class's deck stays yours to study while you're in a class it's in; after you leave, it's yours to keep.
+  const inClass = new Set();
+  for (const r of rows) if (r.visibility === 'class' && await classSees(r.id, socialId(uid))) inClass.add(r.id);
   let n = 0;
   for (const d of linked) {
     const sh = rows.find(r => r.id === d.link.id);
-    if (!sh || !OPEN.includes(sh.visibility)) { d.link.gone = true; d.link.pending = []; n++; continue; }
+    if (!sh || !(OPEN.includes(sh.visibility) || inClass.has(sh.id))) { d.link.gone = true; d.link.pending = []; n++; continue; }
     if (sh.rev <= d.link.rev) continue;
     const since = d.link.rev, changes = [];
     for (let off = 0; off < 20000; off += 1000) {
@@ -477,7 +490,7 @@ const cleanFields = o => {
 };
 export async function suggest(uid, me, sharedId, { message = '', changes = [] } = {}, ai = '') {
   const sid = socialId(uid), sh = await sharedRow(sharedId);
-  if (!canSee(sh, sid)) throw err('This deck isn’t shared anymore.', 404);
+  if (!(await canSee(sh, sid))) throw err('This deck isn’t shared anymore.', 404);
   const list = (Array.isArray(changes) ? changes : []).slice(0, 200);
   if (!list.length) throw err('Add a change first.');
   const refs = list.filter(c => c.card).map(c => String(c.card));
@@ -507,7 +520,7 @@ export async function suggest(uid, me, sharedId, { message = '', changes = [] } 
 }
 // Runs fn in someone else's library (a helper's change going into the owner's deck), again from the newer copy if the
 // owner's library changed at the same moment.
-async function inLibraryOf(uid, fn) {
+export async function inLibraryOf(uid, fn) {
   for (let attempt = 0; attempt < 8; attempt++) {
     if (attempt) await new Promise(r => setTimeout(r, Math.random() * 40 * attempt));
     let out;
@@ -583,7 +596,7 @@ export async function versions(sharedId, { limit = 60 } = {}) {
 // A deck's History page: every version, newest first, with who made it and what changed.
 export async function historyPage(sharedId, viewer) {
   const vid = viewer ? socialId(viewer) : null, sh = await sharedRow(sharedId, 'id,owner,visibility,learners,copies,name,slug');
-  if (!canSee(sh, vid)) return null;
+  if (!(await canSee(sh, vid))) return null;
   const list = await versions(sharedId, { limit: 200 }), o = await profileOf(sh.owner);
   const ids = [...new Set(list.map(v => v.author).filter(Boolean))], faces = ids.length ? await rest('/profiles?id=in.' + inList(ids) + '&select=id,handle,name,avatar,color,verified') : [];
   return { id: sh.id, name: sh.name, url: o ? urlOf(o.handle, sh.slug) : '/d/' + sh.id, owner: face(o), mine: vid === sh.owner, following: (sh.learners || 0) + (sh.copies || 0),
@@ -620,7 +633,7 @@ export async function check(uid, me, sharedId) {
   const p = await ensureProfile(uid, me);
   if (p.verified !== 'teacher' && p.verified !== 'school') throw err('Only verified teachers can check decks.', 403);
   const sh = await sharedRow(sharedId, 'id,owner,version,visibility');
-  if (!canSee(sh, p.id)) throw err('No such deck', 404);
+  if (!(await canSee(sh, p.id))) throw err('No such deck', 404);
   const n = await addVersion(sharedId, [], { by: personOf(p), kind: 'check', summary: p.name + ' checked every card', joinable: false });
   await rest('/shared_decks?id=eq.' + val(sharedId), { method: 'PATCH', body: { checked: { id: p.id, name: p.name, handle: p.handle, version: n, at: nowIso() } } });
   if (sh.owner !== p.id) await notify([{ user_id: sh.owner, kind: 'checked', actor: p.id, actor_name: p.name, shared_id: sharedId, data: {} }]);
@@ -630,14 +643,14 @@ export async function check(uid, me, sharedId) {
 // ---------- saves, follows, updates ----------
 export async function star(uid, me, sharedId, on) {
   const p = await ensureProfile(uid, me), sh = await sharedRow(sharedId, 'id,owner,visibility');
-  if (!canSee(sh, p.id)) throw err('No such deck', 404);
+  if (!(await canSee(sh, p.id))) throw err('No such deck', 404);
   if (on) await rest('/stars', { method: 'POST', prefer: 'resolution=ignore-duplicates', body: { user_id: p.id, shared_id: sharedId } });
   else await rest('/stars?user_id=eq.' + val(p.id) + '&shared_id=eq.' + val(sharedId), { method: 'DELETE' });
   return countFollowing(sharedId);
 }
 export async function watch(uid, me, sharedId, on) {
   const p = await ensureProfile(uid, me), sh = await sharedRow(sharedId, 'id,owner,visibility');
-  if (!canSee(sh, p.id)) throw err('No such deck', 404);
+  if (!(await canSee(sh, p.id))) throw err('No such deck', 404);
   if (on) await rest('/subscriptions?on_conflict=user_id,shared_id,deck_id', { method: 'POST', prefer: 'resolution=merge-duplicates', body: { user_id: p.id, shared_id: sharedId, deck_id: '', mode: 'watch', last_seen: nowIso() } });
   else await rest('/subscriptions?user_id=eq.' + val(p.id) + '&shared_id=eq.' + val(sharedId) + '&mode=eq.watch', { method: 'DELETE' });
   return { on: !!on };
@@ -692,19 +705,19 @@ function card(sh, o) {
     checked: sh.checked ? { name: sh.checked.name, handle: sh.checked.handle, current: sh.checked.version === sh.version } : null,
     maintained: sh.maintained || 'creator', owner: face(o), theme: (o && o.theme) || '' };
 }
-async function withOwners(rows) {
+export async function withOwners(rows) {
   const ids = [...new Set(rows.map(r => r.owner))];
   const people = ids.length ? await rest('/profiles?id=in.' + inList(ids) + '&select=*') : [];
   return rows.map(r => card(r, people.find(p => p.id === r.owner)));
 }
-const LIST = 'id,owner,slug,name,description,tags,cover,card_count,stars,learners,copies,version,updated_at,visibility,checked,maintained';
+export const LIST = 'id,owner,slug,name,description,tags,cover,card_count,stars,learners,copies,version,updated_at,visibility,checked,maintained';
 // A shared deck's page: the deck, its cards (content only), how it was made, who helped, and what you have to do with it.
 export async function deckPage({ handle, slug, id }, viewer) {
   let sh = null, o = null;
   if (id) { sh = await sharedRow(id); o = sh && await profileOf(sh.owner); }
   else { o = await profileByHandle(handle); sh = o && (await rest('/shared_decks?owner=eq.' + val(o.id) + '&slug=eq.' + val(String(slug || '').toLowerCase()) + '&select=*'))[0]; }
   const vid = viewer ? socialId(viewer) : null;
-  if (!sh || !canSee(sh, vid)) return null;
+  if (!sh || !(await canSee(sh, vid))) return null;
   const [rows, vers, subs, starred] = await Promise.all([
     rest('/shared_cards?shared_id=eq.' + val(sh.id) + '&deleted=is.false&select=id,pos,data&order=pos.asc&limit=500'),
     versions(sh.id, { limit: 40 }),

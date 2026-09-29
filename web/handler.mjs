@@ -15,6 +15,7 @@ import { who, forget, accessToken, sessionCookies, clearCookies, pkce, verifier,
   GOOGLE_ID, APPLE_ID, oauthStart, oauthNonce, oauthDone, googleUrl, appleUrl, appleName } from './auth.mjs';
 import { planOf, checkoutUrl, portalUrl, signedBy, onEvent } from './billing.mjs';
 import * as social from './social.mjs';
+import * as classes from './classes.mjs';
 import { cookies } from './auth.mjs';
 import { isDev } from './store.mjs';
 
@@ -74,6 +75,8 @@ async function publicApi(req, res, path, viewer) {
   if (path === '/api/public/history') return out(await social.historyPage(q.get('id'), viewer), 'This deck isn’t shared.');
   if (path === '/api/public/discover') return send(res, 200, await social.discover(viewer, { tag: q.get('tag') || '' }));
   if (path === '/api/public/search') return send(res, 200, await social.search(q.get('q') || '', viewer));
+  // A class (classes.mjs): what an invite shows to anyone, and the whole class to the people in it.
+  if (path === '/api/public/class') return out(await classes.page(q.get('code'), viewer), 'No class has that code.');
   return send(res, 404, { error: 'Not found' });
 }
 // A made-up person on this computer (the lc_dev cookie; /dev/as/<name> sets it), for trying the study network with
@@ -85,7 +88,7 @@ const devMe = uid => ({ email: uid.slice(4) + '@dev.local', provider: 'dev', nam
 // read the deck's name and cards even before the app draws them.
 const escHtml = v => String(v ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 async function publicPage(req, res, path) {
-  const m = await social.metaFor(path).catch(e => { console.error('meta', e); return null; });
+  const m = await (path.startsWith('/class/') ? classes.metaFor(path) : social.metaFor(path)).catch(e => { console.error('meta', e); return null; });
   let html = await readFile(join(ROOT, 'app.html'), 'utf8').catch(() => null);
   if (!html) return send(res, 404, 'Not found', 'text/plain');
   if (m) {
@@ -104,13 +107,17 @@ async function publicPage(req, res, path) {
 async function api(req, res, path, body, me, uid) {
   if (path === '/api/state' && req.method === 'GET') {
     // Decks you study from someone else take the owner's newest changes when the app opens (and comes back to the front).
-    if (new URL(req.url, 'http://x').searchParams.get('sync') === '1') await social.sync(uid).catch(e => console.error('sync', e));
+    if (new URL(req.url, 'http://x').searchParams.get('sync') === '1') {
+      await social.sync(uid).catch(e => console.error('sync', e));
+      // Your classes and their assignments, and (if you share it) your progress on them (classes.mjs).
+      await classes.sync(uid).catch(e => console.error('class sync', e));
+    }
     return send(res, 200, view(me));
   }
   // The study network (social.mjs): sharing, studying and copying decks, suggestions, follows, saves, news. Changes to
   // your library come back with it, like /api/action.
   if (path === '/api/social' && req.method === 'POST') {
-    const a = jsonOf(body), fn = SOCIAL[a.type];
+    const a = jsonOf(body), fn = SOCIAL[a.type] || classes.ACTIONS[a.type];
     if (!fn) return send(res, 400, { error: 'Unknown action ' + a.type });
     try { const result = await fn(uid, me, a); return send(res, 200, { result, state: view(me) }); }
     catch (e) { if (e.status >= 500 || !e.status && !/^[A-Z]/.test(e.message)) console.error(e); return send(res, e.status && e.status < 500 ? e.status : 400, { error: e.message }); }
@@ -118,6 +125,12 @@ async function api(req, res, path, body, me, uid) {
   if (path === '/api/social/activity' && req.method === 'GET') return send(res, 200, await social.activity(uid));
   if (path === '/api/social/mine' && req.method === 'GET') return send(res, 200, await social.mine(uid));
   if (path === '/api/social/unread' && req.method === 'GET') return send(res, 200, { unread: await social.unreadCount(uid).catch(() => 0) });
+  // Classes (classes.mjs): yours, whether you're verified (or waiting), and the admin page (only for admins).
+  if (path === '/api/classes' && req.method === 'GET') return send(res, 200, await classes.mine(uid));
+  if (path === '/api/verify' && req.method === 'GET') return send(res, 200, await classes.verifyStatus(uid));
+  if (path === '/api/admin' && req.method === 'GET') {
+    try { return send(res, 200, await classes.adminPage(uid, me)); } catch (e) { return send(res, e.status || 400, { error: e.message }); }
+  }
   if (path === '/api/social/suggestions' && req.method === 'GET') {
     const q = new URL(req.url, 'http://x').searchParams;
     try { return send(res, 200, await social.suggestionsFor(uid, { sharedId: q.get('id') || '', mine: q.get('mine') === '1', all: q.get('all') === '1' })); }
@@ -346,7 +359,7 @@ export async function handle(req, res) {
       res.writeHead(302, { location: '/', 'set-cookie': 'lc_dev=' + n + '; Path=/; HttpOnly; SameSite=Lax; Max-Age=' + (n ? 86400 * 30 : 0), 'cache-control': 'no-store' });
       return res.end();
     }
-    if (req.method === 'GET' && (/^\/@[A-Za-z0-9_.]{3,30}(\/[A-Za-z0-9-]{1,60})?\/?$/.test(path) || /^\/d\/s[a-z0-9]{4,40}$/.test(path))) return await publicPage(req, res, path);
+    if (req.method === 'GET' && (/^\/@[A-Za-z0-9_.]{3,30}(\/[A-Za-z0-9-]{1,60})?\/?$/.test(path) || /^\/d\/s[a-z0-9]{4,40}$/.test(path) || /^\/class\/[A-Za-z]{6}\/?$/.test(path))) return await publicPage(req, res, path);
     if (path === '/sitemap.xml' && req.method === 'GET') { res.writeHead(200, { 'content-type': 'application/xml; charset=utf-8', 'cache-control': 'public, max-age=3600' }); return res.end(await social.sitemap(originOf(req))); }
     if (path.startsWith('/api/public/') && req.method === 'GET') {
       let viewer = devOf(req);
