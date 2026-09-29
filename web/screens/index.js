@@ -187,6 +187,12 @@ export default [
   "h": 844
  },
  {
+  "name": "PhoneDeckSettingsGoal",
+  "title": "iPhone · Deck settings · Studying · goal raised to 95% (reviews a day)",
+  "w": 390,
+  "h": 844
+ },
+ {
   "name": "PhoneDeckSettingsStudy",
   "title": "iPhone · Deck settings · Studying (FSRS)",
   "w": 390,
@@ -433,6 +439,12 @@ export default [
   "h": 1320
  },
  {
+  "name": "PhoneSettingsFree",
+  "title": "iPhone · Settings · on Free (Tune to you is Pro)",
+  "w": 390,
+  "h": 1320
+ },
+ {
   "name": "PhoneSettingsGray",
   "title": "iPhone · Settings (dark, gray)",
   "w": 390,
@@ -487,6 +499,12 @@ export default [
   "h": 844
  },
  {
+  "name": "PhoneStatsPaceGray",
+  "title": "iPhone · Stats · Pace (dark, gray)",
+  "w": 390,
+  "h": 844
+ },
+ {
   "name": "PhoneStatsUpgrade",
   "title": "iPhone · Stats · on Free: go Pro for deep stats",
   "w": 390,
@@ -495,6 +513,12 @@ export default [
  {
   "name": "PhoneStatsWeak",
   "title": "iPhone · Stats · Weak spots (Pro)",
+  "w": 390,
+  "h": 844
+ },
+ {
+  "name": "PhoneStatsWeakDark",
+  "title": "iPhone · Stats · Weak spots (dark)",
   "w": 390,
   "h": 844
  },
