@@ -26,7 +26,7 @@ export const grain = (op = 0.55, css = '') => `<span class="sk-grain" style="opa
 export function variant(d) {
   let h = 2166136261 ^ 66;
   for (const ch of String(d.seed || d.name || '')) { h ^= ch.charCodeAt(0); h = Math.imul(h, 16777619); }
-  return (((h >>> 0) % 6) + (+d.round || 0)) % 6;
+  return (((h >>> 0) % 6) + (+(d.round ?? (d.cover && d.cover.round)) || 0)) % 6;
 }
 // The picture on a cover says what the deck is about, from its name and tags; a deck about something else gets its
 // first letter instead ('#' + the letter).
@@ -146,7 +146,7 @@ export function make(T) {
     }
     if (part === 'deco') return T.face(w, h, { q: '', a: '', side: a.side || 'front', ...(FACE_AT[a.at] || FACE_AT.web), w, h }).deco();
     if (part === 'cover') {
-      const C = T.cover(deckLook(a.d || {}), { w, h, r: a.r ?? 20, big: w > 200, shape: a.shape || 'wide' });
+      const C = T.cover(deckLook(a.d || {}), { w, h, r: a.r ?? 20, big: w > 200, shape: a.shape || 'wide', fs: a.fs });
       return `<span${C.cls ? ` class="${C.cls}"` : ''} style="position: absolute; inset: 0; background-color: ${C.bg};"></span>${C.draw()}`;
     }
     if (part === 'avatar') return a.photo ? (T.frame ? T.frame(w) : '') : T.avatar(w, initial(a.ch));
@@ -197,13 +197,15 @@ export function make(T) {
     // A deck's cover, for a screen's holes: its base color, words (light or dark ink, with the chips and buttons that
     // go with them), the lettering of its name (`size`: the name's size in px), its shadow, and a ref for its picture.
     coverOf(d, shape = 'wide', size = 19, r) {
-      const dl = deckLook(d), C = T.cover(dl, { w: shape === 'wide' ? 356 : shape === 'square' ? 48 : 173, h: shape === 'wide' ? 240 : shape === 'square' ? 48 : 206, r: r ?? 20, big: shape !== 'square', shape });
+      const dl = deckLook(d), C = T.cover(dl, { w: shape === 'wide' ? 356 : shape === 'square' ? 48 : 173, h: shape === 'wide' ? 240 : shape === 'square' ? 48 : 206, r: r ?? 20, big: shape !== 'square', shape, fs: size });
+      // (a ref for this cover's picture at another shape: a Library row's thumbnail)
+      const art = (sh, rr) => el => paint(el, 'cover', { d: { seed: dl.seed, name: dl.name, round: dl.round, tags: dl.tags, v: dl.v, m: dl.m }, shape: sh, r: rr, fs: size });
       const light = C.ink !== 'dark';
       return { on: true, base: C.bg, ink: light ? '#FFFFFF' : '#111111', sub: light ? 'rgba(255,255,255,.82)' : 'rgba(0,0,0,.62)',
         glass: light ? 'rgba(255,255,255,.18)' : 'rgba(0,0,0,.07)', glassLine: light ? 'rgba(255,255,255,.3)' : 'rgba(0,0,0,.08)',
         btnBg: light ? '#FFFFFF' : '#000000', btnFg: light ? '#000000' : '#FFFFFF', shadow: C.shadow || 'none', textShadow: 'none',
         title: `font-size: ${R(size * (C.ts || 1))}px; ${C.title || ''}`, name: C.name || '',
-        art: el => paint(el, 'cover', { d: { seed: dl.seed, name: dl.name, round: dl.round, tags: dl.tags, v: dl.v, m: dl.m }, shape, r }) };
+        titleAt: n => `font-size: ${R(n * (C.ts || 1))}px; ${C.title || ''}`, art: art(shape, r), artAs: art };
     },
     // Your profile picture: the theme's circle with your initial, or a ring around your photo.
     me: (ch, photo) => el => paint(el, 'avatar', { ch, photo: !!photo }),

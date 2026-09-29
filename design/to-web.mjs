@@ -3,6 +3,7 @@
 // Web boards (1440 x 900) are stretched to fill the browser window, and so are the phone pages the app shows on a phone;
 // the others keep their size.
 import { readFileSync, writeFileSync, readdirSync, mkdirSync, rmSync } from 'node:fs';
+import { withoutThemes, appPictures } from './themes.mjs';
 
 const SRC = new URL('./canvas/project/', import.meta.url);
 const OUT = new URL('../web/screens/', import.meta.url);
@@ -15,11 +16,13 @@ for (const file of readdirSync(SRC).filter(f => f.endsWith('.dc.html')).sort()) 
   const name = file.replace('.dc.html', '');
   const title = src.match(/<title>([^<]*)<\/title>/)[1];
   const body = src.split('<x-dc>')[1].split('</x-dc>')[0];
-  const css = (body.match(/<style>([\s\S]*?)<\/style>/) || ['', ''])[1].trim();
+  // A Theme board's pictures are the canvas's uploads; the app has its own copies (web/themes/img).
+  const css = appPictures((body.match(/<style>([\s\S]*?)<\/style>/) || ['', ''])[1].trim());
   const raw = JSON.parse(src.match(/data-props='([^']*)'/)[1]);
   const { width: w, height: h } = raw.$preview;
   const props = Object.fromEntries(Object.entries(raw).filter(([k]) => k !== '$preview').map(([k, v]) => [k, v.default]));
-  const logic = src.split('data-dc-script')[1].split('>').slice(1).join('>').split('</script>')[0].trim();
+  // Theme boards carry their themes' code for the canvas; the app loads the themes' own modules instead (web/themes).
+  const logic = withoutThemes(src.split('data-dc-script')[1].split('>').slice(1).join('>').split('</script>')[0].trim());
   let template = body.replace(/<helmet>[\s\S]*?<\/helmet>/, '').trim();
   // Phone pages fill the phone's screen. Sign-in and Learn mode grow with what's on them; the app's other pages are the
   // screen's height and scroll inside (like the iPhone app), so the tab bar, sheets, and anything pinned to the bottom
@@ -27,7 +30,7 @@ for (const file of readdirSync(SRC).filter(f => f.endsWith('.dc.html')).sort()) 
   // that board's height instead.
   const grow = ['PhoneSignIn', 'PhoneSignInCode', 'PhoneQuizStart', 'PhoneQuizUpgrade', 'PhoneQuiz', 'PhoneQuizMatch', 'PhoneQuizType', 'PhoneQuizDone'];
   const phoneFill = [...grow, 'PhoneToday', 'PhoneTodayNew', 'PhoneDeck', 'PhoneDeckEmpty', 'PhoneEditor', 'PhoneReview', 'PhoneDone', 'PhoneDonePiles',
-    'PhoneStats', 'PhoneStatsEmpty', 'PhoneConnect', 'PhoneSettings', 'PhoneNewDeck', 'PhoneLibrary', 'PhoneDecksEmpty', 'PhoneWelcome'].includes(name), fill = (w === 1440 && h === 900) || phoneFill;
+    'PhoneStats', 'PhoneStatsEmpty', 'PhoneConnect', 'PhoneSettings', 'PhoneNewDeck', 'PhoneLibrary', 'PhoneDecksEmpty', 'PhoneWelcome', 'PhoneThemePicker', 'PhoneTheme'].includes(name), fill = (w === 1440 && h === 900) || phoneFill;
   if (phoneFill) template = template.replace(/width: 390px; height: \d+px;/, grow.includes(name) ? 'width: 100%; min-height: 100vh; min-height: 100dvh;' : 'width: 100%; height: 100vh; height: 100dvh; min-height: 100%; max-height: 100%;');
   else if (fill) {
     template = template.replace('width: 1440px; height: 900px;', 'width: 100%; height: 100vh;');

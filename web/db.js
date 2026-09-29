@@ -7,6 +7,7 @@ import R from './rich.js';
 import { placeBefore, deckCards, cardBefore, cardToDeck } from './order.js';
 import { createSound } from './sound.js';
 import { sniff } from './sniff.js';
+import { loadTheme } from './themes/load.js';
 
 const DAY = 86400000, MIN = 60000, GAPS = [30, 90, 180, 365, 730, 1825, 3650];
 const DAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
@@ -72,6 +73,13 @@ export async function createDb({ onChange, go }) {
   let session = null; // the review in progress: { key, deckId, pile, started, graded: [{ cardId, rating, pile, was, logId }] }
   let memo = {};
   const changed = () => { memo = {}; onChange(); };
+  // Your theme (Pro, Settings › Theme): its key while it applies (you have Pro; on this computer everything is on), or ''
+  // for Lucida's own look. Its code loads the first time a screen needs it (web/themes/load.js), and the screens draw
+  // again once it's here; a theme you already use loads before the first page, so it doesn't flash in.
+  const isPro = () => !S.me || !!(S.me.plan && S.me.plan.pro);
+  const theme = () => (isPro() && S.settings.theme && S.settings.theme !== 'lucida' ? S.settings.theme : '');
+  const skinNow = () => { const k = theme(), T = k && globalThis.LucidaThemes && globalThis.LucidaThemes[k]; if (k && !T) loadTheme(k, changed); return T || null; };
+  if (theme()) await Promise.race([loadTheme(theme(), () => {}), new Promise(r => setTimeout(r, 600))]);
   // Changes shown before the server has them (see saveNow): each stays on top of any newer copy until it's saved.
   let mine = [], line = Promise.resolve();
   const accept = next => { if (next && next.rev >= S.rev) { S = next; mine.forEach(f => f(S)); changed(); } };
@@ -609,15 +617,19 @@ export async function createDb({ onChange, go }) {
     recording: () => sound.recording(),
     // Your picture wherever it shows (the sidebar, Today on a phone, Settings): your photo, your Google photo, or your
     // initial on your color.
+    // With a theme on, the theme draws the circle and your initial (or a ring around your photo): skinned, art.
     chrome: () => {
-      const due = S.decks.filter(d => !d.paused).reduce((n, d) => n + deckStat(d).due, 0), ph = photoOf();
-      return { nav: { today: due ? String(due) : '' }, me: { bg: COLORS[S.settings.color] || COLORS[0], initial: (((S.settings.name || (S.me && S.me.name) || '').trim() || 'You')[0]).toUpperCase(),
-        color: ph === 'color', photo: ph === 'google' ? S.me.picture : ph === 'yours' ? S.settings.yourPhoto : '' } };
+      const due = S.decks.filter(d => !d.paused).reduce((n, d) => n + deckStat(d).due, 0), ph = photoOf(), T = skinNow(), color = ph === 'color';
+      const initial = (((S.settings.name || (S.me && S.me.name) || '').trim() || 'You')[0]).toUpperCase();
+      return { nav: { today: due ? String(due) : '' }, me: { bg: T && color ? 'transparent' : COLORS[S.settings.color] || COLORS[0], initial,
+        color: color && !T, photo: ph === 'google' ? S.me.picture : ph === 'yours' ? S.settings.yourPhoto : '', skinned: !!T, art: T ? T.me(initial, !color) : null } };
     },
     settings: () => ({ ...S.settings, name: S.settings.name || (S.me && S.me.name) || 'You', sub: S.me ? S.me.email : 'Saved on this computer', signedIn: !!S.me,
       google: !!(S.me && S.me.picture), photo: photoOf(), check: !!S.ai.perms.check }),
     // Lucida Pro: online, from Stripe (the server's `me.plan`); on this computer everything is on.
-    pro: () => !S.me || !!(S.me.plan && S.me.plan.pro),
+    pro: isPro,
+    theme,
+    loadTheme: key => loadTheme(key, changed),
     plan: () => (S.me ? { ...(S.me.plan || { pro: false }), manage: S.me.manage || '' } : null),
     tags: () => [...new Set([...S.decks.flatMap(d => d.tags), ...S.cards.flatMap(c => c.tags)])],
     decks: () => S.decks.map(deckRow),

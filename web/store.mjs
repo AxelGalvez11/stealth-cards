@@ -13,6 +13,7 @@ import { FREE_MEDIA } from './plans.mjs';
 import { grade as fsrsGrade, newCard } from './fsrs.js';
 import R from './rich.js';
 import { placeBefore, cardBefore, cardToDeck } from './order.js';
+import { THEME_KEYS } from './themes/index.js';
 
 export const DATA = process.env.STEALTH_DATA || fileURLToPath(new URL('../data/', import.meta.url));
 export const MEDIA = join(DATA, 'media');
@@ -21,7 +22,10 @@ const GAPS = [30, 90, 180, 365, 730, 1825, 3650];
 
 const fresh = () => ({
   version: 1, rev: 1,
-  settings: { name: '', color: 0, look: 'system', darkMode: 'black', grads: 'mix', prog: 'bar', perDay: 20, goal: 90, grading: 'four', fsrs: true, reminder: '9:00 AM', photo: '', yourPhoto: null, welcomed: false },
+  settings: { name: '', color: 0, look: 'system', darkMode: 'black', grads: 'mix', prog: 'bar', perDay: 20, goal: 90, grading: 'four', fsrs: true, reminder: '9:00 AM', photo: '', yourPhoto: null, welcomed: false,
+    // Settings › Theme (Pro): a theme from web/themes/index.js ('lucida' is the app's own look), and whether your
+    // public profile and decks show it to visitors.
+    theme: 'lucida', themeProfile: true },
   ai: { perms: { read: true, text: true, media: true, edit: true, check: false, del: false }, clients: {} },
   folders: [], decks: [], cards: [], logs: []
 });
@@ -367,6 +371,12 @@ function run(a, who) {
       // Google photo if there is one). Your own is a picture you uploaded to Lucida, so it's always a /media/… path.
       if ('photo' in p && !['', 'google', 'yours', 'color'].includes(p.photo)) throw new Error('No such profile picture');
       if ('welcomed' in p) p.welcomed = !!p.welcomed;
+      if ('themeProfile' in p) p.themeProfile = !!p.themeProfile;
+      // Themes are part of Pro (Lucida's own look is for everyone). Online the plan is known (L.pro); here everything is on.
+      if ('theme' in p) {
+        if (!THEME_KEYS.includes(p.theme)) throw new Error('No such theme');
+        if (p.theme !== 'lucida' && L.pro === false) throw new Error('Themes are part of Pro. Go Pro at lucida.cards/pricing');
+      }
       if ('yourPhoto' in p && p.yourPhoto !== null && !/^\/media\/[\w-]+\.(png|jpg|gif|webp)$/.test(String(p.yourPhoto))) throw new Error('Your photo has to be a picture you uploaded.');
       Object.assign(S.settings, p); return {};
     }

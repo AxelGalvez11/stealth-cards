@@ -80,7 +80,11 @@ export const MOCK_METHOD = String.raw`mock() {
   // Profile picture (the Settings boards' photo setting): the Google photo, your own, or the color; the canvas draws
   // stand-ins for the photos.
   const st = { name: 'Alex Kim', sub: 'Signed in with Google · alex@gmail.com', signedIn: true, google: true, photo: ({ 'Google photo': 'google', 'Your photo': 'yours' })[p.photo] || 'color', yourPhoto: p.photo === 'Your photo' ? 'mock' : null, color: 0,
-    look: 'system', darkMode: p.dim ? 'gray' : 'black', grads: 'mix', prog: ({ Bar: 'bar', Counts: 'counts', None: 'none' })[p.progress] || 'bar', perDay: 20, goal: 90, grading: 'four', fsrs: true, check: true, reminder: '9:00 AM', ...(m.settings || {}) };
+    look: 'system', darkMode: p.dim ? 'gray' : 'black', grads: 'mix', prog: ({ Bar: 'bar', Counts: 'counts', None: 'none' })[p.progress] || 'bar', perDay: 20, goal: 90, grading: 'four', fsrs: true, check: true, reminder: '9:00 AM',
+    // Settings › Theme (Pro): the Theme boards say which is picked (props.theme).
+    theme: p.theme || 'lucida', themeProfile: true, ...(m.settings || {}) };
+  // Your profile picture in a theme: the theme a board shows (props.skin) or the one picked here (see skin() in build.mjs).
+  const skinned = () => this.skinFor(p.skin || (st.theme !== 'lucida' ? st.theme : ''));
   const perms = { read: true, text: true, media: true, edit: true, check: true, del: false, ...(m.perms || {}) };
   const noop = () => {};
   // Folders you make or change here stay on this board.
@@ -92,8 +96,11 @@ export const MOCK_METHOD = String.raw`mock() {
   const cardDeck = m.cardDeck || {}, cardOrder = m.cardOrder || X.CARDS.map(c => c.id);
   return {
     mock: true,
-    chrome: () => ({ nav: { today: caught ? '' : '64' }, me: { bg: 'linear-gradient(135deg, #8C9AFC 0%, #4F60E6 100%)', initial: 'A', color: st.photo === 'color', photo: '', sampleGoogle: st.photo === 'google', sampleYours: st.photo === 'yours' } }),
+    chrome: () => { const S = skinned(), color = st.photo === 'color';
+      return { nav: { today: caught ? '' : '64' }, me: { bg: S && color ? 'transparent' : 'linear-gradient(135deg, #8C9AFC 0%, #4F60E6 100%)', initial: 'A', color: color && !S, photo: '', sampleGoogle: st.photo === 'google', sampleYours: st.photo === 'yours',
+        skinned: !!S, art: S ? S.me('A', !color) : null } }; },
     settings: () => st,
+    theme: () => (st.theme && st.theme !== 'lucida' ? st.theme : ''),
     tags: () => [],
     decks: () => inOrder().map(d => ({ d, i: X.DECKS.indexOf(d) })).map(({ d, i }) => ({ ...d, name: d.name, tags: X.TAGS[d.id], seed: d.name, style: null, image: null, totalLabel: d.total, paused: false, folder: folderOf(d.id), bg: { kind: 'deck', image: null },
       due: caught ? 0 : d.due, overdue: caught ? 0 : d.overdue, soon: caught ? (d.soon || [1, 1, 2, 3, 1, 3][i]) : d.soon,

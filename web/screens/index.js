@@ -457,6 +457,24 @@ export default [
   "h": 844
  },
  {
+  "name": "PhoneTheme",
+  "title": "iPhone · Settings › Theme › a theme’s page",
+  "w": 390,
+  "h": 1260
+ },
+ {
+  "name": "PhoneThemePicker",
+  "title": "iPhone · Settings › Theme",
+  "w": 390,
+  "h": 1260
+ },
+ {
+  "name": "PhoneThemePickerFree",
+  "title": "iPhone · Settings › Theme · on Free (locked, Go Pro)",
+  "w": 390,
+  "h": 1260
+ },
+ {
   "name": "PhoneToday",
   "title": "iPhone · Today",
   "w": 390,
@@ -557,6 +575,696 @@ export default [
   "title": "Terms of Service · lucida.cards/terms",
   "w": 1440,
   "h": 1963
+ },
+ {
+  "name": "ThemeAero",
+  "title": "Frutiger Aero · Settings › Theme › its page",
+  "w": 1440,
+  "h": 900
+ },
+ {
+  "name": "ThemeAeroDeck",
+  "title": "Frutiger Aero · Web · Deck page",
+  "w": 1440,
+  "h": 900
+ },
+ {
+  "name": "ThemeAeroFree",
+  "title": "Frutiger Aero · its page on Free (Go Pro)",
+  "w": 1440,
+  "h": 900
+ },
+ {
+  "name": "ThemeAeroLearn",
+  "title": "Frutiger Aero · Web · Learn mode",
+  "w": 1440,
+  "h": 900
+ },
+ {
+  "name": "ThemeAeroLibrary",
+  "title": "Frutiger Aero · Web · Library",
+  "w": 1440,
+  "h": 900
+ },
+ {
+  "name": "ThemeAeroProfilePhone",
+  "title": "Frutiger Aero · iPhone · Settings (your profile picture)",
+  "w": 390,
+  "h": 844
+ },
+ {
+  "name": "ThemeAeroReview",
+  "title": "Frutiger Aero · Web · Flashcards",
+  "w": 1440,
+  "h": 900
+ },
+ {
+  "name": "ThemeAeroReviewPhone",
+  "title": "Frutiger Aero · iPhone · Flashcards",
+  "w": 390,
+  "h": 844
+ },
+ {
+  "name": "ThemeChrome",
+  "title": "Liquid chrome · Settings › Theme › its page",
+  "w": 1440,
+  "h": 900
+ },
+ {
+  "name": "ThemeChromeDeck",
+  "title": "Liquid chrome · Web · Deck page",
+  "w": 1440,
+  "h": 900
+ },
+ {
+  "name": "ThemeChromeFree",
+  "title": "Liquid chrome · its page on Free (Go Pro)",
+  "w": 1440,
+  "h": 900
+ },
+ {
+  "name": "ThemeChromeLearn",
+  "title": "Liquid chrome · Web · Learn mode",
+  "w": 1440,
+  "h": 900
+ },
+ {
+  "name": "ThemeChromeLibrary",
+  "title": "Liquid chrome · Web · Library",
+  "w": 1440,
+  "h": 900
+ },
+ {
+  "name": "ThemeChromeProfilePhone",
+  "title": "Liquid chrome · iPhone · Settings (your profile picture)",
+  "w": 390,
+  "h": 844
+ },
+ {
+  "name": "ThemeChromeReview",
+  "title": "Liquid chrome · Web · Flashcards",
+  "w": 1440,
+  "h": 900
+ },
+ {
+  "name": "ThemeChromeReviewPhone",
+  "title": "Liquid chrome · iPhone · Flashcards",
+  "w": 390,
+  "h": 844
+ },
+ {
+  "name": "ThemeDreamcore",
+  "title": "Dreamcore · Settings › Theme › its page",
+  "w": 1440,
+  "h": 900
+ },
+ {
+  "name": "ThemeDreamcoreDeck",
+  "title": "Dreamcore · Web · Deck page",
+  "w": 1440,
+  "h": 900
+ },
+ {
+  "name": "ThemeDreamcoreFree",
+  "title": "Dreamcore · its page on Free (Go Pro)",
+  "w": 1440,
+  "h": 900
+ },
+ {
+  "name": "ThemeDreamcoreLearn",
+  "title": "Dreamcore · Web · Learn mode",
+  "w": 1440,
+  "h": 900
+ },
+ {
+  "name": "ThemeDreamcoreLibrary",
+  "title": "Dreamcore · Web · Library",
+  "w": 1440,
+  "h": 900
+ },
+ {
+  "name": "ThemeDreamcoreProfilePhone",
+  "title": "Dreamcore · iPhone · Settings (your profile picture)",
+  "w": 390,
+  "h": 844
+ },
+ {
+  "name": "ThemeDreamcoreReview",
+  "title": "Dreamcore · Web · Flashcards",
+  "w": 1440,
+  "h": 900
+ },
+ {
+  "name": "ThemeDreamcoreReviewPhone",
+  "title": "Dreamcore · iPhone · Flashcards",
+  "w": 390,
+  "h": 844
+ },
+ {
+  "name": "ThemeGlass",
+  "title": "Frosted glass · Settings › Theme › its page",
+  "w": 1440,
+  "h": 900
+ },
+ {
+  "name": "ThemeGlassDeck",
+  "title": "Frosted glass · Web · Deck page",
+  "w": 1440,
+  "h": 900
+ },
+ {
+  "name": "ThemeGlassFree",
+  "title": "Frosted glass · its page on Free (Go Pro)",
+  "w": 1440,
+  "h": 900
+ },
+ {
+  "name": "ThemeGlassLearn",
+  "title": "Frosted glass · Web · Learn mode",
+  "w": 1440,
+  "h": 900
+ },
+ {
+  "name": "ThemeGlassLibrary",
+  "title": "Frosted glass · Web · Library",
+  "w": 1440,
+  "h": 900
+ },
+ {
+  "name": "ThemeGlassProfilePhone",
+  "title": "Frosted glass · iPhone · Settings (your profile picture)",
+  "w": 390,
+  "h": 844
+ },
+ {
+  "name": "ThemeGlassReview",
+  "title": "Frosted glass · Web · Flashcards",
+  "w": 1440,
+  "h": 900
+ },
+ {
+  "name": "ThemeGlassReviewPhone",
+  "title": "Frosted glass · iPhone · Flashcards",
+  "w": 390,
+  "h": 844
+ },
+ {
+  "name": "ThemeLiminal",
+  "title": "Liminal · Flooded hall · Settings › Theme › its page",
+  "w": 1440,
+  "h": 900
+ },
+ {
+  "name": "ThemeLiminalDeck",
+  "title": "Liminal · Flooded hall · Web · Deck page",
+  "w": 1440,
+  "h": 900
+ },
+ {
+  "name": "ThemeLiminalFree",
+  "title": "Liminal · Flooded hall · its page on Free (Go Pro)",
+  "w": 1440,
+  "h": 900
+ },
+ {
+  "name": "ThemeLiminalLearn",
+  "title": "Liminal · Flooded hall · Web · Learn mode",
+  "w": 1440,
+  "h": 900
+ },
+ {
+  "name": "ThemeLiminalLibrary",
+  "title": "Liminal · Flooded hall · Web · Library",
+  "w": 1440,
+  "h": 900
+ },
+ {
+  "name": "ThemeLiminalProfilePhone",
+  "title": "Liminal · Flooded hall · iPhone · Settings (your profile picture)",
+  "w": 390,
+  "h": 844
+ },
+ {
+  "name": "ThemeLiminalReview",
+  "title": "Liminal · Flooded hall · Web · Flashcards",
+  "w": 1440,
+  "h": 900
+ },
+ {
+  "name": "ThemeLiminalReviewPhone",
+  "title": "Liminal · Flooded hall · iPhone · Flashcards",
+  "w": 390,
+  "h": 844
+ },
+ {
+  "name": "ThemeLiminalRoom",
+  "title": "Liminal · Empty room · Settings › Theme › its page",
+  "w": 1440,
+  "h": 900
+ },
+ {
+  "name": "ThemeLiminalRoomDeck",
+  "title": "Liminal · Empty room · Web · Deck page",
+  "w": 1440,
+  "h": 900
+ },
+ {
+  "name": "ThemeLiminalRoomFree",
+  "title": "Liminal · Empty room · its page on Free (Go Pro)",
+  "w": 1440,
+  "h": 900
+ },
+ {
+  "name": "ThemeLiminalRoomLearn",
+  "title": "Liminal · Empty room · Web · Learn mode",
+  "w": 1440,
+  "h": 900
+ },
+ {
+  "name": "ThemeLiminalRoomLibrary",
+  "title": "Liminal · Empty room · Web · Library",
+  "w": 1440,
+  "h": 900
+ },
+ {
+  "name": "ThemeLiminalRoomProfilePhone",
+  "title": "Liminal · Empty room · iPhone · Settings (your profile picture)",
+  "w": 390,
+  "h": 844
+ },
+ {
+  "name": "ThemeLiminalRoomReview",
+  "title": "Liminal · Empty room · Web · Flashcards",
+  "w": 1440,
+  "h": 900
+ },
+ {
+  "name": "ThemeLiminalRoomReviewPhone",
+  "title": "Liminal · Empty room · iPhone · Flashcards",
+  "w": 390,
+  "h": 844
+ },
+ {
+  "name": "ThemePicker",
+  "title": "Web · Settings › Theme",
+  "w": 1440,
+  "h": 900
+ },
+ {
+  "name": "ThemePickerDark",
+  "title": "Web · Settings › Theme (dark)",
+  "w": 1440,
+  "h": 900
+ },
+ {
+  "name": "ThemePickerFree",
+  "title": "Web · Settings › Theme · on Free (locked, Go Pro)",
+  "w": 1440,
+  "h": 900
+ },
+ {
+  "name": "ThemeRiso",
+  "title": "Risograph · Settings › Theme › its page",
+  "w": 1440,
+  "h": 900
+ },
+ {
+  "name": "ThemeRisoDeck",
+  "title": "Risograph · Web · Deck page",
+  "w": 1440,
+  "h": 900
+ },
+ {
+  "name": "ThemeRisoFree",
+  "title": "Risograph · its page on Free (Go Pro)",
+  "w": 1440,
+  "h": 900
+ },
+ {
+  "name": "ThemeRisoLearn",
+  "title": "Risograph · Web · Learn mode",
+  "w": 1440,
+  "h": 900
+ },
+ {
+  "name": "ThemeRisoLibrary",
+  "title": "Risograph · Web · Library",
+  "w": 1440,
+  "h": 900
+ },
+ {
+  "name": "ThemeRisoProfilePhone",
+  "title": "Risograph · iPhone · Settings (your profile picture)",
+  "w": 390,
+  "h": 844
+ },
+ {
+  "name": "ThemeRisoReview",
+  "title": "Risograph · Web · Flashcards",
+  "w": 1440,
+  "h": 900
+ },
+ {
+  "name": "ThemeRisoReviewPhone",
+  "title": "Risograph · iPhone · Flashcards",
+  "w": 390,
+  "h": 844
+ },
+ {
+  "name": "ThemeRubber",
+  "title": "Rubber hose · Settings › Theme › its page",
+  "w": 1440,
+  "h": 900
+ },
+ {
+  "name": "ThemeRubberDeck",
+  "title": "Rubber hose · Web · Deck page",
+  "w": 1440,
+  "h": 900
+ },
+ {
+  "name": "ThemeRubberFree",
+  "title": "Rubber hose · its page on Free (Go Pro)",
+  "w": 1440,
+  "h": 900
+ },
+ {
+  "name": "ThemeRubberLearn",
+  "title": "Rubber hose · Web · Learn mode",
+  "w": 1440,
+  "h": 900
+ },
+ {
+  "name": "ThemeRubberLibrary",
+  "title": "Rubber hose · Web · Library",
+  "w": 1440,
+  "h": 900
+ },
+ {
+  "name": "ThemeRubberProfilePhone",
+  "title": "Rubber hose · iPhone · Settings (your profile picture)",
+  "w": 390,
+  "h": 844
+ },
+ {
+  "name": "ThemeRubberReview",
+  "title": "Rubber hose · Web · Flashcards",
+  "w": 1440,
+  "h": 900
+ },
+ {
+  "name": "ThemeRubberReviewPhone",
+  "title": "Rubber hose · iPhone · Flashcards",
+  "w": 390,
+  "h": 844
+ },
+ {
+  "name": "ThemeSwiss",
+  "title": "Swiss poster · Settings › Theme › its page",
+  "w": 1440,
+  "h": 900
+ },
+ {
+  "name": "ThemeSwissDeck",
+  "title": "Swiss poster · Web · Deck page",
+  "w": 1440,
+  "h": 900
+ },
+ {
+  "name": "ThemeSwissFree",
+  "title": "Swiss poster · its page on Free (Go Pro)",
+  "w": 1440,
+  "h": 900
+ },
+ {
+  "name": "ThemeSwissLearn",
+  "title": "Swiss poster · Web · Learn mode",
+  "w": 1440,
+  "h": 900
+ },
+ {
+  "name": "ThemeSwissLibrary",
+  "title": "Swiss poster · Web · Library",
+  "w": 1440,
+  "h": 900
+ },
+ {
+  "name": "ThemeSwissProfilePhone",
+  "title": "Swiss poster · iPhone · Settings (your profile picture)",
+  "w": 390,
+  "h": 844
+ },
+ {
+  "name": "ThemeSwissReview",
+  "title": "Swiss poster · Web · Flashcards",
+  "w": 1440,
+  "h": 900
+ },
+ {
+  "name": "ThemeSwissReviewPhone",
+  "title": "Swiss poster · iPhone · Flashcards",
+  "w": 390,
+  "h": 844
+ },
+ {
+  "name": "ThemeTerminal",
+  "title": "Terminal · Settings › Theme › its page",
+  "w": 1440,
+  "h": 900
+ },
+ {
+  "name": "ThemeTerminalDeck",
+  "title": "Terminal · Web · Deck page",
+  "w": 1440,
+  "h": 900
+ },
+ {
+  "name": "ThemeTerminalFree",
+  "title": "Terminal · its page on Free (Go Pro)",
+  "w": 1440,
+  "h": 900
+ },
+ {
+  "name": "ThemeTerminalLearn",
+  "title": "Terminal · Web · Learn mode",
+  "w": 1440,
+  "h": 900
+ },
+ {
+  "name": "ThemeTerminalLibrary",
+  "title": "Terminal · Web · Library",
+  "w": 1440,
+  "h": 900
+ },
+ {
+  "name": "ThemeTerminalProfilePhone",
+  "title": "Terminal · iPhone · Settings (your profile picture)",
+  "w": 390,
+  "h": 844
+ },
+ {
+  "name": "ThemeTerminalReview",
+  "title": "Terminal · Web · Flashcards",
+  "w": 1440,
+  "h": 900
+ },
+ {
+  "name": "ThemeTerminalReviewPhone",
+  "title": "Terminal · iPhone · Flashcards",
+  "w": 390,
+  "h": 844
+ },
+ {
+  "name": "ThemeTopo",
+  "title": "Topographic · Settings › Theme › its page",
+  "w": 1440,
+  "h": 900
+ },
+ {
+  "name": "ThemeTopoDeck",
+  "title": "Topographic · Web · Deck page",
+  "w": 1440,
+  "h": 900
+ },
+ {
+  "name": "ThemeTopoFree",
+  "title": "Topographic · its page on Free (Go Pro)",
+  "w": 1440,
+  "h": 900
+ },
+ {
+  "name": "ThemeTopoLearn",
+  "title": "Topographic · Web · Learn mode",
+  "w": 1440,
+  "h": 900
+ },
+ {
+  "name": "ThemeTopoLibrary",
+  "title": "Topographic · Web · Library",
+  "w": 1440,
+  "h": 900
+ },
+ {
+  "name": "ThemeTopoProfilePhone",
+  "title": "Topographic · iPhone · Settings (your profile picture)",
+  "w": 390,
+  "h": 844
+ },
+ {
+  "name": "ThemeTopoReview",
+  "title": "Topographic · Web · Flashcards",
+  "w": 1440,
+  "h": 900
+ },
+ {
+  "name": "ThemeTopoReviewPhone",
+  "title": "Topographic · iPhone · Flashcards",
+  "w": 390,
+  "h": 844
+ },
+ {
+  "name": "ThemeVaporDolphins",
+  "title": "Vaporwave · Dolphins · Settings › Theme › its page",
+  "w": 1440,
+  "h": 900
+ },
+ {
+  "name": "ThemeVaporDolphinsDeck",
+  "title": "Vaporwave · Dolphins · Web · Deck page",
+  "w": 1440,
+  "h": 900
+ },
+ {
+  "name": "ThemeVaporDolphinsFree",
+  "title": "Vaporwave · Dolphins · its page on Free (Go Pro)",
+  "w": 1440,
+  "h": 900
+ },
+ {
+  "name": "ThemeVaporDolphinsLearn",
+  "title": "Vaporwave · Dolphins · Web · Learn mode",
+  "w": 1440,
+  "h": 900
+ },
+ {
+  "name": "ThemeVaporDolphinsLibrary",
+  "title": "Vaporwave · Dolphins · Web · Library",
+  "w": 1440,
+  "h": 900
+ },
+ {
+  "name": "ThemeVaporDolphinsProfilePhone",
+  "title": "Vaporwave · Dolphins · iPhone · Settings (your profile picture)",
+  "w": 390,
+  "h": 844
+ },
+ {
+  "name": "ThemeVaporDolphinsReview",
+  "title": "Vaporwave · Dolphins · Web · Flashcards",
+  "w": 1440,
+  "h": 900
+ },
+ {
+  "name": "ThemeVaporDolphinsReviewPhone",
+  "title": "Vaporwave · Dolphins · iPhone · Flashcards",
+  "w": 390,
+  "h": 844
+ },
+ {
+  "name": "ThemeVaporwave",
+  "title": "Vaporwave · Poolside · Settings › Theme › its page",
+  "w": 1440,
+  "h": 900
+ },
+ {
+  "name": "ThemeVaporwaveDeck",
+  "title": "Vaporwave · Poolside · Web · Deck page",
+  "w": 1440,
+  "h": 900
+ },
+ {
+  "name": "ThemeVaporwaveFree",
+  "title": "Vaporwave · Poolside · its page on Free (Go Pro)",
+  "w": 1440,
+  "h": 900
+ },
+ {
+  "name": "ThemeVaporwaveLearn",
+  "title": "Vaporwave · Poolside · Web · Learn mode",
+  "w": 1440,
+  "h": 900
+ },
+ {
+  "name": "ThemeVaporwaveLibrary",
+  "title": "Vaporwave · Poolside · Web · Library",
+  "w": 1440,
+  "h": 900
+ },
+ {
+  "name": "ThemeVaporwaveProfilePhone",
+  "title": "Vaporwave · Poolside · iPhone · Settings (your profile picture)",
+  "w": 390,
+  "h": 844
+ },
+ {
+  "name": "ThemeVaporwaveReview",
+  "title": "Vaporwave · Poolside · Web · Flashcards",
+  "w": 1440,
+  "h": 900
+ },
+ {
+  "name": "ThemeVaporwaveReviewPhone",
+  "title": "Vaporwave · Poolside · iPhone · Flashcards",
+  "w": 390,
+  "h": 844
+ },
+ {
+  "name": "ThemeZine",
+  "title": "Zine collage · Settings › Theme › its page",
+  "w": 1440,
+  "h": 900
+ },
+ {
+  "name": "ThemeZineDeck",
+  "title": "Zine collage · Web · Deck page",
+  "w": 1440,
+  "h": 900
+ },
+ {
+  "name": "ThemeZineFree",
+  "title": "Zine collage · its page on Free (Go Pro)",
+  "w": 1440,
+  "h": 900
+ },
+ {
+  "name": "ThemeZineLearn",
+  "title": "Zine collage · Web · Learn mode",
+  "w": 1440,
+  "h": 900
+ },
+ {
+  "name": "ThemeZineLibrary",
+  "title": "Zine collage · Web · Library",
+  "w": 1440,
+  "h": 900
+ },
+ {
+  "name": "ThemeZineProfilePhone",
+  "title": "Zine collage · iPhone · Settings (your profile picture)",
+  "w": 390,
+  "h": 844
+ },
+ {
+  "name": "ThemeZineReview",
+  "title": "Zine collage · Web · Flashcards",
+  "w": 1440,
+  "h": 900
+ },
+ {
+  "name": "ThemeZineReviewPhone",
+  "title": "Zine collage · iPhone · Flashcards",
+  "w": 390,
+  "h": 844
  },
  {
   "name": "TopDeck",
@@ -987,6 +1695,12 @@ export default [
  {
   "name": "WebStatsGray",
   "title": "Web · Stats (dark, gray)",
+  "w": 1440,
+  "h": 900
+ },
+ {
+  "name": "WebTheme",
+  "title": "Web · Settings › Theme › Lucida (a theme’s page)",
   "w": 1440,
   "h": 900
  },
