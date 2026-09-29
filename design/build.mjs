@@ -6195,7 +6195,8 @@ const phoneProfile = phone(`<div style="padding: 64px 20px 120px; display: flex;
 ${REPORT_SHEET(true)}`);
 
 // News: suggestions on your decks, people following you, new versions of decks you follow, what owners did with your
-// suggestions, and teachers checking your decks. What's new has a dot; opening the page marks it read a moment later.
+// suggestions, teachers checking your decks, and two things Lucida tells you itself: you're verified as a teacher or school,
+// and a deck of yours was hidden after a report. What's new has a dot; opening the page marks it read a moment later.
 const NEWS_LOGIC = phone => `
 componentWillUnmount() { clearTimeout(this.readT); }
 renderVals() {
@@ -6212,18 +6213,21 @@ renderVals() {
     const who = person(x.person || { name: x.actor_name }), actor = x.actor_name || who.name || 'Someone';
     const did = took && skipped ? 'took ' + took + ' of your changes to' : took ? (took === 1 ? 'took your change to' : 'took your ' + took + ' changes to') : skipped === 1 ? 'skipped your change to' : 'skipped your changes to';
     const words = { suggestion: [actor, 'suggested ' + (n === 1 ? 'a change' : n + ' changes') + ' to', dk.name || ''], follow: [actor, 'followed you', ''],
-      update: [dk.name || 'A deck you follow', 'has ' + (d.summary || 'changes'), ''], decided: [actor, did, dk.name || ''], checked: [actor, 'checked', dk.name || ''] }[x.kind] || [actor, '', dk.name || ''];
+      update: [dk.name || 'A deck you follow', 'has ' + (d.summary || 'changes'), ''], decided: [actor, did, dk.name || ''], checked: [actor, 'checked', dk.name || ''],
+      verified: ['You’re verified', 'as a ' + (d.role === 'school' ? 'school' : 'teacher'), ''], hidden: [dk.name || d.name || 'A deck of yours', 'was hidden after a report', ''] }[x.kind] || [actor, '', dk.name || ''];
     // A suggestion opens your deck's suggestions (your library's deck shared as that one); a follow, their profile.
     const mine = x.kind === 'suggestion' && dk.id ? lib.find(y => y.shared && y.shared.id === dk.id) : null;
-    const href = x.kind === 'follow' ? goTo('/@' + (who.handle || d.handle || ''), B('ProfileOther')) : mine ? goTo('/deck/' + mine.id + '/suggestions', B('Suggestions'))
+    // Lucida's own news (verified, hidden) has no person: it shows Lucida's mark. Being verified opens your profile (where
+    // the check is); a hidden deck opens its page.
+    const href = x.kind === 'follow' ? goTo('/@' + (who.handle || d.handle || ''), B('ProfileOther')) : x.kind === 'verified' ? goTo('/you', B('Profile')) : mine ? goTo('/deck/' + mine.id + '/suggestions', B('Suggestions'))
       : goTo(dk.url || '', x.kind === 'suggestion' ? B('Suggestions') : B('PublicDeck'));
-    const isNew = !x.read || (!!this.fresh && this.fresh.has(x.id));
-    return { id: String(x.id), who, lead: words[0], mid: words[1], tail: words[2], hasNote: x.kind === 'suggestion' && !!d.message, note: d.message || '', when: ago(x.created_at), isNew, dot: isNew ? '#3E63DD' : 'transparent', href };
+    const isNew = !x.read || (!!this.fresh && this.fresh.has(x.id)), system = x.kind === 'verified' || x.kind === 'hidden';
+    return { id: String(x.id), who, system, human: !system, lead: words[0], mid: words[1], tail: words[2], hasNote: x.kind === 'suggestion' && !!d.message, note: d.message || '', when: ago(x.created_at), isNew, dot: isNew ? '#3E63DD' : 'transparent', href };
   });
   return { t, ...chrome, ${NET_VALS} loading: data === undefined, offline: bad, items, hasItems: items.length > 0, nothing: !!data && !bad && !items.length };
 }`;
 const NEWS_ROW = phone => `<a href="{{n.href}}" style="display: flex; align-items: center; gap: ${phone ? 12 : 14}px; min-height: ${phone ? 68 : 72}px; padding: 12px 0; box-sizing: border-box; border-bottom: 1px solid {{t.line}};">
-    ${PERSON_AV('n.who', 40)}
+    <sc-if value="{{n.human}}" hint-placeholder-val="{{ true }}">${PERSON_AV('n.who', 40)}</sc-if><sc-if value="{{n.system}}" hint-placeholder-val="{{ false }}"><span aria-hidden="true" style="width: 40px; height: 40px; flex-shrink: 0; border-radius: 20px; background: {{t.inv}}; color: {{t.invText}}; display: inline-flex; align-items: center; justify-content: center;">${mark(16)}</span></sc-if>
     <span style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px;">
       <span style="font-size: 15px; line-height: 1.4;"><span style="font-weight: 600;">{{n.lead}}</span> {{n.mid}} <span style="font-weight: 600;">{{n.tail}}</span><sc-if value="{{n.isNew}}" hint-placeholder-val="{{ false }}"><span style="position: absolute; left: -9999px;">New</span></sc-if></span>
       <sc-if value="{{n.hasNote}}" hint-placeholder-val="{{ false }}"><span style="font-size: 13px; color: {{t.muted}}; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{n.note}}</span></sc-if>
