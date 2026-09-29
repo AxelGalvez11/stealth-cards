@@ -15,9 +15,9 @@ const PROP_SETS = [
   { settingsOpen: true, $state: { dpOpen: true, dpQ: 'Pharm' } }, { $state: { cpOpen: true, cpQ: 'new tag' } }, { slashDemo: true }, { site: true },
   { naming: true }, { naming: true, dark: true, folder: 'f1' }, { moveOpen: true }, { mode: 'cards' }, { folder: 'f1', view: 'List' },
   { newCard: true, $state: { listQ: 'zz' } },
-  // Pro: deep stats tabs, Free versions, the goal stepped, the end of Studying, All cards' filters, paused cards, tuning.
+  // Pro: deep stats tabs, Free versions, the goal stepped, All cards' filters, paused cards, tuning.
   { tab: 'Memory' }, { tab: 'Weak spots' }, { tab: 'Pace' }, { tab: 'Pace', free: true }, { tab: 'Memory', dark: true, dim: true },
-  { settingsOpen: true, settingsTab: 'Studying', free: true }, { settingsOpen: true, settingsTab: 'Studying', stepGoal: true }, { settingsOpen: true, settingsTab: 'Studying', studyEnd: true },
+  { settingsOpen: true, settingsTab: 'Studying', free: true }, { settingsOpen: true, settingsTab: 'Studying', free: true, $state: { $m: { deck: { exam: '2026-10-04' } } } }, { settingsOpen: true, settingsTab: 'Studying', stepGoal: true },
   { mode: 'cards', level: 'leech' }, { mode: 'cards', level: 'paused' }, { mode: 'cards', level: 'hard' }, { paused: true }, { cardId: 'k1', paused: true, keyboard: false },
   { tune: 'Not enough reviews' }, { tune: 'Tuning' }, { tune: 'Off' }, { plan: 'Free' }
 ];

@@ -35,6 +35,7 @@ Supabase settings sign-in needs (Supabase dashboard → Authentication), all set
 - AI apps can make image cards and audio cards (`web/media.mjs`). A picture can be a link, a file the learner uploaded in ChatGPT (ChatGPT needs Lucida on the internet to reach it), or a file on this computer (for AI apps running here, like Claude Code). For an audio card the AI sends the words and their language. Lucida turns them into speech with ElevenLabs or OpenAI when a key is in `.env` (`web/voice.mjs`); without a key, the app reads them aloud with the device's voice.
 - Every sound shows its waveform (`web/sound.js`). Recording shows the microphone's level live. A clip's shape is worked out once on the device (from the recording or the uploaded file, or the first time an older clip is shown) and saved with its card, so it's there at once after that; the part already played fills in as it plays, and a tap or a drag on the waveform jumps there. Words read by the device's own voice get a waveform made from the words.
 - `node design/snapshot.mjs against <old canvas folder>` lists boards whose look changed, so logic changes can be checked against the canvas.
+- On your computer everything is Pro. `LUCIDA_PLAN=free npm run dev` shows the app as it is on Free, to check the Free screens.
 
 ## Card formatting
 

@@ -866,7 +866,7 @@ const COVER_LOGIC = `
       return { label, sub: g + '% · ' + perDayOf(g) + ' a day', pressed: on ? 'true' : 'false', bg: on ? t.inv : t.surf, fg: on ? t.invText : t.text, pick: () => { this.setState({ goalStepped: true }); up({ goal: g }); } }; }),
     line: db.workload(dk.id, goalNow) < 0.5 ? 'Under 1 review a day' : 'About ' + plural(costNow, 'review') + ' a day', hasDelta: goalNow !== this.goalFrom && change !== 0, delta: (change > 0 ? '+' : '−') + Math.abs(change) + ' a day' };
   const ex = dk.exam, pad = n => String(n).padStart(2, '0'), d0 = new Date(), todayIso = d0.getFullYear() + '-' + pad(d0.getMonth() + 1) + '-' + pad(d0.getDate());
-  const examVals = { on: !!dk.examDay, none: !dk.examDay, value: dk.examDay || '', min: todayIso, day: ex ? ex.day : dk.examDay, line: ex ? ex.line : 'This exam has passed',
+  const examVals = { on: !!dk.examDay, none: !dk.examDay, pick: pro, fixed: !pro, value: dk.examDay || '', min: todayIso, day: ex ? ex.day : dk.examDay, line: ex ? ex.line : 'This exam has passed',
     set: e => { const v = e && e.target ? e.target.value : ''; if (v) up({ exam: v }); },
     open: e => { try { if (e && e.target && e.target.showPicker) e.target.showPicker(); } catch (err) { /* the browser opens its own */ } },
     clear: () => up({ exam: null }) };
@@ -885,11 +885,9 @@ const COVER_LOGIC = `
     perDay: String(perDay), goal: goalNow + '%', perDayIn: typed('perDay', perDay, n => up({ perDay: n }, true), 'New cards a day'),
     lessDay: () => up({ perDay: Math.max(0, perDay - 5) }), moreDay: () => up({ perDay: Math.min(999, perDay + 5) }),
     lessGoal: () => { this.setState({ goalStepped: true }); up({ goal: Math.max(70, goalNow - 1) }); }, moreGoal: () => { this.setState({ goalStepped: true }); up({ goal: Math.min(97, goalNow + 1) }); },
-    plan: planVals, exam: examVals, proOn: pro && fsrsOn, proTeaser: !pro && fsrsOn, proHref: db.mock ? 'Pricing.dc.html' : 'https://lucida.cards/pricing',
+    plan: planVals, exam: examVals, proOn: pro && fsrsOn, proTeaser: !pro && fsrsOn, examLeft: !pro && fsrsOn && !!dk.examDay, proHref: db.mock ? 'Pricing.dc.html' : 'https://lucida.cards/pricing',
     leechN: String(dk.leechAt), lessLeech: () => up({ leechAt: Math.max(3, dk.leechAt - 1) }), moreLeech: () => up({ leechAt: Math.min(30, dk.leechAt + 1) }),
     leechActs: [['tag', 'Tag it “Leech”'], ['pause', 'Pause it']].map(([id, label]) => ({ label, ...segOf(id, dk.leechAct), pick: () => up({ leechAct: id }) })),
-    // The canvas's lower-half boards open the settings scrolled to the end.
-    studyRef: el => { if (el && this.props.studyEnd && !this.studyScrolled) { this.studyScrolled = true; el.scrollTop = el.scrollHeight; } },
     examShow: !!ex, examLine: ex ? ex.line : '',
     pause: sw(paused),
     togglePause: () => up({ paused: !paused }),
@@ -940,7 +938,8 @@ const GOAL_COST = `<sc-if value="{{plan.show}}" hint-placeholder-val="{{ true }}
 // An exam date: pick a day (the phone's or browser's own date picker, under the pill), change it, or take it off; and how
 // the deck stands for it.
 const examPill = (label, extra = '') => `<label class="sc-press" style="position: relative; height: 34px; padding: 0 14px; display: inline-flex; align-items: center; gap: 6px; border-radius: 999px; background: {{t.surf}}; font-size: 13px; font-weight: 600; white-space: nowrap; cursor: pointer; overflow: hidden;">${svg(I.calendar, 14, 2)}<span>${label}</span><input type="date" value="{{exam.value}}" min="{{exam.min}}" onChange="{{exam.set}}" onClick="{{exam.open}}" aria-label="Exam date" style="position: absolute; inset: 0; width: 100%; height: 100%; box-sizing: border-box; margin: 0; padding: 0; border: 0; opacity: 0; font-size: 16px; cursor: pointer;${extra}"></label>`;
-const EXAM_ROW = `<div style="display: flex; flex-direction: column; gap: 6px;"><div style="display: flex; align-items: center; gap: 8px; min-height: 36px;"><span style="flex-grow: 1; font-size: 14px; font-weight: 600;">Exam date</span><sc-if value="{{exam.none}}" hint-placeholder-val="{{ false }}">${examPill('Add a date')}</sc-if><sc-if value="{{exam.on}}" hint-placeholder-val="{{ true }}">${examPill('{{exam.day}}')}<button type="button" onClick="{{exam.clear}}" aria-label="Remove the exam date" style="width: 34px; height: 34px; flex-shrink: 0; border: 0; border-radius: 17px; background: {{t.surf}}; color: {{t.text}}; display: flex; align-items: center; justify-content: center; cursor: pointer;">${svg(I.close, 12, 2.4)}</button></sc-if></div><sc-if value="{{exam.on}}" hint-placeholder-val="{{ true }}"><span style="font-size: 12px; line-height: 1.4; color: {{t.muted}};">{{exam.line}}</span></sc-if></div>`;
+// On Free, a deck that still has an exam (from when it was Pro) shows its day, which can only be taken off.
+const EXAM_ROW = `<div style="display: flex; flex-direction: column; gap: 6px;"><div style="display: flex; align-items: center; gap: 8px; min-height: 36px;"><span style="flex-grow: 1; font-size: 14px; font-weight: 600;">Exam date</span><sc-if value="{{exam.none}}" hint-placeholder-val="{{ false }}">${examPill('Add a date')}</sc-if><sc-if value="{{exam.on}}" hint-placeholder-val="{{ true }}"><sc-if value="{{exam.pick}}" hint-placeholder-val="{{ true }}">${examPill('{{exam.day}}')}</sc-if><sc-if value="{{exam.fixed}}" hint-placeholder-val="{{ false }}"><span style="height: 34px; padding: 0 14px; display: inline-flex; align-items: center; gap: 6px; border-radius: 999px; background: {{t.surf}}; font-size: 13px; font-weight: 600; white-space: nowrap;">${svg(I.calendar, 14, 2)}<span>{{exam.day}}</span></span></sc-if><button type="button" onClick="{{exam.clear}}" aria-label="Remove the exam date" style="width: 34px; height: 34px; flex-shrink: 0; border: 0; border-radius: 17px; background: {{t.surf}}; color: {{t.text}}; display: flex; align-items: center; justify-content: center; cursor: pointer;">${svg(I.close, 12, 2.4)}</button></sc-if></div><sc-if value="{{exam.on}}" hint-placeholder-val="{{ true }}"><span style="font-size: 12px; line-height: 1.4; color: {{t.muted}};">{{exam.line}}</span></sc-if></div>`;
 // Cards you keep forgetting: how many forgets make one, and whether it gets the Leech tag or is paused.
 const LEECH_ROW = `<div style="display: flex; flex-direction: column; gap: 8px;"><span style="font-size: 14px; font-weight: 600;">Cards you keep forgetting</span><div style="display: flex; align-items: center; gap: 10px;"><span style="font-size: 13px; color: {{t.muted}};">After</span>${miniStep('leechN', 'lessLeech', 'moreLeech', '{{t.surf}}')}<span style="font-size: 13px; color: {{t.muted}};">forgets</span></div>${panelSeg('leechActs', 'What happens to them', 2)}</div>`;
 // On Free: what Pro adds here.
@@ -967,12 +966,13 @@ const deckSettingsBody = phone => `<div style="display: flex; align-items: cente
         <div style="display: flex; align-items: center; gap: 12px; min-height: 44px;"><span style="flex-grow: 1; display: flex; flex-direction: column; gap: 2px;"><span style="font-size: 14px; font-weight: 600;">Pause this deck</span><span style="font-size: 12px; line-height: 1.35; color: {{t.muted}};">No reminders, and it leaves Today until you turn it back on.</span></span>${SWITCH('pause', 'togglePause', 'Pause this deck')}</div>
         <div style="display: flex; gap: 8px; margin-top: auto;"><button type="button" onClick="{{exportDeck}}" style="flex-grow: 1; height: 44px; border: 0; border-radius: 999px; background: {{t.surf}}; color: {{t.text}}; font: inherit; font-size: 14px; font-weight: 600; cursor: pointer;">Export cards</button><button type="button" onClick="{{deleteDeck}}" style="flex-grow: 1; height: 44px; border: 0; border-radius: 999px; background: {{t.againTint}}; color: {{t.again}}; font: inherit; font-size: 14px; font-weight: 600; cursor: pointer;">Delete deck</button></div>
       </div></sc-if>
-      <sc-if value="{{dsStudy}}" hint-placeholder-val="{{ false }}"><div ref="{{studyRef}}" style="flex-grow: 1; min-height: 0; overflow-y: auto; scrollbar-width: thin; display: flex; flex-direction: column; gap: 16px;">
+      <sc-if value="{{dsStudy}}" hint-placeholder-val="{{ false }}"><div style="flex-grow: 1; min-height: 0; overflow-y: auto; scrollbar-width: thin; display: flex; flex-direction: column; gap: 16px;">
         <div style="display: flex; flex-direction: column; gap: 8px;"><span style="font-size: 13px; font-weight: 600;">Grade with</span>${modeSeg(true)}</div>
         <div style="display: flex; align-items: center; gap: 12px;"><span style="flex-grow: 1; display: flex; flex-direction: column; gap: 2px;"><span style="font-size: 14px; font-weight: 600;">Schedule with FSRS</span><span style="font-size: 12px; line-height: 1.35; color: {{t.muted}};">{{fsrsHint}}</span></span>${SWITCH('fsrsSw', 'toggleFsrs', 'Schedule with FSRS')}</div>
         <sc-if value="{{fsrsOn}}" hint-placeholder-val="{{ true }}"><div style="display: flex; flex-direction: column; gap: 12px;">${GOAL_PLANS}<div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px;">${stepper('Remember goal', 'goal', 'lessGoal', 'moreGoal', true)}${stepper('Longest gap', 'gapLabel', 'lessGap', 'moreGap', true)}</div>${GOAL_COST}${STEPS_ROW}</div></sc-if>
         <div style="display: flex; align-items: center; gap: 12px; min-height: 44px;"><span style="flex-grow: 1; display: flex; flex-direction: column; gap: 2px;"><span style="font-size: 14px; font-weight: 600;">New cards a day</span><span style="font-size: 12px; color: {{t.muted}};">Unseen cards added each day</span></span>${miniStep('perDay', 'lessDay', 'moreDay', '{{t.surf}}', 'perDayIn')}</div>
         <sc-if value="{{proOn}}" hint-placeholder-val="{{ true }}">${EXAM_ROW}${LEECH_ROW}</sc-if>
+        <sc-if value="{{examLeft}}" hint-placeholder-val="{{ false }}">${EXAM_ROW}</sc-if>
         <sc-if value="{{proTeaser}}" hint-placeholder-val="{{ false }}">${STUDY_TEASER}</sc-if>
       </div></sc-if>`;
 
@@ -5515,9 +5515,9 @@ const W = 1440, H = 900, PW = 390, PH = 844;
 // Settings' profile picture, for showing each one on the canvas (Tweaks).
 const PHOTO_PROP = { editor: 'enum', default: 'Color', options: ['Color', 'Google photo', 'Your photo'] };
 // Pro's states on the canvas: Free (what Pro adds), the Stats page's tabs, All cards' filters, a paused card, and Tune to
-// you's states in Settings. Deck settings can open with the goal stepped from 90% to 95%, or scrolled to the end.
+// you's states in Settings. Deck settings can open with the goal stepped from 90% to 95%.
 const FREE_PROP = { editor: 'boolean', default: false };
-const PRO_DECK_PROPS = { free: FREE_PROP, stepGoal: { editor: 'boolean', default: false }, studyEnd: { editor: 'boolean', default: false } };
+const PRO_DECK_PROPS = { free: FREE_PROP, stepGoal: { editor: 'boolean', default: false } };
 const STATS_PROPS = { tab: { editor: 'enum', default: 'Overview', options: ['Overview', 'Memory', 'Weak spots', 'Pace'] }, free: FREE_PROP };
 const LEVEL_PROP = { editor: 'enum', default: 'all', options: ['all', 'new', 'easy', 'medium', 'hard', 'leech', 'paused'] };
 const TUNE_PROP = { editor: 'enum', default: 'On', options: ['On', 'Off', 'Not enough reviews', 'Tuning'] };
