@@ -589,7 +589,11 @@ export async function suggestionsFor(uid, { sharedId = '', mine = false, all = f
     if (sh.owner !== sid && !helper) throw err('Only the deck’s owner sees its suggestions.', 403);
     return withSenders(await rest('/suggestions?shared_id=eq.' + val(sharedId) + (all ? '' : '&status=eq.open') + '&select=*&order=created_at.desc&limit=100'));
   }
-  return withSenders(await rest('/suggestions?owner=eq.' + val(sid) + (all ? '' : '&status=eq.open') + '&select=*&order=created_at.desc&limit=100'));
+  // Every deck's: the ones on your decks, and on community decks where you're a helper (their owners let helpers take or
+  // skip suggestions, see decide()).
+  const helped = (await rest('/shared_decks?maintained=eq.community&helpers=cs.' + encodeURIComponent(JSON.stringify([{ id: sid }])) + '&select=id&limit=200')).map(x => x.id);
+  const whose = helped.length ? 'or=' + encodeURIComponent('(owner.eq.' + qvalRaw(sid) + ',shared_id.in.(' + helped.map(qvalRaw).join(',') + '))') : 'owner=eq.' + val(sid);
+  return withSenders(await rest('/suggestions?' + whose + (all ? '' : '&status=eq.open') + '&select=*&order=created_at.desc&limit=100'));
 }
 // Who sent each suggestion (their picture, and their name linking to their profile) and which deck it's for, without
 // anyone's account id.
