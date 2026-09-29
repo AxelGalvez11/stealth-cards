@@ -54,6 +54,7 @@ const SOCIAL = {
   'deck.copy': (uid, me, a) => social.addShared(uid, me, a.id, { copy: true, name: a.name, folder: a.folder, updates: a.updates !== false }),
   'deck.detach': (uid, me, a) => social.detach(uid, a.deckId),
   'deck.updates': (uid, me, a) => social.takeUpdates(a.deckId, a.picks || {}),
+  'deck.copyUpdates': (uid, me, a) => social.setUpdates(uid, a.deckId, !!a.on),
   'deck.star': (uid, me, a) => social.star(uid, me, a.id, !!a.on),
   'deck.watch': (uid, me, a) => social.watch(uid, me, a.id, !!a.on),
   'deck.check': (uid, me, a) => social.check(uid, me, a.id),

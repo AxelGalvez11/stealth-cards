@@ -157,6 +157,12 @@ export default [
   "h": 844
  },
  {
+  "name": "PhoneDeckCopy",
+  "title": "iPhone · Deck page · your copy, with the owner’s changes waiting",
+  "w": 390,
+  "h": 844
+ },
+ {
   "name": "PhoneDeckDark",
   "title": "iPhone · Deck page (dark)",
   "w": 390,
@@ -187,14 +193,32 @@ export default [
   "h": 844
  },
  {
+  "name": "PhoneDeckSettingsShare",
+  "title": "iPhone · Deck settings · Sharing (a public deck)",
+  "w": 390,
+  "h": 844
+ },
+ {
   "name": "PhoneDeckSettingsStudy",
   "title": "iPhone · Deck settings · Studying (FSRS)",
   "w": 390,
   "h": 844
  },
  {
+  "name": "PhoneDeckStudied",
+  "title": "iPhone · Deck page · a deck you study from someone else",
+  "w": 390,
+  "h": 844
+ },
+ {
   "name": "PhoneDeckTagPicker",
   "title": "iPhone · Deck settings · Add tag",
+  "w": 390,
+  "h": 844
+ },
+ {
+  "name": "PhoneDeckUpdates",
+  "title": "iPhone · Deck page · your copy · the owner’s changes (take or skip)",
   "w": 390,
   "h": 844
  },
@@ -631,6 +655,12 @@ export default [
   "h": 900
  },
  {
+  "name": "WebDeckCopy",
+  "title": "Web · Deck page · your copy, with the owner’s changes waiting",
+  "w": 1440,
+  "h": 900
+ },
+ {
   "name": "WebDeckDark",
   "title": "Web · Deck page (dark)",
   "w": 1440,
@@ -661,14 +691,50 @@ export default [
   "h": 900
  },
  {
+  "name": "WebDeckSettingsFrom",
+  "title": "Web · Deck settings · Sharing (a deck you study)",
+  "w": 1440,
+  "h": 900
+ },
+ {
+  "name": "WebDeckSettingsShare",
+  "title": "Web · Deck settings · Sharing (a public deck)",
+  "w": 1440,
+  "h": 900
+ },
+ {
+  "name": "WebDeckSettingsSharePrivate",
+  "title": "Web · Deck settings · Sharing (private, the start)",
+  "w": 1440,
+  "h": 900
+ },
+ {
   "name": "WebDeckSettingsStudy",
   "title": "Web · Deck settings · Studying (FSRS)",
   "w": 1440,
   "h": 900
  },
  {
+  "name": "WebDeckShared",
+  "title": "Web · Deck page · shared (public, with suggestions waiting)",
+  "w": 1440,
+  "h": 900
+ },
+ {
+  "name": "WebDeckStudied",
+  "title": "Web · Deck page · a deck you study from someone else",
+  "w": 1440,
+  "h": 900
+ },
+ {
   "name": "WebDeckTagPicker",
   "title": "Web · Deck settings · Add tag",
+  "w": 1440,
+  "h": 900
+ },
+ {
+  "name": "WebDeckUpdates",
+  "title": "Web · Deck page · your copy · the owner’s changes (take or skip)",
   "w": 1440,
   "h": 900
  },

@@ -263,6 +263,7 @@ onSave(async L => {
   const S = L.S, uid = socialId(L.uid);
   for (const [deckId, info] of L.touched) {
     if (info.gone) { await unshare(info.gone).catch(e => console.error('unshare', e)); continue; }
+    if (info.left) { const sharedId = info.left; afterSaving(async () => { await rest('/subscriptions?user_id=eq.' + val(uid) + '&shared_id=eq.' + val(sharedId) + '&deck_id=eq.' + val(deckId), { method: 'DELETE' }).catch(() => {}); await countFollowing(sharedId).catch(() => {}); }); continue; }
     const d = S.decks.find(x => x.id === deckId);
     if (d && d.share && d.share.vis !== 'private') await publish(uid, d, info);
   }
@@ -440,6 +441,16 @@ export function takeUpdates(deckId, picks = {}) {
   d.link.pending = left;
   saved();
   return { left: left.length };
+}
+// A copy getting the owner's later changes to take or skip (or not).
+export async function setUpdates(uid, deckId, on) {
+  const S = state(), d = S.decks.find(x => x.id === deckId);
+  if (!d || !d.link || d.link.mode !== 'copy') throw err('No such deck');
+  d.link.updates = !!on;
+  if (!on) d.link.pending = [];
+  saved();
+  afterSaving(() => rest('/subscriptions?user_id=eq.' + val(socialId(uid)) + '&shared_id=eq.' + val(d.link.id) + '&deck_id=eq.' + val(d.id), { method: 'PATCH', body: { updates: !!on } }).catch(() => {}));
+  return { on: !!on };
 }
 // Stop following a shared deck: it stays in your library as your own deck ("from Maria Santos").
 export async function detach(uid, deckId) {
@@ -764,9 +775,9 @@ export async function search(q, viewer) {
 export async function mine(uid) {
   const sid = socialId(uid);
   const p = await profileOf(sid);
-  const rows = p ? await rest('/shared_decks?owner=eq.' + val(sid) + '&select=id,slug,visibility,stars,learners,copies,version') : [];
+  const rows = p ? await rest('/shared_decks?owner=eq.' + val(sid) + '&select=id,slug,visibility,stars,learners,copies,version,description,maintained,helpers') : [];
   const open = p ? (await rest('/suggestions?owner=eq.' + val(sid) + '&status=eq.open&select=shared_id&limit=500')) : [];
-  return { handle: p ? p.handle : '', profile: face(p), decks: rows.map(r => ({ ...r, open: open.filter(x => x.shared_id === r.id).length })) };
+  return { handle: p ? p.handle : '', profile: face(p), decks: rows.map(r => ({ ...r, helpers: (r.helpers || []).map(h => ({ handle: h.handle, name: h.name })), open: open.filter(x => x.shared_id === r.id).length })) };
 }
 // For search engines and link previews: a public page's title and a line about it.
 export async function metaFor(path) {

@@ -475,6 +475,65 @@ const cardTag = k => `<sc-if value="{{r.${k}.show}}" hint-placeholder-val="{{ tr
 const cardMore = `<sc-if value="{{r.cMore.show}}" hint-placeholder-val="{{ false }}"><span title="{{r.cMore.title}}" style="height: 22px; padding: 0 8px; flex-shrink: 0; display: inline-flex; align-items: center; border-radius: 999px; background: {{t.surf}}; color: {{t.muted}}; font-size: 11px; font-weight: 600; white-space: nowrap;">{{r.cMore.label}}</span></sc-if>`;
 const CARD_TAGS_JS = `const cardSlot = (tags, i) => (tags && tags[i] ? { show: true, ...tagChip(tags[i]) } : { show: false, label: '', bg: 'transparent', fg: t.text });
   const cardFit = tags => { const fit = tagFit(tags, 2); return { c1: cardSlot(fit.vis, 0), c2: cardSlot(fit.vis, 1), cMore: { show: fit.more > 0, label: '+' + fit.more, title: (tags || []).slice(fit.vis.length).join(', ') } }; };`;
+// ---------- Study network: shared pieces (profiles, shared decks, Discover, suggestions, History, news) ----------
+// The owner's note: "GitHub + Instagram for study material". The rules are the canvas's "How sharing works" board:
+// the cards are shared, your progress never is; every deck starts private; Study a deck as it is or Make a copy;
+// anyone can suggest a change and the owner takes it or skips it; every change is a version in History.
+// Data: db.net (web/net.js in the app, net-sample.mjs on the canvas) answers each page; while an answer is on its way
+// it's undefined, and the page shows its loading look. db.act has the changes (study, copyDeck, star, follow, …).
+// People: their photo, or their initial on their color (the six colors of your own picture in Settings).
+const PERSON_COLORS = ['linear-gradient(135deg, #8C9AFC 0%, #4F60E6 100%)', 'linear-gradient(135deg, #FFC857 0%, #EE5A36 100%)', 'linear-gradient(135deg, #7EE0B0 0%, #1F8F5F 100%)',
+  'linear-gradient(135deg, #F9A8D4 0%, #D6336C 100%)', 'linear-gradient(135deg, #7DE3F0 0%, #0E8A9E 100%)', 'linear-gradient(135deg, #C4A7FF 0%, #7C3AED 100%)'];
+// For a board's logic: `person(p)`, `netDeck(d)` (a shared deck as a cover tile), `kfmt(n)` (1.3k), `ago(iso)`, and
+// `goTo(url, board)`: the app's own address in the app, the board's file on the canvas (canvas links are boards).
+const NET_JS = `const PC = ${JSON.stringify(PERSON_COLORS)};
+  const goTo = (url, board) => (db.mock ? board + '.dc.html' : url || '/');
+  const person = p => { p = p || {}; const nm = String(p.name || ''); return { name: nm, handle: p.handle || '', at: p.handle ? '@' + p.handle : '', href: goTo(p.handle ? '/@' + p.handle : '', 'WebProfile'),
+    initial: ((nm.trim() || '?')[0]).toUpperCase(), bg: PC[p.color || 0] || PC[0], photo: p.avatar || '', hasPhoto: !!p.avatar, noPhoto: !p.avatar,
+    teacher: p.verified === 'teacher', school: p.verified === 'school' || p.kind === 'school', verified: !!p.verified }; };
+  const kfmt = n => { n = +n || 0; return n >= 10000 ? Math.round(n / 1000) + 'k' : n >= 1000 ? (Math.round(n / 100) / 10 + 'k').replace('.0k', 'k') : String(n); };
+  const MONTHS3 = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  const ago = iso => { const t = Date.parse(iso || ''); if (!t) return ''; const m = Math.max(0, Math.round((Date.now() - t) / 60000));
+    if (db.mock) { const d = new Date(t); return MONTHS3[d.getUTCMonth()] + ' ' + d.getUTCDate(); }
+    if (m < 1) return 'Just now'; if (m < 60) return m + ' min ago'; const h = Math.round(m / 60); if (h < 24) return h + 'h ago'; const dd = Math.round(h / 24); if (dd === 1) return 'Yesterday'; if (dd < 7) return dd + ' days ago';
+    const d = new Date(t); return MONTHS3[d.getMonth()] + ' ' + d.getDate(); };
+  const netDeck = d => { d = d || {}; const cv = d.cover || {}, pal = this.gen((cv.seed || d.name || 'Lucida') + (cv.round ? ' #' + cv.round : ''), cv.style || 'mix'), photo = cv.image && cv.image !== 'mock' ? cv.image : '';
+    const badge = d.checked ? 'Checked' : d.owner && (d.owner.kind === 'school' || d.owner.verified === 'school') ? d.owner.name : d.pinned ? 'Pinned' : '';
+    const cardsLine = kfmt(d.cards) + (d.cards === 1 ? ' card' : ' cards');
+    return { ...pal, id: d.id || '', name: d.name || '', href: goTo(d.url, 'WebPublicDeck'), stats: kfmt(d.stars) + '   ' + cardsLine, cardsLine, stars: kfmt(d.stars),
+      owner: person(d.owner), photo, hasPhoto: !!photo, badge, hasBadge: !!badge, badgeShield: !!d.checked || (!!d.owner && d.owner.kind === 'school') }; };`;
+// A shared deck as a cover tile: its gradient (or photo), a badge (Checked, Pinned, a school), its name, saves, and cards.
+const NET_TILE = (k, h, name = 22) => `<a href="{{${k}.href}}" class="sc-lift" style="position: relative; display: block; height: ${h}px; border-radius: 20px; overflow: hidden; color: {{${k}.ink}}; background: {{${k}.base}};">${flowLayer(k)}${GRAIN_LAYER}
+    <sc-if value="{{${k}.hasPhoto}}" hint-placeholder-val="{{ false }}"><img src="{{${k}.photo}}" alt="" style="position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover;"><span style="position: absolute; inset: 0; background: linear-gradient(180deg, rgba(0,0,0,0) 40%, rgba(0,0,0,.55) 100%);"></span></sc-if>
+    <span style="position: absolute; inset: 0; box-sizing: border-box; padding: 16px 18px; display: flex; flex-direction: column; justify-content: space-between; text-shadow: {{${k}.shadow}};">
+      <span style="display: flex; min-height: 24px;"><sc-if value="{{${k}.hasBadge}}" hint-placeholder-val="{{ false }}"><span style="height: 24px; padding: 0 9px; display: inline-flex; align-items: center; gap: 5px; border-radius: 999px; background: rgba(0,0,0,.28); color: #FFFFFF; font-size: 11px; font-weight: 600; text-shadow: none; backdrop-filter: blur(8px);"><sc-if value="{{${k}.badgeShield}}" hint-placeholder-val="{{ true }}">${svg(I.shield, 12, 2)}</sc-if>{{${k}.badge}}</span></sc-if></span>
+      <span style="display: flex; flex-direction: column; gap: 4px; min-width: 0;"><span style="font-size: ${name}px; font-weight: 600; letter-spacing: -.02em; line-height: 1.1; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;">{{${k}.name}}</span><span style="display: flex; align-items: center; gap: 5px; font-size: 12px; opacity: .88;">${svg(I.star, 12, 2)}<span>{{${k}.stars}}</span><span style="margin-left: 6px;">{{${k}.cardsLine}}</span></span></span>
+    </span></a>`;
+// A person's round picture: their photo, or their initial on their color.
+const PERSON_AV = (k, size) => `<span style="position: relative; width: ${size}px; height: ${size}px; flex-shrink: 0; border-radius: ${size / 2}px; overflow: hidden; background: {{${k}.bg}}; color: #FFFFFF; display: inline-flex; align-items: center; justify-content: center; font-size: ${Math.round(size * 0.42)}px; font-weight: 600; line-height: 1;"><sc-if value="{{${k}.noPhoto}}" hint-placeholder-val="{{ true }}">{{${k}.initial}}</sc-if><sc-if value="{{${k}.hasPhoto}}" hint-placeholder-val="{{ false }}"><img src="{{${k}.photo}}" alt="" referrerpolicy="no-referrer" style="position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover;"></sc-if></span>`;
+// The small check a verified teacher or school has next to their name.
+const VERIFIED = k => `<sc-if value="{{${k}.verified}}" hint-placeholder-val="{{ false }}"><span title="Verified" style="display: inline-flex; color: #3E63DD; flex-shrink: 0;">${svg(I.shield, 14, 2.2)}</span></sc-if>`;
+// Signed out, a public page has no sidebar: the logo, Discover, and Sign in across the top.
+const NET_TOP = `<header style="height: 64px; flex-shrink: 0; box-sizing: border-box; padding: 0 48px; display: flex; align-items: center; gap: 16px; border-bottom: 1px solid {{t.line}};"><a href="{{homeHref}}" aria-label="Lucida">${logo()}</a><span style="flex-grow: 1;"></span><a href="WebDiscover.dc.html" style="height: 36px; padding: 0 14px; display: inline-flex; align-items: center; border-radius: 999px; font-size: 14px; font-weight: 600; color: {{t.muted}};">Discover</a>${pill('Sign in', { inv: true, href: '{{signInHref}}' })}</header>`;
+// A page of the study network on the web: the sidebar when you're signed in, the top bar when you aren't. `inner` is
+// the page's <main> content.
+const netRoot = (active, inner, extra = '') => `<div style="position: relative; width: 1440px; height: 900px; box-sizing: border-box; display: flex; overflow: hidden; font-family: ${FONT}; background: {{t.bg}}; color: {{t.text}};">
+<sc-if value="{{signedIn}}" hint-placeholder-val="{{ true }}">${sidebar(active)}</sc-if>
+<div style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column;">
+  <sc-if value="{{signedOutView}}" hint-placeholder-val="{{ false }}">${NET_TOP}</sc-if>
+  <main style="flex-grow: 1; min-height: 0; box-sizing: border-box; padding: 36px 48px; display: flex; flex-direction: column; gap: 24px; overflow-y: auto;">
+${inner}
+  </main>
+</div>
+${extra}
+</div>`;
+// What every network page's logic adds: signed in or out, and where the top bar's links go.
+const NET_VALS = `grain: String(this.props.grain ?? 0.7), signedIn: !db.signedOut && !this.props.signedOut, signedOutView: !!db.signedOut || !!this.props.signedOut, homeHref: db.mock ? 'Landing.dc.html' : 'https://lucida.cards/', signInHref: db.mock ? 'WebSignIn.dc.html' : '/sign-in?next=' + encodeURIComponent(location.pathname),`;
+// The loading look: soft gray blocks where the page's parts will be.
+const NET_LOADING = (rows = 3) => `<sc-if value="{{loading}}" hint-placeholder-val="{{ false }}"><div aria-label="Loading" style="display: flex; flex-direction: column; gap: 16px;"><div style="width: 280px; height: 34px; border-radius: 12px; background: {{t.surf}};"></div>${Array.from({ length: rows }, () => '<div style="height: 120px; border-radius: 20px; background: {{t.surf}};"></div>').join('')}</div></sc-if>`;
+// Not there (the owner stopped sharing it, or a mistyped address).
+const NET_MISSING = `<sc-if value="{{missing}}" hint-placeholder-val="{{ false }}"><div style="padding: 64px 24px; border-radius: 24px; background: {{t.surf}}; display: flex; flex-direction: column; align-items: center; gap: 10px; text-align: center;"><span style="font-size: 20px; font-weight: 600;">{{missingTitle}}</span><span style="font-size: 14px; color: {{t.muted}};">{{missingLine}}</span><a href="{{discoverHref}}" style="margin-top: 6px; height: 36px; padding: 0 16px; display: inline-flex; align-items: center; border-radius: 999px; background: {{t.inv}}; color: {{t.invText}}; font-size: 14px; font-weight: 600;">Discover decks</a></div></sc-if>`;
+
 // ---------- Library (was Decks) ----------
 // The owner (V96): "rename decks to library", folders for decks, and every card in one place to filter by tags and
 // difficulty. One board is the whole Library: your folders and decks, one folder's decks (prop `folder`), or all your
@@ -831,6 +890,7 @@ const deckTile = big => `<div style="border-radius: ${big ? 24 : 22}px; height: 
 const COVER_LOGIC = `
   const cs = this.state;
   ${TAG_JS}
+  ${NET_JS}
   const dk = db.deck(this.props.deckId);
   const up = (patch, typing) => db.act.updateDeck(dk.id, patch, typing);
   ${NUM_JS}
@@ -849,8 +909,49 @@ const COVER_LOGIC = `
   const fsrsAllowed = grading !== 'piles', fsrsOn = fsrsAllowed && dk.fsrs !== false;
   const gaps = [[30, '1 mo'], [90, '3 mo'], [180, '6 mo'], [365, '1 yr'], [730, '2 yr'], [1825, '5 yr'], [3650, '10 yr']];
   const gi = dk.gapIdx, steps = dk.steps, stepPool = ['1m', '10m', '1h', '1d'];
-  const dsTab = cs.dsTab || (this.props.settingsTab === 'Studying' ? 'study' : 'general');
+  const dsTab = cs.dsTab || ({ Studying: 'study', Sharing: 'share' }[this.props.settingsTab] || 'general');
   const plural = (n, w) => n + ' ' + w + (n === 1 ? '' : 's');
+  // Sharing (the study network, social.mjs): who can see a deck of yours and its page; or, for a deck from someone else,
+  // whose it is, and (a copy) their changes waiting for you.
+  const shr = dk.shared || null, lk = dk.link || null, ro = !!dk.readOnly, linked = !!(lk && !lk.gone);
+  const netMine = !db.mock && db.net ? db.net.mine() : null, netRow = netMine && netMine.decks && shr ? netMine.decks.find(x => x.id === shr.id) : null;
+  const vis = shr ? shr.vis : 'private', onSite = db.mock || /(^|\\.)lucida\\.cards$/.test(location.hostname);
+  const shareUrl = shr ? (onSite ? 'https://lucida.cards' : location.origin) + shr.url : '';
+  const helperList = (netRow && netRow.helpers) || (db.mock ? [{ handle: 'devp', name: 'Dev Patel' }] : []);
+  const shareSet = o => db.act.shareDeck(dk.id, o).then(r => { this.setState({ shareErr: '' }); return r; }, e => { this.setState({ shareErr: e.message }); throw e; });
+  const openN = netRow ? netRow.open : db.mock && shr ? 3 : 0, firstName = lk ? String(lk.owner.name || '').split(' ')[0] : '';
+  const upd = db.updatesOf ? db.updatesOf(dk.id) : [], updN = linked && lk.mode === 'copy' ? (upd.length || lk.pending || 0) : 0;
+  const kindWord = { new: 'New card', answer: 'Answer', question: 'Question', typo: 'Small fix', media: 'Picture or sound', edit: 'Note or tags', remove: 'Removed' };
+  const updatesOpen = cs.updatesOpen == null ? !!this.props.updatesOpen : cs.updatesOpen;
+  const take = (card, pick) => db.act.takeUpdates(dk.id, { [card]: pick });
+  const shareVals = {
+    canShare: !ro, isShared: !!shr, notShared: !shr && !linked, isLinked: linked, isStudy: ro, isCopy: !!(linked && lk.mode === 'copy'), isGone: !!(lk && lk.gone),
+    visOpts: [['private', 'Private'], ['link', 'Link only'], ['public', 'Public']].map(([id, label]) => ({ label, ...segOf(id, vis), pick: () => id !== vis && shareSet({ visibility: id }).catch(() => {}) })),
+    visLine: { private: 'Only you.', link: 'Anyone with the link.', public: 'On your profile and in Discover.' }[vis],
+    shareLink: shareUrl.replace(/^https?:\\/\\//, ''), copyLabel: cs.copied ? 'Copied' : 'Copy link',
+    copyShareLink: () => { db.act.copy(shareUrl); this.setState({ copied: true }); clearTimeout(this.copiedT); this.copiedT = setTimeout(() => this.setState({ copied: false }), 1600); },
+    aboutText: cs.about ?? (netRow ? netRow.description || '' : db.mock ? 'For BIO 201. Suggestions welcome.' : ''), setAbout: e => this.setState({ about: e && e.target ? e.target.value : '' }),
+    saveAbout: () => { if (cs.about != null) shareSet({ description: cs.about }).catch(() => {}); },
+    helperChips: helperList.map(h => ({ label: '@' + h.handle, remove: () => shareSet({ helpers: helperList.filter(x => x.handle !== h.handle).map(x => x.handle) }).catch(() => {}) })), hasHelpers: helperList.length > 0,
+    helperQ: cs.helperQ || '', setHelperQ: e => this.setState({ helperQ: e && e.target ? e.target.value : '', shareErr: '' }),
+    addHelper: () => { const h = String(cs.helperQ || '').trim().replace(/^@/, '').toLowerCase(); if (h) shareSet({ helpers: [...helperList.map(x => x.handle), h] }).then(() => this.setState({ helperQ: '' }), () => {}); },
+    helperKey: e => { if (e.key === 'Enter') { e.preventDefault(); const h = String(e.target.value || '').trim().replace(/^@/, '').toLowerCase(); if (h) shareSet({ helpers: [...helperList.map(x => x.handle), h] }).then(() => this.setState({ helperQ: '' }), () => {}); } },
+    communitySw: sw(!!(netRow && netRow.maintained === 'community')), toggleCommunity: () => shareSet({ maintained: netRow && netRow.maintained === 'community' ? 'creator' : 'community' }).catch(() => {}),
+    shareErr: cs.shareErr || '', hasShareErr: !!cs.shareErr,
+    shareCounts: netRow ? [kfmt(netRow.learners) + ' studying', kfmt(netRow.copies) + (netRow.copies === 1 ? ' copy' : ' copies'), kfmt(netRow.stars) + (netRow.stars === 1 ? ' save' : ' saves')].join(' · ') : db.mock ? '214 studying · 86 copies · 1.3k saves' : '',
+    sugLabel: openN ? plural(openN, 'suggestion') : 'Suggestions', hasOpenSug: openN > 0, suggestionsHref: db.mock ? 'WebSuggestions.dc.html' : '/deck/' + dk.id + '/suggestions',
+    historyHref: goTo(shr ? shr.url + '/history' : '', 'WebHistory'), pageHref: goTo(shr ? shr.url : '', 'WebPublicDeck'), shareChip: shr ? shr.label : '',
+    fromWho: person(lk ? { name: lk.owner.name, handle: lk.owner.handle, color: 3 } : null), fromTitle: lk ? (lk.mode === 'copy' ? 'Copied from ' : 'From ') + lk.owner.name : '',
+    fromSub: lk && lk.gone ? 'No longer shared. It’s yours now.' : ro ? 'You study it as it is.' : 'Your copy.', fromChip: lk ? 'From ' + lk.owner.name : '',
+    fromHref: goTo(lk ? lk.url : '', 'WebPublicDeck'), suggestHref: goTo(lk ? lk.url + '?suggest=1' : '', 'WebPublicDeck'),
+    makeOwn: () => db.act.detach(dk.id), updSw: sw(!!(lk && lk.updates)), toggleUpd: () => db.act.copyUpdates(dk.id, !(lk && lk.updates)), updLabel: 'Get ' + firstName + '’s updates',
+    canEdit: !ro, hasUpdates: updN > 0, updLine: lk ? lk.owner.name + ' changed ' + plural(updN, 'card') : '', updatesOpen, openUpdates: () => this.setState({ updatesOpen: true }), closeUpdates: () => this.setState({ updatesOpen: false }),
+    updTitle: 'Changes from ' + (lk ? lk.owner.name : ''), takeAll: () => db.act.takeUpdates(dk.id, { $all: 'take' }).then(() => this.setState({ updatesOpen: false })), skipAll: () => db.act.takeUpdates(dk.id, { $all: 'skip' }).then(() => this.setState({ updatesOpen: false })),
+    takeAllLabel: 'Take all ' + updN,
+    updRows: upd.map(u => ({ kind: kindWord[u.kind] || 'Change', mine: u.mine, notMine: !u.mine, hasBefore: !!(u.before && u.op !== 'add'), hasAfter: !!u.after, gone: u.op === 'remove',
+      before: u.before ? u.before.q + (u.before.a ? ' — ' + u.before.a : '') : '', after: u.after ? u.after.q + (u.after.a ? ' — ' + u.after.a : '') : '',
+      take: () => take(u.card, 'take'), skip: () => take(u.card, 'skip') }))
+  };
   const coverVals = {
     grain: String(this.props.grain ?? 0.7),
     cover, coverIsGradient: !isImage, coverIsImage: isImage && !photo, coverHasPhoto: !!photo, coverPhoto: photo, coverHasImage: isImage,
@@ -874,22 +975,22 @@ const COVER_LOGIC = `
     stepChips: steps.map(x => ({ label: x, remove: () => steps.length > 1 && up({ steps: steps.filter(y => y !== x) }) })),
     canAddStep: steps.length < stepPool.length,
     addStep: () => { const nx = stepPool.find(q => !steps.includes(q)); if (nx) up({ steps: stepPool.filter(q => q === nx || steps.includes(q)) }); },
-    dsGeneral: dsTab === 'general', dsStudy: dsTab === 'study',
-    dsTabs: [['general', 'General'], ['study', 'Studying']].map(([id, label]) => ({ label, ...segOf(id, dsTab), pick: () => this.setState({ dsTab: id }) })),
+    dsGeneral: dsTab === 'general', dsStudy: dsTab === 'study', dsShare: dsTab === 'share',
+    dsTabs: [['general', 'General'], ['study', 'Studying'], ['share', 'Sharing']].map(([id, label]) => ({ label, ...segOf(id, dsTab), pick: () => this.setState({ dsTab: id }) })),
     tiles: [{ label: 'Due now', value: String(dk.due), color: t.text }, { label: 'New', value: String(dk.fresh), color: t.text },
       { label: 'Remembered', value: dk.ret == null ? '—' : dk.ret + '%', color: dk.ret == null ? t.muted : dk.ret >= goal ? t.good : dk.ret >= goal - 5 ? t.hard : t.again }],
     deckTags: tagList.map(g => ({ ...tagChip(g), remove: () => up({ tags: tagList.filter(x => x !== g) }) })),
     deckPick: tagPicker(tagList, next => up({ tags: next }), 'dp', db.mock ? null : db.tags()),
-    exportDeck: () => db.act.exportDeck(dk.id), deleteDeck: () => db.act.deleteDeck(dk.id),
+    exportDeck: () => db.act.exportDeck(dk.id), deleteDeck: () => db.act.deleteDeck(dk.id), deleteLabel: lk && !lk.gone ? 'Remove from library' : 'Delete deck',
     // The deck's folder, and its background for Learn mode, flashcards, and Live.
     folderChips: [{ id: null, name: 'No folder' }, ...db.folders()].map(f => { const on = (dk.folder || null) === f.id; return { label: f.name, pressed: on ? 'true' : 'false', bg: on ? t.inv : t.surf, fg: on ? t.invText : t.text, pick: () => db.act.moveDeck(dk.id, f.id) }; }),
     noFolders: !db.folders().length, ...bgPick(dk),
-    deckLine: plural(dk.total, 'card').replace(String(dk.total), dk.totalLabel) + (dk.aiCount ? ' · ' + dk.aiCount + ' added by your AI' : ''),
+    deckLine: plural(dk.total, 'card').replace(String(dk.total), dk.totalLabel) + (lk ? ' · from ' + lk.owner.name : dk.aiCount ? ' · ' + dk.aiCount + ' added by your AI' : ''),
     deckLineShort: plural(dk.total, 'card').replace(String(dk.total), dk.totalLabel) + (dk.aiCount ? ' · ' + dk.aiCount + ' from your AI' : ''),
     // The owner: "learn button needs to be 'learn', flashcards need to have flashcards button". So this one always says
     // Flashcards ("Learn 10 new cards" read like Learn mode), with how many cards wait for it today.
     studyLabel: 'Flashcards', studyCount: String(dk.due || dk.fresh || 0), hasStudyCount: !!(dk.due || dk.fresh), noStudyCount: !(dk.due || dk.fresh),
-    studyHref: dk.studyHref, newCardHref: dk.newCardHref
+    studyHref: dk.studyHref, newCardHref: dk.newCardHref, ...shareVals
   };`;
 // Deck settings: shared by the web side panel and the iPhone sheet. The web panel sits over the page, not inside its
 // scrolling <main>, so it stays in place however far the page is scrolled. Both come last on their page: the app
@@ -907,35 +1008,71 @@ const bgChooser = (phone, title = 'Background') => `<div style="display: flex; f
           </span><span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{o.label}}</span></button></sc-for></div>
           <sc-if value="{{bgIsPhoto}}" hint-placeholder-val="{{ false }}"><div style="display: flex; gap: 6px;">${smallBtn('Change photo', 'uploadBg', 'image')}</div></sc-if>
         </div>`;
+// Deck settings → Sharing (the study network). A deck of yours: who can see it (Private, Link only, Public), its link,
+// a line about it, helpers who fix cards directly, whether helpers also take suggestions, and how many people study,
+// copy, and save it, with its suggestions and History. A deck from someone else: whose it is, and a copy's updates
+// switch, or making a deck you study your own.
+const deckShareBody = phone => `<sc-if value="{{isLinked}}" hint-placeholder-val="{{ false }}"><div style="padding: 16px; border-radius: 18px; background: {{t.surf}}; display: flex; flex-direction: column; gap: 12px;">
+          <a href="{{fromHref}}" style="display: flex; align-items: center; gap: 12px; min-width: 0;">${PERSON_AV('fromWho', 36)}<span style="min-width: 0; display: flex; flex-direction: column; gap: 2px;"><span style="font-size: 14px; font-weight: 600;">{{fromTitle}}</span><span style="font-size: 12px; color: {{t.muted}};">{{fromSub}}</span></span></a>
+          <sc-if value="{{isStudy}}" hint-placeholder-val="{{ false }}"><div style="display: flex; gap: 6px; flex-wrap: wrap;"><a href="{{suggestHref}}" style="height: 34px; padding: 0 12px; display: inline-flex; align-items: center; gap: 6px; border-radius: 999px; background: {{t.bg}}; font-size: 13px; font-weight: 600;">${svg(I.message, 14, 2)}Suggest a change</a>${smallBtn('Make it my own', 'makeOwn', 'copy', '{{t.bg}}')}</div></sc-if>
+        </div>
+        <sc-if value="{{isCopy}}" hint-placeholder-val="{{ false }}"><div style="display: flex; align-items: center; gap: 12px; min-height: 44px;"><span style="flex-grow: 1; font-size: 14px; font-weight: 600;">{{updLabel}}</span>${SWITCH('updSw', 'toggleUpd', 'Get updates')}</div></sc-if>
+        </sc-if>
+        <sc-if value="{{canShare}}" hint-placeholder-val="{{ true }}">
+        <div style="display: flex; flex-direction: column; gap: 8px;"><span style="font-size: 13px; font-weight: 600;">Who can see it</span>${panelSeg('visOpts', 'Who can see it', 3)}<span style="font-size: 12px; color: {{t.muted}};">{{visLine}}</span></div>
+        <sc-if value="{{isShared}}" hint-placeholder-val="{{ false }}">
+          <div style="display: flex; align-items: center; gap: 8px; height: 46px; box-sizing: border-box; padding: 0 6px 0 16px; border-radius: 16px; background: {{t.surf}};"><span style="display: flex; color: {{t.muted}};">${svg(I.link, 16, 1.8)}</span><span style="flex-grow: 1; min-width: 0; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{shareLink}}</span><button type="button" onClick="{{copyShareLink}}" style="height: 34px; padding: 0 14px; border: 0; border-radius: 999px; background: {{t.inv}}; color: {{t.invText}}; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; white-space: nowrap;">{{copyLabel}}</button></div>
+          <span style="font-size: 13px; color: {{t.muted}};">{{shareCounts}}</span>
+          <div style="display: flex; gap: 6px; flex-wrap: wrap;"><a href="{{pageHref}}" style="height: 34px; padding: 0 12px; display: inline-flex; align-items: center; gap: 6px; border-radius: 999px; background: {{t.surf}}; font-size: 13px; font-weight: 600;">${svg(I.globe, 14, 2)}Its page</a><a href="{{suggestionsHref}}" style="height: 34px; padding: 0 12px; display: inline-flex; align-items: center; gap: 6px; border-radius: 999px; background: {{t.surf}}; font-size: 13px; font-weight: 600;">${svg(I.message, 14, 2)}{{sugLabel}}</a><a href="{{historyHref}}" style="height: 34px; padding: 0 12px; display: inline-flex; align-items: center; gap: 6px; border-radius: 999px; background: {{t.surf}}; font-size: 13px; font-weight: 600;">${svg(I.history, 14, 2)}History</a></div>
+          <label style="display: flex; flex-direction: column; gap: 8px;"><span style="font-size: 13px; font-weight: 600;">About this deck</span><textarea onChange="{{setAbout}}" onBlur="{{saveAbout}}" maxlength="300" rows="2" placeholder="What it covers, who it’s for" style="box-sizing: border-box; padding: 12px 16px; border: 0; outline: 0; border-radius: 16px; background: {{t.surf}}; color: {{t.text}}; font: inherit; font-size: ${phone ? 16 : 15}px; line-height: 1.4; resize: none;">{{aboutText}}</textarea></label>
+          <div style="display: flex; flex-direction: column; gap: 8px;"><span style="font-size: 13px; font-weight: 600;">Helpers</span><span style="margin-top: -4px; font-size: 12px; color: {{t.muted}};">They fix cards directly.</span>
+            <div style="display: flex; flex-wrap: wrap; gap: 6px;"><sc-for list="{{helperChips}}" as="h" hint-placeholder-count="1"><button type="button" onClick="{{h.remove}}" aria-label="Remove helper {{h.label}}" style="height: 32px; padding: 0 10px 0 12px; display: inline-flex; align-items: center; gap: 6px; border: 0; border-radius: 999px; background: {{t.surf}}; color: {{t.text}}; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer;">{{h.label}}<span style="display: flex; opacity: .6;">${svg(I.close, 10, 2.4)}</span></button></sc-for></div>
+            <div style="display: flex; gap: 6px;"><input type="text" value="{{helperQ}}" onChange="{{setHelperQ}}" onKeyDown="{{helperKey}}" placeholder="@name" aria-label="Add a helper" autocomplete="off" autocapitalize="off" style="flex-grow: 1; min-width: 0; height: 40px; box-sizing: border-box; padding: 0 14px; border: 0; outline: 0; border-radius: 999px; background: {{t.surf}}; color: {{t.text}}; font: inherit; font-size: ${phone ? 16 : 14}px;">${smallBtn('Add', 'addHelper', 'plus')}</div>
+            <sc-if value="{{hasShareErr}}" hint-placeholder-val="{{ false }}"><span role="alert" style="font-size: 13px; color: {{t.again}};">{{shareErr}}</span></sc-if>
+          </div>
+          <sc-if value="{{hasHelpers}}" hint-placeholder-val="{{ true }}"><div style="display: flex; align-items: center; gap: 12px; min-height: 44px;"><span style="flex-grow: 1; font-size: 14px; font-weight: 600;">Helpers take suggestions too</span>${SWITCH('communitySw', 'toggleCommunity', 'Helpers take suggestions too')}</div></sc-if>
+        </sc-if>
+        </sc-if>`;
 const deckSettingsBody = phone => `<div style="display: flex; align-items: center; justify-content: space-between;"><span style="font-size: ${phone ? 18 : 20}px; font-weight: 600; letter-spacing: -.01em;">Deck settings</span>${phone
     ? `<button type="button" onClick="{{closeSettings}}" style="height: 36px; padding: 0 16px; border: 0; border-radius: 999px; background: {{t.inv}}; color: {{t.invText}}; font: inherit; font-size: 14px; font-weight: 600; cursor: pointer;">Done</button>`
     : `<button type="button" onClick="{{closeSettings}}" aria-label="Close settings" style="width: 36px; height: 36px; border: 0; border-radius: 18px; background: {{t.surf}}; color: {{t.text}}; display: flex; align-items: center; justify-content: center; cursor: pointer;">${svg(I.close, 14, 2.2)}</button>`}</div>
-      <div role="tablist" aria-label="Deck settings sections" style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px; padding: 4px; border-radius: 999px; background: {{t.surf}};"><sc-for list="{{dsTabs}}" as="m" hint-placeholder-count="2"><button type="button" role="tab" onClick="{{m.pick}}" aria-selected="{{m.pressed}}" style="height: 36px; border: 0; border-radius: 999px; font: inherit; font-size: 14px; font-weight: 600; cursor: pointer; background: {{m.bg}}; color: {{m.fg}}; box-shadow: {{m.sh}};">{{m.label}}</button></sc-for></div>
+      <div role="tablist" aria-label="Deck settings sections" style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 4px; padding: 4px; border-radius: 999px; background: {{t.surf}};"><sc-for list="{{dsTabs}}" as="m" hint-placeholder-count="3"><button type="button" role="tab" onClick="{{m.pick}}" aria-selected="{{m.pressed}}" style="height: 36px; border: 0; border-radius: 999px; font: inherit; font-size: 14px; font-weight: 600; cursor: pointer; background: {{m.bg}}; color: {{m.fg}}; box-shadow: {{m.sh}};">{{m.label}}</button></sc-for></div>
       <sc-if value="{{dsGeneral}}" hint-placeholder-val="{{ true }}"><div style="flex-grow: 1; min-height: 0; overflow-y: auto; scrollbar-width: thin; display: flex; flex-direction: column; gap: 14px;">
-        <div style="display: flex; flex-direction: column; gap: 8px;"><span style="font-size: 13px; font-weight: 600;">Header</span>
+        <sc-if value="{{canEdit}}" hint-placeholder-val="{{ true }}"><div style="display: flex; flex-direction: column; gap: 8px;"><span style="font-size: 13px; font-weight: 600;">Header</span>
           <div style="position: relative; height: ${phone ? 88 : 108}px; flex-shrink: 0; border-radius: 20px; overflow: hidden;">${coverFill}</div>
           <div style="display: flex; gap: 6px; flex-wrap: wrap;">${smallBtn('Shuffle', 'nextCover', 'shuffle')}${smallBtn('Upload image', 'uploadCover', 'image')}<sc-if value="{{coverHasImage}}" hint-placeholder-val="{{ false }}">${smallBtn('Use gradient', 'removeCover')}</sc-if></div>
           <div role="group" aria-label="Gradient style" style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 4px; padding: 4px; border-radius: 999px; background: {{t.surf}};">
             <sc-for list="{{coverStyles}}" as="m" hint-placeholder-count="3"><button type="button" onClick="{{m.pick}}" aria-pressed="{{m.pressed}}" style="height: 34px; border: 0; border-radius: 999px; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; background: {{m.bg}}; color: {{m.fg}}; box-shadow: {{m.sh}};">{{m.label}}</button></sc-for>
           </div>
-        </div>
+        </div></sc-if>
         ${bgChooser(phone)}
         <div style="display: flex; flex-direction: column; gap: 8px;"><span style="font-size: 13px; font-weight: 600;">Folder</span>
           <div style="display: flex; flex-wrap: wrap; gap: 6px;"><sc-for list="{{folderChips}}" as="f" hint-placeholder-count="3"><button type="button" onClick="{{f.pick}}" aria-pressed="{{f.pressed}}" style="height: 32px; padding: 0 12px; display: inline-flex; align-items: center; gap: 6px; border: 0; border-radius: 999px; background: {{f.bg}}; color: {{f.fg}}; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer;">${svg(I.folder, 14, 1.8)}{{f.label}}</button></sc-for></div>
           <sc-if value="{{noFolders}}" hint-placeholder-val="{{ false }}"><span style="font-size: 12px; color: {{t.muted}};">Make folders on the Library page.</span></sc-if>
         </div>
-        <label style="display: flex; flex-direction: column; gap: 8px;"><span style="font-size: 13px; font-weight: 600;">Name</span><input type="text" value="{{deckName}}" onChange="{{setDeckName}}" style="height: 46px; box-sizing: border-box; padding: 0 16px; border: 0; outline: 0; border-radius: 16px; background: {{t.surf}}; color: {{t.text}}; font: inherit; font-size: 15px;"></label>
-        <div style="display: flex; flex-direction: column; gap: 8px;"><span style="font-size: 13px; font-weight: 600;">Tags</span>${TAG_EDIT('deckTags', 'deckPick', phone)}</div>
+        <sc-if value="{{canEdit}}" hint-placeholder-val="{{ true }}"><label style="display: flex; flex-direction: column; gap: 8px;"><span style="font-size: 13px; font-weight: 600;">Name</span><input type="text" value="{{deckName}}" onChange="{{setDeckName}}" style="height: 46px; box-sizing: border-box; padding: 0 16px; border: 0; outline: 0; border-radius: 16px; background: {{t.surf}}; color: {{t.text}}; font: inherit; font-size: 15px;"></label>
+        <div style="display: flex; flex-direction: column; gap: 8px;"><span style="font-size: 13px; font-weight: 600;">Tags</span>${TAG_EDIT('deckTags', 'deckPick', phone)}</div></sc-if>
         <div style="display: flex; align-items: center; gap: 12px; min-height: 44px;"><span style="flex-grow: 1; display: flex; flex-direction: column; gap: 2px;"><span style="font-size: 14px; font-weight: 600;">Pause this deck</span><span style="font-size: 12px; line-height: 1.35; color: {{t.muted}};">No reminders, and it leaves Today until you turn it back on.</span></span>${SWITCH('pause', 'togglePause', 'Pause this deck')}</div>
-        <div style="display: flex; gap: 8px; margin-top: auto;"><button type="button" onClick="{{exportDeck}}" style="flex-grow: 1; height: 44px; border: 0; border-radius: 999px; background: {{t.surf}}; color: {{t.text}}; font: inherit; font-size: 14px; font-weight: 600; cursor: pointer;">Export cards</button><button type="button" onClick="{{deleteDeck}}" style="flex-grow: 1; height: 44px; border: 0; border-radius: 999px; background: {{t.againTint}}; color: {{t.again}}; font: inherit; font-size: 14px; font-weight: 600; cursor: pointer;">Delete deck</button></div>
+        <div style="display: flex; gap: 8px; margin-top: auto;"><button type="button" onClick="{{exportDeck}}" style="flex-grow: 1; height: 44px; border: 0; border-radius: 999px; background: {{t.surf}}; color: {{t.text}}; font: inherit; font-size: 14px; font-weight: 600; cursor: pointer;">Export cards</button><button type="button" onClick="{{deleteDeck}}" style="flex-grow: 1; height: 44px; border: 0; border-radius: 999px; background: {{t.againTint}}; color: {{t.again}}; font: inherit; font-size: 14px; font-weight: 600; cursor: pointer;">{{deleteLabel}}</button></div>
       </div></sc-if>
       <sc-if value="{{dsStudy}}" hint-placeholder-val="{{ false }}"><div style="display: flex; flex-direction: column; gap: 16px;">
         <div style="display: flex; flex-direction: column; gap: 8px;"><span style="font-size: 13px; font-weight: 600;">Grade with</span>${modeSeg(true)}</div>
         <div style="display: flex; align-items: center; gap: 12px;"><span style="flex-grow: 1; display: flex; flex-direction: column; gap: 2px;"><span style="font-size: 14px; font-weight: 600;">Schedule with FSRS</span><span style="font-size: 12px; line-height: 1.35; color: {{t.muted}};">{{fsrsHint}}</span></span>${SWITCH('fsrsSw', 'toggleFsrs', 'Schedule with FSRS')}</div>
         <sc-if value="{{fsrsOn}}" hint-placeholder-val="{{ true }}"><div style="display: flex; flex-direction: column; gap: 12px;"><div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px;">${stepper('Remember goal', 'goal', 'lessGoal', 'moreGoal', true)}${stepper('Longest gap', 'gapLabel', 'lessGap', 'moreGap', true)}</div>${STEPS_ROW}</div></sc-if>
         <div style="display: flex; align-items: center; gap: 12px; min-height: 44px;"><span style="flex-grow: 1; display: flex; flex-direction: column; gap: 2px;"><span style="font-size: 14px; font-weight: 600;">New cards a day</span><span style="font-size: 12px; color: {{t.muted}};">Unseen cards added each day</span></span>${miniStep('perDay', 'lessDay', 'moreDay', '{{t.surf}}', 'perDayIn')}</div>
-      </div></sc-if>`;
+      </div></sc-if>
+      <sc-if value="{{dsShare}}" hint-placeholder-val="{{ false }}"><div style="flex-grow: 1; min-height: 0; overflow-y: auto; scrollbar-width: thin; display: flex; flex-direction: column; gap: 16px;">${deckShareBody(phone)}</div></sc-if>`;
 
+// A copy of someone's deck, with their newer changes waiting: take or skip each one (a card you changed too: keep
+// yours, or take theirs), or all of them at once. Shared by the web side panel and the iPhone sheet.
+const deckUpdatesBody = phone => `<div style="display: flex; align-items: center; justify-content: space-between; gap: 12px;"><span style="font-size: ${phone ? 18 : 20}px; font-weight: 600; letter-spacing: -.01em;">{{updTitle}}</span><button type="button" onClick="{{closeUpdates}}" aria-label="Close" style="width: 36px; height: 36px; flex-shrink: 0; border: 0; border-radius: 18px; background: {{t.surf}}; color: {{t.text}}; display: flex; align-items: center; justify-content: center; cursor: pointer;">${svg(I.close, 14, 2.2)}</button></div>
+    <div style="display: flex; gap: 8px;">${pill('Skip all', { onClick: '{{skipAll}}' })}${pill('{{takeAllLabel}}', { inv: true, icon: 'check', onClick: '{{takeAll}}' })}</div>
+    <div style="flex-grow: 1; min-height: 0; overflow-y: auto; scrollbar-width: thin; display: flex; flex-direction: column; gap: 12px;"><sc-for list="{{updRows}}" as="u" hint-placeholder-count="3"><div style="padding: 16px; border-radius: 18px; box-shadow: inset 0 0 0 1px {{t.line}}; display: flex; flex-direction: column; gap: 10px;">
+      <div style="display: flex; align-items: center; gap: 8px;"><span style="height: 24px; padding: 0 9px; display: inline-flex; align-items: center; border-radius: 999px; background: {{t.surf}}; font-size: 12px; font-weight: 600;">{{u.kind}}</span><sc-if value="{{u.mine}}" hint-placeholder-val="{{ false }}"><span style="font-size: 12px; color: {{t.hard}}; font-weight: 600;">You changed it too</span></sc-if></div>
+      <sc-if value="{{u.hasBefore}}" hint-placeholder-val="{{ true }}"><div style="padding: 10px 14px; border-radius: 12px; background: {{t.againTint}}; color: {{t.again}}; font-size: 14px; line-height: 1.4; text-decoration: line-through;">{{u.before}}</div></sc-if>
+      <sc-if value="{{u.hasAfter}}" hint-placeholder-val="{{ true }}"><div style="padding: 10px 14px; border-radius: 12px; background: {{t.goodTint}}; color: {{t.good}}; font-size: 14px; line-height: 1.4;">{{u.after}}</div></sc-if>
+      <div style="display: flex; gap: 8px; justify-content: flex-end;"><sc-if value="{{u.notMine}}" hint-placeholder-val="{{ true }}">${smallBtn('Skip', 'u.skip')}${smallBtn('Take it', 'u.take', 'check', '{{t.inv}}').replace('color: {{t.text}}', 'color: {{t.invText}}')}</sc-if><sc-if value="{{u.mine}}" hint-placeholder-val="{{ false }}">${smallBtn('Keep mine', 'u.skip')}${smallBtn('Take theirs', 'u.take', '', '{{t.inv}}').replace('color: {{t.text}}', 'color: {{t.invText}}')}</sc-if></div>
+    </div></sc-for></div>`;
 // How many cards wait for Flashcards today, as a small round count inside its button.
 const STUDY_COUNT = (h, bg, fg) => `<span style="min-width: ${h}px; height: ${h}px; padding: 0 7px; box-sizing: border-box; display: inline-flex; align-items: center; justify-content: center; border-radius: ${h / 2}px; background: ${bg}; color: ${fg}; font-family: ${MONO}; font-size: ${h > 22 ? 13 : 12}px; font-weight: 600;">{{studyCount}}</span>`;
 const webDeck = webRoot(`${sidebar('Library')}
@@ -945,19 +1082,25 @@ const webDeck = webRoot(`${sidebar('Library')}
     <div style="position: absolute; inset: 0; box-sizing: border-box; padding: 20px 24px 24px 28px; display: flex; flex-direction: column; justify-content: space-between; color: {{coverInk}};">
       <div style="display: flex; align-items: center; justify-content: space-between;">
         <a href="WebDecks.dc.html" style="height: 36px; padding: 0 14px 0 10px; display: inline-flex; align-items: center; gap: 4px; border-radius: 999px; ${onCover} font-size: 13px; font-weight: 600;">${svg(I.back, 14, 2.2)}Library</a>
-        ${coverBtn('Deck settings', 'openSettings', 'gear')}
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <sc-if value="{{isShared}}" hint-placeholder-val="{{ false }}"><a href="{{pageHref}}" style="height: 36px; padding: 0 14px; display: inline-flex; align-items: center; gap: 6px; border-radius: 999px; ${onCover} font-size: 13px; font-weight: 600;">${svg(I.globe, 14, 2)}{{shareChip}}</a><sc-if value="{{hasOpenSug}}" hint-placeholder-val="{{ false }}"><a href="{{suggestionsHref}}" style="height: 36px; padding: 0 14px; display: inline-flex; align-items: center; gap: 6px; border-radius: 999px; ${onCover} font-size: 13px; font-weight: 600;">${svg(I.message, 14, 2)}{{sugLabel}}</a></sc-if></sc-if>
+          <sc-if value="{{isLinked}}" hint-placeholder-val="{{ false }}"><a href="{{fromHref}}" style="height: 36px; padding: 0 14px 0 6px; display: inline-flex; align-items: center; gap: 8px; border-radius: 999px; ${onCover} font-size: 13px; font-weight: 600;">${PERSON_AV('fromWho', 24)}<span>{{fromChip}}</span></a></sc-if>
+          ${coverBtn('Deck settings', 'openSettings', 'gear')}
+        </div>
       </div>
       <div style="display: flex; align-items: flex-end; justify-content: space-between; gap: 16px;">
         <div style="display: flex; flex-direction: column; gap: 6px; min-width: 0; text-shadow: {{coverShadow}};"><h1 style="margin: 0; font-size: 34px; font-weight: 600; letter-spacing: -.035em; line-height: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{deckName}}</h1><div style="font-size: 14px; opacity: .8;">{{deckLine}}</div></div>
         <div style="display: flex; gap: 10px; flex-shrink: 0;">
           <sc-if value="{{showLive}}" hint-placeholder-val="{{ false }}"><a href="LiveSetup.dc.html" style="height: 36px; padding: 0 16px; display: inline-flex; align-items: center; gap: 8px; border-radius: 999px; ${onCover} font-size: 14px; font-weight: 600;">${svg(I.live, 15, 2)}Play live</a></sc-if>
           <a href="{{learnHref}}" style="height: 36px; padding: 0 16px; display: inline-flex; align-items: center; gap: 8px; border-radius: 999px; ${onCover} font-size: 14px; font-weight: 600;">${svg(I.sparkle, 15, 2)}{{learnLabel}}</a>
-          <a href="{{newCardHref}}" style="height: 36px; padding: 0 18px; display: inline-flex; align-items: center; gap: 8px; border-radius: 999px; ${onCover} font-size: 14px; font-weight: 600;">${svg(I.plus, 16, 2)}New card</a>
+          <sc-if value="{{canEdit}}" hint-placeholder-val="{{ true }}"><a href="{{newCardHref}}" style="height: 36px; padding: 0 18px; display: inline-flex; align-items: center; gap: 8px; border-radius: 999px; ${onCover} font-size: 14px; font-weight: 600;">${svg(I.plus, 16, 2)}New card</a></sc-if>
+          <sc-if value="{{isStudy}}" hint-placeholder-val="{{ false }}"><a href="{{suggestHref}}" style="height: 36px; padding: 0 18px; display: inline-flex; align-items: center; gap: 8px; border-radius: 999px; ${onCover} font-size: 14px; font-weight: 600;">${svg(I.message, 15, 2)}Suggest a change</a></sc-if>
           <a href="{{studyHref}}" style="height: 36px; padding: 0 8px 0 18px; display: inline-flex; align-items: center; gap: 8px; border-radius: 999px; background: #FFFFFF; color: #000000; box-shadow: 0 1px 2px rgba(0,0,0,.1); font-size: 14px; font-weight: 600;">${svg(I.decks, 15, 2)}<span>{{studyLabel}}</span><sc-if value="{{hasStudyCount}}" hint-placeholder-val="{{ true }}">${STUDY_COUNT(22, '#EDEDED', '#000000')}</sc-if><sc-if value="{{noStudyCount}}" hint-placeholder-val="{{ false }}"><span style="width: 2px;"></span></sc-if></a>
         </div>
       </div>
     </div>
   </div>
+  <sc-if value="{{hasUpdates}}" hint-placeholder-val="{{ false }}"><div style="flex-shrink: 0; height: 56px; box-sizing: border-box; padding: 0 10px 0 16px; border-radius: 18px; background: {{t.surf}}; display: flex; align-items: center; gap: 12px;">${PERSON_AV('fromWho', 28)}<span style="flex-grow: 1; font-size: 14px; font-weight: 600;">{{updLine}}</span>${pill('See changes', { inv: true, onClick: '{{openUpdates}}' })}</div></sc-if>
   <div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px;">
     <sc-for list="{{tiles}}" as="k" hint-placeholder-count="3">
       ${deckTile(true)}
@@ -989,6 +1132,12 @@ ${moveTray('tray', false)}
   <div class="sc-scrim" style="position: absolute; top: 0; right: 0; bottom: 0; left: 240px; background: {{t.dim}};"></div>
   <aside role="dialog" aria-label="Deck settings" class="sc-panel" style="position: absolute; top: 12px; right: 12px; bottom: 12px; width: 460px; box-sizing: border-box; padding: 24px; border-radius: 20px; background: {{t.bg}}; box-shadow: 0 24px 64px rgba(0,0,0,.24); display: flex; flex-direction: column; gap: 16px; overflow: hidden;">
     ${deckSettingsBody(false)}
+  </aside>
+</sc-if>
+<sc-if value="{{updatesOpen}}" hint-placeholder-val="{{ false }}">
+  <div class="sc-scrim" onClick="{{closeUpdates}}" style="position: absolute; top: 0; right: 0; bottom: 0; left: 240px; background: {{t.dim}};"></div>
+  <aside role="dialog" aria-label="{{updTitle}}" class="sc-panel" style="position: absolute; top: 12px; right: 12px; bottom: 12px; width: 520px; box-sizing: border-box; padding: 24px; border-radius: 20px; background: {{t.bg}}; box-shadow: 0 24px 64px rgba(0,0,0,.24); display: flex; flex-direction: column; gap: 16px; overflow: hidden;">
+    ${deckUpdatesBody(false)}
   </aside>
 </sc-if>`, true);
 // Dragging a card (drag.mjs, both deck pages): to another spot in the deck, or onto another deck in the Move to tray.
@@ -2335,7 +2484,7 @@ renderVals() {
     blank: ${BLANK_JS},
     reveal: () => this.setState({ revealed: !rev, moved: false }),
     undo: () => { if (done > 0 || !db.mock) { this.setState({ revealed: true, moved: false }); db.act.undo(); } },
-    editHref: rv.editHref, endHref: db.mock ? '${phone ? 'PhoneDeck' : 'WebDeck'}.dc.html' : rv.endHref,
+    editHref: rv.editHref, editLabel: rv.editLabel || 'Edit', endHref: db.mock ? '${phone ? 'PhoneDeck' : 'WebDeck'}.dc.html' : rv.endHref,
     // Settings change the background of the deck this card is from; reviewing every deck, it says which deck that is.
     ...bgPick(dk), bgTitle: db.mock || this.props.deckId ? 'Background' : 'Background for ' + dk.name
   };
@@ -2437,7 +2586,7 @@ const webReview = `<div style="position: relative; isolation: isolate; width: 14
   <footer style="height: 64px; box-sizing: border-box; padding: 0 32px; display: flex; align-items: center; gap: 24px; font-size: 13px; color: {{t.muted}};">
     <span style="flex-grow: 1;"></span>
     <sc-if value="{{card.isAudio}}" hint-placeholder-val="{{ false }}"><button type="button" onClick="{{snd.toggle}}" data-key="p" style="padding: 0; border: 0; background: transparent; color: inherit; font: inherit; cursor: pointer;">{{snd.word}} <span style="font-family: ${MONO};">P</span></button></sc-if>
-    <a href="{{editHref}}" data-key="e">Edit <span style="font-family: ${MONO};">E</span></a><button type="button" onClick="{{undo}}" data-key="z" style="padding: 0; border: 0; background: transparent; color: inherit; font: inherit; cursor: pointer;">Undo <span style="font-family: ${MONO};">Z</span></button>
+    <a href="{{editHref}}" data-key="e">{{editLabel}} <span style="font-family: ${MONO};">E</span></a><button type="button" onClick="{{undo}}" data-key="z" style="padding: 0; border: 0; background: transparent; color: inherit; font: inherit; cursor: pointer;">Undo <span style="font-family: ${MONO};">Z</span></button>
   </footer>
   <sc-if value="{{settingsOpen}}" hint-placeholder-val="{{ false }}">
     <div role="dialog" aria-label="Review settings" style="position: absolute; top: 72px; right: 32px; width: 380px; box-sizing: border-box; padding: 20px; border-radius: 18px; background: {{t.bg}}; box-shadow: 0 0 0 1px {{t.line}}, 0 24px 64px rgba(0,0,0,.18); display: flex; flex-direction: column; gap: 18px; z-index: 5;">
@@ -3075,11 +3224,13 @@ const phoneDeck = phone(`<div style="height: 100%; overflow-y: auto; scrollbar-w
   <div style="position: relative; height: 232px; overflow: hidden;">
     ${parallax(232)}
     <div style="position: absolute; inset: 0; box-sizing: border-box; padding: 54px 16px 18px 20px; display: flex; flex-direction: column; justify-content: space-between; color: {{coverInk}};">
-      <div style="display: flex; justify-content: space-between;">${coverRound('back', 'Back', 'PhoneToday.dc.html')}<div style="display: flex; gap: 8px;">${coverRound('gear', 'Deck settings', '', '{{openSettings}}')}${coverRound('search', 'Search')}${coverRound('plus', 'New card', 'PhoneEditor.dc.html')}</div></div>
+      <div style="display: flex; justify-content: space-between;">${coverRound('back', 'Back', 'PhoneToday.dc.html')}<div style="display: flex; gap: 8px;"><sc-if value="{{isShared}}" hint-placeholder-val="{{ false }}"><a href="{{pageHref}}" aria-label="{{shareChip}}" style="width: 40px; height: 40px; border-radius: 20px; ${onCover} display: flex; align-items: center; justify-content: center;">${svg(I.globe, 18, 2)}</a></sc-if>${coverRound('gear', 'Deck settings', '', '{{openSettings}}')}${coverRound('search', 'Search')}<sc-if value="{{canEdit}}" hint-placeholder-val="{{ true }}">${coverRound('plus', 'New card', 'PhoneEditor.dc.html')}</sc-if><sc-if value="{{isStudy}}" hint-placeholder-val="{{ false }}"><a href="{{suggestHref}}" aria-label="Suggest a change" style="width: 40px; height: 40px; border-radius: 20px; ${onCover} display: flex; align-items: center; justify-content: center;">${svg(I.message, 18, 2)}</a></sc-if></div></div>
       <div style="display: flex; flex-direction: column; gap: 4px; text-shadow: {{coverShadow}};"><div style="font-size: 32px; font-weight: 700; letter-spacing: -.03em; line-height: 1.05; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{deckName}}</div><div style="font-size: 14px; opacity: .8;">{{deckLineShort}}</div></div>
     </div>
   </div>
   <div style="padding: 0 20px; display: flex; flex-direction: column; gap: 16px;">
+    <sc-if value="{{isLinked}}" hint-placeholder-val="{{ false }}"><a href="{{fromHref}}" style="display: flex; align-items: center; gap: 10px; min-height: 44px; font-size: 14px; font-weight: 600;">${PERSON_AV('fromWho', 28)}<span style="flex-grow: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{fromChip}}</span><span style="display: flex; color: {{t.muted}};">${svg(I.chev, 16, 2)}</span></a></sc-if>
+    <sc-if value="{{hasUpdates}}" hint-placeholder-val="{{ false }}"><button type="button" onClick="{{openUpdates}}" style="height: 56px; box-sizing: border-box; padding: 0 16px; border: 0; border-radius: 18px; background: {{t.surf}}; color: {{t.text}}; display: flex; align-items: center; gap: 10px; font: inherit; font-size: 15px; font-weight: 600; text-align: left; cursor: pointer;"><span style="flex-grow: 1;">{{updLine}}</span><span style="font-size: 14px; color: {{t.muted}};">See changes</span></button></sc-if>
     <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px;">
       <sc-for list="{{tiles}}" as="k" hint-placeholder-count="3">${deckTile(false)}</sc-for>
     </div>
@@ -3095,6 +3246,12 @@ const phoneDeck = phone(`<div style="height: 100%; overflow-y: auto; scrollbar-w
   <div class="sc-scrim" style="position: absolute; inset: 0; background: {{t.dim}};"></div>
   <div role="dialog" aria-label="Deck settings" class="sc-sheet" style="position: absolute; left: 0; right: 0; bottom: 0; top: 56px; box-sizing: border-box; padding: 16px 20px 34px; border-radius: 32px 32px 0 0; background: {{t.bg}}; display: flex; flex-direction: column; gap: 14px;">
     ${deckSettingsBody(true)}
+  </div>
+</sc-if>
+<sc-if value="{{updatesOpen}}" hint-placeholder-val="{{ false }}">
+  <div class="sc-scrim" onClick="{{closeUpdates}}" style="position: absolute; inset: 0; background: {{t.dim}};"></div>
+  <div role="dialog" aria-label="{{updTitle}}" class="sc-sheet" style="position: absolute; left: 0; right: 0; bottom: 0; top: 56px; box-sizing: border-box; padding: 20px 20px 34px; border-radius: 32px 32px 0 0; background: {{t.bg}}; display: flex; flex-direction: column; gap: 14px;">
+    ${deckUpdatesBody(true)}
   </div>
 </sc-if>`);
 const phoneDeckLogic = `
@@ -5253,65 +5410,6 @@ renderVals() { ${T}${DB_JS}${READ_CARDS_JS}
     progress: now + '%', progressNow: String(now), canBack: ['Steps', 'Pick source', 'Source steps', 'Found'].includes(step) };
 }`;
 
-// ---------- Study network: shared pieces (profiles, shared decks, Discover, suggestions, History, news) ----------
-// The owner's note: "GitHub + Instagram for study material". The rules are the canvas's "How sharing works" board:
-// the cards are shared, your progress never is; every deck starts private; Study a deck as it is or Make a copy;
-// anyone can suggest a change and the owner takes it or skips it; every change is a version in History.
-// Data: db.net (web/net.js in the app, net-sample.mjs on the canvas) answers each page; while an answer is on its way
-// it's undefined, and the page shows its loading look. db.act has the changes (study, copyDeck, star, follow, …).
-// People: their photo, or their initial on their color (the six colors of your own picture in Settings).
-const PERSON_COLORS = ['linear-gradient(135deg, #8C9AFC 0%, #4F60E6 100%)', 'linear-gradient(135deg, #FFC857 0%, #EE5A36 100%)', 'linear-gradient(135deg, #7EE0B0 0%, #1F8F5F 100%)',
-  'linear-gradient(135deg, #F9A8D4 0%, #D6336C 100%)', 'linear-gradient(135deg, #7DE3F0 0%, #0E8A9E 100%)', 'linear-gradient(135deg, #C4A7FF 0%, #7C3AED 100%)'];
-// For a board's logic: `person(p)`, `netDeck(d)` (a shared deck as a cover tile), `kfmt(n)` (1.3k), `ago(iso)`, and
-// `goTo(url, board)`: the app's own address in the app, the board's file on the canvas (canvas links are boards).
-const NET_JS = `const PC = ${JSON.stringify(PERSON_COLORS)};
-  const goTo = (url, board) => (db.mock ? board + '.dc.html' : url || '/');
-  const person = p => { p = p || {}; const nm = String(p.name || ''); return { name: nm, handle: p.handle || '', at: p.handle ? '@' + p.handle : '', href: goTo(p.handle ? '/@' + p.handle : '', 'WebProfile'),
-    initial: ((nm.trim() || '?')[0]).toUpperCase(), bg: PC[p.color || 0] || PC[0], photo: p.avatar || '', hasPhoto: !!p.avatar, noPhoto: !p.avatar,
-    teacher: p.verified === 'teacher', school: p.verified === 'school' || p.kind === 'school', verified: !!p.verified }; };
-  const kfmt = n => { n = +n || 0; return n >= 10000 ? Math.round(n / 1000) + 'k' : n >= 1000 ? (Math.round(n / 100) / 10 + 'k').replace('.0k', 'k') : String(n); };
-  const MONTHS3 = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-  const ago = iso => { const t = Date.parse(iso || ''); if (!t) return ''; const m = Math.max(0, Math.round((Date.now() - t) / 60000));
-    if (db.mock) { const d = new Date(t); return MONTHS3[d.getUTCMonth()] + ' ' + d.getUTCDate(); }
-    if (m < 1) return 'Just now'; if (m < 60) return m + ' min ago'; const h = Math.round(m / 60); if (h < 24) return h + 'h ago'; const dd = Math.round(h / 24); if (dd === 1) return 'Yesterday'; if (dd < 7) return dd + ' days ago';
-    const d = new Date(t); return MONTHS3[d.getMonth()] + ' ' + d.getDate(); };
-  const netDeck = d => { d = d || {}; const cv = d.cover || {}, pal = this.gen((cv.seed || d.name || 'Lucida') + (cv.round ? ' #' + cv.round : ''), cv.style || 'mix'), photo = cv.image && cv.image !== 'mock' ? cv.image : '';
-    const badge = d.checked ? 'Checked' : d.owner && (d.owner.kind === 'school' || d.owner.verified === 'school') ? d.owner.name : d.pinned ? 'Pinned' : '';
-    const cardsLine = kfmt(d.cards) + (d.cards === 1 ? ' card' : ' cards');
-    return { ...pal, id: d.id || '', name: d.name || '', href: goTo(d.url, 'WebPublicDeck'), stats: kfmt(d.stars) + '   ' + cardsLine, cardsLine, stars: kfmt(d.stars),
-      owner: person(d.owner), photo, hasPhoto: !!photo, badge, hasBadge: !!badge, badgeShield: !!d.checked || (!!d.owner && d.owner.kind === 'school') }; };`;
-// A shared deck as a cover tile: its gradient (or photo), a badge (Checked, Pinned, a school), its name, saves, and cards.
-const NET_TILE = (k, h, name = 22) => `<a href="{{${k}.href}}" class="sc-lift" style="position: relative; display: block; height: ${h}px; border-radius: 20px; overflow: hidden; color: {{${k}.ink}}; background: {{${k}.base}};">${flowLayer(k)}${GRAIN_LAYER}
-    <sc-if value="{{${k}.hasPhoto}}" hint-placeholder-val="{{ false }}"><img src="{{${k}.photo}}" alt="" style="position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover;"><span style="position: absolute; inset: 0; background: linear-gradient(180deg, rgba(0,0,0,0) 40%, rgba(0,0,0,.55) 100%);"></span></sc-if>
-    <span style="position: absolute; inset: 0; box-sizing: border-box; padding: 16px 18px; display: flex; flex-direction: column; justify-content: space-between; text-shadow: {{${k}.shadow}};">
-      <span style="display: flex; min-height: 24px;"><sc-if value="{{${k}.hasBadge}}" hint-placeholder-val="{{ false }}"><span style="height: 24px; padding: 0 9px; display: inline-flex; align-items: center; gap: 5px; border-radius: 999px; background: rgba(0,0,0,.28); color: #FFFFFF; font-size: 11px; font-weight: 600; text-shadow: none; backdrop-filter: blur(8px);"><sc-if value="{{${k}.badgeShield}}" hint-placeholder-val="{{ true }}">${svg(I.shield, 12, 2)}</sc-if>{{${k}.badge}}</span></sc-if></span>
-      <span style="display: flex; flex-direction: column; gap: 4px; min-width: 0;"><span style="font-size: ${name}px; font-weight: 600; letter-spacing: -.02em; line-height: 1.1; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;">{{${k}.name}}</span><span style="display: flex; align-items: center; gap: 5px; font-size: 12px; opacity: .88;">${svg(I.star, 12, 2)}<span>{{${k}.stars}}</span><span style="margin-left: 6px;">{{${k}.cardsLine}}</span></span></span>
-    </span></a>`;
-// A person's round picture: their photo, or their initial on their color.
-const PERSON_AV = (k, size) => `<span style="position: relative; width: ${size}px; height: ${size}px; flex-shrink: 0; border-radius: ${size / 2}px; overflow: hidden; background: {{${k}.bg}}; color: #FFFFFF; display: inline-flex; align-items: center; justify-content: center; font-size: ${Math.round(size * 0.42)}px; font-weight: 600; line-height: 1;"><sc-if value="{{${k}.noPhoto}}" hint-placeholder-val="{{ true }}">{{${k}.initial}}</sc-if><sc-if value="{{${k}.hasPhoto}}" hint-placeholder-val="{{ false }}"><img src="{{${k}.photo}}" alt="" referrerpolicy="no-referrer" style="position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover;"></sc-if></span>`;
-// The small check a verified teacher or school has next to their name.
-const VERIFIED = k => `<sc-if value="{{${k}.verified}}" hint-placeholder-val="{{ false }}"><span title="Verified" style="display: inline-flex; color: #3E63DD; flex-shrink: 0;">${svg(I.shield, 14, 2.2)}</span></sc-if>`;
-// Signed out, a public page has no sidebar: the logo, Discover, and Sign in across the top.
-const NET_TOP = `<header style="height: 64px; flex-shrink: 0; box-sizing: border-box; padding: 0 48px; display: flex; align-items: center; gap: 16px; border-bottom: 1px solid {{t.line}};"><a href="{{homeHref}}" aria-label="Lucida">${logo()}</a><span style="flex-grow: 1;"></span><a href="WebDiscover.dc.html" style="height: 36px; padding: 0 14px; display: inline-flex; align-items: center; border-radius: 999px; font-size: 14px; font-weight: 600; color: {{t.muted}};">Discover</a>${pill('Sign in', { inv: true, href: '{{signInHref}}' })}</header>`;
-// A page of the study network on the web: the sidebar when you're signed in, the top bar when you aren't. `inner` is
-// the page's <main> content.
-const netRoot = (active, inner, extra = '') => `<div style="position: relative; width: 1440px; height: 900px; box-sizing: border-box; display: flex; overflow: hidden; font-family: ${FONT}; background: {{t.bg}}; color: {{t.text}};">
-<sc-if value="{{signedIn}}" hint-placeholder-val="{{ true }}">${sidebar(active)}</sc-if>
-<div style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column;">
-  <sc-if value="{{signedOutView}}" hint-placeholder-val="{{ false }}">${NET_TOP}</sc-if>
-  <main style="flex-grow: 1; min-height: 0; box-sizing: border-box; padding: 36px 48px; display: flex; flex-direction: column; gap: 24px; overflow-y: auto;">
-${inner}
-  </main>
-</div>
-${extra}
-</div>`;
-// What every network page's logic adds: signed in or out, and where the top bar's links go.
-const NET_VALS = `grain: String(this.props.grain ?? 0.7), signedIn: !db.signedOut && !this.props.signedOut, signedOutView: !!db.signedOut || !!this.props.signedOut, homeHref: db.mock ? 'Landing.dc.html' : 'https://lucida.cards/', signInHref: db.mock ? 'WebSignIn.dc.html' : '/sign-in?next=' + encodeURIComponent(location.pathname),`;
-// The loading look: soft gray blocks where the page's parts will be.
-const NET_LOADING = (rows = 3) => `<sc-if value="{{loading}}" hint-placeholder-val="{{ false }}"><div aria-label="Loading" style="display: flex; flex-direction: column; gap: 16px;"><div style="width: 280px; height: 34px; border-radius: 12px; background: {{t.surf}};"></div>${Array.from({ length: rows }, () => '<div style="height: 120px; border-radius: 20px; background: {{t.surf}};"></div>').join('')}</div></sc-if>`;
-// Not there (the owner stopped sharing it, or a mistyped address).
-const NET_MISSING = `<sc-if value="{{missing}}" hint-placeholder-val="{{ false }}"><div style="padding: 64px 24px; border-radius: 24px; background: {{t.surf}}; display: flex; flex-direction: column; align-items: center; gap: 10px; text-align: center;"><span style="font-size: 20px; font-weight: 600;">{{missingTitle}}</span><span style="font-size: 14px; color: {{t.muted}};">{{missingLine}}</span><a href="{{discoverHref}}" style="margin-top: 6px; height: 36px; padding: 0 16px; display: inline-flex; align-items: center; border-radius: 999px; background: {{t.inv}}; color: {{t.invText}}; font-size: 14px; font-weight: 600;">Discover decks</a></div></sc-if>`;
-
 // ---------- Discover ----------
 // Find decks people share: popular this week, checked by teachers, new, and from people you follow, narrowed by topic;
 // or search decks, people, and courses. Studying stays in your library; Discover is only for finding more.
@@ -5366,6 +5464,8 @@ const phoneDiscover = phone(`<div style="padding: 64px 20px 120px; display: flex
 
 // ---------- write ----------
 const W = 1440, H = 900, PW = 390, PH = 844;
+// A deck page's sharing on the canvas (Tweaks): shared by you, or from someone else (studied as it is, or a copy).
+const SHARE_PROPS = { shared: { editor: 'enum', default: '', options: ['', 'Link only', 'Public'] }, linked: { editor: 'enum', default: '', options: ['', 'study', 'copy'] }, updatesOpen: { editor: 'boolean', default: false } };
 // Settings' profile picture, for showing each one on the canvas (Tweaks).
 const PHOTO_PROP = { editor: 'enum', default: 'Color', options: ['Color', 'Google photo', 'Your photo'] };
 const EDITOR_CSS = RICH_CSS + OCC_EDIT_CSS;
@@ -5389,7 +5489,7 @@ const files = {
   'WebDecksEmpty': ['Web · Library · no decks yet', webDecksEmpty, { props: { ...DARK, grain: MESH('Iris').grain }, logic: emptyLogic(), w: W, h: H }],
   'WebDeckEmpty': ['Web · Deck · no cards yet', webDeckEmpty, { props: { ...DARK, grain: MESH('Iris').grain }, logic: emptyLogic('Pharmacology'), w: W, h: H }],
   'WebStatsEmpty': ['Web · Stats · no reviews yet', webStatsEmpty, { props: { ...DARK, grain: MESH('Iris').grain }, logic: emptyLogic(), w: W, h: H }],
-  'WebDeck': ['Web · Deck page', webDeck, { props: { ...DARK, grain: MESH('Iris').grain, settingsOpen: { editor: 'boolean', default: false }, settingsTab: { editor: 'enum', default: 'General', options: ['General', 'Studying'] }, tagPicker: { editor: 'boolean', default: false } }, logic: deckLogic, css: NUM_CSS + PARALLAX_CSS + DRAG_CSS, w: W, h: H }],
+  'WebDeck': ['Web · Deck page', webDeck, { props: { ...DARK, grain: MESH('Iris').grain, settingsOpen: { editor: 'boolean', default: false }, settingsTab: { editor: 'enum', default: 'General', options: ['General', 'Studying', 'Sharing'] }, tagPicker: { editor: 'boolean', default: false }, ...SHARE_PROPS }, logic: deckLogic, css: NUM_CSS + PARALLAX_CSS + DRAG_CSS, w: W, h: H }],
   'WebDeckTagPicker': ['Web · Deck settings · Add tag', attrOf('WebDeck', W, H, 'settings-open="{{yes}}" tag-picker="{{yes}}"'), { logic: darkLogic, css: NUM_CSS + DRAG_CSS, w: W, h: H }],
   'WebEditor': ['Web · Card editor', webEditor, { props: { ...DARK, cardType: { editor: 'enum', default: 'Basic', options: ['Basic', 'Blank', 'Image', 'Audio'] }, recording: { editor: 'boolean', default: false }, slashDemo: { editor: 'boolean', default: false } }, logic: EDITOR_LOGIC, css: EDITOR_CSS, w: W, h: H }],
   'WebEditorSlash': ['Web · Card editor · / menu', attrOf('WebEditor', W, H, 'slash-demo="{{yes}}"'), { logic: darkLogic, css: EDITOR_CSS, w: W, h: H }],
@@ -5430,6 +5530,13 @@ const files = {
   'WebReviewAudio': ['Web · Review · audio card, playing', attrOf('WebReview', W, H, 'card="Audio" playing="{{yes}}"'), { logic: darkLogic, css: REVIEW_CSS, w: W, h: H }],
   'WebDeckSettings': ['Web · Deck settings', openOf('WebDeck', W, H), { logic: darkLogic, css: NUM_CSS + DRAG_CSS, w: W, h: H }],
   'WebDeckSettingsStudy': ['Web · Deck settings · Studying (FSRS)', studyOf('WebDeck', W, H), { logic: darkLogic, css: NUM_CSS + DRAG_CSS, w: W, h: H }],
+  'WebDeckSettingsShare': ['Web · Deck settings · Sharing (a public deck)', attrOf('WebDeck', W, H, 'settings-open="{{yes}}" settings-tab="Sharing" shared="Public"'), { logic: darkLogic, css: NUM_CSS + DRAG_CSS, w: W, h: H }],
+  'WebDeckSettingsSharePrivate': ['Web · Deck settings · Sharing (private, the start)', attrOf('WebDeck', W, H, 'settings-open="{{yes}}" settings-tab="Sharing"'), { logic: darkLogic, css: NUM_CSS + DRAG_CSS, w: W, h: H }],
+  'WebDeckShared': ['Web · Deck page · shared (public, with suggestions waiting)', attrOf('WebDeck', W, H, 'shared="Public"'), { logic: darkLogic, css: NUM_CSS + DRAG_CSS, w: W, h: H }],
+  'WebDeckStudied': ['Web · Deck page · a deck you study from someone else', attrOf('WebDeck', W, H, 'linked="study"'), { logic: darkLogic, css: NUM_CSS + DRAG_CSS, w: W, h: H }],
+  'WebDeckCopy': ['Web · Deck page · your copy, with the owner’s changes waiting', attrOf('WebDeck', W, H, 'linked="copy"'), { logic: darkLogic, css: NUM_CSS + DRAG_CSS, w: W, h: H }],
+  'WebDeckUpdates': ['Web · Deck page · your copy · the owner’s changes (take or skip)', attrOf('WebDeck', W, H, 'linked="copy" updates-open="{{yes}}"'), { logic: darkLogic, css: NUM_CSS + DRAG_CSS, w: W, h: H }],
+  'WebDeckSettingsFrom': ['Web · Deck settings · Sharing (a deck you study)', attrOf('WebDeck', W, H, 'settings-open="{{yes}}" settings-tab="Sharing" linked="study"'), { logic: darkLogic, css: NUM_CSS + DRAG_CSS, w: W, h: H }],
   'WebDeckDark': ['Web · Deck page (dark)', darkOf('WebDeck', W, H), { logic: darkLogic, css: NUM_CSS + DRAG_CSS, w: W, h: H }],
   'WebStatsDark': ['Web · Stats (dark)', darkOf('WebStats', W, H), { logic: darkLogic, w: W, h: H }],
   'WebTodayGray': ['Web · Today (dark, gray)', grayOf('Main', W, H), { logic: darkLogic, css: DRAG_CSS, w: W, h: H }],
@@ -5464,9 +5571,13 @@ const files = {
   'PhoneStatsEmpty': ['iPhone · Stats · no reviews yet', phoneStatsEmpty, { props: { ...DARK, grain: MESH('Iris').grain }, logic: emptyLogic(), w: PW, h: PH }],
   'PhoneNewDeck': ['iPhone · New deck', phoneNewDeck, { props: { ...DARK, grain: MESH('Iris').grain }, logic: NEW_DECK_LOGIC, css: NUM_CSS + COVER_FADE_CSS, w: PW, h: PH }],
   'PhoneInbox': ['iPhone · Check AI cards', phoneInbox, { props: DARK, logic: phoneInboxLogic, css: REVIEW_CSS, w: PW, h: PH }],
-  'PhoneDeck': ['iPhone · Deck page', phoneDeck, { props: { ...DARK, grain: MESH('Iris').grain, settingsOpen: { editor: 'boolean', default: false }, settingsTab: { editor: 'enum', default: 'General', options: ['General', 'Studying'] }, tagPicker: { editor: 'boolean', default: false } }, logic: phoneDeckLogic, css: NUM_CSS + PARALLAX_CSS + DRAG_CSS, w: PW, h: PH }],
+  'PhoneDeck': ['iPhone · Deck page', phoneDeck, { props: { ...DARK, grain: MESH('Iris').grain, settingsOpen: { editor: 'boolean', default: false }, settingsTab: { editor: 'enum', default: 'General', options: ['General', 'Studying', 'Sharing'] }, tagPicker: { editor: 'boolean', default: false }, ...SHARE_PROPS }, logic: phoneDeckLogic, css: NUM_CSS + PARALLAX_CSS + DRAG_CSS, w: PW, h: PH }],
   'PhoneDeckTagPicker': ['iPhone · Deck settings · Add tag', attrOf('PhoneDeck', PW, PH, 'settings-open="{{yes}}" tag-picker="{{yes}}"'), { logic: darkLogic, css: NUM_CSS + DRAG_CSS, w: PW, h: PH }],
   'PhoneDeckSettingsStudy': ['iPhone · Deck settings · Studying (FSRS)', studyOf('PhoneDeck', PW, PH), { logic: darkLogic, css: NUM_CSS + DRAG_CSS, w: PW, h: PH }],
+  'PhoneDeckSettingsShare': ['iPhone · Deck settings · Sharing (a public deck)', attrOf('PhoneDeck', PW, PH, 'settings-open="{{yes}}" settings-tab="Sharing" shared="Public"'), { logic: darkLogic, css: NUM_CSS + DRAG_CSS, w: PW, h: PH }],
+  'PhoneDeckStudied': ['iPhone · Deck page · a deck you study from someone else', attrOf('PhoneDeck', PW, PH, 'linked="study"'), { logic: darkLogic, css: NUM_CSS + DRAG_CSS, w: PW, h: PH }],
+  'PhoneDeckCopy': ['iPhone · Deck page · your copy, with the owner’s changes waiting', attrOf('PhoneDeck', PW, PH, 'linked="copy"'), { logic: darkLogic, css: NUM_CSS + DRAG_CSS, w: PW, h: PH }],
+  'PhoneDeckUpdates': ['iPhone · Deck page · your copy · the owner’s changes (take or skip)', attrOf('PhoneDeck', PW, PH, 'linked="copy" updates-open="{{yes}}"'), { logic: darkLogic, css: NUM_CSS + DRAG_CSS, w: PW, h: PH }],
   'PhoneEditor': ['iPhone · Card editor', phoneEditor, { props: { ...DARK, keyboard: { editor: 'boolean', default: true }, textStyles: { editor: 'boolean', default: false }, cardType: { editor: 'enum', default: 'Basic', options: ['Basic', 'Blank', 'Image', 'Audio'] }, recording: { editor: 'boolean', default: false } }, logic: EDITOR_LOGIC, css: EDITOR_CSS, w: PW, h: PH }],
   'PhoneEditorAudio': ['iPhone · Card editor · audio', attrOf('PhoneEditor', PW, PH, 'card-type="Audio" keyboard="{{no}}"'), { logic: yesNoLogic, css: EDITOR_CSS, w: PW, h: PH }],
   'PhoneEditorRecording': ['iPhone · Card editor · recording audio', attrOf('PhoneEditor', PW, PH, 'card-type="Audio" keyboard="{{no}}" recording="{{yes}}"'), { logic: yesNoLogic, css: EDITOR_CSS, w: PW, h: PH }],

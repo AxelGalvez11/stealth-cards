@@ -153,7 +153,12 @@ mock() {
   const deck = () => ({ id: 'cell', name: ed.name ?? 'Cell Biology', tags: ed.tags || X.TAGS.cell, seed: 'Cell Biology', cover: { style: 'mix', round: 0, image: null, ...(ed.cover || {}) },
     paused: !!ed.paused, grading: ed.grading || byName[p.grading] || 'four', fsrs: ed.fsrs ?? (p.fsrs !== false), goal: ed.goal ?? 90, gapIdx: ed.gapIdx ?? 3, steps: ed.steps || ['1m', '10m'], perDay: ed.perDay ?? 20,
     total: 412, totalLabel: '412', due: 28, fresh: 10, ret: 91, aiCount: 38, forecast: [28, 14, 20, 9, 24, 6, 12], piles: m.piles || [{ name: 'Know it', n: 18 }, { name: 'Almost', n: 6 }, { name: 'No clue', n: 3 }],
-    href: 'WebDeck.dc.html', studyHref: 'WebReview.dc.html', settingsHref: 'WebDeckSettings.dc.html', newCardHref: 'WebCardsScreenNew.dc.html', folder: null, bg: ed.bg || { kind: 'deck', image: null } });
+    href: 'WebDeck.dc.html', studyHref: 'WebReview.dc.html', settingsHref: 'WebDeckSettings.dc.html', newCardHref: 'WebCardsScreenNew.dc.html', folder: null, bg: ed.bg || { kind: 'deck', image: null },
+    // Sharing (Tweaks: shared, linked): shared by you, or from Maria (studied as it is, or a copy with her changes waiting).
+    ...(() => { const sv = m.share ? m.share.vis : p.shared === 'Public' ? 'public' : p.shared === 'Link only' ? 'link' : 'private', lk = m.detached ? '' : p.linked;
+      return { shared: sv !== 'private' && !lk ? { vis: sv, id: 's9', url: '/@alexkim/cell-biology', label: sv === 'public' ? 'Public' : 'Link only' } : null,
+        link: lk ? { mode: lk, gone: false, id: 's1', owner: { name: 'Maria Santos', handle: 'mariasantos' }, url: '/@mariasantos/mcat-biochemistry', pending: lk === 'copy' && !m.took ? 3 : 0, updates: m.upd ?? true } : null,
+        readOnly: lk === 'study' }; })() });
   const idx = m.idx ?? (({ 'Fill in the blank': 1, Image: 2, Audio: 3 })[p.card] || 0);
   // Profile picture (the Settings boards' photo setting): the Google photo, your own, or the color; the canvas draws
   // stand-ins for the photos.
@@ -184,6 +189,10 @@ mock() {
     searchDecks: q => X.DECKS.filter(d => d.name.toLowerCase().includes(q)).map(d => d.id),
     cards: () => cardOrder.map(id => X.CARDS.find(r => r.id === id)).filter(r => !cardDeck[r.id] || cardDeck[r.id] === 'cell').map(r => ({ ...r, href: 'WebCardsScreen.dc.html' })),
     card: () => null,
+    updatesOf: () => (p.linked === 'copy' && !m.took ? [
+      { card: 'u1', op: 'edit', kind: 'answer', mine: false, before: { q: 'Which enzyme is the rate-limiting step of glycolysis?', a: 'Hexokinase' }, after: { q: 'Which enzyme is the rate-limiting step of glycolysis?', a: 'Phosphofructokinase-1 (PFK-1)' } },
+      { card: 'u2', op: 'add', kind: 'new', mine: false, before: null, after: { q: 'What activates PFK-1?', a: 'AMP and fructose-2,6-bisphosphate' } },
+      { card: 'u3', op: 'edit', kind: 'typo', mine: true, before: { q: 'Where is ATP made?', a: 'In the mitochondria (my notes)' }, after: { q: 'Where is ATP made?', a: 'Mostly in the mitochondria' } }] : []),
     draft: type => ({ tags: ['Energy', 'Exam 1'], front: '', back: '', text: '', note: '', image: null, audio: null, speak: '', auto: true, ...X.DRAFTS[type] }),
     today: () => ({ date: 'Tuesday, September 22', streak: 12, best: 31, due: caught ? 0 : 64, minutes: 11, fresh: 10, next: { day: 'tomorrow', n: 32 },
       week: ['M', 'T', 'W', 'T', 'F', 'S', 'S'].map((d, i) => ({ d, done: i < 2, today: i === 1 })), forecast: X.DUE_7, newCardHref: 'WebCardsScreenNew.dc.html', studyHref: 'WebReview.dc.html' }),
@@ -260,7 +269,8 @@ mock() {
       follow: (h, on) => set({ follows: { ...(m.follows || {}), [h]: !!on } }), study: () => set({ studying: 'cell' }), copyDeck: () => set({ copied: 'cell' }),
       decide: id => set({ decided: { ...(m.decided || {}), [id]: true } }), readNews: () => set({ read: true }),
       suggest: () => Promise.resolve({ id: 'g9' }), restore: noop, checkDeck: noop, updateProfile: patch => set({ profile: { ...(m.profile || {}), ...patch } }), ensureProfile: noop,
-      shareDeck: (id, o) => set({ share: { ...(m.share || { vis: 'private' }), ...(o.visibility ? { vis: o.visibility } : {}), ...o } }), detach: noop, takeUpdates: () => set({ took: true })
+      shareDeck: (id, o) => { set({ share: { ...(m.share || { vis: p.shared === 'Public' ? 'public' : p.shared === 'Link only' ? 'link' : 'private' }), ...(o.visibility ? { vis: o.visibility } : {}) } }); return Promise.resolve({}); },
+      detach: () => set({ detached: true }), takeUpdates: () => { set({ took: true }); return Promise.resolve({}); }, copyUpdates: (id, on) => set({ upd: !!on })
     }
   };
 }

@@ -55,7 +55,10 @@ function resolve(path, q) {
   if (deck) {
     const id = deck[1];
     if (!db.raw().decks.some(d => d.id === id)) return { redirect: '/library' };
-    if (deck[2] === '/import') return { name: 'WebImport', props: { deckId: id } };
+    // A deck you study as it is can't be edited here: fixing a card is suggesting it on the deck's page.
+    const dRow = db.decks().find(x => x.id === id);
+    if (dRow && dRow.readOnly && deck[2] && /^\/card/.test(deck[2])) { const c = deck[3] && db.raw().cards.find(x => x.id === deck[3]); return { redirect: dRow.link.url + '?suggest=' + encodeURIComponent((c && c.origin) || '1') }; }
+    if (deck[2] === '/import') return dRow && dRow.readOnly ? { redirect: '/deck/' + id } : { name: 'WebImport', props: { deckId: id } };
     // Suggestions people sent for this deck (it's shared), to take or skip.
     if (deck[2] === '/suggestions') return { name: P + 'Suggestions', props: { deckId: id } };
     // Learn mode starts from a sheet over the deck. It's Pro: on Free the sheet shows what Pro adds instead.

@@ -161,6 +161,8 @@ export async function createDb({ onChange, go }) {
       pending: d.link.gone ? 0 : (d.link.pending || []).length, updates: !!d.link.updates } : null;
     return { shared: sh, link: k, readOnly: !!(k && k.mode === 'study' && !k.gone) };
   };
+  // A card of a deck you study as it is: fixing it means suggesting the fix to its owner, on the deck's page.
+  const suggestHref = (d, c) => shareOf(d).link.url + '?suggest=' + encodeURIComponent((c && c.origin) || '1');
   const deckRow = d => {
     const st = deckStat(d);
     return { id: d.id, name: d.name, tags: d.tags, seed: d.cover.seed || d.name, style: d.cover.style, round: d.cover.round, image: d.cover.image, paused: d.paused,
@@ -490,7 +492,9 @@ export async function createDb({ onChange, go }) {
       clearTimeout(typingTimer);
       typingTimer = setTimeout(() => { const all = typing; typing = {}; for (const [k, p] of Object.entries(all)) send('deck.update', { id: k, patch: p }); }, 400);
     },
-    deleteDeck: async id => { const d = deckById(id); if (!d || !confirm('Delete “' + d.name + '” and its ' + plural(cardsOf(id).length, 'card') + '? This can’t be undone.')) return; await send('deck.delete', { id }); go('/library'); },
+    deleteDeck: async id => { const d = deckById(id); if (!d) return;
+      const ask = d.link && !d.link.gone ? 'Remove “' + d.name + '” from your library? Your progress on it goes too.' : 'Delete “' + d.name + '” and its ' + plural(cardsOf(id).length, 'card') + '? This can’t be undone.';
+      if (!confirm(ask)) return; await send('deck.delete', { id }); go('/library'); },
     // Folders: make one (optionally putting a deck in it), rename one, or remove one (its decks go back to the library).
     newFolder: async (name, deckId) => { const r = await send('folder.add', { name }); if (deckId) await send('deck.update', { id: deckId, patch: { folder: r.id } }); return r.id; },
     renameFolder: (id, name) => send('folder.update', { id, patch: { name } }),
@@ -627,6 +631,7 @@ export async function createDb({ onChange, go }) {
     copyDeck: async (id, o = {}) => { const r = await net.act('deck.copy', { id, ...o }); if (r && r.deckId) go('/deck/' + r.deckId); return r; },
     detach: deckId => net.act('deck.detach', { deckId }),
     takeUpdates: (deckId, picks) => net.act('deck.updates', { deckId, picks }),
+    copyUpdates: (deckId, on) => net.act('deck.copyUpdates', { deckId, on }),
     star: (id, on) => net.act('deck.star', { id, on }),
     watch: (id, on) => net.act('deck.watch', { id, on }),
     checkDeck: id => net.act('deck.check', { id }),
@@ -679,8 +684,14 @@ export async function createDb({ onChange, go }) {
       return { ...deckRow(d), cover: d.cover, grading: d.grading, fsrs: d.fsrs !== false, goal: d.goal, gapIdx: d.gapIdx ?? 3, steps: d.steps, perDay: d.perDay,
         forecast: forecast(7, [d]).vals, piles: (d.piles || []).map(p => ({ name: p.name, n: cardsOf(d.id).filter(c => c.pile === p.name).length })) };
     },
-    cards: id => deckCards(deckById(id), S.cards).map(c => ({ id: c.id, kind: KIND[c.kind], icon: ICON[c.kind], front: listFront(c), back: listBack(c), tags: c.tags, next: nextLabel(c),
-      ai: byAI(c) ? c.source : '', href: '/deck/' + id + '/card/' + c.id, group: c.group || null })),
+    cards: id => { const d = deckById(id), ro = d && shareOf(d).readOnly;
+      return deckCards(d, S.cards).map(c => ({ id: c.id, kind: KIND[c.kind], icon: ICON[c.kind], front: listFront(c), back: listBack(c), tags: c.tags, next: nextLabel(c),
+        ai: byAI(c) && c.source !== 'shared' ? c.source : '', href: ro ? suggestHref(d, c) : '/deck/' + id + '/card/' + c.id, group: c.group || null })); },
+    // A copy's waiting changes from the deck it came from (see social.mjs sync), as the updates panel lists them.
+    updatesOf: id => { const d = deckById(id); if (!d || !d.link || d.link.gone) return [];
+      const words = x => (x ? (x.kind === 'cloze' ? R.plain(x.text, { cloze: true, blank: '____', join: ' ', math: 'show' }) : flat(x.front)) : '');
+      const ans = x => (x ? (x.kind === 'cloze' ? R.blanks(x.text, { math: 'show' }).join(', ') : flat(x.back)) : '');
+      return (d.link.pending || []).map(p => ({ card: p.card, op: p.op, kind: p.kind, mine: !!p.mine, before: p.before ? { q: words(p.before), a: ans(p.before) } : null, after: p.after ? { q: words(p.after), a: ans(p.after) } : null })); },
     card: id => { const c = cardIndex().get(id); return c ? { ...c, clozeMode: c.cloze === -1 ? 'one' : 'each' } : null; },
     // The cards made together with this one: every blank of one text, or every box of one picture (just it, alone).
     group: id => { const c = cardIndex().get(id); return !c ? [] : c.group ? groupIndex().get(c.group) : [c]; },
@@ -705,7 +716,8 @@ export async function createDb({ onChange, go }) {
       if (!cur) return { ...base, empty: true, card: null, queue: 'rev', iv: { again: '', hard: '', good: '', easy: '' }, fsrsOn: false, editHref: '' };
       const c = cur.card, t = now(), pv = scheduled(d) ? preview(c.srs, t, { goal: d.goal / 100, maxDays: GAPS[d.gapIdx ?? 3], steps: d.steps }) : null;
       autoplay(c);
-      return { ...base, empty: false, card: face(c), ex: explainOf(c), queue: cur.lane, fsrsOn: !!pv, editHref: '/deck/' + d.id + '/card/' + c.id + '?from=review',
+      const ro = shareOf(d).readOnly;
+      return { ...base, empty: false, card: face(c), ex: explainOf(c), queue: cur.lane, fsrsOn: !!pv, editHref: ro ? suggestHref(d, c) : '/deck/' + d.id + '/card/' + c.id + '?from=review', editLabel: ro ? 'Suggest a fix' : 'Edit',
         iv: pv ? { again: waitLabel(pv[1], t), hard: waitLabel(pv[2], t), good: waitLabel(pv[3], t), easy: waitLabel(pv[4], t) } : { again: '', hard: '', good: '', easy: '' } };
     },
     hasQueue: (id, pile) => queue(id, pile).length > 0,

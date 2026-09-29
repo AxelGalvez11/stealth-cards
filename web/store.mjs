@@ -325,8 +325,10 @@ function run(a, who) {
     case 'deck.delete': {
       const d = findDeck(a.id); if (!d) throw new Error('No such deck');
       S.decks = S.decks.filter(x => x !== d); S.cards = S.cards.filter(c => c.deckId !== d.id); S.logs = S.logs.filter(l => l.deckId !== d.id);
-      // A shared deck stops being shared when it goes (people who copied it keep their copies).
+      // A shared deck stops being shared when it goes (people who copied it keep their copies), and one you studied or
+      // copied from someone stops counting you.
       if (d.share) L.touched.set(d.id, { gone: d.share.id });
+      else if (d.link && !d.link.gone) L.touched.set(d.id, { left: d.link.id });
       return { id: d.id };
     }
     case 'card.add': {
