@@ -80,8 +80,10 @@ struct NewsScreen: View {
       .contentShape(Rectangle())
     }
     .buttonStyle(.flat)
-    .accessibilityElement(children: .combine)
+    .accessibilityElement(children: .ignore)
+    .accessibilityLabel([words.0, words.1, words.2].filter { !$0.isEmpty }.joined(separator: " ") + (note.isEmpty ? "" : ", " + note) + ", " + NetFmt.ago(x.created, demo: store.demo))
     .accessibilityValue(isNew ? "New" : "")
+    .accessibilityAddTraits(.isButton)
   }
 
   /// A follow opens their profile; a suggestion on your deck, its suggestions; the rest, the deck's page (the web app's

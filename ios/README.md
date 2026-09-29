@@ -46,3 +46,23 @@ The background's shader is compiled when the app first shows it (Design/Aura.swi
 
 `-open` goes straight to `deck`, `review`, `stats`, `connect`, `settings`, `learn`, `library`, or `cards` (the Library's All
 cards). Give that server `OPENROUTER_API_KEY` (and `OPENROUTER_BASE` pointing at a stand-in, for testing) to try Explain.
+
+## The study network
+
+Discover (its own tab), profiles (yours from your picture on Today, whose gear opens Settings; anyone's from their name),
+Edit profile, pins, News (the bell on Today), Settings → Profile, whose each deck is in the Library, and a deck's sharing:
+the Sharing tab of Deck settings, a deck you study from someone (Suggest a change instead of New card), and your copy of
+one with the owner's changes to take or skip. The answers come from the same server as the web app's (`Data/Net.swift`,
+like `web/net.js`). A shared deck's own page, its History, and its suggestions open the web app's pages over the app for
+now. The boards: `PhoneDiscover`, `PhoneDiscoverSearch`, `PhoneProfile` (and `Other`, `Following`, `Edit`, `Saved`,
+`Suggestions`, `Empty`, `Loading`, `Missing`), `PhoneActivity` (and `Empty`), `PhoneDeckStudied`, `PhoneDeckCopy`,
+`PhoneDeckUpdates`, and `PhoneDeckSettingsShare`, with their Dark and Gray twins.
+
+Against a copy of the server, `-dev <name>` signs in as one of its made-up people (like `/dev/as/<name>` on the web), and
+`-open` also takes `discover`, `news`, `profile` (yours), `profile:<handle>`, and `deck:<name>`. The whole thing is tested
+end to end by tapping through the app as three people (one shares a deck; another finds, follows, and studies it; a third
+copies it and takes and skips the owner's changes; then News, pins, Sharing, and Edit profile):
+
+    ios/tools/e2e.sh <simulator id>
+
+It starts a fresh server on port 3677 and runs `LucidaUITests`.

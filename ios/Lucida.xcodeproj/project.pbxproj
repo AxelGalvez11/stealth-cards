@@ -8,7 +8,18 @@
 
 /* Begin PBXFileReference section */
 		4C0000000000000000000001 /* Lucida.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Lucida.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		4C0000000000000000000010 /* LucidaUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = LucidaUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
+
+/* Begin PBXContainerItemProxy section */
+		4C0000000000000000000016 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 4C0000000000000000000009 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 4C0000000000000000000006;
+			remoteInfo = Lucida;
+		};
+/* End PBXContainerItemProxy section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		4C0000000000000000000002 /* Lucida */ = {
@@ -16,10 +27,22 @@
 			path = Lucida;
 			sourceTree = "<group>";
 		};
+		4C0000000000000000000011 /* LucidaUITests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = LucidaUITests;
+			sourceTree = "<group>";
+		};
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
 		4C0000000000000000000003 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		4C0000000000000000000013 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -33,6 +56,7 @@
 			isa = PBXGroup;
 			children = (
 				4C0000000000000000000002 /* Lucida */,
+				4C0000000000000000000011 /* LucidaUITests */,
 				4C0000000000000000000005 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -41,6 +65,7 @@
 			isa = PBXGroup;
 			children = (
 				4C0000000000000000000001 /* Lucida.app */,
+				4C0000000000000000000010 /* LucidaUITests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -70,6 +95,29 @@
 			productReference = 4C0000000000000000000001 /* Lucida.app */;
 			productType = "com.apple.product-type.application";
 		};
+		4C0000000000000000000015 /* LucidaUITests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 4C0000000000000000000018 /* Build configuration list for PBXNativeTarget "LucidaUITests" */;
+			buildPhases = (
+				4C0000000000000000000012 /* Sources */,
+				4C0000000000000000000013 /* Frameworks */,
+				4C0000000000000000000014 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				4C0000000000000000000017 /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				4C0000000000000000000011 /* LucidaUITests */,
+			);
+			name = LucidaUITests;
+			packageProductDependencies = (
+			);
+			productName = LucidaUITests;
+			productReference = 4C0000000000000000000010 /* LucidaUITests.xctest */;
+			productType = "com.apple.product-type.bundle.ui-testing";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -82,6 +130,10 @@
 				TargetAttributes = {
 					4C0000000000000000000006 = {
 						CreatedOnToolsVersion = 26.0;
+					};
+					4C0000000000000000000015 = {
+						CreatedOnToolsVersion = 26.0;
+						TestTargetID = 4C0000000000000000000006;
 					};
 				};
 			};
@@ -100,12 +152,20 @@
 			projectRoot = "";
 			targets = (
 				4C0000000000000000000006 /* Lucida */,
+				4C0000000000000000000015 /* LucidaUITests */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
 		4C0000000000000000000008 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		4C0000000000000000000014 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -122,7 +182,22 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		4C0000000000000000000012 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		4C0000000000000000000017 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 4C0000000000000000000006 /* Lucida */;
+			targetProxy = 4C0000000000000000000016 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
 		4C000000000000000000000C /* Debug */ = {
@@ -246,6 +321,40 @@
 			};
 			name = Release;
 		};
+		4C0000000000000000000019 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 27AW3HBC3Z;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = cards.lucida.app.uitests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+				TEST_TARGET_NAME = Lucida;
+			};
+			name = Debug;
+		};
+		4C000000000000000000001A /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 27AW3HBC3Z;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = cards.lucida.app.uitests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+				TEST_TARGET_NAME = Lucida;
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -263,6 +372,15 @@
 			buildConfigurations = (
 				4C000000000000000000000C /* Debug */,
 				4C000000000000000000000D /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		4C0000000000000000000018 /* Build configuration list for PBXNativeTarget "LucidaUITests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				4C0000000000000000000019 /* Debug */,
+				4C000000000000000000001A /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

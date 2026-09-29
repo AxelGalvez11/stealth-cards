@@ -117,8 +117,9 @@ struct DeckShareTab: View {
         .padding(.bottom, keyboard.height > 0 ? keyboard.height : 0)
       }
       .scrollDismissesKeyboard(.interactively)
-      .onChange(of: focus) { _, f in
-        if f == nil, let a = about { set(["description": a]) }
+      .onChange(of: focus) { was, f in
+        // About this deck saves when you leave it (the web's blur).
+        if was == "about" && f != "about", let a = about { set(["description": a]) }
         guard let f else { return }
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) { withAnimation(.out(0.3)) { proxy.scrollTo(f, anchor: UnitPoint(x: 0.5, y: 0.3)) } }
       }
