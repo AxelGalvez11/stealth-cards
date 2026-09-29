@@ -319,7 +319,9 @@ async function go(path, push, replace) {
   const rvm = /^\/review(?:\/([^/]+))?$/.exec(url.pathname), pile = url.searchParams.get('pile') || '';
   if (rvm && rvm[1] !== 'done' && !/from=review/.test(lastPath) && (!/^\/review/.test(lastPath) || (pile && lastPath.startsWith('/review/done')))) db.startReview(rvm[1] || '', pile);
   const r = resolve(url.pathname, url.searchParams);
-  if (r.redirect) return go(r.redirect, false, true);
+  // A link that lands somewhere else (You → /you → /@alexkim) still adds a page to history, so Back returns to the
+  // page you clicked it on; opening an address that moves just takes its place.
+  if (r.redirect) return go(r.redirect, push, !push);
   try { await load(r.name); } catch { return go('/', false, true); }
   if (push) history.pushState(null, '', url.pathname + url.search);
   else if (replace) history.replaceState(null, '', url.pathname + url.search);
