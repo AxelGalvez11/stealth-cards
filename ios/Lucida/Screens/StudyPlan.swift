@@ -133,6 +133,32 @@ struct ExamRow: View {
       .frame(minHeight: 36)
       if on { Text(d.exam?.line ?? "This exam has passed").css(12, lh: 1.4).foregroundStyle(t.muted).fixedSize(horizontal: false, vertical: true) }
     }
+    .sheet(isPresented: $picking) { calendar }
+    #if DEBUG
+    // `-popover exam` opens the calendar as soon as the settings are up (for looking at it).
+    .task { if Board.arg("-popover") == "exam" && pro { try? await Task.sleep(nanoseconds: 1_500_000_000); picked = Store.examDate(d.examDay, demo: store.demo) ?? Store.examMin(demo: store.demo); picking = true } }
+    #endif
+  }
+
+  /// Pick the day (it's set, and the calendar closes): from today on.
+  private var calendar: some View {
+    VStack(alignment: .leading, spacing: 8) {
+      HStack { Text("Exam date").css(18, .semibold, ls: -0.01); Spacer(); SheetDone { picking = false } }
+      DatePicker("", selection: $picked, in: Store.examMin(demo: store.demo)..., displayedComponents: .date)
+        .datePickerStyle(.graphical).labelsHidden().tint(t.text)
+        .onChange(of: picked) { _, day in
+          store.setExam(d.id, Store.examIso(day))
+          Task { try? await Task.sleep(nanoseconds: 250_000_000); picking = false }
+        }
+    }
+    .foregroundStyle(t.text)
+    .padding(.horizontal, 20).padding(.top, 20).padding(.bottom, 12)
+    .frame(maxHeight: .infinity, alignment: .top)
+    .background(t.bg.ignoresSafeArea())
+    .presentationDetents([.height(480)])
+    .presentationDragIndicator(.visible)
+    .presentationBackground(t.bg)
+    .environment(\.theme, t)
   }
 
   private func label(_ text: String) -> some View {
@@ -144,13 +170,6 @@ struct ExamRow: View {
     Button { picked = Store.examDate(d.examDay, demo: store.demo) ?? Store.examMin(demo: store.demo); picking = true } label: { label(text) }
       .buttonStyle(.press)
       .accessibilityLabel(text == "Add a date" ? "Add an exam date" : "Exam date, \(text)")
-      .popover(isPresented: $picking, attachmentAnchor: .point(.bottom), arrowEdge: .top) {
-        DatePicker("", selection: $picked, in: Store.examMin(demo: store.demo)..., displayedComponents: .date)
-          .datePickerStyle(.graphical).labelsHidden()
-          .padding(8).frame(width: 330)
-          .presentationCompactAdaptation(.popover)
-          .onChange(of: picked) { _, day in store.setExam(d.id, Store.examIso(day)); picking = false }
-      }
   }
   /// With no way to change it (Free, on a date from before): just the day.
   private func chip(_ text: String) -> some View { label(text) }
