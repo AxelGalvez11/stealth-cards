@@ -15,6 +15,7 @@ import * as social from './social.mjs';
 import { cancelStripe, dropPlan } from './billing.mjs';
 import { purchasesOf, activePlan, erase as eraseApple } from './apple.mjs';
 import { eraseDev } from './store.mjs';
+import { forget as forgetApps } from './oauth.mjs';
 
 // Blocks and Apple purchases have tables of their own (supabase/appstore.sql). If that SQL hasn't run yet, deleting an account
 // still has to work, so a failure on those two is only logged.
@@ -25,6 +26,8 @@ export async function deleteAccount({ uid, email = '' }) {
   if (cloud()) await cancelStripe(uid, email);
   // (forget removes the blocks they made; the ones against them stay through "Delete my data" but go with the account.)
   await social.forget(uid);
+  // The AI apps they allowed to sign in (online the database removes them with the account; this computer needs it done here).
+  await tolerate('ai apps', forgetApps(uid));
   await tolerate('blocks', rest('/blocks?blocked=eq.' + val(uid), { method: 'DELETE' }));
   if (cloud()) {
     await files.clear(uid);

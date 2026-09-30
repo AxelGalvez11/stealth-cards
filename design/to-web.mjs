@@ -29,7 +29,7 @@ for (const file of readdirSync(SRC).filter(f => f.endsWith('.dc.html')).sort()) 
   // stay on screen. Inside another board (a page behind a sheet, or the dark and other versions on /b), a page takes
   // that board's height instead.
   // Live's player screens fill the phone the same way: joining and the final leaderboard grow, the rest fit the screen.
-  const grow = ['PhoneSignIn', 'PhoneSignInCode', 'PhoneQuizStart', 'PhoneQuiz', 'PhoneQuizMatch', 'PhoneQuizType', 'PhoneQuizDone', 'LiveJoin', 'LiveFinal'];
+  const grow = ['PhoneSignIn', 'PhoneSignInCode', 'PhoneConnectConsent', 'PhoneQuizStart', 'PhoneQuiz', 'PhoneQuizMatch', 'PhoneQuizType', 'PhoneQuizDone', 'LiveJoin', 'LiveFinal'];
   const phoneFill = [...grow, 'PhoneToday', 'PhoneTodayNew', 'PhoneDeck', 'PhoneDeckEmpty', 'PhoneEditor', 'PhoneReview', 'PhoneDone', 'PhoneDonePiles',
     'PhoneStats', 'PhoneStatsEmpty', 'PhoneConnect', 'PhoneSettings', 'PhoneNewDeck', 'PhoneLibrary', 'PhoneDecksEmpty', 'PhoneWelcome', 'PhoneThemePicker', 'PhoneTheme',
     'PhoneDiscover', 'PhoneProfile', 'PhonePublicDeck', 'PhoneHistory', 'PhoneSuggestions', 'PhoneActivity', 'PhoneClasses', 'PhoneClass',

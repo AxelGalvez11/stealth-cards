@@ -387,9 +387,11 @@ art(p, variant) {
   const name = p.fid + (variant ? '-' + variant : ''), on = !!(this.props.site || this.props.db) && ["sc-flow-midnight","sc-flow-midnight-wide","sc-gen-1bgiry6","sc-gen-1eyvfay","sc-gen-1h674rq","sc-gen-1iccxh","sc-gen-1madw05","sc-gen-1mheeld","sc-gen-1mukigx","sc-gen-1neye4o","sc-gen-1s1ssqz","sc-gen-1tj9ifj","sc-gen-1ul2ng5","sc-gen-1yac7zp","sc-gen-2xvhhe","sc-gen-5gnrcu","sc-gen-8f1umk","sc-gen-90zkel","sc-gen-favxds","sc-gen-o6z85t","sc-gen-px21tz","sc-gen-qmdzqs","sc-gen-v4yoeu","sc-gen-vwxtrt","sc-gen-ym0akm","sc-gen-yzu3mr"].includes(name);
   return { ...p, art: on ? 'url(/art/' + name + '.webp)' : '', live: !on };
 }
-constructor(props) { super(props); const a = props.db && props.db.auth; this.state = { email: a ? a.email() : '', code: a ? '' : '482', resent: false, busy: false, error: a ? a.error() : '' }; }
+constructor(props) { super(props); const a = props.db && props.db.auth; this.state = { email: a ? a.email() : '', code: a ? '' : '482', resent: false, busy: false, error: a ? a.error() : '', password: '', pwOn: undefined }; }
 renderVals() { const t = this.theme(!!this.props.dark, !!this.props.dim);
   const s = this.state, code = String(s.code || ''), a = this.props.db && this.props.db.auth;
+  // A password instead of a code: in the app it is its own address (/sign-in/password); on the canvas the link flips the board.
+  const pw = a ? !!this.props.passwordMode : (s.pwOn ?? !!this.props.passwordMode);
   // In the app (props.db) these sign in for real: an email code, or Google and Apple through the server.
   const stop = e => { if (e && e.preventDefault) e.preventDefault(); };
   const failed = e => this.setState({ busy: false, error: e.message });
@@ -398,6 +400,11 @@ renderVals() { const t = this.theme(!!this.props.dark, !!this.props.dim);
     const email = String(s.email || '').trim();
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return this.setState({ error: 'Type your email address.' });
     if (s.busy) return;
+    if (pw) {
+      if (!s.password) return this.setState({ error: 'Type your password.' });
+      this.setState({ busy: true, error: '' });
+      return a.password(email, s.password).then(() => a.done(), failed);
+    }
     this.setState({ busy: true, error: '' });
     a.sendCode(email).then(() => { this.setState({ busy: false }); a.go('/sign-in/code'); }, failed);
   };
@@ -410,7 +417,9 @@ renderVals() { const t = this.theme(!!this.props.dark, !!this.props.dim);
   const leave = to => e => { if (!a) return; stop(e); location.assign(to); };
   return { grain: String(this.props.grain ?? 0.7), t, 
     email: s.email, setEmail: e => this.setState({ email: e && e.target ? e.target.value : '', error: '' }), emailKey: e => { if (e && e.key === 'Enter') send(e); },
-    sentTo: (s.email || '').trim() || 'you@school.edu', sendCode: send, sendLabel: s.busy ? 'Sending…' : 'Continue',
+    sentTo: (s.email || '').trim() || 'you@school.edu', sendCode: send, sendLabel: pw ? (s.busy ? 'Signing in…' : 'Sign in') : s.busy ? 'Sending…' : 'Continue',
+    passwordMode: pw, password: s.password || '', emailAuto: pw ? 'username' : 'email', setPassword: e => this.setState({ password: e && e.target ? e.target.value : '', error: '' }), passwordKey: e => { if (e && e.key === 'Enter') send(e); },
+    togglePassword: () => { if (!a) return this.setState({ pwOn: !pw, error: '' }); if (a.remember) a.remember(String(s.email || '').trim()); a.go(pw ? '/sign-in' : '/sign-in/password'); }, passwordToggle: pw ? 'Use an email code instead' : 'Use a password',
     google: leave('/auth/google'), apple: leave('/auth/apple'),
     code, setCode: e => { const c = String(e && e.target ? e.target.value : '').replace(/\D/g, '').slice(0, 6); this.setState({ code: c, error: '' }); check(c); },
     verify: e => { if (!a) return; stop(e); if (code.length < 6) return this.setState({ error: 'Type the 6-digit code from the email.' }); check(code); },

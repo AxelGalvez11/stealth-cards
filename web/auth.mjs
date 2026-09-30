@@ -51,7 +51,8 @@ async function check(token) {
   return user;
 }
 
-// The signed-in person for this request, or null, plus any cookies to send back (a refreshed or ended session).
+// The signed-in person for this request, or null, plus any cookies to send back (a refreshed or ended session), and the access
+// token that was good (for calls made as the person, like setting a password).
 export async function who(req) {
   const c = cookies(req);
   let token = c[AT], set = [];
@@ -61,7 +62,7 @@ export async function who(req) {
     catch (e) { if (e.status >= 400 && e.status < 500) set = clearCookies(req); else throw e; }
   }
   if (!token) return { user: null, set };
-  try { return { user: await check(token), set }; }
+  try { return { user: await check(token), set, token }; }
   catch (e) { if (e.status === 401 || e.status === 403) return { user: null, set: clearCookies(req) }; throw e; }
 }
 export const forget = token => seen.delete(token);

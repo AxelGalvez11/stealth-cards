@@ -46,13 +46,18 @@ function resolve(path, q) {
   const net = network(path, q, P);
   // Online and signed out: only the sign-in pages (and the code page once a code is on its way), and the study
   // network's pages anyone can open.
-  if (db.signedOut) return net ? { ...net, props: { ...net.props, signedOut: true } } : path === '/sign-in/code' && db.auth.email() ? { name: P + 'SignInCode' } : path === '/sign-in' ? { name: P + 'SignIn' } : { redirect: '/sign-in' };
+  // (/sign-in/password is the same page with a password box, and /oauth/authorize, where an AI app asks to connect, signs you in
+  // first and brings you back to the same request.)
+  if (db.signedOut) return net ? { ...net, props: { ...net.props, signedOut: true } } : path === '/sign-in/code' && db.auth.email() ? { name: P + 'SignInCode' } : path === '/sign-in' ? { name: P + 'SignIn' }
+    : path === '/sign-in/password' ? { name: P + 'SignIn', props: { passwordMode: true } } : path === '/oauth/authorize' ? { redirect: '/sign-in?next=' + encodeURIComponent(path + '?' + q.toString()) } : { redirect: '/sign-in' };
   if (net) return net;
   // You: your profile (it's made the first time you open it). ?edit=1 (Settings → Edit profile) opens it to edit.
   const edit = q.get('edit') === '1';
   if (path === '/you') return db.me().handle ? { redirect: '/@' + db.me().handle + (edit ? '?edit=1' : '') } : { name: P + 'Profile', props: { handle: '', self: true, editOpen: edit } };
   if (path === '/activity') return { name: P + 'Activity' };
   if (path === '/suggestions') return { name: P + 'Suggestions', props: { deckId: '' } };
+  // An AI app (Claude, ChatGPT…) asking to use your decks: who it is, and Allow or Cancel (web/oauth.mjs, web/connect.js).
+  if (path === '/oauth/authorize') return { name: P + 'ConnectConsent' };
   if (path.startsWith('/sign-in')) return { redirect: '/' };
   // Live, for the host: the big screen shows the game this tab is running, in whatever phase it's in.
   const lv = /^\/live\/(\d{6})$/.exec(path);

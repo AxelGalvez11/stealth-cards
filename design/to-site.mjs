@@ -118,3 +118,11 @@ write('site/robots.txt', robots());
 write('site/llms.txt', llmsTxt(pages));
 write('site/llms-full.txt', llmsFull(pages, web.html));
 console.log(SIZES.join('\n'));
+
+// Connect Lucida (lucida.cards/connect): how to add Lucida to Claude, ChatGPT and other AI apps (design/connect-guide.mjs). The file is
+// web/connect-guide.html because /connect in the app (app.lucida.cards) is the signed-in Connect AI page; vercel.json shows it at
+// lucida.cards/connect.
+{
+  const b = board('SiteConnect', { site: true, dark: false });
+  write('connect-guide.html', head(fixed('connect'), { css: b.css }) + `\n<body>\n${b.html}\n</body>\n</html>\n`);
+}

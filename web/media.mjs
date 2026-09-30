@@ -79,14 +79,14 @@ const within = (p, signal) => new Promise((ok, no) => { signal.aborted ? no(new 
 // The link's host is looked up once and every address it gives is checked. The connection is then made to those addresses
 // only (the lookup handed to the request answers with them and asks nobody), so a name that answers something else the second
 // time (DNS rebinding) changes nothing. LUCIDA_TEST_LOCAL_LINKS lets tests serve files from this computer (loopback only).
-async function reach(url, stop) {
+export async function reach(url, stop, headers = {}) {
   const host = url.hostname.replace(/^\[|\]$/g, '');
   const found = isIP(host) ? [{ address: host, family: isIP(host) }] : await within(lookup(host, { all: true }), stop);
   const testing = process.env.LUCIDA_TEST_LOCAL_LINKS === '1';
   if (!found.length || found.some(a => reservedAddress(a.address) && !(testing && loopback(a.address)))) throw new Error('refused');
   return new Promise((ok, no) => {
     const req = (url.protocol === 'https:' ? https : http).request(url, {
-      agent: false, signal: stop, headers: { 'user-agent': 'Lucida flashcards', accept: '*/*' },
+      agent: false, signal: stop, headers: { 'user-agent': 'Lucida flashcards', accept: '*/*', ...headers },
       lookup: (name, o, cb) => {
         const fam = o && (o.family === 'IPv4' ? 4 : o.family === 'IPv6' ? 6 : +o.family || 0), from = fam ? found.filter(a => a.family === fam) : found;
         if (!from.length) return cb(Object.assign(new Error('no address'), { code: 'ENOTFOUND' }));

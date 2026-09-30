@@ -11,6 +11,7 @@ import { placeBefore, deckCards, cardBefore, cardToDeck } from './order.js';
 import { createSound } from './sound.js';
 import { sniff } from './sniff.js';
 import { createNet } from './net.js';
+import { createConnect } from './connect.js';
 import { createLive } from './live.js';
 import { progressOf, doneOf } from './progress.js';
 import { loadTheme } from './themes/load.js';
@@ -55,6 +56,10 @@ function signedOut(go, onChange = () => {}) {
     error: () => off ? (off === 'apple' ? 'Apple' : 'Google') + ' sign-in isn’t set up yet. Use your email for now.' : q.get('failed') ? 'That didn’t work. Try again.' : '',
     sendCode: async e => { await post('/api/auth/code', { email: e }); email = e; try { keep.setItem('lucida.email', e); } catch {} },
     verify: code => post('/api/auth/verify', { email, code }),
+    // A password instead of a code (Settings → Account → Password sets one). `remember` keeps the email typed so far while the
+    // page switches between the two (each is its own address).
+    password: (e, password) => post('/api/auth/password', { email: e, password }),
+    remember: e => { email = e; try { keep.setItem('lucida.email', e); } catch {} },
     done: () => { try { keep.removeItem('lucida.email'); } catch {} location.assign(afterSignIn() || '/'); },
     go
   };
@@ -157,6 +162,8 @@ export async function createDb({ onChange, go }) {
   };
   // The study network (web/net.js): shared decks, profiles, Discover, suggestions, History, news.
   const net = createNet({ accept, changed, go });
+  // AI apps (web/connect.js): the apps that signed in to Lucida, the page where an app asks to connect, and the password.
+  const connect = createConnect({ changed, go });
   const handle = () => (S.profile && S.profile.handle) || '';
   // Live: hosting a game from this page, and playing one.
   const live = createLive({ onChange: () => changed(), go });
@@ -772,6 +779,8 @@ export async function createDb({ onChange, go }) {
     },
     // A new link for AI apps; the old one stops working (for a link that got out).
     newLink: () => send('ai.link'),
+    // AI apps that signed in (web/connect.js): Allow or Cancel on their page, Disconnect, switching account, and a password.
+    ...connect.act,
     // The study network (see web/social.mjs). Each gives back what the server said, and the screens redraw.
     shareDeck: (deckId, o) => net.act('deck.share', { deckId, ...o }),
     study: async id => { const r = await net.act('deck.study', { id }); if (r && r.deckId) go('/deck/' + r.deckId); return r; },
@@ -1032,11 +1041,15 @@ export async function createDb({ onChange, go }) {
       return { streak, best, reviews: logs.length.toLocaleString('en-US'), cards: S.cards.length.toLocaleString('en-US'), ai: S.cards.filter(byAI).length,
         remembered: rememberedPct(logs), goal: S.settings.goal, heat, forecast: forecast(14, S.decks, true), byDeck: S.decks.map(d => ({ name: d.name, ret: deckStat(d).ret })) };
     },
+    // The AI apps: the ones that called the personal link (S.ai.clients) and the ones that signed in to Lucida (`apps`, each with an id
+    // and what it is called; Disconnect ends one).
     ai: () => {
-      const names = Object.keys(S.ai.clients), has = n => names.includes(n);
-      return { url: location.origin + (S.me && S.ai.key ? '/mcp/' + S.ai.key : '/mcp'), perms: S.ai.perms, connected: names.length ? names.join(', ') : 'None yet',
+      const apps = connect.apps(), names = [...new Set([...Object.keys(S.ai.clients), ...apps.map(a => a.name)])], has = n => names.includes(n);
+      return { url: location.origin + (S.me && S.ai.key ? '/mcp/' + S.ai.key : '/mcp'), perms: S.ai.perms, connected: names.length ? names.join(', ') : 'None yet', apps,
         clients: { claude: has('Claude'), openai: has('ChatGPT'), cursor: has('Cursor'), mcp: names.some(n => !['Claude', 'ChatGPT', 'Cursor'].includes(n)) } };
     },
+    // The page where an AI app asks to connect (/oauth/authorize).
+    consent: connect.consent,
     href: (kind, id) => ({ decks: '/library', library: '/library', cards: '/library/cards', newDeck: '/decks/new', import: id ? '/deck/' + id + '/import' : '/decks/import', connect: '/connect', today: '/', done: '/review/done', stats: '/stats',
       review: id ? '/review/' + id : '/review', deck: '/deck/' + id })[kind] || '/'
   };

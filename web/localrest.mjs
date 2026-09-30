@@ -34,6 +34,13 @@ export const TABLES = {
   // Blocks and Apple purchases (supabase/appstore.sql): who blocked whom, and Pro bought with Apple's in-app purchase (web/apple.mjs).
   blocks: { key: ['blocker', 'blocked'], defaults: () => ({ created_at: now() }) },
   apple_purchases: { key: ['original_transaction_id'], defaults: () => ({ period_end: null, ending: false, environment: 'Production', transaction_id: '', signed_at: now(), rev: 1, created_at: now(), updated_at: now() }) },
+  // Sign-in for AI apps (web/oauth.mjs, supabase/oauth.sql): apps that registered themselves, one-time codes, one row per
+  // connected app (a grant), and the hashed tokens each grant holds. Deleting a grant's tokens and then the grant is what
+  // Supabase's "on delete cascade" does, and oauth.mjs does both itself.
+  oauth_clients: { key: ['client_id'], defaults: () => ({ client_name: '', redirect_uris: [], grant_types: ['authorization_code', 'refresh_token'], scope: '', client_uri: '', used: false, created_at: now() }) },
+  oauth_codes: { key: ['code_hash'], defaults: () => ({ client_name: '', client_host: '', scope: '', resource: '', used: false, created_at: now() }) },
+  oauth_grants: { key: ['id'], defaults: () => ({ client_name: '', client_host: '', scope: '', resource: '', created_at: now(), last_used_at: now() }) },
+  oauth_tokens: { key: ['token_hash'], defaults: () => ({ scope: '', resource: '', created_at: now() }) },
   // A view (supabase/hardening.sql deck_people), read only: how many different people study or copy each shared deck. A person
   // who copies a deck 25 times is one person.
   deck_people: { key: ['shared_id'], view: db => {

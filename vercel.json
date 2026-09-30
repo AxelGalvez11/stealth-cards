@@ -51,7 +51,7 @@
       "permanent": false
     },
     {
-      "source": "/:path((?:sign-in|discover|join|play|you|activity|suggestions|welcome|decks|library|verify|admin|stats|connect|settings|review|learn|deck|live|class|d|api|auth|mcp|media|pro|dev|b|@[^/]+)(?:/.*)?)",
+      "source": "/:path((?:sign-in|discover|join|play|you|activity|suggestions|welcome|decks|library|verify|admin|stats|settings|review|learn|deck|live|class|d|api|auth|mcp|media|pro|dev|b|@[^/]+)(?:/.*)?)",
       "has": [
         {
           "type": "host",
@@ -116,8 +116,34 @@
       "destination": "/api/index"
     },
     {
+      "source": "/oauth/:path*",
+      "destination": "/api/index"
+    },
+    {
+      "source": "/.well-known/oauth-protected-resource",
+      "destination": "/api/index"
+    },
+    {
+      "source": "/.well-known/oauth-protected-resource/:path*",
+      "destination": "/api/index"
+    },
+    {
+      "source": "/.well-known/oauth-authorization-server",
+      "destination": "/api/index"
+    },
+    {
       "source": "/pro",
       "destination": "/api/index"
+    },
+    {
+      "source": "/connect",
+      "has": [
+        {
+          "type": "host",
+          "value": "lucida.cards"
+        }
+      ],
+      "destination": "/connect-guide.html"
     },
     {
       "source": "/pricing",

@@ -5,7 +5,7 @@
 // Support: the address Lucida's sign-in emails come from (Resend). It needs receiving turned on in Resend (an MX record
 // on lucida.cards) before replies arrive.
 export const CONTACT = 'team@lucida.cards';
-export const UPDATED = 'September 24, 2026';
+export const UPDATED = 'September 30, 2026';
 
 export const PRIVACY = {
   title: 'Privacy Policy',
@@ -13,26 +13,37 @@ export const PRIVACY = {
   sections: [
     { h: 'What we keep', body: [
       ['list',
-        'Your email address, so we can send you sign-in codes. If you sign in with Google or Apple, we get your email and name from them.',
+        'Your email address, so we can send you sign-in codes. If you sign in with Google or Apple, we get your email and name from them. If you set a password, it’s kept only in scrambled form.',
         'What you put in Lucida: your decks, cards, pictures and sounds, your reviews and grades, and your settings.',
-        'Your personal AI link, the private address your AI apps use to reach your cards.',
+        'Your personal AI link, the private address your AI apps use to reach your cards, and the AI apps you allowed to sign in to Lucida (their name, the site they belong to, and when you connected them). Their sign-in keys are kept only in scrambled form.',
+        'Your profile, if you share decks or edit it: your name, @handle, picture, and what you add about yourself.',
+        'If you buy Pro: whether you have it and until when. Stripe or Apple takes the payment; we never see your card number.',
+        'Reports you send, and the people you block.',
         'Basic technical records. Our hosting and database providers log things like IP addresses and request times, so they can keep Lucida running and secure.']
     ] },
     { h: 'How we use it', body: [
       ['list',
         'To run Lucida: show your cards, plan your reviews, keep you signed in, and send sign-in codes.',
-        'To keep it safe: stop abuse and fix problems.'],
+        'To show what you share to the people you share it with.',
+        'To keep it safe: stop abuse, look at reports, and fix problems.'],
       'We don’t sell your data, use it for ads, or use your cards to train AI models.'
     ] },
+    { h: 'What others can see', body: [
+      'A deck you share publicly, and your profile, can be seen by anyone, including search engines. A Link only deck is seen only by people with its link. Private decks are only yours.',
+      'If someone studies or copies your deck, they see it as you shared it. A copy stays theirs if you stop sharing.'
+    ] },
     { h: 'AI apps you connect', body: [
-      'When you add your Lucida link to Claude, ChatGPT, or another AI app, that app can read and change your cards, within what you allow on the Connect AI page. What you share with the AI app itself is covered by that company’s privacy policy.',
-      'You can cut off every AI app at once by making a new link on the Connect AI page. The old one stops working right away.'
+      'When you add Lucida to Claude, ChatGPT, or another AI app, you either sign in to Lucida and press Allow, or paste your private link. That app can then read and change your cards, within what you allow on the Connect AI page. What you share with the AI app itself is covered by that company’s privacy policy.',
+      'You can cut off one app at a time with Disconnect on the Connect AI page, or every app that uses your private link at once by making a new link there. They stop working right away.'
     ] },
     { h: 'Who helps us run Lucida', body: [
       ['list',
         'Vercel hosts the website and the app.',
         'Supabase stores your account, cards, pictures, and sounds, in the United States.',
         'Resend sends our emails.',
+        'Stripe takes payments for Pro on the web, and Apple for Pro bought in the iPhone app.',
+        'When you ask Lucida to explain an answer, the card’s text goes to OpenRouter, which passes it to an AI model that writes the explanation.',
+        'Themes load their fonts from Google Fonts.',
         'When Lucida makes a voice for a sound card, the card’s text goes to the speech service that makes it.',
         'When you or your AI add a picture or sound from a link, Lucida downloads it from that site.'],
       'They only get what they need to do their part.'
@@ -44,7 +55,8 @@ export const PRIVACY = {
       ['list',
         'Export every deck, card, and review from Settings whenever you want.',
         'Delete decks and cards at any time, or everything at once from Settings.',
-        `To delete your account completely, including your email address, write to ${CONTACT}. We do it within 30 days; backups expire on their own soon after.`]
+        'Make a deck private again, or block someone, at any time.',
+        `To delete your account completely, including your email address, use Delete account in Settings, or write to ${CONTACT}. Backups expire on their own soon after.`]
     ] },
     { h: 'Children', body: [
       'Lucida isn’t meant for children under 13, and we don’t knowingly keep their information.'
@@ -63,10 +75,11 @@ export const TERMS = {
   intro: 'These terms cover your use of Lucida, the website at lucida.cards and the app at app.lucida.cards. By using Lucida, you agree to them. If you don’t, please don’t use it.',
   sections: [
     { h: 'Your account', body: [
-      'You need to be at least 13 to use Lucida. Keep your email account and your Lucida AI link to yourself: anyone with the link can reach your cards. You’re responsible for what happens in your account, so tell us if something looks wrong.'
+      'You need to be at least 13 to use Lucida. Keep your email account, your password (if you set one), and your Lucida AI link to yourself: anyone with them can reach your cards. You’re responsible for what happens in your account, so tell us if something looks wrong.'
     ] },
     { h: 'Your cards', body: [
-      'Your cards are yours. You let us store, copy, and show them only to run Lucida for you, for example to show them to you and to the AI apps you connect. Only add things you have the right to use.'
+      'Your cards are yours. You let us store, copy, and show them only to run Lucida for you, for example to show them to you and to the AI apps you connect. Only add things you have the right to use.',
+      'When you share a deck, you also let the people you share it with see it, study it, and copy it into their own library. Their copies stay theirs.'
     ] },
     { h: 'Cards made by AI', body: [
       'AI apps can make mistakes, and so can the cards they make. Check what matters, especially before an exam, and don’t rely on Lucida for medical, legal, or other professional advice.'
@@ -77,14 +90,16 @@ export const TERMS = {
         'break the law, or add things that aren’t yours to share;',
         'try to reach other people’s accounts or data;',
         'overload, attack, or get around the limits of Lucida;',
-        'use Lucida to send spam or harm anyone.'],
-      'We may suspend accounts that do.'
+        'use Lucida to send spam or harm anyone;',
+        'harass anyone, or share hateful, sexual, or violent content.'],
+      'We may remove what breaks these rules and suspend the accounts that post it. If you see something that does, report it from its ⋯ menu; we look at every report. You can also block anyone you don’t want to hear from.'
     ] },
     { h: 'The service', body: [
-      'Lucida is free for now. If that changes, we’ll tell you before you pay for anything. We keep improving Lucida, so features can change, and we may stop offering parts of it.'
+      'Lucida is free to use. Lucida Pro adds more tools for $5.99 a month or $49.99 a year. It renews on its own until you cancel. Cancel at any time: on the web in Settings, or for Pro bought in the iPhone app, in your iPhone’s Settings under Subscriptions. Pro stays on until the end of the time you paid for. If a price changes, we’ll tell you before it applies to you.',
+      'We keep improving Lucida, so features can change, and we may stop offering parts of it.'
     ] },
     { h: 'Ending', body: [
-      `You can stop using Lucida at any time, and ask us to delete your account at ${CONTACT}.`
+      `You can stop using Lucida at any time, and delete your account in Settings or by writing to ${CONTACT}.`
     ] },
     { h: 'No guarantees', body: [
       'Lucida is provided as is. As far as the law allows, we don’t promise it will always be available or free of mistakes, and we aren’t responsible for indirect losses or lost data. Keep an export of anything you can’t lose.'

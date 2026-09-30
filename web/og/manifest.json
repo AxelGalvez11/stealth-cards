@@ -19,6 +19,11 @@
   "fingerprint": "f9abfe4c25",
   "bytes": 136934
  },
+ "connect": {
+  "file": "og/connect.png",
+  "fingerprint": "66abc1b4d5",
+  "bytes": 139197
+ },
  "compare": {
   "file": "og/compare.png",
   "fingerprint": "1e44179a58",

@@ -56,6 +56,9 @@ PROP_SETS.push({ handle: 'mariasantos', moreOpen: true }, { handle: 'mariasantos
   { deleteOpen: 'Asking' }, { deleteOpen: 'Asking', plan: 'Free' }, { deleteOpen: 'Asking', plan: 'Pro, ending' }, { deleteOpen: 'Asking', plan: 'Pro, billed by Apple' },
   { deleteOpen: 'Asking', plan: 'Pro, billed by Apple', dark: true }, { deleteOpen: 'Deleting' }, { deleteOpen: 'Failed' }, { deleteOpen: 'Failed', dark: true },
   { deleteOpen: 'Asking', $state: { del: false } }, { $state: { del: true, delBusy: true } }, { $state: { del: true, delErr: 'Couldn’t delete your account. Try again in a minute.' } });
+// Connecting an AI app: the sign-in page on a password, Settings with Password open, the Connect AI page with no apps, and the consent page (an app
+// Lucida vouches for, one it doesn't, one on this computer, loading, and a link that failed).
+PROP_SETS.push({ passwordMode: true }, { passwordOpen: true }, { passwordOpen: true, dark: true }, { noApps: true }, { consent: 'Claude' }, { consent: 'ChatGPT' }, { consent: 'Other app' }, { consent: 'App on this computer' }, { consent: 'Loading' }, { consent: 'Error' }, { consent: 'Error', dark: true });
 // A verified teacher's or school's shared deck page (Check this deck, pressing it, one being pressed, on their own deck,
 // signed out), and your verification in Settings.
 PROP_SETS.push({ verified: 'Teacher' }, { verified: 'School' }, { verified: 'Teacher', $state: { $m: { checked: true } } }, { verified: 'Teacher', $state: { busy: 'check', error: 'That didn’t save.' } },

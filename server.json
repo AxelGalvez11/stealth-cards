@@ -1,0 +1,21 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "cards.lucida/lucida",
+  "title": "Lucida",
+  "description": "Flashcards your AI can make, fix and quiz you on, with spaced repetition.",
+  "version": "1.0.0",
+  "websiteUrl": "https://lucida.cards/connect",
+  "icons": [
+    {
+      "src": "https://app.lucida.cards/icon.svg",
+      "mimeType": "image/svg+xml",
+      "sizes": ["any"]
+    }
+  ],
+  "remotes": [
+    {
+      "type": "streamable-http",
+      "url": "https://app.lucida.cards/mcp"
+    }
+  ]
+}

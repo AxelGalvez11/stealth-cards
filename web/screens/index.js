@@ -322,6 +322,12 @@ export default [
   "name": "PhoneConnect",
   "title": "iPhone · Connect AI",
   "w": 390,
+  "h": 975
+ },
+ {
+  "name": "PhoneConnectConsent",
+  "title": "iPhone · An AI app asks to connect (Allow or Cancel)",
+  "w": 390,
   "h": 844
  },
  {
@@ -814,31 +820,31 @@ export default [
   "name": "PhoneSettings",
   "title": "iPhone · Settings",
   "w": 390,
-  "h": 1836
+  "h": 1889
  },
  {
   "name": "PhoneSettingsDelete",
   "title": "iPhone · Settings · Delete account (the question)",
   "w": 390,
-  "h": 1836
+  "h": 1889
  },
  {
   "name": "PhoneSettingsFree",
   "title": "iPhone · Settings · on Free (Tune to you is Pro)",
   "w": 390,
-  "h": 1836
+  "h": 1889
  },
  {
   "name": "PhoneSettingsGray",
   "title": "iPhone · Settings (dark, gray)",
   "w": 390,
-  "h": 1836
+  "h": 1889
  },
  {
   "name": "PhoneSettingsVerified",
   "title": "iPhone · Settings · a verified teacher (Get verified says Verified teacher)",
   "w": 390,
-  "h": 1836
+  "h": 1889
  },
  {
   "name": "PhoneSignIn",
@@ -1054,7 +1060,7 @@ export default [
   "name": "Privacy",
   "title": "Privacy Policy · lucida.cards/privacy",
   "w": 1440,
-  "h": 2236
+  "h": 2338
  },
  {
   "name": "Reference",
@@ -1073,6 +1079,12 @@ export default [
   "title": "Site · Comparisons, alternatives, the hubs and the 404 · lucida.cards on a phone",
   "w": 390,
   "h": 15823
+ },
+ {
+  "name": "SiteConnect",
+  "title": "Connect Lucida to your AI · lucida.cards/connect",
+  "w": 1440,
+  "h": 3336
  },
  {
   "name": "SiteFaq",
@@ -2037,6 +2049,12 @@ export default [
  {
   "name": "WebConnect",
   "title": "Web · Connect AI",
+  "w": 1440,
+  "h": 900
+ },
+ {
+  "name": "WebConnectConsent",
+  "title": "Web · An AI app asks to connect (Allow or Cancel)",
   "w": 1440,
   "h": 900
  },

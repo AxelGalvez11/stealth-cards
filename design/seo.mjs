@@ -3,6 +3,7 @@
 // data (design/site.mjs) to text; design/to-site.mjs writes the files and design/check-site.mjs checks them.
 import { ORIGIN, APP, NAME, EMAIL, SOCIALS, PRICE, PLAN_FREE, PLAN_PRO, PRICING_FAQ, ABOUT, LLMS, FIXED, KINDS, plain, dateLabel, urlOf, ogFile } from './site.mjs';
 import { PRIVACY, TERMS } from './legal.mjs';
+import { CONNECT } from './connect-guide.mjs';
 import { esc } from './render.mjs';
 
 export const OG = { width: 1200, height: 630 };
@@ -115,7 +116,7 @@ ${css}
 
 // ---------- sitemap, robots, llms ----------
 // Every page, with the day it last changed. Order: the home page, pricing, then the rest by kind.
-const RANK = { home: 0, pricing: 1, hub: 2, compare: 3, alternative: 4, feature: 5, use: 6, faq: 7, legal: 8 };
+const RANK = { home: 0, pricing: 1, guide: 1.5, hub: 2, compare: 3, alternative: 4, feature: 5, use: 6, faq: 7, legal: 8 };
 export const ordered = pages => [...pages].sort((a, b) => RANK[a.kind] - RANK[b.kind] || a.slug.localeCompare(b.slug));
 export const sitemap = pages => `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
@@ -151,7 +152,7 @@ export function llmsTxt(pages) {
 
 ${LLMS && LLMS.intro ? '' : `Lucida works in the browser on any device. There is no App Store app yet. Your cards are yours: you can export everything, and your AI works through a personal link you can replace at any time. Support: ${EMAIL}.
 
-`}` + section('Product', [...llmsOrder([...of('home'), ...of('pricing')]).map(line), `- [Open the app](${APP}/): sign in and start making decks`])
+`}` + section('Product', [...llmsOrder([...of('home'), ...of('pricing'), ...of('guide')]).map(line), `- [Open the app](${APP}/): sign in and start making decks`])
     + section('Comparisons', llmsOrder([...hub('compare'), ...of('compare', 'alternative')]).map(line))
     + section('Features and guides', llmsOrder([...hub('features'), ...of('feature')]).map(line))
     + section('Who it’s for', of('use').map(line))
@@ -196,7 +197,9 @@ const pageMd = p => {
   if (p.sources.length) parts.push('## Sources\n\n' + p.sources.map(s => `- [${s.label || s.url}](${s.url})` + (s.checked ? ` (checked ${s.checked})` : '')).join('\n'));
   return parts.filter(Boolean).join('\n\n');
 };
-const legalMd = (doc, p) => [`# ${doc.title}`, `URL: ${p.url}\nUpdated: ${p.updated}`, doc.intro, ...doc.sections.map(s => `## ${s.h}\n\n` + s.body.map(b => (Array.isArray(b) ? b.slice(1).map(x => '- ' + x).join('\n') : b)).join('\n\n'))].join('\n\n');
+// The legal pages and the Connect guide hold a little HTML (bold, a link, the address in a box): as markdown here.
+const mdOf = x => String(x).replace(/<b>(.*?)<\/b>/g, '**$1**').replace(/<a href="\{\{privacyHref\}\}"[^>]*>(.*?)<\/a>/g, '[$1](' + ORIGIN + '/privacy)').replace(/<[^>]+>/g, '');
+const legalMd = (doc, p) => [`# ${doc.title}`, `URL: ${p.url}\nUpdated: ${p.updated}`, mdOf(doc.intro), ...doc.sections.map(s => `## ${s.h}\n\n` + s.body.map(b => (Array.isArray(b) ? b.slice(1).map(x => '- ' + mdOf(x)).join('\n') : mdOf(b))).join('\n\n'))].join('\n\n');
 const pricingMd = p => [`# ${p.h1.replace(/\.$/, '')}`, `URL: ${p.url}\nUpdated: ${p.updated}`, 'Your cards are always free. Pro is for making Lucida yours. Prices in US dollars, as of September 2026.',
   `## Free: $0 forever\n\n${PLAN_FREE.map(x => '- ' + x).join('\n')}`,
   `## Pro: $${PRICE.monthly} a month, or $${PRICE.yearly} a year\n\nEverything in Free, plus:\n\n${PLAN_PRO.map(x => '- ' + x).join('\n')}`,
@@ -205,7 +208,7 @@ const pricingMd = p => [`# ${p.h1.replace(/\.$/, '')}`, `URL: ${p.url}\nUpdated:
 export function llmsFull(pages, homeHtml) {
   const home = FIXED[0];
   const md = llmsOrder(allPages(pages)).map(p => p.kind === 'home' ? htmlToMarkdown(homeHtml).replace(/^# .*\n/, `# ${plain(home.h1).replace(/\.$/, '')}\nURL: ${p.url}\nUpdated: ${p.updated}\n`)
-    : p.kind === 'pricing' ? pricingMd(p) : p.kind === 'legal' ? legalMd(p.slug === 'privacy' ? PRIVACY : TERMS, p) : pageMd(p));
+    : p.kind === 'pricing' ? pricingMd(p) : p.kind === 'legal' ? legalMd(p.slug === 'privacy' ? PRIVACY : TERMS, p) : p.kind === 'guide' ? legalMd(CONNECT, p) : pageMd(p));
   const facts = LLMS && LLMS.facts && LLMS.facts.length ? '## Quick facts\n\n' + LLMS.facts.map(f => '- ' + f).join('\n') + '\n\n' : '';
   return `# ${NAME}: full text of lucida.cards\n\n> ${ABOUT}\n\n${facts}Every page of the site follows, as plain markdown. The short index is at ${ORIGIN}/llms.txt.\n\n---\n\n` + md.join('\n\n---\n\n') + '\n';
 }
