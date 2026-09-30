@@ -51,7 +51,7 @@
       "permanent": false
     },
     {
-      "source": "/:path((?!art/|privacy$|terms$|pricing$).+)",
+      "source": "/:path((?!art/|privacy$|terms$|pricing$|connect$).+)",
       "has": [
         {
           "type": "host",
@@ -94,8 +94,34 @@
       "destination": "/api/index"
     },
     {
+      "source": "/oauth/:path*",
+      "destination": "/api/index"
+    },
+    {
+      "source": "/.well-known/oauth-protected-resource",
+      "destination": "/api/index"
+    },
+    {
+      "source": "/.well-known/oauth-protected-resource/:path*",
+      "destination": "/api/index"
+    },
+    {
+      "source": "/.well-known/oauth-authorization-server",
+      "destination": "/api/index"
+    },
+    {
       "source": "/pro",
       "destination": "/api/index"
+    },
+    {
+      "source": "/connect",
+      "has": [
+        {
+          "type": "host",
+          "value": "lucida.cards"
+        }
+      ],
+      "destination": "/connect-guide.html"
     },
     {
       "source": "/pricing",

@@ -7,6 +7,7 @@ import { MOCK_METHOD, SAMPLE, SAMPLE_WAVE } from './mock.mjs';
 import { DRAG_METHOD } from './drag.mjs';
 import { WALL_CARDS } from './wall.mjs';
 import { PRIVACY, TERMS, UPDATED } from './legal.mjs';
+import { CONNECT } from './connect-guide.mjs';
 import { PRO_LINKS } from '../web/plans.mjs';
 import { G_LOGO, APPLE_LOGO } from './logos.mjs';
 import { THEMES } from '../web/themes/index.js';
@@ -5711,7 +5712,7 @@ renderVals() { ${T}
 
 // ---------- Privacy and Terms (lucida.cards/privacy and /terms) ----------
 // Plain pages from legal.mjs: one column of text that fits any window. design/to-site.mjs makes them pages.
-const LEGAL_H = { Privacy: 2236, Terms: 1963 };
+const LEGAL_H = { Privacy: 2338, Terms: 1963, Connect: 3095 };
 const legalPage = (doc, hgt) => `<div style="width: 1440px; height: ${hgt}px; box-sizing: border-box; font-family: ${FONT}; background: {{t.bg}}; color: {{t.text}}; overflow: hidden;">
 <header style="max-width: 1344px; margin: 0 auto; height: 76px; box-sizing: border-box; padding: 0 clamp(20px, 4vw, 48px); display: flex; align-items: center; justify-content: space-between; gap: 12px;">
   <a href="{{homeHref}}" aria-label="Lucida home">${logo(28)}</a>
@@ -5719,7 +5720,7 @@ const legalPage = (doc, hgt) => `<div style="width: 1440px; height: ${hgt}px; bo
 </header>
 <main style="max-width: 720px; margin: 0 auto; box-sizing: border-box; padding: clamp(40px, 7vw, 88px) 24px 72px; display: flex; flex-direction: column; gap: 16px;">
   <h1 style="margin: 0; font-size: clamp(38px, 5vw, 52px); font-weight: 600; line-height: 1.05; letter-spacing: -.045em;">${doc.title}</h1>
-  <p style="margin: 0; font-size: 14px; color: {{t.muted}};">Last updated ${UPDATED}</p>
+  <p style="margin: 0; font-size: 14px; color: {{t.muted}};">Last updated ${doc.updated || UPDATED}</p>
   <p style="margin: 8px 0 0; font-size: 19px; line-height: 1.55; text-wrap: pretty;">${doc.intro}</p>
   ${doc.sections.map(x => `<section style="margin-top: 24px; display: flex; flex-direction: column; gap: 12px;"><h2 style="margin: 0; font-size: 22px; font-weight: 600; letter-spacing: -.02em;">${x.h}</h2>${x.body.map(b => Array.isArray(b) ? `<ul style="margin: 0; padding-left: 22px; display: flex; flex-direction: column; gap: 8px; font-size: 16px; line-height: 1.6; color: {{t.muted}};">${b.slice(1).map(li => `<li>${li}</li>`).join('')}</ul>` : `<p style="margin: 0; font-size: 16px; line-height: 1.6; color: {{t.muted}};">${b}</p>`).join('')}</section>`).join('\n  ')}
 </main>
@@ -7908,6 +7909,7 @@ const files = {
   'PricingPhone': ['Pricing · lucida.cards/pricing on a phone', pricing(LAND.phone, PW, PRICING_PHONE_H), { props: { ...DARK, grain: MESH('Iris').grain }, logic: pricingLogic(true), css: SKY_CSS, w: PW, h: PRICING_PHONE_H }],
   'Privacy': ['Privacy Policy · lucida.cards/privacy', legalPage(PRIVACY, LEGAL_H.Privacy), { props: DARK, logic: legalLogic, w: W, h: LEGAL_H.Privacy }],
   'Terms': ['Terms of Service · lucida.cards/terms', legalPage(TERMS, LEGAL_H.Terms), { props: DARK, logic: legalLogic, w: W, h: LEGAL_H.Terms }],
+  'SiteConnect': ['Connect Lucida to your AI · lucida.cards/connect', legalPage(CONNECT, LEGAL_H.Connect), { props: DARK, logic: legalLogic, w: W, h: LEGAL_H.Connect }],
   'LandingPhone': ['Landing page · lucida.cards on a phone', landing(LAND.phone, PW, LANDING_PHONE_H), { props: { ...DARK, grain: MESH('Iris').grain }, logic: landingLogic(true), css: WALL_CSS + DEMO_CSS + SKY_CSS, w: PW, h: LANDING_PHONE_H }],
   'PhoneStats': ['iPhone · Stats', phoneStats, { props: { ...DARK, ...STATS_PROPS }, logic: phoneStatsLogic, w: PW, h: PH }],
   'PhoneStatsMemory': ['iPhone · Stats · Memory (Pro)', attrOf('PhoneStats', PW, PH, 'tab="Memory"'), { logic: darkLogic, w: PW, h: PH }],

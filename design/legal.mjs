@@ -5,7 +5,7 @@
 // Support: the address Lucida's sign-in emails come from (Resend). It needs receiving turned on in Resend (an MX record
 // on lucida.cards) before replies arrive.
 export const CONTACT = 'team@lucida.cards';
-export const UPDATED = 'September 24, 2026';
+export const UPDATED = 'September 30, 2026';
 
 export const PRIVACY = {
   title: 'Privacy Policy',
@@ -13,9 +13,9 @@ export const PRIVACY = {
   sections: [
     { h: 'What we keep', body: [
       ['list',
-        'Your email address, so we can send you sign-in codes. If you sign in with Google or Apple, we get your email and name from them.',
+        'Your email address, so we can send you sign-in codes. If you sign in with Google or Apple, we get your email and name from them. If you set a password, it’s kept only in scrambled form.',
         'What you put in Lucida: your decks, cards, pictures and sounds, your reviews and grades, and your settings.',
-        'Your personal AI link, the private address your AI apps use to reach your cards.',
+        'Your personal AI link, the private address your AI apps use to reach your cards, and the AI apps you allowed to sign in to Lucida (their name, the site they belong to, and when you connected them). Their sign-in keys are kept only in scrambled form.',
         'Basic technical records. Our hosting and database providers log things like IP addresses and request times, so they can keep Lucida running and secure.']
     ] },
     { h: 'How we use it', body: [
@@ -25,8 +25,8 @@ export const PRIVACY = {
       'We don’t sell your data, use it for ads, or use your cards to train AI models.'
     ] },
     { h: 'AI apps you connect', body: [
-      'When you add your Lucida link to Claude, ChatGPT, or another AI app, that app can read and change your cards, within what you allow on the Connect AI page. What you share with the AI app itself is covered by that company’s privacy policy.',
-      'You can cut off every AI app at once by making a new link on the Connect AI page. The old one stops working right away.'
+      'When you add Lucida to Claude, ChatGPT, or another AI app, you either sign in to Lucida and press Allow, or paste your private link. That app can then read and change your cards, within what you allow on the Connect AI page. What you share with the AI app itself is covered by that company’s privacy policy.',
+      'You can cut off one app at a time with Disconnect on the Connect AI page, or every app that uses your private link at once by making a new link there. They stop working right away.'
     ] },
     { h: 'Who helps us run Lucida', body: [
       ['list',
@@ -63,7 +63,7 @@ export const TERMS = {
   intro: 'These terms cover your use of Lucida, the website at lucida.cards and the app at app.lucida.cards. By using Lucida, you agree to them. If you don’t, please don’t use it.',
   sections: [
     { h: 'Your account', body: [
-      'You need to be at least 13 to use Lucida. Keep your email account and your Lucida AI link to yourself: anyone with the link can reach your cards. You’re responsible for what happens in your account, so tell us if something looks wrong.'
+      'You need to be at least 13 to use Lucida. Keep your email account, your password (if you set one), and your Lucida AI link to yourself: anyone with them can reach your cards. You’re responsible for what happens in your account, so tell us if something looks wrong.'
     ] },
     { h: 'Your cards', body: [
       'Your cards are yours. You let us store, copy, and show them only to run Lucida for you, for example to show them to you and to the AI apps you connect. Only add things you have the right to use.'

@@ -1042,13 +1042,19 @@ export default [
   "name": "Privacy",
   "title": "Privacy Policy · lucida.cards/privacy",
   "w": 1440,
-  "h": 2236
+  "h": 2338
  },
  {
   "name": "Reference",
   "title": "Your reference",
   "w": 1440,
   "h": 1110
+ },
+ {
+  "name": "SiteConnect",
+  "title": "Connect Lucida to your AI · lucida.cards/connect",
+  "w": 1440,
+  "h": 3095
  },
  {
   "name": "Terms",

@@ -139,3 +139,11 @@ for (const [name, file, title, desc] of [['Privacy', 'privacy', 'Privacy Policy'
   const b = board(name, { site: true, dark: false });
   write(file + '.html', head(title + ' · Lucida', desc, 'https://lucida.cards/' + file, b.css) + `\n<body>\n${b.html}\n</body>\n</html>\n`);
 }
+
+// Connect Lucida (lucida.cards/connect): how to add Lucida to Claude, ChatGPT and other AI apps (design/connect-guide.mjs). The file is
+// web/connect-guide.html because /connect in the app (app.lucida.cards) is the signed-in Connect AI page; vercel.json shows it at
+// lucida.cards/connect.
+{
+  const b = board('SiteConnect', { site: true, dark: false });
+  write('connect-guide.html', head('Connect Lucida to your AI · Lucida', 'Add Lucida to Claude, ChatGPT, Grok, Gemini, Perplexity or Mistral with one address, sign in, and your AI can make flashcards and quiz you.', 'https://lucida.cards/connect', b.css) + `\n<body>\n${b.html}\n</body>\n</html>\n`);
+}
