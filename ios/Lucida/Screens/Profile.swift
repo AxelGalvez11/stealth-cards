@@ -162,7 +162,7 @@ struct ProfileScreen: View {
     let line = [pr.subject, pr.school].filter { !$0.isEmpty }.joined(separator: " · ")
     return Group {
       HStack(spacing: 20) {
-        if isSelf { Avatar(size: 84, initial: store.avatarInitial, color: store.avatarColor, pic: store.avatar) } else { PersonAvatar(p: pr.person, size: 84) }
+        if isSelf { MyAvatar(size: 84) } else { PersonAvatar(p: pr.person, size: 84) }
         HStack(spacing: 0) {
           count(NetFmt.k(decks.count), "Decks")
           count(NetFmt.k(pr.followers), "Followers")
@@ -468,7 +468,7 @@ struct EditProfileSheet: View {
         ScrollView(showsIndicators: false) {
           VStack(alignment: .leading, spacing: 14) {
             VStack(spacing: 14) {
-              Avatar(size: 64, initial: store.avatarInitial, color: store.avatarColor, pic: store.avatar)
+              MyAvatar(size: 64)
               PhotoChoices()
             }
             .frame(maxWidth: .infinity)

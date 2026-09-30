@@ -68,6 +68,10 @@ struct RootView: View {
       Button("OK", role: .cancel) {}
     }
     .task {
+      #if DEBUG
+      // `-themeProbe <theme> -probeOut <folder>`: paints a few pieces of a theme and saves them (ThemeProbe.swift).
+      if let key = ThemeProbe.requested { try? await Task.sleep(nanoseconds: 800_000_000); await ThemeProbe.run(key) }
+      #endif
       if !store.demo {
         DevSignIn.apply()
         await store.load()
@@ -234,8 +238,19 @@ extension Board {
     case "PhoneDeckSettingsShare": store.props.shared = "Public"; store.props.deckSettings = "share"; nav.tab = .library; nav.path = [.deck("cell")]
     case "PhoneSignIn": store.phase = .signedOut
     case "PhoneSignInCode": store.phase = .signedOut; store.signInStep = .code
-    default: break
+    // Settings › Theme (on Pro with Rubber hose in use, and on Free), and a theme's page (Frutiger Aero, not yet in use).
+    case "PhoneThemePicker": store.props.theme = "hose"; nav.path = [.settings, .themes]
+    case "PhoneThemePickerFree": store.props.plan = "Free"; nav.path = [.settings, .themes]
+    case "PhoneTheme": nav.path = [.settings, .themes, .theme(Board.arg("-sheet") ?? "aero")]
+    default:
+      // A theme on the real screens: Theme<Board>ReviewPhone (flashcards, turned over) and Theme<Board>ProfilePhone (Settings).
+      if let b = Board.themeBoard(name) {
+        store.props.theme = b.key
+        if b.screen == "review" { store.props.revealed = true; nav.full = .review(deckId: "cell", pile: nil) } else { nav.path = [.settings] }
+      }
     }
+    // `-theme <key>`: any board in a theme (the Theme boards' `skin`).
+    if let k = Board.arg("-theme") { store.props.theme = k }
     // The Settings boards' Tune to you state (their `tune` Tweak): `-tune Off`, `-tune "Not enough reviews"`, or `-tune Tuning`.
     if let k = Board.arg("-tune") { store.props.tune = ["Off": "off", "Not enough reviews": "few", "Tuning": "busy"][k] ?? "on" }
     // The Settings boards' photo setting (their Tweak on the canvas): `-photo "Google photo"` or `-photo "Your photo"`
@@ -273,6 +288,8 @@ struct MainView: View {
               case .inbox: InboxScreen()
               case .profile(let h): ProfileScreen(handle: h)
               case .news: NewsScreen()
+              case .themes: ThemePickerScreen()
+              case .theme(let key): ThemePageScreen(key: key)
               }
             }
             .toolbar(.hidden, for: .navigationBar)
@@ -305,7 +322,7 @@ struct MainView: View {
     case .connect: ConnectScreen()
     }
   }
-  /// Pages the canvas draws without the tab bar: Settings, Check AI cards, and News.
+  /// Pages the canvas draws without the tab bar: Settings, Check AI cards, News, and the themes.
   private var showsTabBar: Bool {
     switch nav.path.last { case .none, .deck, .folder, .profile: return true; default: return false }
   }

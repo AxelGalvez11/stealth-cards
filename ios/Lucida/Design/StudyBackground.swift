@@ -12,6 +12,8 @@ struct StudyBg {
   var photo: String? = nil
   /// The canvas's placeholder photo: the deck's colors at full strength stand in for it.
   var sample = false
+  /// A theme (Pro) draws the background instead of the deck's colors (a deck set to Plain, Sky, Sunset, or its own photo keeps that).
+  var skin: ThemeSkin? = nil
 }
 
 extension Store {
@@ -25,7 +27,8 @@ extension Store {
     let img = (d.bg.image ?? d.image).flatMap { $0.isEmpty ? nil : $0 }
     let kind = ["deck", "plain", "sky", "sunset", "photo"].contains(d.bg.kind) && !(d.bg.kind == "photo" && img == nil) ? d.bg.kind : "deck"
     let photo = kind == "photo" && img != "mock" ? img : nil
-    return StudyBg(kind: kind, mesh: Mesh.deck(seed: d.seed, round: d.round, style: d.style), photo: photo, sample: kind == "photo" && photo == nil)
+    return StudyBg(kind: kind, mesh: Mesh.deck(seed: d.seed, round: d.round, style: d.style), photo: photo, sample: kind == "photo" && photo == nil,
+                   skin: kind == "deck" ? skin(ThemeArt.shared) : nil)
   }
 
   /// What the background tiles show for a deck (BG_PICK_JS): its choice as it's saved, the photo it would use (its own,
@@ -40,12 +43,20 @@ extension Store {
 /// The layer behind everything on a study page, filling the screen.
 struct StudyBackground: View {
   @Environment(\.theme) private var t
+  /// The theme the study screen draws with (set by the screen once it knows one applies), or nil.
+  @Environment(\.studySkin) private var studySkin
   @EnvironmentObject private var store: Store
   let bg: StudyBg
 
   var body: some View {
+    if let skin = studySkin, bg.kind == "deck" {
+      ThemedStudyBackground(skin: skin).ignoresSafeArea().allowsHitTesting(false).accessibilityHidden(true)
+    } else { lucida }
+  }
+
+  private var lucida: some View {
     let faint = bg.kind == "deck"
-    ZStack {
+    return ZStack {
       t.bg
       if faint || bg.sample {
         // The gradient reaches a little past the page (inset -4%), like the canvas's. The deck's colors are one pale hue
@@ -167,23 +178,30 @@ extension RGBA {
 struct BgChooser: View {
   @Environment(\.theme) private var t
   @EnvironmentObject private var store: Store
+  @ObservedObject private var art = ThemeArt.shared
   let deckId: String
   var title = "Background"
   @State private var picking = false
 
   var body: some View {
     let d = store.bgChoice(deckId), photo = d.image.flatMap { $0 == "mock" ? nil : $0 }
+    // With a theme on, the first choice is the theme's own background instead of the deck's colors.
+    let skin = store.skin(art)
     VStack(alignment: .leading, spacing: 8) {
       Text(title).css(13, .semibold)
       Text("Behind Learn mode, flashcards, and Live").css(12, lh: 16 / 12).foregroundStyle(t.muted).padding(.top, -4)
       HStack(spacing: 8) {
-        ForEach([("deck", "Colors"), ("plain", "Plain"), ("sky", "Sky"), ("sunset", "Sunset"), ("photo", "Photo")], id: \.0) { id, label in
+        ForEach([("deck", skin != nil ? "Theme" : "Colors"), ("plain", "Plain"), ("sky", "Sky"), ("sunset", "Sunset"), ("photo", "Photo")], id: \.0) { id, label in
           let on = d.kind == id
           Button { id == "photo" && d.image == nil ? (picking = true) : store.setBg(deckId, id) } label: {
             VStack(spacing: 6) {
               ZStack {
                 switch id {
-                case "deck": ZStack { CSSLinearGradient(angle: d.mesh.angle, stops: d.mesh.paled().stops); Color.white.opacity(0.35) }
+                case "deck":
+                  ZStack {
+                    CSSLinearGradient(angle: d.mesh.angle, stops: d.mesh.paled().stops); Color.white.opacity(0.35)
+                    if let skin { ThemeBgTile(skin: skin) }
+                  }
                 // Plain draws its own edge, or it would vanish on a panel the page's color.
                 case "plain": t.bg.overlay(RoundedRectangle(cornerRadius: 14, style: .continuous).strokeBorder(t.surf2, lineWidth: 1.5))
                 case "sky": LinearGradient(stops: [.init(color: Color(hex: 0x86BDF3), location: 0), .init(color: Color(hex: 0xC9E2FB), location: 0.45), .init(color: Color(hex: 0xEDF5FE), location: 1)], startPoint: .top, endPoint: .bottom)
@@ -208,5 +226,21 @@ struct BgChooser: View {
       if d.kind == "photo" { HStack(spacing: 6) { SmallButton(label: "Change photo", icon: "image") { picking = true } } }
     }
     .photoPicker($picking) { store.setBgPhoto(deckId, $0) }
+  }
+}
+
+
+/// The theme's background in a small tile (the first choice of BgChooser), drawn at the tile's size.
+struct ThemeBgTile: View {
+  @EnvironmentObject private var store: Store
+  @ObservedObject private var art = ThemeArt.shared
+  let skin: ThemeSkin
+  var body: some View {
+    let _ = art.tick
+    GeometryReader { g in
+      if let p = art.picture(ThemeJob(theme: skin.key, kind: "bg", fields: ["w": Int(g.size.width.rounded()), "h": Int(g.size.height.rounded()), "base": skin.page(gray: store.appGray).colors.bg.css, "veil": false])) {
+        Image(uiImage: p.image).resizable().frame(width: g.size.width, height: g.size.height)
+      }
+    }
   }
 }

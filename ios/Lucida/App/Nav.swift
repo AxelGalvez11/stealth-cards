@@ -2,8 +2,9 @@
 // sheets over a page (new card, new deck, deck settings, Learn), and full screens (review, session done, Learn mode).
 import SwiftUI
 
-/// Pages pushed on a tab: Settings, a deck, a folder, Check AI cards, someone's profile (`profile("")` is yours), and News.
-enum Route: Hashable { case settings, deck(String), folder(String), inbox, profile(String), news }
+/// Pages pushed on a tab: Settings, a deck, a folder, Check AI cards, someone's profile (`profile("")` is yours), News,
+/// and Settings › Theme with a theme's page (its key).
+enum Route: Hashable { case settings, deck(String), folder(String), inbox, profile(String), news, themes, theme(String) }
 enum SheetKind: Identifiable, Equatable {
   case newDeck, newCard(deckId: String?, cardId: String?), deckSettings(String), learnStart(String)
   /// The New folder popup (maybe for a deck that goes in it), or Rename on a folder's page; `name`: what's typed to start.
