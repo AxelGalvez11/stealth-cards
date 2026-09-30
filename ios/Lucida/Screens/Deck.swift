@@ -58,7 +58,7 @@ extension Store {
       let d = DeckVM(id: "cell", name: e.name ?? "Cell Biology", seed: "Cell Biology", style: e.style ?? "mix", round: e.round, image: e.image,
                      lineShort: "412 cards · 38 from your AI", due: 28, fresh: 10, ret: 91, studyCount: 28,
                      rows: demoCardOrder.compactMap { id in X.CARDS.first { $0.id == id } }.filter { (demoCardDeck[$0.id] ?? "cell") == "cell" }
-                       .map { CardRowVM(id: $0.id, front: $0.front, meta: $0.kind + " · " + $0.next, tags: $0.tags) },
+                       .map { CardRowVM(id: $0.id, front: $0.front, meta: $0.kind + " · " + (isPaused($0.id) ? "Paused" : $0.next), tags: $0.tags) },
                      tags: e.tags ?? X.TAGS["cell"] ?? [], allTags: Array(Generated.tagColors.keys),
                      paused: e.paused, grading: e.grading ?? props.grading, fsrs: e.fsrs, goal: e.goal, gapIdx: e.gapIdx, steps: e.steps, perDay: e.perDay,
                      exam: Store.demoExam(day: examDay), examDay: examDay ?? "", leechAt: e.leechAt, leechAct: e.leechAct,
