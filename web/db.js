@@ -722,7 +722,7 @@ export async function createDb({ onChange, go }) {
       nextQuestion(); saveLearn(); changed();
     },
     exportAll: () => download('lucida.json', JSON.stringify({ decks: S.decks, cards: S.cards, logs: S.logs }, null, 1), 'application/json'),
-    resetAll: async () => { if (!confirm('Delete every deck, card, and review' + (S.me ? '' : ' on this computer') + '? This can’t be undone.')) return; await send('data.reset'); session = null; go('/'); },
+    resetAll: async () => { if (!confirm('Delete every deck, card, and review' + (S.me ? ', and your profile and shared decks' : ' on this computer') + '? This can’t be undone.')) return; await send('data.reset'); session = null; go('/'); },
     signOut: async () => { await fetch('/api/auth/signout', { method: 'POST' }).catch(() => {}); toSignIn(); },
     // Explain a card with AI; `question` is how Learn mode asked it, if it did.
     explain: async (cardId, question) => {

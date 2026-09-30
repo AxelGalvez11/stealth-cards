@@ -17,7 +17,7 @@ import { planOf, checkoutUrl, portalUrl, signedBy, onEvent } from './billing.mjs
 import * as social from './social.mjs';
 import * as classes from './classes.mjs';
 import { cookies } from './auth.mjs';
-import { isDev } from './store.mjs';
+import { isDev, afterSaving } from './store.mjs';
 import { reserve, lookup, release, rtOf, listen, pass } from './rooms.mjs';
 
 const ROOT = fileURLToPath(new URL('.', import.meta.url));
@@ -144,7 +144,12 @@ async function api(req, res, path, body, me, uid) {
     catch (e) { return send(res, e.status || 400, { error: e.message }); }
   }
   if (path === '/api/action' && req.method === 'POST') {
-    try { const result = apply(JSON.parse(body)); return send(res, 200, { result, state: view(me) }); }
+    try {
+      const a = JSON.parse(body), result = apply(a);
+      // Delete my data takes you off the study network too: profile, follows, saves, News, suggestions, classes, shared decks.
+      if (a && a.type === 'data.reset') afterSaving(() => social.forget(uid));
+      return send(res, 200, { result, state: view(me) });
+    }
     catch (e) { return send(res, 400, { error: e.message }); }
   }
   if (path === '/api/media' && req.method === 'POST') {
