@@ -346,8 +346,15 @@ export async function sendReport(uid, me, o = {}) {
 }
 
 // ---------- the admin page ----------
+// LUCIDA_ADMINS lists account ids and emails. An email counts only for an account whose email is confirmed (Supabase's
+// email_confirmed_at), so nobody becomes an admin by putting a team address on their own account.
 const ADMINS = () => String(process.env.LUCIDA_ADMINS || '').split(',').map(s => s.trim().toLowerCase()).filter(Boolean);
-export const isAdmin = (uid, me) => (!cloud() && uid === 'dev_admin') || !!(me && me.email && ADMINS().includes(String(me.email).toLowerCase()));
+export const isAdmin = (uid, me) => {
+  if (!cloud() && uid === 'dev_admin') return true;
+  const list = ADMINS();
+  if (uid && list.includes(String(uid).toLowerCase())) return true;
+  return !!(me && me.emailConfirmed && me.email && list.includes(String(me.email).toLowerCase()));
+};
 const mustAdmin = (uid, me) => { if (!isAdmin(uid, me)) throw err('Only Lucida’s team can open this.', 403); };
 // Verification requests waiting, and reports waiting, one row per thing reported (with every report about it).
 export async function adminPage(uid, me) {

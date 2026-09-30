@@ -272,7 +272,7 @@ async function stripe(req, res) {
 // Who's signed in, for the app: their plan, and Stripe's page for changing or cancelling it.
 const meOf = async (user, fresh) => {
   const plan = await planOf(user.id, user.email, fresh);
-  return { email: user.email, provider: user.provider, name: user.name, picture: user.picture, plan, manage: plan.pro ? portalUrl(user.email) : '' };
+  return { email: user.email, emailConfirmed: user.emailConfirmed, provider: user.provider, name: user.name, picture: user.picture, plan, manage: plan.pro ? portalUrl(user.email) : '' };
 };
 
 // Online, pictures and sound load straight from the person's own storage folder through a short-lived link.
