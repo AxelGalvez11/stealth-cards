@@ -44,6 +44,8 @@ e2e() {
   local D=${DEVICE:?set DEVICE to a simulator id (xcrun simctl list devices)} PORT=${PORT:-3699} W=$TESTDIR/e2e; mkdir -p $W
   seed
   (cd $REPO/ios && xcodebuild -project Lucida.xcodeproj -scheme Lucida -destination "id=$D" -configuration Debug -derivedDataPath $W/dd build -quiet 2>&1 | grep -E "error:" | sort -u | head -20)
+  # A fresh install: nothing left over from another test (a made-up person still signed in, say).
+  xcrun simctl uninstall $D cards.lucida.app >/dev/null 2>&1
   xcrun simctl install $D $W/dd/Build/Products/Debug-iphonesimulator/Lucida.app || return 1
   local checks=("$@"); [[ ${#checks} -eq 0 ]] && checks=(pause exam grade learn tune free)
   local pass=0 fail=0
