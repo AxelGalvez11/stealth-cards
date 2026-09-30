@@ -5,8 +5,8 @@
 // banner and takes one change and skips the other; the owner sees News of the follow, pins the deck, shares the
 // profile, and switches who can see the deck; and Edit profile turns down a handle someone has and takes a free one.
 //
-// Run it with ios/tools/e2e.sh (it starts a fresh server on port 3677). Studying and copying happen through the server,
-// as the web's shared deck page does them: the iPhone app doesn't have that page yet.
+// Run it with ios/tools/e2e.sh (it starts a fresh server on port 3677). Studying and copying are tapped on the shared deck's
+// page (SharedDeckPagesTests, ios/tools/e2e-pages.sh, goes through that page and its sheets in full).
 import XCTest
 
 final class StudyNetworkTests: XCTestCase {
@@ -133,8 +133,12 @@ final class StudyNetworkTests: XCTestCase {
     check((profile(ownerHandle)["followers"] as? Int) == 1, "the server counts the follower")
     check(wait(any(app, "MCAT Biochemistry")), "the owner's profile lists the deck")
 
-    // The learner studies the deck (the deck page's Study, through the server): it's in the Library, from the owner.
-    let studied = social(learner, "deck.study", ["id": sharedId])["deckId"] as? String ?? ""
+    // The learner opens the deck's page from its tile and studies it: it's in the Library, from the owner.
+    buttonStarting(app, "MCAT Biochemistry").tap()
+    check(wait(button(app, "Study")) && button(app, "Make a copy").exists, "the deck's tile opens its page, with Study and Make a copy")
+    button(app, "Study").tap()
+    check(wait(button(app, "From Maria Santos"), 12), "Study adds the deck to the learner's library and opens it")
+    let studied = ((state(learner)["decks"] as? [[String: Any]]) ?? []).first { ($0["link"] as? [String: Any])?["id"] as? String == sharedId }?["id"] as? String ?? ""
     check(!studied.isEmpty, "studying the deck adds it to the learner's library")
     button(app, "Library").tap()
     let row = any(app, "From Maria Santos")
@@ -152,8 +156,21 @@ final class StudyNetworkTests: XCTestCase {
     check(button(app, "Make it my own").exists, "with Make it my own")
     button(app, "Done").tap()
 
-    // ---------- the copier: the owner's changes wait on the copy ----------
-    let copy = social(copier, "deck.copy", ["id": sharedId, "updates": true])["deckId"] as? String ?? ""
+    // ---------- the copier: copies the deck from its page, and the owner's changes wait on the copy ----------
+    app = launch(as: copier)
+    button(app, "Discover").tap()
+    let copierSearch = app.textFields["Search decks and people"].firstMatch
+    check(wait(copierSearch), "the third person opens Discover")
+    typeInto(copierSearch, "MCAT Bio")
+    let copierTile = buttonStarting(app, "MCAT Biochemistry")
+    check(wait(copierTile), "and finds the deck")
+    copierTile.tap()
+    check(wait(button(app, "Make a copy")), "its page has Make a copy")
+    button(app, "Make a copy").tap()
+    check(wait(app.staticTexts["Copy to your library"]), "Make a copy opens the copy sheet")
+    button(app, "Copy deck").tap()
+    check(wait(button(app, "From Maria Santos"), 12), "Copy deck makes the copy and opens it")
+    let copy = ((state(copier)["decks"] as? [[String: Any]]) ?? []).first { ($0["link"] as? [String: Any])?["id"] as? String == sharedId && ($0["link"] as? [String: Any])?["mode"] as? String == "copy" }?["id"] as? String ?? ""
     check(!copy.isEmpty, "a third person copies the deck")
     let ownerCards = (state(owner)["cards"] as? [[String: Any]] ?? []).filter { $0["deckId"] as? String == deckId }
     let first = ownerCards.first { ($0["front"] as? String)?.hasPrefix("Which enzyme") == true }?["id"] as? String ?? ""

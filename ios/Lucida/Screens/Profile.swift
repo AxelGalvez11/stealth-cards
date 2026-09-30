@@ -242,7 +242,7 @@ struct ProfileScreen: View {
 
   /// A deck you share: its tile; on your own profile, ⋯ in its corner to pin it.
   private func deckCell(_ d: TileVM, isSelf: Bool) -> some View {
-    Button { menu = nil; nav.open(store.webURL(d.url)) } label: { NetTile(d: d, height: 220) }
+    Button { menu = nil; nav.deckPage(d.url) } label: { NetTile(d: d, height: 220) }
       .buttonStyle(.press)
       .overlay(alignment: .topTrailing) {
         if isSelf {
@@ -261,7 +261,7 @@ struct ProfileScreen: View {
 
   private func savedCell(_ d: TileVM) -> some View {
     VStack(alignment: .leading, spacing: 8) {
-      Button { nav.open(store.webURL(d.url)) } label: { NetTile(d: d, height: 200) }.buttonStyle(.press)
+      Button { nav.deckPage(d.url) } label: { NetTile(d: d, height: 200) }.buttonStyle(.press)
       if let o = d.owner { OwnerLine(p: o) { nav.profile(o.handle) } }
     }
   }
@@ -328,7 +328,7 @@ struct ProfileScreen: View {
     let tone: (Color, Color) = waiting ? (t.hardTint, t.hard) : took > 0 ? (t.goodTint, t.good) : (t.surf, t.muted)
     let deck = g.deck?.name ?? "A deck that isn’t shared now", mesh = Mesh.gen(g.deck?.name ?? "Lucida", "mix")
     let line = [n == 1 ? "1 change" : "\(n) changes", g.message].filter { !$0.isEmpty }.joined(separator: " · ")
-    return Button { nav.open(store.webURL(g.deck?.url.nilIfEmpty ?? "/d/" + g.sharedId)) } label: {
+    return Button { nav.deckPage(g.deck?.url.nilIfEmpty ?? "/d/" + g.sharedId) } label: {
       HStack(spacing: 12) {
         CSSLinearGradient(angle: mesh.angle, stops: mesh.stops).frame(width: 36, height: 36).clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
         VStack(alignment: .leading, spacing: 3) {

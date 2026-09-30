@@ -2,7 +2,6 @@
 // shared deck's cover tile (NET_TILE), someone's round picture (PERSON_AV), a teacher's or school's check (VERIFIED),
 // the loading look, and the gray boxes that say there's nothing here.
 import SwiftUI
-import SafariServices
 
 /// A shared deck as a tile (NET_JS netDeck): its gradient (or photo), a badge (Checked, Pinned, a school's name, or on
 /// your profile Link only), its name, saves, and cards.
@@ -198,12 +197,4 @@ struct OwnerLine: View {
     .buttonStyle(.flat)
     .accessibilityLabel(p.name)
   }
-}
-
-/// A web page in Safari, over the app: the web app's pages the iPhone app doesn't draw yet (a shared deck's page, its
-/// History, its suggestions).
-struct SafariView: UIViewControllerRepresentable {
-  let url: URL
-  func makeUIViewController(context: Context) -> SFSafariViewController { SFSafariViewController(url: url) }
-  func updateUIViewController(_ vc: SFSafariViewController, context: Context) {}
 }

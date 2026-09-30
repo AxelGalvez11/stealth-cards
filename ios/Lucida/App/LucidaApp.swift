@@ -99,6 +99,13 @@ struct RootView: View {
           case "discover": nav.tab = .discover
           case "news": nav.path = [.news]
           case "profile": nav.path = [.profile("")]
+          // `deckpage:<path>`: a shared deck's page (/@maria/mcat-biochemistry); `history:<path>`: its History;
+          // `suggestions`: every deck's suggestions.
+          case let o where o.hasPrefix("deckpage:"): if let a = DeckAddress(path: String(o.dropFirst(9))) { nav.tab = .discover; nav.path = [.publicDeck(a)] }
+          case let o where o.hasPrefix("history:"): if let a = DeckAddress(path: String(o.dropFirst(8)))?.plain { nav.tab = .discover; nav.path = [.history(a)] }
+          case "suggestions": nav.tab = .library; nav.path = [.suggestions("")]
+          case let o where o.hasPrefix("suggestions:"):
+            if let d = store.lib.decks.first(where: { $0.name == String(o.dropFirst(12)) }) { nav.tab = .library; nav.path = [.suggestions(d.id)] }
           case "learn": nav.tab = .library; nav.path = [.deck(first)]; nav.sheet = .learnStart(first)
           case "decksettings": nav.tab = .library; nav.path = [.deck(first)]; nav.sheet = .deckSettings(first)
           // The welcome after the first sign-in, whether or not this library is new.
@@ -142,6 +149,8 @@ struct RootView: View {
 }
 
 extension Board {
+  /// The shared deck the boards show: Maria Santos's MCAT Biochemistry.
+  static func sampleDeck(copy: Bool = false, suggest: String = "") -> DeckAddress { DeckAddress(handle: "mariasantos", slug: "mcat-biochemistry", copy: copy, suggest: suggest) }
   /// Puts the app where a board is: its sample data, its page, and its sheet.
   @MainActor static func setUp(_ name: String, store: Store, nav: Nav, drag: DragCenter) {
     // A board's dark twin ends in Dark; its gray one (dark mode's gray look) in Gray.
@@ -232,6 +241,24 @@ extension Board {
     case "PhoneDeckCopy": store.props.linked = "copy"; nav.tab = .library; nav.path = [.deck("cell")]
     case "PhoneDeckUpdates": store.props.linked = "copy"; nav.tab = .library; nav.path = [.deck("cell")]; nav.sheet = .deckUpdates("cell")
     case "PhoneDeckSettingsShare": store.props.shared = "Public"; store.props.deckSettings = "share"; nav.tab = .library; nav.path = [.deck("cell")]
+    // A shared deck's page (Maria's MCAT Biochemistry): as a learner, studying it, as its owner, with Make a copy or Suggest a
+    // change open; its suggestions (yours: Cell Biology), and its History.
+    case "PhonePublicDeck": nav.tab = .discover; nav.path = [.publicDeck(Board.sampleDeck())]
+    case "PhonePublicDeckStudying": store.demoNet.pages.studying = true; nav.tab = .discover; nav.path = [.publicDeck(Board.sampleDeck())]
+    case "PhonePublicDeckOwner": store.demoNet.pages.owner = true; nav.tab = .discover; nav.path = [.publicDeck(Board.sampleDeck())]
+    case "PhonePublicDeckCopy": nav.tab = .discover; nav.path = [.publicDeck(Board.sampleDeck(copy: true))]
+    case "PhonePublicDeckSuggest": nav.tab = .discover; nav.path = [.publicDeck(Board.sampleDeck(suggest: "c2"))]
+    case "PhonePublicDeckSuggestNew": nav.tab = .discover; nav.path = [.publicDeck(Board.sampleDeck(suggest: "new"))]
+    case "PhoneSuggestions":
+      // The dark board shows one opened.
+      if name.hasSuffix("Dark") { store.demoNet.pages.pickItem = "g1" }
+      nav.tab = .library; nav.path = [.suggestions("cell")]
+    case "PhoneSuggestionsOpen": store.demoNet.pages.pickItem = "g1"; nav.tab = .library; nav.path = [.suggestions("cell")]
+    case "PhoneSuggestionsEmpty": store.demoNet.pages.noSuggestions = true; store.demoNet.pages.aiWaiting = false; nav.tab = .library; nav.path = [.suggestions("cell")]
+    case "PhoneHistory":
+      if name.hasSuffix("Dark") { store.demoNet.pages.openVersion = 14 }
+      nav.tab = .library; nav.path = [.history(Board.sampleDeck().plain)]
+    case "PhoneHistoryOpen": store.demoNet.pages.openVersion = 14; nav.tab = .library; nav.path = [.history(Board.sampleDeck().plain)]
     case "PhoneSignIn": store.phase = .signedOut
     case "PhoneSignInCode": store.phase = .signedOut; store.signInStep = .code
     default: break
@@ -273,14 +300,16 @@ struct MainView: View {
               case .inbox: InboxScreen()
               case .profile(let h): ProfileScreen(handle: h)
               case .news: NewsScreen()
+              case .publicDeck(let a): PublicDeckScreen(addr: a)
+              case .suggestions(let id): SuggestionsScreen(deckId: id)
+              case .history(let a): HistoryScreen(addr: a)
               }
             }
             .toolbar(.hidden, for: .navigationBar)
             .containerBackground(t.bg, for: .navigation)
           }
       }
-      // A profile lights up no tab (it's no tab's page).
-      if showsTabBar { TabBar(active: { if case .profile = nav.path.last { return nil }; return nav.tab }(), pick: nav.pick) }
+      if showsTabBar { TabBar(active: lit, pick: nav.pick) }
       // A deck or card being dragged, over the page and the tab bar; and the Move to tray over it while a card is.
       DragGhost()
       MoveTray()
@@ -290,8 +319,6 @@ struct MainView: View {
       if store.welcoming { WelcomeScreen().zIndex(10).transition(.opacity) }
     }
     .ignoresSafeArea(edges: .bottom)
-    // A page of the web app, over the app (the pages the iPhone app doesn't draw yet).
-    .sheet(item: $nav.web) { SafariView(url: $0.url).ignoresSafeArea() }
     // A design screen's full screen, over its page once that's drawn (Board.setUp).
     .task { if let f = nav.boardFull { nav.boardFull = nil; try? await Task.sleep(nanoseconds: 100_000_000); nav.full = f } }
   }
@@ -305,9 +332,24 @@ struct MainView: View {
     case .connect: ConnectScreen()
     }
   }
-  /// Pages the canvas draws without the tab bar: Settings, Check AI cards, and News.
+  /// Pages the canvas draws without the tab bar: Settings, Check AI cards, and News (and a suggestion once it's opened).
   private var showsTabBar: Bool {
-    switch nav.path.last { case .none, .deck, .folder, .profile: return true; default: return false }
+    switch nav.path.last {
+    case .none, .deck, .folder, .profile, .publicDeck, .history: return true
+    case .suggestions: return !nav.barHidden
+    default: return false
+    }
+  }
+  /// The tab that's lit: a profile lights none (it's no tab's page); a shared deck's page lights Discover; its History lights
+  /// the Library for a deck of yours (Discover for someone's), and Suggestions the Library.
+  private var lit: Tab? {
+    switch nav.path.last {
+    case .profile: return nil
+    case .publicDeck: return .discover
+    case .suggestions: return .library
+    case .history(let a): return store.ownsAddress(a) ? .library : .discover
+    default: return nav.tab
+    }
   }
 }
 
@@ -326,6 +368,8 @@ struct SheetHost: View {
     case .nameFolder(let rename, let deck, let name): FolderPopup(rename: rename, deck: deck, start: name)
     case .editProfile: SheetOverlay(top: 56, radius: 36, close: nav.close) { EditProfileSheet() }
     case .deckUpdates(let id): SheetOverlay(top: 56, close: nav.close) { DeckUpdatesSheet(deckId: id) }
+    case .copyDeck(let a): SheetOverlay(top: nil, radius: 32, close: nav.close) { CopyDeckSheet(addr: a) }
+    case .suggest(let a, let start): SheetOverlay(top: 56, radius: 32, close: nav.close) { SuggestSheet(addr: a, start: start) }
     }
   }
 }

@@ -53,10 +53,18 @@ Discover (its own tab), profiles (yours from your picture on Today, whose gear o
 Edit profile, pins, News (the bell on Today), Settings → Profile, whose each deck is in the Library, and a deck's sharing:
 the Sharing tab of Deck settings, a deck you study from someone (Suggest a change instead of New card), and your copy of
 one with the owner's changes to take or skip. The answers come from the same server as the web app's (`Data/Net.swift`,
-like `web/net.js`). A shared deck's own page, its History, and its suggestions open the web app's pages over the app for
-now. The boards: `PhoneDiscover`, `PhoneDiscoverSearch`, `PhoneProfile` (and `Other`, `Following`, `Edit`, `Saved`,
-`Suggestions`, `Empty`, `Loading`, `Missing`), `PhoneActivity` (and `Empty`), `PhoneDeckStudied`, `PhoneDeckCopy`,
+like `web/net.js`). The boards: `PhoneDiscover`, `PhoneDiscoverSearch`, `PhoneProfile` (and `Other`, `Following`, `Edit`,
+`Saved`, `Suggestions`, `Empty`, `Loading`, `Missing`), `PhoneActivity` (and `Empty`), `PhoneDeckStudied`, `PhoneDeckCopy`,
 `PhoneDeckUpdates`, and `PhoneDeckSettingsShare`, with their Dark and Gray twins.
+
+A shared deck's pages are drawn natively too (`Screens/PublicDeck.swift`, `SuggestSheet.swift`, `Suggestions.swift`,
+`History.swift`; their data and words are in `Data/NetPages.swift`, like web/social.mjs deckPage, historyPage, and
+suggestionsFor): the deck's page (`PhonePublicDeck`, and `Studying`, `Owner`, `Copy` for its Make a copy sheet, `Suggest` and
+`SuggestNew` for its Suggest a change sheet), a deck's `PhoneSuggestions` (`Open`, `Empty`), and its `PhoneHistory` (`Open`),
+with their Dark and Gray twins. Every deck tile, profile, From row, Sharing link, and News row opens them (nothing opens
+Safari). A debug build opens them against a server with `-open deckpage:/@maria/mcat-biochemistry` (add `?copy=1` or
+`?suggest=<card id>` like the web's links), `-open history:/@maria/mcat-biochemistry`, `-open suggestions` (every deck of
+yours), and `-open suggestions:<deck name>`.
 
 Against a copy of the server, `-dev <name>` signs in as one of its made-up people (like `/dev/as/<name>` on the web), and
 `-open` also takes `discover`, `news`, `profile` (yours), `profile:<handle>`, and `deck:<name>`. The whole thing is tested
@@ -65,7 +73,14 @@ copies it and takes and skips the owner's changes; then News, pins, Sharing, and
 
     ios/tools/e2e.sh <simulator id>
 
-It starts a fresh server on port 3677 and runs `LucidaUITests`.
+It starts a fresh server on port 3677 and runs `LucidaUITests/StudyNetworkTests`. The shared deck's pages have their own,
+in seven flows (Discover to the page, Save, Study, Make a copy, Suggest a change, the owner taking and skipping changes,
+History and Go back, your AI's cards, the pages' other states, and every link that opens them):
+
+    ios/tools/e2e-pages.sh <simulator id>
+
+It starts a fresh server on port 3721 and runs `LucidaUITests/SharedDeckPagesTests` (`TEST_RUNNER_SHOTS=<folder> ios/tools/e2e-pages.sh` saves
+a picture of the screen whenever a check fails).
 
 ## Pro study tools
 
