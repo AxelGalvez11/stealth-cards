@@ -110,7 +110,6 @@ struct NewDeckSheet: View {
     let coverW = ThemeLayout.screen.width - 40
     let themed = skin.flatMap { art.picture(.newCover($0, deck: look, size: CGSize(width: coverW, height: 132))) }
     let name = skin.map { ThemeJob.newName($0, deck: look, width: coverW - 34) }
-    let ink = themed.flatMap { RGBA(css: $0.string("ink")) }
     return ZStack(alignment: .topLeading) {
       t.bg
       if let prev { MeshFill(mesh: Mesh.gen(prev, style)) }

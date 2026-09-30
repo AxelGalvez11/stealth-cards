@@ -211,7 +211,7 @@ extension Rich {
   /// Geist (or Georgia for math) as a UIFont; italics lean the letters, like a browser does for a font without them.
   static func uiFont(_ size: CGFloat, _ weight: Font.Weight, italic: Bool = false, math: Bool = false, bold: Bool = false, face: RichFace? = nil) -> UIFont {
     // A theme's type, when it's on the phone.
-    if !math, let face, let t = ThemeFonts.shared.uiFont(face.family, weight: bold ? max(face.weight, 700) : face.weight, size: size, italic: italic) {
+    if !math, let face, let t = ThemeFonts.uiFont(face.family, weight: bold ? max(face.weight, 700) : face.weight, size: size, italic: italic) {
       return t.slanted ? UIFont(descriptor: t.font.fontDescriptor.withMatrix(CGAffineTransform(a: 1, b: 0, c: 0.2, d: 1, tx: 0, ty: 0)), size: size) : t.font
     }
     var f = math ? (UIFont(name: bold ? "Georgia-Bold" : "Georgia", size: size) ?? .systemFont(ofSize: size))

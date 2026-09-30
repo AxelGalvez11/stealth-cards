@@ -15,7 +15,7 @@ final class ThemeFonts: ObservableObject {
   enum State { case loading, ready, failed }
 
   /// The families that are here (read from anywhere, when words are set).
-  private nonisolated let faces = FontTable()
+  private nonisolated static let faces = FontTable()
   private var states: [String: State] = [:]
   private var registered: Set<String> = []
   private let dir: URL = {
@@ -27,7 +27,7 @@ final class ThemeFonts: ObservableObject {
   // ---------- asking ----------
   /// Whether a family is here: `nil` for one that needs nothing (Geist is the app's own, and the system's fonts are there).
   func state(_ family: String, spec: String) -> State {
-    if family.isEmpty || family == "Geist" || UIFont.familyNames.contains(family) && faces[family] == nil { return .ready }
+    if family.isEmpty || family == "Geist" || UIFont.familyNames.contains(family) && Self.faces[family] == nil { return .ready }
     if let s = states[family] { return s }
     // kept from before?
     if let kept = readKept(family), register(family, kept) { states[family] = .ready; return .ready }
@@ -38,8 +38,8 @@ final class ThemeFonts: ObservableObject {
 
   /// A family's font at a weight (400 to 900), or nil (the words stay in Geist). `slanted`: it has no italic of its own, so the
   /// words lean the way a browser leans them.
-  nonisolated func uiFont(_ family: String, weight: Int, size: CGFloat, italic: Bool) -> (font: UIFont, slanted: Bool)? {
-    guard let list = faces[family], !list.isEmpty else { return nil }
+  nonisolated static func uiFont(_ family: String, weight: Int, size: CGFloat, italic: Bool) -> (font: UIFont, slanted: Bool)? {
+    guard let list = Self.faces[family], !list.isEmpty else { return nil }
     // the closest weight, preferring the right slant
     let pick = list.min { a, b in
       let da = abs(a.weight - weight) + (a.italic == italic ? 0 : 1000), db = abs(b.weight - weight) + (b.italic == italic ? 0 : 1000)
@@ -96,7 +96,7 @@ final class ThemeFonts: ObservableObject {
       // (already registered is fine)
       if CTFontManagerRegisterFontsForURL(dir.appendingPathComponent(f.file) as CFURL, .process, &err) || UIFont(name: f.ps, size: 12) != nil { any = true }
     }
-    if any { faces[family] = list; registered.insert(family) }
+    if any { Self.faces[family] = list; registered.insert(family) }
     return any
   }
   private static func postScriptName(_ file: URL) -> String? {
