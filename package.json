@@ -5,6 +5,8 @@
   "scripts": {
     "design": "node design/build.mjs && node design/check.mjs",
     "web": "node design/to-web.mjs",
-    "dev": "node design/to-web.mjs && node web/server.mjs"
+    "dev": "node design/to-web.mjs && node web/server.mjs",
+    "site": "node design/build.mjs && node design/check.mjs && node design/to-web.mjs && node design/site-measure.mjs && node design/build.mjs && node design/to-web.mjs && node design/to-site.mjs && node design/og.mjs && node design/check-site.mjs --no-build",
+    "site:check": "node design/check-site.mjs"
   }
 }
