@@ -271,7 +271,7 @@ const TOOLS = [
     } }
 ];
 const allowed = () => TOOLS.filter(t => state().ai.perms[t.perm]);
-const nameOf = info => { const n = String((info && info.name) || 'MCP app'); return /claude/i.test(n) ? 'Claude' : /openai|chatgpt/i.test(n) ? 'ChatGPT' : /cursor/i.test(n) ? 'Cursor' : n; };
+const nameOf = info => { const n = String((info && info.name) || 'MCP app').replace(/\s+/g, ' ').trim().slice(0, 60) || 'MCP app'; return /claude/i.test(n) ? 'Claude' : /openai|chatgpt/i.test(n) ? 'ChatGPT' : /cursor/i.test(n) ? 'Cursor' : n; };
 
 async function handle(m, sid, ctx) {
   if (m.id === undefined || m.id === null) return null; // notifications need no answer

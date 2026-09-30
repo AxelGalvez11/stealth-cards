@@ -295,7 +295,7 @@ const notYours = d => new Error('This deck is ' + ((d.link.owner && d.link.owner
 function touch(deckId, who) {
   const L = lib();
   if (!deckId || L.touched.has(deckId)) return;
-  L.touched.set(deckId, { ai: who && !['you', 'import'].includes(who) ? who : '', credit: L.credit || null });
+  L.touched.set(deckId, { ai: who && !['you', 'import'].includes(who) ? clean(who, 60) : '', credit: L.credit || null });
 }
 // How a card came to be, newest last, a few steps long: made (by you, your AI, or an import), checked (you kept a card
 // your AI made), edited, or taken from someone's suggestion. Public decks show it ("Added by Claude · Edited by Maria").
