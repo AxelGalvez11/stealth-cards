@@ -3,7 +3,8 @@
 --   * it only adds: three columns (each with a default the old code never notices), one read-only view, and indexes;
 --   * nothing is dropped, renamed, or emptied, and no old column changes meaning;
 --   * every statement can run again (if not exists, or replace, or an update that only touches rows still to fix), so
---     running the two "fill" sections once more right after the deploy is fine (rows the old code wrote in between).
+--     running the fills (section 2, and the last update in section 3) once more right after the deploy is fine: that
+--     catches what the old code did in between (a deck made public or hidden, a version saved, a deck copied).
 -- The columns match web/localrest.mjs, which stands in for these tables on a computer without Supabase.
 -- Run after social.sql and classes.sql.
 
