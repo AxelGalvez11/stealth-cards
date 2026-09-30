@@ -1,0 +1,185 @@
+{
+  "slug": "features/import",
+  "kind": "feature",
+  "title": "Import flashcards from Anki, Quizlet or CSV",
+  "description": "Bring cards into Lucida from Anki’s plain-text export, Quizlet’s Export, a CSV file or pasted text. What comes across, what doesn’t, and how to export.",
+  "h1": "Import flashcards",
+  "lead": "You can import cards into Lucida from Anki’s Notes in Plain Text export, from Quizlet’s Export, from a CSV or TSV file, or by pasting text with one card per line. Lucida can’t open Anki’s .apkg deck files, and imported cards start as new cards, without pictures, sounds, tags or review history.",
+  "updated": "2026-09-30",
+  "table": {
+    "columns": [
+      "From",
+      "How",
+      "What comes across",
+      "What doesn’t"
+    ],
+    "rows": [
+      [
+        "Anki",
+        "In Anki, export with Notes in Plain Text. Drop the .txt file into Lucida",
+        "Front and back text, bold, italics and line breaks, fill-in-the-blank cards (Anki’s {{c1::word}} becomes a blank), and which deck each card was in",
+        "Review history, due dates, pictures, sounds, tags and note types. .apkg and .colpkg files can’t be opened"
+      ],
+      [
+        "Quizlet",
+        "On quizlet.com, open a set you made, then choose Export and Copy text. Paste it into Lucida",
+        "Terms and definitions",
+        "Pictures, which Quizlet doesn’t export. A set you only copied from someone else can’t be exported from Quizlet"
+      ],
+      [
+        "A spreadsheet",
+        "Put fronts in the first column and backs in the second. Save it as a CSV (or TSV) file",
+        "Front and back text. Extra columns are added to the back, separated by commas",
+        "Anything else"
+      ],
+      [
+        "Pasted text",
+        "One card per line: the front, then the back, split by a tab, a comma, a semicolon or a space-dash-space",
+        "The same",
+        "The same"
+      ]
+    ]
+  },
+  "sections": [
+    {
+      "h2": "Import from Anki, step by step",
+      "bullets": [
+        "**1. In Anki, choose Export and Notes in Plain Text.** On a deck, click the gear, then Export (or use the File menu). Anki writes one note per line, with the fields split by tabs, and keeps formatting such as bold as HTML.",
+        "**2. In Lucida, open Import cards.** It’s in Settings, under Your data, and on an empty deck. Drop the file in or choose it. Lucida takes .txt, .csv and .tsv files.",
+        "**3. Check the count.** Lucida says how many cards it found. If it finds none, each card needs its front and back on one line.",
+        "**4. Pick the deck and import.** Type a new deck name, or choose one of yours.",
+        "**About decks.** Anki also writes lines that start with # at the top of the file, like #separator:tab and #deck column:3, and Lucida reads them. If your export has a deck column, the first-time setup screen after your first sign-in splits the file into its decks, with a checkbox for each. The Import screen puts everything into the one deck you choose."
+      ]
+    },
+    {
+      "h2": "Import from Quizlet, step by step",
+      "bullets": [
+        "**1. On quizlet.com, open a set you made.** Quizlet’s help page says exporting only works on the website, and only for sets you created. A set you copied from another person can’t be exported.",
+        "**2. Open the menu, choose Export, and pick how the terms and definitions are arranged.** A tab between the term and the definition and a new line between cards works best in Lucida. Then choose Copy text.",
+        "**3. In Lucida, open Import cards and paste.** Pick a deck and import.",
+        "**4. Add pictures again if you need them.** Quizlet says image exports aren’t available because of copyright."
+      ]
+    },
+    {
+      "h2": "Import from a spreadsheet or pasted text",
+      "paras": [
+        "Put the front in the first column and the back in the second, then save the sheet as CSV. UTF-8 is best: Lucida reads the file as UTF-8, and Anki’s manual asks for it too. You can also paste lines straight into the box.",
+        "Lucida splits each line at a tab first. If there’s no tab, it splits at a space-dash-space, and if there’s neither, at a comma or semicolon. A field in “double quotes” can hold a comma. Blank lines and lines starting with # are skipped, and a line without both a front and a back is left out."
+      ],
+      "bullets": [
+        "To make a fill-in-the-blank card from a file, use Anki’s form: {{c1::word}} in the first column. Lucida turns it into a blank.",
+        "The Import screen takes up to 5,000 cards at a time. For a bigger file, import it in parts. The first-time setup screen has no such cap."
+      ]
+    },
+    {
+      "h2": "What doesn’t come across",
+      "bullets": [
+        "**.apkg and .colpkg files.** They’re Anki’s packaged decks and collections. Export as Notes in Plain Text instead.",
+        "**Review history and due dates.** Imported cards start as new cards and begin a fresh schedule (see [spaced repetition](/features/spaced-repetition)). For an Anki deck you’ve studied for years, that’s a real cost.",
+        "**Pictures, sounds and other media.** A text file can’t carry them. Add them again in Lucida, or ask your AI to make picture cards (see [AI flashcards](/features/ai-flashcards)).",
+        "**Tags and note types** from Anki.",
+        "**Fancy formatting.** Lucida keeps bold, italics, underline, strikethrough, highlights, headings and lists, and leaves the rest of Anki’s HTML out."
+      ]
+    },
+    {
+      "h2": "Export: take everything with you",
+      "bullets": [
+        "**One deck:** choose Export cards in the deck’s settings. You get a CSV file with the columns front, back, kind, text, note and tags.",
+        "**Everything:** in Settings, under Your data, choose Export all cards. You get one file, lucida.json, with every deck, card and review, so your review history goes with you.",
+        "Pictures and sounds aren’t packed into those files.",
+        "**Into Anki:** Anki’s manual says it imports text files with fields split by commas, semicolons or tabs, in UTF-8, so a Lucida CSV can go into Anki. The first row holds the column names, and review history and media don’t come along.",
+        "Lucida’s privacy policy says you can export your data whenever you want."
+      ]
+    }
+  ],
+  "faq": [
+    {
+      "q": "Can I import an Anki deck into Lucida?",
+      "a": "Yes, through Anki’s plain-text export, not the .apkg file. In Anki, export with Notes in Plain Text and import the .txt file into Lucida. Scheduling, pictures, sounds and tags don’t come along."
+    },
+    {
+      "q": "Can I import a .apkg file?",
+      "a": "No. Lucida can’t open .apkg or .colpkg files. Export the deck from Anki as Notes in Plain Text instead."
+    },
+    {
+      "q": "How do I import my Quizlet sets?",
+      "a": "On quizlet.com, open a set you made, choose Export, then Copy text, and paste it into Lucida’s Import cards. Quizlet only exports sets you created, only on its website, and without pictures."
+    },
+    {
+      "q": "Does importing keep my Anki review history?",
+      "a": "No. Imported cards start as new cards, so you begin a fresh schedule."
+    },
+    {
+      "q": "Can I import a CSV file?",
+      "a": "Yes. Put fronts in the first column and backs in the second, and save the file as CSV (UTF-8 is best). Lucida also takes TSV and plain .txt files, or pasted lines."
+    },
+    {
+      "q": "Will my Anki fill-in-the-blank cards still work?",
+      "a": "Yes. Anki’s {{c1::word}} form becomes a fill-in-the-blank card in Lucida."
+    },
+    {
+      "q": "Is there a limit to how much I can import?",
+      "a": "The Import screen takes up to 5,000 cards at a time, so import a bigger file in parts. The first-time setup screen after your first sign-in has no such cap."
+    },
+    {
+      "q": "Can I export my cards from Lucida?",
+      "a": "Yes, on any plan. Export one deck as a CSV file, or everything (decks, cards and review history) as one lucida.json file from Settings."
+    },
+    {
+      "q": "Can I move my Lucida cards to Anki?",
+      "a": "Export a deck as CSV and use Anki’s import for text files. Review history and media don’t carry over."
+    },
+    {
+      "q": "Can my AI add my cards instead?",
+      "a": "Yes. If your AI app is connected to Lucida, you can paste a list into it and ask it to add the cards. For long lists, importing a file is faster."
+    }
+  ],
+  "sources": [
+    {
+      "label": "Anki Manual: Exporting",
+      "url": "https://docs.ankiweb.net/exporting.html",
+      "checked": "2026-09-30"
+    },
+    {
+      "label": "Anki Manual: Importing text files",
+      "url": "https://docs.ankiweb.net/importing/text-files.html",
+      "checked": "2026-09-30"
+    },
+    {
+      "label": "Quizlet Help Center: Exporting your sets (read through an Internet Archive copy from July 2026, because Quizlet’s site blocks automated readers)",
+      "url": "https://help.quizlet.com/hc/en-us/articles/360034345672-Exporting-your-sets",
+      "checked": "2026-09-30"
+    },
+    {
+      "label": "Lucida Privacy Policy (updated September 24, 2026)",
+      "url": "https://lucida.cards/privacy",
+      "checked": "2026-09-30"
+    }
+  ],
+  "related": [
+    "features/ai-flashcards",
+    "features/spaced-repetition",
+    "features/image-occlusion",
+    "for/students",
+    "for/med-school",
+    "vs/anki",
+    "vs/quizlet",
+    "faq"
+  ],
+  "keywords": [
+    "import quizlet to anki",
+    "import quizlet flashcards",
+    "how to export quizlet",
+    "export quizlet flashcards",
+    "import anki deck",
+    "import csv flashcards",
+    "anki csv import",
+    "export anki deck",
+    "export anki as text",
+    "import apkg",
+    "convert quizlet to anki",
+    "switch from quizlet",
+    "migrate from anki",
+    "flashcard app import export"
+  ]
+}

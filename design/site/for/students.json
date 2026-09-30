@@ -1,0 +1,214 @@
+{
+  "slug": "for/students",
+  "kind": "use",
+  "title": "Flashcard app for students: free, with AI and FSRS",
+  "description": "Turn lectures into flashcards with your own AI, review on an FSRS schedule, quiz yourself in Learn mode and study with friends. Free to start.",
+  "h1": "Lucida for students",
+  "lead": "Lucida is a free flashcard app where your own AI turns lectures and notes into cards, and spaced repetition brings each card back just before you’d forget it, so a few minutes a day add up. Start with one deck for your next exam, then add Learn mode quizzes, friends’ decks and live games when you want them.",
+  "updated": "2026-09-30",
+  "table": {
+    "columns": [
+      "",
+      "Free",
+      "Pro ($5.99 a month or $49.99 a year)"
+    ],
+    "rows": [
+      [
+        "Decks and cards",
+        "Unlimited",
+        "Same"
+      ],
+      [
+        "Your AI makes cards and quizzes",
+        "Yes, as many as you want",
+        "Same"
+      ],
+      [
+        "Spaced repetition (FSRS)",
+        "Yes",
+        "Adds exam dates and Tune to you"
+      ],
+      [
+        "Learn mode",
+        "Yes",
+        "Same"
+      ],
+      [
+        "Shared decks, classes and live games",
+        "Yes",
+        "Adds stats on the hardest cards in decks you share"
+      ],
+      [
+        "Pictures and sounds",
+        "Up to 100",
+        "No 100 limit"
+      ],
+      [
+        "Stats",
+        "Streak, reviews, what you remember, cards due each day",
+        "Adds weak topics, hardest cards and pace"
+      ],
+      [
+        "Extras",
+        "Light and dark looks",
+        "Themes, photo covers, natural voices for AI-made sound cards, more AI explanations"
+      ]
+    ]
+  },
+  "sections": [
+    {
+      "h2": "A plan for your next exam, step by step",
+      "bullets": [
+        "**1. Make one deck for the exam.** Name it after the class. Add tags for topics, like Week 3 or Enzymes. Tags give you Learn mode sets and, on Pro, weak-topic stats.",
+        "**2. Get the cards in.** Ask your AI (Claude, ChatGPT or Cursor) to make them from your notes, import them from Quizlet, Anki or a CSV file, or type them. A fill-in-the-blank card is the quickest way to turn a sentence from your notes into a card.",
+        "**3. Learn them.** Start with [Learn mode](/features/learn-mode). It asks several ways until you’ve got each card right twice in a row, then hands new cards to the schedule.",
+        "**4. Review a little each day.** Today shows what’s due and how long it will take. Try to answer before you flip.",
+        "**5. Set your exam date (Pro).** From 30 days out, the cards you’d probably forget by then come up early.",
+        "**6. Look at your stats.** The free Stats page shows your streak, your reviews, how much you remember, and what’s due each day. Pro adds the topics you’re weakest at and your hardest cards.",
+        "**7. Practice the real thing too.** Flashcards are for recall. For anything you have to work out, use past papers or problem sets."
+      ]
+    },
+    {
+      "h2": "Why flashcards and spacing work, and where they don’t",
+      "paras": [
+        "A review of ten study techniques rated practice testing and spaced practice as high utility (Dunlosky and colleagues, 2013). In Roediger and Karpicke’s 2006 experiments, students who tested themselves remembered much more after two days and a week than students who restudied, even though restudying made them more confident. In Kornell’s flashcard experiments, spacing beat cramming for 90% of the people tested.",
+        "Flashcards fit facts, terms, vocabulary, formulas you need to recall, and labeled diagrams. The retrieval practice guide from Agarwal and colleagues says that actually recalling and writing down an answer helps more than flipping the card too early, and Lucida can’t do that part for you."
+      ]
+    },
+    {
+      "h2": "Study with friends",
+      "bullets": [
+        "**Shared decks.** Send a deck by link. Friends study it as it is or make a copy, and they can suggest fixes (see [shared decks](/features/shared-decks)).",
+        "**Live games.** Open a room from a deck and your group joins on their phones with a code and no account (see [live games](/features/live-games)).",
+        "**Classes.** If your teacher makes a class, you join with a code (see [classes](/features/classes))."
+      ]
+    },
+    {
+      "h2": "On your phone and your laptop",
+      "paras": [
+        "Lucida is a web app: open app.lucida.cards in any browser and sign in with an email code, Google or Apple. Phones get a phone layout. A native iPhone app is being built and isn’t on the App Store yet. Lucida needs an internet connection."
+      ]
+    },
+    {
+      "h2": "What Lucida won’t do for you",
+      "bullets": [
+        "It doesn’t come with ready-made textbook decks. You make cards, with your AI or by hand, or find decks other students shared.",
+        "It doesn’t read PDFs or slides itself. Your AI app does that and sends Lucida the cards.",
+        "AI-made cards can be wrong. Check them, especially before an exam. Lucida’s terms say the same."
+      ]
+    }
+  ],
+  "faq": [
+    {
+      "q": "What is the best flashcard app for students?",
+      "a": "It depends on what you need. Lucida suits students who want an AI to draft cards from their own notes, FSRS scheduling, Learn mode and live games, free. If you rely on huge ready-made Anki decks, see [Lucida vs Anki](/vs/anki). If you study from Quizlet sets, see [Lucida vs Quizlet](/vs/quizlet)."
+    },
+    {
+      "q": "Is Lucida free for students?",
+      "a": "Yes. Unlimited decks and cards, spaced repetition, Learn mode, sharing and live games are free. The pricing page has a free plan and Pro ($5.99 a month or $49.99 a year, as of September 2026), and no separate student plan."
+    },
+    {
+      "q": "How many flashcards should I study a day?",
+      "a": "Start with Lucida’s 20 new cards a day and watch how many reviews come due. Each new card adds reviews later, so cut back if the list grows. Anki’s manual estimates that 20 new cards a day settles at roughly 200 reviews a day."
+    },
+    {
+      "q": "How do I make flashcards from my lecture notes?",
+      "a": "Connect your AI app with your Lucida link, share your notes and ask for flashcards, or paste or import your own cards. See [AI flashcards](/features/ai-flashcards)."
+    },
+    {
+      "q": "Are flashcards or practice tests better?",
+      "a": "Both are practice testing, which research rates as high utility. Flashcards suit facts and terms, and practice tests suit applying what you know, so use flashcards for recall and past papers for problems."
+    },
+    {
+      "q": "How long should I study each day?",
+      "a": "Short and often beats long and rarely. In Kornell’s flashcard experiments, spreading study out beat cramming for 90% of the people tested. Lucida’s Today screen shows how long your due cards will take."
+    },
+    {
+      "q": "Can I use Lucida on my phone?",
+      "a": "Yes, in your phone’s browser, which gets a phone layout. The native iPhone app isn’t on the App Store yet, and Lucida needs an internet connection."
+    },
+    {
+      "q": "Do I need a ChatGPT or Claude subscription?",
+      "a": "No. You can type cards, import them, or study shared decks without any AI. To have an AI make cards, you need an AI app that can add your Lucida link. Claude’s free plan allows one custom connector, and ChatGPT’s developer mode is for paid accounts."
+    },
+    {
+      "q": "I already have Quizlet sets or Anki decks. Can I bring them?",
+      "a": "Yes, through text exports: Anki’s Notes in Plain Text, Quizlet’s Export, or a CSV file. Pictures, sounds and review history don’t come along. See [importing](/features/import)."
+    }
+  ],
+  "sources": [
+    {
+      "label": "Dunlosky and others (2013), Improving Students’ Learning With Effective Learning Techniques, Psychological Science in the Public Interest (Association for Psychological Science summary)",
+      "url": "https://www.psychologicalscience.org/publications/journals/pspi/learning-techniques.html",
+      "checked": "2026-09-30"
+    },
+    {
+      "label": "Roediger and Karpicke (2006), Test-enhanced learning: Taking memory tests improves long-term retention, Psychological Science",
+      "url": "https://doi.org/10.1111/j.1467-9280.2006.01693.x",
+      "checked": "2026-09-30"
+    },
+    {
+      "label": "Kornell (2009), Optimising learning using flashcards: Spacing is more effective than cramming, Applied Cognitive Psychology",
+      "url": "https://doi.org/10.1002/acp.1537",
+      "checked": "2026-09-30"
+    },
+    {
+      "label": "Agarwal, Roediger, McDaniel and McDermott (2020), How to Use Retrieval Practice to Improve Learning, retrievalpractice.org",
+      "url": "https://pdf.retrievalpractice.org/RetrievalPracticeGuide.pdf",
+      "checked": "2026-09-30"
+    },
+    {
+      "label": "Anki Manual: Deck options",
+      "url": "https://docs.ankiweb.net/deck-options.html",
+      "checked": "2026-09-30"
+    },
+    {
+      "label": "Claude documentation: Add a connector that isn’t in the directory",
+      "url": "https://claude.com/docs/connectors/custom/remote-mcp",
+      "checked": "2026-09-30"
+    },
+    {
+      "label": "OpenAI documentation: ChatGPT developer mode",
+      "url": "https://developers.openai.com/api/docs/guides/developer-mode",
+      "checked": "2026-09-30"
+    },
+    {
+      "label": "Lucida pricing (what Free and Pro include, as of September 2026)",
+      "url": "https://lucida.cards/pricing",
+      "checked": "2026-09-30"
+    },
+    {
+      "label": "Lucida Terms of Service (updated September 24, 2026)",
+      "url": "https://lucida.cards/terms",
+      "checked": "2026-09-30"
+    }
+  ],
+  "related": [
+    "features/spaced-repetition",
+    "features/ai-flashcards",
+    "features/learn-mode",
+    "features/import",
+    "features/shared-decks",
+    "features/live-games",
+    "for/med-school",
+    "for/mcat",
+    "for/language-learning",
+    "vs/quizlet",
+    "vs/anki",
+    "faq"
+  ],
+  "keywords": [
+    "best flashcard app for students",
+    "flashcard app for college students",
+    "flashcards for college",
+    "how to study with flashcards",
+    "free flashcard app",
+    "active recall and spaced repetition",
+    "study app with ai flashcards",
+    "flashcard app no ads",
+    "flashcards for exams",
+    "turn lecture notes into flashcards",
+    "how many flashcards a day",
+    "are flashcards effective"
+  ]
+}

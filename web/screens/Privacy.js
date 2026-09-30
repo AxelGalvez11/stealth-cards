@@ -380,7 +380,7 @@ mock() {
 
 foot(phone) {
   const site = !!this.props.site, board = { compare: 'SiteCompare', features: 'SiteCompare', faq: 'SiteFaq', pricing: 'Pricing', privacy: 'Privacy', terms: 'Terms' }, twin = { compare: 1, features: 1, faq: 1, pricing: 1 };
-  return [{"label":"Compare","slug":"compare"},{"label":"FAQ","slug":"faq"},{"label":"Pricing","slug":"pricing"},{"label":"Privacy","slug":"privacy"},{"label":"Terms","slug":"terms"}].map(l => ({ label: l.label, href: site ? '/' + l.slug : board[l.slug] + (phone && twin[l.slug] ? 'Phone' : '') + '.dc.html' }));
+  return [{"label":"Compare","slug":"compare"},{"label":"Features","slug":"features"},{"label":"FAQ","slug":"faq"},{"label":"Pricing","slug":"pricing"},{"label":"Privacy","slug":"privacy"},{"label":"Terms","slug":"terms"}].map(l => ({ label: l.label, href: site ? '/' + l.slug : board[l.slug] + (phone && twin[l.slug] ? 'Phone' : '') + '.dc.html' }));
 }
 renderVals() { const t = this.theme(!!this.props.dark, !!this.props.dim);
   const site = !!this.props.site;

@@ -1,0 +1,203 @@
+{
+  "slug": "for/mcat",
+  "kind": "use",
+  "title": "MCAT flashcards: spaced repetition, free",
+  "description": "Make MCAT flashcards from your notes with your own AI, review on an FSRS schedule, and set a test date on Pro. What flashcards can and can’t do here.",
+  "h1": "Lucida for the MCAT",
+  "lead": "Lucida is a free flashcard app for MCAT content review: your AI turns your notes into cards, FSRS schedules the reviews, and Pro can set your test date so cards you’d forget by then come up early. Flashcards cover recall, not the whole exam: the AAMC says learning through practice is key and that CARS needs no specific content knowledge, so pair your cards with practice questions and full-length exams.",
+  "updated": "2026-09-30",
+  "table": {
+    "columns": [
+      "MCAT section (AAMC)",
+      "Questions",
+      "Time",
+      "Content knowledge?"
+    ],
+    "rows": [
+      [
+        "Chemical and Physical Foundations of Biological Systems",
+        "59",
+        "95 minutes",
+        "Yes: science content"
+      ],
+      [
+        "Critical Analysis and Reasoning Skills (CARS)",
+        "53",
+        "90 minutes",
+        "No specific content knowledge needed"
+      ],
+      [
+        "Biological and Biochemical Foundations of Living Systems",
+        "59",
+        "95 minutes",
+        "Yes: science content"
+      ],
+      [
+        "Psychological, Social, and Biological Foundations of Behavior",
+        "59",
+        "95 minutes",
+        "Yes: science content"
+      ],
+      [
+        "Total",
+        "230",
+        "6 hours 15 minutes of content time (about 7 hours 30 minutes seated)",
+        ""
+      ]
+    ]
+  },
+  "sections": [
+    {
+      "h2": "What flashcards can do for the MCAT",
+      "paras": [
+        "Three of the four sections, 177 of the 230 questions, test science and behavioral science content. The AAMC says the content draws on year-long courses in general chemistry, organic chemistry, introductory physics and introductory biology, and on introductory courses in biochemistry, psychology and sociology. Flashcards are good at keeping definitions, pathways, equations and terms ready to recall.",
+        "The AAMC also says learning through practice is key, and offers official prep written by the test developers. Passages and practice exams train the reasoning that cards can’t. Use cards for recall and practice for application. Each section is scored 118 to 132, for a total of 472 to 528.",
+        "The studies we read on flashcards and exam scores are about medical-school exams, not the MCAT (see [Lucida for medical school](/for/med-school))."
+      ]
+    },
+    {
+      "h2": "Set up your content review, step by step",
+      "bullets": [
+        "**1. Understand first.** Piotr Wozniak’s first rule of formulating knowledge is not to learn what you don’t understand. Cards are for holding what you’ve already understood, so read or watch a topic, then make its cards.",
+        "**2. One deck per subject.** Use tags for topics, like Kinematics or Amino acids. Tags give you Learn mode sets and, on Pro, weak-topic stats.",
+        "**3. Make the cards with your AI.** Share your notes and ask for one fact per card, blanks for definitions, and picture cards for diagrams. Then read them (see [AI flashcards](/features/ai-flashcards)).",
+        "**4. Learn, then review.** Use [Learn mode](/features/learn-mode) to drill a new set, then review a little each day.",
+        "**5. Set your test date (Pro).** From 30 days out, the cards you’d likely forget by test day come up early.",
+        "**6. Mix in practice.** Work passages and questions alongside your cards, and check the AAMC’s official prep."
+      ]
+    },
+    {
+      "h2": "Amino acids, equations and other awkward cards",
+      "bullets": [
+        "**Structures and diagrams.** Use a picture card or [image occlusion](/features/image-occlusion): hide the name, or hide parts of the picture.",
+        "**Equations.** Lucida shows simple math: powers, subscripts, fractions, square roots and Greek letters. Write $F = ma$ or $\\frac{a}{b}$. It doesn’t do full equation layout.",
+        "**Lists.** Turn a long list into one blank or one card per item. Wozniak advises avoiding sets and enumerations.",
+        "**Formulas.** Keep each card to one formula and what its symbols mean."
+      ]
+    },
+    {
+      "h2": "Ready-made decks",
+      "paras": [
+        "Lucida has no official MCAT deck. You can search Discover by topic, and decks there are made by people, so check them. AnkiHub lists an MCAT deck for Anki that syncs through AnkiHub. Lucida can’t use decks like that directly, because it can’t open .apkg files or connect to AnkiHub."
+      ]
+    },
+    {
+      "h2": "Your daily load",
+      "paras": [
+        "Lucida starts at 20 new cards a day, which you can change in Settings or for each deck. There’s no daily review limit, so the Stats page, which shows how many cards are due each day this week, helps you pick a pace. Anki’s manual warns that adding new cards while you’re behind can make a backlog worse, so don’t add cards faster than you can review them."
+      ]
+    },
+    {
+      "h2": "What Lucida doesn’t do",
+      "bullets": [
+        "It has no MCAT content or practice questions, and it isn’t affiliated with the AAMC.",
+        "It can’t open .apkg files, and text imports drop pictures, sounds, tags and review history (see [importing](/features/import)).",
+        "Math is basic, and it needs an internet connection.",
+        "AI-made cards can be wrong, so read them before you study."
+      ]
+    }
+  ],
+  "faq": [
+    {
+      "q": "Is Anki necessary for the MCAT?",
+      "a": "No. The MCAT doesn’t test which tools you used, and the AAMC’s own advice is that learning through practice is key. Flashcards, in Lucida or Anki, are one way to keep content ready to recall."
+    },
+    {
+      "q": "What are the best MCAT flashcards?",
+      "a": "There’s no single best deck. A good one is made or edited by you from sources you trust, with one fact per card. Lucida lets your AI draft cards from your notes, and you read them before you study. No deck replaces practice questions."
+    },
+    {
+      "q": "How many flashcards should I do a day for the MCAT?",
+      "a": "There’s no official number. Start at Lucida’s default of 20 new cards a day and raise it only while your daily reviews stay doable. Each new card adds reviews later."
+    },
+    {
+      "q": "When should I start MCAT flashcards?",
+      "a": "After you’ve understood a topic, not before. Cards help you remember, not learn something for the first time, so make a topic’s cards as you finish learning it."
+    },
+    {
+      "q": "Can I make MCAT flashcards with ChatGPT or Claude?",
+      "a": "Yes. Connect your AI app to Lucida, share your notes and ask for cards. Give it your source material, read the cards, and use Let me check AI cards first if you like. See [AI flashcards](/features/ai-flashcards)."
+    },
+    {
+      "q": "Do flashcards help with CARS?",
+      "a": "Not directly. The AAMC says the Critical Analysis and Reasoning Skills section requires no specific content knowledge. Passages and timed practice are what train it."
+    },
+    {
+      "q": "Can I set my MCAT test date in Lucida?",
+      "a": "Yes, on Pro. Add an exam date to a deck, and from 30 days before, cards you’d probably forget by then come up early. See [spaced repetition](/features/spaced-repetition)."
+    },
+    {
+      "q": "Does Lucida have MCAT decks?",
+      "a": "There’s no official one. You can search Discover for decks other people shared, and check them before you trust them."
+    },
+    {
+      "q": "Is Lucida free for MCAT studying?",
+      "a": "Yes. Unlimited decks and cards, FSRS, Learn mode, image occlusion and sharing are free. Pro is $5.99 a month or $49.99 a year (as of September 2026)."
+    },
+    {
+      "q": "Can I import my Anki or Quizlet MCAT cards?",
+      "a": "Yes, through text exports, but not .apkg files. Pictures, sounds, tags and review history don’t come along. See [importing](/features/import)."
+    }
+  ],
+  "sources": [
+    {
+      "label": "AAMC: What’s on the MCAT exam?",
+      "url": "https://students-residents.aamc.org/whats-mcat-exam/publication-chapters/whats-mcat-exam",
+      "checked": "2026-09-30"
+    },
+    {
+      "label": "AAMC: The MCAT exam score scale",
+      "url": "https://students-residents.aamc.org/mcat-scores/mcat-exam-score-scale",
+      "checked": "2026-09-30"
+    },
+    {
+      "label": "AAMC: Prepare for the MCAT exam",
+      "url": "https://students-residents.aamc.org/prepare-mcat-exam/prepare-mcat-exam",
+      "checked": "2026-09-30"
+    },
+    {
+      "label": "Wozniak (1999), Twenty rules of formulating knowledge, SuperMemo",
+      "url": "https://www.supermemo.com/en/blog/twenty-rules-of-formulating-knowledge",
+      "checked": "2026-09-30"
+    },
+    {
+      "label": "Anki Manual: Deck options",
+      "url": "https://docs.ankiweb.net/deck-options.html",
+      "checked": "2026-09-30"
+    },
+    {
+      "label": "AnkiHub: AnKing Step Deck",
+      "url": "https://www.ankihub.net/step-deck",
+      "checked": "2026-09-30"
+    },
+    {
+      "label": "Lucida pricing (what Free and Pro include, as of September 2026)",
+      "url": "https://lucida.cards/pricing",
+      "checked": "2026-09-30"
+    }
+  ],
+  "related": [
+    "for/med-school",
+    "for/students",
+    "features/spaced-repetition",
+    "features/ai-flashcards",
+    "features/image-occlusion",
+    "features/import",
+    "vs/anki",
+    "faq"
+  ],
+  "keywords": [
+    "best mcat flashcards",
+    "mcat flashcards free",
+    "mcat anki",
+    "is anki necessary for mcat",
+    "mcat flashcards app",
+    "mcat spaced repetition",
+    "mcat content review flashcards",
+    "mcat amino acid flashcards",
+    "mcat anki deck",
+    "mcat flashcards how many a day",
+    "anki vs quizlet mcat",
+    "when to start mcat flashcards"
+  ]
+}

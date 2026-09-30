@@ -1,0 +1,173 @@
+{
+  "slug": "features/live-games",
+  "kind": "feature",
+  "title": "Live flashcard games: a free Kahoot-style quiz",
+  "description": "Turn a deck into a live quiz. Friends or a class join on their phones with a 6-digit code, no account, and race for points. Free, up to 60 players.",
+  "h1": "Live games",
+  "lead": "Live turns any deck into a quiz game: you host on a computer, your friends or class join on their phones with a 6-digit code and no account, and everyone answers the same questions for points. It’s free, it takes up to 60 players, and the questions come from your own cards.",
+  "updated": "2026-09-30",
+  "table": {
+    "columns": [
+      "",
+      "How it works"
+    ],
+    "rows": [
+      [
+        "Who hosts",
+        "A signed-in person, from a deck, on a computer (the big screen)"
+      ],
+      [
+        "Who plays",
+        "Anyone with the code, on a phone or any browser, with no account. Up to 60 players, each with a name of up to 20 characters"
+      ],
+      [
+        "Questions",
+        "5, 10 or 20 from your deck: new cards, hard cards, a tag, or all cards"
+      ],
+      [
+        "Time for each",
+        "10, 20 or 30 seconds"
+      ],
+      [
+        "Question type",
+        "Multiple choice with up to four answers"
+      ],
+      [
+        "Points",
+        "500 for a right answer, plus up to 500 more for answering fast"
+      ],
+      [
+        "After each question",
+        "The right answer lifts, each answer shows how many picked it, and a leaderboard follows"
+      ],
+      [
+        "At the end",
+        "A podium on the big screen and the final leaderboard on every phone"
+      ]
+    ]
+  },
+  "sections": [
+    {
+      "h2": "Run a game, step by step",
+      "bullets": [
+        "**1. Open a deck on a computer and choose Play live.** Pick which cards, how many questions (5, 10 or 20) and the time for each (10, 20 or 30 seconds), then choose Open the room.",
+        "**2. Put the code on the big screen.** Lucida shows a 6-digit code and a QR code. Players go to lucida.cards/join, or scan the QR code, then type the code and a name.",
+        "**3. Start when the lobby is full.** Names appear as people join.",
+        "**4. Play each question.** A timer runs. When everyone here has answered, or time is up, the right answer lifts and the screen shows how many picked each answer.",
+        "**5. Watch the leaderboard.** It shows after each question, a podium follows the last one, and the final leaderboard appears on every phone.",
+        "**6. Play again** with the same room and the same people, new questions, and everyone back at zero."
+      ]
+    },
+    {
+      "h2": "How the points work",
+      "paras": [
+        "A right answer is worth 500 points, plus up to 500 more depending on how fast you answered (rounded to tens). A wrong answer, or no answer, is worth nothing. The leaderboard goes by most points, then most right answers, then who joined first. From two right answers in a row, a streak shows on your phone."
+      ]
+    },
+    {
+      "h2": "Where the questions come from",
+      "paras": [
+        "They’re made the way Learn mode makes them (see [Learn mode](/features/learn-mode)). Each question comes from one card, with other answers from the deck as the wrong choices, or from the multiple choice questions your AI wrote for that card. A card is used when it has AI-written questions or when the deck has at least two different answers.",
+        "Picture cards show their picture on the big screen, with the asked box highlighted. Phones show the question and the answers only. Sound cards aren’t used, because a room can’t all hear one phone."
+      ]
+    },
+    {
+      "h2": "Joining, rejoining and leaving",
+      "paras": [
+        "Players need no account, only the code and a name. If a phone reloads, or the same name joins from another phone, it gets its points back. Someone who joins in the middle plays from the next question. A name someone in the room is already using is turned away.",
+        "The host’s page runs the game, so keep that tab open. A reload picks up where it was. If the host is gone for more than about 30 seconds, phones say the game ended. A room’s code holds for three hours after the game opens."
+      ]
+    },
+    {
+      "h2": "Good for study groups and class review",
+      "paras": [
+        "Use Live for a study group, a family quiz, or a review round before a test. In a class, open a room from a class deck (see [classes](/features/classes)). Low-stakes quizzes in class raised scores on chapter and semester exams in three experiments with sixth graders (Roediger and colleagues, 2011), and the retrieval practice guide from Agarwal and colleagues advises keeping them low-stakes. So keep the points for fun, not for grades."
+      ]
+    },
+    {
+      "h2": "What to know first",
+      "bullets": [
+        "Hosting needs an account and a computer for the big screen. Players use phones.",
+        "A room holds up to 60 players.",
+        "Everyone needs an internet connection: the game runs between the browsers over a live connection.",
+        "Live isn’t graded and doesn’t save a report for teachers."
+      ]
+    }
+  ],
+  "faq": [
+    {
+      "q": "Is Lucida Live free?",
+      "a": "Yes. Live games are part of Lucida’s free plan."
+    },
+    {
+      "q": "Do players need an account?",
+      "a": "No. Players only need the 6-digit code and a name. The host needs a Lucida account."
+    },
+    {
+      "q": "How many people can play?",
+      "a": "Up to 60 in one room."
+    },
+    {
+      "q": "Can I use my own flashcards for a live quiz?",
+      "a": "Yes. Any deck of yours can be played live. The questions come from your cards, with other answers from the deck as the wrong choices, or from questions your AI wrote."
+    },
+    {
+      "q": "How are points worked out?",
+      "a": "A right answer is worth 500 points plus up to 500 more for speed. A wrong or missing answer is worth nothing. Ties go to whoever has more right answers, then to whoever joined first."
+    },
+    {
+      "q": "Can I host from my phone?",
+      "a": "Hosting is from a computer, which shows the big screen. Players join on their phones."
+    },
+    {
+      "q": "What if a player’s phone drops out?",
+      "a": "Reloading the page, or joining again with the same name, gets their points back."
+    },
+    {
+      "q": "Is this a Kahoot alternative?",
+      "a": "It’s a similar game: players join with a code, answer against a timer, and see a leaderboard and podium. For a side-by-side with sources, see [Lucida vs Kahoot](/vs/kahoot)."
+    },
+    {
+      "q": "Which cards work in a live game?",
+      "a": "Text, fill-in-the-blank and picture cards. Sound cards are skipped."
+    }
+  ],
+  "sources": [
+    {
+      "label": "Roediger, Agarwal, McDaniel and McDermott (2011), Test-enhanced learning in the classroom: Long-term improvements from quizzing, Journal of Experimental Psychology: Applied",
+      "url": "https://pdf.retrievalpractice.org/guide/Roediger_Agarwal_etal_2011_JEPA.pdf",
+      "checked": "2026-09-30"
+    },
+    {
+      "label": "Agarwal, Roediger, McDaniel and McDermott (2020), How to Use Retrieval Practice to Improve Learning, retrievalpractice.org",
+      "url": "https://pdf.retrievalpractice.org/RetrievalPracticeGuide.pdf",
+      "checked": "2026-09-30"
+    },
+    {
+      "label": "Lucida pricing (what Free and Pro include, as of September 2026)",
+      "url": "https://lucida.cards/pricing",
+      "checked": "2026-09-30"
+    }
+  ],
+  "related": [
+    "features/classes",
+    "features/learn-mode",
+    "features/shared-decks",
+    "for/teachers",
+    "for/students",
+    "vs/kahoot",
+    "faq"
+  ],
+  "keywords": [
+    "kahoot alternative free",
+    "kahoot alternatives for friends",
+    "quizlet live alternative",
+    "live quiz game flashcards",
+    "play flashcards with friends",
+    "classroom review games",
+    "live quiz for study groups",
+    "join with code quiz",
+    "free live quiz game",
+    "classroom review games like kahoot"
+  ]
+}

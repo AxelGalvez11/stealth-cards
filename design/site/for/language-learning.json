@@ -1,0 +1,172 @@
+{
+  "slug": "for/language-learning",
+  "kind": "use",
+  "title": "Language learning flashcards with audio and FSRS",
+  "description": "Make word and sentence cards with sound, hide the word in fill-in-the-blank cards, and review on an FSRS schedule. Free, in any browser. Limits included.",
+  "h1": "Lucida for language learning",
+  "lead": "Lucida is a flashcard app for vocabulary: make word and sentence cards, add sound you record, upload or have read aloud, hide the word you’re learning in fill-in-the-blank cards, and let FSRS schedule the reviews. It’s free and runs in any browser, but it has no lessons, dictionary or ready-made word lists, and there’s no language picker on a sound card you make by hand.",
+  "updated": "2026-09-30",
+  "table": {
+    "columns": [
+      "Card",
+      "What it looks like",
+      "Good for"
+    ],
+    "rows": [
+      [
+        "Question and answer",
+        "A word or phrase on the front, the meaning on the back",
+        "Vocabulary. For both directions, make a second card the other way round"
+      ],
+      [
+        "Fill in the blank",
+        "A sentence with the word hidden: “Yo [[tengo]] dos hermanos.”",
+        "Words in context, verb forms, grammar"
+      ],
+      [
+        "Sound",
+        "You hear the word (recorded, uploaded or read aloud) and answer what it means",
+        "Listening, pronunciation, recognizing words by ear"
+      ],
+      [
+        "Picture",
+        "A picture, or a picture with hidden parts",
+        "Objects, signs, maps"
+      ]
+    ]
+  },
+  "sections": [
+    {
+      "h2": "Make cards, step by step",
+      "bullets": [
+        "**1. Try sentences, not only words.** A card like “Yo [[tengo]] dos hermanos.” shows how a word is used. Add a Blank card, write the sentence, and put double brackets around the word to hide. Each blank can be its own card.",
+        "**2. Add sound.** On a Sound card you can record yourself (tap the mic), upload a file, or type words for your device to read aloud. The sound can play on its own when the card comes up, and you can turn that off.",
+        "**3. Or ask your AI.** Tell Claude or ChatGPT the language and your level, and ask for sentence cards with blanks and for sound cards. It sends Lucida the words and a language code, like es, fr or ja (see [AI flashcards](/features/ai-flashcards)).",
+        "**4. Learn, then review.** In [Learn mode](/features/learn-mode), the type-the-answer question forgives accents, capital letters and small typos, so it tests recall, not spelling. Then FSRS schedules the reviews.",
+        "**5. Keep a pace you can hold.** Lucida starts at 20 new cards a day. Each new card adds reviews later, and Anki’s manual estimates that 20 new cards a day settles at roughly 200 reviews a day."
+      ]
+    },
+    {
+      "h2": "Words and numbers",
+      "paras": [
+        "Vocabulary is a big number. For English, which is the language Nation studied, knowing 98% of the words in a text takes about 8,000 to 9,000 word families for written text and 6,000 to 7,000 for spoken text (Nation, 2006). Spaced repetition is a way to keep that many words in memory. A 2006 review of spacing experiments (Cepeda and colleagues) looked at verbal recall tasks, which means recalling words and facts, so it says less about speaking fluency."
+      ]
+    },
+    {
+      "h2": "Sound on Free and on Pro",
+      "bullets": [
+        "**Recording and uploading** work on Free. Sound files can be MP3, M4A, WAV, OGG or WebM, up to 4 MB each.",
+        "**Reading aloud** uses your device’s own voice, so the voices and languages depend on your device and browser. When you type the words yourself, the card editor has no language picker, and the device reads them in its default voice and language. For other languages, ask your AI to make the sound cards, because it sends a language code, or record or upload the audio.",
+        "**Natural voices (Pro).** When your AI makes a sound card, Lucida turns the words into a natural-sounding voice file on Pro.",
+        "**The 100 limit.** Free includes up to 100 pictures and sounds. A sound card that uses the device’s voice stores no file, so it doesn’t count."
+      ]
+    },
+    {
+      "h2": "Shared decks and your own lists",
+      "paras": [
+        "Discover lists shared decks by topic, like Spanish. They’re made by people, so check them, and study one as it is or copy it to edit (see [shared decks](/features/shared-decks)). To bring your own word lists, save a spreadsheet as CSV with the word in the first column and the meaning in the second, or import an Anki or Quizlet text export (see [importing](/features/import)). Sounds and pictures don’t come along in those."
+      ]
+    },
+    {
+      "h2": "What Lucida doesn’t do for language learners",
+      "bullets": [
+        "It has no lessons, grammar notes or dictionary. It’s a memory tool for the words and phrases you choose.",
+        "Lucida doesn’t come with ready-made word lists or native-speaker recordings.",
+        "It doesn’t listen to you or grade your pronunciation.",
+        "It doesn’t make reverse cards on its own. For both directions, make two cards.",
+        "Typing your answer forgives accents, so it won’t drill diacritics.",
+        "It needs an internet connection."
+      ]
+    }
+  ],
+  "faq": [
+    {
+      "q": "What is the best flashcard app for language learning?",
+      "a": "It depends on what you need. Lucida gives you word, sentence, fill-in-the-blank, sound and picture cards, FSRS scheduling and AI-made cards, free. It has no lessons, dictionary or native recordings, and no language picker on a sound card you make by hand."
+    },
+    {
+      "q": "Can I add audio to flashcards in Lucida?",
+      "a": "Yes. Record yourself, upload a file, or have the device read typed words aloud. Your AI can also make sound cards with a language code. Free includes up to 100 pictures and sounds."
+    },
+    {
+      "q": "Does Lucida have native-speaker pronunciation?",
+      "a": "Only what you add: your own recordings, files you upload, or voices read by your device (or, on Pro, natural voices for sound cards your AI makes). There’s no library of native recordings."
+    },
+    {
+      "q": "How do I make fill-in-the-blank cards for a language?",
+      "a": "Add a Blank card, write a sentence, and put double brackets around the word to hide, like “Yo [[tengo]] dos hermanos.” Each blank becomes its own card unless you choose one card for all of them."
+    },
+    {
+      "q": "Are sentence cards better than single-word cards?",
+      "a": "Try both. A sentence with the word blanked out shows it in use, and a word-and-meaning card is faster to make. Keep whichever you actually remember."
+    },
+    {
+      "q": "How many new words should I learn a day?",
+      "a": "Pick a number you can keep up. Lucida starts at 20 new cards a day, and each new card adds reviews later. Anki’s manual estimates that 20 new cards a day settles at roughly 200 reviews a day."
+    },
+    {
+      "q": "Can Lucida read my cards aloud?",
+      "a": "Yes. Your device’s voice reads typed words aloud. A card the editor makes has no language setting, so it reads in the device’s default voice. Cards your AI makes carry a language code, and on Pro Lucida can make a natural voice file."
+    },
+    {
+      "q": "Can I import my Anki or Quizlet language decks?",
+      "a": "Yes, through text exports or CSV. Audio, pictures, tags and review history don’t come along, and Lucida can’t open .apkg files. See [importing](/features/import)."
+    },
+    {
+      "q": "Does Lucida work for Japanese, Korean, Chinese and other languages?",
+      "a": "Cards take any text you can type, and the landing page shows Japanese and Korean cards. Lucida doesn’t add readings like furigana or pinyin for you, so type them or ask your AI to include them."
+    }
+  ],
+  "sources": [
+    {
+      "label": "Nation (2006), How large a vocabulary is needed for reading and listening?, Canadian Modern Language Review",
+      "url": "https://doi.org/10.3138/cmlr.63.1.59",
+      "checked": "2026-09-30"
+    },
+    {
+      "label": "Cepeda and others (2006), Distributed practice in verbal recall tasks: A review and quantitative synthesis, Psychological Bulletin",
+      "url": "https://digitalcommons.usf.edu/psy_facpub/1771/",
+      "checked": "2026-09-30"
+    },
+    {
+      "label": "Anki Manual: Deck options",
+      "url": "https://docs.ankiweb.net/deck-options.html",
+      "checked": "2026-09-30"
+    },
+    {
+      "label": "Wozniak (1999), Twenty rules of formulating knowledge, SuperMemo",
+      "url": "https://www.supermemo.com/en/blog/twenty-rules-of-formulating-knowledge",
+      "checked": "2026-09-30"
+    },
+    {
+      "label": "Lucida pricing (what Free and Pro include, as of September 2026)",
+      "url": "https://lucida.cards/pricing",
+      "checked": "2026-09-30"
+    }
+  ],
+  "related": [
+    "features/ai-flashcards",
+    "features/learn-mode",
+    "features/spaced-repetition",
+    "features/import",
+    "for/students",
+    "vs/anki",
+    "vs/quizlet",
+    "faq"
+  ],
+  "keywords": [
+    "best flashcard app for language learning",
+    "spaced repetition vocabulary",
+    "anki for language learning",
+    "flashcards with audio app",
+    "flashcards with pronunciation",
+    "sentence mining",
+    "cloze deletion language learning",
+    "spanish flashcards app",
+    "japanese flashcards app",
+    "korean flashcards app",
+    "french flashcards app",
+    "how to make flashcards for language learning",
+    "how many new words a day"
+  ]
+}

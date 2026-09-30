@@ -1,0 +1,253 @@
+{
+  "slug": "vs/mochi",
+  "kind": "compare",
+  "title": "Lucida vs Mochi: flashcard apps compared (2026)",
+  "description": "Lucida vs Mochi: price, FSRS, AI, Anki import, offline and sharing, with sources. Mochi is local-first and Markdown-based. Lucida is a browser app.",
+  "h1": "Lucida vs Mochi",
+  "lead": "Mochi is a local-first, Markdown-based flashcard and notes app with offline apps on every platform, and Pro is $5 a month (billed yearly) for sync and AI. Lucida runs in the browser with free sync, sharing, Learn mode and live games, and your own AI (Claude, ChatGPT) makes the cards.",
+  "updated": "2026-09-30",
+  "published": "2026-09-30",
+  "table": {
+    "columns": [
+      "",
+      "Lucida",
+      "Mochi"
+    ],
+    "rows": [
+      [
+        "Price (September 2026)",
+        "Free: unlimited decks and cards, spaced repetition, Learn mode, sharing, live games, import and export. Pro: $5.99 a month or $49.99 a year.",
+        "Free: unlimited cards and decks, offline use, import and export, no sign-up. Pro: $5 a month billed yearly ($60) or $6 a month billed monthly, for sync, publishing decks, dynamic fields, API keys and more AI."
+      ],
+      [
+        "Platforms",
+        "Web app at app.lucida.cards, on computers and phones. No App Store app yet.",
+        "Mac, Windows, Linux, iPhone and iPad, Android, and a web app."
+      ],
+      [
+        "Spaced repetition",
+        "FSRS plans every review. Grade each card Forgot, Hard, Good or Easy, and set how much you want to remember. Pro adds exam dates and tuning to your own reviews.",
+        "Its own algorithm by default, or FSRS if you switch it on. You grade each card Remembered or Forgot, with no Hard or Easy button."
+      ],
+      [
+        "AI",
+        "Your own AI (Claude, ChatGPT, Cursor or any MCP app) makes and edits cards and Learn quizzes through your personal Lucida link. You choose what it may do and can check its cards first.",
+        "Built in, with monthly limits. Pro: AI completion (500,000 tokens), dictionary, translation, transcription, text to speech and image search. Free gets small amounts (for example 5,000 tokens)."
+      ],
+      [
+        "Making cards",
+        "Type cards in the editor (bold, italics, math, lists), import a list, or ask your AI.",
+        "Markdown cards: write text and put --- between the sides. Templates with fields, references between cards and tags."
+      ],
+      [
+        "Card kinds",
+        "Question and answer, fill in the blank (cloze), picture with hidden parts (image occlusion), and sound.",
+        "Markdown cards with any number of sides, cloze (hidden text), diagram cards (image occlusion) and templates."
+      ],
+      [
+        "Import and export",
+        "Import pasted text or a .csv, .tsv or .txt file, including Anki’s Notes in Plain Text export and Quizlet’s export. Not .apkg files. Export a CSV for each deck, or everything (decks, cards, reviews) as JSON.",
+        "Imports .mochi files, Anki .apkg files (with review history), Markdown and CSV. Exports .mochi (full backup), Markdown and CSV."
+      ],
+      [
+        "Sharing",
+        "Decks are private, link-only or public. Profiles, Discover, study a deck as it is or copy it, suggest changes, version history. All free.",
+        "Publish a deck with a link (Pro) or send a .mochi file. People can clone a published deck into their own workspace."
+      ],
+      [
+        "Classes",
+        "Make a class with a join code, assign decks by a date, and see progress that students choose to share. Free.",
+        "None found."
+      ],
+      [
+        "Games",
+        "Live: play a deck with up to 60 friends on their phones. They join with a code or QR, no account. Free.",
+        "None found."
+      ],
+      [
+        "Works offline",
+        "No. Lucida needs an internet connection.",
+        "Yes. It is local first, with unlimited offline use on Mac, Windows, Linux, iPhone and Android."
+      ],
+      [
+        "Privacy",
+        "No ads. We don’t sell your data or use your cards to train AI models (privacy policy). You need an account, and data is stored in the United States. Export or delete it from Settings.",
+        "Without an account, Mochi stores none of your data on its servers, and all content stays on your computer. An account is needed for sync and other Pro features."
+      ]
+    ]
+  },
+  "sections": [
+    {
+      "h2": "The short version",
+      "paras": [
+        "Mochi is for people who like plain text. You write cards in Markdown, your data lives on your own device, and the apps work offline on Mac, Windows, Linux, iPhone and Android. You pay only if you want sync, publishing or the AI tools.",
+        "Lucida is for people who want no setup. It runs in a browser, your cards follow you to every device you sign in on, and your own AI makes the cards."
+      ]
+    },
+    {
+      "h2": "Where Mochi is better",
+      "bullets": [
+        "**Local first and offline.** Your cards live on your device and work without a connection. Lucida needs one.",
+        "**Apps on every platform.** Mac, Windows, Linux, iPhone and Android. Lucida has no App Store app yet.",
+        "**Power-user tools.** Markdown formatting, card templates with fields, references between cards, and dynamic fields and an HTTP API on Pro.",
+        "**Anki imports with history.** Mochi imports .apkg files including review history. Lucida can’t read .apkg files.",
+        "**Diagram and cloze cards come with the free plan.** Lucida’s free plan has up to 100 pictures and sounds.",
+        "**Language tools.** Built-in dictionaries, translation, text to speech and image search for vocabulary cards.",
+        "**A scheduler you can switch.** Its own algorithm or FSRS, with your own parameters and target retention if you want them."
+      ]
+    },
+    {
+      "h2": "Where Lucida is better",
+      "bullets": [
+        "**Sync is free.** Sign in and your cards are on every device. On Mochi, sync is part of Pro.",
+        "**Sharing is free** and social: public profiles, Discover, study a deck as it is or copy it, suggest changes and version history. On Mochi, publishing a deck is part of Pro.",
+        "**Learn mode and live games** are built in and free: five kinds of questions from your cards, and games for up to 60 friends. We found neither in Mochi’s docs.",
+        "**Classes.** Assign decks by a date and see progress that students choose to share.",
+        "**Your own AI, through your chat apps.** Claude, ChatGPT or any MCP app makes and edits your cards, with no token meter from Lucida.",
+        "**Four grades** (Forgot, Hard, Good, Easy). Mochi records Remembered or Forgot, and its docs note that FSRS then loses a little of the information Hard and Easy would carry."
+      ]
+    },
+    {
+      "h2": "Moving between them",
+      "paras": [
+        "From Mochi to Lucida: export a deck as CSV from Mochi, then choose it in Lucida’s Import cards. The CSV export has no review history.",
+        "From Lucida to Mochi: export a deck as CSV and import it into a Mochi deck. Mochi’s CSV import treats each column as a side of the card."
+      ]
+    },
+    {
+      "h2": "Who should pick which",
+      "bullets": [
+        "**Pick Mochi** if you like Markdown, want your cards on your own device, need offline apps, or want to bring over Anki decks with their history.",
+        "**Pick Lucida** if you want free sync and sharing, Learn mode and live games, and your own AI making the cards."
+      ]
+    },
+    {
+      "h2": "How we checked this page",
+      "paras": [
+        "Facts about Mochi come from Mochi’s home page, pricing page, docs and privacy policy, opened on September 30, 2026. Facts about Lucida come from the app, its pricing page and its privacy policy. Where we couldn’t confirm something about Mochi, we left it out. If anything here is wrong, write to team@lucida.cards."
+      ]
+    }
+  ],
+  "faq": [
+    {
+      "q": "Is Mochi free?",
+      "a": "Yes. Mochi is free forever with no sign-up: unlimited cards and decks, unlimited offline use, card templates, and import and export. Sync, publishing decks, dynamic fields, API keys and larger AI allowances are part of Pro."
+    },
+    {
+      "q": "How much is Mochi Pro?",
+      "a": "Mochi Pro is $5 a month billed yearly ($60 a year) or $6 a month billed monthly (Mochi pricing, September 2026). It includes 10 GB of cloud storage for synced cards and attachments. Lucida Pro is $5.99 a month or $49.99 a year, and Lucida’s sync is free."
+    },
+    {
+      "q": "Does Mochi use FSRS?",
+      "a": "Optionally. Mochi schedules with its own algorithm by default and lets you switch to FSRS in Review Settings. It grades cards Remembered or Forgot rather than four buttons. Lucida plans reviews with FSRS by default."
+    },
+    {
+      "q": "Can Mochi import Anki decks?",
+      "a": "Yes. Mochi imports Anki .apkg files, including review history, though imported cards may not look exactly the same because Mochi strips CSS and JavaScript. Lucida can’t read .apkg files, but it reads Anki’s Notes in Plain Text export."
+    },
+    {
+      "q": "Does Mochi work offline?",
+      "a": "Yes. Mochi is local first, and its pricing page lists unlimited offline use on Mac, Windows, Linux, iPhone and Android on the free plan. Lucida has no offline mode."
+    },
+    {
+      "q": "Does Mochi need an account?",
+      "a": "No, not to use it. Mochi says an account is only needed for Pro features such as sync and the AI services. Lucida needs an account, because your cards are stored online and sync to every device."
+    },
+    {
+      "q": "Does Mochi have AI?",
+      "a": "Yes. Mochi’s AI features (completion, dictionary, translation, transcription, text to speech and image search) have monthly limits: Free gets small amounts and Pro gets much more. Lucida doesn’t write cards itself; your own AI app does through your Lucida link."
+    },
+    {
+      "q": "Is Lucida a good Mochi alternative?",
+      "a": "If you want free sync, sharing, Learn mode and live games in a browser, yes. If you want Markdown, offline apps on every platform or Anki imports with history, Mochi fits better."
+    }
+  ],
+  "sources": [
+    {
+      "label": "Mochi home page",
+      "url": "https://mochi.cards/",
+      "checked": "2026-09-30"
+    },
+    {
+      "label": "Mochi pricing",
+      "url": "https://mochi.cards/pricing/",
+      "checked": "2026-09-30"
+    },
+    {
+      "label": "Mochi docs: Intro to spaced repetition",
+      "url": "https://mochi.cards/docs/reviewing/",
+      "checked": "2026-09-30"
+    },
+    {
+      "label": "Mochi docs: FSRS",
+      "url": "https://mochi.cards/docs/reviewing/fsrs/",
+      "checked": "2026-09-30"
+    },
+    {
+      "label": "Mochi docs: Overview of cards",
+      "url": "https://mochi.cards/docs/cards/",
+      "checked": "2026-09-30"
+    },
+    {
+      "label": "Mochi docs: Hidden text and diagrams",
+      "url": "https://mochi.cards/docs/reviewing/cloze-deletions/",
+      "checked": "2026-09-30"
+    },
+    {
+      "label": "Mochi docs: Importing into Mochi",
+      "url": "https://mochi.cards/docs/import-and-export/importing/",
+      "checked": "2026-09-30"
+    },
+    {
+      "label": "Mochi docs: Exporting from Mochi",
+      "url": "https://mochi.cards/docs/import-and-export/exporting/",
+      "checked": "2026-09-30"
+    },
+    {
+      "label": "Mochi docs: Sharing",
+      "url": "https://mochi.cards/docs/decks/sharing/",
+      "checked": "2026-09-30"
+    },
+    {
+      "label": "Mochi privacy policy",
+      "url": "https://mochi.cards/privacy",
+      "checked": "2026-09-30"
+    },
+    {
+      "label": "Lucida pricing",
+      "url": "https://lucida.cards/pricing",
+      "checked": "2026-09-30"
+    },
+    {
+      "label": "Lucida privacy policy",
+      "url": "https://lucida.cards/privacy",
+      "checked": "2026-09-30"
+    }
+  ],
+  "related": [
+    "vs/anki",
+    "anki-alternative",
+    "vs/remnote",
+    "compare",
+    "pricing",
+    "features/spaced-repetition",
+    "features/import"
+  ],
+  "keywords": [
+    "lucida vs mochi",
+    "mochi vs lucida",
+    "mochi alternative",
+    "mochi cards alternative",
+    "is mochi free",
+    "mochi pro price",
+    "mochi pricing",
+    "mochi fsrs",
+    "mochi vs anki",
+    "mochi import anki",
+    "mochi offline",
+    "markdown flashcards",
+    "local first flashcard app",
+    "mochi cards ai",
+    "mochi sync"
+  ]
+}

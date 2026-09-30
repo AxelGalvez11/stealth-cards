@@ -1,0 +1,346 @@
+{
+  "slug": "compare",
+  "kind": "hub",
+  "title": "Flashcard apps compared: Lucida, Anki, Quizlet and more",
+  "description": "Compare Lucida with Anki, Quizlet, Knowt, RemNote, Brainscape, Mochi, Kahoot and Gizmo on price, spaced repetition, AI and importing, with dated sources.",
+  "h1": "Lucida compared with other flashcard apps",
+  "lead": "These pages compare Lucida with Anki, Quizlet, Knowt, RemNote, Brainscape, Mochi, Kahoot and Gizmo on price, spaced repetition, AI, importing, sharing and games, with a source and a date for every fact. Each page says plainly where the other app is better.",
+  "updated": "2026-09-30",
+  "published": "2026-09-30",
+  "table": {
+    "columns": [
+      "App",
+      "Price (September 2026)",
+      "Spaced repetition",
+      "AI",
+      "Works offline",
+      "Best for"
+    ],
+    "rows": [
+      [
+        "Lucida",
+        "Free. Pro $5.99 a month or $49.99 a year.",
+        "FSRS",
+        "Your own AI (Claude, ChatGPT, any MCP app)",
+        "No",
+        "A quick start in a browser, AI-made cards, free Learn mode and live games"
+      ],
+      [
+        "Anki",
+        "Free on computers and Android. iPhone app $24.99.",
+        "SM-2 or FSRS",
+        "Add-ons only",
+        "Yes",
+        "Control, add-ons and offline study"
+      ],
+      [
+        "Quizlet",
+        "Free with ads. Plus and Plus Unlimited are paid. Teacher plan $35.99 a year.",
+        "Yes, on the website only",
+        "Built in, plus ChatGPT and Claude connectors",
+        "In the mobile apps",
+        "A huge library, classes and phone apps"
+      ],
+      [
+        "Knowt",
+        "Free with ads and AI limits. Ultra $149.99 a year or $24.99 a month.",
+        "Yes (Again, Hard, Good, Easy)",
+        "Built in, limited on Free",
+        "Not confirmed",
+        "AI summaries and AP, SAT and ACT prep"
+      ],
+      [
+        "RemNote",
+        "Free. Pro $8 a month billed yearly or $10 monthly.",
+        "SM-2, or FSRS 6 (beta)",
+        "Built in, monthly credits",
+        "Yes, in the apps",
+        "Notes and flashcards together"
+      ],
+      [
+        "Brainscape",
+        "Free for your own text cards. Pro from $7.99 a month (yearly).",
+        "Own 1 to 5 confidence system",
+        "Built in, limited on Free",
+        "Yes, in the mobile apps",
+        "Expert-made decks and a simple rating"
+      ],
+      [
+        "Mochi",
+        "Free. Pro $5 a month billed yearly or $6 monthly.",
+        "Own algorithm, or FSRS",
+        "Built in, monthly limits",
+        "Yes",
+        "Markdown and local-first study"
+      ],
+      [
+        "Kahoot",
+        "Free for small games (10 to 40 players). Kahoot!+ from $3 a month billed yearly.",
+        "Flashcards and Learn mode",
+        "Built in, paid",
+        "In the app",
+        "Live quiz games for classes and events"
+      ],
+      [
+        "Gizmo",
+        "Free with limits. Unlimited is paid.",
+        "Yes, automatic",
+        "Built in, limited on Free",
+        "Not confirmed",
+        "Quick AI decks on a phone"
+      ]
+    ]
+  },
+  "sections": [
+    {
+      "h2": "Pick by what you need",
+      "bullets": [
+        "**Full control, add-ons and offline study:** Anki. It is free on computers and Android, and [Lucida vs Anki](https://lucida.cards/vs/anki) shows the trade-offs.",
+        "**The biggest library and classroom tools:** Quizlet. See [Lucida vs Quizlet](https://lucida.cards/vs/quizlet) for what its free plan covers.",
+        "**AI built into the app:** Knowt, RemNote, Brainscape, Mochi or Gizmo. Their free plans limit it.",
+        "**Notes and cards in one place:** RemNote. See [Lucida vs RemNote](https://lucida.cards/vs/remnote).",
+        "**Markdown, local-first and offline:** Mochi. See [Lucida vs Mochi](https://lucida.cards/vs/mochi).",
+        "**Expert-made decks and a simple 1 to 5 rating:** Brainscape. See [Lucida vs Brainscape](https://lucida.cards/vs/brainscape).",
+        "**Live games for a class or event:** Kahoot. See [Lucida vs Kahoot](https://lucida.cards/vs/kahoot).",
+        "**A quick start in a browser, cards your own AI makes, and free Learn mode and live games:** Lucida."
+      ]
+    },
+    {
+      "h2": "Read the comparisons",
+      "bullets": [
+        "[Lucida vs Anki](https://lucida.cards/vs/anki): price, FSRS, add-ons, offline study, and how to bring your Anki decks over.",
+        "[Lucida vs Quizlet](https://lucida.cards/vs/quizlet): what Quizlet’s free plan limits, and how to move your sets.",
+        "[Lucida vs Knowt](https://lucida.cards/vs/knowt): built-in AI and ads against your own AI and export.",
+        "[Lucida vs RemNote](https://lucida.cards/vs/remnote): notes plus cards against flashcards only.",
+        "[Lucida vs Brainscape](https://lucida.cards/vs/brainscape): Certified decks and confidence ratings against free pictures and export.",
+        "[Lucida vs Mochi](https://lucida.cards/vs/mochi): local-first Markdown against a browser app with free sync.",
+        "[Lucida vs Kahoot](https://lucida.cards/vs/kahoot): live games for classes against flashcards with a game mode.",
+        "[Lucida vs Gizmo](https://lucida.cards/vs/gizmo): AI flashcards on your phone against export and no daily limits.",
+        "[Anki alternatives](https://lucida.cards/anki-alternative) and [Quizlet alternatives](https://lucida.cards/quizlet-alternative): side-by-side tables of the options."
+      ]
+    },
+    {
+      "h2": "What Lucida doesn’t do yet",
+      "paras": [
+        "Lucida is new, and these pages say where it is behind:"
+      ],
+      "bullets": [
+        "No App Store app yet. It runs in a browser on computers and phones.",
+        "No offline mode. It needs an internet connection.",
+        "No add-ons and no custom card templates.",
+        "It can’t read Anki .apkg files, only Anki’s plain-text export, and pictures, sounds and review history don’t come across.",
+        "Its library of shared decks is new and much smaller than Quizlet’s or AnkiWeb’s.",
+        "Live is multiple choice, for individuals, with up to 60 players, and you host it from a computer.",
+        "Lucida doesn’t write cards from your files itself. Your own AI app does."
+      ]
+    },
+    {
+      "h2": "How we check facts",
+      "paras": [
+        "Every fact about another app comes from its own site, help pages, privacy policy or app store listing, opened on September 30, 2026. Where we couldn’t confirm something, we left it out. Prices are as of September 2026 and can change. Facts about Lucida come from the app, its pricing page and its privacy policy.",
+        "If you find a mistake, write to team@lucida.cards and we will fix it."
+      ]
+    }
+  ],
+  "faq": [
+    {
+      "q": "What is the best flashcard app?",
+      "a": "It depends on what you need. Anki is best for control, add-ons and offline study. Quizlet is best for a huge library and classroom tools. Knowt, RemNote, Brainscape, Mochi and Gizmo each build in AI in different ways. Lucida is for a quick start in a browser with cards your own AI makes, plus free Learn mode and live games."
+    },
+    {
+      "q": "Anki vs Quizlet: which is better?",
+      "a": "Anki is built for long-term memory and control: it is free on computers and Android, works offline and has more than 1,600 add-ons. Quizlet has a huge library of shared sets, classroom tools and live games, and limits Learn and Test on its free plan. Pick Anki for control and long-term study, and Quizlet for shared sets and class use."
+    },
+    {
+      "q": "Which flashcard apps use FSRS?",
+      "a": "Anki supports FSRS, RemNote offers FSRS 6 as a beta option, Mochi lets you switch to it, and Lucida plans reviews with FSRS by default. Brainscape uses its own confidence system, and Quizlet, Knowt, Kahoot and Gizmo don’t say which algorithm they use."
+    },
+    {
+      "q": "Which flashcard apps are free?",
+      "a": "All of them have a free plan, with different limits. Anki is free on computers and Android (its iPhone app is $24.99). Lucida’s core is free. Mochi is free, local and offline. Brainscape is free for your own text cards. Quizlet, Knowt, RemNote, Kahoot and Gizmo are free with limits on learn modes, AI, player counts or daily use."
+    },
+    {
+      "q": "Which flashcard apps have AI built in?",
+      "a": "Quizlet, Knowt, RemNote, Brainscape, Mochi (on Pro, with small free amounts), Gizmo and Kahoot (paid tools) have AI built in, usually with monthly or daily limits. Anki gets AI through add-ons. Lucida has your own AI (Claude, ChatGPT, Cursor or any MCP app) make and edit cards through your Lucida link."
+    },
+    {
+      "q": "Which flashcard apps can import Anki decks?",
+      "a": "RemNote and Mochi import Anki .apkg files with review history. Gizmo imports an Anki deck through Magic Import. Brainscape takes Anki’s text export, Knowt takes Anki decks through a spreadsheet paste, and Lucida reads Anki’s Notes in Plain Text export."
+    },
+    {
+      "q": "Which flashcard apps work offline?",
+      "a": "Anki and Mochi work offline. RemNote’s desktop and mobile apps do, Brainscape’s mobile apps do once you download your cards, Quizlet’s mobile apps can study Flashcards and Match offline, and Kahoot’s app has an offline mode. Lucida has no offline mode. We couldn’t confirm it for Knowt or Gizmo."
+    },
+    {
+      "q": "Which flashcard apps have live games?",
+      "a": "Kahoot is built for live quiz games. Quizlet has Classic Quizlet Live, Knowt has Knowt Play, Gizmo has Gizmo Live, and Lucida has Live for up to 60 friends on any deck. We found live games in none of Anki, RemNote, Mochi or Brainscape."
+    },
+    {
+      "q": "What is Lucida?",
+      "a": "Lucida is a flashcard app that runs in the browser at app.lucida.cards. It plans every review with FSRS spaced repetition, and your own AI (Claude, ChatGPT, Cursor or any MCP app) can make and edit your cards through your personal Lucida link. The free plan has unlimited decks and cards, Learn mode, sharing and live games. Pro is $5.99 a month or $49.99 a year."
+    },
+    {
+      "q": "Does Lucida work on iPhone?",
+      "a": "Yes, in the browser. Open app.lucida.cards in Safari. There is no App Store app yet."
+    }
+  ],
+  "sources": [
+    {
+      "label": "Anki: downloads, platforms and features",
+      "url": "https://apps.ankiweb.net/",
+      "checked": "2026-09-30"
+    },
+    {
+      "label": "AnkiMobile on the App Store",
+      "url": "https://apps.apple.com/us/app/ankimobile-flashcards/id373493387",
+      "checked": "2026-09-30"
+    },
+    {
+      "label": "Anki manual: Deck options (FSRS and SM-2)",
+      "url": "https://docs.ankiweb.net/deck-options.html",
+      "checked": "2026-09-30"
+    },
+    {
+      "label": "Quizlet Plus for teachers: price and trial",
+      "url": "https://quizlet.com/upgrade",
+      "checked": "2026-09-30"
+    },
+    {
+      "label": "Quizlet Help Center: Studying on Quizlet",
+      "url": "https://help.quizlet.com/hc/en-us/articles/360030841732-Studying-on-Quizlet",
+      "checked": "2026-09-30"
+    },
+    {
+      "label": "Quizlet Help Center: Studying with Spaced Repetition",
+      "url": "https://help.quizlet.com/hc/en-us/articles/48324742264077-Studying-with-Spaced-Repetition",
+      "checked": "2026-09-30"
+    },
+    {
+      "label": "Quizlet Help Center: Studying offline with Quizlet mobile apps",
+      "url": "https://help.quizlet.com/hc/en-us/articles/360030565412-Studying-offline-with-Quizlet-mobile-apps",
+      "checked": "2026-09-30"
+    },
+    {
+      "label": "Knowt plans and pricing",
+      "url": "https://knowt.com/plans",
+      "checked": "2026-09-30"
+    },
+    {
+      "label": "Knowt Help Center: How do I use Spaced Repetition mode?",
+      "url": "https://help.knowt.com/en/articles/10714645-how-do-i-use-spaced-repetition-mode",
+      "checked": "2026-09-30"
+    },
+    {
+      "label": "RemNote pricing",
+      "url": "https://www.remnote.com/pricing",
+      "checked": "2026-09-30"
+    },
+    {
+      "label": "RemNote Help Center: The FSRS Spaced Repetition Algorithm",
+      "url": "https://help.remnote.com/en/articles/9124137-the-fsrs-spaced-repetition-algorithm",
+      "checked": "2026-09-30"
+    },
+    {
+      "label": "RemNote Help Center: Offline Mode",
+      "url": "https://help.remnote.com/en/articles/6752029-offline-mode",
+      "checked": "2026-09-30"
+    },
+    {
+      "label": "Brainscape pricing",
+      "url": "https://www.brainscape.com/pricing",
+      "checked": "2026-09-30"
+    },
+    {
+      "label": "Brainscape Help Center: How does the spaced repetition algorithm work?",
+      "url": "https://brainscape.zendesk.com/hc/en-us/articles/13103043051149-How-Does-Brainscape-s-Spaced-Repetition-Algorithm-Work",
+      "checked": "2026-09-30"
+    },
+    {
+      "label": "Mochi pricing",
+      "url": "https://mochi.cards/pricing/",
+      "checked": "2026-09-30"
+    },
+    {
+      "label": "Mochi docs: FSRS",
+      "url": "https://mochi.cards/docs/reviewing/fsrs/",
+      "checked": "2026-09-30"
+    },
+    {
+      "label": "Mochi docs: Importing into Mochi",
+      "url": "https://mochi.cards/docs/import-and-export/importing/",
+      "checked": "2026-09-30"
+    },
+    {
+      "label": "Kahoot! plans for schools",
+      "url": "https://kahoot.com/schools/plans/",
+      "checked": "2026-09-30"
+    },
+    {
+      "label": "Kahoot! for students: study tools",
+      "url": "https://kahoot.com/kahoot-study/",
+      "checked": "2026-09-30"
+    },
+    {
+      "label": "Gizmo Help: Is it free?",
+      "url": "https://help.gizmo.ai/en/articles/13011439-is-it-free",
+      "checked": "2026-09-30"
+    },
+    {
+      "label": "Gizmo Help: What is spaced repetition?",
+      "url": "https://help.gizmo.ai/en/articles/15647638-what-is-spaced-repetition",
+      "checked": "2026-09-30"
+    },
+    {
+      "label": "Gizmo Help: What is Magic Import?",
+      "url": "https://help.gizmo.ai/en/articles/15647624-what-is-magic-import",
+      "checked": "2026-09-30"
+    },
+    {
+      "label": "Lucida pricing",
+      "url": "https://lucida.cards/pricing",
+      "checked": "2026-09-30"
+    },
+    {
+      "label": "Lucida privacy policy",
+      "url": "https://lucida.cards/privacy",
+      "checked": "2026-09-30"
+    }
+  ],
+  "related": [
+    "vs/anki",
+    "vs/quizlet",
+    "vs/knowt",
+    "vs/remnote",
+    "vs/brainscape",
+    "vs/mochi",
+    "vs/kahoot",
+    "vs/gizmo",
+    "anki-alternative",
+    "quizlet-alternative",
+    "faq",
+    "pricing",
+    "features"
+  ],
+  "keywords": [
+    "best flashcard app",
+    "best flashcard apps 2026",
+    "best flashcard app for students",
+    "flashcard app comparison",
+    "flashcard apps compared",
+    "anki vs quizlet",
+    "quizlet vs knowt",
+    "anki vs remnote",
+    "anki vs mochi",
+    "spaced repetition apps",
+    "spaced repetition app comparison",
+    "fsrs apps",
+    "flashcard app with ai",
+    "free flashcard apps",
+    "flashcard apps offline",
+    "flashcard apps that import anki",
+    "quizlet alternatives",
+    "anki alternatives",
+    "kahoot alternatives for studying",
+    "flashcards with live games"
+  ]
+}

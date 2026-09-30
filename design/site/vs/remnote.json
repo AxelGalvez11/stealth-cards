@@ -1,0 +1,255 @@
+{
+  "slug": "vs/remnote",
+  "kind": "compare",
+  "title": "Lucida vs RemNote: flashcard apps compared (2026)",
+  "description": "Lucida vs RemNote: price, FSRS, AI, Anki import, offline and classes, with sources. RemNote mixes notes and cards. Lucida is flashcards only, in a browser.",
+  "h1": "Lucida vs RemNote",
+  "lead": "RemNote is a note-taking app with flashcards built in, so it fits if you want notes and cards in one place, with desktop and phone apps that work offline. Lucida is flashcards only, in a browser, so it fits if you want a simple deck app where your own AI (Claude, ChatGPT) makes the cards.",
+  "updated": "2026-09-30",
+  "published": "2026-09-30",
+  "table": {
+    "columns": [
+      "",
+      "Lucida",
+      "RemNote"
+    ],
+    "rows": [
+      [
+        "Price (September 2026)",
+        "Free: unlimited decks and cards, spaced repetition, Learn mode, sharing, live games, import and export. Pro: $5.99 a month or $49.99 a year.",
+        "Free. Pro: $8 a month billed yearly ($96) or $10 a month. Pro with AI: $18 a month billed yearly ($216) or $20 a month. A lifetime plan is $395, paid once."
+      ],
+      [
+        "Platforms",
+        "Web app at app.lucida.cards, on computers and phones. No App Store app yet.",
+        "Website, Windows, Mac, Linux, iPhone and iPad, Android."
+      ],
+      [
+        "Spaced repetition",
+        "FSRS plans every review. Grade each card Forgot, Hard, Good or Easy, and set how much you want to remember. Pro adds exam dates and tuning to your own reviews.",
+        "Anki SM-2 by default. FSRS (version 6) is optional and in beta. An exam scheduler is included (1 exam on Free)."
+      ],
+      [
+        "AI",
+        "Your own AI (Claude, ChatGPT, Cursor or any MCP app) makes and edits cards and Learn quizzes through your personal Lucida link. You choose what it may do and can check its cards first.",
+        "Built in, with monthly AI credits: 250 on Free, 1,000 on Pro, 20,000 on Pro with AI. Cards from text, PDFs and slides, tutor chat and AI grading."
+      ],
+      [
+        "Making cards",
+        "Type cards in the editor (bold, italics, math, lists), import a list, or ask your AI.",
+        "Write notes, and any bullet can become a card (type Question == Answer). Cards live inside your notes."
+      ],
+      [
+        "Card kinds",
+        "Question and answer, fill in the blank (cloze), picture with hidden parts (image occlusion), and sound.",
+        "Basic, reverse and two-way, concept and descriptor, fill in the blank, multiple choice, image occlusion (5 images on Free), multi-line, list and table cards."
+      ],
+      [
+        "Import and export",
+        "Import pasted text or a .csv, .tsv or .txt file, including Anki’s Notes in Plain Text export and Quizlet’s export. Not .apkg files. Export a CSV for each deck, or everything (decks, cards, reviews) as JSON.",
+        "Imports Anki .apkg files with review history. Exports notes as RemNote, OPML, Markdown, HTML or text, and flashcards as .apkg."
+      ],
+      [
+        "Sharing",
+        "Decks are private, link-only or public. Profiles, Discover, study a deck as it is or copy it, suggest changes, version history. All free.",
+        "Share documents and cards, browse a Shared Flashcards library, and collaborate on notes."
+      ],
+      [
+        "Classes",
+        "Make a class with a join code, assign decks by a date, and see progress that students choose to share. Free.",
+        "None found in its help center or pricing page."
+      ],
+      [
+        "Games",
+        "Live: play a deck with up to 60 friends on their phones. They join with a code or QR, no account. Free.",
+        "None found."
+      ],
+      [
+        "Works offline",
+        "No. Lucida needs an internet connection.",
+        "Yes, in the desktop and mobile apps. Limited in the web app. Most AI features need a connection."
+      ],
+      [
+        "Privacy",
+        "No ads. We don’t sell your data or use your cards to train AI models (privacy policy). You need an account, and data is stored in the United States. Export or delete it from Settings.",
+        "Its help center says you keep complete ownership of your data. Its Privacy Hub lists essential and analytics cookies and explains account deletion."
+      ]
+    ]
+  },
+  "sections": [
+    {
+      "h2": "The short version",
+      "paras": [
+        "RemNote says it was built by Anki users who felt boxed in by question-and-answer cards. You write notes in an outline, and any bullet can become a card, so your notes and your reviews live together.",
+        "Lucida keeps cards and decks separate from notes. It is simpler, it has no notes, and it runs in a browser."
+      ]
+    },
+    {
+      "h2": "Where RemNote is better",
+      "bullets": [
+        "**Notes and cards together.** Outline notes, PDF and slide annotation, handwriting, tables and templates, with cards made inside them. Lucida has no notes.",
+        "**Apps that work offline.** Desktop apps for Windows, Mac and Linux, and mobile apps. Lucida needs a connection.",
+        "**A newer scheduler option.** RemNote offers FSRS version 6 (in beta) next to Anki’s SM-2. Lucida uses FSRS 5.",
+        "**Bring your Anki decks with their history.** RemNote imports .apkg files including review history. Lucida can’t read .apkg files.",
+        "**More card kinds.** Reverse and two-way cards, concept and descriptor cards, multiple choice, tables and lists.",
+        "**An exam scheduler on the free plan** (1 exam), plus plugins and themes. On Lucida, exam dates are Pro.",
+        "**AI built in,** with monthly credits, including cards from PDFs and slides."
+      ]
+    },
+    {
+      "h2": "Where Lucida is better",
+      "bullets": [
+        "**Simple.** Decks and cards, and nothing else to learn: no outline, no knowledge base and nothing to set up.",
+        "**Free picture cards.** Lucida’s free plan has up to 100 pictures and sounds. RemNote’s free plan has 5 image-occlusion images.",
+        "**Learn mode is free:** five kinds of questions made from your cards, with no credits. RemNote’s quizzes are part of its AI features, which run on monthly credits.",
+        "**Live games and classes.** Lucida has live games for up to 60 friends, and classes with assignments and progress students choose to share. We found neither in RemNote’s help center or pricing page.",
+        "**Your own AI, no credit meter from Lucida.** Your AI app makes and edits cards through your Lucida link, and on Free it can make as many as you want.",
+        "**A lower monthly price for Pro:** $5.99 a month, against $10 a month for RemNote Pro ($8 a month billed yearly). The two plans include different things.",
+        "**Your data out.** Export each deck as CSV, or everything including reviews as JSON."
+      ]
+    },
+    {
+      "h2": "Moving between them",
+      "paras": [
+        "Lucida can’t read RemNote’s exports directly. RemNote exports flashcards as .apkg, and Lucida reads plain text and CSV, not .apkg files.",
+        "From Lucida to RemNote: export a deck as CSV and turn each row into a line like Question >> Answer. RemNote’s help says pasted lines written that way become flashcards."
+      ]
+    },
+    {
+      "h2": "Who should pick which",
+      "bullets": [
+        "**Pick RemNote** if you want notes and flashcards in one app, offline apps, or an Anki import that keeps your history.",
+        "**Pick Lucida** if you want flashcards only, kept simple, with your own AI making the cards and free live games and Learn mode."
+      ]
+    },
+    {
+      "h2": "How we checked this page",
+      "paras": [
+        "Facts about RemNote come from RemNote’s pricing page and help center, opened on September 30, 2026. Facts about Lucida come from the app, its pricing page and its privacy policy. Where we couldn’t confirm something about RemNote, we left it out. If anything here is wrong, write to team@lucida.cards."
+      ]
+    }
+  ],
+  "faq": [
+    {
+      "q": "Is RemNote free?",
+      "a": "Yes, with limits. The free plan has unlimited notes and flashcards and unlimited synced devices, plus 3 annotated PDFs, 5 image-occlusion images, 1 handwritten document, 1 exam in the exam scheduler and 250 AI credits a month (RemNote pricing, September 2026)."
+    },
+    {
+      "q": "How much is RemNote Pro?",
+      "a": "RemNote Pro is $8 a month billed yearly ($96) or $10 a month billed monthly. Pro with AI is $18 a month billed yearly ($216) or $20 a month. There is also a lifetime plan, Life-Long Learner, at $395 paid once."
+    },
+    {
+      "q": "Does RemNote use FSRS?",
+      "a": "Optionally. RemNote’s default scheduler is Anki SM-2, and FSRS version 6 is available as a beta feature you switch on. Lucida plans reviews with FSRS by default."
+    },
+    {
+      "q": "Can I import Anki decks into RemNote?",
+      "a": "Yes. RemNote imports Anki .apkg files, including review history, and handles basic, cloze and image-occlusion notes. CSS on note types and custom JavaScript aren’t carried over. Lucida can’t read .apkg files, but it reads Anki’s Notes in Plain Text export."
+    },
+    {
+      "q": "Does RemNote work offline?",
+      "a": "Yes, in the desktop and mobile apps. The web app works offline only if you already have it open, and most AI features need a connection. Lucida has no offline mode."
+    },
+    {
+      "q": "Does RemNote have AI?",
+      "a": "Yes. RemNote includes monthly AI credits (250 on Free, 1,000 on Pro, 20,000 on Pro with AI) for cards from text, PDFs and slides, tutor chat and AI grading. Lucida doesn’t write cards itself; your own AI app does through your Lucida link."
+    },
+    {
+      "q": "Is RemNote better than Anki?",
+      "a": "They suit different habits. RemNote puts cards inside outline notes and imports Anki decks with review history. Anki keeps cards in decks and has more than 1,600 add-ons. Lucida is neither: flashcards only, in a browser."
+    },
+    {
+      "q": "Is Lucida a good RemNote alternative?",
+      "a": "If you only need flashcards and want them simple, free Learn mode and live games, yes. If you want notes, PDFs, handwriting or offline apps, stay with RemNote."
+    }
+  ],
+  "sources": [
+    {
+      "label": "RemNote pricing",
+      "url": "https://www.remnote.com/pricing",
+      "checked": "2026-09-30"
+    },
+    {
+      "label": "RemNote Help Center: The FSRS Spaced Repetition Algorithm",
+      "url": "https://help.remnote.com/en/articles/9124137-the-fsrs-spaced-repetition-algorithm",
+      "checked": "2026-09-30"
+    },
+    {
+      "label": "RemNote Help Center: Importing from Anki",
+      "url": "https://help.remnote.com/en/articles/6751471-importing-from-anki",
+      "checked": "2026-09-30"
+    },
+    {
+      "label": "RemNote Help Center: Offline Mode",
+      "url": "https://help.remnote.com/en/articles/6752029-offline-mode",
+      "checked": "2026-09-30"
+    },
+    {
+      "label": "RemNote Help Center: Creating Flashcards",
+      "url": "https://help.remnote.com/en/articles/6025481-creating-flashcards",
+      "checked": "2026-09-30"
+    },
+    {
+      "label": "RemNote Help Center: Switching from Anki to RemNote",
+      "url": "https://help.remnote.com/en/articles/8664083-switching-from-anki-to-remnote",
+      "checked": "2026-09-30"
+    },
+    {
+      "label": "RemNote Help Center: RemNote vs. Anki, SuperMemo, and other tools",
+      "url": "https://help.remnote.com/en/articles/6025618-remnote-vs-anki-supermemo-and-other-spaced-repetition-tools",
+      "checked": "2026-09-30"
+    },
+    {
+      "label": "RemNote Help Center: Exporting and Printing Notes",
+      "url": "https://help.remnote.com/en/articles/7898019-exporting-and-printing-notes",
+      "checked": "2026-09-30"
+    },
+    {
+      "label": "RemNote Help Center: How to Import Flashcards from Text",
+      "url": "https://help.remnote.com/en/articles/9252072-how-to-import-flashcards-from-text",
+      "checked": "2026-09-30"
+    },
+    {
+      "label": "RemNote Privacy Hub",
+      "url": "https://www.remnote.com/privacy-hub",
+      "checked": "2026-09-30"
+    },
+    {
+      "label": "Lucida pricing",
+      "url": "https://lucida.cards/pricing",
+      "checked": "2026-09-30"
+    },
+    {
+      "label": "Lucida privacy policy",
+      "url": "https://lucida.cards/privacy",
+      "checked": "2026-09-30"
+    }
+  ],
+  "related": [
+    "vs/anki",
+    "anki-alternative",
+    "vs/mochi",
+    "vs/knowt",
+    "compare",
+    "pricing",
+    "features/spaced-repetition",
+    "features/image-occlusion"
+  ],
+  "keywords": [
+    "lucida vs remnote",
+    "remnote vs lucida",
+    "remnote alternative",
+    "is remnote free",
+    "remnote pro price",
+    "remnote pricing",
+    "remnote fsrs",
+    "remnote vs anki",
+    "remnote import anki",
+    "remnote offline",
+    "remnote ai credits",
+    "notes and flashcards app",
+    "flashcards inside notes",
+    "remnote image occlusion",
+    "simple flashcard app"
+  ]
+}

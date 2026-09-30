@@ -1,0 +1,273 @@
+{
+  "slug": "vs/kahoot",
+  "kind": "compare",
+  "title": "Lucida vs Kahoot: flashcards and live games (2026)",
+  "description": "Lucida vs Kahoot: live games, player limits, flashcards, spaced repetition, price and privacy, with sources. Kahoot is built for classes. Lucida for study.",
+  "h1": "Lucida vs Kahoot",
+  "lead": "Kahoot is the well-known live quiz game for classrooms and events, built for large groups, reports and many question types. Lucida is a flashcard app with spaced repetition whose Live mode turns any of your decks into a game for up to 60 friends on their phones, free.",
+  "updated": "2026-09-30",
+  "published": "2026-09-30",
+  "table": {
+    "columns": [
+      "",
+      "Lucida",
+      "Kahoot"
+    ],
+    "rows": [
+      [
+        "Price (September 2026)",
+        "Free: unlimited decks and cards, spaced repetition, Learn mode, sharing, live games, import and export. Pro: $5.99 a month or $49.99 a year.",
+        "Free (Kahoot! Go): flashcards and live games of up to 40 players on its school plans page (10 on its personal plans page). Paid Kahoot!+ starts at $3 a month billed yearly. Kahoot! One is $19 a month billed yearly, shown with a 20% offer that ends September 30, 2026."
+      ],
+      [
+        "Platforms",
+        "Web app at app.lucida.cards, on computers and phones. No App Store app yet.",
+        "Website and the Kahoot! mobile app. Players join at kahoot.it with a game PIN."
+      ],
+      [
+        "Spaced repetition",
+        "FSRS plans every review. Grade each card Forgot, Hard, Good or Easy, and set how much you want to remember. Pro adds exam dates and tuning to your own reviews.",
+        "Flashcards (swipe to see a card again later or mark it done) and Learn mode. Its help center says Learn mode can be used for spaced repetition. No schedule is published."
+      ],
+      [
+        "AI",
+        "Your own AI (Claude, ChatGPT, Cursor or any MCP app) makes and edits cards and Learn quizzes through your personal Lucida link. You choose what it may do and can check its cards first.",
+        "AI builds kahoots and study sets from topics, PDFs, URLs and Wikipedia. These tools are paid: Bronze, from $3 a month billed yearly, reads up to 3 pages, and higher plans up to 150."
+      ],
+      [
+        "Making cards",
+        "Type cards in the editor (bold, italics, math, lists), import a list, or ask your AI.",
+        "A creator with templates and a question bank of community questions, plus AI. Flashcards are free to create."
+      ],
+      [
+        "Card kinds",
+        "Question and answer, fill in the blank (cloze), picture with hidden parts (image occlusion), and sound.",
+        "Quiz and true or false questions on the free plan. Paid plans add question types such as puzzle, drop pin and slider. Flashcards."
+      ],
+      [
+        "Import and export",
+        "Import pasted text or a .csv, .tsv or .txt file, including Anki’s Notes in Plain Text export and Quizlet’s export. Not .apkg files. Export a CSV for each deck, or everything (decks, cards, reviews) as JSON.",
+        "Import quiz questions from an .xlsx template (quiz questions only, no images) and slides from PowerPoint. A kahoot can’t be downloaded as a spreadsheet directly; a game report gives an .xlsx with its questions and answers."
+      ],
+      [
+        "Sharing",
+        "Decks are private, link-only or public. Profiles, Discover, study a deck as it is or copy it, suggest changes, version history. All free.",
+        "A huge public library (its plans page says half a billion community questions). Share kahoots by link."
+      ],
+      [
+        "Classes",
+        "Make a class with a join code, assign decks by a date, and see progress that students choose to share. Free.",
+        "Kahoot! for schools: host games, assign kahoots and get reports. Kahoot says 10 million teachers hosted a kahoot in the past 12 months."
+      ],
+      [
+        "Games",
+        "Live: play a deck with up to 60 friends on their phones. They join with a code or QR, no account. Free.",
+        "This is the product: live games on a shared screen. Kahoot says it has had 14 billion participants since 2013. Team play and more game experiences come with paid plans."
+      ],
+      [
+        "Works offline",
+        "No. Lucida needs an internet connection.",
+        "An offline mode in the app: save kahoots and study, play or create without a connection. Kahoot says it is free for students."
+      ],
+      [
+        "Privacy",
+        "No ads. We don’t sell your data or use your cards to train AI models (privacy policy). You need an account, and data is stored in the United States. Export or delete it from Settings.",
+        "Its privacy notice (effective September 1, 2026) says there is no third-party advertising, and that it does not sell personal information."
+      ]
+    ]
+  },
+  "sections": [
+    {
+      "h2": "What each one is for",
+      "paras": [
+        "Kahoot is a game that a host runs for a group. A teacher or presenter puts questions on a shared screen, and players answer on their phones. Flashcards are a smaller part of it.",
+        "Lucida is a flashcard app you use on your own every day. Live is an extra: any deck becomes a multiple-choice game for friends or a study group, with no quiz to build."
+      ]
+    },
+    {
+      "h2": "Where Kahoot is better",
+      "bullets": [
+        "**Scale.** Kahoot says it has had 14 billion participants since 2013, and its paid plans allow up to 800 players (up to 5,000 on its business plans).",
+        "**Question types and presentations.** Puzzle, slider, drop pin, type answer, word clouds, slides from PowerPoint and more, on paid plans. Lucida Live is multiple choice.",
+        "**Reports and team play.** Reports for teachers and team experiences come with paid plans. Lucida Live has no teams.",
+        "**A huge library** of ready-made kahoots, and a question bank of community questions.",
+        "**Built for schools and events,** with plans for schools, universities, workplaces and one-off events.",
+        "**Mobile apps and offline mode.** The Kahoot! app works offline for students, free. Lucida has no App Store app yet and needs a connection."
+      ]
+    },
+    {
+      "h2": "Where Lucida is better",
+      "bullets": [
+        "**Flashcards with spaced repetition.** FSRS plans every review. Kahoot has flashcards and a Learn mode, and its help center mentions spaced repetition without describing a schedule.",
+        "**A free game for more players.** Live hosts up to 60 players on the free plan. Kahoot’s free plan lists 40 players on its school page and 10 on its personal page.",
+        "**No quiz to build.** The game uses your deck’s cards, or questions your AI wrote, so a deck you already study is ready to play.",
+        "**Players need no account.** Friends join with a code or a QR code and a name.",
+        "**Everything else in one place:** Learn mode, cards your own AI makes, sharing, classes and export."
+      ]
+    },
+    {
+      "h2": "Using both",
+      "paras": [
+        "Study a deck in Lucida every day, then run a Live game before the test. For a big class, a hall or an event, use Kahoot.",
+        "To move questions, export a Lucida deck as CSV and copy the fronts and backs into Kahoot’s spreadsheet template. Each Kahoot question needs at least two answers, so you add the wrong ones, and the template takes standard quiz questions only."
+      ]
+    },
+    {
+      "h2": "Who should pick which",
+      "bullets": [
+        "**Pick Kahoot** for classroom or event games with many players, reports, team modes and slides.",
+        "**Pick Lucida** to study cards every day with spaced repetition and play a deck game with friends or a study group."
+      ]
+    },
+    {
+      "h2": "How we checked this page",
+      "paras": [
+        "Facts about Kahoot come from Kahoot’s plans pages, help center, company page and privacy notice, opened on September 30, 2026. Facts about Lucida come from the app, its pricing page and its privacy policy. Where we couldn’t confirm something about Kahoot, we left it out. If anything here is wrong, write to team@lucida.cards."
+      ]
+    }
+  ],
+  "faq": [
+    {
+      "q": "Is Kahoot free?",
+      "a": "Yes, with limits. Kahoot! Go is free and includes flashcards and live games with a small player limit: 40 players on Kahoot’s school plans page and 10 on its personal plans page. Paid Kahoot!+ plans start at $3 a month billed yearly and raise the limit to 50, 100, 200 or 800 players (September 2026)."
+    },
+    {
+      "q": "How many players can join a free Kahoot?",
+      "a": "Kahoot lists 40 players for the free Kahoot! Go plan on its school plans page, and 10 on its personal plans page. Lucida’s Live is free for up to 60 players."
+    },
+    {
+      "q": "Does Kahoot have flashcards?",
+      "a": "Yes. Kahoot has flashcards you can create for free and a library of flashcards from verified creators. You swipe a card to see it again later or mark it done. AI tools that make cards from PDFs are paid."
+    },
+    {
+      "q": "Does Kahoot use spaced repetition?",
+      "a": "Kahoot’s help center says you can use Learn mode for spaced repetition, and flashcards for memorizing key points. It doesn’t publish how cards are scheduled. Lucida plans every review with FSRS."
+    },
+    {
+      "q": "What is a free alternative to Kahoot for studying with friends?",
+      "a": "Lucida’s Live (free, up to 60 players, join with a code), Gizmo Live (free, at least 2 players and no maximum), Knowt Play (free to host from your own sets, with several game modes) and Quizlet Live (a matching game started from a teacher-identified account). Kahoot is still the one built for big classes and events."
+    },
+    {
+      "q": "Can I turn my flashcards into a Kahoot?",
+      "a": "Kahoot imports quiz questions from an .xlsx template, and every question needs at least two answers, so a flashcard’s front and back need wrong answers added first. Its paid AI tools can also build a kahoot from a PDF. In Lucida you don’t need to: Live plays any deck directly."
+    },
+    {
+      "q": "Do players need an account to join Lucida Live?",
+      "a": "No. Friends open lucida.cards/join or scan the QR code, enter the code and a name, and play. The host needs a Lucida account and runs the game from a deck."
+    },
+    {
+      "q": "Does Lucida Live have teams or many question types?",
+      "a": "No. Lucida Live is for individuals, and its questions are multiple choice, made from your deck’s cards or written by your AI. Kahoot has team experiences and many more question types on paid plans."
+    },
+    {
+      "q": "What does Kahoot say about privacy?",
+      "a": "Kahoot’s privacy notice (effective September 1, 2026) says its services, app and website include no third-party advertising, and that it does not sell personal information or share it with third parties for marketing. Check the notice against your school’s rules."
+    }
+  ],
+  "sources": [
+    {
+      "label": "Kahoot! plans for schools",
+      "url": "https://kahoot.com/schools/plans/",
+      "checked": "2026-09-30"
+    },
+    {
+      "label": "Kahoot!+ Study plans (personal)",
+      "url": "https://kahoot.com/register/kahoot-study-pricing/",
+      "checked": "2026-09-30"
+    },
+    {
+      "label": "Kahoot! for students: study tools",
+      "url": "https://kahoot.com/kahoot-study/",
+      "checked": "2026-09-30"
+    },
+    {
+      "label": "Kahoot! flashcards",
+      "url": "https://kahoot.com/kahoot-study/flashcards/",
+      "checked": "2026-09-30"
+    },
+    {
+      "label": "Kahoot! 360 business pricing (player limits)",
+      "url": "https://kahoot360.com/pricing/",
+      "checked": "2026-09-30"
+    },
+    {
+      "label": "About Kahoot! (participants, teachers)",
+      "url": "https://kahoot.com/company/",
+      "checked": "2026-09-30"
+    },
+    {
+      "label": "Kahoot! Help: How to learn and practice with self-study modes",
+      "url": "https://support.kahoot.com/hc/en-us/articles/31566898896029-How-to-learn-and-practice-with-Kahoot-self-study-modes",
+      "checked": "2026-09-30"
+    },
+    {
+      "label": "Kahoot! Help: How to import questions from a spreadsheet",
+      "url": "https://support.kahoot.com/hc/en-us/articles/115002812547-How-to-import-questions-from-a-spreadsheet-to-your-kahoot",
+      "checked": "2026-09-30"
+    },
+    {
+      "label": "Kahoot! join page (game PIN)",
+      "url": "https://kahoot.it/",
+      "checked": "2026-09-30"
+    },
+    {
+      "label": "Kahoot! privacy notice",
+      "url": "https://trust.kahoot.com/privacy-policy/",
+      "checked": "2026-09-30"
+    },
+    {
+      "label": "Gizmo Help: How do I start or join a Gizmo Live game?",
+      "url": "https://help.gizmo.ai/en/articles/15869959-how-do-i-start-or-join-a-gizmo-live-game",
+      "checked": "2026-09-30"
+    },
+    {
+      "label": "Knowt Help: Getting Started with Knowt Play",
+      "url": "https://help.knowt.com/en/articles/12010990-getting-started-with-knowt-play",
+      "checked": "2026-09-30"
+    },
+    {
+      "label": "Quizlet Help: Starting a game of Classic Quizlet Live",
+      "url": "https://help.quizlet.com/hc/en-us/articles/360041366012-Starting-a-game-of-Classic-Quizlet-Live-in-individuals-mode",
+      "checked": "2026-09-30"
+    },
+    {
+      "label": "Lucida pricing",
+      "url": "https://lucida.cards/pricing",
+      "checked": "2026-09-30"
+    },
+    {
+      "label": "Lucida privacy policy",
+      "url": "https://lucida.cards/privacy",
+      "checked": "2026-09-30"
+    }
+  ],
+  "related": [
+    "vs/quizlet",
+    "vs/gizmo",
+    "vs/knowt",
+    "quizlet-alternative",
+    "compare",
+    "pricing",
+    "features/live-games",
+    "features/classes",
+    "for/teachers"
+  ],
+  "keywords": [
+    "lucida vs kahoot",
+    "kahoot vs lucida",
+    "kahoot alternative",
+    "free kahoot alternative",
+    "is kahoot free",
+    "kahoot player limit",
+    "kahoot free plan limit",
+    "kahoot flashcards",
+    "kahoot spaced repetition",
+    "kahoot for studying",
+    "games to study flashcards with friends",
+    "live quiz game from flashcards",
+    "kahoot vs quizlet live",
+    "kahoot vs gizmo live",
+    "kahoot price",
+    "kahoot privacy"
+  ]
+}

@@ -1,0 +1,292 @@
+{
+  "slug": "vs/gizmo",
+  "kind": "compare",
+  "title": "Lucida vs Gizmo: AI flashcard apps compared (2026)",
+  "description": "Lucida vs Gizmo: price, free limits, AI, export, live games and privacy, with sources. Gizmo has phone apps and AI. Lucida has export and no daily limits.",
+  "h1": "Lucida vs Gizmo",
+  "lead": "Gizmo is an AI flashcard app with iPhone and Android apps that turns PDFs, videos and notes into cards and quizzes, with daily limits on its free plan. Lucida has no App Store app yet, but it has no hearts or waiting times, lets you export everything, and lets your own AI (Claude, ChatGPT) make and edit your cards.",
+  "updated": "2026-09-30",
+  "published": "2026-09-30",
+  "table": {
+    "columns": [
+      "",
+      "Lucida",
+      "Gizmo"
+    ],
+    "rows": [
+      [
+        "Price (September 2026)",
+        "Free: unlimited decks and cards, spaced repetition, Learn mode, sharing, live games, import and export. Pro: $5.99 a month or $49.99 a year.",
+        "Free: unlimited cards, decks and quizzing with limits (15 hearts, then a 10-minute wait; 2 Magic Imports a day, 20 minutes apart). Gizmo Unlimited is a yearly or weekly plan with a student discount, and its prices are shown in the app by device and region."
+      ],
+      [
+        "Platforms",
+        "Web app at app.lucida.cards, on computers and phones. No App Store app yet.",
+        "iPhone, iPad, Android and a web app."
+      ],
+      [
+        "Spaced repetition",
+        "FSRS plans every review. Grade each card Forgot, Hard, Good or Easy, and set how much you want to remember. Pro adds exam dates and tuning to your own reviews.",
+        "Yes. Spaced repetition runs in Memorise mode automatically. Gizmo doesn’t name its algorithm."
+      ],
+      [
+        "AI",
+        "Your own AI (Claude, ChatGPT, Cursor or any MCP app) makes and edits cards and Learn quizzes through your personal Lucida link. You choose what it may do and can check its cards first.",
+        "Built in: Magic Import makes cards from PDFs and more, an AI tutor teaches topics, and AI quizzes are made from your content. The AI tutor is limited on Free."
+      ],
+      [
+        "Making cards",
+        "Type cards in the editor (bold, italics, math, lists), import a list, or ask your AI.",
+        "Magic Import from PDFs, recordings, notes, photos, PowerPoint, websites and YouTube links, or type cards yourself."
+      ],
+      [
+        "Card kinds",
+        "Question and answer, fill in the blank (cloze), picture with hidden parts (image occlusion), and sound.",
+        "Card text (with pictures and LaTeX), multiple choice, matching, ordering and true or false. Labels can be added to an image."
+      ],
+      [
+        "Import and export",
+        "Import pasted text or a .csv, .tsv or .txt file, including Anki’s Notes in Plain Text export and Quizlet’s export. Not .apkg files. Export a CSV for each deck, or everything (decks, cards, reviews) as JSON.",
+        "Magic Import reads Quizlet sets (paste a link), Anki decks and spreadsheets. Exporting cards or decks isn’t available yet, says its help center."
+      ],
+      [
+        "Sharing",
+        "Decks are private, link-only or public. Profiles, Discover, study a deck as it is or copy it, suggest changes, version history. All free.",
+        "Share a deck by link, QR code or invite. Public decks can be found by other users. Its App Store listing says 1,000,000+ free public flashcards."
+      ],
+      [
+        "Classes",
+        "Make a class with a join code, assign decks by a date, and see progress that students choose to share. Free.",
+        "Study groups and friends. We found no teacher classes in its help center."
+      ],
+      [
+        "Games",
+        "Live: play a deck with up to 60 friends on their phones. They join with a code or QR, no account. Free.",
+        "Gizmo Live: a real-time quiz on a deck or any topic. Join with a 6-character code or QR code. At least 2 players, no maximum, free."
+      ],
+      [
+        "Works offline",
+        "No. Lucida needs an internet connection.",
+        "Not confirmed. Its help center has no offline article."
+      ],
+      [
+        "Privacy",
+        "No ads. We don’t sell your data or use your cards to train AI models (privacy policy). You need an account, and data is stored in the United States. Export or delete it from Settings.",
+        "Google Play lists no data shared with third parties. Its privacy notice (updated September 11, 2026) says it does not sell personal information, and that it may use personal information to train the models behind its AI features."
+      ]
+    ]
+  },
+  "sections": [
+    {
+      "h2": "The short version",
+      "paras": [
+        "Gizmo is built for speed on a phone. You drop in a PDF, a video or a photo of your notes, and its AI turns them into a deck and a quiz. It wraps studying in points, streaks and leagues.",
+        "Lucida is calmer and more portable. There are no hearts and no waiting times. Your own AI app makes the cards, and you can take every card out whenever you like."
+      ]
+    },
+    {
+      "h2": "Where Gizmo is better",
+      "bullets": [
+        "**Phone apps.** iPhone, iPad and Android apps, plus a web app. Lucida has no App Store app yet and works in a browser.",
+        "**AI built in.** Magic Import turns PDFs, recordings, photos, PowerPoint files, websites and YouTube links into cards, and an AI tutor can teach a topic step by step. You don’t need a separate AI subscription.",
+        "**Game-style study.** XP, levels, leagues, streaks and Monster Hunt. Lucida keeps a streak and stats, and points appear only in live games.",
+        "**Live games with no player cap.** Gizmo says there is no maximum. Lucida Live takes up to 60.",
+        "**More card types made for quizzing,** including matching and ordering. Lucida has four card kinds and five Learn question kinds.",
+        "**A big public library.** Its App Store listing says 1,000,000+ free public flashcards."
+      ]
+    },
+    {
+      "h2": "Where Lucida is better",
+      "bullets": [
+        "**Your data out.** Gizmo’s help center says exporting cards and decks isn’t available yet. Lucida exports every deck as CSV and everything, reviews included, as JSON.",
+        "**No daily limits.** Gizmo’s free plan has hearts (15, then a 10-minute wait) and two Magic Imports a day. Lucida’s free plan has no waiting times, and your AI can make as many cards as you want.",
+        "**Any AI, and it can edit.** Claude, ChatGPT, Cursor or any MCP app makes cards, fixes them, writes quiz questions and sees what is due. You choose what it may do and can check its cards first.",
+        "**Classes.** Make a class with a join code, assign decks by a date and see progress students choose to share. Gizmo has study groups with friends.",
+        "**Privacy.** Lucida’s policy says it doesn’t use your cards to train AI models. Gizmo’s notice says it may use personal information to train the models behind its AI features."
+      ]
+    },
+    {
+      "h2": "Moving between them",
+      "paras": [
+        "To Gizmo from Lucida: Magic Import takes spreadsheets and pasted notes, so export a deck as CSV and import it there.",
+        "To Lucida from Gizmo: Gizmo can’t export your cards yet, so you would copy your notes or source files into your AI and ask it to rebuild the deck in Lucida through your Lucida link."
+      ]
+    },
+    {
+      "h2": "Who should pick which",
+      "bullets": [
+        "**Pick Gizmo** if you want an app on your phone that turns PDFs and videos into quizzes fast, and you don’t need to export your cards.",
+        "**Pick Lucida** if you want to keep your cards portable, use your own AI, and study without hearts or waiting times."
+      ]
+    },
+    {
+      "h2": "How we checked this page",
+      "paras": [
+        "Facts about Gizmo come from Gizmo’s help center, privacy notice, and its App Store and Google Play listings, opened on September 30, 2026. Facts about Lucida come from the app, its pricing page and its privacy policy. Where we couldn’t confirm something about Gizmo, we left it out. If anything here is wrong, write to team@lucida.cards."
+      ]
+    }
+  ],
+  "faq": [
+    {
+      "q": "Is Gizmo free?",
+      "a": "Yes, with limits. You can make unlimited cards and decks and do unlimited quizzing for free. If you lose 15 hearts while quizzing you wait 10 minutes, you get 2 Magic Imports a day with 20 minutes between imports, and the AI tutor is limited (Gizmo help center, September 2026)."
+    },
+    {
+      "q": "How much does Gizmo Unlimited cost?",
+      "a": "Gizmo’s help pages don’t list prices. It says there are two Unlimited plans, a yearly one and a weekly one, with a student discount for eligible users, and that prices are shown in the app by device and region. Its App Store listing shows many Unlimited price options. Lucida Pro is $5.99 a month or $49.99 a year."
+    },
+    {
+      "q": "What are hearts in Gizmo?",
+      "a": "Hearts limit how long you can quiz on the free plan. Gizmo’s help center says that if you lose 15 hearts you have to wait 10 minutes before you can quiz again. Unlimited removes the limit. Lucida has no hearts."
+    },
+    {
+      "q": "Can I export my cards from Gizmo?",
+      "a": "Not yet. Gizmo’s help center says exporting cards and exporting decks aren’t available yet, and that it plans to add them. Lucida exports a CSV for each deck, or everything as JSON."
+    },
+    {
+      "q": "Does Gizmo use spaced repetition?",
+      "a": "Yes. Its help center says spaced repetition powers Memorise mode and works automatically. It doesn’t name the algorithm. Lucida plans every review with FSRS."
+    },
+    {
+      "q": "Can I import Anki or Quizlet decks into Gizmo?",
+      "a": "Yes, through Magic Import: paste a Quizlet set’s link, or import an Anki deck. On the free plan you wait 20 minutes between imports. Lucida reads Anki’s Notes in Plain Text export and Quizlet’s export, with no waiting."
+    },
+    {
+      "q": "Is Gizmo Live like Kahoot?",
+      "a": "Similar. Gizmo Live is a real-time quiz on a deck or any topic: friends join with a 6-character code or QR code, it needs at least 2 players and has no maximum, and it is free. Lucida’s Live is a free game for up to 60 friends on any deck."
+    },
+    {
+      "q": "Does Gizmo work on Android?",
+      "a": "Yes. Gizmo has iOS and Android apps, and a web app. Lucida is a web app for phones and computers, and has no app in an app store yet."
+    },
+    {
+      "q": "Is Lucida a good Gizmo alternative?",
+      "a": "If you want to export your cards, avoid daily limits and use your own AI, yes. If you want a phone app that turns PDFs and videos into quizzes with AI built in, Gizmo fits better."
+    }
+  ],
+  "sources": [
+    {
+      "label": "Gizmo Help: Is it free?",
+      "url": "https://help.gizmo.ai/en/articles/13011439-is-it-free",
+      "checked": "2026-09-30"
+    },
+    {
+      "label": "Gizmo Help: What do I get with Gizmo Unlimited?",
+      "url": "https://help.gizmo.ai/en/articles/15647627-what-do-i-get-with-gizmo-unlimited",
+      "checked": "2026-09-30"
+    },
+    {
+      "label": "Gizmo Help: How do I sign up for Unlimited?",
+      "url": "https://help.gizmo.ai/en/articles/13185488-how-do-i-sign-up-for-unlimited",
+      "checked": "2026-09-30"
+    },
+    {
+      "label": "Gizmo Help: Do you have an app?",
+      "url": "https://help.gizmo.ai/en/articles/13011457-do-you-have-an-app",
+      "checked": "2026-09-30"
+    },
+    {
+      "label": "Gizmo Help: How does Gizmo work?",
+      "url": "https://help.gizmo.ai/en/articles/14472668-how-does-gizmo-work",
+      "checked": "2026-09-30"
+    },
+    {
+      "label": "Gizmo Help: What is spaced repetition?",
+      "url": "https://help.gizmo.ai/en/articles/15647638-what-is-spaced-repetition",
+      "checked": "2026-09-30"
+    },
+    {
+      "label": "Gizmo Help: What types of flashcards can I make?",
+      "url": "https://help.gizmo.ai/en/articles/16527223-what-types-of-flashcards-can-i-make",
+      "checked": "2026-09-30"
+    },
+    {
+      "label": "Gizmo Help: What is Magic Import?",
+      "url": "https://help.gizmo.ai/en/articles/15647624-what-is-magic-import",
+      "checked": "2026-09-30"
+    },
+    {
+      "label": "Gizmo Help: How do I import from Quizlet?",
+      "url": "https://help.gizmo.ai/en/articles/15647629-how-do-i-import-from-quizlet",
+      "checked": "2026-09-30"
+    },
+    {
+      "label": "Gizmo Help: How do I edit or manage my cards? (no export yet)",
+      "url": "https://help.gizmo.ai/en/articles/13761411-how-do-i-edit-or-manage-my-cards",
+      "checked": "2026-09-30"
+    },
+    {
+      "label": "Gizmo Help: How do I make changes to my decks? (no export yet)",
+      "url": "https://help.gizmo.ai/en/articles/12995587-how-do-i-make-changes-to-my-decks",
+      "checked": "2026-09-30"
+    },
+    {
+      "label": "Gizmo Help: How do I share a deck?",
+      "url": "https://help.gizmo.ai/en/articles/15647633-how-do-i-share-a-deck",
+      "checked": "2026-09-30"
+    },
+    {
+      "label": "Gizmo Help: What is Gizmo Live?",
+      "url": "https://help.gizmo.ai/en/articles/15623066-what-is-gizmo-live",
+      "checked": "2026-09-30"
+    },
+    {
+      "label": "Gizmo Help: How do I start or join a Gizmo Live game?",
+      "url": "https://help.gizmo.ai/en/articles/15869959-how-do-i-start-or-join-a-gizmo-live-game",
+      "checked": "2026-09-30"
+    },
+    {
+      "label": "Gizmo privacy notice",
+      "url": "https://gizmo.ai/privacy",
+      "checked": "2026-09-30"
+    },
+    {
+      "label": "Gizmo on the App Store",
+      "url": "https://apps.apple.com/us/app/gizmo-ai-tutor/id1610516671",
+      "checked": "2026-09-30"
+    },
+    {
+      "label": "Gizmo on Google Play (data safety)",
+      "url": "https://play.google.com/store/apps/details?id=ai.saveall.app",
+      "checked": "2026-09-30"
+    },
+    {
+      "label": "Lucida pricing",
+      "url": "https://lucida.cards/pricing",
+      "checked": "2026-09-30"
+    },
+    {
+      "label": "Lucida privacy policy",
+      "url": "https://lucida.cards/privacy",
+      "checked": "2026-09-30"
+    }
+  ],
+  "related": [
+    "vs/knowt",
+    "vs/quizlet",
+    "vs/kahoot",
+    "quizlet-alternative",
+    "compare",
+    "pricing",
+    "features/ai-flashcards",
+    "features/live-games"
+  ],
+  "keywords": [
+    "lucida vs gizmo",
+    "gizmo vs lucida",
+    "gizmo alternative",
+    "gizmo ai alternative",
+    "is gizmo free",
+    "gizmo unlimited price",
+    "gizmo hearts",
+    "gizmo export flashcards",
+    "gizmo spaced repetition",
+    "gizmo import anki",
+    "gizmo import quizlet",
+    "gizmo live",
+    "gizmo vs quizlet",
+    "gizmo vs knowt",
+    "ai flashcard maker",
+    "flashcards from pdf"
+  ]
+}

@@ -42,9 +42,12 @@ export const PRICING_FAQ = [
   ['What counts toward the 100 pictures and sounds?', 'Each picture or sound on a card. Text cards never count.']
 ];
 
+// What llms.txt and llms-full.txt say, written by hand in design/site/_llms.json: an intro paragraph, a name and one line for
+// each page (in the order to list them), and quick facts. Without that file they are made from the pages' own words.
+export const LLMS = (() => { try { return JSON.parse(readFileSync(join(DATA_DIR, '_llms.json'), 'utf8')); } catch { return null; } })();
 // What Lucida is, in one paragraph: the top of llms.txt, and the description of the organization and the site in the
 // structured data. Only what's true today (the iPhone app isn't in the App Store yet).
-export const ABOUT = 'Lucida is a flashcard app that runs in the browser at app.lucida.cards, on phones and computers. It plans every review with FSRS spaced repetition, and your own AI (Claude, ChatGPT, Cursor or any app that supports MCP) can make and edit your cards through your personal Lucida link. Free: unlimited decks and cards, Learn mode, shared decks and live games with friends. Pro costs $' + PRICE.monthly + ' a month or $' + PRICE.yearly + ' a year.';
+export const ABOUT = LLMS && LLMS.intro ? LLMS.intro : 'Lucida is a flashcard app that runs in the browser at app.lucida.cards, on phones and computers. It plans every review with FSRS spaced repetition, and your own AI (Claude, ChatGPT, Cursor or any app that supports MCP) can make and edit your cards through your personal Lucida link. Free: unlimited decks and cards, Learn mode, shared decks and live games with friends. Pro costs $' + PRICE.monthly + ' a month or $' + PRICE.yearly + ' a year.';
 
 const iso = label => { const d = new Date(label + ' 12:00 UTC'); return isNaN(d) ? '' : d.toISOString().slice(0, 10); };
 
@@ -122,7 +125,7 @@ export function normalize(raw) {
     updated: str(raw.updated), published: str(raw.published),
     table: cols.length && rows.length ? { columns: cols, rows } : null,
     sections: (Array.isArray(raw.sections) ? raw.sections : []).map(s => ({ h2: str(s && s.h2), paras: strs(s && s.paras), bullets: strs(s && s.bullets) })).filter(s => s.h2 || s.paras.length || s.bullets.length),
-    faq: (Array.isArray(raw.faq) ? raw.faq : []).map(f => ({ q: str(f && f.q), a: str(f && f.a) })).filter(f => f.q && f.a),
+    faq: (Array.isArray(raw.faq) ? raw.faq : []).map(f => ({ q: str(f && f.q), a: str(f && f.a), ...(str(f && f.group) ? { group: str(f.group) } : {}) })).filter(f => f.q && f.a),
     sources: (Array.isArray(raw.sources) ? raw.sources : []).map(s => ({ label: str(s && s.label), url: str(s && s.url), checked: str(s && s.checked) })).filter(s => s.url),
     related: strs(raw.related).map(clean).filter(Boolean),
     keywords: Array.isArray(raw.keywords) ? strs(raw.keywords) : str(raw.keywords).split(/\s*,\s*/).filter(Boolean)
@@ -199,7 +202,9 @@ export function pageSet(dir = DATA_DIR) {
   const { pages, problems } = readPages(dir), map = new Map();
   for (const p of pages) { if (map.has(p.slug)) problems.push(p.source + ': the page "' + p.slug + '" is also in ' + map.get(p.slug).source); else map.set(p.slug, p); }
   for (const p of fallbacks(map)) map.set(p.slug, p);
-  const list = [...map.values()].sort((a, b) => ORDER.indexOf(a.kind) - ORDER.indexOf(b.kind) || a.slug.localeCompare(b.slug));
+  // In the order design/site/_llms.json lists them, when it does, so every list of pages reads the way it was meant to.
+  const rank = slug => { const i = LLMS && LLMS.pages ? Object.keys(LLMS.pages).indexOf(slug) : -1; return i < 0 ? 1e6 : i; };
+  const list = [...map.values()].sort((a, b) => ORDER.indexOf(a.kind) - ORDER.indexOf(b.kind) || rank(a.slug) - rank(b.slug) || a.slug.localeCompare(b.slug));
   for (const p of list) {
     p.url = urlOf(p.slug); p.file = fileOf(p.slug); p.og = ogFile(p.slug); p.updatedLabel = dateLabel(p.updated);
     p.sources = p.sources.map(s => ({ ...s, checkedLabel: dateLabel(s.checked) }));

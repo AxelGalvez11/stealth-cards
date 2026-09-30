@@ -5696,6 +5696,9 @@ const spBox = (maxW, top, body) => `<section style="max-width: ${maxW}px; margin
 const spCard = (href, title, desc) => `<a class="sp-card" href="{{${href}}}" style="box-sizing: border-box; padding: 24px; border-radius: 24px; background: {{t.surf}}; display: flex; flex-direction: column; gap: 8px; min-width: 0;"><h3 style="margin: 0; font-size: 17px; font-weight: 600; letter-spacing: -.01em;">{{${title}}}</h3><p style="margin: 0; font-size: 15px; line-height: 1.5; color: {{t.muted}};">{{${desc}}}</p><span style="margin-top: 6px; font-size: 14px; font-weight: 600;">Read more →</span></a>`;
 const spGrid = (body, min = 300) => `<div style="margin-top: 28px; display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, ${min}px), 1fr)); gap: 16px;">${body}</div>`;
 const spLink = 'text-decoration: underline; text-underline-offset: 3px; text-decoration-thickness: 1px;';
+const spSections = key => `<sc-for list="{{${key}}}" as="s" hint-placeholder-count="3">${spBox(760, 'clamp(44px, 7cqw, 72px)', `<sc-if value="{{s.h2}}" hint-placeholder-val="{{ true }}"><h2 id="{{s.id}}" style="margin: 0 0 4px; font-size: clamp(26px, 3.4cqw, 38px); font-weight: 600; line-height: 1.08; letter-spacing: -.035em; text-wrap: balance;">{{s.h2}}</h2></sc-if>
+  <sc-for list="{{s.paras}}" as="p"><p style="margin: 16px 0 0; font-size: 17px; line-height: 1.65; text-wrap: pretty;">${spParts('p.parts')}</p></sc-for>
+  <sc-if value="{{s.hasBullets}}" hint-placeholder-val="{{ false }}"><ul style="margin: 16px 0 0; padding-left: 22px; font-size: 17px; line-height: 1.6;"><sc-for list="{{s.bullets}}" as="b"><li style="margin-top: 10px; padding-left: 4px;">${spParts('b.parts')}</li></sc-for></ul></sc-if>`)}</sc-for>`;
 const SITE_CSS = [
   '.sp{container-type:inline-size}',
   '.sp-crumbs li+li::before{content:"/";margin:0 8px;opacity:.4}',
@@ -5703,8 +5706,8 @@ const SITE_CSS = [
   // On a narrow page a comparison's rows stack: the feature, then each app's answer under its name.
   '@container (max-width: 760px){.sp-nav{display:none!important}.sp-head{height:64px!important}.sp-band-wide{display:none!important}.sp-band-tall{display:block!important}',
   '.sp-table table,.sp-table tbody,.sp-table tr,.sp-table th,.sp-table td{display:block}.sp-table thead{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}',
-  '.sp-table tr{padding:18px 20px}.sp-table tbody tr+tr{border-top:1px solid var(--sp-line)}.sp-table tbody th{width:auto!important;padding:0 0 4px!important;border:0!important;font-size:17px!important}',
-  '.sp-table td{padding:10px 0 0!important;border:0!important;background:none!important}.sp-table td::before{content:attr(data-label);display:block;margin-bottom:2px;font-size:12px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--sp-muted)}}',
+  '.sp-table tr{padding:18px 20px}.sp-table tbody tr+tr{border-top:1px solid var(--sp-line)}.sp-table tbody th{width:auto!important;padding:0 0 4px!important;border:0!important;background:none!important;font-size:17px!important}',
+  '.sp-table td{padding:10px 0 0!important;border:0!important;background:none!important}.sp-table td:empty{display:none}.sp-table td::before{content:attr(data-label);display:block;margin-bottom:2px;font-size:12px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--sp-muted)}}',
   SKY_CSS, NO_RISE
 ].join('');
 const sitePage = (w, h) => `<div class="sp" style="position: relative; isolation: isolate; width: ${w}px; height: ${h}px; box-sizing: border-box; font-family: ${FONT}; background: {{t.bg}}; color: {{t.text}}; overflow: hidden; --sp-line: {{t.line}}; --sp-muted: {{t.muted}};">
@@ -5720,19 +5723,19 @@ ${skyLayer(false)}
   <p style="margin: 22px 0 0; max-width: 680px; font-size: clamp(17px, 1.8cqw, 20px); line-height: 1.5; color: {{t.muted}}; text-wrap: pretty;">${spParts('page.lead')}</p>
   <sc-if value="{{page.updatedLabel}}" hint-placeholder-val="{{ true }}"><p style="margin: 16px 0 0; font-size: 14px; color: {{t.muted}};">Updated {{page.updatedLabel}}</p></sc-if>
 </section>
-<sc-if value="{{hasTable}}" hint-placeholder-val="{{ true }}">${spBox(1040, 'clamp(40px, 6cqw, 64px)', `${spH2('At a glance')}
+<sc-if value="{{hasTable}}" hint-placeholder-val="{{ true }}">${spBox('{{table.width}}', 'clamp(40px, 6cqw, 64px)', `${spH2('At a glance')}
   <div class="sp-table" style="margin-top: 24px; border-radius: 28px; background: {{t.bg}}; box-shadow: 0 0 0 1px {{t.line}}, 0 18px 44px -24px rgba(0,0,0,.25); overflow: hidden;">
     <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 15px; line-height: 1.5;">
       <thead><tr><sc-for list="{{table.head}}" as="c" hint-placeholder-count="3"><th scope="col" class="{{c.cls}}" style="padding: 18px 22px; background: {{c.bg}}; font-size: 15px; font-weight: 600;">{{c.label}}</th></sc-for></tr></thead>
-      <tbody><sc-for list="{{table.rows}}" as="r" hint-placeholder-count="6"><tr><th scope="row" style="width: 22%; padding: 16px 22px; vertical-align: top; border-top: 1px solid {{t.line}}; font-weight: 600;">{{r.label}}</th><sc-for list="{{r.cells}}" as="c" hint-placeholder-count="2"><td data-label="{{c.col}}" style="padding: 16px 22px; vertical-align: top; border-top: 1px solid {{t.line}}; background: {{c.bg}};">${spParts('c.parts')}</td></sc-for></tr></sc-for></tbody>
+      <tbody><sc-for list="{{table.rows}}" as="r" hint-placeholder-count="6"><tr><th scope="row" style="width: {{table.first}}; padding: 16px 22px; vertical-align: top; border-top: 1px solid {{t.line}}; background: {{r.bg}}; font-weight: 600;">{{r.label}}</th><sc-for list="{{r.cells}}" as="c" hint-placeholder-count="2"><td data-label="{{c.col}}" style="padding: 16px 22px; vertical-align: top; border-top: 1px solid {{t.line}}; background: {{c.bg}};">${spParts('c.parts')}</td></sc-for></tr></sc-for></tbody>
     </table>
   </div>`)}</sc-if>
 <sc-for list="{{groups}}" as="g" hint-placeholder-count="1">${spBox(1040, 'clamp(40px, 6cqw, 64px)', `${spH2('{{g.title}}')}${spGrid(`<sc-for list="{{g.cards}}" as="k" hint-placeholder-count="3">${spCard('k.href', 'k.title', 'k.desc')}</sc-for>`)}`)}</sc-for>
-<sc-for list="{{sections}}" as="s" hint-placeholder-count="3">${spBox(760, 'clamp(44px, 7cqw, 72px)', `<sc-if value="{{s.h2}}" hint-placeholder-val="{{ true }}"><h2 id="{{s.id}}" style="margin: 0 0 4px; font-size: clamp(26px, 3.4cqw, 38px); font-weight: 600; line-height: 1.08; letter-spacing: -.035em; text-wrap: balance;">{{s.h2}}</h2></sc-if>
-  <sc-for list="{{s.paras}}" as="p"><p style="margin: 16px 0 0; font-size: 17px; line-height: 1.65; text-wrap: pretty;">${spParts('p.parts')}</p></sc-for>
-  <sc-if value="{{s.hasBullets}}" hint-placeholder-val="{{ false }}"><ul style="margin: 16px 0 0; padding-left: 22px; font-size: 17px; line-height: 1.6;"><sc-for list="{{s.bullets}}" as="b"><li style="margin-top: 10px; padding-left: 4px;">${spParts('b.parts')}</li></sc-for></ul></sc-if>`)}</sc-for>
-<sc-if value="{{hasFaqPage}}" hint-placeholder-val="{{ false }}">${spBox(760, 'clamp(32px, 5cqw, 48px)', `<sc-if value="{{hasJump}}"><nav aria-label="All questions" style="margin-bottom: 8px; box-sizing: border-box; padding: 24px 28px; border-radius: 24px; background: {{t.surf}};"><ul style="margin: 0; padding: 0; list-style: none; column-width: 280px; column-gap: 32px; font-size: 15px; line-height: 1.4;"><sc-for list="{{jump}}" as="j"><li style="break-inside: avoid; padding: 5px 0;"><a href="{{j.href}}">{{j.q}}</a></li></sc-for></ul></nav></sc-if>
-  <sc-for list="{{faq}}" as="f"><div id="{{f.id}}" style="padding-top: clamp(28px, 4cqw, 40px);"><h2 style="margin: 0; font-size: clamp(21px, 2.4cqw, 26px); font-weight: 600; line-height: 1.2; letter-spacing: -.025em; text-wrap: balance;">{{f.q}}</h2><sc-for list="{{f.paras}}" as="p"><p style="margin: 12px 0 0; font-size: 17px; line-height: 1.65; text-wrap: pretty;">${spParts('p.parts')}</p></sc-for></div></sc-for>`)}</sc-if>
+${spSections('sections')}
+<sc-if value="{{hasFaqPage}}" hint-placeholder-val="{{ false }}">${spBox(760, 'clamp(32px, 5cqw, 48px)', `<sc-if value="{{hasJumpPills}}"><nav aria-label="Jump to a group of questions" style="display: flex; flex-wrap: wrap; gap: 8px;"><sc-for list="{{faqGroups}}" as="g"><a href="#{{g.id}}" style="height: 38px; padding: 0 16px; box-sizing: border-box; display: inline-flex; align-items: center; border-radius: 999px; background: {{t.surf}}; font-size: 14px; font-weight: 600;">{{g.title}}</a></sc-for></nav></sc-if>
+  <sc-if value="{{hasJumpList}}"><nav aria-label="All questions" style="margin-bottom: 8px; box-sizing: border-box; padding: 24px 28px; border-radius: 24px; background: {{t.surf}};"><ul style="margin: 0; padding: 0; list-style: none; column-width: 280px; column-gap: 32px; font-size: 15px; line-height: 1.4;"><sc-for list="{{jump}}" as="j"><li style="break-inside: avoid; padding: 5px 0;"><a href="{{j.href}}">{{j.q}}</a></li></sc-for></ul></nav></sc-if>
+  <sc-for list="{{faqGroups}}" as="g"><div id="{{g.id}}" style="padding-top: clamp(36px, 5cqw, 56px);"><sc-if value="{{g.title}}"><h2 style="margin: 0; font-size: clamp(26px, 3.4cqw, 38px); font-weight: 600; line-height: 1.08; letter-spacing: -.035em; text-wrap: balance;">{{g.title}}</h2></sc-if><sc-for list="{{g.items}}" as="f"><div id="{{f.id}}" style="padding-top: clamp(20px, 3cqw, 28px);"><sc-if value="{{g.title}}"><h3 style="margin: 0; font-size: clamp(19px, 2.1cqw, 22px); font-weight: 600; line-height: 1.25; letter-spacing: -.02em; text-wrap: balance;">{{f.q}}</h3></sc-if><sc-if value="{{g.plain}}"><h2 style="margin: 0; font-size: clamp(21px, 2.4cqw, 26px); font-weight: 600; line-height: 1.2; letter-spacing: -.025em; text-wrap: balance;">{{f.q}}</h2></sc-if><sc-for list="{{f.paras}}" as="p"><p style="margin: 10px 0 0; font-size: 17px; line-height: 1.65; text-wrap: pretty;">${spParts('p.parts')}</p></sc-for></div></sc-for></div></sc-for>`)}</sc-if>
+${spSections('sectionsAfter')}
 <sc-if value="{{hasFaqBlock}}" hint-placeholder-val="{{ false }}">${spBox(1040, 'clamp(56px, 9cqw, 96px)', `${spH2('Questions')}${spGrid(`<sc-for list="{{faq}}" as="f"><div id="{{f.id}}" style="box-sizing: border-box; padding: 24px; border-radius: 24px; background: {{t.surf}}; display: flex; flex-direction: column; gap: 8px; min-width: 0;"><h3 style="margin: 0; font-size: 17px; font-weight: 600; letter-spacing: -.01em;">{{f.q}}</h3><sc-for list="{{f.paras}}" as="p"><p style="margin: 0; font-size: 15px; line-height: 1.55; color: {{t.muted}};">${spParts('p.parts')}</p></sc-for></div></sc-for>`, 440)}`)}</sc-if>
 <sc-if value="{{hasSources}}" hint-placeholder-val="{{ false }}">${spBox(760, 'clamp(48px, 8cqw, 80px)', `<h2 style="margin: 0; font-size: 22px; font-weight: 600; letter-spacing: -.02em;">Sources</h2><p style="margin: 10px 0 0; font-size: 14px; line-height: 1.5; color: {{t.muted}};">The pages this one was written from, and the day each was checked.</p>
   <ol style="margin: 16px 0 0; padding-left: 22px; font-size: 15px; line-height: 1.55;"><sc-for list="{{sources}}" as="o"><li style="margin-top: 8px; padding-left: 4px;"><a href="{{o.href}}" target="_blank" rel="noopener" style="${spLink}">{{o.label}}</a><span style="color: {{t.muted}};">{{o.note}}</span></li></sc-for></ol>`)}</sc-if>
@@ -5769,19 +5772,29 @@ renderVals() { ${T}
   let groups = [];
   if (P.kind === 'hub' && P.slug === 'compare') groups = [{ title: 'Comparisons', cards: of('compare') }, { title: 'Alternatives', cards: of('alternative') }];
   else if (P.kind === 'hub') groups = [{ title: 'Features', cards: of('feature') }, { title: 'Made for', cards: of('use') }];
+  // A hub whose own text already links to every page under it doesn't need the cards too.
+  const linked = new Set(P.sections.flatMap(s => [...s.paras, ...s.bullets]).flatMap(x => this.parts(x)).map(w => w.href.replace(/^https?:\\/\\/lucida\\.cards/, '').replace(/\\/$/, '')).filter(Boolean));
+  const below = P.kind === 'hub' ? D.index.filter(i => (P.slug === 'compare' ? ['compare', 'alternative'] : ['feature', 'use']).includes(i.kind)).map(i => i.slug) : [];
+  if (below.length && below.every(x => linked.has('/' + x))) groups = [];
   else if (P.kind === 'notfound') groups = [{ title: 'Start here', cards: ['', 'compare', 'features', 'faq', 'pricing'].map(find).filter(Boolean).map(card).concat([{ href: site ? '${SITE_APP}/' : signIn, title: 'Open the app', desc: 'Sign in, or start a deck, at app.lucida.cards.' }]) }];
-  const tb = P.table, faq = P.faq.map(f => ({ id: 'q-' + slugify(f.q), q: plain(f.q), paras: f.a.split(/\\n\\s*\\n/).map(a => ({ parts: this.parts(a) })) })), isFaq = P.kind === 'faq';
-  const related = P.related.map(find).filter(Boolean).map(card);
+  const item = f => ({ id: 'q-' + slugify(f.q), q: plain(f.q), paras: f.a.split(/\\n\\s*\\n/).map(a => ({ parts: this.parts(a) })) });
+  const tb = P.table, faq = P.faq.map(item), isFaq = P.kind === 'faq', grouped = P.faq.some(f => f.group), faqGroups = [];
+  for (const f of P.faq) { const title = f.group || ''; let g = faqGroups.find(x => x.title === title); if (!g) faqGroups.push(g = { title, id: title ? 'g-' + slugify(title) : 'questions', plain: !title, items: [] }); g.items.push(item(f)); }
+  const related = P.related.filter(x => !below.includes(x)).map(find).filter(Boolean).map(card).slice(0, 9);
+  const sections = P.sections.map(s => ({ id: slugify(s.h2), h2: s.h2, paras: s.paras.map(p => ({ parts: this.parts(p) })), hasBullets: s.bullets.length > 0, bullets: s.bullets.map(b => ({ parts: this.parts(b) })) }));
+  // The app's own column (or, in a table of apps, its row) is tinted.
+  const lc = tb ? tb.columns.findIndex(c => /lucida/i.test(c)) : -1, lr = tb && lc < 0 ? tb.rows.findIndex(r => /^lucida$/i.test(plain(r[0]))) : -1;
+  const widest = tb ? Math.max(...tb.rows.map(r => plain(r[0]).length)) : 0;
   return { t, sky: ${SKY}, grain: String(this.props.grain ?? 0.7), hero: this.art(${MIDNIGHT}, 'wide'), heroTall: this.art(${MIDNIGHT}, ''),
     foot: this.foot(PHONE), nav: D.header.map(l => ({ label: l.label, href: href(find(l.slug)) })),
     links: { home: site ? '/' : (PHONE ? 'LandingPhone' : 'Landing') + '.dc.html', signIn, start: site ? '${SITE_APP}/' : signIn },
     crumbs: P.crumbs.map((c, i) => ({ label: c.label, link: i < P.crumbs.length - 1 && !!find(c.slug), current: i === P.crumbs.length - 1, href: find(c.slug) ? href(find(c.slug)) : '' })),
     page: { h1: P.h1, lead: this.parts(P.lead), updatedLabel: P.updatedLabel || '' },
-    hasTable: !!tb, table: tb ? { head: tb.columns.map((c, i) => ({ label: c || 'Feature', cls: c ? '' : 'sp-sr', bg: i === 1 ? tint : 'transparent' })),
-      rows: tb.rows.map(r => ({ label: plain(r[0]), cells: r.slice(1).map((c, i) => ({ col: plain(tb.columns[i + 1] || ''), parts: this.parts(c), bg: i === 0 ? tint : 'transparent' })) })) } : { head: [], rows: [] },
+    hasTable: !!tb, table: tb ? { width: tb.columns.length >= 5 ? 1200 : 1040, first: tb.columns.length >= 5 ? (widest <= 14 ? '11%' : '15%') : '22%', head: tb.columns.map((c, i) => ({ label: c || 'Feature', cls: c ? '' : 'sp-sr', bg: i === lc ? tint : 'transparent' })),
+      rows: tb.rows.map((r, ri) => ({ label: plain(r[0]), bg: ri === lr ? tint : 'transparent', cells: r.slice(1).map((c, i) => ({ col: plain(tb.columns[i + 1] || ''), parts: this.parts(c), bg: i + 1 === lc || ri === lr ? tint : 'transparent' })) })) } : { width: 1040, first: '22%', head: [], rows: [] },
     groups: groups.filter(g => g.cards.length),
-    sections: P.sections.map(s => ({ id: slugify(s.h2), h2: s.h2, paras: s.paras.map(p => ({ parts: this.parts(p) })), hasBullets: s.bullets.length > 0, bullets: s.bullets.map(b => ({ parts: this.parts(b) })) })),
-    faq, hasFaqPage: isFaq && faq.length > 0, hasFaqBlock: !isFaq && faq.length > 0, hasJump: isFaq && faq.length >= 8, jump: faq.map(f => ({ href: '#' + f.id, q: f.q })),
+    sections: isFaq ? [] : sections, sectionsAfter: isFaq ? sections : [],
+    faq, faqGroups, hasFaqPage: isFaq && faq.length > 0, hasFaqBlock: !isFaq && faq.length > 0, hasJumpPills: isFaq && grouped && faqGroups.length > 1, hasJumpList: isFaq && !grouped && faq.length >= 8, jump: faq.map(f => ({ href: '#' + f.id, q: f.q })),
     hasSources: P.sources.length > 0, sources: P.sources.map(o => ({ label: o.label || o.url, href: o.url, note: o.checkedLabel ? ' · checked ' + o.checkedLabel : '' })),
     hasRelated: related.length > 0, related };
 }`;

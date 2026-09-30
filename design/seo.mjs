@@ -1,12 +1,15 @@
 // What search engines and AI answers read on lucida.cards: each page's <head> (title, description, canonical, link
 // previews, icons, structured data), the sitemap, robots.txt, llms.txt and llms-full.txt. Pure functions from the page
 // data (design/site.mjs) to text; design/to-site.mjs writes the files and design/check-site.mjs checks them.
-import { ORIGIN, APP, NAME, EMAIL, SOCIALS, PRICE, PLAN_FREE, PLAN_PRO, PRICING_FAQ, ABOUT, FIXED, KINDS, plain, dateLabel, urlOf, ogFile } from './site.mjs';
+import { ORIGIN, APP, NAME, EMAIL, SOCIALS, PRICE, PLAN_FREE, PLAN_PRO, PRICING_FAQ, ABOUT, LLMS, FIXED, KINDS, plain, dateLabel, urlOf, ogFile } from './site.mjs';
 import { PRIVACY, TERMS } from './legal.mjs';
 import { esc } from './render.mjs';
 
 export const OG = { width: 1200, height: 630 };
 export const FONTS = 'https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap';
+// Geist's main file (Latin letters, every weight: it's one variable font), as Google's stylesheet names it. Asking for it
+// early, beside the stylesheet, means text is drawn in Geist from its first paint and doesn't shift when the font arrives.
+export const FONT_FILE = 'https://fonts.gstatic.com/s/geist/v5/gyByhwUxId8gMEwcGFWNOITd.woff2';
 // What every site page starts with (design/og.mjs and design/site-measure.mjs draw pages the same way).
 export const BASE_CSS = `html, body { margin: 0; background: #FFFFFF; }
 body { font-family: Geist, -apple-system, system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
@@ -101,6 +104,7 @@ export function head(p, { css, noindex = false } = {}) {
 <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preload" href="${FONT_FILE}" as="font" type="font/woff2" crossorigin>
 <link href="${FONTS}" rel="stylesheet">${noindex ? '' : `\n<script type="application/ld+json">${inScript(jsonLd(p))}</script>`}
 <style>
 ${BASE_CSS}
@@ -131,20 +135,26 @@ Sitemap: ${ORIGIN}/sitemap.xml
 Sitemap: ${APP}/sitemap.xml
 `;
 
-// llms.txt (llmstxt.org): what Lucida is, then links to the pages that explain it, each with a line about it.
-const line = p => `- [${p.crumb ? (p.kind === 'home' ? NAME : p.crumb) : plain(p.h1 || p.title).replace(/\.$/, '')}](${p.url}): ${plain(p.description)}`;
+// llms.txt (llmstxt.org): what Lucida is, then links to the pages that explain it, each with a line about it. The intro, the
+// names, the lines and the order come from design/site/_llms.json when it's there; a page it doesn't mention is listed after
+// the others with its description.
+const llmsPage = p => (LLMS && LLMS.pages && LLMS.pages[p.slug]) || {};
+const llmsRank = p => { const i = LLMS && LLMS.pages ? Object.keys(LLMS.pages).indexOf(p.slug) : -1; return i < 0 ? 1e6 : i; };
+const llmsOrder = list => [...list].sort((a, b) => llmsRank(a) - llmsRank(b) || RANK[a.kind] - RANK[b.kind] || a.slug.localeCompare(b.slug));
+const line = p => `- [${llmsPage(p).label || (p.crumb ? (p.kind === 'home' ? NAME : p.crumb) : plain(p.h1 || p.title).replace(/\.$/, ''))}](${p.url}): ${plain(llmsPage(p).line || p.description)}`;
 export function llmsTxt(pages) {
-  const all = ordered(allPages(pages)), of = (...k) => all.filter(p => k.includes(p.kind));
+  const all = allPages(pages), of = (...k) => llmsOrder(all.filter(p => k.includes(p.kind))), hub = s => all.filter(p => p.kind === 'hub' && p.slug === s);
   const section = (h, list) => (list.length ? `## ${h}\n${list.join('\n')}\n\n` : '');
   return `# ${NAME}
 
 > ${ABOUT}
 
-Lucida works in the browser on any device. There is no App Store app yet. Your cards are yours: you can export everything, and your AI works through a personal link you can replace at any time. Support: ${EMAIL}.
+${LLMS && LLMS.intro ? '' : `Lucida works in the browser on any device. There is no App Store app yet. Your cards are yours: you can export everything, and your AI works through a personal link you can replace at any time. Support: ${EMAIL}.
 
-` + section('Product', [...of('home', 'pricing').map(line), `- [Open the app](${APP}/): sign in and start making decks`])
-    + section('Comparisons', of('hub').filter(p => p.slug === 'compare').concat(of('compare', 'alternative')).map(line))
-    + section('Features and guides', of('hub').filter(p => p.slug === 'features').concat(of('feature', 'use')).map(line))
+`}` + section('Product', [...llmsOrder([...of('home'), ...of('pricing')]).map(line), `- [Open the app](${APP}/): sign in and start making decks`])
+    + section('Comparisons', llmsOrder([...hub('compare'), ...of('compare', 'alternative')]).map(line))
+    + section('Features and guides', llmsOrder([...hub('features'), ...of('feature')]).map(line))
+    + section('Who it’s for', of('use').map(line))
     + section('FAQ', of('faq').map(line))
     + section('Support', [`- [Email ${EMAIL}](mailto:${EMAIL}): questions, feedback, deleting your account`])
     + section('Optional', of('legal').map(line)).replace(/\n\n$/, '\n');
@@ -182,7 +192,7 @@ const pageMd = p => {
   const parts = [`# ${plain(p.h1)}`, `URL: ${p.url}` + (p.updated ? `\nUpdated: ${p.updated}` : ''), plain(p.lead)];
   if (p.table) parts.push('## At a glance' + table(p.table));
   for (const s of p.sections) parts.push((s.h2 ? `## ${s.h2}\n\n` : '') + [...s.paras.map(plain), s.bullets.map(b => '- ' + plain(b)).join('\n')].filter(Boolean).join('\n\n'));
-  if (p.faq.length) parts.push('## Questions\n\n' + p.faq.map(f => `### ${plain(f.q)}\n\n${plain(f.a)}`).join('\n\n'));
+  if (p.faq.length) parts.push('## Questions\n\n' + p.faq.map((f, i) => (f.group && f.group !== (p.faq[i - 1] || {}).group ? `### ${f.group}\n\n` : '') + `${f.group ? '####' : '###'} ${plain(f.q)}\n\n${plain(f.a)}`).join('\n\n'));
   if (p.sources.length) parts.push('## Sources\n\n' + p.sources.map(s => `- [${s.label || s.url}](${s.url})` + (s.checked ? ` (checked ${s.checked})` : '')).join('\n'));
   return parts.filter(Boolean).join('\n\n');
 };
@@ -194,7 +204,8 @@ const pricingMd = p => [`# ${p.h1.replace(/\.$/, '')}`, `URL: ${p.url}\nUpdated:
 // `homeHtml` is the landing board's computer HTML.
 export function llmsFull(pages, homeHtml) {
   const home = FIXED[0];
-  const md = ordered(allPages(pages)).map(p => p.kind === 'home' ? htmlToMarkdown(homeHtml).replace(/^# .*\n/, `# ${plain(home.h1).replace(/\.$/, '')}\nURL: ${p.url}\nUpdated: ${p.updated}\n`)
+  const md = llmsOrder(allPages(pages)).map(p => p.kind === 'home' ? htmlToMarkdown(homeHtml).replace(/^# .*\n/, `# ${plain(home.h1).replace(/\.$/, '')}\nURL: ${p.url}\nUpdated: ${p.updated}\n`)
     : p.kind === 'pricing' ? pricingMd(p) : p.kind === 'legal' ? legalMd(p.slug === 'privacy' ? PRIVACY : TERMS, p) : pageMd(p));
-  return `# ${NAME}: full text of lucida.cards\n\n> ${ABOUT}\n\nEvery page of the site follows, as plain markdown. The short index is at ${ORIGIN}/llms.txt.\n\n---\n\n` + md.join('\n\n---\n\n') + '\n';
+  const facts = LLMS && LLMS.facts && LLMS.facts.length ? '## Quick facts\n\n' + LLMS.facts.map(f => '- ' + f).join('\n') + '\n\n' : '';
+  return `# ${NAME}: full text of lucida.cards\n\n> ${ABOUT}\n\n${facts}Every page of the site follows, as plain markdown. The short index is at ${ORIGIN}/llms.txt.\n\n---\n\n` + md.join('\n\n---\n\n') + '\n';
 }
