@@ -110,7 +110,7 @@ final class StudyNetworkTests: XCTestCase {
 
     // ---------- the learner: Discover, search, the owner's profile, Follow ----------
     var app = launch(as: learner)
-    for tab in ["Today", "Library", "Discover", "Stats", "Connect"] { check(wait(button(app, tab)), "the tab bar has \(tab)") }
+    for tab in ["Today", "Library", "Discover", "Stats", "Profile"] { check(wait(button(app, tab)), "the tab bar has \(tab)") }
     button(app, "Discover").tap()
     check(wait(any(app, "Popular this week")), "Discover shows its sections")
     check(wait(any(app, "MCAT Biochemistry")), "the shared deck is in Discover")
