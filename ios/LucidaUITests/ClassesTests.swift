@@ -199,7 +199,7 @@ final class ClassesTests: XCTestCase {
     Thread.sleep(forTimeInterval: 0.6)
     button(app, "Assign").tap()
     check(wait(app.staticTexts["Assign a deck"]), "Assign opens its sheet")
-    check(wait(any(app, "Chapter 3, 6 cards")), "with the class's deck to pick")
+    check(wait(any(app, "Chapter 3, 6 cards")) && buttonStarting(app, "Chapter 3, 6 cards").isSelected, "with the class's deck picked")
     check(button(app, "Learn every card").exists && button(app, "Review what’s due").exists, "and the two goals")
     for chip in ["Tomorrow", "Friday", "In a week", "In 2 weeks"] { check(button(app, chip).exists, "a date: \(chip)") }
     button(app, "In a week").tap()
@@ -258,12 +258,19 @@ final class ClassesTests: XCTestCase {
     button(app, "End review").tap()
     Thread.sleep(forTimeInterval: 1.5)
 
-    // Opening the app tells the class how far she is (she shares it).
-    app = launch(as: ana, ["-open", "class:" + code])
-    check(wait(any(app, "Chapter 3, Learn every card · due \(week), 3 cards left")), "back on the class: 3 cards left")
+    // Opening the app tells the class how far she is (she shares it); Today and Classes show it too.
+    app = launch(as: ana)
+    check(wait(any(app, "Chapter 3, due \(week) · BIO 201, 3 cards left"), 12), "Today lists her assignment: Chapter 3, due \(week) · BIO 201, 3 cards left")
     check(eventually(10) { self.progress(code, of: me)?["learned"] as? Int == 3 }, "the teacher's page has her progress: 3 learned")
     let p3 = progress(code, of: me)
     check(p3?["total"] as? Int == 6 && p3?["last"] != nil, "of 6 cards, and when she last studied")
+    toClasses(app)
+    let mTile = buttonStarting(app, "BIO 201, 1 assignment")
+    check(wait(mTile), "Classes marks her class with what waits: 1 assignment")
+    check(mTile.label.contains("UC Davis · 2 people"), "and its school and 2 people")
+    mTile.tap()
+    check(wait(any(app, "Chapter 3, Learn every card · due \(week), 3 cards left")), "the class page says 3 cards left")
+    check(app.alerts.count == 0, "no error came up")
 
     // ---------- Jordan opens the invite link, and doesn't share ----------
     app = launch(as: ben, ["-open", "class:" + code])
@@ -287,6 +294,19 @@ final class ClassesTests: XCTestCase {
     let benHandle = handle(ben)
     check(progress(code, of: benHandle) == nil, "the teacher's page has nothing of his")
 
+    // ---------- the teacher, half way: what's shared, and what isn't ----------
+    app = launch(as: teacher)
+    check(wait(button(app, "Today")) && gone(app.staticTexts["ASSIGNMENTS"], 3), "a teacher's Today has no assignments (they're for the students)")
+    toClasses(app)
+    let half = buttonStarting(app, "BIO 201, Yours")
+    check(wait(half), "the teacher's Classes has BIO 201, marked Yours")
+    check(half.label.contains("UC Davis · 3 people") && !half.label.contains("assignment"), "with its school and 3 people, and nothing waiting for her")
+    half.tap()
+    check(wait(app.staticTexts["Progress"]), "the class page has Progress for its owner")
+    check(wait(buttonStarting(app, "Maria Santos, 3 of 6")), "Maria Santos: 3 of 6")
+    check(wait(buttonStarting(app, "Jordan Lee, Not shared")), "Jordan Lee: Not shared")
+    check(wait(any(app, "Chapter 3, Learn every card · due \(week), 0 of 1 done")), "the assignment: 0 of 1 done")
+
     // ---------- Maria finishes the deck: the last card tells the class ----------
     app = launch(as: ana, ["-open", "class:" + code])
     check(wait(button(app, "Study Chapter 3")), "Maria's class page still has Study")
@@ -299,13 +319,8 @@ final class ClassesTests: XCTestCase {
     button(app, "Done").tap()
 
     // ---------- the teacher sees who shares ----------
-    app = launch(as: teacher)
-    toClasses(app)
-    let tile = buttonStarting(app, "BIO 201, Yours")
-    check(wait(tile), "the teacher's Classes has BIO 201, marked Yours")
-    check(tile.label.contains("UC Davis · 3 people"), "with its school and 3 people")
-    tile.tap()
-    check(wait(app.staticTexts["BIO 201"]) && wait(app.staticTexts["Progress"]), "the class page has Progress for its owner")
+    app = launch(as: teacher, ["-open", "class:" + code])
+    check(wait(app.staticTexts["BIO 201"]) && wait(app.staticTexts["Progress"]), "the teacher opens the class")
     check(wait(any(app, "Chapter 3, Learn every card · due \(week), 1 of 1 done")), "the assignment says 1 of 1 done (one shares, and she's done)")
     check(wait(buttonStarting(app, "Maria Santos, 6 of 6")), "Progress: Maria Santos, 6 of 6")
     check(any(app, "Maria Santos, 6 of 6, ").exists, "with when she last studied")
@@ -328,27 +343,6 @@ final class ClassesTests: XCTestCase {
     row.tap()
     check(wait(app.staticTexts["Chapter 3"]) && wait(any(app, "From Dr. Okafor")), "the row opens the deck")
 
-    // ---------- Jordan reports the class's deck ----------
-    app = launch(as: ben, ["-open", "class:" + code])
-    let deckMore = button(app, "More for Chapter 3")
-    check(wait(deckMore), "a class deck has ⋯")
-    tapClear(app, deckMore, below: 260)
-    check(wait(button(app, "Report")) && button(app, "Share to Google Classroom").exists && !button(app, "Take out of class").exists, "its menu has Report and Share to Google Classroom (a student can't take it out)")
-    button(app, "Report").tap()
-    check(wait(app.staticTexts["Report this deck"]) && any(app, "Chapter 3").exists, "Report opens: Report this deck, and its name")
-    check(button(app, "Wrong or harmful").exists && button(app, "Spam").exists && button(app, "Someone else’s work").exists && button(app, "Other").exists, "with four reasons")
-    button(app, "Other").tap()
-    button(app, "Send").tap()
-    Thread.sleep(forTimeInterval: 0.6)
-    check(!any(app, "Thanks. We’ll take a look.").exists, "Other needs a line: Send waits")
-    typeInto(app.textFields["A line about it"], "The third answer is wrong")
-    button(app, "Send").tap()
-    check(wait(any(app, "Thanks. We’ll take a look.")), "with a line, Send says thanks")
-    button(app, "Done").tap()
-    let admin = api("admin", "GET", "/api/admin").json as? [String: Any] ?? [:]
-    let rep = (admin["reports"] as? [[String: Any]] ?? []).first { ($0["deck"] as? [String: Any])?["id"] as? String == sharedId }
-    check((rep?["reports"] as? [[String: Any]])?.first?["reason"] as? String == "other" && (rep?["reports"] as? [[String: Any]])?.first?["note"] as? String == "The third answer is wrong", "the admin page has the report, with the line")
-
     // ---------- the teacher asks to be verified ----------
     app = launch(as: teacher, ["-open", "class:" + code])
     check(wait(button(app, "Get verified")), "the teacher's class has Get verified")
@@ -356,7 +350,7 @@ final class ClassesTests: XCTestCase {
     check(wait(app.staticTexts["Get verified"]) && wait(button(app, "I’m a teacher")) && button(app, "We’re a school").exists, "Get verified: I’m a teacher, We’re a school")
     let contact = app.textFields["School email or link"]
     check(wait(contact) && app.textFields["School"].exists, "it asks for the school, and an email or a link")
-    typeInto(app.textFields["School"], "UC Davis", clear: 0)
+    typeInto(app.textFields["School"], "UC Davis")
     check((app.textFields["School"].value as? String)?.contains("UC Davis") == true, "the school is typed")
     typeInto(contact, "not an email")
     button(app, "Send").tap()
@@ -378,29 +372,79 @@ final class ClassesTests: XCTestCase {
     check(gone(button(app, "Get verified")) && gone(button(app, "Waiting for review")), "approved: Get verified is gone")
     check(any(app, "Verified").exists, "and the teacher's name has its check")
 
-    // ---------- helpers, renaming, taking someone out ----------
-    let annaMore = button(app, "More for Maria Santos")
-    check(wait(annaMore), "the owner can open ⋯ on a member")
-    tapClear(app, annaMore, below: 260)
+    // ---------- Jordan becomes a helper and adds a deck; the verified teacher checks it ----------
+    let benMore = button(app, "More for Jordan Lee")
+    check(wait(benMore), "the owner can open ⋯ on a member")
+    tapClear(app, benMore, below: 260)
     check(wait(button(app, "Make a helper")) && button(app, "Take out of class").exists, "it has Make a helper and Take out of class")
     button(app, "Make a helper").tap()
-    check(eventually { ((classPage(self.teacher, code)["members"] as? [[String: Any]])?.first { $0["handle"] as? String == me })?["role"] as? String == "helper" }, "Make a helper saves")
-    check(wait(button(app, "Maria Santos, Helper")), "the page marks her Helper")
-    check(gone(buttonStarting(app, "Maria Santos, 6 of 6")), "a helper isn't one of the learners: her progress leaves the list")
-    tapClear(app, annaMore, below: 260)
+    func roleOf(_ h: String) -> String? { ((classPage(self.teacher, code)["members"] as? [[String: Any]])?.first { $0["handle"] as? String == h })?["role"] as? String }
+    check(eventually { roleOf(benHandle) == "helper" }, "Make a helper saves")
+    check(wait(button(app, "Jordan Lee, Helper")), "the page marks him Helper")
+    let classId = classPage(teacher, code)["id"] as? String ?? ""
+    let bonusId = act(ben, "deck.add", ["name": "Bonus"])["id"] as? String ?? ""
+    act(ben, "card.add", ["deckId": bonusId, "kind": "basic", "front": "What is osmosis?", "back": "Water moving across a membrane"])
+    let bonusShared = social(ben, "class.addDeck", ["id": classId, "deckId": bonusId])["sharedId"] as? String ?? ""
+    check(!bonusShared.isEmpty, "a helper adds a deck of his own")
+    app = launch(as: ben, ["-open", "class:" + code])
+    check(wait(app.staticTexts["BIO 201"]) && wait(button(app, "Add a deck")) && button(app, "Assign").exists, "a helper has Add a deck and Assign")
+    check(app.staticTexts["Progress"].exists && wait(buttonStarting(app, "Maria Santos, 6 of 6")), "and sees everyone's progress")
+    check(!button(app, "Rename").exists && !button(app, "Delete class").exists && button(app, "Leave class").exists, "but can't rename or delete the class")
+    check(button(app, "Get verified").exists, "and has Get verified too")
+    app = launch(as: teacher, ["-open", "class:" + code])
+    let bonusMore = button(app, "More for Bonus")
+    check(wait(bonusMore), "the teacher's class lists Jordan's deck")
+    tapClear(app, bonusMore, below: 260)
+    check(wait(button(app, "Check this deck")) && button(app, "Take out of class").exists && button(app, "Report").exists, "its ⋯ has Check this deck, Take out of class, and Report")
+    button(app, "Check this deck").tap()
+    check(wait(any(app, "Bonus, Checked")), "Check this deck: the deck says Checked")
+    check(eventually { (self.api(self.teacher, "GET", "/api/public/deck?id=" + bonusShared).json as? [String: Any])?["checked"] is [String: Any] }, "the server has the check")
+    tapClear(app, button(app, "More for Bonus"), below: 260)
+    check(wait(button(app, "Take out of class")) && !button(app, "Check this deck").exists, "a checked deck has no Check this deck")
+    button(app, "Take out of class").tap()
+    check(gone(any(app, "Bonus, Checked")), "Take out of class takes Jordan's deck out")
+    check(eventually { (self.classPage(self.teacher, code)["deckList"] as? [[String: Any]] ?? []).count == 1 }, "the server has just Chapter 3 left")
+    tapClear(app, button(app, "More for Jordan Lee"), below: 260)
     check(wait(button(app, "Make a member")), "a helper's ⋯ has Make a member")
     button(app, "Make a member").tap()
-    check(eventually { ((classPage(self.teacher, code)["members"] as? [[String: Any]])?.first { $0["handle"] as? String == me })?["role"] as? String == "member" }, "Make a member saves")
-    check(gone(button(app, "Maria Santos, Helper")) && wait(buttonStarting(app, "Maria Santos, Not started")), "and the mark goes (she shares, and it comes back once she studies)")
+    check(eventually { roleOf(benHandle) == "member" }, "Make a member saves")
+    check(wait(buttonStarting(app, "Jordan Lee, Not shared")) && gone(button(app, "Jordan Lee, Helper")), "and he's a learner again (his progress isn't shared)")
+
+    // ---------- Jordan reports the class's deck; the admin hides it ----------
+    app = launch(as: ben, ["-open", "class:" + code])
+    let deckMore = button(app, "More for Chapter 3")
+    check(wait(deckMore), "a class deck has ⋯")
+    tapClear(app, deckMore, below: 260)
+    check(wait(button(app, "Report")) && button(app, "Share to Google Classroom").exists && !button(app, "Take out of class").exists, "its menu has Report and Share to Google Classroom (a student can't take it out)")
+    button(app, "Report").tap()
+    check(wait(app.staticTexts["Report this deck"]) && any(app, "Chapter 3").exists, "Report opens: Report this deck, and its name")
+    check(button(app, "Wrong or harmful").exists && button(app, "Spam").exists && button(app, "Someone else’s work").exists && button(app, "Other").exists, "with four reasons")
+    button(app, "Other").tap()
+    button(app, "Send").tap()
+    Thread.sleep(forTimeInterval: 0.6)
+    check(!any(app, "Thanks. We’ll take a look.").exists, "Other needs a line: Send waits")
+    typeInto(app.textFields["A line about it"], "The third answer is wrong")
+    button(app, "Send").tap()
+    check(wait(any(app, "Thanks. We’ll take a look.")), "with a line, Send says thanks")
+    button(app, "Done").tap()
+    let admin = api("admin", "GET", "/api/admin").json as? [String: Any] ?? [:]
+    let rep = (admin["reports"] as? [[String: Any]] ?? []).first { ($0["deck"] as? [String: Any])?["id"] as? String == sharedId }
+    check((rep?["reports"] as? [[String: Any]])?.first?["reason"] as? String == "other" && (rep?["reports"] as? [[String: Any]])?.first?["note"] as? String == "The third answer is wrong", "the admin page has the report, with the line")
+    social("admin", "admin.report", ["id": rep?["id"] as? String ?? "", "pick": "hide"])
+    app = launch(as: ana, ["-open", "class:" + code])
+    check(wait(app.staticTexts["No decks in this class yet."], 10) && wait(app.staticTexts["Nothing assigned yet."]), "hidden: the class no longer shows the deck or its assignment")
+
+    // ---------- renaming; Jordan leaves; the teacher takes Maria out and deletes the class ----------
+    app = launch(as: teacher, ["-open", "class:" + code])
     tapClear(app, button(app, "Rename"))
     let renameField = app.textFields["Class name"]
     check(wait(renameField) && app.staticTexts["Rename class"].exists, "Rename opens its popup")
+    check((renameField.value as? String) == "BIO 201" && (app.textFields["School"].value as? String) == "UC Davis", "with the class's name and school in it")
     typeInto(renameField, " (fall)")
     button(app, "Save").tap()
     check(wait(app.staticTexts["BIO 201 (fall)"]), "Save renames the class")
     check(eventually { classPage(self.teacher, code)["name"] as? String == "BIO 201 (fall)" }, "the server has the new name")
 
-    // ---------- Jordan leaves; the teacher takes Maria out and deletes the class ----------
     app = launch(as: ben, ["-open", "class:" + code])
     check(wait(button(app, "Leave class")), "Jordan can Leave class")
     tapClear(app, button(app, "Leave class"))
@@ -409,7 +453,7 @@ final class ClassesTests: XCTestCase {
     check(wait(button(app, "Join a class")) || wait(app.staticTexts["No classes yet"]), "leaving goes back to his classes")
     check(eventually { (state(self.ben)["classes"] as? [[String: Any]] ?? []).isEmpty }, "the class is gone from his library")
     let kept = (state(ben)["decks"] as? [[String: Any]] ?? []).first { $0["id"] as? String == benDeck }
-    check((kept?["link"] as? [String: Any])?["gone"] as? Bool == true, "the deck he studied is his to keep")
+    check((kept?["link"] as? [String: Any])?["gone"] as? Bool == true && (state(ben)["cards"] as? [[String: Any]] ?? []).filter { $0["deckId"] as? String == benDeck }.count == 6, "the deck he studied is his to keep, with its cards")
 
     app = launch(as: teacher, ["-open", "class:" + code])
     check(wait(button(app, "More for Maria Santos")), "the teacher's page lists Maria")
@@ -419,8 +463,7 @@ final class ClassesTests: XCTestCase {
     check(wait(app.staticTexts["Take Maria Santos out of the class?"]), "Take out of class asks first")
     reachable(app, "Take out of class").tap()
     check(eventually { (classPage(self.teacher, code)["members"] as? [[String: Any]] ?? []).count == 1 }, "she's out (only the owner is left)")
-    let out = classPage(ana, code)
-    check(out["invite"] as? Bool == true, "and she sees only the invite now")
+    check(classPage(ana, code)["invite"] as? Bool == true, "and she sees only the invite now")
 
     tapClear(app, button(app, "Delete class"))
     check(wait(app.staticTexts["Delete “BIO 201 (fall)”?"]) && wait(any(app, "Everyone in it keeps the decks they study.")), "Delete class asks first, in plain words")
@@ -428,7 +471,7 @@ final class ClassesTests: XCTestCase {
     check(wait(app.staticTexts["No classes yet"], 10) || wait(button(app, "Join a class")), "deleting goes back to Classes, with none left")
     check(eventually { (api(self.teacher, "GET", "/api/classes").json as? [Any] ?? []).isEmpty }, "the server has none left")
     check(api(teacher, "GET", "/api/public/class?code=" + code).status == 404, "and no class has that code anymore")
-    check(api(ana, "GET", "/api/public/deck?id=" + sharedId).status == 404, "the deck that was only in the class is private again")
+    check(app.alerts.count == 0, "no error came up")
 
     // ---------- a code no class has ----------
     app = launch(as: cy, ["-open", "class:" + code])
