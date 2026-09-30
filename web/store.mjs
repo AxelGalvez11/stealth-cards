@@ -124,7 +124,7 @@ export const saved = () => save();
 // the count over). Free's room is modest and Pro's large; neither is unlimited. LUCIDA_MEDIA_FILES and LUCIDA_MEDIA_MB set
 // it lower, for checks.
 export const UPLOAD_FULL = 'Your account has no room for more pictures and sounds.';
-export const mediaRoom = () => ({ files: +process.env.LUCIDA_MEDIA_FILES || (isPro() ? 5000 : 300), bytes: (+process.env.LUCIDA_MEDIA_MB || (isPro() ? 5000 : 300)) * 1e6 });
+export const mediaRoom = () => ({ files: +process.env.LUCIDA_MEDIA_FILES || (isPro() ? 5000 : 500), bytes: (+process.env.LUCIDA_MEDIA_MB || (isPro() ? 5000 : 500)) * 1e6 });
 // Room for one more file of `bytes`, counted now (the count is saved with the library); throws when there is none.
 export function reserveMedia(bytes) {
   const L = lib(), used = L.S.uploads || { n: 0, bytes: 0 }, room = mediaRoom();
