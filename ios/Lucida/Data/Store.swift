@@ -84,6 +84,9 @@ struct DemoProps {
   /// The sample deck's sharing (the deck page's Tweaks): "Link only" or "Public" (yours, shared), or from Maria:
   /// "study" (as it is) or "copy" (with her changes waiting); and the changes' sheet open.
   var shared = "", linked = "", updatesOpen = false
+  /// Your theme (the Theme boards' `theme`: a key from web/themes/index.js, "lucida" for the app's own look), whether people
+  /// who visit your profile see it, and which theme's page is open (PhoneTheme's `sheet`).
+  var theme = "lucida", themeProfile = true, themeSheet = "aero"
 }
 
 struct TodayVM {
