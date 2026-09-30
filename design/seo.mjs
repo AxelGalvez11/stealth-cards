@@ -24,7 +24,7 @@ export const allPages = pages => [
 
 // ---------- structured data (JSON-LD) ----------
 const org = () => ({ '@type': 'Organization', '@id': ID.org, name: NAME, url: ORIGIN + '/', description: ABOUT, email: EMAIL,
-  logo: { '@type': 'ImageObject', url: ORIGIN + '/icons/icon-512.png', width: 512, height: 512 }, sameAs: SOCIALS.map(s => s[2]) });
+  logo: { '@type': 'ImageObject', url: ORIGIN + '/icons/icon-512.png' }, sameAs: SOCIALS.map(s => s[2]) });
 const site = () => ({ '@type': 'WebSite', '@id': ID.site, url: ORIGIN + '/', name: NAME, description: ABOUT, inLanguage: 'en', publisher: { '@id': ID.org } });
 // The app: free, and Pro by the month or the year (the same numbers as the pricing page).
 const app = () => ({ '@type': ['SoftwareApplication', 'WebApplication'], '@id': ID.app, name: NAME, url: APP + '/', applicationCategory: 'EducationalApplication', operatingSystem: 'Web',
@@ -41,7 +41,7 @@ const crumbs = p => ({ '@type': 'BreadcrumbList', '@id': p.url + '#breadcrumb', 
 // The graph for one page: the organization and the site on every page, the app on the two that sell it, then what this
 // page is (a page, a list of pages, a FAQ), its breadcrumb (inner pages) and, for comparisons, an article with its date.
 export function jsonLd(p) {
-  const image = { '@type': 'ImageObject', '@id': p.url + '#image', url: ORIGIN + '/' + p.og, width: OG.width, height: OG.height };
+  const image = { '@type': 'ImageObject', '@id': p.url + '#image', url: ORIGIN + '/' + p.og };
   const faq = p.faq && p.faq.length;
   const type = p.kind === 'faq' || (faq && p.kind !== 'hub') ? 'FAQPage' : p.kind === 'hub' ? 'CollectionPage' : 'WebPage';
   const page = { '@type': type, '@id': p.url + '#webpage', url: p.url, name: p.title, description: p.description, inLanguage: 'en', isPartOf: { '@id': ID.site },
