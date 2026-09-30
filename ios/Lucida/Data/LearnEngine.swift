@@ -255,7 +255,7 @@ extension Store {
     guard !L.graded else { return }
     L.graded = true
     let grades = L.ids.compactMap { cid -> (String, Int)? in guard card(cid)?.srs.state == "new" else { return nil }; return (cid, (L.st[cid]?.misses ?? 0) > 0 ? 2 : 3) }
-    Task { for (cid, g) in grades { await send("review.grade", ["cardId": cid, "rating": g]) } }
+    Task { for (cid, g) in grades { await send("review.grade", ["cardId": cid, "rating": g]) }; classSync() }
   }
 
   // ---------- answering ----------

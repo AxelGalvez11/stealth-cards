@@ -22,15 +22,19 @@ struct Library: Decodable {
   var profile: ProfileRef?
   /// False on a server started as the Free app (LUCIDA_PLAN=free, or a made-up person on Free); the Pro tools are off.
   var pro = true
-  enum CodingKeys: String, CodingKey { case rev, settings, ai, folders, decks, cards, logs, me, aiOn, profile, pro }
+  /// The classes you're in, with their assignments (web/classes.mjs keeps them here, so Today shows what's due).
+  var classes: [LibClass]
+  enum CodingKeys: String, CodingKey { case rev, settings, ai, folders, decks, cards, logs, me, aiOn, profile, pro, classes }
   init(from d: Decoder) throws {
     let c = try d.container(keyedBy: CodingKeys.self)
     rev = c.v(.rev, 0); settings = c.v(.settings, UserSettings()); ai = c.v(.ai, AIState()); folders = c.v(.folders, [])
     decks = c.v(.decks, []); cards = c.v(.cards, []); logs = c.v(.logs, []); me = c.v(.me, nil); aiOn = c.v(.aiOn, false); profile = c.v(.profile, nil)
     pro = c.v(.pro, true)
+    classes = c.v(.classes, [])
   }
   init(rev: Int = 0, settings: UserSettings = UserSettings(), ai: AIState = AIState(), folders: [Folder] = [], decks: [Deck] = [], cards: [Card] = [], logs: [ReviewLog] = [], me: Me? = nil, aiOn: Bool = false) {
     self.rev = rev; self.settings = settings; self.ai = ai; self.folders = folders; self.decks = decks; self.cards = cards; self.logs = logs; self.me = me; self.aiOn = aiOn
+    classes = []
   }
 }
 

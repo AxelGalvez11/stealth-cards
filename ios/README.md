@@ -100,3 +100,27 @@ More launch arguments (debug builds): `-open statsdeep -tab Memory` (or `Weak sp
 `tests/run.sh parity` checks the ports against the web app's own code on a seeded library and made-up variations of it (no
 simulator), and `tests/run.sh e2e` runs the `-check`s in the simulator against a local server (`DEVICE=<simulator id>`).
 
+## Classes and schools
+
+The Library's third view (Decks · All cards · Classes): your classes as tiles, Join a class with its 6-letter code, New
+class, and a class's own page: as its owner or a helper (assignments with how many who share are done, each member's
+progress, "Not shared" for the rest, decks, invite, Get verified, people, Rename, Delete), as a member (what's left for you
+on each assignment, whether you share your progress, Leave), or as an invite you haven't taken (Join). Add a deck, Assign
+(a deck, a goal, a date), Report, and Get verified are sheets. Today lists what your classes assigned you. The answers
+come from the same server as the web app's (`Data/ClassData.swift`, like `web/classes.mjs` and `web/net.js`); your own
+progress on a class deck is worked out here from your own cards (a port of `web/progress.js`) and sent to a class only if
+you turned sharing on. Universal links aren't set up, so the way into a class is Join with its code; Copy invite link and
+Share to Google Classroom share the web app's link. The boards: `PhoneClasses` (and `Dark`, `Empty`, `New`, `Join`),
+`PhoneClass` (and `Dark`, `Gray`, `Member`, `New`, `Invite`, `Loading`, `Missing`, `AddDeck`, `Assign`, `Report`, `Verify`), and
+`PhoneTodayClass`.
+
+Against a copy of the server, `-open classes` opens Library → Classes and `-open class:<CODE>` opens one class's page
+(an invite, if you aren't in it). The whole thing is tested end to end by tapping through the app as five made-up people
+(a teacher makes a class, adds and assigns a deck; two students join, one shares progress and one doesn't; they study; Today
+lists the assignment; a report; Get verified, approved by the made-up person `admin`; helpers, leaving, taking someone out,
+deleting the class; a code no class has):
+
+    ios/tools/e2e-classes.sh <simulator id>
+
+It starts a fresh server on port 3733 and runs `LucidaUITests/ClassesTests` (which only runs when that script asks for it,
+so `ios/tools/e2e.sh` keeps running the study network's checks alone).

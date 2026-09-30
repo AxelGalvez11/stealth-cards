@@ -98,6 +98,8 @@ struct RootView: View {
           case "settings": nav.path = [.settings]
           case "discover": nav.tab = .discover
           case "news": nav.path = [.news]
+          // Your classes (the Library's third view), or one class's page by its code (`class:<CODE>`).
+          case "classes": nav.tab = .library; nav.libClasses = true
           case "profile": nav.path = [.profile("")]
           // `deckpage:<path>`: a shared deck's page (/@maria/mcat-biochemistry); `history:<path>`: its History;
           // `suggestions`: every deck's suggestions.
@@ -112,6 +114,7 @@ struct RootView: View {
           case "welcome": store.welcoming = true
           // `profile:<handle>`: someone's profile; `deck:<name>`: the deck with that name.
           case let o where o.hasPrefix("profile:"): nav.path = [.profile(String(o.dropFirst(8)))]
+          case let o where o.hasPrefix("class:"): nav.tab = .library; nav.libClasses = true; nav.path = [.classPage(String(o.dropFirst(6)))]
           case let o where o.hasPrefix("deck:"):
             if let d = store.lib.decks.first(where: { $0.name == String(o.dropFirst(5)) }) { nav.tab = .library; nav.path = [.deck(d.id)] }
           default: break
@@ -259,6 +262,23 @@ extension Board {
       if name.hasSuffix("Dark") { store.demoNet.pages.openVersion = 14 }
       nav.tab = .library; nav.path = [.history(Board.sampleDeck().plain)]
     case "PhoneHistoryOpen": store.demoNet.pages.openVersion = 14; nav.tab = .library; nav.path = [.history(Board.sampleDeck().plain)]
+    // Classes: your classes, a class's page (yours, one you joined, or an invite you haven't taken) with its sheets, the
+    // popups over your classes, and Today with assignments.
+    case "PhoneClasses": nav.tab = .library; nav.libClasses = true
+    case "PhoneClassesEmpty": store.props.netEmpty = true; nav.tab = .library; nav.libClasses = true
+    case "PhoneClassesNew": store.props.classForm = "new"; nav.tab = .library; nav.libClasses = true
+    case "PhoneClassesJoin": store.props.classForm = "join"; nav.tab = .library; nav.libClasses = true
+    case "PhoneClass": classBoard("BIOKTZ", store: store, nav: nav)
+    case "PhoneClassMember": classBoard("ORGCHM", store: store, nav: nav)
+    case "PhoneClassNew": store.props.netEmpty = true; classBoard("BIOKTZ", store: store, nav: nav)
+    case "PhoneClassAddDeck": store.props.classPanel = "add"; classBoard("BIOKTZ", store: store, nav: nav)
+    case "PhoneClassAssign": store.props.classPanel = "assign"; classBoard("BIOKTZ", store: store, nav: nav)
+    case "PhoneClassReport": store.props.classSharing = true; store.props.classReport = true; classBoard("ORGCHM", store: store, nav: nav)
+    case "PhoneClassVerify": store.props.classVerify = true; classBoard("BIOKTZ", store: store, nav: nav)
+    case "PhoneClassInvite": classBoard("PREMED", store: store, nav: nav)
+    case "PhoneClassLoading": store.props.netLoading = true; classBoard("BIOKTZ", store: store, nav: nav)
+    case "PhoneClassMissing": store.props.missing = true; classBoard("BIOKTZ", store: store, nav: nav)
+    case "PhoneTodayClass": store.props.assignments = true
     case "PhoneSignIn": store.phase = .signedOut
     case "PhoneSignInCode": store.phase = .signedOut; store.signInStep = .code
     default: break
@@ -275,6 +295,13 @@ extension Board {
     // A full screen (review, session done, Learn mode) opens once the page under it is drawn: a page drawn under one from
     // the start stays blank after it closes, so X or Done would land on an empty page.
     if let f = nav.full { nav.boardFull = f; nav.full = nil }
+  }
+}
+
+extension Board {
+  /// A class's page on a design screen: the Library's Classes with this class opened over it.
+  @MainActor static func classBoard(_ code: String, store: Store, nav: Nav) {
+    nav.tab = .library; nav.libClasses = true; nav.path = [.classPage(code)]
   }
 }
 
@@ -303,6 +330,7 @@ struct MainView: View {
               case .publicDeck(let a): PublicDeckScreen(addr: a)
               case .suggestions(let id): SuggestionsScreen(deckId: id)
               case .history(let a): HistoryScreen(addr: a)
+              case .classPage(let code): ClassScreen(code: code)
               }
             }
             .toolbar(.hidden, for: .navigationBar)
@@ -335,7 +363,7 @@ struct MainView: View {
   /// Pages the canvas draws without the tab bar: Settings, Check AI cards, and News (and a suggestion once it's opened).
   private var showsTabBar: Bool {
     switch nav.path.last {
-    case .none, .deck, .folder, .profile, .publicDeck, .history: return true
+    case .none, .deck, .folder, .profile, .publicDeck, .history, .classPage: return true
     case .suggestions: return !nav.barHidden
     default: return false
     }
@@ -370,6 +398,11 @@ struct SheetHost: View {
     case .deckUpdates(let id): SheetOverlay(top: 56, close: nav.close) { DeckUpdatesSheet(deckId: id) }
     case .copyDeck(let a): SheetOverlay(top: nil, radius: 32, close: nav.close) { CopyDeckSheet(addr: a) }
     case .suggest(let a, let start): SheetOverlay(top: 56, radius: 32, close: nav.close) { SuggestSheet(addr: a, start: start) }
+    case .classForm(let f): ClassPopup(form: f)
+    case .classAdd(let code): SheetOverlay(top: 56, close: nav.close) { ClassAddSheet(code: code) }
+    case .classAssign(let code): SheetOverlay(top: 56, close: nav.close) { ClassAssignSheet(code: code) }
+    case .report(let kind, let id, let name): SheetOverlay(top: nil, close: nav.close) { ReportSheet(kind: kind, id: id, name: name) }
+    case .verify: SheetOverlay(top: nil, close: nav.close) { VerifySheet() }
     }
   }
 }

@@ -84,6 +84,9 @@ struct DemoProps {
   /// The sample deck's sharing (the deck page's Tweaks): "Link only" or "Public" (yours, shared), or from Maria:
   /// "study" (as it is) or "copy" (with her changes waiting); and the changes' sheet open.
   var shared = "", linked = "", updatesOpen = false
+  /// The classes boards (their Tweaks): sharing your progress on, a sheet open ("add" or "assign"), Report and Get verified
+  /// open, the New class or Join a class popup open ("new" or "join"), and Today with assignments from your classes.
+  var classSharing = false, classPanel = "", classReport = false, classVerify = false, classForm = "", assignments = false
 }
 
 struct TodayVM {
@@ -116,8 +119,9 @@ final class Store: ObservableObject {
   @Published var demoPaused: [String: Bool] = [:]
   @Published var demoGraded = 0
   @Published var demoLearn = DemoLearn()
-  /// What a design screen changed on the study network (Net.swift).
+  /// What a design screen changed on the study network (Net.swift), and on a class (Classes.swift).
   @Published var demoNet = DemoNet()
+  @Published var demoClass = DemoClass()
   /// The study network's answers (Net.swift, like web/net.js).
   let netCache = NetCache()
   /// What you changed on a profile, shown before the server's answer has it (Profile.swift), by handle.
