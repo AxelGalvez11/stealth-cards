@@ -110,7 +110,7 @@ struct ClassScreen: View {
             Spacer(minLength: 0)
             VStack(alignment: .leading, spacing: 6) {
               LabelText(text: Rich.nsText([.init(t: k.name, m: "")], size: 32, weight: .semibold, ls: -0.03, lh: 1.05, color: UIColor(mesh.inkColor), dark: false))
-              Text(k.school).css(15).opacity(0.88)
+              Text(k.school).css(15).line(15).opacity(0.88)
             }
             .shadow(color: .black.opacity(mesh.shadow), radius: mesh.shadow > 0 ? 7 : 0, x: 0, y: mesh.shadow > 0 ? 1 : 0)
           }
@@ -242,7 +242,7 @@ struct ClassScreen: View {
     VStack(alignment: .leading, spacing: 0) {
       Text("Assignments").css(17, .semibold, ls: -0.01).line(17).foregroundStyle(t.text).padding(.bottom, 4).accessibilityAddTraits(.isHeader)
       ForEach(k.assignments) { a in assignmentRow(k, a, staff: staff, role: role, learners: learners, today: today) }
-      if k.assignments.isEmpty { Text("Nothing assigned yet.").css(14).foregroundStyle(t.muted).padding(.vertical, 16) }
+      if k.assignments.isEmpty { Text("Nothing assigned yet.").css(14).foregroundStyle(t.muted).line(14).padding(.vertical, 16) }
     }
   }
 
@@ -314,7 +314,7 @@ struct ClassScreen: View {
       if !rows.isEmpty {
         VStack(spacing: 0) { ForEach(rows, id: \.0.id) { x, c in progressRow(x, c) } }
       } else if selA != nil {
-        Text("No members yet.").css(14).foregroundStyle(t.muted).padding(.vertical, 16)
+        Text("No members yet.").css(14).foregroundStyle(t.muted).line(14).padding(.vertical, 16)
       }
     }
   }
@@ -355,8 +355,8 @@ struct ClassScreen: View {
         }
       }
       .foregroundStyle(t.text)
-      .padding(.vertical, 8).frame(minHeight: 60)
-      .padding(.bottom, 1)
+      // 60 tall at least, with its 1-point line inside (border-box).
+      .padding(.vertical, 8).padding(.bottom, 1).frame(minHeight: 60)
       .overlay(alignment: .bottom) { Rectangle().fill(t.line).frame(height: 1) }
       .contentShape(Rectangle())
     }
@@ -376,7 +376,7 @@ struct ClassScreen: View {
         }
       } else {
         VStack(spacing: 12) {
-          Text("No decks in this class yet.").css(15).foregroundStyle(t.muted)
+          Text("No decks in this class yet.").css(15).foregroundStyle(t.muted).line(15)
           if staff { ClassButton(label: "Add a deck", icon: "plus", inv: true) { nav.sheet = .classAdd(upper) } }
         }
         .frame(maxWidth: .infinity)

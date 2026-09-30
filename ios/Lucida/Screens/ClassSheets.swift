@@ -174,15 +174,23 @@ struct ClassAssignSheet: View {
     .accessibilityAddTraits(on ? [.isButton, .isSelected] : .isButton)
   }
 
-  /// The date: the browser's own field on the web (10/05/2026); here the same look, and a calendar to pick from.
+  /// The date: the browser's own field on the web (10/05/2026, its parts a little apart, and its calendar mark); here the
+  /// same look, and a calendar to pick from.
   private func dateField(_ v: String, min: Date) -> some View {
     let day = ClassWords.dateAt(v)
     let f = DateFormatter(); f.locale = Locale(identifier: "en_US"); f.dateFormat = "MM/dd/yyyy"
+    let parts = f.string(from: day).split(separator: "/").map(String.init)
     return Button { calendar = true } label: {
       HStack(spacing: 10) {
         Icon("calendar", 18, 1.8).foregroundStyle(t.muted)
-        Text(f.string(from: day)).css(15).foregroundStyle(t.text).frame(maxWidth: .infinity, alignment: .leading)
-        Icon("calendar", 16, 1.8).foregroundStyle(t.text)
+        HStack(spacing: 0) {
+          ForEach(Array(parts.enumerated()), id: \.offset) { i, p in
+            if i > 0 { Text("/").padding(.horizontal, 0.45) }
+            Text(p).padding(.horizontal, i == 0 ? 0 : 0.45)
+          }
+        }
+        .css(15).foregroundStyle(t.text).padding(.leading, 2).frame(maxWidth: .infinity, alignment: .leading)
+        DateMark().foregroundStyle(t.text).padding(.trailing, 3.8)
       }
       .padding(.horizontal, 16).frame(height: 48)
       .background(RoundedRectangle(cornerRadius: 16, style: .continuous).fill(t.surf))
@@ -204,6 +212,22 @@ struct ClassAssignSheet: View {
       do { try await store.assign(k.id, sharedId: pickId, goal: goal, due: dueV); busy = false; nav.close() }
       catch { err = error.localizedDescription.nilIfEmpty ?? "Something went wrong. Try again."; busy = false }
     }
+  }
+}
+
+/// The browser's calendar mark on a date field: a box with a solid top and two little tabs, 11.5 by 13.
+private struct DateMark: View {
+  var body: some View {
+    Canvas { ctx, size in
+      let w = size.width
+      var box = Path(roundedRect: CGRect(x: 0.65, y: 2.1, width: w - 1.3, height: 10.1), cornerRadius: 1.6)
+      ctx.stroke(box, with: .foreground, lineWidth: 1.3)
+      box = Path(CGRect(x: 0.65, y: 2.1, width: w - 1.3, height: 3.1)); ctx.fill(box, with: .foreground)
+      ctx.fill(Path(CGRect(x: 2.2, y: 0, width: 1.3, height: 3.4)), with: .foreground)
+      ctx.fill(Path(CGRect(x: w - 3.5, y: 0, width: 1.3, height: 3.4)), with: .foreground)
+    }
+    .frame(width: 11.5, height: 12.9)
+    .accessibilityHidden(true)
   }
 }
 

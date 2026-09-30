@@ -84,7 +84,8 @@ struct LibRound: View {
   }
 }
 
-/// cField: a 50-tall gray field with an icon, for the class popups and sheets (`mono`: the code's big spaced capitals).
+/// cField: a 50-tall gray field with an icon, for the class popups and sheets (`mono`: the code's big spaced capitals). A
+/// hint that's longer than the field is cut off at its edge, like the browser cuts it (not ended with …).
 struct ClassField: View {
   @Environment(\.theme) private var t
   let text: Binding<String>
@@ -99,18 +100,30 @@ struct ClassField: View {
   var body: some View {
     HStack(spacing: 10) {
       if let icon { Icon(icon, 18, 1.8).foregroundStyle(t.muted) }
+      // The browser's input has 2 points of its own on the sides. The hint is drawn over the field, and cut at its edge (a
+      // long one drawn in the layout would widen the page).
       field
+        .padding(.horizontal, 2)
+        .overlay {
+          if text.wrappedValue.isEmpty {
+            Color.clear.overlay(alignment: .leading) {
+              Text(placeholder).font(mono ? .mono(20) : .geist(16)).tracking(mono ? 0.18 * 20 : 0).foregroundStyle(PLACEHOLDER)
+                .lineLimit(1).fixedSize(horizontal: true, vertical: false).padding(.leading, 2)
+            }
+            .mask(Rectangle().padding(.trailing, 2)).allowsHitTesting(false).accessibilityHidden(true)
+          }
+        }
         .foregroundStyle(t.text).tint(t.text)
-        .textInputAutocapitalization(caps).autocorrectionDisabled()
-        .submitLabel(.done).onSubmit(submit)
-        .onChange(of: text.wrappedValue) { _, v in if v.utf16.count > max { text.wrappedValue = v.limited(max) } }
-        .accessibilityLabel(label)
     }
     .padding(.horizontal, 16).frame(height: 50)
     .background(RoundedRectangle(cornerRadius: 16, style: .continuous).fill(t.surf))
   }
   @ViewBuilder private var field: some View {
-    let f = TextField("", text: text, prompt: Text(placeholder).foregroundStyle(PLACEHOLDER))
+    let f = TextField("", text: text)
+      .textInputAutocapitalization(caps).autocorrectionDisabled()
+      .submitLabel(.done).onSubmit(submit)
+      .onChange(of: text.wrappedValue) { _, v in if v.utf16.count > max { text.wrappedValue = v.limited(max) } }
+      .accessibilityLabel(label)
     let styled = mono ? f.font(.mono(20)).tracking(0.18 * 20) : f.font(.geist(16)).tracking(0)
     if let focus { styled.focused(focus) } else { styled }
   }

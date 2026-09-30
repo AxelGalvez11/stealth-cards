@@ -284,7 +284,8 @@ extension Store {
       }
     }
     .filter { $0.at >= t0 || (!$0.done && $0.at >= t0.addingTimeInterval(-14 * 86400)) }
-    .sorted { $0.at < $1.at }
+    // Soonest first; the same day keeps the order the classes give them (a stable sort, like the web's).
+    .enumerated().sorted { ($0.element.at, $0.offset) < ($1.element.at, $1.offset) }.map(\.element)
   }
 
   /// After a study session, a class you share your progress with hears how far you got, without waiting for the app to
