@@ -9,7 +9,7 @@
 // each assignment and when they last studied (web/progress.js), never their answers.
 // Also here: asking to be verified as a teacher or a school, reporting a deck, a profile, or a suggestion, and the admin
 // page that decides both (only for the emails in LUCIDA_ADMINS; on this computer, the made-up person "admin").
-// The tables are in supabase/classes.sql (localrest.mjs on this computer).
+// The tables are in supabase/classes.sql, and supabase/hardening.sql for a deck's `hidden` (localrest.mjs on this computer).
 import { createHash, randomInt } from 'node:crypto';
 import { rest, val, inList, cloud } from './supa.mjs';
 import { state, saved } from './store.mjs';
@@ -262,7 +262,7 @@ export async function page(code, viewer) {
   const [faces, rows, as, prog] = await Promise.all([profilesOf(people.map(x => x.user_id)), links.length ? rest('/shared_decks?id=in.' + inList(links.map(x => x.shared_id)) + '&select=' + LIST) : [],
     rest('/assignments?class_id=eq.' + val(k.id) + '&select=id,shared_id,goal,due,created_at&order=due.asc&limit=500'), staff ? rest('/class_progress?class_id=eq.' + val(k.id) + '&select=*&limit=20000') : []]);
   // A deck hidden after a report (private again) isn't shown, even to the class.
-  const cards = await withOwners(rows.filter(r => r.visibility !== 'private'));
+  const cards = await withOwners(rows.filter(r => r.visibility !== 'private' && !r.hidden));
   const who = id => faces.find(p => p.id === id), handleOf = id => (who(id) || {}).handle || '';
   const decks = links.map(l => { const c = cards.find(x => x.id === l.shared_id); return c ? { ...c, addedBy: handleOf(l.added_by), mine: l.added_by === vid } : null; }).filter(Boolean);
   const members = people.map(x => ({ ...face(who(x.user_id)), role: x.role, ...(staff ? { share: !!x.share_progress } : {}), joined: x.joined_at, you: x.user_id === vid })).filter(x => x.handle);
@@ -311,8 +311,9 @@ export async function verifyStatus(uid) {
 
 // ---------- reports ----------
 // Anyone signed in can report a deck, a profile, or a suggestion (on their own deck): wrong or harmful, spam, someone
-// else's work, or other (with a line). One open report per person per thing; the admin page decides.
-const REASONS = ['wrong', 'spam', 'stolen', 'other'];
+// else's work, or other (with a line). One open report per person per thing, and no more than OPEN_REPORTS open at a time
+// (so the admin page can't be buried); the admin page decides.
+const REASONS = ['wrong', 'spam', 'stolen', 'other'], OPEN_REPORTS = 10;
 export async function sendReport(uid, me, o = {}) {
   const p = await ensureProfile(uid, me);
   const kind = ['deck', 'profile', 'suggestion'].includes(o.kind) ? o.kind : '';
@@ -323,7 +324,7 @@ export async function sendReport(uid, me, o = {}) {
   if (reason === 'other' && !note) throw err('Say what’s wrong.');
   let target = '', name = '';
   if (kind === 'deck') {
-    const sh = (await rest('/shared_decks?id=eq.' + val(o.id) + '&select=id,owner,name,visibility'))[0];
+    const sh = (await rest('/shared_decks?id=eq.' + val(o.id) + '&select=id,owner,name,visibility,hidden'))[0];
     if (!sh || !(await canSee(sh, p.id))) throw err('That deck isn’t shared anymore.', 404);
     if (sh.owner === p.id) throw err('It’s your deck.');
     target = sh.id; name = sh.name;
@@ -340,6 +341,8 @@ export async function sendReport(uid, me, o = {}) {
   }
   const had = (await rest('/reports?reporter=eq.' + val(p.id) + '&kind=eq.' + kind + '&target=eq.' + val(target) + '&status=eq.open&select=id'))[0];
   if (had) { await rest('/reports?id=eq.' + val(had.id), { method: 'PATCH', body: { reason, note, created_at: nowIso() } }); return { id: had.id }; }
+  const waiting = await rest('/reports?reporter=eq.' + val(p.id) + '&status=eq.open&select=id&limit=1', { count: true });
+  if (waiting.total >= OPEN_REPORTS) throw err('You have ' + OPEN_REPORTS + ' reports waiting.', 429);
   const id = rid('r');
   await rest('/reports', { method: 'POST', body: { id, kind, target, target_name: clean(name, 200), reason, note, reporter: p.id } });
   return { id };
@@ -352,7 +355,8 @@ const mustAdmin = (uid, me) => { if (!isAdmin(uid, me)) throw err('Only Lucida�
 // Verification requests waiting, and reports waiting, one row per thing reported (with every report about it).
 export async function adminPage(uid, me) {
   mustAdmin(uid, me);
-  const [reqs, reps] = await Promise.all([rest('/verify_requests?status=eq.open&select=*&order=created_at.asc&limit=200'), rest('/reports?status=eq.open&select=*&order=created_at.asc&limit=1000')]);
+  // Newest first, so a pile of old ones never keeps the new ones off the page.
+  const [reqs, reps] = await Promise.all([rest('/verify_requests?status=eq.open&select=*&order=created_at.desc&limit=200'), rest('/reports?status=eq.open&select=*&order=created_at.desc&limit=1000')]);
   const people = await profilesOf([...reqs.map(r => r.user_id), ...reps.map(r => r.reporter), ...reps.filter(r => r.kind === 'profile').map(r => r.target)]);
   const deckIds = [...new Set(reps.filter(r => r.kind === 'deck').map(r => r.target))], sugIds = [...new Set(reps.filter(r => r.kind === 'suggestion').map(r => r.target))];
   const [decks, sugs] = await Promise.all([deckIds.length ? rest('/shared_decks?id=in.' + inList(deckIds) + '&select=' + LIST).then(withOwners) : [], sugIds.length ? rest('/suggestions?id=in.' + inList(sugIds) + '&select=id,author,author_name,message,changes,status') : []]);
@@ -381,19 +385,21 @@ export async function adminVerify(uid, me, o = {}) {
   if (ok) {
     const p = await profileOf(r.user_id);
     if (!p) throw err('That person is gone.', 404);
-    // A school's account is the school's own profile: its decks say "Official · <school>".
-    await rest('/profiles?id=eq.' + val(p.id), { method: 'PATCH', body: { verified: r.role, ...(r.role === 'school' ? { kind: 'school' } : {}), ...(!p.school ? { school: r.school } : {}), updated_at: nowIso() } });
+    // A school's account is the school's own profile: its decks say "Official · <school>". A verified profile is one its person
+    // asked to make public, so it shows in search too (asking alone doesn't list anyone).
+    await rest('/profiles?id=eq.' + val(p.id), { method: 'PATCH', body: { verified: r.role, listed: true, ...(r.role === 'school' ? { kind: 'school' } : {}), ...(!p.school ? { school: r.school } : {}), updated_at: nowIso() } });
     await rest('/notifications', { method: 'POST', body: [{ user_id: p.id, kind: 'verified', actor: null, actor_name: 'Lucida', data: { role: r.role } }] });
   }
   await rest('/verify_requests?id=eq.' + val(r.id), { method: 'PATCH', body: { status: ok ? 'approved' : 'declined', decided_at: nowIso(), decided_by: (me && me.email) || socialId(uid) } });
   return { status: ok ? 'approved' : 'declined' };
 }
-// Hiding a deck makes it private again (its owner's Sharing says so too, and they hear why). People who study it keep
-// their cards, the way they do when an owner stops sharing.
+// Hiding a deck makes it private again (its owner's Sharing says so too, and they hear why), and it stays hidden: `hidden`
+// is what stops its owner sharing it again (social.mjs shareDeck) and anyone else seeing it (canSee). People who study it
+// keep their cards, the way they do when an owner stops sharing.
 async function hideDeck(sharedId) {
-  const sh = (await rest('/shared_decks?id=eq.' + val(sharedId) + '&select=id,owner,name,visibility'))[0];
-  if (!sh || sh.visibility === 'private') return false;
-  await rest('/shared_decks?id=eq.' + val(sh.id), { method: 'PATCH', body: { visibility: 'private', updated_at: nowIso() } });
+  const sh = (await rest('/shared_decks?id=eq.' + val(sharedId) + '&select=id,owner,name,visibility,hidden'))[0];
+  if (!sh || sh.hidden) return false;
+  await rest('/shared_decks?id=eq.' + val(sh.id), { method: 'PATCH', body: { visibility: 'private', hidden: true, updated_at: nowIso() } });
   await inLibraryOf(sh.owner, async () => { const d = state().decks.find(x => x.share && x.share.id === sh.id); if (d) { d.share.vis = 'private'; saved(); } }).catch(e => console.error('hide', e));
   await rest('/notifications', { method: 'POST', body: [{ user_id: sh.owner, kind: 'hidden', actor: null, actor_name: 'Lucida', shared_id: sh.id, data: { name: sh.name } }] });
   return true;

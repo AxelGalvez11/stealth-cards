@@ -23,6 +23,9 @@ function network(path, q, P) {
   if (m) return { name: P + 'PublicDeck', props: { handle: m[1].toLowerCase(), slug: m[2].toLowerCase(), copyOpen: q.get('copy') === '1', suggest: q.get('suggest') || '' } };
   const d = /^\/d\/(s[a-z0-9]{4,40})$/.exec(path);
   if (d) return { name: P + 'PublicDeck', props: { id: d[1], copyOpen: q.get('copy') === '1', suggest: q.get('suggest') || '' } };
+  // A deck's History by its lasting link (a Link only deck has no other address).
+  const dh = /^\/d\/(s[a-z0-9]{4,40})\/history$/.exec(path);
+  if (dh) return { name: P + 'History', props: { id: dh[1] } };
   // A class's invite link (web/classes.mjs): anyone can open it, and the people in it see the class.
   const k = /^\/class\/([A-Za-z]{6})\/?$/.exec(path);
   if (k) return { name: P + 'Class', props: { code: k[1].toUpperCase() } };
