@@ -1,0 +1,138 @@
+{
+  "_about": "What llms.txt and llms-full.txt say about the site: the intro paragraph, one line and a name for each page (in the order they are listed), and quick facts. Written by hand (research, 2026-09-30); design/check-site.mjs checks that every page has a line.",
+  "intro": "Lucida is a flashcard app that runs in the browser at app.lucida.cards, on phones, tablets and computers. It plans every review with FSRS spaced repetition, and your own AI (Claude, ChatGPT, Cursor or any app that supports MCP) can make and edit your cards through a personal link, so studying itself doesn’t need an AI subscription. Cards can be question and answer, fill in the blank, a picture with hidden parts (image occlusion) or sound, and Learn mode quizzes you on them. The free plan has unlimited decks and cards, FSRS reviews, Learn mode, shared decks, classes, live games with friends, up to 100 pictures and sounds, and import and export. Pro costs $5.99 a month or $49.99 a year and adds exam dates, weak-spot stats, unlimited pictures and sounds, themes and more. There is no App Store app yet. Support: team@lucida.cards.",
+  "pages": {
+    "": {
+      "label": "Lucida",
+      "line": "A flashcard app where your own AI makes the cards and FSRS spaced repetition brings each one back just before you’d forget it."
+    },
+    "pricing": {
+      "label": "Pricing",
+      "line": "Free has unlimited decks and cards, Learn mode, sharing and live games; Pro is $5.99 a month or $49.99 a year and adds exam dates, weak-spot stats and themes."
+    },
+    "privacy": {
+      "label": "Privacy Policy",
+      "line": "What Lucida keeps, why, who helps run it, and how to export or delete your data; it says Lucida doesn’t sell data or train AI on your cards."
+    },
+    "terms": {
+      "label": "Terms of Service",
+      "line": "The rules for using Lucida: you must be 13 or older, AI-made cards can be wrong, and your cards stay yours."
+    },
+    "compare": {
+      "label": "Compare",
+      "line": "How Lucida stacks up against other flashcard apps, each page with dated sources and a plain note on where the other app is stronger."
+    },
+    "vs/anki": {
+      "label": "Lucida vs Anki",
+      "line": "Lucida and Anki compared on price, platforms, spaced repetition, AI features, import and export, sharing and free limits, with dated sources."
+    },
+    "vs/quizlet": {
+      "label": "Lucida vs Quizlet",
+      "line": "Lucida and Quizlet compared on price, platforms, spaced repetition, AI features, import and export, sharing and free limits, with dated sources."
+    },
+    "vs/knowt": {
+      "label": "Lucida vs Knowt",
+      "line": "Lucida and Knowt compared on price, platforms, spaced repetition, AI features, import and export, sharing and free limits, with dated sources."
+    },
+    "vs/remnote": {
+      "label": "Lucida vs RemNote",
+      "line": "Lucida and RemNote compared on price, platforms, spaced repetition, AI features, import and export, sharing and free limits, with dated sources."
+    },
+    "vs/brainscape": {
+      "label": "Lucida vs Brainscape",
+      "line": "Lucida and Brainscape compared on price, platforms, spaced repetition, AI features, import and export, sharing and free limits, with dated sources."
+    },
+    "vs/mochi": {
+      "label": "Lucida vs Mochi",
+      "line": "Lucida and Mochi compared on price, platforms, spaced repetition, AI features, import and export, sharing and free limits, with dated sources."
+    },
+    "vs/kahoot": {
+      "label": "Lucida vs Kahoot",
+      "line": "Lucida’s live games compared with Kahoot on price, free limits and how a game runs, with dated sources."
+    },
+    "vs/gizmo": {
+      "label": "Lucida vs Gizmo",
+      "line": "Lucida and Gizmo compared on price, platforms, spaced repetition, AI features, import and export, sharing and free limits, with dated sources."
+    },
+    "anki-alternative": {
+      "label": "Anki alternative",
+      "line": "What to know if you’re looking for an Anki alternative: what Lucida offers, what you’d gain, and what you’d give up."
+    },
+    "quizlet-alternative": {
+      "label": "Quizlet alternative",
+      "line": "What to know if you’re looking for a Quizlet alternative: what Lucida offers, what you’d gain, and what you’d give up."
+    },
+    "features": {
+      "label": "Features",
+      "line": "An overview of what Lucida does, from spaced repetition and AI-made cards to shared decks and live games, and who uses it."
+    },
+    "features/spaced-repetition": {
+      "label": "Spaced repetition with FSRS",
+      "line": "How Lucida plans every review with FSRS, what you can change (goal, steps, exam dates, tuning), and what it doesn’t do."
+    },
+    "features/ai-flashcards": {
+      "label": "AI flashcards",
+      "line": "How to add your Lucida link to Claude, ChatGPT or Cursor (and what Gemini and Grok need) so your AI writes flashcards into your decks."
+    },
+    "features/learn-mode": {
+      "label": "Learn mode",
+      "line": "Free quizzes on your own cards (multiple choice, true or false, matching, blanks, typing) until each card is right twice in a row."
+    },
+    "features/shared-decks": {
+      "label": "Shared decks",
+      "line": "Share a deck as private, link only or public; others study it or copy it and suggest fixes you take or skip, with History."
+    },
+    "features/classes": {
+      "label": "Classes",
+      "line": "Make a class with a six-letter code, assign decks by a due date, and see progress that students choose to share."
+    },
+    "features/live-games": {
+      "label": "Live games",
+      "line": "Turn a deck into a live quiz that up to 60 players join on their phones with a 6-digit code and no account."
+    },
+    "features/image-occlusion": {
+      "label": "Image occlusion",
+      "line": "Hide parts of a picture behind boxes so each box becomes a flashcard, for anatomy, maps and diagrams."
+    },
+    "features/import": {
+      "label": "Import and export",
+      "line": "How to bring cards in from Anki’s plain-text export, Quizlet or CSV, what doesn’t come across (.apkg files, history, media), and how to export."
+    },
+    "for/students": {
+      "label": "Lucida for students",
+      "line": "A free flashcard app where your AI turns lectures into cards, with a step-by-step exam plan and what’s free or Pro."
+    },
+    "for/med-school": {
+      "label": "Lucida for medical school",
+      "line": "Flashcards for med school with AI-made cards, image occlusion and exam dates, what the research says, and what Lucida can’t do versus Anki."
+    },
+    "for/mcat": {
+      "label": "Lucida for the MCAT",
+      "line": "MCAT content review with flashcards, the AAMC’s section facts, and why practice questions still matter."
+    },
+    "for/language-learning": {
+      "label": "Lucida for language learning",
+      "line": "Word and sentence cards with sound and fill-in-the-blank, plus an honest list of what it lacks for language learners."
+    },
+    "for/teachers": {
+      "label": "Lucida for teachers",
+      "line": "Classes, live review games and shared decks for teachers, with what students share and what teachers never see."
+    },
+    "faq": {
+      "label": "Questions about Lucida",
+      "line": "More than forty short answers on pricing, FSRS, AI-made cards, Learn mode, live games, sharing, importing, exporting and deleting your data."
+    }
+  },
+  "facts": [
+    "Runs in the browser at app.lucida.cards on any device. The native iPhone app isn’t on the App Store yet. It needs an internet connection.",
+    "Sign in with an email code, Google or Apple. You must be 13 or older.",
+    "Scheduling is FSRS version 5 (19 parameters). Default remember goal 90% (70 to 97% per deck), 20 new cards a day, no daily review limit.",
+    "Card kinds: question and answer, fill in the blank, picture (image occlusion, up to 30 boxes a picture) and sound.",
+    "Your AI connects through a personal MCP link and can add up to 500 cards per request. It is free on the free plan.",
+    "Free: unlimited decks and cards, FSRS, Learn mode, shared decks, classes, live games (up to 60 players, no account to join), up to 100 pictures and sounds, import and export.",
+    "Pro: $5.99 a month or $49.99 a year. Adds exam dates, weak-spot stats, unlimited pictures and sounds, themes, hardest cards on decks you share, photo covers, natural voices for sound cards, more AI explanations, and tuning to your own reviews.",
+    "Import: Anki’s Notes in Plain Text export, Quizlet’s Export, CSV, TSV and pasted text. Not .apkg files. Imported cards start as new cards.",
+    "Export: one deck as CSV, or everything (decks, cards and review history) as lucida.json.",
+    "Privacy: no ads, no selling data, and cards aren’t used to train AI models, per the privacy policy."
+  ]
+}

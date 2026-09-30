@@ -1,0 +1,170 @@
+{
+  "slug": "for/med-school",
+  "kind": "use",
+  "title": "Flashcards for med school: spaced repetition and AI",
+  "description": "Make cards from lectures with your own AI, review on an FSRS schedule, hide labels on anatomy pictures and set exam dates. Free, with what it can’t do.",
+  "h1": "Lucida for medical school",
+  "lead": "Lucida is a flashcard app for medical students: your own AI turns lectures into cards, FSRS plans the reviews, and image occlusion and fill-in-the-blank cards cover anatomy, histology and facts inside sentences. It can’t open Anki’s .apkg decks or run Anki add-ons, so it fits best if you make your own cards instead of studying someone else’s mega-deck.",
+  "updated": "2026-09-30",
+  "sections": [
+    {
+      "h2": "What the research says about flashcards in medical school",
+      "paras": [
+        "The evidence is encouraging and not conclusive. A 2015 survey of 72 students at one school found that each extra 445 board-style practice questions, or 1,700 unique Anki flashcards, went with about one more point on USMLE Step 1, after accounting for other academic and psychological factors. The link held for Anki, which the paper calls user-generated, and not for the one commercial flashcard product it also asked about. The authors called the study exploratory, and the data were self-reported.",
+        "A 2026 systematic review of 11 studies reported that three of them showed a consistent link between regular Anki use and higher Step 1 scores, with high-frequency users scoring 4 to 13 points above minimal users. Results for course exams were mixed, and the one study of Step 2 CK found no benefit. The evidence is largely observational, so it shows a link, not a cause.",
+        "The practical reading is to use both: practice questions and flashcards each went with better scores. Lucida doesn’t change that. It’s a way to make and schedule the flashcard part."
+      ]
+    },
+    {
+      "h2": "Make cards from your lectures",
+      "paras": [
+        "Connect your AI app once (see [AI flashcards](/features/ai-flashcards)), then share a lecture or your notes and ask for cards. For medical school, ask for one fact per card, fill-in-the-blank cards for facts inside sentences (a mechanism, a drug’s target), and a one-line why in each note. Try: “Make flashcards from this lecture for my Pharmacology deck. One fact per card. Use fill-in-the-blank for mechanisms and side effects, and add a one-line why. Tag each card with its drug class.”",
+        "Read every card before you study it, or turn on Let me check AI cards first. Lucida’s terms say not to rely on Lucida for medical advice. In one 2026 test of cards written from a reader’s highlights (a different job from studying for class), even the best model made cards its authors rated unusable 36% of the time. For medical facts, check the cards against your course material."
+      ]
+    },
+    {
+      "h2": "Image occlusion for anatomy, histology and pathways",
+      "paras": [
+        "Add a slide or diagram, draw boxes over the labels, and type what’s under each box. Every box is its own card with its own schedule, so you can know one structure and keep forgetting another. Choose Hide one to keep the rest of the picture as context, or Hide all to recall without hints. In Learn mode, each box becomes a multiple choice question with the picture’s other labels as the choices. A picture holds up to 30 boxes.",
+        "Piotr Wozniak’s twenty rules of formulating knowledge say obstructing parts of a picture is great for learning anatomy (rule 8). On Free, up to 100 cards can have a picture or a sound, and a picture with many boxes counts once. Only use pictures you have the right to use. See [image occlusion](/features/image-occlusion)."
+      ]
+    },
+    {
+      "h2": "Plan the schedule around your exams",
+      "bullets": [
+        "**New cards a day** starts at 20. Raise it slowly: each new card adds reviews later, and Anki’s manual warns that adding new cards while you’re behind can make a backlog worse.",
+        "**Tag your cards** by system or topic (cardio, renal, biostatistics). Tags give you Learn mode sets, and on Pro the Stats page ranks tags by how much you remember (a tag needs about 8 reviews first) and lists your hardest cards and the cards you keep forgetting.",
+        "**Put an exam date on each deck (Pro).** From 30 days out, cards you’d probably forget by exam day come up early, and Stats shows how much of the deck you’d likely remember on the day.",
+        "**Let your AI quiz you on weak spots (Pro).** It can read your weak tags and hardest cards and write new questions for them.",
+        "**On Free,** the Stats page shows your streak, your reviews, how much you remember, and how many cards are due each day this week, which is enough to pick a pace."
+      ]
+    },
+    {
+      "h2": "Bring the cards you already have",
+      "paras": [
+        "You can import cards from Anki’s Notes in Plain Text export, from Quizlet’s export, or from a CSV file. Review history, pictures, sounds and tags don’t come along, and Lucida can’t open .apkg files (see [importing](/features/import)). Decks like the AnKing Step Deck are built for Anki and delivered through AnkiHub, which works with Anki, so Lucida can’t use them directly."
+      ]
+    },
+    {
+      "h2": "What Lucida doesn’t have",
+      "bullets": [
+        "No .apkg import and no Anki add-ons, so no direct use of big Anki decks that depend on them.",
+        "No built-in medical content and no question bank. It’s a flashcard tool, and you bring or make the content.",
+        "Text imports drop pictures, sounds, tags and review history.",
+        "Math and chemistry formulas are basic: powers, subscripts, fractions, roots and Greek letters, but not full equation layout. Use a picture card for structures.",
+        "Image occlusion boxes are rectangles only.",
+        "It needs an internet connection, and the native iPhone app isn’t on the App Store yet."
+      ]
+    }
+  ],
+  "faq": [
+    {
+      "q": "Is Anki necessary for med school or Step 1?",
+      "a": "No rule says so. Studies link flashcard use with higher Step 1 scores, but they’re observational, and practice questions show a similar link. Use what gets you recalling and testing yourself often."
+    },
+    {
+      "q": "Is Lucida an Anki alternative for medical students?",
+      "a": "It can be if you make your own cards: AI-made cards from lectures, FSRS, image occlusion and exam dates. It isn’t if your plan depends on .apkg decks or Anki add-ons. For a full comparison, see [Lucida vs Anki](/vs/anki)."
+    },
+    {
+      "q": "How many new cards a day should I do in med school?",
+      "a": "There’s no evidence-based number. Lucida starts at 20. Raise it slowly while your daily reviews stay doable. Anki’s manual estimates that 20 new cards a day settles at roughly 200 reviews a day."
+    },
+    {
+      "q": "Does Lucida have image occlusion for anatomy?",
+      "a": "Yes, and it’s free. Draw boxes over the labels on a picture, and each box becomes a card. See [image occlusion](/features/image-occlusion)."
+    },
+    {
+      "q": "Can I use the AnKing deck or other premade Anki decks?",
+      "a": "Not directly. The AnKing Step Deck is delivered through AnkiHub for use in Anki, and Lucida can’t open .apkg files. A text export from Anki can be imported, but it drops pictures, tags and review history. If your plan depends on a big premade Anki deck, Anki is the better fit."
+    },
+    {
+      "q": "Can I make cards from lecture slides with ChatGPT or Claude?",
+      "a": "Yes. Attach the slides in your AI app and ask for cards, and it adds them to your Lucida decks. Read them before you study. See [AI flashcards](/features/ai-flashcards)."
+    },
+    {
+      "q": "Is Lucida free for medical students?",
+      "a": "Yes. Unlimited decks and cards, FSRS, Learn mode, image occlusion, sharing and live games are free. Pro ($5.99 a month or $49.99 a year, as of September 2026) adds exam dates, weak-spot stats and more."
+    },
+    {
+      "q": "Can I share decks with my class?",
+      "a": "Yes. Share a deck by link, or make a class and add the deck. Classmates study it as it is or copy it, and can suggest fixes you take or skip. See [shared decks](/features/shared-decks)."
+    },
+    {
+      "q": "Are AI-made medical flashcards accurate?",
+      "a": "Not always. Lucida’s terms say AI apps can make mistakes and not to rely on Lucida for medical advice. Check cards against your course material, and use Let me check AI cards first."
+    },
+    {
+      "q": "Does this work for the MCAT too?",
+      "a": "Yes, with the same tools. See [Lucida for the MCAT](/for/mcat) for what flashcards can and can’t do for that exam."
+    }
+  ],
+  "sources": [
+    {
+      "label": "Deng, Gluckstein and Larsen (2015), Student-directed retrieval practice is a predictor of medical licensing examination performance, Perspectives on Medical Education",
+      "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC4673073",
+      "checked": "2026-09-30"
+    },
+    {
+      "label": "Frappa and others (2026), Anki Use and Academic Performance in Medical Education: A Systematic Review, Medical Science Educator",
+      "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC13197492/",
+      "checked": "2026-09-30"
+    },
+    {
+      "label": "Wozniak (1999), Twenty rules of formulating knowledge, SuperMemo",
+      "url": "https://www.supermemo.com/en/blog/twenty-rules-of-formulating-knowledge",
+      "checked": "2026-09-30"
+    },
+    {
+      "label": "Kirkby and Matuschak (2026), Can LLMs create lasting flashcards from readers’ highlights? (Memory Machines)",
+      "url": "https://memory-machines.com/report",
+      "checked": "2026-09-30"
+    },
+    {
+      "label": "Anki Manual: Deck options",
+      "url": "https://docs.ankiweb.net/deck-options.html",
+      "checked": "2026-09-30"
+    },
+    {
+      "label": "AnkiHub: AnKing Step Deck",
+      "url": "https://www.ankihub.net/step-deck",
+      "checked": "2026-09-30"
+    },
+    {
+      "label": "Lucida Terms of Service (updated September 24, 2026)",
+      "url": "https://lucida.cards/terms",
+      "checked": "2026-09-30"
+    },
+    {
+      "label": "Lucida pricing (what Free and Pro include, as of September 2026)",
+      "url": "https://lucida.cards/pricing",
+      "checked": "2026-09-30"
+    }
+  ],
+  "related": [
+    "for/mcat",
+    "features/image-occlusion",
+    "features/ai-flashcards",
+    "features/spaced-repetition",
+    "features/import",
+    "for/students",
+    "vs/anki",
+    "faq"
+  ],
+  "keywords": [
+    "anki for med school",
+    "best flashcard app for medical school",
+    "anki alternative for medical students",
+    "medical school flashcards",
+    "step 1 flashcards",
+    "usmle flashcards app",
+    "anatomy flashcards with pictures",
+    "image occlusion anatomy",
+    "pharmacology flashcards",
+    "how many anki cards per day med school",
+    "is anki necessary for step 1",
+    "spaced repetition med school",
+    "anking alternative",
+    "is anki worth it for medical school"
+  ]
+}

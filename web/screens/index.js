@@ -58,7 +58,7 @@ export default [
   "name": "LandingPhone",
   "title": "Landing page · lucida.cards on a phone",
   "w": 390,
-  "h": 4818
+  "h": 4852
  },
  {
   "name": "LiveAnswer",
@@ -1048,7 +1048,7 @@ export default [
   "name": "PricingPhone",
   "title": "Pricing · lucida.cards/pricing on a phone",
   "w": 390,
-  "h": 2319
+  "h": 2353
  },
  {
   "name": "Privacy",
@@ -1061,6 +1061,48 @@ export default [
   "title": "Your reference",
   "w": 1440,
   "h": 1110
+ },
+ {
+  "name": "SiteCompare",
+  "title": "Site · Comparisons, alternatives, the hubs and the 404 · lucida.cards",
+  "w": 1440,
+  "h": 8313
+ },
+ {
+  "name": "SiteComparePhone",
+  "title": "Site · Comparisons, alternatives, the hubs and the 404 · lucida.cards on a phone",
+  "w": 390,
+  "h": 15823
+ },
+ {
+  "name": "SiteFaq",
+  "title": "Site · FAQ · lucida.cards",
+  "w": 1440,
+  "h": 9361
+ },
+ {
+  "name": "SiteFaqPhone",
+  "title": "Site · FAQ · lucida.cards on a phone",
+  "w": 390,
+  "h": 11973
+ },
+ {
+  "name": "SiteFeature",
+  "title": "Site · Features and who Lucida is for · lucida.cards",
+  "w": 1440,
+  "h": 8958
+ },
+ {
+  "name": "SiteFeaturePhone",
+  "title": "Site · Features and who Lucida is for · lucida.cards on a phone",
+  "w": 390,
+  "h": 13783
+ },
+ {
+  "name": "SiteOg",
+  "title": "Site · Link preview picture (1200 × 630) for any page",
+  "w": 1200,
+  "h": 630
  },
  {
   "name": "Terms",

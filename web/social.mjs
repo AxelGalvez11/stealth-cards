@@ -1034,19 +1034,23 @@ export async function metaFor(path) {
     const page = await deckPage(d ? { id: d[1] } : { handle: m[1], slug: m[2] }, null);
     if (!page) return { status: 404, title: 'Not found · Lucida', description: '' };
     return { title: page.name + ' · ' + (page.owner ? page.owner.name : '') + ' · Lucida', description: plural(page.cards, 'flashcard') + (page.description ? '. ' + page.description : '') + (page.cardsList[0] ? '. ' + (page.cardsList[0].front || page.cardsList[0].text || '').slice(0, 120) : ''),
-      noindex: page.visibility !== 'public', url: page.url, cards: page.cardsList.slice(0, 50) };
+      noindex: page.visibility !== 'public', url: page.url, cards: page.cardsList.slice(0, 50),
+      // The facts for the page's structured data (web/jsonld.mjs).
+      ld: { kind: 'deck', name: page.name, description: page.description, cards: page.cards, updated: page.updated, tags: page.tags, owner: page.owner } };
   }
   const p = await profilePage(m[1], null);
   if (!p) return { status: 404, title: 'Not found · Lucida', description: '' };
   // A profile nobody chose to list (see `listed`) stays out of search engines too.
   const row = await profileByHandle(m[1]);
-  return { title: p.name + ' (@' + p.handle + ') · Lucida', description: (p.bio ? p.bio + ' · ' : '') + plural(p.decks.length, 'public deck'), url: '/@' + p.handle, decks: p.decks.slice(0, 50), noindex: !(row && row.listed) };
+  return { title: p.name + ' (@' + p.handle + ') · Lucida', description: (p.bio ? p.bio + ' · ' : '') + plural(p.decks.length, 'public deck'), url: '/@' + p.handle, decks: p.decks.slice(0, 50), noindex: !(row && row.listed),
+    ld: { kind: 'profile', name: p.name, handle: p.handle, bio: p.bio, school: p.school, subject: p.subject, org: p.kind === 'school', updated: p.decks[0] && p.decks[0].updated } };
 }
 export async function sitemap(origin) {
   const decks = await rest('/shared_decks?visibility=eq.public&hidden=is.false&select=owner,slug,updated_at&order=updated_at.desc&limit=5000');
-  const owners = decks.length ? await rest('/profiles?id=in.' + inList([...new Set(decks.map(d => d.owner))].slice(0, 2000)) + '&select=id,handle') : [];
+  const owners = decks.length ? await rest('/profiles?id=in.' + inList([...new Set(decks.map(d => d.owner))].slice(0, 2000)) + '&select=id,handle,listed') : [];
   const urls = [];
-  for (const o of owners) urls.push({ loc: origin + '/@' + o.handle });
+  // A profile is in the sitemap only if it's listed (an unlisted one is noindex), dated by its newest public deck.
+  for (const o of owners) if (o.listed) urls.push({ loc: origin + '/@' + o.handle, lastmod: String(decks.find(d => d.owner === o.id).updated_at || '').slice(0, 10) });
   for (const d of decks) { const o = owners.find(x => x.id === d.owner); if (o) urls.push({ loc: origin + urlOf(o.handle, d.slug), lastmod: String(d.updated_at || '').slice(0, 10) }); }
   return '<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n' + urls.map(u => '<url><loc>' + u.loc.replace(/&/g, '&amp;') + '</loc>' + (u.lastmod ? '<lastmod>' + u.lastmod + '</lastmod>' : '') + '</url>').join('\n') + '\n</urlset>\n';
 }

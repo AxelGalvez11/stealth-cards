@@ -1,0 +1,415 @@
+{
+  "slug": "anki-alternative",
+  "kind": "alternative",
+  "title": "Best Anki alternatives in 2026: free, simple, AI",
+  "description": "Looking for an Anki alternative? Compare Lucida, RemNote, Mochi, Knowt and Brainscape on price, FSRS, AI, offline use and importing your Anki decks.",
+  "h1": "The best Anki alternatives",
+  "lead": "The right Anki alternative depends on what you want to change: Lucida for FSRS in a browser with your own AI making the cards, RemNote or Mochi for notes, apps and offline study, and Knowt or Brainscape for a quick start with AI built in. If Anki already works for you, keep it: it is free on computers and Android and has more than 1,600 add-ons.",
+  "updated": "2026-09-30",
+  "published": "2026-09-30",
+  "table": {
+    "columns": [
+      "",
+      "Anki",
+      "Lucida",
+      "RemNote",
+      "Mochi",
+      "Knowt",
+      "Brainscape"
+    ],
+    "rows": [
+      [
+        "Price (September 2026)",
+        "Free. iPhone app $24.99.",
+        "Free. Pro $5.99 a month.",
+        "Free. Pro $8 a month billed yearly.",
+        "Free. Pro $5 a month billed yearly.",
+        "Free. Ultra $24.99 a month.",
+        "Free. Pro from $7.99 a month (yearly)."
+      ],
+      [
+        "Platforms",
+        "Windows, Mac, Linux, iPhone, Android",
+        "Web, on computers and phones",
+        "Web, desktop, iPhone, Android",
+        "Mac, Windows, Linux, iPhone, Android, web",
+        "Web, iPhone, Android",
+        "Web, iPhone, Android"
+      ],
+      [
+        "Spaced repetition",
+        "SM-2 or FSRS",
+        "FSRS",
+        "SM-2, or FSRS 6 (beta)",
+        "Own algorithm, or FSRS",
+        "Again, Hard, Good, Easy mode",
+        "Own 1 to 5 confidence system"
+      ],
+      [
+        "AI",
+        "Add-ons only",
+        "Your own AI through MCP",
+        "Built in, monthly credits",
+        "Built in (Pro), monthly limits",
+        "Built in, limited on Free",
+        "Built in, limited on Free"
+      ],
+      [
+        "Making cards",
+        "Notes and note types (HTML and CSS)",
+        "Editor, import, or your AI",
+        "Any bullet in your notes",
+        "Markdown, with --- between sides",
+        "Type, paste, or AI from files",
+        "Type, paste or upload, or AI"
+      ],
+      [
+        "Card kinds",
+        "Basic, reversed, type-in, cloze, image occlusion",
+        "Question and answer, cloze, image occlusion, sound",
+        "Basic, cloze, multiple choice, image occlusion, tables and more",
+        "Markdown sides, cloze, diagram cards",
+        "Term and definition with an image or audio",
+        "Text on Free; images and sounds are Pro"
+      ],
+      [
+        "Imports Anki decks",
+        "Yes, natively",
+        "Anki’s plain-text export (not .apkg)",
+        ".apkg with review history",
+        ".apkg with review history",
+        "By pasting, through a spreadsheet",
+        "Anki .txt export"
+      ],
+      [
+        "Export",
+        ".apkg, .colpkg, plain text",
+        "CSV, or everything as JSON",
+        ".apkg, Markdown, OPML, HTML, text",
+        ".mochi, Markdown, CSV",
+        "PDF",
+        "Excel-ready files (Pro)"
+      ],
+      [
+        "Sharing",
+        "AnkiWeb shared decks (files)",
+        "Public, link-only, profiles, Discover",
+        "Share documents, Shared Flashcards library",
+        "Publish by link (Pro)",
+        "Millions of public sets",
+        "Share with learners; other decks are Pro"
+      ],
+      [
+        "Classes",
+        "Not built in",
+        "Yes, free",
+        "None found",
+        "None found",
+        "Yes, with analytics",
+        "Classes; student data is Enterprise"
+      ],
+      [
+        "Live games",
+        "Not built in",
+        "Yes, free",
+        "None found",
+        "None found",
+        "Yes (Knowt Play)",
+        "None found"
+      ],
+      [
+        "Works offline",
+        "Yes",
+        "No",
+        "Yes, in the apps",
+        "Yes",
+        "Not confirmed",
+        "Yes, in the mobile apps"
+      ],
+      [
+        "Privacy",
+        "Local-first, open source",
+        "No ads, no AI training on your cards",
+        "You keep ownership of your data",
+        "Nothing stored on its servers without an account",
+        "Ads on Free; partners use cookies",
+        "No ads; private decks are Pro"
+      ],
+      [
+        "Best for",
+        "Control, add-ons, offline",
+        "A quick start, AI-made cards, a browser",
+        "Notes and cards together",
+        "Markdown, local-first",
+        "AI summaries, AP, SAT and ACT prep",
+        "Expert-made decks, a simple rating"
+      ]
+    ]
+  },
+  "sections": [
+    {
+      "h2": "Why people look for an Anki alternative",
+      "paras": [
+        "Anki is powerful, and that comes with work. Its manual starts with notes, fields, note types and deck options. The iPhone and iPad app costs $24.99. AI comes from add-ons and your own API key, and your cards live on your own devices, so syncing needs an AnkiWeb account.",
+        "Some people like all of that. If you don’t, the apps below change one or more of those things."
+      ]
+    },
+    {
+      "h2": "Lucida: Anki’s scheduling in a browser, with your AI",
+      "paras": [
+        "Lucida plans every review with FSRS, like Anki, but runs in a browser with nothing to install. Your own AI (Claude, ChatGPT, Cursor or any MCP app) makes and edits the cards through your Lucida link, and you choose what it may do. Learn mode, live games, classes and sharing are free.",
+        "What you give up: no offline mode, no add-ons, no custom card templates, and no .apkg import. You can bring decks over through Anki’s Notes in Plain Text export, which keeps cards, bold and italics, cloze blanks and deck names but not pictures, sounds or review history."
+      ]
+    },
+    {
+      "h2": "RemNote: notes and cards together",
+      "paras": [
+        "RemNote turns any bullet in your notes into a flashcard, has desktop and mobile apps that work offline, and imports Anki .apkg files with review history. FSRS 6 is optional and in beta. Free has unlimited notes and cards with limits on PDFs, image occlusion and AI credits; Pro is $8 a month billed yearly."
+      ]
+    },
+    {
+      "h2": "Mochi: Markdown and local-first",
+      "paras": [
+        "Mochi stores your cards on your device, works offline on Mac, Windows, Linux, iPhone and Android, and imports Anki .apkg files with review history. The free plan has unlimited cards. Sync, publishing and larger AI allowances are Pro, at $5 a month billed yearly."
+      ]
+    },
+    {
+      "h2": "Knowt, Gizmo and Brainscape: a quick start",
+      "paras": [
+        "Knowt and Gizmo build AI into the app and make cards from PDFs, video and notes, with limits on the free plan. Gizmo can import an Anki deck, and Knowt takes Anki decks through a spreadsheet paste. Gizmo can’t export your cards yet.",
+        "Brainscape is simpler: rate each card 1 to 5. Its free plan is for text cards, and images, sounds and export are Pro."
+      ]
+    },
+    {
+      "h2": "Check this before you switch",
+      "bullets": [
+        "**How your decks come across.** RemNote and Mochi read .apkg with history. The others take text, so pictures, sounds and review history usually start over.",
+        "**Add-ons you rely on.** Anki has more than 1,600. Check that the ones you use have an equivalent.",
+        "**Offline study.** Lucida has none. Knowt’s is unconfirmed.",
+        "**Where your cards live.** Anki keeps them on your device. Web apps keep them on a server, and you should check you can export them.",
+        "**Keep a way back.** Export your Anki collection first (File, Export), so you can return."
+      ]
+    },
+    {
+      "h2": "When Anki is still the best answer",
+      "paras": [
+        "Keep Anki if you want total control of card layouts, add-ons, offline study, a free computer app, or you have a large collection. Anki’s current version is 26.09.3, and its FSRS was updated in the 26.09 release. You can also keep Anki for deep study and use another app for quick cards."
+      ]
+    },
+    {
+      "h2": "How we checked this page",
+      "paras": [
+        "Facts about these apps come from each app’s own site, help pages or app store listing, opened on September 30, 2026. Facts about Lucida come from the app, its pricing page and its privacy policy. Where we couldn’t confirm something about these apps, we left it out. If anything here is wrong, write to team@lucida.cards."
+      ]
+    }
+  ],
+  "faq": [
+    {
+      "q": "What is the best free alternative to Anki?",
+      "a": "It depends on what you want. Lucida is free in a browser with FSRS, Learn mode and live games. Mochi’s free plan works offline with unlimited cards but no sync. RemNote’s free plan has unlimited notes and cards with limits on PDFs, image occlusion and AI. Knowt is free with limits on AI, and Brainscape is free for text cards, with images, sounds and export on Pro."
+    },
+    {
+      "q": "Is there an Anki alternative for iPhone that isn’t $24.99?",
+      "a": "Yes. Mochi, RemNote, Knowt, Brainscape and Gizmo have iPhone apps with free plans, and Lucida works in Safari for free. Anki’s iPhone app, AnkiMobile, is $24.99 once, while Anki on computers and Android is free."
+    },
+    {
+      "q": "Is there an Anki alternative with FSRS?",
+      "a": "Yes. RemNote offers FSRS version 6 as a beta option, Mochi lets you switch to FSRS, and Lucida plans reviews with FSRS by default. Anki itself supports FSRS too."
+    },
+    {
+      "q": "Is there an Anki alternative with AI?",
+      "a": "Yes. RemNote, Mochi (Pro), Knowt, Brainscape and Gizmo build AI into the app, with monthly or daily limits on their free plans. Lucida works differently: your own AI app (Claude, ChatGPT, Cursor) makes and edits your cards through your Lucida link."
+    },
+    {
+      "q": "Can I import my Anki decks into another app?",
+      "a": "Yes, in every app here, but not equally. RemNote and Mochi import .apkg files with review history. Gizmo imports an Anki deck through Magic Import. Brainscape takes Anki’s text export. Knowt takes Anki decks through a spreadsheet paste. Lucida reads Anki’s Notes in Plain Text export."
+    },
+    {
+      "q": "What makes Anki hard to start with?",
+      "a": "Its manual begins with notes, fields, note types, card templates and deck options. They make Anki very flexible, and they also take time to learn. Add-ons are optional."
+    },
+    {
+      "q": "Which Anki alternative works offline?",
+      "a": "RemNote’s desktop and mobile apps and Mochi’s apps work offline, and Brainscape’s mobile apps work offline once you download your cards. Lucida has no offline mode. We couldn’t confirm offline use for Knowt."
+    },
+    {
+      "q": "Is Anki still worth using in 2026?",
+      "a": "Yes, if you want control, add-ons, offline study and a free computer app. Anki’s site lists version 26.09.3, and its 26.09 release notes show a FSRS update."
+    },
+    {
+      "q": "Does Lucida import Anki decks?",
+      "a": "Yes, as text. Export a deck from Anki with File, Export, Notes in Plain Text and import it in Lucida. Cards, bold and italics, cloze blanks and deck names come across. Pictures, sounds, review history and .apkg files don’t."
+    }
+  ],
+  "sources": [
+    {
+      "label": "Anki: downloads, platforms and features",
+      "url": "https://apps.ankiweb.net/",
+      "checked": "2026-09-30"
+    },
+    {
+      "label": "AnkiMobile on the App Store",
+      "url": "https://apps.apple.com/us/app/ankimobile-flashcards/id373493387",
+      "checked": "2026-09-30"
+    },
+    {
+      "label": "Anki manual: Getting started (note types)",
+      "url": "https://docs.ankiweb.net/getting-started.html",
+      "checked": "2026-09-30"
+    },
+    {
+      "label": "Anki manual: Syncing with AnkiWeb",
+      "url": "https://docs.ankiweb.net/syncing.html",
+      "checked": "2026-09-30"
+    },
+    {
+      "label": "Anki 26.09 release notes on GitHub",
+      "url": "https://github.com/ankitects/anki/releases/tag/26.09",
+      "checked": "2026-09-30"
+    },
+    {
+      "label": "Wikipedia: Anki (add-on count, used to fill a gap)",
+      "url": "https://en.wikipedia.org/wiki/Anki_(software)",
+      "checked": "2026-09-30"
+    },
+    {
+      "label": "RemNote pricing",
+      "url": "https://www.remnote.com/pricing",
+      "checked": "2026-09-30"
+    },
+    {
+      "label": "RemNote Help Center: Importing from Anki",
+      "url": "https://help.remnote.com/en/articles/6751471-importing-from-anki",
+      "checked": "2026-09-30"
+    },
+    {
+      "label": "RemNote Help Center: The FSRS Spaced Repetition Algorithm",
+      "url": "https://help.remnote.com/en/articles/9124137-the-fsrs-spaced-repetition-algorithm",
+      "checked": "2026-09-30"
+    },
+    {
+      "label": "RemNote Help Center: Offline Mode",
+      "url": "https://help.remnote.com/en/articles/6752029-offline-mode",
+      "checked": "2026-09-30"
+    },
+    {
+      "label": "Mochi pricing",
+      "url": "https://mochi.cards/pricing/",
+      "checked": "2026-09-30"
+    },
+    {
+      "label": "Mochi docs: Importing into Mochi",
+      "url": "https://mochi.cards/docs/import-and-export/importing/",
+      "checked": "2026-09-30"
+    },
+    {
+      "label": "Mochi docs: FSRS",
+      "url": "https://mochi.cards/docs/reviewing/fsrs/",
+      "checked": "2026-09-30"
+    },
+    {
+      "label": "Knowt plans and pricing",
+      "url": "https://knowt.com/plans",
+      "checked": "2026-09-30"
+    },
+    {
+      "label": "Knowt Help Center: Importing from Anki and CSV files",
+      "url": "https://help.knowt.com/en/articles/10298094-how-can-i-import-flashcards-from-things-like-anki-and-csv-files",
+      "checked": "2026-09-30"
+    },
+    {
+      "label": "Knowt Help Center: What’s included in the free plan for students?",
+      "url": "https://help.knowt.com/en/articles/16905163-what-s-included-in-the-free-plan-for-students",
+      "checked": "2026-09-30"
+    },
+    {
+      "label": "Brainscape pricing",
+      "url": "https://www.brainscape.com/pricing",
+      "checked": "2026-09-30"
+    },
+    {
+      "label": "Brainscape Help Center: Can I import my Quizlet or Anki decks?",
+      "url": "https://brainscape.zendesk.com/hc/en-us/articles/115002370391-Can-I-import-my-Quizlet-or-Anki-decks-into-Brainscape",
+      "checked": "2026-09-30"
+    },
+    {
+      "label": "Brainscape Help Center: Do I need WiFi or a 4G/LTE connection?",
+      "url": "https://brainscape.zendesk.com/hc/en-us/articles/360001017252-Do-I-need-WiFi-or-a-4G-LTE-connection",
+      "checked": "2026-09-30"
+    },
+    {
+      "label": "RemNote on the App Store (free with in-app purchases)",
+      "url": "https://apps.apple.com/us/app/remnote-notes-flashcards/id1545429784",
+      "checked": "2026-09-30"
+    },
+    {
+      "label": "Knowt on the App Store (free with in-app purchases)",
+      "url": "https://apps.apple.com/us/app/knowt-ai-flashcards-notes/id6463744184",
+      "checked": "2026-09-30"
+    },
+    {
+      "label": "Brainscape on the App Store (free with in-app purchases)",
+      "url": "https://apps.apple.com/us/app/brainscape-study-flashcards/id442415567",
+      "checked": "2026-09-30"
+    },
+    {
+      "label": "Gizmo on the App Store (free with in-app purchases)",
+      "url": "https://apps.apple.com/us/app/gizmo-ai-tutor/id1610516671",
+      "checked": "2026-09-30"
+    },
+    {
+      "label": "Gizmo Help: What is Magic Import?",
+      "url": "https://help.gizmo.ai/en/articles/15647624-what-is-magic-import",
+      "checked": "2026-09-30"
+    },
+    {
+      "label": "Gizmo Help: How do I edit or manage my cards? (no export yet)",
+      "url": "https://help.gizmo.ai/en/articles/13761411-how-do-i-edit-or-manage-my-cards",
+      "checked": "2026-09-30"
+    },
+    {
+      "label": "Lucida pricing",
+      "url": "https://lucida.cards/pricing",
+      "checked": "2026-09-30"
+    },
+    {
+      "label": "Lucida privacy policy",
+      "url": "https://lucida.cards/privacy",
+      "checked": "2026-09-30"
+    }
+  ],
+  "related": [
+    "vs/anki",
+    "vs/remnote",
+    "vs/mochi",
+    "vs/brainscape",
+    "vs/knowt",
+    "vs/gizmo",
+    "quizlet-alternative",
+    "compare",
+    "features/import",
+    "features/spaced-repetition"
+  ],
+  "keywords": [
+    "anki alternative",
+    "anki alternatives",
+    "best anki alternative",
+    "anki alternative free",
+    "anki alternative ios",
+    "anki alternative iphone",
+    "anki alternative android",
+    "anki alternative with ai",
+    "anki alternative fsrs",
+    "anki alternative easier",
+    "anki alternative online",
+    "anki alternative web",
+    "apps like anki",
+    "anki replacement",
+    "anki competitors",
+    "import anki deck to another app",
+    "spaced repetition app",
+    "is anki worth it",
+    "anki vs remnote",
+    "anki vs mochi"
+  ]
+}

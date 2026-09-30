@@ -51,7 +51,7 @@
       "permanent": false
     },
     {
-      "source": "/:path((?!art/|privacy$|terms$|pricing$).+)",
+      "source": "/:path((?:sign-in|discover|join|play|you|activity|suggestions|welcome|decks|library|verify|admin|stats|connect|settings|review|learn|deck|live|class|d|api|auth|mcp|media|pro|dev|b|@[^/]+)(?:/.*)?)",
       "has": [
         {
           "type": "host",
@@ -60,6 +60,28 @@
       ],
       "destination": "https://app.lucida.cards/:path",
       "permanent": false
+    },
+    {
+      "source": "/landing.html",
+      "has": [
+        {
+          "type": "host",
+          "value": "lucida.cards"
+        }
+      ],
+      "destination": "/",
+      "permanent": true
+    },
+    {
+      "source": "/:page(pricing|privacy|terms).html",
+      "has": [
+        {
+          "type": "host",
+          "value": "lucida.cards"
+        }
+      ],
+      "destination": "/:page",
+      "permanent": true
     }
   ],
   "rewrites": [
@@ -108,6 +130,80 @@
     {
       "source": "/terms",
       "destination": "/terms.html"
+    },
+    {
+      "source": "/robots.txt",
+      "has": [
+        {
+          "type": "host",
+          "value": "lucida.cards"
+        }
+      ],
+      "destination": "/site/robots.txt"
+    },
+    {
+      "source": "/sitemap.xml",
+      "has": [
+        {
+          "type": "host",
+          "value": "lucida.cards"
+        }
+      ],
+      "destination": "/site/sitemap.xml"
+    },
+    {
+      "source": "/llms.txt",
+      "has": [
+        {
+          "type": "host",
+          "value": "lucida.cards"
+        }
+      ],
+      "destination": "/site/llms.txt"
+    },
+    {
+      "source": "/llms-full.txt",
+      "has": [
+        {
+          "type": "host",
+          "value": "lucida.cards"
+        }
+      ],
+      "destination": "/site/llms-full.txt"
+    },
+    {
+      "source": "/robots.txt",
+      "destination": "/robots-app.txt"
+    },
+    {
+      "source": "/:page([a-z0-9-]+)",
+      "has": [
+        {
+          "type": "host",
+          "value": "lucida.cards"
+        }
+      ],
+      "destination": "/site/:page.html"
+    },
+    {
+      "source": "/:dir(vs|features|for)/:page([a-z0-9-]+)",
+      "has": [
+        {
+          "type": "host",
+          "value": "lucida.cards"
+        }
+      ],
+      "destination": "/site/:dir/:page.html"
+    },
+    {
+      "source": "/:path*",
+      "has": [
+        {
+          "type": "host",
+          "value": "lucida.cards"
+        }
+      ],
+      "destination": "/not-found"
     },
     {
       "source": "/(@[A-Za-z0-9_.]+)",

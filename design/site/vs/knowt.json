@@ -1,0 +1,275 @@
+{
+  "slug": "vs/knowt",
+  "kind": "compare",
+  "title": "Lucida vs Knowt: flashcard apps compared (2026)",
+  "description": "Lucida vs Knowt: price, AI, spaced repetition, import, classes and games, with sources. Knowt has AI built in. Lucida has no ads and uses your own AI.",
+  "h1": "Lucida vs Knowt",
+  "lead": "Knowt has AI built in (note summarizers, a tutor, exam prep), but its free plan limits the AI and shows ads. Lucida has no ads and lets your own AI (Claude, ChatGPT) make the cards, so pick Knowt for one-stop AI and a big library, and Lucida for FSRS reviews, export and free live games.",
+  "updated": "2026-09-30",
+  "published": "2026-09-30",
+  "table": {
+    "columns": [
+      "",
+      "Lucida",
+      "Knowt"
+    ],
+    "rows": [
+      [
+        "Price (September 2026)",
+        "Free: unlimited decks and cards, spaced repetition, Learn mode, sharing, live games, import and export. Pro: $5.99 a month or $49.99 a year.",
+        "Free: unlimited sets and notes and every study mode on your own sets, with ads. Ultra: $149.99 a year (3-day free trial) or $24.99 a month."
+      ],
+      [
+        "Platforms",
+        "Web app at app.lucida.cards, on computers and phones. No App Store app yet.",
+        "Website, iPhone (App Store) and Android (Google Play)."
+      ],
+      [
+        "Spaced repetition",
+        "FSRS plans every review. Grade each card Forgot, Hard, Good or Easy, and set how much you want to remember. Pro adds exam dates and tuning to your own reviews.",
+        "Spaced Repetition mode: rate each card Again, Hard, Good or Easy, and choose new cards a day and the intervals. It doesn’t name its algorithm."
+      ],
+      [
+        "AI",
+        "Your own AI (Claude, ChatGPT, Cursor or any MCP app) makes and edits cards and Learn quizzes through your personal Lucida link. You choose what it may do and can check its cards first.",
+        "Built in: a Kai chat in the editor, summarizers for PDFs, video, images and slides, a live-lecture note taker, AI podcasts and a voice tutor. The free plan allows 1 summary a month."
+      ],
+      [
+        "Making cards",
+        "Type cards in the editor (bold, italics, math, lists), import a list, or ask your AI.",
+        "Type terms, paste a list, import, or make cards from PDFs, video, audio or a live recording with AI."
+      ],
+      [
+        "Card kinds",
+        "Question and answer, fill in the blank (cloze), picture with hidden parts (image occlusion), and sound.",
+        "Term and definition cards, each with an optional image or recorded audio clip, multiple-choice options and hints."
+      ],
+      [
+        "Import and export",
+        "Import pasted text or a .csv, .tsv or .txt file, including Anki’s Notes in Plain Text export and Quizlet’s export. Not .apkg files. Export a CSV for each deck, or everything (decks, cards, reviews) as JSON.",
+        "Import by pasting text (for Anki and CSV, through a spreadsheet), from Google Drive, or from Quizlet with Knowt’s Chrome extension. Export as PDF."
+      ],
+      [
+        "Sharing",
+        "Decks are private, link-only or public. Profiles, Discover, study a deck as it is or copy it, suggest changes, version history. All free.",
+        "Millions of public sets, notes and exam resources (its plans page says 5 million). Share sets and collaborate live."
+      ],
+      [
+        "Classes",
+        "Make a class with a join code, assign decks by a date, and see progress that students choose to share. Free.",
+        "Teachers make classes, assign sets and see each student’s time in every study mode and mastery per card. AI on teacher-shared material is free for students."
+      ],
+      [
+        "Games",
+        "Live: play a deck with up to 60 friends on their phones. They join with a code or QR, no account. Free.",
+        "Knowt Play: a live class game. Players join at knowt.com/join with a 6-digit code, no sign-in needed. Five modes: Classic, Race, Clash, Blitz and Survival."
+      ],
+      [
+        "Works offline",
+        "No. Lucida needs an internet connection.",
+        "Not confirmed. Its help center has no article on offline use."
+      ],
+      [
+        "Privacy",
+        "No ads. We don’t sell your data or use your cards to train AI models (privacy policy). You need an account, and data is stored in the United States. Export or delete it from Settings.",
+        "The free plan shows ads. Its privacy policy (updated March 18, 2026) says advertising and analytics partners use cookies and device IDs."
+      ]
+    ]
+  },
+  "sections": [
+    {
+      "h2": "The short version",
+      "paras": [
+        "Knowt is a flashcard and notes app with AI built in. You upload a PDF, video or lecture, and it writes notes and cards for you. The free plan covers every study mode on your own sets, and limits the AI.",
+        "Lucida doesn’t write cards from your files itself. Your own AI app does, through your Lucida link, and Lucida puts no limit on how many cards it makes on Free. Lucida also has no ads."
+      ]
+    },
+    {
+      "h2": "Where Knowt is better",
+      "bullets": [
+        "**AI built in.** Summarizers for PDFs, video, images and slides, a live-lecture note taker, AI podcasts and a voice tutor, all without a separate AI subscription.",
+        "**Phone apps** for iPhone and Android, plus a Chrome extension for bringing in PDFs, YouTube videos and Quizlet sets.",
+        "**Exam prep.** Full access to AP, SAT and ACT prep is part of Ultra, and the free plan includes one full-length mock exam.",
+        "**Knowt Play.** Five live game modes (Classic, Race, Clash, Blitz and Survival) with short-answer questions as well as multiple choice.",
+        "**Notes and cards together,** and a library of millions of public sets and notes.",
+        "**Teacher tools.** Teachers assign sets, turn a set into a live game, and see each student’s time in every study mode and mastery per card. Lucida shows a teacher how far each student is on an assignment and when they last studied, and only if the student chooses to share it."
+      ]
+    },
+    {
+      "h2": "Where Lucida is better",
+      "bullets": [
+        "**No ads,** free or Pro. Knowt’s Ultra plan is what removes its ads.",
+        "**No cap on AI card-making from Lucida.** Your own AI app has its own limits, but on Free, Lucida lets your AI make as many cards as you want. Knowt’s free plan allows 1 AI summary a month.",
+        "**FSRS reviews** with a goal you set, and exam dates on Pro. Knowt names no algorithm for its spaced repetition mode.",
+        "**Cloze and picture-hiding cards.** Lucida has fill-in-the-blank cards and pictures with hidden parts, free (up to 100 pictures and sounds). Knowt’s help center doesn’t describe either kind.",
+        "**Your data out.** Export a deck as CSV, or everything including reviews as JSON. Knowt exports flashcards as PDF.",
+        "**Live games need no setup:** any deck, up to 60 players, and your AI can write the questions."
+      ]
+    },
+    {
+      "h2": "Moving between them",
+      "paras": [
+        "To Lucida from Knowt: Knowt exports flashcards as a PDF, so copy the terms and definitions out as text (one card per line, with a tab or comma between the sides) and paste them into Lucida’s Import cards.",
+        "To Knowt from Lucida: export a deck as CSV, open it in a spreadsheet, and paste it into Knowt’s Import manually box. Knowt’s help says Anki and CSV decks go in this way."
+      ]
+    },
+    {
+      "h2": "Who should pick which",
+      "bullets": [
+        "**Pick Knowt** if you want AI built in, phone apps, AP, SAT or ACT prep, or a class game with several modes.",
+        "**Pick Lucida** if you want no ads, FSRS reviews, easy export and your own AI making the cards."
+      ]
+    },
+    {
+      "h2": "How we checked this page",
+      "paras": [
+        "Facts about Knowt come from Knowt’s plans page, help center, privacy policy and home page, opened on September 30, 2026. Facts about Lucida come from the app, its pricing page and its privacy policy. Where we couldn’t confirm something about Knowt, we left it out. If anything here is wrong, write to team@lucida.cards."
+      ]
+    }
+  ],
+  "faq": [
+    {
+      "q": "Is Knowt free?",
+      "a": "Mostly. The free plan has unlimited flashcard sets and notes, every study mode on your own sets (Learn, Practice Test, Spaced Repetition, Match and Flashcards) and live collaboration. AI is limited: 1 summary a month, 1 free mock exam and 5 practice-room sessions. The free plan shows ads."
+    },
+    {
+      "q": "How much does Knowt Ultra cost?",
+      "a": "Knowt Ultra is $149.99 a year or $24.99 a month (knowt.com/plans, September 2026). The yearly plan has a 3-day free trial. Ultra removes ads and adds unlimited AI summaries, a voice tutor and full AP, SAT and ACT prep."
+    },
+    {
+      "q": "Does Knowt have spaced repetition?",
+      "a": "Yes. Spaced Repetition mode asks you to rate each card Again, Hard, Good or Easy and lets you set new cards a day and the intervals. Knowt doesn’t say which algorithm it uses. Lucida plans reviews with FSRS."
+    },
+    {
+      "q": "Does Knowt have ads?",
+      "a": "On the free plan, yes. Knowt lists an ad-free experience as part of Ultra, and its privacy policy says advertising and analytics partners use cookies and device IDs. Lucida shows no ads."
+    },
+    {
+      "q": "Can I import Anki or Quizlet decks into Knowt?",
+      "a": "Yes, by pasting text. For Anki and CSV files, Knowt’s help says to put the terms and definitions in a spreadsheet and paste them into Import manually. For Quizlet it offers a Chrome extension, and its help notes that Quizlet sometimes blocks it. Lucida reads Anki’s Notes in Plain Text export and Quizlet’s export directly."
+    },
+    {
+      "q": "Is Lucida a good Knowt alternative?",
+      "a": "If you want no ads, FSRS reviews, easy export and your own AI, yes. If you want AI built into the app, phone apps or AP, SAT and ACT prep, Knowt fits better."
+    },
+    {
+      "q": "Does Knowt have live games like Kahoot?",
+      "a": "Yes. Knowt Play turns flashcards, notes or assessments into a live class game. Students join at knowt.com/join with a 6-digit code. Lucida’s Live is similar for flashcards: up to 60 friends join on their phones with a code, free."
+    },
+    {
+      "q": "Does Knowt work offline?",
+      "a": "We couldn’t confirm it. Knowt’s help center has no article on offline use. Lucida has no offline mode."
+    }
+  ],
+  "sources": [
+    {
+      "label": "Knowt plans and pricing",
+      "url": "https://knowt.com/plans",
+      "checked": "2026-09-30"
+    },
+    {
+      "label": "Knowt home page",
+      "url": "https://knowt.com/",
+      "checked": "2026-09-30"
+    },
+    {
+      "label": "Knowt Help Center: What’s included in the free plan for students?",
+      "url": "https://help.knowt.com/en/articles/16905163-what-s-included-in-the-free-plan-for-students",
+      "checked": "2026-09-30"
+    },
+    {
+      "label": "Knowt Help Center: How do I use Spaced Repetition mode?",
+      "url": "https://help.knowt.com/en/articles/10714645-how-do-i-use-spaced-repetition-mode",
+      "checked": "2026-09-30"
+    },
+    {
+      "label": "Knowt Help Center: How can I use AI to make my flashcards?",
+      "url": "https://help.knowt.com/en/articles/10298072-how-can-i-use-ai-to-make-my-flashcards",
+      "checked": "2026-09-30"
+    },
+    {
+      "label": "Knowt Help Center: How do I create and edit flashcards?",
+      "url": "https://help.knowt.com/en/articles/10716239-how-do-i-create-and-edit-flashcards",
+      "checked": "2026-09-30"
+    },
+    {
+      "label": "Knowt Help Center: How can I import flashcards from things like Anki and CSV files?",
+      "url": "https://help.knowt.com/en/articles/10298094-how-can-i-import-flashcards-from-things-like-anki-and-csv-files",
+      "checked": "2026-09-30"
+    },
+    {
+      "label": "Knowt Help Center: How can I export my flashcards?",
+      "url": "https://help.knowt.com/en/articles/10714472-how-can-i-export-my-flashcards",
+      "checked": "2026-09-30"
+    },
+    {
+      "label": "Knowt Help Center: How to import flashcards from Quizlet to Knowt",
+      "url": "https://help.knowt.com/en/articles/10298079-how-to-import-flashcards-from-quizlet-to-knowt",
+      "checked": "2026-09-30"
+    },
+    {
+      "label": "Knowt Help Center: Getting Started with Knowt Play",
+      "url": "https://help.knowt.com/en/articles/12010990-getting-started-with-knowt-play",
+      "checked": "2026-09-30"
+    },
+    {
+      "label": "Knowt Help Center: Knowt Play game modes and settings",
+      "url": "https://help.knowt.com/en/articles/16905168-knowt-play-game-modes-and-settings",
+      "checked": "2026-09-30"
+    },
+    {
+      "label": "Knowt Help Center: Knowt Play, additional details",
+      "url": "https://help.knowt.com/en/articles/12111502-additional-details",
+      "checked": "2026-09-30"
+    },
+    {
+      "label": "Knowt Help Center: How to see which students completed a study mode",
+      "url": "https://help.knowt.com/en/articles/10721997-how-to-see-which-students-completed-a-study-mode",
+      "checked": "2026-09-30"
+    },
+    {
+      "label": "Knowt privacy policy",
+      "url": "https://knowt.com/privacy",
+      "checked": "2026-09-30"
+    },
+    {
+      "label": "Lucida pricing",
+      "url": "https://lucida.cards/pricing",
+      "checked": "2026-09-30"
+    },
+    {
+      "label": "Lucida privacy policy",
+      "url": "https://lucida.cards/privacy",
+      "checked": "2026-09-30"
+    }
+  ],
+  "related": [
+    "quizlet-alternative",
+    "vs/quizlet",
+    "vs/gizmo",
+    "vs/kahoot",
+    "compare",
+    "pricing",
+    "features/ai-flashcards",
+    "features/live-games",
+    "features/import"
+  ],
+  "keywords": [
+    "lucida vs knowt",
+    "knowt vs lucida",
+    "knowt alternative",
+    "is knowt free",
+    "knowt ultra price",
+    "knowt pricing",
+    "knowt vs quizlet",
+    "knowt spaced repetition",
+    "knowt ads",
+    "knowt import anki",
+    "import quizlet to knowt",
+    "knowt play",
+    "knowt export",
+    "knowt ai flashcards",
+    "free flashcard app with ai",
+    "knowt offline"
+  ]
+}

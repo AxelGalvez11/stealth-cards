@@ -1,0 +1,333 @@
+{
+  "slug": "vs/quizlet",
+  "kind": "compare",
+  "title": "Lucida vs Quizlet: flashcard apps compared (2026)",
+  "description": "Lucida vs Quizlet: what is free, spaced repetition, AI, import, classes and games, with sources. Quizlet has the library. Lucida has free Learn mode.",
+  "h1": "Lucida vs Quizlet",
+  "lead": "Quizlet has the bigger library, phone apps and classroom tools, but its free plan limits Learn and Test. Lucida gives you Learn mode, spaced repetition and live games free, with no ads, and your own AI (Claude, ChatGPT) can make and edit the cards.",
+  "updated": "2026-09-30",
+  "published": "2026-09-30",
+  "table": {
+    "columns": [
+      "",
+      "Lucida",
+      "Quizlet"
+    ],
+    "rows": [
+      [
+        "Price (September 2026)",
+        "Free: unlimited decks and cards, spaced repetition, Learn mode, sharing, live games, import and export. Pro: $5.99 a month or $49.99 a year.",
+        "Free, with ads. Paid: Quizlet Plus and Plus Unlimited, monthly or yearly, and a teacher plan at $35.99 a year with a 30-day free trial. The iPhone app lists paid options from $9.99 to $44.99."
+      ],
+      [
+        "Platforms",
+        "Web app at app.lucida.cards, on computers and phones. No App Store app yet.",
+        "Website, iPhone and iPad app, Android app."
+      ],
+      [
+        "Spaced repetition",
+        "FSRS plans every review. Grade each card Forgot, Hard, Good or Easy, and set how much you want to remember. Pro adds exam dates and tuning to your own reviews.",
+        "Yes. Flashcards has a spaced repetition option (Repeat, Hard, Okay, Easy), on the website only. Learn builds a personalized study path from your goals and what you already know, and it is for Plus subscribers after a free session."
+      ],
+      [
+        "AI",
+        "Your own AI (Claude, ChatGPT, Cursor or any MCP app) makes and edits cards and Learn quizzes through your personal Lucida link. You choose what it may do and can check its cards first.",
+        "Ask Quizlet (US, ages 14 and up), Smart Assist, Study Guides and Practice Tests (limited free access), plus a Quizlet app in ChatGPT and a connector in Claude."
+      ],
+      [
+        "Making cards",
+        "Type cards in the editor (bold, italics, math, lists), import a list, or ask your AI.",
+        "Type terms and definitions, paste a list, or let AI build a set from notes or files."
+      ],
+      [
+        "Card kinds",
+        "Question and answer, fill in the blank (cloze), picture with hidden parts (image occlusion), and sound.",
+        "Term and definition cards with images and audio. Diagram sets (labeled pictures) and rich text are Plus."
+      ],
+      [
+        "Import and export",
+        "Import pasted text or a .csv, .tsv or .txt file, including Anki’s Notes in Plain Text export and Quizlet’s export. Not .apkg files. Export a CSV for each deck, or everything (decks, cards, reviews) as JSON.",
+        "Import by pasting text separated by commas, tabs or dashes (website only). Export your own sets as copied text, without images (website only)."
+      ],
+      [
+        "Sharing",
+        "Decks are private, link-only or public. Profiles, Discover, study a deck as it is or copy it, suggest changes, version history. All free.",
+        "Millions of sets made by students and teachers. Search, share links, copy sets, password-protect. Study Groups hold up to 8 people and work with public sets."
+      ],
+      [
+        "Classes",
+        "Make a class with a join code, assign decks by a date, and see progress that students choose to share. Free.",
+        "Teachers make classes, add sets and invite students. Class members get free Learn and Test on the class’s sets. Connects to Google Classroom."
+      ],
+      [
+        "Games",
+        "Live: play a deck with up to 60 friends on their phones. They join with a code or QR, no account. Free.",
+        "Match, Blast, Blocks and Classic Quizlet Live (teams or solo, join with a code). A teacher-identified account starts a Live game."
+      ],
+      [
+        "Works offline",
+        "No. Lucida needs an internet connection.",
+        "The iPhone and Android apps can study Flashcards and Match offline. Quizlet lists offline studying with its paid features."
+      ],
+      [
+        "Privacy",
+        "No ads. We don’t sell your data or use your cards to train AI models (privacy policy). You need an account, and data is stored in the United States. Export or delete it from Settings.",
+        "The free plan shows ads, and Plus removes them. The iPhone app’s privacy label lists data used for advertising and analytics."
+      ]
+    ]
+  },
+  "sections": [
+    {
+      "h2": "The short version",
+      "paras": [
+        "Quizlet is the biggest flashcard site. Its App Store listing says over 60 million people use it, and its help center says there are millions of sets made by students and teachers.",
+        "Lucida is newer and smaller. It is built around free study tools: FSRS reviews, Learn mode, live games and sharing, with your own AI making the cards."
+      ]
+    },
+    {
+      "h2": "Where Quizlet is better",
+      "bullets": [
+        "**The library.** Search millions of public sets by topic, school or course. Lucida’s library of shared decks is new and much smaller.",
+        "**Phone apps.** Quizlet has iPhone, iPad and Android apps, and they can study Flashcards and Match offline. Lucida has no App Store app yet and needs a connection.",
+        "**Classroom tools.** Classes, assignments, Google Classroom, Classic Quizlet Live and teacher plans.",
+        "**Extras.** Expert Solutions (step-by-step textbook answers), practice tests and study guides.",
+        "**AI inside Quizlet.** Ask Quizlet, Smart Assist and Study Guides, plus an app in ChatGPT and a connector in Claude that build flashcard sets from a chat."
+      ]
+    },
+    {
+      "h2": "Where Lucida is better",
+      "bullets": [
+        "**Learn mode is free:** five kinds of questions made from your cards. On Quizlet, Learn is for Plus subscribers after a free study session.",
+        "**Spaced repetition by default,** planned by FSRS, in any browser. Quizlet’s spaced repetition option is on its website only.",
+        "**No ads,** free or Pro. Quizlet’s free plan shows ads.",
+        "**Your AI can do more than create sets.** Quizlet’s help pages describe its ChatGPT and Claude connectors as creating flashcard sets. Lucida’s link also lets an AI edit cards, write Learn questions and see what is due, and you choose what it may do.",
+        "**Live games are free for everyone:** any deck, up to 60 players, and players need no account. Quizlet’s Classic Live is started from a teacher-identified account.",
+        "**Fill-in-the-blank cards and pictures with hidden parts are free** (up to 100 pictures and sounds). On Quizlet, labeled-picture (diagram) sets are Plus.",
+        "**Your data out.** Export every deck as CSV, or everything including reviews as JSON. Quizlet exports only sets you made, as text without images."
+      ]
+    },
+    {
+      "h2": "What Quizlet’s free plan covers (September 2026)",
+      "bullets": [
+        "**Learn:** a free study session to try it. Full use is for Plus and Plus for teachers.",
+        "**Test:** one free practice test per set.",
+        "**Study Guides and Practice Tests:** free with limited access.",
+        "**Expert Solutions:** high-school level is free, and you get a limited number of college textbook solutions.",
+        "**Class sets:** students in a teacher’s class get free Learn and Test on that class’s sets.",
+        "**Paid only:** diagram sets, rich text, offline studying and an ad-free experience."
+      ]
+    },
+    {
+      "h2": "Move your Quizlet sets to Lucida",
+      "paras": [
+        "On quizlet.com, open a set you made, open the more menu, choose Export, then Copy text. In Lucida, open Import cards, paste the text and pick a deck.",
+        "Terms and definitions come across. Images don’t, because Quizlet doesn’t export them, and you can’t export sets you copied from someone else."
+      ]
+    },
+    {
+      "h2": "Who should pick which",
+      "bullets": [
+        "**Pick Quizlet** if you want the biggest library of ready-made sets, phone apps with offline study, or classroom tools like Google Classroom.",
+        "**Pick Lucida** if you want Learn mode, spaced repetition and live games free, no ads, and cards your own AI makes."
+      ]
+    },
+    {
+      "h2": "How we checked this page",
+      "paras": [
+        "Facts about Quizlet come from Quizlet’s help center, its teacher plan page (quizlet.com/upgrade) and its App Store listing, opened on September 30, 2026. Facts about Lucida come from the app, its pricing page and its privacy policy. Where we couldn’t confirm something about Quizlet, we left it out. If anything here is wrong, write to team@lucida.cards."
+      ]
+    }
+  ],
+  "faq": [
+    {
+      "q": "Is Quizlet free?",
+      "a": "Partly. You can make and study flashcard sets for free, with ads. Learn is for Plus subscribers after a free study session, Test gives one free practice test per set, and Study Guides and Practice Tests have limited free access (Quizlet help center, September 2026)."
+    },
+    {
+      "q": "What is Quizlet’s Learn paywall?",
+      "a": "Quizlet’s help center says Learn is available to Plus and Plus for teachers subscribers, and that without a subscription you can start a free study session to try it. Students in a teacher’s class get free Learn and Test on that class’s sets. Lucida’s Learn mode is free."
+    },
+    {
+      "q": "How much does Quizlet Plus cost?",
+      "a": "Quizlet’s teacher plan is $35.99 a year with a 30-day free trial (quizlet.com/upgrade). For students it sells Plus and Plus Unlimited, monthly or yearly. Its iPhone app lists paid options from $9.99 to $44.99 (App Store, September 2026), and prices on its website can differ. Lucida Pro is $5.99 a month or $49.99 a year, and Learn mode is free."
+    },
+    {
+      "q": "Does Quizlet have spaced repetition?",
+      "a": "Yes. Open Flashcards, choose Spaced repetition, then rate each card Repeat, Hard, Okay or Easy. It is available on the Quizlet website only. Lucida plans every review with FSRS, in any browser."
+    },
+    {
+      "q": "Is Lucida a good Quizlet alternative?",
+      "a": "If you want Learn mode, spaced repetition and live games for free, with no ads and cards your own AI makes, yes. If you need Quizlet’s huge library, phone apps with offline study or Google Classroom, stay with Quizlet."
+    },
+    {
+      "q": "Can I import my Quizlet sets into Lucida?",
+      "a": "Yes. Export a set you made on quizlet.com (more menu, Export, Copy text), then paste it into Lucida’s Import cards. Terms and definitions come across. Images don’t."
+    },
+    {
+      "q": "Does Lucida have something like Quizlet Live?",
+      "a": "Yes. Live turns any deck into a multiple-choice game for up to 60 friends on their phones, free. Quizlet’s Classic Live is a matching game played in teams or solo, started from a teacher-identified account."
+    },
+    {
+      "q": "Does Quizlet have AI?",
+      "a": "Yes: Ask Quizlet (US, ages 14 and up), Smart Assist, Study Guides and Practice Tests, plus a Quizlet app in ChatGPT and a connector in Claude. Lucida doesn’t write cards itself. Your own AI app does."
+    },
+    {
+      "q": "Does Quizlet work offline?",
+      "a": "In the iPhone and Android apps, yes. You can study Flashcards and Match offline and create sets offline. Quizlet lists offline studying with its paid features. Lucida has no offline mode."
+    }
+  ],
+  "sources": [
+    {
+      "label": "Quizlet Help Center: Subscribing to Quizlet",
+      "url": "https://help.quizlet.com/hc/en-us/articles/360041181691-Subscribing-to-Quizlet",
+      "checked": "2026-09-30"
+    },
+    {
+      "label": "Quizlet Help Center: Studying on Quizlet",
+      "url": "https://help.quizlet.com/hc/en-us/articles/360030841732-Studying-on-Quizlet",
+      "checked": "2026-09-30"
+    },
+    {
+      "label": "Quizlet Help Center: Studying with Learn",
+      "url": "https://help.quizlet.com/hc/en-us/articles/360030986971-Studying-with-Learn",
+      "checked": "2026-09-30"
+    },
+    {
+      "label": "Quizlet Help Center: Studying with Test",
+      "url": "https://help.quizlet.com/hc/en-us/articles/360030642972-Studying-with-Test",
+      "checked": "2026-09-30"
+    },
+    {
+      "label": "Quizlet Help Center: Free student access to Learn and Test modes",
+      "url": "https://help.quizlet.com/hc/en-us/articles/34270983035149-Free-student-access-to-Learn-and-Test-modes",
+      "checked": "2026-09-30"
+    },
+    {
+      "label": "Quizlet Help Center: Studying with Spaced Repetition",
+      "url": "https://help.quizlet.com/hc/en-us/articles/48324742264077-Studying-with-Spaced-Repetition",
+      "checked": "2026-09-30"
+    },
+    {
+      "label": "Quizlet Help Center: Studying with Ask Quizlet",
+      "url": "https://help.quizlet.com/hc/en-us/articles/42790350723725-Studying-with-Ask-Quizlet",
+      "checked": "2026-09-30"
+    },
+    {
+      "label": "Quizlet Help Center: Creating study sets with Smart Assist",
+      "url": "https://help.quizlet.com/hc/en-us/articles/39606772122509-Creating-study-sets-with-Smart-Assist",
+      "checked": "2026-09-30"
+    },
+    {
+      "label": "Quizlet Help Center: Studying with Study Guides",
+      "url": "https://help.quizlet.com/hc/en-us/articles/18312306436365-Studying-with-Study-Guides",
+      "checked": "2026-09-30"
+    },
+    {
+      "label": "Quizlet Help Center: Create flashcard sets directly in ChatGPT",
+      "url": "https://help.quizlet.com/hc/en-us/articles/44716146144909-Create-flashcard-sets-directly-in-ChatGPT",
+      "checked": "2026-09-30"
+    },
+    {
+      "label": "Quizlet Help Center: Create flashcard sets directly in Claude",
+      "url": "https://help.quizlet.com/hc/en-us/articles/49258738112525-Create-flashcard-sets-directly-in-Claude",
+      "checked": "2026-09-30"
+    },
+    {
+      "label": "Quizlet Help Center: Creating sets by importing content",
+      "url": "https://help.quizlet.com/hc/en-us/articles/360029977151-Creating-sets-by-importing-content",
+      "checked": "2026-09-30"
+    },
+    {
+      "label": "Quizlet Help Center: Exporting your sets",
+      "url": "https://help.quizlet.com/hc/en-us/articles/360034345672-Exporting-your-sets",
+      "checked": "2026-09-30"
+    },
+    {
+      "label": "Quizlet Help Center: Sharing sets and folders",
+      "url": "https://help.quizlet.com/hc/en-us/articles/360030254831-Sharing-sets-and-folders",
+      "checked": "2026-09-30"
+    },
+    {
+      "label": "Quizlet Help Center: Finding flashcard sets",
+      "url": "https://help.quizlet.com/hc/en-us/articles/360029772872-Finding-flashcard-sets",
+      "checked": "2026-09-30"
+    },
+    {
+      "label": "Quizlet Help Center: Studying with Study Groups",
+      "url": "https://help.quizlet.com/hc/en-us/articles/39890856206733-Studying-with-Study-Groups",
+      "checked": "2026-09-30"
+    },
+    {
+      "label": "Quizlet Help Center: Starting a game of Classic Quizlet Live",
+      "url": "https://help.quizlet.com/hc/en-us/articles/360041366012-Starting-a-game-of-Classic-Quizlet-Live-in-individuals-mode",
+      "checked": "2026-09-30"
+    },
+    {
+      "label": "Quizlet Help Center: Studying offline with Quizlet mobile apps",
+      "url": "https://help.quizlet.com/hc/en-us/articles/360030565412-Studying-offline-with-Quizlet-mobile-apps",
+      "checked": "2026-09-30"
+    },
+    {
+      "label": "Quizlet Help Center: Reporting an unauthorized charge (monthly and yearly plans)",
+      "url": "https://help.quizlet.com/hc/en-us/articles/4406068706829-Reporting-an-unauthorized-charge",
+      "checked": "2026-09-30"
+    },
+    {
+      "label": "Quizlet Help Center: FAQs about group orders (ad-free with Plus)",
+      "url": "https://help.quizlet.com/hc/en-us/articles/32799554947725-FAQs-about-group-orders",
+      "checked": "2026-09-30"
+    },
+    {
+      "label": "Quizlet Plus for teachers: price and trial",
+      "url": "https://quizlet.com/upgrade",
+      "checked": "2026-09-30"
+    },
+    {
+      "label": "Quizlet on the App Store (paid options, users, privacy label)",
+      "url": "https://apps.apple.com/us/app/quizlet-ai-powered-flashcards/id546473125",
+      "checked": "2026-09-30"
+    },
+    {
+      "label": "Lucida pricing",
+      "url": "https://lucida.cards/pricing",
+      "checked": "2026-09-30"
+    },
+    {
+      "label": "Lucida privacy policy",
+      "url": "https://lucida.cards/privacy",
+      "checked": "2026-09-30"
+    }
+  ],
+  "related": [
+    "quizlet-alternative",
+    "vs/knowt",
+    "vs/anki",
+    "vs/kahoot",
+    "compare",
+    "pricing",
+    "features/learn-mode",
+    "features/live-games",
+    "features/import"
+  ],
+  "keywords": [
+    "lucida vs quizlet",
+    "quizlet vs lucida",
+    "quizlet alternative",
+    "free quizlet alternative",
+    "is quizlet free",
+    "quizlet plus cost",
+    "quizlet plus price",
+    "quizlet learn paywall",
+    "quizlet learn free",
+    "quizlet test limit",
+    "quizlet spaced repetition",
+    "quizlet ai",
+    "quizlet live alternative",
+    "import quizlet sets",
+    "export quizlet",
+    "quizlet ads",
+    "quizlet offline",
+    "flashcard app with learn mode",
+    "flashcards without ads"
+  ]
+}

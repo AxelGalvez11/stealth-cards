@@ -1,0 +1,184 @@
+{
+  "slug": "features/shared-decks",
+  "kind": "feature",
+  "title": "Share flashcard decks and study anyone’s, free",
+  "description": "Share a deck as private, link only or public. Others study it as it is or copy it, and can suggest fixes that you take or skip. Free in Lucida.",
+  "h1": "Shared decks",
+  "lead": "Share any deck with a link or make it public, and other people can study it, copy it or suggest changes, while you decide which changes go in and everyone keeps their own schedule. You can also study anyone’s shared deck, find decks in Discover, and go back to any earlier version of a deck you share.",
+  "updated": "2026-09-30",
+  "table": {
+    "columns": [
+      "",
+      "Who can see it",
+      "Where it shows up",
+      "Good for"
+    ],
+    "rows": [
+      [
+        "Private",
+        "Only you",
+        "Nowhere",
+        "Decks you’re still making. Every deck starts here"
+      ],
+      [
+        "Link only",
+        "Anyone with the link",
+        "Not on your profile or in Discover. Its page asks search engines not to list it",
+        "Sending a deck to classmates or friends"
+      ],
+      [
+        "Public",
+        "Anyone",
+        "Your profile, Discover and search engines",
+        "Decks you want everyone to find"
+      ]
+    ]
+  },
+  "sections": [
+    {
+      "h2": "How to share a deck, step by step",
+      "bullets": [
+        "**1. Open the deck’s settings and choose Sharing.** Pick Private, Link only or Public.",
+        "**2. Add a line about the deck** (up to 300 characters). If you like, add helpers: people you pick who can edit the deck directly (up to 20).",
+        "**3. Send the link.** A Link only deck’s link looks like lucida.cards/d/ followed by a code. A Public deck’s link looks like lucida.cards/@yourname/deck-name, and the deck also shows up in Discover and on your profile. The first time you share, Lucida makes you a public name (a handle: 3 to 30 letters, numbers, dots or underscores) from your name, and you can change it in Settings.",
+        "**4. Keep improving it.** Your changes reach everyone who studies the deck."
+      ]
+    },
+    {
+      "h2": "Two ways to use someone’s deck",
+      "bullets": [
+        "**Study it as it is.** The deck joins your library and follows the owner’s changes. You can’t edit its cards (suggest a change instead), but the schedule, goal and settings are yours. If the owner makes a small fix, you keep your schedule for that card. If they change the answer, the card comes back as new, so you learn the right thing.",
+        "**Make a copy.** You get your own deck to change. It remembers where it came from and, if you like, offers you the owner’s later changes to take or skip one by one.",
+        "**If an owner stops sharing,** a deck you study becomes yours to keep, marked with their name."
+      ]
+    },
+    {
+      "h2": "Why make a copy",
+      "paras": [
+        "Ready-made cards rarely fit you exactly. In a 2026 experiment with 42 experienced spaced repetition users reading articles, the average reader would have had to delete more than a third of a ready-made set of prompts to match what they wanted to remember. That’s the case for Make a copy: keep what helps and cut the rest."
+      ]
+    },
+    {
+      "h2": "Suggestions and History",
+      "paras": [
+        "Anyone signed in can suggest a change to a deck you share: fix a card, add one, or take one out, with a note. Nothing changes until you take it. You can take or skip each change, or take them all. One person can have five suggestions waiting on a deck at a time.",
+        "Every change is saved as a version in History, with who made it (and which AI app, if one did). You can go back to any version. Going back is a new version itself, so it can be undone too. History shows the newest 50 versions.",
+        "Helpers you name edit directly. Turn on Helpers take suggestions too, and they can take other people’s suggestions as well. Your AI can suggest changes to decks you study, and on your own decks it edits like you do (see [AI flashcards](/features/ai-flashcards))."
+      ]
+    },
+    {
+      "h2": "Discover, profiles and saves",
+      "paras": [
+        "Discover lists public decks people like this week, decks a verified teacher has checked, new decks, and decks from people you follow. You can narrow it by topic, or search decks, people and courses.",
+        "You can save a deck, follow a person, or watch a deck for news. A deck’s page shows how many people study it, copy it and save it. Your profile (lucida.cards/@handle) lists your public decks, a short bio, and your school and subject. A profile stays out of search results until you choose to be listed."
+      ]
+    },
+    {
+      "h2": "Checked by a teacher",
+      "paras": [
+        "A verified teacher can check a deck they can see. A Checked by badge then says they went through every card, and it stays until the deck changes. Teachers get verified by asking in Settings, with a school email or a link that shows where they teach, and the Lucida team reviews each request. The badge means one teacher checked the deck. It isn’t a guarantee, so read a shared deck before an exam."
+      ]
+    },
+    {
+      "h2": "Your progress stays yours",
+      "bullets": [
+        "The cards are shared. Your progress never is: nobody sees your schedule, streak or scores. The one exception is a class, where you choose whether to tell your teacher how far you are (see [classes](/features/classes)).",
+        "On Pro, a deck’s owner can see which cards people miss most, as percentages without names.",
+        "Pictures and sounds in a public deck are public links. Pictures and sounds in decks you study don’t count toward your 100 on Free.",
+        "You can report a deck for being wrong or harmful, spam, or someone else’s work."
+      ]
+    },
+    {
+      "h2": "What to know first",
+      "bullets": [
+        "You can’t share a deck you only study. Make a copy first.",
+        "Lucida has no official textbook decks. Discover holds what people have chosen to share, and shared decks can be wrong.",
+        "Only share cards you have the right to share. Lucida’s terms ask you to add only things you have the right to use.",
+        "To study or copy a deck, people need a Lucida account. Anyone can read a public or link-only deck’s page."
+      ]
+    }
+  ],
+  "faq": [
+    {
+      "q": "How do I share flashcards with friends or classmates?",
+      "a": "Open the deck’s settings, choose Sharing, pick Link only, and send the link. They can read the deck’s page, and they sign in to study it or make a copy."
+    },
+    {
+      "q": "What’s the difference between Link only and Public?",
+      "a": "Link only means anyone with the link can open the deck, but it isn’t on your profile or in Discover, and its page asks search engines not to list it. Public decks show on your profile, in Discover and in search engines."
+    },
+    {
+      "q": "Can other people change my deck?",
+      "a": "No. They can suggest changes, and you take or skip each one. Only helpers you name can edit it directly."
+    },
+    {
+      "q": "What happens to my progress when I study someone’s deck?",
+      "a": "It stays yours. Your schedule, streak and scores never go to the owner. On Pro, an owner sees only which cards people miss most, as percentages without names."
+    },
+    {
+      "q": "Can I edit a deck I study?",
+      "a": "Not when you study it as it is. Suggest a change instead, or make a copy if you want your own version."
+    },
+    {
+      "q": "What if the owner changes a card I’ve already learned?",
+      "a": "A small fix, like a typo, keeps your schedule for that card. A new answer brings the card back as a new card, so you learn the right thing."
+    },
+    {
+      "q": "How do I find flashcards for my class?",
+      "a": "Search Discover by topic or by words, or ask your teacher or classmates for their deck’s link. Lucida has no official textbook decks, so check what you find."
+    },
+    {
+      "q": "Can search engines find my deck?",
+      "a": "Only Public decks. A Link only deck’s page asks search engines not to list it."
+    },
+    {
+      "q": "What does the Checked badge mean?",
+      "a": "A verified teacher says they checked every card in the deck. The badge stays until the deck changes."
+    },
+    {
+      "q": "Can I share a deck I imported from Anki or Quizlet?",
+      "a": "Yes, it’s a deck in your library, but only share cards you have the right to share. Lucida’s terms ask you to add only things you have the right to use."
+    }
+  ],
+  "sources": [
+    {
+      "label": "Kirkby and Matuschak (2026), Can LLMs create lasting flashcards from readers’ highlights? (Memory Machines)",
+      "url": "https://memory-machines.com/report",
+      "checked": "2026-09-30"
+    },
+    {
+      "label": "Lucida Terms of Service (updated September 24, 2026)",
+      "url": "https://lucida.cards/terms",
+      "checked": "2026-09-30"
+    },
+    {
+      "label": "Lucida Privacy Policy (updated September 24, 2026)",
+      "url": "https://lucida.cards/privacy",
+      "checked": "2026-09-30"
+    }
+  ],
+  "related": [
+    "features/classes",
+    "features/live-games",
+    "features/ai-flashcards",
+    "for/students",
+    "for/teachers",
+    "vs/quizlet",
+    "vs/anki",
+    "faq"
+  ],
+  "keywords": [
+    "share flashcards",
+    "how to share flashcards",
+    "share flashcards with friends",
+    "share anki deck",
+    "public flashcard sets",
+    "flashcards for class",
+    "find flashcards for my class",
+    "shared decks",
+    "study sets",
+    "share deck link",
+    "flashcard community",
+    "suggest changes to flashcards"
+  ]
+}

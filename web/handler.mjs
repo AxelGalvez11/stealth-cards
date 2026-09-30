@@ -23,6 +23,7 @@ import * as classes from './classes.mjs';
 import { cookies } from './auth.mjs';
 import { isDev, afterSaving } from './store.mjs';
 import { reserve, lookup, release, rtOf, listen, pass } from './rooms.mjs';
+import { publicLd } from './jsonld.mjs';
 
 const ROOT = fileURLToPath(new URL('.', import.meta.url));
 const TYPES = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.mjs': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8', '.json': 'application/json', '.svg': 'image/svg+xml',
@@ -103,7 +104,7 @@ async function publicPage(req, res, path) {
   if (!html) return send(res, 404, 'Not found', 'text/plain');
   if (m) {
     const origin = originOf(req), url = origin + (m.url || path);
-    const head = `<title>${escHtml(m.title)}</title>\n<meta name="description" content="${escHtml(m.description)}">\n<link rel="canonical" href="${escHtml(url)}">\n<meta property="og:title" content="${escHtml(m.title)}">\n<meta property="og:description" content="${escHtml(m.description)}">\n<meta property="og:url" content="${escHtml(url)}">\n<meta property="og:type" content="website">${m.noindex || m.status === 404 ? '\n<meta name="robots" content="noindex">' : ''}`;
+    const head = `<title>${escHtml(m.title)}</title>\n<meta name="description" content="${escHtml(m.description)}">\n<link rel="canonical" href="${escHtml(url)}">\n<meta property="og:title" content="${escHtml(m.title)}">\n<meta property="og:description" content="${escHtml(m.description)}">\n<meta property="og:url" content="${escHtml(url)}">\n<meta property="og:type" content="website">${m.noindex || m.status === 404 ? '\n<meta name="robots" content="noindex">' : ''}${publicLd(m, origin)}`;
     // A function gives the text as it is: a deck named "$&" or "$'" must not be read as one of replace()'s own patterns.
     html = html.replace(/<title>[^<]*<\/title>/, () => head);
     // What the page is, in plain HTML, for anything that doesn't run the app (it's replaced as soon as the app starts).

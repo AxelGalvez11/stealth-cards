@@ -1,0 +1,203 @@
+{
+  "slug": "features/classes",
+  "kind": "feature",
+  "title": "Flashcard classes: assign decks and see progress",
+  "description": "Make a class with a six-letter code, add your decks, assign them by a due date, and see how far each student is if they choose to share. Free in Lucida.",
+  "h1": "Classes",
+  "lead": "A Lucida class is a group with a six-letter code and an invite link, where the teacher adds decks, assigns them with a due date, and sees how far each student is. Students choose whether to share their progress, teachers see only simple numbers and never individual answers, and classes are free.",
+  "updated": "2026-09-30",
+  "table": {
+    "columns": [
+      "",
+      "Owner",
+      "Helper",
+      "Member"
+    ],
+    "rows": [
+      [
+        "Rename or delete the class",
+        "Yes",
+        "No",
+        "No"
+      ],
+      [
+        "Add their own decks and assign them",
+        "Yes",
+        "Yes",
+        "No"
+      ],
+      [
+        "Take a deck out of the class",
+        "Any deck",
+        "Only decks they added",
+        "No"
+      ],
+      [
+        "Make helpers",
+        "Yes",
+        "No",
+        "No"
+      ],
+      [
+        "Take someone out of the class",
+        "Members and helpers",
+        "Members only",
+        "No"
+      ],
+      [
+        "See each member’s progress (if the member shares it)",
+        "Yes",
+        "Yes",
+        "No, only their own"
+      ],
+      [
+        "Study the class’s decks",
+        "Yes",
+        "Yes",
+        "Yes"
+      ]
+    ]
+  },
+  "sections": [
+    {
+      "h2": "Set up a class, step by step",
+      "bullets": [
+        "**1. Make the class.** In the Library, open Classes and choose New class. Give it a name, and a school if you like. You get a six-letter code and an invite link (lucida.cards/class/CODE). The code never uses the letters I, L or O, so it reads clearly when said out loud.",
+        "**2. Share the code.** Students open the link, or choose Join a class and type the code, sign in, and join with one tap. Before joining, they see the class’s name, who runs it, and how many people and decks it has.",
+        "**3. Add a deck.** Owners and helpers add decks they made themselves. A deck that isn’t set to Link only or Public is seen by the class alone. To use someone else’s deck, make a copy first.",
+        "**4. Assign it.** Pick the deck, a goal (Learn every card, or Review what’s due each day) and a due date. Assignments show on each member’s Today screen.",
+        "**5. Check in.** The class page shows, for each assignment, how far each student who shares is."
+      ]
+    },
+    {
+      "h2": "What teachers see, and never see",
+      "paras": [
+        "The first time a student opens the class, Lucida asks one question, naming the people who would see the answer: Share your progress with them? It’s off until the student says yes, and they can turn it off again at any time. When they do, nothing of it stays behind.",
+        "For students who share, the owner and helpers see, for each assignment, how many cards the student has learned out of the total, how many are due now, how often the student remembered a card when it came back (over the last 30 days), and when they last studied. They never see individual answers. Students who haven’t shared show as Not shared. The progress of the owner and of helpers isn’t collected."
+      ]
+    },
+    {
+      "h2": "What an assignment means",
+      "bullets": [
+        "**Learn every card** is done when every card in the deck is learned, which means studied until it comes back days later.",
+        "**Review what’s due each day** counts as done once the student has started and nothing is due right now.",
+        "The due date has to be a real date that hasn’t passed. Using the same deck, goal and date again is the same assignment, not a second one."
+      ]
+    },
+    {
+      "h2": "Verified teachers and schools",
+      "paras": [
+        "Teachers and schools can ask to be verified, in Settings. You type your school’s name and a school email, or a link that shows you’re there, and the Lucida team reviews each request. A verified teacher gets a check on their profile and can mark shared decks as Checked. A verified school’s decks and class show as Official. Verification doesn’t change what a class can do."
+      ]
+    },
+    {
+      "h2": "Classes with live games and shared decks",
+      "paras": [
+        "Class decks are [shared decks](/features/shared-decks) that only the class can see, so students study them as they are, and a fix you make reaches everyone. For a review round, open a [live game](/features/live-games) from the same deck: students join on their phones with a code, no account needed."
+      ]
+    },
+    {
+      "h2": "Leaving, removing, deleting",
+      "bullets": [
+        "A student who leaves keeps the class’s decks in their library. They become the student’s own, without further updates.",
+        "The owner and helpers can take members out of the class. Only the owner can take out a helper.",
+        "If an owner deletes a class, its people, assignments and progress go. Decks that were only in the class become private again, and students who studied them keep them."
+      ]
+    },
+    {
+      "h2": "What to know first",
+      "bullets": [
+        "Students must be 13 or older. Lucida’s terms require it, and Lucida isn’t meant for younger children.",
+        "Students need an account to join a class. Joining a live game doesn’t need one.",
+        "Lucida doesn’t connect to Google Classroom or other school systems. You share a code or a link.",
+        "There’s no gradebook. The retrieval practice guide from Agarwal and colleagues advises keeping retrieval practice low-stakes, and Lucida’s numbers are there to help students practice, not to grade them.",
+        "Lucida’s privacy policy doesn’t mention school-specific privacy laws, so check with your school before you use it with students."
+      ]
+    }
+  ],
+  "faq": [
+    {
+      "q": "How do I make a class?",
+      "a": "In the Library, open Classes, choose New class, and give it a name (and a school, if you like). Lucida gives you a six-letter code and an invite link to share."
+    },
+    {
+      "q": "How do students join a class?",
+      "a": "Send them the six-letter code or the invite link (lucida.cards/class/CODE). They sign in and tap Join."
+    },
+    {
+      "q": "Do students need an account?",
+      "a": "Yes, to join a class. To join a live game they don’t need one."
+    },
+    {
+      "q": "What can a teacher see about students?",
+      "a": "Only for students who choose to share: cards learned out of the total, cards due now, how often they remembered a card in the last 30 days, and when they last studied. Teachers never see individual answers, and sharing is off until the student turns it on."
+    },
+    {
+      "q": "Can I assign flashcards with a due date?",
+      "a": "Yes. Pick a deck in the class, choose Learn every card or Review what’s due each day, and set a due date. It shows on each member’s Today screen."
+    },
+    {
+      "q": "Can a class have more than one teacher?",
+      "a": "Yes. The owner can make helpers. Helpers add decks, assign them and see progress, but they can’t delete the class or change who the helpers are."
+    },
+    {
+      "q": "Are classes free?",
+      "a": "Yes. Classes, shared decks and live games are part of Lucida’s free plan."
+    },
+    {
+      "q": "Does Lucida work with Google Classroom?",
+      "a": "No. There’s no link to Google Classroom or other school systems. You share the class code or invite link yourself."
+    },
+    {
+      "q": "How old do students need to be?",
+      "a": "At least 13. Lucida’s terms require it, and its privacy policy says it isn’t meant for children under 13."
+    },
+    {
+      "q": "What does a verified teacher get?",
+      "a": "A check on their profile, and the ability to mark shared decks as Checked. You ask in Settings with your school’s name and a school email or a link that shows where you teach, and the Lucida team reviews it."
+    }
+  ],
+  "sources": [
+    {
+      "label": "Roediger, Agarwal, McDaniel and McDermott (2011), Test-enhanced learning in the classroom: Long-term improvements from quizzing, Journal of Experimental Psychology: Applied",
+      "url": "https://pdf.retrievalpractice.org/guide/Roediger_Agarwal_etal_2011_JEPA.pdf",
+      "checked": "2026-09-30"
+    },
+    {
+      "label": "Agarwal, Roediger, McDaniel and McDermott (2020), How to Use Retrieval Practice to Improve Learning, retrievalpractice.org",
+      "url": "https://pdf.retrievalpractice.org/RetrievalPracticeGuide.pdf",
+      "checked": "2026-09-30"
+    },
+    {
+      "label": "Lucida Terms of Service (updated September 24, 2026)",
+      "url": "https://lucida.cards/terms",
+      "checked": "2026-09-30"
+    },
+    {
+      "label": "Lucida Privacy Policy (updated September 24, 2026)",
+      "url": "https://lucida.cards/privacy",
+      "checked": "2026-09-30"
+    }
+  ],
+  "related": [
+    "features/shared-decks",
+    "features/live-games",
+    "features/learn-mode",
+    "for/teachers",
+    "vs/kahoot",
+    "faq"
+  ],
+  "keywords": [
+    "flashcards for teachers",
+    "assign flashcards to students",
+    "classroom flashcards app",
+    "track student progress flashcards",
+    "free flashcard app for teachers",
+    "flashcards for class",
+    "class code flashcards",
+    "google classroom flashcards alternative",
+    "teacher flashcard app",
+    "student progress flashcards",
+    "study group flashcards"
+  ]
+}

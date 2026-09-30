@@ -1,0 +1,248 @@
+{
+  "slug": "vs/brainscape",
+  "kind": "compare",
+  "title": "Lucida vs Brainscape: flashcard apps compared (2026)",
+  "description": "Lucida vs Brainscape: price, spaced repetition, AI, images, export and sharing, with sources. Brainscape has expert-made decks. Lucida has more for free.",
+  "h1": "Lucida vs Brainscape",
+  "lead": "Brainscape is a polished flashcard app with its own spaced repetition (you rate each card 1 to 5), expert-made Certified decks and phone apps, but pictures, sounds and export are Pro features. Lucida makes pictures and sounds (up to 100), Learn mode, sharing and export free, and your own AI (Claude, ChatGPT) makes the cards.",
+  "updated": "2026-09-30",
+  "published": "2026-09-30",
+  "table": {
+    "columns": [
+      "",
+      "Lucida",
+      "Brainscape"
+    ],
+    "rows": [
+      [
+        "Price (September 2026)",
+        "Free: unlimited decks and cards, spaced repetition, Learn mode, sharing, live games, import and export. Pro: $5.99 a month or $49.99 a year.",
+        "Free for your own cards, with no ads. Pro is $7.99 a month on the yearly plan. The App Store lists $19.99 monthly, $59.99 for six months, $95.99 a year and $199.99 for life."
+      ],
+      [
+        "Platforms",
+        "Web app at app.lucida.cards, on computers and phones. No App Store app yet.",
+        "Website, iPhone and iPad app, Android app."
+      ],
+      [
+        "Spaced repetition",
+        "FSRS plans every review. Grade each card Forgot, Hard, Good or Easy, and set how much you want to remember. Pro adds exam dates and tuning to your own reviews.",
+        "Confidence-Based Repetition: you rate every card 1 to 5, and Brainscape’s own algorithm picks when it comes back. It isn’t FSRS."
+      ],
+      [
+        "AI",
+        "Your own AI (Claude, ChatGPT, Cursor or any MCP app) makes and edits cards and Learn quizzes through your personal Lucida link. You choose what it may do and can check its cards first.",
+        "An AI flashcard maker, including a one-by-one Flashcard Copilot. Limited on Free, unlimited on Pro."
+      ],
+      [
+        "Making cards",
+        "Type cards in the editor (bold, italics, math, lists), import a list, or ask your AI.",
+        "Type cards, paste a list or upload a file, or use AI on your notes."
+      ],
+      [
+        "Card kinds",
+        "Question and answer, fill in the blank (cloze), picture with hidden parts (image occlusion), and sound.",
+        "Text cards on Free. Images, sounds and reverse cards are Pro."
+      ],
+      [
+        "Import and export",
+        "Import pasted text or a .csv, .tsv or .txt file, including Anki’s Notes in Plain Text export and Quizlet’s export. Not .apkg files. Export a CSV for each deck, or everything (decks, cards, reviews) as JSON.",
+        "Import by pasting or uploading .csv, .txt, .xlsx or .ods files. Anki text exports work, but there is no direct Quizlet or Anki import. Export a deck to Excel-ready files: Pro only."
+      ],
+      [
+        "Sharing",
+        "Decks are private, link-only or public. Profiles, Discover, study a deck as it is or copy it, suggest changes, version history. All free.",
+        "Share decks and classes with peers or students and control who can edit. Decks shared with you are free to study, and 2,500 preloaded cards are free. Certified (expert-made) decks and other learners’ decks in its library need Pro."
+      ],
+      [
+        "Classes",
+        "Make a class with a join code, assign decks by a date, and see progress that students choose to share. Free.",
+        "Classes group your decks, and you can invite learners. Detailed student study data is an Enterprise feature."
+      ],
+      [
+        "Games",
+        "Live: play a deck with up to 60 friends on their phones. They join with a code or QR, no account. Free.",
+        "None found."
+      ],
+      [
+        "Works offline",
+        "No. Lucida needs an internet connection.",
+        "Yes, in the mobile apps once you have downloaded your cards. Creating and editing need a connection."
+      ],
+      [
+        "Privacy",
+        "No ads. We don’t sell your data or use your cards to train AI models (privacy policy). You need an account, and data is stored in the United States. Export or delete it from Settings.",
+        "No ads, says its help center. Making your cards private is a Pro feature."
+      ]
+    ]
+  },
+  "sections": [
+    {
+      "h2": "The short version",
+      "paras": [
+        "Brainscape is built around one idea: after every card, you say how sure you were, from 1 to 5, and it decides when to show the card again. It also sells expert-made Certified decks for big exams.",
+        "Lucida plans reviews with FSRS instead, and gives away more on the free plan: pictures and sounds, studying other people’s decks, Learn mode, live games and export."
+      ]
+    },
+    {
+      "h2": "Where Brainscape is better",
+      "bullets": [
+        "**Certified flashcards.** Brainscape has expert-curated decks for hundreds of subjects and high-stakes exams. Lucida has none, only decks people share.",
+        "**Phone apps.** iPhone, iPad and Android apps, with offline study after you download your cards. Lucida has no App Store app yet and needs a connection.",
+        "**One rating.** You rate each card 1 to 5, and that sets when it comes back.",
+        "**Schools and companies.** Enterprise licences with branded private portals and detailed student study data.",
+        "**Free forever for your own text cards,** with no ads and unlimited cards."
+      ]
+    },
+    {
+      "h2": "Where Lucida is better",
+      "bullets": [
+        "**Pictures and sounds on the free plan,** up to 100. On Brainscape, images and audio are Pro.",
+        "**Other people’s decks are free.** Study any public deck, copy it, or suggest changes. On Brainscape, decks a friend shares with you are free, but other learners’ decks in its library and Certified decks need Pro.",
+        "**Export is free.** Export a deck as CSV or everything as JSON. On Brainscape, exporting a deck is for Pro users.",
+        "**A different algorithm.** Lucida uses FSRS, an open scheduler, and lets you set how much you want to remember. Brainscape says its algorithm is proprietary.",
+        "**Learn mode and live games, free.** Five kinds of questions from your cards, and games for up to 60 friends. We found no equivalent in Brainscape’s help center.",
+        "**Cloze and picture-hiding cards.** Lucida has fill-in-the-blank cards and pictures with hidden parts, free (up to 100 pictures and sounds). Brainscape’s help center doesn’t describe either kind.",
+        "**A lower Pro price.** Lucida Pro is $5.99 a month or $49.99 a year. Brainscape Pro is $19.99 a month or $95.99 a year in its App Store listing, and $7.99 a month on its website’s yearly plan."
+      ]
+    },
+    {
+      "h2": "Moving between them",
+      "paras": [
+        "From Brainscape to Lucida: export a deck (Pro) to a CSV file, then choose it in Lucida’s Import cards.",
+        "From Lucida to Brainscape: export a deck as CSV and upload it in Brainscape’s Import/Make flashcards. Brainscape accepts .csv, .txt, .xlsx and .ods files."
+      ]
+    },
+    {
+      "h2": "Who should pick which",
+      "bullets": [
+        "**Pick Brainscape** if you want Certified, expert-made decks for a big exam, phone apps with offline study, or a simple 1 to 5 rating.",
+        "**Pick Lucida** if you want pictures, sounds, other people’s decks and export for free, FSRS, and your own AI making the cards."
+      ]
+    },
+    {
+      "h2": "How we checked this page",
+      "paras": [
+        "Facts about Brainscape come from Brainscape’s pricing page, help center and App Store listing, opened on September 30, 2026. Facts about Lucida come from the app, its pricing page and its privacy policy. Where we couldn’t confirm something about Brainscape, we left it out. If anything here is wrong, write to team@lucida.cards."
+      ]
+    }
+  ],
+  "faq": [
+    {
+      "q": "Is Brainscape free?",
+      "a": "Yes, for your own cards. Brainscape’s help center says you can create and study unlimited flashcards for free, forever, with no ads. Pro adds unlimited AI, Certified decks, other learners’ decks, images and audio, reverse cards and privacy controls."
+    },
+    {
+      "q": "How much is Brainscape Pro?",
+      "a": "Brainscape’s pricing page shows Pro from $7.99 a month on the yearly plan. Its App Store listing shows $19.99 monthly, $59.99 every six months, $95.99 a year and $199.99 for lifetime (September 2026). Lucida Pro is $5.99 a month or $49.99 a year."
+    },
+    {
+      "q": "Does Brainscape use FSRS?",
+      "a": "No. Brainscape uses its own Confidence-Based Repetition: you rate each card 1 to 5 and it schedules the next review from your rating and your study pattern. Lucida plans reviews with FSRS."
+    },
+    {
+      "q": "Can I add pictures and audio on Brainscape’s free plan?",
+      "a": "No. Brainscape lists adding images and sounds to flashcards as a Pro feature. Lucida’s free plan allows up to 100 pictures and sounds."
+    },
+    {
+      "q": "Can I import Anki or Quizlet decks into Brainscape?",
+      "a": "Not directly. Brainscape’s help center says to export from Quizlet as CSV, or from Anki as a text file, and import that file. It accepts .csv, .txt, .xlsx and .ods files. Lucida reads Anki’s Notes in Plain Text export and Quizlet’s export as they are."
+    },
+    {
+      "q": "Does Brainscape work offline?",
+      "a": "In the mobile apps, yes, once you have downloaded the flashcards you need. Creating or editing cards needs a connection. Lucida has no offline mode."
+    },
+    {
+      "q": "Does Brainscape have AI?",
+      "a": "Yes. Brainscape has an AI flashcard maker and a one-by-one Flashcard Copilot, with limited access on Free and unlimited use on Pro. Lucida doesn’t write cards itself; your own AI app does through your Lucida link."
+    },
+    {
+      "q": "Is Lucida a good Brainscape alternative?",
+      "a": "If you want free pictures and sounds, free export, other people’s decks for free and FSRS, yes. If you want Certified, expert-made decks or a simple 1 to 5 rating in a phone app, Brainscape fits better."
+    }
+  ],
+  "sources": [
+    {
+      "label": "Brainscape pricing",
+      "url": "https://www.brainscape.com/pricing",
+      "checked": "2026-09-30"
+    },
+    {
+      "label": "Brainscape Help Center: Is Brainscape free?",
+      "url": "https://brainscape.zendesk.com/hc/en-us/articles/115002384872-Is-Brainscape-free",
+      "checked": "2026-09-30"
+    },
+    {
+      "label": "Brainscape Help Center: What is Brainscape Pro?",
+      "url": "https://brainscape.zendesk.com/hc/en-us/articles/115002383652-Do-I-have-to-pay-to-use-Brainscape-What-is-Brainscape-Pro",
+      "checked": "2026-09-30"
+    },
+    {
+      "label": "Brainscape Help Center: How does the spaced repetition algorithm work?",
+      "url": "https://brainscape.zendesk.com/hc/en-us/articles/13103043051149-How-Does-Brainscape-s-Spaced-Repetition-Algorithm-Work",
+      "checked": "2026-09-30"
+    },
+    {
+      "label": "Brainscape Help Center: Can I import my Quizlet or Anki decks?",
+      "url": "https://brainscape.zendesk.com/hc/en-us/articles/115002370391-Can-I-import-my-Quizlet-or-Anki-decks-into-Brainscape",
+      "checked": "2026-09-30"
+    },
+    {
+      "label": "Brainscape Help Center: How do I import various files?",
+      "url": "https://brainscape.zendesk.com/hc/en-us/articles/115002369931-How-do-I-import-various-files-to-create-flashcards",
+      "checked": "2026-09-30"
+    },
+    {
+      "label": "Brainscape Help Center: How can I export a backup of my flashcards?",
+      "url": "https://brainscape.zendesk.com/hc/en-us/articles/115002383872-How-can-I-export-a-backup-of-my-flashcards",
+      "checked": "2026-09-30"
+    },
+    {
+      "label": "Brainscape Help Center: Do I need WiFi or a 4G/LTE connection?",
+      "url": "https://brainscape.zendesk.com/hc/en-us/articles/360001017252-Do-I-need-WiFi-or-a-4G-LTE-connection",
+      "checked": "2026-09-30"
+    },
+    {
+      "label": "Brainscape on the App Store (prices)",
+      "url": "https://apps.apple.com/us/app/brainscape-study-flashcards/id442415567",
+      "checked": "2026-09-30"
+    },
+    {
+      "label": "Lucida pricing",
+      "url": "https://lucida.cards/pricing",
+      "checked": "2026-09-30"
+    },
+    {
+      "label": "Lucida privacy policy",
+      "url": "https://lucida.cards/privacy",
+      "checked": "2026-09-30"
+    }
+  ],
+  "related": [
+    "vs/quizlet",
+    "vs/anki",
+    "quizlet-alternative",
+    "anki-alternative",
+    "compare",
+    "pricing",
+    "features/spaced-repetition",
+    "features/shared-decks"
+  ],
+  "keywords": [
+    "lucida vs brainscape",
+    "brainscape vs lucida",
+    "brainscape alternative",
+    "is brainscape free",
+    "brainscape pro price",
+    "brainscape pricing",
+    "brainscape vs anki",
+    "brainscape vs quizlet",
+    "brainscape confidence based repetition",
+    "brainscape certified flashcards",
+    "brainscape images free",
+    "brainscape export",
+    "brainscape import anki",
+    "brainscape offline",
+    "brainscape ai flashcards"
+  ]
+}

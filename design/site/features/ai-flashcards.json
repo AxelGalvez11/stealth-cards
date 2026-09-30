@@ -1,0 +1,298 @@
+{
+  "slug": "features/ai-flashcards",
+  "kind": "feature",
+  "title": "AI flashcards: your own AI makes the cards",
+  "description": "Add your Lucida link to Claude, ChatGPT or Cursor and ask for flashcards. They land in your decks on an FSRS schedule, at no extra cost on the free plan.",
+  "h1": "AI flashcards that land in your decks",
+  "lead": "Add your personal Lucida link to your AI app once, then ask it for flashcards: it writes them straight into your decks, and Lucida plans the reviews. It works with Claude, ChatGPT and Cursor, and with any other app that can add a remote MCP server by its web address, and on the free plan your AI can make as many cards as you want.",
+  "updated": "2026-09-30",
+  "table": {
+    "columns": [
+      "App",
+      "How to add your link",
+      "Who can do it, per the app’s own docs",
+      "Steps inside Lucida"
+    ],
+    "rows": [
+      [
+        "Claude",
+        "Customize, then Connectors, then Add custom connector. Paste the link. If Claude asks how to sign in, choose No sign-in, because the link itself is the key.",
+        "Custom connectors work on the Free (one connector), Pro, Max, Team and Enterprise plans",
+        "Yes"
+      ],
+      [
+        "ChatGPT",
+        "Turn on Developer mode in ChatGPT’s settings, then add a developer-mode app for a remote MCP server and paste the link. No authentication is needed.",
+        "OpenAI lists Pro, Plus, Business, Enterprise and Education accounts, on the web",
+        "Yes"
+      ],
+      [
+        "Cursor",
+        "Use the Add to Cursor button in Lucida’s setup, or add the link to Cursor’s mcp.json file.",
+        "Cursor connects to remote servers over HTTP and SSE",
+        "Yes"
+      ],
+      [
+        "Gemini",
+        "In the Gemini web app, open Connected Apps, add a custom app and paste the link.",
+        "Google says you must be 18 or over and in the US, use a personal Google Account with Keep Activity on, and use English",
+        "No"
+      ],
+      [
+        "Grok",
+        "Go to grok.com/connectors, choose New Connector, then Custom, and paste the link.",
+        "xAI says connectors are available to all Grok users, and the server must be reachable over the public internet",
+        "No"
+      ],
+      [
+        "Any other MCP app",
+        "Paste the link wherever the app asks for a remote MCP server URL.",
+        "Depends on the app",
+        "Yes (Any MCP app)"
+      ]
+    ]
+  },
+  "sections": [
+    {
+      "h2": "How it works, step by step",
+      "paras": [
+        "MCP, the Model Context Protocol, is an open standard for connecting AI apps to outside tools and data. Your Lucida link is an MCP server that lets your AI read and write your flashcards. Lucida shows step-by-step setup for Claude, ChatGPT and Cursor. Gemini and Grok can add the same link, but Lucida has no steps for them, and menu names change, so follow each app’s own help page (linked under Sources)."
+      ],
+      "bullets": [
+        "**1. Open Connect AI.** Sign in at [app.lucida.cards](https://app.lucida.cards) and open Connect AI. Your personal link is there. It looks like app.lucida.cards/mcp/lk_ followed by a long code.",
+        "**2. Add the link to your AI app.** Use the steps in the table above. You only do this once.",
+        "**3. Ask for cards.** For example: “Make 20 flashcards from these lecture notes, one idea per card.” Attach your notes or slides. Your AI reads them. Lucida doesn’t read files itself.",
+        "**4. Study.** The cards are in your decks, each one already on the review schedule. If you turned on Let me check AI cards first, they wait under Cards to check until you keep or toss them."
+      ]
+    },
+    {
+      "h2": "Keep the link private",
+      "paras": [
+        "Anyone who has your link can reach your cards, so don’t share it or post it. If it leaks, open Connect AI and choose Make a new link. The old link stops working right away, and your AI apps need the new one."
+      ]
+    },
+    {
+      "h2": "What your AI can do with your cards",
+      "bullets": [
+        "Look at your decks, your cards and what’s due, so it can quiz you.",
+        "Add cards of four kinds: question and answer, fill in the blank, picture, and sound. It can add up to 500 in one request.",
+        "Fix or change cards, put decks in folders, and set a deck’s background.",
+        "Write Learn mode questions for your cards: multiple choice with believable wrong answers, and true-or-false statements, each with a short why. It can also leave a short explanation of a card’s answer.",
+        "Search the decks other people share on Lucida and add one to your library, or suggest fixes to a deck you study.",
+        "On Pro, read your weak spots and your recent review history, so it can quiz you on what you forget."
+      ]
+    },
+    {
+      "h2": "What your AI can’t do",
+      "bullets": [
+        "Draw the hidden boxes for picture cards. You add those in the editor (see [image occlusion](/features/image-occlusion)).",
+        "Delete cards, unless you switch that on.",
+        "Change anything on other people’s decks. It can only suggest changes.",
+        "Read PDFs or slides through Lucida. Your AI app reads them and sends Lucida the cards."
+      ]
+    },
+    {
+      "h2": "You stay in charge",
+      "paras": [
+        "On the Connect AI page you choose what your AI may do. Tools you switch off aren’t even offered to the AI."
+      ],
+      "bullets": [
+        "Read cards and what’s due (on by default)",
+        "Write text and fill-in-the-blank cards (on)",
+        "Write image and audio cards (on)",
+        "Edit cards (on)",
+        "Let me check AI cards first (off): new cards and changes wait until you keep them",
+        "Delete cards (off)"
+      ]
+    },
+    {
+      "h2": "Getting good cards from an AI",
+      "paras": [
+        "An AI is quick at drafting cards and not always good at it. In a 2026 test by Ozzie Kirkby and Andy Matuschak, using cards written from a reader’s highlights, even the best model they tried, GPT-5.2, made cards the authors rated unusable (off target, or too vague to work months later) 36% of the time. That was a different job from studying for a class, but the lesson holds: read what it makes, and turn on Let me check AI cards first for anything that matters, like an exam.",
+        "Some prompt habits help. They come from Piotr Wozniak’s twenty rules of formulating knowledge, which Anki’s manual recommends too:"
+      ],
+      "bullets": [
+        "**One idea per card.** Wozniak’s minimum information principle: make each card as simple as it can be.",
+        "**Blanks for facts inside sentences.** Ask for fill-in-the-blank cards. Wozniak calls cloze deletion easy and effective.",
+        "**Avoid lists.** Wozniak warns that sets and enumerations are hard to remember, so ask for one blank or one card per item.",
+        "**Give it your source.** Share your notes or slides and tell it to stick to them, so it doesn’t add facts your course never covered.",
+        "**Ask for a short why** in each card’s note, so a wrong answer teaches you something."
+      ]
+    },
+    {
+      "h2": "A prompt to start with",
+      "paras": [
+        "Try something like: “Here are my lecture notes. Make flashcards for my Cell Biology deck, tagged Exam 1. One idea per card. Use fill-in-the-blank for facts inside sentences, and add a one-line why in the note. Then write Learn mode questions for the cards that test understanding.”"
+      ]
+    },
+    {
+      "h2": "Quizzes and explanations",
+      "paras": [
+        "Learn mode uses the questions your AI wrote when a card has them (about four times in five), and otherwise asks from the card’s own words and your other answers. Questions can ask about cause and effect instead of repeating the card.",
+        "When you tap Explain on a card, you see a two-to-four-sentence explanation: your AI’s, if it wrote one, or one from Lucida’s own AI (3 a day on Free, up to 200 a day on Pro). Each explanation is saved on the card, so seeing it again costs nothing. That’s the only place Lucida’s own AI is used. Making cards and quizzes uses your own AI app."
+      ]
+    },
+    {
+      "h2": "Limits and costs",
+      "bullets": [
+        "Making cards with your AI is free, with no cap on the number of cards.",
+        "Free includes up to 100 pictures and sounds. A picture with hidden parts counts once.",
+        "Sound cards: on Pro, Lucida makes a natural-sounding voice for the sound cards your AI writes. On Free, the app reads them aloud with your device’s voice.",
+        "Photo covers for decks are Pro, including ones your AI sets.",
+        "A picture or sound can come from a web link. Lucida checks that it’s a real picture (PNG, JPEG, GIF or WebP) or sound (MP3, M4A, WAV, OGG or WebM) of up to 20 MB. iPhone HEIC photos aren’t accepted.",
+        "Your AI app may have its own plan limits (see the table). For example, OpenAI lists developer mode for paid accounts."
+      ]
+    },
+    {
+      "h2": "What about the flashcards inside ChatGPT and Gemini?",
+      "paras": [
+        "ChatGPT and Gemini can now show flashcards in their own apps. OpenAI’s education newsletter (September 24, 2026) describes flip-card flashcards in ChatGPT that you can find in your library, and Google says study notebooks in Gemini can make interactive flashcards through NotebookLM. Lucida is where cards from any AI end up when you want them on an FSRS schedule, with Learn mode, sharing and live games, in a library you can export."
+      ]
+    }
+  ],
+  "faq": [
+    {
+      "q": "Can ChatGPT make flashcards?",
+      "a": "Yes. ChatGPT can write flashcards in a chat, and OpenAI describes flip-card flashcards in ChatGPT too. With your Lucida link added as a developer-mode app, it can save the cards straight into your Lucida decks, where they get a review schedule."
+    },
+    {
+      "q": "Can Claude make flashcards for Lucida?",
+      "a": "Yes. Add your Lucida link as a custom connector in Claude (Customize, then Connectors), then ask for cards. Claude’s free plan allows one custom connector."
+    },
+    {
+      "q": "Does Lucida work with Gemini or Grok?",
+      "a": "Both can add a custom MCP server by its web address, so your Lucida link should work, but Lucida’s Connect AI page has steps only for Claude, ChatGPT and Cursor. Google limits custom apps in Gemini to people 18 or over in the US, on personal accounts, in English."
+    },
+    {
+      "q": "Do I need a paid AI subscription?",
+      "a": "Not for Lucida itself. Claude’s free plan allows one custom connector. OpenAI lists ChatGPT’s developer mode for Pro, Plus, Business, Enterprise and Education accounts. Check your AI app’s own plan rules."
+    },
+    {
+      "q": "What is MCP?",
+      "a": "MCP, the Model Context Protocol, is an open standard for connecting AI apps to outside tools and data. Your Lucida link is an MCP server that lets your AI read and write your flashcards."
+    },
+    {
+      "q": "Can I make flashcards from a PDF or lecture slides?",
+      "a": "Yes, through your AI app: attach the file in Claude or ChatGPT and ask for flashcards. Your AI reads the file and sends Lucida the cards. Lucida doesn’t open PDFs itself."
+    },
+    {
+      "q": "Can the AI delete or change my cards?",
+      "a": "It can edit cards while Edit is on, and it can delete only if you switch Delete on, which is off by default. Turn on Let me check AI cards first and every new card and change waits for your OK."
+    },
+    {
+      "q": "Is my Lucida link safe?",
+      "a": "The link is the key to your library, so keep it private. If it leaks, choose Make a new link on the Connect AI page and the old one stops working at once. Lucida’s privacy policy says it doesn’t use your cards to train AI models."
+    },
+    {
+      "q": "Are AI-made flashcards accurate?",
+      "a": "Not always. Lucida’s terms say AI apps can make mistakes and to check what matters, especially before an exam. Give your AI your own notes, read the cards, or use Let me check AI cards first."
+    },
+    {
+      "q": "Does making AI cards cost extra?",
+      "a": "No. On the free plan your AI can make as many cards as you want. Pro ($5.99 a month or $49.99 a year, as of September 2026) adds extras like exam dates, weak-spot stats and natural voices for sound cards."
+    }
+  ],
+  "sources": [
+    {
+      "label": "Model Context Protocol: What is MCP?",
+      "url": "https://modelcontextprotocol.io/docs/getting-started/intro",
+      "checked": "2026-09-30"
+    },
+    {
+      "label": "Claude documentation: Add a connector that isn’t in the directory",
+      "url": "https://claude.com/docs/connectors/custom/remote-mcp",
+      "checked": "2026-09-30"
+    },
+    {
+      "label": "OpenAI documentation: ChatGPT developer mode",
+      "url": "https://developers.openai.com/api/docs/guides/developer-mode",
+      "checked": "2026-09-30"
+    },
+    {
+      "label": "Cursor documentation: Model Context Protocol (MCP)",
+      "url": "https://cursor.com/docs/context/mcp",
+      "checked": "2026-09-30"
+    },
+    {
+      "label": "Gemini Apps Help: Connect and manage custom apps",
+      "url": "https://support.google.com/gemini/answer/17209137",
+      "checked": "2026-09-30"
+    },
+    {
+      "label": "xAI documentation: Connectors (last updated July 17, 2026)",
+      "url": "https://docs.x.ai/grok/connectors",
+      "checked": "2026-09-30"
+    },
+    {
+      "label": "Wozniak (1999), Twenty rules of formulating knowledge, SuperMemo",
+      "url": "https://www.supermemo.com/en/blog/twenty-rules-of-formulating-knowledge",
+      "checked": "2026-09-30"
+    },
+    {
+      "label": "Anki Manual: Leeches",
+      "url": "https://docs.ankiweb.net/leeches.html",
+      "checked": "2026-09-30"
+    },
+    {
+      "label": "Kirkby and Matuschak (2026), Can LLMs create lasting flashcards from readers’ highlights? (Memory Machines)",
+      "url": "https://memory-machines.com/report",
+      "checked": "2026-09-30"
+    },
+    {
+      "label": "OpenAI, ChatGPT for Education: The Edu Prompt, Issue 6 (September 24, 2026)",
+      "url": "https://edunewsletter.openai.com/p/the-edu-prompt-issue-6",
+      "checked": "2026-09-30"
+    },
+    {
+      "label": "Google, Study notebooks in the Gemini app (June 25, 2026)",
+      "url": "https://blog.google/innovation-and-ai/products/gemini-app/gemini-study-notebooks/",
+      "checked": "2026-09-30"
+    },
+    {
+      "label": "Lucida Privacy Policy (updated September 24, 2026)",
+      "url": "https://lucida.cards/privacy",
+      "checked": "2026-09-30"
+    },
+    {
+      "label": "Lucida Terms of Service (updated September 24, 2026)",
+      "url": "https://lucida.cards/terms",
+      "checked": "2026-09-30"
+    },
+    {
+      "label": "Lucida pricing (what Free and Pro include, as of September 2026)",
+      "url": "https://lucida.cards/pricing",
+      "checked": "2026-09-30"
+    }
+  ],
+  "related": [
+    "features/spaced-repetition",
+    "features/learn-mode",
+    "features/image-occlusion",
+    "features/import",
+    "for/students",
+    "for/med-school",
+    "vs/anki",
+    "faq"
+  ],
+  "keywords": [
+    "can chatgpt make flashcards",
+    "chatgpt flashcards",
+    "claude flashcards",
+    "gemini flashcards",
+    "grok flashcards",
+    "ai flashcards free",
+    "ai flashcard maker",
+    "ai flashcard generator free",
+    "make flashcards from pdf",
+    "make flashcards from notes ai",
+    "make flashcards from lecture",
+    "chatgpt to anki",
+    "claude anki",
+    "anki mcp",
+    "mcp flashcards",
+    "ai spaced repetition",
+    "flashcard app with ai",
+    "cursor flashcards",
+    "turn lecture into flashcards"
+  ]
+}
