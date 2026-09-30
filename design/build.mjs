@@ -8,7 +8,7 @@ import { DRAG_METHOD } from './drag.mjs';
 import { WALL_CARDS } from './wall.mjs';
 import { PRIVACY, TERMS, UPDATED } from './legal.mjs';
 import { PRO_LINKS } from '../web/plans.mjs';
-import { PLAN_FREE, PLAN_PRO, PRICING_FAQ, SOCIALS as SITE_SOCIALS, BOARDS as SITE_BOARDS, APP as SITE_APP, pageSet, footerLinks, boardData, partsOf } from './site.mjs';
+import { PLAN_FREE, PLAN_PRO, PRICING_FAQ, SOCIALS as SITE_SOCIALS, BOARDS as SITE_BOARDS, APP as SITE_APP, pageSet, footerLinks, boardData, partsOf, indexOf, ogKey } from './site.mjs';
 import { G_LOGO, APPLE_LOGO } from './logos.mjs';
 import { THEMES } from '../web/themes/index.js';
 import { THEME_KEYS, themeCss, themeFonts, themeStatic } from './themes.mjs';
@@ -5786,6 +5786,32 @@ renderVals() { ${T}
     hasRelated: related.length > 0, related };
 }`;
 };
+// A page's link-preview picture (what Facebook, X, Slack, iMessage and the AI chat apps show when its address is shared): the
+// sky, its kind and title large, its address, and three deck cards. Any page by `page` (its address, "home" for the landing
+// page). design/og.mjs draws each one with Chrome into web/og/.
+const OG_KINDS = { pricing: 'Pricing', legal: 'Legal', compare: 'Comparison', alternative: 'Alternative', feature: 'Feature', use: 'Who it’s for', faq: 'FAQ' };
+const ogCard = (key, x, y, rot, text) => `<div style="position: absolute; left: ${x}px; top: ${y}px; width: 330px; height: 214px; transform: rotate(${rot}deg); border-radius: 30px; box-shadow: 0 34px 60px -26px rgba(20,30,90,.5);">${artCard(key, 'width: 100%; height: 100%; border-radius: 30px;', 'height: 100%; box-sizing: border-box; padding: 26px; display: flex; align-items: center; justify-content: center; text-align: center; font-size: 34px; font-weight: 500; line-height: 1.2; letter-spacing: -.02em;', text)}</div>`;
+const ogPage = `<div style="position: relative; isolation: isolate; width: 1200px; height: 630px; box-sizing: border-box; overflow: hidden; font-family: ${FONT}; background: {{t.bg}}; color: {{t.text}};">
+  <div aria-hidden="true" style="position: absolute; inset: 0; z-index: -1; background: linear-gradient(180deg, {{sky.top}} 0%, {{sky.mid}} 40%, {{sky.low}} 70%, {{t.bg}} 100%);"><div style="position: absolute; left: 0; top: -45%; width: 80%; height: 100%; background: radial-gradient(closest-side, {{sky.glow}}, transparent);"></div></div>
+  <div style="position: absolute; left: 80px; top: 62px; display: flex; align-items: center; gap: 14px; font-size: 32px; font-weight: 600; letter-spacing: -.02em;">${mark(30)}Lucida</div>
+  <div style="position: absolute; left: 80px; top: 0; bottom: 0; width: 600px; display: flex; flex-direction: column; justify-content: center; padding-top: 18px;">
+    <sc-if value="{{kind}}" hint-placeholder-val="{{ true }}"><span style="align-self: flex-start; height: 44px; padding: 0 20px; box-sizing: border-box; display: inline-flex; align-items: center; border-radius: 999px; background: rgba(255,255,255,.72); box-shadow: inset 0 0 0 1px rgba(0,0,0,.08); font-size: 22px; font-weight: 600;">{{kind}}</span></sc-if>
+    <div style="margin-top: 24px; font-size: {{size}}px; font-weight: 600; line-height: 1; letter-spacing: -.05em; text-wrap: balance;">{{h1}}</div>
+  </div>
+  <div style="position: absolute; left: 80px; bottom: 54px; font-size: 26px; color: {{t.muted}};">{{url}}</div>
+  ${ogCard('k1', 742, 50, -8, 'Carpe diem')}${ogCard('k2', 862, 232, 5, 'でんしゃ')}${ogCard('k3', 724, 410, -5, 'F = m · a')}
+</div>`;
+const ogLogic = () => {
+  const index = indexOf(SITE.pages).map(i => ({ key: ogKey(i.slug), slug: i.slug, kind: i.kind, h1: i.h1 }));
+  return `${ART_METHOD}
+renderVals() { ${T}
+  const I = ${JSON.stringify(index)}, it = I.find(i => i.key === this.props.page) || I[0];
+  const KINDS = ${JSON.stringify(OG_KINDS)}, n = it.h1.length, deck = name => this.art(this.gen(name, 'vivid'));
+  const kind = it.kind === 'hub' ? (it.slug === 'compare' ? 'Compare' : 'Features') : KINDS[it.kind] || '';
+  return { t, sky: ${SKY}, grain: '0', kind, h1: it.h1, size: n <= 14 ? 112 : n <= 22 ? 96 : n <= 34 ? 80 : n <= 50 ? 68 : 58,
+    url: 'lucida.cards' + (it.slug ? '/' + it.slug : ''), k1: deck('Latin'), k2: deck('Japanese'), k3: deck('Physics') };
+}`;
+};
 function siteFiles() {
   const out = {};
   for (const b of SITE_BOARDS) {
@@ -5796,6 +5822,8 @@ function siteFiles() {
         { props: { ...DARK, page: { editor: 'enum', default: first, options: pages.map(p => p.slug) }, grain: MESH('Iris').grain }, logic: siteLogic(b, phone), css: SITE_CSS, w, h }];
     }
   }
+  const keys = indexOf(SITE.pages).map(i => ogKey(i.slug));
+  out.SiteOg = ['Site · Link preview picture (1200 × 630) for any page', ogPage, { props: { ...DARK, page: { editor: 'enum', default: 'vs/anki' in Object.fromEntries(keys.map(k => [k, 1])) ? 'vs/anki' : keys[0], options: keys }, grain: { editor: 'range', default: 0, min: 0, max: 1, step: 0.05 } }, logic: ogLogic(), w: 1200, h: 630 }];
   return out;
 }
 

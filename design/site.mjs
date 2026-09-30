@@ -106,7 +106,10 @@ const strs = v => (Array.isArray(v) ? v.map(str).filter(Boolean) : str(v) ? [str
 const clean = slug => str(slug).replace(/^\/+|\/+$/g, '').replace(/\.html$/, '');
 
 export const urlOf = slug => ORIGIN + (slug ? '/' + slug : '/');
-export const ogFile = slug => 'og/' + (slug ? slug.replace(/\//g, '-') : 'home') + '.png';
+export const ogKey = slug => slug || 'home';
+export const ogFile = slug => 'og/' + ogKey(slug).replace(/\//g, '-') + '.png';
+// What a page's link-preview picture shows (its kind, its h1 and its address); the picture is out of date when this changes.
+export const ogFingerprint = item => createHash('sha1').update([item.slug, item.kind, item.h1].join('|')).digest('hex').slice(0, 10);
 export const fileOf = slug => 'site/' + slug + '.html';
 
 // One page as the boards, the pages and the checks use it. Anything missing becomes empty; nothing is invented.

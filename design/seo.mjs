@@ -6,7 +6,13 @@ import { PRIVACY, TERMS } from './legal.mjs';
 import { esc } from './render.mjs';
 
 export const OG = { width: 1200, height: 630 };
-const FONTS = 'https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap';
+export const FONTS = 'https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap';
+// What every site page starts with (design/og.mjs and design/site-measure.mjs draw pages the same way).
+export const BASE_CSS = `html, body { margin: 0; background: #FFFFFF; }
+body { font-family: Geist, -apple-system, system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+a { color: inherit; text-decoration: none; }
+a:hover { opacity: .8; }
+@media (prefers-reduced-motion: no-preference) { html { scroll-behavior: smooth; } }`;
 const ID = { org: ORIGIN + '/#organization', site: ORIGIN + '/#website', app: ORIGIN + '/#app' };
 
 // Every page of the site (the four with their own boards, then the data pages), each as { slug, kind, title, description,
@@ -95,11 +101,7 @@ export function head(p, { css, noindex = false } = {}) {
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="${FONTS}" rel="stylesheet">${noindex ? '' : `\n<script type="application/ld+json">${inScript(jsonLd(p))}</script>`}
 <style>
-html, body { margin: 0; background: #FFFFFF; }
-body { font-family: Geist, -apple-system, system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
-a { color: inherit; text-decoration: none; }
-a:hover { opacity: .8; }
-@media (prefers-reduced-motion: no-preference) { html { scroll-behavior: smooth; } }
+${BASE_CSS}
 ${css}
 </style>
 </head>`;

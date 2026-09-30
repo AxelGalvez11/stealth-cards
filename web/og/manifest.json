@@ -1,0 +1,37 @@
+{
+ "home": {
+  "file": "og/home.png",
+  "fingerprint": "fa22d15268",
+  "bytes": 141217
+ },
+ "pricing": {
+  "file": "og/pricing.png",
+  "fingerprint": "023e2eb5c4",
+  "bytes": 143220
+ },
+ "privacy": {
+  "file": "og/privacy.png",
+  "fingerprint": "0b43fd5a45",
+  "bytes": 139922
+ },
+ "terms": {
+  "file": "og/terms.png",
+  "fingerprint": "f9abfe4c25",
+  "bytes": 136934
+ },
+ "compare": {
+  "file": "og/compare.png",
+  "fingerprint": "1e44179a58",
+  "bytes": 143885
+ },
+ "vs/anki": {
+  "file": "og/vs-anki.png",
+  "fingerprint": "09784c9f5a",
+  "bytes": 142349
+ },
+ "faq": {
+  "file": "og/faq.png",
+  "fingerprint": "e7351264de",
+  "bytes": 139741
+ }
+}
