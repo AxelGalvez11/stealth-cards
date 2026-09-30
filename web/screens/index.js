@@ -322,6 +322,12 @@ export default [
   "name": "PhoneConnect",
   "title": "iPhone · Connect AI",
   "w": 390,
+  "h": 975
+ },
+ {
+  "name": "PhoneConnectConsent",
+  "title": "iPhone · An AI app asks to connect (Allow or Cancel)",
+  "w": 390,
   "h": 844
  },
  {
@@ -802,25 +808,25 @@ export default [
   "name": "PhoneSettings",
   "title": "iPhone · Settings",
   "w": 390,
-  "h": 1562
+  "h": 1674
  },
  {
   "name": "PhoneSettingsFree",
   "title": "iPhone · Settings · on Free (Tune to you is Pro)",
   "w": 390,
-  "h": 1562
+  "h": 1674
  },
  {
   "name": "PhoneSettingsGray",
   "title": "iPhone · Settings (dark, gray)",
   "w": 390,
-  "h": 1562
+  "h": 1674
  },
  {
   "name": "PhoneSettingsVerified",
   "title": "iPhone · Settings · a verified teacher (Get verified says Verified teacher)",
   "w": 390,
-  "h": 1562
+  "h": 1674
  },
  {
   "name": "PhoneSignIn",
@@ -1977,6 +1983,12 @@ export default [
  {
   "name": "WebConnect",
   "title": "Web · Connect AI",
+  "w": 1440,
+  "h": 900
+ },
+ {
+  "name": "WebConnectConsent",
+  "title": "Web · An AI app asks to connect (Allow or Cancel)",
   "w": 1440,
   "h": 900
  },

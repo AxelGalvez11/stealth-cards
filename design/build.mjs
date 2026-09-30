@@ -3149,6 +3149,26 @@ const PROVIDER_LOGO = size => `<sc-if value="{{p.isClaude}}" hint-placeholder-va
 const PROVIDERS = on => `const providers = [['claude', 'Claude'], ['openai', 'ChatGPT'], ['cursor', 'Cursor'], ['mcp', 'Any MCP app']].map(([id, name]) => ({ name, status: (${on})[id] ? 'Connected' : 'Connect', color: (${on})[id] ? t.good : t.muted,
     isClaude: id === 'claude', isOpenAI: id === 'openai', isCursor: id === 'cursor', isMcp: id === 'mcp', cursorInk: this.props.dark ? '#edecec' : '#26251e' }));`;
 
+// The apps that signed in to Lucida (web/oauth.mjs): Claude, ChatGPT and others add Lucida by its address and sign in (no secret
+// link). Each is listed here with when it connected, and Disconnect ends it at once.
+const APP_LOGO = (size, who) => PROVIDER_LOGO(size).replace(/\{\{p\./g, '{{' + who + '.');
+const appsSection = phone => `<div style="background: {{t.surf}}; border-radius: ${phone ? 24 : 18}px; padding: ${phone ? '16px 18px' : '20px 24px'}; display: flex; flex-direction: column; gap: 4px;">
+        <div style="display: flex; ${phone ? 'flex-direction: column; gap: 2px;' : 'align-items: baseline; justify-content: space-between; gap: 12px;'} padding-bottom: 8px;"><span style="font-size: 15px; font-weight: 600;">Apps you allowed</span><span style="font-size: 13px; color: {{t.muted}};">Each one signed in to Lucida and can use your decks.</span></div>
+        <sc-for list="{{apps}}" as="a" hint-placeholder-count="2">
+          <div style="display: flex; align-items: center; gap: 12px; min-height: 58px; border-top: 1px solid {{t.line}};"><span style="width: 38px; height: 38px; flex-shrink: 0; border-radius: 19px; background: {{t.bg}}; display: flex; align-items: center; justify-content: center;">${APP_LOGO(22, 'a')}</span><span style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px;"><span style="font-size: 15px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{a.name}}</span><span style="font-size: 12px; color: {{t.muted}}; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{a.sub}}</span></span>${smallBtn('Disconnect', 'a.disconnect', '', '{{t.bg}}')}</div>
+        </sc-for>
+        <sc-if value="{{noApps}}" hint-placeholder-val="{{ false }}"><div style="padding: 10px 0 2px; font-size: 14px; line-height: 1.4; color: {{t.muted}};">None yet. Add Lucida to your AI app and sign in: <a href="https://lucida.cards/connect" style="color: {{t.text}}; text-decoration: underline;">how</a>.</div></sc-if>
+      </div>`;
+const APPS_JS = `// Each app that signed in: its name, the site it sends you back to, when it connected and was last used, and Disconnect. On the canvas
+  // two sample apps (and the board's noApps setting shows none); Disconnect takes one off the board.
+  const when = iso => (iso ? new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : ''), cursorInk2 = this.props.dark ? '#edecec' : '#26251e', gone = this.state.gone || {};
+  const sample = this.props.noApps ? [] : [{ id: 'a1', name: 'Claude', host: 'claude.ai', connected: '2026-09-12T16:20:00Z', lastUsed: '2026-09-29T08:05:00Z' }, { id: 'a2', name: 'ChatGPT', host: 'chatgpt.com', connected: '2026-09-18T19:40:00Z', lastUsed: '2026-09-18T19:40:00Z' }].filter(a => !gone[a.id]);
+  const appList = db.mock ? sample : ai.apps || [];
+  const appVals = { apps: appList.map(a => ({ name: a.name, sub: [a.host, 'Connected ' + when(a.connected), a.lastUsed && when(a.lastUsed) !== when(a.connected) ? 'Used ' + when(a.lastUsed) : ''].filter(Boolean).join(' · '),
+      isClaude: /^claude/i.test(a.name), isOpenAI: /chatgpt|openai/i.test(a.name), isCursor: /cursor/i.test(a.name), isMcp: !/claude|chatgpt|openai|cursor/i.test(a.name), cursorInk: cursorInk2,
+      disconnect: () => (db.mock ? this.setState({ gone: { ...gone, [a.id]: true } }) : db.act.disconnectApp(a.id, a.name)) })),
+    noApps: !appList.length };`;
+
 // Connect
 const aiKind = (icon, title, text) => `<div style="background: {{t.bg}}; border-radius: 22px; padding: 16px; display: flex; flex-direction: column; gap: 10px;"><span style="width: 36px; height: 36px; border-radius: 18px; background: {{t.surf}}; display: flex; align-items: center; justify-content: center;">${svg(I[icon], 16, 2)}</span><span style="font-size: 14px; font-weight: 600;">${title}</span><span style="font-size: 13px; line-height: 1.4; color: {{t.muted}};">${text}</span></div>`;
 const webConnect = webRoot(`${sidebar('Connect AI')}
@@ -3165,6 +3185,7 @@ const webConnect = webRoot(`${sidebar('Connect AI')}
           <div style="background: {{t.surf}}; border-radius: 16px; padding: 16px; display: flex; flex-direction: column; gap: 12px;"><span style="width: 36px; height: 36px; border-radius: 18px; background: {{t.bg}}; display: flex; align-items: center; justify-content: center;">${PROVIDER_LOGO(22)}</span><span style="font-size: 15px; font-weight: 600;">{{p.name}}</span><span style="font-size: 13px; color: {{p.color}};">{{p.status}}</span></div>
         </sc-for>
       </div>
+      ${appsSection(false)}
       <div style="background: {{t.surf}}; border-radius: 18px; padding: 20px 24px; display: flex; flex-direction: column; gap: 14px;">
         <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 12px;"><span style="font-size: 15px; font-weight: 600;">Cards your AI can make</span><span style="font-size: 13px; color: {{t.muted}};">Just ask, like “Make 20 cards from my notes.”</span></div>
         <div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px;">
@@ -3202,9 +3223,10 @@ renderVals() {
   ${SW_JS}
   const perms = defs.map(d => { const on = ai.perms[d.id]; return { ...d, ...sw(on), toggle: () => db.act.setPerm(d.id, !on) }; });
   ${PROVIDERS('ai.clients')}
+  ${APPS_JS}
   // Online, a link that got out can be swapped for a new one; AI apps with the old link lose access.
   const renew = () => { if (db.mock) return this.setState({ renewed: true }); if (!confirm('Make a new link? AI apps using the old one will stop working until you give them the new link.')) return; db.act.newLink().then(() => this.setState({ renewed: true, copied: false })); };
-  return { ${MESH_VALS('Apricot')} t, ...chrome, perms, providers, mcpUrl: ai.url, copyLabel: this.state.copied ? 'Copied' : 'Copy', copy: () => { db.act.copy(ai.url); this.setState({ copied: true }); },
+  return { ${MESH_VALS('Apricot')} t, ...chrome, ...appVals, perms, providers, mcpUrl: ai.url, copyLabel: this.state.copied ? 'Copied' : 'Copy', copy: () => { db.act.copy(ai.url); this.setState({ copied: true }); },
     canRenew: db.mock || db.settings().signedIn, renew, renewLabel: this.state.renewed ? 'New link made' : 'Make a new link' };
 }`;
 
@@ -3786,6 +3808,8 @@ const phoneStatsLogic = `renderVals() { ${T}${DB_JS}
   return { t, ...deepVals, goalNote: 'The line marks your ' + goal + '% goal', goalLeft: goal + '%', heat: st.heat ? st.heat.slice(-17 * 7).map(cell) : heat, legend, forecast, dueTotal, busy,
     kpis: [{ label: 'Streak', value: plural(st.streak, 'day') }, { label: 'Remembered', value: st.remembered == null ? '—' : st.remembered + '%' }, { label: 'Reviews', value: st.reviews }, { label: 'Cards', value: st.cards }] }; }`;
 
+// The page's content (with room for the tab bar) plus the apps that signed in: two sample apps on the canvas.
+const PHONE_CONNECT_H = 975;
 const phoneConnect = phone(`<div style="padding: 64px 20px 120px; display: flex; flex-direction: column; gap: 16px;">
   ${pTitle('Connect AI')}
   <div style="font-size: 15px; line-height: 1.45; color: {{t.muted}};">Make cards from any chat: text, fill-in-the-blank, images, and audio.</div>
@@ -3798,19 +3822,21 @@ const phoneConnect = phone(`<div style="padding: 64px 20px 120px; display: flex;
       <div style="display: flex; align-items: center; gap: 12px; min-height: 60px; border-bottom: 1px solid {{t.line}};"><span style="width: 38px; height: 38px; border-radius: 19px; background: {{t.surf}}; display: flex; align-items: center; justify-content: center;">${PROVIDER_LOGO(20)}</span><span style="flex-grow: 1; font-size: 16px; font-weight: 500;">{{p.name}}</span><span style="font-size: 13px; font-weight: 600; color: {{p.color}};">{{p.status}}</span></div>
     </sc-for>
   </div>
-</div>`, 'Connect');
+  ${appsSection(true)}
+</div>`, 'Connect', '', PHONE_CONNECT_H);
 // Your MCP link runs on past its pill to the card's edge, as on the canvas.
 const phoneConnectLogic = `
 constructor(props) { super(props); this.state = { copied: false }; }
 renderVals() { ${T}${DB_JS}
   const ai = db.ai();
   ${PROVIDERS('ai.clients')}
-  return { ${MESH_VALS('Apricot')} t, providers, mcpUrl: ai.url, copyLabel: this.state.copied ? 'Copied' : 'Copy link', copy: () => { db.act.copy(ai.url); this.setState({ copied: true }); } }; }`;
+  ${APPS_JS}
+  return { ${MESH_VALS('Apricot')} t, ...appVals, providers, mcpUrl: ai.url, copyLabel: this.state.copied ? 'Copied' : 'Copy link', copy: () => { db.act.copy(ai.url); this.setState({ copied: true }); } }; }`;
 
 // iPhone Settings, from the gear on Today. Appearance switches this screen right away, and so does Dark mode (gray or
 // black, for whenever the app is dark). The page scrolls; the board is tall enough to show all of it: the page's content
 // (on Pro) plus 14, so a row added to Settings adds 53 here (node tests/board-fit.mjs PhoneSettings says if it's cut off).
-const PHONE_SETTINGS_H = 1562;
+const PHONE_SETTINGS_H = 1674;
 const sRow = (label, right, { href = '', sub = '', click = '' } = {}) => {
   const inner = `<span style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px;"><span style="font-size: 16px;">${label}</span>${sub ? `<span style="font-size: 12px; color: {{t.muted}};">${sub}</span>` : ''}</span>${right}`;
   const st = 'min-height: 52px; box-sizing: border-box; padding: 8px 16px; display: flex; align-items: center; gap: 12px;';
@@ -3875,9 +3901,33 @@ const PROFILE_ROW_JS = board => `const you = (db.me && db.me()) || {}, vst = (db
     editProfileHref: db.mock ? '${board}Edit.dc.html' : you.handle ? '/@' + you.handle + '?edit=1' : '/you?edit=1',
     verifyGet: !vst.verified, verifyDone: !!vst.verified, verifyValue: vst.open ? 'Waiting for review' : '', verifiedLabel: vst.verified === 'school' ? 'Verified school' : 'Verified teacher',
     verifyHref: db.mock ? '${board.replace('Profile', 'ClassVerify')}.dc.html' : '/verify' };`;
+// Settings → Account → Password (online only; on this computer nobody signs in). Optional: a row that opens a small form for a new
+// password (8 to 72 characters). Once one is saved, "Use a password" on the sign-in page works for this email, which is how a
+// directory reviewer signs in (they can't get an email code). The Account group is where Delete account and Blocked people belong too.
+const PW_BOX = 'height: 44px; box-sizing: border-box; padding: 0 16px; border: 0; outline: 0; border-radius: 999px; background: {{t.bg}}; color: {{t.text}}; font: inherit; font-size: 16px;';
+const PASSWORD_ROW = sRow('Password', sVal(''), { click: 'pwToggle', sub: 'Optional. Sign in without an email code.' })
+  + `<sc-if value="{{pwOpen}}" hint-placeholder-val="{{ false }}"><div style="padding: 4px 16px 16px; display: flex; flex-direction: column; gap: 10px;">
+    <span style="font-size: 13px; line-height: 1.45; color: {{t.muted}};">Sign in with your email and a password instead of a code. You can still use a code any time.</span>
+    <input type="password" value="{{pwText}}" onChange="{{pwType}}" onKeyDown="{{pwKey}}" placeholder="New password, 8 or more characters" aria-label="New password" autocomplete="new-password" style="${PW_BOX}">
+    <div style="display: flex; gap: 8px;"><button type="button" onClick="{{pwSave}}" style="height: 40px; padding: 0 20px; border: 0; border-radius: 999px; background: {{t.inv}}; color: {{t.invText}}; font: inherit; font-size: 14px; font-weight: 600; cursor: pointer;">{{pwSaveLabel}}</button><button type="button" onClick="{{pwToggle}}" style="height: 40px; padding: 0 16px; border: 0; border-radius: 999px; background: {{t.bg}}; color: {{t.text}}; font: inherit; font-size: 14px; font-weight: 600; cursor: pointer;">Close</button></div>
+    <sc-if value="{{pwMsg}}" hint-placeholder-val="{{ false }}"><span role="status" style="font-size: 13px; line-height: 1.4; color: {{pwMsgColor}};">{{pwMsg}}</span></sc-if>
+  </div></sc-if>`;
+const ACCOUNT_GROUP = `<sc-if value="{{canPassword}}" hint-placeholder-val="{{ true }}">${sGroup('Account', [PASSWORD_ROW])}</sc-if>`;
+const PASSWORD_JS = `const pwS = this.state.pw || {}, pwOpen = pwS.open ?? !!this.props.passwordOpen, setPw = patch => this.setState({ pw: { ...pwS, ...patch } });
+  const pwVals = { canPassword: !!db.mock || !!st.signedIn, pwOpen, pwText: pwS.text || '', pwMsg: pwS.msg || '', pwMsgColor: pwS.ok ? t.good : t.again, pwSaveLabel: pwS.busy ? 'Saving…' : 'Save',
+    pwToggle: () => setPw({ open: !pwOpen, text: '', msg: '', ok: false }), pwType: e => setPw({ text: e && e.target ? e.target.value : '', msg: '', ok: false }), pwKey: e => { if (e && e.key === 'Enter') pwVals.pwSave(e); },
+    pwSave: e => {
+      if (e && e.preventDefault) e.preventDefault();
+      const v = String(pwS.text || ''); if (pwS.busy) return;
+      if (v.length < 8 || v.length > 72) return setPw({ msg: 'Use 8 to 72 characters.', ok: false });
+      if (db.mock) return setPw({ msg: 'Password saved.', ok: true, text: '' });
+      setPw({ busy: true, msg: '' });
+      db.act.setPassword(v).then(() => setPw({ busy: false, ok: true, msg: 'Password saved.', text: '' }), err => setPw({ busy: false, ok: false, msg: err.message }));
+    } };`;
 const phoneSettings = phone(`<div style="padding: 64px 20px 34px; display: flex; flex-direction: column; gap: 18px;">
   <div style="display: flex; align-items: center; gap: 12px;">${roundBtn('back', 'Back', 'PhoneToday.dc.html')}<div style="flex-grow: 1; font-size: 17px; font-weight: 600; text-align: center;">Settings</div><div style="width: 44px;"></div></div>
   <button type="button" onClick="{{account}}" style="width: 100%; border: 0; border-radius: 24px; background: {{t.surf}}; padding: 14px 16px; display: flex; align-items: center; gap: 14px; color: inherit; font: inherit; text-align: left; cursor: pointer;">${AVATAR_ME(44)}<span style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px;"><span style="font-size: 16px; font-weight: 600;">Your account</span><span style="font-size: 13px; color: {{t.muted}}; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{accountSub}}</span></span><span style="display: flex; color: {{t.muted}};">${svg(I.chev, 14, 2.2)}</span></button>
+  ${ACCOUNT_GROUP}
   ${SETTINGS_PROFILE('PhoneProfile')}
   ${sGroup('Profile picture', [`<div style="padding: 12px 16px 16px; display: flex; flex-direction: column; gap: 12px;">${photoPanel(true)}</div>`])}
   ${planGroups}
@@ -3911,8 +3961,9 @@ renderVals() {
   ${PHOTO_JS}
   ${PROFILE_ROW_JS('PhoneProfile')}
   ${TUNE_JS}
+  ${PASSWORD_JS}
   return {
-    t, ...chrome, ...planVals, ...photoVals, ...profileVals, tune,
+    t, ...chrome, ...planVals, ...photoVals, ...profileVals, ...pwVals, tune,
     // Your account: tap it to sign out (online).
     accountSub: db.mock ? 'Synced on all your devices · just now' : st.sub,
     account: () => { if (!db.mock && st.signedIn && confirm('Sign out of Lucida?')) db.act.signOut(); },
@@ -3949,6 +4000,7 @@ const webSettings = webRoot(`${sidebar('You')}
           ${photoPanel(false)}
         </div>
       </div>
+      ${ACCOUNT_GROUP}
       ${sGroup('Studying', [
         sRow('Daily reminder', sVal('{{reminder}}')),
         sRow('New cards a day', miniStep('perDay', 'lessDay', 'moreDay', '{{t.bg}}', 'perDayIn')),
@@ -3995,8 +4047,9 @@ renderVals() {
   ${PHOTO_JS}
   ${PROFILE_ROW_JS('WebProfile')}
   ${TUNE_JS}
+  ${PASSWORD_JS}
   return {
-    t, ...chrome, grain: String(this.props.grain ?? 0.7), ...planVals, ...photoVals, ...profileVals, tune,
+    t, ...chrome, grain: String(this.props.grain ?? 0.7), ...planVals, ...photoVals, ...profileVals, ...pwVals, tune,
     name: st.name, sub: st.sub, signedIn: st.signedIn,
     ...themeRow(),
     looks: opts([['system', 'System'], ['light', 'Light'], ['dark', 'Dark']], look, id => set({ look: id })),
@@ -4928,7 +4981,10 @@ const orLine = `<div style="display: flex; align-items: center; gap: 12px; font-
 // What signing in means, with the Terms and Privacy pages a tap away.
 const AGREE = `<p style="margin: 0; font-size: 12px; line-height: 1.5; color: {{t.muted}}; text-align: center;">By continuing, you agree to the <a href="{{termsHref}}" style="text-decoration: underline;">Terms</a> and <a href="{{privacyHref}}" style="text-decoration: underline;">Privacy Policy</a>.</p>`;
 // Phones get 16px text in the field, or they zoom in when it's tapped.
-const emailForm = (h, next, fs = 15) => `<div style="display: flex; flex-direction: column; gap: 10px;"><input type="email" value="{{email}}" onChange="{{setEmail}}" onKeyDown="{{emailKey}}" placeholder="Email" aria-label="Email" autocomplete="email" style="height: ${h}px; box-sizing: border-box; padding: 0 20px; border: 0; outline: 0; border-radius: 999px; background: {{t.surf}}; color: {{t.text}}; font: inherit; font-size: ${fs}px;"><a href="${next}" onClick="{{sendCode}}" style="height: ${h}px; display: flex; align-items: center; justify-content: center; border-radius: 999px; background: {{t.inv}}; color: {{t.invText}}; font-size: 15px; font-weight: 600;">{{sendLabel}}</a>${SIGN_ERROR}</div>`;
+// The password is for people who set one in Settings (and for directory reviewers, who can't get an email code): the same form with a
+// password box under the email, and a link under it that switches between a password and an email code.
+const emailForm = (h, next, fs = 15) => { const box = `height: ${h}px; box-sizing: border-box; padding: 0 20px; border: 0; outline: 0; border-radius: 999px; background: {{t.surf}}; color: {{t.text}}; font: inherit; font-size: ${fs}px;`;
+  return `<div style="display: flex; flex-direction: column; gap: 10px;"><input type="email" value="{{email}}" onChange="{{setEmail}}" onKeyDown="{{emailKey}}" placeholder="Email" aria-label="Email" autocomplete="{{emailAuto}}" style="${box}"><sc-if value="{{passwordMode}}" hint-placeholder-val="{{ false }}"><input type="password" value="{{password}}" onChange="{{setPassword}}" onKeyDown="{{passwordKey}}" placeholder="Password" aria-label="Password" autocomplete="current-password" style="${box}"></sc-if><a href="${next}" onClick="{{sendCode}}" style="height: ${h}px; display: flex; align-items: center; justify-content: center; border-radius: 999px; background: {{t.inv}}; color: {{t.invText}}; font-size: 15px; font-weight: 600;">{{sendLabel}}</a>${SIGN_ERROR}<button type="button" onClick="{{togglePassword}}" style="align-self: center; border: 0; padding: 0; background: transparent; color: {{t.muted}}; font: inherit; font-size: 14px; cursor: pointer;">{{passwordToggle}}</button></div>`; };
 // Why signing in didn't work (a wrong code, Google not set up yet), under the field it's about.
 const SIGN_ERROR = `<sc-if value="{{hasError}}" hint-placeholder-val="{{ false }}"><div role="alert" style="padding: 2px 4px 0; font-size: 14px; line-height: 1.4; color: {{t.again}}; text-align: center;">{{error}}</div></sc-if>`;
 // Six boxes over one real field, so typing, pasting, and the phone's "code from Mail" all work.
@@ -5037,9 +5093,11 @@ const phoneSignInCode = signPhoneRoot(`<div style="flex: 1 0 auto; box-sizing: b
 </div>`);
 // On the canvas the code page shows three digits typed, with the fourth box next.
 const signInLogic = (code, secs, k = 1) => `${ART_METHOD}
-constructor(props) { super(props); const a = props.db && props.db.auth; this.state = { email: a ? a.email() : '', code: a ? '' : '${code}', resent: false, busy: false, error: a ? a.error() : '' }; }
+constructor(props) { super(props); const a = props.db && props.db.auth; this.state = { email: a ? a.email() : '', code: a ? '' : '${code}', resent: false, busy: false, error: a ? a.error() : '', password: '', pwOn: undefined }; }
 renderVals() { ${T}
   const s = this.state, code = String(s.code || ''), a = this.props.db && this.props.db.auth;
+  // A password instead of a code: in the app it is its own address (/sign-in/password); on the canvas the link flips the board.
+  const pw = a ? !!this.props.passwordMode : (s.pwOn ?? !!this.props.passwordMode);
   // In the app (props.db) these sign in for real: an email code, or Google and Apple through the server.
   const stop = e => { if (e && e.preventDefault) e.preventDefault(); };
   const failed = e => this.setState({ busy: false, error: e.message });
@@ -5048,6 +5106,11 @@ renderVals() { ${T}
     const email = String(s.email || '').trim();
     if (!/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(email)) return this.setState({ error: 'Type your email address.' });
     if (s.busy) return;
+    if (pw) {
+      if (!s.password) return this.setState({ error: 'Type your password.' });
+      this.setState({ busy: true, error: '' });
+      return a.password(email, s.password).then(() => a.done(), failed);
+    }
     this.setState({ busy: true, error: '' });
     a.sendCode(email).then(() => { this.setState({ busy: false }); a.go('/sign-in/code'); }, failed);
   };
@@ -5060,7 +5123,9 @@ renderVals() { ${T}
   const leave = to => e => { if (!a) return; stop(e); location.assign(to); };
   return { grain: String(this.props.grain ?? 0.7), t, ${secs ? WALL_VALS(secs, k, FLIPS.calm) : ''}
     email: s.email, setEmail: e => this.setState({ email: e && e.target ? e.target.value : '', error: '' }), emailKey: e => { if (e && e.key === 'Enter') send(e); },
-    sentTo: (s.email || '').trim() || 'you@school.edu', sendCode: send, sendLabel: s.busy ? 'Sending…' : 'Continue',
+    sentTo: (s.email || '').trim() || 'you@school.edu', sendCode: send, sendLabel: pw ? (s.busy ? 'Signing in…' : 'Sign in') : s.busy ? 'Sending…' : 'Continue',
+    passwordMode: pw, password: s.password || '', emailAuto: pw ? 'username' : 'email', setPassword: e => this.setState({ password: e && e.target ? e.target.value : '', error: '' }), passwordKey: e => { if (e && e.key === 'Enter') send(e); },
+    togglePassword: () => { if (!a) return this.setState({ pwOn: !pw, error: '' }); if (a.remember) a.remember(String(s.email || '').trim()); a.go(pw ? '/sign-in' : '/sign-in/password'); }, passwordToggle: pw ? 'Use an email code instead' : 'Use a password',
     google: leave('/auth/google'), apple: leave('/auth/apple'),
     code, setCode: e => { const c = String(e && e.target ? e.target.value : '').replace(/\\D/g, '').slice(0, 6); this.setState({ code: c, error: '' }); check(c); },
     verify: e => { if (!a) return; stop(e); if (code.length < 6) return this.setState({ error: 'Type the 6-digit code from the email.' }); check(code); },
@@ -7613,6 +7678,64 @@ const STATS_PROPS = { tab: { editor: 'enum', default: 'Overview', options: ['Ove
 const LEVEL_PROP = { editor: 'enum', default: 'all', options: ['all', 'new', 'easy', 'medium', 'hard', 'leech', 'paused'] };
 const TUNE_PROP = { editor: 'enum', default: 'On', options: ['On', 'Off', 'Not enough reviews', 'Tuning'] };
 const EDITOR_CSS = RICH_CSS + OCC_EDIT_CSS;
+// ---------- An AI app asks to connect (web/oauth.mjs) ----------
+// Claude, ChatGPT and other apps send the person to /oauth/authorize once they have signed in to Lucida. This is the page they
+// land on: who is asking, where they'll go back to, what it will be able to do, and Allow or Cancel. What it says comes from the
+// server (db.consent()): an app can't borrow Claude's name, and an app that runs on this computer gets a warning of its own.
+// A request that can't be trusted (an app Lucida doesn't know, a return address it never gave) says so and sends nobody anywhere.
+const CONSENT_PROPS = { ...DARK, grain: MESH('Iris').grain, consent: { editor: 'enum', default: 'Claude', options: ['Claude', 'ChatGPT', 'Other app', 'App on this computer', 'Loading', 'Error'] } };
+const CONSENT_BTN = h => `height: ${h}px; padding: 0 22px; box-sizing: border-box; display: flex; align-items: center; justify-content: center; border: 0; border-radius: 999px; font: inherit; font-size: 15px; font-weight: 600; cursor: pointer;`;
+const consentBody = phone => {
+  const h1 = phone ? 26 : 32, btn = phone ? 52 : 48, node = (inner) => `<span style="width: 56px; height: 56px; flex-shrink: 0; border-radius: 28px; background: {{t.surf}}; display: flex; align-items: center; justify-content: center;">${inner}</span>`;
+  const buttons = `<div style="display: flex; ${phone ? 'flex-direction: column;' : ''} gap: 10px;"><button type="button" onClick="{{allow}}" style="${CONSENT_BTN(btn)} ${phone ? '' : 'flex: 1 1 0;'} background: {{t.inv}}; color: {{t.invText}};">{{allowLabel}}</button><button type="button" onClick="{{cancel}}" style="${CONSENT_BTN(btn)} ${phone ? '' : 'flex: 1 1 0;'} background: {{t.surf}}; color: {{t.text}};">Cancel</button></div>`;
+  return `<sc-if value="{{ready}}" hint-placeholder-val="{{ true }}"><div style="display: flex; flex-direction: column; gap: ${phone ? 18 : 22}px;">
+    <div style="display: flex; align-items: center; gap: 10px;">${node(APP_LOGO(30, 'logo'))}<span style="display: flex; color: {{t.muted}};">${svg(I.link, 18, 2)}</span>${node(mark(22))}</div>
+    <h1 style="margin: 0; font-size: ${h1}px; font-weight: 600; line-height: 1.1; letter-spacing: -.03em; text-wrap: balance;">{{app}} wants to use your Lucida decks</h1>
+    <sc-if value="{{hasEmail}}" hint-placeholder-val="{{ true }}"><div style="font-size: 14px; color: {{t.muted}};">Signed in as <span style="color: {{t.text}}; font-weight: 500;">{{email}}</span><sc-if value="{{canSwitch}}" hint-placeholder-val="{{ true }}"> · <button type="button" onClick="{{switchAccount}}" style="border: 0; padding: 0; background: transparent; color: {{t.muted}}; font: inherit; font-size: 14px; text-decoration: underline; cursor: pointer;">Use another account</button></sc-if></div></sc-if>
+    <div style="background: {{t.surf}}; border-radius: 22px; padding: 18px 20px; display: flex; flex-direction: column; gap: 12px;">
+      ${eyebrow('It will be able to')}
+      <sc-for list="{{permissions}}" as="x" hint-placeholder-count="2"><div style="display: flex; align-items: flex-start; gap: 10px; font-size: 15px; line-height: 1.4;"><span style="display: flex; margin-top: 2px; color: {{t.good}};">${svg(I.check, 16, 2.4)}</span><span>{{x.text}}</span></div></sc-for>
+      <div style="font-size: 13px; line-height: 1.45; color: {{t.muted}};">You choose what it can do, and you can disconnect it any time, in Settings → Connect AI.</div>
+    </div>
+    <div style="font-size: 14px; line-height: 1.45; color: {{t.muted}};">{{goLine}}<sc-if value="{{warn}}" hint-placeholder-val="{{ false }}"> <span style="color: {{t.text}}; font-weight: 500;">{{warnLine}}</span></sc-if></div>
+    <sc-if value="{{hasError}}" hint-placeholder-val="{{ false }}"><div role="alert" style="font-size: 14px; line-height: 1.4; color: {{t.again}};">{{error}}</div></sc-if>
+    ${buttons}
+  </div></sc-if>
+  <sc-if value="{{loading}}" hint-placeholder-val="{{ false }}"><div style="display: flex; flex-direction: column; gap: 14px;"><h1 style="margin: 0; font-size: ${h1}px; font-weight: 600; letter-spacing: -.03em;">One moment…</h1><div style="font-size: 15px; color: {{t.muted}};">Checking the app that sent you here.</div></div></sc-if>
+  <sc-if value="{{failed}}" hint-placeholder-val="{{ false }}"><div style="display: flex; flex-direction: column; gap: 16px;"><h1 style="margin: 0; font-size: ${h1}px; font-weight: 600; line-height: 1.1; letter-spacing: -.03em;">This link didn’t work</h1><div style="font-size: 15px; line-height: 1.5; color: {{t.muted}};">{{problem}}</div><div style="font-size: 15px; line-height: 1.5; color: {{t.muted}};">Go back to the app and start again.</div><a href="Main.dc.html" style="${CONSENT_BTN(btn)} background: {{t.inv}}; color: {{t.invText}};">Open Lucida</a></div></sc-if>`;
+};
+const webConnectConsent = `<div style="width: 1440px; height: 900px; box-sizing: border-box; display: flex; flex-direction: column; font-family: ${FONT}; background: {{t.bg}}; color: {{t.text}}; overflow: hidden;">
+  <header style="height: 76px; flex-shrink: 0; box-sizing: border-box; padding: 0 40px; display: flex; align-items: center;"><a href="https://lucida.cards" aria-label="Lucida home">${logo()}</a></header>
+  <main style="flex-grow: 1; min-height: 0; box-sizing: border-box; padding: 0 24px 76px; display: flex; align-items: center; justify-content: center;"><div style="width: 100%; max-width: 440px;">${consentBody(false)}</div></main>
+</div>`;
+const phoneConnectConsent = signPhoneRoot(`<div style="flex: 1 0 auto; box-sizing: border-box; padding: 64px 20px 34px; display: flex; flex-direction: column; gap: 28px;">
+  <div>${logo()}</div>
+  <div style="flex-grow: 1; display: flex; flex-direction: column; justify-content: center;">${consentBody(true)}</div>
+</div>`);
+const consentLogic = `renderVals() {
+  ${T}${DB_JS}
+  // On the canvas: Claude, ChatGPT, an app nobody vouches for, one on this computer, loading, or a link that failed (the board's consent setting).
+  const sampleConsent = v => {
+    if (v === 'Loading') return { loading: true };
+    if (v === 'Error') return { error: 'That app’s return address isn’t one it gave Lucida.' };
+    const o = { ChatGPT: ['ChatGPT', 'chatgpt.com', true, false], 'Other app': ['Grok', 'grok.com', false, false], 'App on this computer': ['Claude Code', 'localhost', true, true] }[v] || ['Claude', 'claude.ai', true, false];
+    return { ok: true, app: o[0], host: o[1], verified: o[2], loopback: o[3], email: 'alex@school.edu', permissions: ['See your decks, cards and study stats', 'Add and change your cards and decks'] };
+  };
+  const c = db.mock ? sampleConsent(this.props.consent) : db.consent(), st = db.settings(), plain = this.props.dark ? '#edecec' : '#26251e';
+  const who = c.app || '', low = who.toLowerCase();
+  // The app's own logo for Claude and ChatGPT, the plain MCP mark for the rest.
+  const logo = { isClaude: /^claude/.test(low), isOpenAI: /chatgpt|openai/.test(low), isCursor: false, isMcp: !/^claude|chatgpt|openai/.test(low), cursorInk: plain };
+  return {
+    t, ...chrome, grain: String(this.props.grain ?? 0.7), logo,
+    ready: !!c.ok, loading: !!c.loading, failed: !!c.error, problem: c.error || '',
+    app: who, email: c.email || '', hasEmail: !!c.email, canSwitch: !db.mock && st.signedIn, permissions: (c.permissions || []).map(text => ({ text })),
+    goLine: c.loopback ? 'It runs on your computer, so it will go back to ' + c.host + ' there.' : 'After you allow, you’ll go back to ' + c.host + '.',
+    warn: !c.verified || !!c.loopback, warnLine: c.loopback ? 'Only allow it if you just started it yourself.' : 'Only allow apps you trust.',
+    allowLabel: c.busy ? 'One moment…' : 'Allow', allow: () => db.mock || db.act.connectApp(true), cancel: () => db.mock || db.act.connectApp(false), switchAccount: () => db.mock || db.act.switchAccount(),
+    hasError: !!c.decideError, error: c.decideError || ''
+  };
+}`;
+
 const files = {
   'Main': ['Web · Today', webToday, { props: { ...DARK, ...MESH('Iris'), caughtUp: { editor: 'boolean', default: false }, assignments: { editor: 'boolean', default: false } }, logic: todayLogic, css: DRAG_CSS, w: W, h: H }],
   'WebNewDeck': ['Web · New deck', webNewDeck, { props: { ...DARK, grain: MESH('Iris').grain }, logic: NEW_DECK_LOGIC, css: NUM_CSS + COVER_FADE_CSS, w: W, h: H }],
@@ -7627,7 +7750,7 @@ const files = {
   'WebDecksTags': ['Web · Library · a deck with 11 tags (+9 shows them all)', attrOf('WebDecks', W, H, 'open-tags="{{yes}}"'), { logic: darkLogic, css: DRAG_CSS, w: W, h: H }],
   'WebDecksMoreTags': ['Web · Library · More (find any tag)', attrOf('WebDecks', W, H, 'more-tags="{{yes}}"'), { logic: darkLogic, css: DRAG_CSS, w: W, h: H }],
   'WebDecksList': ['Web · Library · list view', listOf('WebDecks', W, H), { logic: 'renderVals() { return {}; }', css: DRAG_CSS, w: W, h: H }],
-  'WebSettings': ['Web · Settings', webSettings, { props: { ...DARK, grain: MESH('Iris').grain, photo: PHOTO_PROP, plan: { editor: 'enum', default: 'Pro', options: ['Free', 'Pro', 'Pro, ending'] }, tune: TUNE_PROP, verified: VERIFIED_PROP }, logic: webSettingsLogic, css: NUM_CSS, w: W, h: H }],
+  'WebSettings': ['Web · Settings', webSettings, { props: { ...DARK, grain: MESH('Iris').grain, passwordOpen: BOOL, photo: PHOTO_PROP, plan: { editor: 'enum', default: 'Pro', options: ['Free', 'Pro', 'Pro, ending'] }, tune: TUNE_PROP, verified: VERIFIED_PROP }, logic: webSettingsLogic, css: NUM_CSS, w: W, h: H }],
   'WebSettingsFree': ['Web · Settings · on Free (Tune to you is Pro)', attrOf('WebSettings', W, H, 'plan="Free"'), { logic: darkLogic, css: NUM_CSS, w: W, h: H }],
   'WebSettingsVerified': ['Web · Settings · a verified teacher (Get verified says Verified teacher)', attrOf('WebSettings', W, H, 'verified="Teacher"'), { logic: darkLogic, css: NUM_CSS, w: W, h: H }],
   'IconOptions': ['Web · Icon options', iconOptions, { props: DARK, logic: iconOptionsLogic, w: W, h: H }],
@@ -7640,7 +7763,7 @@ const files = {
   'WebDeckTagPicker': ['Web · Deck settings · Add tag', attrOf('WebDeck', W, H, 'settings-open="{{yes}}" tag-picker="{{yes}}"'), { logic: darkLogic, css: NUM_CSS + DRAG_CSS, w: W, h: H }],
   'WebEditor': ['Web · Card editor', webEditor, { props: { ...DARK, cardType: { editor: 'enum', default: 'Basic', options: ['Basic', 'Blank', 'Image', 'Audio'] }, recording: { editor: 'boolean', default: false }, slashDemo: { editor: 'boolean', default: false } }, logic: EDITOR_LOGIC, css: EDITOR_CSS, w: W, h: H }],
   'WebEditorSlash': ['Web · Card editor · / menu', attrOf('WebEditor', W, H, 'slash-demo="{{yes}}"'), { logic: darkLogic, css: EDITOR_CSS, w: W, h: H }],
-  'WebSignIn': ['Web · Sign in', webSignIn, { props: { ...DARK, grain: MESH('Iris').grain }, logic: signInLogic('', [64, 78, 70, 84]), css: WALL_CSS, w: W, h: H }],
+  'WebSignIn': ['Web · Sign in', webSignIn, { props: { ...DARK, grain: MESH('Iris').grain, passwordMode: BOOL }, logic: signInLogic('', [64, 78, 70, 84]), css: WALL_CSS, w: W, h: H }],
   'WebSignInCode': ['Web · Sign in · code from email', webSignInCode, { props: { ...DARK, grain: MESH('Iris').grain }, logic: signInLogic('482', [64, 78, 70, 84]), css: WALL_CSS, w: W, h: H }],
   'WebEditorBlank': ['Web · Card editor · fill in the blank', typeOf('WebEditor', W, H, 'Blank'), { logic: darkLogic, css: EDITOR_CSS, w: W, h: H }],
   'WebEditorImage': ['Web · Card editor · image', typeOf('WebEditor', W, H, 'Image'), { logic: darkLogic, css: EDITOR_CSS, w: W, h: H }],
@@ -7668,7 +7791,8 @@ const files = {
   'WebStatsWeak': ['Web · Stats · Weak spots (Pro)', attrOf('WebStats', W, H, 'tab="Weak spots"'), { logic: darkLogic, w: W, h: H }],
   'WebStatsPace': ['Web · Stats · Pace (Pro)', attrOf('WebStats', W, H, 'tab="Pace"'), { logic: darkLogic, w: W, h: H }],
   'WebStatsUpgrade': ['Web · Stats · on Free: go Pro for deep stats', attrOf('WebStats', W, H, 'tab="Weak spots" free="{{yes}}"'), { logic: darkLogic, w: W, h: H }],
-  'WebConnect': ['Web · Connect AI', webConnect, { props: { ...DARK, ...MESH('Apricot') }, logic: connectLogic, w: W, h: H }],
+  'WebConnectConsent': ['Web · An AI app asks to connect (Allow or Cancel)', webConnectConsent, { props: CONSENT_PROPS, logic: consentLogic, w: W, h: H }],
+  'WebConnect': ['Web · Connect AI', webConnect, { props: { ...DARK, ...MESH('Apricot'), noApps: BOOL }, logic: connectLogic, w: W, h: H }],
   'WebTodayDark': ['Web · Today (dark)', darkOf('Main', W, H), { logic: darkLogic, css: DRAG_CSS, w: W, h: H }],
   'WebReviewDark': ['Web · Review (dark)', darkOf('WebReview', W, H), { logic: darkLogic, css: REVIEW_CSS, w: W, h: H }],
   'WebReviewFour': ['Web · Review · 4 grades', styleOf('WebReview', W, H, 'Four buttons'), { logic: darkLogic, css: REVIEW_CSS, w: W, h: H }],
@@ -7744,7 +7868,7 @@ const files = {
   'PhoneReview': ['iPhone · Review', phoneReview, { props: { ...DARK, playing: { editor: 'boolean', default: false }, explainOpen: { editor: 'boolean', default: false }, explained: { editor: 'boolean', default: false }, grading: { editor: 'enum', default: 'Four buttons', options: ['Four buttons', 'Check or X', 'Piles'] }, card: { editor: 'enum', default: 'Basic', options: ['Basic', 'Fill in the blank', 'Image', 'Audio'] }, startRevealed: { editor: 'boolean', default: false }, fsrs: { editor: 'boolean', default: true }, progress: { editor: 'enum', default: 'Bar', options: ['Bar', 'Counts', 'None'] }, settingsOpen: { editor: 'boolean', default: false }, newPileOpen: { editor: 'boolean', default: false }, radius: { editor: 'range', default: 32, min: 12, max: 48, step: 2, unit: 'px' } }, logic: REVIEW_LOGIC(64, true), css: REVIEW_CSS, w: PW, h: PH }],
   'PhoneDone': ['iPhone · Session done', phoneDone, { props: DARK, logic: doneLogic(260, 20, true), w: PW, h: PH }],
   'PhoneDonePiles': ['iPhone · Session done · piles', phoneDonePiles, { props: DARK, logic: donePilesLogic(true), w: PW, h: PH }],
-  'PhoneSignIn': ['iPhone · Sign in', phoneSignIn, { props: { ...DARK, grain: MESH('Iris').grain }, logic: signInLogic('', [50, 60, 55, 65], PHONE_K), css: WALL_CSS, w: PW, h: PH }],
+  'PhoneSignIn': ['iPhone · Sign in', phoneSignIn, { props: { ...DARK, grain: MESH('Iris').grain, passwordMode: BOOL }, logic: signInLogic('', [50, 60, 55, 65], PHONE_K), css: WALL_CSS, w: PW, h: PH }],
   'PhoneSignInCode': ['iPhone · Sign in · code from email', phoneSignInCode, { props: DARK, logic: signInLogic('482'), w: PW, h: PH }],
   'Landing': ['Landing page · lucida.cards', landing(LAND.web, W, LANDING_H), { props: { ...DARK, grain: MESH('Iris').grain }, logic: landingLogic(false), css: WALL_CSS + DEMO_CSS + SKY_CSS, w: W, h: LANDING_H }],
   'WebQuizStart': ['Web · Learn mode · start', webQuizStart(), { props: DARK, logic: QUIZ_START_LOGIC(false, true), w: W, h: H }],
@@ -7792,7 +7916,8 @@ const files = {
   'PhoneStatsUpgrade': ['iPhone · Stats · on Free: go Pro for deep stats', attrOf('PhoneStats', PW, PH, 'tab="Weak spots" free="{{yes}}"'), { logic: darkLogic, w: PW, h: PH }],
   'PhoneStatsWeakDark': ['iPhone · Stats · Weak spots (dark)', `<div style="width: ${PW}px; height: ${PH}px; overflow: hidden; background: #000000;"><dc-import name="PhoneStats" tab="Weak spots" dark="{{yes}}" hint-size="${PW}px,${PH}px"></dc-import></div>`, { logic: darkLogic, w: PW, h: PH }],
   'PhoneStatsPaceGray': ['iPhone · Stats · Pace (dark, gray)', `<div style="width: ${PW}px; height: ${PH}px; overflow: hidden; background: #1E1E20;"><dc-import name="PhoneStats" tab="Pace" dark="{{yes}}" dim="{{yes}}" hint-size="${PW}px,${PH}px"></dc-import></div>`, { logic: darkLogic, w: PW, h: PH }],
-  'PhoneConnect': ['iPhone · Connect AI', phoneConnect, { props: { ...DARK, ...MESH('Apricot') }, logic: phoneConnectLogic, w: PW, h: PH }],
+  'PhoneConnectConsent': ['iPhone · An AI app asks to connect (Allow or Cancel)', phoneConnectConsent, { props: CONSENT_PROPS, logic: consentLogic, w: PW, h: PH }],
+  'PhoneConnect': ['iPhone · Connect AI', phoneConnect, { props: { ...DARK, ...MESH('Apricot'), noApps: BOOL }, logic: phoneConnectLogic, w: PW, h: PHONE_CONNECT_H }],
   'PhoneTodayDark': ['iPhone · Today (dark)', darkOf('PhoneToday', PW, PH), { logic: darkLogic, w: PW, h: PH }],
   'PhoneReviewDark': ['iPhone · Review (dark)', darkOf('PhoneReview', PW, PH), { logic: darkLogic, css: REVIEW_CSS, w: PW, h: PH }],
   'PhoneReviewFour': ['iPhone · Review · 4 grades', styleOf('PhoneReview', PW, PH, 'Four buttons'), { logic: darkLogic, css: REVIEW_CSS, w: PW, h: PH }],
@@ -7807,7 +7932,7 @@ const files = {
   'PhoneEditorImage': ['iPhone · Card editor · image with boxes', attrOf('PhoneEditor', PW, PH, 'card-type="Image" keyboard="{{no}}"'), { logic: 'renderVals() { return { yes: true, no: false }; }', css: EDITOR_CSS, w: PW, h: PH }],
   'PhoneSettingsFree': ['iPhone · Settings · on Free (Tune to you is Pro)', attrOf('PhoneSettings', PW, PHONE_SETTINGS_H, 'plan="Free"'), { logic: darkLogic, w: PW, h: PHONE_SETTINGS_H }],
   'PhoneSettingsVerified': ['iPhone · Settings · a verified teacher (Get verified says Verified teacher)', attrOf('PhoneSettings', PW, PHONE_SETTINGS_H, 'verified="Teacher"'), { logic: darkLogic, w: PW, h: PHONE_SETTINGS_H }],
-  'PhoneSettings': ['iPhone · Settings', phoneSettings, { props: { ...DARK, photo: PHOTO_PROP, plan: { editor: 'enum', default: 'Pro', options: ['Free', 'Pro', 'Pro, ending'] }, tune: TUNE_PROP, verified: VERIFIED_PROP }, logic: phoneSettingsLogic, w: PW, h: PHONE_SETTINGS_H }],
+  'PhoneSettings': ['iPhone · Settings', phoneSettings, { props: { ...DARK, passwordOpen: BOOL, photo: PHOTO_PROP, plan: { editor: 'enum', default: 'Pro', options: ['Free', 'Pro', 'Pro, ending'] }, tune: TUNE_PROP, verified: VERIFIED_PROP }, logic: phoneSettingsLogic, w: PW, h: PHONE_SETTINGS_H }],
   'PhoneDeckSettings': ['iPhone · Deck settings', openOf('PhoneDeck', PW, PH), { logic: darkLogic, css: NUM_CSS + DRAG_CSS, w: PW, h: PH }],
   'PhoneDeckDark': ['iPhone · Deck page (dark)', darkOf('PhoneDeck', PW, PH), { logic: darkLogic, css: NUM_CSS + DRAG_CSS, w: PW, h: PH }],
   'PhoneStatsDark': ['iPhone · Stats (dark)', darkOf('PhoneStats', PW, PH), { logic: darkLogic, w: PW, h: PH }],
