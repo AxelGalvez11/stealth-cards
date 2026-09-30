@@ -16,9 +16,9 @@ export async function withChrome(fn) {
   const chrome = spawn(CHROME, ['--headless=new', '--hide-scrollbars', '--force-color-profile=srgb', '--remote-debugging-port=0', '--user-data-dir=' + profile, 'about:blank'], { stdio: 'ignore' });
   try {
     let port, target;
-    for (let i = 0; i < 100 && !port; i++) { await sleep(100); try { port = readFileSync(join(profile, 'DevToolsActivePort'), 'utf8').split('\n')[0]; } catch {} }
-    for (let i = 0; i < 50 && !target; i++) { try { target = (await (await fetch(`http://127.0.0.1:${port}/json/list`)).json()).find(t => t.type === 'page'); } catch {} if (!target) await sleep(100); }
-    if (!target) throw new Error('Chrome did not start');
+    for (let i = 0; i < 900 && !port; i++) { await sleep(100); try { port = readFileSync(join(profile, 'DevToolsActivePort'), 'utf8').split('\n')[0]; } catch {} }
+    for (let i = 0; i < 300 && !target; i++) { try { target = (await (await fetch(`http://127.0.0.1:${port}/json/list`)).json()).find(t => t.type === 'page'); } catch {} if (!target) await sleep(100); }
+    if (!target) throw new Error('Chrome did not start within a minute and a half (is the computer very busy?)');
     const ws = new WebSocket(target.webSocketDebuggerUrl), waiting = new Map(), events = new Map();
     let id = 0;
     await new Promise((ok, bad) => { ws.onopen = ok; ws.onerror = bad; });

@@ -5701,7 +5701,7 @@ const spSections = key => `<sc-for list="{{${key}}}" as="s" hint-placeholder-cou
   <sc-if value="{{s.hasBullets}}" hint-placeholder-val="{{ false }}"><ul style="margin: 16px 0 0; padding-left: 22px; font-size: 17px; line-height: 1.6;"><sc-for list="{{s.bullets}}" as="b"><li style="margin-top: 10px; padding-left: 4px;">${spParts('b.parts')}</li></sc-for></ul></sc-if>`)}</sc-for>`;
 const SITE_CSS = [
   '.sp{container-type:inline-size}',
-  '.sp-crumbs li+li::before{content:"/";margin:0 8px;opacity:.4}',
+  '.sp-crumbs li:not(:last-child)::after{content:"/";margin:0 8px;opacity:.4}',
   '.sp-sr{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}',
   // On a narrow page a comparison's rows stack: the feature, then each app's answer under its name.
   '@container (max-width: 760px){.sp-nav{display:none!important}.sp-head{height:64px!important}.sp-band-wide{display:none!important}.sp-band-tall{display:block!important}',
