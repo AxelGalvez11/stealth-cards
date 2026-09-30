@@ -33,10 +33,10 @@ extension Store {
     var s = DeckSharing()
     if let sh = d.share, sh.vis != "private" {
       let h = myHandle
-      s.shared = .init(vis: sh.vis, id: sh.id, url: h.isEmpty ? "/d/" + sh.id : "/@" + h + "/" + sh.slug, label: sh.vis == "public" ? "Public" : "Link only")
+      s.shared = .init(vis: sh.vis, id: sh.id, url: h.isEmpty || sh.vis != "public" ? "/d/" + sh.id : "/@" + h + "/" + sh.slug, label: sh.vis == "public" ? "Public" : "Link only")
     }
     if let l = d.link {
-      s.link = .init(mode: l.mode, gone: l.gone, id: l.id, owner: l.owner, url: l.owner.handle.isEmpty ? "/d/" + l.id : "/@" + l.owner.handle + "/" + l.slug,
+      s.link = .init(mode: l.mode, gone: l.gone, id: l.id, owner: l.owner, url: "/d/" + l.id,
                      pending: l.gone ? 0 : l.pending.count, updates: l.updates)
     }
     return s
