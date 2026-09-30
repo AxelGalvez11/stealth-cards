@@ -42,14 +42,16 @@ const crumbs = p => ({ '@type': 'BreadcrumbList', '@id': p.url + '#breadcrumb', 
 // page is (a page, a list of pages, a FAQ), its breadcrumb (inner pages) and, for comparisons, an article with its date.
 export function jsonLd(p) {
   const image = { '@type': 'ImageObject', '@id': p.url + '#image', url: ORIGIN + '/' + p.og };
-  const faq = p.faq && p.faq.length;
+  const faq = p.faq && p.faq.length, questions = () => p.faq.map(f => ({ '@type': 'Question', name: plain(f.q), acceptedAnswer: { '@type': 'Answer', text: plain(f.a) } }));
+  // The page is a FAQPage when that is what it is for (the FAQ, or a page with questions); a hub with questions keeps its own type and gets a FAQPage beside it.
   const type = p.kind === 'faq' || (faq && p.kind !== 'hub') ? 'FAQPage' : p.kind === 'hub' ? 'CollectionPage' : 'WebPage';
   const page = { '@type': type, '@id': p.url + '#webpage', url: p.url, name: p.title, description: p.description, inLanguage: 'en', isPartOf: { '@id': ID.site },
     about: { '@id': ID.org }, primaryImageOfPage: { '@id': image['@id'] }, image: { '@id': image['@id'] }, ...(p.updated ? { dateModified: p.updated } : {}) };
   if (p.slug) page.breadcrumb = { '@id': p.url + '#breadcrumb' };
-  if (type === 'FAQPage' || faq) page.mainEntity = p.faq.map(f => ({ '@type': 'Question', name: plain(f.q), acceptedAnswer: { '@type': 'Answer', text: plain(f.a) } }));
+  if (type === 'FAQPage') page.mainEntity = questions();
   if (['home', 'pricing'].includes(p.kind)) page.mainEntity = page.mainEntity || { '@id': ID.app };
-  const graph = [org(), site(), ...(['home', 'pricing'].includes(p.kind) ? [app()] : []), page, image, ...(p.slug ? [crumbs(p)] : [])];
+  const graph = [org(), site(), ...(['home', 'pricing'].includes(p.kind) ? [app()] : []), page, image, ...(p.slug ? [crumbs(p)] : []),
+    ...(p.kind === 'hub' && faq ? [{ '@type': 'FAQPage', '@id': p.url + '#faq', url: p.url, name: p.title, isPartOf: { '@id': page['@id'] }, mainEntity: questions() }] : [])];
   if (p.kind === 'compare' || p.kind === 'alternative') {
     graph.push({ '@type': 'Article', '@id': p.url + '#article', headline: p.h1, description: p.description, url: p.url, inLanguage: 'en', mainEntityOfPage: { '@id': p.url + '#webpage' },
       ...(p.published ? { datePublished: p.published } : {}), dateModified: p.updated, author: { '@id': ID.org }, publisher: { '@id': ID.org }, image: { '@id': image['@id'] },
