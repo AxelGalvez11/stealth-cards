@@ -5,12 +5,14 @@
 // Audio cards an AI makes get speech from voice.mjs; the same words in the same voice reuse one file.
 import { readFile, stat } from 'node:fs/promises';
 import { lookup } from 'node:dns/promises';
+import http from 'node:http';
+import https from 'node:https';
 import { isIP } from 'node:net';
 import { homedir } from 'node:os';
 import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createHash } from 'node:crypto';
-import { putMedia, readMedia, hasMedia } from './store.mjs';
+import { putMedia, readMedia, hasMedia, isPro } from './store.mjs';
 import { speech, voiceId } from './voice.mjs';
 import { sniff } from './sniff.js';
 export { sniff };
@@ -29,35 +31,88 @@ async function save(buf, want) {
   return '/media/' + name;
 }
 
-// Links must lead to the open internet, never to this computer or its network.
-const privateIp = ip => {
-  if (ip.toLowerCase().startsWith('::ffff:')) ip = ip.slice(7);
-  if (isIP(ip) === 4) {
-    const [a, b] = ip.split('.').map(Number);
-    return a === 0 || a === 10 || a === 127 || a >= 224 || (a === 169 && b === 254) || (a === 172 && b >= 16 && b <= 31) || (a === 192 && b === 168) || (a === 100 && b >= 64 && b <= 127);
-  }
-  const x = ip.toLowerCase();
-  return x === '::' || x === '::1' || x.startsWith('fc') || x.startsWith('fd') || x.startsWith('fe80');
+// Links must lead to the open internet, never to this computer or its network. An address is judged the way the network
+// would see it: an IPv4 address written inside an IPv6 one (::ffff:127.0.0.1, ::ffff:7f00:1) is the IPv4 address.
+const v4 = s => { const p = String(s).split('.'); return p.length === 4 && p.every(x => /^\d{1,3}$/.test(x) && +x < 256) ? p.reduce((n, x) => n * 256 + +x, 0) : null; };
+// An IPv6 address as eight numbers (a dotted IPv4 tail counts as two), or null when it isn't one.
+function v6(text) {
+  let s = String(text).replace(/^\[|\]$/g, '').replace(/%.*$/, '');
+  const tail = /(\d+\.\d+\.\d+\.\d+)$/.exec(s);
+  if (tail) { const n = v4(tail[1]); if (n == null) return null; s = s.slice(0, -tail[1].length) + Math.floor(n / 65536).toString(16) + ':' + (n % 65536).toString(16); }
+  const halves = s.split('::');
+  if (halves.length > 2) return null;
+  const side = h => (h === '' ? [] : h.split(':'));
+  const head = side(halves[0]), rest = halves.length === 2 ? side(halves[1]) : [];
+  const gap = 8 - head.length - rest.length;
+  if (halves.length === 1 ? gap !== 0 : gap < 1) return null;
+  const groups = [...head, ...Array(halves.length === 2 ? gap : 0).fill('0'), ...rest];
+  return groups.every(g => /^[0-9a-f]{1,4}$/i.test(g)) ? groups.map(g => parseInt(g, 16)) : null;
+}
+const parseIp = ip => {
+  const s = String(ip).trim().toLowerCase();
+  if (isIP(s) === 4) return { n: v4(s) };
+  const g = v6(s);
+  if (!g) return null;
+  return g.slice(0, 5).every(x => x === 0) && g[5] === 0xffff ? { n: g[6] * 65536 + g[7] } : { g };
 };
-async function fromLink(link) {
+// Every IPv4 block that isn't the open internet (IANA's special-purpose list): this network and computer, private
+// networks, shared (carrier) space, link-local (which holds the cloud's own address for its secrets, 169.254.169.254),
+// protocol, test and benchmark space, multicast, and the reserved rest (up to 255.255.255.255).
+const V4_BLOCKS = [['0.0.0.0', 8], ['10.0.0.0', 8], ['100.64.0.0', 10], ['127.0.0.0', 8], ['169.254.0.0', 16], ['172.16.0.0', 12], ['192.0.0.0', 24], ['192.0.2.0', 24], ['192.88.99.0', 24],
+  ['192.168.0.0', 16], ['198.18.0.0', 15], ['198.51.100.0', 24], ['203.0.113.0', 24], ['224.0.0.0', 4], ['240.0.0.0', 4]].map(([a, len]) => [Math.floor(v4(a) / 2 ** (32 - len)), 32 - len]);
+// IPv6: only global unicast (2000::/3) is the open internet. That leaves out this computer (::1), the unspecified address,
+// the IPv4 stand-ins (::/96, NAT64 64:ff9b::/96), private (fc00::/7), link-local (fe80::/10), multicast (ff00::/8) and
+// the rest; and inside 2000::/3 the special blocks: 2001::/23 (Teredo, benchmarking, ORCHID), documentation
+// (2001:db8::/32, 3fff::/20) and 6to4 (2002::/16).
+const reservedV6 = g => (g[0] & 0xe000) !== 0x2000 || (g[0] === 0x2001 && (g[1] < 0x0200 || g[1] === 0x0db8)) || g[0] === 0x2002 || (g[0] === 0x3fff && g[1] < 0x1000);
+export function reservedAddress(ip) {
+  const a = parseIp(ip);
+  if (!a) return true; // anything that isn't an address is refused
+  return a.n != null ? V4_BLOCKS.some(([base, bits]) => Math.floor(a.n / 2 ** bits) === base) : reservedV6(a.g);
+}
+const loopback = ip => { const a = parseIp(ip); return !!a && (a.n != null ? Math.floor(a.n / 2 ** 24) === 127 : a.g.slice(0, 7).every(x => x === 0) && a.g[7] === 1); };
+// One plain sentence for every way a link can fail (a refusal, a name that doesn't exist, a page that isn't there), so what
+// comes back says nothing about what is on this network.
+const gone = want => new Error('Lucida couldn’t get that ' + (want === 'audio' ? 'sound' : 'picture') + '.');
+const within = (p, signal) => new Promise((ok, no) => { signal.aborted ? no(new Error('slow')) : signal.addEventListener('abort', () => no(new Error('slow')), { once: true }); p.then(ok, no); });
+// The link's host is looked up once and every address it gives is checked. The connection is then made to those addresses
+// only (the lookup handed to the request answers with them and asks nobody), so a name that answers something else the second
+// time (DNS rebinding) changes nothing. LUCIDA_TEST_LOCAL_LINKS lets tests serve files from this computer (loopback only).
+async function reach(url, stop) {
+  const host = url.hostname.replace(/^\[|\]$/g, '');
+  const found = isIP(host) ? [{ address: host, family: isIP(host) }] : await within(lookup(host, { all: true }), stop);
+  const testing = process.env.LUCIDA_TEST_LOCAL_LINKS === '1';
+  if (!found.length || found.some(a => reservedAddress(a.address) && !(testing && loopback(a.address)))) throw new Error('refused');
+  return new Promise((ok, no) => {
+    const req = (url.protocol === 'https:' ? https : http).request(url, {
+      agent: false, signal: stop, headers: { 'user-agent': 'Lucida flashcards', accept: '*/*' },
+      lookup: (name, o, cb) => {
+        const fam = o && (o.family === 'IPv4' ? 4 : o.family === 'IPv6' ? 6 : +o.family || 0), from = fam ? found.filter(a => a.family === fam) : found;
+        if (!from.length) return cb(Object.assign(new Error('no address'), { code: 'ENOTFOUND' }));
+        return o && o.all ? cb(null, from.map(a => ({ address: a.address, family: a.family }))) : cb(null, from[0].address, from[0].family);
+      }
+    }, ok);
+    req.on('error', no); req.end();
+  });
+}
+async function fromLink(link, want) {
   let url;
-  try { url = new URL(link); } catch { throw new Error('That link isn’t a web address.'); }
+  try { url = new URL(link); } catch { throw gone(want); }
+  const stop = AbortSignal.timeout(20000), big = new Error(TOO_BIG);
   for (let hop = 0; hop < 4; hop++) {
-    if (!/^https?:$/.test(url.protocol)) throw new Error('Links must start with https:// or http://.');
-    const host = url.hostname.replace(/^\[|\]$/g, '');
-    const addrs = isIP(host) ? [host] : (await lookup(host, { all: true }).catch(() => { throw new Error('Couldn’t find ' + host + '.'); })).map(a => a.address);
-    // LUCIDA_TEST_LOCAL_LINKS lets tests serve files from this computer.
-    if (process.env.LUCIDA_TEST_LOCAL_LINKS !== '1' && addrs.some(privateIp)) throw new Error('That link points inside this network, so Lucida won’t open it.');
-    const res = await fetch(url, { redirect: 'manual', signal: AbortSignal.timeout(20000), headers: { 'user-agent': 'Lucida flashcards' } });
-    const next = res.headers.get('location');
-    if (res.status >= 300 && res.status < 400 && next) { url = new URL(next, url); continue; }
-    if (!res.ok) throw new Error('The link answered ' + res.status + '.');
-    if (+res.headers.get('content-length') > MAX) { res.body?.cancel(); throw new Error(TOO_BIG); }
+    if (!/^https?:$/.test(url.protocol)) throw gone(want);
+    let res;
+    try { res = await reach(url, stop); } catch { throw gone(want); }
+    const next = res.headers.location;
+    if (res.statusCode >= 300 && res.statusCode < 400 && next) { res.resume(); try { url = new URL(next, url); } catch { throw gone(want); } continue; }
+    if (res.statusCode < 200 || res.statusCode >= 300) { res.resume(); throw gone(want); }
+    if (+res.headers['content-length'] > MAX) { res.destroy(); throw big; }
     const parts = []; let n = 0;
-    for await (const chunk of res.body) { n += chunk.length; if (n > MAX) throw new Error(TOO_BIG); parts.push(chunk); }
+    try { for await (const chunk of res) { n += chunk.length; if (n > MAX) { res.destroy(); throw big; } parts.push(chunk); } }
+    catch (e) { throw e === big ? e : gone(want); }
     return Buffer.concat(parts);
   }
-  throw new Error('That link redirects too many times.');
+  throw gone(want);
 }
 
 async function fromPath(p) {
@@ -76,7 +131,7 @@ export async function fetchMedia(src, want, { files = [], local = false } = {}) 
   if ((m = src.match(/^file:(\d+)$/))) {
     const f = Array.isArray(files) ? files[+m[1]] : null;
     if (!f || !f.download_url) throw new Error('There’s no uploaded file number ' + m[1] + '.');
-    return save(await fromLink(f.download_url), want);
+    return save(await fromLink(f.download_url, want), want);
   }
   if ((m = src.match(/^\/media\/([\w-]+\.\w+)$/))) {
     const buf = await readMedia(m[1]);
@@ -89,7 +144,7 @@ export async function fetchMedia(src, want, { files = [], local = false } = {}) 
     if (buf.length > MAX) throw new Error(TOO_BIG);
     return save(buf, want);
   }
-  if (/^https?:\/\//i.test(src)) return save(await fromLink(src), want);
+  if (/^https?:\/\//i.test(src)) return save(await fromLink(src, want), want);
   if (/^(file:\/\/|\/|~)/.test(src)) {
     if (!local) throw new Error('A file on a computer only works for AI apps running on the same computer as Lucida. Send a link or upload the file instead.');
     return save(await fromPath(src.startsWith('file://') ? fileURLToPath(src) : src), want);
