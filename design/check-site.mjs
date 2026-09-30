@@ -123,6 +123,20 @@ for (const [p, file] of pageFiles) {
     if (count('table')) ok(ts.filter(x => x.tag === 'th' && !x.close && x.attrs.scope === 'col').length > 0 && ts.filter(x => x.tag === 'th' && x.attrs.scope === 'row').length > 0, 'the table has column and row headers in the ' + where);
   }
   ok(!HOLE.test(body.replace(/<script[\s\S]*?<\/script>/g, '')) && !/\[object Object\]|>undefined<|>null</.test(body), 'no unfilled holes in the page');
+  // A page that reads like an article (the data pages): its own link-preview picture is the hero, loaded first; its other pictures are the
+  // cards of related pages, loaded lazily; and the chips under the title say the day it was updated and the minutes to read (its words at
+  // about 230 a minute, at least 1). The 404 page has no hero.
+  if (KINDS[p.kind]) {
+    const imgs = t.filter(x => x.tag === 'img' && !x.close), heroes = imgs.filter(x => (' ' + (x.attrs.class || '') + ' ').includes(' sp-hero '));
+    ok(heroes.length === 1, 'one hero picture', heroes.length);
+    const hero = (heroes[0] || { attrs: {} }).attrs, cards = imgs.filter(x => !heroes.includes(x));
+    ok(hero.src === '/' + p.og && hero.width === '1200' && hero.height === '630' && hero.fetchpriority === 'high' && !!(hero.alt || '').trim(), 'the hero is the page’s own link-preview picture, 1200 × 630, with alt text, loaded first', hero);
+    ok(cards.every(x => x.attrs.loading === 'lazy' && x.attrs.alt === '' && /^\/og\/[\w-]+\.png$/.test(x.attrs.src || '') && existsSync(join(WEB, (x.attrs.src || '').slice(1)))), 'the cards’ pictures are link-preview pictures of the site, loaded lazily', cards.map(x => x.attrs.src));
+    const words = [p.lead, ...(p.table ? [...p.table.columns, ...p.table.rows.flat()] : []), ...p.sections.flatMap(s => [s.h2, ...s.paras, ...s.bullets]), ...p.faq.flatMap(f => [f.q, f.a])].reduce((n, s) => n + plain(s).split(/\s+/).filter(Boolean).length, 0), minutes = Math.max(1, Math.round(words / 230));
+    ok(body.includes('>' + minutes + ' min read<'), 'the minutes to read come from the page’s words', [words, minutes]);
+    ok(body.includes('<time datetime="' + p.updated + '"'), 'the date chip is the page’s "updated"');
+  }
+  if (notFound) ok(!/\bsp-hero\b/.test(body), 'the 404 page has no hero picture');
   ok(!/\.dc\.html/.test(body), 'no links to canvas boards');
   ok(html.length < (dual > 0 ? 420 : 140) * 1024, 'the page is small', Math.round(html.length / 1024) + ' KB');
   // the footer links to the hub, features (when there are any), FAQ, pricing, privacy and terms
