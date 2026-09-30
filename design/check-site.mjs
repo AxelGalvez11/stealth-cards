@@ -237,6 +237,13 @@ const heights = JSON.parse(readFileSync(join(ROOT, 'design/site-heights.json'), 
 for (const name of ['SiteCompare', 'SiteFeature', 'SiteFaq']) for (const [i, suffix] of ['', 'Phone'].entries()) {
   const src = readFileSync(join(ROOT, 'design/canvas/project', name + suffix + '.dc.html'), 'utf8'), h = +src.match(/"\$preview":\{"width":\d+,"height":(\d+)\}/)[1];
   ok(h === heights[name][i], name + suffix + ' board is as tall as its tallest page (design/site-measure.mjs)', [h, heights[name][i]]);
+  // On the canvas the hero and the cards' pictures are the SiteOg board itself (a dc-import), scaled to the column.
+  ok(src.includes('<dc-import name="SiteOg" page="{{pic.key}}"') && src.includes('<dc-import name="SiteOg" page="{{k.key}}"'), name + suffix + ' draws its pictures with the SiteOg board on the canvas');
+}
+{
+  // SiteOg must know every page's key, or a picture on the canvas would quietly be another page's.
+  const og = readFileSync(join(ROOT, 'design/canvas/project/SiteOg.dc.html'), 'utf8'), options = JSON.parse(og.match(/data-props='([^']*)'/)[1]).page.options;
+  ok(list.every(p => options.includes(p.slug || 'home')), 'the SiteOg board can draw the picture of every page', list.filter(p => !options.includes(p.slug || 'home')).map(p => p.slug));
 }
 
 // ---------- outside links ----------
