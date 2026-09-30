@@ -81,6 +81,9 @@ struct DemoProps {
   var netLoading = false, netEmpty = false, missing = false, following = false, editOpen = false
   var profileTab = "Decks"
   var q = ""
+  /// A page's Report sheet open (the deck page, a profile, a suggestion), and your verification for the boards that show it
+  /// ("", "Waiting for review", "Teacher", or "School": a verified teacher sees Check this deck; Settings says so).
+  var report = false, verified = ""
   /// The sample deck's sharing (the deck page's Tweaks): "Link only" or "Public" (yours, shared), or from Maria:
   /// "study" (as it is) or "copy" (with her changes waiting); and the changes' sheet open.
   var shared = "", linked = "", updatesOpen = false

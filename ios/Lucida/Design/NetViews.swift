@@ -198,3 +198,21 @@ struct OwnerLine: View {
     .accessibilityLabel(p.name)
   }
 }
+
+/// QUIET_BTN: a text button with no background, last among a page's small actions ("Report"): the page's muted words,
+/// `height` tall, with 14 points before it.
+struct QuietButton: View {
+  @Environment(\.theme) private var t
+  let label: String
+  var height: CGFloat = 44
+  var size: CGFloat = 15
+  let action: () -> Void
+  var body: some View {
+    Button(action: action) {
+      Text(label).css(size, .medium).foregroundStyle(t.muted).lineLimit(1).fixedSize().line(size)
+        .padding(.leading, 14).frame(height: height)
+    }
+    .buttonStyle(.press)
+    .accessibilityLabel(label)
+  }
+}

@@ -35,6 +35,7 @@ struct NetDeck: Decodable, Identifiable {
   struct Checked: Decodable {
     var name = "", handle = "", current = false
     enum CodingKeys: String, CodingKey { case name, handle, current }
+    init(name: String, handle: String, current: Bool) { self.name = name; self.handle = handle; self.current = current }
     init(from d: Decoder) throws { let c = try d.container(keyedBy: CodingKeys.self); name = c.v(.name, ""); handle = c.v(.handle, ""); current = c.v(.current, false) }
   }
   var id = "", url = "", name = "", description = "", tags: [String] = []

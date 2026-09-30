@@ -308,9 +308,14 @@ extension Store {
     if demo { return demoClassPage(code) }
     return netGet("api/public/class?code=" + (code.addingPercentEncoding(withAllowedCharacters: .alphanumerics) ?? code), ClassPage.self)
   }
-  /// Whether you're verified, or waiting (for Get verified).
+  /// Whether you're verified, or waiting (for Get verified). On a design screen it's the board's own setting (`verified`).
   func netVerify() -> VerifyStatus {
-    if demo { var v = VerifyStatus(); v.open = demoClass.verifySent; v.school = "UC Davis"; return v }
+    if demo {
+      var v = VerifyStatus()
+      v.verified = ["Teacher": "teacher", "School": "school"][props.verified] ?? ""
+      v.open = props.verified == "Waiting for review" || demoClass.verifySent; v.school = "UC Davis"
+      return v
+    }
     return netGet("api/verify", ttl: 60, VerifyStatus.self)?.value ?? VerifyStatus()
   }
 
@@ -418,6 +423,7 @@ extension Store {
   }
   /// A verified teacher checks a deck (deck.check).
   func checkSharedDeck(_ sharedId: String) async throws {
-    if !demo { try await social("deck.check", ["id": sharedId]) }
+    if demo { demoNet.pages.checked = true; return }
+    try await social("deck.check", ["id": sharedId])
   }
 }

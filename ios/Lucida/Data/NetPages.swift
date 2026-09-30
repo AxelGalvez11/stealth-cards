@@ -178,8 +178,9 @@ struct DemoPages {
   var pickItem = "", aiWaiting = true, noSuggestions = false
   /// History with a version opened.
   var openVersion: Int? = nil
-  // Changed on the screen: copied (Make a copy), a save, who decided what, going back, the AI's cards kept or tossed.
-  var copied = false, starred = false
+  // Changed on the screen: copied (Make a copy), a save, a teacher's check (Check this deck), who decided what, going back,
+  // the AI's cards kept or tossed.
+  var copied = false, starred = false, checked = false
   var picks: [String: [String: String]] = [:]
   var restored: Int? = nil
   var aiDone: [String: String] = [:]
@@ -409,6 +410,8 @@ extension Store {
     let X = NetSample.shared, P = X.P, pr = demoNet.pages
     var deck = X.DECKS["mcat"]!
     deck.stars += pr.starred ? 1 : 0
+    // A teacher checked it on this screen (the canvas says Alex Kim did): its check is current now.
+    if pr.checked { deck.checked = .init(name: "Alex Kim", handle: "alexkim", current: true) }
     return .ok(PublicDeckPage(deck: deck, helpers: [.init(handle: "devp", name: "Dev Patel")], contributors: [.init(handle: "devp", name: "Dev Patel", n: 6), .init(handle: "alexkim", name: "Alex Kim", n: 3)],
                               people: [P["maria"]!, P["dev"]!, P["okafor"]!, P["alex"]!], cardsList: PagesSample.shared.CARDS, moreCards: 634, made: PagesSample.shared.MADE,
                               me: .init(owner: pr.owner, studying: pr.studying ? "cell" : "", copied: pr.copied ? "cell" : "", watching: pr.watching, starred: pr.starred, open: pr.owner ? 3 : 0)))
