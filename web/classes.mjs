@@ -385,8 +385,9 @@ export async function adminVerify(uid, me, o = {}) {
   if (ok) {
     const p = await profileOf(r.user_id);
     if (!p) throw err('That person is gone.', 404);
-    // A school's account is the school's own profile: its decks say "Official · <school>".
-    await rest('/profiles?id=eq.' + val(p.id), { method: 'PATCH', body: { verified: r.role, ...(r.role === 'school' ? { kind: 'school' } : {}), ...(!p.school ? { school: r.school } : {}), updated_at: nowIso() } });
+    // A school's account is the school's own profile: its decks say "Official · <school>". A verified profile is one its person
+    // asked to make public, so it shows in search too (asking alone doesn't list anyone).
+    await rest('/profiles?id=eq.' + val(p.id), { method: 'PATCH', body: { verified: r.role, listed: true, ...(r.role === 'school' ? { kind: 'school' } : {}), ...(!p.school ? { school: r.school } : {}), updated_at: nowIso() } });
     await rest('/notifications', { method: 'POST', body: [{ user_id: p.id, kind: 'verified', actor: null, actor_name: 'Lucida', data: { role: r.role } }] });
   }
   await rest('/verify_requests?id=eq.' + val(r.id), { method: 'PATCH', body: { status: ok ? 'approved' : 'declined', decided_at: nowIso(), decided_by: (me && me.email) || socialId(uid) } });
