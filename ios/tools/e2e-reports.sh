@@ -9,7 +9,7 @@
 # with an empty data folder and the stand-in on PROXY_PORT (3846), runs the test on a simulator, prints each check, and
 # stops both.
 #   ios/tools/e2e-reports.sh [simulator id]      (DD=<folder> keeps the build somewhere else; the ports must be free;
-#                                                 ONLY=ReportsTests/test6SlowSync runs one flow)
+#                                                 ONLY=ReportsTests/test6SlowSync,ReportsTests/test5HelperNews runs just those flows)
 cd "${0:A:h}/../.." || exit 1
 PORT=${PORT:-3844}
 PROXY_PORT=${PROXY_PORT:-3846}
@@ -29,6 +29,7 @@ for i in {1..50}; do curl -s -o /dev/null http://127.0.0.1:$PROXY_PORT/__proxy/l
 DEST=${1:+id=$1}
 DEST=${DEST:-"platform=iOS Simulator,name=iPhone 17e"}
 # The test only runs when asked to (LUCIDA_REPORTS), so ios/tools/e2e.sh keeps running the study network's checks alone.
+ONLYARGS=(); for t in ${(s:,:)${ONLY:-ReportsTests}}; do ONLYARGS+=(-only-testing:LucidaUITests/$t); done
 TEST_RUNNER_LUCIDA_REPORTS=1 TEST_RUNNER_LUCIDA_SERVER=http://127.0.0.1:$PORT TEST_RUNNER_LUCIDA_SLOW=http://127.0.0.1:$PROXY_PORT \
 xcodebuild test -project ios/Lucida.xcodeproj -scheme LucidaUITests -destination "$DEST" -derivedDataPath ${DD:-${TMPDIR:-/tmp}/lucida-e2e-reports} \
-  -only-testing:LucidaUITests/${ONLY:-ReportsTests} 2>&1 | tee ${DATA}test.log | grep -E "^  (ok|FAIL) |^Reports|error:|\*\* TEST"
+  $ONLYARGS 2>&1 | tee ${DATA}test.log | grep -E "^  (ok|FAIL) |^Reports|error:|\*\* TEST"

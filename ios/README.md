@@ -127,6 +127,8 @@ It starts a fresh server on port 3844 and a small stand-in on 3846 that holds th
 (`ios/tools/slow-sync-proxy.mjs`), and runs `LucidaUITests/ReportsTests` (which only runs when that script asks for it):
 Maria reports a deck, a person and a suggestion (and sees the server's words when it says no), a teacher gets verified in
 Settings and checks someone's deck, a helper opens a suggestion from News, and the library opens although the sync is held.
+`ios/tests/sync-check.sh` asks the app's own code for its library (`API.syncedState`) against a stand-in server that is slow,
+trickles, errors, drops the connection, or says signed out, and checks what comes back and how soon (no simulator).
 
 ## Classes and schools
 

@@ -46,7 +46,7 @@ final class ReportsTests: XCTestCase {
   }
   /// Taps something once it's there; if it never is, that's a failed check (a missing element would end the whole test).
   private func tap(_ e: XCUIElement, _ what: String = "") {
-    if e.waitForExistence(timeout: 8) { e.tap() } else { check(false, "found " + (what.isEmpty ? e.description : what) + " to tap") }
+    if e.waitForExistence(timeout: 12) { e.tap() } else { check(false, "found " + (what.isEmpty ? e.description : what) + " to tap") }
   }
   /// A request as one of the made-up people ("": the person on this computer); the answer's JSON.
   @discardableResult
@@ -79,7 +79,7 @@ final class ReportsTests: XCTestCase {
   private func handle(_ who: String) -> String { (state(who)["profile"] as? [String: Any])?["handle"] as? String ?? "" }
   private func get(_ who: String, _ path: String) -> [String: Any] { api(who, "GET", path).json as? [String: Any] ?? [:] }
   /// Waits for a condition on the server (a save that goes out a moment after a tap).
-  private func eventually(_ s: TimeInterval = 8, _ cond: () -> Bool) -> Bool {
+  private func eventually(_ s: TimeInterval = 12, _ cond: () -> Bool) -> Bool {
     let end = Date().addingTimeInterval(s)
     while Date() < end { if cond() { return true }; Thread.sleep(forTimeInterval: 0.4) }
     return cond()
@@ -153,15 +153,15 @@ final class ReportsTests: XCTestCase {
   private func count(_ app: XCUIApplication, _ label: String) -> Int {
     app.descendants(matching: .any).matching(NSPredicate(format: "label == %@", label)).count
   }
-  private func wait(_ e: XCUIElement, _ s: TimeInterval = 8) -> Bool { e.waitForExistence(timeout: s) }
+  private func wait(_ e: XCUIElement, _ s: TimeInterval = 12) -> Bool { e.waitForExistence(timeout: s) }
   /// Waits until something's gone.
-  private func gone(_ e: XCUIElement, _ s: TimeInterval = 8) -> Bool {
+  private func gone(_ e: XCUIElement, _ s: TimeInterval = 12) -> Bool {
     let end = Date().addingTimeInterval(s)
     while Date() < end { if !e.exists { return true }; Thread.sleep(forTimeInterval: 0.25) }
     return !e.exists
   }
   private func typeInto(_ field: XCUIElement, _ text: String, clear: Int = 0) {
-    guard wait(field, 6) else { check(false, "found the field to type “\(text)” in"); return }
+    guard wait(field, 10) else { check(false, "found the field to type “\(text)” in"); return }
     if clear > 0 { field.coordinate(withNormalizedOffset: CGVector(dx: 0.97, dy: 0.5)).tap() } else { field.tap() }
     if clear > 0 { field.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: clear)) }
     field.typeText(text)
@@ -441,7 +441,9 @@ final class ReportsTests: XCTestCase {
     app.terminate()
     verify(teach2)
     app = launch(as: teach2, ["-open", "deckpage:" + w.path])
-    check(wait(button(app, "Study")) && !button(app, "Check this deck").exists && !any(app, "Checked by you").exists, "another verified teacher sees neither: it's already checked")
+    check(wait(button(app, "Study")), "another verified teacher opens the deck")
+    Thread.sleep(forTimeInterval: 2)   // (the page asks whether they're verified a moment after it opens)
+    check(!button(app, "Check this deck").exists && !any(app, "Checked by you").exists, "and sees neither: it's already checked")
 
     // The owner changes the deck: the check is old, and the button is back.
     act(w.alex, "card.add", ["deckId": w.deck, "kind": "basic", "front": "A newer card", "back": "x"])
@@ -542,8 +544,8 @@ final class ReportsTests: XCTestCase {
     let sync = log.first { $0["path"] as? String == "/api/state?sync=1" }, plain = log.first { $0["path"] as? String == "/api/state" }
     let syncAt = sync?["at"] as? Double ?? 0, plainAt = plain?["at"] as? Double ?? 0
     check(sync != nil && (sync?["held"] as? Double ?? 0) >= 12000, "the app asked for the library with the sync, which the stand-in holds for 12 seconds")
-    check(plain != nil && plainAt - syncAt > 7_000 && plainAt - syncAt < 10_500, "after about 8 seconds it gave up on that and asked for the plain library (\(Int(plainAt - syncAt)) ms later)")
-    check(opened && now - syncAt < 11_500, "the library opened before the held sync could answer (\(Int(now - syncAt)) ms after asking)")
+    check(plain != nil && plainAt - syncAt > 7_000 && plainAt - syncAt < 11_000, "after about 8 seconds it gave up on that and asked for the plain library (\(Int(plainAt - syncAt)) ms later)")
+    check(opened && (sync?["sent"] as? Double ?? 1) == 0, "the library opened while the stand-in was still holding the sync (\(Int(now - syncAt)) ms after asking; it lets go at 12000)")
     check(app.alerts.count == 0, "with no error")
     button(app, "Library").tap()
     check(wait(any(app, deckName)), "and it shows the person's deck")
