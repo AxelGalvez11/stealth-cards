@@ -5712,7 +5712,7 @@ renderVals() { ${T}
 
 // ---------- Privacy and Terms (lucida.cards/privacy and /terms) ----------
 // Plain pages from legal.mjs: one column of text that fits any window. design/to-site.mjs makes them pages.
-const LEGAL_H = { Privacy: 2338, Terms: 1963, Connect: 3095 };
+const LEGAL_H = { Privacy: 2338, Terms: 1963, Connect: 3336 };
 const legalPage = (doc, hgt) => `<div style="width: 1440px; height: ${hgt}px; box-sizing: border-box; font-family: ${FONT}; background: {{t.bg}}; color: {{t.text}}; overflow: hidden;">
 <header style="max-width: 1344px; margin: 0 auto; height: 76px; box-sizing: border-box; padding: 0 clamp(20px, 4vw, 48px); display: flex; align-items: center; justify-content: space-between; gap: 12px;">
   <a href="{{homeHref}}" aria-label="Lucida home">${logo(28)}</a>

@@ -38,7 +38,12 @@ export const CONNECT = {
       'ChatGPT’s menus change often. Look for where it adds a custom connector or MCP server.'
     ] },
     { h: 'Grok, Gemini, Perplexity and Mistral', body: [
-      'Each of these can add a custom connector or MCP server by its address. Open its settings, find Connectors (or Tools, or MCP), add a new one, paste the address, and sign in to Lucida when it asks. Menus differ and change, so look for the same words.'
+      ['list',
+        '<b>Gemini:</b> on gemini.google.com, open Settings, then Connected Apps, then Add a custom app. Paste the address and follow the steps. Google offers this to personal Google accounts, 18 and over, in the US.',
+        '<b>Grok:</b> open Connectors, add a custom connector, and paste the address. It may need a paid plan. On a Business plan, a team admin adds it at console.x.ai.',
+        '<b>Perplexity:</b> open Account settings, then Connectors, then Custom connector, then Remote. Paste the address and choose OAuth.',
+        '<b>Mistral (Le Chat):</b> open Connectors, then Add Connector, then the Custom MCP Connector tab. Paste the address and choose OAuth 2.1.'],
+      'Sign in to Lucida when it asks, then press Allow. These menus change. If you don’t see the same words, look for where the app adds a custom connector, or MCP server, by its address.'
     ] },
     { h: 'If your app can’t sign in', body: [
       'Some tools, like Cursor, may not be able to sign in to Lucida. Use your private link instead: Settings, then Connect AI, shows it. Keep it to yourself, because anyone with the link can reach your cards. Make a new link there and the old one stops working.'
