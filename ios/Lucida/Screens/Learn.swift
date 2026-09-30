@@ -127,6 +127,7 @@ struct LearnScreen: View {
     LearnBody(deckId: deckId)
       .environment(\.studySkin, skin)
       .environment(\.theme, skin.map { $0.page(gray: store.appGray) } ?? t)
+      .studyChrome(dark: skin?.spec.dark)
   }
 }
 

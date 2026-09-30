@@ -33,6 +33,27 @@ extension EnvironmentValues {
   var studySkin: ThemeSkin? { get { self[StudySkinKey.self] } set { self[StudySkinKey.self] = newValue } }
 }
 
+/// The phone's own parts on a study screen with a theme (the status bar, the keyboard): the theme's light or dark, whatever the
+/// app's look is. RootView is the one place that can set them, so a study screen asks here while it's up (studyChrome).
+@MainActor final class StudyChrome: ObservableObject {
+  static let shared = StudyChrome()
+  @Published var scheme: ColorScheme? = nil
+}
+private struct StudyChromeAsk: ViewModifier {
+  let dark: Bool?
+  private var scheme: ColorScheme? { dark.map { $0 ? .dark : .light } }
+  func body(content: Content) -> some View {
+    content
+      .onAppear { StudyChrome.shared.scheme = scheme }
+      .onChange(of: dark) { _, _ in StudyChrome.shared.scheme = scheme }
+      .onDisappear { StudyChrome.shared.scheme = nil }
+  }
+}
+extension View {
+  /// While this screen is up, the phone's status bar and keyboard are light or dark like the theme it draws (nil: the app's own).
+  func studyChrome(dark: Bool?) -> some View { modifier(StudyChromeAsk(dark: dark)) }
+}
+
 // ---------- layout the pictures are made for ----------
 enum ThemeLayout {
   static var screen: CGSize { UIScreen.main.bounds.size }

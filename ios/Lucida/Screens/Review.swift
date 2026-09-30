@@ -168,6 +168,8 @@ struct ReviewScreen: View {
     ReviewBody(deckId: deckId, pile: pile, set: set, rv: rv)
       .environment(\.studySkin, skin)
       .environment(\.theme, skin.map { $0.page(gray: store.appGray) } ?? t)
+      // (the phone's own parts, like the status bar, take the theme's light or dark too)
+      .studyChrome(dark: skin?.spec.dark)
   }
 }
 
@@ -458,6 +460,8 @@ struct FlipCard: View {
         face(back: false, look).modifier(FaceShown(angle: turned ? 180 : 0, front: true))
         face(back: true, look).rotation3DEffect(.degrees(180), axis: (0, 1, 0)).modifier(FaceShown(angle: turned ? 180 : 0, front: false))
       }
+      // (a theme's card is a picture behind the words, which a finger goes through: the whole card is the button)
+      .contentShape(RoundedRectangle(cornerRadius: radius, style: .continuous))
       .modifier(Turn(angle: turned ? 180 : 0))
       .animation(moved ? nil : .std(0.5), value: turned)
       .id(moved ? card.id : "")

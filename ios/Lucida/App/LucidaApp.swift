@@ -45,10 +45,16 @@ struct RootView: View {
   @EnvironmentObject private var nav: Nav
   @Environment(\.colorScheme) private var scheme
   @Environment(\.scenePhase) private var scenePhase
+  /// A study screen with a theme sets the window's light or dark itself (StudyChrome, for the status bar and keyboard); the
+  /// phone's own is kept here until it lets go, so it isn't mistaken for the phone's setting.
+  @ObservedObject private var chrome = StudyChrome.shared
+  @State private var system: ColorScheme? = nil
+  /// The theme's light or dark, while its study screen is up (not once it starts to slide away).
+  private var over: ColorScheme? { nav.full != nil ? chrome.scheme : nil }
 
   var body: some View {
     let look = store.demo ? store.props.look : store.settings.look
-    let dark = look == "dark" || (look == "system" && (store.demo ? store.props.dark : scheme == .dark))
+    let dark = look == "dark" || (look == "system" && (store.demo ? store.props.dark : (system ?? scheme) == .dark))
     // Dark mode's look (Settings → Dark mode): gray or black.
     let t = Theme(dark: dark, gray: (store.demo ? store.props.darkMode : store.settings.darkMode) == "gray")
     ZStack {
@@ -60,7 +66,9 @@ struct RootView: View {
       }
     }
     .environment(\.theme, t)
-    .preferredColorScheme(dark ? .dark : .light)
+    .preferredColorScheme(over ?? (dark ? .dark : .light))
+    .onChange(of: scheme, initial: true) { _, s in if over == nil { system = s } }
+    .onChange(of: store.skinKey) { _, k in if let k, !store.demo { ThemeArt.shared.warm(k, store) } }
     .onChange(of: store.skinKey) { _, k in if let k, !store.demo { ThemeArt.shared.warm(k, store) } }
     // Back after a while away: decks you study from other people get their owners' newest changes.
     .onChange(of: scenePhase) { _, p in if p == .background { store.away = Date() } else if p == .active { store.cameBack() } }
@@ -76,6 +84,8 @@ struct RootView: View {
       if !store.demo {
         DevSignIn.apply()
         await store.load()
+        // A theme in use is warmed up (its details, background, card faces, pictures, and covers), so nothing flashes.
+        if let k = store.skinKey { ThemeArt.shared.warm(k, store) }
         // A theme in use is warmed up (its details, background, card faces, pictures, and covers), so nothing flashes.
         if let k = store.skinKey { ThemeArt.shared.warm(k, store) }
         Task { try? await Task.sleep(nanoseconds: 5_000_000_000); await store.retuneWhenDue() }
