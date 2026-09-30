@@ -252,6 +252,8 @@ final class StudyNetworkTests: XCTestCase {
     check(wait(app.staticTexts["@" + learnerHandle]), "the learner's own profile opens (@\(learnerHandle))")
     button(app, "Edit profile").tap()
     let field = app.textFields["Handle"].firstMatch
+    // A tap while the page is still sliding in can land before the button settles: once more, then.
+    if !wait(field, 3) { button(app, "Edit profile").tap() }
     check(wait(field), "Edit profile opens")
     typeInto(field, "b", clear: 30)
     check(wait(app.staticTexts["Use 3 to 30 letters, numbers, dots, or underscores."]), "a handle that isn't one says so as you type")

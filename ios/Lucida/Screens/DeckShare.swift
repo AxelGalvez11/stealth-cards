@@ -325,6 +325,9 @@ struct DeckUpdatesSheet: View {
     }
     .foregroundStyle(t.text)
     .padding(.top, 20).padding(.horizontal, 20).padding(.bottom, 34)
+    // Nothing left to take or skip, whichever answer from the server emptied it (the app also checks for changes every
+    // few seconds, and that answer can land first): the sheet goes.
+    .onChange(of: rows.isEmpty) { _, empty in if empty && !store.demo { nav.close() } }
   }
 
   private func change(_ u: UpdateRow) -> some View {
