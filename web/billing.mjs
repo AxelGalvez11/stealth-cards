@@ -1,7 +1,8 @@
 // Lucida Pro, paid through Stripe (or, on the iPhone, through Apple: apple.mjs). Stripe tells this server about each payment
 // and each change with a webhook to /api/stripe, signed with the endpoint's secret (STRIPE_WEBHOOK_SECRET), and the server
-// keeps one row per subscription in Supabase (`pro` in supa.mjs). The server never calls Stripe, so it needs no Stripe key:
-// paying, switching plans, and cancelling all happen on Stripe's own pages (plans.mjs).
+// keeps one row per subscription in Supabase (`pro` in supa.mjs). Paying, switching plans, and cancelling all happen on
+// Stripe's own pages (plans.mjs), so the server only calls Stripe for one thing: cancelling a subscription when its owner
+// deletes their account (cancelStripe, which needs STRIPE_SECRET_KEY).
 import { createHmac, timingSafeEqual } from 'node:crypto';
 import { pro as rows } from './supa.mjs';
 import { PRO_LINKS, PORTAL } from './plans.mjs';
@@ -67,6 +68,26 @@ export async function planOf(uid, email, fresh = false) {
 }
 // Forgets what was remembered about someone's plan (their purchase just changed).
 export const dropPlan = uid => { seen.delete(uid); };
+
+// Delete account (account.mjs): every Stripe subscription that's still on is cancelled now, so nobody is billed for an account
+// that's gone. This is the one thing here that calls Stripe, so it needs STRIPE_SECRET_KEY (a restricted key that can write
+// Subscriptions is enough). Without it, or if Stripe won't, it throws and the account is left as it was. Apple's subscriptions
+// can't be cancelled from here: the person does that in iPhone Settings → Subscriptions.
+const BILLING = new Set([...ON, 'unpaid']);
+export async function cancelStripe(uid, email) {
+  const list = (await rows.of(uid, email)).filter(r => BILLING.has(r.status));
+  if (!list.length) return 0;
+  const key = process.env.STRIPE_SECRET_KEY, api = (process.env.STRIPE_API_BASE || 'https://api.stripe.com').replace(/\/+$/, '');
+  if (!key) throw Object.assign(new Error('Cancel Pro first: open Manage plan in Settings, cancel, then delete your account.'), { status: 409 });
+  for (const r of list) {
+    const res = await fetch(api + '/v1/subscriptions/' + encodeURIComponent(r.subscription), { method: 'DELETE', signal: AbortSignal.timeout(20000),
+      headers: { authorization: 'Bearer ' + key, 'content-type': 'application/x-www-form-urlencoded' }, body: 'invoice_now=false&prorate=false' }).catch(() => null);
+    // Already gone at Stripe (cancelled there before our table heard) is as good as cancelled.
+    const gone = res && (res.status === 404 || (res.status === 400 && /cancel/i.test(await res.text().catch(() => ''))));
+    if (!res || !(res.ok || gone)) throw Object.assign(new Error('Couldn’t cancel your Pro subscription. Try again in a minute.'), { status: 502 });
+  }
+  return list.length;
+}
 
 // Stripe's checkout for Pro, told who is paying.
 export function checkoutUrl(every, user) {

@@ -1,6 +1,6 @@
 // Every request to Lucida's server: the web app's data (/api), signing in (/api/auth, /auth), the MCP link for AI
 // apps (/mcp), pictures and sound (/media), going Pro (/pro, Stripe's webhook at /api/stripe, and Apple's in-app purchases at
-// /api/iap and /api/apple), and the app's own files. The same code runs on your computer (server.mjs)
+// /api/iap and /api/apple), deleting an account (/api/account/delete), and the app's own files. The same code runs on your computer (server.mjs)
 // and on Vercel (api/index.js), where the pages are static files and only /api, /auth, /mcp, and /media reach this.
 // Online, everything but signing in needs a signed-in person, and each person only ever sees their own library.
 import { readFile, stat } from 'node:fs/promises';
@@ -13,10 +13,11 @@ import { FREE_EXPLAINS, PRO_EXPLAINS } from './plans.mjs';
 import { mcp } from './mcp.mjs';
 import { EXT, HEIC, sniff } from './media.mjs';
 import { cloud, auth } from './supa.mjs';
-import { who, forget, accessToken, sessionCookies, clearCookies, pkce, verifier, clearPkce, linkOwner, sameLink,
+import { who, forget, endSessions, accessToken, sessionCookies, clearCookies, pkce, verifier, clearPkce, linkOwner, sameLink,
   GOOGLE_ID, APPLE_ID, oauthStart, oauthNonce, oauthDone, googleUrl, appleUrl, appleName } from './auth.mjs';
 import { planOf, checkoutUrl, portalUrl, signedBy, onEvent, dropPlan } from './billing.mjs';
 import * as apple from './apple.mjs';
+import { deleteAccount } from './account.mjs';
 import * as social from './social.mjs';
 import * as classes from './classes.mjs';
 import { cookies } from './auth.mjs';
@@ -305,6 +306,22 @@ async function iapReq(res, uid, me, b) {
   const plan = cloud() ? await planOf(uid, me.email, true) : (await devPerson(uid)).plan;
   return send(res, 200, { ok: true, applied, skipped: list.length - applied, plan });
 }
+// Delete account (account.mjs): { confirm: true }. Signs the person out everywhere (their sign-in account is gone), and says
+// whether an Apple subscription is still running, which only they can cancel.
+async function deleteAccountReq(req, res, uid, user, b) {
+  if (!uid || uid === 'local') return send(res, 404, { error: 'Nobody signs in to Lucida on this computer.' });
+  if (b.confirm !== true) return send(res, 400, { error: 'Confirm first.' });
+  try {
+    const r = await deleteAccount({ uid, email: user ? user.email : '' });
+    endSessions(uid);
+    res.setHeader('set-cookie', cloud() ? clearCookies(req) : 'lc_dev=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0');
+    return send(res, 200, { ok: true, apple: r.apple });
+  } catch (e) {
+    console.error('delete account', e);
+    const known = e.status === 409 || e.status === 502;
+    return send(res, known ? e.status : 500, { error: known ? e.message : 'Couldn’t delete your account. Try again in a minute.' });
+  }
+}
 // Who's signed in, for the app: their plan, and the page for changing or cancelling it (Stripe's, or Apple's for a plan billed
 // by Apple). `appAccountToken` is what the iPhone app buys with, so a purchase is the person's own (apple.mjs).
 const meOf = async (user, fresh) => {
@@ -491,8 +508,9 @@ export async function handle(req, res) {
       if (user) me = await meOf(user, path === '/api/state');
       const body = req.method === 'POST' ? await readBody(req, path === '/api/media' ? 20e6 : 5e6) : null;
       if (path === '/api/explain' && req.method === 'POST') return await explainReq(res, uid, me, jsonOf(body));
-      // Not inside a library request: a purchase isn't in the library.
+      // Neither works inside a library request: a purchase isn't in the library, and Delete account removes it.
       if (path === '/api/iap' && req.method === 'POST') return await iapReq(res, uid, me, jsonOf(body));
+      if (path === '/api/account/delete' && req.method === 'POST') return await deleteAccountReq(req, res, uid, user, jsonOf(body));
       return await run(res, uid, out => api(req, out, path, body, me, uid), { pro: me ? me.plan.pro : undefined });
     }
     return await files(req, res, path, ROOT);
