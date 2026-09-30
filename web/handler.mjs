@@ -98,11 +98,12 @@ async function publicPage(req, res, path) {
   if (m) {
     const origin = originOf(req), url = origin + (m.url || path);
     const head = `<title>${escHtml(m.title)}</title>\n<meta name="description" content="${escHtml(m.description)}">\n<link rel="canonical" href="${escHtml(url)}">\n<meta property="og:title" content="${escHtml(m.title)}">\n<meta property="og:description" content="${escHtml(m.description)}">\n<meta property="og:url" content="${escHtml(url)}">\n<meta property="og:type" content="website">${m.noindex || m.status === 404 ? '\n<meta name="robots" content="noindex">' : ''}`;
-    html = html.replace(/<title>[^<]*<\/title>/, head);
+    // A function gives the text as it is: a deck named "$&" or "$'" must not be read as one of replace()'s own patterns.
+    html = html.replace(/<title>[^<]*<\/title>/, () => head);
     // What the page is, in plain HTML, for anything that doesn't run the app (it's replaced as soon as the app starts).
     const list = m.cards ? '<ol>' + m.cards.map(c => '<li>' + escHtml(String(c.front || c.text || '').replace(/\[\[|\]\]/g, '')) + (c.back ? ' — ' + escHtml(c.back) : '') + '</li>').join('') + '</ol>'
       : m.decks ? '<ul>' + m.decks.map(d => '<li><a href="' + escHtml(d.url) + '">' + escHtml(d.name) + '</a> · ' + d.cards + ' cards</li>').join('') + '</ul>' : '';
-    html = html.replace('<div id="app"', '<noscript><h1>' + escHtml(m.title) + '</h1><p>' + escHtml(m.description) + '</p>' + list + '</noscript><div id="app"');
+    html = html.replace('<div id="app"', () => '<noscript><h1>' + escHtml(m.title) + '</h1><p>' + escHtml(m.description) + '</p>' + list + '</noscript><div id="app"');
   }
   res.writeHead(m && m.status === 404 ? 404 : 200, { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-store' });
   res.end(html);
