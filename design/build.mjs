@@ -5866,8 +5866,9 @@ const SITE_CSS = [
   '.sp strong{font-weight:600}',
   // The header: breadcrumb pills, the title, chips, the lead.
   '.sp-top{padding-top:28px}',
-  '.sp-crumbs{margin:0;padding:0;list-style:none;display:flex;flex-wrap:wrap;align-items:center;gap:6px;font-size:14px}',
-  '.sp-crumbs li{display:flex;align-items:center;gap:6px;min-width:0;max-width:100%}.sp-crumbs li:not(:last-child)::after{content:"/";color:var(--sp-muted);opacity:.5}',
+  // One row: the last pill (the page's own title) shortens with "…" when the row is full.
+  '.sp-crumbs{margin:0;padding:0;list-style:none;display:flex;align-items:center;gap:6px;font-size:14px}',
+  '.sp-crumbs li{display:flex;align-items:center;gap:6px;flex:none}.sp-crumbs li:last-child{flex:0 1 auto;min-width:0}.sp-crumbs li:not(:last-child)::after{content:"/";color:var(--sp-muted);opacity:.5}',
   '.sp-crumbs a,.sp-crumbs span{display:block;box-sizing:border-box;height:30px;line-height:30px;padding:0 12px;border-radius:999px;background:var(--sp-surf);color:var(--sp-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}',
   '.sp-crumbs [aria-current]{background:var(--sp-surf2);color:var(--sp-text);font-weight:600}',
   '.sp-h1{margin:20px 0 0;font-size:33px;font-weight:700;line-height:1.14;letter-spacing:-.03em;text-wrap:balance}',
@@ -5876,7 +5877,7 @@ const SITE_CSS = [
   '.sp-chip svg{flex-shrink:0}.sp-chip-a{color:var(--sp-text);font-weight:600}',
   '.sp-lead{margin:20px 0 0;font-size:19px;line-height:1.6;color:var(--sp-muted);text-wrap:pretty}',
   // The pictures: the hero under the header, and the cards' (an <img>, or on the canvas the SiteOg board scaled by --k).
-  '.sp-pic{display:block;width:100%;height:auto;aspect-ratio:1200/630;border-radius:20px;background:var(--sp-surf)}',
+  '.sp-pic{display:block;width:100%;height:auto;aspect-ratio:1200/630;border-radius:20px;background:var(--sp-surf);outline:1px solid rgba(0,0,0,.07);outline-offset:-1px}',
   '.sp-hero{margin-top:28px}.sp-card-img{border-radius:16px}',
   '.sp-og{position:relative;height:auto;overflow:hidden}.sp-og-in{position:absolute;left:0;top:0;width:1200px;height:630px;transform:scale(var(--k));transform-origin:0 0}',
   // The words.
@@ -5911,7 +5912,7 @@ const SITE_CSS = [
   '@container (max-width: 760px){.sp-nav{display:none!important}.sp-head{height:64px!important}.sp-band-wide{display:none!important}.sp-band-tall{display:block!important}',
   spStack('.sp-table'), '}',
   // Six or more columns need room: they stack on any window under 1001 px.
-  '@container (max-width: 1000px){' + spStack('.sp-tx .sp-table') + '}',
+  '@container (max-width: 1000px){' + spStack('.sp-tx .sp-table') + '.sp-tx.sp-col{max-width:720px}}',
   SKY_CSS, NO_RISE
 ].join('');
 const sitePage = (w, h) => `<div class="sp" style="position: relative; isolation: isolate; width: ${w}px; height: ${h}px; box-sizing: border-box; font-family: ${FONT}; background: {{t.bg}}; color: {{t.text}}; overflow: hidden; --sp-line: {{t.line}}; --sp-muted: {{t.muted}}; --sp-surf: {{t.surf}}; --sp-surf2: {{t.surf2}}; --sp-text: {{t.text}};">
