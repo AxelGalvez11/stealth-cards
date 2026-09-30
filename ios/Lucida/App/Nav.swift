@@ -2,14 +2,18 @@
 // sheets over a page (new card, new deck, deck settings, Learn), and full screens (review, session done, Learn mode).
 import SwiftUI
 
-/// Pages pushed on a tab: Settings, a deck, a folder, Check AI cards, someone's profile (`profile("")` is yours), and News.
-enum Route: Hashable { case settings, deck(String), folder(String), inbox, profile(String), news }
+/// Pages pushed on a tab: Settings, a deck, a folder, Check AI cards, someone's profile (`profile("")` is yours), News, and
+/// a class (by its code).
+enum Route: Hashable { case settings, deck(String), folder(String), inbox, profile(String), news, classPage(String) }
 enum SheetKind: Identifiable, Equatable {
   case newDeck, newCard(deckId: String?, cardId: String?), deckSettings(String), learnStart(String)
   /// The New folder popup (maybe for a deck that goes in it), or Rename on a folder's page; `name`: what's typed to start.
   case nameFolder(rename: String?, deck: String?, name: String)
   /// Edit profile (on your profile), and a copy's changes from the deck it came from (take or skip each).
   case editProfile, deckUpdates(String)
+  /// Classes: the New class, Join a class, or Rename popup; a class's Add a deck and Assign sheets (by its code); Report a
+  /// deck, a person, or a suggestion (its kind, id, and name); and Get verified.
+  case classForm(ClassForm), classAdd(String), classAssign(String), report(kind: String, id: String, name: String), verify
   var id: String {
     switch self {
     case .newDeck: return "newDeck"
@@ -19,6 +23,11 @@ enum SheetKind: Identifiable, Equatable {
     case .nameFolder(let f, let d, _): return "folder-\(f ?? "")-\(d ?? "")"
     case .editProfile: return "editProfile"
     case .deckUpdates(let d): return "updates-" + d
+    case .classForm(let f): return "classForm-" + f.id
+    case .classAdd(let c): return "classAdd-" + c
+    case .classAssign(let c): return "classAssign-" + c
+    case .report(let k, let i, _): return "report-\(k)-\(i)"
+    case .verify: return "verify"
     }
   }
 }
@@ -39,8 +48,9 @@ enum FullKind: Identifiable, Equatable {
 @MainActor
 final class Nav: ObservableObject {
   @Published var tab: Tab = .today
-  /// The Library shows All cards instead of your folders and decks.
+  /// The Library shows All cards instead of your folders and decks, or (`libClasses`) your classes.
   @Published var libCards = false
+  @Published var libClasses = false
   @Published var path: [Route] = []
   @Published var sheet: SheetKind?
   @Published var full: FullKind?
@@ -78,6 +88,8 @@ final class Nav: ObservableObject {
   func pick(_ t: Tab) { path = []; tab = t }
   /// Someone's profile (`handle` "": yours).
   func profile(_ handle: String) { push(.profile(handle)) }
+  /// A class's page, by its code.
+  func classPage(_ code: String) { push(.classPage(code)) }
   /// A web app page (`url`: where it opens), for pages the iPhone app doesn't draw yet.
   func open(_ url: URL?) { if let url { web = WebPage(url: url) } }
 }

@@ -20,14 +20,18 @@ struct Library: Decodable {
   var aiOn: Bool
   /// You on the study network, once you have a profile: your handle (web/social.mjs ensureProfile keeps it here).
   var profile: ProfileRef?
-  enum CodingKeys: String, CodingKey { case rev, settings, ai, folders, decks, cards, logs, me, aiOn, profile }
+  /// The classes you're in, with their assignments (web/classes.mjs keeps them here, so Today shows what's due).
+  var classes: [LibClass]
+  enum CodingKeys: String, CodingKey { case rev, settings, ai, folders, decks, cards, logs, me, aiOn, profile, classes }
   init(from d: Decoder) throws {
     let c = try d.container(keyedBy: CodingKeys.self)
     rev = c.v(.rev, 0); settings = c.v(.settings, UserSettings()); ai = c.v(.ai, AIState()); folders = c.v(.folders, [])
     decks = c.v(.decks, []); cards = c.v(.cards, []); logs = c.v(.logs, []); me = c.v(.me, nil); aiOn = c.v(.aiOn, false); profile = c.v(.profile, nil)
+    classes = c.v(.classes, [])
   }
   init(rev: Int = 0, settings: UserSettings = UserSettings(), ai: AIState = AIState(), folders: [Folder] = [], decks: [Deck] = [], cards: [Card] = [], logs: [ReviewLog] = [], me: Me? = nil, aiOn: Bool = false) {
     self.rev = rev; self.settings = settings; self.ai = ai; self.folders = folders; self.decks = decks; self.cards = cards; self.logs = logs; self.me = me; self.aiOn = aiOn
+    classes = []
   }
 }
 

@@ -202,7 +202,9 @@ struct LibraryScreen: View {
     let folder = folderId.flatMap { id in folders.first { $0.id == id } }
     let cards = nav.libCards && folderId == nil
     Group {
-      if folderId != nil && folder == nil { Color.clear.onAppear { nav.back() } }
+      // The Library's third view: your classes (Classes.swift).
+      if nav.libClasses && folderId == nil { ClassesScreen() }
+      else if folderId != nil && folder == nil { Color.clear.onAppear { nav.back() } }
       // No decks and no folders yet (PhoneDecksEmpty).
       else if folderId == nil && !cards && decks.isEmpty && folders.isEmpty { empty }
       else { page(decks, folders, folder, cards) }
@@ -218,9 +220,7 @@ struct LibraryScreen: View {
       VStack(alignment: .leading, spacing: 14) {
         if let folder { folderTop(folder) } else { top(cards) }
         if folder == nil {
-          Segmented(options: [("decks", "Decks"), ("cards", "All cards")], current: cards ? "cards" : "decks", height: 36, size: 14, gap: 2, hPad: 16) { id in
-            menu = nil; nav.libCards = id == "cards"
-          }
+          LibraryModes(current: cards ? "cards" : "decks") { menu = nil }
         }
         search(cards ? "Search all cards" : folder != nil ? "Search this folder" : "Search decks and cards")
         if cards { allCards(ql, decks, folders) } else { deckList(ql, decks, folders, folder) }
@@ -649,6 +649,7 @@ struct LibraryScreen: View {
   private var empty: some View {
     VStack(spacing: 14) {
       PageTitle("Library") { RoundButton(icon: "plus", label: "New deck") { nav.newDeck() } }
+      LibraryModes(current: "decks")
       EmptyBlock(art: 150, icon: "plus", title: "No decks yet", line: "Make one, bring your cards from Anki or Quizlet, or let your AI make them for you.") {
         EmptyActions(primary: ("New deck", "plus", { nav.newDeck() }), a: ("Import cards", "upload", { nav.importCards() }), b: ("Connect AI", "connect", { nav.pick(.connect) }))
       }

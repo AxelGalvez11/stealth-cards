@@ -23,7 +23,7 @@ struct TodayScreen: View {
           }
         }
         .frame(height: 44)
-        if vm.hasDecks { hero(vm); decks(vm) } else { welcome }
+        if vm.hasDecks { hero(vm); assignments; decks(vm) } else { welcome }
       }
       .padding(.horizontal, 20)
       .padding(.top, Screen.top(64))
@@ -54,6 +54,43 @@ struct TodayScreen: View {
       }
     }
     .buttonStyle(.press)
+  }
+
+  /// What your classes assigned (TODAY_ASSIGN_PHONE): a calm row each, soonest first: the deck, when it's due and whose
+  /// class, and what's left for you. A row opens the deck (or the class, until you study it).
+  @ViewBuilder private var assignments: some View {
+    let rows = store.assignmentRows(), today = store.classToday
+    if !rows.isEmpty {
+      VStack(alignment: .leading, spacing: 0) {
+        Eyebrow(text: "Assignments").padding(.horizontal, 4).padding(.top, 6).padding(.bottom, 4)
+        ForEach(rows) { a in
+          let mesh = Mesh.gen(a.cover.seed ?? a.name, a.cover.style ?? "mix")
+          let left = ClassWords.leftWord(goal: a.goal, cards: a.cards, a.progress)
+          let sub = ClassWords.dueWord(a.goal, a.due, today: today) + " · " + a.className
+          Button {
+            if let p = a.progress { nav.push(.deck(store.demo ? "cell" : p.deckId)) } else { nav.classPage(a.code) }
+          } label: {
+            HStack(spacing: 12) {
+              CSSLinearGradient(angle: mesh.angle, stops: mesh.stops).frame(width: 10, height: 10).clipShape(Circle())
+              VStack(alignment: .leading, spacing: 2) {
+                Text(a.name).css(16, .medium).foregroundStyle(a.done ? t.muted : t.text).lineLimit(1).line(16)
+                Text(sub).css(13).foregroundStyle(t.muted).lineLimit(1).line(13)
+              }
+              .frame(maxWidth: .infinity, alignment: .leading)
+              Text(left).css(14, .semibold).foregroundStyle(a.done ? t.good : t.text).lineLimit(1).fixedSize().line(14)
+            }
+            .frame(minHeight: 58)
+            .overlay(alignment: .bottom) { Rectangle().fill(t.line).frame(height: 1).offset(y: 1) }
+            .padding(.bottom, 1)
+            .contentShape(Rectangle())
+          }
+          .buttonStyle(.plain)
+          .accessibilityElement(children: .ignore)
+          .accessibilityLabel([a.name, sub, left].joined(separator: ", "))
+          .accessibilityAddTraits(.isButton)
+        }
+      }
+    }
   }
 
   private func decks(_ vm: TodayVM) -> some View {
