@@ -1,9 +1,11 @@
-// iPhone · Stats (PhoneStats, PhoneStatsEmpty): your streak and numbers, the days you studied, and the cards due
-// each day ahead.
+// iPhone · Stats (PhoneStats, PhoneStatsEmpty, and Pro's tabs, StatsDeep.swift): your streak and numbers, the days you
+// studied, and the cards due each day ahead; then Memory, Weak spots, and Pace.
 import SwiftUI
 
 struct StatsVM {
   var empty = false
+  /// Your memory goal (Settings → Remember goal), which the deep tabs mark.
+  var goal = 90
   var streak = "", remembered = "", reviews = "", cards = ""
   /// Study days, oldest week first, 7 a column: 0 (none) to 4 (busiest).
   var heat: [Int] = []
@@ -16,18 +18,19 @@ extension Store {
       if props.noStats { return StatsVM(empty: true, streak: "0 days", remembered: "—", reviews: "0", cards: "0") }
       let heat = (0..<(17 * 7)).map { i -> Int in let v = (i * 37 + (i % 7) * 11) % 13; return v < 3 ? 0 : v < 6 ? 1 : v < 9 ? 2 : v < 11 ? 3 : 4 }
       let X = Sample.shared.DUE_7
-      return StatsVM(streak: "12 days", remembered: "90%", reviews: "1,284", cards: "2,470", heat: heat, forecast: Forecast(vals: X.vals, labels: X.labels, tops: nil, names: X.names))
+      return StatsVM(goal: 90, streak: "12 days", remembered: "90%", reviews: "1,284", cards: "2,470", heat: heat, forecast: Forecast(vals: X.vals, labels: X.labels, tops: nil, names: X.names))
     }
     let E = engine, st = E.streaks, now = nowMs()
-    let logs = lib.logs.filter { $0.at >= now - 30 * DAY }, pct = Engine.rememberedPct(logs)
-    if lib.logs.isEmpty { return StatsVM(empty: true, streak: "0 days", remembered: "—", reviews: "0", cards: grouped(lib.cards.count)) }
-    // 17 weeks ending this week, Monday first; busier days are darker, compared with your busiest day.
+    // Flashcard grades this month (Learn mode answers are logged too, but aren't reviews).
+    let logs = lib.logs.filter { $0.at >= now - 30 * DAY && Insights.isGrade($0) }, pct = Engine.rememberedPct(logs)
+    if lib.logs.isEmpty { return StatsVM(empty: true, goal: lib.settings.goal, streak: "0 days", remembered: "—", reviews: "0", cards: grouped(lib.cards.count)) }
+    // 38 weeks ending this week, Monday first; busier days are darker, compared with your busiest day; the last 17 show.
     var counts: [Double: Int] = [:]
     for l in lib.logs { counts[dayAt(l.at), default: 0] += 1 }
-    let monday = dayAt(now, -((weekday(now) + 6) % 7)), start = dayAt(monday, -16 * 7)
-    let vals = (0..<(17 * 7)).map { counts[dayAt(start, $0)] ?? 0 }, top = max(1, vals.max() ?? 1)
-    return StatsVM(streak: plural(st.streak, "day"), remembered: pct.map { "\($0)%" } ?? "—", reviews: grouped(logs.count), cards: grouped(lib.cards.count),
-                   heat: vals.map { $0 == 0 ? 0 : min(4, 1 + Int(3.999 * Double($0) / Double(top))) }, forecast: E.forecast(7, lib.decks))
+    let monday = dayAt(now, -((weekday(now) + 6) % 7)), start = dayAt(monday, -37 * 7)
+    let vals = (0..<(38 * 7)).map { counts[dayAt(start, $0)] ?? 0 }, top = max(1, vals.max() ?? 1)
+    return StatsVM(goal: lib.settings.goal, streak: plural(st.streak, "day"), remembered: pct.map { "\($0)%" } ?? "—", reviews: grouped(logs.count), cards: grouped(lib.cards.count),
+                   heat: vals.suffix(17 * 7).map { $0 == 0 ? 0 : min(4, 1 + Int(3.999 * Double($0) / Double(top))) }, forecast: E.forecast(7, lib.decks.filter { !$0.paused }))
   }
 }
 
@@ -35,28 +38,40 @@ struct StatsScreen: View {
   @Environment(\.theme) private var t
   @EnvironmentObject private var store: Store
   @EnvironmentObject private var nav: Nav
+  /// Overview (free), and Pro's Memory, Weak spots, and Pace.
+  @State private var tab = "Overview"
 
   var body: some View {
     let s = store.stats()
     let page = VStack(alignment: .leading, spacing: 14) {
       PageTitle("Stats")
-      LazyVGrid(columns: [GridItem(.flexible(), spacing: 8), GridItem(.flexible(), spacing: 8)], spacing: 8) {
-        kpi("Streak", s.streak, s.empty); kpi("Remembered", s.remembered, s.empty); kpi("Reviews", s.reviews, s.empty); kpi("Cards", s.cards, s.empty)
+      if !s.empty {
+        Segmented(options: ["Overview", "Memory", "Weak spots", "Pace"].map { ($0, $0) }, current: tab, height: 34, size: 13, gap: 2, hPad: 4) { tab = $0 }
       }
-      if s.empty { empty } else {
-        studyDays(s)
-        VStack(alignment: .leading, spacing: 12) { DueChart(fc: s.forecast, span: "Next 7 days", maxH: 60, gap: 6, radius: 6) }
-          .padding(18).background(RoundedRectangle(cornerRadius: 28, style: .continuous).fill(t.surf))
-      }
+      if s.empty || tab == "Overview" { overview(s) }
+      else if store.isPro { DeepStats(tab: tab, goal: s.goal) }
+      else { StatsUpgrade() }
     }
     .foregroundStyle(t.text)
     .padding(.horizontal, 20).padding(.top, Screen.top(64)).padding(.bottom, 120)
     Group {
       // No reviews yet: the page fills the screen, with the empty card taking the rest.
       if s.empty { page.frame(maxHeight: .infinity, alignment: .top) }
-      else { ScrollView(showsIndicators: false) { page } }
+      else { ScrollView(showsIndicators: false) { page }.debugScroll() }
     }
     .ignoresSafeArea()
+    .onAppear { if tab == "Overview" && store.props.statsTab != "Overview" { tab = store.props.statsTab } }
+  }
+
+  @ViewBuilder private func overview(_ s: StatsVM) -> some View {
+    LazyVGrid(columns: [GridItem(.flexible(), spacing: 8), GridItem(.flexible(), spacing: 8)], spacing: 8) {
+      kpi("Streak", s.streak, s.empty); kpi("Remembered", s.remembered, s.empty); kpi("Reviews", s.reviews, s.empty); kpi("Cards", s.cards, s.empty)
+    }
+    if s.empty { empty } else {
+      studyDays(s)
+      VStack(alignment: .leading, spacing: 12) { DueChart(fc: s.forecast, span: "Next 7 days", maxH: 60, gap: 6, radius: 6) }
+        .padding(18).background(RoundedRectangle(cornerRadius: 28, style: .continuous).fill(t.surf))
+    }
   }
 
   private func kpi(_ label: String, _ value: String, _ empty: Bool) -> some View {

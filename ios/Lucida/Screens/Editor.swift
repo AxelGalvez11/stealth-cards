@@ -40,6 +40,13 @@ extension Store {
       return CardDraft(kind: c.kind, front: c.front, back: c.back, text: c.text, note: c.note, tags: c.tags, image: c.image, audio: c.audio, wave: c.wave,
                        speak: c.speak, lang: c.lang, auto: c.auto, clozeMode: c.cloze == -1 ? "one" : "each", boxes: c.boxes, occ: c.occ == "all" ? "all" : "one", box: c.box)
     }
+    // A sample card the canvas's editor boards open to edit (mock.mjs card(id)).
+    if demo, let id = cardId, let r = Sample.shared.CARDS.first(where: { $0.id == id }) {
+      let kind = ["text": "basic", "blank": "cloze", "image": "image", "audio": "audio"][r.icon] ?? "basic"
+      return CardDraft(kind: kind, front: kind == "cloze" ? "" : r.front, back: kind == "image" ? "" : r.back,
+                       text: kind == "cloze" ? r.front.replacingOccurrences(of: "____", with: "[[" + r.back + "]]") : "", tags: r.tags,
+                       image: kind == "image" ? "mock" : nil, audio: kind == "audio" ? "mock" : nil, boxes: kind == "image" ? Sample.shared.BOXES : [])
+    }
     if demo {
       let tags = ["Energy", "Exam 1"]
       switch type {
@@ -149,8 +156,17 @@ struct EditorSheet: View {
                 .buttonStyle(.press)
                 }
               }
-              if cardId != nil {
-                Button { Task { await store.deleteCard(cardId!); nav.close() } } label: { Text("Delete card").css(14, .semibold).foregroundStyle(t.again) }.buttonStyle(.plain)
+              if let id = cardId {
+                // Pausing a card (every card of its text or picture): it doesn't come up until it's unpaused.
+                let paused = store.isPaused(id)
+                HStack(spacing: 24) {
+                  Button { store.pauseCards(store.demo ? [id] : store.cardGroup(id), !paused) } label: {
+                    HStack(spacing: 7) { Icon("pauseRing", 16, 2); Text(paused ? "Unpause card" : "Pause card").css(14, .semibold) }.foregroundStyle(t.text).frame(minHeight: 44)
+                  }
+                  .buttonStyle(.plain)
+                  .accessibilityAddTraits(paused ? .isSelected : [])
+                  Button { Task { await store.deleteCard(id); nav.close() } } label: { Text("Delete card").css(14, .semibold).foregroundStyle(t.again).frame(minHeight: 44) }.buttonStyle(.plain)
+                }
               }
             }
             .padding(.bottom, keyboard.height > 0 ? keyboard.height + 60 : 0)

@@ -142,6 +142,8 @@ struct SettingsScreen: View {
           menuRow("Remember goal", "\(s.goal)%", options: ["80%", "85%", "90%", "93%", "95%"]) { store.setSetting(["goal": Int($0.dropLast()) ?? 90]) }
           divider
           row("Schedule with FSRS", sub: "For 4 grades and ✓ / ✗") { Toggle48(on: fsrs, label: "Schedule with FSRS") { store.setSetting(["fsrs": !fsrs]) } }
+          divider
+          TuneRow()
         }
         group("Look") {
           row("Appearance") { seg([("system", "System"), ("light", "Light"), ("dark", "Dark")], look) { store.setSetting(["look": $0]) } }
@@ -196,7 +198,7 @@ struct SettingsScreen: View {
     } else {
       group("Plan") {
         row("Free", sub: "Pro adds exam tools, deeper stats, and more") {
-          Button { UIApplication.shared.open(URL(string: "https://lucida.cards/pricing")!) } label: {
+          Button { UIApplication.shared.open(API.pricing) } label: {
             Text("Go Pro").css(14, .semibold).foregroundStyle(t.invText).padding(.horizontal, 16).frame(height: 36).background(Capsule().fill(t.inv))
           }
           .buttonStyle(.press)
@@ -245,7 +247,8 @@ struct SettingsScreen: View {
     HStack(spacing: 12) {
       VStack(alignment: .leading, spacing: 2) {
         Text(label).css(16).foregroundStyle(color ?? t.text)
-        if let sub { Text(sub).css(12).foregroundStyle(t.muted) }
+        // (Wrapped like a browser: SwiftUI's Text would move a lone last word down.)
+        if let sub { WebText(text: sub, size: 12, color: t.muted) }
       }
       .frame(maxWidth: .infinity, alignment: .leading)
       right()

@@ -66,3 +66,22 @@ copies it and takes and skips the owner's changes; then News, pins, Sharing, and
     ios/tools/e2e.sh <simulator id>
 
 It starts a fresh server on port 3677 and runs `LucidaUITests`.
+
+## Pro study tools
+
+The scheduling rules are ports of the web app's: `Data/FSRS.swift` (with a person's tuned parameters), `Sched.swift` (paused
+cards, exam dates, cards you keep forgetting, what a goal costs), `Tune.swift` (Tune to you: the same fit as web/tune.js),
+and `Insights.swift` (Stats' Memory, Weak spots, and Pace). `Screens/StudyPlan.swift` is Deck settings → Studying's Pro
+part, `StatsDeep.swift` the deep tabs, `TuneRow.swift` Settings' Tune to you. Boards: `PhoneDeckSettingsStudy`,
+`PhoneDeckSettingsGoal`, `PhoneDeckSettingsStudyFree`, `PhoneStatsMemory`, `PhoneStatsWeak`, `PhoneStatsPace`,
+`PhoneStatsUpgrade`, `PhoneLibraryLeeches`, `PhoneEditorPaused`, `PhoneSettingsFree` (a board's `-tune Off|"Not enough
+reviews"|Tuning` shows the other states of Tune to you).
+
+More launch arguments (debug builds): `-open statsdeep -tab Memory` (or `Weak spots`, `Pace`) opens Stats on that tab;
+`-dev <name>` signs in as a made-up person on a local test server (like the web's /dev/as/<name>; a name that starts with
+`free` is on the Free plan); `-check pause|exam|grade|learn|tune|free` runs an end-to-end check against the server and quits
+(`App/DebugChecks.swift`); `-scroll <points>` opens a page scrolled that far.
+
+`tests/run.sh parity` checks the ports against the web app's own code on a seeded library and made-up variations of it (no
+simulator), and `tests/run.sh e2e` runs the `-check`s in the simulator against a local server (`DEVICE=<simulator id>`).
+

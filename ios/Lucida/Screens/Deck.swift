@@ -24,6 +24,9 @@ struct DeckVM {
   var tags: [String] = []
   var allTags: [String] = []
   var paused = false, grading = "four", fsrs = true, goal = 90, gapIdx = 3, steps = ["1m", "10m"], perDay = 20
+  /// Its exam (Pro): the day it was set for ("" for none), and its line, like "Exam in 12 days · 84 cards to review first" (nil
+  /// without one, and once the day has passed); and the rule for cards you keep forgetting.
+  var exam: ExamInfo? = nil, examDay = "", leechAt = 8, leechAct = "tag"
   /// Its folder, the Library's folders, and what shows behind studying it.
   var folder: String? = nil
   var folders: [(id: String, name: String)] = []
@@ -47,19 +50,24 @@ struct DemoDeck {
   var image: String? = nil
   var bg = DeckBg()
   var paused = false, grading: String? = nil, fsrs = true, goal = 90, gapIdx = 3, steps = ["1m", "10m"], perDay = 20
+  /// The exam day: untouched (the sample's Sunday, October 4, unless the board is Free), cleared, or one picked here.
+  var exam: String?? = .none
+  var leechAt = 8, leechAct = "tag"
 }
 
 extension Store {
   func deck(_ id: String) -> DeckVM {
     if demo {
       let X = Sample.shared, e = demoDeck, empty = props.emptyDeck
+      let examDay: String? = { if case .some(let v) = e.exam { return v }; return props.free ? nil : Store.sampleExamDay }()
       if empty { return DeckVM(id: "pharm", name: "Pharmacology", seed: "Pharmacology", lineShort: "No cards yet") }
       let d = DeckVM(id: "cell", name: e.name ?? "Cell Biology", seed: "Cell Biology", style: e.style ?? "mix", round: e.round, image: e.image,
                      lineShort: "412 cards · 38 from your AI", due: 28, fresh: 10, ret: 91, studyCount: 28,
                      rows: demoCardOrder.compactMap { id in X.CARDS.first { $0.id == id } }.filter { (demoCardDeck[$0.id] ?? "cell") == "cell" }
-                       .map { CardRowVM(id: $0.id, front: $0.front, meta: $0.kind + " · " + $0.next, tags: $0.tags) },
+                       .map { CardRowVM(id: $0.id, front: $0.front, meta: $0.kind + " · " + (isPaused($0.id) ? "Paused" : $0.next), tags: $0.tags) },
                      tags: e.tags ?? X.TAGS["cell"] ?? [], allTags: Array(Generated.tagColors.keys),
                      paused: e.paused, grading: e.grading ?? props.grading, fsrs: e.fsrs, goal: e.goal, gapIdx: e.gapIdx, steps: e.steps, perDay: e.perDay,
+                     exam: Store.demoExam(day: examDay), examDay: examDay ?? "", leechAt: e.leechAt, leechAct: e.leechAct,
                      folder: demoFolderOf("cell"), folders: demoFolders.map { ($0.id, $0.name) }, bg: e.bg, sharing: demoSharing())
       return d
     }
@@ -73,6 +81,7 @@ extension Store {
                   studyCount: st.due > 0 ? st.due : st.fresh, resume: learnOn(id),
                   rows: cards.map { c in CardRowVM(id: c.id, front: Store.listFront(c), meta: (KIND_LABEL[c.kind] ?? "Basic") + " · " + E.nextLabel(c), tags: c.tags, origin: c.origin) },
                   tags: d.tags, allTags: E.tags, paused: d.paused, grading: d.grading, fsrs: d.fsrs, goal: d.goal, gapIdx: d.gapIdx, steps: d.steps, perDay: d.perDay,
+                  exam: st.exam, examDay: d.exam ?? "", leechAt: Sched.leechAt(d), leechAct: Sched.leechAct(d),
                   folder: d.folder, folders: lib.folders.map { ($0.id, $0.name) }, bg: d.bg, sharing: sharing(d))
   }
 
@@ -100,6 +109,9 @@ extension Store {
         case "gapIdx": e.gapIdx = v as? Int ?? 3
         case "steps": e.steps = v as? [String] ?? e.steps
         case "perDay": e.perDay = v as? Int ?? 20
+        case "exam": e.exam = .some(v as? String)
+        case "leechAt": e.leechAt = v as? Int ?? 8
+        case "leechAct": e.leechAct = v as? String ?? "tag"
         case "cover":
           let c = v as? [String: Any] ?? [:]
           if let s = c["style"] as? String { e.style = s }
@@ -262,6 +274,11 @@ struct DeckScreen: View {
             tile("New", String(d.fresh), t.text)
             tile("Remembered", d.ret.map { "\($0)%" } ?? "—", d.ret == nil ? t.muted : d.ret! >= d.goal ? t.good : d.ret! >= d.goal - 5 ? t.hard : t.again)
           }
+          // An exam coming: how many days, and how many cards to review before it.
+          if let x = d.exam {
+            HStack(spacing: 8) { Icon("calendar", 16, 2).foregroundStyle(t.text); Text(x.line).css(14).foregroundStyle(t.muted) }
+              .frame(maxWidth: .infinity, alignment: .leading).accessibilityElement(children: .combine)
+          }
           HStack(spacing: 8) {
             Button { store.startReview(d.id); nav.study(deckId: d.id) } label: {
               HStack(spacing: 8) {
@@ -392,6 +409,8 @@ struct DeckSettingsSheet: View {
   let close: () -> Void
   @State private var name: String? = nil
   @State private var pickingCover = false
+  /// The goal the settings opened with (the cost of a goal counts from there).
+  @State private var goalFrom: Int? = nil
   private let gaps = [(30, "1 mo"), (90, "3 mo"), (180, "6 mo"), (365, "1 yr"), (730, "2 yr"), (1825, "5 yr"), (3650, "10 yr")]
   private let stepPool = ["1m", "10m", "1h", "1d"]
 
@@ -528,10 +547,12 @@ struct DeckSettingsSheet: View {
       }
       if fsrsOn {
         VStack(alignment: .leading, spacing: 12) {
+          if store.isPro { GoalPresets(d: d) }
           HStack(spacing: 8) {
             StackedStepper(label: "Remember goal", value: "\(d.goal)%", less: { store.updateDeck(d.id, ["goal": max(70, d.goal - 1)]) }, more: { store.updateDeck(d.id, ["goal": min(97, d.goal + 1)]) })
             StackedStepper(label: "Longest gap", value: gaps[min(max(d.gapIdx, 0), 6)].1, less: { store.updateDeck(d.id, ["gapIdx": max(0, d.gapIdx - 1)]) }, more: { store.updateDeck(d.id, ["gapIdx": min(6, d.gapIdx + 1)]) })
           }
+          if store.isPro { WorkloadLine(d: d, from: goalFrom ?? d.goal) }
           HStack(spacing: 6) {
             Text("Learning steps").css(12).foregroundStyle(t.muted).padding(.trailing, 4)
             ForEach(d.steps, id: \.self) { x in
@@ -561,8 +582,10 @@ struct DeckSettingsSheet: View {
         MiniStepper(value: d.perDay, bg: t.surf, set: { store.updateDeck(d.id, ["perDay": $0]) }, step: 5)
       }
       .frame(minHeight: 44)
+      if fsrsOn { StudyPro(d: d) }
     }
     .frame(maxHeight: .infinity, alignment: .top)
+    .onAppear { if goalFrom == nil { goalFrom = store.demo && store.props.stepGoal ? 90 : d.goal } }
   }
 }
 

@@ -27,9 +27,12 @@ enum SheetKind: Identifiable, Equatable {
 struct WebPage: Identifiable { let url: URL; var id: String { url.absoluteString } }
 enum FullKind: Identifiable, Equatable {
   case review(deckId: String?, pile: String?), done, learn(String)
+  /// Going over cards picked on the Stats page: "hard", "leech", or "tag:Organelles".
+  case reviewSet(String)
   var id: String {
     switch self {
     case .review(let d, let p): return "review-\(d ?? "")-\(p ?? "")"
+    case .reviewSet(let s): return "review-set-" + s
     case .done: return "done"
     case .learn(let d): return "learn-" + d
     }
@@ -41,6 +44,8 @@ final class Nav: ObservableObject {
   @Published var tab: Tab = .today
   /// The Library shows All cards instead of your folders and decks.
   @Published var libCards = false
+  /// A filter for All cards to start on, from the Stats page: "hard", "leech", or "paused".
+  var libFilter: String? = nil
   @Published var path: [Route] = []
   @Published var sheet: SheetKind?
   @Published var full: FullKind?
@@ -54,6 +59,8 @@ final class Nav: ObservableObject {
   func push(_ r: Route) { path.append(r) }
   func back() { if !path.isEmpty { path.removeLast() } }
   func study(deckId: String?, pile: String? = nil) { withAnimation(.out(0.35)) { full = .review(deckId: deckId, pile: pile) } }
+  /// Studies cards picked on the Stats page (a weak tag, the hardest cards, the ones you keep forgetting).
+  func study(set: String) { withAnimation(.out(0.35)) { full = .reviewSet(set) } }
   func newCard(deckId: String?, cardId: String? = nil) { withAnimation(.out(0.35)) { sheet = .newCard(deckId: deckId, cardId: cardId) } }
   func newDeck() { withAnimation(.out(0.35)) { sheet = .newDeck } }
   func importCards() { /* Import comes with the card editor. */ }

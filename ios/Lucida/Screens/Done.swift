@@ -12,6 +12,8 @@ struct SessionVM {
   var onlyPiles = false
   var piles: [(name: String, n: Int, total: Int)] = []
   var deckId: String?
+  /// The session went over cards picked on the Stats page (a weak tag, the hardest cards); Done goes back to Stats.
+  var set: String?
 }
 
 extension Store {
@@ -33,7 +35,7 @@ extension Store {
                      streak: E.streaks.streak, next: nx.map { $0.short + " · \($0.n)" } ?? "Nothing due",
                      sorted: piled.count, onlyPiles: !piled.isEmpty && rated.isEmpty,
                      piles: names.map { name in (name, piled.filter { $0.pile == name }.count, (d.map { E.cards(of: $0.id) } ?? lib.cards).filter { $0.pile == name }.count) },
-                     deckId: session?.deckId)
+                     deckId: session?.deckId, set: session?.set)
   }
 }
 
@@ -63,7 +65,7 @@ struct DoneScreen: View {
         tile("Next", ss.next.components(separatedBy: " · ").first ?? ss.next)
       }
       Spacer(minLength: 0)
-      BigButton(label: "Done", height: 58, size: 17) { store.session = nil; nav.leave(to: ss.deckId) }
+      BigButton(label: "Done", height: 58, size: 17) { store.session = nil; if ss.set != nil { nav.closeFull() } else { nav.leave(to: ss.deckId) } }
     }
     .foregroundStyle(t.text)
     .padding(.top, Screen.top(64)).padding(.horizontal, 20).padding(.bottom, 34)
