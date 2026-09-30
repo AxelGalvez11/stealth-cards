@@ -94,6 +94,12 @@ struct RootView: View {
             }
           case "deck": nav.tab = .library; nav.path = [.deck(first)]
           case "library": nav.tab = .library
+          // The New deck sheet, and Settings › Theme (with `-theme <key>` a theme's page).
+          case "newdeck": nav.tab = .library; nav.sheet = .newDeck
+          // Learn mode on the first deck's questions (multiple choice and true or false), started as Start learning would.
+          case "learnq": if store.startLearn(first, set: "all", kinds: ["mc", "tf", "blank"]) { nav.tab = .library; nav.path = [.deck(first)]; nav.full = .learn(first) }
+          case "themes": nav.path = [.settings, .themes]
+          case let o where o.hasPrefix("theme:"): nav.path = [.settings, .themes, .theme(String(o.dropFirst(6)))]
           case "cards": nav.tab = .library; nav.libCards = true
           case "stats": nav.tab = .stats
           // Stats on one of Pro's tabs: `-open stats -tab Memory` (or Weak spots, Pace).
