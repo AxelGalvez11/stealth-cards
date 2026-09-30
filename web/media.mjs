@@ -152,10 +152,11 @@ export async function fetchMedia(src, want, { files = [], local = false } = {}) 
   throw new Error('Give a link (https://…), an uploaded file ("file:0"), or the full path of a file on this computer.');
 }
 
-// Speech for an audio card, or null when no voice key is set (then the app reads the words aloud itself).
+// Speech for an audio card, or null when no voice key is set (then the app reads the words aloud itself). Natural voices are
+// part of Lucida Pro: on Free there is none, and nothing is sent to the voice service.
 export async function speechFile(text, lang) {
   text = String(text || '').trim().slice(0, 2500);
-  if (!text || !voiceId()) return null;
+  if (!text || !voiceId() || !isPro()) return null;
   const name = 'v' + createHash('sha256').update(voiceId() + '\n' + (lang || '') + '\n' + text).digest('hex').slice(0, 20) + '.mp3';
   if (await hasMedia(name)) return '/media/' + name;
   const buf = await speech(text, lang);
