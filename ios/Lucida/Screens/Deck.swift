@@ -207,11 +207,11 @@ struct DeckScreen: View {
           CoverButton(icon: "back", label: "Back") { nav.back() }
           Spacer()
           // A deck you share: its page. One you study from someone: Suggest a change instead of New card.
-          if let sh = d.sharing.shared { CoverButton(icon: "globe", label: sh.label, size: 40) { nav.open(store.webURL(sh.url)) } }
+          if let sh = d.sharing.shared { CoverButton(icon: "globe", label: sh.label, size: 40) { nav.deckPage(sh.url) } }
           CoverButton(icon: "gear", label: "Deck settings") { withAnimation(.out(0.35)) { nav.sheet = .deckSettings(d.id) } }
           if !d.rows.isEmpty { CoverButton(icon: "search", label: "Search") {} }
           if !d.sharing.readOnly { CoverButton(icon: "plus", label: "New card") { nav.newCard(deckId: d.id) } }
-          if d.sharing.readOnly, let lk = d.sharing.link { CoverButton(icon: "message", label: "Suggest a change", size: 40) { nav.open(store.webURL(lk.url + "?suggest=1")) } }
+          if d.sharing.readOnly, let lk = d.sharing.link { CoverButton(icon: "message", label: "Suggest a change", size: 40) { nav.deckPage(lk.url, suggest: "1") } }
         }
         .padding(.top, Screen.top(54))
         Spacer(minLength: 0)
@@ -288,7 +288,7 @@ struct DeckScreen: View {
             ForEach(d.rows) { r in
               // A card of a deck you study as it is opens Suggest a change on it (on its deck's page).
               let open = d.sharing.readOnly && d.sharing.link != nil
-                ? { nav.open(store.webURL(d.sharing.link!.url + "?suggest=" + (r.origin ?? "1").addingPercentEncoding(withAllowedCharacters: .alphanumerics)!)) }
+                ? { nav.deckPage(d.sharing.link!.url, suggest: r.origin ?? "1") }
                 : { nav.newCard(deckId: d.id, cardId: store.demo ? nil : r.id) }
               row(r)
                 .overlay(alignment: .bottom) { Rectangle().fill(t.line).frame(height: 1) }
@@ -310,7 +310,7 @@ struct DeckScreen: View {
 
   /// Whose deck it is: their picture and name (tap: its page).
   private func fromRow(_ d: DeckVM, _ lk: DeckSharing.Linked) -> some View {
-    Button { nav.open(store.webURL(lk.url)) } label: {
+    Button { nav.deckPage(lk.url) } label: {
       HStack(spacing: 10) {
         PersonAvatar(p: d.sharing.ownerFace, size: 28)
         Text("From " + lk.owner.name).css(14, .semibold).foregroundStyle(t.text).lineLimit(1).frame(maxWidth: .infinity, alignment: .leading)

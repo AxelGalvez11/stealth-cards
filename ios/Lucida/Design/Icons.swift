@@ -6,7 +6,9 @@ struct Icon: View {
   let name: String
   var size: CGFloat
   var stroke: CGFloat
-  init(_ name: String, _ size: CGFloat = 18, _ stroke: CGFloat = 1.8) { self.name = name; self.size = size; self.stroke = stroke }
+  /// Drawn filled as well as outlined (a bell that's on).
+  var filled = false
+  init(_ name: String, _ size: CGFloat = 18, _ stroke: CGFloat = 1.8, filled: Bool = false) { self.name = name; self.size = size; self.stroke = stroke; self.filled = filled }
 
   var body: some View {
     let parts = IconArt.parts(name), k = size / 24, width = stroke * k
@@ -14,7 +16,7 @@ struct Icon: View {
       let scale = CGAffineTransform(scaleX: k, y: k)
       for part in parts {
         let path = Path(part.path).applying(scale)
-        if part.fill { ctx.fill(path, with: .foreground) }
+        if part.fill || filled { ctx.fill(path, with: .foreground) }
         if part.stroke { ctx.stroke(path, with: .foreground, style: StrokeStyle(lineWidth: width, lineCap: .round, lineJoin: .round)) }
       }
     }

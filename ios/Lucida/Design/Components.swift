@@ -51,10 +51,12 @@ struct RoundButton: View {
 struct CoverButton: View {
   let icon: String, label: String
   var size: CGFloat = 44
+  /// The icon drawn filled (a bell that's on).
+  var filled = false
   let action: () -> Void
   var body: some View {
     Button(action: action) {
-      Icon(icon, 18, 2)
+      Icon(icon, 18, 2, filled: filled)
         .foregroundStyle(Color.black)
         .frame(width: size, height: size)
         .background(Circle().fill(.ultraThinMaterial).environment(\.colorScheme, .light))

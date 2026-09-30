@@ -2,14 +2,17 @@
 // sheets over a page (new card, new deck, deck settings, Learn), and full screens (review, session done, Learn mode).
 import SwiftUI
 
-/// Pages pushed on a tab: Settings, a deck, a folder, Check AI cards, someone's profile (`profile("")` is yours), and News.
-enum Route: Hashable { case settings, deck(String), folder(String), inbox, profile(String), news }
+/// Pages pushed on a tab: Settings, a deck, a folder, Check AI cards, someone's profile (`profile("")` is yours), News, a
+/// shared deck's page, its suggestions (`suggestions("")`: every deck of yours), and its History.
+enum Route: Hashable { case settings, deck(String), folder(String), inbox, profile(String), news, publicDeck(DeckAddress), suggestions(String), history(DeckAddress) }
 enum SheetKind: Identifiable, Equatable {
   case newDeck, newCard(deckId: String?, cardId: String?), deckSettings(String), learnStart(String)
   /// The New folder popup (maybe for a deck that goes in it), or Rename on a folder's page; `name`: what's typed to start.
   case nameFolder(rename: String?, deck: String?, name: String)
   /// Edit profile (on your profile), and a copy's changes from the deck it came from (take or skip each).
   case editProfile, deckUpdates(String)
+  /// A shared deck's Make a copy, and its Suggest a change (`start`: the card it opens on, "new", or "1").
+  case copyDeck(DeckAddress), suggest(DeckAddress, start: String)
   var id: String {
     switch self {
     case .newDeck: return "newDeck"
@@ -19,12 +22,11 @@ enum SheetKind: Identifiable, Equatable {
     case .nameFolder(let f, let d, _): return "folder-\(f ?? "")-\(d ?? "")"
     case .editProfile: return "editProfile"
     case .deckUpdates(let d): return "updates-" + d
+    case .copyDeck(let a): return "copy-" + a.key
+    case .suggest(let a, _): return "suggest-" + a.key
     }
   }
 }
-/// A page of the web app shown in the app (for the pages the iPhone app doesn't draw yet: a shared deck's page, its
-/// History, its suggestions).
-struct WebPage: Identifiable { let url: URL; var id: String { url.absoluteString } }
 enum FullKind: Identifiable, Equatable {
   case review(deckId: String?, pile: String?), done, learn(String)
   var id: String {
@@ -46,8 +48,8 @@ final class Nav: ObservableObject {
   @Published var full: FullKind?
   /// A design screen's full screen, waiting for the page under it to be drawn (see MainView).
   var boardFull: FullKind?
-  /// A web page over the app (Safari), for pages the app doesn't have yet.
-  @Published var web: WebPage?
+  /// A page hides the tab bar (Suggestions, once one is opened).
+  @Published var barHidden = false
   /// Edit profile opens once your profile is showing (Settings → Edit profile).
   var wantsEdit = false
 
@@ -78,6 +80,18 @@ final class Nav: ObservableObject {
   func pick(_ t: Tab) { path = []; tab = t }
   /// Someone's profile (`handle` "": yours).
   func profile(_ handle: String) { push(.profile(handle)) }
-  /// A web app page (`url`: where it opens), for pages the iPhone app doesn't draw yet.
-  func open(_ url: URL?) { if let url { web = WebPage(url: url) } }
+  /// A shared deck's page, from the path the server gives (/@maria/mcat-biochemistry or /d/<id>): `suggest` opens Suggest a
+  /// change on it (a card's id, or "1"), `copy` opens Make a copy.
+  func deckPage(_ path: String, copy: Bool = false, suggest: String = "") {
+    guard var a = DeckAddress(path: path) else { return }
+    a.copy = copy; a.suggest = suggest
+    push(.publicDeck(a))
+  }
+  /// A shared deck's History, from its page's path.
+  func history(_ path: String) { if let a = DeckAddress(path: path)?.plain { push(.history(a)) } }
+  /// A deck in your Library (studying or copying one goes to it; so do Edit and Share settings on your own page).
+  func openDeck(_ id: String, settings: Bool = false) {
+    tab = .library; path = [.deck(id)]
+    sheet = settings ? .deckSettings(id) : nil
+  }
 }

@@ -128,11 +128,13 @@ struct DeckShareTab: View {
   }
 
   private func label(_ s: String) -> some View { Text(s).css(13, .semibold).line(13) }
+  /// A link out of the sheet goes to its page, with the sheet closed (like leaving the deck's page on the web).
+  private func go(_ open: () -> Void) { nav.close(); open() }
 
   /// Whose it is (tap: its page), and for a deck you study, Suggest a change and Make it my own; a copy's Get updates.
   @ViewBuilder private func from(_ s: DeckSharing, _ lk: DeckSharing.Linked) -> some View {
     VStack(alignment: .leading, spacing: 12) {
-      Button { nav.open(store.webURL(lk.url)) } label: {
+      Button { go { nav.deckPage(lk.url) } } label: {
         HStack(spacing: 12) {
           PersonAvatar(p: s.ownerFace, size: 36)
           VStack(alignment: .leading, spacing: 2) {
@@ -146,7 +148,7 @@ struct DeckShareTab: View {
       .buttonStyle(.flat)
       if s.readOnly {
         FlowLayout(spacing: 6, lineSpacing: 6) {
-          SmallButton(label: "Suggest a change", icon: "message", bg: t.bg) { nav.open(store.webURL(lk.url + "?suggest=1")) }
+          SmallButton(label: "Suggest a change", icon: "message", bg: t.bg) { go { nav.deckPage(lk.url, suggest: "1") } }
           SmallButton(label: "Make it my own", icon: "copy", bg: t.bg) { Task { do { try await store.detach(d.id) } catch { shareErr = error.localizedDescription } } }
         }
       }
@@ -209,9 +211,9 @@ struct DeckShareTab: View {
       .frame(minHeight: 44)
     }
     FlowLayout(spacing: 6, lineSpacing: 6) {
-      SmallButton(label: "Its page", icon: "globe") { nav.open(store.webURL(shr.url)) }
-      SmallButton(label: openN > 0 ? plural(openN, "suggestion") : "Suggestions", icon: "message") { nav.open(store.webURL("/deck/" + d.id + "/suggestions")) }
-      SmallButton(label: "History", icon: "history") { nav.open(store.webURL(shr.url + "/history")) }
+      SmallButton(label: "Its page", icon: "globe") { go { nav.deckPage(shr.url) } }
+      SmallButton(label: openN > 0 ? plural(openN, "suggestion") : "Suggestions", icon: "message") { go { nav.push(.suggestions(d.id)) } }
+      SmallButton(label: "History", icon: "history") { go { nav.history(shr.url) } }
     }
     VStack(alignment: .leading, spacing: 8) {
       label("About this deck")

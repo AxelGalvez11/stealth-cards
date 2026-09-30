@@ -314,8 +314,6 @@ extension Store {
     if demo { return "Alex Kim" }
     return settings.name.nilIfEmpty ?? lib.me?.name.nilIfEmpty ?? "You"
   }
-  /// A page on the web app (a shared deck's page, its History, its suggestions), for pages the iPhone app doesn't draw yet.
-  func webURL(_ path: String) -> URL? { URL(string: API.base.absoluteString.replacingOccurrences(of: "/$", with: "", options: .regularExpression) + (path.hasPrefix("/") ? path : "/" + path)) }
   /// A link people can open (a profile, a deck): on Lucida's own site, lucida.cards; elsewhere (a copy of the server on
   /// a computer), that server's address.
   func shareLink(_ path: String) -> String {
@@ -436,6 +434,8 @@ struct DemoNet {
   var vis: String? = nil
   var detached = false, took = false
   var upd: Bool? = nil
+  /// The shared deck's page, suggestions, and History (NetPages.swift).
+  var pages = DemoPages()
 }
 
 extension Store {

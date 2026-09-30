@@ -86,14 +86,13 @@ struct NewsScreen: View {
     .accessibilityAddTraits(.isButton)
   }
 
-  /// A follow opens their profile; a suggestion on your deck, its suggestions; the rest, the deck's page (the web app's
-  /// pages for now).
+  /// A follow opens their profile; a suggestion on your deck, its suggestions; the rest, the deck's page.
   private func open(_ x: NewsItem, who: NetPerson) {
     if x.kind == "follow" { nav.profile(who.handle.nilIfEmpty ?? x.data?.handle ?? ""); return }
     let dk = x.deck
     if x.kind == "suggestion", let id = dk?.id, !id.isEmpty, let mine = store.lib.decks.first(where: { $0.share?.id == id }) {
-      nav.open(store.webURL("/deck/" + mine.id + "/suggestions")); return
+      nav.push(.suggestions(mine.id)); return
     }
-    if let u = dk?.url, !u.isEmpty { nav.open(store.webURL(u)) }
+    if let u = dk?.url, !u.isEmpty { nav.deckPage(u) }
   }
 }

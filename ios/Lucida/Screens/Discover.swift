@@ -1,7 +1,6 @@
 // iPhone · Discover (PhoneDiscover, PhoneDiscoverSearch): decks people share, by topic, in sections (popular this week,
 // from people you follow, checked by teachers, new); or search decks and people. Studying stays in your library;
-// Discover is only for finding more. A deck opens its page (for now the web app's page, over the app); a name opens
-// that person's profile.
+// Discover is only for finding more. A deck opens its page; a name opens that person's profile.
 import SwiftUI
 
 struct DiscoverScreen: View {
@@ -97,7 +96,7 @@ struct DiscoverScreen: View {
     LazyVGrid(columns: [GridItem(.flexible(), spacing: 12, alignment: .top), GridItem(.flexible(), alignment: .top)], alignment: .leading, spacing: 12) {
       ForEach(decks) { d in
         VStack(alignment: .leading, spacing: 8) {
-          Button { nav.open(store.webURL(d.url)) } label: { NetTile(d: d, height: 200) }
+          Button { nav.deckPage(d.url) } label: { NetTile(d: d, height: 200) }
             .buttonStyle(.press)
           if owners, let o = d.owner { OwnerLine(p: o) { nav.profile(o.handle) } }
         }
