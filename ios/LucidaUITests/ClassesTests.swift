@@ -349,6 +349,17 @@ final class ClassesTests: XCTestCase {
     check(app.staticTexts["People"].exists && app.staticTexts["3"].exists, "the page lists its 3 people")
     check(button(app, "More for Maria Santos").exists && button(app, "More for Jordan Lee").exists, "each member has ⋯")
 
+    // ---------- she changes her mind: turning sharing off leaves nothing behind ----------
+    app = launch(as: ana, ["-open", "class:" + code])
+    check(wait(app.buttons["Share my progress"].firstMatch) && (app.buttons["Share my progress"].firstMatch.value as? String) == "On", "Maria's switch is on")
+    tapClear(app, app.buttons["Share my progress"].firstMatch)
+    check(eventually { (self.classPage(self.ana, code)["me"] as? [String: Any])?["share"] as? Bool == false }, "turning it off saves")
+    check(eventually { self.progress(code, of: me) == nil }, "and her numbers leave the teacher's page")
+    check(eventually { ((self.classPage(self.teacher, code)["members"] as? [[String: Any]])?.first { $0["handle"] as? String == me })?["share"] as? Bool == false }, "which says she doesn't share")
+    check((app.buttons["Share my progress"].firstMatch.value as? String) == "Off", "the switch reads Off")
+    tapClear(app, app.buttons["Share my progress"].firstMatch)
+    check(eventually(10) { self.progress(code, of: me)?["learned"] as? Int == 6 }, "turned back on, her progress goes out again (6 learned)")
+
     // ---------- Today lists the assignment ----------
     app = launch(as: ana)
     check(wait(any(app, "Chapter 3, due \(week) · BIO 201, Done"), 12), "Today lists Maria's assignment as Done")
