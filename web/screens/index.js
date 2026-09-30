@@ -58,7 +58,7 @@ export default [
   "name": "LandingPhone",
   "title": "Landing page · lucida.cards on a phone",
   "w": 390,
-  "h": 4818
+  "h": 4852
  },
  {
   "name": "LiveAnswer",
@@ -1030,7 +1030,7 @@ export default [
   "name": "PricingPhone",
   "title": "Pricing · lucida.cards/pricing on a phone",
   "w": 390,
-  "h": 2319
+  "h": 2353
  },
  {
   "name": "Privacy",
