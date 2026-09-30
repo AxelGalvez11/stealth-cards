@@ -4052,6 +4052,8 @@ const themePicker = webRoot(`${sidebar('You')}
   <div style="width: 1092px; display: flex; flex-direction: column; gap: 12px;">${themeUpgrade(false)}${themeOnProfile(false)}</div>
 </main>`);
 const PHONE_THEMES_H = 1260;
+// A theme’s own page is longer: its covers, both sides of the card, and the profile pictures.
+const PHONE_THEME_H = 1382;
 const phoneThemePicker = phone(`<div style="padding: 64px 20px 34px; display: flex; flex-direction: column; gap: 18px;">
   <div style="display: flex; align-items: center; gap: 12px;">${roundBtn('back', 'Back', 'PhoneSettings.dc.html')}<div style="flex-grow: 1; font-size: 17px; font-weight: 600; text-align: center;">Theme</div><div style="width: 44px;"></div></div>
   <div style="font-size: 14px; line-height: 1.45; color: {{t.muted}};">Changes your deck covers, flashcards, study background, and profile picture.</div>
@@ -4118,7 +4120,7 @@ const phoneTheme = phone(`<div style="padding: 64px 20px 34px; display: flex; fl
   ${sheetLabel('Flashcard, front and back')}
   <div style="display: flex; flex-direction: column; gap: 10px;">${sheetPart('sh.front', luCard(17, '20px 22px', 'front'), 'height: 172px;')}${sheetPart('sh.back', luCard(17, '20px 22px', 'back'), 'height: 172px;')}</div>
   ${sheetLabel('Profile picture')}${sheetAvatars([84, 56, 36, 28])}
-</div>`, '', '', PHONE_THEMES_H);
+</div>`, '', '', PHONE_THEME_H);
 const themePageLogic = phone => `
 renderVals() {
   const db = this.props.db || this.mock(), chrome = db.chrome(), st = db.settings(), t = this.theme(!!this.props.dark, !!this.props.dim);
@@ -7986,7 +7988,7 @@ Object.assign(files, {
   'PhoneThemePicker': ['iPhone · Settings › Theme', phoneThemePicker, { props: { ...DARK, grain: MESH('Iris').grain, plan: PLAN_PROP, theme: THEME_PROP }, logic: withThemes(THEME_KEYS, themePickerLogic(true)), ...ALL, w: PW, h: PHONE_THEMES_H }],
   'PhoneThemePickerFree': ['iPhone · Settings › Theme · on Free (locked, Go Pro)', themeOf('PhoneThemePicker', PW, PHONE_THEMES_H, 'plan="Free" theme="lucida"'), { logic: withThemes(THEME_KEYS, darkLogic), ...ALL, w: PW, h: PHONE_THEMES_H }],
   'WebTheme': ['Web · Settings › Theme › Lucida (a theme’s page)', webTheme, { props: { ...DARK, grain: MESH('Iris').grain, plan: PLAN_PROP, sheet: { editor: 'string', default: '' } }, logic: themePageLogic(false), w: W, h: H }],
-  'PhoneTheme': ['iPhone · Settings › Theme › a theme’s page', phoneTheme, { props: { ...DARK, grain: MESH('Iris').grain, plan: PLAN_PROP, sheet: { editor: 'string', default: 'aero' } }, logic: withThemes(['aero'], themePageLogic(true)), css: themeCss(['aero']), fonts: themeFonts(['aero']), w: PW, h: PHONE_THEMES_H }],
+  'PhoneTheme': ['iPhone · Settings › Theme › a theme’s page', phoneTheme, { props: { ...DARK, grain: MESH('Iris').grain, plan: PLAN_PROP, sheet: { editor: 'string', default: 'aero' } }, logic: withThemes(['aero'], themePageLogic(true)), css: themeCss(['aero']), fonts: themeFonts(['aero']), w: PW, h: PHONE_THEME_H }],
 });
 for (const T of THEMES.filter(x => x.key !== 'lucida')) {
   const k = T.key, B = 'Theme' + T.board, one = { css: themeCss([k]), fonts: themeFonts([k]) }, logic = withThemes([k], darkLogic), at = attrs => `skin="${k}" ${attrs}`.trim();

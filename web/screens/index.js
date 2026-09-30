@@ -928,7 +928,7 @@ export default [
   "name": "PhoneTheme",
   "title": "iPhone · Settings › Theme › a theme’s page",
   "w": 390,
-  "h": 1260
+  "h": 1382
  },
  {
   "name": "PhoneThemePicker",
