@@ -606,7 +606,7 @@
    "y": 2600
   },
   "PhoneSettings.dc.html": {
-   "h": 1470,
+   "h": 1562,
    "is_interactive": true,
    "page": "phone",
    "title": "iPhone · Settings",
@@ -615,13 +615,13 @@
    "y": 0
   },
   "PhoneSettingsGray.dc.html": {
-   "h": 1470,
+   "h": 1562,
    "is_interactive": true,
    "page": "phone",
    "title": "iPhone · Settings (dark, gray)",
    "w": 390,
    "x": 4700,
-   "y": 1560
+   "y": 1640
   },
   "PhoneSignIn.dc.html": {
    "h": 844,
@@ -2279,7 +2279,7 @@
    "is_interactive": true
   },
   "WebPublicDeckCopy.dc.html": {
-   "x": 1520,
+   "x": 3040,
    "y": 1320,
    "w": 1440,
    "h": 900,
@@ -2288,7 +2288,7 @@
    "is_interactive": true
   },
   "WebPublicDeckHistory.dc.html": {
-   "x": 3040,
+   "x": 4560,
    "y": 1320,
    "w": 1440,
    "h": 900,
@@ -2297,7 +2297,7 @@
    "is_interactive": true
   },
   "WebPublicDeckLoading.dc.html": {
-   "x": 4560,
+   "x": 6080,
    "y": 1320,
    "w": 1440,
    "h": 900,
@@ -2306,7 +2306,7 @@
    "is_interactive": true
   },
   "WebPublicDeckMissing.dc.html": {
-   "x": 6080,
+   "x": 7600,
    "y": 1320,
    "w": 1440,
    "h": 900,
@@ -2315,7 +2315,7 @@
    "is_interactive": true
   },
   "WebPublicDeckOwner.dc.html": {
-   "x": 7600,
+   "x": 9120,
    "y": 1320,
    "w": 1440,
    "h": 900,
@@ -2324,7 +2324,7 @@
    "is_interactive": true
   },
   "WebPublicDeckPeople.dc.html": {
-   "x": 9120,
+   "x": 10640,
    "y": 1320,
    "w": 1440,
    "h": 900,
@@ -2333,7 +2333,7 @@
    "is_interactive": true
   },
   "WebPublicDeckSignedOut.dc.html": {
-   "x": 10640,
+   "x": 13680,
    "y": 1320,
    "w": 1440,
    "h": 900,
@@ -2342,7 +2342,7 @@
    "is_interactive": true
   },
   "WebPublicDeckStudying.dc.html": {
-   "x": 12160,
+   "x": 15200,
    "y": 1320,
    "w": 1440,
    "h": 900,
@@ -2351,7 +2351,7 @@
    "is_interactive": true
   },
   "WebPublicDeckSuggest.dc.html": {
-   "x": 13680,
+   "x": 16720,
    "y": 1320,
    "w": 1440,
    "h": 900,
@@ -2360,7 +2360,7 @@
    "is_interactive": true
   },
   "WebPublicDeckSuggestNew.dc.html": {
-   "x": 15200,
+   "x": 18240,
    "y": 1320,
    "w": 1440,
    "h": 900,
@@ -2369,7 +2369,7 @@
    "is_interactive": true
   },
   "WebPublicDeckDark.dc.html": {
-   "x": 16720,
+   "x": 19760,
    "y": 1320,
    "w": 1440,
    "h": 900,
@@ -2378,7 +2378,7 @@
    "is_interactive": true
   },
   "WebPublicDeckGray.dc.html": {
-   "x": 18240,
+   "x": 21280,
    "y": 1320,
    "w": 1440,
    "h": 900,
@@ -2396,7 +2396,7 @@
    "is_interactive": true
   },
   "PhonePublicDeckCopy.dc.html": {
-   "x": 470,
+   "x": 940,
    "y": 2640,
    "w": 390,
    "h": 844,
@@ -2405,7 +2405,7 @@
    "is_interactive": true
   },
   "PhonePublicDeckOwner.dc.html": {
-   "x": 940,
+   "x": 1410,
    "y": 2640,
    "w": 390,
    "h": 844,
@@ -2414,7 +2414,7 @@
    "is_interactive": true
   },
   "PhonePublicDeckSignedOut.dc.html": {
-   "x": 1410,
+   "x": 2350,
    "y": 2640,
    "w": 390,
    "h": 844,
@@ -2423,7 +2423,7 @@
    "is_interactive": true
   },
   "PhonePublicDeckStudying.dc.html": {
-   "x": 1880,
+   "x": 2820,
    "y": 2640,
    "w": 390,
    "h": 844,
@@ -2432,7 +2432,7 @@
    "is_interactive": true
   },
   "PhonePublicDeckSuggest.dc.html": {
-   "x": 2350,
+   "x": 3290,
    "y": 2640,
    "w": 390,
    "h": 844,
@@ -2441,7 +2441,7 @@
    "is_interactive": true
   },
   "PhonePublicDeckSuggestNew.dc.html": {
-   "x": 2820,
+   "x": 3760,
    "y": 2640,
    "w": 390,
    "h": 844,
@@ -2450,7 +2450,7 @@
    "is_interactive": true
   },
   "PhonePublicDeckDark.dc.html": {
-   "x": 3290,
+   "x": 4230,
    "y": 2640,
    "w": 390,
    "h": 844,
@@ -2459,7 +2459,7 @@
    "is_interactive": true
   },
   "PhonePublicDeckGray.dc.html": {
-   "x": 3760,
+   "x": 4700,
    "y": 2640,
    "w": 390,
    "h": 844,
@@ -2504,7 +2504,7 @@
    "is_interactive": true
   },
   "WebSuggestionsDark.dc.html": {
-   "x": 6080,
+   "x": 7600,
    "y": 3904,
    "w": 1440,
    "h": 900,
@@ -2513,7 +2513,7 @@
    "is_interactive": true
   },
   "WebSuggestionsGray.dc.html": {
-   "x": 7600,
+   "x": 9120,
    "y": 3904,
    "w": 1440,
    "h": 900,
@@ -2522,7 +2522,7 @@
    "is_interactive": true
   },
   "PhoneSuggestions.dc.html": {
-   "x": 9120,
+   "x": 10640,
    "y": 3904,
    "w": 390,
    "h": 844,
@@ -2531,7 +2531,7 @@
    "is_interactive": true
   },
   "PhoneSuggestionsEmpty.dc.html": {
-   "x": 9590,
+   "x": 11110,
    "y": 3904,
    "w": 390,
    "h": 844,
@@ -2540,7 +2540,7 @@
    "is_interactive": true
   },
   "PhoneSuggestionsOpen.dc.html": {
-   "x": 10060,
+   "x": 11580,
    "y": 3904,
    "w": 390,
    "h": 844,
@@ -2549,7 +2549,7 @@
    "is_interactive": true
   },
   "PhoneSuggestionsDark.dc.html": {
-   "x": 10530,
+   "x": 12520,
    "y": 3904,
    "w": 390,
    "h": 844,
@@ -2558,7 +2558,7 @@
    "is_interactive": true
   },
   "WebHistory.dc.html": {
-   "x": 11000,
+   "x": 12990,
    "y": 3904,
    "w": 1440,
    "h": 900,
@@ -2567,7 +2567,7 @@
    "is_interactive": true
   },
   "WebHistoryGoBack.dc.html": {
-   "x": 12520,
+   "x": 14510,
    "y": 3904,
    "w": 1440,
    "h": 900,
@@ -2576,7 +2576,7 @@
    "is_interactive": true
   },
   "WebHistoryOpen.dc.html": {
-   "x": 14040,
+   "x": 16030,
    "y": 3904,
    "w": 1440,
    "h": 900,
@@ -2585,7 +2585,7 @@
    "is_interactive": true
   },
   "WebHistoryOther.dc.html": {
-   "x": 15560,
+   "x": 17550,
    "y": 3904,
    "w": 1440,
    "h": 900,
@@ -2594,7 +2594,7 @@
    "is_interactive": true
   },
   "WebHistoryDark.dc.html": {
-   "x": 17080,
+   "x": 19070,
    "y": 3904,
    "w": 1440,
    "h": 900,
@@ -2603,7 +2603,7 @@
    "is_interactive": true
   },
   "WebHistoryGray.dc.html": {
-   "x": 18600,
+   "x": 20590,
    "y": 3904,
    "w": 1440,
    "h": 900,
@@ -2612,7 +2612,7 @@
    "is_interactive": true
   },
   "PhoneHistory.dc.html": {
-   "x": 20120,
+   "x": 22110,
    "y": 3904,
    "w": 390,
    "h": 844,
@@ -2621,7 +2621,7 @@
    "is_interactive": true
   },
   "PhoneHistoryOpen.dc.html": {
-   "x": 20590,
+   "x": 22580,
    "y": 3904,
    "w": 390,
    "h": 844,
@@ -2630,7 +2630,7 @@
    "is_interactive": true
   },
   "PhoneHistoryDark.dc.html": {
-   "x": 21060,
+   "x": 23050,
    "y": 3904,
    "w": 390,
    "h": 844,
@@ -2720,7 +2720,7 @@
    "is_interactive": true
   },
   "WebProfileSaved.dc.html": {
-   "x": 13680,
+   "x": 15200,
    "y": 5224,
    "w": 1440,
    "h": 900,
@@ -2729,7 +2729,7 @@
    "is_interactive": true
   },
   "WebProfileSignedOut.dc.html": {
-   "x": 15200,
+   "x": 16720,
    "y": 5224,
    "w": 1440,
    "h": 900,
@@ -2738,7 +2738,7 @@
    "is_interactive": true
   },
   "WebProfileSuggestions.dc.html": {
-   "x": 16720,
+   "x": 18240,
    "y": 5224,
    "w": 1440,
    "h": 900,
@@ -2747,7 +2747,7 @@
    "is_interactive": true
   },
   "WebProfileDark.dc.html": {
-   "x": 18240,
+   "x": 19760,
    "y": 5224,
    "w": 1440,
    "h": 900,
@@ -2756,7 +2756,7 @@
    "is_interactive": true
   },
   "WebProfileGray.dc.html": {
-   "x": 19760,
+   "x": 21280,
    "y": 5224,
    "w": 1440,
    "h": 900,
@@ -2828,7 +2828,7 @@
    "is_interactive": true
   },
   "PhoneProfileSaved.dc.html": {
-   "x": 3290,
+   "x": 3760,
    "y": 6544,
    "w": 390,
    "h": 844,
@@ -2837,7 +2837,7 @@
    "is_interactive": true
   },
   "PhoneProfileSignedOut.dc.html": {
-   "x": 3760,
+   "x": 4230,
    "y": 6544,
    "w": 390,
    "h": 844,
@@ -2846,7 +2846,7 @@
    "is_interactive": true
   },
   "PhoneProfileSuggestions.dc.html": {
-   "x": 4230,
+   "x": 4700,
    "y": 6544,
    "w": 390,
    "h": 844,
@@ -2855,7 +2855,7 @@
    "is_interactive": true
   },
   "PhoneProfileDark.dc.html": {
-   "x": 4700,
+   "x": 5170,
    "y": 6544,
    "w": 390,
    "h": 844,
@@ -2864,7 +2864,7 @@
    "is_interactive": true
   },
   "PhoneProfileGray.dc.html": {
-   "x": 5170,
+   "x": 5640,
    "y": 6544,
    "w": 390,
    "h": 844,
@@ -3299,7 +3299,7 @@
    "x": 1520,
    "y": 5224,
    "w": 390,
-   "h": 1470,
+   "h": 1562,
    "page": "pro",
    "title": "iPhone · Settings · on Free (Tune to you is Pro)",
    "is_interactive": true
@@ -3675,7 +3675,7 @@
   },
   "WebAdmin.dc.html": {
    "x": 0,
-   "y": 7808,
+   "y": 9790,
    "w": 1440,
    "h": 900,
    "page": "classes",
@@ -3684,7 +3684,7 @@
   },
   "WebAdminDenied.dc.html": {
    "x": 1520,
-   "y": 7808,
+   "y": 9790,
    "w": 1440,
    "h": 900,
    "page": "classes",
@@ -3693,7 +3693,7 @@
   },
   "WebAdminEmpty.dc.html": {
    "x": 3040,
-   "y": 7808,
+   "y": 9790,
    "w": 1440,
    "h": 900,
    "page": "classes",
@@ -3702,7 +3702,7 @@
   },
   "WebAdminReports.dc.html": {
    "x": 4560,
-   "y": 7808,
+   "y": 9790,
    "w": 1440,
    "h": 900,
    "page": "classes",
@@ -3711,7 +3711,7 @@
   },
   "WebAdminDark.dc.html": {
    "x": 6080,
-   "y": 7808,
+   "y": 9790,
    "w": 1440,
    "h": 900,
    "page": "classes",
@@ -4149,6 +4149,96 @@
    "page": "themes",
    "title": "Swiss poster · Web · Learn mode",
    "is_interactive": true
+  },
+  "WebPublicDeckCheck.dc.html": {
+   "x": 1520,
+   "y": 1320,
+   "w": 1440,
+   "h": 900,
+   "page": "network",
+   "title": "Web · Shared deck page · a verified teacher’s view (Check this deck)",
+   "is_interactive": true
+  },
+  "WebPublicDeckReport.dc.html": {
+   "x": 12160,
+   "y": 1320,
+   "w": 1440,
+   "h": 900,
+   "page": "network",
+   "title": "Web · Shared deck page · Report",
+   "is_interactive": true
+  },
+  "PhonePublicDeckCheck.dc.html": {
+   "x": 470,
+   "y": 2640,
+   "w": 390,
+   "h": 844,
+   "page": "network",
+   "title": "iPhone · Shared deck page · a verified teacher’s view (Check this deck)",
+   "is_interactive": true
+  },
+  "PhonePublicDeckReport.dc.html": {
+   "x": 1880,
+   "y": 2640,
+   "w": 390,
+   "h": 844,
+   "page": "network",
+   "title": "iPhone · Shared deck page · Report",
+   "is_interactive": true
+  },
+  "WebSuggestionsReport.dc.html": {
+   "x": 6080,
+   "y": 3904,
+   "w": 1440,
+   "h": 900,
+   "page": "network",
+   "title": "Web · Suggestions · Report",
+   "is_interactive": true
+  },
+  "PhoneSuggestionsReport.dc.html": {
+   "x": 12050,
+   "y": 3904,
+   "w": 390,
+   "h": 844,
+   "page": "network",
+   "title": "iPhone · Suggestions · Report",
+   "is_interactive": true
+  },
+  "WebProfileReport.dc.html": {
+   "x": 13680,
+   "y": 5224,
+   "w": 1440,
+   "h": 900,
+   "page": "network",
+   "title": "Web · Profile · someone else’s · Report",
+   "is_interactive": true
+  },
+  "PhoneProfileReport.dc.html": {
+   "x": 3290,
+   "y": 6544,
+   "w": 390,
+   "h": 844,
+   "page": "network",
+   "title": "iPhone · Profile · someone else’s · Report",
+   "is_interactive": true
+  },
+  "WebSettingsVerified.dc.html": {
+   "x": 0,
+   "y": 7808,
+   "w": 1440,
+   "h": 900,
+   "page": "classes",
+   "title": "Web · Settings · a verified teacher (Get verified says Verified teacher)",
+   "is_interactive": true
+  },
+  "PhoneSettingsVerified.dc.html": {
+   "x": 1520,
+   "y": 7808,
+   "w": 390,
+   "h": 1562,
+   "page": "classes",
+   "title": "iPhone · Settings · a verified teacher (Get verified says Verified teacher)",
+   "is_interactive": true
   }
  },
  "createdOnFiles": {
@@ -4469,7 +4559,7 @@
   },
   "aNetwork1": {
    "kind": "title1",
-   "maxW": 19680,
+   "maxW": 22720,
    "page": "network",
    "text": "A shared deck’s page: study, copy, save, suggest",
    "w": 240,
@@ -4478,7 +4568,7 @@
   },
   "aNetwork2": {
    "kind": "title1",
-   "maxW": 4150,
+   "maxW": 5090,
    "page": "network",
    "text": "A shared deck’s page on iPhone",
    "w": 240,
@@ -4487,7 +4577,7 @@
   },
   "aNetwork3": {
    "kind": "title1",
-   "maxW": 21450,
+   "maxW": 23440,
    "page": "network",
    "text": "Suggestions and History",
    "w": 240,
@@ -4496,7 +4586,7 @@
   },
   "aNetwork4": {
    "kind": "title1",
-   "maxW": 21200,
+   "maxW": 22720,
    "page": "network",
    "text": "Profiles",
    "w": 240,
@@ -4505,7 +4595,7 @@
   },
   "aNetwork5": {
    "kind": "title1",
-   "maxW": 5560,
+   "maxW": 6030,
    "page": "network",
    "text": "Profiles on iPhone",
    "w": 240,
@@ -4685,12 +4775,21 @@
   },
   "aClasses6": {
    "kind": "title1",
+   "maxW": 1910,
+   "page": "classes",
+   "text": "Get verified, in Settings → Profile",
+   "w": 240,
+   "x": 0,
+   "y": 7508
+  },
+  "aClasses7": {
+   "kind": "title1",
    "maxW": 7520,
    "page": "classes",
    "text": "Admin (computers only)",
    "w": 240,
    "x": 0,
-   "y": 7508
+   "y": 9490
   },
   "aThemes0": {
    "kind": "title1",
@@ -5289,7 +5388,17 @@
   "ThemeRisoLearn.dc.html",
   "ThemeSwissFree.dc.html",
   "ThemeSwissDeck.dc.html",
-  "ThemeSwissLearn.dc.html"
+  "ThemeSwissLearn.dc.html",
+  "WebPublicDeckCheck.dc.html",
+  "WebPublicDeckReport.dc.html",
+  "PhonePublicDeckCheck.dc.html",
+  "PhonePublicDeckReport.dc.html",
+  "WebSuggestionsReport.dc.html",
+  "PhoneSuggestionsReport.dc.html",
+  "WebProfileReport.dc.html",
+  "PhoneProfileReport.dc.html",
+  "WebSettingsVerified.dc.html",
+  "PhoneSettingsVerified.dc.html"
  ],
  "pages": [
   {
