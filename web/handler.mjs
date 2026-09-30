@@ -63,6 +63,7 @@ const SOCIAL = {
   'deck.watch': (uid, me, a) => social.watch(uid, me, a.id, !!a.on),
   'deck.check': (uid, me, a) => social.check(uid, me, a.id),
   'user.follow': (uid, me, a) => social.follow(uid, me, a.handle, !!a.on),
+  'user.block': (uid, me, a) => social.block(uid, me, a.handle, !!a.on),
   'suggestion.send': (uid, me, a) => social.suggest(uid, me, a.id, { message: a.message, changes: a.changes }),
   'suggestion.decide': (uid, me, a) => social.decide(uid, a.id, a.picks || {}),
   'version.restore': (uid, me, a) => social.restore(uid, a.id, a.version),
@@ -134,6 +135,8 @@ async function api(req, res, path, body, me, uid) {
     catch (e) { return send(res, e.status || 400, { error: e.message }); }
   }
   if (path === '/api/social/unread' && req.method === 'GET') return send(res, 200, { unread: await social.unreadCount(uid).catch(() => 0) });
+  // The people you blocked (Settings → Account → Blocked people); blocking and unblocking is the 'user.block' action above.
+  if (path === '/api/social/blocks' && req.method === 'GET') return send(res, 200, await social.blockedPeople(uid));
   // Classes (classes.mjs): yours, whether you're verified (or waiting), and the admin page (only for admins).
   if (path === '/api/classes' && req.method === 'GET') return send(res, 200, await classes.mine(uid));
   if (path === '/api/verify' && req.method === 'GET') return send(res, 200, await classes.verifyStatus(uid));
