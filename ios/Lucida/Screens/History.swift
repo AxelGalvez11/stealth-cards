@@ -102,8 +102,8 @@ struct HistoryScreen: View {
 
   /// Going back asks first, in the page.
   private func ask(_ version: Int, h: HistoryPage) -> some View {
-    FlowLayout(spacing: 10, lineSpacing: 10) {
-      Text("Go back to version \(version)?").css(14, .semibold).lineLimit(1).fixedSize()
+    GrowFirstWrap(spacing: 10, lineSpacing: 10) {
+      Text("Go back to version \(version)?").css(14, .semibold).lineLimit(1).frame(maxWidth: .infinity, alignment: .leading)
       Button { askV = nil } label: {
         Text("Cancel").css(14, .semibold).foregroundStyle(t.text).padding(.horizontal, 16).frame(height: 36).background(Capsule().fill(t.bg))
       }

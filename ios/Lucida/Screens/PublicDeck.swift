@@ -379,6 +379,12 @@ struct PublicDeckScreen: View {
   }
 }
 
+/// Where the Folder button is, for its list.
+private struct FolderAnchor: PreferenceKey {
+  static let defaultValue: Anchor<CGRect>? = nil
+  static func reduce(value: inout Anchor<CGRect>?, nextValue: () -> Anchor<CGRect>?) { value = value ?? nextValue() }
+}
+
 // ---------- Make a copy ----------
 /// Copy to your library (COPY_FORM): the deck's name, a folder, and whether to get the owner's changes later.
 struct CopyDeckSheet: View {
@@ -427,10 +433,8 @@ struct CopyDeckSheet: View {
         }
         .buttonStyle(.flat)
         .accessibilityLabel("Folder: " + label)
-        .overlay(alignment: .topLeading) { if foldersOpen { folderList(folders).offset(y: 56) } }
-        .zIndex(1)
+        .anchorPreference(key: FolderAnchor.self, value: .bounds) { $0 }
       }
-      .zIndex(1)
       HStack(spacing: 12) {
         VStack(alignment: .leading, spacing: 2) {
           Text("Get " + PageText.firstName(owner) + "’s updates").css(15, .semibold).line(15)
@@ -462,6 +466,21 @@ struct CopyDeckSheet: View {
     }
     .foregroundStyle(t.text)
     .padding(.top, 22).padding(.horizontal, 20).padding(.bottom, keyboard.height > 0 ? keyboard.height + 12 : 34)
+    .overlayPreferenceValue(FolderAnchor.self) { a in folderPopup(a, folders) }
+  }
+
+  /// The folders, beside the button: below it, or above when there isn't room below (like the web's menus).
+  @ViewBuilder private func folderPopup(_ a: Anchor<CGRect>?, _ folders: [(id: String, name: String)]) -> some View {
+    if foldersOpen, let a {
+      GeometryReader { g in
+        let r = g[a], n = CGFloat(folders.count), h = min(232, 12 + n * 42 + (n - 1) * 2)
+        let below = g.frame(in: .global).minY + r.maxY + 6 + h <= UIScreen.main.bounds.height - 8
+        ZStack(alignment: .topLeading) {
+          Color.black.opacity(0.001).frame(width: 4000, height: 4000).offset(x: -2000, y: -2000).onTapGesture { withAnimation(.out(0.2)) { foldersOpen = false } }
+          folderList(folders).frame(width: r.width).offset(x: r.minX, y: below ? r.maxY + 6 : r.minY - 6 - h)
+        }
+      }
+    }
   }
 
   private func thumb(_ d: NetDeck?) -> some View {

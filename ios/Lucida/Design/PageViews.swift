@@ -133,3 +133,40 @@ enum ShareSheet {
     top.present(vc, animated: true)
   }
 }
+
+/// A row that wraps like CSS flex-wrap, its first child growing to fill its line (flex-grow: 1), the rest as wide as they are,
+/// each centered in its line.
+struct GrowFirstWrap: Layout {
+  var spacing: CGFloat = 10
+  var lineSpacing: CGFloat = 10
+  private struct Line { var items: [Int] = [], width: CGFloat = 0, height: CGFloat = 0 }
+  private func lines(_ maxW: CGFloat, _ subviews: Subviews) -> ([Line], [CGSize]) {
+    let sizes = subviews.map { $0.sizeThatFits(.unspecified) }
+    var out: [Line] = [], cur = Line()
+    for (i, s) in sizes.enumerated() {
+      let w = min(s.width, maxW)
+      if !cur.items.isEmpty && cur.width + spacing + w > maxW { out.append(cur); cur = Line() }
+      cur.width += (cur.items.isEmpty ? 0 : spacing) + w
+      cur.items.append(i); cur.height = max(cur.height, s.height)
+    }
+    if !cur.items.isEmpty { out.append(cur) }
+    return (out, sizes)
+  }
+  func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
+    let (ls, _) = lines(proposal.width ?? .infinity, subviews)
+    return CGSize(width: proposal.width ?? (ls.map(\.width).max() ?? 0), height: ls.reduce(0) { $0 + $1.height } + CGFloat(max(0, ls.count - 1)) * lineSpacing)
+  }
+  func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) {
+    let (ls, sizes) = lines(bounds.width, subviews)
+    var y = bounds.minY
+    for (n, line) in ls.enumerated() {
+      var x = bounds.minX
+      for (k, i) in line.items.enumerated() {
+        let w = min(sizes[i].width, bounds.width) + (n == 0 && k == 0 ? max(0, bounds.width - line.width) : 0)
+        subviews[i].place(at: CGPoint(x: x, y: y + (line.height - sizes[i].height) / 2), proposal: ProposedViewSize(width: w, height: sizes[i].height))
+        x += w + spacing
+      }
+      y += line.height + lineSpacing
+    }
+  }
+}

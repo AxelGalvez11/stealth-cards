@@ -227,6 +227,7 @@ struct SuggestSheet: View {
               Text(kind).css(12).foregroundStyle(t.muted).line(12)
             }
             .foregroundStyle(t.text).padding(.vertical, 11).padding(.horizontal, 2).frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.bottom, 1)
             .overlay(alignment: .bottom) { Rectangle().fill(t.line).frame(height: 1) }
             .contentShape(Rectangle())
           }
