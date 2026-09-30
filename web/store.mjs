@@ -119,8 +119,18 @@ const save = () => {
 // For changes made outside apply() (social.mjs: studying or copying a shared deck, its updates arriving): saves them
 // like any other change.
 export const saved = () => save();
-// Pictures and sound for cards: in data/media here, in the person's folder of the Supabase bucket online.
-export const putMedia = (name, buf, type) => (cloud() ? files.put(lib().uid, name, buf, type) : writeFile(join(MEDIA, name), buf));
+// Pictures and sound for cards: in data/media here, in the person's folder of the Supabase bucket online. An account has
+// room for so many files and megabytes, kept as a running count in its library (Delete my data clears the files and starts
+// the count over). Free's room is modest and Pro's large; neither is unlimited. LUCIDA_MEDIA_FILES and LUCIDA_MEDIA_MB set
+// it lower, for checks.
+export const UPLOAD_FULL = 'Your account has no room for more pictures and sounds.';
+export const mediaRoom = () => ({ files: +process.env.LUCIDA_MEDIA_FILES || (isPro() ? 5000 : 300), bytes: (+process.env.LUCIDA_MEDIA_MB || (isPro() ? 5000 : 300)) * 1e6 });
+export async function putMedia(name, buf, type) {
+  const L = lib(), used = L.S.uploads || { n: 0, bytes: 0 }, room = mediaRoom();
+  if (used.n + 1 > room.files || used.bytes + buf.length > room.bytes) throw Object.assign(new Error(UPLOAD_FULL), { full: true });
+  await (cloud() ? files.put(L.uid, name, buf, type) : writeFile(join(MEDIA, name), buf));
+  L.S.uploads = { n: used.n + 1, bytes: used.bytes + buf.length }; save();
+}
 export const readMedia = name => (cloud() ? files.get(lib().uid, name) : readFile(join(MEDIA, name)).catch(() => null));
 export const hasMedia = name => (cloud() ? files.has(lib().uid, name) : access(join(MEDIA, name)).then(() => true, () => false));
 export const mediaLink = (name, uid) => (cloud() ? files.link(uid, name) : Promise.resolve(null));

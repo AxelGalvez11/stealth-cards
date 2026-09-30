@@ -4,6 +4,7 @@
 // Online, everything but signing in needs a signed-in person, and each person only ever sees their own library.
 import { readFile, stat } from 'node:fs/promises';
 import { extname, join, normalize, sep } from 'node:path';
+import { createHash } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import { state, apply, withLibrary, revOf, putMedia, mediaLink, MEDIA, aiLeft, useAi, refundAi, saveExplain, isPro } from './store.mjs';
 import { aiReady, explain } from './ai.mjs';
@@ -152,8 +153,10 @@ async function api(req, res, path, body, me, uid) {
     if (!ext) return send(res, 415, { error: 'Only images and audio' });
     // The file must really be what it's labeled (its first bytes say), so nothing else is ever saved as a picture or sound.
     if (real !== type && !(type === 'audio/x-m4a' && real === 'audio/mp4')) return send(res, 415, { error: real === 'image/heic' ? HEIC : 'That file isn’t a picture or sound Lucida can use.' });
-    const name = 'm' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7) + ext;
-    await putMedia(name, body, type);
+    // Named after what's in it, so a request that runs again (another change landed at the same moment) saves the same file, not another.
+    const name = 'm' + createHash('sha256').update(body).digest('hex').slice(0, 24) + ext;
+    // An account has room for so many pictures and sounds (store.mjs); past it, the answer says so.
+    try { await putMedia(name, body, type); } catch (e) { if (e.full) return send(res, 403, { error: e.message }); throw e; }
     return send(res, 200, { url: '/media/' + name });
   }
   return send(res, 404, { error: 'Not found' });

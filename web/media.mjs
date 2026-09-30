@@ -26,7 +26,8 @@ async function save(buf, want) {
   const type = sniff(buf);
   if (type === 'image/heic') throw new Error(HEIC);
   if (!type || !type.startsWith(want + '/')) throw new Error(want === 'image' ? 'That isn’t a picture Lucida can show (PNG, JPEG, GIF, or WebP).' : 'That isn’t a sound Lucida can play (MP3, M4A, WAV, OGG, or WebM).');
-  const name = 'm' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7) + EXT[type];
+  // Named after what's in it, so saving the same file again (a request that runs twice) is the same file, not another.
+  const name = 'm' + createHash('sha256').update(buf).digest('hex').slice(0, 24) + EXT[type];
   await putMedia(name, buf, type);
   return '/media/' + name;
 }
