@@ -56,14 +56,32 @@ final class API {
   }
 
   func state() async throws -> Library { try JSONDecoder().decode(Library.self, from: try await request("api/state").0) }
+  /// How long the app waits for decks you study to be brought up to date before it opens without that (web/db.js SYNC_WAIT).
+  static let syncWait: TimeInterval = 8
   /// The library after decks you study from other people take their owners' newest changes (the app's first look, and
-  /// coming back after a while away, like the web app).
+  /// coming back after a while away, like the web app). That must never keep the app from opening (web/db.js readState):
+  /// if asking for the sync fails or takes longer than `syncWait` seconds, the library comes without it (the app checks
+  /// again every few seconds, so whatever the server finishes later still arrives). Signed out (a 401) still means signed out.
   func syncedState() async throws -> Library {
-    var r = URLRequest(url: URL(string: "api/state?sync=1", relativeTo: API.base)!.absoluteURL)
-    r.setValue("application/json", forHTTPHeaderField: "accept")
-    let (data, resp) = try await session.data(for: r)
-    if (resp as? HTTPURLResponse)?.statusCode == 401 { throw APIError.signedOut }
-    return try JSONDecoder().decode(Library.self, from: data)
+    do {
+      let (status, data) = try await within(API.syncWait) { try await self.get("api/state?sync=1") }
+      if (200..<300).contains(status), let lib = try? JSONDecoder().decode(Library.self, from: data) { return lib }
+    } catch APIError.signedOut {
+      throw APIError.signedOut
+    } catch {
+      // Too slow, or the connection dropped: without the sync, then.
+    }
+    return try await state()
+  }
+  /// `work`, given up on (and cancelled) once `seconds` have passed: the whole answer must be here by then, however it
+  /// arrives (the web's AbortController timer; a request's own timeout only counts the quiet stretches).
+  private func within<T>(_ seconds: TimeInterval, _ work: @escaping () async throws -> T) async throws -> T {
+    try await withThrowingTaskGroup(of: T.self) { group in
+      group.addTask { try await work() }
+      group.addTask { try await Task.sleep(nanoseconds: UInt64(seconds * 1_000_000_000)); throw URLError(.timedOut) }
+      defer { group.cancelAll() }
+      return try await group.next()!
+    }
   }
 
   // ---------- the study network (web/net.js) ----------
