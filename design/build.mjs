@@ -8,7 +8,7 @@ import { DRAG_METHOD } from './drag.mjs';
 import { WALL_CARDS } from './wall.mjs';
 import { PRIVACY, TERMS, UPDATED } from './legal.mjs';
 import { PRO_LINKS } from '../web/plans.mjs';
-import { PLAN_FREE, PLAN_PRO, PRICING_FAQ, SOCIALS as SITE_SOCIALS, pageSet, footerLinks } from './site.mjs';
+import { PLAN_FREE, PLAN_PRO, PRICING_FAQ, SOCIALS as SITE_SOCIALS, BOARDS as SITE_BOARDS, APP as SITE_APP, pageSet, footerLinks, boardData, partsOf } from './site.mjs';
 import { G_LOGO, APPLE_LOGO } from './logos.mjs';
 import { THEMES } from '../web/themes/index.js';
 import { THEME_KEYS, themeCss, themeFonts, themeStatic } from './themes.mjs';
@@ -5675,6 +5675,130 @@ renderVals() { ${T}
   return { t, foot: this.foot(false), homeHref: site ? 'https://lucida.cards/' : 'Landing.dc.html', signInHref: site ? 'https://app.lucida.cards/sign-in' : 'WebSignIn.dc.html', startHref: site ? 'https://app.lucida.cards/' : 'WebSignIn.dc.html',
     privacyHref: site ? '/privacy' : 'Privacy.dc.html', termsHref: site ? '/terms' : 'Terms.dc.html', pricingHref: site ? '/pricing' : 'Pricing.dc.html' }; }`;
 
+// ---------- The site's other pages: comparisons, features, the FAQ, the 404, and their link-preview pictures ----------
+// (lucida.cards/vs/anki, /compare, /features/…, /for/…, /faq. design/site.mjs says what a page file holds.)
+// Three boards draw every one of those pages, each with a phone twin and a page picker, since the canvas has room for few files:
+//   SiteCompare  comparisons, alternatives, the hubs (compare, features) and the "404" page
+//   SiteFeature  features, and who Lucida is for
+//   SiteFaq      the FAQ
+// A page is one markup that fits any width (container queries, so a frame on the canvas and a window on the site behave the
+// same): the page at lucida.cards holds one copy of it with one h1, and a phone board is that markup in a 390-wide frame. The
+// pages' words are embedded in each board (`site-data`); design/to-site.mjs stops if a page file changed after the boards were
+// built. SiteOg draws any page's 1200 × 630 link-preview picture (design/og.mjs). Board heights are measured
+// (design/site-measure.mjs → site-heights.json): a frame must be as tall as its tallest page.
+const SITE_H_FILE = new URL('./site-heights.json', import.meta.url);
+const SITE_H = existsSync(SITE_H_FILE) ? JSON.parse(readFileSync(SITE_H_FILE, 'utf8')) : {};
+const SITE_NAMES = { SiteCompare: 'Comparisons, alternatives, the hubs and the 404', SiteFeature: 'Features and who Lucida is for', SiteFaq: 'FAQ' };
+// Words with [links](…) and **bold** in them, as pieces (design/site.mjs partsOf).
+const spParts = key => `<sc-for list="{{${key}}}" as="w"><sc-if value="{{w.plain}}">{{w.text}}</sc-if><sc-if value="{{w.href}}"><a href="{{w.href}}" style="text-decoration: underline; text-underline-offset: 3px; text-decoration-thickness: 1px;">{{w.text}}</a></sc-if><sc-if value="{{w.bold}}"><strong style="font-weight: 600;">{{w.text}}</strong></sc-if></sc-for>`;
+const spH2 = (text, size = 'clamp(26px, 3.4cqw, 38px)') => `<h2 style="margin: 0; font-size: ${size}; font-weight: 600; line-height: 1.08; letter-spacing: -.035em; text-wrap: balance;">${text}</h2>`;
+const spBox = (maxW, top, body) => `<section style="max-width: ${maxW}px; margin: 0 auto; box-sizing: border-box; padding: ${top} clamp(20px, 4cqw, 48px) 0;">${body}</section>`;
+const spCard = (href, title, desc) => `<a class="sp-card" href="{{${href}}}" style="box-sizing: border-box; padding: 24px; border-radius: 24px; background: {{t.surf}}; display: flex; flex-direction: column; gap: 8px; min-width: 0;"><h3 style="margin: 0; font-size: 17px; font-weight: 600; letter-spacing: -.01em;">{{${title}}}</h3><p style="margin: 0; font-size: 15px; line-height: 1.5; color: {{t.muted}};">{{${desc}}}</p><span style="margin-top: 6px; font-size: 14px; font-weight: 600;">Read more →</span></a>`;
+const spGrid = (body, min = 300) => `<div style="margin-top: 28px; display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, ${min}px), 1fr)); gap: 16px;">${body}</div>`;
+const spLink = 'text-decoration: underline; text-underline-offset: 3px; text-decoration-thickness: 1px;';
+const SITE_CSS = [
+  '.sp{container-type:inline-size}',
+  '.sp-crumbs li+li::before{content:"/";margin:0 8px;opacity:.4}',
+  '.sp-sr{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}',
+  // On a narrow page a comparison's rows stack: the feature, then each app's answer under its name.
+  '@container (max-width: 760px){.sp-nav{display:none!important}.sp-head{height:64px!important}.sp-band-wide{display:none!important}.sp-band-tall{display:block!important}',
+  '.sp-table table,.sp-table tbody,.sp-table tr,.sp-table th,.sp-table td{display:block}.sp-table thead{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}',
+  '.sp-table tr{padding:18px 20px}.sp-table tbody tr+tr{border-top:1px solid var(--sp-line)}.sp-table tbody th{width:auto!important;padding:0 0 4px!important;border:0!important;font-size:17px!important}',
+  '.sp-table td{padding:10px 0 0!important;border:0!important;background:none!important}.sp-table td::before{content:attr(data-label);display:block;margin-bottom:2px;font-size:12px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--sp-muted)}}',
+  SKY_CSS, NO_RISE
+].join('');
+const sitePage = (w, h) => `<div class="sp" style="position: relative; isolation: isolate; width: ${w}px; height: ${h}px; box-sizing: border-box; font-family: ${FONT}; background: {{t.bg}}; color: {{t.text}}; overflow: hidden; --sp-line: {{t.line}}; --sp-muted: {{t.muted}};">
+${skyLayer(false)}
+<header class="sp-head" style="max-width: 1344px; margin: 0 auto; height: 76px; box-sizing: border-box; padding: 0 clamp(20px, 4cqw, 48px); display: flex; align-items: center; justify-content: space-between; gap: 12px;">
+  <a href="{{links.home}}" aria-label="Lucida home">${logo(30)}</a>
+  <nav aria-label="Main" style="display: flex; align-items: center; gap: 4px;"><sc-for list="{{nav}}" as="n" hint-placeholder-count="3"><a class="sp-nav" href="{{n.href}}" style="height: 36px; padding: 0 14px; display: inline-flex; align-items: center; border-radius: 999px; font-size: 14px; color: {{t.text}};">{{n.label}}</a></sc-for><a href="{{links.signIn}}" style="height: 36px; padding: 0 14px; display: inline-flex; align-items: center; border-radius: 999px; font-size: 14px; color: {{t.text}};">Sign in</a>${landPill('Get started', '{{links.start}}', true, 36)}</nav>
+</header>
+<main>
+<section style="padding: clamp(32px, 6cqw, 80px) clamp(20px, 4cqw, 48px) 0; display: flex; flex-direction: column; align-items: center; text-align: center;">
+  <nav aria-label="Breadcrumb"><ol class="sp-crumbs" style="margin: 0; padding: 0; list-style: none; display: flex; flex-wrap: wrap; justify-content: center; font-size: 14px; color: {{t.muted}};"><sc-for list="{{crumbs}}" as="c" hint-placeholder-count="3"><li><sc-if value="{{c.link}}"><a href="{{c.href}}">{{c.label}}</a></sc-if><sc-if value="{{c.current}}"><span aria-current="page">{{c.label}}</span></sc-if></li></sc-for></ol></nav>
+  <h1 style="margin: 20px 0 0; max-width: 1000px; font-size: clamp(36px, 5.6cqw, 68px); font-weight: 600; line-height: 1.02; letter-spacing: -.05em; text-wrap: balance;">{{page.h1}}</h1>
+  <p style="margin: 22px 0 0; max-width: 680px; font-size: clamp(17px, 1.8cqw, 20px); line-height: 1.5; color: {{t.muted}}; text-wrap: pretty;">${spParts('page.lead')}</p>
+  <sc-if value="{{page.updatedLabel}}" hint-placeholder-val="{{ true }}"><p style="margin: 16px 0 0; font-size: 14px; color: {{t.muted}};">Updated {{page.updatedLabel}}</p></sc-if>
+</section>
+<sc-if value="{{hasTable}}" hint-placeholder-val="{{ true }}">${spBox(1040, 'clamp(40px, 6cqw, 64px)', `${spH2('At a glance')}
+  <div class="sp-table" style="margin-top: 24px; border-radius: 28px; background: {{t.bg}}; box-shadow: 0 0 0 1px {{t.line}}, 0 18px 44px -24px rgba(0,0,0,.25); overflow: hidden;">
+    <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 15px; line-height: 1.5;">
+      <thead><tr><sc-for list="{{table.head}}" as="c" hint-placeholder-count="3"><th scope="col" class="{{c.cls}}" style="padding: 18px 22px; background: {{c.bg}}; font-size: 15px; font-weight: 600;">{{c.label}}</th></sc-for></tr></thead>
+      <tbody><sc-for list="{{table.rows}}" as="r" hint-placeholder-count="6"><tr><th scope="row" style="width: 22%; padding: 16px 22px; vertical-align: top; border-top: 1px solid {{t.line}}; font-weight: 600;">{{r.label}}</th><sc-for list="{{r.cells}}" as="c" hint-placeholder-count="2"><td data-label="{{c.col}}" style="padding: 16px 22px; vertical-align: top; border-top: 1px solid {{t.line}}; background: {{c.bg}};">${spParts('c.parts')}</td></sc-for></tr></sc-for></tbody>
+    </table>
+  </div>`)}</sc-if>
+<sc-for list="{{groups}}" as="g" hint-placeholder-count="1">${spBox(1040, 'clamp(40px, 6cqw, 64px)', `${spH2('{{g.title}}')}${spGrid(`<sc-for list="{{g.cards}}" as="k" hint-placeholder-count="3">${spCard('k.href', 'k.title', 'k.desc')}</sc-for>`)}`)}</sc-for>
+<sc-for list="{{sections}}" as="s" hint-placeholder-count="3">${spBox(760, 'clamp(44px, 7cqw, 72px)', `<sc-if value="{{s.h2}}" hint-placeholder-val="{{ true }}"><h2 id="{{s.id}}" style="margin: 0 0 4px; font-size: clamp(26px, 3.4cqw, 38px); font-weight: 600; line-height: 1.08; letter-spacing: -.035em; text-wrap: balance;">{{s.h2}}</h2></sc-if>
+  <sc-for list="{{s.paras}}" as="p"><p style="margin: 16px 0 0; font-size: 17px; line-height: 1.65; text-wrap: pretty;">${spParts('p.parts')}</p></sc-for>
+  <sc-if value="{{s.hasBullets}}" hint-placeholder-val="{{ false }}"><ul style="margin: 16px 0 0; padding-left: 22px; font-size: 17px; line-height: 1.6;"><sc-for list="{{s.bullets}}" as="b"><li style="margin-top: 10px; padding-left: 4px;">${spParts('b.parts')}</li></sc-for></ul></sc-if>`)}</sc-for>
+<sc-if value="{{hasFaqPage}}" hint-placeholder-val="{{ false }}">${spBox(760, 'clamp(32px, 5cqw, 48px)', `<sc-if value="{{hasJump}}"><nav aria-label="All questions" style="margin-bottom: 8px; box-sizing: border-box; padding: 24px 28px; border-radius: 24px; background: {{t.surf}};"><ul style="margin: 0; padding: 0; list-style: none; column-width: 280px; column-gap: 32px; font-size: 15px; line-height: 1.4;"><sc-for list="{{jump}}" as="j"><li style="break-inside: avoid; padding: 5px 0;"><a href="{{j.href}}">{{j.q}}</a></li></sc-for></ul></nav></sc-if>
+  <sc-for list="{{faq}}" as="f"><div id="{{f.id}}" style="padding-top: clamp(28px, 4cqw, 40px);"><h2 style="margin: 0; font-size: clamp(21px, 2.4cqw, 26px); font-weight: 600; line-height: 1.2; letter-spacing: -.025em; text-wrap: balance;">{{f.q}}</h2><sc-for list="{{f.paras}}" as="p"><p style="margin: 12px 0 0; font-size: 17px; line-height: 1.65; text-wrap: pretty;">${spParts('p.parts')}</p></sc-for></div></sc-for>`)}</sc-if>
+<sc-if value="{{hasFaqBlock}}" hint-placeholder-val="{{ false }}">${spBox(1040, 'clamp(56px, 9cqw, 96px)', `${spH2('Questions')}${spGrid(`<sc-for list="{{faq}}" as="f"><div id="{{f.id}}" style="box-sizing: border-box; padding: 24px; border-radius: 24px; background: {{t.surf}}; display: flex; flex-direction: column; gap: 8px; min-width: 0;"><h3 style="margin: 0; font-size: 17px; font-weight: 600; letter-spacing: -.01em;">{{f.q}}</h3><sc-for list="{{f.paras}}" as="p"><p style="margin: 0; font-size: 15px; line-height: 1.55; color: {{t.muted}};">${spParts('p.parts')}</p></sc-for></div></sc-for>`, 440)}`)}</sc-if>
+<sc-if value="{{hasSources}}" hint-placeholder-val="{{ false }}">${spBox(760, 'clamp(48px, 8cqw, 80px)', `<h2 style="margin: 0; font-size: 22px; font-weight: 600; letter-spacing: -.02em;">Sources</h2><p style="margin: 10px 0 0; font-size: 14px; line-height: 1.5; color: {{t.muted}};">The pages this one was written from, and the day each was checked.</p>
+  <ol style="margin: 16px 0 0; padding-left: 22px; font-size: 15px; line-height: 1.55;"><sc-for list="{{sources}}" as="o"><li style="margin-top: 8px; padding-left: 4px;"><a href="{{o.href}}" target="_blank" rel="noopener" style="${spLink}">{{o.label}}</a><span style="color: {{t.muted}};">{{o.note}}</span></li></sc-for></ol>`)}</sc-if>
+<sc-if value="{{hasRelated}}" hint-placeholder-val="{{ false }}">${spBox(1040, 'clamp(56px, 9cqw, 96px)', `${spH2('Keep reading')}${spGrid(`<sc-for list="{{related}}" as="k">${spCard('k.href', 'k.title', 'k.desc')}</sc-for>`)}`)}</sc-if>
+<section style="margin-top: clamp(64px, 10cqw, 128px); position: relative; overflow: hidden; color: {{hero.ink}}; background: {{hero.base}};">
+  <div class="sp-band-wide" aria-hidden="true" style="position: absolute; inset: 0;">${ART_LAYERS('hero')}</div>
+  <div class="sp-band-tall" aria-hidden="true" style="position: absolute; inset: 0; display: none;">${ART_LAYERS('heroTall')}</div>
+  <div style="position: relative; text-shadow: {{hero.shadow}}; box-sizing: border-box; padding: clamp(56px, 9cqw, 104px) clamp(20px, 4cqw, 32px); display: flex; flex-direction: column; align-items: center; text-align: center;"><h2 style="margin: 0; font-size: clamp(34px, 4.4cqw, 56px); font-weight: 600; line-height: 1.04; letter-spacing: -.04em; text-wrap: balance;">Your next exam, in cards.</h2><p style="margin: 16px 0 0; max-width: 480px; font-size: clamp(16px, 1.4cqw, 18px); line-height: 1.5; opacity: .8; text-wrap: balance;">Start with one deck. Your AI can fill it in a few minutes.</p><div style="margin-top: 28px;">${landPill('Get started', '{{links.start}}', true, 48, 'background: #FFFFFF; color: #000000;')}</div></div>
+</section>
+</main>
+<footer style="max-width: 1344px; margin: 0 auto; box-sizing: border-box; padding: 48px clamp(20px, 4cqw, 48px); display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 20px 16px; font-size: 14px; color: {{t.muted}};">
+  ${logo(26)}<span style="display: flex; flex-wrap: wrap; align-items: center; gap: 16px 20px;"><nav aria-label="Footer" style="display: contents;"><sc-for list="{{foot}}" as="l" hint-placeholder-count="5"><a href="{{l.href}}">{{l.label}}</a></sc-for></nav><span>© 2026 Lucida</span><span style="margin-left: 8px;">${socialLinks(20)}</span></span>
+</footer>
+</div>`;
+const siteLogic = (board, phone) => {
+  const data = boardData(board, SITE.pages);
+  return `${ART_METHOD}
+${FOOT_METHOD}
+data() { return Component._site || (Component._site = ${JSON.stringify(data).replace(/</g, '\\u003c')}); }
+parts(text) { return (${partsOf.toString()})(text); }
+renderVals() { ${T}
+  // site-data: ${data.hash}
+  const site = !!this.props.site, PHONE = ${phone}, D = this.data(), P = D.pages.find(p => p.slug === this.props.page) || D.pages[0];
+  const plain = s => this.parts(s).map(x => x.text).join('');
+  const slugify = s => plain(s).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 48);
+  // Where a link goes: the real page on lucida.cards, or on the canvas the board that draws it.
+  const BOARD = { compare: 'SiteCompare', alternative: 'SiteCompare', hub: 'SiteCompare', notfound: 'SiteCompare', feature: 'SiteFeature', use: 'SiteFeature', faq: 'SiteFaq', home: 'Landing', pricing: 'Pricing' };
+  const href = it => site ? (it.slug ? '/' + it.slug : '/') : (it.kind === 'legal' ? (it.slug === 'privacy' ? 'Privacy' : 'Terms') : BOARD[it.kind] + (PHONE ? 'Phone' : '')) + '.dc.html';
+  const find = slug => D.index.find(i => i.slug === slug);
+  const signIn = site ? '${SITE_APP}/sign-in' : (PHONE ? 'PhoneSignIn' : 'WebSignIn') + '.dc.html';
+  const tint = this.props.dark ? 'rgba(120,150,255,.14)' : 'rgba(134,189,243,.16)';
+  const card = it => ({ href: href(it), title: plain(it.label || it.h1), desc: plain(it.description) });
+  const of = (...kinds) => D.index.filter(i => kinds.includes(i.kind) && i.slug !== P.slug).map(card);
+  let groups = [];
+  if (P.kind === 'hub' && P.slug === 'compare') groups = [{ title: 'Comparisons', cards: of('compare') }, { title: 'Alternatives', cards: of('alternative') }];
+  else if (P.kind === 'hub') groups = [{ title: 'Features', cards: of('feature') }, { title: 'Made for', cards: of('use') }];
+  else if (P.kind === 'notfound') groups = [{ title: 'Start here', cards: ['', 'compare', 'features', 'faq', 'pricing'].map(find).filter(Boolean).map(card).concat([{ href: site ? '${SITE_APP}/' : signIn, title: 'Open the app', desc: 'Sign in, or start a deck, at app.lucida.cards.' }]) }];
+  const tb = P.table, faq = P.faq.map(f => ({ id: 'q-' + slugify(f.q), q: plain(f.q), paras: f.a.split(/\\n\\s*\\n/).map(a => ({ parts: this.parts(a) })) })), isFaq = P.kind === 'faq';
+  const related = P.related.map(find).filter(Boolean).map(card);
+  return { t, sky: ${SKY}, grain: String(this.props.grain ?? 0.7), hero: this.art(${MIDNIGHT}, 'wide'), heroTall: this.art(${MIDNIGHT}, ''),
+    foot: this.foot(PHONE), nav: D.header.map(l => ({ label: l.label, href: href(find(l.slug)) })),
+    links: { home: site ? '/' : (PHONE ? 'LandingPhone' : 'Landing') + '.dc.html', signIn, start: site ? '${SITE_APP}/' : signIn },
+    crumbs: P.crumbs.map((c, i) => ({ label: c.label, link: i < P.crumbs.length - 1 && !!find(c.slug), current: i === P.crumbs.length - 1, href: find(c.slug) ? href(find(c.slug)) : '' })),
+    page: { h1: P.h1, lead: this.parts(P.lead), updatedLabel: P.updatedLabel || '' },
+    hasTable: !!tb, table: tb ? { head: tb.columns.map((c, i) => ({ label: c || 'Feature', cls: c ? '' : 'sp-sr', bg: i === 1 ? tint : 'transparent' })),
+      rows: tb.rows.map(r => ({ label: plain(r[0]), cells: r.slice(1).map((c, i) => ({ col: plain(tb.columns[i + 1] || ''), parts: this.parts(c), bg: i === 0 ? tint : 'transparent' })) })) } : { head: [], rows: [] },
+    groups: groups.filter(g => g.cards.length),
+    sections: P.sections.map(s => ({ id: slugify(s.h2), h2: s.h2, paras: s.paras.map(p => ({ parts: this.parts(p) })), hasBullets: s.bullets.length > 0, bullets: s.bullets.map(b => ({ parts: this.parts(b) })) })),
+    faq, hasFaqPage: isFaq && faq.length > 0, hasFaqBlock: !isFaq && faq.length > 0, hasJump: isFaq && faq.length >= 8, jump: faq.map(f => ({ href: '#' + f.id, q: f.q })),
+    hasSources: P.sources.length > 0, sources: P.sources.map(o => ({ label: o.label || o.url, href: o.url, note: o.checkedLabel ? ' · checked ' + o.checkedLabel : '' })),
+    hasRelated: related.length > 0, related };
+}`;
+};
+function siteFiles() {
+  const out = {};
+  for (const b of SITE_BOARDS) {
+    const { pages } = boardData(b, SITE.pages), first = pages[0].slug;
+    for (const phone of [false, true]) {
+      const w = phone ? PW : W, h = (SITE_H[b] || [3200, 4400])[phone ? 1 : 0];
+      out[b + (phone ? 'Phone' : '')] = [`Site · ${SITE_NAMES[b]} · lucida.cards${phone ? ' on a phone' : ''}`, sitePage(w, h),
+        { props: { ...DARK, page: { editor: 'enum', default: first, options: pages.map(p => p.slug) }, grain: MESH('Iris').grain }, logic: siteLogic(b, phone), css: SITE_CSS, w, h }];
+    }
+  }
+  return out;
+}
+
 // ---------- Onboarding: after the first sign-in, connect your AI, then bring your cards ----------
 // The owner (2026-09-24): an onboarding page right after sign-in, "for connecting ai and importing flashcards", full
 // screen. It first had sign-in's card wall beside it; the owner (V98): "remove this whole right side, this is only for
@@ -8010,6 +8134,7 @@ for (const T of THEMES.filter(x => x.key !== 'lucida')) {
     [B + 'ProfilePhone']: [`${T.name} · iPhone · Settings (your profile picture)`, themeOf('PhoneSettings', PW, PH, at('')), { logic, ...one, w: PW, h: PH }],
   });
 }
+Object.assign(files, siteFiles());
 for (const [name, [title, body, opts]] of Object.entries(files)) writeFileSync(OUT + name + '.dc.html', page(title, body, opts));
 
 // The canvas layout (where each board sits) lives in canvas/project/canvas.json. It's kept in sync with the live

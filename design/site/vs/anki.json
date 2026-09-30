@@ -1,0 +1,241 @@
+{
+  "slug": "vs/anki",
+  "kind": "compare",
+  "title": "Lucida vs Anki: flashcards compared (2026)",
+  "description": "Lucida vs Anki side by side: price, spaced repetition, AI, importing and sharing, and where each one is the better pick. Checked September 2026.",
+  "h1": "Lucida vs Anki",
+  "lead": "Both can plan your reviews with FSRS. Anki is the better pick for studying offline, add-ons and full control of your card layouts; Lucida is the better pick for starting in a browser in a minute, having your own AI make the cards, and playing live games with friends.",
+  "updated": "2026-09-30",
+  "table": {
+    "columns": [
+      "",
+      "Lucida",
+      "Anki"
+    ],
+    "rows": [
+      [
+        "Price",
+        "Free. Pro is $5.99 a month or $49.99 a year (as of September 2026).",
+        "Free on computers and on Android (AnkiDroid). The iPhone and iPad app, AnkiMobile, is $24.99 once in the US App Store (as of September 2026)."
+      ],
+      [
+        "Where it runs",
+        "In your browser, on phones, tablets and computers. There is no store app yet.",
+        "Windows, Mac and Linux; Android with AnkiDroid; iPhone and iPad with AnkiMobile; and online through AnkiWeb."
+      ],
+      [
+        "Where your cards live",
+        "In your Lucida account, online. There is no offline mode yet.",
+        "In a file on your computer. AnkiWeb keeps a synced copy when you sync."
+      ],
+      [
+        "Spaced repetition",
+        "FSRS, on for every deck, with the goal starting at 90%. Pro can tune it to your own reviews.",
+        "FSRS is built in, and you switch it on in deck options; desired retention starts at 90%. The older SM-2 scheduler is the other choice."
+      ],
+      [
+        "Card types",
+        "Basic, fill in the blank, picture with hidden parts, and sound.",
+        "Basic, cloze (fill in the blank), image occlusion (Anki 23.10 and later), and note types you design yourself with templates."
+      ],
+      [
+        "Making cards with AI",
+        "Your own AI (Claude, ChatGPT, Cursor or any MCP app) adds and edits cards in your decks through your Lucida link. On Free, it can make as many cards as you want.",
+        "Anki’s manual describes no built-in AI card maker. Add-ons can add features."
+      ],
+      [
+        "Quizzes and games",
+        "Learn mode quizzes you with multiple choice, true or false, fill in the blank, matching and typing. Live games let friends play together on their phones. Both are free.",
+        "Flashcards with typed answers, plus custom study and filtered decks. The manual describes no multiple-choice quiz or live game."
+      ],
+      [
+        "Importing",
+        "Text files: Anki’s “Notes in Plain Text” export, a Quizlet export, or CSV. Not .apkg files. Pictures, sounds and review history don’t come across.",
+        "Text files, packaged decks (.apkg and .colpkg) and Mnemosyne 2.0 files."
+      ],
+      [
+        "Exporting",
+        "A deck as a CSV file, or everything as one JSON file.",
+        "Notes as plain text, decks as .apkg, or your whole collection as .colpkg."
+      ],
+      [
+        "Sharing decks",
+        "Share a deck by link or publicly. Others study it, copy it, or suggest changes.",
+        "Shared decks on AnkiWeb, or export a deck and send the file."
+      ],
+      [
+        "Classes",
+        "A teacher makes a class, shares decks and assigns them by a date.",
+        "Anki’s manual describes no classes."
+      ],
+      [
+        "Stats",
+        "A stats page. Pro adds stats on what you’re weak at, and exam dates.",
+        "Built-in graphs and statistics, including card stability and difficulty under FSRS."
+      ],
+      [
+        "Customizing",
+        "Deck covers, settings for your goal and learning steps, and themes (Pro).",
+        "Add-ons, card templates, and many deck options."
+      ]
+    ]
+  },
+  "sections": [
+    {
+      "h2": "When Anki is the better pick",
+      "paras": [
+        "Anki does several things Lucida doesn’t, and for some people they matter most."
+      ],
+      "bullets": [
+        "**You want to study offline.** Anki keeps your collection in a file on your computer. Lucida has no offline mode yet.",
+        "**You want add-ons.** Anki can be extended with add-ons. Lucida has none.",
+        "**You want to design your own cards.** Anki lets you change your card layouts with templates. Lucida’s cards come in four kinds with a set layout.",
+        "**You have years of reviews in Anki.** Lucida can import your cards as text, but your review history and schedule stay behind.",
+        "**You want a free Android app.** AnkiDroid is free. Lucida has no store apps yet, though the website works on phones.",
+        "**You have a very large collection.** Anki says it handles decks of 100,000+ cards with no problems."
+      ]
+    },
+    {
+      "h2": "When Lucida is the better pick",
+      "paras": [
+        "Lucida is made to be quick to start and easy to share."
+      ],
+      "bullets": [
+        "**You want to start now.** Sign in and make a deck in your browser. There is nothing to install.",
+        "**You want your own AI to make the cards.** Paste your Lucida link into Claude, ChatGPT or Cursor once. Then share a lecture or your notes and ask for flashcards.",
+        "**You like studying with other people.** Friends join a live game on their phones with a code, and Learn mode turns your cards into quizzes.",
+        "**You teach or share decks.** Share a deck by link, or set up a class and assign decks by a date.",
+        "**You want the same thing on every device.** Your decks, cards and progress are in your account, so a phone, a laptop and a school computer all show the same cards."
+      ]
+    },
+    {
+      "h2": "How reviews compare",
+      "paras": [
+        "Both use FSRS, the Free Spaced Repetition Scheduler. [Anki’s manual](https://docs.ankiweb.net/deck-options.html#fsrs) calls it an alternative to Anki’s older SM-2 algorithm, and says to switch it on in deck options. In Lucida it is on for every deck, with the goal starting at 90%. Lucida uses FSRS-5 with Anki-style learning steps of 1 minute and 10 minutes.",
+        "Anki’s Optimize button fits FSRS to your own review history. Lucida’s Pro plan has a similar option, called Tune to you."
+      ],
+      "bullets": []
+    },
+    {
+      "h2": "Moving your Anki cards to Lucida",
+      "paras": [
+        "In Anki, open the File menu, choose Export, and pick “Notes in Plain Text”. In Lucida, open Import cards and choose that file. Each card goes into the deck named in Anki’s deck column, bold, italics and line breaks stay, and {{c1::cloze}} blanks become fill-in-the-blank cards.",
+        "Pictures, sounds, tags, note types and your review history don’t come across. Lucida can’t read .apkg files. Going the other way works too: Lucida exports a deck as CSV, and Anki can import text files."
+      ],
+      "bullets": []
+    }
+  ],
+  "faq": [
+    {
+      "q": "Is Anki free?",
+      "a": "The computer version of Anki is free, and so are AnkiDroid on Android and the AnkiWeb sync service. AnkiMobile, the iPhone and iPad app, costs $24.99 once in the US App Store (as of September 2026)."
+    },
+    {
+      "q": "Is Lucida free?",
+      "a": "Yes. Unlimited decks and cards, spaced repetition, Learn mode, sharing and live games are free. Pro costs $5.99 a month or $49.99 a year and adds exam dates, stats on what you’re weak at, themes and unlimited pictures and sounds."
+    },
+    {
+      "q": "Does Lucida use FSRS like Anki?",
+      "a": "Yes. Lucida plans every review with FSRS-5, and it is on for every deck. In Anki, FSRS is built in but you switch it on in deck options."
+    },
+    {
+      "q": "Can I import my Anki decks into Lucida?",
+      "a": "Yes, as text. Export a deck from Anki with “Notes in Plain Text”, then open Import cards in Lucida and choose the file. Pictures, sounds, tags and your review history don’t come across, and .apkg files don’t work."
+    },
+    {
+      "q": "Can I move my cards from Lucida back to Anki?",
+      "a": "Yes. Lucida exports a deck as a CSV file, and Anki can import text files. Your review history doesn’t move in either direction."
+    },
+    {
+      "q": "Does Lucida work offline?",
+      "a": "Not yet. Lucida runs in your browser and keeps your cards in your account online. Anki keeps your collection in a file on your computer."
+    },
+    {
+      "q": "Can AI make my Anki cards?",
+      "a": "Anki’s manual describes no built-in AI card maker, though add-ons can add features. With Lucida, your own AI (Claude, ChatGPT, Cursor or any MCP app) adds cards straight to your decks through your Lucida link."
+    },
+    {
+      "q": "Is there a Lucida app for iPhone or Android?",
+      "a": "Not in the App Store or on Google Play yet. Lucida works in the browser on any phone."
+    },
+    {
+      "q": "Should I switch from Anki to Lucida?",
+      "a": "If Anki works for you, keep it. Try Lucida if you want to start in a browser, have an AI make your cards, or quiz friends live. Importing doesn’t change your Anki collection, so you can try both."
+    }
+  ],
+  "sources": [
+    {
+      "label": "Anki: home page (platforms, prices, sync, add-ons)",
+      "url": "https://apps.ankiweb.net/",
+      "checked": "2026-09-30"
+    },
+    {
+      "label": "AnkiMobile on the App Store (price)",
+      "url": "https://apps.apple.com/us/app/ankimobile-flashcards/id373493387",
+      "checked": "2026-09-30"
+    },
+    {
+      "label": "Anki manual: deck options, FSRS",
+      "url": "https://docs.ankiweb.net/deck-options.html#fsrs",
+      "checked": "2026-09-30"
+    },
+    {
+      "label": "Anki manual: editing (cloze and image occlusion)",
+      "url": "https://docs.ankiweb.net/editing.html",
+      "checked": "2026-09-30"
+    },
+    {
+      "label": "Anki manual: importing",
+      "url": "https://docs.ankiweb.net/importing/intro.html",
+      "checked": "2026-09-30"
+    },
+    {
+      "label": "Anki manual: exporting",
+      "url": "https://docs.ankiweb.net/exporting.html",
+      "checked": "2026-09-30"
+    },
+    {
+      "label": "Anki manual: add-ons",
+      "url": "https://docs.ankiweb.net/addons.html",
+      "checked": "2026-09-30"
+    },
+    {
+      "label": "Anki manual: syncing with AnkiWeb",
+      "url": "https://docs.ankiweb.net/syncing.html",
+      "checked": "2026-09-30"
+    },
+    {
+      "label": "Anki manual: managing files and your collection",
+      "url": "https://docs.ankiweb.net/files.html",
+      "checked": "2026-09-30"
+    },
+    {
+      "label": "Anki manual: card info, graphs and statistics",
+      "url": "https://docs.ankiweb.net/stats.html",
+      "checked": "2026-09-30"
+    },
+    {
+      "label": "Lucida: pricing",
+      "url": "https://lucida.cards/pricing",
+      "checked": "2026-09-30"
+    }
+  ],
+  "related": [
+    "compare",
+    "vs/quizlet",
+    "anki-alternative",
+    "features/spaced-repetition",
+    "features/ai-flashcards",
+    "features/import"
+  ],
+  "keywords": [
+    "lucida vs anki",
+    "anki vs lucida",
+    "is anki free",
+    "anki alternative",
+    "anki fsrs",
+    "import anki cards",
+    "spaced repetition app",
+    "ai flashcards"
+  ]
+}

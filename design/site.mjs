@@ -60,17 +60,27 @@ export const FIXED = [
     title: 'Terms of Service · Lucida', description: 'The terms for using Lucida, on the website at lucida.cards and in the app at app.lucida.cards: your account, your cards and fair use.' }
 ];
 
-// The kinds of page. `board` draws it (and its Phone twin); `parent` is the hub its breadcrumb goes through.
+// The kinds of page. `board` draws it (and its Phone twin); `parent` is the hub its breadcrumb goes through. Three boards
+// draw every page (the canvas has room for few): SiteCompare (comparisons, alternatives, the hubs and the 404 page),
+// SiteFeature (features and who it's for) and SiteFaq, each with a page picker; a fourth, SiteOg, draws the link-preview
+// picture of any page.
 export const KINDS = {
   compare: { board: 'SiteCompare', label: 'Comparison', slug: /^vs\/[a-z0-9]+(?:-[a-z0-9]+)*$/, parent: 'compare' },
   alternative: { board: 'SiteCompare', label: 'Alternative', slug: /^[a-z0-9]+(?:-[a-z0-9]+)*-alternative$/, parent: 'compare' },
-  hub: { board: 'SiteHub', label: 'Hub', slug: /^(?:compare|features)$/, parent: null },
+  hub: { board: 'SiteCompare', label: 'Hub', slug: /^(?:compare|features)$/, parent: null },
   feature: { board: 'SiteFeature', label: 'Feature', slug: /^features\/[a-z0-9]+(?:-[a-z0-9]+)*$/, parent: 'features' },
   use: { board: 'SiteFeature', label: 'Made for', slug: /^for\/[a-z0-9]+(?:-[a-z0-9]+)*$/, parent: 'features' },
   faq: { board: 'SiteFaq', label: 'FAQ', slug: /^faq$/, parent: null }
 };
-export const BOARDS = ['SiteCompare', 'SiteFeature', 'SiteHub', 'SiteFaq'];
+export const BOARDS = ['SiteCompare', 'SiteFeature', 'SiteFaq'];
 const ORDER = ['hub', 'compare', 'alternative', 'feature', 'use', 'faq'];
+
+// The page nobody meant to visit (web/404.html), drawn by SiteCompare as its "404" page. Its links are filled in by the
+// board from the pages that exist.
+export const NOT_FOUND = { slug: '404', kind: 'notfound', title: 'Page not found · Lucida', h1: 'This page doesn’t exist', updated: '',
+  description: 'There is no page at this address. Lucida is a flashcard app: start from the home page, or see how it compares with other apps.',
+  lead: 'The address may have changed, or it may have a typo. These pages are a good place to start.',
+  table: null, sections: [], faq: [], sources: [], related: [], keywords: [], published: '', url: ORIGIN + '/404', updatedLabel: '', crumbs: [{ label: 'Home', slug: '' }, { label: 'Page not found', slug: '404' }] };
 
 const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 export const dateLabel = d => { const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(d || ''); return m ? MONTHS[+m[2] - 1] + ' ' + +m[3] + ', ' + m[1] : d || ''; };
@@ -204,8 +214,8 @@ export function pageSet(dir = DATA_DIR) {
 }
 
 // One line about every page, for links to it (boards, llms.txt): title and words to show for a link, and where it goes.
-export const indexOf = pages => [...FIXED.map(f => ({ slug: f.slug, kind: f.kind, title: f.title, h1: f.h1, description: f.description })),
-  ...pages.filter(p => !p.sample).map(p => ({ slug: p.slug, kind: p.kind, title: p.title, h1: p.h1, description: p.description }))];
+export const indexOf = pages => [...FIXED.map(f => ({ slug: f.slug, kind: f.kind, title: f.title, h1: f.h1, label: f.kind === 'home' ? NAME : f.crumb, description: f.description })),
+  ...pages.filter(p => !p.sample).map(p => ({ slug: p.slug, kind: p.kind, title: p.title, h1: p.h1, label: p.h1, description: p.description }))];
 
 // The links at the bottom of every site page, and the ones in the header of the pages made here. A page that doesn't exist
 // isn't linked.
@@ -220,6 +230,7 @@ export const headerLinks = pages => footerLinks(pages).filter(l => ['compare', '
 export function boardData(board, pages) {
   const kinds = Object.keys(KINDS).filter(k => KINDS[k].board === board);
   let mine = pages.filter(p => kinds.includes(p.kind));
+  if (board === 'SiteCompare') mine = [...mine, NOT_FOUND];
   if (!mine.length) mine = SAMPLES.filter(p => kinds.includes(p.kind)).map(p => ({ ...p, url: urlOf(p.slug), updatedLabel: dateLabel(p.updated), crumbs: [{ label: 'Home', slug: '' }, { label: 'Features', slug: 'features' }, { label: p.h1, slug: p.slug }] }));
   const data = { pages: mine, index: indexOf(pages), footer: footerLinks(pages), header: headerLinks(pages) };
   return { ...data, hash: createHash('sha1').update(JSON.stringify(data)).digest('hex').slice(0, 12) };
