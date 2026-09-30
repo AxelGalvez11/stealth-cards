@@ -124,6 +124,14 @@ export const publicMedia = {
       await call('/storage/v1/object/shared/' + uuid(uid) + '/' + encodeURIComponent(name), { method: 'POST', headers: { 'content-type': 'application/octet-stream', 'x-upsert': 'true' }, body: buf });
     }
     return publicMedia.url(uid, name);
+  },
+  // Everything a person made public: "Delete my data" (social.mjs forget) removes their whole folder, like files.clear.
+  clear: async uid => {
+    for (let i = 0; i < 50; i++) {
+      const names = ((await call('/storage/v1/object/list/shared', { method: 'POST', headers: json, body: JSON.stringify({ prefix: uuid(uid) + '/', search: '', limit: 1000 }) })) || []).map(o => o.name).filter(Boolean);
+      if (!names.length) return;
+      await call('/storage/v1/object/shared', { method: 'DELETE', headers: json, body: JSON.stringify({ prefixes: names.map(n => uuid(uid) + '/' + n) }) });
+    }
   }
 };
 

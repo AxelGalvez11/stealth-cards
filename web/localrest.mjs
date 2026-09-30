@@ -9,10 +9,12 @@ import { join } from 'node:path';
 // Each table's key (and other unique columns), and the columns the database fills in itself (supabase/social.sql).
 const now = () => new Date().toISOString();
 export const TABLES = {
-  profiles: { key: ['id'], unique: [['handle']], defaults: () => ({ name: '', bio: '', school: '', subject: '', avatar: null, color: 0, kind: 'person', verified: '', featured: [], theme: '', followers: 0, following: 0, contributions: 0, created_at: now(), updated_at: now() }) },
-  shared_decks: { key: ['id'], unique: [['owner', 'slug'], ['owner', 'deck_id']], defaults: () => ({ visibility: 'link', name: '', description: '', tags: [], cover: {}, card_count: 0, rev: 1, version: 0, maintained: 'creator', helpers: [], contributors: [], checked: null, stars: 0, learners: 0, copies: 0, score: 0, theme: '', class_id: null, media: [], created_at: now(), updated_at: now() }) },
+  // `listed`: whether the profile shows in search (a profile made just by studying, following, saving... stays unlisted until its
+  // person edits it or shares a deck publicly). supabase/hardening.sql adds it, and the two columns below.
+  profiles: { key: ['id'], unique: [['handle']], defaults: () => ({ name: '', bio: '', school: '', subject: '', avatar: null, color: 0, kind: 'person', verified: '', featured: [], theme: '', followers: 0, following: 0, contributions: 0, listed: false, created_at: now(), updated_at: now() }) },
+  shared_decks: { key: ['id'], unique: [['owner', 'slug'], ['owner', 'deck_id']], defaults: () => ({ visibility: 'link', name: '', description: '', tags: [], cover: {}, card_count: 0, rev: 1, version: 0, maintained: 'creator', helpers: [], contributors: [], checked: null, stars: 0, learners: 0, copies: 0, score: 0, theme: '', class_id: null, media: [], hidden: false, created_at: now(), updated_at: now() }) },
   shared_cards: { key: ['shared_id', 'id'], defaults: () => ({ pos: 0, data: {}, deleted: false, rev: 1, updated_at: now() }) },
-  deck_versions: { key: ['id'], serial: 'id', unique: [['shared_id', 'version']], defaults: () => ({ author: null, author_name: '', ai: '', kind: 'edit', summary: '', changes: [], created_at: now() }) },
+  deck_versions: { key: ['id'], serial: 'id', unique: [['shared_id', 'version']], defaults: () => ({ author: null, author_name: '', ai: '', kind: 'edit', summary: '', changes: [], n_changes: 0, created_at: now() }) },
   suggestions: { key: ['id'], defaults: () => ({ author: null, author_name: '', ai: '', message: '', changes: [], status: 'open', created_at: now(), decided_at: null }) },
   follows: { key: ['follower', 'followee'], defaults: () => ({ created_at: now() }) },
   stars: { key: ['user_id', 'shared_id'], defaults: () => ({ created_at: now() }) },
@@ -27,7 +29,18 @@ export const TABLES = {
   assignments: { key: ['id'], defaults: () => ({ goal: 'learn', created_by: null, created_at: now() }) },
   class_progress: { key: ['assignment_id', 'user_id'], defaults: () => ({ learned: 0, total: 0, due: 0, remembered: null, last_at: null, updated_at: now() }) },
   verify_requests: { key: ['id'], defaults: () => ({ role: 'teacher', school: '', contact: '', status: 'open', created_at: now(), decided_at: null, decided_by: '' }) },
-  reports: { key: ['id'], defaults: () => ({ target_name: '', reason: 'other', note: '', reporter: null, status: 'open', created_at: now(), decided_at: null }) }
+  reports: { key: ['id'], defaults: () => ({ target_name: '', reason: 'other', note: '', reporter: null, status: 'open', created_at: now(), decided_at: null }) },
+  // A view (supabase/hardening.sql deck_people), read only: how many different people study or copy each shared deck. A person
+  // who copies a deck 25 times is one person.
+  deck_people: { key: ['shared_id'], view: db => {
+    const by = new Map();
+    for (const s of db.subscriptions) {
+      if (s.mode !== 'study' && s.mode !== 'copy') continue;
+      const e = by.get(s.shared_id) || { shared_id: s.shared_id, study: new Set(), copy: new Set() };
+      e[s.mode].add(s.user_id); by.set(s.shared_id, e);
+    }
+    return [...by.values()].map(e => ({ shared_id: e.shared_id, learners: e.study.size, copies: e.copy.size }));
+  } }
 };
 
 const fail = (status, message) => Object.assign(new Error('Supabase ' + status + ': ' + message), { status, body: JSON.stringify({ message }) });
@@ -126,14 +139,31 @@ function order(rows, params) {
   });
 }
 
+// A file written before a column was added gives the rows that are already there the column's default, the way
+// `alter table … add column … default` does in Supabase, and what supabase/hardening.sql fills in for them: who is listed
+// (someone who wrote on their profile, is verified, or shares a deck publicly), decks already hidden after a report, and
+// how many changes each version has.
+function migrate(db) {
+  const publicOwners = new Set(db.shared_decks.filter(d => d.visibility === 'public').map(d => d.owner));
+  for (const p of db.profiles) if (!('listed' in p)) p.listed = !!(p.bio || p.school || p.subject || (p.featured || []).length || p.verified || p.kind === 'school' || publicOwners.has(p.id));
+  for (const d of db.shared_decks) if (!('hidden' in d)) d.hidden = db.reports.some(r => r.kind === 'deck' && r.status === 'hidden' && r.target === d.id);
+  for (const v of db.deck_versions) if (!('n_changes' in v)) v.n_changes = Array.isArray(v.changes) ? v.changes.length : 0;
+  for (const [t, spec] of Object.entries(TABLES)) {
+    if (spec.view) continue;
+    const fresh = spec.defaults();
+    for (const r of db[t]) for (const k of Object.keys(fresh)) if (!(k in r)) r[k] = fresh[k];
+  }
+}
+
 export function localRest(dir) {
   const FILE = join(dir, 'social.json');
   let db = null;
   const load = () => {
     if (db) return db;
     try { db = existsSync(FILE) ? JSON.parse(readFileSync(FILE, 'utf8')) : {}; } catch { db = {}; }
-    for (const t of Object.keys(TABLES)) db[t] ||= [];
+    for (const t of Object.keys(TABLES)) if (!TABLES[t].view) db[t] ||= [];
     db.$serial ||= {};
+    migrate(db);
     return db;
   };
   const save = () => { mkdirSync(dir, { recursive: true }); const tmp = FILE + '.tmp'; writeFileSync(tmp, JSON.stringify(db)); renameSync(tmp, FILE); };
@@ -153,8 +183,9 @@ export function localRest(dir) {
     const t = m[1], spec = TABLES[t], params = new URLSearchParams((m[2] || '').slice(1));
     const prefer = String(headers.prefer || headers.Prefer || ''), back = /return=representation/.test(prefer);
     const input = body == null ? null : typeof body === 'string' ? JSON.parse(body) : body;
+    if (spec.view && method !== 'GET' && method !== 'HEAD') throw fail(405, t + ' is read only');
     if (method === 'GET' || method === 'HEAD') {
-      let rows = order(db[t].filter(matcher(params)), params);
+      let rows = order((spec.view ? spec.view(db) : db[t]).filter(matcher(params)), params);
       const total = rows.length, off = +(params.get('offset') || 0), lim = params.has('limit') ? +params.get('limit') : Infinity;
       rows = rows.slice(off, off + lim);
       const h = /count=exact/.test(prefer) ? { 'content-range': (rows.length ? off + '-' + (off + rows.length - 1) : '*') + '/' + total } : {};
