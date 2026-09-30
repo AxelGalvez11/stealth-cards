@@ -79,10 +79,9 @@ struct DemoProps {
   /// The sample deck's sharing (the deck page's Tweaks): "Link only" or "Public" (yours, shared), or from Maria:
   /// "study" (as it is) or "copy" (with her changes waiting); and the changes' sheet open.
   var shared = "", linked = "", updatesOpen = false
-  /// The classes boards (their Tweaks): which class the page shows ("Yours", "Member", or "Invite"), sharing your progress
-  /// on, a sheet open ("add" or "assign"), Report and Get verified open, the New class or Join a class popup open ("new"
-  /// or "join"), and Today with assignments from your classes.
-  var classView = "Yours", classSharing = false, classPanel = "", classReport = false, classVerify = false, classForm = "", assignments = false
+  /// The classes boards (their Tweaks): sharing your progress on, a sheet open ("add" or "assign"), Report and Get verified
+  /// open, the New class or Join a class popup open ("new" or "join"), and Today with assignments from your classes.
+  var classSharing = false, classPanel = "", classReport = false, classVerify = false, classForm = "", assignments = false
 }
 
 struct TodayVM {
