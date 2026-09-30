@@ -322,7 +322,7 @@ export default [
   "name": "PhoneConnect",
   "title": "iPhone · Connect AI",
   "w": 390,
-  "h": 975
+  "h": 889
  },
  {
   "name": "PhoneConnectConsent",

@@ -201,22 +201,28 @@ const mark = h => `<svg width="${Math.round(h * 33 / 30.5)}" height="${h}" viewB
 const logo = (size = 28) => `<div style="display: flex; align-items: center; gap: 9px;">${mark(Math.round(size / 2))}<div style="font-size: 17px; font-weight: 600; letter-spacing: -.02em;">Lucida</div></div>`;
 
 // ---------- Structure A: web sidebar ----------
-const NAV_A = [['Today', 'today', 'Main.dc.html', '64'], ['Library', 'decks', 'WebDecks.dc.html', ''], ['Discover', 'compass', 'WebDiscover.dc.html', ''], ['Stats', 'stats', 'WebStats.dc.html', ''], ['Connect AI', 'connect', 'WebConnect.dc.html', '']];
+// Today, Library, Discover, Stats, and Profile (your own picture is its icon: 'me'). Settings sits at the bottom, lit on
+// Settings and on the pages inside it (Theme, Connect AI, a theme's page).
+const NAV_A = [['Today', 'today', 'Main.dc.html', '64'], ['Library', 'decks', 'WebDecks.dc.html', ''], ['Discover', 'compass', 'WebDiscover.dc.html', ''], ['Stats', 'stats', 'WebStats.dc.html', ''], ['Profile', 'me', '{{me.href}}', '']];
 // Your profile circle follows Settings (your photo, your Google photo, or your initial on your color): in the web
-// sidebar, on the iPhone's Today and Settings, and on Settings' profile card. The canvas has no photos, so it draws
-// stand-ins: one for the Google photo, one for a photo you uploaded.
+// sidebar and the iPhone's tab bar (Profile), on the iPhone's Today and Settings, and on Settings' profile card. The canvas
+// has no photos, so it draws stand-ins: one for the Google photo, one for a photo you uploaded.
 const STAND_IN = (size, label, bg) => `<span role="img" aria-label="${label}" style="width: ${size}px; height: ${size}px; flex-shrink: 0; border-radius: ${size / 2}px; overflow: hidden; background: ${bg}; display: flex;"><svg width="${size}" height="${size}" viewBox="0 0 64 64" aria-hidden="true"><circle cx="32" cy="26" r="11" fill="rgba(255,255,255,.92)"/><path d="M11 64c1.5-12 10-19 21-19s19.5 7 21 19z" fill="rgba(255,255,255,.92)"/></svg></span>`;
 const PHOTO = size => STAND_IN(size, 'Google profile photo', 'linear-gradient(160deg, #FFD9A8 0%, #F59E6B 55%, #D9677A 100%)');
 const YOUR_PHOTO = size => STAND_IN(size, 'Your profile photo', 'linear-gradient(160deg, #B8F0D8 0%, #4FC3B0 50%, #3A7BD5 100%)');
 // With a theme on (Pro), the theme draws the circle (and your initial on it) or a ring around your photo, over it.
 const AVATAR_ME = size => `<span style="position: relative; width: ${size}px; height: ${size}px; flex-shrink: 0; display: flex;"><span style="position: relative; width: ${size}px; height: ${size}px; flex-shrink: 0; border-radius: ${size / 2}px; overflow: hidden; background: {{me.bg}}; color: #FFFFFF; display: flex; align-items: center; justify-content: center; font-size: ${Math.round(size * 0.42)}px; font-weight: 600;"><sc-if value="{{me.color}}" hint-placeholder-val="{{ true }}">{{me.initial}}</sc-if><sc-if value="{{me.photo}}" hint-placeholder-val="{{ false }}"><img src="{{me.photo}}" alt="" referrerpolicy="no-referrer" style="position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover;"></sc-if><sc-if value="{{me.sampleGoogle}}" hint-placeholder-val="{{ false }}">${PHOTO(size)}</sc-if><sc-if value="{{me.sampleYours}}" hint-placeholder-val="{{ false }}">${YOUR_PHOTO(size)}</sc-if></span><sc-if value="{{me.skinned}}" hint-placeholder-val="{{ false }}"><span ref="{{me.art}}" data-sc-own aria-hidden="true" style="position: absolute; inset: 0; border-radius: 50%; pointer-events: none;"></span></sc-if></span>`;
+// A place in the sidebar: its icon, its name, and (lit, on the page you're on) a gray pill. Profile's icon is your own
+// circle, 22 wide in the 18 of the others (the margin keeps its name lined up with theirs).
+const MY_ICON_A = `<span style="margin: 0 -2px; display: flex;">${AVATAR_ME(22)}</span>`;
+const navRow = (label, icon, href, on, more = '', attrs = '') => `<a href="${href}"${attrs} style="display: flex; align-items: center; gap: 12px; height: 36px; padding: 0 14px; border-radius: 999px; font-size: 14px; ${on ? 'background: {{t.surf}}; color: {{t.text}}; font-weight: 600;' : 'color: {{t.muted}};'}">${icon}${label}${more}</a>`;
 // News (the study network: suggestions on your decks, people following you, updates to decks you follow) is the bell
 // by the logo, with how many are new.
 const sidebar = active => `<nav style="width: 240px; flex-shrink: 0; box-sizing: border-box; padding: 24px 16px; display: flex; flex-direction: column; gap: 4px; border-right: 1px solid {{t.line}};">
   <div style="padding: 0 4px 20px 12px; display: flex; align-items: center; justify-content: space-between;">${logo()}<a href="WebActivity.dc.html" aria-label="News" style="position: relative; width: 32px; height: 32px; border-radius: 16px; display: flex; align-items: center; justify-content: center; ${active === 'News' ? 'background: {{t.surf}}; color: {{t.text}};' : 'color: {{t.muted}};'}">${svg(I.bell, 18, 1.8)}<sc-if value="{{nav.hasNews}}" hint-placeholder-val="{{ true }}"><span style="position: absolute; top: 1px; right: 0; min-width: 16px; height: 16px; padding: 0 4px; box-sizing: border-box; border-radius: 8px; background: #E5484D; color: #FFFFFF; font-size: 10px; font-weight: 700; line-height: 16px; text-align: center;">{{nav.news}}</span></sc-if></a></div>
-  ${NAV_A.map(([label, ic, href]) => `<a href="${href}" style="display: flex; align-items: center; gap: 12px; height: 36px; padding: 0 14px; border-radius: 999px; font-size: 14px; ${label === active ? 'background: {{t.surf}}; color: {{t.text}}; font-weight: 600;' : 'color: {{t.muted}};'}">${svg(I[ic])}${label}${label === 'Today' ? `<sc-if value="{{nav.today}}" hint-placeholder-val="{{ true }}"><span style="margin-left: auto; font-family: ${MONO}; font-size: 12px;">{{nav.today}}</span></sc-if>` : ''}</a>`).join('\n  ')}
+  ${NAV_A.map(([label, ic, href]) => navRow(label, ic === 'me' ? MY_ICON_A : svg(I[ic]), href, label === active, label === 'Today' ? `<sc-if value="{{nav.today}}" hint-placeholder-val="{{ true }}"><span style="margin-left: auto; font-family: ${MONO}; font-size: 12px;">{{nav.today}}</span></sc-if>` : '', label === 'Profile' ? ' aria-label="Your profile"' : '')).join('\n  ')}
   <div style="flex-grow: 1;"></div>
-  <div style="display: flex; align-items: center; height: 40px; border-radius: 999px; font-size: 14px; ${active === 'You' || active === 'Profile' ? 'background: {{t.surf}}; color: {{t.text}}; font-weight: 600;' : 'color: {{t.muted}};'}"><a href="{{me.href}}" aria-label="Your profile" style="flex-grow: 1; min-width: 0; height: 100%; padding: 0 0 0 9px; display: flex; align-items: center; gap: 12px;">${AVATAR_ME(28)}You</a><a href="WebSettings.dc.html" aria-label="Settings" style="width: 40px; height: 40px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; border-radius: 20px;${active === 'You' ? ' color: {{t.text}};' : ''}">${svg(I.gear, 18)}</a></div>
+  ${navRow('Settings', svg(I.gear), 'WebSettings.dc.html', active === 'Settings', '', ' aria-label="Settings"')}
 </nav>`;
 // `board`: the page has things to drag (see drag.mjs), and popups and trays drawn over the whole page.
 // `over`: a popup drawn over the whole page (Settings' Delete account question), nothing to drag.
@@ -3191,8 +3197,9 @@ const APPS_JS = `// Each app that signed in: its name, the site it sends you bac
 
 // Connect
 const aiKind = (icon, title, text) => `<div style="background: {{t.bg}}; border-radius: 22px; padding: 16px; display: flex; flex-direction: column; gap: 10px;"><span style="width: 36px; height: 36px; border-radius: 18px; background: {{t.surf}}; display: flex; align-items: center; justify-content: center;">${svg(I[icon], 16, 2)}</span><span style="font-size: 14px; font-weight: 600;">${title}</span><span style="font-size: 13px; line-height: 1.4; color: {{t.muted}};">${text}</span></div>`;
-const webConnect = webRoot(`${sidebar('Connect AI')}
+const webConnect = webRoot(`${sidebar('Settings')}
 <main style="flex-grow: 1; box-sizing: border-box; padding: 36px 48px; display: flex; flex-direction: column; gap: 24px; min-width: 0;">
+  <a href="WebSettings.dc.html" style="align-self: flex-start; margin-bottom: -14px; display: inline-flex; align-items: center; gap: 6px; font-size: 14px; color: {{t.muted}};">${svg(I.back, 16, 2)}Settings</a>
   <div style="display: flex; flex-direction: column; gap: 8px;"><h1 style="margin: 0; font-size: 32px; font-weight: 600; letter-spacing: -.03em;">Connect your AI</h1><p style="margin: 0; font-size: 16px; line-height: 1.5; color: {{t.muted}}; max-width: 640px;">Your cards live here. Claude, ChatGPT, or any app that speaks MCP can add text, fill-in-the-blank, image, and audio cards straight from the chat.</p></div>
   <div style="display: flex; gap: 16px; min-height: 0;">
     <section style="flex-grow: 1; display: flex; flex-direction: column; gap: 12px; min-width: 0;">
@@ -3518,9 +3525,11 @@ renderVals() {
 }`;
 
 // ---------- iPhone ----------
-const NAV_P = [['Today', 'today', 'PhoneToday.dc.html'], ['Library', 'decks', 'PhoneLibrary.dc.html'], ['Discover', 'compass', 'PhoneDiscover.dc.html'], ['Stats', 'stats', 'PhoneStats.dc.html'], ['Connect', 'connect', 'PhoneConnect.dc.html']];
+// Today, Library, Discover, Stats, and Profile: your own circle is its icon ('me'), 22 wide in a 20 box so its name sits level
+// with the others'. A profile that isn't yours lights no tab. Connect AI is a page inside Settings now (no tab bar).
+const NAV_P = [['Today', 'today', 'PhoneToday.dc.html'], ['Library', 'decks', 'PhoneLibrary.dc.html'], ['Discover', 'compass', 'PhoneDiscover.dc.html'], ['Stats', 'stats', 'PhoneStats.dc.html'], ['Profile', 'me', 'PhoneProfile.dc.html']];
 const tabBar = active => `<nav style="position: absolute; left: 16px; right: 16px; bottom: 28px; height: 64px; box-sizing: border-box; padding: 6px; border-radius: 999px; background: {{t.surf}}; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 4px;">
-  ${NAV_P.map(([l, ic, h]) => `<a href="${h}" style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; border-radius: 999px; font-size: 11px; font-weight: 600; ${l === active ? 'background: {{t.inv}}; color: {{t.invText}};' : 'color: {{t.muted}};'}">${svg(I[ic], 20, 2)}${l}</a>`).join('\n  ')}
+  ${NAV_P.map(([l, ic, h]) => `<a href="${h}" style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; border-radius: 999px; font-size: 11px; font-weight: 600; ${l === active ? 'background: {{t.inv}}; color: {{t.invText}};' : 'color: {{t.muted}};'}">${ic === 'me' ? `<span style="width: 20px; height: 20px; display: flex; align-items: center; justify-content: center;">${AVATAR_ME(22)}</span>` : svg(I[ic], 20, 2)}${l}</a>`).join('\n  ')}
 </nav>`;
 // A page taller than the phone scrolls under the tab bar (in the app, phone pages are the screen's height).
 const phone = (inner, active, extra = '', h = 844) => `<div${/dragKey/.test(extra) || /data-sc-list/.test(inner) ? ' data-sc-board="{{dragKey}}"' : ''} style="position: relative; width: 390px; height: ${h}px; box-sizing: border-box; font-family: ${FONT}; background: {{t.bg}}; color: {{t.text}}; overflow: hidden;">
@@ -3720,7 +3729,7 @@ renderVals() { ${T}${DB_JS}${COVER_LOGIC}
   ${CARD_TAGS_JS}
   ${LIFT_JS}
   ${CARD_DRAG_JS(true)}
-  return { t, dark: !!this.props.dark, ...coverVals, ...cardDrag, tiles: coverVals.tiles.map(k => k.label === 'Due now' ? { ...k, label: 'Due' } : k),
+  return { t, ...chrome, dark: !!this.props.dark, ...coverVals, ...cardDrag, tiles: coverVals.tiles.map(k => k.label === 'Due now' ? { ...k, label: 'Due' } : k),
     // Every card (all six sample cards on the canvas, so the page scrolls and shows the cover's parallax); each opens
     // in the editor.
     rows: db.cards(dk.id).map(r => ({ ...r, ...cardFit(r.tags), href: db.mock ? 'PhoneEditor.dc.html' : r.href })),
@@ -3825,13 +3834,14 @@ const phoneStatsLogic = `renderVals() { ${T}${DB_JS}
   ${HEAT_LOGIC(17)}${FORECAST_JS('db.today().forecast', 60)}
   ${TAG_JS}
   ${DEEP_JS(true)}
-  return { t, ...deepVals, goalNote: 'The line marks your ' + goal + '% goal', goalLeft: goal + '%', heat: st.heat ? st.heat.slice(-17 * 7).map(cell) : heat, legend, forecast, dueTotal, busy,
+  return { t, ...chrome, ...deepVals, goalNote: 'The line marks your ' + goal + '% goal', goalLeft: goal + '%', heat: st.heat ? st.heat.slice(-17 * 7).map(cell) : heat, legend, forecast, dueTotal, busy,
     kpis: [{ label: 'Streak', value: plural(st.streak, 'day') }, { label: 'Remembered', value: st.remembered == null ? '—' : st.remembered + '%' }, { label: 'Reviews', value: st.reviews }, { label: 'Cards', value: st.cards }] }; }`;
 
-// The page's content (with room for the tab bar) plus the apps that signed in: two sample apps on the canvas.
-const PHONE_CONNECT_H = 975;
-const phoneConnect = phone(`<div style="padding: 64px 20px 120px; display: flex; flex-direction: column; gap: 16px;">
-  ${pTitle('Connect AI')}
+// A page inside Settings (its row says Connect AI): a back button to Settings, its name in the middle, no tab bar, like
+// Settings > Theme. The page's content plus the apps that signed in: two sample apps on the canvas.
+const PHONE_CONNECT_H = 889;
+const phoneConnect = phone(`<div style="padding: 64px 20px 34px; display: flex; flex-direction: column; gap: 16px;">
+  <div style="display: flex; align-items: center; gap: 12px;">${roundBtn('back', 'Back', 'PhoneSettings.dc.html')}<div style="flex-grow: 1; font-size: 17px; font-weight: 600; text-align: center;">Connect AI</div><div style="width: 44px;"></div></div>
   <div style="font-size: 15px; line-height: 1.45; color: {{t.muted}};">Make cards from any chat: text, fill-in-the-blank, images, and audio.</div>
   ${meshCard('hero', 'border-radius: 32px;', 'box-sizing: border-box; padding: 20px; display: flex; flex-direction: column; gap: 12px;', `
     <span style="font-size: 12px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; opacity: .8;">Your MCP link</span>
@@ -3843,7 +3853,7 @@ const phoneConnect = phone(`<div style="padding: 64px 20px 120px; display: flex;
     </sc-for>
   </div>
   ${appsSection(true)}
-</div>`, 'Connect', '', PHONE_CONNECT_H);
+</div>`, '', '', PHONE_CONNECT_H);
 // Your MCP link runs on past its pill to the card's edge, as on the canvas.
 const phoneConnectLogic = `
 constructor(props) { super(props); this.state = { copied: false }; }
@@ -3984,7 +3994,6 @@ const ACCOUNT_JS = `const acct = (() => {
 const phoneSettings = phone(`<div style="padding: 64px 20px 34px; display: flex; flex-direction: column; gap: 18px;">
   <div style="display: flex; align-items: center; gap: 12px;">${roundBtn('back', 'Back', 'PhoneToday.dc.html')}<div style="flex-grow: 1; font-size: 17px; font-weight: 600; text-align: center;">Settings</div><div style="width: 44px;"></div></div>
   <button type="button" onClick="{{account}}" style="width: 100%; border: 0; border-radius: 24px; background: {{t.surf}}; padding: 14px 16px; display: flex; align-items: center; gap: 14px; color: inherit; font: inherit; text-align: left; cursor: pointer;">${AVATAR_ME(44)}<span style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px;"><span style="font-size: 16px; font-weight: 600;">Your account</span><span style="font-size: 13px; color: {{t.muted}}; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{accountSub}}</span></span><span style="display: flex; color: {{t.muted}};">${svg(I.chev, 14, 2.2)}</span></button>
-  ${ACCOUNT_GROUP}
   ${SETTINGS_PROFILE('PhoneProfile')}
   ${sGroup('Profile picture', [`<div style="padding: 12px 16px 16px; display: flex; flex-direction: column; gap: 12px;">${photoPanel(true)}</div>`])}
   ${planGroups}
@@ -3997,7 +4006,7 @@ const phoneSettings = phone(`<div style="padding: 64px 20px 34px; display: flex;
   ])}
   ${sGroup('Look', [sRow('Appearance', SEG('looks', 'Appearance')), sRow('Dark mode', SEG('darks', 'Dark mode', 2), { sub: 'When the app is dark' }), THEME_ROW('PhoneThemePicker'), sRow('<span style="display: flex; flex-direction: column; gap: 2px;"><span>Card gradients</span><sc-if value="{{gradsThemed}}" hint-placeholder-val="{{ false }}"><span style="font-size: 12px; color: {{t.muted}};">With the Lucida theme</span></sc-if></span>', SEG('grads', 'Card gradients'))])}
   ${sGroup('Your AI', [
-    sRow('Connected apps', sVal('{{connected}}'), { href: 'PhoneConnect.dc.html' }),
+    sRow('Connect AI', sVal('{{connected}}'), { href: 'PhoneConnect.dc.html' }),
     sRow('Check AI cards first', SWITCH('checkSw', 'toggleCheck', 'Check AI cards first'))
       + `<sc-if value="{{hasInbox}}" hint-placeholder-val="{{ true }}">${S_LINE}${sRow('Cards to check', sVal('{{toCheck}}'), { href: 'PhoneInbox.dc.html' })}</sc-if>`
   ])}
@@ -4044,7 +4053,7 @@ renderVals() {
 }`;
 
 // Web Settings, from "You" at the bottom of the sidebar. Profile picture: the Google photo, your own photo, or a color.
-const webSettings = webRoot(`${sidebar('You')}
+const webSettings = webRoot(`${sidebar('Settings')}
 <main style="flex-grow: 1; box-sizing: border-box; padding: 36px 48px; display: flex; flex-direction: column; gap: 24px; min-width: 0; overflow-y: auto;">
   <h1 style="margin: 0; font-size: 32px; font-weight: 600; letter-spacing: -.03em;">Settings</h1>
   <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px; align-items: start;">
@@ -4060,7 +4069,6 @@ const webSettings = webRoot(`${sidebar('You')}
           ${photoPanel(false)}
         </div>
       </div>
-      ${ACCOUNT_GROUP}
       ${sGroup('Studying', [
         sRow('Daily reminder', sVal('{{reminder}}')),
         sRow('New cards a day', miniStep('perDay', 'lessDay', 'moreDay', '{{t.bg}}', 'perDayIn')),
@@ -4086,7 +4094,7 @@ const webSettings = webRoot(`${sidebar('You')}
         `<div style="padding: 10px 16px 16px; display: flex; flex-direction: column; gap: 12px;"><div style="display: flex; align-items: center; gap: 12px;"><span style="flex-grow: 1; display: flex; flex-direction: column; gap: 2px;"><span style="font-size: 16px;">Card gradients</span><sc-if value="{{gradsThemed}}" hint-placeholder-val="{{ false }}"><span style="font-size: 12px; color: {{t.muted}};">With the Lucida theme</span></sc-if></span>${SEG('grads', 'Card gradients')}</div><div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px;"><sc-for list="{{gradPreview}}" as="k" hint-placeholder-count="4">${meshCard('k', 'height: 60px; border-radius: 14px;', 'height: 100%; box-sizing: border-box; padding: 8px 10px; display: flex; align-items: flex-end; font-size: 11px; font-weight: 600;', '{{k.name}}')}</sc-for></div></div>`
       ])}
       ${sGroup('Your AI', [
-        sRow('Connected apps', sVal('{{connected}}'), { href: 'WebConnect.dc.html' }),
+        sRow('Connect AI', sVal('{{connected}}'), { href: 'WebConnect.dc.html' }),
         sRow('Check AI cards first', SWITCH('checkSw', 'toggleCheck', 'Check AI cards first'), { sub: 'New cards and changes wait until you keep them' })
       ])}
       ${sGroup('Schedule', [TUNE_ROW])}
@@ -4160,7 +4168,7 @@ const themeTile = (W, H, fs, gap, r = 16) => `<a href="{{x.href}}" aria-label="{
 const themeUpgrade = phone => `<sc-if value="{{locked}}" hint-placeholder-val="{{ false }}"><div style="box-sizing: border-box; padding: ${phone ? '16px' : '18px 22px'}; border-radius: ${phone ? 24 : 20}px; background: {{t.surf}}; display: flex; align-items: center; gap: 16px;"><span style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px;"><span style="display: flex; align-items: center; gap: 8px; font-size: 15px; font-weight: 600;"><span>Themes are part of Pro</span>${PRO_BADGE}</span><span style="font-size: 13px; line-height: 1.4; color: {{t.muted}};">Yearly works out to $4.17 a month. Cancel anytime.</span></span><a href="{{proHref}}" class="sc-press" style="height: 36px; padding: 0 16px; flex-shrink: 0; display: inline-flex; align-items: center; border-radius: 999px; background: {{t.inv}}; color: {{t.invText}}; font-size: 14px; font-weight: 600; white-space: nowrap;">Go Pro</a></div></sc-if>`;
 // On Pro: your profile can show your theme to people who visit it (public profiles and decks; on by default).
 const themeOnProfile = phone => `<sc-if value="{{unlocked}}" hint-placeholder-val="{{ true }}"><div style="box-sizing: border-box; padding: ${phone ? '14px 16px' : '18px 22px'}; border-radius: ${phone ? 24 : 20}px; background: {{t.surf}}; display: flex; align-items: center; gap: 16px;"><span style="display: flex; flex-direction: column; gap: 2px; flex-grow: 1; min-width: 0;"><span style="font-size: 15px; font-weight: 600;">Show my theme on my profile</span><span style="font-size: 13px; line-height: 1.4; color: {{t.muted}};">People who visit see your decks the way you do.</span></span>${SWITCH('showSw', 'toggleShow', 'Show my theme on my profile')}</div></sc-if>`;
-const themePicker = webRoot(`${sidebar('You')}
+const themePicker = webRoot(`${sidebar('Settings')}
 <main style="flex-grow: 1; box-sizing: border-box; padding: 36px 48px; display: flex; flex-direction: column; gap: 22px; min-width: 0; overflow-y: auto;">
   <a href="WebSettings.dc.html" style="align-self: flex-start; margin-bottom: -12px; display: inline-flex; align-items: center; gap: 6px; font-size: 14px; color: {{t.muted}};">${svg(I.back, 16, 2)}Settings</a>
   <h1 style="margin: 0; font-size: 32px; font-weight: 600; letter-spacing: -.03em;">Theme</h1>
@@ -4214,7 +4222,7 @@ const sheetScene = (w, h, cw, ch, fs) => `<div style="position: relative; width:
       <sc-if value="{{sh.lucida}}" hint-placeholder-val="{{ false }}"><div style="position: absolute; inset: 0; background: {{lu1.base}};">${flowLayer('lu1')}</div><div style="position: absolute; inset: 0; background: rgba(255,255,255,.55);"></div></sc-if>
       <div style="position: absolute; left: 50%; top: 50%; width: ${cw}px; height: ${ch}px; transform: translate(-50%, -50%);"><sc-if value="{{sh.skin}}" hint-placeholder-val="{{ true }}"><div ref="{{sh.card}}" data-sc-own aria-hidden="true" style="position: absolute; inset: 0;"></div></sc-if><sc-if value="{{sh.lucida}}" hint-placeholder-val="{{ false }}">${luCard(fs, '28px 30px', 'front')}</sc-if></div>
     </div>`;
-const webTheme = webRoot(`${sidebar('You')}
+const webTheme = webRoot(`${sidebar('Settings')}
 <main style="flex-grow: 1; box-sizing: border-box; padding: 36px 48px; display: flex; flex-direction: column; gap: 22px; min-width: 0; overflow-y: auto;">
   <a href="ThemePicker.dc.html" style="align-self: flex-start; margin-bottom: -12px; display: inline-flex; align-items: center; gap: 6px; font-size: 14px; color: {{t.muted}};">${svg(I.back, 16, 2)}Theme</a>
   <div style="display: flex; align-items: center; gap: 16px;"><h1 style="flex-grow: 1; min-width: 0; margin: 0; display: flex; align-items: center; gap: 12px; font-size: 32px; font-weight: 600; letter-spacing: -.03em;"><span>{{sh.name}}</span><sc-if value="{{sh.pro}}" hint-placeholder-val="{{ true }}">${PRO_BADGE}</sc-if></h1>${sheetButton(44)}</div>
@@ -6597,7 +6605,7 @@ renderVals() {
     saveBg: off ? t.surf2 : t.inv, saveFg: off ? t.muted : t.invText, saveInk: off ? t.muted : t.text
   };
 }`;
-// Your own profile lights up "You" in the sidebar; someone else's lights up nothing.
+// Your own profile lights up Profile in the sidebar (and the iPhone's tab bar); someone else's lights up nothing.
 const SIDE_ONE = `<sc-if value="{{signedIn}}" hint-placeholder-val="{{ true }}">${sidebar('Profile')}</sc-if>`;
 const profileRoot = (inner, extra) => { const html = netRoot('Profile', inner, extra); if (!html.includes(SIDE_ONE)) throw new Error('profileRoot: netRoot changed');
   return html.replace(SIDE_ONE, `<sc-if value="{{sideSelf}}" hint-placeholder-val="{{ true }}">${sidebar('Profile')}</sc-if><sc-if value="{{sideOther}}" hint-placeholder-val="{{ false }}">${sidebar('')}</sc-if>`); };
@@ -6737,7 +6745,8 @@ const phoneProfile = phone(`<div style="padding: 64px 20px 120px; display: flex;
     ${SENT_ROWS(true)}
     ${PROFILE_EMPTIES(true, 'Phone')}
   </sc-if>
-</div>`, 'You', `${EDIT_SHEET}
+</div>`, '', `<sc-if value="{{self}}" hint-placeholder-val="{{ true }}">${tabBar('Profile')}</sc-if><sc-if value="{{notSelf}}" hint-placeholder-val="{{ false }}">${tabBar('')}</sc-if>
+${EDIT_SHEET}
 ${REPORT_SHEET(true)}
 ${BLOCK_SHEET(true)}`);
 
