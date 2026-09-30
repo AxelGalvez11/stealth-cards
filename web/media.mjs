@@ -105,8 +105,8 @@ async function fromLink(link, want) {
     let res;
     try { res = await reach(url, stop); } catch { throw gone(want); }
     const next = res.headers.location;
-    if (res.statusCode >= 300 && res.statusCode < 400 && next) { res.resume(); try { url = new URL(next, url); } catch { throw gone(want); } continue; }
-    if (res.statusCode < 200 || res.statusCode >= 300) { res.resume(); throw gone(want); }
+    if (res.statusCode >= 300 && res.statusCode < 400 && next) { res.destroy(); try { url = new URL(next, url); } catch { throw gone(want); } continue; }
+    if (res.statusCode < 200 || res.statusCode >= 300) { res.destroy(); throw gone(want); }
     if (+res.headers['content-length'] > MAX) { res.destroy(); throw big; }
     const parts = []; let n = 0;
     try { for await (const chunk of res) { n += chunk.length; if (n > MAX) { res.destroy(); throw big; } parts.push(chunk); } }
