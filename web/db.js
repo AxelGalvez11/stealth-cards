@@ -202,9 +202,11 @@ export async function createDb({ onChange, go }) {
   }
   // Sharing, on a deck of yours: who can see it (Link only or Public) and its page. On a deck from someone else: whose it
   // is, whether you study it as it is (readOnly: its cards follow theirs) or made a copy, and the owner's changes waiting.
+  // A public deck's page is at its owner's name and its own; every other deck's only at its lasting link, /d/<id> (the server
+  // opens a Link only deck nowhere else, so that link is the one to share).
   const shareOf = d => {
-    const sh = d.share && d.share.vis !== 'private' ? { vis: d.share.vis, id: d.share.id, url: handle() ? '/@' + handle() + '/' + d.share.slug : '/d/' + d.share.id, label: { public: 'Public', link: 'Link only', class: 'Class' }[d.share.vis] || 'Link only' } : null;
-    const k = d.link ? { mode: d.link.mode, gone: !!d.link.gone, id: d.link.id, owner: d.link.owner || { name: '', handle: '' }, url: d.link.owner && d.link.owner.handle ? '/@' + d.link.owner.handle + '/' + d.link.slug : '/d/' + d.link.id,
+    const sh = d.share && d.share.vis !== 'private' ? { vis: d.share.vis, id: d.share.id, url: handle() && d.share.vis === 'public' ? '/@' + handle() + '/' + d.share.slug : '/d/' + d.share.id, label: { public: 'Public', link: 'Link only', class: 'Class' }[d.share.vis] || 'Link only' } : null;
+    const k = d.link ? { mode: d.link.mode, gone: !!d.link.gone, id: d.link.id, owner: d.link.owner || { name: '', handle: '' }, url: d.link.vis === 'public' && d.link.owner && d.link.owner.handle ? '/@' + d.link.owner.handle + '/' + d.link.slug : '/d/' + d.link.id,
       pending: d.link.gone ? 0 : (d.link.pending || []).length, updates: !!d.link.updates } : null;
     return { shared: sh, link: k, readOnly: !!(k && k.mode === 'study' && !k.gone) };
   };
