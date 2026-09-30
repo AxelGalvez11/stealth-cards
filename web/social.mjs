@@ -10,11 +10,12 @@
 // - An AI app works for one person: on your own deck it edits like you do; on someone else's it can only suggest.
 // - Every change is a version in History, with who made it; you can go back to any version.
 // - A class (classes.mjs) sees the decks added to it, even ones that are otherwise private.
-// The tables are Supabase's (supabase/social.sql), reached through supa.mjs rest(); on this computer the same calls go
+// The tables are Supabase's (supabase/social.sql, and supabase/hardening.sql for what the security fixes added), reached
+// through supa.mjs rest(); on this computer the same calls go
 // to data/social.json (localrest.mjs). A person's own decks and cards stay in their library (store.mjs); a shared deck
 // is a copy of the deck's cards in shared_cards, refreshed each time the owner's changes are saved.
 import { rest, val, qval, inList, like, publicMedia, cloud } from './supa.mjs';
-import { state, saved, onSave, onReviewed, afterSaving, withLibrary, withCredit, apply, uidOf, makeDeck, newId, isDev } from './store.mjs';
+import { state, saved, onSave, onReviewed, afterSaving, withLibrary, withCredit, apply, uidOf, makeDeck, newId, isDev, isPro, cleanBoxes } from './store.mjs';
 import { deckCards } from './order.js';
 import { newCard } from './fsrs.js';
 import { createHash } from 'node:crypto';
@@ -27,6 +28,11 @@ const rid = p => p + Date.now().toString(36) + Math.random().toString(36).slice(
 const plural = (n, w, ws = w + 's') => n + ' ' + (n === 1 ? w : ws);
 const hash = x => createHash('sha1').update(JSON.stringify(x)).digest('base64url').slice(0, 12);
 const err = (msg, status = 400) => Object.assign(new Error(msg), { status });
+// What one app open (sync) may do for the decks you study: a time budget (what's left waits for the next open), and how many
+// changed cards it copies, per deck and in all. A deck that changed more than that catches up over a few opens.
+export const LIMITS = { syncMs: 6000, syncPage: 200, syncDeck: 1500, syncAll: 3000 };
+// How many suggestions one person can have waiting on one deck (open reports have a limit too, in classes.mjs).
+const OPEN_SUGGESTIONS = 5;
 
 // Who someone is on the network: their user id online; on this computer "local", or a made-up person's dev_ id.
 export const socialId = uid => uid || 'local';
@@ -35,14 +41,24 @@ export const socialId = uid => uid || 'local';
 // A handle is how people find you (lucida.cards/@alexkim): 3 to 30 lowercase letters, numbers, dots and underscores.
 export const HANDLE_RE = /^[a-z0-9_.]{3,30}$/;
 const TAKEN = new Set(['admin', 'lucida', 'support', 'help', 'team', 'settings', 'discover', 'library', 'stats', 'connect', 'about', 'api', 'app', 'www', 'mcp', 'pro', 'join', 'live', 'you', 'me', 'official', 'staff', 'root', 'null', 'undefined']);
+// A handle that says it's Lucida, its team, or its support is taken too, even with dots, underscores, or numbers standing in
+// for letters (lucida_team, adm1n, supp0rt).
+const LOOKS_OFFICIAL = /lucida|admin|support|official|team/;
+export const reservedHandle = h => {
+  const x = String(h || '').toLowerCase();
+  if (TAKEN.has(x)) return true;
+  const plain = x.replace(/[._]/g, ''), letters = plain.replace(/0/g, 'o').replace(/3/g, 'e').replace(/4/g, 'a').replace(/5/g, 's').replace(/7/g, 't');
+  return [plain, letters, letters.replace(/1/g, 'i'), letters.replace(/1/g, 'l')].some(y => LOOKS_OFFICIAL.test(y));
+};
 const handleFrom = s => String(s || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9_.]+/g, '').replace(/^[._]+|[._]+$/g, '').slice(0, 24);
 export async function profileOf(uid) { const r = await rest('/profiles?id=eq.' + val(uid) + '&select=*'); return (r && r[0]) || null; }
 export async function profileByHandle(h) { const x = String(h || '').toLowerCase(); if (!HANDLE_RE.test(x)) return null; const r = await rest('/profiles?handle=eq.' + val(x) + '&select=*'); return (r && r[0]) || null; }
 // What a profile shows of someone before they fill it in: their name (Settings, then their account), their picture
-// (the one they picked in Settings, made public), and their color.
+// (the one they picked in Settings, made public), and their color. Never their email address, not in the name and not in
+// the handle: anyone can read both.
 async function seedOf(uid, me, S) {
   const st = (S && S.settings) || {};
-  const name = oneLine(st.name || (me && me.name) || (me && me.email ? me.email.split('@')[0] : '') || (isDev(uid) ? uid.slice(4) : 'You'), 60);
+  const name = oneLine(st.name || (me && me.name) || (isDev(uid) ? uid.slice(4) : cloud() ? 'Learner' : 'You'), 60);
   const ph = st.photo, google = me && me.picture;
   let avatar = null;
   if ((ph === 'google' || (!ph && google)) && google) avatar = google;
@@ -50,7 +66,7 @@ async function seedOf(uid, me, S) {
     const file = String(st.yourPhoto).replace(/^\/media\//, '');
     avatar = publicMedia.on() && !isDev(uid) && uid !== 'local' ? await publicMedia.publish(uid, file).catch(() => null) : st.yourPhoto;
   }
-  return { name, avatar, color: Math.min(5, Math.max(0, +st.color || 0)), base: handleFrom(st.name || (me && me.name)) || handleFrom(me && me.email && me.email.split('@')[0]) || handleFrom(isDev(uid) ? uid.slice(4) : '') || 'learner' };
+  return { name, avatar, color: Math.min(5, Math.max(0, +st.color || 0)), base: handleFrom(st.name || (me && me.name)) || handleFrom(isDev(uid) ? uid.slice(4) : '') || 'learner' };
 }
 // Makes someone's profile the first time it's needed (sharing a deck, following, saving, suggesting), and keeps its
 // name, picture, and color in step with Settings after that.
@@ -59,9 +75,10 @@ export async function ensureProfile(uid, me, S) {
   let p = await profileOf(uid);
   const seed = await seedOf(uid, me, S || state());
   if (!p) {
+    const base = reservedHandle(seed.base) ? 'learner' : seed.base;
     for (let i = 0; i < 30 && !p; i++) {
-      let handle = (seed.base.length >= 3 ? seed.base : seed.base + 'learner').slice(0, 24) + (i ? String(i < 10 ? i + 1 : Math.floor(Math.random() * 9000) + 1000) : '');
-      if (TAKEN.has(handle)) continue;
+      let handle = (base.length >= 3 ? base : base + 'learner').slice(0, 24) + (i ? String(i < 10 ? i + 1 : Math.floor(Math.random() * 9000) + 1000) : '');
+      if (reservedHandle(handle)) continue;
       try { p = (await rest('/profiles', { method: 'POST', body: { id: uid, handle, name: seed.name, avatar: seed.avatar, color: seed.color }, prefer: 'return=representation' }))[0]; }
       catch (e) { if (e.status !== 409) throw e; p = await profileOf(uid); }
     }
@@ -85,15 +102,15 @@ export async function updateProfile(uid, me, patch) {
   if ('handle' in patch) {
     const h = String(patch.handle || '').trim().replace(/^@/, '').toLowerCase();
     if (!HANDLE_RE.test(h)) throw err('Use 3 to 30 letters, numbers, dots, or underscores.');
-    if (TAKEN.has(h)) throw err('That name is taken. Try another.');
-    if (h !== p.handle) next.handle = h;
+    if (h !== p.handle) { if (reservedHandle(h)) throw err('That name is taken. Try another.'); next.handle = h; }
   }
   if ('bio' in patch) next.bio = clean(patch.bio, 160).replace(/\s+\n/g, '\n').trim();
   if ('school' in patch) next.school = oneLine(patch.school, 60);
   if ('subject' in patch) next.subject = oneLine(patch.subject, 60);
   if ('featured' in patch) next.featured = (Array.isArray(patch.featured) ? patch.featured : []).map(x => clean(x, 40)).slice(0, 3);
   if (!Object.keys(next).length) return p;
-  next.updated_at = nowIso();
+  // Editing your profile is choosing to be found: it shows in search from now on.
+  next.updated_at = nowIso(); next.listed = true;
   try { await rest('/profiles?id=eq.' + val(p.id), { method: 'PATCH', body: next }); }
   catch (e) { if (e.status === 409) throw err('That name is taken. Try another.'); throw e; }
   Object.assign(p, next);
@@ -108,27 +125,65 @@ const face = p => { if (!p) return null; const { id, ...rest } = personOf(p); re
 // What a shared deck's page shows of a card: its content and how it was made. Never its schedule or your answers.
 const CONTENT = ['kind', 'front', 'back', 'text', 'note', 'image', 'audio', 'wave', 'speak', 'lang', 'auto', 'boxes', 'occ', 'cloze', 'box', 'group', 'tags'];
 const contentOf = c => Object.fromEntries(CONTENT.map(k => [k, c[k] ?? null]));
-// Pictures and sound on shared cards are links anyone can open (supa.mjs publicMedia).
+// Pictures and sound on shared cards are links anyone can open (supa.mjs publicMedia). Only a file name Lucida made
+// (letters, numbers, - and _, then an extension) is ever copied into storage; anything else on a card is left out.
+const MEDIA_NAME = /^[\w-]+\.\w+$/;
 async function mediaFor(uid, sh, c) {
   const out = {};
   for (const k of ['image', 'audio']) {
     const v = c[k];
     if (typeof v !== 'string' || !v.startsWith('/media/') || !publicMedia.on() || isDev(uid) || uid === 'local') continue;
     const name = v.slice(7);
+    if (!MEDIA_NAME.test(name)) { out[k] = null; continue; }
     out[k] = publicMedia.url(uid, name);
     if (!sh.media.includes(name)) { await publicMedia.publish(uid, name); sh.media.push(name); sh.mediaDirty = true; }
   }
   return out;
 }
+// A deck's address. A public deck is at its owner's name and its own (lucida.cards/@maria/cell-biology); every other deck
+// (Link only, or a class's) only at its lasting link, /d/<id>, which nobody can guess.
+const urlOf = (handle, slug) => '/@' + handle + '/' + slug;
+const deckUrl = (sh, o) => (sh.visibility === 'public' && o ? urlOf(o.handle, sh.slug) : '/d/' + sh.id);
 const coverOf = d => ({ style: d.cover.style || 'mix', round: d.cover.round || 0, seed: d.cover.seed || d.name, image: d.cover.image && !String(d.cover.image).startsWith('/media/') ? d.cover.image : null, $local: d.cover.image || null });
 const slugify = s => String(s).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 50) || 'deck';
 
 // Changes between two versions of a card, sorted into what they mean for the people studying it: a new card, a new
 // answer (they'll learn it again), a new question, or a small fix (their schedule stays).
 const lev = (a, b) => { if (a === b) return 0; if (Math.abs(a.length - b.length) > 8) return 99; const d = Array.from({ length: b.length + 1 }, (_, i) => i); for (let i = 1; i <= a.length; i++) { let p = d[0]; d[0] = i; for (let j = 1; j <= b.length; j++) { const t = d[j]; d[j] = Math.min(d[j] + 1, d[j - 1] + 1, p + (a[i - 1] === b[j - 1] ? 0 : 1)); p = t; } } return d[b.length]; };
-const small = (a, b) => { a = String(a || ''); b = String(b || ''); if (a === b) return true; const x = a.toLowerCase().replace(/\s+/g, ' ').trim(), y = b.toLowerCase().replace(/\s+/g, ' ').trim(); return x === y || lev(x, y) <= Math.max(2, Math.floor(Math.max(x.length, y.length) * 0.08)); };
-const answerOf = d => (d.kind === 'cloze' ? (String(d.text || '').match(/\[\[([^\]]+)\]\]/g) || []).join('|') : d.box != null ? ((d.boxes || []).find(b => b.id === d.box) || {}).label || '' : d.back || '');
-const questionOf = d => (d.kind === 'cloze' ? String(d.text || '').replace(/\[\[[^\]]+\]\]/g, '[]') : d.front || '');
+// Comparing two texts letter by letter takes time in proportion to their lengths multiplied, so a text longer than this isn't
+// compared at all: if it differs, it counts as changed. (A deck owner could otherwise rewrite thousands of long cards and
+// make every studier's app open crawl.)
+const BIG = 300;
+const small = (a, b) => {
+  a = String(a || ''); b = String(b || '');
+  if (a === b) return true;
+  const x = a.toLowerCase().replace(/\s+/g, ' ').trim(), y = b.toLowerCase().replace(/\s+/g, ' ').trim();
+  if (x === y) return true;
+  if (x.length > BIG || y.length > BIG) return false;
+  return lev(x, y) <= Math.max(2, Math.floor(Math.max(x.length, y.length) * 0.08));
+};
+// The [[blanks]] of a fill-in-the-blank text (where each starts and ends), found in one pass. (A regular expression for
+// them takes time in proportion to the square of the text's length when the text has many "[[" and no "]".)
+const blankSpans = text => {
+  const t = String(text || ''), out = [];
+  for (let i = t.indexOf('[['); i >= 0;) {
+    const j = t.indexOf(']', i + 2);
+    if (j < 0) break;
+    if (j > i + 2 && t[j + 1] === ']') { out.push([i, j + 2]); i = t.indexOf('[[', j + 2); } else i = t.indexOf('[[', j + 1);
+  }
+  return out;
+};
+export const answerOf = d => {
+  if (d.kind === 'cloze') { const t = String(d.text || ''); return blankSpans(t).map(([a, b]) => t.slice(a, b)).join('|'); }
+  return d.box != null ? ((d.boxes || []).find(b => b.id === d.box) || {}).label || '' : d.back || '';
+};
+export const questionOf = d => {
+  if (d.kind !== 'cloze') return d.front || '';
+  const t = String(d.text || '');
+  let out = '', at = 0;
+  for (const [a, b] of blankSpans(t)) { out += t.slice(at, a) + '[]'; at = b; }
+  return out + t.slice(at);
+};
 export function kindOf(before, after) {
   if (!before) return 'new';
   if (!after) return 'remove';
@@ -183,6 +238,7 @@ async function cardsById(sharedId, ids) {
 // changes the owner takes from one person in one sitting (Take it, then Take all), one version crediting them.
 // `summary` can be a function of how many changes the version has.
 async function addVersion(sharedId, changes, { by, ai = '', kind = 'edit', summary = '', joinable = true }) {
+  ai = clean(ai, 60);
   const last = (await rest('/deck_versions?shared_id=eq.' + val(sharedId) + '&select=id,version,author,ai,kind,changes,created_at&order=version.desc&limit=1'))[0];
   const words = list => (typeof summary === 'function' ? summary(list.length) : summary || summaryOf(list));
   if (joinable && last && last.kind === kind && ['edit', 'ai', 'suggestion'].includes(kind) && last.author === (by && by.id) && last.ai === ai && Date.now() - Date.parse(last.created_at) < 30 * MIN) {
@@ -193,12 +249,12 @@ async function addVersion(sharedId, changes, { by, ai = '', kind = 'edit', summa
       await rest('/shared_decks?id=eq.' + val(sharedId), { method: 'PATCH', body: { version: last.version - 1 } });
       return last.version - 1;
     }
-    await rest('/deck_versions?id=eq.' + val(last.id), { method: 'PATCH', body: { changes: all, summary: words(all) } });
+    await rest('/deck_versions?id=eq.' + val(last.id), { method: 'PATCH', body: { changes: all, n_changes: all.length, summary: words(all) } });
     return last.version;
   }
   for (let n = (last ? last.version : 0) + 1, tries = 0; tries < 5; n++, tries++) {
     try {
-      await rest('/deck_versions', { method: 'POST', body: { shared_id: sharedId, version: n, author: by ? by.id : null, author_name: by ? by.name : '', ai, kind, summary: words(changes), changes } });
+      await rest('/deck_versions', { method: 'POST', body: { shared_id: sharedId, version: n, author: by ? by.id : null, author_name: by ? by.name : '', ai, kind, summary: words(changes), changes, n_changes: changes.length } });
       await rest('/shared_decks?id=eq.' + val(sharedId), { method: 'PATCH', body: { version: n } });
       return n;
     } catch (e) { if (e.status !== 409) throw e; }
@@ -247,7 +303,7 @@ async function publish(uid, d, info = {}) {
     const credit = info.credit, owner = info.owner || personOf(await profileOf(uid));
     if (credit && credit.suggestion) await addVersion(sh.id, diffs, { by: credit, kind: 'suggestion', summary: n => 'Took ' + plural(n, 'change') + ' from ' + credit.name });
     else if (credit && credit.restore) await addVersion(sh.id, diffs, { by: owner, kind: 'restore', summary: 'Went back to version ' + credit.restore, joinable: false });
-    else await addVersion(sh.id, diffs, { by: owner, ai: info.ai || '', kind: info.ai ? 'ai' : 'edit' });
+    else await addVersion(sh.id, diffs, { by: owner, ai: clean(info.ai, 60), kind: info.ai ? 'ai' : 'edit' });
     if (!credit || !credit.quiet) await tellFollowers(sh.id, uid, owner, diffs);
   }
   sh.pub = next; sh.meta = metaH; sh.rev = rev;
@@ -295,6 +351,11 @@ export async function shareDeck(uid, me, deckId, o = {}) {
   let vis = ['private', 'link', 'public', 'class'].includes(o.visibility) ? o.visibility : d.share ? d.share.vis : 'link';
   // A deck in a class (classes.mjs) stays seen by its classes when it's otherwise private: that's visibility 'class'.
   if (vis === 'private' && d.share && (await rest('/class_decks?shared_id=eq.' + val(d.share.id) + '&select=class_id&limit=1')).length) vis = 'class';
+  // A deck hidden after a report stays hidden: its owner can't share it again.
+  const sharedId = d.share ? d.share.id : sharedIdOf(sid, d);
+  if (vis !== 'private') { const row = await sharedRow(sharedId, 'id,hidden'); if (row && row.hidden) throw err('This deck was hidden after a report.', 403); }
+  // Sharing a deck publicly is choosing to be found: the profile shows in search from then on.
+  if (vis === 'public' && !owner.listed) { await rest('/profiles?id=eq.' + val(sid), { method: 'PATCH', body: { listed: true } }); owner.listed = true; }
   const extra = {};
   if ('description' in o) extra.description = clean(o.description, 300).trim();
   if ('maintained' in o) extra.maintained = o.maintained === 'community' ? 'community' : 'creator';
@@ -302,7 +363,7 @@ export async function shareDeck(uid, me, deckId, o = {}) {
   if (!d.share) {
     if (vis === 'private') return { vis };
     // The same deck always gets the same id, so a request that runs again (its save lost a race) reuses it.
-    const id = 's' + createHash('sha1').update(sid + ':' + d.id).digest('hex').slice(0, 14), slug = await freeSlug(sid, d.name, id);
+    const id = sharedId, slug = await freeSlug(sid, d.name, id);
     await rest('/shared_decks?on_conflict=id', { method: 'POST', prefer: 'resolution=merge-duplicates', body: { id, owner: sid, deck_id: d.id, slug, visibility: vis, name: d.name, tags: d.tags, cover: coverOf(d), card_count: 0, rev: 0, ...extra } });
     await rest('/shared_cards?shared_id=eq.' + val(id), { method: 'DELETE' });
     d.share = { id, vis, slug, pub: {}, rev: 0 };
@@ -320,6 +381,7 @@ export async function shareDeck(uid, me, deckId, o = {}) {
   saved();
   return { id: d.share.id, vis, slug: d.share.slug };
 }
+const sharedIdOf = (owner, d) => 's' + createHash('sha1').update(owner + ':' + d.id).digest('hex').slice(0, 14);
 async function helpersFrom(list, owner) {
   const handles = [...new Set((Array.isArray(list) ? list : []).map(h => String(h || '').trim().replace(/^@/, '').toLowerCase()).filter(h => HANDLE_RE.test(h)))].slice(0, 20);
   if (!handles.length) return [];
@@ -338,7 +400,8 @@ export async function classSees(sharedId, uid) {
   if (!rows.length) return false;
   return (await rest('/class_members?user_id=eq.' + val(uid) + '&class_id=in.' + inList(rows.map(r => r.class_id)) + '&select=class_id&limit=1')).length > 0;
 }
-export const canSee = async (sh, uid) => !!sh && (OPEN.includes(sh.visibility) || sh.owner === uid || (sh.visibility === 'class' && await classSees(sh.id, uid)));
+// A deck hidden after a report is seen only by its owner, whatever its visibility says.
+export const canSee = async (sh, uid) => !!sh && (sh.owner === uid || (!sh.hidden && (OPEN.includes(sh.visibility) || (sh.visibility === 'class' && await classSees(sh.id, uid)))));
 // A shared card, as a card in your library: the owner's content, with your own fresh schedule. `origin` ties it to the
 // shared card, and `base` remembers what it said, so a copy can tell your edits from the owner's.
 const fromShared = (r, deckId) => {
@@ -347,12 +410,24 @@ const fromShared = (r, deckId) => {
     auto: d.auto !== false, tags: Array.isArray(d.tags) ? d.tags : [], source: d.source || 'shared', pending: false, created: Date.now(), srs: newCard(), pile: null,
     trail: d.trail || [], explain: d.explain ? { text: d.explain, by: 'shared' } : undefined, quiz: d.quiz || undefined, origin: r.id, base: hash(contentOf(d)) };
 };
+// How many different people study or copy a deck (the deck_people view, supabase/hardening.sql): someone who copies it 25
+// times is one person, so no one can push a deck up Discover by copying it again and again. Without the view (before the
+// SQL ran) it falls back to counting rows.
+async function peopleOf(sharedId) {
+  try {
+    const r = (await rest('/deck_people?shared_id=eq.' + val(sharedId) + '&select=learners,copies'))[0];
+    return { learners: r ? r.learners : 0, copies: r ? r.copies : 0 };
+  } catch (e) {
+    console.error('deck_people', e.message);
+    const [learn, copy] = await Promise.all([
+      rest('/subscriptions?shared_id=eq.' + val(sharedId) + '&mode=eq.study&select=user_id&limit=1', { count: true }),
+      rest('/subscriptions?shared_id=eq.' + val(sharedId) + '&mode=eq.copy&select=user_id&limit=1', { count: true })]);
+    return { learners: learn.total, copies: copy.total };
+  }
+}
 async function countFollowing(sharedId) {
-  const [learn, copy] = await Promise.all([
-    rest('/subscriptions?shared_id=eq.' + val(sharedId) + '&mode=eq.study&select=user_id&limit=1', { count: true }),
-    rest('/subscriptions?shared_id=eq.' + val(sharedId) + '&mode=eq.copy&select=user_id&limit=1', { count: true })]);
-  const stars = await rest('/stars?shared_id=eq.' + val(sharedId) + '&select=user_id&limit=1', { count: true });
-  const n = { learners: learn.total, copies: copy.total, stars: stars.total };
+  const [people, stars] = await Promise.all([peopleOf(sharedId), rest('/stars?shared_id=eq.' + val(sharedId) + '&select=user_id&limit=1', { count: true })]);
+  const n = { learners: people.learners, copies: people.copies, stars: stars.total };
   await rest('/shared_decks?id=eq.' + val(sharedId), { method: 'PATCH', body: { ...n, score: n.stars * 3 + n.learners * 2 + n.copies * 2 } });
   return n;
 }
@@ -369,7 +444,7 @@ export async function addShared(uid, me, sharedId, { copy = false, name = '', fo
   await ensureProfile(uid, me, S);
   const d = makeDeck({ name: copy && name ? name : sh.name, tags: sh.tags, folder });
   d.cover = { style: (sh.cover && sh.cover.style) || 'mix', round: (sh.cover && sh.cover.round) || 0, image: (sh.cover && sh.cover.image) || null, seed: (sh.cover && sh.cover.seed) || sh.name };
-  d.link = { id: sharedId, mode: copy ? 'copy' : 'study', rev: sh.rev, slug: sh.slug, owner: { id: sh.owner, handle: owner ? owner.handle : '', name: owner ? owner.name : '' }, updates: copy ? !!updates : true, pending: [] };
+  d.link = { id: sharedId, mode: copy ? 'copy' : 'study', rev: sh.rev, slug: sh.slug, vis: sh.visibility, owner: { handle: owner ? owner.handle : '', name: owner ? owner.name : '' }, updates: copy ? !!updates : true, pending: [] };
   const cards = rows.map(r => fromShared(r, d.id));
   S.cards.push(...cards);
   d.cardOrder = cards.map(c => c.id);
@@ -385,38 +460,63 @@ export async function addShared(uid, me, sharedId, { copy = false, name = '', fo
 // thing), and a copy gets them waiting in `link.pending` for you to take or skip. A deck that stopped being shared
 // becomes yours ("from Maria Santos").
 export async function sync(uid) {
-  const S = state(), linked = S.decks.filter(d => d.link && !d.link.gone && (d.link.mode === 'study' || d.link.updates));
-  if (!linked.length) return 0;
+  const S = state(), t0 = Date.now();
+  let n = 0;
+  // Account ids stay on the server: a library from before that still holds each owner's.
+  for (const d of S.decks) if (d.link && d.link.owner && 'id' in d.link.owner) { delete d.link.owner.id; n++; }
+  const linked = S.decks.filter(d => d.link && !d.link.gone && (d.link.mode === 'study' || d.link.updates));
+  if (!linked.length) { if (n) saved(); return n; }
   const ids = [...new Set(linked.map(d => d.link.id))];
-  const rows = await rest('/shared_decks?id=in.' + inList(ids) + '&select=id,rev,visibility,name,tags,cover,slug,owner');
+  const rows = await rest('/shared_decks?id=in.' + inList(ids) + '&select=id,rev,visibility,hidden,name,tags,cover,slug,owner');
   // A class's deck stays yours to study while you're in a class it's in; after you leave, it's yours to keep.
   const inClass = new Set();
-  for (const r of rows) if (r.visibility === 'class' && await classSees(r.id, socialId(uid))) inClass.add(r.id);
-  let n = 0;
+  for (const r of rows) if (r.visibility === 'class' && !r.hidden && await classSees(r.id, socialId(uid))) inClass.add(r.id);
+  let room = LIMITS.syncAll;
   for (const d of linked) {
     const sh = rows.find(r => r.id === d.link.id);
-    if (!sh || !(OPEN.includes(sh.visibility) || inClass.has(sh.id))) { d.link.gone = true; d.link.pending = []; n++; continue; }
+    if (!sh || sh.hidden || !(OPEN.includes(sh.visibility) || inClass.has(sh.id))) { d.link.gone = true; d.link.pending = []; delete d.link.cur; n++; continue; }
+    // Whether its deck is public decides how the app links to it (by its owner's name, or at /d/<id>).
+    if (d.link.vis !== sh.visibility) { d.link.vis = sh.visibility; n++; }
     if (sh.rev <= d.link.rev) continue;
-    const since = d.link.rev, changes = [];
-    for (let off = 0; off < 20000; off += 1000) {
-      const part = await rest('/shared_cards?shared_id=eq.' + val(sh.id) + '&rev=gt.' + since + '&select=id,pos,data,deleted&order=pos.asc&limit=1000&offset=' + off);
-      changes.push(...part);
-      if (part.length < 1000) break;
-    }
-    if (d.link.mode === 'study') applyStudy(S, d, sh, changes);
-    else offerCopy(S, d, changes);
-    d.link.rev = sh.rev; d.link.slug = sh.slug;
+    // Out of time, or already copied a lot: what's left waits for the next open.
+    if (room <= 0 || Date.now() - t0 > LIMITS.syncMs) break;
+    room -= (await copyChanges(S, d, sh, Math.min(room, LIMITS.syncDeck), t0)).took;
     n++;
   }
   if (n) saved();
   return n;
 }
-function applyStudy(S, d, sh, changes) {
+// Copies a deck's newest changes into your library, oldest first, a page at a time, from where the last open stopped
+// (`link.cur`: the last change copied), for at most `cap` cards and until the time is up. When all of them are copied the
+// deck is up to date (`link.rev`); otherwise the rest waits for the next open.
+async function copyChanges(S, d, sh, cap, t0) {
+  const link = d.link, since = link.rev, study = link.mode === 'study', pos = new Map();
+  let cur = link.cur && typeof link.cur.id === 'string' && link.cur.rev >= since ? link.cur : null, took = 0, done = false;
+  if (study) applyMeta(d, sh);
+  while (true) {
+    const size = Math.min(LIMITS.syncPage, cap - took);
+    if (size <= 0 || Date.now() - t0 > LIMITS.syncMs) break;
+    const after = cur ? '&or=' + encodeURIComponent('(rev.gt.' + cur.rev + ',and(rev.eq.' + cur.rev + ',id.gt.' + qvalRaw(cur.id) + '))') : '';
+    const part = await rest('/shared_cards?shared_id=eq.' + val(sh.id) + '&rev=gt.' + since + after + '&select=id,pos,data,deleted,rev&order=rev.asc,id.asc&limit=' + size);
+    if (study) applyCards(S, d, part, pos); else offerCopy(S, d, part);
+    took += part.length;
+    if (part.length) { const last = part[part.length - 1]; cur = { rev: last.rev, id: last.id }; }
+    if (part.length < size) { done = true; break; }
+  }
+  if (study) orderLike(S, d, pos);
+  link.slug = sh.slug;
+  if (done) { link.rev = sh.rev; delete link.cur; } else if (cur) link.cur = cur;
+  return { took, done };
+}
+function applyMeta(d, sh) {
   d.name = sh.name; d.tags = sh.tags || [];
   d.cover = { ...d.cover, style: (sh.cover && sh.cover.style) || d.cover.style, round: (sh.cover && sh.cover.round) || 0, seed: (sh.cover && sh.cover.seed) || sh.name, image: (sh.cover && sh.cover.image) || null };
+}
+function applyCards(S, d, changes, pos) {
   const mine = new Map(S.cards.filter(c => c.deckId === d.id && c.origin).map(c => [c.origin, c]));
   const gone = new Set();
   for (const r of changes) {
+    pos.set(r.id, r.pos);
     const c = mine.get(r.id);
     if (r.deleted) { if (c) gone.add(c.id); continue; }
     if (!c) { const x = fromShared(r, d.id); S.cards.push(x); mine.set(r.id, x); continue; }
@@ -424,8 +524,9 @@ function applyStudy(S, d, sh, changes) {
     Object.assign(c, fromShared(r, d.id), { id: c.id, srs: kind === 'answer' ? newCard() : c.srs, pile: kind === 'answer' ? null : c.pile, created: c.created });
   }
   if (gone.size) { S.cards = S.cards.filter(c => !gone.has(c.id)); S.logs = S.logs.filter(l => !gone.has(l.cardId)); }
-  // The owner's order.
-  const pos = new Map(changes.map(r => [r.id, r.pos]));
+}
+// The owner's order.
+function orderLike(S, d, pos) {
   if (pos.size) { const all = S.cards.filter(c => c.deckId === d.id); d.cardOrder = all.slice().sort((a, b) => (pos.get(a.origin) ?? 1e9) - (pos.get(b.origin) ?? 1e9)).map(c => c.id); }
 }
 function offerCopy(S, d, changes) {
@@ -485,12 +586,22 @@ export async function detach(uid, deckId) {
 // Anyone who can see a deck can suggest changes to it: fix a card, add cards, or take one out, with a line saying why.
 // The owner sees each change and takes it or skips it. A helper's suggestions go straight in.
 const FIELDS = ['kind', 'front', 'back', 'text', 'note', 'tags', 'image', 'audio', 'speak', 'lang', 'boxes', 'occ'];
-const cleanFields = o => {
+// `media`: the pictures and sounds a deck already has. Given, a picture or sound that isn't one of them is left out (a
+// suggestion never brings in a link from somewhere else); without it (going back to an earlier version of your own deck),
+// all are kept.
+const cleanFields = (o, media) => {
   const f = {};
-  for (const k of FIELDS) if (o && k in o) f[k] = k === 'tags' ? (Array.isArray(o.tags) ? o.tags.map(x => clean(x, 40)).filter(Boolean).slice(0, 20) : []) : ['boxes'].includes(k) ? o[k] : clean(o[k], k === 'note' ? 2000 : 5000);
+  for (const k of FIELDS) if (o && k in o) f[k] = k === 'tags' ? (Array.isArray(o.tags) ? o.tags.map(x => clean(x, 40)).filter(Boolean).slice(0, 20) : []) : k === 'boxes' ? cleanBoxes(o[k]) : clean(o[k], k === 'note' ? 2000 : 5000);
   if (f.kind && !['basic', 'cloze', 'image', 'audio'].includes(f.kind)) delete f.kind;
+  if (media) for (const k of ['image', 'audio']) if (k in f && !media.has(f[k])) delete f[k];
   return f;
 };
+// Every picture and sound in a shared deck, as its cards hold them.
+async function deckMedia(sharedId) {
+  const out = new Set();
+  for (const r of await allCards(sharedId)) for (const k of ['image', 'audio']) { const v = r.data && r.data[k]; if (typeof v === 'string' && v) out.add(v); }
+  return out;
+}
 export async function suggest(uid, me, sharedId, { message = '', changes = [] } = {}, ai = '') {
   const sid = socialId(uid), sh = await sharedRow(sharedId);
   if (!(await canSee(sh, sid))) throw err('This deck isn’t shared anymore.', 404);
@@ -498,12 +609,15 @@ export async function suggest(uid, me, sharedId, { message = '', changes = [] } 
   if (!list.length) throw err('Add a change first.');
   const refs = list.filter(c => c.card).map(c => String(c.card));
   const was = refs.length ? await cardsById(sharedId, refs) : new Map();
+  // Only pictures and sounds the deck already has can come along.
+  const brings = v => typeof v === 'string' && v !== '';
+  const media = list.some(c => { const a = (c && (c.after || c)) || {}; return brings(a.image) || brings(a.audio); }) ? await deckMedia(sharedId) : new Set();
   const out = [];
   for (const c of list) {
     const op = ['edit', 'add', 'remove'].includes(c.op) ? c.op : c.card ? 'edit' : 'add';
     const b = c.card && was.get(String(c.card)), before = b && !b.deleted ? b.data : null;
     if (op !== 'add' && !before) continue;
-    const after = op === 'remove' ? null : { ...(before || { kind: 'basic', front: '', back: '', text: '', note: '', tags: [] }), ...cleanFields(c.after || c) };
+    const after = op === 'remove' ? null : { ...(before || { kind: 'basic', front: '', back: '', text: '', note: '', tags: [] }), ...cleanFields(c.after || c, media) };
     if (op === 'add' && !(after.front || after.text || after.back)) continue;
     if (op === 'edit' && hash(contentOf(before)) === hash(contentOf(after))) continue;
     out.push({ id: rid('x'), card: op === 'add' ? rid('n') : String(c.card), op, before, after, kind: kindOf(before, after), status: 'open' });
@@ -511,6 +625,9 @@ export async function suggest(uid, me, sharedId, { message = '', changes = [] } 
   if (!out.length) throw err('Those changes are already in the deck.');
   const author = await ensureProfile(uid, me);
   if (author.id === sh.owner) throw err('It’s your deck: change it right there.');
+  // A few at a time: the owner answers these before more come.
+  const waiting = await rest('/suggestions?shared_id=eq.' + val(sharedId) + '&author=eq.' + val(author.id) + '&status=eq.open&select=id&limit=1', { count: true });
+  if (waiting.total >= OPEN_SUGGESTIONS) throw err('You have ' + OPEN_SUGGESTIONS + ' suggestions waiting on this deck.', 429);
   const s = { id: rid('g'), shared_id: sharedId, owner: sh.owner, author: author.id, author_name: author.name, ai: clean(ai, 60), message: oneLine(message, 280), changes: out, status: 'open' };
   await rest('/suggestions', { method: 'POST', body: s });
   // Helpers edit directly: their changes go in now.
@@ -520,7 +637,14 @@ export async function suggest(uid, me, sharedId, { message = '', changes = [] } 
   }
   // The owner hears, and so do the helpers of a deck kept up by the community (they can take it or skip it too).
   const to = [sh.owner, ...(sh.maintained === 'community' ? (sh.helpers || []).map(h => h.id) : [])].filter((id, i, a) => id && id !== author.id && a.indexOf(id) === i);
-  await notify(to.map(user_id => ({ user_id, kind: 'suggestion', actor: author.id, actor_name: author.name + (s.ai ? ' (' + s.ai + ')' : ''), shared_id: sharedId, data: { n: out.length, message: s.message, id: s.id } })));
+  // One line of news for all of a person's suggestions on a deck, until it's read.
+  const name = author.name + (s.ai ? ' (' + s.ai + ')' : ''), fresh = [];
+  for (const user_id of to) {
+    const last = (await rest('/notifications?user_id=eq.' + val(user_id) + '&kind=eq.suggestion&actor=eq.' + val(author.id) + '&shared_id=eq.' + val(sharedId) + '&read=is.false&select=id,data&order=created_at.desc&limit=1'))[0];
+    if (last) await rest('/notifications?id=eq.' + val(last.id), { method: 'PATCH', body: { actor_name: name, data: { ...(last.data || {}), n: ((last.data || {}).n || 0) + out.length, message: s.message || (last.data || {}).message || '', id: s.id }, created_at: nowIso() } });
+    else fresh.push({ user_id, kind: 'suggestion', actor: author.id, actor_name: name, shared_id: sharedId, data: { n: out.length, message: s.message, id: s.id } });
+  }
+  await notify(fresh);
   return { id: s.id, taken: false };
 }
 // Runs fn in someone else's library (a helper's change going into the owner's deck), again from the newer copy if the
@@ -550,7 +674,18 @@ export async function decide(uid, id, picks = {}, { byHelper = false } = {}) {
   if (!d) throw err('This deck isn’t shared anymore.', 404);
   const author = await profileOf(s.author);
   const credit = { id: s.author, name: s.author_name || (author && author.name) || 'Someone', handle: author ? author.handle : '', ai: s.ai || '', suggestion: s.id };
-  let took = 0, skipped = 0;
+  let took = 0, skipped = 0, known = null;
+  // What a suggestion changes on a card. A picture or sound is only ever one the deck already has (a suggestion made before
+  // that rule could carry a link from somewhere else), and one that didn't change is left as the card has it.
+  const patchOf = async c => {
+    const f = cleanFields(c.after);
+    for (const k of ['image', 'audio']) {
+      if (!(k in f)) continue;
+      if (c.before && f[k] === c.before[k]) delete f[k];
+      else if (!(known ||= await deckMedia(s.shared_id)).has(f[k])) delete f[k];
+    }
+    return f;
+  };
   await withCredit(credit, async () => {
     for (const c of s.changes) {
       if (c.status !== 'open') continue;
@@ -559,10 +694,10 @@ export async function decide(uid, id, picks = {}, { byHelper = false } = {}) {
       if (pick !== 'take') continue;
       const card = S.cards.find(x => x.id === c.card && x.deckId === d.id);
       try {
-        if (c.op === 'add') apply({ type: 'card.add', deckId: d.id, ...cleanFields(c.after) }, 'suggestion');
+        if (c.op === 'add') apply({ type: 'card.add', deckId: d.id, ...(await patchOf(c)) }, 'suggestion');
         else if (!card) { c.status = 'gone'; continue; }
         else if (c.op === 'remove') apply({ type: 'card.delete', id: card.id }, 'suggestion');
-        else apply({ type: 'card.update', id: card.id, patch: cleanFields(c.after) }, 'suggestion');
+        else apply({ type: 'card.update', id: card.id, patch: await patchOf(c) }, 'suggestion');
         c.status = 'taken'; took++;
       } catch (e) { c.status = 'gone'; }
     }
@@ -603,25 +738,27 @@ async function withSenders(rows) {
   if (!rows.length) return rows;
   const ids = [...new Set(rows.map(r => r.author).filter(Boolean))], decks = [...new Set(rows.map(r => r.shared_id))];
   const [people, shared] = await Promise.all([ids.length ? rest('/profiles?id=in.' + inList(ids) + '&select=id,handle,name,avatar,color,verified,kind') : [],
-    rest('/shared_decks?id=in.' + inList(decks) + '&select=id,name,slug,owner')]);
+    rest('/shared_decks?id=in.' + inList(decks) + '&select=id,name,slug,owner,visibility')]);
   const owners = shared.length ? await rest('/profiles?id=in.' + inList([...new Set(shared.map(d => d.owner))]) + '&select=id,handle') : [];
   return rows.map(({ owner, author, ...r }) => {
     const d = shared.find(x => x.id === r.shared_id), o = d && owners.find(x => x.id === d.owner);
-    return { ...r, person: face(people.find(x => x.id === author)) || { name: r.author_name }, deck: d ? { id: d.id, name: d.name, url: o ? urlOf(o.handle, d.slug) : '/d/' + d.id } : null };
+    return { ...r, person: face(people.find(x => x.id === author)) || { name: r.author_name }, deck: d ? { id: d.id, name: d.name, url: deckUrl(d, o) } : null };
   });
 }
 
 // ---------- history ----------
-export async function versions(sharedId, { limit = 60 } = {}) {
-  return rest('/deck_versions?shared_id=eq.' + val(sharedId) + '&select=id,version,author,author_name,ai,kind,summary,changes,created_at&order=version.desc&limit=' + Math.min(200, limit));
+// A deck's newest versions (at most 50). Their changes are only read when the page shows them (History); a deck's own page
+// just needs how many each one has.
+export async function versions(sharedId, { limit = 50, changes = true } = {}) {
+  return rest('/deck_versions?shared_id=eq.' + val(sharedId) + '&select=id,version,author,author_name,ai,kind,summary,n_changes,created_at' + (changes ? ',changes' : '') + '&order=version.desc&limit=' + Math.min(50, limit));
 }
 // A deck's History page: every version, newest first, with who made it and what changed.
 export async function historyPage(sharedId, viewer) {
-  const vid = viewer ? socialId(viewer) : null, sh = await sharedRow(sharedId, 'id,owner,visibility,learners,copies,name,slug');
+  const vid = viewer ? socialId(viewer) : null, sh = await sharedRow(sharedId, 'id,owner,visibility,hidden,learners,copies,name,slug');
   if (!(await canSee(sh, vid))) return null;
-  const list = await versions(sharedId, { limit: 200 }), o = await profileOf(sh.owner);
+  const list = await versions(sharedId, { limit: 50 }), o = await profileOf(sh.owner);
   const ids = [...new Set(list.map(v => v.author).filter(Boolean))], faces = ids.length ? await rest('/profiles?id=in.' + inList(ids) + '&select=id,handle,name,avatar,color,verified') : [];
-  return { id: sh.id, name: sh.name, url: o ? urlOf(o.handle, sh.slug) : '/d/' + sh.id, owner: face(o), mine: vid === sh.owner, following: (sh.learners || 0) + (sh.copies || 0),
+  return { id: sh.id, name: sh.name, url: deckUrl(sh, o), owner: face(o), mine: vid === sh.owner, following: (sh.learners || 0) + (sh.copies || 0),
     versions: list.map(v => ({ version: v.version, kind: v.kind, summary: v.summary, ai: v.ai, at: v.created_at, by: face(faces.find(f => f.id === v.author)) || (v.author_name ? { name: v.author_name } : null), changes: v.changes || [] })) };
 }
 // Going back to a version: every change since then is undone (cards added since go, cards removed since come back),
@@ -654,8 +791,11 @@ export async function restore(uid, sharedId, version) {
 export async function check(uid, me, sharedId) {
   const p = await ensureProfile(uid, me);
   if (p.verified !== 'teacher' && p.verified !== 'school') throw err('Only verified teachers can check decks.', 403);
-  const sh = await sharedRow(sharedId, 'id,owner,version,visibility');
+  const sh = await sharedRow(sharedId, 'id,owner,version,visibility,hidden,checked');
   if (!(await canSee(sh, p.id))) throw err('No such deck', 404);
+  if (sh.owner === p.id) throw err('You can’t check your own deck.');
+  // Once for each version: a deck already checked as it is now has nothing new to say (no version, no news).
+  if (sh.checked && sh.checked.version === sh.version) return { version: sh.version };
   const n = await addVersion(sharedId, [], { by: personOf(p), kind: 'check', summary: p.name + ' checked every card', joinable: false });
   await rest('/shared_decks?id=eq.' + val(sharedId), { method: 'PATCH', body: { checked: { id: p.id, name: p.name, handle: p.handle, version: n, at: nowIso() } } });
   if (sh.owner !== p.id) await notify([{ user_id: sh.owner, kind: 'checked', actor: p.id, actor_name: p.name, shared_id: sharedId, data: {} }]);
@@ -664,14 +804,14 @@ export async function check(uid, me, sharedId) {
 
 // ---------- saves, follows, updates ----------
 export async function star(uid, me, sharedId, on) {
-  const p = await ensureProfile(uid, me), sh = await sharedRow(sharedId, 'id,owner,visibility');
+  const p = await ensureProfile(uid, me), sh = await sharedRow(sharedId, 'id,owner,visibility,hidden');
   if (!(await canSee(sh, p.id))) throw err('No such deck', 404);
   if (on) await rest('/stars', { method: 'POST', prefer: 'resolution=ignore-duplicates', body: { user_id: p.id, shared_id: sharedId } });
   else await rest('/stars?user_id=eq.' + val(p.id) + '&shared_id=eq.' + val(sharedId), { method: 'DELETE' });
   return countFollowing(sharedId);
 }
 export async function watch(uid, me, sharedId, on) {
-  const p = await ensureProfile(uid, me), sh = await sharedRow(sharedId, 'id,owner,visibility');
+  const p = await ensureProfile(uid, me), sh = await sharedRow(sharedId, 'id,owner,visibility,hidden');
   if (!(await canSee(sh, p.id))) throw err('No such deck', 404);
   if (on) await rest('/subscriptions?on_conflict=user_id,shared_id,deck_id', { method: 'POST', prefer: 'resolution=merge-duplicates', body: { user_id: p.id, shared_id: sharedId, deck_id: '', mode: 'watch', last_seen: nowIso() } });
   else await rest('/subscriptions?user_id=eq.' + val(p.id) + '&shared_id=eq.' + val(sharedId) + '&mode=eq.watch', { method: 'DELETE' });
@@ -707,11 +847,12 @@ export async function activity(uid) {
     rest('/notifications?user_id=eq.' + val(sid) + '&select=id,kind,actor,actor_name,shared_id,data,read,created_at&order=created_at.desc&limit=60'),
     rest('/notifications?user_id=eq.' + val(sid) + '&read=is.false&select=id&limit=1', { count: true })]);
   const ids = [...new Set(rows.map(r => r.shared_id).filter(Boolean))], people = [...new Set(rows.map(r => r.actor).filter(Boolean))];
-  const [decks, who] = await Promise.all([ids.length ? rest('/shared_decks?id=in.' + inList(ids) + '&select=id,name,slug,owner') : [], people.length ? rest('/profiles?id=in.' + inList(people) + '&select=id,handle,name,avatar,color') : []]);
+  const [decks, who] = await Promise.all([ids.length ? rest('/shared_decks?id=in.' + inList(ids) + '&select=id,name,slug,owner,visibility') : [], people.length ? rest('/profiles?id=in.' + inList(people) + '&select=id,handle,name,avatar,color') : []]);
   const owners = decks.length ? await rest('/profiles?id=in.' + inList([...new Set(decks.map(d => d.owner))]) + '&select=id,handle') : [];
-  return { unread: unread.total, items: rows.map(r => {
-    const d = decks.find(x => x.id === r.shared_id), o = d && owners.find(x => x.id === d.owner), a = who.find(x => x.id === r.actor);
-    return { ...r, deck: d ? { id: d.id, name: d.name, url: o ? '/@' + o.handle + '/' + d.slug : '/d/' + d.id } : null, person: a ? { handle: a.handle, name: a.name, avatar: a.avatar, color: a.color } : null };
+  // Who did each thing comes as their name and handle, never their account id.
+  return { unread: unread.total, items: rows.map(({ actor, ...r }) => {
+    const d = decks.find(x => x.id === r.shared_id), o = d && owners.find(x => x.id === d.owner), a = who.find(x => x.id === actor);
+    return { ...r, deck: d ? { id: d.id, name: d.name, url: deckUrl(d, o) } : null, person: a ? { handle: a.handle, name: a.name, avatar: a.avatar, color: a.color } : null };
   }) };
 }
 export async function unreadCount(uid) { return (await rest('/notifications?user_id=eq.' + val(socialId(uid)) + '&read=is.false&select=id&limit=1', { count: true })).total; }
@@ -722,9 +863,8 @@ export async function markRead(uid, ids) {
 }
 
 // ---------- what public pages show ----------
-const urlOf = (handle, slug) => '/@' + handle + '/' + slug;
 function card(sh, o) {
-  return { id: sh.id, url: o ? urlOf(o.handle, sh.slug) : '/d/' + sh.id, name: sh.name, description: sh.description || '', tags: sh.tags || [], cover: sh.cover || {}, cards: sh.card_count || 0,
+  return { id: sh.id, url: deckUrl(sh, o), name: sh.name, description: sh.description || '', tags: sh.tags || [], cover: sh.cover || {}, cards: sh.card_count || 0,
     stars: sh.stars || 0, learners: sh.learners || 0, copies: sh.copies || 0, version: sh.version || 1, updated: sh.updated_at, visibility: sh.visibility,
     checked: sh.checked ? { name: sh.checked.name, handle: sh.checked.handle, current: sh.checked.version === sh.version } : null,
     maintained: sh.maintained || 'creator', owner: face(o), theme: (o && o.theme) || '' };
@@ -734,17 +874,18 @@ export async function withOwners(rows) {
   const people = ids.length ? await rest('/profiles?id=in.' + inList(ids) + '&select=*') : [];
   return rows.map(r => card(r, people.find(p => p.id === r.owner)));
 }
-export const LIST = 'id,owner,slug,name,description,tags,cover,card_count,stars,learners,copies,version,updated_at,visibility,checked,maintained';
+export const LIST = 'id,owner,slug,name,description,tags,cover,card_count,stars,learners,copies,version,updated_at,visibility,hidden,checked,maintained';
 // A shared deck's page: the deck, its cards (content only), how it was made, who helped, and what you have to do with it.
 export async function deckPage({ handle, slug, id }, viewer) {
   let sh = null, o = null;
   if (id) { sh = await sharedRow(id); o = sh && await profileOf(sh.owner); }
-  else { o = await profileByHandle(handle); sh = o && (await rest('/shared_decks?owner=eq.' + val(o.id) + '&slug=eq.' + val(String(slug || '').toLowerCase()) + '&select=*'))[0]; }
+  // A deck is found by its owner's name and its own only when it's public; Link only and class decks open at /d/<id> alone.
+  else { o = await profileByHandle(handle); sh = o && (await rest('/shared_decks?owner=eq.' + val(o.id) + '&slug=eq.' + val(String(slug || '').toLowerCase()) + '&visibility=eq.public&select=*'))[0]; }
   const vid = viewer ? socialId(viewer) : null;
   if (!sh || !(await canSee(sh, vid))) return null;
   const [rows, vers, subs, starred] = await Promise.all([
     rest('/shared_cards?shared_id=eq.' + val(sh.id) + '&deleted=is.false&select=id,pos,data&order=pos.asc&limit=500'),
-    versions(sh.id, { limit: 40 }),
+    versions(sh.id, { limit: 40, changes: false }),
     vid ? rest('/subscriptions?user_id=eq.' + val(vid) + '&shared_id=eq.' + val(sh.id) + '&select=deck_id,mode,updates') : [],
     vid ? rest('/stars?user_id=eq.' + val(vid) + '&shared_id=eq.' + val(sh.id) + '&select=user_id') : []]);
   const owner = vid === sh.owner, helper = (sh.helpers || []).some(h => h.id === vid);
@@ -755,7 +896,7 @@ export async function deckPage({ handle, slug, id }, viewer) {
     people: faces.map(face),
     cardsList: rows.map(r => ({ id: r.id, kind: r.data.kind, front: r.data.front, back: r.data.back, text: r.data.text, image: r.data.image, box: r.data.box, boxes: r.data.boxes, cloze: r.data.cloze, tags: r.data.tags || [], source: r.data.source || '', trail: r.data.trail || [] })),
     moreCards: Math.max(0, (sh.card_count || 0) - rows.length),
-    made: vers.map(v => ({ version: v.version, kind: v.kind, summary: v.summary, ai: v.ai, at: v.created_at, by: face(faces.find(f => f.id === v.author)) || (v.author_name ? { name: v.author_name } : null), n: (v.changes || []).length })),
+    made: vers.map(v => ({ version: v.version, kind: v.kind, summary: v.summary, ai: v.ai, at: v.created_at, by: face(faces.find(f => f.id === v.author)) || (v.author_name ? { name: v.author_name } : null), n: v.n_changes || 0 })),
     me: vid ? { owner, helper, studying: (subs.find(x => x.mode === 'study') || {}).deck_id || '', copied: (subs.find(x => x.mode === 'copy') || {}).deck_id || '', watching: subs.some(x => x.mode === 'watch'), starred: starred.length > 0, open } : null };
 }
 export async function profilePage(handle, viewer) {
@@ -763,10 +904,10 @@ export async function profilePage(handle, viewer) {
   if (!p) return null;
   const vid = viewer ? socialId(viewer) : null, self = vid === p.id;
   const [decks, following, saved] = await Promise.all([
-    rest('/shared_decks?owner=eq.' + val(p.id) + (self ? '&visibility=in.(link,public)' : '&visibility=eq.public') + '&select=' + LIST + '&order=updated_at.desc&limit=200'),
+    rest('/shared_decks?owner=eq.' + val(p.id) + (self ? '&visibility=in.(link,public)' : '&visibility=eq.public') + '&hidden=is.false&select=' + LIST + '&order=updated_at.desc&limit=200'),
     vid && !self ? rest('/follows?follower=eq.' + val(vid) + '&followee=eq.' + val(p.id) + '&select=follower') : [],
     self ? rest('/stars?user_id=eq.' + val(p.id) + '&select=shared_id&order=created_at.desc&limit=100') : []]);
-  const savedRows = saved.length ? await rest('/shared_decks?id=in.' + inList(saved.map(s => s.shared_id)) + '&visibility=in.(link,public)&select=' + LIST) : [];
+  const savedRows = saved.length ? await rest('/shared_decks?id=in.' + inList(saved.map(s => s.shared_id)) + '&visibility=in.(link,public)&hidden=is.false&select=' + LIST) : [];
   const feat = p.featured || [], list = decks.map(r => card(r, p));
   list.sort((a, b) => (feat.includes(b.id) - feat.includes(a.id)));
   return { ...face(p), bio: p.bio || '', school: p.school || '', subject: p.subject || '', followers: p.followers || 0, following: p.following || 0, contributions: p.contributions || 0,
@@ -777,7 +918,7 @@ export async function profilePage(handle, viewer) {
 // topics to narrow it down. Studying stays in your library; this is only for finding more.
 export async function discover(viewer, { tag = '' } = {}) {
   const t = String(tag || '').slice(0, 40), byTag = t ? '&tags=cs.' + encodeURIComponent('{' + qvalRaw(t) + '}') : '';
-  const base = '/shared_decks?visibility=eq.public' + byTag + '&select=' + LIST;
+  const base = '/shared_decks?visibility=eq.public&hidden=is.false' + byTag + '&select=' + LIST;
   const vid = viewer ? socialId(viewer) : null;
   const follows = vid ? await rest('/follows?follower=eq.' + val(vid) + '&select=followee&limit=500') : [];
   const [popular, checked, fresh, friends, tagRows] = await Promise.all([
@@ -785,7 +926,7 @@ export async function discover(viewer, { tag = '' } = {}) {
     rest(base + '&checked=not.is.null&order=score.desc&limit=8'),
     rest(base + '&order=created_at.desc&limit=12'),
     follows.length ? rest(base + '&owner=in.' + inList(follows.map(f => f.followee)) + '&order=updated_at.desc&limit=12') : [],
-    rest('/shared_decks?visibility=eq.public&select=tags&order=score.desc&limit=300')]);
+    rest('/shared_decks?visibility=eq.public&hidden=is.false&select=tags&order=score.desc&limit=300')]);
   const count = {};
   for (const r of tagRows) for (const g of r.tags || []) count[g] = (count[g] || 0) + 1;
   const topics = Object.keys(count).sort((a, b) => count[b] - count[a] || a.localeCompare(b)).slice(0, 10);
@@ -802,9 +943,9 @@ export async function search(q, viewer) {
   if (!words) return { q: '', decks: [], people: [] };
   const pat = like(words);
   const [decks, tagged, people] = await Promise.all([
-    rest('/shared_decks?visibility=eq.public&or=' + encodeURIComponent('(') + 'name.ilike.' + pat + ',description.ilike.' + pat + encodeURIComponent(')') + '&select=' + LIST + '&order=score.desc&limit=24'),
-    rest('/shared_decks?visibility=eq.public&tags=cs.' + encodeURIComponent('{' + qvalRaw(words) + '}') + '&select=' + LIST + '&order=score.desc&limit=12'),
-    rest('/profiles?or=' + encodeURIComponent('(') + 'handle.ilike.' + pat + ',name.ilike.' + pat + ',school.ilike.' + pat + ',subject.ilike.' + pat + encodeURIComponent(')') + '&select=*&order=followers.desc&limit=12')]);
+    rest('/shared_decks?visibility=eq.public&hidden=is.false&or=' + encodeURIComponent('(') + 'name.ilike.' + pat + ',description.ilike.' + pat + encodeURIComponent(')') + '&select=' + LIST + '&order=score.desc&limit=24'),
+    rest('/shared_decks?visibility=eq.public&hidden=is.false&tags=cs.' + encodeURIComponent('{' + qvalRaw(words) + '}') + '&select=' + LIST + '&order=score.desc&limit=12'),
+    rest('/profiles?listed=is.true&or=' + encodeURIComponent('(') + 'handle.ilike.' + pat + ',name.ilike.' + pat + ',school.ilike.' + pat + ',subject.ilike.' + pat + encodeURIComponent(')') + '&select=*&order=followers.desc&limit=12')]);
   const seen = new Set(), rows = [...decks, ...tagged].filter(r => !seen.has(r.id) && seen.add(r.id));
   return { q: words, decks: await withOwners(rows), people: people.map(p => ({ ...face(p), bio: p.bio || '', school: p.school || '', followers: p.followers || 0 })) };
 }
@@ -813,6 +954,8 @@ export async function search(q, viewer) {
 // only ever rewrites their own row), added up here. The hardest cards are the ones missed most, once seen 3 times.
 onReviewed(r => rest('/card_stats', { method: 'POST', prefer: 'resolution=merge-duplicates', body: { shared_id: r.sharedId, user_id: socialId(uidOf()), card_id: r.card, reviews: r.reviews, misses: r.misses, updated_at: nowIso() } }));
 export async function creatorStats(uid, sharedId) {
+  // Hardest cards are part of Lucida Pro, like the rest of Pro (store.mjs isPro).
+  if (!isPro()) throw err('Hardest cards are part of Lucida Pro: lucida.cards/pricing', 402);
   const sh = await sharedRow(sharedId, 'id,owner,helpers');
   const sid = socialId(uid);
   if (!sh || (sh.owner !== sid && !(sh.helpers || []).some(h => h.id === sid))) throw Object.assign(new Error('Only its owner sees this.'), { status: 403 });
@@ -844,14 +987,76 @@ export async function metaFor(path) {
   }
   const p = await profilePage(m[1], null);
   if (!p) return { status: 404, title: 'Not found · Lucida', description: '' };
-  return { title: p.name + ' (@' + p.handle + ') · Lucida', description: (p.bio ? p.bio + ' · ' : '') + plural(p.decks.length, 'public deck'), url: '/@' + p.handle, decks: p.decks.slice(0, 50) };
+  // A profile nobody chose to list (see `listed`) stays out of search engines too.
+  const row = await profileByHandle(m[1]);
+  return { title: p.name + ' (@' + p.handle + ') · Lucida', description: (p.bio ? p.bio + ' · ' : '') + plural(p.decks.length, 'public deck'), url: '/@' + p.handle, decks: p.decks.slice(0, 50), noindex: !(row && row.listed) };
 }
 export async function sitemap(origin) {
-  const decks = await rest('/shared_decks?visibility=eq.public&select=owner,slug,updated_at&order=updated_at.desc&limit=5000');
+  const decks = await rest('/shared_decks?visibility=eq.public&hidden=is.false&select=owner,slug,updated_at&order=updated_at.desc&limit=5000');
   const owners = decks.length ? await rest('/profiles?id=in.' + inList([...new Set(decks.map(d => d.owner))].slice(0, 2000)) + '&select=id,handle') : [];
   const urls = [];
   for (const o of owners) urls.push({ loc: origin + '/@' + o.handle });
   for (const d of decks) { const o = owners.find(x => x.id === d.owner); if (o) urls.push({ loc: origin + urlOf(o.handle, d.slug), lastmod: String(d.updated_at || '').slice(0, 10) }); }
   return '<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n' + urls.map(u => '<url><loc>' + u.loc.replace(/&/g, '&amp;') + '</loc>' + (u.lastmod ? '<lastmod>' + u.lastmod + '</lastmod>' : '') + '</url>').join('\n') + '\n</urlset>\n';
+}
+
+// ---------- "Delete my data" ----------
+// Everything the study network holds about someone goes: their profile, follows (both ways), saves, subscriptions, news,
+// suggestions, and places in classes. Their decks stop being shared (people who studied or copied one keep their cards, "from
+// <name>"), and the pictures and sounds they made public are deleted. store.mjs's data.reset calls this. Safe to run again if
+// it stopped halfway (it finds everything by the person's id). Supabase would chain most of these deletes from the profile's;
+// this computer's stand-in doesn't, so they're all done here.
+const chunk = (list, n = 100) => Array.from({ length: Math.ceil(list.length / n) }, (_, i) => list.slice(i * n, i * n + n));
+export async function forget(uid) {
+  const sid = socialId(uid), me = val(sid), del = (table, filter) => rest('/' + table + '?' + filter, { method: 'DELETE' });
+  const decks = (await rest('/shared_decks?owner=eq.' + me + '&select=id&limit=10000')).map(r => r.id);
+  const owned = (await rest('/classes?owner=eq.' + me + '&select=id&limit=1000')).map(r => r.id);
+  // Suggestions of theirs, and on their decks: reports about them go too (they name the person).
+  const sugs = new Set((await rest('/suggestions?author=eq.' + me + '&select=id&limit=100000')).map(s => s.id));
+  for (const ids of chunk(decks)) for (const s of await rest('/suggestions?shared_id=in.' + inList(ids) + '&select=id&limit=100000')) sugs.add(s.id);
+  // Their decks, with everything that hangs on them.
+  for (const ids of chunk(decks)) {
+    const list = inList(ids), assigned = (await rest('/assignments?shared_id=in.' + list + '&select=id&limit=10000')).map(a => a.id);
+    for (const a of chunk(assigned)) await del('class_progress', 'assignment_id=in.' + inList(a));
+    await del('assignments', 'shared_id=in.' + list);
+    await del('class_decks', 'shared_id=in.' + list);
+    for (const t of ['shared_cards', 'deck_versions', 'suggestions', 'stars', 'subscriptions', 'card_stats', 'notifications']) await del(t, 'shared_id=in.' + list);
+    await del('reports', 'kind=eq.deck&target=in.' + list);
+    await del('shared_decks', 'id=in.' + list);
+  }
+  // Their classes go with their people, decks, assignments, and progress; a deck of someone else's that was only in one is private again.
+  for (const ids of chunk(owned)) {
+    const list = inList(ids), inThem = [...new Set((await rest('/class_decks?class_id=in.' + list + '&select=shared_id&limit=10000')).map(x => x.shared_id))];
+    for (const t of ['class_progress', 'assignments', 'class_decks', 'class_members']) await del(t, 'class_id=in.' + list);
+    await del('classes', 'id=in.' + list);
+    for (const sharedId of inThem) if (!(await rest('/class_decks?shared_id=eq.' + val(sharedId) + '&select=class_id&limit=1')).length) await rest('/shared_decks?id=eq.' + val(sharedId) + '&visibility=eq.class', { method: 'PATCH', body: { visibility: 'private', updated_at: nowIso() } });
+  }
+  // What they did on other people's decks and in their classes.
+  const onDecks = new Set([...(await rest('/stars?user_id=eq.' + me + '&select=shared_id&limit=100000')), ...(await rest('/subscriptions?user_id=eq.' + me + '&select=shared_id&limit=100000'))].map(r => r.shared_id));
+  const follows = await rest('/follows?or=' + encodeURIComponent('(follower.eq.' + qvalRaw(sid) + ',followee.eq.' + qvalRaw(sid) + ')') + '&select=follower,followee&limit=100000');
+  const people = new Set(follows.flatMap(f => [f.follower, f.followee]).filter(x => x !== sid));
+  for (const t of ['stars', 'subscriptions', 'card_stats', 'suggestions']) await del(t, (t === 'suggestions' ? 'author' : 'user_id') + '=eq.' + me);
+  await del('follows', 'follower=eq.' + me); await del('follows', 'followee=eq.' + me);
+  await del('notifications', 'user_id=eq.' + me); await del('notifications', 'actor=eq.' + me);
+  for (const t of ['class_progress', 'class_members', 'verify_requests']) await del(t, 'user_id=eq.' + me);
+  // Reports they sent stay for Lucida's team, without them; reports about them (their profile, their suggestions) go.
+  await rest('/reports?reporter=eq.' + me, { method: 'PATCH', body: { reporter: null } });
+  await del('reports', 'kind=eq.profile&target=eq.' + me);
+  for (const ids of chunk([...sugs])) await del('reports', 'kind=eq.suggestion&target=in.' + inList(ids));
+  // Where they're only named on someone else's deck: an assignment or deck they added, a version they made, a helper or
+  // contributor, a teacher's check.
+  await rest('/assignments?created_by=eq.' + me, { method: 'PATCH', body: { created_by: null } });
+  await rest('/class_decks?added_by=eq.' + me, { method: 'PATCH', body: { added_by: null } });
+  await rest('/deck_versions?author=eq.' + me, { method: 'PATCH', body: { author: null } });
+  for (const col of ['helpers', 'contributors']) {
+    for (const r of await rest('/shared_decks?' + col + '=cs.' + encodeURIComponent(JSON.stringify([{ id: sid }])) + '&select=id,' + col + '&limit=1000')) await rest('/shared_decks?id=eq.' + val(r.id), { method: 'PATCH', body: { [col]: (r[col] || []).filter(x => x.id !== sid) } });
+  }
+  for (const r of await rest('/shared_decks?checked=not.is.null&select=id,checked&limit=5000')) if (r.checked && r.checked.id === sid) await rest('/shared_decks?id=eq.' + val(r.id), { method: 'PATCH', body: { checked: null } });
+  await del('profiles', 'id=eq.' + me);
+  // The numbers other people see (saves, studying, copies, followers) drop by them.
+  for (const sharedId of onDecks) await countFollowing(sharedId).catch(() => {});
+  for (const id of people) await recountPeople(id).catch(() => {});
+  if (publicMedia.on() && !isDev(sid) && sid !== 'local') await publicMedia.clear(sid);
+  return {};
 }
 export { cloud };
