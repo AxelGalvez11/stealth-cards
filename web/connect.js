@@ -23,15 +23,16 @@ export function createConnect({ changed = () => {}, go = () => {} } = {}) {
   function consent() {
     const key = location.search;
     if (!ask || ask.key !== key) {
-      ask = { key, state: { loading: true } };
+      const mine = ask = { key, state: { loading: true } };
+      decideError = '';
       fetch('/api/oauth/request' + key, { cache: 'no-store' })
         .then(async r => {
           if (r.status === 401) return signInFirst();
           const j = await r.json().catch(() => ({}));
           if (j.redirect) return location.replace(j.redirect);
-          ask.state = r.ok ? { ok: true, ...j } : { error: j.error || 'That link didn’t work.' };
+          mine.state = r.ok ? { ok: true, ...j } : { error: j.error || 'That link didn’t work.' };
         })
-        .catch(() => { ask.state = { error: 'Couldn’t reach Lucida. Check your connection and try again.' }; })
+        .catch(() => { mine.state = { error: 'Couldn’t reach Lucida. Check your connection and try again.' }; })
         .finally(changed);
     }
     return { ...ask.state, busy: deciding, decideError };
