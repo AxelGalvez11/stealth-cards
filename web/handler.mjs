@@ -287,7 +287,13 @@ async function stripe(req, res) {
 async function appleHook(req, res) {
   let signedPayload;
   try { signedPayload = jsonOf(await readBody(req, 2e5)).signedPayload; } catch { return send(res, 400, { error: 'Bad notification' }); }
-  try { const r = await apple.onNotification(signedPayload); if (r.uid) dropPlan(r.uid); return send(res, 200, { ok: true }); }
+  try {
+    const r = await apple.onNotification(signedPayload);
+    if (r.uid) dropPlan(r.uid);
+    // One line a notification, so the logs show Apple's news arriving (and what became of it).
+    console.log('apple', r.type + (r.subtype ? '/' + r.subtype : ''), r.applied ? '→ ' + r.status : '(' + r.why + ')');
+    return send(res, 200, { ok: true });
+  }
   catch (e) { if (e instanceof apple.AppleError) return send(res, 400, { error: e.message, code: e.code }); throw e; }
 }
 // The iPhone app sending what the signed-in person bought (apple.mjs): { signedTransaction } or, for Restore purchases, { signedTransactions: [...] }
