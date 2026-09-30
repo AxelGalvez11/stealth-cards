@@ -84,7 +84,7 @@
    "y": 0
   },
   "LandingPhone.dc.html": {
-   "h": 4818,
+   "h": 4852,
    "is_interactive": true,
    "page": "landing",
    "title": "Landing page · lucida.cards on a phone",
@@ -219,7 +219,7 @@
    "y": 0
   },
   "PhoneConnect.dc.html": {
-   "h": 844,
+   "h": 975,
    "is_interactive": true,
    "page": "phone",
    "title": "iPhone · Connect AI",
@@ -606,7 +606,7 @@
    "y": 2600
   },
   "PhoneSettings.dc.html": {
-   "h": 1562,
+   "h": 1889,
    "is_interactive": true,
    "page": "phone",
    "title": "iPhone · Settings",
@@ -615,13 +615,13 @@
    "y": 0
   },
   "PhoneSettingsGray.dc.html": {
-   "h": 1562,
+   "h": 1889,
    "is_interactive": true,
    "page": "phone",
    "title": "iPhone · Settings (dark, gray)",
    "w": 390,
    "x": 4700,
-   "y": 1640
+   "y": 1969
   },
   "PhoneSignIn.dc.html": {
    "h": 844,
@@ -795,7 +795,7 @@
    "y": 0
   },
   "PricingPhone.dc.html": {
-   "h": 2319,
+   "h": 2353,
    "is_interactive": true,
    "page": "landing",
    "title": "Pricing · lucida.cards/pricing on a phone",
@@ -804,7 +804,7 @@
    "y": 0
   },
   "Privacy.dc.html": {
-   "h": 2236,
+   "h": 2338,
    "is_interactive": true,
    "page": "landing",
    "title": "Privacy Policy · lucida.cards/privacy",
@@ -1587,7 +1587,7 @@
   },
   "ThemeRubber.dc.html": {
    "x": 0,
-   "y": 1680,
+   "y": 1802,
    "w": 1440,
    "h": 900,
    "page": "themes",
@@ -1596,7 +1596,7 @@
   },
   "ThemeRubberLibrary.dc.html": {
    "x": 3040,
-   "y": 1680,
+   "y": 1802,
    "w": 1440,
    "h": 900,
    "page": "themes",
@@ -1605,7 +1605,7 @@
   },
   "ThemeRubberReview.dc.html": {
    "x": 6080,
-   "y": 1680,
+   "y": 1802,
    "w": 1440,
    "h": 900,
    "page": "themes",
@@ -1614,7 +1614,7 @@
   },
   "ThemeRubberReviewPhone.dc.html": {
    "x": 9120,
-   "y": 1680,
+   "y": 1802,
    "w": 390,
    "h": 844,
    "page": "themes",
@@ -1623,7 +1623,7 @@
   },
   "ThemeRubberProfilePhone.dc.html": {
    "x": 9590,
-   "y": 1680,
+   "y": 1802,
    "w": 390,
    "h": 844,
    "page": "themes",
@@ -1632,7 +1632,7 @@
   },
   "ThemeChrome.dc.html": {
    "x": 0,
-   "y": 3000,
+   "y": 3122,
    "w": 1440,
    "h": 900,
    "page": "themes",
@@ -1641,7 +1641,7 @@
   },
   "ThemeChromeLibrary.dc.html": {
    "x": 3040,
-   "y": 3000,
+   "y": 3122,
    "w": 1440,
    "h": 900,
    "page": "themes",
@@ -1650,7 +1650,7 @@
   },
   "ThemeChromeReview.dc.html": {
    "x": 6080,
-   "y": 3000,
+   "y": 3122,
    "w": 1440,
    "h": 900,
    "page": "themes",
@@ -1659,7 +1659,7 @@
   },
   "ThemeChromeReviewPhone.dc.html": {
    "x": 9120,
-   "y": 3000,
+   "y": 3122,
    "w": 390,
    "h": 844,
    "page": "themes",
@@ -1668,7 +1668,7 @@
   },
   "ThemeChromeProfilePhone.dc.html": {
    "x": 9590,
-   "y": 3000,
+   "y": 3122,
    "w": 390,
    "h": 844,
    "page": "themes",
@@ -1686,7 +1686,7 @@
   },
   "ThemeAero.dc.html": {
    "x": 0,
-   "y": 4320,
+   "y": 4442,
    "w": 1440,
    "h": 900,
    "page": "themes",
@@ -1695,7 +1695,7 @@
   },
   "ThemeAeroLibrary.dc.html": {
    "x": 3040,
-   "y": 4320,
+   "y": 4442,
    "w": 1440,
    "h": 900,
    "page": "themes",
@@ -1704,7 +1704,7 @@
   },
   "ThemeAeroReview.dc.html": {
    "x": 6080,
-   "y": 4320,
+   "y": 4442,
    "w": 1440,
    "h": 900,
    "page": "themes",
@@ -1713,7 +1713,7 @@
   },
   "ThemeAeroReviewPhone.dc.html": {
    "x": 9120,
-   "y": 4320,
+   "y": 4442,
    "w": 390,
    "h": 844,
    "page": "themes",
@@ -1722,7 +1722,7 @@
   },
   "ThemeAeroProfilePhone.dc.html": {
    "x": 9590,
-   "y": 4320,
+   "y": 4442,
    "w": 390,
    "h": 844,
    "page": "themes",
@@ -1731,7 +1731,7 @@
   },
   "ThemeLiminal.dc.html": {
    "x": 0,
-   "y": 5640,
+   "y": 5762,
    "w": 1440,
    "h": 900,
    "page": "themes",
@@ -1740,7 +1740,7 @@
   },
   "ThemeLiminalLibrary.dc.html": {
    "x": 3040,
-   "y": 5640,
+   "y": 5762,
    "w": 1440,
    "h": 900,
    "page": "themes",
@@ -1749,7 +1749,7 @@
   },
   "ThemeLiminalReview.dc.html": {
    "x": 6080,
-   "y": 5640,
+   "y": 5762,
    "w": 1440,
    "h": 900,
    "page": "themes",
@@ -1758,7 +1758,7 @@
   },
   "ThemeLiminalReviewPhone.dc.html": {
    "x": 9120,
-   "y": 5640,
+   "y": 5762,
    "w": 390,
    "h": 844,
    "page": "themes",
@@ -1767,7 +1767,7 @@
   },
   "ThemeLiminalProfilePhone.dc.html": {
    "x": 9590,
-   "y": 5640,
+   "y": 5762,
    "w": 390,
    "h": 844,
    "page": "themes",
@@ -1776,7 +1776,7 @@
   },
   "ThemeDreamcore.dc.html": {
    "x": 0,
-   "y": 8280,
+   "y": 8402,
    "w": 1440,
    "h": 900,
    "page": "themes",
@@ -1785,7 +1785,7 @@
   },
   "ThemeDreamcoreLibrary.dc.html": {
    "x": 3040,
-   "y": 8280,
+   "y": 8402,
    "w": 1440,
    "h": 900,
    "page": "themes",
@@ -1794,7 +1794,7 @@
   },
   "ThemeDreamcoreReview.dc.html": {
    "x": 6080,
-   "y": 8280,
+   "y": 8402,
    "w": 1440,
    "h": 900,
    "page": "themes",
@@ -1803,7 +1803,7 @@
   },
   "ThemeDreamcoreReviewPhone.dc.html": {
    "x": 9120,
-   "y": 8280,
+   "y": 8402,
    "w": 390,
    "h": 844,
    "page": "themes",
@@ -1812,7 +1812,7 @@
   },
   "ThemeDreamcoreProfilePhone.dc.html": {
    "x": 9590,
-   "y": 8280,
+   "y": 8402,
    "w": 390,
    "h": 844,
    "page": "themes",
@@ -1821,7 +1821,7 @@
   },
   "ThemeVaporwave.dc.html": {
    "x": 0,
-   "y": 9600,
+   "y": 9722,
    "w": 1440,
    "h": 900,
    "page": "themes",
@@ -1830,7 +1830,7 @@
   },
   "ThemeVaporwaveLibrary.dc.html": {
    "x": 3040,
-   "y": 9600,
+   "y": 9722,
    "w": 1440,
    "h": 900,
    "page": "themes",
@@ -1839,7 +1839,7 @@
   },
   "ThemeVaporwaveReview.dc.html": {
    "x": 6080,
-   "y": 9600,
+   "y": 9722,
    "w": 1440,
    "h": 900,
    "page": "themes",
@@ -1848,7 +1848,7 @@
   },
   "ThemeVaporwaveReviewPhone.dc.html": {
    "x": 9120,
-   "y": 9600,
+   "y": 9722,
    "w": 390,
    "h": 844,
    "page": "themes",
@@ -1857,7 +1857,7 @@
   },
   "ThemeVaporwaveProfilePhone.dc.html": {
    "x": 9590,
-   "y": 9600,
+   "y": 9722,
    "w": 390,
    "h": 844,
    "page": "themes",
@@ -1866,7 +1866,7 @@
   },
   "ThemeTerminal.dc.html": {
    "x": 0,
-   "y": 12240,
+   "y": 12362,
    "w": 1440,
    "h": 900,
    "page": "themes",
@@ -1875,7 +1875,7 @@
   },
   "ThemeTerminalLibrary.dc.html": {
    "x": 3040,
-   "y": 12240,
+   "y": 12362,
    "w": 1440,
    "h": 900,
    "page": "themes",
@@ -1884,7 +1884,7 @@
   },
   "ThemeTerminalReview.dc.html": {
    "x": 6080,
-   "y": 12240,
+   "y": 12362,
    "w": 1440,
    "h": 900,
    "page": "themes",
@@ -1893,7 +1893,7 @@
   },
   "ThemeTerminalReviewPhone.dc.html": {
    "x": 9120,
-   "y": 12240,
+   "y": 12362,
    "w": 390,
    "h": 844,
    "page": "themes",
@@ -1902,7 +1902,7 @@
   },
   "ThemeTerminalProfilePhone.dc.html": {
    "x": 9590,
-   "y": 12240,
+   "y": 12362,
    "w": 390,
    "h": 844,
    "page": "themes",
@@ -1911,7 +1911,7 @@
   },
   "ThemeLiminalRoom.dc.html": {
    "x": 0,
-   "y": 6960,
+   "y": 7082,
    "w": 1440,
    "h": 900,
    "page": "themes",
@@ -1920,7 +1920,7 @@
   },
   "ThemeLiminalRoomLibrary.dc.html": {
    "x": 3040,
-   "y": 6960,
+   "y": 7082,
    "w": 1440,
    "h": 900,
    "page": "themes",
@@ -1929,7 +1929,7 @@
   },
   "ThemeLiminalRoomReview.dc.html": {
    "x": 6080,
-   "y": 6960,
+   "y": 7082,
    "w": 1440,
    "h": 900,
    "page": "themes",
@@ -1938,7 +1938,7 @@
   },
   "ThemeLiminalRoomReviewPhone.dc.html": {
    "x": 9120,
-   "y": 6960,
+   "y": 7082,
    "w": 390,
    "h": 844,
    "page": "themes",
@@ -1947,7 +1947,7 @@
   },
   "ThemeLiminalRoomProfilePhone.dc.html": {
    "x": 9590,
-   "y": 6960,
+   "y": 7082,
    "w": 390,
    "h": 844,
    "page": "themes",
@@ -1956,7 +1956,7 @@
   },
   "ThemeVaporDolphins.dc.html": {
    "x": 0,
-   "y": 10920,
+   "y": 11042,
    "w": 1440,
    "h": 900,
    "page": "themes",
@@ -1965,7 +1965,7 @@
   },
   "ThemeVaporDolphinsLibrary.dc.html": {
    "x": 3040,
-   "y": 10920,
+   "y": 11042,
    "w": 1440,
    "h": 900,
    "page": "themes",
@@ -1974,7 +1974,7 @@
   },
   "ThemeVaporDolphinsReview.dc.html": {
    "x": 6080,
-   "y": 10920,
+   "y": 11042,
    "w": 1440,
    "h": 900,
    "page": "themes",
@@ -1983,7 +1983,7 @@
   },
   "ThemeVaporDolphinsReviewPhone.dc.html": {
    "x": 9120,
-   "y": 10920,
+   "y": 11042,
    "w": 390,
    "h": 844,
    "page": "themes",
@@ -1992,7 +1992,7 @@
   },
   "ThemeVaporDolphinsProfilePhone.dc.html": {
    "x": 9590,
-   "y": 10920,
+   "y": 11042,
    "w": 390,
    "h": 844,
    "page": "themes",
@@ -2001,7 +2001,7 @@
   },
   "ThemeZine.dc.html": {
    "x": 0,
-   "y": 13560,
+   "y": 13682,
    "w": 1440,
    "h": 900,
    "page": "themes",
@@ -2010,7 +2010,7 @@
   },
   "ThemeZineLibrary.dc.html": {
    "x": 3040,
-   "y": 13560,
+   "y": 13682,
    "w": 1440,
    "h": 900,
    "page": "themes",
@@ -2019,7 +2019,7 @@
   },
   "ThemeZineReview.dc.html": {
    "x": 6080,
-   "y": 13560,
+   "y": 13682,
    "w": 1440,
    "h": 900,
    "page": "themes",
@@ -2028,7 +2028,7 @@
   },
   "ThemeZineReviewPhone.dc.html": {
    "x": 9120,
-   "y": 13560,
+   "y": 13682,
    "w": 390,
    "h": 844,
    "page": "themes",
@@ -2037,7 +2037,7 @@
   },
   "ThemeZineProfilePhone.dc.html": {
    "x": 9590,
-   "y": 13560,
+   "y": 13682,
    "w": 390,
    "h": 844,
    "page": "themes",
@@ -2046,7 +2046,7 @@
   },
   "ThemeGlass.dc.html": {
    "x": 0,
-   "y": 14880,
+   "y": 15002,
    "w": 1440,
    "h": 900,
    "page": "themes",
@@ -2055,7 +2055,7 @@
   },
   "ThemeGlassLibrary.dc.html": {
    "x": 3040,
-   "y": 14880,
+   "y": 15002,
    "w": 1440,
    "h": 900,
    "page": "themes",
@@ -2064,7 +2064,7 @@
   },
   "ThemeGlassReview.dc.html": {
    "x": 6080,
-   "y": 14880,
+   "y": 15002,
    "w": 1440,
    "h": 900,
    "page": "themes",
@@ -2073,7 +2073,7 @@
   },
   "ThemeGlassReviewPhone.dc.html": {
    "x": 9120,
-   "y": 14880,
+   "y": 15002,
    "w": 390,
    "h": 844,
    "page": "themes",
@@ -2082,7 +2082,7 @@
   },
   "ThemeGlassProfilePhone.dc.html": {
    "x": 9590,
-   "y": 14880,
+   "y": 15002,
    "w": 390,
    "h": 844,
    "page": "themes",
@@ -2091,7 +2091,7 @@
   },
   "ThemeTopo.dc.html": {
    "x": 0,
-   "y": 16200,
+   "y": 16322,
    "w": 1440,
    "h": 900,
    "page": "themes",
@@ -2100,7 +2100,7 @@
   },
   "ThemeTopoLibrary.dc.html": {
    "x": 3040,
-   "y": 16200,
+   "y": 16322,
    "w": 1440,
    "h": 900,
    "page": "themes",
@@ -2109,7 +2109,7 @@
   },
   "ThemeTopoReview.dc.html": {
    "x": 6080,
-   "y": 16200,
+   "y": 16322,
    "w": 1440,
    "h": 900,
    "page": "themes",
@@ -2118,7 +2118,7 @@
   },
   "ThemeTopoReviewPhone.dc.html": {
    "x": 9120,
-   "y": 16200,
+   "y": 16322,
    "w": 390,
    "h": 844,
    "page": "themes",
@@ -2127,7 +2127,7 @@
   },
   "ThemeTopoProfilePhone.dc.html": {
    "x": 9590,
-   "y": 16200,
+   "y": 16322,
    "w": 390,
    "h": 844,
    "page": "themes",
@@ -2136,7 +2136,7 @@
   },
   "ThemeRiso.dc.html": {
    "x": 0,
-   "y": 17520,
+   "y": 17642,
    "w": 1440,
    "h": 900,
    "page": "themes",
@@ -2145,7 +2145,7 @@
   },
   "ThemeRisoLibrary.dc.html": {
    "x": 3040,
-   "y": 17520,
+   "y": 17642,
    "w": 1440,
    "h": 900,
    "page": "themes",
@@ -2154,7 +2154,7 @@
   },
   "ThemeRisoReview.dc.html": {
    "x": 6080,
-   "y": 17520,
+   "y": 17642,
    "w": 1440,
    "h": 900,
    "page": "themes",
@@ -2163,7 +2163,7 @@
   },
   "ThemeRisoReviewPhone.dc.html": {
    "x": 9120,
-   "y": 17520,
+   "y": 17642,
    "w": 390,
    "h": 844,
    "page": "themes",
@@ -2172,7 +2172,7 @@
   },
   "ThemeRisoProfilePhone.dc.html": {
    "x": 9590,
-   "y": 17520,
+   "y": 17642,
    "w": 390,
    "h": 844,
    "page": "themes",
@@ -2181,7 +2181,7 @@
   },
   "ThemeSwiss.dc.html": {
    "x": 0,
-   "y": 18840,
+   "y": 18962,
    "w": 1440,
    "h": 900,
    "page": "themes",
@@ -2190,7 +2190,7 @@
   },
   "ThemeSwissLibrary.dc.html": {
    "x": 3040,
-   "y": 18840,
+   "y": 18962,
    "w": 1440,
    "h": 900,
    "page": "themes",
@@ -2199,7 +2199,7 @@
   },
   "ThemeSwissReview.dc.html": {
    "x": 6080,
-   "y": 18840,
+   "y": 18962,
    "w": 1440,
    "h": 900,
    "page": "themes",
@@ -2208,7 +2208,7 @@
   },
   "ThemeSwissReviewPhone.dc.html": {
    "x": 9120,
-   "y": 18840,
+   "y": 18962,
    "w": 390,
    "h": 844,
    "page": "themes",
@@ -2217,7 +2217,7 @@
   },
   "ThemeSwissProfilePhone.dc.html": {
    "x": 9590,
-   "y": 18840,
+   "y": 18962,
    "w": 390,
    "h": 844,
    "page": "themes",
@@ -2648,7 +2648,7 @@
    "is_interactive": true
   },
   "WebProfileEdit.dc.html": {
-   "x": 1520,
+   "x": 4560,
    "y": 5224,
    "w": 1440,
    "h": 900,
@@ -2657,7 +2657,7 @@
    "is_interactive": true
   },
   "WebProfileEditTaken.dc.html": {
-   "x": 3040,
+   "x": 6080,
    "y": 5224,
    "w": 1440,
    "h": 900,
@@ -2666,7 +2666,7 @@
    "is_interactive": true
   },
   "WebProfileEmpty.dc.html": {
-   "x": 4560,
+   "x": 7600,
    "y": 5224,
    "w": 1440,
    "h": 900,
@@ -2675,7 +2675,7 @@
    "is_interactive": true
   },
   "WebProfileFollowing.dc.html": {
-   "x": 6080,
+   "x": 9120,
    "y": 5224,
    "w": 1440,
    "h": 900,
@@ -2684,7 +2684,7 @@
    "is_interactive": true
   },
   "WebProfileLoading.dc.html": {
-   "x": 7600,
+   "x": 10640,
    "y": 5224,
    "w": 1440,
    "h": 900,
@@ -2693,7 +2693,7 @@
    "is_interactive": true
   },
   "WebProfileMissing.dc.html": {
-   "x": 9120,
+   "x": 12160,
    "y": 5224,
    "w": 1440,
    "h": 900,
@@ -2702,7 +2702,7 @@
    "is_interactive": true
   },
   "WebProfileOther.dc.html": {
-   "x": 10640,
+   "x": 13680,
    "y": 5224,
    "w": 1440,
    "h": 900,
@@ -2711,7 +2711,7 @@
    "is_interactive": true
   },
   "WebProfilePin.dc.html": {
-   "x": 12160,
+   "x": 15200,
    "y": 5224,
    "w": 1440,
    "h": 900,
@@ -2720,7 +2720,7 @@
    "is_interactive": true
   },
   "WebProfileSaved.dc.html": {
-   "x": 15200,
+   "x": 18240,
    "y": 5224,
    "w": 1440,
    "h": 900,
@@ -2729,7 +2729,7 @@
    "is_interactive": true
   },
   "WebProfileSignedOut.dc.html": {
-   "x": 16720,
+   "x": 19760,
    "y": 5224,
    "w": 1440,
    "h": 900,
@@ -2738,7 +2738,7 @@
    "is_interactive": true
   },
   "WebProfileSuggestions.dc.html": {
-   "x": 18240,
+   "x": 21280,
    "y": 5224,
    "w": 1440,
    "h": 900,
@@ -2747,7 +2747,7 @@
    "is_interactive": true
   },
   "WebProfileDark.dc.html": {
-   "x": 19760,
+   "x": 22800,
    "y": 5224,
    "w": 1440,
    "h": 900,
@@ -2756,7 +2756,7 @@
    "is_interactive": true
   },
   "WebProfileGray.dc.html": {
-   "x": 21280,
+   "x": 24320,
    "y": 5224,
    "w": 1440,
    "h": 900,
@@ -2774,7 +2774,7 @@
    "is_interactive": true
   },
   "PhoneProfileEdit.dc.html": {
-   "x": 470,
+   "x": 1410,
    "y": 6544,
    "w": 390,
    "h": 844,
@@ -2783,7 +2783,7 @@
    "is_interactive": true
   },
   "PhoneProfileEmpty.dc.html": {
-   "x": 940,
+   "x": 1880,
    "y": 6544,
    "w": 390,
    "h": 844,
@@ -2792,7 +2792,7 @@
    "is_interactive": true
   },
   "PhoneProfileFollowing.dc.html": {
-   "x": 1410,
+   "x": 2350,
    "y": 6544,
    "w": 390,
    "h": 844,
@@ -2801,7 +2801,7 @@
    "is_interactive": true
   },
   "PhoneProfileLoading.dc.html": {
-   "x": 1880,
+   "x": 2820,
    "y": 6544,
    "w": 390,
    "h": 844,
@@ -2810,7 +2810,7 @@
    "is_interactive": true
   },
   "PhoneProfileMissing.dc.html": {
-   "x": 2350,
+   "x": 3290,
    "y": 6544,
    "w": 390,
    "h": 844,
@@ -2819,7 +2819,7 @@
    "is_interactive": true
   },
   "PhoneProfileOther.dc.html": {
-   "x": 2820,
+   "x": 3760,
    "y": 6544,
    "w": 390,
    "h": 844,
@@ -2828,7 +2828,7 @@
    "is_interactive": true
   },
   "PhoneProfileSaved.dc.html": {
-   "x": 3760,
+   "x": 4700,
    "y": 6544,
    "w": 390,
    "h": 844,
@@ -2837,7 +2837,7 @@
    "is_interactive": true
   },
   "PhoneProfileSignedOut.dc.html": {
-   "x": 4230,
+   "x": 5170,
    "y": 6544,
    "w": 390,
    "h": 844,
@@ -2846,7 +2846,7 @@
    "is_interactive": true
   },
   "PhoneProfileSuggestions.dc.html": {
-   "x": 4700,
+   "x": 5640,
    "y": 6544,
    "w": 390,
    "h": 844,
@@ -2855,7 +2855,7 @@
    "is_interactive": true
   },
   "PhoneProfileDark.dc.html": {
-   "x": 5170,
+   "x": 6110,
    "y": 6544,
    "w": 390,
    "h": 844,
@@ -2864,7 +2864,7 @@
    "is_interactive": true
   },
   "PhoneProfileGray.dc.html": {
-   "x": 5640,
+   "x": 6580,
    "y": 6544,
    "w": 390,
    "h": 844,
@@ -3299,7 +3299,7 @@
    "x": 1520,
    "y": 5224,
    "w": 390,
-   "h": 1562,
+   "h": 1889,
    "page": "pro",
    "title": "iPhone · Settings · on Free (Tune to you is Pro)",
    "is_interactive": true
@@ -3675,7 +3675,7 @@
   },
   "WebAdmin.dc.html": {
    "x": 0,
-   "y": 9790,
+   "y": 10117,
    "w": 1440,
    "h": 900,
    "page": "classes",
@@ -3684,7 +3684,7 @@
   },
   "WebAdminDenied.dc.html": {
    "x": 1520,
-   "y": 9790,
+   "y": 10117,
    "w": 1440,
    "h": 900,
    "page": "classes",
@@ -3693,7 +3693,7 @@
   },
   "WebAdminEmpty.dc.html": {
    "x": 3040,
-   "y": 9790,
+   "y": 10117,
    "w": 1440,
    "h": 900,
    "page": "classes",
@@ -3702,7 +3702,7 @@
   },
   "WebAdminReports.dc.html": {
    "x": 4560,
-   "y": 9790,
+   "y": 10117,
    "w": 1440,
    "h": 900,
    "page": "classes",
@@ -3711,7 +3711,7 @@
   },
   "WebAdminDark.dc.html": {
    "x": 6080,
-   "y": 9790,
+   "y": 10117,
    "w": 1440,
    "h": 900,
    "page": "classes",
@@ -3767,14 +3767,14 @@
    "x": 7020,
    "y": 0,
    "w": 390,
-   "h": 1260,
+   "h": 1382,
    "page": "themes",
    "title": "iPhone · Settings › Theme › a theme’s page",
    "is_interactive": true
   },
   "ThemeRubberFree.dc.html": {
    "x": 1520,
-   "y": 1680,
+   "y": 1802,
    "w": 1440,
    "h": 900,
    "page": "themes",
@@ -3783,7 +3783,7 @@
   },
   "ThemeRubberDeck.dc.html": {
    "x": 4560,
-   "y": 1680,
+   "y": 1802,
    "w": 1440,
    "h": 900,
    "page": "themes",
@@ -3792,7 +3792,7 @@
   },
   "ThemeRubberLearn.dc.html": {
    "x": 7600,
-   "y": 1680,
+   "y": 1802,
    "w": 1440,
    "h": 900,
    "page": "themes",
@@ -3801,7 +3801,7 @@
   },
   "ThemeChromeFree.dc.html": {
    "x": 1520,
-   "y": 3000,
+   "y": 3122,
    "w": 1440,
    "h": 900,
    "page": "themes",
@@ -3810,7 +3810,7 @@
   },
   "ThemeChromeDeck.dc.html": {
    "x": 4560,
-   "y": 3000,
+   "y": 3122,
    "w": 1440,
    "h": 900,
    "page": "themes",
@@ -3819,7 +3819,7 @@
   },
   "ThemeChromeLearn.dc.html": {
    "x": 7600,
-   "y": 3000,
+   "y": 3122,
    "w": 1440,
    "h": 900,
    "page": "themes",
@@ -3828,7 +3828,7 @@
   },
   "ThemeAeroFree.dc.html": {
    "x": 1520,
-   "y": 4320,
+   "y": 4442,
    "w": 1440,
    "h": 900,
    "page": "themes",
@@ -3837,7 +3837,7 @@
   },
   "ThemeAeroDeck.dc.html": {
    "x": 4560,
-   "y": 4320,
+   "y": 4442,
    "w": 1440,
    "h": 900,
    "page": "themes",
@@ -3846,7 +3846,7 @@
   },
   "ThemeAeroLearn.dc.html": {
    "x": 7600,
-   "y": 4320,
+   "y": 4442,
    "w": 1440,
    "h": 900,
    "page": "themes",
@@ -3855,7 +3855,7 @@
   },
   "ThemeLiminalFree.dc.html": {
    "x": 1520,
-   "y": 5640,
+   "y": 5762,
    "w": 1440,
    "h": 900,
    "page": "themes",
@@ -3864,7 +3864,7 @@
   },
   "ThemeLiminalDeck.dc.html": {
    "x": 4560,
-   "y": 5640,
+   "y": 5762,
    "w": 1440,
    "h": 900,
    "page": "themes",
@@ -3873,7 +3873,7 @@
   },
   "ThemeLiminalLearn.dc.html": {
    "x": 7600,
-   "y": 5640,
+   "y": 5762,
    "w": 1440,
    "h": 900,
    "page": "themes",
@@ -3882,7 +3882,7 @@
   },
   "ThemeLiminalRoomFree.dc.html": {
    "x": 1520,
-   "y": 6960,
+   "y": 7082,
    "w": 1440,
    "h": 900,
    "page": "themes",
@@ -3891,7 +3891,7 @@
   },
   "ThemeLiminalRoomDeck.dc.html": {
    "x": 4560,
-   "y": 6960,
+   "y": 7082,
    "w": 1440,
    "h": 900,
    "page": "themes",
@@ -3900,7 +3900,7 @@
   },
   "ThemeLiminalRoomLearn.dc.html": {
    "x": 7600,
-   "y": 6960,
+   "y": 7082,
    "w": 1440,
    "h": 900,
    "page": "themes",
@@ -3909,7 +3909,7 @@
   },
   "ThemeDreamcoreFree.dc.html": {
    "x": 1520,
-   "y": 8280,
+   "y": 8402,
    "w": 1440,
    "h": 900,
    "page": "themes",
@@ -3918,7 +3918,7 @@
   },
   "ThemeDreamcoreDeck.dc.html": {
    "x": 4560,
-   "y": 8280,
+   "y": 8402,
    "w": 1440,
    "h": 900,
    "page": "themes",
@@ -3927,7 +3927,7 @@
   },
   "ThemeDreamcoreLearn.dc.html": {
    "x": 7600,
-   "y": 8280,
+   "y": 8402,
    "w": 1440,
    "h": 900,
    "page": "themes",
@@ -3936,7 +3936,7 @@
   },
   "ThemeVaporwaveFree.dc.html": {
    "x": 1520,
-   "y": 9600,
+   "y": 9722,
    "w": 1440,
    "h": 900,
    "page": "themes",
@@ -3945,7 +3945,7 @@
   },
   "ThemeVaporwaveDeck.dc.html": {
    "x": 4560,
-   "y": 9600,
+   "y": 9722,
    "w": 1440,
    "h": 900,
    "page": "themes",
@@ -3954,7 +3954,7 @@
   },
   "ThemeVaporwaveLearn.dc.html": {
    "x": 7600,
-   "y": 9600,
+   "y": 9722,
    "w": 1440,
    "h": 900,
    "page": "themes",
@@ -3963,7 +3963,7 @@
   },
   "ThemeVaporDolphinsFree.dc.html": {
    "x": 1520,
-   "y": 10920,
+   "y": 11042,
    "w": 1440,
    "h": 900,
    "page": "themes",
@@ -3972,7 +3972,7 @@
   },
   "ThemeVaporDolphinsDeck.dc.html": {
    "x": 4560,
-   "y": 10920,
+   "y": 11042,
    "w": 1440,
    "h": 900,
    "page": "themes",
@@ -3981,7 +3981,7 @@
   },
   "ThemeVaporDolphinsLearn.dc.html": {
    "x": 7600,
-   "y": 10920,
+   "y": 11042,
    "w": 1440,
    "h": 900,
    "page": "themes",
@@ -3990,7 +3990,7 @@
   },
   "ThemeTerminalFree.dc.html": {
    "x": 1520,
-   "y": 12240,
+   "y": 12362,
    "w": 1440,
    "h": 900,
    "page": "themes",
@@ -3999,7 +3999,7 @@
   },
   "ThemeTerminalDeck.dc.html": {
    "x": 4560,
-   "y": 12240,
+   "y": 12362,
    "w": 1440,
    "h": 900,
    "page": "themes",
@@ -4008,7 +4008,7 @@
   },
   "ThemeTerminalLearn.dc.html": {
    "x": 7600,
-   "y": 12240,
+   "y": 12362,
    "w": 1440,
    "h": 900,
    "page": "themes",
@@ -4017,7 +4017,7 @@
   },
   "ThemeZineFree.dc.html": {
    "x": 1520,
-   "y": 13560,
+   "y": 13682,
    "w": 1440,
    "h": 900,
    "page": "themes",
@@ -4026,7 +4026,7 @@
   },
   "ThemeZineDeck.dc.html": {
    "x": 4560,
-   "y": 13560,
+   "y": 13682,
    "w": 1440,
    "h": 900,
    "page": "themes",
@@ -4035,7 +4035,7 @@
   },
   "ThemeZineLearn.dc.html": {
    "x": 7600,
-   "y": 13560,
+   "y": 13682,
    "w": 1440,
    "h": 900,
    "page": "themes",
@@ -4044,7 +4044,7 @@
   },
   "ThemeGlassFree.dc.html": {
    "x": 1520,
-   "y": 14880,
+   "y": 15002,
    "w": 1440,
    "h": 900,
    "page": "themes",
@@ -4053,7 +4053,7 @@
   },
   "ThemeGlassDeck.dc.html": {
    "x": 4560,
-   "y": 14880,
+   "y": 15002,
    "w": 1440,
    "h": 900,
    "page": "themes",
@@ -4062,7 +4062,7 @@
   },
   "ThemeGlassLearn.dc.html": {
    "x": 7600,
-   "y": 14880,
+   "y": 15002,
    "w": 1440,
    "h": 900,
    "page": "themes",
@@ -4071,7 +4071,7 @@
   },
   "ThemeTopoFree.dc.html": {
    "x": 1520,
-   "y": 16200,
+   "y": 16322,
    "w": 1440,
    "h": 900,
    "page": "themes",
@@ -4080,7 +4080,7 @@
   },
   "ThemeTopoDeck.dc.html": {
    "x": 4560,
-   "y": 16200,
+   "y": 16322,
    "w": 1440,
    "h": 900,
    "page": "themes",
@@ -4089,7 +4089,7 @@
   },
   "ThemeTopoLearn.dc.html": {
    "x": 7600,
-   "y": 16200,
+   "y": 16322,
    "w": 1440,
    "h": 900,
    "page": "themes",
@@ -4098,7 +4098,7 @@
   },
   "ThemeRisoFree.dc.html": {
    "x": 1520,
-   "y": 17520,
+   "y": 17642,
    "w": 1440,
    "h": 900,
    "page": "themes",
@@ -4107,7 +4107,7 @@
   },
   "ThemeRisoDeck.dc.html": {
    "x": 4560,
-   "y": 17520,
+   "y": 17642,
    "w": 1440,
    "h": 900,
    "page": "themes",
@@ -4116,7 +4116,7 @@
   },
   "ThemeRisoLearn.dc.html": {
    "x": 7600,
-   "y": 17520,
+   "y": 17642,
    "w": 1440,
    "h": 900,
    "page": "themes",
@@ -4125,7 +4125,7 @@
   },
   "ThemeSwissFree.dc.html": {
    "x": 1520,
-   "y": 18840,
+   "y": 18962,
    "w": 1440,
    "h": 900,
    "page": "themes",
@@ -4134,7 +4134,7 @@
   },
   "ThemeSwissDeck.dc.html": {
    "x": 4560,
-   "y": 18840,
+   "y": 18962,
    "w": 1440,
    "h": 900,
    "page": "themes",
@@ -4143,7 +4143,7 @@
   },
   "ThemeSwissLearn.dc.html": {
    "x": 7600,
-   "y": 18840,
+   "y": 18962,
    "w": 1440,
    "h": 900,
    "page": "themes",
@@ -4205,7 +4205,7 @@
    "is_interactive": true
   },
   "WebProfileReport.dc.html": {
-   "x": 13680,
+   "x": 16720,
    "y": 5224,
    "w": 1440,
    "h": 900,
@@ -4214,7 +4214,7 @@
    "is_interactive": true
   },
   "PhoneProfileReport.dc.html": {
-   "x": 3290,
+   "x": 4230,
    "y": 6544,
    "w": 390,
    "h": 844,
@@ -4235,9 +4235,153 @@
    "x": 1520,
    "y": 7808,
    "w": 390,
-   "h": 1562,
+   "h": 1889,
    "page": "classes",
    "title": "iPhone · Settings · a verified teacher (Get verified says Verified teacher)",
+   "is_interactive": true
+  },
+  "WebProfileBlock.dc.html": {
+   "x": 1520,
+   "y": 5224,
+   "w": 1440,
+   "h": 900,
+   "page": "network",
+   "title": "Web · Profile · someone else’s · Block (the question)",
+   "is_interactive": true
+  },
+  "WebProfileBlocked.dc.html": {
+   "x": 3040,
+   "y": 5224,
+   "w": 1440,
+   "h": 900,
+   "page": "network",
+   "title": "Web · Profile · someone you blocked (Unblock)",
+   "is_interactive": true
+  },
+  "PhoneProfileBlock.dc.html": {
+   "x": 470,
+   "y": 6544,
+   "w": 390,
+   "h": 844,
+   "page": "network",
+   "title": "iPhone · Profile · someone else’s · Block (the question)",
+   "is_interactive": true
+  },
+  "PhoneProfileBlocked.dc.html": {
+   "x": 940,
+   "y": 6544,
+   "w": 390,
+   "h": 844,
+   "page": "network",
+   "title": "iPhone · Profile · someone you blocked (Unblock)",
+   "is_interactive": true
+  },
+  "SiteCompare.dc.html": {
+   "x": 0,
+   "y": 5272,
+   "w": 1440,
+   "h": 8313,
+   "page": "landing",
+   "title": "Site · Comparisons, alternatives, the hubs and the 404 · lucida.cards",
+   "is_interactive": true
+  },
+  "SiteComparePhone.dc.html": {
+   "x": 1520,
+   "y": 5272,
+   "w": 390,
+   "h": 15823,
+   "page": "landing",
+   "title": "Site · Comparisons, alternatives, the hubs and the 404 · lucida.cards on a phone",
+   "is_interactive": true
+  },
+  "SiteFeature.dc.html": {
+   "x": 1990,
+   "y": 5272,
+   "w": 1440,
+   "h": 8958,
+   "page": "landing",
+   "title": "Site · Features and who Lucida is for · lucida.cards",
+   "is_interactive": true
+  },
+  "SiteFeaturePhone.dc.html": {
+   "x": 3510,
+   "y": 5272,
+   "w": 390,
+   "h": 13783,
+   "page": "landing",
+   "title": "Site · Features and who Lucida is for · lucida.cards on a phone",
+   "is_interactive": true
+  },
+  "SiteFaq.dc.html": {
+   "x": 3980,
+   "y": 5272,
+   "w": 1440,
+   "h": 9361,
+   "page": "landing",
+   "title": "Site · FAQ · lucida.cards",
+   "is_interactive": true
+  },
+  "SiteFaqPhone.dc.html": {
+   "x": 5500,
+   "y": 5272,
+   "w": 390,
+   "h": 11973,
+   "page": "landing",
+   "title": "Site · FAQ · lucida.cards on a phone",
+   "is_interactive": true
+  },
+  "SiteConnect.dc.html": {
+   "x": 0,
+   "y": 21515,
+   "w": 1440,
+   "h": 3336,
+   "page": "landing",
+   "title": "Connect Lucida to your AI · lucida.cards/connect",
+   "is_interactive": true
+  },
+  "SiteOg.dc.html": {
+   "x": 1520,
+   "y": 21515,
+   "w": 1200,
+   "h": 630,
+   "page": "landing",
+   "title": "Site · Link preview picture (1200 × 630) for any page",
+   "is_interactive": true
+  },
+  "WebSettingsDelete.dc.html": {
+   "x": 12160,
+   "y": 5280,
+   "w": 1440,
+   "h": 900,
+   "page": "sidebar",
+   "title": "Web · Settings · Delete account (the question)",
+   "is_interactive": true
+  },
+  "PhoneSettingsDelete.dc.html": {
+   "x": 6110,
+   "y": 0,
+   "w": 390,
+   "h": 1889,
+   "page": "phone",
+   "title": "iPhone · Settings · Delete account (the question)",
+   "is_interactive": true
+  },
+  "WebConnectConsent.dc.html": {
+   "x": 3040,
+   "y": 7920,
+   "w": 1440,
+   "h": 900,
+   "page": "sidebar",
+   "title": "Web · An AI app asks to connect (Allow or Cancel)",
+   "is_interactive": true
+  },
+  "PhoneConnectConsent.dc.html": {
+   "x": 940,
+   "y": 3900,
+   "w": 390,
+   "h": 844,
+   "page": "phone",
+   "title": "iPhone · An AI app asks to connect (Allow or Cancel)",
    "is_interactive": true
   }
  },
@@ -4431,15 +4575,6 @@
    "x": 0,
    "y": -300
   },
-  "lTitle": {
-   "kind": "title1",
-   "maxW": 6940,
-   "page": "landing",
-   "text": "lucida.cards",
-   "w": 240,
-   "x": 0,
-   "y": -300
-  },
   "mTitle": {
    "kind": "title1",
    "maxW": 1440,
@@ -4586,7 +4721,7 @@
   },
   "aNetwork4": {
    "kind": "title1",
-   "maxW": 22720,
+   "maxW": 25760,
    "page": "network",
    "text": "Profiles",
    "w": 240,
@@ -4595,7 +4730,7 @@
   },
   "aNetwork5": {
    "kind": "title1",
-   "maxW": 6030,
+   "maxW": 6970,
    "page": "network",
    "text": "Profiles on iPhone",
    "w": 240,
@@ -4789,7 +4924,34 @@
    "text": "Admin (computers only)",
    "w": 240,
    "x": 0,
-   "y": 9490
+   "y": 9817
+  },
+  "aLanding0": {
+   "kind": "title1",
+   "maxW": 6940,
+   "page": "landing",
+   "text": "lucida.cards: home, privacy, terms and pricing",
+   "w": 240,
+   "x": 0,
+   "y": -300
+  },
+  "aLanding1": {
+   "kind": "title1",
+   "maxW": 5890,
+   "page": "landing",
+   "text": "Comparison, feature and FAQ pages (each board has a page picker in its Tweaks)",
+   "w": 240,
+   "x": 0,
+   "y": 4972
+  },
+  "aLanding2": {
+   "kind": "title1",
+   "maxW": 2720,
+   "page": "landing",
+   "text": "Connect Lucida (lucida.cards/connect), and the link-preview pictures",
+   "w": 240,
+   "x": 0,
+   "y": 21215
   },
   "aThemes0": {
    "kind": "title1",
@@ -4807,7 +4969,7 @@
    "text": "Rubber hose",
    "w": 240,
    "x": 0,
-   "y": 1380
+   "y": 1502
   },
   "aThemes2": {
    "kind": "title1",
@@ -4816,7 +4978,7 @@
    "text": "Liquid chrome",
    "w": 240,
    "x": 0,
-   "y": 2700
+   "y": 2822
   },
   "aThemes3": {
    "kind": "title1",
@@ -4825,7 +4987,7 @@
    "text": "Frutiger Aero",
    "w": 240,
    "x": 0,
-   "y": 4020
+   "y": 4142
   },
   "aThemes4": {
    "kind": "title1",
@@ -4834,7 +4996,7 @@
    "text": "Liminal · Flooded hall",
    "w": 240,
    "x": 0,
-   "y": 5340
+   "y": 5462
   },
   "aThemes5": {
    "kind": "title1",
@@ -4843,7 +5005,7 @@
    "text": "Liminal · Empty room",
    "w": 240,
    "x": 0,
-   "y": 6660
+   "y": 6782
   },
   "aThemes6": {
    "kind": "title1",
@@ -4852,7 +5014,7 @@
    "text": "Dreamcore",
    "w": 240,
    "x": 0,
-   "y": 7980
+   "y": 8102
   },
   "aThemes7": {
    "kind": "title1",
@@ -4861,7 +5023,7 @@
    "text": "Vaporwave · Poolside",
    "w": 240,
    "x": 0,
-   "y": 9300
+   "y": 9422
   },
   "aThemes8": {
    "kind": "title1",
@@ -4870,7 +5032,7 @@
    "text": "Vaporwave · Dolphins",
    "w": 240,
    "x": 0,
-   "y": 10620
+   "y": 10742
   },
   "aThemes9": {
    "kind": "title1",
@@ -4879,7 +5041,7 @@
    "text": "Terminal",
    "w": 240,
    "x": 0,
-   "y": 11940
+   "y": 12062
   },
   "aThemes10": {
    "kind": "title1",
@@ -4888,7 +5050,7 @@
    "text": "Zine collage",
    "w": 240,
    "x": 0,
-   "y": 13260
+   "y": 13382
   },
   "aThemes11": {
    "kind": "title1",
@@ -4897,7 +5059,7 @@
    "text": "Frosted glass",
    "w": 240,
    "x": 0,
-   "y": 14580
+   "y": 14702
   },
   "aThemes12": {
    "kind": "title1",
@@ -4906,7 +5068,7 @@
    "text": "Topographic",
    "w": 240,
    "x": 0,
-   "y": 15900
+   "y": 16022
   },
   "aThemes13": {
    "kind": "title1",
@@ -4915,7 +5077,7 @@
    "text": "Risograph",
    "w": 240,
    "x": 0,
-   "y": 17220
+   "y": 17342
   },
   "aThemes14": {
    "kind": "title1",
@@ -4924,7 +5086,7 @@
    "text": "Swiss poster",
    "w": 240,
    "x": 0,
-   "y": 18540
+   "y": 18662
   }
  },
  "order": [
@@ -5398,7 +5560,23 @@
   "WebProfileReport.dc.html",
   "PhoneProfileReport.dc.html",
   "WebSettingsVerified.dc.html",
-  "PhoneSettingsVerified.dc.html"
+  "PhoneSettingsVerified.dc.html",
+  "WebProfileBlock.dc.html",
+  "WebProfileBlocked.dc.html",
+  "PhoneProfileBlock.dc.html",
+  "PhoneProfileBlocked.dc.html",
+  "SiteCompare.dc.html",
+  "SiteComparePhone.dc.html",
+  "SiteFeature.dc.html",
+  "SiteFeaturePhone.dc.html",
+  "SiteFaq.dc.html",
+  "SiteFaqPhone.dc.html",
+  "SiteConnect.dc.html",
+  "SiteOg.dc.html",
+  "WebSettingsDelete.dc.html",
+  "PhoneSettingsDelete.dc.html",
+  "WebConnectConsent.dc.html",
+  "PhoneConnectConsent.dc.html"
  ],
  "pages": [
   {
