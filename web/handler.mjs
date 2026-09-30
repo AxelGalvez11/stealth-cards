@@ -10,6 +10,7 @@ import { state, apply, withLibrary, revOf, putMediaLater, mediaLink, MEDIA, aiLe
 import { aiReady, explain } from './ai.mjs';
 import { FREE_EXPLAINS, PRO_EXPLAINS } from './plans.mjs';
 import { mcp } from './mcp.mjs';
+import * as oauth from './oauth.mjs';
 import { EXT, HEIC, sniff } from './media.mjs';
 import { cloud, auth } from './supa.mjs';
 import { who, forget, accessToken, sessionCookies, clearCookies, pkce, verifier, clearPkce, linkOwner, sameLink,
@@ -191,6 +192,29 @@ async function signIn(req, res, path) {
       return send(res, 200, { ok: true });
     } catch (e) { return send(res, 400, { error: e.status === 429 ? 'Too many tries for now. Wait a minute, then try again.' : 'That code didn’t work. Check the newest email, or send a new code.' }); }
   }
+  // A password, for people who set one (Settings → Account → Password). Directory reviewers can't get an email code, so this is how
+  // they sign in. The same plain answer whether the email is unknown or the password is wrong.
+  if (path === '/api/auth/password' && req.method === 'POST') {
+    const b = jsonOf(await readBody(req, 1e4)), email = String(b.email || '').trim().toLowerCase(), password = String(b.password || '');
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || email.length > 254 || !password || password.length > 200) return send(res, 400, { error: 'Type your email and password.' });
+    try { const s = await auth.password(email, password); res.setHeader('set-cookie', sessionCookies(req, s)); return send(res, 200, { ok: true }); }
+    catch (e) { return send(res, e.status === 429 ? 429 : 400, { error: e.status === 429 ? 'Too many tries for now. Wait a minute, then try again.' : e.status >= 500 || !e.status ? TRY_AGAIN : 'That email and password don’t match.' }); }
+  }
+  if (path === '/api/auth/password/set' && req.method === 'POST') {
+    const w = await who(req);
+    if (w.set.length) res.setHeader('set-cookie', w.set);
+    if (!w.user) return send(res, 401, { error: 'Sign in to Lucida.', signIn: true });
+    const password = String(jsonOf(await readBody(req, 1e4)).password || '');
+    if (password.length < 8 || password.length > 72) return send(res, 400, { error: 'Use 8 to 72 characters.' });
+    try { await auth.setPassword(w.token, password); return send(res, 200, { ok: true }); }
+    catch (e) {
+      const why = String(e.body || '');
+      if (/reauth/i.test(why)) return send(res, 400, { error: 'For safety, sign out and sign in again, then set your password.' });
+      if (/same_password|different from the old/i.test(why)) return send(res, 400, { error: 'That’s the password you have now. Pick a new one.' });
+      if (/weak_password|too weak|should contain|Password should/i.test(why)) return send(res, 400, { error: 'That password is too easy to guess. Try a longer one.' });
+      return send(res, e.status === 429 ? 429 : 400, { error: e.status === 429 ? 'Too many tries for now. Wait a minute, then try again.' : TRY_AGAIN });
+    }
+  }
   if (path === '/api/auth/signout' && req.method === 'POST') {
     const token = accessToken(req);
     if (token) { forget(token); await auth.signOut(token).catch(() => {}); }
@@ -347,6 +371,52 @@ async function liveApi(req, res, m, uid) {
   return send(res, 404, { error: 'Not found' });
 }
 
+// AI apps at /mcp. On this computer it is open (the one local library). Online it opens the signed-in person's own library, for
+//   - the old way: the person's own secret link, /mcp/lk_… (every link that was ever given out keeps working), or
+//   - a token from signing in to Lucida (oauth.mjs), sent as `Authorization: Bearer …` to /mcp.
+// With neither, the answer is 401 pointing at how to sign in (never a 200), which is what starts the sign-in in Claude and ChatGPT.
+async function mcpRoute(req, res, path) {
+  const origin = oauth.canonical(req), from = oauth.mcpOrigin(req);
+  // A web page may only ask from this site, an AI app's own site, or an app on this computer.
+  if (!from.ok) return send(res, 403, { error: 'Forbidden' });
+  if (from.cors) for (const [k, v] of Object.entries(from.cors)) res.setHeader(k, v);
+  if (req.method === 'OPTIONS') {
+    res.writeHead(from.cors ? 204 : 404, { 'access-control-allow-methods': 'POST, GET, DELETE, OPTIONS', 'access-control-allow-headers': 'authorization, content-type, mcp-session-id, mcp-protocol-version, accept, last-event-id', 'access-control-max-age': '600' });
+    return res.end();
+  }
+  const key = path.slice(5), bearer = /^Bearer\s+(\S+)$/i.exec(String(req.headers.authorization || ''));
+  const read = async () => (req.method === 'POST' ? String(await readBody(req, 5e6)) : '');
+  const unauthorized = (error = '', description = '') => {
+    res.writeHead(401, { 'content-type': 'application/json', 'cache-control': 'no-store', 'www-authenticate': oauth.challenge(origin, { error, description }) });
+    res.end(JSON.stringify({ error: error || 'unauthorized', error_description: description || 'Sign in to Lucida to use this.' }));
+  };
+  // This computer doesn't ask apps to sign in (Claude Code just connects), unless LUCIDA_MCP_LOGIN=1 asks for what happens online.
+  const asks = cloud() || process.env.LUCIDA_MCP_LOGIN === '1';
+  if (!asks && !bearer) { const body = await read(); return run(res, null, out => mcp(req, out, body, null)); }
+  // The person's own link (the address itself says which library, so a token sent along with it isn't looked at). Free has a limit on
+  // pictures and sound (store.mjs); a link only knows whose it is, so Pro is looked up by id.
+  if (cloud() && key) {
+    const uid = linkOwner(key);
+    const denied = () => send(res, 401, { jsonrpc: '2.0', id: null, error: { code: -32001, message: 'This Lucida link doesn’t work anymore. Copy the link again from the Connect AI page.' } });
+    if (!uid) return denied();
+    const { pro } = await planOf(uid, ''), body = await read();
+    try {
+      return await run(res, uid, async out => {
+        if (!sameLink(state().ai.key, key)) { out.writeHead(401, { 'content-type': 'application/json' }).end(JSON.stringify({ jsonrpc: '2.0', id: null, error: { code: -32001, message: 'This Lucida link doesn’t work anymore. Copy the link again from the Connect AI page.' } })); return; }
+        await mcp(req, out, body, uid);
+      }, { existing: true, pro });
+    } catch (e) { if (e.status === 401) return denied(); throw e; }
+  }
+  if (!bearer) return unauthorized();
+  const t = await oauth.verify(bearer[1], origin), ended = 'That sign-in has ended. Connect the app to Lucida again.';
+  if (!t) return unauthorized('invalid_token', ended);
+  const lib = t.uid === 'local' ? null : t.uid, body = await read();
+  // A made-up person on this computer has the plan their name says (names starting with free are on Free); online it's looked up by id.
+  const pro = cloud() ? (await planOf(lib, '')).pro : isDev(lib) ? !lib.startsWith('dev_free') : undefined;
+  try { return await run(res, lib, out => mcp(req, out, body, lib, { scopes: t.scopes, origin }), { existing: cloud(), pro }); }
+  catch (e) { if (e.status === 401) return unauthorized('invalid_token', ended); throw e; }
+}
+
 // Runs fn against one library and gives back what it returned, again from the newer copy if another request saved
 // first (like run, below, for work that happens in steps).
 async function inLibrary(uid, fn, opts) {
@@ -394,9 +464,9 @@ export async function handle(req, res) {
   try { path = normalize(decodeURIComponent(new URL(req.url, 'http://localhost').pathname)); }
   catch { return send(res, 400, 'Bad request', 'text/plain'); }
   try {
-    const isApi = path.startsWith('/api/'), isMcp = path === '/mcp' || path.startsWith('/mcp/'), isAuth = path.startsWith('/api/auth/') || path.startsWith('/auth/');
+    const isApi = path.startsWith('/api/'), isMcp = path === '/mcp' || path.startsWith('/mcp/'), isAuth = path.startsWith('/api/auth/') || path.startsWith('/auth/'), isOauth = path.startsWith('/oauth/') || path.startsWith('/.well-known/oauth-');
     // On Vercel, saving needs the Supabase database; until it's linked, say so instead of losing changes.
-    if (process.env.VERCEL && !cloud() && (isApi || isMcp || isAuth)) return send(res, 503, { error: 'Lucida isn’t connected to its database yet, so nothing can be saved.' });
+    if (process.env.VERCEL && !cloud() && (isApi || isMcp || isAuth || isOauth)) return send(res, 503, { error: 'Lucida isn’t connected to its database yet, so nothing can be saved.' });
     if (path === '/api/stripe' && req.method === 'POST') return await stripe(req, res);
     if (path === '/pro' && req.method === 'GET') return await upgrade(req, res);
     // Trying the study network on this computer as someone else: /dev/as/maria (and /dev/as/ to be yourself again).
@@ -414,7 +484,20 @@ export async function handle(req, res) {
       else if (!viewer) viewer = 'local';
       try { return await publicApi(req, res, path, viewer); } catch (e) { console.error(e); return send(res, 500, { error: 'Something went wrong. Try again.' }); }
     }
-    if ((isApi || isMcp) && !sameSite(req)) return send(res, 403, { error: 'Forbidden' });
+    // AI apps signing in (oauth.mjs): the discovery documents, registering, and the token calls answer to anyone; the page where the
+    // person says Allow is the app's own (a board), which asks /api/oauth/request. Signed out, they sign in first and come back.
+    if (isOauth) {
+      if (path === '/oauth/authorize' && req.method === 'GET') {
+        const p = await oauth.personOf(req);
+        if (p.set.length) res.setHeader('set-cookie', p.set);
+        if (!p.id) return go(res, '/sign-in?next=' + encodeURIComponent(req.url));
+        res.setHeader('x-frame-options', 'DENY'); res.setHeader('content-security-policy', "frame-ancestors 'none'");
+        return await files(req, res, path, ROOT);
+      }
+      if (await oauth.route(req, res, path, { readBody })) return;
+      return send(res, 404, { error: 'Not found' });
+    }
+    if (isApi && !sameSite(req)) return send(res, 403, { error: 'Forbidden' });
 
     if (isAuth) {
       if (!cloud()) return send(res, 404, { error: 'Nobody signs in to Lucida on this computer.' });
@@ -422,22 +505,8 @@ export async function handle(req, res) {
       return done === null ? send(res, 404, { error: 'Not found' }) : done;
     }
 
-    // AI apps: on this computer at /mcp; online at the person's own link, /mcp/lk_…, which opens only their library.
-    if (isMcp) {
-      const body = req.method === 'POST' ? String(await readBody(req, 5e6)) : '';
-      if (!cloud()) return run(res, null, out => mcp(req, out, body, null));
-      const key = path.slice(5), uid = linkOwner(key);
-      const denied = () => send(res, 401, { jsonrpc: '2.0', id: null, error: { code: -32001, message: 'This Lucida link doesn’t work anymore. Copy the link again from the Connect AI page.' } });
-      if (!uid) return denied();
-      // Free has a limit on pictures and sound (store.mjs); a link only knows whose it is, so Pro is looked up by id.
-      const { pro } = await planOf(uid, '');
-      try {
-        return await run(res, uid, async out => {
-          if (!sameLink(state().ai.key, key)) { out.writeHead(401, { 'content-type': 'application/json' }).end(JSON.stringify({ jsonrpc: '2.0', id: null, error: { code: -32001, message: 'This Lucida link doesn’t work anymore. Copy the link again from the Connect AI page.' } })); return; }
-          await mcp(req, out, body, uid);
-        }, { existing: true, pro });
-      } catch (e) { if (e.status === 401) return denied(); throw e; }
-    }
+    // AI apps (see mcpRoute).
+    if (isMcp) return await mcpRoute(req, res, path);
 
     // Live's public routes, before the sign-in check (players have no account).
     const live = isApi && LIVE.exec(path);
@@ -457,6 +526,7 @@ export async function handle(req, res) {
       // The app's first load asks Stripe's news afresh, so Pro shows right after paying.
       if (user) me = await meOf(user, path === '/api/state');
       const body = req.method === 'POST' ? await readBody(req, path === '/api/media' ? 20e6 : 5e6) : null;
+      if (path.startsWith('/api/oauth/')) return await oauth.api(req, res, path, body, { uid: uid || 'local', email: (me && me.email) || '' });
       if (path === '/api/explain' && req.method === 'POST') return await explainReq(res, uid, me, jsonOf(body));
       return await run(res, uid, out => api(req, out, path, body, me, uid), { pro: me ? me.plan.pro : undefined });
     }

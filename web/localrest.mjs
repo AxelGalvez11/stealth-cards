@@ -30,6 +30,13 @@ export const TABLES = {
   class_progress: { key: ['assignment_id', 'user_id'], defaults: () => ({ learned: 0, total: 0, due: 0, remembered: null, last_at: null, updated_at: now() }) },
   verify_requests: { key: ['id'], defaults: () => ({ role: 'teacher', school: '', contact: '', status: 'open', created_at: now(), decided_at: null, decided_by: '' }) },
   reports: { key: ['id'], defaults: () => ({ target_name: '', reason: 'other', note: '', reporter: null, status: 'open', created_at: now(), decided_at: null }) },
+  // Sign-in for AI apps (web/oauth.mjs, supabase/oauth.sql): apps that registered themselves, one-time codes, one row per
+  // connected app (a grant), and the hashed tokens each grant holds. Deleting a grant's tokens and then the grant is what
+  // Supabase's "on delete cascade" does, and oauth.mjs does both itself.
+  oauth_clients: { key: ['client_id'], defaults: () => ({ client_name: '', redirect_uris: [], grant_types: ['authorization_code', 'refresh_token'], scope: '', client_uri: '', used: false, created_at: now() }) },
+  oauth_codes: { key: ['code_hash'], defaults: () => ({ client_name: '', client_host: '', scope: '', resource: '', used: false, created_at: now() }) },
+  oauth_grants: { key: ['id'], defaults: () => ({ client_name: '', client_host: '', scope: '', resource: '', created_at: now(), last_used_at: now() }) },
+  oauth_tokens: { key: ['token_hash'], defaults: () => ({ scope: '', resource: '', created_at: now() }) },
   // A view (supabase/hardening.sql deck_people), read only: how many different people study or copy each shared deck. A person
   // who copies a deck 25 times is one person.
   deck_people: { key: ['shared_id'], view: db => {

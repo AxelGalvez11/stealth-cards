@@ -76,7 +76,11 @@ export const auth = {
   // Google and Apple (see auth.mjs): their signed ID token, checked by Supabase against the raw nonce it was made for.
   idToken: (provider, id_token, nonce) => authCall('/token?grant_type=id_token', { provider, id_token, nonce }),
   // Apple sends the person's name only the first time, and not in the token, so it's saved to their account.
-  setName: (token, name) => call('/auth/v1/user', { method: 'PUT', key: publicKey(), headers: { ...json, authorization: 'Bearer ' + token }, body: JSON.stringify({ data: { full_name: name } }) })
+  setName: (token, name) => call('/auth/v1/user', { method: 'PUT', key: publicKey(), headers: { ...json, authorization: 'Bearer ' + token }, body: JSON.stringify({ data: { full_name: name } }) }),
+  // A password, for people who set one (Settings → Account → Password): Supabase's own password sign-in. It gives the same
+  // session as a code does. Directory reviewers can't receive an email code, so they sign in this way.
+  password: (email, password) => authCall('/token?grant_type=password', { email, password }),
+  setPassword: (token, password) => call('/auth/v1/user', { method: 'PUT', key: publicKey(), headers: { ...json, authorization: 'Bearer ' + token }, body: JSON.stringify({ password }) })
 };
 
 // The study network's tables (social.mjs): profiles, shared decks and their cards, versions, suggestions, follows,
