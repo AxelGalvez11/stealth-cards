@@ -71,8 +71,10 @@ struct RootView: View {
     #if DEBUG
     // The end-to-end test reads which themes' pictures are on screen from this invisible element (ThemeAudit).
     .overlay(alignment: .topLeading) {
-      TimelineView(.periodic(from: .now, by: 0.25)) { _ in
-        Color.clear.frame(width: 2, height: 2).accessibilityElement().accessibilityIdentifier("themeAudit").accessibilityValue(ThemeAudit.shared.summary)
+      if ThemeAudit.on {
+        TimelineView(.periodic(from: .now, by: 0.25)) { _ in
+          Color.clear.frame(width: 2, height: 2).accessibilityElement().accessibilityIdentifier("themeAudit").accessibilityValue(ThemeAudit.shared.summary)
+        }
       }
     }
     #endif

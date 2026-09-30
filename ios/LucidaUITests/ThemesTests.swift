@@ -63,7 +63,7 @@ final class ThemesTests: XCTestCase {
 
   private func launch(as who: String, _ extra: [String] = []) -> XCUIApplication {
     let app = XCUIApplication()
-    app.launchArguments = ["-server", Self.server, "-dev", who] + extra
+    app.launchArguments = ["-server", Self.server, "-dev", who, "-themeAudit"] + extra
     app.launch()
     return app
   }

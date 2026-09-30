@@ -193,6 +193,9 @@ struct ThemedName: View {
 /// (it stands in the page as an invisible element named themeAudit). Nothing of it is in a release build.
 final class ThemeAudit: @unchecked Sendable {
   static let shared = ThemeAudit()
+  /// Only when the themes test asks for it (`-themeAudit`): the element it reads refreshes four times a second, which keeps
+  /// the app from ever being still and slows every other test's taps and checks.
+  static let on = ProcessInfo.processInfo.arguments.contains("-themeAudit")
   private let lock = NSLock()
   private var counts: [String: Int] = [:]
   func mark(_ kind: String, _ key: String, _ by: Int) {
