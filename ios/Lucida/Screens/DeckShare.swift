@@ -128,8 +128,12 @@ struct DeckShareTab: View {
   }
 
   private func label(_ s: String) -> some View { Text(s).css(13, .semibold).line(13) }
-  /// A link out of the sheet goes to its page, with the sheet closed (like leaving the deck's page on the web).
-  private func go(_ open: () -> Void) { nav.close(); open() }
+  /// A link out of the sheet goes to its page, with the sheet closed (like leaving the deck's page on the web): the sheet goes
+  /// first, then the page comes in over the deck's.
+  private func go(_ open: @escaping () -> Void) {
+    nav.close()
+    DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) { open() }
+  }
 
   /// Whose it is (tap: its page), and for a deck you study, Suggest a change and Make it my own; a copy's Get updates.
   @ViewBuilder private func from(_ s: DeckSharing, _ lk: DeckSharing.Linked) -> some View {

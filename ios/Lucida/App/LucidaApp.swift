@@ -98,6 +98,8 @@ struct RootView: View {
           case let o where o.hasPrefix("deckpage:"): if let a = DeckAddress(path: String(o.dropFirst(9))) { nav.tab = .discover; nav.path = [.publicDeck(a)] }
           case let o where o.hasPrefix("history:"): if let a = DeckAddress(path: String(o.dropFirst(8)))?.plain { nav.tab = .discover; nav.path = [.history(a)] }
           case "suggestions": nav.tab = .library; nav.path = [.suggestions("")]
+          case let o where o.hasPrefix("suggestions:"):
+            if let d = store.lib.decks.first(where: { $0.name == String(o.dropFirst(12)) }) { nav.tab = .library; nav.path = [.suggestions(d.id)] }
           case "learn": nav.tab = .library; nav.path = [.deck(first)]; nav.sheet = .learnStart(first)
           case "decksettings": nav.tab = .library; nav.path = [.deck(first)]; nav.sheet = .deckSettings(first)
           // The welcome after the first sign-in, whether or not this library is new.

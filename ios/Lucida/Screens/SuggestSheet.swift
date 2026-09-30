@@ -50,6 +50,8 @@ final class SuggestModel: ObservableObject {
   func resetFields() { front = nil; back = nil; text = nil; remove = false }
   /// Opened from its button (no card yet) or from a card.
   func open(card: String) { step = card.isEmpty ? "pick" : "card"; cardId = card; resetFields(); sent = false; err = "" }
+  /// Opened by a link (?suggest=<card>): it starts where the link says, with the changes already added kept.
+  func startFresh() { step = nil; cardId = ""; resetFields(); q = ""; sent = false; err = "" }
 }
 
 struct SuggestSheet: View {
@@ -97,6 +99,9 @@ struct SuggestSheet: View {
     .foregroundStyle(t.text)
     .padding(.top, 16).padding(.horizontal, 20).padding(.bottom, keyboard.height > 0 ? keyboard.height + 12 : 34)
     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+    // A sheet is all there is while it's up (a screen reader shouldn't go on to the page behind it).
+    .accessibilityAddTraits(.isModal)
+    .accessibilityElement(children: .contain).accessibilityIdentifier("suggest-sheet")
   }
 
   /// The card a link points at: a card of this deck, or one in your library that came from it.
@@ -194,8 +199,8 @@ struct SuggestSheet: View {
           .background(Capsule().fill(t.inv)).compositingGroup().opacity(all.isEmpty ? 0.4 : 1)
       }
       .buttonStyle(.press)
+      .disabled(all.isEmpty || m.busy)
       .accessibilityLabel("Send to " + first)
-      .accessibilityAddTraits(all.isEmpty || m.busy ? .isStaticText : [])
     }
   }
 
@@ -305,8 +310,8 @@ struct SuggestSheet: View {
         .foregroundStyle(t.text).frame(maxWidth: .infinity).frame(height: 44).background(Capsule().fill(t.surf)).compositingGroup().opacity(on ? 1 : 0.4)
     }
     .buttonStyle(.press)
+    .disabled(!on)
     .accessibilityLabel(label)
-    .accessibilityAddTraits(on ? [] : .isStaticText)
   }
 
   /// A field for a card's words (SP_FIELD): its name, and a box `rows` lines tall.

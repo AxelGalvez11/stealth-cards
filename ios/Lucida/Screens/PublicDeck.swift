@@ -40,7 +40,11 @@ struct PublicDeckScreen: View {
   private func openWanted(_ p: PublicDeckPage) {
     guard !opened, let me = p.me, !me.owner else { return }
     if addr.copy { opened = true; withAnimation(.out(0.35)) { nav.sheet = .copyDeck(addr.plain) } }
-    else if !addr.suggest.isEmpty { opened = true; withAnimation(.out(0.35)) { nav.sheet = .suggest(addr.plain, start: addr.suggest) } }
+    else if !addr.suggest.isEmpty {
+      opened = true
+      SuggestModel.of(addr.plain.key).startFresh()
+      withAnimation(.out(0.35)) { nav.sheet = .suggest(addr.plain, start: addr.suggest) }
+    }
   }
 
   // ---------- before the page is here ----------
@@ -458,8 +462,8 @@ struct CopyDeckSheet: View {
               .compositingGroup().opacity(title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? 0.4 : 1)
           }
           .buttonStyle(.press)
+          .disabled(!ready)
           .frame(width: free / 2 + 48)
-          .accessibilityAddTraits(ready ? [] : .isStaticText)
         }
       }
       .frame(height: 48)
@@ -467,6 +471,8 @@ struct CopyDeckSheet: View {
     .foregroundStyle(t.text)
     .padding(.top, 22).padding(.horizontal, 20).padding(.bottom, keyboard.height > 0 ? keyboard.height + 12 : 34)
     .overlayPreferenceValue(FolderAnchor.self) { a in folderPopup(a, folders) }
+    .accessibilityAddTraits(.isModal)
+    .accessibilityElement(children: .contain).accessibilityIdentifier("copy-sheet")
   }
 
   /// The folders, beside the button: below it, or above when there isn't room below (like the web's menus).
