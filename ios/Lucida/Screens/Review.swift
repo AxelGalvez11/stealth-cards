@@ -113,6 +113,8 @@ extension Store {
     Task {
       let r = await send("review.grade", ["cardId": cardId, "rating": rating])
       if let id = r["logId"] as? String, session != nil, at < session!.graded.count { session!.graded[at].logId = id }
+      // The last card of the session: a class you share your progress with hears how far you got.
+      if !hasQueue(session?.deckId, pile: session?.pile) { classSync() }
     }
   }
 
@@ -126,6 +128,7 @@ extension Store {
     Task {
       let r = await send("review.grade", ["cardId": cardId, "pile": name])
       if let id = r["logId"] as? String, session != nil, at < session!.graded.count { session!.graded[at].logId = id }
+      if !hasQueue(session?.deckId, pile: session?.pile) { classSync() }
     }
   }
 
