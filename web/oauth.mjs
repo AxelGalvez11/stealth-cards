@@ -23,13 +23,17 @@ import { reach } from './media.mjs';
 export const SCOPES = { 'cards:read': 'See your decks, cards and study stats', 'cards:write': 'Add and change your cards and decks' };
 export const OFFLINE = 'offline_access';
 export const PRODUCTION = 'https://app.lucida.cards';
-const ACCESS_SECS = 3600, REFRESH_SECS = 90 * 86400, CODE_SECS = 300, MAX_GRANTS = 10;
+// How long a code (five minutes), an access token (an hour) and a refresh token (90 days, from the last refresh) last. The
+// LUCIDA_CODE_SECS, LUCIDA_ACCESS_SECS and LUCIDA_REFRESH_SECS settings shorten them, for checks that wait for them to run out.
+const secs = (name, dflt) => (+process.env[name] > 0 ? +process.env[name] : dflt);
+const ACCESS_SECS = () => secs('LUCIDA_ACCESS_SECS', 3600), REFRESH_SECS = () => secs('LUCIDA_REFRESH_SECS', 90 * 86400), CODE_SECS = () => secs('LUCIDA_CODE_SECS', 300), MAX_GRANTS = 10;
 
 const enc = encodeURIComponent;
 const rnd = n => randomBytes(n).toString('base64url');
 const sha = s => createHash('sha256').update(String(s)).digest('hex');
 const iso = ms => new Date(ms).toISOString();
-const clean = (s, n) => String(s ?? '').replace(/[\u0000-\u001f\u007f]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, n);
+// Text from an app (its name): no control characters, and none that change the direction of the text or hide in it.
+const clean = (s, n) => String(s ?? '').replace(/[\u200b-\u200f\u202a-\u202e\u2060-\u2069\ufeff]/g, '').replace(/[\u0000-\u001f\u007f]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, n);
 const words = s => [...new Set(String(s || '').split(/\s+/).filter(Boolean))];
 
 // ---------- addresses ----------
@@ -130,7 +134,7 @@ async function getDoc(href) {
 async function cimd(id) {
   let u; try { u = new URL(id); } catch { return null; }
   const path = id.replace(/^https:\/\/[^/?#]*/i, '').split('?')[0];
-  if (u.protocol !== 'https:' || u.username || u.password || id.includes('#') || u.pathname.length < 2 || path.split('/').some(s => s === '.' || s === '..')) return null;
+  if (u.protocol !== 'https:' || u.username || u.password || id.includes('#') || u.pathname.length < 2 || path.split('/').some(s => /^(\.|%2e){1,2}$/i.test(s))) return null;
   const known = KNOWN_APPS.find(k => k.test(id));
   if (known) return { id, name: known.name, redirects: known.redirects(id), kind: 'known', host: u.hostname };
   const hit = docs.get(id);
@@ -214,7 +218,7 @@ const now = () => Date.now();
 async function issueCode(r, person, origin) {
   const code = 'lco_' + rnd(24);
   await rest('/oauth_codes', { method: 'POST', prefer: 'return=minimal', body: { code_hash: sha(code), client_id: r.client.id, client_name: clean(r.app, 100), client_host: r.client.host || r.host, user_id: person, redirect_uri: r.redirect,
-    code_challenge: r.challenge, scope: r.scopes.join(' '), resource: resourceOf(origin), grant_id: 'g' + rnd(12), expires_at: iso(now() + CODE_SECS * 1000) } });
+    code_challenge: r.challenge, scope: r.scopes.join(' '), resource: resourceOf(origin), grant_id: 'g' + rnd(12), expires_at: iso(now() + CODE_SECS() * 1000) } });
   if (r.client.kind === 'registered') rest('/oauth_clients?client_id=eq.' + val(r.client.id), { method: 'PATCH', body: { used: true } }).catch(() => {});
   return code;
 }
@@ -228,8 +232,8 @@ class Fail extends Error { constructor(code, description, status = 400) { super(
 // Tokens for a grant: an hour for the access token, 90 days for the refresh token (which works once; the next refresh makes a new one).
 async function mint(g) {
   const access = 'lat_' + rnd(32), refresh = 'lrt_' + rnd(32), t = now(), base = { grant_id: g.id, user_id: g.user_id, client_id: g.client_id, scope: g.scope, resource: g.resource };
-  await rest('/oauth_tokens', { method: 'POST', prefer: 'return=minimal', body: [{ ...base, token_hash: sha(access), kind: 'access', expires_at: iso(t + ACCESS_SECS * 1000) }, { ...base, token_hash: sha(refresh), kind: 'refresh', expires_at: iso(t + REFRESH_SECS * 1000) }] });
-  return { access_token: access, token_type: 'Bearer', expires_in: ACCESS_SECS, refresh_token: refresh, scope: g.scope };
+  await rest('/oauth_tokens', { method: 'POST', prefer: 'return=minimal', body: [{ ...base, token_hash: sha(access), kind: 'access', expires_at: iso(t + ACCESS_SECS() * 1000) }, { ...base, token_hash: sha(refresh), kind: 'refresh', expires_at: iso(t + REFRESH_SECS() * 1000) }] });
+  return { access_token: access, token_type: 'Bearer', expires_in: ACCESS_SECS(), refresh_token: refresh, scope: g.scope };
 }
 async function revokeGrant(id, user) {
   const mine = user ? '&user_id=eq.' + val(user) : '';
@@ -266,14 +270,17 @@ async function codeGrant(p, origin) {
   return mint(g);
 }
 async function refreshGrant(p) {
-  const h = sha(p.refresh_token || '');
-  const took = await rest('/oauth_tokens?token_hash=eq.' + h + '&kind=eq.refresh&expires_at=gt.' + enc(iso(now())), { method: 'DELETE', prefer: 'return=representation' });
-  const t = took && took[0];
+  const h = sha(p.refresh_token || ''), live = '&kind=eq.refresh&expires_at=gt.' + enc(iso(now()));
+  // Look first, so a wrong app or a request for too much doesn't use the token up; then take it (only one request can).
+  const seen = await rest('/oauth_tokens?token_hash=eq.' + h + live + '&select=grant_id,client_id,scope');
+  const t = seen && seen[0];
   if (!t) throw new Fail('invalid_grant', 'That refresh token doesn’t work anymore. Connect the app again.');
   if (p.client_id && p.client_id !== t.client_id) throw new Fail('invalid_grant', 'That refresh token was given to a different app.');
   // Asking for less is fine; asking for more isn't.
   const have = words(t.scope), want = p.scope === undefined ? have : words(p.scope);
   if (want.some(s => !have.includes(s))) throw new Fail('invalid_scope', 'That is more than the app was allowed.');
+  const took = await rest('/oauth_tokens?token_hash=eq.' + h + live, { method: 'DELETE', prefer: 'return=representation' });
+  if (!took || !took[0]) throw new Fail('invalid_grant', 'That refresh token doesn’t work anymore. Connect the app again.');
   const g = await rest('/oauth_grants?id=eq.' + val(t.grant_id) + '&select=id,user_id,client_id,scope,resource');
   if (!g || !g[0]) throw new Fail('invalid_grant', 'That connection was ended. Connect the app again.');
   await rest('/oauth_grants?id=eq.' + val(t.grant_id), { method: 'PATCH', body: { last_used_at: iso(now()) } }).catch(() => {});
