@@ -48,8 +48,8 @@ function signedOut(go, onChange = () => {}) {
   };
   const off = q.get('off');
   // Where to go once signed in (going Pro signs you in first): a page of this site only.
-  const next = q.get('next') || '';
-  if (/^\/(?![\/\\])/.test(next)) try { keep.setItem('lucida.next', next); } catch {}
+  const next = localPath(q.get('next'));
+  if (next) try { keep.setItem('lucida.next', next); } catch {}
   const auth = {
     email: () => email,
     error: () => off ? (off === 'apple' ? 'Apple' : 'Google') + ' sign-in isn’t set up yet. Use your email for now.' : q.get('failed') ? 'That didn’t work. Try again.' : '',
@@ -66,10 +66,18 @@ function signedOut(go, onChange = () => {}) {
     chrome: () => ({ nav: { today: '', news: '', hasNews: false }, me: { bg: COLORS[0], initial: '', color: true, photo: '', href: '/sign-in' } }),
     join: () => live.view(), joinAt: (kind, code) => live.at(kind, code), act: { go, ...playerActs(live, go) } };
 }
+// A path on Lucida (like /pro?plan=yearly), or '' for anything else. A browser drops tabs and line breaks inside an address, so
+// "/<tab>/evil.com" would mean "//evil.com", another site: those go first, and what's left must still be an address on this
+// site (the same check the browser will make).
+export function localPath(next) {
+  const s = String(next || '').replace(/[\t\n\r]/g, '');
+  if (!/^\/(?![\/\\])/.test(s)) return '';
+  try { return new URL(s, location.origin).origin === location.origin ? s : ''; } catch { return ''; }
+}
 // The page to open once you're signed in, if signing in started somewhere (asked once, then forgotten).
 export function afterSignIn() {
   let next = ''; try { next = sessionStorage.getItem('lucida.next') || ''; sessionStorage.removeItem('lucida.next'); } catch {}
-  return /^\/(?![\/\\])/.test(next) ? next : '';
+  return localPath(next);
 }
 // A request that finds you signed out (your session ended) goes back to signing in.
 const toSignIn = () => location.assign('/sign-in');
