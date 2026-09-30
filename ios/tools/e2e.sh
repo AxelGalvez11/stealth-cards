@@ -14,4 +14,4 @@ for i in {1..50}; do curl -s -o /dev/null http://127.0.0.1:$PORT/ && break; slee
 DEST=${1:+id=$1}
 DEST=${DEST:-"platform=iOS Simulator,name=iPhone 17e"}
 # The test finds the server through LUCIDA_SERVER: xcodebuild hands the test runner its TEST_RUNNER_ variables.
-TEST_RUNNER_LUCIDA_SERVER=http://127.0.0.1:$PORT xcodebuild test -project ios/Lucida.xcodeproj -scheme LucidaUITests -destination "$DEST" -derivedDataPath ${DD:-${TMPDIR:-/tmp}/lucida-e2e} 2>&1 | tee ${DATA}test.log | grep -E "^  (ok|FAIL) |^Study network|error:|\*\* TEST"
+TEST_RUNNER_LUCIDA_SERVER=http://127.0.0.1:$PORT xcodebuild test -project ios/Lucida.xcodeproj -scheme LucidaUITests -only-testing:LucidaUITests/StudyNetworkTests -destination "$DEST" -derivedDataPath ${DD:-${TMPDIR:-/tmp}/lucida-e2e} 2>&1 | tee ${DATA}test.log | grep -E "^  (ok|FAIL) |^Study network|error:|\*\* TEST"

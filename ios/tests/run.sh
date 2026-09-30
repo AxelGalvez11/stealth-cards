@@ -57,7 +57,7 @@ e2e() {
     (cd $REPO && STEALTH_DATA=$W/data/ PORT=$PORT nohup node web/server.mjs > $W/server.log 2>&1 & echo $! > $W/server.pid)
     for i in {1..30}; do grep -q "localhost:$PORT" $W/server.log 2>/dev/null && break; sleep 0.3; done
     xcrun simctl terminate $D cards.lucida.app >/dev/null 2>&1; rm -f $W/$c.out
-    local extra=(); [[ $c == free ]] && extra=(-dev freeamy)
+    local extra=(-dev none); [[ $c == free ]] && extra=(-dev freeamy)   # (none: not whoever a UI test last signed in as)
     (xcrun simctl launch --console $D cards.lucida.app -server http://127.0.0.1:$PORT $extra -check $c > $W/$c.out 2>&1 &)
     for i in {1..300}; do grep -q "CHECKS DONE" $W/$c.out 2>/dev/null && break; sleep 0.5; done
     grep -E "^CHECK" $W/$c.out | sed "s/^CHECK /[$c] /"

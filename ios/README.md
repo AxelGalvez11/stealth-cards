@@ -79,8 +79,9 @@ reviews"|Tuning` shows the other states of Tune to you).
 
 More launch arguments (debug builds): `-open statsdeep -tab Memory` (or `Weak spots`, `Pace`) opens Stats on that tab;
 `-dev <name>` signs in as a made-up person on a local test server (like the web's /dev/as/<name>; a name that starts with
-`free` is on the Free plan); `-check pause|exam|grade|learn|tune|free` runs an end-to-end check against the server and quits
-(`App/DebugChecks.swift`); `-scroll <points>` opens a page scrolled that far.
+`free` is on the Free plan; the app remembers who, and `-dev none` forgets it, so the server's own person is back);
+`-check pause|exam|grade|learn|tune|free` runs an end-to-end check against the server and quits (`App/DebugChecks.swift`);
+`-scroll <points>` opens a page scrolled that far.
 
 `tests/run.sh parity` checks the ports against the web app's own code on a seeded library and made-up variations of it (no
 simulator), and `tests/run.sh e2e` runs the `-check`s in the simulator against a local server (`DEVICE=<simulator id>`).

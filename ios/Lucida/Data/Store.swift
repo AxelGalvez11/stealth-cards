@@ -194,7 +194,7 @@ final class Store: ObservableObject {
     #if DEBUG
     // `-dev <name>`: one of the made-up people on a copy of the server on this Mac (its lc_dev cookie), for trying the
     // study network as several people.
-    if let name = Board.arg("-dev"), let host = API.base.host,
+    if let name = Board.arg("-dev"), name != "none", let host = API.base.host,
        let c = HTTPCookie(properties: [.name: "lc_dev", .value: name, .domain: host, .path: "/", .expires: Date().addingTimeInterval(86400)]) {
       HTTPCookieStorage.shared.setCookie(c)
     }

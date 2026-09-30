@@ -4,9 +4,12 @@ import Foundation
 
 enum DevSignIn {
   #if DEBUG
-  /// Sets the server's lc_dev cookie for the test server this app is pointed at (`-server`).
+  /// Sets the server's lc_dev cookie for the test server this app is pointed at (`-server`). `-dev none` forgets it instead:
+  /// nobody in particular (the local server's own person), whoever an earlier run on this simulator was signed in as.
   static func apply() {
-    guard let name = Board.arg("-dev"), let host = API.base.host, let c = HTTPCookie(properties: [.domain: host, .path: "/", .name: "lc_dev", .value: name]) else { return }
+    guard let name = Board.arg("-dev"), let host = API.base.host else { return }
+    if name == "none" { for c in HTTPCookieStorage.shared.cookies ?? [] where c.name == "lc_dev" { HTTPCookieStorage.shared.deleteCookie(c) }; return }
+    guard let c = HTTPCookie(properties: [.domain: host, .path: "/", .name: "lc_dev", .value: name]) else { return }
     HTTPCookieStorage.shared.setCookie(c)
   }
   #else
