@@ -101,6 +101,36 @@ More launch arguments (debug builds): `-open statsdeep -tab Memory` (or `Weak sp
 `tests/run.sh parity` checks the ports against the web app's own code on a seeded library and made-up variations of it (no
 simulator), and `tests/run.sh e2e` runs the `-check`s in the simulator against a local server (`DEVICE=<simulator id>`).
 
+## Report, Check this deck, and Get verified
+
+Apple's rule for apps where people share things (guideline 1.2) wants a way to report content, and the web app has one: a
+quiet **Report** on someone else's shared deck (on its cover, after the bell), on someone else's profile (after Share), and
+on a suggestion once it's opened (a person's; not the cards your own AI made). Each opens the Report sheet the classes already
+had (`Screens/ClassSheets.swift`: four reasons, a line that Other needs, Send, then "Thanks. We'll take a look."), and the
+server's own words when it says no (`web/classes.mjs` sendReport: "It's your deck.", "You have 10 reports waiting.", ...) show
+in the sheet. A verified teacher or school (Settings → Profile → **Get verified**, approved by the made-up person `admin` on
+a copy of the server) sees **Check this deck** under a shared deck's buttons, on a deck someone else owns whose check isn't
+current; it then says "Checked by you" until the owner changes the deck, and the button comes back. Settings says **Verified
+teacher** (or school) with the check. News says when you're verified and when a deck of yours was hidden after a report (with
+Lucida's mark), and a helper's News row for a suggestion on a community deck opens Suggestions (every deck you own or help
+with, like the web's /suggestions). The boards: `PhonePublicDeckReport`, `PhonePublicDeckCheck`, `PhoneProfileReport`,
+`PhoneSuggestionsReport`, and `PhoneSettingsVerified` (a board's `-verified "Waiting for review"|Teacher|School` shows the
+other states of Get verified). `-open report:<deck|profile|suggestion>:<id>[:<name>]` opens the Report sheet for a deck (its
+shared id), a person (their handle), or a suggestion, even where its page wouldn't offer Report (your own deck, say, to see
+what the server answers).
+
+Opening the app doesn't wait on a slow server: the library with the decks you study brought up to date (`/api/state?sync=1`)
+gets 8 seconds, then the app shows the library as it is (`API.syncedState`, like the web's `readState`).
+
+    ios/tools/e2e-reports.sh <simulator id>
+
+It starts a fresh server on port 3844 and a small stand-in on 3846 that holds the sync for 12 seconds
+(`ios/tools/slow-sync-proxy.mjs`), and runs `LucidaUITests/ReportsTests` (which only runs when that script asks for it):
+Maria reports a deck, a person and a suggestion (and sees the server's words when it says no), a teacher gets verified in
+Settings and checks someone's deck, a helper opens a suggestion from News, and the library opens although the sync is held.
+`ios/tests/sync-check.sh` asks the app's own code for its library (`API.syncedState`) against a stand-in server that is slow,
+trickles, errors, drops the connection, or says signed out, and checks what comes back and how soon (no simulator).
+
 ## Classes and schools
 
 The Library's third view (Decks · All cards · Classes): your classes as tiles, Join a class with its 6-letter code, New

@@ -104,6 +104,7 @@ struct SettingsScreen: View {
     let s = store.settings, demo = store.demo
     let look = demo ? store.props.look : s.look, grads = demo ? store.props.grads : s.grads, darkMode = demo ? store.props.darkMode : s.darkMode
     let fsrs = demo ? store.props.fsrs : s.fsrs, check = demo ? store.props.check : store.lib.ai.perms.check
+    let vst = store.netVerify()
     ScrollView(showsIndicators: false) {
       VStack(alignment: .leading, spacing: 18) {
         HStack(spacing: 12) {
@@ -130,11 +131,21 @@ struct SettingsScreen: View {
           Button("Sign out", role: .destructive) { Task { await store.signOut() } }
         }
         // Your handle opens your profile; Edit profile opens it with its editor open. Before you have a handle it says
-        // Your profile (opening it makes one).
+        // Your profile (opening it makes one). Get verified (teachers and schools) opens its sheet, and says Waiting for
+        // review once a request is in; once you are verified, the row says Verified teacher (or school), with the check
+        // and no link.
         group("Profile") {
           Button { nav.profile("") } label: { row(store.myHandle.isEmpty ? "Your profile" : "@" + store.myHandle) { value("View profile") } }.buttonStyle(.plain)
           divider
           Button { nav.wantsEdit = true; nav.profile("") } label: { row("Edit profile") { value("") } }.buttonStyle(.plain)
+          divider
+          if vst.verified.isEmpty {
+            Button { withAnimation(.out(0.35)) { nav.sheet = .verify } } label: { row("Get verified") { value(vst.open ? "Waiting for review" : "") } }.buttonStyle(.plain)
+          } else {
+            let label = vst.verified == "school" ? "Verified school" : "Verified teacher"
+            row(label) { Icon("shield", 20, 2).foregroundStyle(Color(hex: 0x3E63DD)) }
+              .accessibilityElement(children: .ignore).accessibilityLabel(label).accessibilityAddTraits(.isStaticText)
+          }
         }
         group("Profile picture") { photoPanel }
         planGroup

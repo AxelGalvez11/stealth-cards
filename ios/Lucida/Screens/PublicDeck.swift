@@ -2,7 +2,9 @@
 // PhonePublicDeckSuggest, PhonePublicDeckSuggestNew, and the Dark and Gray twins): what anyone opens from Discover, a
 // profile, or a link. Its cover and badge, whose it is, and what you can do with it: Study it as it is, Make a copy (a
 // sheet), Save it, Get its updates, and Suggest a change (a sheet); its owner gets Edit, Suggestions, and Share settings
-// instead. Under it, its cards (press one for its answer), its History, and its People.
+// instead. Under it, its cards (press one for its answer), its History, and its People. Anyone but its owner can Report it
+// (a sheet); a verified teacher or school gets Check this deck under the buttons (on a deck whose check isn't current),
+// which then says "Checked by you" until the owner changes the deck again.
 import SwiftUI
 
 struct PublicDeckScreen: View {
@@ -19,6 +21,8 @@ struct PublicDeckScreen: View {
   @State private var watch: Bool? = nil
   @State private var busy = ""
   @State private var err = ""
+  /// The version of the deck you checked (Check this deck): it says "Checked by you" until the deck changes again.
+  @State private var checkedAt: Int? = nil
   /// A link's ?copy=1 or ?suggest=<card> opens its sheet once, when the page is here.
   @State private var opened = false
 
@@ -39,6 +43,8 @@ struct PublicDeckScreen: View {
   /// A link that asks for Make a copy or Suggest a change opens it, for someone who can (not on your own deck).
   private func openWanted(_ p: PublicDeckPage) {
     guard !opened, let me = p.me, !me.owner else { return }
+    // The Report board has its sheet open.
+    if store.demo && store.props.report { opened = true; nav.sheet = .report(kind: "deck", id: p.id, name: p.deck.name); return }
     if addr.copy { opened = true; withAnimation(.out(0.35)) { nav.sheet = .copyDeck(addr.plain) } }
     else if !addr.suggest.isEmpty {
       opened = true
@@ -66,8 +72,13 @@ struct PublicDeckScreen: View {
     let starOn = star ?? (me?.starred ?? false), watchOn = watch ?? (me?.watching ?? false)
     let ownerName = d.owner?.name ?? "", owner = d.owner ?? NetPerson()
     let people = peopleRows(p)
+    // Check this deck is for a verified teacher or school, on a deck whose check isn't current; once they press it, it says
+    // "Checked by you" (until the deck changes again: then its check is old and the button comes back).
+    let checkedNow = d.checked?.current ?? false, checker = learner && !store.netVerify().verified.isEmpty
+    let mineChecked = learner && (checkedAt == d.version || (checkedNow && !store.myHandle.isEmpty && d.checked?.handle == store.myHandle))
+    let canCheck = checker && !checkedNow && !mineChecked
     return VStack(spacing: 16) {
-      cover(p, watchOn: watchOn, showWatch: learner && studying.isEmpty)
+      cover(p, watchOn: watchOn, showWatch: learner && studying.isEmpty, canReport: !owns)
       VStack(alignment: .leading, spacing: 16) {
         if learner {
           HStack(spacing: 10) {
@@ -89,6 +100,19 @@ struct PublicDeckScreen: View {
             round(starOn ? "starOn" : "star", "Save", on: starOn) { toggleStar(p, !starOn) }
             round("message", "Suggest a change") { openSuggest(card: "") }
           }
+        }
+        if canCheck {
+          Button { check(p) } label: {
+            HStack(spacing: 8) { Icon("shield", 16, 2); Text(busy == "check" ? "Checking…" : "Check this deck").css(16, .semibold).lineLimit(1) }
+              .foregroundStyle(t.text).frame(maxWidth: .infinity).frame(height: 48).background(Capsule().fill(t.surf))
+          }
+          .buttonStyle(.press)
+          .accessibilityLabel(busy == "check" ? "Checking…" : "Check this deck")
+        }
+        if mineChecked {
+          HStack(spacing: 8) { Icon("shield", 16, 2).foregroundStyle(Color(hex: 0x3E63DD)); Text("Checked by you").css(16, .semibold).lineLimit(1) }
+            .foregroundStyle(t.text).frame(maxWidth: .infinity).frame(height: 48).background(Capsule().fill(t.surf))
+            .accessibilityElement(children: .ignore).accessibilityLabel("Checked by you").accessibilityAddTraits(.isStaticText)
         }
         if owns {
           HStack(spacing: 10) {
@@ -117,8 +141,8 @@ struct PublicDeckScreen: View {
     .accessibilityLabel(d.name + " by " + owner.name)
   }
 
-  /// The cover: its gradient (or photo, under a soft shade), Back, Share, and the bell; a badge, its name, and whose it is.
-  private func cover(_ p: PublicDeckPage, watchOn: Bool, showWatch: Bool) -> some View {
+  /// The cover: its gradient (or photo, under a soft shade), Back, Share, the bell, and Report; a badge, its name, and whose it is.
+  private func cover(_ p: PublicDeckPage, watchOn: Bool, showWatch: Bool, canReport: Bool) -> some View {
     let d = p.deck, mesh = Mesh.deck(seed: d.cover.seed ?? (d.name.isEmpty ? "Lucida" : d.name), round: d.cover.round, style: d.cover.style ?? "mix")
     let photo = d.cover.image.flatMap { $0 == "mock" || $0.isEmpty ? nil : $0 }
     let ink = photo != nil ? Color.white : mesh.inkColor, shade = photo != nil ? 0.45 : mesh.shadow
@@ -139,6 +163,16 @@ struct PublicDeckScreen: View {
             if showWatch {
               CoverButton(icon: "bell", label: watchOn ? "Getting updates" : "Get updates", filled: watchOn) { toggleWatch(p, !watchOn) }
                 .accessibilityAddTraits(watchOn ? .isSelected : [])
+            }
+            // Report sits last, in the cover's own words and shade (anyone but the deck's owner).
+            if canReport {
+              Button { withAnimation(.out(0.35)) { nav.sheet = .report(kind: "deck", id: p.id, name: d.name) } } label: {
+                Text("Report").css(15, .semibold).lineLimit(1).fixedSize().line(15).foregroundStyle(ink)
+                  .shadow(color: .black.opacity(shade), radius: 7, x: 0, y: 1)
+                  .padding(.leading, 8).padding(.trailing, 4).frame(height: 44)
+              }
+              .buttonStyle(.press)
+              .accessibilityLabel("Report")
             }
           }
         }
@@ -365,6 +399,15 @@ struct PublicDeckScreen: View {
         busy = ""
         if !id.isEmpty && !store.demo { nav.openDeck(id) }
       } catch { busy = ""; err = fail(error) }
+    }
+  }
+  /// Check this deck: the page then says "Checked by you"; if it didn't work, the page says so and the button stays.
+  private func check(_ p: PublicDeckPage) {
+    guard busy.isEmpty else { return }
+    busy = "check"; err = ""
+    Task {
+      do { try await store.checkSharedDeck(p.id); busy = ""; checkedAt = p.deck.version }
+      catch { busy = ""; err = fail(error) }
     }
   }
   private func toggleStar(_ p: PublicDeckPage, _ on: Bool) {

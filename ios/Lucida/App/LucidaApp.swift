@@ -136,6 +136,11 @@ struct RootView: View {
           case let o where o.hasPrefix("deckpage:"): if let a = DeckAddress(path: String(o.dropFirst(9))) { nav.tab = .discover; nav.path = [.publicDeck(a)] }
           case let o where o.hasPrefix("history:"): if let a = DeckAddress(path: String(o.dropFirst(8)))?.plain { nav.tab = .discover; nav.path = [.history(a)] }
           case "suggestions": nav.tab = .library; nav.path = [.suggestions("")]
+          // `report:<deck|profile|suggestion>:<id>[:<name>]`: the Report sheet for that deck (its shared id), person (their
+          // handle), or suggestion, even where its page wouldn't offer it (for checking what the server says when it says no).
+          case let o where o.hasPrefix("report:"):
+            let x = o.split(separator: ":", maxSplits: 3, omittingEmptySubsequences: false).map(String.init)
+            if x.count >= 3 { nav.sheet = .report(kind: x[1], id: x[2], name: x.count > 3 ? x[3] : x[2]) }
           case let o where o.hasPrefix("suggestions:"):
             if let d = store.lib.decks.first(where: { $0.name == String(o.dropFirst(12)) }) { nav.tab = .library; nav.path = [.suggestions(d.id)] }
           case "learn": nav.tab = .library; nav.path = [.deck(first)]; nav.sheet = .learnStart(first)
@@ -231,6 +236,8 @@ extension Board {
     case "PhoneConnect": nav.tab = .connect
     case "PhoneSettings": nav.path = [.settings]
     case "PhoneSettingsFree": store.props.plan = "Free"; nav.path = [.settings]
+    // A verified teacher's Settings: Get verified says Verified teacher (the board's `verified`: -verified "Waiting for review" or School).
+    case "PhoneSettingsVerified": store.props.verified = "Teacher"; nav.path = [.settings]
     case "PhoneNewDeck": nav.sheet = .newDeck
     case "PhoneEditor": store.props.editorTyping = true; nav.tab = .library; nav.path = [.deck("cell")]; nav.sheet = .newCard(deckId: "cell", cardId: nil)
     // Editing a card that's paused (Unpause card), from the sample's first card.
@@ -268,6 +275,7 @@ extension Board {
     case "PhoneProfileEmpty": store.props.netEmpty = true; nav.path = [.profile("")]
     case "PhoneProfileLoading": store.props.netLoading = true; nav.path = [.profile("")]
     case "PhoneProfileMissing": store.props.missing = true; nav.path = [.profile("nobody")]
+    case "PhoneProfileReport": store.props.report = true; nav.path = [.profile("mariasantos")]
     case "PhoneActivity": nav.path = [.news]
     case "PhoneActivityEmpty": store.props.netEmpty = true; nav.path = [.news]
     case "PhoneDeckStudied": store.props.linked = "study"; nav.tab = .library; nav.path = [.deck("cell")]
@@ -282,11 +290,15 @@ extension Board {
     case "PhonePublicDeckCopy": nav.tab = .discover; nav.path = [.publicDeck(Board.sampleDeck(copy: true))]
     case "PhonePublicDeckSuggest": nav.tab = .discover; nav.path = [.publicDeck(Board.sampleDeck(suggest: "c2"))]
     case "PhonePublicDeckSuggestNew": nav.tab = .discover; nav.path = [.publicDeck(Board.sampleDeck(suggest: "new"))]
+    // Report on the deck's page (its sheet open), and a verified teacher's view of it (Check this deck).
+    case "PhonePublicDeckReport": store.props.report = true; nav.tab = .discover; nav.path = [.publicDeck(Board.sampleDeck())]
+    case "PhonePublicDeckCheck": store.props.verified = "Teacher"; nav.tab = .discover; nav.path = [.publicDeck(Board.sampleDeck())]
     case "PhoneSuggestions":
       // The dark board shows one opened.
       if name.hasSuffix("Dark") { store.demoNet.pages.pickItem = "g1" }
       nav.tab = .library; nav.path = [.suggestions("cell")]
     case "PhoneSuggestionsOpen": store.demoNet.pages.pickItem = "g1"; nav.tab = .library; nav.path = [.suggestions("cell")]
+    case "PhoneSuggestionsReport": store.props.report = true; store.demoNet.pages.pickItem = "g1"; nav.tab = .library; nav.path = [.suggestions("cell")]
     case "PhoneSuggestionsEmpty": store.demoNet.pages.noSuggestions = true; store.demoNet.pages.aiWaiting = false; nav.tab = .library; nav.path = [.suggestions("cell")]
     case "PhoneHistory":
       if name.hasSuffix("Dark") { store.demoNet.pages.openVersion = 14 }
@@ -326,6 +338,8 @@ extension Board {
     if let k = Board.arg("-theme") { store.props.theme = k }
     // The Settings boards' Tune to you state (their `tune` Tweak): `-tune Off`, `-tune "Not enough reviews"`, or `-tune Tuning`.
     if let k = Board.arg("-tune") { store.props.tune = ["Off": "off", "Not enough reviews": "few", "Tuning": "busy"][k] ?? "on" }
+    // The boards that show your verification (their `verified` Tweak): `-verified "Waiting for review"`, `Teacher`, or `School`.
+    if let v = Board.arg("-verified") { store.props.verified = v }
     // The Settings boards' photo setting (their Tweak on the canvas): `-photo "Google photo"` or `-photo "Your photo"`
     // (Color when it's left out), with the canvas's stand-in for the photo.
     switch Board.arg("-photo") {

@@ -35,6 +35,7 @@ struct NetDeck: Decodable, Identifiable {
   struct Checked: Decodable {
     var name = "", handle = "", current = false
     enum CodingKeys: String, CodingKey { case name, handle, current }
+    init(name: String, handle: String, current: Bool) { self.name = name; self.handle = handle; self.current = current }
     init(from d: Decoder) throws { let c = try d.container(keyedBy: CodingKeys.self); name = c.v(.name, ""); handle = c.v(.handle, ""); current = c.v(.current, false) }
   }
   var id = "", url = "", name = "", description = "", tags: [String] = []
@@ -116,11 +117,12 @@ struct NetDeckRef: Decodable {
 struct NewsItem: Decodable, Identifiable {
   struct Data: Decodable {
     var n = 0, took = 0, skipped = 0
-    var message = "", summary = "", handle = ""
-    enum CodingKeys: String, CodingKey { case n, took, skipped, message, summary, handle }
+    var message = "", summary = "", handle = "", role = "", name = ""
+    enum CodingKeys: String, CodingKey { case n, took, skipped, message, summary, handle, role, name }
     init(from d: Decoder) throws {
       let c = try d.container(keyedBy: CodingKeys.self)
       n = c.v(.n, 0); took = c.v(.took, 0); skipped = c.v(.skipped, 0); message = c.v(.message, ""); summary = c.v(.summary, ""); handle = c.v(.handle, "")
+      role = c.v(.role, ""); name = c.v(.name, "")
     }
   }
   var id = "", kind = "", actorName = "", created = ""

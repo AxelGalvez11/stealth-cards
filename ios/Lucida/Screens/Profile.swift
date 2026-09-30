@@ -3,7 +3,7 @@
 // someone's picture, their numbers (decks, followers, following), name, what they study, their bio, and the decks they
 // share, pinned ones first. Your own adds Edit profile, ⋯ on each deck to pin it (up to 3), the decks you saved, and
 // the suggestions you sent with what became of them. The first time you open yours, it's made (the handle comes from
-// your name).
+// your name). Someone else's has Report, a quiet button after Share (a sheet).
 import SwiftUI
 
 /// What you changed on a profile (PROFILE_LOGIC's `over`): a follow, pins, your bio. It shows at once, and stays while
@@ -87,7 +87,7 @@ struct ProfileScreen: View {
     let loading = data == nil && makeErr.isEmpty && (!h.isEmpty || makingNow)
     ScrollView(showsIndicators: false) {
       VStack(alignment: .leading, spacing: 16) {
-        header(h, ok: pr != nil, isSelf: isSelf)
+        header(h, ok: pr != nil, isSelf: isSelf, report: pr.map { ($0.handle.nilIfEmpty ?? h, $0.name) })
         if loading { loadingLook }
         if missing { NetMissing(title: "No one has that name", line: "@" + h) { nav.pick(.discover) } }
         if offline { box { CSSText("Couldn’t reach Lucida. Check your connection.", 15, color: t.muted, align: .center) } }
@@ -110,8 +110,9 @@ struct ProfileScreen: View {
       if store.demo, tab == nil { tab = store.props.profileTab }
       make(makingNow)
       openEditIfWanted(pr != nil && isSelf)
+      openReportIfWanted(pr, isSelf: isSelf)
     }
-    .onChange(of: pr != nil) { _, ok in openEditIfWanted(ok && isSelf) }
+    .onChange(of: pr != nil) { _, ok in openEditIfWanted(ok && isSelf); openReportIfWanted(pr, isSelf: isSelf) }
     .onDisappear { copiedTask?.cancel() }
   }
 
@@ -132,15 +133,23 @@ struct ProfileScreen: View {
     nav.sheet = .editProfile
   }
 
+  /// The Report board has its sheet open, on someone else's profile.
+  private func openReportIfWanted(_ pr: ProfilePage?, isSelf: Bool) {
+    guard store.demo, store.props.report, let pr, !isSelf, nav.sheet == nil else { return }
+    store.props.report = false
+    nav.sheet = .report(kind: "profile", id: pr.handle, name: pr.name)
+  }
+
   // ---------- the parts ----------
-  /// Back (someone else's), the handle, Share, and your gear (Settings).
-  private func header(_ h: String, ok: Bool, isSelf: Bool) -> some View {
+  /// Back (someone else's), the handle, Share, your gear (Settings), and on someone else's, Report.
+  private func header(_ h: String, ok: Bool, isSelf: Bool, report: (handle: String, name: String)?) -> some View {
     HStack(spacing: 10) {
       if !isSelf { RoundButton(icon: "back", label: "Back") { nav.back() } }
       Text(h.isEmpty ? "" : "@" + h).css(20, .bold, ls: -0.02).foregroundStyle(t.text).lineLimit(1).truncationMode(.tail).line(20)
         .frame(maxWidth: .infinity, alignment: .leading)
       if ok { RoundButton(icon: "share", label: "Share profile") { share(h) } }
       if isSelf { RoundButton(icon: "gear", label: "Settings") { nav.push(.settings) } }
+      if ok, !isSelf, let report { QuietButton(label: "Report") { withAnimation(.out(0.35)) { nav.sheet = .report(kind: "profile", id: report.handle, name: report.name) } } }
     }
     .frame(minHeight: 44)
   }
