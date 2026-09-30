@@ -13,7 +13,7 @@ struct LibDeck: Identifiable {
   var photo: String? = nil
   var folder: String? = nil
   var due = 0, fresh = 0, totalLabel = "0", ret: Int? = nil, paused = false
-  /// How many cards, and whose it is: "Public" or "Link only" for a deck you share, "From <name>" for someone else's.
+  /// How many cards, and whose it is: "Public", "Link only", or "Class" for a deck you share, "From <name>" for someone else's.
   var total = 0, whose = ""
   /// "Public · 412 cards · 10 new · 91%" (one card says card).
   var line: String { (whose.isEmpty ? "" : whose + " · ") + totalLabel + (total == 1 ? " card · " : " cards · ") + "\(fresh) new" + (ret.map { " · \($0)%" } ?? "") }
