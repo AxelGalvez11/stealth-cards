@@ -747,6 +747,18 @@ export async function createDb({ onChange, go }) {
     exportAll: () => download('lucida.json', JSON.stringify({ decks: S.decks, cards: S.cards, logs: S.logs }, null, 1), 'application/json'),
     resetAll: async () => { if (!confirm('Delete every deck, card, and review' + (S.me ? ', and your profile and shared decks' : ' on this computer') + '? This can’t be undone.')) return; await send('data.reset'); session = null; go('/'); },
     signOut: async () => { await fetch('/api/auth/signout', { method: 'POST' }).catch(() => {}); toSignIn(); },
+    // Delete account (Settings › Account; Apple asks for it inside the app): everything of yours goes, on the server too, and you're
+    // signed out. A failure (like Pro that has to be cancelled first) comes back in plain words for the question to show.
+    deleteAccount: async () => {
+      let r;
+      try { r = await fetch('/api/account/delete', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ confirm: true }) }); }
+      catch { throw new Error('Couldn’t reach Lucida. Check your connection and try again.'); }
+      if (r.status === 401) { toSignIn(); throw new Error('Signed out'); }
+      const j = await r.json().catch(() => ({}));
+      if (!r.ok) throw new Error(j.error || 'Something went wrong. Try again.');
+      toSignIn();
+      return j;
+    },
     // Explain a card with AI; `question` is how Learn mode asked it, if it did.
     explain: async (cardId, question) => {
       const c = S.cards.find(x => x.id === cardId); if (!c || explaining[cardId]) return;
@@ -773,6 +785,8 @@ export async function createDb({ onChange, go }) {
     watch: (id, on) => net.act('deck.watch', { id, on }),
     checkDeck: id => net.act('deck.check', { id }),
     follow: (h, on) => net.act('user.follow', { handle: h, on }),
+    // Block someone (or unblock them): they can't follow you or suggest to your decks, and you stop seeing them.
+    block: (h, on) => net.act('user.block', { handle: h, on }),
     suggest: (id, changes, message) => net.act('suggestion.send', { id, changes, message }),
     decide: (id, picks) => net.act('suggestion.decide', { id, picks }),
     restore: (id, version) => net.act('version.restore', { id, version }),

@@ -34,10 +34,18 @@ const pictureOf = m => { const p = String((m && (m.avatar_url || m.picture)) || 
 const person = u => ({ id: u.id, email: u.email || '', emailConfirmed: !!u.email_confirmed_at, provider: (u.app_metadata && u.app_metadata.provider) || 'email', name: (u.user_metadata && (u.user_metadata.full_name || u.user_metadata.name)) || '',
   picture: pictureOf(u.user_metadata) });
 
+// People whose account was just deleted: their sign-ins stop working on this server at once, even ones it remembered (another
+// server forgets them within five minutes, when its own memory of the sign-in runs out; Supabase refuses them from then on).
+const gone = new Set();
+export function endSessions(uid) {
+  gone.add(uid);
+  for (const [token, hit] of seen) if (hit.user.id === uid) seen.delete(token);
+}
 async function check(token) {
   const hit = seen.get(token);
-  if (hit && hit.until > Date.now()) return hit.user;
+  if (hit && hit.until > Date.now() && !gone.has(hit.user.id)) return hit.user;
   const user = person(await auth.user(token));
+  if (gone.has(user.id)) throw Object.assign(new Error('This account was deleted.'), { status: 403 });
   if (seen.size > 5000) seen.clear();
   seen.set(token, { user, until: Math.min(Date.now() + 5 * 60000, expiry(token)) });
   return user;

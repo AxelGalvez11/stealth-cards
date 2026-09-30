@@ -1,5 +1,6 @@
 // On this computer there's no Supabase, so the study network's tables (profiles, shared decks, versions, suggestions,
-// follows, saves, and news, see social.mjs; classes, verification and reports, see classes.mjs) live in data/social.json,
+// follows, saves, and news, see social.mjs; classes, verification and reports, see classes.mjs; blocks and Apple purchases, see
+// social.mjs and apple.mjs) live in data/social.json,
 // and this answers the same calls Supabase's REST API (PostgREST) would: the same paths, filters, and headers. So
 // social.mjs runs unchanged here and online. It knows
 // only what social.mjs asks, and says so when asked anything else, so nothing works here that wouldn't online.
@@ -30,6 +31,9 @@ export const TABLES = {
   class_progress: { key: ['assignment_id', 'user_id'], defaults: () => ({ learned: 0, total: 0, due: 0, remembered: null, last_at: null, updated_at: now() }) },
   verify_requests: { key: ['id'], defaults: () => ({ role: 'teacher', school: '', contact: '', status: 'open', created_at: now(), decided_at: null, decided_by: '' }) },
   reports: { key: ['id'], defaults: () => ({ target_name: '', reason: 'other', note: '', reporter: null, status: 'open', created_at: now(), decided_at: null }) },
+  // Blocks and Apple purchases (supabase/appstore.sql): who blocked whom, and Pro bought with Apple's in-app purchase (web/apple.mjs).
+  blocks: { key: ['blocker', 'blocked'], defaults: () => ({ created_at: now() }) },
+  apple_purchases: { key: ['original_transaction_id'], defaults: () => ({ period_end: null, ending: false, environment: 'Production', transaction_id: '', signed_at: now(), rev: 1, created_at: now(), updated_at: now() }) },
   // A view (supabase/hardening.sql deck_people), read only: how many different people study or copy each shared deck. A person
   // who copies a deck 25 times is one person.
   deck_people: { key: ['shared_id'], view: db => {

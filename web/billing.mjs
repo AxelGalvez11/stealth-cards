@@ -1,10 +1,12 @@
-// Lucida Pro, paid through Stripe. Stripe tells this server about each payment and each change with a webhook to
-// /api/stripe, signed with the endpoint's secret (STRIPE_WEBHOOK_SECRET), and the server keeps one row per subscription
-// in Supabase (`pro` in supa.mjs). The server never calls Stripe, so it needs no Stripe key: paying, switching plans,
-// and cancelling all happen on Stripe's own pages (plans.mjs).
+// Lucida Pro, paid through Stripe (or, on the iPhone, through Apple: apple.mjs). Stripe tells this server about each payment
+// and each change with a webhook to /api/stripe, signed with the endpoint's secret (STRIPE_WEBHOOK_SECRET), and the server
+// keeps one row per subscription in Supabase (`pro` in supa.mjs). Paying, switching plans, and cancelling all happen on
+// Stripe's own pages (plans.mjs), so the server only calls Stripe for one thing: cancelling a subscription when its owner
+// deletes their account (cancelStripe, which needs STRIPE_SECRET_KEY).
 import { createHmac, timingSafeEqual } from 'node:crypto';
 import { pro as rows } from './supa.mjs';
 import { PRO_LINKS, PORTAL } from './plans.mjs';
+import { purchasesOf, activePlan } from './apple.mjs';
 
 // Stripe signs each event: t=<unix time>,v1=<HMAC-SHA256 of "time.body" with the secret>. An event more than 5 minutes
 // old is refused, so a copied one can't be sent again later.
@@ -39,7 +41,9 @@ export async function onEvent(e) {
 }
 
 // Whether someone has Pro, remembered for a minute (the app's first load always asks again, so it's right just after
-// paying). Past due still counts: Stripe keeps retrying the card for a while before it cancels.
+// paying). Past due still counts: Stripe keeps retrying the card for a while before it cancels. Pro bought with Apple's
+// in-app purchase (apple.mjs) counts the same: if someone has both, the plan shown is the one that lasts longer, and `by`
+// says who bills it ('stripe' or 'apple').
 const ON = new Set(['active', 'trialing', 'past_due']);
 const seen = new Map();
 export async function planOf(uid, email, fresh = false) {
@@ -47,11 +51,13 @@ export async function planOf(uid, email, fresh = false) {
   if (!fresh && hit && hit.until > Date.now()) return hit.plan;
   let plan;
   try {
-    const list = await rows.of(uid, email);
+    // Apple's rows are asked for on their own, so a problem there (its table isn't made yet) never takes Pro away from Stripe's.
+    const [list, buys] = await Promise.all([rows.of(uid, email), purchasesOf(uid).catch(e => { console.error('apple purchases', e.message); return []; })]);
     // Paid with this email before signing in: it's theirs now.
     await Promise.all(list.filter(r => !r.user_id).map(r => rows.claim(r.subscription, uid).catch(() => {})));
-    const on = list.filter(r => ON.has(r.status)).sort((a, b) => String(b.period_end || '').localeCompare(String(a.period_end || '')))[0];
-    plan = on ? { pro: true, every: on.plan === 'month' ? 'month' : on.plan === 'year' ? 'year' : '', until: on.period_end || '', ending: !!on.ending } : { pro: false };
+    const stripe = list.filter(r => ON.has(r.status)).map(r => ({ pro: true, every: r.plan === 'month' ? 'month' : r.plan === 'year' ? 'year' : '', until: r.period_end || '', ending: !!r.ending, by: 'stripe' }));
+    const apple = activePlan(buys), end = p => (p.until ? Date.parse(p.until) || 0 : Infinity);
+    plan = [...stripe, ...(apple ? [apple] : [])].sort((a, b) => end(b) - end(a))[0] || { pro: false };
   } catch (e) {
     // If the check itself fails, the app still opens (on Free until the next try).
     console.error(e); return { pro: false };
@@ -59,6 +65,28 @@ export async function planOf(uid, email, fresh = false) {
   if (seen.size > 5000) seen.clear();
   seen.set(uid, { plan, until: Date.now() + 60000 });
   return plan;
+}
+// Forgets what was remembered about someone's plan (their purchase just changed).
+export const dropPlan = uid => { seen.delete(uid); };
+
+// Delete account (account.mjs): every Stripe subscription that's still on is cancelled now, so nobody is billed for an account
+// that's gone. This is the one thing here that calls Stripe, so it needs STRIPE_SECRET_KEY (a restricted key that can write
+// Subscriptions is enough). Without it, or if Stripe won't, it throws and the account is left as it was. Apple's subscriptions
+// can't be cancelled from here: the person does that in iPhone Settings → Subscriptions.
+const BILLING = new Set([...ON, 'unpaid']);
+export async function cancelStripe(uid, email) {
+  const list = (await rows.of(uid, email)).filter(r => BILLING.has(r.status));
+  if (!list.length) return 0;
+  const key = process.env.STRIPE_SECRET_KEY, api = (process.env.STRIPE_API_BASE || 'https://api.stripe.com').replace(/\/+$/, '');
+  if (!key) throw Object.assign(new Error('Cancel Pro first: open Manage plan in Settings, cancel, then delete your account.'), { status: 409 });
+  for (const r of list) {
+    const res = await fetch(api + '/v1/subscriptions/' + encodeURIComponent(r.subscription), { method: 'DELETE', signal: AbortSignal.timeout(20000),
+      headers: { authorization: 'Bearer ' + key, 'content-type': 'application/x-www-form-urlencoded' }, body: 'invoice_now=false&prorate=false' }).catch(() => null);
+    // Already gone at Stripe (cancelled there before our table heard) is as good as cancelled.
+    const gone = res && (res.status === 404 || (res.status === 400 && /cancel/i.test(await res.text().catch(() => ''))));
+    if (!res || !(res.ok || gone)) throw Object.assign(new Error('Couldn’t cancel your Pro subscription. Try again in a minute.'), { status: 502 });
+  }
+  return list.length;
 }
 
 // Stripe's checkout for Pro, told who is paying.

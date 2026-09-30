@@ -46,6 +46,8 @@ export function createNet({ accept = () => {}, changed = () => {}, signedOut = f
     inbox: () => (signedOut ? [] : get('/api/social/suggestions')),
     sent: () => (signedOut ? [] : get('/api/social/suggestions?mine=1')),
     mine: () => (signedOut ? null : get('/api/social/mine', 30000)),
+    // The people you blocked, for Settings › Account (names and handles, newest first).
+    blocks: () => (signedOut ? { people: [] } : get('/api/social/blocks', 15000)),
     stats: id => (signedOut ? null : get('/api/social/stats?id=' + enc(id || ''), 60000)),
     // Classes (web/classes.mjs): yours, one class's page (or its invite, for anyone), whether you're verified, and the
     // admin page (only for admins; anyone else gets { missing }).

@@ -37,7 +37,9 @@ export const library = {
     const rows = await call('/rest/v1/libraries?id=eq.' + uuid(uid) + '&rev=eq.' + was, { method: 'PATCH', headers: { ...json, prefer: 'return=representation' },
       body: JSON.stringify({ state, rev: state.rev, updated_at: new Date().toISOString() }) });
     return Array.isArray(rows) && rows.length === 1;
-  }
+  },
+  // Delete account (account.mjs): the whole library goes.
+  remove: uid => call('/rest/v1/libraries?id=eq.' + uuid(uid), { method: 'DELETE' })
 };
 
 // Each person's files live in a folder named after their user id.
@@ -77,6 +79,12 @@ export const auth = {
   idToken: (provider, id_token, nonce) => authCall('/token?grant_type=id_token', { provider, id_token, nonce }),
   // Apple sends the person's name only the first time, and not in the token, so it's saved to their account.
   setName: (token, name) => call('/auth/v1/user', { method: 'PUT', key: publicKey(), headers: { ...json, authorization: 'Bearer ' + token }, body: JSON.stringify({ data: { full_name: name } }) })
+};
+
+// Delete account (account.mjs): removing the sign-in account itself, which only this server's secret key can do (Supabase Auth's
+// admin API). Its sessions and sign-in methods go with it, and so does everything that points at it with "on delete cascade".
+export const admin = {
+  deleteUser: uid => call('/auth/v1/admin/users/' + uuid(uid), { method: 'DELETE', headers: json, body: JSON.stringify({ should_soft_delete: false }) })
 };
 
 // The study network's tables (social.mjs): profiles, shared decks and their cards, versions, suggestions, follows,
@@ -146,7 +154,9 @@ export const pro = {
   status: args => rpc('pro_status', args),
   // Someone's rows: theirs, and any paid with their email before they signed in (nobody's yet).
   of: (uid, email) => call('/rest/v1/pro?select=subscription,user_id,status,plan,period_end,ending&or=' + encodeURIComponent('(user_id.eq.' + uuid(uid) + (email ? ',and(user_id.is.null,email.eq.' + quoted(String(email).toLowerCase()) + ')' : '') + ')')),
-  claim: (subscription, uid) => call('/rest/v1/pro?subscription=eq.' + encodeURIComponent(subscription) + '&user_id=is.null', { method: 'PATCH', headers: { ...json, prefer: 'return=minimal' }, body: JSON.stringify({ user_id: uuid(uid) }) })
+  claim: (subscription, uid) => call('/rest/v1/pro?subscription=eq.' + encodeURIComponent(subscription) + '&user_id=is.null', { method: 'PATCH', headers: { ...json, prefer: 'return=minimal' }, body: JSON.stringify({ user_id: uuid(uid) }) }),
+  // Delete account (account.mjs): the same rows `of` finds.
+  remove: (uid, email) => call('/rest/v1/pro?or=' + encodeURIComponent('(user_id.eq.' + uuid(uid) + (email ? ',and(user_id.is.null,email.eq.' + quoted(String(email).toLowerCase()) + ')' : '') + ')'), { method: 'DELETE' })
 };
 
 // Live (rooms.mjs): each game's 6-digit code, a row in the private `live_rooms` table while the game can be joined.
@@ -166,7 +176,9 @@ export const rooms = {
     return Array.isArray(rows) && rows.length === 1;
   },
   get: async code => ((await call('/rest/v1/live_rooms?code=eq.' + code6(code) + '&expires_at=gt.' + encodeURIComponent(at(Date.now())) + '&select=deck')) || [])[0] || null,
-  remove: (code, uid) => call('/rest/v1/live_rooms?code=eq.' + code6(code) + '&host=eq.' + uuid(uid), { method: 'DELETE' })
+  remove: (code, uid) => call('/rest/v1/live_rooms?code=eq.' + code6(code) + '&host=eq.' + uuid(uid), { method: 'DELETE' }),
+  // Delete account (account.mjs): every room this person hosts.
+  clearHost: uid => call('/rest/v1/live_rooms?host=eq.' + uuid(uid), { method: 'DELETE' })
 };
 // Live's messages go over Supabase Realtime, straight between the host's and the players' browsers, which connect with
 // the project's public key. That key is made to be shared (the secret one never leaves this server), so it's Lucida's

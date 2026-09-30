@@ -295,8 +295,9 @@ mock() {
           if (p.missing) return { missing: true, status: 404, error: 'No one has that name.' };
           const mine = (m.profile && m.profile.handle) || 'alexkim';
           if (h && h !== mine) {
-            const was = !!p.following, on = follows[h] ?? was;
-            return { ...N.OTHER, followers: N.OTHER.followers + (on ? 1 : 0) - (was ? 1 : 0), decks: p.empty ? [] : [D.mcat, D.spanish].map(deckCard).map((d, i) => ({ ...d, pinned: !i })), saved: [], me: p.signedOut ? null : { self: false, following: on } };
+            // Prop "blocked": someone you blocked (Unblock); their page comes without their decks, like the server's.
+            const was = !!p.following, blocked = (m.blocks || {})[h] ?? !!p.blocked, on = !blocked && (follows[h] ?? was);
+            return { ...N.OTHER, followers: N.OTHER.followers + (on ? 1 : 0) - (was ? 1 : 0), decks: p.empty || blocked ? [] : [D.mcat, D.spanish].map(deckCard).map((d, i) => ({ ...d, pinned: !i })), saved: [], stars: blocked ? 0 : N.OTHER.stars, me: p.signedOut ? null : { self: false, following: on, blocked } };
           }
           const pr = { ...N.PROFILE, ...(m.profile || {}), handle: mine }, feat = pr.featured || [];
           const decks = p.empty ? [] : N.ALEX_DECKS.map(deckCard).map(d => ({ ...d, pinned: feat.includes(d.id) }));
@@ -309,6 +310,8 @@ mock() {
           : { id: 's9', name: 'Cell Biology', url: '/@alexkim/cell-biology', owner: N.P.alex, mine: true, following: 214, versions: back(N.CELL_HISTORY) }),
         activity: () => (wait ? undefined : p.empty ? { unread: 0, items: [] } : { unread: m.read ? 0 : 2, items: N.NEWS.map(x => ({ ...x, read: m.read ? true : x.read })) }),
         suggestions: open, inbox: open, sent: () => (wait ? undefined : p.empty ? [] : N.SENT),
+        // The people you blocked (Settings › Account): Maria and Dev, or nobody (prop "noBlocks"); Unblock takes one off.
+        blocks: () => (wait ? undefined : { people: p.noBlocks ? [] : [N.P.maria, N.P.dev].filter(x => (m.blocks || {})[x.handle] !== false) }),
         mine: () => ({ handle: 'alexkim', profile: N.P.alex, decks: [{ id: 's9', slug: 'cell-biology', visibility: 'public', stars: 1300, learners: 214, copies: 86, version: 14, open: 3 }] }),
         classes: () => (wait ? undefined : p.empty ? [] : N.CLASS_LIST),
         klass: code => (wait ? undefined : p.missing ? { missing: true, status: 404 } : klass(code)),
@@ -344,6 +347,8 @@ mock() {
       addPile: (id, name) => set({ piles: [...deck().piles, { name, n: 0 }] }),
       star: (id, on) => set({ stars: { ...(m.stars || {}), [id]: !!on } }), watch: (id, on) => set({ watching: !!on }),
       follow: (h, on) => set({ follows: { ...(m.follows || {}), [h]: !!on } }), study: () => set({ studying: 'cell' }), copyDeck: () => set({ copied: 'cell' }),
+      // Block (or Unblock) and Delete account (App Store): they stay on the board.
+      block: (h, on) => { set({ blocks: { ...(m.blocks || {}), [h]: !!on } }); return Promise.resolve({ blocked: !!on }); }, deleteAccount: () => Promise.resolve({ ok: true, apple: false }),
       decide: (id, picks) => { set({ picks: { ...(m.picks || {}), [id]: { ...((m.picks || {})[id] || {}), ...picks } } }); return Promise.resolve({}); }, readNews: () => set({ read: true }),
       suggest: () => Promise.resolve({ id: 'g9', taken: false }), restore: (id, v) => { set({ restored: v }); return Promise.resolve({ changes: 1 }); }, checkDeck: () => { set({ checked: true }); return Promise.resolve({}); },
       keepCards: ids => { set({ aiDone: { ...aiDone, ...Object.fromEntries(ids.map(x => [x, 'kept'])) } }); return Promise.resolve({}); },
@@ -385,11 +390,11 @@ renderVals() {
   const sw = (on, enabled = true) => ({ checked: on ? 'true' : 'false', track: on ? t.inv : t.surf2, knob: on ? 'translateX(20px)' : 'translateX(0)', knobColor: on ? t.invText : t.bg, op: enabled ? '1' : '.4', disabled: enabled ? 'false' : 'true' });
   const opts = (list, cur, set) => list.map(([id, label]) => ({ label, pressed: id === cur ? 'true' : 'false', bg: id === cur ? t.inv : 'transparent', fg: id === cur ? t.invText : t.muted, pick: () => set(id) }));
   const set = patch => db.act.setSettings(patch);
-  const planOf = { Free: { pro: false }, Pro: { pro: true, every: 'year', until: '2027-09-24T12:00:00Z', ending: false, manage: '#' }, 'Pro, ending': { pro: true, every: 'year', until: '2027-09-24T12:00:00Z', ending: true, manage: '#' } };
+  const planOf = { Free: { pro: false }, Pro: { pro: true, every: 'year', until: '2027-09-24T12:00:00Z', ending: false, manage: '#' }, 'Pro, ending': { pro: true, every: 'year', until: '2027-09-24T12:00:00Z', ending: true, manage: '#' }, 'Pro, billed by Apple': { pro: true, every: 'year', until: '2027-09-24T12:00:00Z', ending: false, by: 'apple', manage: '#' } };
   const plan = db.mock ? planOf[this.props.plan] || planOf.Pro : db.plan && db.plan();
   const planDay = plan && plan.until ? new Date(plan.until).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : '';
   const planVals = { planFree: !!plan && !plan.pro, planPro: !!plan && !!plan.pro, planRenews: !!plan && !plan.ending, planEnding: !!plan && !!plan.ending,
-    planSub: plan ? [({ month: 'Monthly', year: 'Yearly' })[plan.every] || '', planDay ? (plan.ending ? 'ends ' : 'renews ') + planDay : ''].filter(Boolean).join(' · ') : '',
+    planSub: plan ? [({ month: 'Monthly', year: 'Yearly' })[plan.every] || '', planDay ? (plan.ending ? 'ends ' : 'renews ') + planDay : '', plan.by === 'apple' ? 'Billed by Apple' : ''].filter(Boolean).join(' · ') : '',
     manageHref: plan && plan.manage || 'https://lucida.cards/pricing', proHref: db.mock ? 'Pricing.dc.html' : 'https://lucida.cards/pricing' };
   const colors = [['Periwinkle', 'linear-gradient(135deg, #8C9AFC 0%, #4F60E6 100%)'], ['Orange', 'linear-gradient(135deg, #FFC857 0%, #EE5A36 100%)'], ['Green', 'linear-gradient(135deg, #7EE0B0 0%, #1F8F5F 100%)'], ['Pink', 'linear-gradient(135deg, #F9A8D4 0%, #D6336C 100%)'], ['Teal', 'linear-gradient(135deg, #7DE3F0 0%, #0E8A9E 100%)'], ['Violet', 'linear-gradient(135deg, #C4A7FF 0%, #7C3AED 100%)']];
   // Settings › Look › Theme: your theme's name (Lucida on Free, where the others are locked).

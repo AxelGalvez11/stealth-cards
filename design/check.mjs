@@ -39,6 +39,23 @@ PROP_SETS.push({ report: true }, { report: true, signedOut: true }, { report: tr
   { $state: { rep: { kind: 'deck', id: 's1', name: 'MCAT Biochemistry' }, repReason: 'other', repNote: '', repErr: 'Say what’s wrong.' } },
   { $state: { rep: { kind: 'profile', id: 'mariasantos', name: 'Maria Santos' }, repReason: 'spam', repSent: true } },
   { pickItem: 'g1', $state: { rep: { kind: 'suggestion', id: 'g1', name: 'Maria Santos' }, repReason: 'stolen', repNote: 'Mine' } });
+// Blocking people and deleting your account (App Store). Someone else's profile: the ⋯ menu (Report, Block), the Block question
+// (slow, failed), a person you blocked (Unblock, its menu, slow, failed), and signed out (just Report). Suggestions: Block on one.
+// Settings: the plan billed by Apple, the Account group (two blocked people, none, one just unblocked, a failed Unblock), and
+// Delete account's question for Free, Pro, and Pro billed by Apple (waiting, failed).
+PROP_SETS.push({ handle: 'mariasantos', moreOpen: true }, { handle: 'mariasantos', moreOpen: true, dark: true }, { handle: 'mariasantos', moreOpen: true, blocked: true },
+  { handle: 'mariasantos', block: true }, { handle: 'mariasantos', block: true, dark: true }, { handle: 'mariasantos', block: true, $state: { blkBusy: true } },
+  { handle: 'mariasantos', block: true, $state: { blkErr: 'You can’t block yourself.' } }, { handle: 'mariasantos', blocked: true }, { handle: 'mariasantos', blocked: true, dark: true },
+  { handle: 'mariasantos', blocked: true, following: true }, { handle: 'mariasantos', blocked: true, $state: { err: 'Something went wrong. Try again.' } },
+  { handle: 'mariasantos', moreOpen: true, signedOut: true }, { handle: 'mariasantos', blocked: true, signedOut: true }, { handle: 'mariasantos', block: true, signedOut: true },
+  { block: true }, { block: true, pickItem: 'g1' }, { block: true, pickItem: 'g2' }, { block: true, deckId: '' }, { block: true, dark: true, pickItem: 'g1' },
+  { block: true, pickItem: 'g1', $state: { blkBusy: true } }, { block: true, pickItem: 'g1', $state: { blkErr: 'Something went wrong. Try again.' } },
+  { pickItem: 'ai' }, { pickItem: 'ai', block: true },
+  { plan: 'Pro, billed by Apple' }, { plan: 'Pro, billed by Apple', dark: true }, { noBlocks: true }, { $state: { unblocked: { mariasantos: true } } },
+  { $state: { unblocked: { mariasantos: true, devp: true } } }, { $state: { blockErr: 'Something went wrong. Try again.' } }, { noBlocks: true, dark: true },
+  { deleteOpen: 'Asking' }, { deleteOpen: 'Asking', plan: 'Free' }, { deleteOpen: 'Asking', plan: 'Pro, ending' }, { deleteOpen: 'Asking', plan: 'Pro, billed by Apple' },
+  { deleteOpen: 'Asking', plan: 'Pro, billed by Apple', dark: true }, { deleteOpen: 'Deleting' }, { deleteOpen: 'Failed' }, { deleteOpen: 'Failed', dark: true },
+  { deleteOpen: 'Asking', $state: { del: false } }, { $state: { del: true, delBusy: true } }, { $state: { del: true, delErr: 'Couldn’t delete your account. Try again in a minute.' } });
 // A verified teacher's or school's shared deck page (Check this deck, pressing it, one being pressed, on their own deck,
 // signed out), and your verification in Settings.
 PROP_SETS.push({ verified: 'Teacher' }, { verified: 'School' }, { verified: 'Teacher', $state: { $m: { checked: true } } }, { verified: 'Teacher', $state: { busy: 'check', error: 'That didn’t save.' } },

@@ -1,5 +1,6 @@
 // Every request to Lucida's server: the web app's data (/api), signing in (/api/auth, /auth), the MCP link for AI
-// apps (/mcp), pictures and sound (/media), going Pro (/pro, and Stripe's webhook at /api/stripe), and the app's own files. The same code runs on your computer (server.mjs)
+// apps (/mcp), pictures and sound (/media), going Pro (/pro, Stripe's webhook at /api/stripe, and Apple's in-app purchases at
+// /api/iap and /api/apple), deleting an account (/api/account/delete), and the app's own files. The same code runs on your computer (server.mjs)
 // and on Vercel (api/index.js), where the pages are static files and only /api, /auth, /mcp, and /media reach this.
 // Online, everything but signing in needs a signed-in person, and each person only ever sees their own library.
 import { readFile, stat } from 'node:fs/promises';
@@ -12,9 +13,11 @@ import { FREE_EXPLAINS, PRO_EXPLAINS } from './plans.mjs';
 import { mcp } from './mcp.mjs';
 import { EXT, HEIC, sniff } from './media.mjs';
 import { cloud, auth } from './supa.mjs';
-import { who, forget, accessToken, sessionCookies, clearCookies, pkce, verifier, clearPkce, linkOwner, sameLink,
+import { who, forget, endSessions, accessToken, sessionCookies, clearCookies, pkce, verifier, clearPkce, linkOwner, sameLink,
   GOOGLE_ID, APPLE_ID, oauthStart, oauthNonce, oauthDone, googleUrl, appleUrl, appleName } from './auth.mjs';
-import { planOf, checkoutUrl, portalUrl, signedBy, onEvent } from './billing.mjs';
+import { planOf, checkoutUrl, portalUrl, signedBy, onEvent, dropPlan } from './billing.mjs';
+import * as apple from './apple.mjs';
+import { deleteAccount } from './account.mjs';
 import * as social from './social.mjs';
 import * as classes from './classes.mjs';
 import { cookies } from './auth.mjs';
@@ -63,6 +66,7 @@ const SOCIAL = {
   'deck.watch': (uid, me, a) => social.watch(uid, me, a.id, !!a.on),
   'deck.check': (uid, me, a) => social.check(uid, me, a.id),
   'user.follow': (uid, me, a) => social.follow(uid, me, a.handle, !!a.on),
+  'user.block': (uid, me, a) => social.block(uid, me, a.handle, !!a.on),
   'suggestion.send': (uid, me, a) => social.suggest(uid, me, a.id, { message: a.message, changes: a.changes }),
   'suggestion.decide': (uid, me, a) => social.decide(uid, a.id, a.picks || {}),
   'version.restore': (uid, me, a) => social.restore(uid, a.id, a.version),
@@ -87,7 +91,9 @@ async function publicApi(req, res, path, viewer) {
 const LOCAL_HOST = req => /^(localhost|127\.0\.0\.1)(:\d+)?$/.test(String(req.headers.host || ''));
 const devOf = req => { const n = cookies(req).lc_dev; return !cloud() && LOCAL_HOST(req) && n && isDev('dev_' + n) ? 'dev_' + n : null; };
 // Made-up people have Pro, except those whose name starts with "free" (for trying the Free plan).
-const devMe = uid => ({ email: uid.slice(4) + '@dev.local', provider: 'dev', name: uid.slice(4, 5).toUpperCase() + uid.slice(5), picture: '', plan: { pro: !uid.startsWith('dev_free') }, manage: '', dev: true });
+const devMe = uid => ({ email: uid.slice(4) + '@dev.local', provider: 'dev', name: uid.slice(4, 5).toUpperCase() + uid.slice(5), picture: '', plan: { pro: !uid.startsWith('dev_free') }, manage: '', dev: true, appAccountToken: apple.tokenOf(uid) });
+// ...and what a made-up person bought with Apple's in-app purchase (apple.mjs) is their plan (so the iPhone flow can be tried here).
+const devPerson = async uid => { const me = devMe(uid), ap = await apple.applePlan(uid).catch(() => null); if (ap) { me.plan = ap; me.manage = apple.MANAGE; } return me; };
 // A public page (a deck or a profile) is the app's own page, told what it's about, so search engines and link previews
 // read the deck's name and cards even before the app draws them.
 const escHtml = v => String(v ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
@@ -134,6 +140,8 @@ async function api(req, res, path, body, me, uid) {
     catch (e) { return send(res, e.status || 400, { error: e.message }); }
   }
   if (path === '/api/social/unread' && req.method === 'GET') return send(res, 200, { unread: await social.unreadCount(uid).catch(() => 0) });
+  // The people you blocked (Settings → Account → Blocked people); blocking and unblocking is the 'user.block' action above.
+  if (path === '/api/social/blocks' && req.method === 'GET') return send(res, 200, await social.blockedPeople(uid));
   // Classes (classes.mjs): yours, whether you're verified (or waiting), and the admin page (only for admins).
   if (path === '/api/classes' && req.method === 'GET') return send(res, 200, await classes.mine(uid));
   if (path === '/api/verify' && req.method === 'GET') return send(res, 200, await classes.verifyStatus(uid));
@@ -274,10 +282,57 @@ async function stripe(req, res) {
   await onEvent(e);
   return send(res, 200, { received: true });
 }
-// Who's signed in, for the app: their plan, and Stripe's page for changing or cancelling it.
+// Apple's notifications about in-app purchases (apple.mjs): signed by Apple, not by a signed-in person. One that isn't Apple's, or
+// isn't for Lucida, answers 400; any other trouble answers 500, so Apple sends it again later.
+async function appleHook(req, res) {
+  let signedPayload;
+  try { signedPayload = jsonOf(await readBody(req, 2e5)).signedPayload; } catch { return send(res, 400, { error: 'Bad notification' }); }
+  try {
+    const r = await apple.onNotification(signedPayload);
+    if (r.uid) dropPlan(r.uid);
+    // One line a notification, so the logs show Apple's news arriving (and what became of it).
+    console.log('apple', r.type + (r.subtype ? '/' + r.subtype : ''), r.applied ? '→ ' + r.status : '(' + r.why + ')');
+    return send(res, 200, { ok: true });
+  }
+  catch (e) { if (e instanceof apple.AppleError) return send(res, 400, { error: e.message, code: e.code }); throw e; }
+}
+// The iPhone app sending what the signed-in person bought (apple.mjs): { signedTransaction } or, for Restore purchases, { signedTransactions: [...] }
+// (up to 10), and with a single transaction optionally its { signedRenewalInfo }. The answer is the person's plan now.
+async function iapReq(res, uid, me, b) {
+  if (!uid) return send(res, 401, { error: 'Sign in to Lucida.', signIn: true });
+  const list = [...(Array.isArray(b.signedTransactions) ? b.signedTransactions : []), ...(b.signedTransaction ? [b.signedTransaction] : [])].slice(0, 10);
+  if (!list.length) return send(res, 400, { error: 'There was no purchase to check.', code: 'empty' });
+  let applied = 0, first = null;
+  for (const jws of list) {
+    try { await apple.record(uid, jws, list.length === 1 && typeof b.signedRenewalInfo === 'string' ? b.signedRenewalInfo : undefined); applied++; }
+    catch (e) { if (!(e instanceof apple.AppleError)) throw e; first ||= e; }
+  }
+  dropPlan(uid);
+  if (!applied) return send(res, first.status, { error: first.message, code: first.code });
+  const plan = cloud() ? await planOf(uid, me.email, true) : (await devPerson(uid)).plan;
+  return send(res, 200, { ok: true, applied, skipped: list.length - applied, plan });
+}
+// Delete account (account.mjs): { confirm: true }. Signs the person out everywhere (their sign-in account is gone), and says
+// whether an Apple subscription is still running, which only they can cancel.
+async function deleteAccountReq(req, res, uid, user, b) {
+  if (!uid || uid === 'local') return send(res, 404, { error: 'Nobody signs in to Lucida on this computer.' });
+  if (b.confirm !== true) return send(res, 400, { error: 'Confirm first.' });
+  try {
+    const r = await deleteAccount({ uid, email: user ? user.email : '' });
+    endSessions(uid);
+    res.setHeader('set-cookie', cloud() ? clearCookies(req) : 'lc_dev=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0');
+    return send(res, 200, { ok: true, apple: r.apple });
+  } catch (e) {
+    console.error('delete account', e);
+    const known = e.status === 409 || e.status === 502;
+    return send(res, known ? e.status : 500, { error: known ? e.message : 'Couldn’t delete your account. Try again in a minute.' });
+  }
+}
+// Who's signed in, for the app: their plan, and the page for changing or cancelling it (Stripe's, or Apple's for a plan billed
+// by Apple). `appAccountToken` is what the iPhone app buys with, so a purchase is the person's own (apple.mjs).
 const meOf = async (user, fresh) => {
   const plan = await planOf(user.id, user.email, fresh);
-  return { email: user.email, emailConfirmed: user.emailConfirmed, provider: user.provider, name: user.name, picture: user.picture, plan, manage: plan.pro ? portalUrl(user.email) : '' };
+  return { email: user.email, emailConfirmed: user.emailConfirmed, provider: user.provider, name: user.name, picture: user.picture, plan, manage: plan.pro ? (plan.by === 'apple' ? apple.MANAGE : portalUrl(user.email)) : '', appAccountToken: apple.tokenOf(user.id) };
 };
 
 // Online, pictures and sound load straight from the person's own storage folder through a short-lived link.
@@ -398,6 +453,7 @@ export async function handle(req, res) {
     // On Vercel, saving needs the Supabase database; until it's linked, say so instead of losing changes.
     if (process.env.VERCEL && !cloud() && (isApi || isMcp || isAuth)) return send(res, 503, { error: 'Lucida isn’t connected to its database yet, so nothing can be saved.' });
     if (path === '/api/stripe' && req.method === 'POST') return await stripe(req, res);
+    if (path === '/api/apple' && req.method === 'POST') return await appleHook(req, res);
     if (path === '/pro' && req.method === 'GET') return await upgrade(req, res);
     // Trying the study network on this computer as someone else: /dev/as/maria (and /dev/as/ to be yourself again).
     if (path.startsWith('/dev/as') && req.method === 'GET') {
@@ -450,7 +506,7 @@ export async function handle(req, res) {
         if (w.set.length) res.setHeader('set-cookie', w.set);
         if (!w.user) return send(res, 401, { error: 'Sign in to Lucida.', signIn: true });
         user = w.user; uid = user.id;
-      } else if (devOf(req)) { uid = devOf(req); me = devMe(uid); }
+      } else if (devOf(req)) { uid = devOf(req); me = await devPerson(uid); }
       if (path.startsWith('/media/')) return await media(req, res, path.slice(7), uid);
       if (live) return await liveApi(req, res, live, uid);
       if (path === '/api/rev' && req.method === 'GET') return send(res, 200, { rev: await revOf(uid) });
@@ -458,6 +514,9 @@ export async function handle(req, res) {
       if (user) me = await meOf(user, path === '/api/state');
       const body = req.method === 'POST' ? await readBody(req, path === '/api/media' ? 20e6 : 5e6) : null;
       if (path === '/api/explain' && req.method === 'POST') return await explainReq(res, uid, me, jsonOf(body));
+      // Neither works inside a library request: a purchase isn't in the library, and Delete account removes it.
+      if (path === '/api/iap' && req.method === 'POST') return await iapReq(res, uid, me, jsonOf(body));
+      if (path === '/api/account/delete' && req.method === 'POST') return await deleteAccountReq(req, res, uid, user, jsonOf(body));
       return await run(res, uid, out => api(req, out, path, body, me, uid), { pro: me ? me.plan.pro : undefined });
     }
     return await files(req, res, path, ROOT);

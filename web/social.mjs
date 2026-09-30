@@ -625,6 +625,9 @@ export async function suggest(uid, me, sharedId, { message = '', changes = [] } 
   if (!out.length) throw err('Those changes are already in the deck.');
   const author = await ensureProfile(uid, me);
   if (author.id === sh.owner) throw err('It’s your deck: change it right there.');
+  // Someone the deck's owner blocked can't suggest to it (and you can't suggest to someone you blocked).
+  if (await hasBlocked(sh.owner, author.id)) throw err('You can’t suggest changes to this deck.', 403);
+  if (await hasBlocked(author.id, sh.owner)) throw err('You blocked this deck’s owner. Unblock them first.', 403);
   // A few at a time: the owner answers these before more come.
   const waiting = await rest('/suggestions?shared_id=eq.' + val(sharedId) + '&author=eq.' + val(author.id) + '&status=eq.open&select=id&limit=1', { count: true });
   if (waiting.total >= OPEN_SUGGESTIONS) throw err('You have ' + OPEN_SUGGESTIONS + ' suggestions waiting on this deck.', 429);
@@ -827,6 +830,9 @@ export async function follow(uid, me, handle, on) {
   if (!them) throw err('No such person', 404);
   if (them.id === p.id) throw err('That’s you.');
   if (on) {
+    // Someone you blocked isn't followed, and someone who blocked you can't follow.
+    if (await hasBlocked(p.id, them.id)) throw err('You blocked this person. Unblock them first.', 403);
+    if (await hasBlocked(them.id, p.id)) throw err('You can’t follow this person.', 403);
     await rest('/follows', { method: 'POST', prefer: 'resolution=ignore-duplicates', body: { follower: p.id, followee: them.id } });
     // Unfollowing and following again stays quiet: they hear about the same person once a week at most.
     const lately = await rest('/notifications?user_id=eq.' + val(them.id) + '&kind=eq.follow&actor=eq.' + val(p.id) + '&created_at=gt.' + val(new Date(Date.now() - 7 * DAY).toISOString()) + '&select=id&limit=1');
@@ -836,9 +842,47 @@ export async function follow(uid, me, handle, on) {
   return recountPeople(them.id);
 }
 
+// ---------- blocks ----------
+// Blocking someone (a profile's ⋯, a suggestion, or Settings → Account → Blocked people): they can't follow you or suggest
+// changes to your decks, nothing from them reaches your News, and their decks stay out of your Discover, search, and their own
+// profile page. Unblocking brings none of it back but what they do from then on. A lookup that fails (before supabase/appstore.sql
+// has run) counts as nobody blocked, so the rest of the app keeps working.
+const blockedBy = async id => { try { return (await rest('/blocks?blocker=eq.' + val(id) + '&select=blocked&order=created_at.desc&limit=2000')).map(r => r.blocked); } catch (e) { console.error('blocks', e.message); return []; } };
+const hasBlocked = async (blocker, who) => { try { return (await rest('/blocks?blocker=eq.' + val(blocker) + '&blocked=eq.' + val(who) + '&select=blocker&limit=1')).length > 0; } catch (e) { console.error('blocks', e.message); return false; } };
+// A filter that leaves out these people's decks (or, with `col` = 'id', their profiles): the first hundred in the address, the
+// rest by the caller filtering what comes back.
+const without = (col, ids) => (ids.length ? '&' + col + '=not.in.' + inList(ids.slice(0, 100)) : '');
+export async function block(uid, me, handle, on) {
+  const p = await ensureProfile(uid, me), them = await profileByHandle(handle);
+  if (!them) throw err('No such person', 404);
+  if (them.id === p.id) throw err('That’s you.');
+  if (!on) { await rest('/blocks?blocker=eq.' + val(p.id) + '&blocked=eq.' + val(them.id), { method: 'DELETE' }); return { blocked: false }; }
+  await rest('/blocks', { method: 'POST', prefer: 'resolution=ignore-duplicates', body: { blocker: p.id, blocked: them.id } });
+  // They're out of your follows (and you're out of theirs) and your News, and what they suggested to your decks is gone.
+  await rest('/follows?follower=eq.' + val(p.id) + '&followee=eq.' + val(them.id), { method: 'DELETE' });
+  await rest('/follows?follower=eq.' + val(them.id) + '&followee=eq.' + val(p.id), { method: 'DELETE' });
+  await rest('/notifications?user_id=eq.' + val(p.id) + '&actor=eq.' + val(them.id), { method: 'DELETE' });
+  await rest('/suggestions?owner=eq.' + val(p.id) + '&author=eq.' + val(them.id) + '&status=eq.open', { method: 'DELETE' });
+  await recountPeople(p.id); await recountPeople(them.id);
+  return { blocked: true };
+}
+// The people you blocked, newest first, for Settings → Account → Blocked people (names and handles, never account ids).
+export async function blockedPeople(uid) {
+  const rows = await rest('/blocks?blocker=eq.' + val(socialId(uid)) + '&select=blocked&order=created_at.desc&limit=500');
+  const faces = rows.length ? await rest('/profiles?id=in.' + inList(rows.map(r => r.blocked)) + '&select=id,handle,name,avatar,color,verified,kind') : [];
+  return { people: rows.map(r => face(faces.find(f => f.id === r.blocked))).filter(Boolean) };
+}
+
 // ---------- news ----------
 async function notify(list) {
-  const rows = list.filter(x => x && x.user_id);
+  let rows = list.filter(x => x && x.user_id);
+  // Nothing from someone the person blocked.
+  const actors = [...new Set(rows.map(r => r.actor).filter(Boolean))];
+  if (actors.length) {
+    const pairs = new Set();
+    try { for (const ids of chunk(actors, 50)) for (const b of await rest('/blocks?blocked=in.' + inList(ids) + '&select=blocker,blocked&limit=5000')) pairs.add(b.blocker + '>' + b.blocked); } catch (e) { console.error('blocks', e.message); }
+    rows = rows.filter(r => !r.actor || !pairs.has(r.user_id + '>' + r.actor));
+  }
   for (let i = 0; i < rows.length; i += 500) await rest('/notifications', { method: 'POST', body: rows.slice(i, i + 500) });
 }
 export async function activity(uid) {
@@ -903,8 +947,10 @@ export async function profilePage(handle, viewer) {
   const p = await profileByHandle(handle);
   if (!p) return null;
   const vid = viewer ? socialId(viewer) : null, self = vid === p.id;
+  // Someone you blocked: their page says so (and offers Unblock), without their decks.
+  const blocked = !!vid && !self && await hasBlocked(vid, p.id);
   const [decks, following, saved] = await Promise.all([
-    rest('/shared_decks?owner=eq.' + val(p.id) + (self ? '&visibility=in.(link,public)' : '&visibility=eq.public') + '&hidden=is.false&select=' + LIST + '&order=updated_at.desc&limit=200'),
+    blocked ? [] : rest('/shared_decks?owner=eq.' + val(p.id) + (self ? '&visibility=in.(link,public)' : '&visibility=eq.public') + '&hidden=is.false&select=' + LIST + '&order=updated_at.desc&limit=200'),
     vid && !self ? rest('/follows?follower=eq.' + val(vid) + '&followee=eq.' + val(p.id) + '&select=follower') : [],
     self ? rest('/stars?user_id=eq.' + val(p.id) + '&select=shared_id&order=created_at.desc&limit=100') : []]);
   const savedRows = saved.length ? await rest('/shared_decks?id=in.' + inList(saved.map(s => s.shared_id)) + '&visibility=in.(link,public)&hidden=is.false&select=' + LIST) : [];
@@ -912,21 +958,23 @@ export async function profilePage(handle, viewer) {
   list.sort((a, b) => (feat.includes(b.id) - feat.includes(a.id)));
   return { ...face(p), bio: p.bio || '', school: p.school || '', subject: p.subject || '', followers: p.followers || 0, following: p.following || 0, contributions: p.contributions || 0,
     featured: feat, decks: list.map(d => ({ ...d, pinned: feat.includes(d.id) })), saved: self ? await withOwners(saved.map(s => savedRows.find(r => r.id === s.shared_id)).filter(Boolean)) : [],
-    stars: list.reduce((n, d) => n + d.stars, 0), me: vid ? { self, following: following.length > 0 } : null };
+    stars: list.reduce((n, d) => n + d.stars, 0), me: vid ? { self, following: following.length > 0, blocked } : null };
 }
 // Discover: decks people like this week, decks a teacher checked, new ones, and ones from people you follow, with
 // topics to narrow it down. Studying stays in your library; this is only for finding more.
 export async function discover(viewer, { tag = '' } = {}) {
   const t = String(tag || '').slice(0, 40), byTag = t ? '&tags=cs.' + encodeURIComponent('{' + qvalRaw(t) + '}') : '';
-  const base = '/shared_decks?visibility=eq.public&hidden=is.false' + byTag + '&select=' + LIST;
   const vid = viewer ? socialId(viewer) : null;
+  // Decks of people you blocked aren't here.
+  const skip = vid ? await blockedBy(vid) : [], gone = new Set(skip), hide = without('owner', skip);
+  const base = '/shared_decks?visibility=eq.public&hidden=is.false' + byTag + hide + '&select=' + LIST;
   const follows = vid ? await rest('/follows?follower=eq.' + val(vid) + '&select=followee&limit=500') : [];
-  const [popular, checked, fresh, friends, tagRows] = await Promise.all([
+  const [popular, checked, fresh, friends, tagRows] = (await Promise.all([
     rest(base + '&order=score.desc,updated_at.desc&limit=12'),
     rest(base + '&checked=not.is.null&order=score.desc&limit=8'),
     rest(base + '&order=created_at.desc&limit=12'),
     follows.length ? rest(base + '&owner=in.' + inList(follows.map(f => f.followee)) + '&order=updated_at.desc&limit=12') : [],
-    rest('/shared_decks?visibility=eq.public&hidden=is.false&select=tags&order=score.desc&limit=300')]);
+    rest('/shared_decks?visibility=eq.public&hidden=is.false' + hide + '&select=tags,owner&order=score.desc&limit=300')])).map(rows => rows.filter(r => !gone.has(r.owner)));
   const count = {};
   for (const r of tagRows) for (const g of r.tags || []) count[g] = (count[g] || 0) + 1;
   const topics = Object.keys(count).sort((a, b) => count[b] - count[a] || a.localeCompare(b)).slice(0, 10);
@@ -942,10 +990,13 @@ export async function search(q, viewer) {
   const words = String(q || '').trim().slice(0, 60);
   if (!words) return { q: '', decks: [], people: [] };
   const pat = like(words);
+  // Decks and profiles of people you blocked aren't found.
+  const skip = viewer ? await blockedBy(socialId(viewer)) : [], gone = new Set(skip);
   const [decks, tagged, people] = await Promise.all([
-    rest('/shared_decks?visibility=eq.public&hidden=is.false&or=' + encodeURIComponent('(') + 'name.ilike.' + pat + ',description.ilike.' + pat + encodeURIComponent(')') + '&select=' + LIST + '&order=score.desc&limit=24'),
-    rest('/shared_decks?visibility=eq.public&hidden=is.false&tags=cs.' + encodeURIComponent('{' + qvalRaw(words) + '}') + '&select=' + LIST + '&order=score.desc&limit=12'),
-    rest('/profiles?listed=is.true&or=' + encodeURIComponent('(') + 'handle.ilike.' + pat + ',name.ilike.' + pat + ',school.ilike.' + pat + ',subject.ilike.' + pat + encodeURIComponent(')') + '&select=*&order=followers.desc&limit=12')]);
+    rest('/shared_decks?visibility=eq.public&hidden=is.false' + without('owner', skip) + '&or=' + encodeURIComponent('(') + 'name.ilike.' + pat + ',description.ilike.' + pat + encodeURIComponent(')') + '&select=' + LIST + '&order=score.desc&limit=24'),
+    rest('/shared_decks?visibility=eq.public&hidden=is.false' + without('owner', skip) + '&tags=cs.' + encodeURIComponent('{' + qvalRaw(words) + '}') + '&select=' + LIST + '&order=score.desc&limit=12'),
+    rest('/profiles?listed=is.true' + without('id', skip) + '&or=' + encodeURIComponent('(') + 'handle.ilike.' + pat + ',name.ilike.' + pat + ',school.ilike.' + pat + ',subject.ilike.' + pat + encodeURIComponent(')') + '&select=*&order=followers.desc&limit=12')])
+    .then(([d, t, pe]) => [d.filter(r => !gone.has(r.owner)), t.filter(r => !gone.has(r.owner)), pe.filter(r => !gone.has(r.id))]);
   const seen = new Set(), rows = [...decks, ...tagged].filter(r => !seen.has(r.id) && seen.add(r.id));
   return { q: words, decks: await withOwners(rows), people: people.map(p => ({ ...face(p), bio: p.bio || '', school: p.school || '', followers: p.followers || 0 })) };
 }
@@ -1038,6 +1089,8 @@ export async function forget(uid) {
   for (const t of ['stars', 'subscriptions', 'card_stats', 'suggestions']) await del(t, (t === 'suggestions' ? 'author' : 'user_id') + '=eq.' + me);
   await del('follows', 'follower=eq.' + me); await del('follows', 'followee=eq.' + me);
   await del('notifications', 'user_id=eq.' + me); await del('notifications', 'actor=eq.' + me);
+  // The people they blocked are theirs to forget. Blocks against them stay: starting over doesn't lift a block.
+  await del('blocks', 'blocker=eq.' + me).catch(e => console.error('blocks', e.message));
   for (const t of ['class_progress', 'class_members', 'verify_requests']) await del(t, 'user_id=eq.' + me);
   // Reports they sent stay for Lucida's team, without them; reports about them (their profile, their suggestions) go.
   await rest('/reports?reporter=eq.' + me, { method: 'PATCH', body: { reporter: null } });

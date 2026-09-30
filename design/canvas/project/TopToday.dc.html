@@ -341,8 +341,9 @@ mock() {
           if (p.missing) return { missing: true, status: 404, error: 'No one has that name.' };
           const mine = (m.profile && m.profile.handle) || 'alexkim';
           if (h && h !== mine) {
-            const was = !!p.following, on = follows[h] ?? was;
-            return { ...N.OTHER, followers: N.OTHER.followers + (on ? 1 : 0) - (was ? 1 : 0), decks: p.empty ? [] : [D.mcat, D.spanish].map(deckCard).map((d, i) => ({ ...d, pinned: !i })), saved: [], me: p.signedOut ? null : { self: false, following: on } };
+            // Prop "blocked": someone you blocked (Unblock); their page comes without their decks, like the server's.
+            const was = !!p.following, blocked = (m.blocks || {})[h] ?? !!p.blocked, on = !blocked && (follows[h] ?? was);
+            return { ...N.OTHER, followers: N.OTHER.followers + (on ? 1 : 0) - (was ? 1 : 0), decks: p.empty || blocked ? [] : [D.mcat, D.spanish].map(deckCard).map((d, i) => ({ ...d, pinned: !i })), saved: [], stars: blocked ? 0 : N.OTHER.stars, me: p.signedOut ? null : { self: false, following: on, blocked } };
           }
           const pr = { ...N.PROFILE, ...(m.profile || {}), handle: mine }, feat = pr.featured || [];
           const decks = p.empty ? [] : N.ALEX_DECKS.map(deckCard).map(d => ({ ...d, pinned: feat.includes(d.id) }));
@@ -355,6 +356,8 @@ mock() {
           : { id: 's9', name: 'Cell Biology', url: '/@alexkim/cell-biology', owner: N.P.alex, mine: true, following: 214, versions: back(N.CELL_HISTORY) }),
         activity: () => (wait ? undefined : p.empty ? { unread: 0, items: [] } : { unread: m.read ? 0 : 2, items: N.NEWS.map(x => ({ ...x, read: m.read ? true : x.read })) }),
         suggestions: open, inbox: open, sent: () => (wait ? undefined : p.empty ? [] : N.SENT),
+        // The people you blocked (Settings › Account): Maria and Dev, or nobody (prop "noBlocks"); Unblock takes one off.
+        blocks: () => (wait ? undefined : { people: p.noBlocks ? [] : [N.P.maria, N.P.dev].filter(x => (m.blocks || {})[x.handle] !== false) }),
         mine: () => ({ handle: 'alexkim', profile: N.P.alex, decks: [{ id: 's9', slug: 'cell-biology', visibility: 'public', stars: 1300, learners: 214, copies: 86, version: 14, open: 3 }] }),
         classes: () => (wait ? undefined : p.empty ? [] : N.CLASS_LIST),
         klass: code => (wait ? undefined : p.missing ? { missing: true, status: 404 } : klass(code)),
@@ -390,6 +393,8 @@ mock() {
       addPile: (id, name) => set({ piles: [...deck().piles, { name, n: 0 }] }),
       star: (id, on) => set({ stars: { ...(m.stars || {}), [id]: !!on } }), watch: (id, on) => set({ watching: !!on }),
       follow: (h, on) => set({ follows: { ...(m.follows || {}), [h]: !!on } }), study: () => set({ studying: 'cell' }), copyDeck: () => set({ copied: 'cell' }),
+      // Block (or Unblock) and Delete account (App Store): they stay on the board.
+      block: (h, on) => { set({ blocks: { ...(m.blocks || {}), [h]: !!on } }); return Promise.resolve({ blocked: !!on }); }, deleteAccount: () => Promise.resolve({ ok: true, apple: false }),
       decide: (id, picks) => { set({ picks: { ...(m.picks || {}), [id]: { ...((m.picks || {})[id] || {}), ...picks } } }); return Promise.resolve({}); }, readNews: () => set({ read: true }),
       suggest: () => Promise.resolve({ id: 'g9', taken: false }), restore: (id, v) => { set({ restored: v }); return Promise.resolve({ changes: 1 }); }, checkDeck: () => { set({ checked: true }); return Promise.resolve({}); },
       keepCards: ids => { set({ aiDone: { ...aiDone, ...Object.fromEntries(ids.map(x => [x, 'kept'])) } }); return Promise.resolve({}); },

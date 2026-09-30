@@ -57,6 +57,13 @@ function devLib(uid) {
   }
   return devLibs.get(uid);
 }
+// Delete account on this computer (account.mjs): a made-up person's library is deleted, and if they come back they start over.
+export function eraseDev(uid) {
+  if (!isDev(uid)) return false;
+  devLibs.delete(uid);
+  rmSync(join(DATA, 'users', uid.slice(4) + '.json'), { force: true });
+  return true;
+}
 // Work that runs once a request's changes are made, just before its library is saved: social.mjs shares a changed
 // deck's new cards this way, and what it shared is saved with the library. If the save loses a race, the request runs
 // again from the newer copy, and sharing the same cards again changes nothing.

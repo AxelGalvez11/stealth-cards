@@ -217,7 +217,8 @@ const sidebar = active => `<nav style="width: 240px; flex-shrink: 0; box-sizing:
   <div style="display: flex; align-items: center; height: 40px; border-radius: 999px; font-size: 14px; ${active === 'You' || active === 'Profile' ? 'background: {{t.surf}}; color: {{t.text}}; font-weight: 600;' : 'color: {{t.muted}};'}"><a href="{{me.href}}" aria-label="Your profile" style="flex-grow: 1; min-width: 0; height: 100%; padding: 0 0 0 9px; display: flex; align-items: center; gap: 12px;">${AVATAR_ME(28)}You</a><a href="WebSettings.dc.html" aria-label="Settings" style="width: 40px; height: 40px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; border-radius: 20px;${active === 'You' ? ' color: {{t.text}};' : ''}">${svg(I.gear, 18)}</a></div>
 </nav>`;
 // `board`: the page has things to drag (see drag.mjs), and popups and trays drawn over the whole page.
-const webRoot = (inner, board = false) => `<div${board ? ' data-sc-board="{{dragKey}}"' : ''} style="width: 1440px; height: 900px; box-sizing: border-box; display: flex; overflow: hidden; font-family: ${FONT}; background: {{t.bg}}; color: {{t.text}};${board ? ' position: relative;' : ''}">
+// `over`: a popup drawn over the whole page (Settings' Delete account question), nothing to drag.
+const webRoot = (inner, board = false, over = false) => `<div${board ? ' data-sc-board="{{dragKey}}"' : ''} style="width: 1440px; height: 900px; box-sizing: border-box; display: flex; overflow: hidden; font-family: ${FONT}; background: {{t.bg}}; color: {{t.text}};${board || over ? ' position: relative;' : ''}">
 ${inner}
 </div>`;
 
@@ -653,6 +654,23 @@ const REPORT_JS = `const REASONS = [['wrong', 'Wrong or harmful'], ['spam', 'Spa
       Promise.resolve(db.act.report({ kind: rep0.kind, id: rep0.id, handle: rep0.kind === 'profile' ? rep0.id : undefined, reason: repReason, note: repNote.trim() })).then(() => this.setState({ repSent: true }), e => this.setState({ repErr: e.message })); } };`;
 // A quiet text button, with no background: "Report", last among a page's small actions.
 const QUIET_BTN = (label, handler, { h = 44, size = 15 } = {}) => `<button type="button" onClick="{{${handler}}}" class="sc-press" style="height: ${h}px; padding: 0 0 0 14px; flex-shrink: 0; border: 0; background: transparent; color: {{t.muted}}; font: inherit; font-size: ${size}px; font-weight: 500; white-space: nowrap; cursor: pointer;">${label}</button>`;
+// Blocking someone (App Store: people can block people): a question first, in the same window as Report. Pages that can block
+// include BLOCK_JS in their logic (it reads this.state, calls the page's own `doBlock(handle, on)`, which answers with a promise,
+// and uses `blkDefault` = { handle, name } on a board that shows the question open) and BLOCK_SHEET in their markup, then call
+// openBlock(handle, name). A failure shows the server's words in red and leaves the question open.
+const BLOCK_BODY = `<div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 12px;"><span style="min-width: 0; font-size: 22px; font-weight: 600; letter-spacing: -.02em; line-height: 1.2; overflow-wrap: anywhere;">{{blk.title}}</span>${closeX('blk.close')}</div>
+    <span style="font-size: 14px; line-height: 1.45; color: {{t.muted}};">They won’t be able to follow you or suggest changes to your decks, and you won’t see their decks. You can unblock them in Settings.</span>
+    ${errLine('blk')}
+    ${twoBtns('blk', '{{blk.action}}')}`;
+const BLOCK_SHEET = phone => (phone ? cSheet('blk.show', 'Block', BLOCK_BODY, 'blk.close', false) : cDialog('blk', BLOCK_BODY, 440));
+const BLOCK_JS = `const blk0 = 'blk' in this.state ? this.state.blk : (typeof blkDefault === 'undefined' ? null : blkDefault);
+  const openBlock = (handle, name) => this.setState({ blk: { handle, name }, blkBusy: false, blkErr: '' });
+  const blkBusy = !!this.state.blkBusy;
+  const blk = { show: !!blk0, title: blk0 ? 'Block ' + blk0.name + '?' : '', err: this.state.blkErr || '', hasErr: !!this.state.blkErr,
+    action: blkBusy ? 'Blocking…' : 'Block', off: blkBusy ? 'true' : 'false', bg: blkBusy ? t.surf2 : t.againTint, fg: blkBusy ? t.muted : t.again,
+    close: () => { if (!blkBusy) this.setState({ blk: null, blkErr: '' }); },
+    save: () => { if (!blk0 || blkBusy) return; this.setState({ blkBusy: true, blkErr: '' });
+      Promise.resolve(doBlock(blk0.handle, true)).then(() => this.setState({ blk: null, blkBusy: false }), e => this.setState({ blkBusy: false, blkErr: (e && e.message) || 'Something went wrong. Try again.' })); } };`;
 
 // ---------- Library (was Decks) ----------
 // A theme (Pro) draws a deck's cover (its picture, words, chips, button, and shadow); a deck with its own photo keeps it.
@@ -3809,8 +3827,9 @@ renderVals() { ${T}${DB_JS}
 
 // iPhone Settings, from the gear on Today. Appearance switches this screen right away, and so does Dark mode (gray or
 // black, for whenever the app is dark). The page scrolls; the board is tall enough to show all of it: the page's content
-// (on Pro) plus 14, so a row added to Settings adds 53 here (node tests/board-fit.mjs PhoneSettings says if it's cut off).
-const PHONE_SETTINGS_H = 1562;
+// (on Pro) plus 14, so a row added to Settings adds 53 here (node tests/board-fit.mjs PhoneSettings says if it's cut off). The
+// Account group adds 274 with the two blocked people of the sample (each person listed adds 56 more).
+const PHONE_SETTINGS_H = 1836;
 const sRow = (label, right, { href = '', sub = '', click = '' } = {}) => {
   const inner = `<span style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px;"><span style="font-size: 16px;">${label}</span>${sub ? `<span style="font-size: 12px; color: {{t.muted}};">${sub}</span>` : ''}</span>${right}`;
   const st = 'min-height: 52px; box-sizing: border-box; padding: 8px 16px; display: flex; align-items: center; gap: 12px;';
@@ -3844,11 +3863,11 @@ const TUNE_JS = `const ti = db.tuneInfo(), n2 = n => Number(n).toLocaleString('e
       : ti.tuned ? 'Off: the standard schedule' : ti.can ? 'Fit the schedule to your ' + n2(ti.reviews) + ' reviews' : 'After ' + n2(ti.need) + ' reviews · you have ' + n2(ti.reviews),
     toggle: () => { if (tuneOk) db.act.useTuned(!ti.on); } };`;
 // The plan's values for renderVals: the app's plan (db.plan()), or on the canvas the board's `plan` setting.
-const PLAN_JS = pricingBoard => `const planOf = { Free: { pro: false }, Pro: { pro: true, every: 'year', until: '2027-09-24T12:00:00Z', ending: false, manage: '#' }, 'Pro, ending': { pro: true, every: 'year', until: '2027-09-24T12:00:00Z', ending: true, manage: '#' } };
+const PLAN_JS = pricingBoard => `const planOf = { Free: { pro: false }, Pro: { pro: true, every: 'year', until: '2027-09-24T12:00:00Z', ending: false, manage: '#' }, 'Pro, ending': { pro: true, every: 'year', until: '2027-09-24T12:00:00Z', ending: true, manage: '#' }, 'Pro, billed by Apple': { pro: true, every: 'year', until: '2027-09-24T12:00:00Z', ending: false, by: 'apple', manage: '#' } };
   const plan = db.mock ? planOf[this.props.plan] || planOf.Pro : db.plan && db.plan();
   const planDay = plan && plan.until ? new Date(plan.until).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : '';
   const planVals = { planFree: !!plan && !plan.pro, planPro: !!plan && !!plan.pro, planRenews: !!plan && !plan.ending, planEnding: !!plan && !!plan.ending,
-    planSub: plan ? [({ month: 'Monthly', year: 'Yearly' })[plan.every] || '', planDay ? (plan.ending ? 'ends ' : 'renews ') + planDay : ''].filter(Boolean).join(' · ') : '',
+    planSub: plan ? [({ month: 'Monthly', year: 'Yearly' })[plan.every] || '', planDay ? (plan.ending ? 'ends ' : 'renews ') + planDay : '', plan.by === 'apple' ? 'Billed by Apple' : ''].filter(Boolean).join(' · ') : '',
     manageHref: plan && plan.manage || 'https://lucida.cards/pricing', proHref: db.mock ? '${pricingBoard}.dc.html' : 'https://lucida.cards/pricing' };`;
 // Settings → Profile picture (web and iPhone): the Google photo (for people signed in with Google), a photo you upload,
 // or your initial on a color. `full`: the choices span the row (iPhone).
@@ -3875,6 +3894,43 @@ const PROFILE_ROW_JS = board => `const you = (db.me && db.me()) || {}, vst = (db
     editProfileHref: db.mock ? '${board}Edit.dc.html' : you.handle ? '/@' + you.handle + '?edit=1' : '/you?edit=1',
     verifyGet: !vst.verified, verifyDone: !!vst.verified, verifyValue: vst.open ? 'Waiting for review' : '', verifiedLabel: vst.verified === 'school' ? 'Verified school' : 'Verified teacher',
     verifyHref: db.mock ? '${board.replace('Profile', 'ClassVerify')}.dc.html' : '/verify' };`;
+// Settings › Account (App Store: people can block people, and delete their account inside the app). Only when you're signed in.
+// Blocked people: how many, and who, each with Unblock (it works at once, and a failure says so). Delete account opens a question
+// first: what goes, what happens to Lucida Pro (Stripe's is cancelled with the account; Apple's can only be stopped in iPhone
+// Settings), and a red Delete account. These rows are the App Store helper's; another helper's Password row goes in the same
+// group: add it to the list in ACCOUNT_GROUP. The logic (ACCOUNT_JS) and the question (DELETE_SHEET) are separate on purpose.
+const ACCOUNT_BLOCKED_ROW = sRow('Blocked people', '<span style="font-size: 15px; color: {{t.muted}}; white-space: nowrap;">{{acct.count}}</span>')
+  + `<sc-for list="{{acct.people}}" as="b" hint-placeholder-count="2">${S_LINE}<div style="min-height: 52px; box-sizing: border-box; padding: 8px 16px; display: flex; align-items: center; gap: 12px;">${PERSON_AV('b', 36)}<span style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px;"><span style="font-size: 16px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{b.name}}</span><span style="font-size: 12px; color: {{t.muted}}; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{b.at}}</span></span>${smallBtn('Unblock', 'b.unblock', '', '{{t.bg}}')}</div></sc-for>`
+  + `<sc-if value="{{acct.hasErr}}" hint-placeholder-val="{{ false }}">${S_LINE}<div style="padding: 10px 16px;"><span role="alert" style="font-size: 13px; line-height: 1.4; color: {{t.again}};">{{acct.err}}</span></div></sc-if>`;
+const ACCOUNT_DELETE_ROW = sRow('<span style="color: {{t.again}};">Delete account</span>', '', { click: 'acct.askDelete' });
+const ACCOUNT_GROUP = `<sc-if value="{{signedIn}}" hint-placeholder-val="{{ true }}">${sGroup('Account', [ACCOUNT_BLOCKED_ROW, ACCOUNT_DELETE_ROW])}</sc-if>`;
+const DELETE_BODY = `<div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 12px;"><span style="min-width: 0; font-size: 22px; font-weight: 600; letter-spacing: -.02em; line-height: 1.2;">{{acct.del.title}}</span>${closeX('acct.del.close')}</div>
+    <div style="display: flex; flex-direction: column; gap: 10px; font-size: 14px; line-height: 1.45; color: {{t.muted}};"><span>This deletes your decks, cards, and reviews, your profile, and the decks you shared. It can’t be undone.</span><sc-if value="{{acct.del.stripe}}" hint-placeholder-val="{{ true }}"><span>Your Lucida Pro subscription will be cancelled.</span></sc-if><sc-if value="{{acct.del.apple}}" hint-placeholder-val="{{ false }}"><span>You pay for Lucida Pro through Apple, and deleting your account doesn’t cancel it. To stop it, open Settings on your iPhone, tap your name, then Subscriptions.</span></sc-if></div>
+    ${errLine('acct.del')}
+    ${twoBtns('acct.del', '{{acct.del.action}}')}`;
+const DELETE_SHEET = phone => (phone ? cSheet('acct.del.show', 'Delete account', DELETE_BODY, 'acct.del.close', false) : cDialog('acct.del', DELETE_BODY, 440));
+// The logic of the Account group, for renderVals (after PLAN_JS and NET_JS, which give it `plan` and `person`). The board's
+// Tweaks can open the question (deleteOpen: Asking, Deleting, or Failed) and empty the list (noBlocks).
+const ACCOUNT_JS = `const acct = (() => {
+    const bl = st.signedIn || db.mock ? db.net.blocks() : undefined, gone = this.state.unblocked || {}, fail = e => (e && e.message) || 'Something went wrong. Try again.';
+    const loaded = !!bl && Array.isArray(bl.people), people = (loaded ? bl.people : []).filter(x => !gone[x.handle]);
+    const want = this.props.deleteOpen || '', open = 'del' in this.state ? !!this.state.del : !!want, working = !!this.state.delBusy;
+    const busy = 'delBusy' in this.state ? working : want === 'Deleting';
+    const err = 'delErr' in this.state ? this.state.delErr : want === 'Failed' ? 'Cancel Pro first: open Manage plan in Settings, cancel, then delete your account.' : '';
+    return {
+      count: loaded ? (people.length ? String(people.length) : 'None') : '',
+      people: people.map(x => ({ ...person(x), unblock: () => {
+        this.setState({ unblocked: { ...(this.state.unblocked || {}), [x.handle]: true }, blockErr: '' });
+        Promise.resolve(db.act.block(x.handle, false)).catch(e => { const back = { ...(this.state.unblocked || {}) }; delete back[x.handle]; this.setState({ unblocked: back, blockErr: fail(e) }); }); } })),
+      hasErr: !!this.state.blockErr, err: this.state.blockErr || '',
+      askDelete: () => this.setState({ del: true, delBusy: false, delErr: '' }),
+      del: { show: open, title: 'Delete your account?', stripe: !!plan && !!plan.pro && plan.by !== 'apple', apple: !!plan && plan.by === 'apple',
+        err, hasErr: !!err, action: busy ? 'Deleting…' : 'Delete account', off: busy ? 'true' : 'false', bg: busy ? t.surf2 : t.againTint, fg: busy ? t.muted : t.again,
+        close: () => { if (!working) this.setState({ del: false, delErr: '' }); },
+        save: () => { if (working) return; this.setState({ del: true, delBusy: true, delErr: '' });
+          Promise.resolve(db.act.deleteAccount()).then(() => { if (db.mock) this.setState({ del: false, delBusy: false }); }, e => this.setState({ delBusy: false, delErr: fail(e) })); } }
+    };
+  })();`;
 const phoneSettings = phone(`<div style="padding: 64px 20px 34px; display: flex; flex-direction: column; gap: 18px;">
   <div style="display: flex; align-items: center; gap: 12px;">${roundBtn('back', 'Back', 'PhoneToday.dc.html')}<div style="flex-grow: 1; font-size: 17px; font-weight: 600; text-align: center;">Settings</div><div style="width: 44px;"></div></div>
   <button type="button" onClick="{{account}}" style="width: 100%; border: 0; border-radius: 24px; background: {{t.surf}}; padding: 14px 16px; display: flex; align-items: center; gap: 14px; color: inherit; font: inherit; text-align: left; cursor: pointer;">${AVATAR_ME(44)}<span style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px;"><span style="font-size: 16px; font-weight: 600;">Your account</span><span style="font-size: 13px; color: {{t.muted}}; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{accountSub}}</span></span><span style="display: flex; color: {{t.muted}};">${svg(I.chev, 14, 2.2)}</span></button>
@@ -3894,7 +3950,8 @@ const phoneSettings = phone(`<div style="padding: 64px 20px 34px; display: flex;
     sRow('Check AI cards first', SWITCH('checkSw', 'toggleCheck', 'Check AI cards first'))
       + `<sc-if value="{{hasInbox}}" hint-placeholder-val="{{ true }}">${S_LINE}${sRow('Cards to check', sVal('{{toCheck}}'), { href: 'PhoneInbox.dc.html' })}</sc-if>`
   ])}
-</div>`, '', '', PHONE_SETTINGS_H);
+  ${ACCOUNT_GROUP}
+</div>`, '', DELETE_SHEET(true), PHONE_SETTINGS_H);
 const phoneSettingsLogic = `
 renderVals() {
   const db = this.props.db || this.mock(), chrome = db.chrome(), st = db.settings();
@@ -3911,8 +3968,10 @@ renderVals() {
   ${PHOTO_JS}
   ${PROFILE_ROW_JS('PhoneProfile')}
   ${TUNE_JS}
+  ${NET_JS}
+  ${ACCOUNT_JS}
   return {
-    t, ...chrome, ...planVals, ...photoVals, ...profileVals, tune,
+    t, ...chrome, ...planVals, ...photoVals, ...profileVals, tune, acct, signedIn: st.signedIn,
     // Your account: tap it to sign out (online).
     accountSub: db.mock ? 'Synced on all your devices · just now' : st.sub,
     account: () => { if (!db.mock && st.signedIn && confirm('Sign out of Lucida?')) db.act.signOut(); },
@@ -3934,7 +3993,7 @@ renderVals() {
 
 // Web Settings, from "You" at the bottom of the sidebar. Profile picture: the Google photo, your own photo, or a color.
 const webSettings = webRoot(`${sidebar('You')}
-<main style="flex-grow: 1; box-sizing: border-box; padding: 36px 48px; display: flex; flex-direction: column; gap: 24px; min-width: 0;">
+<main style="flex-grow: 1; box-sizing: border-box; padding: 36px 48px; display: flex; flex-direction: column; gap: 24px; min-width: 0; overflow-y: auto;">
   <h1 style="margin: 0; font-size: 32px; font-weight: 600; letter-spacing: -.03em;">Settings</h1>
   <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px; align-items: start;">
     <div style="display: flex; flex-direction: column; gap: 24px;">
@@ -3960,8 +4019,9 @@ const webSettings = webRoot(`${sidebar('You')}
       ${sGroup('Your data', [
         sRow('Import cards', sVal('Anki, Quizlet, or CSV'), { href: 'WebImport.dc.html' }),
         sRow('Export all cards', sVal(''), { click: 'exportAll' }),
-        sRow('<span style="color: {{t.again}};">Delete account</span>', '', { click: 'deleteAccount' })
+        sRow('<span style="color: {{t.again}};">Delete my data</span>', '', { click: 'deleteData' })
       ])}
+      ${ACCOUNT_GROUP}
     </div>
     <div style="display: flex; flex-direction: column; gap: 24px;">
       ${SETTINGS_PROFILE('WebProfile')}
@@ -3979,7 +4039,8 @@ const webSettings = webRoot(`${sidebar('You')}
       ${sGroup('Schedule', [TUNE_ROW])}
     </div>
   </div>
-</main>`);
+</main>
+${DELETE_SHEET(false)}`, false, true);
 const webSettingsLogic = `
 renderVals() {
   const db = this.props.db || this.mock(), chrome = db.chrome(), st = db.settings();
@@ -3995,8 +4056,10 @@ renderVals() {
   ${PHOTO_JS}
   ${PROFILE_ROW_JS('WebProfile')}
   ${TUNE_JS}
+  ${NET_JS}
+  ${ACCOUNT_JS}
   return {
-    t, ...chrome, grain: String(this.props.grain ?? 0.7), ...planVals, ...photoVals, ...profileVals, tune,
+    t, ...chrome, grain: String(this.props.grain ?? 0.7), ...planVals, ...photoVals, ...profileVals, tune, acct,
     name: st.name, sub: st.sub, signedIn: st.signedIn,
     ...themeRow(),
     looks: opts([['system', 'System'], ['light', 'Light'], ['dark', 'Dark']], look, id => set({ look: id })),
@@ -4012,7 +4075,7 @@ renderVals() {
     lessDay: () => set({ perDay: Math.max(0, st.perDay - 5) }), moreDay: () => set({ perDay: Math.min(999, st.perDay + 5) }),
     lessGoal: () => set({ goal: Math.max(70, st.goal - 1) }), moreGoal: () => set({ goal: Math.min(97, st.goal + 1) }),
     reminder: st.reminder, connected: db.ai().connected,
-    exportAll: () => db.act.exportAll(), deleteAccount: () => db.act.resetAll(), signOut: () => db.act.signOut && db.act.signOut()
+    exportAll: () => db.act.exportAll(), deleteData: () => db.act.resetAll(), signOut: () => db.act.signOut && db.act.signOut()
   };
 }`;
 
@@ -6249,22 +6312,42 @@ renderVals() {
     }).catch(e => { const m = oops(e); this.setState(/taken|letters, numbers/i.test(m) ? { saving: false, handleErr: m } : { saving: false, saveErr: m }); });
   };
   const hasLine = !!(pr.subject || pr.school), err = s.err || '';
+  // Someone you blocked: their page comes without their decks, and says so. Blocking shows at once; Unblock waits for their page
+  // to come back with their decks (the button says Unblocking… until then).
+  const blocked = ok && !self && !out && !!(pr.me && pr.me.blocked), unblocking = blocked && !!pr.unblocking;
+  const setBlocked = on => {
+    this.over = { patch: { ...over, ...(on ? { me: { ...(pr.me || {}), blocked: true, following: false }, decks: [], saved: [] } : { unblocking: true }) }, data: null };
+    this.busy = (this.busy || 0) + 1; this.setState({ err: '', menu: null });
+    return Promise.resolve(db.act.block(pr.handle || h, on)).then(() => { if (!--this.busy && this.over) this.over.data = db.net.profile(h); this.forceUpdate(); },
+      e => { this.busy--; this.over = null; throw e; });
+  };
+  const doBlock = (handle, on) => setBlocked(on);
+  const unblock = () => { if (!unblocking) setBlocked(false).catch(e => this.setState({ err: oops(e) })); };
   // Report this person (anyone but you; signed out, sending it signs you in first).
   const repDefault = p.report && ok && !self ? { kind: 'profile', id: pr.handle || h, name } : null;
   ${REPORT_JS}
+  const blkDefault = p.block && ok && !self && !out ? { handle: pr.handle || h, name } : null;
+  ${BLOCK_JS}
+  // ⋯ (someone else's page, signed in): Report, and Block (or Unblock, for someone you blocked). Signed out, there's just Report.
+  const showMore = ok && !self && !out, moreOn = showMore && ('more' in s ? !!s.more : !!p.moreOpen);
+  const more = { open: moreOn, expanded: moreOn ? 'true' : 'false', toggle: () => this.setState({ more: !moreOn }),
+    items: [{ label: 'Report', fg: t.text, pick: () => { this.setState({ more: false }); openReport('profile', pr.handle || h, name); } },
+      blocked ? { label: 'Unblock', fg: t.text, pick: () => { this.setState({ more: false }); unblock(); } }
+        : { label: 'Block', fg: t.again, pick: () => { this.setState({ more: false }); openBlock(pr.handle || h, name); } }] };
   return {
     t, ...chrome, ${NET_VALS} ...photoVals,
-    sideSelf: !out && self, sideOther: !out && !self, canReport: ok && !self, reportIt: () => openReport('profile', pr.handle || h, name), rep,
+    sideSelf: !out && self, sideOther: !out && !self, quietReport: ok && !self && out, reportIt: () => openReport('profile', pr.handle || h, name), rep, blk, more, showMore,
     loading: !data && !s.makeErr && !!(h || making), missing, offline, ok, self, notSelf: !self, who, name, at: h ? '@' + h : '', hasLine, line: [pr.subject, pr.school].filter(Boolean).join(' · '),
     hasBio: !!pr.bio, bio: pr.bio || '',
-    counts: [{ n: kfmt(decks.length), word: n1(decks.length, 'deck', 'decks') }, { n: kfmt(followers), word: n1(followers, 'follower', 'followers') }, { n: kfmt(pr.following), word: 'following' }, { n: kfmt(stars), word: n1(stars, 'save', 'saves') }],
-    counts3: [{ n: kfmt(decks.length), label: 'Decks' }, { n: kfmt(followers), label: 'Followers' }, { n: kfmt(pr.following), label: 'Following' }],
-    canFollow: ok && !self && !out, followSignIn: ok && out, toggleFollow, followLabel: following ? 'Following' : 'Follow', followPressed: following ? 'true' : 'false',
+    // Someone you blocked: their decks and saves aren't shown (they'd read 0), so neither are those counts.
+    counts: [{ n: kfmt(decks.length), word: n1(decks.length, 'deck', 'decks') }, { n: kfmt(followers), word: n1(followers, 'follower', 'followers') }, { n: kfmt(pr.following), word: 'following' }, { n: kfmt(stars), word: n1(stars, 'save', 'saves') }].filter((c, i) => !blocked || i === 1 || i === 2),
+    counts3: [{ n: kfmt(decks.length), label: 'Decks' }, { n: kfmt(followers), label: 'Followers' }, { n: kfmt(pr.following), label: 'Following' }].filter((c, i) => !blocked || i > 0), cols3: String(blocked ? 2 : 3),
+    canFollow: ok && !self && !out && !blocked, canUnblock: blocked, unblock, unblockLabel: unblocking ? 'Unblocking…' : 'Unblock', followSignIn: ok && out, toggleFollow, followLabel: following ? 'Following' : 'Follow', followPressed: following ? 'true' : 'false',
     followBg: following ? t.surf : t.inv, followFg: following ? t.text : t.invText,
     share, copied: !!s.copied, notCopied: !s.copied, shareLabel: s.copied ? 'Link copied' : 'Share', shareLong: s.copied ? 'Link copied' : 'Share profile',
     hasErr: !!err, err, makeFailed: !!s.makeErr, makeErr: s.makeErr || '', retryMake: () => { this.making = false; this.setState({ makeErr: '' }); },
-    tabs: { decks: tabOf('Decks', decks.length), saved: tabOf('Saved', saved.length), sugg: tabOf('Suggestions', sentData === undefined ? null : sentList.length) },
-    decks, showDecks: tab === 'Decks' && decks.length > 0, noDecks: tab === 'Decks' && !decks.length,
+    tabs: { decks: tabOf('Decks', blocked ? null : decks.length), saved: tabOf('Saved', saved.length), sugg: tabOf('Suggestions', sentData === undefined ? null : sentList.length) },
+    decks, showDecks: tab === 'Decks' && decks.length > 0, noDecks: tab === 'Decks' && !decks.length && !blocked, blockedNote: blocked,
     saved, showSaved: tab === 'Saved' && saved.length > 0, noSaved: tab === 'Saved' && !saved.length,
     sentRows, sentLoading: tab === 'Suggestions' && sentData === undefined, showSent: tab === 'Suggestions' && sentRows.length > 0, noSent: tab === 'Suggestions' && sentData !== undefined && !sentRows.length,
     missingTitle: 'No one has that name', missingLine: '@' + h, discoverHref: goTo('/discover', B('Discover')), backHref: goTo('/discover', B('Discover')),
@@ -6291,11 +6374,15 @@ const PIN_MENU = pos => `<sc-if value="{{d.menuOpen}}" hint-placeholder-val="{{ 
   <sc-if value="{{d.canPin}}" hint-placeholder-val="{{ true }}"><button type="button" onClick="{{d.pin}}" style="${MENU_ITEM}"><span style="display: flex; color: {{t.muted}};">${svg(I.pin, 16, 1.8)}</span>Pin to profile</button></sc-if>
   <sc-if value="{{d.pinFull}}" hint-placeholder-val="{{ false }}"><span aria-disabled="true" style="padding: 9px 12px; display: flex; gap: 10px; color: {{t.muted}};"><span style="display: flex; padding-top: 1px;">${svg(I.pin, 16, 1.8)}</span><span style="display: flex; flex-direction: column; gap: 2px;"><span style="font-size: 14px;">Pin to profile</span><span style="font-size: 12px;">3 pinned already</span></span></span></sc-if>
 </div></sc-if>`;
+// ⋯ on someone else's profile (signed in): a round button, and its small menu: Report, and Block (Unblock, for someone you blocked).
+const MORE_BTN = size => `<button type="button" onClick="{{more.toggle}}" aria-label="More for {{name}}" aria-haspopup="menu" aria-expanded="{{more.expanded}}" class="sc-press" style="width: ${size}px; height: ${size}px; flex-shrink: 0; border: 0; border-radius: ${size / 2}px; background: {{t.surf}}; color: {{t.text}}; display: flex; align-items: center; justify-content: center; cursor: pointer;">${svg(I.more, size > 40 ? 18 : 16, 2)}</button>`;
+const MORE_MENU = top => `<sc-if value="{{more.open}}" hint-placeholder-val="{{ false }}"><div role="menu" aria-label="More for {{name}}" data-sc-pop style="position: absolute; right: 0; top: ${top}px; z-index: 25; width: 190px; ${popBox}"><sc-for list="{{more.items}}" as="o" hint-placeholder-count="2"><button type="button" role="menuitem" onClick="{{o.pick}}" style="${MENU_ITEM} color: {{o.fg}};">{{o.label}}</button></sc-for></div></sc-if>`;
 // A tab with nothing in it yet, and what to do about it.
 const PROFILE_EMPTY = (on, text, action = '', phone = false) => `<sc-if value="{{${on}}}" hint-placeholder-val="{{ false }}"><div style="padding: ${phone ? '40px 20px' : '56px 24px'}; border-radius: ${phone ? 22 : 24}px; background: {{t.surf}}; display: flex; flex-direction: column; align-items: center; gap: 14px; text-align: center; font-size: 15px; color: {{t.muted}};"><span>${text}</span>${action}</div></sc-if>`;
 const PROFILE_EMPTIES = (phone, P) => `${PROFILE_EMPTY('noDecks', 'No public decks yet', `<sc-if value="{{self}}" hint-placeholder-val="{{ true }}">${pill('Open Library', { inv: true, href: P + (phone ? 'Library' : 'Decks') + '.dc.html' })}</sc-if>`, phone)}
   ${PROFILE_EMPTY('noSaved', 'No saved decks yet', pill('Discover decks', { inv: true, href: P + 'Discover.dc.html' }), phone)}
-  ${PROFILE_EMPTY('noSent', 'No suggestions yet', '', phone)}`;
+  ${PROFILE_EMPTY('noSent', 'No suggestions yet', '', phone)}
+  ${PROFILE_EMPTY('blockedNote', 'You blocked {{name}}.', '', phone)}`;
 // The suggestions you sent, each with its deck's color, what you said, when, and what became of it.
 const SENT_ROWS = phone => `<sc-if value="{{sentLoading}}" hint-placeholder-val="{{ false }}"><div aria-label="Loading" style="height: 120px; border-radius: 20px; background: {{t.surf}};"></div></sc-if>
   <sc-if value="{{showSent}}" hint-placeholder-val="{{ false }}"><div style="display: flex; flex-direction: column;"><sc-for list="{{sentRows}}" as="g" hint-placeholder-count="4"><a href="{{g.href}}" style="display: flex; align-items: center; gap: ${phone ? 12 : 16}px; min-height: ${phone ? 64 : 68}px; padding: 10px 0; box-sizing: border-box; border-bottom: 1px solid {{t.line}};">
@@ -6359,9 +6446,11 @@ const webProfile = profileRoot(`
         <div style="flex-shrink: 0; display: flex; align-items: center; gap: 10px;">
           <sc-if value="{{self}}" hint-placeholder-val="{{ true }}">${pill('Edit profile', { icon: 'pencil', onClick: '{{openEdit}}' })}</sc-if>
           <sc-if value="{{canFollow}}" hint-placeholder-val="{{ false }}"><button type="button" onClick="{{toggleFollow}}" aria-pressed="{{followPressed}}" class="sc-press" style="height: 36px; padding: 0 20px; display: inline-flex; align-items: center; border: 0; border-radius: 999px; background: {{followBg}}; color: {{followFg}}; font: inherit; font-size: 14px; font-weight: 600; cursor: pointer; transition: background-color .15s, color .15s;">{{followLabel}}</button></sc-if>
+          <sc-if value="{{canUnblock}}" hint-placeholder-val="{{ false }}"><button type="button" onClick="{{unblock}}" class="sc-press" style="height: 36px; padding: 0 20px; display: inline-flex; align-items: center; border: 0; border-radius: 999px; background: {{t.inv}}; color: {{t.invText}}; font: inherit; font-size: 14px; font-weight: 600; cursor: pointer;">{{unblockLabel}}</button></sc-if>
           <sc-if value="{{followSignIn}}" hint-placeholder-val="{{ false }}">${pill('Follow', { inv: true, href: '{{signInHref}}' })}</sc-if>
           <button type="button" onClick="{{share}}" class="sc-press" style="height: 36px; padding: 0 16px; display: inline-flex; align-items: center; gap: 8px; border: 0; border-radius: 999px; background: {{t.surf}}; color: {{t.text}}; font: inherit; font-size: 14px; font-weight: 600; cursor: pointer;"><sc-if value="{{copied}}" hint-placeholder-val="{{ false }}">${svg(I.check, 16, 2)}</sc-if><sc-if value="{{notCopied}}" hint-placeholder-val="{{ true }}">${svg(I.share, 16, 2)}</sc-if>{{shareLabel}}</button>
-          <sc-if value="{{canReport}}" hint-placeholder-val="{{ true }}">${QUIET_BTN('Report', 'reportIt', { h: 36, size: 14 })}</sc-if>
+          <sc-if value="{{showMore}}" hint-placeholder-val="{{ true }}"><div style="position: relative; flex-shrink: 0;">${MORE_BTN(36)}${MORE_MENU(44)}</div></sc-if>
+          <sc-if value="{{quietReport}}" hint-placeholder-val="{{ false }}">${QUIET_BTN('Report', 'reportIt', { h: 36, size: 14 })}</sc-if>
         </div>
       </div>
       <sc-if value="{{hasErr}}" hint-placeholder-val="{{ false }}"><span role="alert" style="margin-top: -12px; font-size: 13px; color: {{t.again}};">{{err}}</span></sc-if>
@@ -6371,21 +6460,23 @@ const webProfile = profileRoot(`
       ${SENT_ROWS(false)}
       ${PROFILE_EMPTIES(false, 'Web')}
     </sc-if>`, `${EDIT_PANEL}
-${REPORT_SHEET(false)}`);
+${REPORT_SHEET(false)}
+${BLOCK_SHEET(false)}`);
 const phoneProfile = phone(`<div style="padding: 64px 20px 120px; display: flex; flex-direction: column; gap: 16px;">
   <div style="display: flex; align-items: center; gap: 10px;">
     <sc-if value="{{notSelf}}" hint-placeholder-val="{{ false }}"><a href="{{backHref}}" aria-label="Back" style="width: 44px; height: 44px; flex-shrink: 0; border-radius: 22px; background: {{t.surf}}; display: flex; align-items: center; justify-content: center;">${svg(I.back, 18, 2)}</a></sc-if>
     <span style="flex-grow: 1; min-width: 0; font-size: 20px; font-weight: 700; letter-spacing: -.02em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{at}}</span>
     <sc-if value="{{ok}}" hint-placeholder-val="{{ true }}"><button type="button" onClick="{{share}}" aria-label="Share profile" class="sc-press" style="width: 44px; height: 44px; flex-shrink: 0; border: 0; border-radius: 22px; background: {{t.surf}}; color: {{t.text}}; display: flex; align-items: center; justify-content: center; cursor: pointer;">${svg(I.share, 18, 2)}</button></sc-if>
     <sc-if value="{{self}}" hint-placeholder-val="{{ true }}"><a href="PhoneSettings.dc.html" aria-label="Settings" class="sc-press" style="width: 44px; height: 44px; flex-shrink: 0; border-radius: 22px; background: {{t.surf}}; display: flex; align-items: center; justify-content: center;">${svg(I.gear, 18, 2)}</a></sc-if>
-    <sc-if value="{{canReport}}" hint-placeholder-val="{{ true }}">${QUIET_BTN('Report', 'reportIt')}</sc-if>
+    <sc-if value="{{showMore}}" hint-placeholder-val="{{ true }}"><div style="position: relative; flex-shrink: 0;">${MORE_BTN(44)}${MORE_MENU(52)}</div></sc-if>
+    <sc-if value="{{quietReport}}" hint-placeholder-val="{{ false }}">${QUIET_BTN('Report', 'reportIt')}</sc-if>
   </div>
   ${PROFILE_LOADING(true)}
   ${PROFILE_TROUBLE(true)}
   <sc-if value="{{ok}}" hint-placeholder-val="{{ true }}">
     <div style="display: flex; align-items: center; gap: 20px;">
       <sc-if value="{{self}}" hint-placeholder-val="{{ true }}">${AVATAR_ME(84)}</sc-if><sc-if value="{{notSelf}}" hint-placeholder-val="{{ false }}">${PERSON_AV('who', 84)}</sc-if>
-      <div style="flex-grow: 1; min-width: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); text-align: center;"><sc-for list="{{counts3}}" as="c" hint-placeholder-count="3"><span style="display: flex; flex-direction: column; gap: 2px;"><span style="font-size: 18px; font-weight: 700;">{{c.n}}</span><span style="font-size: 13px; color: {{t.muted}};">{{c.label}}</span></span></sc-for></div>
+      <div style="flex-grow: 1; min-width: 0; display: grid; grid-template-columns: repeat({{cols3}}, minmax(0, 1fr)); text-align: center;"><sc-for list="{{counts3}}" as="c" hint-placeholder-count="3"><span style="display: flex; flex-direction: column; gap: 2px;"><span style="font-size: 18px; font-weight: 700;">{{c.n}}</span><span style="font-size: 13px; color: {{t.muted}};">{{c.label}}</span></span></sc-for></div>
     </div>
     <div style="display: flex; flex-direction: column; gap: 3px;">
       <span style="display: flex; align-items: center; gap: 6px; min-width: 0; font-size: 16px; font-weight: 600;"><span style="min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{name}}</span>${VERIFIED('who')}</span>
@@ -6395,6 +6486,7 @@ const phoneProfile = phone(`<div style="padding: 64px 20px 120px; display: flex;
     <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px;">
       <sc-if value="{{self}}" hint-placeholder-val="{{ true }}"><button type="button" onClick="{{openEdit}}" class="sc-press" style="height: 44px; border: 0; border-radius: 999px; background: {{t.surf}}; color: {{t.text}}; font: inherit; font-size: 15px; font-weight: 600; cursor: pointer;">Edit profile</button></sc-if>
       <sc-if value="{{canFollow}}" hint-placeholder-val="{{ false }}"><button type="button" onClick="{{toggleFollow}}" aria-pressed="{{followPressed}}" class="sc-press" style="height: 44px; border: 0; border-radius: 999px; background: {{followBg}}; color: {{followFg}}; font: inherit; font-size: 15px; font-weight: 600; cursor: pointer; transition: background-color .15s, color .15s;">{{followLabel}}</button></sc-if>
+      <sc-if value="{{canUnblock}}" hint-placeholder-val="{{ false }}"><button type="button" onClick="{{unblock}}" class="sc-press" style="height: 44px; border: 0; border-radius: 999px; background: {{t.inv}}; color: {{t.invText}}; font: inherit; font-size: 15px; font-weight: 600; cursor: pointer;">{{unblockLabel}}</button></sc-if>
       <sc-if value="{{followSignIn}}" hint-placeholder-val="{{ false }}"><a href="{{signInHref}}" class="sc-press" style="height: 44px; border-radius: 999px; background: {{t.inv}}; color: {{t.invText}}; display: flex; align-items: center; justify-content: center; font-size: 15px; font-weight: 600;">Follow</a></sc-if>
       <button type="button" onClick="{{share}}" class="sc-press" style="height: 44px; border: 0; border-radius: 999px; background: {{t.surf}}; color: {{t.text}}; font: inherit; font-size: 15px; font-weight: 600; cursor: pointer;">{{shareLong}}</button>
     </div>
@@ -6407,7 +6499,8 @@ const phoneProfile = phone(`<div style="padding: 64px 20px 120px; display: flex;
     ${PROFILE_EMPTIES(true, 'Phone')}
   </sc-if>
 </div>`, 'You', `${EDIT_SHEET}
-${REPORT_SHEET(true)}`);
+${REPORT_SHEET(true)}
+${BLOCK_SHEET(true)}`);
 
 // News: suggestions on your decks, people following you, new versions of decks you follow, what owners did with your
 // suggestions, teachers checking your decks, and two things Lucida tells you itself: you're verified as a teacher or school,
@@ -6917,7 +7010,8 @@ renderVals() {
   const sid = dk && dk.shared ? dk.shared.id : db.mock && deckId ? 's9' : '';
   const fresh = p.noSuggestions ? [] : deckId ? (sid ? db.net.suggestions(sid) : []) : db.net.inbox();
   if (fresh !== undefined) this.list = fresh;
-  const got = fresh === undefined ? this.list : fresh, loading = got === undefined, list = Array.isArray(got) ? got : [];
+  // Someone you just blocked from here: their suggestions go at once (the server has deleted them; the page asks again).
+  const got = fresh === undefined ? this.list : fresh, loading = got === undefined, list = (Array.isArray(got) ? got : []).filter(x => !(x.person && (st.blockedBy || {})[x.person.handle]));
   // A change decided here a moment ago shows that way until the server's answer comes back.
   const local = st.local || {}, statusOf = c => local[c.id] || c.status || 'open', busy = !!st.busy;
   const libDecks = db.decks ? db.decks() : [];
@@ -6947,13 +7041,15 @@ renderVals() {
   };
   const items = [
     ...aiItems.map(a => ({ ...a, ...whoOf(a.ai), title: a.ai + ', through your link', line: plural(a.cards.length, 'new card') + (deckId ? '' : ' · ' + a.deckName), when: a.at ? brief(new Date(a.at).toISOString()) : '',
-      head: a.ai + ' added ' + plural(a.cards.length, 'card'), message: 'Through your link' + (deckId ? '' : ' · ' + a.deckName), takeAllLabel: 'Keep all ' + a.cards.length, skipAllLabel: 'Toss all', many: a.cards.length > 1, canReport: false, report: () => {},
+      head: a.ai + ' added ' + plural(a.cards.length, 'card'), message: 'Through your link' + (deckId ? '' : ' · ' + a.deckName), takeAllLabel: 'Keep all ' + a.cards.length, skipAllLabel: 'Toss all', many: a.cards.length > 1, canReport: false, report: () => {}, canBlock: false, block: () => {},
       takeAll: () => keep(a.cards.flatMap(c => c.ids), 'kept'), skipAll: () => keep(a.cards.flatMap(c => c.ids), 'tossed'),
       changes: a.cards.map(c => ({ label: 'New card', context: c.kind || 'Card', hasContext: true, before: '', hasBefore: false, after: c.back ? 'Q: ' + c.front + '  A: ' + c.back : c.front, hasAfter: true, op: '1',
         open: true, decided: false, state: '', stateColor: t.muted, takeLabel: 'Keep', skipLabel: 'Toss', take: () => keep(c.ids, 'kept'), skip: () => keep(c.ids, 'tossed') })) })),
     ...list.map(s => ({ s, open: (s.changes || []).filter(c => statusOf(c) === 'open') })).filter(x => x.open.length).map(({ s, open }) => {
       const who = s.ai ? s.ai + ', through ' + firstName(s.author_name) + '’s link' : s.author_name || 'Someone', deckName = deckOf(s);
+      const from = s.person && s.person.handle ? { handle: s.person.handle, name: s.person.name || s.author_name || 'this person' } : null;
       return { key: s.id, kind: 'suggestion', authorName: s.author_name || 'Someone', canReport: true, report: () => openReport('suggestion', s.id, s.author_name || 'Someone'),
+        canBlock: !!from, block: () => from && openBlock(from.handle, from.name), blockWho: from || { handle: '', name: '' },
         ...(s.ai ? whoOf(s.ai) : whoOf('', s.person || { name: s.author_name })), title: who, line: plural(open.length, 'change') + (deckId || !deckName ? '' : ' · ' + deckName), when: brief(s.created_at),
         head: who + ' suggested ' + plural(open.length, 'change'), message: s.message ? '“' + s.message + '”' : deckId || !deckName ? '' : deckName, takeAllLabel: 'Take all ' + open.length, skipAllLabel: 'Skip all', many: open.length > 1,
         takeAll: () => decide(s, { $all: 'take' }), skipAll: () => decide(s, { $all: 'skip' }),
@@ -6966,12 +7062,16 @@ renderVals() {
   // Report a suggestion (someone's, not the cards your own AI made).
   const repDefault = p.report && cur && cur.kind === 'suggestion' ? { kind: 'suggestion', id: cur.key, name: cur.authorName } : null;
   ${REPORT_JS}
+  // Block the person who sent it (the same question as on their profile); afterwards their suggestions are gone.
+  const doBlock = (handle, on) => Promise.resolve(db.act.block(handle, on)).then(r => { this.setState({ blockedBy: { ...(this.state.blockedBy || {}), [handle]: on } }); return r; });
+  const blkDefault = p.block && cur && cur.canBlock ? { handle: cur.blockWho.handle, name: cur.blockWho.name } : null;
+  ${BLOCK_JS}
   return {
-    t, ...chrome, ${NET_VALS} ink: inkOf, rep, loading: loading && !items.length, empty, ready: !!items.length,
+    t, ...chrome, ${NET_VALS} ink: inkOf, rep, blk, loading: loading && !items.length, empty, ready: !!items.length,
     hasBack: !!deckId, backHref: goTo('/deck/' + deckId, B + 'Deck'), backLabel: dk ? dk.name : '', count: String(items.length), hasCount: items.length > 0,
     items: items.map(i => ({ ...i, sel: cur && i.key === cur.key ? 'true' : 'false', bg: cur && i.key === cur.key ? t.surf : 'transparent', pick: () => set({ sel: i.key, err: '', note: '' }) })),
-    cur: cur || { head: '', message: '', changes: [], takeAll: () => {}, skipAll: () => {}, takeAllLabel: '', skipAllLabel: '', many: false, canReport: false, report: () => {}, isAI: false, isPerson: true, who: person({}), aiBg: '', aiInk: '', aiName: '' },
-    hasCur: !!cur, hasMessage: !!(cur && cur.message), listView: ${phone ? '!cur' : 'true'}, detailView: !!cur, closeItem: () => set({ sel: '', err: '', note: '' }),
+    cur: cur || { head: '', message: '', changes: [], takeAll: () => {}, skipAll: () => {}, takeAllLabel: '', skipAllLabel: '', many: false, canReport: false, report: () => {}, canBlock: false, block: () => {}, isAI: false, isPerson: true, who: person({}), aiBg: '', aiInk: '', aiName: '' },
+    hasCur: !!cur, hasMessage: !!(cur && cur.message), hasMeta: !!(cur && (cur.message || cur.canReport || cur.canBlock)), listView: ${phone ? '!cur' : 'true'}, detailView: !!cur, closeItem: () => set({ sel: '', err: '', note: '' }),
     hasNote: !!st.note, note: st.note || '', hasErr: !!st.err, err: st.err || '', busyOp: busy ? '.6' : '1'
   };
 }`;
@@ -6987,12 +7087,14 @@ const webSuggestions = netRoot('Library', `
       <sc-if value="{{hasCur}}" hint-placeholder-val="{{ true }}"><section style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 12px; opacity: {{busyOp}};">
         <div style="display: flex; align-items: center; gap: 12px; min-height: 44px;">${WHO_AV('cur', 40)}<span style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px;"><span style="font-size: 17px; font-weight: 600; letter-spacing: -.01em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{cur.head}}</span><sc-if value="{{hasMessage}}" hint-placeholder-val="{{ true }}"><span style="font-size: 14px; color: {{t.muted}}; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{cur.message}}</span></sc-if></span>
           <sc-if value="{{cur.many}}" hint-placeholder-val="{{ true }}"><span style="display: flex; gap: 8px; flex-shrink: 0;"><button type="button" onClick="{{cur.skipAll}}" class="sc-press" style="height: 40px; padding: 0 18px; border: 0; border-radius: 999px; background: {{t.surf}}; color: {{t.text}}; font: inherit; font-size: 14px; font-weight: 600; cursor: pointer;"><span>{{cur.skipAllLabel}}</span></button><button type="button" onClick="{{cur.takeAll}}" class="sc-press" style="height: 40px; padding: 0 18px 0 16px; border: 0; border-radius: 999px; background: {{t.inv}}; color: {{t.invText}}; font: inherit; font-size: 14px; font-weight: 600; display: inline-flex; align-items: center; gap: 7px; cursor: pointer;">${svg(I.check, 15, 2.4)}<span>{{cur.takeAllLabel}}</span></button></span></sc-if>
-          <sc-if value="{{cur.canReport}}" hint-placeholder-val="{{ true }}">${QUIET_BTN('Report', 'cur.report', { h: 40, size: 14 })}</sc-if></div>
+          <sc-if value="{{cur.canReport}}" hint-placeholder-val="{{ true }}">${QUIET_BTN('Report', 'cur.report', { h: 40, size: 14 })}</sc-if>
+          <sc-if value="{{cur.canBlock}}" hint-placeholder-val="{{ true }}">${QUIET_BTN('Block', 'cur.block', { h: 40, size: 14 })}</sc-if></div>
         <sc-if value="{{hasErr}}" hint-placeholder-val="{{ false }}"><span role="alert" style="font-size: 13px; color: {{t.again}};">{{err}}</span></sc-if>
         <sc-for list="{{cur.changes}}" as="c" hint-placeholder-count="3">${CHANGE_CARD('c', false)}</sc-for>
       </section></sc-if>
     </div></sc-if>
-    <sc-if value="{{hasNote}}" hint-placeholder-val="{{ false }}"><span role="status" style="font-size: 14px; color: {{t.muted}};">{{note}}</span></sc-if>`, REPORT_SHEET(false));
+    <sc-if value="{{hasNote}}" hint-placeholder-val="{{ false }}"><span role="status" style="font-size: 14px; color: {{t.muted}};">{{note}}</span></sc-if>`, `${REPORT_SHEET(false)}
+${BLOCK_SHEET(false)}`);
 const phoneSuggestions = phone(`<div style="padding: 64px 20px 120px; display: flex; flex-direction: column; gap: 16px;">
   <sc-if value="{{listView}}" hint-placeholder-val="{{ true }}">
     <div style="display: flex; align-items: center; gap: 12px;"><sc-if value="{{hasBack}}" hint-placeholder-val="{{ true }}">${roundBtn('back', 'Back', '{{backHref}}')}</sc-if><h1 style="margin: 0; flex-grow: 1; min-width: 0; font-size: 32px; font-weight: 700; letter-spacing: -.03em;">Suggestions</h1><sc-if value="{{hasCount}}" hint-placeholder-val="{{ true }}"><span style="font-family: ${MONO}; font-size: 15px; color: {{t.muted}};">{{count}}</span></sc-if></div>
@@ -7003,14 +7105,15 @@ const phoneSuggestions = phone(`<div style="padding: 64px 20px 120px; display: f
     <div style="display: flex; flex-direction: column;"><sc-for list="{{items}}" as="i" hint-placeholder-count="3"><button type="button" onClick="{{i.pick}}" style="width: 100%; min-height: 72px; padding: 12px 0; border: 0; border-bottom: 1px solid {{t.line}}; background: transparent; color: {{t.text}}; font: inherit; text-align: left; display: flex; align-items: center; gap: 12px; cursor: pointer;">${WHO_AV('i', 44)}<span style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px;"><span style="font-size: 16px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{i.title}}</span><span style="font-size: 14px; color: {{t.muted}}; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{i.line}}</span></span><span style="flex-shrink: 0; font-size: 13px; color: {{t.muted}};">{{i.when}}</span></button></sc-for></div>
   </sc-if>
   <sc-if value="{{detailView}}" hint-placeholder-val="{{ false }}">
-    <div style="display: flex; align-items: center; gap: 12px;"><button type="button" onClick="{{closeItem}}" aria-label="Back to suggestions" style="width: 44px; height: 44px; flex-shrink: 0; border: 0; border-radius: 22px; background: {{t.surf}}; color: {{t.text}}; display: flex; align-items: center; justify-content: center; cursor: pointer;">${svg(I.back, 18, 2)}</button>${WHO_AV('cur', 40)}<span style="flex-grow: 1; min-width: 0; font-size: 16px; font-weight: 600; line-height: 1.25;">{{cur.head}}</span><sc-if value="{{cur.canReport}}" hint-placeholder-val="{{ true }}">${QUIET_BTN('Report', 'cur.report')}</sc-if></div>
-    <sc-if value="{{hasMessage}}" hint-placeholder-val="{{ true }}"><span style="font-size: 15px; line-height: 1.4; color: {{t.muted}};">{{cur.message}}</span></sc-if>
+    <div style="display: flex; align-items: center; gap: 12px;"><button type="button" onClick="{{closeItem}}" aria-label="Back to suggestions" style="width: 44px; height: 44px; flex-shrink: 0; border: 0; border-radius: 22px; background: {{t.surf}}; color: {{t.text}}; display: flex; align-items: center; justify-content: center; cursor: pointer;">${svg(I.back, 18, 2)}</button>${WHO_AV('cur', 40)}<span style="flex-grow: 1; min-width: 0; font-size: 16px; font-weight: 600; line-height: 1.25;">{{cur.head}}</span></div>
+    <sc-if value="{{hasMeta}}" hint-placeholder-val="{{ true }}"><div style="display: flex; align-items: center; gap: 12px; min-height: 36px;"><sc-if value="{{hasMessage}}" hint-placeholder-val="{{ true }}"><span style="flex-grow: 1; min-width: 0; font-size: 15px; line-height: 1.4; color: {{t.muted}};">{{cur.message}}</span></sc-if><span style="margin-left: auto; display: flex; flex-shrink: 0;"><sc-if value="{{cur.canReport}}" hint-placeholder-val="{{ true }}">${QUIET_BTN('Report', 'cur.report', { h: 36 })}</sc-if><sc-if value="{{cur.canBlock}}" hint-placeholder-val="{{ true }}">${QUIET_BTN('Block', 'cur.block', { h: 36 })}</sc-if></span></div></sc-if>
     <sc-if value="{{cur.many}}" hint-placeholder-val="{{ true }}"><div style="display: flex; gap: 8px;"><button type="button" onClick="{{cur.skipAll}}" class="sc-press" style="flex: 1 1 0; height: 48px; border: 0; border-radius: 999px; background: {{t.surf}}; color: {{t.text}}; font: inherit; font-size: 15px; font-weight: 600; cursor: pointer;"><span>{{cur.skipAllLabel}}</span></button><button type="button" onClick="{{cur.takeAll}}" class="sc-press" style="flex: 1 1 0; height: 48px; border: 0; border-radius: 999px; background: {{t.inv}}; color: {{t.invText}}; font: inherit; font-size: 15px; font-weight: 600; display: inline-flex; align-items: center; justify-content: center; gap: 7px; cursor: pointer;">${svg(I.check, 16, 2.4)}<span>{{cur.takeAllLabel}}</span></button></div></sc-if>
     <sc-if value="{{hasErr}}" hint-placeholder-val="{{ false }}"><span role="alert" style="font-size: 13px; color: {{t.again}};">{{err}}</span></sc-if>
     <div style="display: flex; flex-direction: column; gap: 12px; opacity: {{busyOp}};"><sc-for list="{{cur.changes}}" as="c" hint-placeholder-count="3">${CHANGE_CARD('c', true)}</sc-for></div>
   </sc-if>
 </div>`, '', `<sc-if value="{{listView}}" hint-placeholder-val="{{ true }}">${tabBar('Library')}</sc-if>
-${REPORT_SHEET(true)}`);
+${REPORT_SHEET(true)}
+${BLOCK_SHEET(true)}`);
 
 // ----- History -----
 // Every version of a shared deck, newest first: who made it, what changed, and when; See changes lists the changes, and
@@ -7106,7 +7209,7 @@ const bool = (d = false) => ({ editor: 'boolean', default: d });
 // Your verification, for the boards that show it (a verified teacher sees Check this deck; Settings says Verified teacher).
 const VERIFIED_PROP = { editor: 'enum', default: '', options: ['', 'Waiting for review', 'Teacher', 'School'] };
 const PD_PROPS = { ...DARK, grain: MESH('Iris').grain, loading: bool(), signedOut: bool(), owner: bool(), studying: bool(), copyOpen: bool(), missing: bool(), report: bool(), verified: VERIFIED_PROP, deckTab: { editor: 'enum', default: 'Cards', options: ['Cards', 'History', 'People'] } };
-const SG_PROPS = { ...DARK, loading: bool(), aiWaiting: bool(true), noSuggestions: bool(), report: bool() };
+const SG_PROPS = { ...DARK, loading: bool(), aiWaiting: bool(true), noSuggestions: bool(), report: bool(), block: bool() };
 const HI_PROPS = { ...DARK, loading: bool(), missing: bool(), signedOut: bool(), someoneElse: bool() };
 // ---------- Classes ----------
 // The owner's note: "Schools / organizations", as a study group that a teacher can also run (the owner: Lucida is for
@@ -7606,7 +7709,8 @@ const CLASSES_PROPS = { ...DARK, grain: MESH('Iris').grain, loading: { editor: '
 const PHOTO_PROP = { editor: 'enum', default: 'Color', options: ['Color', 'Google photo', 'Your photo'] };
 // A profile's settings on the canvas: which tab, Edit profile open, loading, signed out, and nothing shared yet.
 const BOOL = { editor: 'boolean', default: false };
-const PROFILE_PROPS = { ...DARK, grain: MESH('Iris').grain, tab: { editor: 'enum', default: 'Decks', options: ['Decks', 'Saved', 'Suggestions'] }, editOpen: BOOL, loading: BOOL, signedOut: BOOL, empty: BOOL, report: BOOL };
+// (moreOpen: the ⋯ menu on someone else's page; block: its Block question; blocked: a person you blocked, with Unblock.)
+const PROFILE_PROPS = { ...DARK, grain: MESH('Iris').grain, tab: { editor: 'enum', default: 'Decks', options: ['Decks', 'Saved', 'Suggestions'] }, editOpen: BOOL, loading: BOOL, signedOut: BOOL, empty: BOOL, report: BOOL, moreOpen: BOOL, block: BOOL, blocked: BOOL };
 // Pro's states on the canvas: Free (what Pro adds), the Stats page's tabs, All cards' filters, a paused card, and Tune to
 // you's states in Settings. Deck settings can open with the goal stepped from 90% to 95%.
 const FREE_PROP = { editor: 'boolean', default: false };
@@ -7615,6 +7719,11 @@ const STATS_PROPS = { tab: { editor: 'enum', default: 'Overview', options: ['Ove
 const LEVEL_PROP = { editor: 'enum', default: 'all', options: ['all', 'new', 'easy', 'medium', 'hard', 'leech', 'paused'] };
 const TUNE_PROP = { editor: 'enum', default: 'On', options: ['On', 'Off', 'Not enough reviews', 'Tuning'] };
 const EDITOR_CSS = RICH_CSS + OCC_EDIT_CSS;
+// Settings' plan on the canvas (Tweaks): Free, Pro (billed by Stripe), Pro ending, or Pro billed by Apple (the plan line says so, and
+// Delete account's question tells you Apple's subscription goes on). And its Account group: Delete account's question open (asking,
+// working, or failed), and nobody blocked.
+const SETTINGS_PLAN_PROP = { editor: 'enum', default: 'Pro', options: ['Free', 'Pro', 'Pro, ending', 'Pro, billed by Apple'] };
+const ACCOUNT_PROPS = { deleteOpen: { editor: 'enum', default: '', options: ['', 'Asking', 'Deleting', 'Failed'] }, noBlocks: BOOL };
 const files = {
   'Main': ['Web · Today', webToday, { props: { ...DARK, ...MESH('Iris'), caughtUp: { editor: 'boolean', default: false }, assignments: { editor: 'boolean', default: false } }, logic: todayLogic, css: DRAG_CSS, w: W, h: H }],
   'WebNewDeck': ['Web · New deck', webNewDeck, { props: { ...DARK, grain: MESH('Iris').grain }, logic: NEW_DECK_LOGIC, css: NUM_CSS + COVER_FADE_CSS, w: W, h: H }],
@@ -7629,7 +7738,8 @@ const files = {
   'WebDecksTags': ['Web · Library · a deck with 11 tags (+9 shows them all)', attrOf('WebDecks', W, H, 'open-tags="{{yes}}"'), { logic: darkLogic, css: DRAG_CSS, w: W, h: H }],
   'WebDecksMoreTags': ['Web · Library · More (find any tag)', attrOf('WebDecks', W, H, 'more-tags="{{yes}}"'), { logic: darkLogic, css: DRAG_CSS, w: W, h: H }],
   'WebDecksList': ['Web · Library · list view', listOf('WebDecks', W, H), { logic: 'renderVals() { return {}; }', css: DRAG_CSS, w: W, h: H }],
-  'WebSettings': ['Web · Settings', webSettings, { props: { ...DARK, grain: MESH('Iris').grain, photo: PHOTO_PROP, plan: { editor: 'enum', default: 'Pro', options: ['Free', 'Pro', 'Pro, ending'] }, tune: TUNE_PROP, verified: VERIFIED_PROP }, logic: webSettingsLogic, css: NUM_CSS, w: W, h: H }],
+  'WebSettings': ['Web · Settings', webSettings, { props: { ...DARK, grain: MESH('Iris').grain, photo: PHOTO_PROP, plan: SETTINGS_PLAN_PROP, tune: TUNE_PROP, verified: VERIFIED_PROP, ...ACCOUNT_PROPS }, logic: webSettingsLogic, css: NUM_CSS, w: W, h: H }],
+  'WebSettingsDelete': ['Web · Settings · Delete account (the question)', attrOf('WebSettings', W, H, 'delete-open="Asking"'), { logic: darkLogic, css: NUM_CSS, w: W, h: H }],
   'WebSettingsFree': ['Web · Settings · on Free (Tune to you is Pro)', attrOf('WebSettings', W, H, 'plan="Free"'), { logic: darkLogic, css: NUM_CSS, w: W, h: H }],
   'WebSettingsVerified': ['Web · Settings · a verified teacher (Get verified says Verified teacher)', attrOf('WebSettings', W, H, 'verified="Teacher"'), { logic: darkLogic, css: NUM_CSS, w: W, h: H }],
   'IconOptions': ['Web · Icon options', iconOptions, { props: DARK, logic: iconOptionsLogic, w: W, h: H }],
@@ -7809,7 +7919,8 @@ const files = {
   'PhoneEditorImage': ['iPhone · Card editor · image with boxes', attrOf('PhoneEditor', PW, PH, 'card-type="Image" keyboard="{{no}}"'), { logic: 'renderVals() { return { yes: true, no: false }; }', css: EDITOR_CSS, w: PW, h: PH }],
   'PhoneSettingsFree': ['iPhone · Settings · on Free (Tune to you is Pro)', attrOf('PhoneSettings', PW, PHONE_SETTINGS_H, 'plan="Free"'), { logic: darkLogic, w: PW, h: PHONE_SETTINGS_H }],
   'PhoneSettingsVerified': ['iPhone · Settings · a verified teacher (Get verified says Verified teacher)', attrOf('PhoneSettings', PW, PHONE_SETTINGS_H, 'verified="Teacher"'), { logic: darkLogic, w: PW, h: PHONE_SETTINGS_H }],
-  'PhoneSettings': ['iPhone · Settings', phoneSettings, { props: { ...DARK, photo: PHOTO_PROP, plan: { editor: 'enum', default: 'Pro', options: ['Free', 'Pro', 'Pro, ending'] }, tune: TUNE_PROP, verified: VERIFIED_PROP }, logic: phoneSettingsLogic, w: PW, h: PHONE_SETTINGS_H }],
+  'PhoneSettings': ['iPhone · Settings', phoneSettings, { props: { ...DARK, photo: PHOTO_PROP, plan: SETTINGS_PLAN_PROP, tune: TUNE_PROP, verified: VERIFIED_PROP, ...ACCOUNT_PROPS }, logic: phoneSettingsLogic, w: PW, h: PHONE_SETTINGS_H }],
+  'PhoneSettingsDelete': ['iPhone · Settings · Delete account (the question)', attrOf('PhoneSettings', PW, PHONE_SETTINGS_H, 'delete-open="Asking"'), { logic: darkLogic, w: PW, h: PHONE_SETTINGS_H }],
   'PhoneDeckSettings': ['iPhone · Deck settings', openOf('PhoneDeck', PW, PH), { logic: darkLogic, css: NUM_CSS + DRAG_CSS, w: PW, h: PH }],
   'PhoneDeckDark': ['iPhone · Deck page (dark)', darkOf('PhoneDeck', PW, PH), { logic: darkLogic, css: NUM_CSS + DRAG_CSS, w: PW, h: PH }],
   'PhoneStatsDark': ['iPhone · Stats (dark)', darkOf('PhoneStats', PW, PH), { logic: darkLogic, w: PW, h: PH }],
@@ -7845,6 +7956,8 @@ const files = {
   'WebProfile': ['Web · Profile (yours)', webProfile, { props: PROFILE_PROPS, logic: PROFILE_LOGIC(false), w: W, h: H }],
   'WebProfileOther': ['Web · Profile · someone else’s', attrOf('WebProfile', W, H, 'handle="mariasantos"'), { logic: darkLogic, w: W, h: H }],
   'WebProfileReport': ['Web · Profile · someone else’s · Report', attrOf('WebProfile', W, H, 'handle="mariasantos" report="{{yes}}"'), { logic: darkLogic, w: W, h: H }],
+  'WebProfileBlock': ['Web · Profile · someone else’s · Block (the question)', attrOf('WebProfile', W, H, 'handle="mariasantos" block="{{yes}}"'), { logic: darkLogic, w: W, h: H }],
+  'WebProfileBlocked': ['Web · Profile · someone you blocked (Unblock)', attrOf('WebProfile', W, H, 'handle="mariasantos" blocked="{{yes}}"'), { logic: darkLogic, w: W, h: H }],
   'WebProfileFollowing': ['Web · Profile · someone you follow', attrOf('WebProfile', W, H, 'handle="mariasantos" following="{{yes}}"'), { logic: darkLogic, w: W, h: H }],
   'WebProfileEdit': ['Web · Profile · Edit profile', attrOf('WebProfile', W, H, 'edit-open="{{yes}}"'), { logic: darkLogic, w: W, h: H }],
   'WebProfileEditTaken': ['Web · Profile · Edit profile · a handle someone has', attrOf('WebProfile', W, H, 'edit-open="{{yes}}" edit-handle="mariasantos" edit-error="That name is taken. Try another."'), { logic: darkLogic, w: W, h: H }],
@@ -7864,6 +7977,8 @@ const files = {
   'PhoneProfile': ['iPhone · Profile (yours)', phoneProfile, { props: PROFILE_PROPS, logic: PROFILE_LOGIC(true), w: PW, h: PH }],
   'PhoneProfileOther': ['iPhone · Profile · someone else’s', attrOf('PhoneProfile', PW, PH, 'handle="mariasantos"'), { logic: darkLogic, w: PW, h: PH }],
   'PhoneProfileReport': ['iPhone · Profile · someone else’s · Report', attrOf('PhoneProfile', PW, PH, 'handle="mariasantos" report="{{yes}}"'), { logic: darkLogic, w: PW, h: PH }],
+  'PhoneProfileBlock': ['iPhone · Profile · someone else’s · Block (the question)', attrOf('PhoneProfile', PW, PH, 'handle="mariasantos" block="{{yes}}"'), { logic: darkLogic, w: PW, h: PH }],
+  'PhoneProfileBlocked': ['iPhone · Profile · someone you blocked (Unblock)', attrOf('PhoneProfile', PW, PH, 'handle="mariasantos" blocked="{{yes}}"'), { logic: darkLogic, w: PW, h: PH }],
   'PhoneProfileFollowing': ['iPhone · Profile · someone you follow', attrOf('PhoneProfile', PW, PH, 'handle="mariasantos" following="{{yes}}"'), { logic: darkLogic, w: PW, h: PH }],
   'PhoneProfileEdit': ['iPhone · Profile · Edit profile', attrOf('PhoneProfile', PW, PH, 'edit-open="{{yes}}"'), { logic: darkLogic, w: PW, h: PH }],
   'PhoneProfileSaved': ['iPhone · Profile · Saved', attrOf('PhoneProfile', PW, PH, 'tab="Saved"'), { logic: darkLogic, w: PW, h: PH }],
