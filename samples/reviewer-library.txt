@@ -1,0 +1,96 @@
+#separator:tab
+#html:false
+#deck column:1
+Cell Biology	What organelle makes most of the cell’s ATP?	The mitochondria
+Cell Biology	What do ribosomes do?	They build proteins by reading mRNA
+Cell Biology	Which organelle packages proteins and ships them out of the cell?	The Golgi apparatus
+Cell Biology	What surrounds and protects a cell?	The plasma membrane, a double layer of phospholipids
+Cell Biology	What is the job of lysosomes?	They break down waste and worn-out parts with enzymes
+Cell Biology	Where does photosynthesis happen in a plant cell?	In the chloroplasts
+Cell Biology	What does rough ER have that smooth ER lacks?	Ribosomes on its surface
+Cell Biology	Where is DNA kept in a eukaryotic cell?	In the nucleus
+Cell Biology	How do prokaryotic cells differ from eukaryotic cells?	They have no nucleus and no membrane-bound organelles
+Cell Biology	What is osmosis?	Water moving across a membrane toward the side with more dissolved particles
+Cell Biology	What is diffusion?	Molecules spreading from where they are crowded to where they are not
+Cell Biology	What does a plant cell wall do?	It gives the cell its shape and support
+Cell Biology	Which molecule carries amino acids to the ribosome?	tRNA (transfer RNA)
+Cell Biology	In which phase of mitosis do chromosomes line up in the middle of the cell?	Metaphase
+Cell Biology	What are the four phases of mitosis, in order?	Prophase, metaphase, anaphase, telophase
+Cell Biology	What does the cytoskeleton do?	It holds the cell’s shape and moves parts around inside it
+Cell Biology	What is active transport?	Moving molecules against their gradient, which costs energy (ATP)
+Cell Biology	What do centrioles help with?	Organizing the spindle fibers during cell division
+Cell Biology	The {{c1::mitochondrion}} is the powerhouse of the cell.	It makes ATP through cellular respiration.
+Cell Biology	During {{c1::translation}}, ribosomes read mRNA to build a protein.
+Cell Biology	{{c1::Enzymes}} speed up reactions in cells without being used up.
+Cell Biology	The fluid inside a cell, outside the nucleus, is the {{c1::cytoplasm}}.
+Spanish Basics	hola	hello
+Spanish Basics	adiós	goodbye
+Spanish Basics	por favor	please
+Spanish Basics	gracias	thank you
+Spanish Basics	de nada	you’re welcome
+Spanish Basics	buenos días	good morning
+Spanish Basics	buenas noches	good night
+Spanish Basics	¿Cómo estás?	How are you?
+Spanish Basics	Me llamo…	My name is…
+Spanish Basics	¿Cómo te llamas?	What is your name?
+Spanish Basics	mucho gusto	nice to meet you
+Spanish Basics	lo siento	I’m sorry
+Spanish Basics	perdón	excuse me
+Spanish Basics	el agua	the water
+Spanish Basics	la comida	the food
+Spanish Basics	la casa	the house
+Spanish Basics	el libro	the book
+Spanish Basics	¿Dónde está el baño?	Where is the bathroom?
+Spanish Basics	¿Cuánto cuesta?	How much does it cost?
+Spanish Basics	No entiendo.	I don’t understand.
+Spanish Basics	¿Hablas inglés?	Do you speak English?
+Spanish Basics	hablar	to speak
+Spanish Basics	comer	to eat
+Spanish Basics	vivir	to live
+Spanish Basics	Yo {{c1::hablo}} español.	I speak Spanish.
+Spanish Basics	Ella {{c1::come}} una manzana.	She eats an apple.
+Spanish Basics	Nosotros {{c1::vivimos}} en una ciudad.	We live in a city.
+Organic Chemistry	What is the general formula of an alkane?	CnH2n+2
+Organic Chemistry	Which functional group makes a molecule an alcohol?	–OH (hydroxyl)
+Organic Chemistry	Which functional group makes a molecule a carboxylic acid?	–COOH
+Organic Chemistry	What are isomers?	Molecules with the same formula but a different structure
+Organic Chemistry	What is a chiral center?	A carbon bonded to four different groups
+Organic Chemistry	What does SN2 stand for?	Substitution, nucleophilic, bimolecular
+Organic Chemistry	What happens to the configuration in an SN2 reaction?	It inverts (the nucleophile attacks from the back)
+Organic Chemistry	Which carbocation is the most stable?	Tertiary
+Organic Chemistry	What is Markovnikov’s rule?	When HX adds to an alkene, the H goes to the carbon that already has more hydrogens
+Organic Chemistry	What reaction makes an ester from a carboxylic acid and an alcohol?	Fischer esterification
+Organic Chemistry	What is the hybridization of each carbon in ethene?	sp2
+Organic Chemistry	What is the hybridization of each carbon in ethyne?	sp
+Organic Chemistry	What is a double bond made of?	One sigma bond and one pi bond
+Organic Chemistry	What is an electrophile?	An electron-poor species that accepts an electron pair
+Organic Chemistry	What is a nucleophile?	An electron-rich species that donates an electron pair
+Organic Chemistry	What does complete combustion of a hydrocarbon make?	Carbon dioxide and water
+Organic Chemistry	What are enantiomers?	Mirror-image molecules that cannot be stacked on each other
+Organic Chemistry	Which has the higher boiling point: an alcohol or an alkane of similar size?	The alcohol, because of hydrogen bonding
+Organic Chemistry	An {{c1::aldehyde}} has a carbonyl group at the end of a carbon chain.
+Organic Chemistry	A {{c1::ketone}} has a carbonyl group between two carbons.
+Organic Chemistry	In an E2 reaction, a {{c1::strong base}} removes a proton while the leaving group leaves.
+World Geography	What is the capital of Canada?	Ottawa
+World Geography	What is the capital of Australia?	Canberra
+World Geography	What is the capital of Brazil?	Brasília
+World Geography	What is the capital of Japan?	Tokyo
+World Geography	What is the capital of Egypt?	Cairo
+World Geography	What is the capital of Kenya?	Nairobi
+World Geography	What is the capital of Turkey?	Ankara
+World Geography	What is the capital of Peru?	Lima
+World Geography	What is the capital of Spain?	Madrid
+World Geography	What is the capital of India?	New Delhi
+World Geography	What are the three capitals of South Africa?	Pretoria, Cape Town, and Bloemfontein
+World Geography	Which is the largest ocean?	The Pacific Ocean
+World Geography	What is the longest river in Africa?	The Nile
+World Geography	What is the tallest mountain above sea level?	Mount Everest
+World Geography	Which country is the largest by area?	Russia
+World Geography	Which is the smallest country in the world?	Vatican City
+World Geography	Which continent has the most countries?	Africa
+World Geography	What is the imaginary line at 0° latitude?	The Equator
+World Geography	What is the imaginary line at 0° longitude?	The Prime Meridian
+World Geography	What is the largest hot desert?	The Sahara
+World Geography	What is the deepest ocean trench?	The Mariana Trench
+World Geography	The {{c1::Amazon}} River carries more water than any other river.
+World Geography	The {{c1::Himalayas}} are the highest mountain range on Earth.
