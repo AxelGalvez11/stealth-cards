@@ -169,6 +169,17 @@ async function api(req, res, path, body, me, uid) {
   return send(res, 404, { error: 'Not found' });
 }
 
+// Guessing passwords is slowed, best effort (in this server's memory; the real limit belongs in Vercel's firewall): six wrong tries for
+// one email from one address in ten minutes, and a ceiling on all tries from one address. Supabase sees this server's address, not the
+// person's, so its own limit would otherwise be shared by everyone.
+const tries = new Map();
+const recent = (key, ms) => {
+  const now = Date.now(), list = (tries.get(key) || []).filter(t => now - t < ms);
+  tries.set(key, list);
+  if (tries.size > 5000) for (const [k, v] of tries) if (!v.length || now - v[v.length - 1] > ms) tries.delete(k);
+  return list;
+};
+const ipOf = req => String(req.headers['x-forwarded-for'] || '').split(',')[0].trim() || req.socket.remoteAddress || '';
 // Signing in. The email code and the session never touch the page's scripts: the session lives in cookies they can't read.
 const TRY_AGAIN = 'That didn’t work. Try again in a minute.';
 async function signIn(req, res, path) {
@@ -197,8 +208,11 @@ async function signIn(req, res, path) {
   if (path === '/api/auth/password' && req.method === 'POST') {
     const b = jsonOf(await readBody(req, 1e4)), email = String(b.email || '').trim().toLowerCase(), password = String(b.password || '');
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || email.length > 254 || !password || password.length > 200) return send(res, 400, { error: 'Type your email and password.' });
-    try { const s = await auth.password(email, password); res.setHeader('set-cookie', sessionCookies(req, s)); return send(res, 200, { ok: true }); }
-    catch (e) { return send(res, e.status === 429 ? 429 : 400, { error: e.status === 429 ? 'Too many tries for now. Wait a minute, then try again.' : e.status >= 500 || !e.status ? TRY_AGAIN : 'That email and password don’t match.' }); }
+    const ip = ipOf(req), WINDOW = 10 * 60000, mine = 'pw:' + ip + '|' + email;
+    if (recent('pw-ip:' + ip, WINDOW).length >= 120 || recent(mine, WINDOW).length >= 6) return send(res, 429, { error: 'Too many tries for now. Wait a few minutes, then try again.' });
+    recent('pw-ip:' + ip, WINDOW).push(Date.now());
+    try { const s = await auth.password(email, password); tries.delete(mine); res.setHeader('set-cookie', sessionCookies(req, s)); return send(res, 200, { ok: true }); }
+    catch (e) { if (e.status >= 400 && e.status < 500) recent(mine, WINDOW).push(Date.now()); return send(res, e.status === 429 ? 429 : 400, { error: e.status === 429 ? 'Too many tries for now. Wait a minute, then try again.' : e.status >= 500 || !e.status ? TRY_AGAIN : 'That email and password don’t match.' }); }
   }
   if (path === '/api/auth/password/set' && req.method === 'POST') {
     const w = await who(req);
