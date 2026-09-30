@@ -415,6 +415,13 @@ final class ReportsTests: XCTestCase {
     app.terminate()
     app = launch(as: school, ["-open", "news"])
     check(wait(buttonStarting(app, "You’re verified as a school")), "and its News says “as a school”")
+    // A verified school checks a deck too.
+    let sd = shareDeck(w.alex, "School check " + run, n: 2)
+    app.terminate()
+    app = launch(as: school, ["-open", "deckpage:/@" + w.AH + "/" + sd.slug])
+    check(wait(button(app, "Check this deck")), "a verified school sees Check this deck too")
+    button(app, "Check this deck").tap()
+    check(wait(any(app, "Checked by you")) && eventually { self.checkOf(school, sd.id)?["current"] as? Bool == true }, "and pressing it checks the deck for them")
 
     // ---------- Check this deck ----------
     let TN = "Dr. Okafor"
