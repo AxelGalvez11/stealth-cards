@@ -64,6 +64,8 @@ struct ConnectScreen: View {
               Text(on ? "Connected" : "Connect").css(13, .semibold).foregroundStyle(on ? t.good : t.muted)
             }
             .frame(minHeight: 60)
+            // The board's row is 60 tall and then its 1px line (a border adds to min-height).
+            .padding(.bottom, 1)
             .overlay(alignment: .bottom) { Rectangle().fill(t.line).frame(height: 1) }
           }
         }
