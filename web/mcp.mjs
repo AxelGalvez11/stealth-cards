@@ -8,6 +8,7 @@ import { isDue, scheduled, examStatus } from './sched.js';
 import { insights, history } from './insights.js';
 import { fetchMedia, speechFile } from './media.mjs';
 import R from './rich.js';
+import { SCOPES, challenge } from './oauth.mjs';
 
 const VERSIONS = ['2025-06-18', '2025-03-26', '2024-11-05'];
 // Which AI app each session is, and the last one each person connected (for sessions that don't say).
@@ -78,19 +79,19 @@ async function speakFile(words, lang, notes, room) {
 }
 
 const TOOLS = [
-  { name: 'list_decks', perm: 'read', description: 'List the decks with how many cards each has and how many are due.', inputSchema: { type: 'object', properties: {} },
+  { name: 'list_decks', perm: 'read', description: 'List the learner’s decks, each with its id, folder, tags, how many cards it has, how many are due and new, its exam date, and whether it is shared or came from someone else. Use it first: the other tools take a deck’s name or id.', inputSchema: { type: 'object', properties: {} },
     run: () => text(state().decks.map(d => { const cs = state().cards.filter(c => c.deckId === d.id), paused = cs.filter(c => c.paused).length;
       return { id: d.id, name: d.name, folder: folderName(d), tags: d.tags, cards: cs.length, due: cs.filter(dueNow).length, new: cs.filter(isNew).length, paused: paused || undefined, exam: examOut(d),
         shared: d.share && d.share.vis !== 'private' ? (d.share.vis === 'public' ? 'public' : 'link only') : undefined,
         from: d.link && !d.link.gone ? { owner: d.link.owner && d.link.owner.name, as: d.link.mode === 'study' ? 'studied as it is (suggest changes with suggest_changes)' : 'the learner’s own copy' } : undefined }; })) },
-  { name: 'list_cards', perm: 'read', description: 'List or search the cards in a deck (or in every deck).', inputSchema: { type: 'object', properties: { deck: { type: 'string', description: 'Deck name or id. Leave out for every deck.' }, search: { type: 'string' }, limit: { type: 'number', description: 'Up to 500. Default 50.' } } },
+  { name: 'list_cards', perm: 'read', description: 'List or search the cards in one deck, or in every deck when none is given. Each card comes with its id, deck, kind, text, tags and next review date (up to 500 cards, 50 by default). Use it to find a card’s id before changing or deleting it.', inputSchema: { type: 'object', properties: { deck: { type: 'string', description: 'Deck name or id. Leave out for every deck.' }, search: { type: 'string' }, limit: { type: 'number', description: 'Up to 500. Default 50.' } } },
     run: a => { const d = a.deck ? deckBy(a.deck) : null; if (a.deck && !d) return fail('No deck called ' + a.deck);
       const q = String(a.search || '').toLowerCase();
       const cs = state().cards.filter(c => (!d || c.deckId === d.id) && (!q || [c.front, c.back, c.text, c.note, ...c.tags].join(' ').toLowerCase().includes(q)));
       return text({ total: cs.length, cards: cs.slice(0, Math.min(500, a.limit || 50)).map(cardOut) }); } },
-  { name: 'get_due_cards', perm: 'read', description: 'Cards that are due for review now, to quiz the learner. Paused cards never are; before an exam date, cards the learner would forget by then are due early.', inputSchema: { type: 'object', properties: { deck: { type: 'string' }, limit: { type: 'number' } } },
+  { name: 'get_due_cards', perm: 'read', description: 'Get the cards that are due for review now, for quizzing the learner (20 by default). Paused cards are never due, and before a deck’s exam date the cards the learner would forget by then count as due early.', inputSchema: { type: 'object', properties: { deck: { type: 'string' }, limit: { type: 'number' } } },
     run: a => { const d = a.deck ? deckBy(a.deck) : null; const cs = state().cards.filter(c => (!d || c.deckId === d.id) && dueNow(c)); return text({ due: cs.length, cards: cs.slice(0, a.limit || 20).map(cardOut) }); } },
-  { name: 'get_stats', perm: 'read', description: 'How studying is going: reviews, what is remembered, streak, and totals. With Lucida Pro, also how often cards are forgotten, time per card, cards forgotten too often, exam readiness, and whether scheduling is tuned to the learner.', inputSchema: { type: 'object', properties: {} },
+  { name: 'get_stats', perm: 'read', description: 'Get how studying is going: reviews in the last 30 days, how much is remembered, the streak, and totals. With Lucida Pro it also says how often cards are forgotten, the time per card, cards forgotten too often, exam readiness, and whether scheduling is tuned to the learner.', inputSchema: { type: 'object', properties: {} },
     run: () => { const S = state(), since = Date.now() - 30 * 86400000, logs = S.logs.filter(l => l.at >= since && l.rating && l.was === 'review' && !l.kind);
       const days = new Set(S.logs.map(l => dayAt(l.at)));
       let streak = 0, t = dayAt(Date.now());
@@ -107,7 +108,7 @@ const TOOLS = [
         cards_forgotten_too_often: x.weak.leeches.length, typical_gap_days: x.pace.gapNow == null ? undefined : Math.round(x.pace.gapNow),
         reviews_next_7_days: x.pace.ahead[0].n, exams: x.pace.exams.length ? x.pace.exams.map(e => ({ deck: e.name, date: e.date, days_left: e.days, cards_to_review_first: e.toReview, seen: e.seen + ' of ' + e.total, likely_to_remember: Math.round(e.likely * 100) + '%' })) : undefined,
         scheduling: tunedW() ? 'tuned to the learner’s ' + (tune.reviews || tune.n) + ' reviews' : 'standard FSRS parameters' }); } },
-  { name: 'get_weak_spots', perm: 'read', pro: true, description: 'What the learner is weakest at, to quiz them on it or fix the cards: the tags remembered least, the hardest cards (forgotten most, most difficult), and cards forgotten so often they may need rewording (leeches; some may be paused). Every card has its id, for update_card or add_quiz. Lucida Pro.',
+  { name: 'get_weak_spots', perm: 'read', pro: true, description: 'Find what the learner is weakest at: the tags remembered least, the hardest cards (forgotten most, most difficult), and cards forgotten so often they may need rewording (some may be paused). Every card comes with its id. Part of Lucida Pro.',
     inputSchema: { type: 'object', properties: { deck: { type: 'string', description: 'Deck name or id. Leave out for every deck.' }, days: { type: 'number', description: 'How far back to look at reviews for the tags, 7 to 365. Default 90.' }, limit: { type: 'number', description: 'Cards in each list, up to 50. Default 10.' } } },
     run: a => {
       const d = a.deck ? deckBy(a.deck) : null; if (a.deck && !d) return fail('No deck called ' + a.deck);
@@ -117,13 +118,13 @@ const TOOLS = [
         weakest_tags: x.weak.weakTags.map(g => ({ tag: g.tag, remembered: g.pct + '%', reviews: g.n, cards: g.cards })),
         hardest_cards: x.weak.hardest.slice(0, n).map(h => ({ ...cardOut(cardBy(h.id)), forgotten: h.lapses, difficulty: h.d, remember_now: h.recall == null ? undefined : Math.round(h.recall * 100) + '%' })),
         leeches: x.weak.leeches.slice(0, n).map(h => ({ ...cardOut(cardBy(h.id)), forgotten: h.lapses })), leech_count: x.weak.leeches.length }); } },
-  { name: 'get_review_history', perm: 'read', pro: true, description: 'The learner’s recent reviews, summarized day by day and deck by deck: reviews, percent right, minutes, new cards learned, and Learn mode answers. Lucida Pro.',
+  { name: 'get_review_history', perm: 'read', pro: true, description: 'Get the learner’s recent reviews summed up day by day and deck by deck: reviews, percent right, minutes, new cards learned, and Learn mode answers. Part of Lucida Pro.',
     inputSchema: { type: 'object', properties: { deck: { type: 'string', description: 'Deck name or id. Leave out for every deck.' }, days: { type: 'number', description: 'How many days back, 1 to 365. Default 30.' } } },
     run: a => {
       const d = a.deck ? deckBy(a.deck) : null; if (a.deck && !d) return fail('No deck called ' + a.deck);
       const h = history(state(), { days: a.days || 30, deckId: d && d.id }), name = id => (deckBy(id) || {}).name || 'A deleted deck';
       return text({ total: h.total, by_day: h.days.map(x => ({ date: day(x.day), ...x, day: undefined })), by_deck: h.decks.map(x => ({ deck: name(x.deckId), ...x, deckId: undefined })) }); } },
-  { name: 'create_deck', perm: 'text', description: 'Make a new deck, optionally in a folder and with a cover picture.', inputSchema: { type: 'object', properties: { name: { type: 'string' }, tags: { type: 'array', items: { type: 'string' } }, folder: FOLDER, cover_image: COVER, files: FILES }, required: ['name'] },
+  { name: 'create_deck', perm: 'text', description: 'Make a new deck, optionally in a folder and with a cover picture (a picture cover is part of Lucida Pro). It fails if a deck with that name already exists. Use add_cards to fill it.', inputSchema: { type: 'object', properties: { name: { type: 'string' }, tags: { type: 'array', items: { type: 'string' } }, folder: FOLDER, cover_image: COVER, files: FILES }, required: ['name'] },
     meta: { 'openai/fileParams': ['files'] },
     run: async (a, who, ctx) => {
       if (deckBy(a.name)) return fail('There is already a deck called ' + a.name);
@@ -133,7 +134,7 @@ const TOOLS = [
       try { if (a.cover_image) image = await fetchMedia(a.cover_image, 'image', { files: a.files, local: ctx.local }); } catch (e) { return fail(e.message); }
       return text(apply({ type: 'deck.add', name: a.name, tags: a.tags, folder: a.folder ? folderFor(a.folder, who) : null, image }, who));
     } },
-  { name: 'update_deck', perm: 'edit', description: 'Change a deck: rename it, retag it, move it into or out of a folder, give it a cover picture, or change the background it shows in Learn mode, flashcards, and Live.',
+  { name: 'update_deck', perm: 'edit', description: 'Change a deck: rename it, retag it, move it into or out of a folder, give it a cover picture (part of Lucida Pro), or change the background it shows in Learn mode, flashcards, and Live. The values you give replace the old ones.',
     inputSchema: { type: 'object', properties: { deck: { type: 'string', description: 'Deck name or id.' }, name: { type: 'string' }, tags: { type: 'array', items: { type: 'string' } },
       folder: { type: 'string', description: 'A folder name, made if there isn’t one yet. An empty string takes the deck out of its folder.' },
       cover_image: { type: 'string', description: 'The deck’s cover picture. ' + SOURCE + ' An empty string goes back to the deck’s own gradient.' },
@@ -161,7 +162,7 @@ const TOOLS = [
       apply({ type: 'deck.update', id: d.id, patch }, who);
       return text('Updated ' + (patch.name || d.name) + '.');
     } },
-  { name: 'add_cards', perm: 'text', description: 'Add flashcards to a deck. The deck is made if it doesn’t exist yet. Keep each card to one idea.',
+  { name: 'add_cards', perm: 'text', description: 'Add flashcards to a deck, making the deck if it doesn’t exist yet. Takes up to 500 cards of four kinds: basic (a question and its answer), fill in the blank, image, and audio. When the learner asked to check AI cards first, the new cards wait in the deck until they keep them.',
     inputSchema: { type: 'object', properties: { deck: { type: 'string', description: 'Deck name or id.' }, cards: { type: 'array', items: CARD, minItems: 1 }, files: FILES }, required: ['deck', 'cards'] },
     meta: { 'openai/fileParams': ['files'] },
     run: async (a, who, ctx) => {
@@ -181,7 +182,7 @@ const TOOLS = [
       for (const c of ready) { const r = apply({ type: 'card.add', deckId: d ? d.id : null, deckName: d ? null : a.deck, ...c, pending: check }, who); d = deckBy(r.deckId); made += r.ids.length; }
       return text('Added ' + made + ' card' + (made === 1 ? '' : 's') + ' to ' + d.name + (check ? '. They wait in the deck until the learner keeps them.' : '.') + [...notes].map(n => ' ' + n).join(''));
     } },
-  { name: 'update_card', perm: 'edit', description: 'Fix or change a card (typos, better answers, tags), or give it a picture or sound.',
+  { name: 'update_card', perm: 'edit', description: 'Change a card: fix typos, give a better answer, change its tags, or give it a picture or sound. The fields you give replace the old ones. On a deck the learner studies from someone else, use suggest_changes instead.',
     inputSchema: { type: 'object', properties: { id: { type: 'string' }, front: { type: 'string' }, back: { type: 'string' }, text: { type: 'string' }, note: { type: 'string' }, tags: { type: 'array', items: { type: 'string' } }, ...MEDIA_PROPS, files: FILES }, required: ['id'] },
     meta: { 'openai/fileParams': ['files'] },
     run: async (a, who, ctx) => {
@@ -212,7 +213,7 @@ const TOOLS = [
       apply({ type: 'card.update', id: a.id, patch }, who);
       return text('Updated the card.');
     } },
-  { name: 'add_quiz', perm: 'text', description: 'Write Learn mode questions for cards, so the learner is quizzed on understanding, not just recall. For each card give one to three questions: multiple choice (the question, the right answer, and three wrong answers that are plausible, the same kind of thing as the right one) or a true-or-false statement. Add a short why to each. Questions can apply the idea (a situation, a cause and effect) instead of repeating the card. You can also leave a two to four sentence explanation of the card’s answer, which shows when the learner taps Explain. Use list_cards for card ids; quiz_questions shows which cards have some already. New questions replace a card’s old ones.',
+  { name: 'add_quiz', perm: 'text', description: 'Save Learn mode questions on cards, one to three per card: multiple choice (a question, the right answer and three wrong ones) or true or false, each with a short reason. It can also save a short explanation of a card’s answer, shown when the learner taps Explain. New questions replace the card’s old ones. Use list_cards for card ids; its quiz_questions count shows which cards have questions already.',
     inputSchema: { type: 'object', properties: { quizzes: { type: 'array', minItems: 1, items: { type: 'object', properties: {
       card: { type: 'string', description: 'The card id.' },
       questions: { type: 'array', items: { type: 'object', properties: {
@@ -223,7 +224,7 @@ const TOOLS = [
         why: { type: 'string', description: 'One or two sentences on why the answer is right.' } }, required: ['kind', 'question', 'answer'] } },
       explanation: { type: 'string', description: 'Optional: two to four plain sentences explaining the card’s answer.' } }, required: ['card'] } } }, required: ['quizzes'] },
     run: (a, who) => { const r = apply({ type: 'card.quiz', quizzes: a.quizzes }, who); return r.questions || (a.quizzes || []).some(q => q.explanation) ? text('Saved ' + r.questions + ' question' + (r.questions === 1 ? '' : 's') + '. Learn mode uses them next time.') : fail('None of those questions could be used. Check the card ids, and give each choice question three wrong answers.'); } },
-  { name: 'delete_cards', perm: 'del', description: 'Delete cards for good.', inputSchema: { type: 'object', properties: { ids: { type: 'array', items: { type: 'string' }, minItems: 1 } }, required: ['ids'] },
+  { name: 'delete_cards', perm: 'del', description: 'Delete cards for good, with every review of them. When the learner asked to check AI changes first, a delete waits for them to agree. Use list_cards to find card ids.', inputSchema: { type: 'object', properties: { ids: { type: 'array', items: { type: 'string' }, minItems: 1 } }, required: ['ids'] },
     run: (a, who) => {
       const cs = (a.ids || []).map(id => state().cards.find(c => c.id === id)).filter(Boolean), theirs = cs.map(c => deckBy(c.deckId)).find(d => d && d.link && d.link.mode === 'study' && !d.link.gone);
       if (theirs) return fail('Those cards are in ' + theirs.link.owner.name + '’s deck: use suggest_changes to suggest removing them.');
@@ -232,14 +233,14 @@ const TOOLS = [
     } },
   // The study network (social.mjs): decks other people share. The learner can study one as it is, or copy it; on a deck
   // from someone else, an AI can only suggest changes, which the owner takes or skips.
-  { name: 'search_shared_decks', perm: 'read', description: 'Find decks other people share on Lucida (public decks), by words or a topic. Leave both out for popular ones. study_shared_deck adds one to the learner’s library.',
+  { name: 'search_shared_decks', perm: 'read', description: 'Find decks other people share publicly on Lucida, by words or by topic (a tag). With neither it lists popular ones. Each deck comes with its id, name, author, card count and link. Use study_shared_deck to add one to the learner’s library.',
     inputSchema: { type: 'object', properties: { query: { type: 'string' }, topic: { type: 'string', description: 'A topic (a tag), like "MCAT" or "Spanish".' } } },
     run: async (a, who, ctx) => {
       const r = a.query ? await social.search(a.query, ctx.uid) : await social.discover(ctx.uid, { tag: a.topic || '' });
       const list = a.query ? r.decks : (r.sections[0] || { decks: [] }).decks;
       return text(list.map(d => ({ id: d.id, name: d.name, by: d.owner ? d.owner.name + ' (@' + d.owner.handle + ')' : undefined, cards: d.cards, saves: d.stars, studying: d.learners, checked_by_a_teacher: !!d.checked || undefined, about: d.description || undefined, link: 'https://lucida.cards' + d.url })));
     } },
-  { name: 'get_shared_deck', perm: 'read', description: 'A shared deck’s cards (up to 100) and who made it, by its id (from search_shared_decks) or its link.',
+  { name: 'get_shared_deck', perm: 'read', description: 'Read a shared deck: who made it, its version, its first 100 cards, and whether the learner already studies or copied it. Takes the deck’s id (from search_shared_decks) or its link.',
     inputSchema: { type: 'object', properties: { id: { type: 'string', description: 'Its id, or its link (lucida.cards/@name/deck).' } }, required: ['id'] },
     run: async (a, who, ctx) => {
       const m = /@([a-z0-9_.]{3,30})\/([a-z0-9-]{1,60})/i.exec(String(a.id)), id = (/\b(s[a-z0-9]{6,40})\b/.exec(String(a.id)) || [])[1];
@@ -248,10 +249,10 @@ const TOOLS = [
       return text({ id: p.id, name: p.name, by: p.owner && p.owner.name, about: p.description || undefined, cards: p.cards, version: p.version, learner: p.me ? { studying: !!p.me.studying, copied: !!p.me.copied, saved: p.me.starred } : undefined,
         sample: p.cardsList.slice(0, 100).map(c => ({ id: c.id, kind: c.kind === 'cloze' ? 'fill in the blank' : c.kind, front: c.front || undefined, back: c.back || undefined, text: c.text || undefined })) });
     } },
-  { name: 'study_shared_deck', perm: 'text', description: 'Add a shared deck to the learner’s library. By default they study it as it is: its cards follow the owner’s changes, and changes to it are suggested with suggest_changes. With copy: true it is the learner’s own copy to change.',
+  { name: 'study_shared_deck', perm: 'text', description: 'Add a shared deck to the learner’s library. By default they study it as it is, and its cards follow the owner’s changes; with copy: true it becomes the learner’s own copy to change.',
     inputSchema: { type: 'object', properties: { id: { type: 'string', description: 'The shared deck’s id (from search_shared_decks).' }, copy: { type: 'boolean' }, name: { type: 'string', description: 'A name for a copy.' } }, required: ['id'] },
     run: async (a, who, ctx) => { const r = await social.addShared(ctx.uid, null, a.id, { copy: !!a.copy, name: a.name || '', updates: true }); return text((a.copy ? 'Copied it into the library' : 'Added it to the library') + '. Deck id: ' + r.deckId + '.'); } },
-  { name: 'suggest_changes', perm: 'text', description: 'Suggest changes to a deck the learner has from someone else (list_decks shows "from"): fix a card, add cards, or take one out. Nothing changes until the owner takes it. Say why in "message".',
+  { name: 'suggest_changes', perm: 'text', description: 'Suggest changes to a deck the learner studies or copied from someone else (list_decks shows "from" on it): fix a card, add cards, or take one out. The deck’s owner gets the suggestion, and nothing changes until they take it. "message" says why.',
     inputSchema: { type: 'object', properties: {
       deck: { type: 'string', description: 'The deck’s name or id in the learner’s library.' }, message: { type: 'string' },
       changes: { type: 'array', minItems: 1, items: { type: 'object', properties: { card: { type: 'string', description: 'The card’s id (from list_cards). Leave out to add a new card.' }, remove: { type: 'boolean', description: 'true to suggest taking the card out.' },
@@ -270,6 +271,37 @@ const TOOLS = [
       return text(r.taken ? 'The learner helps keep this deck, so the changes went straight in.' : 'Sent to ' + d.link.owner.name + '. Nothing changes until they take it.');
     } }
 ];
+// What each tool is, for the AI app's permission prompts and for the directories' checks (Claude's and ChatGPT's both turn
+// a tool down without a title and explicit hints). `ro`: it only reads. `destructive`: it may overwrite or delete what the
+// learner has (changing a card or a deck replaces what was there; adding things doesn't). `open`: it reaches beyond the
+// learner's own library (other people's shared decks, and messages to their owners). `idem`: calling it again with the same
+// words changes nothing more. `scope`: what a signed-in app needs (oauth.mjs). A new tool needs a row here; web tests fail without one.
+const META = {
+  list_decks: { title: 'List decks', scope: 'cards:read', ro: true, destructive: false, open: false, idem: true },
+  list_cards: { title: 'List or search cards', scope: 'cards:read', ro: true, destructive: false, open: false, idem: true },
+  get_due_cards: { title: 'Get cards due for review', scope: 'cards:read', ro: true, destructive: false, open: false, idem: true },
+  get_stats: { title: 'Get study stats', scope: 'cards:read', ro: true, destructive: false, open: false, idem: true },
+  get_weak_spots: { title: 'Find weak spots', scope: 'cards:read', ro: true, destructive: false, open: false, idem: true },
+  get_review_history: { title: 'Get review history', scope: 'cards:read', ro: true, destructive: false, open: false, idem: true },
+  create_deck: { title: 'Create a deck', scope: 'cards:write', ro: false, destructive: false, open: false, idem: false },
+  update_deck: { title: 'Change a deck', scope: 'cards:write', ro: false, destructive: true, open: false, idem: true },
+  add_cards: { title: 'Add cards', scope: 'cards:write', ro: false, destructive: false, open: false, idem: false },
+  update_card: { title: 'Change a card', scope: 'cards:write', ro: false, destructive: true, open: false, idem: true },
+  add_quiz: { title: 'Save Learn mode questions', scope: 'cards:write', ro: false, destructive: true, open: false, idem: true },
+  delete_cards: { title: 'Delete cards', scope: 'cards:write', ro: false, destructive: true, open: false, idem: true },
+  search_shared_decks: { title: 'Search shared decks', scope: 'cards:read', ro: true, destructive: false, open: true, idem: true },
+  get_shared_deck: { title: 'Read a shared deck', scope: 'cards:read', ro: true, destructive: false, open: true, idem: true },
+  study_shared_deck: { title: 'Add a shared deck to the library', scope: 'cards:write', ro: false, destructive: false, open: true, idem: false },
+  suggest_changes: { title: 'Suggest changes to a shared deck', scope: 'cards:write', ro: false, destructive: false, open: true, idem: false }
+};
+// A tool as tools/list shows it. An app that signed in through Lucida (not a secret link) is also told which scope each tool needs.
+const listed = (t, oauth) => {
+  const m = META[t.name], schemes = m && oauth ? [{ type: 'oauth2', scopes: [m.scope] }] : null, extra = { ...(t.meta || {}), ...(schemes ? { securitySchemes: schemes } : {}) };
+  return { name: t.name, ...(m ? { title: m.title } : {}), description: t.description, inputSchema: t.inputSchema,
+    ...(m ? { annotations: { title: m.title, readOnlyHint: m.ro, destructiveHint: m.destructive, idempotentHint: m.idem, openWorldHint: m.open } } : {}),
+    ...(schemes ? { securitySchemes: schemes } : {}), ...(Object.keys(extra).length ? { _meta: extra } : {}) };
+};
+export const toolNames = () => TOOLS.map(t => t.name);
 const allowed = () => TOOLS.filter(t => state().ai.perms[t.perm]);
 const nameOf = info => { const n = String((info && info.name) || 'MCP app').replace(/\s+/g, ' ').trim().slice(0, 60) || 'MCP app'; return /claude/i.test(n) ? 'Claude' : /openai|chatgpt/i.test(n) ? 'ChatGPT' : /cursor/i.test(n) ? 'Cursor' : n; };
 
@@ -285,14 +317,14 @@ async function handle(m, sid, ctx) {
         apply({ type: 'ai.client', name: nameOf(info), version: info.version });
         const asked = (m.params || {}).protocolVersion;
         return ok({ protocolVersion: VERSIONS.includes(asked) ? asked : VERSIONS[0], capabilities: { tools: {} },
-          serverInfo: { name: 'lucida', title: 'Lucida', version: '0.1.0' },
+          serverInfo: { name: 'lucida', title: 'Lucida', version: '1.0.0', websiteUrl: 'https://lucida.cards' },
           instructions: 'Lucida holds the learner’s flashcards. Use list_decks first. Make clear, short cards with one idea each; use cloze cards with [[blanks]] for facts inside sentences. ' + FORMAT +
             ' Image cards show a picture: a link, a file the learner uploaded in the chat, or a file on this computer. Audio cards read words aloud (put them in "speak" and the language in "lang"); use them for languages and pronunciation.' +
             ' Learn mode quizzes the learner on a deck: add_quiz gives cards better questions (multiple choice with plausible wrong answers, or true or false) and an explanation. Decks can sit in folders and have a cover picture and a background (update_deck).' +
             ' To help with what the learner finds hard, get_weak_spots lists their weakest tags and hardest cards (with ids to quiz them or fix the cards), and get_review_history sums up their recent reviews.' });
       }
       case 'ping': return ok({});
-      case 'tools/list': return ok({ tools: allowed().map(({ name, description, inputSchema, meta }) => ({ name, description, inputSchema, ...(meta ? { _meta: meta } : {}) })) });
+      case 'tools/list': return ok({ tools: allowed().map(t => listed(t, ctx.oauth)) });
       case 'tools/call': {
         const p = m.params || {}, t = allowed().find(x => x.name === p.name);
         if (!t) return ok(fail(TOOLS.some(x => x.name === p.name) ? 'The learner turned this off on the Connect AI page.' : 'Unknown tool ' + p.name));
@@ -304,16 +336,27 @@ async function handle(m, sid, ctx) {
   } catch (e) { return m.method === 'tools/call' ? ok(fail(e.message)) : err(-32603, e.message); }
 }
 
-export async function mcp(req, res, body, uid) {
+// `auth` is set when the app signed in through Lucida (oauth.mjs): { scopes, origin }. A secret link has none, and may do everything
+// the Connect AI page allows.
+export async function mcp(req, res, body, uid, auth = null) {
   if (req.method !== 'POST') { res.writeHead(req.method === 'DELETE' ? 200 : 405, { allow: 'POST' }).end(); return; }
   let msg;
   try { msg = JSON.parse(body); } catch { res.writeHead(400, { 'content-type': 'application/json' }).end(JSON.stringify({ jsonrpc: '2.0', id: null, error: { code: -32700, message: 'Parse error' } })); return; }
   let sid = req.headers['mcp-session-id'];
   const list = Array.isArray(msg) ? msg : [msg];
   if (!sid && list.some(x => x && x.method === 'initialize')) sid = 's' + Date.now().toString(36) + Math.random().toString(36).slice(2, 10);
+  // A connection that was only allowed to read can't call a tool that changes things: 403, asking the app to sign in again with more.
+  if (auth) {
+    const short = [...new Set(list.map(x => (x && x.method === 'tools/call' ? META[(x.params || {}).name] : null)).filter(m => m && !auth.scopes.has(m.scope)).map(m => m.scope))];
+    if (short.length) {
+      const scope = [...new Set([...auth.scopes].filter(x => x in SCOPES).concat(short))].join(' '), what = 'This connection may only read. Connect the app again and allow it to change cards.';
+      res.writeHead(403, { 'content-type': 'application/json', 'www-authenticate': challenge(auth.origin, { error: 'insufficient_scope', scope, description: what }) }).end(JSON.stringify({ error: 'insufficient_scope', error_description: what }));
+      return;
+    }
+  }
   // Files on this computer are only for AI apps running here: not through a tunnel or proxy, which adds these headers.
   const local = ['127.0.0.1', '::1', '::ffff:127.0.0.1'].includes(req.socket.remoteAddress) && !['x-forwarded-for', 'forwarded', 'x-real-ip', 'cf-connecting-ip'].some(h => req.headers[h]);
-  const out = (await Promise.all(list.map(x => handle(x || {}, sid, { local, uid })))).filter(Boolean);
+  const out = (await Promise.all(list.map(x => handle(x || {}, sid, { local, uid, oauth: !!auth })))).filter(Boolean);
   const head = { 'content-type': 'application/json', ...(sid ? { 'mcp-session-id': sid } : {}) };
   if (!out.length) { res.writeHead(202, head).end(); return; }
   res.writeHead(200, head).end(JSON.stringify(Array.isArray(msg) ? out : out[0]));
