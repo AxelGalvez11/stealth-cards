@@ -46,7 +46,7 @@
   ],
   "redirects": [
     {
-      "source": "/(.*)\\.mjs",
+      "source": "/(.*)(\\.|%2[eE])(m|%6[dD])(j|%6[aA])(s|%73){/}?",
       "destination": "/",
       "permanent": false
     },
