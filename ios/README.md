@@ -85,3 +85,27 @@ More launch arguments (debug builds): `-open statsdeep -tab Memory` (or `Weak sp
 `tests/run.sh parity` checks the ports against the web app's own code on a seeded library and made-up variations of it (no
 simulator), and `tests/run.sh e2e` runs the `-check`s in the simulator against a local server (`DEVICE=<simulator id>`).
 
+## Themes
+
+Pro's 14 themes (Settings › Theme; Lucida's own look is for everyone) are drawn by the web app's own theme code, not ported: an
+offscreen web view (`Design/ThemeRender.swift`, its page `Resources/ThemePage.html`) loads `/themes/load.js`, `kit.js` and the
+theme's module from the app's server, has the theme draw one piece (a study background, a card's face, a deck's cover, a deck's
+name, a profile picture, a Settings tile) and the app takes a picture of it. `Design/ThemeArt.swift` keeps the pictures (memory
+and `Caches/lucida-themes`, keyed by theme, piece, size, and a fingerprint of the theme's code, so a change on the web paints
+again) and asks for the ones a screen needs; until one is kept a screen shows Lucida's own look, and a theme in use is warmed
+up at launch. The words on a card stay the app's own, set in the theme's type: `Design/ThemeFonts.swift` asks Google Fonts for
+the families the theme names (as the web page does) and registers them; nothing ships with the app. What the theme says about
+its card (padding, ink, weight, spacing, ...) is read from the theme's own styles (`ThemeFace.swift`).
+
+A theme changes only the flashcard, the study background (Review and Learn), deck covers (Library thumbnails and folder fans, the
+deck page's header, Deck settings' header, New deck's preview) and your picture (Today, Settings, your profile). Free never draws
+one, whatever the library says. Boards: `PhoneThemePicker`, `PhoneThemePickerFree`, `PhoneTheme` (`-sheet <key>` for another
+theme) and, for each theme, `Theme<Board>ReviewPhone` and `Theme<Board>ProfilePhone`; `-theme <key>` puts any board in a theme.
+
+More launch arguments (debug builds): `-open themes` (Settings › Theme), `-open theme:<key>`, `-open newdeck`, `-open learnq` (a Learn
+question); `-themeProbe <key> -probeOut <folder>` paints a few pieces of a theme and saves them; `-themePage <file>` loads another
+copy of the painter's page. `tools/e2e-themes.sh <simulator id>` is the end-to-end test (`LucidaUITests/ThemesTests.swift`): a
+Pro person picks a theme and sees its card, background, covers and picture, a dark theme, back to Lucida; a Free person can't
+pick one, and one whose Pro lapsed never draws it. The app tells the test what it draws through an invisible element
+(`ThemeAudit`, debug builds only).
+

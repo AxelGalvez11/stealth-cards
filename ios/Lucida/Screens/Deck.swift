@@ -248,7 +248,7 @@ struct DeckScreen: View {
 
   @ViewBuilder private func cover(_ d: DeckVM, _ themed: ThemePic? = nil) -> some View {
     if let themed {
-      Color.clear.overlay(alignment: .topLeading) { themed.placed }
+      Color.clear.overlay(alignment: .topLeading) { themed.placed }.themeMark("head", store.skinKey ?? "")
     } else if let img = d.image, img != "mock", let url = store.api.mediaURL(img) {
       // Cropped to the header (a photo sized to fill on its own would stretch the header's layout).
       FillPhoto(url: url)

@@ -115,7 +115,7 @@ struct NewDeckSheet: View {
       t.bg
       if let prev { MeshFill(mesh: Mesh.gen(prev, style)) }
       if let mesh { MeshFill(mesh: mesh).opacity(fade) }
-      if let themed { Color.clear.overlay(alignment: .topLeading) { themed.placed } }
+      if let themed { Color.clear.overlay(alignment: .topLeading) { themed.placed }.themeMark("newcover", store.skinKey ?? "") }
       if let photo { FillPhoto(url: photo) }
       VStack(alignment: .leading, spacing: 0) {
         HStack(spacing: 8) {

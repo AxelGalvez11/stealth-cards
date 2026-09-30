@@ -123,7 +123,7 @@ struct ThemedFace: View {
           .frame(width: look.size.width, height: look.size.height, alignment: .topLeading)
           .clipShape(RoundedRectangle(cornerRadius: look.spec.radius, style: .continuous))
       }
-      if let pic { pic.placed }
+      if let pic { pic.placed.themeMark("face", look.skin.key) }
     }
     .frame(width: look.size.width, height: look.size.height, alignment: .topLeading)
     .allowsHitTesting(false)

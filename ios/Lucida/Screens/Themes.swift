@@ -70,7 +70,6 @@ struct ThemePickerScreen: View {
     .debugScroll()
     .ignoresSafeArea()
     .toolbar(.hidden, for: .navigationBar)
-    .onAppear { if !locked { for x in Generated.themes where x.key != "lucida" { _ = art.spec(x.key) } } }
   }
 
   /// A theme's tile (110 x 146): its picture, the Pro badge, and under it its name and a tick, an empty circle, or a lock.
@@ -149,7 +148,7 @@ struct ThemeTilePicture: View {
   let key: String
   var body: some View {
     let _ = art.tick
-    if let p = art.picture(.tile(key, ch: store.avatarLetter)) { Image(uiImage: p.image).resizable().frame(width: 110, height: 146) }
+    if let p = art.picture(.tile(key, ch: store.avatarLetter)) { Image(uiImage: p.image).resizable().frame(width: 110, height: 146).themeMark("tile", key) }
     else { t.surf }
   }
 }
@@ -292,7 +291,7 @@ struct ThemePictureBox: View {
   var body: some View {
     let _ = art.tick
     Color.clear.frame(width: size.width, height: size.height)
-      .overlay(alignment: .topLeading) { if let p = art.picture(job) { p.placed } }
+      .overlay(alignment: .topLeading) { if let p = art.picture(job) { p.placed.themeMark("page-" + job.kind, job.theme) } }
   }
 }
 

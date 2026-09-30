@@ -68,7 +68,14 @@ struct RootView: View {
     .environment(\.theme, t)
     .preferredColorScheme(over ?? (dark ? .dark : .light))
     .onChange(of: scheme, initial: true) { _, s in if over == nil { system = s } }
-    .onChange(of: store.skinKey) { _, k in if let k, !store.demo { ThemeArt.shared.warm(k, store) } }
+    #if DEBUG
+    // The end-to-end test reads which themes' pictures are on screen from this invisible element (ThemeAudit).
+    .overlay(alignment: .topLeading) {
+      TimelineView(.periodic(from: .now, by: 0.25)) { _ in
+        Color.clear.frame(width: 2, height: 2).accessibilityElement().accessibilityIdentifier("themeAudit").accessibilityValue(ThemeAudit.shared.summary)
+      }
+    }
+    #endif
     .onChange(of: store.skinKey) { _, k in if let k, !store.demo { ThemeArt.shared.warm(k, store) } }
     // Back after a while away: decks you study from other people get their owners' newest changes.
     .onChange(of: scenePhase) { _, p in if p == .background { store.away = Date() } else if p == .active { store.cameBack() } }
@@ -84,8 +91,6 @@ struct RootView: View {
       if !store.demo {
         DevSignIn.apply()
         await store.load()
-        // A theme in use is warmed up (its details, background, card faces, pictures, and covers), so nothing flashes.
-        if let k = store.skinKey { ThemeArt.shared.warm(k, store) }
         // A theme in use is warmed up (its details, background, card faces, pictures, and covers), so nothing flashes.
         if let k = store.skinKey { ThemeArt.shared.warm(k, store) }
         Task { try? await Task.sleep(nanoseconds: 5_000_000_000); await store.retuneWhenDue() }

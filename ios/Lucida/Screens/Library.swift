@@ -379,7 +379,7 @@ struct LibraryScreen: View {
 
   /// A deck's little card in a folder's fan: its colors, or the theme's cover.
   @ViewBuilder private func swatch(_ d: LibDeck) -> some View {
-    if d.photo == nil, let skin = store.skin(art), let pic = art.picture(.swatch(skin, deck: d.look)) { Color.clear.overlay(alignment: .topLeading) { pic.placed } }
+    if d.photo == nil, let skin = store.skin(art), let pic = art.picture(.swatch(skin, deck: d.look)) { Color.clear.overlay(alignment: .topLeading) { pic.placed }.themeMark("swatch", skin.key) }
     else { CSSLinearGradient(angle: d.mesh.angle, stops: d.mesh.stops) }
   }
 
@@ -416,7 +416,7 @@ struct LibraryScreen: View {
         CSSLinearGradient(angle: d.mesh.angle, stops: d.mesh.stops)
         if let p = d.photo { FillPhoto(url: store.api.mediaURL(p)) }
         // With a theme on (Pro), the theme draws the cover (a deck with a photo of its own keeps it).
-        else if let skin = store.skin(art), let pic = art.picture(.thumb(skin, deck: d.look)) { Color.clear.overlay(alignment: .topLeading) { pic.placed } }
+        else if let skin = store.skin(art), let pic = art.picture(.thumb(skin, deck: d.look)) { Color.clear.overlay(alignment: .topLeading) { pic.placed }.themeMark("thumb", skin.key) }
       }
       .frame(width: 48, height: 48).clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
       VStack(alignment: .leading, spacing: 2) {

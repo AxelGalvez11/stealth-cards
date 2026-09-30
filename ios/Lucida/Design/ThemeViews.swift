@@ -103,6 +103,7 @@ struct ThemedStudyBackground: View {
         GeometryReader { g in
           Image(uiImage: p.image).resizable().scaledToFill().frame(width: g.size.width, height: g.size.height).clipped()
         }
+        .themeMark("bg", skin.key)
         .transition(.opacity)
       }
     }
@@ -123,7 +124,7 @@ struct MyAvatar: View {
     if let skin = store.skin(art), let p = art.picture(.avatar(skin.key, size: Int(size), ch: store.avatarLetter, photo: !color)) {
       ZStack {
         if !color { plain }
-        Color.clear.overlay(alignment: .topLeading) { p.placed }
+        Color.clear.overlay(alignment: .topLeading) { p.placed }.themeMark("avatar", skin.key)
       }
       .frame(width: size, height: size)
     } else { plain }
@@ -183,5 +184,46 @@ struct ThemedName: View {
       } else { Color.clear.frame(height: 34) }
     }
     .task(id: art.tick) { if let p = art.picture(job) { last = p } }
+  }
+}
+
+
+// ---------- for the end-to-end test ----------
+/// Debug builds: which themes' pictures are on screen right now ("bg=aero;face=aero;thumb=aero"), for the end-to-end test to read
+/// (it stands in the page as an invisible element named themeAudit). Nothing of it is in a release build.
+final class ThemeAudit: @unchecked Sendable {
+  static let shared = ThemeAudit()
+  private let lock = NSLock()
+  private var counts: [String: Int] = [:]
+  func mark(_ kind: String, _ key: String, _ by: Int) {
+    lock.lock(); defer { lock.unlock() }
+    let k = kind + "=" + key
+    counts[k, default: 0] += by
+    if counts[k] == 0 { counts[k] = nil }
+  }
+  var summary: String { lock.lock(); defer { lock.unlock() }; return counts.keys.sorted().joined(separator: ";") }
+}
+
+private struct ThemeMark: ViewModifier {
+  let kind: String, key: String
+  @State private var on: String? = nil
+  func body(content: Content) -> some View {
+    content.onAppear { set(key) }.onDisappear { set(nil) }.onChange(of: key) { _, k in set(k) }
+  }
+  private func set(_ k: String?) {
+    if let o = on { ThemeAudit.shared.mark(kind, o, -1) }
+    on = k
+    if let k { ThemeAudit.shared.mark(kind, k, 1) }
+  }
+}
+
+extension View {
+  /// Debug builds: says that this picture of a theme is on screen (the end-to-end test reads it).
+  @ViewBuilder func themeMark(_ kind: String, _ key: String) -> some View {
+    #if DEBUG
+    modifier(ThemeMark(kind: kind, key: key))
+    #else
+    self
+    #endif
   }
 }
