@@ -46,9 +46,11 @@ struct ClassScreen: View {
         if let k { if k.invite { invite(k) } else { page(k) } }
       }
       .padding(.horizontal, 20).padding(.top, Screen.top(60)).padding(.bottom, 120)
-      .overlayPreferenceValue(ClassMenuAnchors.self) { anchors in menuOverlay(anchors, k) }
     }
     .ignoresSafeArea(edges: .top)
+    // A ⋯ menu sits in the screen beside its button, so it can keep clear of the sides and the tab bar; scrolling closes it.
+    .overlayPreferenceValue(ClassMenuAnchors.self) { anchors in menuOverlay(anchors, k) }
+    .onScrollPhaseChange { _, phase in if menu != nil && (phase == .interacting || phase == .decelerating) { menu = nil } }
     .toolbar(.hidden, for: .navigationBar)
     .debugScroll()
     .onAppear { openDemoSheets(k) }
@@ -110,6 +112,7 @@ struct ClassScreen: View {
             Spacer(minLength: 0)
             VStack(alignment: .leading, spacing: 6) {
               LabelText(text: Rich.nsText([.init(t: k.name, m: "")], size: 32, weight: .semibold, ls: -0.03, lh: 1.05, color: UIColor(mesh.inkColor), dark: false))
+                .accessibilityAddTraits(.isHeader)
               Text(k.school).css(15).line(15).opacity(0.88)
             }
             .shadow(color: .black.opacity(mesh.shadow), radius: mesh.shadow > 0 ? 7 : 0, x: 0, y: mesh.shadow > 0 ? 1 : 0)
@@ -120,8 +123,6 @@ struct ClassScreen: View {
         }
         .frame(height: 220)
         .clipShape(RoundedRectangle(cornerRadius: 28, style: .continuous))
-        .accessibilityElement(children: .ignore)
-        .accessibilityLabel([k.name, k.school].filter { !$0.isEmpty }.joined(separator: ", "))
         Button { nav.profile(k.owner.handle) } label: {
           HStack(spacing: 12) {
             PersonAvatar(p: k.owner, size: 40)
@@ -560,13 +561,18 @@ struct ClassScreen: View {
     return rows
   }
 
-  /// The open menu, beside its button (its right edge under the button's), over a layer that closes it.
+  /// The open menu, beside its button (its right edge under the button's), over a layer that closes it. Like the web's
+  /// menus, it moves in from the sides of the screen, and opens above its button when there's no room below (the tab bar
+  /// floats over the bottom).
   @ViewBuilder private func menuOverlay(_ anchors: [String: Anchor<CGRect>], _ k: ClassPage?) -> some View {
     if let m = menu, let a = anchors[m], let k {
       GeometryReader { g in
-        let r = g[a], rows = rowsFor(m, k)
+        let r = g[a], rows = rowsFor(m, k), width: CGFloat = 250
+        let h = CGFloat(rows.count) * 40 + CGFloat(max(0, rows.count - 1)) * 4 + 16
+        let x = min(max(8, r.maxX - width), g.size.width - 8 - width)
+        let below = r.maxY + 8 + h <= g.size.height - 100 || r.minY - 8 - h < Screen.top(60)
         ZStack(alignment: .topLeading) {
-          Color.black.opacity(0.001).frame(width: 4000, height: 8000).offset(x: -2000, y: -4000).onTapGesture { menu = nil }
+          Color.black.opacity(0.001).onTapGesture { menu = nil }
           VStack(alignment: .leading, spacing: 4) {
             ForEach(Array(rows.enumerated()), id: \.offset) { _, row in
               Button { menu = nil; row.action() } label: {
@@ -577,10 +583,11 @@ struct ClassScreen: View {
             }
           }
           .padding(8)
-          .frame(width: 250, alignment: .leading)
+          .frame(width: width, alignment: .leading)
           .modifier(PopBox())
-          .offset(x: r.maxX - 250, y: r.minY + 40)
+          .offset(x: x, y: below ? r.maxY + 8 : r.minY - 8 - h)
         }
+        .frame(width: g.size.width, height: g.size.height, alignment: .topLeading)
       }
       .transition(.opacity)
     }
