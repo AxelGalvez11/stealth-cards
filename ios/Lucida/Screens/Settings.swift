@@ -172,7 +172,7 @@ struct SettingsScreen: View {
           row("Card gradients", sub: store.skinKey != nil ? "With the Lucida theme" : nil) { seg([("mix", "Mix"), ("vivid", "Vivid"), ("deep", "Deep")], grads) { store.setSetting(["grads": $0]) } }
         }
         group("Your AI") {
-          Button { nav.pick(.connect) } label: { row("Connected apps") { value(connected) } }.buttonStyle(.plain)
+          Button { nav.openConnect() } label: { row("Connect AI") { value(connected) } }.buttonStyle(.plain)
           divider
           row("Check AI cards first") { Toggle48(on: check, label: "Check AI cards first") { store.setCheck(!check) } }
           divider

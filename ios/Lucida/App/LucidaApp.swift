@@ -12,6 +12,7 @@ struct LucidaApp: App {
   init() {
     Fonts.register()
     let store = Store(demo: Board.requested != nil), nav = Nav(), drag = DragCenter()
+    nav.mine = { [weak store] in store?.myHandle ?? "" }
     // A design screen starts where its board is, before anything draws.
     if let b = Board.requested { Board.setUp(b, store: store, nav: nav, drag: drag) }
     _store = StateObject(wrappedValue: store)
@@ -124,13 +125,14 @@ struct RootView: View {
           case "stats": nav.tab = .stats
           // Stats on one of Pro's tabs: `-open stats -tab Memory` (or Weak spots, Pace).
           case "statsdeep": nav.tab = .stats; store.props.statsTab = Board.arg("-tab") ?? "Memory"
-          case "connect": nav.tab = .connect
+          // Connect AI is a page inside Settings: Settings › Connect AI.
+          case "connect": nav.path = [.settings, .connect]
           case "settings": nav.path = [.settings]
           case "discover": nav.tab = .discover
           case "news": nav.path = [.news]
           // Your classes (the Library's third view), or one class's page by its code (`class:<CODE>`).
           case "classes": nav.tab = .library; nav.libClasses = true
-          case "profile": nav.path = [.profile("")]
+          case "profile": nav.tab = .profile
           // `deckpage:<path>`: a shared deck's page (/@maria/mcat-biochemistry); `history:<path>`: its History;
           // `suggestions`: every deck's suggestions.
           case let o where o.hasPrefix("deckpage:"): if let a = DeckAddress(path: String(o.dropFirst(9))) { nav.tab = .discover; nav.path = [.publicDeck(a)] }
@@ -233,7 +235,7 @@ extension Board {
       nav.tab = .library; nav.path = [.deck("cell")]
       drag.showTray(Sample.shared.DECKS.filter { $0.id != "cell" }.map { TrayDeck(id: $0.id, name: $0.name, mesh: Mesh.deck(seed: $0.name)) })
     case "PhoneReviewExplain": store.props.revealed = true; store.props.explainOpen = true; nav.full = .review(deckId: "cell", pile: nil)
-    case "PhoneConnect": nav.tab = .connect
+    case "PhoneConnect": nav.path = [.settings, .connect]
     case "PhoneSettings": nav.path = [.settings]
     case "PhoneSettingsFree": store.props.plan = "Free"; nav.path = [.settings]
     // A verified teacher's Settings: Get verified says Verified teacher (the board's `verified`: -verified "Waiting for review" or School).
@@ -266,14 +268,14 @@ extension Board {
     // The study network: Discover, profiles (yours and Maria's), News, and the sample deck shared or from Maria.
     case "PhoneDiscover": nav.tab = .discover
     case "PhoneDiscoverSearch": nav.tab = .discover; store.props.q = "bio"
-    case "PhoneProfile": nav.path = [.profile("")]
+    case "PhoneProfile": nav.tab = .profile
     case "PhoneProfileOther": nav.path = [.profile("mariasantos")]
     case "PhoneProfileFollowing": store.props.following = true; nav.path = [.profile("mariasantos")]
-    case "PhoneProfileEdit": store.props.editOpen = true; nav.path = [.profile("")]
-    case "PhoneProfileSaved": store.props.profileTab = "Saved"; nav.path = [.profile("")]
-    case "PhoneProfileSuggestions": store.props.profileTab = "Suggestions"; nav.path = [.profile("")]
-    case "PhoneProfileEmpty": store.props.netEmpty = true; nav.path = [.profile("")]
-    case "PhoneProfileLoading": store.props.netLoading = true; nav.path = [.profile("")]
+    case "PhoneProfileEdit": store.props.editOpen = true; nav.tab = .profile
+    case "PhoneProfileSaved": store.props.profileTab = "Saved"; nav.tab = .profile
+    case "PhoneProfileSuggestions": store.props.profileTab = "Suggestions"; nav.tab = .profile
+    case "PhoneProfileEmpty": store.props.netEmpty = true; nav.tab = .profile
+    case "PhoneProfileLoading": store.props.netLoading = true; nav.tab = .profile
     case "PhoneProfileMissing": store.props.missing = true; nav.path = [.profile("nobody")]
     case "PhoneProfileReport": store.props.report = true; nav.path = [.profile("mariasantos")]
     case "PhoneActivity": nav.path = [.news]
@@ -388,6 +390,7 @@ struct MainView: View {
               case .classPage(let code): ClassScreen(code: code)
               case .themes: ThemePickerScreen()
               case .theme(let key): ThemePageScreen(key: key)
+              case .connect: ConnectScreen()
               }
             }
             .toolbar(.hidden, for: .navigationBar)
@@ -414,11 +417,11 @@ struct MainView: View {
     case .library: LibraryScreen()
     case .discover: DiscoverScreen()
     case .stats: StatsScreen()
-    case .connect: ConnectScreen()
+    case .profile: ProfileScreen(handle: "")
     }
   }
-  /// Pages the canvas draws without the tab bar: Settings, Check AI cards, News (and a suggestion once it's opened), and
-  /// the themes.
+  /// Pages the canvas draws without the tab bar: Settings, Check AI cards, News (and a suggestion once it's opened), the
+  /// themes, and Connect AI (a page inside Settings).
   private var showsTabBar: Bool {
     switch nav.path.last {
     case .none, .deck, .folder, .profile, .publicDeck, .history, .classPage: return true
@@ -426,11 +429,12 @@ struct MainView: View {
     default: return false
     }
   }
-  /// The tab that's lit: a profile lights none (it's no tab's page); a shared deck's page lights Discover; its History lights
-  /// the Library for a deck of yours (Discover for someone's), and Suggestions the Library.
+  /// The tab that's lit: your own profile lights Profile and someone else's lights none (it's no tab's page); a shared deck's
+  /// page lights Discover; its History lights the Library for a deck of yours (Discover for someone's), and Suggestions the
+  /// Library.
   private var lit: Tab? {
     switch nav.path.last {
-    case .profile: return nil
+    case .profile(let h): return h.isEmpty || h.lowercased() == store.myHandle.lowercased() ? .profile : nil
     case .publicDeck: return .discover
     case .suggestions: return .library
     case .history(let a): return store.ownsAddress(a) ? .library : .discover

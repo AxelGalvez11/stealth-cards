@@ -79,23 +79,24 @@ struct Eyebrow: View {
   }
 }
 
-/// The tabs (NAV_P). The Library was called Decks (it keeps the Decks icon).
-enum Tab: String, CaseIterable { case today = "Today", library = "Library", discover = "Discover", stats = "Stats", connect = "Connect" }
+/// The tabs (NAV_P). The Library was called Decks (it keeps the Decks icon). Profile's icon is your own picture.
+enum Tab: String, CaseIterable { case today = "Today", library = "Library", discover = "Discover", stats = "Stats", profile = "Profile" }
 
 /// The floating tab bar: a gray pill, 64 tall, 16 in from the sides and 28 up from the bottom; the current tab is a
-/// black pill (none on a profile).
+/// black pill (none on someone else's profile).
 struct TabBar: View {
   @Environment(\.theme) private var t
   let active: Tab?
   let pick: (Tab) -> Void
-  private let icons: [Tab: String] = [.today: "today", .library: "decks", .discover: "compass", .stats: "stats", .connect: "connect"]
+  private let icons: [Tab: String] = [.today: "today", .library: "decks", .discover: "compass", .stats: "stats"]
   var body: some View {
     HStack(spacing: 4) {
       ForEach(Tab.allCases, id: \.self) { tab in
         let on = tab == active
         Button { pick(tab) } label: {
           VStack(spacing: 2) {
-            Icon(icons[tab]!, 20, 2)
+            // Your own circle, 22 wide in a 20 box so its name sits level with the others' (NAV_P's 'me').
+            if let icon = icons[tab] { Icon(icon, 20, 2) } else { MyAvatar(size: 22).frame(width: 20, height: 20) }
             Text(tab.rawValue).css(11, .semibold)
           }
           .foregroundStyle(on ? t.invText : t.muted)

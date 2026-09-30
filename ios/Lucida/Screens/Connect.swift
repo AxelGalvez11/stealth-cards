@@ -1,4 +1,5 @@
-// iPhone · Connect AI (PhoneConnect): your personal MCP link on the Apricot card, and which AI apps use it.
+// iPhone · Connect AI (PhoneConnect): your personal MCP link on the Apricot card, and which AI apps use it. It's a page
+// inside Settings (its row there says Connect AI): a back button to Settings and no tab bar, like Settings › Theme.
 import SwiftUI
 
 struct ConnectVM {
@@ -20,13 +21,18 @@ extension Store {
 struct ConnectScreen: View {
   @Environment(\.theme) private var t
   @EnvironmentObject private var store: Store
+  @EnvironmentObject private var nav: Nav
   @State private var copied = false
 
   var body: some View {
     let c = store.connect(), hero = Mesh.palette("Apricot")
     ScrollView(showsIndicators: false) {
       VStack(alignment: .leading, spacing: 16) {
-        PageTitle("Connect AI")
+        HStack(spacing: 12) {
+          RoundButton(icon: "back", label: "Back") { nav.back() }
+          Text("Connect AI").css(17, .semibold).frame(maxWidth: .infinity)
+          Color.clear.frame(width: 44, height: 44)
+        }
         Text("Make cards from any chat: text, fill-in-the-blank, images, and audio.").css(15, lh: 1.45).foregroundStyle(t.muted)
         MeshCard(mesh: hero, radius: 32) {
           VStack(alignment: .leading, spacing: 12) {
@@ -58,14 +64,18 @@ struct ConnectScreen: View {
               Text(on ? "Connected" : "Connect").css(13, .semibold).foregroundStyle(on ? t.good : t.muted)
             }
             .frame(minHeight: 60)
+            // The board's row is 60 tall and then its 1px line (a border adds to min-height).
+            .padding(.bottom, 1)
             .overlay(alignment: .bottom) { Rectangle().fill(t.line).frame(height: 1) }
           }
         }
       }
       .foregroundStyle(t.text)
-      .padding(.horizontal, 20).padding(.top, Screen.top(64)).padding(.bottom, 120)
+      .padding(.horizontal, 20).padding(.top, Screen.top(64)).padding(.bottom, 34)
     }
+    .debugScroll()
     .ignoresSafeArea()
+    .toolbar(.hidden, for: .navigationBar)
   }
 }
 

@@ -165,7 +165,7 @@ final class ClassesTests: XCTestCase {
 
     // ---------- the teacher makes a class ----------
     var app = launch(as: teacher)
-    for tab in ["Today", "Library", "Discover", "Stats", "Connect"] { check(wait(button(app, tab)), "the tab bar has \(tab)") }
+    for tab in ["Today", "Library", "Discover", "Stats", "Profile"] { check(wait(button(app, tab)), "the tab bar has \(tab)") }
     button(app, "Library").tap()
     check(wait(button(app, "Classes")) && button(app, "Decks").exists && button(app, "All cards").exists, "the Library has Decks, All cards, and Classes")
     button(app, "Classes").tap()

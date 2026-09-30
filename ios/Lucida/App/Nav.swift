@@ -2,10 +2,10 @@
 // sheets over a page (new card, new deck, deck settings, Learn), and full screens (review, session done, Learn mode).
 import SwiftUI
 
-/// Pages pushed on a tab: Settings, a deck, a folder, Check AI cards, someone's profile (`profile("")` is yours), News, a
-/// shared deck's page, its suggestions (`suggestions("")`: every deck of yours), its History, a class (by its code), and
-/// Settings › Theme with a theme's page (its key).
-enum Route: Hashable { case settings, deck(String), folder(String), inbox, profile(String), news, publicDeck(DeckAddress), suggestions(String), history(DeckAddress), classPage(String), themes, theme(String) }
+/// Pages pushed on a tab: Settings, a deck, a folder, Check AI cards, someone's profile (yours is the Profile tab, not a
+/// page: see `profile`), News, a shared deck's page, its suggestions (`suggestions("")`: every deck of yours), its History,
+/// a class (by its code), Settings › Theme with a theme's page (its key), and Settings › Connect AI.
+enum Route: Hashable { case settings, deck(String), folder(String), inbox, profile(String), news, publicDeck(DeckAddress), suggestions(String), history(DeckAddress), classPage(String), themes, theme(String), connect }
 enum SheetKind: Identifiable, Equatable {
   case newDeck, newCard(deckId: String?, cardId: String?), deckSettings(String), learnStart(String)
   /// The New folder popup (maybe for a deck that goes in it), or Rename on a folder's page; `name`: what's typed to start.
@@ -95,8 +95,17 @@ final class Nav: ObservableObject {
     DispatchQueue.main.async { withAnimation(.out(0.35)) { self.full = nil } }
   }
   func pick(_ t: Tab) { path = []; tab = t }
-  /// Someone's profile (`handle` "": yours).
-  func profile(_ handle: String) { push(.profile(handle)) }
+  /// Someone's profile (`handle` "": yours). Yours is the Profile tab (`mine` says your handle), so opening it goes there
+  /// instead of stacking a second copy of it on the page you're on.
+  var mine: () -> String = { "" }
+  func profile(_ handle: String) {
+    if handle.isEmpty || handle.lowercased() == mine().lowercased() { pick(.profile) } else { push(.profile(handle)) }
+  }
+  /// Connect AI, which is a page inside Settings (its row in Settings opens it the same way): Settings is put under it, so
+  /// its back button goes to Settings, and Settings' goes to where you were.
+  func openConnect() {
+    if path.last == .settings { push(.connect) } else { path += [.settings, .connect] }
+  }
   /// A shared deck's page, from the path the server gives (/@maria/mcat-biochemistry or /d/<id>): `suggest` opens Suggest a
   /// change on it (a card's id, or "1"), `copy` opens Make a copy.
   func deckPage(_ path: String, copy: Bool = false, suggest: String = "") {
