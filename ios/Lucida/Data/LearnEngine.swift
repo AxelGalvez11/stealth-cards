@@ -301,7 +301,8 @@ extension Store {
     nextQuestion(&L)
     learning = L
   }
-  func stopLearn() { learning = nil }
+  /// Ends the session; whatever answers haven't been logged yet go first.
+  func stopLearn() { if var L = learning { sendAnswers(&L) }; learning = nil }
 
   // ---------- close enough ----------
   /// Spelling that's close enough counts: case, accents, a missing "the", and a typo or two in a longer word.
