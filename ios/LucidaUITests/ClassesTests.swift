@@ -90,6 +90,11 @@ final class ClassesTests: XCTestCase {
     let all = app.buttons.matching(NSPredicate(format: "label == %@", label)).allElementsBoundByIndex
     return all.last { $0.isHittable } ?? app.buttons[label].firstMatch
   }
+  /// The lowest button with this label on screen (in a sheet or on a pushed page, not the page under it).
+  private func lowest(_ app: XCUIApplication, _ label: String) -> XCUIElement {
+    let all = app.buttons.matching(NSPredicate(format: "label == %@", label)).allElementsBoundByIndex
+    return all.max { $0.frame.minY < $1.frame.minY } ?? app.buttons[label].firstMatch
+  }
   private func wait(_ e: XCUIElement, _ s: TimeInterval = 8) -> Bool { e.waitForExistence(timeout: s) }
   /// Waits until something's gone.
   private func gone(_ e: XCUIElement, _ s: TimeInterval = 8) -> Bool {
@@ -297,6 +302,17 @@ final class ClassesTests: XCTestCase {
     // ---------- the teacher, half way: what's shared, and what isn't ----------
     app = launch(as: teacher)
     check(wait(button(app, "Today")) && gone(app.staticTexts["ASSIGNMENTS"], 3), "a teacher's Today has no assignments (they're for the students)")
+    button(app, "Library").tap()
+    let classRow = any(app, "Class · 6 cards")
+    check(wait(classRow, 10), "her Library marks the deck she added to the class: Class")
+    classRow.tap()
+    check(wait(button(app, "Deck settings")), "the deck opens")
+    button(app, "Deck settings").tap()
+    lowest(app, "Sharing").tap()
+    check(wait(app.staticTexts["Only you and your classes."]), "its Sharing says Only you and your classes.")
+    check(buttonStarting(app, "Private").isSelected || button(app, "Private").exists, "and keeps Private picked")
+    button(app, "Done").tap()
+    Thread.sleep(forTimeInterval: 0.8)
     toClasses(app)
     let half = buttonStarting(app, "BIO 201, Yours")
     check(wait(half), "the teacher's Classes has BIO 201, marked Yours")
