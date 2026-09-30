@@ -703,7 +703,7 @@ struct LibraryScreen: View {
       PageTitle("Library") { RoundButton(icon: "plus", label: "New deck") { nav.newDeck() } }
       LibraryModes(current: "decks")
       EmptyBlock(art: 150, icon: "plus", title: "No decks yet", line: "Make one, bring your cards from Anki or Quizlet, or let your AI make them for you.") {
-        EmptyActions(primary: ("New deck", "plus", { nav.newDeck() }), a: ("Import cards", "upload", { nav.importCards() }), b: ("Connect AI", "connect", { nav.pick(.connect) }))
+        EmptyActions(primary: ("New deck", "plus", { nav.newDeck() }), a: ("Import cards", "upload", { nav.importCards() }), b: ("Connect AI", "connect", { nav.openConnect() }))
       }
       .padding(.horizontal, 8).padding(.bottom, 20)
       .frame(maxHeight: .infinity)

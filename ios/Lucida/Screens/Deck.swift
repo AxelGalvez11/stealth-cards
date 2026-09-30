@@ -394,7 +394,7 @@ struct DeckScreen: View {
     VStack(spacing: 0) {
       header(d, sub: "No cards yet")
       EmptyBlock(art: 140, icon: "plus", title: "This deck is empty", line: "Add your first card, import some, or ask your AI to make them.") {
-        EmptyActions(primary: ("New card", "plus", { nav.newCard(deckId: d.id) }), a: ("Import cards", "upload", { nav.importCards() }), b: ("Ask your AI", "sparkle", { nav.pick(.connect) }))
+        EmptyActions(primary: ("New card", "plus", { nav.newCard(deckId: d.id) }), a: ("Import cards", "upload", { nav.importCards() }), b: ("Ask your AI", "sparkle", { nav.openConnect() }))
       }
       .padding(.horizontal, 28)
       .frame(maxHeight: .infinity)

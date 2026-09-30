@@ -153,7 +153,7 @@ struct TodayScreen: View {
         .buttonStyle(.press)
         HStack(spacing: 8) {
           startTile(icon: "upload", title: "Import cards", body: "From Anki, Quizlet, or a CSV file.") { nav.importCards() }
-          startTile(icon: "connect", title: "Connect your AI", body: "Let Claude or ChatGPT make cards.") { nav.tab = .connect }
+          startTile(icon: "connect", title: "Connect your AI", body: "Let Claude or ChatGPT make cards.") { nav.openConnect() }
         }
       }
       VStack(alignment: .leading, spacing: 14) {
