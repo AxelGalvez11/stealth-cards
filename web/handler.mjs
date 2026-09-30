@@ -4,8 +4,9 @@
 // Online, everything but signing in needs a signed-in person, and each person only ever sees their own library.
 import { readFile, stat } from 'node:fs/promises';
 import { extname, join, normalize, sep } from 'node:path';
+import { createHash } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
-import { state, apply, withLibrary, revOf, putMedia, mediaLink, MEDIA, aiLeft, useAi, refundAi, saveExplain, isPro } from './store.mjs';
+import { state, apply, withLibrary, revOf, putMediaLater, mediaLink, MEDIA, aiLeft, useAi, refundAi, saveExplain, isPro } from './store.mjs';
 import { aiReady, explain } from './ai.mjs';
 import { FREE_EXPLAINS, PRO_EXPLAINS } from './plans.mjs';
 import { mcp } from './mcp.mjs';
@@ -97,11 +98,12 @@ async function publicPage(req, res, path) {
   if (m) {
     const origin = originOf(req), url = origin + (m.url || path);
     const head = `<title>${escHtml(m.title)}</title>\n<meta name="description" content="${escHtml(m.description)}">\n<link rel="canonical" href="${escHtml(url)}">\n<meta property="og:title" content="${escHtml(m.title)}">\n<meta property="og:description" content="${escHtml(m.description)}">\n<meta property="og:url" content="${escHtml(url)}">\n<meta property="og:type" content="website">${m.noindex || m.status === 404 ? '\n<meta name="robots" content="noindex">' : ''}`;
-    html = html.replace(/<title>[^<]*<\/title>/, head);
+    // A function gives the text as it is: a deck named "$&" or "$'" must not be read as one of replace()'s own patterns.
+    html = html.replace(/<title>[^<]*<\/title>/, () => head);
     // What the page is, in plain HTML, for anything that doesn't run the app (it's replaced as soon as the app starts).
     const list = m.cards ? '<ol>' + m.cards.map(c => '<li>' + escHtml(String(c.front || c.text || '').replace(/\[\[|\]\]/g, '')) + (c.back ? ' — ' + escHtml(c.back) : '') + '</li>').join('') + '</ol>'
       : m.decks ? '<ul>' + m.decks.map(d => '<li><a href="' + escHtml(d.url) + '">' + escHtml(d.name) + '</a> · ' + d.cards + ' cards</li>').join('') + '</ul>' : '';
-    html = html.replace('<div id="app"', '<noscript><h1>' + escHtml(m.title) + '</h1><p>' + escHtml(m.description) + '</p>' + list + '</noscript><div id="app"');
+    html = html.replace('<div id="app"', () => '<noscript><h1>' + escHtml(m.title) + '</h1><p>' + escHtml(m.description) + '</p>' + list + '</noscript><div id="app"');
   }
   res.writeHead(m && m.status === 404 ? 404 : 200, { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-store' });
   res.end(html);
@@ -157,8 +159,10 @@ async function api(req, res, path, body, me, uid) {
     if (!ext) return send(res, 415, { error: 'Only images and audio' });
     // The file must really be what it's labeled (its first bytes say), so nothing else is ever saved as a picture or sound.
     if (real !== type && !(type === 'audio/x-m4a' && real === 'audio/mp4')) return send(res, 415, { error: real === 'image/heic' ? HEIC : 'That file isn’t a picture or sound Lucida can use.' });
-    const name = 'm' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7) + ext;
-    await putMedia(name, body, type);
+    // Named after what's in it, so uploading the same file again is the same file, not another.
+    const name = 'm' + createHash('sha256').update(body).digest('hex').slice(0, 24) + ext;
+    // An account has room for so many pictures and sounds (store.mjs); past it, the answer says so.
+    try { putMediaLater(name, body, type); } catch (e) { if (e.full) return send(res, 403, { error: e.message }); throw e; }
     return send(res, 200, { url: '/media/' + name });
   }
   return send(res, 404, { error: 'Not found' });
@@ -273,7 +277,7 @@ async function stripe(req, res) {
 // Who's signed in, for the app: their plan, and Stripe's page for changing or cancelling it.
 const meOf = async (user, fresh) => {
   const plan = await planOf(user.id, user.email, fresh);
-  return { email: user.email, provider: user.provider, name: user.name, picture: user.picture, plan, manage: plan.pro ? portalUrl(user.email) : '' };
+  return { email: user.email, emailConfirmed: user.emailConfirmed, provider: user.provider, name: user.name, picture: user.picture, plan, manage: plan.pro ? portalUrl(user.email) : '' };
 };
 
 // Online, pictures and sound load straight from the person's own storage folder through a short-lived link.

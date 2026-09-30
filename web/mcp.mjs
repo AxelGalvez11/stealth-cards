@@ -56,18 +56,25 @@ const folderName = d => (state().folders.find(f => f.id === d.folder) || {}).nam
 // The id of the folder with this name, made if needed.
 const folderFor = (name, who) => (state().folders.find(f => f.name.toLowerCase() === String(name).trim().toLowerCase()) || { id: apply({ type: 'folder.add', name }, who).id }).id;
 const DEVICE_VOICE = 'No voice key is set up, so the app reads audio cards aloud with the device’s voice.';
+// Natural voices for sound cards are Pro; on Free the app reads the words aloud with the device's voice. Photo covers are Pro too.
+const FREE_VOICE = 'Natural voices are part of Lucida Pro, so the app reads these aloud with the device’s voice.';
+const FREE_COVER = 'Photo covers are part of Lucida Pro. The learner can go Pro at lucida.cards/pricing to get them.';
+// Free's limit on pictures and sound is counted before each one is fetched or spoken (`room.left`), so nothing is fetched, or
+// paid for, past it. Pro has no limit (Infinity).
+const take = room => { if (room.left < 1) throw Object.assign(new Error(MEDIA_FULL), { full: true }); room.left--; };
 // Fetches a card's picture and sound (or makes its speech) and keeps only the fields a card has.
-async function withMedia(c, files, ctx, notes) {
+async function withMedia(c, files, ctx, notes, room) {
   const card = { kind: c.kind, front: c.front, back: c.back, text: c.text, note: c.note, tags: c.tags, speak: c.speak, lang: c.lang };
   try {
-    if (c.kind === 'image') card.image = await fetchMedia(c.image, 'image', { files, local: ctx.local });
-    if (c.kind === 'audio') card.audio = c.audio ? await fetchMedia(c.audio, 'audio', { files, local: ctx.local }) : await speakFile(c.speak, c.lang, notes);
-  } catch (e) { throw new Error('Card “' + String(c.front || c.back || c.speak || c.text || '').slice(0, 40) + '”: ' + e.message); }
+    if (c.kind === 'image') { take(room); card.image = await fetchMedia(c.image, 'image', { files, local: ctx.local }); }
+    if (c.kind === 'audio') { if (c.audio) { take(room); card.audio = await fetchMedia(c.audio, 'audio', { files, local: ctx.local }); } else card.audio = await speakFile(c.speak, c.lang, notes, room); }
+  } catch (e) { throw e.full ? e : new Error('Card “' + String(c.front || c.back || c.speak || c.text || '').slice(0, 40) + '”: ' + e.message); }
   return card;
 }
-async function speakFile(words, lang, notes) {
-  try { const url = await speechFile(R.plain(words, { join: ' ', math: 'show' }), lang); if (!url) notes.add(DEVICE_VOICE); return url; }
-  catch (e) { notes.add(e.message + ' Those cards use the device’s voice for now.'); return null; }
+async function speakFile(words, lang, notes, room) {
+  if (!isPro()) { notes.add(FREE_VOICE); return null; }
+  try { if (room) take(room); const url = await speechFile(R.plain(words, { join: ' ', math: 'show' }), lang); if (!url) notes.add(DEVICE_VOICE); return url; }
+  catch (e) { if (e.full) throw e; notes.add(e.message + ' Those cards use the device’s voice for now.'); return null; }
 }
 
 const TOOLS = [
@@ -121,6 +128,7 @@ const TOOLS = [
     run: async (a, who, ctx) => {
       if (deckBy(a.name)) return fail('There is already a deck called ' + a.name);
       if (a.cover_image && !state().ai.perms.media) return fail(NO_MEDIA);
+      if (a.cover_image && !isPro()) return fail(FREE_COVER);
       let image = null;
       try { if (a.cover_image) image = await fetchMedia(a.cover_image, 'image', { files: a.files, local: ctx.local }); } catch (e) { return fail(e.message); }
       return text(apply({ type: 'deck.add', name: a.name, tags: a.tags, folder: a.folder ? folderFor(a.folder, who) : null, image }, who));
@@ -135,6 +143,7 @@ const TOOLS = [
     run: async (a, who, ctx) => {
       const d = deckBy(a.deck); if (!d) return fail('No deck called ' + a.deck);
       if ((a.cover_image || a.background_image) && !state().ai.perms.media) return fail(NO_MEDIA);
+      if (a.cover_image && !isPro()) return fail(FREE_COVER);
       const patch = {};
       if (a.name !== undefined) { const other = deckBy(a.name); if (other && other !== d) return fail('There is already a deck called ' + a.name); patch.name = a.name; }
       if (a.tags !== undefined) patch.tags = a.tags;
@@ -160,12 +169,13 @@ const TOOLS = [
       const bad = list.find(problem);
       if (bad) return fail('Can’t add these cards: ' + problem(bad) + ': ' + JSON.stringify(bad));
       if (list.some(c => c.image || c.audio || c.kind === 'audio') && !state().ai.perms.media) return fail(NO_MEDIA);
-      // Free's limit on pictures and sound: checked before fetching anything, and again once spoken words have their files.
-      if (list.filter(c => c.image || c.audio).length > mediaLeft()) return fail(MEDIA_FULL);
+      // Free's limit on pictures and sound: what these cards would use is checked before anything is fetched or spoken, and each one
+      // is counted again as it is made. Spoken words only become a file on Pro (on Free the device reads them aloud).
+      const needFile = list.filter(c => c.kind === 'image' || (c.kind === 'audio' && (c.audio || isPro())));
+      if (needFile.length > mediaLeft()) return fail(MEDIA_FULL);
       // Pictures and sound first, so a bad link doesn't leave half the cards made.
-      const notes = new Set(), ready = [];
-      try { for (const c of list) ready.push(await withMedia(c, a.files, ctx, notes)); } catch (e) { return fail(e.message); }
-      if (ready.filter(c => c.image || c.audio).length > mediaLeft()) return fail(MEDIA_FULL);
+      const notes = new Set(), ready = [], room = { left: mediaLeft() };
+      try { for (const c of list) ready.push(await withMedia(c, a.files, ctx, notes, room)); } catch (e) { return fail(e.message); }
       const check = state().ai.perms.check;
       let d = deckBy(a.deck), made = 0;
       for (const c of ready) { const r = apply({ type: 'card.add', deckId: d ? d.id : null, deckName: d ? null : a.deck, ...c, pending: check }, who); d = deckBy(r.deckId); made += r.ids.length; }
@@ -187,6 +197,8 @@ const TOOLS = [
         if (a.image && sound) return fail('A card can have a picture or a sound, not both.');
         if (a.image && !['basic', 'image'].includes(c.kind)) return fail('Only basic and image cards can have a picture.');
         if (sound && !['basic', 'audio'].includes(c.kind)) return fail('Only basic and audio cards can have sound.');
+        // Free's limit is counted before the picture or sound is fetched or spoken (a card that has one already needs no new place).
+        if ((a.image || a.audio || (sound && isPro())) && !(c.image || c.audio) && mediaLeft() < 1) return fail(MEDIA_FULL);
         const notes = new Set();
         try {
           if (a.image) { patch.image = await fetchMedia(a.image, 'image', { files: a.files, local: ctx.local }); patch.kind = 'image'; }
@@ -259,7 +271,7 @@ const TOOLS = [
     } }
 ];
 const allowed = () => TOOLS.filter(t => state().ai.perms[t.perm]);
-const nameOf = info => { const n = String((info && info.name) || 'MCP app'); return /claude/i.test(n) ? 'Claude' : /openai|chatgpt/i.test(n) ? 'ChatGPT' : /cursor/i.test(n) ? 'Cursor' : n; };
+const nameOf = info => { const n = String((info && info.name) || 'MCP app').replace(/\s+/g, ' ').trim().slice(0, 60) || 'MCP app'; return /claude/i.test(n) ? 'Claude' : /openai|chatgpt/i.test(n) ? 'ChatGPT' : /cursor/i.test(n) ? 'Cursor' : n; };
 
 async function handle(m, sid, ctx) {
   if (m.id === undefined || m.id === null) return null; // notifications need no answer

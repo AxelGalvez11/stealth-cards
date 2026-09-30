@@ -119,8 +119,29 @@ const save = () => {
 // For changes made outside apply() (social.mjs: studying or copying a shared deck, its updates arriving): saves them
 // like any other change.
 export const saved = () => save();
-// Pictures and sound for cards: in data/media here, in the person's folder of the Supabase bucket online.
-export const putMedia = (name, buf, type) => (cloud() ? files.put(lib().uid, name, buf, type) : writeFile(join(MEDIA, name), buf));
+// Pictures and sound for cards: in data/media here, in the person's folder of the Supabase bucket online. An account has
+// room for so many files and megabytes, kept as a running count in its library (Delete my data clears the files and starts
+// the count over). Free's room is modest and Pro's large; neither is unlimited. LUCIDA_MEDIA_FILES and LUCIDA_MEDIA_MB set
+// it lower, for checks.
+export const UPLOAD_FULL = 'Your account has no room for more pictures and sounds.';
+export const mediaRoom = () => ({ files: +process.env.LUCIDA_MEDIA_FILES || (isPro() ? 5000 : 500), bytes: (+process.env.LUCIDA_MEDIA_MB || (isPro() ? 5000 : 500)) * 1e6 });
+// The same file again (a request that runs twice, an AI app trying again after a bad link, the same picture on two cards) is the
+// same file, since files are named after what is in them, so it is counted once: the count keeps a 16-letter key for each file.
+const keyOf = name => String(name).replace(/\.\w+$/, '').slice(1, 17);
+// Room for one more file of `bytes`, counted now (the count is saved with the library); throws when there is none.
+export function reserveMedia(name, bytes) {
+  const L = lib(), used = L.S.uploads || { n: 0, bytes: 0, names: '' }, room = mediaRoom(), key = keyOf(name);
+  if (key && (' ' + (used.names || '') + ' ').includes(' ' + key + ' ')) return;
+  if (used.n + 1 > room.files || used.bytes + bytes > room.bytes) throw Object.assign(new Error(UPLOAD_FULL), { full: true });
+  L.S.uploads = { n: used.n + 1, bytes: used.bytes + bytes, names: ((used.names || '') + ' ' + key).trim() }; save();
+}
+const writeMedia = (name, buf, type) => (cloud() ? files.put(lib().uid, name, buf, type) : writeFile(join(MEDIA, name), buf));
+// A picture or sound an AI app brings: counted, then stored.
+export async function putMedia(name, buf, type) { reserveMedia(name, buf.length); await writeMedia(name, buf, type); }
+// The app's own upload: counted now, but stored only once the library (with its count) has really saved. A request that loses
+// a race to another change runs again from the newer copy, and only the run that wins stores anything, so a burst of uploads at
+// once can't leave files behind that were never counted.
+export function putMediaLater(name, buf, type) { reserveMedia(name, buf.length); afterSaving(() => writeMedia(name, buf, type)); }
 export const readMedia = name => (cloud() ? files.get(lib().uid, name) : readFile(join(MEDIA, name)).catch(() => null));
 export const hasMedia = name => (cloud() ? files.has(lib().uid, name) : access(join(MEDIA, name)).then(() => true, () => false));
 export const mediaLink = (name, uid) => (cloud() ? files.link(uid, name) : Promise.resolve(null));
@@ -132,12 +153,12 @@ const PRO_ONLY = ' part of Lucida Pro: lucida.cards/pricing';
 const needPro = what => { if (!isPro()) throw new Error(what + PRO_ONLY); };
 // On Free, up to FREE_MEDIA cards can have a picture or a sound (Pro has no limit, and neither does this computer).
 export const MEDIA_FULL = 'Free includes up to ' + FREE_MEDIA + ' pictures and sounds. Go Pro for as many as you like: lucida.cards/pricing';
+// Only pictures and sound they uploaded count: a shared deck's are the owner's (they come as public links).
+const own = x => typeof x === 'string' && !/^https?:/.test(x);
 // A picture with hidden parts is one picture, however many boxes (cards) it has.
 export const mediaLeft = () => {
   if (lib().pro !== false) return Infinity;
   const seen = new Set();
-  // Only pictures and sound they uploaded count: a shared deck's are the owner's (they come as public links).
-  const own = x => typeof x === 'string' && !/^https?:/.test(x);
   for (const c of state().cards) if (own(c.image) || own(c.audio)) seen.add(c.box != null && c.group ? c.group : c.id);
   return Math.max(0, FREE_MEDIA - seen.size);
 };
@@ -285,7 +306,7 @@ const notYours = d => new Error('This deck is ' + ((d.link.owner && d.link.owner
 function touch(deckId, who) {
   const L = lib();
   if (!deckId || L.touched.has(deckId)) return;
-  L.touched.set(deckId, { ai: who && !['you', 'import'].includes(who) ? who : '', credit: L.credit || null });
+  L.touched.set(deckId, { ai: who && !['you', 'import'].includes(who) ? clean(who, 60) : '', credit: L.credit || null });
 }
 // How a card came to be, newest last, a few steps long: made (by you, your AI, or an import), checked (you kept a card
 // your AI made), edited, or taken from someone's suggestion. Public decks show it ("Added by Claude · Edited by Maria").
@@ -310,7 +331,7 @@ export function apply(a, who = 'you') {
 function run(a, who) {
   const L = lib(), S = L.S;
   switch (a.type) {
-    case 'deck.add': return { id: makeDeck(a).id };
+    case 'deck.add': if (a.image) needPro('Photo covers are'); return { id: makeDeck(a).id };
     case 'deck.update': {
       const d = findDeck(a.id); if (!d) throw new Error('No such deck');
       const p = pick(a.patch, readOnly(d) ? LOCAL_DECK_KEYS : DECK_KEYS);
@@ -320,7 +341,8 @@ function run(a, who) {
       if ('goal' in p) p.goal = Math.min(97, Math.max(70, +p.goal || 90));
       if ('perDay' in p) p.perDay = Math.min(999, Math.max(0, Math.round(+p.perDay) || 0));
       if ('gapIdx' in p) p.gapIdx = Math.min(GAPS.length - 1, Math.max(0, +p.gapIdx || 0));
-      if ('cover' in p) p.cover = { ...d.cover, ...pick(p.cover, ['style', 'round', 'image']) };
+      // Photo covers are Pro: a cover picture already there can stay (or come off), but another can't be set.
+      if ('cover' in p) { const img = pick(p.cover, ['image']).image; if (img && img !== d.cover.image) needPro('Photo covers are'); p.cover = { ...d.cover, ...pick(p.cover, ['style', 'round', 'image']) }; }
       if ('folder' in p) { const f = p.folder ? folderOf(p.folder) : null; if (p.folder && !f) throw new Error('No such folder'); p.folder = f; }
       if ('bg' in p) p.bg = cleanBg(d.bg, p.bg);
       // Pro: an exam date, and what happens to cards you keep forgetting. Taking an exam date off works on any plan.
@@ -563,10 +585,12 @@ function run(a, who) {
     case 'ai.perm': { if (a.id in S.ai.perms) S.ai.perms[a.id] = !!a.on; return {}; }
     case 'ai.client': { const n = clean(a.name, 80) || 'MCP app'; S.ai.clients[n] = { name: n, version: clean(a.version, 40), seen: Date.now() }; return {}; }
     case 'data.import': {
+      const list = (a.cards || []).slice(0, 5000).filter(x => x && (x.front || x.text));
+      // Free's limit on pictures and sound counts imported cards too (before anything is made).
+      if (list.filter(x => own(x.image) || own(x.audio)).length > mediaLeft()) throw new Error(MEDIA_FULL);
       const d = findDeck(a.deckId) || makeDeck({ name: a.deckName || 'Imported cards' });
       if (readOnly(d)) throw notYours(d);
       touch(d.id, 'import');
-      const list = (a.cards || []).slice(0, 5000).filter(x => x && (x.front || x.text));
       list.forEach(x => makeCards(d, x, 'import'));
       return { deckId: d.id, count: list.length };
     }
@@ -574,7 +598,8 @@ function run(a, who) {
       // Shared decks stop being shared (copies people made keep working).
       for (const d of S.decks) if (d.share) L.touched.set(d.id, { gone: d.share.id });
       // The rev keeps counting up, so every copy of the app sees the reset as the newest data.
-      const next = fresh(); next.ai.clients = S.ai.clients; next.ai.key = S.ai.key; next.rev = S.rev; next.settings.welcomed = true; L.S = next;
+      // The day's AI explanations used stay counted, so deleting your data doesn't give them back.
+      const next = fresh(); next.ai.clients = S.ai.clients; next.ai.key = S.ai.key; next.ai.used = S.ai.used; next.rev = S.rev; next.settings.welcomed = true; L.S = next;
       if (cloud()) L.later.push(files.clear(L.uid)); else { rmSync(MEDIA, { recursive: true, force: true }); mkdirSync(MEDIA, { recursive: true }); }
       return {};
     }

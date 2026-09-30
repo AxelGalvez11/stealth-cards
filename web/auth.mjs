@@ -18,10 +18,20 @@ export const clearCookies = req => [cookie(req, AT, '', 0), cookie(req, RT, '', 
 
 // The token's own expiry time (read, not trusted: Supabase still checks the token itself).
 const expiry = token => { try { return JSON.parse(Buffer.from(token.split('.')[1], 'base64url').toString()).exp * 1000; } catch { return 0; } };
-// Google sends a link to the person's photo (Apple and email sign-ins have none). Only an https link is kept, asked for
-// at 256 px so it stays sharp where the app shows it.
-const pictureOf = m => { const p = String((m && (m.avatar_url || m.picture)) || ''); return /^https:\/\/\S{1,2000}$/.test(p) ? p.replace(/(googleusercontent\.com\/.+)=s\d+-c$/, '$1=s256-c') : ''; };
-const person = u => ({ id: u.id, email: u.email || '', provider: (u.app_metadata && u.app_metadata.provider) || 'email', name: (u.user_metadata && (u.user_metadata.full_name || u.user_metadata.name)) || '',
+// Google sends a link to the person's photo (Apple and email sign-ins have none). Other people see it on the person's public
+// profile, and a person can put any address in their own account's details, so only two places are trusted: Google's own
+// (googleusercontent.com) and Lucida's own storage. Google's is asked for at 256 px so it stays sharp where the app shows it.
+const ownStorage = () => { const b = String(process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL || '').replace(/\/+$/, ''); try { return b ? new URL(b + '/storage/v1/object/public/') : null; } catch { return null; } };
+const trustedPicture = p => {
+  let u; try { u = new URL(p); } catch { return false; }
+  if (u.username || u.password) return false;
+  const own = ownStorage();
+  if (own && u.origin === own.origin && u.pathname.startsWith(own.pathname)) return true;
+  return u.protocol === 'https:' && !u.port && (u.hostname === 'googleusercontent.com' || u.hostname.endsWith('.googleusercontent.com'));
+};
+const pictureOf = m => { const p = String((m && (m.avatar_url || m.picture)) || ''); return /^https?:\/\/\S{1,2000}$/.test(p) && trustedPicture(p) ? p.replace(/(googleusercontent\.com\/.+)=s\d+-c$/, '$1=s256-c') : ''; };
+// `emailConfirmed`: Supabase has checked the person really owns the email (a code they typed, or Google's or Apple's word).
+const person = u => ({ id: u.id, email: u.email || '', emailConfirmed: !!u.email_confirmed_at, provider: (u.app_metadata && u.app_metadata.provider) || 'email', name: (u.user_metadata && (u.user_metadata.full_name || u.user_metadata.name)) || '',
   picture: pictureOf(u.user_metadata) });
 
 async function check(token) {

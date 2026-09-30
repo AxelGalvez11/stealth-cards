@@ -48,8 +48,8 @@ function signedOut(go, onChange = () => {}) {
   };
   const off = q.get('off');
   // Where to go once signed in (going Pro signs you in first): a page of this site only.
-  const next = q.get('next') || '';
-  if (/^\/(?![\/\\])/.test(next)) try { keep.setItem('lucida.next', next); } catch {}
+  const next = localPath(q.get('next'));
+  if (next) try { keep.setItem('lucida.next', next); } catch {}
   const auth = {
     email: () => email,
     error: () => off ? (off === 'apple' ? 'Apple' : 'Google') + ' sign-in isn’t set up yet. Use your email for now.' : q.get('failed') ? 'That didn’t work. Try again.' : '',
@@ -66,20 +66,43 @@ function signedOut(go, onChange = () => {}) {
     chrome: () => ({ nav: { today: '', news: '', hasNews: false }, me: { bg: COLORS[0], initial: '', color: true, photo: '', href: '/sign-in' } }),
     join: () => live.view(), joinAt: (kind, code) => live.at(kind, code), act: { go, ...playerActs(live, go) } };
 }
+// A path on Lucida (like /pro?plan=yearly), or '' for anything else. A browser drops tabs and line breaks inside an address, so
+// "/<tab>/evil.com" would mean "//evil.com", another site: those go first, and what's left must still be an address on this
+// site (the same check the browser will make).
+export function localPath(next) {
+  const s = String(next || '').replace(/[\t\n\r]/g, '');
+  if (!/^\/(?![\/\\])/.test(s)) return '';
+  try { return new URL(s, location.origin).origin === location.origin ? s : ''; } catch { return ''; }
+}
 // The page to open once you're signed in, if signing in started somewhere (asked once, then forgotten).
 export function afterSignIn() {
   let next = ''; try { next = sessionStorage.getItem('lucida.next') || ''; sessionStorage.removeItem('lucida.next'); } catch {}
-  return /^\/(?![\/\\])/.test(next) ? next : '';
+  return localPath(next);
 }
 // A request that finds you signed out (your session ended) goes back to signing in.
 const toSignIn = () => location.assign('/sign-in');
 
+// The library (/api/state). With `sync`, decks you study from other people also take their owners' newest changes first
+// (?sync=1), which asks the server for more. That must never keep the app from opening: if it fails or takes too long, the
+// library comes without it (the app checks again every few seconds, so whatever the server finishes later still arrives).
+const SYNC_WAIT = 8000;
+async function readState(sync) {
+  const ask = async (url, wait) => {
+    const stop = new AbortController(), timer = wait ? setTimeout(() => stop.abort(), wait) : 0;
+    try { const r = await fetch(url, { cache: 'no-store', signal: stop.signal }); return { status: r.status, data: r.ok ? await r.json() : null }; }
+    finally { clearTimeout(timer); }
+  };
+  if (sync) { try { const r = await ask('/api/state?sync=1', SYNC_WAIT); if (r.data || r.status === 401) return r; } catch { /* too slow, or the connection dropped: without the sync, then */ } }
+  return ask('/api/state', 0);
+}
+
 export async function createDb({ onChange, go }) {
   const get = async url => { const r = await fetch(url, { cache: 'no-store' }); if (r.status === 401) { toSignIn(); throw new Error('Signed out'); } return r.json(); };
   // Opening the app also brings decks you study from other people up to date (their owners' newest changes).
-  const first = await fetch('/api/state?sync=1', { cache: 'no-store' });
+  const first = await readState(true);
   if (first.status === 401) return signedOut(go, onChange);
-  let S = await first.json();
+  if (!first.data) throw new Error('Lucida couldn’t open your library. Try again in a minute.');
+  let S = first.data;
   // Back from paying for Pro: Stripe's news can land a moment after you do, so ask again for a little while.
   if (new URLSearchParams(location.search).get('welcome') === 'pro' && S.me && !(S.me.plan && S.me.plan.pro)) {
     let tries = 0;
@@ -147,7 +170,7 @@ export async function createDb({ onChange, go }) {
   let away = 0;
   document.addEventListener('visibilitychange', async () => {
     if (document.hidden) { away = Date.now(); return; }
-    if (away && Date.now() - away > 10 * MIN) { away = 0; try { accept(await get('/api/state?sync=1')); net.drop(); changed(); } catch { /* offline */ } }
+    if (away && Date.now() - away > 10 * MIN) { away = 0; try { const r = await readState(true); if (r.status === 401) return toSignIn(); accept(r.data); net.drop(); changed(); } catch { /* offline */ } }
   });
 
   const now = () => Date.now();

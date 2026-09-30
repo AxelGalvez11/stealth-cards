@@ -2,7 +2,7 @@
 // a template with {{holes}}, <sc-if>, <sc-for> and <dc-import>, plus the board's own logic class.
 // This file renders those screens with your data (web/db.js), keeps them updated, and moves between them.
 // /b/<Board> shows any canvas board with the canvas's sample data instead.
-import { createDb, afterSignIn } from './db.js';
+import { createDb, afterSignIn, localPath } from './db.js';
 import { THEME_KEYS } from './themes/index.js';
 import { loadTheme } from './themes/load.js';
 
@@ -473,6 +473,6 @@ narrow.addEventListener('change', schedule);
 // `replace`: the new page takes the old one's place in history (your profile's address after you change your handle).
 db = await createDb({ onChange: schedule, go: (path, replace) => go(path, !replace, !!replace) });
 // Just signed in on the way somewhere (like going Pro): go there now.
-const next = db.signedOut ? '' : afterSignIn();
+const next = db.signedOut ? '' : localPath(afterSignIn());
 if (next) location.assign(next);
 else go(location.pathname + location.search, false);
