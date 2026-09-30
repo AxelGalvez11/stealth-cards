@@ -9,12 +9,15 @@ import SwiftUI
 struct LibDeck: Identifiable {
   var id = "", name = "", tags: [String] = []
   var mesh: Mesh
+  /// What a theme's cover is worked out from (its cover's seed, and how many times it was shuffled).
+  var seed = "", round = 0
   /// Its header photo (not the canvas's placeholder).
   var photo: String? = nil
   var folder: String? = nil
   var due = 0, fresh = 0, totalLabel = "0", ret: Int? = nil, paused = false
   /// How many cards, and whose it is: "Public", "Link only", or "Class" for a deck you share, "From <name>" for someone else's.
   var total = 0, whose = ""
+  var look: ThemeDeck { ThemeDeck(name: name, seed: seed.isEmpty ? name : seed, round: round, tags: tags) }
   /// "Public · 412 cards · 10 new · 91%" (one card says card).
   var line: String { (whose.isEmpty ? "" : whose + " · ") + totalLabel + (total == 1 ? " card · " : " cards · ") + "\(fresh) new" + (ret.map { " · \($0)%" } ?? "") }
 }
@@ -54,13 +57,13 @@ extension Store {
       // In the sample, System Design is shared (Public) and Spanish Verbs is a copy of Maria's deck (mock.mjs LIB_NET).
       let whose = ["sys": "Public", "span": "From Maria Santos"]
       return demoDeckOrder.compactMap { id in X.DECKS.first { $0.id == id } }.map { d in
-        LibDeck(id: d.id, name: d.name, tags: X.TAGS[d.id] ?? [], mesh: Mesh.deck(seed: d.name), folder: demoFolderOf(d.id),
+        LibDeck(id: d.id, name: d.name, tags: X.TAGS[d.id] ?? [], mesh: Mesh.deck(seed: d.name), seed: d.name, folder: demoFolderOf(d.id),
                 due: props.caughtUp ? 0 : d.due, fresh: d.fresh, totalLabel: d.total, ret: d.ret, total: Int(d.total) ?? 0, whose: whose[d.id] ?? "")
       }
     }
     let byId = Dictionary(lib.decks.map { ($0.id, $0) }, uniquingKeysWith: { a, _ in a })
     return engine.decks.map { d in
-      LibDeck(id: d.id, name: d.name, tags: d.tags, mesh: d.mesh, photo: d.image == "mock" ? nil : d.image, folder: d.folder,
+      LibDeck(id: d.id, name: d.name, tags: d.tags, mesh: d.mesh, seed: d.seed, round: d.round, photo: d.image == "mock" ? nil : d.image, folder: d.folder,
               due: d.due, fresh: d.fresh, totalLabel: d.totalLabel, ret: d.ret, paused: d.paused, total: d.total, whose: byId[d.id].map { sharing($0).whose } ?? "")
     }
   }
@@ -185,6 +188,7 @@ private struct MenuAnchors: PreferenceKey {
 struct LibraryScreen: View {
   @Environment(\.theme) private var t
   @EnvironmentObject private var store: Store
+  @ObservedObject private var art = ThemeArt.shared
   @EnvironmentObject private var nav: Nav
   @Environment(DragCenter.self) private var drag
   /// One folder's page, or (nil) the Library itself.
@@ -342,7 +346,7 @@ struct LibraryScreen: View {
         ZStack(alignment: .topLeading) {
           ForEach(Array(f.decks.prefix(3).enumerated()), id: \.offset) { i, d in
             let fan: (x: CGFloat, y: CGFloat, r: Double) = [(0, 8, -8), (22, 4, 0), (44, 0, 8)][i]
-            CSSLinearGradient(angle: d.mesh.angle, stops: d.mesh.stops)
+            swatch(d)
               .frame(width: 60, height: 41)
               .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
               .boxShadow(.black.opacity(0.4), y: 8, blur: 18, spread: -8, radius: 12)
@@ -371,6 +375,12 @@ struct LibraryScreen: View {
     .accessibilityElement(children: .ignore)
     .accessibilityLabel("\(f.name), \(f.line)")
     .accessibilityAddTraits(.isButton)
+  }
+
+  /// A deck's little card in a folder's fan: its colors, or the theme's cover.
+  @ViewBuilder private func swatch(_ d: LibDeck) -> some View {
+    if d.photo == nil, let skin = store.skin(art), let pic = art.picture(.swatch(skin, deck: d.look)) { Color.clear.overlay(alignment: .topLeading) { pic.placed }.themeMark("swatch", skin.key) }
+    else { CSSLinearGradient(angle: d.mesh.angle, stops: d.mesh.stops) }
   }
 
   /// A deck: its colors (or photo), name, numbers, what's due, and the ⋯ button that moves it between folders. All of it
@@ -405,6 +415,8 @@ struct LibraryScreen: View {
       ZStack {
         CSSLinearGradient(angle: d.mesh.angle, stops: d.mesh.stops)
         if let p = d.photo { FillPhoto(url: store.api.mediaURL(p)) }
+        // With a theme on (Pro), the theme draws the cover (a deck with a photo of its own keeps it).
+        else if let skin = store.skin(art), let pic = art.picture(.thumb(skin, deck: d.look)) { Color.clear.overlay(alignment: .topLeading) { pic.placed }.themeMark("thumb", skin.key) }
       }
       .frame(width: 48, height: 48).clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
       VStack(alignment: .leading, spacing: 2) {

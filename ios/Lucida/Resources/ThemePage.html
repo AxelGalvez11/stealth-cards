@@ -1,0 +1,316 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<!-- The iPhone app's theme painter (ios/Lucida/Design/ThemeRender.swift). It loads the web app's own theme code from the
+     server (/themes/load.js, kit.js and the theme's module), draws one piece of a theme into #stage (a study background, a
+     card's face, a deck's cover, a profile picture, a Settings › Theme tile, ...), and the app takes a picture of it.
+     Nothing here knows what a theme looks like: every theme draws itself. -->
+<style>
+  html, body { margin: 0; padding: 0; background: transparent; overflow: hidden; }
+  #stage { position: absolute; left: 0; top: 0; overflow: visible; font-family: Geist, -apple-system, system-ui, sans-serif; -webkit-text-size-adjust: 100%; }
+  /* Everything holds still: a picture is one moment of it. */
+  #stage *, #stage *::before, #stage *::after { animation: none !important; transition: none !important; }
+</style>
+</head>
+<body>
+<div id="stage" class="sk-still"></div>
+<script type="module">
+import { loadTheme } from '/themes/load.js';
+
+const stage = document.getElementById('stage');
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+const raf = () => new Promise(r => requestAnimationFrame(() => r()));
+const el = (css, cls) => { const d = document.createElement('div'); d.style.cssText = css; if (cls) d.className = cls; return d; };
+const px = n => Math.round(n * 100) / 100 + 'px';
+
+// ---------- themes ----------
+const themes = {};
+const picture = file => '/themes/img/' + file;
+// A theme, loaded (its module, CSS, pictures, and fonts), once.
+async function ensure(key) {
+  if (!themes[key]) {
+    themes[key] = (async () => {
+      await loadTheme(key);
+      const S = globalThis.LucidaThemes && globalThis.LucidaThemes[key];
+      if (!S) throw new Error('No theme ' + key);
+      // its pictures, so a background-image is there when the snapshot is taken
+      const kit = await import('/themes/kit.js');
+      const files = Object.values({ ...(kit.KIT_ASSETS || {}), ...(S.T.assets || {}) });
+      await Promise.all(files.map(f => new Promise(r => { const i = new Image(); i.onload = i.onerror = () => r(); i.src = picture(f); setTimeout(r, 6000); })));
+      // its fonts' style sheets
+      const links = [...document.querySelectorAll('link[data-theme="' + key + '"]')];
+      await Promise.all(links.map(l => l.sheet ? 0 : new Promise(r => { l.addEventListener('load', r); l.addEventListener('error', r); setTimeout(r, 3500); })));
+      return S;
+    })().catch(e => { delete themes[key]; throw e; });
+  }
+  return themes[key];
+}
+
+// Waits until what was just drawn is there: the pictures, the fonts, and the metal on Liquid chrome.
+async function settle() {
+  await raf(); await raf();
+  await Promise.all([...stage.querySelectorAll('img')].map(i => (i.decode ? i.decode().catch(() => {}) : 0)));
+  await Promise.race([document.fonts.ready, sleep(3000)]);
+  for (let i = 0; i < 60; i++) {
+    const cv = [...stage.querySelectorAll('canvas[data-lq]')];
+    if (cv.every(c => c.__lqDrawn)) break;
+    await sleep(40);
+  }
+  await raf();
+}
+
+// A rounded box that clips what's in it, with a blurred piece inside (Frosted glass's profile picture), is drawn square by this
+// web view. A mask over the box's contents, which clips them to its corners properly, puts that right; the box's own shadow
+// (a mask would cut it) goes to a copy of the box without its contents, underneath.
+function fixClips() {
+  const filtered = e => { const c = getComputedStyle(e); return c.filter !== 'none' || (c.backdropFilter && c.backdropFilter !== 'none'); };
+  for (const e of stage.querySelectorAll('*')) {
+    const cs = getComputedStyle(e);
+    if (cs.overflowX !== 'hidden' && cs.overflowY !== 'hidden') continue;
+    if (![cs.borderTopLeftRadius, cs.borderTopRightRadius, cs.borderBottomLeftRadius, cs.borderBottomRightRadius].some(r => parseFloat(r) > 0)) continue;
+    if (![...e.querySelectorAll('*')].some(filtered)) continue;
+    if (cs.boxShadow && cs.boxShadow !== 'none' && e.offsetParent) {
+      const c = e.cloneNode(false);
+      c.removeAttribute('id');
+      c.style.cssText += ';position:absolute;margin:0;pointer-events:none;left:' + e.offsetLeft + 'px;top:' + e.offsetTop + 'px;';
+      e.parentNode.insertBefore(c, e);
+      e.style.boxShadow = 'none';
+    }
+    e.style.webkitMaskImage = '-webkit-radial-gradient(white, black)';
+  }
+}
+
+// The name of a font's family, first in a CSS font-family.
+const first = f => String(f || '').split(',')[0].trim().replace(/^['"]|['"]$/g, '');
+
+// ---------- what a theme is (no picture) ----------
+const KINDS = {};
+KINDS.spec = async (S, j) => {
+  const T = S.T;
+  return { key: S.key, name: S.name, short: S.short, line: S.line || '', dark: !!S.dark, cw: T.cw || 0, headArt: !!T.headArt, fonts: T.fonts || '' };
+};
+
+// ---------- the study background (Review, Learn): the theme's own, drawn at the size of the screen ----------
+KINDS.bg = async (S, j) => {
+  stage.style.cssText = `width:${j.w}px;height:${j.h}px;`;
+  const host = el(`position:absolute;inset:0;overflow:hidden;background:${j.base || '#FFFFFF'};`);
+  const art = el('position:absolute;inset:0;overflow:hidden;');
+  host.append(art); stage.append(host);
+  S.paint(art, 'bg', { veil: j.veil === false ? undefined : 'phone' });
+  return { w: j.w, h: j.h };
+};
+
+// ---------- a flashcard's face: its own look (color, edge, shadow), and what it draws behind the words ----------
+// Drawn like the app's card (the boards' FACE): the app's own face style first (its color, line, radius, shadow), then the
+// theme's on top of it. `pad`: how far to leave room around it for its shadow (what fits between it and the screen's edge).
+function shadowExtent(css) {
+  // The reach of each outer box-shadow, per side.
+  const out = { t: 0, r: 0, b: 0, l: 0 };
+  if (!css || css === 'none') return out;
+  const layers = css.split(/,(?![^(]*\))/).map(s => s.trim()).filter(s => s && !/^inset\b/.test(s) && !/\binset\b/.test(s));
+  for (const l of layers) {
+    const nums = (l.replace(/rgba?\([^)]*\)|#[0-9a-f]{3,8}\b/gi, '').match(/-?[\d.]+(?=px)/g) || []).map(Number);
+    // (a blur of B is a Gaussian of B/2: it's gone by three of those past the shadow's edge)
+    const [ox = 0, oy = 0, blur = 0, spread = 0] = nums, reach = spread + blur * 1.5;
+    out.l = Math.max(out.l, reach - ox); out.r = Math.max(out.r, reach + ox);
+    out.t = Math.max(out.t, reach - oy); out.b = Math.max(out.b, reach + oy);
+  }
+  return out;
+}
+// Room to leave around a box for its shadow: its reach, up to `cap` (a number for every side, or per side).
+function padFor(css, cap) {
+  const e = shadowExtent(css), c = typeof cap === 'number' ? { t: cap, r: cap, b: cap, l: cap } : (cap || { t: 0, r: 0, b: 0, l: 0 });
+  return { t: Math.ceil(Math.min(e.t, c.t)), r: Math.ceil(Math.min(e.r, c.r)), b: Math.ceil(Math.min(e.b, c.b)), l: Math.ceil(Math.min(e.l, c.l)) };
+}
+// How far what's drawn inside a box reaches past it (a star stuck on a corner), unless the box clips its contents.
+function overflowOf(box) {
+  const out = { t: 0, r: 0, b: 0, l: 0 };
+  const cs = getComputedStyle(box);
+  if (cs.overflowX === 'hidden' || cs.overflowY === 'hidden') return out;
+  const b = box.getBoundingClientRect();
+  for (const d of box.querySelectorAll('*')) {
+    const r = d.getBoundingClientRect();
+    if (!r.width && !r.height) continue;
+    out.l = Math.max(out.l, b.left - r.left); out.t = Math.max(out.t, b.top - r.top);
+    out.r = Math.max(out.r, r.right - b.right); out.b = Math.max(out.b, r.bottom - b.bottom);
+  }
+  return out;
+}
+const capPad = (a, b, cap) => {
+  const c = typeof cap === 'number' ? { t: cap, r: cap, b: cap, l: cap } : (cap || { t: 0, r: 0, b: 0, l: 0 });
+  return { t: Math.ceil(Math.min(Math.max(a.t, b.t), c.t)), r: Math.ceil(Math.min(Math.max(a.r, b.r), c.r)), b: Math.ceil(Math.min(Math.max(a.b, b.b), c.b)), l: Math.ceil(Math.min(Math.max(a.l, b.l), c.l)) };
+};
+function faceBox(S, j) {
+  const F = S.faceOf(j.side, j.at || 'phone');
+  const cp = j.cp || {};
+  const base = `position:absolute;box-sizing:border-box;display:flex;flex-direction:column;text-align:left;padding:${j.basePad || '26px 22px'};` +
+    `background:${cp.card || '#FFFFFF'};border:1px solid ${cp.line || '#EBEBEB'};border-radius:${j.radius ?? 32}px;box-shadow:${cp.shadow || 'none'};--sk-fs:${F.fs};color:${cp.text || '#000'};`;
+  return { F, css: base + F.css };
+}
+KINDS.face = async (S, j) => {
+  const { F, css } = faceBox(S, j);
+  const want = j.pad || { t: 0, r: 0, b: 0, l: 0 }, P = 96;
+  // painted with room all round first, to see how far it reaches, then moved to its place
+  stage.style.cssText = `width:${j.w + 2 * P}px;height:${j.h + 2 * P}px;`;
+  const face = el(css + `left:${P}px;top:${P}px;width:${j.w}px;height:${j.h}px;`);
+  const deco = el('position:absolute;inset:0;border-radius:inherit;pointer-events:none;');
+  face.append(deco); stage.append(face);
+  F.deco(deco);
+  const pad = capPad(shadowExtent(getComputedStyle(face).boxShadow), overflowOf(face), want);
+  face.style.left = pad.l + 'px'; face.style.top = pad.t + 'px';
+  stage.style.cssText = `width:${j.w + pad.l + pad.r}px;height:${j.h + pad.t + pad.b}px;`;
+  return { w: j.w + pad.l + pad.r, h: j.h + pad.t + pad.b, pad };
+};
+// The face's words, as the app sets them (no picture): for each way the app sets words on a card, the computed size, weight,
+// spacing, and color, and the face's own padding, text alignment, and colors.
+KINDS.facespec = async (S, j) => {
+  const { F, css } = faceBox(S, j);
+  const face = el(css + `left:0;top:0;width:${j.w}px;height:${j.h}px;visibility:hidden;`);
+  stage.style.cssText = `width:${j.w}px;height:${j.h}px;`;
+  stage.append(face);
+  const cs = getComputedStyle(face);
+  const out = { padding: { t: parseFloat(cs.paddingTop), r: parseFloat(cs.paddingRight), b: parseFloat(cs.paddingBottom), l: parseFloat(cs.paddingLeft) },
+    align: cs.textAlign, color: cs.color, family: first(cs.fontFamily), radius: parseFloat(cs.borderTopLeftRadius) || 0,
+    ink: F.ink, paper: F.paper, muted: F.muted, dark: !!F.dark, fs: parseFloat(F.fs) || 1,
+    backdrop: cs.backdropFilter && cs.backdropFilter !== 'none' ? cs.backdropFilter : (cs.webkitBackdropFilter && cs.webkitBackdropFilter !== 'none' ? cs.webkitBackdropFilter : ''),
+    type: {} };
+  // How a card's words are set: [id, css of the app's own style], with the theme's `a` on top.
+  for (const [id, base, useA] of j.probes || []) {
+    const p = document.createElement('div');
+    p.style.cssText = base + (useA ? F.a : '');
+    p.textContent = 'Hamburgefonstiv';
+    face.append(p);
+    const c = getComputedStyle(p);
+    out.type[id] = { size: parseFloat(c.fontSize), weight: parseInt(c.fontWeight, 10) || 400, ls: c.letterSpacing === 'normal' ? 0 : parseFloat(c.letterSpacing), ws: c.wordSpacing === 'normal' ? 0 : parseFloat(c.wordSpacing),
+      color: c.color, style: c.fontStyle, family: first(c.fontFamily), lh: c.lineHeight === 'normal' ? 0 : parseFloat(c.lineHeight) };
+  }
+  face.remove();
+  return out;
+};
+
+// ---------- a deck's cover ----------
+// `cs`: the shape the app asks for the cover's own values with (base color, ink, lettering, shadow); `shape`: the shape drawn.
+KINDS.cover = async (S, j) => {
+  const d = j.d || {};
+  const C = S.coverOf(d, j.cs || j.shape, j.fs, j.cr);
+  const pad = j.shadow ? padFor(C.shadow, j.pad ?? 16) : { t: 0, r: 0, b: 0, l: 0 };
+  stage.style.cssText = `width:${j.w + pad.l + pad.r}px;height:${j.h + pad.t + pad.b}px;`;
+  const wrap = el(`position:absolute;left:${pad.l}px;top:${pad.t}px;width:${j.w}px;height:${j.h}px;border-radius:${j.r ?? 20}px;${j.shadow ? 'box-shadow:' + C.shadow + ';' : ''}`);
+  const clip = el(`position:absolute;inset:0;border-radius:inherit;overflow:hidden;background:${C.base};`);
+  const art = el('position:relative;display:block;width:100%;height:100%;');
+  clip.append(art); wrap.append(clip); stage.append(wrap);
+  C.artAs(j.shape, j.r)(art);
+  return { w: j.w + pad.l + pad.r, h: j.h + pad.t + pad.b, pad, base: C.base, ink: C.ink, sub: C.sub, glass: C.glass, glassLine: C.glassLine, btnBg: C.btnBg, btnFg: C.btnFg, shadow: C.shadow, name: C.name };
+};
+
+// A deck's name, lettered the theme's way (the deck page's header, New deck's preview). `mode`: head (the header's: one line
+// that shrinks to fit, or two beside the picture) or new (New deck's). `cw`: the width of the box it sits in; `inset`: what's
+// between that box and the words. The picture is taken around the words' box, with `pad` to spare for shadows and outlines.
+KINDS.name = async (S, j) => {
+  const C = S.coverOf(j.d || {}, j.mode === 'head' ? 'head' : 'wide', j.size);
+  const pad = j.pad ?? 16;
+  let title, base;
+  if (j.mode === 'head') {
+    title = C.titleHead(j.n ?? 32, j.text);
+    base = 'font-size: 32px; font-weight: 700; letter-spacing: -.03em; line-height: 1.05; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;';
+  } else {
+    title = C.titleAt(j.n ?? j.size);
+    base = `font-size: ${j.n ?? j.size}px; font-weight: 600; letter-spacing: -.02em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;`;
+  }
+  // (the header is a size container, the width of the screen; its words start 20 in and stop 16 short of the edge)
+  stage.style.cssText = `width:${j.cw + 2 * pad}px;height:400px;`;
+  const box = el(`position:absolute;left:${pad}px;top:${pad}px;width:${j.cw}px;container-type:inline-size;`);
+  const inner = el(`box-sizing:border-box;padding:${j.inset || '0'};color:${C.ink};text-shadow:${j.shadow || 'none'};`);
+  const t = document.createElement('div');
+  t.style.cssText = base + title;
+  t.textContent = j.text;
+  inner.append(t); box.append(inner); stage.append(box);
+  await raf();
+  const r = t.getBoundingClientRect(), s0 = stage.getBoundingClientRect();
+  const w = Math.max(1, Math.ceil(r.width)), h = Math.max(1, Math.ceil(r.height));
+  // The words' box goes to the corner of the picture (with the padding), so the app puts the picture where the words go.
+  box.style.left = (pad - (r.left - s0.left) + pad) + 'px'; box.style.top = (pad - (r.top - s0.top) + pad) + 'px';
+  stage.style.cssText = `width:${w + 2 * pad}px;height:${h + 2 * pad}px;`;
+  return { w: w + 2 * pad, h: h + 2 * pad, pad, textW: w, textH: h, ink: C.ink };
+};
+
+// ---------- your profile picture ----------
+KINDS.avatar = async (S, j) => {
+  const s = j.size, pad = j.pad ?? Math.max(6, Math.ceil(s * 0.3));
+  stage.style.cssText = `width:${s + 2 * pad}px;height:${s + 2 * pad}px;`;
+  const host = el(`position:absolute;left:${pad}px;top:${pad}px;width:${s}px;height:${s}px;display:flex;`);
+  const art = el('position:absolute;inset:0;border-radius:50%;pointer-events:none;');
+  host.append(art); stage.append(host);
+  S.me(j.ch || 'A', !!j.photo)(art);
+  return { w: s + 2 * pad, h: s + 2 * pad, pad };
+};
+
+// ---------- Settings › Theme: a theme's tile ----------
+KINDS.tile = async (S, j) => {
+  stage.style.cssText = `width:${j.w}px;height:${j.h}px;`;
+  const host = el(`position:absolute;inset:0;overflow:hidden;border-radius:${j.r}px;isolation:isolate;`);
+  const art = el('position:absolute;inset:0;');
+  host.append(art); stage.append(host);
+  S.tile(j.ch || 'A')(art);
+  return { w: j.w, h: j.h };
+};
+
+// ---------- a theme's own page: the study screen with a card on it, a flashcard's two sides, covers, and pictures ----------
+KINDS.scene = async (S, j) => {
+  stage.style.cssText = `width:${j.w}px;height:${j.h}px;`;
+  const host = el(`position:absolute;inset:0;border-radius:${j.r}px;overflow:hidden;isolation:isolate;background:${j.base || '#FFFFFF'};`);
+  const bg = el('position:absolute;inset:0;');
+  const cardBox = el(`position:absolute;left:50%;top:50%;width:${j.cw}px;height:${j.ch}px;transform:translate(-50%,-50%);`);
+  const card = el('position:absolute;inset:0;');
+  cardBox.append(card); host.append(bg, cardBox); stage.append(host);
+  S.ref('bg')(bg);
+  S.card({ q: j.q, side: 'front', fs: j.fs, r: j.cr, pad: j.cpad })(card);
+  return { w: j.w, h: j.h };
+};
+KINDS.card = async (S, j) => {
+  stage.style.cssText = `width:${j.w}px;height:${j.h}px;`;
+  const holder = el(`position:absolute;left:0;top:0;width:${j.w}px;height:${j.h}px;`);
+  stage.append(holder);
+  S.card({ q: j.q, a: j.a || '', side: j.side, fs: j.fs, r: j.r, pad: j.cpad })(holder);
+  const face = holder.firstElementChild;
+  const pad = face ? capPad(shadowExtent(getComputedStyle(face).boxShadow), overflowOf(face), j.pad || 0) : { t: 0, r: 0, b: 0, l: 0 };
+  holder.style.left = pad.l + 'px'; holder.style.top = pad.t + 'px';
+  stage.style.cssText = `width:${j.w + pad.l + pad.r}px;height:${j.h + pad.t + pad.b}px;`;
+  return { w: j.w + pad.l + pad.r, h: j.h + pad.t + pad.b, pad };
+};
+// A deck's cover as the theme's page shows it, with its name on it.
+KINDS.pagecover = async (S, j) => {
+  const d = j.d || {};
+  const C = S.coverOf(d, 'tall', j.fs, j.cr);
+  const pad = padFor(C.shadow, j.pad ?? 16);
+  stage.style.cssText = `width:${j.w + pad.l + pad.r}px;height:${j.h + pad.t + pad.b}px;`;
+  const wrap = el(`position:absolute;left:${pad.l}px;top:${pad.t}px;width:${j.w}px;height:${j.h}px;border-radius:${j.r}px;overflow:hidden;background:${C.base};color:${C.ink};box-shadow:${C.shadow};`);
+  const art = el('position:absolute;inset:0;');
+  const name = document.createElement('span');
+  name.style.cssText = `position:absolute;left:${Math.round(j.w * 0.1)}px;right:${Math.round(j.w * 0.1)}px;bottom:${Math.round(j.w * 0.1)}px;font-size:${j.w > 120 ? 16 : 14}px;font-weight:600;letter-spacing:-.015em;line-height:1.12;text-shadow:none;${C.title}`;
+  name.textContent = d.name || '';
+  wrap.append(art, name); stage.append(wrap);
+  C.art(art);
+  return { w: j.w + pad.l + pad.r, h: j.h + pad.t + pad.b, pad };
+};
+
+// The Go: a job comes in as { theme, kind, ...params }; what it drew comes back as its size, and the app takes the picture.
+globalThis.LT = {
+  async render(job) {
+    const S = await ensure(job.theme);
+    stage.innerHTML = '';
+    stage.style.cssText = '';
+    const fn = KINDS[job.kind];
+    if (!fn) throw new Error('No such job ' + job.kind);
+    const out = await fn(S, job);
+    if (job.kind !== 'spec' && job.kind !== 'facespec') { fixClips(); await settle(); }
+    return out;
+  },
+  ready: true
+};
+if (window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.lt) window.webkit.messageHandlers.lt.postMessage('ready');
+</script>
+</body>
+</html>

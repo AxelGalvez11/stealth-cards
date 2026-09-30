@@ -1,12 +1,13 @@
 // Copies what the iPhone app (ios/) shares with the design canvas into Swift: the theme colors, the icons, the gradient
 // palettes (plus the site's Midnight, for the Learn sheet's deep top), the onboarding's icons and moving background, tag colors, the sign-in wall's cards, and the canvas's sample data
-// (its sample sound's waveform, Pro's deep stats, and the study network's sample: net-sample.mjs). Run it after changing any of those.
+// (its sample sound's waveform, Pro's deep stats, and the study network's sample: net-sample.mjs), and the themes' list. Run it after changing any of those.
 import { readFileSync, writeFileSync } from 'node:fs';
 import { PALETTES, PALETTE_NAMES, SITE_PALETTES } from './surfaces.mjs';
 import { WALL_CARDS } from './wall.mjs';
 import { SAMPLE, SAMPLE_WAVE, SAMPLE_INSIGHTS } from './mock.mjs';
 import { NET_SAMPLE } from './net-sample.mjs';
 import { G_LOGO, APPLE_LOGO } from './logos.mjs';
+import { THEMES } from '../web/themes/index.js';
 
 const OUT = new URL('../ios/Lucida/Design/Generated.swift', import.meta.url);
 const src = readFileSync(new URL('./build.mjs', import.meta.url), 'utf8');
@@ -110,6 +111,11 @@ ${Object.entries(logos).map(([k, v]) => `    ${str(k)}: (${str(v.vb)}, [${v.path
 
   /// The study network's sample data (design/net-sample.mjs): people, shared decks, Discover, profiles, and news.
   static let netSampleJSON = ${str(JSON.stringify(NET_SAMPLE))}
+
+  /// The themes (web/themes/index.js), in the order Settings › Theme shows them: key, the name of its boards, its name, and its short name.
+  static let themes: [(key: String, board: String, name: String, short: String)] = [
+${THEMES.map(t => `    (${str(t.key)}, ${str(t.board || '')}, ${str(t.name)}, ${str(t.short || t.name)})`).join(',\n')}
+  ]
 
   /// The sample sound's waveform (design/mock.mjs SAMPLE_WAVE): 96 peaks, 0 to 1.
   static let sampleWave: [Double] = ${str(SAMPLE_WAVE)}

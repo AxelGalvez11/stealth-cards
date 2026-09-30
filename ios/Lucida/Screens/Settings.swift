@@ -18,6 +18,8 @@ extension Store {
         case "photo": props.photo = v as? String ?? "color"
         case "yourPhoto": props.yourPhoto = v as? String
         case "color": props.color = v as? Int ?? 0
+        case "theme": props.theme = v as? String ?? "lucida"
+        case "themeProfile": props.themeProfile = v as? Bool ?? true
         default: break
         }
       }
@@ -42,6 +44,8 @@ extension Store {
       case "yourPhoto": s.yourPhoto = v as? String
       case "welcomed": s.welcomed = v as? Bool ?? s.welcomed
       case "name": s.name = v as? String ?? s.name
+      case "theme": s.theme = v as? String ?? s.theme
+      case "themeProfile": s.themeProfile = v as? Bool ?? s.themeProfile
       default: break
       }
     }
@@ -109,7 +113,7 @@ struct SettingsScreen: View {
         }
         Button { account = true } label: {
           HStack(spacing: 14) {
-            Avatar(size: 44, initial: store.avatarInitial, color: store.avatarColor, pic: store.avatar)
+            MyAvatar(size: 44)
             VStack(alignment: .leading, spacing: 2) {
               Text("Your account").css(16, .semibold)
               Text(demo ? "Synced on all your devices · just now" : store.lib.me?.email ?? "Synced on all your devices").css(13).foregroundStyle(t.muted).lineLimit(1)
@@ -151,7 +155,10 @@ struct SettingsScreen: View {
           // Gray or black, for whenever the app is dark (the owner: "grayish not fully blackedout").
           row("Dark mode", sub: "When the app is dark") { seg([("gray", "Gray"), ("black", "Black")], darkMode == "gray" ? "gray" : "black") { store.setSetting(["darkMode": $0]) } }
           divider
-          row("Card gradients") { seg([("mix", "Mix"), ("vivid", "Vivid"), ("deep", "Deep")], grads) { store.setSetting(["grads": $0]) } }
+          Button { nav.push(.themes) } label: { themeRow }.buttonStyle(.plain)
+          divider
+          // A theme draws the deck covers, so the gradients only matter with Lucida's own look.
+          row("Card gradients", sub: store.skinKey != nil ? "With the Lucida theme" : nil) { seg([("mix", "Mix"), ("vivid", "Vivid"), ("deep", "Deep")], grads) { store.setSetting(["grads": $0]) } }
         }
         group("Your AI") {
           Button { nav.pick(.connect) } label: { row("Connected apps") { value(connected) } }.buttonStyle(.plain)
@@ -259,6 +266,18 @@ struct SettingsScreen: View {
     .contentShape(Rectangle())
   }
 
+  /// Theme: your theme's name (Lucida on Free), with the Pro badge on Free (THEME_ROW).
+  private var themeRow: some View {
+    HStack(spacing: 12) {
+      HStack(spacing: 8) { Text("Theme").css(16); if !store.isPro { ProBadge() } }.frame(maxWidth: .infinity, alignment: .leading)
+      value(store.themeShort)
+    }
+    .foregroundStyle(t.text)
+    .padding(.horizontal, 16).padding(.vertical, 8)
+    .frame(minHeight: 52)
+    .contentShape(Rectangle())
+  }
+
   private func value(_ v: String) -> some View {
     HStack(spacing: 6) { Text(v).css(15).lineLimit(1); Icon("chev", 14, 2.2) }.foregroundStyle(t.muted)
   }
@@ -296,7 +315,8 @@ struct PhotoChoices: View {
   @State private var pickingPhoto = false
   var body: some View {
     let choice = store.photoChoice, color = store.avatarColor
-    let options = (store.hasGooglePhoto ? [("google", "Google photo")] : []) + [("yours", "Your photo"), ("color", "Color")]
+    let skinned = store.skinKey != nil
+    let options = (store.hasGooglePhoto ? [("google", "Google photo")] : []) + [("yours", "Your photo"), ("color", skinned ? "Theme" : "Color")]
     VStack(alignment: .leading, spacing: 12) {
       HStack(spacing: 2) {
         ForEach(options, id: \.0) { id, label in
@@ -321,6 +341,8 @@ struct PhotoChoices: View {
           SmallButton(label: "Change photo", icon: "image", bg: t.bg) { pickingPhoto = true }
           SmallButton(label: "Remove", bg: t.bg) { store.removePhoto() }
         }
+      // With a theme on, the theme draws the circle and your letter, so there are no colors to pick.
+      case _ where skinned: EmptyView()
       default:
         HStack(spacing: 10) {
           ForEach(Avatar.colors.indices, id: \.self) { i in

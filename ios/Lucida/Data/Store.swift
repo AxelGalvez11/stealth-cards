@@ -87,6 +87,9 @@ struct DemoProps {
   /// The classes boards (their Tweaks): sharing your progress on, a sheet open ("add" or "assign"), Report and Get verified
   /// open, the New class or Join a class popup open ("new" or "join"), and Today with assignments from your classes.
   var classSharing = false, classPanel = "", classReport = false, classVerify = false, classForm = "", assignments = false
+  /// Your theme (the Theme boards' `theme`: a key from web/themes/index.js, "lucida" for the app's own look), whether people
+  /// who visit your profile see it, and which theme's page is open (PhoneTheme's `sheet`).
+  var theme = "lucida", themeProfile = true, themeSheet = "aero"
 }
 
 struct TodayVM {
@@ -195,7 +198,7 @@ final class Store: ObservableObject {
     #if DEBUG
     // `-dev <name>`: one of the made-up people on a copy of the server on this Mac (its lc_dev cookie), for trying the
     // study network as several people.
-    if let name = Board.arg("-dev"), let host = API.base.host,
+    if let name = Board.arg("-dev"), name != "none", let host = API.base.host,
        let c = HTTPCookie(properties: [.name: "lc_dev", .value: name, .domain: host, .path: "/", .expires: Date().addingTimeInterval(86400)]) {
       HTTPCookieStorage.shared.setCookie(c)
     }

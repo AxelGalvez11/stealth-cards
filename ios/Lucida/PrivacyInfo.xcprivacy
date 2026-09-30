@@ -2,7 +2,9 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <!-- What the App Store asks every app to declare. Lucida doesn't track anyone. It keeps your email (to sign you in),
      your decks and cards, and the pictures and sounds (like recordings) you put on them, all to run the app. UserDefaults
-     only holds a Learn session you left, for this app alone (reason CA92.1). -->
+     only holds a Learn session you left and a fingerprint of each theme's code, for this app alone (reason CA92.1). The
+     pictures a theme is drawn into are kept in the app's own cache folder, and their dates tell which are the oldest to
+     clear out when there are too many (file timestamps, reason C617.1). -->
 <plist version="1.0">
 <dict>
 	<key>NSPrivacyTracking</key>
@@ -68,6 +70,14 @@
 			<key>NSPrivacyAccessedAPITypeReasons</key>
 			<array>
 				<string>CA92.1</string>
+			</array>
+		</dict>
+		<dict>
+			<key>NSPrivacyAccessedAPIType</key>
+			<string>NSPrivacyAccessedAPICategoryFileTimestamp</string>
+			<key>NSPrivacyAccessedAPITypeReasons</key>
+			<array>
+				<string>C617.1</string>
 			</array>
 		</dict>
 	</array>

@@ -15,7 +15,7 @@ struct TodayScreen: View {
         ZStack {
           Text("Today").css(34, .bold, ls: -0.03).foregroundStyle(t.text).accessibilityAddTraits(.isHeader)
           HStack(spacing: 8) {
-            Button { nav.profile("") } label: { Avatar(size: 44, initial: store.avatarInitial, color: store.avatarColor, pic: store.avatar) }
+            Button { nav.profile("") } label: { MyAvatar(size: 44) }
               .buttonStyle(.press).accessibilityLabel("Your profile")
             Spacer(minLength: 0)
             NewsBell(count: store.netUnread()) { nav.push(.news) }

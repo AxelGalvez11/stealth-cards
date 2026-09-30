@@ -187,6 +187,7 @@ struct DeckScreen: View {
   @Environment(\.theme) private var t
   @Environment(\.accessibilityReduceMotion) private var still
   @EnvironmentObject private var store: Store
+  @ObservedObject private var art = ThemeArt.shared
   @EnvironmentObject private var nav: Nav
   @Environment(DragCenter.self) private var drag
   let id: String
@@ -201,12 +202,16 @@ struct DeckScreen: View {
     .onAppear { if store.demo && store.props.deckSettings != nil { nav.sheet = .deckSettings(id) } }
   }
 
-  // The header: the deck's gradient (or its photo), with round buttons and its name.
+  // The header: the deck's gradient (or its photo), with round buttons and its name. With a theme on (Pro), the theme's
+  // cover and lettering take their place (a deck with a photo of its own keeps it).
   private func header(_ d: DeckVM, sub: String) -> some View {
-    ZStack(alignment: .topLeading) {
+    let skin = d.image == nil ? store.skin(art) : nil, size = CGSize(width: ThemeLayout.screen.width, height: Screen.top(232))
+    let themed = skin.flatMap { s in art.picture(.head(s, deck: d.look, size: size)).map { (s, $0) } }
+    let ink = themed.flatMap { RGBA(css: $0.1.string("ink")) }
+    return ZStack(alignment: .topLeading) {
       // Parallax: scrolling up, the cover drifts at half speed behind the header; pulled down past the top, it
       // stretches to fill the gap. Reduce Motion keeps it still.
-      cover(d)
+      cover(d, themed?.1)
         .visualEffect { [still] content, proxy in
           let y = still ? 0 : proxy.frame(in: .scrollView(axis: .vertical)).minY, h = max(1, proxy.size.height)
           return content
@@ -228,11 +233,12 @@ struct DeckScreen: View {
         .padding(.top, Screen.top(54))
         Spacer(minLength: 0)
         VStack(alignment: .leading, spacing: 4) {
-          Text(d.name).css(32, .bold, ls: -0.03).lineLimit(1).truncationMode(.tail).lineBox(33.6)
+          if let skin, themed != nil { ThemedName(job: .headName(skin, deck: d.look, width: size.width)).accessibilityLabel(d.name).accessibilityAddTraits(.isHeader) }
+          else { Text(d.name).css(32, .bold, ls: -0.03).lineLimit(1).truncationMode(.tail).lineBox(33.6) }
           Text(sub).css(14).opacity(0.8)
         }
-        .foregroundStyle(d.hasImage ? .white : d.mesh.inkColor)
-        .shadow(color: .black.opacity(d.hasImage ? 0.45 : d.mesh.shadow), radius: 7, x: 0, y: 1)
+        .foregroundStyle(ink?.color ?? (d.hasImage ? .white : d.mesh.inkColor))
+        .shadow(color: .black.opacity(themed != nil ? 0 : d.hasImage ? 0.45 : d.mesh.shadow), radius: 7, x: 0, y: 1)
       }
       .padding(.leading, 20).padding(.trailing, 16).padding(.bottom, 18)
     }
@@ -240,8 +246,10 @@ struct DeckScreen: View {
     .clipShape(BelowClip())
   }
 
-  @ViewBuilder private func cover(_ d: DeckVM) -> some View {
-    if let img = d.image, img != "mock", let url = store.api.mediaURL(img) {
+  @ViewBuilder private func cover(_ d: DeckVM, _ themed: ThemePic? = nil) -> some View {
+    if let themed {
+      Color.clear.overlay(alignment: .topLeading) { themed.placed }.themeMark("head", store.skinKey ?? "")
+    } else if let img = d.image, img != "mock", let url = store.api.mediaURL(img) {
       // Cropped to the header (a photo sized to fill on its own would stretch the header's layout).
       FillPhoto(url: url)
     } else if d.image == "mock" {
@@ -402,6 +410,7 @@ struct DeckScreen: View {
 struct DeckSettingsSheet: View {
   @Environment(\.theme) private var t
   @EnvironmentObject private var store: Store
+  @ObservedObject private var art = ThemeArt.shared
   @EnvironmentObject private var nav: Nav
   let d: DeckVM
   @Binding var tab: String
@@ -495,18 +504,22 @@ struct DeckSettingsSheet: View {
   private var header: some View {
     VStack(alignment: .leading, spacing: 8) {
       label("Header")
+      // With a theme on, the theme draws the header (and a deck with a picture of its own keeps it).
+      let skin = store.skin(art), themed = d.hasImage ? nil : skin
       ZStack {
         if let p = d.photo { FillPhoto(url: store.api.mediaURL(p)) }
         else if d.hasImage { ZStack { t.surf; HStack(spacing: 8) { Icon("image", 18, 1.8); Text("[Your header image]").css(14, .medium) }.foregroundStyle(t.muted) } }
+        else if let themed, let pic = art.picture(.cover(themed.key, deck: d.look.dict, shape: "head", fs: 34, size: CGSize(width: ThemeLayout.screen.width - 40, height: 88), r: 20)) { Color.clear.overlay(alignment: .topLeading) { pic.placed } }
         else { MeshFill(mesh: d.mesh) }
       }
       .frame(height: 88).clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
       HStack(spacing: 6) {
         SmallButton(label: "Shuffle", icon: "shuffle") { store.updateDeck(d.id, ["cover": ["round": d.round + 1, "image": NSNull()]]) }
         SmallButton(label: "Upload image", icon: "image") { pickingCover = true }
-        if d.hasImage { SmallButton(label: "Use gradient") { store.updateDeck(d.id, ["cover": ["image": NSNull()]]) } }
+        if d.hasImage { SmallButton(label: skin != nil ? "Use theme" : "Use gradient") { store.updateDeck(d.id, ["cover": ["image": NSNull()]]) } }
       }
-      Segmented(options: [("mix", "Mix"), ("vivid", "Vivid"), ("deep", "Deep")], current: d.style) { store.updateDeck(d.id, ["cover": ["style": $0, "image": NSNull()]]) }
+      // (a theme draws the cover, so the gradient's style only shows with Lucida's own look)
+      if themed == nil { Segmented(options: [("mix", "Mix"), ("vivid", "Vivid"), ("deep", "Deep")], current: d.style) { store.updateDeck(d.id, ["cover": ["style": $0, "image": NSNull()]]) } }
     }
   }
 

@@ -155,14 +155,35 @@ extension Store {
   func hasQueue(_ deckId: String?, pile: String?, set: String? = nil) -> Bool { demo || !engine.queue(deckId, pile: pile, set: set, done: Set(session?.graded.map(\.cardId) ?? [])).isEmpty }
 }
 
+/// Flashcards. With a theme on (Pro), the theme's background and card take the place of the deck's colors and the plain card,
+/// and the page's buttons take the theme's light or dark look; everything else is the app's own.
 struct ReviewScreen: View {
+  @Environment(\.theme) private var t
+  @EnvironmentObject private var store: Store
+  @ObservedObject private var art = ThemeArt.shared
+  let deckId: String?
+  let pile: String?
+  /// Cards picked on the Stats page ("hard", "leech", "tag:Organelles"), across decks.
+  var set: String? = nil
+  var body: some View {
+    let rv = store.review(deckId, pile: pile, set: set)
+    let skin = store.studyBg(rv.deckId).skin
+    ReviewBody(deckId: deckId, pile: pile, set: set, rv: rv)
+      .environment(\.studySkin, skin)
+      .environment(\.theme, skin.map { $0.page(gray: store.appGray) } ?? t)
+      // (the phone's own parts, like the status bar, take the theme's light or dark too)
+      .studyChrome(dark: skin?.spec.dark)
+  }
+}
+
+private struct ReviewBody: View {
   @Environment(\.theme) private var t
   @EnvironmentObject private var store: Store
   @EnvironmentObject private var nav: Nav
   let deckId: String?
   let pile: String?
-  /// Cards picked on the Stats page ("hard", "leech", "tag:Organelles"), across decks.
   var set: String? = nil
+  let rv: ReviewVM
   @State private var revealed = false
   /// After a grade the next card comes up fresh (a small lift) instead of spinning back.
   @State private var moved = false
@@ -176,7 +197,6 @@ struct ReviewScreen: View {
   @State private var autoplaying: Task<Void, Never>? = nil
 
   var body: some View {
-    let rv = store.review(deckId, pile: pile, set: set)
     ZStack {
       VStack(spacing: 16) {
         topBar(rv)
@@ -421,6 +441,9 @@ struct PileDialog: View {
 /// blank fills in with a pop and the note fades in below.
 struct FlipCard: View {
   @Environment(\.theme) private var t
+  @Environment(\.studySkin) private var skin
+  @EnvironmentObject private var store: Store
+  @ObservedObject private var art = ThemeArt.shared
   let card: CardFace
   let revealed: Bool
   let moved: Bool
@@ -433,12 +456,15 @@ struct FlipCard: View {
   var body: some View {
     // Fill-in-the-blank cards and pictures with boxes stay put: the blank fills in, or the box fades to an outline.
     let turned = revealed && card.kind != "cloze" && !card.isOcc
+    // With a theme on, the theme's face and the way it sets words (nil until they're kept: Lucida's own card meanwhile).
+    let look = skin.flatMap { art.cardSkin($0, at: "phone", size: ThemeLayout.reviewCard, basePad: "26px 22px", radius: Int(radius), margins: ThemeLayout.reviewMargins, gray: store.appGray) }
     Button(action: tap) {
       ZStack {
-        CardFaceView(card: card, back: false, revealed: revealed, big: big).padding(pad).cardFace(radius).modifier(FaceShown(angle: turned ? 180 : 0, front: true))
-        CardFaceView(card: card, back: true, revealed: revealed, big: big).padding(pad).cardFace(radius)
-          .rotation3DEffect(.degrees(180), axis: (0, 1, 0)).modifier(FaceShown(angle: turned ? 180 : 0, front: false))
+        face(back: false, look).modifier(FaceShown(angle: turned ? 180 : 0, front: true))
+        face(back: true, look).rotation3DEffect(.degrees(180), axis: (0, 1, 0)).modifier(FaceShown(angle: turned ? 180 : 0, front: false))
       }
+      // (a theme's card is a picture behind the words, which a finger goes through: the whole card is the button)
+      .contentShape(RoundedRectangle(cornerRadius: radius, style: .continuous))
       .modifier(Turn(angle: turned ? 180 : 0))
       .animation(moved ? nil : .std(0.5), value: turned)
       .id(moved ? card.id : "")
@@ -447,6 +473,18 @@ struct FlipCard: View {
     .buttonStyle(.plain)
     .accessibilityLabel(card.kind == "cloze" ? (revealed ? "Hide the answer" : "Show the blank") : card.isOcc ? (revealed ? "Hide the answer" : "Show what’s under the box") : (revealed ? "Flip back" : "Flip card"))
     .animation(.out(0.32), value: moved ? card.id : "")
+  }
+}
+
+extension FlipCard {
+  /// One side: the app's plain face, or the theme's picture behind the words (set in the theme's ink and type).
+  @ViewBuilder fileprivate func face(back: Bool, _ look: CardSkin?) -> some View {
+    if let look {
+      CardFaceView(card: card, back: back, revealed: revealed, big: big, look: look).padding(look.pad)
+        .environment(\.theme, look.spec.palette)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background { GeometryReader { g in ThemedFace(look: look, back: back, origin: g.frame(in: .global).origin) } }
+    } else { CardFaceView(card: card, back: back, revealed: revealed, big: big).padding(pad).cardFace(radius) }
   }
 }
 
@@ -500,12 +538,21 @@ struct CardFaceView: View {
   let back: Bool
   let revealed: Bool
   var big = false
+  /// With a theme on: how it sets words on the card.
+  var look: CardSkin? = nil
+  private var align: HorizontalAlignment { look?.spec.textAlign ?? .leading }
+  private var frameAlign: Alignment { align == .center ? .center : .leading }
+  /// The size, weight, spacing (em), and ink of words on the card: the app's own, or the theme's way of setting them.
+  private func words(_ id: String, _ size: CGFloat, _ weight: Font.Weight, _ ls: CGFloat) -> (size: CGFloat, weight: Font.Weight, ls: CGFloat, color: Color?, face: RichFace?) {
+    guard let x = look?.spec.type[id], x.size > 0 else { return (size, weight, ls, nil, nil) }
+    return (x.size, x.fontWeight, x.ls / x.size, x.color?.color, RichFace(family: x.family, weight: x.weight))
+  }
 
   var body: some View {
     VStack(alignment: .leading, spacing: 0) {
       Color.clear.frame(height: 21)
       // The face turned away can't be reached: its buttons (like a sound's) stay out of the way, and out of VoiceOver.
-      middle.frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
+      middle.frame(maxWidth: .infinity, maxHeight: .infinity, alignment: frameAlign)
         .allowsHitTesting(facing).accessibilityHidden(!facing)
       // The note line keeps its height when it's empty. Under a card that stays put (a blank, or a picture with boxes),
       // it shows with the answer.
@@ -514,20 +561,21 @@ struct CardFaceView: View {
         if back { note }
         else if card.kind == "cloze" || card.isOcc { note.modifier(FadeUp(on: revealed)).accessibilityHidden(!revealed) }
       }
-      .frame(maxWidth: .infinity, alignment: .leading)
+      .frame(maxWidth: .infinity, alignment: frameAlign)
     }
     .foregroundStyle(t.text)
   }
 
-  private var note: some View { RichText(md: card.note, size: 14, lh: 1.5, color: t.muted) }
+  private var note: some View { RichText(md: card.note, size: 14, lh: 1.5, align: align, color: t.muted) }
   /// This face is the one showing (a blank or a picture with boxes never turns).
   private var facing: Bool { card.kind == "cloze" || card.isOcc ? !back : back == revealed }
 
   @ViewBuilder private var middle: some View {
     switch (card.kind, back) {
     case ("cloze", _):
-      RichText(md: card.text, size: big ? 38 : 28, weight: .medium, lh: 1.45, ls: -0.02,
-               cloze: ClozeStyle(ask: card.cloze, hide: !revealed, pad: big ? 16 : 12, bg: revealed ? t.inv : t.surf2, fg: revealed ? t.invText : .clear, pop: revealed))
+      let w = words("cloze", big ? 38 : 28, .medium, -0.02)
+      RichText(md: card.text, size: w.size, weight: w.weight, lh: 1.45, ls: w.ls,
+               cloze: ClozeStyle(ask: card.cloze, hide: !revealed, pad: big ? 16 : 12, bg: revealed ? t.inv : t.surf2, fg: revealed ? t.invText : .clear, pop: revealed), align: align, color: w.color, face: w.face)
     case ("image", false) where card.isOcc:
       OccFace(card: card, revealed: revealed, big: big)
     case ("image", true) where card.isOcc:
@@ -535,7 +583,7 @@ struct CardFaceView: View {
     case ("image", _):
       VStack(spacing: 16) {
         picture
-        if back { RichText(md: card.backLabel.isEmpty ? card.back : card.backLabel, size: big ? 32 : 26, weight: .semibold, ls: -0.02) }
+        if back { let w = words("label", big ? 32 : 26, .semibold, -0.02); RichText(md: card.backLabel.isEmpty ? card.back : card.backLabel, size: w.size, weight: w.weight, ls: w.ls, align: align, color: w.color, face: w.face) }
         else { RichText(md: card.front, size: big ? 24 : 20, weight: .medium) }
       }
       .frame(maxWidth: .infinity)
@@ -557,7 +605,8 @@ struct CardFaceView: View {
     case ("audio", true):
       let clip = card.clip, vm = store.sound(clip)
       VStack(spacing: 8) {
-        RichText(md: card.backBig.isEmpty ? card.back : card.backBig, size: big ? 64 : 52, weight: .semibold, ls: -0.02)
+        let w = words("big", big ? 64 : 52, .semibold, -0.02)
+        RichText(md: card.backBig.isEmpty ? card.back : card.backBig, size: w.size, weight: w.weight, ls: w.ls, align: align, color: w.color, face: w.face)
         RichText(md: card.backSub, size: big ? 22 : 18, color: t.muted)
         // The sound again, small, to hear it with the answer (pressing it doesn't turn the card).
         HStack(spacing: 12) {
@@ -573,8 +622,8 @@ struct CardFaceView: View {
         .padding(.top, big ? 18 : 14)
       }
       .frame(maxWidth: .infinity)
-    case (_, false): RichText(md: card.front, size: big ? 38 : 28, weight: .medium, lh: 1.25, ls: -0.02)
-    default: RichText(md: card.back, size: big ? 32 : 24, weight: .medium, lh: 1.3, ls: -0.015)
+    case (_, false): let w = words("front", big ? 38 : 28, .medium, -0.02); RichText(md: card.front, size: w.size, weight: w.weight, lh: 1.25, ls: w.ls, align: align, color: w.color, face: w.face)
+    default: let w = words("back", big ? 32 : 24, .medium, -0.015); RichText(md: card.back, size: w.size, weight: w.weight, lh: 1.3, ls: w.ls, align: align, color: w.color, face: w.face)
     }
   }
 

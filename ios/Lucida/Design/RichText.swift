@@ -13,6 +13,9 @@ struct ClozeStyle {
   var pop = false
 }
 
+/// A theme's type for words (a family and a weight from 400 to 900): where it's set, the words use it instead of Geist.
+struct RichFace: Equatable { var family: String; var weight: Int }
+
 struct RichText: View {
   @Environment(\.theme) private var t
   let md: String
@@ -24,6 +27,8 @@ struct RichText: View {
   var align: HorizontalAlignment = .leading
   /// The text color (the theme's text color when not given).
   var color: Color? = nil
+  /// A theme's type (nil: Geist).
+  var face: RichFace? = nil
 
   var body: some View {
     let lines = Rich.parse(md, cloze: cloze != nil)
@@ -62,7 +67,7 @@ struct RichText: View {
       if let cloze, l.runs.contains(where: { $0.m.contains("k") }) { clozeLine(l, st, cloze, firstBlank) }
       else {
         LabelText(text: Rich.nsText(l.runs.isEmpty ? [Rich.Run(t: "\u{200B}", m: "")] : l.runs, size: st.size, weight: st.weight, ls: st.ls, lh: st.lh,
-                                    color: UIColor(color ?? t.text), dark: t.dark, align: align == .center ? .center : .left))
+                                    color: UIColor(color ?? t.text), dark: t.dark, align: align == .center ? .center : .left, face: face))
       }
     }
     if l.kind == "li" || l.kind == "ol" {
@@ -89,14 +94,14 @@ struct RichText: View {
         if p.blank {
           Group {
             if c.hide { Color.clear.frame(width: st.size * 4) }
-            else { Rich.text(p.runs, size: st.size, weight: st.weight, dark: t.dark).foregroundStyle(c.fg).tracking(st.ls * st.size) }
+            else { Rich.text(p.runs, size: st.size, weight: st.weight, dark: t.dark, face: face).foregroundStyle(c.fg).tracking(st.ls * st.size) }
           }
           .padding(.horizontal, c.pad)
           .frame(height: natural)
           .background(Capsule().fill(c.bg))
           .modifier(PopIn(on: c.pop))
         } else {
-          Rich.text(p.runs, size: st.size, weight: st.weight, dark: t.dark).tracking(st.ls * st.size).foregroundStyle(color ?? t.text).fixedSize().frame(height: natural)
+          Rich.text(p.runs, size: st.size, weight: st.weight, dark: t.dark, face: face).tracking(st.ls * st.size).foregroundStyle(color ?? t.text).fixedSize().frame(height: natural)
         }
       }
     }
@@ -134,9 +139,9 @@ struct PopIn: ViewModifier {
 extension Rich {
   /// Runs as styled text: marks become weight, slant, lines, and highlight; math reads like a formula (Georgia,
   /// letters in italics, raised and lowered parts smaller).
-  static func text(_ runs: [Run], size: CGFloat, weight: Font.Weight, dark: Bool) -> Text { Text(attributed(runs, size: size, weight: weight, dark: dark)) }
+  static func text(_ runs: [Run], size: CGFloat, weight: Font.Weight, dark: Bool, face: RichFace? = nil) -> Text { Text(attributed(runs, size: size, weight: weight, dark: dark, face: face)) }
 
-  static func attributed(_ runs: [Run], size: CGFloat, weight: Font.Weight, dark: Bool) -> AttributedString {
+  static func attributed(_ runs: [Run], size: CGFloat, weight: Font.Weight, dark: Bool, face: RichFace? = nil) -> AttributedString {
     var out = AttributedString()
     let hl = Color(hex: dark ? 0x2F3D9A : 0xDCE0FD)
     func mark(_ a: inout AttributedString, _ m: String) {
@@ -160,9 +165,13 @@ extension Rich {
         continue
       }
       var a = AttributedString(r.t)
-      var f = Font.geist(size, r.m.contains("b") ? .bold : weight)
-      if r.m.contains("i") { f = f.italic() }
-      a.font = f
+      if let face, !r.m.contains("m") {
+        a.font = Font(uiFont(size, weight, italic: r.m.contains("i"), bold: r.m.contains("b"), face: face))
+      } else {
+        var f = Font.geist(size, r.m.contains("b") ? .bold : weight)
+        if r.m.contains("i") { f = f.italic() }
+        a.font = f
+      }
       mark(&a, r.m)
       out += a
     }
@@ -200,7 +209,11 @@ struct LabelText: UIViewRepresentable {
 
 extension Rich {
   /// Geist (or Georgia for math) as a UIFont; italics lean the letters, like a browser does for a font without them.
-  static func uiFont(_ size: CGFloat, _ weight: Font.Weight, italic: Bool = false, math: Bool = false, bold: Bool = false) -> UIFont {
+  static func uiFont(_ size: CGFloat, _ weight: Font.Weight, italic: Bool = false, math: Bool = false, bold: Bool = false, face: RichFace? = nil) -> UIFont {
+    // A theme's type, when it's on the phone.
+    if !math, let face, let t = ThemeFonts.uiFont(face.family, weight: bold ? max(face.weight, 700) : face.weight, size: size, italic: italic) {
+      return t.slanted ? UIFont(descriptor: t.font.fontDescriptor.withMatrix(CGAffineTransform(a: 1, b: 0, c: 0.2, d: 1, tx: 0, ty: 0)), size: size) : t.font
+    }
     var f = math ? (UIFont(name: bold ? "Georgia-Bold" : "Georgia", size: size) ?? .systemFont(ofSize: size))
                  : geist(bold ? .bold : weight, size)
     if italic {
@@ -220,7 +233,7 @@ extension Rich {
   }
 
   /// Runs as an attributed string with CSS line height and letter-spacing (ls in em).
-  static func nsText(_ runs: [Run], size: CGFloat, weight: Font.Weight, ls: CGFloat = 0, lh: CGFloat, color: UIColor, dark: Bool, align: NSTextAlignment = .left) -> NSAttributedString {
+  static func nsText(_ runs: [Run], size: CGFloat, weight: Font.Weight, ls: CGFloat = 0, lh: CGFloat, color: UIColor, dark: Bool, align: NSTextAlignment = .left, face: RichFace? = nil) -> NSAttributedString {
     let L = size * lh, shift = (L - size * GEIST_LINE) / 2
     let para = NSMutableParagraphStyle(); para.minimumLineHeight = L; para.maximumLineHeight = L; para.alignment = align; para.lineBreakMode = .byWordWrapping
     // Break lines like a browser does: no moving a lone last word down with the one before it.
@@ -246,7 +259,10 @@ extension Rich {
         continue
       }
       var a = base
-      a[.font] = uiFont(size, weight, italic: r.m.contains("i"), bold: r.m.contains("b"))
+      let f = uiFont(size, weight, italic: r.m.contains("i"), bold: r.m.contains("b"), face: face)
+      a[.font] = f
+      // A theme's type has its own ascent and descent: the glyphs are centered in the line by those (half-leading), as in a browser.
+      if face != nil { a[.baselineOffset] = (L - (f.ascender - f.descender)) / 2 }
       out.append(NSAttributedString(string: r.t, attributes: a))
     }
     return out

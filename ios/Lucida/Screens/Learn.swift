@@ -115,8 +115,25 @@ enum Scrim {
 
 // ---------- questions ----------
 
+/// Learn mode's questions. With a theme on (Pro), its background and card take the place of the deck's colors and the plain
+/// question, and the page's buttons take the theme's light or dark look.
 struct LearnScreen: View {
   @Environment(\.theme) private var t
+  @EnvironmentObject private var store: Store
+  @ObservedObject private var art = ThemeArt.shared
+  let deckId: String
+  var body: some View {
+    let skin = store.studyBg(deckId).skin
+    LearnBody(deckId: deckId)
+      .environment(\.studySkin, skin)
+      .environment(\.theme, skin.map { $0.page(gray: store.appGray) } ?? t)
+      .studyChrome(dark: skin?.spec.dark)
+  }
+}
+
+private struct LearnBody: View {
+  @Environment(\.theme) private var t
+  @Environment(\.studySkin) private var skin
   @EnvironmentObject private var store: Store
   @EnvironmentObject private var nav: Nav
   let deckId: String
@@ -234,9 +251,18 @@ struct LearnScreen: View {
 
   // The question alone: the owner dropped the kind of question ("Multiple choice", canvas V73) and the card's two
   // streak dots (V85).
-  private func head(_ v: LearnView, question: String? = nil) -> some View {
-    VStack(alignment: .leading, spacing: 10) {
-      LabelText(text: Rich.nsText([Rich.Run(t: question ?? v.text, m: "")], size: 24, weight: .bold, ls: -0.025, lh: 1.2, color: UIColor(look.ink), dark: t.dark))
+  @ViewBuilder private func head(_ v: LearnView, question: String? = nil) -> some View {
+    // With a theme on, the question sits on the theme's card (set in its type, in its ink).
+    if let skin {
+      ThemedCard(skin: skin) { spec in headContent(v, question: question, spec: spec) }
+    } else { headContent(v, question: question, spec: nil).padding(.top, 8).padding(.horizontal, 4) }
+  }
+
+  private func headContent(_ v: LearnView, question: String?, spec: FaceSpec?) -> some View {
+    let q = spec?.type["question"]
+    return VStack(alignment: .leading, spacing: 10) {
+      LabelText(text: Rich.nsText([Rich.Run(t: question ?? v.text, m: "")], size: q?.size ?? 24, weight: q?.fontWeight ?? .bold, ls: q.map { $0.size > 0 ? $0.ls / $0.size : -0.025 } ?? -0.025, lh: 1.2,
+                                  color: UIColor(q?.color?.color ?? look.ink), dark: t.dark, align: spec?.align == "center" ? .center : .left, face: q.map { RichFace(family: $0.family, weight: $0.weight) }))
       // A picture with boxes shows them, the asked one highlighted, and it turns to an outline once answered.
       if let img = v.image, let o = v.occ {
         LearnPicture(image: img, occ: o, shown: v.type == "type" ? v.checked : v.pick != nil, look: look)
@@ -248,7 +274,6 @@ struct LearnScreen: View {
           .background(RoundedRectangle(cornerRadius: 20, style: .continuous).fill(look.card).learnShadow(look.shadow))
       }
     }
-    .padding(.top, 8).padding(.horizontal, 4)
   }
 
   private func why(_ ok: Bool, learnedNow: Bool, _ text: String) -> some View {

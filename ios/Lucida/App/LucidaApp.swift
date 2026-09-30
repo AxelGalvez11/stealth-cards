@@ -45,10 +45,16 @@ struct RootView: View {
   @EnvironmentObject private var nav: Nav
   @Environment(\.colorScheme) private var scheme
   @Environment(\.scenePhase) private var scenePhase
+  /// A study screen with a theme sets the window's light or dark itself (StudyChrome, for the status bar and keyboard); the
+  /// phone's own is kept here until it lets go, so it isn't mistaken for the phone's setting.
+  @ObservedObject private var chrome = StudyChrome.shared
+  @State private var system: ColorScheme? = nil
+  /// The theme's light or dark, while its study screen is up (not once it starts to slide away).
+  private var over: ColorScheme? { nav.full != nil ? chrome.scheme : nil }
 
   var body: some View {
     let look = store.demo ? store.props.look : store.settings.look
-    let dark = look == "dark" || (look == "system" && (store.demo ? store.props.dark : scheme == .dark))
+    let dark = look == "dark" || (look == "system" && (store.demo ? store.props.dark : (system ?? scheme) == .dark))
     // Dark mode's look (Settings → Dark mode): gray or black.
     let t = Theme(dark: dark, gray: (store.demo ? store.props.darkMode : store.settings.darkMode) == "gray")
     ZStack {
@@ -60,7 +66,17 @@ struct RootView: View {
       }
     }
     .environment(\.theme, t)
-    .preferredColorScheme(dark ? .dark : .light)
+    .preferredColorScheme(over ?? (dark ? .dark : .light))
+    .onChange(of: scheme, initial: true) { _, s in if over == nil { system = s } }
+    #if DEBUG
+    // The end-to-end test reads which themes' pictures are on screen from this invisible element (ThemeAudit).
+    .overlay(alignment: .topLeading) {
+      TimelineView(.periodic(from: .now, by: 0.25)) { _ in
+        Color.clear.frame(width: 2, height: 2).accessibilityElement().accessibilityIdentifier("themeAudit").accessibilityValue(ThemeAudit.shared.summary)
+      }
+    }
+    #endif
+    .onChange(of: store.skinKey) { _, k in if let k, !store.demo { ThemeArt.shared.warm(k, store) } }
     // Back after a while away: decks you study from other people get their owners' newest changes.
     .onChange(of: scenePhase) { _, p in if p == .background { store.away = Date() } else if p == .active { store.cameBack() } }
     // What went wrong saving a change or uploading a photo, like the web app's alert.
@@ -68,9 +84,15 @@ struct RootView: View {
       Button("OK", role: .cancel) {}
     }
     .task {
+      #if DEBUG
+      // `-themeProbe <theme> -probeOut <folder>`: paints a few pieces of a theme and saves them (ThemeProbe.swift).
+      if let key = ThemeProbe.requested { try? await Task.sleep(nanoseconds: 800_000_000); await ThemeProbe.run(key) }
+      #endif
       if !store.demo {
         DevSignIn.apply()
         await store.load()
+        // A theme in use is warmed up (its details, background, card faces, pictures, and covers), so nothing flashes.
+        if let k = store.skinKey { ThemeArt.shared.warm(k, store) }
         Task { try? await Task.sleep(nanoseconds: 5_000_000_000); await store.retuneWhenDue() }
         #if DEBUG
         // `-check pause|exam|grade|learn|tune|free`: an end-to-end check of the Pro tools against the server (DebugChecks.swift).
@@ -90,6 +112,12 @@ struct RootView: View {
             }
           case "deck": nav.tab = .library; nav.path = [.deck(first)]
           case "library": nav.tab = .library
+          // The New deck sheet, and Settings › Theme (with `-theme <key>` a theme's page).
+          case "newdeck": nav.tab = .library; nav.sheet = .newDeck
+          // Learn mode on the first deck's questions (multiple choice and true or false), started as Start learning would.
+          case "learnq": if store.startLearn(first, set: "all", kinds: ["mc", "tf", "blank"]) { nav.tab = .library; nav.path = [.deck(first)]; nav.full = .learn(first) }
+          case "themes": nav.path = [.settings, .themes]
+          case let o where o.hasPrefix("theme:"): nav.path = [.settings, .themes, .theme(String(o.dropFirst(6)))]
           case "cards": nav.tab = .library; nav.libCards = true
           case "stats": nav.tab = .stats
           // Stats on one of Pro's tabs: `-open stats -tab Memory` (or Weak spots, Pace).
@@ -281,8 +309,19 @@ extension Board {
     case "PhoneTodayClass": store.props.assignments = true
     case "PhoneSignIn": store.phase = .signedOut
     case "PhoneSignInCode": store.phase = .signedOut; store.signInStep = .code
-    default: break
+    // Settings › Theme (on Pro with Rubber hose in use, and on Free), and a theme's page (Frutiger Aero, not yet in use).
+    case "PhoneThemePicker": store.props.theme = "hose"; nav.path = [.settings, .themes]
+    case "PhoneThemePickerFree": store.props.plan = "Free"; nav.path = [.settings, .themes]
+    case "PhoneTheme": nav.path = [.settings, .themes, .theme(Board.arg("-sheet") ?? "aero")]
+    default:
+      // A theme on the real screens: Theme<Board>ReviewPhone (flashcards, turned over) and Theme<Board>ProfilePhone (Settings).
+      if let b = Board.themeBoard(name) {
+        store.props.theme = b.key
+        if b.screen == "review" { store.props.revealed = true; nav.full = .review(deckId: "cell", pile: nil) } else { nav.path = [.settings] }
+      }
     }
+    // `-theme <key>`: any board in a theme (the Theme boards' `skin`).
+    if let k = Board.arg("-theme") { store.props.theme = k }
     // The Settings boards' Tune to you state (their `tune` Tweak): `-tune Off`, `-tune "Not enough reviews"`, or `-tune Tuning`.
     if let k = Board.arg("-tune") { store.props.tune = ["Off": "off", "Not enough reviews": "few", "Tuning": "busy"][k] ?? "on" }
     // The Settings boards' photo setting (their Tweak on the canvas): `-photo "Google photo"` or `-photo "Your photo"`
@@ -331,6 +370,8 @@ struct MainView: View {
               case .suggestions(let id): SuggestionsScreen(deckId: id)
               case .history(let a): HistoryScreen(addr: a)
               case .classPage(let code): ClassScreen(code: code)
+              case .themes: ThemePickerScreen()
+              case .theme(let key): ThemePageScreen(key: key)
               }
             }
             .toolbar(.hidden, for: .navigationBar)
@@ -360,7 +401,8 @@ struct MainView: View {
     case .connect: ConnectScreen()
     }
   }
-  /// Pages the canvas draws without the tab bar: Settings, Check AI cards, and News (and a suggestion once it's opened).
+  /// Pages the canvas draws without the tab bar: Settings, Check AI cards, News (and a suggestion once it's opened), and
+  /// the themes.
   private var showsTabBar: Bool {
     switch nav.path.last {
     case .none, .deck, .folder, .profile, .publicDeck, .history, .classPage: return true

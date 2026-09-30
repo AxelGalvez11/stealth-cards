@@ -14,6 +14,7 @@ extension Store {
 struct NewDeckSheet: View {
   @Environment(\.theme) private var t
   @EnvironmentObject private var store: Store
+  @ObservedObject private var art = ThemeArt.shared
   @EnvironmentObject private var nav: Nav
   @State private var name = ""
   @State private var tags: [String] = []
@@ -102,10 +103,18 @@ struct NewDeckSheet: View {
   /// The cover: white until a name settles, then its gradient fades in over the last one.
   private func cover(_ title: String, style: String) -> some View {
     let mesh = shown.map { Mesh.gen($0, style) }, photo = image.flatMap { store.api.mediaURL($0) }
+    // With a theme on (Pro), the theme's cover for this name (the one the deck gets), which changes once you stop typing; its
+    // lettering too. A picture of your own takes its place.
+    let skin = image == nil ? store.skin(art) : nil
+    let look = ThemeDeck(name: title, seed: shown.map { $0.replacingOccurrences(of: #" #\d+$"#, with: "", options: .regularExpression) } ?? title, round: round, tags: tags)
+    let coverW = ThemeLayout.screen.width - 40
+    let themed = skin.flatMap { art.picture(.newCover($0, deck: look, size: CGSize(width: coverW, height: 132))) }
+    let name = skin.map { ThemeJob.newName($0, deck: look, width: coverW - 34) }
     return ZStack(alignment: .topLeading) {
       t.bg
       if let prev { MeshFill(mesh: Mesh.gen(prev, style)) }
       if let mesh { MeshFill(mesh: mesh).opacity(fade) }
+      if let themed { Color.clear.overlay(alignment: .topLeading) { themed.placed }.themeMark("newcover", store.skinKey ?? "") }
       if let photo { FillPhoto(url: photo) }
       VStack(alignment: .leading, spacing: 0) {
         HStack(spacing: 8) {
@@ -116,10 +125,13 @@ struct NewDeckSheet: View {
         }
         Spacer(minLength: 0)
         // White words on a photo, like a deck's header.
-        Text(title).css(22, .semibold, ls: -0.02).lineLimit(1)
-          .foregroundStyle(photo != nil ? .white : mesh?.inkColor ?? t.text)
-          .shadow(color: .black.opacity(photo != nil ? 0.45 : mesh?.shadow ?? 0), radius: 7, y: 1)
-          .animation(.easeInOut(duration: 2), value: shown)
+        if let name, themed != nil { ThemedName(job: name).accessibilityLabel(title) }
+        else {
+          Text(title).css(22, .semibold, ls: -0.02).lineLimit(1)
+            .foregroundStyle(photo != nil ? .white : mesh?.inkColor ?? t.text)
+            .shadow(color: .black.opacity(photo != nil ? 0.45 : mesh?.shadow ?? 0), radius: 7, y: 1)
+            .animation(.easeInOut(duration: 2), value: shown)
+        }
       }
       .padding(.top, 14).padding(.trailing, 16).padding(.bottom, 16).padding(.leading, 18)
     }

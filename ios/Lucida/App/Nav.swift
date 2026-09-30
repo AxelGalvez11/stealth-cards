@@ -3,8 +3,9 @@
 import SwiftUI
 
 /// Pages pushed on a tab: Settings, a deck, a folder, Check AI cards, someone's profile (`profile("")` is yours), News, a
-/// shared deck's page, its suggestions (`suggestions("")`: every deck of yours), its History, and a class (by its code).
-enum Route: Hashable { case settings, deck(String), folder(String), inbox, profile(String), news, publicDeck(DeckAddress), suggestions(String), history(DeckAddress), classPage(String) }
+/// shared deck's page, its suggestions (`suggestions("")`: every deck of yours), its History, a class (by its code), and
+/// Settings › Theme with a theme's page (its key).
+enum Route: Hashable { case settings, deck(String), folder(String), inbox, profile(String), news, publicDeck(DeckAddress), suggestions(String), history(DeckAddress), classPage(String), themes, theme(String) }
 enum SheetKind: Identifiable, Equatable {
   case newDeck, newCard(deckId: String?, cardId: String?), deckSettings(String), learnStart(String)
   /// The New folder popup (maybe for a deck that goes in it), or Rename on a folder's page; `name`: what's typed to start.

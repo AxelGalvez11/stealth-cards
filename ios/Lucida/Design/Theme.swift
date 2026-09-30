@@ -37,6 +37,14 @@ struct ThemeColors {
   let shadow: [Shadow]
 }
 
+extension ThemeColors {
+  /// These colors with another text and muted color.
+  func with(text: RGBA? = nil, muted: RGBA? = nil) -> ThemeColors {
+    ThemeColors(bg: bg, surf: surf, surf2: surf2, line: line, text: text ?? self.text, muted: muted ?? self.muted, inv: inv, invText: invText, card: card,
+                again: again, hard: hard, good: good, easy: easy, againTint: againTint, goodTint: goodTint, hardTint: hardTint, dim: dim, shadow: shadow)
+  }
+}
+
 /// The theme a screen draws with: `t.bg` is a Color, `t.dark` says which one. Dark mode has two looks (Settings → Dark
 /// mode): black, the default, or gray (`t.gray`, only ever on when dark).
 @dynamicMemberLookup
@@ -48,6 +56,8 @@ struct Theme {
     self.dark = dark; self.gray = dark && gray
     colors = !dark ? Generated.light : gray ? Generated.gray : Generated.dark
   }
+  /// The same look with other colors (a themed flashcard sets its words in the theme's ink).
+  init(dark: Bool, gray: Bool = false, colors: ThemeColors) { self.dark = dark; self.gray = dark && gray; self.colors = colors }
   subscript(dynamicMember key: KeyPath<ThemeColors, RGBA>) -> Color { colors[keyPath: key].color }
   /// The cards' soft shadow (none in black dark mode).
   var shadow: [Shadow] { colors.shadow }
