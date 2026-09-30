@@ -13,5 +13,7 @@ trap "kill $SERVER 2>/dev/null" EXIT
 for i in {1..50}; do curl -s -o /dev/null http://127.0.0.1:$PORT/ && break; sleep 0.2; done
 DEST=${1:+id=$1}
 DEST=${DEST:-"platform=iOS Simulator,name=iPhone 17e"}
+# The test learns the server's address from its environment (a build setting on the command line doesn't reach it).
+TEST_RUNNER_LUCIDA_SERVER=http://127.0.0.1:$PORT \
 xcodebuild test -project ios/Lucida.xcodeproj -scheme LucidaUITests -destination "$DEST" -derivedDataPath ${DD:-${TMPDIR:-/tmp}/lucida-e2e} \
   TEST_RUNNER_LUCIDA_SERVER=http://127.0.0.1:$PORT 2>&1 | tee ${DATA}test.log | grep -E "^  (ok|FAIL) |^Study network|error:|\*\* TEST"
