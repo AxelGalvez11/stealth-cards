@@ -541,6 +541,18 @@ export default [
   "h": 844
  },
  {
+  "name": "PhoneProfileBlock",
+  "title": "iPhone · Profile · someone else’s · Block (the question)",
+  "w": 390,
+  "h": 844
+ },
+ {
+  "name": "PhoneProfileBlocked",
+  "title": "iPhone · Profile · someone you blocked (Unblock)",
+  "w": 390,
+  "h": 844
+ },
+ {
   "name": "PhoneProfileDark",
   "title": "iPhone · Profile (dark)",
   "w": 390,
@@ -802,25 +814,31 @@ export default [
   "name": "PhoneSettings",
   "title": "iPhone · Settings",
   "w": 390,
-  "h": 1562
+  "h": 1836
+ },
+ {
+  "name": "PhoneSettingsDelete",
+  "title": "iPhone · Settings · Delete account (the question)",
+  "w": 390,
+  "h": 1836
  },
  {
   "name": "PhoneSettingsFree",
   "title": "iPhone · Settings · on Free (Tune to you is Pro)",
   "w": 390,
-  "h": 1562
+  "h": 1836
  },
  {
   "name": "PhoneSettingsGray",
   "title": "iPhone · Settings (dark, gray)",
   "w": 390,
-  "h": 1562
+  "h": 1836
  },
  {
   "name": "PhoneSettingsVerified",
   "title": "iPhone · Settings · a verified teacher (Get verified says Verified teacher)",
   "w": 390,
-  "h": 1562
+  "h": 1836
  },
  {
   "name": "PhoneSignIn",
@@ -2305,6 +2323,18 @@ export default [
   "h": 900
  },
  {
+  "name": "WebProfileBlock",
+  "title": "Web · Profile · someone else’s · Block (the question)",
+  "w": 1440,
+  "h": 900
+ },
+ {
+  "name": "WebProfileBlocked",
+  "title": "Web · Profile · someone you blocked (Unblock)",
+  "w": 1440,
+  "h": 900
+ },
+ {
   "name": "WebProfileDark",
   "title": "Web · Profile (dark)",
   "w": 1440,
@@ -2601,6 +2631,12 @@ export default [
  {
   "name": "WebSettings",
   "title": "Web · Settings",
+  "w": 1440,
+  "h": 900
+ },
+ {
+  "name": "WebSettingsDelete",
+  "title": "Web · Settings · Delete account (the question)",
   "w": 1440,
   "h": 900
  },
