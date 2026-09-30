@@ -346,6 +346,13 @@ final class SharedDeckPagesTests: XCTestCase {
     check(wait(app.textFields["Find a card to fix"].firstMatch), "the cover's Suggest a change opens the page with the sheet")
     tap(button(app, "Cancel"))
     check(gone(app.textFields["Find a card to fix"].firstMatch), "Cancel closes it")
+    // A link to a card (?suggest=<card id>) opens the sheet on that card.
+    let listed = get(w.maria, "/api/public/deck?id=" + w.sharedId)["cardsList"] as? [[String: Any]] ?? []
+    let powerhouse = listed.first { ($0["text"] as? String)?.contains("powerhouse") == true }?["id"] as? String ?? ""
+    app.terminate()
+    app = launch(as: w.maria, ["-open", "deckpage:" + w.path + "?suggest=" + powerhouse])
+    check(wait(field(app, "Text")) && (field(app, "Text").value as? String)?.contains("[[mitochondrion]]") == true, "?suggest=<card> opens the sheet on that card")
+    check(app.alerts.count == 0, "no alerts along the way")
   }
 
   // ---------- 4: Alex decides; Maria's decks get the changes; History ----------
@@ -376,6 +383,11 @@ final class SharedDeckPagesTests: XCTestCase {
     tap(button(app, "Done"))
     tap(button(app, "Public"))
     check(wait(button(app, "Share settings")), "and Public is back to the page")
+    tap(buttonStarting(app, "Where does glycolysis happen?"))
+    tap(button(app, "Edit"))
+    check(wait(button(app, "Deck settings")) && !button(app, "Share settings").exists, "Edit opens his deck in the library")
+    tap(button(app, "Public"))
+    check(wait(button(app, "Share settings")), "and Public opens the page again")
     tap(button(app, "Suggestions"))
     check(wait(buttonStarting(app, "Maria Santos, 4 changes")) && buttonStarting(app, "Maria Santos, 1 change").exists, "both of Maria’s suggestions are listed")
     tap(buttonStarting(app, "Maria Santos, 4 changes"))
@@ -435,6 +447,7 @@ final class SharedDeckPagesTests: XCTestCase {
     app.terminate()
     app = launch(as: w.maria, ["-open", "history:" + w.path])
     check(wait(any(app, "Went back to version 1")) && !button(app, "Go back to this version").exists, "someone else sees History without Go back")
+    check(app.alerts.count == 0, "no alerts along the way")
   }
 
   // ---------- 5: your AI's cards wait for you on Suggestions ----------

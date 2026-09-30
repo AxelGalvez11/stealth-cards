@@ -151,11 +151,12 @@ struct PublicDeckScreen: View {
           CSSText(d.name, 32, .bold, lh: 1.05, color: ink, ls: -0.03, lines: 2)
             .shadow(color: .black.opacity(shade), radius: 7, x: 0, y: 1)
           HStack(spacing: 8) {
+            // The name keeps its room first (the numbers after it shorten); a name too long for the cover shortens too.
             Button { if !owner.handle.isEmpty { nav.profile(owner.handle) } } label: {
               HStack(spacing: 8) { PersonAvatar(p: owner, size: 22); Text(owner.name).css(14, .semibold).lineLimit(1).line(14) }
             }
             .buttonStyle(.flat)
-            .fixedSize()
+            .layoutPriority(1)
             Text(meta).css(14).lineLimit(1).line(14).opacity(0.85).shadow(color: .black.opacity(shade), radius: 7, x: 0, y: 1)
           }
         }
