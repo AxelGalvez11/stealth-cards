@@ -44,12 +44,15 @@ that file as if it was picked (a .csv as a spreadsheet, anything else as an Anki
 imports it. `-auraOnly` (with a board) shows only its moving background, held still, for comparing with the canvas.
 The background's shader is compiled when the app first shows it (Design/Aura.swift), so building needs no Metal toolchain.
 
-`-open` goes straight to `deck`, `review`, `stats`, `connect`, `settings`, `learn`, `library`, or `cards` (the Library's All
-cards). Give that server `OPENROUTER_API_KEY` (and `OPENROUTER_BASE` pointing at a stand-in, for testing) to try Explain.
+`-open` goes straight to `deck`, `review`, `stats`, `connect` (Settings › Connect AI), `settings`, `learn`, `library`, or
+`cards` (the Library's All cards). Give that server `OPENROUTER_API_KEY` (and `OPENROUTER_BASE` pointing at a stand-in, for testing) to try Explain.
 
 ## The study network
 
-Discover (its own tab), profiles (yours from your picture on Today, whose gear opens Settings; anyone's from their name),
+The tab bar is Today, Library, Discover, Stats, and Profile (your own picture is its icon). Connect AI is a page inside Settings
+(its row there, a back button, no tab bar; `Nav.openConnect()` opens it from the empty states and Today's start tile).
+Discover (its own tab), profiles (yours is the Profile tab, which your picture on Today opens too, and its gear opens Settings;
+anyone's, from their name, is a page that lights no tab),
 Edit profile, pins, News (the bell on Today), Settings → Profile, whose each deck is in the Library, and a deck's sharing:
 the Sharing tab of Deck settings, a deck you study from someone (Suggest a change instead of New card), and your copy of
 one with the owner's changes to take or skip. The answers come from the same server as the web app's (`Data/Net.swift`,

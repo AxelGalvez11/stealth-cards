@@ -3591,7 +3591,7 @@ const phoneLibrary = phone(`<div style="padding: 64px 20px 120px; display: flex;
 ${folderPopup(true)}`);
 const pTitle = (txt, right = '') => `<div style="display: flex; align-items: center; justify-content: space-between;"><div style="font-size: 34px; font-weight: 700; letter-spacing: -.03em;">${txt}</div>${right}</div>`;
 const roundBtn = (ic, label, href = '') => href ? `<a href="${href}" aria-label="${label}" style="width: 44px; height: 44px; border-radius: 22px; background: {{t.surf}}; display: flex; align-items: center; justify-content: center;">${svg(I[ic], 18, 2)}</a>` : `<button type="button" aria-label="${label}" style="width: 44px; height: 44px; border: 0; border-radius: 22px; background: {{t.surf}}; color: {{t.text}}; display: flex; align-items: center; justify-content: center; cursor: pointer;">${svg(I[ic], 18, 2)}</button>`;
-// Today's header: your picture on the left (it opens your profile, whose gear opens Settings, like "You" in the web's
+// Today's header: your picture on the left (it opens your profile, whose gear opens Settings, like Profile in the web's
 // sidebar), the title in the middle of the screen, and news (with how many are new) and + on the right.
 const NEWS_BTN = `<a href="PhoneActivity.dc.html" aria-label="News" style="position: relative; width: 44px; height: 44px; flex-shrink: 0; border-radius: 22px; background: {{t.surf}}; display: flex; align-items: center; justify-content: center;">${svg(I.bell, 18, 2)}<sc-if value="{{nav.hasNews}}" hint-placeholder-val="{{ true }}"><span style="position: absolute; top: -3px; right: -3px; min-width: 18px; height: 18px; padding: 0 5px; box-sizing: border-box; border-radius: 9px; background: #E5484D; color: #FFFFFF; box-shadow: 0 0 0 2px {{t.bg}}; font-size: 11px; font-weight: 700; line-height: 18px; text-align: center;">{{nav.news}}</span></sc-if></a>`;
 const todayTitle = (label, href) => `<div style="display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: center; gap: 12px;"><a href="PhoneProfile.dc.html" aria-label="Your profile" style="justify-self: start; display: flex; border-radius: 22px;">${AVATAR_ME(44)}</a><h1 style="margin: 0; font-size: 34px; font-weight: 700; letter-spacing: -.03em; text-align: center;">Today</h1><div style="justify-self: end; display: flex; gap: 8px;">${NEWS_BTN}${roundBtn('plus', label, href)}</div></div>`;
@@ -3863,7 +3863,7 @@ renderVals() { ${T}${DB_JS}
   ${APPS_JS}
   return { ${MESH_VALS('Apricot')} t, ...appVals, providers, mcpUrl: ai.url, copyLabel: this.state.copied ? 'Copied' : 'Copy link', copy: () => { db.act.copy(ai.url); this.setState({ copied: true }); } }; }`;
 
-// iPhone Settings, from the gear on Today. Appearance switches this screen right away, and so does Dark mode (gray or
+// iPhone Settings, from the gear on your profile. Appearance switches this screen right away, and so does Dark mode (gray or
 // black, for whenever the app is dark). The page scrolls; the board is tall enough to show all of it: the page's content
 // (on Pro) plus 14, so a row added to Settings adds 53 here (node tests/board-fit.mjs PhoneSettings says if it's cut off). The
 // Account group adds 274 with the two blocked people of the sample (each person listed adds 56 more), and its Password row 53.
@@ -4052,7 +4052,7 @@ renderVals() {
   };
 }`;
 
-// Web Settings, from "You" at the bottom of the sidebar. Profile picture: the Google photo, your own photo, or a color.
+// Web Settings, from the Settings row at the bottom of the sidebar. Profile picture: the Google photo, your own photo, or a color.
 const webSettings = webRoot(`${sidebar('Settings')}
 <main style="flex-grow: 1; box-sizing: border-box; padding: 36px 48px; display: flex; flex-direction: column; gap: 24px; min-width: 0; overflow-y: auto;">
   <h1 style="margin: 0; font-size: 32px; font-weight: 600; letter-spacing: -.03em;">Settings</h1>
