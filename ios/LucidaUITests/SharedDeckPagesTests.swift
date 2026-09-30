@@ -365,6 +365,17 @@ final class SharedDeckPagesTests: XCTestCase {
     tap(button(app, "Public"))
     check(wait(button(app, "Edit")) && button(app, "Suggestions").exists && button(app, "Share settings").exists, "he sees his own page: Edit, Suggestions, Share settings")
     check((button(app, "Suggestions").value as? String) == "2 waiting", "Suggestions says 2 wait")
+    // Press a card: Edit opens the card in the editor. Share settings opens his deck's settings.
+    tap(buttonStarting(app, "Where does glycolysis happen?"))
+    tap(lowest(app, "Edit"))
+    check(wait(button(app, "Delete card")), "Edit on a card opens the card editor on it")
+    tap(button(app, "Cancel"))
+    check(gone(button(app, "Delete card")), "Cancel closes it")
+    tap(button(app, "Share settings"))
+    check(wait(lowest(app, "Sharing")) && button(app, "Deck settings").exists, "Share settings opens his deck (its settings up)")
+    tap(button(app, "Done"))
+    tap(button(app, "Public"))
+    check(wait(button(app, "Share settings")), "and Public is back to the page")
     tap(button(app, "Suggestions"))
     check(wait(buttonStarting(app, "Maria Santos, 4 changes")) && buttonStarting(app, "Maria Santos, 1 change").exists, "both of Maria’s suggestions are listed")
     tap(buttonStarting(app, "Maria Santos, 4 changes"))
@@ -468,8 +479,18 @@ final class SharedDeckPagesTests: XCTestCase {
     app = launch(as: w.maria, ["-open", "deckpage:/d/" + w.sharedId])
     check(wait(text(app, w.deckName)), "the lasting link /d/<id> opens the same page")
     app.terminate()
-    // Someone who stopped sharing: the page says so.
+    // The owner stops sharing while the page is open: Study says so, in the server's words, on the page; so does the copy sheet.
+    app = launch(as: w.maria, ["-open", "deckpage:" + w.path])
+    check(wait(button(app, "Study")), "the page is open")
     social(w.alex, "deck.share", ["deckId": w.deck, "visibility": "private"])
+    tap(button(app, "Study"))
+    check(wait(text(app, "This deck isn’t shared anymore.")), "Study on a deck that stopped being shared says so, on the page")
+    tap(button(app, "Make a copy"))
+    check(wait(text(app, "Copy to your library")), "Make a copy still opens its sheet")
+    tap(button(app, "Copy deck"))
+    check(wait(text(app, "This deck isn’t shared anymore.")) && button(app, "Copy deck").exists, "and Copy deck says so in the sheet, which stays")
+    app.terminate()
+    // Opening it again: it isn't there.
     app = launch(as: w.maria, ["-open", "deckpage:" + w.path])
     check(wait(text(app, "This deck isn’t here")), "a deck its owner made private isn’t there anymore")
   }
