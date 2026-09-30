@@ -222,16 +222,6 @@
       "destination": "/site/:dir/:page.html"
     },
     {
-      "source": "/:path*",
-      "has": [
-        {
-          "type": "host",
-          "value": "lucida.cards"
-        }
-      ],
-      "destination": "/not-found"
-    },
-    {
       "source": "/(@[A-Za-z0-9_.]+)",
       "destination": "/api/index"
     },
@@ -253,7 +243,13 @@
     },
     {
       "source": "/((?!.*\\.).*)",
-      "destination": "/app.html"
+      "destination": "/app.html",
+      "missing": [
+        {
+          "type": "host",
+          "value": "lucida.cards"
+        }
+      ]
     }
   ]
 }

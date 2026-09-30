@@ -4,8 +4,8 @@
 //
 // The order is Vercel's (vercel.com/docs/project-configuration, "rewrites" and "redirects"): redirects first, then the
 // files in the output folder (a file wins over a rewrite with the same path, so a rewrite's source should never be a
-// file), then rewrites in the order written (the first that matches wins; its destination is a file, the function, or
-// nothing), and whatever is left is a 404 (web/404.html, if there is one, is its page). `source` patterns follow
+// file), then rewrites in the order written (the first that matches and lands on a file or the function wins; one whose
+// destination is no file lets the next one try), and whatever is left is a 404 (web/404.html, if there is one, is its page). `source` patterns follow
 // path-to-regexp: :name, :name(regex), :name*, and (regex); a trailing slash is allowed.
 // Used by design/check-site.mjs, and by a small server that puts a page in front of a browser under both host names.
 import { existsSync, statSync } from 'node:fs';
@@ -70,7 +70,9 @@ export function route(config, webDir, req) {
     const dest = fill(rule.destination, params).split('?')[0];
     if (/^\/api\/index$/.test(dest)) return { type: 'function', rule: rule.source };
     const file = at(dest);
-    return file ? { type: 'file', file, rewritten: dest, rule: rule.source } : { type: 'notfound', page: at('/404.html'), rule: rule.source };
+    // Vercel checks the files after a rewrite and, when its destination isn't one, goes on to the next rewrite (seen on the live
+    // site: lucida.cards/<no such page> reached the app's catch-all). What no rewrite answers is a 404.
+    if (file) return { type: 'file', file, rewritten: dest, rule: rule.source };
   }
   return { type: 'notfound', page: at('/404.html'), rule: 'none' };
 }
