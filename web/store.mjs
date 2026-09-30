@@ -125,12 +125,19 @@ export const saved = () => save();
 // it lower, for checks.
 export const UPLOAD_FULL = 'Your account has no room for more pictures and sounds.';
 export const mediaRoom = () => ({ files: +process.env.LUCIDA_MEDIA_FILES || (isPro() ? 5000 : 300), bytes: (+process.env.LUCIDA_MEDIA_MB || (isPro() ? 5000 : 300)) * 1e6 });
-export async function putMedia(name, buf, type) {
+// Room for one more file of `bytes`, counted now (the count is saved with the library); throws when there is none.
+export function reserveMedia(bytes) {
   const L = lib(), used = L.S.uploads || { n: 0, bytes: 0 }, room = mediaRoom();
-  if (used.n + 1 > room.files || used.bytes + buf.length > room.bytes) throw Object.assign(new Error(UPLOAD_FULL), { full: true });
-  await (cloud() ? files.put(L.uid, name, buf, type) : writeFile(join(MEDIA, name), buf));
-  L.S.uploads = { n: used.n + 1, bytes: used.bytes + buf.length }; save();
+  if (used.n + 1 > room.files || used.bytes + bytes > room.bytes) throw Object.assign(new Error(UPLOAD_FULL), { full: true });
+  L.S.uploads = { n: used.n + 1, bytes: used.bytes + bytes }; save();
 }
+const writeMedia = (name, buf, type) => (cloud() ? files.put(lib().uid, name, buf, type) : writeFile(join(MEDIA, name), buf));
+// A picture or sound an AI app brings: counted, then stored.
+export async function putMedia(name, buf, type) { reserveMedia(buf.length); await writeMedia(name, buf, type); }
+// The app's own upload: counted now, but stored only once the library (with its count) has really saved. A request that loses
+// a race to another change runs again from the newer copy, and only the run that wins stores anything, so a burst of uploads at
+// once can't leave files behind that were never counted.
+export function putMediaLater(name, buf, type) { reserveMedia(buf.length); afterSaving(() => writeMedia(name, buf, type)); }
 export const readMedia = name => (cloud() ? files.get(lib().uid, name) : readFile(join(MEDIA, name)).catch(() => null));
 export const hasMedia = name => (cloud() ? files.has(lib().uid, name) : access(join(MEDIA, name)).then(() => true, () => false));
 export const mediaLink = (name, uid) => (cloud() ? files.link(uid, name) : Promise.resolve(null));
