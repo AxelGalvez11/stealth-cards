@@ -323,8 +323,10 @@ extension Store {
     var k = k0
     if k0.invite {
       guard D.joined else { return .ok(k0) }
+      // An invite taken shows the class as a member sees it (the canvas keeps Organic Chemistry's people and decks, and one more person).
       k = X.CLASSES["ORGCHM"]!
       k.id = k0.id; k.code = k0.code; k.name = k0.name; k.owner = k0.owner; k.people = k0.people + 1; k.me = ClassPage.Me(role: "member", share: false, asked: false); k.assignments = []
+      return .ok(k)
     }
     if let s = D.share[k0.id] { k.me = ClassPage.Me(role: k.me?.role ?? "member", share: s, asked: true) }
     else if props.classSharing { k.me = ClassPage.Me(role: k.me?.role ?? "member", share: true, asked: true) }
