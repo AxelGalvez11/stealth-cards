@@ -124,6 +124,24 @@ function padFor(css, cap) {
   const e = shadowExtent(css), c = typeof cap === 'number' ? { t: cap, r: cap, b: cap, l: cap } : (cap || { t: 0, r: 0, b: 0, l: 0 });
   return { t: Math.ceil(Math.min(e.t, c.t)), r: Math.ceil(Math.min(e.r, c.r)), b: Math.ceil(Math.min(e.b, c.b)), l: Math.ceil(Math.min(e.l, c.l)) };
 }
+// How far what's drawn inside a box reaches past it (a star stuck on a corner), unless the box clips its contents.
+function overflowOf(box) {
+  const out = { t: 0, r: 0, b: 0, l: 0 };
+  const cs = getComputedStyle(box);
+  if (cs.overflowX === 'hidden' || cs.overflowY === 'hidden') return out;
+  const b = box.getBoundingClientRect();
+  for (const d of box.querySelectorAll('*')) {
+    const r = d.getBoundingClientRect();
+    if (!r.width && !r.height) continue;
+    out.l = Math.max(out.l, b.left - r.left); out.t = Math.max(out.t, b.top - r.top);
+    out.r = Math.max(out.r, r.right - b.right); out.b = Math.max(out.b, r.bottom - b.bottom);
+  }
+  return out;
+}
+const capPad = (a, b, cap) => {
+  const c = typeof cap === 'number' ? { t: cap, r: cap, b: cap, l: cap } : (cap || { t: 0, r: 0, b: 0, l: 0 });
+  return { t: Math.ceil(Math.min(Math.max(a.t, b.t), c.t)), r: Math.ceil(Math.min(Math.max(a.r, b.r), c.r)), b: Math.ceil(Math.min(Math.max(a.b, b.b), c.b)), l: Math.ceil(Math.min(Math.max(a.l, b.l), c.l)) };
+};
 function faceBox(S, j) {
   const F = S.faceOf(j.side, j.at || 'phone');
   const cp = j.cp || {};
@@ -133,17 +151,16 @@ function faceBox(S, j) {
 }
 KINDS.face = async (S, j) => {
   const { F, css } = faceBox(S, j);
-  const want = j.pad || { t: 0, r: 0, b: 0, l: 0 };
-  const probe = el(css + `left:0;top:0;width:${j.w}px;height:${j.h}px;visibility:hidden;`);
-  stage.append(probe);
-  const ext = shadowExtent(getComputedStyle(probe).boxShadow);
-  probe.remove();
-  const pad = { t: Math.ceil(Math.min(ext.t, want.t)), r: Math.ceil(Math.min(ext.r, want.r)), b: Math.ceil(Math.min(ext.b, want.b)), l: Math.ceil(Math.min(ext.l, want.l)) };
-  stage.style.cssText = `width:${j.w + pad.l + pad.r}px;height:${j.h + pad.t + pad.b}px;`;
-  const face = el(css + `left:${pad.l}px;top:${pad.t}px;width:${j.w}px;height:${j.h}px;`);
+  const want = j.pad || { t: 0, r: 0, b: 0, l: 0 }, P = 96;
+  // painted with room all round first, to see how far it reaches, then moved to its place
+  stage.style.cssText = `width:${j.w + 2 * P}px;height:${j.h + 2 * P}px;`;
+  const face = el(css + `left:${P}px;top:${P}px;width:${j.w}px;height:${j.h}px;`);
   const deco = el('position:absolute;inset:0;border-radius:inherit;pointer-events:none;');
   face.append(deco); stage.append(face);
   F.deco(deco);
+  const pad = capPad(shadowExtent(getComputedStyle(face).boxShadow), overflowOf(face), want);
+  face.style.left = pad.l + 'px'; face.style.top = pad.t + 'px';
+  stage.style.cssText = `width:${j.w + pad.l + pad.r}px;height:${j.h + pad.t + pad.b}px;`;
   return { w: j.w + pad.l + pad.r, h: j.h + pad.t + pad.b, pad };
 };
 // The face's words, as the app sets them (no picture): for each way the app sets words on a card, the computed size, weight,
@@ -258,7 +275,7 @@ KINDS.card = async (S, j) => {
   stage.append(holder);
   S.card({ q: j.q, a: j.a || '', side: j.side, fs: j.fs, r: j.r, pad: j.cpad })(holder);
   const face = holder.firstElementChild;
-  const pad = padFor(face ? getComputedStyle(face).boxShadow : 'none', j.pad || 0);
+  const pad = face ? capPad(shadowExtent(getComputedStyle(face).boxShadow), overflowOf(face), j.pad || 0) : { t: 0, r: 0, b: 0, l: 0 };
   holder.style.left = pad.l + 'px'; holder.style.top = pad.t + 'px';
   stage.style.cssText = `width:${j.w + pad.l + pad.r}px;height:${j.h + pad.t + pad.b}px;`;
   return { w: j.w + pad.l + pad.r, h: j.h + pad.t + pad.b, pad };

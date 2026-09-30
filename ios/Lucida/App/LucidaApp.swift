@@ -61,6 +61,7 @@ struct RootView: View {
     }
     .environment(\.theme, t)
     .preferredColorScheme(dark ? .dark : .light)
+    .onChange(of: store.skinKey) { _, k in if let k, !store.demo { ThemeArt.shared.warm(k, store) } }
     // Back after a while away: decks you study from other people get their owners' newest changes.
     .onChange(of: scenePhase) { _, p in if p == .background { store.away = Date() } else if p == .active { store.cameBack() } }
     // What went wrong saving a change or uploading a photo, like the web app's alert.
@@ -75,6 +76,8 @@ struct RootView: View {
       if !store.demo {
         DevSignIn.apply()
         await store.load()
+        // A theme in use is warmed up (its details, background, card faces, pictures, and covers), so nothing flashes.
+        if let k = store.skinKey { ThemeArt.shared.warm(k, store) }
         Task { try? await Task.sleep(nanoseconds: 5_000_000_000); await store.retuneWhenDue() }
         #if DEBUG
         // `-check pause|exam|grade|learn|tune|free`: an end-to-end check of the Pro tools against the server (DebugChecks.swift).

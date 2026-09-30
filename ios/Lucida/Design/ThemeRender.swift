@@ -39,8 +39,17 @@ final class ThemeRenderer: NSObject, WKScriptMessageHandler {
 
   enum Failure: Error { case noWindow, noPage, page(String), noPicture }
 
+  /// Jobs waiting or running; and the web view's turn to go once it's been idle a while (it's a whole page in memory).
+  private var active = 0
+  private var idle: Task<Void, Never>?
+
   /// Paints a job. `picture: false` only asks the page for values (a theme's own details, how a card sets its words).
   func make(_ job: ThemeJob, picture: Bool = true) async throws -> ThemeMade {
+    idle?.cancel(); active += 1
+    defer {
+      active -= 1
+      if active == 0 { idle = Task { try? await Task.sleep(nanoseconds: 90_000_000_000); if !Task.isCancelled, active == 0 { close() } } }
+    }
     let before = chain
     let task = Task { () -> Result<ThemeMade, Error> in
       await before.value
@@ -48,6 +57,11 @@ final class ThemeRenderer: NSObject, WKScriptMessageHandler {
     }
     chain = Task { _ = await task.value }
     return try await task.value.get()
+  }
+
+  /// The web view goes (the next job makes it again).
+  private func close() {
+    web?.removeFromSuperview(); web = nil; loading = nil
   }
 
   // ---------- the page ----------

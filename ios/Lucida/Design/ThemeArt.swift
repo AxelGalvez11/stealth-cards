@@ -55,6 +55,7 @@ final class ThemeArt: ObservableObject {
   private var failed: [String: Date] = [:]
   private var queue: [(job: ThemeJob, low: Bool)] = []
   private var worker: Task<Void, Never>?
+  private var noWindowTries = 0
   private let dir: URL = {
     let d = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask)[0].appendingPathComponent("lucida-themes", isDirectory: true)
     try? FileManager.default.createDirectory(at: d, withIntermediateDirectories: true)
@@ -62,7 +63,29 @@ final class ThemeArt: ObservableObject {
   }()
   private let defaults = UserDefaults.standard
 
-  init() { mem.totalCostLimit = 96 * 1024 * 1024 }
+  init() {
+    mem.totalCostLimit = 96 * 1024 * 1024
+    let dir = self.dir
+    Task.detached(priority: .background) { ThemeArt.prune(dir, keep: 250 * 1024 * 1024) }
+  }
+
+  /// The pictures are only pictures: when they come to more than `keep` bytes, the ones of themes not used lately go.
+  nonisolated static func prune(_ dir: URL, keep: Int) {
+    let fm = FileManager.default
+    guard let folders = try? fm.contentsOfDirectory(at: dir, includingPropertiesForKeys: [.contentModificationDateKey], options: .skipsHiddenFiles) else { return }
+    var sized: [(url: URL, bytes: Int, at: Date)] = []
+    for f in folders {
+      var bytes = 0, at = (try? f.resourceValues(forKeys: [.contentModificationDateKey]).contentModificationDate) ?? .distantPast
+      for u in (fm.enumerator(at: f, includingPropertiesForKeys: [.fileSizeKey, .contentModificationDateKey])?.allObjects as? [URL]) ?? [] {
+        let v = try? u.resourceValues(forKeys: [.fileSizeKey, .contentModificationDateKey])
+        bytes += v?.fileSize ?? 0
+        if let d = v?.contentModificationDate, d > at { at = d }
+      }
+      sized.append((f, bytes, at))
+    }
+    var total = sized.reduce(0) { $0 + $1.bytes }
+    for x in sized.sorted(by: { $0.at < $1.at }) where total > keep { try? fm.removeItem(at: x.url); total -= x.bytes }
+  }
   /// Something a screen draws changed (a font arrived).
   func bump() { tick += 1 }
 
@@ -71,14 +94,22 @@ final class ThemeArt: ObservableObject {
   /// code are paid no mind. The last one seen is kept, so a theme in use draws at once at launch; the server's is fetched
   /// once per launch, and a change makes the pictures again.
   func stamp(_ theme: String) -> String? {
-    if let s = stamps[theme] { return s }
-    if let s = defaults.string(forKey: "themeStamp." + theme) { stamps[theme] = s }
+    if stamps[theme] == nil, let s = defaults.string(forKey: "themeStamp." + theme) { stamps[theme] = s }
     refreshStamp(theme)
-    return stamps[theme]
+    return stamps[theme].map { $0 + painter }
   }
+  /// A fingerprint of the painter's own page (a new version of the app that paints differently paints again).
+  private let painter: String = {
+    guard let url = Bundle.main.url(forResource: "ThemePage", withExtension: "html"), let d = try? Data(contentsOf: url) else { return "" }
+    return "-" + SHA256.hash(data: d).prefix(3).map { String(format: "%02x", $0) }.joined()
+  }()
   private var refreshed: Set<String> = []
+  private var stampTried: [String: Date] = [:]
   private func refreshStamp(_ theme: String) {
     guard !refreshed.contains(theme), !stamping.contains(theme) else { return }
+    // (offline, it tries again every so often, not every time a screen draws)
+    if let t = stampTried[theme], Date().timeIntervalSince(t) < 15 { return }
+    stampTried[theme] = Date()
     stamping.insert(theme)
     Task {
       var h = SHA256()
@@ -95,8 +126,9 @@ final class ThemeArt: ObservableObject {
       if stamps[theme] != s {
         let old = stamps[theme]
         stamps[theme] = s; defaults.set(s, forKey: "themeStamp." + theme)
-        if let old { try? FileManager.default.removeItem(at: folder(theme, old)) }
-        mem.removeAllObjects(); infos = [:]; specs[theme] = nil; asked = asked.filter { !$0.hasPrefix(theme + "|") }
+        if let old { try? FileManager.default.removeItem(at: folder(theme, old + painter)) }
+        mem.removeAllObjects(); infos = [:]; specs[theme] = nil
+        asked = asked.filter { !$0.contains("#" + theme + "|") }; failed = failed.filter { !$0.key.contains("#" + theme + "|") }
         tick += 1
       }
     }
@@ -170,17 +202,24 @@ final class ThemeArt: ObservableObject {
   private func work() async {
     while let i = queue.firstIndex(where: { !$0.low }) ?? queue.indices.first {
       let item = queue.remove(at: i), job = item.job
-      guard let stamp = stamps[job.theme] else { continue }
+      guard let stamp = stamp(job.theme) else { continue }
       let k = stampedKey(job, stamp)
       let wantsPicture = job.kind != "spec" && job.kind != "facespec"
       do {
         let made = try await ThemeRenderer.shared.make(job, picture: wantsPicture)
-        guard stamps[job.theme] == stamp else { asked.remove(k); continue }
+        guard self.stamp(job.theme) == stamp else { asked.remove(k); continue }
         infos[k] = made.info
         if let img = made.image { mem.setObject(img, forKey: k as NSString, cost: Int(img.size.width * img.size.height * img.scale * img.scale * 4)) }
         save(job, stamp, made)
         tick += 1
       } catch {
+        // (the app's window isn't there yet, in the first moments: try again shortly)
+        if case ThemeRenderer.Failure.noWindow = error, noWindowTries < 40 {
+          noWindowTries += 1
+          queue.insert(item, at: 0)
+          try? await Task.sleep(nanoseconds: 300_000_000)
+          continue
+        }
         asked.remove(k); failed[k] = Date()
         #if DEBUG
         print("THEME failed \(job.kind) \(job.theme): \(error)")
@@ -204,7 +243,7 @@ final class ThemeArt: ObservableObject {
   /// Nothing is kept for a theme any more (a theme picked and dropped again keeps its pictures, which are only pictures).
   func forget(_ theme: String) {
     mem.removeAllObjects(); infos = [:]; asked = []
-    if let s = stamps[theme] { try? FileManager.default.removeItem(at: folder(theme, s)) }
+    if let s = stamp(theme) { try? FileManager.default.removeItem(at: folder(theme, s)) }
   }
 }
 
@@ -266,5 +305,10 @@ extension ThemeArt {
     for s in [44, 84, 64] {
       for photo in [false, true] { _ = picture(.avatar(key, size: s, ch: store.avatarLetter, photo: photo), low: true) }
     }
+    // The Library's covers (its first decks, and the ones in folders) and the first decks' pages.
+    let decks = store.libraryDecks().filter { $0.photo == nil }
+    for d in decks.prefix(12) { _ = picture(.thumb(skin, deck: d.look), low: true) }
+    for d in decks.filter({ $0.folder != nil }).prefix(9) { _ = picture(.swatch(skin, deck: d.look), low: true) }
+    for d in decks.prefix(4) { _ = picture(.head(skin, deck: d.look, size: CGSize(width: ThemeLayout.screen.width, height: Screen.top(232))), low: true) }
   }
 }
