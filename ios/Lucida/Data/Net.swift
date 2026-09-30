@@ -117,11 +117,12 @@ struct NetDeckRef: Decodable {
 struct NewsItem: Decodable, Identifiable {
   struct Data: Decodable {
     var n = 0, took = 0, skipped = 0
-    var message = "", summary = "", handle = ""
-    enum CodingKeys: String, CodingKey { case n, took, skipped, message, summary, handle }
+    var message = "", summary = "", handle = "", role = "", name = ""
+    enum CodingKeys: String, CodingKey { case n, took, skipped, message, summary, handle, role, name }
     init(from d: Decoder) throws {
       let c = try d.container(keyedBy: CodingKeys.self)
       n = c.v(.n, 0); took = c.v(.took, 0); skipped = c.v(.skipped, 0); message = c.v(.message, ""); summary = c.v(.summary, ""); handle = c.v(.handle, "")
+      role = c.v(.role, ""); name = c.v(.name, "")
     }
   }
   var id = "", kind = "", actorName = "", created = ""

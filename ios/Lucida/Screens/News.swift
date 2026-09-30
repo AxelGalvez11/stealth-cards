@@ -1,7 +1,8 @@
 // iPhone · News (PhoneActivity, PhoneActivityEmpty, and the Dark and Gray twins), from the bell on Today: suggestions on
 // your decks, people following you, new versions of decks you follow, what owners did with your suggestions, and
-// teachers checking your decks. What's new has a dot; opening the page marks it read a moment later (the bell's count
-// goes), and what was new when you opened it keeps its dot while you're here.
+// teachers checking your decks; and two things Lucida tells you itself (with its mark): you're verified as a teacher or
+// school, and a deck of yours was hidden after a report. What's new has a dot; opening the page marks it read a moment
+// later (the bell's count goes), and what was new when you opened it keeps its dot while you're here.
 import SwiftUI
 
 struct NewsScreen: View {
@@ -57,14 +58,19 @@ struct NewsScreen: View {
       case "update": return (dk?.name.nilIfEmpty ?? "A deck you follow", "has " + (d?.summary.nilIfEmpty ?? "changes"), "")
       case "decided": return (actor, did, dk?.name ?? "")
       case "checked": return (actor, "checked", dk?.name ?? "")
+      case "verified": return ("You’re verified", "as a " + (d?.role == "school" ? "school" : "teacher"), "")
+      case "hidden": return (dk?.name.nilIfEmpty ?? d?.name.nilIfEmpty ?? "A deck of yours", "was hidden after a report", "")
       default: return (actor, "", dk?.name ?? "")
       }
     }()
+    // Lucida's own news has no person: it shows Lucida's mark.
+    let system = x.kind == "verified" || x.kind == "hidden"
     let isNew = !x.read || (fresh?.contains(x.id) ?? false)
     let note = x.kind == "suggestion" ? d?.message ?? "" : ""
     return Button { open(x, who: who) } label: {
       HStack(spacing: 12) {
-        PersonAvatar(p: who, size: 40)
+        if system { Mark(h: 16).foregroundStyle(t.invText).frame(width: 40, height: 40).background(Circle().fill(t.inv)) }
+        else { PersonAvatar(p: who, size: 40) }
         VStack(alignment: .leading, spacing: 3) {
           CSSText(parts: [(words.0, .semibold), (" " + words.1 + " ", .regular), (words.2, .semibold)], 15, lh: 1.4, color: t.text)
           if !note.isEmpty { Text(note).css(13).foregroundStyle(t.muted).lineLimit(1).line(13) }
@@ -86,11 +92,12 @@ struct NewsScreen: View {
     .accessibilityAddTraits(.isButton)
   }
 
-  /// A follow opens their profile; a suggestion on your deck, its suggestions; a suggestion on a deck that isn't yours (you
-  /// help keep it up), your Suggestions, where every deck you own or help with waits (like the web's /suggestions); the rest,
-  /// the deck's page.
+  /// A follow opens their profile; being verified, yours (where the check is); a suggestion on your deck, its suggestions; a
+  /// suggestion on a deck that isn't yours (you help keep it up), your Suggestions, where every deck you own or help with
+  /// waits (like the web's /suggestions); the rest, the deck's page.
   private func open(_ x: NewsItem, who: NetPerson) {
     if x.kind == "follow" { nav.profile(who.handle.nilIfEmpty ?? x.data?.handle ?? ""); return }
+    if x.kind == "verified" { nav.profile(""); return }
     let dk = x.deck
     if x.kind == "suggestion" {
       if let id = dk?.id, !id.isEmpty, let mine = store.lib.decks.first(where: { $0.share?.id == id }) { nav.push(.suggestions(mine.id)) }
