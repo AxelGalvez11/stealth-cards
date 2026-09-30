@@ -51,7 +51,7 @@
       "permanent": false
     },
     {
-      "source": "/:path((?:sign-in|discover|join|play|you|activity|suggestions|welcome|decks|library|verify|admin|stats|settings|review|learn|deck|live|class|d|api|auth|mcp|media|pro|dev|b|@[^/]+)(?:/.*)?)",
+      "source": "/:path((?:sign-in|discover|join|play|you|activity|suggestions|welcome|decks|library|verify|admin|stats|settings|review|learn|deck|live|class|d|api|auth|oauth|mcp|media|pro|dev|b|@[^/]+)(?:/.*)?)",
       "has": [
         {
           "type": "host",
