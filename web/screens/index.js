@@ -1102,13 +1102,13 @@ export default [
   "name": "SiteFeature",
   "title": "Site · Features and who Lucida is for · lucida.cards",
   "w": 1440,
-  "h": 10694
+  "h": 10663
  },
  {
   "name": "SiteFeaturePhone",
   "title": "Site · Features and who Lucida is for · lucida.cards on a phone",
   "w": 390,
-  "h": 15418
+  "h": 15389
  },
  {
   "name": "SiteOg",

@@ -5843,7 +5843,7 @@ const spQ = level => `<div id="{{f.id}}" class="sp-q"><h${level} class="sp-h3">{
 const spSections = key => `<sc-for list="{{${key}}}" as="s" hint-placeholder-count="3"><section class="sp-col">
   <sc-if value="{{s.h2}}" hint-placeholder-val="{{ true }}">${spH2('{{s.h2}}', ' id="{{s.id}}"')}</sc-if>
   <sc-for list="{{s.paras}}" as="p"><p class="sp-p">${spParts('p.parts')}</p></sc-for>
-  <sc-if value="{{s.hasBullets}}" hint-placeholder-val="{{ false }}"><ul class="sp-ul"><sc-for list="{{s.bullets}}" as="b"><li>${spParts('b.parts')}</li></sc-for></ul></sc-if>
+  <sc-if value="{{s.hasBullets}}" hint-placeholder-val="{{ false }}"><ul class="sp-ul"><sc-for list="{{s.bullets}}" as="b"><li class="{{b.cls}}">${spParts('b.parts')}</li></sc-for></ul></sc-if>
 </section></sc-for>`;
 // On a narrow page a table's rows stack: the feature in bold, then a paragraph per app that begins with the app's name in bold.
 const spStack = s => [
@@ -5885,6 +5885,8 @@ const SITE_CSS = [
   '.sp-h3{margin:0;font-size:19px;font-weight:600;line-height:1.35;letter-spacing:-.01em;text-wrap:balance}',
   '.sp-p{margin:18px 0 0;font-size:17px;line-height:1.7;text-wrap:pretty}.sp-h2+.sp-p,.sp-h2+.sp-ul{margin-top:16px}',
   '.sp-ul{margin:18px 0 0;padding-left:22px;font-size:17px;line-height:1.7}.sp-ul li{margin-top:12px;padding-left:4px}.sp-ul li:first-child{margin-top:0}',
+  // A step that begins with its own number ("1. Open Connect AI.") has no bullet dot, and sits flush with the words.
+  '.sp-ul li.sp-n{list-style:none;margin-left:-22px;padding-left:0}',
   // Questions: a heading and its answer, under a thin line.
   '.sp-q{padding:22px 0 26px;border-top:1px solid var(--sp-line)}.sp-q .sp-p{margin-top:10px}.sp-h2+.sp-q{margin-top:20px}',
   '.sp-pills{display:flex;flex-wrap:wrap;gap:8px;margin-top:28px}',
@@ -5992,7 +5994,7 @@ renderVals() { ${T}
   const tb = P.table, faq = P.faq.map(item), isFaq = P.kind === 'faq', grouped = P.faq.some(f => f.group), faqGroups = [];
   for (const f of P.faq) { const title = f.group || ''; let g = faqGroups.find(x => x.title === title); if (!g) faqGroups.push(g = { title, id: title ? 'g-' + slugify(title) : 'questions', plain: !title, items: [] }); g.items.push(item(f)); }
   const related = P.related.filter(x => !below.includes(x)).map(find).filter(Boolean).map(card).slice(0, 9);
-  const sections = P.sections.map(s => ({ id: slugify(s.h2), h2: s.h2, paras: s.paras.map(p => ({ parts: this.parts(p) })), hasBullets: s.bullets.length > 0, bullets: s.bullets.map(b => ({ parts: this.parts(b) })) }));
+  const sections = P.sections.map(s => ({ id: slugify(s.h2), h2: s.h2, paras: s.paras.map(p => ({ parts: this.parts(p) })), hasBullets: s.bullets.length > 0, bullets: s.bullets.map(b => ({ parts: this.parts(b), cls: /^\\*\\*\\d+\\./.test(b) ? 'sp-n' : '' })) }));
   // The chips under the title: the day it was updated ("Sep 30, 2026"), and minutes to read (its words at about 230 a minute, at least 1).
   const MON = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'], dm = /^(\\d{4})-(\\d{2})-(\\d{2})$/.exec(P.updated || '');
   const count = s => plain(s).split(/\\s+/).filter(Boolean).length, sum = (list, f) => list.reduce((n, x) => n + f(x), 0);
