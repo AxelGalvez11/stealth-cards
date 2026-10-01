@@ -10,6 +10,10 @@
 #       (App/DebugChecks.swift, run with -check <name>): pausing a card, an exam date, the time a grade sends, Learn mode's
 #       log, Tune to you, and the Free app. DEVICE=<simulator id> is needed; PORT (default 3699) is the test server's.
 #
+#   ios/tests/run.sh xcode
+#       The server taking purchases from Xcode's StoreKit test store (what the iPhone app's UI tests buy with), and only when
+#       told to: on the module and over HTTP against two local servers (ports PORT and PORT + 1, default 3905). No simulator.
+#
 # Everything it makes goes in a folder of its own under the temp folder (TESTDIR to move it).
 H=${0:A:h}; REPO=${H:h:h}; TESTDIR=${TESTDIR:-${TMPDIR:-/tmp}/lucida-ios-tests}; mkdir -p $TESTDIR
 DATA=$REPO/ios/Lucida/Data
@@ -72,6 +76,7 @@ e2e() {
 }
 
 case "$1" in
+  xcode) node $H/js/xcode-purchase.mjs ${PORT:-3905} ;;
   parity) parity ;;
   e2e) shift; e2e "$@" ;;
   *) sed -n '2,15p' $0 ;;

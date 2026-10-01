@@ -17,6 +17,10 @@
 //   * then the data itself: our bundle (cards.lucida.app), a Lucida Pro product, and the Production or Sandbox App Store
 //     (Xcode's local testing isn't signed by Apple and is never accepted).
 // Revocation (OCSP) isn't checked, which is what Apple's verifier does with its online checks off.
+// One more kind of signature exists, for testing only: Xcode's local StoreKit test store (the simulator with a StoreKit
+// configuration, which the iPhone app's UI tests buy from) signs what it "sells" with one self-signed certificate of its own,
+// "StoreKit Testing in Xcode", and says `environment: "Xcode"`. Apple signed none of that, so it is refused everywhere, except on
+// a computer that has asked for it (LUCIDA_APPLE_TEST_XCODE=1, never online). See checkXcode.
 import { X509Certificate, createHash, verify as cryptoVerify } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { rest, val, cloud } from './supa.mjs';
@@ -106,6 +110,28 @@ function trustedKey(header, trusted, at) {
 
 // ---------- a JWS ----------
 const b64 = s => Buffer.from(s, 'base64url');
+// Whether this computer takes purchases from Xcode's StoreKit test store (LUCIDA_APPLE_TEST_XCODE=1). Never online: the server
+// that has a database of real people only believes Apple.
+export const xcodeOn = () => !cloud() && /^(1|on|true|yes)$/i.test(process.env.LUCIDA_APPLE_TEST_XCODE || '');
+// What the test store signs: ES256 by the key of the one certificate in the header, which signed itself and is named "StoreKit
+// Testing in Xcode" (anything else saying it is Xcode's is refused), valid when signed.
+function checkXcode(parts, header, payload, now) {
+  if (!xcodeOn()) throw bad('not_apple');
+  const x5c = header.x5c;
+  if (!Array.isArray(x5c) || x5c.length !== 1 || typeof x5c[0] !== 'string' || x5c[0].length > 3000 || payload.environment !== 'Xcode') throw bad('chain');
+  let cert;
+  try { cert = new X509Certificate(Buffer.from(x5c[0], 'base64')); } catch { throw bad('chain'); }
+  if (!/CN=StoreKit Testing in Xcode/.test(cert.subject) || cert.subject !== cert.issuer || !signedBy(cert, cert)) throw bad('not_apple');
+  const key = cert.publicKey;
+  if (key.asymmetricKeyType !== 'ec' || key.asymmetricKeyDetails.namedCurve !== 'prime256v1') throw bad('not_apple');
+  const at = Number.isFinite(+payload.signedDate) && +payload.signedDate > 0 ? +payload.signedDate : now;
+  if (at > now + 5 * 60000) throw bad('from_the_future');
+  if (!validAt(cert, at)) throw bad('expired_certificate');
+  let signed = false;
+  try { signed = cryptoVerify('sha256', Buffer.from(parts[0] + '.' + parts[1]), { key, dsaEncoding: 'ieee-p1363' }, b64(parts[2])); } catch { /* not a signature */ }
+  if (!signed) throw bad('signature');
+  return { header, payload };
+}
 // Checks a JWS and gives back what it says. `roots` and `now` are for tests.
 export function verifyJws(jws, { roots: trusted = roots(), now = Date.now() } = {}) {
   if (typeof jws !== 'string' || jws.length > 30000) throw bad('form');
@@ -116,6 +142,9 @@ export function verifyJws(jws, { roots: trusted = roots(), now = Date.now() } = 
   if (!header || typeof header !== 'object' || !payload || typeof payload !== 'object' || Array.isArray(header) || Array.isArray(payload)) throw bad('form');
   // Apple signs with ES256 and nothing else (so "none" and shared-secret algorithms are never accepted).
   if (header.alg !== 'ES256') throw bad('algorithm');
+  // Xcode's test store (its key says so): only on a computer set up for it, and then checked on its own terms. (An Apple chain that
+  // says environment "Xcode" isn't that: it goes the usual way and checkTransaction turns it down.)
+  if (header.kid === 'Apple_Xcode_Key') return checkXcode(parts, header, payload, now);
   // The certificates had to be valid when Apple signed it (what Apple's verifier does without its online checks).
   const at = Number.isFinite(+payload.signedDate) && +payload.signedDate > 0 ? +payload.signedDate : now;
   if (at > now + 5 * 60000) throw bad('from_the_future');
@@ -133,7 +162,7 @@ const sandboxOn = () => !/^(0|off|false|no)$/i.test(process.env.LUCIDA_APPLE_SAN
 // A verified transaction (JWSTransactionDecodedPayload) that's ours: our app, a Lucida Pro subscription, and a real App Store.
 export function checkTransaction(tx, { sandbox = sandboxOn() } = {}) {
   if (tx.bundleId !== BUNDLE_ID) throw bad('wrong_app');
-  if (tx.environment !== 'Production' && !(tx.environment === 'Sandbox' && sandbox)) throw bad('wrong_environment');
+  if (tx.environment !== 'Production' && !(tx.environment === 'Sandbox' && sandbox) && !(tx.environment === 'Xcode' && xcodeOn())) throw bad('wrong_environment');
   if (!Object.hasOwn(PRODUCTS, String(tx.productId)) || tx.type !== 'Auto-Renewable Subscription') throw bad('wrong_product');
   if (!/^\d{1,30}$/.test(String(tx.originalTransactionId || '')) || !/^\d{1,30}$/.test(String(tx.transactionId || '')) || !Number.isFinite(+tx.expiresDate) || +tx.expiresDate <= 0) throw bad('form');
   return tx;
