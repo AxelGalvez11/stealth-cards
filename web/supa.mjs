@@ -60,7 +60,18 @@ export const files = {
       if (!names.length) return;
       await call('/storage/v1/object/media', { method: 'DELETE', headers: json, body: JSON.stringify({ prefixes: names.map(n => uid + '/' + n) }) });
     }
-  }
+  },
+  // Making cards from files (blobs.mjs): an address the page can PUT a big file to without going through this server (Vercel takes
+  // no request over 4.5 MB), good for two hours; a file moved to its kept name; files deleted; and a person's files by name prefix
+  // (with when each was made, so waiting uploads nobody used can be cleared).
+  signedUpload: async (uid, name) => {
+    const r = await call('/storage/v1/object/upload/sign/media/' + uuid(uid) + '/' + encodeURIComponent(name), { method: 'POST', headers: { ...json, 'x-upsert': 'true' }, body: '{}' });
+    const rel = r && (r.url || (r.token ? '/object/upload/sign/media/' + uuid(uid) + '/' + encodeURIComponent(name) + '?token=' + encodeURIComponent(r.token) : ''));
+    return rel ? base() + '/storage/v1' + rel : null;
+  },
+  move: (uid, from, to) => call('/storage/v1/object/move', { method: 'POST', headers: json, body: JSON.stringify({ bucketId: 'media', sourceKey: uuid(uid) + '/' + from, destinationKey: uuid(uid) + '/' + to }) }),
+  remove: (uid, names) => call('/storage/v1/object/media', { method: 'DELETE', headers: json, body: JSON.stringify({ prefixes: names.map(n => uuid(uid) + '/' + n) }) }),
+  list: (uid, search, limit) => listIn(uid, search, limit)
 };
 
 // Sign-in (Supabase Auth): a 6-digit code by email, or an ID token from Google or Apple.
