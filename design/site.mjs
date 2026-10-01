@@ -174,25 +174,30 @@ export const GRAD = {
   Grove: ['#1FA24A', '#B6E34A', '#F9D64A', '#DFF5C2', '#0F5D3A'], Ember: ['#FF5A1F', '#FFA24D', '#FF2E63', '#FFE2C9', '#5A1A3C'],
   Ocean: ['#0C8CE9', '#2CD4D9', '#5B6CFF', '#D4F6FF', '#0B2E6B'], Neon: ['#C6FF00', '#FF2E93', '#FFEE00', '#F4FFC2', '#00D1FF'],
   Sunset: ['#FF3D6E', '#FF8A3D', '#FFD23D', '#FFE3D1', '#4B2BA6'], Tropic: ['#00D4B1', '#FFD93D', '#FF5F7E', '#D6FFF3', '#2D6BFF'],
-  Candy: ['#FFB3C7', '#C9B6FF', '#B6E3FF', '#FFF0D6', '#FFD08A'], Berry: ['#D4145A', '#FBB03B', '#7B2FF7', '#FFE3F1', '#2A0A5E']
+  Candy: ['#FFB3C7', '#C9B6FF', '#B6E3FF', '#FFF0D6', '#FFD08A'], Berry: ['#D4145A', '#FBB03B', '#7B2FF7', '#FFE3F1', '#2A0A5E'],
+  // Added so that every page's gradient can be a look of its own (the first sixteen are the ones the blog started with).
+  Cobalt: ['#1F4BFF', '#4D8DFF', '#00C6FF', '#D9E6FF', '#0A1F6B'], Magenta: ['#E6007E', '#FF5CA8', '#9B2DFF', '#FFD9EC', '#4A0A5E'],
+  Crimson: ['#E0112B', '#FF5A5F', '#FF9A3C', '#FFDAD6', '#5A0A1E'], Teal: ['#00A39A', '#2DD4BF', '#3B82F6', '#D3FAF4', '#064E5B'],
+  Violet: ['#7C3AED', '#A78BFA', '#EC4899', '#EDE4FF', '#2E1065'], Lime: ['#B6F500', '#7BE000', '#00D4A0', '#F3FFC8', '#0B6B3A'],
+  Plum: ['#8E2DE2', '#FF4E8A', '#FFB347', '#F6E3FF', '#2A0A4A'], Cherry: ['#D6204B', '#FF7096', '#7A5AF8', '#FFE0E8', '#3B0A2E']
 };
 export const GRAD_NAMES = Object.keys(GRAD);
 const PICTURES = {
   // The blog's own order: the featured page, then each category's pages (design/check-site.mjs keeps neighbors from sharing a style).
-  'vs/quizlet': { scene: 'versus', v: 1, style: 'retro', grad: 'Sunset', other: 'Quizlet' },
-  compare: { scene: 'grid', style: 'mesh', grad: 'Iris' }, 'vs/anki': { scene: 'versus', v: 0, style: 'tri', grad: 'Ocean', other: 'Anki' }, 'vs/knowt': { scene: 'versus', v: 2, style: 'blurred', grad: 'Mint', other: 'Knowt' },
-  'vs/remnote': { scene: 'versus', v: 3, style: 'volume', grad: 'Rose', other: 'RemNote' }, 'vs/brainscape': { scene: 'versus', v: 3, style: 'bands', grad: 'Aqua', other: 'Brainscape' }, 'vs/mochi': { scene: 'versus', v: 0, style: 'duo', grad: 'Lemon', other: 'Mochi' },
-  'vs/kahoot': { scene: 'versus', v: 1, style: 'edgy', grad: 'Dusk', other: 'Kahoot' }, 'vs/gizmo': { scene: 'versus', v: 2, style: 'radial', grad: 'Berry', other: 'Gizmo' },
-  'anki-alternative': { scene: 'switch', style: 'banding', grad: 'Lilac', other: 'Anki' }, 'quizlet-alternative': { scene: 'switch', style: 'multi', grad: 'Ember', other: 'Quizlet' },
-  features: { scene: 'grid', style: 'grainy', grad: 'Apricot' }, 'features/spaced-repetition': { scene: 'intervals', style: 'radial', grad: 'Grove' }, 'features/ai-flashcards': { scene: 'chat', style: 'swirl', grad: 'Lilac' },
-  'features/learn-mode': { scene: 'quiz', style: 'mesh', grad: 'Sunset' }, 'features/shared-decks': { scene: 'shared', style: 'blurred', grad: 'Rose' }, 'features/classes': { scene: 'class', style: 'tri', grad: 'Mint' },
-  'features/live-games': { scene: 'live', style: 'retro', grad: 'Neon' }, 'features/image-occlusion': { scene: 'occlusion', style: 'duo', grad: 'Aqua' }, 'features/import': { scene: 'import', style: 'bands', grad: 'Tropic' },
-  'for/students': { scene: 'week', style: 'volume', grad: 'Tropic' }, 'for/med-school': { scene: 'med', style: 'edgy', grad: 'Rose' }, 'for/mcat': { scene: 'mcat', style: 'swirl', grad: 'Lemon' },
-  'for/language-learning': { scene: 'words', style: 'multi', grad: 'Aqua' }, 'for/teachers': { scene: 'teach', style: 'mesh', grad: 'Candy' },
-  faq: { scene: 'question', style: 'banding', grad: 'Sunset' }, connect: { scene: 'link', style: 'blurred', grad: 'Iris' },
+  'vs/quizlet': { scene: 'versus', v: 1, style: 'mesh', grad: 'Aqua', other: 'Quizlet' },
+  compare: { scene: 'grid', style: 'tri', grad: 'Cherry' }, 'vs/anki': { scene: 'versus', v: 0, style: 'volume', grad: 'Neon', other: 'Anki' }, 'vs/knowt': { scene: 'versus', v: 2, style: 'bands', grad: 'Plum', other: 'Knowt' },
+  'vs/remnote': { scene: 'versus', v: 3, style: 'retro', grad: 'Neon', other: 'RemNote' }, 'vs/brainscape': { scene: 'versus', v: 3, style: 'edgy', grad: 'Cobalt', other: 'Brainscape' }, 'vs/mochi': { scene: 'versus', v: 0, style: 'multi', grad: 'Teal', other: 'Mochi' },
+  'vs/kahoot': { scene: 'versus', v: 1, style: 'radial', grad: 'Magenta', other: 'Kahoot' }, 'vs/gizmo': { scene: 'versus', v: 2, style: 'volume', grad: 'Lemon', other: 'Gizmo' },
+  'anki-alternative': { scene: 'switch', style: 'bands', grad: 'Berry', other: 'Anki' }, 'quizlet-alternative': { scene: 'switch', style: 'swirl', grad: 'Apricot', other: 'Quizlet' },
+  features: { scene: 'grid', style: 'blurred', grad: 'Lime' }, 'features/spaced-repetition': { scene: 'intervals', style: 'edgy', grad: 'Sunset' }, 'features/ai-flashcards': { scene: 'chat', style: 'swirl', grad: 'Ocean' },
+  'features/learn-mode': { scene: 'quiz', style: 'bands', grad: 'Tropic' }, 'features/shared-decks': { scene: 'shared', style: 'swirl', grad: 'Dusk' }, 'features/classes': { scene: 'class', style: 'tri', grad: 'Grove' },
+  'features/live-games': { scene: 'live', style: 'volume', grad: 'Crimson' }, 'features/image-occlusion': { scene: 'occlusion', style: 'tri', grad: 'Lime' }, 'features/import': { scene: 'import', style: 'edgy', grad: 'Magenta' },
+  'for/students': { scene: 'week', style: 'duo', grad: 'Mint' }, 'for/med-school': { scene: 'med', style: 'retro', grad: 'Plum' }, 'for/mcat': { scene: 'mcat', style: 'radial', grad: 'Cobalt' },
+  'for/language-learning': { scene: 'words', style: 'multi', grad: 'Cherry' }, 'for/teachers': { scene: 'teach', style: 'blurred', grad: 'Tropic' },
+  faq: { scene: 'question', style: 'retro', grad: 'Berry' }, connect: { scene: 'link', style: 'banding', grad: 'Candy' },
   // Pages outside the blog's grid.
-  blog: { scene: 'blog', style: 'swirl', grad: 'Tropic' }, '': { scene: 'cards', style: 'mesh', grad: 'Neon' }, pricing: { scene: 'plans', style: 'banding', grad: 'Berry' },
-  privacy: { scene: 'lock', style: 'grainy', grad: 'Ocean' }, terms: { scene: 'terms', style: 'duo', grad: 'Dusk' }
+  blog: { scene: 'blog', style: 'radial', grad: 'Ember' }, '': { scene: 'cards', style: 'banding', grad: 'Violet' }, pricing: { scene: 'plans', style: 'mesh', grad: 'Sunset' },
+  privacy: { scene: 'lock', style: 'multi', grad: 'Apricot' }, terms: { scene: 'terms', style: 'mesh', grad: 'Dusk' }
 };
 const KIND_SCENE = { compare: 'versus', alternative: 'switch', hub: 'grid', faq: 'question' };
 export const pictureOf = p => {

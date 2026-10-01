@@ -35,6 +35,8 @@ export async function withChrome(fn) {
       size: (width, height, scale = 1) => send('Emulation.setDeviceMetricsOverride', { width, height, deviceScaleFactor: scale, mobile: width < 500 }),
       // The look the window asks pages for: 'light' or 'dark' (prefers-color-scheme).
       scheme: value => send('Emulation.setEmulatedMedia', { features: [{ name: 'prefers-color-scheme', value }] }),
+      // Several of the look's media features at once, as a list of { name, value } (prefers-color-scheme, prefers-reduced-motion).
+      media: features => send('Emulation.setEmulatedMedia', { features }),
       // Opens an address and waits until it has loaded.
       open: async url => { const loaded = once('Page.loadEventFired'); await send('Page.navigate', { url }); await Promise.race([loaded, sleep(30000)]); },
       // Runs an expression (it may be async) and gives back its value.

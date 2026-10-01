@@ -5925,7 +5925,7 @@ const idTag = (k, tag, cls, extra, inner) => `<sc-if value="{{${k}.id}}"><${tag}
 const spArrowLi = `<li class="sp-arrow" aria-hidden="true">${svg('<path d="M5 12h14M13 6l6 6-6 6"/>', 20, 1.8)}</li>`;
 const FIG_CHUNKS = {
   // The two bullets "Pick X if …" as two flashcards side by side: the other app's plain card, and Lucida's with its cover.
-  pick: `<ul class="sp-picks"><sc-for list="{{f.items}}" as="it">${idTag('it', 'li', 'sp-pk', ' data-l="{{it.lucida}}"', `<span class="sp-pk-top"><sc-if value="{{it.lucida}}" hint-placeholder-val="{{ false }}"><span class="sp-pk-mark">${mark(13)}</span></sc-if><span class="sp-pk-name">{{it.name}}</span></span><span class="sp-pk-body">${spParts('it.parts')}</span>`)}</sc-for></ul>`,
+  pick: `<ul class="sp-picks"><sc-for list="{{f.items}}" as="it">${idTag('it', 'li', 'sp-pk sp-fc', ' data-l="{{it.lucida}}"', `<sc-if value="{{it.lucida}}" hint-placeholder-val="{{ false }}"><span class="sp-fc-chip sp-fc-cover" aria-hidden="true"></span></sc-if><span class="sp-pk-name">{{it.name}}</span><span class="sp-pk-body">${spParts('it.parts')}</span>`)}</sc-for></ul>`,
   // Step cards with arrows between them.
   steps: `<ol class="sp-steps{{f.cols}}"><sc-for list="{{f.steps}}" as="st"><li class="sp-step"><span class="sp-sn">{{st.n}}</span><span class="sp-st-b"><span class="sp-st-t">{{st.t}}</span><sc-if value="{{st.hasD}}" hint-placeholder-val="{{ false }}"><span class="sp-st-d">{{st.d}}</span></sc-if></span></li><sc-if value="{{st.more}}" hint-placeholder-val="{{ true }}">${spArrowLi}</sc-if></sc-for></ol>`,
   // Small cards, each an app and its one line (Lucida's with the cover).
@@ -5938,7 +5938,7 @@ const FIG_CHUNKS = {
     + `<sc-if value="{{canvas}}" hint-placeholder-val="{{ true }}"><div class="sp-shot sp-shotc" role="img" aria-label="{{f.alt}}" style="width: {{f.dw}}px; --ard: {{f.ar}}; --arp: {{f.ar}};"><div class="sp-shot-in" style="width: {{f.bw}}px; height: {{f.bh}}px; transform: scale({{f.k}}) translate({{f.tx}}px, {{f.ty}}px);">${SHOT_BOARDS.map(n => `<sc-if value="{{f.b.${n}}}" hint-placeholder-val="{{ false }}"><dc-import name="${n}" dark="{{dark}}" hint-size="${/^Phone|^LiveAnswer$/.test(n) ? '390px,844px' : '1440px,900px'}"></dc-import></sc-if>`).join('')}</div></div></sc-if>`
 };
 // ---- the single-page drawings (batch 2) ----
-const spLn = w => `<span class="sp-ln" style="width: ${w}%;"></span>`;
+const spLn = (w, q = false) => `<span class="sp-ln${q ? ' sp-q' : ''}" style="width: ${w}%;"></span>`;
 const spPlay = `<span class="sp-play" aria-hidden="true">${svg('<path d="M8 5.5v13l11-6.5z" fill="currentColor" stroke="none"/>', 16, 1.8)}</span>`;
 // The memory curve: after each review the chance of remembering is back at the top and falls more slowly; the card comes back at the goal.
 const CURVE_SEGS = (() => {
@@ -5953,12 +5953,12 @@ const CURVE_SEGS = (() => {
 })();
 const FIG_CHUNKS_2 = {
   // One card's reviews along a line: cards at widening gaps (a column on a phone).
-  gaps: `<ol class="sp-gaps"><sc-for list="{{f.items}}" as="g"><sc-if value="{{g.isCard}}" hint-placeholder-val="{{ true }}"><li class="sp-gc"><span class="sp-gcard" aria-hidden="true"><span class="sp-gcv sp-cv{{g.cv}}"></span>${spLn(70)}${spLn(44)}</span><span class="sp-gl">{{g.t}}</span></li></sc-if><sc-if value="{{g.isGap}}" hint-placeholder-val="{{ false }}"><li class="sp-gsp" style="--w: {{g.w}}; --h: {{g.h}}px;"><span class="sp-gt">{{g.t}}</span></li></sc-if></sc-for></ol>`,
+  gaps: `<ol class="sp-gaps"><sc-for list="{{f.items}}" as="g"><sc-if value="{{g.isCard}}" hint-placeholder-val="{{ true }}"><li class="sp-gc"><span class="sp-gcard" aria-hidden="true"><span class="sp-gcv sp-cv{{g.cv}}"></span>${spLn(70, true)}${spLn(44)}</span><span class="sp-gl">{{g.t}}</span></li></sc-if><sc-if value="{{g.isGap}}" hint-placeholder-val="{{ false }}"><li class="sp-gsp" style="--w: {{g.w}}; --h: {{g.h}}px;"><span class="sp-gt">{{g.t}}</span></li></sc-if></sc-for></ol>`,
   curve: `<svg class="sp-curve" viewBox="0 0 320 150" role="img" aria-label="{{f.label}}"><path class="sp-cax" d="M34 8V126H314"/><path class="sp-cgoal" d="M34 46H314"/><text class="sp-ctx" x="314" y="62" text-anchor="end">{{f.goal}}</text><text class="sp-ctx" x="314" y="143" text-anchor="end">{{f.time}}</text><text class="sp-ctx" transform="rotate(-90 14 68)" x="14" y="68" text-anchor="middle">{{f.chance}}</text>${CURVE_SEGS}</svg>`,
   // A message to your AI, and the deck it lands in.
-  chat: `<div class="sp-chat"><div class="sp-bub"><span class="sp-bub-w">{{f.who}}</span><span class="sp-bub-t">{{f.prompt}}</span></div><span class="sp-arrow" aria-hidden="true">${svg('<path d="M5 12h14M13 6l6 6-6 6"/>', 20, 1.8)}</span><div class="sp-dk"><span class="sp-dk-fan" aria-hidden="true"><span class="sp-mc"><span class="sp-mt sp-cv1"></span></span><span class="sp-mc"><span class="sp-mt sp-cv2"></span></span><span class="sp-mc"><span class="sp-mt sp-cv0"></span>${spLn(60)}${spLn(36)}</span></span><span class="sp-dk-b"><span class="sp-dk-n">{{f.deck}}</span><span class="sp-dk-m"><span class="sp-chp">{{f.tag}}</span><span>{{f.note}}</span></span></span></div></div>`,
+  chat: `<div class="sp-chat"><div class="sp-bub"><span class="sp-bub-w">{{f.who}}</span><span class="sp-bub-t">{{f.prompt}}</span></div><span class="sp-arrow" aria-hidden="true">${svg('<path d="M5 12h14M13 6l6 6-6 6"/>', 20, 1.8)}</span><div class="sp-dk"><span class="sp-dk-fan" aria-hidden="true"><span class="sp-mc"><span class="sp-mt sp-cv1"></span></span><span class="sp-mc"><span class="sp-mt sp-cv2"></span></span><span class="sp-mc"><span class="sp-mt sp-cv0"></span>${spLn(60, true)}${spLn(36)}</span></span><span class="sp-dk-b"><span class="sp-dk-n">{{f.deck}}</span><span class="sp-dk-m"><span class="sp-chp">{{f.tag}}</span><span>{{f.note}}</span></span></span></div></div>`,
   // Learn mode: a question card with four answers, one right; and the way a card gets to "learned".
-  learn: `<div class="sp-lm"><div class="sp-lq"><span class="sp-chp">{{f.chip}}</span><span class="sp-lq-q">${spLn(92)}${spLn(62)}</span><ul class="sp-lq-a" aria-hidden="true"><li class="sp-lq-o sp-lq-ok"><span class="sp-lq-n" style="background: #5B63F0;">1</span>${spLn(54)}<span class="sp-lq-t">${svg(I.check, 14, 2.6)}</span></li><li class="sp-lq-o"><span class="sp-lq-n" style="background: #F2761D;">2</span>${spLn(40)}</li><li class="sp-lq-o"><span class="sp-lq-n" style="background: #1E9BB2;">3</span>${spLn(48)}</li><li class="sp-lq-o"><span class="sp-lq-n" style="background: #EA3F7F;">4</span>${spLn(34)}</li></ul></div><div class="sp-lp"><ol class="sp-lps"><sc-for list="{{f.path}}" as="p"><li class="sp-lpi" data-d="{{p.done}}"><span class="sp-lpt">{{p.t}}</span><sc-if value="{{p.hasD}}" hint-placeholder-val="{{ false }}"><span class="sp-lpd">{{p.d}}</span></sc-if></li><sc-if value="{{p.more}}" hint-placeholder-val="{{ true }}">${spArrowLi}</sc-if></sc-for></ol><p class="sp-lmiss"><span class="sp-lmk" aria-hidden="true">${svg('<path d="M6 6l12 12M18 6L6 18"/>', 12, 2.6)}</span>{{f.miss}}</p></div></div>`,
+  learn: `<div class="sp-lm"><div class="sp-lq"><span class="sp-chp">{{f.chip}}</span><span class="sp-lq-q">${spLn(92, true)}${spLn(62, true)}</span><ul class="sp-lq-a" aria-hidden="true"><li class="sp-lq-o sp-lq-ok"><span class="sp-lq-n" style="background: #5B63F0;">1</span>${spLn(54)}<span class="sp-lq-t">${svg(I.check, 14, 2.6)}</span></li><li class="sp-lq-o"><span class="sp-lq-n" style="background: #F2761D;">2</span>${spLn(40)}</li><li class="sp-lq-o"><span class="sp-lq-n" style="background: #1E9BB2;">3</span>${spLn(48)}</li><li class="sp-lq-o"><span class="sp-lq-n" style="background: #EA3F7F;">4</span>${spLn(34)}</li></ul></div><div class="sp-lp"><ol class="sp-lps"><sc-for list="{{f.path}}" as="p"><li class="sp-lpi" data-d="{{p.done}}"><span class="sp-lpt">{{p.t}}</span><sc-if value="{{p.hasD}}" hint-placeholder-val="{{ false }}"><span class="sp-lpd">{{p.d}}</span></sc-if></li><sc-if value="{{p.more}}" hint-placeholder-val="{{ true }}">${spArrowLi}</sc-if></sc-for></ol><p class="sp-lmiss"><span class="sp-lmk" aria-hidden="true">${svg('<path d="M6 6l12 12M18 6L6 18"/>', 12, 2.6)}</span>{{f.miss}}</p></div></div>`,
   // Live: the code on the big screen, the four answers, and the leaderboard (example numbers).
   live: `<div class="sp-lv"><div class="sp-lv-code"><span class="sp-lv-j">{{f.join}}</span><span class="sp-lv-c">{{f.code}}</span></div><ul class="sp-lv-t" aria-hidden="true"><li class="sp-lt0">${svg('<circle cx="12" cy="12" r="6" fill="currentColor" stroke="none"/>', 20, 1)}</li><li class="sp-lt1">${svg('<path d="M12 5l8 14H4z" fill="currentColor" stroke="none"/>', 20, 1)}</li><li class="sp-lt2">${svg('<rect x="6" y="6" width="12" height="12" rx="2" fill="currentColor" stroke="none"/>', 20, 1)}</li><li class="sp-lt3">${svg('<path d="M12 4l8 8-8 8-8-8z" fill="currentColor" stroke="none"/>', 20, 1)}</li></ul><ol class="sp-lv-b"><sc-for list="{{f.board}}" as="r"><li><span class="sp-lv-r">{{r.n}}</span><span class="sp-av" style="background: {{r.c}};">{{r.i}}</span><span class="sp-lv-w">{{r.who}}</span><span class="sp-lv-p">{{r.pts}}</span></li></sc-for></ol></div>`,
   // Shared decks: someone's deck, and the two ways to use it.
@@ -5968,21 +5968,23 @@ const FIG_CHUNKS_2 = {
   // A picture with covered labels, one of them shown.
   occlusion: `<div class="sp-oc"><svg class="sp-oc-s" viewBox="0 0 320 190" role="img" aria-label="{{f.label}}"><ellipse class="sp-oc-l" cx="106" cy="96" rx="96" ry="72"/><ellipse class="sp-oc-l" cx="62" cy="62" rx="15" ry="9"/><circle class="sp-oc-l" cx="120" cy="100" r="30"/><circle class="sp-oc-d" cx="120" cy="100" r="9"/><path class="sp-oc-l" d="M77 60L222 41M202 98L222 100M141 121L190 163"/><g class="sp-oc-c"><rect x="222" y="28" width="82" height="26" rx="7"/><rect x="222" y="87" width="82" height="26" rx="7"/><rect x="190" y="150" width="114" height="26" rx="7" class="sp-oc-r"/></g><text class="sp-oc-n" x="263" y="46" text-anchor="middle">1</text><text class="sp-oc-n" x="263" y="105" text-anchor="middle">2</text><text class="sp-oc-w" x="247" y="168" text-anchor="middle">{{f.shown}}</text></svg></div>`,
   // Import: text from Anki, Quizlet or a spreadsheet, into Import cards, into cards.
-  import: `<div class="sp-im"><ul class="sp-im-src"><sc-for list="{{f.sources}}" as="s"><li class="sp-im-s"><span class="sp-im-n">{{s.t}}</span><span class="sp-im-d">{{s.d}}</span></li></sc-for></ul><span class="sp-arrow" aria-hidden="true">${svg('<path d="M5 12h14M13 6l6 6-6 6"/>', 20, 1.8)}</span><div class="sp-im-box"><span class="sp-im-h">{{f.box}}</span><span class="sp-im-r" aria-hidden="true">${spLn(34)}<i></i>${spLn(40)}</span><span class="sp-im-r" aria-hidden="true">${spLn(26)}<i></i>${spLn(48)}</span><span class="sp-im-r" aria-hidden="true">${spLn(38)}<i></i>${spLn(30)}</span></div><span class="sp-arrow" aria-hidden="true">${svg('<path d="M5 12h14M13 6l6 6-6 6"/>', 20, 1.8)}</span><span class="sp-im-out" aria-hidden="true"><span class="sp-mc"><span class="sp-mt sp-cv3"></span>${spLn(60)}</span><span class="sp-mc"><span class="sp-mt sp-cv4"></span>${spLn(48)}</span><span class="sp-mc"><span class="sp-mt sp-cv5"></span>${spLn(66)}</span></span></div><p class="sp-im-no"><span class="sp-im-x" aria-hidden="true">${svg('<path d="M6 6l12 12M18 6L6 18"/>', 12, 2.6)}</span>{{f.no}}</p>`,
+  import: `<div class="sp-im"><ul class="sp-im-src"><sc-for list="{{f.sources}}" as="s"><li class="sp-im-s"><span class="sp-im-n">{{s.t}}</span><span class="sp-im-d">{{s.d}}</span></li></sc-for></ul><span class="sp-arrow" aria-hidden="true">${svg('<path d="M5 12h14M13 6l6 6-6 6"/>', 20, 1.8)}</span><div class="sp-im-box"><span class="sp-im-h">{{f.box}}</span><span class="sp-im-r" aria-hidden="true">${spLn(34)}<i></i>${spLn(40)}</span><span class="sp-im-r" aria-hidden="true">${spLn(26)}<i></i>${spLn(48)}</span><span class="sp-im-r" aria-hidden="true">${spLn(38)}<i></i>${spLn(30)}</span></div><span class="sp-arrow" aria-hidden="true">${svg('<path d="M5 12h14M13 6l6 6-6 6"/>', 20, 1.8)}</span><span class="sp-im-out" aria-hidden="true"><span class="sp-mc"><span class="sp-mt sp-cv3"></span>${spLn(60, true)}</span><span class="sp-mc"><span class="sp-mt sp-cv4"></span>${spLn(48, true)}</span><span class="sp-mc"><span class="sp-mt sp-cv5"></span>${spLn(66, true)}</span></span></div><p class="sp-im-no"><span class="sp-im-x" aria-hidden="true">${svg('<path d="M6 6l12 12M18 6L6 18"/>', 12, 2.6)}</span>{{f.no}}</p>`,
   // A plan: small cards along the way, each with its day.
   plan: `<ol class="sp-steps sp-plan{{f.cols}}"><sc-for list="{{f.steps}}" as="st"><li class="sp-step"><span class="sp-day sp-cv{{st.cv}}">{{st.n}}</span><span class="sp-st-b"><span class="sp-st-t">{{st.t}}</span><sc-if value="{{st.hasD}}" hint-placeholder-val="{{ false }}"><span class="sp-st-d">{{st.d}}</span></sc-if></span></li><sc-if value="{{st.more}}" hint-placeholder-val="{{ true }}">${spArrowLi}</sc-if></sc-for></ol>`,
   // One example card, front and back, and what a day looks like.
-  example: `<div class="sp-ex"><div class="sp-ex-cards"><div class="sp-exc"><span class="sp-exc-l">{{f.frontLabel}}</span><span class="sp-exc-t">{{f.front}}</span></div><span class="sp-arrow" aria-hidden="true">${svg('<path d="M5 12h14M13 6l6 6-6 6"/>', 20, 1.8)}</span><div class="sp-exc sp-exc-b"><span class="sp-exc-l">{{f.backLabel}}</span><span class="sp-exc-t">{{f.back}}</span></div></div><ul class="sp-ex-load"><sc-for list="{{f.load}}" as="l"><li><span class="sp-ex-i sp-cv{{l.cv}}" aria-hidden="true"></span><span>{{l.t}}</span></li></sc-for></ul></div>`,
+  example: `<div class="sp-ex"><div class="sp-ex-cards"><div class="sp-exc sp-fc"><span class="sp-fc-chip">{{f.frontLabel}}</span><span class="sp-exc-t">{{f.front}}</span></div><span class="sp-arrow" aria-hidden="true">${svg('<path d="M5 12h14M13 6l6 6-6 6"/>', 20, 1.8)}</span><div class="sp-exc sp-fc sp-exc-b"><span class="sp-fc-chip">{{f.backLabel}}</span><span class="sp-exc-t">{{f.back}}</span></div></div><ul class="sp-ex-load"><sc-for list="{{f.load}}" as="l"><li><span class="sp-ex-i sp-cv{{l.cv}}" aria-hidden="true"></span><span>{{l.t}}</span></li></sc-for></ul></div>`,
   // Word cards: a sentence with the word hidden, and a sound card with its play button.
-  words: `<div class="sp-wd"><div class="sp-wc"><span class="sp-wl">{{f.a.label}}</span><span class="sp-wt">{{f.a.before}} <span class="sp-wb" aria-hidden="true"></span> {{f.a.after}}</span>${spPlay}</div><div class="sp-wc"><span class="sp-wl">{{f.b.label}}</span><span class="sp-wave" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span><span class="sp-wch"><sc-for list="{{f.b.ways}}" as="w"><span class="sp-chp">{{w}}</span></sc-for></span>${spPlay}</div></div>`
+  words: `<div class="sp-wd"><div class="sp-wc sp-fc"><span class="sp-fc-chip">{{f.a.label}}</span><span class="sp-wt">{{f.a.before}} <span class="sp-wb" aria-hidden="true"></span> {{f.a.after}}</span></div><div class="sp-wc sp-fc"><span class="sp-fc-chip">{{f.b.label}}</span><span class="sp-snd">${spPlay}<span class="sp-wave" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span></span><span class="sp-wch"><sc-for list="{{f.b.ways}}" as="w"><span class="sp-chp">{{w}}</span></sc-for></span></div></div>`
 };
 Object.assign(FIG_CHUNKS, FIG_CHUNKS_2);
 const spFig = `<figure class="sp-fig sp-f-{{f.kind}}">${KINDS.map(k => { if (!FIG_CHUNKS[k]) throw new Error('visuals: no drawing for the figure kind "' + k + '"'); return `<sc-if value="{{f.is${k.charAt(0).toUpperCase() + k.slice(1)}}}" hint-placeholder-val="{{ false }}">${FIG_CHUNKS[k]}</sc-if>`; }).join('')}<sc-if value="{{f.hasCaption}}" hint-placeholder-val="{{ false }}"><figcaption class="sp-fcap">{{f.caption}}</figcaption></sc-if></figure>`;
 // A table made from a section's bullets: what, and its words.
 const spT2 = `<sc-if value="{{s.hasTable}}" hint-placeholder-val="{{ false }}"><div class="sp-t2w sp-tsc" role="region" aria-label="Table, scrolls sideways" tabindex="0"><table class="sp-t2"><thead><tr><sc-for list="{{s.table.head}}" as="c"><th scope="col">{{c.label}}</th></sc-for></tr></thead><tbody><sc-for list="{{s.table.rows}}" as="r">${idTag('r', 'tr', 'sp-t2r', '', `<th scope="row">{{r.label}}</th><td>${spParts('r.parts')}</td>`)}</sc-for></tbody></table></div></sc-if>`;
-// "Test yourself": each card is a <details>: the question on the card, and a tap shows the answer on the same card, at once.
-const spTcInner = `<summary class="sp-tq"><span class="sp-tn sp-cv{{c.cv}}">{{c.n}}</span><span class="sp-tt">{{c.q}}</span><span class="sp-th">Show the answer</span></summary><div class="sp-ta"><span class="sp-ta-l">Answer</span>{{c.a}}</div>`;
-const spTest = `<sc-if value="{{hasTest}}" hint-placeholder-val="{{ false }}"><section class="sp-sec sp-test" id="test-yourself">${spH2('Test yourself')}<div class="sp-tcs sp-wide{{testCols}}"><sc-for list="{{test}}" as="c"><sc-if value="{{c.open}}" hint-placeholder-val="{{ false }}"><details class="sp-tc" open>${spTcInner}</details></sc-if><sc-if value="{{c.closed}}" hint-placeholder-val="{{ true }}"><details class="sp-tc">${spTcInner}</details></sc-if></sc-for></div><p class="sp-tmore"><a class="sp-u" href="{{links.start}}">Make your own cards free</a></p></section></sc-if>`;
+// "Test yourself": each card is the app's card (a <details>, so it needs no script): the question on its front, and a tap turns it to the answer, on
+// the same card and at once, as the app does; a tap again turns it back. The chip in the corner says what a tap does, and on its back the faint line
+// under the words (the app's note) is the question.
+const spTcInner = `<summary class="sp-tq"><span class="sp-fc-chip"><span class="sp-tca">Show the answer</span><span class="sp-tcq">Show the question</span></span><span class="sp-tt sp-tf">{{c.q}}</span><span class="sp-tt sp-ta">{{c.a}}</span><span class="sp-tn" aria-hidden="true">{{c.q}}</span></summary>`;
+const spTest = `<sc-if value="{{hasTest}}" hint-placeholder-val="{{ false }}"><section class="sp-sec sp-test" id="test-yourself">${spH2('Test yourself')}<div class="sp-tcs"><sc-for list="{{test}}" as="c"><sc-if value="{{c.open}}" hint-placeholder-val="{{ false }}"><details class="sp-tc sp-fc" open>${spTcInner}</details></sc-if><sc-if value="{{c.closed}}" hint-placeholder-val="{{ true }}"><details class="sp-tc sp-fc">${spTcInner}</details></sc-if></sc-for></div><p class="sp-tmore"><a class="sp-u" href="{{links.start}}">Make your own cards free</a></p></section></sc-if>`;
 const spSections = key => `<sc-for list="{{${key}}}" as="s" hint-placeholder-count="3"><section class="sp-sec">
   <sc-if value="{{s.h2}}" hint-placeholder-val="{{ true }}">${spH2('{{s.h2}}', ' id="{{s.id}}"')}</sc-if>
   <sc-for list="{{s.figsBefore}}" as="f">${spFig}</sc-for>
@@ -6125,10 +6127,18 @@ const SITE_CSS = [
   // dark) with a soft shadow, and Lucida's wears the deck cover's gradient.
   '.sp-fig{margin:26px 0 0}.sp-fig:not(.sp-f-screen){box-sizing:border-box;padding:16px;border-radius:24px;background:var(--sp-fstage);box-shadow:inset 0 0 0 1px var(--sp-fedge)}',
   '.sp-fcap{margin:12px 2px 0;font-size:14px;line-height:1.45;color:var(--sp-muted)}.sp-fig:not(.sp-f-screen) .sp-fcap{margin:14px 2px 0}',
+  // The app's flashcard, wherever the articles draw one (the pick, example and word cards, and "Test yourself"). It is the Review screen's card: WebReview
+  // draws it 780 × 480 with a radius of 36, padding of 44 × 56, a 1 px line, the app's shadow, and its words 38 px at weight 500 with a tight letter-spacing,
+  // left-aligned and centered in the card (a faint note under them and a chip in the top corner when there are any). Here every measure is in em, in the
+  // same ratios, from the size of the front words (--fs), so one card is the other at another size; the small parts keep a size you can read. Dark is the
+  // app's dark card (#141414 with a #262626 line, no shadow).
+  '.sp-fc{--fs:20px;position:relative;box-sizing:border-box;background:var(--sp-fcard);border:1px solid var(--sp-fedge);border-radius:.95em;box-shadow:var(--sp-fshadow);padding:1.16em 1.47em;font-size:var(--fs);font-weight:500;line-height:1.25;letter-spacing:-.02em;text-align:left;color:var(--sp-text)}',
+  '.sp-fc-chip{position:absolute;top:calc(var(--fs) * .55);right:calc(var(--fs) * .55);z-index:1;display:inline-flex;align-items:center;justify-content:center;height:max(26px,1.4em);padding:0 12px;box-sizing:border-box;border-radius:999px;background:color-mix(in srgb,var(--sp-text) 7%,var(--sp-fcard));color:var(--sp-text);font-size:max(12px,.34em);font-weight:600;line-height:1;letter-spacing:0;white-space:nowrap}',
+  // Lucida's card in a comparison wears a deck's cover (the app's default one, Iris) in the corner where a chip sits.
+  `.sp-fc-cover{width:max(44px,2.2em);padding:0;background:${coverOf('Iris')};box-shadow:inset 0 0 0 1px rgba(0,0,0,.06)}`,
   '.sp-picks{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:minmax(0,1fr);gap:12px}',
-  '.sp-pk{display:block;box-sizing:border-box;padding:16px 18px 18px;border-radius:20px;background:var(--sp-fcard);box-shadow:var(--sp-fshadow),0 0 0 1px var(--sp-fedge);font-size:16px;line-height:1.5}',
-  '.sp-pk-top{display:flex;align-items:center;gap:8px;margin-bottom:8px}.sp-pk-name{font-size:17px;font-weight:700;letter-spacing:-.01em}.sp-pk-body{display:block}',
-  `.sp-pk[data-l="true"]{padding:0;overflow:hidden}.sp-pk[data-l="true"] .sp-pk-top{margin:0;padding:14px 18px;color:#FFFFFF;background:${MID}}.sp-pk[data-l="true"] .sp-pk-body{padding:14px 18px 18px}`,
+  '.sp-pk{--fs:22px;display:block;padding-top:1.5em}',
+  '.sp-pk-name{display:block;margin-right:3em;font-size:1em}.sp-pk-body{display:block;margin-top:.55em;font-size:16px;font-weight:400;line-height:1.5;letter-spacing:0}',
   '.sp-steps{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;align-items:stretch}',
   '.sp-step{display:flex;align-items:flex-start;gap:12px;box-sizing:border-box;padding:12px 14px;border-radius:16px;background:var(--sp-fcard);box-shadow:var(--sp-fshadow),0 0 0 1px var(--sp-fedge)}',
   '.sp-sn{flex:none;display:flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:9px;background:var(--sp-text);color:var(--sp-bg);font-size:13px;font-weight:600}',
@@ -6155,16 +6165,16 @@ const SITE_CSS = [
   '.sp-t2 tbody th{width:32%;font-weight:600;color:var(--sp-text)}.sp-t2 tbody tr:first-child th,.sp-t2 tbody tr:first-child td{border-top:0}',
   // "Test yourself": flashcards in a row; on a phone one row that scrolls sideways and snaps (the page itself never does).
   '.sp-tcs{display:flex;gap:12px;align-items:flex-start;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none;margin:18px -20px 0;padding:6px 20px 16px;overscroll-behavior-x:contain}.sp-tcs::-webkit-scrollbar{display:none}',
-  '.sp-tc{flex:0 0 82%;box-sizing:border-box;scroll-snap-align:center;border-radius:22px;background:var(--sp-fcard);box-shadow:var(--sp-fshadow),0 0 0 1px var(--sp-fedge)}',
-  '.sp-tq{display:flex;flex-direction:column;align-items:flex-start;gap:14px;padding:16px 18px 18px;cursor:pointer;list-style:none}.sp-tq::-webkit-details-marker{display:none}',
-  '.sp-tn{display:flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:10px;color:#000000;font-size:14px;font-weight:700}',
-  '.sp-tt{font-size:18px;font-weight:600;line-height:1.35;letter-spacing:-.01em;text-wrap:balance}',
-  '.sp-th{display:inline-flex;align-items:center;height:32px;box-sizing:border-box;padding:0 14px;border-radius:999px;background:var(--sp-surf);color:var(--sp-text);font-size:14px;font-weight:600}.sp-tc[open] .sp-th{display:none}',
-  '.sp-ta{padding:0 18px 20px;font-size:16px;line-height:1.5}.sp-ta-l{display:block;margin-bottom:6px;font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--sp-muted)}',
-  '.sp-tmore{margin:4px 0 0;font-size:16px}',
+  '.sp-tc{--fs:20px;flex:0 0 82%;scroll-snap-align:center;padding:0}',
+  '.sp-tq{display:flex;align-items:center;box-sizing:border-box;min-height:11em;padding:1.16em 1.47em;cursor:pointer;list-style:none;-webkit-tap-highlight-color:transparent}.sp-tq::-webkit-details-marker{display:none}',
+  '.sp-tt{display:block;margin-right:.4em;font-size:1em;font-weight:500;line-height:1.25;letter-spacing:-.02em;text-wrap:balance}.sp-ta{font-size:.84em;line-height:1.3;letter-spacing:-.015em}',
+  '.sp-tc:not([open]) .sp-ta,.sp-tc[open] .sp-tf,.sp-tc[open] .sp-tca,.sp-tc:not([open]) .sp-tcq,.sp-tn{display:none}',
+  '.sp-tc[open] .sp-tn{display:block;position:absolute;left:calc(var(--fs) * 1.47);right:calc(var(--fs) * 1.47);bottom:calc(var(--fs) * .85);font-size:max(13px,.37em);font-weight:400;line-height:1.4;letter-spacing:0;color:var(--sp-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}',
+  '.sp-tc .sp-fc-chip{cursor:pointer}.sp-tq:focus-visible{outline:2px solid var(--sp-text);outline-offset:3px;border-radius:.95em}',
+  '.sp-tmore{margin:16px 0 0;font-size:16px}',
   // The drawings of single pages: cards, bars for text, chips, avatars; each a few small pieces on the stage.
-  '.sp-ln{display:block;height:6px;border-radius:3px;background:var(--sp-fsoft)}',
-  '.sp-mc{position:relative;display:flex;flex-direction:column;gap:6px;box-sizing:border-box;padding:8px 9px;border-radius:10px;background:var(--sp-fcard);box-shadow:var(--sp-fshadow),0 0 0 1px var(--sp-fedge);overflow:hidden}.sp-mt{display:block;width:16px;height:6px;border-radius:3px}',
+  '.sp-ln{display:block;height:6px;border-radius:3px;background:var(--sp-fsoft)}.sp-ln.sp-q{background:color-mix(in srgb,var(--sp-text) 24%,var(--sp-fcard))}',
+  '.sp-mc{position:relative;display:flex;flex-direction:column;gap:6px;box-sizing:border-box;padding:8px 9px;border-radius:10px;background:var(--sp-fcard);border:1px solid var(--sp-fedge);box-shadow:var(--sp-fshadow);overflow:hidden}.sp-mt{display:block;align-self:flex-end;width:16px;height:6px;border-radius:3px}',
   '.sp-chp{display:inline-flex;align-items:center;height:24px;box-sizing:border-box;padding:0 10px;border-radius:999px;background:var(--sp-fsoft);color:var(--sp-text);font-size:12px;font-weight:600;white-space:nowrap}',
   '.sp-av{display:inline-flex;align-items:center;justify-content:center;flex:none;width:24px;height:24px;border-radius:50%;color:#FFFFFF;font-size:11px;font-weight:700}',
   '.sp-play{display:inline-flex;align-items:center;justify-content:center;flex:none;width:36px;height:36px;border-radius:50%;background:var(--sp-text);color:var(--sp-bg)}',
@@ -6172,8 +6182,8 @@ const SITE_CSS = [
   '.sp-fig .sp-arrow{flex:none}',
   // Cards at widening gaps (a column on a phone, a row on a computer).
   '.sp-gaps{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;align-items:flex-start}',
-  '.sp-gc{display:flex;align-items:center;gap:12px;flex:none}.sp-gcard{display:flex;flex-direction:column;gap:5px;box-sizing:border-box;width:52px;height:36px;padding:6px 7px;border-radius:9px;background:var(--sp-fcard);box-shadow:var(--sp-fshadow),0 0 0 1px var(--sp-fedge);overflow:hidden}',
-  '.sp-gcv{display:block;width:14px;height:5px;border-radius:3px}.sp-gl{font-size:14px;font-weight:600}',
+  '.sp-gc{display:flex;align-items:center;gap:12px;flex:none}.sp-gcard{display:flex;flex-direction:column;gap:5px;box-sizing:border-box;width:52px;height:36px;padding:5px 6px;border-radius:9px;background:var(--sp-fcard);border:1px solid var(--sp-fedge);box-shadow:var(--sp-fshadow);overflow:hidden}',
+  '.sp-gcv{display:block;align-self:flex-end;width:14px;height:5px;border-radius:3px}.sp-gl{font-size:14px;font-weight:600}',
   '.sp-gsp{position:relative;flex:none;width:52px;height:var(--h);display:flex;align-items:center}.sp-gsp::before{content:"";position:absolute;left:25px;top:3px;bottom:3px;border-left:2px dashed var(--sp-fline)}.sp-gt{margin-left:66px;font-size:13px;font-weight:600;white-space:nowrap;color:var(--sp-muted)}',
   '.sp-curve{display:block;width:100%;height:auto;max-height:210px}.sp-cax{fill:none;stroke:var(--sp-fline);stroke-width:1.5}.sp-cgoal{fill:none;stroke:var(--sp-fline);stroke-width:1.5;stroke-dasharray:4 4}',
   '.sp-ctx{font-size:12px;fill:var(--sp-muted);font-family:inherit}.sp-cc{fill:none;stroke:var(--sp-g1);stroke-width:2.6;stroke-linecap:round}.sp-ccd{fill:none;stroke:var(--sp-fline);stroke-width:1.5;stroke-dasharray:3 3}.sp-cdot{fill:var(--sp-g1)}',
@@ -6187,7 +6197,7 @@ const SITE_CSS = [
   '.sp-dk-b{display:flex;flex-direction:column;gap:6px;min-width:0}.sp-dk-n{font-size:17px;font-weight:700;line-height:1.25}.sp-dk-m{display:flex;flex-wrap:wrap;align-items:center;gap:6px 8px;font-size:14px;line-height:1.4;color:var(--sp-muted)}',
   // Learn mode.
   '.sp-lm{display:flex;flex-direction:column;gap:12px}',
-  '.sp-lq{display:flex;flex-direction:column;gap:10px;box-sizing:border-box;padding:14px;border-radius:18px;background:var(--sp-fcard);box-shadow:var(--sp-fshadow),0 0 0 1px var(--sp-fedge)}.sp-lq .sp-chp{align-self:flex-start}',
+  '.sp-lq{display:flex;flex-direction:column;gap:10px;box-sizing:border-box;padding:14px;border-radius:18px;background:var(--sp-fcard);border:1px solid var(--sp-fedge);box-shadow:var(--sp-fshadow)}.sp-lq .sp-chp{align-self:flex-end}',
   '.sp-lq-q{display:flex;flex-direction:column;gap:6px}.sp-lq-a{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}',
   '.sp-lq-o{display:flex;align-items:center;gap:10px;height:30px;box-sizing:border-box;padding:0 10px;border-radius:12px;background:var(--sp-fstage);box-shadow:inset 0 0 0 1px var(--sp-fedge)}',
   '.sp-lq-n{display:flex;align-items:center;justify-content:center;flex:none;width:22px;height:22px;border-radius:50%;color:#FFFFFF;font-size:12px;font-weight:700}.sp-lq-ok{box-shadow:inset 0 0 0 2px var(--sp-good)}.sp-lq-t{margin-left:auto;display:flex;color:var(--sp-good)}',
@@ -6230,16 +6240,15 @@ const SITE_CSS = [
   '.sp-plan .sp-step{gap:12px}.sp-plan .sp-day{min-width:76px;justify-content:center}',
   // One example card, front and back, and what a day looks like.
   '.sp-ex{display:flex;flex-direction:column;gap:10px}.sp-ex-cards{display:flex;flex-direction:column;align-items:stretch;gap:2px}.sp-ex-cards>.sp-arrow{align-self:center}',
-  '.sp-exc{display:flex;flex-direction:column;gap:6px;box-sizing:border-box;padding:12px 14px;border-radius:18px;background:var(--sp-fcard);box-shadow:var(--sp-fshadow),0 0 0 1px var(--sp-fedge)}.sp-exc-b{box-shadow:var(--sp-fshadow),0 0 0 2px var(--sp-g1)}',
-  '.sp-exc-l{font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--sp-muted)}.sp-exc-t{font-size:17px;font-weight:600;line-height:1.35}',
+  '.sp-exc{--fs:20px;display:flex;flex-direction:column;justify-content:center;min-height:9.2em;padding-top:2.2em}.sp-exc-t{display:block}.sp-exc-b .sp-exc-t{font-size:.84em;line-height:1.3;letter-spacing:-.015em}',
   '.sp-ex-load{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}.sp-ex-load li{display:flex;align-items:center;gap:10px;font-size:14px;line-height:1.4}.sp-ex-i{flex:none;width:12px;height:12px;border-radius:4px}',
   // Word cards.
-  '.sp-wd{display:grid;grid-template-columns:minmax(0,1fr);gap:12px}.sp-wc{position:relative;display:flex;flex-direction:column;gap:10px;box-sizing:border-box;min-height:118px;padding:14px 16px;border-radius:18px;background:var(--sp-fcard);box-shadow:var(--sp-fshadow),0 0 0 1px var(--sp-fedge)}',
-  '.sp-wl{font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--sp-muted)}.sp-wt{padding-right:48px;font-size:20px;font-weight:600;line-height:1.5}',
-  '.sp-wb{display:inline-block;width:72px;height:24px;margin:0 2px;vertical-align:-5px;border-radius:7px;background:var(--sp-fsoft);box-shadow:inset 0 0 0 1px var(--sp-fedge)}.sp-wc .sp-play{position:absolute;right:14px;bottom:14px}',
+  '.sp-wd{display:grid;grid-template-columns:minmax(0,1fr);gap:12px}.sp-wc{--fs:22px;display:flex;flex-direction:column;justify-content:center;gap:.7em;min-height:9.2em;padding-top:2.2em}',
+  '.sp-wt{display:block;font-size:1em;line-height:1.5}.sp-snd{display:flex;align-items:center;gap:14px}',
+  '.sp-wb{display:inline-block;width:3.2em;height:1.15em;margin:0 .1em;vertical-align:-.22em;border-radius:999px;background:var(--sp-surf2)}',
   '.sp-wave{display:flex;align-items:center;gap:3px;height:40px}.sp-wave i{display:block;width:3px;border-radius:2px;background:var(--sp-text)}',
   '.sp-wave i:nth-child(1){height:8px}.sp-wave i:nth-child(2){height:14px}.sp-wave i:nth-child(3){height:22px}.sp-wave i:nth-child(4){height:30px}.sp-wave i:nth-child(5){height:38px}.sp-wave i:nth-child(6){height:30px}.sp-wave i:nth-child(7){height:22px}.sp-wave i:nth-child(8){height:34px}.sp-wave i:nth-child(9){height:26px}.sp-wave i:nth-child(10){height:16px}.sp-wave i:nth-child(11){height:22px}.sp-wave i:nth-child(12){height:12px}.sp-wave i:nth-child(13){height:8px}',
-  '.sp-wch{display:flex;flex-wrap:wrap;gap:6px;padding-right:48px}',
+  '.sp-wch{display:flex;flex-wrap:wrap;gap:6px}',
   COVER_CSS,
   // A computer: a little larger.
   '@container (min-width: 761px){.sp-top{padding-top:48px}.sp-h1{margin-top:22px;font-size:44px;line-height:1.1;letter-spacing:-.035em}.sp-lead{margin-top:20px;font-size:20px}',
@@ -6257,7 +6266,7 @@ const SITE_CSS = [
   '.sp-bsec .sp-h2{font-size:30px}.sp-bsec{margin-top:64px}',
   '.sp-hub .sp-top{padding-top:56px}.sp-hub .sp-sec,.sp-hub .sp-qcard,.sp-hub .sp-cta,.sp-hub .sp-src{margin-top:64px}.sp-hub .sp-sec>.sp-h2{font-size:30px}',
   '.sp-fig{margin-top:32px}.sp-fig:not(.sp-f-screen){padding:22px}',
-  '.sp-picks{grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;align-items:start}',
+  '.sp-picks{grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;align-items:stretch}',
   '.sp-steps{flex-direction:row;align-items:stretch}.sp-steps.sp-n5,.sp-steps.sp-n6,.sp-steps.sp-n7{grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}.sp-step{flex:1 1 0;flex-direction:column;gap:10px;padding:14px}.sp-plan .sp-step{gap:8px}.sp-plan .sp-day{min-width:0;justify-content:flex-start}.sp-arrow{flex:none;width:30px;height:auto}.sp-arrow svg{transform:none}',
   '.sp-apps{grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}',
   '.sp-shot{max-width:min(100%,calc(560px * var(--ard)))}.sp-shotc{max-width:none}',
@@ -6284,7 +6293,10 @@ const SITE_CSS = [
   '.sp-has-toc .sp-tocd{display:none}',
   '.sp-has-toc .sp-main{grid-column:2}}',
   // On a narrow page (a phone, or a window under 761 px) the call-to-action card changes its art.
+  // (On a phone the app's card has the phone's measures too: PhoneReview has its type at 28 px, a radius of 36, padding of 26 × 22 and the chip 12 px from the
+  // corner, so the card is rounder and its padding tighter, in the same ratios.)
   '@container (max-width: 760px){.sp-band-wide{display:none!important}.sp-band-tall{display:block!important}.sp-table table{--first:min(var(--f),132px)}',
+  '.sp-fc{border-radius:1.29em;padding:.93em .79em}.sp-fc-chip{top:calc(var(--fs) * .43);right:calc(var(--fs) * .43)}.sp-tq{padding:.93em .79em}.sp-tc[open] .sp-tn{left:calc(var(--fs) * .79);right:calc(var(--fs) * .79)}.sp-pk{padding-top:1.7em}.sp-pk-name{margin-right:2.4em}.sp-exc,.sp-wc{padding-top:2.3em;min-height:6.4em}.sp-tc{padding:0}',
   '}',
   SKY_CSS, HEAD_CSS, NO_RISE
 ].join('');
@@ -6480,6 +6492,20 @@ const ogPill = (x, y, h, body, o = {}) => `<div style="position: absolute; left:
 const ogDot = (slot, x, y, d, ring = 3) => `<div style="position: absolute; left: ${x}px; top: ${y}px; width: ${d}px; height: ${d}px; border-radius: 50%; background: linear-gradient(140deg, {{${slot}.b0.c}}, {{${slot}.b2.c}}); box-shadow: 0 0 0 ${ring}px {{card}}, 0 8px 18px -8px {{sh}};"></div>`;
 const ogBar = (x, y, w, h = 10, bg = '{{bar}}') => `<div style="position: absolute; left: ${x}px; top: ${y}px; width: ${w}px; height: ${h}px; border-radius: ${h}px; background: ${bg};"></div>`;
 const ogTxt = (x, y, w, text, o = {}) => `<div style="position: absolute; left: ${x}px; top: ${y}px; width: ${w}px; font-size: ${o.fs ?? 24}px; font-weight: ${o.fw ?? 500}; line-height: ${o.lh ?? 1.25}; letter-spacing: -.02em; color: ${o.fg ?? '{{t.text}}'}; text-align: ${o.align ?? 'left'};">${text}</div>`;
+// The app's flashcard in a picture: the Review screen's card (WebReview draws it 780 × 480 with a radius of 36, padding of 56 × 44, a 1 px line, the app's
+// shadow, and its words left-aligned and centered in the card, with a faint note at the bottom and a chip in the top corner). Radius, padding and the
+// line scale with the card's width here; `fs` is the size of its words in picture pixels (names and single words are set bigger than the app's share
+// of the card, so they still read when the picture is small). o: { text | html, fs, fw, note, noteFs, chip: a palette slot like c1 (its deck cover) or
+// words, box: the card's own pieces (placed inside it), css }.
+const ogCover = slot => `radial-gradient(circle at 18% 88%, {{${slot}.b0.c}}, transparent 62%), radial-gradient(circle at 86% 10%, {{${slot}.b3.c}}, transparent 58%), {{${slot}.base}}`;
+const ogFace = (x, y, w, h, rot, o = {}) => {
+  const k = w / 780, r = o.r ?? Math.max(10, Math.round(36 * k)), px = Math.max(16, Math.round(56 * k)), py = Math.max(14, Math.round(44 * k)), off = Math.max(10, Math.round(26 * k));
+  const chip = !o.chip ? '' : /^c\d$/.test(o.chip) ? `<div style="position: absolute; top: ${off}px; right: ${off}px; width: ${o.chipW ?? 64}px; height: 28px; border-radius: 14px; background: ${ogCover(o.chip)}; box-shadow: inset 0 0 0 1px rgba(0,0,0,.06);"></div>`
+    : `<div style="position: absolute; top: ${off}px; right: ${off}px; height: 30px; padding: 0 14px; box-sizing: border-box; display: flex; align-items: center; border-radius: 15px; background: {{surf}}; font-size: 15px; font-weight: 600; letter-spacing: 0;">${o.chip}</div>`;
+  const note = o.note ? `<div style="position: absolute; left: ${px}px; right: ${px}px; bottom: ${Math.round(py * .6)}px; font-size: ${o.noteFs ?? 20}px; font-weight: 400; letter-spacing: 0; color: {{t.muted}};">${o.note}</div>` : '';
+  const words = o.box ? '' : `<div style="height: 100%; display: flex; flex-direction: column; justify-content: center; font-size: ${o.fs ?? 36}px; font-weight: ${o.fw ?? 500}; line-height: 1.2; letter-spacing: -.02em; ${o.wcss ?? ''}">${o.text ?? o.html}</div>`;
+  return `<div style="${ogAt(x, y, w, h, rot)} box-sizing: border-box; border-radius: ${r}px; background: {{card}}; border: 1px solid {{line}}; box-shadow: ${o.sh ?? '0 30px 56px -24px {{sh}}'}; padding: ${o.box ? 0 : py}px ${o.box ? 0 : px}px; text-align: left; color: {{t.text}}; ${o.css ?? ''}">${words}${o.box ?? ''}${note}${chip}</div>`;
+};
 const ogIc = (path, size, sw = 2) => svg(path, size, sw);
 const OGI = {
   arrow: '<path d="M4 12h15M13 6l6 6-6 6"/>', star: '<path d="M12 3.6l2.5 5.2 5.7.8-4.1 4 1 5.7L12 16.6l-5.1 2.7 1-5.7-4.1-4 5.7-.8z" fill="currentColor"/>',
@@ -6488,43 +6514,43 @@ const OGI = {
   spark: '<path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z"/><path d="M19 15.5l.8 2.2 2.2.8-2.2.8-.8 2.2-.8-2.2-2.2-.8 2.2-.8z"/>', search: '<circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/>'
 };
 // A comparison's two cards: the other app's, plain, with its name in text, and Lucida's, and the "vs" between them.
-const ogOther = (x, y, w, h, rot) => ogCard(x, y, w, h, rot, `<div style="height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px;"><div style="font-size: {{${w > 300 ? 'otherFsWide' : 'otherFs'}}}px; font-weight: 600; letter-spacing: -.035em; white-space: nowrap;">{{other}}</div><div style="width: 130px; height: 10px; border-radius: 10px; background: {{bar}};"></div><div style="width: 88px; height: 10px; border-radius: 10px; background: {{bar}};"></div></div>`);
-const ogLu = (x, y, w, h, rot) => ogCard(x, y, w, h, rot, `<div style="height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px;">${mark(44)}<span style="font-size: 40px; font-weight: 600; letter-spacing: -.035em;">Lucida</span><span style="width: 150px; height: 12px; border-radius: 12px; background: linear-gradient(90deg, {{c1.b0.c}}, {{c1.b3.c}}, {{c1.b2.c}});"></span></div>`);
+const ogOther = (x, y, w, h, rot) => ogFace(x, y, w, h, rot, { text: `<span style="white-space: nowrap;">{{other}}</span>`, fs: `{{${w > 300 ? 'otherFsWide' : 'otherFs'}}}` });
+const ogLu = (x, y, w, h, rot, chip = 'c1') => ogFace(x, y, w, h, rot, { text: 'Lucida', fs: 48, chip });
 const ogVs = (x, y) => `<div style="${ogAt(x, y, 76, 76)} z-index: 3; border-radius: 50%; background: {{t.inv}}; color: {{t.invText}}; display: flex; align-items: center; justify-content: center; font-size: 28px; font-weight: 700; letter-spacing: -.02em; box-shadow: 0 14px 28px -10px {{sh}};">vs</div>`;
 // A small white card of words (a deck's card), with a gradient strip on its left.
-const ogWords = (x, y, w, h, rot, body, slot, o = {}) => ogCard(x, y, w, h, rot, `<div style="position: absolute; left: 0; top: 0; bottom: 0; width: 16px; border-radius: ${o.r ?? 24}px 0 0 ${o.r ?? 24}px; background: linear-gradient(180deg, {{${slot}.b0.c}}, {{${slot}.b2.c}});"></div><div style="height: 100%; box-sizing: border-box; padding: ${o.pad ?? '18px 22px 18px 34px'}; display: flex; align-items: center; font-size: ${o.fs ?? 26}px; font-weight: ${o.fw ?? 500}; line-height: 1.22; letter-spacing: -.02em;">${body}</div>`, { r: o.r ?? 24 });
+const ogWords = (x, y, w, h, rot, body, slot, o = {}) => ogFace(x, y, w, h, rot, { html: body, fs: o.fs ?? 26, chip: slot, chipW: o.chipW ?? 54, note: o.note, noteFs: o.noteFs });
 // What the right of a picture draws, a scene for each kind of page (500 × 630 from x = 700; a card may run past the edge).
-const ogScene = (name, body) => `<sc-if value="{{scene.${name}}}" hint-placeholder-val="{{ false }}"><div style="position: absolute; left: 696px; top: 8px; width: 500px; height: 630px; transform: scale(1.08); transform-origin: 50% 50%;">${body}</div></sc-if>`;
+const ogScene = (name, body) => `<sc-if value="{{scene.${name}}}" hint-placeholder-val="{{ false }}"><div data-og-scene style="position: absolute; left: 696px; top: 8px; width: 500px; height: 630px; transform: scale(1.08); transform-origin: 50% 50%;">${body}</div></sc-if>`;
 const OG_SCENES = [
   // A comparison, in four arrangements, so that eight of them side by side don't all look alike.
-  ogScene('versus0', ogOther(215, 130, 280, 186, -6) + ogLu(20, 270, 300, 196, 6) + ogVs(216, 262)),
+  ogScene('versus0', ogOther(215, 130, 280, 186, -6) + ogLu(20, 270, 300, 196, 6) + ogVs(160, 238)),
   ogScene('versus1', ogOther(12, 128, 280, 186, 5) + ogLu(186, 276, 300, 196, -6) + ogVs(200, 246)),
   ogScene('versus2', ogOther(150, 64, 330, 176, -5) + ogLu(10, 330, 330, 196, 5) + ogVs(300, 268)),
   ogScene('versus3', ogLu(0, 214, 232, 198, -4) + ogOther(262, 178, 232, 198, 5) + ogVs(218, 276)),
   // An alternative: the other app's card, an arrow, and Lucida's card in front.
   ogScene('switch', [
-    ogCard(10, 330, 250, 160, -7, `<div style="height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; opacity: .8;"><div style="font-size: {{otherFs}}px; font-weight: 600; letter-spacing: -.035em; white-space: nowrap;">{{other}}</div><div style="width: 110px; height: 10px; border-radius: 10px; background: {{bar}};"></div></div>`),
+    ogFace(10, 330, 250, 160, -7, { text: '<span style="white-space: nowrap;">{{other}}</span>', fs: '{{otherFs}}' }),
     `<div style="${ogAt(232, 288, 64, 64)} z-index: 3; border-radius: 50%; background: {{t.inv}}; color: {{t.invText}}; display: flex; align-items: center; justify-content: center; box-shadow: 0 14px 28px -10px {{sh}};">${ogIc(OGI.arrow, 30, 2.2)}</div>`,
-    ogLu(160, 70, 330, 214, 6),
-    ogPill(350, 50, 46, ogIc(OGI.check, 24, 2.6) + 'Free', { bg: '{{t.inv}}', fg: '{{t.invText}}', fs: 20, sh: '0 12px 24px -10px {{sh}}' })
+    ogLu(160, 70, 330, 214, 6, ''),
+    ogPill(330, 62, 46, ogIc(OGI.check, 24, 2.6) + 'Free', { bg: '{{t.inv}}', fg: '{{t.invText}}', fs: 20, sh: '0 12px 24px -10px {{sh}}' })
   ].join('')),
   // Spaced repetition: cards spread along a line, the gaps widening, each a little higher.
   ogScene('intervals', [
     ogBar(0, 508, 500, 3),
     '<sc-for list="{{steps}}" as="s">',
-    `<div style="position: absolute; left: {{s.x}}px; top: {{s.y}}px; width: {{s.w}}px; height: {{s.h}}px; transform: rotate({{s.rot}}deg); box-sizing: border-box; border-radius: 20px; background: {{card}}; box-shadow: 0 0 0 1.5px {{edge}}, 0 20px 36px -18px {{sh}}; overflow: hidden;"><div style="position: absolute; left: 0; right: 0; top: 0; height: 46%; background: {{s.cover}};"></div></div>`,
+    `<div style="position: absolute; left: {{s.x}}px; top: {{s.y}}px; width: {{s.w}}px; height: {{s.h}}px; transform: rotate({{s.rot}}deg); box-sizing: border-box; border-radius: 12px; background: {{card}}; border: 1px solid {{line}}; box-shadow: 0 20px 36px -18px {{sh}}; overflow: hidden;"><div style="position: absolute; top: 7%; right: 7%; width: 34%; height: 15%; border-radius: 999px; background: {{s.cover}};"></div><div style="position: absolute; left: 12%; top: 46%; width: 58%; height: 8px; border-radius: 8px; background: {{bar}};"></div><div style="position: absolute; left: 12%; top: 68%; width: 34%; height: 6px; border-radius: 6px; background: {{bar}}; opacity: .6;"></div></div>`,
     `<div style="position: absolute; left: {{s.tx}}px; top: 518px; width: 80px; text-align: center; font-size: 20px; font-weight: 600; color: {{t.text}};">{{s.label}}</div><div style="position: absolute; left: {{s.cx}}px; top: 500px; width: 3px; height: 19px; border-radius: 3px; background: {{t.text}};"></div>`,
     '</sc-for>'
   ].join('')),
   // Picture with hidden parts: a drawing with labels, some covered by boxes.
-  ogScene('occlusion', ogCard(10, 80, 470, 340, 3, [
+  ogScene('occlusion', ogFace(10, 80, 470, 340, 3, { box: [
     ogSw('c1', 34, 56, 210, 210, 105, 'box-shadow: 0 20px 40px -20px {{sh}};'), ogSw('c3', 78, 96, 92, 92, 46), ogSw('c2', 150, 170, 70, 42, 21, 'transform: rotate(-24deg);'), ogSw('c2', 58, 204, 56, 34, 17, 'transform: rotate(18deg);'),
     `<svg width="470" height="340" viewBox="0 0 470 340" style="position: absolute; inset: 0; fill: none; stroke: {{bar}}; stroke-width: 2.5; stroke-linecap: round;"><path d="M150 120 L300 66"/><path d="M196 186 L300 140"/><path d="M126 252 L300 214"/><path d="M226 100 L300 290"/></svg>`,
     ogPill(300, 44, 44, 'Nucleus', { fs: 21, sh: '0 0 0 1.5px {{edge}}' }),
     `<div style="${ogAt(300, 118, 150, 44)} border-radius: 12px; background: {{t.inv}}; color: {{t.invText}}; display: flex; align-items: center; justify-content: center; font-size: 26px; font-weight: 700; box-shadow: 0 12px 22px -10px {{sh}};">?</div>`,
     ogPill(300, 192, 44, 'Membrane', { fs: 21, sh: '0 0 0 1.5px {{edge}}' }),
     `<div style="${ogAt(300, 266, 150, 44)} border-radius: 12px; background: {{t.inv}}; color: {{t.invText}}; display: flex; align-items: center; justify-content: center; font-size: 26px; font-weight: 700; box-shadow: 0 12px 22px -10px {{sh}};">?</div>`
-  ].join(''))),
+  ].join('') })),
   // Learn mode: a question and four answers, one of them right.
   ogScene('quiz', [
     ogWords(10, 60, 460, 160, -2, `Which organelle makes most of a cell’s ATP?`, 'c1', { fs: 30, fw: 600, r: 28 }),
@@ -6536,7 +6562,7 @@ const OG_SCENES = [
   ].join('')),
   // Live games: four answer tiles and a join code.
   ogScene('live', [
-    ogCard(10, 50, 460, 128, -2, `<div style="height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px;"><div style="font-size: 21px; font-weight: 500; color: {{t.muted}};">Join at lucida.cards/join</div><div style="font-size: 64px; font-weight: 700; letter-spacing: .08em; line-height: 1;">482 913</div></div>`),
+    ogCard(10, 50, 460, 128, -2, `<div style="height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px;"><div style="font-size: 21px; font-weight: 500; color: {{t.muted}};">Join with this code</div><div style="font-size: 64px; font-weight: 700; letter-spacing: .08em; line-height: 1;">482 913</div></div>`),
     ...[['c1', 'A', 10, 212, 2], ['c2', 'B', 248, 206, -2], ['c3', 'C', 10, 380, -1], ['c4', 'D', 248, 372, 2]].map(([s, l, x, y, r]) => ogCard(x, y, 222, 150, r, `<div style="height: 100%; display: flex; align-items: center; gap: 18px; padding: 0 22px;"><span style="flex: none; width: 76px; height: 76px; border-radius: 22px; background: radial-gradient(circle at 20% 85%, {{${s}.b0.c}}, transparent 65%), radial-gradient(circle at 85% 10%, {{${s}.b3.c}}, transparent 60%), {{${s}.base}}; display: inline-flex; align-items: center; justify-content: center; font-size: 44px; font-weight: 700; color: #000000;">${l}</span><span style="width: 56px; height: 12px; border-radius: 12px; background: {{bar}};"></span></div>`, { r: 30 }))
   ].join('')),
   // Shared decks: a deck card with people and stars.
@@ -6652,7 +6678,7 @@ const OG_SCENES = [
 const ogPage = `<div style="position: relative; isolation: isolate; width: 1200px; height: 630px; box-sizing: border-box; overflow: hidden; font-family: ${FONT}; background: {{bg.base}}; color: {{t.text}};">
   <svg width="0" height="0" style="position: absolute;" aria-hidden="true"><defs><filter id="og-liquid" x="-10%" y="-10%" width="120%" height="120%" color-interpolation-filters="sRGB"><feTurbulence type="fractalNoise" baseFrequency=".0032 .0052" numOctaves="2" seed="4" result="n"/><feDisplacementMap in="SourceGraphic" in2="n" scale="190" xChannelSelector="R" yChannelSelector="G"/></filter></defs></svg>
   <div aria-hidden="true" style="position: absolute; inset: 0; z-index: -1; overflow: hidden;"><sc-for list="{{bg.layers}}" as="l"><div style="position: absolute; left: {{l.x}}px; top: {{l.y}}px; width: {{l.w}}px; height: {{l.h}}px; background: {{l.bg}}; opacity: {{l.o}}; mix-blend-mode: {{l.blend}}; filter: {{l.filter}}; border-radius: {{l.r}}; transform: rotate({{l.rot}}deg);"></div></sc-for></div>
-  <div aria-hidden="true" style="position: absolute; inset: 0; z-index: -1; background: {{bg.veil}};"></div>
+  <div aria-hidden="true" data-og-veil style="position: absolute; inset: 0; z-index: -1; background: {{bg.veil}};"></div>
   ${grainSvg('{{bg.grain}}', { blend: 'soft-light', freq: 0.85, slope: 3.4, id: 'og-grain' }).replace('style="position: absolute; inset: 0;', 'style="position: absolute; inset: 0; z-index: -1;')}
   <div data-og-text style="position: absolute; left: 80px; top: 62px; display: flex; align-items: center; gap: 14px; font-size: 32px; font-weight: 600; letter-spacing: -.02em;">${mark(30)}Lucida</div>
   <div style="position: absolute; left: 80px; top: 0; bottom: 0; width: 600px; display: flex; flex-direction: column; justify-content: center; padding-top: 18px;">
@@ -6671,7 +6697,8 @@ renderVals() { ${T}
   // The gradient: layers on a base. A "blob" is a soft round patch of one color; a "fill" covers the picture.
   const blob = (x, y, w, h, col, o, ex) => Object.assign({ x, y, w, h, bg: 'radial-gradient(closest-side, ' + col + ', transparent)', o: o == null ? 1 : o, blend: 'normal', filter: 'none', r: '0', rot: 0 }, ex || {});
   const fill = (bg, o, ex) => Object.assign({ x: 0, y: 0, w: 1200, h: 630, bg, o: o == null ? 1 : o, blend: 'normal', filter: 'none', r: '0', rot: 0 }, ex || {});
-  const j = ((seed * 37) % 100) / 100, k = ((seed * 53 + 11) % 100) / 100;
+  // How far a style's shapes are moved: by the page's v only, so a style and a palette make the same background on any page.
+  const v0 = it.picture.v || 0, j = ((v0 * 37) % 100) / 100, k = ((v0 * 53 + 11) % 100) / 100;
   const [c0, c1, c2, c3, c4] = c, steps = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9].map(i => mix(c3, i < 5 ? c0 : c1, i < 5 ? 0.2 + i * 0.16 : (i - 4) * 0.17));
   const STYLE = {
     // Irregular mesh: soft patches of several colors running into each other.
@@ -6720,7 +6747,7 @@ renderVals() { ${T}
   return { t, grain: '0', h1: it.h1, size: n <= 14 ? 112 : n <= 22 ? 96 : n <= 34 ? 80 : n <= 50 ? 68 : 58, bg,
     other: it.picture.other, otherFs: it.picture.other.length <= 6 ? 46 : it.picture.other.length <= 8 ? 38 : 31, otherFsWide: it.picture.other.length <= 6 ? 50 : it.picture.other.length <= 8 ? 42 : 34,
     scene: Object.fromEntries(${JSON.stringify(SCENES)}.map(s => [s, s === it.picture.scene + (${JSON.stringify(SCENE_ARRANGEMENTS)}[it.picture.scene] ? (it.picture.v || 0) % ${JSON.stringify(SCENE_ARRANGEMENTS)}[it.picture.scene] : '')])),
-    card: '#FFFFFF', glass: 'rgba(255,255,255,.62)', glassEdge: 'rgba(255,255,255,.75)', edge: 'rgba(0,0,0,.06)',
+    card: '#FFFFFF', line: '#EBEBEB', glass: 'rgba(255,255,255,.62)', glassEdge: 'rgba(255,255,255,.75)', edge: 'rgba(0,0,0,.06)',
     bar: 'rgba(0,0,0,.11)', sh: 'rgba(20,20,60,.45)', surf: '#F1F1F4',
     c1: acc(0), c2: acc(1), c3: acc(2), c4: acc(3), c5: acc(4), c6: acc(5), tiles, steps: stepsOf, days };
 }`;

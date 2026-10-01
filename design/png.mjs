@@ -54,3 +54,17 @@ export function thumb({ width, height, rgb }, cols = 48, rows = 25) {
   return out;
 }
 export const distance = (a, b) => { let d = 0; for (let i = 0; i < a.length; i++) d += Math.abs(a[i] - b[i]); return d / a.length; };
+
+// How far apart two pictures' colors are, as people see colors: the grids of `thumb` turned to CIELAB (sRGB, D65), and the mean over their cells
+// of the distance between the two colors of a cell (ΔE76: about 2.3 is the least a person notices, 50 is an entirely different color).
+const lab = (r, g, b) => {
+  const lin = v => { v /= 255; return v <= 0.04045 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4); }, R = lin(r), G = lin(g), B = lin(b);
+  const f = t => (t > 216 / 24389 ? Math.cbrt(t) : (24389 / 27 * t + 16) / 116);
+  const fx = f((0.4124564 * R + 0.3575761 * G + 0.1804375 * B) / 0.95047), fy = f(0.2126729 * R + 0.7151522 * G + 0.072175 * B), fz = f((0.0193339 * R + 0.119192 * G + 0.9503041 * B) / 1.08883);
+  return [116 * fy - 16, 500 * (fx - fy), 200 * (fy - fz)];
+};
+export const labDistance = (a, b) => {
+  let d = 0; const n = a.length / 3;
+  for (let i = 0; i < a.length; i += 3) { const p = lab(a[i], a[i + 1], a[i + 2]), q = lab(b[i], b[i + 1], b[i + 2]); d += Math.hypot(p[0] - q[0], p[1] - q[1], p[2] - q[2]); }
+  return d / n;
+};
