@@ -23,6 +23,9 @@ export const MOTION = {
   fade: 0.18
 };
 
+// The web app only (a phone has no pointer, so this isn't in MOTION and the iPhone app never sees it): deck, folder and class tiles
+// lift 4 px with a bigger shadow under the pointer, in this many seconds, easing off (the owner, 2026-10-01: "yes hover 0.2 seconds").
+export const TILE_HOVER = 0.2;
 const s = n => String(+n.toFixed(3)).replace(/^0\./, '.') + 's';
 export const EASE = 'cubic-bezier(' + MOTION.ease.join(',') + ')';
 // The way out is eased in (it starts slowly and leaves), the mirror of the way in.

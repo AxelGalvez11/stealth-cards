@@ -6,7 +6,7 @@ import { PALETTE_NAMES, PALETTES, flowSvg, grainSvg, grainTile, paletteData } fr
 import { GEN_METHOD } from './generator.mjs';
 import { MOCK_METHOD, SAMPLE, SAMPLE_WAVE } from './mock.mjs';
 import { DRAG_METHOD } from './drag.mjs';
-import { MOTION, EASE, MOTION_CSS } from './motion.mjs';
+import { MOTION, EASE, MOTION_CSS, TILE_HOVER } from './motion.mjs';
 import { WALL_CARDS } from './wall.mjs';
 import { SHARE_METHOD } from './share.mjs';
 import { PRIVACY, TERMS, UPDATED } from './legal.mjs';
@@ -99,11 +99,11 @@ const APP_MOTION_CSS = [
   [2, 3, 4, 5].map(n => `main>*:nth-child(${n}){animation-delay:${((n - 1) * 0.06).toFixed(2)}s}`).join('') + 'main>*:nth-child(n+6){animation-delay:.3s}',
   'button,.sc-press{transition:transform .1s ease}button:active,.sc-press:active{transform:scale(.96)}',
   MOTION_CSS,
-  // Deck, folder and class tiles stay still under the pointer (the owner, 2026-10-01: "remove the deck hover in webapp effect");
-  // .sc-lift only marks them now. Links dim a little under the pointer (a:hover), but not these.
-  '.sc-lift:hover{opacity:1}',
-  // A theme's deck cover has its own shadow (a cartoon's hard ink shadow, a glow).
-  '.sk-cover{box-shadow:var(--sk-shadow)}',
+  // Deck, folder and class tiles lift 4 px under the pointer, with a bigger shadow, in 0.2 s and easing off, both ways (the owner,
+  // 2026-10-01: "yes hover 0.2 seconds"; it was 1 s before, and was taken off for a day). A pointer only: the iPhone has none.
+  `.sc-lift{transition:transform ${TILE_HOVER}s ease-out,box-shadow ${TILE_HOVER}s ease-out}.sc-lift:hover{transform:translateY(-4px);box-shadow:0 24px 48px -24px rgba(0,0,0,.45)}`,
+  // A theme's deck cover has its own shadow (a cartoon's hard ink shadow, a glow), under the lift's.
+  '.sk-cover{box-shadow:var(--sk-shadow)}.sk-cover.sc-lift:hover{box-shadow:var(--sk-shadow),0 24px 48px -24px rgba(0,0,0,.45)}',
   '@keyframes scFloat{50%{transform:translateY(-6px)}}@keyframes scSwayA{50%{transform:rotate(-13deg) translateX(-3px)}}@keyframes scSwayB{50%{transform:rotate(10deg) translateX(3px)}}@keyframes scGlow{50%{opacity:.55}}',
   '@keyframes scSheen{0%,58%{transform:translateX(-160%) skewX(-18deg)}86%,100%{transform:translateX(260%) skewX(-18deg)}}',
   '.sc-float{animation:scFloat 6s ease-in-out infinite}.sc-sway-a{animation:scSwayA 6s ease-in-out infinite}.sc-sway-b{animation:scSwayB 6s ease-in-out infinite}.sc-glow{animation:scGlow 6s ease-in-out infinite}',
@@ -113,7 +113,7 @@ const APP_MOTION_CSS = [
   '@keyframes scKnob{from{opacity:0;transform:scale(.3)}}.sc-knob{transform-box:fill-box;transform-origin:center;animation:scKnob .35s .75s cubic-bezier(.34,1.56,.64,1) backwards}',
   '@keyframes scGrow{from{transform:scaleY(0)}}.sc-grow{transform-origin:bottom;animation:scGrow .6s cubic-bezier(.2,.8,.2,1) backwards}',
   Array.from({ length: 13 }, (_, i) => `:nth-child(${i + 2})>.sc-grow{animation-delay:${((i + 1) * 0.04).toFixed(2)}s}`).join(''),
-  '@media (prefers-reduced-motion:reduce){main>*,.sc-float,.sc-sway-a,.sc-sway-b,.sc-glow,.sc-alive>svg,.sc-draw,.sc-knob,.sc-grow{animation:none!important}.sc-sheen{display:none}button:active,.sc-press:active{transform:none}}'
+  '@media (prefers-reduced-motion:reduce){main>*,.sc-float,.sc-sway-a,.sc-sway-b,.sc-glow,.sc-alive>svg,.sc-draw,.sc-knob,.sc-grow{animation:none!important}.sc-sheen{display:none}button:active,.sc-press:active,.sc-lift:hover{transform:none}}'
 ].join('');
 // Dark mode, and its gray look (dim): the app sets both from Settings (Appearance, and Dark mode: Gray or Black).
 const DARK = { dark: { editor: 'boolean', default: false }, dim: { editor: 'boolean', default: false } };
@@ -3420,11 +3420,11 @@ const tile = (title, spec, stage) => `<div style="background: #F4F4F4; border-ra
   <div style="display: flex; flex-direction: column; gap: 4px;"><span style="font-size: 16px; font-weight: 600;">${title}</span><span style="font-family: ${MONO}; font-size: 12px; color: #666666;">${spec}</span></div>
 </div>`;
 const mcard = (txt, extra = '', cls = '') => `<div class="${cls}" style="width: 180px; height: 120px; box-sizing: border-box; padding: 16px; border-radius: 22px; background: #FFFFFF; border: 1px solid #EBEBEB; box-shadow: 0 12px 28px -12px rgba(0,0,0,.22); display: flex; align-items: flex-end; font-size: 15px; font-weight: 600; ${extra}">${txt}</div>`;
-const MOTION_H = 1734;
+const MOTION_H = 2115;
 // Drawn when the boards are made, since its tiles use parts defined further down (EMPTY_ART).
 const motion = () => `<div style="width: 1440px; height: ${MOTION_H}px; box-sizing: border-box; padding: 56px 64px; display: flex; flex-direction: column; gap: 28px; font-family: ${FONT}; background: #FFFFFF; color: #000000;">
   <div style="display: flex; flex-direction: column; gap: 8px;"><h1 style="margin: 0; font-size: 44px; font-weight: 600; letter-spacing: -.035em;">Motion</h1><p style="margin: 0; font-size: 16px; color: #666666;">Every animation loops here so you can watch it. In the app most play once; empty states and the Today card keep moving, slowly. All of them turn off when Reduce Motion is on.</p></div>
-  <div style="flex-grow: 1; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); grid-template-rows: repeat(4, minmax(0, 1fr)); gap: 16px;">
+  <div style="flex-grow: 1; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); grid-template-rows: repeat(5, minmax(0, 1fr)); gap: 16px;">
     ${tile('Card flip', '500 ms · 3D turn · ease in-out', `<div style="perspective: 900px;"><div class="m-flip" style="position: relative; width: 180px; height: 120px; transform-style: preserve-3d;">${mcard('Question', 'position: absolute; inset: 0; backface-visibility: hidden;')}${mcard('Answer', 'position: absolute; inset: 0; backface-visibility: hidden; transform: rotateY(180deg); background: #000000; color: #FFFFFF; border-color: #000000;')}</div></div>`)}
     ${tile('Grade → next card', 'out 220 ms · in 320 ms · slight lift', `<div style="position: relative; width: 180px; height: 120px;">${mcard('Next card', 'position: absolute; inset: 0;', 'm-in')}${mcard('Graded card', 'position: absolute; inset: 0;', 'm-out')}</div>`)}
     ${tile('Button press', '100 ms · shrinks to 96%', `<div class="m-press" style="height: 56px; padding: 0 36px; border-radius: 999px; background: #000000; color: #FFFFFF; display: flex; align-items: center; font-size: 15px; font-weight: 600;">Save card</div>`)}
@@ -3440,6 +3440,7 @@ const motion = () => `<div style="width: 1440px; height: ${MOTION_H}px; box-sizi
     ${tile('Segmented control', `the selected pill slides · ${Math.round(MOTION.knob * 1000)} ms`, `<div style="position: relative; width: 276px; height: 48px; box-sizing: border-box; padding: 4px; border-radius: 24px; background: #F4F4F4; display: flex; font-size: 14px; font-weight: 600;"><span class="m-pill" style="position: absolute; left: 4px; top: 4px; width: 89px; height: 40px; border-radius: 20px; background: #FFFFFF; box-shadow: 0 1px 3px rgba(0,0,0,.14);"></span><span style="position: relative; width: 89px; display: flex; align-items: center; justify-content: center;">Decks</span><span style="position: relative; width: 89px; display: flex; align-items: center; justify-content: center; color: #666666;">All cards</span><span style="position: relative; width: 89px; display: flex; align-items: center; justify-content: center; color: #666666;">Classes</span></div>`)}
     ${tile('Sheet', `slides up from the bottom · ${Math.round(MOTION.sheet * 1000)} ms · leaves in ${Math.round(MOTION.leave * 1000)} ms`, `<div style="position: relative; width: 150px; height: 230px; border-radius: 28px; background: #F4F4F4; overflow: hidden;"><div class="m-sheet" style="position: absolute; left: 0; right: 0; bottom: 0; top: 58px; box-sizing: border-box; padding: 16px; border-radius: 24px 24px 0 0; background: #FFFFFF; box-shadow: 0 -12px 32px -12px rgba(0,0,0,.25); display: flex; flex-direction: column; gap: 10px;"><span style="width: 70px; height: 12px; border-radius: 6px; background: #000000;"></span><span style="height: 36px; border-radius: 12px; background: #F4F4F4;"></span><span style="height: 36px; border-radius: 12px; background: #F4F4F4;"></span></div></div>`)}
     ${tile('Deck cover parallax', 'the cover moves at half speed as you scroll', `<div style="position: relative; width: 210px; height: 230px; border-radius: 22px; overflow: hidden; background: #FFFFFF; border: 1px solid #EBEBEB;"><div class="m-par-front" style="position: absolute; inset: 0;"><div style="position: relative; height: 120px; overflow: hidden;"><div class="m-par-cover" style="position: absolute; inset: 0;">${meshCard('art', 'position: absolute; inset: 0;', 'height: 100%;', '', 'div')}</div><span style="position: absolute; left: 16px; bottom: 14px; color: #FFFFFF; font-size: 17px; font-weight: 700; letter-spacing: -.02em; text-shadow: 0 1px 8px rgba(0,0,0,.3);">Cell Biology</span></div><div style="padding: 16px; display: flex; flex-direction: column; gap: 12px;"><span style="height: 12px; width: 150px; border-radius: 6px; background: #EBEBEB;"></span><span style="height: 12px; width: 120px; border-radius: 6px; background: #EBEBEB;"></span><span style="height: 12px; width: 160px; border-radius: 6px; background: #EBEBEB;"></span><span style="height: 12px; width: 100px; border-radius: 6px; background: #EBEBEB;"></span></div></div></div>`)}
+    ${tile('Deck card hover', `lifts 4 px · ${TILE_HOVER} s · eases out · shadow grows`, meshCard('hero', 'width: 200px; height: 132px; border-radius: 20px;', 'height: 100%; box-sizing: border-box; padding: 16px; display: flex; align-items: flex-end; font-size: 15px; font-weight: 600;', 'Cell Biology', 'div', ' class="m-lift"'))}
     ${tile('Today card', 'colors drift · 16 s · back and forth', meshCard('hero', 'width: 240px; height: 132px; border-radius: 20px;', 'height: 100%; box-sizing: border-box; padding: 18px; display: flex; flex-direction: column; justify-content: flex-end; gap: 4px;', '<span style="font-size: 12px; opacity: .8;">Tuesday</span><span style="font-size: 26px; font-weight: 500; letter-spacing: -.03em; line-height: 1;">64 cards due</span>', 'div', ' class="sc-alive"'))}
   </div>
 </div>`;
@@ -3455,6 +3456,8 @@ const mLoopCss = `.m-pop{animation:mpop 3.2s ${EASE} infinite}
 @keyframes mpill{0%,${pc(.6, 4)}%{transform:none}${pc(.6 + MOTION.knob, 4)}%,${pc(1.8, 4)}%{transform:translateX(89px)}${pc(1.8 + MOTION.knob, 4)}%,${pc(3, 4)}%{transform:translateX(178px)}${pc(3 + MOTION.knob, 4)}%,100%{transform:none}}
 .m-sheet{animation:msheet 3.4s ${EASE} infinite}
 @keyframes msheet{0%,${pc(.5, 3.4)}%{transform:translateY(100%)}${pc(.5 + MOTION.sheet, 3.4)}%,${pc(2.6, 3.4)}%{transform:none}${pc(2.6 + MOTION.leave, 3.4)}%,100%{transform:translateY(100%)}}
+.m-lift{animation:mlift 5s ease-out infinite}
+@keyframes mlift{0%,${pc(1.5, 5)}%{transform:none;box-shadow:0 8px 20px -14px rgba(0,0,0,.3)}${pc(1.5 + TILE_HOVER, 5)}%,${pc(3.2, 5)}%{transform:translateY(-4px);box-shadow:0 24px 48px -24px rgba(0,0,0,.45)}${pc(3.2 + TILE_HOVER, 5)}%,100%{transform:none;box-shadow:0 8px 20px -14px rgba(0,0,0,.3)}}
 .m-par-front{animation:mparf 4.4s ease-in-out infinite}
 @keyframes mparf{0%,12%{transform:none}48%,62%{transform:translateY(-90px)}98%,100%{transform:none}}
 .m-par-cover{animation:mparc 4.4s ease-in-out infinite}
