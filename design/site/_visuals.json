@@ -1,0 +1,1245 @@
+{
+ "anki-alternative": {
+  "figs": [
+   {
+    "kind": "apps",
+    "at": "Why people look for an Anki alternative",
+    "pos": "before",
+    "caption": "What each is best for, from the page",
+    "cards": [
+     {
+      "name": "Anki",
+      "line": "Free on computers and Android, with more than 1,600 add-ons"
+     },
+     {
+      "name": "Lucida",
+      "line": "FSRS in a browser, with your own AI making the cards",
+      "lucida": true
+     },
+     {
+      "name": "RemNote",
+      "line": "Notes and cards together"
+     },
+     {
+      "name": "Mochi",
+      "line": "Markdown and local-first"
+     },
+     {
+      "name": "Knowt",
+      "line": "A quick start, with AI built in"
+     },
+     {
+      "name": "Brainscape",
+      "line": "A quick start: rate each card 1 to 5"
+     }
+    ]
+   },
+   {
+    "kind": "checklist",
+    "at": "Check this before you switch",
+    "caption": "Check this before you switch"
+   },
+   {
+    "kind": "screen",
+    "id": "import",
+    "at": "Lucida: Anki’s scheduling in a browser, with your AI",
+    "pos": "after",
+    "caption": "Importing cards into Lucida: paste text, and pick a deck"
+   }
+  ],
+  "test": [
+   {
+    "q": "What does Anki’s iPhone app cost?",
+    "a": "It costs $24.99 once, while Anki on computers and Android is free."
+   },
+   {
+    "q": "What does Lucida give up compared with Anki?",
+    "a": "No offline mode, no add-ons, no custom card templates, and no .apkg import."
+   },
+   {
+    "q": "Which Lucida features are free?",
+    "a": "Learn mode, live games, classes and sharing are free. Lucida Pro costs $5.99 a month."
+   },
+   {
+    "q": "Which apps keep your Anki review history when you switch?",
+    "a": "RemNote and Mochi. The other apps take text, so pictures, sounds and review history usually start over."
+   }
+  ]
+ },
+ "features/ai-flashcards": {
+  "figs": [
+   {
+    "kind": "chat",
+    "at": "How it works, step by step",
+    "pos": "after",
+    "caption": "Example: ask for cards in your AI app, and they land in your deck",
+    "who": "You, in your AI app",
+    "prompt": "Make 20 flashcards from these lecture notes, one idea per card.",
+    "deck": "Cell Biology",
+    "tag": "Exam 1",
+    "note": "Already on the review schedule"
+   },
+   {
+    "kind": "screen",
+    "id": "connect",
+    "at": "You stay in charge",
+    "pos": "before",
+    "caption": "Connect your AI: your Lucida link, and what your AI may do"
+   }
+  ],
+  "test": [
+   {
+    "q": "Which AI apps does Lucida show step-by-step setup for?",
+    "a": "Claude, ChatGPT and Cursor. Gemini and Grok can add the same link, but Lucida has no steps for them."
+   },
+   {
+    "q": "What do you do if your Lucida link leaks?",
+    "a": "Open Connect AI and choose Make a new link. The old link stops working right away."
+   },
+   {
+    "q": "Which Connect AI settings are off by default?",
+    "a": "“Let me check AI cards first” and “Delete cards.” The rest are on."
+   },
+   {
+    "q": "How many cards can your AI add in one request?",
+    "a": "Up to 500. On the free plan, there is no cap on the number of cards."
+   }
+  ]
+ },
+ "features/classes": {
+  "figs": [
+   {
+    "kind": "class",
+    "at": "Set up a class, step by step",
+    "pos": "before",
+    "caption": "Example: a class has a name, a six-letter code and its people, and a few steps set it up",
+    "name": "BIO 201",
+    "sub": "Six-letter code and an invite link",
+    "code": "BIOKTZ",
+    "codeLabel": "An example class code: six letters",
+    "people": [
+     "Alex",
+     "Dev",
+     "Maria",
+     "Sam",
+     "Priya"
+    ]
+   },
+   {
+    "kind": "screen",
+    "id": "class",
+    "at": "What teachers see, and never see",
+    "pos": "after",
+    "caption": "A class: its assignments, how far each student who shares has got, and the invite code"
+   }
+  ],
+  "tables": [
+   {
+    "at": "What an assignment means",
+    "columns": [
+     "Goal",
+     "When it counts as done"
+    ]
+   }
+  ],
+  "test": [
+   {
+    "q": "Is a student’s progress shared with the teacher by default?",
+    "a": "No. Sharing is off until the student says yes, and teachers never see individual answers."
+   },
+   {
+    "q": "What can a class owner do that a helper can’t?",
+    "a": "Rename or delete the class, make helpers, take out any deck, and take out helpers."
+   },
+   {
+    "q": "What goals can you pick when you assign a deck?",
+    "a": "Learn every card, or Review what’s due each day. You also set a due date."
+   },
+   {
+    "q": "What should you know before using classes with students?",
+    "a": "Students must be 13 or older and need an account to join. Lucida doesn’t connect to Google Classroom."
+   }
+  ]
+ },
+ "features/image-occlusion": {
+  "figs": [
+   {
+    "kind": "occlusion",
+    "at": "Make picture cards, step by step",
+    "pos": "after",
+    "caption": "Example picture: boxes cover the labels, and each box is its own card",
+    "label": "A drawing of a cell with two covered labels and one label shown",
+    "shown": "Nucleus"
+   },
+   {
+    "kind": "screen",
+    "id": "picture",
+    "at": "How the cards work",
+    "pos": "after",
+    "caption": "Drawing boxes on a picture in the card editor, and typing what is under each"
+   }
+  ],
+  "test": [
+   {
+    "q": "What is the difference between Hide one and Hide all?",
+    "a": "With Hide one, only the asked box is covered. With Hide all, every box is covered and one is asked."
+   },
+   {
+    "q": "How many boxes can one picture have?",
+    "a": "Up to 30. Each box is its own flashcard with its own schedule."
+   },
+   {
+    "q": "Is image occlusion free in Lucida?",
+    "a": "Yes. The free plan includes up to 100 pictures and sounds on cards, and Pro lifts that limit."
+   },
+   {
+    "q": "What shapes can Lucida’s image occlusion boxes be?",
+    "a": "Rectangles only. There are no ellipses or free-form shapes, and you can’t group several boxes into one card."
+   }
+  ]
+ },
+ "features/import": {
+  "figs": [
+   {
+    "kind": "import",
+    "at": "Import from Anki, step by step",
+    "pos": "before",
+    "caption": "Text goes in, cards come out",
+    "box": "Import cards",
+    "sources": [
+     {
+      "t": "Anki",
+      "d": "Notes in Plain Text"
+     },
+     {
+      "t": "Quizlet",
+      "d": "Export, then Copy text"
+     },
+     {
+      "t": "A spreadsheet",
+      "d": "A CSV or TSV file"
+     }
+    ],
+    "no": ".apkg and .colpkg files don’t come across"
+   },
+   {
+    "kind": "screen",
+    "id": "import",
+    "at": "Import from a spreadsheet or pasted text",
+    "pos": "after",
+    "caption": "Import cards: pasted text with one card per line, and the deck to put them in"
+   }
+  ],
+  "tables": [
+   {
+    "at": "What doesn’t come across",
+    "columns": [
+     "What",
+     "What happens"
+    ]
+   }
+  ],
+  "test": [
+   {
+    "q": "Can Lucida open Anki’s .apkg files?",
+    "a": "No. Use Anki’s Notes in Plain Text export instead, but review history, pictures and sounds don’t come across."
+   },
+   {
+    "q": "What are the steps to move a Quizlet set into Lucida?",
+    "a": "Open a set you made on quizlet.com, choose Export, then Copy text, and paste it into Import cards."
+   },
+   {
+    "q": "How many cards can the Import screen take at a time?",
+    "a": "Up to 5,000, so import a bigger file in parts. The first-time setup screen has no such cap."
+   },
+   {
+    "q": "What does Export all cards give you in Lucida?",
+    "a": "One file, lucida.json, with every deck, card and review, so your review history goes with you."
+   }
+  ]
+ },
+ "features/learn-mode": {
+  "figs": [
+   {
+    "kind": "learn",
+    "at": "How a Learn session works, step by step",
+    "pos": "after",
+    "caption": "How a card gets to learned",
+    "chip": "Multiple choice",
+    "path": [
+     {
+      "t": "Not seen yet"
+     },
+     {
+      "t": "In progress"
+     },
+     {
+      "t": "Learned",
+      "d": "Two right answers in a row"
+     }
+    ],
+    "miss": "Miss one and the card comes back a few questions later, and its streak starts over."
+   },
+   {
+    "kind": "screen",
+    "id": "learn",
+    "at": "Where the questions come from",
+    "pos": "after",
+    "caption": "A Learn mode question, and the bar at the top that shows how many cards are learned"
+   },
+   {
+    "kind": "screen",
+    "id": "setup",
+    "at": "Learn mode or flashcard review?",
+    "pos": "after",
+    "caption": "Learn mode’s start screen: which cards, and which kinds of questions"
+   }
+  ],
+  "test": [
+   {
+    "q": "Is Learn mode free?",
+    "a": "Yes. It’s part of Lucida’s free plan, and it needs no paid service to run."
+   },
+   {
+    "q": "How many right answers in a row count a card as learned?",
+    "a": "Two. Miss one and the card comes back a few questions later, and its streak starts again."
+   },
+   {
+    "q": "Which question type is off until you switch it on?",
+    "a": "Type the answer. It’s used for answers up to 40 characters, and it forgives accents and small typos."
+   },
+   {
+    "q": "Does an unfinished Learn session follow you to another device?",
+    "a": "No. It’s saved on the device you’re using, in its browser, so you can pick it up later."
+   }
+  ]
+ },
+ "features/live-games": {
+  "figs": [
+   {
+    "kind": "live",
+    "at": "Run a game, step by step",
+    "pos": "after",
+    "caption": "Example: the code on the big screen, the four answers and the leaderboard",
+    "join": "Join at lucida.cards/join",
+    "code": "482 913",
+    "board": [
+     {
+      "who": "Maya",
+      "pts": "3,420"
+     },
+     {
+      "who": "Jordan",
+      "pts": "3,210"
+     },
+     {
+      "who": "Kai",
+      "pts": "2,980"
+     }
+    ]
+   },
+   {
+    "kind": "screen",
+    "id": "live",
+    "at": "How the points work",
+    "pos": "after",
+    "caption": "A live question on the big screen, and on a player’s phone"
+   }
+  ],
+  "test": [
+   {
+    "q": "Is Live free, and how many players can a room hold?",
+    "a": "Yes, it’s free. A room holds up to 60 players."
+   },
+   {
+    "q": "What do players need to join a live game?",
+    "a": "A 6-digit code and a name. They need no account."
+   },
+   {
+    "q": "How many points is a right answer worth in Live?",
+    "a": "500 points, plus up to 500 more for answering fast. A wrong answer, or no answer, is worth nothing."
+   },
+   {
+    "q": "Does Live grade players or save a report for teachers?",
+    "a": "No. Live isn’t graded and doesn’t save a report for teachers."
+   }
+  ]
+ },
+ "features/shared-decks": {
+  "figs": [
+   {
+    "kind": "fork",
+    "at": "Two ways to use someone’s deck",
+    "pos": "before",
+    "auto": true,
+    "caption": "Two ways to use a shared deck",
+    "from": "Someone’s shared deck"
+   },
+   {
+    "kind": "screen",
+    "id": "deck",
+    "at": "Suggestions and History",
+    "pos": "after",
+    "caption": "A shared deck’s page: its cards, and how it was made"
+   }
+  ],
+  "test": [
+   {
+    "q": "Is a Link only deck shown in Discover or on your profile?",
+    "a": "No. Anyone with the link can open it, but its page asks search engines not to list it."
+   },
+   {
+    "q": "Can other people change a deck you share?",
+    "a": "No. They can suggest changes, and you take or skip each one, but only helpers you name can edit it directly."
+   },
+   {
+    "q": "What happens to a card you study when the owner changes its answer?",
+    "a": "The card comes back as new, so you learn the right thing. A small fix keeps your schedule for that card."
+   },
+   {
+    "q": "What can a deck’s owner see about the people who study it?",
+    "a": "Not their schedule, streak or scores. On Pro, the owner sees only which cards people miss most, as percentages without names."
+   }
+  ]
+ },
+ "features/spaced-repetition": {
+  "figs": [
+   {
+    "kind": "curve",
+    "at": "What spaced repetition is",
+    "pos": "after",
+    "goal": "Your goal",
+    "time": "Time",
+    "chance": "Chance you remember",
+    "label": "A curve that falls over time, jumps back up at each review, and falls more slowly each time",
+    "caption": "An illustration of the idea, with no real numbers: each review puts the chance of remembering back at the top, and it falls more slowly each time. The card comes back near your goal (90% by default)."
+   },
+   {
+    "kind": "screen",
+    "id": "review",
+    "at": "How a review works, step by step",
+    "pos": "before",
+    "caption": "Reviewing a card in Lucida: each button shows when the card comes back"
+   },
+   {
+    "kind": "gaps",
+    "at": "How a review works, step by step",
+    "pos": "after",
+    "caption": "Example: the gaps depend on the card and your answers",
+    "cards": [
+     "1st",
+     "2nd",
+     "3rd",
+     "4th",
+     "5th"
+    ],
+    "gaps": [
+     "1 min",
+     "10 min",
+     "6 days",
+     "12 days"
+    ]
+   }
+  ],
+  "test": [
+   {
+    "q": "What does FSRS do after each answer?",
+    "a": "It works out the day you’d still have about a 90% chance of remembering that card, and brings it back then."
+   },
+   {
+    "q": "How many new cards a day does Lucida start you at?",
+    "a": "20 a day. There’s no daily review limit, so everything due is in today’s list."
+   },
+   {
+    "q": "How many graded reviews does Pro need to tune FSRS to you?",
+    "a": "400 graded reviews, at least 100 of them reviews of cards you’d already learned."
+   },
+   {
+    "q": "Does Lucida use FSRS-6, the newest version?",
+    "a": "Not yet. Lucida uses FSRS version 5, which has 19 parameters, and the newest version has 21."
+   }
+  ]
+ },
+ "for/language-learning": {
+  "figs": [
+   {
+    "kind": "words",
+    "at": "Make cards, step by step",
+    "pos": "after",
+    "caption": "Example word cards: a sentence with the word hidden, and a sound card",
+    "a": {
+     "label": "Fill in the blank",
+     "before": "Yo",
+     "after": "dos hermanos."
+    },
+    "b": {
+     "label": "Sound",
+     "ways": [
+      "Record",
+      "Upload",
+      "Read aloud"
+     ]
+    }
+   },
+   {
+    "kind": "screen",
+    "id": "audio",
+    "at": "Sound on Free and on Pro",
+    "pos": "before",
+    "caption": "A sound card in review"
+   }
+  ],
+  "test": [
+   {
+    "q": "What goes around a word to hide it in a Blank card?",
+    "a": "Double brackets. Each blank can be its own card."
+   },
+   {
+    "q": "How many pictures and sounds does Free include?",
+    "a": "Up to 100. A sound card that uses the device’s voice stores no file, so it doesn’t count."
+   },
+   {
+    "q": "Is there a language picker on a sound card you make by hand?",
+    "a": "No. The card editor has no language picker, so the device reads the words in its default voice and language."
+   },
+   {
+    "q": "What does Lucida not include for language learners?",
+    "a": "Lessons, grammar notes, a dictionary, ready-made word lists and native-speaker recordings. It doesn’t grade your pronunciation."
+   }
+  ]
+ },
+ "for/mcat": {
+  "figs": [
+   {
+    "kind": "example",
+    "at": "Amino acids, equations and other awkward cards",
+    "pos": "before",
+    "caption": "Example card: one formula, and what its symbols mean",
+    "frontLabel": "Front",
+    "front": "What do F, m and a stand for in F = ma?",
+    "backLabel": "Back",
+    "back": "F is force, m is mass and a is acceleration.",
+    "load": [
+     "20 new cards a day to start",
+     "No daily review limit",
+     "Stats shows the cards due each day this week"
+    ]
+   },
+   {
+    "kind": "screen",
+    "id": "stats",
+    "at": "Your daily load",
+    "pos": "after",
+    "caption": "Stats: how many cards are due each day"
+   }
+  ],
+  "tables": [
+   {
+    "at": "Amino acids, equations and other awkward cards",
+    "columns": [
+     "Card",
+     "What to do"
+    ]
+   }
+  ],
+  "test": [
+   {
+    "q": "Which plan lets you set a test date, and what does it do?",
+    "a": "Pro. From 30 days out, the cards you’d likely forget by test day come up early."
+   },
+   {
+    "q": "What do flashcards cover for the MCAT?",
+    "a": "Recall, not the whole exam. Use cards for recall and practice for application."
+   },
+   {
+    "q": "Is the research on flashcards and exam scores about the MCAT?",
+    "a": "No. The studies we read on flashcards and exam scores are about medical-school exams, not the MCAT."
+   },
+   {
+    "q": "Does Lucida include MCAT content or practice questions?",
+    "a": "No. It has no MCAT content or practice questions, and it isn’t affiliated with the AAMC."
+   }
+  ]
+ },
+ "for/med-school": {
+  "figs": [
+   {
+    "kind": "occlusion",
+    "at": "Image occlusion for anatomy, histology and pathways",
+    "pos": "before",
+    "caption": "Example picture: boxes cover the labels, and each box is its own card",
+    "label": "A drawing with two covered labels and one label shown",
+    "shown": "Nucleus"
+   },
+   {
+    "kind": "plan",
+    "at": "Plan the schedule around your exams",
+    "pos": "before",
+    "caption": "An exam date on a deck (Pro)",
+    "steps": [
+     {
+      "n": "Now",
+      "t": "Put an exam date on each deck",
+      "d": "Pro"
+     },
+     {
+      "n": "30 days out",
+      "t": "Early reviews begin",
+      "d": "Cards you’d probably forget by exam day come up early"
+     },
+     {
+      "n": "Exam day",
+      "t": "Stats shows how much you’d remember"
+     }
+    ]
+   }
+  ],
+  "test": [
+   {
+    "q": "What went with about one more Step 1 point in the 2015 survey?",
+    "a": "Each extra 445 board-style practice questions, or 1,700 unique Anki flashcards. The authors called the study exploratory."
+   },
+   {
+    "q": "Does the 2026 review show that Anki use causes higher Step 1 scores?",
+    "a": "No. The evidence is largely observational, so it shows a link, not a cause."
+   },
+   {
+    "q": "Is image occlusion free, and how many boxes can one picture hold?",
+    "a": "Yes, it’s free. A picture holds up to 30 boxes, and each box is its own card with its own schedule."
+   },
+   {
+    "q": "Can Lucida open Anki’s .apkg decks or run Anki add-ons?",
+    "a": "No. It fits best if you make your own cards instead of studying someone else’s mega-deck."
+   }
+  ]
+ },
+ "for/students": {
+  "figs": [
+   {
+    "kind": "plan",
+    "at": "A plan for your next exam, step by step",
+    "pos": "after",
+    "caption": "The plan, from today to the exam",
+    "steps": [
+     {
+      "n": "Today",
+      "t": "Make one deck for the exam",
+      "d": "Then get the cards in"
+     },
+     {
+      "n": "Next",
+      "t": "Learn them",
+      "d": "Start with Learn mode"
+     },
+     {
+      "n": "Every day",
+      "t": "Review a little",
+      "d": "Today shows what’s due"
+     },
+     {
+      "n": "30 days out",
+      "t": "Set your exam date (Pro)",
+      "d": "Cards you’d forget come up early"
+     }
+    ]
+   },
+   {
+    "kind": "screen",
+    "id": "stats",
+    "at": "On your phone and your laptop",
+    "pos": "after",
+    "caption": "Stats: your streak, reviews and how much you remember"
+   }
+  ],
+  "tables": [
+   {
+    "at": "Study with friends",
+    "columns": [
+     "Way",
+     "What it does"
+    ]
+   }
+  ],
+  "test": [
+   {
+    "q": "What does Lucida Pro cost?",
+    "a": "$5.99 a month or $49.99 a year, as of September 2026. The pricing page has no separate student plan."
+   },
+   {
+    "q": "How many pictures and sounds does the Free plan include?",
+    "a": "Up to 100. Pro has no 100 limit."
+   },
+   {
+    "q": "What should you use, besides flashcards, for anything you have to work out?",
+    "a": "Past papers or problem sets. Flashcards are for recall."
+   },
+   {
+    "q": "Which students remembered more in Roediger and Karpicke’s 2006 experiments?",
+    "a": "Students who tested themselves remembered much more after two days and a week than students who restudied."
+   }
+  ]
+ },
+ "for/teachers": {
+  "figs": [
+   {
+    "kind": "steps",
+    "at": "Run a unit, step by step",
+    "pos": "before",
+    "auto": true,
+    "caption": "Running a unit, in six steps"
+   },
+   {
+    "kind": "screen",
+    "id": "class",
+    "at": "Run a unit, step by step",
+    "pos": "after",
+    "caption": "A class: assignments, and how far each student who shares has got"
+   }
+  ],
+  "test": [
+   {
+    "q": "Is Lucida free for teachers?",
+    "a": "Yes. Classes, shared decks and live games are free, and the pricing page has no separate school plan."
+   },
+   {
+    "q": "What codes do classes and live games use?",
+    "a": "Classes use a six-letter code and an invite link. Live games use a 6-digit code."
+   },
+   {
+    "q": "Can teachers see a student’s individual answers?",
+    "a": "No. Teachers see numbers only, for students who share, and sharing is off until a student says yes."
+   },
+   {
+    "q": "What does Lucida not do for teachers?",
+    "a": "No gradebook, roster import, or link to Google Classroom. Live games aren’t graded, and it isn’t for students under 13."
+   }
+  ]
+ },
+ "quizlet-alternative": {
+  "figs": [
+   {
+    "kind": "apps",
+    "at": "Why people look for a Quizlet alternative",
+    "pos": "before",
+    "caption": "What each is best for, from the page",
+    "cards": [
+     {
+      "name": "Quizlet",
+      "line": "The biggest library and classroom tools"
+     },
+     {
+      "name": "Lucida",
+      "line": "Learn mode, spaced repetition and live games, free",
+      "lucida": true
+     },
+     {
+      "name": "Knowt",
+      "line": "Free learn-style study modes"
+     },
+     {
+      "name": "Anki",
+      "line": "Free and deeper"
+     },
+     {
+      "name": "Brainscape",
+      "line": "Free for your own text cards"
+     },
+     {
+      "name": "Gizmo",
+      "line": "AI and live games"
+     }
+    ]
+   },
+   {
+    "kind": "steps",
+    "at": "Move your Quizlet sets",
+    "pos": "after",
+    "caption": "Moving a Quizlet set to another app",
+    "steps": [
+     {
+      "t": "Open a set you made",
+      "d": "On quizlet.com"
+     },
+     {
+      "t": "Export, then Copy text",
+      "d": "Open the more menu"
+     },
+     {
+      "t": "Paste the text",
+      "d": "Into the new app’s import"
+     }
+    ]
+   },
+   {
+    "kind": "screen",
+    "id": "learn",
+    "at": "Lucida: free Learn mode, spaced repetition and live games",
+    "pos": "after",
+    "caption": "Learn mode in Lucida, which is free"
+   }
+  ],
+  "test": [
+   {
+    "q": "What does Quizlet’s free plan give you in Learn and Test?",
+    "a": "Learn is for Plus subscribers, with a free study session to try it. Test gives one free practice test per set."
+   },
+   {
+    "q": "What does Lucida’s free plan include?",
+    "a": "Unlimited decks and cards, FSRS reviews, Learn mode, live games for up to 60 friends, sharing, classes, and import and export."
+   },
+   {
+    "q": "When is Quizlet still the right pick?",
+    "a": "When you need the biggest library of ready-made sets, Google Classroom, offline iPhone and Android apps, or Classic Quizlet Live."
+   },
+   {
+    "q": "Which Quizlet sets can you export?",
+    "a": "Only sets you made, as text without images. You can’t export a set you copied from someone else."
+   }
+  ]
+ },
+ "vs/anki": {
+  "figs": [
+   {
+    "kind": "pick",
+    "at": "Who should pick which",
+    "caption": "Who should pick which"
+   },
+   {
+    "kind": "steps",
+    "at": "Bring your Anki decks to Lucida",
+    "pos": "after",
+    "caption": "Moving an Anki deck to Lucida",
+    "steps": [
+     {
+      "t": "Export in Anki",
+      "d": "File, then Export"
+     },
+     {
+      "t": "Choose Notes in Plain Text"
+     },
+     {
+      "t": "Open Import cards",
+      "d": "In Lucida"
+     },
+     {
+      "t": "Choose the file",
+      "d": "And pick a deck"
+     }
+    ]
+   },
+   {
+    "kind": "screen",
+    "id": "review",
+    "at": "Where Lucida is better",
+    "pos": "after",
+    "caption": "Reviewing a card in Lucida: the buttons show when it comes back"
+   }
+  ],
+  "test": [
+   {
+    "q": "Is Anki free?",
+    "a": "Mostly. It is free on Windows, Mac, Linux and Android, but AnkiMobile, the iPhone and iPad app, costs $24.99, paid once."
+   },
+   {
+    "q": "Which app works offline, Anki or Lucida?",
+    "a": "Anki does: your collection lives on your device. Lucida needs an internet connection."
+   },
+   {
+    "q": "What does Anki need to connect to Claude or ChatGPT?",
+    "a": "An add-on and your own API key. In Lucida, your own AI works through one private link."
+   },
+   {
+    "q": "Can Lucida read Anki’s .apkg deck files?",
+    "a": "No. Export Notes in Plain Text from Anki instead, but pictures, sounds, tags and your review history don’t come across."
+   }
+  ]
+ },
+ "vs/brainscape": {
+  "figs": [
+   {
+    "kind": "pick",
+    "at": "Who should pick which",
+    "caption": "Who should pick which"
+   },
+   {
+    "kind": "steps",
+    "at": "Moving between them",
+    "pos": "after",
+    "caption": "Moving a Brainscape deck to Lucida",
+    "steps": [
+     {
+      "t": "Export a deck",
+      "d": "In Brainscape (Pro)"
+     },
+     {
+      "t": "To a CSV file"
+     },
+     {
+      "t": "Choose it in Import cards",
+      "d": "In Lucida"
+     }
+    ]
+   },
+   {
+    "kind": "screen",
+    "id": "deck",
+    "at": "Where Lucida is better",
+    "pos": "after",
+    "caption": "A public deck in Lucida"
+   }
+  ],
+  "test": [
+   {
+    "q": "Does Brainscape use FSRS to plan reviews?",
+    "a": "No. You rate every card 1 to 5, and Brainscape’s own algorithm picks when it comes back."
+   },
+   {
+    "q": "What are Brainscape’s Certified flashcards?",
+    "a": "Expert-curated decks for hundreds of subjects and high-stakes exams. They need Pro, and Lucida has none."
+   },
+   {
+    "q": "Can you add pictures and sounds on Brainscape’s free plan?",
+    "a": "No, images and audio are Pro. Lucida’s free plan allows up to 100 pictures and sounds."
+   },
+   {
+    "q": "What are Brainscape Pro’s monthly and yearly prices in its App Store listing?",
+    "a": "$19.99 a month or $95.99 a year. Lucida Pro is $5.99 a month or $49.99 a year."
+   }
+  ]
+ },
+ "vs/gizmo": {
+  "figs": [
+   {
+    "kind": "pick",
+    "at": "Who should pick which",
+    "caption": "Who should pick which"
+   },
+   {
+    "kind": "steps",
+    "at": "Moving between them",
+    "pos": "after",
+    "caption": "Moving from Gizmo to Lucida",
+    "steps": [
+     {
+      "t": "Copy your notes or source files",
+      "d": "Gizmo can’t export your cards yet"
+     },
+     {
+      "t": "Into your AI",
+      "d": "Ask it to rebuild the deck"
+     },
+     {
+      "t": "In Lucida",
+      "d": "Through your Lucida link"
+     }
+    ]
+   },
+   {
+    "kind": "screen",
+    "id": "connect",
+    "at": "Where Lucida is better",
+    "pos": "after",
+    "caption": "Connect your AI: your Lucida link, and what your AI may do"
+   }
+  ],
+  "test": [
+   {
+    "q": "How many players can join a Gizmo Live game?",
+    "a": "There is no maximum, and it needs at least 2 players. Lucida Live takes up to 60."
+   },
+   {
+    "q": "What daily limits does Gizmo’s free plan have?",
+    "a": "15 hearts, then a 10-minute wait, and 2 Magic Imports a day, 20 minutes apart. Lucida has no waiting times."
+   },
+   {
+    "q": "Can you export your cards from Gizmo?",
+    "a": "Not yet, says Gizmo’s help center. Lucida exports every deck as CSV and everything, reviews included, as JSON."
+   },
+   {
+    "q": "What can Gizmo’s Magic Import turn into cards?",
+    "a": "PDFs, recordings, photos, PowerPoint files, websites and YouTube links. You don’t need a separate AI subscription."
+   }
+  ]
+ },
+ "vs/kahoot": {
+  "figs": [
+   {
+    "kind": "pick",
+    "at": "Who should pick which",
+    "caption": "Who should pick which"
+   },
+   {
+    "kind": "steps",
+    "at": "Using both",
+    "pos": "after",
+    "caption": "Using Lucida and Kahoot together",
+    "steps": [
+     {
+      "t": "Study a deck every day",
+      "d": "In Lucida"
+     },
+     {
+      "t": "Run a Live game",
+      "d": "Before the test"
+     },
+     {
+      "t": "Use Kahoot",
+      "d": "For a big class, a hall or an event"
+     }
+    ]
+   },
+   {
+    "kind": "screen",
+    "id": "live",
+    "at": "Where Lucida is better",
+    "pos": "after",
+    "caption": "A live game in Lucida: the question on the big screen, and on a player’s phone"
+   }
+  ],
+  "test": [
+   {
+    "q": "How many players can join a free Lucida Live game?",
+    "a": "Up to 60. Kahoot’s free plan lists 40 players on its school page and 10 on its personal page."
+   },
+   {
+    "q": "How many players do Kahoot’s paid plans allow?",
+    "a": "Up to 800, and up to 5,000 on its business plans."
+   },
+   {
+    "q": "What is the starting price of paid Kahoot!+?",
+    "a": "$3 a month billed yearly. Kahoot! Go is free."
+   },
+   {
+    "q": "Does a player need an account to join Lucida Live?",
+    "a": "No. Friends join with a code or a QR code and a name, but the host needs a Lucida account."
+   }
+  ]
+ },
+ "vs/knowt": {
+  "figs": [
+   {
+    "kind": "pick",
+    "at": "Who should pick which",
+    "caption": "Who should pick which"
+   },
+   {
+    "kind": "steps",
+    "at": "Moving between them",
+    "pos": "after",
+    "caption": "Moving a Knowt set to Lucida",
+    "steps": [
+     {
+      "t": "Export from Knowt",
+      "d": "Knowt exports flashcards as a PDF"
+     },
+     {
+      "t": "Copy the terms and definitions",
+      "d": "One card per line"
+     },
+     {
+      "t": "Paste into Import cards",
+      "d": "In Lucida"
+     }
+    ]
+   },
+   {
+    "kind": "screen",
+    "id": "connect",
+    "at": "Where Lucida is better",
+    "pos": "after",
+    "caption": "Connect your AI: your Lucida link, and what your AI may do"
+   }
+  ],
+  "test": [
+   {
+    "q": "Does Knowt’s free plan show ads?",
+    "a": "Yes. Knowt’s Ultra plan removes them, and Lucida shows no ads, free or Pro."
+   },
+   {
+    "q": "What does Knowt Ultra cost?",
+    "a": "$149.99 a year with a 3-day free trial, or $24.99 a month."
+   },
+   {
+    "q": "How many AI summaries does Knowt’s free plan allow?",
+    "a": "1 summary a month. On Free, Lucida lets your own AI make as many cards as you want."
+   },
+   {
+    "q": "What AI tools does Knowt have built in?",
+    "a": "Summarizers for PDFs, video, images and slides, a live-lecture note taker, AI podcasts and a voice tutor."
+   }
+  ]
+ },
+ "vs/mochi": {
+  "figs": [
+   {
+    "kind": "pick",
+    "at": "Who should pick which",
+    "caption": "Who should pick which"
+   },
+   {
+    "kind": "steps",
+    "at": "Moving between them",
+    "pos": "after",
+    "caption": "Moving a Mochi deck to Lucida",
+    "steps": [
+     {
+      "t": "Export a deck as CSV",
+      "d": "From Mochi"
+     },
+     {
+      "t": "Choose it in Import cards",
+      "d": "In Lucida"
+     },
+     {
+      "t": "No review history",
+      "d": "The CSV export has no review history"
+     }
+    ]
+   },
+   {
+    "kind": "screen",
+    "id": "learn",
+    "at": "Where Lucida is better",
+    "pos": "after",
+    "caption": "Learn mode in Lucida, which is free"
+   }
+  ],
+  "test": [
+   {
+    "q": "What does Mochi’s free plan include?",
+    "a": "Unlimited cards and decks, offline use, import and export, and no sign-up."
+   },
+   {
+    "q": "What does Mochi Pro cost?",
+    "a": "$5 a month billed yearly ($60), or $6 a month billed monthly. Pro adds sync, publishing decks and more AI."
+   },
+   {
+    "q": "Is sync free on Lucida?",
+    "a": "Yes: sign in and your cards are on every device. On Mochi, sync is part of Pro."
+   },
+   {
+    "q": "Can Mochi import Anki .apkg files?",
+    "a": "Yes, including review history. Lucida can’t read .apkg files."
+   }
+  ]
+ },
+ "vs/quizlet": {
+  "figs": [
+   {
+    "kind": "pick",
+    "at": "Who should pick which",
+    "caption": "Who should pick which"
+   },
+   {
+    "kind": "steps",
+    "at": "Move your Quizlet sets to Lucida",
+    "pos": "after",
+    "caption": "Moving a Quizlet set to Lucida",
+    "steps": [
+     {
+      "t": "Open a set you made",
+      "d": "On quizlet.com"
+     },
+     {
+      "t": "Export, then Copy text",
+      "d": "From the more menu"
+     },
+     {
+      "t": "Open Import cards",
+      "d": "In Lucida"
+     },
+     {
+      "t": "Paste and pick a deck"
+     }
+    ]
+   },
+   {
+    "kind": "screen",
+    "id": "learn",
+    "at": "Where Lucida is better",
+    "pos": "after",
+    "caption": "Learn mode in Lucida, which is free"
+   }
+  ],
+  "tables": [
+   {
+    "at": "What Quizlet’s free plan covers (September 2026)",
+    "columns": [
+     "What",
+     "On the free plan"
+    ]
+   }
+  ],
+  "test": [
+   {
+    "q": "What does Quizlet’s free plan give you for Learn and Test?",
+    "a": "A free study session for Learn, and one free practice test per set for Test. Lucida’s Learn mode is free."
+   },
+   {
+    "q": "Which Quizlet features are paid only?",
+    "a": "Diagram sets, rich text, offline studying and an ad-free experience. Lucida has no ads, free or Pro."
+   },
+   {
+    "q": "Which app has the bigger library of shared decks, Quizlet or Lucida?",
+    "a": "Quizlet, with millions of public sets. Lucida’s library of shared decks is new and much smaller."
+   },
+   {
+    "q": "Does Quizlet have spaced repetition?",
+    "a": "Yes, but on its website only. Lucida plans every review with FSRS, in any browser."
+   }
+  ]
+ },
+ "vs/remnote": {
+  "figs": [
+   {
+    "kind": "pick",
+    "at": "Who should pick which",
+    "caption": "Who should pick which"
+   },
+   {
+    "kind": "steps",
+    "at": "Moving between them",
+    "pos": "after",
+    "caption": "Moving a Lucida deck to RemNote",
+    "steps": [
+     {
+      "t": "Export a Lucida deck as CSV"
+     },
+     {
+      "t": "Turn each row into a line",
+      "d": "Like Question >> Answer"
+     },
+     {
+      "t": "Paste the lines into RemNote",
+      "d": "Pasted lines become flashcards"
+     }
+    ]
+   },
+   {
+    "kind": "screen",
+    "id": "decks",
+    "at": "Where Lucida is better",
+    "pos": "after",
+    "caption": "Lucida’s library: folders and decks"
+   }
+  ],
+  "test": [
+   {
+    "q": "Where do RemNote cards live?",
+    "a": "Inside your notes. Any bullet can become a card: type Question == Answer."
+   },
+   {
+    "q": "What does RemNote Pro cost a month?",
+    "a": "$10 a month, or $8 a month billed yearly. Lucida Pro is $5.99 a month, but the plans include different things."
+   },
+   {
+    "q": "How many image-occlusion images does RemNote’s free plan allow?",
+    "a": "5 images. Lucida’s free plan has up to 100 pictures and sounds."
+   },
+   {
+    "q": "Does RemNote work offline?",
+    "a": "Yes, in the desktop and mobile apps, but it is limited in the web app. Lucida has no offline mode."
+   }
+  ]
+ }
+}
