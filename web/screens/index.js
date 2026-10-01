@@ -184,7 +184,7 @@ export default [
   "name": "Motion",
   "title": "Motion",
   "w": 1440,
-  "h": 1734
+  "h": 2115
  },
  {
   "name": "PhoneActivity",
