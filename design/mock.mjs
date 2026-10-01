@@ -135,7 +135,8 @@ export const MOCK_METHOD = String.raw`mock() {
     exam, examDay: examDay || '', leechAt: ed.leechAt ?? 8, leechAct: ed.leechAct ?? 'tag',
     // Sharing (Tweaks: shared, linked): shared by you, or from Maria (studied as it is, or a copy with her changes waiting).
     ...(() => { const sv = m.share ? m.share.vis : p.shared === 'Public' ? 'public' : p.shared === 'Link only' ? 'link' : 'private', lk = m.detached ? '' : p.linked;
-      return { shared: sv !== 'private' && !lk ? { vis: sv, id: 's9', url: '/@alexkim/cell-biology', label: sv === 'public' ? 'Public' : 'Link only' } : null,
+      // Its labels (level, subject, school): Cell Biology's own, and what you pick in its Sharing settings.
+      return { shared: sv !== 'private' && !lk ? { vis: sv, id: 's9', url: '/@alexkim/cell-biology', label: sv === 'public' ? 'Public' : 'Link only', labels: { level: 'college', subject: 'biology', schoolId: '110644', school: 'University of California-Davis', ...((m.share && m.share.labels) || {}) } } : null,
         link: lk ? { mode: lk, gone: false, id: 's1', owner: { name: 'Maria Santos', handle: 'mariasantos' }, url: '/@mariasantos/mcat-biochemistry', pending: lk === 'copy' && !m.took ? 3 : 0, updates: m.upd ?? true } : null,
         readOnly: lk === 'study' }; })() });
   const idx = m.idx ?? (({ 'Fill in the blank': 1, Image: 2, Audio: 3 })[p.card] || 0);
@@ -171,6 +172,9 @@ export const MOCK_METHOD = String.raw`mock() {
   const liveRows = (p.final ? LS.final : LS.board.map(([name, score]) => [name, name === LS.me ? jordan : score])).slice().sort((a, b) => b[1] - a[1]);
   return {
     mock: true,
+    // The school list (web/schools.json): the sample's few schools, found by the words they start with.
+    schools: { find: q => { const w = String(q || '').toLowerCase().split(/[^a-z0-9]+/).filter(Boolean);
+      return w.length ? N.SCHOOLS.filter(r => w.every(x => (r[1] + ' ' + r[2] + ' ' + r[3] + ' ' + (r[4] || '')).toLowerCase().split(/[^a-z0-9]+/).some(y => y.startsWith(x)))) : []; } },
     // Pro: on for the canvas's boards, off for the ones that show Free (their free or plan setting).
     pro: () => !(p.free || p.plan === 'Free'),
     chrome: () => { const S = skinned(), color = st.photo === 'color';
@@ -278,8 +282,25 @@ export const MOCK_METHOD = String.raw`mock() {
         me: p.signedOut ? null : { owner: !!p.owner, helper: false, studying: m.studying || (p.studying ? 'cell' : ''), copied: m.copied || '', watching: !!(m.watching ?? p.watching), starred: star('s1') ?? false, open: p.owner ? 3 : 0 } });
       return {
         signedOut: !!p.signedOut,
-        discover: tag => (wait ? undefined : { topics: N.DISCOVER.topics, tag: tag || '', sections: N.DISCOVER.sections.map(s => ({ ...s, decks: s.decks.map(pick).map(deckCard) })) }),
-        search: q => (wait ? undefined : !String(q || '').trim() ? { q: '', decks: [], people: [] } : { q, decks: [D.mcat, D.bio2a, D.cell].map(deckCard), people: [{ ...N.P.maria, bio: 'Biochem TA', school: 'UC Davis', followers: 1280 }, { ...N.P.okafor, bio: '', school: 'UC Davis', followers: 3400 }] }),
+        // Narrowed by level, subject, or school (f: level and subject ids, a school's id or name): one list of decks, best first. Not
+        // narrowed, the sections, and first the one for your school (the board's mySchool: University of California-Davis).
+        discover: (tag, f = {}) => {
+          if (wait) return undefined;
+          const school = f.school ? N.SCHOOLS.find(r => r[0] === f.school || r[1] === f.school) : null, on = !!(f.level || f.subject || f.school);
+          const same = d => (!f.level || d.level === f.level) && (!f.subject || d.subject === f.subject) && (!f.school || (school && d.schoolId === school[0]));
+          const echo = { topics: N.DISCOVER.topics, tag: tag || '', level: f.level || '', subject: f.subject || '', school: school ? { id: school[0], name: school[1] } : null, filtered: on };
+          if (on) { const list = Object.values(D).filter(same).sort((a, b) => b.stars - a.stars).slice(0, 24); return { ...echo, sections: list.length ? [{ id: 'results', title: 'Decks', decks: list.map(deckCard) }] : [] }; }
+          const home = p.mySchool === false ? [] : Object.values(D).filter(d => d.schoolId === '110644').sort((a, b) => b.stars - a.stars).slice(0, 12);
+          return { ...echo, sections: [...(home.length ? [{ id: 'school', title: 'Popular at University of California-Davis', decks: home.map(deckCard) }] : []), ...N.DISCOVER.sections.map(s => ({ ...s, decks: s.decks.map(pick).map(deckCard) }))] };
+        },
+        search: (q, f = {}) => {
+          if (wait) return undefined;
+          if (!String(q || '').trim()) return { q: '', decks: [], people: [] };
+          const school = f.school ? N.SCHOOLS.find(r => r[0] === f.school || r[1] === f.school) : null, on = !!(f.level || f.subject || f.school);
+          const same = d => (!f.level || d.level === f.level) && (!f.subject || d.subject === f.subject) && (!f.school || (school && d.schoolId === school[0]));
+          // People aren't narrowed by school or level (nothing lists the people at a school), so with a filter there are none.
+          return { q, filtered: on, decks: [D.mcat, D.bio2a, D.cell].filter(same).map(deckCard), people: on ? [] : [{ ...N.P.maria, bio: 'Biochem TA', followers: 1280 }, { ...N.P.okafor, bio: '', followers: 3400 }] };
+        },
         // A profile: Maria's for any other handle (prop "following": you follow her), or yours, with what you changed on
         // this board (your handle, bio, pins). Prop "missing": no one has that name; "empty": nothing shared or saved yet.
         profile: h => {
@@ -304,7 +325,7 @@ export const MOCK_METHOD = String.raw`mock() {
         suggestions: open, inbox: open, sent: () => (wait ? undefined : p.empty ? [] : N.SENT),
         // The people you blocked (Settings › Account): Maria and Dev, or nobody (prop "noBlocks"); Unblock takes one off.
         blocks: () => (wait ? undefined : { people: p.noBlocks ? [] : [N.P.maria, N.P.dev].filter(x => (m.blocks || {})[x.handle] !== false) }),
-        mine: () => ({ handle: 'alexkim', profile: N.P.alex, decks: [{ id: 's9', slug: 'cell-biology', visibility: 'public', stars: 1300, learners: 214, copies: 86, version: 14, open: 3 }] }),
+        mine: () => ({ handle: 'alexkim', profile: N.P.alex, decks: [{ id: 's9', slug: 'cell-biology', visibility: 'public', stars: 1300, learners: 214, copies: 86, version: 14, open: 3, level: 'college', subject: 'biology', schoolId: '110644', school: 'University of California-Davis' }] }),
         classes: () => (wait ? undefined : p.empty ? [] : N.CLASS_LIST),
         klass: code => (wait ? undefined : p.missing ? { missing: true, status: 404 } : klass(code)),
         verify: () => ({ verified: ({ Teacher: 'teacher', School: 'school' })[p.verified] || '', open: p.verified === 'Waiting for review' || !!m.verifySent, declined: false, role: '', school: 'UC Davis' }),
@@ -352,7 +373,15 @@ export const MOCK_METHOD = String.raw`mock() {
         set({ profile: { ...(m.profile || {}), ...patch } });
         return Promise.resolve({ handle: h || (m.profile && m.profile.handle) || 'alexkim' });
       },
-      shareDeck: (id, o) => { set({ share: { ...(m.share || { vis: p.shared === 'Public' ? 'public' : p.shared === 'Link only' ? 'link' : 'private' }), ...(o.visibility ? { vis: o.visibility } : {}) } }); return Promise.resolve({}); },
+      // Its level, subject, and school stay on the board too (a school by its id, from the sample's list, or the words typed).
+      shareDeck: (id, o) => {
+        const labels = {};
+        if ('level' in o) labels.level = o.level;
+        if ('subject' in o) labels.subject = o.subject;
+        if ('schoolId' in o || 'school' in o) { const r = N.SCHOOLS.find(x => x[0] === o.schoolId); labels.schoolId = r ? r[0] : ''; labels.school = r ? r[1] : o.school || ''; }
+        set({ share: { ...(m.share || { vis: p.shared === 'Public' ? 'public' : p.shared === 'Link only' ? 'link' : 'private' }), ...(o.visibility ? { vis: o.visibility } : {}), labels: { ...((m.share || {}).labels || {}), ...labels } } });
+        return Promise.resolve({});
+      },
       detach: () => set({ detached: true }), takeUpdates: () => { set({ took: true }); return Promise.resolve({}); }, copyUpdates: (id, on) => set({ upd: !!on }),
       // Live: typing on the join board and tapping an answer stay on that board; the rest link to the next board.
       joinCode: v => set({ joinCode: String(v || '').replace(/\D/g, '').slice(0, 6) }), joinName: v => set({ joinName: String(v || '').slice(0, 20) }), liveAnswer: i => set({ livePick: i }),

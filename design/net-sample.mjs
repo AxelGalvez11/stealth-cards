@@ -2,6 +2,12 @@
 // suggestions, news), the same people and decks as the "Study network" mockups. mock.mjs hands these to boards as
 // this.mock().net, shaped exactly like what web/social.mjs answers the app (see web/net.js), so a board draws the same
 // way from both.
+import { readFileSync } from 'node:fs';
+// A few real schools out of web/schools.json, for the school pickers (the picker's rows are [id, name, city, state, other names]).
+const SCHOOL_IDS = ['110644', '110635', '110653', '110680', '110662', '243744', '166683', '166027', '130794', '190415', '193900', '228778', '237358', '202435', '186131'];
+const SCHOOL_ROWS = JSON.parse(readFileSync(new URL('../web/schools.json', import.meta.url), 'utf8')).rows;
+export const SCHOOLS = SCHOOL_IDS.map(id => SCHOOL_ROWS.find(r => r[0] === id));
+const UCD = { schoolId: '110644', school: 'University of California-Davis' }, STAN = { schoolId: '243744', school: 'Stanford University' };
 const P = {
   alex: { handle: 'alexkim', name: 'Alex Kim', avatar: null, color: 0, verified: '', kind: 'person' },
   maria: { handle: 'mariasantos', name: 'Maria Santos', avatar: null, color: 3, verified: '', kind: 'person' },
@@ -11,27 +17,27 @@ const P = {
   sam: { handle: 'samr', name: 'Sam Rivera', avatar: null, color: 5, verified: '', kind: 'person' },
   ucd: { handle: 'ucdavis.bio', name: 'UC Davis Biology', avatar: null, color: 0, verified: 'school', kind: 'school' }
 };
-const deck = (id, owner, name, cards, stars, extra = {}) => ({ id, url: '/@' + P[owner].handle + '/' + name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, ''), name, description: '', tags: [],
+const deck = (id, owner, name, cards, stars, extra = {}) => ({ level: '', subject: '', school: '', schoolId: '', id, url: '/@' + P[owner].handle + '/' + name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, ''), name, description: '', tags: [],
   cover: { style: 'mix', round: 0, seed: name, image: null }, cards, stars, learners: Math.round(stars * .6), copies: Math.round(stars * .12), version: 3, updated: '2026-09-26T10:00:00Z', visibility: 'public',
   checked: null, maintained: 'creator', owner: P[owner], theme: '', ...extra });
 const DECKS = {
-  mcat: deck('s1', 'maria', 'MCAT Biochemistry', 640, 4200, { tags: ['MCAT', 'Biology'], description: 'Every enzyme, pathway, and number the exam asks. Suggestions welcome.', version: 14, updated: '2026-09-26T10:00:00Z',
+  mcat: deck('s1', 'maria', 'MCAT Biochemistry', 640, 4200, { ...UCD, level: 'college', subject: 'biology', tags: ['MCAT', 'Biology'], description: 'Every enzyme, pathway, and number the exam asks. Suggestions welcome.', version: 14, updated: '2026-09-26T10:00:00Z',
     checked: { name: 'Dr. Okafor', handle: 'drokafor', current: false }, learners: 214, copies: 86 }),
-  kanji: deck('s2', 'jordan', 'JLPT N3 Kanji', 1024, 3100, { tags: ['Languages', 'Japanese'] }),
-  algo: deck('s3', 'dev', 'Algorithms', 212, 2700, { tags: ['Computer science'] }),
-  pharm: deck('s4', 'sam', 'Pharmacology', 388, 1900, { tags: ['Pre-med'] }),
-  bio2a: deck('s5', 'okafor', 'BIO 2A · Final', 290, 860, { tags: ['Biology'], checked: { name: 'Dr. Okafor', handle: 'drokafor', current: true } }),
-  law: deck('s6', 'sam', 'Constitutional Law', 174, 640, { tags: ['Law'], checked: { name: 'Dr. Okafor', handle: 'drokafor', current: true } }),
-  orgo: deck('s7', 'okafor', 'Organic Reactions', 256, 1400, { tags: ['Chemistry'], checked: { name: 'Dr. Okafor', handle: 'drokafor', current: true } }),
-  spanish: deck('s8', 'maria', 'Spanish B1', 900, 2200, { tags: ['Languages'] }),
-  cell: deck('s9', 'alex', 'Cell Biology', 412, 1300, { tags: ['Biology', 'MCAT'] }),
-  sys: deck('s10', 'alex', 'System Design', 74, 412, { tags: ['Computer science'] }),
-  jp: deck('s11', 'alex', 'Japanese N4', 820, 2400, { tags: ['Languages'] }),
-  orgoA: deck('s12', 'alex', 'Organic Chemistry', 236, 640, { tags: ['Chemistry'], checked: { name: 'Dr. Okafor', handle: 'drokafor', current: true } }),
-  hist: deck('s13', 'alex', 'US History', 158, 205, { tags: ['History'] }),
-  anat: deck('s14', 'alex', 'Anatomy', 530, 980, { tags: ['Biology'] }),
-  pharmA: deck('s15', 'alex', 'Pharmacology', 188, 320, { tags: ['Pre-med'] }),
-  psych: deck('s16', 'alex', 'Psych & Soc', 344, 1100, { tags: ['MCAT'] })
+  kanji: deck('s2', 'jordan', 'JLPT N3 Kanji', 1024, 3100, { level: 'other', subject: 'languages', tags: ['Languages', 'Japanese'] }),
+  algo: deck('s3', 'dev', 'Algorithms', 212, 2700, { ...STAN, level: 'college', subject: 'computer-science', tags: ['Computer science'] }),
+  pharm: deck('s4', 'sam', 'Pharmacology', 388, 1900, { ...STAN, level: 'medical', subject: 'pharmacy', tags: ['Pre-med'] }),
+  bio2a: deck('s5', 'okafor', 'BIO 2A · Final', 290, 860, { ...UCD, level: 'college', subject: 'biology', tags: ['Biology'], checked: { name: 'Dr. Okafor', handle: 'drokafor', current: true } }),
+  law: deck('s6', 'sam', 'Constitutional Law', 174, 640, { ...STAN, level: 'medical', subject: 'law', tags: ['Law'], checked: { name: 'Dr. Okafor', handle: 'drokafor', current: true } }),
+  orgo: deck('s7', 'okafor', 'Organic Reactions', 256, 1400, { ...UCD, level: 'college', subject: 'chemistry', tags: ['Chemistry'], checked: { name: 'Dr. Okafor', handle: 'drokafor', current: true } }),
+  spanish: deck('s8', 'maria', 'Spanish B1', 900, 2200, { level: 'highschool', subject: 'languages', tags: ['Languages'] }),
+  cell: deck('s9', 'alex', 'Cell Biology', 412, 1300, { ...UCD, level: 'college', subject: 'biology', tags: ['Biology', 'MCAT'] }),
+  sys: deck('s10', 'alex', 'System Design', 74, 412, { ...UCD, level: 'college', subject: 'computer-science', tags: ['Computer science'] }),
+  jp: deck('s11', 'alex', 'Japanese N4', 820, 2400, { level: 'other', subject: 'languages', tags: ['Languages'] }),
+  orgoA: deck('s12', 'alex', 'Organic Chemistry', 236, 640, { ...UCD, level: 'college', subject: 'chemistry', tags: ['Chemistry'], checked: { name: 'Dr. Okafor', handle: 'drokafor', current: true } }),
+  hist: deck('s13', 'alex', 'US History', 158, 205, { level: 'highschool', subject: 'history', tags: ['History'] }),
+  anat: deck('s14', 'alex', 'Anatomy', 530, 980, { ...UCD, level: 'college', subject: 'medicine', tags: ['Biology'] }),
+  pharmA: deck('s15', 'alex', 'Pharmacology', 188, 320, { ...UCD, level: 'medical', subject: 'pharmacy', tags: ['Pre-med'] }),
+  psych: deck('s16', 'alex', 'Psych & Soc', 344, 1100, { ...UCD, level: 'college', subject: 'psychology', tags: ['MCAT'] })
 };
 const ALEX_DECKS = ['cell', 'sys', 'jp', 'orgoA', 'hist', 'anat', 'pharmA', 'psych'].map((k, i) => ({ ...DECKS[k], pinned: i < 2 }));
 const CARDS = [
@@ -157,8 +163,10 @@ const ADMIN = {
 };
 export const NET_SAMPLE = {
   P, DECKS, ALEX_DECKS, CARDS, MADE, HISTORY, CELL_HISTORY, SUGGESTIONS, SENT, NEWS, CLASSES, CLASS_LIST, MY_PROGRESS, ASSIGNED, ADMIN,
-  PROFILE: { ...P.alex, bio: 'MCAT decks, made with my AI. Suggestions welcome.', school: 'UC Davis', subject: 'Pre-med', followers: 340, following: 86, contributions: 23, featured: ['s9', 's10'], stars: 7360 },
-  OTHER: { ...P.maria, bio: 'Biochem TA. I fix what my students trip on.', school: 'UC Davis', subject: 'Biochemistry', followers: 1280, following: 140, contributions: 212, featured: ['s1'], stars: 6400 },
+  // Alex shows his school (the switch is on); Maria's page shows hers too.
+  PROFILE: { ...P.alex, bio: 'MCAT decks, made with my AI. Suggestions welcome.', ...UCD, level: 'college', year: '3', showSchool: true, subject: 'Pre-med', followers: 340, following: 86, contributions: 23, featured: ['s9', 's10'], stars: 7360 },
+  OTHER: { ...P.maria, bio: 'Biochem TA. I fix what my students trip on.', school: 'University of California-Davis', level: 'graduate', year: '', subject: 'Biochemistry', followers: 1280, following: 140, contributions: 212, featured: ['s1'], stars: 6400 },
+  SCHOOLS,
   DISCOVER: { topics: ['MCAT', 'Languages', 'Computer science', 'Chemistry', 'Law', 'History', 'Biology'], sections: [
     { id: 'popular', title: 'Popular this week', decks: ['mcat', 'kanji', 'algo', 'pharm'] },
     { id: 'checked', title: 'Checked by teachers', decks: ['bio2a', 'law', 'orgo', 'spanish'] },

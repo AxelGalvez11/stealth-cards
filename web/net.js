@@ -3,6 +3,8 @@
 // here yet (undefined), so the screen shows its loading look, and it draws again when the answer arrives. Answers are
 // kept for a little while, and anything you change drops them so the next look is fresh.
 const enc = encodeURIComponent;
+// Discover and search can be narrowed by level, subject, and school (a school's id): what's set goes on the address.
+const narrow = f => ['level', 'subject', 'school'].filter(k => f && f[k]).map(k => '&' + k + '=' + enc(f[k])).join('');
 export function createNet({ accept = () => {}, changed = () => {}, signedOut = false, go = () => {} } = {}) {
   // `gen` counts changes. An answer from before the last change is asked for again, but it stays on the page until the
   // fresh one arrives, so a page doesn't flash its loading look after every follow, save, or pin.
@@ -36,8 +38,8 @@ export function createNet({ accept = () => {}, changed = () => {}, signedOut = f
     deck: (h, s) => get('/api/public/deck?h=' + enc(h || '') + '&s=' + enc(s || '')),
     deckById: id => get('/api/public/deck?id=' + enc(id || '')),
     profile: h => get('/api/public/profile?h=' + enc(h || '')),
-    discover: tag => get('/api/public/discover?tag=' + enc(tag || '')),
-    search: q => (String(q || '').trim() ? get('/api/public/search?q=' + enc(String(q).trim()), 60000) : { q: '', decks: [], people: [] }),
+    discover: (tag, f) => get('/api/public/discover?tag=' + enc(tag || '') + narrow(f)),
+    search: (q, f) => (String(q || '').trim() ? get('/api/public/search?q=' + enc(String(q).trim()) + narrow(f), 60000) : { q: '', decks: [], people: [] }),
     history: id => get('/api/public/history?id=' + enc(id || '')),
     activity: () => (signedOut ? { unread: 0, items: [] } : get('/api/social/activity', 15000)),
     // How much news is new, for the bell (a small question, asked at most once a minute).

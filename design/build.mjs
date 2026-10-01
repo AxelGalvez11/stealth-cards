@@ -16,6 +16,7 @@ import { VARS, SKY_VARS, EXTRA_VARS, EXTRA_LIGHT, EXTRA_DARK } from './scheme.mj
 import { SCREENS, KINDS, shotFile, visualsOf, CONNECT_FIGS } from './visuals.mjs';
 import { THEMES } from '../web/themes/index.js';
 import { THEME_KEYS, themeCss, themeFonts, themeStatic } from './themes.mjs';
+import { LEVELS, YEARS, SUBJECTS } from '../web/school.js';
 // The themes (Pro), for boards' logic: key, board name, short and full names.
 const THEME_LIST = JSON.stringify(THEMES.map(({ key, board, short, name }) => ({ key, board: board || '', short, name })));
 const MESH_DATA = JSON.stringify(Object.fromEntries(PALETTE_NAMES.map(n => [n, { ...paletteData(n), shadow: PALETTES[n].ink === '#FFFFFF' ? '0 1px 14px rgba(0,0,0,.16)' : 'none' }])));
@@ -684,6 +685,48 @@ const BLOCK_JS = `const blk0 = 'blk' in this.state ? this.state.blk : (typeof bl
     save: () => { if (!blk0 || blkBusy) return; this.setState({ blkBusy: true, blkErr: '' });
       Promise.resolve(doBlock(blk0.handle, true)).then(() => this.setState({ blk: null, blkBusy: false }), e => this.setState({ blkBusy: false, blkErr: (e && e.message) || 'Something went wrong. Try again.' })); } };`;
 
+// ---------- Pickers: level, year, subject, and school ----------
+// Discover's filters, Profile → Edit, and a deck's labels choose from short lists (levels, years, the thirty subjects in
+// web/school.js) and from the school list (web/schools.json: `db.schools.find` searches it as you type; "Other" keeps what was
+// typed). A picker is a menu under its button on the web and a sheet on the iPhone; only one is open at a time (this.state.pickIs).
+// A logic that has pickers includes PICK_JS, makes each with pick(...), and the markup draws it with pickPop (web) or pickSheet (iPhone).
+const PICK_JS = `const PL = ${JSON.stringify({ levels: LEVELS, years: YEARS, subjects: SUBJECTS })};
+  const lvWords = id => (PL.levels.find(x => x[0] === id) || [])[1] || '', yrWords = id => (PL.years.find(x => x[0] === id) || [])[1] || '', sjWords = id => (PL.subjects.find(x => x[0] === id) || [])[1] || '';
+  // rows: [id, words, a line under the words]; value: the one picked ('' for none); choose(id, row) picks one; any: the words for picking
+  // none; find(q): the rows for what was typed (the school list), nothing until something is; other(q): offers what was typed as it is.
+  // A board can show one open (its Tweaks) with pickDefault, and what's typed in it with pickQDefault.
+  const idOf = (list, x) => { const hit = list.find(r => r[0] === x || r[1] === x); return hit ? hit[0] : ''; };
+  const pick = (key, { title, rows = [], value = '', choose, any = '', find = null, other = null, ph = '', noneLine = 'Nothing matches' }) => {
+    const open = ('pickIs' in this.state ? this.state.pickIs : typeof pickDefault === 'undefined' ? '' : pickDefault) === key;
+    const q = open ? ('pickQ' in this.state ? this.state.pickQ : typeof pickQDefault === 'undefined' ? '' : pickQDefault) || '' : '', typed = q.trim(), shut = { pickIs: '', pickQ: '' };
+    const found = find ? (typed ? find(typed) : []) : rows;
+    const row = (r, on, go) => ({ label: r[1], sub: r[2] || '', hasSub: !!r[2], on, pressed: on ? 'true' : 'false', pick: () => { this.setState(shut); go(); } });
+    const head = any && !typed ? [row(['', any], !value, () => choose('', null))] : [];
+    const list = found.map(r => row(r, !!value && r[0] === value, () => choose(r[0], r)));
+    const o = other && typed ? other(typed) : null;
+    return { open, expanded: open ? 'true' : 'false', title, ph, hasSearch: !!find, query: q, rows: [...head, ...list], none: !!find && !!typed && !list.length && !o, noneLine,
+      toggle: () => this.setState(open ? shut : { pickIs: key, pickQ: '', pickN: (this.state.pickN || 0) + 1 }), close: () => this.setState(shut),
+      setQuery: e => this.setState({ pickQ: e && e.target ? e.target.value : '' }),
+      ref: el => { if (!el || db.mock || this.pickFocus === this.state.pickN) return; this.pickFocus = this.state.pickN; el.focus(); },
+      otherShow: !!o, otherLabel: o ? o.label : '', otherPick: () => { this.setState(shut); if (o) o.choose(); } };
+  };
+  // The school list's rows for what was typed: [id, name, city and state].
+  const findSchool = x => (db.schools.find(x) || []).map(r => [r[0], r[1], r[2] + ', ' + r[3]]);`;
+// One row of a picker's list: its words, a line under them (a school's city and state), and a check when it's the one picked.
+const PICK_ROW = phone => `<button type="button" onClick="{{o.pick}}" aria-pressed="{{o.pressed}}" class="sc-press" style="min-height: ${phone ? 52 : 40}px; flex-shrink: 0; padding: ${phone ? '8px 4px' : '6px 12px'}; display: flex; align-items: center; gap: 10px; border: 0; ${phone ? 'border-bottom: 1px solid {{t.line}}; ' : ''}border-radius: ${phone ? 0 : 12}px; background: transparent; color: {{t.text}}; font: inherit; text-align: left; cursor: pointer;"><span style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px;"><span style="font-size: ${phone ? 16 : 14}px; ${phone ? '' : 'line-height: 1.25; '}white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{o.label}}</span><sc-if value="{{o.hasSub}}" hint-placeholder-val="{{ false }}"><span style="font-size: ${phone ? 13 : 12}px; color: {{t.muted}}; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{o.sub}}</span></sc-if></span><sc-if value="{{o.on}}" hint-placeholder-val="{{ false }}"><span style="display: flex; flex-shrink: 0;">${svg(I.check, 15, 2.4)}</span></sc-if></button>`;
+const PICK_LIST = (k, phone) => `<sc-for list="{{${k}.rows}}" as="o" hint-placeholder-count="5">${PICK_ROW(phone)}</sc-for>
+    <sc-if value="{{${k}.none}}" hint-placeholder-val="{{ false }}"><span style="padding: 10px ${phone ? 4 : 12}px; font-size: ${phone ? 15 : 13}px; color: {{t.muted}};">{{${k}.noneLine}}</span></sc-if>
+    <sc-if value="{{${k}.otherShow}}" hint-placeholder-val="{{ false }}"><button type="button" onClick="{{${k}.otherPick}}" class="sc-press" style="min-height: ${phone ? 48 : 38}px; flex-shrink: 0; margin-top: 4px; padding: 0 ${phone ? 16 : 12}px; display: flex; align-items: center; border: 0; border-radius: ${phone ? 16 : 12}px; background: {{t.surf}}; color: {{t.text}}; font: inherit; font-size: ${phone ? 16 : 14}px; font-weight: 600; text-align: left; cursor: pointer;"><span style="min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{${k}.otherLabel}}</span></button></sc-if>`;
+const pickSearch = (k, h = 40) => `<sc-if value="{{${k}.hasSearch}}" hint-placeholder-val="{{ true }}"><label style="display: flex; align-items: center; gap: 8px; height: ${h}px; flex-shrink: 0; padding: 0 14px; box-sizing: border-box; border-radius: 999px; background: {{t.surf}}; color: {{t.muted}};">${svg(I.search, 14)}<span style="position: absolute; left: -9999px;">{{${k}.ph}}</span><input value="{{${k}.query}}" onChange="{{${k}.setQuery}}" ref="{{${k}.ref}}" placeholder="{{${k}.ph}}" autocomplete="off" autocapitalize="none" spellcheck="false" style="flex-grow: 1; min-width: 0; border: 0; outline: 0; background: transparent; font: inherit; font-size: ${h > 40 ? 16 : 14}px; color: {{t.text}};"></label></sc-if>`;
+// On the web, a menu under the button that opens it (inside the same box, so Escape and a click outside close it).
+const pickPop = (k, { w = 260, pos = 'left: 0; top: calc(100% + 8px);' } = {}) => `<sc-if value="{{${k}.open}}" hint-placeholder-val="{{ false }}"><div role="dialog" aria-label="{{${k}.title}}" data-sc-pop style="position: absolute; ${pos} z-index: 30; width: ${w}px; ${popBox}">${pickSearch(k)}<div style="max-height: 304px; overflow-y: auto; scrollbar-width: thin; display: flex; flex-direction: column;">${PICK_LIST(k, false)}</div></div></sc-if>`;
+// On the iPhone, a sheet from the bottom (a short one for a few rows, a tall one for a long list or a search).
+const pickSheet = (k, full = false) => cSheet(`${k}.open`, '{{' + k + '.title}}', `<div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-shrink: 0;"><span style="font-size: 20px; font-weight: 600; letter-spacing: -.02em;">{{${k}.title}}</span>${closeX(k + '.close')}</div>
+    ${pickSearch(k, 44)}
+    <div style="${full ? 'flex-grow: 1; ' : ''}min-height: 0; overflow-y: auto; scrollbar-width: none; display: flex; flex-direction: column;">${PICK_LIST(k, true)}</div>`, `${k}.close`, full);
+// A row that opens a picker: what it's for, and what's picked (or "Add"). Profile → Edit and a deck's labels use it.
+const pickRow = (k, label, phone, { w = 300 } = {}) => `<div style="position: relative;"><button type="button" onClick="{{${k}.toggle}}" aria-haspopup="dialog" aria-expanded="{{${k}.expanded}}" aria-label="${label}" class="sc-press" style="width: 100%; height: 46px; box-sizing: border-box; padding: 0 14px 0 16px; display: flex; align-items: center; gap: 12px; border: 0; border-radius: 16px; background: {{t.surf}}; color: {{t.text}}; font: inherit; font-size: ${phone ? 16 : 15}px; text-align: left; cursor: pointer;"><span style="flex-shrink: 0; font-size: 13px; font-weight: 600;">${label}</span><span style="flex-grow: 1; min-width: 0; text-align: right; color: {{${k}.valueFg}}; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{${k}.value}}</span><span style="display: flex; flex-shrink: 0; color: {{t.muted}};">${svg(I.chevDown, 14, 2.2)}</span></button>${phone ? '' : pickPop(k, { w, pos: 'right: 0; top: calc(100% + 8px);' })}</div>`;
+
 // ---------- Library (was Decks) ----------
 // A theme (Pro) draws a deck's cover (its picture, words, chips, button, and shadow); a deck with its own photo keeps it.
 // SKIN_COVER_JS gives a deck's holes, from S (the board's theme) and C (S.coverOf(deck)); SKIN_THUMB is a Library row's
@@ -1072,6 +1115,7 @@ const COVER_LOGIC = `
   const cs = this.state;
   ${TAG_JS}
   ${NET_JS}
+  ${PICK_JS}
   const dk = db.deck(this.props.deckId);
   const up = (patch, typing) => db.act.updateDeck(dk.id, patch, typing);
   ${NUM_JS}
@@ -1109,7 +1153,16 @@ const COVER_LOGIC = `
   const kindWord = { new: 'New card', answer: 'Answer', question: 'Question', typo: 'Small fix', media: 'Picture or sound', edit: 'Note or tags', remove: 'Removed' };
   const updatesOpen = cs.updatesOpen == null ? !!this.props.updatesOpen : cs.updatesOpen;
   const take = (card, pick) => db.act.takeUpdates(dk.id, { [card]: pick });
+  // A public deck's labels: its level, subject, and school, which Discover narrows by. The school starts as its owner's (if they
+  // show it), and can be cleared. Picking sends the label at once, like the rest of Sharing.
+  const lab = netRow || (shr && shr.labels) || {}, label = (p, text) => ({ ...p, value: text || 'Add', valueFg: text ? t.text : t.muted }), setLabel = o => shareSet(o).catch(() => {});
+  const pickDefault = this.props.pick === 'Level' ? 'dlv' : this.props.pick === 'Subject' ? 'dsj' : this.props.pick === 'School' ? 'dsc' : '', pickQDefault = this.props.pickQ || '';
   const shareVals = {
+    labelsShow: !ro && !!shr && vis === 'public',
+    lbLevel: label(pick('dlv', { title: 'Level', rows: PL.levels, value: lab.level || '', any: 'None', choose: id => setLabel({ level: id }) }), lvWords(lab.level)),
+    lbSubject: label(pick('dsj', { title: 'Subject', rows: PL.subjects, value: lab.subject || '', any: 'None', choose: id => setLabel({ subject: id }) }), sjWords(lab.subject)),
+    lbSchool: label(pick('dsc', { title: 'School', find: findSchool, value: lab.schoolId || '', any: 'None', ph: 'Search schools', noneLine: 'No school matches', choose: (id, r) => setLabel(id ? { schoolId: id } : { schoolId: '', school: '' }),
+      other: x => ({ label: 'Other: “' + x + '”', choose: () => setLabel({ schoolId: '', school: x.slice(0, 60) }) }) }), lab.school),
     canShare: !ro, isShared: !!shr, notShared: !shr && !linked, isLinked: linked, isStudy: ro, isCopy: !!(linked && lk.mode === 'copy'), isGone: !!(lk && lk.gone),
     visOpts: [['private', 'Private'], ['link', 'Link only'], ['public', 'Public']].map(([id, label]) => ({ label, ...segOf(id, vis), pick: () => id !== vis && shareSet({ visibility: id }).catch(() => {}) })),
     visLine: vis0 === 'class' ? 'Only you and your classes.' : { private: 'Only you.', link: 'Anyone with the link.', public: 'On your profile and in Discover.' }[vis],
@@ -1237,6 +1290,8 @@ const deckShareBody = phone => `<sc-if value="{{isLinked}}" hint-placeholder-val
           <sc-if value="{{hardPro}}" hint-placeholder-val="{{ false }}"><div style="display: flex; align-items: center; gap: 12px; min-height: 44px;"><span style="flex-grow: 1; font-size: 14px; font-weight: 600;">Hardest cards</span><a href="{{hardProHref}}" style="height: 34px; padding: 0 14px; display: inline-flex; align-items: center; border-radius: 999px; background: {{t.inv}}; color: {{t.invText}}; font-size: 13px; font-weight: 600;">Go Pro</a></div></sc-if>
           <div style="display: flex; gap: 6px; flex-wrap: wrap;"><a href="{{pageHref}}" style="height: 34px; padding: 0 12px; display: inline-flex; align-items: center; gap: 6px; border-radius: 999px; background: {{t.surf}}; font-size: 13px; font-weight: 600;">${svg(I.globe, 14, 2)}Its page</a><a href="{{suggestionsHref}}" style="height: 34px; padding: 0 12px; display: inline-flex; align-items: center; gap: 6px; border-radius: 999px; background: {{t.surf}}; font-size: 13px; font-weight: 600;">${svg(I.message, 14, 2)}{{sugLabel}}</a><a href="{{historyHref}}" style="height: 34px; padding: 0 12px; display: inline-flex; align-items: center; gap: 6px; border-radius: 999px; background: {{t.surf}}; font-size: 13px; font-weight: 600;">${svg(I.history, 14, 2)}History</a></div>
           <label style="display: flex; flex-direction: column; gap: 8px;"><span style="font-size: 13px; font-weight: 600;">About this deck</span><textarea onChange="{{setAbout}}" onBlur="{{saveAbout}}" maxlength="300" rows="2" placeholder="What it covers, who it’s for" style="box-sizing: border-box; padding: 12px 16px; border: 0; outline: 0; border-radius: 16px; background: {{t.surf}}; color: {{t.text}}; font: inherit; font-size: ${phone ? 16 : 15}px; line-height: 1.4; resize: none;">{{aboutText}}</textarea></label>
+          <sc-if value="{{labelsShow}}" hint-placeholder-val="{{ true }}"><div style="display: flex; flex-direction: column; gap: 8px;"><span style="font-size: 13px; font-weight: 600;">Labels</span><span style="margin-top: -4px; font-size: 12px; color: {{t.muted}};">People can find your deck by these.</span>
+            ${pickRow('lbLevel', 'Level', phone)}${pickRow('lbSubject', 'Subject', phone)}${pickRow('lbSchool', 'School', phone)}</div></sc-if>
           <div style="display: flex; flex-direction: column; gap: 8px;"><span style="font-size: 13px; font-weight: 600;">Helpers</span><span style="margin-top: -4px; font-size: 12px; color: {{t.muted}};">They fix cards directly.</span>
             <div style="display: flex; flex-wrap: wrap; gap: 6px;"><sc-for list="{{helperChips}}" as="h" hint-placeholder-count="1"><button type="button" onClick="{{h.remove}}" aria-label="Remove helper {{h.label}}" style="height: 32px; padding: 0 10px 0 12px; display: inline-flex; align-items: center; gap: 6px; border: 0; border-radius: 999px; background: {{t.surf}}; color: {{t.text}}; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer;">{{h.label}}<span style="display: flex; opacity: .6;">${svg(I.close, 10, 2.4)}</span></button></sc-for></div>
             <div style="display: flex; gap: 6px;"><input type="text" value="{{helperQ}}" onChange="{{setHelperQ}}" onKeyDown="{{helperKey}}" placeholder="@name" aria-label="Add a helper" autocomplete="off" autocapitalize="off" style="flex-grow: 1; min-width: 0; height: 40px; box-sizing: border-box; padding: 0 14px; border: 0; outline: 0; border-radius: 999px; background: {{t.surf}}; color: {{t.text}}; font: inherit; font-size: ${phone ? 16 : 14}px;">${smallBtn('Add', 'addHelper', 'plus')}</div>
@@ -3721,6 +3776,7 @@ const phoneDeck = phone(`<div style="height: 100%; overflow-y: auto; scrollbar-w
     ${deckSettingsBody(true)}
   </div>
 </sc-if>
+${pickSheet('lbLevel')}${pickSheet('lbSubject', true)}${pickSheet('lbSchool', true)}
 <sc-if value="{{updatesOpen}}" hint-placeholder-val="{{ false }}">
   <div class="sc-scrim" onClick="{{closeUpdates}}" style="position: absolute; inset: 0; background: {{t.dim}};"></div>
   <div role="dialog" aria-label="{{updTitle}}" class="sc-sheet" style="position: absolute; left: 0; right: 0; bottom: 0; top: 56px; box-sizing: border-box; padding: 20px 20px 34px; border-radius: 32px 32px 0 0; background: {{t.bg}}; display: flex; flex-direction: column; gap: 14px;">
@@ -7214,35 +7270,63 @@ renderVals() { ${T}${DB_JS}${READ_CARDS_JS}
 }`;
 
 // ---------- Discover ----------
+// The board's Tweaks for the new filters: narrow by level, subject, or school, show a picker open, and whether the sample person set a
+// school (then "Popular at" their school is the first row).
+const DISCOVER_PROPS = {
+  level: { editor: 'enum', default: 'Any', options: ['Any', ...LEVELS.map(l => l[1])] },
+  subject: { editor: 'enum', default: 'Any', options: ['Any', ...SUBJECTS.map(l => l[1])] },
+  school: { editor: 'enum', default: 'Any', options: ['Any', 'University of California-Davis', 'Stanford University', 'Massachusetts Institute of Technology', 'University of California-Los Angeles'] },
+  pick: { editor: 'enum', default: 'None', options: ['None', 'Level', 'Subject', 'School'] },
+  mySchool: { editor: 'boolean', default: true }
+};
 // Find decks people share: popular this week, checked by teachers, new, and from people you follow, narrowed by topic;
 // or search decks, people, and courses. Studying stays in your library; Discover is only for finding more.
 const DISCOVER_LOGIC = phone => `
 renderVals() {
-  ${T}${DB_JS}${NET_JS}
+  ${T}${DB_JS}${NET_JS}${PICK_JS}
   const st = this.state, q = st.q ?? this.props.q ?? '', tag = st.tag ?? this.props.tag ?? '';
-  const searching = !!String(q).trim(), data = searching ? db.net.search(q) : db.net.discover(tag);
+  // Narrowed by level, subject, and school (a school is { id, name }); on the canvas the board's school is a name.
+  const lvl = st.level ?? idOf(PL.levels, this.props.level), sbj = st.subject ?? idOf(PL.subjects, this.props.subject);
+  const sch0 = 'school' in st ? st.school : this.props.school && this.props.school !== 'Any' ? (db.mock ? { id: '', name: String(this.props.school) } : { id: String(this.props.school), name: '' }) : null;
+  const pickDefault = ({ Level: 'lv', Subject: 'sj', School: 'sc' })[this.props.pick] || '', pickQDefault = this.props.pickQ || '';
+  // (On the canvas a school given by name finds its id in the sample's list.)
+  if (db.mock && sch0 && !sch0.id) { const hit = (db.schools.find(sch0.name) || [])[0]; if (hit) sch0.id = hit[0]; }
+  const f = { level: lvl, subject: sbj, school: sch0 ? sch0.id || sch0.name : '' }, narrowed = !!(lvl || sbj || sch0);
+  const searching = !!String(q).trim(), data = searching ? db.net.search(q, f) : db.net.discover(tag, f);
   const loading = data === undefined, bad = !!(data && (data.missing || data.offline));
   const topics = ((!searching && data && data.topics) || []).map(g => ({ label: g, pressed: g === tag ? 'true' : 'false', bg: g === tag ? t.inv : t.surf, fg: g === tag ? t.invText : t.text, pick: () => this.setState({ tag: g === tag ? '' : g }) }));
   const forYou = { label: 'For you', pressed: tag ? 'false' : 'true', bg: tag ? t.surf : t.inv, fg: tag ? t.text : t.invText, pick: () => this.setState({ tag: '' }) };
   const sections = (!searching && data && data.sections || []).map(x => ({ id: x.id, title: x.title, decks: (x.decks || []).slice(0, ${phone ? 6 : 4}).map(netDeck) }));
   const found = searching && data && !bad ? data : { decks: [], people: [] };
+  // The filters: a pill each (inverted once it holds a choice), with a menu or sheet of choices. A school is searched as you type.
+  const schName = sch0 ? sch0.name || (data && data.school && data.school.name) || '' : '';
+  const pill = (p, name, on, text) => ({ ...p, label: on ? text : name, bg: on ? t.inv : 'transparent', fg: on ? t.invText : t.text, ring: on ? 'none' : 'inset 0 0 0 1px ' + t.surf2 });
+  const lv = pill(pick('lv', { title: 'Level', rows: PL.levels, value: lvl, any: 'Any level', choose: id => this.setState({ level: id }) }), 'Level', !!lvl, lvWords(lvl));
+  const sj = pill(pick('sj', { title: 'Subject', rows: PL.subjects, value: sbj, any: 'Any subject', choose: id => this.setState({ subject: id }) }), 'Subject', !!sbj, sjWords(sbj));
+  const sc = pill(pick('sc', { title: 'School', find: findSchool, value: sch0 ? sch0.id : '', any: 'Any school', ph: 'Search schools', noneLine: 'No school matches', choose: (id, r) => this.setState({ school: id ? { id, name: r[1] } : null }) }), 'School', !!sch0, schName || 'School');
   return {
     t, ...chrome, ${NET_VALS}
     query: q, setQuery: e => this.setState({ q: e && e.target ? e.target.value : '' }), clearQuery: () => this.setState({ q: '' }), hasQuery: searching,
+    lv, sj, sc, anyFilter: narrowed, clearFilters: () => this.setState({ level: '', subject: '', school: null, pickIs: '', pickQ: '' }),
     loading: loading && !bad, topics: [forYou, ...topics], hasTopics: !searching, sections, browse: !searching && !loading && !bad, nothing: !searching && !loading && !bad && !sections.length,
-    searching: searching && !loading, foundDecks: found.decks.map(netDeck), foundPeople: found.people.map(p => ({ ...person(p), line: [p.school, p.followers ? kfmt(p.followers) + ' followers' : ''].filter(Boolean).join(' · ') })),
+    nothingLine: narrowed ? 'No decks match.' : 'No one has shared a deck here yet.',
+    searching: searching && !loading, foundDecks: found.decks.map(netDeck), foundPeople: found.people.map(p => ({ ...person(p), line: p.followers ? kfmt(p.followers) + (p.followers === 1 ? ' follower' : ' followers') : '' })),
     hasDecks: found.decks.length > 0, hasPeople: found.people.length > 0, noResults: searching && !loading && !found.decks.length && !found.people.length,
     resultsLine: 'Nothing matches “' + String(q).trim() + '” yet.', offline: bad
   };
 }`;
+// Discover's filters: Level, Subject, and School, a pill each. On the web each opens a menu under it; on the iPhone, a sheet.
+const FILTER_PILL = (k, phone) => `<div style="position: relative; flex-shrink: 0;"><button type="button" onClick="{{${k}.toggle}}" aria-haspopup="dialog" aria-expanded="{{${k}.expanded}}" class="sc-press" style="height: 36px; max-width: ${phone ? 240 : 260}px; padding: 0 10px 0 14px; display: inline-flex; align-items: center; gap: 6px; border: 0; border-radius: 999px; background: {{${k}.bg}}; box-shadow: {{${k}.ring}}; color: {{${k}.fg}}; font: inherit; font-size: 13px; font-weight: 600; white-space: nowrap; cursor: pointer; transition: background-color .15s, color .15s;"><span style="min-width: 0; overflow: hidden; text-overflow: ellipsis;">{{${k}.label}}</span><span style="display: flex; flex-shrink: 0;">${svg(I.chevDown, 14, 2.2)}</span></button>${phone ? '' : pickPop(k, { w: k === 'sc' ? 320 : 240 })}</div>`;
+const CLEAR_FILTERS = `<sc-if value="{{anyFilter}}" hint-placeholder-val="{{ false }}"><button type="button" onClick="{{clearFilters}}" class="sc-press" style="height: 36px; flex-shrink: 0; padding: 0 6px; border: 0; background: transparent; color: {{t.muted}}; font: inherit; font-size: 13px; font-weight: 600; white-space: nowrap; cursor: pointer;">Clear</button></sc-if>`;
 const webDiscover = netRoot('Discover', `
     <div style="display: flex; align-items: center; gap: 16px;"><h1 style="margin: 0; font-size: 32px; font-weight: 600; letter-spacing: -.03em;">Discover</h1><span style="flex-grow: 1;"></span>
       <label style="display: flex; align-items: center; gap: 10px; width: 360px; height: 40px; padding: 0 16px; box-sizing: border-box; border-radius: 999px; background: {{t.surf}}; color: {{t.muted}};">${svg(I.search, 16)}<span style="position: absolute; left: -9999px;">Search decks, people, and courses</span><input value="{{query}}" onChange="{{setQuery}}" placeholder="Search decks, people, and courses" style="flex-grow: 1; min-width: 0; border: 0; outline: 0; background: transparent; font: inherit; font-size: 14px; color: {{t.text}};"><sc-if value="{{hasQuery}}" hint-placeholder-val="{{ false }}"><button type="button" onClick="{{clearQuery}}" aria-label="Clear search" style="width: 24px; height: 24px; border: 0; border-radius: 12px; background: {{t.surf2}}; color: {{t.text}}; display: flex; align-items: center; justify-content: center; cursor: pointer;">${svg(I.close, 10, 2.4)}</button></sc-if></label></div>
+    <div role="group" aria-label="Filters" style="display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: -8px;">${FILTER_PILL('lv', false)}${FILTER_PILL('sj', false)}${FILTER_PILL('sc', false)}${CLEAR_FILTERS}</div>
     <sc-if value="{{hasTopics}}" hint-placeholder-val="{{ true }}"><div role="group" aria-label="Topics" style="display: flex; flex-wrap: wrap; gap: 8px; margin-top: -4px;"><sc-for list="{{topics}}" as="g" hint-placeholder-count="7"><button type="button" onClick="{{g.pick}}" aria-pressed="{{g.pressed}}" style="height: 36px; padding: 0 14px; border: 0; border-radius: 999px; background: {{g.bg}}; color: {{g.fg}}; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer;">{{g.label}}</button></sc-for></div></sc-if>
     ${NET_LOADING(2)}
     <sc-if value="{{browse}}" hint-placeholder-val="{{ true }}"><sc-for list="{{sections}}" as="x" hint-placeholder-count="2"><section style="display: flex; flex-direction: column; gap: 14px;"><span style="font-size: 18px; font-weight: 600; letter-spacing: -.01em;">{{x.title}}</span>
       <div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 18px;"><sc-for list="{{x.decks}}" as="d" hint-placeholder-count="4"><div style="display: flex; flex-direction: column; gap: 10px; min-width: 0;">${NET_TILE('d', 230)}<a href="{{d.owner.href}}" style="display: flex; align-items: center; gap: 8px; min-width: 0; font-size: 13px;">${PERSON_AV('d.owner', 22)}<span style="font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{d.owner.name}}</span>${VERIFIED('d.owner')}<span style="margin-left: auto; flex-shrink: 0; color: {{t.muted}};">{{d.cardsLine}}</span></a></div></sc-for></div></section></sc-for></sc-if>
-    <sc-if value="{{nothing}}" hint-placeholder-val="{{ false }}"><div style="padding: 56px 24px; border-radius: 24px; background: {{t.surf}}; text-align: center; font-size: 15px; color: {{t.muted}};">No one has shared a deck here yet.</div></sc-if>
+    <sc-if value="{{nothing}}" hint-placeholder-val="{{ false }}"><div style="padding: 56px 24px; border-radius: 24px; background: {{t.surf}}; text-align: center; font-size: 15px; color: {{t.muted}};">{{nothingLine}}</div></sc-if>
     <sc-if value="{{searching}}" hint-placeholder-val="{{ false }}">
       <sc-if value="{{hasPeople}}" hint-placeholder-val="{{ true }}"><section style="display: flex; flex-direction: column; gap: 12px;"><span style="font-size: 18px; font-weight: 600;">People</span><div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px;"><sc-for list="{{foundPeople}}" as="p" hint-placeholder-count="2"><a href="{{p.href}}" style="display: flex; align-items: center; gap: 12px; padding: 14px 16px; border-radius: 18px; background: {{t.surf}}; min-width: 0;">${PERSON_AV('p', 40)}<span style="min-width: 0; display: flex; flex-direction: column; gap: 2px;"><span style="display: flex; align-items: center; gap: 6px; font-size: 15px; font-weight: 600;"><span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{p.name}}</span>${VERIFIED('p')}</span><span style="font-size: 12px; color: {{t.muted}}; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{p.at}}</span><span style="font-size: 12px; color: {{t.muted}}; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{p.line}}</span></span></a></sc-for></div></section></sc-if>
       <sc-if value="{{hasDecks}}" hint-placeholder-val="{{ true }}"><section style="display: flex; flex-direction: column; gap: 14px;"><span style="font-size: 18px; font-weight: 600;">Decks</span><div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 18px;"><sc-for list="{{foundDecks}}" as="d" hint-placeholder-count="3"><div style="display: flex; flex-direction: column; gap: 10px; min-width: 0;">${NET_TILE('d', 230)}<a href="{{d.owner.href}}" style="display: flex; align-items: center; gap: 8px; min-width: 0; font-size: 13px;">${PERSON_AV('d.owner', 22)}<span style="font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{d.owner.name}}</span>${VERIFIED('d.owner')}<span style="margin-left: auto; flex-shrink: 0; color: {{t.muted}};">{{d.cardsLine}}</span></a></div></sc-for></div></section></sc-if>
@@ -7252,18 +7336,19 @@ const webDiscover = netRoot('Discover', `
 const phoneDiscover = phone(`<div style="padding: 64px 20px 120px; display: flex; flex-direction: column; gap: 16px;">
   <h1 style="margin: 0; font-size: 32px; font-weight: 600; letter-spacing: -.03em;">Discover</h1>
   <label style="display: flex; align-items: center; gap: 10px; height: 44px; padding: 0 16px; box-sizing: border-box; border-radius: 999px; background: {{t.surf}}; color: {{t.muted}};">${svg(I.search, 16)}<span style="position: absolute; left: -9999px;">Search decks and people</span><input value="{{query}}" onChange="{{setQuery}}" placeholder="Search decks and people" style="flex-grow: 1; min-width: 0; border: 0; outline: 0; background: transparent; font: inherit; font-size: 16px; color: {{t.text}};"><sc-if value="{{hasQuery}}" hint-placeholder-val="{{ false }}"><button type="button" onClick="{{clearQuery}}" aria-label="Clear search" style="width: 26px; height: 26px; border: 0; border-radius: 13px; background: {{t.surf2}}; color: {{t.text}}; display: flex; align-items: center; justify-content: center;">${svg(I.close, 10, 2.4)}</button></sc-if></label>
+  <div role="group" aria-label="Filters" style="display: flex; align-items: center; gap: 8px; margin: -4px -20px 0; padding: 0 20px; overflow-x: auto; scrollbar-width: none;">${FILTER_PILL('lv', true)}${FILTER_PILL('sj', true)}${FILTER_PILL('sc', true)}${CLEAR_FILTERS}</div>
   <sc-if value="{{hasTopics}}" hint-placeholder-val="{{ true }}"><div role="group" aria-label="Topics" style="display: flex; gap: 8px; margin: 0 -20px; padding: 0 20px; overflow-x: auto; scrollbar-width: none;"><sc-for list="{{topics}}" as="g" hint-placeholder-count="5"><button type="button" onClick="{{g.pick}}" aria-pressed="{{g.pressed}}" style="flex-shrink: 0; height: 36px; padding: 0 14px; border: 0; border-radius: 999px; background: {{g.bg}}; color: {{g.fg}}; font: inherit; font-size: 13px; font-weight: 600; white-space: nowrap;">{{g.label}}</button></sc-for></div></sc-if>
   ${NET_LOADING(2)}
   <sc-if value="{{browse}}" hint-placeholder-val="{{ true }}"><sc-for list="{{sections}}" as="x" hint-placeholder-count="2"><section style="display: flex; flex-direction: column; gap: 12px;"><span style="font-size: 17px; font-weight: 600;">{{x.title}}</span>
     <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px;"><sc-for list="{{x.decks}}" as="d" hint-placeholder-count="4"><div style="display: flex; flex-direction: column; gap: 8px; min-width: 0;">${NET_TILE('d', 200, 18)}<a href="{{d.owner.href}}" style="display: flex; align-items: center; gap: 6px; min-width: 0; font-size: 12px;">${PERSON_AV('d.owner', 20)}<span style="font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{d.owner.name}}</span>${VERIFIED('d.owner')}</a></div></sc-for></div></section></sc-for></sc-if>
-  <sc-if value="{{nothing}}" hint-placeholder-val="{{ false }}"><div style="padding: 40px 20px; border-radius: 22px; background: {{t.surf}}; text-align: center; font-size: 15px; color: {{t.muted}};">No one has shared a deck here yet.</div></sc-if>
+  <sc-if value="{{nothing}}" hint-placeholder-val="{{ false }}"><div style="padding: 40px 20px; border-radius: 22px; background: {{t.surf}}; text-align: center; font-size: 15px; color: {{t.muted}};">{{nothingLine}}</div></sc-if>
   <sc-if value="{{searching}}" hint-placeholder-val="{{ false }}">
     <sc-if value="{{hasPeople}}" hint-placeholder-val="{{ true }}"><div style="display: flex; flex-direction: column;"><span style="font-size: 17px; font-weight: 600; padding-bottom: 6px;">People</span><sc-for list="{{foundPeople}}" as="p" hint-placeholder-count="2"><a href="{{p.href}}" style="display: flex; align-items: center; gap: 12px; height: 64px; border-bottom: 1px solid {{t.line}};">${PERSON_AV('p', 40)}<span style="min-width: 0; display: flex; flex-direction: column; gap: 2px;"><span style="display: flex; align-items: center; gap: 6px; font-size: 16px; font-weight: 600;">{{p.name}}${VERIFIED('p')}</span><span style="font-size: 13px; color: {{t.muted}};">{{p.at}}</span></span></a></sc-for></div></sc-if>
     <sc-if value="{{hasDecks}}" hint-placeholder-val="{{ true }}"><div style="display: flex; flex-direction: column; gap: 12px;"><span style="font-size: 17px; font-weight: 600;">Decks</span><div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px;"><sc-for list="{{foundDecks}}" as="d" hint-placeholder-count="2">${NET_TILE('d', 200, 18)}</sc-for></div></div></sc-if>
     <sc-if value="{{noResults}}" hint-placeholder-val="{{ false }}"><div style="padding: 40px 20px; border-radius: 22px; background: {{t.surf}}; text-align: center; font-size: 15px; color: {{t.muted}};">{{resultsLine}}</div></sc-if>
   </sc-if>
   <sc-if value="{{offline}}" hint-placeholder-val="{{ false }}"><div style="padding: 40px 20px; border-radius: 22px; background: {{t.surf}}; text-align: center; font-size: 15px; color: {{t.muted}};">Couldn’t reach Lucida.</div></sc-if>
-</div>`, 'Discover');
+</div>`, 'Discover', `${pickSheet('lv')}${pickSheet('sj', true)}${pickSheet('sc', true)}`);
 
 // ---------- Profiles and news ----------
 // A profile (lucida.cards/@alexkim): someone's picture, name, what they study, their bio, their numbers (decks,
@@ -7275,7 +7360,7 @@ constructor(props) { super(props); this.state = {}; }
 componentWillUnmount() { clearTimeout(this.copiedT); }
 renderVals() {
   ${T}${DB_JS}${NET_JS}
-  ${OPTS_JS}
+  ${OPTS_JS}${PICK_JS}${SW_JS}
   const p = this.props, s = this.state, you = (db.me && db.me()) || {}, out = !!db.signedOut || !!p.signedOut;
   const B = n => '${phone ? 'Phone' : 'Web'}' + n, oops = e => (e && e.message) || 'Something went wrong. Try again.';
   const h = String(p.handle || (out ? '' : you.handle) || '').toLowerCase();
@@ -7342,28 +7427,35 @@ renderVals() {
   const set = patch => db.act.setSettings(patch);
   ${PHOTO_JS}
   const editing = self && ok && (s.editing ?? !!p.editOpen);
-  const was = { name, handle: pr.handle || h, bio: pr.bio || '', school: pr.school || '', subject: pr.subject || '' };
+  // Your school, level, and year come with a switch: they're on your profile only if it's on (off to start with). A high school
+  // student has a level and no school.
+  const was = { name, handle: pr.handle || h, bio: pr.bio || '', school: pr.school || '', subject: pr.subject || '', schoolId: pr.schoolId || '', level: pr.level || '', year: pr.year || '', showSchool: !!pr.showSchool };
   const dr = { ...was, ...(p.editHandle ? { handle: p.editHandle } : {}), ...(s.draft || {}) };
+  const draftSet = patch => this.setState({ draft: { ...(this.state.draft || {}), ...patch } });
+  const pickDefault = p.pick === 'School' ? 'sc' : '', pickQDefault = p.pickQ || '';
   const hv = String(dr.handle || '').trim().replace(/^@+/, '').toLowerCase(), handleOk = /^[a-z0-9_.]{3,30}$/.test(hv);
   const handleMsg = !handleOk ? 'Use 3 to 30 letters, numbers, dots, or underscores.' : s.handleErr ?? (p.editError || '');
   const field = k => e => this.setState({ draft: { ...(this.state.draft || {}), [k]: e && e.target ? e.target.value : '' }, ...(k === 'handle' ? { handleErr: '' } : {}) });
   const cleanUrl = () => { if (!db.mock && /[?&]edit=1/.test(location.search)) history.replaceState(null, '', location.pathname); };
   // Closing also brings your public picture up to date with the one you picked.
-  const closeEdit = () => { this.setState({ editing: false, draft: null, handleErr: null, saveErr: '' }); cleanUrl(); if (!db.mock) Promise.resolve(db.act.ensureProfile()).catch(() => {}); };
+  const closeEdit = () => { this.setState({ editing: false, draft: null, handleErr: null, saveErr: '', pickIs: '', pickQ: '' }); cleanUrl(); if (!db.mock) Promise.resolve(db.act.ensureProfile()).catch(() => {}); };
   const busy = !!s.saving, off = busy || !handleOk;
   const saveEdit = () => {
     if (off) return;
     const patch = {}, nm = String(dr.name || '').trim().slice(0, 60);
-    for (const k of ['bio', 'school', 'subject']) if (dr[k] !== was[k]) patch[k] = dr[k];
+    for (const k of ['bio', 'subject', 'level', 'year', 'showSchool']) if (dr[k] !== was[k]) patch[k] = dr[k];
+    if (dr.schoolId !== was.schoolId || dr.school !== was.school) { patch.schoolId = dr.schoolId; patch.school = dr.school; }
     if (hv !== was.handle) patch.handle = hv;
     this.setState({ saving: true, saveErr: '', handleErr: null });
     Promise.resolve(nm && nm !== was.name ? db.act.setSettings({ name: nm }) : null).then(() => db.act.updateProfile(patch)).then(r => {
       this.over = { patch: { ...over, ...patch, name: nm || was.name }, data: db.net.profile(h) };
-      this.setState({ saving: false, editing: false, draft: null }); cleanUrl();
+      this.setState({ saving: false, editing: false, draft: null, pickIs: '', pickQ: '' }); cleanUrl();
       if (r && r.handle && r.handle !== h && !db.mock) db.act.go('/@' + r.handle, true);
     }).catch(e => { const m = oops(e); this.setState(/taken|letters, numbers/i.test(m) ? { saving: false, handleErr: m } : { saving: false, saveErr: m }); });
   };
-  const hasLine = !!(pr.subject || pr.school), err = s.err || '';
+  // What you study, and (if it's on, or someone else's page) your school, level, and year.
+  const meta = [pr.subject, !self || pr.showSchool ? [pr.school, lvWords(pr.level), yrWords(pr.year)].filter(Boolean).join(' · ') : ''].filter(Boolean).join(' · ');
+  const hasLine = !!meta, err = s.err || '';
   // Someone you blocked: their page comes without their decks, and says so. Blocking shows at once; Unblock waits for their page
   // to come back with their decks (the button says Unblocking… until then).
   const blocked = ok && !self && !out && !!(pr.me && pr.me.blocked), unblocking = blocked && !!pr.unblocking;
@@ -7389,7 +7481,7 @@ renderVals() {
   return {
     t, ...chrome, ${NET_VALS} ...photoVals,
     sideSelf: !out && self, sideOther: !out && !self, quietReport: ok && !self && out, reportIt: () => openReport('profile', pr.handle || h, name), rep, blk, more, showMore,
-    loading: !data && !s.makeErr && !!(h || making), missing, offline, ok, self, notSelf: !self, who, name, at: h ? '@' + h : '', hasLine, line: [pr.subject, pr.school].filter(Boolean).join(' · '),
+    loading: !data && !s.makeErr && !!(h || making), missing, offline, ok, self, notSelf: !self, who, name, at: h ? '@' + h : '', hasLine, line: meta,
     hasBio: !!pr.bio, bio: pr.bio || '',
     // Someone you blocked: their decks and saves aren't shown (they'd read 0), so neither are those counts.
     counts: [{ n: kfmt(decks.length), word: n1(decks.length, 'deck', 'decks') }, { n: kfmt(followers), word: n1(followers, 'follower', 'followers') }, { n: kfmt(pr.following), word: 'following' }, { n: kfmt(stars), word: n1(stars, 'save', 'saves') }].filter((c, i) => !blocked || i === 1 || i === 2),
@@ -7404,7 +7496,14 @@ renderVals() {
     sentRows, sentLoading: tab === 'Suggestions' && sentData === undefined, showSent: tab === 'Suggestions' && sentRows.length > 0, noSent: tab === 'Suggestions' && sentData !== undefined && !sentRows.length,
     missingTitle: 'No one has that name', missingLine: '@' + h, discoverHref: goTo('/discover', B('Discover')), backHref: goTo('/discover', B('Discover')),
     editing, openEdit: () => this.setState({ editing: true, draft: null, handleErr: null, saveErr: '', menu: null }), closeEdit, saveEdit,
-    draft: dr, setName: field('name'), setHandle: field('handle'), setBio: field('bio'), setSchool: field('school'), setSubject: field('subject'),
+    draft: dr, setName: field('name'), setHandle: field('handle'), setBio: field('bio'), setSubject: field('subject'),
+    levelOpts: PL.levels.map(([id, label]) => { const on = dr.level === id; return { label, pressed: on ? 'true' : 'false', bg: on ? t.inv : t.surf, fg: on ? t.invText : t.text,
+      pick: () => draftSet(on ? { level: '' } : id === 'highschool' ? { level: id, school: '', schoolId: '' } : { level: id }) }; }),
+    yearOpts: PL.years.map(([id]) => { const on = dr.year === id; return { label: id === '5' ? '5th+' : id + ['st', 'nd', 'rd', 'th'][+id - 1], pressed: on ? 'true' : 'false', bg: on ? t.inv : t.surf, fg: on ? t.invText : t.text, pick: () => draftSet({ year: on ? '' : id }) }; }),
+    hasSchoolRow: dr.level !== 'highschool',
+    scp: { ...pick('sc', { title: 'School', find: findSchool, value: dr.schoolId, any: 'None', ph: 'Search schools', noneLine: 'No school matches', choose: (id, r) => draftSet(id ? { schoolId: id, school: r[1] } : { schoolId: '', school: '' }),
+      other: x => ({ label: 'Other: “' + x + '”', choose: () => draftSet({ schoolId: '', school: x.slice(0, 60) }) }) }), value: dr.school || 'Add', valueFg: dr.school ? t.text : t.muted },
+    schoolSw: sw(!!dr.showSchool), toggleSchool: () => draftSet({ showSchool: !dr.showSchool }),
     bioCount: String(dr.bio || '').length + '/160', hasHandleMsg: !!handleMsg, handleMsg, handleInvalid: handleMsg ? 'true' : 'false', handleRing: handleMsg ? 'inset 0 0 0 2px ' + t.again : 'none',
     hasSaveErr: !!s.saveErr, saveErr: s.saveErr || '', saveOff: off ? 'true' : 'false', saveLabel: busy ? 'Saving…' : 'Save',
     saveBg: off ? t.surf2 : t.inv, saveFg: off ? t.muted : t.invText, saveInk: off ? t.muted : t.text
@@ -7452,6 +7551,13 @@ const PROFILE_LOADING = phone => { const b = (w, h, r) => `<div style="width: ${
 const PROFILE_TROUBLE = phone => `${NET_MISSING}
   <sc-if value="{{offline}}" hint-placeholder-val="{{ false }}"><div style="padding: ${phone ? '40px 20px' : '56px 24px'}; border-radius: 24px; background: {{t.surf}}; text-align: center; font-size: 15px; color: {{t.muted}};">Couldn’t reach Lucida. Check your connection.</div></sc-if>
   <sc-if value="{{makeFailed}}" hint-placeholder-val="{{ false }}"><div style="padding: ${phone ? '40px 20px' : '56px 24px'}; border-radius: 24px; background: {{t.surf}}; display: flex; flex-direction: column; align-items: center; gap: 14px; text-align: center; font-size: 15px; color: {{t.muted}};"><span>{{makeErr}}</span>${pill('Try again', { inv: true, onClick: '{{retryMake}}' })}</div></sc-if>`;
+// Your school: a level (chips), the school (a picker that searches the list, or "Other": what you type), the year (chips), and the
+// switch for showing it on your profile. A high school student has no school row.
+const PICK_CHIP = `<button type="button" onClick="{{o.pick}}" aria-pressed="{{o.pressed}}" class="sc-press" style="height: 34px; padding: 0 12px; border: 0; border-radius: 999px; background: {{o.bg}}; color: {{o.fg}}; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; transition: background-color .15s, color .15s;">{{o.label}}</button>`;
+const SCHOOL_FIELDS = (phone, label) => `<div style="display: flex; flex-direction: column; gap: 8px;">${label('Level')}<div role="group" aria-label="Level" style="display: flex; flex-wrap: wrap; gap: 6px;"><sc-for list="{{levelOpts}}" as="o" hint-placeholder-count="5">${PICK_CHIP}</sc-for></div></div>
+      <sc-if value="{{hasSchoolRow}}" hint-placeholder-val="{{ true }}">${pickRow('scp', 'School', phone)}</sc-if>
+      <div style="display: flex; flex-direction: column; gap: 8px;">${label('Year')}<div role="group" aria-label="Year" style="display: flex; flex-wrap: wrap; gap: 6px;"><sc-for list="{{yearOpts}}" as="o" hint-placeholder-count="5">${PICK_CHIP}</sc-for></div></div>
+      <div style="display: flex; align-items: center; gap: 12px; min-height: 44px;"><span style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px;"><span style="font-size: 14px; font-weight: 600;">Show my school on my profile</span><span style="font-size: 12px; color: {{t.muted}};">Only you can see it unless this is on.</span></span>${SWITCH('schoolSw', 'toggleSchool', 'Show my school on my profile')}</div>`;
 // Edit profile's fields (the web's side panel and the iPhone's sheet).
 const PROFILE_FIELDS = phone => {
   const fs = phone ? 16 : 15, box = `box-sizing: border-box; border: 0; outline: 0; border-radius: 16px; background: {{t.surf}}; color: {{t.text}}; font: inherit; font-size: ${fs}px;`;
@@ -7462,7 +7568,7 @@ const PROFILE_FIELDS = phone => {
       ${line('Name', 'name', 'setName', 60, ' autocomplete="name"')}
       <label style="display: flex; flex-direction: column; gap: 8px;">${label('Handle')}<span style="height: 46px; padding: 0 16px; display: flex; align-items: center; gap: 1px; box-shadow: {{handleRing}}; ${box}"><span aria-hidden="true" style="color: {{t.muted}};">@</span><input type="text" value="{{draft.handle}}" onChange="{{setHandle}}" maxlength="31" autocomplete="off" autocapitalize="none" spellcheck="false" aria-invalid="{{handleInvalid}}" aria-label="Handle" style="flex-grow: 1; min-width: 0; height: 100%; padding: 0; border: 0; outline: 0; background: transparent; color: {{t.text}}; font: inherit;"></span><sc-if value="{{hasHandleMsg}}" hint-placeholder-val="{{ false }}"><span role="alert" style="font-size: 13px; color: {{t.again}};">{{handleMsg}}</span></sc-if></label>
       <label style="display: flex; flex-direction: column; gap: 8px;"><span style="display: flex; align-items: baseline; justify-content: space-between; gap: 8px;">${label('Bio')}<span style="font-family: ${MONO}; font-size: 12px; color: {{t.muted}};">{{bioCount}}</span></span><textarea rows="3" onChange="{{setBio}}" maxlength="160" style="resize: none; padding: 12px 16px; line-height: 1.45; ${box}">{{draft.bio}}</textarea></label>
-      ${line('School', 'school', 'setSchool', 60, ' autocomplete="organization"')}
+      ${SCHOOL_FIELDS(phone, label)}
       ${line('Subject or course', 'subject', 'setSubject', 60)}`;
 };
 const PROFILE_SAVE_ERR = `<sc-if value="{{hasSaveErr}}" hint-placeholder-val="{{ false }}"><span role="alert" style="font-size: 13px; color: {{t.again}};">{{saveErr}}</span></sc-if>`;
@@ -7552,6 +7658,7 @@ const phoneProfile = phone(`<div style="padding: 64px 20px 120px; display: flex;
   </sc-if>
 </div>`, '', `<sc-if value="{{self}}" hint-placeholder-val="{{ true }}">${tabBar('Profile')}</sc-if><sc-if value="{{notSelf}}" hint-placeholder-val="{{ false }}">${tabBar('')}</sc-if>
 ${EDIT_SHEET}
+${pickSheet('scp', true)}
 ${REPORT_SHEET(true)}
 ${BLOCK_SHEET(true)}`);
 
@@ -8750,7 +8857,7 @@ const webAdmin = webRoot(`${sidebar('')}
 // ---------- write ----------
 const W = 1440, H = 900, PW = 390, PH = 844;
 // A deck page's sharing on the canvas (Tweaks): shared by you, or from someone else (studied as it is, or a copy).
-const SHARE_PROPS = { shared: { editor: 'enum', default: '', options: ['', 'Link only', 'Public'] }, linked: { editor: 'enum', default: '', options: ['', 'study', 'copy'] }, updatesOpen: { editor: 'boolean', default: false } };
+const SHARE_PROPS = { shared: { editor: 'enum', default: '', options: ['', 'Link only', 'Public'] }, linked: { editor: 'enum', default: '', options: ['', 'study', 'copy'] }, updatesOpen: { editor: 'boolean', default: false }, pick: { editor: 'enum', default: 'None', options: ['None', 'Level', 'Subject', 'School'] } };
 // A class's boards on the canvas (Tweaks): which class (yours, one you joined, or an invite you haven't taken), sharing
 // your progress, a class with nothing in it yet, a panel or sheet open, and the loading, missing, and signed-out looks.
 const CLASS_PROPS = { ...DARK, grain: MESH('Iris').grain, view: { editor: 'enum', default: 'Yours', options: ['Yours', 'Member', 'Invite'] }, sharing: { editor: 'boolean', default: false }, empty: { editor: 'boolean', default: false },
@@ -8763,7 +8870,7 @@ const PHOTO_PROP = { editor: 'enum', default: 'Color', options: ['Color', 'Googl
 // A profile's settings on the canvas: which tab, Edit profile open, loading, signed out, and nothing shared yet.
 const BOOL = { editor: 'boolean', default: false };
 // (moreOpen: the ⋯ menu on someone else's page; block: its Block question; blocked: a person you blocked, with Unblock.)
-const PROFILE_PROPS = { ...DARK, grain: MESH('Iris').grain, tab: { editor: 'enum', default: 'Decks', options: ['Decks', 'Saved', 'Suggestions'] }, editOpen: BOOL, loading: BOOL, signedOut: BOOL, empty: BOOL, report: BOOL, moreOpen: BOOL, block: BOOL, blocked: BOOL };
+const PROFILE_PROPS = { ...DARK, grain: MESH('Iris').grain, tab: { editor: 'enum', default: 'Decks', options: ['Decks', 'Saved', 'Suggestions'] }, pick: { editor: 'enum', default: 'None', options: ['None', 'School'] }, editOpen: BOOL, loading: BOOL, signedOut: BOOL, empty: BOOL, report: BOOL, moreOpen: BOOL, block: BOOL, blocked: BOOL };
 // Pro's states on the canvas: Free (what Pro adds), the Stats page's tabs, All cards' filters, a paused card, and Tune to
 // you's states in Settings. Deck settings can open with the goal stepped from 90% to 95%.
 const FREE_PROP = { editor: 'boolean', default: false };
@@ -9062,10 +9169,11 @@ const files = {
   'PhoneWelcomeFound': ['iPhone · Onboarding · cards found', attrOf('PhoneWelcome', PW, PH, 'step="Found"'), { logic: darkLogic, css: OB_CSS, w: PW, h: PH }],
   'PhoneWelcomeDone': ['iPhone · Onboarding · all set', attrOf('PhoneWelcome', PW, PH, 'step="Done"'), { logic: darkLogic, css: OB_CSS, w: PW, h: PH }],
   // The study network.
-  'WebDiscover': ['Web · Discover', webDiscover, { props: { ...DARK, grain: MESH('Iris').grain, loading: { editor: 'boolean', default: false }, signedOut: { editor: 'boolean', default: false } }, logic: DISCOVER_LOGIC(false), w: W, h: H }],
+  'WebDiscover': ['Web · Discover', webDiscover, { props: { ...DARK, grain: MESH('Iris').grain, loading: { editor: 'boolean', default: false }, signedOut: { editor: 'boolean', default: false }, ...DISCOVER_PROPS }, logic: DISCOVER_LOGIC(false), w: W, h: H }],
   'WebDiscoverSearch': ['Web · Discover · search', attrOf('WebDiscover', W, H, 'q="bio"'), { logic: darkLogic, w: W, h: H }],
+  'WebDiscoverFilters': ['Web · Discover · narrowed by level, subject, and school (choosing a school)', attrOf('WebDiscover', W, H, 'level="College" subject="Biology" school="University of California-Davis" pick="School" pick-q="davis"'), { logic: darkLogic, w: W, h: H }],
   'WebDiscoverSignedOut': ['Web · Discover · signed out (anyone can look)', attrOf('WebDiscover', W, H, 'signed-out="{{yes}}"'), { logic: darkLogic, w: W, h: H }],
-  'PhoneDiscover': ['iPhone · Discover', phoneDiscover, { props: { ...DARK, grain: MESH('Iris').grain, loading: { editor: 'boolean', default: false }, signedOut: { editor: 'boolean', default: false } }, logic: DISCOVER_LOGIC(true), w: PW, h: PH }],
+  'PhoneDiscover': ['iPhone · Discover', phoneDiscover, { props: { ...DARK, grain: MESH('Iris').grain, loading: { editor: 'boolean', default: false }, signedOut: { editor: 'boolean', default: false }, ...DISCOVER_PROPS }, logic: DISCOVER_LOGIC(true), w: PW, h: PH }],
   'PhoneDiscoverSearch': ['iPhone · Discover · search', attrOf('PhoneDiscover', PW, PH, 'q="bio"'), { logic: darkLogic, w: PW, h: PH }],
   // Profiles (yours, and someone else's by handle) and news.
   'WebProfile': ['Web · Profile (yours)', webProfile, { props: PROFILE_PROPS, logic: PROFILE_LOGIC(false), w: W, h: H }],
