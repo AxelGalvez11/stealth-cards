@@ -4153,25 +4153,21 @@ renderVals() {
 
 
 // ---- the web page ----
-// (A div with the navigation role rather than a second <nav>: the sidebar is the page's one <nav>, which other checks and scripts look for.)
-const SET_LIST = `<div role="navigation" aria-label="Settings sections" class="st-nav" style="display: flex; flex-direction: column; gap: 2px;">
-  ${SETTINGS_SECTIONS.map(([k, name, ic]) => { const id = SEC_ID(k), a = `<a href="{{sec.${id}.href}}" onClick="{{sec.${id}.pick}}" aria-current="{{sec.${id}.current}}" class="sc-press" style="height: 38px; box-sizing: border-box; padding: 0 14px; border-radius: 999px; display: flex; align-items: center; gap: 12px; font-size: 15px; white-space: nowrap; background: {{sec.${id}.bg}}; color: {{sec.${id}.fg}}; font-weight: {{sec.${id}.weight}};">${svg(I[ic], 18, 1.8)}${SEC_NAME(name)}</a>`;
+// On Settings' pages (computer width) the Settings sidebar replaces the app's, in the same place with the same width and style (the owner:
+// "make the settings sidebar replace the apps sidebar so it looks cleaner"): a Back row on top (to the page you came from, or Today when
+// Settings was opened directly), then the seven sections with their icons, the current one lit the way the app sidebar lights its place.
+// It is always open (the app sidebar's open or collapsed choice is kept, and is there again when you leave), and the swap is instant.
+// The page body holds just the section's title and its rows, laid out like the other pages.
+const SETTINGS_SIDEBAR = `<nav aria-label="Settings sections" style="width: 240px; flex-shrink: 0; box-sizing: border-box; padding: 24px 16px; display: flex; flex-direction: column; gap: 4px; border-right: 1px solid {{t.line}}; overflow: hidden;">
+  <a href="{{backHref}}" style="display: flex; align-items: center; gap: 12px; height: 36px; margin-bottom: 16px; padding: 0 14px; border-radius: 999px; font-size: 14px; color: {{t.muted}};">${svg(I.back, 18, 1.8)}<span>Back</span></a>
+  ${SETTINGS_SECTIONS.map(([k, name, ic]) => { const id = SEC_ID(k), a = `<a href="{{sec.${id}.href}}" onClick="{{sec.${id}.pick}}" aria-current="{{sec.${id}.current}}" style="position: relative; display: flex; align-items: center; gap: 12px; height: 36px; padding: 0 14px; border-radius: 999px; font-size: 14px; white-space: nowrap; background: {{sec.${id}.bg}}; color: {{sec.${id}.fg}}; font-weight: {{sec.${id}.weight}};">${svg(I[ic], 18, 1.8)}<span>${SEC_NAME(name)}</span></a>`;
     return k === 'plan' ? `<sc-if value="{{hasPlan}}" hint-placeholder-val="{{ true }}">${a}</sc-if>` : a; }).join('\n  ')}
-</div>`;
-const WEB_PAGE = (k, name, cards) => `<sc-if value="{{on.${SEC_ID(k)}}}" hint-placeholder-val="{{ ${k === 'account'} }}"><section aria-labelledby="st-title" style="display: flex; flex-direction: column; gap: 20px;"><h2 id="st-title" style="margin: 0 0 4px; font-size: 28px; font-weight: 600; letter-spacing: -.03em; line-height: 1.15;">${SEC_NAME(name)}</h2>
+</nav>`;
+const WEB_PAGE = (k, name, cards) => `<sc-if value="{{on.${SEC_ID(k)}}}" hint-placeholder-val="{{ ${k === 'account'} }}"><section aria-labelledby="st-title" style="max-width: 720px; display: flex; flex-direction: column; gap: 24px;"><h1 id="st-title" style="margin: 0; font-size: 32px; font-weight: 600; letter-spacing: -.03em;">${SEC_NAME(name)}</h1>
 ${cards.join('\n')}
 </section></sc-if>`;
-// (side by side down to 861 px; from there to 761 the list is a row of pills above the section; under 761 the app shows the iPhone boards)
-const SETTINGS_CSS = '@media (max-width:1100px){.st-wrap{gap:28px!important;padding-left:28px!important;padding-right:28px!important}.st-list{width:184px!important}}'
-  + '@media (max-width:860px){.st-wrap{flex-direction:column!important;gap:20px!important;padding:28px 24px 48px!important}.st-list{width:auto!important;position:static!important;align-self:stretch!important}.st-nav{flex-direction:row!important;flex-wrap:wrap!important;gap:6px!important}.st-body{width:100%!important;max-width:none!important}}';
-const webSettings = webRoot(`${sidebar('Settings')}
-<main style="flex-grow: 1; box-sizing: border-box; min-width: 0; overflow-y: auto;">
-  <div class="st-wrap" style="box-sizing: border-box; width: 100%; max-width: 1056px; margin: 0 auto; padding: 36px 48px 64px; display: flex; align-items: flex-start; gap: 56px;">
-    <div class="st-list" style="width: 216px; flex-shrink: 0; position: sticky; top: 36px; display: flex; flex-direction: column; gap: 20px;">
-      <h1 style="margin: 0; font-size: 32px; font-weight: 600; letter-spacing: -.03em; line-height: 1.15;">Settings</h1>
-      ${SET_LIST}
-    </div>
-    <div class="st-body" style="flex-grow: 1; min-width: 0; max-width: 720px;">
+const webSettings = webRoot(`${SETTINGS_SIDEBAR}
+<main style="flex-grow: 1; box-sizing: border-box; padding: 36px 48px; display: flex; flex-direction: column; gap: 24px; min-width: 0; overflow-y: auto;">
       ${WEB_PAGE('account', 'Account', [
         `<div style="border-radius: 18px; background: {{t.surf}}; padding: 22px; display: flex; flex-direction: column; gap: 18px;">
         <div style="display: flex; align-items: center; gap: 16px;">
@@ -4209,8 +4205,6 @@ const webSettings = webRoot(`${sidebar('Settings')}
       ])])}
       ${WEB_PAGE('privacy', 'Privacy', [`<sc-if value="{{signedIn}}" hint-placeholder-val="{{ true }}">${sBox([ACCOUNT_BLOCKED_ROW])}</sc-if>`, sBox(YOUR_DATA_ROWS)])}
       ${WEB_PAGE('help', 'Help & legal', [sBox(HELP_ROWS)])}
-    </div>
-  </div>
 </main>
 ${DELETE_SHEET(false)}`, false, true);
 const webSettingsLogic = `
@@ -4236,7 +4230,7 @@ renderVals() {
   return {
     t, ...chrome, grain: String(this.props.grain ?? 0.7), ...planVals, ...photoVals, ...profileVals, ...pwVals, tune, acct,
     name: st.name, sub: st.sub, signedIn: st.signedIn,
-    on: Object.fromEntries(SEC.map(([k]) => [secId(k), k === cur])), sec: secLinks(cur), hasPlan: !!plan,
+    on: Object.fromEntries(SEC.map(([k]) => [secId(k), k === cur])), sec: secLinks(cur), hasPlan: !!plan, backHref: db.mock ? 'Main.dc.html' : this.props.back || '/',
     ...themeRow(),
     looks: opts([['system', 'System'], ['light', 'Light'], ['dark', 'Dark']], look, id => set({ look: id })),
     darks: opts([['gray', 'Gray'], ['black', 'Black']], darkMode, id => set({ darkMode: id })),
@@ -9017,10 +9011,10 @@ const files = {
   'WebDecksTags': ['Web · Library · a deck with 11 tags (+9 shows them all)', attrOf('WebDecks', W, H, 'open-tags="{{yes}}"'), { logic: darkLogic, css: DRAG_CSS, w: W, h: H }],
   'WebDecksMoreTags': ['Web · Library · More (find any tag)', attrOf('WebDecks', W, H, 'more-tags="{{yes}}"'), { logic: darkLogic, css: DRAG_CSS, w: W, h: H }],
   'WebDecksList': ['Web · Library · list view', listOf('WebDecks', W, H), { logic: 'renderVals() { return {}; }', css: DRAG_CSS, w: W, h: H }],
-  'WebSettings': ['Web · Settings', webSettings, { props: { ...DARK, grain: MESH('Iris').grain, passwordOpen: BOOL, photo: PHOTO_PROP, plan: SETTINGS_PLAN_PROP, tune: TUNE_PROP, verified: VERIFIED_PROP, section: WEB_SECTION_PROP, collapsed: BOOL, ...ACCOUNT_PROPS }, logic: webSettingsLogic, css: NUM_CSS + SETTINGS_CSS, w: W, h: H }],
-  'WebSettingsDelete': ['Web · Settings · Delete account (the question)', attrOf('WebSettings', W, H, 'delete-open="Asking" section="Account"'), { logic: darkLogic, css: NUM_CSS + SETTINGS_CSS, w: W, h: H }],
-  'WebSettingsFree': ['Web · Settings · on Free (Tune to you is Pro)', attrOf('WebSettings', W, H, 'plan="Free" section="Studying"'), { logic: darkLogic, css: NUM_CSS + SETTINGS_CSS, w: W, h: H }],
-  'WebSettingsVerified': ['Web · Settings · a verified teacher (Get verified says Verified teacher)', attrOf('WebSettings', W, H, 'verified="Teacher" section="Account"'), { logic: darkLogic, css: NUM_CSS + SETTINGS_CSS, w: W, h: H }],
+  'WebSettings': ['Web · Settings', webSettings, { props: { ...DARK, grain: MESH('Iris').grain, passwordOpen: BOOL, photo: PHOTO_PROP, plan: SETTINGS_PLAN_PROP, tune: TUNE_PROP, verified: VERIFIED_PROP, section: WEB_SECTION_PROP, ...ACCOUNT_PROPS }, logic: webSettingsLogic, css: NUM_CSS, w: W, h: H }],
+  'WebSettingsDelete': ['Web · Settings · Delete account (the question)', attrOf('WebSettings', W, H, 'delete-open="Asking" section="Account"'), { logic: darkLogic, css: NUM_CSS, w: W, h: H }],
+  'WebSettingsFree': ['Web · Settings · on Free (Tune to you is Pro)', attrOf('WebSettings', W, H, 'plan="Free" section="Studying"'), { logic: darkLogic, css: NUM_CSS, w: W, h: H }],
+  'WebSettingsVerified': ['Web · Settings · a verified teacher (Get verified says Verified teacher)', attrOf('WebSettings', W, H, 'verified="Teacher" section="Account"'), { logic: darkLogic, css: NUM_CSS, w: W, h: H }],
   'IconOptions': ['Web · Icon options', iconOptions, { props: DARK, logic: iconOptionsLogic, w: W, h: H }],
   'WebTodayNew': ['Web · Today · new user', webTodayNew, { props: { ...DARK, ...MESH('Iris') }, logic: emptyLogic(), w: W, h: H }],
   'WebTodayCaughtUp': ['Web · Today · all caught up', caughtOf('Main', W, H), { logic: darkLogic, css: DRAG_CSS, w: W, h: H }],
@@ -9093,7 +9087,7 @@ const files = {
   'WebQuizGray': ['Web · Learn mode (dark, gray)', grayOf('WebQuiz', W, H), { logic: darkLogic, css: LEARN_CSS, w: W, h: H }],
   'WebStatsGray': ['Web · Stats (dark, gray)', grayOf('WebStats', W, H), { logic: darkLogic, w: W, h: H }],
   'WebStatsPaceGray': ['Web · Stats · Pace (dark, gray)', `<div style="width: ${W}px; height: ${H}px; overflow: hidden; background: #1E1E20;"><dc-import name="WebStats" tab="Pace" dark="{{yes}}" dim="{{yes}}" hint-size="${W}px,${H}px"></dc-import></div>`, { logic: darkLogic, w: W, h: H }],
-  'WebSettingsGray': ['Web · Settings (dark, gray)', grayOf('WebSettings', W, H), { logic: darkLogic, css: NUM_CSS + SETTINGS_CSS, w: W, h: H }],
+  'WebSettingsGray': ['Web · Settings (dark, gray)', grayOf('WebSettings', W, H), { logic: darkLogic, css: NUM_CSS, w: W, h: H }],
   'TopToday': ['Top tabs · Today', topToday, { props: { ...DARK, ...MESH('Iris') }, logic: topTodayLogic, w: W, h: H }],
   'TopDeck': ['Top tabs · Deck', topDeck, { props: DARK, logic: topDeckLogic, w: W, h: H }],
   'TopTodayDark': ['Top tabs · Today (dark)', darkOf('TopToday', W, H), { logic: darkLogic, w: W, h: H }],

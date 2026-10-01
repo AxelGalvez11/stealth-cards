@@ -13,6 +13,16 @@ const DESIGN = ['localhost', '127.0.0.1'].includes(location.hostname);
 // Phones get the iPhone boards, which fill the screen (design/to-web.mjs). Importing cards has no iPhone board, so phones
 // get the web's.
 const narrow = matchMedia('(max-width: 760px)');
+// Settings' own sidebar replaces the app's on Settings' pages (computer width), with a Back row to the page you came from, or to Today when
+// Settings was opened directly. That page is kept for this tab (sessionStorage), so reloading Settings keeps it; an address typed in, or a
+// link from somewhere else, starts again. Connect AI (/connect) and the themes are pages inside Settings, so going between them keeps it too.
+const IN_SETTINGS = p => /^\/(settings(\/|$)|connect$)/.test(p);
+let settingsFrom = '';
+try {
+  const nav = performance.getEntriesByType('navigation')[0];
+  if (nav && (nav.type === 'reload' || nav.type === 'back_forward')) settingsFrom = sessionStorage.getItem('lucida.settingsFrom') || '';
+  else sessionStorage.removeItem('lucida.settingsFrom');
+} catch { /* no storage: it is kept until the page closes */ }
 // The study network's pages (web/net.js): Discover, a profile (/@alexkim), a shared deck (/@alexkim/cell-biology, or its
 // lasting link /d/<id>), and a deck's History. Anyone can open them, signed in or not.
 function network(path, q, P) {
@@ -129,9 +139,9 @@ function resolve(path, q) {
   if (path === '/connect') return { name: P + 'Connect' };
   // Settings is a page of its own: the sections down the left and the chosen one on the right (/settings is Account, and /settings/<section> is
   // the others), so Back and links work. A narrow screen shows the list of sections as one page, and each section as a page of its own.
-  if (path === '/settings') return { name: P + 'Settings', props: narrow.matches ? { section: 'List' } : {} };
+  if (path === '/settings') return { name: P + 'Settings', props: narrow.matches ? { section: 'List' } : { back: settingsFrom || '/' } };
   const sec = /^\/settings\/(account|plan|studying|appearance|connect-ai|privacy|help)$/.exec(path);
-  if (sec) return sec[1] === 'plan' && !db.plan() ? { redirect: '/settings' } : { name: P + 'Settings', props: { section: sec[1] } };
+  if (sec) return sec[1] === 'plan' && !db.plan() ? { redirect: '/settings' } : { name: P + 'Settings', props: { section: sec[1], back: settingsFrom || '/' } };
   // Settings › Theme, and each theme's page (where you use it, or Go Pro on Free).
   if (path === '/settings/theme') return { name: narrow.matches ? 'PhoneThemePicker' : 'ThemePicker' };
   const th = /^\/settings\/theme\/([a-z]+)$/.exec(path);
@@ -372,6 +382,8 @@ function placePops() {
 addEventListener('resize', placePops);
 async function go(path, push, replace) {
   const url = new URL(path, location.origin);
+  // Coming into Settings from another page: that is where its Back goes.
+  if (IN_SETTINGS(url.pathname) && !IN_SETTINGS(lastPath) && lastPath && !/^\/(sign-in|welcome|oauth)/.test(lastPath)) { settingsFrom = lastPath; try { sessionStorage.setItem('lucida.settingsFrom', lastPath); } catch { /* kept until the page closes */ } }
   if (url.pathname === '/b' && DESIGN) return screenList(push, url);
   // A review started from somewhere else is a new session (coming back from editing a card keeps it),
   // and so is going over a pile from the Session done page.
