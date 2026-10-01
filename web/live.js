@@ -250,7 +250,8 @@ function createHost({ onChange, go }) {
     if (link) { link.send('closed', { game: was.game }); link.close(); link = null; }
     api('DELETE', '/api/live/' + was.code).catch(() => {});
     G = null; save(); run(); clearTimeout(soon); soon = null;
-    if (!stay) go('/deck/' + was.deckId);
+    // (A game made from a topic has no deck to go back to, unless it was saved as one.)
+    if (!stay) go(was.deckId ? '/deck/' + was.deckId : was.topic && was.topic.saved ? '/deck/' + was.topic.saved : '/library');
     else changed();
   }
   // The room's code stays good for a few more hours: renewed when a game starts, on Play again, and on a reload (which
@@ -269,6 +270,8 @@ function createHost({ onChange, go }) {
       if (asking && ring[k] == null) ring[k] = -Math.round(Math.min(G.time, (now - G.start) / 1000) * 100) / 100;
       return {
         code: G.code, codeShown: G.code.slice(0, 3) + ' ' + G.code.slice(3), deckId: G.deckId, deck: G.deck, phase: G.phase, status,
+        // A game made from a topic: its name, and the deck it was saved as (once it was).
+        topic: G.topic ? { name: G.topic.name, saved: G.topic.saved || '' } : null,
         joinText: joinText(), qr: qrs[G.code] || (qrs[G.code] = qrSrc(origin() + '/join/' + G.code)),
         people: G.players.map(p => ({ id: p.id, name: p.name, color: p.color })), here: G.players.filter(present).length,
         n: G.qi + 1, of: G.qs.length,
@@ -281,10 +284,10 @@ function createHost({ onChange, go }) {
     },
     game: () => G,
     // A new room for a deck: its code comes from the server, then the lobby opens. An open game closes first.
-    async open({ deckId, deck, qs, set, count, time }) {
+    async open({ deckId, deck, qs, set, count, time, topic }) {
       const r = await api('POST', '/api/live', { deck: deck.name });
       if (G) close(true);
-      G = { v: 1, code: r.code, rt: r.rt || null, deckId, deck, set, count, time, game: rid('g'), qs, phase: 'lobby', qi: -1, start: 0, deadline: 0, players: [], answers: {}, counts: null, prev: null };
+      G = { v: 1, code: r.code, rt: r.rt || null, deckId, deck, set, count, time, game: rid('g'), qs, phase: 'lobby', qi: -1, start: 0, deadline: 0, players: [], answers: {}, counts: null, prev: null, ...(topic ? { topic } : {}) };
       save(); attach(); changed(); go('/live/' + G.code);
     },
     start() { if (G && G.phase === 'lobby' && G.players.length) { keep(); ask(0); } },
@@ -302,6 +305,8 @@ function createHost({ onChange, go }) {
       for (const p of G.players) Object.assign(p, { score: 0, streak: 0, right: 0, gained: 0, pick: -1, since: 0 });
       save(); tell(); changed(); keep();
     },
+    // A game made from a topic: what to remember about it (the deck it was saved as).
+    note(patch) { if (G && G.topic) { Object.assign(G.topic, patch); save(); changed(); } },
     // Done: the room closes (phones still on the final leaderboard keep it) and it's back to the deck.
     close: () => close(false)
   };

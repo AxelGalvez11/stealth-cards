@@ -13,6 +13,7 @@ import { sniff } from './sniff.js';
 import { createNet } from './net.js';
 import { createConnect } from './connect.js';
 import { createLive } from './live.js';
+import { createMake } from './make.js';
 import { progressOf, doneOf } from './progress.js';
 import { loadTheme } from './themes/load.js';
 
@@ -256,7 +257,9 @@ export async function createDb({ onChange, go }) {
     return { id: d.id, name: d.name, tags: d.tags, seed: d.cover.seed || d.name, style: d.cover.style, round: d.cover.round, image: d.cover.image, paused: d.paused,
       folder: d.folder || null, bg: d.bg || { kind: 'deck', image: null },
       total: st.total, totalLabel: st.total.toLocaleString('en-US'), due: st.due, overdue: st.overdue, soon: st.soon, fresh: st.fresh, ret: st.ret, aiCount: st.aiCount, exam: st.exam,
-      href: '/deck/' + d.id, studyHref: '/review/' + d.id, settingsHref: '/deck/' + d.id + '?settings=1', newCardHref: '/deck/' + d.id + '/card', ...shareOf(d) };
+      href: '/deck/' + d.id, studyHref: '/review/' + d.id, settingsHref: '/deck/' + d.id + '?settings=1', newCardHref: '/deck/' + d.id + '/card',
+      // Whether it has a Guide (words, or extra pages) and Sources, for the deck page and the Library.
+      hasGuide: !!(d.guide && ((d.guide.text || '').trim() || (d.guide.pages || []).length)), hasSources: !!(d.sources || []).length, ...shareOf(d) };
   };
 
   // Days ahead: how many review cards come due each day (1 = tomorrow).
@@ -435,6 +438,23 @@ export async function createDb({ onChange, go }) {
     }
   }, known: url => (S.cards.find(c => c.audio === url && c.wave) || {}).wave });
 
+  // Making cards from files, photos, recordings, videos, text and topics (web/make.js): the flow's memory and what it does. A picture sent to
+  // be read is made smaller first (at most 1600 px across), like the ones on cards.
+  const make = createMake({ state: () => S, reload: async () => { accept(await get('/api/state')); }, changed, go, sniff,
+    shrink: async f => {
+      const type = sniff(new Uint8Array(await f.slice(0, 16).arrayBuffer())) || f.type, heic = type === 'image/heic' || /^image\/hei[cf]$/.test(f.type) || /\.hei[cf]$/i.test(f.name || '');
+      const b = await picture(f, heic ? 'image/heic' : type, 1600);
+      return b ? new File([b], f.name || 'photo', { type: b.type }) : null;
+    } });
+  // A deck's Guide (like a README) and its Sources (what its cards were made from). The Guide saves as it is typed (a moment after the last
+  // key), one save at a time and in order; what the screen shows meanwhile is the typing, kept by the screen itself.
+  const guideOf = d => d.guide || { text: '', at: 0, pages: [] };
+  const fileHref = x => (x.files && x.files[0] ? '/media/' + x.files[0].name : '');
+  const sourceRow = x => ({ id: x.id, kind: x.kind, name: x.name, cards: x.cards || 0, at: x.at || 0, url: x.url || '', text: x.text || '', textName: x.textFile ? x.textFile.name : '', seconds: x.seconds || 0, pages: x.pages || 0,
+    files: (x.files || []).map(f => ({ name: f.name, href: '/media/' + f.name, type: f.type, size: f.size, file: f.file || '' })), href: fileHref(x) });
+  let sourceTexts = {};
+  const guideSaves = {};
+
   // ---------- Learn mode ----------
   // Learn a set of cards until you know every one. Each card is asked in different ways: pick from a few answers, true
   // or false, match it with others, fill in its blank, or type it. It's learned after two right answers in a row, asked
@@ -587,6 +607,14 @@ export async function createDb({ onChange, go }) {
     return { text: o ? boxAsk(c, o) : learnText(c) || 'What’s in the picture?', options, right: options.indexOf(answerOf(c)), ...pic };
   }
   const liveQuestions = (id, set, count) => shuffle(learnSet(id, set).filter(liveable)).slice(0, count).map(liveQuestion);
+  // Live from a topic: the questions are written first (make.quiz), then the room opens like any other. `word` says what's happening in
+  // the setup window meanwhile, `error` what went wrong, `saving` that "Save as a deck" is working. `liveRun` tells an old try from a new one.
+  const liveTopic = { busy: false, word: '', error: '', saving: false };
+  let liveRun = 0;
+  // A topic's question as the game plays it: its four answers in a new order and where the right one landed. `why` stays for saving.
+  const topicQuestion = c => { const x = c.quiz || {}, options = shuffle([x.answer, ...(x.wrong || [])]); return { text: x.question, options, right: options.indexOf(x.answer), image: '', occ: null, why: x.why || '' }; };
+  // Play again with the same questions of a topic: in a new order, with each one's answers in a new order too.
+  const topicAgain = qs => shuffle(qs.map(q => { const a = q.options[q.right], options = shuffle(q.options); return { ...q, options, right: options.indexOf(a) }; }));
   const learnDeckLabel = L => (L.set.startsWith('tag:') ? L.set.slice(4) : { new: 'New cards', hard: 'Hard cards', all: 'All cards' }[L.set]);
   function learnView() {
     if (!learnOk()) return null;
@@ -777,6 +805,23 @@ export async function createDb({ onChange, go }) {
       } catch { explainErr[cardId] = 'Couldn’t reach Lucida. Try again.'; }
       explaining[cardId] = false; changed();
     },
+    // Goes to a page of the app (a screen that finishes something, like the Guide's Done).
+    go: path => go(path),
+    // The Guide: saved as it's typed (the screen holds the typing; `quiet` so a failed save shows in the page, not as an alert), its extra pages, and
+    // older versions coming back. Sources: deleting one removes its files and keeps the cards.
+    saveGuide: (deckId, page, text) => {
+      const d = deckById(deckId); if (!d) return Promise.resolve();
+      const key = deckId + '|' + (page || 'main'), out = (guideSaves[key] || Promise.resolve()).then(() => send('guide.save', { deckId, page: page || 'main', text }, false, true));
+      guideSaves[key] = out.catch(() => {});
+      return out;
+    },
+    addGuidePage: async (deckId, title) => { const r = await send('guide.page.add', { deckId, title }, false, true); return r.id; },
+    renameGuidePage: (deckId, page, title) => send('guide.page.rename', { deckId, page, title }, false, true),
+    deleteGuidePage: (deckId, page) => send('guide.page.delete', { deckId, page }, false, true),
+    restoreGuide: (deckId, page, at) => send('guide.restore', { deckId, page: page || 'main', at }, false, true),
+    deleteSource: async (deckId, id) => { const d = deckById(deckId), x = d && (d.sources || []).find(y => y.id === id); if (!x) return;
+      if (!confirm('Delete “' + x.name + '”? Its file goes, and the ' + plural(x.cards || 0, 'card') + ' made from it stay in the deck.')) return;
+      try { await send('source.delete', { deckId, id }, false, true); } catch (e) { alert(e.message); } },
     // A new link for AI apps; the old one stops working (for a link that got out).
     newLink: () => send('ai.link'),
     // AI apps that signed in (web/connect.js): Allow or Cancel on their page, Disconnect, switching account, and a password.
@@ -810,9 +855,38 @@ export async function createDb({ onChange, go }) {
       try { await live.host.open({ deckId: id, deck: { name: d.name, seed: d.cover.seed || d.name, style: d.cover.style || 'mix', round: d.cover.round || 0, bg: d.bg || { kind: 'deck', image: null } }, qs, set, count, time }); }
       catch (e) { alert(e.message || 'Couldn’t open a room. Try again.'); }
     },
+    // Live from a topic: the maker writes the questions (counting as one of today's makes), then the room opens. `cancelLiveTopic` stops it.
+    openLiveTopic: async (topic, count, time) => {
+      topic = String(topic || '').replace(/\s+/g, ' ').trim();
+      if (liveTopic.busy || topic.length < 2) return;
+      const mine = ++liveRun;
+      Object.assign(liveTopic, { busy: true, word: 'Thinking about your topic…', error: '' }); changed();
+      try {
+        const r = await make.quiz(topic, count, w => { if (mine === liveRun) { liveTopic.word = w; changed(); } });
+        if (!r || mine !== liveRun) return;
+        // Someone who closed the window (the X) while it was writing doesn't get a room opened under them.
+        if (typeof location !== 'undefined' && !/\/live\/new$|\/live$/.test(location.pathname)) return;
+        const qs = r.cards.filter(c => c.quiz).map(topicQuestion).filter(q => q.text && q.right >= 0);
+        if (qs.length < 2) throw new Error('Lucida couldn’t write enough questions about that. Try a different topic.');
+        await live.host.open({ deckId: '', deck: { name: r.name, seed: r.name, style: 'mix', round: 0, bg: { kind: 'deck', image: null } }, qs, set: 'topic', count, time, topic: { name: r.name, job: r.job } });
+      } catch (e) { if (mine === liveRun) liveTopic.error = e.message || 'Couldn’t open a room. Try again.'; }
+      finally { if (mine === liveRun) { liveTopic.busy = false; liveTopic.word = ''; changed(); } }
+    },
+    cancelLiveTopic: () => { liveRun++; make.cancelQuiz(); Object.assign(liveTopic, { busy: false, word: '', error: '' }); changed(); },
+    // After a game made from a topic: keep its questions as a deck.
+    saveLiveTopic: async () => {
+      const G = live.host.game();
+      if (!G || !G.topic || G.topic.saved || liveTopic.saving) return;
+      Object.assign(liveTopic, { saving: true, error: '' }); changed();
+      try {
+        const cards = G.qs.map(q => ({ kind: 'basic', front: q.text, back: q.options[q.right], text: '', at: '', quiz: { question: q.text, answer: q.options[q.right], wrong: q.options.filter((_, i) => i !== q.right), why: q.why || '' } }));
+        live.host.note({ saved: await make.saveQuiz(G.topic.job, G.topic.name, cards) });
+      } catch (e) { liveTopic.error = e.message || 'Couldn’t save the deck. Try again.'; }
+      liveTopic.saving = false; changed();
+    },
     liveStart: () => live.host.start(),
     liveNext: () => live.host.next(),
-    liveAgain: () => { const G = live.host.game(); if (G) live.host.again(liveQuestions(G.deckId, G.set, G.count)); },
+    liveAgain: () => { const G = live.host.game(); if (G) live.host.again(G.topic ? topicAgain(G.qs) : liveQuestions(G.deckId, G.set, G.count)); },
     liveClose: () => live.host.close(),
     ...playerActs(live.player, go),
     // Pausing cards (every card of a text or a picture together): they don't come up until they're unpaused.
@@ -991,6 +1065,7 @@ export async function createDb({ onChange, go }) {
         .filter(([k, , n]) => n > 0 || k === 'all').map(([k, label, n]) => ({ id: k, label, n }));
     },
     live: () => live.host.view(),
+    liveTopic: () => ({ ...liveTopic }),
     join: () => live.player.view(),
     joinAt: (kind, code) => live.player.at(kind, code),
     startReview: (id, pile, set) => { session = { key: keyOf(id, pile, set), deckId: id || null, pile: pile || null, set: set || null, started: now(), graded: [] }; },
@@ -1048,9 +1123,17 @@ export async function createDb({ onChange, go }) {
       return { url: location.origin + (S.me && S.ai.key ? '/mcp/' + S.ai.key : '/mcp'), perms: S.ai.perms, connected: names.length ? names.join(', ') : 'None yet', apps,
         clients: { claude: has('Claude'), openai: has('ChatGPT'), cursor: has('Cursor'), mcp: names.some(n => !['Claude', 'ChatGPT', 'Cursor'].includes(n)) } };
     },
+    // Making cards (web/make.js), a deck's Guide, and its Sources.
+    make,
+    guide: id => { const d = deckById(id); if (!d) return { deckId: '', text: '', at: 0, pages: [], can: false, studying: false };
+      const g = guideOf(d), ro = shareOf(d).readOnly;
+      return { deckId: d.id, text: g.text || '', at: g.at || 0, pages: (g.pages || []).map(p => ({ id: p.id, title: p.title, text: p.text || '', at: p.at || 0 })), can: !ro, studying: ro }; },
+    guideHistory: async (id, page) => { try { const r = await fetch('/api/guide/history?deck=' + encodeURIComponent(id) + '&page=' + encodeURIComponent(page || 'main'), { cache: 'no-store' }); return r.ok ? (await r.json()).versions || [] : []; } catch { return []; } },
+    sources: id => { const d = deckById(id); return d ? (d.sources || []).slice().reverse().map(sourceRow) : []; },
+    sourceText: name => { if (!name) return ''; if (sourceTexts[name] === undefined) { sourceTexts[name] = null; fetch('/media/' + encodeURIComponent(name), { cache: 'no-store' }).then(r => (r.ok ? r.text() : '')).then(t => { sourceTexts[name] = t; changed(); }).catch(() => { sourceTexts[name] = ''; }); } return sourceTexts[name]; },
     // The page where an AI app asks to connect (/oauth/authorize).
     consent: connect.consent,
-    href: (kind, id) => ({ decks: '/library', library: '/library', cards: '/library/cards', newDeck: '/decks/new', import: id ? '/deck/' + id + '/import' : '/decks/import', connect: '/connect', today: '/', done: '/review/done', stats: '/stats',
+    href: (kind, id) => ({ decks: '/library', library: '/library', cards: '/library/cards', newDeck: '/decks/new', import: id ? '/deck/' + id + '/import' : '/decks/import', make: '/make' + (id ? '?deck=' + id : ''), guide: '/deck/' + id + '/guide', connect: '/connect', today: '/', done: '/review/done', stats: '/stats',
       review: id ? '/review/' + id : '/review', deck: '/deck/' + id })[kind] || '/'
   };
 }

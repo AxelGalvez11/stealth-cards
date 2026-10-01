@@ -32,7 +32,8 @@ function network(path, q, P) {
   return null;
 }
 function resolve(path, q) {
-  if (path.startsWith('/b/')) return DESIGN ? { name: decodeURIComponent(path.slice(3)), design: true } : { redirect: '/' };
+  // (On /b a board's other settings can be given in the address too, like /b/WebMake?step=Review, to see its states.)
+  if (path.startsWith('/b/')) return DESIGN ? { name: decodeURIComponent(path.slice(3)), design: true, props: Object.fromEntries([...q].filter(([k]) => k !== 'dark' && k !== 'gray')) } : { redirect: '/' };
   const P = narrow.matches ? 'Phone' : 'Web';
   // Live, for players: the join page, and a game's screens on their phone (the host's page runs the game). Friends
   // join without an account, so these open signed out too; a game this phone isn't in starts at the join page.
@@ -59,6 +60,8 @@ function resolve(path, q) {
   // An AI app (Claude, ChatGPT…) asking to use your decks: who it is, and Allow or Cancel (web/oauth.mjs, web/connect.js).
   if (path === '/oauth/authorize') return { name: P + 'ConnectConsent' };
   if (path.startsWith('/sign-in')) return { redirect: '/' };
+  // Live from a topic, with no deck to start from (needs a big screen, like the deck's Play live). ?topic= fills the topic in.
+  if (path === '/live/new') return narrow.matches ? { redirect: '/library' } : { name: 'LiveSetup', props: { deckId: '', topic: q.get('topic') || '' } };
   // Live, for the host: the big screen shows the game this tab is running, in whatever phase it's in.
   const lv = /^\/live\/(\d{6})$/.exec(path);
   if (lv) {
@@ -66,7 +69,7 @@ function resolve(path, q) {
     if (!L || L.code !== lv[1]) return { redirect: '/' };
     return { name: { question: 'LiveQuestion', reveal: 'LiveReveal', board: 'LiveLeaderboard', end: 'LivePodium' }[L.phase] || 'LiveLobby', props: { deckId: L.deckId } };
   }
-  const deck = /^\/deck\/([^/]+)(\/card(?:\/([^/]+))?|\/import|\/learn|\/suggestions|\/live)?$/.exec(path);
+  const deck = /^\/deck\/([^/]+)(\/card(?:\/([^/]+))?|\/import|\/learn|\/suggestions|\/live|\/guide)?$/.exec(path);
   // Your first time in: the welcome (connect your AI, bring your cards) comes before Today.
   if (path === '/' && !db.settings().welcomed && !db.decks().length) return { redirect: '/welcome' };
   if (path === '/welcome') return { name: P + 'Welcome' };
@@ -86,6 +89,9 @@ function resolve(path, q) {
     return { name: narrow.matches ? 'PhoneLibrary' : 'WebDecks', props: { mode: lib[1] ? 'cards' : 'decks', folder: lib[2] || '', level: lib[1] ? q.get('level') || '' : '' } };
   }
   if (path === '/decks/new') return { name: P + 'NewDeck' };
+  // Making cards from a file, photos, a recording, a video, text or a topic (web/make.js). `source` opens one kind's page, `deck` is where
+  // the cards go, `from` is a kept source to make more cards from, and `guide` (with `page`) is a deck's Guide to make cards from.
+  if (path === '/make') return { name: P + 'Make', props: { kind: q.get('source') || '', deckId: q.get('deck') || '', from: q.get('from') || '', guide: q.get('guide') || '', page: q.get('page') || '' } };
   if (path === '/decks/import') return { name: 'WebImport' };
   if (deck) {
     const id = deck[1];
@@ -96,6 +102,8 @@ function resolve(path, q) {
     if (deck[2] === '/import') return dRow && dRow.readOnly ? { redirect: '/deck/' + id } : { name: 'WebImport', props: { deckId: id } };
     // Suggestions people sent for this deck (it's shared), to take or skip.
     if (deck[2] === '/suggestions') return { name: P + 'Suggestions', props: { deckId: id } };
+    // A deck's Guide (a page like a README), written here; a deck you study as it is shows its owner's, which is theirs to change.
+    if (deck[2] === '/guide') return dRow && dRow.readOnly ? { redirect: '/deck/' + id } : { name: P + 'Guide', props: { deckId: id, page: q.get('page') || '' } };
     // Playing a deck live needs a big screen, so it starts from a computer.
     if (deck[2] === '/live') return narrow.matches ? { redirect: '/deck/' + id } : { name: 'LiveSetup', props: { deckId: id } };
     // Learn mode starts from a sheet over the deck.
@@ -106,7 +114,7 @@ function resolve(path, q) {
     if (deck[2]) return narrow.matches ? { name: 'PhoneEditor', props: { deckId: id, cardId: deck[3] || '', from: q.get('from') || '', keyboard: false } }
       : { name: 'WebCardsScreen', props: { deckId: id, cardId: deck[3] || '', from: q.get('from') || '' } };
     // An empty deck shows its empty page, unless you opened its settings.
-    return { name: P + (db.cards(id).length || q.get('settings') === '1' ? 'Deck' : 'DeckEmpty'), props: { deckId: id, settingsOpen: q.get('settings') === '1' } };
+    return { name: P + (db.cards(id).length || q.get('settings') === '1' || (dRow && (dRow.hasGuide || dRow.hasSources)) ? 'Deck' : 'DeckEmpty'), props: { deckId: id, settingsOpen: q.get('settings') === '1', sourceOpen: q.get('source') || '', sourceAt: q.get('at') || '' } };
   }
   // A Learn mode session: the board for its current question, or the end once every card is learned.
   const ln = /^\/learn\/([^/]+)$/.exec(path);
@@ -148,6 +156,7 @@ function linkFor(name) {
     WebStats: '/stats', WebStatsEmpty: '/stats', WebConnect: '/connect', WebWelcome: '/welcome', WebSettings: '/settings', ThemePicker: '/settings/theme', PhoneThemePicker: '/settings/theme', WebTheme: '/settings/theme/lucida', WebSignIn: '/sign-in', WebSignInCode: '/sign-in/code', PhoneSignIn: '/sign-in', PhoneSignInCode: '/sign-in/code', PhoneToday: '/', Privacy: '/privacy', Terms: '/terms',
     WebDiscover: '/discover', WebActivity: '/activity', WebProfile: '/you', WebSuggestions: id ? '/deck/' + id + '/suggestions' : '/suggestions',
     LiveSetup: id ? '/deck/' + id + '/live' : '/library', LiveJoin: '/join',
+    WebMake: '/make', PhoneMake: '/make', WebGuide: id ? '/deck/' + id + '/guide' : '/library', PhoneGuide: id ? '/deck/' + id + '/guide' : '/library',
     WebClasses: '/library/classes', WebClass: current && current.props.code ? '/class/' + current.props.code : '/library/classes', WebAdmin: '/admin' };
   // Live's screens follow the game (their buttons act on it), so a link to one stays on the game's page.
   if (/^Live/.test(name) && !pages[name]) return current ? current.path : '/';
