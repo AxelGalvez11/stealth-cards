@@ -33,6 +33,8 @@ export async function withChrome(fn) {
     const page = {
       // The window's size in CSS pixels, and how many device pixels make one.
       size: (width, height, scale = 1) => send('Emulation.setDeviceMetricsOverride', { width, height, deviceScaleFactor: scale, mobile: width < 500 }),
+      // The look the window asks pages for: 'light' or 'dark' (prefers-color-scheme).
+      scheme: value => send('Emulation.setEmulatedMedia', { features: [{ name: 'prefers-color-scheme', value }] }),
       // Opens an address and waits until it has loaded.
       open: async url => { const loaded = once('Page.loadEventFired'); await send('Page.navigate', { url }); await Promise.race([loaded, sleep(30000)]); },
       // Runs an expression (it may be async) and gives back its value.
@@ -42,9 +44,9 @@ export async function withChrome(fn) {
         return r.result.value;
       },
       // A picture of what's in the window (or of `clip`), as bytes. `transparent` leaves the page's background out.
-      shot: async ({ type = 'png', clip, transparent = false, quality = 90 } = {}) => {
+      shot: async ({ type = 'png', clip, transparent = false, quality = 90, beyond = false } = {}) => {
         if (transparent) await send('Emulation.setDefaultBackgroundColorOverride', { color: { r: 0, g: 0, b: 0, a: 0 } });
-        const r = await send('Page.captureScreenshot', { format: type, quality, ...(clip ? { clip: { ...clip, scale: 1 } } : {}) });
+        const r = await send('Page.captureScreenshot', { format: type, quality, ...(beyond ? { captureBeyondViewport: true } : {}), ...(clip ? { clip: { ...clip, scale: 1 } } : {}) });
         if (transparent) await send('Emulation.setDefaultBackgroundColorOverride', {});
         return Buffer.from(r.data, 'base64');
       }

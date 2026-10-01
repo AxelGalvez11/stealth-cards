@@ -10,6 +10,10 @@
       "label": "Pricing",
       "line": "Free has unlimited decks and cards, Learn mode, sharing and live games; Pro is $5.99 a month or $49.99 a year and adds exam dates, weak-spot stats and themes."
     },
+    "blog": {
+      "label": "Blog",
+      "line": "Every comparison, feature guide and answer on the site in one place, sorted by kind, each with its minutes to read and the day it was last checked."
+    },
     "privacy": {
       "label": "Privacy Policy",
       "line": "What Lucida keeps, why, who helps run it, and how to export or delete your data; it says Lucida doesn’t sell data or train AI on your cards."
