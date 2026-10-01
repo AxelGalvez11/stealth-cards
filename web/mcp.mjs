@@ -252,7 +252,7 @@ const TOOLS = [
       const m = /@([a-z0-9_.]{3,30})\/([a-z0-9-]{1,60})/i.exec(String(a.id)), id = (/\b(s[a-z0-9]{6,40})\b/.exec(String(a.id)) || [])[1];
       const p = await social.deckPage(m ? { handle: m[1], slug: m[2] } : { id: id || a.id }, ctx.uid);
       if (!p) return fail('That deck isn’t shared.');
-      return text({ id: p.id, name: p.name, by: p.owner && p.owner.name, about: p.description || undefined, cards: p.cards, version: p.version, learner: p.me ? { studying: !!p.me.studying, copied: !!p.me.copied, saved: p.me.starred } : undefined,
+      return text({ id: p.id, name: p.name, by: p.owner && p.owner.name, about: p.description || undefined, level: levelWords(p.level) || undefined, subject: subjectWords(p.subject) || undefined, school: p.school || undefined, cards: p.cards, version: p.version, learner: p.me ? { studying: !!p.me.studying, copied: !!p.me.copied, saved: p.me.starred } : undefined,
         sample: p.cardsList.slice(0, 100).map(c => ({ id: c.id, kind: c.kind === 'cloze' ? 'fill in the blank' : c.kind, front: c.front || undefined, back: c.back || undefined, text: c.text || undefined })) });
     } },
   { name: 'study_shared_deck', perm: 'text', description: 'Add a shared deck to the learner’s library. By default they study it as it is, and its cards follow the owner’s changes; with copy: true it becomes the learner’s own copy to change.',

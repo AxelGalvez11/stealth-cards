@@ -77,7 +77,8 @@ function signedOut(go, onChange = () => {}) {
 function createSchools(changed) {
   let rows = null, asked = false;
   return { find: (q, limit = 30) => {
-    if (!asked) { asked = true; fetch('/schools.json').then(r => r.json()).then(j => { rows = Array.isArray(j.rows) ? j.rows : []; changed(); }).catch(() => { asked = false; }); }
+    // (If it doesn't come, the next try is ten seconds later.)
+    if (!asked) { asked = true; fetch('/schools.json').then(r => r.json()).then(j => { rows = Array.isArray(j.rows) ? j.rows : []; changed(); }).catch(() => { setTimeout(() => { asked = false; }, 10000); }); }
     return rows ? schoolSearch(rows, q, limit) : [];
   } };
 }
