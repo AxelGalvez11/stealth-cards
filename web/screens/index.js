@@ -1072,13 +1072,13 @@ export default [
   "name": "SiteCompare",
   "title": "Site · The blog, comparisons, alternatives, the hubs and the 404 · lucida.cards",
   "w": 1440,
-  "h": 7205
+  "h": 7509
  },
  {
   "name": "SiteComparePhone",
   "title": "Site · The blog, comparisons, alternatives, the hubs and the 404 · lucida.cards on a phone",
   "w": 390,
-  "h": 9652
+  "h": 9284
  },
  {
   "name": "SiteConnect",
@@ -1090,7 +1090,7 @@ export default [
   "name": "SiteFaq",
   "title": "Site · FAQ · lucida.cards",
   "w": 1440,
-  "h": 5173
+  "h": 5143
  },
  {
   "name": "SiteFaqPhone",
@@ -1102,13 +1102,13 @@ export default [
   "name": "SiteFeature",
   "title": "Site · Features and who Lucida is for · lucida.cards",
   "w": 1440,
-  "h": 8028
+  "h": 8609
  },
  {
   "name": "SiteFeaturePhone",
   "title": "Site · Features and who Lucida is for · lucida.cards on a phone",
   "w": 390,
-  "h": 10797
+  "h": 10283
  },
  {
   "name": "SiteOg",

@@ -1,195 +1,455 @@
 {
- "_art": "6defc65300",
+ "_art": "5d81c828be",
  "home": {
   "file": "og/home.png",
-  "fingerprint": "1162841b7c",
-  "bytes": 145534,
-  "read": 13.7
+  "fingerprint": "f7bf565639",
+  "bytes": 130576,
+  "text": [
+   "Lucida",
+   "Flashcards your AI can make.",
+   "Carpe diem",
+   "でんしゃ",
+   "F = m · a"
+  ],
+  "read": 8.7
  },
  "pricing": {
   "file": "og/pricing.png",
-  "fingerprint": "64d9f825ea",
-  "bytes": 166421,
-  "read": 12.7
+  "fingerprint": "0f9debfd34",
+  "bytes": 168306,
+  "text": [
+   "Lucida",
+   "Simple pricing.",
+   "Free",
+   "$0",
+   "Unlimited cards",
+   "Learn mode",
+   "Live games",
+   "Pro",
+   "$5.99",
+   "a month",
+   "Exam dates",
+   "Themes"
+  ],
+  "read": 14
  },
  "privacy": {
   "file": "og/privacy.png",
-  "fingerprint": "3dfa006a7d",
-  "bytes": 134315,
-  "read": 13.4
+  "fingerprint": "047e7a4254",
+  "bytes": 170328,
+  "text": [
+   "Lucida",
+   "Privacy Policy",
+   "Your cards",
+   "Ads",
+   "AI training"
+  ],
+  "read": 15.1
  },
  "terms": {
   "file": "og/terms.png",
-  "fingerprint": "1ef08c2624",
-  "bytes": 180053,
-  "read": 11
+  "fingerprint": "626cf396d1",
+  "bytes": 186641,
+  "text": [
+   "Lucida",
+   "Terms of Service"
+  ],
+  "read": 13.7
  },
  "connect": {
   "file": "og/connect.png",
-  "fingerprint": "6c6e863288",
-  "bytes": 208239,
-  "read": 9.9
+  "fingerprint": "cc7af5025c",
+  "bytes": 140378,
+  "text": [
+   "Lucida",
+   "Connect Lucida to your AI",
+   "Lucida",
+   "Add my Lucida link, then ask for cards."
+  ],
+  "read": 16.1
  },
  "blog": {
   "file": "og/blog.png",
-  "fingerprint": "f368e687b4",
-  "bytes": 213206,
-  "read": 9.3
+  "fingerprint": "138c3f45bb",
+  "bytes": 169850,
+  "text": [
+   "Lucida",
+   "Everything about studying with flashcards",
+   "Search the blog",
+   "Lucida vs Quizlet",
+   "Features",
+   "Guides"
+  ],
+  "read": 12.6
  },
  "compare": {
   "file": "og/compare.png",
-  "fingerprint": "cd36d08af1",
-  "bytes": 176831,
-  "read": 11.4
+  "fingerprint": "9362cd2de5",
+  "bytes": 213231,
+  "text": [
+   "Lucida",
+   "Lucida compared with other flashcard apps",
+   "Anki",
+   "Quizlet",
+   "Knowt",
+   "RemNote",
+   "Brainscape",
+   "Mochi",
+   "Kahoot",
+   "Gizmo",
+   "Lucida"
+  ],
+  "read": 10.7
  },
  "features": {
   "file": "og/features.png",
-  "fingerprint": "6459ae6ab8",
-  "bytes": 142106,
-  "read": 13.3
+  "fingerprint": "085ab74079",
+  "bytes": 211759,
+  "text": [
+   "Lucida",
+   "Everything Lucida does",
+   "Spaced repetition with FSRS",
+   "AI flashcards",
+   "Learn mode",
+   "Shared decks",
+   "Classes",
+   "Live games",
+   "Image occlusion",
+   "Import and export",
+   "And more"
+  ],
+  "read": 15.8
  },
  "vs/anki": {
   "file": "og/vs-anki.png",
-  "fingerprint": "45efd7fd6f",
-  "bytes": 215402,
-  "read": 9.5
+  "fingerprint": "74ed3c16ee",
+  "bytes": 186042,
+  "text": [
+   "Lucida",
+   "Lucida vs Anki",
+   "Anki",
+   "Lucida",
+   "vs"
+  ],
+  "read": 18.1
  },
  "vs/quizlet": {
   "file": "og/vs-quizlet.png",
-  "fingerprint": "2d9eb94403",
-  "bytes": 214810,
-  "read": 10.4
+  "fingerprint": "0ef540523b",
+  "bytes": 165312,
+  "text": [
+   "Lucida",
+   "Lucida vs Quizlet",
+   "Quizlet",
+   "Lucida",
+   "vs"
+  ],
+  "read": 16.6
  },
  "vs/knowt": {
   "file": "og/vs-knowt.png",
-  "fingerprint": "9b914ce701",
-  "bytes": 201270,
-  "read": 12.5
+  "fingerprint": "f2b70a1073",
+  "bytes": 162475,
+  "text": [
+   "Lucida",
+   "Lucida vs Knowt",
+   "Knowt",
+   "Lucida",
+   "vs"
+  ],
+  "read": 13.7
  },
  "vs/remnote": {
   "file": "og/vs-remnote.png",
-  "fingerprint": "a350de5ada",
-  "bytes": 199256,
-  "read": 9.7
+  "fingerprint": "ee8a7e4143",
+  "bytes": 196976,
+  "text": [
+   "Lucida",
+   "Lucida vs RemNote",
+   "Lucida",
+   "RemNote",
+   "vs"
+  ],
+  "read": 13
  },
  "vs/brainscape": {
   "file": "og/vs-brainscape.png",
-  "fingerprint": "274dcb512c",
-  "bytes": 181984,
-  "read": 12
+  "fingerprint": "f69ebbf555",
+  "bytes": 223394,
+  "text": [
+   "Lucida",
+   "Lucida vs Brainscape",
+   "Lucida",
+   "Brainscape",
+   "vs"
+  ],
+  "read": 9.1
  },
  "vs/mochi": {
   "file": "og/vs-mochi.png",
-  "fingerprint": "8a708ea276",
-  "bytes": 146918,
-  "read": 13.4
+  "fingerprint": "231d8c91f1",
+  "bytes": 224588,
+  "text": [
+   "Lucida",
+   "Lucida vs Mochi",
+   "Mochi",
+   "Lucida",
+   "vs"
+  ],
+  "read": 13.3
  },
  "vs/kahoot": {
   "file": "og/vs-kahoot.png",
-  "fingerprint": "c9c84c5a52",
-  "bytes": 206231,
-  "read": 9.5
+  "fingerprint": "2d22213cf4",
+  "bytes": 168813,
+  "text": [
+   "Lucida",
+   "Lucida vs Kahoot",
+   "Kahoot",
+   "Lucida",
+   "vs"
+  ],
+  "read": 14.5
  },
  "vs/gizmo": {
   "file": "og/vs-gizmo.png",
-  "fingerprint": "f93936041a",
-  "bytes": 150622,
-  "read": 11.8
+  "fingerprint": "9f82c30021",
+  "bytes": 186158,
+  "text": [
+   "Lucida",
+   "Lucida vs Gizmo",
+   "Gizmo",
+   "Lucida",
+   "vs"
+  ],
+  "read": 18.7
  },
  "anki-alternative": {
   "file": "og/anki-alternative.png",
-  "fingerprint": "ea29182b9a",
-  "bytes": 147905,
-  "read": 12.4
+  "fingerprint": "9725b04733",
+  "bytes": 178742,
+  "text": [
+   "Lucida",
+   "The best Anki alternatives",
+   "Anki",
+   "Lucida",
+   "Free"
+  ],
+  "read": 11
  },
  "quizlet-alternative": {
   "file": "og/quizlet-alternative.png",
-  "fingerprint": "279b416237",
-  "bytes": 208038,
-  "read": 8.6
+  "fingerprint": "333e1074fb",
+  "bytes": 244401,
+  "text": [
+   "Lucida",
+   "The best Quizlet alternatives",
+   "Quizlet",
+   "Lucida",
+   "Free"
+  ],
+  "read": 13.5
  },
  "features/spaced-repetition": {
   "file": "og/features-spaced-repetition.png",
-  "fingerprint": "999b362993",
-  "bytes": 210671,
-  "read": 9.4
+  "fingerprint": "de2b3e2027",
+  "bytes": 226536,
+  "text": [
+   "Lucida",
+   "Spaced repetition with FSRS",
+   "1d",
+   "3d",
+   "1w",
+   "3w",
+   "2mo"
+  ],
+  "read": 13.2
  },
  "features/ai-flashcards": {
   "file": "og/features-ai-flashcards.png",
-  "fingerprint": "57348f59f9",
-  "bytes": 201494,
-  "read": 9.5
+  "fingerprint": "8ada7aaa8e",
+  "bytes": 249389,
+  "text": [
+   "Lucida",
+   "AI flashcards that land in your decks",
+   "Make 20 flashcards from my lecture on cell respiration.",
+   "What does glycolysis produce?",
+   "20 cards"
+  ],
+  "read": 11.6
  },
  "features/learn-mode": {
   "file": "og/features-learn-mode.png",
-  "fingerprint": "72bd78232f",
-  "bytes": 177256,
-  "read": 11.1
+  "fingerprint": "181ad2c572",
+  "bytes": 148255,
+  "text": [
+   "Lucida",
+   "Learn mode",
+   "Which organelle makes most of a cell’s ATP?",
+   "Ribosome",
+   "Mitochondrion",
+   "Golgi body",
+   "Nucleus",
+   "7 of 12"
+  ],
+  "read": 12.1
  },
  "features/shared-decks": {
   "file": "og/features-shared-decks.png",
-  "fingerprint": "4bd646ca2c",
-  "bytes": 192106,
-  "read": 10.5
+  "fingerprint": "e7aa3aa8b1",
+  "bytes": 245810,
+  "text": [
+   "Lucida",
+   "Shared decks",
+   "Cell Biology",
+   "412 cards · shared deck",
+   "4.8",
+   "· 1.2k",
+   "Anyone with the link"
+  ],
+  "read": 12.4
  },
  "features/classes": {
   "file": "og/features-classes.png",
-  "fingerprint": "6f4000bef5",
-  "bytes": 185805,
-  "read": 10.8
+  "fingerprint": "f4ab77eb64",
+  "bytes": 163378,
+  "text": [
+   "Lucida",
+   "Classes",
+   "Bio 101",
+   "KQ4 7TD",
+   "Due Friday"
+  ],
+  "read": 17.9
  },
  "features/live-games": {
   "file": "og/features-live-games.png",
-  "fingerprint": "c316cfb2ce",
-  "bytes": 172066,
-  "read": 9
+  "fingerprint": "60ef6963fa",
+  "bytes": 199939,
+  "text": [
+   "Lucida",
+   "Live games",
+   "Join with this code",
+   "482 913",
+   "A",
+   "B",
+   "C",
+   "D"
+  ],
+  "read": 7.4
  },
  "features/image-occlusion": {
   "file": "og/features-image-occlusion.png",
-  "fingerprint": "605c08946e",
-  "bytes": 158843,
-  "read": 11.5
+  "fingerprint": "9e09c2facf",
+  "bytes": 205365,
+  "text": [
+   "Lucida",
+   "Image occlusion flashcards",
+   "Nucleus",
+   "?",
+   "Membrane",
+   "?"
+  ],
+  "read": 13.6
  },
  "features/import": {
   "file": "og/features-import.png",
-  "fingerprint": "ab83795bed",
-  "bytes": 148489,
-  "read": 9.7
+  "fingerprint": "62810ee976",
+  "bytes": 213014,
+  "text": [
+   "Lucida",
+   "Import flashcards",
+   ".csv",
+   "Term",
+   "Definition",
+   "Card"
+  ],
+  "read": 9.2
  },
  "for/students": {
   "file": "og/for-students.png",
-  "fingerprint": "e9772c2322",
-  "bytes": 156410,
-  "read": 11.1
+  "fingerprint": "97240f2693",
+  "bytes": 140102,
+  "text": [
+   "Lucida",
+   "Lucida for students",
+   "Mon",
+   "Tue",
+   "Wed",
+   "Thu",
+   "Fri",
+   "Exam Friday"
+  ],
+  "read": 18.7
  },
  "for/med-school": {
   "file": "og/for-med-school.png",
-  "fingerprint": "16a5e3cb99",
-  "bytes": 180546,
-  "read": 9.8
+  "fingerprint": "3a8c184d67",
+  "bytes": 199313,
+  "text": [
+   "Lucida",
+   "Lucida for medical school",
+   "Brachial plexus: roots, trunks, divisions…",
+   "Beta-blockers end in -olol",
+   "Krebs cycle: where does CO₂ leave?"
+  ],
+  "read": 13.1
  },
  "for/mcat": {
   "file": "og/for-mcat.png",
-  "fingerprint": "4cc6c633b4",
-  "bytes": 210418,
-  "read": 10
+  "fingerprint": "0c6eafd21d",
+  "bytes": 156466,
+  "text": [
+   "Lucida",
+   "Lucida for the MCAT",
+   "pH = pKa + log([A⁻] / [HA])",
+   "Which amino acid side chain is basic?",
+   "ΔG = ΔH − TΔS",
+   "MCAT · 230 questions"
+  ],
+  "read": 12.7
  },
  "for/language-learning": {
   "file": "og/for-language-learning.png",
-  "fingerprint": "472f456bda",
-  "bytes": 181539,
-  "read": 10.1
+  "fingerprint": "654ba13ae7",
+  "bytes": 208180,
+  "text": [
+   "Lucida",
+   "Lucida for language learning",
+   "犬",
+   "dog",
+   "gracias",
+   "thank you",
+   "Guten Tag",
+   "good day"
+  ],
+  "read": 11.6
  },
  "for/teachers": {
   "file": "og/for-teachers.png",
-  "fingerprint": "52f8f720fd",
-  "bytes": 132223,
-  "read": 13.1
+  "fingerprint": "688acab371",
+  "bytes": 175671,
+  "text": [
+   "Lucida",
+   "Lucida for teachers",
+   "Period 3 · Chemistry",
+   "Moles due Friday",
+   "Live",
+   "Quiz: the mole"
+  ],
+  "read": 17.2
  },
  "faq": {
   "file": "og/faq.png",
-  "fingerprint": "4944aaed05",
-  "bytes": 159262,
-  "read": 10.8
+  "fingerprint": "f95fdf43b8",
+  "bytes": 198330,
+  "text": [
+   "Lucida",
+   "Questions about Lucida",
+   "?",
+   "Got a question?",
+   "Q & A"
+  ],
+  "read": 8.6
  }
 }

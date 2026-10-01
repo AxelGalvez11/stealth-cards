@@ -176,7 +176,7 @@
     "id": "picture",
     "at": "How the cards work",
     "pos": "after",
-    "caption": "Drawing boxes on a picture in the card editor, and typing what is under each"
+    "caption": "A picture card in Lucida: the boxes hide the labels, and each box is its own card"
    }
   ],
   "test": [

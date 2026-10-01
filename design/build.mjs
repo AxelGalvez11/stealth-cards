@@ -10,7 +10,7 @@ import { WALL_CARDS } from './wall.mjs';
 import { PRIVACY, TERMS, UPDATED } from './legal.mjs';
 import { CONNECT } from './connect-guide.mjs';
 import { PRO_LINKS } from '../web/plans.mjs';
-import { PLAN_FREE, PLAN_PRO, PRICING_FAQ, SOCIALS as SITE_SOCIALS, BOARDS as SITE_BOARDS, APP as SITE_APP, SCENES, SCENE_ARRANGEMENTS, GRAD, CATEGORIES, FEATURED, pageSet, footerLinks, boardData, partsOf, indexOf, ogKey } from './site.mjs';
+import { PLAN_FREE, PLAN_PRO, PRICING_FAQ, SOCIALS as SITE_SOCIALS, BOARDS as SITE_BOARDS, APP as SITE_APP, SCENES, SCENE_ARRANGEMENTS, GRAD, CATEGORIES, FEATURED, pageSet, footerLinks, headerLinks, boardData, partsOf, indexOf, ogKey } from './site.mjs';
 import { G_LOGO, APPLE_LOGO } from './logos.mjs';
 import { VARS, SKY_VARS, EXTRA_VARS, EXTRA_LIGHT, EXTRA_DARK } from './scheme.mjs';
 import { SCREENS, KINDS, shotFile, visualsOf, CONNECT_FIGS } from './visuals.mjs';
@@ -333,8 +333,9 @@ const ART_METHOD = `art(p, variant) {
   const name = p.fid + (variant ? '-' + variant : ''), on = !!(this.props.site || this.props.db) && ${JSON.stringify(ART_FILES)}.includes(name);
   return { ...p, art: on ? 'url(/art/' + name + '.webp)' : '', live: !on };
 }`;
-const ART_LAYERS = key => `<sc-if value="{{${key}.art}}" hint-placeholder-val="{{ false }}"><div style="position: absolute; inset: 0; background: {{${key}.art}} center / 100% 100% no-repeat;"></div><div class="sc-grain" style="opacity: {{grain}};"></div></sc-if><sc-if value="{{${key}.live}}" hint-placeholder-val="{{ true }}">${flowLayer(key)}${GRAIN_LAYER}</sc-if>`;
-const artCard = (key, outer, inner, body) => `<div style="position: relative; overflow: hidden; color: {{${key}.ink}}; background: {{${key}.base}}; ${outer}">${ART_LAYERS(key)}<div style="position: relative; text-shadow: {{${key}.shadow}}; ${inner}">${body}</div></div>`;
+// `flow`: the layer drifts slowly (SKY_CSS, .sc-flow), the grain over it stays still.
+const ART_LAYERS = (key, flow = false) => `<sc-if value="{{${key}.art}}" hint-placeholder-val="{{ false }}"><div${flow ? ' class="sc-flow"' : ''} style="position: absolute; inset: 0; background: {{${key}.art}} center / 100% 100% no-repeat;"></div><div class="sc-grain" style="opacity: {{grain}};"></div></sc-if><sc-if value="{{${key}.live}}" hint-placeholder-val="{{ true }}">${flow ? `<div class="sc-flow" style="position: absolute; inset: 0;">${flowLayer(key)}</div>` : flowLayer(key)}${GRAIN_LAYER}</sc-if>`;
+const artCard = (key, outer, inner, body, flow = false) => `<div style="position: relative; overflow: hidden; color: {{${key}.ink}}; background: {{${key}.base}}; ${outer}">${ART_LAYERS(key, flow)}<div style="position: relative; text-shadow: {{${key}.shadow}}; ${inner}">${body}</div></div>`;
 writeFileSync(new URL('../web/fast.css', import.meta.url), `/* Made by design/build.mjs. Film grain for gradient cards drawn from pictures (web/art): one tile, drawn once. */
 .sc-grain { position: absolute; inset: 0; pointer-events: none; mix-blend-mode: soft-light; background: url("data:image/svg+xml,${encodeURIComponent(grainTile(256)).replace(/'/g, '%27')}") 0 0 / 256px 256px; }
 `);
@@ -4718,15 +4719,21 @@ const learnStartBody = (back, start, deep) => `${deep ? deepHead('sparkle', 'Lea
     <div style="display: flex; gap: 10px;">${quizBtn('Cancel', back, false, 1)}${quizBtn('Start learning', start, true, 2, 'sparkle', 'start')}</div>`;
 // A daylight sky behind the top of the page (a night sky in dark mode): deep blue up high, paler toward the page,
 // a soft glow, and clouds of three soft puffs each, drifting slowly. The wall and the words sit over it.
+// Each cloud's last number is the seconds one way of its drift takes (72 to 120: slow enough that you notice only that they have moved).
 const SKY_CLOUDS = {
-  web: [[-4, 118, 440, 150, 52], [79, 84, 470, 160, 64], [8, 404, 540, 170, 58], [67, 372, 500, 160, 70], [41, 22, 280, 96, 46]],
-  phone: [[-24, 104, 260, 100, 44], [62, 64, 250, 94, 52], [48, 372, 300, 110, 60]]
+  web: [[-4, 118, 440, 150, 96], [79, 84, 470, 160, 112], [8, 404, 540, 170, 104], [67, 372, 500, 160, 120], [41, 22, 280, 96, 72]],
+  phone: [[-24, 104, 260, 100, 80], [62, 64, 250, 94, 96], [48, 372, 300, 110, 108]]
 };
 const skyLayer = phone => `<div aria-hidden="true" class="sc-demo" style="position: absolute; left: 0; right: 0; top: 0; height: ${phone ? 600 : 700}px; z-index: -1; overflow: hidden; pointer-events: none; background: linear-gradient(180deg, {{sky.top}} 0%, {{sky.mid}} 30%, {{sky.low}} 55%, {{t.bg}} 100%);">
   <div style="position: absolute; left: 50%; top: -35%; width: 120%; height: 90%; transform: translateX(-50%); background: radial-gradient(closest-side, {{sky.glow}}, transparent);"></div>
-  ${SKY_CLOUDS[phone ? 'phone' : 'web'].map(([x, y, w, h, secs], i) => `<div class="sc-cloud" style="position: absolute; left: ${x}%; top: ${y}px; width: ${w}px; height: ${h}px; animation: scCloud ${secs}s ease-in-out -${i * 11}s infinite alternate;">${[[0, 30, 60, 70], [24, 0, 56, 88], [46, 24, 54, 76]].map(([l, t, pw, ph]) => `<span style="position: absolute; left: ${l}%; top: ${t}%; width: ${pw}%; height: ${ph}%; background: radial-gradient(closest-side, {{sky.cloud}} 40%, transparent);"></span>`).join('')}</div>`).join('')}
+  ${SKY_CLOUDS[phone ? 'phone' : 'web'].map(([x, y, w, h, secs], i) => `<div class="sc-cloud" style="position: absolute; left: ${x}%; top: ${y}px; width: ${w}px; height: ${h}px; animation: scCloud ${secs}s ease-in-out -${i * 23}s infinite alternate;">${[[0, 30, 60, 70], [24, 0, 56, 88], [46, 24, 54, 76]].map(([l, t, pw, ph]) => `<span style="position: absolute; left: ${l}%; top: ${t}%; width: ${pw}%; height: ${ph}%; background: radial-gradient(closest-side, {{sky.cloud}} 40%, transparent);"></span>`).join('')}</div>`).join('')}
 </div>`;
-const SKY_CSS = '@keyframes scCloud{from{transform:translateX(-28px)}to{transform:translateX(28px)}}@media (prefers-reduced-motion:reduce){.sc-cloud{animation:none!important}}';
+// The clouds drift slowly, to one side and back (a cloud moves 16% of its own width each way, about 170 px for a computer's big ones, in 72 to 120
+// seconds, eased at both ends, so the loop has no jump). The gradient that ends a page flows as the app's Today card does (the app's scDrift:
+// it grows 14% and drifts a few percent, back and forth, 16 s). Both are transforms only, and both stop with reduced motion.
+const SKY_CSS = '@keyframes scCloud{from{transform:translate3d(-16%,0,0)}to{transform:translate3d(16%,0,0)}}.sc-cloud{will-change:transform}'
+  + '@keyframes scDrift{from{transform:scale(1.14) translate(-3%,-2%)}to{transform:scale(1.14) translate(3%,2%)}}.sc-flow{animation:scDrift 16s ease-in-out infinite alternate;will-change:transform}'
+  + '@media (prefers-reduced-motion:reduce){.sc-cloud,.sc-flow{animation:none!important}}';
 // Learn mode's sky: only the faint blue fade, with no clouds or glow (the owner: "remove the clouds, i only want the
 // faint blue fade", V75). A night sky in dark mode.
 // The sky's colors, for renderVals: daylight, or a night sky in dark mode (the landing page's top, Learn mode's end).
@@ -5220,6 +5227,35 @@ const LAND = {
   phone: { pad: 20, h1: 44, lead: 17, h2: 32, gapTop: 88, btn: 50, wallH: 420, wall: { cols: 4, w: 150, h: 100, gap: 10, r: 16, tilt: -14, k: PHONE_K }, typeH: 150, ctaH1: 34, typeCols: 'repeat(2, minmax(0, 1fr))' }
 };
 const landPill = (label, href, inv, h, extra = '') => `<a href="${href}" style="height: ${h}px; padding: 0 ${Math.round(h / 2)}px; box-sizing: border-box; display: inline-flex; align-items: center; justify-content: center; border-radius: 999px; font-size: ${h >= 48 ? 15 : 14}px; font-weight: 600; white-space: nowrap; ${inv ? 'background: {{t.inv}}; color: {{t.invText}};' : 'background: {{t.surf}}; color: {{t.text}};'} ${extra}">${label}</a>`;
+// ---- One header on every page of lucida.cards (the landing page, Pricing, Privacy, Terms, Connect, the blog, the hubs, the articles, the
+// FAQ and the 404, and the canvas boards that draw them) ----
+// The logo, then Blog, Compare, Features, Pricing and Sign in, then "Get started". On a narrow page (a phone, or a window under 761 px)
+// the same five links sit behind one menu button, which opens at once (a <details>: no script, no movement); "Get started" stays beside
+// it. `hd` (HEAD_METHOD, in the page's logic) says where each link goes; the colors are the page's own (HEAD_VARS).
+const HEAD_VARS = '--sp-bg: {{t.bg}}; --sp-text: {{t.text}}; --sp-muted: {{t.muted}}; --sp-surf: {{t.surf}}; --sp-surf2: {{t.surf2}}; --sp-line: {{t.line}}; --sp-inv: {{t.inv}}; --sp-invtext: {{t.invText}};';
+const HEAD_LINKS = `<sc-for list="{{hd.nav}}" as="n" hint-placeholder-count="4"><a href="{{n.href}}">{{n.label}}</a></sc-for><a href="{{hd.signIn}}">Sign in</a>`;
+const siteHeader = () => `<header class="sp-head">
+  <a class="sp-hlogo" href="{{hd.home}}" aria-label="Lucida home">${logo(28)}</a>
+  <nav class="sp-hnav" aria-label="Main">${HEAD_LINKS}</nav>
+  <a class="sp-hgo" href="{{hd.start}}">Get started</a>
+  <details class="sp-menu"><summary aria-label="Menu"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path class="sp-mi-a" d="M5 8.5h14M5 15.5h14"/><path class="sp-mi-b" d="M6.5 6.5l11 11M17.5 6.5l-11 11"/></svg></summary><nav class="sp-mpanel" aria-label="Menu">${HEAD_LINKS}</nav></details>
+</header>`;
+const HEAD_CSS = [
+  '.sp-c{container-type:inline-size}',
+  '.sp-head{position:relative;z-index:6;max-width:1344px;margin:0 auto;height:76px;box-sizing:border-box;padding:0 clamp(20px,4cqw,48px);display:flex;align-items:center;gap:4px}',
+  '.sp-hlogo{display:flex;margin-right:auto;color:var(--sp-text)}',
+  '.sp-hnav{display:flex;align-items:center;gap:4px}',
+  '.sp-hnav a{display:inline-flex;align-items:center;height:36px;padding:0 14px;border-radius:999px;font-size:14px;color:var(--sp-text);white-space:nowrap}.sp-hnav a:hover{background:var(--sp-surf)}',
+  '.sp-hgo{display:inline-flex;align-items:center;justify-content:center;height:36px;padding:0 18px;margin-left:4px;box-sizing:border-box;border-radius:999px;background:var(--sp-inv);color:var(--sp-invtext);font-size:14px;font-weight:600;white-space:nowrap}',
+  '.sp-menu{display:none}',
+  '.sp-menu summary{list-style:none;cursor:pointer;display:flex;align-items:center;justify-content:center;width:44px;height:44px;border-radius:22px;background:var(--sp-surf);color:var(--sp-text);-webkit-tap-highlight-color:transparent}',
+  '.sp-menu summary::-webkit-details-marker{display:none}.sp-menu summary:focus-visible{outline:2px solid var(--sp-text);outline-offset:2px}',
+  '.sp-mi-b,.sp-menu[open] .sp-mi-a{display:none}.sp-menu[open] .sp-mi-b{display:inline}',
+  '.sp-mpanel{position:absolute;z-index:7;left:12px;right:12px;top:calc(100% - 4px);box-sizing:border-box;padding:8px;border-radius:22px;background:var(--sp-bg);box-shadow:0 0 0 1px var(--sp-line),0 28px 60px -22px rgba(0,0,0,.42);display:flex;flex-direction:column;gap:2px}',
+  '.sp-mpanel a{display:flex;align-items:center;height:52px;padding:0 16px;border-radius:14px;font-size:17px;font-weight:500;color:var(--sp-text)}.sp-mpanel a:active{background:var(--sp-surf)}',
+  // A narrow page: the links go behind the menu button, which sits after "Get started".
+  '@container (max-width: 760px){.sp-head{height:64px}.sp-hnav{display:none}.sp-menu{display:block}.sp-hgo{height:44px;margin-left:0;margin-right:8px}}'
+].join('');
 const landH2 = (L, text) => `<h2 style="margin: 0; max-width: 760px; font-size: ${L.h2}px; font-weight: 600; line-height: 1.04; letter-spacing: -.04em; text-wrap: balance;">${text}</h2>`;
 const leadP = (L, text, center) => `<p style="margin: ${Math.round(L.lead * .9)}px ${center ? 'auto' : '0'} 0; max-width: 600px; font-size: ${L.lead}px; line-height: 1.5; color: {{t.muted}}; text-wrap: pretty;">${text}</p>`;
 // A demo beside its words: side by side on computers (the demo first when `demoFirst`), stacked on phones.
@@ -5329,12 +5365,9 @@ const REASONS = [
   ['today', 'A few minutes a day', 'Today shows what’s due, how long it takes, and your streak.'],
   ['list', 'Your cards stay yours', 'Export every deck, card, and review whenever you want.']
 ];
-const landing = (L, w, hgt) => { const phone = L === LAND.phone; return `<div style="position: relative; isolation: isolate; width: ${w}px; height: ${hgt}px; box-sizing: border-box; font-family: ${FONT}; background: {{t.bg}}; color: {{t.text}}; overflow: hidden;">
+const landing = (L, w, hgt) => { const phone = L === LAND.phone; return `<div class="sp-c" style="position: relative; isolation: isolate; width: ${w}px; height: ${hgt}px; box-sizing: border-box; font-family: ${FONT}; background: {{t.bg}}; color: {{t.text}}; overflow: hidden; ${HEAD_VARS}">
 ${skyLayer(phone)}
-<header style="max-width: 1344px; margin: 0 auto; height: ${phone ? 64 : 76}px; box-sizing: border-box; padding: 0 ${L.pad}px; display: flex; align-items: center; justify-content: space-between; gap: 12px;">
-  <a href="{{homeHref}}" aria-label="Lucida home">${logo(phone ? 26 : 30)}</a>
-  <nav style="display: flex; align-items: center; gap: ${phone ? 6 : 4}px;">${phone ? '' : `<a href="#how" style="height: 36px; padding: 0 14px; display: inline-flex; align-items: center; border-radius: 999px; font-size: 14px; color: {{t.text}};">How it works</a><a href="#cards" style="height: 36px; padding: 0 14px; display: inline-flex; align-items: center; border-radius: 999px; font-size: 14px; color: {{t.text}};">Card types</a><a href="{{pricingHref}}" style="height: 36px; padding: 0 14px; display: inline-flex; align-items: center; border-radius: 999px; font-size: 14px; color: {{t.text}};">Pricing</a>`}<a href="{{signInHref}}" style="height: 36px; padding: 0 14px; display: inline-flex; align-items: center; border-radius: 999px; font-size: 14px; color: {{t.text}};">Sign in</a>${landPill('Get started', '{{startHref}}', true, 36, phone ? 'padding: 0 14px;' : '')}</nav>
-</header>
+${siteHeader()}
 <main>
 <section style="padding: ${phone ? 48 : 88}px ${L.pad}px 0; display: flex; flex-direction: column; align-items: center; text-align: center;">
   <h1 style="margin: 0; max-width: 1200px; font-size: ${L.h1}px; font-weight: 600; line-height: 1; letter-spacing: -.05em; text-wrap: balance;">Flashcards your AI can make.</h1>
@@ -5361,10 +5394,10 @@ ${featureRow(L, '', 'Flip, rate, remember.', 'Tap a card to see the answer, then
   </div>
 </section>
 <section style="padding-top: ${L.gapTop}px;">
-  ${artCard('hero', '', `box-sizing: border-box; padding: ${phone ? '64px 24px' : '104px 32px'}; display: flex; flex-direction: column; align-items: center; text-align: center;`, `<h2 style="margin: 0; font-size: ${L.ctaH1}px; font-weight: 600; line-height: 1.04; letter-spacing: -.04em; text-wrap: balance;">Your next exam, in cards.</h2><p style="margin: 16px 0 0; max-width: 480px; font-size: ${phone ? 16 : 18}px; line-height: 1.5; opacity: .8; text-wrap: balance;">Start with one deck. Your AI can fill it in a few minutes.</p><div style="margin-top: 28px;">${landPill('Get started', '{{startHref}}', true, L.btn, 'background: #FFFFFF; color: #000000;')}</div>`)}
+  ${artCard('hero', '', `box-sizing: border-box; padding: ${phone ? '64px 24px' : '104px 32px'}; display: flex; flex-direction: column; align-items: center; text-align: center;`, `<h2 style="margin: 0; font-size: ${L.ctaH1}px; font-weight: 600; line-height: 1.04; letter-spacing: -.04em; text-wrap: balance;">Your next exam, in cards.</h2><p style="margin: 16px 0 0; max-width: 480px; font-size: ${phone ? 16 : 18}px; line-height: 1.5; opacity: .8; text-wrap: balance;">Start with one deck. Your AI can fill it in a few minutes.</p><div style="margin-top: 28px;">${landPill('Get started', '{{startHref}}', true, L.btn, 'background: #FFFFFF; color: #000000;')}</div>`, true)}
 </section>
 </main>
-${landFooter(phone)}
+${landFooter(phone, `<a href="#how">How it works</a><a href="#cards">Card types</a>`)}
 </div>`; };
 // The footer on the landing page and the Privacy and Terms pages.
 // Lucida's accounts, as icons (each a 36px target) that open in a new tab.
@@ -5373,20 +5406,27 @@ const SOCIALS = SITE_SOCIALS;
 // the board that draws each (the phone footers to the phone boards).
 const SITE = pageSet();
 const FOOT_METHOD = `foot(phone) {
-  const site = !!this.props.site, board = { compare: 'SiteCompare', features: 'SiteCompare', faq: 'SiteFaq', pricing: 'Pricing', privacy: 'Privacy', terms: 'Terms' }, twin = { compare: 1, features: 1, faq: 1, pricing: 1 };
+  const site = !!this.props.site, board = { blog: 'SiteCompare', compare: 'SiteCompare', features: 'SiteCompare', faq: 'SiteFaq', pricing: 'Pricing', privacy: 'Privacy', terms: 'Terms' }, twin = { blog: 1, compare: 1, features: 1, faq: 1, pricing: 1 };
   return ${JSON.stringify(footerLinks(SITE.pages))}.map(l => ({ label: l.label, href: site ? '/' + l.slug : board[l.slug] + (phone && twin[l.slug] ? 'Phone' : '') + '.dc.html' }));
+}`;
+// Where the header's links go: the real pages on lucida.cards, and on the canvas the board that draws each (a phone board's links to the phone boards).
+const HEAD_METHOD = `hd(phone) {
+  const site = !!this.props.site, board = { blog: 'SiteCompare', compare: 'SiteCompare', features: 'SiteCompare', pricing: 'Pricing' };
+  const signIn = site ? '${SITE_APP}/sign-in' : (phone ? 'PhoneSignIn' : 'WebSignIn') + '.dc.html';
+  return { home: site ? '/' : (phone ? 'LandingPhone' : 'Landing') + '.dc.html', signIn, start: site ? '${SITE_APP}/' : signIn,
+    nav: ${JSON.stringify(headerLinks(SITE.pages))}.map(l => ({ label: l.label, href: site ? '/' + l.slug : board[l.slug] + (phone ? 'Phone' : '') + '.dc.html' })) };
 }`;
 // Landing and Pricing gained a <main>, whose children rise in on the app's boards; these two pages never did.
 const NO_RISE = 'main>*{animation:none}';
 const socialLinks = gap => `<span style="display: flex; align-items: center; gap: ${gap}px;">${SOCIALS.map(([ic, name, href]) => `<a href="${href}" target="_blank" rel="noopener" aria-label="Lucida on ${name}" title="${name}" style="width: 36px; height: 36px; margin: -8px; display: inline-flex; align-items: center; justify-content: center;">${svg(I[ic], 20, 1.8)}</a>`).join('')}</span>`;
 // On phones: the logo and the accounts, then the links. On computers it's one row, which wraps on a narrow window.
-const landFooter = phone => phone
+const landFooter = (phone, extra = '') => phone
   ? `<footer style="box-sizing: border-box; padding: 36px 20px 40px; display: flex; flex-direction: column; gap: 24px; font-size: 14px; color: {{t.muted}};">
   <div style="display: flex; align-items: center; justify-content: space-between; gap: 16px;">${logo(24)}${socialLinks(22)}</div>
-  <span style="display: flex; flex-wrap: wrap; gap: 16px;"><nav aria-label="Footer" style="display: contents;"><sc-for list="{{foot}}" as="l" hint-placeholder-count="5"><a href="{{l.href}}">{{l.label}}</a></sc-for></nav><span>© 2026 Lucida</span></span>
+  <span style="display: flex; flex-wrap: wrap; gap: 16px;"><nav aria-label="Footer" style="display: contents;"><sc-for list="{{foot}}" as="l" hint-placeholder-count="5"><a href="{{l.href}}">{{l.label}}</a></sc-for>${extra}</nav><span>© 2026 Lucida</span></span>
 </footer>`
   : `<footer style="max-width: 1344px; margin: 0 auto; box-sizing: border-box; padding: 48px clamp(20px, 4vw, 48px); display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 20px 16px; font-size: 14px; color: {{t.muted}};">
-  ${logo(26)}<span style="display: flex; flex-wrap: wrap; align-items: center; gap: 16px 20px;"><nav aria-label="Footer" style="display: contents;"><sc-for list="{{foot}}" as="l" hint-placeholder-count="5"><a href="{{l.href}}">{{l.label}}</a></sc-for></nav><span>© 2026 Lucida</span><span style="margin-left: 8px;">${socialLinks(20)}</span></span>
+  ${logo(26)}<span style="display: flex; flex-wrap: wrap; align-items: center; gap: 16px 20px;"><nav aria-label="Footer" style="display: contents;"><sc-for list="{{foot}}" as="l" hint-placeholder-count="5"><a href="{{l.href}}">{{l.label}}</a></sc-for>${extra}</nav><span>© 2026 Lucida</span><span style="margin-left: 8px;">${socialLinks(20)}</span></span>
 </footer>`;
 const LANDING_H = 4002, LANDING_PHONE_H = 4852;
 // The band that ends the page runs edge to edge in the site's dark Midnight gradient (surfaces.mjs).
@@ -5397,11 +5437,12 @@ const TS = `const t = this.props.site ? ${JSON.stringify(VARS)} : this.theme(!!t
 const SKYS = `(this.props.site ? ${JSON.stringify(SKY_VARS)} : ${SKY})`;
 const landingLogic = phone => `${ART_METHOD}
 ${FOOT_METHOD}
+${HEAD_METHOD}
 renderVals() { ${TS}
   // On lucida.cards (props.site) the links open the app; on the canvas they open the sign-in board.
   const site = !!this.props.site, signIn = site ? 'https://app.lucida.cards/sign-in' : '${phone ? 'PhoneSignIn' : 'WebSignIn'}.dc.html';
   const deck = name => this.art(this.gen(name, 'vivid'));
-  return { t, foot: this.foot(${phone}), sky: ${SKYS}, grain: String(this.props.grain ?? 0.7), hero: this.art(${MIDNIGHT}, '${phone ? '' : 'wide'}'), ${WALL_VALS(phone ? [50, 60, 55, 65] : [64, 78, 70, 84, 74, 88, 68, 80, 72], phone ? PHONE_K : 1, phone ? FLIPS.phone : FLIPS.busy)}
+  return { t, hd: this.hd(${phone}), foot: this.foot(${phone}), sky: ${SKYS}, grain: String(this.props.grain ?? 0.7), hero: this.art(${MIDNIGHT}, '${phone ? '' : 'wide'}'), ${WALL_VALS(phone ? [50, 60, 55, 65] : [64, 78, 70, 84, 74, 88, 68, 80, 72], phone ? PHONE_K : 1, phone ? FLIPS.phone : FLIPS.busy)}
     q1: deck('Cell Biology'), q2: deck('Genetics'), q3: deck('Anatomy'), q4: deck('Korean'), m1: deck('Cell Biology'),
     homeHref: site ? '/' : '${phone ? 'LandingPhone' : 'Landing'}.dc.html', signInHref: signIn, startHref: site ? 'https://app.lucida.cards/' : signIn,
     privacyHref: site ? '/privacy' : 'Privacy.dc.html', termsHref: site ? '/terms' : 'Terms.dc.html', pricingHref: site ? '/pricing' : '${phone ? 'PricingPhone' : 'Pricing'}.dc.html' }; }`;
@@ -5740,12 +5781,9 @@ const planPrice = (price, per, note) => `<div style="display: flex; flex-directi
 // Pro's price and Go Pro for one way of paying. Both are drawn, and the Monthly/Yearly switch shows one (on the site, a
 // small script in design/to-site.mjs flips them, since its pages are plain HTML).
 const proPlan = (plan, price, per, note) => `<div data-plan="${plan}" style="display: {{${plan}Show}}; flex-direction: column; gap: 24px;">${planPrice(price, per, note)}<sc-if value="{{proLive}}" hint-placeholder-val="{{ true }}">${landPill('Go Pro', `{{${plan}Href}}`, true, 50, 'background: #FFFFFF; color: #000000;')}</sc-if><sc-if value="{{proSoon}}" hint-placeholder-val="{{ false }}"><span style="height: 50px; display: flex; align-items: center; justify-content: center; border-radius: 999px; background: rgba(255,255,255,.16); box-shadow: inset 0 0 0 1px rgba(255,255,255,.35); font-size: 15px; font-weight: 600;">Pro is coming soon</span></sc-if></div>`;
-const pricing = (L, w, hgt) => { const phone = L === LAND.phone, pad = phone ? 20 : 32; return `<div style="position: relative; isolation: isolate; width: ${w}px; height: ${hgt}px; box-sizing: border-box; font-family: ${FONT}; background: {{t.bg}}; color: {{t.text}}; overflow: hidden;">
+const pricing = (L, w, hgt) => { const phone = L === LAND.phone, pad = phone ? 20 : 32; return `<div class="sp-c" style="position: relative; isolation: isolate; width: ${w}px; height: ${hgt}px; box-sizing: border-box; font-family: ${FONT}; background: {{t.bg}}; color: {{t.text}}; overflow: hidden; ${HEAD_VARS}">
 ${skyLayer(phone)}
-<header style="max-width: 1344px; margin: 0 auto; height: ${phone ? 64 : 76}px; box-sizing: border-box; padding: 0 ${L.pad}px; display: flex; align-items: center; justify-content: space-between; gap: 12px;">
-  <a href="{{homeHref}}" aria-label="Lucida home">${logo(phone ? 26 : 30)}</a>
-  <nav style="display: flex; align-items: center; gap: ${phone ? 6 : 4}px;">${phone ? '' : `<a href="{{howHref}}" style="height: 36px; padding: 0 14px; display: inline-flex; align-items: center; border-radius: 999px; font-size: 14px; color: {{t.text}};">How it works</a><a href="{{typesHref}}" style="height: 36px; padding: 0 14px; display: inline-flex; align-items: center; border-radius: 999px; font-size: 14px; color: {{t.text}};">Card types</a><a href="#" aria-current="page" style="height: 36px; padding: 0 14px; display: inline-flex; align-items: center; border-radius: 999px; font-size: 14px; font-weight: 600; color: {{t.text}};">Pricing</a>`}<a href="{{signInHref}}" style="height: 36px; padding: 0 14px; display: inline-flex; align-items: center; border-radius: 999px; font-size: 14px; color: {{t.text}};">Sign in</a>${landPill('Get started', '{{startHref}}', true, 36, phone ? 'padding: 0 14px;' : '')}</nav>
-</header>
+${siteHeader()}
 <main>
 <section style="padding: ${phone ? 44 : 80}px ${L.pad}px 0; display: flex; flex-direction: column; align-items: center; text-align: center;">
   <h1 style="margin: 0; font-size: ${phone ? 44 : 72}px; font-weight: 600; line-height: 1; letter-spacing: -.05em; text-wrap: balance;">Simple pricing.</h1>
@@ -5783,28 +5821,26 @@ const PRICING_H = 1678, PRICING_PHONE_H = 2353;
 // has the yearly subscription no monthly option"), so the site has the Monthly/Yearly switch too, starting on Yearly.
 const pricingLogic = phone => `${ART_METHOD}
 ${FOOT_METHOD}
+${HEAD_METHOD}
 constructor(props) { super(props); this.state = { yearly: true }; }
 renderVals() { ${TS}
   // On lucida.cards (props.site) the links open the app and the landing page; on the canvas, the boards.
   const site = !!this.props.site, y = this.state.yearly, signIn = site ? 'https://app.lucida.cards/sign-in' : '${phone ? 'PhoneSignIn' : 'WebSignIn'}.dc.html';
   const seg = on => ({ bg: on ? t.inv : 'transparent', fg: on ? t.invText : t.text, pressed: on ? 'true' : 'false' });
   const links = ${JSON.stringify(PRO_LINKS)}, selling = !!(links.monthly && links.yearly), start = site ? 'https://app.lucida.cards/' : signIn;
-  return { t, foot: this.foot(${phone}), sky: ${SKYS}, grain: String(this.props.grain ?? 0.7), pro: this.art(${MIDNIGHT}, ''),
+  return { t, hd: this.hd(${phone}), foot: this.foot(${phone}), sky: ${SKYS}, grain: String(this.props.grain ?? 0.7), pro: this.art(${MIDNIGHT}, ''),
     billing: [{ id: 'monthly', label: 'Monthly', ...seg(!y), hasTag: false, pick: () => this.setState({ yearly: false }) }, { id: 'yearly', label: 'Yearly', ...seg(y), hasTag: true, pick: () => this.setState({ yearly: true }) }],
     yearlyShow: y ? 'flex' : 'none', monthlyShow: y ? 'none' : 'flex',
     yearlyHref: selling ? (site ? 'https://app.lucida.cards/pro?plan=yearly' : links.yearly) : start, monthlyHref: selling ? (site ? 'https://app.lucida.cards/pro?plan=monthly' : links.monthly) : start,
-    homeHref: site ? '/' : '${phone ? 'LandingPhone' : 'Landing'}.dc.html', howHref: site ? '/#how' : 'Landing.dc.html', typesHref: site ? '/#cards' : 'Landing.dc.html',
+    homeHref: site ? '/' : '${phone ? 'LandingPhone' : 'Landing'}.dc.html',
     signInHref: signIn, startHref: site ? 'https://app.lucida.cards/' : signIn, privacyHref: site ? '/privacy' : 'Privacy.dc.html', termsHref: site ? '/terms' : 'Terms.dc.html',
     pricingHref: site ? '/pricing' : '${phone ? 'PricingPhone' : 'Pricing'}.dc.html', proLive: !site || selling, proSoon: site && !selling }; }`;
 
 // ---------- Privacy and Terms (lucida.cards/privacy and /terms) ----------
 // Plain pages from legal.mjs: one column of text that fits any window. design/to-site.mjs makes them pages.
 const LEGAL_H = { Privacy: 2338, Terms: 1963, Connect: 4207 };
-const legalPage = (doc, hgt, marks = {}) => `<div style="width: 1440px; height: ${hgt}px; box-sizing: border-box; font-family: ${FONT}; background: {{t.bg}}; color: {{t.text}}; overflow: hidden;">
-<header style="max-width: 1344px; margin: 0 auto; height: 76px; box-sizing: border-box; padding: 0 clamp(20px, 4vw, 48px); display: flex; align-items: center; justify-content: space-between; gap: 12px;">
-  <a href="{{homeHref}}" aria-label="Lucida home">${logo(28)}</a>
-  <nav style="display: flex; align-items: center; gap: 4px;"><a href="{{signInHref}}" style="height: 36px; padding: 0 14px; display: inline-flex; align-items: center; border-radius: 999px; font-size: 14px; color: {{t.muted}};">Sign in</a>${landPill('Get started', '{{startHref}}', true, 36)}</nav>
-</header>
+const legalPage = (doc, hgt, marks = {}) => `<div class="sp-c" style="width: 1440px; height: ${hgt}px; box-sizing: border-box; font-family: ${FONT}; background: {{t.bg}}; color: {{t.text}}; overflow: hidden; ${HEAD_VARS}">
+${siteHeader()}
 <main style="max-width: 720px; margin: 0 auto; box-sizing: border-box; padding: clamp(40px, 7vw, 88px) 24px 72px; display: flex; flex-direction: column; gap: 16px;">
   <h1 style="margin: 0; font-size: clamp(38px, 5vw, 52px); font-weight: 600; line-height: 1.05; letter-spacing: -.045em;">${doc.title}</h1>
   <p style="margin: 0; font-size: 14px; color: {{t.muted}};">Last updated ${doc.updated || UPDATED}</p>
@@ -5816,11 +5852,12 @@ ${landFooter(false)}
 </div>`;
 // On lucida.cards (props.site) the links open the site and the app; on the canvas, the boards.
 const legalLogic = `${FOOT_METHOD}
+${HEAD_METHOD}
 renderVals() {
   const site = !!this.props.site;
   // On lucida.cards the colors are CSS variables with a light and a dark set (design/scheme.mjs), so the page follows the system.
   const t = site ? ${JSON.stringify(VARS)} : this.theme(!!this.props.dark, !!this.props.dim);
-  return { t, foot: this.foot(false), homeHref: site ? 'https://lucida.cards/' : 'Landing.dc.html', signInHref: site ? 'https://app.lucida.cards/sign-in' : 'WebSignIn.dc.html', startHref: site ? 'https://app.lucida.cards/' : 'WebSignIn.dc.html',
+  return { t, hd: this.hd(false), foot: this.foot(false), homeHref: site ? 'https://lucida.cards/' : 'Landing.dc.html', signInHref: site ? 'https://app.lucida.cards/sign-in' : 'WebSignIn.dc.html', startHref: site ? 'https://app.lucida.cards/' : 'WebSignIn.dc.html',
     privacyHref: site ? '/privacy' : 'Privacy.dc.html', termsHref: site ? '/terms' : 'Terms.dc.html', pricingHref: site ? '/pricing' : 'Pricing.dc.html' }; }`;
 
 // ---------- The site's other pages: comparisons, features, the FAQ, the 404, the blog and their pictures ----------
@@ -5868,10 +5905,10 @@ const spH2 = (text, attrs = '') => `<h2 class="sp-h2"${attrs}>${text}</h2>`;
 // how the <img> loads: the hero at once, cards lazily.
 const spPic = (key, cls, alt, load, scale) => `<sc-if value="{{site}}" hint-placeholder-val="{{ false }}"><span class="sp-pw"><img class="sp-pic ${cls}" src="{{${key}.src}}" alt="${alt}" width="1200" height="630" ${load} decoding="async"><span class="sc-grain" aria-hidden="true" style="opacity: {{grain}};"></span></span></sc-if><sc-if value="{{canvas}}" hint-placeholder-val="{{ true }}"><div class="sp-pic sp-og ${cls}" style="--k: {{${scale}}};"><div class="sp-og-in"><dc-import name="SiteOg" page="{{${key}.key}}" hint-size="1200px,630px"></dc-import></div>${GRAIN_LAYER}</div></sc-if>`;
 // A page as a card: its picture with a chip on it, its title, and "7 min · Sep 30, 2026". `data-s` is what the blog's search looks in.
-const spCard = (k, scale = 'cardK') => `<a class="sp-card" href="{{${k}.href}}" data-s="{{${k}.s}}"><span class="sp-card-pic"><sc-if value="{{${k}.hasPic}}" hint-placeholder-val="{{ true }}">${spPic(k, 'sp-card-img', '', 'loading="lazy"', scale)}</sc-if><sc-if value="{{${k}.chip}}" hint-placeholder-val="{{ true }}"><span class="sp-card-chip">{{${k}.chip}}</span></sc-if></span><h3 class="sp-card-t">{{${k}.title}}</h3><p class="sp-card-m">{{${k}.meta}}</p></a>`;
+const spCard = (k, scale = 'cardK') => `<a class="sp-card" href="{{${k}.href}}" data-s="{{${k}.s}}"><span class="sp-card-pic"><sc-if value="{{${k}.hasPic}}" hint-placeholder-val="{{ true }}">${spPic(k, 'sp-card-img', '', 'loading="lazy"', scale)}</sc-if></span><h3 class="sp-card-t">{{${k}.title}}</h3><p class="sp-card-m">{{${k}.meta}}</p></a>`;
 const spCards = (list, hint = '', scale = 'cardK') => `<div class="sp-cards sp-wide"><sc-for list="{{${list}}}" as="k"${hint}>${spCard('k', scale)}</sc-for></div>`;
 // The featured page on a hub or the blog: a big picture, a chip, the minutes and the day, the title, two lines, and "Read now".
-const spFeat = `<a class="sp-feat sp-wide" href="{{feat.href}}" data-s="{{feat.s}}"><span class="sp-feat-pic">${spPic('feat', 'sp-feat-img', '', 'fetchpriority="high"', 'featK')}</span><span class="sp-feat-body"><span class="sp-feat-row"><span class="sp-kchip">{{feat.chip}}</span><span>{{feat.meta}}</span></span><h2 class="sp-feat-t">{{feat.title}}</h2><span class="sp-feat-d">{{feat.desc}}</span><span class="sp-btn">Read now</span></span></a>`;
+const spFeat = `<a class="sp-feat sp-wide" href="{{feat.href}}" data-s="{{feat.s}}"><span class="sp-feat-pic">${spPic('feat', 'sp-feat-img', '', 'fetchpriority="high"', 'featK')}</span><span class="sp-feat-body"><span class="sp-feat-row"><span>{{feat.meta}}</span></span><h2 class="sp-feat-t">{{feat.title}}</h2><span class="sp-feat-d">{{feat.desc}}</span><span class="sp-btn">Read now</span></span></a>`;
 // A + that becomes a − when its <details> opens (nothing moves: it opens at once).
 const spPm = '<span class="sp-pm" aria-hidden="true"></span>';
 // A question: a closed row with its answer under it. The question is still an h3.
@@ -5888,7 +5925,7 @@ const idTag = (k, tag, cls, extra, inner) => `<sc-if value="{{${k}.id}}"><${tag}
 const spArrowLi = `<li class="sp-arrow" aria-hidden="true">${svg('<path d="M5 12h14M13 6l6 6-6 6"/>', 20, 1.8)}</li>`;
 const FIG_CHUNKS = {
   // The two bullets "Pick X if …" as two flashcards side by side: the other app's plain card, and Lucida's with its cover.
-  pick: `<ul class="sp-picks"><sc-for list="{{f.items}}" as="it">${idTag('it', 'li', 'sp-pk', ' data-l="{{it.lucida}}"', `<span class="sp-pk-top"><sc-if value="{{it.lucida}}" hint-placeholder-val="{{ false }}"><span class="sp-pk-mark">${mark(13)}</span></sc-if><span class="sp-pk-name">{{it.name}}</span></span><span class="sp-pk-body">${spParts('it.parts')}</span>`)}</sc-for></ul>`,
+  pick: `<ul class="sp-picks"><sc-for list="{{f.items}}" as="it">${idTag('it', 'li', 'sp-pk sp-fc', ' data-l="{{it.lucida}}"', `<sc-if value="{{it.lucida}}" hint-placeholder-val="{{ false }}"><span class="sp-fc-chip sp-fc-cover" aria-hidden="true"></span></sc-if><span class="sp-pk-name">{{it.name}}</span><span class="sp-pk-body">${spParts('it.parts')}</span>`)}</sc-for></ul>`,
   // Step cards with arrows between them.
   steps: `<ol class="sp-steps{{f.cols}}"><sc-for list="{{f.steps}}" as="st"><li class="sp-step"><span class="sp-sn">{{st.n}}</span><span class="sp-st-b"><span class="sp-st-t">{{st.t}}</span><sc-if value="{{st.hasD}}" hint-placeholder-val="{{ false }}"><span class="sp-st-d">{{st.d}}</span></sc-if></span></li><sc-if value="{{st.more}}" hint-placeholder-val="{{ true }}">${spArrowLi}</sc-if></sc-for></ol>`,
   // Small cards, each an app and its one line (Lucida's with the cover).
@@ -5901,7 +5938,7 @@ const FIG_CHUNKS = {
     + `<sc-if value="{{canvas}}" hint-placeholder-val="{{ true }}"><div class="sp-shot sp-shotc" role="img" aria-label="{{f.alt}}" style="width: {{f.dw}}px; --ard: {{f.ar}}; --arp: {{f.ar}};"><div class="sp-shot-in" style="width: {{f.bw}}px; height: {{f.bh}}px; transform: scale({{f.k}}) translate({{f.tx}}px, {{f.ty}}px);">${SHOT_BOARDS.map(n => `<sc-if value="{{f.b.${n}}}" hint-placeholder-val="{{ false }}"><dc-import name="${n}" dark="{{dark}}" hint-size="${/^Phone|^LiveAnswer$/.test(n) ? '390px,844px' : '1440px,900px'}"></dc-import></sc-if>`).join('')}</div></div></sc-if>`
 };
 // ---- the single-page drawings (batch 2) ----
-const spLn = w => `<span class="sp-ln" style="width: ${w}%;"></span>`;
+const spLn = (w, q = false) => `<span class="sp-ln${q ? ' sp-q' : ''}" style="width: ${w}%;"></span>`;
 const spPlay = `<span class="sp-play" aria-hidden="true">${svg('<path d="M8 5.5v13l11-6.5z" fill="currentColor" stroke="none"/>', 16, 1.8)}</span>`;
 // The memory curve: after each review the chance of remembering is back at the top and falls more slowly; the card comes back at the goal.
 const CURVE_SEGS = (() => {
@@ -5916,12 +5953,12 @@ const CURVE_SEGS = (() => {
 })();
 const FIG_CHUNKS_2 = {
   // One card's reviews along a line: cards at widening gaps (a column on a phone).
-  gaps: `<ol class="sp-gaps"><sc-for list="{{f.items}}" as="g"><sc-if value="{{g.isCard}}" hint-placeholder-val="{{ true }}"><li class="sp-gc"><span class="sp-gcard" aria-hidden="true"><span class="sp-gcv sp-cv{{g.cv}}"></span>${spLn(70)}${spLn(44)}</span><span class="sp-gl">{{g.t}}</span></li></sc-if><sc-if value="{{g.isGap}}" hint-placeholder-val="{{ false }}"><li class="sp-gsp" style="--w: {{g.w}}; --h: {{g.h}}px;"><span class="sp-gt">{{g.t}}</span></li></sc-if></sc-for></ol>`,
+  gaps: `<ol class="sp-gaps"><sc-for list="{{f.items}}" as="g"><sc-if value="{{g.isCard}}" hint-placeholder-val="{{ true }}"><li class="sp-gc"><span class="sp-gcard" aria-hidden="true"><span class="sp-gcv sp-cv{{g.cv}}"></span>${spLn(70, true)}${spLn(44)}</span><span class="sp-gl">{{g.t}}</span></li></sc-if><sc-if value="{{g.isGap}}" hint-placeholder-val="{{ false }}"><li class="sp-gsp" style="--w: {{g.w}}; --h: {{g.h}}px;"><span class="sp-gt">{{g.t}}</span></li></sc-if></sc-for></ol>`,
   curve: `<svg class="sp-curve" viewBox="0 0 320 150" role="img" aria-label="{{f.label}}"><path class="sp-cax" d="M34 8V126H314"/><path class="sp-cgoal" d="M34 46H314"/><text class="sp-ctx" x="314" y="62" text-anchor="end">{{f.goal}}</text><text class="sp-ctx" x="314" y="143" text-anchor="end">{{f.time}}</text><text class="sp-ctx" transform="rotate(-90 14 68)" x="14" y="68" text-anchor="middle">{{f.chance}}</text>${CURVE_SEGS}</svg>`,
   // A message to your AI, and the deck it lands in.
-  chat: `<div class="sp-chat"><div class="sp-bub"><span class="sp-bub-w">{{f.who}}</span><span class="sp-bub-t">{{f.prompt}}</span></div><span class="sp-arrow" aria-hidden="true">${svg('<path d="M5 12h14M13 6l6 6-6 6"/>', 20, 1.8)}</span><div class="sp-dk"><span class="sp-dk-fan" aria-hidden="true"><span class="sp-mc"><span class="sp-mt sp-cv1"></span></span><span class="sp-mc"><span class="sp-mt sp-cv2"></span></span><span class="sp-mc"><span class="sp-mt sp-cv0"></span>${spLn(60)}${spLn(36)}</span></span><span class="sp-dk-b"><span class="sp-dk-n">{{f.deck}}</span><span class="sp-dk-m"><span class="sp-chp">{{f.tag}}</span><span>{{f.note}}</span></span></span></div></div>`,
+  chat: `<div class="sp-chat"><div class="sp-bub"><span class="sp-bub-w">{{f.who}}</span><span class="sp-bub-t">{{f.prompt}}</span></div><span class="sp-arrow" aria-hidden="true">${svg('<path d="M5 12h14M13 6l6 6-6 6"/>', 20, 1.8)}</span><div class="sp-dk"><span class="sp-dk-fan" aria-hidden="true"><span class="sp-mc"><span class="sp-mt sp-cv1"></span></span><span class="sp-mc"><span class="sp-mt sp-cv2"></span></span><span class="sp-mc"><span class="sp-mt sp-cv0"></span>${spLn(60, true)}${spLn(36)}</span></span><span class="sp-dk-b"><span class="sp-dk-n">{{f.deck}}</span><span class="sp-dk-m"><span class="sp-chp">{{f.tag}}</span><span>{{f.note}}</span></span></span></div></div>`,
   // Learn mode: a question card with four answers, one right; and the way a card gets to "learned".
-  learn: `<div class="sp-lm"><div class="sp-lq"><span class="sp-chp">{{f.chip}}</span><span class="sp-lq-q">${spLn(92)}${spLn(62)}</span><ul class="sp-lq-a" aria-hidden="true"><li class="sp-lq-o sp-lq-ok"><span class="sp-lq-n" style="background: #5B63F0;">1</span>${spLn(54)}<span class="sp-lq-t">${svg(I.check, 14, 2.6)}</span></li><li class="sp-lq-o"><span class="sp-lq-n" style="background: #F2761D;">2</span>${spLn(40)}</li><li class="sp-lq-o"><span class="sp-lq-n" style="background: #1E9BB2;">3</span>${spLn(48)}</li><li class="sp-lq-o"><span class="sp-lq-n" style="background: #EA3F7F;">4</span>${spLn(34)}</li></ul></div><div class="sp-lp"><ol class="sp-lps"><sc-for list="{{f.path}}" as="p"><li class="sp-lpi" data-d="{{p.done}}"><span class="sp-lpt">{{p.t}}</span><sc-if value="{{p.hasD}}" hint-placeholder-val="{{ false }}"><span class="sp-lpd">{{p.d}}</span></sc-if></li><sc-if value="{{p.more}}" hint-placeholder-val="{{ true }}">${spArrowLi}</sc-if></sc-for></ol><p class="sp-lmiss"><span class="sp-lmk" aria-hidden="true">${svg('<path d="M6 6l12 12M18 6L6 18"/>', 12, 2.6)}</span>{{f.miss}}</p></div></div>`,
+  learn: `<div class="sp-lm"><div class="sp-lq"><span class="sp-chp">{{f.chip}}</span><span class="sp-lq-q">${spLn(92, true)}${spLn(62, true)}</span><ul class="sp-lq-a" aria-hidden="true"><li class="sp-lq-o sp-lq-ok"><span class="sp-lq-n" style="background: #5B63F0;">1</span>${spLn(54)}<span class="sp-lq-t">${svg(I.check, 14, 2.6)}</span></li><li class="sp-lq-o"><span class="sp-lq-n" style="background: #F2761D;">2</span>${spLn(40)}</li><li class="sp-lq-o"><span class="sp-lq-n" style="background: #1E9BB2;">3</span>${spLn(48)}</li><li class="sp-lq-o"><span class="sp-lq-n" style="background: #EA3F7F;">4</span>${spLn(34)}</li></ul></div><div class="sp-lp"><ol class="sp-lps"><sc-for list="{{f.path}}" as="p"><li class="sp-lpi" data-d="{{p.done}}"><span class="sp-lpt">{{p.t}}</span><sc-if value="{{p.hasD}}" hint-placeholder-val="{{ false }}"><span class="sp-lpd">{{p.d}}</span></sc-if></li><sc-if value="{{p.more}}" hint-placeholder-val="{{ true }}">${spArrowLi}</sc-if></sc-for></ol><p class="sp-lmiss"><span class="sp-lmk" aria-hidden="true">${svg('<path d="M6 6l12 12M18 6L6 18"/>', 12, 2.6)}</span>{{f.miss}}</p></div></div>`,
   // Live: the code on the big screen, the four answers, and the leaderboard (example numbers).
   live: `<div class="sp-lv"><div class="sp-lv-code"><span class="sp-lv-j">{{f.join}}</span><span class="sp-lv-c">{{f.code}}</span></div><ul class="sp-lv-t" aria-hidden="true"><li class="sp-lt0">${svg('<circle cx="12" cy="12" r="6" fill="currentColor" stroke="none"/>', 20, 1)}</li><li class="sp-lt1">${svg('<path d="M12 5l8 14H4z" fill="currentColor" stroke="none"/>', 20, 1)}</li><li class="sp-lt2">${svg('<rect x="6" y="6" width="12" height="12" rx="2" fill="currentColor" stroke="none"/>', 20, 1)}</li><li class="sp-lt3">${svg('<path d="M12 4l8 8-8 8-8-8z" fill="currentColor" stroke="none"/>', 20, 1)}</li></ul><ol class="sp-lv-b"><sc-for list="{{f.board}}" as="r"><li><span class="sp-lv-r">{{r.n}}</span><span class="sp-av" style="background: {{r.c}};">{{r.i}}</span><span class="sp-lv-w">{{r.who}}</span><span class="sp-lv-p">{{r.pts}}</span></li></sc-for></ol></div>`,
   // Shared decks: someone's deck, and the two ways to use it.
@@ -5931,21 +5968,23 @@ const FIG_CHUNKS_2 = {
   // A picture with covered labels, one of them shown.
   occlusion: `<div class="sp-oc"><svg class="sp-oc-s" viewBox="0 0 320 190" role="img" aria-label="{{f.label}}"><ellipse class="sp-oc-l" cx="106" cy="96" rx="96" ry="72"/><ellipse class="sp-oc-l" cx="62" cy="62" rx="15" ry="9"/><circle class="sp-oc-l" cx="120" cy="100" r="30"/><circle class="sp-oc-d" cx="120" cy="100" r="9"/><path class="sp-oc-l" d="M77 60L222 41M202 98L222 100M141 121L190 163"/><g class="sp-oc-c"><rect x="222" y="28" width="82" height="26" rx="7"/><rect x="222" y="87" width="82" height="26" rx="7"/><rect x="190" y="150" width="114" height="26" rx="7" class="sp-oc-r"/></g><text class="sp-oc-n" x="263" y="46" text-anchor="middle">1</text><text class="sp-oc-n" x="263" y="105" text-anchor="middle">2</text><text class="sp-oc-w" x="247" y="168" text-anchor="middle">{{f.shown}}</text></svg></div>`,
   // Import: text from Anki, Quizlet or a spreadsheet, into Import cards, into cards.
-  import: `<div class="sp-im"><ul class="sp-im-src"><sc-for list="{{f.sources}}" as="s"><li class="sp-im-s"><span class="sp-im-n">{{s.t}}</span><span class="sp-im-d">{{s.d}}</span></li></sc-for></ul><span class="sp-arrow" aria-hidden="true">${svg('<path d="M5 12h14M13 6l6 6-6 6"/>', 20, 1.8)}</span><div class="sp-im-box"><span class="sp-im-h">{{f.box}}</span><span class="sp-im-r" aria-hidden="true">${spLn(34)}<i></i>${spLn(40)}</span><span class="sp-im-r" aria-hidden="true">${spLn(26)}<i></i>${spLn(48)}</span><span class="sp-im-r" aria-hidden="true">${spLn(38)}<i></i>${spLn(30)}</span></div><span class="sp-arrow" aria-hidden="true">${svg('<path d="M5 12h14M13 6l6 6-6 6"/>', 20, 1.8)}</span><span class="sp-im-out" aria-hidden="true"><span class="sp-mc"><span class="sp-mt sp-cv3"></span>${spLn(60)}</span><span class="sp-mc"><span class="sp-mt sp-cv4"></span>${spLn(48)}</span><span class="sp-mc"><span class="sp-mt sp-cv5"></span>${spLn(66)}</span></span></div><p class="sp-im-no"><span class="sp-im-x" aria-hidden="true">${svg('<path d="M6 6l12 12M18 6L6 18"/>', 12, 2.6)}</span>{{f.no}}</p>`,
+  import: `<div class="sp-im"><ul class="sp-im-src"><sc-for list="{{f.sources}}" as="s"><li class="sp-im-s"><span class="sp-im-n">{{s.t}}</span><span class="sp-im-d">{{s.d}}</span></li></sc-for></ul><span class="sp-arrow" aria-hidden="true">${svg('<path d="M5 12h14M13 6l6 6-6 6"/>', 20, 1.8)}</span><div class="sp-im-box"><span class="sp-im-h">{{f.box}}</span><span class="sp-im-r" aria-hidden="true">${spLn(34)}<i></i>${spLn(40)}</span><span class="sp-im-r" aria-hidden="true">${spLn(26)}<i></i>${spLn(48)}</span><span class="sp-im-r" aria-hidden="true">${spLn(38)}<i></i>${spLn(30)}</span></div><span class="sp-arrow" aria-hidden="true">${svg('<path d="M5 12h14M13 6l6 6-6 6"/>', 20, 1.8)}</span><span class="sp-im-out" aria-hidden="true"><span class="sp-mc"><span class="sp-mt sp-cv3"></span>${spLn(60, true)}</span><span class="sp-mc"><span class="sp-mt sp-cv4"></span>${spLn(48, true)}</span><span class="sp-mc"><span class="sp-mt sp-cv5"></span>${spLn(66, true)}</span></span></div><p class="sp-im-no"><span class="sp-im-x" aria-hidden="true">${svg('<path d="M6 6l12 12M18 6L6 18"/>', 12, 2.6)}</span>{{f.no}}</p>`,
   // A plan: small cards along the way, each with its day.
   plan: `<ol class="sp-steps sp-plan{{f.cols}}"><sc-for list="{{f.steps}}" as="st"><li class="sp-step"><span class="sp-day sp-cv{{st.cv}}">{{st.n}}</span><span class="sp-st-b"><span class="sp-st-t">{{st.t}}</span><sc-if value="{{st.hasD}}" hint-placeholder-val="{{ false }}"><span class="sp-st-d">{{st.d}}</span></sc-if></span></li><sc-if value="{{st.more}}" hint-placeholder-val="{{ true }}">${spArrowLi}</sc-if></sc-for></ol>`,
   // One example card, front and back, and what a day looks like.
-  example: `<div class="sp-ex"><div class="sp-ex-cards"><div class="sp-exc"><span class="sp-exc-l">{{f.frontLabel}}</span><span class="sp-exc-t">{{f.front}}</span></div><span class="sp-arrow" aria-hidden="true">${svg('<path d="M5 12h14M13 6l6 6-6 6"/>', 20, 1.8)}</span><div class="sp-exc sp-exc-b"><span class="sp-exc-l">{{f.backLabel}}</span><span class="sp-exc-t">{{f.back}}</span></div></div><ul class="sp-ex-load"><sc-for list="{{f.load}}" as="l"><li><span class="sp-ex-i sp-cv{{l.cv}}" aria-hidden="true"></span><span>{{l.t}}</span></li></sc-for></ul></div>`,
+  example: `<div class="sp-ex"><div class="sp-ex-cards"><div class="sp-exc sp-fc"><span class="sp-fc-chip">{{f.frontLabel}}</span><span class="sp-exc-t">{{f.front}}</span></div><span class="sp-arrow" aria-hidden="true">${svg('<path d="M5 12h14M13 6l6 6-6 6"/>', 20, 1.8)}</span><div class="sp-exc sp-fc sp-exc-b"><span class="sp-fc-chip">{{f.backLabel}}</span><span class="sp-exc-t">{{f.back}}</span></div></div><ul class="sp-ex-load"><sc-for list="{{f.load}}" as="l"><li><span class="sp-ex-i sp-cv{{l.cv}}" aria-hidden="true"></span><span>{{l.t}}</span></li></sc-for></ul></div>`,
   // Word cards: a sentence with the word hidden, and a sound card with its play button.
-  words: `<div class="sp-wd"><div class="sp-wc"><span class="sp-wl">{{f.a.label}}</span><span class="sp-wt">{{f.a.before}} <span class="sp-wb" aria-hidden="true"></span> {{f.a.after}}</span>${spPlay}</div><div class="sp-wc"><span class="sp-wl">{{f.b.label}}</span><span class="sp-wave" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span><span class="sp-wch"><sc-for list="{{f.b.ways}}" as="w"><span class="sp-chp">{{w}}</span></sc-for></span>${spPlay}</div></div>`
+  words: `<div class="sp-wd"><div class="sp-wc sp-fc"><span class="sp-fc-chip">{{f.a.label}}</span><span class="sp-wt">{{f.a.before}} <span class="sp-wb" aria-hidden="true"></span> {{f.a.after}}</span></div><div class="sp-wc sp-fc"><span class="sp-fc-chip">{{f.b.label}}</span><span class="sp-snd">${spPlay}<span class="sp-wave" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span></span><span class="sp-wch"><sc-for list="{{f.b.ways}}" as="w"><span class="sp-chp">{{w}}</span></sc-for></span></div></div>`
 };
 Object.assign(FIG_CHUNKS, FIG_CHUNKS_2);
 const spFig = `<figure class="sp-fig sp-f-{{f.kind}}">${KINDS.map(k => { if (!FIG_CHUNKS[k]) throw new Error('visuals: no drawing for the figure kind "' + k + '"'); return `<sc-if value="{{f.is${k.charAt(0).toUpperCase() + k.slice(1)}}}" hint-placeholder-val="{{ false }}">${FIG_CHUNKS[k]}</sc-if>`; }).join('')}<sc-if value="{{f.hasCaption}}" hint-placeholder-val="{{ false }}"><figcaption class="sp-fcap">{{f.caption}}</figcaption></sc-if></figure>`;
 // A table made from a section's bullets: what, and its words.
-const spT2 = `<sc-if value="{{s.hasTable}}" hint-placeholder-val="{{ false }}"><div class="sp-t2w"><table class="sp-t2"><thead><tr><sc-for list="{{s.table.head}}" as="c"><th scope="col">{{c.label}}</th></sc-for></tr></thead><tbody><sc-for list="{{s.table.rows}}" as="r">${idTag('r', 'tr', 'sp-t2r', '', `<th scope="row">{{r.label}}</th><td>${spParts('r.parts')}</td>`)}</sc-for></tbody></table></div></sc-if>`;
-// "Test yourself": each card is a <details>: the question on the card, and a tap shows the answer on the same card, at once.
-const spTcInner = `<summary class="sp-tq"><span class="sp-tn sp-cv{{c.cv}}">{{c.n}}</span><span class="sp-tt">{{c.q}}</span><span class="sp-th">Show the answer</span></summary><div class="sp-ta"><span class="sp-ta-l">Answer</span>{{c.a}}</div>`;
-const spTest = `<sc-if value="{{hasTest}}" hint-placeholder-val="{{ false }}"><section class="sp-sec sp-test" id="test-yourself">${spH2('Test yourself')}<div class="sp-tcs sp-wide{{testCols}}"><sc-for list="{{test}}" as="c"><sc-if value="{{c.open}}" hint-placeholder-val="{{ false }}"><details class="sp-tc" open>${spTcInner}</details></sc-if><sc-if value="{{c.closed}}" hint-placeholder-val="{{ true }}"><details class="sp-tc">${spTcInner}</details></sc-if></sc-for></div><p class="sp-tmore"><a class="sp-u" href="{{links.start}}">Make your own cards free</a></p></section></sc-if>`;
+const spT2 = `<sc-if value="{{s.hasTable}}" hint-placeholder-val="{{ false }}"><div class="sp-t2w sp-tsc" role="region" aria-label="Table, scrolls sideways" tabindex="0"><table class="sp-t2"><thead><tr><sc-for list="{{s.table.head}}" as="c"><th scope="col">{{c.label}}</th></sc-for></tr></thead><tbody><sc-for list="{{s.table.rows}}" as="r">${idTag('r', 'tr', 'sp-t2r', '', `<th scope="row">{{r.label}}</th><td>${spParts('r.parts')}</td>`)}</sc-for></tbody></table></div></sc-if>`;
+// "Test yourself": each card is the app's card (a <details>, so it needs no script): the question on its front, and a tap turns it to the answer, on
+// the same card and at once, as the app does; a tap again turns it back. The chip in the corner says what a tap does, and on its back the faint line
+// under the words (the app's note) is the question.
+const spTcInner = `<summary class="sp-tq"><span class="sp-fc-chip"><span class="sp-tca">Show the answer</span><span class="sp-tcq">Show the question</span></span><span class="sp-tt sp-tf">{{c.q}}</span><span class="sp-tt sp-ta">{{c.a}}</span><span class="sp-tn" aria-hidden="true">{{c.q}}</span></summary>`;
+const spTest = `<sc-if value="{{hasTest}}" hint-placeholder-val="{{ false }}"><section class="sp-sec sp-test" id="test-yourself">${spH2('Test yourself')}<div class="sp-tcs"><sc-for list="{{test}}" as="c"><sc-if value="{{c.open}}" hint-placeholder-val="{{ false }}"><details class="sp-tc sp-fc" open>${spTcInner}</details></sc-if><sc-if value="{{c.closed}}" hint-placeholder-val="{{ true }}"><details class="sp-tc sp-fc">${spTcInner}</details></sc-if></sc-for></div><p class="sp-tmore"><a class="sp-u" href="{{links.start}}">Make your own cards free</a></p></section></sc-if>`;
 const spSections = key => `<sc-for list="{{${key}}}" as="s" hint-placeholder-count="3"><section class="sp-sec">
   <sc-if value="{{s.h2}}" hint-placeholder-val="{{ true }}">${spH2('{{s.h2}}', ' id="{{s.id}}"')}</sc-if>
   <sc-for list="{{s.figsBefore}}" as="f">${spFig}</sc-for>
@@ -5957,18 +5996,6 @@ const spSections = key => `<sc-for list="{{${key}}}" as="s" hint-placeholder-cou
 // "On this page": the page's sections, each with its parts under it (a tree). `cur` marks the one being read.
 const spTree = `<ol><sc-for list="{{toc}}" as="o" hint-placeholder-count="5"><li class="{{o.cls}}"><a href="#{{o.id}}" aria-current="{{o.cur}}">{{o.label}}</a><sc-if value="{{o.hasKids}}" hint-placeholder-val="{{ false }}"><ol><sc-for list="{{o.kids}}" as="k"><li><a href="#{{k.id}}">{{k.label}}</a></li></sc-for></ol></sc-if></li></sc-for></ol>`;
 const spTocIcon = svg('<path d="M4 7h16M4 12h10M4 17h13"/>', 14, 1.8);
-// On a narrow page a table's rows stack: the feature in bold, then a paragraph per app that begins with the app's name in bold.
-const spStack = s => [
-  `${s} table,${s} tbody,${s} tr,${s} th,${s} td{display:block}`,
-  `${s} thead{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}`,
-  `${s} tr{padding:16px 0;border-top:1px solid var(--sp-line)}`,
-  `${s} th,${s} td{padding:0;border:0}`,
-  `${s} tbody th{width:auto;margin-bottom:2px;font-size:17px;line-height:1.4;font-weight:700}`,
-  `${s} td{margin-top:8px;font-size:16px;line-height:1.55}${s} td:empty{display:none}`,
-  `${s} td[data-label]:not([data-label=""])::before{content:attr(data-label);margin-right:.35em;font-weight:600}`,
-  // Rows past the sixth wait for "Show all": shown as blocks while the table is stacked.
-  `@supports selector(:has(*)){${s}:has(.sp-more[open]) tr.sp-x{display:block}}`
-].join('');
 // The deck covers' gradients (the app's palettes), as small classes: the number chips on the test cards, and Lucida's cards in the diagrams.
 const coverOf = n => { const m = paletteData(n); return `radial-gradient(circle at 18% 88%,${m.b0.c},transparent 62%),radial-gradient(circle at 86% 10%,${m.b3.c},transparent 58%),${m.base}`; };
 const COVER_CSS = ['Iris', 'Apricot', 'Mint', 'Rose', 'Aqua', 'Lemon', 'Lilac', 'Sun'].map((n, i) => `.sp-cv${i}{background:${coverOf(n)}}`).join('');
@@ -5979,11 +6006,12 @@ const SITE_CSS = [
   '.sp [id]{scroll-margin-top:24px}picture{display:contents}[hidden]{display:none!important}',
   '.sp-u{text-decoration:underline;text-underline-offset:3px;text-decoration-thickness:1px}',
   '.sp strong{font-weight:600}',
-  // The page: one column of words (680 px), with "On this page" beside it on a wide screen. A wide block (a table of four or more
-  // columns, a row of cards) breaks out of the column by as much as the window allows, up to 1040 px.
+  // The page: one column of words (680 px), centered on the page at every width, with "On this page" in the left margin on a wide screen
+  // (1280 px and more, where the margin has room for it; it never moves the column). Nothing breaks out of the column: a table wider than
+  // the column scrolls sideways inside its own box, and cards stay in the column's width. A hub or the blog is one wider container instead.
   '.sp-art{box-sizing:border-box;padding:0 20px}',
   '.sp-main{max-width:680px;margin:0 auto;overflow-wrap:break-word}',
-  '.sp-wide{--bo:clamp(0px,calc((100cqw - 680px) / 2 - 20px),180px);margin-left:calc(-1 * var(--bo));margin-right:calc(-1 * var(--bo))}',
+  '.sp-wide{margin-left:0;margin-right:0}',
   '.sp-toc{display:none}',
   // The header: breadcrumb pills, the title, chips, the lead.
   '.sp-top{padding-top:24px}',
@@ -6022,9 +6050,15 @@ const SITE_CSS = [
   '.sp-pills{display:flex;flex-wrap:wrap;gap:8px;margin-top:24px}',
   '.sp-pill{display:inline-flex;align-items:center;height:38px;box-sizing:border-box;padding:0 16px;border-radius:999px;background:var(--sp-surf);font-size:14px;font-weight:600}',
   '.sp-jump{margin:24px 0 0;padding:0;list-style:none;font-size:16px;line-height:1.5}.sp-jump li{padding:6px 0}',
-  // Tables have no box: a header row and thin lines. Past six rows, "Show all 12" (a closed row under the table) opens the rest.
+  // Tables have no box: a header row and thin lines, in the column and centered with it, with their real columns on every screen. A table
+  // wider than its box (its columns need room: the first column and 168 px for each other) scrolls sideways inside it, and a soft shade at the edge says there is more: it
+  // sits on the edge that has more to show and goes when the end is reached (two layers: shades fixed to the box, and covers that move
+  // with the table and hide a shade at the start and at the end). The page itself never scrolls sideways. Past six rows, "Show all 12" (a
+  // closed row under the table) opens the rest.
   '.sp-table{margin-top:18px}',
-  '.sp-table table{width:100%;border-collapse:collapse;text-align:left;font-size:16px;line-height:1.5}',
+  '.sp-tsc{--sp-shade:color-mix(in srgb,var(--sp-text) 13%,transparent);overflow-x:auto;overscroll-behavior-x:contain;background:linear-gradient(to right,var(--sp-bg) 60%,transparent) 0 0/48px 100% no-repeat local,linear-gradient(to left,var(--sp-bg) 60%,transparent) 100% 0/48px 100% no-repeat local,linear-gradient(to right,var(--sp-shade),transparent) 0 0/28px 100% no-repeat scroll,linear-gradient(to left,var(--sp-shade),transparent) 100% 0/28px 100% no-repeat scroll}',
+  '.sp-tsc:focus-visible{outline:2px solid var(--sp-text);outline-offset:2px;border-radius:6px}',
+  '.sp-table table{--first:var(--f);width:100%;min-width:calc(var(--first) + (var(--cols) - 1) * 168px);border-collapse:collapse;text-align:left;font-size:16px;line-height:1.5}',
   '.sp-table th,.sp-table td{padding:12px 16px 12px 0;vertical-align:top;border-top:1px solid var(--sp-line)}',
   '.sp-table td:last-child{padding-right:0}.sp-table thead th{padding-top:0;padding-bottom:10px;border-top:0;font-weight:600}',
   '.sp-table tbody th{width:var(--first);font-weight:600}',
@@ -6036,13 +6070,12 @@ const SITE_CSS = [
   '.sp-card{display:block;min-width:0}',
   '.sp-card-pic{display:block;position:relative;aspect-ratio:1200/630;border-radius:16px;overflow:hidden;background:var(--sp-surf);outline:1px solid var(--sp-edge);outline-offset:-1px}',
   '.sp-card-pic .sp-pic{border-radius:0;outline:0}',
-  '.sp-card-chip{position:absolute;left:10px;bottom:10px;height:26px;padding:0 12px;border-radius:999px;background:var(--sp-chipbg);color:var(--sp-chipfg);font-size:13px;font-weight:500;line-height:26px;box-shadow:0 0 0 1px var(--sp-edge)}',
   '.sp-card-t{margin:12px 0 0;font-size:17px;font-weight:600;line-height:1.3;letter-spacing:-.01em;text-wrap:balance}',
   '.sp-card-m{margin:6px 0 0;font-size:14px;line-height:1.4;color:var(--sp-muted)}',
   '.sp-feat{display:block;margin-top:28px}',
   '.sp-feat-pic{display:block;position:relative;aspect-ratio:1200/630;border-radius:20px;overflow:hidden;background:var(--sp-surf);outline:1px solid var(--sp-edge);outline-offset:-1px}',
   '.sp-feat-pic .sp-pic{border-radius:0;outline:0}.sp-feat-body{display:block;margin-top:16px}',
-  '.sp-feat-row{display:flex;align-items:center;gap:10px;font-size:14px;color:var(--sp-muted)}.sp-kchip{display:none}',
+  '.sp-feat-row{display:flex;align-items:center;gap:10px;font-size:14px;color:var(--sp-muted)}',
   '.sp-feat-t{margin:8px 0 0;font-size:24px;font-weight:700;line-height:1.2;letter-spacing:-.025em;text-wrap:balance}',
   '.sp-feat-d{display:none;margin-top:10px;font-size:16px;line-height:1.55;color:var(--sp-muted)}',
   '.sp-btn{display:flex;align-items:center;justify-content:center;box-sizing:border-box;height:46px;margin-top:16px;padding:0 22px;border-radius:14px;background:var(--sp-surf2);color:var(--sp-text);font-size:15px;font-weight:600}',
@@ -6083,14 +6116,29 @@ const SITE_CSS = [
   '.sp-bsec{margin-top:44px}.sp-bsec .sp-h2{margin-top:0;font-size:26px}',
   '.sp-bsec .sp-cards{margin-top:18px}',
   '.sp-none{margin:44px 0 0;font-size:16px;color:var(--sp-muted)}',
+  // A hub (compare, features) is the blog's front page in small: one container as wide as the blog's, and everything in it starts at the
+  // container's left edge (the crumbs, the title, the lead, the featured page, the cards, the table, the headings, the lists; words keep a
+  // readable 720 px), with the blog's gaps: 44 px between parts (64 px on a computer).
+  '.sp-art.sp-hub{max-width:1344px;margin:0 auto;padding:0 clamp(20px,4cqw,48px)}',
+  '.sp-hub .sp-main{max-width:none;margin:0}.sp-hub .sp-top{padding-top:28px}.sp-hub .sp-h1{max-width:880px}',
+  '.sp-hub .sp-lead,.sp-hub .sp-p,.sp-hub .sp-ul,.sp-hub .sp-qcard,.sp-hub .sp-src{max-width:720px}',
+  '.sp-hub .sp-sec,.sp-hub .sp-qcard,.sp-hub .sp-cta,.sp-hub .sp-src{margin-top:44px}.sp-hub .sp-sec>.sp-h2{margin-top:0;font-size:26px}',
   // The diagrams, tables, screens and flashcards in the articles. A drawn diagram sits on a quiet stage; its cards are white (a dark gray when
   // dark) with a soft shadow, and Lucida's wears the deck cover's gradient.
   '.sp-fig{margin:26px 0 0}.sp-fig:not(.sp-f-screen){box-sizing:border-box;padding:16px;border-radius:24px;background:var(--sp-fstage);box-shadow:inset 0 0 0 1px var(--sp-fedge)}',
   '.sp-fcap{margin:12px 2px 0;font-size:14px;line-height:1.45;color:var(--sp-muted)}.sp-fig:not(.sp-f-screen) .sp-fcap{margin:14px 2px 0}',
+  // The app's flashcard, wherever the articles draw one (the pick, example and word cards, and "Test yourself"). It is the Review screen's card: WebReview
+  // draws it 780 × 480 with a radius of 36, padding of 44 × 56, a 1 px line, the app's shadow, and its words 38 px at weight 500 with a tight letter-spacing,
+  // left-aligned and centered in the card (a faint note under them and a chip in the top corner when there are any). Here every measure is in em, in the
+  // same ratios, from the size of the front words (--fs), so one card is the other at another size; the small parts keep a size you can read. Dark is the
+  // app's dark card (#141414 with a #262626 line, no shadow).
+  '.sp-fc{--fs:20px;position:relative;box-sizing:border-box;background:var(--sp-fcard);border:1px solid var(--sp-fedge);border-radius:.95em;box-shadow:var(--sp-fshadow);padding:1.16em 1.47em;font-size:var(--fs);font-weight:500;line-height:1.25;letter-spacing:-.02em;text-align:left;color:var(--sp-text)}',
+  '.sp-fc-chip{position:absolute;top:calc(var(--fs) * .55);right:calc(var(--fs) * .55);z-index:1;display:inline-flex;align-items:center;justify-content:center;height:max(26px,1.4em);padding:0 12px;box-sizing:border-box;border-radius:999px;background:color-mix(in srgb,var(--sp-text) 7%,var(--sp-fcard));color:var(--sp-text);font-size:max(12px,.34em);font-weight:600;line-height:1;letter-spacing:0;white-space:nowrap}',
+  // Lucida's card in a comparison wears a deck's cover (the app's default one, Iris) in the corner where a chip sits.
+  `.sp-fc-cover{width:max(44px,2.2em);padding:0;background:${coverOf('Iris')};box-shadow:inset 0 0 0 1px rgba(0,0,0,.06)}`,
   '.sp-picks{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:minmax(0,1fr);gap:12px}',
-  '.sp-pk{display:block;box-sizing:border-box;padding:16px 18px 18px;border-radius:20px;background:var(--sp-fcard);box-shadow:var(--sp-fshadow),0 0 0 1px var(--sp-fedge);font-size:16px;line-height:1.5}',
-  '.sp-pk-top{display:flex;align-items:center;gap:8px;margin-bottom:8px}.sp-pk-name{font-size:17px;font-weight:700;letter-spacing:-.01em}.sp-pk-body{display:block}',
-  `.sp-pk[data-l="true"]{padding:0;overflow:hidden}.sp-pk[data-l="true"] .sp-pk-top{margin:0;padding:14px 18px;color:#FFFFFF;background:${MID}}.sp-pk[data-l="true"] .sp-pk-body{padding:14px 18px 18px}`,
+  '.sp-pk{--fs:22px;display:block;padding-top:1.5em}',
+  '.sp-pk-name{display:block;margin-right:3em;font-size:1em}.sp-pk-body{display:block;margin-top:.55em;font-size:16px;font-weight:400;line-height:1.5;letter-spacing:0}',
   '.sp-steps{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;align-items:stretch}',
   '.sp-step{display:flex;align-items:flex-start;gap:12px;box-sizing:border-box;padding:12px 14px;border-radius:16px;background:var(--sp-fcard);box-shadow:var(--sp-fshadow),0 0 0 1px var(--sp-fedge)}',
   '.sp-sn{flex:none;display:flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:9px;background:var(--sp-text);color:var(--sp-bg);font-size:13px;font-weight:600}',
@@ -6111,22 +6159,22 @@ const SITE_CSS = [
   '.sp-shotc{position:relative;overflow:hidden;max-width:none;aspect-ratio:var(--ard)}.sp-shot-in{position:absolute;left:0;top:0;transform-origin:0 0}',
   '.sp-fig.sp-f-screen .sp-fcap{text-align:center}',
   // A table made from bullets: no box, a muted header row, thin lines; two columns stay a table on a phone.
-  '.sp-t2w{margin-top:20px}.sp-t2{width:100%;border-collapse:collapse;font-size:16px;line-height:1.5}',
+  '.sp-t2w{margin-top:20px}.sp-t2{width:100%;min-width:min(100%,420px);border-collapse:collapse;font-size:16px;line-height:1.5}',
   '.sp-t2 th,.sp-t2 td{padding:13px 14px 13px 0;text-align:left;vertical-align:top;border-top:1px solid var(--sp-line)}.sp-t2 td{padding-right:0}',
   '.sp-t2 thead th{padding-top:10px;padding-bottom:10px;border-top:0;border-bottom:1px solid var(--sp-line);font-size:13px;font-weight:500;color:var(--sp-muted)}',
   '.sp-t2 tbody th{width:32%;font-weight:600;color:var(--sp-text)}.sp-t2 tbody tr:first-child th,.sp-t2 tbody tr:first-child td{border-top:0}',
   // "Test yourself": flashcards in a row; on a phone one row that scrolls sideways and snaps (the page itself never does).
   '.sp-tcs{display:flex;gap:12px;align-items:flex-start;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none;margin:18px -20px 0;padding:6px 20px 16px;overscroll-behavior-x:contain}.sp-tcs::-webkit-scrollbar{display:none}',
-  '.sp-tc{flex:0 0 82%;box-sizing:border-box;scroll-snap-align:center;border-radius:22px;background:var(--sp-fcard);box-shadow:var(--sp-fshadow),0 0 0 1px var(--sp-fedge)}',
-  '.sp-tq{display:flex;flex-direction:column;align-items:flex-start;gap:14px;padding:16px 18px 18px;cursor:pointer;list-style:none}.sp-tq::-webkit-details-marker{display:none}',
-  '.sp-tn{display:flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:10px;color:#000000;font-size:14px;font-weight:700}',
-  '.sp-tt{font-size:18px;font-weight:600;line-height:1.35;letter-spacing:-.01em;text-wrap:balance}',
-  '.sp-th{display:inline-flex;align-items:center;height:32px;box-sizing:border-box;padding:0 14px;border-radius:999px;background:var(--sp-surf);color:var(--sp-text);font-size:14px;font-weight:600}.sp-tc[open] .sp-th{display:none}',
-  '.sp-ta{padding:0 18px 20px;font-size:16px;line-height:1.5}.sp-ta-l{display:block;margin-bottom:6px;font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--sp-muted)}',
-  '.sp-tmore{margin:4px 0 0;font-size:16px}',
+  '.sp-tc{--fs:20px;flex:0 0 82%;scroll-snap-align:center;padding:0}',
+  '.sp-tq{display:flex;align-items:center;box-sizing:border-box;min-height:11em;padding:1.16em 1.47em;cursor:pointer;list-style:none;-webkit-tap-highlight-color:transparent}.sp-tq::-webkit-details-marker{display:none}',
+  '.sp-tt{display:block;margin-right:.4em;font-size:1em;font-weight:500;line-height:1.25;letter-spacing:-.02em;text-wrap:balance}.sp-ta{font-size:.84em;line-height:1.3;letter-spacing:-.015em}',
+  '.sp-tc:not([open]) .sp-ta,.sp-tc[open] .sp-tf,.sp-tc[open] .sp-tca,.sp-tc:not([open]) .sp-tcq,.sp-tn{display:none}',
+  '.sp-tc[open] .sp-tn{display:block;position:absolute;left:calc(var(--fs) * 1.47);right:calc(var(--fs) * 1.47);bottom:calc(var(--fs) * .85);font-size:max(13px,.37em);font-weight:400;line-height:1.4;letter-spacing:0;color:var(--sp-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}',
+  '.sp-tc .sp-fc-chip{cursor:pointer}.sp-tq:focus-visible{outline:2px solid var(--sp-text);outline-offset:3px;border-radius:.95em}',
+  '.sp-tmore{margin:16px 0 0;font-size:16px}',
   // The drawings of single pages: cards, bars for text, chips, avatars; each a few small pieces on the stage.
-  '.sp-ln{display:block;height:6px;border-radius:3px;background:var(--sp-fsoft)}',
-  '.sp-mc{position:relative;display:flex;flex-direction:column;gap:6px;box-sizing:border-box;padding:8px 9px;border-radius:10px;background:var(--sp-fcard);box-shadow:var(--sp-fshadow),0 0 0 1px var(--sp-fedge);overflow:hidden}.sp-mt{display:block;width:16px;height:6px;border-radius:3px}',
+  '.sp-ln{display:block;height:6px;border-radius:3px;background:var(--sp-fsoft)}.sp-ln.sp-q{background:color-mix(in srgb,var(--sp-text) 24%,var(--sp-fcard))}',
+  '.sp-mc{position:relative;display:flex;flex-direction:column;gap:6px;box-sizing:border-box;padding:8px 9px;border-radius:10px;background:var(--sp-fcard);border:1px solid var(--sp-fedge);box-shadow:var(--sp-fshadow);overflow:hidden}.sp-mt{display:block;align-self:flex-end;width:16px;height:6px;border-radius:3px}',
   '.sp-chp{display:inline-flex;align-items:center;height:24px;box-sizing:border-box;padding:0 10px;border-radius:999px;background:var(--sp-fsoft);color:var(--sp-text);font-size:12px;font-weight:600;white-space:nowrap}',
   '.sp-av{display:inline-flex;align-items:center;justify-content:center;flex:none;width:24px;height:24px;border-radius:50%;color:#FFFFFF;font-size:11px;font-weight:700}',
   '.sp-play{display:inline-flex;align-items:center;justify-content:center;flex:none;width:36px;height:36px;border-radius:50%;background:var(--sp-text);color:var(--sp-bg)}',
@@ -6134,8 +6182,8 @@ const SITE_CSS = [
   '.sp-fig .sp-arrow{flex:none}',
   // Cards at widening gaps (a column on a phone, a row on a computer).
   '.sp-gaps{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;align-items:flex-start}',
-  '.sp-gc{display:flex;align-items:center;gap:12px;flex:none}.sp-gcard{display:flex;flex-direction:column;gap:5px;box-sizing:border-box;width:52px;height:36px;padding:6px 7px;border-radius:9px;background:var(--sp-fcard);box-shadow:var(--sp-fshadow),0 0 0 1px var(--sp-fedge);overflow:hidden}',
-  '.sp-gcv{display:block;width:14px;height:5px;border-radius:3px}.sp-gl{font-size:14px;font-weight:600}',
+  '.sp-gc{display:flex;align-items:center;gap:12px;flex:none}.sp-gcard{display:flex;flex-direction:column;gap:5px;box-sizing:border-box;width:52px;height:36px;padding:5px 6px;border-radius:9px;background:var(--sp-fcard);border:1px solid var(--sp-fedge);box-shadow:var(--sp-fshadow);overflow:hidden}',
+  '.sp-gcv{display:block;align-self:flex-end;width:14px;height:5px;border-radius:3px}.sp-gl{font-size:14px;font-weight:600}',
   '.sp-gsp{position:relative;flex:none;width:52px;height:var(--h);display:flex;align-items:center}.sp-gsp::before{content:"";position:absolute;left:25px;top:3px;bottom:3px;border-left:2px dashed var(--sp-fline)}.sp-gt{margin-left:66px;font-size:13px;font-weight:600;white-space:nowrap;color:var(--sp-muted)}',
   '.sp-curve{display:block;width:100%;height:auto;max-height:210px}.sp-cax{fill:none;stroke:var(--sp-fline);stroke-width:1.5}.sp-cgoal{fill:none;stroke:var(--sp-fline);stroke-width:1.5;stroke-dasharray:4 4}',
   '.sp-ctx{font-size:12px;fill:var(--sp-muted);font-family:inherit}.sp-cc{fill:none;stroke:var(--sp-g1);stroke-width:2.6;stroke-linecap:round}.sp-ccd{fill:none;stroke:var(--sp-fline);stroke-width:1.5;stroke-dasharray:3 3}.sp-cdot{fill:var(--sp-g1)}',
@@ -6149,7 +6197,7 @@ const SITE_CSS = [
   '.sp-dk-b{display:flex;flex-direction:column;gap:6px;min-width:0}.sp-dk-n{font-size:17px;font-weight:700;line-height:1.25}.sp-dk-m{display:flex;flex-wrap:wrap;align-items:center;gap:6px 8px;font-size:14px;line-height:1.4;color:var(--sp-muted)}',
   // Learn mode.
   '.sp-lm{display:flex;flex-direction:column;gap:12px}',
-  '.sp-lq{display:flex;flex-direction:column;gap:10px;box-sizing:border-box;padding:14px;border-radius:18px;background:var(--sp-fcard);box-shadow:var(--sp-fshadow),0 0 0 1px var(--sp-fedge)}.sp-lq .sp-chp{align-self:flex-start}',
+  '.sp-lq{display:flex;flex-direction:column;gap:10px;box-sizing:border-box;padding:14px;border-radius:18px;background:var(--sp-fcard);border:1px solid var(--sp-fedge);box-shadow:var(--sp-fshadow)}.sp-lq .sp-chp{align-self:flex-end}',
   '.sp-lq-q{display:flex;flex-direction:column;gap:6px}.sp-lq-a{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}',
   '.sp-lq-o{display:flex;align-items:center;gap:10px;height:30px;box-sizing:border-box;padding:0 10px;border-radius:12px;background:var(--sp-fstage);box-shadow:inset 0 0 0 1px var(--sp-fedge)}',
   '.sp-lq-n{display:flex;align-items:center;justify-content:center;flex:none;width:22px;height:22px;border-radius:50%;color:#FFFFFF;font-size:12px;font-weight:700}.sp-lq-ok{box-shadow:inset 0 0 0 2px var(--sp-good)}.sp-lq-t{margin-left:auto;display:flex;color:var(--sp-good)}',
@@ -6192,16 +6240,15 @@ const SITE_CSS = [
   '.sp-plan .sp-step{gap:12px}.sp-plan .sp-day{min-width:76px;justify-content:center}',
   // One example card, front and back, and what a day looks like.
   '.sp-ex{display:flex;flex-direction:column;gap:10px}.sp-ex-cards{display:flex;flex-direction:column;align-items:stretch;gap:2px}.sp-ex-cards>.sp-arrow{align-self:center}',
-  '.sp-exc{display:flex;flex-direction:column;gap:6px;box-sizing:border-box;padding:12px 14px;border-radius:18px;background:var(--sp-fcard);box-shadow:var(--sp-fshadow),0 0 0 1px var(--sp-fedge)}.sp-exc-b{box-shadow:var(--sp-fshadow),0 0 0 2px var(--sp-g1)}',
-  '.sp-exc-l{font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--sp-muted)}.sp-exc-t{font-size:17px;font-weight:600;line-height:1.35}',
+  '.sp-exc{--fs:20px;display:flex;flex-direction:column;justify-content:center;min-height:9.2em;padding-top:2.2em}.sp-exc-t{display:block}.sp-exc-b .sp-exc-t{font-size:.84em;line-height:1.3;letter-spacing:-.015em}',
   '.sp-ex-load{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}.sp-ex-load li{display:flex;align-items:center;gap:10px;font-size:14px;line-height:1.4}.sp-ex-i{flex:none;width:12px;height:12px;border-radius:4px}',
   // Word cards.
-  '.sp-wd{display:grid;grid-template-columns:minmax(0,1fr);gap:12px}.sp-wc{position:relative;display:flex;flex-direction:column;gap:10px;box-sizing:border-box;min-height:118px;padding:14px 16px;border-radius:18px;background:var(--sp-fcard);box-shadow:var(--sp-fshadow),0 0 0 1px var(--sp-fedge)}',
-  '.sp-wl{font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--sp-muted)}.sp-wt{padding-right:48px;font-size:20px;font-weight:600;line-height:1.5}',
-  '.sp-wb{display:inline-block;width:72px;height:24px;margin:0 2px;vertical-align:-5px;border-radius:7px;background:var(--sp-fsoft);box-shadow:inset 0 0 0 1px var(--sp-fedge)}.sp-wc .sp-play{position:absolute;right:14px;bottom:14px}',
+  '.sp-wd{display:grid;grid-template-columns:minmax(0,1fr);gap:12px}.sp-wc{--fs:22px;display:flex;flex-direction:column;justify-content:center;gap:.7em;min-height:9.2em;padding-top:2.2em}',
+  '.sp-wt{display:block;font-size:1em;line-height:1.5}.sp-snd{display:flex;align-items:center;gap:14px}',
+  '.sp-wb{display:inline-block;width:3.2em;height:1.15em;margin:0 .1em;vertical-align:-.22em;border-radius:999px;background:var(--sp-surf2)}',
   '.sp-wave{display:flex;align-items:center;gap:3px;height:40px}.sp-wave i{display:block;width:3px;border-radius:2px;background:var(--sp-text)}',
   '.sp-wave i:nth-child(1){height:8px}.sp-wave i:nth-child(2){height:14px}.sp-wave i:nth-child(3){height:22px}.sp-wave i:nth-child(4){height:30px}.sp-wave i:nth-child(5){height:38px}.sp-wave i:nth-child(6){height:30px}.sp-wave i:nth-child(7){height:22px}.sp-wave i:nth-child(8){height:34px}.sp-wave i:nth-child(9){height:26px}.sp-wave i:nth-child(10){height:16px}.sp-wave i:nth-child(11){height:22px}.sp-wave i:nth-child(12){height:12px}.sp-wave i:nth-child(13){height:8px}',
-  '.sp-wch{display:flex;flex-wrap:wrap;gap:6px;padding-right:48px}',
+  '.sp-wch{display:flex;flex-wrap:wrap;gap:6px}',
   COVER_CSS,
   // A computer: a little larger.
   '@container (min-width: 761px){.sp-top{padding-top:48px}.sp-h1{margin-top:22px;font-size:44px;line-height:1.1;letter-spacing:-.035em}.sp-lead{margin-top:20px;font-size:20px}',
@@ -6210,22 +6257,22 @@ const SITE_CSS = [
   '.sp-qcard{padding:24px 28px 8px}.sp-qcard .sp-h2{font-size:26px}.sp-cta{padding:32px 32px 30px}.sp-cta-t{font-size:28px;max-width:520px}',
   '.sp-cards{grid-template-columns:repeat(3,minmax(0,1fr));gap:32px 24px}.sp-card-t{font-size:17px}',
   '.sp-feat{display:grid;grid-template-columns:minmax(0,1.45fr) minmax(0,1fr);gap:32px;align-items:center;margin-top:36px}.sp-feat-body{margin-top:0}',
-  '.sp-kchip{display:inline-flex;align-items:center;height:26px;padding:0 12px;border-radius:999px;background:var(--sp-surf2);color:var(--sp-text);font-size:13px;font-weight:500}',
-  '.sp-feat-row{justify-content:space-between}.sp-feat-t{margin-top:14px;font-size:30px}.sp-feat-d{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:3;overflow:hidden}',
+  '.sp-feat-t{margin-top:14px;font-size:30px}.sp-feat-d{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:3;overflow:hidden}',
   '.sp-btn{display:inline-flex;height:44px;margin-top:20px;border-radius:12px}',
   '.sp-bhead{padding-top:56px}.sp-bh1{font-size:60px;line-height:1.05;letter-spacing:-.045em}.sp-blead{margin-top:18px;font-size:20px}',
   '.sp-bar{margin-top:44px;flex-direction:row-reverse;align-items:center;justify-content:space-between;gap:24px;border-bottom:1px solid var(--sp-hair)}',
   '.sp-search{flex:0 1 320px}.sp-tabs{margin:0;padding:0;overflow:visible}',
   '.sp-tab{height:52px;padding:0 4px;margin-right:16px;border-radius:0;background:none;border-bottom:2px solid transparent;margin-bottom:-1px}.sp-tab[aria-current="true"]{background:none;color:var(--sp-text);border-bottom-color:var(--sp-text)}',
   '.sp-bsec .sp-h2{font-size:30px}.sp-bsec{margin-top:64px}',
+  '.sp-hub .sp-top{padding-top:56px}.sp-hub .sp-sec,.sp-hub .sp-qcard,.sp-hub .sp-cta,.sp-hub .sp-src{margin-top:64px}.sp-hub .sp-sec>.sp-h2{font-size:30px}',
   '.sp-fig{margin-top:32px}.sp-fig:not(.sp-f-screen){padding:22px}',
-  '.sp-picks{grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;align-items:start}',
+  '.sp-picks{grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;align-items:stretch}',
   '.sp-steps{flex-direction:row;align-items:stretch}.sp-steps.sp-n5,.sp-steps.sp-n6,.sp-steps.sp-n7{grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}.sp-step{flex:1 1 0;flex-direction:column;gap:10px;padding:14px}.sp-plan .sp-step{gap:8px}.sp-plan .sp-day{min-width:0;justify-content:flex-start}.sp-arrow{flex:none;width:30px;height:auto}.sp-arrow svg{transform:none}',
   '.sp-apps{grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}',
   '.sp-shot{max-width:min(100%,calc(560px * var(--ard)))}.sp-shotc{max-width:none}',
   '.sp-t2 tbody th{width:28%}.sp-t2 th,.sp-t2 td{font-size:17px}.sp-t2 thead th{font-size:13px}',
-  '.sp-tcs{display:grid;grid-template-columns:repeat(var(--tn,4),minmax(0,1fr));gap:16px;overflow:visible;scroll-snap-type:none;margin-top:22px;padding:4px 0 0}.sp-tcs.sp-n3{--tn:3}.sp-tcs.sp-n4{--tn:4}',
-  '.sp-tcs.sp-wide{margin-left:calc(-1 * var(--bo));margin-right:calc(-1 * var(--bo))}.sp-tc{flex:none}',
+  '.sp-tcs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;overflow:visible;scroll-snap-type:none;margin:22px 0 0;padding:4px 0 0}',
+  '.sp-tc{flex:none}',
   '.sp-gaps{flex-direction:row;padding-top:4px}.sp-gc{flex-direction:column;gap:8px;width:60px}.sp-gsp{flex:var(--w) 1 0;width:auto;min-width:58px;height:36px;justify-content:center}.sp-gsp::before{left:4px;right:4px;top:50%;bottom:auto;border-left:0;border-top:2px dashed var(--sp-fline)}.sp-gt{position:relative;margin:0;padding:0 6px;background:var(--sp-fstage)}',
   '.sp-chat{flex-direction:row;align-items:center;gap:10px}.sp-chat>.sp-bub{flex:1.25}.sp-chat>.sp-dk{flex:1}.sp-chat>.sp-arrow{align-self:center;width:30px;height:auto}.sp-chat>.sp-arrow svg{transform:none}',
   '.sp-lm{flex-direction:row;align-items:stretch;gap:20px}.sp-lq{flex:1.15}.sp-lp{flex:1}',
@@ -6237,27 +6284,27 @@ const SITE_CSS = [
   '.sp-wd{grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}',
   '.sp-lps{flex-direction:column}.sp-lpi{flex:none;padding:10px 14px}.sp-lps .sp-arrow{width:auto;height:22px}.sp-lps .sp-arrow svg{transform:rotate(90deg)}',
   '}',
-  // A wide screen: the tree stands on the left of the column and sticks; a wide block can only grow to the right.
-  '@container (min-width: 1100px){.sp-art.sp-has-toc{display:grid;grid-template-columns:minmax(170px,1fr) 680px minmax(0,1fr);column-gap:40px;max-width:1344px;margin:0 auto;padding:0 24px}',
-  '.sp-has-toc .sp-toc{display:block;position:sticky;top:24px;align-self:start;justify-self:end;width:min(260px,100%);height:calc(100vh - 96px);margin-top:118px;overflow:hidden}',
+  // A wide screen (1280 px and more): the page is three tracks, the column in the middle and a margin of the same width on each side, so
+  // the column is centered; the tree stands in the left margin (224 px and a gap of 40 fit in it from 1280 px) and sticks as the page
+  // scrolls. Narrower than that the tree is the closed row under the lead.
+  '@container (min-width: 1280px){.sp-art.sp-has-toc{display:grid;grid-template-columns:minmax(0,1fr) 680px minmax(0,1fr);max-width:1344px;margin:0 auto;padding:0 24px}',
+  '.sp-has-toc .sp-toc{display:block;position:sticky;top:24px;align-self:start;justify-self:end;width:min(224px,100%);margin-right:40px;height:calc(100vh - 96px);margin-top:118px;overflow:hidden}',
   '.sp-has-toc .sp-toc::after{content:"";position:absolute;left:0;right:0;bottom:0;height:56px;background:linear-gradient(transparent,var(--sp-bg));pointer-events:none}',
   '.sp-has-toc .sp-tocd{display:none}',
-  '.sp-has-toc .sp-main{grid-column:2}.sp-has-toc .sp-wide{--bo:clamp(0px,calc((100cqw - 680px) / 2 - 64px),300px);margin-left:0}}',
-  // On a narrow page (a phone, or a window under 761 px) the header's nav goes, the card's art changes, and tables stack.
-  '@container (max-width: 760px){.sp-nav{display:none!important}.sp-head{height:64px!important}.sp-band-wide{display:none!important}.sp-band-tall{display:block!important}',
-  spStack('.sp-table'), '}',
-  // Six or more columns need room: they stack on any window under 1280 px.
-  '@container (max-width: 1279px){' + spStack('.sp-table.sp-tx') + '.sp-table.sp-tx.sp-wide{--bo:0px}}',
-  SKY_CSS, NO_RISE
+  '.sp-has-toc .sp-main{grid-column:2}}',
+  // On a narrow page (a phone, or a window under 761 px) the call-to-action card changes its art.
+  // (On a phone the app's card has the phone's measures too: PhoneReview has its type at 28 px, a radius of 36, padding of 26 × 22 and the chip 12 px from the
+  // corner, so the card is rounder and its padding tighter, in the same ratios.)
+  '@container (max-width: 760px){.sp-band-wide{display:none!important}.sp-band-tall{display:block!important}.sp-table table{--first:min(var(--f),132px)}',
+  '.sp-fc{border-radius:1.29em;padding:.93em .79em}.sp-fc-chip{top:calc(var(--fs) * .43);right:calc(var(--fs) * .43)}.sp-tq{padding:.93em .79em}.sp-tc[open] .sp-tn{left:calc(var(--fs) * .79);right:calc(var(--fs) * .79)}.sp-pk{padding-top:1.7em}.sp-pk-name{margin-right:2.4em}.sp-exc,.sp-wc{padding-top:2.3em;min-height:6.4em}.sp-tc{padding:0}',
+  '}',
+  SKY_CSS, HEAD_CSS, NO_RISE
 ].join('');
 // The colors the site's CSS reads (--sp-…), from the page's theme and its extras; set on the page's root, or on a wrapper round figures on a plain page.
-const SP_VARS = '--sp-bg: {{t.bg}}; --sp-line: {{t.line}}; --sp-muted: {{t.muted}}; --sp-surf: {{t.surf}}; --sp-surf2: {{t.surf2}}; --sp-text: {{t.text}}; --sp-hair: {{ink.hair}}; --sp-sub: {{ink.sub}}; --sp-edge: {{ink.edge}}; --sp-chipbg: {{ink.chipbg}}; --sp-chipfg: {{ink.chipfg}}; --sp-g1: {{ink.g1}}; --sp-g2: {{ink.g2}}; --sp-g3: {{ink.g3}}; --sp-good: {{t.good}}; --sp-again: {{t.again}}; --sp-hard: {{t.hard}}; --sp-easy: {{t.easy}}; --sp-fstage: {{ink.fstage}}; --sp-fcard: {{ink.fcard}}; --sp-fedge: {{ink.fedge}}; --sp-fsoft: {{ink.fsoft}}; --sp-fline: {{ink.fline}}; --sp-fshadow: {{ink.fshadow}};';
+const SP_VARS = '--sp-inv: {{t.inv}}; --sp-invtext: {{t.invText}}; --sp-bg: {{t.bg}}; --sp-line: {{t.line}}; --sp-muted: {{t.muted}}; --sp-surf: {{t.surf}}; --sp-surf2: {{t.surf2}}; --sp-text: {{t.text}}; --sp-hair: {{ink.hair}}; --sp-sub: {{ink.sub}}; --sp-edge: {{ink.edge}}; --sp-g1: {{ink.g1}}; --sp-g2: {{ink.g2}}; --sp-g3: {{ink.g3}}; --sp-good: {{t.good}}; --sp-again: {{t.again}}; --sp-hard: {{t.hard}}; --sp-easy: {{t.easy}}; --sp-fstage: {{ink.fstage}}; --sp-fcard: {{ink.fcard}}; --sp-fedge: {{ink.fedge}}; --sp-fsoft: {{ink.fsoft}}; --sp-fline: {{ink.fline}}; --sp-fshadow: {{ink.fshadow}};';
 const sitePage = (w, h) => `<div class="sp" style="position: relative; isolation: isolate; width: ${w}px; height: ${h}px; box-sizing: border-box; font-family: ${FONT}; background: {{t.bg}}; color: {{t.text}}; overflow: hidden; overflow: clip; ${SP_VARS}">
 ${skyLayer(false)}
-<header class="sp-head" style="max-width: 1344px; margin: 0 auto; height: 76px; box-sizing: border-box; padding: 0 clamp(20px, 4cqw, 48px); display: flex; align-items: center; justify-content: space-between; gap: 12px;">
-  <a href="{{links.home}}" aria-label="Lucida home">${logo(30)}</a>
-  <nav aria-label="Main" style="display: flex; align-items: center; gap: 4px;"><sc-for list="{{nav}}" as="n" hint-placeholder-count="3"><a class="sp-nav" href="{{n.href}}" style="height: 36px; padding: 0 14px; display: inline-flex; align-items: center; border-radius: 999px; font-size: 14px; color: {{t.text}};">{{n.label}}</a></sc-for><a href="{{links.signIn}}" style="height: 36px; padding: 0 14px; display: inline-flex; align-items: center; border-radius: 999px; font-size: 14px; color: {{t.text}};">Sign in</a>${landPill('Get started', '{{links.start}}', true, 36)}</nav>
-</header>
+${siteHeader()}
 <main>
 <sc-if value="{{isBlog}}" hint-placeholder-val="{{ false }}"><div class="sp-blog" id="top">
   <div class="sp-bhead"><h1 class="sp-bh1"><span>{{blog.l1}}</span><span class="sp-grad">{{blog.l2}}</span></h1><p class="sp-blead">${spParts('page.lead')}</p></div>
@@ -6284,11 +6331,11 @@ ${skyLayer(false)}
 <sc-for list="{{groups}}" as="g" hint-placeholder-count="1"><section class="sp-sec">${spH2('{{g.title}}')}${spCards('g.cards', ' hint-placeholder-count="3"')}</section></sc-for>
 <sc-if value="{{hasTable}}" hint-placeholder-val="{{ true }}"><section class="sp-sec">
   ${spH2('At a glance', ' id="at-a-glance"')}
-  <div class="sp-table{{table.cls}}">
-    <table style="--first: {{table.first}};">
+  <div class="sp-table">
+    <div class="sp-tsc" role="region" aria-label="Table, scrolls sideways" tabindex="0"><table style="--f: {{table.first}}px; --cols: {{table.cols}};">
       <thead><tr><sc-for list="{{table.head}}" as="c" hint-placeholder-count="3"><th scope="col"><sc-if value="{{c.blank}}"><span class="sp-sr">Feature</span></sc-if>{{c.label}}</th></sc-for></tr></thead>
       <tbody><sc-for list="{{table.rows}}" as="r" hint-placeholder-count="6"><tr class="{{r.cls}}"><th scope="row">{{r.label}}</th><sc-for list="{{r.cells}}" as="c" hint-placeholder-count="2"><td data-label="{{c.col}}">${spParts('c.parts')}</td></sc-for></tr></sc-for></tbody>
-    </table>
+    </table></div>
     <sc-if value="{{table.more}}" hint-placeholder-val="{{ false }}"><details class="sp-more"><summary><span class="sp-more-a">Show all {{table.total}}</span><span class="sp-more-b">Show fewer</span>${spPm}</summary></details></sc-if>
   </div>
 </section></sc-if>
@@ -6301,8 +6348,8 @@ ${spSections('sections')}
 ${spSections('sectionsAfter')}
 ${spTest}
 <aside class="sp-cta" aria-label="Start with Lucida" style="color: {{hero.ink}}; background: {{hero.base}};">
-  <div class="sp-band-wide" aria-hidden="true" style="position: absolute; inset: 0;">${ART_LAYERS('hero')}</div>
-  <div class="sp-band-tall" aria-hidden="true" style="position: absolute; inset: 0; display: none;">${ART_LAYERS('heroTall')}</div>
+  <div class="sp-band-wide" aria-hidden="true" style="position: absolute; inset: 0;">${ART_LAYERS('hero', true)}</div>
+  <div class="sp-band-tall" aria-hidden="true" style="position: absolute; inset: 0; display: none;">${ART_LAYERS('heroTall', true)}</div>
   <p class="sp-cta-t" style="text-shadow: {{hero.shadow}};">{{cta}}</p><p class="sp-cta-d">Free: unlimited decks and cards, Learn mode and live games.</p>
   <div class="sp-cta-b">${landPill('Start free', '{{links.start}}', true, 44, 'background: #FFFFFF; color: #000000;')}</div>
 </aside>
@@ -6321,6 +6368,7 @@ const siteLogic = (board, phone) => {
   const data = boardData(board, SITE.pages);
   return `${ART_METHOD}
 ${FOOT_METHOD}
+${HEAD_METHOD}
 data() { return Component._site || (Component._site = ${JSON.stringify(data).replace(/</g, '\\u003c')}); }
 parts(text) { return (${partsOf.toString()})(text); }
 renderVals() {
@@ -6393,18 +6441,18 @@ renderVals() {
   }
   toc.forEach((o, i) => { o.cur = i ? '' : 'location'; o.cls = i ? '' : 'sp-open'; o.hasKids = o.kids.length > 0; });
   // On the canvas the SiteOg board (1200 wide) is scaled to the width it has: the column's 680 px (or a phone's 350); in a row of cards
-  // or a featured page, a share of a wide block (980 px beside "On this page", 1040 px without it), or of the blog's 1248 px.
+  // or a featured page, a share of the column, or on a hub and the blog, of their 1248 px container.
   const hasToc = toc.length >= 2, scale = px => (px / 1200).toFixed(5);
-  const wideW = PHONE ? 350 : hasToc ? 680 + Math.min(300, (${W} - 680) / 2 - 64) : 680 + 2 * Math.min(180, (${W} - 680) / 2 - 20), blogW = PHONE ? 350 : Math.min(1248, ${W} - 96);
-  // A comparison's columns: a table of four or more may be wider than the words, six or more stack on any window under 1280 px. Its
-  // first column is as wide as its longest label needs, at most. Past six rows the rest wait behind "Show all".
+  const wideW = PHONE ? 350 : isHub ? Math.min(1248, ${W} - 96) : 680, blogW = PHONE ? 350 : Math.min(1248, ${W} - 96);
+  // A comparison's columns: the first is as wide as its longest label needs (112 to 190 px, 132 at most on a narrow page) and each of the
+  // others 168 px at least, and a table that is wider than its box scrolls sideways inside it. Past six rows the rest wait behind "Show all".
   const cols = tb ? tb.columns.length : 0, widest = tb ? Math.max(...tb.rows.map(r => plain(r[0]).length)) : 0, KEEP = 6;
-  const first = cols >= 6 ? (widest <= 14 ? '11%' : '15%') : cols >= 4 ? (widest <= 14 ? '16%' : widest <= 30 ? '20%' : '26%') : (widest <= 14 ? '20%' : widest <= 30 ? '26%' : '32%');
+  const first = Math.min(190, Math.max(112, Math.round(widest * 8 + 36)));
   const words = plain(P.h1).split(' ');
   return { t, sky, ink, dark: !!this.props.dark, grain: String(this.props.grain ?? 0.7), hero: this.art(${MIDNIGHT}, 'wide'), heroTall: this.art(${MIDNIGHT}, ''),
     pic: { src: ogSrc(P.slug), key: ogKey(P.slug), alt: /^lucida\\b/i.test(h1) ? h1 : 'Lucida: ' + h1, k: scale(PHONE ? 350 : 680) },
     site, canvas: !site, cardK: scale(PHONE ? 350 : (wideW - 48) / 3), blogK: scale(PHONE ? 350 : (blogW - 48) / 3), featK: scale(PHONE ? 350 : ((isBlog ? blogW : wideW) - 32) * 1.45 / 2.45),
-    foot: this.foot(PHONE), nav: D.header.map(l => ({ label: l.label, href: href(find(l.slug)) })),
+    hd: this.hd(PHONE), foot: this.foot(PHONE),
     links: { home: site ? '/' : (PHONE ? 'LandingPhone' : 'Landing') + '.dc.html', signIn, start: site ? '${SITE_APP}/' : signIn },
     crumbs: P.crumbs.map((c, i) => ({ label: c.label, link: i < P.crumbs.length - 1 && !!find(c.slug), current: i === P.crumbs.length - 1, href: find(c.slug) ? href(find(c.slug)) + (site && c.hash ? '#' + c.hash : '') : '' })),
     page: { h1: P.h1, lead: this.parts(P.lead), updated: P.updated || '', updatedShort: me.date || (dm ? MON[+dm[2] - 1] + ' ' + +dm[3] + ', ' + dm[1] : P.updatedLabel || ''), minutes: String(me.minutes || 1) },
@@ -6412,8 +6460,8 @@ renderVals() {
     isBlog, notBlog: !isBlog, blog: { l1: words.slice(0, 2).join(' '), l2: words.slice(2).join(' ') }, tabs, blogSections, searchCls: site ? 'sp-nojs' : '',
     layout: (hasToc ? ' sp-has-toc' : '') + (isHub ? ' sp-hub' : ''), hasToc, toc, tocOpen: !site, tocClosed: site,
     hasMeta: !gone && !isHub && !!P.updated, hasHero: !gone && !isHub, hasFeat: !!featIt, feat,
-    hasTable: !!tb, table: tb ? { cls: (cols >= 4 ? ' sp-wide' : '') + (cols >= 6 ? ' sp-tx' : ''), first, head: tb.columns.map(c => ({ label: c, blank: !c })), more: tb.rows.length > KEEP, total: String(tb.rows.length),
-      rows: tb.rows.map((r, i) => ({ cls: i >= KEEP ? 'sp-x' : '', label: plain(r[0]), cells: r.slice(1).map((c, j) => ({ col: plain(tb.columns[j + 1] || ''), parts: this.parts(c) })) })) } : { cls: '', first: '22%', head: [], rows: [], more: false, total: '0' },
+    hasTable: !!tb, table: tb ? { first: String(first), cols: String(cols), head: tb.columns.map(c => ({ label: c, blank: !c })), more: tb.rows.length > KEEP, total: String(tb.rows.length),
+      rows: tb.rows.map((r, i) => ({ cls: i >= KEEP ? 'sp-x' : '', label: plain(r[0]), cells: r.slice(1).map((c, j) => ({ col: plain(tb.columns[j + 1] || ''), parts: this.parts(c) })) })) } : { first: '120', cols: '1', head: [], rows: [], more: false, total: '0' },
     groups: groups.filter(g => g.cards.length),
     sections: isFaq ? [] : sections, sectionsAfter: isFaq ? sections : [],
     test: V.test, hasTest: V.hasTest && !isFaq, testCols: V.testCols || '',
@@ -6444,6 +6492,20 @@ const ogPill = (x, y, h, body, o = {}) => `<div style="position: absolute; left:
 const ogDot = (slot, x, y, d, ring = 3) => `<div style="position: absolute; left: ${x}px; top: ${y}px; width: ${d}px; height: ${d}px; border-radius: 50%; background: linear-gradient(140deg, {{${slot}.b0.c}}, {{${slot}.b2.c}}); box-shadow: 0 0 0 ${ring}px {{card}}, 0 8px 18px -8px {{sh}};"></div>`;
 const ogBar = (x, y, w, h = 10, bg = '{{bar}}') => `<div style="position: absolute; left: ${x}px; top: ${y}px; width: ${w}px; height: ${h}px; border-radius: ${h}px; background: ${bg};"></div>`;
 const ogTxt = (x, y, w, text, o = {}) => `<div style="position: absolute; left: ${x}px; top: ${y}px; width: ${w}px; font-size: ${o.fs ?? 24}px; font-weight: ${o.fw ?? 500}; line-height: ${o.lh ?? 1.25}; letter-spacing: -.02em; color: ${o.fg ?? '{{t.text}}'}; text-align: ${o.align ?? 'left'};">${text}</div>`;
+// The app's flashcard in a picture: the Review screen's card (WebReview draws it 780 × 480 with a radius of 36, padding of 56 × 44, a 1 px line, the app's
+// shadow, and its words left-aligned and centered in the card, with a faint note at the bottom and a chip in the top corner). Radius, padding and the
+// line scale with the card's width here; `fs` is the size of its words in picture pixels (names and single words are set bigger than the app's share
+// of the card, so they still read when the picture is small). o: { text | html, fs, fw, note, noteFs, chip: a palette slot like c1 (its deck cover) or
+// words, box: the card's own pieces (placed inside it), css }.
+const ogCover = slot => `radial-gradient(circle at 18% 88%, {{${slot}.b0.c}}, transparent 62%), radial-gradient(circle at 86% 10%, {{${slot}.b3.c}}, transparent 58%), {{${slot}.base}}`;
+const ogFace = (x, y, w, h, rot, o = {}) => {
+  const k = w / 780, r = o.r ?? Math.max(10, Math.round(36 * k)), px = Math.max(16, Math.round(56 * k)), py = Math.max(14, Math.round(44 * k)), off = Math.max(10, Math.round(26 * k));
+  const chip = !o.chip ? '' : /^c\d$/.test(o.chip) ? `<div style="position: absolute; top: ${off}px; right: ${off}px; width: ${o.chipW ?? 64}px; height: 28px; border-radius: 14px; background: ${ogCover(o.chip)}; box-shadow: inset 0 0 0 1px rgba(0,0,0,.06);"></div>`
+    : `<div style="position: absolute; top: ${off}px; right: ${off}px; height: 30px; padding: 0 14px; box-sizing: border-box; display: flex; align-items: center; border-radius: 15px; background: {{surf}}; font-size: 15px; font-weight: 600; letter-spacing: 0;">${o.chip}</div>`;
+  const note = o.note ? `<div style="position: absolute; left: ${px}px; right: ${px}px; bottom: ${Math.round(py * .6)}px; font-size: ${o.noteFs ?? 20}px; font-weight: 400; letter-spacing: 0; color: {{t.muted}};">${o.note}</div>` : '';
+  const words = o.box ? '' : `<div style="height: 100%; display: flex; flex-direction: column; justify-content: center; font-size: ${o.fs ?? 36}px; font-weight: ${o.fw ?? 500}; line-height: 1.2; letter-spacing: -.02em; ${o.wcss ?? ''}">${o.text ?? o.html}</div>`;
+  return `<div style="${ogAt(x, y, w, h, rot)} box-sizing: border-box; border-radius: ${r}px; background: {{card}}; border: 1px solid {{line}}; box-shadow: ${o.sh ?? '0 30px 56px -24px {{sh}}'}; padding: ${o.box ? 0 : py}px ${o.box ? 0 : px}px; text-align: left; color: {{t.text}}; ${o.css ?? ''}">${words}${o.box ?? ''}${note}${chip}</div>`;
+};
 const ogIc = (path, size, sw = 2) => svg(path, size, sw);
 const OGI = {
   arrow: '<path d="M4 12h15M13 6l6 6-6 6"/>', star: '<path d="M12 3.6l2.5 5.2 5.7.8-4.1 4 1 5.7L12 16.6l-5.1 2.7 1-5.7-4.1-4 5.7-.8z" fill="currentColor"/>',
@@ -6452,43 +6514,43 @@ const OGI = {
   spark: '<path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z"/><path d="M19 15.5l.8 2.2 2.2.8-2.2.8-.8 2.2-.8-2.2-2.2-.8 2.2-.8z"/>', search: '<circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/>'
 };
 // A comparison's two cards: the other app's, plain, with its name in text, and Lucida's, and the "vs" between them.
-const ogOther = (x, y, w, h, rot) => ogCard(x, y, w, h, rot, `<div style="height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px;"><div style="font-size: {{${w > 300 ? 'otherFsWide' : 'otherFs'}}}px; font-weight: 600; letter-spacing: -.035em; white-space: nowrap;">{{other}}</div><div style="width: 130px; height: 10px; border-radius: 10px; background: {{bar}};"></div><div style="width: 88px; height: 10px; border-radius: 10px; background: {{bar}};"></div></div>`);
-const ogLu = (x, y, w, h, rot) => ogCard(x, y, w, h, rot, `<div style="height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px;">${mark(44)}<span style="font-size: 40px; font-weight: 600; letter-spacing: -.035em;">Lucida</span><span style="width: 150px; height: 12px; border-radius: 12px; background: linear-gradient(90deg, {{c1.b0.c}}, {{c1.b3.c}}, {{c1.b2.c}});"></span></div>`);
+const ogOther = (x, y, w, h, rot) => ogFace(x, y, w, h, rot, { text: `<span style="white-space: nowrap;">{{other}}</span>`, fs: `{{${w > 300 ? 'otherFsWide' : 'otherFs'}}}` });
+const ogLu = (x, y, w, h, rot, chip = 'c1') => ogFace(x, y, w, h, rot, { text: 'Lucida', fs: 48, chip });
 const ogVs = (x, y) => `<div style="${ogAt(x, y, 76, 76)} z-index: 3; border-radius: 50%; background: {{t.inv}}; color: {{t.invText}}; display: flex; align-items: center; justify-content: center; font-size: 28px; font-weight: 700; letter-spacing: -.02em; box-shadow: 0 14px 28px -10px {{sh}};">vs</div>`;
 // A small white card of words (a deck's card), with a gradient strip on its left.
-const ogWords = (x, y, w, h, rot, body, slot, o = {}) => ogCard(x, y, w, h, rot, `<div style="position: absolute; left: 0; top: 0; bottom: 0; width: 16px; border-radius: ${o.r ?? 24}px 0 0 ${o.r ?? 24}px; background: linear-gradient(180deg, {{${slot}.b0.c}}, {{${slot}.b2.c}});"></div><div style="height: 100%; box-sizing: border-box; padding: ${o.pad ?? '18px 22px 18px 34px'}; display: flex; align-items: center; font-size: ${o.fs ?? 26}px; font-weight: ${o.fw ?? 500}; line-height: 1.22; letter-spacing: -.02em;">${body}</div>`, { r: o.r ?? 24 });
+const ogWords = (x, y, w, h, rot, body, slot, o = {}) => ogFace(x, y, w, h, rot, { html: body, fs: o.fs ?? 26, chip: slot, chipW: o.chipW ?? 54, note: o.note, noteFs: o.noteFs });
 // What the right of a picture draws, a scene for each kind of page (500 × 630 from x = 700; a card may run past the edge).
-const ogScene = (name, body) => `<sc-if value="{{scene.${name}}}" hint-placeholder-val="{{ false }}"><div style="position: absolute; left: 696px; top: 8px; width: 500px; height: 630px; transform: scale(1.08); transform-origin: 50% 50%;">${body}</div></sc-if>`;
+const ogScene = (name, body) => `<sc-if value="{{scene.${name}}}" hint-placeholder-val="{{ false }}"><div data-og-scene style="position: absolute; left: 696px; top: 8px; width: 500px; height: 630px; transform: scale(1.08); transform-origin: 50% 50%;">${body}</div></sc-if>`;
 const OG_SCENES = [
   // A comparison, in four arrangements, so that eight of them side by side don't all look alike.
-  ogScene('versus0', ogOther(215, 130, 280, 186, -6) + ogLu(20, 270, 300, 196, 6) + ogVs(216, 262)),
+  ogScene('versus0', ogOther(215, 130, 280, 186, -6) + ogLu(20, 270, 300, 196, 6) + ogVs(160, 238)),
   ogScene('versus1', ogOther(12, 128, 280, 186, 5) + ogLu(186, 276, 300, 196, -6) + ogVs(200, 246)),
   ogScene('versus2', ogOther(150, 64, 330, 176, -5) + ogLu(10, 330, 330, 196, 5) + ogVs(300, 268)),
   ogScene('versus3', ogLu(0, 214, 232, 198, -4) + ogOther(262, 178, 232, 198, 5) + ogVs(218, 276)),
   // An alternative: the other app's card, an arrow, and Lucida's card in front.
   ogScene('switch', [
-    ogCard(10, 330, 250, 160, -7, `<div style="height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; opacity: .8;"><div style="font-size: {{otherFs}}px; font-weight: 600; letter-spacing: -.035em; white-space: nowrap;">{{other}}</div><div style="width: 110px; height: 10px; border-radius: 10px; background: {{bar}};"></div></div>`),
+    ogFace(10, 330, 250, 160, -7, { text: '<span style="white-space: nowrap;">{{other}}</span>', fs: '{{otherFs}}' }),
     `<div style="${ogAt(232, 288, 64, 64)} z-index: 3; border-radius: 50%; background: {{t.inv}}; color: {{t.invText}}; display: flex; align-items: center; justify-content: center; box-shadow: 0 14px 28px -10px {{sh}};">${ogIc(OGI.arrow, 30, 2.2)}</div>`,
-    ogLu(160, 70, 330, 214, 6),
-    ogPill(350, 50, 46, ogIc(OGI.check, 24, 2.6) + 'Free', { bg: '{{t.inv}}', fg: '{{t.invText}}', fs: 20, sh: '0 12px 24px -10px {{sh}}' })
+    ogLu(160, 70, 330, 214, 6, ''),
+    ogPill(330, 62, 46, ogIc(OGI.check, 24, 2.6) + 'Free', { bg: '{{t.inv}}', fg: '{{t.invText}}', fs: 20, sh: '0 12px 24px -10px {{sh}}' })
   ].join('')),
   // Spaced repetition: cards spread along a line, the gaps widening, each a little higher.
   ogScene('intervals', [
     ogBar(0, 508, 500, 3),
     '<sc-for list="{{steps}}" as="s">',
-    `<div style="position: absolute; left: {{s.x}}px; top: {{s.y}}px; width: {{s.w}}px; height: {{s.h}}px; transform: rotate({{s.rot}}deg); box-sizing: border-box; border-radius: 20px; background: {{card}}; box-shadow: 0 0 0 1.5px {{edge}}, 0 20px 36px -18px {{sh}}; overflow: hidden;"><div style="position: absolute; left: 0; right: 0; top: 0; height: 46%; background: {{s.cover}};"></div></div>`,
+    `<div style="position: absolute; left: {{s.x}}px; top: {{s.y}}px; width: {{s.w}}px; height: {{s.h}}px; transform: rotate({{s.rot}}deg); box-sizing: border-box; border-radius: 12px; background: {{card}}; border: 1px solid {{line}}; box-shadow: 0 20px 36px -18px {{sh}}; overflow: hidden;"><div style="position: absolute; top: 7%; right: 7%; width: 34%; height: 15%; border-radius: 999px; background: {{s.cover}};"></div><div style="position: absolute; left: 12%; top: 46%; width: 58%; height: 8px; border-radius: 8px; background: {{bar}};"></div><div style="position: absolute; left: 12%; top: 68%; width: 34%; height: 6px; border-radius: 6px; background: {{bar}}; opacity: .6;"></div></div>`,
     `<div style="position: absolute; left: {{s.tx}}px; top: 518px; width: 80px; text-align: center; font-size: 20px; font-weight: 600; color: {{t.text}};">{{s.label}}</div><div style="position: absolute; left: {{s.cx}}px; top: 500px; width: 3px; height: 19px; border-radius: 3px; background: {{t.text}};"></div>`,
     '</sc-for>'
   ].join('')),
   // Picture with hidden parts: a drawing with labels, some covered by boxes.
-  ogScene('occlusion', ogCard(10, 80, 470, 340, 3, [
+  ogScene('occlusion', ogFace(10, 80, 470, 340, 3, { box: [
     ogSw('c1', 34, 56, 210, 210, 105, 'box-shadow: 0 20px 40px -20px {{sh}};'), ogSw('c3', 78, 96, 92, 92, 46), ogSw('c2', 150, 170, 70, 42, 21, 'transform: rotate(-24deg);'), ogSw('c2', 58, 204, 56, 34, 17, 'transform: rotate(18deg);'),
     `<svg width="470" height="340" viewBox="0 0 470 340" style="position: absolute; inset: 0; fill: none; stroke: {{bar}}; stroke-width: 2.5; stroke-linecap: round;"><path d="M150 120 L300 66"/><path d="M196 186 L300 140"/><path d="M126 252 L300 214"/><path d="M226 100 L300 290"/></svg>`,
     ogPill(300, 44, 44, 'Nucleus', { fs: 21, sh: '0 0 0 1.5px {{edge}}' }),
     `<div style="${ogAt(300, 118, 150, 44)} border-radius: 12px; background: {{t.inv}}; color: {{t.invText}}; display: flex; align-items: center; justify-content: center; font-size: 26px; font-weight: 700; box-shadow: 0 12px 22px -10px {{sh}};">?</div>`,
     ogPill(300, 192, 44, 'Membrane', { fs: 21, sh: '0 0 0 1.5px {{edge}}' }),
     `<div style="${ogAt(300, 266, 150, 44)} border-radius: 12px; background: {{t.inv}}; color: {{t.invText}}; display: flex; align-items: center; justify-content: center; font-size: 26px; font-weight: 700; box-shadow: 0 12px 22px -10px {{sh}};">?</div>`
-  ].join(''))),
+  ].join('') })),
   // Learn mode: a question and four answers, one of them right.
   ogScene('quiz', [
     ogWords(10, 60, 460, 160, -2, `Which organelle makes most of a cell’s ATP?`, 'c1', { fs: 30, fw: 600, r: 28 }),
@@ -6500,7 +6562,7 @@ const OG_SCENES = [
   ].join('')),
   // Live games: four answer tiles and a join code.
   ogScene('live', [
-    ogCard(10, 50, 460, 128, -2, `<div style="height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px;"><div style="font-size: 21px; font-weight: 500; color: {{t.muted}};">Join at lucida.cards/join</div><div style="font-size: 64px; font-weight: 700; letter-spacing: .08em; line-height: 1;">482 913</div></div>`),
+    ogCard(10, 50, 460, 128, -2, `<div style="height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px;"><div style="font-size: 21px; font-weight: 500; color: {{t.muted}};">Join with this code</div><div style="font-size: 64px; font-weight: 700; letter-spacing: .08em; line-height: 1;">482 913</div></div>`),
     ...[['c1', 'A', 10, 212, 2], ['c2', 'B', 248, 206, -2], ['c3', 'C', 10, 380, -1], ['c4', 'D', 248, 372, 2]].map(([s, l, x, y, r]) => ogCard(x, y, 222, 150, r, `<div style="height: 100%; display: flex; align-items: center; gap: 18px; padding: 0 22px;"><span style="flex: none; width: 76px; height: 76px; border-radius: 22px; background: radial-gradient(circle at 20% 85%, {{${s}.b0.c}}, transparent 65%), radial-gradient(circle at 85% 10%, {{${s}.b3.c}}, transparent 60%), {{${s}.base}}; display: inline-flex; align-items: center; justify-content: center; font-size: 44px; font-weight: 700; color: #000000;">${l}</span><span style="width: 56px; height: 12px; border-radius: 12px; background: {{bar}};"></span></div>`, { r: 30 }))
   ].join('')),
   // Shared decks: a deck card with people and stars.
@@ -6616,12 +6678,11 @@ const OG_SCENES = [
 const ogPage = `<div style="position: relative; isolation: isolate; width: 1200px; height: 630px; box-sizing: border-box; overflow: hidden; font-family: ${FONT}; background: {{bg.base}}; color: {{t.text}};">
   <svg width="0" height="0" style="position: absolute;" aria-hidden="true"><defs><filter id="og-liquid" x="-10%" y="-10%" width="120%" height="120%" color-interpolation-filters="sRGB"><feTurbulence type="fractalNoise" baseFrequency=".0032 .0052" numOctaves="2" seed="4" result="n"/><feDisplacementMap in="SourceGraphic" in2="n" scale="190" xChannelSelector="R" yChannelSelector="G"/></filter></defs></svg>
   <div aria-hidden="true" style="position: absolute; inset: 0; z-index: -1; overflow: hidden;"><sc-for list="{{bg.layers}}" as="l"><div style="position: absolute; left: {{l.x}}px; top: {{l.y}}px; width: {{l.w}}px; height: {{l.h}}px; background: {{l.bg}}; opacity: {{l.o}}; mix-blend-mode: {{l.blend}}; filter: {{l.filter}}; border-radius: {{l.r}}; transform: rotate({{l.rot}}deg);"></div></sc-for></div>
-  <div aria-hidden="true" style="position: absolute; inset: 0; z-index: -1; background: {{bg.veil}};"></div>
+  <div aria-hidden="true" data-og-veil style="position: absolute; inset: 0; z-index: -1; background: {{bg.veil}};"></div>
   ${grainSvg('{{bg.grain}}', { blend: 'soft-light', freq: 0.85, slope: 3.4, id: 'og-grain' }).replace('style="position: absolute; inset: 0;', 'style="position: absolute; inset: 0; z-index: -1;')}
   <div data-og-text style="position: absolute; left: 80px; top: 62px; display: flex; align-items: center; gap: 14px; font-size: 32px; font-weight: 600; letter-spacing: -.02em;">${mark(30)}Lucida</div>
   <div style="position: absolute; left: 80px; top: 0; bottom: 0; width: 600px; display: flex; flex-direction: column; justify-content: center; padding-top: 18px;">
     <div data-og-text style="font-size: {{size}}px; font-weight: 600; line-height: 1; letter-spacing: -.05em; text-wrap: balance;">{{h1}}</div>
-    <div data-og-text style="margin-top: 30px; font-size: 26px; color: {{ink2}};">{{url}}</div>
   </div>
   ${OG_SCENES}
 </div>`;
@@ -6636,7 +6697,8 @@ renderVals() { ${T}
   // The gradient: layers on a base. A "blob" is a soft round patch of one color; a "fill" covers the picture.
   const blob = (x, y, w, h, col, o, ex) => Object.assign({ x, y, w, h, bg: 'radial-gradient(closest-side, ' + col + ', transparent)', o: o == null ? 1 : o, blend: 'normal', filter: 'none', r: '0', rot: 0 }, ex || {});
   const fill = (bg, o, ex) => Object.assign({ x: 0, y: 0, w: 1200, h: 630, bg, o: o == null ? 1 : o, blend: 'normal', filter: 'none', r: '0', rot: 0 }, ex || {});
-  const j = ((seed * 37) % 100) / 100, k = ((seed * 53 + 11) % 100) / 100;
+  // How far a style's shapes are moved: by the page's v only, so a style and a palette make the same background on any page.
+  const v0 = it.picture.v || 0, j = ((v0 * 37) % 100) / 100, k = ((v0 * 53 + 11) % 100) / 100;
   const [c0, c1, c2, c3, c4] = c, steps = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9].map(i => mix(c3, i < 5 ? c0 : c1, i < 5 ? 0.2 + i * 0.16 : (i - 4) * 0.17));
   const STYLE = {
     // Irregular mesh: soft patches of several colors running into each other.
@@ -6683,9 +6745,9 @@ renderVals() { ${T}
   // An exam week: a column of cards for each day, fewer as the exam comes, and the exam.
   const days = [['Mon', 5], ['Tue', 4], ['Wed', 3], ['Thu', 2], ['Fri', 1]].map(([label, kk], i) => ({ label, x: 22 + i * 92, h: 40 + kk * 44, y: 330 - (40 + kk * 44), c1: acc(i).b0.c, c2: acc(i).b3.c }));
   return { t, grain: '0', h1: it.h1, size: n <= 14 ? 112 : n <= 22 ? 96 : n <= 34 ? 80 : n <= 50 ? 68 : 58, bg,
-    url: 'lucida.cards' + (it.slug ? '/' + it.slug : ''), other: it.picture.other, otherFs: it.picture.other.length <= 6 ? 46 : it.picture.other.length <= 8 ? 38 : 31, otherFsWide: it.picture.other.length <= 6 ? 50 : it.picture.other.length <= 8 ? 42 : 34, ink2: '#2A2A30',
+    other: it.picture.other, otherFs: it.picture.other.length <= 6 ? 46 : it.picture.other.length <= 8 ? 38 : 31, otherFsWide: it.picture.other.length <= 6 ? 50 : it.picture.other.length <= 8 ? 42 : 34,
     scene: Object.fromEntries(${JSON.stringify(SCENES)}.map(s => [s, s === it.picture.scene + (${JSON.stringify(SCENE_ARRANGEMENTS)}[it.picture.scene] ? (it.picture.v || 0) % ${JSON.stringify(SCENE_ARRANGEMENTS)}[it.picture.scene] : '')])),
-    card: '#FFFFFF', glass: 'rgba(255,255,255,.62)', glassEdge: 'rgba(255,255,255,.75)', edge: 'rgba(0,0,0,.06)',
+    card: '#FFFFFF', line: '#EBEBEB', glass: 'rgba(255,255,255,.62)', glassEdge: 'rgba(255,255,255,.75)', edge: 'rgba(0,0,0,.06)',
     bar: 'rgba(0,0,0,.11)', sh: 'rgba(20,20,60,.45)', surf: '#F1F1F4',
     c1: acc(0), c2: acc(1), c3: acc(2), c4: acc(3), c5: acc(4), c6: acc(5), tiles, steps: stepsOf, days };
 }`;
@@ -6696,6 +6758,7 @@ renderVals() { ${T}
 // The Connect guide's figures: a .sp wrapper (the site's colors as variables) round a list of drawings.
 const guideFigs = list => `<div class="sp" style="margin-top: 8px; ${SP_VARS}"><sc-for list="{{${list}}}" as="f">${spFig}</sc-for></div>`;
 const guideLogic = () => `${FOOT_METHOD}
+${HEAD_METHOD}
 renderVals() {
   const site = !!this.props.site;
   // On lucida.cards the colors are CSS variables with a light and a dark set (design/scheme.mjs), so the page follows the system.
@@ -6703,7 +6766,7 @@ renderVals() {
   const ink = site ? ${JSON.stringify(EXTRA_VARS)} : this.props.dark ? ${JSON.stringify(EXTRA_DARK)} : ${JSON.stringify(EXTRA_LIGHT)};
   const V = (${visualsOf.toString()})({ visuals: { figs: ${JSON.stringify(CONNECT_FIGS)} } }, { plain: s => s, parts: s => [{ text: s, plain: true }], PHONE: false, site, SCREENS: ${JSON.stringify(SCREENS)}, BOARDS: ${JSON.stringify(SHOT_BOARDS)}, KINDS: ${JSON.stringify(KINDS)}, shotFile: ${shotFile.toString()} }, ${JSON.stringify(CONNECT.sections.map(x => ({ h2: x.h, paras: [], bullets: [] })))});
   const at = (h, k) => (V.bySection[h] || { before: [], after: [] })[k];
-  return { t, ink, site, canvas: !site, dark: !!this.props.dark, figsTop: at('What you need', 'before'), figsClaude: at('Claude', 'after'), foot: this.foot(false), homeHref: site ? 'https://lucida.cards/' : 'Landing.dc.html', signInHref: site ? 'https://app.lucida.cards/sign-in' : 'WebSignIn.dc.html', startHref: site ? 'https://app.lucida.cards/' : 'WebSignIn.dc.html',
+  return { t, ink, site, canvas: !site, dark: !!this.props.dark, figsTop: at('What you need', 'before'), figsClaude: at('Claude', 'after'), hd: this.hd(false), foot: this.foot(false), homeHref: site ? 'https://lucida.cards/' : 'Landing.dc.html', signInHref: site ? 'https://app.lucida.cards/sign-in' : 'WebSignIn.dc.html', startHref: site ? 'https://app.lucida.cards/' : 'WebSignIn.dc.html',
     privacyHref: site ? '/privacy' : 'Privacy.dc.html', termsHref: site ? '/terms' : 'Terms.dc.html', pricingHref: site ? '/pricing' : 'Pricing.dc.html' }; }`;
 function siteFiles() {
   const out = {};
@@ -8907,7 +8970,7 @@ const files = {
   'PhoneDonePiles': ['iPhone · Session done · piles', phoneDonePiles, { props: DARK, logic: donePilesLogic(true), w: PW, h: PH }],
   'PhoneSignIn': ['iPhone · Sign in', phoneSignIn, { props: { ...DARK, grain: MESH('Iris').grain, passwordMode: BOOL }, logic: signInLogic('', [50, 60, 55, 65], PHONE_K), css: WALL_CSS, w: PW, h: PH }],
   'PhoneSignInCode': ['iPhone · Sign in · code from email', phoneSignInCode, { props: DARK, logic: signInLogic('482'), w: PW, h: PH }],
-  'Landing': ['Landing page · lucida.cards', landing(LAND.web, W, LANDING_H), { props: { ...DARK, grain: MESH('Iris').grain }, logic: landingLogic(false), css: WALL_CSS + DEMO_CSS + SKY_CSS + NO_RISE, w: W, h: LANDING_H }],
+  'Landing': ['Landing page · lucida.cards', landing(LAND.web, W, LANDING_H), { props: { ...DARK, grain: MESH('Iris').grain }, logic: landingLogic(false), css: WALL_CSS + DEMO_CSS + SKY_CSS + HEAD_CSS + NO_RISE, w: W, h: LANDING_H }],
   'WebQuizStart': ['Web · Learn mode · start', webQuizStart(), { props: DARK, logic: QUIZ_START_LOGIC(false, true), w: W, h: H }],
   'WebQuiz': ['Web · Learn mode · choice question', webQuiz, { props: { ...DARK, answered: { editor: 'boolean', default: false }, settingsOpen: { editor: 'boolean', default: false } }, logic: QUIZ_LOGIC(false), css: LEARN_CSS, w: W, h: H }],
   'WebQuizAnswered': ['Web · Learn mode · answered', attrOf('WebQuiz', W, H, 'answered="{{yes}}"'), { logic: darkLogic, css: LEARN_CSS, w: W, h: H }],
@@ -8941,13 +9004,13 @@ const files = {
   'LiveResultTimeUp': ['Live · phone · time’s up (no answer)', attrOf('LiveResult', PW, PH, 'time-up="{{yes}}"'), { logic: darkLogic, css: LIVE_CSS + FLAME_CSS, w: PW, h: PH }],
   'LiveFinal': ['Live · phone · final', liveFinal, { props: { ...DARK, grain: MESH('Iris').grain, final: { editor: 'boolean', default: true } }, logic: LIVE_PHONE_LOGIC, css: LIVE_CSS, w: PW, h: PH }],
   'LiveEnded': ['Live · phone · the game ended', liveEnded, { props: { ...DARK, grain: MESH('Iris').grain }, logic: LIVE_PHONE_LOGIC, css: LIVE_CSS, w: PW, h: PH }],
-  'Pricing': ['Pricing · lucida.cards/pricing', pricing(LAND.web, W, PRICING_H), { props: { ...DARK, grain: MESH('Iris').grain }, logic: pricingLogic(false), css: SKY_CSS + NO_RISE, w: W, h: PRICING_H }],
-  'PricingPhone': ['Pricing · lucida.cards/pricing on a phone', pricing(LAND.phone, PW, PRICING_PHONE_H), { props: { ...DARK, grain: MESH('Iris').grain }, logic: pricingLogic(true), css: SKY_CSS + NO_RISE, w: PW, h: PRICING_PHONE_H }],
-  'Privacy': ['Privacy Policy · lucida.cards/privacy', legalPage(PRIVACY, LEGAL_H.Privacy), { props: DARK, logic: legalLogic, w: W, h: LEGAL_H.Privacy }],
-  'Terms': ['Terms of Service · lucida.cards/terms', legalPage(TERMS, LEGAL_H.Terms), { props: DARK, logic: legalLogic, w: W, h: LEGAL_H.Terms }],
+  'Pricing': ['Pricing · lucida.cards/pricing', pricing(LAND.web, W, PRICING_H), { props: { ...DARK, grain: MESH('Iris').grain }, logic: pricingLogic(false), css: SKY_CSS + HEAD_CSS + NO_RISE, w: W, h: PRICING_H }],
+  'PricingPhone': ['Pricing · lucida.cards/pricing on a phone', pricing(LAND.phone, PW, PRICING_PHONE_H), { props: { ...DARK, grain: MESH('Iris').grain }, logic: pricingLogic(true), css: SKY_CSS + HEAD_CSS + NO_RISE, w: PW, h: PRICING_PHONE_H }],
+  'Privacy': ['Privacy Policy · lucida.cards/privacy', legalPage(PRIVACY, LEGAL_H.Privacy), { props: DARK, logic: legalLogic, css: HEAD_CSS, w: W, h: LEGAL_H.Privacy }],
+  'Terms': ['Terms of Service · lucida.cards/terms', legalPage(TERMS, LEGAL_H.Terms), { props: DARK, logic: legalLogic, css: HEAD_CSS, w: W, h: LEGAL_H.Terms }],
   // The Connect guide has its steps as cards and the consent screen (the same drawings as the articles', in a .sp wrapper that sets their colors).
   'SiteConnect': ['Connect Lucida to your AI · lucida.cards/connect', legalPage(CONNECT, LEGAL_H.Connect, { top: guideFigs('figsTop'), after: { Claude: guideFigs('figsClaude') } }), { props: DARK, logic: guideLogic(), css: SITE_CSS, w: W, h: LEGAL_H.Connect }],
-  'LandingPhone': ['Landing page · lucida.cards on a phone', landing(LAND.phone, PW, LANDING_PHONE_H), { props: { ...DARK, grain: MESH('Iris').grain }, logic: landingLogic(true), css: WALL_CSS + DEMO_CSS + SKY_CSS + NO_RISE, w: PW, h: LANDING_PHONE_H }],
+  'LandingPhone': ['Landing page · lucida.cards on a phone', landing(LAND.phone, PW, LANDING_PHONE_H), { props: { ...DARK, grain: MESH('Iris').grain }, logic: landingLogic(true), css: WALL_CSS + DEMO_CSS + SKY_CSS + HEAD_CSS + NO_RISE, w: PW, h: LANDING_PHONE_H }],
   'PhoneStats': ['iPhone · Stats', phoneStats, { props: { ...DARK, ...STATS_PROPS }, logic: phoneStatsLogic, w: PW, h: PH }],
   'PhoneStatsMemory': ['iPhone · Stats · Memory (Pro)', attrOf('PhoneStats', PW, PH, 'tab="Memory"'), { logic: darkLogic, w: PW, h: PH }],
   'PhoneStatsWeak': ['iPhone · Stats · Weak spots (Pro)', attrOf('PhoneStats', PW, PH, 'tab="Weak spots"'), { logic: darkLogic, w: PW, h: PH }],

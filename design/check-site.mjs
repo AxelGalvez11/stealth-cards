@@ -16,7 +16,7 @@ import { join } from 'node:path';
 import { pageSet, KINDS, FIXED, PRICE, ORIGIN, APP, EMAIL, SOCIALS, CATEGORIES, STYLES, GRAD_NAMES, categoryOf, pictureOf, ogFingerprint, plain, DATA_DIR, VISUALS } from './site.mjs';
 import { KINDS as FIG_KINDS, SCREENS, CONNECT_FIGS } from './visuals.mjs';
 import { wanted as screenPictures } from './screens.mjs';
-import { readPng, thumb, distance } from './png.mjs';
+import { readPng, thumb, distance, labDistance } from './png.mjs';
 import { LIGHT, DARK, SCHEME_CSS } from './scheme.mjs';
 import { allPages, AI_BOTS, OG, crumbUrl } from './seo.mjs';
 import { checkJsonLd } from './schema-check.mjs';
@@ -87,6 +87,22 @@ for (const [p, file] of pageFiles) {
   const meta = (k, v) => { const m = tags(head).find(t => t.tag === 'meta' && t.attrs[k] === v); return m ? m.attrs.content : undefined; };
   const link = rel => { const m = tags(head).find(t => t.tag === 'link' && t.attrs.rel === rel); return m ? m.attrs.href : undefined; };
   const notFound = p.kind === 'notfound';
+  // One header on every page (the landing page and Pricing hold two copies, for a computer and for a phone): the logo, then Blog, Compare, Features,
+  // Pricing and Sign in, and Get started; the same five links again in the menu a narrow page opens (a <details>), in the same order.
+  {
+    const headers = [...body.matchAll(/<header class="sp-head">([\s\S]*?)<\/header>/g)].map(m => m[1]);
+    const links = h => [...(h || '').matchAll(/<a href="([^"]*)"[^>]*>([^<]*)<\/a>/g)].map(m => [m[2], m[1]]);
+    const want = [['Blog', '/blog'], ['Compare', '/compare'], ['Features', '/features'], ['Pricing', '/pricing'], ['Sign in', APP + '/sign-in']];
+    const copies = p.slug === '' || p.slug === 'pricing' ? 2 : 1;
+    ok(headers.length === copies, 'the page has ' + (copies === 2 ? 'a header for a computer and one for a phone' : 'one header'), headers.length);
+    for (const h of headers) {
+      const nav = (h.match(/<nav class="sp-hnav"[^>]*>([\s\S]*?)<\/nav>/) || [])[1], menu = (h.match(/<nav class="sp-mpanel"[^>]*>([\s\S]*?)<\/nav>/) || [])[1];
+      ok(JSON.stringify(links(nav)) === JSON.stringify(want), 'the header links are Blog, Compare, Features, Pricing, Sign in, in that order', links(nav));
+      ok(JSON.stringify(links(menu)) === JSON.stringify(want), 'the menu a narrow page opens holds the same five links in the same order', links(menu));
+      ok(/<a class="sp-hlogo" href="\/" aria-label="Lucida home">/.test(h) && h.includes('<a class="sp-hgo" href="' + APP + '/">Get started</a>'), 'the header has the logo (home) and Get started (the app)');
+      ok(/<details class="sp-menu"><summary aria-label="Menu">/.test(h) && !/<header[^>]*>[\s\S]*How it works/.test(h), 'the header has a menu button and no page-only links (How it works, Card types)');
+    }
+  }
   ok(/^<!doctype html>\s*<html lang="en">/i.test(html), '<html lang="en"> after the doctype');
   ok(/<meta name="viewport" content="width=device-width, initial-scale=1">/.test(head), 'viewport');
   // title and description
@@ -188,9 +204,12 @@ for (const [p, file] of pageFiles) {
         ok(figs.length >= 2, p.slug + ' has two or more visuals', figs.length);
         ok(figs.length === (V.figs || []).length && figs.every((f, i) => FIG_KINDS.includes(f[1])), 'every visual of ' + p.slug + ' is drawn, and every drawing is one of the known kinds', [figs.length, (V.figs || []).length]);
         ok(figs.every(f => /<figcaption class="sp-fcap">[^<]+<\/figcaption>/.test(f[2])), 'every visual of ' + p.slug + ' has a caption');
-        const cards = body.match(/<details class="sp-tc"[^>]*>/g) || [], tsec = (body.match(/<section class="sp-sec sp-test" id="test-yourself">[\s\S]*?<\/section>/) || [''])[0];
+        const cards = body.match(/<details class="sp-tc sp-fc"[^>]*>/g) || [], tsec = (body.match(/<section class="sp-sec sp-test" id="test-yourself">[\s\S]*?<\/section>/) || [''])[0];
         ok(cards.length >= 3 && cards.length <= 4 && cards.length === (V.test || []).length, p.slug + ' has a "Test yourself" set of three or four cards', cards.length);
         ok(cards.every(c => !/\bopen\b/.test(c)) && /<a class="sp-u" href="https:\/\/app\.lucida\.cards\/">Make your own cards free<\/a>/.test(tsec), 'the cards are closed (a tap shows the answer), and "Make your own cards free" goes to the app');
+        // Each card is the app's card (class sp-fc): the question on its front, the answer on its back (a tap turns it, on the same card), and a chip in
+        // the corner that says what a tap does.
+        ok([...tsec.matchAll(/<details class="sp-tc sp-fc"[^>]*><summary class="sp-tq"><span class="sp-fc-chip"><span class="sp-tca">Show the answer<\/span><span class="sp-tcq">Show the question<\/span><\/span><span class="sp-tt sp-tf">([^<]+)<\/span><span class="sp-tt sp-ta">([^<]+)<\/span><span class="sp-tn" aria-hidden="true">([^<]+)<\/span><\/summary><\/details>/g)].length === cards.length, 'each test card is the app’s card: a question on its front, an answer on its back (the question again as its faint note line), and a chip in the corner');
         ok(body.indexOf('id="test-yourself"') > 0 && body.indexOf('id="test-yourself"') < body.indexOf('id="questions"'), '"Test yourself" comes before "Questions"');
         ok(top.includes('test-yourself'), '"On this page" lists "Test yourself"', top);
         // The screens: a picture for a computer and for a phone, light and dark, each with its size and a real alt text.
@@ -231,6 +250,10 @@ for (const [p, file] of pageFiles) {
     }
   }
   ok(!/\.dc\.html/.test(body), 'no links to canvas boards');
+  // No card shows a pill with the kind of page (Comparison, Feature, Guide, Help, Overview): the section headings already say it. And a table sits in a box
+  // that scrolls sideways when it must (a focusable region), keeping its real columns.
+  ok(!/sp-card-chip|sp-kchip/.test(html), 'no card shows a pill with its category (no sp-card-chip or sp-kchip anywhere)');
+  for (const t of body.matchAll(/<div class="sp-table">([\s\S]*?)<\/table>/g)) ok(/^\s*<div class="sp-tsc" role="region" aria-label="Table, scrolls sideways" tabindex="0"><table style="--f: \d+px; --cols: \d+;">/.test(t[1]), 'a table sits in a box that scrolls sideways (a focusable region) and says how wide its columns are');
   ok(html.length < (dual > 0 ? 420 : 140) * 1024, 'the page is small', Math.round(html.length / 1024) + ' KB');
   // the footer links to the hub, features (when there are any), FAQ, pricing, privacy and terms
   const foot = (body.match(/<nav aria-label="Footer"[\s\S]*?<\/nav>/) || [''])[0], footLinks = [...foot.matchAll(/href="([^"]*)"/g)].map(m => m[1]);
@@ -378,6 +401,13 @@ for (const p of list) {
   ok(m && m.file === p.og && m.dark === undefined && m.fingerprint === ogFingerprint(p), 'the picture for ' + (p.slug || '/') + ' was drawn for its current title, scene and palette', m);
   ok(existsSync(join(WEB, p.og)) && JSON.stringify(png(p.og)) === JSON.stringify([OG.width, OG.height]), 'the picture for ' + (p.slug || '/') + ' exists and is 1200 × 630', p.og);
 }
+// A picture carries no web address, nowhere on it: not under its title, not in a scene (design/og.mjs writes every word a picture shows into its manifest).
+{
+  const url = /lucida\.cards|app\.lucida|https?:|www\.|\.(com|cards|app|io|org)\b/i, texts = list.map(p => [p.slug || 'home', (manifest[p.slug || 'home'] || {}).text]);
+  ok(texts.every(([, t]) => Array.isArray(t) && t.length >= 2), 'the pictures’ words are in the manifest (node design/og.mjs)', texts.filter(([, t]) => !Array.isArray(t) || t.length < 2).map(x => x[0]));
+  ok(texts.every(([, t]) => (t || []).every(x => !url.test(x))), 'no picture shows a web address', texts.flatMap(([k, t]) => (t || []).filter(x => url.test(x)).map(x => k + ': ' + x)));
+  ok(!/\{\{url\}\}|lucida\.cards/.test(og.split('<x-dc>')[1].split('</x-dc>')[0].replace(/<helmet>[\s\S]*?<\/helmet>/, '')), 'the SiteOg board’s drawing has no address in it');
+}
 ok(readdirSync(join(WEB, 'og')).filter(f => /-dark\./.test(f)).length === 0, 'web/og has no -dark pictures (the gradients look the same in dark mode)', readdirSync(join(WEB, 'og')).filter(f => /-dark\./.test(f)));
 ok(readdirSync(join(WEB, 'og')).filter(f => f.endsWith('.png')).length === list.length, 'web/og has one picture for every page and no others', readdirSync(join(WEB, 'og')).length + ' files vs ' + list.length);
 ok(Object.keys(manifest).filter(k => !k.startsWith('_')).length === list.length, 'no pictures for pages that aren’t there', Object.keys(manifest).length + ' vs ' + list.length);
@@ -399,6 +429,34 @@ ok(Object.keys(manifest).filter(k => !k.startsWith('_')).length === list.length,
   order.forEach((c, i) => { if (order[i + 1] && style(c) === style(order[i + 1])) clash.push(c + ' > ' + order[i + 1]); });
   ok(order.length >= 20 && !clash.length, 'no two neighbors on the blog’s grid share a gradient style', clash);
 }
+// The gradients themselves, as people see them: design/og.mjs draws each picture's gradient alone (no words, no veil under them, no scene) as a
+// grid of 32 × 17 colors (design/og-bg.json), and the grids are compared in CIELAB (the mean over the 544 cells of how far apart a cell's two
+// colors are; about 2 is the least a person notices). No two pictures on the site may be closer than 30 (the blog's first palettes had a pair at 14),
+// and pictures that sit next to each other (beside, above or after one another on the blog, a hub or in Keep reading) not closer than 60.
+{
+  const ANY = 30, NEXT = 60;
+  let bgd = null; try { bgd = JSON.parse(readFileSync(join(ROOT, 'design/og-bg.json'), 'utf8')); } catch {}
+  ok(bgd && bgd._art === art, 'the pictures’ gradients (design/og-bg.json) were drawn by the current SiteOg drawing (node design/og.mjs)', bgd && [bgd._art, art]);
+  const keys = list.map(p => p.slug || 'home'), grid = k => Uint8Array.from(Buffer.from(((bgd || {}).bg || {})[k] || '', 'base64'));
+  ok(keys.every(k => grid(k).length === 32 * 17 * 3), 'every picture has its gradient as a grid of 32 × 17 colors', keys.filter(k => grid(k).length !== 32 * 17 * 3));
+  if (keys.every(k => grid(k).length === 32 * 17 * 3)) {
+    const d = {}, dist = (a, b) => { const k = a < b ? a + '|' + b : b + '|' + a; return d[k] ?? (d[k] = labDistance(grid(a), grid(b))); };
+    const close = [];
+    for (let a = 0; a < keys.length; a++) for (let b = a + 1; b < keys.length; b++) { const x = dist(keys[a], keys[b]); if (x < ANY) close.push(keys[a] + ' / ' + keys[b] + ' ' + x.toFixed(1)); }
+    ok(!close.length, 'no two pictures have gradients that look alike (every two at least ' + ANY + ' apart)', close);
+    // Who is next to whom.
+    const slugOf = h => h.replace(/^\//, '') || 'home', next = new Map(), add = (a, b, where) => { if (a !== b && keys.includes(a) && keys.includes(b)) next.set(a < b ? a + '|' + b : b + '|' + a, where); };
+    for (const [slug, html] of htmlOf) {
+      const order = [...html.matchAll(/<a class="sp-(?:card|feat sp-wide)" href="([^"]*)"/g)].map(m => slugOf(m[1]));
+      order.forEach((c, i) => { if (order[i + 1]) add(c, order[i + 1], slug + ' (one after another)'); });
+      for (const m of html.matchAll(/<div class="sp-cards sp-wide">([\s\S]*?)<\/div>/g)) { const cards = [...m[1].matchAll(/<a class="sp-card" href="([^"]*)"/g)].map(x => slugOf(x[1])); cards.forEach((c, i) => { if (i % 3 < 2 && cards[i + 1]) add(c, cards[i + 1], slug + ' (beside)'); if (cards[i + 3]) add(c, cards[i + 3], slug + ' (below)'); }); }
+      const feat = (html.match(/<a class="sp-feat sp-wide" href="([^"]*)"/) || [])[1];
+      if (feat) for (const x of [...html.matchAll(/<a class="sp-card" href="([^"]*)"/g)].slice(0, 3)) add(slugOf(feat), slugOf(x[1]), slug + ' (featured, above)');
+    }
+    const tooNear = [...next].map(([k, where]) => { const [a, b] = k.split('|'); return [dist(a, b), a, b, where]; }).filter(x => x[0] < NEXT).map(x => x[1] + ' / ' + x[2] + ' ' + x[0].toFixed(1) + ' on ' + x[3]);
+    ok(next.size >= 60 && !tooNear.length, 'neighbors (' + next.size + ' pairs on the blog, the hubs and Keep reading) have gradients at least ' + NEXT + ' apart', tooNear.length ? tooNear : next.size);
+  }
+}
 for (const [f, s] of [['icons/icon-192.png', 192], ['icons/icon-512.png', 512], ['icons/apple-touch-icon.png', 180]]) ok(JSON.stringify(png(f)) === JSON.stringify([s, s]), f + ' is ' + s + ' × ' + s);
 for (const f of ['SiteCompare', 'SiteCompare', 'SiteFeature', 'SiteFaq']) for (const suffix of ['', 'Phone']) ok(existsSync(join(ROOT, 'design/canvas/project', f + suffix + '.dc.html')), f + suffix + ' board exists');
 ok(existsSync(join(ROOT, 'design/canvas/project/SiteOg.dc.html')), 'SiteOg board exists');
@@ -412,6 +470,15 @@ for (const name of ['SiteCompare', 'SiteFeature', 'SiteFaq']) for (const [i, suf
   // soft-light, the board's grain) drawn at the screen's pixels right over each import.
   { const imports = src.match(/<dc-import name="SiteOg"/g) || [], grained = src.match(/<dc-import name="SiteOg"[^>]*><\/dc-import><\/div><svg aria-hidden="true" width="100%" height="100%" style="position: absolute; inset: 0; mix-blend-mode: soft-light; opacity: \{\{grain\}\};/g) || [];
     ok(imports.length >= 3 && !/<dc-import name="SiteOg"[^>]*\bdark=/.test(src) && grained.length === imports.length, name + suffix + ' draws SiteOg in its one look, each under the app’s grain', [imports.length, grained.length]); }
+}
+{
+  // One header on every canvas board that draws a page of lucida.cards (the landing page and Pricing for a computer and for a phone, Privacy, Terms,
+  // Connect and the Site boards): the same markup, from the same code, and its styles (the bar, the menu button and the menu) in the board.
+  const names = ['Landing', 'LandingPhone', 'Pricing', 'PricingPhone', 'Privacy', 'Terms', 'SiteConnect', 'SiteCompare', 'SiteComparePhone', 'SiteFeature', 'SiteFeaturePhone', 'SiteFaq', 'SiteFaqPhone'];
+  const srcs = names.map(n => readFileSync(join(ROOT, 'design/canvas/project', n + '.dc.html'), 'utf8')), heads = srcs.map(x => (x.match(/<header class="sp-head">[\s\S]*?<\/header>/) || [''])[0]);
+  ok(heads.every(h => h && h === heads[0]), 'the canvas boards (landing page, Pricing, Privacy, Terms, Connect and the Site boards, computer and phone) all draw the same header', names.filter((n, i) => heads[i] !== heads[0]));
+  ok(/\{\{hd\.nav\}\}/.test(heads[0]) && /\{\{hd\.signIn\}\}/.test(heads[0]) && /\{\{hd\.start\}\}/.test(heads[0]) && heads[0].includes('<details class="sp-menu">'), 'that header has the links from the page’s own logic and a menu button');
+  ok(srcs.every(x => x.includes('.sp-menu summary') && x.includes('.sp-mpanel') && x.includes('@container (max-width: 760px){.sp-head{height:64px}')), 'every one of those boards carries the header’s styles', names.filter((n, i) => !srcs[i].includes('.sp-mpanel')));
 }
 {
   // SiteOg must know every page's key, or a picture on the canvas would quietly be another page's.

@@ -16,13 +16,14 @@ export const DARK = {
 export const SKY_LIGHT = { top: '#86BDF3', mid: '#C9E2FB', low: '#EDF5FE', glow: 'rgba(255,255,255,.75)', cloud: 'rgba(255,255,255,.94)' };
 export const SKY_DARK = { top: '#081733', mid: '#0D2148', low: '#0A1530', glow: 'rgba(120,150,255,.16)', cloud: 'rgba(150,170,230,.10)' };
 // Only the site's pages: thin rules inside a card, the hairline round a picture, the second gray (for the words over the page's sky, a
-// touch stronger than `muted`, which a dark sky would leave under 4.5 to 1), the chip on a card's picture, and the three colors of the
+// touch stronger than `muted`, which a dark sky would leave under 4.5 to 1), and the three colors of the
 // blog's headline (Lucida's colors: periwinkle, sky, violet), and the drawn diagrams in the articles (the stage they sit on, their cards,
-// the hairline and shadow of a card, the soft bars that stand for text, the lines and arrows).
-export const EXTRA_LIGHT = { hair: 'rgba(0,0,0,.09)', edge: 'rgba(0,0,0,.07)', sub: '#595959', chipbg: 'rgba(255,255,255,.92)', chipfg: '#000000', g1: '#4B5BF0', g2: '#1D8FD6', g3: '#7C4DF2',
-  fstage: '#F3F4F9', fcard: '#FFFFFF', fedge: 'rgba(20,20,60,.08)', fsoft: '#E3E6EF', fline: '#9096AB', fshadow: '0 1px 2px rgba(20,20,60,.05), 0 16px 30px -18px rgba(30,30,90,.30)' };
-export const EXTRA_DARK = { hair: 'rgba(255,255,255,.12)', edge: 'rgba(255,255,255,.1)', sub: '#BDBDBD', chipbg: 'rgba(24,24,28,.92)', chipfg: '#FFFFFF', g1: '#8C98FC', g2: '#53B1FD', g3: '#B79DFB',
-  fstage: '#111116', fcard: '#1E1E24', fedge: 'rgba(255,255,255,.10)', fsoft: '#2E2E37', fline: '#6F7389', fshadow: '0 16px 30px -16px rgba(0,0,0,.8)' };
+// the line and shadow of a card, the soft bars that stand for text, the lines and arrows). A card is the app's own: #FFFFFF with a #EBEBEB line and the
+// app's shadow (scaled down for a small card), or in dark the app's dark card, #141414 with a #262626 line and no shadow.
+export const EXTRA_LIGHT = { hair: 'rgba(0,0,0,.09)', edge: 'rgba(0,0,0,.07)', sub: '#595959', g1: '#4B5BF0', g2: '#1D8FD6', g3: '#7C4DF2',
+  fstage: '#F3F4F9', fcard: '#FFFFFF', fedge: '#EBEBEB', fsoft: '#E3E6EF', fline: '#9096AB', fshadow: '0 1px 2px rgba(0,0,0,.04), 0 8px 20px -8px rgba(0,0,0,.18)' };
+export const EXTRA_DARK = { hair: 'rgba(255,255,255,.12)', edge: 'rgba(255,255,255,.1)', sub: '#BDBDBD', g1: '#8C98FC', g2: '#53B1FD', g3: '#B79DFB',
+  fstage: '#0A0A0A', fcard: '#141414', fedge: '#262626', fsoft: '#2A2A2A', fline: '#6F7389', fshadow: '0 0 0 0 transparent' };
 
 const names = o => Object.keys(o);
 // theme() as variable references: { bg: 'var(--t-bg)', ... }; and the sky and the extras the same way.

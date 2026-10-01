@@ -10,7 +10,15 @@
 //     section being read on a wide screen, the blog's tabs and search filter its cards;
 //   - the colors a page shows are the ones design/scheme.mjs says, light and dark;
 //   - an article's diagrams fit (none taller than 440 px on a phone, apart from the ones that hold the page's own bullets), its screens are
-//     the phone's on a phone, the dark ones in the dark, and its "Test yourself" cards scroll sideways on a phone (never the page) and open at once.
+//     the phone's on a phone, the dark ones in the dark, and its "Test yourself" cards scroll sideways on a phone (never the page) and turn at once;
+//   - one header on every page: the same links in the same order, on a computer in the bar and on a phone behind one menu button that opens at
+//     once, in the same place on every page; no card shows a pill with its category;
+//   - the article column is centered (equal margins within 1 px, at 390 and 1440, with the contents tree in the left margin and never over the
+//     column); a table keeps its real columns, sits in the column and scrolls inside its own box; a hub's crumbs, title, lead, featured page, cards,
+//     table, headings and lists start at one left edge (the blog's too);
+//   - the flashcards are the app's: radius, line, shadow, padding and type in the app card's ratios, in light and in dark, and a test card turns
+//     to its answer on the same card (its size does not change);
+//   - the motion: only the clouds and the gradient that ends a page move, slowly, and only when the system allows motion; nothing moves the layout.
 // --quick checks only a few pages (the pages with something special) and skips the contrast. Needs Chrome (design/chrome.mjs).
 import { createServer } from 'node:http';
 import { readFileSync, existsSync } from 'node:fs';
@@ -20,7 +28,7 @@ import { withChrome } from './chrome.mjs';
 import { pageSet, FIXED } from './site.mjs';
 import { route } from './vercel-routes.mjs';
 import { readPng } from './png.mjs';
-import { LIGHT, DARK } from './scheme.mjs';
+import { LIGHT, DARK, EXTRA_LIGHT, EXTRA_DARK } from './scheme.mjs';
 
 const ROOT = fileURLToPath(new URL('../', import.meta.url)), WEB = join(ROOT, 'web'), args = process.argv.slice(2), quick = args.includes('--quick');
 const only = args.filter(a => !a.startsWith('--'));
@@ -65,7 +73,7 @@ const PROBE = `(() => {
   const tcs = document.querySelector('.sp-tcs'); out.tests = tcs ? { n: tcs.querySelectorAll('details.sp-tc').length, sw: tcs.scrollWidth, cw: tcs.clientWidth, ox: getComputedStyle(tcs).overflowX } : null;
   const main = document.querySelector('main');
   if (main) for (const el of main.querySelectorAll('*')) {
-    if (el.closest('[aria-hidden="true"]') || el.closest('.sp-sr') || el.closest('thead') && getComputedStyle(el.closest('thead')).position === 'absolute' || el.closest('.sp-tabs') || el.closest('.sp-toc') || el.closest('.sp-tcs')) continue;
+    if (el.closest('[aria-hidden="true"]') || el.closest('.sp-sr') || el.closest('thead') && getComputedStyle(el.closest('thead')).position === 'absolute' || el.closest('.sp-tabs') || el.closest('.sp-toc') || el.closest('.sp-tcs') || (el.parentElement && el.parentElement.closest('.sp-tsc'))) continue;
     const r = el.getBoundingClientRect();
     if (r.width && r.height && (r.right > innerWidth + 1 || r.left < -1)) out.past.push(el.tagName.toLowerCase() + '.' + String(el.className).slice(0, 30) + ' ' + Math.round(r.left) + '..' + Math.round(r.right));
   }
@@ -86,6 +94,32 @@ const PROBE = `(() => {
   }
   return out;
 })()`;
+// How the page is laid out, for the checks of the header, the column, the tables, the hubs and the flashcards.
+const LAYOUT = `(() => {
+  const W = document.documentElement.clientWidth, R = e => { const r = e.getBoundingClientRect(); return { l: +r.left.toFixed(2), r: +(W - r.right).toFixed(2), w: +r.width.toFixed(2), h: +r.height.toFixed(2), t: +(r.top + scrollY).toFixed(2) }; };
+  const shown = e => { const r = e.getBoundingClientRect(), cs = getComputedStyle(e); return r.width > 0 && r.height > 0 && cs.display !== 'none' && cs.visibility !== 'hidden'; };
+  const out = {}, head = [...document.querySelectorAll('header.sp-head')].find(shown);
+  if (head) {
+    const nav = head.querySelector('.sp-hnav'), menu = head.querySelector('.sp-menu'), go = head.querySelector('.sp-hgo'), logo = head.querySelector('.sp-hlogo'), sum = menu && menu.querySelector('summary');
+    out.head = { h: R(head).h, logo: R(logo), go: R(go), goText: go.textContent.trim(), goHref: go.getAttribute('href'), homeHref: logo.getAttribute('href'),
+      nav: nav && shown(nav) ? [...nav.querySelectorAll('a')].map(a => [a.textContent.trim(), a.getAttribute('href'), Math.round(a.getBoundingClientRect().height)]) : null,
+      menu: menu && shown(menu) ? { w: Math.round(R(sum).w), h: Math.round(R(sum).h), links: [...menu.querySelectorAll('.sp-mpanel a')].map(a => [a.textContent.trim(), a.getAttribute('href')]) } : null };
+  }
+  const main = document.querySelector('.sp-main'); if (main && shown(main)) out.main = R(main);
+  const toc = document.querySelector('.sp-toc'); if (toc && shown(toc)) out.toc = R(toc);
+  const hub = !!document.querySelector('.sp-art.sp-hub'), blog = !!document.querySelector('.sp-blog'), lefts = {};
+  const first = (k, sel) => { const e = [...document.querySelectorAll(sel)].find(shown); if (e) lefts[k] = +e.getBoundingClientRect().left.toFixed(2); };
+  if (hub) { for (const [k, sel] of [['crumbs', '.sp-crumbs'], ['h1', '.sp-h1'], ['lead', '.sp-lead'], ['feat', '.sp-feat'], ['cards', '.sp-cards'], ['table', '.sp-table'], ['ul', '.sp-ul'], ['p', '.sp-p'], ['cta', '.sp-cta'], ['qcard', '.sp-qcard'], ['src', '.sp-src']]) first(k, sel); lefts.h2 = [...document.querySelectorAll('.sp-sec > .sp-h2')].filter(shown).map(e => +e.getBoundingClientRect().left.toFixed(2)); }
+  if (blog) { for (const [k, sel] of [['h1', '.sp-bh1'], ['lead', '.sp-blead'], ['feat', '.sp-feat']]) first(k, sel); lefts.h2 = [...document.querySelectorAll('.sp-bsec .sp-h2')].filter(shown).map(e => +e.getBoundingClientRect().left.toFixed(2)); lefts.cards = [...document.querySelectorAll('.sp-cards')].filter(shown).map(e => +e.getBoundingClientRect().left.toFixed(2)); }
+  out.hub = hub || blog; out.lefts = lefts;
+  out.tables = [...document.querySelectorAll('.sp-tsc')].filter(shown).map(e => { const th = [...e.querySelectorAll('thead th')], row = e.querySelector('tbody tr'), cells = row ? [...row.children] : [], c1 = cells[1] || cells[0];
+    return { l: R(e).l, r: R(e).r, sw: e.scrollWidth, cw: e.clientWidth, ox: getComputedStyle(e).overflowX, cols: th.length, side: cells.length > 1 && cells.every(c => Math.abs(c.getBoundingClientRect().top - cells[0].getBoundingClientRect().top) < 4), disp: c1 ? getComputedStyle(c1).display : '', size: c1 ? parseFloat(getComputedStyle(c1).fontSize) : 0, tabindex: e.getAttribute('tabindex'), role: e.getAttribute('role') }; });
+  out.pills = document.querySelectorAll('.sp-card-chip,.sp-kchip').length;
+  out.picText = [...document.querySelectorAll('.sp-card-pic,.sp-feat-pic')].map(e => e.innerText.trim()).filter(Boolean);
+  out.fc = [...document.querySelectorAll('.sp-fc')].filter(shown).map(e => { const cs = getComputedStyle(e), face = e.matches('.sp-tc') ? getComputedStyle(e.querySelector('.sp-tq')) : cs, txt = e.querySelector('.sp-tf,.sp-pk-name,.sp-exc-t,.sp-wt') || e;
+    return { cls: e.className.split(' ')[0], fs: parseFloat(cs.fontSize), radius: parseFloat(cs.borderTopLeftRadius), padL: parseFloat(face.paddingLeft), padT: parseFloat(face.paddingTop), bw: parseFloat(cs.borderTopWidth), bg: cs.backgroundColor, bc: cs.borderTopColor, shadow: cs.boxShadow, align: cs.textAlign, weight: +cs.fontWeight, ls: parseFloat(cs.letterSpacing) / parseFloat(cs.fontSize), tw: +getComputedStyle(txt).fontWeight }; });
+  return out;
+})()`;
 const HIDE = `(() => { const s = document.createElement('style'); s.id = 'hide-text'; s.textContent = '*,*::before,*::after{color:transparent!important;-webkit-text-fill-color:transparent!important;text-shadow:none!important;text-decoration-color:transparent!important;caret-color:transparent!important;animation:none!important;transition:none!important}input::placeholder{color:transparent!important}'; document.head.appendChild(s); })()`;
 const SETTLE = `(async () => {
   document.documentElement.style.scrollBehavior = 'auto';
@@ -99,12 +133,17 @@ const SETTLE = `(async () => {
 const wait = ms => new Promise(r => setTimeout(r, ms));
 const controlsOf = chrome => async (pg, width, tag) => {
   const run = x => chrome.run(x), frame = () => run('new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)))');
+  // A phone's menu button opens the menu at once (its links, each 44 px or more tall, inside the window) and closes it again.
+  if (width < 761) {
+    const mm = await run(`(() => { const head = [...document.querySelectorAll('header.sp-head')].find(h => h.getBoundingClientRect().height > 0), d = head.querySelector('.sp-menu'), s = d.querySelector('summary'), p = d.querySelector('.sp-mpanel'); const was = d.open; s.click(); const open = d.open, r = p.getBoundingClientRect(), links = [...p.querySelectorAll('a')].map(a => [a.textContent.trim(), a.getAttribute('href'), Math.round(a.getBoundingClientRect().height)]); s.click(); return { was, open, shown: r.height > 0, inside: r.left >= 0 && r.right <= innerWidth, links, closed: !d.open }; })()`);
+    ok(mm.was === false && mm.open && mm.shown && mm.inside && JSON.stringify(mm.links.map(x => [x[0], x[1]])) === JSON.stringify(NAV) && mm.links.every(x => x[2] >= 44) && mm.closed, tag + ': the menu button opens the menu at once, with the five links, and closes it again', mm);
+  }
   // A question opens (its answer shows) and closes again, at once.
   const q = await run(`(() => { const d = document.querySelector('details.sp-qd'); if (!d) return null; const s = d.querySelector('summary'), a = d.querySelector('.sp-qa'); const was = d.open; s.click(); const open = d.open, shown = a.getBoundingClientRect().height > 0; s.click(); return { was, open, shown, closed: !d.open }; })()`);
   if (q) ok(q.was === false && q.open && q.shown && q.closed, tag + ': a question opens and closes', q);
   // A test card opens (its answer shows) and closes again, at once.
-  const tc = await run(`(() => { const d = document.querySelector('details.sp-tc'); if (!d) return null; const s = d.querySelector('summary'), a = d.querySelector('.sp-ta'), was = d.open; s.click(); const open = d.open, shown = a.getBoundingClientRect().height > 0; s.click(); return { was, open, shown, closed: !d.open }; })()`);
-  if (tc) ok(tc.was === false && tc.open && tc.shown && tc.closed, tag + ': a test card opens to its answer and closes again', tc);
+  const tc = await run(`(() => { const d = document.querySelector('details.sp-tc'); if (!d) return null; const s = d.querySelector('summary'), a = d.querySelector('.sp-ta'), f = d.querySelector('.sp-tf'), h0 = d.getBoundingClientRect().height, was = d.open, front = f.getBoundingClientRect().height > 0; s.click(); const open = d.open, shown = a.getBoundingClientRect().height > 0, gone = f.getBoundingClientRect().height === 0, h1 = d.getBoundingClientRect().height; s.click(); return { was, front, open, shown, gone, same: Math.abs(h0 - h1) <= 1 && Math.abs(h0 - d.getBoundingClientRect().height) <= 1, closed: !d.open }; })()`);
+  if (tc) ok(tc.was === false && tc.front && tc.open && tc.shown && tc.gone && tc.same && tc.closed, tag + ': a test card turns from its question to its answer on the same card, at once (its size does not change), and back', tc);
   // "Show all N" shows the rest of a table, and "Show fewer" hides it again.
   const more = await run(`(() => { const d = document.querySelector('.sp-more'); if (!d || getComputedStyle(d).display === 'none') return null; const rows = [...document.querySelectorAll('tr.sp-x')], vis = () => rows.length && getComputedStyle(rows[0]).display !== 'none'; const before = vis(); d.querySelector('summary').click(); const after = vis(); d.querySelector('summary').click(); return { rows: rows.length, before, after, again: vis() }; })()`);
   if (more) ok(more.rows > 0 && !more.before && more.after && !more.again, tag + ': "Show all" shows the rest of the table and "Show fewer" hides it', more);
@@ -143,6 +182,9 @@ const controlsOf = chrome => async (pg, width, tag) => {
   }
 };
 
+// What the header looks like on the first page of each width: every other page's must be the same (the same place, the same size).
+const headSeen = {}, NAV = [['Blog', '/blog'], ['Compare', '/compare'], ['Features', '/features'], ['Pricing', '/pricing'], ['Sign in', 'https://app.lucida.cards/sign-in']];
+const rgb = hex => 'rgb(' + hex.slice(1).match(/../g).map(h => parseInt(h, 16)).join(', ') + ')';
 console.log('Pages in a browser (' + (quick ? 'quick' : 'all') + '), ' + list.length + ' pages × 390 and 1440 wide × light and dark');
 await withChrome(async chrome => {
   const controls = controlsOf(chrome);
@@ -166,6 +208,35 @@ await withChrome(async chrome => {
       ok(!wrong.length, tag + ': the pictures are the same in ' + scheme + ' (no -dark picture)', wrong.map(p => p.src).slice(0, 3));
       const ungrained = m.pics.filter(p => /^\/og\//.test(p.src) && !(p.grain && p.grain.same && p.grain.blend === 'soft-light' && p.grain.opacity === '0.7' && p.grain.events === 'none' && p.grain.tile));
       ok(!ungrained.length, tag + ': every picture wears the app’s grain (soft-light, .7, exactly over it)', ungrained.map(p => [p.src, p.grain]).slice(0, 3));
+      // ---- the header, the pills, the column, the tables, the hubs and the flashcards ----
+      {
+        const L = await chrome.run(LAYOUT), phone = width < 761;
+        if (ok(!!L.head, tag + ': the page has a header', null)) {
+          const h = L.head, geo = [h.h, h.logo.l, h.logo.w, h.go.r, h.go.w, h.go.h];
+          ok(h.homeHref === '/' && h.goText === 'Get started' && h.goHref === 'https://app.lucida.cards/', tag + ': the header has the logo (home) and Get started (the app)', [h.homeHref, h.goText, h.goHref]);
+          if (!phone) ok(h.nav && JSON.stringify(h.nav.map(x => [x[0], x[1]])) === JSON.stringify(NAV) && h.nav.every(x => x[2] >= 36) && !h.menu && h.h === 76, tag + ': a computer’s header is the logo, Blog, Compare, Features, Pricing, Sign in and Get started, in that order, with no menu button', h);
+          else ok(!h.nav && h.menu && h.menu.w >= 44 && h.menu.h >= 44 && h.go.h >= 44 && h.h === 64, tag + ': a phone’s header is the logo, Get started and one menu button (both 44 px or more) in place of the links', h);
+          const first = headSeen[width] || (headSeen[width] = geo);
+          ok(geo.every((v, i) => Math.abs(v - first[i]) <= 1), tag + ': the header is in the same place, at the same size, as on every other page', [geo, first]);
+        }
+        ok(L.pills === 0 && !L.picText.length, tag + ': no card shows a pill with its category, or any words over its picture', [L.pills, L.picText]);
+        if (L.main) {
+          ok(Math.abs(L.main.l - L.main.r) <= 1, tag + ': the ' + (L.hub ? 'page’s container' : 'article column') + ' is centered (its margins are equal)', L.main);
+          if (L.toc) ok(L.toc.l >= 0 && L.toc.l + L.toc.w <= L.main.l - 16, tag + ': "On this page" stands in the left margin, clear of the column', [L.toc, L.main]);
+        }
+        for (const t of L.tables) {
+          ok(t.cols >= 2 && t.side && t.disp === 'table-cell' && t.size >= 16, tag + ': a table keeps its real columns and its 16 px text', t);
+          ok(!L.main || (Math.abs(t.l - L.main.l) <= 1 && Math.abs(t.r - L.main.r) <= 1), tag + ': a table sits in the column, centered with it', [t, L.main]);
+          ok((t.sw <= t.cw + 1 || /auto|scroll/.test(t.ox)) && t.tabindex === '0' && t.role === 'region', tag + ': a table wider than its box scrolls sideways inside it (a focusable region)', t);
+          if (phone && t.cols >= 3) ok(t.sw > t.cw + 1, tag + ': a table of three or more columns scrolls inside its box on a phone', t);
+        }
+        if (L.hub) { const all = Object.values(L.lefts).flat(); ok(all.length >= 4 && Math.max(...all) - Math.min(...all) <= 1, tag + ': the title, lead, featured page, headings, cards, table and lists share one left edge', L.lefts); }
+        const X = scheme === 'dark' ? EXTRA_DARK : EXTRA_LIGHT, card = rgb(X.fcard), line = rgb(X.fedge);
+        // The app's card is WebReview's (radius 36 and padding 56 at a type of 38 px) on a computer and PhoneReview's (36 and 22 at 28 px) on a phone.
+        const rad = phone ? 36 / 28 : 36 / 38, padX = phone ? 22 / 28 : 56 / 38;
+        const badCard = L.fc.filter(c => !(Math.abs(c.radius / c.fs - rad) < 0.04 && c.bw === 1 && c.bg === card && c.bc === line && Math.abs(c.padL / c.fs - padX) < 0.05 && (c.align === 'left' || c.align === 'start') && c.tw === 500 && Math.abs(c.ls + 0.02) < 0.004 && (scheme === 'dark' ? /0px 0px 0px 0px/.test(c.shadow) : /rgba\(0, 0, 0, 0\.18\)/.test(c.shadow))));
+        ok(!badCard.length, tag + ': every flashcard is the app’s card (radius, line, shadow, padding, type, and the ' + scheme + ' colors)', badCard.slice(0, 2));
+      }
       // The diagrams, the app's screens and the test cards of an article.
       const text = new Set(['pick', 'checklist', 'fork']);
       if (m.figs.length) {
@@ -174,7 +245,7 @@ await withChrome(async chrome => {
         ok(!wide.length, tag + ': every diagram fits its box', wide.map(f => [f.kind, f.sw, f.cw]));
         const bad = m.shots.filter(i => !i.ok || (i.alt || '').length < 30 || (width < 500) !== /-phone/.test(i.src) || (scheme === 'dark') !== /-dark\.webp$/.test(i.src) || (width < 500 && i.boxh > 422) || i.boxw < 150);
         ok(!bad.length, tag + ': the screens load, are the phone’s on a phone and the dark ones in the dark, and have alt text', bad.map(i => [i.src, i.ok, Math.round(i.boxw) + 'x' + Math.round(i.boxh)]));
-        if (m.tests) ok(m.tests.n >= 3 && (width < 500 ? m.tests.ox === 'auto' && m.tests.sw > m.tests.cw : m.tests.sw <= m.tests.cw + 1), tag + ': the test cards scroll sideways on a phone (the page does not) and sit in a row on a computer', m.tests);
+        if (m.tests) ok(m.tests.n >= 3 && (width < 500 ? m.tests.ox === 'auto' && m.tests.sw > m.tests.cw : m.tests.sw <= m.tests.cw + 1), tag + ': the test cards scroll sideways on a phone (the page does not) and sit two across on a computer', m.tests);
       }
       // Text.
       const small = m.text.filter(x => x.body && (x.size < 16 || x.lh < 1.5));
@@ -203,6 +274,30 @@ await withChrome(async chrome => {
       // Controls, once on a phone and once on a computer, in light.
       if (scheme === 'light') await controls(pg, width, tag);
     }
+  }
+});
+// ---------- the motion ----------
+// The clouds in the sky and the gradient that ends a page drift slowly, and on the pages of the blog nothing else moves; when the system asks for
+// less motion nothing moves at all; and the layout never moves. (The pages above were looked at with animations off, so this opens them again.)
+console.log('Motion');
+await withChrome(async chrome => {
+  const look = ['vs/quizlet', 'blog', 'compare', 'faq', '404-page', '', 'pricing'].filter(x => !only.length || only.includes(x));
+  const read = () => chrome.run(`(() => document.getAnimations().filter(a => a.effect && a.effect.target && a.effect.target.getBoundingClientRect().width > 0).map(a => [a.animationName || '', a.playState, getComputedStyle(a.effect.target).transform]))()`);
+  const geo = () => chrome.run(`(() => [document.documentElement.scrollHeight, ...['.sp-main', 'h1', '.sp-cta', 'header'].map(s => { const e = document.querySelector(s); if (!e) return 0; const r = e.getBoundingClientRect(); return [Math.round((r.top + scrollY) * 10), Math.round(r.height * 10), Math.round(r.left * 10)]; })])()`);
+  const tx = m => { const x = /matrix\(([^)]+)\)/.exec(m); return x ? x[1].split(',').map(Number) : [1, 0, 0, 1, 0, 0]; };
+  for (const slug of look) for (const width of [1440, 390]) for (const reduce of [false, true]) {
+    const tag = (slug || '/') + ' ' + width + ' ' + (reduce ? 'reduced motion' : 'motion allowed'), site = !['', 'pricing'].includes(slug);
+    await chrome.media([{ name: 'prefers-color-scheme', value: 'light' }, { name: 'prefers-reduced-motion', value: reduce ? 'reduce' : 'no-preference' }]); await chrome.size(width, 900);
+    await chrome.open(base + '/' + (slug === '404-page' ? 'no-such-page' : slug)); await chrome.run('document.fonts.ready.then(() => 1)'); await wait(400);
+    const a = await read(), g0 = await geo(); await wait(1500); const b = await read(), g1 = await geo();
+    const names = {}; for (const x of b) names[x[0]] = (names[x[0]] || 0) + 1;
+    // (The landing page's own card wall and demos are the app's older motion, and they run on; the clouds and the closing gradient must not.)
+    if (reduce) { const mine = site ? b : b.filter(x => ['scCloud', 'scDrift'].includes(x[0])); ok(mine.length === 0, tag + ': ' + (site ? 'nothing moves' : 'the clouds and the closing gradient stand still'), names); continue; }
+    const clouds = b.filter(x => x[0] === 'scCloud'), moved = b.filter((x, i) => a[i] && a[i][2] !== x[2]), far = b.filter((x, i) => a[i] && Math.abs(tx(a[i][2])[4] - tx(x[2])[4]) > 0.2 || Math.abs(tx(a[i][2])[0] - tx(x[2])[0]) > 0.0005);
+    ok(clouds.length >= 3 && clouds.every(x => x[1] === 'running') && far.some(x => x[0] === 'scCloud'), tag + ': the clouds drift', [clouds.length, moved.length]);
+    if (site) ok(Object.keys(names).every(n => ['scCloud', 'scDrift'].includes(n)), tag + ': only the clouds and the closing gradient move', names);
+    if (site && slug !== 'blog') ok(names.scDrift === 1, tag + ': the gradient that ends the page flows', names);
+    ok(JSON.stringify(g0) === JSON.stringify(g1), tag + ': the motion does not move the layout', [g0, g1]);
   }
 });
 server.close();

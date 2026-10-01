@@ -3,6 +3,7 @@
 //   web/og/<page>.png        the 1200 × 630 picture of every page (the SiteOg board): the link preview, and the page's hero and
 //                            card, on a light screen and a dark one alike (the gradients keep their look in dark mode). It has a light
 //                            grain of its own; on the site the app's grain is laid over it too (spPic in design/build.mjs)
+//   design/og-bg.json        each picture's gradient alone as a grid of 32 × 17 colors (design/check-site.mjs says whether two look alike)
 //   og/manifest.json         says what each one was drawn for (its title, scene and palette) and which version of the drawing
 //                            (`_art`), so design/check-site.mjs can tell when one is out of date
 //   web/icons/*.png     the icon as pictures: 192 and 512 pixels (the organization's logo, and the icon search results show)
@@ -18,7 +19,7 @@ import { withChrome } from './chrome.mjs';
 import { board, esc } from './render.mjs';
 import { pageSet, indexOf, ogKey, ogFile, ogFingerprint } from './site.mjs';
 import { BASE_CSS, FONTS } from './seo.mjs';
-import { readPng } from './png.mjs';
+import { readPng, thumb } from './png.mjs';
 
 const WEB = new URL('../web/', import.meta.url);
 const OUT = new URL('og/', WEB), ICONS = new URL('icons/', WEB);
@@ -32,7 +33,7 @@ mkdirSync(OUT, { recursive: true }); mkdirSync(ICONS, { recursive: true });
 // brightens the colors and leaves stray dots of another hue; the picture's own light grain breaks up the steps instead. `-strip` leaves out
 // the time stamps ImageMagick writes into a file, so drawing the same picture again gives the same bytes (and git sees no change).
 const shrink = file => { try { execFileSync('magick', [file, '-colors', '256', '+dither', '-strip', 'PNG8:' + file], { stdio: 'ignore' }); } catch {} };
-const manifest = {};
+const manifest = {}, bgs = {};
 // Which drawing the pictures come from: SiteOg's own code writes it into its logic (`// og-art: …`).
 const art = (readFileSync(new URL('../design/canvas/project/SiteOg.dc.html', import.meta.url), 'utf8').match(/og-art: ([0-9a-f]+)/) || [])[1];
 if (!art) throw new Error('SiteOg has no og-art mark. Run `node design/build.mjs` first.');
@@ -58,6 +59,8 @@ try {
       writeFileSync(file, await chrome.shot({ clip: { x: 0, y: 0, width: 1200, height: 630 } }));
       // The words on the picture (Lucida, the title, the address) must read against the gradient behind them: 4.5 to 1 or more, measured
       // from a picture of the same page with its text taken out.
+      // Every word the picture shows (a picture carries no web address: design/check-site.mjs reads these).
+      entry.text = (await chrome.run(`document.body.innerText`)).split('\n').map(x => x.trim()).filter(Boolean);
       const words = await chrome.run(`[...document.querySelectorAll('[data-og-text]')].map(e => { const cs = getComputedStyle(e), r = document.createRange(); r.selectNodeContents(e); return { t: e.textContent.trim().slice(0, 30), color: cs.color, rects: [...r.getClientRects()].filter(x => x.width > 2).map(x => [x.left, x.top, x.width, x.height]) }; })`);
       await chrome.run(`(() => { const s = document.createElement('style'); s.id = 'hide'; s.textContent = '*{color:transparent!important;-webkit-text-fill-color:transparent!important}'; document.head.appendChild(s); })()`);
       const bare = readPng(await chrome.shot({ clip: { x: 0, y: 0, width: 1200, height: 630 } })), lin = v => { v /= 255; return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4); }, lum = c => 0.2126 * lin(c[0]) + 0.7152 * lin(c[1]) + 0.0722 * lin(c[2]);
@@ -65,6 +68,10 @@ try {
       for (const w of words) { const fg = /rgba?\(([^)]+)\)/.exec(w.color)[1].split(/[ ,]+/).map(Number); for (const [x, y, rw, rh] of w.rects) for (let i = 0; i < 12; i++) for (let j = 0; j < 4; j++) { const px = Math.min(1199, Math.round(x + rw * (i + 0.5) / 12)), py = Math.min(629, Math.round(y + rh * (j + 0.5) / 4)), k = (py * 1200 + px) * 3, bg = [bare.rgb[k], bare.rgb[k + 1], bare.rgb[k + 2]], a = lum(fg), b = lum(bg), ratio = (Math.max(a, b) + 0.05) / (Math.min(a, b) + 0.05); if (ratio < worst) { worst = ratio; where = w.t; } } }
       if (worst < 4.5) throw new Error('The words on the picture for ' + (it.slug || 'the home page') + ' ("' + where + '") read at only ' + worst.toFixed(2) + ' to 1 against their gradient (4.5 is the least). Change the page’s style or palette in design/site.mjs.');
       entry.read = +worst.toFixed(1);
+      // The gradient alone (no words, no veil under them, no scene), as a grid of 32 × 17 colors, for design/check-site.mjs: no two pictures may have
+      // backgrounds that look alike.
+      await chrome.run(`(() => { const s = document.createElement('style'); s.textContent = '[data-og-text],[data-og-veil],[data-og-scene]{visibility:hidden!important}'; document.head.appendChild(s); })()`);
+      bgs[it.slug || 'home'] = Buffer.from(Uint8Array.from(thumb(readPng(await chrome.shot({ clip: { x: 0, y: 0, width: 1200, height: 630 } })), 32, 17), v => Math.round(v))).toString('base64');
       shrink(file.pathname);
       entry.bytes = readFileSync(file).length;
       console.log(ogFile(it.slug).padEnd(34), Math.round(entry.bytes / 1024) + ' KB, words read ' + entry.read + ' to 1');
@@ -84,6 +91,8 @@ try {
   });
 } finally { rmSync(dir, { recursive: true, force: true }); }
 writeFileSync(new URL('manifest.json', OUT), JSON.stringify(manifest, null, 1) + '\n');
+// Each page's gradient as 32 × 17 cells (red, green, blue, in order, as base64), made with the pictures.
+writeFileSync(new URL('./og-bg.json', import.meta.url), JSON.stringify({ _art: art, bg: bgs }, null, 1) + '\n');
 // Pictures of pages that no longer exist go.
 const pics = Object.entries(manifest).filter(([k]) => !k.startsWith('_')).map(([, m]) => m);
 const keep = new Set(pics.map(m => m.file.replace(/^og\//, '')).concat('manifest.json'));
