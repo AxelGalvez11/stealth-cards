@@ -127,6 +127,12 @@ for (const f of readdirSync(DIR).filter(f => f.endsWith('.dc.html')).sort()) {
   if (C) for (const extra of PROP_SETS) {
     try { const { $state, ...pp } = extra; const c = new C({ ...defaults, ...pp }); if ($state) c.state = { ...c.state, ...$state }; walk(body, c.renderVals(), miss); } catch (e) { errs.push(`renderVals ${JSON.stringify(extra)}: ${e.message}`); break; }
   }
+  // The site's boards draw a page chosen by the `page` prop (a picker of every page): check each page, on the site (props.site) and
+  // on the canvas, in light and in dark.
+  const pickable = props && props.page && Array.isArray(props.page.options) && /^Site/.test(f) ? props.page.options : [];
+  if (C) for (const pg of pickable) for (const extra of [{}, { dark: true }, { site: true }]) {
+    try { const c = new C({ ...defaults, page: pg, ...extra }); walk(body, c.renderVals(), miss); } catch (e) { errs.push(`renderVals page ${pg} ${JSON.stringify(extra)}: ${e.message}`); break; }
+  }
   // Wrapper boards: {{yes}} lives in their own logic; dc-import attributes are fine.
   errs.push(...miss);
   if (errs.length) { bad++; console.log(f, '\n  ' + errs.join('\n  ')); }
