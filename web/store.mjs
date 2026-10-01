@@ -308,11 +308,11 @@ function syncBoxes(c, p, before) {
   for (const b of boxes) {
     let x = keep.get(b.id);
     if (!x && spare.length) { x = spare.shift(); x.box = b.id; }
-    if (!x) { x = { ...c, id: id('c'), box: b.id, srs: newCard(), pile: null, created: Date.now() }; delete x.explain; delete x.quiz; S.cards.push(x); }
+    if (!x) { x = { ...c, id: id('c'), box: b.id, srs: newCard(), pile: null, created: Date.now() }; delete x.explain; delete x.quiz; delete x.quizTried; S.cards.push(x); }
     x.group = group; x.cloze = null;
     keep.set(b.id, x);
     // A box that says something new needs a new explanation.
-    if (had.has(b.id) && had.get(b.id) !== b.label) { delete x.explain; delete x.quiz; }
+    if (had.has(b.id) && had.get(b.id) !== b.label) { delete x.explain; delete x.quiz; delete x.quizTried; }
   }
   const kept = new Set([...keep.values()].map(x => x.id));
   S.cards = S.cards.filter(x => !sibs.includes(x) || kept.has(x.id));
@@ -334,6 +334,41 @@ export function saveExplain(cardId, text, by) {
   const sibs = c.group && c.kind === 'cloze' ? state().cards.filter(x => x.group === c.group) : [c];
   sibs.forEach(x => { x.explain = { text: clean(text, 2000), by: clean(by, 60), at: Date.now() }; });
   save(); return true;
+}
+
+// Lucida's own Learn mode questions (quizai.mjs, handler.mjs): how many batches were written today, which cards can get a question, and saving
+// a batch. Only the server changes these, so they aren't actions the app can send. A card that has questions (an AI app's over MCP, or
+// Lucida's from before) never gets new ones from here.
+const hasQuiz = c => Array.isArray(c.quiz) && c.quiz.length > 0;
+export const quizLeft = (day, limit) => { const u = state().ai.quiz; return Math.max(0, limit - (u && u.day === day ? u.n : 0)); };
+export function useQuiz(day, limit) {
+  const S = state(), n = S.ai.quiz && S.ai.quiz.day === day ? S.ai.quiz.n : 0;
+  if (n >= limit) return false;
+  S.ai.quiz = { day, n: n + 1 }; save(); return true;
+}
+export function refundQuiz(day) { const S = state(); if (S.ai.quiz && S.ai.quiz.day === day && S.ai.quiz.n > 0) { S.ai.quiz = { day, n: S.ai.quiz.n - 1 }; save(); } }
+/** Copies of the asked-for cards (in the order asked, up to `max`) that can get a question: text cards with none yet that the AI hasn't already failed on. */
+export function quizCandidates(ids, max) {
+  const S = state(), out = [];
+  for (const id of ids) {
+    const c = S.cards.find(x => x.id === id);
+    if (!c || (c.kind !== 'basic' && c.kind !== 'cloze') || hasQuiz(c) || c.quizTried) continue;
+    out.push(JSON.parse(JSON.stringify(c)));
+    if (out.length >= max) break;
+  }
+  return out;
+}
+/** Saves a batch: `got` is { cardId: [question] }, `tried` the cards the AI answered about with nothing usable. Each question is marked as Lucida's. Gives back what was saved. */
+export function saveQuiz(got, tried, by = 'Lucida') {
+  const S = state(), saved = {};
+  for (const [id, list] of Object.entries(got || {})) {
+    const c = S.cards.find(x => x.id === id);
+    if (!c || hasQuiz(c) || !Array.isArray(list) || !list.length) continue;
+    c.quiz = list.slice(0, 5).map(q => ({ ...q, by: clean(by, 60) }));
+    delete c.quizTried; saved[id] = c.quiz;
+  }
+  for (const id of tried || []) { const c = S.cards.find(x => x.id === id); if (c && !hasQuiz(c)) c.quizTried = Date.now(); }
+  save(); return saved;
 }
 
 // A deck someone else shares, which you study as it is (social.mjs): its cards follow the owner's, so you can't change
@@ -462,7 +497,7 @@ function run(a, who) {
       if (kept) trailStep(c, 'checked', who);
       if (edited) trailStep(c, 'edited', who);
       if (kept || edited || 'tags' in p) touch(c.deckId, who);
-      if (stale) for (const x of c.group ? S.cards.filter(y => y.group === c.group) : [c]) { delete x.explain; delete x.quiz; }
+      if (stale) for (const x of c.group ? S.cards.filter(y => y.group === c.group) : [c]) { delete x.explain; delete x.quiz; delete x.quizTried; }
       // A card that stops being an image card leaves its picture, and takes its box with it (as if deleted).
       if (c.kind !== 'image' && c.box != null) {
         for (const x of S.cards) if (x !== c && c.group && x.group === c.group && x.boxes) x.boxes = x.boxes.filter(b => b.id !== c.box);

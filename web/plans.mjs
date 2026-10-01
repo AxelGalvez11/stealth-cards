@@ -12,3 +12,6 @@ export const PORTAL = 'https://billing.stripe.com/p/login/fZu8wQ3Mo6Z3b0Tcdc4F20
 export const FREE_MEDIA = 100;
 // AI explanations of a card (ai.mjs): Free gets this many a day, Pro as many as it likes (up to a fair-use ceiling).
 export const FREE_EXPLAINS = 3, PRO_EXPLAINS = 200;
+// Lucida's own quiz questions for Learn mode (quizai.mjs): each batch is up to 20 cards, so a batch costs Lucida a little. Free gets this
+// many batches a day, Pro more (a fair-use ceiling).
+export const FREE_QUIZ_BATCHES = 3, PRO_QUIZ_BATCHES = 30;

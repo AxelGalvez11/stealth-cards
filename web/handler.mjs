@@ -7,9 +7,10 @@ import { readFile, stat } from 'node:fs/promises';
 import { extname, join, normalize, sep } from 'node:path';
 import { createHash } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
-import { state, apply, withLibrary, revOf, putMediaLater, mediaLink, MEDIA, aiLeft, useAi, refundAi, saveExplain, isPro } from './store.mjs';
+import { state, apply, withLibrary, revOf, putMediaLater, mediaLink, MEDIA, aiLeft, useAi, refundAi, saveExplain, quizLeft, useQuiz, refundQuiz, quizCandidates, saveQuiz, isPro } from './store.mjs';
 import { aiReady, explain } from './ai.mjs';
-import { FREE_EXPLAINS, PRO_EXPLAINS } from './plans.mjs';
+import { writeQuiz, BATCH } from './quizai.mjs';
+import { FREE_EXPLAINS, PRO_EXPLAINS, FREE_QUIZ_BATCHES, PRO_QUIZ_BATCHES } from './plans.mjs';
 import { mcp } from './mcp.mjs';
 import * as oauth from './oauth.mjs';
 import { EXT, HEIC, sniff } from './media.mjs';
@@ -518,6 +519,38 @@ async function explainReq(res, uid, me, a) {
   return send(res, 200, { text, left, free: !pro });
 }
 
+// Lucida's own questions for Learn mode (quizai.mjs): up to 20 of the asked-for cards that have none yet get one each, saved on the cards, so a
+// card is paid for once and Learn mode and the practice test reuse the question. A request is one batch of the day (Free gets
+// FREE_QUIZ_BATCHES, Pro PRO_QUIZ_BATCHES); with nothing to write, no batch is used. The AI is asked between two saves, so it's never
+// asked twice when another change lands at the same moment, a failed batch is given back, and questions that came to a card meanwhile
+// (an AI app's) are kept.
+const quizBusy = new Set();
+async function quizReq(res, uid, me, a) {
+  if (!aiReady()) return send(res, 503, { error: 'Lucida’s AI isn’t set up yet.' });
+  const pro = !me || !!me.plan.pro, limit = pro ? PRO_QUIZ_BATCHES : FREE_QUIZ_BATCHES, day = new Date().toISOString().slice(0, 10), opts = { pro: me ? me.plan.pro : undefined };
+  const mine = id => uid + ':' + id, ids = [...new Set((Array.isArray(a.cardIds) ? a.cardIds : []).map(String))].filter(id => !quizBusy.has(mine(id))).slice(0, 200);
+  const first = await inLibrary(uid, () => {
+    const cards = quizCandidates(ids, BATCH);
+    if (!cards.length) return { questions: {}, tried: [], left: quizLeft(day, limit) };
+    if (!useQuiz(day, limit)) return { code: 402, pro: !pro, error: pro ? 'That’s a lot of questions for one day. More tomorrow.' : 'That’s today’s free questions. Go Pro for more.' };
+    return { cards, deck: (state().decks.find(d => d.id === cards[0].deckId) || {}).name || '' };
+  }, opts);
+  if (!first.cards) return send(res, first.code || 200, first);
+  // (Two tabs asking about the same cards at the same moment: the second finds them taken.)
+  first.cards.forEach(c => quizBusy.add(mine(c.id)));
+  try {
+    let got;
+    try { got = await writeQuiz(first.cards, { deck: first.deck }); }
+    catch (e) { await inLibrary(uid, () => refundQuiz(day), opts); return send(res, 502, { error: e.message }); }
+    const out = await inLibrary(uid, () => {
+      const questions = saveQuiz(got.questions, got.tried);
+      if (!Object.keys(got.questions).length) refundQuiz(day);
+      return { questions, tried: got.tried, left: quizLeft(day, limit) };
+    }, opts);
+    return send(res, 200, { ...out, free: !pro });
+  } finally { first.cards.forEach(c => quizBusy.delete(mine(c.id))); }
+}
+
 // Runs a request against one library, again from the newer copy if another request saved first (after a short,
 // growing wait, so a burst of changes from the same person all get their turn).
 async function run(res, uid, work, opts) {
@@ -599,6 +632,7 @@ export async function handle(req, res) {
       const body = req.method === 'POST' ? await readBody(req, path === '/api/media' ? 20e6 : 5e6) : null;
       if (path.startsWith('/api/oauth/')) return await oauth.api(req, res, path, body, { uid: uid || 'local', email: (me && me.email) || '' });
       if (path === '/api/explain' && req.method === 'POST') return await explainReq(res, uid, me, jsonOf(body));
+      if (path === '/api/quiz' && req.method === 'POST') return await quizReq(res, uid, me, jsonOf(body));
       // Neither works inside a library request: a purchase isn't in the library, and Delete account removes it.
       if (path === '/api/iap' && req.method === 'POST') return await iapReq(res, uid, me, jsonOf(body));
       if (path === '/api/account/delete' && req.method === 'POST') return await deleteAccountReq(req, res, uid, user, jsonOf(body));
