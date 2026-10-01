@@ -190,7 +190,7 @@ What App Review asks of an app like this one is inside the app, drawn from board
 
 **Go Pro** (`Screens/GoPro.swift`, `Data/Purchases.swift`; boards `PhoneGoPro` and `PhoneGoProSoon`, and Settings' plan in `PhoneSettings`
 with `-plan "Pro, billed by Apple"` or `"Pro, billed on the web"`). Pro is bought with StoreKit 2: `cards.lucida.pro.monthly` and
-`cards.lucida.pro.yearly`, with the pricing page's Pro list, Terms and Privacy, and Restore purchases. Every price on screen is the App
+`cards.lucida.pro.yearly`, with the pricing page's Pro list less natural voices, which only the web has (`PLAN_PRO_PHONE` in design/site.mjs; the web's list is `PLAN_PRO`), Terms and Privacy, and Restore purchases. Every price on screen is the App
 Store's own (`displayPrice`, and the yearly price divided by twelve for "That's $4.17 a month", worked out in its currency); nothing is
 typed in the app. Buying uses the person's id as the purchase's `appAccountToken` (`me.appAccountToken`), the signed transaction goes to
 `POST /api/iap`, and `Transaction.updates` sends renewals and purchases made elsewhere the same way. Pro itself comes back from the server
@@ -219,9 +219,18 @@ server and, in front of it, `ios/tools/password-proxy.mjs`, which asks for a sig
 server does online and a copy on a computer can't. A debug build can open any of these states on a board (`-deleteOpen Asking|Deleting|Failed`,
 `-passwordOpen`, `-noBlocks`, `-noApps`, `-moreOpen`, `-blockOpen`, `-blocked`).
 
+**Daily reminder** (`Data/Reminder.swift`; the row in Settings › Studying, board `PhoneSettings` with its `reminder` and `reminderNote` Tweaks, or `-reminder Off|"6:00 PM"`
+and `-reminderNote` on a design screen). Off, or a time. Picking a time turns it on and the phone is asked then, never when the app opens, to
+send notifications; it then schedules one local notification a day at that time (UNUserNotificationCenter), "Time to review your cards". Another
+time sets it again, Off removes it, and signing out removes it. If notifications are refused the row stays Off and says how to allow them in
+iPhone Settings. The row says what the phone has scheduled (not a saved setting), so it is always what will happen; the time is also kept with
+the settings. Local notifications need no entitlement, no Info.plist text and no privacy declaration. `ios/tools/e2e-reminder.sh <simulator id>`
+is the end-to-end test (`LucidaUITests/ReminderTests`, reading what is scheduled through `-reminderAudit`); it takes the app off the simulator before
+each flow so the phone has never been asked.
+
 **Sign in with Apple** sends the token Apple made for this app (audience `cards.lucida.app`) and its nonce to `/api/auth/token`; the server
-forwards both to Supabase, which accepts the audiences in the Apple provider's "Client IDs". That list must hold `cards.lucida.app` next to the
-web's `cards.lucida.web` (Supabase dashboard › Authentication › Sign In / Providers › Apple); only the owner can see it. `ios/tests/run.sh
+forwards both to Supabase, which accepts the audiences in the Apple provider's "Client IDs". That list already holds both the app's and the
+web's (`cards.lucida.web,cards.lucida.app`, read in the Supabase dashboard on 2026-10-01), so nothing is left to set there. `ios/tests/run.sh
 signin` shows the server's part against a pretend Supabase.
 
 **The listing and the screenshots** are in `AppStore/`: `listing.md` (name, subtitle, description, keywords, URLs, the two subscriptions, App

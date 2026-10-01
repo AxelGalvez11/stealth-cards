@@ -4,9 +4,9 @@
 // audiences of its own: it hands the token and the nonce to Supabase (`/auth/v1/token?grant_type=id_token`), and Supabase accepts the
 // audiences in its Apple provider's "Client IDs" (Supabase dashboard → Authentication → Sign In / Providers → Apple), checking the
 // token's nonce against the raw one. So whether the app can sign in on a real iPhone depends on that list holding cards.lucida.app
-// next to cards.lucida.web, which only the owner can see; this test shows the server's part: it forwards what the app sends, lets
-// both audiences through when Supabase does, and doesn't make up a yes when Supabase says no. It runs the real server against a
-// small pretend Supabase on this Mac whose Apple "Client IDs" list can be set either way (it never touches the real one).
+// next to cards.lucida.web, and it does (the dashboard reads "cards.lucida.web,cards.lucida.app"); this test shows the server's part: it
+// forwards what the app sends, lets both audiences through when Supabase does, and doesn't make up a yes when Supabase says no. It runs the
+// real server against a small pretend Supabase on this Mac whose Apple "Client IDs" list can be set either way (it never touches the real one).
 import http from 'node:http';
 import { spawn } from 'node:child_process';
 import { createHash } from 'node:crypto';
@@ -77,7 +77,7 @@ try {
   // The thing only the owner can check: Supabase's own list. Without cards.lucida.app in it, the iPhone's Apple sign-in fails.
   clientIds = ['cards.lucida.web'];
   r = await appCalls('cards.lucida.app');
-  ok(r.status === 400 && /try again/i.test(r.json.error || '') && !/lc_at=/.test(r.cookies), 'if Supabase’s Apple Client IDs lacked cards.lucida.app, the app would get “try again” and no session (so the list must have it)', r);
+  ok(r.status === 400 && /try again/i.test(r.json.error || '') && !/lc_at=/.test(r.cookies), 'if Supabase’s Apple Client IDs lacked cards.lucida.app, the app would get “try again” and no session (the real list has it, so it doesn’t)', r);
   clientIds = ['cards.lucida.web', 'cards.lucida.app'];
 
   r = await (async () => { seen.length = 0; const x = await fetch('http://127.0.0.1:' + PORT + '/api/auth/token', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ provider: 'apple', token: idToken('cards.lucida.app', 'n') }) }); return { status: x.status, calls: seen.length }; })();

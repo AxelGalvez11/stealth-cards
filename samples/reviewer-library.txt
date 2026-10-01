@@ -23,74 +23,75 @@ Cell Biology	The {{c1::mitochondrion}} is the powerhouse of the cell.	It makes A
 Cell Biology	During {{c1::translation}}, ribosomes read mRNA to build a protein.
 Cell Biology	{{c1::Enzymes}} speed up reactions in cells without being used up.
 Cell Biology	The fluid inside a cell, outside the nucleus, is the {{c1::cytoplasm}}.
-Spanish Basics	hola	hello
-Spanish Basics	adiós	goodbye
-Spanish Basics	por favor	please
-Spanish Basics	gracias	thank you
-Spanish Basics	de nada	you’re welcome
-Spanish Basics	buenos días	good morning
-Spanish Basics	buenas noches	good night
-Spanish Basics	¿Cómo estás?	How are you?
-Spanish Basics	Me llamo…	My name is…
-Spanish Basics	¿Cómo te llamas?	What is your name?
-Spanish Basics	mucho gusto	nice to meet you
-Spanish Basics	lo siento	I’m sorry
-Spanish Basics	perdón	excuse me
-Spanish Basics	el agua	the water
-Spanish Basics	la comida	the food
-Spanish Basics	la casa	the house
-Spanish Basics	el libro	the book
-Spanish Basics	¿Dónde está el baño?	Where is the bathroom?
-Spanish Basics	¿Cuánto cuesta?	How much does it cost?
-Spanish Basics	No entiendo.	I don’t understand.
-Spanish Basics	¿Hablas inglés?	Do you speak English?
-Spanish Basics	hablar	to speak
-Spanish Basics	comer	to eat
-Spanish Basics	vivir	to live
-Spanish Basics	Yo {{c1::hablo}} español.	I speak Spanish.
-Spanish Basics	Ella {{c1::come}} una manzana.	She eats an apple.
-Spanish Basics	Nosotros {{c1::vivimos}} en una ciudad.	We live in a city.
-Organic Chemistry	What is the general formula of an alkane?	CnH2n+2
-Organic Chemistry	Which functional group makes a molecule an alcohol?	–OH (hydroxyl)
-Organic Chemistry	Which functional group makes a molecule a carboxylic acid?	–COOH
-Organic Chemistry	What are isomers?	Molecules with the same formula but a different structure
-Organic Chemistry	What is a chiral center?	A carbon bonded to four different groups
-Organic Chemistry	What does SN2 stand for?	Substitution, nucleophilic, bimolecular
-Organic Chemistry	What happens to the configuration in an SN2 reaction?	It inverts (the nucleophile attacks from the back)
-Organic Chemistry	Which carbocation is the most stable?	Tertiary
-Organic Chemistry	What is Markovnikov’s rule?	When HX adds to an alkene, the H goes to the carbon that already has more hydrogens
-Organic Chemistry	What reaction makes an ester from a carboxylic acid and an alcohol?	Fischer esterification
-Organic Chemistry	What is the hybridization of each carbon in ethene?	sp2
-Organic Chemistry	What is the hybridization of each carbon in ethyne?	sp
-Organic Chemistry	What is a double bond made of?	One sigma bond and one pi bond
-Organic Chemistry	What is an electrophile?	An electron-poor species that accepts an electron pair
-Organic Chemistry	What is a nucleophile?	An electron-rich species that donates an electron pair
-Organic Chemistry	What does complete combustion of a hydrocarbon make?	Carbon dioxide and water
-Organic Chemistry	What are enantiomers?	Mirror-image molecules that cannot be stacked on each other
-Organic Chemistry	Which has the higher boiling point: an alcohol or an alkane of similar size?	The alcohol, because of hydrogen bonding
-Organic Chemistry	An {{c1::aldehyde}} has a carbonyl group at the end of a carbon chain.
-Organic Chemistry	A {{c1::ketone}} has a carbonyl group between two carbons.
-Organic Chemistry	In an E2 reaction, a {{c1::strong base}} removes a proton while the leaving group leaves.
-World Geography	What is the capital of Canada?	Ottawa
-World Geography	What is the capital of Australia?	Canberra
-World Geography	What is the capital of Brazil?	Brasília
-World Geography	What is the capital of Japan?	Tokyo
-World Geography	What is the capital of Egypt?	Cairo
-World Geography	What is the capital of Kenya?	Nairobi
-World Geography	What is the capital of Turkey?	Ankara
-World Geography	What is the capital of Peru?	Lima
-World Geography	What is the capital of Spain?	Madrid
-World Geography	What is the capital of India?	New Delhi
-World Geography	What are the three capitals of South Africa?	Pretoria, Cape Town, and Bloemfontein
-World Geography	Which is the largest ocean?	The Pacific Ocean
-World Geography	What is the longest river in Africa?	The Nile
-World Geography	What is the tallest mountain above sea level?	Mount Everest
-World Geography	Which country is the largest by area?	Russia
-World Geography	Which is the smallest country in the world?	Vatican City
-World Geography	Which continent has the most countries?	Africa
-World Geography	What is the imaginary line at 0° latitude?	The Equator
-World Geography	What is the imaginary line at 0° longitude?	The Prime Meridian
-World Geography	What is the largest hot desert?	The Sahara
-World Geography	What is the deepest ocean trench?	The Mariana Trench
-World Geography	The {{c1::Amazon}} River carries more water than any other river.
-World Geography	The {{c1::Himalayas}} are the highest mountain range on Earth.
+Spanish basics	hola	hello
+Spanish basics	adiós	goodbye
+Spanish basics	por favor	please
+Spanish basics	gracias	thank you
+Spanish basics	de nada	you’re welcome
+Spanish basics	buenos días	good morning
+Spanish basics	buenas noches	good night
+Spanish basics	¿Cómo estás?	How are you?
+Spanish basics	Me llamo…	My name is…
+Spanish basics	¿Cómo te llamas?	What is your name?
+Spanish basics	mucho gusto	nice to meet you
+Spanish basics	lo siento	I’m sorry
+Spanish basics	perdón	excuse me
+Spanish basics	el agua	the water
+Spanish basics	la comida	the food
+Spanish basics	la casa	the house
+Spanish basics	el libro	the book
+Spanish basics	¿Dónde está el baño?	Where is the bathroom?
+Spanish basics	¿Cuánto cuesta?	How much does it cost?
+Spanish basics	No entiendo.	I don’t understand.
+Spanish basics	¿Hablas inglés?	Do you speak English?
+Spanish basics	hablar	to speak
+Spanish basics	comer	to eat
+Spanish basics	vivir	to live
+Spanish basics	Yo {{c1::hablo}} español.	I speak Spanish.
+Spanish basics	Ella {{c1::come}} una manzana.	She eats an apple.
+Spanish basics	Nosotros {{c1::vivimos}} en una ciudad.	We live in a city.
+MCAT: amino acids	How many standard amino acids build the proteins in our bodies?	20
+MCAT: amino acids	What bond joins two amino acids together?	A peptide bond
+MCAT: amino acids	What do all amino acids have around their central (alpha) carbon?	An amino group, a carboxyl group, a hydrogen, and a side chain (R group)
+MCAT: amino acids	Which amino acid has only a hydrogen as its side chain?	Glycine
+MCAT: amino acids	Which amino acid is not chiral?	Glycine, because its side chain is just a hydrogen
+MCAT: amino acids	Which two amino acids have acidic side chains?	Aspartate and glutamate
+MCAT: amino acids	Which amino acids have basic side chains?	Lysine, arginine, and (partly) histidine
+MCAT: amino acids	Which amino acid can form a disulfide bond?	Cysteine
+MCAT: amino acids	Which amino acid has a side chain that loops back to its own nitrogen and bends an alpha helix?	Proline
+MCAT: amino acids	Which three amino acids have aromatic side chains?	Phenylalanine, tyrosine, and tryptophan
+MCAT: amino acids	Which three amino acids have a hydroxyl group that can be phosphorylated?	Serine, threonine, and tyrosine
+MCAT: amino acids	What is a zwitterion?	A molecule with a positive and a negative charge that adds up to no net charge
+MCAT: amino acids	What is the isoelectric point (pI)?	The pH at which an amino acid has no net charge
+MCAT: amino acids	Which form of amino acids, D or L, is found in proteins?	L
+MCAT: amino acids	What is an essential amino acid?	One the body can’t make, so it has to come from food
+MCAT: amino acids	Which amino acid does a new protein start with in eukaryotes?	Methionine (the AUG codon)
+MCAT: amino acids	What is the one-letter code for tryptophan?	W
+MCAT: amino acids	What is the one-letter code for lysine?	K
+MCAT: amino acids	What is the one-letter code for glycine?	G
+MCAT: amino acids	Which amino acid is named by the one-letter code E?	Glutamate
+MCAT: amino acids	A {{c1::peptide bond}} links amino acids in a protein.
+MCAT: amino acids	{{c1::Cysteine}} can link two parts of a protein with a disulfide bridge.
+World capitals	What is the capital of Canada?	Ottawa
+World capitals	What is the capital of Australia?	Canberra
+World capitals	What is the capital of Brazil?	Brasília
+World capitals	What is the capital of Japan?	Tokyo
+World capitals	What is the capital of Egypt?	Cairo
+World capitals	What is the capital of Kenya?	Nairobi
+World capitals	What is the capital of Turkey?	Ankara
+World capitals	What is the capital of Peru?	Lima
+World capitals	What is the capital of Spain?	Madrid
+World capitals	What is the capital of India?	New Delhi
+World capitals	What are the three capitals of South Africa?	Pretoria, Cape Town, and Bloemfontein
+World capitals	What is the capital of France?	Paris
+World capitals	What is the capital of Germany?	Berlin
+World capitals	What is the capital of Italy?	Rome
+World capitals	What is the capital of Argentina?	Buenos Aires
+World capitals	What is the capital of Mexico?	Mexico City
+World capitals	What is the capital of Nigeria?	Abuja
+World capitals	What is the capital of Thailand?	Bangkok
+World capitals	What is the capital of South Korea?	Seoul
+World capitals	What is the capital of Morocco?	Rabat
+World capitals	What is the capital of New Zealand?	Wellington
+World capitals	The capital of Australia is {{c1::Canberra}}, not Sydney.
+World capitals	The capital of Turkey is {{c1::Ankara}}, not Istanbul.

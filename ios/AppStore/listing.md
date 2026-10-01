@@ -23,7 +23,7 @@ leave out other apps' and exams' names.
 
 ## Description
 
-(Under 4000 characters, 1768 used. Paste as it is; the capital-letter lines are plain text headings.)
+(Under 4000 characters, 1846 used. Paste as it is; the capital-letter lines are plain text headings.)
 
 ```
 Lucida is a flashcard app that remembers for you.
@@ -31,6 +31,9 @@ Lucida is a flashcard app that remembers for you.
 Make cards the way you like. Type them, bring them in from a spreadsheet or an Anki export, or ask your AI. Connect Claude, ChatGPT, Cursor or any app that speaks MCP, and it can add cards, make quizzes and put them in your decks.
 
 Lucida plans every review with FSRS, a spaced repetition method. Cards you forget come back sooner. Cards you know come back later. A few minutes a day is enough.
+
+DAILY REMINDER
+Pick a time and get one reminder a day. Turn it off any time.
 
 LEARN MODE
 Quiz yourself with multiple choice, true or false, and fill in the blank.
@@ -56,10 +59,10 @@ Privacy Policy: https://lucida.cards/privacy
 ```
 
 What each line stands on, so nothing here goes further than the app does: cards typed, imported (a spreadsheet, or an Anki export, from the
-welcome) or made by an AI app through Connect AI (Claude, ChatGPT, Cursor, any MCP app); FSRS scheduling; Learn mode (multiple choice, true or
+welcome) or made by an AI app through Connect AI (Claude, ChatGPT, Cursor, any MCP app); FSRS scheduling; the daily reminder (a notification the phone schedules itself at the time picked: Settings > Studying); Learn mode (multiple choice, true or
 false, fill in the blank); Stats; sharing, Discover, following, saving, copying and Suggest a change; classes; the Pro list is the pricing page's
 (`PLAN_PRO` in design/site.mjs) less the one line the iPhone app doesn't have yet (natural voices for sound cards; the app reads audio cards
-with the phone's own voice). Live games and export are on the web only, so they aren't here. No ads and no tracking: `PrivacyInfo.xcprivacy` says the same.
+with the phone's own voice): the iPhone paywall's list is the same, `PLAN_PRO_PHONE`. Live games and export are on the web only, so they aren't here. No ads and no tracking: `PrivacyInfo.xcprivacy` says the same.
 
 ## The two subscriptions (App Store Connect → Subscriptions)
 
@@ -75,16 +78,16 @@ screenshot for each subscription can be `screenshots/` picture 8, the Go Pro she
 
 ## App Review notes
 
-(Paste into "Notes" under App Review Information. The two lines marked FILL IN are the owner's: the reviewer account is made on the
-real service by the owner, who types its password; nobody else does.)
+(Paste into "Notes" under App Review Information. The reviewer account is team+review@lucida.cards, made on the real service; its password is
+typed by the owner in App Store Connect (the Sign-in information fields) and is never written down here or in the repo.)
 
 ```
 Signing in
 Lucida signs in with Apple, Google, an email code, or a password. App Review can't get an email code, so please use the password:
 on the sign-in screen tap "Use a password" (under the Email field) and type
-  Email:    FILL IN (the reviewer account's email)
-  Password: FILL IN (its password)
-The account has four small decks of cards in it, so every screen has something on it.
+  Email:    team+review@lucida.cards
+  Password: typed by the owner in App Store Connect
+The account has four small decks of cards in it (Cell Biology, Spanish basics, MCAT: amino acids and World capitals), so every screen has something on it.
 
 Subscriptions (Pro)
 Settings (the gear on the Profile tab) > Plan > Go Pro. Lucida Pro is sold monthly and yearly with in-app purchase; the prices are the App Store's.
@@ -101,17 +104,23 @@ Report and Block (user-generated content)
 - Block: on someone's profile, ... > Block; on a suggestion, open it > Block. A blocked person can't follow you or suggest changes to your
   decks, nothing from them reaches your News, and you don't see their decks. Settings > Account > Blocked people lists them with Unblock.
 
+Daily reminder
+Settings > Studying > Daily reminder. It starts Off. Picking a time turns it on and asks, then, to send notifications (the app never asks when it
+opens); the phone then sends one notification a day at that time, "Time to review your cards". Another time sets it again, and Off removes it. If
+notifications are refused, the row stays Off and says how to allow them in iPhone Settings. Signing out removes it.
+
 Connect AI (optional)
 Settings > Connect AI lets people add Lucida to their AI app (Claude, ChatGPT and others) so it can make cards. "Apps you allowed" on that page
 lists the apps that signed in, each with Disconnect. Nothing in the app needs it.
 
 Everything else works with the account above. The app needs a network connection. It uses no camera, location or contacts, and does no
-tracking. It asks for the microphone only when someone records a sound for a card, and the photos on cards and profiles are only ones
-the person picks (with the system's own picker).
+tracking. It asks for the microphone only when someone records a sound for a card, to send notifications only when someone turns the daily
+reminder on, and the photos on cards and profiles are only ones the person picks (with the system's own picker).
 ```
 
-Check before submitting: the reviewer account is Free (so Go Pro shows), has the four decks of `samples/reviewer-library.txt` (Welcome >
-Bring your cards > Anki, or Library), and its password works at "Use a password" on a fresh install.
+Check before submitting: the reviewer account is Free (so Go Pro shows) and its password works at "Use a password" on a fresh install. Its four
+decks are already on the server (Cell Biology, Spanish basics, MCAT: amino acids and World capitals). `samples/reviewer-library.txt` has the same
+four, with the same names, to bring in again (Welcome > Bring your cards > Anki) if the account is ever made anew; it isn't needed otherwise.
 
 ## App Privacy (the questions App Store Connect asks)
 
@@ -127,6 +136,9 @@ person" and used for "App functionality".
 | Audio data | the recordings a person puts on cards |
 | Other user content | decks, cards, reviews, suggestions, reports |
 | Purchase history | which Lucida Pro someone bought with Apple (the signed purchase goes to Lucida's server, which turns Pro on) |
+
+The daily reminder collects nothing: it is a notification the phone schedules itself (no push service, nothing sent to Lucida). Only the time you
+pick is kept, with your other settings. It needs no entry in `PrivacyInfo.xcprivacy` and no usage text in the app's Info.plist.
 
 ## Screenshots
 

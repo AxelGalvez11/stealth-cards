@@ -16,8 +16,8 @@
 #
 #   ios/tests/run.sh signin
 #       Sign in with Apple from the iPhone app (audience cards.lucida.app, the web's is cards.lucida.web) against the real server and
-#       a pretend Supabase: the server forwards the token and nonce and has no list of its own; the list that matters is Supabase's
-#       (Apple "Client IDs"), which the owner has to check. Ports PORT and PORT + 1 (default 3907). No simulator.
+#       a pretend Supabase: the server forwards the token and nonce and has no list of its own; the list that decides is Supabase's
+#       (Apple "Client IDs", which hold both ids). Ports PORT and PORT + 1 (default 3907). No simulator.
 #
 # Everything it makes goes in a folder of its own under the temp folder (TESTDIR to move it).
 H=${0:A:h}; REPO=${H:h:h}; TESTDIR=${TESTDIR:-${TMPDIR:-/tmp}/lucida-ios-tests}; mkdir -p $TESTDIR
