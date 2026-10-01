@@ -89,9 +89,15 @@ final class ClassesTests: XCTestCase {
     while Date() < end { if up() { return true }; Thread.sleep(forTimeInterval: 0.3) }
     return up()
   }
+  /// Puts the share sheet away the way a person does: a tap on the page above it (a tap up in the status bar does nothing).
   private func closeShareSheet(_ app: XCUIApplication) {
-    if app.buttons["Close"].exists { app.buttons["Close"].tap() } else { app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.06)).tap() }
-    Thread.sleep(forTimeInterval: 1.0)
+    for _ in 0..<3 {
+      app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.25)).tap()
+      let end = Date().addingTimeInterval(3)
+      while Date() < end && shareSheetUp(app, 0.1) { Thread.sleep(forTimeInterval: 0.25) }
+      if !shareSheetUp(app, 0.1) { break }
+    }
+    Thread.sleep(forTimeInterval: 0.8)
   }
   private func button(_ app: XCUIApplication, _ label: String) -> XCUIElement { app.buttons[label].firstMatch }
   private func buttonStarting(_ app: XCUIApplication, _ words: String) -> XCUIElement {
