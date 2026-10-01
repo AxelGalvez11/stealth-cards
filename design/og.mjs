@@ -8,9 +8,15 @@
 //                            (`_art`), so design/check-site.mjs can tell when one is out of date
 //   web/icons/*.png     the icon as pictures: 192 and 512 pixels (the organization's logo, and the icon search results show)
 //                       and the 180-pixel one iPhones use for the home screen
+//   web/favicon.ico     the tab icon (web/icon.svg) at 16, 32 and 48 pixels in one file: what a browser asks for at the root of a site when
+//                       a page names no icon, and what Safari on a Mac and Google's search results fall back on (design/ico.mjs)
+//   web/apple-touch-icon.png, web/apple-touch-icon-precomposed.png
+//                       the same 180-pixel picture as icons/apple-touch-icon.png, at the root, which is where iPhones look when a page
+//                       names none (the -precomposed name is the older one)
 // Run it after adding pages or changing a page's title (and after design/build.mjs):  node design/og.mjs
+// `node design/og.mjs --icons` draws only the icons (the favicon and the pictures in web/icons), and touches nothing else.
 // Everything it draws is shown in a window of the size it will have, so nothing is scaled.
-import { writeFileSync, mkdirSync, mkdtempSync, rmSync, readFileSync, readdirSync } from 'node:fs';
+import { writeFileSync, copyFileSync, mkdirSync, mkdtempSync, rmSync, readFileSync, readdirSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
@@ -20,6 +26,7 @@ import { board, esc } from './render.mjs';
 import { pageSet, indexOf, ogKey, ogFile, ogFingerprint } from './site.mjs';
 import { BASE_CSS, FONTS } from './seo.mjs';
 import { readPng, thumb } from './png.mjs';
+import { makeIco } from './ico.mjs';
 
 const WEB = new URL('../web/', import.meta.url);
 const OUT = new URL('og/', WEB), ICONS = new URL('icons/', WEB);
@@ -33,7 +40,7 @@ mkdirSync(OUT, { recursive: true }); mkdirSync(ICONS, { recursive: true });
 // brightens the colors and leaves stray dots of another hue; the picture's own light grain breaks up the steps instead. `-strip` leaves out
 // the time stamps ImageMagick writes into a file, so drawing the same picture again gives the same bytes (and git sees no change).
 const shrink = file => { try { execFileSync('magick', [file, '-colors', '256', '+dither', '-strip', 'PNG8:' + file], { stdio: 'ignore' }); } catch {} };
-const manifest = {}, bgs = {};
+const iconsOnly = process.argv.includes('--icons'), manifest = {}, bgs = {};
 // Which drawing the pictures come from: SiteOg's own code writes it into its logic (`// og-art: …`).
 const art = (readFileSync(new URL('../design/canvas/project/SiteOg.dc.html', import.meta.url), 'utf8').match(/og-art: ([0-9a-f]+)/) || [])[1];
 if (!art) throw new Error('SiteOg has no og-art mark. Run `node design/build.mjs` first.');
@@ -47,7 +54,7 @@ try {
       return chrome.run(`document.fonts.ready.then(() => new Promise(r => setTimeout(() => r(document.fonts.check('600 40px Geist')), 300)))`);
     };
     await chrome.size(1200, 630);
-    for (const it of items) {
+    for (const it of iconsOnly ? [] : items) {
       const entry = manifest[it.slug || 'home'] = { file: ogFile(it.slug), fingerprint: ogFingerprint(it), bytes: 0 };
       const b = board('SiteOg', { page: ogKey(it.slug), site: true });
       if (!b.html.includes(esc(it.h1))) throw new Error('The SiteOg board doesn’t know "' + it.h1 + '" yet. Run `node design/build.mjs` first.');
@@ -88,8 +95,23 @@ try {
       writeFileSync(new URL(name, ICONS), await chrome.shot({ clip: { x: 0, y: 0, width: px, height: px }, transparent }));
       console.log('icons/' + name);
     }
+    // The tab icon, web/icon.svg itself (white dots on a black rounded tile; its faint edge for a dark strip is a media query a picture can't
+    // follow, so the picture is the light one) drawn at 16, 32 and 48 pixels on a clear background, into one .ico file. Browsers ask for
+    // /favicon.ico by default, Safari on a Mac and Google's search results use it, and nothing in it changes unless the icon does.
+    const frames = [];
+    for (const px of [16, 32, 48]) {
+      await chrome.size(px, px);
+      await show(`<!doctype html><html><head><meta charset="utf-8"><style>html,body{margin:0;background:transparent;overflow:hidden}svg{display:block}</style></head><body>${svg.replace('<svg ', `<svg width="${px}" height="${px}" `)}</body></html>`);
+      frames.push({ size: px, png: await chrome.shot({ clip: { x: 0, y: 0, width: px, height: px }, transparent: true }) });
+    }
+    writeFileSync(new URL('favicon.ico', WEB), makeIco(frames));
+    console.log('favicon.ico (16, 32 and 48 pixels)');
+    // iPhones ask for /apple-touch-icon.png (and the older -precomposed name) at the root when a page names none: the same 180-pixel picture.
+    for (const name of ['apple-touch-icon.png', 'apple-touch-icon-precomposed.png']) copyFileSync(new URL('apple-touch-icon.png', ICONS), new URL(name, WEB));
+    console.log('apple-touch-icon.png and apple-touch-icon-precomposed.png at the root');
   });
 } finally { rmSync(dir, { recursive: true, force: true }); }
+if (iconsOnly) process.exit(0);
 writeFileSync(new URL('manifest.json', OUT), JSON.stringify(manifest, null, 1) + '\n');
 // Each page's gradient as 32 × 17 cells (red, green, blue, in order, as base64), made with the pictures.
 writeFileSync(new URL('./og-bg.json', import.meta.url), JSON.stringify({ _art: art, bg: bgs }, null, 1) + '\n');

@@ -70,6 +70,20 @@ export function jsonLd(p) {
 const inScript = o => JSON.stringify(o).split('<').join('\\u003c').split(String.fromCharCode(0x2028)).join('\\u2028').split(String.fromCharCode(0x2029)).join('\\u2029');
 
 // ---------- <head> ----------
+// The icons every page of both hosts names (the same four in design/seo.mjs's pages, web/app.html and the app's own pages; design/check-site.mjs
+// checks that they are):
+//   - /favicon.ico: the tab icon at 16, 32 and 48 pixels. It is what Safari on a Mac and the older browsers use, and what a browser asks for at the
+//     root of a site when a page names none. `sizes="32x32"` is today's advice (Chrome and Edge then take the SVG, which is sharp at any size and has
+//     a faint edge on a dark tab strip; without it they may take the .ico over the SVG; Safari on a Mac, which has no SVG tab icons, takes the .ico);
+//   - /icon.svg: the tab icon, white dots on a black rounded tile;
+//   - /icons/icon-192.png: the home-screen icon for Android, black dots on white (a browser takes it only where it wants a big icon);
+//   - /apple-touch-icon.png: the same black dots on white at 180 pixels, for the iPhone's home screen. (Both files stay at the root, where iPhones
+//     look when a page names none, and the older /apple-touch-icon-precomposed.png is there too.)
+// No manifest: Android Chrome shows the tab icon from these and builds a home-screen icon from the 192-pixel one without it.
+export const ICON_LINKS = `<link rel="icon" href="/favicon.ico" sizes="32x32">
+<link rel="icon" href="/icon.svg" type="image/svg+xml">
+<link rel="icon" href="/icons/icon-192.png" type="image/png" sizes="192x192">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">`;
 const ROBOTS = 'index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1';
 // Everything up to and including </head> for one page: its own words, then the shared fonts, icons and styles. `css` is the
 // page's stylesheet; `noindex` is for pages that shouldn't be found (the 404); `scheme` is for the pages that follow the system's
@@ -104,9 +118,7 @@ ${scheme ? `<meta name="color-scheme" content="light dark">\n<meta name="theme-c
 <meta name="twitter:description" content="${desc}">
 <meta name="twitter:image" content="${img}">
 <meta name="twitter:image:alt" content="${alt}">
-<link rel="icon" href="/icon.svg" type="image/svg+xml">
-<link rel="icon" href="/icons/icon-192.png" type="image/png" sizes="192x192">
-<link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
+${ICON_LINKS}
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="preload" href="${FONT_FILE}" as="font" type="font/woff2" crossorigin>

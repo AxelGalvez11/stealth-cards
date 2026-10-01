@@ -18,27 +18,35 @@
 //     table, headings and lists start at one left edge (the blog's too);
 //   - the flashcards are the app's: radius, line, shadow, padding and type in the app card's ratios, in light and in dark, and a test card turns
 //     to its answer on the same card (its size does not change);
-//   - the motion: only the clouds and the gradient that ends a page move, slowly, and only when the system allows motion; nothing moves the layout.
-// --quick checks only a few pages (the pages with something special) and skips the contrast. Needs Chrome (design/chrome.mjs).
-import { createServer } from 'node:http';
-import { readFileSync, existsSync } from 'node:fs';
+//   - the motion: only the clouds and the gradient that ends a page move, slowly, and only when the system allows motion; nothing moves the layout;
+//   - the icons: every page of lucida.cards and the app's pages (its page, a public deck, a profile, sign-in) name the same four icons, every icon
+//     file answers and decodes, the places a browser looks when a page names none answer too, and the icons Chrome asks for by itself never get a 404.
+// --quick checks only a few pages (the pages with something special) and skips the contrast. --icons checks only the icons. Needs Chrome (design/chrome.mjs).
+import { createServer, request } from 'node:http';
+import { spawn } from 'node:child_process';
+import { readFileSync, existsSync, mkdtempSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
 import { join, extname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { withChrome } from './chrome.mjs';
 import { pageSet, FIXED } from './site.mjs';
-import { route } from './vercel-routes.mjs';
+import { route, headersFor } from './vercel-routes.mjs';
 import { readPng } from './png.mjs';
 import { LIGHT, DARK, EXTRA_LIGHT, EXTRA_DARK } from './scheme.mjs';
+import { ICON_LINKS } from './seo.mjs';
 
-const ROOT = fileURLToPath(new URL('../', import.meta.url)), WEB = join(ROOT, 'web'), args = process.argv.slice(2), quick = args.includes('--quick');
+const ROOT = fileURLToPath(new URL('../', import.meta.url)), WEB = join(ROOT, 'web'), args = process.argv.slice(2), quick = args.includes('--quick'), iconsOnly = args.includes('--icons');
 const only = args.filter(a => !a.startsWith('--'));
 const config = JSON.parse(readFileSync(join(ROOT, 'vercel.json'), 'utf8'));
 const TYPES = { '.html': 'text/html; charset=utf-8', '.png': 'image/png', '.webp': 'image/webp', '.svg': 'image/svg+xml', '.css': 'text/css', '.js': 'text/javascript', '.json': 'application/json', '.txt': 'text/plain; charset=utf-8', '.xml': 'application/xml' };
 
 // The built site, served the way Vercel routes it (design/vercel-routes.mjs), on a port of its own.
+const seen = [];  // what the browser asked for, and what it was told: { path, status }
 const server = createServer((req, res) => {
   const path = decodeURIComponent(new URL(req.url, 'http://x').pathname), r = route(config, WEB, { host: 'lucida.cards', path });
-  const send = (file, status = 200) => { res.writeHead(status, { 'content-type': TYPES[extname(file)] || 'application/octet-stream', 'cache-control': 'no-store' }); res.end(readFileSync(file)); };
+  res.on('finish', () => seen.push({ path, status: res.statusCode }));
+  // (The type a file gets from vercel.json's `headers` is the one it is served with, as on Vercel: that is how the .ico is an image.)
+  const send = (file, status = 200) => { res.writeHead(status, { 'content-type': TYPES[extname(file)] || 'application/octet-stream', ...(headersFor(config, path)['content-type'] ? { 'content-type': headersFor(config, path)['content-type'] } : {}), 'cache-control': 'no-store' }); res.end(readFileSync(file)); };
   if (r.type === 'file') return send(r.file);
   if (r.type === 'notfound' && r.page) return send(r.page, 404);
   res.writeHead(404); res.end('not found');
@@ -188,7 +196,7 @@ const rgb = hex => 'rgb(' + hex.slice(1).match(/../g).map(h => parseInt(h, 16)).
 console.log('Pages in a browser (' + (quick ? 'quick' : 'all') + '), ' + list.length + ' pages × 390 and 1440 wide × light and dark');
 await withChrome(async chrome => {
   const controls = controlsOf(chrome);
-  for (const pg of list) {
+  for (const pg of iconsOnly ? [] : list) {
     const url = base + '/' + (pg.slug === '404-page' ? 'no-such-page' : pg.slug);
     const follows = true;
     for (const width of [390, 1440]) for (const scheme of follows ? ['light', 'dark'] : ['light']) {
@@ -281,7 +289,7 @@ await withChrome(async chrome => {
 // less motion nothing moves at all; and the layout never moves. (The pages above were looked at with animations off, so this opens them again.)
 console.log('Motion');
 await withChrome(async chrome => {
-  const look = ['vs/quizlet', 'blog', 'compare', 'faq', '404-page', '', 'pricing'].filter(x => !only.length || only.includes(x));
+  const look = iconsOnly ? [] : ['vs/quizlet', 'blog', 'compare', 'faq', '404-page', '', 'pricing'].filter(x => !only.length || only.includes(x));
   const read = () => chrome.run(`(() => document.getAnimations().filter(a => a.effect && a.effect.target && a.effect.target.getBoundingClientRect().width > 0).map(a => [a.animationName || '', a.playState, getComputedStyle(a.effect.target).transform]))()`);
   const geo = () => chrome.run(`(() => [document.documentElement.scrollHeight, ...['.sp-main', 'h1', '.sp-cta', 'header'].map(s => { const e = document.querySelector(s); if (!e) return 0; const r = e.getBoundingClientRect(); return [Math.round((r.top + scrollY) * 10), Math.round(r.height * 10), Math.round(r.left * 10)]; })])()`);
   const tx = m => { const x = /matrix\(([^)]+)\)/.exec(m); return x ? x[1].split(',').map(Number) : [1, 0, 0, 1, 0, 0]; };
@@ -299,6 +307,57 @@ await withChrome(async chrome => {
     if (site && slug !== 'blog') ok(names.scDrift === 1, tag + ': the gradient that ends the page flows', names);
     ok(JSON.stringify(g0) === JSON.stringify(g1), tag + ': the motion does not move the layout', [g0, g1]);
   }
+});
+// ---------- the icons ----------
+// The tab icon and the home-screen icons, as a browser meets them. Each page names the same four; every file answers (200, an image type) and
+// decodes as a picture; the three places a browser looks when a page names none (/favicon.ico, /apple-touch-icon.png and the older
+// -precomposed name) answer too; and Chrome, which asks for the page's icons by itself (this one does, headless), is never told 404 for one.
+// On lucida.cards: every page. On the app: its page, a public deck, a profile and sign-in, through the app's own server (the one the screens use).
+console.log('Icons');
+const ICON_PATH = /^\/(favicon\.ico|icon\.svg|icons\/|apple-touch-icon)/;
+const WANT_LINKS = ICON_LINKS.split('\n').map(l => { const m = /rel="([^"]+)" href="([^"]+)"/.exec(l); return [m[1], m[2], (/type="([^"]+)"/.exec(l) || [])[1] || '', (/sizes="([^"]+)"/.exec(l) || [])[1] || '']; });
+const ICON_TYPE = { '/favicon.ico': /^image\/(x-icon|vnd\.microsoft\.icon)/, '/icon.svg': /^image\/svg\+xml/, '/icons/icon-192.png': /^image\/png/, '/apple-touch-icon.png': /^image\/png/, '/apple-touch-icon-precomposed.png': /^image\/png/ };
+const ICON_PROBE = `(async () => {
+  const links = [...document.querySelectorAll('link[rel~="icon"], link[rel="apple-touch-icon"], link[rel="apple-touch-icon-precomposed"]')].map(l => [l.getAttribute('rel'), l.getAttribute('href'), l.getAttribute('type') || '', l.getAttribute('sizes') || '']);
+  const urls = [...new Set([...links.map(l => l[1]), '/favicon.ico', '/apple-touch-icon.png', '/apple-touch-icon-precomposed.png'])], files = [];
+  for (const u of urls) {
+    const r = await fetch(u, { cache: 'no-store' }), b = await r.blob();
+    const loaded = await new Promise(done => { const i = new Image(); i.onload = () => done(true); i.onerror = () => done(false); i.src = URL.createObjectURL(b); });
+    files.push([u, r.status, (r.headers.get('content-type') || ''), b.size, loaded]);
+  }
+  return { links, files };
+})()`;
+// Chrome keeps the icons it has had (by address) and asks only for new ones, so each page is opened under a name of its own (icons3.localhost
+// is this computer too): the icons are new to it every time.
+let named = 0;
+async function iconsOf(chrome, tag, url, log) {
+  log.length = 0;
+  await chrome.size(1440, 900); await chrome.open(url.replace('127.0.0.1', 'icons' + (++named) + '.localhost'));
+  for (let i = 0; i < 30 && !log.some(x => ICON_PATH.test(x.path)); i++) await wait(100);   // Chrome asks for the icons a moment after the page loads
+  await wait(300);
+  const asked = log.filter(x => ICON_PATH.test(x.path)), got = await chrome.run(ICON_PROBE);
+  if (process.env.ICON_DEBUG) console.log('  ' + tag + ' asked for', asked.map(x => x.path + ' ' + x.status).join(', '));
+  ok(asked.length > 0 && asked.every(x => x.status === 200), tag + ': the icons the browser asked for by itself all answered (none was a 404)', asked);
+  ok(JSON.stringify(got.links) === JSON.stringify(WANT_LINKS), tag + ': the page names the four icons: favicon.ico, the SVG, the 192-pixel PNG and the apple-touch-icon', got.links);
+  ok(got.files.length >= 5 && got.files.every(([u, status, type, size, loaded]) => status === 200 && size > 0 && loaded && (!ICON_TYPE[u] || ICON_TYPE[u].test(type))), tag + ': every icon file, and the places a browser looks by default, answers with a picture of the right type', got.files.filter(([u, status, type, size, loaded]) => !(status === 200 && size > 0 && loaded && (!ICON_TYPE[u] || ICON_TYPE[u].test(type)))));
+}
+await withChrome(async chrome => {
+  for (const pg of list) await iconsOf(chrome, (pg.slug || '/') + ' icons', base + '/' + (pg.slug === '404-page' ? 'no-such-page' : pg.slug), seen);
+  if (only.length) return;
+  // The app, through its own server and a small go-between that writes down what the browser asks for.
+  const data = mkdtempSync(join(tmpdir(), 'lucida-pages-app-')), appPort = process.env.PAGES_APP_PORT || '3894', seenApp = [];
+  const app = spawn(process.execPath, [join(WEB, 'server.mjs')], { cwd: ROOT, env: { ...process.env, PORT: appPort, STEALTH_DATA: data }, stdio: ['ignore', 'pipe', 'pipe'] });
+  const proxy = createServer((req, res) => {
+    const path = new URL(req.url, 'http://x').pathname;
+    const up = request({ host: '127.0.0.1', port: +appPort, path: req.url, method: req.method, headers: req.headers }, r => { seenApp.push({ path, status: r.statusCode }); res.writeHead(r.statusCode, r.headers); r.pipe(res); });
+    up.on('error', () => { res.writeHead(502); res.end(); }); req.pipe(up);
+  });
+  try {
+    await new Promise((done, bad) => { const t = setTimeout(() => bad(new Error('The app’s server did not start')), 30000); app.stdout.on('data', d => { if (/localhost:\d+/.test(String(d))) { clearTimeout(t); done(); } }); app.on('exit', c => { clearTimeout(t); bad(new Error('The app’s server stopped (' + c + ')')); }); });
+    await new Promise(done => proxy.listen(0, '127.0.0.1', done));
+    const root = 'http://127.0.0.1:' + proxy.address().port;
+    for (const path of ['/', '/d/none', '/@nobody', '/sign-in']) await iconsOf(chrome, 'the app ' + path + ' icons', root + path, seenApp);
+  } finally { app.kill('SIGKILL'); proxy.close(); rmSync(data, { recursive: true, force: true }); }
 });
 server.close();
 

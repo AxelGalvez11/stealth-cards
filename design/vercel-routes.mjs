@@ -76,3 +76,15 @@ export function route(config, webDir, req) {
   }
   return { type: 'notfound', page: at('/404.html'), rule: 'none' };
 }
+
+// The headers vercel.json's `headers` rules put on the answer for `path` (names in lower case): every rule whose `source` matches adds its
+// headers, and a later rule's header replaces an earlier one's of the same name. (Static files only: the cache of the pictures and icons, the
+// type of the .ico.)
+export function headersFor(config, path) {
+  const out = {};
+  for (const rule of config.headers || []) {
+    if (!compile(rule.source).re.test(path)) continue;
+    for (const h of rule.headers) out[h.key.toLowerCase()] = h.value;
+  }
+  return out;
+}
