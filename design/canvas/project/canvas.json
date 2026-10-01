@@ -4280,25 +4280,25 @@
    "x": 0,
    "y": 5272,
    "w": 1440,
-   "h": 10648,
+   "h": 6021,
    "page": "landing",
-   "title": "Site · Comparisons, alternatives, the hubs and the 404 · lucida.cards",
+   "title": "Site · The blog, comparisons, alternatives, the hubs and the 404 · lucida.cards",
    "is_interactive": true
   },
   "SiteComparePhone.dc.html": {
    "x": 1520,
    "y": 5272,
    "w": 390,
-   "h": 16115,
+   "h": 9652,
    "page": "landing",
-   "title": "Site · Comparisons, alternatives, the hubs and the 404 · lucida.cards on a phone",
+   "title": "Site · The blog, comparisons, alternatives, the hubs and the 404 · lucida.cards on a phone",
    "is_interactive": true
   },
   "SiteFeature.dc.html": {
    "x": 1990,
    "y": 5272,
    "w": 1440,
-   "h": 10663,
+   "h": 6997,
    "page": "landing",
    "title": "Site · Features and who Lucida is for · lucida.cards",
    "is_interactive": true
@@ -4307,7 +4307,7 @@
    "x": 3510,
    "y": 5272,
    "w": 390,
-   "h": 15389,
+   "h": 9658,
    "page": "landing",
    "title": "Site · Features and who Lucida is for · lucida.cards on a phone",
    "is_interactive": true
@@ -4316,7 +4316,7 @@
    "x": 3980,
    "y": 5272,
    "w": 1440,
-   "h": 11508,
+   "h": 5173,
    "page": "landing",
    "title": "Site · FAQ · lucida.cards",
    "is_interactive": true
@@ -4325,14 +4325,14 @@
    "x": 5500,
    "y": 5272,
    "w": 390,
-   "h": 14558,
+   "h": 6098,
    "page": "landing",
    "title": "Site · FAQ · lucida.cards on a phone",
    "is_interactive": true
   },
   "SiteConnect.dc.html": {
    "x": 0,
-   "y": 21807,
+   "y": 15350,
    "w": 1440,
    "h": 3336,
    "page": "landing",
@@ -4341,7 +4341,7 @@
   },
   "SiteOg.dc.html": {
    "x": 1520,
-   "y": 21807,
+   "y": 15350,
    "w": 1200,
    "h": 630,
    "page": "landing",
@@ -4951,7 +4951,7 @@
    "text": "Connect Lucida (lucida.cards/connect), and the link-preview pictures",
    "w": 240,
    "x": 0,
-   "y": 21507
+   "y": 15050
   },
   "aThemes0": {
    "kind": "title1",
