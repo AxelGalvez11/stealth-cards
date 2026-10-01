@@ -207,6 +207,9 @@ struct LibraryScreen: View {
   @State private var pick = ""
   @State private var shown = 60
   @State private var confirmRemove = false
+  /// The difficulty control's sliding pill, and its taps.
+  @Namespace private var levelPill
+  @State private var levelTaps = 0
 
   var body: some View {
     let decks = store.libraryDecks(), folders = store.libraryFolders(decks)
@@ -246,10 +249,10 @@ struct LibraryScreen: View {
     }
     .scrollDismissesKeyboard(.immediately)
     .ignoresSafeArea(edges: .top)
-    .overlayPreferenceValue(MenuAnchors.self) { anchors in menus(anchors, decks, folders) }
+    .overlayPreferenceValue(MenuAnchors.self) { anchors in menus(anchors, decks, folders).animation(Motion.pop, value: menu) }
     .confirmationDialog("Remove the folder “\(folder?.name ?? "")”?", isPresented: $confirmRemove, titleVisibility: .visible) {
       // Back to the Library (the page also goes back by itself once its folder is gone).
-      Button("Remove folder", role: .destructive) { if let id = folderId { Task { await store.deleteFolder(id); if nav.path.last == .folder(id) { nav.back() } } } }
+      Button("Remove folder", role: .destructive) { Buzz.shared.warning("remove folder"); if let id = folderId { Task { await store.deleteFolder(id); if nav.path.last == .folder(id) { nav.back() } } } }
     } message: { Text("Its decks stay in your library.") }
   }
 
@@ -524,7 +527,7 @@ struct LibraryScreen: View {
     FlexRow(spacing: 2) {
       ForEach(["all"] + Level.all, id: \.self) { k in
         let on = level == k, n = k == "all" ? base.count : base.filter { $0.level == k }.count
-        Button { level = k; shown = 60 } label: {
+        Button { if !on { levelTaps += 1 }; level = k; shown = 60 } label: {
           HStack(spacing: 4) {
             Circle().fill(k == "all" ? .clear : Level.color(k, t)).frame(width: k == "all" ? 0 : 8, height: 8)
             Text(k == "all" ? "All" : Level.name(k)).css(12, .semibold).lineLimit(1)
@@ -532,7 +535,7 @@ struct LibraryScreen: View {
           }
           .foregroundStyle(on ? t.text : t.muted)
           .padding(.horizontal, 6).frame(maxWidth: .infinity).frame(height: 34)
-          .background(Capsule().fill(on ? t.bg : .clear).shadow(color: .black.opacity(on ? 0.14 : 0), radius: 1.5, x: 0, y: 1))
+          .background { if on { Capsule().fill(t.bg).shadow(color: .black.opacity(0.14), radius: 1.5, x: 0, y: 1).matchedGeometryEffect(id: "pill", in: levelPill) } }
           .contentShape(Capsule())
         }
         .buttonStyle(.plain)
@@ -540,8 +543,10 @@ struct LibraryScreen: View {
         .accessibilityAddTraits(on ? .isSelected : [])
       }
     }
+    .animation(Motion.knob, value: level)
     .padding(4)
     .background(Capsule().fill(t.surf))
+    .haptic(.selection, on: levelTaps, "segmented")
   }
 
   private func menuButton(_ key: String, _ label: String) -> some View {
@@ -619,15 +624,16 @@ struct LibraryScreen: View {
           }
         }
       }
-      .transition(.opacity)
+      .popTransition()
     }
   }
 
-  /// Move to: No folder or a folder (ticked where it is), then New folder.
+  /// Move to: Remove from folder (only for a deck that's in one: a deck in none just doesn't get it), then the folders (ticked
+  /// where it is), then New folder.
   private func moveMenu(_ d: LibDeck, _ folders: [LibFolder]) -> some View {
     VStack(alignment: .leading, spacing: 4) {
       Text("Move to").css(12, .semibold).foregroundStyle(t.muted).padding(.horizontal, 12).padding(.top, 8).padding(.bottom, 4)
-      ForEach([(key: "", id: String?.none, name: "No folder")] + folders.map { (key: $0.id, id: Optional($0.id), name: $0.name) }, id: \.key) { f in
+      ForEach((d.folder != nil ? [(key: "", id: String?.none, name: "Remove from folder")] : []) + folders.map { (key: $0.id, id: Optional($0.id), name: $0.name) }, id: \.key) { f in
         let on = d.folder == f.id
         Button { store.moveDeck(d.id, to: f.id); menu = nil } label: {
           HStack(spacing: 10) {

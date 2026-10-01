@@ -6,7 +6,6 @@ import SwiftUI
 
 struct FolderPopup: View {
   @Environment(\.theme) private var t
-  @Environment(\.accessibilityReduceMotion) private var still
   @EnvironmentObject private var store: Store
   @EnvironmentObject private var nav: Nav
   /// The folder being renamed (nil: a new one), a deck that goes in the new one, and what's typed to start with.
@@ -23,7 +22,7 @@ struct FolderPopup: View {
     let mover = deck.flatMap { id in store.libraryDecks().first { $0.id == id } }
     GeometryReader { g in
       ZStack(alignment: .top) {
-        t.dim.onTapGesture(perform: close).opacity(shown ? 1 : 0)
+        t.dim.onTapGesture(perform: close).opacity(shown ? 1 : 0).animation(Motion.fade, value: shown)
         VStack(alignment: .leading, spacing: 16) {
           VStack(alignment: .leading, spacing: 4) {
             Text(rename != nil ? "Rename folder" : "New folder").css(20, .semibold, ls: -0.02).accessibilityAddTraits(.isHeader)
@@ -62,8 +61,8 @@ struct FolderPopup: View {
         .background(RoundedRectangle(cornerRadius: 28, style: .continuous).fill(t.bg))
         .padding(.horizontal, 16)
         .padding(.top, (g.size.height * 0.2).rounded())
-        // It rises in (.sc-pop).
-        .opacity(shown ? 1 : 0).scaleEffect(shown ? 1 : 0.97).offset(y: shown ? 0 : 12)
+        // It slides up and fades in like every pop-up (Design/Motion.swift).
+        .opacity(shown ? 1 : 0).offset(y: shown ? 0 : Motion.slide).animation(Motion.pop, value: shown)
         .accessibilityElement(children: .contain)
         .accessibilityAddTraits(.isModal)
       }
@@ -71,7 +70,7 @@ struct FolderPopup: View {
     .ignoresSafeArea()
     .onAppear {
       name = start
-      withAnimation(still ? nil : .out(0.26)) { shown = true }
+      shown = true
       // Ready to type in (a name being changed is picked once the field has the focus, to type over it).
       DispatchQueue.main.async { focused = true }
       if rename != nil {

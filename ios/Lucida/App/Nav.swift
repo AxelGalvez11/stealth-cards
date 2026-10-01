@@ -91,22 +91,22 @@ final class Nav: ObservableObject {
   func reset() { sheet = nil; full = nil; boardFull = nil; path = []; tab = .today; libCards = false; libClasses = false; asking = false; barHidden = false }
   func push(_ r: Route) { path.append(r) }
   func back() { if !path.isEmpty { path.removeLast() } }
-  func study(deckId: String?, pile: String? = nil) { withAnimation(.out(0.35)) { full = .review(deckId: deckId, pile: pile) } }
+  func study(deckId: String?, pile: String? = nil) { withAnimation(Motion.sheet) { full = .review(deckId: deckId, pile: pile) } }
   /// Studies cards picked on the Stats page (a weak tag, the hardest cards, the ones you keep forgetting).
-  func study(set: String) { withAnimation(.out(0.35)) { full = .reviewSet(set) } }
-  func newCard(deckId: String?, cardId: String? = nil) { withAnimation(.out(0.35)) { sheet = .newCard(deckId: deckId, cardId: cardId) } }
-  func newDeck() { withAnimation(.out(0.35)) { sheet = .newDeck } }
+  func study(set: String) { withAnimation(Motion.sheet) { full = .reviewSet(set) } }
+  func newCard(deckId: String?, cardId: String? = nil) { withAnimation(Motion.sheet) { sheet = .newCard(deckId: deckId, cardId: cardId) } }
+  func newDeck() { withAnimation(Motion.sheet) { sheet = .newDeck } }
   /// Go Pro: the paywall opens over whatever is showing.
-  func goPro() { withAnimation(.out(0.35)) { sheet = .goPro } }
+  func goPro() { withAnimation(Motion.sheet) { sheet = .goPro } }
   func importCards() { /* Import comes with the card editor. */ }
   /// Learn mode: pick up where you stopped, or start from the sheet.
-  func learn(deckId: String, resume: Bool) { withAnimation(.out(0.35)) { if resume { full = .learn(deckId) } else { sheet = .learnStart(deckId) } } }
-  func close() { withAnimation(.out(0.3)) { sheet = nil } }
+  func learn(deckId: String, resume: Bool) { withAnimation(Motion.sheet) { if resume { full = .learn(deckId) } else { sheet = .learnStart(deckId) } } }
+  func close() { withAnimation(Motion.leave) { sheet = nil } }
   /// A review that ran out of cards: the session's summary if anything was graded.
-  func finishReview(graded: Bool = true) { withAnimation(.out(0.35)) { full = graded ? .done : nil } }
-  func closeFull() { withAnimation(.out(0.35)) { full = nil } }
+  func finishReview(graded: Bool = true) { withAnimation(Motion.sheet) { full = graded ? .done : nil } }
+  func closeFull() { withAnimation(Motion.sheet) { full = nil } }
   /// The end of a review of a set of cards: the page it was started from, or (cards missed in a test) the test's results.
-  func endSet() { let back = afterSet; afterSet = nil; withAnimation(.out(0.35)) { full = back } }
+  func endSet() { let back = afterSet; afterSet = nil; withAnimation(Motion.sheet) { full = back } }
   /// Leaving flashcards or Learn mode (X, or Done on the summary): straight to the deck's page, or to Today after a
   /// review of every deck (the web's endHref and doneHref). Every grade is saved already.
   func leave(to deckId: String?) {
@@ -114,20 +114,20 @@ final class Nav: ObservableObject {
     // screen already. When it isn't, the page underneath changes first, at once, while the full screen still covers it;
     // then the full screen slides away, a moment later (when both happen in one update, the slide can stall).
     let there = deckId.map { path.last == .deck($0) } ?? (tab == .today && path.isEmpty)
-    if there { withAnimation(.out(0.35)) { full = nil }; return }
+    if there { withAnimation(Motion.sheet) { full = nil }; return }
     var now = Transaction(); now.disablesAnimations = true
     withTransaction(now) { if let id = deckId { path.append(.deck(id)) } else { pick(.today) } }
-    DispatchQueue.main.async { withAnimation(.out(0.35)) { self.full = nil } }
+    DispatchQueue.main.async { withAnimation(Motion.sheet) { self.full = nil } }
   }
   /// Leaving a practice test (Leave, or Done on its results): the page it was started from, a deck's or a folder's.
   func leave(test scope: TestScope) {
     switch scope {
     case .deck(let id): leave(to: id)
     case .folder(let id):
-      if path.last == .folder(id) { withAnimation(.out(0.35)) { full = nil }; return }
+      if path.last == .folder(id) { withAnimation(Motion.sheet) { full = nil }; return }
       var now = Transaction(); now.disablesAnimations = true
       withTransaction(now) { tab = .library; path = [.folder(id)] }
-      DispatchQueue.main.async { withAnimation(.out(0.35)) { self.full = nil } }
+      DispatchQueue.main.async { withAnimation(Motion.sheet) { self.full = nil } }
     }
   }
   func pick(_ t: Tab) { path = []; tab = t }

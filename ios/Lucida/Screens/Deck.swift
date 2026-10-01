@@ -210,14 +210,8 @@ struct DeckScreen: View {
     let ink = themed.flatMap { RGBA(css: $0.1.string("ink")) }
     return ZStack(alignment: .topLeading) {
       // Parallax: scrolling up, the cover drifts at half speed behind the header; pulled down past the top, it
-      // stretches to fill the gap. Reduce Motion keeps it still.
-      cover(d, themed?.1)
-        .visualEffect { [still] content, proxy in
-          let y = still ? 0 : proxy.frame(in: .scrollView(axis: .vertical)).minY, h = max(1, proxy.size.height)
-          return content
-            .scaleEffect(y > 0 ? (h + y) / h : 1, anchor: .bottom)
-            .offset(y: y < 0 ? -y / 2 : 0)
-        }
+      // stretches to fill the gap. Reduce Motion keeps it still (Design/Parallax.swift).
+      cover(d, themed?.1).coverParallax(still: still)
       VStack(alignment: .leading, spacing: 0) {
         // Top-aligned, like the board's row (its page and Suggest a change are 40, the rest 44).
         HStack(alignment: .top, spacing: 8) {
@@ -225,7 +219,7 @@ struct DeckScreen: View {
           Spacer()
           // A deck you share: its page. One you study from someone: Suggest a change instead of New card.
           if let sh = d.sharing.shared { CoverButton(icon: "globe", label: sh.label, size: 40) { nav.deckPage(sh.url) } }
-          CoverButton(icon: "gear", label: "Deck settings") { withAnimation(.out(0.35)) { nav.sheet = .deckSettings(d.id) } }
+          CoverButton(icon: "gear", label: "Deck settings") { withAnimation(Motion.sheet) { nav.sheet = .deckSettings(d.id) } }
           if !d.rows.isEmpty { CoverButton(icon: "search", label: "Search") {} }
           if !d.sharing.readOnly { CoverButton(icon: "plus", label: "New card") { nav.newCard(deckId: d.id) } }
           if d.sharing.readOnly, let lk = d.sharing.link { CoverButton(icon: "message", label: "Suggest a change", size: 40) { nav.deckPage(lk.url, suggest: "1") } }
@@ -267,7 +261,7 @@ struct DeckScreen: View {
           if d.sharing.linked, let lk = d.sharing.link { fromRow(d, lk) }
           let upd = d.sharing.isCopy ? max(store.deckUpdates(d.id).count, d.sharing.link?.pending ?? 0) : 0
           if upd > 0, let lk = d.sharing.link {
-            Button { withAnimation(.out(0.35)) { nav.sheet = .deckUpdates(d.id) } } label: {
+            Button { withAnimation(Motion.sheet) { nav.sheet = .deckUpdates(d.id) } } label: {
               HStack(spacing: 10) {
                 Text(lk.owner.name + " changed " + plural(upd, "card")).css(15, .semibold).foregroundStyle(t.text).lineLimit(1).frame(maxWidth: .infinity, alignment: .leading)
                 Text("See changes").css(14, .semibold).foregroundStyle(t.muted).fixedSize()
@@ -525,12 +519,12 @@ struct DeckSettingsSheet: View {
     }
   }
 
-  // Its folder: No folder, or one of the Library's.
+  // Its folder: one of the Library's, or Remove from folder (only for a deck that's in one).
   private var folder: some View {
     VStack(alignment: .leading, spacing: 8) {
       label("Folder")
       FlowLayout(spacing: 6, lineSpacing: 6) {
-        ForEach([(key: "", id: String?.none, name: "No folder")] + d.folders.map { (key: $0.id, id: Optional($0.id), name: $0.name) }, id: \.key) { f in
+        ForEach((d.folder != nil ? [(key: "", id: String?.none, name: "Remove from folder")] : []) + d.folders.map { (key: $0.id, id: Optional($0.id), name: $0.name) }, id: \.key) { f in
           let on = d.folder == f.id
           Button { store.moveDeck(d.id, to: f.id) } label: {
             HStack(spacing: 6) { Icon("folder", 14, 1.8); Text(f.name).css(13, .semibold).lineLimit(1) }
@@ -542,6 +536,7 @@ struct DeckSettingsSheet: View {
       }
       if d.folders.isEmpty { Text("Make folders on the Library page.").css(12).foregroundStyle(t.muted) }
     }
+    .haptic(.selection, on: d.folder ?? "", "option")
   }
 
   private var studying: some View {

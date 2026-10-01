@@ -42,6 +42,7 @@ struct MoreChip: View {
 /// Tags you can take off (x), then "Add tag" (TAG_EDIT).
 struct TagEditor: View {
   @Environment(\.theme) private var t
+  @State private var taps = 0
   let tags: [String]
   let remove: (String) -> Void
   let add: () -> Void
@@ -49,7 +50,7 @@ struct TagEditor: View {
     FlowLayout(spacing: 6, lineSpacing: 6) {
       ForEach(tags, id: \.self) { g in
         let c = Tags.color(g)
-        Button { remove(g) } label: {
+        Button { taps += 1; remove(g) } label: {
           HStack(spacing: 6) {
             Text(g).css(13, .semibold).lineLimit(1)
             Icon("close", 10, 2.4).opacity(0.7)
@@ -69,6 +70,7 @@ struct TagEditor: View {
       }
       .buttonStyle(.press)
     }
+    .haptic(.light, on: taps, "tag removed")
   }
 }
 
@@ -116,6 +118,7 @@ struct TagPicker: View {
   let set: ([String]) -> Void
   let close: () -> Void
   @State private var q = ""
+  @State private var taps = 0
   var body: some View {
     let ql = q.trimmingCharacters(in: .whitespaces).lowercased()
     let lib = Array(Set(all + current)).sorted { $0.localizedCompare($1) == .orderedAscending }
@@ -134,7 +137,7 @@ struct TagPicker: View {
       ScrollView(showsIndicators: false) {
         VStack(spacing: 0) {
           if canMake {
-            Button { set(current + [q.trimmingCharacters(in: .whitespaces)]); q = "" } label: {
+            Button { taps += 1; set(current + [q.trimmingCharacters(in: .whitespaces)]); q = "" } label: {
               HStack(spacing: 10) { Icon("plus", 13, 2.4); Text("Make “\(q.trimmingCharacters(in: .whitespaces))”").css(16, .semibold); Spacer() }
                 .foregroundStyle(t.text).padding(.horizontal, 12).frame(height: 48)
                 .background(RoundedRectangle(cornerRadius: 12).fill(t.surf))
@@ -143,7 +146,7 @@ struct TagPicker: View {
           }
           ForEach(shown, id: \.self) { g in
             let on = current.contains(g)
-            Button { set(on ? current.filter { $0 != g } : current + [g]) } label: {
+            Button { taps += 1; set(on ? current.filter { $0 != g } : current + [g]) } label: {
               HStack(spacing: 10) {
                 Circle().fill(Tags.color(g).color).frame(width: 10, height: 10)
                 Text(g).css(16).lineLimit(1).frame(maxWidth: .infinity, alignment: .leading)
@@ -161,6 +164,7 @@ struct TagPicker: View {
       }
     }
     .padding(.top, 16).padding(.horizontal, 20).padding(.bottom, 34)
+    .haptic(.light, on: taps, "tag added or removed")
   }
 }
 

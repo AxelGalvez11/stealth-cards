@@ -188,6 +188,9 @@ private struct ReviewBody: View {
   /// After a grade the next card comes up fresh (a small lift) instead of spinning back.
   @State private var moved = false
   @State private var settingsOpen = false
+  /// Flips and grades, each a light tap.
+  @State private var flips = 0
+  @State private var grades = 0
   @State private var pileDraft: String? = nil
   /// The card whose explanation is open, and (on a design screen) whether the sample one was asked for.
   @State private var exFor: String? = nil
@@ -200,14 +203,13 @@ private struct ReviewBody: View {
     ZStack {
       VStack(spacing: 16) {
         topBar(rv)
-        FlipCard(card: rv.card, revealed: revealed, moved: moved, done: rv.done) { withAnimation(nil) { moved = false }; revealed.toggle() }
-          .overlay { explain(rv) }
+        middle(rv)
         grading(rv).frame(height: 76)
       }
       .padding(.top, Screen.top(60)).padding(.horizontal, 16).padding(.bottom, 34)
       .ignoresSafeArea()
       if settingsOpen {
-        SheetOverlay(top: nil, close: { withAnimation(.out(0.3)) { settingsOpen = false } }) { settingsSheet(rv) }.zIndex(2)
+        SheetOverlay(top: nil, close: { withAnimation(Motion.leave) { settingsOpen = false } }) { settingsSheet(rv) }.zIndex(2)
       }
       if pileDraft != nil { newPile(rv).zIndex(3) }
     }
@@ -222,6 +224,8 @@ private struct ReviewBody: View {
       else if rv.empty { nav.finishReview(graded: !(store.session?.graded.isEmpty ?? true)) }
     }
     .onChange(of: rv.empty) { _, empty in if empty { nav.finishReview() } }
+    .haptic(.light, on: flips, "flip")
+    .haptic(.light, on: grades, "grade")
     // A sound card plays on its own when it comes up (unless it's set not to).
     .onChange(of: rv.card.id, initial: true) { _, _ in autoplay(rv.card) }
     .onDisappear { autoplaying?.cancel(); store.stopSound() }
@@ -235,33 +239,55 @@ private struct ReviewBody: View {
     autoplaying = Task { try? await Task.sleep(nanoseconds: 350_000_000); if !Task.isCancelled { store.playSound(clip, again: true) } }
   }
 
-  // Once the card is turned over: Explain in its corner, or the explanation over its lower part.
-  @ViewBuilder private func explain(_ rv: ReviewVM) -> some View {
-    let id = rv.card.id
-    let ex = store.demo ? ExplainVM(on: true, text: exMock ? Store.demoExplain.review : "", note: exMock ? "2 free explanations left today" : "") : store.explainOf(id)
-    if revealed && ex.on && !id.isEmpty {
-      if exFor == id {
-        GeometryReader { g in
-          CappedScroll(max: g.size.height * 0.72) {
-            ExplainPanel(ex: ex, look: .card(t)) { withAnimation(.out(0.25)) { exFor = nil } }
-              .padding(.vertical, 14).padding(.horizontal, 16)
-          }
-          .background(RoundedRectangle(cornerRadius: 20, style: .continuous).fill(t.bg))
-          .overlay(RoundedRectangle(cornerRadius: 21, style: .continuous).strokeBorder(t.line, lineWidth: 1).padding(-1))
-          .boxShadow(.black.opacity(0.4), y: 18, blur: 44, spread: -14, radius: 20)
-          .padding(10)
-          .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
+  /// What the card's explanation looks like right now (the canvas's sample on a design screen).
+  private func explanation(_ rv: ReviewVM) -> ExplainVM {
+    store.demo ? ExplainVM(on: true, text: exMock ? Store.demoExplain.review : "", note: exMock ? "2 free explanations left today" : "") : store.explainOf(rv.card.id)
+  }
+  /// The explanation is open: the card is turned over, it can be explained, and this card's was asked for.
+  private func isOpen(_ rv: ReviewVM) -> Bool { revealed && explanation(rv).on && !rv.card.id.isEmpty && exFor == rv.card.id }
+
+  /// The card, and once its explanation is open, the explanation UNDER it (the owner, 2026-10-01: "in ios just make it open below
+  /// questions and flashcards"): the card gets a little shorter to make room (60% of the room, at least 250 pt), and the
+  /// explanation takes what's left, scrolling inside itself when it is longer. Only a short fade, none with Reduce Motion.
+  private func middle(_ rv: ReviewVM) -> some View {
+    let open = isOpen(rv), ex = explanation(rv)
+    return GeometryReader { g in
+      let cardH = open ? min(g.size.height, ThemeLayout.reviewCardOpen.height) : g.size.height
+      VStack(spacing: 12) {
+        FlipCard(card: rv.card, revealed: revealed, moved: moved, done: rv.done, tap: { flips += 1; withAnimation(nil) { moved = false }; revealed.toggle() }, compact: open)
+          .frame(height: cardH)
+          // Explain, in the card's corner once it's turned over (the explanation has its own place under it).
+          .overlay(alignment: .topTrailing) { explainButton(rv, ex) }
+        Group {
+          if open { panel(ex, max: max(0, g.size.height - cardH - 12)).transition(.opacity) }
         }
-        .transition(.opacity.combined(with: .offset(y: 6)))
-      } else {
-        ExplainButton(label: ex.label) {
-          withAnimation(.out(0.25)) { exFor = id }
-          if store.demo { exMock = true } else if ex.text.isEmpty { Task { await store.explain(id, question: "") } }
-        }
-        .padding(12)
-        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topTrailing)
+        .animation(Motion.fade, value: open)
       }
+      .frame(width: g.size.width, height: g.size.height, alignment: .top)
     }
+  }
+
+  @ViewBuilder private func explainButton(_ rv: ReviewVM, _ ex: ExplainVM) -> some View {
+    let id = rv.card.id
+    if revealed && ex.on && !id.isEmpty && exFor != id {
+      ExplainButton(label: ex.label) {
+        exFor = id
+        if store.demo { exMock = true } else if ex.text.isEmpty { Task { await store.explain(id, question: "") } }
+      }
+      .padding(12)
+    }
+  }
+
+  /// The explanation: a card of its own like the flashcard (its color, line and shadow), as tall as its words or `max`.
+  private func panel(_ ex: ExplainVM, max cap: CGFloat) -> some View {
+    CappedScroll(max: cap) {
+      ExplainPanel(ex: ex, look: .card(t)) { exFor = nil }
+        .padding(.vertical, 14).padding(.horizontal, 16)
+    }
+    .frame(maxWidth: .infinity)
+    .background(RoundedRectangle(cornerRadius: 24, style: .continuous).fill(t.card))
+    .overlay(RoundedRectangle(cornerRadius: 24, style: .continuous).strokeBorder(t.line, lineWidth: 1))
+    .themeShadow(t.shadow, radius: 24)
   }
 
   private func topBar(_ rv: ReviewVM) -> some View {
@@ -291,7 +317,7 @@ private struct ReviewBody: View {
       }
       .frame(maxWidth: .infinity)
       RoundButton(icon: "sliders", label: "Review settings", bg: settingsOpen ? t.inv : t.surf, fg: settingsOpen ? t.invText : t.text) {
-        withAnimation(.out(0.35)) { settingsOpen.toggle() }
+        withAnimation(Motion.sheet) { settingsOpen.toggle() }
       }
     }
   }
@@ -348,6 +374,7 @@ private struct ReviewBody: View {
 
   /// After a grade: the next card, fresh and unflipped.
   private func next(_ action: () -> Void) {
+    grades += 1
     var tx = Transaction(); tx.disablesAnimations = true
     withTransaction(tx) { moved = true; revealed = false }
     action()
@@ -375,7 +402,7 @@ private struct ReviewBody: View {
   private func settingsSheet(_ rv: ReviewVM) -> some View {
     VStack(alignment: .leading, spacing: 18) {
       Grabber().frame(maxWidth: .infinity)
-      HStack { Text("Review settings").css(18, .semibold); Spacer(); SheetDone { withAnimation(.out(0.3)) { settingsOpen = false } } }
+      HStack { Text("Review settings").css(18, .semibold); Spacer(); SheetDone { withAnimation(Motion.leave) { settingsOpen = false } } }
       VStack(alignment: .leading, spacing: 8) {
         Text("Grade with").css(13, .semibold)
         Segmented(options: [("four", "4 grades"), ("binary", "✓ / ✗"), ("piles", "Piles")], current: rv.mode, hPad: 8) { store.updateDeck(rv.deckId, ["grading": $0]) }
@@ -452,12 +479,14 @@ struct FlipCard: View {
   var radius: CGFloat = 32
   var pad = EdgeInsets(top: 26, leading: 22, bottom: 26, trailing: 22)
   var big = false
+  /// The card is the shorter one that has its explanation under it (a theme's face is drawn for that height).
+  var compact = false
 
   var body: some View {
     // Fill-in-the-blank cards and pictures with boxes stay put: the blank fills in, or the box fades to an outline.
     let turned = revealed && card.kind != "cloze" && !card.isOcc
     // With a theme on, the theme's face and the way it sets words (nil until they're kept: Lucida's own card meanwhile).
-    let look = skin.flatMap { art.cardSkin($0, at: "phone", size: ThemeLayout.reviewCard, basePad: "26px 22px", radius: Int(radius), margins: ThemeLayout.reviewMargins, gray: store.appGray) }
+    let look = skin.flatMap { art.cardSkin($0, at: "phone", size: compact ? ThemeLayout.reviewCardOpen : ThemeLayout.reviewCard, basePad: "26px 22px", radius: Int(radius), margins: compact ? ThemeLayout.reviewMarginsOpen : ThemeLayout.reviewMargins, gray: store.appGray) }
     Button(action: tap) {
       ZStack {
         face(back: false, look).modifier(FaceShown(angle: turned ? 180 : 0, front: true))

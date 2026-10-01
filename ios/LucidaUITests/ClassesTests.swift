@@ -81,6 +81,24 @@ final class ClassesTests: XCTestCase {
   private func any(_ app: XCUIApplication, _ words: String) -> XCUIElement {
     app.descendants(matching: .any).matching(NSPredicate(format: "label CONTAINS %@", words)).firstMatch
   }
+  /// The phone's share sheet is up (the system's activity view, which has Copy among its actions), and closing it.
+  private func shareSheetUp(_ app: XCUIApplication, _ s: TimeInterval = 10) -> Bool {
+    let up = { app.otherElements["ActivityListView"].exists || app.collectionViews["ActivityListView"].exists || app.otherElements["ActivityContentView"].exists
+      || app.navigationBars["UIActivityContentView"].exists || app.buttons["Copy"].exists || app.staticTexts["Copy"].exists }
+    let end = Date().addingTimeInterval(s)
+    while Date() < end { if up() { return true }; Thread.sleep(forTimeInterval: 0.3) }
+    return up()
+  }
+  /// Puts the share sheet away the way a person does: a tap on the page above it (a tap up in the status bar does nothing).
+  private func closeShareSheet(_ app: XCUIApplication) {
+    for _ in 0..<3 {
+      app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.25)).tap()
+      let end = Date().addingTimeInterval(3)
+      while Date() < end && shareSheetUp(app, 0.1) { Thread.sleep(forTimeInterval: 0.25) }
+      if !shareSheetUp(app, 0.1) { break }
+    }
+    Thread.sleep(forTimeInterval: 0.8)
+  }
   private func button(_ app: XCUIApplication, _ label: String) -> XCUIElement { app.buttons[label].firstMatch }
   private func buttonStarting(_ app: XCUIApplication, _ words: String) -> XCUIElement {
     app.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", words)).firstMatch
@@ -185,8 +203,9 @@ final class ClassesTests: XCTestCase {
     let rows = api(teacher, "GET", "/api/classes").json as? [[String: Any]] ?? []
     check(rows.count == 1 && rows[0]["code"] as? String == code && rows[0]["role"] as? String == "owner" && rows[0]["name"] as? String == "BIO 201" && rows[0]["school"] as? String == "UC Davis", "the server has the class, with the teacher as its owner")
     check(wait(any(app, "/class/" + code)), "the page shows the invite link")
-    tapClear(app, button(app, "Copy invite link"))
-    check(wait(button(app, "Copied")), "Copy invite link says Copied")
+    tapClear(app, button(app, "Share invite link"))
+    check(shareSheetUp(app) && !button(app, "Copied").exists, "Share invite link opens the phone's share sheet (it used to copy)")
+    closeShareSheet(app)
 
     // Adding a deck, and assigning it.
     let add = button(app, "Add a deck")

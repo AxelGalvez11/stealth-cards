@@ -83,6 +83,10 @@ struct RootView: View {
         }
       }
     }
+    // The haptics that fired (`-hapticAudit`) and what the deck cover is doing (`-parallaxAudit`), read the same way.
+    .overlay(alignment: .topLeading) { if HapticLog.on { HapticAudit() } }
+    .overlay(alignment: .topLeading) { if ParallaxAudit.on { ParallaxReadout() } }
+    .overlay(alignment: .topLeading) { if PopAudit.on { PopReadout() } }
     #endif
     .onChange(of: store.skinKey) { _, k in if let k, !store.demo { ThemeArt.shared.warm(k, store) } }
     // Signed out (or the account deleted): nothing of the last person's is left open for the next.
@@ -421,12 +425,23 @@ struct MainView: View {
   @EnvironmentObject private var store: Store
   @EnvironmentObject private var nav: Nav
   @Environment(\.theme) private var t
+  @Environment(DragCenter.self) private var drag
+  /// Tabs the person changed (a tap on the tab bar, or a swipe): each gives a selection haptic.
+  @State private var tabTicks = 0
+  /// Haptics for what happens as a sheet closes or a deck goes (Buzz).
+  @ObservedObject private var buzz = Buzz.shared
+
+  /// A swipe between tabs can start: a tab's first page is showing, and nothing is over it.
+  private var swipesBetweenTabs: Bool { nav.path.isEmpty && nav.sheet == nil && nav.full == nil && !store.welcoming && drag.list == nil }
 
   var body: some View {
     ZStack(alignment: .bottom) {
       NavigationStack(path: $nav.path) {
-        tabRoot
+        // A swipe left or right on a tab's first page moves to the next tab or the one before (Design/Swipe.swift).
+        TabPager(tab: $nav.tab, enabled: swipesBetweenTabs, changed: { tabTicks += 1 }) { tab in tabRoot(tab) }
           .toolbar(.hidden, for: .navigationBar)
+          // A swipe from the left edge goes back on every pushed page (the pages draw their own Back button, which turns UIKit's off).
+          .background(BackSwipe(canPop: { nav.sheet == nil && nav.full == nil && drag.list == nil }))
           // Every page on the theme's page color (the stack's own is the system's white or black, not dark mode's gray).
           .containerBackground(t.bg, for: .navigation)
           .navigationDestination(for: Route.self) { route in
@@ -448,27 +463,33 @@ struct MainView: View {
               }
             }
             .toolbar(.hidden, for: .navigationBar)
+            .background(BackSwipe(canPop: { nav.sheet == nil && nav.full == nil && drag.list == nil }))
             .containerBackground(t.bg, for: .navigation)
           }
       }
-      if showsTabBar { TabBar(active: lit, pick: nav.pick) }
+      if showsTabBar { TabBar(active: lit, pick: { tab in if tab != nav.tab { tabTicks += 1 }; nav.pick(tab) }) }
       // A deck or card being dragged, over the page and the tab bar; and the Move to tray over it while a card is.
       DragGhost()
       MoveTray()
       if let s = nav.sheet { SheetHost(kind: s).zIndex(s == .goPro ? 8 : 5) }
-      if let f = nav.full { FullHost(kind: f).zIndex(6).transition(.move(edge: .bottom)) }
+      if let f = nav.full { FullHost(kind: f).zIndex(6).sheetTransition() }
       // A list to pick from (a filter, a school, a label), over a page or a sheet.
       if let p = nav.picker { PickHost(request: p).id(p.id).zIndex(7) }
       // The welcome after your first sign-in, over everything until it's done or skipped.
       if store.welcoming { WelcomeScreen().zIndex(10).transition(.opacity) }
     }
     .ignoresSafeArea(edges: .bottom)
+    .haptic(.selection, on: tabTicks, "tab")
+    .sensoryFeedback(.impact(weight: .light), trigger: buzz.lights)
+    .sensoryFeedback(.success, trigger: buzz.successes)
+    .sensoryFeedback(.warning, trigger: buzz.warnings)
     // A design screen's full screen, over its page once that's drawn (Board.setUp).
     .task { if let f = nav.boardFull { nav.boardFull = nil; try? await Task.sleep(nanoseconds: 100_000_000); nav.full = f } }
   }
 
-  @ViewBuilder private var tabRoot: some View {
-    switch nav.tab {
+  /// A tab's first page.
+  @ViewBuilder private func tabRoot(_ tab: Tab) -> some View {
+    switch tab {
     case .today: TodayScreen()
     case .library: LibraryScreen()
     case .discover: DiscoverScreen()
@@ -547,6 +568,7 @@ struct DeckSettingsHost: View {
     .onAppear { if store.demo { tab = store.props.deckSettings ?? "general"; tagPicker = store.props.tagPicker } }
     .confirmationDialog(ask, isPresented: Binding(get: { store.confirmDelete == id }, set: { if !$0 { store.confirmDelete = nil } }), titleVisibility: .visible) {
       Button(linked ? "Remove from library" : "Delete deck", role: .destructive) {
+        Buzz.shared.warning("delete deck")
         Task { await store.deleteDeck(id); nav.close(); nav.pick(.library) }
       }
     }

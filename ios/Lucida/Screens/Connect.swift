@@ -54,7 +54,10 @@ struct ConnectScreen: View {
               UIPasteboard.general.string = c.url
               copied = true
             } label: {
-              Text(copied ? "Copied" : "Copy link").css(15, .semibold).foregroundStyle(Color.black).frame(maxWidth: .infinity).frame(height: 48).background(Capsule().fill(Color.white))
+              // "Copied" slides in where "Copy link" was, like a toast.
+              ZStack { Text(copied ? "Copied" : "Copy link").css(15, .semibold).foregroundStyle(Color.black).id(copied).popTransition() }
+                .animation(Motion.pop, value: copied)
+                .frame(maxWidth: .infinity).frame(height: 48).background(Capsule().fill(Color.white))
             }
             .buttonStyle(.press)
           }

@@ -21,6 +21,8 @@ struct PublicDeckScreen: View {
   @State private var watch: Bool? = nil
   @State private var busy = ""
   @State private var err = ""
+  /// Save and Get updates, on and off (a light tap each).
+  @State private var changes = 0
   /// The version of the deck you checked (Check this deck): it says "Checked by you" until the deck changes again.
   @State private var checkedAt: Int? = nil
   /// A link's ?copy=1 or ?suggest=<card> opens its sheet once, when the page is here.
@@ -38,6 +40,7 @@ struct PublicDeckScreen: View {
     .ignoresSafeArea(edges: .top)
     .toolbar(.hidden, for: .navigationBar)
     .onChange(of: page != nil, initial: true) { _, ok in if ok, let page { openWanted(page) } }
+    .haptic(.light, on: changes, "save or updates")
   }
 
   /// A link that asks for Make a copy or Suggest a change opens it, for someone who can (not on your own deck).
@@ -45,11 +48,11 @@ struct PublicDeckScreen: View {
     guard !opened, let me = p.me, !me.owner else { return }
     // The Report board has its sheet open.
     if store.demo && store.props.report { opened = true; nav.sheet = .report(kind: "deck", id: p.id, name: p.deck.name); return }
-    if addr.copy { opened = true; withAnimation(.out(0.35)) { nav.sheet = .copyDeck(addr.plain) } }
+    if addr.copy { opened = true; withAnimation(Motion.sheet) { nav.sheet = .copyDeck(addr.plain) } }
     else if !addr.suggest.isEmpty {
       opened = true
       SuggestModel.of(addr.plain.key).startFresh()
-      withAnimation(.out(0.35)) { nav.sheet = .suggest(addr.plain, start: addr.suggest) }
+      withAnimation(Motion.sheet) { nav.sheet = .suggest(addr.plain, start: addr.suggest) }
     }
   }
 
@@ -95,7 +98,7 @@ struct PublicDeckScreen: View {
               }
               .buttonStyle(.press)
             }
-            if copied.isEmpty { round("copy", "Make a copy") { withAnimation(.out(0.35)) { nav.sheet = .copyDeck(addr.plain) } } }
+            if copied.isEmpty { round("copy", "Make a copy") { withAnimation(Motion.sheet) { nav.sheet = .copyDeck(addr.plain) } } }
             else { round("copy", "Your copy") { nav.openDeck(copied) } }
             round(starOn ? "starOn" : "star", "Save", on: starOn) { toggleStar(p, !starOn) }
             round("message", "Suggest a change") { openSuggest(card: "") }
@@ -149,11 +152,15 @@ struct PublicDeckScreen: View {
     let owner = d.owner ?? NetPerson(), badge = badges(p).first
     let meta = "· " + NetFmt.k(d.cards) + (d.cards == 1 ? " card" : " cards") + " · v\(d.version)"
     return ZStack(alignment: .topLeading) {
-      MeshFill(mesh: mesh)
-      if let photo {
-        FillPhoto(url: API.media(photo))
-        LinearGradient(colors: [.black.opacity(0.12), .black.opacity(0.55)], startPoint: .top, endPoint: .bottom)
+      // The picture: it drifts at half speed as the page scrolls, and stretches when it's pulled down (Design/Parallax.swift).
+      ZStack {
+        MeshFill(mesh: mesh)
+        if let photo {
+          FillPhoto(url: API.media(photo))
+          LinearGradient(colors: [.black.opacity(0.12), .black.opacity(0.55)], startPoint: .top, endPoint: .bottom)
+        }
       }
+      .coverParallax(still: still)
       VStack(alignment: .leading, spacing: 0) {
         HStack(spacing: 0) {
           CoverButton(icon: "back", label: "Back") { nav.back() }
@@ -166,7 +173,7 @@ struct PublicDeckScreen: View {
             }
             // Report sits last, in the cover's own words and shade (anyone but the deck's owner).
             if canReport {
-              Button { withAnimation(.out(0.35)) { nav.sheet = .report(kind: "deck", id: p.id, name: d.name) } } label: {
+              Button { withAnimation(Motion.sheet) { nav.sheet = .report(kind: "deck", id: p.id, name: d.name) } } label: {
                 Text("Report").css(15, .semibold).lineLimit(1).fixedSize().line(15).foregroundStyle(ink)
                   .shadow(color: .black.opacity(shade), radius: 7, x: 0, y: 1)
                   .padding(.leading, 8).padding(.trailing, 4).frame(height: 44)
@@ -200,11 +207,6 @@ struct PublicDeckScreen: View {
     }
     .frame(height: Screen.top(300))
     .clipShape(BelowClip())
-    .visualEffect { [still] content, proxy in
-      // Pulled down past the top, the cover stretches to fill the gap (Reduce Motion keeps it still).
-      let y = still ? 0 : proxy.frame(in: .scrollView(axis: .vertical)).minY, h = max(1, proxy.size.height)
-      return content.scaleEffect(y > 0 ? (h + y) / h : 1, anchor: .bottom)
-    }
   }
 
   /// The cover's badges: a teacher's check, a school's deck, and who keeps it up (the phone shows the first).
@@ -412,18 +414,18 @@ struct PublicDeckScreen: View {
   }
   private func toggleStar(_ p: PublicDeckPage, _ on: Bool) {
     guard p.me != nil else { return }
-    star = on; err = ""
+    star = on; err = ""; changes += 1
     Task { do { try await store.starDeck(p.id, on) } catch { star = nil; err = fail(error) } }
   }
   private func toggleWatch(_ p: PublicDeckPage, _ on: Bool) {
     guard p.me != nil else { return }
-    watch = on; err = ""
+    watch = on; err = ""; changes += 1
     Task { do { try await store.watchDeck(p.id, on) } catch { watch = nil; err = fail(error) } }
   }
   /// Suggest a change from its button (no card yet) or from a card.
   private func openSuggest(card: String) {
     SuggestModel.of(addr.plain.key).open(card: card)
-    withAnimation(.out(0.35)) { nav.sheet = .suggest(addr.plain, start: "") }
+    withAnimation(Motion.sheet) { nav.sheet = .suggest(addr.plain, start: "") }
   }
 }
 
@@ -452,7 +454,7 @@ struct CopyDeckSheet: View {
     let p = store.netDeckPage(addr)?.value, d = p?.deck
     let title = name ?? d?.name ?? "", ready = !title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty && !busy
     let owner = d?.owner?.name ?? ""
-    let folders: [(id: String, name: String)] = [("", "No folder")] + (store.demo ? store.demoFolders.map { ($0.id, $0.name) } : store.lib.folders.map { ($0.id, $0.name) })
+    let folders: [(id: String, name: String)] = [("", "Library")] + (store.demo ? store.demoFolders.map { ($0.id, $0.name) } : store.lib.folders.map { ($0.id, $0.name) })
     VStack(alignment: .leading, spacing: 16) {
       HStack(spacing: 14) {
         thumb(d)
@@ -473,8 +475,8 @@ struct CopyDeckSheet: View {
       }
       VStack(alignment: .leading, spacing: 8) {
         Text("Folder").css(13, .semibold).line(13)
-        let label = folders.first { $0.id == folder }?.name ?? "No folder"
-        Button { withAnimation(.out(0.2)) { foldersOpen.toggle() } } label: {
+        let label = folders.first { $0.id == folder }?.name ?? "Library"
+        Button { withAnimation(Motion.pop) { foldersOpen.toggle() } } label: {
           HStack(spacing: 10) { Text(label).css(16).lineLimit(1); Spacer(minLength: 0); Icon("chevDown", 16, 2) }
             .foregroundStyle(t.text).padding(.horizontal, 16).frame(height: 50)
             .background(RoundedRectangle(cornerRadius: 16, style: .continuous).fill(t.surf))
@@ -526,7 +528,7 @@ struct CopyDeckSheet: View {
         let r = g[a], n = CGFloat(folders.count), h = min(232, 12 + n * 42 + (n - 1) * 2)
         let below = g.frame(in: .global).minY + r.maxY + 6 + h <= UIScreen.main.bounds.height - 8
         ZStack(alignment: .topLeading) {
-          Color.black.opacity(0.001).frame(width: 4000, height: 4000).offset(x: -2000, y: -2000).onTapGesture { withAnimation(.out(0.2)) { foldersOpen = false } }
+          Color.black.opacity(0.001).frame(width: 4000, height: 4000).offset(x: -2000, y: -2000).onTapGesture { withAnimation(Motion.pop) { foldersOpen = false } }
           folderList(folders).frame(width: r.width).offset(x: r.minX, y: below ? r.maxY + 6 : r.minY - 6 - h)
         }
       }
@@ -547,7 +549,7 @@ struct CopyDeckSheet: View {
     ScrollView(showsIndicators: false) {
       VStack(spacing: 2) {
         ForEach(folders, id: \.id) { f in
-          Button { folder = f.id; withAnimation(.out(0.2)) { foldersOpen = false } } label: {
+          Button { folder = f.id; withAnimation(Motion.pop) { foldersOpen = false } } label: {
             HStack(spacing: 10) { Icon("folder", 16, 1.8); Text(f.name).css(15).lineLimit(1); Spacer(minLength: 0) }
               .foregroundStyle(t.text).padding(.horizontal, 12).frame(height: 42)
               .background(RoundedRectangle(cornerRadius: 12, style: .continuous).fill(f.id == folder ? t.surf : .clear))
@@ -563,7 +565,7 @@ struct CopyDeckSheet: View {
     .frame(maxHeight: 232).fixedSize(horizontal: false, vertical: true)
     .background(RoundedRectangle(cornerRadius: 18, style: .continuous).fill(t.bg).shadow(color: .black.opacity(0.18), radius: 22, x: 0, y: 18))
     .overlay(RoundedRectangle(cornerRadius: 18, style: .continuous).strokeBorder(t.line, lineWidth: 1))
-    .transition(.opacity)
+    .popTransition()
   }
 
   private func save(_ d: NetDeck?) {

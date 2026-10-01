@@ -83,9 +83,10 @@ struct Eyebrow: View {
 enum Tab: String, CaseIterable { case today = "Today", library = "Library", discover = "Discover", stats = "Stats", profile = "Profile" }
 
 /// The floating tab bar: a gray pill, 64 tall, 16 in from the sides and 28 up from the bottom; the current tab is a
-/// black pill (none on someone else's profile).
+/// black pill that slides to the tab you pick (none on someone else's profile).
 struct TabBar: View {
   @Environment(\.theme) private var t
+  @Namespace private var pill
   let active: Tab?
   let pick: (Tab) -> Void
   private let icons: [Tab: String] = [.today: "today", .library: "decks", .discover: "compass", .stats: "stats"]
@@ -101,7 +102,7 @@ struct TabBar: View {
           }
           .foregroundStyle(on ? t.invText : t.muted)
           .frame(maxWidth: .infinity, maxHeight: .infinity)
-          .background(Capsule().fill(on ? t.inv : .clear))
+          .background { if on { Capsule().fill(t.inv).matchedGeometryEffect(id: "pill", in: pill) } }
           .contentShape(Capsule())
         }
         .buttonStyle(.plain)
@@ -109,6 +110,7 @@ struct TabBar: View {
         .accessibilityAddTraits(on ? .isSelected : [])
       }
     }
+    .animation(Motion.knob, value: active)
     .padding(6)
     .frame(height: 64)
     .background(Capsule().fill(t.surf))
@@ -157,11 +159,10 @@ struct MeshCard<Content: View>: View {
 }
 
 /// The on/off switch (48 x 28; black when on). It flips the moment it's tapped (the change saves after, Store.saveNow):
-/// the knob springs across with a slight overshoot while the colors fade, like the canvas's sc-sw. With Reduce Motion
-/// the knob doesn't slide; the colors still fade.
+/// the knob slides across (design/motion.mjs: 200 ms, eased out, no bounce) while the colors fade, like the canvas's sc-sw.
+/// With Reduce Motion the knob doesn't slide; the colors still fade. A tap gives a selection haptic.
 struct Toggle48: View {
   @Environment(\.theme) private var t
-  @Environment(\.accessibilityReduceMotion) private var still
   let on: Bool
   var enabled = true
   let label: String
@@ -169,15 +170,13 @@ struct Toggle48: View {
   /// The colors and the knob's place, each changed in its own animation when `on` does.
   @State private var lit: Bool
   @State private var knob: Bool
-  /// cubic-bezier(.34, 1.56, .64, 1) over 0.32 s for the knob; ease over 0.3 s for the colors.
-  static let spring = Animation.timingCurve(0.34, 1.56, 0.64, 1, duration: 0.32)
-  static let fade = Animation.timingCurve(0.25, 0.1, 0.25, 1, duration: 0.3)
+  @State private var taps = 0
   init(on: Bool, enabled: Bool = true, label: String, action: @escaping () -> Void) {
     self.on = on; self.enabled = enabled; self.label = label; self.action = action
     _lit = State(initialValue: on); _knob = State(initialValue: on)
   }
   var body: some View {
-    Button(action: action) {
+    Button { taps += 1; action() } label: {
       ZStack(alignment: .leading) {
         Capsule().fill(lit ? t.inv : t.surf2)
         Circle().fill(lit ? t.invText : t.bg).frame(width: 22, height: 22).padding(3).offset(x: knob ? 20 : 0)
@@ -188,18 +187,22 @@ struct Toggle48: View {
     .buttonStyle(.press)
     .disabled(!enabled)
     .onChange(of: on) { _, v in
-      withAnimation(Toggle48.fade) { lit = v }
-      withAnimation(still ? nil : Toggle48.spring) { knob = v }
+      withAnimation(.easeOut(duration: Motion.timings.knob)) { lit = v }
+      withAnimation(Motion.knob) { knob = v }
     }
+    .haptic(.selection, on: taps, "toggle")
     .accessibilityLabel(label)
     .accessibilityValue(on ? "On" : "Off")
     .accessibilityAddTraits(.isButton)
   }
 }
 
-/// A row of choices on a gray track; the chosen one is white with a soft shadow (or black, `inverted`).
+/// A row of choices on a gray track; the chosen one is white with a soft shadow (or black, `inverted`). The pill slides to the
+/// choice you tap (design/motion.mjs), and a tap gives a selection haptic.
 struct Segmented: View {
   @Environment(\.theme) private var t
+  @Namespace private var pill
+  @State private var taps = 0
   let options: [(id: String, label: String)]
   let current: String
   var height: CGFloat = 34
@@ -216,21 +219,25 @@ struct Segmented: View {
     HStack(spacing: gap) {
       ForEach(options, id: \.id) { o in
         let on = o.id == current
-        Button { pick(o.id) } label: {
+        Button { if !on { taps += 1 }; pick(o.id) } label: {
           Text(o.label).css(size, weight).lineLimit(1)
             .foregroundStyle(on ? (inverted ? t.invText : t.text) : t.muted)
             .padding(.horizontal, hPad)
             .frame(maxWidth: equal ? .infinity : nil)
             .frame(height: height)
-            .background(Capsule().fill(on ? (inverted ? t.inv : t.bg) : .clear).shadow(color: .black.opacity(on && !inverted ? 0.14 : 0), radius: 1.5, x: 0, y: 1))
+            .background {
+              if on { Capsule().fill(inverted ? t.inv : t.bg).shadow(color: .black.opacity(inverted ? 0 : 0.14), radius: 1.5, x: 0, y: 1).matchedGeometryEffect(id: "pill", in: pill) }
+            }
             .contentShape(Capsule())
         }
         .buttonStyle(.plain)
         .accessibilityAddTraits(on ? .isSelected : [])
       }
     }
+    .animation(Motion.knob, value: current)
     .padding(pad)
     .background(Capsule().fill(track ?? t.surf))
+    .haptic(.selection, on: taps, "segmented")
   }
 }
 
@@ -255,7 +262,7 @@ struct SheetOverlay<Content: View>: View {
           if v.translation.height > 120 || v.predictedEndTranslation.height > 300 { close() }
           withAnimation(.out(0.3)) { drag = 0 }
         })
-        .transition(.move(edge: .bottom))
+        .sheetTransition()
     }
     .ignoresSafeArea()
   }

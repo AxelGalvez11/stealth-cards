@@ -167,6 +167,7 @@ struct DiscoverScreen: View {
       .padding(.horizontal, 20)
     }
     .padding(.horizontal, -20)
+    .haptic(.selection, on: tag, "topic")
     .accessibilityElement(children: .contain)
     .accessibilityLabel("Topics")
   }

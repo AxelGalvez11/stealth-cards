@@ -147,6 +147,8 @@ struct ClassAssignSheet: View {
     }
     .foregroundStyle(t.text)
     .padding(.top, 20).padding(.horizontal, 20).padding(.bottom, 34)
+    .haptic(.selection, on: pick, "option")
+    .haptic(.selection, on: due, "option")
   }
 
   private func label(_ s: String) -> some View { Text(s).css(13, .semibold).line(13) }
@@ -279,6 +281,7 @@ struct ReportSheet: View {
               .accessibilityAddTraits(on ? [.isButton, .isSelected] : .isButton)
             }
           }
+          .haptic(.selection, on: reason, "option")
           ClassField(text: $note, placeholder: reason == "other" ? "What’s wrong?" : "A line about it (if you like)", label: "A line about it", max: 280, focus: $focus)
           ErrLine(text: err)
           HStack(spacing: 10) {

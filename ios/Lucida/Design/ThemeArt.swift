@@ -302,6 +302,7 @@ extension ThemeArt {
     let skin = ThemeSkin(key: key, spec: spec), gray = store.appGray
     _ = picture(.studyBg(skin, gray: gray), low: true)
     _ = cardSkin(skin, at: "phone", size: ThemeLayout.reviewCard, basePad: "26px 22px", radius: 32, margins: ThemeLayout.reviewMargins, gray: gray)
+    _ = cardSkin(skin, at: "phone", size: ThemeLayout.reviewCardOpen, basePad: "26px 22px", radius: 32, margins: ThemeLayout.reviewMarginsOpen, gray: gray)
     for s in [44, 84, 64] {
       for photo in [false, true] { _ = picture(.avatar(key, size: s, ch: store.avatarLetter, photo: photo), low: true) }
     }

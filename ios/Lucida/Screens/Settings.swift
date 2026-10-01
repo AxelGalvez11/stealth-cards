@@ -156,7 +156,7 @@ struct SettingsScreen: View {
           Button { nav.wantsEdit = true; nav.profile("") } label: { row("Edit profile") { value("") } }.buttonStyle(.plain)
           divider
           if vst.verified.isEmpty {
-            Button { withAnimation(.out(0.35)) { nav.sheet = .verify } } label: { row("Get verified") { value(vst.open ? "Waiting for review" : "") } }.buttonStyle(.plain)
+            Button { withAnimation(Motion.sheet) { nav.sheet = .verify } } label: { row("Get verified") { value(vst.open ? "Waiting for review" : "") } }.buttonStyle(.plain)
           } else {
             let label = vst.verified == "school" ? "Verified school" : "Verified teacher"
             row(label) { Icon("shield", 20, 2).foregroundStyle(Color(hex: 0x3E63DD)) }
@@ -298,7 +298,7 @@ struct SettingsScreen: View {
         CSSText(blockErr, 13, lh: 1.4, color: t.again).padding(.horizontal, 16).padding(.vertical, 10).frame(maxWidth: .infinity, alignment: .leading)
       }
       divider
-      Button { withAnimation(.out(0.35)) { nav.sheet = .deleteAccount } } label: { row("Delete account", color: t.again) { EmptyView() } }.buttonStyle(.plain)
+      Button { withAnimation(Motion.sheet) { nav.sheet = .deleteAccount } } label: { row("Delete account", color: t.again) { EmptyView() } }.buttonStyle(.plain)
     }
   }
 
@@ -439,7 +439,9 @@ struct SettingsScreen: View {
 struct PhotoChoices: View {
   @Environment(\.theme) private var t
   @EnvironmentObject private var store: Store
+  @Namespace private var pill
   @State private var pickingPhoto = false
+  @State private var taps = 0
   var body: some View {
     let choice = store.photoChoice, color = store.avatarColor
     let skinned = store.skinKey != nil
@@ -448,17 +450,19 @@ struct PhotoChoices: View {
       HStack(spacing: 2) {
         ForEach(options, id: \.0) { id, label in
           let on = id == choice
-          Button { if id == "yours" && !store.hasYourPhoto { pickingPhoto = true } else { store.setSetting(["photo": id]) } } label: {
+          Button { if !on { taps += 1 }; if id == "yours" && !store.hasYourPhoto { pickingPhoto = true } else { store.setSetting(["photo": id]) } } label: {
             Text(label).css(13, .semibold).lineLimit(1).foregroundStyle(on ? t.invText : t.muted)
               .padding(.horizontal, 8).frame(maxWidth: .infinity).frame(height: 30)
-              .background(Capsule().fill(on ? t.inv : .clear)).contentShape(Capsule())
+              .background { if on { Capsule().fill(t.inv).matchedGeometryEffect(id: "pill", in: pill) } }.contentShape(Capsule())
           }
           .buttonStyle(.plain)
           .accessibilityAddTraits(on ? .isSelected : [])
         }
       }
+      .animation(Motion.knob, value: choice)
       .padding(3)
       .background(Capsule().fill(t.bg))
+      .haptic(.selection, on: taps, "segmented")
       switch choice {
       case "google":
         Text("Uses the photo on your Google account. Change it there and it updates here.").css(13, lh: 1.45).foregroundStyle(t.muted)

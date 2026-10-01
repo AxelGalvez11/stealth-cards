@@ -225,8 +225,8 @@ struct SuggestionsScreen: View {
       HStack(spacing: 12) {
         if !c.message.isEmpty { CSSText(c.message, 15, lh: 1.4, color: t.muted).frame(maxWidth: .infinity, alignment: .leading) } else { Spacer(minLength: 0) }
         HStack(spacing: 0) {
-          if let id = c.reportId { QuietButton(label: "Report", height: 36) { withAnimation(.out(0.35)) { nav.sheet = .report(kind: "suggestion", id: id, name: c.reportName) } } }
-          if let h = c.blockHandle { QuietButton(label: "Block", height: 36) { withAnimation(.out(0.35)) { nav.sheet = .block(handle: h, name: c.blockName) } } }
+          if let id = c.reportId { QuietButton(label: "Report", height: 36) { withAnimation(Motion.sheet) { nav.sheet = .report(kind: "suggestion", id: id, name: c.reportName) } } }
+          if let h = c.blockHandle { QuietButton(label: "Block", height: 36) { withAnimation(Motion.sheet) { nav.sheet = .block(handle: h, name: c.blockName) } } }
         }
         .fixedSize()
       }

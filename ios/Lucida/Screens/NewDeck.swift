@@ -78,6 +78,7 @@ struct NewDeckSheet: View {
             busy = true
             Task {
               if let id = await store.addDeck(name: title, tags: tags, perDay: perDay, goal: goal, grading: grading, round: round, image: image) {
+                Buzz.shared.success("deck made")
                 nav.sheet = nil
                 if !store.demo { nav.tab = .library; nav.path = [.deck(id)] }
               }

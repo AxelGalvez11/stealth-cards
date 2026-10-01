@@ -5,6 +5,7 @@
 import { createDb, afterSignIn, localPath } from './db.js';
 import { THEME_KEYS } from './themes/index.js';
 import { loadTheme } from './themes/load.js';
+import { snapPills, slidePills, bindParallax } from './motion.js';
 
 // ---------- pages ----------
 // Which board shows for a page. Some depend on your data: no decks yet shows the new-user Today, and so on.
@@ -265,7 +266,8 @@ function renderScreen(s, key, props) {
 function morph(from, to) {
   // An input method (Japanese, accents) is typing in this field: leave it be until it's done.
   if (from.hasAttribute('data-composing')) return;
-  for (const a of [...from.attributes]) if (!to.hasAttribute(a.name)) from.removeAttribute(a.name);
+  // (data-fx-* marks are motion's own, while something slides: web/motion.js.)
+  for (const a of [...from.attributes]) if (!to.hasAttribute(a.name) && !a.name.startsWith('data-fx-')) from.removeAttribute(a.name);
   for (const a of [...to.attributes]) if (from.getAttribute(a.name) !== a.value) from.setAttribute(a.name, a.value);
   // A theme draws into this element itself (web/themes: a study background, a cover, a card's tape), and draws it again
   // when what it shows changes; a redraw of the page leaves what's in it alone, so its slow drifts keep drifting.
@@ -320,7 +322,7 @@ function paint() {
   document.body.style.background = props.dark && !/^Live(?!Setup)/.test(current.name) ? (props.dim ? '#1E1E20' : '#000000') : '#FFFFFF';
   const tpl = document.createElement('template');
   tpl.innerHTML = renderScreen(s, current.key, props).replace(/href="([A-Za-z0-9]+)\.dc\.html"/g, (_, n) => 'href="' + linkFor(n) + '"');
-  const was = tpl.content.querySelector('.sc-panel, .sc-sheet') ? [] : panels();
+  const was = tpl.content.querySelector('.sc-panel, .sc-sheet') ? [] : panels(), pills = snapPills(app);
   morphChildren(app, tpl.content);
   const fns = refs, done = drawn;
   app.querySelectorAll('[data-ref]').forEach(el => fns[el.getAttribute('data-ref')]?.(el));
@@ -330,6 +332,8 @@ function paint() {
   }
   slideOut(was);
   placePops();
+  slidePills(app, pills);
+  bindParallax(app);
 }
 // Side panels and sheets (deck settings, the card editor) slide in as they're drawn (sc-panel and sc-sheet in the
 // boards' motion CSS), and slide back out as they close: the one that was open stays on top for a moment, where it
@@ -405,12 +409,13 @@ async function go(path, push, replace) {
   app.className = !s.fill ? 'fixed' : s.w === 390 && !narrow.matches && !livePhone ? 'fixed phone' : '';
   app.style.setProperty('--board-h', s.h + 'px');
   // Leaving the card editor slides it out over the page it goes back to.
-  const was = panels();
+  const was = panels(), pills = snapPills(app);
   app.textContent = '';
   const deck = current.props.deckId && !db.signedOut && db.raw().decks.find(d => d.id === current.props.deckId);
   document.title = (r.name === 'Main' ? 'Today' : deck && /^(Web|Phone)Deck/.test(r.name) ? deck.name : s.title.replace(/^(Web|iPhone) · /, '').replace(/ page$/, '').replace(/ · .*$/, '').replace(/ \(.*\)$/, '')) + ' · Lucida';
   paint();
   slideOut(was);
+  slidePills(app, pills);
   scrollTo(0, 0);
 }
 

@@ -28,8 +28,6 @@ struct ClassScreen: View {
   @State private var menu: String? = nil
   @State private var sel: String? = nil
   @State private var allPeople = false
-  @State private var copied = false
-  @State private var copiedTask: Task<Void, Never>? = nil
   @State private var ask: Ask? = nil
   @State private var opened = false
 
@@ -49,15 +47,14 @@ struct ClassScreen: View {
     }
     .ignoresSafeArea(edges: .top)
     // A ⋯ menu sits in the screen beside its button, so it can keep clear of the sides and the tab bar; scrolling closes it.
-    .overlayPreferenceValue(ClassMenuAnchors.self) { anchors in menuOverlay(anchors, k) }
+    .overlayPreferenceValue(ClassMenuAnchors.self) { anchors in menuOverlay(anchors, k).animation(Motion.pop, value: menu) }
     .onScrollPhaseChange { _, phase in if menu != nil && (phase == .interacting || phase == .decelerating) { menu = nil } }
     .toolbar(.hidden, for: .navigationBar)
     .debugScroll()
     .onAppear { openDemoSheets(k) }
     .onChange(of: k?.id) { _, _ in openDemoSheets(k) }
-    .onDisappear { copiedTask?.cancel() }
     .confirmationDialog(ask?.title ?? "", isPresented: Binding(get: { ask != nil }, set: { if !$0 { ask = nil } }), titleVisibility: .visible) {
-      if let a = ask { Button(a.button, role: .destructive) { a.action() } }
+      if let a = ask { Button(a.button, role: .destructive) { Buzz.shared.warning("class"); a.action() } }
     } message: { if let m = ask?.message { Text(m) } }
   }
 
@@ -442,7 +439,7 @@ struct ClassScreen: View {
       Text(k.code).css(34, .medium, ls: 0.14, lh: 1.1, mono: true).foregroundStyle(t.text)
       Text(link.replacingOccurrences(of: "^https?://", with: "", options: .regularExpression)).css(13).foregroundStyle(t.muted).lineLimit(1).truncationMode(.tail).line(13)
       VStack(spacing: 8) {
-        ClassButton(label: copied ? "Copied" : "Copy invite link", icon: "link", inv: true, height: 44, wide: true) { copyInvite(link) }
+        ClassButton(label: "Share invite link", icon: "link", inv: true, height: 44, wide: true) { shareInvite(link, k) }
         ClassButton(label: "Share to Google Classroom", icon: "share", height: 44, wide: true) { classroom(link, "Join \(k.name.isEmpty ? "my class" : k.name) on Lucida") }
       }
       .padding(.top, 4)
@@ -589,7 +586,7 @@ struct ClassScreen: View {
         }
         .frame(width: g.size.width, height: g.size.height, alignment: .topLeading)
       }
-      .transition(.opacity)
+      .popTransition()
     }
   }
 
@@ -612,11 +609,9 @@ struct ClassScreen: View {
   }
 
   // ---------- the invite link ----------
-  private func copyInvite(_ link: String) {
-    UIPasteboard.general.string = link
-    copied = true
-    copiedTask?.cancel()
-    copiedTask = Task { try? await Task.sleep(nanoseconds: 1_600_000_000); if !Task.isCancelled { copied = false } }
+  /// Share invite link opens the phone's share sheet with the class's invite link (it used to copy it).
+  private func shareInvite(_ link: String, _ k: ClassPage) {
+    ShareSheet.present(title: "Join \(k.name.isEmpty ? "my class" : k.name) on Lucida", url: URL(string: link))
   }
   /// Google Classroom's own share page (the invite link, or a class deck's page), over the app.
   private func classroom(_ url: String, _ title: String) {

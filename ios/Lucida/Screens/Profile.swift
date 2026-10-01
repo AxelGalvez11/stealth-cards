@@ -84,11 +84,11 @@ struct ProfileScreen: View {
   @State private var tab: String? = nil
   /// The deck whose ⋯ menu is open (your own profile), or "more": the ⋯ after Share on someone else's.
   @State private var menu: String? = nil
-  @State private var copied = false
-  @State private var copiedTask: Task<Void, Never>? = nil
   @State private var err = ""
   @State private var makeErr = ""
   @State private var making = false
+  /// Follow, Unfollow, Pin and Unpin (a light tap each).
+  @State private var changes = 0
 
   var body: some View {
     let you = store.myHandle, h = (handle.isEmpty ? you : handle).lowercased()
@@ -115,7 +115,7 @@ struct ProfileScreen: View {
         if let pr { page(pr, h: h, isSelf: isSelf) }
       }
       .padding(.horizontal, 20).padding(.top, Screen.top(64)).padding(.bottom, 120)
-      .overlayPreferenceValue(PinAnchors.self) { anchors in pinMenu(anchors, pr, h: h) }
+      .overlayPreferenceValue(PinAnchors.self) { anchors in pinMenu(anchors, pr, h: h).animation(Motion.pop, value: menu) }
     }
     .ignoresSafeArea(edges: .top)
     .toolbar(.hidden, for: .navigationBar)
@@ -126,7 +126,7 @@ struct ProfileScreen: View {
       openReportIfWanted(pr, isSelf: isSelf)
     }
     .onChange(of: pr != nil) { _, ok in openEditIfWanted(ok && isSelf); openReportIfWanted(pr, isSelf: isSelf) }
-    .onDisappear { copiedTask?.cancel() }
+    .haptic(.light, on: changes, "follow or pin")
   }
 
   /// Your profile the first time: made once (profile.ensure); the library then has its handle.
@@ -164,7 +164,7 @@ struct ProfileScreen: View {
       if !isSelf { RoundButton(icon: "back", label: "Back") { nav.back() } }
       Text(h.isEmpty ? "" : "@" + h).css(20, .bold, ls: -0.02).foregroundStyle(t.text).lineLimit(1).truncationMode(.tail).line(20)
         .frame(maxWidth: .infinity, alignment: .leading)
-      if ok { RoundButton(icon: "share", label: "Share profile") { share(h) } }
+      if ok { RoundButton(icon: "share", label: "Share profile") { share(h, name: report?.name ?? h) } }
       if isSelf { RoundButton(icon: "gear", label: "Settings") { nav.push(.settings) } }
       if ok, !isSelf, let report {
         RoundButton(icon: "more", label: "More for " + report.name) { menu = menu == "more" ? nil : "more" }
@@ -212,7 +212,7 @@ struct ProfileScreen: View {
         if isSelf { wide("Edit profile") { nav.sheet = .editProfile } }
         else if blocked { wide(pr.unblocking ? "Unblocking…" : "Unblock", inv: true) { if !pr.unblocking { unblock(pr, h: h) } } }
         else { wide(following ? "Following" : "Follow", inv: !following) { toggleFollow(pr, h: h) }.accessibilityAddTraits(following ? .isSelected : []) }
-        wide(copied ? "Link copied" : "Share profile") { share(h) }
+        wide("Share profile") { share(h, name: name) }
       }
       if !err.isEmpty { CSSText(err, 13, color: t.again) }
       if isSelf { tabs(current) } else { Rectangle().fill(t.line).frame(height: 1).padding(.horizontal, -20) }
@@ -330,7 +330,7 @@ struct ProfileScreen: View {
           .offset(x: x, y: r.minY + 48)
         }
       }
-      .transition(.opacity)
+      .popTransition()
     }
   }
 
@@ -341,9 +341,9 @@ struct ProfileScreen: View {
       ZStack(alignment: .topLeading) {
         Color.black.opacity(0.001).frame(width: 4000, height: 8000).offset(x: -2000, y: -4000).onTapGesture { menu = nil }
         VStack(alignment: .leading, spacing: 4) {
-          moreItem("Report", t.text) { menu = nil; withAnimation(.out(0.35)) { nav.sheet = .report(kind: "profile", id: who, name: pr.name) } }
+          moreItem("Report", t.text) { menu = nil; withAnimation(Motion.sheet) { nav.sheet = .report(kind: "profile", id: who, name: pr.name) } }
           if blocked { moreItem("Unblock", t.text) { menu = nil; unblock(pr, h: h) } }
-          else { moreItem("Block", t.again) { menu = nil; withAnimation(.out(0.35)) { nav.sheet = .block(handle: who, name: pr.name) } } }
+          else { moreItem("Block", t.again) { menu = nil; withAnimation(Motion.sheet) { nav.sheet = .block(handle: who, name: pr.name) } } }
         }
         .padding(8)
         .frame(width: 190, alignment: .leading)
@@ -444,7 +444,7 @@ struct ProfileScreen: View {
   // ---------- what the buttons do ----------
   private func toggleFollow(_ pr: ProfilePage, h: String) {
     let on = !(pr.me?.following ?? false)
-    err = ""; menu = nil
+    err = ""; menu = nil; changes += 1
     Task {
       do { try await store.changeProfile(h, ProfilePatch(following: on, followers: max(0, pr.followers + (on ? 1 : -1)))) { try await store.follow(pr.handle, on) } }
       catch { err = error.localizedDescription.nilIfEmpty ?? "Something went wrong. Try again." }
@@ -459,18 +459,16 @@ struct ProfileScreen: View {
     }
   }
   private func setPins(_ pr: ProfilePage, h: String, _ next: [String]) {
-    err = ""; menu = nil
+    err = ""; menu = nil; changes += 1
     Task {
       do { try await store.changeProfile(h, ProfilePatch(featured: next)) { try await store.updateProfile(["featured": next]) } }
       catch { err = error.localizedDescription.nilIfEmpty ?? "Something went wrong. Try again." }
     }
   }
-  /// Share copies the profile's link, and says so for a moment.
-  private func share(_ h: String) {
-    UIPasteboard.general.string = store.shareLink("/@" + h)
-    copied = true
-    copiedTask?.cancel()
-    copiedTask = Task { try? await Task.sleep(nanoseconds: 2_000_000_000); if !Task.isCancelled { copied = false } }
+  /// Share opens the phone's share sheet with the profile's link (the owner: "users cannot 'share' profile, it just says 'link
+  /// copied' i was expecting a share popup").
+  private func share(_ h: String, name: String) {
+    ShareSheet.present(title: name, url: URL(string: store.shareLink("/@" + h)))
   }
 }
 

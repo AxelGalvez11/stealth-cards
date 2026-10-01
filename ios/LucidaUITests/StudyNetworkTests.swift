@@ -63,6 +63,24 @@ final class StudyNetworkTests: XCTestCase {
   private func any(_ app: XCUIApplication, _ words: String) -> XCUIElement {
     app.descendants(matching: .any).matching(NSPredicate(format: "label CONTAINS %@", words)).firstMatch
   }
+  /// The phone's share sheet is up (the system's activity view, which has Copy among its actions), and closing it.
+  private func shareSheetUp(_ app: XCUIApplication, _ s: TimeInterval = 10) -> Bool {
+    let up = { app.otherElements["ActivityListView"].exists || app.collectionViews["ActivityListView"].exists || app.otherElements["ActivityContentView"].exists
+      || app.navigationBars["UIActivityContentView"].exists || app.buttons["Copy"].exists || app.staticTexts["Copy"].exists }
+    let end = Date().addingTimeInterval(s)
+    while Date() < end { if up() { return true }; Thread.sleep(forTimeInterval: 0.3) }
+    return up()
+  }
+  /// Puts the share sheet away the way a person does: a tap on the page above it (a tap up in the status bar does nothing).
+  private func closeShareSheet(_ app: XCUIApplication) {
+    for _ in 0..<3 {
+      app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.25)).tap()
+      let end = Date().addingTimeInterval(3)
+      while Date() < end && shareSheetUp(app, 0.1) { Thread.sleep(forTimeInterval: 0.25) }
+      if !shareSheetUp(app, 0.1) { break }
+    }
+    Thread.sleep(forTimeInterval: 0.8)
+  }
   private func button(_ app: XCUIApplication, _ label: String) -> XCUIElement { app.buttons[label].firstMatch }
   /// A button whose label starts with these words (a row's label has its value after it).
   private func buttonStarting(_ app: XCUIApplication, _ words: String) -> XCUIElement {
@@ -213,8 +231,9 @@ final class StudyNetworkTests: XCTestCase {
     button(app, "Back").tap()
     button(app, "Back").tap()
     check(wait(button(app, "News"), 10), "News is read a moment after opening it (the count goes)")
-    button(app, "Your profile").tap()
-    check(wait(app.staticTexts["@" + ownerHandle]), "your picture on Today opens your profile")
+    check(!button(app, "Your profile").exists, "Today has no profile picture")
+    button(app, "Profile").tap()
+    check(wait(app.staticTexts["@" + ownerHandle]), "the Profile tab opens your profile")
     let more = button(app, "More for MCAT Biochemistry")
     check(wait(more), "your decks have ⋯")
     more.tap()
@@ -225,14 +244,15 @@ final class StudyNetworkTests: XCTestCase {
     Thread.sleep(forTimeInterval: 1.5)
     check((profile(ownerHandle)["featured"] as? [String])?.contains(sharedId) == true, "the pin is saved")
     button(app, "Share profile").tap()
-    check(wait(button(app, "Link copied")), "Share says Link copied")
+    check(shareSheetUp(app) && !button(app, "Link copied").exists, "Share opens the phone's share sheet (it used to say Link copied)")
+    closeShareSheet(app)
     button(app, "Library").tap()
     check(wait(any(app, "Public · 3 cards"), 10), "the Library marks the deck Public")
     any(app, "Public · 3 cards").tap()
     check(wait(button(app, "Public")), "a deck you share has its page's button")
     button(app, "Deck settings").tap()
     lowest(app, "Sharing").tap()
-    check(wait(button(app, "Copy link")), "Sharing has its link with Copy link")
+    check(wait(button(app, "Share link")), "Sharing has its link with Share link")
     check(wait(any(app, "1 studying · 1 copy")), "and how many study and copy it")
     lowest(app, "Link only").tap()
     Thread.sleep(forTimeInterval: 1.5)
@@ -247,7 +267,7 @@ final class StudyNetworkTests: XCTestCase {
 
     // ---------- the learner: Edit profile, a handle someone has, then a free one ----------
     app = launch(as: learner)
-    button(app, "Your profile").tap()
+    button(app, "Profile").tap()
     let learnerHandle = (state(learner)["profile"] as? [String: Any])?["handle"] as? String ?? ""
     check(wait(app.staticTexts["@" + learnerHandle]), "the learner's own profile opens (@\(learnerHandle))")
     button(app, "Edit profile").tap()

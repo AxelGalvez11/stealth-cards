@@ -2,7 +2,7 @@
 // Mac with made-up people (the `lc_dev` cookie that the debug-only `-dev <name>` launch argument sets). The same story as the
 // web app's own check (nav-ui.mjs), in three flows that each set up their own people (so any one can run alone):
 //   1  The tab bar has Today, Library, Discover, Stats and Profile, and no Connect. Profile opens your own profile and is lit
-//      there; so does your picture on Today. The gear opens Settings, whose row says Connect AI (not Connected apps); the row
+//      there (Today has no picture of its own any more). The gear opens Settings, whose row says Connect AI (not Connected apps); the row
 //      opens the page, which has a back button and no tab bar; Back goes to Settings, and Back again to your profile.
 //   2  Someone else's profile lights no tab (and the News bell is still on Today).
 //   3  Everything else that opens Connect AI opens the same page: the Library's empty state, Today's "Connect your AI" tile,
@@ -138,11 +138,12 @@ final class NavTests: XCTestCase {
     check(!mine.isEmpty && wait(app.staticTexts["@" + mine]), "it says your handle (@\(mine))")
     check(litIs(app, "Profile"), "and the Profile tab is lit")
     check(button(app, "Settings").exists && !button(app, "Back").exists, "with the gear for Settings, and no back button (it's a tab)")
-    // Your picture on Today opens the same page.
+    // Today has no picture (the owner, 2026-10-01); the tab is the way to your profile.
     tap(button(app, "Today"), "the Today tab")
-    check(litIs(app, "Today") && wait(button(app, "Your profile")), "Today is lit again, with your picture")
-    tap(button(app, "Your profile"), "your picture on Today")
-    check(wait(button(app, "Edit profile")) && litIs(app, "Profile"), "your picture on Today opens your profile, with Profile lit")
+    check(litIs(app, "Today") && wait(button(app, "News")), "Today is lit again")
+    check(!button(app, "Your profile").exists, "and has no profile picture")
+    tap(button(app, "Profile"), "the Profile tab")
+    check(wait(button(app, "Edit profile")) && litIs(app, "Profile"), "the Profile tab opens your profile, with Profile lit")
     // Settings › Connect AI.
     tap(button(app, "Settings"), "the gear")
     check(wait(app.staticTexts["Settings"]) && wait(buttonStarting(app, "Connect AI")), "the gear opens Settings, whose row says Connect AI")

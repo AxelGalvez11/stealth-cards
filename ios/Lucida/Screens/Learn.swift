@@ -72,7 +72,7 @@ struct LearnStartSheet: View {
         Button(action: nav.close) { Text("Cancel").css(15, .semibold).foregroundStyle(t.text).frame(maxWidth: .infinity).frame(height: 52).background(Capsule().fill(t.surf)) }
           .buttonStyle(.press)
         Button {
-          if store.demo || store.startLearn(deckId, set: cur.id, kinds: kinds) { nav.sheet = nil; withAnimation(.out(0.35)) { nav.full = .learn(deckId) } }
+          if store.demo || store.startLearn(deckId, set: cur.id, kinds: kinds) { nav.sheet = nil; withAnimation(Motion.sheet) { nav.full = .learn(deckId) } }
         } label: {
           HStack(spacing: 8) { Icon("sparkle", 16, 2); Text("Start learning").css(15, .semibold) }
             .foregroundStyle(t.invText).frame(maxWidth: .infinity).frame(height: 52).background(Capsule().fill(t.inv))
@@ -154,7 +154,7 @@ private struct LearnBody: View {
       }
       .foregroundStyle(look.ink)
       if settingsOpen {
-        SheetOverlay(top: nil, close: { withAnimation(.out(0.3)) { settingsOpen = false } }) { settingsSheet }.zIndex(2)
+        SheetOverlay(top: nil, close: { withAnimation(Motion.leave) { settingsOpen = false } }) { settingsSheet }.zIndex(2)
       }
     }
     .background(t.bg)
@@ -165,7 +165,7 @@ private struct LearnBody: View {
   private var settingsSheet: some View {
     VStack(alignment: .leading, spacing: 18) {
       Grabber().frame(maxWidth: .infinity)
-      HStack { Text("Learn settings").css(18, .semibold); Spacer(); SheetDone { withAnimation(.out(0.3)) { settingsOpen = false } } }
+      HStack { Text("Learn settings").css(18, .semibold); Spacer(); SheetDone { withAnimation(Motion.leave) { settingsOpen = false } } }
       BgChooser(deckId: deckId)
     }
     .foregroundStyle(t.text)
@@ -206,17 +206,23 @@ private struct LearnBody: View {
     let sample = v.type == "type" ? Store.demoExplain.type : Store.demoExplain.learn
     let ex = store.demo ? ExplainVM(on: true, text: exMock ? sample : "", note: exMock ? "2 free explanations left today" : "") : store.explainOf(v.id)
     if answered && ex.on && !v.id.isEmpty {
-      if exFor == v.id {
-        ExplainPanel(ex: ex, look: .learn(look)) { withAnimation(.out(0.25)) { exFor = nil } }
-          .padding(.vertical, 14).padding(.horizontal, 16)
-          .background(RoundedRectangle(cornerRadius: 18, style: .continuous).fill(look.card).learnShadow(look.shadow))
-          .transition(.opacity.combined(with: .offset(y: 6)))
-      } else {
-        ExplainButton(label: ex.label, look: .learn(look)) {
-          withAnimation(.out(0.25)) { exFor = v.id }
-          if store.demo { exMock = true } else if ex.text.isEmpty { Task { await store.explain(v.id, question: v.text) } }
+      // (it opens in the same place for every question: under the answers and the line that says why, never over them; it
+      // fades in, nothing slides)
+      Group {
+        if exFor == v.id {
+          ExplainPanel(ex: ex, look: .learn(look)) { exFor = nil }
+            .padding(.vertical, 14).padding(.horizontal, 16)
+            .background(RoundedRectangle(cornerRadius: 18, style: .continuous).fill(look.card).learnShadow(look.shadow))
+            .id("explanation")
+            .transition(.opacity)
+        } else {
+          ExplainButton(label: ex.label, look: .learn(look)) {
+            exFor = v.id
+            if store.demo { exMock = true } else if ex.text.isEmpty { Task { await store.explain(v.id, question: v.text) } }
+          }
         }
       }
+      .animation(Motion.fade, value: exFor)
     }
   }
 
@@ -227,7 +233,7 @@ private struct LearnBody: View {
     return HStack(spacing: 12) {
       Button { nav.leave(to: deckId) } label: { Icon("close", 18, 2).foregroundStyle(k.ink).frame(width: 44, height: 44).background(Circle().fill(k.chip)) }
         .buttonStyle(.press).accessibilityLabel("Stop for now")
-      Button { withAnimation(.out(0.35)) { settingsOpen.toggle() } } label: {
+      Button { withAnimation(Motion.sheet) { settingsOpen.toggle() } } label: {
         Icon("gear", 18, 2).foregroundStyle(settingsOpen ? k.btnFg : k.ink).frame(width: 44, height: 44).background(Circle().fill(settingsOpen ? k.btn : k.chip))
       }
       .buttonStyle(.press).accessibilityLabel("Learn settings")
@@ -301,16 +307,31 @@ private struct LearnBody: View {
   /// A question page: the top, then the question (it scrolls when it runs long), then Next at the bottom, over the deck's
   /// study background.
   private func page<Top: View, C: View, B: View>(_ spacing: CGFloat = 18, @ViewBuilder top: () -> Top, @ViewBuilder content: () -> C, @ViewBuilder bottom: () -> B) -> some View {
-    VStack(alignment: .leading, spacing: spacing) {
+    let inner = content()
+    return VStack(alignment: .leading, spacing: spacing) {
       top()
-      ScrollView(showsIndicators: false) { content().frame(maxWidth: .infinity, alignment: .leading) }
-        .scrollBounceBehavior(.basedOnSize)
+      // (the explanation, when it opens or its words arrive, is brought into view, with no sliding: it opens under the answers,
+      // which on a long question is below the fold)
+      ScrollViewReader { proxy in
+        ScrollView(showsIndicators: false) { inner.frame(maxWidth: .infinity, alignment: .leading) }
+          .scrollBounceBehavior(.basedOnSize)
+          .onChange(of: exFor) { _, open in if open != nil { reveal(proxy) } }
+          .onChange(of: store.explaining) { _, _ in if exFor != nil { reveal(proxy) } }
+      }
       bottom()
     }
     .padding(.top, Screen.top(60)).padding(.horizontal, 16).padding(.bottom, 34)
     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
     .background(StudyBackground(bg: store.studyBg(deckId)))
     .ignoresSafeArea(.container)
+  }
+
+  /// Scrolls the open explanation (the one place it opens: `.id("explanation")`) to the bottom of the screen, at once.
+  private func reveal(_ proxy: ScrollViewProxy) {
+    DispatchQueue.main.async {
+      var tx = Transaction(); tx.disablesAnimations = true
+      withTransaction(tx) { proxy.scrollTo("explanation", anchor: .bottom) }
+    }
   }
 
   // A choice question (multiple choice, true or false, fill in the blank). A question the learner's AI wrote brings its
@@ -357,12 +378,15 @@ private struct LearnBody: View {
             from(card?.0 ?? (v.cardText.isEmpty ? v.text : v.cardText), card?.1 ?? v.answer)
           }
           .padding(.horizontal, 4)
-          .transition(.opacity.combined(with: .offset(y: 6)))
+          .popTransition()
         }
       }
     }, bottom: {
       if done { nextButton { exFor = nil; store.demo ? store.demoNext() : store.learnNext() } }
     })
+    // Right: success (a card gets learned this way); wrong: warning.
+    .haptic(.success, on: v.pick, "right answer") { _, new in new != nil && new == v.right }
+    .haptic(.warning, on: v.pick, "wrong answer") { _, new in new != nil && new != v.right }
   }
 
   // Matching: tap a word, then what it means.
@@ -385,6 +409,9 @@ private struct LearnBody: View {
     }, bottom: {
       if all { nextButton { store.demo ? store.demoNext() : store.learnNext() } }
     })
+    .haptic(.selection, on: v.sel, "pick") { _, new in new != nil }
+    .haptic(.success, on: v.matched.count, "right pair") { old, new in new > old }
+    .haptic(.warning, on: v.wrong, "wrong pair") { _, new in new != nil }
   }
   private func state(_ v: LearnView, _ id: String, left: Bool) -> String {
     if v.matched.contains(id) { return "done" }
@@ -461,6 +488,8 @@ private struct LearnBody: View {
       if v.checked { nextButton { typing = ""; exFor = nil; store.demo ? store.demoNext() : store.learnNext() } }
     })
     .onChange(of: v.id) { _, _ in typing = "" }
+    .haptic(.success, on: v.checked, "right answer") { _, new in new && v.ok }
+    .haptic(.warning, on: v.checked, "wrong answer") { _, new in new && !v.ok }
   }
   private func check() {
     if store.demo { if !store.demoLearn.typed.trimmingCharacters(in: .whitespaces).isEmpty { store.demoLearn.checked = true } }

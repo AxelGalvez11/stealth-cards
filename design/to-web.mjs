@@ -4,6 +4,7 @@
 // the others keep their size.
 import { readFileSync, writeFileSync, readdirSync, mkdirSync, rmSync } from 'node:fs';
 import { withoutThemes, appPictures } from './themes.mjs';
+import { MOTION } from './motion.mjs';
 
 const SRC = new URL('./canvas/project/', import.meta.url);
 const OUT = new URL('../web/screens/', import.meta.url);
@@ -55,5 +56,10 @@ return Component;
 `);
   list.push({ name, title, w, h });
 }
+// The motion timings the iPhone app shares (design/motion.mjs), for web/motion.js: a segmented control's pill slides at the
+// knob's speed.
+writeFileSync(new URL('../web/motion-timings.js', import.meta.url), `// Made by design/to-web.mjs from design/motion.mjs, the one set of timings the web app and the iPhone app share. Change that, not this file.
+export default ${JSON.stringify(MOTION)};
+`);
 writeFileSync(new URL('index.js', OUT), `// Every screen, for the screen list at /b. Made by design/to-web.mjs.\nexport default ${JSON.stringify(list, null, 1)};\n`);
 console.log(list.length, 'screens');

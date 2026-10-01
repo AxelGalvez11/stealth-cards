@@ -32,6 +32,11 @@ body { font-family: Geist, -apple-system, system-ui, sans-serif; }
 /* A phone page that grows with what's on it (signing in, Learn mode, joining a live game), shown inside another board
    (its other versions on /b), takes that board's height. */
 #app > * [style*="min-height: 100dvh"] { min-height: 100% !important; }
+/* A segmented control's pill, sliding to the new choice (web/motion.js): the pill is drawn behind the words, and the picked
+   button's own pill waits until it arrives. */
+[data-fx-pill] { position: relative; isolation: isolate; }
+[data-fx-pill]::before { content: ""; position: absolute; z-index: -1; pointer-events: none; }
+[data-fx-hide] { background: transparent !important; box-shadow: none !important; }
 /* Pages rise in once, when the app opens (web/app.js adds sc-calm after the first page). */
 html.sc-calm #app main > * { animation: none !important; }
 @media (max-width: 760px) {

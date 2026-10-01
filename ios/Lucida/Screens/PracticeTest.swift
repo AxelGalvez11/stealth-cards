@@ -16,7 +16,7 @@ struct TestStartButton: View {
   var height: CGFloat = 56
   var size: CGFloat = 17
   var body: some View {
-    Button { withAnimation(still ? nil : .out(0.35)) { nav.sheet = .testStart(scope) } } label: {
+    Button { withAnimation(Motion.sheet) { nav.sheet = .testStart(scope) } } label: {
       HStack(spacing: 8) { Icon("file", size, 2); Text("Practice test").css(size, .semibold).lineLimit(1).fixedSize() }
         .foregroundStyle(t.text).frame(maxWidth: .infinity).frame(height: height).background(Capsule().fill(t.surf))
     }
@@ -120,7 +120,7 @@ struct TestStartSheet: View {
           .buttonStyle(.press)
         Button {
           if off { return }
-          if store.startTest(scope, count: Int(cur.id) ?? 0, kinds: kinds, limit: limit) { nav.sheet = nil; withAnimation(still ? nil : .out(0.35)) { nav.full = .test(scope) } }
+          if store.startTest(scope, count: Int(cur.id) ?? 0, kinds: kinds, limit: limit) { nav.sheet = nil; withAnimation(Motion.sheet) { nav.full = .test(scope) } }
         } label: {
           Text("Start test").css(15, .semibold).foregroundStyle(off ? t.muted : t.invText).frame(maxWidth: .infinity).frame(height: 52).background(Capsule().fill(off ? t.surf2 : t.inv))
         }
