@@ -5,6 +5,10 @@ import SwiftUI
 /// taller one (the Dynamic Island) move everything down by the difference, so the gap under the status bar stays the same.
 struct Screen {
   static var safeTop: CGFloat {
+    #if DEBUG
+    // `-safeTop 47` lays everything out for the boards' own 47-point status bar, whatever this phone has (to set a screen beside its board).
+    if let v = Board.arg("-safeTop"), let n = Double(v) { return CGFloat(n) }
+    #endif
     let scene = UIApplication.shared.connectedScenes.compactMap { $0 as? UIWindowScene }.first
     return scene?.windows.first?.safeAreaInsets.top ?? 47
   }

@@ -207,6 +207,8 @@ struct LibraryScreen: View {
   @State private var pick = ""
   @State private var shown = 60
   @State private var confirmRemove = false
+  /// The + menu (New deck, Make cards, Import cards) is open.
+  @State private var addOpen = false
 
   var body: some View {
     let decks = store.libraryDecks(), folders = store.libraryFolders(decks)
@@ -247,18 +249,22 @@ struct LibraryScreen: View {
     .scrollDismissesKeyboard(.immediately)
     .ignoresSafeArea(edges: .top)
     .overlayPreferenceValue(MenuAnchors.self) { anchors in menus(anchors, decks, folders) }
+    .addMenu(open: $addOpen, rows: [
+      AddMenuRow(icon: "decks", title: "New deck", line: "Start from scratch") { nav.newDeck() },
+      AddMenuRow(icon: "sparkle", title: "Make cards", line: "From a file, photo, video or topic") { nav.make() },
+      AddMenuRow(icon: "upload", title: "Import cards", line: "From Anki, Quizlet or a CSV") { nav.importCards() }])
     .confirmationDialog("Remove the folder “\(folder?.name ?? "")”?", isPresented: $confirmRemove, titleVisibility: .visible) {
       // Back to the Library (the page also goes back by itself once its folder is gone).
       Button("Remove folder", role: .destructive) { if let id = folderId { Task { await store.deleteFolder(id); if nav.path.last == .folder(id) { nav.back() } } } }
     } message: { Text("Its decks stay in your library.") }
   }
 
-  /// The title with New folder and New deck; in cards mode, just New deck.
+  /// The title with New folder and the + menu; in cards mode, just the menu.
   private func top(_ cards: Bool) -> some View {
     HStack(spacing: 8) {
       Text("Library").css(32, .bold, ls: -0.03).foregroundStyle(t.text).frame(maxWidth: .infinity, alignment: .leading).accessibilityAddTraits(.isHeader)
       if !cards { round("folder", "New folder") { startNaming() } }
-      round("plus", "New deck", inv: true) { nav.newDeck() }
+      round("plus", "Add", inv: true) { menu = nil; addOpen.toggle() }.addMenuAnchor()
     }
     .frame(height: 41)
   }

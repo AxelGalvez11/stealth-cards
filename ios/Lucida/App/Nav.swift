@@ -17,6 +17,8 @@ enum SheetKind: Identifiable, Equatable {
   /// Classes: the New class, Join a class, or Rename popup; a class's Add a deck and Assign sheets (by its code); Report a
   /// deck, a person, or a suggestion (its kind, id, and name); and Get verified.
   case classForm(ClassForm), classAdd(String), classAssign(String), report(kind: String, id: String, name: String), verify
+  /// Make cards from a file, pictures, a recording, text, a link, or a topic (Screens/Make.swift), starting where the MakeStart says.
+  case make(MakeStart)
   var id: String {
     switch self {
     case .newDeck: return "newDeck"
@@ -33,6 +35,7 @@ enum SheetKind: Identifiable, Equatable {
     case .classAssign(let c): return "classAssign-" + c
     case .report(let k, let i, _): return "report-\(k)-\(i)"
     case .verify: return "verify"
+    case .make: return "make"
     }
   }
 }
@@ -76,6 +79,13 @@ final class Nav: ObservableObject {
   func newCard(deckId: String?, cardId: String? = nil) { withAnimation(.out(0.35)) { sheet = .newCard(deckId: deckId, cardId: cardId) } }
   func newDeck() { withAnimation(.out(0.35)) { sheet = .newDeck } }
   func importCards() { /* Import comes with the card editor. */ }
+  /// Make cards from anything (the web's /make?source=&deck=&from=&guide=&page=): `kind` opens one kind's page (file, photo, record, paste,
+  /// video, or topic; "" for the list), `deckId` is where the cards go, `from` is a kept source (its id) to make more cards from, and
+  /// `guide` (a deck's id, with its `page`: "" or "main" for the Guide itself) is a Guide to make cards from. `text` starts it on Paste
+  /// with those words (a Guide's selection), named `title`.
+  func make(kind: String = "", deckId: String = "", from: String = "", guide: String = "", page: String = "", text: String = "", title: String = "") {
+    withAnimation(.out(0.35)) { sheet = .make(MakeStart(kind: kind, deckId: deckId, from: from, guide: guide, page: page, text: text, title: title)) }
+  }
   /// Learn mode: pick up where you stopped, or start from the sheet.
   func learn(deckId: String, resume: Bool) { withAnimation(.out(0.35)) { if resume { full = .learn(deckId) } else { sheet = .learnStart(deckId) } } }
   func close() { withAnimation(.out(0.3)) { sheet = nil } }

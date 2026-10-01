@@ -204,7 +204,8 @@ final class ThemesTests: XCTestCase {
 
     // ---------- flashcards: the background, the card, and grading ----------
     front(app, "Back").tap()
-    check(wait(button(app, "New deck")), "back on the Library")
+    // (The Library's + is a menu now: New deck, Make cards, Import cards.)
+    check(wait(button(app, "Add")), "back on the Library")
     check(openDeck(app, "Cell Biology"), "Cell Biology opens")
     let study = buttonStarting(app, "Flashcards")
     check(wait(study), "Cell Biology has Flashcards")
@@ -238,7 +239,9 @@ final class ThemesTests: XCTestCase {
 
     // ---------- New deck ----------
     button(app, "Back").tap()
-    check(wait(button(app, "New deck")), "the Library has New deck")
+    check(wait(button(app, "Add")), "the Library has its + menu")
+    button(app, "Add").tap()
+    check(wait(button(app, "New deck")), "which offers New deck")
     button(app, "New deck").tap()
     check(wait(app.staticTexts["New deck"]) && drawing(app, "newcover=aero"), "New deck's preview is the theme's cover")
     button(app, "Cancel").tap()

@@ -117,6 +117,8 @@ struct RootView: View {
           case "library": nav.tab = .library
           // The New deck sheet, and Settings › Theme (with `-theme <key>` a theme's page).
           case "newdeck": nav.tab = .library; nav.sheet = .newDeck
+          // Make cards from anything (`-makeFile`, `-makePhoto`, `-makeRecording`, `-makeTopic`, `-makeText`, `-makeVideo` open it with that already in).
+          case "make": nav.sheet = .make(MakeStart())
           // Learn mode on the first deck's questions (multiple choice and true or false), started as Start learning would.
           case "learnq": if store.startLearn(first, set: "all", kinds: ["mc", "tf", "blank"]) { nav.tab = .library; nav.path = [.deck(first)]; nav.full = .learn(first) }
           case "themes": nav.path = [.settings, .themes]
@@ -157,6 +159,7 @@ struct RootView: View {
           default: break
           }
         }
+        if let s = MakeDebug.start { nav.sheet = .make(s) }
         // `-upload profile|cover|bg <file>`: that picture goes up as a picked photo would (your profile photo, or the first
         // deck's header or background); `-sound <file>`: that sound, as the card editor's Upload would.
         if let i = a.firstIndex(of: "-upload"), i + 2 < a.count, let data = FileManager.default.contents(atPath: a[i + 2]) {
@@ -241,6 +244,8 @@ extension Board {
     // A verified teacher's Settings: Get verified says Verified teacher (the board's `verified`: -verified "Waiting for review" or School).
     case "PhoneSettingsVerified": store.props.verified = "Teacher"; nav.path = [.settings]
     case "PhoneNewDeck": nav.sheet = .newDeck
+    // Make cards over Today, on one of the canvas's steps (`-state Review`, or any name in MakeSample.steps; Pick when it's left out).
+    case "PhoneMake": nav.tab = .today; nav.sheet = .make(MakeStart(demo: MakeSample.name(Board.arg("-state"))))
     case "PhoneEditor": store.props.editorTyping = true; nav.tab = .library; nav.path = [.deck("cell")]; nav.sheet = .newCard(deckId: "cell", cardId: nil)
     // Editing a card that's paused (Unpause card), from the sample's first card.
     case "PhoneEditorPaused": store.props.editCard = "k1"; store.demoPaused["k1"] = true; nav.tab = .library; nav.path = [.deck("cell")]; nav.sheet = .newCard(deckId: "cell", cardId: "k1")
@@ -465,6 +470,7 @@ struct SheetHost: View {
     case .classAssign(let code): SheetOverlay(top: 56, close: nav.close) { ClassAssignSheet(code: code) }
     case .report(let kind, let id, let name): SheetOverlay(top: nil, close: nav.close) { ReportSheet(kind: kind, id: id, name: name) }
     case .verify: SheetOverlay(top: nil, close: nav.close) { VerifySheet() }
+    case .make(let s): MakeHost(start: s, store: store, nav: nav)
     }
   }
 }

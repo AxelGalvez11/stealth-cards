@@ -134,6 +134,73 @@ Settings and checks someone's deck, a helper opens a suggestion from News, and t
 `ios/tests/sync-check.sh` asks the app's own code for its library (`API.syncedState`) against a stand-in server that is slow,
 trickles, errors, drops the connection, or says signed out, and checks what comes back and how soon (no simulator).
 
+## Make cards
+
+Cards from anything: a file (PDF, slides, a Word file, text, caption files (.srt and .vtt), pictures, audio), pictures from the library or the
+camera, a lecture recorded with the microphone, pasted text, a YouTube link, or a topic in words. The same make also drafts starter notes for the
+deck, and, for a language that is set, can write audio cards. `Screens/Make.swift` draws the canvas's `PhoneMake` board, a sheet over
+the page it came from: pick a source, add it (with the options under it: Into deck, How many cards, Kinds, Language), watch it work (and
+Cancel), check the new cards (edit, remove, or keep each one), and Add them to a deck, which then opens. What it does is `Data/MakeData.swift`,
+a port of `web/make.js` (the same calls in the same order: `upload`, the file's bytes, `start`, `step` for each part three at a time with two
+retries, `plan`, `finish`, `save`, `cancel`, `job`); `Data/MakeRecorder.swift` is the recorder (AAC .m4a, mono, 22.05 kHz, about 24 kbps, a new
+file every 10 minutes, Pause and Resume, a stop of its own at the plan's minutes). `/api/state` carries `make` (the plan's limits), which the
+library reads (`Library.make`). A file goes where `upload` says: a path on this server (with the session cookie) or the storage's own address
+(with the headers it gives and no cookie). Pictures are made at most 1600 pixels across and sent as JPEG (the iPhone camera's HEIC included).
+The speech service takes an audio file of at most 25 MB, and a make can be two hours, so a long recording goes up as several files: the recorder's
+files are ten minutes each, and a recording picked from Files that is over 18 MB or longer than ten minutes (the web's own numbers) is cut into even
+parts of at most ten minutes before it goes (`Data/MakeSplit.swift`: one `AVAssetExportSession`, `AVAssetExportPresetAppleM4A`, for each part's time range, to files in a
+folder of the flow's own that go when the flow ends; the recording is never held in memory). Its row stays one row ("57 MB · 12 parts"), the
+parts go up one after another in the same make ("Lecture (part 3 of 12).m4a", with the make named for the recording itself), and the server adds
+each one's length to the next one's times. A recording longer than the plan makes from is turned away at once with the server's own words (nothing
+is cut or sent); one that can't be cut and is over 25 MB says so. Take a photo shows only on a phone with a camera (the iOS 26 simulator says it can use the camera but has none).
+
+It opens from Today's + menu (New card, Make cards, New deck), the Library's + menu (New deck, Make cards, Import cards; `Screens/AddMenu.swift`
+draws these menus, and a deck's Add cards can reuse it), and the empty deck's Make cards button. Any screen opens it with
+`nav.make(kind:deckId:from:guide:page:text:title:)`, like the web's `/make?source=&deck=&from=&guide=&page=`: `kind` (file, photo, record, paste,
+video, topic, or none), the deck the cards go to, a kept source's id to make more cards from, a deck's id (and its page) to make cards from its
+Guide, or words already in hand.
+
+**Notes.** `/api/make/finish` also answers `notes` (null, or a title, an overview, a note for each part of the material with where it comes from,
+and the whole draft as Markdown). The review shows a "Notes for the deck" panel above the cards: how many ("6 notes · p. 4 to p. 9 · saved with the
+cards"), a switch (on) that keeps them, and "Read the notes" / "Hide the notes", which unfolds the draft drawn the way a Guide page is (a title and
+headings with a line under them, paragraphs, bullets, numbers, a table, **bold** terms: `MakeMarkdown` in `Screens/Make.swift`, a small reader until
+the Guide's own Markdown view comes). The server drafts notes only when asked: every make sends `options.notes: true`, except a make from a Guide
+page or from a selection of one (`nav.make(guide:page:)`, `nav.make(text:)`), which says `options.notes: false` and shows no panel, and more cards from
+a source, which says nothing (its notes were drafted when it was made). Saving sends `notes: true|false` (only when finish gave notes), and the server
+makes them the deck's Guide, or a new Guide page when the deck has one. When the deck the cards go into already has every page a Guide can have (the
+library's `make.guidePages`, 10; `MakeFlow.notesFull`), the panel says "This deck has every page a Guide can have, so these notes can’t be added. Delete
+a page in its Guide to make room.", its switch is off and out of reach (the notes can still be read), and saving sends `notes: false`. Nothing in this
+flow writes or offers quiz questions.
+
+**Audio cards.** With a Language chosen, the options offer an Audio kind beside Basic and Fill in the blank (off until turned on, with a line about
+what it does); at least one kind always stays on, and clearing the language turns Audio off (and gives the other two back if Audio was the only one).
+It goes to the server as `options.kinds` containing "audio", only with `options.lang`. Cards that come back with kind "audio" carry `speak` (the
+words), `lang` (a BCP 47 code like es-ES) and `back` (what they mean); the review shows the words with a small speaker button (`Data/MakeSpeech.swift`:
+AVSpeechSynthesizer, in the card's language), "Read aloud · es-ES", and two fields to edit ("Words to say", "What it means"); saving sends `speak` and
+`lang` with each audio card.
+
+The boards: `PhoneMake` (and `PhoneMakeDark`, `PhoneMakeGray`); `-state <the canvas's step>` shows any of its 24 states (`Pick`, `Upload`,
+`Upload (a file added)`, `Photos`, `Record`, `Recording`, `Paused`, `Paste`, `Paste (a language set)`, `YouTube`, `YouTube transcript`, `Topic`,
+`More from a source`, `Making`, `Making a recording`, `Review`, `Review (notes open)`, `Review (notes off)`, `Review (no room for notes)`, `Review (audio cards)`,
+`Review (editing a card)`, `Limit reached`, `File too big`, `Error`), with the sample in `Design/MakeSample.swift`. Also changed: `PhoneToday` and `PhoneLibrary` (their + menus; `-menu open` opens it) and `PhoneDeckEmpty` (Make cards).
+
+More launch arguments (debug builds): `-makeFile <path>`, `-makePhoto <path>` (several: paths with commas between), `-makeRecording <path>` (a
+file for the microphone, which the simulator doesn't have: the timer, Pause, Resume and Stop run as they do for real, and Stop uses that file;
+`-makeSpeed <n>` runs its clock n times faster), `-makeTopic <words>`, `-makeText <path>` (a text file's words), `-makeVideo <link>` (with
+`-makeText`: the link's transcript) open the flow with that already picked or typed; `-makeRoute "source=&deck=&from=&guide=&page="` opens it the
+way the web's link does; `-open make` opens the list; `-safeTop 47` lays a screen out for the boards' own 47-point status bar (to set it beside
+its board on a phone with a Dynamic Island).
+
+    ios/tools/e2e-make.sh <simulator id>
+
+taps through the app as made-up people, on a fresh copy of the server on port 3934 and the stand-in AI (`stub-ai.mjs`: it answers what
+OpenRouter and Gemini would and logs every question; nothing real is asked) on port 3939, in 21 flows (every source, check and save, Cancel,
+the Free plan's three a day, a file over the plan's size, pictures as JPEG, the recorder and its limits, Try again, the + menus, the web's
+link, the pickers, a 70 minute recording cut into seven parts, caption files, the starter notes and a deck with no room for them, audio cards). It makes the long recording itself (ffmpeg, or afconvert) in a
+temporary folder. `ios/tests/make-check.sh` runs the flow's own code on the Mac against a stand-in server that goes wrong on purpose (parts
+three at a time and tried again twice, a bad file not tried again, the server's words, a 401, Cancel while it's starting, a direct upload
+with no cookie, what can be picked, a long recording cut into parts and sent in order, the recorder's ten-minute files); no simulator.
+
 ## Classes and schools
 
 The Library's third view (Decks · All cards · Classes): your classes as tiles, Join a class with its 6-letter code, New

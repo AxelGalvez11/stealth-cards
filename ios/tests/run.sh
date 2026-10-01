@@ -22,7 +22,7 @@ parity() {
   seed
   local W=$TESTDIR/parity; rm -rf $W; mkdir -p $W/variants
   local S=$TESTDIR/seed/stealth-cards.json NOW=$(node -e 'console.log(Date.now())')
-  swiftc -O -o $W/parity $DATA/Models.swift $DATA/Rich.swift $DATA/FSRS.swift $DATA/Sched.swift $DATA/Tune.swift $DATA/Insights.swift $DATA/Engine.swift $H/swift/stubs.swift $H/swift/main.swift 2>&1 | grep -E "error" && return 1
+  swiftc -O -o $W/parity $DATA/Models.swift $DATA/MakeModels.swift $DATA/Rich.swift $DATA/FSRS.swift $DATA/Sched.swift $DATA/Tune.swift $DATA/Insights.swift $DATA/Engine.swift $H/swift/stubs.swift $H/swift/main.swift 2>&1 | grep -E "error" && return 1
   local bad=0
   say() { echo "$1: $2"; [[ $2 == *" 0 differ"* ]] || bad=$((bad+1)); }
   WT=$REPO node $H/js/oracle-dump.mjs $S $NOW $W/js.json > /dev/null && $W/parity $S $NOW $W/swift.json > /dev/null

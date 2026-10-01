@@ -24,13 +24,20 @@ struct Library: Decodable {
   var pro = true
   /// The classes you're in, with their assignments (web/classes.mjs keeps them here, so Today shows what's due).
   var classes: [LibClass]
-  enum CodingKeys: String, CodingKey { case rev, settings, ai, folders, decks, cards, logs, me, aiOn, profile, pro, classes }
+  /// What making cards can do for you (your plan's limits), and what each deck kept of what it was made from and of its Guide,
+  /// by deck id (Data/MakeData.swift).
+  var make = MakeInfo()
+  var materials: [String: DeckMaterials] = [:]
+  enum CodingKeys: String, CodingKey { case rev, settings, ai, folders, decks, cards, logs, me, aiOn, profile, pro, classes, make }
   init(from d: Decoder) throws {
     let c = try d.container(keyedBy: CodingKeys.self)
     rev = c.v(.rev, 0); settings = c.v(.settings, UserSettings()); ai = c.v(.ai, AIState()); folders = c.v(.folders, [])
     decks = c.v(.decks, []); cards = c.v(.cards, []); logs = c.v(.logs, []); me = c.v(.me, nil); aiOn = c.v(.aiOn, false); profile = c.v(.profile, nil)
     pro = c.v(.pro, true)
     classes = c.v(.classes, [])
+    make = c.v(.make, MakeInfo())
+    // (Each deck's sources and Guide are read from the same list of decks, apart from Deck itself.)
+    for row in c.v(.decks, [DeckMaterials]()) where !row.id.isEmpty && (!row.sources.isEmpty || row.guide != nil) { materials[row.id] = row }
   }
   init(rev: Int = 0, settings: UserSettings = UserSettings(), ai: AIState = AIState(), folders: [Folder] = [], decks: [Deck] = [], cards: [Card] = [], logs: [ReviewLog] = [], me: Me? = nil, aiOn: Bool = false) {
     self.rev = rev; self.settings = settings; self.ai = ai; self.folders = folders; self.decks = decks; self.cards = cards; self.logs = logs; self.me = me; self.aiOn = aiOn

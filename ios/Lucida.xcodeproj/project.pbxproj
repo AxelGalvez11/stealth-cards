@@ -272,7 +272,8 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = Lucida;
 				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
-				INFOPLIST_KEY_NSMicrophoneUsageDescription = "Lucida records the sounds you put on your cards.";
+				INFOPLIST_KEY_NSCameraUsageDescription = "Lucida takes pictures of your notes, slides, or whiteboard to make cards from.";
+				INFOPLIST_KEY_NSMicrophoneUsageDescription = "Lucida records the sounds you put on your cards, and the lectures you record to make cards from.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -303,7 +304,8 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = Lucida;
 				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
-				INFOPLIST_KEY_NSMicrophoneUsageDescription = "Lucida records the sounds you put on your cards.";
+				INFOPLIST_KEY_NSCameraUsageDescription = "Lucida takes pictures of your notes, slides, or whiteboard to make cards from.";
+				INFOPLIST_KEY_NSMicrophoneUsageDescription = "Lucida records the sounds you put on your cards, and the lectures you record to make cards from.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;

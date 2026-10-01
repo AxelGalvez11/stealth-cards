@@ -394,7 +394,8 @@ struct DeckScreen: View {
     VStack(spacing: 0) {
       header(d, sub: "No cards yet")
       EmptyBlock(art: 140, icon: "plus", title: "This deck is empty", line: "Add your first card, import some, or ask your AI to make them.") {
-        EmptyActions(primary: ("New card", "plus", { nav.newCard(deckId: d.id) }), a: ("Import cards", "upload", { nav.importCards() }), b: ("Ask your AI", "sparkle", { nav.openConnect() }))
+        EmptyActions(primary: ("New card", "plus", { nav.newCard(deckId: d.id) }), second: ("Make cards", "sparkle", { nav.make(deckId: d.id) }),
+                     a: ("Import cards", "upload", { nav.importCards() }), b: ("Ask your AI", "connect", { nav.openConnect() }))
       }
       .padding(.horizontal, 28)
       .frame(maxHeight: .infinity)
@@ -697,15 +698,18 @@ struct EmptyBlock<Actions: View>: View {
   }
 }
 
-/// One black button, then two lighter ones side by side (phoneActionRow), like the web's row of pills.
+/// One black button (and maybe a gray one under it, full width too), then two lighter ones side by side (phoneActionRow), like the web's
+/// row of pills.
 struct EmptyActions: View {
   @Environment(\.theme) private var t
   let primary: (String, String, () -> Void)
+  var second: (String, String, () -> Void)? = nil
   let a: (String, String, () -> Void)
   let b: (String, String, () -> Void)
   var body: some View {
     VStack(spacing: 10) {
       BigButton(label: primary.0, icon: primary.1, action: primary.2)
+      if let second { BigButton(label: second.0, icon: second.1, inv: false, action: second.2) }
       HStack(spacing: 10) { small(a); small(b) }
     }
   }
