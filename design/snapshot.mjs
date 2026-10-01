@@ -6,6 +6,7 @@
 //   node design/snapshot.mjs html <Board> [props]   print one board's HTML
 import { readFileSync, writeFileSync, readdirSync, existsSync } from 'node:fs';
 import { createHash } from 'node:crypto';
+import { readBoard } from './slim.mjs';
 
 const HERE = new URL('./canvas/project/', import.meta.url);
 const SNAP = new URL('./.snapshot.json', import.meta.url);
@@ -16,7 +17,7 @@ const get = (o, p) => p.trim().split('.').reduce((a, k) => (a == null ? a : a[k]
 function loadBoards(dir) {
   const boards = {};
   for (const f of readdirSync(dir).filter(f => f.endsWith('.dc.html'))) {
-    const src = readFileSync(new URL(f, dir), 'utf8');
+    const src = readBoard(dir, f);
     const raw = JSON.parse(src.match(/data-props='([^']*)'/)[1]);
     const logic = src.split('data-dc-script')[1].split('>').slice(1).join('>').split('</script>')[0];
     boards[f.replace('.dc.html', '')] = {

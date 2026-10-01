@@ -1,6 +1,7 @@
 // Static check for every board: props JSON parses, logic runs under several prop sets,
 // every {{hole}} resolves (handlers to functions), sc-for lists are arrays, and tags balance.
 import { readFileSync, readdirSync } from 'node:fs';
+import { readBoard } from './slim.mjs';
 
 const DIR = new URL('./canvas/project/', import.meta.url);
 const get = (o, p) => p.trim().split('.').reduce((a, k) => (a == null ? undefined : a[k]), o);
@@ -151,7 +152,7 @@ function balance(body) {
 
 let bad = 0;
 for (const f of readdirSync(DIR).filter(f => f.endsWith('.dc.html')).sort()) {
-  const src = readFileSync(new URL(f, DIR), 'utf8');
+  const src = readBoard(DIR, f);
   const errs = [];
   let props;
   try { props = JSON.parse(src.match(/data-props='([^']*)'/)[1]); } catch (e) { errs.push('props JSON: ' + e.message); }

@@ -9594,7 +9594,12 @@ for (const T of THEMES.filter(x => x.key !== 'lucida')) {
   });
 }
 Object.assign(files, siteFiles());
-for (const [name, [title, body, opts]] of Object.entries(files)) writeFileSync(OUT + name + '.dc.html', page(title, body, opts));
+// The canvas keeps what every board shares once, in three files beside the boards (design/slim.mjs): the logic every board
+// has, the themes' code and the CSS every board starts with. Each board keeps its own markup, props and logic.
+const { slimBoards } = await import('./slim.mjs');
+const slim = slimBoards(Object.entries(files).map(([name, [title, body, opts]]) => [name, page(title, body, opts), opts]), { rich: RICH_METHOD, drag: DRAG_METHOD });
+for (const [name, text] of slim.boards) writeFileSync(OUT + name + '.dc.html', text);
+for (const [file, text] of Object.entries(slim.files)) writeFileSync(OUT + file, text);
 
 // The canvas layout (where each board sits) lives in canvas/project/canvas.json. It's kept in sync with the live
 // canvas, since boards can be moved there, so this script never rewrites it.
