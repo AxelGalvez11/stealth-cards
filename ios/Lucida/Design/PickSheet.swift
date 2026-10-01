@@ -83,8 +83,13 @@ struct PickSheet: View {
     .foregroundStyle(t.text)
     .padding(.top, 20).padding(.horizontal, 20).padding(.bottom, 34)
     .frame(maxHeight: r.full ? .infinity : nil, alignment: .top)
-    // The cursor goes to the search (the design screens, like the canvas's, leave it alone).
-    .onAppear { if r.find != nil && !store.demo { DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) { focus = true } } }
+    // The cursor goes to the search (the design screens, like the canvas's, leave it alone), and the list is read in the background so
+    // the first letters find schools at once.
+    .onAppear {
+      guard let find = r.find else { return }
+      DispatchQueue.global(qos: .userInitiated).async { _ = find("") }
+      if !store.demo { DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) { focus = true } }
+    }
   }
 
   private var search: some View {
