@@ -85,7 +85,7 @@ ${logic}
 </html>
 `;
 // Motion on every board, as the Motion board shows it: a page's content rises in (each part a moment after the one
-// before), pills and buttons press in, deck cards lift under the pointer, empty states float in a soft light with a
+// before), pills and buttons press in, empty states float in a soft light with a
 // shine crossing the top card, the Today card's colors drift, the session meter draws in, and forecast bars grow.
 // Switches spring across (the owner: "could you add toggle switch animation"), and side panels and sheets (deck
 // settings, the card editor) slide in over a dimming page (the owner: "add a move in animation for the right sidebar");
@@ -96,10 +96,11 @@ const APP_MOTION_CSS = [
   [2, 3, 4, 5].map(n => `main>*:nth-child(${n}){animation-delay:${((n - 1) * 0.06).toFixed(2)}s}`).join('') + 'main>*:nth-child(n+6){animation-delay:.3s}',
   'button,.sc-press{transition:transform .1s ease}button:active,.sc-press:active{transform:scale(.96)}',
   '.sc-sw{transition:background-color .3s ease,transform .1s ease}.sc-sw>span{transition:transform .32s cubic-bezier(.34,1.56,.64,1),background-color .3s ease}',
-  // The owner: "make the hover animation for decks be 1 seconds". It starts right away and eases off, both ways.
-  '.sc-lift{transition:transform 1s ease-out,box-shadow 1s ease-out}.sc-lift:hover{transform:translateY(-4px);box-shadow:0 24px 48px -24px rgba(0,0,0,.45)}',
-  // A theme's deck cover has its own shadow (a cartoon's hard ink shadow, a glow), under the lift's.
-  '.sk-cover{box-shadow:var(--sk-shadow)}.sk-cover.sc-lift:hover{box-shadow:var(--sk-shadow),0 24px 48px -24px rgba(0,0,0,.45)}',
+  // Deck, folder and class tiles stay still under the pointer (the owner, 2026-10-01: "remove the deck hover in webapp effect");
+  // .sc-lift only marks them now. Links dim a little under the pointer (a:hover), but not these.
+  '.sc-lift:hover{opacity:1}',
+  // A theme's deck cover has its own shadow (a cartoon's hard ink shadow, a glow).
+  '.sk-cover{box-shadow:var(--sk-shadow)}',
   '@keyframes scScrimIn{from{opacity:0}}@keyframes scScrimOut{to{opacity:0}}.sc-scrim{animation:scScrimIn .35s ease backwards}.sc-scrim.sc-gone{animation:scScrimOut .26s ease forwards}',
   '@keyframes scPanelIn{from{opacity:0;transform:translateX(calc(100% + 12px))}}@keyframes scPanelOut{to{opacity:0;transform:translateX(calc(100% + 12px))}}.sc-panel{animation:scPanelIn .35s cubic-bezier(.2,.8,.2,1) backwards}.sc-panel.sc-gone{animation:scPanelOut .26s cubic-bezier(.4,0,1,1) forwards}',
   '@keyframes scSheetIn{from{transform:translateY(100%)}}@keyframes scSheetOut{to{transform:translateY(100%)}}.sc-sheet{animation:scSheetIn .35s cubic-bezier(.2,.8,.2,1) backwards}.sc-sheet.sc-gone{animation:scSheetOut .26s cubic-bezier(.4,0,1,1) forwards}',
@@ -112,7 +113,7 @@ const APP_MOTION_CSS = [
   '@keyframes scKnob{from{opacity:0;transform:scale(.3)}}.sc-knob{transform-box:fill-box;transform-origin:center;animation:scKnob .35s .75s cubic-bezier(.34,1.56,.64,1) backwards}',
   '@keyframes scGrow{from{transform:scaleY(0)}}.sc-grow{transform-origin:bottom;animation:scGrow .6s cubic-bezier(.2,.8,.2,1) backwards}',
   Array.from({ length: 13 }, (_, i) => `:nth-child(${i + 2})>.sc-grow{animation-delay:${((i + 1) * 0.04).toFixed(2)}s}`).join(''),
-  '@media (prefers-reduced-motion:reduce){main>*,.sc-float,.sc-sway-a,.sc-sway-b,.sc-glow,.sc-alive>svg,.sc-draw,.sc-knob,.sc-grow,.sc-scrim,.sc-panel,.sc-sheet{animation:none!important}.sc-sheen{display:none}button:active,.sc-press:active,.sc-lift:hover{transform:none}.sc-sw>span{transition:background-color .3s ease}}'
+  '@media (prefers-reduced-motion:reduce){main>*,.sc-float,.sc-sway-a,.sc-sway-b,.sc-glow,.sc-alive>svg,.sc-draw,.sc-knob,.sc-grow,.sc-scrim,.sc-panel,.sc-sheet{animation:none!important}.sc-sheen{display:none}button:active,.sc-press:active{transform:none}.sc-sw>span{transition:background-color .3s ease}}'
 ].join('');
 // Dark mode, and its gray look (dim): the app sets both from Settings (Appearance, and Dark mode: Gray or Black).
 const DARK = { dark: { editor: 'boolean', default: false }, dim: { editor: 'boolean', default: false } };
