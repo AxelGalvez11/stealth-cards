@@ -279,6 +279,7 @@ struct LibraryScreen: View {
       }
       // A 41-point line, like the browser's (Geist's rounded ascent and descent).
       Text(f.name).css(32, .bold, ls: -0.03, lh: 41 / 32).foregroundStyle(t.text).fixedSize(horizontal: false, vertical: true).accessibilityAddTraits(.isHeader)
+      TestFolderBits(folder: f)
     }
   }
 

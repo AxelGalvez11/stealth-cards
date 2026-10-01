@@ -75,6 +75,8 @@ struct DemoProps {
   var naming: String? = nil
   /// Learn mode with its settings open (PhoneQuizSettings).
   var learnSettings = false
+  /// The practice test's board (its Tweaks): which screen, and whether the timer shows.
+  var testScreen = "Set up", testTimed = true
   /// The onboarding open on this step (PhoneWelcome and its twins: "Pick AI", "Steps", "Connected", "Pick source",
   /// "Source steps", "Found", or "Done").
   var welcomeStep = "Pick AI"
@@ -127,7 +129,16 @@ final class Store: ObservableObject {
   /// The design screens: sample data, nothing saved.
   let demo: Bool
   @Published var props = DemoProps()
-  @Published var lib = Library() { didSet { allCardsMemo = nil; studyMemo = StudyMemo() } }
+  @Published var lib = Library() { didSet { allCardsMemo = nil; studyMemo = StudyMemo(); learnMemo = [:]; answerMemo = [:] } }
+  /// A deck's cards a question can be made from, with their answers, until the library changes (LearnEngine.learnIn).
+  var learnMemo: [String: [(c: Card, a: String)]] = [:]
+  /// How many different answers each deck has (a practice test's choices need another one), until the library changes.
+  var answerMemo: [String: Int] = [:]
+  /// The practice test in progress (TestEngine.swift).
+  let testBox = TestBox()
+  /// Lucida's own Learn mode questions (LearnEngine.swift wantQuiz): a batch is being written; the AI is off or today's batches are used
+  /// (no more asking until the app opens again); and when to try again after something went wrong.
+  var quizBusy = false, quizOff = false, quizRetryAt = 0.0
   /// Things the Pro study tools work out from the library (deep stats, review histories, a goal's cost), until it changes.
   var studyMemo = StudyMemo()
   /// Tune to you in progress (0 to 1), and what went wrong the last time.
@@ -140,6 +151,8 @@ final class Store: ObservableObject {
   @Published var demoPaused: [String: Bool] = [:]
   @Published var demoGraded = 0
   @Published var demoLearn = DemoLearn()
+  /// The practice test on a design screen (TestDemo.swift).
+  @Published var demoTest = DemoTest()
   /// What a design screen changed on the study network (Net.swift), and on a class (Classes.swift).
   @Published var demoNet = DemoNet()
   @Published var demoClass = DemoClass()

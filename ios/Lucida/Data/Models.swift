@@ -24,17 +24,35 @@ struct Library: Decodable {
   var pro = true
   /// The classes you're in, with their assignments (web/classes.mjs keeps them here, so Today shows what's due).
   var classes: [LibClass]
-  enum CodingKeys: String, CodingKey { case rev, settings, ai, folders, decks, cards, logs, me, aiOn, profile, pro, classes }
+  /// Your finished practice tests, newest first (web/store.mjs test.save).
+  var tests: [PastTest]
+  /// How many batches of Lucida's own Learn mode questions are left today (nil from a server that doesn't say; Learn mode asks for none at 0).
+  var quizLeft: Int? = nil
+  enum CodingKeys: String, CodingKey { case rev, settings, ai, folders, decks, cards, logs, me, aiOn, profile, pro, classes, tests, quizLeft }
   init(from d: Decoder) throws {
     let c = try d.container(keyedBy: CodingKeys.self)
     rev = c.v(.rev, 0); settings = c.v(.settings, UserSettings()); ai = c.v(.ai, AIState()); folders = c.v(.folders, [])
     decks = c.v(.decks, []); cards = c.v(.cards, []); logs = c.v(.logs, []); me = c.v(.me, nil); aiOn = c.v(.aiOn, false); profile = c.v(.profile, nil)
     pro = c.v(.pro, true)
     classes = c.v(.classes, [])
+    tests = c.v(.tests, []); quizLeft = c.v(.quizLeft, nil)
   }
   init(rev: Int = 0, settings: UserSettings = UserSettings(), ai: AIState = AIState(), folders: [Folder] = [], decks: [Deck] = [], cards: [Card] = [], logs: [ReviewLog] = [], me: Me? = nil, aiOn: Bool = false) {
     self.rev = rev; self.settings = settings; self.ai = ai; self.folders = folders; self.decks = decks; self.cards = cards; self.logs = logs; self.me = me; self.aiOn = aiOn
-    classes = []
+    classes = []; tests = []
+  }
+}
+
+/// A finished practice test as the library keeps it (web/store.mjs test.save): when, of which deck or folder, and how it went.
+struct PastTest: Decodable, Identifiable {
+  var id = "", at: Double = 0, deckId: String? = nil, folderId: String? = nil, name = "", n = 0, right = 0, pct = 0
+  enum CodingKeys: String, CodingKey { case id, at, deckId, folderId, name, n, right, pct }
+  init(id: String = "", at: Double = 0, deckId: String? = nil, folderId: String? = nil, name: String = "", n: Int = 0, right: Int = 0, pct: Int = 0) {
+    self.id = id; self.at = at; self.deckId = deckId; self.folderId = folderId; self.name = name; self.n = n; self.right = right; self.pct = pct
+  }
+  init(from d: Decoder) throws {
+    let c = try d.container(keyedBy: CodingKeys.self)
+    id = c.v(.id, ""); at = c.v(.at, 0); deckId = c.v(.deckId, nil); folderId = c.v(.folderId, nil); name = c.v(.name, ""); n = c.v(.n, 0); right = c.v(.right, 0); pct = c.v(.pct, 0)
   }
 }
 
@@ -289,14 +307,15 @@ struct Explanation: Decodable {
   init(from d: Decoder) throws { let c = try d.container(keyedBy: CodingKeys.self); text = c.v(.text, ""); by = c.v(.by, "") }
 }
 
-/// A Learn mode question the learner's AI app wrote for a card (web/store.mjs card.quiz): a choice with its wrong answers,
-/// or a true-or-false claim (answer "true" or "false"), each with why.
+/// A Learn mode question written for a card, by the learner's AI app (web/store.mjs card.quiz) or by Lucida's own AI (`by` is
+/// "Lucida"; web/quizai.mjs): a choice with its wrong answers, a true-or-false claim (answer "true" or "false"), or (Lucida's
+/// only) a fill-in-the-blank sentence with its blank ("blank", like a choice: the right word and its wrong ones), each with why.
 struct QuizQuestion: Decodable, Equatable {
-  var kind = "choice", question = "", answer = "", wrong: [String] = [], why = ""
-  enum CodingKeys: String, CodingKey { case kind, question, answer, wrong, why }
+  var kind = "choice", question = "", answer = "", wrong: [String] = [], why = "", by = ""
+  enum CodingKeys: String, CodingKey { case kind, question, answer, wrong, why, by }
   init(from d: Decoder) throws {
     let c = try d.container(keyedBy: CodingKeys.self)
-    kind = c.v(.kind, "choice"); question = c.v(.question, ""); wrong = c.v(.wrong, []); why = c.v(.why, "")
+    kind = c.v(.kind, "choice"); question = c.v(.question, ""); wrong = c.v(.wrong, []); why = c.v(.why, ""); by = c.v(.by, "")
     // A true-or-false answer is "true" or "false" (a plain true or false counts too).
     answer = c.v(.answer, c.v(.answer, Bool?.none).map { $0 ? "true" : "false" } ?? "")
   }
@@ -304,7 +323,7 @@ struct QuizQuestion: Decodable, Equatable {
 
 /// Image occlusion (web/store.mjs cleanBoxes): a box over part of a picture, hiding what's under it (its label, the
 /// answer). Place and size are fractions of the picture (0 to 1), so a box fits the picture at any size.
-struct OccBox: Decodable, Equatable, Identifiable {
+struct OccBox: Codable, Equatable, Identifiable {
   var id: String, x: Double, y: Double, w: Double, h: Double, label: String
   enum CodingKeys: String, CodingKey { case id, x, y, w, h, label }
   init(id: String, x: Double, y: Double, w: Double, h: Double, label: String = "") { self.id = id; self.x = x; self.y = y; self.w = w; self.h = h; self.label = label }
@@ -351,9 +370,11 @@ struct Card: Decodable, Identifiable {
   /// Its AI explanation, and the Learn mode questions an AI app wrote for it.
   var explain: Explanation?
   var quiz: [QuizQuestion] = []
+  /// Lucida's AI was asked for this card's question and gave nothing usable (it isn't asked again until the card changes).
+  var quizTried = false
   /// A card of a deck from someone else: the shared card it came from.
   var origin: String?
-  enum CodingKeys: String, CodingKey { case id, deckId, kind, front, back, note, text, tags, image, audio, wave, speak, lang, auto, source, pending, paused, created, srs, pile, cloze, group, boxes, box, occ, explain, quiz, origin }
+  enum CodingKeys: String, CodingKey { case id, deckId, kind, front, back, note, text, tags, image, audio, wave, speak, lang, auto, source, pending, paused, created, srs, pile, cloze, group, boxes, box, occ, explain, quiz, quizTried, origin }
   init(from d: Decoder) throws {
     let c = try d.container(keyedBy: CodingKeys.self)
     id = c.v(.id, UUID().uuidString); deckId = c.v(.deckId, ""); kind = c.v(.kind, "basic")
@@ -362,7 +383,7 @@ struct Card: Decodable, Identifiable {
     source = c.v(.source, "you"); pending = c.v(.pending, false); paused = c.v(.paused, false); created = c.v(.created, 0); srs = c.v(.srs, SRS())
     pile = c.v(.pile, nil); cloze = c.v(.cloze, nil); group = c.v(.group, nil)
     boxes = c.v(.boxes, []); box = c.v(.box, nil); occ = c.v(.occ, "one")
-    explain = c.v(.explain, nil); quiz = c.v(.quiz, []); origin = c.v(.origin, nil)
+    explain = c.v(.explain, nil); quiz = c.v(.quiz, []); quizTried = c.v(.quizTried, 0.0) > 0; origin = c.v(.origin, nil)
   }
 }
 

@@ -27,7 +27,9 @@ const fresh = () => ({
     // public profile and decks show it to visitors.
     theme: 'lucida', themeProfile: true },
   ai: { perms: { read: true, text: true, media: true, edit: true, check: false, del: false }, clients: {} },
-  folders: [], decks: [], cards: [], logs: []
+  folders: [], decks: [], cards: [], logs: [],
+  // Practice test results (test.save): the newest first.
+  tests: []
 });
 // Saved data from an older version gets any settings added since. The welcome after your first sign-in (`welcomed`)
 // counts as seen for anyone who already has decks or cards.
@@ -249,6 +251,38 @@ const cleanTune = (was, t) => {
   const num = v => (Number.isFinite(+v) ? +v : null);
   return { on: !!x.on && !!w, w, n: Math.max(0, Math.round(+x.n) || 0), reviews: Math.max(0, Math.round(+x.reviews) || 0), at: num(x.at) || Date.now(), loss: num(x.loss), base: num(x.base), gain: num(x.gain) };
 };
+// Practice tests (web/db.js builds and takes them; the results are kept here): the score, the time taken, and each question
+// with the learner's answer and the right one. A test never changes when a card comes back (no review is logged); this list
+// shows the learner their results, and AI apps read it (mcp.mjs get_test_results). The newest TESTS_KEPT are kept, and only
+// the newest TESTS_DETAILED keep their questions (older ones keep their score), so the library stays small.
+export const TEST_KINDS = ['mc', 'tf', 'blank', 'match', 'type'];
+export const TEST_LIMITS = [0, 10, 20, 30];
+const TESTS_KEPT = 200, TESTS_DETAILED = 10, TEST_ITEMS = 100;
+const whole = (v, max) => Math.min(max, Math.max(0, Math.round(+v) || 0));
+export const testScore = items => { const right = items.filter(x => x.ok).length; return { n: items.length, right, pct: items.length ? Math.round(right / items.length * 100) : 0 }; };
+function cleanTest(t) {
+  const S = state(), deck = t.deckId ? S.decks.find(d => d.id === t.deckId) : null, folder = t.folderId ? S.folders.find(f => f.id === t.folderId) : null;
+  if (t.deckId && !deck) throw new Error('No such deck');
+  if (t.folderId && !folder) throw new Error('No such folder');
+  if (!deck && !folder) throw new Error('A test is from a deck or a folder.');
+  const one = (x, i) => {
+    if (!x || typeof x !== 'object' || !TEST_KINDS.includes(x.k)) return null;
+    const it = { n: whole(x.n, 1000) || i + 1, k: x.k, card: clean(x.card, 60), q: clean(x.q, 400).trim(), a: clean(x.a, 300).trim(), r: clean(x.r, 300).trim(), ok: !!x.ok };
+    if (x.claim) it.claim = clean(x.claim, 400).trim();
+    if (x.counted && it.ok) it.counted = true;
+    if (x.k === 'match') it.pairs = (Array.isArray(x.pairs) ? x.pairs : []).slice(0, 5).map(p => ({ card: clean(p && p.card, 60), q: clean(p && p.q, 200).trim(), a: clean(p && p.a, 200).trim(), r: clean(p && p.r, 200).trim(), ok: !!(p && p.ok) }));
+    return it;
+  };
+  let items = (Array.isArray(t.items) ? t.items : []).slice(0, 1000).map(one).filter(Boolean);
+  if (!items.length) throw new Error('This test has no questions.');
+  const score = testScore(items);
+  // A very long test keeps its missed questions first, then the others, up to TEST_ITEMS, in the order they were asked.
+  if (items.length > TEST_ITEMS) items = [...items.filter(x => !x.ok), ...items.filter(x => x.ok)].slice(0, TEST_ITEMS).sort((x, y) => x.n - y.n);
+  return { id: id('t'), at: Date.now(), deckId: deck ? deck.id : null, folderId: !deck && folder ? folder.id : null, name: clean(deck ? deck.name : folder.name, 120), ...score,
+    took: whole(t.took, 86400), limit: TEST_LIMITS.includes(+t.limit) ? +t.limit : 0, timeUp: !!t.timeUp, kinds: [...new Set((Array.isArray(t.kinds) ? t.kinds : []).filter(k => TEST_KINDS.includes(k)))], items };
+}
+// The newest results keep their questions; the oldest go once there are too many.
+function trimTests(S) { S.tests = (S.tests || []).slice(0, TESTS_KEPT); S.tests.forEach((x, i) => { if (i >= TESTS_DETAILED) delete x.items; }); }
 const CARD_KEYS = ['kind', 'front', 'back', 'note', 'text', 'tags', 'image', 'audio', 'wave', 'speak', 'lang', 'auto', 'pending', 'cloze', 'boxes', 'occ'];
 // What every card of one picture with boxes shares (everything but which box it asks, and its reviews).
 const SHARED_KEYS = ['kind', 'front', 'back', 'note', 'tags', 'image', 'lang', 'pending', 'boxes', 'occ'];
@@ -274,11 +308,11 @@ function syncBoxes(c, p, before) {
   for (const b of boxes) {
     let x = keep.get(b.id);
     if (!x && spare.length) { x = spare.shift(); x.box = b.id; }
-    if (!x) { x = { ...c, id: id('c'), box: b.id, srs: newCard(), pile: null, created: Date.now() }; delete x.explain; delete x.quiz; S.cards.push(x); }
+    if (!x) { x = { ...c, id: id('c'), box: b.id, srs: newCard(), pile: null, created: Date.now() }; delete x.explain; delete x.quiz; delete x.quizTried; S.cards.push(x); }
     x.group = group; x.cloze = null;
     keep.set(b.id, x);
     // A box that says something new needs a new explanation.
-    if (had.has(b.id) && had.get(b.id) !== b.label) { delete x.explain; delete x.quiz; }
+    if (had.has(b.id) && had.get(b.id) !== b.label) { delete x.explain; delete x.quiz; delete x.quizTried; }
   }
   const kept = new Set([...keep.values()].map(x => x.id));
   S.cards = S.cards.filter(x => !sibs.includes(x) || kept.has(x.id));
@@ -300,6 +334,41 @@ export function saveExplain(cardId, text, by) {
   const sibs = c.group && c.kind === 'cloze' ? state().cards.filter(x => x.group === c.group) : [c];
   sibs.forEach(x => { x.explain = { text: clean(text, 2000), by: clean(by, 60), at: Date.now() }; });
   save(); return true;
+}
+
+// Lucida's own Learn mode questions (quizai.mjs, handler.mjs): how many batches were written today, which cards can get a question, and saving
+// a batch. Only the server changes these, so they aren't actions the app can send. A card that has questions (an AI app's over MCP, or
+// Lucida's from before) never gets new ones from here.
+const hasQuiz = c => Array.isArray(c.quiz) && c.quiz.length > 0;
+export const quizLeft = (day, limit) => { const u = state().ai.quiz; return Math.max(0, limit - (u && u.day === day ? u.n : 0)); };
+export function useQuiz(day, limit) {
+  const S = state(), n = S.ai.quiz && S.ai.quiz.day === day ? S.ai.quiz.n : 0;
+  if (n >= limit) return false;
+  S.ai.quiz = { day, n: n + 1 }; save(); return true;
+}
+export function refundQuiz(day) { const S = state(); if (S.ai.quiz && S.ai.quiz.day === day && S.ai.quiz.n > 0) { S.ai.quiz = { day, n: S.ai.quiz.n - 1 }; save(); } }
+/** Copies of the asked-for cards (in the order asked, up to `max`) that can get a question: text cards with none yet that the AI hasn't already failed on. */
+export function quizCandidates(ids, max) {
+  const S = state(), out = [];
+  for (const id of ids) {
+    const c = S.cards.find(x => x.id === id);
+    if (!c || (c.kind !== 'basic' && c.kind !== 'cloze') || hasQuiz(c) || c.quizTried) continue;
+    out.push(JSON.parse(JSON.stringify(c)));
+    if (out.length >= max) break;
+  }
+  return out;
+}
+/** Saves a batch: `got` is { cardId: [question] }, `tried` the cards the AI answered about with nothing usable. Each question is marked as Lucida's. Gives back what was saved. */
+export function saveQuiz(got, tried, by = 'Lucida') {
+  const S = state(), saved = {};
+  for (const [id, list] of Object.entries(got || {})) {
+    const c = S.cards.find(x => x.id === id);
+    if (!c || hasQuiz(c) || !Array.isArray(list) || !list.length) continue;
+    c.quiz = list.slice(0, 5).map(q => ({ ...q, by: clean(by, 60) }));
+    delete c.quizTried; saved[id] = c.quiz;
+  }
+  for (const id of tried || []) { const c = S.cards.find(x => x.id === id); if (c && !hasQuiz(c)) c.quizTried = Date.now(); }
+  save(); return saved;
 }
 
 // A deck someone else shares, which you study as it is (social.mjs): its cards follow the owner's, so you can't change
@@ -385,11 +454,12 @@ function run(a, who) {
       const f = S.folders.find(x => x.id === a.id); if (!f) throw new Error('No such folder');
       S.folders = S.folders.filter(x => x !== f);
       S.decks.forEach(d => { if (d.folder === f.id) d.folder = null; });
+      S.tests = (S.tests || []).filter(t => t.folderId !== f.id);
       return { id: f.id };
     }
     case 'deck.delete': {
       const d = findDeck(a.id); if (!d) throw new Error('No such deck');
-      S.decks = S.decks.filter(x => x !== d); S.cards = S.cards.filter(c => c.deckId !== d.id); S.logs = S.logs.filter(l => l.deckId !== d.id);
+      S.decks = S.decks.filter(x => x !== d); S.cards = S.cards.filter(c => c.deckId !== d.id); S.logs = S.logs.filter(l => l.deckId !== d.id); S.tests = (S.tests || []).filter(t => t.deckId !== d.id);
       // A shared deck stops being shared when it goes (people who copied it keep their copies), and one you studied or
       // copied from someone stops counting you.
       if (d.share) L.touched.set(d.id, { gone: d.share.id });
@@ -427,7 +497,7 @@ function run(a, who) {
       if (kept) trailStep(c, 'checked', who);
       if (edited) trailStep(c, 'edited', who);
       if (kept || edited || 'tags' in p) touch(c.deckId, who);
-      if (stale) for (const x of c.group ? S.cards.filter(y => y.group === c.group) : [c]) { delete x.explain; delete x.quiz; }
+      if (stale) for (const x of c.group ? S.cards.filter(y => y.group === c.group) : [c]) { delete x.explain; delete x.quiz; delete x.quizTried; }
       // A card that stops being an image card leaves its picture, and takes its box with it (as if deleted).
       if (c.kind !== 'image' && c.box != null) {
         for (const x of S.cards) if (x !== c && c.group && x.group === c.group && x.boxes) x.boxes = x.boxes.filter(b => b.id !== c.box);
@@ -568,6 +638,22 @@ function run(a, who) {
       if (Number.isFinite(+a.ms) && +a.ms > 0) log.ms = Math.min(180000, Math.round(+a.ms));
       S.logs.push(log);
       return { logId: log.id };
+    }
+    // A finished practice test: what was asked and answered (see cleanTest). It doesn't touch any card's schedule.
+    case 'test.save': {
+      const t = cleanTest(a.test || {});
+      S.tests = [t, ...(S.tests || [])]; trimTests(S);
+      return { id: t.id, n: t.n, right: t.right, pct: t.pct };
+    }
+    // "Count it as right" on a written answer the spelling check missed (another word for the same thing).
+    case 'test.fix': {
+      const t = (S.tests || []).find(x => x.id === a.id); if (!t) throw new Error('No such test');
+      const it = (t.items || []).find(x => x.n === +a.n); if (!it) throw new Error('No such question');
+      if (it.k !== 'type') throw new Error('Only a written answer can be counted as right.');
+      if (it.ok) return { n: t.n, right: t.right, pct: t.pct };
+      // Counted from the score, not the questions kept (a long test keeps only some of them).
+      it.ok = true; it.counted = true; t.right = Math.min(t.n, t.right + 1); t.pct = Math.round(t.right / t.n * 100);
+      return { n: t.n, right: t.right, pct: t.pct };
     }
     case 'settings.update': {
       const p = pick(a.patch, Object.keys(fresh().settings));

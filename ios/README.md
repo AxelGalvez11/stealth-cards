@@ -104,6 +104,41 @@ More launch arguments (debug builds): `-open statsdeep -tab Memory` (or `Weak sp
 `tests/run.sh parity` checks the ports against the web app's own code on a seeded library and made-up variations of it (no
 simulator), and `tests/run.sh e2e` runs the `-check`s in the simulator against a local server (`DEVICE=<simulator id>`).
 
+## Practice test
+
+**Practice test** sits under Flashcards and Learn on a deck's page and on a folder's page (every deck in it that isn't paused). It opens
+a sheet (how many questions, which kinds, a time limit, and "Tests don’t change your review schedule."), then the test: numbered
+questions you can go back through and flag, a list of all the questions, a quiet clock when you asked for one, and nothing about right or
+wrong until Submit (which asks first when some are unanswered). The results show the score, the time, every question with your answer
+and the right one, Explain where the card has it, **Count it as right** on a written answer the spelling check missed, **Retake the ones I
+missed**, and **Study the missed cards now** (a normal review of just those cards, then back to the results). `Data/TestEngine.swift` is a
+port of the web's engine (`web/db.js`, "Practice test": Learn's `choiceQuestion`, a card of its own for each question, matching as four
+or five pairs, the kinds in sections); `Data/TestDemo.swift` is the design screens' sample test; `Screens/PracticeTest.swift` has the
+pieces (`TestStartButton`, `TestPastList`, `TestFolderBits`, `TestStartSheet`, `TestScreen`). A test never changes a schedule or logs a
+review. The test in progress is kept on the phone (`UserDefaults`, `lucida.test`) and is open again, where it was, when the app opens; its
+clock counts only while it shows. A finished test is saved with the library (`test.save`, and `test.fix` for Count it as right), and the
+deck's page lists the last three.
+
+The board is `PhoneTest` (the deck's and folder's pieces are states of `PhoneDeck` and `PhoneLibrary`); with it, `-screen "Set up"`,
+`Multiple choice`, `True or false`, `Fill in the blank`, `Written`, `Matching`, `Submit`, `Leave`, `Results` or `"Results · missed"` picks the
+screen and `-timed false` takes the clock off. More launch arguments (debug builds): `-open folder:<name>` (the folder with that name),
+`-testAudit` (an invisible element tells the end-to-end test which answer is right for the question on screen) and `-testSpent <ms>` (the
+test in progress has already been open that long, to check the clock without waiting).
+
+    ios/tools/e2e-test.sh <simulator id>
+
+It starts a fresh server on port 3947 and runs `LucidaUITests/PracticeTestTests` (which only runs when that script asks for it): the
+set-up, a test of choices and true-or-false (numbers, back, flags, the list, Submit asking, the results, Retake the ones I missed, past
+results on the deck page), written answers with typos, Count it as right and Study the missed cards now, matching, the clock (the test
+open again after the app closes, running out by itself, leaving), a folder's test, and fill in the blank; a test changes no schedule.
+
+## Questions Lucida writes for Learn mode
+
+When Learn mode starts and the next cards have no question yet, the app asks the server's Lucida AI for 20 at once (`Store.wantQuiz` in `Data/LearnEngine.swift`, `API.quizBatch`, `POST /api/quiz`, like the web's), and again about 5 questions from the end;
+the questions are saved on the cards (marked `by: "Lucida"`; a fill-in-the-blank one is `kind: "blank"`) and Learn mode and the practice test use them with the card's own words. Nobody waits: until
+they arrive Learn mode asks with its builders, and when the AI is off or the day's batches are used (Free 3, Pro 30) it goes on with them without a word. `tools/e2e-quiz.sh <simulator id>` is the
+end-to-end test (`LucidaUITests/QuizTests.swift`), with a pretend OpenRouter (`tools/stub-openrouter.mjs`) and a second server that has no AI.
+
 ## Report, Check this deck, and Get verified
 
 Apple's rule for apps where people share things (guideline 1.2) wants a way to report content, and the web app has one: a
