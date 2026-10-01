@@ -87,6 +87,22 @@ for (const [p, file] of pageFiles) {
   const meta = (k, v) => { const m = tags(head).find(t => t.tag === 'meta' && t.attrs[k] === v); return m ? m.attrs.content : undefined; };
   const link = rel => { const m = tags(head).find(t => t.tag === 'link' && t.attrs.rel === rel); return m ? m.attrs.href : undefined; };
   const notFound = p.kind === 'notfound';
+  // One header on every page (the landing page and Pricing hold two copies, for a computer and for a phone): the logo, then Blog, Compare, Features,
+  // Pricing and Sign in, and Get started; the same five links again in the menu a narrow page opens (a <details>), in the same order.
+  {
+    const headers = [...body.matchAll(/<header class="sp-head">([\s\S]*?)<\/header>/g)].map(m => m[1]);
+    const links = h => [...(h || '').matchAll(/<a href="([^"]*)"[^>]*>([^<]*)<\/a>/g)].map(m => [m[2], m[1]]);
+    const want = [['Blog', '/blog'], ['Compare', '/compare'], ['Features', '/features'], ['Pricing', '/pricing'], ['Sign in', APP + '/sign-in']];
+    const copies = p.slug === '' || p.slug === 'pricing' ? 2 : 1;
+    ok(headers.length === copies, 'the page has ' + (copies === 2 ? 'a header for a computer and one for a phone' : 'one header'), headers.length);
+    for (const h of headers) {
+      const nav = (h.match(/<nav class="sp-hnav"[^>]*>([\s\S]*?)<\/nav>/) || [])[1], menu = (h.match(/<nav class="sp-mpanel"[^>]*>([\s\S]*?)<\/nav>/) || [])[1];
+      ok(JSON.stringify(links(nav)) === JSON.stringify(want), 'the header links are Blog, Compare, Features, Pricing, Sign in, in that order', links(nav));
+      ok(JSON.stringify(links(menu)) === JSON.stringify(want), 'the menu a narrow page opens holds the same five links in the same order', links(menu));
+      ok(/<a class="sp-hlogo" href="\/" aria-label="Lucida home">/.test(h) && h.includes('<a class="sp-hgo" href="' + APP + '/">Get started</a>'), 'the header has the logo (home) and Get started (the app)');
+      ok(/<details class="sp-menu"><summary aria-label="Menu">/.test(h) && !/<header[^>]*>[\s\S]*How it works/.test(h), 'the header has a menu button and no page-only links (How it works, Card types)');
+    }
+  }
   ok(/^<!doctype html>\s*<html lang="en">/i.test(html), '<html lang="en"> after the doctype');
   ok(/<meta name="viewport" content="width=device-width, initial-scale=1">/.test(head), 'viewport');
   // title and description

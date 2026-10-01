@@ -10,7 +10,7 @@ import { WALL_CARDS } from './wall.mjs';
 import { PRIVACY, TERMS, UPDATED } from './legal.mjs';
 import { CONNECT } from './connect-guide.mjs';
 import { PRO_LINKS } from '../web/plans.mjs';
-import { PLAN_FREE, PLAN_PRO, PRICING_FAQ, SOCIALS as SITE_SOCIALS, BOARDS as SITE_BOARDS, APP as SITE_APP, SCENES, SCENE_ARRANGEMENTS, GRAD, CATEGORIES, FEATURED, pageSet, footerLinks, boardData, partsOf, indexOf, ogKey } from './site.mjs';
+import { PLAN_FREE, PLAN_PRO, PRICING_FAQ, SOCIALS as SITE_SOCIALS, BOARDS as SITE_BOARDS, APP as SITE_APP, SCENES, SCENE_ARRANGEMENTS, GRAD, CATEGORIES, FEATURED, pageSet, footerLinks, headerLinks, boardData, partsOf, indexOf, ogKey } from './site.mjs';
 import { G_LOGO, APPLE_LOGO } from './logos.mjs';
 import { VARS, SKY_VARS, EXTRA_VARS, EXTRA_LIGHT, EXTRA_DARK } from './scheme.mjs';
 import { SCREENS, KINDS, shotFile, visualsOf, CONNECT_FIGS } from './visuals.mjs';
@@ -5220,6 +5220,35 @@ const LAND = {
   phone: { pad: 20, h1: 44, lead: 17, h2: 32, gapTop: 88, btn: 50, wallH: 420, wall: { cols: 4, w: 150, h: 100, gap: 10, r: 16, tilt: -14, k: PHONE_K }, typeH: 150, ctaH1: 34, typeCols: 'repeat(2, minmax(0, 1fr))' }
 };
 const landPill = (label, href, inv, h, extra = '') => `<a href="${href}" style="height: ${h}px; padding: 0 ${Math.round(h / 2)}px; box-sizing: border-box; display: inline-flex; align-items: center; justify-content: center; border-radius: 999px; font-size: ${h >= 48 ? 15 : 14}px; font-weight: 600; white-space: nowrap; ${inv ? 'background: {{t.inv}}; color: {{t.invText}};' : 'background: {{t.surf}}; color: {{t.text}};'} ${extra}">${label}</a>`;
+// ---- One header on every page of lucida.cards (the landing page, Pricing, Privacy, Terms, Connect, the blog, the hubs, the articles, the
+// FAQ and the 404, and the canvas boards that draw them) ----
+// The logo, then Blog, Compare, Features, Pricing and Sign in, then "Get started". On a narrow page (a phone, or a window under 761 px)
+// the same five links sit behind one menu button, which opens at once (a <details>: no script, no movement); "Get started" stays beside
+// it. `hd` (HEAD_METHOD, in the page's logic) says where each link goes; the colors are the page's own (HEAD_VARS).
+const HEAD_VARS = '--sp-bg: {{t.bg}}; --sp-text: {{t.text}}; --sp-muted: {{t.muted}}; --sp-surf: {{t.surf}}; --sp-surf2: {{t.surf2}}; --sp-line: {{t.line}}; --sp-inv: {{t.inv}}; --sp-invtext: {{t.invText}};';
+const HEAD_LINKS = `<sc-for list="{{hd.nav}}" as="n" hint-placeholder-count="4"><a href="{{n.href}}">{{n.label}}</a></sc-for><a href="{{hd.signIn}}">Sign in</a>`;
+const siteHeader = () => `<header class="sp-head">
+  <a class="sp-hlogo" href="{{hd.home}}" aria-label="Lucida home">${logo(28)}</a>
+  <nav class="sp-hnav" aria-label="Main">${HEAD_LINKS}</nav>
+  <a class="sp-hgo" href="{{hd.start}}">Get started</a>
+  <details class="sp-menu"><summary aria-label="Menu"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path class="sp-mi-a" d="M5 8.5h14M5 15.5h14"/><path class="sp-mi-b" d="M6.5 6.5l11 11M17.5 6.5l-11 11"/></svg></summary><nav class="sp-mpanel" aria-label="Menu">${HEAD_LINKS}</nav></details>
+</header>`;
+const HEAD_CSS = [
+  '.sp-c{container-type:inline-size}',
+  '.sp-head{position:relative;z-index:6;max-width:1344px;margin:0 auto;height:76px;box-sizing:border-box;padding:0 clamp(20px,4cqw,48px);display:flex;align-items:center;gap:4px}',
+  '.sp-hlogo{display:flex;margin-right:auto;color:var(--sp-text)}',
+  '.sp-hnav{display:flex;align-items:center;gap:4px}',
+  '.sp-hnav a{display:inline-flex;align-items:center;height:36px;padding:0 14px;border-radius:999px;font-size:14px;color:var(--sp-text);white-space:nowrap}.sp-hnav a:hover{background:var(--sp-surf)}',
+  '.sp-hgo{display:inline-flex;align-items:center;justify-content:center;height:36px;padding:0 18px;margin-left:4px;box-sizing:border-box;border-radius:999px;background:var(--sp-inv);color:var(--sp-invtext);font-size:14px;font-weight:600;white-space:nowrap}',
+  '.sp-menu{display:none}',
+  '.sp-menu summary{list-style:none;cursor:pointer;display:flex;align-items:center;justify-content:center;width:44px;height:44px;border-radius:22px;background:var(--sp-surf);color:var(--sp-text);-webkit-tap-highlight-color:transparent}',
+  '.sp-menu summary::-webkit-details-marker{display:none}.sp-menu summary:focus-visible{outline:2px solid var(--sp-text);outline-offset:2px}',
+  '.sp-mi-b,.sp-menu[open] .sp-mi-a{display:none}.sp-menu[open] .sp-mi-b{display:inline}',
+  '.sp-mpanel{position:absolute;z-index:7;left:12px;right:12px;top:calc(100% - 4px);box-sizing:border-box;padding:8px;border-radius:22px;background:var(--sp-bg);box-shadow:0 0 0 1px var(--sp-line),0 28px 60px -22px rgba(0,0,0,.42);display:flex;flex-direction:column;gap:2px}',
+  '.sp-mpanel a{display:flex;align-items:center;height:52px;padding:0 16px;border-radius:14px;font-size:17px;font-weight:500;color:var(--sp-text)}.sp-mpanel a:active{background:var(--sp-surf)}',
+  // A narrow page: the links go behind the menu button, which sits after "Get started".
+  '@container (max-width: 760px){.sp-head{height:64px}.sp-hnav{display:none}.sp-menu{display:block}.sp-hgo{height:40px;margin-left:0;margin-right:8px}}'
+].join('');
 const landH2 = (L, text) => `<h2 style="margin: 0; max-width: 760px; font-size: ${L.h2}px; font-weight: 600; line-height: 1.04; letter-spacing: -.04em; text-wrap: balance;">${text}</h2>`;
 const leadP = (L, text, center) => `<p style="margin: ${Math.round(L.lead * .9)}px ${center ? 'auto' : '0'} 0; max-width: 600px; font-size: ${L.lead}px; line-height: 1.5; color: {{t.muted}}; text-wrap: pretty;">${text}</p>`;
 // A demo beside its words: side by side on computers (the demo first when `demoFirst`), stacked on phones.
@@ -5329,12 +5358,9 @@ const REASONS = [
   ['today', 'A few minutes a day', 'Today shows what’s due, how long it takes, and your streak.'],
   ['list', 'Your cards stay yours', 'Export every deck, card, and review whenever you want.']
 ];
-const landing = (L, w, hgt) => { const phone = L === LAND.phone; return `<div style="position: relative; isolation: isolate; width: ${w}px; height: ${hgt}px; box-sizing: border-box; font-family: ${FONT}; background: {{t.bg}}; color: {{t.text}}; overflow: hidden;">
+const landing = (L, w, hgt) => { const phone = L === LAND.phone; return `<div class="sp-c" style="position: relative; isolation: isolate; width: ${w}px; height: ${hgt}px; box-sizing: border-box; font-family: ${FONT}; background: {{t.bg}}; color: {{t.text}}; overflow: hidden; ${HEAD_VARS}">
 ${skyLayer(phone)}
-<header style="max-width: 1344px; margin: 0 auto; height: ${phone ? 64 : 76}px; box-sizing: border-box; padding: 0 ${L.pad}px; display: flex; align-items: center; justify-content: space-between; gap: 12px;">
-  <a href="{{homeHref}}" aria-label="Lucida home">${logo(phone ? 26 : 30)}</a>
-  <nav style="display: flex; align-items: center; gap: ${phone ? 6 : 4}px;">${phone ? '' : `<a href="#how" style="height: 36px; padding: 0 14px; display: inline-flex; align-items: center; border-radius: 999px; font-size: 14px; color: {{t.text}};">How it works</a><a href="#cards" style="height: 36px; padding: 0 14px; display: inline-flex; align-items: center; border-radius: 999px; font-size: 14px; color: {{t.text}};">Card types</a><a href="{{pricingHref}}" style="height: 36px; padding: 0 14px; display: inline-flex; align-items: center; border-radius: 999px; font-size: 14px; color: {{t.text}};">Pricing</a>`}<a href="{{signInHref}}" style="height: 36px; padding: 0 14px; display: inline-flex; align-items: center; border-radius: 999px; font-size: 14px; color: {{t.text}};">Sign in</a>${landPill('Get started', '{{startHref}}', true, 36, phone ? 'padding: 0 14px;' : '')}</nav>
-</header>
+${siteHeader()}
 <main>
 <section style="padding: ${phone ? 48 : 88}px ${L.pad}px 0; display: flex; flex-direction: column; align-items: center; text-align: center;">
   <h1 style="margin: 0; max-width: 1200px; font-size: ${L.h1}px; font-weight: 600; line-height: 1; letter-spacing: -.05em; text-wrap: balance;">Flashcards your AI can make.</h1>
@@ -5364,7 +5390,7 @@ ${featureRow(L, '', 'Flip, rate, remember.', 'Tap a card to see the answer, then
   ${artCard('hero', '', `box-sizing: border-box; padding: ${phone ? '64px 24px' : '104px 32px'}; display: flex; flex-direction: column; align-items: center; text-align: center;`, `<h2 style="margin: 0; font-size: ${L.ctaH1}px; font-weight: 600; line-height: 1.04; letter-spacing: -.04em; text-wrap: balance;">Your next exam, in cards.</h2><p style="margin: 16px 0 0; max-width: 480px; font-size: ${phone ? 16 : 18}px; line-height: 1.5; opacity: .8; text-wrap: balance;">Start with one deck. Your AI can fill it in a few minutes.</p><div style="margin-top: 28px;">${landPill('Get started', '{{startHref}}', true, L.btn, 'background: #FFFFFF; color: #000000;')}</div>`)}
 </section>
 </main>
-${landFooter(phone)}
+${landFooter(phone, `<a href="#how">How it works</a><a href="#cards">Card types</a>`)}
 </div>`; };
 // The footer on the landing page and the Privacy and Terms pages.
 // Lucida's accounts, as icons (each a 36px target) that open in a new tab.
@@ -5373,20 +5399,27 @@ const SOCIALS = SITE_SOCIALS;
 // the board that draws each (the phone footers to the phone boards).
 const SITE = pageSet();
 const FOOT_METHOD = `foot(phone) {
-  const site = !!this.props.site, board = { compare: 'SiteCompare', features: 'SiteCompare', faq: 'SiteFaq', pricing: 'Pricing', privacy: 'Privacy', terms: 'Terms' }, twin = { compare: 1, features: 1, faq: 1, pricing: 1 };
+  const site = !!this.props.site, board = { blog: 'SiteCompare', compare: 'SiteCompare', features: 'SiteCompare', faq: 'SiteFaq', pricing: 'Pricing', privacy: 'Privacy', terms: 'Terms' }, twin = { blog: 1, compare: 1, features: 1, faq: 1, pricing: 1 };
   return ${JSON.stringify(footerLinks(SITE.pages))}.map(l => ({ label: l.label, href: site ? '/' + l.slug : board[l.slug] + (phone && twin[l.slug] ? 'Phone' : '') + '.dc.html' }));
+}`;
+// Where the header's links go: the real pages on lucida.cards, and on the canvas the board that draws each (a phone board's links to the phone boards).
+const HEAD_METHOD = `hd(phone) {
+  const site = !!this.props.site, board = { blog: 'SiteCompare', compare: 'SiteCompare', features: 'SiteCompare', pricing: 'Pricing' };
+  const signIn = site ? '${SITE_APP}/sign-in' : (phone ? 'PhoneSignIn' : 'WebSignIn') + '.dc.html';
+  return { home: site ? '/' : (phone ? 'LandingPhone' : 'Landing') + '.dc.html', signIn, start: site ? '${SITE_APP}/' : signIn,
+    nav: ${JSON.stringify(headerLinks(SITE.pages))}.map(l => ({ label: l.label, href: site ? '/' + l.slug : board[l.slug] + (phone ? 'Phone' : '') + '.dc.html' })) };
 }`;
 // Landing and Pricing gained a <main>, whose children rise in on the app's boards; these two pages never did.
 const NO_RISE = 'main>*{animation:none}';
 const socialLinks = gap => `<span style="display: flex; align-items: center; gap: ${gap}px;">${SOCIALS.map(([ic, name, href]) => `<a href="${href}" target="_blank" rel="noopener" aria-label="Lucida on ${name}" title="${name}" style="width: 36px; height: 36px; margin: -8px; display: inline-flex; align-items: center; justify-content: center;">${svg(I[ic], 20, 1.8)}</a>`).join('')}</span>`;
 // On phones: the logo and the accounts, then the links. On computers it's one row, which wraps on a narrow window.
-const landFooter = phone => phone
+const landFooter = (phone, extra = '') => phone
   ? `<footer style="box-sizing: border-box; padding: 36px 20px 40px; display: flex; flex-direction: column; gap: 24px; font-size: 14px; color: {{t.muted}};">
   <div style="display: flex; align-items: center; justify-content: space-between; gap: 16px;">${logo(24)}${socialLinks(22)}</div>
-  <span style="display: flex; flex-wrap: wrap; gap: 16px;"><nav aria-label="Footer" style="display: contents;"><sc-for list="{{foot}}" as="l" hint-placeholder-count="5"><a href="{{l.href}}">{{l.label}}</a></sc-for></nav><span>© 2026 Lucida</span></span>
+  <span style="display: flex; flex-wrap: wrap; gap: 16px;"><nav aria-label="Footer" style="display: contents;"><sc-for list="{{foot}}" as="l" hint-placeholder-count="5"><a href="{{l.href}}">{{l.label}}</a></sc-for>${extra}</nav><span>© 2026 Lucida</span></span>
 </footer>`
   : `<footer style="max-width: 1344px; margin: 0 auto; box-sizing: border-box; padding: 48px clamp(20px, 4vw, 48px); display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 20px 16px; font-size: 14px; color: {{t.muted}};">
-  ${logo(26)}<span style="display: flex; flex-wrap: wrap; align-items: center; gap: 16px 20px;"><nav aria-label="Footer" style="display: contents;"><sc-for list="{{foot}}" as="l" hint-placeholder-count="5"><a href="{{l.href}}">{{l.label}}</a></sc-for></nav><span>© 2026 Lucida</span><span style="margin-left: 8px;">${socialLinks(20)}</span></span>
+  ${logo(26)}<span style="display: flex; flex-wrap: wrap; align-items: center; gap: 16px 20px;"><nav aria-label="Footer" style="display: contents;"><sc-for list="{{foot}}" as="l" hint-placeholder-count="5"><a href="{{l.href}}">{{l.label}}</a></sc-for>${extra}</nav><span>© 2026 Lucida</span><span style="margin-left: 8px;">${socialLinks(20)}</span></span>
 </footer>`;
 const LANDING_H = 4002, LANDING_PHONE_H = 4852;
 // The band that ends the page runs edge to edge in the site's dark Midnight gradient (surfaces.mjs).
@@ -5397,11 +5430,12 @@ const TS = `const t = this.props.site ? ${JSON.stringify(VARS)} : this.theme(!!t
 const SKYS = `(this.props.site ? ${JSON.stringify(SKY_VARS)} : ${SKY})`;
 const landingLogic = phone => `${ART_METHOD}
 ${FOOT_METHOD}
+${HEAD_METHOD}
 renderVals() { ${TS}
   // On lucida.cards (props.site) the links open the app; on the canvas they open the sign-in board.
   const site = !!this.props.site, signIn = site ? 'https://app.lucida.cards/sign-in' : '${phone ? 'PhoneSignIn' : 'WebSignIn'}.dc.html';
   const deck = name => this.art(this.gen(name, 'vivid'));
-  return { t, foot: this.foot(${phone}), sky: ${SKYS}, grain: String(this.props.grain ?? 0.7), hero: this.art(${MIDNIGHT}, '${phone ? '' : 'wide'}'), ${WALL_VALS(phone ? [50, 60, 55, 65] : [64, 78, 70, 84, 74, 88, 68, 80, 72], phone ? PHONE_K : 1, phone ? FLIPS.phone : FLIPS.busy)}
+  return { t, hd: this.hd(${phone}), foot: this.foot(${phone}), sky: ${SKYS}, grain: String(this.props.grain ?? 0.7), hero: this.art(${MIDNIGHT}, '${phone ? '' : 'wide'}'), ${WALL_VALS(phone ? [50, 60, 55, 65] : [64, 78, 70, 84, 74, 88, 68, 80, 72], phone ? PHONE_K : 1, phone ? FLIPS.phone : FLIPS.busy)}
     q1: deck('Cell Biology'), q2: deck('Genetics'), q3: deck('Anatomy'), q4: deck('Korean'), m1: deck('Cell Biology'),
     homeHref: site ? '/' : '${phone ? 'LandingPhone' : 'Landing'}.dc.html', signInHref: signIn, startHref: site ? 'https://app.lucida.cards/' : signIn,
     privacyHref: site ? '/privacy' : 'Privacy.dc.html', termsHref: site ? '/terms' : 'Terms.dc.html', pricingHref: site ? '/pricing' : '${phone ? 'PricingPhone' : 'Pricing'}.dc.html' }; }`;
@@ -5740,12 +5774,9 @@ const planPrice = (price, per, note) => `<div style="display: flex; flex-directi
 // Pro's price and Go Pro for one way of paying. Both are drawn, and the Monthly/Yearly switch shows one (on the site, a
 // small script in design/to-site.mjs flips them, since its pages are plain HTML).
 const proPlan = (plan, price, per, note) => `<div data-plan="${plan}" style="display: {{${plan}Show}}; flex-direction: column; gap: 24px;">${planPrice(price, per, note)}<sc-if value="{{proLive}}" hint-placeholder-val="{{ true }}">${landPill('Go Pro', `{{${plan}Href}}`, true, 50, 'background: #FFFFFF; color: #000000;')}</sc-if><sc-if value="{{proSoon}}" hint-placeholder-val="{{ false }}"><span style="height: 50px; display: flex; align-items: center; justify-content: center; border-radius: 999px; background: rgba(255,255,255,.16); box-shadow: inset 0 0 0 1px rgba(255,255,255,.35); font-size: 15px; font-weight: 600;">Pro is coming soon</span></sc-if></div>`;
-const pricing = (L, w, hgt) => { const phone = L === LAND.phone, pad = phone ? 20 : 32; return `<div style="position: relative; isolation: isolate; width: ${w}px; height: ${hgt}px; box-sizing: border-box; font-family: ${FONT}; background: {{t.bg}}; color: {{t.text}}; overflow: hidden;">
+const pricing = (L, w, hgt) => { const phone = L === LAND.phone, pad = phone ? 20 : 32; return `<div class="sp-c" style="position: relative; isolation: isolate; width: ${w}px; height: ${hgt}px; box-sizing: border-box; font-family: ${FONT}; background: {{t.bg}}; color: {{t.text}}; overflow: hidden; ${HEAD_VARS}">
 ${skyLayer(phone)}
-<header style="max-width: 1344px; margin: 0 auto; height: ${phone ? 64 : 76}px; box-sizing: border-box; padding: 0 ${L.pad}px; display: flex; align-items: center; justify-content: space-between; gap: 12px;">
-  <a href="{{homeHref}}" aria-label="Lucida home">${logo(phone ? 26 : 30)}</a>
-  <nav style="display: flex; align-items: center; gap: ${phone ? 6 : 4}px;">${phone ? '' : `<a href="{{howHref}}" style="height: 36px; padding: 0 14px; display: inline-flex; align-items: center; border-radius: 999px; font-size: 14px; color: {{t.text}};">How it works</a><a href="{{typesHref}}" style="height: 36px; padding: 0 14px; display: inline-flex; align-items: center; border-radius: 999px; font-size: 14px; color: {{t.text}};">Card types</a><a href="#" aria-current="page" style="height: 36px; padding: 0 14px; display: inline-flex; align-items: center; border-radius: 999px; font-size: 14px; font-weight: 600; color: {{t.text}};">Pricing</a>`}<a href="{{signInHref}}" style="height: 36px; padding: 0 14px; display: inline-flex; align-items: center; border-radius: 999px; font-size: 14px; color: {{t.text}};">Sign in</a>${landPill('Get started', '{{startHref}}', true, 36, phone ? 'padding: 0 14px;' : '')}</nav>
-</header>
+${siteHeader()}
 <main>
 <section style="padding: ${phone ? 44 : 80}px ${L.pad}px 0; display: flex; flex-direction: column; align-items: center; text-align: center;">
   <h1 style="margin: 0; font-size: ${phone ? 44 : 72}px; font-weight: 600; line-height: 1; letter-spacing: -.05em; text-wrap: balance;">Simple pricing.</h1>
@@ -5783,28 +5814,26 @@ const PRICING_H = 1678, PRICING_PHONE_H = 2353;
 // has the yearly subscription no monthly option"), so the site has the Monthly/Yearly switch too, starting on Yearly.
 const pricingLogic = phone => `${ART_METHOD}
 ${FOOT_METHOD}
+${HEAD_METHOD}
 constructor(props) { super(props); this.state = { yearly: true }; }
 renderVals() { ${TS}
   // On lucida.cards (props.site) the links open the app and the landing page; on the canvas, the boards.
   const site = !!this.props.site, y = this.state.yearly, signIn = site ? 'https://app.lucida.cards/sign-in' : '${phone ? 'PhoneSignIn' : 'WebSignIn'}.dc.html';
   const seg = on => ({ bg: on ? t.inv : 'transparent', fg: on ? t.invText : t.text, pressed: on ? 'true' : 'false' });
   const links = ${JSON.stringify(PRO_LINKS)}, selling = !!(links.monthly && links.yearly), start = site ? 'https://app.lucida.cards/' : signIn;
-  return { t, foot: this.foot(${phone}), sky: ${SKYS}, grain: String(this.props.grain ?? 0.7), pro: this.art(${MIDNIGHT}, ''),
+  return { t, hd: this.hd(${phone}), foot: this.foot(${phone}), sky: ${SKYS}, grain: String(this.props.grain ?? 0.7), pro: this.art(${MIDNIGHT}, ''),
     billing: [{ id: 'monthly', label: 'Monthly', ...seg(!y), hasTag: false, pick: () => this.setState({ yearly: false }) }, { id: 'yearly', label: 'Yearly', ...seg(y), hasTag: true, pick: () => this.setState({ yearly: true }) }],
     yearlyShow: y ? 'flex' : 'none', monthlyShow: y ? 'none' : 'flex',
     yearlyHref: selling ? (site ? 'https://app.lucida.cards/pro?plan=yearly' : links.yearly) : start, monthlyHref: selling ? (site ? 'https://app.lucida.cards/pro?plan=monthly' : links.monthly) : start,
-    homeHref: site ? '/' : '${phone ? 'LandingPhone' : 'Landing'}.dc.html', howHref: site ? '/#how' : 'Landing.dc.html', typesHref: site ? '/#cards' : 'Landing.dc.html',
+    homeHref: site ? '/' : '${phone ? 'LandingPhone' : 'Landing'}.dc.html',
     signInHref: signIn, startHref: site ? 'https://app.lucida.cards/' : signIn, privacyHref: site ? '/privacy' : 'Privacy.dc.html', termsHref: site ? '/terms' : 'Terms.dc.html',
     pricingHref: site ? '/pricing' : '${phone ? 'PricingPhone' : 'Pricing'}.dc.html', proLive: !site || selling, proSoon: site && !selling }; }`;
 
 // ---------- Privacy and Terms (lucida.cards/privacy and /terms) ----------
 // Plain pages from legal.mjs: one column of text that fits any window. design/to-site.mjs makes them pages.
 const LEGAL_H = { Privacy: 2338, Terms: 1963, Connect: 4207 };
-const legalPage = (doc, hgt, marks = {}) => `<div style="width: 1440px; height: ${hgt}px; box-sizing: border-box; font-family: ${FONT}; background: {{t.bg}}; color: {{t.text}}; overflow: hidden;">
-<header style="max-width: 1344px; margin: 0 auto; height: 76px; box-sizing: border-box; padding: 0 clamp(20px, 4vw, 48px); display: flex; align-items: center; justify-content: space-between; gap: 12px;">
-  <a href="{{homeHref}}" aria-label="Lucida home">${logo(28)}</a>
-  <nav style="display: flex; align-items: center; gap: 4px;"><a href="{{signInHref}}" style="height: 36px; padding: 0 14px; display: inline-flex; align-items: center; border-radius: 999px; font-size: 14px; color: {{t.muted}};">Sign in</a>${landPill('Get started', '{{startHref}}', true, 36)}</nav>
-</header>
+const legalPage = (doc, hgt, marks = {}) => `<div class="sp-c" style="width: 1440px; height: ${hgt}px; box-sizing: border-box; font-family: ${FONT}; background: {{t.bg}}; color: {{t.text}}; overflow: hidden; ${HEAD_VARS}">
+${siteHeader()}
 <main style="max-width: 720px; margin: 0 auto; box-sizing: border-box; padding: clamp(40px, 7vw, 88px) 24px 72px; display: flex; flex-direction: column; gap: 16px;">
   <h1 style="margin: 0; font-size: clamp(38px, 5vw, 52px); font-weight: 600; line-height: 1.05; letter-spacing: -.045em;">${doc.title}</h1>
   <p style="margin: 0; font-size: 14px; color: {{t.muted}};">Last updated ${doc.updated || UPDATED}</p>
@@ -5816,11 +5845,12 @@ ${landFooter(false)}
 </div>`;
 // On lucida.cards (props.site) the links open the site and the app; on the canvas, the boards.
 const legalLogic = `${FOOT_METHOD}
+${HEAD_METHOD}
 renderVals() {
   const site = !!this.props.site;
   // On lucida.cards the colors are CSS variables with a light and a dark set (design/scheme.mjs), so the page follows the system.
   const t = site ? ${JSON.stringify(VARS)} : this.theme(!!this.props.dark, !!this.props.dim);
-  return { t, foot: this.foot(false), homeHref: site ? 'https://lucida.cards/' : 'Landing.dc.html', signInHref: site ? 'https://app.lucida.cards/sign-in' : 'WebSignIn.dc.html', startHref: site ? 'https://app.lucida.cards/' : 'WebSignIn.dc.html',
+  return { t, hd: this.hd(false), foot: this.foot(false), homeHref: site ? 'https://lucida.cards/' : 'Landing.dc.html', signInHref: site ? 'https://app.lucida.cards/sign-in' : 'WebSignIn.dc.html', startHref: site ? 'https://app.lucida.cards/' : 'WebSignIn.dc.html',
     privacyHref: site ? '/privacy' : 'Privacy.dc.html', termsHref: site ? '/terms' : 'Terms.dc.html', pricingHref: site ? '/pricing' : 'Pricing.dc.html' }; }`;
 
 // ---------- The site's other pages: comparisons, features, the FAQ, the 404, the blog and their pictures ----------
@@ -6244,20 +6274,17 @@ const SITE_CSS = [
   '.sp-has-toc .sp-tocd{display:none}',
   '.sp-has-toc .sp-main{grid-column:2}.sp-has-toc .sp-wide{--bo:clamp(0px,calc((100cqw - 680px) / 2 - 64px),300px);margin-left:0}}',
   // On a narrow page (a phone, or a window under 761 px) the header's nav goes, the card's art changes, and tables stack.
-  '@container (max-width: 760px){.sp-nav{display:none!important}.sp-head{height:64px!important}.sp-band-wide{display:none!important}.sp-band-tall{display:block!important}',
+  '@container (max-width: 760px){.sp-band-wide{display:none!important}.sp-band-tall{display:block!important}',
   spStack('.sp-table'), '}',
   // Six or more columns need room: they stack on any window under 1280 px.
   '@container (max-width: 1279px){' + spStack('.sp-table.sp-tx') + '.sp-table.sp-tx.sp-wide{--bo:0px}}',
-  SKY_CSS, NO_RISE
+  SKY_CSS, HEAD_CSS, NO_RISE
 ].join('');
 // The colors the site's CSS reads (--sp-…), from the page's theme and its extras; set on the page's root, or on a wrapper round figures on a plain page.
-const SP_VARS = '--sp-bg: {{t.bg}}; --sp-line: {{t.line}}; --sp-muted: {{t.muted}}; --sp-surf: {{t.surf}}; --sp-surf2: {{t.surf2}}; --sp-text: {{t.text}}; --sp-hair: {{ink.hair}}; --sp-sub: {{ink.sub}}; --sp-edge: {{ink.edge}}; --sp-chipbg: {{ink.chipbg}}; --sp-chipfg: {{ink.chipfg}}; --sp-g1: {{ink.g1}}; --sp-g2: {{ink.g2}}; --sp-g3: {{ink.g3}}; --sp-good: {{t.good}}; --sp-again: {{t.again}}; --sp-hard: {{t.hard}}; --sp-easy: {{t.easy}}; --sp-fstage: {{ink.fstage}}; --sp-fcard: {{ink.fcard}}; --sp-fedge: {{ink.fedge}}; --sp-fsoft: {{ink.fsoft}}; --sp-fline: {{ink.fline}}; --sp-fshadow: {{ink.fshadow}};';
+const SP_VARS = '--sp-inv: {{t.inv}}; --sp-invtext: {{t.invText}}; --sp-bg: {{t.bg}}; --sp-line: {{t.line}}; --sp-muted: {{t.muted}}; --sp-surf: {{t.surf}}; --sp-surf2: {{t.surf2}}; --sp-text: {{t.text}}; --sp-hair: {{ink.hair}}; --sp-sub: {{ink.sub}}; --sp-edge: {{ink.edge}}; --sp-chipbg: {{ink.chipbg}}; --sp-chipfg: {{ink.chipfg}}; --sp-g1: {{ink.g1}}; --sp-g2: {{ink.g2}}; --sp-g3: {{ink.g3}}; --sp-good: {{t.good}}; --sp-again: {{t.again}}; --sp-hard: {{t.hard}}; --sp-easy: {{t.easy}}; --sp-fstage: {{ink.fstage}}; --sp-fcard: {{ink.fcard}}; --sp-fedge: {{ink.fedge}}; --sp-fsoft: {{ink.fsoft}}; --sp-fline: {{ink.fline}}; --sp-fshadow: {{ink.fshadow}};';
 const sitePage = (w, h) => `<div class="sp" style="position: relative; isolation: isolate; width: ${w}px; height: ${h}px; box-sizing: border-box; font-family: ${FONT}; background: {{t.bg}}; color: {{t.text}}; overflow: hidden; overflow: clip; ${SP_VARS}">
 ${skyLayer(false)}
-<header class="sp-head" style="max-width: 1344px; margin: 0 auto; height: 76px; box-sizing: border-box; padding: 0 clamp(20px, 4cqw, 48px); display: flex; align-items: center; justify-content: space-between; gap: 12px;">
-  <a href="{{links.home}}" aria-label="Lucida home">${logo(30)}</a>
-  <nav aria-label="Main" style="display: flex; align-items: center; gap: 4px;"><sc-for list="{{nav}}" as="n" hint-placeholder-count="3"><a class="sp-nav" href="{{n.href}}" style="height: 36px; padding: 0 14px; display: inline-flex; align-items: center; border-radius: 999px; font-size: 14px; color: {{t.text}};">{{n.label}}</a></sc-for><a href="{{links.signIn}}" style="height: 36px; padding: 0 14px; display: inline-flex; align-items: center; border-radius: 999px; font-size: 14px; color: {{t.text}};">Sign in</a>${landPill('Get started', '{{links.start}}', true, 36)}</nav>
-</header>
+${siteHeader()}
 <main>
 <sc-if value="{{isBlog}}" hint-placeholder-val="{{ false }}"><div class="sp-blog" id="top">
   <div class="sp-bhead"><h1 class="sp-bh1"><span>{{blog.l1}}</span><span class="sp-grad">{{blog.l2}}</span></h1><p class="sp-blead">${spParts('page.lead')}</p></div>
@@ -6321,6 +6348,7 @@ const siteLogic = (board, phone) => {
   const data = boardData(board, SITE.pages);
   return `${ART_METHOD}
 ${FOOT_METHOD}
+${HEAD_METHOD}
 data() { return Component._site || (Component._site = ${JSON.stringify(data).replace(/</g, '\\u003c')}); }
 parts(text) { return (${partsOf.toString()})(text); }
 renderVals() {
@@ -6404,7 +6432,7 @@ renderVals() {
   return { t, sky, ink, dark: !!this.props.dark, grain: String(this.props.grain ?? 0.7), hero: this.art(${MIDNIGHT}, 'wide'), heroTall: this.art(${MIDNIGHT}, ''),
     pic: { src: ogSrc(P.slug), key: ogKey(P.slug), alt: /^lucida\\b/i.test(h1) ? h1 : 'Lucida: ' + h1, k: scale(PHONE ? 350 : 680) },
     site, canvas: !site, cardK: scale(PHONE ? 350 : (wideW - 48) / 3), blogK: scale(PHONE ? 350 : (blogW - 48) / 3), featK: scale(PHONE ? 350 : ((isBlog ? blogW : wideW) - 32) * 1.45 / 2.45),
-    foot: this.foot(PHONE), nav: D.header.map(l => ({ label: l.label, href: href(find(l.slug)) })),
+    hd: this.hd(PHONE), foot: this.foot(PHONE),
     links: { home: site ? '/' : (PHONE ? 'LandingPhone' : 'Landing') + '.dc.html', signIn, start: site ? '${SITE_APP}/' : signIn },
     crumbs: P.crumbs.map((c, i) => ({ label: c.label, link: i < P.crumbs.length - 1 && !!find(c.slug), current: i === P.crumbs.length - 1, href: find(c.slug) ? href(find(c.slug)) + (site && c.hash ? '#' + c.hash : '') : '' })),
     page: { h1: P.h1, lead: this.parts(P.lead), updated: P.updated || '', updatedShort: me.date || (dm ? MON[+dm[2] - 1] + ' ' + +dm[3] + ', ' + dm[1] : P.updatedLabel || ''), minutes: String(me.minutes || 1) },
@@ -6696,6 +6724,7 @@ renderVals() { ${T}
 // The Connect guide's figures: a .sp wrapper (the site's colors as variables) round a list of drawings.
 const guideFigs = list => `<div class="sp" style="margin-top: 8px; ${SP_VARS}"><sc-for list="{{${list}}}" as="f">${spFig}</sc-for></div>`;
 const guideLogic = () => `${FOOT_METHOD}
+${HEAD_METHOD}
 renderVals() {
   const site = !!this.props.site;
   // On lucida.cards the colors are CSS variables with a light and a dark set (design/scheme.mjs), so the page follows the system.
@@ -6703,7 +6732,7 @@ renderVals() {
   const ink = site ? ${JSON.stringify(EXTRA_VARS)} : this.props.dark ? ${JSON.stringify(EXTRA_DARK)} : ${JSON.stringify(EXTRA_LIGHT)};
   const V = (${visualsOf.toString()})({ visuals: { figs: ${JSON.stringify(CONNECT_FIGS)} } }, { plain: s => s, parts: s => [{ text: s, plain: true }], PHONE: false, site, SCREENS: ${JSON.stringify(SCREENS)}, BOARDS: ${JSON.stringify(SHOT_BOARDS)}, KINDS: ${JSON.stringify(KINDS)}, shotFile: ${shotFile.toString()} }, ${JSON.stringify(CONNECT.sections.map(x => ({ h2: x.h, paras: [], bullets: [] })))});
   const at = (h, k) => (V.bySection[h] || { before: [], after: [] })[k];
-  return { t, ink, site, canvas: !site, dark: !!this.props.dark, figsTop: at('What you need', 'before'), figsClaude: at('Claude', 'after'), foot: this.foot(false), homeHref: site ? 'https://lucida.cards/' : 'Landing.dc.html', signInHref: site ? 'https://app.lucida.cards/sign-in' : 'WebSignIn.dc.html', startHref: site ? 'https://app.lucida.cards/' : 'WebSignIn.dc.html',
+  return { t, ink, site, canvas: !site, dark: !!this.props.dark, figsTop: at('What you need', 'before'), figsClaude: at('Claude', 'after'), hd: this.hd(false), foot: this.foot(false), homeHref: site ? 'https://lucida.cards/' : 'Landing.dc.html', signInHref: site ? 'https://app.lucida.cards/sign-in' : 'WebSignIn.dc.html', startHref: site ? 'https://app.lucida.cards/' : 'WebSignIn.dc.html',
     privacyHref: site ? '/privacy' : 'Privacy.dc.html', termsHref: site ? '/terms' : 'Terms.dc.html', pricingHref: site ? '/pricing' : 'Pricing.dc.html' }; }`;
 function siteFiles() {
   const out = {};
@@ -8907,7 +8936,7 @@ const files = {
   'PhoneDonePiles': ['iPhone · Session done · piles', phoneDonePiles, { props: DARK, logic: donePilesLogic(true), w: PW, h: PH }],
   'PhoneSignIn': ['iPhone · Sign in', phoneSignIn, { props: { ...DARK, grain: MESH('Iris').grain, passwordMode: BOOL }, logic: signInLogic('', [50, 60, 55, 65], PHONE_K), css: WALL_CSS, w: PW, h: PH }],
   'PhoneSignInCode': ['iPhone · Sign in · code from email', phoneSignInCode, { props: DARK, logic: signInLogic('482'), w: PW, h: PH }],
-  'Landing': ['Landing page · lucida.cards', landing(LAND.web, W, LANDING_H), { props: { ...DARK, grain: MESH('Iris').grain }, logic: landingLogic(false), css: WALL_CSS + DEMO_CSS + SKY_CSS + NO_RISE, w: W, h: LANDING_H }],
+  'Landing': ['Landing page · lucida.cards', landing(LAND.web, W, LANDING_H), { props: { ...DARK, grain: MESH('Iris').grain }, logic: landingLogic(false), css: WALL_CSS + DEMO_CSS + SKY_CSS + HEAD_CSS + NO_RISE, w: W, h: LANDING_H }],
   'WebQuizStart': ['Web · Learn mode · start', webQuizStart(), { props: DARK, logic: QUIZ_START_LOGIC(false, true), w: W, h: H }],
   'WebQuiz': ['Web · Learn mode · choice question', webQuiz, { props: { ...DARK, answered: { editor: 'boolean', default: false }, settingsOpen: { editor: 'boolean', default: false } }, logic: QUIZ_LOGIC(false), css: LEARN_CSS, w: W, h: H }],
   'WebQuizAnswered': ['Web · Learn mode · answered', attrOf('WebQuiz', W, H, 'answered="{{yes}}"'), { logic: darkLogic, css: LEARN_CSS, w: W, h: H }],
@@ -8941,13 +8970,13 @@ const files = {
   'LiveResultTimeUp': ['Live · phone · time’s up (no answer)', attrOf('LiveResult', PW, PH, 'time-up="{{yes}}"'), { logic: darkLogic, css: LIVE_CSS + FLAME_CSS, w: PW, h: PH }],
   'LiveFinal': ['Live · phone · final', liveFinal, { props: { ...DARK, grain: MESH('Iris').grain, final: { editor: 'boolean', default: true } }, logic: LIVE_PHONE_LOGIC, css: LIVE_CSS, w: PW, h: PH }],
   'LiveEnded': ['Live · phone · the game ended', liveEnded, { props: { ...DARK, grain: MESH('Iris').grain }, logic: LIVE_PHONE_LOGIC, css: LIVE_CSS, w: PW, h: PH }],
-  'Pricing': ['Pricing · lucida.cards/pricing', pricing(LAND.web, W, PRICING_H), { props: { ...DARK, grain: MESH('Iris').grain }, logic: pricingLogic(false), css: SKY_CSS + NO_RISE, w: W, h: PRICING_H }],
-  'PricingPhone': ['Pricing · lucida.cards/pricing on a phone', pricing(LAND.phone, PW, PRICING_PHONE_H), { props: { ...DARK, grain: MESH('Iris').grain }, logic: pricingLogic(true), css: SKY_CSS + NO_RISE, w: PW, h: PRICING_PHONE_H }],
-  'Privacy': ['Privacy Policy · lucida.cards/privacy', legalPage(PRIVACY, LEGAL_H.Privacy), { props: DARK, logic: legalLogic, w: W, h: LEGAL_H.Privacy }],
-  'Terms': ['Terms of Service · lucida.cards/terms', legalPage(TERMS, LEGAL_H.Terms), { props: DARK, logic: legalLogic, w: W, h: LEGAL_H.Terms }],
+  'Pricing': ['Pricing · lucida.cards/pricing', pricing(LAND.web, W, PRICING_H), { props: { ...DARK, grain: MESH('Iris').grain }, logic: pricingLogic(false), css: SKY_CSS + HEAD_CSS + NO_RISE, w: W, h: PRICING_H }],
+  'PricingPhone': ['Pricing · lucida.cards/pricing on a phone', pricing(LAND.phone, PW, PRICING_PHONE_H), { props: { ...DARK, grain: MESH('Iris').grain }, logic: pricingLogic(true), css: SKY_CSS + HEAD_CSS + NO_RISE, w: PW, h: PRICING_PHONE_H }],
+  'Privacy': ['Privacy Policy · lucida.cards/privacy', legalPage(PRIVACY, LEGAL_H.Privacy), { props: DARK, logic: legalLogic, css: HEAD_CSS, w: W, h: LEGAL_H.Privacy }],
+  'Terms': ['Terms of Service · lucida.cards/terms', legalPage(TERMS, LEGAL_H.Terms), { props: DARK, logic: legalLogic, css: HEAD_CSS, w: W, h: LEGAL_H.Terms }],
   // The Connect guide has its steps as cards and the consent screen (the same drawings as the articles', in a .sp wrapper that sets their colors).
   'SiteConnect': ['Connect Lucida to your AI · lucida.cards/connect', legalPage(CONNECT, LEGAL_H.Connect, { top: guideFigs('figsTop'), after: { Claude: guideFigs('figsClaude') } }), { props: DARK, logic: guideLogic(), css: SITE_CSS, w: W, h: LEGAL_H.Connect }],
-  'LandingPhone': ['Landing page · lucida.cards on a phone', landing(LAND.phone, PW, LANDING_PHONE_H), { props: { ...DARK, grain: MESH('Iris').grain }, logic: landingLogic(true), css: WALL_CSS + DEMO_CSS + SKY_CSS + NO_RISE, w: PW, h: LANDING_PHONE_H }],
+  'LandingPhone': ['Landing page · lucida.cards on a phone', landing(LAND.phone, PW, LANDING_PHONE_H), { props: { ...DARK, grain: MESH('Iris').grain }, logic: landingLogic(true), css: WALL_CSS + DEMO_CSS + SKY_CSS + HEAD_CSS + NO_RISE, w: PW, h: LANDING_PHONE_H }],
   'PhoneStats': ['iPhone · Stats', phoneStats, { props: { ...DARK, ...STATS_PROPS }, logic: phoneStatsLogic, w: PW, h: PH }],
   'PhoneStatsMemory': ['iPhone · Stats · Memory (Pro)', attrOf('PhoneStats', PW, PH, 'tab="Memory"'), { logic: darkLogic, w: PW, h: PH }],
   'PhoneStatsWeak': ['iPhone · Stats · Weak spots (Pro)', attrOf('PhoneStats', PW, PH, 'tab="Weak spots"'), { logic: darkLogic, w: PW, h: PH }],
