@@ -10,7 +10,7 @@ import { WALL_CARDS } from './wall.mjs';
 import { PRIVACY, TERMS, UPDATED } from './legal.mjs';
 import { CONNECT } from './connect-guide.mjs';
 import { PRO_LINKS } from '../web/plans.mjs';
-import { PLAN_FREE, PLAN_PRO, PRICING_FAQ, SOCIALS as SITE_SOCIALS, BOARDS as SITE_BOARDS, APP as SITE_APP, SCENES, SCENE_ARRANGEMENTS, GRAD, CATEGORIES, FEATURED, pageSet, footerLinks, boardData, partsOf, indexOf, ogKey } from './site.mjs';
+import { PLAN_FREE, PLAN_PRO, PLAN_PRO_PHONE, PRICING_FAQ, SOCIALS as SITE_SOCIALS, BOARDS as SITE_BOARDS, APP as SITE_APP, SCENES, SCENE_ARRANGEMENTS, GRAD, CATEGORIES, FEATURED, pageSet, footerLinks, boardData, partsOf, indexOf, ogKey } from './site.mjs';
 import { G_LOGO, APPLE_LOGO } from './logos.mjs';
 import { VARS, SKY_VARS, EXTRA_VARS, EXTRA_LIGHT, EXTRA_DARK } from './scheme.mjs';
 import { THEMES } from '../web/themes/index.js';
@@ -3878,8 +3878,13 @@ const sRow = (label, right, { href = '', sub = '', click = '' } = {}) => {
 const sVal = v => `<span style="display: flex; align-items: center; gap: 6px; font-size: 15px; color: {{t.muted}}; white-space: nowrap;">${v}${svg(I.chev, 14, 2.2)}</span>`;
 // A row that picks from a list: tapping it opens the phone's own picker (an invisible <select> over the row, with 16px
 // text so the phone doesn't zoom in), like the iPhone app's menus. `k` names a renderVals object made by pickOf()
-// (phoneSettingsLogic); `options` are [value, label].
-const sPick = (label, k, options) => `<div style="position: relative;">${sRow(label, sVal(`{{${k}.label}}`))}<select onChange="{{${k}.set}}" ref="{{${k}.ref}}" aria-label="${label}" style="position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; border: 0; font-size: 16px; cursor: pointer;">${options.map(([v, l]) => `<option value="${v}">${l}</option>`).join('')}</select></div>`;
+// (phoneSettingsLogic); `options` are [value, label]. `note` = [flag, its opposite, words]: with the flag on, the row says
+// something small under its name (Daily reminder, when the phone has notifications off for Lucida).
+const sPick = (label, k, options, note = null) => {
+  const select = `<select onChange="{{${k}.set}}" ref="{{${k}.ref}}" aria-label="${label}" style="position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; border: 0; font-size: 16px; cursor: pointer;">${options.map(([v, l]) => `<option value="${v}">${l}</option>`).join('')}</select>`;
+  const row = sub => `<div style="position: relative;">${sRow(label, sVal(`{{${k}.label}}`), sub ? { sub } : {})}${select}</div>`;
+  return note ? `<sc-if value="{{${note[0]}}}" hint-placeholder-val="{{ false }}">${row(note[2])}</sc-if><sc-if value="{{${note[1]}}}" hint-placeholder-val="{{ true }}">${row('')}</sc-if>` : row('');
+};
 const S_LINE = '<div style="height: 1px; margin-left: 16px; background: {{t.bg}};"></div>';
 const sGroup = (title, rows) => `<div style="display: flex; flex-direction: column; gap: 8px;"><span style="padding: 0 4px; font-size: 13px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: {{t.muted}};">${title}</span><div style="border-radius: 24px; background: {{t.surf}}; overflow: hidden;">${rows.join(S_LINE)}</div></div>`;
 // Settings → Plan: Free, with a way to Go Pro; or Pro, when it renews (or ends), and Stripe's page to manage or cancel it.
@@ -3997,6 +4002,11 @@ const ACCOUNT_JS = `const acct = (() => {
           Promise.resolve(db.act.deleteAccount()).then(() => { if (db.mock) this.setState({ del: false, delBusy: false }); }, e => this.setState({ delBusy: false, delErr: fail(e) })); } }
     };
   })();`;
+// Settings › Studying › Daily reminder on iPhone: Off, or a time. Picking a time turns the reminder on (the phone asks to send notices then, not
+// before: a notice a day at that time saying "Time to review your cards"); Off turns it off. If the person says no to notifications the row stays Off
+// and says how to allow them (the `reminderNote` Tweak shows that).
+const REMINDER_TIMES = ['7:00 AM', '8:00 AM', '9:00 AM', '12:00 PM', '6:00 PM', '8:00 PM', '9:00 PM'];
+const REMINDER_PROP = { editor: 'enum', default: '9:00 AM', options: ['Off', ...REMINDER_TIMES] };
 const phoneSettings = phone(`<div style="padding: 64px 20px 34px; display: flex; flex-direction: column; gap: 18px;">
   <div style="display: flex; align-items: center; gap: 12px;">${roundBtn('back', 'Back', 'PhoneToday.dc.html')}<div style="flex-grow: 1; font-size: 17px; font-weight: 600; text-align: center;">Settings</div><div style="width: 44px;"></div></div>
   <button type="button" onClick="{{account}}" style="width: 100%; border: 0; border-radius: 24px; background: {{t.surf}}; padding: 14px 16px; display: flex; align-items: center; gap: 14px; color: inherit; font: inherit; text-align: left; cursor: pointer;">${AVATAR_ME(44)}<span style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px;"><span style="font-size: 16px; font-weight: 600;">Your account</span><span style="font-size: 13px; color: {{t.muted}}; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{accountSub}}</span></span><span style="display: flex; color: {{t.muted}};">${svg(I.chev, 14, 2.2)}</span></button>
@@ -4004,7 +4014,7 @@ const phoneSettings = phone(`<div style="padding: 64px 20px 34px; display: flex;
   ${sGroup('Profile picture', [`<div style="padding: 12px 16px 16px; display: flex; flex-direction: column; gap: 12px;">${photoPanel(true)}</div>`])}
   ${planGroups}
   ${sGroup('Studying', [
-    sPick('Daily reminder', 'reminder', ['7:00 AM', '8:00 AM', '9:00 AM', '12:00 PM', '6:00 PM', '8:00 PM', '9:00 PM'].map(x => [x, x])),
+    sPick('Daily reminder', 'reminder', ['Off', ...REMINDER_TIMES].map(x => [x, x]), ['reminderNote', 'reminderPlain', 'Allow notifications for Lucida in iPhone Settings.']),
     sPick('New cards a day', 'perDay', [0, 5, 10, 15, 20, 30, 50].map(n => [n, n])),
     sPick('Remember goal', 'goal', [80, 85, 90, 93, 95].map(n => [n, n + '%'])),
     sRow('Schedule with FSRS', SWITCH('fsrsSw', 'toggleFsrs', 'Schedule with FSRS'), { sub: '{{fsrsSub}}' }),
@@ -4028,6 +4038,7 @@ renderVals() {
   ${SW_JS}
   ${OPTS_JS}
   const set = patch => db.act.setSettings(patch), piles = st.grading === 'piles';
+  const remNow = db.mock ? (this.state.rem ?? (this.props.reminderNote ? 'Off' : this.props.reminder || st.reminder)) : st.reminder, remNote = db.mock && !!this.props.reminderNote && remNow === 'Off';
   // A row's list (sPick): the value it shows, and saving a pick. The list shows the current value as picked.
   const pickOf = (cur, label, save) => ({ label, set: e => save(e.target.value), ref: el => { if (el && el.value !== String(cur)) el.value = String(cur); } });
   ${PLAN_JS('PhoneGoPro')}
@@ -4043,7 +4054,10 @@ renderVals() {
     accountSub: db.mock ? 'Synced on all your devices · just now' : st.sub,
     account: () => { if (!db.mock && st.signedIn && confirm('Sign out of Lucida?')) db.act.signOut(); },
     ...themeRow(),
-    reminder: pickOf(st.reminder, st.reminder, v => set({ reminder: v })),
+    // Daily reminder: on the canvas the Tweaks say where it starts (Off, a time, or Off with the line about allowing notifications) and a pick
+    // shows at once; online it is the saved time.
+    reminder: pickOf(remNow, remNow, v => { if (db.mock) this.setState({ rem: v }); else set({ reminder: v }); }),
+    reminderNote: remNote, reminderPlain: !remNote,
     perDay: pickOf(st.perDay, String(st.perDay), v => set({ perDay: +v })),
     goal: pickOf(st.goal, st.goal + '%', v => set({ goal: +v })),
     fsrsSw: sw(st.fsrs && !piles, !piles), toggleFsrs: () => !piles && set({ fsrs: !st.fsrs }),
@@ -8555,7 +8569,7 @@ const goProBody = `<div style="flex-shrink: 0; display: flex; align-items: cente
         <sc-if value="{{gp.soon}}" hint-placeholder-val="{{ false }}"><span role="status" style="${GP_PILL} background: rgba(255,255,255,.16); box-shadow: inset 0 0 0 1px rgba(255,255,255,.35);">Pro isn’t available on iPhone yet</span></sc-if>
         <sc-if value="{{gp.offline}}" hint-placeholder-val="{{ false }}"><div style="display: flex; flex-direction: column; gap: 10px;"><span role="status" style="${GP_PILL} background: rgba(255,255,255,.16); box-shadow: inset 0 0 0 1px rgba(255,255,255,.35);">Couldn’t reach the App Store</span><button type="button" onClick="{{gp.retry}}" style="${GP_PILL} border: 0; background: #FFFFFF; color: #000000; cursor: pointer;">Try again</button></div></sc-if>
         <sc-if value="{{gp.isPro}}" hint-placeholder-val="{{ false }}"><div style="display: flex; flex-direction: column; gap: 6px;"><span style="display: flex; align-items: center; gap: 10px; font-size: 24px; font-weight: 600; letter-spacing: -.02em;">${svg(I.check, 22, 2.4)}You’re on Pro</span><span style="font-size: 14px; opacity: .75;">{{gp.proLine}}</span></div></sc-if>
-        <div style="display: flex; flex-direction: column; gap: 12px;"><span style="font-size: 14px; opacity: .9;">Everything in Free, plus:</span>${planList(PLAN_PRO, 'color: #FFFFFF;')}</div>`)}
+        <div style="display: flex; flex-direction: column; gap: 12px;"><span style="font-size: 14px; opacity: .9;">Everything in Free, plus:</span>${planList(PLAN_PRO_PHONE, 'color: #FFFFFF;')}</div>`)}
       <sc-if value="{{gp.hasLine}}" hint-placeholder-val="{{ false }}"><span role="alert" style="flex-shrink: 0; font-size: 13px; line-height: 1.4; color: {{gp.lineColor}};">{{gp.line}}</span></sc-if>
     </div>
     <sc-if value="{{gp.footer}}" hint-placeholder-val="{{ true }}"><div style="flex-shrink: 0; display: flex; flex-direction: column; align-items: center; gap: 8px;">
@@ -8790,7 +8804,7 @@ const files = {
   'PhoneEditorImage': ['iPhone · Card editor · image with boxes', attrOf('PhoneEditor', PW, PH, 'card-type="Image" keyboard="{{no}}"'), { logic: 'renderVals() { return { yes: true, no: false }; }', css: EDITOR_CSS, w: PW, h: PH }],
   'PhoneSettingsFree': ['iPhone · Settings · on Free (Tune to you is Pro)', attrOf('PhoneSettings', PW, PHONE_SETTINGS_H, 'plan="Free"'), { logic: darkLogic, w: PW, h: PHONE_SETTINGS_H }],
   'PhoneSettingsVerified': ['iPhone · Settings · a verified teacher (Get verified says Verified teacher)', attrOf('PhoneSettings', PW, PHONE_SETTINGS_H, 'verified="Teacher"'), { logic: darkLogic, w: PW, h: PHONE_SETTINGS_H }],
-  'PhoneSettings': ['iPhone · Settings', phoneSettings, { props: { ...DARK, passwordOpen: BOOL, photo: PHOTO_PROP, plan: SETTINGS_PLAN_PROP, tune: TUNE_PROP, verified: VERIFIED_PROP, ...ACCOUNT_PROPS }, logic: phoneSettingsLogic, w: PW, h: PHONE_SETTINGS_H }],
+  'PhoneSettings': ['iPhone · Settings', phoneSettings, { props: { ...DARK, passwordOpen: BOOL, photo: PHOTO_PROP, plan: SETTINGS_PLAN_PROP, tune: TUNE_PROP, verified: VERIFIED_PROP, reminder: REMINDER_PROP, reminderNote: BOOL, ...ACCOUNT_PROPS }, logic: phoneSettingsLogic, w: PW, h: PHONE_SETTINGS_H }],
   'PhoneSettingsDelete': ['iPhone · Settings · Delete account (the question)', attrOf('PhoneSettings', PW, PHONE_SETTINGS_H, 'delete-open="Asking"'), { logic: darkLogic, w: PW, h: PHONE_SETTINGS_H }],
   'PhoneDeckSettings': ['iPhone · Deck settings', openOf('PhoneDeck', PW, PH), { logic: darkLogic, css: NUM_CSS + DRAG_CSS, w: PW, h: PH }],
   'PhoneDeckDark': ['iPhone · Deck page (dark)', darkOf('PhoneDeck', PW, PH), { logic: darkLogic, css: NUM_CSS + DRAG_CSS, w: PW, h: PH }],

@@ -35,6 +35,8 @@ export const SOCIALS = [['tiktok', 'TikTok', 'https://www.tiktok.com/@lucidacard
 export const PRICE = { monthly: '5.99', yearly: '49.99', currency: 'USD' };
 export const PLAN_FREE = ['Unlimited decks and cards', 'Your AI makes cards and quizzes for you', 'Reviews planned by spaced repetition', 'Learn mode', 'Share decks and study anyone’s', 'Live games with friends', 'Up to 100 pictures and sounds', 'Import and export anytime'];
 export const PLAN_PRO = ['Exam dates: ready in time for the test', 'Stats on what you’re weak at', 'Unlimited pictures and sounds', 'Themes for cards, covers and your profile', 'The hardest cards on decks you share', 'Photo covers and your own colors', 'Natural voices for sound cards', 'More AI explanations'];
+// What the iPhone app's paywall lists: the same, less what the iPhone app doesn't have yet (natural voices for sound cards, which only the web has).
+export const PLAN_PRO_PHONE = PLAN_PRO.filter(x => x !== 'Natural voices for sound cards');
 export const PRICING_FAQ = [
   ['Do I need Pro for my AI to make cards?', 'No. On Free, your AI can make as many cards as you want.'],
   ['What happens to my cards if I stop Pro?', 'Nothing. Every deck and card stays yours. Only the Pro extras switch off.'],

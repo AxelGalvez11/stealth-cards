@@ -64,6 +64,8 @@ PROP_SETS.push({ passwordMode: true }, { passwordOpen: true }, { passwordOpen: t
 PROP_SETS.push({ state: 'Yearly' }, { state: 'Monthly' }, { state: 'Buying' }, { state: 'Error' }, { state: 'Not yet' }, { state: 'Offline' }, { state: 'Loading' }, { state: 'Pro' },
   { state: 'Monthly', dark: true }, { state: 'Not yet', dark: true, dim: true }, { state: 'Pro', dark: true }, { state: 'Error', $state: { pick: 'monthly' } },
   { plan: 'Pro, billed on the web' }, { plan: 'Pro, billed on the web', dark: true });
+// Settings' Daily reminder on iPhone: Off, a time, and the line that says how to allow notifications when the phone has them off.
+PROP_SETS.push({ reminder: 'Off' }, { reminder: '6:00 PM' }, { reminder: 'Off', dark: true }, { reminderNote: true }, { reminderNote: true, dark: true }, { reminderNote: true, dark: true, dim: true });
 // A verified teacher's or school's shared deck page (Check this deck, pressing it, one being pressed, on their own deck,
 // signed out), and your verification in Settings.
 PROP_SETS.push({ verified: 'Teacher' }, { verified: 'School' }, { verified: 'Teacher', $state: { $m: { checked: true } } }, { verified: 'Teacher', $state: { busy: 'check', error: 'That didn’t save.' } },
