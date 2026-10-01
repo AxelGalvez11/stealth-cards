@@ -18,9 +18,10 @@ import { KINDS as FIG_KINDS, SCREENS, CONNECT_FIGS } from './visuals.mjs';
 import { wanted as screenPictures } from './screens.mjs';
 import { readPng, thumb, distance, labDistance } from './png.mjs';
 import { LIGHT, DARK, SCHEME_CSS } from './scheme.mjs';
-import { allPages, AI_BOTS, OG, crumbUrl } from './seo.mjs';
+import { allPages, AI_BOTS, OG, crumbUrl, ICON_LINKS } from './seo.mjs';
+import { readIco } from './ico.mjs';
 import { checkJsonLd } from './schema-check.mjs';
-import { route } from './vercel-routes.mjs';
+import { route, headersFor } from './vercel-routes.mjs';
 
 const ROOT = fileURLToPath(new URL('../', import.meta.url)), WEB = join(ROOT, 'web'), args = new Set(process.argv.slice(2));
 if (!args.has('--no-build')) for (const s of ['build.mjs', 'check.mjs', 'to-web.mjs', 'to-site.mjs']) execFileSync('node', [join(ROOT, 'design', s)], { stdio: ['ignore', 'pipe', 'inherit'] });
@@ -135,7 +136,8 @@ for (const [p, file] of pageFiles) {
   ok(un(meta('property', 'og:description') || '') === desc && meta('property', 'og:url') === p.url && meta('property', 'og:site_name') === 'Lucida' && meta('property', 'og:image:width') === '1200' && meta('property', 'og:image:height') === '630', 'og:description, url, site name and picture size');
   ok(meta('name', 'twitter:card') === 'summary_large_image' && meta('name', 'twitter:image') === img && un(meta('name', 'twitter:title') || '') === title, 'Twitter card: large image, same picture and title');
   ok(!!meta('property', 'og:image:alt') && !!meta('name', 'twitter:image:alt'), 'the picture has alt text');
-  for (const href of [link('icon'), '/icons/icon-192.png', link('apple-touch-icon')]) ok(href && existsSync(join(WEB, href.replace(/^\//, ''))), 'icon ' + href + ' exists');
+  // Icons: every page names the same four in its <head> (design/seo.mjs, ICON_LINKS); the files themselves are checked once, in "Icons" below.
+  ok(head.includes(ICON_LINKS), 'the page names the four icons: favicon.ico, the SVG, the 192-pixel PNG and the apple-touch-icon');
   ok(/rel="preconnect" href="https:\/\/fonts.gstatic.com" crossorigin/.test(head) && /display=swap/.test(head) && /rel="preload" href="https:\/\/fonts\.gstatic\.com\/s\/geist\/[^"]+\.woff2" as="font" type="font\/woff2" crossorigin/.test(head), 'fonts: preconnect, preload of the main file, display=swap');
   // body: one h1 (per copy, on the pages that hold a computer and a phone copy), landmarks, headings
   const t = tags(body), dual = body.indexOf('<div class="phone">');
@@ -341,6 +343,44 @@ for (const path of ['/sign-in', '/discover', '/@maria', '/@maria/cell-biology', 
 ok(via('lucida.cards', '/landing.html').to === '/' && via('lucida.cards', '/pricing.html').to === '/pricing', 'the old .html addresses go to the clean ones');
 ok(file('app.lucida.cards', '/pricing', 'pricing.html') && file('app.lucida.cards', '/zzz', 'app.html') && via('app.lucida.cards', '/@maria').type === 'function' && via('app.lucida.cards', '/d/sabc').type === 'function' && via('app.lucida.cards', '/api/state').type === 'function', 'app.lucida.cards: pages, the app, /@…, /d/… and /api unchanged');
 ok(via('app.lucida.cards', '/vs/anki').rewritten === '/app.html' && via('app.lucida.cards', '/compare').rewritten === '/app.html', 'app.lucida.cards doesn’t serve the site’s pages');
+
+console.log('Icons (the tab icon and the home-screen icons, on both hosts)');
+{
+  // The four links, as the pages write them (design/seo.mjs): what each says it is, and what its file really is.
+  const linked = [...ICON_LINKS.matchAll(/<link rel="([^"]+)" href="([^"]+)"([^>]*)>/g)].map(m => ({ rel: m[1], href: m[2], type: (/type="([^"]+)"/.exec(m[3]) || [])[1], sizes: (/sizes="(\d+)x(\d+)"/.exec(m[3]) || []).slice(1).map(Number) }));
+  ok(linked.length === 4 && linked.map(l => l.href).join() === '/favicon.ico,/icon.svg,/icons/icon-192.png,/apple-touch-icon.png', 'the icons every page names are favicon.ico, icon.svg, icons/icon-192.png and apple-touch-icon.png', linked.map(l => l.href));
+  const file = href => join(WEB, href.replace(/^\//, ''));
+  for (const l of linked) ok(existsSync(file(l.href)), 'icon ' + l.href + ' exists');
+  // /favicon.ico: an .ico of 16, 32 and 48 pixels, each a PNG of that size (a browser or Google takes the one that fits)
+  const ico = existsSync(file('/favicon.ico')) ? readIco(readFileSync(file('/favicon.ico'))) : [];
+  ok(ico.map(f => f.width).join() === '16,32,48' && ico.every(f => f.isPng && f.pngWidth === f.width && f.pngHeight === f.height), '/favicon.ico holds the tab icon at 16, 32 and 48 pixels, each a PNG of that size', ico.map(f => [f.width, f.height, f.pngWidth]));
+  const fav = linked.find(l => l.href === '/favicon.ico');
+  ok(fav.sizes.join('x') === '32x32' && ico.some(f => f.width === 32), 'the link to favicon.ico says 32x32 (so Chrome and Edge take the SVG over it) and the file has that size');
+  // /icon.svg: the tab icon, white dots on a black tile, in a 32-pixel box (the picture the .ico is drawn from)
+  const svg = existsSync(file('/icon.svg')) ? readFileSync(file('/icon.svg'), 'utf8') : '';
+  ok(/^<svg xmlns="http:\/\/www\.w3\.org\/2000\/svg" viewBox="0 0 32 32">/.test(svg) && /\.tile\{fill:#000/.test(svg) && (svg.match(/<circle /g) || []).length === 3 && /<g fill="#fff"/.test(svg), '/icon.svg is the tab icon: three white dots on a black rounded tile');
+  // the PNGs: the sizes the links say
+  for (const l of linked.filter(x => x.type === 'image/png')) ok(JSON.stringify(png(l.href.replace(/^\//, ''))) === JSON.stringify(l.sizes), l.href + ' is a PNG of ' + l.sizes.join(' × '), png(l.href.replace(/^\//, '')));
+  ok(JSON.stringify(png('apple-touch-icon.png')) === JSON.stringify([180, 180]) && JSON.stringify(png('apple-touch-icon-precomposed.png')) === JSON.stringify([180, 180]), 'the apple-touch-icon at the root, and the older -precomposed name, are 180 × 180');
+  const bytes = f => readFileSync(join(WEB, f));
+  ok(bytes('apple-touch-icon.png').equals(bytes('icons/apple-touch-icon.png')) && bytes('apple-touch-icon-precomposed.png').equals(bytes('icons/apple-touch-icon.png')), 'both root apple-touch icons are the same picture as icons/apple-touch-icon.png');
+  // Both hosts hand out every icon, from the root, as a file with its own type and a day of cache: a browser and Google ask for these by default.
+  const TYPES_OF = { '/favicon.ico': /^image\/(x-icon|vnd\.microsoft\.icon)$/, '/apple-touch-icon.png': /^image\/png$/, '/apple-touch-icon-precomposed.png': /^image\/png$/, '/icon.svg': /^image\/svg\+xml$/, '/icons/icon-192.png': null, '/icons/apple-touch-icon.png': null };
+  for (const host of ['lucida.cards', 'app.lucida.cards']) for (const [path, type] of Object.entries(TYPES_OF)) {
+    const r = via(host, path), h = headersFor(config, path);
+    ok(r.type === 'file' && r.file === file(path) && (!type || type.test(h['content-type'] || '')) && /public, max-age=86400/.test(h['cache-control'] || ''), host + path + ' is the icon file (not a 404 page), with the right type and a day of cache', [r.type, h['content-type'], h['cache-control']]);
+  }
+  // robots.txt doesn't keep Google or anyone from them
+  const disallowed = txt => [...txt.matchAll(/^Disallow:\s*(\S*)/gim)].map(m => m[1]).filter(Boolean);
+  for (const [who, txt] of [['lucida.cards', read('site/robots.txt')], ['app.lucida.cards', read('robots-app.txt')]]) ok(Object.keys(TYPES_OF).every(path => !disallowed(txt).some(d => path.startsWith(d))), who + '’s robots.txt doesn’t block any icon', disallowed(txt));
+  // The app's own pages: its page (and so every public deck page and profile, which are that page with their words put in), and the one page it
+  // writes itself, name the same four icons; and its local server knows what an .ico and an .svg are.
+  const appHead = read('app.html'), handler = readFileSync(join(WEB, 'handler.mjs'), 'utf8');
+  ok(appHead.slice(0, appHead.indexOf('</head>')).includes(ICON_LINKS), 'web/app.html (the app, public decks, profiles) names the four icons');
+  ok(handler.includes('const GOOGLE_BACK = `<!doctype html>') && handler.slice(handler.indexOf('const GOOGLE_BACK')).split('<body')[0].includes(ICON_LINKS), 'the app’s sign-in page (GOOGLE_BACK in web/handler.mjs) names the four icons');
+  ok(/html = html\.replace\(\/<title>\[\^<\]\*<\\\/title>\/, \(\) => head\)/.test(handler), 'a public deck page changes only the <title> of web/app.html, so it keeps the icons');
+  ok(/'\.ico': 'image\/x-icon'/.test(handler) && /'\.svg': 'image\/svg\+xml'/.test(handler), 'the app’s own server gives an .ico and an .svg their types');
+}
 
 console.log('Visuals (design/site/_visuals.json, design/visuals.mjs, web/shots)');
 {

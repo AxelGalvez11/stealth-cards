@@ -292,6 +292,10 @@ async function signIn(req, res, path) {
 }
 
 const GOOGLE_BACK = `<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Signing in · Lucida</title>
+<link rel="icon" href="/favicon.ico" sizes="32x32">
+<link rel="icon" href="/icon.svg" type="image/svg+xml">
+<link rel="icon" href="/icons/icon-192.png" type="image/png" sizes="192x192">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <body style="margin: 0; height: 100vh; display: flex; align-items: center; justify-content: center; font: 15px Geist, -apple-system, system-ui, sans-serif; color: #8A8F98; color-scheme: light dark;">Signing in…
 <script>
 const p = new URLSearchParams(location.hash.slice(1)), fail = () => location.replace(p.get('error') === 'access_denied' ? '/sign-in' : '/sign-in?failed=1');
