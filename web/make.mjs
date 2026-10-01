@@ -170,8 +170,9 @@ export function transcriptUnits(text) {
 }
 // The number of characters the AI reads in a part's units.
 const sizeOf = units => units.reduce((n, u) => n + u.text.length + (u.at ? u.at.length + 6 : 0), 0);
-// How many cards to aim for: what was asked, or (Auto) about one for every 1,100 characters of text, a few for each photo or scanned page, 15 for a topic.
-const autoCount = (kind, chars, photos, scanned = 0) => Math.max(5, Math.min(MAKE_CARDS_MAX, kind === 'topic' ? 15 : kind === 'photo' ? photos * 6 : scanned ? scanned * 2 : Math.round(chars / 1100)));
+// How many cards to aim for: what was asked, or (Auto) about one for every 1,100 characters of text, a few for each photo or scanned page, 15 for a topic. With audio cards
+// on (words and phrases of a language, a list of them being the usual material) about one for every 250 characters, and at least 10.
+const autoCount = (kind, chars, photos, scanned = 0, audio = false) => Math.max(audio ? 10 : 5, Math.min(MAKE_CARDS_MAX, kind === 'topic' ? 15 : kind === 'photo' ? photos * 6 : scanned ? scanned * 2 : Math.round(chars / (audio ? 250 : 1100))));
 const LANGS = { en: 'English', es: 'Spanish', fr: 'French', de: 'German', it: 'Italian', pt: 'Portuguese', nl: 'Dutch', pl: 'Polish', tr: 'Turkish', ru: 'Russian', ar: 'Arabic',
   hi: 'Hindi', zh: 'Chinese', ja: 'Japanese', ko: 'Korean', vi: 'Vietnamese', id: 'Indonesian' };
 function cleanOptions(o) {
@@ -583,7 +584,7 @@ async function begin(uid, b, pro, ids) {
   const { out, opts } = m, J0 = Date.now();
   const totalChars = out.parts.reduce((n, p) => n + (p.chars || 0), 0);
   const scanned = out.parts.reduce((n, p) => n + (p.kind === 'scan' ? p.to - p.from + 1 : 0), 0);
-  const target = opts.count === 'auto' ? autoCount(out.kind, totalChars, out.photos, scanned) : opts.count;
+  const target = opts.count === 'auto' ? autoCount(out.kind, totalChars, out.photos, scanned, opts.kinds.includes('audio')) : opts.count;
   // 3. Count it for today, and make the job.
   const id = 'j' + randomBytes(9).toString('hex');
   const old = await inLib(uid, () => {
@@ -666,7 +667,7 @@ async function plan(uid, b) {
   if (title && J.name === 'YouTube video') J.name = title;
   J.parts = X.chunkUnits(units, { maxChars: CHUNK }).map(c => ({ kind: 'text', units: c, chars: sizeOf(c) }));
   const chars = J.parts.reduce((n, p) => n + p.chars, 0);
-  if (J.opts.count === 'auto') J.target = autoCount(J.kind, chars, 0);
+  if (J.opts.count === 'auto') J.target = autoCount(J.kind, chars, 0, 0, J.opts.kinds.includes('audio'));
   await putJson(uid, jobName(J.id), J);
   return summary(J);
 }
