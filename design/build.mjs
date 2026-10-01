@@ -844,7 +844,7 @@ ${moveTray('tray', false)}`, true);
 const libraryLogic = phone => `
 constructor(props) { super(props); this.state = { tag: 'All', view: props.view === 'List' ? 'list' : 'cards', openDeck: props.openTags ? 'cell' : null, moreOpen: !!props.moreTags, moreQ: '', q: '',
   level: ['new', 'easy', 'medium', 'hard'].includes(props.level) ? props.level : 'all', state: ['leech', 'paused'].includes(props.level) ? props.level : '', cardTags: [], deck: '', tagPickOpen: false, tagPickQ: '', deckPickOpen: false, deckPickQ: '', shown: 60, naming: props.naming ? 'new' : null, name: props.naming ? 'Biology' : '', namingAt: 0,
-  moveDeck: props.moveOpen ? 'cell' : null, moveAfter: null }; }
+  moveDeck: props.moveOpen ? ({ f1: 'jlpt', f2: 'orgo' }[props.folder] || 'cell') : null, moveAfter: null }; }
 renderVals() {
   ${T}${DB_JS}
   ${TAG_JS}
@@ -894,7 +894,8 @@ renderVals() {
       toggleTags: () => this.setState({ openDeck: open ? null : d.id, moreOpen: false, moveDeck: null }),
       allTags: tg.map(g => ({ ...tagChip(g), pick: () => pickTag(g) })),
       moveOpen: moving, moveExpanded: moving ? 'true' : 'false', toggleMove: () => this.setState({ moveDeck: moving ? null : d.id, openDeck: null }),
-      moveTo: [{ id: null, name: 'No folder' }, ...folders].map(f => ({ label: f.name, on: (d.folder || null) === f.id, pressed: (d.folder || null) === f.id ? 'true' : 'false', pick: move(f.id) })),
+      // "Remove from folder" only shows for a deck that's in one (a deck in none just doesn't get it); it isn't ticked, the folder the deck is in is.
+      moveTo: [...(d.folder ? [{ id: null, name: 'Remove from folder' }] : []), ...folders].map(f => ({ label: f.name, on: (d.folder || null) === f.id, pressed: (d.folder || null) === f.id ? 'true' : 'false', pick: move(f.id) })),
       newFolder: () => openNaming('new', d.id),
       total: d.totalLabel, ret: d.ret == null ? '—' : d.ret + '%', whose, hasWhose: !!whose,
       line: (whose ? whose + ' · ' : '') + d.totalLabel + (d.total === 1 ? ' card · ' : ' cards · ') + d.fresh + ' new' + (d.ret == null ? '' : ' · ' + d.ret + '%'),
@@ -1189,7 +1190,7 @@ const COVER_LOGIC = `
     deckPick: tagPicker(tagList, next => up({ tags: next }), 'dp', db.mock ? null : db.tags()),
     exportDeck: () => db.act.exportDeck(dk.id), deleteDeck: () => db.act.deleteDeck(dk.id), deleteLabel: lk && !lk.gone ? 'Remove from library' : 'Delete deck',
     // The deck's folder, and its background for Learn mode, flashcards, and Live.
-    folderChips: [{ id: null, name: 'No folder' }, ...db.folders()].map(f => { const on = (dk.folder || null) === f.id; return { label: f.name, pressed: on ? 'true' : 'false', bg: on ? t.inv : t.surf, fg: on ? t.invText : t.text, pick: () => db.act.moveDeck(dk.id, f.id) }; }),
+    folderChips: [...(dk.folder ? [{ id: null, name: 'Remove from folder' }] : []), ...db.folders()].map(f => { const on = (dk.folder || null) === f.id; return { label: f.name, pressed: on ? 'true' : 'false', bg: on ? t.inv : t.surf, fg: on ? t.invText : t.text, pick: () => db.act.moveDeck(dk.id, f.id) }; }),
     noFolders: !db.folders().length, ...bgPick(dk, S),
     deckLine: plural(dk.total, 'card').replace(String(dk.total), dk.totalLabel) + (lk ? ' · from ' + lk.owner.name : dk.aiCount ? ' · ' + dk.aiCount + ' added by your AI' : ''),
     deckLineShort: plural(dk.total, 'card').replace(String(dk.total), dk.totalLabel) + (dk.aiCount ? ' · ' + dk.aiCount + ' from your AI' : ''),
@@ -7834,8 +7835,8 @@ renderVals() {
   const cp = {
     open: cpOpen, from: cardsLine + ' from ' + ownerName, name: cpName, setName: e => set({ cpName: val(e) }),
     nameRef: el => { if (!el || db.mock || !this.state.cpAt || this.cpFocus === this.state.cpAt) return; this.cpFocus = this.state.cpAt; el.focus(); el.select(); },
-    folderLabel: (folders.find(f => f.id === folderId) || {}).name || 'No folder', foldersOpen: !!st.cpFolders, foldersExpanded: st.cpFolders ? 'true' : 'false', toggleFolders: () => set({ cpFolders: !st.cpFolders }),
-    folders: [{ id: '', name: 'No folder' }, ...folders].map(f => ({ name: f.name, sel: f.id === folderId ? 'true' : 'false', bg: f.id === folderId ? t.surf : 'transparent', pick: () => set({ cpFolder: f.id, cpFolders: false }) })),
+    folderLabel: (folders.find(f => f.id === folderId) || {}).name || 'Library', foldersOpen: !!st.cpFolders, foldersExpanded: st.cpFolders ? 'true' : 'false', toggleFolders: () => set({ cpFolders: !st.cpFolders }),
+    folders: [{ id: '', name: 'Library' }, ...folders].map(f => ({ name: f.name, sel: f.id === folderId ? 'true' : 'false', bg: f.id === folderId ? t.surf : 'transparent', pick: () => set({ cpFolder: f.id, cpFolders: false }) })),
     updatesLabel: 'Get ' + firstName(ownerName) + '’s updates', updatesSw: sw(updates), toggleUpdates: () => set({ cpUpdates: !updates }),
     cancel: () => set({ cpOpen: false, cpFolders: false, cpErr: '' }), save: saveCopy, nameKey: e => { if (e.key === 'Enter') { e.preventDefault(); saveCopy(); } },
     action: st.cpBusy ? 'Copying…' : 'Copy deck', off: String(cpName).trim() && !st.cpBusy ? 'false' : 'true', op: String(cpName).trim() ? '1' : '.4', hasError: !!st.cpErr, error: st.cpErr || ''
@@ -8797,7 +8798,7 @@ const files = {
   'WebLibraryLeeches': ['Web · Library · all cards · cards you keep forgetting (Pause all)', attrOf('WebDecks', W, H, 'mode="cards" level="leech"'), { logic: darkLogic, css: DRAG_CSS, w: W, h: H }],
   'WebLibraryFolder': ['Web · Library · a folder', attrOf('WebDecks', W, H, 'folder="f1"'), { logic: darkLogic, css: DRAG_CSS, w: W, h: H }],
   'WebLibraryNewFolder': ['Web · Library · New folder popup', attrOf('WebDecks', W, H, 'naming="{{yes}}"'), { logic: darkLogic, css: DRAG_CSS, w: W, h: H }],
-  'WebLibraryMove': ['Web · Library · a deck’s ⋯ menu (move it to a folder)', attrOf('WebDecks', W, H, 'move-open="{{yes}}"'), { logic: darkLogic, css: DRAG_CSS, w: W, h: H }],
+  'WebLibraryMove': ['Web · Library · a deck’s ⋯ menu (move it to a folder, or take it out of one)', attrOf('WebDecks', W, H, 'folder="f1" move-open="{{yes}}"'), { logic: darkLogic, css: DRAG_CSS, w: W, h: H }],
   'WebDeckMoveTray': ['Web · Deck · Move to tray (while a card is dragged)', attrOf('WebDeck', W, H, 'tray-open="{{yes}}"'), { logic: darkLogic, css: NUM_CSS + DRAG_CSS, w: W, h: H }],
   'WebDecksTags': ['Web · Library · a deck with 11 tags (+9 shows them all)', attrOf('WebDecks', W, H, 'open-tags="{{yes}}"'), { logic: darkLogic, css: DRAG_CSS, w: W, h: H }],
   'WebDecksMoreTags': ['Web · Library · More (find any tag)', attrOf('WebDecks', W, H, 'more-tags="{{yes}}"'), { logic: darkLogic, css: DRAG_CSS, w: W, h: H }],
