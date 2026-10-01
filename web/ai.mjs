@@ -18,17 +18,23 @@ export async function explain(card, { deck = '', question = '' } = {}) {
   const box = card.kind === 'image' && card.box != null ? (card.boxes || []).find(b => b.id === card.box) : null;
   const front = card.kind === 'cloze' ? plain(card.text) : plain(card.front), back = card.kind === 'cloze' ? R.blanks(card.text, { math: 'show' }).join(', ') : box ? box.label : plain(card.back);
   const lines = [deck && 'Deck: ' + deck, 'Card: ' + (front || (box ? '(a picture with one part hidden: what is it?)' : '(a picture)')), 'Answer: ' + back, card.note && 'Note on the card: ' + plain(card.note), question && question !== front && 'Asked as: ' + question].filter(Boolean);
-  // OPENROUTER_BASE lets tests answer instead of OpenRouter.
-  const res = await fetch((process.env.OPENROUTER_BASE || 'https://openrouter.ai/api/v1') + '/chat/completions', {
-    method: 'POST', signal: AbortSignal.timeout(30000),
-    headers: { authorization: 'Bearer ' + process.env.OPENROUTER_API_KEY, 'content-type': 'application/json', 'HTTP-Referer': 'https://lucida.cards', 'X-Title': 'Lucida' },
-    body: JSON.stringify({ model: MODEL(), models: [...new Set([MODEL(), FALLBACK])], provider: PROVIDER, reasoning: { enabled: false },
-      max_tokens: 600, temperature: 0.3, messages: [{ role: 'system', content: SYSTEM }, { role: 'user', content: lines.join('\n') }] })
-  }).catch(() => null);
-  if (!res || !res.ok) throw new Error('The AI didn’t answer. Try again in a moment.');
-  const j = await res.json().catch(() => ({}));
-  // A host that thinks anyway may put its thinking in the answer between <think> marks: only the answer is kept.
-  const text = String((((j.choices || [])[0] || {}).message || {}).content || '').replace(/<think>[\s\S]*?(<\/think>|$)/g, '').trim();
+  const messages = [{ role: 'system', content: SYSTEM }, { role: 'user', content: lines.join('\n') }];
+  // One request; '' when nothing usable came back. OPENROUTER_BASE lets tests answer instead of OpenRouter.
+  const ask = async (how, ms) => {
+    const res = await fetch((process.env.OPENROUTER_BASE || 'https://openrouter.ai/api/v1') + '/chat/completions', {
+      method: 'POST', signal: AbortSignal.timeout(ms),
+      headers: { authorization: 'Bearer ' + process.env.OPENROUTER_API_KEY, 'content-type': 'application/json', 'HTTP-Referer': 'https://lucida.cards', 'X-Title': 'Lucida' },
+      body: JSON.stringify({ ...how, max_tokens: 600, temperature: 0.3, messages })
+    }).catch(() => null);
+    if (!res || !res.ok) return '';
+    const j = await res.json().catch(() => ({}));
+    // A host that thinks anyway may put its thinking in the answer between <think> marks: only the answer is kept.
+    return String((((j.choices || [])[0] || {}).message || {}).content || '').replace(/<think>[\s\S]*?(<\/think>|$)/g, '').trim();
+  };
+  // The careful request first; if nothing comes back, V4 Flash asked plainly (as Explain always did), so the choice
+  // of hosts can never stop an explanation. Both together stay inside a minute.
+  const text = await ask({ model: MODEL(), models: [...new Set([MODEL(), FALLBACK])], provider: PROVIDER, reasoning: { enabled: false } }, 20000)
+    || await ask({ model: FALLBACK }, 25000);
   if (!text) throw new Error('The AI didn’t answer. Try again in a moment.');
   return text.slice(0, 1500);
 }
