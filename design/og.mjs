@@ -29,8 +29,9 @@ const dir = mkdtempSync(join(tmpdir(), 'lucida-og-'));
 mkdirSync(OUT, { recursive: true }); mkdirSync(ICONS, { recursive: true });
 
 // Smaller files: a picture with smooth gradients keeps its look with 256 colors (ImageMagick, if it's installed). No dithering: it
-// brightens the colors and leaves stray dots of another hue; the picture's own light grain breaks up the steps instead.
-const shrink = file => { try { execFileSync('magick', [file, '-colors', '256', '+dither', 'PNG8:' + file], { stdio: 'ignore' }); } catch {} };
+// brightens the colors and leaves stray dots of another hue; the picture's own light grain breaks up the steps instead. `-strip` leaves out
+// the time stamps ImageMagick writes into a file, so drawing the same picture again gives the same bytes (and git sees no change).
+const shrink = file => { try { execFileSync('magick', [file, '-colors', '256', '+dither', '-strip', 'PNG8:' + file], { stdio: 'ignore' }); } catch {} };
 const manifest = {};
 // Which drawing the pictures come from: SiteOg's own code writes it into its logic (`// og-art: …`).
 const art = (readFileSync(new URL('../design/canvas/project/SiteOg.dc.html', import.meta.url), 'utf8').match(/og-art: ([0-9a-f]+)/) || [])[1];
