@@ -5824,60 +5824,144 @@ renderVals() { ${T}
 // pages' words are embedded in each board (`site-data`); design/to-site.mjs stops if a page file changed after the boards were
 // built. SiteOg draws any page's 1200 × 630 link-preview picture (design/og.mjs). Board heights are measured
 // (design/site-measure.mjs → site-heights.json): a frame must be as tall as its tallest page.
+//
+// A page reads like an article (the owner, 2026-09-30, on an iPhone, after higgsfield.ai/blog: "more of an article type", since
+// the boxed table with its small gray labels was dense and hard to read):
+//   - one column, its words left-aligned: 680 px at most on a computer, the phone's width less 20 px a side on a phone;
+//   - breadcrumbs as small pills, a big title, chips (Lucida's mark and name, the day it was updated, minutes to read), the lead;
+//   - the page's link-preview picture (web/og/<page>.png) under the header as the hero: an <img> on lucida.cards, and on the canvas
+//     the SiteOg board itself (a dc-import, drawn at its own size and scaled to the column), so both show the same picture;
+//   - tables without a box: a header row and thin lines on a computer; on a phone each row is the feature in bold and then a
+//     paragraph per app that starts with the app's name in bold (still one <table>, restyled by CSS);
+//   - questions as h3 headings with their answers under thin lines; related pages as cards (their picture, title and one line);
+//     sources last, small and muted.
+// Type sizes are CSS classes with container queries (a phone-sized frame and a narrow window both count as a phone).
 const SITE_H_FILE = new URL('./site-heights.json', import.meta.url);
 const SITE_H = existsSync(SITE_H_FILE) ? JSON.parse(readFileSync(SITE_H_FILE, 'utf8')) : {};
 const SITE_NAMES = { SiteCompare: 'Comparisons, alternatives, the hubs and the 404', SiteFeature: 'Features and who Lucida is for', SiteFaq: 'FAQ' };
 // Words with [links](…) and **bold** in them, as pieces (design/site.mjs partsOf).
-const spParts = key => `<sc-for list="{{${key}}}" as="w"><sc-if value="{{w.plain}}">{{w.text}}</sc-if><sc-if value="{{w.href}}"><a href="{{w.href}}" style="text-decoration: underline; text-underline-offset: 3px; text-decoration-thickness: 1px;">{{w.text}}</a></sc-if><sc-if value="{{w.bold}}"><strong style="font-weight: 600;">{{w.text}}</strong></sc-if></sc-for>`;
-const spH2 = (text, size = 'clamp(26px, 3.4cqw, 38px)') => `<h2 style="margin: 0; font-size: ${size}; font-weight: 600; line-height: 1.08; letter-spacing: -.035em; text-wrap: balance;">${text}</h2>`;
-const spBox = (maxW, top, body) => `<section style="max-width: ${maxW}px; margin: 0 auto; box-sizing: border-box; padding: ${top} clamp(20px, 4cqw, 48px) 0;">${body}</section>`;
-const spCard = (href, title, desc) => `<a class="sp-card" href="{{${href}}}" style="box-sizing: border-box; padding: 24px; border-radius: 24px; background: {{t.surf}}; display: flex; flex-direction: column; gap: 8px; min-width: 0;"><h3 style="margin: 0; font-size: 17px; font-weight: 600; letter-spacing: -.01em;">{{${title}}}</h3><p style="margin: 0; font-size: 15px; line-height: 1.5; color: {{t.muted}};">{{${desc}}}</p><span style="margin-top: 6px; font-size: 14px; font-weight: 600;">Read more →</span></a>`;
-const spGrid = (body, min = 300) => `<div style="margin-top: 28px; display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, ${min}px), 1fr)); gap: 16px;">${body}</div>`;
-const spLink = 'text-decoration: underline; text-underline-offset: 3px; text-decoration-thickness: 1px;';
-const spSections = key => `<sc-for list="{{${key}}}" as="s" hint-placeholder-count="3">${spBox(760, 'clamp(44px, 7cqw, 72px)', `<sc-if value="{{s.h2}}" hint-placeholder-val="{{ true }}"><h2 id="{{s.id}}" style="margin: 0 0 4px; font-size: clamp(26px, 3.4cqw, 38px); font-weight: 600; line-height: 1.08; letter-spacing: -.035em; text-wrap: balance;">{{s.h2}}</h2></sc-if>
-  <sc-for list="{{s.paras}}" as="p"><p style="margin: 16px 0 0; font-size: 17px; line-height: 1.65; text-wrap: pretty;">${spParts('p.parts')}</p></sc-for>
-  <sc-if value="{{s.hasBullets}}" hint-placeholder-val="{{ false }}"><ul style="margin: 16px 0 0; padding-left: 22px; font-size: 17px; line-height: 1.6;"><sc-for list="{{s.bullets}}" as="b"><li style="margin-top: 10px; padding-left: 4px;">${spParts('b.parts')}</li></sc-for></ul></sc-if>`)}</sc-for>`;
+const spParts = key => `<sc-for list="{{${key}}}" as="w"><sc-if value="{{w.plain}}">{{w.text}}</sc-if><sc-if value="{{w.href}}"><a class="sp-u" href="{{w.href}}">{{w.text}}</a></sc-if><sc-if value="{{w.bold}}"><strong>{{w.text}}</strong></sc-if></sc-for>`;
+const spH2 = (text, attrs = '') => `<h2 class="sp-h2"${attrs}>${text}</h2>`;
+// A page's picture: an <img> of its link-preview picture on lucida.cards (`site`), and on the canvas the SiteOg board itself, drawn at
+// 1200 × 630 and scaled down by `scale` (CSS `--k`) to the width it has there. `load` is how the <img> loads: the hero at once, cards lazily.
+const spPic = (key, cls, alt, load, scale) => `<sc-if value="{{site}}" hint-placeholder-val="{{ false }}"><img class="sp-pic ${cls}" src="{{${key}.src}}" alt="${alt}" width="1200" height="630" ${load} decoding="async"></sc-if><sc-if value="{{canvas}}" hint-placeholder-val="{{ true }}"><div class="sp-pic sp-og ${cls}" style="--k: {{${scale}}};"><div class="sp-og-in"><dc-import name="SiteOg" page="{{${key}.key}}" hint-size="1200px,630px"></dc-import></div></div></sc-if>`;
+// A related page as a card: its picture, then its title and one line.
+const spCard = k => `<a class="sp-card" href="{{${k}.href}}"><sc-if value="{{${k}.hasPic}}" hint-placeholder-val="{{ true }}">${spPic(k, 'sp-card-img', '', 'loading="lazy"', 'cardK')}</sc-if><h3 class="sp-card-t">{{${k}.title}}</h3><p class="sp-card-d">{{${k}.desc}}</p></a>`;
+const spCards = (list, hint = '') => `<div class="sp-cards"><sc-for list="{{${list}}}" as="k"${hint}>${spCard('k')}</sc-for></div>`;
+// A question with its answer, under a thin line (an h3 under an h2; an h2 when nothing else heads the group).
+const spQ = level => `<div id="{{f.id}}" class="sp-q"><h${level} class="sp-h3">{{f.q}}</h${level}><sc-for list="{{f.paras}}" as="p"><p class="sp-p">${spParts('p.parts')}</p></sc-for></div>`;
+const spSections = key => `<sc-for list="{{${key}}}" as="s" hint-placeholder-count="3"><section class="sp-col">
+  <sc-if value="{{s.h2}}" hint-placeholder-val="{{ true }}">${spH2('{{s.h2}}', ' id="{{s.id}}"')}</sc-if>
+  <sc-for list="{{s.paras}}" as="p"><p class="sp-p">${spParts('p.parts')}</p></sc-for>
+  <sc-if value="{{s.hasBullets}}" hint-placeholder-val="{{ false }}"><ul class="sp-ul"><sc-for list="{{s.bullets}}" as="b"><li class="{{b.cls}}">${spParts('b.parts')}</li></sc-for></ul></sc-if>
+</section></sc-for>`;
+// On a narrow page a table's rows stack: the feature in bold, then a paragraph per app that begins with the app's name in bold.
+const spStack = s => [
+  `${s} table,${s} tbody,${s} tr,${s} th,${s} td{display:block}`,
+  `${s} thead{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}`,
+  `${s} tr{padding:20px 0;border-top:1px solid var(--sp-line)}`,
+  `${s} th,${s} td{padding:0;border:0}`,
+  `${s} tbody th{width:auto;margin-bottom:4px;font-size:18px;line-height:1.4;font-weight:700}`,
+  `${s} td{margin-top:10px;font-size:17px;line-height:1.6}${s} td:empty{display:none}`,
+  `${s} td[data-label]:not([data-label=""])::before{content:attr(data-label);margin-right:.35em;font-weight:600}`
+].join('');
 const SITE_CSS = [
-  '.sp{container-type:inline-size}',
-  '.sp-crumbs li:not(:last-child)::after{content:"/";margin:0 8px;opacity:.4}',
+  '.sp{container-type:inline-size;-webkit-text-size-adjust:100%}',
   '.sp-sr{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}',
-  // On a narrow page a comparison's rows stack: the feature, then each app's answer under its name.
+  '.sp [id]{scroll-margin-top:24px}',
+  // The column: 680 px of words (720 with its padding) in the middle of the page. A wide table breaks out of it.
+  '.sp-col{max-width:720px;margin:0 auto;box-sizing:border-box;padding:0 20px;overflow-wrap:break-word}',
+  '.sp-col.sp-tw{max-width:1080px}.sp-in{max-width:680px;margin:0 auto}',
+  '.sp-u{text-decoration:underline;text-underline-offset:3px;text-decoration-thickness:1px}',
+  '.sp strong{font-weight:600}',
+  // The header: breadcrumb pills, the title, chips, the lead.
+  '.sp-top{padding-top:28px}',
+  // One row: the last pill (the page's own title) shortens with "…" when the row is full.
+  '.sp-crumbs{margin:0;padding:0;list-style:none;display:flex;align-items:center;gap:6px;font-size:14px}',
+  '.sp-crumbs li{display:flex;align-items:center;gap:6px;flex:none}.sp-crumbs li:last-child{flex:0 1 auto;min-width:0}.sp-crumbs li:not(:last-child)::after{content:"/";color:var(--sp-muted);opacity:.5}',
+  '.sp-crumbs a,.sp-crumbs span{display:block;box-sizing:border-box;height:30px;line-height:30px;padding:0 12px;border-radius:999px;background:var(--sp-surf);color:var(--sp-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}',
+  '.sp-crumbs [aria-current]{background:var(--sp-surf2);color:var(--sp-text);font-weight:600}',
+  '.sp-h1{margin:20px 0 0;font-size:33px;font-weight:700;line-height:1.14;letter-spacing:-.03em;text-wrap:balance}',
+  '.sp-chips{margin-top:20px;display:flex;flex-wrap:wrap;gap:8px}',
+  '.sp-chip{display:inline-flex;align-items:center;gap:6px;height:30px;box-sizing:border-box;padding:0 12px;border-radius:999px;background:var(--sp-surf);font-size:14px;line-height:1;color:var(--sp-muted);white-space:nowrap}',
+  '.sp-chip svg{flex-shrink:0}.sp-chip-a{color:var(--sp-text);font-weight:600}',
+  '.sp-lead{margin:20px 0 0;font-size:19px;line-height:1.6;color:var(--sp-muted);text-wrap:pretty}',
+  // The pictures: the hero under the header, and the cards' (an <img>, or on the canvas the SiteOg board scaled by --k).
+  '.sp-pic{display:block;width:100%;height:auto;aspect-ratio:1200/630;border-radius:20px;background:var(--sp-surf);outline:1px solid rgba(0,0,0,.07);outline-offset:-1px}',
+  '.sp-hero{margin-top:28px}.sp-card-img{border-radius:16px}',
+  '.sp-og{position:relative;height:auto;overflow:hidden}.sp-og-in{position:absolute;left:0;top:0;width:1200px;height:630px;transform:scale(var(--k));transform-origin:0 0}',
+  // The words.
+  '.sp-h2{margin:48px 0 0;font-size:27px;font-weight:700;line-height:1.2;letter-spacing:-.025em;text-wrap:balance}',
+  '.sp-h3{margin:0;font-size:19px;font-weight:600;line-height:1.35;letter-spacing:-.01em;text-wrap:balance}',
+  '.sp-p{margin:18px 0 0;font-size:17px;line-height:1.7;text-wrap:pretty}.sp-h2+.sp-p,.sp-h2+.sp-ul{margin-top:16px}',
+  '.sp-ul{margin:18px 0 0;padding-left:22px;font-size:17px;line-height:1.7}.sp-ul li{margin-top:12px;padding-left:4px}.sp-ul li:first-child{margin-top:0}',
+  // A step that begins with its own number ("1. Open Connect AI.") has no bullet dot, and sits flush with the words.
+  '.sp-ul li.sp-n{list-style:none;margin-left:-22px;padding-left:0}',
+  // Questions: a heading and its answer, under a thin line.
+  '.sp-q{padding:22px 0 26px;border-top:1px solid var(--sp-line)}.sp-q .sp-p{margin-top:10px}.sp-h2+.sp-q{margin-top:20px}',
+  '.sp-pills{display:flex;flex-wrap:wrap;gap:8px;margin-top:28px}',
+  '.sp-pill{display:inline-flex;align-items:center;height:38px;box-sizing:border-box;padding:0 16px;border-radius:999px;background:var(--sp-surf);font-size:14px;font-weight:600}',
+  '.sp-jump{margin:28px 0 0;padding:0;list-style:none;font-size:16px;line-height:1.5}.sp-jump li{padding:6px 0}',
+  // Tables have no box: a header row and thin lines.
+  '.sp-table{margin-top:24px}',
+  '.sp-table table{width:100%;border-collapse:collapse;text-align:left;font-size:16px;line-height:1.55}',
+  '.sp-table th,.sp-table td{padding:14px 20px 14px 0;vertical-align:top;border-top:1px solid var(--sp-line)}',
+  '.sp-table td:last-child{padding-right:0}.sp-table thead th{padding-top:0;padding-bottom:12px;border-top:0;font-weight:600}',
+  '.sp-table tbody th{width:var(--first);font-weight:600}',
+  // Cards: two across on a computer, one on a phone.
+  '.sp-cards{margin-top:24px;display:grid;grid-template-columns:minmax(0,1fr);gap:32px}',
+  '.sp-card{display:block;min-width:0}.sp-card-t{margin:14px 0 0;font-size:19px;font-weight:600;line-height:1.3;letter-spacing:-.01em;text-wrap:balance}',
+  '.sp-card-d{margin:6px 0 0;font-size:16px;line-height:1.55;color:var(--sp-muted);display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden}',
+  // Sources: small and muted, last.
+  '.sp-src{margin-top:64px;color:var(--sp-muted)}.sp-src h2{margin:0;font-size:20px;font-weight:600;letter-spacing:-.015em;color:var(--sp-text)}',
+  '.sp-src p{margin:8px 0 0;font-size:14px;line-height:1.55}.sp-src ol{margin:14px 0 0;padding-left:22px;font-size:14px;line-height:1.55}.sp-src li{margin-top:8px;padding-left:4px}',
+  // A computer: a little larger, two cards across, and a wide table (four or more columns) may be wider than the words.
+  '@container (min-width: 761px){.sp-top{padding-top:56px}.sp-h1{margin-top:24px;font-size:46px;line-height:1.1;letter-spacing:-.035em}.sp-lead{margin-top:24px;font-size:21px}',
+  '.sp-hero{margin-top:36px}.sp-pic{border-radius:24px}.sp-card-img{border-radius:16px}',
+  '.sp-h2{margin-top:64px;font-size:32px}.sp-h3{font-size:20px}.sp-p,.sp-ul{font-size:18px}',
+  '.sp-cards{grid-template-columns:repeat(2,minmax(0,1fr));gap:40px 24px}.sp-src{margin-top:80px}}',
+  // On a narrow page (a phone, or a window under 761 px) the header's nav goes, the band's art changes, and tables stack.
   '@container (max-width: 760px){.sp-nav{display:none!important}.sp-head{height:64px!important}.sp-band-wide{display:none!important}.sp-band-tall{display:block!important}',
-  '.sp-table table,.sp-table tbody,.sp-table tr,.sp-table th,.sp-table td{display:block}.sp-table thead{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}',
-  '.sp-table tr{padding:18px 20px}.sp-table tbody tr+tr{border-top:1px solid var(--sp-line)}.sp-table tbody th{width:auto!important;padding:0 0 4px!important;border:0!important;background:none!important;font-size:17px!important}',
-  '.sp-table td{padding:10px 0 0!important;border:0!important;background:none!important}.sp-table td:empty{display:none}.sp-table td::before{content:attr(data-label);display:block;margin-bottom:2px;font-size:12px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--sp-muted)}}',
+  spStack('.sp-table'), '}',
+  // Six or more columns need room: they stack on any window under 1001 px.
+  '@container (max-width: 1000px){' + spStack('.sp-tx .sp-table') + '.sp-tx.sp-col{max-width:720px}}',
   SKY_CSS, NO_RISE
 ].join('');
-const sitePage = (w, h) => `<div class="sp" style="position: relative; isolation: isolate; width: ${w}px; height: ${h}px; box-sizing: border-box; font-family: ${FONT}; background: {{t.bg}}; color: {{t.text}}; overflow: hidden; --sp-line: {{t.line}}; --sp-muted: {{t.muted}};">
+const sitePage = (w, h) => `<div class="sp" style="position: relative; isolation: isolate; width: ${w}px; height: ${h}px; box-sizing: border-box; font-family: ${FONT}; background: {{t.bg}}; color: {{t.text}}; overflow: hidden; --sp-line: {{t.line}}; --sp-muted: {{t.muted}}; --sp-surf: {{t.surf}}; --sp-surf2: {{t.surf2}}; --sp-text: {{t.text}};">
 ${skyLayer(false)}
 <header class="sp-head" style="max-width: 1344px; margin: 0 auto; height: 76px; box-sizing: border-box; padding: 0 clamp(20px, 4cqw, 48px); display: flex; align-items: center; justify-content: space-between; gap: 12px;">
   <a href="{{links.home}}" aria-label="Lucida home">${logo(30)}</a>
   <nav aria-label="Main" style="display: flex; align-items: center; gap: 4px;"><sc-for list="{{nav}}" as="n" hint-placeholder-count="3"><a class="sp-nav" href="{{n.href}}" style="height: 36px; padding: 0 14px; display: inline-flex; align-items: center; border-radius: 999px; font-size: 14px; color: {{t.text}};">{{n.label}}</a></sc-for><a href="{{links.signIn}}" style="height: 36px; padding: 0 14px; display: inline-flex; align-items: center; border-radius: 999px; font-size: 14px; color: {{t.text}};">Sign in</a>${landPill('Get started', '{{links.start}}', true, 36)}</nav>
 </header>
 <main>
-<section style="padding: clamp(32px, 6cqw, 80px) clamp(20px, 4cqw, 48px) 0; display: flex; flex-direction: column; align-items: center; text-align: center;">
-  <nav aria-label="Breadcrumb"><ol class="sp-crumbs" style="margin: 0; padding: 0; list-style: none; display: flex; flex-wrap: wrap; justify-content: center; font-size: 14px; color: {{t.muted}};"><sc-for list="{{crumbs}}" as="c" hint-placeholder-count="3"><li><sc-if value="{{c.link}}"><a href="{{c.href}}">{{c.label}}</a></sc-if><sc-if value="{{c.current}}"><span aria-current="page">{{c.label}}</span></sc-if></li></sc-for></ol></nav>
-  <h1 style="margin: 20px 0 0; max-width: 1000px; font-size: clamp(36px, 5.6cqw, 68px); font-weight: 600; line-height: 1.02; letter-spacing: -.05em; text-wrap: balance;">{{page.h1}}</h1>
-  <p style="margin: 22px 0 0; max-width: 680px; font-size: clamp(17px, 1.8cqw, 20px); line-height: 1.5; color: {{t.muted}}; text-wrap: pretty;">${spParts('page.lead')}</p>
-  <sc-if value="{{page.updatedLabel}}" hint-placeholder-val="{{ true }}"><p style="margin: 16px 0 0; font-size: 14px; color: {{t.muted}};">Updated {{page.updatedLabel}}</p></sc-if>
+<section class="sp-col sp-top">
+  <nav aria-label="Breadcrumb"><ol class="sp-crumbs"><sc-for list="{{crumbs}}" as="c" hint-placeholder-count="3"><li><sc-if value="{{c.link}}"><a href="{{c.href}}">{{c.label}}</a></sc-if><sc-if value="{{c.current}}"><span aria-current="page">{{c.label}}</span></sc-if></li></sc-for></ol></nav>
+  <h1 class="sp-h1">{{page.h1}}</h1>
+  <sc-if value="{{hasMeta}}" hint-placeholder-val="{{ true }}"><div class="sp-chips"><span class="sp-chip sp-chip-a">${mark(13)}Lucida</span><span class="sp-chip"><time datetime="{{page.updated}}" title="Updated {{page.updatedShort}}">{{page.updatedShort}}</time></span><span class="sp-chip">${svg(I.today, 14, 1.8)}{{page.minutes}} min read</span></div></sc-if>
+  <p class="sp-lead">${spParts('page.lead')}</p>
 </section>
-<sc-if value="{{hasTable}}" hint-placeholder-val="{{ true }}">${spBox('{{table.width}}', 'clamp(40px, 6cqw, 64px)', `${spH2('At a glance')}
-  <div class="sp-table" style="margin-top: 24px; border-radius: 28px; background: {{t.bg}}; box-shadow: 0 0 0 1px {{t.line}}, 0 18px 44px -24px rgba(0,0,0,.25); overflow: hidden;">
-    <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 15px; line-height: 1.5;">
-      <thead><tr><sc-for list="{{table.head}}" as="c" hint-placeholder-count="3"><th scope="col" class="{{c.cls}}" style="padding: 18px 22px; background: {{c.bg}}; font-size: 15px; font-weight: 600;">{{c.label}}</th></sc-for></tr></thead>
-      <tbody><sc-for list="{{table.rows}}" as="r" hint-placeholder-count="6"><tr><th scope="row" style="width: {{table.first}}; padding: 16px 22px; vertical-align: top; border-top: 1px solid {{t.line}}; background: {{r.bg}}; font-weight: 600;">{{r.label}}</th><sc-for list="{{r.cells}}" as="c" hint-placeholder-count="2"><td data-label="{{c.col}}" style="padding: 16px 22px; vertical-align: top; border-top: 1px solid {{t.line}}; background: {{c.bg}};">${spParts('c.parts')}</td></sc-for></tr></sc-for></tbody>
+<sc-if value="{{hasHero}}" hint-placeholder-val="{{ true }}"><section class="sp-col">${spPic('pic', 'sp-hero', '{{pic.alt}}', 'fetchpriority="high"', 'pic.k')}</section></sc-if>
+<sc-if value="{{hasTable}}" hint-placeholder-val="{{ true }}"><section class="sp-col{{table.cls}}">
+  <div class="sp-in">${spH2('At a glance')}</div>
+  <div class="sp-table">
+    <table style="--first: {{table.first}};">
+      <thead><tr><sc-for list="{{table.head}}" as="c" hint-placeholder-count="3"><th scope="col"><sc-if value="{{c.blank}}"><span class="sp-sr">Feature</span></sc-if>{{c.label}}</th></sc-for></tr></thead>
+      <tbody><sc-for list="{{table.rows}}" as="r" hint-placeholder-count="6"><tr><th scope="row">{{r.label}}</th><sc-for list="{{r.cells}}" as="c" hint-placeholder-count="2"><td data-label="{{c.col}}">${spParts('c.parts')}</td></sc-for></tr></sc-for></tbody>
     </table>
-  </div>`)}</sc-if>
-<sc-for list="{{groups}}" as="g" hint-placeholder-count="1">${spBox(1040, 'clamp(40px, 6cqw, 64px)', `${spH2('{{g.title}}')}${spGrid(`<sc-for list="{{g.cards}}" as="k" hint-placeholder-count="3">${spCard('k.href', 'k.title', 'k.desc')}</sc-for>`)}`)}</sc-for>
+  </div>
+</section></sc-if>
+<sc-for list="{{groups}}" as="g" hint-placeholder-count="1"><section class="sp-col">${spH2('{{g.title}}')}${spCards('g.cards', ' hint-placeholder-count="3"')}</section></sc-for>
 ${spSections('sections')}
-<sc-if value="{{hasFaqPage}}" hint-placeholder-val="{{ false }}">${spBox(760, 'clamp(32px, 5cqw, 48px)', `<sc-if value="{{hasJumpPills}}"><nav aria-label="Jump to a group of questions" style="display: flex; flex-wrap: wrap; gap: 8px;"><sc-for list="{{faqGroups}}" as="g"><a href="#{{g.id}}" style="height: 38px; padding: 0 16px; box-sizing: border-box; display: inline-flex; align-items: center; border-radius: 999px; background: {{t.surf}}; font-size: 14px; font-weight: 600;">{{g.title}}</a></sc-for></nav></sc-if>
-  <sc-if value="{{hasJumpList}}"><nav aria-label="All questions" style="margin-bottom: 8px; box-sizing: border-box; padding: 24px 28px; border-radius: 24px; background: {{t.surf}};"><ul style="margin: 0; padding: 0; list-style: none; column-width: 280px; column-gap: 32px; font-size: 15px; line-height: 1.4;"><sc-for list="{{jump}}" as="j"><li style="break-inside: avoid; padding: 5px 0;"><a href="{{j.href}}">{{j.q}}</a></li></sc-for></ul></nav></sc-if>
-  <sc-for list="{{faqGroups}}" as="g"><div id="{{g.id}}" style="padding-top: clamp(36px, 5cqw, 56px);"><sc-if value="{{g.title}}"><h2 style="margin: 0; font-size: clamp(26px, 3.4cqw, 38px); font-weight: 600; line-height: 1.08; letter-spacing: -.035em; text-wrap: balance;">{{g.title}}</h2></sc-if><sc-for list="{{g.items}}" as="f"><div id="{{f.id}}" style="padding-top: clamp(20px, 3cqw, 28px);"><sc-if value="{{g.title}}"><h3 style="margin: 0; font-size: clamp(19px, 2.1cqw, 22px); font-weight: 600; line-height: 1.25; letter-spacing: -.02em; text-wrap: balance;">{{f.q}}</h3></sc-if><sc-if value="{{g.plain}}"><h2 style="margin: 0; font-size: clamp(21px, 2.4cqw, 26px); font-weight: 600; line-height: 1.2; letter-spacing: -.025em; text-wrap: balance;">{{f.q}}</h2></sc-if><sc-for list="{{f.paras}}" as="p"><p style="margin: 10px 0 0; font-size: 17px; line-height: 1.65; text-wrap: pretty;">${spParts('p.parts')}</p></sc-for></div></sc-for></div></sc-for>`)}</sc-if>
+<sc-if value="{{hasFaqPage}}" hint-placeholder-val="{{ false }}"><section class="sp-col">
+  <sc-if value="{{hasJumpPills}}"><nav aria-label="Jump to a group of questions" class="sp-pills"><sc-for list="{{faqGroups}}" as="g"><a class="sp-pill" href="#{{g.id}}">{{g.title}}</a></sc-for></nav></sc-if>
+  <sc-if value="{{hasJumpList}}"><nav aria-label="All questions"><ul class="sp-jump"><sc-for list="{{jump}}" as="j"><li><a class="sp-u" href="{{j.href}}">{{j.q}}</a></li></sc-for></ul></nav></sc-if>
+  <sc-for list="{{faqGroups}}" as="g"><div id="{{g.id}}"><sc-if value="{{g.title}}">${spH2('{{g.title}}')}</sc-if><sc-for list="{{g.items}}" as="f"><sc-if value="{{g.title}}">${spQ(3)}</sc-if><sc-if value="{{g.plain}}">${spQ(2)}</sc-if></sc-for></div></sc-for>
+</section></sc-if>
 ${spSections('sectionsAfter')}
-<sc-if value="{{hasFaqBlock}}" hint-placeholder-val="{{ false }}">${spBox(1040, 'clamp(56px, 9cqw, 96px)', `${spH2('Questions')}${spGrid(`<sc-for list="{{faq}}" as="f"><div id="{{f.id}}" style="box-sizing: border-box; padding: 24px; border-radius: 24px; background: {{t.surf}}; display: flex; flex-direction: column; gap: 8px; min-width: 0;"><h3 style="margin: 0; font-size: 17px; font-weight: 600; letter-spacing: -.01em;">{{f.q}}</h3><sc-for list="{{f.paras}}" as="p"><p style="margin: 0; font-size: 15px; line-height: 1.55; color: {{t.muted}};">${spParts('p.parts')}</p></sc-for></div></sc-for>`, 440)}`)}</sc-if>
-<sc-if value="{{hasSources}}" hint-placeholder-val="{{ false }}">${spBox(760, 'clamp(48px, 8cqw, 80px)', `<h2 style="margin: 0; font-size: 22px; font-weight: 600; letter-spacing: -.02em;">Sources</h2><p style="margin: 10px 0 0; font-size: 14px; line-height: 1.5; color: {{t.muted}};">The pages this one was written from, and the day each was checked.</p>
-  <ol style="margin: 16px 0 0; padding-left: 22px; font-size: 15px; line-height: 1.55;"><sc-for list="{{sources}}" as="o"><li style="margin-top: 8px; padding-left: 4px;"><a href="{{o.href}}" target="_blank" rel="noopener" style="${spLink}">{{o.label}}</a><span style="color: {{t.muted}};">{{o.note}}</span></li></sc-for></ol>`)}</sc-if>
-<sc-if value="{{hasRelated}}" hint-placeholder-val="{{ false }}">${spBox(1040, 'clamp(56px, 9cqw, 96px)', `${spH2('Keep reading')}${spGrid(`<sc-for list="{{related}}" as="k">${spCard('k.href', 'k.title', 'k.desc')}</sc-for>`)}`)}</sc-if>
+<sc-if value="{{hasFaqBlock}}" hint-placeholder-val="{{ false }}"><section class="sp-col">${spH2('Questions')}<sc-for list="{{faq}}" as="f">${spQ(3)}</sc-for></section></sc-if>
+<sc-if value="{{hasRelated}}" hint-placeholder-val="{{ false }}"><section class="sp-col">${spH2('Keep reading')}${spCards('related')}</section></sc-if>
+<sc-if value="{{hasSources}}" hint-placeholder-val="{{ false }}"><section class="sp-col sp-src"><h2>Sources</h2><p>The pages this one was written from, and the day each was checked.</p>
+  <ol><sc-for list="{{sources}}" as="o"><li><a class="sp-u" href="{{o.href}}" target="_blank" rel="noopener">{{o.label}}</a><span>{{o.note}}</span></li></sc-for></ol></section></sc-if>
 <section style="margin-top: clamp(64px, 10cqw, 128px); position: relative; overflow: hidden; color: {{hero.ink}}; background: {{hero.base}};">
   <div class="sp-band-wide" aria-hidden="true" style="position: absolute; inset: 0;">${ART_LAYERS('hero')}</div>
   <div class="sp-band-tall" aria-hidden="true" style="position: absolute; inset: 0; display: none;">${ART_LAYERS('heroTall')}</div>
@@ -5904,8 +5988,9 @@ renderVals() { ${T}
   const href = it => site ? (it.slug ? '/' + it.slug : '/') : (it.kind === 'legal' ? (it.slug === 'privacy' ? 'Privacy' : 'Terms') : BOARD[it.kind] + (PHONE ? 'Phone' : '')) + '.dc.html';
   const find = slug => D.index.find(i => i.slug === slug);
   const signIn = site ? '${SITE_APP}/sign-in' : (PHONE ? 'PhoneSignIn' : 'WebSignIn') + '.dc.html';
-  const tint = this.props.dark ? 'rgba(120,150,255,.14)' : 'rgba(134,189,243,.16)';
-  const card = it => ({ href: href(it), title: plain(it.label || it.h1), desc: plain(it.description) });
+  // A page's link-preview picture (web/og/<page>.png, drawn by the SiteOg board; design/site.mjs ogKey and ogFile).
+  const ogKey = slug => slug || 'home', ogSrc = slug => '/og/' + ogKey(slug).replace(/\\//g, '-') + '.png';
+  const card = it => ({ href: href(it), title: plain(it.label || it.h1), desc: plain(it.description), hasPic: true, key: ogKey(it.slug), src: ogSrc(it.slug) });
   const of = (...kinds) => D.index.filter(i => kinds.includes(i.kind) && i.slug !== P.slug).map(card);
   let groups = [];
   if (P.kind === 'hub' && P.slug === 'compare') groups = [{ title: 'Comparisons', cards: of('compare') }, { title: 'Alternatives', cards: of('alternative') }];
@@ -5914,22 +5999,35 @@ renderVals() { ${T}
   const linked = new Set(P.sections.flatMap(s => [...s.paras, ...s.bullets]).flatMap(x => this.parts(x)).map(w => w.href.replace(/^https?:\\/\\/lucida\\.cards/, '').replace(/\\/$/, '')).filter(Boolean));
   const below = P.kind === 'hub' ? D.index.filter(i => (P.slug === 'compare' ? ['compare', 'alternative'] : ['feature', 'use']).includes(i.kind)).map(i => i.slug) : [];
   if (below.length && below.every(x => linked.has('/' + x))) groups = [];
-  else if (P.kind === 'notfound') groups = [{ title: 'Start here', cards: ['', 'compare', 'features', 'faq', 'pricing'].map(find).filter(Boolean).map(card).concat([{ href: site ? '${SITE_APP}/' : signIn, title: 'Open the app', desc: 'Sign in, or start a deck, at app.lucida.cards.' }]) }];
+  else if (P.kind === 'notfound') groups = [{ title: 'Start here', cards: ['', 'compare', 'features', 'faq', 'pricing'].map(find).filter(Boolean).map(card).concat([{ href: site ? '${SITE_APP}/' : signIn, title: 'Open the app', desc: 'Sign in, or start a deck, at app.lucida.cards.', hasPic: false, key: '', src: '' }]) }];
   const item = f => ({ id: 'q-' + slugify(f.q), q: plain(f.q), paras: f.a.split(/\\n\\s*\\n/).map(a => ({ parts: this.parts(a) })) });
   const tb = P.table, faq = P.faq.map(item), isFaq = P.kind === 'faq', grouped = P.faq.some(f => f.group), faqGroups = [];
   for (const f of P.faq) { const title = f.group || ''; let g = faqGroups.find(x => x.title === title); if (!g) faqGroups.push(g = { title, id: title ? 'g-' + slugify(title) : 'questions', plain: !title, items: [] }); g.items.push(item(f)); }
   const related = P.related.filter(x => !below.includes(x)).map(find).filter(Boolean).map(card).slice(0, 9);
-  const sections = P.sections.map(s => ({ id: slugify(s.h2), h2: s.h2, paras: s.paras.map(p => ({ parts: this.parts(p) })), hasBullets: s.bullets.length > 0, bullets: s.bullets.map(b => ({ parts: this.parts(b) })) }));
-  // The app's own column (or, in a table of apps, its row) is tinted.
-  const lc = tb ? tb.columns.findIndex(c => /lucida/i.test(c)) : -1, lr = tb && lc < 0 ? tb.rows.findIndex(r => /^lucida$/i.test(plain(r[0]))) : -1;
-  const widest = tb ? Math.max(...tb.rows.map(r => plain(r[0]).length)) : 0;
+  const sections = P.sections.map(s => ({ id: slugify(s.h2), h2: s.h2, paras: s.paras.map(p => ({ parts: this.parts(p) })), hasBullets: s.bullets.length > 0, bullets: s.bullets.map(b => ({ parts: this.parts(b), cls: /^\\*\\*\\d+\\./.test(b) ? 'sp-n' : '' })) }));
+  // The chips under the title: the day it was updated ("Sep 30, 2026"), and minutes to read (its words at about 230 a minute, at least 1).
+  const MON = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'], dm = /^(\\d{4})-(\\d{2})-(\\d{2})$/.exec(P.updated || '');
+  const count = s => plain(s).split(/\\s+/).filter(Boolean).length, sum = (list, f) => list.reduce((n, x) => n + f(x), 0);
+  const words = count(P.lead) + (tb ? sum(tb.columns.concat(...tb.rows), count) : 0) + sum(P.sections, s => count(s.h2) + sum(s.paras.concat(s.bullets), count)) + sum(P.faq, f => count(f.q) + count(f.a));
+  // The hero is the page's own picture; the pages with no picture of their own (the 404) have none.
+  const h1 = plain(P.h1).replace(/\\.$/, ''), gone = P.kind === 'notfound';
+  // On the canvas the SiteOg board (1200 wide) is scaled to the width it has: the column's 680 px (or a phone's 350), and a card's
+  // (a computer's two across, with 24 px between, or a phone's 350).
+  const colW = PHONE ? 350 : 680, scale = px => (px / 1200).toFixed(5);
+  // A comparison's columns: a table of four or more may be wider than the words, six or more stack on any window under 1001 px. Its
+  // first column is as wide as its longest label needs, at most.
+  const cols = tb ? tb.columns.length : 0, widest = tb ? Math.max(...tb.rows.map(r => plain(r[0]).length)) : 0;
+  const first = cols >= 6 ? (widest <= 14 ? '11%' : '15%') : cols >= 4 ? (widest <= 14 ? '16%' : widest <= 30 ? '20%' : '26%') : (widest <= 14 ? '20%' : widest <= 30 ? '26%' : '32%');
   return { t, sky: ${SKY}, grain: String(this.props.grain ?? 0.7), hero: this.art(${MIDNIGHT}, 'wide'), heroTall: this.art(${MIDNIGHT}, ''),
+    pic: { src: ogSrc(P.slug), key: ogKey(P.slug), alt: /^lucida\\b/i.test(h1) ? h1 : 'Lucida: ' + h1, k: scale(colW) },
+    site, canvas: !site, cardK: scale(PHONE ? 350 : (680 - 24) / 2),
     foot: this.foot(PHONE), nav: D.header.map(l => ({ label: l.label, href: href(find(l.slug)) })),
     links: { home: site ? '/' : (PHONE ? 'LandingPhone' : 'Landing') + '.dc.html', signIn, start: site ? '${SITE_APP}/' : signIn },
     crumbs: P.crumbs.map((c, i) => ({ label: c.label, link: i < P.crumbs.length - 1 && !!find(c.slug), current: i === P.crumbs.length - 1, href: find(c.slug) ? href(find(c.slug)) : '' })),
-    page: { h1: P.h1, lead: this.parts(P.lead), updatedLabel: P.updatedLabel || '' },
-    hasTable: !!tb, table: tb ? { width: tb.columns.length >= 5 ? 1200 : 1040, first: tb.columns.length >= 5 ? (widest <= 14 ? '11%' : '15%') : '22%', head: tb.columns.map((c, i) => ({ label: c || 'Feature', cls: c ? '' : 'sp-sr', bg: i === lc ? tint : 'transparent' })),
-      rows: tb.rows.map((r, ri) => ({ label: plain(r[0]), bg: ri === lr ? tint : 'transparent', cells: r.slice(1).map((c, i) => ({ col: plain(tb.columns[i + 1] || ''), parts: this.parts(c), bg: i + 1 === lc || ri === lr ? tint : 'transparent' })) })) } : { width: 1040, first: '22%', head: [], rows: [] },
+    page: { h1: P.h1, lead: this.parts(P.lead), updated: P.updated || '', updatedShort: dm ? MON[+dm[2] - 1] + ' ' + +dm[3] + ', ' + dm[1] : P.updatedLabel || '', minutes: String(Math.max(1, Math.round(words / 230))) },
+    hasMeta: !gone && !!P.updated, hasHero: !gone,
+    hasTable: !!tb, table: tb ? { cls: (cols >= 4 ? ' sp-tw' : '') + (cols >= 6 ? ' sp-tx' : ''), first, head: tb.columns.map(c => ({ label: c, blank: !c })),
+      rows: tb.rows.map(r => ({ label: plain(r[0]), cells: r.slice(1).map((c, i) => ({ col: plain(tb.columns[i + 1] || ''), parts: this.parts(c) })) })) } : { cls: '', first: '22%', head: [], rows: [] },
     groups: groups.filter(g => g.cards.length),
     sections: isFaq ? [] : sections, sectionsAfter: isFaq ? sections : [],
     faq, faqGroups, hasFaqPage: isFaq && faq.length > 0, hasFaqBlock: !isFaq && faq.length > 0, hasJumpPills: isFaq && grouped && faqGroups.length > 1, hasJumpList: isFaq && !grouped && faq.length >= 8, jump: faq.map(f => ({ href: '#' + f.id, q: f.q })),

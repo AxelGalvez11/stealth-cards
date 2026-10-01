@@ -123,6 +123,20 @@ for (const [p, file] of pageFiles) {
     if (count('table')) ok(ts.filter(x => x.tag === 'th' && !x.close && x.attrs.scope === 'col').length > 0 && ts.filter(x => x.tag === 'th' && x.attrs.scope === 'row').length > 0, 'the table has column and row headers in the ' + where);
   }
   ok(!HOLE.test(body.replace(/<script[\s\S]*?<\/script>/g, '')) && !/\[object Object\]|>undefined<|>null</.test(body), 'no unfilled holes in the page');
+  // A page that reads like an article (the data pages): its own link-preview picture is the hero, loaded first; its other pictures are the
+  // cards of related pages, loaded lazily; and the chips under the title say the day it was updated and the minutes to read (its words at
+  // about 230 a minute, at least 1). The 404 page has no hero.
+  if (KINDS[p.kind]) {
+    const imgs = t.filter(x => x.tag === 'img' && !x.close), heroes = imgs.filter(x => (' ' + (x.attrs.class || '') + ' ').includes(' sp-hero '));
+    ok(heroes.length === 1, 'one hero picture', heroes.length);
+    const hero = (heroes[0] || { attrs: {} }).attrs, cards = imgs.filter(x => !heroes.includes(x));
+    ok(hero.src === '/' + p.og && hero.width === '1200' && hero.height === '630' && hero.fetchpriority === 'high' && !!(hero.alt || '').trim(), 'the hero is the page’s own link-preview picture, 1200 × 630, with alt text, loaded first', hero);
+    ok(cards.every(x => x.attrs.loading === 'lazy' && x.attrs.alt === '' && /^\/og\/[\w-]+\.png$/.test(x.attrs.src || '') && existsSync(join(WEB, (x.attrs.src || '').slice(1)))), 'the cards’ pictures are link-preview pictures of the site, loaded lazily', cards.map(x => x.attrs.src));
+    const words = [p.lead, ...(p.table ? [...p.table.columns, ...p.table.rows.flat()] : []), ...p.sections.flatMap(s => [s.h2, ...s.paras, ...s.bullets]), ...p.faq.flatMap(f => [f.q, f.a])].reduce((n, s) => n + plain(s).split(/\s+/).filter(Boolean).length, 0), minutes = Math.max(1, Math.round(words / 230));
+    ok(body.includes('>' + minutes + ' min read<'), 'the minutes to read come from the page’s words', [words, minutes]);
+    ok(body.includes('<time datetime="' + p.updated + '"'), 'the date chip is the page’s "updated"');
+  }
+  if (notFound) ok(!/\bsp-hero\b/.test(body), 'the 404 page has no hero picture');
   ok(!/\.dc\.html/.test(body), 'no links to canvas boards');
   ok(html.length < (dual > 0 ? 420 : 140) * 1024, 'the page is small', Math.round(html.length / 1024) + ' KB');
   // the footer links to the hub, features (when there are any), FAQ, pricing, privacy and terms
@@ -223,6 +237,13 @@ const heights = JSON.parse(readFileSync(join(ROOT, 'design/site-heights.json'), 
 for (const name of ['SiteCompare', 'SiteFeature', 'SiteFaq']) for (const [i, suffix] of ['', 'Phone'].entries()) {
   const src = readFileSync(join(ROOT, 'design/canvas/project', name + suffix + '.dc.html'), 'utf8'), h = +src.match(/"\$preview":\{"width":\d+,"height":(\d+)\}/)[1];
   ok(h === heights[name][i], name + suffix + ' board is as tall as its tallest page (design/site-measure.mjs)', [h, heights[name][i]]);
+  // On the canvas the hero and the cards' pictures are the SiteOg board itself (a dc-import), scaled to the column.
+  ok(src.includes('<dc-import name="SiteOg" page="{{pic.key}}"') && src.includes('<dc-import name="SiteOg" page="{{k.key}}"'), name + suffix + ' draws its pictures with the SiteOg board on the canvas');
+}
+{
+  // SiteOg must know every page's key, or a picture on the canvas would quietly be another page's.
+  const og = readFileSync(join(ROOT, 'design/canvas/project/SiteOg.dc.html'), 'utf8'), options = JSON.parse(og.match(/data-props='([^']*)'/)[1]).page.options;
+  ok(list.every(p => options.includes(p.slug || 'home')), 'the SiteOg board can draw the picture of every page', list.filter(p => !options.includes(p.slug || 'home')).map(p => p.slug));
 }
 
 // ---------- outside links ----------
