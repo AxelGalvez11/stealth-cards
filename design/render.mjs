@@ -1,6 +1,7 @@
 // Draws a canvas board as plain HTML: the board's own template and logic, filled with its props, and no runtime.
 // design/to-site.mjs (the site's pages) and design/og.mjs (the link-preview pictures) both use it.
 import { readFileSync } from 'node:fs';
+import { readBoard } from './slim.mjs';
 
 const SRC = new URL('./canvas/project/', import.meta.url);
 const get = (o, p) => p.trim().split('.').reduce((a, k) => (a == null ? a : a[k]), o);
@@ -9,7 +10,7 @@ export const esc = v => String(v).replace(/&/g, '&amp;').replace(/</g, '&lt;').r
 // { css, html, logic } for a board with the given props on top of its defaults. The board's frame size becomes the
 // page's width (its height follows the content).
 export function board(name, props) {
-  const src = readFileSync(new URL(name + '.dc.html', SRC), 'utf8');
+  const src = readBoard(SRC, name + '.dc.html');
   const raw = JSON.parse(src.match(/data-props='([^']*)'/)[1]);
   const defaults = Object.fromEntries(Object.entries(raw).filter(([k]) => k !== '$preview').map(([k, v]) => [k, v.default]));
   const logic = src.split('data-dc-script')[1].split('>').slice(1).join('>').split('</script>')[0];

@@ -13,6 +13,7 @@ import { createHash } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import { withChrome } from './chrome.mjs';
 import { SCREENS, shotFile } from './visuals.mjs';
+import { readBoard } from './slim.mjs';
 
 const ROOT = fileURLToPath(new URL('../', import.meta.url)), WEB = join(ROOT, 'web'), OUT = join(WEB, 'shots'), BOARDS = join(ROOT, 'design/canvas/project');
 const ALL = process.argv.includes('--all'), VERSION = 2;
@@ -24,7 +25,7 @@ export const windowOf = name => (isPhoneBoard(name) ? [390, 844] : [1440, 900]);
 // How many device pixels to a CSS pixel: a phone's picture at 2 (shown at about 350 px wide), a computer's so it comes out about 1360 px wide.
 export const scaleOf = (phone, crop) => (phone ? 2 : Math.min(2, 1360 / crop[2]));
 const bw0 = name => (isPhoneBoard(name) ? 390 : 1440);
-export const boardHash = name => { const f = join(BOARDS, name + '.dc.html'); return existsSync(f) ? createHash('sha1').update(readFileSync(f)).digest('hex').slice(0, 10) : ''; };
+export const boardHash = name => { const f = join(BOARDS, name + '.dc.html'); return existsSync(f) ? createHash('sha1').update(readBoard(BOARDS, name + '.dc.html')).digest('hex').slice(0, 10) : ''; };
 
 // Every picture that is wanted: its file, its board, its crop, whether dark.
 export const wanted = () => Object.entries(SCREENS).flatMap(([id, sc]) => [[false, false], [false, true], [true, false], [true, true]].map(([phone, dark]) => {

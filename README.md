@@ -7,6 +7,7 @@ The flashcard database any AI can plug into. FSRS scheduling, clean flip cards, 
 The design canvas is the source of truth for how the app looks: https://claude.ai/artifact/VLXyuTGdroHdrJ2qNAmiGs
 
 - `design/` makes every canvas board (`node design/build.mjs`, checked by `node design/check.mjs`).
+- The boards keep what they all share once, in three files beside them in `design/canvas/project` (`lucida-logic.js`, `lucida-themes.js`, `lucida.css`; `design/slim.mjs`), so a board holds only its own markup, props and logic. Publish those three files with the boards. A script that reads a board reads it with `readBoard()` (`design/slim.mjs`), which puts the shared code back.
 - `design/to-web.mjs` turns those boards into the web app's screens, so the app matches the canvas.
 - `web/` is the web app. Run it with `npm run dev` and open http://localhost:3000 (no packages to install).
 - http://localhost:3000/b lists every board, including empty states and dark mode.

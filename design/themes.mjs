@@ -1,6 +1,7 @@
 // Themes (Pro) on the design canvas. The app loads a theme's module from web/themes when you pick it; the canvas can't,
-// so each Theme board carries its theme's code in its own logic (a static block that puts it where the boards look for
-// it, globalThis.LucidaThemes), and its CSS and fonts in its helmet, with the pictures as the canvas's uploads (/_blob).
+// so each Theme board runs its theme's code from its own logic (a static block that puts it where the boards look for
+// it, globalThis.LucidaThemes; the canvas keeps the code itself once, in lucida-themes.js: design/slim.mjs), and has its
+// CSS and fonts in its helmet, with the pictures as the canvas's uploads (/_blob).
 // design/to-web.mjs takes the code back out of those boards for the app (it has the modules) and points their
 // pictures at web/themes/img. build.mjs uses this file; nothing here runs in the app.
 import { readFileSync } from 'node:fs';
@@ -48,13 +49,15 @@ export const themeFonts = keys => [...new Set(keys.flatMap(k => (mods[k].fonts |
 // registered. A marked static block, so the app's copy of the board can leave it out (to-web.mjs).
 export const CANVAS_START = 'static { /* themes for the canvas */', CANVAS_END = '/* end of the themes */ }';
 const plain = src => src.replace(/^import [^;]+;\n/gm, '').replace(/^export (const|function|let|async function) /gm, '$1 ');
-export function themeStatic(keys) {
-  const kit = plain(readFileSync(new URL('kit.js', DIR), 'utf8'));
-  const each = keys.map(k => `  if (!T.${k}) T.${k} = make((() => {\n${plain(readFileSync(new URL(k + '.js', DIR), 'utf8')).replace(/^export default \{/m, 'const __theme = {')}\nreturn __theme;\n})());`).join('\n');
+// That code: the kit, and each theme by its key. The canvas keeps one copy of it for all its boards (design/slim.mjs).
+export const themeCode = () => Object.fromEntries([['kit', plain(readFileSync(new URL('kit.js', DIR), 'utf8'))],
+  ...THEME_KEYS.map(k => [k, plain(readFileSync(new URL(k + '.js', DIR), 'utf8')).replace(/^export default \{/m, 'const __theme = {')])]);
+export function themeStatic(keys, code = themeCode()) {
+  const each = keys.map(k => `  if (!T.${k}) T.${k} = make((() => {\n${code[k]}\nreturn __theme;\n})());`).join('\n');
   return `${CANVAS_START}
   const T = globalThis.LucidaThemes || (globalThis.LucidaThemes = {});
   if (${keys.map(k => `!T.${k}`).join(' || ')}) {
-${kit}
+${code.kit}
 ${each}
   }
 ${CANVAS_END}`;

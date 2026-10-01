@@ -3,6 +3,7 @@
 // Web boards (1440 x 900) are stretched to fill the browser window, and so are the phone pages the app shows on a phone;
 // the others keep their size.
 import { readFileSync, writeFileSync, readdirSync, mkdirSync, rmSync } from 'node:fs';
+import { readBoard } from './slim.mjs';
 import { withoutThemes, appPictures } from './themes.mjs';
 
 const SRC = new URL('./canvas/project/', import.meta.url);
@@ -12,7 +13,8 @@ mkdirSync(OUT, { recursive: true });
 
 const list = [];
 for (const file of readdirSync(SRC).filter(f => f.endsWith('.dc.html')).sort()) {
-  const src = readFileSync(new URL(file, SRC), 'utf8');
+  // A board as build.mjs made it, with the code it shares with the other boards put back (design/slim.mjs).
+  const src = readBoard(SRC, file);
   const name = file.replace('.dc.html', '');
   const title = src.match(/<title>([^<]*)<\/title>/)[1];
   const body = src.split('<x-dc>')[1].split('</x-dc>')[0];
