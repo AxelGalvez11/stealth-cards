@@ -15,6 +15,7 @@ extension Store {
         case "darkMode": props.darkMode = v as? String ?? "black"
         case "grads": props.grads = v as? String ?? "mix"
         case "fsrs": props.fsrs = v as? Bool ?? true
+        case "flip": props.flip = v as? Bool ?? true
         case "check": props.check = v as? Bool ?? true
         case "prog": props.prog = v as? String ?? "bar"
         case "photo": props.photo = v as? String ?? "color"
@@ -38,6 +39,7 @@ extension Store {
       case "grads": s.grads = v as? String ?? s.grads
       case "prog": s.prog = v as? String ?? s.prog
       case "fsrs": s.fsrs = v as? Bool ?? s.fsrs
+      case "flip": s.flip = v as? Bool ?? s.flip
       case "perDay": s.perDay = v as? Int ?? s.perDay
       case "goal": s.goal = v as? Int ?? s.goal
       case "reminder": s.reminder = v as? String ?? s.reminder
@@ -52,6 +54,9 @@ extension Store {
       }
     }
   }
+  /// Flip animation (Settings › Studying): on unless you turned it off. Off, a card's other side just appears (Review, Cards to check,
+  /// the welcome): no 3D turn, no pop, no fade. Reduce Motion doesn't change it either way.
+  var flipOn: Bool { demo ? props.flip : settings.flip }
   /// "Check AI cards first" is the AI link's own permission.
   func setCheck(_ on: Bool) {
     if demo { props.check = on; return }
@@ -119,7 +124,7 @@ struct SettingsScreen: View {
   var body: some View {
     let s = store.settings, demo = store.demo
     let look = demo ? store.props.look : s.look, grads = demo ? store.props.grads : s.grads, darkMode = demo ? store.props.darkMode : s.darkMode
-    let fsrs = demo ? store.props.fsrs : s.fsrs, check = demo ? store.props.check : store.lib.ai.perms.check
+    let fsrs = demo ? store.props.fsrs : s.fsrs, check = demo ? store.props.check : store.lib.ai.perms.check, flip = store.flipOn
     let vst = store.netVerify()
     ScrollView(showsIndicators: false) {
       VStack(alignment: .leading, spacing: 18) {
@@ -175,6 +180,8 @@ struct SettingsScreen: View {
           menuRow("Remember goal", "\(s.goal)%", options: ["80%", "85%", "90%", "93%", "95%"]) { store.setSetting(["goal": Int($0.dropLast()) ?? 90]) }
           divider
           row("Schedule with FSRS", sub: "For 4 grades and ✓ / ✗") { Toggle48(on: fsrs, label: "Schedule with FSRS") { store.setSetting(["fsrs": !fsrs]) } }
+          divider
+          row("Flip animation") { Toggle48(on: flip, label: "Flip animation") { store.setSetting(["flip": !flip]) } }
           divider
           TuneRow()
         }

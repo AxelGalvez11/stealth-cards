@@ -69,6 +69,12 @@ extension EnvironmentValues {
   var theme: Theme { get { self[ThemeKey.self] } set { self[ThemeKey.self] = newValue } }
 }
 
+/// Settings › Studying › Flip animation, for the views that show a card's other side (set once, at the root). Off: nothing turns, pops or fades.
+private struct FlipsOnKey: EnvironmentKey { static let defaultValue = true }
+extension EnvironmentValues {
+  var flipsOn: Bool { get { self[FlipsOnKey.self] } set { self[FlipsOnKey.self] = newValue } }
+}
+
 // ---------- type ----------
 enum Fonts {
   /// Geist and Geist Mono ship with the app (SIL Open Font License, see Resources/Fonts/OFL.txt).

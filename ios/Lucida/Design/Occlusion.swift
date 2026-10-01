@@ -28,6 +28,8 @@ struct OccColors { var ask, askText, cover, coverText, ring: Color }
 /// is always at once, so its answer never shows through).
 struct OccBoxes: View {
   @Environment(\.accessibilityReduceMotion) private var still
+  /// Settings › Studying › Flip animation: off, and the box turns to an outline at once.
+  @Environment(\.flipsOn) private var flips
   let boxes: [OccBox]
   let ask: Int
   let mode: String
@@ -40,7 +42,7 @@ struct OccBoxes: View {
         ForEach(Array(boxes.enumerated()), id: \.element.id) { i, b in
           let asked = i == ask
           if asked || mode == "all" {
-            let c = colors, fade = asked && shown && !still
+            let c = colors, fade = asked && shown && !still && flips
             ZStack {
               RoundedRectangle(cornerRadius: 6, style: .circular).fill(asked ? (shown ? .clear : c.ask) : c.cover)
                 .animation(fade ? .out(0.45) : nil, value: shown)
@@ -116,8 +118,10 @@ struct OccFace: View {
 struct FadeUp: ViewModifier {
   let on: Bool
   @Environment(\.accessibilityReduceMotion) private var still
+  /// Settings › Studying › Flip animation: off, and it shows at once.
+  @Environment(\.flipsOn) private var flips
   func body(content: Content) -> some View {
-    content.opacity(on ? 1 : 0).offset(y: on || still ? 0 : 8).animation(on && !still ? .out(0.4) : nil, value: on)
+    content.opacity(on ? 1 : 0).offset(y: on || still || !flips ? 0 : 8).animation(on && !still && flips ? .out(0.4) : nil, value: on)
   }
 }
 

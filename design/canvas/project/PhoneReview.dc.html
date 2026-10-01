@@ -69,7 +69,7 @@ a{color:inherit;text-decoration:none}a:hover{opacity:.8}
   <div style="position: absolute; inset: 0; display: flex; align-items: center; gap: 3px; opacity: .22;"><sc-for list="{{snd.bars}}" as="b" hint-placeholder-count="48"><span style="flex: 1 1 0; min-width: 1px; height: {{b.h}}; border-radius: 2px; background: currentColor;"></span></sc-for></div>
   <div data-anim="1" style="position: absolute; inset: 0; display: flex; align-items: center; gap: 3px; clip-path: {{snd.fill}}; animation: {{snd.anim}};"><sc-for list="{{snd.bars}}" as="b" hint-placeholder-count="48"><span style="flex: 1 1 0; min-width: 1px; height: {{b.h}}; border-radius: 2px; background: currentColor;"></span></sc-for></div>
 </div><sc-if value="{{snd.hasTime}}" hint-placeholder-val="{{ true }}"><div style="display: flex; justify-content: space-between; font-family: 'Geist Mono', ui-monospace, monospace; font-size: 12px; color: {{cp.muted}};"><span ref="{{snd.atRef}}">{{snd.at}}</span><span>{{snd.total}}</span></div></sc-if></div><div style="font-size: 20px; font-weight: 500;"><sc-for list="{{card.frontLines}}" as="rl" hint-placeholder-count="1"><div style="{{rl.css}}"><sc-for list="{{rl.items}}" as="rc" hint-placeholder-count="1"><span style="{{rc.css}}">{{rc.t}}</span></sc-for></div></sc-for></div></div></sc-if></div>
-  <div style="position: relative; font-size: 14px; line-height: 1.5; color: {{sk.muted}}; min-height: 21px;"><sc-if value="{{clozeShown}}" hint-placeholder-val="{{ false }}"><span class="sc-fade-a" style="display: block;"><sc-for list="{{card.noteLines}}" as="rl" hint-placeholder-count="1"><div style="{{rl.css}}"><sc-for list="{{rl.items}}" as="rc" hint-placeholder-count="1"><span style="{{rc.css}}">{{rc.t}}</span></sc-for></div></sc-for></span></sc-if></div>
+  <div style="position: relative; font-size: 14px; line-height: 1.5; color: {{sk.muted}}; min-height: 21px;"><sc-if value="{{clozeShown}}" hint-placeholder-val="{{ false }}"><span class="{{fadeCls}}" style="display: block;"><sc-for list="{{card.noteLines}}" as="rl" hint-placeholder-count="1"><div style="{{rl.css}}"><sc-for list="{{rl.items}}" as="rc" hint-placeholder-count="1"><span style="{{rc.css}}">{{rc.t}}</span></sc-for></div></sc-for></span></sc-if></div>
 </div>
     <div style="position: absolute; inset: 0; box-sizing: border-box; padding: 26px 22px; display: flex; flex-direction: column; text-align: left; background: {{cp.card}}; border: 1px solid {{cp.line}}; border-radius: {{radius}}; box-shadow: {{cp.shadow}}; backface-visibility: hidden; -webkit-backface-visibility: hidden; transform: rotateY(180deg); --sk-fs: {{sk.fs}}; {{sk.back.css}}">
   <sc-if value="{{sk.on}}" hint-placeholder-val="{{ false }}"><div ref="{{sk.back.deco}}" data-sc-own aria-hidden="true" style="position: absolute; inset: 0; border-radius: inherit; pointer-events: none;"></div></sc-if>
@@ -1070,6 +1070,8 @@ rich() { return Component._rich || (Component._rich = (function makeRich() {
 constructor(props) { super(props); this.state = { revealed: !!props.startRevealed, settings: null, pileDraft: props.newPileOpen ? 'Tricky ones' : null, exOpen: !!props.explainOpen, exFor: props.explainOpen ? 'r0' : null }; }
 renderVals() {
   const db = this.props.db || this.mock(); const chrome = db.chrome();
+  // Settings › Studying › Flip animation: off, and the other side just appears (no turn, no pop, no fade).
+  const flipOn = db.settings().flip !== false;
   const studyBg = (dk, dark, dim, S, phone) => {
     const b = (dk && dk.bg) || {}, img = b.image || (dk && dk.image) || '';
     const kind = ['deck', 'plain', 'sky', 'sunset', 'photo'].includes(b.kind) && !(b.kind === 'photo' && !img) ? b.kind : 'deck';
@@ -1124,9 +1126,9 @@ renderVals() {
     // A picture with boxes asks one box (c.box); a picture without is a plain image card, as before.
     const oi = c.kind === 'image' && c.image && Array.isArray(c.boxes) ? c.boxes.findIndex(b => b.id === c.box) : -1, ob = oi < 0 ? null : c.boxes[oi], ratio = ob ? ratioOf(c.image) : 0;
     return { ...c, isBasic: c.kind === 'basic', isCloze: c.kind === 'cloze', isImage: c.kind === 'image' && !ob, isOcc: !!ob, isAudio: c.kind === 'audio',
-      occ: ob ? occView(c.boxes, oi, c.occ, rev, { ask: t.inv, askText: t.invText, cover: t.surf2, coverText: t.muted, ring: t.bg }) : [],
+      occ: ob ? occView(c.boxes, oi, c.occ, rev, { ask: t.inv, askText: t.invText, cover: t.surf2, coverText: t.muted, ring: t.bg }).map(b => (flipOn ? b : { ...b, tr: 'none' })) : [],
       occAsk: ob ? show(R.plain(c.front || '').trim() ? c.front : 'What’s under box ' + (oi + 1) + '?') : [], occRatio: String(+(ratio || 4 / 3).toFixed(4)), occVis: ratio ? 'visible' : 'hidden',
-      occLabel: ob ? ob.label || '' : '', hasOccLabel: !!(ob && ob.label), occLabelCls: rev ? 'sc-fade-a' : '', occLabelVis: rev ? 'visible' : 'hidden',
+      occLabel: ob ? ob.label || '' : '', hasOccLabel: !!(ob && ob.label), occLabelCls: rev && flipOn ? 'sc-fade-a' : '', occLabelVis: rev ? 'visible' : 'hidden',
       occAlt: ob ? 'The picture, with box ' + (oi + 1) + (rev ? ' showing' : ' hidden') : '',
       lines: c.kind === 'cloze' ? R.view(text, { ...ro, cloze: true, ask: c.cloze == null ? -1 : c.cloze, hide: !rev }) : [],
       frontLines: show(c.front), backLines: show(c.back), noteLines: show(c.note),
@@ -1246,11 +1248,11 @@ renderVals() {
     // outline, instead of the card flipping.
     flipTransform: rev && !card.isCloze && !card.isOcc ? 'rotateY(180deg)' : 'rotateY(0deg)',
     // After a grade the next card shows up fresh with a small lift, instead of spinning back to its front.
-    flipTrans: this.state.moved ? 'none' : 'transform .5s cubic-bezier(.4,0,.2,1)', cardIn: this.state.moved ? (done % 2 ? 'sc-in-a' : 'sc-in-b') : '',
+    flipTrans: this.state.moved || !flipOn ? 'none' : 'transform .5s cubic-bezier(.4,0,.2,1)', fadeCls: flipOn ? 'sc-fade-a' : '', cardIn: this.state.moved ? (done % 2 ? 'sc-in-a' : 'sc-in-b') : '',
     flipLabel: card.isCloze ? (rev ? 'Hide the answer' : 'Show the blank') : card.isOcc ? (rev ? 'Hide the answer' : 'Show what’s under the box') : (rev ? 'Flip back' : 'Flip card'),
     // The note under a card that stays put (clozeShown: fill in the blank, or a picture with boxes) shows with the answer.
     clozeShown: rev && (card.isCloze || card.isOcc),
-    blank: Fs ? (rev ? { text: c.back, bg: Fs.blankBg, fg: Fs.blankFg, cls: 'sc-pop' } : { text: '    ', bg: Fs.blankOff, fg: 'transparent', cls: '' }) : rev ? { text: c.back, bg: t.inv, fg: t.invText, cls: 'sc-pop' } : { text: '\u2003\u2003\u2003\u2003', bg: t.surf2, fg: 'transparent', cls: '' },
+    blank: Fs ? (rev ? { text: c.back, bg: Fs.blankBg, fg: Fs.blankFg, cls: flipOn ? 'sc-pop' : '' } : { text: '    ', bg: Fs.blankOff, fg: 'transparent', cls: '' }) : rev ? { text: c.back, bg: t.inv, fg: t.invText, cls: flipOn ? 'sc-pop' : '' } : { text: '\u2003\u2003\u2003\u2003', bg: t.surf2, fg: 'transparent', cls: '' },
     reveal: () => this.setState({ revealed: !rev, moved: false }),
     undo: () => { if (done > 0 || !db.mock) { this.setState({ revealed: true, moved: false }); db.act.undo(); } },
     editHref: rv.editHref, editLabel: rv.editLabel || 'Edit', endHref: db.mock ? 'PhoneDeck.dc.html' : rv.endHref,

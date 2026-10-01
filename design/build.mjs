@@ -2637,20 +2637,22 @@ const CARD_VIEW_JS = `const R = this.rich(), ro = this.cardPal || { t, dark: !!t
     // A picture with boxes asks one box (c.box); a picture without is a plain image card, as before.
     const oi = c.kind === 'image' && c.image && Array.isArray(c.boxes) ? c.boxes.findIndex(b => b.id === c.box) : -1, ob = oi < 0 ? null : c.boxes[oi], ratio = ob ? ratioOf(c.image) : 0;
     return { ...c, isBasic: c.kind === 'basic', isCloze: c.kind === 'cloze', isImage: c.kind === 'image' && !ob, isOcc: !!ob, isAudio: c.kind === 'audio',
-      occ: ob ? occView(c.boxes, oi, c.occ, rev, { ask: t.inv, askText: t.invText, cover: t.surf2, coverText: t.muted, ring: t.bg }) : [],
+      occ: ob ? occView(c.boxes, oi, c.occ, rev, { ask: t.inv, askText: t.invText, cover: t.surf2, coverText: t.muted, ring: t.bg }).map(b => (flipOn ? b : { ...b, tr: 'none' })) : [],
       occAsk: ob ? show(R.plain(c.front || '').trim() ? c.front : 'What’s under box ' + (oi + 1) + '?') : [], occRatio: String(+(ratio || 4 / 3).toFixed(4)), occVis: ratio ? 'visible' : 'hidden',
-      occLabel: ob ? ob.label || '' : '', hasOccLabel: !!(ob && ob.label), occLabelCls: rev ? 'sc-fade-a' : '', occLabelVis: rev ? 'visible' : 'hidden',
+      occLabel: ob ? ob.label || '' : '', hasOccLabel: !!(ob && ob.label), occLabelCls: rev && flipOn ? 'sc-fade-a' : '', occLabelVis: rev ? 'visible' : 'hidden',
       occAlt: ob ? 'The picture, with box ' + (oi + 1) + (rev ? ' showing' : ' hidden') : '',
       lines: c.kind === 'cloze' ? R.view(text, { ...ro, cloze: true, ask: c.cloze == null ? -1 : c.cloze, hide: !rev }) : [],
       frontLines: show(c.front), backLines: show(c.back), noteLines: show(c.note),
       imageMock: c.image === 'mock', imageUrl: c.image && c.image !== 'mock' ? c.image : '',
       labelLines: show(c.backLabel || c.back), bigLines: show(c.backBig || c.back), subLines: show(c.backSub != null ? c.backSub : c.note) };
   };`;
-const BLANK_JS = `rev ? { text: c.back, bg: t.inv, fg: t.invText, cls: 'sc-pop' } : { text: '\\u2003\\u2003\\u2003\\u2003', bg: t.surf2, fg: 'transparent', cls: '' }`;
+const BLANK_JS = `rev ? { text: c.back, bg: t.inv, fg: t.invText, cls: flipOn ? 'sc-pop' : '' } : { text: '\\u2003\\u2003\\u2003\\u2003', bg: t.surf2, fg: 'transparent', cls: '' }`;
 const REVIEW_LOGIC = (total, phone = false) => `
 constructor(props) { super(props); this.state = { revealed: !!props.startRevealed, settings: null, pileDraft: props.newPileOpen ? 'Tricky ones' : null, exOpen: !!props.explainOpen, exFor: props.explainOpen ? 'r0' : null }; }
 renderVals() {
   ${DB_JS}
+  // Settings › Studying › Flip animation: off, and the other side just appears (no turn, no pop, no fade).
+  const flipOn = db.settings().flip !== false;
   ${STUDY_BG_JS}
   // One deck, all of them, one pile, or a set of cards picked on the Stats page.
   const rv = db.review(this.props.deckId, this.props.pile, this.props.set);
@@ -2717,11 +2719,11 @@ renderVals() {
     // outline, instead of the card flipping.
     flipTransform: rev && !card.isCloze && !card.isOcc ? 'rotateY(180deg)' : 'rotateY(0deg)',
     // After a grade the next card shows up fresh with a small lift, instead of spinning back to its front.
-    flipTrans: this.state.moved ? 'none' : 'transform .5s cubic-bezier(.4,0,.2,1)', cardIn: this.state.moved ? (done % 2 ? 'sc-in-a' : 'sc-in-b') : '',
+    flipTrans: this.state.moved || !flipOn ? 'none' : 'transform .5s cubic-bezier(.4,0,.2,1)', fadeCls: flipOn ? 'sc-fade-a' : '', cardIn: this.state.moved ? (done % 2 ? 'sc-in-a' : 'sc-in-b') : '',
     flipLabel: card.isCloze ? (rev ? 'Hide the answer' : 'Show the blank') : card.isOcc ? (rev ? 'Hide the answer' : 'Show what’s under the box') : (rev ? 'Flip back' : 'Flip card'),
     // The note under a card that stays put (clozeShown: fill in the blank, or a picture with boxes) shows with the answer.
     clozeShown: rev && (card.isCloze || card.isOcc),
-    blank: Fs ? (rev ? { text: c.back, bg: Fs.blankBg, fg: Fs.blankFg, cls: 'sc-pop' } : { text: '\u2003\u2003\u2003\u2003', bg: Fs.blankOff, fg: 'transparent', cls: '' }) : ${BLANK_JS},
+    blank: Fs ? (rev ? { text: c.back, bg: Fs.blankBg, fg: Fs.blankFg, cls: flipOn ? 'sc-pop' : '' } : { text: '\u2003\u2003\u2003\u2003', bg: Fs.blankOff, fg: 'transparent', cls: '' }) : ${BLANK_JS},
     reveal: () => this.setState({ revealed: !rev, moved: false }),
     undo: () => { if (done > 0 || !db.mock) { this.setState({ revealed: true, moved: false }); db.act.undo(); } },
     editHref: rv.editHref, editLabel: rv.editLabel || 'Edit', endHref: db.mock ? '${phone ? 'PhoneDeck' : 'WebDeck'}.dc.html' : rv.endHref,
@@ -2761,7 +2763,7 @@ const FACE = (pad, big, back) => `<div style="position: absolute; inset: 0; box-
   <sc-if value="{{sk.on}}" hint-placeholder-val="{{ false }}"><div ref="{{sk.${back ? 'back' : 'front'}.deco}}" data-sc-own aria-hidden="true" style="position: absolute; inset: 0; border-radius: inherit; pointer-events: none;"></div></sc-if>
   <div style="position: relative; min-height: 21px;"></div>
   <div style="position: relative; display: flex; flex-direction: column; justify-content: center; flex-grow: 1;">${(back ? faceBack(big) : faceFront(big)).replace(/\{\{t\./g, '{{cp.')}</div>
-  <div style="position: relative; font-size: 14px; line-height: 1.5; color: {{sk.muted}}; min-height: 21px;">${back ? RICH_SHOW('card.noteLines') : `<sc-if value="{{clozeShown}}" hint-placeholder-val="{{ false }}"><span class="sc-fade-a" style="display: block;">${RICH_SHOW('card.noteLines')}</span></sc-if>`}</div>
+  <div style="position: relative; font-size: 14px; line-height: 1.5; color: {{sk.muted}}; min-height: 21px;">${back ? RICH_SHOW('card.noteLines') : `<sc-if value="{{clozeShown}}" hint-placeholder-val="{{ false }}"><span class="{{fadeCls}}" style="display: block;">${RICH_SHOW('card.noteLines')}</span></sc-if>`}</div>
 </div>`;
 // The face's holes (sk, cp) for a board with a theme S ('web' or 'phone': the size the theme draws it at).
 const FACE_SKIN_JS = at => `const Fs = S ? S.faceOf('front', '${at}') : null, Bs = S ? S.faceOf('back', '${at}') : null;
@@ -3669,6 +3671,7 @@ renderVals() { ${T}
   const c = items[0] || { kind: 'basic', front: '', back: '', note: '' };
   const rev = this.state.revealed;
   const S = null;
+  const flipOn = this.mock().settings().flip !== false;
   ${FACE_SKIN_JS('phone')}
   ${CARD_VIEW_JS}
   const card = cardView({ ...c, image: c.kind === 'image' ? 'mock' : null, backLabel: c.kind === 'image' ? '1 = ' + c.back : '', backBig: c.kind === 'audio' ? '電車' : '', backSub: c.kind === 'audio' ? 'でんしゃ · ' + c.back : undefined }, rev);
@@ -3681,7 +3684,7 @@ renderVals() { ${T}
     t, card, sk, cp, radius: '36px', snd: soundView(src, 48, 'front'), sndBack: soundView(src, 36, 'back'),
     reveal: () => this.setState({ revealed: !rev, moved: false }),
     flipTransform: rev && !card.isCloze ? 'rotateY(180deg)' : 'rotateY(0deg)',
-    flipTrans: this.state.moved ? 'none' : 'transform .5s cubic-bezier(.4,0,.2,1)', cardIn: this.state.moved ? (Object.keys(done).length % 2 ? 'sc-in-a' : 'sc-in-b') : '',
+    flipTrans: this.state.moved || !flipOn ? 'none' : 'transform .5s cubic-bezier(.4,0,.2,1)', fadeCls: flipOn ? 'sc-fade-a' : '', cardIn: this.state.moved ? (Object.keys(done).length % 2 ? 'sc-in-a' : 'sc-in-b') : '',
     flipLabel: card.isCloze ? (rev ? 'Hide the answer' : 'Show the blank') : (rev ? 'Flip back' : 'Flip card'),
     clozeShown: rev && card.isCloze,
     blank: ${BLANK_JS},
@@ -3871,7 +3874,7 @@ renderVals() { ${T}${DB_JS}
 // black, for whenever the app is dark). The page scrolls; the board is tall enough to show all of it: the page's content
 // (on Pro) plus 14, so a row added to Settings adds 53 here (node tests/board-fit.mjs PhoneSettings says if it's cut off). The
 // Account group adds 274 with the two blocked people of the sample (each person listed adds 56 more), and its Password row 53.
-const PHONE_SETTINGS_H = 1889;
+const PHONE_SETTINGS_H = 1942;
 const sRow = (label, right, { href = '', sub = '', click = '' } = {}) => {
   const inner = `<span style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px;"><span style="font-size: 16px;">${label}</span>${sub ? `<span style="font-size: 12px; color: {{t.muted}};">${sub}</span>` : ''}</span>${right}`;
   const st = 'min-height: 52px; box-sizing: border-box; padding: 8px 16px; display: flex; align-items: center; gap: 12px;';
@@ -4020,6 +4023,7 @@ const phoneSettings = phone(`<div style="padding: 64px 20px 34px; display: flex;
     sPick('New cards a day', 'perDay', [0, 5, 10, 15, 20, 30, 50].map(n => [n, n])),
     sPick('Remember goal', 'goal', [80, 85, 90, 93, 95].map(n => [n, n + '%'])),
     sRow('Schedule with FSRS', SWITCH('fsrsSw', 'toggleFsrs', 'Schedule with FSRS'), { sub: '{{fsrsSub}}' }),
+    sRow('Flip animation', SWITCH('flipSw', 'toggleFlip', 'Flip animation')),
     TUNE_ROW
   ])}
   ${sGroup('Look', [sRow('Appearance', SEG('looks', 'Appearance')), sRow('Dark mode', SEG('darks', 'Dark mode', 2), { sub: 'When the app is dark' }), THEME_ROW('PhoneThemePicker'), sRow('<span style="display: flex; flex-direction: column; gap: 2px;"><span>Card gradients</span><sc-if value="{{gradsThemed}}" hint-placeholder-val="{{ false }}"><span style="font-size: 12px; color: {{t.muted}};">With the Lucida theme</span></sc-if></span>', SEG('grads', 'Card gradients'))])}
@@ -4064,6 +4068,8 @@ renderVals() {
     goal: pickOf(st.goal, st.goal + '%', v => set({ goal: +v })),
     fsrsSw: sw(st.fsrs && !piles, !piles), toggleFsrs: () => !piles && set({ fsrs: !st.fsrs }),
     fsrsSub: piles ? 'Off while you grade with piles' : 'For 4 grades and ✓ / ✗',
+    // Flip animation (on unless you turned it off): the Review screens read the same setting.
+    flipSw: sw(st.flip !== false), toggleFlip: () => set({ flip: st.flip === false }),
     looks: opts([['system', 'System'], ['light', 'Light'], ['dark', 'Dark']], look, id => set({ look: id })),
     darks: opts([['gray', 'Gray'], ['black', 'Black']], darkMode, id => set({ darkMode: id })),
     grads: opts([['mix', 'Mix'], ['vivid', 'Vivid'], ['deep', 'Deep']], st.grads, id => set({ grads: id })),
@@ -4096,6 +4102,7 @@ const webSettings = webRoot(`${sidebar('Settings')}
         sRow('New cards a day', miniStep('perDay', 'lessDay', 'moreDay', '{{t.bg}}', 'perDayIn')),
         sRow('Remember goal', miniStep('goal', 'lessGoal', 'moreGoal')),
         sRow('Schedule with FSRS', SWITCH('fsrsSw', 'toggleFsrs', 'Schedule with FSRS'), { sub: '{{fsrsSub}}' }),
+        sRow('Flip animation', SWITCH('flipSw', 'toggleFlip', 'Flip animation')),
         sRow('Grade with', SEG('gradeOpts', 'Grade with')),
         sRow('Progress', SEG('progOpts', 'Progress'))
       ])}
@@ -4154,6 +4161,8 @@ renderVals() {
     progOpts: opts([['bar', 'Bar'], ['counts', 'Counts'], ['none', 'None']], st.prog, id => set({ prog: id })),
     fsrsSw: sw(st.fsrs && !piles, !piles), toggleFsrs: () => !piles && set({ fsrs: !st.fsrs }),
     fsrsSub: piles ? 'Off while you grade with piles' : 'For 4 grades and ✓ / ✗',
+    // Flip animation (on unless you turned it off): the Review screens read the same setting.
+    flipSw: sw(st.flip !== false), toggleFlip: () => set({ flip: st.flip === false }),
     checkSw: sw(st.check), toggleCheck: () => db.act.setPerm('check', !st.check),
     perDay: String(st.perDay), goal: st.goal + '%', perDayIn: typed('perDay', st.perDay, n => set({ perDay: n }), 'New cards a day'),
     lessDay: () => set({ perDay: Math.max(0, st.perDay - 5) }), moreDay: () => set({ perDay: Math.min(999, st.perDay + 5) }),

@@ -150,6 +150,8 @@ struct Plan: Decodable {
 struct UserSettings: Decodable {
   /// look: System, Light, or Dark; darkMode: how dark looks, "gray" or "black" (the default).
   var name = "", color = 0, look = "system", darkMode = "black", grads = "mix", prog = "bar", perDay = 20, goal = 90, grading = "four", fsrs = true, reminder = "9:00 AM"
+  /// Studying › Flip animation: a card turns over (on, the default), or its other side just appears (off). The web app reads the same one.
+  var flip = true
   /// Your profile picture: "google", "yours", or "color" ("" until you pick one: your Google photo if there is one), and
   /// the photo you uploaded for it (a /media/… link).
   var photo = "", yourPhoto: String? = nil
@@ -161,13 +163,13 @@ struct UserSettings: Decodable {
   var welcomed = true
   /// Tune to you (Pro): the FSRS parameters fitted to your own reviews, and whether they're in use (nil: never tuned).
   var tune: TuneFit? = nil
-  enum CodingKeys: String, CodingKey { case name, color, look, darkMode, grads, prog, perDay, goal, grading, fsrs, reminder, photo, yourPhoto, welcomed, tune, theme, themeProfile }
+  enum CodingKeys: String, CodingKey { case name, color, look, darkMode, grads, prog, perDay, goal, grading, fsrs, reminder, flip, photo, yourPhoto, welcomed, tune, theme, themeProfile }
   init() {}
   init(from d: Decoder) throws {
     let c = try d.container(keyedBy: CodingKeys.self)
     name = c.v(.name, ""); color = c.v(.color, 0); look = c.v(.look, "system"); darkMode = c.v(.darkMode, "black") == "gray" ? "gray" : "black"
     grads = c.v(.grads, "mix"); prog = c.v(.prog, "bar")
-    perDay = c.v(.perDay, 20); goal = c.v(.goal, 90); grading = c.v(.grading, "four"); fsrs = c.v(.fsrs, true); reminder = c.v(.reminder, "9:00 AM")
+    perDay = c.v(.perDay, 20); goal = c.v(.goal, 90); grading = c.v(.grading, "four"); fsrs = c.v(.fsrs, true); reminder = c.v(.reminder, "9:00 AM"); flip = c.v(.flip, true)
     photo = c.v(.photo, ""); yourPhoto = c.v(.yourPhoto, nil); welcomed = c.v(.welcomed, true)
     theme = c.v(.theme, "lucida"); themeProfile = c.v(.themeProfile, true)
     tune = c.v(.tune, nil)

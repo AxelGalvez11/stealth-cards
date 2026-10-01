@@ -228,6 +228,12 @@ the settings. Local notifications need no entitlement, no Info.plist text and no
 is the end-to-end test (`LucidaUITests/ReminderTests`, reading what is scheduled through `-reminderAudit`); it takes the app off the simulator before
 each flow so the phone has never been asked.
 
+**Flip animation** (Settings › Studying, `settings.flip`, on unless turned off; `Store.flipOn`, `Design/Theme.swift` `\.flipsOn`; boards `PhoneSettings` and `WebSettings`
+with their switch, `-flip Off` on a design screen). Off, the card's other side just appears in Review and Cards to check: no 3D turn, no blank's pop,
+no note or box fade (and the welcome's card doesn't turn between steps). It is one of the person's study settings on the server, so the web app and every
+phone follow the same choice; the web app's Review reads it the same way (`flipTrans` in the Review boards). Reduce Motion changes nothing about it.
+`ios/tools/e2e-flip.sh <simulator id>` is the end-to-end test (`LucidaUITests/FlipTests`, reading what the card does through `-flipAudit`'s invisible element).
+
 **Sign in with Apple** sends the token Apple made for this app (audience `cards.lucida.app`) and its nonce to `/api/auth/token`; the server
 forwards both to Supabase, which accepts the audiences in the Apple provider's "Client IDs". That list already holds both the app's and the
 web's (`cards.lucida.web,cards.lucida.app`, read in the Supabase dashboard on 2026-10-01), so nothing is left to set there. `ios/tests/run.sh
