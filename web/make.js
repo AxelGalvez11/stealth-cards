@@ -11,7 +11,7 @@ import { splitAudio, fromBlob, PART_BYTES, PART_SECONDS } from './audiosplit.js'
 export function createMake({ state, reload, changed, go, sniff, shrink }) {
   const info = () => ((state() || {}).make) || { on: false, video: false, perDay: 3, pages: 30, minutes: 15, photos: 10, fileMB: 20, audioMB: 25, cards: 100 };
   const fresh = () => ({ key: '', step: 'pick', kind: '', files: [], text: '', topic: '', url: '', transcript: false, title: '',
-    opts: { count: 'auto', basic: true, cloze: true, lang: '', deckId: '', deckName: '' }, rec: null, job: '', progress: { word: '', i: 0, n: 1 }, cards: [], editing: '', error: null, from: null, saving: false, seconds: [] });
+    opts: { count: 'auto', basic: true, cloze: true, audio: false, lang: '', deckId: '', deckName: '' }, rec: null, job: '', progress: { word: '', i: 0, n: 1 }, cards: [], notes: null, keepNotes: true, noNotes: false, editing: '', error: null, from: null, saving: false, seconds: [] });
   let M = fresh(), run = 0, rec = null;
   const bump = () => changed();
 
@@ -51,7 +51,7 @@ export function createMake({ state, reload, changed, go, sniff, shrink }) {
       if (s) { M.from = { deckId: d.id, id: s.id, name: s.name, kind: s.kind }; M.kind = s.kind === 'photo' ? 'photo' : s.kind === 'recording' ? 'record' : s.kind === 'video' ? 'video' : s.kind === 'text' ? 'paste' : s.kind === 'topic' ? 'topic' : 'file'; M.step = 'add'; }
     } else if (o.guide) {
       const d = decks.find(x => x.id === o.guide), g = (d && d.guide) || { text: '', pages: [] }, p = o.page && o.page !== 'main' ? (g.pages || []).find(x => x.id === o.page) : null, text = p ? p.text : g.text;
-      if (d && text && text.trim()) { M.kind = 'paste'; M.text = text; M.title = d.name + (p ? ': ' + p.title : ' Guide'); M.step = 'add'; M.opts.deckId = d.id; }
+      if (d && text && text.trim()) { M.kind = 'paste'; M.text = text; M.title = d.name + (p ? ': ' + p.title : ' Guide'); M.step = 'add'; M.opts.deckId = d.id; M.noNotes = true; }
     } else if (['file', 'photo', 'record', 'paste', 'video', 'topic'].includes(o.kind)) { M.kind = o.kind; M.step = 'add'; }
   }
   // Starts from words the page already has (the Guide editor's selection, say).
@@ -108,10 +108,15 @@ export function createMake({ state, reload, changed, go, sniff, shrink }) {
   const setTopic = v => { M.topic = String(v ?? ''); M.error = null; bump(); };
   const setUrl = v => { M.url = String(v ?? '').trim(); M.error = null; bump(); };
   const useTranscript = on => { M.transcript = !!on; M.error = null; bump(); };
+  // The kinds of card: at least one stays on. Audio only counts while a language is set; without one it is off (and a person who had only audio on gets the usual kinds back).
   const setOpt = (k, v) => {
-    if (k === 'basic' || k === 'cloze') { const other = k === 'basic' ? 'cloze' : 'basic'; if (!v && !M.opts[other]) return; }
-    M.opts = { ...M.opts, [k]: v }; bump();
+    const o = { ...M.opts, [k]: v };
+    if (k === 'lang' && !v) o.audio = false;
+    const on = ['basic', 'cloze'].filter(x => o[x]).length + (o.audio && o.lang ? 1 : 0);
+    if (!on) { if (k === 'lang') { o.basic = true; o.cloze = true; } else return; }
+    M.opts = o; bump();
   };
+  const setKeepNotes = on => { M.keepNotes = !!on; bump(); };
 
   // ---------- recording a lecture ----------
   // The microphone, one file for every ten minutes (a long recording is several files, so no one request is long: the speech service gives up after a
@@ -170,7 +175,8 @@ export function createMake({ state, reload, changed, go, sniff, shrink }) {
 
   // ---------- making ----------
   const sourceBody = () => {
-    const o = M.opts, options = { count: o.count, kinds: [o.basic && 'basic', o.cloze && 'cloze'].filter(Boolean), lang: o.lang, deckId: o.deckId, deckName: o.deckName };
+    // (Audio cards are for learning a language, so they only go along when a language is set. Notes are drafted with the cards, except from a Guide page, which already is notes.)
+    const o = M.opts, options = { count: o.count, kinds: [o.basic && 'basic', o.cloze && 'cloze', o.audio && o.lang && 'audio'].filter(Boolean), lang: o.lang, deckId: o.deckId, deckName: o.deckName, ...(M.noNotes ? { notes: false } : {}) };
     if (M.from) return { fromSource: { deckId: M.from.deckId, id: M.from.id }, options };
     if (M.kind === 'topic') return { kind: 'topic', topic: M.topic, options };
     if (M.kind === 'video') return { kind: 'video', url: M.url, ...(M.transcript ? { text: M.text } : {}), ...(M.title ? { title: M.title } : {}), options };
@@ -238,7 +244,7 @@ export function createMake({ state, reload, changed, go, sniff, shrink }) {
       }
       await steps(s.job, 'write', parts, mine, 'Writing cards…'); if (mine !== run) return;
       const f = await call('/api/make/finish', { job: s.job }); if (mine !== run) return;
-      M.cards = f.cards.map(c => ({ ...c, key: 'k' + c.k, gone: false })); M.title = M.title || f.name; M.step = 'review'; bump();
+      M.cards = f.cards.map(c => ({ ...c, key: 'k' + c.k, gone: false })); M.notes = f.notes || null; M.keepNotes = true; M.title = M.title || f.name; M.step = 'review'; bump();
     } catch (e) {
       if (mine !== run) return;
       M.step = 'error'; M.error = { message: e.message || 'Something went wrong. Try again.', pro: !!e.pro, code: e.code || '', network: !!e.network, again: !!M.job && again(e) }; bump();
@@ -262,7 +268,7 @@ export function createMake({ state, reload, changed, go, sniff, shrink }) {
     if (s.phase === 'read') { await steps(job, 'read', s.read, mine, words[M.kind] || 'Reading…'); if (mine !== run) return; parts = (await call('/api/make/plan', { job })).parts; }
     await steps(job, 'write', parts, mine, 'Writing cards…'); if (mine !== run) return;
     const f = await call('/api/make/finish', { job }); if (mine !== run) return;
-    M.cards = f.cards.map(c => ({ ...c, key: 'k' + c.k, gone: false })); M.step = 'review'; bump();
+    M.cards = f.cards.map(c => ({ ...c, key: 'k' + c.k, gone: false })); M.notes = f.notes || null; M.keepNotes = true; M.step = 'review'; bump();
   }
 
   // ---------- checking the cards ----------
@@ -271,12 +277,12 @@ export function createMake({ state, reload, changed, go, sniff, shrink }) {
   const remove = (key, gone = true) => { M.cards = M.cards.map(c => (c.key === key ? { ...c, gone } : c)); if (M.editing === key) M.editing = ''; bump(); };
   async function save() {
     if (M.saving) return;
-    const keep = M.cards.filter(c => !c.gone).map(({ kind, front, back, text, at }) => ({ kind, front, back, text, at }));
+    const keep = M.cards.filter(c => !c.gone).map(({ kind, front, back, text, at, speak, lang }) => ({ kind, front, back, text, at, ...(kind === 'audio' ? { speak, lang } : {}) }));
     if (!keep.length) { M.error = { message: 'There are no cards to save.', soft: true }; return bump(); }
     M.saving = true; M.error = null; bump();
     try {
       const o = M.opts, deck = o.deckId ? { id: o.deckId } : { name: o.deckName.trim() || M.title || M.name || 'New deck' };
-      const r = await call('/api/make/save', { job: M.job, deck, cards: keep });
+      const r = await call('/api/make/save', { job: M.job, deck, cards: keep, ...(M.notes ? { notes: M.keepNotes } : {}) });
       try { sessionStorage.removeItem('lucida.make'); } catch { /* private window */ }
       const id = r.deckId; M = fresh(); await reload(); bump(); go('/deck/' + id);
     } catch (e) { M.saving = false; M.error = { message: e.message, pro: !!e.pro, code: e.code || '', soft: true }; bump(); }
@@ -323,9 +329,9 @@ export function createMake({ state, reload, changed, go, sniff, shrink }) {
       step: M.step, kind: M.kind, from: M.from, on: lim.on !== false, videoOn: !!lim.video, limits: lim,
       files: M.files.map((f, i) => ({ i, name: f.name, size: mb(f.size) + (f.cut ? ' · ' + plural(f.cut.parts.length, 'part') : ''), fam: f.fam })), text: M.text, topic: M.topic, url: M.url, transcript: M.transcript, title: M.title, opts: M.opts,
       rec: M.rec ? { state: rec ? rec.state : 'saving', secs, levels: rec ? rec.levels.slice() : [], level: rec ? rec.level : 0, limit: lim.minutes * 60 } : null,
-      progress: M.progress, cards: M.cards, editing: M.editing, error: M.error, saving: M.saving, ready: ready(), name: M.name || '', job: M.job
+      notes: M.notes, keepNotes: M.keepNotes, progress: M.progress, cards: M.cards, editing: M.editing, error: M.error, saving: M.saving, ready: ready(), name: M.name || '', job: M.job
     };
   }
-  return { view, enter, begin, choose, back, close, pickFiles, addFiles, removeFile, setText, setTopic, setUrl, useTranscript, setOpt, recStart, recPause, recResume, recStop, recDiscard,
+  return { view, enter, begin, choose, back, close, pickFiles, addFiles, removeFile, setText, setTopic, setUrl, useTranscript, setOpt, setKeepNotes, recStart, recPause, recResume, recStop, recDiscard,
     make, cancel, retry, edit, openCard, remove, save, discard, mb, quiz, cancelQuiz, saveQuiz };
 }

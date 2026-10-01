@@ -6,8 +6,8 @@
 // The app draws these boards (design/to-web.mjs), so what you see on the canvas is what runs.
 
 // What the Make boards' "step" picker offers on the canvas (the app's own flow follows web/make.js).
-export const MAKE_STEPS = ['Pick', 'Upload', 'Upload (a file added)', 'Photos', 'Record', 'Recording', 'Paused', 'Paste', 'YouTube', 'YouTube transcript', 'Topic', 'More from a source',
-  'Making', 'Making a recording', 'Review', 'Review (editing a card)', 'Limit reached', 'File too big', 'Error'];
+export const MAKE_STEPS = ['Pick', 'Upload', 'Upload (a file added)', 'Photos', 'Record', 'Recording', 'Paused', 'Paste', 'Paste (a language set)', 'YouTube', 'YouTube transcript', 'Topic', 'More from a source',
+  'Making', 'Making a recording', 'Review', 'Review (notes open)', 'Review (notes off)', 'Review (audio cards)', 'Review (editing a card)', 'Limit reached', 'File too big', 'Error'];
 
 // Icons these boards use that the main set doesn't have (the onboarding's paste icon).
 const EXTRA = { paste: '<rect x="5.5" y="4.5" width="13" height="16" rx="2.5"/><path d="M9 4.5v-.3a1.7 1.7 0 0 1 1.7-1.7h2.6A1.7 1.7 0 0 1 15 4.2v.3"/><path d="M9 11h6M9 15h4"/>' };
@@ -26,7 +26,7 @@ export function makeBoards(H) {
   // ----- step 1: what to make cards from
   const row = (icon, title, sub, click) => `<button type="button" onClick="{{${click}}}" class="sc-press" style="width: 100%; min-height: 68px; box-sizing: border-box; padding: 12px 16px 12px 12px; display: flex; align-items: center; gap: 14px; border: 0; border-radius: 20px; background: {{t.surf}}; color: {{t.text}}; font: inherit; text-align: left; cursor: pointer;"><span style="width: 44px; height: 44px; flex-shrink: 0; border-radius: 22px; background: {{t.bg}}; display: flex; align-items: center; justify-content: center;">${svg(I[icon] || EXTRA[icon], 20, 1.8)}</span><span style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px;"><span style="font-size: 16px; font-weight: 600; letter-spacing: -.01em;">${title}</span><span style="font-size: 13px; color: {{t.muted}};">${sub}</span></span><span style="display: flex; color: {{t.muted}};">${svg(I.chev, 16, 2)}</span></button>`;
   const pick = `<div style="display: flex; flex-direction: column; gap: 10px;">
-    ${row('upload', 'Upload', 'A PDF, slides, a Word file, pictures or audio', 'pickFile')}
+    ${row('upload', 'Upload', 'A PDF, slides, a Word file, captions, pictures or audio', 'pickFile')}
     ${row('image', 'Photo', 'Notes, slides, a whiteboard or a book page', 'pickPhoto')}
     ${row('mic', 'Record a lecture', 'Use your microphone', 'pickRecord')}
     ${row('paste', 'Paste', 'Text or notes', 'pickPaste')}
@@ -80,7 +80,7 @@ export function makeBoards(H) {
     ${field('Into deck', `<div style="display: flex; flex-direction: column; gap: 8px;">${input('deckName', 'setDeckName', '{{deckPlaceholder}}', 'height: 44px; font-size: 15px;')}<div style="display: flex; flex-wrap: wrap; gap: 6px;"><sc-for list="{{deckChips}}" as="d" hint-placeholder-count="3"><button type="button" onClick="{{d.pick}}" aria-pressed="{{d.pressed}}" style="height: 32px; max-width: 100%; padding: 0 12px; border: 0; border-radius: 999px; background: {{d.bg}}; color: {{d.fg}}; font: inherit; font-size: 13px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: pointer;">{{d.name}}</button></sc-for></div></div>`)}
     ${field('How many cards', seg('counts'))}
     <div style="display: grid; grid-template-columns: ${phone ? '1fr' : 'minmax(0, 1fr) minmax(0, 1fr)'}; gap: 16px;">
-      ${field('Kinds', `<div style="display: flex; gap: 8px; flex-wrap: wrap;">${chip(svg(I.check, 13, 2.4) + 'Basic', 'basic', 'toggleBasic')}${chip(svg(I.check, 13, 2.4) + 'Fill in the blank', 'cloze', 'toggleCloze')}</div>`)}
+      ${field('Kinds', `<div style="display: flex; flex-direction: column; gap: 8px;"><div style="display: flex; gap: 8px; flex-wrap: wrap;">${chip(svg(I.check, 13, 2.4) + 'Basic', 'basic', 'toggleBasic')}${chip(svg(I.check, 13, 2.4) + 'Fill in the blank', 'cloze', 'toggleCloze')}<sc-if value="{{canAudio}}" hint-placeholder-val="{{ false }}">${chip(svg(I.check, 13, 2.4) + 'Audio', 'audio', 'toggleAudio')}</sc-if></div><sc-if value="{{audioOn}}" hint-placeholder-val="{{ false }}"><span style="font-size: 12px; line-height: 1.45; color: {{t.muted}};">{{audioLine}}</span></sc-if></div>`)}
       ${field('Language', `<label style="position: relative; display: flex; align-items: center;"><select onChange="{{setLang}}" aria-label="Language of the cards" style="appearance: none; -webkit-appearance: none; width: 100%; height: 36px; padding: 0 34px 0 14px; border: 0; outline: 0; border-radius: 999px; background: {{t.surf}}; color: {{t.text}}; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer;"><sc-for list="{{langs}}" as="l" hint-placeholder-count="3"><sc-if value="{{l.on}}" hint-placeholder-val="{{ false }}"><option value="{{l.code}}" selected>{{l.name}}</option></sc-if><sc-if value="{{l.off}}" hint-placeholder-val="{{ true }}"><option value="{{l.code}}">{{l.name}}</option></sc-if></sc-for></select><span style="position: absolute; right: 12px; display: flex; pointer-events: none; color: {{t.muted}};">${svg(I.chevDown, 14, 2)}</span></label>`)}
     </div>
   </div>`;
@@ -92,9 +92,10 @@ export function makeBoards(H) {
   </div>`;
   const reviewCard = `<div style="box-sizing: border-box; padding: 14px 8px 14px 16px; border-radius: 20px; background: {{t.surf}}; display: flex; align-items: flex-start; gap: 8px; opacity: {{c.op}};">
       <div style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px;">
-        <sc-if value="{{c.reading}}" hint-placeholder-val="{{ true }}"><span style="font-size: 15px; font-weight: 600; line-height: 1.35; overflow-wrap: anywhere; text-decoration: {{c.strike}};">{{c.q}}</span><span style="font-size: 14px; line-height: 1.4; color: {{t.muted}}; overflow-wrap: anywhere;">{{c.a}}</span></sc-if>
+        <sc-if value="{{c.reading}}" hint-placeholder-val="{{ true }}"><div style="display: flex; align-items: flex-start; gap: 8px;"><sc-if value="{{c.isAudio}}" hint-placeholder-val="{{ false }}"><button type="button" onClick="{{c.say}}" aria-label="Hear {{c.q}}" style="width: 28px; height: 28px; flex-shrink: 0; margin-top: -3px; border: 0; border-radius: 14px; background: {{t.bg}}; color: {{t.text}}; display: flex; align-items: center; justify-content: center; cursor: pointer;">${svg(I.audio, 14, 2)}</button></sc-if><span style="font-size: 15px; font-weight: 600; line-height: 1.35; overflow-wrap: anywhere; text-decoration: {{c.strike}};">{{c.q}}</span></div><span style="font-size: 14px; line-height: 1.4; color: {{t.muted}}; overflow-wrap: anywhere;">{{c.a}}</span></sc-if>
         <sc-if value="{{c.editing}}" hint-placeholder-val="{{ false }}">
           <sc-if value="{{c.isBasic}}" hint-placeholder-val="{{ true }}"><div style="display: flex; flex-direction: column; gap: 6px;"><input type="text" value="{{c.front}}" onChange="{{c.setFront}}" aria-label="Question" style="height: 40px; box-sizing: border-box; padding: 0 12px; border: 0; outline: 0; border-radius: 12px; background: {{t.bg}}; color: {{t.text}}; font: inherit; font-size: 15px;"><input type="text" value="{{c.back}}" onChange="{{c.setBack}}" aria-label="Answer" style="height: 40px; box-sizing: border-box; padding: 0 12px; border: 0; outline: 0; border-radius: 12px; background: {{t.bg}}; color: {{t.text}}; font: inherit; font-size: 15px;"></div></sc-if>
+          <sc-if value="{{c.isAudio}}" hint-placeholder-val="{{ false }}"><div style="display: flex; flex-direction: column; gap: 6px;"><input type="text" value="{{c.speak}}" onChange="{{c.setSpeak}}" aria-label="Words to say" style="height: 40px; box-sizing: border-box; padding: 0 12px; border: 0; outline: 0; border-radius: 12px; background: {{t.bg}}; color: {{t.text}}; font: inherit; font-size: 15px;"><input type="text" value="{{c.back}}" onChange="{{c.setBack}}" aria-label="What it means" style="height: 40px; box-sizing: border-box; padding: 0 12px; border: 0; outline: 0; border-radius: 12px; background: {{t.bg}}; color: {{t.text}}; font: inherit; font-size: 15px;"></div></sc-if>
           <sc-if value="{{c.isCloze}}" hint-placeholder-val="{{ false }}"><textarea rows="2" onChange="{{c.setText}}" aria-label="Sentence with a blank in [[double brackets]]" style="resize: none; border: 0; outline: 0; border-radius: 12px; padding: 10px 12px; background: {{t.bg}}; color: {{t.text}}; font: inherit; font-size: 15px; line-height: 1.4;">{{c.text}}</textarea></sc-if>
         </sc-if>
         <sc-if value="{{c.hasAt}}" hint-placeholder-val="{{ true }}"><span style="font-family: ${MONO}; font-size: 11px; color: {{t.muted}};">{{c.at}}</span></sc-if>
@@ -104,8 +105,20 @@ export function makeBoards(H) {
         <button type="button" onClick="{{c.toggleGone}}" aria-label="{{c.goneLabel}}" style="width: 36px; height: 36px; border: 0; border-radius: 18px; background: transparent; color: {{t.muted}}; display: flex; align-items: center; justify-content: center; cursor: pointer;"><sc-if value="{{c.gone}}" hint-placeholder-val="{{ false }}">${svg(I.undo, 15, 2)}</sc-if><sc-if value="{{c.kept}}" hint-placeholder-val="{{ true }}">${svg(I.close, 15, 2)}</sc-if></button>
       </div>
     </div>`;
+  // The starter notes drafted from the same material (a note for each part, joined in order): shown beside the cards, kept with them unless the switch is turned off.
+  const notesPanel = `<sc-if value="{{hasNotes}}" hint-placeholder-val="{{ true }}">
+    <section aria-label="Notes" style="box-sizing: border-box; padding: 14px 16px; border-radius: 20px; background: {{t.surf}}; display: flex; flex-direction: column; gap: 10px;">
+      <div style="display: flex; align-items: center; gap: 12px;">
+        <span style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px;"><span style="font-size: 15px; font-weight: 600;">Notes for the deck</span><span style="font-size: 13px; line-height: 1.4; color: {{t.muted}};">{{notesLine}}</span></span>
+        <button type="button" role="switch" aria-checked="{{notesSw.checked}}" aria-label="Save these notes with the cards" onClick="{{toggleNotes}}" class="sc-sw" style="width: 48px; height: 28px; flex-shrink: 0; padding: 3px; box-sizing: border-box; border: 0; border-radius: 14px; background: {{notesSw.track}}; cursor: pointer;"><span style="display: block; width: 22px; height: 22px; border-radius: 11px; background: {{notesSw.knobColor}}; transform: {{notesSw.knob}};"></span></button>
+      </div>
+      <button type="button" onClick="{{toggleNotesOpen}}" aria-expanded="{{notesExpanded}}" style="align-self: flex-start; padding: 0; border: 0; background: transparent; color: {{t.text}}; font: inherit; font-size: 14px; font-weight: 600; text-decoration: underline; cursor: pointer;">{{notesOpenLabel}}</button>
+      <sc-if value="{{notesOpen}}" hint-placeholder-val="{{ false }}"><div class="gd" ref="{{notesRef}}" data-sc-own style="--gd-text: {{t.text}}; --gd-muted: {{t.muted}}; --gd-line: {{t.line}}; --gd-code: {{t.bg}}; max-height: ${'${PHONE_NOTES_H}'}px; overflow-y: auto; scrollbar-width: none; opacity: {{notesOp}};"></div></sc-if>
+    </section>
+  </sc-if>`;
   const review = phone => `<div style="display: flex; flex-direction: column; gap: 14px; min-height: 0;">
     <span style="font-size: 14px; color: {{t.muted}};">{{reviewLine}}</span>
+    ${notesPanel.replace('${PHONE_NOTES_H}', phone ? '220' : '260')}
     <div style="display: flex; flex-direction: column; gap: 8px; ${phone ? 'max-height: 520px;' : 'max-height: 470px;'} overflow-y: auto; scrollbar-width: none; margin: 0 -4px; padding: 0 4px;"><sc-for list="{{cards}}" as="c" hint-placeholder-count="4">${reviewCard}</sc-for></div>
   </div>`;
   const problem = `<div style="display: flex; flex-direction: column; gap: 14px; padding: 8px 0 0;"><span style="font-size: 17px; font-weight: 600; line-height: 1.35;">{{errMessage}}</span><span style="font-size: 14px; line-height: 1.45; color: {{t.muted}};">{{errMore}}</span></div>`;
@@ -151,7 +164,7 @@ export function makeBoards(H) {
 constructor(props) { super(props); this.state = {}; }
 renderVals() {
   ${T}${DB_JS}
-  const p = this.props, R = this.rich(), M = db.mock ? this.mockMaterials().make : db.make, plural = (n, w) => n + ' ' + w + (n === 1 ? '' : 's');
+  const p = this.props, R = this.rich(), md = this.md(), M = db.mock ? this.mockMaterials().make : db.make, plural = (n, w) => n + ' ' + w + (n === 1 ? '' : 's');
   M.enter({ kind: p.kind, deckId: p.deckId, from: p.from, guide: p.guide, page: p.page, step: p.step });
   const v = M.view(), step = v.step, kind = v.kind, o = v.opts, lim = v.limits, mock = !!db.mock;
   const TITLES = { file: 'Upload', photo: 'Photos', record: 'Record a lecture', paste: 'Paste', video: 'YouTube', topic: 'A topic' };
@@ -165,11 +178,17 @@ renderVals() {
   const topics = ['The Krebs cycle', 'Spanish travel phrases', 'The French Revolution', 'Linear algebra basics'];
   const addable = step === 'add' && !(kind === 'record');
   const prog = v.progress, pct = prog.n ? Math.min(100, Math.round(100 * prog.i / prog.n)) : 0;
-  const cards = v.cards.map(c => { const q = c.kind === 'cloze' ? R.plain(c.text, { cloze: true, blank: '____', join: ' ', math: 'show' }) : c.front, a = c.kind === 'cloze' ? R.blanks(c.text, { math: 'show' }).join(', ') : c.back, ed = v.editing === c.key;
-    return { q, a, at: c.at, hasAt: !!c.at, editing: ed, notEditing: !ed, reading: !ed, isBasic: c.kind !== 'cloze', isCloze: c.kind === 'cloze', front: c.front, back: c.back, text: c.text, gone: !!c.gone, kept: !c.gone, op: c.gone ? '.45' : '1', strike: c.gone ? 'line-through' : 'none',
+  const cards = v.cards.map(c => { const q = c.kind === 'cloze' ? R.plain(c.text, { cloze: true, blank: '____', join: ' ', math: 'show' }) : c.kind === 'audio' ? c.speak : c.front, a = c.kind === 'cloze' ? R.blanks(c.text, { math: 'show' }).join(', ') : c.back, ed = v.editing === c.key;
+    const meta = [c.kind === 'audio' ? 'Read aloud · ' + c.lang : '', c.at].filter(Boolean).join(' · ');
+    return { q, a, at: meta, hasAt: !!meta, editing: ed, notEditing: !ed, reading: !ed, isBasic: c.kind === 'basic', isCloze: c.kind === 'cloze', isAudio: c.kind === 'audio', front: c.front, back: c.back, text: c.text, speak: c.speak || '', gone: !!c.gone, kept: !c.gone, op: c.gone ? '.45' : '1', strike: c.gone ? 'line-through' : 'none',
       editLabel: ed ? 'Done editing' : 'Edit this card', goneLabel: c.gone ? 'Put this card back' : 'Remove this card',
-      toggleEdit: () => M.openCard(c.key), toggleGone: () => M.remove(c.key, !c.gone),
-      setFront: e => M.edit(c.key, { front: e && e.target ? e.target.value : '' }), setBack: e => M.edit(c.key, { back: e && e.target ? e.target.value : '' }), setText: e => M.edit(c.key, { text: e && e.target ? e.target.value : '' }) }; });
+      toggleEdit: () => M.openCard(c.key), toggleGone: () => M.remove(c.key, !c.gone), say: () => (mock ? null : db.act.speak(c.speak, c.lang)),
+      setFront: e => M.edit(c.key, { front: e && e.target ? e.target.value : '' }), setBack: e => M.edit(c.key, { back: e && e.target ? e.target.value : '' }), setText: e => M.edit(c.key, { text: e && e.target ? e.target.value : '' }), setSpeak: e => M.edit(c.key, { speak: e && e.target ? e.target.value : '' }) }; });
+  // The notes drafted beside the cards: a line on what is in them, the switch that keeps them, and the draft itself (drawn as a Guide page is).
+  const N = v.notes, keepN = v.keepNotes !== false, nOpen = this.state.notesOpen != null ? !!this.state.notesOpen : mock && p.step === 'Review (notes open)';
+  const sw = on => ({ checked: on ? 'true' : 'false', track: on ? t.inv : t.surf2, knob: on ? 'translateX(20px)' : 'translateX(0)', knobColor: on ? t.invText : t.bg });
+  const noteAts = N ? N.sections.map(x => x.at).filter(Boolean) : [];
+  const notesLine = N ? plural(N.sections.length, 'note') + (noteAts.length > 1 ? ' · ' + noteAts[0] + ' to ' + noteAts[noteAts.length - 1] : noteAts.length ? ' · ' + noteAts[0] : '') + (keepN ? ' · saved with the cards' : ' · not saved') : '';
   const keep = cards.filter(c => !c.gone).length, err = v.error;
   const into = chosen ? chosen.name : (o.deckName.trim() || v.title || v.name || 'a new deck');
   const LANGS = [['', 'Same as the material'], ['en', 'English'], ['es', 'Spanish'], ['fr', 'French'], ['de', 'German'], ['it', 'Italian'], ['pt', 'Portuguese'], ['zh', 'Chinese'], ['ja', 'Japanese'], ['ko', 'Korean'], ['ar', 'Arabic'], ['hi', 'Hindi']];
@@ -186,7 +205,7 @@ renderVals() {
     liveShow: kind === 'topic' && String(v.topic || '').trim().length >= 2, liveHref: mock ? 'LiveSetup.dc.html' : '/live/new?topic=' + encodeURIComponent(String(v.topic || '').trim()),
     isFile: kind === 'file' && !v.from, isPhoto: kind === 'photo' && !v.from, isRecord: kind === 'record' && !v.from, isPaste: kind === 'paste' && !v.from, isVideo: kind === 'video' && !v.from, isTopic: kind === 'topic' && !v.from, isFrom: !!v.from, fromName: v.from ? v.from.name : '',
     files, hasFiles: files.length > 0, dropLine: kind === 'photo' ? 'Add your photos' : 'Drop a file here', chooseLabel: kind === 'photo' ? 'Choose photos' : 'Choose a file',
-    acceptLine: kind === 'photo' ? 'Up to ' + lim.photos + ' pictures' : 'PDF, slides, Word, text, pictures or audio · up to ' + lim.fileMB + ' MB', canCamera: kind === 'photo' && (coarse || mock),
+    acceptLine: kind === 'photo' ? 'Up to ' + lim.photos + ' pictures' : 'PDF, slides, Word, captions, text, pictures or audio · up to ' + lim.fileMB + ' MB', canCamera: kind === 'photo' && (coarse || mock),
     choose: () => M.pickFiles(false), camera: () => M.pickFiles(true), dragOver: e => { if (e && e.preventDefault) e.preventDefault(); }, drop: e => { if (e && e.preventDefault) { e.preventDefault(); const l = e.dataTransfer && e.dataTransfer.files; if (l && l.length) M.addFiles([...l]); } },
     recIdle: !live, recLive: live, bars, recTime: mmss(rec ? rec.secs : 0), recState: !rec ? 'Ready' : rec.state === 'paused' ? 'Paused' : rec.state === 'saving' ? 'Saving…' : 'Recording', recPauseLabel: rec && rec.state === 'paused' ? 'Resume' : 'Pause',
     recStart: () => M.recStart(), recPause: () => (rec && rec.state === 'paused' ? M.recResume() : M.recPause()), recStop: () => M.recStop(), recDiscard: () => M.recDiscard(),
@@ -198,12 +217,18 @@ renderVals() {
     deckName: o.deckName, deckPlaceholder: chosen ? '' : (v.title || v.name || 'New deck name'), setDeckName: e => { M.setOpt('deckId', ''); M.setOpt('deckName', e && e.target ? e.target.value : ''); },
     deckChips: decks.map(d => { const on = o.deckId === d.id; return { name: d.name, pressed: on ? 'true' : 'false', bg: on ? t.inv : t.surf, fg: on ? t.invText : t.text, pick: () => { M.setOpt('deckId', on ? '' : d.id); M.setOpt('deckName', ''); } }; }),
     counts: [['Auto', 'auto'], ['10', 10], ['20', 20], ['50', 50]].map(([l, n]) => segBtn(l, o.count === n, () => M.setOpt('count', n))),
+    // Audio cards are for learning a language, so the choice is there only once a language is set, and it starts off.
+    canAudio: !!o.lang, audioOn: !!o.lang && !!o.audio, audioPressed: o.audio ? 'true' : 'false', audioBg: o.audio ? t.inv : t.surf, audioFg: o.audio ? t.invText : t.text, toggleAudio: () => M.setOpt('audio', !o.audio),
+    audioLine: 'Words and short phrases in ' + ((LANGS.find(x => x[0] === o.lang) || [])[1] || 'that language') + ' are read aloud by your device’s voice. The back says what they mean.',
     basicPressed: o.basic ? 'true' : 'false', basicBg: o.basic ? t.inv : t.surf, basicFg: o.basic ? t.invText : t.text, toggleBasic: () => M.setOpt('basic', !o.basic),
     clozePressed: o.cloze ? 'true' : 'false', clozeBg: o.cloze ? t.inv : t.surf, clozeFg: o.cloze ? t.invText : t.text, toggleCloze: () => M.setOpt('cloze', !o.cloze),
     langs: LANGS.map(([code, name]) => ({ code, name, on: o.lang === code, off: o.lang !== code })), setLang: e => M.setOpt('lang', e && e.target ? e.target.value : ''),
     showMake: addable, makeBg: v.ready ? t.inv : t.surf2, makeFg: v.ready ? t.invText : t.muted,
     hasWarn: !!(err && err.soft), warn: err && err.soft ? err.message : '',
     progWord: prog.word || 'Getting ready…', progLine: prog.phase === 'write' || prog.phase === 'read' ? plural(prog.i, 'part') + ' of ' + prog.n + ' done' : prog.phase === 'send' && prog.n > 1 ? prog.i + ' of ' + prog.n + ' sent' : 'This takes a moment', progPct: pct, progWidth: Math.max(4, pct) + '%',
+    hasNotes: step === 'review' && !!N, notesLine, notesSw: sw(keepN), toggleNotes: () => M.setKeepNotes(!keepN), toggleNotesOpen: () => this.setState({ notesOpen: !nOpen }), notesOpen: nOpen, notesExpanded: nOpen ? 'true' : 'false',
+    notesOpenLabel: nOpen ? 'Hide the notes' : 'Read the notes', notesOp: keepN ? '1' : '.5',
+    notesRef: el => { const k = N ? N.text.length + ':' + N.title : ''; if (el.getAttribute('data-k') !== k) { el.innerHTML = N ? md.render(N.text) : ''; el.setAttribute('data-k', k); } },
     cards, reviewLine: plural(keep, 'card') + (v.name || v.title ? ' from ' + (v.name || v.title) : ''), saveLabel: v.saving ? 'Saving…' : keep ? 'Add ' + plural(keep, 'card') + ' to ' + into : 'No cards to add', saveBg: keep ? t.inv : t.surf2, saveFg: keep ? t.invText : t.muted,
     errMessage: err && !err.soft ? err.message : '', errMore: err && err.code === 'video-failed' ? 'You can paste the video’s transcript instead.' : err && err.code === 'video-off' ? 'On YouTube, open the video’s description, tap Show transcript, then copy it.' : '',
     errPro: !!(err && err.pro), errRetry: !!(err && !err.pro && err.again)
@@ -212,8 +237,8 @@ renderVals() {
 
   const props = { ...DARK, grain: MESH('Iris').grain, step: { editor: 'enum', default: 'Pick', options: MAKE_STEPS } };
   return {
-    'WebMake': ['Web · Make cards (pick the step)', webMake, { props, logic: logic(false), w: W, h: HH }],
-    'PhoneMake': ['iPhone · Make cards (pick the step)', phoneMake, { props, logic: logic(true), w: PW, h: PH }],
+    'WebMake': ['Web · Make cards (pick the step)', webMake, { props, logic: logic(false), css: GUIDE_CSS, w: W, h: HH }],
+    'PhoneMake': ['iPhone · Make cards (pick the step)', phoneMake, { props, logic: logic(true), css: GUIDE_CSS, w: PW, h: PH }],
     ...guideBoards(H)
   };
 }
@@ -350,8 +375,8 @@ export const MATERIALS_MOCK = String.raw`mockMaterials() {
   const day = (m, d) => new Date(2026, m, d, 10).getTime();
   const MK = (() => {
     const free = { perDay: 3, pages: 30, minutes: 15, photos: 10, fileMB: 20, audioMB: 25, cards: 100 }, pro = { perDay: 30, pages: 300, minutes: 120, photos: 50, fileMB: 40, audioMB: 25, cards: 100 };
-    const base = { step: 'add', kind: '', from: null, on: true, videoOn: true, limits: pro, files: [], text: '', topic: '', url: '', transcript: false, title: '', opts: { count: 'auto', basic: true, cloze: true, lang: '', deckId: '', deckName: '' },
-      rec: null, progress: { word: '', phase: '', i: 0, n: 1 }, cards: [], editing: '', error: null, saving: false, ready: false, name: '', job: '' };
+    const base = { step: 'add', kind: '', from: null, on: true, videoOn: true, limits: pro, files: [], text: '', topic: '', url: '', transcript: false, title: '', opts: { count: 'auto', basic: true, cloze: true, audio: false, lang: '', deckId: '', deckName: '' },
+      rec: null, progress: { word: '', phase: '', i: 0, n: 1 }, cards: [], notes: null, keepNotes: true, editing: '', error: null, saving: false, ready: false, name: '', job: '' };
     const slides = { i: 0, name: 'Lecture 3 slides.pdf', size: '4.2 MB', fam: 'doc' };
     const levels = Array.from({ length: 60 }, (_, i) => Math.round((.18 + .5 * Math.abs(Math.sin(i * .55)) * (.6 + .4 * Math.sin(i * .17))) * 100) / 100);
     const cards = [
@@ -361,22 +386,39 @@ export const MATERIALS_MOCK = String.raw`mockMaterials() {
       { key: 'k4', kind: 'basic', front: 'Where does glycolysis happen?', back: 'In the cytoplasm.', text: '', at: 'p. 7', gone: true },
       { key: 'k5', kind: 'cloze', front: '', back: '', text: 'The Krebs cycle runs in the [[mitochondrial matrix]].', at: 'p. 8', gone: false },
       { key: 'k6', kind: 'basic', front: 'What carries electrons to the transport chain?', back: 'NADH and FADH₂.', text: '', at: 'p. 9', gone: false }];
+    const notes = { title: 'Lecture 3 slides', overview: 'How cells make energy: the mitochondrion, the electron transport chain and the Krebs cycle. It ends with how ATP is made and what runs out without oxygen.',
+      sections: [{ heading: 'The mitochondrion', at: 'p. 4', text: 'The **mitochondrion** makes most of the cell’s **ATP**. It has two membranes and is the site of the electron transport chain.' },
+        { heading: 'The electron transport chain', at: 'p. 5', text: '- **NADH** and **FADH₂** pass electrons along the chain\n- Protons (H⁺) are pumped into the intermembrane space\n- **ATP synthase** lets them flow back and makes ATP' },
+        { heading: 'Glycolysis', at: 'p. 7', text: 'Happens in the **cytoplasm** and splits one glucose into two **pyruvate**.' },
+        { heading: 'The Krebs cycle', at: 'p. 8', text: '| Where | What it makes |\n| --- | --- |\n| **Matrix** | NADH, FADH₂ and a little ATP |' }],
+      text: ['# Lecture 3 slides', '', 'How cells make energy: the mitochondrion, the electron transport chain and the Krebs cycle. It ends with how ATP is made and what runs out without oxygen.', '', '## The mitochondrion (p. 4)', '', 'The **mitochondrion** makes most of the cell’s **ATP**. It has two membranes and is the site of the electron transport chain.', '',
+        '## The electron transport chain (p. 5)', '', '- **NADH** and **FADH₂** pass electrons along the chain', '- Protons (H⁺) are pumped into the intermembrane space', '- **ATP synthase** lets them flow back and makes ATP', '', '## Glycolysis (p. 7)', '', 'Happens in the **cytoplasm** and splits one glucose into two **pyruvate**.', '',
+        '## The Krebs cycle (p. 8)', '', '| Where | What it makes |', '| --- | --- |', '| **Matrix** | NADH, FADH₂ and a little ATP |', ''].join('\n') };
+    const spanish = [
+      { key: 'k1', kind: 'audio', front: '', back: 'the house', text: '', speak: 'la casa', lang: 'es', at: '', gone: false },
+      { key: 'k2', kind: 'audio', front: '', back: 'Good morning', text: '', speak: 'buenos días', lang: 'es', at: '', gone: false },
+      { key: 'k3', kind: 'basic', front: 'When do you use “usted”?', back: 'To be formal or polite with someone, like a teacher or a stranger.', text: '', at: '', gone: false },
+      { key: 'k4', kind: 'audio', front: '', back: 'Where is the library?', text: '', speak: '¿Dónde está la biblioteca?', lang: 'es', at: '', gone: false },
+      { key: 'k5', kind: 'cloze', front: '', back: '', text: 'Ella [[tiene]] dos hermanos.', at: '', gone: false }];
     const by = {
       'Pick': { step: 'pick' }, 'Upload': { kind: 'file' }, 'Upload (a file added)': { kind: 'file', files: [slides], ready: true },
       'Photos': { kind: 'photo', ready: true, files: ['IMG_2041.jpg', 'IMG_2042.jpg', 'IMG_2043.jpg'].map((name, i) => ({ i, name, size: (1.1 + i * .3).toFixed(1) + ' MB', fam: 'image' })) },
       'Record': { kind: 'record' }, 'Recording': { kind: 'record', rec: { state: 'recording', secs: 754, levels, level: .4, limit: 7200 } }, 'Paused': { kind: 'record', rec: { state: 'paused', secs: 754, levels, level: 0, limit: 7200 } },
       'Paste': { kind: 'paste', ready: true, text: 'The mitochondrion is the powerhouse of the cell. It makes most of the cell’s ATP through the electron transport chain, which pumps protons across the inner membrane.\n\nThe nucleus holds the cell’s DNA, and the ribosomes translate mRNA into protein.' },
+      'Paste (a language set)': { kind: 'paste', ready: true, text: 'la casa · the house\nbuenos días · good morning\n¿Dónde está la biblioteca? · Where is the library?\nElla tiene dos hermanos · She has two siblings', opts: { count: 'auto', basic: true, cloze: true, audio: true, lang: 'es', deckId: '', deckName: '' } },
       'YouTube': { kind: 'video', ready: true, url: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ' },
       'YouTube transcript': { kind: 'video', ready: true, transcript: true, url: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ', text: '0:00\nWelcome to the lecture on enzymes\n0:20\nAn enzyme lowers the activation energy of a reaction' },
       'Topic': { kind: 'topic', ready: true, topic: 'The Krebs cycle' }, 'More from a source': { kind: 'file', ready: true, from: { deckId: 'cell', id: 'x1', name: 'Lecture 3 slides', kind: 'file' } },
       'Making': { step: 'making', kind: 'file', progress: { word: 'Writing cards…', phase: 'write', i: 3, n: 8 } },
       'Making a recording': { step: 'making', kind: 'record', progress: { word: 'Listening to your recording…', phase: 'read', i: 1, n: 2 } },
-      'Review': { step: 'review', kind: 'file', cards, name: 'Lecture 3 slides' }, 'Review (editing a card)': { step: 'review', kind: 'file', cards, name: 'Lecture 3 slides', editing: 'k2' },
+      'Review': { step: 'review', kind: 'file', cards, name: 'Lecture 3 slides', notes }, 'Review (notes open)': { step: 'review', kind: 'file', cards, name: 'Lecture 3 slides', notes }, 'Review (notes off)': { step: 'review', kind: 'file', cards, name: 'Lecture 3 slides', notes, keepNotes: false },
+      'Review (audio cards)': { step: 'review', kind: 'paste', cards: spanish, name: 'Spanish words', notes: { ...notes, title: 'Spanish words', sections: notes.sections.slice(0, 2).map(x => ({ ...x, at: '' })), text: '# Spanish words\n\nGreetings and words for the home and school.\n\n## Greetings\n\n**buenos días** means good morning. Use **usted** to be polite.\n\n## The home\n\n**la casa** is the house.\n' } },
+      'Review (editing a card)': { step: 'review', kind: 'file', cards, name: 'Lecture 3 slides', notes, editing: 'k2' },
       'Limit reached': { step: 'error', kind: 'file', limits: free, error: { message: 'That’s today’s 3 free makes. Go Pro for 30 a day.', pro: true, code: 'day' } },
       'File too big': { step: 'add', kind: 'file', limits: free, files: [slides], ready: true, error: { message: 'That file is over 20 MB. Go Pro for up to 40 MB.', soft: true } },
       'Error': { step: 'error', kind: 'file', error: { message: 'The AI didn’t answer. Try again in a moment.', again: true } } };
     return { view: () => ({ ...base, ...(by[p.step] || by.Pick) }), enter: noop, begin: noop, choose: noop, back: noop, close: noop, pickFiles: noop, addFiles: noop, removeFile: noop, setText: noop, setTopic: noop, setUrl: noop, useTranscript: noop, setOpt: noop,
-      recStart: noop, recPause: noop, recResume: noop, recStop: noop, recDiscard: noop, make: noop, cancel: noop, retry: noop, edit: noop, openCard: noop, remove: noop, save: noop, discard: noop };
+      recStart: noop, recPause: noop, recResume: noop, recStop: noop, recDiscard: noop, setKeepNotes: noop, make: noop, cancel: noop, retry: noop, edit: noop, openCard: noop, remove: noop, save: noop, discard: noop };
   })();
   const GD = (() => {
     const text = ['# Cell Biology: Exam 1', '', 'Everything for the first exam, in the order we covered it. Start with the checklist, then the mnemonics.', '', '## Checklist', '- [x] Organelles and what each one does', '- [x] The electron transport chain',
@@ -519,7 +561,7 @@ renderVals() {
     previewRef: el => { const k = key + ':' + text.length + ':' + text.slice(0, 40) + text.slice(-40); if (el.getAttribute('data-k') !== k) { el.innerHTML = md.render(text); el.setAttribute('data-k', k); } },
     previewEmpty: !text.trim(),
     makeLabel: ${phone ? "'Make cards'" : "'Make cards from this ' + (pageId === 'main' ? 'guide' : 'page')"},
-    makeCards: () => { const el = ta(), sel = el && el.selectionEnd > el.selectionStart ? el.value.slice(el.selectionStart, el.selectionEnd) : ''; if (mock) return; this._flush().then(() => db.make.begin({ kind: 'paste', text: sel || text, title: sel ? dk.name + ' (selection)' : dk.name + (pageId === 'main' ? ' Guide' : ': ' + cur.title), opts: { deckId } })); },
+    makeCards: () => { const el = ta(), sel = el && el.selectionEnd > el.selectionStart ? el.value.slice(el.selectionStart, el.selectionEnd) : ''; if (mock) return; this._flush().then(() => db.make.begin({ kind: 'paste', noNotes: true, text: sel || text, title: sel ? dk.name + ' (selection)' : dk.name + (pageId === 'main' ? ' Guide' : ': ' + cur.title), opts: { deckId } })); },
     histOpen, versions: histNow, noVersions: histOpen && st.hist !== null && !versions.length, histLine: 'Older versions of ' + (pageId === 'main' ? 'the Guide' : cur.title) + '. Restoring one keeps what you have now as a version too.'
   };
 }`;
