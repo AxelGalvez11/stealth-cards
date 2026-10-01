@@ -71,8 +71,6 @@ struct ProfileScreen: View {
   @State private var tab: String? = nil
   /// The deck whose ⋯ menu is open (your own profile).
   @State private var menu: String? = nil
-  @State private var copied = false
-  @State private var copiedTask: Task<Void, Never>? = nil
   @State private var err = ""
   @State private var makeErr = ""
   @State private var making = false
@@ -115,7 +113,7 @@ struct ProfileScreen: View {
       openReportIfWanted(pr, isSelf: isSelf)
     }
     .onChange(of: pr != nil) { _, ok in openEditIfWanted(ok && isSelf); openReportIfWanted(pr, isSelf: isSelf) }
-    .onDisappear { copiedTask?.cancel() }
+    .haptic(.light, on: changes, "follow or pin")
   }
 
   /// Your profile the first time: made once (profile.ensure); the library then has its handle.
@@ -149,7 +147,7 @@ struct ProfileScreen: View {
       if !isSelf { RoundButton(icon: "back", label: "Back") { nav.back() } }
       Text(h.isEmpty ? "" : "@" + h).css(20, .bold, ls: -0.02).foregroundStyle(t.text).lineLimit(1).truncationMode(.tail).line(20)
         .frame(maxWidth: .infinity, alignment: .leading)
-      if ok { RoundButton(icon: "share", label: "Share profile") { share(h) } }
+      if ok { RoundButton(icon: "share", label: "Share profile") { share(h, name: report?.name ?? h) } }
       if isSelf { RoundButton(icon: "gear", label: "Settings") { nav.push(.settings) } }
       if ok, !isSelf, let report { QuietButton(label: "Report") { withAnimation(Motion.sheet) { nav.sheet = .report(kind: "profile", id: report.handle, name: report.name) } } }
     }
@@ -190,7 +188,7 @@ struct ProfileScreen: View {
       HStack(spacing: 8) {
         if isSelf { wide("Edit profile") { nav.sheet = .editProfile } }
         else { wide(following ? "Following" : "Follow", inv: !following) { toggleFollow(pr, h: h) }.accessibilityAddTraits(following ? .isSelected : []) }
-        wide(copied ? "Link copied" : "Share profile") { share(h) }
+        wide("Share profile") { share(h, name: name) }
       }
       if !err.isEmpty { CSSText(err, 13, color: t.again) }
       if isSelf { tabs(current) } else { Rectangle().fill(t.line).frame(height: 1).padding(.horizontal, -20) }
@@ -406,12 +404,10 @@ struct ProfileScreen: View {
       catch { err = error.localizedDescription.nilIfEmpty ?? "Something went wrong. Try again." }
     }
   }
-  /// Share copies the profile's link, and says so for a moment.
-  private func share(_ h: String) {
-    UIPasteboard.general.string = store.shareLink("/@" + h)
-    copied = true
-    copiedTask?.cancel()
-    copiedTask = Task { try? await Task.sleep(nanoseconds: 2_000_000_000); if !Task.isCancelled { copied = false } }
+  /// Share opens the phone's share sheet with the profile's link (the owner: "users cannot 'share' profile, it just says 'link
+  /// copied' i was expecting a share popup").
+  private func share(_ h: String, name: String) {
+    ShareSheet.present(title: name, url: URL(string: store.shareLink("/@" + h)))
   }
 }
 

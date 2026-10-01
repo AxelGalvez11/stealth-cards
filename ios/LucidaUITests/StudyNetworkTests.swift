@@ -63,6 +63,18 @@ final class StudyNetworkTests: XCTestCase {
   private func any(_ app: XCUIApplication, _ words: String) -> XCUIElement {
     app.descendants(matching: .any).matching(NSPredicate(format: "label CONTAINS %@", words)).firstMatch
   }
+  /// The phone's share sheet is up (the system's activity view, which has Copy among its actions), and closing it.
+  private func shareSheetUp(_ app: XCUIApplication, _ s: TimeInterval = 10) -> Bool {
+    let up = { app.otherElements["ActivityListView"].exists || app.collectionViews["ActivityListView"].exists || app.otherElements["ActivityContentView"].exists
+      || app.navigationBars["UIActivityContentView"].exists || app.buttons["Copy"].exists || app.staticTexts["Copy"].exists }
+    let end = Date().addingTimeInterval(s)
+    while Date() < end { if up() { return true }; Thread.sleep(forTimeInterval: 0.3) }
+    return up()
+  }
+  private func closeShareSheet(_ app: XCUIApplication) {
+    if app.buttons["Close"].exists { app.buttons["Close"].tap() } else { app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.06)).tap() }
+    Thread.sleep(forTimeInterval: 1.0)
+  }
   private func button(_ app: XCUIApplication, _ label: String) -> XCUIElement { app.buttons[label].firstMatch }
   /// A button whose label starts with these words (a row's label has its value after it).
   private func buttonStarting(_ app: XCUIApplication, _ words: String) -> XCUIElement {
@@ -226,14 +238,15 @@ final class StudyNetworkTests: XCTestCase {
     Thread.sleep(forTimeInterval: 1.5)
     check((profile(ownerHandle)["featured"] as? [String])?.contains(sharedId) == true, "the pin is saved")
     button(app, "Share profile").tap()
-    check(wait(button(app, "Link copied")), "Share says Link copied")
+    check(shareSheetUp(app) && !button(app, "Link copied").exists, "Share opens the phone's share sheet (it used to say Link copied)")
+    closeShareSheet(app)
     button(app, "Library").tap()
     check(wait(any(app, "Public · 3 cards"), 10), "the Library marks the deck Public")
     any(app, "Public · 3 cards").tap()
     check(wait(button(app, "Public")), "a deck you share has its page's button")
     button(app, "Deck settings").tap()
     lowest(app, "Sharing").tap()
-    check(wait(button(app, "Copy link")), "Sharing has its link with Copy link")
+    check(wait(button(app, "Share link")), "Sharing has its link with Share link")
     check(wait(any(app, "1 studying · 1 copy")), "and how many study and copy it")
     lowest(app, "Link only").tap()
     Thread.sleep(forTimeInterval: 1.5)

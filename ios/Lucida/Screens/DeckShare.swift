@@ -88,8 +88,6 @@ struct DeckShareTab: View {
   @State private var about: String? = nil
   @State private var helperQ = ""
   @State private var shareErr = ""
-  @State private var copied = false
-  @State private var copiedTask: Task<Void, Never>? = nil
   @FocusState private var focus: String?
 
   var body: some View {
@@ -125,7 +123,7 @@ struct DeckShareTab: View {
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) { withAnimation(.out(0.3)) { proxy.scrollTo(f, anchor: UnitPoint(x: 0.5, y: 0.3)) } }
       }
     }
-    .onDisappear { copiedTask?.cancel(); if focus == "about", let a = about { set(["description": a]) } }
+    .onDisappear { if focus == "about", let a = about { set(["description": a]) } }
   }
 
   private func label(_ s: String) -> some View { Text(s).css(13, .semibold).line(13) }
@@ -176,8 +174,8 @@ struct DeckShareTab: View {
     HStack(spacing: 8) {
       Icon("link", 16, 1.8).foregroundStyle(t.muted)
       Text(link.replacingOccurrences(of: "^https?://", with: "", options: .regularExpression)).css(14).lineLimit(1).truncationMode(.tail).frame(maxWidth: .infinity, alignment: .leading)
-      Button { copy(link) } label: {
-        Text(copied ? "Copied" : "Copy link").css(13, .semibold).lineLimit(1).fixedSize().foregroundStyle(t.invText).padding(.horizontal, 14).frame(height: 34).background(Capsule().fill(t.inv))
+      Button { share(link) } label: {
+        Text("Share link").css(13, .semibold).lineLimit(1).fixedSize().foregroundStyle(t.invText).padding(.horizontal, 14).frame(height: 34).background(Capsule().fill(t.inv))
       }
       .buttonStyle(.press)
     }
@@ -285,12 +283,8 @@ struct DeckShareTab: View {
       catch { shareErr = error.localizedDescription }
     }
   }
-  private func copy(_ link: String) {
-    UIPasteboard.general.string = link
-    copied = true
-    copiedTask?.cancel()
-    copiedTask = Task { try? await Task.sleep(nanoseconds: 1_600_000_000); if !Task.isCancelled { copied = false } }
-  }
+  /// Share link opens the phone's share sheet with the deck's link (it used to copy it).
+  private func share(_ link: String) { ShareSheet.present(title: d.name, url: URL(string: link)) }
 }
 
 /// A copy of someone's deck, with their newer changes waiting (deckUpdatesBody): take or skip each one (a card you
