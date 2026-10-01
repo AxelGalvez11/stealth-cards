@@ -57,7 +57,7 @@ struct ClassScreen: View {
     .onChange(of: k?.id) { _, _ in openDemoSheets(k) }
     .onDisappear { copiedTask?.cancel() }
     .confirmationDialog(ask?.title ?? "", isPresented: Binding(get: { ask != nil }, set: { if !$0 { ask = nil } }), titleVisibility: .visible) {
-      if let a = ask { Button(a.button, role: .destructive) { a.action() } }
+      if let a = ask { Button(a.button, role: .destructive) { Buzz.shared.warning("class"); a.action() } }
     } message: { if let m = ask?.message { Text(m) } }
   }
 

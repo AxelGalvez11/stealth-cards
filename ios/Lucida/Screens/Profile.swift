@@ -76,6 +76,8 @@ struct ProfileScreen: View {
   @State private var err = ""
   @State private var makeErr = ""
   @State private var making = false
+  /// Follow, Unfollow, Pin and Unpin (a light tap each).
+  @State private var changes = 0
 
   var body: some View {
     let you = store.myHandle, h = (handle.isEmpty ? you : handle).lowercased()
@@ -391,14 +393,14 @@ struct ProfileScreen: View {
   // ---------- what the buttons do ----------
   private func toggleFollow(_ pr: ProfilePage, h: String) {
     let on = !(pr.me?.following ?? false)
-    err = ""; menu = nil
+    err = ""; menu = nil; changes += 1
     Task {
       do { try await store.changeProfile(h, ProfilePatch(following: on, followers: max(0, pr.followers + (on ? 1 : -1)))) { try await store.follow(pr.handle, on) } }
       catch { err = error.localizedDescription.nilIfEmpty ?? "Something went wrong. Try again." }
     }
   }
   private func setPins(_ pr: ProfilePage, h: String, _ next: [String]) {
-    err = ""; menu = nil
+    err = ""; menu = nil; changes += 1
     Task {
       do { try await store.changeProfile(h, ProfilePatch(featured: next)) { try await store.updateProfile(["featured": next]) } }
       catch { err = error.localizedDescription.nilIfEmpty ?? "Something went wrong. Try again." }

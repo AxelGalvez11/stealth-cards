@@ -325,6 +325,7 @@ struct PhotoChoices: View {
   @EnvironmentObject private var store: Store
   @Namespace private var pill
   @State private var pickingPhoto = false
+  @State private var taps = 0
   var body: some View {
     let choice = store.photoChoice, color = store.avatarColor
     let skinned = store.skinKey != nil
@@ -333,7 +334,7 @@ struct PhotoChoices: View {
       HStack(spacing: 2) {
         ForEach(options, id: \.0) { id, label in
           let on = id == choice
-          Button { if id == "yours" && !store.hasYourPhoto { pickingPhoto = true } else { store.setSetting(["photo": id]) } } label: {
+          Button { if !on { taps += 1 }; if id == "yours" && !store.hasYourPhoto { pickingPhoto = true } else { store.setSetting(["photo": id]) } } label: {
             Text(label).css(13, .semibold).lineLimit(1).foregroundStyle(on ? t.invText : t.muted)
               .padding(.horizontal, 8).frame(maxWidth: .infinity).frame(height: 30)
               .background { if on { Capsule().fill(t.inv).matchedGeometryEffect(id: "pill", in: pill) } }.contentShape(Capsule())
@@ -345,6 +346,7 @@ struct PhotoChoices: View {
       .animation(Motion.knob, value: choice)
       .padding(3)
       .background(Capsule().fill(t.bg))
+      .haptic(.selection, on: taps, "segmented")
       switch choice {
       case "google":
         Text("Uses the photo on your Google account. Change it there and it updates here.").css(13, lh: 1.45).foregroundStyle(t.muted)

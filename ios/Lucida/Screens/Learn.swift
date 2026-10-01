@@ -363,6 +363,9 @@ private struct LearnBody: View {
     }, bottom: {
       if done { nextButton { exFor = nil; store.demo ? store.demoNext() : store.learnNext() } }
     })
+    // Right: success (a card gets learned this way); wrong: warning.
+    .haptic(.success, on: v.pick, "right answer") { _, new in new != nil && new == v.right }
+    .haptic(.warning, on: v.pick, "wrong answer") { _, new in new != nil && new != v.right }
   }
 
   // Matching: tap a word, then what it means.
@@ -385,6 +388,9 @@ private struct LearnBody: View {
     }, bottom: {
       if all { nextButton { store.demo ? store.demoNext() : store.learnNext() } }
     })
+    .haptic(.selection, on: v.sel, "pick") { _, new in new != nil }
+    .haptic(.success, on: v.matched.count, "right pair") { old, new in new > old }
+    .haptic(.warning, on: v.wrong, "wrong pair") { _, new in new != nil }
   }
   private func state(_ v: LearnView, _ id: String, left: Bool) -> String {
     if v.matched.contains(id) { return "done" }
@@ -461,6 +467,8 @@ private struct LearnBody: View {
       if v.checked { nextButton { typing = ""; exFor = nil; store.demo ? store.demoNext() : store.learnNext() } }
     })
     .onChange(of: v.id) { _, _ in typing = "" }
+    .haptic(.success, on: v.checked, "right answer") { _, new in new && v.ok }
+    .haptic(.warning, on: v.checked, "wrong answer") { _, new in new && !v.ok }
   }
   private func check() {
     if store.demo { if !store.demoLearn.typed.trimmingCharacters(in: .whitespaces).isEmpty { store.demoLearn.checked = true } }

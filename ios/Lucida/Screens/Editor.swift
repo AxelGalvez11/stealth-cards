@@ -165,7 +165,7 @@ struct EditorSheet: View {
                   }
                   .buttonStyle(.plain)
                   .accessibilityAddTraits(paused ? .isSelected : [])
-                  Button { Task { await store.deleteCard(id); nav.close() } } label: { Text("Delete card").css(14, .semibold).foregroundStyle(t.again).frame(minHeight: 44) }.buttonStyle(.plain)
+                  Button { Buzz.shared.light("card deleted"); Task { await store.deleteCard(id); nav.close() } } label: { Text("Delete card").css(14, .semibold).foregroundStyle(t.again).frame(minHeight: 44) }.buttonStyle(.plain)
                 }
               }
             }
@@ -477,7 +477,7 @@ struct EditorSheet: View {
     o["wave"] = audio != nil ? (wave?.json ?? NSNull()) : NSNull()
     // A picture's boxes (as fractions) and what to hide: the server makes one card per box.
     if kind == "image" { o["boxes"] = boxes.map(\.json); o["occ"] = occ }
-    Task { if await store.saveCard(cardId, deckId: deckId ?? "", o) { nav.close() } }
+    Task { if await store.saveCard(cardId, deckId: deckId ?? "", o) { if cardId == nil { Buzz.shared.light("card added") }; nav.close() } }
   }
 
   /// A picked photo goes to your library's storage (made small enough first, or it says why it didn't); the card keeps
@@ -492,13 +492,14 @@ struct EditorSheet: View {
 private struct HideSegmented: View {
   @Environment(\.theme) private var t
   @Namespace private var pill
+  @State private var taps = 0
   let current: String
   let pick: (String) -> Void
   var body: some View {
     EqualWidths(gap: 4) {
       ForEach([("one", "Hide one"), ("all", "Hide all")], id: \.0) { id, label in
         let on = id == current
-        Button { pick(id) } label: {
+        Button { if !on { taps += 1 }; pick(id) } label: {
           Text(label).css(13, .semibold).lineLimit(1).foregroundStyle(on ? t.text : t.muted)
             .padding(.horizontal, 10).frame(maxWidth: .infinity).frame(height: 34)
             .background { if on { Capsule().fill(t.bg).shadow(color: .black.opacity(0.12), radius: 1.5, x: 0, y: 1).matchedGeometryEffect(id: "pill", in: pill) } }
@@ -511,6 +512,7 @@ private struct HideSegmented: View {
     .animation(Motion.knob, value: current)
     .padding(4)
     .background(Capsule().fill(t.surf))
+    .haptic(.selection, on: taps, "segmented")
     .accessibilityElement(children: .contain)
     .accessibilityLabel("What to hide")
   }

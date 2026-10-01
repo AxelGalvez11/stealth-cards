@@ -78,6 +78,8 @@ struct RootView: View {
         }
       }
     }
+    // The haptics that fired (`-hapticAudit`) and what the deck cover is doing (`-parallaxAudit`), read the same way.
+    .overlay(alignment: .topLeading) { if HapticLog.on { HapticAudit() } }
     #endif
     .onChange(of: store.skinKey) { _, k in if let k, !store.demo { ThemeArt.shared.warm(k, store) } }
     // Back after a while away: decks you study from other people get their owners' newest changes.
@@ -367,6 +369,10 @@ struct MainView: View {
   @EnvironmentObject private var store: Store
   @EnvironmentObject private var nav: Nav
   @Environment(\.theme) private var t
+  /// Tabs the person changed (a tap on the tab bar, or a swipe): each gives a selection haptic.
+  @State private var tabTicks = 0
+  /// Haptics for what happens as a sheet closes or a deck goes (Buzz).
+  @ObservedObject private var buzz = Buzz.shared
 
   var body: some View {
     ZStack(alignment: .bottom) {
@@ -397,7 +403,7 @@ struct MainView: View {
             .containerBackground(t.bg, for: .navigation)
           }
       }
-      if showsTabBar { TabBar(active: lit, pick: nav.pick) }
+      if showsTabBar { TabBar(active: lit, pick: { tab in if tab != nav.tab { tabTicks += 1 }; nav.pick(tab) }) }
       // A deck or card being dragged, over the page and the tab bar; and the Move to tray over it while a card is.
       DragGhost()
       MoveTray()
@@ -407,6 +413,10 @@ struct MainView: View {
       if store.welcoming { WelcomeScreen().zIndex(10).transition(.opacity) }
     }
     .ignoresSafeArea(edges: .bottom)
+    .haptic(.selection, on: tabTicks, "tab")
+    .sensoryFeedback(.impact(weight: .light), trigger: buzz.lights)
+    .sensoryFeedback(.success, trigger: buzz.successes)
+    .sensoryFeedback(.warning, trigger: buzz.warnings)
     // A design screen's full screen, over its page once that's drawn (Board.setUp).
     .task { if let f = nav.boardFull { nav.boardFull = nil; try? await Task.sleep(nanoseconds: 100_000_000); nav.full = f } }
   }
@@ -487,6 +497,7 @@ struct DeckSettingsHost: View {
     .onAppear { if store.demo { tab = store.props.deckSettings ?? "general"; tagPicker = store.props.tagPicker } }
     .confirmationDialog(ask, isPresented: Binding(get: { store.confirmDelete == id }, set: { if !$0 { store.confirmDelete = nil } }), titleVisibility: .visible) {
       Button(linked ? "Remove from library" : "Delete deck", role: .destructive) {
+        Buzz.shared.warning("delete deck")
         Task { await store.deleteDeck(id); nav.close(); nav.pick(.library) }
       }
     }

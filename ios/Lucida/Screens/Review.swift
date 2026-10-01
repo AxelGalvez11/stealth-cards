@@ -188,6 +188,9 @@ private struct ReviewBody: View {
   /// After a grade the next card comes up fresh (a small lift) instead of spinning back.
   @State private var moved = false
   @State private var settingsOpen = false
+  /// Flips and grades, each a light tap.
+  @State private var flips = 0
+  @State private var grades = 0
   @State private var pileDraft: String? = nil
   /// The card whose explanation is open, and (on a design screen) whether the sample one was asked for.
   @State private var exFor: String? = nil
@@ -200,7 +203,7 @@ private struct ReviewBody: View {
     ZStack {
       VStack(spacing: 16) {
         topBar(rv)
-        FlipCard(card: rv.card, revealed: revealed, moved: moved, done: rv.done) { withAnimation(nil) { moved = false }; revealed.toggle() }
+        FlipCard(card: rv.card, revealed: revealed, moved: moved, done: rv.done) { flips += 1; withAnimation(nil) { moved = false }; revealed.toggle() }
           .overlay { explain(rv) }
         grading(rv).frame(height: 76)
       }
@@ -222,6 +225,8 @@ private struct ReviewBody: View {
       else if rv.empty { nav.finishReview(graded: !(store.session?.graded.isEmpty ?? true)) }
     }
     .onChange(of: rv.empty) { _, empty in if empty { nav.finishReview() } }
+    .haptic(.light, on: flips, "flip")
+    .haptic(.light, on: grades, "grade")
     // A sound card plays on its own when it comes up (unless it's set not to).
     .onChange(of: rv.card.id, initial: true) { _, _ in autoplay(rv.card) }
     .onDisappear { autoplaying?.cancel(); store.stopSound() }
@@ -348,6 +353,7 @@ private struct ReviewBody: View {
 
   /// After a grade: the next card, fresh and unflipped.
   private func next(_ action: () -> Void) {
+    grades += 1
     var tx = Transaction(); tx.disablesAnimations = true
     withTransaction(tx) { moved = true; revealed = false }
     action()

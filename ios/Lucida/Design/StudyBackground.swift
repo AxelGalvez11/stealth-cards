@@ -226,6 +226,7 @@ struct BgChooser: View {
       if d.kind == "photo" { HStack(spacing: 6) { SmallButton(label: "Change photo", icon: "image") { picking = true } } }
     }
     .photoPicker($picking) { store.setBgPhoto(deckId, $0) }
+    .haptic(.selection, on: d.kind, "option")
   }
 }
 

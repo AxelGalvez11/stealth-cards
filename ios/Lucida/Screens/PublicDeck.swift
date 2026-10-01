@@ -21,6 +21,8 @@ struct PublicDeckScreen: View {
   @State private var watch: Bool? = nil
   @State private var busy = ""
   @State private var err = ""
+  /// Save and Get updates, on and off (a light tap each).
+  @State private var changes = 0
   /// The version of the deck you checked (Check this deck): it says "Checked by you" until the deck changes again.
   @State private var checkedAt: Int? = nil
   /// A link's ?copy=1 or ?suggest=<card> opens its sheet once, when the page is here.
@@ -38,6 +40,7 @@ struct PublicDeckScreen: View {
     .ignoresSafeArea(edges: .top)
     .toolbar(.hidden, for: .navigationBar)
     .onChange(of: page != nil, initial: true) { _, ok in if ok, let page { openWanted(page) } }
+    .haptic(.light, on: changes, "save or updates")
   }
 
   /// A link that asks for Make a copy or Suggest a change opens it, for someone who can (not on your own deck).
@@ -415,12 +418,12 @@ struct PublicDeckScreen: View {
   }
   private func toggleStar(_ p: PublicDeckPage, _ on: Bool) {
     guard p.me != nil else { return }
-    star = on; err = ""
+    star = on; err = ""; changes += 1
     Task { do { try await store.starDeck(p.id, on) } catch { star = nil; err = fail(error) } }
   }
   private func toggleWatch(_ p: PublicDeckPage, _ on: Bool) {
     guard p.me != nil else { return }
-    watch = on; err = ""
+    watch = on; err = ""; changes += 1
     Task { do { try await store.watchDeck(p.id, on) } catch { watch = nil; err = fail(error) } }
   }
   /// Suggest a change from its button (no card yet) or from a card.

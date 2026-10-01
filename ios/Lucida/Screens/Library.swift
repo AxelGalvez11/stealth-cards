@@ -207,7 +207,9 @@ struct LibraryScreen: View {
   @State private var pick = ""
   @State private var shown = 60
   @State private var confirmRemove = false
+  /// The difficulty control's sliding pill, and its taps.
   @Namespace private var levelPill
+  @State private var levelTaps = 0
 
   var body: some View {
     let decks = store.libraryDecks(), folders = store.libraryFolders(decks)
@@ -250,7 +252,7 @@ struct LibraryScreen: View {
     .overlayPreferenceValue(MenuAnchors.self) { anchors in menus(anchors, decks, folders).animation(Motion.pop, value: menu) }
     .confirmationDialog("Remove the folder “\(folder?.name ?? "")”?", isPresented: $confirmRemove, titleVisibility: .visible) {
       // Back to the Library (the page also goes back by itself once its folder is gone).
-      Button("Remove folder", role: .destructive) { if let id = folderId { Task { await store.deleteFolder(id); if nav.path.last == .folder(id) { nav.back() } } } }
+      Button("Remove folder", role: .destructive) { Buzz.shared.warning("remove folder"); if let id = folderId { Task { await store.deleteFolder(id); if nav.path.last == .folder(id) { nav.back() } } } }
     } message: { Text("Its decks stay in your library.") }
   }
 
@@ -524,7 +526,7 @@ struct LibraryScreen: View {
     FlexRow(spacing: 2) {
       ForEach(["all"] + Level.all, id: \.self) { k in
         let on = level == k, n = k == "all" ? base.count : base.filter { $0.level == k }.count
-        Button { level = k; shown = 60 } label: {
+        Button { if !on { levelTaps += 1 }; level = k; shown = 60 } label: {
           HStack(spacing: 4) {
             Circle().fill(k == "all" ? .clear : Level.color(k, t)).frame(width: k == "all" ? 0 : 8, height: 8)
             Text(k == "all" ? "All" : Level.name(k)).css(12, .semibold).lineLimit(1)
@@ -543,6 +545,7 @@ struct LibraryScreen: View {
     .animation(Motion.knob, value: level)
     .padding(4)
     .background(Capsule().fill(t.surf))
+    .haptic(.selection, on: levelTaps, "segmented")
   }
 
   private func menuButton(_ key: String, _ label: String) -> some View {

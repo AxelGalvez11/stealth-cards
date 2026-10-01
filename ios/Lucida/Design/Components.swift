@@ -170,15 +170,13 @@ struct Toggle48: View {
   /// The colors and the knob's place, each changed in its own animation when `on` does.
   @State private var lit: Bool
   @State private var knob: Bool
-  /// cubic-bezier(.34, 1.56, .64, 1) over 0.32 s for the knob; ease over 0.3 s for the colors.
-  static let spring = Animation.timingCurve(0.34, 1.56, 0.64, 1, duration: 0.32)
-  static let fade = Animation.timingCurve(0.25, 0.1, 0.25, 1, duration: 0.3)
+  @State private var taps = 0
   init(on: Bool, enabled: Bool = true, label: String, action: @escaping () -> Void) {
     self.on = on; self.enabled = enabled; self.label = label; self.action = action
     _lit = State(initialValue: on); _knob = State(initialValue: on)
   }
   var body: some View {
-    Button(action: action) {
+    Button { taps += 1; action() } label: {
       ZStack(alignment: .leading) {
         Capsule().fill(lit ? t.inv : t.surf2)
         Circle().fill(lit ? t.invText : t.bg).frame(width: 22, height: 22).padding(3).offset(x: knob ? 20 : 0)
@@ -192,6 +190,7 @@ struct Toggle48: View {
       withAnimation(.easeOut(duration: Motion.timings.knob)) { lit = v }
       withAnimation(Motion.knob) { knob = v }
     }
+    .haptic(.selection, on: taps, "toggle")
     .accessibilityLabel(label)
     .accessibilityValue(on ? "On" : "Off")
     .accessibilityAddTraits(.isButton)
@@ -203,6 +202,7 @@ struct Toggle48: View {
 struct Segmented: View {
   @Environment(\.theme) private var t
   @Namespace private var pill
+  @State private var taps = 0
   let options: [(id: String, label: String)]
   let current: String
   var height: CGFloat = 34
@@ -219,7 +219,7 @@ struct Segmented: View {
     HStack(spacing: gap) {
       ForEach(options, id: \.id) { o in
         let on = o.id == current
-        Button { pick(o.id) } label: {
+        Button { if !on { taps += 1 }; pick(o.id) } label: {
           Text(o.label).css(size, weight).lineLimit(1)
             .foregroundStyle(on ? (inverted ? t.invText : t.text) : t.muted)
             .padding(.horizontal, hPad)
@@ -237,6 +237,7 @@ struct Segmented: View {
     .animation(Motion.knob, value: current)
     .padding(pad)
     .background(Capsule().fill(track ?? t.surf))
+    .haptic(.selection, on: taps, "segmented")
   }
 }
 
