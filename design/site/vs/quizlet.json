@@ -4,8 +4,8 @@
   "title": "Lucida vs Quizlet: flashcard apps compared (2026)",
   "description": "Lucida vs Quizlet: what is free, spaced repetition, AI, import, classes and games, with sources. Quizlet has the library. Lucida has free Learn mode.",
   "h1": "Lucida vs Quizlet",
-  "lead": "Quizlet has the bigger library, phone apps and classroom tools, but its free plan limits Learn and Test. Lucida gives you Learn mode, spaced repetition and live games free, with no ads, and your own AI (Claude, ChatGPT) can make and edit the cards.",
-  "updated": "2026-09-30",
+  "lead": "Quizlet has the bigger library, phone apps and classroom tools, but its free plan limits Learn and Test. Lucida gives you Learn mode, spaced repetition and live games free, with no ads, and it can make cards from your files, while your own AI (Claude, ChatGPT) can make and edit cards too.",
+  "updated": "2026-10-01",
   "published": "2026-09-30",
   "table": {
     "columns": [
@@ -31,12 +31,12 @@
       ],
       [
         "AI",
-        "Your own AI (Claude, ChatGPT, Cursor or any MCP app) makes and edits cards and Learn quizzes through your personal Lucida link. You choose what it may do and can check its cards first.",
+        "Built in: makes cards, writes live-game questions from a topic and explains answers. Your own AI (Claude, ChatGPT, Cursor or any MCP app) can also make and edit cards and Learn quizzes through your personal Lucida link. You choose what it may do and can check its cards first.",
         "Ask Quizlet (US, ages 14 and up), Smart Assist, Study Guides and Practice Tests (limited free access), plus a Quizlet app in ChatGPT and a connector in Claude."
       ],
       [
         "Making cards",
-        "Type cards in the editor (bold, italics, math, lists), import a list, or ask your AI.",
+        "Type cards in the editor (bold, italics, math, lists), import a list, make cards from a PDF, slides, a Word file, pictures, a recording, a YouTube video or a topic (3 makes a day on Free, 30 on Pro), or ask your own AI. Lucida shows new cards first, and you keep, edit or remove each one.",
         "Type terms and definitions, paste a list, or let AI build a set from notes or files."
       ],
       [
@@ -81,7 +81,7 @@
       "h2": "The short version",
       "paras": [
         "Quizlet is the biggest flashcard site. Its App Store listing says over 60 million people use it, and its help center says there are millions of sets made by students and teachers.",
-        "Lucida is newer and smaller. It is built around free study tools: FSRS reviews, Learn mode, live games and sharing, with your own AI making the cards."
+        "Lucida is newer and smaller. It is built around free study tools: FSRS reviews, Learn mode, live games and sharing, with cards made from your files or by your own AI."
       ]
     },
     {
@@ -128,13 +128,13 @@
       "h2": "Who should pick which",
       "bullets": [
         "**Pick Quizlet** if you want the biggest library of ready-made sets, phone apps with offline study, or classroom tools like Google Classroom.",
-        "**Pick Lucida** if you want Learn mode, spaced repetition and live games free, no ads, and cards your own AI makes."
+        "**Pick Lucida** if you want Learn mode, spaced repetition and live games free, no ads, and cards made from your files or by your own AI."
       ]
     },
     {
       "h2": "How we checked this page",
       "paras": [
-        "Facts about Quizlet come from Quizlet’s help center, its teacher plan page (quizlet.com/upgrade) and its App Store listing, opened on September 30, 2026. Facts about Lucida come from the app, its pricing page and its privacy policy. Where we couldn’t confirm something about Quizlet, we left it out. If anything here is wrong, write to team@lucida.cards."
+        "Facts about Quizlet come from Quizlet’s help center, its teacher plan page (quizlet.com/upgrade) and its App Store listing, opened on September 30, 2026. Facts about Lucida come from the app, its pricing page and its privacy policy, and are as of October 1, 2026. Where we couldn’t confirm something about Quizlet, we left it out. If anything here is wrong, write to team@lucida.cards."
       ]
     }
   ],
@@ -157,7 +157,7 @@
     },
     {
       "q": "Is Lucida a good Quizlet alternative?",
-      "a": "If you want Learn mode, spaced repetition and live games for free, with no ads and cards your own AI makes, yes. If you need Quizlet’s huge library, phone apps with offline study or Google Classroom, stay with Quizlet."
+      "a": "If you want Learn mode, spaced repetition and live games for free, with no ads and cards made from your files or by your own AI, yes. If you need Quizlet’s huge library, phone apps with offline study or Google Classroom, stay with Quizlet."
     },
     {
       "q": "Can I import my Quizlet sets into Lucida?",
@@ -169,7 +169,7 @@
     },
     {
       "q": "Does Quizlet have AI?",
-      "a": "Yes: Ask Quizlet (US, ages 14 and up), Smart Assist, Study Guides and Practice Tests, plus a Quizlet app in ChatGPT and a connector in Claude. Lucida doesn’t write cards itself. Your own AI app does."
+      "a": "Yes: Ask Quizlet (US, ages 14 and up), Smart Assist, Study Guides and Practice Tests, plus a Quizlet app in ChatGPT and a connector in Claude. Lucida makes cards itself from your files, pictures, recordings, YouTube links or a topic, and your own AI app can also make cards through your Lucida link."
     },
     {
       "q": "Does Quizlet work offline?",
@@ -290,12 +290,12 @@
     {
       "label": "Lucida pricing",
       "url": "https://lucida.cards/pricing",
-      "checked": "2026-09-30"
+      "checked": "2026-10-01"
     },
     {
       "label": "Lucida privacy policy",
       "url": "https://lucida.cards/privacy",
-      "checked": "2026-09-30"
+      "checked": "2026-10-01"
     }
   ],
   "related": [

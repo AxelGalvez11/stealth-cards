@@ -4,8 +4,8 @@
   "title": "Lucida vs Anki: flashcard apps compared (2026)",
   "description": "Lucida vs Anki: price, FSRS, AI, import, offline and sharing, with sources. Anki is deeper and works offline. Lucida is easier and runs in a browser.",
   "h1": "Lucida vs Anki",
-  "lead": "Anki is the better choice if you want full control, add-ons and offline study on your own devices, and it is free on computers and Android. Lucida is the easier choice if you want FSRS reviews in any browser and your own AI (Claude, ChatGPT) to make and edit the cards.",
-  "updated": "2026-09-30",
+  "lead": "Anki is the better choice if you want full control, add-ons and offline study on your own devices, and it is free on computers and Android. Lucida is the easier choice if you want FSRS reviews in any browser, with Lucida making cards from your files and your own AI (Claude, ChatGPT) able to make and edit them too.",
+  "updated": "2026-10-01",
   "published": "2026-09-30",
   "table": {
     "columns": [
@@ -31,12 +31,12 @@
       ],
       [
         "AI",
-        "Your own AI (Claude, ChatGPT, Cursor or any MCP app) makes and edits cards and Learn quizzes through your personal Lucida link. You choose what it may do and can check its cards first.",
+        "Built in: makes cards, writes live-game questions from a topic and explains answers. Your own AI (Claude, ChatGPT, Cursor or any MCP app) can also make and edit cards and Learn quizzes through your personal Lucida link. You choose what it may do and can check its cards first.",
         "Not built in. Add-ons can connect it to Claude, ChatGPT, Gemini or DeepSeek with your own API key."
       ],
       [
         "Making cards",
-        "Type cards in the editor (bold, italics, math, lists), import a list, or ask your AI.",
+        "Type cards in the editor (bold, italics, math, lists), import a list, make cards from a PDF, slides, a Word file, pictures, a recording, a YouTube video or a topic (3 makes a day on Free, 30 on Pro), or ask your own AI. Lucida shows new cards first, and you keep, edit or remove each one.",
         "You add notes, and a note type (fields plus HTML and CSS templates) makes the cards. Very flexible, with more to learn."
       ],
       [
@@ -81,7 +81,7 @@
       "h2": "The short version",
       "paras": [
         "Anki is powerful and free on computers and Android, with a huge community. It is local-first: your cards sit on your device, and you choose how much to configure.",
-        "Lucida has fewer settings and nothing to install. You sign in, ask your AI for cards or type them, and Lucida plans every review with FSRS. Learn mode and live games come with it."
+        "Lucida has fewer settings and nothing to install. You sign in, make cards from your files, ask your own AI for cards or type them, and Lucida plans every review with FSRS. Learn mode and live games come with it."
       ]
     },
     {
@@ -101,7 +101,7 @@
       "h2": "Where Lucida is better",
       "bullets": [
         "**Nothing to install or set up.** Open a browser on any computer or phone. Anki’s iPhone app costs $24.99, and Lucida works in Safari for free.",
-        "**AI that works on your cards.** Your own AI (Claude, ChatGPT, Cursor or any MCP app) can add cards, fix them, write quiz questions and see what is due, through one private link. You choose what it may do and can check its cards before they join a deck. In Anki this takes an add-on and your own API key.",
+        "**AI that makes and works on your cards.** Lucida makes cards from a PDF, slides, a Word file, pictures, a recording, a YouTube video or a topic, and shows them to you before they are saved. Your own AI (Claude, ChatGPT, Cursor or any MCP app) can also add cards, fix them, write quiz questions and see what is due, through one private link. You choose what it may do and can check its cards before they join a deck. In Anki this takes an add-on and your own API key.",
         "**Learn mode is built in and free:** multiple choice, true or false, fill in the blank, matching and typing questions made from your cards.",
         "**Live games.** Play any deck with up to 60 friends on their phones. Anki has no games built in.",
         "**Classes and sharing.** Assign a deck by a date, see progress students choose to share, suggest changes to someone else’s deck and go back to any version.",
@@ -119,20 +119,20 @@
     {
       "h2": "Can you use both?",
       "paras": [
-        "Yes. Keep Anki for big, heavily customized decks and offline study, and use Lucida for cards your AI makes, Learn mode and live games. Export a Lucida deck as CSV and Anki can import it, because Anki reads text and CSV files."
+        "Yes. Keep Anki for big, heavily customized decks and offline study, and use Lucida for cards made from your files or by your AI, Learn mode and live games. Export a Lucida deck as CSV and Anki can import it, because Anki reads text and CSV files."
       ]
     },
     {
       "h2": "Who should pick which",
       "bullets": [
         "**Pick Anki** if you want total control, add-ons, offline study, or you already have a large collection.",
-        "**Pick Lucida** if you want to start in a minute, let your AI make the cards and study on a phone without installing anything."
+        "**Pick Lucida** if you want to start in a minute, make cards from your files or with your own AI, and study on a phone without installing anything."
       ]
     },
     {
       "h2": "How we checked this page",
       "paras": [
-        "Facts about Anki come from apps.ankiweb.net, the Anki manual, AnkiWeb, the AnkiMobile App Store listing and Anki’s GitHub release notes (the add-on count comes from Wikipedia, used to fill a gap), opened on September 30, 2026. Facts about Lucida come from the app, its pricing page and its privacy policy. Where we couldn’t confirm something about Anki, we left it out. If anything here is wrong, write to team@lucida.cards."
+        "Facts about Anki come from apps.ankiweb.net, the Anki manual, AnkiWeb, the AnkiMobile App Store listing and Anki’s GitHub release notes (the add-on count comes from Wikipedia, used to fill a gap), opened on September 30, 2026. Facts about Lucida come from the app, its pricing page and its privacy policy, and are as of October 1, 2026. Where we couldn’t confirm something about Anki, we left it out. If anything here is wrong, write to team@lucida.cards."
       ]
     }
   ],
@@ -147,7 +147,7 @@
     },
     {
       "q": "Is Lucida better than Anki?",
-      "a": "Neither is better for everyone. Anki wins on control, add-ons, offline use and a free computer app. Lucida wins on getting started fast, cards your own AI makes, and built-in Learn mode and live games. You can try Lucida on one deck for free and keep Anki for anything that needs offline study or add-ons."
+      "a": "Neither is better for everyone. Anki wins on control, add-ons, offline use and a free computer app. Lucida wins on getting started fast, cards made from your files or by your own AI, and built-in Learn mode and live games. You can try Lucida on one deck for free and keep Anki for anything that needs offline study or add-ons."
     },
     {
       "q": "Does Lucida use FSRS like Anki?",
@@ -159,7 +159,7 @@
     },
     {
       "q": "Does Anki have AI?",
-      "a": "Not built in. Add-ons can connect it to AI models. One on AnkiWeb supports Claude, ChatGPT, Gemini and DeepSeek with your own API key and adds information to cards you select (updated February 26, 2026). Lucida works the other way round: your own AI app makes and edits cards through your Lucida link."
+      "a": "Not built in. Add-ons can connect it to AI models. One on AnkiWeb supports Claude, ChatGPT, Gemini and DeepSeek with your own API key and adds information to cards you select (updated February 26, 2026). Lucida has its own AI for making cards from your files, and your own AI app can also make and edit cards through your Lucida link."
     },
     {
       "q": "Does Lucida work offline like Anki?",
@@ -171,7 +171,7 @@
     },
     {
       "q": "Can I use Lucida and Anki together?",
-      "a": "Yes. Use Anki for deep, offline study and Lucida for cards your AI makes. Export a Lucida deck as CSV to bring it into Anki, or export Anki’s Notes in Plain Text to bring a deck into Lucida."
+      "a": "Yes. Use Anki for deep, offline study and Lucida for cards made from your files or by your AI. Export a Lucida deck as CSV to bring it into Anki, or export Anki’s Notes in Plain Text to bring a deck into Lucida."
     }
   ],
   "sources": [
@@ -258,12 +258,12 @@
     {
       "label": "Lucida pricing",
       "url": "https://lucida.cards/pricing",
-      "checked": "2026-09-30"
+      "checked": "2026-10-01"
     },
     {
       "label": "Lucida privacy policy",
       "url": "https://lucida.cards/privacy",
-      "checked": "2026-09-30"
+      "checked": "2026-10-01"
     }
   ],
   "related": [

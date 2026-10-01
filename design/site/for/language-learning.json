@@ -5,7 +5,7 @@
   "description": "Make word and sentence cards with sound, hide the word in fill-in-the-blank cards, and review on an FSRS schedule. Free, in any browser. Limits included.",
   "h1": "Lucida for language learning",
   "lead": "Lucida is a flashcard app for vocabulary: make word and sentence cards, add sound you record, upload or have read aloud, hide the word you’re learning in fill-in-the-blank cards, and let FSRS schedule the reviews. It’s free and runs in any browser, but it has no lessons, dictionary or ready-made word lists, and there’s no language picker on a sound card you make by hand.",
-  "updated": "2026-09-30",
+  "updated": "2026-10-01",
   "table": {
     "columns": [
       "Card",
@@ -41,9 +41,10 @@
       "bullets": [
         "**1. Try sentences, not only words.** A card like “Yo [[tengo]] dos hermanos.” shows how a word is used. Add a Blank card, write the sentence, and put double brackets around the word to hide. Each blank can be its own card.",
         "**2. Add sound.** On a Sound card you can record yourself (tap the mic), upload a file, or type words for your device to read aloud. The sound can play on its own when the card comes up, and you can turn that off.",
-        "**3. Or ask your AI.** Tell Claude or ChatGPT the language and your level, and ask for sentence cards with blanks and for sound cards. It sends Lucida the words and a language code, like es, fr or ja (see [AI flashcards](/features/ai-flashcards)).",
-        "**4. Learn, then review.** In [Learn mode](/features/learn-mode), the type-the-answer question forgives accents, capital letters and small typos, so it tests recall, not spelling. Then FSRS schedules the reviews.",
-        "**5. Keep a pace you can hold.** Lucida starts at 20 new cards a day. Each new card adds reviews later, and Anki’s manual estimates that 20 new cards a day settles at roughly 200 reviews a day."
+        "**3. Or make cards from a lesson.** Choose Make cards, add your notes, a PDF, a photo of a book page, a recording or a YouTube link, and pick the deck, the kinds (basic or fill in the blank) and the language. Lucida shows the new cards first, and you keep, edit or remove each one.",
+        "**4. Or ask your AI.** Tell Claude or ChatGPT the language and your level, and ask for sentence cards with blanks and for sound cards. It sends Lucida the words and a language code, like es, fr or ja (see [AI flashcards](/features/ai-flashcards)).",
+        "**5. Learn, then review.** In [Learn mode](/features/learn-mode), the type-the-answer question forgives accents, capital letters and small typos, so it tests recall, not spelling. Then FSRS schedules the reviews.",
+        "**6. Keep a pace you can hold.** Lucida starts at 20 new cards a day. Each new card adds reviews later, and Anki’s manual estimates that 20 new cards a day settles at roughly 200 reviews a day."
       ]
     },
     {
@@ -83,6 +84,10 @@
     {
       "q": "What is the best flashcard app for language learning?",
       "a": "It depends on what you need. Lucida gives you word, sentence, fill-in-the-blank, sound and picture cards, FSRS scheduling and AI-made cards, free. It has no lessons, dictionary or native recordings, and no language picker on a sound card you make by hand."
+    },
+    {
+      "q": "Can Lucida make word cards from my notes or a lesson recording?",
+      "a": "Yes. Choose Make cards and add your notes, a PDF, a photo of a book page, a recording or a YouTube link, then pick the deck, the kinds (basic or fill in the blank) and the language. Lucida shows the new cards first. It makes basic and fill-in-the-blank cards, not sound cards."
     },
     {
       "q": "Can I add audio to flashcards in Lucida?",
@@ -141,7 +146,7 @@
     {
       "label": "Lucida pricing (what Free and Pro include, as of September 2026)",
       "url": "https://lucida.cards/pricing",
-      "checked": "2026-09-30"
+      "checked": "2026-10-01"
     }
   ],
   "related": [

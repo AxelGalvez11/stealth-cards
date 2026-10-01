@@ -4,8 +4,8 @@
   "title": "Lucida vs Brainscape: flashcard apps compared (2026)",
   "description": "Lucida vs Brainscape: price, spaced repetition, AI, images, export and sharing, with sources. Brainscape has expert-made decks. Lucida has more for free.",
   "h1": "Lucida vs Brainscape",
-  "lead": "Brainscape is a polished flashcard app with its own spaced repetition (you rate each card 1 to 5), expert-made Certified decks and phone apps, but pictures, sounds and export are Pro features. Lucida makes pictures and sounds (up to 100), Learn mode, sharing and export free, and your own AI (Claude, ChatGPT) makes the cards.",
-  "updated": "2026-09-30",
+  "lead": "Brainscape is a polished flashcard app with its own spaced repetition (you rate each card 1 to 5), expert-made Certified decks and phone apps, but pictures, sounds and export are Pro features. Lucida makes pictures and sounds (up to 100), Learn mode, sharing and export free, and it makes cards from your files, while your own AI (Claude, ChatGPT) can make them too.",
+  "updated": "2026-10-01",
   "published": "2026-09-30",
   "table": {
     "columns": [
@@ -31,12 +31,12 @@
       ],
       [
         "AI",
-        "Your own AI (Claude, ChatGPT, Cursor or any MCP app) makes and edits cards and Learn quizzes through your personal Lucida link. You choose what it may do and can check its cards first.",
+        "Built in: makes cards, writes live-game questions from a topic and explains answers. Your own AI (Claude, ChatGPT, Cursor or any MCP app) can also make and edit cards and Learn quizzes through your personal Lucida link. You choose what it may do and can check its cards first.",
         "An AI flashcard maker, including a one-by-one Flashcard Copilot. Limited on Free, unlimited on Pro."
       ],
       [
         "Making cards",
-        "Type cards in the editor (bold, italics, math, lists), import a list, or ask your AI.",
+        "Type cards in the editor (bold, italics, math, lists), import a list, make cards from a PDF, slides, a Word file, pictures, a recording, a YouTube video or a topic (3 makes a day on Free, 30 on Pro), or ask your own AI. Lucida shows new cards first, and you keep, edit or remove each one.",
         "Type cards, paste a list or upload a file, or use AI on your notes."
       ],
       [
@@ -117,13 +117,13 @@
       "h2": "Who should pick which",
       "bullets": [
         "**Pick Brainscape** if you want Certified, expert-made decks for a big exam, phone apps with offline study, or a simple 1 to 5 rating.",
-        "**Pick Lucida** if you want pictures, sounds, other people’s decks and export for free, FSRS, and your own AI making the cards."
+        "**Pick Lucida** if you want pictures, sounds, other people’s decks and export for free, FSRS, and cards made from your files or by your own AI."
       ]
     },
     {
       "h2": "How we checked this page",
       "paras": [
-        "Facts about Brainscape come from Brainscape’s pricing page, help center and App Store listing, opened on September 30, 2026. Facts about Lucida come from the app, its pricing page and its privacy policy. Where we couldn’t confirm something about Brainscape, we left it out. If anything here is wrong, write to team@lucida.cards."
+        "Facts about Brainscape come from Brainscape’s pricing page, help center and App Store listing, opened on September 30, 2026. Facts about Lucida come from the app, its pricing page and its privacy policy, and are as of October 1, 2026. Where we couldn’t confirm something about Brainscape, we left it out. If anything here is wrong, write to team@lucida.cards."
       ]
     }
   ],
@@ -154,7 +154,7 @@
     },
     {
       "q": "Does Brainscape have AI?",
-      "a": "Yes. Brainscape has an AI flashcard maker and a one-by-one Flashcard Copilot, with limited access on Free and unlimited use on Pro. Lucida doesn’t write cards itself; your own AI app does through your Lucida link."
+      "a": "Yes. Brainscape has an AI flashcard maker and a one-by-one Flashcard Copilot, with limited access on Free and unlimited use on Pro. Lucida makes cards itself too, with 3 makes a day on Free and 30 on Pro, and your own AI app can make cards through your Lucida link."
     },
     {
       "q": "Is Lucida a good Brainscape alternative?",
@@ -210,12 +210,12 @@
     {
       "label": "Lucida pricing",
       "url": "https://lucida.cards/pricing",
-      "checked": "2026-09-30"
+      "checked": "2026-10-01"
     },
     {
       "label": "Lucida privacy policy",
       "url": "https://lucida.cards/privacy",
-      "checked": "2026-09-30"
+      "checked": "2026-10-01"
     }
   ],
   "related": [

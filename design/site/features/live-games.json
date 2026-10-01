@@ -4,8 +4,8 @@
   "title": "Live flashcard games: a free Kahoot-style quiz",
   "description": "Turn a deck into a live quiz. Friends or a class join on their phones with a 6-digit code, no account, and race for points. Free, up to 60 players.",
   "h1": "Live games",
-  "lead": "Live turns any deck into a quiz game: you host on a computer, your friends or class join on their phones with a 6-digit code and no account, and everyone answers the same questions for points. It’s free, it takes up to 60 players, and the questions come from your own cards.",
-  "updated": "2026-09-30",
+  "lead": "Live turns any deck into a quiz game: you host on a computer, your friends or class join on their phones with a 6-digit code and no account, and everyone answers the same questions for points. It’s free, it takes up to 60 players, and the questions come from your own cards or from a topic you type.",
+  "updated": "2026-10-01",
   "table": {
     "columns": [
       "",
@@ -14,7 +14,7 @@
     "rows": [
       [
         "Who hosts",
-        "A signed-in person, from a deck, on a computer (the big screen)"
+        "A signed-in person, from a deck or a typed topic, on a computer (the big screen)"
       ],
       [
         "Who plays",
@@ -22,7 +22,7 @@
       ],
       [
         "Questions",
-        "5, 10 or 20 from your deck: new cards, hard cards, a tag, or all cards"
+        "From a deck: 5, 10 or 20 questions from new cards, hard cards, a tag, or all cards. From a topic: about 10, written by Lucida"
       ],
       [
         "Time for each",
@@ -67,8 +67,9 @@
     {
       "h2": "Where the questions come from",
       "paras": [
-        "They’re made the way Learn mode makes them (see [Learn mode](/features/learn-mode)). Each question comes from one card, with other answers from the deck as the wrong choices, or from the multiple choice questions your AI wrote for that card. A card is used when it has AI-written questions or when the deck has at least two different answers.",
-        "Picture cards show their picture on the big screen, with the asked box highlighted. Phones show the question and the answers only. Sound cards aren’t used, because a room can’t all hear one phone."
+        "In a game from a deck, they’re made the way Learn mode makes them (see [Learn mode](/features/learn-mode)). Each question comes from one card, with other answers from the deck as the wrong choices, or from the multiple choice questions your AI wrote for that card. A card is used when it has AI-written questions or when the deck has at least two different answers.",
+        "Picture cards show their picture on the big screen, with the asked box highlighted. Phones show the question and the answers only. Sound cards aren’t used, because a room can’t all hear one phone.",
+        "A game can also start from a topic you type instead of a deck. Lucida writes about 10 questions, and afterwards Save as a deck keeps them."
       ]
     },
     {
@@ -90,14 +91,15 @@
         "Hosting needs an account and a computer for the big screen. Players use phones.",
         "A room holds up to 60 players.",
         "Everyone needs an internet connection: the game runs between the browsers over a live connection.",
-        "Live isn’t graded and doesn’t save a report for teachers."
+        "Live isn’t graded and doesn’t save a report for teachers.",
+        "A game from a topic counts as one of your daily makes: 3 a day on Free, 30 on Pro."
       ]
     }
   ],
   "faq": [
     {
       "q": "Is Lucida Live free?",
-      "a": "Yes. Live games are part of Lucida’s free plan."
+      "a": "Yes. Live games are part of Lucida’s free plan. A game started from a topic counts as one of your daily makes (3 a day on Free)."
     },
     {
       "q": "Do players need an account?",
@@ -110,6 +112,10 @@
     {
       "q": "Can I use my own flashcards for a live quiz?",
       "a": "Yes. Any deck of yours can be played live. The questions come from your cards, with other answers from the deck as the wrong choices, or from questions your AI wrote."
+    },
+    {
+      "q": "Can I play a live game without a deck?",
+      "a": "Yes. Start a game from a topic you type, and Lucida writes about 10 questions. Afterwards, Save as a deck keeps the questions. It counts as one of your daily makes (3 a day on Free, 30 on Pro)."
     },
     {
       "q": "How are points worked out?",
@@ -146,7 +152,7 @@
     {
       "label": "Lucida pricing (what Free and Pro include, as of September 2026)",
       "url": "https://lucida.cards/pricing",
-      "checked": "2026-09-30"
+      "checked": "2026-10-01"
     }
   ],
   "related": [

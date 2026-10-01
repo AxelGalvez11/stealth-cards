@@ -5,7 +5,7 @@
   "description": "Share a deck as private, link only or public. Others study it as it is or copy it, and can suggest fixes that you take or skip. Free in Lucida.",
   "h1": "Shared decks",
   "lead": "Share any deck with a link or make it public, and other people can study it, copy it or suggest changes, while you decide which changes go in and everyone keeps their own schedule. You can also study anyone’s shared deck, find decks in Discover, and go back to any earlier version of a deck you share.",
-  "updated": "2026-09-30",
+  "updated": "2026-10-01",
   "table": {
     "columns": [
       "",
@@ -89,6 +89,14 @@
       ]
     },
     {
+      "h2": "Sources and the Guide",
+      "paras": [
+        "Every deck keeps its Sources: what its cards were made from, like a file, a recording, a video, pasted text or a topic. Sources are private, even on a shared deck, and a public deck’s page may only say “Made from 3 sources”.",
+        "A deck can also have a Guide, a page written in Markdown that shows under the deck’s header like a README. A shared deck’s Guide shows on its public page."
+      ],
+      "bullets": []
+    },
+    {
       "h2": "What to know first",
       "bullets": [
         "You can’t share a deck you only study. Make a copy first.",
@@ -138,6 +146,14 @@
     {
       "q": "Can I share a deck I imported from Anki or Quizlet?",
       "a": "Yes, it’s a deck in your library, but only share cards you have the right to share. Lucida’s terms ask you to add only things you have the right to use."
+    },
+    {
+      "q": "Can people see the files my cards were made from?",
+      "a": "No. A deck’s Sources are private, even on a shared deck. A public deck’s page may only say “Made from 3 sources”."
+    },
+    {
+      "q": "Does my deck’s Guide show when I share it?",
+      "a": "Yes. A shared deck’s Guide shows on its public page, under the deck’s header."
     }
   ],
   "sources": [
@@ -154,7 +170,7 @@
     {
       "label": "Lucida Privacy Policy (updated September 24, 2026)",
       "url": "https://lucida.cards/privacy",
-      "checked": "2026-09-30"
+      "checked": "2026-10-01"
     }
   ],
   "related": [

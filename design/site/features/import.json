@@ -5,7 +5,7 @@
   "description": "Bring cards into Lucida from Anki’s plain-text export, Quizlet’s Export, a CSV file or pasted text. What comes across, what doesn’t, and how to export.",
   "h1": "Import flashcards",
   "lead": "You can import cards into Lucida from Anki’s Notes in Plain Text export, from Quizlet’s Export, from a CSV or TSV file, or by pasting text with one card per line. Lucida can’t open Anki’s .apkg deck files, and imported cards start as new cards, without pictures, sounds, tags or review history.",
-  "updated": "2026-09-30",
+  "updated": "2026-10-01",
   "table": {
     "columns": [
       "From",
@@ -82,6 +82,13 @@
       ]
     },
     {
+      "h2": "Make new cards from a file instead",
+      "paras": [
+        "Import brings in cards that already exist. If you have notes, slides or a recording instead, Lucida can make the cards for you: choose Make cards and add a PDF, a PowerPoint, Word or text file, pictures, an audio file, a YouTube link, pasted text or a topic. Lucida shows the new cards first, and you keep, edit or remove each one. See [AI flashcards](/features/ai-flashcards) for the limits and what is sent to an AI service."
+      ],
+      "bullets": []
+    },
+    {
       "h2": "Export: take everything with you",
       "bullets": [
         "**One deck:** choose Export cards in the deck’s settings. You get a CSV file with the columns front, back, kind, text, note and tags.",
@@ -132,6 +139,10 @@
     {
       "q": "Can my AI add my cards instead?",
       "a": "Yes. If your AI app is connected to Lucida, you can paste a list into it and ask it to add the cards. For long lists, importing a file is faster."
+    },
+    {
+      "q": "Can Lucida make cards from a PDF or slides instead of importing?",
+      "a": "Yes. Importing is for cards that already exist. To make new cards from a PDF, slides, a Word file, pictures, a recording, a YouTube link or a topic, choose Make cards. Lucida can’t make cards from a web page address, so paste the text or save the page as a PDF."
     }
   ],
   "sources": [
@@ -153,7 +164,7 @@
     {
       "label": "Lucida Privacy Policy (updated September 24, 2026)",
       "url": "https://lucida.cards/privacy",
-      "checked": "2026-09-30"
+      "checked": "2026-10-01"
     }
   ],
   "related": [

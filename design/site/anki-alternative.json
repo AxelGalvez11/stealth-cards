@@ -4,8 +4,8 @@
   "title": "Best Anki alternatives in 2026: free, simple, AI",
   "description": "Looking for an Anki alternative? Compare Lucida, RemNote, Mochi, Knowt and Brainscape on price, FSRS, AI, offline use and importing your Anki decks.",
   "h1": "The best Anki alternatives",
-  "lead": "The right Anki alternative depends on what you want to change: Lucida for FSRS in a browser with your own AI making the cards, RemNote or Mochi for notes, apps and offline study, and Knowt or Brainscape for a quick start with AI built in. If Anki already works for you, keep it: it is free on computers and Android and has more than 1,600 add-ons.",
-  "updated": "2026-09-30",
+  "lead": "The right Anki alternative depends on what you want to change: Lucida for FSRS in a browser with cards made from your files or by your own AI, RemNote or Mochi for notes, apps and offline study, and Knowt or Brainscape for a quick start with AI built in. If Anki already works for you, keep it: it is free on computers and Android and has more than 1,600 add-ons.",
+  "updated": "2026-10-01",
   "published": "2026-09-30",
   "table": {
     "columns": [
@@ -48,7 +48,7 @@
       [
         "AI",
         "Add-ons only",
-        "Your own AI through MCP",
+        "Built in for making cards, plus your own AI through MCP",
         "Built in, monthly credits",
         "Built in (Pro), monthly limits",
         "Built in, limited on Free",
@@ -57,7 +57,7 @@
       [
         "Making cards",
         "Notes and note types (HTML and CSS)",
-        "Editor, import, or your AI",
+        "Editor, import, files, or your AI",
         "Any bullet in your notes",
         "Markdown, with --- between sides",
         "Type, paste, or AI from files",
@@ -157,7 +157,7 @@
     {
       "h2": "Lucida: Anki’s scheduling in a browser, with your AI",
       "paras": [
-        "Lucida plans every review with FSRS, like Anki, but runs in a browser with nothing to install. Your own AI (Claude, ChatGPT, Cursor or any MCP app) makes and edits the cards through your Lucida link, and you choose what it may do. Learn mode, live games, classes and sharing are free.",
+        "Lucida plans every review with FSRS, like Anki, but runs in a browser with nothing to install. It makes cards from your files, pictures, recordings, YouTube links or a topic (3 makes a day on Free) and shows them to you first. Your own AI (Claude, ChatGPT, Cursor or any MCP app) can also make and edit the cards through your Lucida link, and you choose what it may do. Learn mode, live games, classes and sharing are free.",
         "What you give up: no offline mode, no add-ons, no custom card templates, and no .apkg import. You can bring decks over through Anki’s Notes in Plain Text export, which keeps cards, bold and italics, cloze blanks and deck names but not pictures, sounds or review history."
       ]
     },
@@ -199,7 +199,7 @@
     {
       "h2": "How we checked this page",
       "paras": [
-        "Facts about these apps come from each app’s own site, help pages or app store listing, opened on September 30, 2026. Facts about Lucida come from the app, its pricing page and its privacy policy. Where we couldn’t confirm something about these apps, we left it out. If anything here is wrong, write to team@lucida.cards."
+        "Facts about these apps come from each app’s own site, help pages or app store listing, opened on September 30, 2026. Facts about Lucida come from the app, its pricing page and its privacy policy, and are as of October 1, 2026. Where we couldn’t confirm something about these apps, we left it out. If anything here is wrong, write to team@lucida.cards."
       ]
     }
   ],
@@ -218,7 +218,7 @@
     },
     {
       "q": "Is there an Anki alternative with AI?",
-      "a": "Yes. RemNote, Mochi (Pro), Knowt, Brainscape and Gizmo build AI into the app, with monthly or daily limits on their free plans. Lucida works differently: your own AI app (Claude, ChatGPT, Cursor) makes and edits your cards through your Lucida link."
+      "a": "Yes. RemNote, Mochi (Pro), Knowt, Brainscape and Gizmo build AI into the app, with monthly or daily limits on their free plans. Lucida builds in AI for making cards from your files (3 makes a day on Free), and your own AI app (Claude, ChatGPT, Cursor) can also make and edit your cards through your Lucida link."
     },
     {
       "q": "Can I import my Anki decks into another app?",
@@ -370,12 +370,12 @@
     {
       "label": "Lucida pricing",
       "url": "https://lucida.cards/pricing",
-      "checked": "2026-09-30"
+      "checked": "2026-10-01"
     },
     {
       "label": "Lucida privacy policy",
       "url": "https://lucida.cards/privacy",
-      "checked": "2026-09-30"
+      "checked": "2026-10-01"
     }
   ],
   "related": [

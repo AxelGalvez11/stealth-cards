@@ -5,7 +5,7 @@
   "description": "Looking for a Quizlet alternative? Compare Lucida, Knowt, Anki, Brainscape and Gizmo on free limits, Learn mode, spaced repetition, AI and importing sets.",
   "h1": "The best Quizlet alternatives",
   "lead": "Knowt and Lucida give you free learn-style study modes, Anki is free and deeper, Brainscape is free for your own text cards, and Gizmo adds AI and live games. Lucida gives you Learn mode, spaced repetition and live games free, with no ads, but Quizlet still has the biggest library and classroom tools.",
-  "updated": "2026-09-30",
+  "updated": "2026-10-01",
   "published": "2026-09-30",
   "table": {
     "columns": [
@@ -30,7 +30,7 @@
       [
         "What the free plan limits",
         "Learn (a free session), Test (1 per set), AI tools, ads",
-        "100 pictures and sounds, fewer AI explanations",
+        "100 pictures and sounds, 3 card makes a day, fewer AI explanations",
         "AI (1 summary a month), ads",
         "Nothing on computers and Android",
         "Images, sounds, export, other learners’ decks",
@@ -48,7 +48,7 @@
       [
         "AI",
         "Built in, plus ChatGPT and Claude connectors",
-        "Your own AI through MCP",
+        "Built in for making cards, plus your own AI through MCP",
         "Built in, limited on Free",
         "Add-ons only",
         "Built in, limited on Free",
@@ -57,7 +57,7 @@
       [
         "Making cards",
         "Type, paste, or AI (Smart Assist)",
-        "Editor, import, or your AI",
+        "Editor, import, files, or your AI",
         "Type, paste, or AI from files",
         "Notes and note types (HTML and CSS)",
         "Type, paste or upload, or AI",
@@ -166,7 +166,7 @@
     {
       "h2": "Lucida: free Learn mode, spaced repetition and live games",
       "paras": [
-        "Lucida’s free plan has unlimited decks and cards, FSRS reviews, Learn mode (five kinds of questions made from your cards), live games for up to 60 friends, sharing, classes, and import and export. There are no ads. Your own AI (Claude, ChatGPT, Cursor or any MCP app) makes and edits the cards through your Lucida link. Pro is $5.99 a month or $49.99 a year for exam dates, weak-spot stats, themes and unlimited pictures and sounds.",
+        "Lucida’s free plan has unlimited decks and cards, FSRS reviews, Learn mode (five kinds of questions made from your cards), live games for up to 60 friends, sharing, classes, making cards from your files, pictures, recordings, YouTube links or a topic (3 makes a day), and import and export. There are no ads. Your own AI (Claude, ChatGPT, Cursor or any MCP app) can also make and edit cards through your Lucida link. Pro is $5.99 a month or $49.99 a year for exam dates, weak-spot stats, themes, unlimited pictures and sounds, and 30 card makes a day.",
         "What you give up: Quizlet’s library (Lucida’s is new and small), phone apps with offline study, Google Classroom and Quizlet’s teacher tools."
       ]
     },
@@ -198,7 +198,7 @@
     {
       "h2": "How we checked this page",
       "paras": [
-        "Facts about these apps come from each app’s own site, help pages or app store listing, opened on September 30, 2026. Facts about Lucida come from the app, its pricing page and its privacy policy. Where we couldn’t confirm something about these apps, we left it out. If anything here is wrong, write to team@lucida.cards."
+        "Facts about these apps come from each app’s own site, help pages or app store listing, opened on September 30, 2026. Facts about Lucida come from the app, its pricing page and its privacy policy, and are as of October 1, 2026. Where we couldn’t confirm something about these apps, we left it out. If anything here is wrong, write to team@lucida.cards."
       ]
     }
   ],
@@ -225,7 +225,7 @@
     },
     {
       "q": "Is there a Quizlet alternative with AI?",
-      "a": "Yes. Knowt, Brainscape and Gizmo build AI into the app, with limits on their free plans. Lucida works differently: your own AI app (Claude, ChatGPT, Cursor) makes and edits cards through your Lucida link. Quizlet itself has Ask Quizlet and Smart Assist, and apps in ChatGPT and Claude."
+      "a": "Yes. Knowt, Brainscape and Gizmo build AI into the app, with limits on their free plans. Lucida does too, for making cards from your files (3 makes a day on Free), and your own AI app (Claude, ChatGPT, Cursor) can also make and edit cards through your Lucida link. Quizlet itself has Ask Quizlet and Smart Assist, and apps in ChatGPT and Claude."
     },
     {
       "q": "What can I use instead of Quizlet Live?",
@@ -369,12 +369,12 @@
     {
       "label": "Lucida pricing",
       "url": "https://lucida.cards/pricing",
-      "checked": "2026-09-30"
+      "checked": "2026-10-01"
     },
     {
       "label": "Lucida privacy policy",
       "url": "https://lucida.cards/privacy",
-      "checked": "2026-09-30"
+      "checked": "2026-10-01"
     }
   ],
   "related": [
