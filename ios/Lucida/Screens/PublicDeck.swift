@@ -160,6 +160,7 @@ struct PublicDeckScreen: View {
           LinearGradient(colors: [.black.opacity(0.12), .black.opacity(0.55)], startPoint: .top, endPoint: .bottom)
         }
       }
+      .coverParallax(still: still)
       VStack(alignment: .leading, spacing: 0) {
         HStack(spacing: 0) {
           CoverButton(icon: "back", label: "Back") { nav.back() }
@@ -206,11 +207,6 @@ struct PublicDeckScreen: View {
     }
     .frame(height: Screen.top(300))
     .clipShape(BelowClip())
-    .visualEffect { [still] content, proxy in
-      // Pulled down past the top, the cover stretches to fill the gap (Reduce Motion keeps it still).
-      let y = still ? 0 : proxy.frame(in: .scrollView(axis: .vertical)).minY, h = max(1, proxy.size.height)
-      return content.scaleEffect(y > 0 ? (h + y) / h : 1, anchor: .bottom)
-    }
   }
 
   /// The cover's badges: a teacher's check, a school's deck, and who keeps it up (the phone shows the first).

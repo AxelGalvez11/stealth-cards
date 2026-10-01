@@ -80,6 +80,7 @@ struct RootView: View {
     }
     // The haptics that fired (`-hapticAudit`) and what the deck cover is doing (`-parallaxAudit`), read the same way.
     .overlay(alignment: .topLeading) { if HapticLog.on { HapticAudit() } }
+    .overlay(alignment: .topLeading) { if ParallaxAudit.on { ParallaxReadout() } }
     .overlay(alignment: .topLeading) { if PopAudit.on { PopReadout() } }
     #endif
     .onChange(of: store.skinKey) { _, k in if let k, !store.demo { ThemeArt.shared.warm(k, store) } }

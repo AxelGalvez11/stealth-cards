@@ -210,14 +210,8 @@ struct DeckScreen: View {
     let ink = themed.flatMap { RGBA(css: $0.1.string("ink")) }
     return ZStack(alignment: .topLeading) {
       // Parallax: scrolling up, the cover drifts at half speed behind the header; pulled down past the top, it
-      // stretches to fill the gap. Reduce Motion keeps it still.
-      cover(d, themed?.1)
-        .visualEffect { [still] content, proxy in
-          let y = still ? 0 : proxy.frame(in: .scrollView(axis: .vertical)).minY, h = max(1, proxy.size.height)
-          return content
-            .scaleEffect(y > 0 ? (h + y) / h : 1, anchor: .bottom)
-            .offset(y: y < 0 ? -y / 2 : 0)
-        }
+      // stretches to fill the gap. Reduce Motion keeps it still (Design/Parallax.swift).
+      cover(d, themed?.1).coverParallax(still: still)
       VStack(alignment: .leading, spacing: 0) {
         // Top-aligned, like the board's row (its page and Suggest a change are 40, the rest 44).
         HStack(alignment: .top, spacing: 8) {
