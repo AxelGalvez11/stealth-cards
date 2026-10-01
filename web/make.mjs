@@ -101,6 +101,9 @@ const extOf = (name, type) => {
 const NOT_READABLE = 'Lucida can’t read that kind of file. Try a PDF, slides, a Word file, pictures, or a recording.';
 const HEIC = 'That photo is in a format Lucida can’t read (HEIC). Pick a JPEG or PNG picture.';
 const room = pro => `Your account has no room for more files. Delete a source to make room${pro ? '' : ', or go Pro'}.`;
+// A recording the speech service can't take in one go. (The page and the app cut MP3, WAV, Ogg, AAC and M4A recordings into parts before sending, so this is
+// for what comes any other way: a kind that can't be cut, or something that wasn't cut.)
+const OVER_AUDIO = 'That recording is over ' + MAKE_AUDIO_MB + ' MB, and Lucida reads up to ' + MAKE_AUDIO_MB + ' MB at a time. Pick a shorter one, or cut it into parts of under ' + MAKE_AUDIO_MB + ' MB first.';
 
 // The upload step: where to put one file. Checks the plan's file size and what room the account has left, and remembers the upload.
 async function upload(uid, b, pro) {
@@ -112,7 +115,7 @@ async function upload(uid, b, pro) {
   const rec = await inLib(uid, () => {
     const plan = MAKE[isPro() ? 'pro' : 'free'];
     if (!makeReady()) throw fail('Making cards isn’t set up yet.', 503);
-    if (AUDIO_EXT.has(ext) && size > MAKE_AUDIO_MB * 1e6) throw fail('That recording is over ' + MAKE_AUDIO_MB + ' MB. Try a shorter one.', 413);
+    if (AUDIO_EXT.has(ext) && size > MAKE_AUDIO_MB * 1e6) throw fail(OVER_AUDIO, 413);
     if (size > plan.fileMB * 1e6) throw fail('That file is over ' + plan.fileMB + ' MB.' + (isPro() ? '' : ' Go Pro for up to ' + MAKE.pro.fileMB + ' MB.'), 413, '', { pro: !isPro() });
     const used = state().uploads || { n: 0, bytes: 0 }, wait = uploadsOf(), r = mediaRoom();
     if (used.n + wait.length + 1 > r.files || used.bytes + wait.reduce((n, u) => n + u.size, 0) + size > r.bytes) throw fail(room(isPro()), 403, 'full', { pro: !isPro() });
@@ -269,7 +272,7 @@ async function material(uid, b, info) {
   if (fam === 'audio') {
     let secs = 0;
     for (const [i, f] of files.entries()) {
-      if (f.buf.length > MAKE_AUDIO_MB * 1e6) throw fail('That recording is over ' + MAKE_AUDIO_MB + ' MB. Try a shorter one.', 413);
+      if (f.buf.length > MAKE_AUDIO_MB * 1e6) throw fail(OVER_AUDIO, 413);
       // The length comes from the file itself; only when it doesn't say, from what the app timed.
       f.seconds = X.audioSeconds(f.buf) || Math.max(0, Math.round(+(Array.isArray(b.seconds) ? b.seconds[i] : b.seconds) || 0));
       secs += f.seconds;
@@ -277,7 +280,7 @@ async function material(uid, b, info) {
     if (secs > plan.minutes * 60 * 1.03) throw fail('That recording is ' + plural(Math.round(secs / 60), 'minute') + ' long. ' + (pro ? 'Pro makes from up to ' + plan.minutes + ' minutes at a time.' : 'Free makes from up to ' + plan.minutes + ' minutes at a time. Go Pro for up to ' + MAKE.pro.minutes + '.'), 413, 'minutes', { pro: !pro });
     out.kind = 'recording'; out.seconds = secs; out.text = true;
     out.name = src ? src.name : given || (files.length === 1 ? baseName(files[0].file) : 'Recording');
-    out.read = files.map(f => ({ kind: 'transcribe', name: f.name, ext: f.ext, seconds: Math.round(f.seconds) }));
+    out.read = files.map(f => ({ kind: 'transcribe', name: f.name, ext: f.ext, seconds: Math.round(f.seconds * 100) / 100 }));
     out.files.forEach((f, i) => { f.seconds = Math.round(files[i].seconds); });
     return { out, opts };
   }

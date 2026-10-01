@@ -6,6 +6,8 @@
 //                                                                       \->  error (plain words, and a way to go on)
 // Making is a few requests, so a big source never meets a time limit: the files go up (small ones through this server, big
 // ones straight to storage), `start` reads them, `step` runs once for each part (three at a time), `finish` joins the cards.
+import { splitAudio, fromBlob, PART_BYTES, PART_SECONDS } from './audiosplit.js';
+
 export function createMake({ state, reload, changed, go, sniff, shrink }) {
   const info = () => ((state() || {}).make) || { on: false, video: false, perDay: 3, pages: 30, minutes: 15, photos: 10, fileMB: 20, audioMB: 25, cards: 100 };
   const fresh = () => ({ key: '', step: 'pick', kind: '', files: [], text: '', topic: '', url: '', transcript: false, title: '',
@@ -80,15 +82,27 @@ export function createMake({ state, reload, changed, go, sniff, shrink }) {
       if (/\.hei[cf]$/i.test(f.name) || /hei[cf]/i.test(f.type)) { tip.push('That photo is in a format Lucida can’t read (HEIC). Pick a JPEG or PNG picture.'); continue; }
       if (!fam) { tip.push('Lucida can’t read that kind of file. Try a PDF, slides, a Word file, pictures, or a recording.'); continue; }
       if (have.length && (have[0].fam !== fam || fam === 'doc')) { tip.push(fam === 'doc' || have[0].fam === 'doc' ? 'Pick one document at a time.' : 'Pick one kind of file at a time: pictures, or a recording, or one document.'); continue; }
-      let file = f;
+      let file = f, cut = null;
       if (fam === 'image') { try { file = (await shrink(f)) || f; } catch { file = f; } }
-      const limit = (fam === 'audio' ? lim.audioMB : lim.fileMB) * 1e6;
-      if (file.size > limit) { tip.push('That file is over ' + (fam === 'audio' ? lim.audioMB : lim.fileMB) + ' MB.' + (fam !== 'audio' && lim.fileMB < 40 ? ' Go Pro for up to 40 MB.' : '')); continue; }
+      if (fam === 'audio') {
+        // A recording the speech service can't take in one go (over its size, or more than ten minutes) is cut into parts here, before it is sent.
+        let why = null;
+        try { cut = await splitAudio(fromBlob(f), { bytes: Math.min(PART_BYTES, lim.audioMB * 1e6, lim.fileMB * 1e6), seconds: PART_SECONDS }); } catch (e) { why = e; }
+        if (cut && cut.seconds > lim.minutes * 60 * 1.03) { tip.push(longRecording(cut.seconds, lim)); continue; }
+        if (cut && cut.whole) cut = null;
+        if (!cut && f.size > lim.audioMB * 1e6) { tip.push(bigRecording(f.size, lim, why)); continue; }
+      } else if (file.size > lim.fileMB * 1e6) { tip.push('That file is over ' + lim.fileMB + ' MB.' + (lim.fileMB < 40 ? ' Go Pro for up to 40 MB.' : '')); continue; }
       if (fam === 'image' && have.length >= lim.photos) { tip.push('That’s the most pictures for one make (' + lim.photos + ').'); continue; }
-      have.push({ file, name: f.name || 'File', size: file.size, type: file.type || f.type, fam });
+      have.push({ file, name: f.name || 'File', size: file.size, type: file.type || f.type, fam, ...(cut ? { cut } : {}) });
     }
     M.files = have; M.error = tip.length ? { message: tip[0], soft: true } : null; bump();
   }
+  // What to say about a recording that is too long or too big to read (the server says the same when asked directly).
+  const longRecording = (secs, lim) => 'That recording is ' + plural(Math.round(secs / 60), 'minute') + ' long. ' + (lim.minutes < 120 ? 'Free makes from up to ' + lim.minutes + ' minutes at a time. Go Pro for up to 120.' : 'Pro makes from up to ' + lim.minutes + ' minutes at a time.');
+  const bigRecording = (size, lim, why) => 'That recording is ' + mb(size) + ', and Lucida reads up to ' + lim.audioMB + ' MB at a time. ' + (why && why.code === 'unsupported'
+    ? 'It cuts MP3, WAV, Ogg, AAC and M4A recordings into parts by itself, but not this kind. Save it as an MP3 or M4A, or pick shorter recordings.' : 'It couldn’t read this one to cut it into parts. Save it again as an MP3 or M4A, or pick shorter recordings.');
+  const baseName = n => String(n || 'Recording').replace(/\.[A-Za-z0-9]{1,5}$/, '').slice(0, 100) || 'Recording';
+  const partName = (name, i, n, ext) => baseName(name) + ' (part ' + i + ' of ' + n + ').' + ext;
   const removeFile = i => { M.files = M.files.filter((_, n) => n !== i); M.error = null; bump(); };
   const setText = v => { M.text = String(v ?? ''); M.error = null; bump(); };
   const setTopic = v => { M.topic = String(v ?? ''); M.error = null; bump(); };
@@ -100,9 +114,9 @@ export function createMake({ state, reload, changed, go, sniff, shrink }) {
   };
 
   // ---------- recording a lecture ----------
-  // The microphone, one file for every twenty minutes (a long recording is several files, so no one request is long); Pause and
-  // Resume; Stop makes the cards. The level is read from the microphone for a quiet meter.
-  const SEGMENT = 20 * 60;
+  // The microphone, one file for every ten minutes (a long recording is several files, so no one request is long: the speech service gives up after a
+  // minute); Pause and Resume; Stop makes the cards. The level is read from the microphone for a quiet meter.
+  const SEGMENT = 10 * 60;
   const typeOf = () => ['audio/webm;codecs=opus', 'audio/mp4;codecs=mp4a.40.2', 'audio/ogg;codecs=opus', 'audio/webm', 'audio/mp4'].find(t => window.MediaRecorder && MediaRecorder.isTypeSupported && MediaRecorder.isTypeSupported(t)) || '';
   async function recStart() {
     if (rec) return;
@@ -123,7 +137,7 @@ export function createMake({ state, reload, changed, go, sniff, shrink }) {
     r.timer = setInterval(() => {
       const secs = recSecs();
       if (r.an && r.state === 'recording') { r.an.getFloatTimeDomainData(buf); let s = 0; for (let i = 0; i < buf.length; i++) s += buf[i] * buf[i]; r.level = Math.min(1, Math.pow(Math.sqrt(s / buf.length) * 5, .7)); r.levels.push(r.level); if (r.levels.length > 60) r.levels.shift(); }
-      // A new file every twenty minutes: the old one is finished first, so each is a whole recording of its own.
+      // A new file every ten minutes: the old one is finished first, so each is a whole recording of its own.
       if (r.state === 'recording' && performance.now() - r.segStart - r.segPaused > SEGMENT * 1000) { const old = r.mr; old.stop(); next(); }
       // The plan's limit: it stops by itself, and says so.
       if (secs >= info().minutes * 60) { M.error = { message: 'That’s the ' + plural(info().minutes, 'minute') + ' limit for one make.', soft: true }; recStop(); return; }
@@ -201,9 +215,18 @@ export function createMake({ state, reload, changed, go, sniff, shrink }) {
     M.step = 'making'; M.error = null; M.cards = []; M.job = ''; M.progress = { word: M.files.length ? 'Sending your ' + (M.kind === 'photo' ? 'pictures' : M.kind === 'record' ? 'recording' : 'file') + '…' : words[M.kind] || 'Getting ready…', phase: 'send', i: 0, n: 1 }; bump();
     try {
       if (!M.from && ['file', 'photo', 'record'].includes(M.kind)) {
-        const ids = []; for (const f of M.files) { ids.push(await sendFile(f)); if (mine !== run) return; M.progress = { ...M.progress, i: ids.length, n: M.files.length }; bump(); }
+        // (A recording that was cut is sent a part at a time; the parts go to the server in order and are put back together there.)
+        const list = M.files.flatMap(f => (f.cut ? f.cut.parts.map(p => ({ part: p, cut: f.cut, name: partName(f.name, p.i + 1, f.cut.parts.length, f.cut.ext) })) : [f]));
+        const ids = [], seconds = [];
+        for (const u of list) {
+          let f = u;
+          if (u.part) { const blob = await u.part.blob(); f = { file: blob, name: u.name, size: blob.size, type: u.cut.mime }; seconds.push(Math.round(u.part.seconds * 100) / 100); } else seconds.push(0);
+          ids.push(await sendFile(f)); if (mine !== run) return; M.progress = { ...M.progress, i: ids.length, n: list.length }; bump();
+        }
         body.uploads = ids;
-        if (M.kind === 'record' && M.seconds.length) body.seconds = M.seconds;
+        if (M.kind === 'record' && M.seconds.length) body.seconds = M.seconds; else if (seconds.some(Boolean)) body.seconds = seconds;
+        const cutOnes = M.files.filter(f => f.cut);
+        if (!body.title && cutOnes.length === 1 && M.files.length === 1) body.title = baseName(cutOnes[0].name);
       }
       M.progress = { word: words[M.kind] || 'Getting ready…', phase: 'start', i: 0, n: 1 }; bump();
       const s = await call('/api/make/start', body); if (mine !== run) return;
@@ -298,7 +321,7 @@ export function createMake({ state, reload, changed, go, sniff, shrink }) {
     const lim = info(), secs = recSecs();
     return {
       step: M.step, kind: M.kind, from: M.from, on: lim.on !== false, videoOn: !!lim.video, limits: lim,
-      files: M.files.map((f, i) => ({ i, name: f.name, size: mb(f.size), fam: f.fam })), text: M.text, topic: M.topic, url: M.url, transcript: M.transcript, title: M.title, opts: M.opts,
+      files: M.files.map((f, i) => ({ i, name: f.name, size: mb(f.size) + (f.cut ? ' · ' + plural(f.cut.parts.length, 'part') : ''), fam: f.fam })), text: M.text, topic: M.topic, url: M.url, transcript: M.transcript, title: M.title, opts: M.opts,
       rec: M.rec ? { state: rec ? rec.state : 'saving', secs, levels: rec ? rec.levels.slice() : [], level: rec ? rec.level : 0, limit: lim.minutes * 60 } : null,
       progress: M.progress, cards: M.cards, editing: M.editing, error: M.error, saving: M.saving, ready: ready(), name: M.name || '', job: M.job
     };
