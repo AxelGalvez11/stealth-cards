@@ -2767,24 +2767,35 @@ const FACE_SKIN_JS = at => `const Fs = S ? S.faceOf('front', '${at}') : null, Bs
   this.cardPal = Fs ? { t: cp, dark: Fs.dark } : null;
   const sk = Fs ? { on: true, front: { css: Fs.css, deco: Fs.deco }, back: { css: Bs.css, deco: Bs.deco }, a: Fs.a, fs: Fs.fs, muted: Fs.muted }
     : { on: false, front: { css: '', deco: null }, back: { css: '', deco: null }, a: '', fs: '1', muted: t.muted };`;
-// Explain (V96): once a card is turned over, its corner offers an AI explanation of the answer, which opens over the
-// card. It shows only when Lucida's AI is set up (or the card already has one); Free gets a few a day.
-const explainOver = phone => `<sc-if value="{{ex.show}}" hint-placeholder-val="{{ false }}">
+// Explain (V96): once a card is turned over, its corner offers an AI explanation of the answer. It shows only when Lucida's AI
+// is set up (or the card already has one); Free gets a few a day. The explanation never covers the card (the owner, 2026-10-01):
+// on a computer it opens as a panel to the RIGHT of the card, top-aligned with it, the two sitting side by side as one centered
+// group (the card may narrow down to 560 px, and below that the panel goes UNDER it); on a phone it opens UNDER the card, which
+// gets a little shorter. Closing it puts everything back. Only a short fade (none with reduced motion).
+// What these classes do is in REVIEW_CSS (.sc-xg is the group, .sc-xo says the explanation is open).
+const explainButton = phone => `<sc-if value="{{ex.show}}" hint-placeholder-val="{{ false }}">
   <sc-if value="{{ex.closed}}" hint-placeholder-val="{{ true }}"><button type="button" onClick="{{ex.ask}}" class="sc-press" style="position: absolute; top: ${phone ? 12 : 16}px; right: ${phone ? 12 : 16}px; z-index: 3; height: 34px; padding: 0 14px 0 12px; display: inline-flex; align-items: center; gap: 6px; border: 0; border-radius: 999px; background: {{t.surf}}; color: {{t.text}}; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer;">${svg(I.sparkle, 14, 2)}{{ex.label}}</button></sc-if>
-  <sc-if value="{{ex.open}}" hint-placeholder-val="{{ false }}"><div role="region" aria-label="Explanation" class="sc-quiz-in" style="position: absolute; left: ${phone ? 10 : 16}px; right: ${phone ? 10 : 16}px; bottom: ${phone ? 10 : 16}px; z-index: 3; max-height: 72%; overflow-y: auto; box-sizing: border-box; padding: ${phone ? '14px 16px' : '18px 20px'}; border-radius: 20px; background: {{t.bg}}; box-shadow: 0 18px 44px -14px rgba(0,0,0,.4), 0 0 0 1px {{t.line}}; display: flex; flex-direction: column; gap: 8px; text-align: left; animation: scQuizIn .25s cubic-bezier(.2,.8,.2,1) both;">
-    <div style="display: flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 600; color: {{t.muted}};">${svg(I.sparkle, 13, 2)}<span style="flex-grow: 1;">Explained by AI</span><button type="button" onClick="{{ex.close}}" aria-label="Close the explanation" style="width: 28px; height: 28px; border: 0; border-radius: 14px; background: {{t.surf}}; color: {{t.text}}; display: flex; align-items: center; justify-content: center; cursor: pointer;">${svg(I.close, 10, 2.4)}</button></div>
-    <sc-if value="{{ex.busy}}" hint-placeholder-val="{{ false }}"><span style="font-size: 15px; color: {{t.muted}};">Thinking…</span></sc-if>
-    <sc-if value="{{ex.hasText}}" hint-placeholder-val="{{ true }}"><span style="font-size: ${phone ? 15 : 17}px; line-height: 1.5;">{{ex.text}}</span></sc-if>
-    <sc-if value="{{ex.hasError}}" hint-placeholder-val="{{ false }}"><span style="font-size: 14px; line-height: 1.4; color: {{t.again}};">{{ex.error}}</span><sc-if value="{{ex.goPro}}" hint-placeholder-val="{{ false }}"><a href="{{ex.proHref}}" style="align-self: flex-start; height: 34px; padding: 0 16px; display: inline-flex; align-items: center; border-radius: 999px; background: {{t.inv}}; color: {{t.invText}}; font-size: 13px; font-weight: 600;">Go Pro</a></sc-if></sc-if>
-    <sc-if value="{{ex.hasNote}}" hint-placeholder-val="{{ false }}"><span style="font-size: 12px; color: {{t.muted}};">{{ex.note}}</span></sc-if>
-  </div></sc-if>
 </sc-if>`;
+const explainPanel = phone => `<sc-if value="{{ex.panel}}" hint-placeholder-val="{{ false }}"><div role="region" aria-label="Explanation" class="sc-fade sc-xx" style="box-sizing: border-box; min-width: 0; overflow-y: auto; padding: ${phone ? '14px 16px' : '22px 24px'}; border-radius: ${phone ? 24 : 28}px; background: {{cp.card}}; border: 1px solid {{cp.line}}; box-shadow: {{cp.shadow}}; color: {{cp.text}}; display: flex; flex-direction: column; gap: ${phone ? 8 : 10}px; text-align: left;">
+    <div style="display: flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 600; color: {{cp.muted}};">${svg(I.sparkle, 13, 2)}<span style="flex-grow: 1;">Explained by AI</span><button type="button" onClick="{{ex.close}}" aria-label="Close the explanation" style="width: 28px; height: 28px; border: 0; border-radius: 14px; background: {{cp.surf}}; color: {{cp.text}}; display: flex; align-items: center; justify-content: center; cursor: pointer;">${svg(I.close, 10, 2.4)}</button></div>
+    <sc-if value="{{ex.busy}}" hint-placeholder-val="{{ false }}"><span style="font-size: 15px; color: {{cp.muted}};">Thinking…</span></sc-if>
+    <sc-if value="{{ex.hasText}}" hint-placeholder-val="{{ true }}"><span style="font-size: ${phone ? 15 : 17}px; line-height: 1.5;">{{ex.text}}</span></sc-if>
+    <sc-if value="{{ex.hasError}}" hint-placeholder-val="{{ false }}"><span style="font-size: 14px; line-height: 1.4; color: {{cp.again}};">{{ex.error}}</span><sc-if value="{{ex.goPro}}" hint-placeholder-val="{{ false }}"><a href="{{ex.proHref}}" style="align-self: flex-start; height: 34px; padding: 0 16px; display: inline-flex; align-items: center; border-radius: 999px; background: {{cp.inv}}; color: {{cp.invText}}; font-size: 13px; font-weight: 600;">Go Pro</a></sc-if></sc-if>
+    <sc-if value="{{ex.hasNote}}" hint-placeholder-val="{{ false }}"><span style="font-size: 12px; color: {{cp.muted}};">{{ex.note}}</span></sc-if>
+  </div></sc-if>`;
 // The explanation's state for a screen (review or Learn): `exv` is db's view of it, `id` the card, `question` how it
 // was asked, `answered` whether the answer is showing.
 const EXPLAIN_JS = `const explainView = (exv, id, question, answered, sample) => {
     exv = db.mock ? { on: true, text: this.state.exMock || this.props.explained ? sample : '', note: this.state.exMock || this.props.explained ? '2 free explanations left today' : '' } : exv || { on: false };
     const open = !!this.state.exOpen && this.state.exFor === id;
-    return { show: !!(answered && exv.on && id), closed: !open, open, label: exv.text ? 'Explanation' : 'Explain',
+    const show = !!(answered && exv.on && id);
+    // Under the card or the answers (a phone, or a window with no room beside them) it can open below the fold: it comes into view at
+    // once (no sliding) when it opens, and again when its words arrive. (Not on the canvas, where a board never scrolls.)
+    if (!db.mock && show && open) {
+      const key = id + '|' + (exv.busy ? 'busy' : exv.text || exv.error || '');
+      if (this.exKey !== key) { this.exKey = key; setTimeout(() => { const e = [...document.querySelectorAll('[role="region"][aria-label="Explanation"]')].find(x => x.offsetParent !== null); if (e && e.scrollIntoView) e.scrollIntoView({ block: 'nearest' }); }, 60); }
+    }
+    return { show, closed: !open, open, panel: show && open, side: show && open ? 'sc-xo' : '', label: exv.text ? 'Explanation' : 'Explain',
       busy: !!exv.busy, hasText: !!exv.text && !exv.busy, text: exv.text || '', hasError: !!exv.error && !exv.busy, error: exv.error || '', goPro: !!exv.goPro,
       proHref: db.mock ? 'Pricing.dc.html' : 'https://lucida.cards/pricing', hasNote: !!exv.note && !!exv.text, note: exv.note || '',
       ask: () => { this.setState({ exOpen: true, exFor: id }); if (db.mock) this.setState({ exMock: true }); else if (!exv.text) db.act.explain(id, question); },
@@ -2806,9 +2817,11 @@ const webReview = `<div style="position: relative; isolation: isolate; width: 14
     </div>
     <div style="display: flex; justify-content: flex-end;">${settingsBtn}</div>
   </header>
-  <main style="flex-grow: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 28px;">
-    <div style="position: relative; width: 780px; height: 480px;">${flipCard('780px', '480px', '44px 56px', true)}${explainOver(false)}</div>
-    <div style="width: 780px; height: 84px; display: flex;">
+  <main style="flex-grow: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; justify-content: safe center; padding: 0 16px; container-type: inline-size;">
+    <div class="sc-xg {{ex.side}}">
+    <div class="sc-xc" style="position: relative; height: 480px;">${flipCard('100%', '480px', '44px 56px', true)}${explainButton(false)}</div>
+    ${explainPanel(false)}
+    <div class="sc-xb" style="width: 100%; height: 84px; display: flex;">
       <sc-if value="{{showBinary}}" hint-placeholder-val="{{ false }}">
         <div style="flex-grow: 1; display: flex; align-items: center; justify-content: center; gap: 56px;">
     ${binaryBtns(false)}
@@ -2829,6 +2842,7 @@ const webReview = `<div style="position: relative; isolation: isolate; width: 14
           </sc-for>
         </div>
       </sc-if>
+    </div>
     </div>
   </main>
   <footer style="height: 64px; box-sizing: border-box; padding: 0 32px; display: flex; align-items: center; gap: 24px; font-size: 13px; color: {{t.muted}};">
@@ -3390,7 +3404,16 @@ const cardTypesCss = `${WAVE_CSS}
 .sc-in-a{animation:scInA .32s cubic-bezier(.2,.8,.2,1) both}
 .sc-in-b{animation:scInB .32s cubic-bezier(.2,.8,.2,1) both}
 @media (prefers-reduced-motion:reduce){.sc-blank,.sc-fade-a,.sc-fade-b,.sc-in-a,.sc-in-b,[data-anim]{animation:none!important}}`;
-const REVIEW_CSS = cardTypesCss + OCC_VIEW_CSS;
+// The explanation next to a card (Explain). .sc-xg is the group of the card, the explanation and the grade buttons on a computer:
+// one column (the card, the explanation under it if it's open, the grade buttons) that becomes two once the explanation is open
+// and there is room for a card at least 560 px wide, a 24 px gap and a 360 px panel; then the panel is beside the card, top-aligned
+// with it, and the two sit centered as one group (the card narrows from 780 to 560 px as the window does). On a phone (.sc-px) the
+// card keeps 60% of the room (at least 250 px) while the explanation is open and the explanation takes what is left, under the
+// card, scrolling inside itself when it is longer.
+const EXPLAIN_SIDE_CSS = '.sc-xg{width:100%;display:grid;grid-template-columns:minmax(0,780px);justify-content:center;align-items:start;gap:28px 24px}.sc-xc{min-width:0}'
+  + '@container (min-width:944px){.sc-xg.sc-xo{grid-template-columns:minmax(560px,780px) 360px}.sc-xg.sc-xo>.sc-xx{max-height:480px}}'
+  + '.sc-px.sc-xo>.sc-pc{flex:0 0 max(250px,60%)}.sc-px>.sc-xx{flex:0 1 auto;overflow-y:auto;max-height:min(calc(100% - 262px),calc(40% - 12px))}';
+const REVIEW_CSS = cardTypesCss + OCC_VIEW_CSS + EXPLAIN_SIDE_CSS;
 const cardTypesLogic = `
 constructor(props) { super(props); this.state = { basic: false, blanks: 0, image: false, audio: false, playing: false }; }
 renderVals() {
@@ -3788,7 +3811,10 @@ const phoneReview = `<div style="position: relative; isolation: isolate; width: 
     </div>
     ${settingsBtn}
   </div>
-  <div style="position: relative; flex-grow: 1; display: flex; flex-direction: column;">${flipCard('100%', 'auto', '26px 22px', false)}${explainOver(true)}</div>
+  <div class="sc-px {{ex.side}}" style="position: relative; flex-grow: 1; min-height: 0; display: flex; flex-direction: column; gap: 12px;">
+    <div class="sc-pc" style="position: relative; flex: 1 0 auto; min-height: 250px; display: flex; flex-direction: column;">${flipCard('100%', 'auto', '26px 22px', false)}${explainButton(true)}</div>
+    ${explainPanel(true)}
+  </div>
   <div style="height: 76px; display: flex;">
     <sc-if value="{{showBinary}}" hint-placeholder-val="{{ false }}">
       <div style="flex-grow: 1; display: flex; align-items: center; justify-content: center; gap: 44px;">
@@ -4668,7 +4694,11 @@ const LEARN_RIGHT = [3, 0, 4, 2, 1];
 const LEARN_KINDS = [['mc', 'Multiple choice'], ['match', 'Matching'], ['tf', 'True or false'], ['blank', 'Fill in the blank'], ['type', 'Type the answer']];
 // Motion: each question rises in, a right answer pops as its check draws, a wrong one shakes, "+1"
 // floats up by the count when a card is learned, and the end counts up while its ring draws. Reduced motion: none.
-const LEARN_CSS = OCC_VIEW_CSS + '@keyframes scQuizIn{from{opacity:0;transform:translateY(6px)}}@keyframes scQA{from{opacity:0;transform:translateY(12px)}}@keyframes scQB{from{opacity:0;transform:translateY(12px)}}'
+// A computer's Learn question and its explanation (Explain): .sc-lg is the question's column, and the explanation beside it once it's
+// open and there is room (a column at least 560 px wide, a 24 px gap, a 360 px panel); narrower, only the copy under the answers shows.
+const LEARN_SIDE_CSS = '.sc-lg{width:100%;display:grid;grid-template-columns:minmax(0,720px);justify-content:center;align-items:start;gap:24px}.sc-lx-side{display:none}'
+  + '@container (min-width:944px){.sc-lg.sc-xo{grid-template-columns:minmax(560px,720px) 360px}.sc-lg.sc-xo>.sc-lx-side{display:flex}.sc-lg.sc-xo .sc-lx-in{display:none!important}}';
+const LEARN_CSS = OCC_VIEW_CSS + LEARN_SIDE_CSS + '@keyframes scQuizIn{from{opacity:0;transform:translateY(6px)}}@keyframes scQA{from{opacity:0;transform:translateY(12px)}}@keyframes scQB{from{opacity:0;transform:translateY(12px)}}'
   + '@keyframes scShake{0%,100%{transform:none}25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}@keyframes scPop{40%{transform:scale(1.025)}}'
   + '@keyframes scPlusA{0%{opacity:0;transform:translateY(6px)}25%{opacity:1}100%{opacity:0;transform:translateY(-16px)}}@keyframes scPlusB{0%{opacity:0;transform:translateY(6px)}25%{opacity:1}100%{opacity:0;transform:translateY(-16px)}}'
   + '.sc-tick path{stroke-dasharray:24;stroke-dashoffset:24;animation:scTick .32s .06s ease forwards}@keyframes scTick{to{stroke-dashoffset:0}}'
@@ -4810,14 +4840,21 @@ const quizFrom = `<div style="min-width: 0; display: flex; flex-direction: colum
 const learnNext = (h, fs) => `<sc-if value="{{isLast}}" hint-placeholder-val="{{ false }}"><a href="{{afterHref}}" style="height: ${h}px; padding: 0 24px; display: flex; align-items: center; justify-content: center; border-radius: 999px; background: {{k.btn}}; color: {{k.btnFg}}; font-size: ${fs}px; font-weight: 600;">Next question</a></sc-if><sc-if value="{{notLast}}" hint-placeholder-val="{{ true }}"><button type="button" onClick="{{next}}" data-key="Enter" style="width: 100%; height: ${h}px; padding: 0 24px; border: 0; border-radius: 999px; background: {{k.btn}}; color: {{k.btnFg}}; font: inherit; font-size: ${fs}px; font-weight: 600; cursor: pointer;">Next question</button></sc-if>`;
 // The canvas's sample explanation for the Learn question.
 const EX_SAMPLE_LEARN = 'It drops. ATP synthase makes ATP only as protons flow back through it, down the gradient the electron transport chain built. A leak lets them slip back another way, so the gradient runs down and far less ATP gets made. Picture a dam with a hole in it: the water still falls, but the turbine barely turns.';
-// After an answer, the AI can explain it, under the line that says why (the same explanation as the card's, V96).
-const learnExplain = fs => `<sc-if value="{{ex.show}}" hint-placeholder-val="{{ false }}"><sc-if value="{{ex.closed}}" hint-placeholder-val="{{ true }}"><button type="button" onClick="{{ex.ask}}" class="sc-press" style="align-self: flex-start; height: 34px; padding: 0 14px 0 12px; display: inline-flex; align-items: center; gap: 6px; border: 0; border-radius: 999px; background: {{k.card}}; box-shadow: {{k.shadow}}; color: {{k.ink}}; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer;">${svg(I.sparkle, 14, 2)}{{ex.label}}</button></sc-if><sc-if value="{{ex.open}}" hint-placeholder-val="{{ false }}"><div role="region" aria-label="Explanation" style="box-sizing: border-box; padding: 14px 16px; border-radius: 18px; background: {{k.card}}; box-shadow: {{k.shadow}}; display: flex; flex-direction: column; gap: 6px; animation: scQuizIn .25s cubic-bezier(.2,.8,.2,1) both;">
+// After an answer, the AI can explain it (the same explanation as the card's, V96). The Explain button is under the line that says
+// why; the explanation opens there on a phone, under the question and its answers (the owner, 2026-10-01), and on a computer it
+// opens as a panel to the RIGHT of the question, top-aligned with it, the two sitting side by side as one centered group; when
+// there isn't room for that (a question column under 560 px next to a 360 px panel) it opens under the answers like on a phone.
+// (Both panels are in the page, one hidden: REVIEW_CSS's neighbor LEARN_CSS says which shows. Only a short fade.)
+const learnPanel = (fs, cls, box) => `<div role="region" aria-label="Explanation" class="sc-fade ${cls}" style="box-sizing: border-box; min-width: 0; ${box} background: {{k.card}}; box-shadow: {{k.shadow}}; flex-direction: column; text-align: left;">
     <div style="display: flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 600; color: {{k.ink2}};">${svg(I.sparkle, 13, 2)}<span style="flex-grow: 1;">Explained by AI</span><button type="button" onClick="{{ex.close}}" aria-label="Close the explanation" style="width: 26px; height: 26px; border: 0; border-radius: 13px; background: {{k.track}}; color: {{k.ink}}; display: flex; align-items: center; justify-content: center; cursor: pointer;">${svg(I.close, 10, 2.4)}</button></div>
     <sc-if value="{{ex.busy}}" hint-placeholder-val="{{ false }}"><span style="font-size: ${fs}px; color: {{k.ink2}};">Thinking…</span></sc-if>
     <sc-if value="{{ex.hasText}}" hint-placeholder-val="{{ true }}"><span style="font-size: ${fs}px; line-height: 1.5;">{{ex.text}}</span></sc-if>
     <sc-if value="{{ex.hasError}}" hint-placeholder-val="{{ false }}"><span style="font-size: 14px; line-height: 1.4; color: {{t.again}};">{{ex.error}}</span><sc-if value="{{ex.goPro}}" hint-placeholder-val="{{ false }}"><a href="{{ex.proHref}}" style="align-self: flex-start; height: 34px; padding: 0 16px; display: inline-flex; align-items: center; border-radius: 999px; background: {{k.btn}}; color: {{k.btnFg}}; font-size: 13px; font-weight: 600;">Go Pro</a></sc-if></sc-if>
     <sc-if value="{{ex.hasNote}}" hint-placeholder-val="{{ false }}"><span style="font-size: 12px; color: {{k.ink2}};">{{ex.note}}</span></sc-if>
-  </div></sc-if></sc-if>`;
+  </div>`;
+const learnExplain = fs => `<sc-if value="{{ex.show}}" hint-placeholder-val="{{ false }}"><sc-if value="{{ex.closed}}" hint-placeholder-val="{{ true }}"><button type="button" onClick="{{ex.ask}}" class="sc-press" style="align-self: flex-start; height: 34px; padding: 0 14px 0 12px; display: inline-flex; align-items: center; gap: 6px; border: 0; border-radius: 999px; background: {{k.card}}; box-shadow: {{k.shadow}}; color: {{k.ink}}; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer;">${svg(I.sparkle, 14, 2)}{{ex.label}}</button></sc-if><sc-if value="{{ex.open}}" hint-placeholder-val="{{ false }}">${learnPanel(fs, 'sc-lx-in', 'display: flex; padding: 14px 16px; border-radius: 18px; gap: 6px;')}</sc-if></sc-if>`;
+// The panel beside the question (a computer wide enough for it): a grid child after the question's column.
+const learnExplainSide = `<sc-if value="{{ex.panel}}" hint-placeholder-val="{{ false }}">${learnPanel(16, 'sc-lx-side', 'max-height: 560px; overflow-y: auto; padding: 18px 20px; border-radius: 22px; gap: 8px;')}</sc-if>`;
 const learnWhy = (fs = 17) => `<div style="font-size: ${fs}px; line-height: 1.5;"><span style="font-weight: 700; color: {{verdictColor}};">{{verdict}}</span> {{why}}</div>`;
 // The card's picture; a picture with boxes shows them, the asked one highlighted, and it turns to an outline once
 // answered.
@@ -4830,8 +4867,9 @@ const learnClaim = fs => `<sc-if value="{{hasClaim}}" hint-placeholder-val="{{ f
 const webQuizOf = bg => `<div style="position: relative; isolation: isolate; width: 1440px; height: 900px; box-sizing: border-box; display: flex; flex-direction: column; overflow: hidden; font-family: ${FONT}; background: {{t.bg}}; color: {{k.ink}};">
   ${bg}
   ${learnTop('WebDeck.dc.html')}
-  <main style="flex-grow: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;">
-    <div class="sc-q" style="width: 720px; display: flex; flex-direction: column; gap: 22px; animation: {{qAnim}};">
+  <main style="flex-grow: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; justify-content: safe center; padding: 0 16px; container-type: inline-size;">
+    <div class="sc-lg {{ex.side}}">
+    <div class="sc-q" style="min-width: 0; display: flex; flex-direction: column; gap: 22px; animation: {{qAnim}};">
       <div style="position: relative; display: flex; flex-direction: column; gap: 22px; {{qc.css}}">${learnCardDeco}<h1 style="position: relative; margin: 0; font-size: 36px; font-weight: 700; line-height: 1.15; letter-spacing: -.03em; text-wrap: pretty; {{qc.a}}">{{question}}</h1>
       ${learnImage(240)}${learnClaim(20)}</div>
       <div style="display: flex; flex-direction: column; gap: 12px;"><sc-for list="{{options}}" as="o" hint-placeholder-count="4">${learnOption(64, 22, 18)}</sc-for></div>
@@ -4840,6 +4878,8 @@ const webQuizOf = bg => `<div style="position: relative; isolation: isolate; wid
         ${learnExplain(16)}
         <div style="display: flex; align-items: flex-end; justify-content: space-between; gap: 20px;">${quizFrom}<div style="flex-shrink: 0; width: 180px;">${learnNext(52, 15)}</div></div>
       </div></sc-if></div>
+    </div>
+    ${learnExplainSide}
     </div>
   </main>
   ${learnSettings(false)}
@@ -4859,7 +4899,7 @@ const phoneQuizOf = bg => `<div style="position: relative; isolation: isolate; w
 </div>`;
 const phoneQuiz = phoneQuizOf(studyBgLayer);
 const QUIZ_LOGIC = phone => `
-constructor(props) { super(props); this.state = { i: 0, pick: props && props.answered ? 1 : null, gained: 0 }; }
+constructor(props) { super(props); this.state = { i: 0, pick: props && props.answered ? 1 : null, gained: 0, exOpen: !!(props && props.explainOpen), exMock: !!(props && props.explainOpen), exFor: props && props.explainOpen ? 'q0' : null }; }
 renderVals() { ${DB_JS}
   ${LEARN_VIEW_JS(phone)}
   ${EXPLAIN_JS}
@@ -4959,8 +4999,9 @@ const typeOverride = `<sc-if value="{{canOverride}}" hint-placeholder-val="{{ fa
 const webQuizType = `<div style="position: relative; isolation: isolate; width: 1440px; height: 900px; box-sizing: border-box; display: flex; flex-direction: column; overflow: hidden; font-family: ${FONT}; background: {{t.bg}}; color: {{k.ink}};">
   ${studyBgLayer}
   ${learnTop('WebDeck.dc.html')}
-  <main style="flex-grow: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;">
-    <div class="sc-q" style="width: 720px; display: flex; flex-direction: column; gap: 20px; animation: {{qAnim}};">
+  <main style="flex-grow: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; justify-content: safe center; padding: 0 16px; container-type: inline-size;">
+    <div class="sc-lg {{ex.side}}">
+    <div class="sc-q" style="min-width: 0; display: flex; flex-direction: column; gap: 20px; animation: {{qAnim}};">
       <div style="position: relative; display: flex; flex-direction: column; gap: 20px; {{qc.css}}">${learnCardDeco}<h1 style="position: relative; margin: 0; font-size: 36px; font-weight: 700; line-height: 1.15; letter-spacing: -.03em; text-wrap: pretty; {{qc.a}}">{{question}}</h1>
       ${learnImage(240)}</div>
       ${typeRow(64, 18)}
@@ -4969,6 +5010,8 @@ const webQuizType = `<div style="position: relative; isolation: isolate; width: 
         ${learnWhy()}${typeOverride}${learnExplain(16)}
         <div style="display: flex; align-items: flex-end; justify-content: space-between; gap: 20px;">${quizFrom}<div style="flex-shrink: 0; width: 180px;">${learnNext(52, 15)}</div></div>
       </div></sc-if></div>
+    </div>
+    ${learnExplainSide}
     </div>
   </main>
   ${learnSettings(false)}
@@ -4987,7 +5030,7 @@ const phoneQuizType = `<div style="position: relative; isolation: isolate; width
   ${learnSettings(true)}
 </div>`;
 const TYPE_LOGIC = phone => `
-constructor(props) { super(props); this.state = { typed: 'golgi body', checked: true, qid: null }; }
+constructor(props) { super(props); this.state = { typed: 'golgi body', checked: true, qid: null, exOpen: !!(props && props.explainOpen), exMock: !!(props && props.explainOpen), exFor: props && props.explainOpen ? 'typeq' : null }; }
 renderVals() { ${DB_JS}
   ${LEARN_VIEW_JS(phone)}
   ${EXPLAIN_JS}
@@ -8928,17 +8971,17 @@ const files = {
   'PhoneSignInCode': ['iPhone · Sign in · code from email', phoneSignInCode, { props: DARK, logic: signInLogic('482'), w: PW, h: PH }],
   'Landing': ['Landing page · lucida.cards', landing(LAND.web, W, LANDING_H), { props: { ...DARK, grain: MESH('Iris').grain }, logic: landingLogic(false), css: WALL_CSS + DEMO_CSS + SKY_CSS + NO_RISE, w: W, h: LANDING_H }],
   'WebQuizStart': ['Web · Learn mode · start', webQuizStart(), { props: DARK, logic: QUIZ_START_LOGIC(false, true), w: W, h: H }],
-  'WebQuiz': ['Web · Learn mode · choice question', webQuiz, { props: { ...DARK, answered: { editor: 'boolean', default: false }, settingsOpen: { editor: 'boolean', default: false } }, logic: QUIZ_LOGIC(false), css: LEARN_CSS, w: W, h: H }],
+  'WebQuiz': ['Web · Learn mode · choice question', webQuiz, { props: { ...DARK, answered: { editor: 'boolean', default: false }, explainOpen: { editor: 'boolean', default: false }, settingsOpen: { editor: 'boolean', default: false } }, logic: QUIZ_LOGIC(false), css: LEARN_CSS, w: W, h: H }],
   'WebQuizAnswered': ['Web · Learn mode · answered', attrOf('WebQuiz', W, H, 'answered="{{yes}}"'), { logic: darkLogic, css: LEARN_CSS, w: W, h: H }],
   'WebQuizMatch': ['Web · Learn mode · matching', webQuizMatch, { props: DARK, logic: MATCH_LOGIC(false), css: LEARN_CSS, w: W, h: H }],
-  'WebQuizType': ['Web · Learn mode · type the answer', webQuizType, { props: DARK, logic: TYPE_LOGIC(false), css: LEARN_CSS, w: W, h: H }],
+  'WebQuizType': ['Web · Learn mode · type the answer', webQuizType, { props: { ...DARK, explainOpen: { editor: 'boolean', default: false } }, logic: TYPE_LOGIC(false), css: LEARN_CSS, w: W, h: H }],
   'WebQuizDone': ['Web · Learn mode · all learned', webQuizDone, { props: DARK, logic: QUIZ_DONE_LOGIC(false), css: LEARN_CSS, w: W, h: H }],
   'WebQuizSettings': ['Web · Learn mode · settings (the deck’s background)', attrOf('WebQuiz', W, H, 'settings-open="{{yes}}"'), { logic: darkLogic, css: LEARN_CSS, w: W, h: H }],
   'PhoneQuizStart': ['iPhone · Learn mode · start', phoneQuizStart(), { props: DARK, logic: QUIZ_START_LOGIC(true, true), w: PW, h: PH }],
-  'PhoneQuiz': ['iPhone · Learn mode · choice question', phoneQuiz, { props: { ...DARK, answered: { editor: 'boolean', default: false }, settingsOpen: { editor: 'boolean', default: false } }, logic: QUIZ_LOGIC(true), css: LEARN_CSS, w: PW, h: PH }],
+  'PhoneQuiz': ['iPhone · Learn mode · choice question', phoneQuiz, { props: { ...DARK, answered: { editor: 'boolean', default: false }, explainOpen: { editor: 'boolean', default: false }, settingsOpen: { editor: 'boolean', default: false } }, logic: QUIZ_LOGIC(true), css: LEARN_CSS, w: PW, h: PH }],
   'PhoneQuizAnswered': ['iPhone · Learn mode · answered', attrOf('PhoneQuiz', PW, PH, 'answered="{{yes}}"'), { logic: darkLogic, css: LEARN_CSS, w: PW, h: PH }],
   'PhoneQuizMatch': ['iPhone · Learn mode · matching', phoneQuizMatch, { props: DARK, logic: MATCH_LOGIC(true), css: LEARN_CSS, w: PW, h: PH }],
-  'PhoneQuizType': ['iPhone · Learn mode · type the answer', phoneQuizType, { props: DARK, logic: TYPE_LOGIC(true), css: LEARN_CSS, w: PW, h: PH }],
+  'PhoneQuizType': ['iPhone · Learn mode · type the answer', phoneQuizType, { props: { ...DARK, explainOpen: { editor: 'boolean', default: false } }, logic: TYPE_LOGIC(true), css: LEARN_CSS, w: PW, h: PH }],
   'PhoneQuizDone': ['iPhone · Learn mode · all learned', phoneQuizDone, { props: DARK, logic: QUIZ_DONE_LOGIC(true), css: LEARN_CSS, w: PW, h: PH }],
   'PhoneQuizSettings': ['iPhone · Learn mode · settings (the deck’s background)', attrOf('PhoneQuiz', PW, PH, 'settings-open="{{yes}}"'), { logic: darkLogic, css: LEARN_CSS, w: PW, h: PH }],
   'LiveSetup': ['Live · host · set up', liveSetup, { props: DARK, logic: LIVE_SETUP_LOGIC, w: W, h: H }],
