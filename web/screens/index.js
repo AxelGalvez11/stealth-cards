@@ -184,7 +184,7 @@ export default [
   "name": "Motion",
   "title": "Motion",
   "w": 1440,
-  "h": 1260
+  "h": 1734
  },
  {
   "name": "PhoneActivity",
@@ -2360,7 +2360,7 @@ export default [
  },
  {
   "name": "WebLibraryMove",
-  "title": "Web · Library · a deck’s ⋯ menu (move it to a folder)",
+  "title": "Web · Library · a deck’s ⋯ menu (move it to a folder, or take it out of one)",
   "w": 1440,
   "h": 900
  },
