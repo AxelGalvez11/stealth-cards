@@ -732,7 +732,10 @@ export async function createDb({ onChange, go }) {
     if (shown !== testClock) { testClock = shown; onChange(); }
     if (++testBeat % 5 === 0) saveTest();
   }, 1000);
-  addEventListener('pagehide', () => { tickTest(); saveTest(); });
+  // The test is saved as the page goes (a reload, a closed tab). (Where db.js runs in Node, as in the iPhone parity oracle, there's no bare addEventListener.)
+  const keep = () => { tickTest(); saveTest(); };
+  if (typeof addEventListener === 'function') addEventListener('pagehide', keep);
+  document.addEventListener('visibilitychange', () => { if (document.hidden) keep(); });
   // What the screen shows: the question you're on and your place in the test, or the results once it's submitted.
   function testView() {
     if (!testing || !testOk()) return null;
