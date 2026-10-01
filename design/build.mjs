@@ -703,8 +703,8 @@ const PICK_JS = `const PL = ${JSON.stringify({ levels: LEVELS, years: YEARS, sub
     const row = (r, on, go) => ({ label: r[1], sub: r[2] || '', hasSub: !!r[2], on, pressed: on ? 'true' : 'false', pick: () => { this.setState(shut); go(); } });
     const head = any && !typed ? [row(['', any], !value, () => choose('', null))] : [];
     const list = found.map(r => row(r, !!value && r[0] === value, () => choose(r[0], r)));
-    const o = other && typed ? other(typed) : null;
-    return { open, expanded: open ? 'true' : 'false', title, ph, hasSearch: !!find, query: q, rows: [...head, ...list], none: !!find && !!typed && !list.length && !o, noneLine,
+    const o = other && typed && !found.some(r => String(r[1]).toLowerCase() === typed.toLowerCase()) ? other(typed) : null;
+    return { open, expanded: open ? 'true' : 'false', title, ph, hasSearch: !!find, query: q, rows: [...head, ...list], none: !!find && !!typed && !list.length, noneLine,
       toggle: () => this.setState(open ? shut : { pickIs: key, pickQ: '', pickN: (this.state.pickN || 0) + 1 }), close: () => this.setState(shut),
       setQuery: e => this.setState({ pickQ: e && e.target ? e.target.value : '' }),
       ref: el => { if (!el || db.mock || this.pickFocus === this.state.pickN) return; this.pickFocus = this.state.pickN; el.focus(); },
@@ -5894,7 +5894,7 @@ renderVals() { ${TS}
 
 // ---------- Privacy and Terms (lucida.cards/privacy and /terms) ----------
 // Plain pages from legal.mjs: one column of text that fits any window. design/to-site.mjs makes them pages.
-const LEGAL_H = { Privacy: 2338, Terms: 1963, Connect: 4207 };
+const LEGAL_H = { Privacy: 2685, Terms: 1963, Connect: 4207 };
 const legalPage = (doc, hgt, marks = {}) => `<div class="sp-c" style="width: 1440px; height: ${hgt}px; box-sizing: border-box; font-family: ${FONT}; background: {{t.bg}}; color: {{t.text}}; overflow: hidden; ${HEAD_VARS}">
 ${siteHeader()}
 <main style="max-width: 720px; margin: 0 auto; box-sizing: border-box; padding: clamp(40px, 7vw, 88px) 24px 72px; display: flex; flex-direction: column; gap: 16px;">
