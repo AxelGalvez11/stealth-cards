@@ -20,6 +20,15 @@
    "x": 1520,
    "y": 0
   },
+  "CoverStyles.dc.html": {
+   "h": 900,
+   "is_interactive": true,
+   "page": "themes",
+   "title": "More cover styles",
+   "w": 1440,
+   "x": 7490,
+   "y": 0
+  },
   "FocusDecks.dc.html": {
    "h": 900,
    "is_interactive": true,
@@ -101,6 +110,24 @@
    "x": 1880,
    "y": 1320
   },
+  "LiveAnswered.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "page": "live",
+   "title": "Live · phone · answer locked in",
+   "w": 390,
+   "x": 2350,
+   "y": 1320
+  },
+  "LiveEnded.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "page": "live",
+   "title": "Live · phone · the game ended",
+   "w": 390,
+   "x": 4700,
+   "y": 1320
+  },
   "LiveFinal.dc.html": {
    "h": 844,
    "is_interactive": true,
@@ -117,6 +144,24 @@
    "title": "Live · phone · join",
    "w": 390,
    "x": 0,
+   "y": 1320
+  },
+  "LiveJoinNotFound.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "page": "live",
+   "title": "Live · phone · join, no game with that code",
+   "w": 390,
+   "x": 470,
+   "y": 1320
+  },
+  "LiveLate.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "page": "live",
+   "title": "Live · phone · joined mid-game (plays from the next question)",
+   "w": 390,
+   "x": 1410,
    "y": 1320
   },
   "LiveLeaderboard.dc.html": {
@@ -137,6 +182,15 @@
    "x": 3040,
    "y": 0
   },
+  "LiveLobbyEmpty.dc.html": {
+   "h": 900,
+   "is_interactive": true,
+   "page": "live",
+   "title": "Live · big screen · lobby, nobody in yet",
+   "w": 1440,
+   "x": 1520,
+   "y": 0
+  },
   "LivePodium.dc.html": {
    "h": 900,
    "is_interactive": true,
@@ -155,6 +209,15 @@
    "x": 4560,
    "y": 0
   },
+  "LiveQuestionImage.dc.html": {
+   "h": 900,
+   "is_interactive": true,
+   "page": "live",
+   "title": "Live · big screen · question with a picture",
+   "w": 1440,
+   "x": 6080,
+   "y": 0
+  },
   "LiveResult.dc.html": {
    "h": 844,
    "is_interactive": true,
@@ -162,6 +225,15 @@
    "title": "Live · phone · right",
    "w": 390,
    "x": 2820,
+   "y": 1320
+  },
+  "LiveResultTimeUp.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "page": "live",
+   "title": "Live · phone · time’s up (no answer)",
+   "w": 390,
+   "x": 3760,
    "y": 1320
   },
   "LiveResultWrong.dc.html": {
@@ -218,6 +290,213 @@
    "x": 0,
    "y": 0
   },
+  "NetRules.dc.html": {
+   "h": 900,
+   "is_interactive": true,
+   "page": "network",
+   "title": "How sharing works",
+   "w": 1440,
+   "x": 0,
+   "y": 11768
+  },
+  "PhoneActivity.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "page": "network",
+   "title": "iPhone · News",
+   "w": 390,
+   "x": 6080,
+   "y": 7808
+  },
+  "PhoneActivityDark.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "page": "network",
+   "title": "iPhone · News (dark)",
+   "w": 390,
+   "x": 7020,
+   "y": 7808
+  },
+  "PhoneActivityEmpty.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "page": "network",
+   "title": "iPhone · News · nothing new",
+   "w": 390,
+   "x": 6550,
+   "y": 7808
+  },
+  "PhoneActivityGray.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "page": "network",
+   "title": "iPhone · News (dark, gray)",
+   "w": 390,
+   "x": 7490,
+   "y": 7808
+  },
+  "PhoneClass.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "page": "classes",
+   "title": "iPhone · Class · yours",
+   "w": 390,
+   "x": 0,
+   "y": 6544
+  },
+  "PhoneClassAddDeck.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "page": "classes",
+   "title": "iPhone · Class · Add a deck",
+   "w": 390,
+   "x": 470,
+   "y": 6544
+  },
+  "PhoneClassAssign.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "page": "classes",
+   "title": "iPhone · Class · Assign a deck",
+   "w": 390,
+   "x": 940,
+   "y": 6544
+  },
+  "PhoneClassDark.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "page": "classes",
+   "title": "iPhone · Class (dark)",
+   "w": 390,
+   "x": 5170,
+   "y": 6544
+  },
+  "PhoneClassGray.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "page": "classes",
+   "title": "iPhone · Class (dark, gray)",
+   "w": 390,
+   "x": 5640,
+   "y": 6544
+  },
+  "PhoneClassInvite.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "page": "classes",
+   "title": "iPhone · Class · its invite link",
+   "w": 390,
+   "x": 1410,
+   "y": 6544
+  },
+  "PhoneClassInviteSignedOut.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "page": "classes",
+   "title": "iPhone · Class · its invite link, signed out",
+   "w": 390,
+   "x": 1880,
+   "y": 6544
+  },
+  "PhoneClassLoading.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "page": "classes",
+   "title": "iPhone · Class · loading",
+   "w": 390,
+   "x": 2350,
+   "y": 6544
+  },
+  "PhoneClassMember.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "page": "classes",
+   "title": "iPhone · Class · one you joined (asked once: share your progress?)",
+   "w": 390,
+   "x": 2820,
+   "y": 6544
+  },
+  "PhoneClassMissing.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "page": "classes",
+   "title": "iPhone · Class · no class has that code",
+   "w": 390,
+   "x": 3290,
+   "y": 6544
+  },
+  "PhoneClassNew.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "page": "classes",
+   "title": "iPhone · Class · just made",
+   "w": 390,
+   "x": 3760,
+   "y": 6544
+  },
+  "PhoneClassReport.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "page": "classes",
+   "title": "iPhone · Class · Report a deck",
+   "w": 390,
+   "x": 4230,
+   "y": 6544
+  },
+  "PhoneClassVerify.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "page": "classes",
+   "title": "iPhone · Class · Get verified",
+   "w": 390,
+   "x": 4700,
+   "y": 6544
+  },
+  "PhoneClasses.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "page": "classes",
+   "title": "iPhone · Library · Classes",
+   "w": 390,
+   "x": 0,
+   "y": 5280
+  },
+  "PhoneClassesDark.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "page": "classes",
+   "title": "iPhone · Library · Classes (dark)",
+   "w": 390,
+   "x": 1880,
+   "y": 5280
+  },
+  "PhoneClassesEmpty.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "page": "classes",
+   "title": "iPhone · Library · Classes · none yet",
+   "w": 390,
+   "x": 470,
+   "y": 5280
+  },
+  "PhoneClassesJoin.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "page": "classes",
+   "title": "iPhone · Library · Classes · Join a class",
+   "w": 390,
+   "x": 940,
+   "y": 5280
+  },
+  "PhoneClassesNew.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "page": "classes",
+   "title": "iPhone · Library · Classes · New class",
+   "w": 390,
+   "x": 1410,
+   "y": 5280
+  },
   "PhoneConnect.dc.html": {
    "h": 889,
    "is_interactive": true,
@@ -227,6 +506,15 @@
    "x": 3290,
    "y": 0
   },
+  "PhoneConnectConsent.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "page": "phone",
+   "title": "iPhone · An AI app asks to connect (Allow or Cancel)",
+   "w": 390,
+   "x": 940,
+   "y": 3900
+  },
   "PhoneDeck.dc.html": {
    "h": 844,
    "is_interactive": true,
@@ -235,6 +523,15 @@
    "w": 390,
    "x": 940,
    "y": 0
+  },
+  "PhoneDeckCopy.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "page": "network",
+   "title": "iPhone · Deck page · your copy, with the owner’s changes waiting",
+   "w": 390,
+   "x": 6550,
+   "y": 10448
   },
   "PhoneDeckDark.dc.html": {
    "h": 844,
@@ -281,6 +578,24 @@
    "x": 4230,
    "y": 0
   },
+  "PhoneDeckSettingsGoal.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "page": "pro",
+   "title": "iPhone · Deck settings · Studying · goal raised to 95% (reviews a day)",
+   "w": 390,
+   "x": 3040,
+   "y": 0
+  },
+  "PhoneDeckSettingsShare.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "page": "network",
+   "title": "iPhone · Deck settings · Sharing (a public deck)",
+   "w": 390,
+   "x": 4560,
+   "y": 9128
+  },
   "PhoneDeckSettingsStudy.dc.html": {
    "h": 844,
    "is_interactive": true,
@@ -289,6 +604,24 @@
    "w": 390,
    "x": 5170,
    "y": 0
+  },
+  "PhoneDeckSettingsStudyFree.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "page": "pro",
+   "title": "iPhone · Deck settings · Studying · on Free (what Pro adds)",
+   "w": 390,
+   "x": 3510,
+   "y": 0
+  },
+  "PhoneDeckStudied.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "page": "network",
+   "title": "iPhone · Deck page · a deck you study from someone else",
+   "w": 390,
+   "x": 6080,
+   "y": 10448
   },
   "PhoneDeckTagPicker.dc.html": {
    "h": 844,
@@ -299,6 +632,15 @@
    "x": 5640,
    "y": 0
   },
+  "PhoneDeckUpdates.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "page": "network",
+   "title": "iPhone · Deck page · your copy · the owner’s changes (take or skip)",
+   "w": 390,
+   "x": 7020,
+   "y": 10448
+  },
   "PhoneDecksEmpty.dc.html": {
    "h": 844,
    "is_interactive": true,
@@ -307,6 +649,24 @@
    "w": 390,
    "x": 940,
    "y": 1300
+  },
+  "PhoneDiscover.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "page": "network",
+   "title": "iPhone · Discover",
+   "w": 390,
+   "x": 4560,
+   "y": 0
+  },
+  "PhoneDiscoverSearch.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "page": "network",
+   "title": "iPhone · Discover · search",
+   "w": 390,
+   "x": 5030,
+   "y": 0
   },
   "PhoneDone.dc.html": {
    "h": 844,
@@ -353,6 +713,15 @@
    "x": 3760,
    "y": 2600
   },
+  "PhoneEditorPaused.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "page": "pro",
+   "title": "iPhone · Card editor · editing a paused card (Unpause card)",
+   "w": 390,
+   "x": 3510,
+   "y": 3904
+  },
   "PhoneEditorRecording.dc.html": {
    "h": 844,
    "is_interactive": true,
@@ -361,6 +730,33 @@
    "w": 390,
    "x": 2820,
    "y": 5200
+  },
+  "PhoneHistory.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "page": "network",
+   "title": "iPhone · History",
+   "w": 390,
+   "x": 22110,
+   "y": 3904
+  },
+  "PhoneHistoryDark.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "page": "network",
+   "title": "iPhone · History · dark",
+   "w": 390,
+   "x": 23050,
+   "y": 3904
+  },
+  "PhoneHistoryOpen.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "page": "network",
+   "title": "iPhone · History · a version opened",
+   "w": 390,
+   "x": 22580,
+   "y": 3904
   },
   "PhoneInbox.dc.html": {
    "h": 844,
@@ -407,6 +803,15 @@
    "x": 2350,
    "y": 1300
   },
+  "PhoneLibraryLeeches.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "page": "pro",
+   "title": "iPhone · Library · all cards · cards you keep forgetting (Pause all)",
+   "w": 390,
+   "x": 3040,
+   "y": 3904
+  },
   "PhoneLibraryNewFolder.dc.html": {
    "h": 844,
    "is_interactive": true,
@@ -424,6 +829,240 @@
    "w": 390,
    "x": 3760,
    "y": 0
+  },
+  "PhoneProfile.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "page": "network",
+   "title": "iPhone · Profile (yours)",
+   "w": 390,
+   "x": 0,
+   "y": 6544
+  },
+  "PhoneProfileBlock.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "page": "network",
+   "title": "iPhone · Profile · someone else’s · Block (the question)",
+   "w": 390,
+   "x": 470,
+   "y": 6544
+  },
+  "PhoneProfileBlocked.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "page": "network",
+   "title": "iPhone · Profile · someone you blocked (Unblock)",
+   "w": 390,
+   "x": 940,
+   "y": 6544
+  },
+  "PhoneProfileDark.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "page": "network",
+   "title": "iPhone · Profile (dark)",
+   "w": 390,
+   "x": 6110,
+   "y": 6544
+  },
+  "PhoneProfileEdit.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "page": "network",
+   "title": "iPhone · Profile · Edit profile",
+   "w": 390,
+   "x": 1410,
+   "y": 6544
+  },
+  "PhoneProfileEmpty.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "page": "network",
+   "title": "iPhone · Profile · nothing shared yet",
+   "w": 390,
+   "x": 1880,
+   "y": 6544
+  },
+  "PhoneProfileFollowing.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "page": "network",
+   "title": "iPhone · Profile · someone you follow",
+   "w": 390,
+   "x": 2350,
+   "y": 6544
+  },
+  "PhoneProfileGray.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "page": "network",
+   "title": "iPhone · Profile (dark, gray)",
+   "w": 390,
+   "x": 6580,
+   "y": 6544
+  },
+  "PhoneProfileLoading.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "page": "network",
+   "title": "iPhone · Profile · loading",
+   "w": 390,
+   "x": 2820,
+   "y": 6544
+  },
+  "PhoneProfileMissing.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "page": "network",
+   "title": "iPhone · Profile · no one has that name",
+   "w": 390,
+   "x": 3290,
+   "y": 6544
+  },
+  "PhoneProfileOther.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "page": "network",
+   "title": "iPhone · Profile · someone else’s",
+   "w": 390,
+   "x": 3760,
+   "y": 6544
+  },
+  "PhoneProfileReport.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "page": "network",
+   "title": "iPhone · Profile · someone else’s · Report",
+   "w": 390,
+   "x": 4230,
+   "y": 6544
+  },
+  "PhoneProfileSaved.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "page": "network",
+   "title": "iPhone · Profile · Saved",
+   "w": 390,
+   "x": 4700,
+   "y": 6544
+  },
+  "PhoneProfileSignedOut.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "page": "network",
+   "title": "iPhone · Profile · signed out (anyone can look)",
+   "w": 390,
+   "x": 5170,
+   "y": 6544
+  },
+  "PhoneProfileSuggestions.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "page": "network",
+   "title": "iPhone · Profile · Suggestions you sent",
+   "w": 390,
+   "x": 5640,
+   "y": 6544
+  },
+  "PhonePublicDeck.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "page": "network",
+   "title": "iPhone · Shared deck page",
+   "w": 390,
+   "x": 0,
+   "y": 2640
+  },
+  "PhonePublicDeckCheck.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "page": "network",
+   "title": "iPhone · Shared deck page · a verified teacher’s view (Check this deck)",
+   "w": 390,
+   "x": 470,
+   "y": 2640
+  },
+  "PhonePublicDeckCopy.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "page": "network",
+   "title": "iPhone · Shared deck page · Make a copy",
+   "w": 390,
+   "x": 940,
+   "y": 2640
+  },
+  "PhonePublicDeckDark.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "page": "network",
+   "title": "iPhone · Shared deck page · dark",
+   "w": 390,
+   "x": 4230,
+   "y": 2640
+  },
+  "PhonePublicDeckGray.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "page": "network",
+   "title": "iPhone · Shared deck page · gray",
+   "w": 390,
+   "x": 4700,
+   "y": 2640
+  },
+  "PhonePublicDeckOwner.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "page": "network",
+   "title": "iPhone · Shared deck page · your own deck",
+   "w": 390,
+   "x": 1410,
+   "y": 2640
+  },
+  "PhonePublicDeckReport.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "page": "network",
+   "title": "iPhone · Shared deck page · Report",
+   "w": 390,
+   "x": 1880,
+   "y": 2640
+  },
+  "PhonePublicDeckSignedOut.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "page": "network",
+   "title": "iPhone · Shared deck page · signed out",
+   "w": 390,
+   "x": 2350,
+   "y": 2640
+  },
+  "PhonePublicDeckStudying.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "page": "network",
+   "title": "iPhone · Shared deck page · a deck you study",
+   "w": 390,
+   "x": 2820,
+   "y": 2640
+  },
+  "PhonePublicDeckSuggest.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "page": "network",
+   "title": "iPhone · Shared deck page · Suggest a change, on a card",
+   "w": 390,
+   "x": 3290,
+   "y": 2640
+  },
+  "PhonePublicDeckSuggestNew.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "page": "network",
+   "title": "iPhone · Shared deck page · Suggest a change, a new card",
+   "w": 390,
+   "x": 3760,
+   "y": 2640
   },
   "PhoneQuiz.dc.html": {
    "h": 844,
@@ -614,6 +1253,24 @@
    "x": 4700,
    "y": 0
   },
+  "PhoneSettingsDelete.dc.html": {
+   "h": 1889,
+   "is_interactive": true,
+   "page": "phone",
+   "title": "iPhone · Settings · Delete account (the question)",
+   "w": 390,
+   "x": 6110,
+   "y": 0
+  },
+  "PhoneSettingsFree.dc.html": {
+   "h": 1889,
+   "is_interactive": true,
+   "page": "pro",
+   "title": "iPhone · Settings · on Free (Tune to you is Pro)",
+   "w": 390,
+   "x": 1520,
+   "y": 5224
+  },
   "PhoneSettingsGray.dc.html": {
    "h": 1889,
    "is_interactive": true,
@@ -622,6 +1279,15 @@
    "w": 390,
    "x": 4700,
    "y": 1969
+  },
+  "PhoneSettingsVerified.dc.html": {
+   "h": 1889,
+   "is_interactive": true,
+   "page": "classes",
+   "title": "iPhone · Settings · a verified teacher (Get verified says Verified teacher)",
+   "w": 390,
+   "x": 1520,
+   "y": 7808
   },
   "PhoneSignIn.dc.html": {
    "h": 844,
@@ -677,6 +1343,132 @@
    "x": 4230,
    "y": 1300
   },
+  "PhoneStatsMemory.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "page": "pro",
+   "title": "iPhone · Stats · Memory (Pro)",
+   "w": 390,
+   "x": 0,
+   "y": 2640
+  },
+  "PhoneStatsPace.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "page": "pro",
+   "title": "iPhone · Stats · Pace (Pro)",
+   "w": 390,
+   "x": 470,
+   "y": 2640
+  },
+  "PhoneStatsPaceGray.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "page": "pro",
+   "title": "iPhone · Stats · Pace (dark, gray)",
+   "w": 390,
+   "x": 1880,
+   "y": 2640
+  },
+  "PhoneStatsUpgrade.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "page": "pro",
+   "title": "iPhone · Stats · on Free: go Pro for deep stats",
+   "w": 390,
+   "x": 940,
+   "y": 2640
+  },
+  "PhoneStatsWeak.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "page": "pro",
+   "title": "iPhone · Stats · Weak spots (Pro)",
+   "w": 390,
+   "x": 1410,
+   "y": 2640
+  },
+  "PhoneStatsWeakDark.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "page": "pro",
+   "title": "iPhone · Stats · Weak spots (dark)",
+   "w": 390,
+   "x": 2350,
+   "y": 2640
+  },
+  "PhoneSuggestions.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "page": "network",
+   "title": "iPhone · Suggestions",
+   "w": 390,
+   "x": 10640,
+   "y": 3904
+  },
+  "PhoneSuggestionsDark.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "page": "network",
+   "title": "iPhone · Suggestions · dark",
+   "w": 390,
+   "x": 12520,
+   "y": 3904
+  },
+  "PhoneSuggestionsEmpty.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "page": "network",
+   "title": "iPhone · Suggestions · none",
+   "w": 390,
+   "x": 11110,
+   "y": 3904
+  },
+  "PhoneSuggestionsOpen.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "page": "network",
+   "title": "iPhone · Suggestions · one opened",
+   "w": 390,
+   "x": 11580,
+   "y": 3904
+  },
+  "PhoneSuggestionsReport.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "page": "network",
+   "title": "iPhone · Suggestions · Report",
+   "w": 390,
+   "x": 12050,
+   "y": 3904
+  },
+  "PhoneTheme.dc.html": {
+   "h": 1382,
+   "is_interactive": true,
+   "page": "themes",
+   "title": "iPhone · Settings › Theme › a theme’s page",
+   "w": 390,
+   "x": 7020,
+   "y": 0
+  },
+  "PhoneThemePicker.dc.html": {
+   "h": 1260,
+   "is_interactive": true,
+   "page": "themes",
+   "title": "iPhone · Settings › Theme",
+   "w": 390,
+   "x": 6080,
+   "y": 0
+  },
+  "PhoneThemePickerFree.dc.html": {
+   "h": 1260,
+   "is_interactive": true,
+   "page": "themes",
+   "title": "iPhone · Settings › Theme · on Free (locked, Go Pro)",
+   "w": 390,
+   "x": 6550,
+   "y": 0
+  },
   "PhoneToday.dc.html": {
    "h": 844,
    "is_interactive": true,
@@ -694,6 +1486,15 @@
    "w": 390,
    "x": 470,
    "y": 1300
+  },
+  "PhoneTodayClass.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "page": "classes",
+   "title": "iPhone · Today · with assignments from your classes",
+   "w": 390,
+   "x": 1520,
+   "y": 3960
   },
   "PhoneTodayDark.dc.html": {
    "h": 844,
@@ -820,6 +1621,78 @@
    "x": 1520,
    "y": 0
   },
+  "SiteCompare.dc.html": {
+   "h": 7509,
+   "is_interactive": true,
+   "page": "landing",
+   "title": "Site · The blog, comparisons, alternatives, the hubs and the 404 · lucida.cards",
+   "w": 1440,
+   "x": 0,
+   "y": 5272
+  },
+  "SiteComparePhone.dc.html": {
+   "h": 8000,
+   "is_interactive": true,
+   "page": "landing",
+   "title": "Site · The blog, comparisons, alternatives, the hubs and the 404 · lucida.cards on a phone",
+   "w": 390,
+   "x": 1520,
+   "y": 5272
+  },
+  "SiteConnect.dc.html": {
+   "h": 4207,
+   "is_interactive": true,
+   "page": "landing",
+   "title": "Connect Lucida to your AI · lucida.cards/connect",
+   "w": 1440,
+   "x": 0,
+   "y": 13692
+  },
+  "SiteFaq.dc.html": {
+   "h": 5143,
+   "is_interactive": true,
+   "page": "landing",
+   "title": "Site · FAQ · lucida.cards",
+   "w": 1440,
+   "x": 3980,
+   "y": 5272
+  },
+  "SiteFaqPhone.dc.html": {
+   "h": 6098,
+   "is_interactive": true,
+   "page": "landing",
+   "title": "Site · FAQ · lucida.cards on a phone",
+   "w": 390,
+   "x": 5500,
+   "y": 5272
+  },
+  "SiteFeature.dc.html": {
+   "h": 8000,
+   "is_interactive": true,
+   "page": "landing",
+   "title": "Site · Features and who Lucida is for · lucida.cards",
+   "w": 1440,
+   "x": 1990,
+   "y": 5272
+  },
+  "SiteFeaturePhone.dc.html": {
+   "h": 8000,
+   "is_interactive": true,
+   "page": "landing",
+   "title": "Site · Features and who Lucida is for · lucida.cards on a phone",
+   "w": 390,
+   "x": 3510,
+   "y": 5272
+  },
+  "SiteOg.dc.html": {
+   "h": 630,
+   "is_interactive": true,
+   "page": "landing",
+   "title": "Site · Link preview picture (1200 × 630) for any page",
+   "w": 1200,
+   "x": 1520,
+   "y": 13692
+  },
   "Terms.dc.html": {
    "h": 1963,
    "is_interactive": true,
@@ -828,6 +1701,1041 @@
    "w": 1440,
    "x": 3510,
    "y": 0
+  },
+  "ThemeAero.dc.html": {
+   "h": 900,
+   "is_interactive": true,
+   "page": "themes",
+   "title": "Frutiger Aero · Settings › Theme › its page",
+   "w": 1440,
+   "x": 0,
+   "y": 4442
+  },
+  "ThemeAeroDeck.dc.html": {
+   "h": 900,
+   "is_interactive": true,
+   "page": "themes",
+   "title": "Frutiger Aero · Web · Deck page",
+   "w": 1440,
+   "x": 4560,
+   "y": 4442
+  },
+  "ThemeAeroFree.dc.html": {
+   "h": 900,
+   "is_interactive": true,
+   "page": "themes",
+   "title": "Frutiger Aero · its page on Free (Go Pro)",
+   "w": 1440,
+   "x": 1520,
+   "y": 4442
+  },
+  "ThemeAeroLearn.dc.html": {
+   "h": 900,
+   "is_interactive": true,
+   "page": "themes",
+   "title": "Frutiger Aero · Web · Learn mode",
+   "w": 1440,
+   "x": 7600,
+   "y": 4442
+  },
+  "ThemeAeroLibrary.dc.html": {
+   "h": 900,
+   "is_interactive": true,
+   "page": "themes",
+   "title": "Frutiger Aero · Web · Library",
+   "w": 1440,
+   "x": 3040,
+   "y": 4442
+  },
+  "ThemeAeroProfilePhone.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "page": "themes",
+   "title": "Frutiger Aero · iPhone · Settings (your profile picture)",
+   "w": 390,
+   "x": 9590,
+   "y": 4442
+  },
+  "ThemeAeroReview.dc.html": {
+   "h": 900,
+   "is_interactive": true,
+   "page": "themes",
+   "title": "Frutiger Aero · Web · Flashcards",
+   "w": 1440,
+   "x": 6080,
+   "y": 4442
+  },
+  "ThemeAeroReviewPhone.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "page": "themes",
+   "title": "Frutiger Aero · iPhone · Flashcards",
+   "w": 390,
+   "x": 9120,
+   "y": 4442
+  },
+  "ThemeChrome.dc.html": {
+   "h": 900,
+   "is_interactive": true,
+   "page": "themes",
+   "title": "Liquid chrome · Settings › Theme › its page",
+   "w": 1440,
+   "x": 0,
+   "y": 3122
+  },
+  "ThemeChromeDeck.dc.html": {
+   "h": 900,
+   "is_interactive": true,
+   "page": "themes",
+   "title": "Liquid chrome · Web · Deck page",
+   "w": 1440,
+   "x": 4560,
+   "y": 3122
+  },
+  "ThemeChromeFree.dc.html": {
+   "h": 900,
+   "is_interactive": true,
+   "page": "themes",
+   "title": "Liquid chrome · its page on Free (Go Pro)",
+   "w": 1440,
+   "x": 1520,
+   "y": 3122
+  },
+  "ThemeChromeLearn.dc.html": {
+   "h": 900,
+   "is_interactive": true,
+   "page": "themes",
+   "title": "Liquid chrome · Web · Learn mode",
+   "w": 1440,
+   "x": 7600,
+   "y": 3122
+  },
+  "ThemeChromeLibrary.dc.html": {
+   "h": 900,
+   "is_interactive": true,
+   "page": "themes",
+   "title": "Liquid chrome · Web · Library",
+   "w": 1440,
+   "x": 3040,
+   "y": 3122
+  },
+  "ThemeChromeProfilePhone.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "page": "themes",
+   "title": "Liquid chrome · iPhone · Settings (your profile picture)",
+   "w": 390,
+   "x": 9590,
+   "y": 3122
+  },
+  "ThemeChromeReview.dc.html": {
+   "h": 900,
+   "is_interactive": true,
+   "page": "themes",
+   "title": "Liquid chrome · Web · Flashcards",
+   "w": 1440,
+   "x": 6080,
+   "y": 3122
+  },
+  "ThemeChromeReviewPhone.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "page": "themes",
+   "title": "Liquid chrome · iPhone · Flashcards",
+   "w": 390,
+   "x": 9120,
+   "y": 3122
+  },
+  "ThemeDreamcore.dc.html": {
+   "h": 900,
+   "is_interactive": true,
+   "page": "themes",
+   "title": "Dreamcore · Settings › Theme › its page",
+   "w": 1440,
+   "x": 0,
+   "y": 8402
+  },
+  "ThemeDreamcoreDeck.dc.html": {
+   "h": 900,
+   "is_interactive": true,
+   "page": "themes",
+   "title": "Dreamcore · Web · Deck page",
+   "w": 1440,
+   "x": 4560,
+   "y": 8402
+  },
+  "ThemeDreamcoreFree.dc.html": {
+   "h": 900,
+   "is_interactive": true,
+   "page": "themes",
+   "title": "Dreamcore · its page on Free (Go Pro)",
+   "w": 1440,
+   "x": 1520,
+   "y": 8402
+  },
+  "ThemeDreamcoreLearn.dc.html": {
+   "h": 900,
+   "is_interactive": true,
+   "page": "themes",
+   "title": "Dreamcore · Web · Learn mode",
+   "w": 1440,
+   "x": 7600,
+   "y": 8402
+  },
+  "ThemeDreamcoreLibrary.dc.html": {
+   "h": 900,
+   "is_interactive": true,
+   "page": "themes",
+   "title": "Dreamcore · Web · Library",
+   "w": 1440,
+   "x": 3040,
+   "y": 8402
+  },
+  "ThemeDreamcoreProfilePhone.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "page": "themes",
+   "title": "Dreamcore · iPhone · Settings (your profile picture)",
+   "w": 390,
+   "x": 9590,
+   "y": 8402
+  },
+  "ThemeDreamcoreReview.dc.html": {
+   "h": 900,
+   "is_interactive": true,
+   "page": "themes",
+   "title": "Dreamcore · Web · Flashcards",
+   "w": 1440,
+   "x": 6080,
+   "y": 8402
+  },
+  "ThemeDreamcoreReviewPhone.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "page": "themes",
+   "title": "Dreamcore · iPhone · Flashcards",
+   "w": 390,
+   "x": 9120,
+   "y": 8402
+  },
+  "ThemeGlass.dc.html": {
+   "h": 900,
+   "is_interactive": true,
+   "page": "themes",
+   "title": "Frosted glass · Settings › Theme › its page",
+   "w": 1440,
+   "x": 0,
+   "y": 15002
+  },
+  "ThemeGlassDeck.dc.html": {
+   "h": 900,
+   "is_interactive": true,
+   "page": "themes",
+   "title": "Frosted glass · Web · Deck page",
+   "w": 1440,
+   "x": 4560,
+   "y": 15002
+  },
+  "ThemeGlassFree.dc.html": {
+   "h": 900,
+   "is_interactive": true,
+   "page": "themes",
+   "title": "Frosted glass · its page on Free (Go Pro)",
+   "w": 1440,
+   "x": 1520,
+   "y": 15002
+  },
+  "ThemeGlassLearn.dc.html": {
+   "h": 900,
+   "is_interactive": true,
+   "page": "themes",
+   "title": "Frosted glass · Web · Learn mode",
+   "w": 1440,
+   "x": 7600,
+   "y": 15002
+  },
+  "ThemeGlassLibrary.dc.html": {
+   "h": 900,
+   "is_interactive": true,
+   "page": "themes",
+   "title": "Frosted glass · Web · Library",
+   "w": 1440,
+   "x": 3040,
+   "y": 15002
+  },
+  "ThemeGlassProfilePhone.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "page": "themes",
+   "title": "Frosted glass · iPhone · Settings (your profile picture)",
+   "w": 390,
+   "x": 9590,
+   "y": 15002
+  },
+  "ThemeGlassReview.dc.html": {
+   "h": 900,
+   "is_interactive": true,
+   "page": "themes",
+   "title": "Frosted glass · Web · Flashcards",
+   "w": 1440,
+   "x": 6080,
+   "y": 15002
+  },
+  "ThemeGlassReviewPhone.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "page": "themes",
+   "title": "Frosted glass · iPhone · Flashcards",
+   "w": 390,
+   "x": 9120,
+   "y": 15002
+  },
+  "ThemeLiminal.dc.html": {
+   "h": 900,
+   "is_interactive": true,
+   "page": "themes",
+   "title": "Liminal · Flooded hall · Settings › Theme › its page",
+   "w": 1440,
+   "x": 0,
+   "y": 5762
+  },
+  "ThemeLiminalDeck.dc.html": {
+   "h": 900,
+   "is_interactive": true,
+   "page": "themes",
+   "title": "Liminal · Flooded hall · Web · Deck page",
+   "w": 1440,
+   "x": 4560,
+   "y": 5762
+  },
+  "ThemeLiminalFree.dc.html": {
+   "h": 900,
+   "is_interactive": true,
+   "page": "themes",
+   "title": "Liminal · Flooded hall · its page on Free (Go Pro)",
+   "w": 1440,
+   "x": 1520,
+   "y": 5762
+  },
+  "ThemeLiminalLearn.dc.html": {
+   "h": 900,
+   "is_interactive": true,
+   "page": "themes",
+   "title": "Liminal · Flooded hall · Web · Learn mode",
+   "w": 1440,
+   "x": 7600,
+   "y": 5762
+  },
+  "ThemeLiminalLibrary.dc.html": {
+   "h": 900,
+   "is_interactive": true,
+   "page": "themes",
+   "title": "Liminal · Flooded hall · Web · Library",
+   "w": 1440,
+   "x": 3040,
+   "y": 5762
+  },
+  "ThemeLiminalProfilePhone.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "page": "themes",
+   "title": "Liminal · Flooded hall · iPhone · Settings (your profile picture)",
+   "w": 390,
+   "x": 9590,
+   "y": 5762
+  },
+  "ThemeLiminalReview.dc.html": {
+   "h": 900,
+   "is_interactive": true,
+   "page": "themes",
+   "title": "Liminal · Flooded hall · Web · Flashcards",
+   "w": 1440,
+   "x": 6080,
+   "y": 5762
+  },
+  "ThemeLiminalReviewPhone.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "page": "themes",
+   "title": "Liminal · Flooded hall · iPhone · Flashcards",
+   "w": 390,
+   "x": 9120,
+   "y": 5762
+  },
+  "ThemeLiminalRoom.dc.html": {
+   "h": 900,
+   "is_interactive": true,
+   "page": "themes",
+   "title": "Liminal · Empty room · Settings › Theme › its page",
+   "w": 1440,
+   "x": 0,
+   "y": 7082
+  },
+  "ThemeLiminalRoomDeck.dc.html": {
+   "h": 900,
+   "is_interactive": true,
+   "page": "themes",
+   "title": "Liminal · Empty room · Web · Deck page",
+   "w": 1440,
+   "x": 4560,
+   "y": 7082
+  },
+  "ThemeLiminalRoomFree.dc.html": {
+   "h": 900,
+   "is_interactive": true,
+   "page": "themes",
+   "title": "Liminal · Empty room · its page on Free (Go Pro)",
+   "w": 1440,
+   "x": 1520,
+   "y": 7082
+  },
+  "ThemeLiminalRoomLearn.dc.html": {
+   "h": 900,
+   "is_interactive": true,
+   "page": "themes",
+   "title": "Liminal · Empty room · Web · Learn mode",
+   "w": 1440,
+   "x": 7600,
+   "y": 7082
+  },
+  "ThemeLiminalRoomLibrary.dc.html": {
+   "h": 900,
+   "is_interactive": true,
+   "page": "themes",
+   "title": "Liminal · Empty room · Web · Library",
+   "w": 1440,
+   "x": 3040,
+   "y": 7082
+  },
+  "ThemeLiminalRoomProfilePhone.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "page": "themes",
+   "title": "Liminal · Empty room · iPhone · Settings (your profile picture)",
+   "w": 390,
+   "x": 9590,
+   "y": 7082
+  },
+  "ThemeLiminalRoomReview.dc.html": {
+   "h": 900,
+   "is_interactive": true,
+   "page": "themes",
+   "title": "Liminal · Empty room · Web · Flashcards",
+   "w": 1440,
+   "x": 6080,
+   "y": 7082
+  },
+  "ThemeLiminalRoomReviewPhone.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "page": "themes",
+   "title": "Liminal · Empty room · iPhone · Flashcards",
+   "w": 390,
+   "x": 9120,
+   "y": 7082
+  },
+  "ThemePicker.dc.html": {
+   "h": 900,
+   "is_interactive": true,
+   "page": "themes",
+   "title": "Web · Settings › Theme",
+   "w": 1440,
+   "x": 0,
+   "y": 0
+  },
+  "ThemePickerDark.dc.html": {
+   "h": 900,
+   "is_interactive": true,
+   "page": "themes",
+   "title": "Web · Settings › Theme (dark)",
+   "w": 1440,
+   "x": 1520,
+   "y": 0
+  },
+  "ThemePickerFree.dc.html": {
+   "h": 900,
+   "is_interactive": true,
+   "page": "themes",
+   "title": "Web · Settings › Theme · on Free (locked, Go Pro)",
+   "w": 1440,
+   "x": 3040,
+   "y": 0
+  },
+  "ThemeRiso.dc.html": {
+   "h": 900,
+   "is_interactive": true,
+   "page": "themes",
+   "title": "Risograph · Settings › Theme › its page",
+   "w": 1440,
+   "x": 0,
+   "y": 17642
+  },
+  "ThemeRisoDeck.dc.html": {
+   "h": 900,
+   "is_interactive": true,
+   "page": "themes",
+   "title": "Risograph · Web · Deck page",
+   "w": 1440,
+   "x": 4560,
+   "y": 17642
+  },
+  "ThemeRisoFree.dc.html": {
+   "h": 900,
+   "is_interactive": true,
+   "page": "themes",
+   "title": "Risograph · its page on Free (Go Pro)",
+   "w": 1440,
+   "x": 1520,
+   "y": 17642
+  },
+  "ThemeRisoLearn.dc.html": {
+   "h": 900,
+   "is_interactive": true,
+   "page": "themes",
+   "title": "Risograph · Web · Learn mode",
+   "w": 1440,
+   "x": 7600,
+   "y": 17642
+  },
+  "ThemeRisoLibrary.dc.html": {
+   "h": 900,
+   "is_interactive": true,
+   "page": "themes",
+   "title": "Risograph · Web · Library",
+   "w": 1440,
+   "x": 3040,
+   "y": 17642
+  },
+  "ThemeRisoProfilePhone.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "page": "themes",
+   "title": "Risograph · iPhone · Settings (your profile picture)",
+   "w": 390,
+   "x": 9590,
+   "y": 17642
+  },
+  "ThemeRisoReview.dc.html": {
+   "h": 900,
+   "is_interactive": true,
+   "page": "themes",
+   "title": "Risograph · Web · Flashcards",
+   "w": 1440,
+   "x": 6080,
+   "y": 17642
+  },
+  "ThemeRisoReviewPhone.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "page": "themes",
+   "title": "Risograph · iPhone · Flashcards",
+   "w": 390,
+   "x": 9120,
+   "y": 17642
+  },
+  "ThemeRubber.dc.html": {
+   "h": 900,
+   "is_interactive": true,
+   "page": "themes",
+   "title": "Rubber hose · Settings › Theme › its page",
+   "w": 1440,
+   "x": 0,
+   "y": 1802
+  },
+  "ThemeRubberDeck.dc.html": {
+   "h": 900,
+   "is_interactive": true,
+   "page": "themes",
+   "title": "Rubber hose · Web · Deck page",
+   "w": 1440,
+   "x": 4560,
+   "y": 1802
+  },
+  "ThemeRubberFree.dc.html": {
+   "h": 900,
+   "is_interactive": true,
+   "page": "themes",
+   "title": "Rubber hose · its page on Free (Go Pro)",
+   "w": 1440,
+   "x": 1520,
+   "y": 1802
+  },
+  "ThemeRubberLearn.dc.html": {
+   "h": 900,
+   "is_interactive": true,
+   "page": "themes",
+   "title": "Rubber hose · Web · Learn mode",
+   "w": 1440,
+   "x": 7600,
+   "y": 1802
+  },
+  "ThemeRubberLibrary.dc.html": {
+   "h": 900,
+   "is_interactive": true,
+   "page": "themes",
+   "title": "Rubber hose · Web · Library",
+   "w": 1440,
+   "x": 3040,
+   "y": 1802
+  },
+  "ThemeRubberProfilePhone.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "page": "themes",
+   "title": "Rubber hose · iPhone · Settings (your profile picture)",
+   "w": 390,
+   "x": 9590,
+   "y": 1802
+  },
+  "ThemeRubberReview.dc.html": {
+   "h": 900,
+   "is_interactive": true,
+   "page": "themes",
+   "title": "Rubber hose · Web · Flashcards",
+   "w": 1440,
+   "x": 6080,
+   "y": 1802
+  },
+  "ThemeRubberReviewPhone.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "page": "themes",
+   "title": "Rubber hose · iPhone · Flashcards",
+   "w": 390,
+   "x": 9120,
+   "y": 1802
+  },
+  "ThemeSwiss.dc.html": {
+   "h": 900,
+   "is_interactive": true,
+   "page": "themes",
+   "title": "Swiss poster · Settings › Theme › its page",
+   "w": 1440,
+   "x": 0,
+   "y": 18962
+  },
+  "ThemeSwissDeck.dc.html": {
+   "h": 900,
+   "is_interactive": true,
+   "page": "themes",
+   "title": "Swiss poster · Web · Deck page",
+   "w": 1440,
+   "x": 4560,
+   "y": 18962
+  },
+  "ThemeSwissFree.dc.html": {
+   "h": 900,
+   "is_interactive": true,
+   "page": "themes",
+   "title": "Swiss poster · its page on Free (Go Pro)",
+   "w": 1440,
+   "x": 1520,
+   "y": 18962
+  },
+  "ThemeSwissLearn.dc.html": {
+   "h": 900,
+   "is_interactive": true,
+   "page": "themes",
+   "title": "Swiss poster · Web · Learn mode",
+   "w": 1440,
+   "x": 7600,
+   "y": 18962
+  },
+  "ThemeSwissLibrary.dc.html": {
+   "h": 900,
+   "is_interactive": true,
+   "page": "themes",
+   "title": "Swiss poster · Web · Library",
+   "w": 1440,
+   "x": 3040,
+   "y": 18962
+  },
+  "ThemeSwissProfilePhone.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "page": "themes",
+   "title": "Swiss poster · iPhone · Settings (your profile picture)",
+   "w": 390,
+   "x": 9590,
+   "y": 18962
+  },
+  "ThemeSwissReview.dc.html": {
+   "h": 900,
+   "is_interactive": true,
+   "page": "themes",
+   "title": "Swiss poster · Web · Flashcards",
+   "w": 1440,
+   "x": 6080,
+   "y": 18962
+  },
+  "ThemeSwissReviewPhone.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "page": "themes",
+   "title": "Swiss poster · iPhone · Flashcards",
+   "w": 390,
+   "x": 9120,
+   "y": 18962
+  },
+  "ThemeTerminal.dc.html": {
+   "h": 900,
+   "is_interactive": true,
+   "page": "themes",
+   "title": "Terminal · Settings › Theme › its page",
+   "w": 1440,
+   "x": 0,
+   "y": 12362
+  },
+  "ThemeTerminalDeck.dc.html": {
+   "h": 900,
+   "is_interactive": true,
+   "page": "themes",
+   "title": "Terminal · Web · Deck page",
+   "w": 1440,
+   "x": 4560,
+   "y": 12362
+  },
+  "ThemeTerminalFree.dc.html": {
+   "h": 900,
+   "is_interactive": true,
+   "page": "themes",
+   "title": "Terminal · its page on Free (Go Pro)",
+   "w": 1440,
+   "x": 1520,
+   "y": 12362
+  },
+  "ThemeTerminalLearn.dc.html": {
+   "h": 900,
+   "is_interactive": true,
+   "page": "themes",
+   "title": "Terminal · Web · Learn mode",
+   "w": 1440,
+   "x": 7600,
+   "y": 12362
+  },
+  "ThemeTerminalLibrary.dc.html": {
+   "h": 900,
+   "is_interactive": true,
+   "page": "themes",
+   "title": "Terminal · Web · Library",
+   "w": 1440,
+   "x": 3040,
+   "y": 12362
+  },
+  "ThemeTerminalProfilePhone.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "page": "themes",
+   "title": "Terminal · iPhone · Settings (your profile picture)",
+   "w": 390,
+   "x": 9590,
+   "y": 12362
+  },
+  "ThemeTerminalReview.dc.html": {
+   "h": 900,
+   "is_interactive": true,
+   "page": "themes",
+   "title": "Terminal · Web · Flashcards",
+   "w": 1440,
+   "x": 6080,
+   "y": 12362
+  },
+  "ThemeTerminalReviewPhone.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "page": "themes",
+   "title": "Terminal · iPhone · Flashcards",
+   "w": 390,
+   "x": 9120,
+   "y": 12362
+  },
+  "ThemeTopo.dc.html": {
+   "h": 900,
+   "is_interactive": true,
+   "page": "themes",
+   "title": "Topographic · Settings › Theme › its page",
+   "w": 1440,
+   "x": 0,
+   "y": 16322
+  },
+  "ThemeTopoDeck.dc.html": {
+   "h": 900,
+   "is_interactive": true,
+   "page": "themes",
+   "title": "Topographic · Web · Deck page",
+   "w": 1440,
+   "x": 4560,
+   "y": 16322
+  },
+  "ThemeTopoFree.dc.html": {
+   "h": 900,
+   "is_interactive": true,
+   "page": "themes",
+   "title": "Topographic · its page on Free (Go Pro)",
+   "w": 1440,
+   "x": 1520,
+   "y": 16322
+  },
+  "ThemeTopoLearn.dc.html": {
+   "h": 900,
+   "is_interactive": true,
+   "page": "themes",
+   "title": "Topographic · Web · Learn mode",
+   "w": 1440,
+   "x": 7600,
+   "y": 16322
+  },
+  "ThemeTopoLibrary.dc.html": {
+   "h": 900,
+   "is_interactive": true,
+   "page": "themes",
+   "title": "Topographic · Web · Library",
+   "w": 1440,
+   "x": 3040,
+   "y": 16322
+  },
+  "ThemeTopoProfilePhone.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "page": "themes",
+   "title": "Topographic · iPhone · Settings (your profile picture)",
+   "w": 390,
+   "x": 9590,
+   "y": 16322
+  },
+  "ThemeTopoReview.dc.html": {
+   "h": 900,
+   "is_interactive": true,
+   "page": "themes",
+   "title": "Topographic · Web · Flashcards",
+   "w": 1440,
+   "x": 6080,
+   "y": 16322
+  },
+  "ThemeTopoReviewPhone.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "page": "themes",
+   "title": "Topographic · iPhone · Flashcards",
+   "w": 390,
+   "x": 9120,
+   "y": 16322
+  },
+  "ThemeVaporDolphins.dc.html": {
+   "h": 900,
+   "is_interactive": true,
+   "page": "themes",
+   "title": "Vaporwave · Dolphins · Settings › Theme › its page",
+   "w": 1440,
+   "x": 0,
+   "y": 11042
+  },
+  "ThemeVaporDolphinsDeck.dc.html": {
+   "h": 900,
+   "is_interactive": true,
+   "page": "themes",
+   "title": "Vaporwave · Dolphins · Web · Deck page",
+   "w": 1440,
+   "x": 4560,
+   "y": 11042
+  },
+  "ThemeVaporDolphinsFree.dc.html": {
+   "h": 900,
+   "is_interactive": true,
+   "page": "themes",
+   "title": "Vaporwave · Dolphins · its page on Free (Go Pro)",
+   "w": 1440,
+   "x": 1520,
+   "y": 11042
+  },
+  "ThemeVaporDolphinsLearn.dc.html": {
+   "h": 900,
+   "is_interactive": true,
+   "page": "themes",
+   "title": "Vaporwave · Dolphins · Web · Learn mode",
+   "w": 1440,
+   "x": 7600,
+   "y": 11042
+  },
+  "ThemeVaporDolphinsLibrary.dc.html": {
+   "h": 900,
+   "is_interactive": true,
+   "page": "themes",
+   "title": "Vaporwave · Dolphins · Web · Library",
+   "w": 1440,
+   "x": 3040,
+   "y": 11042
+  },
+  "ThemeVaporDolphinsProfilePhone.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "page": "themes",
+   "title": "Vaporwave · Dolphins · iPhone · Settings (your profile picture)",
+   "w": 390,
+   "x": 9590,
+   "y": 11042
+  },
+  "ThemeVaporDolphinsReview.dc.html": {
+   "h": 900,
+   "is_interactive": true,
+   "page": "themes",
+   "title": "Vaporwave · Dolphins · Web · Flashcards",
+   "w": 1440,
+   "x": 6080,
+   "y": 11042
+  },
+  "ThemeVaporDolphinsReviewPhone.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "page": "themes",
+   "title": "Vaporwave · Dolphins · iPhone · Flashcards",
+   "w": 390,
+   "x": 9120,
+   "y": 11042
+  },
+  "ThemeVaporwave.dc.html": {
+   "h": 900,
+   "is_interactive": true,
+   "page": "themes",
+   "title": "Vaporwave · Poolside · Settings › Theme › its page",
+   "w": 1440,
+   "x": 0,
+   "y": 9722
+  },
+  "ThemeVaporwaveDeck.dc.html": {
+   "h": 900,
+   "is_interactive": true,
+   "page": "themes",
+   "title": "Vaporwave · Poolside · Web · Deck page",
+   "w": 1440,
+   "x": 4560,
+   "y": 9722
+  },
+  "ThemeVaporwaveFree.dc.html": {
+   "h": 900,
+   "is_interactive": true,
+   "page": "themes",
+   "title": "Vaporwave · Poolside · its page on Free (Go Pro)",
+   "w": 1440,
+   "x": 1520,
+   "y": 9722
+  },
+  "ThemeVaporwaveLearn.dc.html": {
+   "h": 900,
+   "is_interactive": true,
+   "page": "themes",
+   "title": "Vaporwave · Poolside · Web · Learn mode",
+   "w": 1440,
+   "x": 7600,
+   "y": 9722
+  },
+  "ThemeVaporwaveLibrary.dc.html": {
+   "h": 900,
+   "is_interactive": true,
+   "page": "themes",
+   "title": "Vaporwave · Poolside · Web · Library",
+   "w": 1440,
+   "x": 3040,
+   "y": 9722
+  },
+  "ThemeVaporwaveProfilePhone.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "page": "themes",
+   "title": "Vaporwave · Poolside · iPhone · Settings (your profile picture)",
+   "w": 390,
+   "x": 9590,
+   "y": 9722
+  },
+  "ThemeVaporwaveReview.dc.html": {
+   "h": 900,
+   "is_interactive": true,
+   "page": "themes",
+   "title": "Vaporwave · Poolside · Web · Flashcards",
+   "w": 1440,
+   "x": 6080,
+   "y": 9722
+  },
+  "ThemeVaporwaveReviewPhone.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "page": "themes",
+   "title": "Vaporwave · Poolside · iPhone · Flashcards",
+   "w": 390,
+   "x": 9120,
+   "y": 9722
+  },
+  "ThemeZine.dc.html": {
+   "h": 900,
+   "is_interactive": true,
+   "page": "themes",
+   "title": "Zine collage · Settings › Theme › its page",
+   "w": 1440,
+   "x": 0,
+   "y": 13682
+  },
+  "ThemeZineDeck.dc.html": {
+   "h": 900,
+   "is_interactive": true,
+   "page": "themes",
+   "title": "Zine collage · Web · Deck page",
+   "w": 1440,
+   "x": 4560,
+   "y": 13682
+  },
+  "ThemeZineFree.dc.html": {
+   "h": 900,
+   "is_interactive": true,
+   "page": "themes",
+   "title": "Zine collage · its page on Free (Go Pro)",
+   "w": 1440,
+   "x": 1520,
+   "y": 13682
+  },
+  "ThemeZineLearn.dc.html": {
+   "h": 900,
+   "is_interactive": true,
+   "page": "themes",
+   "title": "Zine collage · Web · Learn mode",
+   "w": 1440,
+   "x": 7600,
+   "y": 13682
+  },
+  "ThemeZineLibrary.dc.html": {
+   "h": 900,
+   "is_interactive": true,
+   "page": "themes",
+   "title": "Zine collage · Web · Library",
+   "w": 1440,
+   "x": 3040,
+   "y": 13682
+  },
+  "ThemeZineProfilePhone.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "page": "themes",
+   "title": "Zine collage · iPhone · Settings (your profile picture)",
+   "w": 390,
+   "x": 9590,
+   "y": 13682
+  },
+  "ThemeZineReview.dc.html": {
+   "h": 900,
+   "is_interactive": true,
+   "page": "themes",
+   "title": "Zine collage · Web · Flashcards",
+   "w": 1440,
+   "x": 6080,
+   "y": 13682
+  },
+  "ThemeZineReviewPhone.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "page": "themes",
+   "title": "Zine collage · iPhone · Flashcards",
+   "w": 390,
+   "x": 9120,
+   "y": 13682
   },
   "TopDeck.dc.html": {
    "h": 900,
@@ -855,6 +2763,87 @@
    "w": 1440,
    "x": 3040,
    "y": 0
+  },
+  "WebActivity.dc.html": {
+   "h": 900,
+   "is_interactive": true,
+   "page": "network",
+   "title": "Web · News",
+   "w": 1440,
+   "x": 0,
+   "y": 7808
+  },
+  "WebActivityDark.dc.html": {
+   "h": 900,
+   "is_interactive": true,
+   "page": "network",
+   "title": "Web · News (dark)",
+   "w": 1440,
+   "x": 3040,
+   "y": 7808
+  },
+  "WebActivityEmpty.dc.html": {
+   "h": 900,
+   "is_interactive": true,
+   "page": "network",
+   "title": "Web · News · nothing new",
+   "w": 1440,
+   "x": 1520,
+   "y": 7808
+  },
+  "WebActivityGray.dc.html": {
+   "h": 900,
+   "is_interactive": true,
+   "page": "network",
+   "title": "Web · News (dark, gray)",
+   "w": 1440,
+   "x": 4560,
+   "y": 7808
+  },
+  "WebAdmin.dc.html": {
+   "h": 900,
+   "is_interactive": true,
+   "page": "classes",
+   "title": "Web · Admin · verification requests",
+   "w": 1440,
+   "x": 0,
+   "y": 10117
+  },
+  "WebAdminDark.dc.html": {
+   "h": 900,
+   "is_interactive": true,
+   "page": "classes",
+   "title": "Web · Admin (dark)",
+   "w": 1440,
+   "x": 6080,
+   "y": 10117
+  },
+  "WebAdminDenied.dc.html": {
+   "h": 900,
+   "is_interactive": true,
+   "page": "classes",
+   "title": "Web · Admin · someone who isn’t an admin",
+   "w": 1440,
+   "x": 1520,
+   "y": 10117
+  },
+  "WebAdminEmpty.dc.html": {
+   "h": 900,
+   "is_interactive": true,
+   "page": "classes",
+   "title": "Web · Admin · nothing waiting",
+   "w": 1440,
+   "x": 3040,
+   "y": 10117
+  },
+  "WebAdminReports.dc.html": {
+   "h": 900,
+   "is_interactive": true,
+   "page": "classes",
+   "title": "Web · Admin · reports",
+   "w": 1440,
+   "x": 4560,
+   "y": 10117
   },
   "WebCardsScreen.dc.html": {
    "h": 900,
@@ -901,6 +2890,204 @@
    "x": 0,
    "y": 11880
   },
+  "WebCardsScreenPaused.dc.html": {
+   "h": 900,
+   "is_interactive": true,
+   "page": "pro",
+   "title": "Web · Edit cards · a paused card (Unpause)",
+   "w": 1440,
+   "x": 1520,
+   "y": 3904
+  },
+  "WebClass.dc.html": {
+   "h": 900,
+   "is_interactive": true,
+   "page": "classes",
+   "title": "Web · Class · yours (assignments, progress, decks, people)",
+   "w": 1440,
+   "x": 0,
+   "y": 1320
+  },
+  "WebClassAddDeck.dc.html": {
+   "h": 900,
+   "is_interactive": true,
+   "page": "classes",
+   "title": "Web · Class · Add a deck",
+   "w": 1440,
+   "x": 3040,
+   "y": 1320
+  },
+  "WebClassAssign.dc.html": {
+   "h": 900,
+   "is_interactive": true,
+   "page": "classes",
+   "title": "Web · Class · Assign a deck",
+   "w": 1440,
+   "x": 4560,
+   "y": 1320
+  },
+  "WebClassDark.dc.html": {
+   "h": 900,
+   "is_interactive": true,
+   "page": "classes",
+   "title": "Web · Class (dark)",
+   "w": 1440,
+   "x": 10640,
+   "y": 1320
+  },
+  "WebClassGray.dc.html": {
+   "h": 900,
+   "is_interactive": true,
+   "page": "classes",
+   "title": "Web · Class (dark, gray)",
+   "w": 1440,
+   "x": 12160,
+   "y": 1320
+  },
+  "WebClassInvite.dc.html": {
+   "h": 900,
+   "is_interactive": true,
+   "page": "classes",
+   "title": "Web · Class · its invite link (join with a tap)",
+   "w": 1440,
+   "x": 6080,
+   "y": 2640
+  },
+  "WebClassInviteSignedOut.dc.html": {
+   "h": 900,
+   "is_interactive": true,
+   "page": "classes",
+   "title": "Web · Class · its invite link, signed out",
+   "w": 1440,
+   "x": 7600,
+   "y": 2640
+  },
+  "WebClassLoading.dc.html": {
+   "h": 900,
+   "is_interactive": true,
+   "page": "classes",
+   "title": "Web · Class · loading",
+   "w": 1440,
+   "x": 7600,
+   "y": 1320
+  },
+  "WebClassMember.dc.html": {
+   "h": 900,
+   "is_interactive": true,
+   "page": "classes",
+   "title": "Web · Class · one you joined (asked once: share your progress?)",
+   "w": 1440,
+   "x": 0,
+   "y": 2640
+  },
+  "WebClassMemberDark.dc.html": {
+   "h": 900,
+   "is_interactive": true,
+   "page": "classes",
+   "title": "Web · Class · one you joined (dark)",
+   "w": 1440,
+   "x": 4560,
+   "y": 2640
+  },
+  "WebClassMemberSharing.dc.html": {
+   "h": 900,
+   "is_interactive": true,
+   "page": "classes",
+   "title": "Web · Class · one you joined, sharing your progress",
+   "w": 1440,
+   "x": 1520,
+   "y": 2640
+  },
+  "WebClassMissing.dc.html": {
+   "h": 900,
+   "is_interactive": true,
+   "page": "classes",
+   "title": "Web · Class · no class has that code",
+   "w": 1440,
+   "x": 9120,
+   "y": 1320
+  },
+  "WebClassNew.dc.html": {
+   "h": 900,
+   "is_interactive": true,
+   "page": "classes",
+   "title": "Web · Class · just made (no decks or people yet)",
+   "w": 1440,
+   "x": 1520,
+   "y": 1320
+  },
+  "WebClassReport.dc.html": {
+   "h": 900,
+   "is_interactive": true,
+   "page": "classes",
+   "title": "Web · Class · Report a deck",
+   "w": 1440,
+   "x": 3040,
+   "y": 2640
+  },
+  "WebClassVerify.dc.html": {
+   "h": 900,
+   "is_interactive": true,
+   "page": "classes",
+   "title": "Web · Class · Get verified",
+   "w": 1440,
+   "x": 6080,
+   "y": 1320
+  },
+  "WebClasses.dc.html": {
+   "h": 900,
+   "is_interactive": true,
+   "page": "classes",
+   "title": "Web · Library · Classes",
+   "w": 1440,
+   "x": 0,
+   "y": 0
+  },
+  "WebClassesDark.dc.html": {
+   "h": 900,
+   "is_interactive": true,
+   "page": "classes",
+   "title": "Web · Library · Classes (dark)",
+   "w": 1440,
+   "x": 7600,
+   "y": 0
+  },
+  "WebClassesEmpty.dc.html": {
+   "h": 900,
+   "is_interactive": true,
+   "page": "classes",
+   "title": "Web · Library · Classes · none yet",
+   "w": 1440,
+   "x": 1520,
+   "y": 0
+  },
+  "WebClassesJoin.dc.html": {
+   "h": 900,
+   "is_interactive": true,
+   "page": "classes",
+   "title": "Web · Library · Classes · Join a class (with its code)",
+   "w": 1440,
+   "x": 3040,
+   "y": 0
+  },
+  "WebClassesLoading.dc.html": {
+   "h": 900,
+   "is_interactive": true,
+   "page": "classes",
+   "title": "Web · Library · Classes · loading",
+   "w": 1440,
+   "x": 4560,
+   "y": 0
+  },
+  "WebClassesNew.dc.html": {
+   "h": 900,
+   "is_interactive": true,
+   "page": "classes",
+   "title": "Web · Library · Classes · New class",
+   "w": 1440,
+   "x": 6080,
+   "y": 0
+  },
   "WebConnect.dc.html": {
    "h": 900,
    "is_interactive": true,
@@ -910,6 +3097,15 @@
    "x": 4560,
    "y": 1320
   },
+  "WebConnectConsent.dc.html": {
+   "h": 900,
+   "is_interactive": true,
+   "page": "sidebar",
+   "title": "Web · An AI app asks to connect (Allow or Cancel)",
+   "w": 1440,
+   "x": 3040,
+   "y": 7920
+  },
   "WebDeck.dc.html": {
    "h": 900,
    "is_interactive": true,
@@ -918,6 +3114,15 @@
    "w": 1440,
    "x": 3040,
    "y": 0
+  },
+  "WebDeckCopy.dc.html": {
+   "h": 900,
+   "is_interactive": true,
+   "page": "network",
+   "title": "Web · Deck page · your copy, with the owner’s changes waiting",
+   "w": 1440,
+   "x": 3040,
+   "y": 10448
   },
   "WebDeckDark.dc.html": {
    "h": 900,
@@ -964,6 +3169,42 @@
    "x": 6080,
    "y": 2640
   },
+  "WebDeckSettingsFrom.dc.html": {
+   "h": 900,
+   "is_interactive": true,
+   "page": "network",
+   "title": "Web · Deck settings · Sharing (a deck you study)",
+   "w": 1440,
+   "x": 1520,
+   "y": 10448
+  },
+  "WebDeckSettingsGoal.dc.html": {
+   "h": 900,
+   "is_interactive": true,
+   "page": "pro",
+   "title": "Web · Deck settings · Studying · goal raised to 95% (reviews a day)",
+   "w": 1440,
+   "x": 0,
+   "y": 0
+  },
+  "WebDeckSettingsShare.dc.html": {
+   "h": 900,
+   "is_interactive": true,
+   "page": "network",
+   "title": "Web · Deck settings · Sharing (a public deck)",
+   "w": 1440,
+   "x": 1520,
+   "y": 9128
+  },
+  "WebDeckSettingsSharePrivate.dc.html": {
+   "h": 900,
+   "is_interactive": true,
+   "page": "network",
+   "title": "Web · Deck settings · Sharing (private, the start)",
+   "w": 1440,
+   "x": 0,
+   "y": 9128
+  },
   "WebDeckSettingsStudy.dc.html": {
    "h": 900,
    "is_interactive": true,
@@ -973,6 +3214,33 @@
    "x": 7600,
    "y": 2640
   },
+  "WebDeckSettingsStudyFree.dc.html": {
+   "h": 900,
+   "is_interactive": true,
+   "page": "pro",
+   "title": "Web · Deck settings · Studying · on Free (what Pro adds)",
+   "w": 1440,
+   "x": 1520,
+   "y": 0
+  },
+  "WebDeckShared.dc.html": {
+   "h": 900,
+   "is_interactive": true,
+   "page": "network",
+   "title": "Web · Deck page · shared (public, with suggestions waiting)",
+   "w": 1440,
+   "x": 3040,
+   "y": 9128
+  },
+  "WebDeckStudied.dc.html": {
+   "h": 900,
+   "is_interactive": true,
+   "page": "network",
+   "title": "Web · Deck page · a deck you study from someone else",
+   "w": 1440,
+   "x": 0,
+   "y": 10448
+  },
   "WebDeckTagPicker.dc.html": {
    "h": 900,
    "is_interactive": true,
@@ -981,6 +3249,15 @@
    "w": 1440,
    "x": 3040,
    "y": 6600
+  },
+  "WebDeckUpdates.dc.html": {
+   "h": 900,
+   "is_interactive": true,
+   "page": "network",
+   "title": "Web · Deck page · your copy · the owner’s changes (take or skip)",
+   "w": 1440,
+   "x": 4560,
+   "y": 10448
   },
   "WebDecks.dc.html": {
    "h": 900,
@@ -1026,6 +3303,33 @@
    "w": 1440,
    "x": 0,
    "y": 6600
+  },
+  "WebDiscover.dc.html": {
+   "h": 900,
+   "is_interactive": true,
+   "page": "network",
+   "title": "Web · Discover",
+   "w": 1440,
+   "x": 0,
+   "y": 0
+  },
+  "WebDiscoverSearch.dc.html": {
+   "h": 900,
+   "is_interactive": true,
+   "page": "network",
+   "title": "Web · Discover · search",
+   "w": 1440,
+   "x": 1520,
+   "y": 0
+  },
+  "WebDiscoverSignedOut.dc.html": {
+   "h": 900,
+   "is_interactive": true,
+   "page": "network",
+   "title": "Web · Discover · signed out (anyone can look)",
+   "w": 1440,
+   "x": 3040,
+   "y": 0
   },
   "WebDone.dc.html": {
    "h": 900,
@@ -1153,6 +3457,60 @@
    "x": 9120,
    "y": 5280
   },
+  "WebHistory.dc.html": {
+   "h": 900,
+   "is_interactive": true,
+   "page": "network",
+   "title": "Web · History (your deck)",
+   "w": 1440,
+   "x": 12990,
+   "y": 3904
+  },
+  "WebHistoryDark.dc.html": {
+   "h": 900,
+   "is_interactive": true,
+   "page": "network",
+   "title": "Web · History · dark",
+   "w": 1440,
+   "x": 19070,
+   "y": 3904
+  },
+  "WebHistoryGoBack.dc.html": {
+   "h": 900,
+   "is_interactive": true,
+   "page": "network",
+   "title": "Web · History · going back to a version",
+   "w": 1440,
+   "x": 14510,
+   "y": 3904
+  },
+  "WebHistoryGray.dc.html": {
+   "h": 900,
+   "is_interactive": true,
+   "page": "network",
+   "title": "Web · History · gray",
+   "w": 1440,
+   "x": 20590,
+   "y": 3904
+  },
+  "WebHistoryOpen.dc.html": {
+   "h": 900,
+   "is_interactive": true,
+   "page": "network",
+   "title": "Web · History · a version opened",
+   "w": 1440,
+   "x": 16030,
+   "y": 3904
+  },
+  "WebHistoryOther.dc.html": {
+   "h": 900,
+   "is_interactive": true,
+   "page": "network",
+   "title": "Web · History · someone else’s deck",
+   "w": 1440,
+   "x": 17550,
+   "y": 3904
+  },
   "WebImport.dc.html": {
    "h": 900,
    "is_interactive": true,
@@ -1189,6 +3547,15 @@
    "x": 10640,
    "y": 2640
   },
+  "WebLibraryLeeches.dc.html": {
+   "h": 900,
+   "is_interactive": true,
+   "page": "pro",
+   "title": "Web · Library · all cards · cards you keep forgetting (Pause all)",
+   "w": 1440,
+   "x": 0,
+   "y": 3904
+  },
   "WebLibraryMove.dc.html": {
    "h": 900,
    "is_interactive": true,
@@ -1214,6 +3581,294 @@
    "title": "Web · New deck",
    "w": 1440,
    "x": 6080,
+   "y": 1320
+  },
+  "WebProfile.dc.html": {
+   "h": 900,
+   "is_interactive": true,
+   "page": "network",
+   "title": "Web · Profile (yours)",
+   "w": 1440,
+   "x": 0,
+   "y": 5224
+  },
+  "WebProfileBlock.dc.html": {
+   "h": 900,
+   "is_interactive": true,
+   "page": "network",
+   "title": "Web · Profile · someone else’s · Block (the question)",
+   "w": 1440,
+   "x": 1520,
+   "y": 5224
+  },
+  "WebProfileBlocked.dc.html": {
+   "h": 900,
+   "is_interactive": true,
+   "page": "network",
+   "title": "Web · Profile · someone you blocked (Unblock)",
+   "w": 1440,
+   "x": 3040,
+   "y": 5224
+  },
+  "WebProfileDark.dc.html": {
+   "h": 900,
+   "is_interactive": true,
+   "page": "network",
+   "title": "Web · Profile (dark)",
+   "w": 1440,
+   "x": 22800,
+   "y": 5224
+  },
+  "WebProfileEdit.dc.html": {
+   "h": 900,
+   "is_interactive": true,
+   "page": "network",
+   "title": "Web · Profile · Edit profile",
+   "w": 1440,
+   "x": 4560,
+   "y": 5224
+  },
+  "WebProfileEditTaken.dc.html": {
+   "h": 900,
+   "is_interactive": true,
+   "page": "network",
+   "title": "Web · Profile · Edit profile · a handle someone has",
+   "w": 1440,
+   "x": 6080,
+   "y": 5224
+  },
+  "WebProfileEmpty.dc.html": {
+   "h": 900,
+   "is_interactive": true,
+   "page": "network",
+   "title": "Web · Profile · nothing shared yet",
+   "w": 1440,
+   "x": 7600,
+   "y": 5224
+  },
+  "WebProfileFollowing.dc.html": {
+   "h": 900,
+   "is_interactive": true,
+   "page": "network",
+   "title": "Web · Profile · someone you follow",
+   "w": 1440,
+   "x": 9120,
+   "y": 5224
+  },
+  "WebProfileGray.dc.html": {
+   "h": 900,
+   "is_interactive": true,
+   "page": "network",
+   "title": "Web · Profile (dark, gray)",
+   "w": 1440,
+   "x": 24320,
+   "y": 5224
+  },
+  "WebProfileLoading.dc.html": {
+   "h": 900,
+   "is_interactive": true,
+   "page": "network",
+   "title": "Web · Profile · loading",
+   "w": 1440,
+   "x": 10640,
+   "y": 5224
+  },
+  "WebProfileMissing.dc.html": {
+   "h": 900,
+   "is_interactive": true,
+   "page": "network",
+   "title": "Web · Profile · no one has that name",
+   "w": 1440,
+   "x": 12160,
+   "y": 5224
+  },
+  "WebProfileOther.dc.html": {
+   "h": 900,
+   "is_interactive": true,
+   "page": "network",
+   "title": "Web · Profile · someone else’s",
+   "w": 1440,
+   "x": 13680,
+   "y": 5224
+  },
+  "WebProfilePin.dc.html": {
+   "h": 900,
+   "is_interactive": true,
+   "page": "network",
+   "title": "Web · Profile · a deck’s ⋯ menu (pin it to your profile)",
+   "w": 1440,
+   "x": 15200,
+   "y": 5224
+  },
+  "WebProfileReport.dc.html": {
+   "h": 900,
+   "is_interactive": true,
+   "page": "network",
+   "title": "Web · Profile · someone else’s · Report",
+   "w": 1440,
+   "x": 16720,
+   "y": 5224
+  },
+  "WebProfileSaved.dc.html": {
+   "h": 900,
+   "is_interactive": true,
+   "page": "network",
+   "title": "Web · Profile · Saved",
+   "w": 1440,
+   "x": 18240,
+   "y": 5224
+  },
+  "WebProfileSignedOut.dc.html": {
+   "h": 900,
+   "is_interactive": true,
+   "page": "network",
+   "title": "Web · Profile · signed out (anyone can look)",
+   "w": 1440,
+   "x": 19760,
+   "y": 5224
+  },
+  "WebProfileSuggestions.dc.html": {
+   "h": 900,
+   "is_interactive": true,
+   "page": "network",
+   "title": "Web · Profile · Suggestions you sent",
+   "w": 1440,
+   "x": 21280,
+   "y": 5224
+  },
+  "WebPublicDeck.dc.html": {
+   "h": 900,
+   "is_interactive": true,
+   "page": "network",
+   "title": "Web · Shared deck page",
+   "w": 1440,
+   "x": 0,
+   "y": 1320
+  },
+  "WebPublicDeckCheck.dc.html": {
+   "h": 900,
+   "is_interactive": true,
+   "page": "network",
+   "title": "Web · Shared deck page · a verified teacher’s view (Check this deck)",
+   "w": 1440,
+   "x": 1520,
+   "y": 1320
+  },
+  "WebPublicDeckCopy.dc.html": {
+   "h": 900,
+   "is_interactive": true,
+   "page": "network",
+   "title": "Web · Shared deck page · Make a copy",
+   "w": 1440,
+   "x": 3040,
+   "y": 1320
+  },
+  "WebPublicDeckDark.dc.html": {
+   "h": 900,
+   "is_interactive": true,
+   "page": "network",
+   "title": "Web · Shared deck page · dark",
+   "w": 1440,
+   "x": 19760,
+   "y": 1320
+  },
+  "WebPublicDeckGray.dc.html": {
+   "h": 900,
+   "is_interactive": true,
+   "page": "network",
+   "title": "Web · Shared deck page · gray",
+   "w": 1440,
+   "x": 21280,
+   "y": 1320
+  },
+  "WebPublicDeckHistory.dc.html": {
+   "h": 900,
+   "is_interactive": true,
+   "page": "network",
+   "title": "Web · Shared deck page · History",
+   "w": 1440,
+   "x": 4560,
+   "y": 1320
+  },
+  "WebPublicDeckLoading.dc.html": {
+   "h": 900,
+   "is_interactive": true,
+   "page": "network",
+   "title": "Web · Shared deck page · loading",
+   "w": 1440,
+   "x": 6080,
+   "y": 1320
+  },
+  "WebPublicDeckMissing.dc.html": {
+   "h": 900,
+   "is_interactive": true,
+   "page": "network",
+   "title": "Web · Shared deck page · not shared",
+   "w": 1440,
+   "x": 7600,
+   "y": 1320
+  },
+  "WebPublicDeckOwner.dc.html": {
+   "h": 900,
+   "is_interactive": true,
+   "page": "network",
+   "title": "Web · Shared deck page · your own deck",
+   "w": 1440,
+   "x": 9120,
+   "y": 1320
+  },
+  "WebPublicDeckPeople.dc.html": {
+   "h": 900,
+   "is_interactive": true,
+   "page": "network",
+   "title": "Web · Shared deck page · People",
+   "w": 1440,
+   "x": 10640,
+   "y": 1320
+  },
+  "WebPublicDeckReport.dc.html": {
+   "h": 900,
+   "is_interactive": true,
+   "page": "network",
+   "title": "Web · Shared deck page · Report",
+   "w": 1440,
+   "x": 12160,
+   "y": 1320
+  },
+  "WebPublicDeckSignedOut.dc.html": {
+   "h": 900,
+   "is_interactive": true,
+   "page": "network",
+   "title": "Web · Shared deck page · signed out (anyone can look)",
+   "w": 1440,
+   "x": 13680,
+   "y": 1320
+  },
+  "WebPublicDeckStudying.dc.html": {
+   "h": 900,
+   "is_interactive": true,
+   "page": "network",
+   "title": "Web · Shared deck page · a deck you study",
+   "w": 1440,
+   "x": 15200,
+   "y": 1320
+  },
+  "WebPublicDeckSuggest.dc.html": {
+   "h": 900,
+   "is_interactive": true,
+   "page": "network",
+   "title": "Web · Shared deck page · Suggest a change, on a card",
+   "w": 1440,
+   "x": 16720,
+   "y": 1320
+  },
+  "WebPublicDeckSuggestNew.dc.html": {
+   "h": 900,
+   "is_interactive": true,
+   "page": "network",
+   "title": "Web · Shared deck page · Suggest a change, a new card",
+   "w": 1440,
+   "x": 18240,
    "y": 1320
   },
   "WebQuiz.dc.html": {
@@ -1405,6 +4060,24 @@
    "x": 0,
    "y": 5280
   },
+  "WebSettingsDelete.dc.html": {
+   "h": 900,
+   "is_interactive": true,
+   "page": "sidebar",
+   "title": "Web · Settings · Delete account (the question)",
+   "w": 1440,
+   "x": 12160,
+   "y": 5280
+  },
+  "WebSettingsFree.dc.html": {
+   "h": 900,
+   "is_interactive": true,
+   "page": "pro",
+   "title": "Web · Settings · on Free (Tune to you is Pro)",
+   "w": 1440,
+   "x": 0,
+   "y": 5224
+  },
   "WebSettingsGray.dc.html": {
    "h": 900,
    "is_interactive": true,
@@ -1413,6 +4086,15 @@
    "w": 1440,
    "x": 18240,
    "y": 2640
+  },
+  "WebSettingsVerified.dc.html": {
+   "h": 900,
+   "is_interactive": true,
+   "page": "classes",
+   "title": "Web · Settings · a verified teacher (Get verified says Verified teacher)",
+   "w": 1440,
+   "x": 0,
+   "y": 7808
   },
   "WebSignIn.dc.html": {
    "h": 900,
@@ -1468,6 +4150,132 @@
    "x": 16720,
    "y": 2640
   },
+  "WebStatsMemory.dc.html": {
+   "h": 900,
+   "is_interactive": true,
+   "page": "pro",
+   "title": "Web · Stats · Memory (Pro)",
+   "w": 1440,
+   "x": 0,
+   "y": 1320
+  },
+  "WebStatsPace.dc.html": {
+   "h": 900,
+   "is_interactive": true,
+   "page": "pro",
+   "title": "Web · Stats · Pace (Pro)",
+   "w": 1440,
+   "x": 1520,
+   "y": 1320
+  },
+  "WebStatsPaceGray.dc.html": {
+   "h": 900,
+   "is_interactive": true,
+   "page": "pro",
+   "title": "Web · Stats · Pace (dark, gray)",
+   "w": 1440,
+   "x": 6080,
+   "y": 1320
+  },
+  "WebStatsUpgrade.dc.html": {
+   "h": 900,
+   "is_interactive": true,
+   "page": "pro",
+   "title": "Web · Stats · on Free: go Pro for deep stats",
+   "w": 1440,
+   "x": 3040,
+   "y": 1320
+  },
+  "WebStatsWeak.dc.html": {
+   "h": 900,
+   "is_interactive": true,
+   "page": "pro",
+   "title": "Web · Stats · Weak spots (Pro)",
+   "w": 1440,
+   "x": 4560,
+   "y": 1320
+  },
+  "WebStatsWeakDark.dc.html": {
+   "h": 900,
+   "is_interactive": true,
+   "page": "pro",
+   "title": "Web · Stats · Weak spots (dark)",
+   "w": 1440,
+   "x": 7600,
+   "y": 1320
+  },
+  "WebSuggestions.dc.html": {
+   "h": 900,
+   "is_interactive": true,
+   "page": "network",
+   "title": "Web · Suggestions (for one deck)",
+   "w": 1440,
+   "x": 0,
+   "y": 3904
+  },
+  "WebSuggestionsAI.dc.html": {
+   "h": 900,
+   "is_interactive": true,
+   "page": "network",
+   "title": "Web · Suggestions · your AI’s cards",
+   "w": 1440,
+   "x": 1520,
+   "y": 3904
+  },
+  "WebSuggestionsAll.dc.html": {
+   "h": 900,
+   "is_interactive": true,
+   "page": "network",
+   "title": "Web · Suggestions · every deck",
+   "w": 1440,
+   "x": 3040,
+   "y": 3904
+  },
+  "WebSuggestionsDark.dc.html": {
+   "h": 900,
+   "is_interactive": true,
+   "page": "network",
+   "title": "Web · Suggestions · dark",
+   "w": 1440,
+   "x": 7600,
+   "y": 3904
+  },
+  "WebSuggestionsEmpty.dc.html": {
+   "h": 900,
+   "is_interactive": true,
+   "page": "network",
+   "title": "Web · Suggestions · none",
+   "w": 1440,
+   "x": 4560,
+   "y": 3904
+  },
+  "WebSuggestionsGray.dc.html": {
+   "h": 900,
+   "is_interactive": true,
+   "page": "network",
+   "title": "Web · Suggestions · gray",
+   "w": 1440,
+   "x": 9120,
+   "y": 3904
+  },
+  "WebSuggestionsReport.dc.html": {
+   "h": 900,
+   "is_interactive": true,
+   "page": "network",
+   "title": "Web · Suggestions · Report",
+   "w": 1440,
+   "x": 6080,
+   "y": 3904
+  },
+  "WebTheme.dc.html": {
+   "h": 900,
+   "is_interactive": true,
+   "page": "themes",
+   "title": "Web · Settings › Theme › Lucida (a theme’s page)",
+   "w": 1440,
+   "x": 4560,
+   "y": 0
+  },
   "WebTodayCaughtUp.dc.html": {
    "h": 900,
    "is_interactive": true,
@@ -1476,6 +4284,15 @@
    "w": 1440,
    "x": 1520,
    "y": 0
+  },
+  "WebTodayClass.dc.html": {
+   "h": 900,
+   "is_interactive": true,
+   "page": "classes",
+   "title": "Web · Today · with assignments from your classes",
+   "w": 1440,
+   "x": 0,
+   "y": 3960
   },
   "WebTodayDark.dc.html": {
    "h": 900,
@@ -1566,2823 +4383,6 @@
    "w": 1440,
    "x": 4560,
    "y": 0
-  },
-  "ThemePicker.dc.html": {
-   "x": 0,
-   "y": 0,
-   "w": 1440,
-   "h": 900,
-   "page": "themes",
-   "title": "Web · Settings › Theme",
-   "is_interactive": true
-  },
-  "CoverStyles.dc.html": {
-   "x": 7490,
-   "y": 0,
-   "w": 1440,
-   "h": 900,
-   "page": "themes",
-   "title": "More cover styles",
-   "is_interactive": true
-  },
-  "ThemeRubber.dc.html": {
-   "x": 0,
-   "y": 1802,
-   "w": 1440,
-   "h": 900,
-   "page": "themes",
-   "title": "Rubber hose · Settings › Theme › its page",
-   "is_interactive": true
-  },
-  "ThemeRubberLibrary.dc.html": {
-   "x": 3040,
-   "y": 1802,
-   "w": 1440,
-   "h": 900,
-   "page": "themes",
-   "title": "Rubber hose · Web · Library",
-   "is_interactive": true
-  },
-  "ThemeRubberReview.dc.html": {
-   "x": 6080,
-   "y": 1802,
-   "w": 1440,
-   "h": 900,
-   "page": "themes",
-   "title": "Rubber hose · Web · Flashcards",
-   "is_interactive": true
-  },
-  "ThemeRubberReviewPhone.dc.html": {
-   "x": 9120,
-   "y": 1802,
-   "w": 390,
-   "h": 844,
-   "page": "themes",
-   "title": "Rubber hose · iPhone · Flashcards",
-   "is_interactive": true
-  },
-  "ThemeRubberProfilePhone.dc.html": {
-   "x": 9590,
-   "y": 1802,
-   "w": 390,
-   "h": 844,
-   "page": "themes",
-   "title": "Rubber hose · iPhone · Settings (your profile picture)",
-   "is_interactive": true
-  },
-  "ThemeChrome.dc.html": {
-   "x": 0,
-   "y": 3122,
-   "w": 1440,
-   "h": 900,
-   "page": "themes",
-   "title": "Liquid chrome · Settings › Theme › its page",
-   "is_interactive": true
-  },
-  "ThemeChromeLibrary.dc.html": {
-   "x": 3040,
-   "y": 3122,
-   "w": 1440,
-   "h": 900,
-   "page": "themes",
-   "title": "Liquid chrome · Web · Library",
-   "is_interactive": true
-  },
-  "ThemeChromeReview.dc.html": {
-   "x": 6080,
-   "y": 3122,
-   "w": 1440,
-   "h": 900,
-   "page": "themes",
-   "title": "Liquid chrome · Web · Flashcards",
-   "is_interactive": true
-  },
-  "ThemeChromeReviewPhone.dc.html": {
-   "x": 9120,
-   "y": 3122,
-   "w": 390,
-   "h": 844,
-   "page": "themes",
-   "title": "Liquid chrome · iPhone · Flashcards",
-   "is_interactive": true
-  },
-  "ThemeChromeProfilePhone.dc.html": {
-   "x": 9590,
-   "y": 3122,
-   "w": 390,
-   "h": 844,
-   "page": "themes",
-   "title": "Liquid chrome · iPhone · Settings (your profile picture)",
-   "is_interactive": true
-  },
-  "NetRules.dc.html": {
-   "x": 0,
-   "y": 11768,
-   "w": 1440,
-   "h": 900,
-   "page": "network",
-   "title": "How sharing works",
-   "is_interactive": true
-  },
-  "ThemeAero.dc.html": {
-   "x": 0,
-   "y": 4442,
-   "w": 1440,
-   "h": 900,
-   "page": "themes",
-   "title": "Frutiger Aero · Settings › Theme › its page",
-   "is_interactive": true
-  },
-  "ThemeAeroLibrary.dc.html": {
-   "x": 3040,
-   "y": 4442,
-   "w": 1440,
-   "h": 900,
-   "page": "themes",
-   "title": "Frutiger Aero · Web · Library",
-   "is_interactive": true
-  },
-  "ThemeAeroReview.dc.html": {
-   "x": 6080,
-   "y": 4442,
-   "w": 1440,
-   "h": 900,
-   "page": "themes",
-   "title": "Frutiger Aero · Web · Flashcards",
-   "is_interactive": true
-  },
-  "ThemeAeroReviewPhone.dc.html": {
-   "x": 9120,
-   "y": 4442,
-   "w": 390,
-   "h": 844,
-   "page": "themes",
-   "title": "Frutiger Aero · iPhone · Flashcards",
-   "is_interactive": true
-  },
-  "ThemeAeroProfilePhone.dc.html": {
-   "x": 9590,
-   "y": 4442,
-   "w": 390,
-   "h": 844,
-   "page": "themes",
-   "title": "Frutiger Aero · iPhone · Settings (your profile picture)",
-   "is_interactive": true
-  },
-  "ThemeLiminal.dc.html": {
-   "x": 0,
-   "y": 5762,
-   "w": 1440,
-   "h": 900,
-   "page": "themes",
-   "title": "Liminal · Flooded hall · Settings › Theme › its page",
-   "is_interactive": true
-  },
-  "ThemeLiminalLibrary.dc.html": {
-   "x": 3040,
-   "y": 5762,
-   "w": 1440,
-   "h": 900,
-   "page": "themes",
-   "title": "Liminal · Flooded hall · Web · Library",
-   "is_interactive": true
-  },
-  "ThemeLiminalReview.dc.html": {
-   "x": 6080,
-   "y": 5762,
-   "w": 1440,
-   "h": 900,
-   "page": "themes",
-   "title": "Liminal · Flooded hall · Web · Flashcards",
-   "is_interactive": true
-  },
-  "ThemeLiminalReviewPhone.dc.html": {
-   "x": 9120,
-   "y": 5762,
-   "w": 390,
-   "h": 844,
-   "page": "themes",
-   "title": "Liminal · Flooded hall · iPhone · Flashcards",
-   "is_interactive": true
-  },
-  "ThemeLiminalProfilePhone.dc.html": {
-   "x": 9590,
-   "y": 5762,
-   "w": 390,
-   "h": 844,
-   "page": "themes",
-   "title": "Liminal · Flooded hall · iPhone · Settings (your profile picture)",
-   "is_interactive": true
-  },
-  "ThemeDreamcore.dc.html": {
-   "x": 0,
-   "y": 8402,
-   "w": 1440,
-   "h": 900,
-   "page": "themes",
-   "title": "Dreamcore · Settings › Theme › its page",
-   "is_interactive": true
-  },
-  "ThemeDreamcoreLibrary.dc.html": {
-   "x": 3040,
-   "y": 8402,
-   "w": 1440,
-   "h": 900,
-   "page": "themes",
-   "title": "Dreamcore · Web · Library",
-   "is_interactive": true
-  },
-  "ThemeDreamcoreReview.dc.html": {
-   "x": 6080,
-   "y": 8402,
-   "w": 1440,
-   "h": 900,
-   "page": "themes",
-   "title": "Dreamcore · Web · Flashcards",
-   "is_interactive": true
-  },
-  "ThemeDreamcoreReviewPhone.dc.html": {
-   "x": 9120,
-   "y": 8402,
-   "w": 390,
-   "h": 844,
-   "page": "themes",
-   "title": "Dreamcore · iPhone · Flashcards",
-   "is_interactive": true
-  },
-  "ThemeDreamcoreProfilePhone.dc.html": {
-   "x": 9590,
-   "y": 8402,
-   "w": 390,
-   "h": 844,
-   "page": "themes",
-   "title": "Dreamcore · iPhone · Settings (your profile picture)",
-   "is_interactive": true
-  },
-  "ThemeVaporwave.dc.html": {
-   "x": 0,
-   "y": 9722,
-   "w": 1440,
-   "h": 900,
-   "page": "themes",
-   "title": "Vaporwave · Poolside · Settings › Theme › its page",
-   "is_interactive": true
-  },
-  "ThemeVaporwaveLibrary.dc.html": {
-   "x": 3040,
-   "y": 9722,
-   "w": 1440,
-   "h": 900,
-   "page": "themes",
-   "title": "Vaporwave · Poolside · Web · Library",
-   "is_interactive": true
-  },
-  "ThemeVaporwaveReview.dc.html": {
-   "x": 6080,
-   "y": 9722,
-   "w": 1440,
-   "h": 900,
-   "page": "themes",
-   "title": "Vaporwave · Poolside · Web · Flashcards",
-   "is_interactive": true
-  },
-  "ThemeVaporwaveReviewPhone.dc.html": {
-   "x": 9120,
-   "y": 9722,
-   "w": 390,
-   "h": 844,
-   "page": "themes",
-   "title": "Vaporwave · Poolside · iPhone · Flashcards",
-   "is_interactive": true
-  },
-  "ThemeVaporwaveProfilePhone.dc.html": {
-   "x": 9590,
-   "y": 9722,
-   "w": 390,
-   "h": 844,
-   "page": "themes",
-   "title": "Vaporwave · Poolside · iPhone · Settings (your profile picture)",
-   "is_interactive": true
-  },
-  "ThemeTerminal.dc.html": {
-   "x": 0,
-   "y": 12362,
-   "w": 1440,
-   "h": 900,
-   "page": "themes",
-   "title": "Terminal · Settings › Theme › its page",
-   "is_interactive": true
-  },
-  "ThemeTerminalLibrary.dc.html": {
-   "x": 3040,
-   "y": 12362,
-   "w": 1440,
-   "h": 900,
-   "page": "themes",
-   "title": "Terminal · Web · Library",
-   "is_interactive": true
-  },
-  "ThemeTerminalReview.dc.html": {
-   "x": 6080,
-   "y": 12362,
-   "w": 1440,
-   "h": 900,
-   "page": "themes",
-   "title": "Terminal · Web · Flashcards",
-   "is_interactive": true
-  },
-  "ThemeTerminalReviewPhone.dc.html": {
-   "x": 9120,
-   "y": 12362,
-   "w": 390,
-   "h": 844,
-   "page": "themes",
-   "title": "Terminal · iPhone · Flashcards",
-   "is_interactive": true
-  },
-  "ThemeTerminalProfilePhone.dc.html": {
-   "x": 9590,
-   "y": 12362,
-   "w": 390,
-   "h": 844,
-   "page": "themes",
-   "title": "Terminal · iPhone · Settings (your profile picture)",
-   "is_interactive": true
-  },
-  "ThemeLiminalRoom.dc.html": {
-   "x": 0,
-   "y": 7082,
-   "w": 1440,
-   "h": 900,
-   "page": "themes",
-   "title": "Liminal · Empty room · Settings › Theme › its page",
-   "is_interactive": true
-  },
-  "ThemeLiminalRoomLibrary.dc.html": {
-   "x": 3040,
-   "y": 7082,
-   "w": 1440,
-   "h": 900,
-   "page": "themes",
-   "title": "Liminal · Empty room · Web · Library",
-   "is_interactive": true
-  },
-  "ThemeLiminalRoomReview.dc.html": {
-   "x": 6080,
-   "y": 7082,
-   "w": 1440,
-   "h": 900,
-   "page": "themes",
-   "title": "Liminal · Empty room · Web · Flashcards",
-   "is_interactive": true
-  },
-  "ThemeLiminalRoomReviewPhone.dc.html": {
-   "x": 9120,
-   "y": 7082,
-   "w": 390,
-   "h": 844,
-   "page": "themes",
-   "title": "Liminal · Empty room · iPhone · Flashcards",
-   "is_interactive": true
-  },
-  "ThemeLiminalRoomProfilePhone.dc.html": {
-   "x": 9590,
-   "y": 7082,
-   "w": 390,
-   "h": 844,
-   "page": "themes",
-   "title": "Liminal · Empty room · iPhone · Settings (your profile picture)",
-   "is_interactive": true
-  },
-  "ThemeVaporDolphins.dc.html": {
-   "x": 0,
-   "y": 11042,
-   "w": 1440,
-   "h": 900,
-   "page": "themes",
-   "title": "Vaporwave · Dolphins · Settings › Theme › its page",
-   "is_interactive": true
-  },
-  "ThemeVaporDolphinsLibrary.dc.html": {
-   "x": 3040,
-   "y": 11042,
-   "w": 1440,
-   "h": 900,
-   "page": "themes",
-   "title": "Vaporwave · Dolphins · Web · Library",
-   "is_interactive": true
-  },
-  "ThemeVaporDolphinsReview.dc.html": {
-   "x": 6080,
-   "y": 11042,
-   "w": 1440,
-   "h": 900,
-   "page": "themes",
-   "title": "Vaporwave · Dolphins · Web · Flashcards",
-   "is_interactive": true
-  },
-  "ThemeVaporDolphinsReviewPhone.dc.html": {
-   "x": 9120,
-   "y": 11042,
-   "w": 390,
-   "h": 844,
-   "page": "themes",
-   "title": "Vaporwave · Dolphins · iPhone · Flashcards",
-   "is_interactive": true
-  },
-  "ThemeVaporDolphinsProfilePhone.dc.html": {
-   "x": 9590,
-   "y": 11042,
-   "w": 390,
-   "h": 844,
-   "page": "themes",
-   "title": "Vaporwave · Dolphins · iPhone · Settings (your profile picture)",
-   "is_interactive": true
-  },
-  "ThemeZine.dc.html": {
-   "x": 0,
-   "y": 13682,
-   "w": 1440,
-   "h": 900,
-   "page": "themes",
-   "title": "Zine collage · Settings › Theme › its page",
-   "is_interactive": true
-  },
-  "ThemeZineLibrary.dc.html": {
-   "x": 3040,
-   "y": 13682,
-   "w": 1440,
-   "h": 900,
-   "page": "themes",
-   "title": "Zine collage · Web · Library",
-   "is_interactive": true
-  },
-  "ThemeZineReview.dc.html": {
-   "x": 6080,
-   "y": 13682,
-   "w": 1440,
-   "h": 900,
-   "page": "themes",
-   "title": "Zine collage · Web · Flashcards",
-   "is_interactive": true
-  },
-  "ThemeZineReviewPhone.dc.html": {
-   "x": 9120,
-   "y": 13682,
-   "w": 390,
-   "h": 844,
-   "page": "themes",
-   "title": "Zine collage · iPhone · Flashcards",
-   "is_interactive": true
-  },
-  "ThemeZineProfilePhone.dc.html": {
-   "x": 9590,
-   "y": 13682,
-   "w": 390,
-   "h": 844,
-   "page": "themes",
-   "title": "Zine collage · iPhone · Settings (your profile picture)",
-   "is_interactive": true
-  },
-  "ThemeGlass.dc.html": {
-   "x": 0,
-   "y": 15002,
-   "w": 1440,
-   "h": 900,
-   "page": "themes",
-   "title": "Frosted glass · Settings › Theme › its page",
-   "is_interactive": true
-  },
-  "ThemeGlassLibrary.dc.html": {
-   "x": 3040,
-   "y": 15002,
-   "w": 1440,
-   "h": 900,
-   "page": "themes",
-   "title": "Frosted glass · Web · Library",
-   "is_interactive": true
-  },
-  "ThemeGlassReview.dc.html": {
-   "x": 6080,
-   "y": 15002,
-   "w": 1440,
-   "h": 900,
-   "page": "themes",
-   "title": "Frosted glass · Web · Flashcards",
-   "is_interactive": true
-  },
-  "ThemeGlassReviewPhone.dc.html": {
-   "x": 9120,
-   "y": 15002,
-   "w": 390,
-   "h": 844,
-   "page": "themes",
-   "title": "Frosted glass · iPhone · Flashcards",
-   "is_interactive": true
-  },
-  "ThemeGlassProfilePhone.dc.html": {
-   "x": 9590,
-   "y": 15002,
-   "w": 390,
-   "h": 844,
-   "page": "themes",
-   "title": "Frosted glass · iPhone · Settings (your profile picture)",
-   "is_interactive": true
-  },
-  "ThemeTopo.dc.html": {
-   "x": 0,
-   "y": 16322,
-   "w": 1440,
-   "h": 900,
-   "page": "themes",
-   "title": "Topographic · Settings › Theme › its page",
-   "is_interactive": true
-  },
-  "ThemeTopoLibrary.dc.html": {
-   "x": 3040,
-   "y": 16322,
-   "w": 1440,
-   "h": 900,
-   "page": "themes",
-   "title": "Topographic · Web · Library",
-   "is_interactive": true
-  },
-  "ThemeTopoReview.dc.html": {
-   "x": 6080,
-   "y": 16322,
-   "w": 1440,
-   "h": 900,
-   "page": "themes",
-   "title": "Topographic · Web · Flashcards",
-   "is_interactive": true
-  },
-  "ThemeTopoReviewPhone.dc.html": {
-   "x": 9120,
-   "y": 16322,
-   "w": 390,
-   "h": 844,
-   "page": "themes",
-   "title": "Topographic · iPhone · Flashcards",
-   "is_interactive": true
-  },
-  "ThemeTopoProfilePhone.dc.html": {
-   "x": 9590,
-   "y": 16322,
-   "w": 390,
-   "h": 844,
-   "page": "themes",
-   "title": "Topographic · iPhone · Settings (your profile picture)",
-   "is_interactive": true
-  },
-  "ThemeRiso.dc.html": {
-   "x": 0,
-   "y": 17642,
-   "w": 1440,
-   "h": 900,
-   "page": "themes",
-   "title": "Risograph · Settings › Theme › its page",
-   "is_interactive": true
-  },
-  "ThemeRisoLibrary.dc.html": {
-   "x": 3040,
-   "y": 17642,
-   "w": 1440,
-   "h": 900,
-   "page": "themes",
-   "title": "Risograph · Web · Library",
-   "is_interactive": true
-  },
-  "ThemeRisoReview.dc.html": {
-   "x": 6080,
-   "y": 17642,
-   "w": 1440,
-   "h": 900,
-   "page": "themes",
-   "title": "Risograph · Web · Flashcards",
-   "is_interactive": true
-  },
-  "ThemeRisoReviewPhone.dc.html": {
-   "x": 9120,
-   "y": 17642,
-   "w": 390,
-   "h": 844,
-   "page": "themes",
-   "title": "Risograph · iPhone · Flashcards",
-   "is_interactive": true
-  },
-  "ThemeRisoProfilePhone.dc.html": {
-   "x": 9590,
-   "y": 17642,
-   "w": 390,
-   "h": 844,
-   "page": "themes",
-   "title": "Risograph · iPhone · Settings (your profile picture)",
-   "is_interactive": true
-  },
-  "ThemeSwiss.dc.html": {
-   "x": 0,
-   "y": 18962,
-   "w": 1440,
-   "h": 900,
-   "page": "themes",
-   "title": "Swiss poster · Settings › Theme › its page",
-   "is_interactive": true
-  },
-  "ThemeSwissLibrary.dc.html": {
-   "x": 3040,
-   "y": 18962,
-   "w": 1440,
-   "h": 900,
-   "page": "themes",
-   "title": "Swiss poster · Web · Library",
-   "is_interactive": true
-  },
-  "ThemeSwissReview.dc.html": {
-   "x": 6080,
-   "y": 18962,
-   "w": 1440,
-   "h": 900,
-   "page": "themes",
-   "title": "Swiss poster · Web · Flashcards",
-   "is_interactive": true
-  },
-  "ThemeSwissReviewPhone.dc.html": {
-   "x": 9120,
-   "y": 18962,
-   "w": 390,
-   "h": 844,
-   "page": "themes",
-   "title": "Swiss poster · iPhone · Flashcards",
-   "is_interactive": true
-  },
-  "ThemeSwissProfilePhone.dc.html": {
-   "x": 9590,
-   "y": 18962,
-   "w": 390,
-   "h": 844,
-   "page": "themes",
-   "title": "Swiss poster · iPhone · Settings (your profile picture)",
-   "is_interactive": true
-  },
-  "WebDiscover.dc.html": {
-   "x": 0,
-   "y": 0,
-   "w": 1440,
-   "h": 900,
-   "page": "network",
-   "title": "Web · Discover",
-   "is_interactive": true
-  },
-  "WebDiscoverSearch.dc.html": {
-   "x": 1520,
-   "y": 0,
-   "w": 1440,
-   "h": 900,
-   "page": "network",
-   "title": "Web · Discover · search",
-   "is_interactive": true
-  },
-  "WebDiscoverSignedOut.dc.html": {
-   "x": 3040,
-   "y": 0,
-   "w": 1440,
-   "h": 900,
-   "page": "network",
-   "title": "Web · Discover · signed out (anyone can look)",
-   "is_interactive": true
-  },
-  "PhoneDiscover.dc.html": {
-   "x": 4560,
-   "y": 0,
-   "w": 390,
-   "h": 844,
-   "page": "network",
-   "title": "iPhone · Discover",
-   "is_interactive": true
-  },
-  "PhoneDiscoverSearch.dc.html": {
-   "x": 5030,
-   "y": 0,
-   "w": 390,
-   "h": 844,
-   "page": "network",
-   "title": "iPhone · Discover · search",
-   "is_interactive": true
-  },
-  "WebPublicDeck.dc.html": {
-   "x": 0,
-   "y": 1320,
-   "w": 1440,
-   "h": 900,
-   "page": "network",
-   "title": "Web · Shared deck page",
-   "is_interactive": true
-  },
-  "WebPublicDeckCopy.dc.html": {
-   "x": 3040,
-   "y": 1320,
-   "w": 1440,
-   "h": 900,
-   "page": "network",
-   "title": "Web · Shared deck page · Make a copy",
-   "is_interactive": true
-  },
-  "WebPublicDeckHistory.dc.html": {
-   "x": 4560,
-   "y": 1320,
-   "w": 1440,
-   "h": 900,
-   "page": "network",
-   "title": "Web · Shared deck page · History",
-   "is_interactive": true
-  },
-  "WebPublicDeckLoading.dc.html": {
-   "x": 6080,
-   "y": 1320,
-   "w": 1440,
-   "h": 900,
-   "page": "network",
-   "title": "Web · Shared deck page · loading",
-   "is_interactive": true
-  },
-  "WebPublicDeckMissing.dc.html": {
-   "x": 7600,
-   "y": 1320,
-   "w": 1440,
-   "h": 900,
-   "page": "network",
-   "title": "Web · Shared deck page · not shared",
-   "is_interactive": true
-  },
-  "WebPublicDeckOwner.dc.html": {
-   "x": 9120,
-   "y": 1320,
-   "w": 1440,
-   "h": 900,
-   "page": "network",
-   "title": "Web · Shared deck page · your own deck",
-   "is_interactive": true
-  },
-  "WebPublicDeckPeople.dc.html": {
-   "x": 10640,
-   "y": 1320,
-   "w": 1440,
-   "h": 900,
-   "page": "network",
-   "title": "Web · Shared deck page · People",
-   "is_interactive": true
-  },
-  "WebPublicDeckSignedOut.dc.html": {
-   "x": 13680,
-   "y": 1320,
-   "w": 1440,
-   "h": 900,
-   "page": "network",
-   "title": "Web · Shared deck page · signed out (anyone can look)",
-   "is_interactive": true
-  },
-  "WebPublicDeckStudying.dc.html": {
-   "x": 15200,
-   "y": 1320,
-   "w": 1440,
-   "h": 900,
-   "page": "network",
-   "title": "Web · Shared deck page · a deck you study",
-   "is_interactive": true
-  },
-  "WebPublicDeckSuggest.dc.html": {
-   "x": 16720,
-   "y": 1320,
-   "w": 1440,
-   "h": 900,
-   "page": "network",
-   "title": "Web · Shared deck page · Suggest a change, on a card",
-   "is_interactive": true
-  },
-  "WebPublicDeckSuggestNew.dc.html": {
-   "x": 18240,
-   "y": 1320,
-   "w": 1440,
-   "h": 900,
-   "page": "network",
-   "title": "Web · Shared deck page · Suggest a change, a new card",
-   "is_interactive": true
-  },
-  "WebPublicDeckDark.dc.html": {
-   "x": 19760,
-   "y": 1320,
-   "w": 1440,
-   "h": 900,
-   "page": "network",
-   "title": "Web · Shared deck page · dark",
-   "is_interactive": true
-  },
-  "WebPublicDeckGray.dc.html": {
-   "x": 21280,
-   "y": 1320,
-   "w": 1440,
-   "h": 900,
-   "page": "network",
-   "title": "Web · Shared deck page · gray",
-   "is_interactive": true
-  },
-  "PhonePublicDeck.dc.html": {
-   "x": 0,
-   "y": 2640,
-   "w": 390,
-   "h": 844,
-   "page": "network",
-   "title": "iPhone · Shared deck page",
-   "is_interactive": true
-  },
-  "PhonePublicDeckCopy.dc.html": {
-   "x": 940,
-   "y": 2640,
-   "w": 390,
-   "h": 844,
-   "page": "network",
-   "title": "iPhone · Shared deck page · Make a copy",
-   "is_interactive": true
-  },
-  "PhonePublicDeckOwner.dc.html": {
-   "x": 1410,
-   "y": 2640,
-   "w": 390,
-   "h": 844,
-   "page": "network",
-   "title": "iPhone · Shared deck page · your own deck",
-   "is_interactive": true
-  },
-  "PhonePublicDeckSignedOut.dc.html": {
-   "x": 2350,
-   "y": 2640,
-   "w": 390,
-   "h": 844,
-   "page": "network",
-   "title": "iPhone · Shared deck page · signed out",
-   "is_interactive": true
-  },
-  "PhonePublicDeckStudying.dc.html": {
-   "x": 2820,
-   "y": 2640,
-   "w": 390,
-   "h": 844,
-   "page": "network",
-   "title": "iPhone · Shared deck page · a deck you study",
-   "is_interactive": true
-  },
-  "PhonePublicDeckSuggest.dc.html": {
-   "x": 3290,
-   "y": 2640,
-   "w": 390,
-   "h": 844,
-   "page": "network",
-   "title": "iPhone · Shared deck page · Suggest a change, on a card",
-   "is_interactive": true
-  },
-  "PhonePublicDeckSuggestNew.dc.html": {
-   "x": 3760,
-   "y": 2640,
-   "w": 390,
-   "h": 844,
-   "page": "network",
-   "title": "iPhone · Shared deck page · Suggest a change, a new card",
-   "is_interactive": true
-  },
-  "PhonePublicDeckDark.dc.html": {
-   "x": 4230,
-   "y": 2640,
-   "w": 390,
-   "h": 844,
-   "page": "network",
-   "title": "iPhone · Shared deck page · dark",
-   "is_interactive": true
-  },
-  "PhonePublicDeckGray.dc.html": {
-   "x": 4700,
-   "y": 2640,
-   "w": 390,
-   "h": 844,
-   "page": "network",
-   "title": "iPhone · Shared deck page · gray",
-   "is_interactive": true
-  },
-  "WebSuggestions.dc.html": {
-   "x": 0,
-   "y": 3904,
-   "w": 1440,
-   "h": 900,
-   "page": "network",
-   "title": "Web · Suggestions (for one deck)",
-   "is_interactive": true
-  },
-  "WebSuggestionsAI.dc.html": {
-   "x": 1520,
-   "y": 3904,
-   "w": 1440,
-   "h": 900,
-   "page": "network",
-   "title": "Web · Suggestions · your AI’s cards",
-   "is_interactive": true
-  },
-  "WebSuggestionsAll.dc.html": {
-   "x": 3040,
-   "y": 3904,
-   "w": 1440,
-   "h": 900,
-   "page": "network",
-   "title": "Web · Suggestions · every deck",
-   "is_interactive": true
-  },
-  "WebSuggestionsEmpty.dc.html": {
-   "x": 4560,
-   "y": 3904,
-   "w": 1440,
-   "h": 900,
-   "page": "network",
-   "title": "Web · Suggestions · none",
-   "is_interactive": true
-  },
-  "WebSuggestionsDark.dc.html": {
-   "x": 7600,
-   "y": 3904,
-   "w": 1440,
-   "h": 900,
-   "page": "network",
-   "title": "Web · Suggestions · dark",
-   "is_interactive": true
-  },
-  "WebSuggestionsGray.dc.html": {
-   "x": 9120,
-   "y": 3904,
-   "w": 1440,
-   "h": 900,
-   "page": "network",
-   "title": "Web · Suggestions · gray",
-   "is_interactive": true
-  },
-  "PhoneSuggestions.dc.html": {
-   "x": 10640,
-   "y": 3904,
-   "w": 390,
-   "h": 844,
-   "page": "network",
-   "title": "iPhone · Suggestions",
-   "is_interactive": true
-  },
-  "PhoneSuggestionsEmpty.dc.html": {
-   "x": 11110,
-   "y": 3904,
-   "w": 390,
-   "h": 844,
-   "page": "network",
-   "title": "iPhone · Suggestions · none",
-   "is_interactive": true
-  },
-  "PhoneSuggestionsOpen.dc.html": {
-   "x": 11580,
-   "y": 3904,
-   "w": 390,
-   "h": 844,
-   "page": "network",
-   "title": "iPhone · Suggestions · one opened",
-   "is_interactive": true
-  },
-  "PhoneSuggestionsDark.dc.html": {
-   "x": 12520,
-   "y": 3904,
-   "w": 390,
-   "h": 844,
-   "page": "network",
-   "title": "iPhone · Suggestions · dark",
-   "is_interactive": true
-  },
-  "WebHistory.dc.html": {
-   "x": 12990,
-   "y": 3904,
-   "w": 1440,
-   "h": 900,
-   "page": "network",
-   "title": "Web · History (your deck)",
-   "is_interactive": true
-  },
-  "WebHistoryGoBack.dc.html": {
-   "x": 14510,
-   "y": 3904,
-   "w": 1440,
-   "h": 900,
-   "page": "network",
-   "title": "Web · History · going back to a version",
-   "is_interactive": true
-  },
-  "WebHistoryOpen.dc.html": {
-   "x": 16030,
-   "y": 3904,
-   "w": 1440,
-   "h": 900,
-   "page": "network",
-   "title": "Web · History · a version opened",
-   "is_interactive": true
-  },
-  "WebHistoryOther.dc.html": {
-   "x": 17550,
-   "y": 3904,
-   "w": 1440,
-   "h": 900,
-   "page": "network",
-   "title": "Web · History · someone else’s deck",
-   "is_interactive": true
-  },
-  "WebHistoryDark.dc.html": {
-   "x": 19070,
-   "y": 3904,
-   "w": 1440,
-   "h": 900,
-   "page": "network",
-   "title": "Web · History · dark",
-   "is_interactive": true
-  },
-  "WebHistoryGray.dc.html": {
-   "x": 20590,
-   "y": 3904,
-   "w": 1440,
-   "h": 900,
-   "page": "network",
-   "title": "Web · History · gray",
-   "is_interactive": true
-  },
-  "PhoneHistory.dc.html": {
-   "x": 22110,
-   "y": 3904,
-   "w": 390,
-   "h": 844,
-   "page": "network",
-   "title": "iPhone · History",
-   "is_interactive": true
-  },
-  "PhoneHistoryOpen.dc.html": {
-   "x": 22580,
-   "y": 3904,
-   "w": 390,
-   "h": 844,
-   "page": "network",
-   "title": "iPhone · History · a version opened",
-   "is_interactive": true
-  },
-  "PhoneHistoryDark.dc.html": {
-   "x": 23050,
-   "y": 3904,
-   "w": 390,
-   "h": 844,
-   "page": "network",
-   "title": "iPhone · History · dark",
-   "is_interactive": true
-  },
-  "WebProfile.dc.html": {
-   "x": 0,
-   "y": 5224,
-   "w": 1440,
-   "h": 900,
-   "page": "network",
-   "title": "Web · Profile (yours)",
-   "is_interactive": true
-  },
-  "WebProfileEdit.dc.html": {
-   "x": 4560,
-   "y": 5224,
-   "w": 1440,
-   "h": 900,
-   "page": "network",
-   "title": "Web · Profile · Edit profile",
-   "is_interactive": true
-  },
-  "WebProfileEditTaken.dc.html": {
-   "x": 6080,
-   "y": 5224,
-   "w": 1440,
-   "h": 900,
-   "page": "network",
-   "title": "Web · Profile · Edit profile · a handle someone has",
-   "is_interactive": true
-  },
-  "WebProfileEmpty.dc.html": {
-   "x": 7600,
-   "y": 5224,
-   "w": 1440,
-   "h": 900,
-   "page": "network",
-   "title": "Web · Profile · nothing shared yet",
-   "is_interactive": true
-  },
-  "WebProfileFollowing.dc.html": {
-   "x": 9120,
-   "y": 5224,
-   "w": 1440,
-   "h": 900,
-   "page": "network",
-   "title": "Web · Profile · someone you follow",
-   "is_interactive": true
-  },
-  "WebProfileLoading.dc.html": {
-   "x": 10640,
-   "y": 5224,
-   "w": 1440,
-   "h": 900,
-   "page": "network",
-   "title": "Web · Profile · loading",
-   "is_interactive": true
-  },
-  "WebProfileMissing.dc.html": {
-   "x": 12160,
-   "y": 5224,
-   "w": 1440,
-   "h": 900,
-   "page": "network",
-   "title": "Web · Profile · no one has that name",
-   "is_interactive": true
-  },
-  "WebProfileOther.dc.html": {
-   "x": 13680,
-   "y": 5224,
-   "w": 1440,
-   "h": 900,
-   "page": "network",
-   "title": "Web · Profile · someone else’s",
-   "is_interactive": true
-  },
-  "WebProfilePin.dc.html": {
-   "x": 15200,
-   "y": 5224,
-   "w": 1440,
-   "h": 900,
-   "page": "network",
-   "title": "Web · Profile · a deck’s ⋯ menu (pin it to your profile)",
-   "is_interactive": true
-  },
-  "WebProfileSaved.dc.html": {
-   "x": 18240,
-   "y": 5224,
-   "w": 1440,
-   "h": 900,
-   "page": "network",
-   "title": "Web · Profile · Saved",
-   "is_interactive": true
-  },
-  "WebProfileSignedOut.dc.html": {
-   "x": 19760,
-   "y": 5224,
-   "w": 1440,
-   "h": 900,
-   "page": "network",
-   "title": "Web · Profile · signed out (anyone can look)",
-   "is_interactive": true
-  },
-  "WebProfileSuggestions.dc.html": {
-   "x": 21280,
-   "y": 5224,
-   "w": 1440,
-   "h": 900,
-   "page": "network",
-   "title": "Web · Profile · Suggestions you sent",
-   "is_interactive": true
-  },
-  "WebProfileDark.dc.html": {
-   "x": 22800,
-   "y": 5224,
-   "w": 1440,
-   "h": 900,
-   "page": "network",
-   "title": "Web · Profile (dark)",
-   "is_interactive": true
-  },
-  "WebProfileGray.dc.html": {
-   "x": 24320,
-   "y": 5224,
-   "w": 1440,
-   "h": 900,
-   "page": "network",
-   "title": "Web · Profile (dark, gray)",
-   "is_interactive": true
-  },
-  "PhoneProfile.dc.html": {
-   "x": 0,
-   "y": 6544,
-   "w": 390,
-   "h": 844,
-   "page": "network",
-   "title": "iPhone · Profile (yours)",
-   "is_interactive": true
-  },
-  "PhoneProfileEdit.dc.html": {
-   "x": 1410,
-   "y": 6544,
-   "w": 390,
-   "h": 844,
-   "page": "network",
-   "title": "iPhone · Profile · Edit profile",
-   "is_interactive": true
-  },
-  "PhoneProfileEmpty.dc.html": {
-   "x": 1880,
-   "y": 6544,
-   "w": 390,
-   "h": 844,
-   "page": "network",
-   "title": "iPhone · Profile · nothing shared yet",
-   "is_interactive": true
-  },
-  "PhoneProfileFollowing.dc.html": {
-   "x": 2350,
-   "y": 6544,
-   "w": 390,
-   "h": 844,
-   "page": "network",
-   "title": "iPhone · Profile · someone you follow",
-   "is_interactive": true
-  },
-  "PhoneProfileLoading.dc.html": {
-   "x": 2820,
-   "y": 6544,
-   "w": 390,
-   "h": 844,
-   "page": "network",
-   "title": "iPhone · Profile · loading",
-   "is_interactive": true
-  },
-  "PhoneProfileMissing.dc.html": {
-   "x": 3290,
-   "y": 6544,
-   "w": 390,
-   "h": 844,
-   "page": "network",
-   "title": "iPhone · Profile · no one has that name",
-   "is_interactive": true
-  },
-  "PhoneProfileOther.dc.html": {
-   "x": 3760,
-   "y": 6544,
-   "w": 390,
-   "h": 844,
-   "page": "network",
-   "title": "iPhone · Profile · someone else’s",
-   "is_interactive": true
-  },
-  "PhoneProfileSaved.dc.html": {
-   "x": 4700,
-   "y": 6544,
-   "w": 390,
-   "h": 844,
-   "page": "network",
-   "title": "iPhone · Profile · Saved",
-   "is_interactive": true
-  },
-  "PhoneProfileSignedOut.dc.html": {
-   "x": 5170,
-   "y": 6544,
-   "w": 390,
-   "h": 844,
-   "page": "network",
-   "title": "iPhone · Profile · signed out (anyone can look)",
-   "is_interactive": true
-  },
-  "PhoneProfileSuggestions.dc.html": {
-   "x": 5640,
-   "y": 6544,
-   "w": 390,
-   "h": 844,
-   "page": "network",
-   "title": "iPhone · Profile · Suggestions you sent",
-   "is_interactive": true
-  },
-  "PhoneProfileDark.dc.html": {
-   "x": 6110,
-   "y": 6544,
-   "w": 390,
-   "h": 844,
-   "page": "network",
-   "title": "iPhone · Profile (dark)",
-   "is_interactive": true
-  },
-  "PhoneProfileGray.dc.html": {
-   "x": 6580,
-   "y": 6544,
-   "w": 390,
-   "h": 844,
-   "page": "network",
-   "title": "iPhone · Profile (dark, gray)",
-   "is_interactive": true
-  },
-  "WebActivity.dc.html": {
-   "x": 0,
-   "y": 7808,
-   "w": 1440,
-   "h": 900,
-   "page": "network",
-   "title": "Web · News",
-   "is_interactive": true
-  },
-  "WebActivityEmpty.dc.html": {
-   "x": 1520,
-   "y": 7808,
-   "w": 1440,
-   "h": 900,
-   "page": "network",
-   "title": "Web · News · nothing new",
-   "is_interactive": true
-  },
-  "WebActivityDark.dc.html": {
-   "x": 3040,
-   "y": 7808,
-   "w": 1440,
-   "h": 900,
-   "page": "network",
-   "title": "Web · News (dark)",
-   "is_interactive": true
-  },
-  "WebActivityGray.dc.html": {
-   "x": 4560,
-   "y": 7808,
-   "w": 1440,
-   "h": 900,
-   "page": "network",
-   "title": "Web · News (dark, gray)",
-   "is_interactive": true
-  },
-  "PhoneActivity.dc.html": {
-   "x": 6080,
-   "y": 7808,
-   "w": 390,
-   "h": 844,
-   "page": "network",
-   "title": "iPhone · News",
-   "is_interactive": true
-  },
-  "PhoneActivityEmpty.dc.html": {
-   "x": 6550,
-   "y": 7808,
-   "w": 390,
-   "h": 844,
-   "page": "network",
-   "title": "iPhone · News · nothing new",
-   "is_interactive": true
-  },
-  "PhoneActivityDark.dc.html": {
-   "x": 7020,
-   "y": 7808,
-   "w": 390,
-   "h": 844,
-   "page": "network",
-   "title": "iPhone · News (dark)",
-   "is_interactive": true
-  },
-  "PhoneActivityGray.dc.html": {
-   "x": 7490,
-   "y": 7808,
-   "w": 390,
-   "h": 844,
-   "page": "network",
-   "title": "iPhone · News (dark, gray)",
-   "is_interactive": true
-  },
-  "WebDeckSettingsSharePrivate.dc.html": {
-   "x": 0,
-   "y": 9128,
-   "w": 1440,
-   "h": 900,
-   "page": "network",
-   "title": "Web · Deck settings · Sharing (private, the start)",
-   "is_interactive": true
-  },
-  "WebDeckSettingsShare.dc.html": {
-   "x": 1520,
-   "y": 9128,
-   "w": 1440,
-   "h": 900,
-   "page": "network",
-   "title": "Web · Deck settings · Sharing (a public deck)",
-   "is_interactive": true
-  },
-  "WebDeckShared.dc.html": {
-   "x": 3040,
-   "y": 9128,
-   "w": 1440,
-   "h": 900,
-   "page": "network",
-   "title": "Web · Deck page · shared (public, with suggestions waiting)",
-   "is_interactive": true
-  },
-  "PhoneDeckSettingsShare.dc.html": {
-   "x": 4560,
-   "y": 9128,
-   "w": 390,
-   "h": 844,
-   "page": "network",
-   "title": "iPhone · Deck settings · Sharing (a public deck)",
-   "is_interactive": true
-  },
-  "WebDeckStudied.dc.html": {
-   "x": 0,
-   "y": 10448,
-   "w": 1440,
-   "h": 900,
-   "page": "network",
-   "title": "Web · Deck page · a deck you study from someone else",
-   "is_interactive": true
-  },
-  "WebDeckSettingsFrom.dc.html": {
-   "x": 1520,
-   "y": 10448,
-   "w": 1440,
-   "h": 900,
-   "page": "network",
-   "title": "Web · Deck settings · Sharing (a deck you study)",
-   "is_interactive": true
-  },
-  "WebDeckCopy.dc.html": {
-   "x": 3040,
-   "y": 10448,
-   "w": 1440,
-   "h": 900,
-   "page": "network",
-   "title": "Web · Deck page · your copy, with the owner’s changes waiting",
-   "is_interactive": true
-  },
-  "WebDeckUpdates.dc.html": {
-   "x": 4560,
-   "y": 10448,
-   "w": 1440,
-   "h": 900,
-   "page": "network",
-   "title": "Web · Deck page · your copy · the owner’s changes (take or skip)",
-   "is_interactive": true
-  },
-  "PhoneDeckStudied.dc.html": {
-   "x": 6080,
-   "y": 10448,
-   "w": 390,
-   "h": 844,
-   "page": "network",
-   "title": "iPhone · Deck page · a deck you study from someone else",
-   "is_interactive": true
-  },
-  "PhoneDeckCopy.dc.html": {
-   "x": 6550,
-   "y": 10448,
-   "w": 390,
-   "h": 844,
-   "page": "network",
-   "title": "iPhone · Deck page · your copy, with the owner’s changes waiting",
-   "is_interactive": true
-  },
-  "PhoneDeckUpdates.dc.html": {
-   "x": 7020,
-   "y": 10448,
-   "w": 390,
-   "h": 844,
-   "page": "network",
-   "title": "iPhone · Deck page · your copy · the owner’s changes (take or skip)",
-   "is_interactive": true
-  },
-  "LiveLobbyEmpty.dc.html": {
-   "x": 1520,
-   "y": 0,
-   "w": 1440,
-   "h": 900,
-   "page": "live",
-   "title": "Live · big screen · lobby, nobody in yet",
-   "is_interactive": true
-  },
-  "LiveQuestionImage.dc.html": {
-   "x": 6080,
-   "y": 0,
-   "w": 1440,
-   "h": 900,
-   "page": "live",
-   "title": "Live · big screen · question with a picture",
-   "is_interactive": true
-  },
-  "LiveJoinNotFound.dc.html": {
-   "x": 470,
-   "y": 1320,
-   "w": 390,
-   "h": 844,
-   "page": "live",
-   "title": "Live · phone · join, no game with that code",
-   "is_interactive": true
-  },
-  "LiveLate.dc.html": {
-   "x": 1410,
-   "y": 1320,
-   "w": 390,
-   "h": 844,
-   "page": "live",
-   "title": "Live · phone · joined mid-game (plays from the next question)",
-   "is_interactive": true
-  },
-  "LiveAnswered.dc.html": {
-   "x": 2350,
-   "y": 1320,
-   "w": 390,
-   "h": 844,
-   "page": "live",
-   "title": "Live · phone · answer locked in",
-   "is_interactive": true
-  },
-  "LiveResultTimeUp.dc.html": {
-   "x": 3760,
-   "y": 1320,
-   "w": 390,
-   "h": 844,
-   "page": "live",
-   "title": "Live · phone · time’s up (no answer)",
-   "is_interactive": true
-  },
-  "LiveEnded.dc.html": {
-   "x": 4700,
-   "y": 1320,
-   "w": 390,
-   "h": 844,
-   "page": "live",
-   "title": "Live · phone · the game ended",
-   "is_interactive": true
-  },
-  "WebDeckSettingsGoal.dc.html": {
-   "x": 0,
-   "y": 0,
-   "w": 1440,
-   "h": 900,
-   "page": "pro",
-   "title": "Web · Deck settings · Studying · goal raised to 95% (reviews a day)",
-   "is_interactive": true
-  },
-  "WebDeckSettingsStudyFree.dc.html": {
-   "x": 1520,
-   "y": 0,
-   "w": 1440,
-   "h": 900,
-   "page": "pro",
-   "title": "Web · Deck settings · Studying · on Free (what Pro adds)",
-   "is_interactive": true
-  },
-  "PhoneDeckSettingsGoal.dc.html": {
-   "x": 3040,
-   "y": 0,
-   "w": 390,
-   "h": 844,
-   "page": "pro",
-   "title": "iPhone · Deck settings · Studying · goal raised to 95% (reviews a day)",
-   "is_interactive": true
-  },
-  "PhoneDeckSettingsStudyFree.dc.html": {
-   "x": 3510,
-   "y": 0,
-   "w": 390,
-   "h": 844,
-   "page": "pro",
-   "title": "iPhone · Deck settings · Studying · on Free (what Pro adds)",
-   "is_interactive": true
-  },
-  "WebStatsMemory.dc.html": {
-   "x": 0,
-   "y": 1320,
-   "w": 1440,
-   "h": 900,
-   "page": "pro",
-   "title": "Web · Stats · Memory (Pro)",
-   "is_interactive": true
-  },
-  "WebStatsPace.dc.html": {
-   "x": 1520,
-   "y": 1320,
-   "w": 1440,
-   "h": 900,
-   "page": "pro",
-   "title": "Web · Stats · Pace (Pro)",
-   "is_interactive": true
-  },
-  "WebStatsUpgrade.dc.html": {
-   "x": 3040,
-   "y": 1320,
-   "w": 1440,
-   "h": 900,
-   "page": "pro",
-   "title": "Web · Stats · on Free: go Pro for deep stats",
-   "is_interactive": true
-  },
-  "WebStatsWeak.dc.html": {
-   "x": 4560,
-   "y": 1320,
-   "w": 1440,
-   "h": 900,
-   "page": "pro",
-   "title": "Web · Stats · Weak spots (Pro)",
-   "is_interactive": true
-  },
-  "WebStatsPaceGray.dc.html": {
-   "x": 6080,
-   "y": 1320,
-   "w": 1440,
-   "h": 900,
-   "page": "pro",
-   "title": "Web · Stats · Pace (dark, gray)",
-   "is_interactive": true
-  },
-  "WebStatsWeakDark.dc.html": {
-   "x": 7600,
-   "y": 1320,
-   "w": 1440,
-   "h": 900,
-   "page": "pro",
-   "title": "Web · Stats · Weak spots (dark)",
-   "is_interactive": true
-  },
-  "PhoneStatsMemory.dc.html": {
-   "x": 0,
-   "y": 2640,
-   "w": 390,
-   "h": 844,
-   "page": "pro",
-   "title": "iPhone · Stats · Memory (Pro)",
-   "is_interactive": true
-  },
-  "PhoneStatsPace.dc.html": {
-   "x": 470,
-   "y": 2640,
-   "w": 390,
-   "h": 844,
-   "page": "pro",
-   "title": "iPhone · Stats · Pace (Pro)",
-   "is_interactive": true
-  },
-  "PhoneStatsUpgrade.dc.html": {
-   "x": 940,
-   "y": 2640,
-   "w": 390,
-   "h": 844,
-   "page": "pro",
-   "title": "iPhone · Stats · on Free: go Pro for deep stats",
-   "is_interactive": true
-  },
-  "PhoneStatsWeak.dc.html": {
-   "x": 1410,
-   "y": 2640,
-   "w": 390,
-   "h": 844,
-   "page": "pro",
-   "title": "iPhone · Stats · Weak spots (Pro)",
-   "is_interactive": true
-  },
-  "PhoneStatsPaceGray.dc.html": {
-   "x": 1880,
-   "y": 2640,
-   "w": 390,
-   "h": 844,
-   "page": "pro",
-   "title": "iPhone · Stats · Pace (dark, gray)",
-   "is_interactive": true
-  },
-  "PhoneStatsWeakDark.dc.html": {
-   "x": 2350,
-   "y": 2640,
-   "w": 390,
-   "h": 844,
-   "page": "pro",
-   "title": "iPhone · Stats · Weak spots (dark)",
-   "is_interactive": true
-  },
-  "WebLibraryLeeches.dc.html": {
-   "x": 0,
-   "y": 3904,
-   "w": 1440,
-   "h": 900,
-   "page": "pro",
-   "title": "Web · Library · all cards · cards you keep forgetting (Pause all)",
-   "is_interactive": true
-  },
-  "WebCardsScreenPaused.dc.html": {
-   "x": 1520,
-   "y": 3904,
-   "w": 1440,
-   "h": 900,
-   "page": "pro",
-   "title": "Web · Edit cards · a paused card (Unpause)",
-   "is_interactive": true
-  },
-  "PhoneLibraryLeeches.dc.html": {
-   "x": 3040,
-   "y": 3904,
-   "w": 390,
-   "h": 844,
-   "page": "pro",
-   "title": "iPhone · Library · all cards · cards you keep forgetting (Pause all)",
-   "is_interactive": true
-  },
-  "PhoneEditorPaused.dc.html": {
-   "x": 3510,
-   "y": 3904,
-   "w": 390,
-   "h": 844,
-   "page": "pro",
-   "title": "iPhone · Card editor · editing a paused card (Unpause card)",
-   "is_interactive": true
-  },
-  "WebSettingsFree.dc.html": {
-   "x": 0,
-   "y": 5224,
-   "w": 1440,
-   "h": 900,
-   "page": "pro",
-   "title": "Web · Settings · on Free (Tune to you is Pro)",
-   "is_interactive": true
-  },
-  "PhoneSettingsFree.dc.html": {
-   "x": 1520,
-   "y": 5224,
-   "w": 390,
-   "h": 1889,
-   "page": "pro",
-   "title": "iPhone · Settings · on Free (Tune to you is Pro)",
-   "is_interactive": true
-  },
-  "WebClasses.dc.html": {
-   "x": 0,
-   "y": 0,
-   "w": 1440,
-   "h": 900,
-   "page": "classes",
-   "title": "Web · Library · Classes",
-   "is_interactive": true
-  },
-  "WebClassesEmpty.dc.html": {
-   "x": 1520,
-   "y": 0,
-   "w": 1440,
-   "h": 900,
-   "page": "classes",
-   "title": "Web · Library · Classes · none yet",
-   "is_interactive": true
-  },
-  "WebClassesJoin.dc.html": {
-   "x": 3040,
-   "y": 0,
-   "w": 1440,
-   "h": 900,
-   "page": "classes",
-   "title": "Web · Library · Classes · Join a class (with its code)",
-   "is_interactive": true
-  },
-  "WebClassesLoading.dc.html": {
-   "x": 4560,
-   "y": 0,
-   "w": 1440,
-   "h": 900,
-   "page": "classes",
-   "title": "Web · Library · Classes · loading",
-   "is_interactive": true
-  },
-  "WebClassesNew.dc.html": {
-   "x": 6080,
-   "y": 0,
-   "w": 1440,
-   "h": 900,
-   "page": "classes",
-   "title": "Web · Library · Classes · New class",
-   "is_interactive": true
-  },
-  "WebClassesDark.dc.html": {
-   "x": 7600,
-   "y": 0,
-   "w": 1440,
-   "h": 900,
-   "page": "classes",
-   "title": "Web · Library · Classes (dark)",
-   "is_interactive": true
-  },
-  "WebClass.dc.html": {
-   "x": 0,
-   "y": 1320,
-   "w": 1440,
-   "h": 900,
-   "page": "classes",
-   "title": "Web · Class · yours (assignments, progress, decks, people)",
-   "is_interactive": true
-  },
-  "WebClassNew.dc.html": {
-   "x": 1520,
-   "y": 1320,
-   "w": 1440,
-   "h": 900,
-   "page": "classes",
-   "title": "Web · Class · just made (no decks or people yet)",
-   "is_interactive": true
-  },
-  "WebClassAddDeck.dc.html": {
-   "x": 3040,
-   "y": 1320,
-   "w": 1440,
-   "h": 900,
-   "page": "classes",
-   "title": "Web · Class · Add a deck",
-   "is_interactive": true
-  },
-  "WebClassAssign.dc.html": {
-   "x": 4560,
-   "y": 1320,
-   "w": 1440,
-   "h": 900,
-   "page": "classes",
-   "title": "Web · Class · Assign a deck",
-   "is_interactive": true
-  },
-  "WebClassVerify.dc.html": {
-   "x": 6080,
-   "y": 1320,
-   "w": 1440,
-   "h": 900,
-   "page": "classes",
-   "title": "Web · Class · Get verified",
-   "is_interactive": true
-  },
-  "WebClassLoading.dc.html": {
-   "x": 7600,
-   "y": 1320,
-   "w": 1440,
-   "h": 900,
-   "page": "classes",
-   "title": "Web · Class · loading",
-   "is_interactive": true
-  },
-  "WebClassMissing.dc.html": {
-   "x": 9120,
-   "y": 1320,
-   "w": 1440,
-   "h": 900,
-   "page": "classes",
-   "title": "Web · Class · no class has that code",
-   "is_interactive": true
-  },
-  "WebClassDark.dc.html": {
-   "x": 10640,
-   "y": 1320,
-   "w": 1440,
-   "h": 900,
-   "page": "classes",
-   "title": "Web · Class (dark)",
-   "is_interactive": true
-  },
-  "WebClassGray.dc.html": {
-   "x": 12160,
-   "y": 1320,
-   "w": 1440,
-   "h": 900,
-   "page": "classes",
-   "title": "Web · Class (dark, gray)",
-   "is_interactive": true
-  },
-  "WebClassMember.dc.html": {
-   "x": 0,
-   "y": 2640,
-   "w": 1440,
-   "h": 900,
-   "page": "classes",
-   "title": "Web · Class · one you joined (asked once: share your progress?)",
-   "is_interactive": true
-  },
-  "WebClassMemberSharing.dc.html": {
-   "x": 1520,
-   "y": 2640,
-   "w": 1440,
-   "h": 900,
-   "page": "classes",
-   "title": "Web · Class · one you joined, sharing your progress",
-   "is_interactive": true
-  },
-  "WebClassReport.dc.html": {
-   "x": 3040,
-   "y": 2640,
-   "w": 1440,
-   "h": 900,
-   "page": "classes",
-   "title": "Web · Class · Report a deck",
-   "is_interactive": true
-  },
-  "WebClassMemberDark.dc.html": {
-   "x": 4560,
-   "y": 2640,
-   "w": 1440,
-   "h": 900,
-   "page": "classes",
-   "title": "Web · Class · one you joined (dark)",
-   "is_interactive": true
-  },
-  "WebClassInvite.dc.html": {
-   "x": 6080,
-   "y": 2640,
-   "w": 1440,
-   "h": 900,
-   "page": "classes",
-   "title": "Web · Class · its invite link (join with a tap)",
-   "is_interactive": true
-  },
-  "WebClassInviteSignedOut.dc.html": {
-   "x": 7600,
-   "y": 2640,
-   "w": 1440,
-   "h": 900,
-   "page": "classes",
-   "title": "Web · Class · its invite link, signed out",
-   "is_interactive": true
-  },
-  "WebTodayClass.dc.html": {
-   "x": 0,
-   "y": 3960,
-   "w": 1440,
-   "h": 900,
-   "page": "classes",
-   "title": "Web · Today · with assignments from your classes",
-   "is_interactive": true
-  },
-  "PhoneTodayClass.dc.html": {
-   "x": 1520,
-   "y": 3960,
-   "w": 390,
-   "h": 844,
-   "page": "classes",
-   "title": "iPhone · Today · with assignments from your classes",
-   "is_interactive": true
-  },
-  "PhoneClasses.dc.html": {
-   "x": 0,
-   "y": 5280,
-   "w": 390,
-   "h": 844,
-   "page": "classes",
-   "title": "iPhone · Library · Classes",
-   "is_interactive": true
-  },
-  "PhoneClassesEmpty.dc.html": {
-   "x": 470,
-   "y": 5280,
-   "w": 390,
-   "h": 844,
-   "page": "classes",
-   "title": "iPhone · Library · Classes · none yet",
-   "is_interactive": true
-  },
-  "PhoneClassesJoin.dc.html": {
-   "x": 940,
-   "y": 5280,
-   "w": 390,
-   "h": 844,
-   "page": "classes",
-   "title": "iPhone · Library · Classes · Join a class",
-   "is_interactive": true
-  },
-  "PhoneClassesNew.dc.html": {
-   "x": 1410,
-   "y": 5280,
-   "w": 390,
-   "h": 844,
-   "page": "classes",
-   "title": "iPhone · Library · Classes · New class",
-   "is_interactive": true
-  },
-  "PhoneClassesDark.dc.html": {
-   "x": 1880,
-   "y": 5280,
-   "w": 390,
-   "h": 844,
-   "page": "classes",
-   "title": "iPhone · Library · Classes (dark)",
-   "is_interactive": true
-  },
-  "PhoneClass.dc.html": {
-   "x": 0,
-   "y": 6544,
-   "w": 390,
-   "h": 844,
-   "page": "classes",
-   "title": "iPhone · Class · yours",
-   "is_interactive": true
-  },
-  "PhoneClassAddDeck.dc.html": {
-   "x": 470,
-   "y": 6544,
-   "w": 390,
-   "h": 844,
-   "page": "classes",
-   "title": "iPhone · Class · Add a deck",
-   "is_interactive": true
-  },
-  "PhoneClassAssign.dc.html": {
-   "x": 940,
-   "y": 6544,
-   "w": 390,
-   "h": 844,
-   "page": "classes",
-   "title": "iPhone · Class · Assign a deck",
-   "is_interactive": true
-  },
-  "PhoneClassInvite.dc.html": {
-   "x": 1410,
-   "y": 6544,
-   "w": 390,
-   "h": 844,
-   "page": "classes",
-   "title": "iPhone · Class · its invite link",
-   "is_interactive": true
-  },
-  "PhoneClassInviteSignedOut.dc.html": {
-   "x": 1880,
-   "y": 6544,
-   "w": 390,
-   "h": 844,
-   "page": "classes",
-   "title": "iPhone · Class · its invite link, signed out",
-   "is_interactive": true
-  },
-  "PhoneClassLoading.dc.html": {
-   "x": 2350,
-   "y": 6544,
-   "w": 390,
-   "h": 844,
-   "page": "classes",
-   "title": "iPhone · Class · loading",
-   "is_interactive": true
-  },
-  "PhoneClassMember.dc.html": {
-   "x": 2820,
-   "y": 6544,
-   "w": 390,
-   "h": 844,
-   "page": "classes",
-   "title": "iPhone · Class · one you joined (asked once: share your progress?)",
-   "is_interactive": true
-  },
-  "PhoneClassMissing.dc.html": {
-   "x": 3290,
-   "y": 6544,
-   "w": 390,
-   "h": 844,
-   "page": "classes",
-   "title": "iPhone · Class · no class has that code",
-   "is_interactive": true
-  },
-  "PhoneClassNew.dc.html": {
-   "x": 3760,
-   "y": 6544,
-   "w": 390,
-   "h": 844,
-   "page": "classes",
-   "title": "iPhone · Class · just made",
-   "is_interactive": true
-  },
-  "PhoneClassReport.dc.html": {
-   "x": 4230,
-   "y": 6544,
-   "w": 390,
-   "h": 844,
-   "page": "classes",
-   "title": "iPhone · Class · Report a deck",
-   "is_interactive": true
-  },
-  "PhoneClassVerify.dc.html": {
-   "x": 4700,
-   "y": 6544,
-   "w": 390,
-   "h": 844,
-   "page": "classes",
-   "title": "iPhone · Class · Get verified",
-   "is_interactive": true
-  },
-  "PhoneClassDark.dc.html": {
-   "x": 5170,
-   "y": 6544,
-   "w": 390,
-   "h": 844,
-   "page": "classes",
-   "title": "iPhone · Class (dark)",
-   "is_interactive": true
-  },
-  "PhoneClassGray.dc.html": {
-   "x": 5640,
-   "y": 6544,
-   "w": 390,
-   "h": 844,
-   "page": "classes",
-   "title": "iPhone · Class (dark, gray)",
-   "is_interactive": true
-  },
-  "WebAdmin.dc.html": {
-   "x": 0,
-   "y": 10117,
-   "w": 1440,
-   "h": 900,
-   "page": "classes",
-   "title": "Web · Admin · verification requests",
-   "is_interactive": true
-  },
-  "WebAdminDenied.dc.html": {
-   "x": 1520,
-   "y": 10117,
-   "w": 1440,
-   "h": 900,
-   "page": "classes",
-   "title": "Web · Admin · someone who isn’t an admin",
-   "is_interactive": true
-  },
-  "WebAdminEmpty.dc.html": {
-   "x": 3040,
-   "y": 10117,
-   "w": 1440,
-   "h": 900,
-   "page": "classes",
-   "title": "Web · Admin · nothing waiting",
-   "is_interactive": true
-  },
-  "WebAdminReports.dc.html": {
-   "x": 4560,
-   "y": 10117,
-   "w": 1440,
-   "h": 900,
-   "page": "classes",
-   "title": "Web · Admin · reports",
-   "is_interactive": true
-  },
-  "WebAdminDark.dc.html": {
-   "x": 6080,
-   "y": 10117,
-   "w": 1440,
-   "h": 900,
-   "page": "classes",
-   "title": "Web · Admin (dark)",
-   "is_interactive": true
-  },
-  "ThemePickerDark.dc.html": {
-   "x": 1520,
-   "y": 0,
-   "w": 1440,
-   "h": 900,
-   "page": "themes",
-   "title": "Web · Settings › Theme (dark)",
-   "is_interactive": true
-  },
-  "ThemePickerFree.dc.html": {
-   "x": 3040,
-   "y": 0,
-   "w": 1440,
-   "h": 900,
-   "page": "themes",
-   "title": "Web · Settings › Theme · on Free (locked, Go Pro)",
-   "is_interactive": true
-  },
-  "WebTheme.dc.html": {
-   "x": 4560,
-   "y": 0,
-   "w": 1440,
-   "h": 900,
-   "page": "themes",
-   "title": "Web · Settings › Theme › Lucida (a theme’s page)",
-   "is_interactive": true
-  },
-  "PhoneThemePicker.dc.html": {
-   "x": 6080,
-   "y": 0,
-   "w": 390,
-   "h": 1260,
-   "page": "themes",
-   "title": "iPhone · Settings › Theme",
-   "is_interactive": true
-  },
-  "PhoneThemePickerFree.dc.html": {
-   "x": 6550,
-   "y": 0,
-   "w": 390,
-   "h": 1260,
-   "page": "themes",
-   "title": "iPhone · Settings › Theme · on Free (locked, Go Pro)",
-   "is_interactive": true
-  },
-  "PhoneTheme.dc.html": {
-   "x": 7020,
-   "y": 0,
-   "w": 390,
-   "h": 1382,
-   "page": "themes",
-   "title": "iPhone · Settings › Theme › a theme’s page",
-   "is_interactive": true
-  },
-  "ThemeRubberFree.dc.html": {
-   "x": 1520,
-   "y": 1802,
-   "w": 1440,
-   "h": 900,
-   "page": "themes",
-   "title": "Rubber hose · its page on Free (Go Pro)",
-   "is_interactive": true
-  },
-  "ThemeRubberDeck.dc.html": {
-   "x": 4560,
-   "y": 1802,
-   "w": 1440,
-   "h": 900,
-   "page": "themes",
-   "title": "Rubber hose · Web · Deck page",
-   "is_interactive": true
-  },
-  "ThemeRubberLearn.dc.html": {
-   "x": 7600,
-   "y": 1802,
-   "w": 1440,
-   "h": 900,
-   "page": "themes",
-   "title": "Rubber hose · Web · Learn mode",
-   "is_interactive": true
-  },
-  "ThemeChromeFree.dc.html": {
-   "x": 1520,
-   "y": 3122,
-   "w": 1440,
-   "h": 900,
-   "page": "themes",
-   "title": "Liquid chrome · its page on Free (Go Pro)",
-   "is_interactive": true
-  },
-  "ThemeChromeDeck.dc.html": {
-   "x": 4560,
-   "y": 3122,
-   "w": 1440,
-   "h": 900,
-   "page": "themes",
-   "title": "Liquid chrome · Web · Deck page",
-   "is_interactive": true
-  },
-  "ThemeChromeLearn.dc.html": {
-   "x": 7600,
-   "y": 3122,
-   "w": 1440,
-   "h": 900,
-   "page": "themes",
-   "title": "Liquid chrome · Web · Learn mode",
-   "is_interactive": true
-  },
-  "ThemeAeroFree.dc.html": {
-   "x": 1520,
-   "y": 4442,
-   "w": 1440,
-   "h": 900,
-   "page": "themes",
-   "title": "Frutiger Aero · its page on Free (Go Pro)",
-   "is_interactive": true
-  },
-  "ThemeAeroDeck.dc.html": {
-   "x": 4560,
-   "y": 4442,
-   "w": 1440,
-   "h": 900,
-   "page": "themes",
-   "title": "Frutiger Aero · Web · Deck page",
-   "is_interactive": true
-  },
-  "ThemeAeroLearn.dc.html": {
-   "x": 7600,
-   "y": 4442,
-   "w": 1440,
-   "h": 900,
-   "page": "themes",
-   "title": "Frutiger Aero · Web · Learn mode",
-   "is_interactive": true
-  },
-  "ThemeLiminalFree.dc.html": {
-   "x": 1520,
-   "y": 5762,
-   "w": 1440,
-   "h": 900,
-   "page": "themes",
-   "title": "Liminal · Flooded hall · its page on Free (Go Pro)",
-   "is_interactive": true
-  },
-  "ThemeLiminalDeck.dc.html": {
-   "x": 4560,
-   "y": 5762,
-   "w": 1440,
-   "h": 900,
-   "page": "themes",
-   "title": "Liminal · Flooded hall · Web · Deck page",
-   "is_interactive": true
-  },
-  "ThemeLiminalLearn.dc.html": {
-   "x": 7600,
-   "y": 5762,
-   "w": 1440,
-   "h": 900,
-   "page": "themes",
-   "title": "Liminal · Flooded hall · Web · Learn mode",
-   "is_interactive": true
-  },
-  "ThemeLiminalRoomFree.dc.html": {
-   "x": 1520,
-   "y": 7082,
-   "w": 1440,
-   "h": 900,
-   "page": "themes",
-   "title": "Liminal · Empty room · its page on Free (Go Pro)",
-   "is_interactive": true
-  },
-  "ThemeLiminalRoomDeck.dc.html": {
-   "x": 4560,
-   "y": 7082,
-   "w": 1440,
-   "h": 900,
-   "page": "themes",
-   "title": "Liminal · Empty room · Web · Deck page",
-   "is_interactive": true
-  },
-  "ThemeLiminalRoomLearn.dc.html": {
-   "x": 7600,
-   "y": 7082,
-   "w": 1440,
-   "h": 900,
-   "page": "themes",
-   "title": "Liminal · Empty room · Web · Learn mode",
-   "is_interactive": true
-  },
-  "ThemeDreamcoreFree.dc.html": {
-   "x": 1520,
-   "y": 8402,
-   "w": 1440,
-   "h": 900,
-   "page": "themes",
-   "title": "Dreamcore · its page on Free (Go Pro)",
-   "is_interactive": true
-  },
-  "ThemeDreamcoreDeck.dc.html": {
-   "x": 4560,
-   "y": 8402,
-   "w": 1440,
-   "h": 900,
-   "page": "themes",
-   "title": "Dreamcore · Web · Deck page",
-   "is_interactive": true
-  },
-  "ThemeDreamcoreLearn.dc.html": {
-   "x": 7600,
-   "y": 8402,
-   "w": 1440,
-   "h": 900,
-   "page": "themes",
-   "title": "Dreamcore · Web · Learn mode",
-   "is_interactive": true
-  },
-  "ThemeVaporwaveFree.dc.html": {
-   "x": 1520,
-   "y": 9722,
-   "w": 1440,
-   "h": 900,
-   "page": "themes",
-   "title": "Vaporwave · Poolside · its page on Free (Go Pro)",
-   "is_interactive": true
-  },
-  "ThemeVaporwaveDeck.dc.html": {
-   "x": 4560,
-   "y": 9722,
-   "w": 1440,
-   "h": 900,
-   "page": "themes",
-   "title": "Vaporwave · Poolside · Web · Deck page",
-   "is_interactive": true
-  },
-  "ThemeVaporwaveLearn.dc.html": {
-   "x": 7600,
-   "y": 9722,
-   "w": 1440,
-   "h": 900,
-   "page": "themes",
-   "title": "Vaporwave · Poolside · Web · Learn mode",
-   "is_interactive": true
-  },
-  "ThemeVaporDolphinsFree.dc.html": {
-   "x": 1520,
-   "y": 11042,
-   "w": 1440,
-   "h": 900,
-   "page": "themes",
-   "title": "Vaporwave · Dolphins · its page on Free (Go Pro)",
-   "is_interactive": true
-  },
-  "ThemeVaporDolphinsDeck.dc.html": {
-   "x": 4560,
-   "y": 11042,
-   "w": 1440,
-   "h": 900,
-   "page": "themes",
-   "title": "Vaporwave · Dolphins · Web · Deck page",
-   "is_interactive": true
-  },
-  "ThemeVaporDolphinsLearn.dc.html": {
-   "x": 7600,
-   "y": 11042,
-   "w": 1440,
-   "h": 900,
-   "page": "themes",
-   "title": "Vaporwave · Dolphins · Web · Learn mode",
-   "is_interactive": true
-  },
-  "ThemeTerminalFree.dc.html": {
-   "x": 1520,
-   "y": 12362,
-   "w": 1440,
-   "h": 900,
-   "page": "themes",
-   "title": "Terminal · its page on Free (Go Pro)",
-   "is_interactive": true
-  },
-  "ThemeTerminalDeck.dc.html": {
-   "x": 4560,
-   "y": 12362,
-   "w": 1440,
-   "h": 900,
-   "page": "themes",
-   "title": "Terminal · Web · Deck page",
-   "is_interactive": true
-  },
-  "ThemeTerminalLearn.dc.html": {
-   "x": 7600,
-   "y": 12362,
-   "w": 1440,
-   "h": 900,
-   "page": "themes",
-   "title": "Terminal · Web · Learn mode",
-   "is_interactive": true
-  },
-  "ThemeZineFree.dc.html": {
-   "x": 1520,
-   "y": 13682,
-   "w": 1440,
-   "h": 900,
-   "page": "themes",
-   "title": "Zine collage · its page on Free (Go Pro)",
-   "is_interactive": true
-  },
-  "ThemeZineDeck.dc.html": {
-   "x": 4560,
-   "y": 13682,
-   "w": 1440,
-   "h": 900,
-   "page": "themes",
-   "title": "Zine collage · Web · Deck page",
-   "is_interactive": true
-  },
-  "ThemeZineLearn.dc.html": {
-   "x": 7600,
-   "y": 13682,
-   "w": 1440,
-   "h": 900,
-   "page": "themes",
-   "title": "Zine collage · Web · Learn mode",
-   "is_interactive": true
-  },
-  "ThemeGlassFree.dc.html": {
-   "x": 1520,
-   "y": 15002,
-   "w": 1440,
-   "h": 900,
-   "page": "themes",
-   "title": "Frosted glass · its page on Free (Go Pro)",
-   "is_interactive": true
-  },
-  "ThemeGlassDeck.dc.html": {
-   "x": 4560,
-   "y": 15002,
-   "w": 1440,
-   "h": 900,
-   "page": "themes",
-   "title": "Frosted glass · Web · Deck page",
-   "is_interactive": true
-  },
-  "ThemeGlassLearn.dc.html": {
-   "x": 7600,
-   "y": 15002,
-   "w": 1440,
-   "h": 900,
-   "page": "themes",
-   "title": "Frosted glass · Web · Learn mode",
-   "is_interactive": true
-  },
-  "ThemeTopoFree.dc.html": {
-   "x": 1520,
-   "y": 16322,
-   "w": 1440,
-   "h": 900,
-   "page": "themes",
-   "title": "Topographic · its page on Free (Go Pro)",
-   "is_interactive": true
-  },
-  "ThemeTopoDeck.dc.html": {
-   "x": 4560,
-   "y": 16322,
-   "w": 1440,
-   "h": 900,
-   "page": "themes",
-   "title": "Topographic · Web · Deck page",
-   "is_interactive": true
-  },
-  "ThemeTopoLearn.dc.html": {
-   "x": 7600,
-   "y": 16322,
-   "w": 1440,
-   "h": 900,
-   "page": "themes",
-   "title": "Topographic · Web · Learn mode",
-   "is_interactive": true
-  },
-  "ThemeRisoFree.dc.html": {
-   "x": 1520,
-   "y": 17642,
-   "w": 1440,
-   "h": 900,
-   "page": "themes",
-   "title": "Risograph · its page on Free (Go Pro)",
-   "is_interactive": true
-  },
-  "ThemeRisoDeck.dc.html": {
-   "x": 4560,
-   "y": 17642,
-   "w": 1440,
-   "h": 900,
-   "page": "themes",
-   "title": "Risograph · Web · Deck page",
-   "is_interactive": true
-  },
-  "ThemeRisoLearn.dc.html": {
-   "x": 7600,
-   "y": 17642,
-   "w": 1440,
-   "h": 900,
-   "page": "themes",
-   "title": "Risograph · Web · Learn mode",
-   "is_interactive": true
-  },
-  "ThemeSwissFree.dc.html": {
-   "x": 1520,
-   "y": 18962,
-   "w": 1440,
-   "h": 900,
-   "page": "themes",
-   "title": "Swiss poster · its page on Free (Go Pro)",
-   "is_interactive": true
-  },
-  "ThemeSwissDeck.dc.html": {
-   "x": 4560,
-   "y": 18962,
-   "w": 1440,
-   "h": 900,
-   "page": "themes",
-   "title": "Swiss poster · Web · Deck page",
-   "is_interactive": true
-  },
-  "ThemeSwissLearn.dc.html": {
-   "x": 7600,
-   "y": 18962,
-   "w": 1440,
-   "h": 900,
-   "page": "themes",
-   "title": "Swiss poster · Web · Learn mode",
-   "is_interactive": true
-  },
-  "WebPublicDeckCheck.dc.html": {
-   "x": 1520,
-   "y": 1320,
-   "w": 1440,
-   "h": 900,
-   "page": "network",
-   "title": "Web · Shared deck page · a verified teacher’s view (Check this deck)",
-   "is_interactive": true
-  },
-  "WebPublicDeckReport.dc.html": {
-   "x": 12160,
-   "y": 1320,
-   "w": 1440,
-   "h": 900,
-   "page": "network",
-   "title": "Web · Shared deck page · Report",
-   "is_interactive": true
-  },
-  "PhonePublicDeckCheck.dc.html": {
-   "x": 470,
-   "y": 2640,
-   "w": 390,
-   "h": 844,
-   "page": "network",
-   "title": "iPhone · Shared deck page · a verified teacher’s view (Check this deck)",
-   "is_interactive": true
-  },
-  "PhonePublicDeckReport.dc.html": {
-   "x": 1880,
-   "y": 2640,
-   "w": 390,
-   "h": 844,
-   "page": "network",
-   "title": "iPhone · Shared deck page · Report",
-   "is_interactive": true
-  },
-  "WebSuggestionsReport.dc.html": {
-   "x": 6080,
-   "y": 3904,
-   "w": 1440,
-   "h": 900,
-   "page": "network",
-   "title": "Web · Suggestions · Report",
-   "is_interactive": true
-  },
-  "PhoneSuggestionsReport.dc.html": {
-   "x": 12050,
-   "y": 3904,
-   "w": 390,
-   "h": 844,
-   "page": "network",
-   "title": "iPhone · Suggestions · Report",
-   "is_interactive": true
-  },
-  "WebProfileReport.dc.html": {
-   "x": 16720,
-   "y": 5224,
-   "w": 1440,
-   "h": 900,
-   "page": "network",
-   "title": "Web · Profile · someone else’s · Report",
-   "is_interactive": true
-  },
-  "PhoneProfileReport.dc.html": {
-   "x": 4230,
-   "y": 6544,
-   "w": 390,
-   "h": 844,
-   "page": "network",
-   "title": "iPhone · Profile · someone else’s · Report",
-   "is_interactive": true
-  },
-  "WebSettingsVerified.dc.html": {
-   "x": 0,
-   "y": 7808,
-   "w": 1440,
-   "h": 900,
-   "page": "classes",
-   "title": "Web · Settings · a verified teacher (Get verified says Verified teacher)",
-   "is_interactive": true
-  },
-  "PhoneSettingsVerified.dc.html": {
-   "x": 1520,
-   "y": 7808,
-   "w": 390,
-   "h": 1889,
-   "page": "classes",
-   "title": "iPhone · Settings · a verified teacher (Get verified says Verified teacher)",
-   "is_interactive": true
-  },
-  "WebProfileBlock.dc.html": {
-   "x": 1520,
-   "y": 5224,
-   "w": 1440,
-   "h": 900,
-   "page": "network",
-   "title": "Web · Profile · someone else’s · Block (the question)",
-   "is_interactive": true
-  },
-  "WebProfileBlocked.dc.html": {
-   "x": 3040,
-   "y": 5224,
-   "w": 1440,
-   "h": 900,
-   "page": "network",
-   "title": "Web · Profile · someone you blocked (Unblock)",
-   "is_interactive": true
-  },
-  "PhoneProfileBlock.dc.html": {
-   "x": 470,
-   "y": 6544,
-   "w": 390,
-   "h": 844,
-   "page": "network",
-   "title": "iPhone · Profile · someone else’s · Block (the question)",
-   "is_interactive": true
-  },
-  "PhoneProfileBlocked.dc.html": {
-   "x": 940,
-   "y": 6544,
-   "w": 390,
-   "h": 844,
-   "page": "network",
-   "title": "iPhone · Profile · someone you blocked (Unblock)",
-   "is_interactive": true
-  },
-  "SiteCompare.dc.html": {
-   "x": 0,
-   "y": 5272,
-   "w": 1440,
-   "h": 7205,
-   "page": "landing",
-   "title": "Site · The blog, comparisons, alternatives, the hubs and the 404 · lucida.cards",
-   "is_interactive": true
-  },
-  "SiteComparePhone.dc.html": {
-   "x": 1520,
-   "y": 5272,
-   "w": 390,
-   "h": 9652,
-   "page": "landing",
-   "title": "Site · The blog, comparisons, alternatives, the hubs and the 404 · lucida.cards on a phone",
-   "is_interactive": true
-  },
-  "SiteFeature.dc.html": {
-   "x": 1990,
-   "y": 5272,
-   "w": 1440,
-   "h": 8028,
-   "page": "landing",
-   "title": "Site · Features and who Lucida is for · lucida.cards",
-   "is_interactive": true
-  },
-  "SiteFeaturePhone.dc.html": {
-   "x": 3510,
-   "y": 5272,
-   "w": 390,
-   "h": 10797,
-   "page": "landing",
-   "title": "Site · Features and who Lucida is for · lucida.cards on a phone",
-   "is_interactive": true
-  },
-  "SiteFaq.dc.html": {
-   "x": 3980,
-   "y": 5272,
-   "w": 1440,
-   "h": 5173,
-   "page": "landing",
-   "title": "Site · FAQ · lucida.cards",
-   "is_interactive": true
-  },
-  "SiteFaqPhone.dc.html": {
-   "x": 5500,
-   "y": 5272,
-   "w": 390,
-   "h": 6098,
-   "page": "landing",
-   "title": "Site · FAQ · lucida.cards on a phone",
-   "is_interactive": true
-  },
-  "SiteConnect.dc.html": {
-   "x": 0,
-   "y": 16489,
-   "w": 1440,
-   "h": 4207,
-   "page": "landing",
-   "title": "Connect Lucida to your AI · lucida.cards/connect",
-   "is_interactive": true
-  },
-  "SiteOg.dc.html": {
-   "x": 1520,
-   "y": 16489,
-   "w": 1200,
-   "h": 630,
-   "page": "landing",
-   "title": "Site · Link preview picture (1200 × 630) for any page",
-   "is_interactive": true
-  },
-  "WebSettingsDelete.dc.html": {
-   "x": 12160,
-   "y": 5280,
-   "w": 1440,
-   "h": 900,
-   "page": "sidebar",
-   "title": "Web · Settings · Delete account (the question)",
-   "is_interactive": true
-  },
-  "PhoneSettingsDelete.dc.html": {
-   "x": 6110,
-   "y": 0,
-   "w": 390,
-   "h": 1889,
-   "page": "phone",
-   "title": "iPhone · Settings · Delete account (the question)",
-   "is_interactive": true
-  },
-  "WebConnectConsent.dc.html": {
-   "x": 3040,
-   "y": 7920,
-   "w": 1440,
-   "h": 900,
-   "page": "sidebar",
-   "title": "Web · An AI app asks to connect (Allow or Cancel)",
-   "is_interactive": true
-  },
-  "PhoneConnectConsent.dc.html": {
-   "x": 940,
-   "y": 3900,
-   "w": 390,
-   "h": 844,
-   "page": "phone",
-   "title": "iPhone · An AI app asks to connect (Allow or Cancel)",
-   "is_interactive": true
   }
  },
  "createdOnFiles": {
@@ -4520,6 +4520,15 @@
    "w": 240,
    "x": 0,
    "y": 6300
+  },
+  "aThemesIntro": {
+   "kind": "title1",
+   "maxW": 5420,
+   "page": "themes",
+   "text": "Each theme changes only the card, study background, deck covers, and profile picture. The rest of Lucida stays the same.",
+   "w": 240,
+   "x": 0,
+   "y": -620
   },
   "bSticky": {
    "fill": "gray",
@@ -4674,15 +4683,6 @@
    "x": 0,
    "y": -300
   },
-  "aThemesIntro": {
-   "kind": "title1",
-   "maxW": 5420,
-   "page": "themes",
-   "text": "Each theme changes only the card, study background, deck covers, and profile picture. The rest of Lucida stays the same.",
-   "w": 240,
-   "x": 0,
-   "y": -620
-  },
   "aNetwork0": {
    "kind": "title1",
    "maxW": 5420,
@@ -4694,7 +4694,7 @@
   },
   "aNetwork1": {
    "kind": "title1",
-   "maxW": 22720,
+   "maxW": 8000,
    "page": "network",
    "text": "A shared deck’s page: study, copy, save, suggest",
    "w": 240,
@@ -4712,7 +4712,7 @@
   },
   "aNetwork3": {
    "kind": "title1",
-   "maxW": 23440,
+   "maxW": 8000,
    "page": "network",
    "text": "Suggestions and History",
    "w": 240,
@@ -4721,7 +4721,7 @@
   },
   "aNetwork4": {
    "kind": "title1",
-   "maxW": 25760,
+   "maxW": 8000,
    "page": "network",
    "text": "Profiles",
    "w": 240,
@@ -4775,7 +4775,7 @@
   },
   "aLive0": {
    "kind": "title1",
-   "maxW": 12080,
+   "maxW": 8000,
    "page": "live",
    "text": "Live · the big screen (host)",
    "w": 240,
@@ -4793,7 +4793,7 @@
   },
   "aQuiz0": {
    "kind": "title1",
-   "maxW": 10560,
+   "maxW": 8000,
    "page": "quiz",
    "text": "Learn mode · web",
    "w": 240,
@@ -4820,7 +4820,7 @@
   },
   "aPro1": {
    "kind": "title1",
-   "maxW": 9040,
+   "maxW": 8000,
    "page": "pro",
    "text": "Stats: memory, weak spots, pace (and on Free)",
    "w": 240,
@@ -4856,7 +4856,7 @@
   },
   "aClasses0": {
    "kind": "title1",
-   "maxW": 9040,
+   "maxW": 8000,
    "page": "classes",
    "text": "Library → Classes",
    "w": 240,
@@ -4865,7 +4865,7 @@
   },
   "aClasses1": {
    "kind": "title1",
-   "maxW": 13600,
+   "maxW": 8000,
    "page": "classes",
    "text": "A class you run",
    "w": 240,
@@ -4874,7 +4874,7 @@
   },
   "aClasses2": {
    "kind": "title1",
-   "maxW": 9040,
+   "maxW": 8000,
    "page": "classes",
    "text": "A class you’re in, and its invite",
    "w": 240,
@@ -4951,11 +4951,11 @@
    "text": "Connect Lucida (lucida.cards/connect), and the link-preview pictures",
    "w": 240,
    "x": 0,
-   "y": 16189
+   "y": 13392
   },
   "aThemes0": {
    "kind": "title1",
-   "maxW": 8930,
+   "maxW": 8000,
    "page": "themes",
    "text": "Choosing a theme, and more cover styles",
    "w": 240,
@@ -4964,7 +4964,7 @@
   },
   "aThemes1": {
    "kind": "title1",
-   "maxW": 9980,
+   "maxW": 8000,
    "page": "themes",
    "text": "Rubber hose",
    "w": 240,
@@ -4973,7 +4973,7 @@
   },
   "aThemes2": {
    "kind": "title1",
-   "maxW": 9980,
+   "maxW": 8000,
    "page": "themes",
    "text": "Liquid chrome",
    "w": 240,
@@ -4982,7 +4982,7 @@
   },
   "aThemes3": {
    "kind": "title1",
-   "maxW": 9980,
+   "maxW": 8000,
    "page": "themes",
    "text": "Frutiger Aero",
    "w": 240,
@@ -4991,7 +4991,7 @@
   },
   "aThemes4": {
    "kind": "title1",
-   "maxW": 9980,
+   "maxW": 8000,
    "page": "themes",
    "text": "Liminal · Flooded hall",
    "w": 240,
@@ -5000,7 +5000,7 @@
   },
   "aThemes5": {
    "kind": "title1",
-   "maxW": 9980,
+   "maxW": 8000,
    "page": "themes",
    "text": "Liminal · Empty room",
    "w": 240,
@@ -5009,7 +5009,7 @@
   },
   "aThemes6": {
    "kind": "title1",
-   "maxW": 9980,
+   "maxW": 8000,
    "page": "themes",
    "text": "Dreamcore",
    "w": 240,
@@ -5018,7 +5018,7 @@
   },
   "aThemes7": {
    "kind": "title1",
-   "maxW": 9980,
+   "maxW": 8000,
    "page": "themes",
    "text": "Vaporwave · Poolside",
    "w": 240,
@@ -5027,7 +5027,7 @@
   },
   "aThemes8": {
    "kind": "title1",
-   "maxW": 9980,
+   "maxW": 8000,
    "page": "themes",
    "text": "Vaporwave · Dolphins",
    "w": 240,
@@ -5036,7 +5036,7 @@
   },
   "aThemes9": {
    "kind": "title1",
-   "maxW": 9980,
+   "maxW": 8000,
    "page": "themes",
    "text": "Terminal",
    "w": 240,
@@ -5045,7 +5045,7 @@
   },
   "aThemes10": {
    "kind": "title1",
-   "maxW": 9980,
+   "maxW": 8000,
    "page": "themes",
    "text": "Zine collage",
    "w": 240,
@@ -5054,7 +5054,7 @@
   },
   "aThemes11": {
    "kind": "title1",
-   "maxW": 9980,
+   "maxW": 8000,
    "page": "themes",
    "text": "Frosted glass",
    "w": 240,
@@ -5063,7 +5063,7 @@
   },
   "aThemes12": {
    "kind": "title1",
-   "maxW": 9980,
+   "maxW": 8000,
    "page": "themes",
    "text": "Topographic",
    "w": 240,
@@ -5072,7 +5072,7 @@
   },
   "aThemes13": {
    "kind": "title1",
-   "maxW": 9980,
+   "maxW": 8000,
    "page": "themes",
    "text": "Risograph",
    "w": 240,
@@ -5081,7 +5081,7 @@
   },
   "aThemes14": {
    "kind": "title1",
-   "maxW": 9980,
+   "maxW": 8000,
    "page": "themes",
    "text": "Swiss poster",
    "w": 240,
@@ -5206,13 +5206,6 @@
   "WebQuizType.dc.html",
   "WebQuizDone.dc.html",
   "WebQuizSettings.dc.html",
-  "PhoneQuizStart.dc.html",
-  "PhoneQuiz.dc.html",
-  "PhoneQuizAnswered.dc.html",
-  "PhoneQuizMatch.dc.html",
-  "PhoneQuizType.dc.html",
-  "PhoneQuizDone.dc.html",
-  "PhoneQuizSettings.dc.html",
   "Pricing.dc.html",
   "PricingPhone.dc.html",
   "LiveSetup.dc.html",
@@ -5576,7 +5569,14 @@
   "WebSettingsDelete.dc.html",
   "PhoneSettingsDelete.dc.html",
   "WebConnectConsent.dc.html",
-  "PhoneConnectConsent.dc.html"
+  "PhoneConnectConsent.dc.html",
+  "PhoneQuizStart.dc.html",
+  "PhoneQuiz.dc.html",
+  "PhoneQuizAnswered.dc.html",
+  "PhoneQuizMatch.dc.html",
+  "PhoneQuizType.dc.html",
+  "PhoneQuizDone.dc.html",
+  "PhoneQuizSettings.dc.html"
  ],
  "pages": [
   {
