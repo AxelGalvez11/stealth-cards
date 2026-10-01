@@ -783,7 +783,7 @@ renderVals() {
       owner: person(d.owner), photo, hasPhoto: !!photo, badge, hasBadge: !!badge, badgeShield: !!d.checked || (!!d.owner && d.owner.kind === 'school') }; };
   const dk = db.deck(this.props.deckId);
   const up = (patch, typing) => db.act.updateDeck(dk.id, patch, typing);
-  const testVals = (() => { const rows = db.mock ? [{ day: 'Sep 28', line: '16 of 20', pct: '80%' }, { day: 'Sep 24', line: '14 of 20', pct: '70%' }, { day: 'Sep 19', line: '11 of 20', pct: '55%' }] : db.tests({ deckId: dk.id }).slice(0, 3).map(x => ({ day: x.day, line: x.line, pct: x.pct + '%' }));
+  const testVals = (() => { const rows = db.mock ? [["Sep 28","16 of 20",80],["Sep 24","14 of 20",70],["Sep 19","11 of 20",55]].map(([day, line, pct]) => ({ day, line, pct: pct + '%' })) : db.tests({ deckId: dk.id }).slice(0, 3).map(x => ({ day: x.day, line: x.line, pct: x.pct + '%' }));
     return { testHref: db.mock ? 'WebTest.dc.html' : '/deck/' + dk.id + '/test', hasTests: rows.length > 0 && this.props.tests !== false, testRows: rows.map((x, i) => ({ ...x, sep: i ? '1px solid ' + t.line : 'none' })) }; })();
   const typed = (id, value, save, label) => {
     const draft = (this.state.numDraft || {})[id];

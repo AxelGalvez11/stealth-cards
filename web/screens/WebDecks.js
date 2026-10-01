@@ -671,7 +671,7 @@ renderVals() {
   const allOptions = [{ id: '', label: 'All decks', dot: t.muted }, ...folders.map(f => ({ id: 'f:' + f.id, label: f.name, dot: t.text })), ...all.map(d => ({ id: d.id, label: d.name, dot: grad(d).base }))];
   const deckOptions = allOptions.filter(o => !dq || o.label.toLowerCase().includes(dq)), pickedName = (allOptions.find(o => o.id === pick) || allOptions[0]).label;
   const title = folder ? folder.name : 'Library';
-  const testScope = folder ? { folderId: folder.id } : null, lastTest = !db.mock && testScope ? db.tests(testScope)[0] : db.mock && folder ? { day: 'Sep 28', line: '16 of 20', pct: 80 } : null;
+  const testScope = folder ? { folderId: folder.id } : null, lastTest = !db.mock && testScope ? db.tests(testScope)[0] : db.mock && folder ? (([day, line, pct]) => ({ day, line, pct }))(["Sep 28","16 of 20",80]) : null;
   const testVals = { testHref: db.mock ? 'WebTest.dc.html' : folder ? '/library/folder/' + folder.id + '/test' : '', canTest: !!folder && decks.length > 0, hasLastTest: !!lastTest, lastTest: lastTest ? 'Last practice test: ' + lastTest.day + ' · ' + lastTest.line + ' · ' + lastTest.pct + '%' : '' };
   return {
     t, ...chrome, ...testVals, grain: String(this.props.grain ?? 0.7), decks, title, atTop, inFolder: !!folder, libraryHref: db.mock ? board('Decks') : '/library',

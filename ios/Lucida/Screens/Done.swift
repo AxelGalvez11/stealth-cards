@@ -65,7 +65,7 @@ struct DoneScreen: View {
         tile("Next", ss.next.components(separatedBy: " · ").first ?? ss.next)
       }
       Spacer(minLength: 0)
-      BigButton(label: "Done", height: 58, size: 17) { store.session = nil; if ss.set != nil { nav.closeFull() } else { nav.leave(to: ss.deckId) } }
+      BigButton(label: "Done", height: 58, size: 17) { store.session = nil; if ss.set != nil { nav.endSet() } else { nav.leave(to: ss.deckId) } }
     }
     .foregroundStyle(t.text)
     .padding(.top, Screen.top(64)).padding(.horizontal, 20).padding(.bottom, 34)

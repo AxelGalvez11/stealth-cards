@@ -257,6 +257,12 @@ extension Board {
     case "PhoneQuizType": store.demoLearn.screen = "type"; nav.full = .learn("cell")
     case "PhoneQuizDone": store.demoLearn.screen = "done"; nav.full = .learn("cell")
     case "PhoneQuizSettings": store.props.learnSettings = true; nav.full = .learn("cell")
+    // The practice test: its screen is the board's `screen` Tweak (-screen "Results · missed", -screen Matching, ...), and its timer the
+    // `timed` Tweak (-timed false).
+    case "PhoneTest":
+      store.props.testScreen = Board.arg("-screen") ?? "Set up"; store.props.testTimed = Board.arg("-timed") != "false"; store.demoTest.screen = store.props.testScreen
+      nav.tab = .library; nav.path = [.deck("cell")]
+      if store.props.testScreen == "Set up" { nav.sheet = .testStart(.deck("cell")) } else { nav.full = .test(.deck("cell")) }
     // The onboarding, open on one of its steps (the canvas's PhoneWelcome with its `step`).
     case "PhoneWelcome": store.welcoming = true
     case "PhoneWelcomeClaude": store.welcoming = true; store.props.welcomeStep = "Steps"
@@ -455,6 +461,7 @@ struct SheetHost: View {
     case .newCard(let deckId, let cardId): SheetOverlay(top: 56, radius: 36, close: nav.close) { EditorSheet(deckId: deckId ?? store.lib.decks.first?.id, cardId: cardId) }
     // Learn mode is free for everyone (the owner, 2026-09-29).
     case .learnStart(let id): SheetOverlay(top: nil, radius: 36, close: nav.close) { LearnStartSheet(deckId: id) }
+    case .testStart(let s): SheetOverlay(top: nil, radius: 32, close: nav.close) { TestStartSheet(scope: s) }
     case .nameFolder(let rename, let deck, let name): FolderPopup(rename: rename, deck: deck, start: name)
     case .editProfile: SheetOverlay(top: 56, radius: 36, close: nav.close) { EditProfileSheet() }
     case .deckUpdates(let id): SheetOverlay(top: 56, close: nav.close) { DeckUpdatesSheet(deckId: id) }
@@ -504,6 +511,7 @@ struct FullHost: View {
       case .reviewSet(let set): ReviewScreen(deckId: nil, pile: nil, set: set)
       case .done: DoneScreen()
       case .learn(let id): LearnScreen(deckId: id)
+      case .test(let s): TestScreen(scope: s)
       }
     }
     .background(t.bg.ignoresSafeArea())

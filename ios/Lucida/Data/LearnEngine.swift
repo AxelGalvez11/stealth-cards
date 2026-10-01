@@ -123,21 +123,32 @@ extension Store {
     return out.filter { $0.2 > 0 || $0.0 == "all" }
   }
 
+  /// A deck's cards that can be asked (until the library changes), with their answers: building many questions at once (a
+  /// practice test) asks for these again and again.
+  func learnIn(_ id: String) -> [(c: Card, a: String)] {
+    if let m = learnMemo["l" + id] { return m }
+    let m = engine.cards(of: id).filter(learnable).map { (c: $0, a: answerOf($0)) }
+    learnMemo["l" + id] = m
+    return m
+  }
+
   /// Wrong answers that look like the right one: other cards' answers of about the same length, from the same deck. A
-  /// box of a picture gets the picture's other labels first.
-  private func distractors(_ c: Card, _ n: Int) -> [String] {
-    let right = answerOf(c).lowercased(), deck = engine.cards(of: c.deckId).filter { $0.id != c.id && learnable($0) }, same = deck.filter { $0.kind == c.kind }
+  /// box of a picture gets the picture's other labels first. `cap`: of a long list of other answers, only this many
+  /// (picked at random) are looked through.
+  func distractors(_ c: Card, _ n: Int, cap: Int = .max) -> [String] {
+    let right = answerOf(c).lowercased(), deck = learnIn(c.deckId).filter { $0.c.id != c.id }, same = deck.filter { $0.c.kind == c.kind }
     var near: [String] = []
     for b in Occ(c)?.boxes ?? [] {
       let a = b.label.trimmingCharacters(in: .whitespacesAndNewlines)
       if !a.isEmpty && a.lowercased() != right && !near.contains(a) { near.append(a) }
     }
     var seen = Set<String>(), pool: [String] = []
-    for a in (same.count > n ? same : deck).map(answerOf) where !a.isEmpty && a.lowercased() != right && !near.contains(a) && seen.insert(a).inserted { pool.append(a) }
+    for e in (same.count > n ? same : deck) where !e.a.isEmpty && e.a.lowercased() != right && !near.contains(e.a) && seen.insert(e.a).inserted { pool.append(e.a) }
+    if pool.count > cap { pool = Array(pool.shuffled().prefix(cap)) }
     pool.sort { abs($0.count - right.count) < abs($1.count - right.count) }
     return Array((near.shuffled() + Array(pool.prefix(n * 2)).shuffled()).prefix(n))
   }
-  private func short(_ c: Card) -> Bool { c.kind != "image" && learnText(c).count <= 70 && answerOf(c).count <= 60 }
+  func short(_ c: Card) -> Bool { c.kind != "image" && learnText(c).count <= 70 && answerOf(c).count <= 60 }
 
   // ---------- a session ----------
   var learning: LearnSession? {
@@ -168,7 +179,7 @@ extension Store {
   }
 
   /// Questions the learner's AI app wrote for a card (MCP add_quiz), of one kind ("choice" or "true_false").
-  private func aiQuiz(_ c: Card, _ kind: String) -> [QuizQuestion] { c.quiz.filter { $0.kind == kind } }
+  func aiQuiz(_ c: Card, _ kind: String) -> [QuizQuestion] { c.quiz.filter { $0.kind == kind } }
 
   /// Which kind of question a card gets: a choice first; once it's right, typing it (or another kind of choice).
   private func kindFor(_ L: LearnSession, _ s: LearnCard, _ c: Card, _ play: [String]) -> String {
@@ -215,24 +226,27 @@ extension Store {
       return
     }
     if kind == "type" { L.q = LearnQuestion(type: "type", kind: "type", id: cid, typed: "", checked: false, ok: false); return }
-    // An AI-written question, when the card has one of this kind (most of the time; now and then the card's own words).
+    L.q = choiceQuestion(c, kind: kind, blank: L.kinds.contains("blank"))
+  }
+
+  /// A choice question for a card (multiple choice or true or false): an AI-written one when the card has one of this kind
+  /// (most of the time; now and then the card's own words), else the card's words with other cards' answers. A
+  /// fill-in-the-blank card is a "blank" question when `blank` is on. Learn mode and the practice test both ask this way.
+  func choiceQuestion(_ c: Card, kind: String, blank: Bool, cap: Int = .max) -> LearnQuestion {
     let ai = kind == "tf" ? aiQuiz(c, "true_false") : kind == "mc" ? aiQuiz(c, "choice") : []
-    if let x = ai.randomElement(), Double.random(in: 0..<1) < 0.8 || distractors(c, 1).isEmpty {
+    if let x = ai.randomElement(), Double.random(in: 0..<1) < 0.8 || distractors(c, 1, cap: cap).isEmpty {
       if kind == "tf" {
-        L.q = LearnQuestion(type: "choice", kind: "tf", id: cid, text: "True or false?", why: x.why, ai: true, claim: x.question, options: ["True", "False"], right: x.answer == "true" ? 0 : 1)
-        return
+        return LearnQuestion(type: "choice", kind: "tf", id: c.id, text: "True or false?", why: x.why, ai: true, claim: x.question, options: ["True", "False"], right: x.answer == "true" ? 0 : 1)
       }
       let options = ([x.answer] + x.wrong).shuffled()
-      L.q = LearnQuestion(type: "choice", kind: kind, id: cid, text: x.question, why: x.why, ai: true, options: options, right: options.firstIndex(of: x.answer))
-      return
+      return LearnQuestion(type: "choice", kind: kind, id: c.id, text: x.question, why: x.why, ai: true, options: options, right: options.firstIndex(of: x.answer))
     }
     if kind == "tf" {
-      let truth = Bool.random(), claim = truth ? answerOf(c) : (distractors(c, 1).first ?? answerOf(c))
-      L.q = LearnQuestion(type: "choice", kind: "tf", id: cid, claim: claim, options: ["True", "False"], right: truth ? 0 : 1)
-      return
+      let truth = Bool.random(), claim = truth ? answerOf(c) : (distractors(c, 1, cap: cap).first ?? answerOf(c))
+      return LearnQuestion(type: "choice", kind: "tf", id: c.id, claim: claim, options: ["True", "False"], right: truth ? 0 : 1)
     }
-    let options = ([answerOf(c)] + distractors(c, 3)).shuffled()
-    L.q = LearnQuestion(type: "choice", kind: c.kind == "cloze" && L.kinds.contains("blank") ? "blank" : kind, id: cid, options: options, right: options.firstIndex(of: answerOf(c)))
+    let options = ([answerOf(c)] + distractors(c, 3, cap: cap)).shuffled()
+    return LearnQuestion(type: "choice", kind: c.kind == "cloze" && blank ? "blank" : kind, id: c.id, options: options, right: options.firstIndex(of: answerOf(c)))
   }
 
   private func mark(_ L: inout LearnSession, _ cid: String, _ ok: Bool, _ kind: String) {

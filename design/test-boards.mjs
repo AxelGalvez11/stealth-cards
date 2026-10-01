@@ -5,6 +5,32 @@
 // The look: a calm, professional exam, not a game. Plain words, no colors but the app's own, no confetti, streaks, or points; the
 // timer is a quiet number; nothing says right or wrong until you submit. Motion is quick and subtle (a question slides in 6 px), and
 // off with Reduce Motion. Dark and gray (Tweaks) look like the neighbors'.
+// The canvas's sample test (also copied into the iPhone app by design/to-ios.mjs, for its design screens).
+export const TEST_SAMPLE = {
+  name: 'Cell Biology', cards: 412, n: 20, answered: [1, 2, 4, 5, 6, 7, 8, 9, 10, 11, 12, 14], flagged: [5, 12], at: { mc: 3, tf: 10, blank: 13, match: 15, type: 18, submit: 20 },
+  mc: ['Which organelle packages proteins for secretion?', ['Golgi apparatus', 'Lysosome', 'Nucleus', 'Ribosome']],
+  tf: ['True or false?', 'The ribosome copies DNA into mRNA.'],
+  blank: ['The ____ is the powerhouse of the cell.', ['mitochondrion', 'nucleus', 'ribosome', 'lysosome']],
+  type: 'What does the electron transport chain pump across the inner membrane?',
+  match: [['Mitochondrion', 'Ribosome', 'Golgi apparatus', 'Nucleus', 'Lysosome'], ['Holds the cell’s DNA', 'Makes most of the cell’s ATP', 'Breaks down waste', 'Builds proteins from mRNA', 'Packages proteins for export']],
+  picks: { mc: 0, tf: 1, blank: 0, type: 'protons', match: { 0: 1, 1: 3, 2: 4 } },
+  // The results: 16 of 20 (the questions, as they were asked in sections: kind, words, statement, answer given, right answer).
+  rows: [
+    ['mc', 'What does the electron transport chain pump across the inner membrane?', '', 'Protons (H⁺)', 'Protons (H⁺)'], ['mc', 'Which organelle packages proteins for secretion?', '', 'Golgi apparatus', 'Golgi apparatus'],
+    ['mc', 'Which organelle makes most of the cell’s ATP?', '', '', 'Mitochondrion'], ['mc', 'What holds the cell’s DNA?', '', 'The nucleus', 'The nucleus'], ['mc', 'What builds proteins from mRNA?', '', 'Ribosome', 'Ribosome'],
+    ['mc', 'What breaks down waste in the cell?', '', 'Lysosome', 'Lysosome'], ['mc', 'Where does glycolysis happen?', '', 'In the cytoplasm', 'In the cytoplasm'], ['mc', 'What is the cell’s outer layer?', '', 'Membrane', 'Membrane'],
+    ['tf', 'True or false?', 'The Golgi apparatus makes most of the cell’s ATP.', 'False', 'False'], ['tf', 'True or false?', 'The ribosome copies DNA into mRNA.', 'True', 'False'],
+    ['tf', 'True or false?', 'The nucleus holds the cell’s DNA.', 'True', 'True'], ['tf', 'True or false?', 'Lysosomes build proteins.', 'False', 'False'],
+    ['blank', 'The ____ is the powerhouse of the cell.', '', 'mitochondrion', 'mitochondrion'], ['blank', 'DNA is copied in the ____.', '', 'nucleus', 'nucleus'],
+    ['match', 'Match each one to its answer.', '', '', '', [['Mitochondrion', 'Makes most of the cell’s ATP', 'Makes most of the cell’s ATP'], ['Ribosome', 'Builds proteins from mRNA', 'Builds proteins from mRNA'], ['Golgi apparatus', 'Breaks down waste', 'Packages proteins for export'], ['Nucleus', 'Holds the cell’s DNA', 'Holds the cell’s DNA'], ['Lysosome', 'Packages proteins for export', 'Breaks down waste']]],
+    ['match', 'Match each one to its answer.', '', '', '', [['Cytoplasm', 'The jelly inside a cell', 'The jelly inside a cell'], ['Membrane', 'The cell’s outer layer', 'The cell’s outer layer'], ['Vacuole', 'Stores water in a plant cell', 'Stores water in a plant cell'], ['Chloroplast', 'Where photosynthesis happens', 'Where photosynthesis happens']]],
+    ['type', 'Which organelle packages proteins for secretion?', '', 'golgi aparatus', 'Golgi apparatus'], ['type', 'What is the jelly inside a cell?', '', 'cytosol', 'Cytoplasm'],
+    ['type', 'Which sugar is in DNA?', '', 'deoxyribose', 'Deoxyribose'], ['type', 'What do ribosomes make?', '', 'proteins', 'Proteins']
+  ],
+  wrong: [3, 10, 15, 18],
+  // The deck page's and the folder's past results: day, "x of y", percent.
+  past: [['Sep 28', '16 of 20', 80], ['Sep 24', '14 of 20', 70], ['Sep 19', '11 of 20', 55]], explain: 'The cell’s ATP mostly comes from the mitochondrion, which uses the energy in food to charge ATP. The Golgi apparatus only packages proteins, and the nucleus holds the DNA.'
+};
 export default function testKit(c) {
   // (OCC_JS, OCC_BOXES, and CELL are read when a board is made, not now: build.mjs defines them further down.)
   const { svg, I, FONT, MONO, DB_JS, T } = c;
@@ -161,29 +187,7 @@ export default function testKit(c) {
   };
 
   // ---------- the logic (the canvas's sample, or the app's real test: web/db.js) ----------
-  const SAMPLE = {
-    name: 'Cell Biology', cards: 412, n: 20, answered: [1, 2, 4, 5, 6, 7, 8, 9, 10, 11, 12, 14], flagged: [5, 12], at: { mc: 3, tf: 10, blank: 13, match: 15, type: 18, submit: 20 },
-    mc: ['Which organelle packages proteins for secretion?', ['Golgi apparatus', 'Lysosome', 'Nucleus', 'Ribosome']],
-    tf: ['True or false?', 'The ribosome copies DNA into mRNA.'],
-    blank: ['The ____ is the powerhouse of the cell.', ['mitochondrion', 'nucleus', 'ribosome', 'lysosome']],
-    type: 'What does the electron transport chain pump across the inner membrane?',
-    match: [['Mitochondrion', 'Ribosome', 'Golgi apparatus', 'Nucleus', 'Lysosome'], ['Holds the cell’s DNA', 'Makes most of the cell’s ATP', 'Breaks down waste', 'Builds proteins from mRNA', 'Packages proteins for export']],
-    picks: { mc: 0, tf: 1, blank: 0, type: 'protons', match: { 0: 1, 1: 3, 2: 4 } },
-    // The results: 16 of 20 (the questions, as they were asked in sections: kind, words, statement, answer given, right answer).
-    rows: [
-      ['mc', 'What does the electron transport chain pump across the inner membrane?', '', 'Protons (H⁺)', 'Protons (H⁺)'], ['mc', 'Which organelle packages proteins for secretion?', '', 'Golgi apparatus', 'Golgi apparatus'],
-      ['mc', 'Which organelle makes most of the cell’s ATP?', '', '', 'Mitochondrion'], ['mc', 'What holds the cell’s DNA?', '', 'The nucleus', 'The nucleus'], ['mc', 'What builds proteins from mRNA?', '', 'Ribosome', 'Ribosome'],
-      ['mc', 'What breaks down waste in the cell?', '', 'Lysosome', 'Lysosome'], ['mc', 'Where does glycolysis happen?', '', 'In the cytoplasm', 'In the cytoplasm'], ['mc', 'What is the cell’s outer layer?', '', 'Membrane', 'Membrane'],
-      ['tf', 'True or false?', 'The Golgi apparatus makes most of the cell’s ATP.', 'False', 'False'], ['tf', 'True or false?', 'The ribosome copies DNA into mRNA.', 'True', 'False'],
-      ['tf', 'True or false?', 'The nucleus holds the cell’s DNA.', 'True', 'True'], ['tf', 'True or false?', 'Lysosomes build proteins.', 'False', 'False'],
-      ['blank', 'The ____ is the powerhouse of the cell.', '', 'mitochondrion', 'mitochondrion'], ['blank', 'DNA is copied in the ____.', '', 'nucleus', 'nucleus'],
-      ['match', 'Match each one to its answer.', '', '', '', [['Mitochondrion', 'Makes most of the cell’s ATP', 'Makes most of the cell’s ATP'], ['Ribosome', 'Builds proteins from mRNA', 'Builds proteins from mRNA'], ['Golgi apparatus', 'Breaks down waste', 'Packages proteins for export'], ['Nucleus', 'Holds the cell’s DNA', 'Holds the cell’s DNA'], ['Lysosome', 'Packages proteins for export', 'Breaks down waste']]],
-      ['match', 'Match each one to its answer.', '', '', '', [['Cytoplasm', 'The jelly inside a cell', 'The jelly inside a cell'], ['Membrane', 'The cell’s outer layer', 'The cell’s outer layer'], ['Vacuole', 'Stores water in a plant cell', 'Stores water in a plant cell'], ['Chloroplast', 'Where photosynthesis happens', 'Where photosynthesis happens']]],
-      ['type', 'Which organelle packages proteins for secretion?', '', 'golgi aparatus', 'Golgi apparatus'], ['type', 'What is the jelly inside a cell?', '', 'cytosol', 'Cytoplasm'],
-      ['type', 'Which sugar is in DNA?', '', 'deoxyribose', 'Deoxyribose'], ['type', 'What do ribosomes make?', '', 'proteins', 'Proteins']
-    ],
-    wrong: [3, 10, 15, 18], explain: 'The cell’s ATP mostly comes from the mitochondrion, which uses the energy in food to charge ATP. The Golgi apparatus only packages proteins, and the nucleus holds the DNA.'
-  };
+  const SAMPLE = TEST_SAMPLE;
 
   const logic = phone => `
 constructor(props) { super(props); this.state = {}; }
@@ -320,13 +324,13 @@ renderVals() { ${DB_JS}
 
   // ---------- the deck page's pieces (the Practice test button and past results) ----------
   // `testVals` goes in the deck board's values (it knows `db` and `dk`); the markup places them.
-  const deckJs = `const testVals = (() => { const rows = db.mock ? [{ day: 'Sep 28', line: '16 of 20', pct: '80%' }, { day: 'Sep 24', line: '14 of 20', pct: '70%' }, { day: 'Sep 19', line: '11 of 20', pct: '55%' }] : db.tests({ deckId: dk.id }).slice(0, 3).map(x => ({ day: x.day, line: x.line, pct: x.pct + '%' }));
+  const deckJs = `const testVals = (() => { const rows = db.mock ? ${JSON.stringify(TEST_SAMPLE.past)}.map(([day, line, pct]) => ({ day, line, pct: pct + '%' })) : db.tests({ deckId: dk.id }).slice(0, 3).map(x => ({ day: x.day, line: x.line, pct: x.pct + '%' }));
     return { testHref: db.mock ? 'WebTest.dc.html' : '/deck/' + dk.id + '/test', hasTests: rows.length > 0 && this.props.tests !== false, testRows: rows.map((x, i) => ({ ...x, sep: i ? '1px solid ' + t.line : 'none' })) }; })();`;
   const pastList = phone => `<sc-if value="{{hasTests}}" hint-placeholder-val="{{ true }}"><div style="display: flex; flex-direction: column; gap: 8px;"><span style="font-size: 13px; font-weight: 600; color: {{t.muted}};">Practice tests</span><div style="${phone ? '' : 'max-width: 560px; '}border-radius: ${phone ? 18 : 16}px; background: {{t.surf}}; padding: 2px ${phone ? 16 : 18}px;"><sc-for list="{{testRows}}" as="x" hint-placeholder-count="3"><div style="display: flex; align-items: center; gap: 16px; height: ${phone ? 44 : 40}px; border-top: {{x.sep}}; font-size: 14px;"><span style="flex-grow: 1;">{{x.day}}</span><span style="color: {{t.muted}};">{{x.line}}</span><span style="width: 48px; text-align: right; font-family: ${MONO}; font-weight: 600;">{{x.pct}}</span></div></sc-for></div></div></sc-if>`;
   const webButton = onCover => `<a href="{{testHref}}" style="height: 36px; padding: 0 16px; display: inline-flex; align-items: center; gap: 8px; border-radius: 999px; ${onCover} font-size: 14px; font-weight: 600;">${svg(I.file, 15, 2)}Practice test</a>`;
   const phoneButton = `<a href="{{testHref}}" style="height: 56px; flex-shrink: 0; border-radius: 999px; background: {{t.surf}}; display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 17px; font-weight: 600; white-space: nowrap;">${svg(I.file, 17, 2)}Practice test</a>`;
   // A folder's page: a button to start one over all its decks, and how the last one went.
-  const folderJs = `const testScope = folder ? { folderId: folder.id } : null, lastTest = !db.mock && testScope ? db.tests(testScope)[0] : db.mock && folder ? { day: 'Sep 28', line: '16 of 20', pct: 80 } : null;
+  const folderJs = `const testScope = folder ? { folderId: folder.id } : null, lastTest = !db.mock && testScope ? db.tests(testScope)[0] : db.mock && folder ? (([day, line, pct]) => ({ day, line, pct }))(${JSON.stringify(TEST_SAMPLE.past[0])}) : null;
   const testVals = { testHref: db.mock ? 'WebTest.dc.html' : folder ? '/library/folder/' + folder.id + '/test' : '', canTest: !!folder && decks.length > 0, hasLastTest: !!lastTest, lastTest: lastTest ? 'Last practice test: ' + lastTest.day + ' · ' + lastTest.line + ' · ' + lastTest.pct + '%' : '' };`;
   const folderLine = `<sc-if value="{{hasLastTest}}" hint-placeholder-val="{{ false }}"><div style="margin: -8px 0 0; font-size: 14px; color: {{t.muted}};">{{lastTest}}</div></sc-if>`;
   const folderWebPill = `<sc-if value="{{canTest}}" hint-placeholder-val="{{ true }}"><a href="{{testHref}}" class="sc-press" style="height: 36px; padding: 0 16px; display: inline-flex; align-items: center; justify-content: center; gap: 8px; border-radius: 999px; background: {{t.surf}}; color: {{t.text}}; font-size: 14px; font-weight: 600;">${svg(I.file, 16, 2)}Practice test</a></sc-if>`;

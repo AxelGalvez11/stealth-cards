@@ -267,7 +267,7 @@ private struct ReviewBody: View {
   private func topBar(_ rv: ReviewVM) -> some View {
     HStack(spacing: 12) {
       // X goes straight back to the deck's page (Today after a review of every deck); every grade is saved already.
-      RoundButton(icon: "close", label: "End review") { if set != nil { nav.closeFull() } else { nav.leave(to: deckId) } }
+      RoundButton(icon: "close", label: "End review") { if set != nil { nav.endSet() } else { nav.leave(to: deckId) } }
       HStack(spacing: 10) {
         if rv.prog == "bar" {
           GeometryReader { g in

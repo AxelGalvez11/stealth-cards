@@ -308,6 +308,8 @@ struct DeckScreen: View {
             .buttonStyle(.press)
             .frame(width: learnWidth)
           }
+          TestStartButton(scope: .deck(d.id))
+          TestPastList(scope: .deck(d.id))
           let list = board + "/cards", ids = d.rows.map(\.id)
           VStack(spacing: 0) {
             ForEach(d.rows) { r in
