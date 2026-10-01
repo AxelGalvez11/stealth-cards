@@ -411,8 +411,9 @@ export async function shareDeck(uid, me, deckId, o = {}) {
   return { id: d.share.id, vis, slug: d.share.slug };
 }
 // The labels a deck's sharing settings send: `level`, `subject`, and the school (`schoolId` from the list, or `school` typed). A school
-// typed on a high school deck is left out, like a person's (no high school names). `start` is the owner's profile when this is the
-// first time the deck goes public: its school becomes the deck's, if they show it.
+// typed on a high school deck is left out, like a person's (no high school names), and a high school deck doesn't start with its owner's
+// college. `start` is the owner's profile when this is the first time the deck goes public: its school becomes the deck's, if they
+// show it.
 async function deckLabels(o, was, start) {
   const out = {};
   if ('level' in o) out.level = levelOf(o.level);
@@ -426,7 +427,7 @@ async function deckLabels(o, was, start) {
       out.school_id = row[0]; out.school = row[1];
     } else { out.school_id = ''; out.school = oneLine(o.school, 60); }
     if (!out.school_id && ('level' in out ? out.level : was && was.level) === 'highschool') out.school = '';
-  } else if (start && start.school_show && start.school && start.level !== 'highschool') Object.assign(out, { school_id: start.school_id || '', school: start.school });
+  } else if (start && start.school_show && start.school && start.level !== 'highschool' && ('level' in out ? out.level : was && was.level) !== 'highschool') Object.assign(out, { school_id: start.school_id || '', school: start.school });
   if (Object.keys(out).length) out.labeled = true;
   return out;
 }
