@@ -207,6 +207,7 @@ struct LibraryScreen: View {
   @State private var pick = ""
   @State private var shown = 60
   @State private var confirmRemove = false
+  @Namespace private var levelPill
 
   var body: some View {
     let decks = store.libraryDecks(), folders = store.libraryFolders(decks)
@@ -246,7 +247,7 @@ struct LibraryScreen: View {
     }
     .scrollDismissesKeyboard(.immediately)
     .ignoresSafeArea(edges: .top)
-    .overlayPreferenceValue(MenuAnchors.self) { anchors in menus(anchors, decks, folders) }
+    .overlayPreferenceValue(MenuAnchors.self) { anchors in menus(anchors, decks, folders).animation(Motion.pop, value: menu) }
     .confirmationDialog("Remove the folder “\(folder?.name ?? "")”?", isPresented: $confirmRemove, titleVisibility: .visible) {
       // Back to the Library (the page also goes back by itself once its folder is gone).
       Button("Remove folder", role: .destructive) { if let id = folderId { Task { await store.deleteFolder(id); if nav.path.last == .folder(id) { nav.back() } } } }
@@ -531,7 +532,7 @@ struct LibraryScreen: View {
           }
           .foregroundStyle(on ? t.text : t.muted)
           .padding(.horizontal, 6).frame(maxWidth: .infinity).frame(height: 34)
-          .background(Capsule().fill(on ? t.bg : .clear).shadow(color: .black.opacity(on ? 0.14 : 0), radius: 1.5, x: 0, y: 1))
+          .background { if on { Capsule().fill(t.bg).shadow(color: .black.opacity(0.14), radius: 1.5, x: 0, y: 1).matchedGeometryEffect(id: "pill", in: levelPill) } }
           .contentShape(Capsule())
         }
         .buttonStyle(.plain)
@@ -539,6 +540,7 @@ struct LibraryScreen: View {
         .accessibilityAddTraits(on ? .isSelected : [])
       }
     }
+    .animation(Motion.knob, value: level)
     .padding(4)
     .background(Capsule().fill(t.surf))
   }
@@ -618,7 +620,7 @@ struct LibraryScreen: View {
           }
         }
       }
-      .transition(.opacity)
+      .popTransition()
     }
   }
 

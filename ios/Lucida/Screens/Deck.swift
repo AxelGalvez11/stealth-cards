@@ -225,7 +225,7 @@ struct DeckScreen: View {
           Spacer()
           // A deck you share: its page. One you study from someone: Suggest a change instead of New card.
           if let sh = d.sharing.shared { CoverButton(icon: "globe", label: sh.label, size: 40) { nav.deckPage(sh.url) } }
-          CoverButton(icon: "gear", label: "Deck settings") { withAnimation(.out(0.35)) { nav.sheet = .deckSettings(d.id) } }
+          CoverButton(icon: "gear", label: "Deck settings") { withAnimation(Motion.sheet) { nav.sheet = .deckSettings(d.id) } }
           if !d.rows.isEmpty { CoverButton(icon: "search", label: "Search") {} }
           if !d.sharing.readOnly { CoverButton(icon: "plus", label: "New card") { nav.newCard(deckId: d.id) } }
           if d.sharing.readOnly, let lk = d.sharing.link { CoverButton(icon: "message", label: "Suggest a change", size: 40) { nav.deckPage(lk.url, suggest: "1") } }
@@ -267,7 +267,7 @@ struct DeckScreen: View {
           if d.sharing.linked, let lk = d.sharing.link { fromRow(d, lk) }
           let upd = d.sharing.isCopy ? max(store.deckUpdates(d.id).count, d.sharing.link?.pending ?? 0) : 0
           if upd > 0, let lk = d.sharing.link {
-            Button { withAnimation(.out(0.35)) { nav.sheet = .deckUpdates(d.id) } } label: {
+            Button { withAnimation(Motion.sheet) { nav.sheet = .deckUpdates(d.id) } } label: {
               HStack(spacing: 10) {
                 Text(lk.owner.name + " changed " + plural(upd, "card")).css(15, .semibold).foregroundStyle(t.text).lineLimit(1).frame(maxWidth: .infinity, alignment: .leading)
                 Text("See changes").css(14, .semibold).foregroundStyle(t.muted).fixedSize()

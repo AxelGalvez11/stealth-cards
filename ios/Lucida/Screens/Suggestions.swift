@@ -211,7 +211,7 @@ struct SuggestionsScreen: View {
       WhoAvatar(who: c.who, size: 40)
       // (The browser rounds these lines 20 high, 16 across, a point higher than UIKit does: measured against the board.)
       CSSText(c.head, 16, .semibold, lh: 1.25, color: t.text).frame(maxWidth: .infinity, alignment: .leading).offset(y: -1)
-      if let id = c.reportId { QuietButton(label: "Report") { withAnimation(.out(0.35)) { nav.sheet = .report(kind: "suggestion", id: id, name: c.reportName) } } }
+      if let id = c.reportId { QuietButton(label: "Report") { withAnimation(Motion.sheet) { nav.sheet = .report(kind: "suggestion", id: id, name: c.reportName) } } }
     }
     if !c.message.isEmpty { CSSText(c.message, 15, lh: 1.4, color: t.muted).frame(maxWidth: .infinity, alignment: .leading) }
     if c.many {

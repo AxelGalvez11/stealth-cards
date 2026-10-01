@@ -291,7 +291,9 @@ struct WelcomeScreen: View {
         copied = true
         connectSoon()
       } label: {
-        Text(copied ? "Copied" : "Copy").css(13, .semibold).foregroundStyle(t.invText).padding(.horizontal, 16).frame(height: 40).background(Capsule().fill(t.inv))
+        ZStack { Text(copied ? "Copied" : "Copy").css(13, .semibold).foregroundStyle(t.invText).id(copied).popTransition() }
+          .animation(Motion.pop, value: copied)
+          .padding(.horizontal, 16).frame(height: 40).background(Capsule().fill(t.inv))
       }
       .buttonStyle(.press)
     }
@@ -568,7 +570,7 @@ struct WelcomeScreen: View {
   private func finish() {
     if live { store.setSetting(["welcomed": true]) }
     nav.pick(.today)
-    withAnimation(.out(0.35)) { store.welcoming = false }
+    withAnimation(Motion.sheet) { store.welcoming = false }
   }
 
   /// A file you picked: its cards, into decks named for the file (vocab.csv makes "vocab") unless it names its own.

@@ -72,7 +72,7 @@ struct LearnStartSheet: View {
         Button(action: nav.close) { Text("Cancel").css(15, .semibold).foregroundStyle(t.text).frame(maxWidth: .infinity).frame(height: 52).background(Capsule().fill(t.surf)) }
           .buttonStyle(.press)
         Button {
-          if store.demo || store.startLearn(deckId, set: cur.id, kinds: kinds) { nav.sheet = nil; withAnimation(.out(0.35)) { nav.full = .learn(deckId) } }
+          if store.demo || store.startLearn(deckId, set: cur.id, kinds: kinds) { nav.sheet = nil; withAnimation(Motion.sheet) { nav.full = .learn(deckId) } }
         } label: {
           HStack(spacing: 8) { Icon("sparkle", 16, 2); Text("Start learning").css(15, .semibold) }
             .foregroundStyle(t.invText).frame(maxWidth: .infinity).frame(height: 52).background(Capsule().fill(t.inv))
@@ -154,7 +154,7 @@ private struct LearnBody: View {
       }
       .foregroundStyle(look.ink)
       if settingsOpen {
-        SheetOverlay(top: nil, close: { withAnimation(.out(0.3)) { settingsOpen = false } }) { settingsSheet }.zIndex(2)
+        SheetOverlay(top: nil, close: { withAnimation(Motion.leave) { settingsOpen = false } }) { settingsSheet }.zIndex(2)
       }
     }
     .background(t.bg)
@@ -165,7 +165,7 @@ private struct LearnBody: View {
   private var settingsSheet: some View {
     VStack(alignment: .leading, spacing: 18) {
       Grabber().frame(maxWidth: .infinity)
-      HStack { Text("Learn settings").css(18, .semibold); Spacer(); SheetDone { withAnimation(.out(0.3)) { settingsOpen = false } } }
+      HStack { Text("Learn settings").css(18, .semibold); Spacer(); SheetDone { withAnimation(Motion.leave) { settingsOpen = false } } }
       BgChooser(deckId: deckId)
     }
     .foregroundStyle(t.text)
@@ -207,13 +207,13 @@ private struct LearnBody: View {
     let ex = store.demo ? ExplainVM(on: true, text: exMock ? sample : "", note: exMock ? "2 free explanations left today" : "") : store.explainOf(v.id)
     if answered && ex.on && !v.id.isEmpty {
       if exFor == v.id {
-        ExplainPanel(ex: ex, look: .learn(look)) { withAnimation(.out(0.25)) { exFor = nil } }
+        ExplainPanel(ex: ex, look: .learn(look)) { withAnimation(Motion.pop) { exFor = nil } }
           .padding(.vertical, 14).padding(.horizontal, 16)
           .background(RoundedRectangle(cornerRadius: 18, style: .continuous).fill(look.card).learnShadow(look.shadow))
-          .transition(.opacity.combined(with: .offset(y: 6)))
+          .popTransition()
       } else {
         ExplainButton(label: ex.label, look: .learn(look)) {
-          withAnimation(.out(0.25)) { exFor = v.id }
+          withAnimation(Motion.pop) { exFor = v.id }
           if store.demo { exMock = true } else if ex.text.isEmpty { Task { await store.explain(v.id, question: v.text) } }
         }
       }
@@ -227,7 +227,7 @@ private struct LearnBody: View {
     return HStack(spacing: 12) {
       Button { nav.leave(to: deckId) } label: { Icon("close", 18, 2).foregroundStyle(k.ink).frame(width: 44, height: 44).background(Circle().fill(k.chip)) }
         .buttonStyle(.press).accessibilityLabel("Stop for now")
-      Button { withAnimation(.out(0.35)) { settingsOpen.toggle() } } label: {
+      Button { withAnimation(Motion.sheet) { settingsOpen.toggle() } } label: {
         Icon("gear", 18, 2).foregroundStyle(settingsOpen ? k.btnFg : k.ink).frame(width: 44, height: 44).background(Circle().fill(settingsOpen ? k.btn : k.chip))
       }
       .buttonStyle(.press).accessibilityLabel("Learn settings")
@@ -357,7 +357,7 @@ private struct LearnBody: View {
             from(card?.0 ?? (v.cardText.isEmpty ? v.text : v.cardText), card?.1 ?? v.answer)
           }
           .padding(.horizontal, 4)
-          .transition(.opacity.combined(with: .offset(y: 6)))
+          .popTransition()
         }
       }
     }, bottom: {

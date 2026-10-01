@@ -140,7 +140,7 @@ struct SettingsScreen: View {
           Button { nav.wantsEdit = true; nav.profile("") } label: { row("Edit profile") { value("") } }.buttonStyle(.plain)
           divider
           if vst.verified.isEmpty {
-            Button { withAnimation(.out(0.35)) { nav.sheet = .verify } } label: { row("Get verified") { value(vst.open ? "Waiting for review" : "") } }.buttonStyle(.plain)
+            Button { withAnimation(Motion.sheet) { nav.sheet = .verify } } label: { row("Get verified") { value(vst.open ? "Waiting for review" : "") } }.buttonStyle(.plain)
           } else {
             let label = vst.verified == "school" ? "Verified school" : "Verified teacher"
             row(label) { Icon("shield", 20, 2).foregroundStyle(Color(hex: 0x3E63DD)) }
@@ -323,6 +323,7 @@ struct SettingsScreen: View {
 struct PhotoChoices: View {
   @Environment(\.theme) private var t
   @EnvironmentObject private var store: Store
+  @Namespace private var pill
   @State private var pickingPhoto = false
   var body: some View {
     let choice = store.photoChoice, color = store.avatarColor
@@ -335,12 +336,13 @@ struct PhotoChoices: View {
           Button { if id == "yours" && !store.hasYourPhoto { pickingPhoto = true } else { store.setSetting(["photo": id]) } } label: {
             Text(label).css(13, .semibold).lineLimit(1).foregroundStyle(on ? t.invText : t.muted)
               .padding(.horizontal, 8).frame(maxWidth: .infinity).frame(height: 30)
-              .background(Capsule().fill(on ? t.inv : .clear)).contentShape(Capsule())
+              .background { if on { Capsule().fill(t.inv).matchedGeometryEffect(id: "pill", in: pill) } }.contentShape(Capsule())
           }
           .buttonStyle(.plain)
           .accessibilityAddTraits(on ? .isSelected : [])
         }
       }
+      .animation(Motion.knob, value: choice)
       .padding(3)
       .background(Capsule().fill(t.bg))
       switch choice {

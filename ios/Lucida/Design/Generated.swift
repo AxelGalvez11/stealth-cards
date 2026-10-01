@@ -86,6 +86,10 @@ enum Generated {
   static let auraLight = Aura(base: RGBA(0xFFFFFF), lit: RGBA(0xFFFFFF), deep: RGBA(0xC6D3F2), vig: 0.8, grain: 0.22, multiply: true, slope: 2.2, intercept: -0.1, card: [Shadow(x: 0, y: 0, blur: 0, spread: 1, color: RGBA(r: 0, g: 0, b: 0, a: 0.06)), Shadow(x: 0, y: 2, blur: 6, spread: 0, color: RGBA(r: 0, g: 0, b: 0, a: 0.04)), Shadow(x: 0, y: 32, blur: 64, spread: -24, color: RGBA(r: 0, g: 0, b: 0, a: 0.24))])
   static let auraDark = Aura(base: RGBA(0x131419), lit: RGBA(0x41475B), deep: RGBA(0x0A0B10), vig: 0.55, grain: 0.5, multiply: false, slope: 3, intercept: -1, card: [Shadow(x: 0, y: 0, blur: 0, spread: 1, color: RGBA(r: 255, g: 255, b: 255, a: 0.08)), Shadow(x: 0, y: 32, blur: 64, spread: -24, color: RGBA(r: 0, g: 0, b: 0, a: 0.8))])
 
+  /// The motion timings the web app shares (design/motion.mjs): how far a menu or pop-up slides, how long each kind of
+  /// motion takes (seconds), and the one curve they ease out on. Design/Motion.swift turns them into animations.
+  static let motion = MotionTimings(ease: (0.2, 0.8, 0.2, 1), slide: 10, pop: 0.22, sheet: 0.25, leave: 0.18, knob: 0.2, fade: 0.18)
+
   static let paletteNames: [String] = ["Iris","Apricot","Lilac","Mint","Aqua","Rose","Lemon","Dusk","Grove","Forest","Ember","Meadow","Ocean","Sun"]
   static let palettes: [String: Palette] = [
     "Iris": Palette(angle: 102, stops: [(RGBA(0xC9CCFC), 0), (RGBA(0x9CA2FE), 0.17), (RGBA(0xA9B9FF), 0.32), (RGBA(0xBFCEFF), 0.52), (RGBA(0xBACFFF), 0.7), (RGBA(0x8EC5FC), 0.86), (RGBA(0x33B3EC), 1)],

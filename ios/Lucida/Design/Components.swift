@@ -83,9 +83,10 @@ struct Eyebrow: View {
 enum Tab: String, CaseIterable { case today = "Today", library = "Library", discover = "Discover", stats = "Stats", profile = "Profile" }
 
 /// The floating tab bar: a gray pill, 64 tall, 16 in from the sides and 28 up from the bottom; the current tab is a
-/// black pill (none on someone else's profile).
+/// black pill that slides to the tab you pick (none on someone else's profile).
 struct TabBar: View {
   @Environment(\.theme) private var t
+  @Namespace private var pill
   let active: Tab?
   let pick: (Tab) -> Void
   private let icons: [Tab: String] = [.today: "today", .library: "decks", .discover: "compass", .stats: "stats"]
@@ -101,7 +102,7 @@ struct TabBar: View {
           }
           .foregroundStyle(on ? t.invText : t.muted)
           .frame(maxWidth: .infinity, maxHeight: .infinity)
-          .background(Capsule().fill(on ? t.inv : .clear))
+          .background { if on { Capsule().fill(t.inv).matchedGeometryEffect(id: "pill", in: pill) } }
           .contentShape(Capsule())
         }
         .buttonStyle(.plain)
@@ -109,6 +110,7 @@ struct TabBar: View {
         .accessibilityAddTraits(on ? .isSelected : [])
       }
     }
+    .animation(Motion.knob, value: active)
     .padding(6)
     .frame(height: 64)
     .background(Capsule().fill(t.surf))
@@ -157,11 +159,10 @@ struct MeshCard<Content: View>: View {
 }
 
 /// The on/off switch (48 x 28; black when on). It flips the moment it's tapped (the change saves after, Store.saveNow):
-/// the knob springs across with a slight overshoot while the colors fade, like the canvas's sc-sw. With Reduce Motion
-/// the knob doesn't slide; the colors still fade.
+/// the knob slides across (design/motion.mjs: 200 ms, eased out, no bounce) while the colors fade, like the canvas's sc-sw.
+/// With Reduce Motion the knob doesn't slide; the colors still fade. A tap gives a selection haptic.
 struct Toggle48: View {
   @Environment(\.theme) private var t
-  @Environment(\.accessibilityReduceMotion) private var still
   let on: Bool
   var enabled = true
   let label: String
@@ -188,8 +189,8 @@ struct Toggle48: View {
     .buttonStyle(.press)
     .disabled(!enabled)
     .onChange(of: on) { _, v in
-      withAnimation(Toggle48.fade) { lit = v }
-      withAnimation(still ? nil : Toggle48.spring) { knob = v }
+      withAnimation(.easeOut(duration: Motion.timings.knob)) { lit = v }
+      withAnimation(Motion.knob) { knob = v }
     }
     .accessibilityLabel(label)
     .accessibilityValue(on ? "On" : "Off")
@@ -197,9 +198,11 @@ struct Toggle48: View {
   }
 }
 
-/// A row of choices on a gray track; the chosen one is white with a soft shadow (or black, `inverted`).
+/// A row of choices on a gray track; the chosen one is white with a soft shadow (or black, `inverted`). The pill slides to the
+/// choice you tap (design/motion.mjs), and a tap gives a selection haptic.
 struct Segmented: View {
   @Environment(\.theme) private var t
+  @Namespace private var pill
   let options: [(id: String, label: String)]
   let current: String
   var height: CGFloat = 34
@@ -222,13 +225,16 @@ struct Segmented: View {
             .padding(.horizontal, hPad)
             .frame(maxWidth: equal ? .infinity : nil)
             .frame(height: height)
-            .background(Capsule().fill(on ? (inverted ? t.inv : t.bg) : .clear).shadow(color: .black.opacity(on && !inverted ? 0.14 : 0), radius: 1.5, x: 0, y: 1))
+            .background {
+              if on { Capsule().fill(inverted ? t.inv : t.bg).shadow(color: .black.opacity(inverted ? 0 : 0.14), radius: 1.5, x: 0, y: 1).matchedGeometryEffect(id: "pill", in: pill) }
+            }
             .contentShape(Capsule())
         }
         .buttonStyle(.plain)
         .accessibilityAddTraits(on ? .isSelected : [])
       }
     }
+    .animation(Motion.knob, value: current)
     .padding(pad)
     .background(Capsule().fill(track ?? t.surf))
   }
@@ -255,7 +261,7 @@ struct SheetOverlay<Content: View>: View {
           if v.translation.height > 120 || v.predictedEndTranslation.height > 300 { close() }
           withAnimation(.out(0.3)) { drag = 0 }
         })
-        .transition(.move(edge: .bottom))
+        .sheetTransition()
     }
     .ignoresSafeArea()
   }

@@ -1,6 +1,7 @@
 // Copies what the iPhone app (ios/) shares with the design canvas into Swift: the theme colors, the icons, the gradient
 // palettes (plus the site's Midnight, for the Learn sheet's deep top), the onboarding's icons and moving background, tag colors, the sign-in wall's cards, and the canvas's sample data
-// (its sample sound's waveform, Pro's deep stats, and the study network's sample: net-sample.mjs), and the themes' list. Run it after changing any of those.
+// (its sample sound's waveform, Pro's deep stats, and the study network's sample: net-sample.mjs), the themes' list, and the motion
+// timings (motion.mjs). Run it after changing any of those.
 import { readFileSync, writeFileSync } from 'node:fs';
 import { PALETTES, PALETTE_NAMES, SITE_PALETTES } from './surfaces.mjs';
 import { WALL_CARDS } from './wall.mjs';
@@ -8,6 +9,7 @@ import { SAMPLE, SAMPLE_WAVE, SAMPLE_INSIGHTS } from './mock.mjs';
 import { NET_SAMPLE } from './net-sample.mjs';
 import { G_LOGO, APPLE_LOGO } from './logos.mjs';
 import { THEMES } from '../web/themes/index.js';
+import { MOTION } from './motion.mjs';
 
 const OUT = new URL('../ios/Lucida/Design/Generated.swift', import.meta.url);
 const src = readFileSync(new URL('./build.mjs', import.meta.url), 'utf8');
@@ -86,6 +88,10 @@ ${Object.entries(I).map(([k, v]) => `    ${str(k)}: ${str(v)}`).join(',\n')}
 
   /// The onboarding's moving background (design/build.mjs OB_AURA), light and dark.
 ${['light', 'dark'].map(m => { const a = OB_AURA[m]; return `  static let aura${m[0].toUpperCase() + m.slice(1)} = Aura(base: ${color(a.base)}, lit: ${color(a.lit)}, deep: ${color(a.deep)}, vig: ${a.vig}, grain: ${+a.grain}, multiply: ${a.blend === 'multiply'}, slope: ${+a.gs}, intercept: ${+a.gi}, card: ${shadow(a.card)})`; }).join('\n')}
+
+  /// The motion timings the web app shares (design/motion.mjs): how far a menu or pop-up slides, how long each kind of
+  /// motion takes (seconds), and the one curve they ease out on. Design/Motion.swift turns them into animations.
+  static let motion = MotionTimings(ease: (${MOTION.ease.join(', ')}), slide: ${MOTION.slide}, pop: ${MOTION.pop}, sheet: ${MOTION.sheet}, leave: ${MOTION.leave}, knob: ${MOTION.knob}, fade: ${MOTION.fade})
 
   static let paletteNames: [String] = ${str(PALETTE_NAMES)}
   static let palettes: [String: Palette] = [

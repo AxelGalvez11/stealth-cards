@@ -49,7 +49,7 @@ struct ClassScreen: View {
     }
     .ignoresSafeArea(edges: .top)
     // A ⋯ menu sits in the screen beside its button, so it can keep clear of the sides and the tab bar; scrolling closes it.
-    .overlayPreferenceValue(ClassMenuAnchors.self) { anchors in menuOverlay(anchors, k) }
+    .overlayPreferenceValue(ClassMenuAnchors.self) { anchors in menuOverlay(anchors, k).animation(Motion.pop, value: menu) }
     .onScrollPhaseChange { _, phase in if menu != nil && (phase == .interacting || phase == .decelerating) { menu = nil } }
     .toolbar(.hidden, for: .navigationBar)
     .debugScroll()
@@ -589,7 +589,7 @@ struct ClassScreen: View {
         }
         .frame(width: g.size.width, height: g.size.height, alignment: .topLeading)
       }
-      .transition(.opacity)
+      .popTransition()
     }
   }
 

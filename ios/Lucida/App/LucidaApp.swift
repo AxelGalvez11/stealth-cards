@@ -402,7 +402,7 @@ struct MainView: View {
       DragGhost()
       MoveTray()
       if let s = nav.sheet { SheetHost(kind: s).zIndex(5) }
-      if let f = nav.full { FullHost(kind: f).zIndex(6).transition(.move(edge: .bottom)) }
+      if let f = nav.full { FullHost(kind: f).zIndex(6).sheetTransition() }
       // The welcome after your first sign-in, over everything until it's done or skipped.
       if store.welcoming { WelcomeScreen().zIndex(10).transition(.opacity) }
     }

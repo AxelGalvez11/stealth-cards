@@ -491,6 +491,7 @@ struct EditorSheet: View {
 /// "What to hide": Hide one or Hide all, both as wide as the wider (a grid of equal columns on the canvas).
 private struct HideSegmented: View {
   @Environment(\.theme) private var t
+  @Namespace private var pill
   let current: String
   let pick: (String) -> Void
   var body: some View {
@@ -500,13 +501,14 @@ private struct HideSegmented: View {
         Button { pick(id) } label: {
           Text(label).css(13, .semibold).lineLimit(1).foregroundStyle(on ? t.text : t.muted)
             .padding(.horizontal, 10).frame(maxWidth: .infinity).frame(height: 34)
-            .background(Capsule().fill(on ? t.bg : .clear).shadow(color: .black.opacity(on ? 0.12 : 0), radius: 1.5, x: 0, y: 1))
+            .background { if on { Capsule().fill(t.bg).shadow(color: .black.opacity(0.12), radius: 1.5, x: 0, y: 1).matchedGeometryEffect(id: "pill", in: pill) } }
             .contentShape(Capsule())
         }
         .buttonStyle(.plain)
         .accessibilityAddTraits(on ? .isSelected : [])
       }
     }
+    .animation(Motion.knob, value: current)
     .padding(4)
     .background(Capsule().fill(t.surf))
     .accessibilityElement(children: .contain)

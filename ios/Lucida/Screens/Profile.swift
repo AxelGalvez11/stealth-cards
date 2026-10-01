@@ -102,7 +102,7 @@ struct ProfileScreen: View {
         if let pr { page(pr, h: h, isSelf: isSelf) }
       }
       .padding(.horizontal, 20).padding(.top, Screen.top(64)).padding(.bottom, 120)
-      .overlayPreferenceValue(PinAnchors.self) { anchors in pinMenu(anchors, pr, h: h) }
+      .overlayPreferenceValue(PinAnchors.self) { anchors in pinMenu(anchors, pr, h: h).animation(Motion.pop, value: menu) }
     }
     .ignoresSafeArea(edges: .top)
     .toolbar(.hidden, for: .navigationBar)
@@ -149,7 +149,7 @@ struct ProfileScreen: View {
         .frame(maxWidth: .infinity, alignment: .leading)
       if ok { RoundButton(icon: "share", label: "Share profile") { share(h) } }
       if isSelf { RoundButton(icon: "gear", label: "Settings") { nav.push(.settings) } }
-      if ok, !isSelf, let report { QuietButton(label: "Report") { withAnimation(.out(0.35)) { nav.sheet = .report(kind: "profile", id: report.handle, name: report.name) } } }
+      if ok, !isSelf, let report { QuietButton(label: "Report") { withAnimation(Motion.sheet) { nav.sheet = .report(kind: "profile", id: report.handle, name: report.name) } } }
     }
     .frame(minHeight: 44)
   }
@@ -304,7 +304,7 @@ struct ProfileScreen: View {
           .offset(x: x, y: r.minY + 48)
         }
       }
-      .transition(.opacity)
+      .popTransition()
     }
   }
 

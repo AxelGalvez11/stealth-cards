@@ -159,7 +159,6 @@ struct ClassTile: View {
 /// didn't work (No class has that code…) shows under the fields.
 struct ClassPopup: View {
   @Environment(\.theme) private var t
-  @Environment(\.accessibilityReduceMotion) private var still
   @EnvironmentObject private var store: Store
   @EnvironmentObject private var nav: Nav
   let form: ClassForm
@@ -178,7 +177,7 @@ struct ClassPopup: View {
     let action: String = { switch form { case .new: return "Create"; case .join: return "Join"; case .rename: return "Save" } }()
     GeometryReader { g in
       ZStack(alignment: .top) {
-        t.dim.onTapGesture(perform: close).opacity(shown ? 1 : 0)
+        t.dim.onTapGesture(perform: close).opacity(shown ? 1 : 0).animation(Motion.fade, value: shown)
         VStack(alignment: .leading, spacing: 14) {
           Text(title).css(22, .semibold, ls: -0.02).line(22).accessibilityAddTraits(.isHeader)
           if join {
@@ -213,8 +212,8 @@ struct ClassPopup: View {
         .background(RoundedRectangle(cornerRadius: 28, style: .continuous).fill(t.bg))
         .padding(.horizontal, 16)
         .padding(.top, (g.size.height * 0.12).rounded())
-        // It rises in (.sc-pop).
-        .opacity(shown ? 1 : 0).scaleEffect(shown ? 1 : 0.97).offset(y: shown ? 0 : 12)
+        // It slides up and fades in like every pop-up (Design/Motion.swift).
+        .opacity(shown ? 1 : 0).offset(y: shown ? 0 : Motion.slide).animation(Motion.pop, value: shown)
         .accessibilityElement(children: .contain)
         .accessibilityAddTraits(.isModal)
       }
@@ -226,7 +225,7 @@ struct ClassPopup: View {
       case .join: if store.demo { code = "BIOKTZ" }
       case .rename(_, let n, let s): name = n; school = s
       }
-      withAnimation(still ? nil : .out(0.26)) { shown = true }
+      shown = true
       DispatchQueue.main.async { focused = true }
     }
   }

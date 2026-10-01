@@ -207,7 +207,7 @@ private struct ReviewBody: View {
       .padding(.top, Screen.top(60)).padding(.horizontal, 16).padding(.bottom, 34)
       .ignoresSafeArea()
       if settingsOpen {
-        SheetOverlay(top: nil, close: { withAnimation(.out(0.3)) { settingsOpen = false } }) { settingsSheet(rv) }.zIndex(2)
+        SheetOverlay(top: nil, close: { withAnimation(Motion.leave) { settingsOpen = false } }) { settingsSheet(rv) }.zIndex(2)
       }
       if pileDraft != nil { newPile(rv).zIndex(3) }
     }
@@ -243,7 +243,7 @@ private struct ReviewBody: View {
       if exFor == id {
         GeometryReader { g in
           CappedScroll(max: g.size.height * 0.72) {
-            ExplainPanel(ex: ex, look: .card(t)) { withAnimation(.out(0.25)) { exFor = nil } }
+            ExplainPanel(ex: ex, look: .card(t)) { withAnimation(Motion.pop) { exFor = nil } }
               .padding(.vertical, 14).padding(.horizontal, 16)
           }
           .background(RoundedRectangle(cornerRadius: 20, style: .continuous).fill(t.bg))
@@ -252,10 +252,10 @@ private struct ReviewBody: View {
           .padding(10)
           .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
         }
-        .transition(.opacity.combined(with: .offset(y: 6)))
+        .popTransition()
       } else {
         ExplainButton(label: ex.label) {
-          withAnimation(.out(0.25)) { exFor = id }
+          withAnimation(Motion.pop) { exFor = id }
           if store.demo { exMock = true } else if ex.text.isEmpty { Task { await store.explain(id, question: "") } }
         }
         .padding(12)
@@ -291,7 +291,7 @@ private struct ReviewBody: View {
       }
       .frame(maxWidth: .infinity)
       RoundButton(icon: "sliders", label: "Review settings", bg: settingsOpen ? t.inv : t.surf, fg: settingsOpen ? t.invText : t.text) {
-        withAnimation(.out(0.35)) { settingsOpen.toggle() }
+        withAnimation(Motion.sheet) { settingsOpen.toggle() }
       }
     }
   }
@@ -375,7 +375,7 @@ private struct ReviewBody: View {
   private func settingsSheet(_ rv: ReviewVM) -> some View {
     VStack(alignment: .leading, spacing: 18) {
       Grabber().frame(maxWidth: .infinity)
-      HStack { Text("Review settings").css(18, .semibold); Spacer(); SheetDone { withAnimation(.out(0.3)) { settingsOpen = false } } }
+      HStack { Text("Review settings").css(18, .semibold); Spacer(); SheetDone { withAnimation(Motion.leave) { settingsOpen = false } } }
       VStack(alignment: .leading, spacing: 8) {
         Text("Grade with").css(13, .semibold)
         Segmented(options: [("four", "4 grades"), ("binary", "✓ / ✗"), ("piles", "Piles")], current: rv.mode, hPad: 8) { store.updateDeck(rv.deckId, ["grading": $0]) }
