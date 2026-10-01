@@ -8,7 +8,7 @@
    640
   ],
   "scale": 1.619047619047619,
-  "hash": "594756596b",
+  "hash": "f74832401a",
   "width": 1360,
   "height": 1036,
   "bytes": 33252
@@ -22,7 +22,7 @@
    640
   ],
   "scale": 1.619047619047619,
-  "hash": "01e0e7a37a",
+  "hash": "d2cd97dec0",
   "width": 1360,
   "height": 1036,
   "bytes": 53198
@@ -36,7 +36,7 @@
    480
   ],
   "scale": 2,
-  "hash": "68776a4dff",
+  "hash": "809e99d9af",
   "width": 780,
   "height": 960,
   "bytes": 26120
@@ -50,7 +50,7 @@
    480
   ],
   "scale": 2,
-  "hash": "cc4cc08eed",
+  "hash": "c3b91a496a",
   "width": 780,
   "height": 960,
   "bytes": 33324
@@ -64,7 +64,7 @@
    640
   ],
   "scale": 1.446808510638298,
-  "hash": "ebe0efaf57",
+  "hash": "36ded10723",
   "width": 1360,
   "height": 926,
   "bytes": 67438
@@ -78,7 +78,7 @@
    640
   ],
   "scale": 1.446808510638298,
-  "hash": "9d7465ed3b",
+  "hash": "fe32263cb4",
   "width": 1360,
   "height": 926,
   "bytes": 125200
@@ -92,7 +92,7 @@
    390
   ],
   "scale": 2,
-  "hash": "db0aac40ca",
+  "hash": "b895ecd7ab",
   "width": 780,
   "height": 780,
   "bytes": 47168
@@ -106,7 +106,7 @@
    390
   ],
   "scale": 2,
-  "hash": "424bdef2ef",
+  "hash": "5bbaa82bb3",
   "width": 780,
   "height": 780,
   "bytes": 60308
@@ -120,10 +120,10 @@
    590
   ],
   "scale": 2,
-  "hash": "6f925fb899",
+  "hash": "18363a70e6",
   "width": 1280,
   "height": 1180,
-  "bytes": 147958
+  "bytes": 144252
  },
  "setup-dark.webp": {
   "board": "WebQuizStart",
@@ -134,10 +134,10 @@
    590
   ],
   "scale": 2,
-  "hash": "9ce7e82daf",
+  "hash": "c79c4de503",
   "width": 1280,
   "height": 1180,
-  "bytes": 137760
+  "bytes": 136018
  },
  "setup-phone.webp": {
   "board": "PhoneQuizStart",
@@ -148,7 +148,7 @@
    420
   ],
   "scale": 2,
-  "hash": "42d355f021",
+  "hash": "6cee1adb74",
   "width": 780,
   "height": 840,
   "bytes": 98978
@@ -162,7 +162,7 @@
    420
   ],
   "scale": 2,
-  "hash": "6ce3fd9abb",
+  "hash": "157f756b23",
   "width": 780,
   "height": 840,
   "bytes": 99230
@@ -176,7 +176,7 @@
    540
   ],
   "scale": 0.9855072463768116,
-  "hash": "e8995bc099",
+  "hash": "ebf16c0d27",
   "width": 1360,
   "height": 532,
   "bytes": 139392
@@ -190,7 +190,7 @@
    540
   ],
   "scale": 0.9855072463768116,
-  "hash": "53133edee0",
+  "hash": "3b91934e57",
   "width": 1360,
   "height": 532,
   "bytes": 139392
@@ -204,10 +204,10 @@
    440
   ],
   "scale": 2,
-  "hash": "f23cfaf6e1",
+  "hash": "91f0219026",
   "width": 780,
   "height": 880,
-  "bytes": 131412
+  "bytes": 131318
  },
  "live-phone-dark.webp": {
   "board": "LiveAnswer",
@@ -218,10 +218,10 @@
    440
   ],
   "scale": 2,
-  "hash": "bcc8d04650",
+  "hash": "d6c2cb771d",
   "width": 780,
   "height": 880,
-  "bytes": 131412
+  "bytes": 131466
  },
  "deck.webp": {
   "board": "WebPublicDeck",
@@ -232,7 +232,7 @@
    640
   ],
   "scale": 1.2035398230088497,
-  "hash": "233679d318",
+  "hash": "7e370da321",
   "width": 1360,
   "height": 770,
   "bytes": 136040
@@ -246,7 +246,7 @@
    640
   ],
   "scale": 1.2035398230088497,
-  "hash": "13acacf0dd",
+  "hash": "491bdfdfcd",
   "width": 1360,
   "height": 770,
   "bytes": 137750
@@ -260,7 +260,7 @@
    440
   ],
   "scale": 2,
-  "hash": "4c99540c12",
+  "hash": "10d6161c90",
   "width": 780,
   "height": 880,
   "bytes": 113014
@@ -274,7 +274,7 @@
    440
   ],
   "scale": 2,
-  "hash": "3fa2de1798",
+  "hash": "b46f95bad9",
   "width": 780,
   "height": 880,
   "bytes": 113746
@@ -288,10 +288,10 @@
    640
   ],
   "scale": 1.2035398230088497,
-  "hash": "822aa01044",
+  "hash": "8d483fe530",
   "width": 1360,
   "height": 770,
-  "bytes": 37608
+  "bytes": 37486
  },
  "class-dark.webp": {
   "board": "WebClass",
@@ -302,10 +302,10 @@
    640
   ],
   "scale": 1.2035398230088497,
-  "hash": "c6fa4c3e88",
+  "hash": "6cdb65dcb5",
   "width": 1360,
   "height": 770,
-  "bytes": 38796
+  "bytes": 38870
  },
  "class-phone.webp": {
   "board": "PhoneClass",
@@ -316,7 +316,7 @@
    390
   ],
   "scale": 2,
-  "hash": "e2563b91fb",
+  "hash": "12ed9e17d9",
   "width": 780,
   "height": 780,
   "bytes": 26212
@@ -330,7 +330,7 @@
    390
   ],
   "scale": 2,
-  "hash": "68df76db45",
+  "hash": "c22ee4e688",
   "width": 780,
   "height": 780,
   "bytes": 26844
@@ -344,7 +344,7 @@
    620
   ],
   "scale": 1.2830188679245282,
-  "hash": "b9821c5dc6",
+  "hash": "703e5b22e0",
   "width": 1360,
   "height": 795,
   "bytes": 23060
@@ -358,7 +358,7 @@
    620
   ],
   "scale": 1.2830188679245282,
-  "hash": "bf656bf654",
+  "hash": "d8ade6136c",
   "width": 1360,
   "height": 795,
   "bytes": 23450
@@ -372,7 +372,7 @@
    440
   ],
   "scale": 2,
-  "hash": "0f3dddb560",
+  "hash": "a2dec360c7",
   "width": 780,
   "height": 880,
   "bytes": 16882
@@ -386,7 +386,7 @@
    440
   ],
   "scale": 2,
-  "hash": "77f8c4e372",
+  "hash": "7ebf703448",
   "width": 780,
   "height": 880,
   "bytes": 22904
@@ -400,7 +400,7 @@
    640
   ],
   "scale": 2,
-  "hash": "a06809e2c2",
+  "hash": "7a81e79876",
   "width": 1280,
   "height": 1280,
   "bytes": 34446
@@ -414,7 +414,7 @@
    640
   ],
   "scale": 2,
-  "hash": "a243f34804",
+  "hash": "7aaa5ca959",
   "width": 1280,
   "height": 1280,
   "bytes": 31366
@@ -428,7 +428,7 @@
    400
   ],
   "scale": 2,
-  "hash": "aae7d932a4",
+  "hash": "53c6427165",
   "width": 1200,
   "height": 800,
   "bytes": 12564
@@ -442,7 +442,7 @@
    400
   ],
   "scale": 2,
-  "hash": "de25a523ff",
+  "hash": "a4e032d570",
   "width": 1200,
   "height": 800,
   "bytes": 12420
@@ -456,7 +456,7 @@
    650
   ],
   "scale": 1.2035398230088497,
-  "hash": "1abc9618d9",
+  "hash": "961adc008c",
   "width": 1360,
   "height": 782,
   "bytes": 70170
@@ -470,7 +470,7 @@
    650
   ],
   "scale": 1.2035398230088497,
-  "hash": "14909caa54",
+  "hash": "0c6e9c0c50",
   "width": 1360,
   "height": 782,
   "bytes": 71686
@@ -484,7 +484,7 @@
    420
   ],
   "scale": 2,
-  "hash": "b305c6364d",
+  "hash": "85bbc7fdfb",
   "width": 780,
   "height": 840,
   "bytes": 55794
@@ -498,7 +498,7 @@
    420
   ],
   "scale": 2,
-  "hash": "8049a2870f",
+  "hash": "52ddc60dc9",
   "width": 780,
   "height": 840,
   "bytes": 56462
@@ -512,7 +512,7 @@
    540
   ],
   "scale": 2,
-  "hash": "b312c8946b",
+  "hash": "d1dc299ae1",
   "width": 1120,
   "height": 1080,
   "bytes": 38952
@@ -526,7 +526,7 @@
    540
   ],
   "scale": 2,
-  "hash": "051ac9d8ac",
+  "hash": "7e31ad1c59",
   "width": 1120,
   "height": 1080,
   "bytes": 40038
@@ -540,7 +540,7 @@
    480
   ],
   "scale": 2,
-  "hash": "fa39086a47",
+  "hash": "20253a8a26",
   "width": 780,
   "height": 960,
   "bytes": 35716
@@ -554,7 +554,7 @@
    480
   ],
   "scale": 2,
-  "hash": "d88ce56111",
+  "hash": "010b4c471a",
   "width": 780,
   "height": 960,
   "bytes": 36680
@@ -568,7 +568,7 @@
    640
   ],
   "scale": 1.2035398230088497,
-  "hash": "eb6f8de4c1",
+  "hash": "92fbba5a5f",
   "width": 1360,
   "height": 770,
   "bytes": 83928
@@ -582,7 +582,7 @@
    640
   ],
   "scale": 1.2035398230088497,
-  "hash": "d5c5b4fc37",
+  "hash": "965e708c61",
   "width": 1360,
   "height": 770,
   "bytes": 83678
@@ -596,7 +596,7 @@
    480
   ],
   "scale": 2,
-  "hash": "14fc25d74d",
+  "hash": "71447abaef",
   "width": 780,
   "height": 960,
   "bytes": 22800
@@ -610,7 +610,7 @@
    480
   ],
   "scale": 2,
-  "hash": "8284a4982b",
+  "hash": "1c59ff8bd0",
   "width": 780,
   "height": 960,
   "bytes": 22810
@@ -624,10 +624,10 @@
    540
   ],
   "scale": 1.619047619047619,
-  "hash": "beb27fc92c",
+  "hash": "a0644c9ea2",
   "width": 1360,
   "height": 874,
-  "bytes": 19700
+  "bytes": 19616
  },
  "audio-dark.webp": {
   "board": "WebReviewAudio",
@@ -638,7 +638,7 @@
    540
   ],
   "scale": 1.619047619047619,
-  "hash": "0d12b4f11a",
+  "hash": "a85ae85dd2",
   "width": 1360,
   "height": 874,
   "bytes": 34410
@@ -652,7 +652,7 @@
    360
   ],
   "scale": 2,
-  "hash": "5c533ab321",
+  "hash": "880ee52b66",
   "width": 780,
   "height": 720,
   "bytes": 11578
@@ -666,10 +666,10 @@
    360
   ],
   "scale": 2,
-  "hash": "5db912239e",
+  "hash": "61fa74b123",
   "width": 780,
   "height": 720,
-  "bytes": 14650
+  "bytes": 14676
  },
  "stats.webp": {
   "board": "WebStats",
@@ -680,10 +680,10 @@
    580
   ],
   "scale": 1.2035398230088497,
-  "hash": "b31b5de389",
+  "hash": "b1cf832df6",
   "width": 1360,
   "height": 698,
-  "bytes": 45646
+  "bytes": 45686
  },
  "stats-dark.webp": {
   "board": "WebStats",
@@ -694,10 +694,10 @@
    580
   ],
   "scale": 1.2035398230088497,
-  "hash": "8773400ea7",
+  "hash": "917f8eefc4",
   "width": 1360,
   "height": 698,
-  "bytes": 47656
+  "bytes": 47672
  },
  "stats-phone.webp": {
   "board": "PhoneStats",
@@ -708,7 +708,7 @@
    480
   ],
   "scale": 2,
-  "hash": "03d3ebec36",
+  "hash": "dba6eaa805",
   "width": 780,
   "height": 960,
   "bytes": 27830
@@ -722,7 +722,7 @@
    480
   ],
   "scale": 2,
-  "hash": "2aac4c8763",
+  "hash": "a2ce891295",
   "width": 780,
   "height": 960,
   "bytes": 29268
