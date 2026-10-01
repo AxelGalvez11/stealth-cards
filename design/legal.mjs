@@ -5,7 +5,7 @@
 // Support: the address Lucida's sign-in emails come from (Resend). It needs receiving turned on in Resend (an MX record
 // on lucida.cards) before replies arrive.
 export const CONTACT = 'team@lucida.cards';
-export const UPDATED = 'September 30, 2026';
+export const UPDATED = 'October 1, 2026';
 
 export const PRIVACY = {
   title: 'Privacy Policy',
@@ -42,7 +42,7 @@ export const PRIVACY = {
         'Supabase stores your account, cards, pictures, and sounds, in the United States.',
         'Resend sends our emails.',
         'Stripe takes payments for Pro on the web, and Apple for Pro bought in the iPhone app.',
-        'When you ask Lucida to explain an answer, the card’s text goes to OpenRouter, which passes it to an AI model that writes the explanation.',
+        'When you ask Lucida to explain an answer, or Learn mode asks it to write quiz questions, the card’s text goes to OpenRouter, which passes it to an AI model that writes the explanation or the questions.',
         'Themes load their fonts from Google Fonts.',
         'When Lucida makes a voice for a sound card, the card’s text goes to the speech service that makes it.',
         'When you or your AI add a picture or sound from a link, Lucida downloads it from that site.'],
