@@ -484,7 +484,10 @@ renderVals() {
     board: board.slice(0, 5).map((p, i) => ({ rank: String(i + 1), name: p.name, initial: (p.name[0] || '?').toUpperCase(), color: colors[p.color % 5], score: p.score.toLocaleString('en-US'), w: Math.max(0, p.score) / top * 100 + '%',
       move: p.move > 0 ? '▲ ' + p.move : p.move < 0 ? '▼ ' + -p.move : p.move === 0 ? '–' : '', moveColor: p.move > 0 ? '#12A150' : p.move < 0 ? '#D92D20' : LVc.grayInk, delay: (i * .08).toFixed(2) + 's' })),
     podium: places, winLine: first ? first.name + ' wins!' : 'Nobody played', endLine: L.deck.name + ' · final results',
-    again: act(() => db.act.liveAgain()), done: act(() => db.act.liveClose()) };
+    again: act(() => db.act.liveAgain()), done: act(() => db.act.liveClose()),
+    // A game made from a topic can be kept as a deck once it is over (the canvas shows it by the board's "topicState" setting).
+    ...(() => { const TS = db.mock ? this.props.topicState || 'A deck' : '', lt = db.mock ? { saving: false, error: '' } : db.liveTopic(), tp = L.topic || (TS === 'A topic' ? { name: 'The French Revolution', saved: '' } : TS === 'A topic (saved)' ? { name: 'The French Revolution', saved: 'x' } : null);
+      return { topicSave: !!tp && !tp.saved, saveLabel: lt.saving ? 'Saving…' : 'Save as a deck', saveTopic: act(() => db.act.saveLiveTopic()), topicSaved: !!tp && !!tp.saved, savedHref: tp && tp.saved ? '/deck/' + tp.saved : 'WebDeck.dc.html', saveError: lt.error || '' }; })() };
 }
 }
 </script>

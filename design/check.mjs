@@ -1,6 +1,7 @@
 // Static check for every board: props JSON parses, logic runs under several prop sets,
 // every {{hole}} resolves (handlers to functions), sc-for lists are arrays, and tags balance.
 import { readFileSync, readdirSync } from 'node:fs';
+import { MAKE_STEPS, GUIDE_STATES, GUIDE_VIEWS, LIVE_FROM, LIVE_TOPIC_STATES } from './materials.mjs';
 
 const DIR = new URL('./canvas/project/', import.meta.url);
 const get = (o, p) => p.trim().split('.').reduce((a, k) => (a == null ? undefined : a[k]), o);
@@ -63,6 +64,17 @@ PROP_SETS.push({ passwordMode: true }, { passwordOpen: true }, { passwordOpen: t
 // signed out), and your verification in Settings.
 PROP_SETS.push({ verified: 'Teacher' }, { verified: 'School' }, { verified: 'Teacher', $state: { $m: { checked: true } } }, { verified: 'Teacher', $state: { busy: 'check', error: 'That didn’t save.' } },
   { verified: 'Teacher', owner: true }, { verified: 'Teacher', signedOut: true }, { verified: 'Waiting for review' }, { verified: 'Teacher', $state: { checkedAt: 14 } }, { verified: 'Teacher', dark: true });
+
+// Making cards: every step the Make boards offer, light and dark.
+for (const step of MAKE_STEPS) PROP_SETS.push({ step }, { step, dark: true });
+// The deck page's Guide and Sources, in each state (and dark).
+for (const guide of GUIDE_STATES) PROP_SETS.push({ guide }, { guide, dark: true });
+// The Guide's editor: writing, previewing, older versions, a new page, nothing written yet (and dark).
+for (const view of GUIDE_VIEWS) PROP_SETS.push({ view }, { view, dark: true });
+for (const liveFrom of LIVE_FROM) PROP_SETS.push({ liveFrom }, { liveFrom, dark: true });
+for (const topicState of LIVE_TOPIC_STATES) PROP_SETS.push({ topicState });
+// A card made from a source says so in the editor (and the deck page's source opens where the card points).
+PROP_SETS.push({ madeFrom: false }, { madeFrom: true, dark: true }, { guide: 'A source open', sourceAt: 'p. 4' });
 
 function walk(str, sc, miss) {
   let i = 0;

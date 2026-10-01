@@ -16,12 +16,17 @@ import { VARS, SKY_VARS, EXTRA_VARS, EXTRA_LIGHT, EXTRA_DARK } from './scheme.mj
 import { SCREENS, KINDS, shotFile, visualsOf, CONNECT_FIGS } from './visuals.mjs';
 import { THEMES } from '../web/themes/index.js';
 import { THEME_KEYS, themeCss, themeFonts, themeStatic } from './themes.mjs';
+import { makeBoards, deckBlocks, publicGuideBlocks, PUBLIC_GUIDE_JS, DECK_MATERIALS_JS, GUIDE_CSS, GUIDE_STATES, MATERIALS_MOCK, LIVE_FROM, LIVE_TOPIC_STATES } from './materials.mjs';
 // The themes (Pro), for boards' logic: key, board name, short and full names.
 const THEME_LIST = JSON.stringify(THEMES.map(({ key, board, short, name }) => ({ key, board: board || '', short, name })));
 const MESH_DATA = JSON.stringify(Object.fromEntries(PALETTE_NAMES.map(n => [n, { ...paletteData(n), shadow: PALETTES[n].ink === '#FFFFFF' ? '0 1px 14px rgba(0,0,0,.16)' : 'none' }])));
 // Card text formatting (web/rich.js), copied into every board that shows or edits card text.
 const RICH_SRC = readFileSync(new URL('../web/rich.js', import.meta.url), 'utf8');
 const RICH_METHOD = `rich() { return Component._rich || (Component._rich = (${RICH_SRC.slice(RICH_SRC.indexOf('function makeRich'), RICH_SRC.lastIndexOf('export default')).trim()})()); }`;
+// The Guide's Markdown (web/guide.js), copied into every board that draws one, like card text above.
+const GUIDE_FILE = new URL('../web/guide.js', import.meta.url), GUIDE_SRC = existsSync(GUIDE_FILE) ? readFileSync(GUIDE_FILE, 'utf8') : '';
+const GUIDE_METHOD = GUIDE_SRC ? `md() { return Component._md || (Component._md = (${GUIDE_SRC.slice(GUIDE_SRC.indexOf('function makeGuide'), GUIDE_SRC.lastIndexOf('export default')).trim()})()); }`
+  : `md() { return { render: s => String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;'), plain: s => String(s || '') }; }`;
 const OUT = new URL('./canvas/project/', import.meta.url).pathname;
 mkdirSync(OUT, { recursive: true });
 
@@ -77,7 +82,7 @@ skinFor(k) {
 }
 ${GEN_METHOD}
 ${MOCK_METHOD}
-${logic.includes('this.rich(') ? RICH_METHOD : ''}${logic.includes('this.drag(') ? '\n' + DRAG_METHOD : ''}
+${logic.includes('this.rich(') ? RICH_METHOD : ''}${logic.includes('this.drag(') ? '\n' + DRAG_METHOD : ''}${logic.includes('this.md(') ? '\n' + GUIDE_METHOD : ''}${logic.includes('this.mockMaterials(') ? '\n' + MATERIALS_MOCK : ''}
 ${logic}
 }
 </script>
@@ -425,6 +430,7 @@ const webToday = webRoot(`${sidebar('Today')}
       </div>
       <div style="display: flex; gap: 10px;">
         <a href="{{newCardHref}}" style="height: 36px; padding: 0 20px; display: inline-flex; align-items: center; gap: 8px; border-radius: 999px; ${glass} font-size: 14px; font-weight: 600;">${svg(I.plus, 16, 2)}New card</a>
+        <a href="WebMake.dc.html" style="height: 36px; padding: 0 20px; display: inline-flex; align-items: center; gap: 8px; border-radius: 999px; ${glass} font-size: 14px; font-weight: 600;">${svg(I.sparkle, 16, 2)}Make cards</a>
         <a href="{{heroHref}}" style="height: 36px; padding: 0 24px; display: inline-flex; align-items: center; border-radius: 999px; background: #FFFFFF; color: #000000; font-size: 14px; font-weight: 600;">{{heroCta}}</a>
       </div>`, 'div', ' class="sc-alive"')}
 
@@ -757,7 +763,7 @@ const webDecks = webRoot(`${sidebar('Library')}
     <label style="display: flex; align-items: center; gap: 10px; width: 280px; height: 36px; padding: 0 16px; box-sizing: border-box; border-radius: 999px; background: {{t.surf}}; color: {{t.muted}};">${svg(I.search, 16)}<span style="position: absolute; left: -9999px;">{{searchHint}}</span><input value="{{query}}" onChange="{{setQuery}}" placeholder="{{searchHint}}" style="flex-grow: 1; min-width: 0; border: 0; outline: 0; background: transparent; font: inherit; font-size: 14px; color: {{t.text}};"></label>
     <sc-if value="{{inFolder}}" hint-placeholder-val="{{ false }}">${pill('Rename', { onClick: '{{renameFolder}}' })}${pill('Remove folder', { onClick: '{{removeFolder}}' })}</sc-if>
     <sc-if value="{{deckView}}" hint-placeholder-val="{{ true }}"><sc-if value="{{atTop}}" hint-placeholder-val="{{ true }}">${pill('New folder', { icon: 'folder', onClick: '{{newFolder}}' })}</sc-if></sc-if>
-    ${pill('New deck', { inv: true, icon: 'plus', href: 'WebNewDeck.dc.html' })}
+    ${pill('Make cards', { icon: 'sparkle', href: 'WebMake.dc.html' })}${pill('New deck', { inv: true, icon: 'plus', href: 'WebNewDeck.dc.html' })}
   </div>
   <sc-if value="{{deckView}}" hint-placeholder-val="{{ true }}">
     <div style="display: flex; align-items: center; gap: 16px;">
@@ -976,7 +982,8 @@ renderVals() {
       setQuery: e => this.setState({ deckPickQ: e && e.target ? e.target.value : '' }), none: deckOptions.length === 0,
       rows: deckOptions.map(o => ({ label: o.label, dot: o.dot, count: '', on: o.id === pick, pressed: o.id === pick ? 'true' : 'false', pick: () => this.setState({ deck: o.id, deckPickOpen: false, shown: 60 }) })) },
     rows, cardCount: matched.length.toLocaleString('en-US') + (matched.length === 1 ? ' card' : ' cards'), noCards: cards && matched.length === 0,
-    hasMore: matched.length > s.shown, moreLabel: 'Show ' + Math.min(${phone ? 40 : 60}, matched.length - s.shown) + ' more', showMore: () => this.setState({ shown: s.shown + ${phone ? 40 : 60} })
+    hasMore: matched.length > s.shown, moreLabel: 'Show ' + Math.min(${phone ? 40 : 60}, matched.length - s.shown) + ' more', showMore: () => this.setState({ shown: s.shown + ${phone ? 40 : 60} }),
+    gs: { addOpen: !!s.addOpen, addExpanded: s.addOpen ? 'true' : 'false', toggleAdd: () => this.setState({ addOpen: !s.addOpen }) }
   };
 }`;
 const decksLogic = libraryLogic(false);
@@ -1306,6 +1313,7 @@ const deckUpdatesBody = phone => `<div style="display: flex; align-items: center
 const examLine = (fs, mt = 0) => `<sc-if value="{{examShow}}" hint-placeholder-val="{{ true }}"><div role="note" style="${mt ? `margin-top: ${mt}px; ` : ''}display: flex; align-items: center; gap: 8px; font-size: ${fs}px; color: {{t.muted}};"><span style="display: flex; color: {{t.text}};">${svg(I.calendar, fs + 2, 2)}</span><span>{{examLine}}</span></div></sc-if>`;
 // How many cards wait for Flashcards today, as a small round count inside its button.
 const STUDY_COUNT = (h, bg, fg) => `<span style="min-width: ${h}px; height: ${h}px; padding: 0 7px; box-sizing: border-box; display: inline-flex; align-items: center; justify-content: center; border-radius: ${h / 2}px; background: ${bg}; color: ${fg}; font-family: ${MONO}; font-size: ${h > 22 ? 13 : 12}px; font-weight: 600;">{{studyCount}}</span>`;
+const DB = deckBlocks({ svg, I, MONO }, false), DBP = deckBlocks({ svg, I, MONO }, true);
 const webDeck = webRoot(`${sidebar('Library')}
 <main style="position: relative; flex-grow: 1; box-sizing: border-box; padding: 24px 48px 20px; display: flex; flex-direction: column; gap: 20px; min-width: 0; scroll-timeline: --deck block;">
   <div style="position: relative; height: 184px; flex-shrink: 0; border-radius: 20px; overflow: hidden;">
@@ -1324,7 +1332,7 @@ const webDeck = webRoot(`${sidebar('Library')}
         <div style="display: flex; gap: 10px; flex-shrink: 0;">
           <sc-if value="{{showLive}}" hint-placeholder-val="{{ false }}"><a href="LiveSetup.dc.html" style="height: 36px; padding: 0 16px; display: inline-flex; align-items: center; gap: 8px; border-radius: 999px; ${onCover} font-size: 14px; font-weight: 600;">${svg(I.live, 15, 2)}Play live</a></sc-if>
           <a href="{{learnHref}}" style="height: 36px; padding: 0 16px; display: inline-flex; align-items: center; gap: 8px; border-radius: 999px; ${onCover} font-size: 14px; font-weight: 600;">${svg(I.sparkle, 15, 2)}{{learnLabel}}</a>
-          <sc-if value="{{canEdit}}" hint-placeholder-val="{{ true }}"><a href="{{newCardHref}}" style="height: 36px; padding: 0 18px; display: inline-flex; align-items: center; gap: 8px; border-radius: 999px; ${onCover} font-size: 14px; font-weight: 600;">${svg(I.plus, 16, 2)}New card</a></sc-if>
+          <sc-if value="{{canEdit}}" hint-placeholder-val="{{ true }}">${DB.addMenu(`<button type="button" onClick="{{gs.toggleAdd}}" aria-expanded="{{gs.addExpanded}}" aria-haspopup="menu" style="height: 36px; padding: 0 14px 0 18px; display: inline-flex; align-items: center; gap: 8px; border: 0; border-radius: 999px; ${onCover} font: inherit; font-size: 14px; font-weight: 600; cursor: pointer;">${svg(I.plus, 16, 2)}Add cards${svg(I.chevDown, 13, 2)}</button>`, 'right: 0; top: 44px;')}</sc-if>
           <sc-if value="{{isStudy}}" hint-placeholder-val="{{ false }}"><a href="{{suggestHref}}" style="height: 36px; padding: 0 18px; display: inline-flex; align-items: center; gap: 8px; border-radius: 999px; ${onCover} font-size: 14px; font-weight: 600;">${svg(I.message, 15, 2)}Suggest a change</a></sc-if>
           <a href="{{studyHref}}" style="height: 36px; padding: 0 8px 0 18px; display: inline-flex; align-items: center; gap: 8px; border-radius: 999px; background: #FFFFFF; color: #000000; box-shadow: 0 1px 2px rgba(0,0,0,.1); font-size: 14px; font-weight: 600;">${svg(I.decks, 15, 2)}<span>{{studyLabel}}</span><sc-if value="{{hasStudyCount}}" hint-placeholder-val="{{ true }}">${STUDY_COUNT(22, '#EDEDED', '#000000')}</sc-if><sc-if value="{{noStudyCount}}" hint-placeholder-val="{{ false }}"><span style="width: 2px;"></span></sc-if></a>
         </div>
@@ -1339,6 +1347,7 @@ const webDeck = webRoot(`${sidebar('Library')}
     <div style="border-radius: 16px; height: 104px; box-sizing: border-box; padding: 18px 20px; background: {{t.surf}}; display: flex; flex-direction: column; justify-content: space-between;"><span style="font-size: 13px; font-weight: 500; color: {{t.muted}};">Due next 7 days</span><div style="display: flex; align-items: flex-end; gap: 6px; height: 36px;"><sc-for list="{{spark}}" as="s" hint-placeholder-count="7"><div style="flex-grow: 1; border-radius: 4px; background: {{s.c}}; height: {{s.h}};"></div></sc-for></div></div>
   </div>
   ${examLine(14, -4)}
+  <div style="display: grid; grid-template-columns: {{gs.columns}}; gap: 16px; align-items: start;">${DB.guide}${DB.sources}</div>
   <div style="display: flex; align-items: center; gap: 8px;">
     <sc-for list="{{filters}}" as="f" hint-placeholder-count="6">
       <button type="button" onClick="{{f.pick}}" aria-pressed="{{f.pressed}}" style="height: 36px; padding: 0 16px; display: inline-flex; align-items: center; border: 0; border-radius: 999px; font: inherit; font-size: 13px; font-weight: 500; cursor: pointer; background: {{f.bg}}; color: {{f.fg}};">{{f.label}}</button>
@@ -1371,7 +1380,8 @@ ${moveTray('tray', false)}
   <aside role="dialog" aria-label="{{updTitle}}" class="sc-panel" style="position: absolute; top: 12px; right: 12px; bottom: 12px; width: 520px; box-sizing: border-box; padding: 24px; border-radius: 20px; background: {{t.bg}}; box-shadow: 0 24px 64px rgba(0,0,0,.24); display: flex; flex-direction: column; gap: 16px; overflow: hidden;">
     ${deckUpdatesBody(false)}
   </aside>
-</sc-if>`, true);
+</sc-if>
+${DB.viewer}`, true);
 // Dragging a card (drag.mjs, both deck pages): to another spot in the deck, or onto another deck in the Move to tray.
 // The canvas shows the tray open (prop trayOpen), with a card over its first deck.
 const CARD_DRAG_JS = phone => `const others = db.decks().filter(d => d.id !== dk.id), trayOpen = !!this.props.trayOpen;
@@ -1383,7 +1393,7 @@ const CARD_DRAG_JS = phone => `const others = db.decks().filter(d => d.id !== dk
 const deckLogic = `
 constructor(props) { super(props); this.state = { filter: 'All', tagMenuOpen: false, tagQ: '', q: '' }; }
 renderVals() {
-  ${T}${DB_JS}${COVER_LOGIC}${FORECAST_JS('{ vals: dk.forecast, labels: [], tops: null, names: [] }', 40)}
+  ${T}${DB_JS}${COVER_LOGIC}${DECK_MATERIALS_JS}${FORECAST_JS('{ vals: dk.forecast, labels: [], tops: null, names: [] }', 40)}
   ${CARD_TAGS_JS}
   ${LIFT_JS}
   ${CARD_DRAG_JS(false)}
@@ -1398,7 +1408,7 @@ renderVals() {
   const rows = allRows.filter(r => (f === 'All' || r.kind === f || r.tags.includes(f)) && (!q || [r.front, r.back, ...r.tags].join(' ').toLowerCase().includes(q)))
     .map(r => ({ ...r, glyph: glyphs[r.icon], aiNote: r.ai ? ' · ' + r.ai : '', ...cardFit(r.tags) }));
   return {
-    t, rows, ...chrome, ...coverVals, ...cardDrag, query: this.state.q || '', setQuery: e => this.setState({ q: e && e.target ? e.target.value : '' }),
+    t, rows, ...chrome, ...coverVals, ...cardDrag, gs: { ...gs, columns: gs.guideShow && gs.sourcesShow ? 'minmax(0, 1fr) 340px' : 'minmax(0, 1fr)' }, vw, query: this.state.q || '', setQuery: e => this.setState({ q: e && e.target ? e.target.value : '' }),
     filters: labels.map(l => ({ label: l, pressed: l === f ? 'true' : 'false', bg: l === f ? t.inv : t.surf, fg: l === f ? t.invText : t.text, pick: () => this.setState({ filter: l, tagMenuOpen: false }) })),
     tagBtn: { label: tagOn ? f : 'Tags', pressed: tagOn ? 'true' : 'false', bg: tagOn ? t.inv : t.surf, fg: tagOn ? t.invText : t.text, dot: tagOn ? tagCol(f) : 'transparent', dotW: tagOn ? '8px' : '0px' },
     tagMenu: { open: menuOpen, expanded: menuOpen ? 'true' : 'false', query: this.state.tagQ || '',
@@ -1549,6 +1559,10 @@ const blankPill = word => `<span style="padding: 1px 10px; border-radius: 999px;
 // The fields for each kind of card, in one column. The big editor (big) sets each kind out in two columns instead: the
 // front and the back side by side (a blank card's text and what's shown after it, a sound and its answer), or the
 // picture as big as it fits, with its answers beside it (`side` wide).
+// A card made from one of the deck's sources says so, and the line opens that source at the card's place (its page, or its time).
+const madeFromLine = phone => { const st = `align-self: flex-start; max-width: 100%; box-sizing: border-box; min-height: ${phone ? 44 : 32}px; padding: 0 14px 0 12px; display: inline-flex; align-items: center; gap: 8px; border-radius: 999px; background: {{t.surf}}; color: {{t.muted}}; font-size: 13px; font-weight: 500;`,
+  inner = `<span style="display: flex; flex-shrink: 0;">${svg(I.file, 14, 1.8)}</span><span style="min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{madeFrom.label}}</span>`;
+  return `<sc-if value="{{madeFrom.link}}" hint-placeholder-val="{{ true }}"><a href="{{madeFrom.href}}" aria-label="{{madeFrom.label}}" style="${st}">${inner}</a></sc-if><sc-if value="{{madeFrom.plain}}" hint-placeholder-val="{{ false }}"><span style="${st}">${inner}</span></sc-if>`; };
 const editorFieldsOf = (phone, big = false, side = 380) => {
   const col = 'min-height: 0; display: flex; flex-direction: column; gap: 20px;', picH = big ? 0 : phone ? 240 : 186, waveH = big ? 96 : 32;
   const two = (main, side, cols = 'repeat(2, minmax(0, 1fr))') => big ? `<div style="flex: 1 1 0; min-height: 0; display: grid; grid-template-columns: ${cols}; grid-template-rows: minmax(0, 1fr); gap: 28px;"><div style="${col}">${main}</div><div style="${col} overflow-y: auto; scrollbar-width: thin;">${side}</div></div>` : main + side;
@@ -2235,6 +2249,11 @@ renderVals() {
     // Opening the picker puts the keyboard away.
     cardPick: (() => { const q = tagPicker(tags, next => put({ tags: next }), 'cp', db.mock ? null : db.tags()); return { ...q, toggle: () => this.setState({ cpOpen: !q.open, cpQ: '', typing: false }) }; })(),
     canDelete: !!saved, remove: () => db.act.deleteCard(saved.id, backHref),
+    // Where the card came from (if one of the deck's sources made it): "Made from Lecture 3 slides · p. 4", opening that source at that place.
+    madeFrom: (() => { const x = saved && saved.src || (db.mock && this.props.madeFrom !== false ? { id: 'x1', name: 'Lecture 3 slides', at: 'p. 4' } : null);
+      if (!x || !x.name) return { link: false, plain: false, label: '', href: '' };
+      const here = db.mock || (db.sources && db.sources(saved.deckId).some(q => q.id === x.id)), label = 'Made from ' + x.name + (x.at ? ' · ' + x.at : '');
+      return { link: !!here, plain: !here, label, href: db.mock ? 'WebDeck.dc.html' : here ? '/deck/' + saved.deckId + '?source=' + encodeURIComponent(x.id) + (x.at ? '&at=' + encodeURIComponent(x.at) : '') : '' }; })(),
     // Pausing a card (every card of its text or picture): it doesn't come up until it's unpaused.
     pausedNow: saved && saved.paused ? 'true' : 'false', pauseLabel: saved && saved.paused ? 'Unpause' : 'Pause', pauseCardLabel: saved && saved.paused ? 'Unpause card' : 'Pause card',
     pauseBg: saved && saved.paused ? t.inv : t.surf, pauseFg: saved && saved.paused ? t.invText : t.text,
@@ -2289,6 +2308,7 @@ const webCards = `<div style="width: 1440px; height: 900px; box-sizing: border-b
     <main style="position: relative; flex-grow: 1; min-width: 0; box-sizing: border-box; padding: 24px 28px; display: flex; flex-direction: column; gap: 20px;">
       <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 12px 16px;"><div style="flex: 0 1 380px; min-width: 300px;">${TYPE_SEG}</div><span style="flex-grow: 1;"></span>${WEB_FMT}</div>
       ${editorFieldsOf(false, true, 300)}
+      ${madeFromLine(false)}
       <div style="display: flex; align-items: center; gap: 12px;">
         <div style="flex-grow: 1; min-width: 0;">${TAG_EDIT('cardTags', 'cardPick', false, true)}</div>
         <sc-if value="{{note.show}}" hint-placeholder-val="{{ true }}"><span role="status" style="margin-right: 4px; display: inline-flex; align-items: center; gap: 6px; font-size: 13px; color: {{t.muted}}; white-space: nowrap;"><sc-if value="{{note.done}}" hint-placeholder-val="{{ true }}">${svg(I.check, 14, 2.2)}</sc-if>{{note.label}}</span></sc-if>
@@ -3548,7 +3568,8 @@ const phoneLibrary = phone(`<div style="padding: 64px 20px 120px; display: flex;
   <sc-if value="{{atTop}}" hint-placeholder-val="{{ true }}"><div style="display: flex; align-items: center; gap: 8px;">
     <h1 style="margin: 0; flex-grow: 1; min-width: 0; font-size: 32px; font-weight: 700; letter-spacing: -.03em;">Library</h1>
     <sc-if value="{{deckView}}" hint-placeholder-val="{{ true }}">${libRound('folder', 'New folder', { onClick: '{{newFolder}}' })}</sc-if>
-    ${libRound('plus', 'New deck', { href: 'PhoneNewDeck.dc.html', inv: true })}
+    ${DBP.addMenu(`<button type="button" onClick="{{gs.toggleAdd}}" aria-expanded="{{gs.addExpanded}}" aria-haspopup="menu" aria-label="Add" class="sc-press" style="width: 40px; height: 40px; flex-shrink: 0; border: 0; border-radius: 20px; background: {{t.inv}}; color: {{t.invText}}; display: flex; align-items: center; justify-content: center; cursor: pointer;">${svg(I.plus, 18, 2)}</button>`, 'right: 0; top: 48px;',
+      [['decks', 'New deck', 'Start from scratch', 'PhoneNewDeck.dc.html'], ['sparkle', 'Make cards', 'From a file, photo, video or topic', 'PhoneMake.dc.html'], ['upload', 'Import cards', 'From Anki, Quizlet or a CSV', 'WebImport.dc.html']])}
   </div></sc-if>
   <sc-if value="{{inFolder}}" hint-placeholder-val="{{ false }}"><div style="display: flex; align-items: center; gap: 8px;">
     ${libRound('back', 'Library', { href: '{{libraryHref}}', attrs: ' data-sc-drop="folder:" data-sc-look="chip" draggable="false"' })}<span style="flex-grow: 1;"></span>
@@ -3599,7 +3620,8 @@ const roundBtn = (ic, label, href = '') => href ? `<a href="${href}" aria-label=
 const NEWS_BTN = `<a href="PhoneActivity.dc.html" aria-label="News" style="position: relative; width: 44px; height: 44px; flex-shrink: 0; border-radius: 22px; background: {{t.surf}}; display: flex; align-items: center; justify-content: center;">${svg(I.bell, 18, 2)}<sc-if value="{{nav.hasNews}}" hint-placeholder-val="{{ true }}"><span style="position: absolute; top: -3px; right: -3px; min-width: 18px; height: 18px; padding: 0 5px; box-sizing: border-box; border-radius: 9px; background: #E5484D; color: #FFFFFF; box-shadow: 0 0 0 2px {{t.bg}}; font-size: 11px; font-weight: 700; line-height: 18px; text-align: center;">{{nav.news}}</span></sc-if></a>`;
 const todayTitle = (label, href) => `<div style="display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: center; gap: 12px;"><a href="PhoneProfile.dc.html" aria-label="Your profile" style="justify-self: start; display: flex; border-radius: 22px;">${AVATAR_ME(44)}</a><h1 style="margin: 0; font-size: 34px; font-weight: 700; letter-spacing: -.03em; text-align: center;">Today</h1><div style="justify-self: end; display: flex; gap: 8px;">${NEWS_BTN}${roundBtn('plus', label, href)}</div></div>`;
 const phoneToday = phone(`<div style="padding: 64px 20px 120px; display: flex; flex-direction: column; gap: 18px;">
-  ${todayTitle('New card', 'PhoneEditor.dc.html')}
+  ${todayTitle('New card', 'PhoneEditor.dc.html').replace(roundBtn('plus', 'New card', 'PhoneEditor.dc.html'), () => DBP.addMenu(`<button type="button" onClick="{{gs.toggleAdd}}" aria-expanded="{{gs.addExpanded}}" aria-haspopup="menu" aria-label="Add" style="width: 44px; height: 44px; border: 0; border-radius: 22px; background: {{t.surf}}; color: {{t.text}}; display: flex; align-items: center; justify-content: center; cursor: pointer;">${svg(I.plus, 18, 2)}</button>`, 'right: 0; top: 52px;',
+    [['plus', 'New card', 'Write one yourself', 'PhoneEditor.dc.html'], ['sparkle', 'Make cards', 'From a file, photo, video or topic', 'PhoneMake.dc.html'], ['decks', 'New deck', 'Start from scratch', 'PhoneNewDeck.dc.html']]))}
   ${meshCard('hero', 'display: block; border-radius: 32px;', 'box-sizing: border-box; padding: 24px; display: flex; flex-direction: column; gap: 18px;', `
     <span style="height: 56px;"></span>
     <span style="display: flex; flex-direction: column; gap: 4px;"><span style="font-size: 14px; opacity: .85;">{{heroMeta}}</span><span style="font-size: {{heroSize}}; font-weight: 600; letter-spacing: -.045em; line-height: 1;">{{heroTitle}}</span><span style="font-size: 14px; opacity: .85;">{{heroSub}}</span></span>
@@ -3615,7 +3637,7 @@ const phoneToday = phone(`<div style="padding: 64px 20px 120px; display: flex; f
 // Your day on the Iris card, then your decks, most urgent first (like the web's Today). The canvas shows its sample day.
 const phoneDecksLogic = `renderVals() { ${T}${DB_JS}
   ${TODAY_ASSIGN_JS(true)}
-  const assignVals = { assignments: assignRows, hasAssignments: assignRows.length > 0 };
+  const assignVals = { assignments: assignRows, hasAssignments: assignRows.length > 0, gs: { addOpen: !!this.state.addOpen, addExpanded: this.state.addOpen ? 'true' : 'false', toggleAdd: () => this.setState({ addOpen: !this.state.addOpen }) } };
   // A deck's count on the right: cards due now, or (muted) when it's next due.
   const row = (d, right, later) => ({ ...d, right, rightColor: later ? t.muted : t.text, rightFont: later ? 'inherit' : "${MONO}", rightSize: later ? '14px' : '15px' });
   if (db.mock) {
@@ -3695,7 +3717,7 @@ const phoneDeck = phone(`<div style="height: 100%; overflow-y: auto; scrollbar-w
   <div style="position: relative; height: 232px; overflow: hidden; container-type: inline-size;">
     ${parallax(232)}
     <div style="position: absolute; inset: 0; box-sizing: border-box; padding: 54px 16px 18px 20px; display: flex; flex-direction: column; justify-content: space-between; color: {{coverInk}};">
-      <div style="display: flex; justify-content: space-between;">${coverRound('back', 'Back', 'PhoneToday.dc.html')}<div style="display: flex; gap: 8px;"><sc-if value="{{isShared}}" hint-placeholder-val="{{ false }}"><a href="{{pageHref}}" aria-label="{{shareChip}}" style="width: 40px; height: 40px; border-radius: 20px; ${onCover} display: flex; align-items: center; justify-content: center;">${svg(I.globe, 18, 2)}</a></sc-if>${coverRound('gear', 'Deck settings', '', '{{openSettings}}')}${coverRound('search', 'Search')}<sc-if value="{{canEdit}}" hint-placeholder-val="{{ true }}">${coverRound('plus', 'New card', 'PhoneEditor.dc.html')}</sc-if><sc-if value="{{isStudy}}" hint-placeholder-val="{{ false }}"><a href="{{suggestHref}}" aria-label="Suggest a change" style="width: 40px; height: 40px; border-radius: 20px; ${onCover} display: flex; align-items: center; justify-content: center;">${svg(I.message, 18, 2)}</a></sc-if></div></div>
+      <div style="display: flex; justify-content: space-between;">${coverRound('back', 'Back', 'PhoneToday.dc.html')}<div style="display: flex; gap: 8px;"><sc-if value="{{isShared}}" hint-placeholder-val="{{ false }}"><a href="{{pageHref}}" aria-label="{{shareChip}}" style="width: 40px; height: 40px; border-radius: 20px; ${onCover} display: flex; align-items: center; justify-content: center;">${svg(I.globe, 18, 2)}</a></sc-if>${coverRound('gear', 'Deck settings', '', '{{openSettings}}')}${coverRound('search', 'Search')}<sc-if value="{{canEdit}}" hint-placeholder-val="{{ true }}">${DBP.addMenu(`<button type="button" onClick="{{gs.toggleAdd}}" aria-expanded="{{gs.addExpanded}}" aria-haspopup="menu" aria-label="Add cards" style="width: 44px; height: 44px; border: 0; border-radius: 22px; ${onCover} display: flex; align-items: center; justify-content: center; cursor: pointer;">${svg(I.plus, 18, 2)}</button>`, 'right: 0; top: 52px;')}</sc-if><sc-if value="{{isStudy}}" hint-placeholder-val="{{ false }}"><a href="{{suggestHref}}" aria-label="Suggest a change" style="width: 40px; height: 40px; border-radius: 20px; ${onCover} display: flex; align-items: center; justify-content: center;">${svg(I.message, 18, 2)}</a></sc-if></div></div>
       <div style="display: flex; flex-direction: column; gap: 4px; text-shadow: {{coverShadow}};"><div style="font-size: 32px; font-weight: 700; letter-spacing: -.03em; line-height: 1.05; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; {{coverTitleS}}">{{deckName}}</div><div style="font-size: 14px; opacity: .8;">{{deckLineShort}}</div></div>
     </div>
   </div>
@@ -3707,6 +3729,7 @@ const phoneDeck = phone(`<div style="height: 100%; overflow-y: auto; scrollbar-w
     </div>
     ${examLine(14)}
     <div style="display: flex; gap: 8px;"><a href="PhoneReview.dc.html" style="flex: 2 1 0; height: 56px; border-radius: 999px; background: {{t.inv}}; color: {{t.invText}}; display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 17px; font-weight: 600; white-space: nowrap;">${svg(I.decks, 17, 2)}<span>{{studyLabel}}</span><sc-if value="{{hasStudyCount}}" hint-placeholder-val="{{ true }}">${STUDY_COUNT(24, 'rgba(128,128,128,.32)', 'inherit')}</sc-if></a><a href="{{learnHref}}" style="flex: 1 1 0; height: 56px; border-radius: 999px; background: {{t.surf}}; display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 17px; font-weight: 600; white-space: nowrap;">${svg(I.sparkle, 17, 2)}{{learnShort}}</a></div>
+    ${DBP.guide}${DBP.sources}
     <div data-sc-list="cards" ref="{{dragList}}" onPointerDown="{{grab}}" style="display: flex; flex-direction: column;">
       <sc-for list="{{rows}}" as="r" hint-placeholder-count="4">
         <a href="{{r.href}}" data-sc-item="{{r.id}}" draggable="false" class="sc-drag" style="display: flex; flex-direction: column; gap: 3px; padding: 12px 0; border-bottom: 1px solid {{t.line}};"><span style="font-size: 15px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{r.front}}</span><span style="display: flex; align-items: center; gap: 8px; min-width: 0; font-size: 13px; color: {{t.muted}};"><span style="white-space: nowrap;">{{r.kind}} · {{r.next}}</span>${cardTag('c1')}${cardTag('c2')}${cardMore}</span></a>
@@ -3725,14 +3748,15 @@ const phoneDeck = phone(`<div style="height: 100%; overflow-y: auto; scrollbar-w
   <div role="dialog" aria-label="{{updTitle}}" class="sc-sheet" style="position: absolute; left: 0; right: 0; bottom: 0; top: 56px; box-sizing: border-box; padding: 20px 20px 34px; border-radius: 32px 32px 0 0; background: {{t.bg}}; display: flex; flex-direction: column; gap: 14px;">
     ${deckUpdatesBody(true)}
   </div>
-</sc-if>`);
+</sc-if>
+${DBP.viewer}`);
 const phoneDeckLogic = `
 constructor(props) { super(props); this.state = {}; }
-renderVals() { ${T}${DB_JS}${COVER_LOGIC}
+renderVals() { ${T}${DB_JS}${COVER_LOGIC}${DECK_MATERIALS_JS}
   ${CARD_TAGS_JS}
   ${LIFT_JS}
   ${CARD_DRAG_JS(true)}
-  return { t, ...chrome, dark: !!this.props.dark, ...coverVals, ...cardDrag, tiles: coverVals.tiles.map(k => k.label === 'Due now' ? { ...k, label: 'Due' } : k),
+  return { t, ...chrome, dark: !!this.props.dark, ...coverVals, ...cardDrag, gs, vw, tiles: coverVals.tiles.map(k => k.label === 'Due now' ? { ...k, label: 'Due' } : k),
     // Every card (all six sample cards on the canvas, so the page scrolls and shows the cover's parallax); each opens
     // in the editor.
     rows: db.cards(dk.id).map(r => ({ ...r, ...cardFit(r.tags), href: db.mock ? 'PhoneEditor.dc.html' : r.href })),
@@ -3749,6 +3773,7 @@ const phoneEditor = `<div style="position: relative; width: 390px; height: 844px
     ${TYPE_SEG}
     <div style="flex-grow: 1; min-height: 0; overflow-y: auto; scrollbar-width: none;"><div style="display: flex; flex-direction: column; gap: 16px;">
     ${editorFieldsOf(true)}
+    ${madeFromLine(true)}
     <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">${chip(svg(I.decks, 12, 2) + '{{deckName}}', 'height: 32px; padding: 0 12px; font-size: 13px; font-weight: 600;')}${TAG_EDIT('cardTags', 'cardPick', true)}</div>
     <sc-if value="{{canDelete}}" hint-placeholder-val="{{ false }}"><div style="display: flex; align-items: center; gap: 24px;"><button type="button" onClick="{{togglePause}}" aria-pressed="{{pausedNow}}" style="min-height: 44px; padding: 0; border: 0; background: transparent; color: {{t.text}}; display: inline-flex; align-items: center; gap: 7px; font: inherit; font-size: 14px; font-weight: 600; cursor: pointer;">${svg(I.pauseRing, 16, 2)}<span>{{pauseCardLabel}}</span></button><button type="button" onClick="{{remove}}" style="min-height: 44px; padding: 0; border: 0; background: transparent; color: {{t.again}}; font: inherit; font-size: 14px; font-weight: 600; cursor: pointer;">Delete card</button></div></sc-if>
     </div></div>
@@ -4390,7 +4415,7 @@ const webDeckEmpty = webRoot(`${sidebar('Library')}
     </div>
   </div>
   <div style="flex-grow: 1; display: flex; align-items: center; justify-content: center; padding-bottom: 40px;">
-    ${emptyBlock({ art: EMPTY_ART(150, 'plus'), title: 'This deck is empty', body: 'Add your first card, import some, or ask your AI to make them.', actions: webActions(pill('New card', { inv: true, icon: 'plus', href: '{{newCardHref}}' }) + pill('Import cards', { icon: 'upload', href: '{{importHref}}' }) + pill('Ask your AI', { icon: 'sparkle', href: 'WebConnect.dc.html' })) })}
+    ${emptyBlock({ art: EMPTY_ART(150, 'plus'), title: 'This deck is empty', body: 'Add your first card, import some, or ask your AI to make them.', actions: webActions(pill('New card', { inv: true, icon: 'plus', href: '{{newCardHref}}' }) + pill('Make cards', { icon: 'sparkle', href: '{{makeHref}}' }) + pill('Import cards', { icon: 'upload', href: '{{importHref}}' }) + pill('Ask your AI', { icon: 'connect', href: 'WebConnect.dc.html' })) })}
   </div>
 </main>`);
 const emptyKpis = (list, big) => `<div style="display: grid; grid-template-columns: repeat(${big ? 4 : 2}, minmax(0, 1fr)); gap: ${big ? 12 : 8}px;">${list.map(([l, v]) => `<div style="background: {{t.surf}}; border-radius: ${big ? 28 : 24}px; padding: ${big ? 22 : 16}px; display: flex; flex-direction: column; gap: ${big ? 6 : 2}px;"><span style="font-size: ${big ? 13 : 12}px; color: {{t.muted}};">${l}</span><span style="font-size: ${big ? 40 : 28}px; font-weight: ${big ? 600 : 700}; letter-spacing: -.035em; line-height: 1.05; color: {{t.muted}};">${v}</span></div>`).join('')}</div>`;
@@ -4425,7 +4450,7 @@ const phoneDeckEmpty = phone(`<div style="height: 100%; box-sizing: border-box; 
     </div>
   </div>
   <div style="flex-grow: 1; box-sizing: border-box; padding: 0 28px; display: flex; align-items: center; justify-content: center;">
-    ${emptyBlock({ art: EMPTY_ART(140, 'plus'), title: 'This deck is empty', size: 22, body: 'Add your first card, import some, or ask your AI to make them.', actions: phoneActionRow(phoneBtn('New card', 'PhoneEditor.dc.html', 'plus', true), phoneBtn2('Import cards', '{{importHref}}', 'upload'), phoneBtn2('Ask your AI', 'PhoneConnect.dc.html', 'sparkle')) })}
+    ${emptyBlock({ art: EMPTY_ART(140, 'plus'), title: 'This deck is empty', size: 22, body: 'Add your first card, import some, or ask your AI to make them.', actions: phoneActionRow(phoneBtn('New card', 'PhoneEditor.dc.html', 'plus', true) + phoneBtn('Make cards', '{{makeHref}}', 'sparkle'), phoneBtn2('Import cards', '{{importHref}}', 'upload'), phoneBtn2('Ask your AI', 'PhoneConnect.dc.html', 'connect')) })}
   </div>
 </div>`, 'Library');
 // The Decks tab before there are any decks.
@@ -4459,7 +4484,7 @@ const emptyLogic = (cover = '', phone = false) => `renderVals() { ${T}${DB_JS}
       ...(C ? { base: C.base, ink: C.ink, shadow: 'none', plain: false, skin: true, art: C.art } : { plain: true, skin: false, art: null }) },
     coverTitle: C ? C.titleAt(34) : '', coverTitleS: C ? C.titleHead(32, dk.name) : '',
     coverIsImage: pic === 'mock', coverHasPhoto: !!photo, coverPhoto: photo,
-    newCardHref: db.mock ? 'WebCardsScreenNew.dc.html' : dk.newCardHref, importHref: db.href('import', dk.id), connectHref: db.href('connect'),
+    newCardHref: db.mock ? 'WebCardsScreenNew.dc.html' : dk.newCardHref, importHref: db.href('import', dk.id), makeHref: db.mock ? 'WebMake.dc.html' : db.href('make', dk.id), connectHref: db.href('connect'),
     openSettings: () => { if (!db.mock) db.act.go(dk.settingsHref); } }; }`;
 
 // New deck. The cover starts white. Its colors (generated from the name) fade in over 2 s once you stop typing the name
@@ -4706,7 +4731,7 @@ const scrimMask = (from, to) => `linear-gradient(180deg, ${SCRIM.map(([p, a]) =>
 // runs 3 lines under a grab handle, so it ends near 158px and the first label sits near 200px (V77).
 const deepTopOf = (h, from) => `<div aria-hidden="true" style="position: absolute; left: 0; right: 0; top: 0; height: ${h}px; overflow: hidden; background: {{deep.base}}; -webkit-mask-image: ${scrimMask(+(from / h * 100).toFixed(1), 100)}; mask-image: ${scrimMask(+(from / h * 100).toFixed(1), 100)};">${flowLayer('deep')}${GRAIN_LAYER}</div>`;
 const deepTop = deepTopOf(330, 40);
-const deepHead = (icon, title, back, line) => `<div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; color: #FFFFFF;"><span style="display: flex; align-items: center; gap: 10px; font-size: 22px; font-weight: 600; letter-spacing: -.02em;">${svg(I[icon], 20, 1.8)}${title}</span><a href="${back}" aria-label="Close" style="width: 40px; height: 40px; flex-shrink: 0; border-radius: 20px; background: rgba(255,255,255,.14); box-shadow: inset 0 0 0 1.5px rgba(255,255,255,.3); color: #FFFFFF; display: flex; align-items: center; justify-content: center;">${svg(I.close, 16, 2)}</a></div>
+const deepHead = (icon, title, back, line, click = '') => `<div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; color: #FFFFFF;"><span style="display: flex; align-items: center; gap: 10px; font-size: 22px; font-weight: 600; letter-spacing: -.02em;">${svg(I[icon], 20, 1.8)}${title}</span><a href="${back}" aria-label="Close"${click ? ` onClick="{{${click}}}"` : ''} style="width: 40px; height: 40px; flex-shrink: 0; border-radius: 20px; background: rgba(255,255,255,.14); box-shadow: inset 0 0 0 1.5px rgba(255,255,255,.3); color: #FFFFFF; display: flex; align-items: center; justify-content: center;">${svg(I.close, 16, 2)}</a></div>
     <p style="margin: 0 0 24px; font-size: 15px; line-height: 1.5; color: rgba(255,255,255,.9); text-shadow: {{deep.shadow}};">${line}</p>`;
 // Starting: which cards to learn and which kinds of questions to ask (on the web, under the deep top).
 const LEARN_LINE = 'Learn cards until you know every one. Each card is asked a few different ways, and the ones you miss come back.';
@@ -5507,7 +5532,11 @@ const livePodium = `<div ${liveRoot(1440, 900, 'display: flex; flex-direction: c
   <div style="position: relative; flex-grow: 1; width: 900px; max-width: 100%; display: flex; align-items: flex-end; justify-content: center; gap: 18px;">
     <sc-for list="{{podium}}" as="w" hint-placeholder-count="3"><div style="width: 260px; display: flex; flex-direction: column; align-items: center; gap: 12px; animation: scRiseUp .7s cubic-bezier(.2,.8,.2,1) both; animation-delay: {{w.delay}};"><span style="width: 64px; height: 64px; border-radius: 32px; background: {{w.color}}; color: #FFFFFF; display: flex; align-items: center; justify-content: center; font-size: 26px; font-weight: 700; box-shadow: 0 0 0 4px #FFFFFF, 0 0 0 6px rgba(13,21,66,.12);">{{w.initial}}</span><span style="max-width: 100%; font-size: 24px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{w.name}}</span><span style="font-size: 18px; color: ${LV.ink2}; font-variant-numeric: tabular-nums;">{{w.score}}</span><div style="width: 100%; height: {{w.h}}; box-sizing: border-box; padding-top: 22px; border-radius: 28px 28px 0 0; background: {{w.bg}}; color: {{w.fg}}; display: flex; justify-content: center;"><span style="font-size: 64px; font-weight: 700; letter-spacing: -.04em; line-height: 1;">{{w.place}}</span></div></div></sc-for>
   </div>
-  <div style="position: relative; width: 100%; height: 108px; box-sizing: border-box; padding: 0 48px; display: flex; align-items: center; justify-content: center; gap: 12px;"><a href="LiveLobby.dc.html" onClick="{{again}}" style="height: 52px; padding: 0 26px; display: inline-flex; align-items: center; border-radius: 999px; background: rgba(13,21,66,.07); font-size: 16px; font-weight: 600;">Play again</a>${navyAct('Done', 'WebDeck.dc.html', 'done')}</div>
+  <div style="position: relative; width: 100%; height: 108px; box-sizing: border-box; padding: 0 48px; display: flex; align-items: center; justify-content: center; gap: 12px;"><a href="LiveLobby.dc.html" onClick="{{again}}" style="height: 52px; padding: 0 26px; display: inline-flex; align-items: center; border-radius: 999px; background: rgba(13,21,66,.07); font-size: 16px; font-weight: 600;">Play again</a>
+    <sc-if value="{{topicSave}}" hint-placeholder-val="{{ false }}"><a href="LivePodium.dc.html" onClick="{{saveTopic}}" style="height: 52px; padding: 0 26px; display: inline-flex; align-items: center; border-radius: 999px; background: rgba(13,21,66,.07); font-size: 16px; font-weight: 600;">{{saveLabel}}</a></sc-if>
+    <sc-if value="{{topicSaved}}" hint-placeholder-val="{{ false }}"><a href="{{savedHref}}" style="height: 52px; padding: 0 26px; display: inline-flex; align-items: center; border-radius: 999px; background: rgba(13,21,66,.07); font-size: 16px; font-weight: 600;">Open the deck</a></sc-if>
+    ${navyAct('Done', 'WebDeck.dc.html', 'done')}
+    <sc-if value="{{saveError}}" hint-placeholder-val="{{ false }}"><span role="alert" style="position: absolute; left: 0; right: 0; bottom: 6px; text-align: center; font-size: 14px; color: ${LV.ink2};">{{saveError}}</span></sc-if></div>
 </div>`;
 // The lobby, with the join code big, a QR code that opens the join page with the code in, and people popping in as they
 // join. Start needs someone in.
@@ -5530,16 +5559,22 @@ const liveLobby = `<div ${liveRoot(1440, 900, 'display: flex; flex-direction: co
 // Setting up, from a deck: which cards, how many questions, and the time for each. A deck needs cards that can make
 // questions (two or more with answers).
 const liveSetup = `<div style="position: relative; width: 1440px; height: 900px; overflow: hidden; font-family: ${FONT}; color: {{t.text}};">
-  <dc-import name="WebDeck" dark="{{dark}}" dim="{{dim}}" deck-id="{{deckId}}" hint-size="1440px,900px"></dc-import>
-  <div style="position: absolute; inset: 0; background: {{t.dim}};"></div>
-  <div role="dialog" aria-label="Play live" style="position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); width: 560px; box-sizing: border-box; padding: 28px; border-radius: 36px; overflow: hidden; background: {{t.bg}}; box-shadow: 0 24px 64px rgba(0,0,0,.24);">
+  <sc-if value="{{deckPage}}" hint-placeholder-val="{{ true }}"><dc-import name="WebDeck" dark="{{dark}}" dim="{{dim}}" deck-id="{{deckId}}" hint-size="1440px,900px"></dc-import></sc-if>
+  <sc-if value="{{libraryPage}}" hint-placeholder-val="{{ false }}"><dc-import name="WebDecks" dark="{{dark}}" dim="{{dim}}" hint-size="1440px,900px"></dc-import></sc-if>
+  <div style="position: absolute; inset: 0; z-index: 40; background: {{t.dim}};"></div>
+  <div role="dialog" aria-label="Play live" style="position: absolute; z-index: 41; left: 50%; top: 50%; transform: translate(-50%, -50%); width: 560px; box-sizing: border-box; padding: 28px; border-radius: 36px; overflow: hidden; background: {{t.bg}}; box-shadow: 0 24px 64px rgba(0,0,0,.24);">
     ${deepTop}
     <div style="position: relative; display: flex; flex-direction: column; gap: 20px;">
-    ${deepHead('live', 'Play live', 'WebDeck.dc.html', 'Play this deck with friends. They join on their phones with a code, no account needed. Right and fast answers win.')}
-    ${quizField('Cards', quizSeg('sets'))}
+    ${deepHead('live', 'Play live', 'WebDeck.dc.html', '{{headLine}}', 'close')}
+    <sc-if value="{{choose}}" hint-placeholder-val="{{ true }}">${quizField('Questions from', quizSeg('froms'))}</sc-if>
+    <sc-if value="{{fromDeck}}" hint-placeholder-val="{{ true }}">${quizField('Cards', quizSeg('sets'))}</sc-if>
+    <sc-if value="{{fromTopic}}" hint-placeholder-val="{{ false }}"><label style="display: flex; flex-direction: column; gap: 8px;"><span style="font-size: 13px; font-weight: 600;">Topic</span>
+      <sc-if value="{{topicEdit}}" hint-placeholder-val="{{ true }}"><input type="text" value="{{topic}}" onChange="{{setTopic}}" onKeyDown="{{topicKey}}" ref="{{topicRef}}" placeholder="{{topicHint}}" aria-label="Topic" maxlength="120" autocomplete="off" style="height: 48px; box-sizing: border-box; padding: 0 16px; border: 0; outline: 0; border-radius: 16px; background: {{t.surf}}; color: {{t.text}}; font: inherit; font-size: 16px;"></sc-if>
+      <sc-if value="{{topicBusy}}" hint-placeholder-val="{{ false }}"><span style="height: 48px; box-sizing: border-box; padding: 0 16px; display: flex; align-items: center; border-radius: 16px; background: {{t.surf}}; color: {{t.muted}}; font-size: 16px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{topic}}</span></sc-if></label></sc-if>
     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">${quizField('Questions', quizSeg('counts'))}${quizField('Time for each', quizSeg('times'))}</div>
     <sc-if value="{{noneLine}}" hint-placeholder-val="{{ false }}"><div style="font-size: 13px; line-height: 1.45; color: {{t.muted}};">{{noneLine}}</div></sc-if>
-    <div style="display: flex; gap: 10px;">${quizBtn('Cancel', 'WebDeck.dc.html', false, 1)}<a href="LiveLobby.dc.html" onClick="{{open}}" data-key="Enter" style="flex-grow: 2; height: 52px; border-radius: 999px; background: {{openBg}}; color: {{openFg}}; display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 15px; font-weight: 600; cursor: {{openCursor}};">${svg(I.live, 16, 2)}Open the room</a></div>
+    <sc-if value="{{problem}}" hint-placeholder-val="{{ false }}"><div role="alert" style="font-size: 13px; line-height: 1.45; color: {{t.text}};">{{problem}}</div></sc-if>
+    <div style="display: flex; gap: 10px;">${quizBtn('Cancel', 'WebDeck.dc.html', false, 1, '', 'cancel')}<a href="LiveLobby.dc.html" onClick="{{open}}" data-key="Enter" style="flex-grow: 2; height: 52px; border-radius: 999px; background: {{openBg}}; color: {{openFg}}; display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 15px; font-weight: 600; cursor: {{openCursor}};">${svg(I.live, 16, 2)}{{openLabel}}</a></div>
     </div>
   </div>
 </div>`;
@@ -5654,23 +5689,44 @@ renderVals() {
     board: board.slice(0, 5).map((p, i) => ({ rank: String(i + 1), name: p.name, initial: (p.name[0] || '?').toUpperCase(), color: colors[p.color % 5], score: p.score.toLocaleString('en-US'), w: Math.max(0, p.score) / top * 100 + '%',
       move: p.move > 0 ? '▲ ' + p.move : p.move < 0 ? '▼ ' + -p.move : p.move === 0 ? '–' : '', moveColor: p.move > 0 ? '#12A150' : p.move < 0 ? '#D92D20' : LVc.grayInk, delay: (i * .08).toFixed(2) + 's' })),
     podium: places, winLine: first ? first.name + ' wins!' : 'Nobody played', endLine: L.deck.name + ' · final results',
-    again: act(() => db.act.liveAgain()), done: act(() => db.act.liveClose()) };
+    again: act(() => db.act.liveAgain()), done: act(() => db.act.liveClose()),
+    // A game made from a topic can be kept as a deck once it is over (the canvas shows it by the board's "topicState" setting).
+    ...(() => { const TS = db.mock ? this.props.topicState || 'A deck' : '', lt = db.mock ? { saving: false, error: '' } : db.liveTopic(), tp = L.topic || (TS === 'A topic' ? { name: 'The French Revolution', saved: '' } : TS === 'A topic (saved)' ? { name: 'The French Revolution', saved: 'x' } : null);
+      return { topicSave: !!tp && !tp.saved, saveLabel: lt.saving ? 'Saving…' : 'Save as a deck', saveTopic: act(() => db.act.saveLiveTopic()), topicSaved: !!tp && !!tp.saved, savedHref: tp && tp.saved ? '/deck/' + tp.saved : 'WebDeck.dc.html', saveError: lt.error || '' }; })() };
 }`;
 // Setting up (over the deck's page, so it follows dark mode): the deck's cards that can play live, grouped like Learn
 // mode's, and the deep gradient for the card's top.
 const LIVE_SETUP_LOGIC = `
-constructor(props) { super(props); this.state = { set: null, count: 10, time: 20 }; }
+constructor(props) { super(props); this.state = { set: null, count: 10, time: 20, from: '', topic: null }; }
 renderVals() { ${T}
-  const db = this.props.db || this.mock(), s = this.state, id = this.props.deckId;
+  const db = this.props.db || this.mock(), s = this.state, id = this.props.deckId, P = this.props, mock = !!db.mock, F = P.liveFrom || 'A deck';
   const seg = (k, cur) => ({ pressed: k === cur ? 'true' : 'false', bg: k === cur ? t.bg : 'transparent', fg: k === cur ? t.text : t.muted, sh: k === cur ? '0 1px 3px rgba(0,0,0,.14)' : 'none' });
-  const sets = db.liveSets(id), set = sets.find(x => x.id === s.set) || (db.mock ? sets[2] : sets.find(x => x.n > 0) || sets[sets.length - 1]), n = set.n;
-  return { t, deep: ${MIDNIGHT}, dark: !!this.props.dark, dim: !!this.props.dim, deckId: id || '', grain: String(this.props.grain ?? 0.7),
+  const sets = db.liveSets(id), set = sets.find(x => x.id === s.set) || (mock ? sets[2] : sets.find(x => x.n > 0) || sets[sets.length - 1]), n = set.n;
+  // Questions can come from the deck's cards or from a topic. With no deck (Live from the Library) it is always a topic; a deck with no
+  // cards to play starts on the topic too. The canvas takes its pick from the board's "liveFrom" setting.
+  const hasDeck = mock ? F !== 'A topic (from the Library)' : !!id;
+  const from = !hasDeck ? 'topic' : mock ? (F === 'A deck' ? 'deck' : 'topic') : s.from || (n > 0 ? 'deck' : 'topic');
+  const LT = mock ? { busy: F === 'Writing the questions', word: 'Writing your questions…', error: F === 'It didn’t work' ? 'The AI didn’t answer. Try again in a moment.' : '' } : db.liveTopic();
+  const topic = s.topic != null ? s.topic : mock && from === 'topic' ? 'The French Revolution' : P.topic || '';
+  const busy = from === 'topic' && LT.busy, ready = from === 'topic' ? topic.trim().length >= 2 && !LT.busy : n > 0;
+  const go = e => { if (e && e.preventDefault) e.preventDefault(); if (mock) return; if (from === 'topic') { if (ready) db.act.openLiveTopic(topic, s.count, s.time); } else if (n) db.act.openLive(id, set.id, s.count, s.time); };
+  return { t, deep: ${MIDNIGHT}, dark: !!P.dark, dim: !!P.dim, deckId: id || '', grain: String(P.grain ?? 0.7),
+    deckPage: hasDeck, libraryPage: !hasDeck,
+    headLine: from === 'topic' ? 'Type a topic and Lucida writes the questions. Friends join on their phones with a code, no account needed. Right and fast answers win.' : 'Play this deck with friends. They join on their phones with a code, no account needed. Right and fast answers win.',
+    choose: hasDeck, froms: [['deck', 'This deck'], ['topic', 'A topic']].map(([k, label]) => ({ label, ...seg(k, from), pick: () => { if (!busy) this.setState({ from: k }); } })),
+    fromDeck: from === 'deck', fromTopic: from === 'topic', topic, topicEdit: !busy, topicBusy: busy, topicHint: 'The French Revolution',
+    setTopic: e => this.setState({ topic: e && e.target ? e.target.value : '' }), topicKey: e => { if (e && e.key === 'Enter') go(e); },
+    topicRef: el => { if (el && !mock && from === 'topic' && !this._focused) { this._focused = true; el.focus(); } },
     sets: sets.map(x => ({ label: x.label + ' · ' + x.n, ...seg(x.id, set.id), pick: () => this.setState({ set: x.id }) })),
-    counts: [5, 10, 20].map(k => ({ label: String(k), ...seg(k, s.count), pick: () => this.setState({ count: k }) })),
-    times: [10, 20, 30].map(k => ({ label: k + 's', ...seg(k, s.time), pick: () => this.setState({ time: k }) })),
-    noneLine: n ? '' : 'Live needs two or more cards with answers. Sound cards don’t play live yet.',
-    openBg: n ? t.inv : t.surf2, openFg: n ? t.invText : t.muted, openCursor: n ? 'pointer' : 'default',
-    open: e => { if (db.mock) return; if (e && e.preventDefault) e.preventDefault(); if (n) db.act.openLive(id, set.id, s.count, s.time); } }; }`;
+    counts: [5, 10, 20].map(k => ({ label: String(k), ...seg(k, s.count), pick: () => { if (!busy) this.setState({ count: k }); } })),
+    times: [10, 20, 30].map(k => ({ label: k + 's', ...seg(k, s.time), pick: () => { if (!busy) this.setState({ time: k }); } })),
+    noneLine: from === 'deck' && !n ? 'Live needs two or more cards with answers. Sound cards don’t play live yet.' : '', problem: from === 'topic' ? LT.error || '' : '',
+    openBg: ready ? t.inv : t.surf2, openFg: ready ? t.invText : t.muted, openCursor: ready ? 'pointer' : 'default', openLabel: busy ? LT.word || 'Writing your questions…' : 'Open the room',
+    // Cancel stops the questions being written (and stays here); otherwise it closes, like the X.
+    cancel: e => { if (mock) return; if (busy) { if (e && e.preventDefault) e.preventDefault(); db.act.cancelLiveTopic(); } },
+    // The X closes the window, and stops the questions being written.
+    close: () => { if (!mock && busy) db.act.cancelLiveTopic(); },
+    open: go }; }`;
 // A phone's logic (joining, waiting, answering, each answer's result, the final leaderboard, and the end), from
 // db.join(): this phone's place in the game, or the canvas's sample (Jordan's phone).
 const LIVE_PHONE_LOGIC = `
@@ -7735,6 +7791,7 @@ renderVals() {
     ...(d.checked ? [{ label: 'Checked by ' + d.checked.name + (d.checked.current ? '' : checkedAt ? ' at version ' + checkedAt.version : ' earlier'), shield: true, people: false }] : []),
     ...(school ? [{ label: ownerName, shield: true, people: false }] : []),
     { label: d.maintained === 'community' ? 'Kept up by the community' : 'Kept up by ' + firstName(ownerName), shield: false, people: true }];
+  ${PUBLIC_GUIDE_JS}
   const upd = rel(d.updated), cardsLine = kfmt(d.cards) + (d.cards === 1 ? ' card' : ' cards');
   // What you've done with it decides the buttons. Saving and getting updates show as you press them.
   const starOn = st.star ?? !!(me && me.starred), stars = Math.max(0, (d.stars || 0) + (me ? (starOn ? 1 : 0) - (me.starred ? 1 : 0) : 0));
@@ -7835,7 +7892,7 @@ renderVals() {
   const checkIt = async () => { if (this.state.busy || !checker) return; set({ busy: 'check', error: '' });
     try { await db.act.checkDeck(d.id); this.setState({ busy: '', checkedAt: d.version }); } catch (e) { this.setState({ busy: '', error: fail(e) }); } };
   return {
-    t, ...chrome, ${NET_VALS} ink: inkOf,
+    t, ...chrome, ${NET_VALS} ink: inkOf, gd: GD,
     canReport: ready && !owns, reportIt: () => openReport('deck', d.id, d.name), rep,
     canCheck: checker && !checkedNow && !mineChecked, mineChecked, checkLabel: busy === 'check' ? 'Checking…' : 'Check this deck', checkIt,
     loading: loading && !p.missing, missing: bad, ready, notReady: !ready, missingTitle: 'This deck isn’t here', missingLine: 'It may be private now, or the link is wrong.', discoverHref: goTo('/discover', B + 'Discover'),
@@ -7862,6 +7919,7 @@ renderVals() {
     peopleRows, story, sp, cp, backHref: goTo('/discover', B + 'Discover')
   };
 }`;
+const PGW = publicGuideBlocks({ svg, I }, false), PGP = publicGuideBlocks({ svg, I }, true);
 const webPublicDeck = netRoot('Discover', `
     ${NET_LOADING(2)}
     ${NET_MISSING}
@@ -7904,12 +7962,13 @@ const webPublicDeck = netRoot('Discover', `
     <sc-if value="{{hasError}}" hint-placeholder-val="{{ false }}"><div role="alert" style="margin-top: -12px; font-size: 13px; color: {{t.again}};">{{error}}</div></sc-if>
     <div style="display: flex; gap: 40px; align-items: flex-start;">
       <section style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column;">
+        ${PGW.guide}
         ${PD_TABS}
         ${PD_CARDS(false)}
         ${PD_HISTORY(false)}
         ${PD_PEOPLE}
       </section>
-      <aside style="width: 320px; flex-shrink: 0; display: flex; flex-direction: column; gap: 18px; padding-top: 14px;">${eyebrow('How it was made')}${PD_STORY}</aside>
+      <aside style="width: 320px; flex-shrink: 0; display: flex; flex-direction: column; gap: 18px; padding-top: 14px;">${eyebrow('How it was made')}${PGW.made}${PD_STORY}</aside>
     </div>
     </sc-if>`, `<sc-if value="{{cp.open}}" hint-placeholder-val="{{ false }}"><div style="position: absolute; inset: 0; z-index: 80; display: flex; align-items: center; justify-content: center;">
   <div class="sc-fade" onClick="{{cp.cancel}}" style="position: absolute; inset: 0; background: {{t.dim}};"></div>
@@ -7963,6 +8022,7 @@ const phonePublicDeck = phone(`<div style="padding: 0 0 120px; display: flex; fl
       ${pdRound(svg(I.copy, 20, 2), 'Make a copy', { href: '{{signInPhone}}' })}${pdRound(svg(I.star, 20, 2), 'Save', { href: '{{signInPhone}}' })}${pdRound(svg(I.message, 20, 2), 'Suggest a change', { href: '{{signInPhone}}' })}
     </div></sc-if>
     <sc-if value="{{hasError}}" hint-placeholder-val="{{ false }}"><div role="alert" style="margin-top: -6px; font-size: 13px; color: {{t.again}};">{{error}}</div></sc-if>
+    ${PGP.guide}${PGP.made}
     <div style="display: flex; flex-direction: column;">
       ${PD_TABS}
       ${PD_CARDS(true)}
@@ -8198,7 +8258,7 @@ const phoneHistory = phone(`<div style="padding: 64px 20px 120px; display: flex;
 const bool = (d = false) => ({ editor: 'boolean', default: d });
 // Your verification, for the boards that show it (a verified teacher sees Check this deck; Settings says Verified teacher).
 const VERIFIED_PROP = { editor: 'enum', default: '', options: ['', 'Waiting for review', 'Teacher', 'School'] };
-const PD_PROPS = { ...DARK, grain: MESH('Iris').grain, loading: bool(), signedOut: bool(), owner: bool(), studying: bool(), copyOpen: bool(), missing: bool(), report: bool(), verified: VERIFIED_PROP, deckTab: { editor: 'enum', default: 'Cards', options: ['Cards', 'History', 'People'] } };
+const PD_PROPS = { ...DARK, grain: MESH('Iris').grain, guide: { editor: 'enum', default: 'Guide and sources', options: ['Guide and sources', 'Guide pages', 'No guide yet'] }, loading: bool(), signedOut: bool(), owner: bool(), studying: bool(), copyOpen: bool(), missing: bool(), report: bool(), verified: VERIFIED_PROP, deckTab: { editor: 'enum', default: 'Cards', options: ['Cards', 'History', 'People'] } };
 const SG_PROPS = { ...DARK, loading: bool(), aiWaiting: bool(true), noSuggestions: bool(), report: bool(), block: bool() };
 const HI_PROPS = { ...DARK, loading: bool(), missing: bool(), signedOut: bool(), someoneElse: bool() };
 // ---------- Classes ----------
@@ -8705,6 +8765,8 @@ const PROFILE_PROPS = { ...DARK, grain: MESH('Iris').grain, tab: { editor: 'enum
 // you's states in Settings. Deck settings can open with the goal stepped from 90% to 95%.
 const FREE_PROP = { editor: 'boolean', default: false };
 const PRO_DECK_PROPS = { free: FREE_PROP, stepGoal: { editor: 'boolean', default: false } };
+// The deck page's Guide and Sources: with both, with the Guide's extra pages, a long Guide, a source opened, nothing yet, or a deck you only study.
+const GUIDE_STATE = { guide: { editor: 'enum', default: 'Guide and sources', options: GUIDE_STATES }, sourceOpen: { editor: 'string', default: '' }, sourceAt: { editor: 'string', default: '' } };
 const STATS_PROPS = { tab: { editor: 'enum', default: 'Overview', options: ['Overview', 'Memory', 'Weak spots', 'Pace'] }, free: FREE_PROP };
 const LEVEL_PROP = { editor: 'enum', default: 'all', options: ['all', 'new', 'easy', 'medium', 'hard', 'leech', 'paused'] };
 const TUNE_PROP = { editor: 'enum', default: 'On', options: ['On', 'Off', 'Not enough reviews', 'Tuning'] };
@@ -8796,7 +8858,7 @@ const files = {
   'WebDecksEmpty': ['Web · Library · no decks yet', webDecksEmpty, { props: { ...DARK, grain: MESH('Iris').grain }, logic: emptyLogic(), w: W, h: H }],
   'WebDeckEmpty': ['Web · Deck · no cards yet', webDeckEmpty, { props: { ...DARK, grain: MESH('Iris').grain }, logic: emptyLogic('Pharmacology'), w: W, h: H }],
   'WebStatsEmpty': ['Web · Stats · no reviews yet', webStatsEmpty, { props: { ...DARK, grain: MESH('Iris').grain }, logic: emptyLogic(), w: W, h: H }],
-  'WebDeck': ['Web · Deck page', webDeck, { props: { ...DARK, grain: MESH('Iris').grain, settingsOpen: { editor: 'boolean', default: false }, settingsTab: { editor: 'enum', default: 'General', options: ['General', 'Studying', 'Sharing'] }, tagPicker: { editor: 'boolean', default: false }, ...SHARE_PROPS, ...PRO_DECK_PROPS }, logic: deckLogic, css: NUM_CSS + PARALLAX_CSS + DRAG_CSS, w: W, h: H }],
+  'WebDeck': ['Web · Deck page', webDeck, { props: { ...DARK, grain: MESH('Iris').grain, settingsOpen: { editor: 'boolean', default: false }, settingsTab: { editor: 'enum', default: 'General', options: ['General', 'Studying', 'Sharing'] }, tagPicker: { editor: 'boolean', default: false }, ...SHARE_PROPS, ...PRO_DECK_PROPS, ...GUIDE_STATE }, logic: deckLogic, css: NUM_CSS + PARALLAX_CSS + DRAG_CSS + GUIDE_CSS, w: W, h: H }],
   'WebDeckTagPicker': ['Web · Deck settings · Add tag', attrOf('WebDeck', W, H, 'settings-open="{{yes}}" tag-picker="{{yes}}"'), { logic: darkLogic, css: NUM_CSS + DRAG_CSS, w: W, h: H }],
   'WebEditor': ['Web · Card editor', webEditor, { props: { ...DARK, cardType: { editor: 'enum', default: 'Basic', options: ['Basic', 'Blank', 'Image', 'Audio'] }, recording: { editor: 'boolean', default: false }, slashDemo: { editor: 'boolean', default: false } }, logic: EDITOR_LOGIC, css: EDITOR_CSS, w: W, h: H }],
   'WebEditorSlash': ['Web · Card editor · / menu', attrOf('WebEditor', W, H, 'slash-demo="{{yes}}"'), { logic: darkLogic, css: EDITOR_CSS, w: W, h: H }],
@@ -8814,7 +8876,7 @@ const files = {
   'WebEditorBigDark': ['Web · Bigger card editor (dark, mockup)', darkOf('WebEditorBig', W, H), { logic: darkLogic, css: EDITOR_CSS, w: W, h: H }],
   'WebEditorBigImageDark': ['Web · Bigger card editor · image with boxes (dark, mockup)', attrOf('WebEditorBig', W, H, 'card-type="Image" dark="{{yes}}"'), { logic: darkLogic, css: EDITOR_CSS, w: W, h: H }],
   // Option B, also a mockup: the deck's cards on a screen of their own (cardType: which card it opens on).
-  'WebCardsScreen': ['Web · Edit cards (Option B)', webCards, { props: { ...DARK, cardType: { editor: 'enum', default: 'Basic', options: ['Basic', 'Blank', 'Image', 'Audio'] }, newCard: { editor: 'boolean', default: false }, recording: { editor: 'boolean', default: false }, paused: { editor: 'boolean', default: false } }, logic: CARDS_LOGIC, css: EDITOR_CSS + CARDS_CSS, w: W, h: H }],
+  'WebCardsScreen': ['Web · Edit cards (Option B)', webCards, { props: { ...DARK, cardType: { editor: 'enum', default: 'Basic', options: ['Basic', 'Blank', 'Image', 'Audio'] }, newCard: { editor: 'boolean', default: false }, recording: { editor: 'boolean', default: false }, paused: { editor: 'boolean', default: false }, madeFrom: { editor: 'boolean', default: true } }, logic: CARDS_LOGIC, css: EDITOR_CSS + CARDS_CSS, w: W, h: H }],
   'WebCardsScreenNew': ['Web · Edit cards · writing a new card (Option B)', attrOf('WebCardsScreen', W, H, 'new-card="{{yes}}"'), { logic: darkLogic, css: EDITOR_CSS + CARDS_CSS, w: W, h: H }],
   'WebCardsScreenImage': ['Web · Edit cards · image with boxes (Option B)', typeOf('WebCardsScreen', W, H, 'Image'), { logic: darkLogic, css: EDITOR_CSS + CARDS_CSS, w: W, h: H }],
   'WebCardsScreenBlank': ['Web · Edit cards · fill in the blank (Option B)', typeOf('WebCardsScreen', W, H, 'Blank'), { logic: darkLogic, css: EDITOR_CSS + CARDS_CSS, w: W, h: H }],
@@ -8889,7 +8951,7 @@ const files = {
   'PhoneStatsEmpty': ['iPhone · Stats · no reviews yet', phoneStatsEmpty, { props: { ...DARK, grain: MESH('Iris').grain }, logic: emptyLogic(), w: PW, h: PH }],
   'PhoneNewDeck': ['iPhone · New deck', phoneNewDeck, { props: { ...DARK, grain: MESH('Iris').grain }, logic: NEW_DECK_LOGIC, css: NUM_CSS + COVER_FADE_CSS, w: PW, h: PH }],
   'PhoneInbox': ['iPhone · Check AI cards', phoneInbox, { props: DARK, logic: phoneInboxLogic, css: REVIEW_CSS, w: PW, h: PH }],
-  'PhoneDeck': ['iPhone · Deck page', phoneDeck, { props: { ...DARK, grain: MESH('Iris').grain, settingsOpen: { editor: 'boolean', default: false }, settingsTab: { editor: 'enum', default: 'General', options: ['General', 'Studying', 'Sharing'] }, tagPicker: { editor: 'boolean', default: false }, ...SHARE_PROPS, ...PRO_DECK_PROPS }, logic: phoneDeckLogic, css: NUM_CSS + PARALLAX_CSS + DRAG_CSS, w: PW, h: PH }],
+  'PhoneDeck': ['iPhone · Deck page', phoneDeck, { props: { ...DARK, grain: MESH('Iris').grain, settingsOpen: { editor: 'boolean', default: false }, settingsTab: { editor: 'enum', default: 'General', options: ['General', 'Studying', 'Sharing'] }, tagPicker: { editor: 'boolean', default: false }, ...SHARE_PROPS, ...PRO_DECK_PROPS, ...GUIDE_STATE }, logic: phoneDeckLogic, css: NUM_CSS + PARALLAX_CSS + DRAG_CSS + GUIDE_CSS, w: PW, h: PH }],
   'PhoneDeckTagPicker': ['iPhone · Deck settings · Add tag', attrOf('PhoneDeck', PW, PH, 'settings-open="{{yes}}" tag-picker="{{yes}}"'), { logic: darkLogic, css: NUM_CSS + DRAG_CSS, w: PW, h: PH }],
   'PhoneDeckSettingsStudy': ['iPhone · Deck settings · Studying (FSRS)', studyOf('PhoneDeck', PW, PH), { logic: darkLogic, css: NUM_CSS + DRAG_CSS, w: PW, h: PH }],
   'PhoneDeckSettingsGoal': ['iPhone · Deck settings · Studying · goal raised to 95% (reviews a day)', attrOf('PhoneDeck', PW, PH, 'settings-open="{{yes}}" settings-tab="Studying" step-goal="{{yes}}"'), { logic: darkLogic, css: NUM_CSS + DRAG_CSS, w: PW, h: PH }],
@@ -8898,7 +8960,7 @@ const files = {
   'PhoneDeckStudied': ['iPhone · Deck page · a deck you study from someone else', attrOf('PhoneDeck', PW, PH, 'linked="study"'), { logic: darkLogic, css: NUM_CSS + DRAG_CSS, w: PW, h: PH }],
   'PhoneDeckCopy': ['iPhone · Deck page · your copy, with the owner’s changes waiting', attrOf('PhoneDeck', PW, PH, 'linked="copy"'), { logic: darkLogic, css: NUM_CSS + DRAG_CSS, w: PW, h: PH }],
   'PhoneDeckUpdates': ['iPhone · Deck page · your copy · the owner’s changes (take or skip)', attrOf('PhoneDeck', PW, PH, 'linked="copy" updates-open="{{yes}}"'), { logic: darkLogic, css: NUM_CSS + DRAG_CSS, w: PW, h: PH }],
-  'PhoneEditor': ['iPhone · Card editor', phoneEditor, { props: { ...DARK, keyboard: { editor: 'boolean', default: true }, textStyles: { editor: 'boolean', default: false }, cardType: { editor: 'enum', default: 'Basic', options: ['Basic', 'Blank', 'Image', 'Audio'] }, recording: { editor: 'boolean', default: false }, cardId: { editor: 'string', default: '' }, paused: { editor: 'boolean', default: false } }, logic: EDITOR_LOGIC, css: EDITOR_CSS, w: PW, h: PH }],
+  'PhoneEditor': ['iPhone · Card editor', phoneEditor, { props: { ...DARK, keyboard: { editor: 'boolean', default: true }, textStyles: { editor: 'boolean', default: false }, cardType: { editor: 'enum', default: 'Basic', options: ['Basic', 'Blank', 'Image', 'Audio'] }, recording: { editor: 'boolean', default: false }, cardId: { editor: 'string', default: '' }, paused: { editor: 'boolean', default: false }, madeFrom: { editor: 'boolean', default: true } }, logic: EDITOR_LOGIC, css: EDITOR_CSS, w: PW, h: PH }],
   'PhoneEditorAudio': ['iPhone · Card editor · audio', attrOf('PhoneEditor', PW, PH, 'card-type="Audio" keyboard="{{no}}"'), { logic: yesNoLogic, css: EDITOR_CSS, w: PW, h: PH }],
   'PhoneEditorRecording': ['iPhone · Card editor · recording audio', attrOf('PhoneEditor', PW, PH, 'card-type="Audio" keyboard="{{no}}" recording="{{yes}}"'), { logic: yesNoLogic, css: EDITOR_CSS, w: PW, h: PH }],
   'PhoneEditorPaused': ['iPhone · Card editor · editing a paused card (Unpause card)', attrOf('PhoneEditor', PW, PH, 'card-id="k1" paused="{{yes}}" keyboard="{{no}}"'), { logic: yesNoLogic, css: EDITOR_CSS, w: PW, h: PH }],
@@ -8922,14 +8984,14 @@ const files = {
   'PhoneQuizType': ['iPhone · Learn mode · type the answer', phoneQuizType, { props: DARK, logic: TYPE_LOGIC(true), css: LEARN_CSS, w: PW, h: PH }],
   'PhoneQuizDone': ['iPhone · Learn mode · all learned', phoneQuizDone, { props: DARK, logic: QUIZ_DONE_LOGIC(true), css: LEARN_CSS, w: PW, h: PH }],
   'PhoneQuizSettings': ['iPhone · Learn mode · settings (the deck’s background)', attrOf('PhoneQuiz', PW, PH, 'settings-open="{{yes}}"'), { logic: darkLogic, css: LEARN_CSS, w: PW, h: PH }],
-  'LiveSetup': ['Live · host · set up', liveSetup, { props: DARK, logic: LIVE_SETUP_LOGIC, w: W, h: H }],
+  'LiveSetup': ['Live · host · set up', liveSetup, { props: { ...DARK, liveFrom: { editor: 'enum', default: 'A deck', options: LIVE_FROM }, topic: { editor: 'string', default: '' } }, logic: LIVE_SETUP_LOGIC, w: W, h: H }],
   'LiveLobby': ['Live · big screen · lobby (join code)', liveLobby, { props: { ...DARK, grain: MESH('Iris').grain, empty: { editor: 'boolean', default: false } }, logic: LIVE_HOST_LOGIC, css: LIVE_CSS, w: W, h: H }],
   'LiveLobbyEmpty': ['Live · big screen · lobby, nobody in yet', attrOf('LiveLobby', W, H, 'empty="{{yes}}"'), { logic: darkLogic, css: LIVE_CSS, w: W, h: H }],
   'LiveQuestion': ['Live · big screen · question', liveQuestion, { props: { ...DARK, grain: MESH('Iris').grain, image: { editor: 'boolean', default: false } }, logic: LIVE_HOST_LOGIC, css: LIVE_CSS, w: W, h: H }],
   'LiveQuestionImage': ['Live · big screen · question with a picture', attrOf('LiveQuestion', W, H, 'image="{{yes}}"'), { logic: darkLogic, css: LIVE_CSS, w: W, h: H }],
   'LiveReveal': ['Live · big screen · answer', liveReveal, { props: { ...DARK, grain: MESH('Iris').grain, reveal: { editor: 'boolean', default: true }, image: { editor: 'boolean', default: false } }, logic: LIVE_HOST_LOGIC, css: LIVE_CSS, w: W, h: H }],
   'LiveLeaderboard': ['Live · big screen · leaderboard', liveLeaderboard, { props: { ...DARK, grain: MESH('Iris').grain }, logic: LIVE_HOST_LOGIC, css: LIVE_CSS, w: W, h: H }],
-  'LivePodium': ['Live · big screen · podium', livePodium, { props: { ...DARK, grain: MESH('Iris').grain, final: { editor: 'boolean', default: true } }, logic: LIVE_HOST_LOGIC, css: LIVE_CSS, w: W, h: H }],
+  'LivePodium': ['Live · big screen · podium', livePodium, { props: { ...DARK, grain: MESH('Iris').grain, final: { editor: 'boolean', default: true }, topicState: { editor: 'enum', default: 'A deck', options: LIVE_TOPIC_STATES } }, logic: LIVE_HOST_LOGIC, css: LIVE_CSS, w: W, h: H }],
   'LiveJoin': ['Live · phone · join', liveJoin, { props: { ...DARK, grain: MESH('Iris').grain, notFound: { editor: 'boolean', default: false } }, logic: LIVE_PHONE_LOGIC, css: LIVE_CSS, w: PW, h: PH }],
   'LiveJoinNotFound': ['Live · phone · join, no game with that code', attrOf('LiveJoin', PW, PH, 'not-found="{{yes}}"'), { logic: darkLogic, css: LIVE_CSS, w: PW, h: PH }],
   'LiveWaiting': ['Live · phone · waiting', liveWaiting, { props: { ...DARK, grain: MESH('Iris').grain, late: { editor: 'boolean', default: false } }, logic: LIVE_PHONE_LOGIC, css: LIVE_CSS, w: PW, h: PH }],
@@ -9046,7 +9108,7 @@ const files = {
   'PhoneActivityDark': ['iPhone · News (dark)', darkOf('PhoneActivity', PW, PH), { logic: darkLogic, w: PW, h: PH }],
   'PhoneActivityGray': ['iPhone · News (dark, gray)', grayOf('PhoneActivity', PW, PH), { logic: darkLogic, w: PW, h: PH }],
   // A shared deck's page, suggesting changes, Suggestions, and History.
-  'WebPublicDeck': ['Web · Shared deck page', webPublicDeck, { props: PD_PROPS, logic: PUBLIC_DECK_LOGIC(false), css: NETX_CSS, w: W, h: H }],
+  'WebPublicDeck': ['Web · Shared deck page', webPublicDeck, { props: PD_PROPS, logic: PUBLIC_DECK_LOGIC(false), css: NETX_CSS + GUIDE_CSS, w: W, h: H }],
   'WebPublicDeckStudying': ['Web · Shared deck page · a deck you study', attrOf('WebPublicDeck', W, H, 'studying="{{yes}}"'), { logic: darkLogic, w: W, h: H }],
   'WebPublicDeckOwner': ['Web · Shared deck page · your own deck', attrOf('WebPublicDeck', W, H, 'owner="{{yes}}"'), { logic: darkLogic, w: W, h: H }],
   'WebPublicDeckCopy': ['Web · Shared deck page · Make a copy', attrOf('WebPublicDeck', W, H, 'copy-open="{{yes}}"'), { logic: darkLogic, w: W, h: H }],
@@ -9061,7 +9123,7 @@ const files = {
   'WebPublicDeckMissing': ['Web · Shared deck page · not shared', attrOf('WebPublicDeck', W, H, 'missing="{{yes}}"'), { logic: darkLogic, w: W, h: H }],
   'WebPublicDeckDark': ['Web · Shared deck page · dark', darkOf('WebPublicDeck', W, H), { logic: darkLogic, w: W, h: H }],
   'WebPublicDeckGray': ['Web · Shared deck page · gray', grayOf('WebPublicDeck', W, H), { logic: darkLogic, w: W, h: H }],
-  'PhonePublicDeck': ['iPhone · Shared deck page', phonePublicDeck, { props: PD_PROPS, logic: PUBLIC_DECK_LOGIC(true), css: NETX_CSS, w: PW, h: PH }],
+  'PhonePublicDeck': ['iPhone · Shared deck page', phonePublicDeck, { props: PD_PROPS, logic: PUBLIC_DECK_LOGIC(true), css: NETX_CSS + GUIDE_CSS, w: PW, h: PH }],
   'PhonePublicDeckStudying': ['iPhone · Shared deck page · a deck you study', attrOf('PhonePublicDeck', PW, PH, 'studying="{{yes}}"'), { logic: darkLogic, w: PW, h: PH }],
   'PhonePublicDeckOwner': ['iPhone · Shared deck page · your own deck', attrOf('PhonePublicDeck', PW, PH, 'owner="{{yes}}"'), { logic: darkLogic, w: PW, h: PH }],
   'PhonePublicDeckCopy': ['iPhone · Shared deck page · Make a copy', attrOf('PhonePublicDeck', PW, PH, 'copy-open="{{yes}}"'), { logic: darkLogic, w: PW, h: PH }],
@@ -9171,6 +9233,8 @@ for (const T of THEMES.filter(x => x.key !== 'lucida')) {
   });
 }
 Object.assign(files, siteFiles());
+// Making cards from anything, a deck's Guide, and its Sources (design/materials.mjs; web/make.js, web/guide.js).
+Object.assign(files, makeBoards({ svg, I, FONT, MONO, T, DB_JS, DARK, MESH, W, HH: H, PW, PH }));
 for (const [name, [title, body, opts]] of Object.entries(files)) writeFileSync(OUT + name + '.dc.html', page(title, body, opts));
 
 // The canvas layout (where each board sits) lives in canvas/project/canvas.json. It's kept in sync with the live

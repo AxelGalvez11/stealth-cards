@@ -475,6 +475,12 @@ export default [
   "h": 844
  },
  {
+  "name": "PhoneGuide",
+  "title": "iPhone · Deck Guide editor (pick the view)",
+  "w": 390,
+  "h": 844
+ },
+ {
   "name": "PhoneHistory",
   "title": "iPhone · History",
   "w": 390,
@@ -531,6 +537,12 @@ export default [
  {
   "name": "PhoneLibraryNewFolder",
   "title": "iPhone · Library · New folder popup",
+  "w": 390,
+  "h": 844
+ },
+ {
+  "name": "PhoneMake",
+  "title": "iPhone · Make cards (pick the step)",
   "w": 390,
   "h": 844
  },
@@ -2293,6 +2305,12 @@ export default [
   "h": 900
  },
  {
+  "name": "WebGuide",
+  "title": "Web · Deck Guide editor (pick the view)",
+  "w": 1440,
+  "h": 900
+ },
+ {
   "name": "WebHistory",
   "title": "Web · History (your deck)",
   "w": 1440,
@@ -2367,6 +2385,12 @@ export default [
  {
   "name": "WebLibraryNewFolder",
   "title": "Web · Library · New folder popup",
+  "w": 1440,
+  "h": 900
+ },
+ {
+  "name": "WebMake",
+  "title": "Web · Make cards (pick the step)",
   "w": 1440,
   "h": 900
  },

@@ -1,10 +1,10 @@
-// Made from design/canvas/project/PricingPhone.dc.html by design/to-web.mjs. Change the design, not this file.
+// Made from design/canvas/project/PhoneGuide.dc.html by design/to-web.mjs. Change the design, not this file.
 export default {
-  name: "PricingPhone", title: "Pricing · lucida.cards/pricing on a phone", w: 390, h: 2353, fill: false,
-  props: {"dark":false,"dim":false,"grain":0.7},
+  name: "PhoneGuide", title: "iPhone · Deck Guide editor (pick the view)", w: 390, h: 844, fill: true,
+  props: {"dark":false,"dim":false,"grain":0.7,"view":"Write","deckId":"","page":""},
   imports: [],
-  css: "body{margin:0;font-family:Geist, -apple-system, system-ui, sans-serif}\na{color:inherit;text-decoration:none}a:hover{opacity:.8}\n@keyframes scRise{from{opacity:0;transform:translateY(14px)}}main>*{animation:scRise .5s cubic-bezier(.2,.8,.2,1) backwards}main>*:nth-child(2){animation-delay:0.06s}main>*:nth-child(3){animation-delay:0.12s}main>*:nth-child(4){animation-delay:0.18s}main>*:nth-child(5){animation-delay:0.24s}main>*:nth-child(n+6){animation-delay:.3s}button,.sc-press{transition:transform .1s ease}button:active,.sc-press:active{transform:scale(.96)}.sc-sw{transition:background-color .3s ease,transform .1s ease}.sc-sw>span{transition:transform .32s cubic-bezier(.34,1.56,.64,1),background-color .3s ease}.sc-lift{transition:transform 1s ease-out,box-shadow 1s ease-out}.sc-lift:hover{transform:translateY(-4px);box-shadow:0 24px 48px -24px rgba(0,0,0,.45)}.sk-cover{box-shadow:var(--sk-shadow)}.sk-cover.sc-lift:hover{box-shadow:var(--sk-shadow),0 24px 48px -24px rgba(0,0,0,.45)}@keyframes scScrimIn{from{opacity:0}}@keyframes scScrimOut{to{opacity:0}}.sc-scrim{animation:scScrimIn .35s ease backwards}.sc-scrim.sc-gone{animation:scScrimOut .26s ease forwards}@keyframes scPanelIn{from{opacity:0;transform:translateX(calc(100% + 12px))}}@keyframes scPanelOut{to{opacity:0;transform:translateX(calc(100% + 12px))}}.sc-panel{animation:scPanelIn .35s cubic-bezier(.2,.8,.2,1) backwards}.sc-panel.sc-gone{animation:scPanelOut .26s cubic-bezier(.4,0,1,1) forwards}@keyframes scSheetIn{from{transform:translateY(100%)}}@keyframes scSheetOut{to{transform:translateY(100%)}}.sc-sheet{animation:scSheetIn .35s cubic-bezier(.2,.8,.2,1) backwards}.sc-sheet.sc-gone{animation:scSheetOut .26s cubic-bezier(.4,0,1,1) forwards}@keyframes scFloat{50%{transform:translateY(-6px)}}@keyframes scSwayA{50%{transform:rotate(-13deg) translateX(-3px)}}@keyframes scSwayB{50%{transform:rotate(10deg) translateX(3px)}}@keyframes scGlow{50%{opacity:.55}}@keyframes scSheen{0%,58%{transform:translateX(-160%) skewX(-18deg)}86%,100%{transform:translateX(260%) skewX(-18deg)}}.sc-float{animation:scFloat 6s ease-in-out infinite}.sc-sway-a{animation:scSwayA 6s ease-in-out infinite}.sc-sway-b{animation:scSwayB 6s ease-in-out infinite}.sc-glow{animation:scGlow 6s ease-in-out infinite}.sc-sheen{position:absolute;top:0;bottom:0;left:0;width:45%;background:linear-gradient(90deg,transparent,rgba(255,255,255,.4),transparent);animation:scSheen 5s cubic-bezier(.4,0,.2,1) infinite;pointer-events:none}@keyframes scDrift{from{transform:scale(1.14) translate(-3%,-2%)}to{transform:scale(1.14) translate(3%,2%)}}.sc-alive>svg:first-of-type{animation:scDrift 16s ease-in-out infinite alternate}@keyframes scDraw{from{stroke-dashoffset:1.02}}.sc-draw{stroke-dasharray:1 2;animation:scDraw .9s cubic-bezier(.2,.8,.2,1) backwards}@keyframes scKnob{from{opacity:0;transform:scale(.3)}}.sc-knob{transform-box:fill-box;transform-origin:center;animation:scKnob .35s .75s cubic-bezier(.34,1.56,.64,1) backwards}@keyframes scGrow{from{transform:scaleY(0)}}.sc-grow{transform-origin:bottom;animation:scGrow .6s cubic-bezier(.2,.8,.2,1) backwards}:nth-child(2)>.sc-grow{animation-delay:0.04s}:nth-child(3)>.sc-grow{animation-delay:0.08s}:nth-child(4)>.sc-grow{animation-delay:0.12s}:nth-child(5)>.sc-grow{animation-delay:0.16s}:nth-child(6)>.sc-grow{animation-delay:0.20s}:nth-child(7)>.sc-grow{animation-delay:0.24s}:nth-child(8)>.sc-grow{animation-delay:0.28s}:nth-child(9)>.sc-grow{animation-delay:0.32s}:nth-child(10)>.sc-grow{animation-delay:0.36s}:nth-child(11)>.sc-grow{animation-delay:0.40s}:nth-child(12)>.sc-grow{animation-delay:0.44s}:nth-child(13)>.sc-grow{animation-delay:0.48s}:nth-child(14)>.sc-grow{animation-delay:0.52s}@media (prefers-reduced-motion:reduce){main>*,.sc-float,.sc-sway-a,.sc-sway-b,.sc-glow,.sc-alive>svg,.sc-draw,.sc-knob,.sc-grow,.sc-scrim,.sc-panel,.sc-sheet{animation:none!important}.sc-sheen{display:none}button:active,.sc-press:active,.sc-lift:hover{transform:none}.sc-sw>span{transition:background-color .3s ease}}\n@keyframes scCloud{from{transform:translateX(-28px)}to{transform:translateX(28px)}}@media (prefers-reduced-motion:reduce){.sc-cloud{animation:none!important}}main>*{animation:none}",
-  template: "<div style=\"position: relative; isolation: isolate; width: 390px; height: 2353px; box-sizing: border-box; font-family: Geist, -apple-system, system-ui, sans-serif; background: {{t.bg}}; color: {{t.text}}; overflow: hidden;\">\n<div aria-hidden=\"true\" class=\"sc-demo\" style=\"position: absolute; left: 0; right: 0; top: 0; height: 600px; z-index: -1; overflow: hidden; pointer-events: none; background: linear-gradient(180deg, {{sky.top}} 0%, {{sky.mid}} 30%, {{sky.low}} 55%, {{t.bg}} 100%);\">\n  <div style=\"position: absolute; left: 50%; top: -35%; width: 120%; height: 90%; transform: translateX(-50%); background: radial-gradient(closest-side, {{sky.glow}}, transparent);\"></div>\n  <div class=\"sc-cloud\" style=\"position: absolute; left: -24%; top: 104px; width: 260px; height: 100px; animation: scCloud 44s ease-in-out -0s infinite alternate;\"><span style=\"position: absolute; left: 0%; top: 30%; width: 60%; height: 70%; background: radial-gradient(closest-side, {{sky.cloud}} 40%, transparent);\"></span><span style=\"position: absolute; left: 24%; top: 0%; width: 56%; height: 88%; background: radial-gradient(closest-side, {{sky.cloud}} 40%, transparent);\"></span><span style=\"position: absolute; left: 46%; top: 24%; width: 54%; height: 76%; background: radial-gradient(closest-side, {{sky.cloud}} 40%, transparent);\"></span></div><div class=\"sc-cloud\" style=\"position: absolute; left: 62%; top: 64px; width: 250px; height: 94px; animation: scCloud 52s ease-in-out -11s infinite alternate;\"><span style=\"position: absolute; left: 0%; top: 30%; width: 60%; height: 70%; background: radial-gradient(closest-side, {{sky.cloud}} 40%, transparent);\"></span><span style=\"position: absolute; left: 24%; top: 0%; width: 56%; height: 88%; background: radial-gradient(closest-side, {{sky.cloud}} 40%, transparent);\"></span><span style=\"position: absolute; left: 46%; top: 24%; width: 54%; height: 76%; background: radial-gradient(closest-side, {{sky.cloud}} 40%, transparent);\"></span></div><div class=\"sc-cloud\" style=\"position: absolute; left: 48%; top: 372px; width: 300px; height: 110px; animation: scCloud 60s ease-in-out -22s infinite alternate;\"><span style=\"position: absolute; left: 0%; top: 30%; width: 60%; height: 70%; background: radial-gradient(closest-side, {{sky.cloud}} 40%, transparent);\"></span><span style=\"position: absolute; left: 24%; top: 0%; width: 56%; height: 88%; background: radial-gradient(closest-side, {{sky.cloud}} 40%, transparent);\"></span><span style=\"position: absolute; left: 46%; top: 24%; width: 54%; height: 76%; background: radial-gradient(closest-side, {{sky.cloud}} 40%, transparent);\"></span></div>\n</div>\n<header style=\"max-width: 1344px; margin: 0 auto; height: 64px; box-sizing: border-box; padding: 0 20px; display: flex; align-items: center; justify-content: space-between; gap: 12px;\">\n  <a href=\"{{homeHref}}\" aria-label=\"Lucida home\"><div style=\"display: flex; align-items: center; gap: 9px;\"><svg width=\"14\" height=\"13\" viewBox=\"0 0 33 30.5\" fill=\"currentColor\" aria-hidden=\"true\" style=\"flex-shrink: 0; display: block;\"><circle cx=\"7\" cy=\"7\" r=\"7\"/><circle cx=\"26\" cy=\"7\" r=\"7\"/><circle cx=\"16.5\" cy=\"23.45\" r=\"7\"/></svg><div style=\"font-size: 17px; font-weight: 600; letter-spacing: -.02em;\">Lucida</div></div></a>\n  <nav style=\"display: flex; align-items: center; gap: 6px;\"><a href=\"{{signInHref}}\" style=\"height: 36px; padding: 0 14px; display: inline-flex; align-items: center; border-radius: 999px; font-size: 14px; color: {{t.text}};\">Sign in</a><a href=\"{{startHref}}\" style=\"height: 36px; padding: 0 18px; box-sizing: border-box; display: inline-flex; align-items: center; justify-content: center; border-radius: 999px; font-size: 14px; font-weight: 600; white-space: nowrap; background: {{t.inv}}; color: {{t.invText}}; padding: 0 14px;\">Get started</a></nav>\n</header>\n<main>\n<section style=\"padding: 44px 20px 0; display: flex; flex-direction: column; align-items: center; text-align: center;\">\n  <h1 style=\"margin: 0; font-size: 44px; font-weight: 600; line-height: 1; letter-spacing: -.05em; text-wrap: balance;\">Simple pricing.</h1>\n  <p style=\"margin: 15px auto 0; max-width: 600px; font-size: 17px; line-height: 1.5; color: {{t.muted}}; text-wrap: pretty;\">Your cards are always free. Pro is for making Lucida yours.</p>\n  <div role=\"group\" aria-label=\"Billing\" style=\"margin-top: 26px; display: inline-flex; padding: 4px; border-radius: 999px; background: {{t.bg}}; box-shadow: 0 1px 2px rgba(0,0,0,.06), 0 10px 24px -14px rgba(0,0,0,.25);\"><sc-for list=\"{{billing}}\" as=\"b\" hint-placeholder-count=\"2\"><button type=\"button\" onClick=\"{{b.pick}}\" data-plan-pick=\"{{b.id}}\" aria-pressed=\"{{b.pressed}}\" style=\"height: 40px; padding: 0 18px; display: inline-flex; align-items: center; gap: 8px; border: 0; border-radius: 999px; background: {{b.bg}}; color: {{b.fg}}; font: inherit; font-size: 14px; font-weight: 600; cursor: pointer;\">{{b.label}}<sc-if value=\"{{b.hasTag}}\" hint-placeholder-val=\"{{ false }}\"><span style=\"height: 22px; padding: 0 8px; display: inline-flex; align-items: center; border-radius: 999px; background: #E6F4EC; color: #067647; font-size: 12px; font-weight: 600;\">Save 30%</span></sc-if></button></sc-for></div>\n</section>\n<section style=\"padding: 28px 16px 0;\">\n  <div style=\"max-width: 960px; margin: 0 auto; display: grid; grid-template-columns: 1fr; gap: 12px;\">\n    <div style=\"box-sizing: border-box; padding: 20px; border-radius: 28px; background: {{t.bg}}; box-shadow: 0 0 0 1px {{t.line}}, 0 18px 44px -24px rgba(0,0,0,.25); display: flex; flex-direction: column; gap: 24px;\">\n      <div><h2 style=\"margin: 0; font-size: 20px; font-weight: 600; letter-spacing: -.01em;\">Free</h2><p style=\"margin: 6px 0 0; font-size: 15px; color: {{t.muted}};\">Everything you need to learn.</p></div>\n      <div style=\"display: flex; flex-direction: column; gap: 6px;\"><div style=\"display: flex; align-items: baseline; gap: 8px;\"><span style=\"font-size: 56px; font-weight: 600; letter-spacing: -.04em; line-height: 1;\">$0</span><span style=\"font-size: 16px; opacity: .75;\">forever</span></div><span style=\"min-height: 20px; font-size: 14px; opacity: .75;\"></span></div>\n      <a href=\"{{startHref}}\" style=\"height: 50px; padding: 0 25px; box-sizing: border-box; display: inline-flex; align-items: center; justify-content: center; border-radius: 999px; font-size: 15px; font-weight: 600; white-space: nowrap; background: {{t.surf}}; color: {{t.text}}; \">Get started</a>\n      <ul style=\"margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 12px; font-size: 15px; line-height: 1.35;\"><li style=\"display: flex; align-items: flex-start; gap: 10px;\"><span style=\"margin-top: 1px; flex-shrink: 0; display: flex; color: {{t.muted}};\"><svg width=\"17\" height=\"17\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M5 12l5 5 9-10\"/></svg></span>Unlimited decks and cards</li><li style=\"display: flex; align-items: flex-start; gap: 10px;\"><span style=\"margin-top: 1px; flex-shrink: 0; display: flex; color: {{t.muted}};\"><svg width=\"17\" height=\"17\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M5 12l5 5 9-10\"/></svg></span>Make cards from files, photos, recordings and links: 3 a day</li><li style=\"display: flex; align-items: flex-start; gap: 10px;\"><span style=\"margin-top: 1px; flex-shrink: 0; display: flex; color: {{t.muted}};\"><svg width=\"17\" height=\"17\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M5 12l5 5 9-10\"/></svg></span>Your own AI makes cards and quizzes too</li><li style=\"display: flex; align-items: flex-start; gap: 10px;\"><span style=\"margin-top: 1px; flex-shrink: 0; display: flex; color: {{t.muted}};\"><svg width=\"17\" height=\"17\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M5 12l5 5 9-10\"/></svg></span>Reviews planned by spaced repetition</li><li style=\"display: flex; align-items: flex-start; gap: 10px;\"><span style=\"margin-top: 1px; flex-shrink: 0; display: flex; color: {{t.muted}};\"><svg width=\"17\" height=\"17\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M5 12l5 5 9-10\"/></svg></span>Learn mode</li><li style=\"display: flex; align-items: flex-start; gap: 10px;\"><span style=\"margin-top: 1px; flex-shrink: 0; display: flex; color: {{t.muted}};\"><svg width=\"17\" height=\"17\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M5 12l5 5 9-10\"/></svg></span>Share decks and study anyone’s</li><li style=\"display: flex; align-items: flex-start; gap: 10px;\"><span style=\"margin-top: 1px; flex-shrink: 0; display: flex; color: {{t.muted}};\"><svg width=\"17\" height=\"17\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M5 12l5 5 9-10\"/></svg></span>Live games with friends</li><li style=\"display: flex; align-items: flex-start; gap: 10px;\"><span style=\"margin-top: 1px; flex-shrink: 0; display: flex; color: {{t.muted}};\"><svg width=\"17\" height=\"17\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M5 12l5 5 9-10\"/></svg></span>Up to 100 pictures and sounds</li><li style=\"display: flex; align-items: flex-start; gap: 10px;\"><span style=\"margin-top: 1px; flex-shrink: 0; display: flex; color: {{t.muted}};\"><svg width=\"17\" height=\"17\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M5 12l5 5 9-10\"/></svg></span>Import and export anytime</li></ul>\n    </div>\n    <div style=\"position: relative; overflow: hidden; color: {{pro.ink}}; background: {{pro.base}}; border-radius: 28px; box-shadow: 0 24px 56px -28px rgba(20,22,90,.55);\"><sc-if value=\"{{pro.art}}\" hint-placeholder-val=\"{{ false }}\"><div style=\"position: absolute; inset: 0; background: {{pro.art}} center / 100% 100% no-repeat;\"></div><div class=\"sc-grain\" style=\"opacity: {{grain}};\"></div></sc-if><sc-if value=\"{{pro.live}}\" hint-placeholder-val=\"{{ true }}\"><svg aria-hidden=\"true\" viewBox=\"0 0 100 100\" preserveAspectRatio=\"none\" width=\"100%\" height=\"100%\" style=\"position: absolute; inset: 0; pointer-events: none;\"><defs><filter id=\"{{pro.fid}}\" x=\"-60%\" y=\"-60%\" width=\"220%\" height=\"220%\" color-interpolation-filters=\"sRGB\"><feTurbulence type=\"fractalNoise\" baseFrequency=\".018\" numOctaves=\"2\" seed=\"7\" result=\"n\"/><feDisplacementMap in=\"SourceGraphic\" in2=\"n\" scale=\"{{pro.disp}}\" xChannelSelector=\"R\" yChannelSelector=\"G\"/><feGaussianBlur stdDeviation=\"{{pro.blur}}\"/></filter><filter id=\"{{pro.sid}}\" x=\"-60%\" y=\"-60%\" width=\"220%\" height=\"220%\" color-interpolation-filters=\"sRGB\"><feGaussianBlur stdDeviation=\"{{pro.sblur}}\"/></filter></defs><g filter=\"url(#{{pro.fid}})\"><ellipse cx=\"{{pro.b0.x}}\" cy=\"{{pro.b0.y}}\" rx=\"{{pro.b0.rx}}\" ry=\"{{pro.b0.ry}}\" fill=\"{{pro.b0.c}}\" transform=\"rotate({{pro.b0.r}} {{pro.b0.x}} {{pro.b0.y}})\"/><ellipse cx=\"{{pro.b1.x}}\" cy=\"{{pro.b1.y}}\" rx=\"{{pro.b1.rx}}\" ry=\"{{pro.b1.ry}}\" fill=\"{{pro.b1.c}}\" transform=\"rotate({{pro.b1.r}} {{pro.b1.x}} {{pro.b1.y}})\"/><ellipse cx=\"{{pro.b2.x}}\" cy=\"{{pro.b2.y}}\" rx=\"{{pro.b2.rx}}\" ry=\"{{pro.b2.ry}}\" fill=\"{{pro.b2.c}}\" transform=\"rotate({{pro.b2.r}} {{pro.b2.x}} {{pro.b2.y}})\"/><ellipse cx=\"{{pro.b3.x}}\" cy=\"{{pro.b3.y}}\" rx=\"{{pro.b3.rx}}\" ry=\"{{pro.b3.ry}}\" fill=\"{{pro.b3.c}}\" transform=\"rotate({{pro.b3.r}} {{pro.b3.x}} {{pro.b3.y}})\"/><ellipse cx=\"{{pro.b4.x}}\" cy=\"{{pro.b4.y}}\" rx=\"{{pro.b4.rx}}\" ry=\"{{pro.b4.ry}}\" fill=\"{{pro.b4.c}}\" transform=\"rotate({{pro.b4.r}} {{pro.b4.x}} {{pro.b4.y}})\"/><ellipse cx=\"{{pro.b5.x}}\" cy=\"{{pro.b5.y}}\" rx=\"{{pro.b5.rx}}\" ry=\"{{pro.b5.ry}}\" fill=\"{{pro.b5.c}}\" transform=\"rotate({{pro.b5.r}} {{pro.b5.x}} {{pro.b5.y}})\"/></g><g filter=\"url(#{{pro.sid}})\"><ellipse cx=\"{{pro.s0.x}}\" cy=\"{{pro.s0.y}}\" rx=\"{{pro.s0.rx}}\" ry=\"{{pro.s0.ry}}\" fill=\"{{pro.s0.c}}\" transform=\"rotate({{pro.s0.r}} {{pro.s0.x}} {{pro.s0.y}})\"/><ellipse cx=\"{{pro.s1.x}}\" cy=\"{{pro.s1.y}}\" rx=\"{{pro.s1.rx}}\" ry=\"{{pro.s1.ry}}\" fill=\"{{pro.s1.c}}\" transform=\"rotate({{pro.s1.r}} {{pro.s1.x}} {{pro.s1.y}})\"/></g></svg><svg aria-hidden=\"true\" width=\"100%\" height=\"100%\" style=\"position: absolute; inset: 0; mix-blend-mode: soft-light; opacity: {{grain}}; pointer-events: none;\"><filter id=\"sc-grain\" x=\"0\" y=\"0\" width=\"100%\" height=\"100%\" color-interpolation-filters=\"sRGB\"><feTurbulence type=\"fractalNoise\" baseFrequency=\"0.85\" numOctaves=\"3\" stitchTiles=\"stitch\"/><feColorMatrix type=\"saturate\" values=\"0\"/><feComponentTransfer><feFuncR type=\"linear\" slope=\"3.4\" intercept=\"-1.2\"/><feFuncG type=\"linear\" slope=\"3.4\" intercept=\"-1.2\"/><feFuncB type=\"linear\" slope=\"3.4\" intercept=\"-1.2\"/></feComponentTransfer></filter><rect width=\"100%\" height=\"100%\" filter=\"url(#sc-grain)\"/></svg></sc-if><div style=\"position: relative; text-shadow: {{pro.shadow}}; height: 100%; box-sizing: border-box; padding: 20px; display: flex; flex-direction: column; gap: 24px;\"><div><h2 style=\"margin: 0; display: flex; align-items: center; gap: 8px; font-size: 20px; font-weight: 600; letter-spacing: -.01em;\"><svg width=\"18\" height=\"18\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M11 3l1.9 5.1L18 10l-5.1 1.9L11 17l-1.9-5.1L4 10l5.1-1.9z\"/><path d=\"M18.5 15l.8 2.2 2.2.8-2.2.8-.8 2.2-.8-2.2-2.2-.8 2.2-.8z\"/></svg>Pro</h2><p style=\"margin: 6px 0 0; font-size: 15px; opacity: .8;\">Make Lucida yours.</p></div>\n      <div data-plan=\"yearly\" style=\"display: {{yearlyShow}}; flex-direction: column; gap: 24px;\"><div style=\"display: flex; flex-direction: column; gap: 6px;\"><div style=\"display: flex; align-items: baseline; gap: 8px;\"><span style=\"font-size: 56px; font-weight: 600; letter-spacing: -.04em; line-height: 1;\">$49.99</span><span style=\"font-size: 16px; opacity: .75;\">a year</span></div><span style=\"min-height: 20px; font-size: 14px; opacity: .75;\">That’s $4.17 a month, paid once a year.</span></div><sc-if value=\"{{proLive}}\" hint-placeholder-val=\"{{ true }}\"><a href=\"{{yearlyHref}}\" style=\"height: 50px; padding: 0 25px; box-sizing: border-box; display: inline-flex; align-items: center; justify-content: center; border-radius: 999px; font-size: 15px; font-weight: 600; white-space: nowrap; background: {{t.inv}}; color: {{t.invText}}; background: #FFFFFF; color: #000000;\">Go Pro</a></sc-if><sc-if value=\"{{proSoon}}\" hint-placeholder-val=\"{{ false }}\"><span style=\"height: 50px; display: flex; align-items: center; justify-content: center; border-radius: 999px; background: rgba(255,255,255,.16); box-shadow: inset 0 0 0 1px rgba(255,255,255,.35); font-size: 15px; font-weight: 600;\">Pro is coming soon</span></sc-if></div>\n      <div data-plan=\"monthly\" style=\"display: {{monthlyShow}}; flex-direction: column; gap: 24px;\"><div style=\"display: flex; flex-direction: column; gap: 6px;\"><div style=\"display: flex; align-items: baseline; gap: 8px;\"><span style=\"font-size: 56px; font-weight: 600; letter-spacing: -.04em; line-height: 1;\">$5.99</span><span style=\"font-size: 16px; opacity: .75;\">a month</span></div><span style=\"min-height: 20px; font-size: 14px; opacity: .75;\">Paid monthly. Cancel anytime.</span></div><sc-if value=\"{{proLive}}\" hint-placeholder-val=\"{{ true }}\"><a href=\"{{monthlyHref}}\" style=\"height: 50px; padding: 0 25px; box-sizing: border-box; display: inline-flex; align-items: center; justify-content: center; border-radius: 999px; font-size: 15px; font-weight: 600; white-space: nowrap; background: {{t.inv}}; color: {{t.invText}}; background: #FFFFFF; color: #000000;\">Go Pro</a></sc-if><sc-if value=\"{{proSoon}}\" hint-placeholder-val=\"{{ false }}\"><span style=\"height: 50px; display: flex; align-items: center; justify-content: center; border-radius: 999px; background: rgba(255,255,255,.16); box-shadow: inset 0 0 0 1px rgba(255,255,255,.35); font-size: 15px; font-weight: 600;\">Pro is coming soon</span></sc-if></div>\n      <div style=\"display: flex; flex-direction: column; gap: 12px;\"><span style=\"font-size: 14px; opacity: .9;\">Everything in Free, plus:</span><ul style=\"margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 12px; font-size: 15px; line-height: 1.35;\"><li style=\"display: flex; align-items: flex-start; gap: 10px;\"><span style=\"margin-top: 1px; flex-shrink: 0; display: flex; color: #FFFFFF;\"><svg width=\"17\" height=\"17\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M5 12l5 5 9-10\"/></svg></span>Make cards from bigger sources: 30 a day, up to 300 pages or 2 hours</li><li style=\"display: flex; align-items: flex-start; gap: 10px;\"><span style=\"margin-top: 1px; flex-shrink: 0; display: flex; color: #FFFFFF;\"><svg width=\"17\" height=\"17\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M5 12l5 5 9-10\"/></svg></span>Exam dates: ready in time for the test</li><li style=\"display: flex; align-items: flex-start; gap: 10px;\"><span style=\"margin-top: 1px; flex-shrink: 0; display: flex; color: #FFFFFF;\"><svg width=\"17\" height=\"17\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M5 12l5 5 9-10\"/></svg></span>Stats on what you’re weak at</li><li style=\"display: flex; align-items: flex-start; gap: 10px;\"><span style=\"margin-top: 1px; flex-shrink: 0; display: flex; color: #FFFFFF;\"><svg width=\"17\" height=\"17\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M5 12l5 5 9-10\"/></svg></span>Unlimited pictures and sounds</li><li style=\"display: flex; align-items: flex-start; gap: 10px;\"><span style=\"margin-top: 1px; flex-shrink: 0; display: flex; color: #FFFFFF;\"><svg width=\"17\" height=\"17\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M5 12l5 5 9-10\"/></svg></span>Themes for cards, covers and your profile</li><li style=\"display: flex; align-items: flex-start; gap: 10px;\"><span style=\"margin-top: 1px; flex-shrink: 0; display: flex; color: #FFFFFF;\"><svg width=\"17\" height=\"17\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M5 12l5 5 9-10\"/></svg></span>The hardest cards on decks you share</li><li style=\"display: flex; align-items: flex-start; gap: 10px;\"><span style=\"margin-top: 1px; flex-shrink: 0; display: flex; color: #FFFFFF;\"><svg width=\"17\" height=\"17\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M5 12l5 5 9-10\"/></svg></span>Photo covers and your own colors</li><li style=\"display: flex; align-items: flex-start; gap: 10px;\"><span style=\"margin-top: 1px; flex-shrink: 0; display: flex; color: #FFFFFF;\"><svg width=\"17\" height=\"17\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M5 12l5 5 9-10\"/></svg></span>Natural voices for sound cards</li><li style=\"display: flex; align-items: flex-start; gap: 10px;\"><span style=\"margin-top: 1px; flex-shrink: 0; display: flex; color: #FFFFFF;\"><svg width=\"17\" height=\"17\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M5 12l5 5 9-10\"/></svg></span>More AI explanations</li></ul></div></div></div>\n  </div>\n</section>\n<section style=\"max-width: 1024px; margin: 0 auto; box-sizing: border-box; padding: 72px 20px 0;\">\n  <h2 style=\"margin: 0; max-width: 760px; font-size: 32px; font-weight: 600; line-height: 1.04; letter-spacing: -.04em; text-wrap: balance;\">Questions</h2>\n  <div style=\"margin-top: 24px; display: grid; grid-template-columns: 1fr; gap: 10px;\">\n    <div style=\"box-sizing: border-box; padding: 20px; border-radius: 22px; background: {{t.surf}}; display: flex; flex-direction: column; gap: 8px;\"><h3 style=\"margin: 0; font-size: 17px; font-weight: 600; letter-spacing: -.01em;\">What can Lucida make cards from?</h3><p style=\"margin: 0; font-size: 15px; line-height: 1.5; color: {{t.muted}};\">A PDF, slides, a Word file, pictures, a recording, a YouTube link, pasted text or a topic you type. You check the new cards before they’re saved, and the deck keeps what they were made from.</p></div>\n    <div style=\"box-sizing: border-box; padding: 20px; border-radius: 22px; background: {{t.surf}}; display: flex; flex-direction: column; gap: 8px;\"><h3 style=\"margin: 0; font-size: 17px; font-weight: 600; letter-spacing: -.01em;\">How much can I make?</h3><p style=\"margin: 0; font-size: 15px; line-height: 1.5; color: {{t.muted}};\">Free: 3 makes a day, each up to 30 pages, 15 minutes of recording or video, or 10 pictures. Pro: 30 a day, up to 300 pages, 2 hours or 50 pictures.</p></div>\n    <div style=\"box-sizing: border-box; padding: 20px; border-radius: 22px; background: {{t.surf}}; display: flex; flex-direction: column; gap: 8px;\"><h3 style=\"margin: 0; font-size: 17px; font-weight: 600; letter-spacing: -.01em;\">Do I need Pro for my AI to make cards?</h3><p style=\"margin: 0; font-size: 15px; line-height: 1.5; color: {{t.muted}};\">No. On Free, your own AI app can make as many cards as you want through your Lucida link. Lucida’s own maker has the daily limits above.</p></div>\n    <div style=\"box-sizing: border-box; padding: 20px; border-radius: 22px; background: {{t.surf}}; display: flex; flex-direction: column; gap: 8px;\"><h3 style=\"margin: 0; font-size: 17px; font-weight: 600; letter-spacing: -.01em;\">What happens to my cards if I stop Pro?</h3><p style=\"margin: 0; font-size: 15px; line-height: 1.5; color: {{t.muted}};\">Nothing. Every deck and card stays yours. Only the Pro extras switch off.</p></div>\n    <div style=\"box-sizing: border-box; padding: 20px; border-radius: 22px; background: {{t.surf}}; display: flex; flex-direction: column; gap: 8px;\"><h3 style=\"margin: 0; font-size: 17px; font-weight: 600; letter-spacing: -.01em;\">Can I cancel anytime?</h3><p style=\"margin: 0; font-size: 15px; line-height: 1.5; color: {{t.muted}};\">Yes, from Settings. Pro stays on until the end of the time you paid for.</p></div>\n    <div style=\"box-sizing: border-box; padding: 20px; border-radius: 22px; background: {{t.surf}}; display: flex; flex-direction: column; gap: 8px;\"><h3 style=\"margin: 0; font-size: 17px; font-weight: 600; letter-spacing: -.01em;\">What counts toward the 100 pictures and sounds?</h3><p style=\"margin: 0; font-size: 15px; line-height: 1.5; color: {{t.muted}};\">Each picture or sound on a card. Text cards never count.</p></div>\n  </div>\n</section>\n<div style=\"height: 72px;\"></div>\n</main>\n<footer style=\"box-sizing: border-box; padding: 36px 20px 40px; display: flex; flex-direction: column; gap: 24px; font-size: 14px; color: {{t.muted}};\">\n  <div style=\"display: flex; align-items: center; justify-content: space-between; gap: 16px;\"><div style=\"display: flex; align-items: center; gap: 9px;\"><svg width=\"13\" height=\"12\" viewBox=\"0 0 33 30.5\" fill=\"currentColor\" aria-hidden=\"true\" style=\"flex-shrink: 0; display: block;\"><circle cx=\"7\" cy=\"7\" r=\"7\"/><circle cx=\"26\" cy=\"7\" r=\"7\"/><circle cx=\"16.5\" cy=\"23.45\" r=\"7\"/></svg><div style=\"font-size: 17px; font-weight: 600; letter-spacing: -.02em;\">Lucida</div></div><span style=\"display: flex; align-items: center; gap: 22px;\"><a href=\"https://www.tiktok.com/@lucidacards\" target=\"_blank\" rel=\"noopener\" aria-label=\"Lucida on TikTok\" title=\"TikTok\" style=\"width: 36px; height: 36px; margin: -8px; display: inline-flex; align-items: center; justify-content: center;\"><svg width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M15.5 3c.4 2.7 2.3 4.6 5 5\"/><path d=\"M15.5 3v11.8a4.3 4.3 0 1 1-4.3-4.3\"/></svg></a><a href=\"https://www.youtube.com/@lucidacards\" target=\"_blank\" rel=\"noopener\" aria-label=\"Lucida on YouTube\" title=\"YouTube\" style=\"width: 36px; height: 36px; margin: -8px; display: inline-flex; align-items: center; justify-content: center;\"><svg width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><rect x=\"2.5\" y=\"5\" width=\"19\" height=\"14\" rx=\"4.5\"/><path d=\"M10 9.2v5.6l4.8-2.8z\" fill=\"currentColor\"/></svg></a><a href=\"https://www.instagram.com/lucidacards/\" target=\"_blank\" rel=\"noopener\" aria-label=\"Lucida on Instagram\" title=\"Instagram\" style=\"width: 36px; height: 36px; margin: -8px; display: inline-flex; align-items: center; justify-content: center;\"><svg width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><rect x=\"3\" y=\"3\" width=\"18\" height=\"18\" rx=\"5.5\"/><circle cx=\"12\" cy=\"12\" r=\"4.2\"/><circle cx=\"17.3\" cy=\"6.7\" r=\".9\" fill=\"currentColor\" stroke=\"none\"/></svg></a><a href=\"https://www.facebook.com/61594547618098\" target=\"_blank\" rel=\"noopener\" aria-label=\"Lucida on Facebook\" title=\"Facebook\" style=\"width: 36px; height: 36px; margin: -8px; display: inline-flex; align-items: center; justify-content: center;\"><svg width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><circle cx=\"12\" cy=\"12\" r=\"9.5\"/><path d=\"M15.5 7.5h-1.8a2.7 2.7 0 0 0-2.7 2.7v11.3M8.5 13.2h6\"/></svg></a></span></div>\n  <span style=\"display: flex; flex-wrap: wrap; gap: 16px;\"><nav aria-label=\"Footer\" style=\"display: contents;\"><sc-for list=\"{{foot}}\" as=\"l\" hint-placeholder-count=\"5\"><a href=\"{{l.href}}\">{{l.label}}</a></sc-for></nav><span>© 2026 Lucida</span></span>\n</footer>\n</div>",
+  css: "body{margin:0;font-family:Geist, -apple-system, system-ui, sans-serif}\na{color:inherit;text-decoration:none}a:hover{opacity:.8}\n@keyframes scRise{from{opacity:0;transform:translateY(14px)}}main>*{animation:scRise .5s cubic-bezier(.2,.8,.2,1) backwards}main>*:nth-child(2){animation-delay:0.06s}main>*:nth-child(3){animation-delay:0.12s}main>*:nth-child(4){animation-delay:0.18s}main>*:nth-child(5){animation-delay:0.24s}main>*:nth-child(n+6){animation-delay:.3s}button,.sc-press{transition:transform .1s ease}button:active,.sc-press:active{transform:scale(.96)}.sc-sw{transition:background-color .3s ease,transform .1s ease}.sc-sw>span{transition:transform .32s cubic-bezier(.34,1.56,.64,1),background-color .3s ease}.sc-lift{transition:transform 1s ease-out,box-shadow 1s ease-out}.sc-lift:hover{transform:translateY(-4px);box-shadow:0 24px 48px -24px rgba(0,0,0,.45)}.sk-cover{box-shadow:var(--sk-shadow)}.sk-cover.sc-lift:hover{box-shadow:var(--sk-shadow),0 24px 48px -24px rgba(0,0,0,.45)}@keyframes scScrimIn{from{opacity:0}}@keyframes scScrimOut{to{opacity:0}}.sc-scrim{animation:scScrimIn .35s ease backwards}.sc-scrim.sc-gone{animation:scScrimOut .26s ease forwards}@keyframes scPanelIn{from{opacity:0;transform:translateX(calc(100% + 12px))}}@keyframes scPanelOut{to{opacity:0;transform:translateX(calc(100% + 12px))}}.sc-panel{animation:scPanelIn .35s cubic-bezier(.2,.8,.2,1) backwards}.sc-panel.sc-gone{animation:scPanelOut .26s cubic-bezier(.4,0,1,1) forwards}@keyframes scSheetIn{from{transform:translateY(100%)}}@keyframes scSheetOut{to{transform:translateY(100%)}}.sc-sheet{animation:scSheetIn .35s cubic-bezier(.2,.8,.2,1) backwards}.sc-sheet.sc-gone{animation:scSheetOut .26s cubic-bezier(.4,0,1,1) forwards}@keyframes scFloat{50%{transform:translateY(-6px)}}@keyframes scSwayA{50%{transform:rotate(-13deg) translateX(-3px)}}@keyframes scSwayB{50%{transform:rotate(10deg) translateX(3px)}}@keyframes scGlow{50%{opacity:.55}}@keyframes scSheen{0%,58%{transform:translateX(-160%) skewX(-18deg)}86%,100%{transform:translateX(260%) skewX(-18deg)}}.sc-float{animation:scFloat 6s ease-in-out infinite}.sc-sway-a{animation:scSwayA 6s ease-in-out infinite}.sc-sway-b{animation:scSwayB 6s ease-in-out infinite}.sc-glow{animation:scGlow 6s ease-in-out infinite}.sc-sheen{position:absolute;top:0;bottom:0;left:0;width:45%;background:linear-gradient(90deg,transparent,rgba(255,255,255,.4),transparent);animation:scSheen 5s cubic-bezier(.4,0,.2,1) infinite;pointer-events:none}@keyframes scDrift{from{transform:scale(1.14) translate(-3%,-2%)}to{transform:scale(1.14) translate(3%,2%)}}.sc-alive>svg:first-of-type{animation:scDrift 16s ease-in-out infinite alternate}@keyframes scDraw{from{stroke-dashoffset:1.02}}.sc-draw{stroke-dasharray:1 2;animation:scDraw .9s cubic-bezier(.2,.8,.2,1) backwards}@keyframes scKnob{from{opacity:0;transform:scale(.3)}}.sc-knob{transform-box:fill-box;transform-origin:center;animation:scKnob .35s .75s cubic-bezier(.34,1.56,.64,1) backwards}@keyframes scGrow{from{transform:scaleY(0)}}.sc-grow{transform-origin:bottom;animation:scGrow .6s cubic-bezier(.2,.8,.2,1) backwards}:nth-child(2)>.sc-grow{animation-delay:0.04s}:nth-child(3)>.sc-grow{animation-delay:0.08s}:nth-child(4)>.sc-grow{animation-delay:0.12s}:nth-child(5)>.sc-grow{animation-delay:0.16s}:nth-child(6)>.sc-grow{animation-delay:0.20s}:nth-child(7)>.sc-grow{animation-delay:0.24s}:nth-child(8)>.sc-grow{animation-delay:0.28s}:nth-child(9)>.sc-grow{animation-delay:0.32s}:nth-child(10)>.sc-grow{animation-delay:0.36s}:nth-child(11)>.sc-grow{animation-delay:0.40s}:nth-child(12)>.sc-grow{animation-delay:0.44s}:nth-child(13)>.sc-grow{animation-delay:0.48s}:nth-child(14)>.sc-grow{animation-delay:0.52s}@media (prefers-reduced-motion:reduce){main>*,.sc-float,.sc-sway-a,.sc-sway-b,.sc-glow,.sc-alive>svg,.sc-draw,.sc-knob,.sc-grow,.sc-scrim,.sc-panel,.sc-sheet{animation:none!important}.sc-sheen{display:none}button:active,.sc-press:active,.sc-lift:hover{transform:none}.sc-sw>span{transition:background-color .3s ease}}\n.gd{font-size:15px;line-height:1.6;color:var(--gd-text);overflow-wrap:anywhere}.gd>:first-child{margin-top:0}.gd>:last-child{margin-bottom:0}.gd h1,.gd h2,.gd h3,.gd h4,.gd h5,.gd h6{margin:1.3em 0 .5em;line-height:1.25;font-weight:600;letter-spacing:-.02em}.gd h1{font-size:1.65em;padding-bottom:.3em;border-bottom:1px solid var(--gd-line)}.gd h2{font-size:1.32em;padding-bottom:.25em;border-bottom:1px solid var(--gd-line)}.gd h3{font-size:1.12em}.gd h4,.gd h5,.gd h6{font-size:1em}.gd h6{color:var(--gd-muted)}.gd p{margin:0 0 .9em}.gd ul,.gd ol{margin:0 0 .9em;padding-left:1.5em}.gd li{margin:.25em 0}.gd li>ul,.gd li>ol{margin:.25em 0 0}.gd li.gd-task{list-style:none;margin-left:-1.5em;display:flex;gap:.55em;align-items:baseline}.gd li.gd-task>input{flex-shrink:0;margin:0;accent-color:var(--gd-text)}.gd blockquote{margin:0 0 .9em;padding:0 1em;border-left:3px solid var(--gd-line);color:var(--gd-muted)}.gd blockquote>:last-child{margin-bottom:0}.gd code{font-family:'Geist Mono',ui-monospace,monospace;font-size:.88em;padding:.15em .4em;border-radius:6px;background:var(--gd-code)}.gd pre{margin:0 0 .9em;padding:12px 14px;border-radius:12px;background:var(--gd-code);overflow:auto;line-height:1.5}.gd pre code{padding:0;background:none;font-size:.85em}.gd table{display:block;border-collapse:collapse;margin:0 0 .9em;overflow:auto;max-width:100%}.gd th,.gd td{padding:6px 12px;border:1px solid var(--gd-line);text-align:left}.gd th{font-weight:600;background:var(--gd-code)}.gd hr{border:0;border-top:1px solid var(--gd-line);margin:1.3em 0}.gd a{color:inherit;text-decoration:underline;text-underline-offset:2px}.gd img{max-width:100%;height:auto;border-radius:12px}",
+  template: "<div style=\"position: relative; width: 100%; height: 100vh; height: 100dvh; min-height: 100%; max-height: 100%; box-sizing: border-box; padding: 58px 16px 22px; display: flex; flex-direction: column; gap: 12px; overflow: hidden; font-family: Geist, -apple-system, system-ui, sans-serif; background: {{t.bg}}; color: {{t.text}};\">\n    \n    <div style=\"display: flex; align-items: center; gap: 10px;\">\n      <button type=\"button\" onClick=\"{{done}}\" aria-label=\"Done\" style=\"width: 40px; height: 40px; flex-shrink: 0; border: 0; border-radius: 20px; background: {{t.surf}}; color: {{t.text}}; display: flex; align-items: center; justify-content: center; cursor: pointer;\"><svg width=\"18\" height=\"18\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M15 18l-6-6 6-6\"/></svg></button>\n      <span style=\"flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px;\"><span style=\"font-size: 20px; font-weight: 600; letter-spacing: -.02em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;\">Guide</span><span style=\"font-size: 13px; color: {{t.muted}}; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;\">{{deckName}}</span></span>\n      <span aria-live=\"polite\" style=\"font-size: 13px; color: {{saveColor}};\">{{saveLabel}}</span>\n      <button type=\"button\" onClick=\"{{toggleHistory}}\" aria-pressed=\"{{histPressed}}\" class=\"sc-press\" style=\"height: 40px; padding: 0 12px; border: 0; border-radius: 20px; background: {{histBg}}; color: {{histFg}}; font: inherit; font-size: 14px; font-weight: 600; display: flex; align-items: center; gap: 6px; cursor: pointer;\"><svg width=\"15\" height=\"15\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M4 12a8 8 0 1 0 2.4-5.7L4 8.5\"/><path d=\"M4 4v4.5h4.5M12 8v4.5l3 1.8\"/></svg></button>\n    </div>\n    <div role=\"group\" aria-label=\"Pages\" style=\"display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; flex-shrink: 0;\"><sc-for list=\"{{tabs}}\" as=\"g\" hint-placeholder-count=\"3\"><button type=\"button\" onClick=\"{{g.pick}}\" aria-pressed=\"{{g.pressed}}\" style=\"height: 34px; max-width: 220px; flex-shrink: 0; padding: 0 14px; border: 0; border-radius: 999px; background: {{g.bg}}; color: {{g.fg}}; font: inherit; font-size: 13px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: pointer;\">{{g.title}}</button></sc-for><sc-if value=\"{{canAddPage}}\" hint-placeholder-val=\"{{ true }}\"><button type=\"button\" onClick=\"{{addPage}}\" aria-label=\"Add a page\" style=\"height: 34px; flex-shrink: 0; padding: 0 14px 0 10px; border: 0; border-radius: 999px; background: transparent; box-shadow: inset 0 0 0 1px {{t.line}}; color: {{t.text}}; font: inherit; font-size: 13px; font-weight: 600; display: flex; align-items: center; gap: 4px; cursor: pointer;\"><svg width=\"14\" height=\"14\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M12 5v14M5 12h14\"/></svg>Add page</button></sc-if></div>\n    <sc-if value=\"{{pageTools}}\" hint-placeholder-val=\"{{ false }}\"><div style=\"display: flex; align-items: center; gap: 8px; flex-shrink: 0;\"><input type=\"text\" value=\"{{pageTitle}}\" onChange=\"{{setPageTitle}}\" aria-label=\"Page name\" placeholder=\"Page name\" style=\"flex-grow: 1; min-width: 0; height: 40px; box-sizing: border-box; padding: 0 14px; border: 0; outline: 0; border-radius: 12px; background: {{t.surf}}; color: {{t.text}}; font: inherit; font-size: 15px; font-weight: 600;\"><button type=\"button\" onClick=\"{{deletePage}}\" style=\"height: 40px; padding: 0 14px; border: 0; border-radius: 12px; background: {{t.surf}}; color: {{t.again}}; font: inherit; font-size: 14px; font-weight: 600; cursor: pointer;\">Delete page</button></div></sc-if>\n    <sc-if value=\"{{showEditor}}\" hint-placeholder-val=\"{{ true }}\">\n      <div style=\"display: flex; align-items: center; gap: 10px; flex-shrink: 0; flex-wrap: wrap;\">\n        <div role=\"group\" aria-label=\"Write or Preview\" style=\"display: flex; padding: 3px; border-radius: 999px; background: {{t.surf}}; flex-shrink: 0;\"><sc-for list=\"{{tabsWP}}\" as=\"o\" hint-placeholder-count=\"2\"><button type=\"button\" onClick=\"{{o.pick}}\" aria-pressed=\"{{o.pressed}}\" style=\"height: 32px; padding: 0 16px; border: 0; border-radius: 999px; background: {{o.bg}}; color: {{o.fg}}; box-shadow: {{o.sh}}; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer;\">{{o.label}}</button></sc-for></div>\n        <sc-if value=\"{{isWrite}}\" hint-placeholder-val=\"{{ true }}\"><div style=\"min-width: 0; width: 100%; order: 3;\"><div role=\"toolbar\" aria-label=\"Formatting\" style=\"display: flex; align-items: center; gap: 2px; overflow-x: auto; scrollbar-width: none;\">\n    <button type=\"button\" onMouseDown=\"{{tbHeading.down}}\" onClick=\"{{tbHeading.click}}\" aria-label=\"Heading\" title=\"Heading\" style=\"min-width: 36px; height: 34px; flex-shrink: 0; padding: 0 8px; border: 0; border-radius: 10px; background: transparent; color: {{t.text}}; font: inherit; font-size: 14px; font-weight: 600; display: flex; align-items: center; justify-content: center; cursor: pointer; \">H</button><button type=\"button\" onMouseDown=\"{{tbBold.down}}\" onClick=\"{{tbBold.click}}\" aria-label=\"Bold\" title=\"Bold\" style=\"min-width: 36px; height: 34px; flex-shrink: 0; padding: 0 8px; border: 0; border-radius: 10px; background: transparent; color: {{t.text}}; font: inherit; font-size: 14px; font-weight: 600; display: flex; align-items: center; justify-content: center; cursor: pointer; font-weight: 800;\">B</button><button type=\"button\" onMouseDown=\"{{tbItalic.down}}\" onClick=\"{{tbItalic.click}}\" aria-label=\"Italic\" title=\"Italic\" style=\"min-width: 36px; height: 34px; flex-shrink: 0; padding: 0 8px; border: 0; border-radius: 10px; background: transparent; color: {{t.text}}; font: inherit; font-size: 14px; font-weight: 600; display: flex; align-items: center; justify-content: center; cursor: pointer; font-style: italic; font-family: Georgia, serif; font-size: 15px;\">I</button><button type=\"button\" onMouseDown=\"{{tbCode.down}}\" onClick=\"{{tbCode.click}}\" aria-label=\"Code\" title=\"Code\" style=\"min-width: 36px; height: 34px; flex-shrink: 0; padding: 0 8px; border: 0; border-radius: 10px; background: transparent; color: {{t.text}}; font: inherit; font-size: 14px; font-weight: 600; display: flex; align-items: center; justify-content: center; cursor: pointer; font-family: 'Geist Mono', ui-monospace, monospace; font-size: 12px;\">&lt;/&gt;</button>\n    <span aria-hidden=\"true\" style=\"width: 1px; height: 18px; flex-shrink: 0; margin: 0 6px; background: {{t.line}};\"></span>\n    <button type=\"button\" onMouseDown=\"{{tbLink.down}}\" onClick=\"{{tbLink.click}}\" aria-label=\"Link\" title=\"Link\" style=\"min-width: 36px; height: 34px; flex-shrink: 0; padding: 0 8px; border: 0; border-radius: 10px; background: transparent; color: {{t.text}}; font: inherit; font-size: 14px; font-weight: 600; display: flex; align-items: center; justify-content: center; cursor: pointer; \"><svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M10 14a4 4 0 0 0 5.66 0l3-3a4 4 0 0 0-5.66-5.66l-1 1\"/><path d=\"M14 10a4 4 0 0 0-5.66 0l-3 3a4 4 0 0 0 5.66 5.66l1-1\"/></svg></button><button type=\"button\" onMouseDown=\"{{tbBullets.down}}\" onClick=\"{{tbBullets.click}}\" aria-label=\"Bulleted list\" title=\"Bulleted list\" style=\"min-width: 36px; height: 34px; flex-shrink: 0; padding: 0 8px; border: 0; border-radius: 10px; background: transparent; color: {{t.text}}; font: inherit; font-size: 14px; font-weight: 600; display: flex; align-items: center; justify-content: center; cursor: pointer; \"><svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M9 6h11M9 12h11M9 18h11\"/><circle cx=\"4.5\" cy=\"6\" r=\"1\" fill=\"currentColor\" stroke=\"none\"/><circle cx=\"4.5\" cy=\"12\" r=\"1\" fill=\"currentColor\" stroke=\"none\"/><circle cx=\"4.5\" cy=\"18\" r=\"1\" fill=\"currentColor\" stroke=\"none\"/></svg></button><button type=\"button\" onMouseDown=\"{{tbNumbers.down}}\" onClick=\"{{tbNumbers.click}}\" aria-label=\"Numbered list\" title=\"Numbered list\" style=\"min-width: 36px; height: 34px; flex-shrink: 0; padding: 0 8px; border: 0; border-radius: 10px; background: transparent; color: {{t.text}}; font: inherit; font-size: 14px; font-weight: 600; display: flex; align-items: center; justify-content: center; cursor: pointer; font-family: 'Geist Mono', ui-monospace, monospace; font-size: 12px;\">1.</button><button type=\"button\" onMouseDown=\"{{tbTasks.down}}\" onClick=\"{{tbTasks.click}}\" aria-label=\"Task list\" title=\"Task list\" style=\"min-width: 36px; height: 34px; flex-shrink: 0; padding: 0 8px; border: 0; border-radius: 10px; background: transparent; color: {{t.text}}; font: inherit; font-size: 14px; font-weight: 600; display: flex; align-items: center; justify-content: center; cursor: pointer; \"><svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M5 12l5 5 9-10\"/></svg></button><button type=\"button\" onMouseDown=\"{{tbQuote.down}}\" onClick=\"{{tbQuote.click}}\" aria-label=\"Quote\" title=\"Quote\" style=\"min-width: 36px; height: 34px; flex-shrink: 0; padding: 0 8px; border: 0; border-radius: 10px; background: transparent; color: {{t.text}}; font: inherit; font-size: 14px; font-weight: 600; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 20px; font-family: Georgia, serif;\">“</button><button type=\"button\" onMouseDown=\"{{tbTable.down}}\" onClick=\"{{tbTable.click}}\" aria-label=\"Table\" title=\"Table\" style=\"min-width: 36px; height: 34px; flex-shrink: 0; padding: 0 8px; border: 0; border-radius: 10px; background: transparent; color: {{t.text}}; font: inherit; font-size: 14px; font-weight: 600; display: flex; align-items: center; justify-content: center; cursor: pointer; \"><svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><rect x=\"3.5\" y=\"3.5\" width=\"7\" height=\"7\" rx=\"2\"/><rect x=\"13.5\" y=\"3.5\" width=\"7\" height=\"7\" rx=\"2\"/><rect x=\"3.5\" y=\"13.5\" width=\"7\" height=\"7\" rx=\"2\"/><rect x=\"13.5\" y=\"13.5\" width=\"7\" height=\"7\" rx=\"2\"/></svg></button><button type=\"button\" onMouseDown=\"{{tbImage.down}}\" onClick=\"{{tbImage.click}}\" aria-label=\"Picture\" title=\"Picture\" style=\"min-width: 36px; height: 34px; flex-shrink: 0; padding: 0 8px; border: 0; border-radius: 10px; background: transparent; color: {{t.text}}; font: inherit; font-size: 14px; font-weight: 600; display: flex; align-items: center; justify-content: center; cursor: pointer; \"><svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><rect x=\"3\" y=\"4\" width=\"18\" height=\"16\" rx=\"3\"/><circle cx=\"9\" cy=\"10\" r=\"2\"/><path d=\"M21 16l-5-5-9 9\"/></svg></button>\n  </div></div></sc-if>\n      </div>\n      <sc-if value=\"{{isWrite}}\" hint-placeholder-val=\"{{ true }}\"><textarea ref=\"{{taRef}}\" onChange=\"{{type}}\" onKeyDown=\"{{keys}}\" aria-label=\"Guide, in Markdown\" placeholder=\"Write about this deck in Markdown: a plan, links, a summary, a table of terms.\" spellcheck=\"true\" style=\"flex-grow: 1; min-height: 0; resize: none; box-sizing: border-box; border: 0; outline: 0; border-radius: 18px; padding: 16px 18px; background: {{t.surf}}; color: {{t.text}}; font-family: 'Geist Mono', ui-monospace, monospace; font-size: 14px; line-height: 1.65; tab-size: 2;\">{{text}}</textarea></sc-if>\n      <sc-if value=\"{{isPreview}}\" hint-placeholder-val=\"{{ false }}\"><div style=\"flex-grow: 1; min-height: 0; overflow-y: auto; box-sizing: border-box; padding: 18px 22px; border-radius: 18px; background: {{t.surf}};\"><div class=\"gd\" ref=\"{{previewRef}}\" data-sc-own style=\"--gd-text: {{t.text}}; --gd-muted: {{t.muted}}; --gd-line: {{t.line}}; --gd-code: {{t.bg}};\"></div><sc-if value=\"{{previewEmpty}}\" hint-placeholder-val=\"{{ false }}\"><span style=\"font-size: 15px; color: {{t.muted}};\">Nothing to show yet.</span></sc-if></div></sc-if>\n      <div style=\"display: flex; gap: 10px; flex-shrink: 0;\">\n        <button type=\"button\" onClick=\"{{makeCards}}\" class=\"sc-press\" style=\"flex: 1 1 0; min-width: 0; height: 50px; padding: 0 16px; border: 0; border-radius: 999px; background: {{t.surf}}; color: {{t.text}}; font: inherit; font-size: 15px; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 8px; white-space: nowrap; overflow: hidden; cursor: pointer;\"><svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M11 3l1.9 5.1L18 10l-5.1 1.9L11 17l-1.9-5.1L4 10l5.1-1.9z\"/><path d=\"M18.5 15l.8 2.2 2.2.8-2.2.8-.8 2.2-.8-2.2-2.2-.8 2.2-.8z\"/></svg><span style=\"overflow: hidden; text-overflow: ellipsis;\">{{makeLabel}}</span></button>\n        <button type=\"button\" onClick=\"{{done}}\" class=\"sc-press\" style=\"flex: 1 1 0; height: 50px; padding: 0 16px; border: 0; border-radius: 999px; background: {{t.inv}}; color: {{t.invText}}; font: inherit; font-size: 15px; font-weight: 600; cursor: pointer;\">Done</button>\n      </div>\n    </sc-if>\n    <sc-if value=\"{{histOpen}}\" hint-placeholder-val=\"{{ false }}\">\n      <div style=\"flex-grow: 1; min-height: 0; overflow-y: auto; scrollbar-width: none; display: flex; flex-direction: column; gap: 10px;\">\n        <span style=\"font-size: 14px; color: {{t.muted}};\">{{histLine}}</span>\n        <sc-for list=\"{{versions}}\" as=\"v\" hint-placeholder-count=\"2\"><div style=\"box-sizing: border-box; padding: 14px 16px; border-radius: 18px; background: {{t.surf}}; display: flex; flex-direction: column; gap: 8px;\">\n          <div style=\"display: flex; align-items: center; gap: 10px;\"><span style=\"flex-grow: 1; font-size: 14px; font-weight: 600;\">{{v.when}}</span><span style=\"font-size: 12px; color: {{t.muted}};\">{{v.size}}</span><button type=\"button\" onClick=\"{{v.restore}}\" class=\"sc-press\" style=\"height: 32px; padding: 0 14px; border: 0; border-radius: 999px; background: {{t.inv}}; color: {{t.invText}}; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer;\">Restore</button></div>\n          <span style=\"font-size: 13px; line-height: 1.5; color: {{t.muted}}; white-space: pre-wrap; overflow-wrap: anywhere; max-height: 84px; overflow: hidden;\">{{v.excerpt}}</span>\n        </div></sc-for>\n        <sc-if value=\"{{noVersions}}\" hint-placeholder-val=\"{{ false }}\"><span style=\"font-size: 15px; color: {{t.muted}};\">There are no older versions yet. They show up here as you write.</span></sc-if>\n      </div>\n      <div style=\"display: flex; gap: 10px; flex-shrink: 0;\"><button type=\"button\" onClick=\"{{toggleHistory}}\" class=\"sc-press\" style=\"flex-grow: 1; height: 50px; border: 0; border-radius: 999px; background: {{t.surf}}; color: {{t.text}}; font: inherit; font-size: 15px; font-weight: 600; cursor: pointer;\">Back to writing</button></div>\n    </sc-if>\n  </div>",
   Logic: DCLogic => {
 class Component extends DCLogic {
 // Dark mode has two looks, picked in Settings → Dark mode: black (the first one, and still the default) or gray (the
@@ -383,29 +383,1498 @@ mock() {
   };
 }
 
-art(p, variant) {
-  const name = p.fid + (variant ? '-' + variant : ''), on = !!(this.props.site || this.props.db) && ["sc-flow-midnight","sc-flow-midnight-wide","sc-gen-1bgiry6","sc-gen-1eyvfay","sc-gen-1h674rq","sc-gen-1iccxh","sc-gen-1madw05","sc-gen-1mheeld","sc-gen-1mukigx","sc-gen-1neye4o","sc-gen-1s1ssqz","sc-gen-1tj9ifj","sc-gen-1ul2ng5","sc-gen-1yac7zp","sc-gen-2xvhhe","sc-gen-5gnrcu","sc-gen-8f1umk","sc-gen-90zkel","sc-gen-favxds","sc-gen-o6z85t","sc-gen-px21tz","sc-gen-qmdzqs","sc-gen-v4yoeu","sc-gen-vwxtrt","sc-gen-ym0akm","sc-gen-yzu3mr"].includes(name);
-  return { ...p, art: on ? 'url(/art/' + name + '.webp)' : '', live: !on };
+md() { return Component._md || (Component._md = (function makeGuide() {
+  // ---------- limits ----------
+  const MAX = 60000;         // characters read; the rest of a longer text is ignored
+  const MAX_NEST = 12;       // lists and quotes inside lists and quotes; a deeper one is shown as text
+  const MAX_MARKS = 20;      // bold, italic, strike and links inside each other; a deeper one loses its marks
+  const MAX_URL_CHARS = 200000; // all link and picture addresses of one document together (a [ref] used again counts again)
+  const MAX_IMAGES = 100;    // pictures shown in one document
+  let errors = 0;            // unexpected errors caught (a bug if it is ever not 0)
+  let lastScan = 0;          // how many characters the last link scan read, for the inline work budget
+
+  // ---------- characters and text ----------
+  const isSp = c => c === 32 || c === 9;
+  const isDigit = c => c >= 48 && c <= 57;
+  const isAlpha = c => (c >= 65 && c <= 90) || (c >= 97 && c <= 122);
+  const isAlnum = c => isDigit(c) || isAlpha(c);
+  const isHex = c => isDigit(c) || (c >= 65 && c <= 70) || (c >= 97 && c <= 102);
+  // ASCII punctuation: the characters a backslash can escape.
+  const isPunct = c => (c >= 33 && c <= 47) || (c >= 58 && c <= 64) || (c >= 91 && c <= 96) || (c >= 123 && c <= 126);
+  const str = v => { try { return v == null ? '' : String(v); } catch (e) { return ''; } };
+  // The text as read: at most MAX characters, one kind of line break, no NUL and no half emoji (a lone surrogate).
+  function clean(v) {
+    let s = str(v);
+    if (s.length > MAX) { s = s.slice(0, MAX); const c = s.charCodeAt(MAX - 1); if (c >= 0xd800 && c <= 0xdbff) s = s.slice(0, -1); }
+    return s.replace(/\r\n?/g, '\n').replace(/\0/g, '\uFFFD').replace(/[\ud800-\udbff][\udc00-\udfff]|[\ud800-\udfff]/g, m => (m.length === 2 ? m : '\uFFFD'));
+  }
+  // Spaces, tabs and line breaks off both ends.
+  function trimWS(s) {
+    let a = 0, b = s.length;
+    while (a < b && (isSp(s.charCodeAt(a)) || s.charCodeAt(a) === 10)) a++;
+    while (b > a && (isSp(s.charCodeAt(b - 1)) || s.charCodeAt(b - 1) === 10)) b--;
+    return s.slice(a, b);
+  }
+  const blankFrom = (s, i) => { for (; i < s.length; i++) { const c = s.charCodeAt(i); if (!isSp(c) && c !== 10 && c !== 13 && c !== 12 && c !== 11) return false; } return true; };
+  const AMP = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
+  const esc = s => s.replace(/[&<>]/g, c => AMP[c]);              // text between tags
+  const escA = s => s.replace(/[&<>"']/g, c => AMP[c]);           // an attribute value
+  // Punctuation and whitespace as the emphasis rules see them: 0 whitespace, 1 punctuation or symbol, 2 anything else.
+  const RE_WS = /[\p{Zs}\t\n\f\r]/u, RE_PUNCT = /[\p{P}\p{S}]/u;
+  function cls(cp) {
+    if (cp < 128) return cp === 32 || (cp >= 9 && cp <= 13 && cp !== 11) ? 0 : isPunct(cp) ? 1 : 2;
+    const ch = String.fromCodePoint(cp);
+    return RE_WS.test(ch) ? 0 : RE_PUNCT.test(ch) ? 1 : 2;
+  }
+  function cpBefore(s, i) {
+    if (i <= 0) return 10;
+    const c = s.charCodeAt(i - 1);
+    if (c >= 0xdc00 && c <= 0xdfff && i >= 2) { const h = s.charCodeAt(i - 2); if (h >= 0xd800 && h <= 0xdbff) return ((h - 0xd800) << 10) + (c - 0xdc00) + 0x10000; }
+    return c;
+  }
+  const cpAfter = (s, i) => (i >= s.length ? 10 : s.codePointAt(i));
+
+  // ---------- entities ----------
+  // Only a safe list of named entities is read; anything else stays as typed. Numbers are read when they are a real
+  // printable character (a control character, a lone surrogate or a non-character becomes U+FFFD).
+  const NAMED = Object.create(null);
+  NAMED.amp = '&'; NAMED.lt = '<'; NAMED.gt = '>'; NAMED.quot = '"'; NAMED.apos = "'"; NAMED.nbsp = '\u00A0';
+  ('copy:© reg:® trade:™ hellip:… mdash:— ndash:– lsquo:‘ rsquo:’ ldquo:“ rdquo:” sbquo:‚ bdquo:„ laquo:« raquo:» lsaquo:‹ rsaquo:› bull:• middot:· deg:° plusmn:± times:× divide:÷ ' +
+    'frac12:½ frac14:¼ frac34:¾ euro:€ pound:£ yen:¥ cent:¢ curren:¤ sect:§ para:¶ dagger:† Dagger:‡ permil:‰ prime:′ Prime:″ larr:← rarr:→ uarr:↑ darr:↓ harr:↔ lArr:⇐ rArr:⇒ uArr:⇑ dArr:⇓ hArr:⇔ ' +
+    'minus:− lowast:∗ radic:√ infin:∞ ne:≠ le:≤ ge:≥ asymp:≈ equiv:≡ sum:∑ prod:∏ int:∫ part:∂ nabla:∇ isin:∈ notin:∉ cap:∩ cup:∪ sub:⊂ sup:⊃ and:∧ or:∨ not:¬ forall:∀ exist:∃ empty:∅ ' +
+    'sup1:¹ sup2:² sup3:³ micro:µ ordf:ª ordm:º iexcl:¡ iquest:¿ hearts:♥ spades:♠ clubs:♣ diams:♦ check:✓ star:☆ starf:★ phone:☎ ' +
+    'alpha:α beta:β gamma:γ delta:δ epsilon:ε zeta:ζ eta:η theta:θ iota:ι kappa:κ lambda:λ mu:μ nu:ν xi:ξ omicron:ο pi:π rho:ρ sigma:σ tau:τ upsilon:υ phi:φ chi:χ psi:ψ omega:ω ' +
+    'Alpha:Α Beta:Β Gamma:Γ Delta:Δ Theta:Θ Lambda:Λ Pi:Π Sigma:Σ Phi:Φ Psi:Ψ Omega:Ω ' +
+    'Agrave:À Aacute:Á Acirc:Â Atilde:Ã Auml:Ä Aring:Å AElig:Æ Ccedil:Ç Egrave:È Eacute:É Ecirc:Ê Euml:Ë Igrave:Ì Iacute:Í Icirc:Î Iuml:Ï Ntilde:Ñ Ograve:Ò Oacute:Ó Ocirc:Ô Otilde:Õ Ouml:Ö Oslash:Ø ' +
+    'Ugrave:Ù Uacute:Ú Ucirc:Û Uuml:Ü Yacute:Ý szlig:ß agrave:à aacute:á acirc:â atilde:ã auml:ä aring:å aelig:æ ccedil:ç egrave:è eacute:é ecirc:ê euml:ë igrave:ì iacute:í icirc:î iuml:ï ntilde:ñ ' +
+    'ograve:ò oacute:ó ocirc:ô otilde:õ ouml:ö oslash:ø ugrave:ù uacute:ú ucirc:û uuml:ü yacute:ý yuml:ÿ').split(' ').forEach(p => { NAMED[p.slice(0, p.indexOf(':'))] = p.slice(p.indexOf(':') + 1); });
+  function safeChar(cp) {
+    if (cp === 9 || cp === 10 || cp === 13) return ' ';
+    if (cp < 32 || (cp >= 127 && cp < 160) || cp > 0x10ffff || (cp >= 0xd800 && cp <= 0xdfff) || (cp & 0xfffe) === 0xfffe || (cp >= 0xfdd0 && cp <= 0xfdef)) return '\uFFFD';
+    return String.fromCodePoint(cp);
+  }
+  // The entity starting at s[i] (which is "&"): [the text it stands for, its length], or null.
+  function entityAt(s, i) {
+    let j = i + 1;
+    const c = s.charCodeAt(j);
+    if (c === 35) {
+      j++;
+      const hex = s.charCodeAt(j) === 120 || s.charCodeAt(j) === 88;
+      if (hex) j++;
+      const from = j;
+      let n = 0;
+      while (j - from < 9) { const d = s.charCodeAt(j); if (!(hex ? isHex(d) : isDigit(d))) break; n = n * (hex ? 16 : 10) + parseInt(s[j], 16); j++; }
+      if (j === from || j - from > (hex ? 6 : 7) || s.charCodeAt(j) !== 59) return null;
+      return [safeChar(n), j + 1 - i];
+    }
+    if (!isAlpha(c)) return null;
+    while (j - i < 34 && isAlnum(s.charCodeAt(j))) j++;
+    if (s.charCodeAt(j) !== 59 || j - i < 3) return null;
+    const v = NAMED[s.slice(i + 1, j)];
+    return v === undefined ? null : [v, j + 1 - i];
+  }
+  // Backslash escapes and entities turned into the characters they stand for (for addresses, titles and code languages).
+  function unescapeStr(s) {
+    if (s.indexOf('\\') < 0 && s.indexOf('&') < 0) return s;
+    let out = '';
+    for (let i = 0; i < s.length;) {
+      const c = s.charCodeAt(i);
+      if (c === 92 && isPunct(s.charCodeAt(i + 1))) { out += s[i + 1]; i += 2; }
+      else if (c === 38) { const e = entityAt(s, i); if (e) { out += e[0]; i += e[1]; } else { out += '&'; i++; } }
+      else { out += s[i]; i++; }
+    }
+    return out;
+  }
+
+  // ---------- addresses ----------
+  // An address is percent-encoded: afterwards it has only letters, digits and URL punctuation, never a quote, angle
+  // bracket, space, backslash or control character. A valid %XX stays as it is. "javascript:" and "vbscript:" never
+  // appear in one (the colon is written %3A), so an address that hides one in its path still cannot be mistaken for a script.
+  const URL_OK = new Uint8Array(128);
+  for (const ch of "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~!$&'()*+,;=:@/?#") URL_OK[ch.charCodeAt(0)] = 1;
+  const pct = c => (c < 16 ? '%0' : '%') + c.toString(16).toUpperCase();
+  function encodeUrl(u) {
+    let out = '';
+    for (let i = 0; i < u.length; i++) {
+      const c = u.charCodeAt(i);
+      if (c < 128) out += URL_OK[c] || (c === 37 && isHex(u.charCodeAt(i + 1)) && isHex(u.charCodeAt(i + 2))) ? u[i] : pct(c);
+      else {
+        const cp = u.codePointAt(i);
+        if (cp >= 0xd800 && cp <= 0xdfff) out += '%EF%BF%BD';
+        else { out += encodeURIComponent(String.fromCodePoint(cp)); if (cp > 0xffff) i++; }
+      }
+    }
+    return out.replace(/((?:java|vb)script):/gi, '$1%3A');       // not even inside a path: no scanner should ever see "javascript:" in an address
+  }
+  // Which (already encoded) addresses may be a link, and which a picture.
+  const linkOk = u => u.charCodeAt(0) === 35 || /^(?:https?:\/\/[^\/?#]|mailto:.)/i.test(u);
+  const imgOk = u => /^(?:https?:\/\/[^\/?#]|\/(?!\/))/i.test(u);
+  const ownImg = u => /^\/media\/[\w-]+\.(?:png|jpe?g|gif|webp)$/i.test(u);
+
+  // ---------- link syntax: label, address, title (shared by [text](...) and [ref]: ... ) ----------
+  // Each scanner reads a bounded number of characters and notes in lastScan how many it read.
+  // The text of a [label] starting at p: the index after its "]", or -1. No brackets inside, at most 999 characters.
+  function labelEnd(s, p) {
+    const lim = Math.min(s.length, p + 1002);
+    let j = p + 1;
+    while (j < lim) {
+      const c = s.charCodeAt(j);
+      if (c === 92) { j += 2; continue; }
+      if (c === 91) { lastScan = j - p; return -1; }
+      if (c === 93) { lastScan = j - p; return j + 1; }
+      j++;
+    }
+    lastScan = j - p;
+    return -1;
+  }
+  // An address at p, either <...> or characters up to a space with balanced parentheses: { end, raw } or null.
+  function scanDest(s, p) {
+    const lim = Math.min(s.length, p + 2002);
+    let j = p;
+    if (s.charCodeAt(p) === 60) {
+      j = p + 1;
+      while (j < lim) {
+        const c = s.charCodeAt(j);
+        if (c === 62) { lastScan = j - p; return { end: j + 1, raw: s.slice(p + 1, j) }; }
+        if (c === 10 || c === 60) break;
+        j += c === 92 && isPunct(s.charCodeAt(j + 1)) ? 2 : 1;
+      }
+      lastScan = j - p;
+      return null;
+    }
+    let depth = 0;
+    while (j < lim) {
+      const c = s.charCodeAt(j);
+      if (c === 92 && isPunct(s.charCodeAt(j + 1))) { j += 2; continue; }
+      if (c === 40) { if (++depth > 32) break; j++; continue; }
+      if (c === 41) { if (depth === 0) break; depth--; j++; continue; }
+      if (c <= 32 || c === 127) break;
+      j++;
+    }
+    lastScan = j - p;
+    if (j >= lim && j < s.length) return null;                  // longer than we read
+    if (depth !== 0 || (j === p && s.charCodeAt(j) !== 41)) return null;
+    return { end: j, raw: s.slice(p, j) };
+  }
+  // A title at p, in "...", '...' or (...): { end, raw } or null.
+  function scanTitle(s, p) {
+    const q = s.charCodeAt(p), close = q === 34 ? 34 : q === 39 ? 39 : q === 40 ? 41 : 0;
+    if (!close) return null;
+    const lim = Math.min(s.length, p + 1002);
+    let j = p + 1;
+    while (j < lim) {
+      const c = s.charCodeAt(j);
+      if (c === 92 && isPunct(s.charCodeAt(j + 1))) { j += 2; continue; }
+      if (c === close) { lastScan = j - p; return { end: j + 1, raw: s.slice(p + 1, j) }; }
+      if (q === 40 && c === 40) break;
+      j++;
+    }
+    lastScan = j - p;
+    return null;
+  }
+  // Spaces, at most one line break, and more spaces.
+  function spnl(s, p) {
+    while (isSp(s.charCodeAt(p))) p++;
+    if (s.charCodeAt(p) === 10) { p++; while (isSp(s.charCodeAt(p))) p++; }
+    return p;
+  }
+  const normLabel = raw => trimWS(raw).replace(/[ \t\n]+/g, ' ').toLowerCase().toUpperCase();
+  // After spaces, the end of the line: the index after the line break, or -1 when something else comes first.
+  function eol(s, p) {
+    while (isSp(s.charCodeAt(p))) p++;
+    if (p >= s.length) return s.length;
+    return s.charCodeAt(p) === 10 ? p + 1 : -1;
+  }
+  // "[label]: address "title"" at the start of s[p0...]: the index after it, or -1. The first definition of a label wins.
+  function parseRefDef(s, p0, refs) {
+    const le = labelEnd(s, p0);
+    if (le < 0 || s.charCodeAt(le) !== 58) return -1;
+    const label = normLabel(s.slice(p0 + 1, le - 1));
+    if (!label) return -1;
+    const D = scanDest(s, spnl(s, le + 1));
+    if (!D) return -1;
+    let q = spnl(s, D.end), title = null, e = -1;
+    if (q > D.end) { const T = scanTitle(s, q); if (T) { title = unescapeStr(T.raw); e = eol(s, T.end); } }
+    if (e < 0) { title = null; e = eol(s, D.end); }
+    if (e < 0) return -1;
+    if (!refs.has(label)) refs.set(label, { dest: encodeUrl(unescapeStr(D.raw)), title: title || '' });
+    return e;
+  }
+
+  // ---------- inline: text -> nodes ----------
+  // The nodes while reading are a linked list per parent: { t, v, p (previous), n (next), fc, lc (first, last child), par }.
+  const N = (t, v) => ({ t, v: v === undefined ? '' : v, p: null, n: null, fc: null, lc: null, par: null, dest: '', title: '' });
+  function unlink(x) {
+    if (x.p) x.p.n = x.n; else if (x.par) x.par.fc = x.n;
+    if (x.n) x.n.p = x.p; else if (x.par) x.par.lc = x.p;
+    x.par = x.p = x.n = null;
+  }
+  function appendChild(par, x) {
+    x.par = par; x.p = par.lc; x.n = null;
+    if (par.lc) par.lc.n = x; else par.fc = x;
+    par.lc = x;
+  }
+  function insertAfter(a, x) {
+    x.par = a.par; x.p = a; x.n = a.n;
+    if (a.n) a.n.p = x; else if (a.par) a.par.lc = x;
+    a.n = x;
+  }
+  const SPECIAL = new Uint8Array(128);
+  for (const ch of '\n\\`*_~[]!<&hH') SPECIAL[ch.charCodeAt(0)] = 1;
+  function schemeEnd(b) {
+    if (!isAlpha(b.charCodeAt(0))) return -1;
+    let i = 1;
+    while (i < 33) { const c = b.charCodeAt(i); if (isAlnum(c) || c === 43 || c === 46 || c === 45) i++; else break; }
+    return i >= 2 && b.charCodeAt(i) === 58 ? i : -1;
+  }
+  const EMAIL_CH = "!#$%&'*+/=?^_`{|}~-.";
+  function isEmail(b) {
+    const at = b.indexOf('@');
+    if (at < 1) return false;
+    for (let i = 0; i < at; i++) { const c = b.charCodeAt(i); if (!isAlnum(c) && EMAIL_CH.indexOf(b[i]) < 0) return false; }
+    const labels = b.slice(at + 1).split('.');
+    return labels.every(l => l.length >= 1 && l.length <= 63 && isAlnum(l.charCodeAt(0)) && isAlnum(l.charCodeAt(l.length - 1)) && [...l].every(ch => isAlnum(ch.charCodeAt(0)) || ch === '-'));
+  }
+
+  // Reads one paragraph, heading or table cell. Returns a root node whose children are the inline nodes.
+  // This is the CommonMark way: scan left to right, push * _ ~ and [ ![ on two stacks, and when a closer shows up look
+  // back for its opener. Every loop that could be slow on hostile text is bounded (see the work budget).
+  function inlineParse(s, refs) {
+    const root = N('root'), len = s.length;
+    let pos = 0, delims = null, brackets = null, work = 0, tickIdx = null;
+    const cap = 20 * len + 2000;                   // the work budget: scans past it stop making links and emphasis
+    const text = v => N('text', v);
+    const add = x => appendChild(root, x);
+    const removeDelim = d => { if (d.prev) d.prev.next = d.next; if (!d.next) delims = d.prev; else d.next.prev = d.prev; };
+
+    // Code spans: the closing run of backticks of the same length is found with an index built once, so a long text of
+    // unmatched backtick runs is still read in one pass.
+    function findTicks(L, from) {
+      if (!tickIdx) {
+        tickIdx = new Map();
+        for (let i = s.indexOf('`'); i >= 0 && i < len;) {
+          let j = i; while (s.charCodeAt(j) === 96) j++;
+          let a = tickIdx.get(j - i); if (!a) tickIdx.set(j - i, a = { p: [], k: 0 });
+          a.p.push(i);
+          i = s.indexOf('`', j);
+        }
+      }
+      const a = tickIdx.get(L);
+      if (!a) return -1;
+      while (a.k < a.p.length && a.p[a.k] < from) a.k++;
+      return a.k < a.p.length ? a.p[a.k] : -1;
+    }
+    function backticks() {
+      let j = pos; while (s.charCodeAt(j) === 96) j++;
+      const L = j - pos, at = findTicks(L, j);
+      if (at < 0) { add(text(s.slice(pos, j))); pos = j; return; }
+      let v = s.slice(j, at).replace(/\n/g, ' ');
+      if (v.length > 0 && v.charCodeAt(0) === 32 && v.charCodeAt(v.length - 1) === 32 && /[^ ]/.test(v)) v = v.slice(1, -1);
+      add(N('code', v));
+      pos = at + L;
+    }
+    function backslash() {
+      pos++;
+      const c = s.charCodeAt(pos);
+      if (c === 10) { pos++; add(N('br')); }
+      else if (isPunct(c)) { add(text(s[pos])); pos++; }
+      else add(text('\\'));
+    }
+    function newline() {
+      pos++;
+      const l = root.lc;
+      if (l && l.t === 'text' && l.v.charCodeAt(l.v.length - 1) === 32) {
+        const hard = l.v.charCodeAt(l.v.length - 2) === 32;
+        let e = l.v.length; while (e > 0 && l.v.charCodeAt(e - 1) === 32) e--;
+        l.v = l.v.slice(0, e);
+        add(N(hard ? 'br' : 'soft'));
+      } else add(N('soft'));
+      while (s.charCodeAt(pos) === 32) pos++;
+    }
+    function entity() {
+      const e = entityAt(s, pos);
+      if (e) { add(text(e[0])); pos += e[1]; } else { add(text('&')); pos++; }
+    }
+    // <https://...> and <me@mail.com>. Other schemes are not links: the whole <...> stays as typed.
+    function angle() {
+      let e = pos + 1;
+      const lim = Math.min(len, pos + 2100);
+      while (e < lim) { const c = s.charCodeAt(e); if (c === 62) break; if (c <= 32 || c === 60 || c === 127) { e = -1; break; } e++; }
+      work += (e < 0 ? 1 : e - pos);
+      if (e < 0 || e >= len || s.charCodeAt(e) !== 62) { add(text('<')); pos++; return; }
+      const body = s.slice(pos + 1, e), colon = schemeEnd(body);
+      let href = '';
+      if (colon > 0) { const sch = body.slice(0, colon).toLowerCase(); if (sch === 'http' || sch === 'https' || sch === 'mailto') href = encodeUrl(body); else { add(text(s.slice(pos, e + 1))); pos = e + 1; return; } }
+      else if (isEmail(body)) href = 'mailto:' + encodeUrl(body);
+      else { add(text('<')); pos++; return; }
+      const a = N('link'); a.dest = href;
+      appendChild(a, text(body)); add(a);
+      pos = e + 1;
+    }
+    // A bare http:// or https:// address (GitHub style). It starts after anything but a letter; the domain may not have
+    // an underscore in its last two parts; a trailing . , : ; ! ? * _ ~ ' " ] and an unmatched ) are not part of it.
+    function urlAt(j) {
+      if (j > 0 && isAlpha(s.charCodeAt(j - 1))) return false;
+      if ((s.charCodeAt(j + 1) | 32) !== 116 || (s.charCodeAt(j + 2) | 32) !== 116 || (s.charCodeAt(j + 3) | 32) !== 112) return false;
+      let k = j + 4; if ((s.charCodeAt(k) | 32) === 115) k++;
+      return s.charCodeAt(k) === 58 && s.charCodeAt(k + 1) === 47 && s.charCodeAt(k + 2) === 47;
+    }
+    const wsAt = e => { const c = s.charCodeAt(e); return c <= 32 || c === 127 || (c >= 128 && RE_WS.test(s[e])); };
+    function autoEnd(j) {
+      let k = j + 4; if ((s.charCodeAt(k) | 32) === 115) k++;
+      k += 3;
+      const ds = k;
+      if (k >= len || s.charCodeAt(k) < 33 || cls(s.codePointAt(k)) !== 2) return -1;
+      let e = k;
+      while (e < len && e - j < 2100) {
+        if (wsAt(e) || s.charCodeAt(e) === 60) break;
+        if (s.charCodeAt(e) === 93) { const d = s.charCodeAt(e + 1); if (e + 1 >= len || d === 40 || d === 91 || wsAt(e + 1)) break; }
+        e++;
+      }
+      work += e - j;
+      if (e - j >= 2100) return -1;
+      let open = 0, close = 0;
+      for (let i = j; i < e; i++) { const c = s.charCodeAt(i); if (c === 40) open++; else if (c === 41) close++; }
+      let end = e;
+      while (end > ds) {
+        const c = s.charCodeAt(end - 1);
+        if (c === 63 || c === 33 || c === 46 || c === 44 || c === 58 || c === 42 || c === 95 || c === 126 || c === 39 || c === 34 || c === 93) end--;
+        else if (c === 59) { let q = end - 2; while (q > ds && isAlpha(s.charCodeAt(q))) q--; end = q < end - 2 && s.charCodeAt(q) === 38 ? q : end - 1; }
+        else if (c === 41 && close > open) { close--; end--; }
+        else break;
+      }
+      let seen = false, under = false, underBefore = false;
+      for (let d = ds; d < end;) {
+        const cp = s.codePointAt(d);
+        if (cp === 46) { underBefore = under; under = false; d++; continue; }
+        if (cp === 95) { under = true; d++; continue; }
+        if (cp !== 45 && cls(cp) !== 2) break;
+        seen = true; d += cp > 0xffff ? 2 : 1;
+      }
+      return under || underBefore || !seen ? -1 : end;
+    }
+    // * _ and ~ runs. Whether a run can open or close emphasis follows the CommonMark "flanking" rules.
+    function delim(c) {
+      let j = pos; while (s.charCodeAt(j) === c) j++;
+      const n = j - pos;
+      if (c === 126 && n > 2) { add(text(s.slice(pos, j))); pos = j; return; }
+      const before = cls(cpBefore(s, pos)), after = cls(cpAfter(s, j));
+      const left = after !== 0 && (after !== 1 || before !== 2), right = before !== 0 && (before !== 1 || after !== 2);
+      let open = left, close = right;
+      if (c === 95) { open = left && (!right || before === 1); close = right && (!left || after === 1); }
+      const node = text(s.slice(pos, j)); add(node);
+      pos = j;
+      if (open || close) { delims = { cc: c, n, orig: n, node, prev: delims, next: null, open, close }; if (delims.prev) delims.prev.next = delims; }
+    }
+    // Pair every closer above `bottom` with the nearest opener below it. A closer with no opener is plain text.
+    function processEmphasis(bottom) {
+      const ob = new Array(14).fill(bottom);                      // per kind of closer: no opener to find below here
+      let closer = delims;
+      while (closer && closer.prev !== bottom) closer = closer.prev;
+      while (closer && work <= cap) {
+        if (!closer.close) { closer = closer.next; continue; }
+        const cc = closer.cc, idx = cc === 95 ? (closer.open ? 3 : 0) + closer.orig % 3 : cc === 42 ? 6 + (closer.open ? 3 : 0) + closer.orig % 3 : 12 + (closer.n === 2 ? 1 : 0);
+        let opener = closer.prev, found = false;
+        while (opener && opener !== bottom && opener !== ob[idx]) {
+          if (++work > cap) break;
+          if (opener.cc === cc && opener.open) {
+            if (cc === 126) { if (opener.n === closer.n) { found = true; break; } }
+            else if (!((closer.open || opener.close) && closer.orig % 3 !== 0 && (opener.orig + closer.orig) % 3 === 0)) { found = true; break; }
+          }
+          opener = opener.prev;
+        }
+        const old = closer;
+        if (!found) {
+          closer = closer.next;
+          ob[idx] = old.prev;
+          if (!old.open) removeDelim(old);
+          continue;
+        }
+        const use = cc === 126 ? closer.n : closer.n >= 2 && opener.n >= 2 ? 2 : 1;
+        const oi = opener.node, ci = closer.node;
+        opener.n -= use; closer.n -= use;
+        oi.v = oi.v.slice(0, oi.v.length - use); ci.v = ci.v.slice(0, ci.v.length - use);
+        const em = N(cc === 126 ? 's' : use === 1 ? 'i' : 'b');
+        for (let t = oi.n; t && t !== ci;) { const nx = t.n; unlink(t); appendChild(em, t); t = nx; work++; }
+        insertAfter(oi, em);
+        if (opener.next !== closer) { opener.next = closer; closer.prev = opener; }
+        if (opener.n === 0) { unlink(oi); removeDelim(opener); }
+        if (closer.n === 0) { unlink(ci); const nx = closer.next; removeDelim(closer); closer = nx; }
+      }
+      while (delims && delims !== bottom) removeDelim(delims);
+    }
+    function openBracket(image) {
+      const index = image ? pos + 1 : pos;
+      add(text(image ? '![' : '['));
+      pos += image ? 2 : 1;
+      if (brackets) brackets.after = true;
+      brackets = { node: root.lc, prev: brackets, prevDelim: delims, index, image, active: true, after: false };
+    }
+    // The tail of an inline link: "(address "title")" at p. { end, dest, title } or null.
+    function inlineTail(p) {
+      const start = p;
+      p = spnl(s, p + 1);
+      const D = scanDest(s, p); work += lastScan;
+      if (!D) return null;
+      let q = spnl(s, D.end), title = '';
+      if (q > D.end) { const T = scanTitle(s, q); work += lastScan; if (T) { title = unescapeStr(T.raw); q = spnl(s, T.end); } }
+      if (s.charCodeAt(q) !== 41) return null;
+      work += q - start;
+      return { end: q + 1, dest: encodeUrl(unescapeStr(D.raw)), title };
+    }
+    function closeBracket() {
+      pos++;
+      const startpos = pos, op = brackets;
+      if (!op) { add(text(']')); return; }
+      if (!op.active) { add(text(']')); brackets = op.prev; return; }
+      let dest = '', title = '', matched = false;
+      if (s.charCodeAt(pos) === 40 && work <= cap) { const r = inlineTail(pos); if (r) { dest = r.dest; title = r.title; pos = r.end; matched = true; } }
+      if (!matched && work <= cap) {
+        let n = 0;
+        if (s.charCodeAt(pos) === 91) { const le = labelEnd(s, pos); work += lastScan; n = le < 0 ? 0 : le - pos; }
+        let raw = null;
+        if (n > 2) raw = s.slice(pos + 1, pos + n - 1);
+        else if (!op.after && startpos - op.index <= 1001) raw = s.slice(op.index + 1, startpos - 1);
+        const ref = raw === null ? null : refs.get(normLabel(raw));
+        if (ref) { dest = ref.dest; title = ref.title; matched = true; pos += n; }
+      }
+      if (!matched) { brackets = op.prev; pos = startpos; add(text(']')); return; }
+      const node = N(op.image ? 'image' : 'link'); node.dest = dest; node.title = title;
+      for (let t = op.node.n; t;) { const nx = t.n; unlink(t); appendChild(node, t); t = nx; work++; }
+      add(node);
+      processEmphasis(op.prevDelim);
+      brackets = op.prev;
+      unlink(op.node);
+      if (!op.image) for (let b = brackets; b; b = b.prev) { if (b.image) continue; if (!b.active) break; b.active = false; }
+    }
+
+    while (pos < len) {
+      const c = s.charCodeAt(pos);
+      if (c === 10) newline();
+      else if (c === 92) backslash();
+      else if (c === 96) backticks();
+      else if (c === 42 || c === 95 || c === 126) delim(c);
+      else if (c === 91) openBracket(false);
+      else if (c === 33) { if (s.charCodeAt(pos + 1) === 91) openBracket(true); else { add(text('!')); pos++; } }
+      else if (c === 93) closeBracket();
+      else if (c === 60) angle();
+      else if (c === 38) entity();
+      else if ((c === 104 || c === 72) && !brackets && urlAt(pos) && work <= cap) {
+        const e = autoEnd(pos);
+        if (e > 0) { const url = s.slice(pos, e), a = N('link'); a.dest = encodeUrl(url); appendChild(a, text(url)); add(a); pos = e; }
+        else { add(text(s[pos])); pos++; }
+      } else {
+        let j = pos + 1;
+        while (j < len) { const d = s.charCodeAt(j); if (d < 128 && SPECIAL[d] && !((d === 104 || d === 72) && !urlAt(j))) break; j++; }
+        add(text(s.slice(pos, j)));
+        pos = j;
+      }
+    }
+    processEmphasis(null);
+    return root;
+  }
+
+  // The plain text inside a picture's [description]: all the text and code in it, line breaks as spaces.
+  function altOf(x) {
+    let out = '', cur = x.fc;
+    const up = [];
+    for (;;) {
+      if (!cur) { if (!up.length) break; cur = up.pop(); continue; }
+      const nd = cur;
+      if (nd.fc) { up.push(nd.n); cur = nd.fc; continue; }
+      if (nd.t === 'text' || nd.t === 'code') out += nd.v; else if (nd.t === 'soft' || nd.t === 'br') out += ' ';
+      cur = nd.n;
+    }
+    return out;
+  }
+  function pushText(out, v) {
+    if (!v) return;
+    const l = out[out.length - 1];
+    if (l && l.t === 'text') l.v += v; else out.push({ t: 'text', v });
+  }
+  // Linked nodes -> the tree. No recursion (a hostile text can nest very deep), and marks nested deeper than MAX_MARKS
+  // are dropped but their text stays. Links inside links are dropped the same way.
+  function toInline(root, ctx) {
+    const out = [], stack = [];
+    let f = { cur: root.fc, out, inA: false, depth: 0 };
+    for (;;) {
+      const x = f.cur;
+      if (!x) { if (!stack.length) break; f = stack.pop(); continue; }
+      f.cur = x.n;
+      switch (x.t) {
+        case 'text': pushText(f.out, x.v); break;
+        case 'soft': pushText(f.out, ' '); break;
+        case 'br': f.out.push({ t: 'br' }); break;
+        case 'code': if (x.v) f.out.push({ t: 'code', v: x.v }); break;
+        case 'image': {
+          const alt = altOf(x), cost = x.dest.length + x.title.length;
+          if (!imgOk(x.dest) || ctx.urls + cost > MAX_URL_CHARS) pushText(f.out, alt);
+          else { ctx.urls += cost; f.out.push({ t: 'img', src: x.dest, alt, title: x.title }); }
+          break;
+        }
+        default: {                                                 // b, i, s, link
+          const isA = x.t === 'link', cost = x.dest.length + x.title.length;
+          let wrap = null;
+          if (f.depth < MAX_MARKS) {
+            if (!isA) wrap = { t: x.t, c: [] };
+            else if (!f.inA && linkOk(x.dest) && ctx.urls + cost <= MAX_URL_CHARS) { ctx.urls += cost; wrap = { t: 'a', href: x.dest, title: x.title, c: [] }; ctx.links.push(wrap); }
+          }
+          if (wrap) f.out.push(wrap);
+          stack.push(f);
+          f = { cur: x.fc, out: wrap ? wrap.c : f.out, inA: f.inA || (isA && !!wrap), depth: f.depth + (wrap ? 1 : 0) };
+        }
+      }
+    }
+    return out;
+  }
+  const inlineOf = (content, refs, ctx) => toInline(inlineParse(trimWS(content), refs), ctx);
+
+  // ---------- blocks: lines -> a tree of containers and leaves ----------
+  // This is the CommonMark way (and commonmark.js's): each line is matched against the open containers (quote, list item),
+  // then against the starts of new blocks, and what is left is text for a paragraph, a code block or a table row.
+  // Tabs count as moving to the next multiple of 4 columns, as the spec says.
+  function parseBlocks(src, refs) {
+    const mk = (type, depth) => ({ type, kids: [], parent: null, open: true, content: '', depth, line: 0, blankEnd: false, seen: false, ld: null });
+    const doc = mk('doc', 0);
+    let tip = doc, oldtip = doc, lastMatched = doc, allClosed = true;
+    let ln = '', lineNo = 0, offset = 0, column = 0, nextNonspace = 0, nextCol = 0, indent = 0, indented = false, blank = false, partialTab = false;
+    const canContain = (p, t) => (p === 'doc' || p === 'quote' || p === 'item' ? t !== 'item' : p === 'list' ? t === 'item' : false);
+
+    function findNextNonspace() {
+      let i = offset, cols = column;
+      for (; i < ln.length; i++) {
+        const c = ln.charCodeAt(i);
+        if (c === 32) cols++; else if (c === 9) cols += 4 - (cols % 4); else break;
+      }
+      blank = i >= ln.length;
+      nextNonspace = i; nextCol = cols; indent = cols - column; indented = indent >= 4;
+    }
+    function advanceNextNonspace() { offset = nextNonspace; column = nextCol; partialTab = false; }
+    function advanceOffset(count, columns) {
+      while (count > 0 && offset < ln.length) {
+        if (ln.charCodeAt(offset) === 9) {
+          const toTab = 4 - (column % 4);
+          if (columns) {
+            partialTab = toTab > count;
+            const adv = partialTab ? count : toTab;
+            column += adv; offset += partialTab ? 0 : 1; count -= adv;
+          } else { partialTab = false; column += toTab; offset += 1; count -= 1; }
+        } else { partialTab = false; offset += 1; column += 1; count -= 1; }
+      }
+    }
+    function addLine() {
+      if (partialTab) { offset += 1; tip.content += ' '.repeat(4 - (column % 4)); }
+      tip.content += ln.slice(offset) + '\n';
+    }
+    function addChild(type) {
+      while (!canContain(tip.type, type)) finalize(tip);
+      const n = mk(type, tip.depth + (type === 'quote' || type === 'item' ? 1 : 0));
+      n.parent = tip; n.line = lineNo;
+      tip.kids.push(n);
+      tip = n;
+      return n;
+    }
+    function closeUnmatched() {
+      if (allClosed) return;
+      while (oldtip !== lastMatched) { const parent = oldtip.parent; finalize(oldtip); oldtip = parent; }
+      allClosed = true;
+    }
+    function endsBlank(b) {
+      while (b) {
+        if (b.blankEnd) return true;
+        if (!b.seen && (b.type === 'list' || b.type === 'item')) { b.seen = true; b = b.kids[b.kids.length - 1]; } else { b.seen = true; break; }
+      }
+      return false;
+    }
+    function finalize(b) {
+      const above = b.parent;
+      b.open = false;
+      if (b.type === 'para') {
+        let p = 0, defs = false;
+        while (b.content.charCodeAt(p) === 91) { const e = parseRefDef(b.content, p, refs); if (e < 0) break; p = e; defs = true; }
+        if (defs) b.content = b.content.slice(p);
+        if (blankFrom(b.content, 0)) { const i = above.kids.lastIndexOf(b); if (i >= 0) above.kids.splice(i, 1); }
+      } else if (b.type === 'list') {
+        const items = b.kids;
+        for (let i = 0; i < items.length && b.ld.tight; i++) {
+          if (endsBlank(items[i]) && i < items.length - 1) { b.ld.tight = false; break; }
+          const sub = items[i].kids;
+          for (let j = 0; j < sub.length; j++) if (endsBlank(sub[j]) && (i < items.length - 1 || j < sub.length - 1)) { b.ld.tight = false; break; }
+        }
+      } else if (b.type === 'code') {
+        if (b.fenced) { const nl = b.content.indexOf('\n'); b.info = unescapeStr(trimWS(b.content.slice(0, nl))); b.literal = b.content.slice(nl + 1); }
+        else {
+          let end = b.content.length;                              // drop blank lines at the end, keep one line break
+          for (;;) {
+            const ls = end < 2 ? 0 : b.content.lastIndexOf('\n', end - 2) + 1;
+            let allSp = true; for (let i = ls; i < end - 1; i++) if (b.content.charCodeAt(i) !== 32) { allSp = false; break; }
+            if (allSp && ls > 0 && ls < end) end = ls; else break;
+          }
+          b.literal = b.content.slice(0, end);
+        }
+        b.content = '';
+      }
+      tip = above;
+    }
+
+    // --- table helpers ---
+    // A row's cells. Pipes at the ends are optional, "\|" is a pipe in the text.
+    function splitCells(s) {
+      let i = 0, n = s.length;
+      while (i < n && isSp(s.charCodeAt(i))) i++;
+      while (n > i && isSp(s.charCodeAt(n - 1))) n--;
+      if (i < n && s.charCodeAt(i) === 124) i++;
+      if (n > i && s.charCodeAt(n - 1) === 124) { let bs = 0; for (let k = n - 2; k >= i && s.charCodeAt(k) === 92; k--) bs++; if (bs % 2 === 0) n--; }
+      const cells = [];
+      let start = i;
+      for (let j = i; j < n; j++) {
+        const c = s.charCodeAt(j);
+        if (c === 92) j++;
+        else if (c === 124) { cells.push(s.slice(start, j)); start = j + 1; }
+      }
+      cells.push(s.slice(start, n));
+      return cells.map(c => trimWS(c).replace(/\\\|/g, '|'));
+    }
+    // "| --- | :-: |" -> ['', 'center']; null when the line is not a delimiter row.
+    function delimRow(s) {
+      for (let j = 0; j < s.length; j++) { const c = s.charCodeAt(j); if (c !== 32 && c !== 9 && c !== 124 && c !== 58 && c !== 45) return null; }
+      const aligns = [];
+      for (const cell of splitCells(s)) {
+        const l = cell.charCodeAt(0) === 58, r = cell.charCodeAt(cell.length - 1) === 58 && cell.length > 1;
+        const dashes = cell.slice(l ? 1 : 0, r ? -1 : undefined);
+        if (!dashes || dashes.replace(/-/g, '') !== '') return null;
+        aligns.push(l && r ? 'center' : l ? 'left' : r ? 'right' : '');
+      }
+      return aligns.length ? aligns : null;
+    }
+
+    // --- how each open container takes the next line: 0 it continues, 1 it does not, 2 the line was consumed ---
+    function cont(c) {
+      switch (c.type) {
+        case 'quote':
+          if (!indented && ln.charCodeAt(nextNonspace) === 62) {
+            advanceNextNonspace(); advanceOffset(1, false);
+            if (isSp(ln.charCodeAt(offset))) advanceOffset(1, true);
+            return 0;
+          }
+          return 1;
+        case 'item':
+          if (blank) { if (!c.kids.length) return 1; advanceNextNonspace(); }
+          else if (indent >= c.ld.markerOffset + c.ld.padding) advanceOffset(c.ld.markerOffset + c.ld.padding, true);
+          else return 1;
+          return 0;
+        case 'heading': case 'hr': return 1;
+        case 'para': case 'table': return blank ? 1 : 0;
+        case 'code':
+          if (c.fenced) {
+            if (indent <= 3 && ln.charCodeAt(nextNonspace) === c.fenceChar) {
+              let j = nextNonspace; while (ln.charCodeAt(j) === c.fenceChar) j++;
+              if (j - nextNonspace >= c.fenceLen && blankFrom(ln, j)) { finalize(c); return 2; }
+            }
+            for (let i = c.fenceOffset; i > 0 && isSp(ln.charCodeAt(offset)); i--) advanceOffset(1, true);
+          } else if (indent >= 4) advanceOffset(4, true);
+          else if (blank) advanceNextNonspace();
+          else return 1;
+          return 0;
+        default: return 0;
+      }
+    }
+
+    // --- the starts of new blocks: 0 no, 1 a container was opened (keep looking), 2 a leaf was opened ---
+    function quoteStart(container) {
+      if (indented || ln.charCodeAt(nextNonspace) !== 62 || container.depth >= MAX_NEST) return 0;
+      advanceNextNonspace(); advanceOffset(1, false);
+      if (isSp(ln.charCodeAt(offset))) advanceOffset(1, true);
+      closeUnmatched();
+      addChild('quote');
+      return 1;
+    }
+    function atxStart() {
+      if (indented) return 0;
+      let j = nextNonspace;
+      while (ln.charCodeAt(j) === 35) j++;
+      const n = j - nextNonspace;
+      if (n < 1 || n > 6 || !(j >= ln.length || isSp(ln.charCodeAt(j)))) return 0;
+      advanceNextNonspace(); advanceOffset(n, false);
+      while (isSp(ln.charCodeAt(offset))) advanceOffset(1, false);
+      closeUnmatched();
+      const h = addChild('heading');
+      h.level = n;
+      const rest = ln.slice(offset);
+      let e = rest.length; while (e > 0 && isSp(rest.charCodeAt(e - 1))) e--;
+      let k = e; while (k > 0 && rest.charCodeAt(k - 1) === 35) k--;
+      if (k < e) { if (k === 0) e = 0; else if (isSp(rest.charCodeAt(k - 1))) { e = k - 1; while (e > 0 && isSp(rest.charCodeAt(e - 1))) e--; } }
+      h.content = rest.slice(0, e);
+      advanceOffset(ln.length - offset, false);
+      return 2;
+    }
+    function fenceStart() {
+      if (indented) return 0;
+      const c = ln.charCodeAt(nextNonspace);
+      if (c !== 96 && c !== 126) return 0;
+      let j = nextNonspace; while (ln.charCodeAt(j) === c) j++;
+      const n = j - nextNonspace;
+      if (n < 3 || (c === 96 && ln.indexOf('`', j) >= 0)) return 0;
+      closeUnmatched();
+      const b = addChild('code');
+      b.fenced = true; b.fenceLen = n; b.fenceChar = c; b.fenceOffset = indent;
+      advanceNextNonspace(); advanceOffset(n, false);
+      return 2;
+    }
+    function setextStart(container) {
+      if (indented || container.type !== 'para') return 0;
+      const c = ln.charCodeAt(nextNonspace);
+      if (c !== 61 && c !== 45) return 0;
+      let j = nextNonspace; while (ln.charCodeAt(j) === c) j++;
+      if (!blankFrom(ln, j)) return 0;
+      closeUnmatched();
+      let p = 0;
+      while (container.content.charCodeAt(p) === 91) { const e = parseRefDef(container.content, p, refs); if (e < 0) break; p = e; }
+      container.content = container.content.slice(p);
+      if (!container.content.length) return 0;
+      const h = mk('heading', container.depth);
+      h.level = c === 61 ? 1 : 2; h.content = container.content; h.parent = container.parent; h.line = lineNo;
+      container.parent.kids[container.parent.kids.lastIndexOf(container)] = h;
+      container.open = false;
+      tip = h;
+      advanceOffset(ln.length - offset, false);
+      return 2;
+    }
+    function hrStart() {
+      if (indented) return 0;
+      const c = ln.charCodeAt(nextNonspace);
+      if (c !== 42 && c !== 45 && c !== 95) return 0;
+      let n = 0;
+      for (let j = nextNonspace; j < ln.length; j++) { const d = ln.charCodeAt(j); if (d === c) n++; else if (!isSp(d)) return 0; }
+      if (n < 3) return 0;
+      closeUnmatched();
+      addChild('hr');
+      advanceOffset(ln.length - offset, false);
+      return 2;
+    }
+    function listMarker(container) {
+      if (indent >= 4) return null;
+      const c = ln.charCodeAt(nextNonspace);
+      const ld = { type: '', tight: true, bullet: '', start: 0, delim: '', padding: 0, markerOffset: indent };
+      let mlen;
+      if (c === 42 || c === 43 || c === 45) { ld.type = 'bullet'; ld.bullet = ln[nextNonspace]; mlen = 1; }
+      else if (isDigit(c)) {
+        let j = nextNonspace; while (j - nextNonspace < 10 && isDigit(ln.charCodeAt(j))) j++;
+        const dn = j - nextNonspace, d = ln.charCodeAt(j);
+        if (dn > 9 || (d !== 46 && d !== 41)) return null;
+        if (container.type === 'para' && !(dn === 1 && c === 49)) return null;
+        ld.type = 'ordered'; ld.start = parseInt(ln.substr(nextNonspace, dn), 10); ld.delim = ln[j]; mlen = dn + 1;
+      } else return null;
+      const nc = ln.charCodeAt(nextNonspace + mlen);
+      if (!(nextNonspace + mlen >= ln.length || nc === 9 || nc === 32)) return null;
+      if (container.type === 'para' && blankFrom(ln, nextNonspace + mlen)) return null;
+      advanceNextNonspace(); advanceOffset(mlen, true);
+      const spCol = column, spOff = offset;
+      do { advanceOffset(1, true); } while (column - spCol < 5 && isSp(ln.charCodeAt(offset)));
+      const blankItem = offset >= ln.length, after = column - spCol;
+      if (after >= 5 || after < 1 || blankItem) {
+        ld.padding = mlen + 1; column = spCol; offset = spOff;
+        if (isSp(ln.charCodeAt(offset))) advanceOffset(1, true);
+      } else ld.padding = mlen + after;
+      return ld;
+    }
+    function itemStart(container) {
+      if ((indented && container.type !== 'list') || container.depth >= MAX_NEST) return 0;
+      const ld = listMarker(container);
+      if (!ld) return 0;
+      closeUnmatched();
+      if (tip.type !== 'list' || !container.ld || container.ld.type !== ld.type || container.ld.delim !== ld.delim || container.ld.bullet !== ld.bullet) addChild('list').ld = ld;
+      addChild('item').ld = ld;
+      return 1;
+    }
+    // A line of delimiters under a line of text makes a table (the text line is the header; earlier lines stay a paragraph).
+    function tableStart(container) {
+      if (indented || container.type !== 'para') return 0;
+      const c0 = ln.charCodeAt(nextNonspace);
+      if (c0 !== 124 && c0 !== 58 && c0 !== 45) return 0;
+      const aligns = delimRow(ln.slice(nextNonspace));
+      if (!aligns) return 0;
+      const c = container.content;
+      if (c.length < 2) return 0;
+      const nl = c.lastIndexOf('\n', c.length - 2), row = c.slice(nl + 1, c.length - 1), head = splitCells(row);
+      if (head.length !== aligns.length || trimWS(row) === '|') return 0;       // a lone | is not a row
+      closeUnmatched();
+      container.content = c.slice(0, nl + 1);
+      finalize(container);
+      const t = addChild('table');
+      t.align = aligns; t.head = head; t.rows = [];
+      advanceOffset(ln.length - offset, false);
+      return 2;
+    }
+    function codeStart() {
+      if (!(indented && tip.type !== 'para' && !blank)) return 0;
+      advanceOffset(4, true); closeUnmatched();
+      addChild('code').fenced = false;
+      return 2;
+    }
+    const STARTS = [quoteStart, atxStart, fenceStart, setextStart, hrStart, itemStart, tableStart, codeStart];
+    const special = c => (c >= 48 && c <= 58) || c === 35 || c === 96 || c === 126 || c === 42 || c === 43 || c === 95 || c === 61 || c === 62 || c === 45 || c === 124;
+
+    function incorporateLine(line) {
+      let container = doc;
+      oldtip = tip; offset = 0; column = 0; blank = false; partialTab = false; lineNo++;
+      ln = line;
+      for (let last; (last = container.kids[container.kids.length - 1]) && last.open;) {
+        container = last;
+        findNextNonspace();
+        const r = cont(container);
+        if (r === 1) { container = container.parent; break; }
+        if (r === 2) return;
+      }
+      allClosed = container === oldtip;
+      lastMatched = container;
+      let leaf = container.type === 'code';
+      while (!leaf) {
+        findNextNonspace();
+        if (!indented && !special(ln.charCodeAt(nextNonspace))) { advanceNextNonspace(); break; }
+        let i = 0;
+        for (; i < STARTS.length; i++) {
+          const res = STARTS[i](container);
+          if (res === 1) { container = tip; break; }
+          if (res === 2) { container = tip; leaf = true; break; }
+        }
+        if (i === STARTS.length) { advanceNextNonspace(); break; }
+      }
+      if (!allClosed && !blank && tip.type === 'para') { addLine(); return; }
+      closeUnmatched();
+      if (blank && container.kids.length) container.kids[container.kids.length - 1].blankEnd = true;
+      const t = container.type;
+      const lastBlank = blank && !(t === 'quote' || (t === 'code' && container.fenced) || (t === 'item' && !container.kids.length && container.line === lineNo));
+      for (let c = container; c; c = c.parent) c.blankEnd = lastBlank;
+      if (t === 'code' || t === 'para') addLine();
+      else if (offset < ln.length && !blank) {
+        if (t === 'table') {
+          const cells = splitCells(ln.slice(offset)), n = container.align.length;
+          while (cells.length < n) cells.push('');
+          container.rows.push(cells.slice(0, n));
+        } else { addChild('para'); advanceNextNonspace(); addLine(); }
+      }
+    }
+
+    for (let i = 0, nl; i <= src.length; i = nl + 1) {
+      nl = src.indexOf('\n', i); if (nl < 0) nl = src.length;
+      if (nl === src.length && i === nl && i > 0) break;           // the text ended with a line break
+      incorporateLine(src.slice(i, nl));
+    }
+    while (tip) finalize(tip);
+    return doc;
+  }
+
+  // A task item's first paragraph starts with [ ], [x] or [X], then a space, then more text: { on, len } (len = what to cut off), else null.
+  const taskMark = c => {
+    if (c.charCodeAt(0) !== 91 || c.charCodeAt(2) !== 93 || !(c[1] === ' ' || c[1] === 'x' || c[1] === 'X')) return null;
+    const w = c.charCodeAt(3);
+    if (!(isSp(w) || w === 10)) return null;
+    let k = 4; while (k < c.length && (isSp(c.charCodeAt(k)) || c.charCodeAt(k) === 10)) k++;
+    return k >= c.length ? null : { on: c[1] !== ' ', len: k };
+  };
+  // Containers and leaves -> blocks of the tree.
+  function build(node, refs, ctx) {
+    const out = [];
+    for (const k of node.kids) {
+      switch (k.type) {
+        case 'para': { const inline = inlineOf(k.content, refs, ctx); if (inline.length) out.push({ t: 'p', inline }); break; }
+        case 'heading': { const h = { t: 'h', level: k.level, inline: inlineOf(k.content, refs, ctx), id: '' }; ctx.heads.push(h); out.push(h); break; }
+        case 'hr': out.push({ t: 'hr' }); break;
+        case 'code': { const lit = k.literal || '';           // the language is the first word of a fence's info string
+          out.push({ t: 'code', lang: k.fenced ? k.info.split(/[ \t]/, 1)[0] : '', text: lit.endsWith('\n') ? lit.slice(0, -1) : lit }); break; }
+        case 'quote': out.push({ t: 'quote', blocks: build(k, refs, ctx) }); break;
+        case 'list': {
+          const items = k.kids.map(it => {
+            let checked = null;
+            const f = it.kids[0];
+            if (f && f.type === 'para' && f.line === it.line) { const m = taskMark(f.content); if (m) { checked = m.on; f.content = f.content.slice(m.len); } }
+            return { checked, blocks: build(it, refs, ctx) };
+          });
+          out.push(k.ld.type === 'ordered' ? { t: 'ol', start: k.ld.start, tight: k.ld.tight, items } : { t: 'ul', tight: k.ld.tight, items });
+          break;
+        }
+        case 'table': { const cell = c => inlineOf(c, refs, ctx); out.push({ t: 'table', align: k.align, head: k.head.map(cell), rows: k.rows.map(r => r.map(cell)) }); break; }
+        default: break;
+      }
+    }
+    return out;
+  }
+  // The text of inline nodes without any marks.
+  function textOf(nodes) {
+    let s = '';
+    for (const x of nodes) {
+      if (x.t === 'text' || x.t === 'code') s += x.v;
+      else if (x.t === 'img') s += x.alt;
+      else if (x.t === 'br') s += ' ';
+      else if (x.c) s += textOf(x.c);
+    }
+    return s;
+  }
+  // GitHub-style ids: lower case, letters, numbers, - and _ only, spaces become -, a repeat gets -1, -2. In the text,
+  // a link to (#some-heading) points at that heading's id.
+  const slugify = t => t.toLowerCase().replace(/[^\p{L}\p{M}\p{N}\p{Pc} -]/gu, '').replace(/ /g, '-') || 'section';
+  function assignIds(heads, links) {
+    const used = new Set(), counts = new Map();
+    for (const h of heads) {
+      const base = slugify(textOf(h.inline));
+      let id = base;
+      if (used.has(id)) { let n = counts.get(base) || 0; do { n++; id = base + '-' + n; } while (used.has(id)); counts.set(base, n); }
+      used.add(id);
+      h.id = 'g-' + id;
+    }
+    for (const a of links) {
+      if (a.href.charCodeAt(0) !== 35) continue;
+      let f = a.href.slice(1);
+      try { f = decodeURIComponent(f); } catch (e) { /* stays as written */ }
+      f = f.toLowerCase();
+      if (used.has(f)) a.href = encodeUrl('#g-' + f);
+    }
+  }
+  function parse(md) {
+    const src = clean(md);
+    try {
+      const refs = new Map(), ctx = { urls: 0, links: [], heads: [] };
+      const blocks = build(parseBlocks(src, refs), refs, ctx);
+      assignIds(ctx.heads, ctx.links);
+      return blocks;
+    } catch (e) {
+      errors++;
+      return src ? [{ t: 'p', inline: [{ t: 'text', v: src.slice(0, 5000) }] }] : [];
+    }
+  }
+
+  // ---------- showing: the tree -> HTML ----------
+  // Only these tags are ever written: div h1-h6 p br strong em del code pre blockquote ul ol li input hr table thead
+  // tbody tr th td a img. And only these attributes: class (gd, gd-task, language-x), id (on headings), href title rel
+  // target (a), src alt title loading decoding (img), start (ol), type disabled checked (input), style="text-align:x" (th, td).
+  // No line breaks between tags (only inside pre), so the same text always gives the same HTML.
+  // opts.image(src) says whether a picture may show: it returns the address to use or '' to refuse.
+  const LANG = /^[A-Za-z0-9_+#-]{1,20}$/;
+  function renderer(opts) {
+    const custom = opts && typeof opts.image === 'function' ? opts.image : null;
+    let pictures = 0;
+    function picture(src) {
+      if (pictures >= MAX_IMAGES) return '';
+      let u = src;
+      if (custom) {
+        try { u = custom(src); } catch (e) { u = ''; }
+        u = typeof u === 'string' && u ? encodeUrl(u) : '';
+        if (!imgOk(u)) u = '';
+      } else if (!ownImg(src)) u = '';
+      if (u) pictures++;
+      return u;
+    }
+    function inline(nodes) {
+      let h = '';
+      for (const x of nodes) {
+        switch (x.t) {
+          case 'text': h += esc(x.v); break;
+          case 'b': h += '<strong>' + inline(x.c) + '</strong>'; break;
+          case 'i': h += '<em>' + inline(x.c) + '</em>'; break;
+          case 's': h += '<del>' + inline(x.c) + '</del>'; break;
+          case 'code': h += '<code>' + esc(x.v) + '</code>'; break;
+          case 'br': h += '<br>'; break;
+          case 'a':
+            h += linkOk(x.href)
+              ? '<a href="' + escA(x.href) + '"' + (x.title ? ' title="' + escA(x.title) + '"' : '') + ' rel="nofollow ugc noopener"' + (x.href.charCodeAt(0) === 35 ? '' : ' target="_blank"') + '>' + inline(x.c) + '</a>'
+              : inline(x.c);
+            break;
+          case 'img': {
+            const u = picture(x.src);
+            h += u ? '<img src="' + escA(u) + '" alt="' + escA(x.alt) + '"' + (x.title ? ' title="' + escA(x.title) + '"' : '') + ' loading="lazy" decoding="async">' : esc(x.alt);
+            break;
+          }
+          default: break;
+        }
+      }
+      return h;
+    }
+    function item(it, tight) {
+      const task = it.checked === true || it.checked === false;
+      const box = '<input type="checkbox" disabled' + (it.checked ? ' checked' : '') + '>';
+      let h = '';
+      it.blocks.forEach((b, i) => {
+        if (b.t === 'p' && i === 0 && task) h += tight ? box + ' ' + inline(b.inline) : '<p>' + box + ' ' + inline(b.inline) + '</p>';
+        else if (b.t === 'p' && tight) h += inline(b.inline);
+        else h += (i === 0 && task ? box : '') + block(b, tight);
+      });
+      if (task && !it.blocks.length) h = box;
+      return '<li' + (task ? ' class="gd-task"' : '') + '>' + h + '</li>';
+    }
+    function block(b) {
+      switch (b.t) {
+        case 'h': { const n = Math.max(1, Math.min(6, b.level | 0)); return '<h' + n + ' id="' + escA(b.id) + '">' + inline(b.inline) + '</h' + n + '>'; }
+        case 'p': { const h = inline(b.inline); return h ? '<p>' + h + '</p>' : ''; }
+        case 'code': return '<pre><code' + (LANG.test(b.lang) ? ' class="language-' + escA(b.lang) + '"' : '') + '>' + esc(b.text) + (b.text ? '\n' : '') + '</code></pre>';
+        case 'quote': return '<blockquote>' + b.blocks.map(block).join('') + '</blockquote>';
+        case 'hr': return '<hr>';
+        case 'ul': return '<ul>' + b.items.map(it => item(it, b.tight)).join('') + '</ul>';
+        case 'ol': return (b.start !== 1 ? '<ol start="' + (b.start | 0) + '">' : '<ol>') + b.items.map(it => item(it, b.tight)).join('') + '</ol>';
+        case 'table': {
+          const al = i => (b.align[i] === 'left' || b.align[i] === 'right' || b.align[i] === 'center' ? ' style="text-align:' + b.align[i] + '"' : '');
+          return '<table><thead><tr>' + b.head.map((c, i) => '<th' + al(i) + '>' + inline(c) + '</th>').join('') + '</tr></thead>'
+            + (b.rows.length ? '<tbody>' + b.rows.map(r => '<tr>' + r.map((c, i) => '<td' + al(i) + '>' + inline(c) + '</td>').join('') + '</tr>').join('') + '</tbody>' : '') + '</table>';
+        }
+        default: return '';
+      }
+    }
+    return block;
+  }
+  function render(md, opts) {
+    try {
+      const block = renderer(opts);
+      return '<div class="gd">' + parse(md).map(block).join('') + '</div>';
+    } catch (e) {
+      errors++;
+      return '<div class="gd"><p>' + esc(clean(md).slice(0, 5000)) + '</p></div>';
+    }
+  }
+
+  // ---------- plain text and outline ----------
+  // The words without any marks: a heading, a paragraph, a list item, a code line, a table row each on its own line.
+  function plainLines(blocks, out) {
+    for (const b of blocks) {
+      switch (b.t) {
+        case 'h': case 'p': { const t = textOf(b.inline); if (t) out.push(t); break; }
+        case 'code': for (const l of b.text.split('\n')) if (l) out.push(l); break;
+        case 'quote': plainLines(b.blocks, out); break;
+        case 'ul': case 'ol': for (const it of b.items) plainLines(it.blocks, out); break;
+        case 'table': for (const r of [b.head, ...b.rows]) { const t = r.map(textOf).filter(Boolean).join(' '); if (t) out.push(t); } break;
+        default: break;
+      }
+    }
+    return out;
+  }
+  function plain(md, n) {
+    try {
+      let t = plainLines(parse(md), []).join('\n');
+      if (typeof n === 'number' && n >= 0 && t.length > n) {
+        t = t.slice(0, Math.floor(n));
+        const c = t.charCodeAt(t.length - 1);
+        if (c >= 0xd800 && c <= 0xdbff) t = t.slice(0, -1);
+        t = t.trimEnd();
+      }
+      return t;
+    } catch (e) { errors++; return ''; }
+  }
+  function headings(md) {
+    const out = [];
+    const walk = blocks => {
+      for (const b of blocks) {
+        if (b.t === 'h') out.push({ level: b.level, text: textOf(b.inline), id: b.id });
+        else if (b.t === 'quote') walk(b.blocks);
+        else if (b.t === 'ul' || b.t === 'ol') b.items.forEach(it => walk(it.blocks));
+      }
+    };
+    try { walk(parse(md)); } catch (e) { errors++; }
+    return out;
+  }
+
+  // ---------- the toolbar: editing a text field's text ----------
+  // Every helper takes the text and the selection (a..b, either way round) and returns { text, a, b }: the new text and
+  // the new selection. Nothing here changes anything else, so the page just puts the result back into the field.
+  const num = (v, n, d) => (typeof v === 'number' && isFinite(v) ? Math.max(0, Math.min(Math.floor(v), n)) : d);
+  function range(text, a, b) { const n = text.length, x = num(a, n, n), y = num(b, n, x); return x <= y ? [x, y] : [y, x]; }
+  const lineStart = (t, i) => (i <= 0 ? 0 : t.lastIndexOf('\n', i - 1) + 1);
+  const lineEnd = (t, i) => { const j = t.indexOf('\n', i); return j < 0 ? t.length : j; };
+  const runLen = (t, i, ch, dir) => { let k = 0; while (dir < 0 ? i - 1 - k >= 0 && t[i - 1 - k] === ch : i + k < t.length && t[i + k] === ch) k++; return k; };
+
+  // --- bold, italic, strike, code: wrap the selection, or unwrap it when it is wrapped already ---
+  const MARKS = { b: ['**', '*'], i: ['*', '*'], s: ['~~', '~'], c: ['`', '`'] };
+  // How many mark characters sit on each side of t[x..y]; 0 when it is not wrapped.
+  function around(t, x, y, kind) {
+    const ch = MARKS[kind][1], rb = runLen(t, x, ch, -1), ra = runLen(t, y, ch, 1);
+    if (kind === 'b' || kind === 's') return rb >= 2 && ra >= 2 ? 2 : 0;
+    if (kind === 'i') return rb % 2 === 1 && ra % 2 === 1 ? 1 : 0;
+    return rb >= 1 && rb === ra ? rb : 0;
+  }
+  // How many mark characters t[x..y] itself starts and ends with.
+  function inner(seg, kind) {
+    const ch = MARKS[kind][1], m = MARKS[kind][0].length;
+    let l = 0, r = 0;
+    while (l < seg.length && seg[l] === ch) l++;
+    while (r < seg.length - l && seg[seg.length - 1 - r] === ch) r++;
+    if (kind === 'b' || kind === 's') return l >= 2 && r >= 2 && seg.length >= 2 * m ? 2 : 0;
+    if (kind === 'i') return l % 2 === 1 && r % 2 === 1 ? 1 : 0;
+    return l >= 1 && l === r ? l : 0;
+  }
+  // Where a list marker, heading marker or quote marker ends at the start of a line (for wrapping text on each line).
+  function prefixEnd(line) {
+    let i = 0;
+    for (;;) {
+      let j = i; while (j < line.length && j - i < 3 && isSp(line.charCodeAt(j))) j++;
+      if (line.charCodeAt(j) === 62) { i = j + 1; if (isSp(line.charCodeAt(i))) i++; continue; }
+      break;
+    }
+    const rest = line.slice(i), li = listInfo(rest);
+    if (li) return i + li.end;
+    const m = /^ {0,3}#{1,6}[ \t]+/.exec(rest);
+    return m ? i + m[0].length : i;
+  }
+  // The pieces of the selection to mark: one per line, without list/heading/quote markers or edge spaces.
+  function pieces(t, s, e) {
+    const nl = t.indexOf('\n', s), multi = nl >= 0 && nl < e, out = [];
+    for (let ls = lineStart(t, s); ls <= e;) {
+      const le = lineEnd(t, ls);
+      let x = Math.max(ls, s), y = Math.min(le, e);
+      if (multi && x === ls) x = Math.min(y, ls + prefixEnd(t.slice(ls, le)));
+      while (x < y && isSp(t.charCodeAt(x))) x++;
+      while (y > x && isSp(t.charCodeAt(y - 1))) y--;
+      if (x < y) out.push([x, y]);
+      if (le >= e) break;
+      ls = le + 1;
+    }
+    return out.length ? out : [[s, e]];
+  }
+  function mark(text, a, b, kind) {
+    const t = str(text), [s, e] = range(t, a, b), [open, ch] = MARKS[kind];
+    if (s === e) {
+      const k = around(t, s, s, kind);
+      if (k) return { text: t.slice(0, s - k) + t.slice(s + k), a: s - k, b: s - k };
+      return { text: t.slice(0, s) + open + open + t.slice(s), a: s + open.length, b: s + open.length };
+    }
+    const segs = pieces(t, s, e).map(([x, y]) => ({ x, y, ko: around(t, x, y, kind), ki: inner(t.slice(x, y), kind) }));
+    const un = segs.every(g => g.ko || g.ki);
+    let out = '', last = 0;
+    const spans = [];
+    for (const g of segs) {
+      let cutStart = g.x, content = t.slice(g.x, g.y), cutEnd = g.y, pre = '', post = '';
+      if (un) {
+        if (g.ko) { cutStart = g.x - g.ko; cutEnd = g.y + g.ko; } else content = content.slice(g.ki, content.length - g.ki);
+      } else if (!g.ko && !g.ki) {
+        let f = open;
+        if (kind === 'c') {
+          let longest = 0; for (let i = 0, r = 0; i < content.length; i++) { r = content[i] === '`' ? r + 1 : 0; if (r > longest) longest = r; }
+          f = '`'.repeat(longest + 1);
+          if (content[0] === '`' || content[content.length - 1] === '`') { pre = f + ' '; post = ' ' + f; } else { pre = f; post = f; }
+        } else { pre = open; post = open; }
+      }
+      out += t.slice(last, cutStart);
+      const o0 = out.length; out += pre;
+      const c0 = out.length; out += content;
+      const c1 = out.length; out += post;
+      spans.push([o0, c0, c1, out.length]);
+      last = cutEnd;
+    }
+    out += t.slice(last);
+    // One piece: its words stay selected. Several lines: they are selected whole, marks included, so the same button takes the marks off again.
+    const whole = segs.length > 1 && !un, f = spans[0], z = spans[spans.length - 1];
+    return { text: out, a: whole ? f[0] : f[1], b: whole ? z[3] : z[2] };
+  }
+  const bold = (t, a, b) => mark(t, a, b, 'b');
+  const italic = (t, a, b) => mark(t, a, b, 'i');
+  const strike = (t, a, b) => mark(t, a, b, 's');
+  const code = (t, a, b) => mark(t, a, b, 'c');
+
+  // --- line by line: headings, lists, quotes, indenting ---
+  // Runs fn on the selected lines (an array of lines). fn answers, for each line, null (no change) or { keep, cut, ins }: keep the
+  // first `keep` characters, replace the next `cut` by `ins`, keep the rest. (Or null for "nothing to do at all".) The selection
+  // stays on the same words: a position moves with the text on its line, a caret in or at the changed part ends up after the new
+  // part, and the start of a selection stays in front of it, so the marks are selected too.
+  function applyLines(t, a, b, fn) {
+    const [s, e] = range(t, a, b);
+    const ls = lineStart(t, s), le = lineEnd(t, e > s && t.charCodeAt(e - 1) === 10 ? e - 1 : e);
+    const old = t.slice(ls, le).split('\n'), ch = fn(old);
+    if (!ch) return { text: t, a: s, b: e };
+    const info = [], out = [];
+    let os = ls, ns = ls;
+    old.forEach((o, i) => {
+      const c = ch[i] || { keep: 0, cut: 0, ins: '' }, n = o.slice(0, c.keep) + c.ins + o.slice(c.keep + c.cut);
+      out.push(n);
+      info.push({ os, ns, ol: o.length, c });
+      os += o.length + 1; ns += n.length + 1;
+    });
+    const delta = ns - os, caret = s === e;
+    const map = p => {
+      if (p < ls) return p;
+      if (p > le) return p + delta;
+      for (const g of info) {
+        if (p > g.os + g.ol) continue;
+        const col = p - g.os, { keep, cut, ins } = g.c;
+        if (col < keep) return g.ns + col;
+        if (col <= keep + cut) return g.ns + (caret || col > keep ? keep + ins.length : col);
+        return g.ns + col + ins.length - cut;
+      }
+      return p + delta;
+    };
+    return { text: t.slice(0, ls) + out.join('\n') + t.slice(le), a: map(s), b: map(e) };
+  }
+  // Which of the lines a toggle applies to: the ones with text; blank ones too when it is the only line.
+  const activeLines = lines => { const act = lines.map(l => l.trim() !== ''); return act.some(Boolean) ? act : lines.map(() => true); };
+  const indentLen = l => { let i = 0; while (i < l.length && isSp(l.charCodeAt(i))) i++; return i; };
+  // A list line: { indent, kind: 'bullet'|'number', marker, delim, task: null|false|true, end } where end is where the text starts.
+  function listInfo(line) {
+    const i = indentLen(line), c = line.charCodeAt(i);
+    let kind, marker, delim = '', j;
+    if (c === 45 || c === 42 || c === 43) { kind = 'bullet'; marker = line[i]; j = i + 1; }
+    else if (isDigit(c)) {
+      j = i; while (j < line.length && j - i < 10 && isDigit(line.charCodeAt(j))) j++;
+      const d = line.charCodeAt(j);
+      if (j - i > 9 || (d !== 46 && d !== 41)) return null;
+      kind = 'number'; marker = line.slice(i, j); delim = line[j]; j++;
+    } else return null;
+    if (j < line.length && !isSp(line.charCodeAt(j))) return null;
+    let k = j; while (k < line.length && isSp(line.charCodeAt(k))) k++;
+    let task = null;
+    if (line.charCodeAt(k) === 91 && line.charCodeAt(k + 2) === 93 && (line[k + 1] === ' ' || line[k + 1] === 'x' || line[k + 1] === 'X') && (k + 3 >= line.length || isSp(line.charCodeAt(k + 3)))) {
+      task = line[k + 1] !== ' ';
+      k += 3; while (k < line.length && isSp(line.charCodeAt(k))) k++;
+    }
+    return { indent: i, kind, marker, delim, task, end: k };
+  }
+  const headMark = l => { const m = /^ {0,3}(#{1,6})(?:[ \t]+|$)/.exec(l); return m ? { len: m[0].length, n: m[1].length } : { len: 0, n: 0 }; };
+  function heading(text, a, b, level) {
+    const t = str(text), lv = Math.max(1, Math.min(6, Math.floor(+level) || 1));
+    return applyLines(t, a, b, lines => {
+      const act = activeLines(lines), on = lines.every((l, i) => !act[i] || headMark(l).n === lv);
+      return lines.map((l, i) => (act[i] ? { keep: 0, cut: headMark(l).len, ins: on ? '' : '#'.repeat(lv) + ' ' } : null));
+    });
+  }
+  function listOp(text, a, b, kind) {
+    return applyLines(str(text), a, b, lines => {
+      const act = activeLines(lines), infos = lines.map((l, i) => (act[i] ? listInfo(l) : null));
+      const fits = g => !!g && (kind === 'bullet' ? g.kind === 'bullet' && g.task === null : kind === 'number' ? g.kind === 'number' : g.kind === 'bullet' && g.task !== null);
+      const on = lines.every((l, i) => !act[i] || fits(infos[i]));
+      let n = 0;
+      return lines.map((l, i) => {
+        if (!act[i]) return null;
+        const g = infos[i], keep = g ? g.indent : indentLen(l), cut = g ? g.end - g.indent : 0;
+        if (on) return { keep, cut, ins: '' };
+        n++;
+        if (kind === 'bullet') return { keep, cut, ins: '- ' };
+        if (kind === 'number') return { keep, cut, ins: n + '. ' };
+        return g && g.kind === 'bullet' && g.task !== null ? null : { keep, cut, ins: '- [ ] ' };
+      });
+    });
+  }
+  const bullets = (t, a, b) => listOp(t, a, b, 'bullet');
+  const numbers = (t, a, b) => listOp(t, a, b, 'number');
+  const tasks = (t, a, b) => listOp(t, a, b, 'task');
+  function quote(text, a, b) {
+    return applyLines(str(text), a, b, lines => {
+      const q = l => /^ {0,3}>/.test(l), on = lines.every(q);
+      return lines.map(l => {
+        if (on) { const m = /^( {0,3})> ?/.exec(l); return { keep: m[1].length, cut: m[0].length - m[1].length, ins: '' }; }
+        return q(l) ? null : { keep: 0, cut: 0, ins: l.trim() === '' && lines.length > 1 ? '>' : '> ' };
+      });
+    });
+  }
+  // Tab and Shift+Tab on list lines: two spaces in or out. Nothing changes when no selected line is a list line.
+  function indentLines(text, a, b, out) {
+    return applyLines(str(text), a, b, lines => {
+      if (!lines.some(l => listInfo(l))) return null;
+      return lines.map(l => {
+        if (!l.trim()) return null;
+        if (!out) return { keep: 0, cut: 0, ins: '  ' };
+        const m = /^(?: {1,2}|\t)/.exec(l);
+        return m ? { keep: 0, cut: m[0].length, ins: '' } : null;
+      });
+    });
+  }
+  // Enter at pos (a caret) in a list: the next item starts (bullets, numbers going up, tasks unchecked); Enter on an empty
+  // item ends the list. null means "do nothing special" (not in a list, caret before the marker, or inside a code block).
+  function inFence(t, upto) {
+    let fence = null;
+    for (let ls = 0; ls < upto;) {
+      const le = lineEnd(t, ls), line = t.slice(ls, le);
+      const m = /^ {0,3}(`{3,}|~{3,})/.exec(line);
+      if (fence) { if (m && m[1][0] === fence.ch && m[1].length >= fence.len && line.slice(m[0].length).trim() === '') fence = null; }
+      else if (m && !(m[1][0] === '`' && line.indexOf('`', m[0].length) >= 0)) fence = { ch: m[1][0], len: m[1].length };
+      ls = le + 1;
+    }
+    return !!fence;
+  }
+  function continueList(text, pos) {
+    try {
+      const t = str(text), p = num(pos, t.length, t.length);
+      const ls = lineStart(t, p), le = lineEnd(t, p), line = t.slice(ls, le), g = listInfo(line);
+      if (!g || p - ls < g.end || inFence(t, ls)) return null;
+      const markLen = g.kind === 'bullet' ? 1 : g.marker.length + 1;
+      if (!isSp(line.charCodeAt(g.indent + markLen))) return null;     // a lone "-" is not an item yet
+      if (line.slice(g.end).trim() === '') return { text: t.slice(0, ls) + t.slice(le), pos: ls };
+      const mk = g.kind === 'bullet' ? g.marker : (parseInt(g.marker, 10) + 1) + g.delim;
+      const ins = '\n' + line.slice(0, g.indent) + mk + ' ' + (g.task !== null ? '[ ] ' : '');
+      return { text: t.slice(0, p) + ins + t.slice(p), pos: p + ins.length };
+    } catch (e) { errors++; return null; }
+  }
+  // A link or picture address typed into the toolbar, made safe to put between ( and ).
+  const inParens = u => str(u).trim().replace(/[ \t\n\r]/g, '%20').replace(/\(/g, '%28').replace(/\)/g, '%29').replace(/</g, '%3C').replace(/>/g, '%3E');
+  function link(text, a, b, url) {
+    const t = str(text), [s, e] = range(t, a, b), u = inParens(url);
+    if (s === e) { const ins = '[text](' + u + ')'; return { text: t.slice(0, s) + ins + t.slice(e), a: s + 1, b: s + 5 }; }
+    const ins = '[' + t.slice(s, e) + '](' + u + ')', end = s + ins.length;
+    return { text: t.slice(0, s) + ins + t.slice(e), a: u ? end : end - 1, b: u ? end : end - 1 };
+  }
+  function image(text, a, b, src, alt) {
+    const t = str(text), [s, e] = range(t, a, b);
+    const label = (alt !== undefined && alt !== null && str(alt) !== '' ? str(alt) : e > s ? t.slice(s, e) : 'image').replace(/\s+/g, ' ').replace(/[\\\[\]]/g, '\\$&');
+    const ins = '![' + label + '](' + inParens(src) + ')';
+    return { text: t.slice(0, s) + ins + t.slice(e), a: s + ins.length, b: s + ins.length };
+  }
+  // A block of text put in with blank lines around it, at the end of the selection.
+  function insertBlock(t, p, blk) {
+    const before = t.slice(0, p), after = t.slice(p);
+    const lead = !before ? '' : before.endsWith('\n\n') ? '' : before.endsWith('\n') ? '\n' : '\n\n';
+    const trail = !after ? '\n' : after.startsWith('\n\n') ? '' : after.startsWith('\n') ? '\n' : '\n\n';
+    return { text: before + lead + blk + trail + after, at: p + lead.length, end: p + lead.length + blk.length + trail.length };
+  }
+  const TABLE = '| Column 1 | Column 2 |\n| --- | --- |\n| Cell | Cell |\n| Cell | Cell |';
+  function table(text, a, b) {
+    const t = str(text), [, e] = range(t, a, b), r = insertBlock(t, e, TABLE);
+    return { text: r.text, a: r.at + 2, b: r.at + 10 };
+  }
+  function rule(text, a, b) {
+    const t = str(text), [, e] = range(t, a, b), r = insertBlock(t, e, '---');
+    return { text: r.text, a: r.end, b: r.end };
+  }
+  function codeBlock(text, a, b) {
+    const t = str(text), [s, e] = range(t, a, b);
+    const ls = lineStart(t, s), le = lineEnd(t, e > s && t.charCodeAt(e - 1) === 10 ? e - 1 : e), body = t.slice(ls, le), lines = body.split('\n');
+    const isFence = l => /^ {0,3}(`{3,}|~{3,})/.test(l);
+    // already fenced (the fences are in the selection, or just around it): take them off
+    if (lines.length >= 2 && isFence(lines[0]) && isFence(lines[lines.length - 1])) {
+      const inside = lines.slice(1, -1).join('\n');
+      return { text: t.slice(0, ls) + inside + t.slice(le), a: ls, b: ls + inside.length };
+    }
+    const pl = ls > 0 ? lineStart(t, ls - 1) : -1, nl = le < t.length ? lineEnd(t, le + 1) : -1;
+    if (pl >= 0 && nl >= 0 && isFence(t.slice(pl, ls - 1)) && isFence(t.slice(le + 1, nl)) && inFence(t, ls)) {
+      return { text: t.slice(0, pl) + body + t.slice(nl), a: pl, b: pl + body.length };
+    }
+    let longest = 0;
+    for (let i = 0, r = 0; i < body.length; i++) { r = body[i] === '`' ? r + 1 : 0; if (r > longest) longest = r; }
+    const f = '`'.repeat(Math.max(3, longest + 1));
+    return { text: t.slice(0, ls) + f + '\n' + body + '\n' + f + t.slice(le), a: ls + f.length + 1, b: ls + f.length + 1 + body.length };
+  }
+
+  return {
+    MAX, parse, render, plain, headings,
+    bold, italic, strike, code, heading, bullets, numbers, tasks, quote, link, codeBlock, table, rule, image, continueList, indent: indentLines,
+    // How many unexpected errors were caught and hidden (always 0 unless there is a bug).
+    get errors() { return errors; }
+  };
+})()); }
+mockMaterials() {
+  const p = this.props, noop = () => {};
+  const day = (m, d) => new Date(2026, m, d, 10).getTime();
+  const MK = (() => {
+    const free = { perDay: 3, pages: 30, minutes: 15, photos: 10, fileMB: 20, audioMB: 25, cards: 100 }, pro = { perDay: 30, pages: 300, minutes: 120, photos: 50, fileMB: 40, audioMB: 25, cards: 100 };
+    const base = { step: 'add', kind: '', from: null, on: true, videoOn: true, limits: pro, files: [], text: '', topic: '', url: '', transcript: false, title: '', opts: { count: 'auto', basic: true, cloze: true, lang: '', deckId: '', deckName: '' },
+      rec: null, progress: { word: '', phase: '', i: 0, n: 1 }, cards: [], editing: '', error: null, saving: false, ready: false, name: '', job: '' };
+    const slides = { i: 0, name: 'Lecture 3 slides.pdf', size: '4.2 MB', fam: 'doc' };
+    const levels = Array.from({ length: 60 }, (_, i) => Math.round((.18 + .5 * Math.abs(Math.sin(i * .55)) * (.6 + .4 * Math.sin(i * .17))) * 100) / 100);
+    const cards = [
+      { key: 'k1', kind: 'basic', front: 'What does the electron transport chain pump across the inner membrane?', back: 'Protons (H⁺), from the matrix into the intermembrane space.', text: '', at: 'p. 4', gone: false },
+      { key: 'k2', kind: 'cloze', front: '', back: '', text: 'The [[mitochondrion]] is the powerhouse of the cell.', at: 'p. 4', gone: false },
+      { key: 'k3', kind: 'basic', front: 'What does ATP synthase make?', back: 'ATP, using the proton gradient.', text: '', at: 'p. 5', gone: false },
+      { key: 'k4', kind: 'basic', front: 'Where does glycolysis happen?', back: 'In the cytoplasm.', text: '', at: 'p. 7', gone: true },
+      { key: 'k5', kind: 'cloze', front: '', back: '', text: 'The Krebs cycle runs in the [[mitochondrial matrix]].', at: 'p. 8', gone: false },
+      { key: 'k6', kind: 'basic', front: 'What carries electrons to the transport chain?', back: 'NADH and FADH₂.', text: '', at: 'p. 9', gone: false }];
+    const by = {
+      'Pick': { step: 'pick' }, 'Upload': { kind: 'file' }, 'Upload (a file added)': { kind: 'file', files: [slides], ready: true },
+      'Photos': { kind: 'photo', ready: true, files: ['IMG_2041.jpg', 'IMG_2042.jpg', 'IMG_2043.jpg'].map((name, i) => ({ i, name, size: (1.1 + i * .3).toFixed(1) + ' MB', fam: 'image' })) },
+      'Record': { kind: 'record' }, 'Recording': { kind: 'record', rec: { state: 'recording', secs: 754, levels, level: .4, limit: 7200 } }, 'Paused': { kind: 'record', rec: { state: 'paused', secs: 754, levels, level: 0, limit: 7200 } },
+      'Paste': { kind: 'paste', ready: true, text: 'The mitochondrion is the powerhouse of the cell. It makes most of the cell’s ATP through the electron transport chain, which pumps protons across the inner membrane.\n\nThe nucleus holds the cell’s DNA, and the ribosomes translate mRNA into protein.' },
+      'YouTube': { kind: 'video', ready: true, url: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ' },
+      'YouTube transcript': { kind: 'video', ready: true, transcript: true, url: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ', text: '0:00\nWelcome to the lecture on enzymes\n0:20\nAn enzyme lowers the activation energy of a reaction' },
+      'Topic': { kind: 'topic', ready: true, topic: 'The Krebs cycle' }, 'More from a source': { kind: 'file', ready: true, from: { deckId: 'cell', id: 'x1', name: 'Lecture 3 slides', kind: 'file' } },
+      'Making': { step: 'making', kind: 'file', progress: { word: 'Writing cards…', phase: 'write', i: 3, n: 8 } },
+      'Making a recording': { step: 'making', kind: 'record', progress: { word: 'Listening to your recording…', phase: 'read', i: 1, n: 2 } },
+      'Review': { step: 'review', kind: 'file', cards, name: 'Lecture 3 slides' }, 'Review (editing a card)': { step: 'review', kind: 'file', cards, name: 'Lecture 3 slides', editing: 'k2' },
+      'Limit reached': { step: 'error', kind: 'file', limits: free, error: { message: 'That’s today’s 3 free makes. Go Pro for 30 a day.', pro: true, code: 'day' } },
+      'File too big': { step: 'add', kind: 'file', limits: free, files: [slides], ready: true, error: { message: 'That file is over 20 MB. Go Pro for up to 40 MB.', soft: true } },
+      'Error': { step: 'error', kind: 'file', error: { message: 'The AI didn’t answer. Try again in a moment.', again: true } } };
+    return { view: () => ({ ...base, ...(by[p.step] || by.Pick) }), enter: noop, begin: noop, choose: noop, back: noop, close: noop, pickFiles: noop, addFiles: noop, removeFile: noop, setText: noop, setTopic: noop, setUrl: noop, useTranscript: noop, setOpt: noop,
+      recStart: noop, recPause: noop, recResume: noop, recStop: noop, recDiscard: noop, make: noop, cancel: noop, retry: noop, edit: noop, openCard: noop, remove: noop, save: noop, discard: noop };
+  })();
+  const GD = (() => {
+    const text = ['# Cell Biology: Exam 1', '', 'Everything for the first exam, in the order we covered it. Start with the checklist, then the mnemonics.', '', '## Checklist', '- [x] Organelles and what each one does', '- [x] The electron transport chain',
+      '- [ ] Glycolysis, step by step', '- [ ] Mitosis versus meiosis', '', '## Mnemonics', '| Phase | Remember it as |', '| --- | --- |', '| Prophase | **P**ut your chromosomes in **P**lace |', '| Metaphase | **M**iddle of the cell |',
+      '| Anaphase | **A**part they go |', '| Telophase | **T**wo new cells |', '', '> The mitochondrion makes most of the cell’s ATP.', '', 'Questions? Ask in [office hours](https://example.edu/office-hours).'].join('\n');
+    const pages = [{ id: 'g1', title: 'Lecture 3 summary', text: '## Lecture 3\n\nThe **electron transport chain** pumps protons across the inner membrane.\n\n1. NADH gives up its electrons.\n2. Protons are pumped out of the matrix.\n3. ATP synthase lets them flow back and makes ATP.', at: 0 }, { id: 'g2', title: 'Mnemonics', text: '- **PMAT** for the phases of mitosis\n- *Please Do Not Throw Sausage Pizza Away* for the layers', at: 0 }];
+    const file = (name, type, size, f) => ({ name, href: '/media/' + name, type, size, file: f });
+    const sources = [
+      { id: 'x1', kind: 'file', name: 'Lecture 3 slides', cards: 24, at: day(8, 18), url: '', text: '', textName: '', seconds: 0, pages: 32, files: [file('sx1-0.pdf', 'application/pdf', 4200000, 'Lecture 3 slides.pdf')], href: '/media/sx1-0.pdf' },
+      { id: 'x2', kind: 'recording', name: 'Lecture 4 · Sep 21', cards: 18, at: day(8, 21), url: '', text: '', textName: 'sx2-text.txt', seconds: 2532, pages: 0, files: [file('sx2-0.m4a', 'audio/mp4', 6100000, 'Lecture 4.m4a')], href: '/media/sx2-0.m4a' },
+      { id: 'x3', kind: 'video', name: 'Mitochondria explained', cards: 9, at: day(8, 20), url: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ', text: '', textName: 'sx3-text.txt', seconds: 0, pages: 0, files: [], href: '' },
+      { id: 'x4', kind: 'photo', name: 'Whiteboard, Sep 22', cards: 6, at: day(8, 22), url: '', text: '', textName: '', seconds: 0, pages: 0, files: [file('sx4-0.jpg', 'image/jpeg', 1100000, 'IMG_2041.jpg'), file('sx4-1.jpg', 'image/jpeg', 1400000, 'IMG_2042.jpg')], href: '/media/sx4-0.jpg' },
+      { id: 'x5', kind: 'topic', name: 'The Krebs cycle', cards: 12, at: day(8, 19), url: '', text: 'The Krebs cycle', textName: '', seconds: 0, pages: 0, files: [], href: '' }];
+    const talk = '<<0:00>>\nWelcome back. Today we finish the electron transport chain and see how it makes ATP.\n\n<<1:00>>\nThe chain pumps protons across the inner membrane, and ATP synthase lets them flow back.\n\n<<2:00>>\nWithout oxygen as the last acceptor, the chain backs up and ATP production stops.';
+    return { text, pages, sources, talk };
+  })();
+  const GMODE = p.guide || 'Guide and sources';
+  return { make: MK,
+    publicGuide: () => (GMODE === 'No guide yet' ? { pages: [], sources: 0 } : { pages: [{ id: 'main', title: 'Guide', text: GD.text }, ...(GMODE === 'Guide pages' ? GD.pages : [])], sources: 5 }),
+    guide: () => ({ deckId: 'cell', text: GMODE === 'No guide yet' ? '' : GMODE === 'Long guide' ? GD.text + '\n\n' + GD.text.replace('# Cell Biology: Exam 1', '## More for the exam') : GD.text, at: 0, pages: GMODE === 'Guide pages' ? GD.pages : [], can: GMODE !== 'Studying (read only)', studying: GMODE === 'Studying (read only)' }),
+    sources: () => (['No guide yet', 'Studying (read only)'].includes(GMODE) ? [] : GD.sources),
+    sourceText: name => (/^sx2/.test(name) || /^sx3/.test(name) ? GD.talk : ''),
+    guideHistory: () => Promise.resolve([{ at: day(8, 21), saved: 0, text: GD.text.replace('- [x] The electron transport chain', '- [ ] The electron transport chain') }, { at: day(8, 18), saved: 0, text: '# Cell Biology: Exam 1\n\nEverything for the first exam.' }]),
+    saveGuide: () => Promise.resolve({}), addGuidePage: () => Promise.resolve('g9'), renameGuidePage: () => Promise.resolve({}), deleteGuidePage: () => Promise.resolve({}), restoreGuide: () => Promise.resolve({}), deleteSource: () => Promise.resolve({}) };
 }
-foot(phone) {
-  const site = !!this.props.site, board = { compare: 'SiteCompare', features: 'SiteCompare', faq: 'SiteFaq', pricing: 'Pricing', privacy: 'Privacy', terms: 'Terms' }, twin = { compare: 1, features: 1, faq: 1, pricing: 1 };
-  return [{"label":"Blog","slug":"blog"},{"label":"Compare","slug":"compare"},{"label":"Features","slug":"features"},{"label":"FAQ","slug":"faq"},{"label":"Pricing","slug":"pricing"},{"label":"Privacy","slug":"privacy"},{"label":"Terms","slug":"terms"}].map(l => ({ label: l.label, href: site ? '/' + l.slug : board[l.slug] + (phone && twin[l.slug] ? 'Phone' : '') + '.dc.html' }));
+
+constructor(props) { super(props); this.state = { tab: props.view === 'Preview' ? 'preview' : 'write', histOpen: props.view === 'Older versions', drafts: {}, saving: false, err: '', hist: null }; }
+componentWillUnmount() { clearTimeout(this._t); if (this._pending) this._flush(); }
+renderVals() {
+  const t = this.theme(!!this.props.dark, !!this.props.dim);const db = this.props.db || this.mock(); const chrome = db.chrome();
+  const p = this.props, st = this.state, mock = !!db.mock, dm = mock ? this.mockMaterials() : db, am = mock ? dm : db.act, md = this.md();
+  const dk = db.deck(p.deckId || (mock ? 'cell' : '')), G = dm.guide(dk.id), deckId = dk.id;
+  const extra = mock && p.view === 'A new page' ? [...G.pages, { id: 'gnew', title: 'New page', text: '' }] : G.pages;
+  const want = st.page || p.page || (mock && p.view === 'A new page' ? 'gnew' : ''), pageId = extra.some(x => x.id === want) ? want : 'main';
+  const cur = pageId === 'main' ? { id: 'main', title: 'Guide', text: G.text } : extra.find(x => x.id === pageId), key = deckId + '|' + pageId;
+  const text = key in st.drafts ? st.drafts[key] : mock && p.view === 'Nothing written yet' ? '' : cur.text;
+  const tab = st.tab, histOpen = !!st.histOpen, plural = (n, w) => n + ' ' + w + (n === 1 ? '' : 's');
+  // Saving as it's typed: a moment after the last key, one save after another. Leaving sends what's waiting.
+  this._pending = this._pending || {};
+  this._flush = async () => {
+    clearTimeout(this._t);
+    const jobs = Object.values(this._pending); this._pending = {};
+    if (!jobs.length) return;
+    this.setState({ saving: true, err: '' });
+    try { for (const j of jobs) await am.saveGuide(j.deckId, j.page, j.text); this.setState({ saving: false, savedAt: Date.now() }); }
+    catch (e) { for (const j of jobs) this._pending[j.deckId + '|' + j.page] = j; this.setState({ saving: false, err: e.message || 'Couldn’t save. Try again.' }); }
+  };
+  const setText = v => { this.setState({ drafts: { ...this.state.drafts, [key]: v }, err: '' }); this._pending[key] = { deckId, page: pageId, text: v }; clearTimeout(this._t); this._t = setTimeout(() => this._flush(), 700); };
+  const ta = () => this._ta;
+  // A formatting button: the text field's own text and selection go through guide.js, and the result goes back in.
+  const act = (name, ...args) => { const el = ta(); if (!el) return; const r = md[name](el.value, el.selectionStart, el.selectionEnd, ...args); el.value = r.text; el.setSelectionRange(r.a, r.b); el.focus(); setText(r.text); };
+  const btn = (fn) => ({ down: e => { if (e && e.preventDefault) e.preventDefault(); this._did = true; fn(); }, click: () => { if (this._did) { this._did = false; return; } fn(); } });
+  const pickPicture = () => (mock ? Promise.resolve(null) : db.act.pickFile('image')).then(url => { if (url) act('image', url, ''); });
+  const seg = (label, on, go) => ({ label, pressed: on ? 'true' : 'false', bg: on ? t.bg : 'transparent', fg: on ? t.text : t.muted, sh: on ? '0 1px 3px rgba(0,0,0,.14)' : 'none', pick: go });
+  const saved = st.err ? st.err : st.saving ? 'Saving…' : st.savedAt || Object.keys(st.drafts).length ? 'Saved' : '';
+  const canAddPage = G.can && extra.length < 10, mark = G.can;
+  const openHist = async () => { this.setState({ histOpen: true, hist: null }); await this._flush(); const v = await dm.guideHistory(deckId, pageId); this.setState({ hist: v }); };
+  const when = t0 => new Date(t0).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
+  const versions = (st.hist || (mock && histOpen ? [] : [])).map(v => ({ when: when(v.at), size: plural(v.text.length, 'character'), excerpt: v.text.slice(0, 220), restore: async () => { await am.restoreGuide(deckId, pageId, v.at); this.setState({ drafts: Object.fromEntries(Object.entries(this.state.drafts).filter(([k]) => k !== key)), histOpen: false, hist: null }); } }));
+  const histNow = mock && histOpen && st.hist === null ? (dm.guideHistory(deckId, pageId).then(v => this.setState({ hist: v })), []) : versions;
+  const goBack = () => (mock ? null : db.act.go('/deck/' + deckId));
+  return {
+    t, ...chrome, dark: !!p.dark, dim: !!p.dim, deckId, deckName: dk.name || 'Cell Biology',
+    done: async () => { await this._flush(); goBack(); },
+    saveLabel: saved, saveColor: st.err ? t.again : t.muted,
+    toggleHistory: () => (histOpen ? this.setState({ histOpen: false }) : openHist()), histPressed: histOpen ? 'true' : 'false', histBg: histOpen ? t.inv : t.surf, histFg: histOpen ? t.invText : t.text,
+    tabs: [{ id: 'main', title: 'Guide' }, ...extra].map(x => ({ title: x.title, pressed: x.id === pageId ? 'true' : 'false', bg: x.id === pageId ? t.inv : t.surf, fg: x.id === pageId ? t.invText : t.text, pick: async () => { await this._flush(); this.setState({ page: x.id, histOpen: false, tab: 'write' }); } })),
+    canAddPage, addPage: async () => { await this._flush(); const id = await am.addGuidePage(deckId, 'New page'); this.setState({ page: id, histOpen: false, tab: 'write' }); },
+    pageTools: G.can && pageId !== 'main', pageTitle: cur.title, setPageTitle: e => { const v = e && e.target ? e.target.value : ''; clearTimeout(this._tt); this._tt = setTimeout(() => am.renameGuidePage(deckId, pageId, v).catch(() => {}), 600); },
+    deletePage: async () => { if (!mock && !confirm('Delete the page “' + cur.title + '”?')) return; await am.deleteGuidePage(deckId, pageId); this.setState({ page: 'main', drafts: Object.fromEntries(Object.entries(this.state.drafts).filter(([k]) => k !== key)) }); },
+    showEditor: !histOpen, isWrite: tab === 'write', isPreview: tab === 'preview',
+    tabsWP: [seg('Write', tab === 'write', () => this.setState({ tab: 'write' })), seg('Preview', tab === 'preview', () => this.setState({ tab: 'preview' }))],
+    text, type: e => setText(e && e.target ? e.target.value : ''), taRef: el => { this._ta = el; },
+    keys: e => {
+      if (!e || !this._ta) return;
+      const el = this._ta, mod = e.metaKey || e.ctrlKey;
+      if (mod && !e.shiftKey && !e.altKey && ['b', 'i', 'k'].includes(e.key.toLowerCase())) { e.preventDefault(); return act(e.key.toLowerCase() === 'b' ? 'bold' : e.key.toLowerCase() === 'i' ? 'italic' : 'link', ''); }
+      if (e.key === 'Enter' && !e.shiftKey && !mod && !e.isComposing && el.selectionStart === el.selectionEnd) { const r = md.continueList(el.value, el.selectionStart); if (r) { e.preventDefault(); el.value = r.text; el.setSelectionRange(r.pos, r.pos); setText(r.text); } }
+      if (e.key === 'Tab' && !mod && !e.altKey) { const r = md.indent(el.value, el.selectionStart, el.selectionEnd, !!e.shiftKey); if (r && r.text !== el.value) { e.preventDefault(); el.value = r.text; el.setSelectionRange(r.a, r.b); setText(r.text); } }
+    },
+    tbHeading: btn(() => act('heading', 2)), tbBold: btn(() => act('bold')), tbItalic: btn(() => act('italic')), tbCode: btn(() => act('code')), tbLink: btn(() => act('link', '')), tbBullets: btn(() => act('bullets')),
+    tbNumbers: btn(() => act('numbers')), tbTasks: btn(() => act('tasks')), tbQuote: btn(() => act('quote')), tbTable: btn(() => act('table')), tbImage: btn(pickPicture),
+    previewRef: el => { const k = key + ':' + text.length + ':' + text.slice(0, 40) + text.slice(-40); if (el.getAttribute('data-k') !== k) { el.innerHTML = md.render(text); el.setAttribute('data-k', k); } },
+    previewEmpty: !text.trim(),
+    makeLabel: 'Make cards',
+    makeCards: () => { const el = ta(), sel = el && el.selectionEnd > el.selectionStart ? el.value.slice(el.selectionStart, el.selectionEnd) : ''; if (mock) return; this._flush().then(() => db.make.begin({ kind: 'paste', text: sel || text, title: sel ? dk.name + ' (selection)' : dk.name + (pageId === 'main' ? ' Guide' : ': ' + cur.title), opts: { deckId } })); },
+    histOpen, versions: histNow, noVersions: histOpen && st.hist !== null && !versions.length, histLine: 'Older versions of ' + (pageId === 'main' ? 'the Guide' : cur.title) + '. Restoring one keeps what you have now as a version too.'
+  };
 }
-constructor(props) { super(props); this.state = { yearly: true }; }
-renderVals() { const t = this.props.site ? {"bg":"var(--t-bg)","surf":"var(--t-surf)","surf2":"var(--t-surf2)","line":"var(--t-line)","text":"var(--t-text)","muted":"var(--t-muted)","inv":"var(--t-inv)","invText":"var(--t-invText)","card":"var(--t-card)","shadow":"var(--t-shadow)","again":"var(--t-again)","hard":"var(--t-hard)","good":"var(--t-good)","easy":"var(--t-easy)","againTint":"var(--t-againTint)","goodTint":"var(--t-goodTint)","hardTint":"var(--t-hardTint)","dim":"var(--t-dim)"} : this.theme(!!this.props.dark, !!this.props.dim);
-  // On lucida.cards (props.site) the links open the app and the landing page; on the canvas, the boards.
-  const site = !!this.props.site, y = this.state.yearly, signIn = site ? 'https://app.lucida.cards/sign-in' : 'PhoneSignIn.dc.html';
-  const seg = on => ({ bg: on ? t.inv : 'transparent', fg: on ? t.invText : t.text, pressed: on ? 'true' : 'false' });
-  const links = {"monthly":"https://buy.stripe.com/fZu7sMaaM2IN8SL7WW4F201","yearly":"https://buy.stripe.com/bJe4gA6YA5UZ8SL9104F202"}, selling = !!(links.monthly && links.yearly), start = site ? 'https://app.lucida.cards/' : signIn;
-  return { t, foot: this.foot(true), sky: (this.props.site ? {"top":"var(--sky-top)","mid":"var(--sky-mid)","low":"var(--sky-low)","glow":"var(--sky-glow)","cloud":"var(--sky-cloud)"} : (this.props.dark && this.props.dim ? { top: '#1B2A48', mid: '#1F2B45', low: '#212637', glow: 'rgba(120,150,255,.16)', cloud: 'rgba(150,170,230,.12)' }
-    : this.props.dark ? { top: '#081733', mid: '#0D2148', low: '#0A1530', glow: 'rgba(120,150,255,.16)', cloud: 'rgba(150,170,230,.10)' }
-    : { top: '#86BDF3', mid: '#C9E2FB', low: '#EDF5FE', glow: 'rgba(255,255,255,.75)', cloud: 'rgba(255,255,255,.94)' })), grain: String(this.props.grain ?? 0.7), pro: this.art({"base":"linear-gradient(102deg, #14165A 0%, #20238A 17%, #1B2378 32%, #151D66 52%, #172372 70%, #123F86 86%, #0B6C9C 100%)","ink":"#FFFFFF","fid":"sc-flow-midnight","sid":"sc-streak-midnight","blur":"6","sblur":"2.2","disp":"10","glass":"rgba(255,255,255,.12)","glassLine":"rgba(255,255,255,.62)","shadow":"0 1px 14px rgba(0,0,0,.16)","b0":{"c":"#3440C4","x":14,"y":70,"rx":10,"ry":70,"r":12},"b1":{"c":"#1A2270","x":55,"y":40,"rx":12,"ry":80,"r":12},"b2":{"c":"#0E8CC6","x":102,"y":102,"rx":20,"ry":42,"r":18},"b3":{"c":"#262C8E","x":88,"y":0,"rx":22,"ry":26,"r":0},"b4":{"c":"#4450DA","x":6,"y":100,"rx":16,"ry":22,"r":12},"b5":{"c":"#1C2A80","x":72,"y":60,"rx":10,"ry":70,"r":12},"s0":{"c":"#5A64E6","x":1,"y":40,"rx":3.2,"ry":70,"r":12},"s1":{"c":"#3A47C0","x":44,"y":50,"rx":2.6,"ry":80,"r":12}}, ''),
-    billing: [{ id: 'monthly', label: 'Monthly', ...seg(!y), hasTag: false, pick: () => this.setState({ yearly: false }) }, { id: 'yearly', label: 'Yearly', ...seg(y), hasTag: true, pick: () => this.setState({ yearly: true }) }],
-    yearlyShow: y ? 'flex' : 'none', monthlyShow: y ? 'none' : 'flex',
-    yearlyHref: selling ? (site ? 'https://app.lucida.cards/pro?plan=yearly' : links.yearly) : start, monthlyHref: selling ? (site ? 'https://app.lucida.cards/pro?plan=monthly' : links.monthly) : start,
-    homeHref: site ? '/' : 'LandingPhone.dc.html', howHref: site ? '/#how' : 'Landing.dc.html', typesHref: site ? '/#cards' : 'Landing.dc.html',
-    signInHref: signIn, startHref: site ? 'https://app.lucida.cards/' : signIn, privacyHref: site ? '/privacy' : 'Privacy.dc.html', termsHref: site ? '/terms' : 'Terms.dc.html',
-    pricingHref: site ? '/pricing' : 'PricingPhone.dc.html', proLive: !site || selling, proSoon: site && !selling }; }
 }
 return Component;
   }

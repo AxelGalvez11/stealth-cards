@@ -1654,6 +1654,11 @@ renderVals() {
     // Opening the picker puts the keyboard away.
     cardPick: (() => { const q = tagPicker(tags, next => put({ tags: next }), 'cp', db.mock ? null : db.tags()); return { ...q, toggle: () => this.setState({ cpOpen: !q.open, cpQ: '', typing: false }) }; })(),
     canDelete: !!saved, remove: () => db.act.deleteCard(saved.id, backHref),
+    // Where the card came from (if one of the deck's sources made it): "Made from Lecture 3 slides · p. 4", opening that source at that place.
+    madeFrom: (() => { const x = saved && saved.src || (db.mock && this.props.madeFrom !== false ? { id: 'x1', name: 'Lecture 3 slides', at: 'p. 4' } : null);
+      if (!x || !x.name) return { link: false, plain: false, label: '', href: '' };
+      const here = db.mock || (db.sources && db.sources(saved.deckId).some(q => q.id === x.id)), label = 'Made from ' + x.name + (x.at ? ' · ' + x.at : '');
+      return { link: !!here, plain: !here, label, href: db.mock ? 'WebDeck.dc.html' : here ? '/deck/' + saved.deckId + '?source=' + encodeURIComponent(x.id) + (x.at ? '&at=' + encodeURIComponent(x.at) : '') : '' }; })(),
     // Pausing a card (every card of its text or picture): it doesn't come up until it's unpaused.
     pausedNow: saved && saved.paused ? 'true' : 'false', pauseLabel: saved && saved.paused ? 'Unpause' : 'Pause', pauseCardLabel: saved && saved.paused ? 'Unpause card' : 'Pause card',
     pauseBg: saved && saved.paused ? t.inv : t.surf, pauseFg: saved && saved.paused ? t.invText : t.text,
