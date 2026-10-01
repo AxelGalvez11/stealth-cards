@@ -52,6 +52,8 @@ struct DemoProps {
   var noStats = false
   /// Settings on the design screen (darkMode: dark mode's look, "gray" on the canvas's Gray boards).
   var look = "system", darkMode = "black", grads = "mix", fsrs = true, check = true
+  /// Settings' Flip animation on a design screen (`-flip Off` turns it off).
+  var flip = true
   /// The board shows the Free app (its `free` setting): Pro's tools give way to what Pro adds.
   var free = false
   /// Deck settings opened with the goal already stepped up to 95% (the canvas's stepGoal), Stats on this tab, the Library's

@@ -219,6 +219,14 @@ pick one, and one whose Pro lapsed never draws it. The app tells the test what i
 (`ThemeAudit`, debug builds only).
 
 
+## Settings
+
+Settings is one native list, its rows grouped into seven sections with the same names, in the same order, as the web's Settings page: Account (your profile, Edit
+profile, Get verified, Profile picture, Password, Delete account), Plan, Studying (Daily reminder, New cards a day, Remember goal, Schedule with FSRS, Flip
+animation, Tune to you), Appearance (Appearance, Dark mode, Theme, Card gradients), Connect AI (Connect AI, Check AI cards first, Cards to check), Privacy
+(Blocked people) and Help & legal (Help, Terms of Service, Privacy Policy, which open lucida.cards in the browser). The board is `PhoneSettings` (its `section`
+Tweak is `All`; the web app's narrow screens use its `List` and section states).
+
 ## For the App Store
 
 What App Review asks of an app like this one is inside the app, drawn from boards like every other screen.
@@ -243,11 +251,11 @@ told `LUCIDA_APPLE_TEST_XCODE=1` and never online. `ios/tools/e2e-store.sh <simu
 (`LucidaUITests/StoreTests`): buying monthly turns Pro on through the local server (Settings says Billed by Apple, with Manage plan), Restore
 purchases, Pro bought on the web, no products, and every Go Pro. `ios/tests/run.sh xcode` tests the server's side of the test store.
 
-**Delete account, Block, password, and the apps you allowed** (`Screens/AccountSheets.swift`, `Data/AccountData.swift`, Settings' Account group,
-Profile's ⋯, Suggestions, SignIn, Connect; boards `PhoneSettingsDelete`, `PhoneProfileBlock`, `PhoneProfileBlocked`, the Account group of
+**Delete account, Block, password, and the apps you allowed** (`Screens/AccountSheets.swift`, `Data/AccountData.swift`, Settings' Account and Privacy groups,
+Profile's ⋯, Suggestions, SignIn, Connect; boards `PhoneSettingsDelete`, `PhoneProfileBlock`, `PhoneProfileBlocked`, the Account and Privacy groups of
 `PhoneSettings`, `PhoneSignIn` with `-passwordMode`, and `PhoneConnect`). Delete account asks first, then the server removes the library, the
 profile, the shared decks and the sign-in itself, and the app goes back to the sign-in screen (for Apple billing the question says to stop it in
-iPhone Settings). Block is on a profile's ⋯ and on a suggestion; Settings › Account › Blocked people lists them with Unblock. Settings ›
+iPhone Settings). Block is on a profile's ⋯ and on a suggestion; Settings › Privacy › Blocked people lists them with Unblock. Settings ›
 Account › Password sets one, and the sign-in screen has "Use a password" (App Review can't get an email code). Connect AI lists the apps you
 allowed, each with Disconnect. `ios/tools/e2e-account.sh <simulator id>` is the end-to-end test (`LucidaUITests/AccountTests`); it starts the
 server and, in front of it, `ios/tools/password-proxy.mjs`, which asks for a sign-in when nobody is signed in and takes passwords, as the real
@@ -262,6 +270,12 @@ iPhone Settings. The row says what the phone has scheduled (not a saved setting)
 the settings. Local notifications need no entitlement, no Info.plist text and no privacy declaration. `ios/tools/e2e-reminder.sh <simulator id>`
 is the end-to-end test (`LucidaUITests/ReminderTests`, reading what is scheduled through `-reminderAudit`); it takes the app off the simulator before
 each flow so the phone has never been asked.
+
+**Flip animation** (Settings › Studying, `settings.flip`, on unless turned off; `Store.flipOn`, `Design/Theme.swift` `\.flipsOn`; boards `PhoneSettings` and `WebSettings`
+with their switch, `-flip Off` on a design screen). Off, the card's other side just appears in Review and Cards to check: no 3D turn, no blank's pop,
+no note or box fade (and the welcome's card doesn't turn between steps). It is one of the person's study settings on the server, so the web app and every
+phone follow the same choice; the web app's Review reads it the same way (`flipTrans` in the Review boards). Reduce Motion changes nothing about it.
+`ios/tools/e2e-flip.sh <simulator id>` is the end-to-end test (`LucidaUITests/FlipTests`, reading what the card does through `-flipAudit`'s invisible element, and checking the seven sections).
 
 **Sign in with Apple** sends the token Apple made for this app (audience `cards.lucida.app`) and its nonce to `/api/auth/token`; the server
 forwards both to Supabase, which accepts the audiences in the Apple provider's "Client IDs". That list already holds both the app's and the

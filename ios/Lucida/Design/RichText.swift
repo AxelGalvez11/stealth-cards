@@ -127,13 +127,16 @@ struct RichText: View {
 /// sc-pop: the blank fills in with a small bounce.
 struct PopIn: ViewModifier {
   let on: Bool
+  /// Settings › Studying › Flip animation: off, and the blank just fills in.
+  @Environment(\.flipsOn) private var flips
   @State private var shown = false
   func body(content: Content) -> some View {
     content
       .scaleEffect(on && !shown ? 0.6 : 1).offset(y: on && !shown ? 4 : 0).opacity(on && !shown ? 0 : 1)
-      .onAppear { if on { withAnimation(.timingCurve(0.34, 1.56, 0.64, 1, duration: 0.5)) { shown = true } } }
-      .onChange(of: on) { _, v in if v { shown = false; withAnimation(.timingCurve(0.34, 1.56, 0.64, 1, duration: 0.5)) { shown = true } } }
+      .onAppear { if on { pop() } }
+      .onChange(of: on) { _, v in if v { shown = false; pop() } }
   }
+  private func pop() { if flips { withAnimation(.timingCurve(0.34, 1.56, 0.64, 1, duration: 0.5)) { shown = true } } else { shown = true } }
 }
 
 extension Rich {

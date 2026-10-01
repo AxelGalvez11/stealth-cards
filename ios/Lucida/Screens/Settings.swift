@@ -1,5 +1,6 @@
-// iPhone · Settings (PhoneSettings), from the gear on Today: your account, studying, the look, your AI, and what Apple asks every
-// app to have inside it (the Account group: a password, the people you blocked, and Delete account).
+// iPhone · Settings (PhoneSettings), from the gear on Today: your account, plan, studying, appearance, Connect AI, privacy, and help and
+// legal, in the same seven sections, in the same order and with the same names as the web's Settings page (and what Apple asks every app
+// to have inside it: a password, Delete account, the people you blocked, and the Terms and Privacy pages).
 import StoreKit
 import SwiftUI
 
@@ -15,6 +16,7 @@ extension Store {
         case "darkMode": props.darkMode = v as? String ?? "black"
         case "grads": props.grads = v as? String ?? "mix"
         case "fsrs": props.fsrs = v as? Bool ?? true
+        case "flip": props.flip = v as? Bool ?? true
         case "check": props.check = v as? Bool ?? true
         case "prog": props.prog = v as? String ?? "bar"
         case "photo": props.photo = v as? String ?? "color"
@@ -38,6 +40,7 @@ extension Store {
       case "grads": s.grads = v as? String ?? s.grads
       case "prog": s.prog = v as? String ?? s.prog
       case "fsrs": s.fsrs = v as? Bool ?? s.fsrs
+      case "flip": s.flip = v as? Bool ?? s.flip
       case "perDay": s.perDay = v as? Int ?? s.perDay
       case "goal": s.goal = v as? Int ?? s.goal
       case "reminder": s.reminder = v as? String ?? s.reminder
@@ -52,6 +55,9 @@ extension Store {
       }
     }
   }
+  /// Flip animation (Settings › Studying): on unless you turned it off. Off, a card's other side just appears (Review, Cards to check,
+  /// the welcome): no 3D turn, no pop, no fade. Reduce Motion doesn't change it either way.
+  var flipOn: Bool { demo ? props.flip : settings.flip }
   /// "Check AI cards first" is the AI link's own permission.
   func setCheck(_ on: Bool) {
     if demo { props.check = on; return }
@@ -119,7 +125,7 @@ struct SettingsScreen: View {
   var body: some View {
     let s = store.settings, demo = store.demo
     let look = demo ? store.props.look : s.look, grads = demo ? store.props.grads : s.grads, darkMode = demo ? store.props.darkMode : s.darkMode
-    let fsrs = demo ? store.props.fsrs : s.fsrs, check = demo ? store.props.check : store.lib.ai.perms.check
+    let fsrs = demo ? store.props.fsrs : s.fsrs, check = demo ? store.props.check : store.lib.ai.perms.check, flip = store.flipOn
     let vst = store.netVerify()
     ScrollView(showsIndicators: false) {
       VStack(alignment: .leading, spacing: 18) {
@@ -146,11 +152,11 @@ struct SettingsScreen: View {
         .confirmationDialog("Your account", isPresented: $account) {
           Button("Sign out", role: .destructive) { Task { await store.signOut() } }
         }
-        // Your handle opens your profile; Edit profile opens it with its editor open. Before you have a handle it says
+        // ACCOUNT: your handle opens your profile; Edit profile opens it with its editor open. Before you have a handle it says
         // Your profile (opening it makes one). Get verified (teachers and schools) opens its sheet, and says Waiting for
         // review once a request is in; once you are verified, the row says Verified teacher (or school), with the check
-        // and no link.
-        group("Profile") {
+        // and no link. Then your picture, a password, and Delete account (Apple asks for it inside the app).
+        group("Account") {
           Button { nav.profile("") } label: { row(store.myHandle.isEmpty ? "Your profile" : "@" + store.myHandle) { value("View profile") } }.buttonStyle(.plain)
           divider
           Button { nav.wantsEdit = true; nav.profile("") } label: { row("Edit profile") { value("") } }.buttonStyle(.plain)
@@ -162,8 +168,10 @@ struct SettingsScreen: View {
             row(label) { Icon("shield", 20, 2).foregroundStyle(Color(hex: 0x3E63DD)) }
               .accessibilityElement(children: .ignore).accessibilityLabel(label).accessibilityAddTraits(.isStaticText)
           }
+          divider
+          photoPanel
+          if demo || store.lib.me != nil { accountRows }
         }
-        group("Profile picture") { photoPanel }
         planGroup
         group("Studying") {
           // Off, or a time: picking a time turns the reminder on (the phone asks to send notices then), Off turns it off, and with notices off
@@ -176,9 +184,11 @@ struct SettingsScreen: View {
           divider
           row("Schedule with FSRS", sub: "For 4 grades and ✓ / ✗") { Toggle48(on: fsrs, label: "Schedule with FSRS") { store.setSetting(["fsrs": !fsrs]) } }
           divider
+          row("Flip animation") { Toggle48(on: flip, label: "Flip animation") { store.setSetting(["flip": !flip]) } }
+          divider
           TuneRow()
         }
-        group("Look") {
+        group("Appearance") {
           row("Appearance") { seg([("system", "System"), ("light", "Light"), ("dark", "Dark")], look) { store.setSetting(["look": $0]) } }
           divider
           // Gray or black, for whenever the app is dark (the owner: "grayish not fully blackedout").
@@ -189,14 +199,21 @@ struct SettingsScreen: View {
           // A theme draws the deck covers, so the gradients only matter with Lucida's own look.
           row("Card gradients", sub: store.skinKey != nil ? "With the Lucida theme" : nil) { seg([("mix", "Mix"), ("vivid", "Vivid"), ("deep", "Deep")], grads) { store.setSetting(["grads": $0]) } }
         }
-        group("Your AI") {
+        group("Connect AI") {
           Button { nav.openConnect() } label: { row("Connect AI") { value(connected) } }.buttonStyle(.plain)
           divider
           row("Check AI cards first") { Toggle48(on: check, label: "Check AI cards first") { store.setCheck(!check) } }
           divider
           Button { nav.push(.inbox) } label: { row("Cards to check") { value("\(store.pendingCount)") } }.buttonStyle(.plain)
         }
-        if demo || store.lib.me != nil { accountGroup }
+        if demo || store.lib.me != nil { privacyGroup }
+        group("Help & legal") {
+          link("Help", "https://lucida.cards/faq")
+          divider
+          link("Terms of Service", "https://lucida.cards/terms")
+          divider
+          link("Privacy Policy", "https://lucida.cards/privacy")
+        }
       }
       .foregroundStyle(t.text)
       .padding(.horizontal, 20).padding(.top, Screen.top(64)).padding(.bottom, 34)
@@ -215,9 +232,13 @@ struct SettingsScreen: View {
     }
   }
 
-  /// Profile picture (photoPanel on the canvas), on the gray row.
+  /// Profile picture (photoPanel on the canvas), on the gray row, with its name above it (the group around it is Account).
   private var photoPanel: some View {
-    PhotoChoices().frame(maxWidth: .infinity, alignment: .leading).padding(.horizontal, 16).padding(.top, 12).padding(.bottom, 16)
+    VStack(alignment: .leading, spacing: 12) {
+      Text("Profile picture").css(16)
+      PhotoChoices().frame(maxWidth: .infinity, alignment: .leading)
+    }
+    .frame(maxWidth: .infinity, alignment: .leading).padding(.horizontal, 16).padding(.top, 12).padding(.bottom, 16)
   }
 
   /// PLAN: Free with Go Pro; or Pro with when it renews (or ends) and who bills it. A plan billed by Apple has Manage plan and Cancel
@@ -267,17 +288,23 @@ struct SettingsScreen: View {
     }
   }
 
-  // ---------- ACCOUNT: a password, the people you blocked, Delete account ----------
-  private var accountGroup: some View {
+  // ---------- ACCOUNT (the rest of it, once you're signed in): a password, and Delete account ----------
+  @ViewBuilder private var accountRows: some View {
+    divider
+    Button { withAnimation(.out(0.2)) { pwOpen.toggle(); pw = ""; pwMsg = ""; pwOk = false } } label: {
+      row("Password", sub: "Optional. Sign in without an email code.") { value("") }
+    }
+    .buttonStyle(.plain)
+    if pwOpen { passwordForm }
+    divider
+    Button { withAnimation(Motion.sheet) { nav.sheet = .deleteAccount } } label: { row("Delete account", color: t.again) { EmptyView() } }.buttonStyle(.plain)
+  }
+
+  // ---------- PRIVACY: the people you blocked, each with Unblock ----------
+  private var privacyGroup: some View {
     let list = store.netBlocks(), people = (list?.value?.people ?? []).filter { !unblocked.contains($0.handle) }
     let count = list?.value == nil ? "" : people.isEmpty ? "None" : String(people.count)
-    return group("Account") {
-      Button { withAnimation(.out(0.2)) { pwOpen.toggle(); pw = ""; pwMsg = ""; pwOk = false } } label: {
-        row("Password", sub: "Optional. Sign in without an email code.") { value("") }
-      }
-      .buttonStyle(.plain)
-      if pwOpen { passwordForm }
-      divider
+    return group("Privacy") {
       row("Blocked people") { Text(count).css(15).foregroundStyle(t.muted) }
       ForEach(people, id: \.handle) { b in
         divider
@@ -297,9 +324,12 @@ struct SettingsScreen: View {
         divider
         CSSText(blockErr, 13, lh: 1.4, color: t.again).padding(.horizontal, 16).padding(.vertical, 10).frame(maxWidth: .infinity, alignment: .leading)
       }
-      divider
-      Button { withAnimation(Motion.sheet) { nav.sheet = .deleteAccount } } label: { row("Delete account", color: t.again) { EmptyView() } }.buttonStyle(.plain)
     }
+  }
+
+  /// A row that opens one of Lucida's pages on lucida.cards (Help, the Terms, the Privacy Policy) in the browser.
+  private func link(_ label: String, _ url: String) -> some View {
+    Button { nav.open(URL(string: url)) } label: { row(label) { value("") } }.buttonStyle(.plain)
   }
 
   /// Unblock works at once (the row goes); if the server won't, it comes back with the server's words.

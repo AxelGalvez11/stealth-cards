@@ -70,6 +70,7 @@ struct RootView: View {
       }
     }
     .environment(\.theme, t)
+    .environment(\.flipsOn, store.flipOn)
     .preferredColorScheme(over ?? (dark ? .dark : .light))
     .onChange(of: scheme, initial: true) { _, s in if over == nil { system = s } }
     #if DEBUG
@@ -371,6 +372,8 @@ extension Board {
       }
     }
     if let k = Board.arg("-goPro") { store.props.goPro = k }
+    // Settings' Flip animation on a design screen: `-flip Off` (on when it's left out).
+    if Board.arg("-flip") == "Off" { store.props.flip = false }
     // Settings' Daily reminder: `-reminder Off|"6:00 PM"|...`, and `-reminderNote` (Off, with the line about allowing notifications).
     if let k = Board.arg("-reminder") { store.props.reminder = k }
     if ProcessInfo.processInfo.arguments.contains("-reminderNote") { store.props.reminderNote = true; store.props.reminder = "Off" }

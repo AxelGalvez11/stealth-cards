@@ -832,31 +832,31 @@ export default [
   "name": "PhoneSettings",
   "title": "iPhone · Settings",
   "w": 390,
-  "h": 1889
+  "h": 2134
  },
  {
   "name": "PhoneSettingsDelete",
   "title": "iPhone · Settings · Delete account (the question)",
   "w": 390,
-  "h": 1889
+  "h": 2134
  },
  {
   "name": "PhoneSettingsFree",
   "title": "iPhone · Settings · on Free (Tune to you is Pro)",
   "w": 390,
-  "h": 1889
+  "h": 2134
  },
  {
   "name": "PhoneSettingsGray",
   "title": "iPhone · Settings (dark, gray)",
   "w": 390,
-  "h": 1889
+  "h": 2134
  },
  {
   "name": "PhoneSettingsVerified",
   "title": "iPhone · Settings · a verified teacher (Get verified says Verified teacher)",
   "w": 390,
-  "h": 1889
+  "h": 2134
  },
  {
   "name": "PhoneSignIn",

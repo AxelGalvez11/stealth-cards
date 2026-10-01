@@ -468,6 +468,8 @@ struct PileDialog: View {
 /// blank fills in with a pop and the note fades in below.
 struct FlipCard: View {
   @Environment(\.theme) private var t
+  /// Settings › Studying › Flip animation: off, and the other side just appears (Reduce Motion changes nothing here).
+  @Environment(\.flipsOn) private var flips
   @Environment(\.studySkin) private var skin
   @EnvironmentObject private var store: Store
   @ObservedObject private var art = ThemeArt.shared
@@ -495,15 +497,26 @@ struct FlipCard: View {
       // (a theme's card is a picture behind the words, which a finger goes through: the whole card is the button)
       .contentShape(RoundedRectangle(cornerRadius: radius, style: .continuous))
       .modifier(Turn(angle: turned ? 180 : 0))
-      .animation(moved ? nil : .std(0.5), value: turned)
+      .animation(moved || !flips ? nil : .std(0.5), value: turned)
       .id(moved ? card.id : "")
       .transition(.asymmetric(insertion: .opacity.combined(with: .offset(y: 14)).combined(with: .scale(scale: 0.98)), removal: .identity))
     }
     .buttonStyle(.plain)
     .accessibilityLabel(card.kind == "cloze" ? (revealed ? "Hide the answer" : "Show the blank") : card.isOcc ? (revealed ? "Hide the answer" : "Show what’s under the box") : (revealed ? "Flip back" : "Flip card"))
     .animation(.out(0.32), value: moved ? card.id : "")
+    #if DEBUG
+    // The flip test reads from this invisible element whether the card turns ("turns") or its other side just appears ("appears").
+    .overlay(alignment: .topLeading) {
+      if FlipAudit.on { Color.clear.frame(width: 2, height: 2).accessibilityElement().accessibilityIdentifier("flipAudit").accessibilityValue(flips ? "turns" : "appears") }
+    }
+    #endif
   }
 }
+
+#if DEBUG
+/// Debug builds, with `-flipAudit`: puts the flip mode on the card as an invisible element named flipAudit, for the flip test (FlipTests).
+enum FlipAudit { static let on = ProcessInfo.processInfo.arguments.contains("-flipAudit") }
+#endif
 
 extension FlipCard {
   /// One side: the app's plain face, or the theme's picture behind the words (set in the theme's ink and type).

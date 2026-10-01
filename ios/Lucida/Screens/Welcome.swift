@@ -28,6 +28,8 @@ private let FILES: [String: (String, [(String, Int)])] = ["anki": ("Biology.txt"
 struct WelcomeScreen: View {
   @Environment(\.theme) private var t
   @Environment(\.accessibilityReduceMotion) private var still
+  /// Settings › Studying › Flip animation: off, and the card doesn't turn between steps.
+  @Environment(\.flipsOn) private var flips
   @Environment(\.openURL) private var openURL
   @EnvironmentObject private var store: Store
   @EnvironmentObject private var nav: Nav
@@ -157,7 +159,7 @@ struct WelcomeScreen: View {
           .modifier(FaceVisible(angle: now.turn, front: false))
       }
       .modifier(CardTurn(angle: now.turn, perspective: max(g.size.width, g.size.height) / 1600))
-      .animation(still ? nil : .std(0.7), value: now.turn)
+      .animation(still || !flips ? nil : .std(0.7), value: now.turn)
     }
     .frame(maxHeight: .infinity)
   }

@@ -23,6 +23,8 @@ const FILE = join(DATA, 'stealth-cards.json');
 const fresh = () => ({
   version: 1, rev: 1,
   settings: { name: '', color: 0, look: 'system', darkMode: 'black', grads: 'mix', prog: 'bar', perDay: 20, goal: 90, grading: 'four', fsrs: true, reminder: '9:00 AM', photo: '', yourPhoto: null, welcomed: false, tune: null,
+    // Settings › Studying › Flip animation: a flashcard turns over (on), or the other side just appears (off). Web and iPhone follow it.
+    flip: true,
     // Settings › Theme (Pro): a theme from web/themes/index.js ('lucida' is the app's own look), and whether your
     // public profile and decks show it to visitors.
     theme: 'lucida', themeProfile: true },
@@ -663,6 +665,7 @@ function run(a, who) {
       // Google photo if there is one). Your own is a picture you uploaded to Lucida, so it's always a /media/… path.
       if ('photo' in p && !['', 'google', 'yours', 'color'].includes(p.photo)) throw new Error('No such profile picture');
       if ('welcomed' in p) p.welcomed = !!p.welcomed;
+      if ('flip' in p) p.flip = !!p.flip;
       // Tune to you (Pro): the parameters fitted to your reviews, and whether they're in use. Going back to the standard
       // parameters works on any plan.
       if ('tune' in p) { if (p.tune && (p.tune.on || p.tune.w)) needPro('Tuning to your reviews is'); p.tune = cleanTune(S.settings.tune, p.tune); }

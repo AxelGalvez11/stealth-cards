@@ -317,7 +317,7 @@ async function upgrade(req, res) {
   const w = await who(req);
   if (w.set.length) res.setHeader('set-cookie', w.set);
   if (!w.user) return go(res, '/sign-in?next=' + encodeURIComponent('/pro?plan=' + (every === 'month' ? 'monthly' : 'yearly')));
-  if ((await planOf(w.user.id, w.user.email, true)).pro) return go(res, '/settings');
+  if ((await planOf(w.user.id, w.user.email, true)).pro) return go(res, '/settings/plan');
   return go(res, checkoutUrl(every, w.user));
 }
 // Stripe's webhook (billing.mjs): signed by Stripe with the endpoint's secret, not by a signed-in person. An error
