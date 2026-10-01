@@ -26,7 +26,9 @@ const PROP_SETS = [
   { suggest: 'c2', $state: { spRemove: true } }, { suggest: 'new', $state: { spKind: 'cloze' } }, { suggest: 'c2', $state: { spSent: true } }, { signedOut: true }, { loading: true }, { missing: true },
   { deckTab: 'History' }, { deckTab: 'People' }, { $state: { openCard: 'c1' } }, { owner: true, $state: { openCard: 'c1' } },
   { deckId: '' }, { pickItem: 'ai' }, { pickItem: 'g1' }, { noSuggestions: true, aiWaiting: false },
-  { someoneElse: true, openVersion: 14 }, { openVersion: 12, confirmVersion: 12 }, { openVersion: 9 }
+  { someoneElse: true, openVersion: 14 }, { openVersion: 12, confirmVersion: 12 }, { openVersion: 9 },
+  // Explain open: beside a flashcard or a Learn question on a computer, under it on a phone.
+  { startRevealed: true, explainOpen: true, explained: true }, { answered: true, explainOpen: true }, { explainOpen: true, dark: true, startRevealed: true }
 ];
 // The study network's pages: loading, signed out, nothing yet, not found, someone else's profile (followed or not),
 // a profile's tabs, Edit profile (with a handle someone has, or one that can't be a handle), and a deck's ⋯ menu.
