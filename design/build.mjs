@@ -5254,7 +5254,7 @@ const HEAD_CSS = [
   '.sp-mpanel{position:absolute;z-index:7;left:12px;right:12px;top:calc(100% - 4px);box-sizing:border-box;padding:8px;border-radius:22px;background:var(--sp-bg);box-shadow:0 0 0 1px var(--sp-line),0 28px 60px -22px rgba(0,0,0,.42);display:flex;flex-direction:column;gap:2px}',
   '.sp-mpanel a{display:flex;align-items:center;height:52px;padding:0 16px;border-radius:14px;font-size:17px;font-weight:500;color:var(--sp-text)}.sp-mpanel a:active{background:var(--sp-surf)}',
   // A narrow page: the links go behind the menu button, which sits after "Get started".
-  '@container (max-width: 760px){.sp-head{height:64px}.sp-hnav{display:none}.sp-menu{display:block}.sp-hgo{height:40px;margin-left:0;margin-right:8px}}'
+  '@container (max-width: 760px){.sp-head{height:64px}.sp-hnav{display:none}.sp-menu{display:block}.sp-hgo{height:44px;margin-left:0;margin-right:8px}}'
 ].join('');
 const landH2 = (L, text) => `<h2 style="margin: 0; max-width: 760px; font-size: ${L.h2}px; font-weight: 600; line-height: 1.04; letter-spacing: -.04em; text-wrap: balance;">${text}</h2>`;
 const leadP = (L, text, center) => `<p style="margin: ${Math.round(L.lead * .9)}px ${center ? 'auto' : '0'} 0; max-width: 600px; font-size: ${L.lead}px; line-height: 1.5; color: {{t.muted}}; text-wrap: pretty;">${text}</p>`;

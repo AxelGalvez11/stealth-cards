@@ -215,7 +215,7 @@ await withChrome(async chrome => {
           const h = L.head, geo = [h.h, h.logo.l, h.logo.w, h.go.r, h.go.w, h.go.h];
           ok(h.homeHref === '/' && h.goText === 'Get started' && h.goHref === 'https://app.lucida.cards/', tag + ': the header has the logo (home) and Get started (the app)', [h.homeHref, h.goText, h.goHref]);
           if (!phone) ok(h.nav && JSON.stringify(h.nav.map(x => [x[0], x[1]])) === JSON.stringify(NAV) && h.nav.every(x => x[2] >= 36) && !h.menu && h.h === 76, tag + ': a computer’s header is the logo, Blog, Compare, Features, Pricing, Sign in and Get started, in that order, with no menu button', h);
-          else ok(!h.nav && h.menu && h.menu.w >= 44 && h.menu.h >= 44 && h.h === 64, tag + ': a phone’s header is the logo, Get started and one menu button (44 px or more) in place of the links', h);
+          else ok(!h.nav && h.menu && h.menu.w >= 44 && h.menu.h >= 44 && h.go.h >= 44 && h.h === 64, tag + ': a phone’s header is the logo, Get started and one menu button (both 44 px or more) in place of the links', h);
           const first = headSeen[width] || (headSeen[width] = geo);
           ok(geo.every((v, i) => Math.abs(v - first[i]) <= 1), tag + ': the header is in the same place, at the same size, as on every other page', [geo, first]);
         }
