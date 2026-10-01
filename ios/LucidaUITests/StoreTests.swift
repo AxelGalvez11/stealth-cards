@@ -49,6 +49,7 @@ final class StoreTests: AppCase {
     check(app.buttons["goPro.pick.yearly"].label.contains("Save 30%"), "and what Yearly saves, worked out too")
     check(app.buttons["goPro.pick.yearly"].isSelected && !app.buttons["goPro.pick.monthly"].isSelected, "Yearly is the one picked")
     check(text(app, "Exam dates: ready in time for the test").exists && text(app, "More AI explanations").exists, "the pricing page’s Pro list is there")
+    check(!text(app, "Natural voices for sound cards").exists && app.staticTexts.matching(NSPredicate(format: "label == %@", "Themes for cards, covers and your profile")).count == 1, "less natural voices, which only the web has (and nothing twice)")
     check(button(app, "Restore purchases").exists && any(app, "Terms").exists && any(app, "Privacy").exists, "with Restore purchases, Terms, and Privacy")
     check(app.staticTexts["goPro.legal"].label == "Billed to your Apple Account. Renews every year until you cancel it, in iPhone Settings under Subscriptions.", "and how it renews, and where to cancel")
     app.buttons["goPro.pick.monthly"].tap()
