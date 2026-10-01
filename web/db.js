@@ -71,7 +71,7 @@ function signedOut(go, onChange = () => {}) {
   // The sidebar's rail (web/side.js) works for these pages too.
   let side = readSide();
   const toggleSide = () => { side = !side; writeSide(side); onChange(); };
-  addEventListener('storage', e => { if (e.key === SIDE_KEY) { side = readSide(); onChange(); } });
+  if (typeof addEventListener === 'function') addEventListener('storage', e => { if (e.key === SIDE_KEY) { side = readSide(); onChange(); } });
   return { signedOut: true, mock: false, auth, net, settings: () => ({ look: 'system' }), me: () => null, decks: () => [], folders: () => [],
     chrome: () => ({ nav: { today: '', news: '', hasNews: false, ...sideView(side, toggleSide) }, me: { bg: COLORS[0], initial: '', color: true, photo: '', href: '/sign-in' } }),
     join: () => live.view(), joinAt: (kind, code) => live.at(kind, code), act: { go, ...playerActs(live, go) } };
@@ -130,7 +130,7 @@ export async function createDb({ onChange, go }) {
   // The sidebar's rail (web/side.js), kept on this device and shared with the other tabs of it.
   let side = readSide();
   const toggleSide = () => { side = !side; writeSide(side); changed(); };
-  addEventListener('storage', e => { if (e.key === SIDE_KEY) { side = readSide(); changed(); } });
+  if (typeof addEventListener === 'function') addEventListener('storage', e => { if (e.key === SIDE_KEY) { side = readSide(); changed(); } });
   // Your theme (Pro, Settings › Theme): its key while it applies (you have Pro; on this computer everything is on), or ''
   // for Lucida's own look. Its code loads the first time a screen needs it (web/themes/load.js), and the screens draw
   // again once it's here; a theme you already use loads before the first page, so it doesn't flash in.
