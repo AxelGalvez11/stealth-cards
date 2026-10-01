@@ -92,6 +92,8 @@ extension Store {
     guard !demo else { return }
     await api.signOut()
     HTTPCookieStorage.shared.cookies?.forEach { HTTPCookieStorage.shared.deleteCookie($0) }
+    // (Their daily reminder goes with them. Only on purpose: a session that ran out, or opening the app with no network, leaves it.)
+    Reminder.shared.remove()
     lib = Library(); session = nil; signInStep = .email; phase = .signedOut
   }
 }
@@ -101,6 +103,8 @@ struct SettingsScreen: View {
   @EnvironmentObject private var store: Store
   @EnvironmentObject private var nav: Nav
   @State private var account = false
+  /// The daily reminder (what the phone has scheduled, and whether notices are allowed), which the row below reads.
+  @ObservedObject private var reminder = Reminder.shared
   /// Account → Password: its form open, what's typed, what the server said, and whether it worked.
   @State private var pwOpen = false
   @State private var pw = ""
@@ -162,7 +166,9 @@ struct SettingsScreen: View {
         group("Profile picture") { photoPanel }
         planGroup
         group("Studying") {
-          menuRow("Daily reminder", demo ? "9:00 AM" : s.reminder, options: ["7:00 AM", "8:00 AM", "9:00 AM", "12:00 PM", "6:00 PM", "8:00 PM", "9:00 PM"]) { store.setSetting(["reminder": $0]) }
+          // Off, or a time: picking a time turns the reminder on (the phone asks to send notices then), Off turns it off, and with notices off
+          // for Lucida in iPhone Settings the row stays Off and says how to allow them.
+          menuRow("Daily reminder", store.reminderValue, options: [Reminder.off] + Reminder.times, sub: store.reminderRefused ? Reminder.refusedLine : nil) { chooseReminder($0) }
           divider
           menuRow("New cards a day", "\(s.perDay)", options: ["0", "5", "10", "15", "20", "30", "50"]) { store.setSetting(["perDay": Int($0) ?? 20]) }
           divider
@@ -197,6 +203,9 @@ struct SettingsScreen: View {
     }
     // (Password's Save sits under the keyboard on a short screen: scrolling puts the keyboard away.)
     .scrollDismissesKeyboard(.interactively)
+    // The daily reminder is read from the phone when this opens and when you come back (from iPhone Settings, say, after allowing notices).
+    .task { if !store.demo { await reminder.refresh() } }
+    .onReceive(NotificationCenter.default.publisher(for: UIApplication.willEnterForegroundNotification)) { _ in if !store.demo { Task { await reminder.refresh() } } }
     .debugScroll()
     .ignoresSafeArea()
     .toolbar(.hidden, for: .navigationBar)
@@ -394,10 +403,16 @@ struct SettingsScreen: View {
     HStack(spacing: 6) { Text(v).css(15).lineLimit(1); Icon("chev", 14, 2.2) }.foregroundStyle(t.muted)
   }
 
-  private func menuRow(_ label: String, _ current: String, options: [String], pick: @escaping (String) -> Void) -> some View {
+  private func menuRow(_ label: String, _ current: String, options: [String], sub: String? = nil, pick: @escaping (String) -> Void) -> some View {
     Menu {
       ForEach(options, id: \.self) { o in Button(o) { pick(o) } }
-    } label: { row(label) { value(current) } }
+    } label: { row(label, sub: sub) { value(current) } }
+  }
+
+  /// Daily reminder: Off removes it; a time sets it (the phone asks to send notices then) and is kept with your settings.
+  private func chooseReminder(_ pick: String) {
+    if store.demo { store.props.reminder = pick; store.props.reminderNote = false; return }
+    Task { if await reminder.choose(pick) { store.setSetting(["reminder": pick]) } }
   }
 
   /// SEG: a small segmented control on the gray row (white track, black pick).

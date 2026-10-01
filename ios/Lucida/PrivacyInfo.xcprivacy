@@ -3,7 +3,8 @@
 <!-- What the App Store asks every app to declare. Lucida doesn't track anyone. It keeps your email, your name and handle (to sign
      you in and to show who shared a deck), your decks and cards, and the pictures and sounds (like recordings) you put on them,
      and which Lucida Pro you bought with Apple's in-app purchase (the signed purchase goes to Lucida's server, which turns Pro
-     on), all to run the app. A password you may set is only sent to be checked, and never kept on the phone. UserDefaults
+     on), all to run the app. A password you may set is only sent to be checked, and never kept on the phone. The daily reminder is a notification the phone schedules
+     itself, so nothing about it is sent anywhere but the time you pick, which is kept with your settings. UserDefaults
      only holds a Learn session you left and a fingerprint of each theme's code, for this app alone (reason CA92.1). The
      pictures a theme is drawn into are kept in the app's own cache folder, and their dates tell which are the oldest to
      clear out when there are too many (file timestamps, reason C617.1). -->

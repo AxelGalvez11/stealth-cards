@@ -87,6 +87,8 @@ struct DemoProps {
   /// A page's Report sheet open (the deck page, a profile, a suggestion), and your verification for the boards that show it
   /// ("", "Waiting for review", "Teacher", or "School": a verified teacher sees Check this deck; Settings says so).
   var report = false, verified = ""
+  /// Settings' Daily reminder on a design screen: what the row says ("Off" or a time), and the line about allowing notifications.
+  var reminder = "9:00 AM", reminderNote = false
   /// The Account group and the AI apps (their Tweaks): Delete account's question open ("Asking", "Deleting", or "Failed"), Password
   /// open, nobody blocked, and no apps allowed.
   var deleteOpen = "", passwordOpen = false, noBlocks = false, noApps = false

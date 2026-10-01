@@ -73,6 +73,8 @@ struct RootView: View {
     .preferredColorScheme(over ?? (dark ? .dark : .light))
     .onChange(of: scheme, initial: true) { _, s in if over == nil { system = s } }
     #if DEBUG
+    // The reminder's end-to-end test reads what is scheduled from this invisible element (`-reminderAudit`).
+    .overlay(alignment: .bottomLeading) { if ProcessInfo.processInfo.arguments.contains("-reminderAudit") { ReminderAuditView() } }
     // The end-to-end test reads which themes' pictures are on screen from this invisible element (ThemeAudit).
     .overlay(alignment: .topLeading) {
       if ThemeAudit.on {
@@ -352,6 +354,9 @@ extension Board {
       }
     }
     if let k = Board.arg("-goPro") { store.props.goPro = k }
+    // Settings' Daily reminder: `-reminder Off|"6:00 PM"|...`, and `-reminderNote` (Off, with the line about allowing notifications).
+    if let k = Board.arg("-reminder") { store.props.reminder = k }
+    if ProcessInfo.processInfo.arguments.contains("-reminderNote") { store.props.reminderNote = true; store.props.reminder = "Off" }
     // The Settings, Profile, Connect AI, and sign-in boards' Tweaks: `-plan "Pro, billed by Apple"`, `-deleteOpen Asking|Deleting|Failed`,
     // `-passwordOpen`, `-noBlocks`, `-noApps`, `-moreOpen`, `-blocked`, `-passwordMode`.
     if let k = Board.arg("-plan") { store.props.plan = k }

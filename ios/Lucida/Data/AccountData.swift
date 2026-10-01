@@ -64,6 +64,7 @@ extension Store {
   /// Everything of yours leaves this phone: the cookies, the library, what was drawn for your theme, and any page you were on.
   func signedOutNow() {
     HTTPCookieStorage.shared.cookies?.forEach { HTTPCookieStorage.shared.deleteCookie($0) }
+    Reminder.shared.remove()
     lib = Library(); session = nil; welcoming = false; signInStep = .email; phase = .signedOut
     netDrop()
   }
