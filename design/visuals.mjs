@@ -34,7 +34,7 @@ export const SCREENS = {
   class:   { desk: { board: 'WebClass', crop: [270, 20, 1130, 640] }, phone: { board: 'PhoneClass', crop: [0, 100, 390, 390] },
     alt: 'A class: its assignments, how far each student who shares has got, the invite code and the people in it' },
   picture: { desk: { board: 'WebCardsScreenImage', crop: [370, 130, 1060, 620] }, phone: { board: 'PhoneReviewImage', crop: [0, 100, 390, 440] },
-    alt: 'A picture card: boxes drawn over the parts of a picture, and the answer for each box' },
+    alt: 'A picture card in Lucida: boxes cover the labels of a picture, and each box is its own card' },
   import:  { desk: { board: 'WebImport', crop: [400, 130, 640, 640] }, phone: { board: 'WebImport', crop: [420, 143, 600, 400] },
     alt: 'Import cards: pasted text with one card per line, the number of cards found, and the deck to put them in' },
   connect: { desk: { board: 'WebConnect', crop: [270, 50, 1130, 650] }, phone: { board: 'PhoneConnect', crop: [0, 50, 390, 420] },
