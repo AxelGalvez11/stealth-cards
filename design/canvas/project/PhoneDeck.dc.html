@@ -818,8 +818,8 @@ renderVals() { const t = this.theme(!!this.props.dark, !!this.props.dim);const d
     const row = (r, on, go) => ({ label: r[1], sub: r[2] || '', hasSub: !!r[2], on, pressed: on ? 'true' : 'false', pick: () => { this.setState(shut); go(); } });
     const head = any && !typed ? [row(['', any], !value, () => choose('', null))] : [];
     const list = found.map(r => row(r, !!value && r[0] === value, () => choose(r[0], r)));
-    const o = other && typed ? other(typed) : null;
-    return { open, expanded: open ? 'true' : 'false', title, ph, hasSearch: !!find, query: q, rows: [...head, ...list], none: !!find && !!typed && !list.length && !o, noneLine,
+    const o = other && typed && !found.some(r => String(r[1]).toLowerCase() === typed.toLowerCase()) ? other(typed) : null;
+    return { open, expanded: open ? 'true' : 'false', title, ph, hasSearch: !!find, query: q, rows: [...head, ...list], none: !!find && !!typed && !list.length, noneLine,
       toggle: () => this.setState(open ? shut : { pickIs: key, pickQ: '', pickN: (this.state.pickN || 0) + 1 }), close: () => this.setState(shut),
       setQuery: e => this.setState({ pickQ: e && e.target ? e.target.value : '' }),
       ref: el => { if (!el || db.mock || this.pickFocus === this.state.pickN) return; this.pickFocus = this.state.pickN; el.focus(); },

@@ -1060,7 +1060,7 @@ export default [
   "name": "Privacy",
   "title": "Privacy Policy · lucida.cards/privacy",
   "w": 1440,
-  "h": 2338
+  "h": 2685
  },
  {
   "name": "Reference",
