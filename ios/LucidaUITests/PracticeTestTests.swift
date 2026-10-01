@@ -3,7 +3,7 @@
 // element, which answer is right for the question on screen, and `-testSpent <ms>` sets how long the test in progress has been
 // open (to check the clock without waiting). The same story as the web app's own test (full/practice/tests/test-ui.mjs), in
 // flows that each set up their own people and decks (so any one can run alone):
-//   1  The set-up (lengths, kinds, time limit, the line about the review schedule), taking a test of choices and true-or-false:
+//   1  The set-up (lengths, kinds, time limit, and no tip lines), taking a test of choices and true-or-false:
 //      numbers, going back, flags, the list of questions, Submit asking when some are unanswered, the results (the score, the
 //      time, every question), Retake the ones I missed, and the past results on the deck page.
 //   2  Written answers (case, accents, a missing "the" and small typos are forgiven; a wrong one offers Count it as right,
@@ -209,9 +209,8 @@ final class PracticeTestTests: XCTestCase {
     check(!any(app, "Practice tests").exists, "with no tests taken there is no list of past results")
     tap(button(app, "Practice test"), "Practice test")
     check(wait(button(app, "Start test")), "Practice test opens the set-up")
-    check(wait(any(app, "Answer questions from " + name + ", then see how you did.")), "it says what the test is of")
     check(button(app, "10").exists && button(app, "All · 12").exists && !button(app, "20").exists, "lengths: 10 and All with its number (12 cards, so no 20 or 30)")
-    check(count(app, "Tests don’t change your review schedule.") == 1, "it says once, plainly, that tests don’t change your review schedule")
+    check(!any(app, "Tests don’t change your review schedule.").exists && !any(app, "Answer questions from " + name + ", then see how you did.").exists, "no tip lines on the set-up (the owner: no tips)")
     check(["Multiple choice", "True or false", "Written", "Matching", "Fill in the blank"].allSatisfy { button(app, $0).exists && button(app, $0).isSelected }, "all five kinds are on to begin with")
     check(["Off", "10 min", "20 min", "30 min"].allSatisfy { button(app, $0).exists }, "time limit: Off, 10, 20 or 30 minutes")
     for k in ["Written", "Matching", "Fill in the blank", "True or false"] { tap(button(app, k), k) }
@@ -424,7 +423,7 @@ final class PracticeTestTests: XCTestCase {
     check(wait(button(app, "Practice test")), "a folder’s page has a Practice test button")
     check(!any(app, "Last practice test").exists, "and no line about a last test yet")
     tap(button(app, "Practice test"), "Practice test")
-    check(wait(any(app, "Answer questions from the decks in " + fname + ", then see how you did.")) && button(app, "All · 16").exists, "it is a test of all its decks (12 + 4 cards)")
+    check(wait(button(app, "Start test")) && button(app, "All · 16").exists, "it is a test of all its decks (12 + 4 cards)")
     for k in ["Written", "Matching", "Fill in the blank"] { tap(button(app, k), k) }
     tap(button(app, "All · 16"), "All")
     tap(button(app, "Start test"), "Start test")

@@ -96,8 +96,6 @@ struct TestStartSheet: View {
         Button(action: nav.close) { Icon("close", 16, 2.2).frame(width: 40, height: 40).background(Circle().fill(t.surf)) }
           .buttonStyle(.press).accessibilityLabel("Close")
       }
-      Text(folder ? "Answer questions from the decks in \(plan.name), then see how you did." : "Answer questions from \(plan.name), then see how you did.")
-        .css(15, lh: 1.5).foregroundStyle(t.muted).padding(.top, -6)
       field("Questions") { Segmented(options: lens, current: cur.id, height: 38, hPad: 6) { count = Int($0) } }
       field("Kinds of questions") {
         FlowLayout(spacing: 8, lineSpacing: 8) {
@@ -113,8 +111,10 @@ struct TestStartSheet: View {
         }
       }
       field("Time limit") { Segmented(options: [("0", "Off"), ("10", "10 min"), ("20", "20 min"), ("30", "30 min")], current: String(limit), height: 38, hPad: 6) { limit = Int($0) ?? 0 } }
-      Text(plan.cards == 0 ? (folder ? "These decks have no cards to ask yet." : "This deck has no cards to ask yet.") : off ? "These kinds don’t fit your cards. Turn on more." : "Tests don’t change your review schedule.")
-        .css(13, lh: 1.5).foregroundStyle(t.muted)
+      if plan.cards == 0 || off {
+        Text(plan.cards == 0 ? (folder ? "These decks have no cards to ask yet." : "This deck has no cards to ask yet.") : "These kinds don’t fit your cards. Turn on more.")
+          .css(13, lh: 1.5).foregroundStyle(t.muted)
+      }
       FlexRow(spacing: 10) {
         Button(action: nav.close) { Text("Cancel").css(15, .semibold).foregroundStyle(t.text).frame(maxWidth: .infinity).frame(height: 52).background(Capsule().fill(t.surf)) }
           .buttonStyle(.press)

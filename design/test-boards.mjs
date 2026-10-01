@@ -67,11 +67,10 @@ export default function testKit(c) {
 
   // ---------- Set up ----------
   const setupBody = phone => `<div style="display: flex; align-items: center; justify-content: space-between; gap: 12px;"><span style="display: flex; align-items: center; gap: 10px; font-size: 22px; font-weight: 600; letter-spacing: -.02em;">${svg(I.file, 20, 1.8)}Practice test</span>${close('cancel', 'Close')}</div>
-    <p style="margin: ${phone ? '-6px' : '-8px'} 0 0; font-size: 15px; line-height: 1.5; color: {{t.muted}};">{{setupLine}}</p>
     ${field('Questions', seg('lengths'))}
     ${field('Kinds of questions', `<div style="display: flex; flex-wrap: wrap; gap: 8px;"><sc-for list="{{kinds}}" as="k" hint-placeholder-count="5"><button type="button" onClick="{{k.pick}}" aria-pressed="{{k.pressed}}" style="height: 38px; padding: 0 14px; display: inline-flex; align-items: center; gap: 6px; border: 0; border-radius: 999px; background: {{k.bg}}; color: {{k.fg}}; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; transition: background-color .15s, color .15s;"><sc-if value="{{k.on}}" hint-placeholder-val="{{ true }}">${svg(I.check, 14, 2.4)}</sc-if>{{k.label}}</button></sc-for></div>`)}
     ${field('Time limit', seg('limits'))}
-    <div style="font-size: 13px; line-height: 1.5; color: {{t.muted}};">{{setupNote}}</div>
+    <sc-if value="{{hasNote}}" hint-placeholder-val="{{ false }}"><div style="font-size: 13px; line-height: 1.5; color: {{t.muted}};">{{setupNote}}</div></sc-if>
     <div style="display: flex; gap: 10px;">${btn('Cancel', 'cancel')}${btn('Start test', 'start', { inv: true, grow: 2, attrs: ' aria-disabled="{{startOff}}"' }).replace('background: {{t.inv}}', 'background: {{startBg}}').replace('color: {{t.invText}}', 'color: {{startFg}}')}</div>`;
   const webSetup = `<div style="position: absolute; inset: 0;"><sc-if value="{{inFolder}}" hint-placeholder-val="{{ false }}"><dc-import name="WebDecks" dark="{{dark}}" dim="{{dim}}" folder="{{folderId}}" hint-size="1440px,900px"></dc-import></sc-if><sc-if value="{{inDeck}}" hint-placeholder-val="{{ true }}"><dc-import name="WebDeck" dark="{{dark}}" dim="{{dim}}" deck-id="{{deckId}}" hint-size="1440px,900px"></dc-import></sc-if></div>
     <div class="sc-scrim" style="position: absolute; inset: 0; background: {{t.dim}};"></div>
@@ -217,12 +216,13 @@ renderVals() { ${DB_JS}
   const folder = !!P.folderId;
   const hasCards = plan.cards > 0;
   const setupVals = {
-    inFolder: folder, inDeck: !folder, setupLine: folder ? 'Answer questions from the decks in ' + plan.name + ', then see how you did.' : 'Answer questions from ' + plan.name + ', then see how you did.',
+    inFolder: folder, inDeck: !folder,
     lengths: lens.map(x => ({ label: x.id ? x.label : 'All' + (avail > 0 ? ' · ' + avail.toLocaleString('en-US') : ''), ...seg(x.id === lenNow), pick: () => this.setState({ count: x.id }) })),
     kinds: chips.map(([k, label]) => { const on = kindsOn.includes(k); return { label, on, pressed: on ? 'true' : 'false', bg: on ? t.inv : t.surf, fg: on ? t.invText : t.text,
       pick: () => this.setState({ kinds: on && kindsOn.length > 1 ? kindsOn.filter(x => x !== k) : on ? kindsOn : [...kindsOn, k] }) }; }),
     limits: [[0, 'Off'], [10, '10 min'], [20, '20 min'], [30, '30 min']].map(([m, label]) => ({ label, ...seg(m === limitNow), pick: () => this.setState({ limit: m }) })),
-    setupNote: !hasCards ? (folder ? 'These decks have no cards to ask yet.' : 'This deck has no cards to ask yet.') : avail === 0 ? 'These kinds don’t fit your cards. Turn on more.' : 'Tests don’t change your review schedule.',
+    setupNote: !hasCards ? (folder ? 'These decks have no cards to ask yet.' : 'This deck has no cards to ask yet.') : avail === 0 ? 'These kinds don’t fit your cards. Turn on more.' : '',
+    hasNote: !hasCards || avail === 0,
     startOff: avail === 0 ? 'true' : 'false', startBg: avail === 0 ? t.surf2 : t.inv, startFg: avail === 0 ? t.muted : t.invText,
     cancel: () => { if (live) db.act.go(folder ? '/library/folder/' + P.folderId : '/deck/' + P.deckId); else this.setState({ screen: 'Set up' }); },
     start: e => { if (e && e.preventDefault) e.preventDefault(); if (avail === 0) return; if (live) db.act.startTest(scope, { count: lenNow, kinds: kindsOn, limit: limitNow }); else go('Multiple choice'); },
