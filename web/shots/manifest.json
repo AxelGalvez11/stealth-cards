@@ -1,0 +1,730 @@
+{
+ "review.webp": {
+  "board": "WebReviewFour",
+  "crop": [
+   300,
+   130,
+   840,
+   640
+  ],
+  "scale": 1.619047619047619,
+  "hash": "594756596b",
+  "width": 1360,
+  "height": 1036,
+  "bytes": 33252
+ },
+ "review-dark.webp": {
+  "board": "WebReviewFour",
+  "crop": [
+   300,
+   130,
+   840,
+   640
+  ],
+  "scale": 1.619047619047619,
+  "hash": "01e0e7a37a",
+  "width": 1360,
+  "height": 1036,
+  "bytes": 53198
+ },
+ "review-phone.webp": {
+  "board": "PhoneReviewFour",
+  "crop": [
+   0,
+   340,
+   390,
+   480
+  ],
+  "scale": 2,
+  "hash": "68776a4dff",
+  "width": 780,
+  "height": 960,
+  "bytes": 26120
+ },
+ "review-phone-dark.webp": {
+  "board": "PhoneReviewFour",
+  "crop": [
+   0,
+   340,
+   390,
+   480
+  ],
+  "scale": 2,
+  "hash": "cc4cc08eed",
+  "width": 780,
+  "height": 960,
+  "bytes": 33324
+ },
+ "learn.webp": {
+  "board": "WebQuiz",
+  "crop": [
+   250,
+   10,
+   940,
+   640
+  ],
+  "scale": 1.446808510638298,
+  "hash": "ebe0efaf57",
+  "width": 1360,
+  "height": 926,
+  "bytes": 67438
+ },
+ "learn-dark.webp": {
+  "board": "WebQuiz",
+  "crop": [
+   250,
+   10,
+   940,
+   640
+  ],
+  "scale": 1.446808510638298,
+  "hash": "9d7465ed3b",
+  "width": 1360,
+  "height": 926,
+  "bytes": 125200
+ },
+ "learn-phone.webp": {
+  "board": "PhoneQuiz",
+  "crop": [
+   0,
+   105,
+   390,
+   390
+  ],
+  "scale": 2,
+  "hash": "db0aac40ca",
+  "width": 780,
+  "height": 780,
+  "bytes": 47168
+ },
+ "learn-phone-dark.webp": {
+  "board": "PhoneQuiz",
+  "crop": [
+   0,
+   105,
+   390,
+   390
+  ],
+  "scale": 2,
+  "hash": "424bdef2ef",
+  "width": 780,
+  "height": 780,
+  "bytes": 60308
+ },
+ "setup.webp": {
+  "board": "WebQuizStart",
+  "crop": [
+   400,
+   160,
+   640,
+   590
+  ],
+  "scale": 2,
+  "hash": "6f925fb899",
+  "width": 1280,
+  "height": 1180,
+  "bytes": 147958
+ },
+ "setup-dark.webp": {
+  "board": "WebQuizStart",
+  "crop": [
+   400,
+   160,
+   640,
+   590
+  ],
+  "scale": 2,
+  "hash": "9ce7e82daf",
+  "width": 1280,
+  "height": 1180,
+  "bytes": 137760
+ },
+ "setup-phone.webp": {
+  "board": "PhoneQuizStart",
+  "crop": [
+   0,
+   250,
+   390,
+   420
+  ],
+  "scale": 2,
+  "hash": "42d355f021",
+  "width": 780,
+  "height": 840,
+  "bytes": 98978
+ },
+ "setup-phone-dark.webp": {
+  "board": "PhoneQuizStart",
+  "crop": [
+   0,
+   250,
+   390,
+   420
+  ],
+  "scale": 2,
+  "hash": "6ce3fd9abb",
+  "width": 780,
+  "height": 840,
+  "bytes": 99230
+ },
+ "live.webp": {
+  "board": "LiveQuestion",
+  "crop": [
+   30,
+   190,
+   1380,
+   540
+  ],
+  "scale": 0.9855072463768116,
+  "hash": "e8995bc099",
+  "width": 1360,
+  "height": 532,
+  "bytes": 139392
+ },
+ "live-dark.webp": {
+  "board": "LiveQuestion",
+  "crop": [
+   30,
+   190,
+   1380,
+   540
+  ],
+  "scale": 0.9855072463768116,
+  "hash": "53133edee0",
+  "width": 1360,
+  "height": 532,
+  "bytes": 139392
+ },
+ "live-phone.webp": {
+  "board": "LiveAnswer",
+  "crop": [
+   0,
+   40,
+   390,
+   440
+  ],
+  "scale": 2,
+  "hash": "f23cfaf6e1",
+  "width": 780,
+  "height": 880,
+  "bytes": 131412
+ },
+ "live-phone-dark.webp": {
+  "board": "LiveAnswer",
+  "crop": [
+   0,
+   40,
+   390,
+   440
+  ],
+  "scale": 2,
+  "hash": "bcc8d04650",
+  "width": 780,
+  "height": 880,
+  "bytes": 131412
+ },
+ "deck.webp": {
+  "board": "WebPublicDeck",
+  "crop": [
+   270,
+   20,
+   1130,
+   640
+  ],
+  "scale": 1.2035398230088497,
+  "hash": "233679d318",
+  "width": 1360,
+  "height": 770,
+  "bytes": 136040
+ },
+ "deck-dark.webp": {
+  "board": "WebPublicDeck",
+  "crop": [
+   270,
+   20,
+   1130,
+   640
+  ],
+  "scale": 1.2035398230088497,
+  "hash": "13acacf0dd",
+  "width": 1360,
+  "height": 770,
+  "bytes": 137750
+ },
+ "deck-phone.webp": {
+  "board": "PhonePublicDeck",
+  "crop": [
+   0,
+   0,
+   390,
+   440
+  ],
+  "scale": 2,
+  "hash": "4c99540c12",
+  "width": 780,
+  "height": 880,
+  "bytes": 113014
+ },
+ "deck-phone-dark.webp": {
+  "board": "PhonePublicDeck",
+  "crop": [
+   0,
+   0,
+   390,
+   440
+  ],
+  "scale": 2,
+  "hash": "3fa2de1798",
+  "width": 780,
+  "height": 880,
+  "bytes": 113746
+ },
+ "class.webp": {
+  "board": "WebClass",
+  "crop": [
+   270,
+   20,
+   1130,
+   640
+  ],
+  "scale": 1.2035398230088497,
+  "hash": "822aa01044",
+  "width": 1360,
+  "height": 770,
+  "bytes": 37608
+ },
+ "class-dark.webp": {
+  "board": "WebClass",
+  "crop": [
+   270,
+   20,
+   1130,
+   640
+  ],
+  "scale": 1.2035398230088497,
+  "hash": "c6fa4c3e88",
+  "width": 1360,
+  "height": 770,
+  "bytes": 38796
+ },
+ "class-phone.webp": {
+  "board": "PhoneClass",
+  "crop": [
+   0,
+   100,
+   390,
+   390
+  ],
+  "scale": 2,
+  "hash": "e2563b91fb",
+  "width": 780,
+  "height": 780,
+  "bytes": 26212
+ },
+ "class-phone-dark.webp": {
+  "board": "PhoneClass",
+  "crop": [
+   0,
+   100,
+   390,
+   390
+  ],
+  "scale": 2,
+  "hash": "68df76db45",
+  "width": 780,
+  "height": 780,
+  "bytes": 26844
+ },
+ "picture.webp": {
+  "board": "WebCardsScreenImage",
+  "crop": [
+   370,
+   130,
+   1060,
+   620
+  ],
+  "scale": 1.2830188679245282,
+  "hash": "b9821c5dc6",
+  "width": 1360,
+  "height": 795,
+  "bytes": 23060
+ },
+ "picture-dark.webp": {
+  "board": "WebCardsScreenImage",
+  "crop": [
+   370,
+   130,
+   1060,
+   620
+  ],
+  "scale": 1.2830188679245282,
+  "hash": "bf656bf654",
+  "width": 1360,
+  "height": 795,
+  "bytes": 23450
+ },
+ "picture-phone.webp": {
+  "board": "PhoneReviewImage",
+  "crop": [
+   0,
+   100,
+   390,
+   440
+  ],
+  "scale": 2,
+  "hash": "0f3dddb560",
+  "width": 780,
+  "height": 880,
+  "bytes": 16882
+ },
+ "picture-phone-dark.webp": {
+  "board": "PhoneReviewImage",
+  "crop": [
+   0,
+   100,
+   390,
+   440
+  ],
+  "scale": 2,
+  "hash": "77f8c4e372",
+  "width": 780,
+  "height": 880,
+  "bytes": 22904
+ },
+ "import.webp": {
+  "board": "WebImport",
+  "crop": [
+   400,
+   130,
+   640,
+   640
+  ],
+  "scale": 2,
+  "hash": "a06809e2c2",
+  "width": 1280,
+  "height": 1280,
+  "bytes": 34446
+ },
+ "import-dark.webp": {
+  "board": "WebImport",
+  "crop": [
+   400,
+   130,
+   640,
+   640
+  ],
+  "scale": 2,
+  "hash": "a243f34804",
+  "width": 1280,
+  "height": 1280,
+  "bytes": 31366
+ },
+ "import-phone.webp": {
+  "board": "WebImport",
+  "crop": [
+   420,
+   143,
+   600,
+   400
+  ],
+  "scale": 2,
+  "hash": "aae7d932a4",
+  "width": 1200,
+  "height": 800,
+  "bytes": 12564
+ },
+ "import-phone-dark.webp": {
+  "board": "WebImport",
+  "crop": [
+   420,
+   143,
+   600,
+   400
+  ],
+  "scale": 2,
+  "hash": "de25a523ff",
+  "width": 1200,
+  "height": 800,
+  "bytes": 12420
+ },
+ "connect.webp": {
+  "board": "WebConnect",
+  "crop": [
+   270,
+   50,
+   1130,
+   650
+  ],
+  "scale": 1.2035398230088497,
+  "hash": "1abc9618d9",
+  "width": 1360,
+  "height": 782,
+  "bytes": 70170
+ },
+ "connect-dark.webp": {
+  "board": "WebConnect",
+  "crop": [
+   270,
+   50,
+   1130,
+   650
+  ],
+  "scale": 1.2035398230088497,
+  "hash": "14909caa54",
+  "width": 1360,
+  "height": 782,
+  "bytes": 71686
+ },
+ "connect-phone.webp": {
+  "board": "PhoneConnect",
+  "crop": [
+   0,
+   50,
+   390,
+   420
+  ],
+  "scale": 2,
+  "hash": "b305c6364d",
+  "width": 780,
+  "height": 840,
+  "bytes": 55794
+ },
+ "connect-phone-dark.webp": {
+  "board": "PhoneConnect",
+  "crop": [
+   0,
+   50,
+   390,
+   420
+  ],
+  "scale": 2,
+  "hash": "8049a2870f",
+  "width": 780,
+  "height": 840,
+  "bytes": 56462
+ },
+ "consent.webp": {
+  "board": "WebConnectConsent",
+  "crop": [
+   440,
+   180,
+   560,
+   540
+  ],
+  "scale": 2,
+  "hash": "b312c8946b",
+  "width": 1120,
+  "height": 1080,
+  "bytes": 38952
+ },
+ "consent-dark.webp": {
+  "board": "WebConnectConsent",
+  "crop": [
+   440,
+   180,
+   560,
+   540
+  ],
+  "scale": 2,
+  "hash": "051ac9d8ac",
+  "width": 1120,
+  "height": 1080,
+  "bytes": 40038
+ },
+ "consent-phone.webp": {
+  "board": "PhoneConnectConsent",
+  "crop": [
+   0,
+   180,
+   390,
+   480
+  ],
+  "scale": 2,
+  "hash": "fa39086a47",
+  "width": 780,
+  "height": 960,
+  "bytes": 35716
+ },
+ "consent-phone-dark.webp": {
+  "board": "PhoneConnectConsent",
+  "crop": [
+   0,
+   180,
+   390,
+   480
+  ],
+  "scale": 2,
+  "hash": "d88ce56111",
+  "width": 780,
+  "height": 960,
+  "bytes": 36680
+ },
+ "decks.webp": {
+  "board": "WebDecks",
+  "crop": [
+   270,
+   20,
+   1130,
+   640
+  ],
+  "scale": 1.2035398230088497,
+  "hash": "eb6f8de4c1",
+  "width": 1360,
+  "height": 770,
+  "bytes": 83928
+ },
+ "decks-dark.webp": {
+  "board": "WebDecks",
+  "crop": [
+   270,
+   20,
+   1130,
+   640
+  ],
+  "scale": 1.2035398230088497,
+  "hash": "d5c5b4fc37",
+  "width": 1360,
+  "height": 770,
+  "bytes": 83678
+ },
+ "decks-phone.webp": {
+  "board": "PhoneLibrary",
+  "crop": [
+   0,
+   40,
+   390,
+   480
+  ],
+  "scale": 2,
+  "hash": "14fc25d74d",
+  "width": 780,
+  "height": 960,
+  "bytes": 22800
+ },
+ "decks-phone-dark.webp": {
+  "board": "PhoneLibrary",
+  "crop": [
+   0,
+   40,
+   390,
+   480
+  ],
+  "scale": 2,
+  "hash": "8284a4982b",
+  "width": 780,
+  "height": 960,
+  "bytes": 22810
+ },
+ "audio.webp": {
+  "board": "WebReviewAudio",
+  "crop": [
+   300,
+   120,
+   840,
+   540
+  ],
+  "scale": 1.619047619047619,
+  "hash": "beb27fc92c",
+  "width": 1360,
+  "height": 874,
+  "bytes": 19700
+ },
+ "audio-dark.webp": {
+  "board": "WebReviewAudio",
+  "crop": [
+   300,
+   120,
+   840,
+   540
+  ],
+  "scale": 1.619047619047619,
+  "hash": "0d12b4f11a",
+  "width": 1360,
+  "height": 874,
+  "bytes": 34410
+ },
+ "audio-phone.webp": {
+  "board": "PhoneReviewAudio",
+  "crop": [
+   0,
+   200,
+   390,
+   360
+  ],
+  "scale": 2,
+  "hash": "5c533ab321",
+  "width": 780,
+  "height": 720,
+  "bytes": 11578
+ },
+ "audio-phone-dark.webp": {
+  "board": "PhoneReviewAudio",
+  "crop": [
+   0,
+   200,
+   390,
+   360
+  ],
+  "scale": 2,
+  "hash": "5db912239e",
+  "width": 780,
+  "height": 720,
+  "bytes": 14650
+ },
+ "stats.webp": {
+  "board": "WebStats",
+  "crop": [
+   270,
+   20,
+   1130,
+   580
+  ],
+  "scale": 1.2035398230088497,
+  "hash": "b31b5de389",
+  "width": 1360,
+  "height": 698,
+  "bytes": 45646
+ },
+ "stats-dark.webp": {
+  "board": "WebStats",
+  "crop": [
+   270,
+   20,
+   1130,
+   580
+  ],
+  "scale": 1.2035398230088497,
+  "hash": "8773400ea7",
+  "width": 1360,
+  "height": 698,
+  "bytes": 47656
+ },
+ "stats-phone.webp": {
+  "board": "PhoneStats",
+  "crop": [
+   0,
+   40,
+   390,
+   480
+  ],
+  "scale": 2,
+  "hash": "03d3ebec36",
+  "width": 780,
+  "height": 960,
+  "bytes": 27830
+ },
+ "stats-phone-dark.webp": {
+  "board": "PhoneStats",
+  "crop": [
+   0,
+   40,
+   390,
+   480
+  ],
+  "scale": 2,
+  "hash": "2aac4c8763",
+  "width": 780,
+  "height": 960,
+  "bytes": 29268
+ }
+}
