@@ -51,7 +51,7 @@ The background's shader is compiled when the app first shows it (Design/Aura.swi
 
 The tab bar is Today, Library, Discover, Stats, and Profile (your own picture is its icon). Connect AI is a page inside Settings
 (its row there, a back button, no tab bar; `Nav.openConnect()` opens it from the empty states and Today's start tile).
-Discover (its own tab), profiles (yours is the Profile tab, which your picture on Today opens too, and its gear opens Settings;
+Discover (its own tab), profiles (yours is the Profile tab, and its gear opens Settings;
 anyone's, from their name, is a page that lights no tab),
 Edit profile, pins, News (the bell on Today), Settings → Profile, whose each deck is in the Library, and a deck's sharing:
 the Sharing tab of Deck settings, a deck you study from someone (Suggest a change instead of New card), and your copy of
@@ -143,8 +143,8 @@ on each assignment, whether you share your progress, Leave), or as an invite you
 (a deck, a goal, a date), Report, and Get verified are sheets. Today lists what your classes assigned you. The answers
 come from the same server as the web app's (`Data/ClassData.swift`, like `web/classes.mjs` and `web/net.js`); your own
 progress on a class deck is worked out here from your own cards (a port of `web/progress.js`) and sent to a class only if
-you turned sharing on. Universal links aren't set up, so the way into a class is Join with its code; Copy invite link and
-Share to Google Classroom share the web app's link. The boards: `PhoneClasses` (and `Dark`, `Empty`, `New`, `Join`),
+you turned sharing on. Universal links aren't set up, so the way into a class is Join with its code; Share invite link opens the
+phone's share sheet with the web app's link. The boards: `PhoneClasses` (and `Dark`, `Empty`, `New`, `Join`),
 `PhoneClass` (and `Dark`, `Gray`, `Member`, `New`, `Invite`, `Loading`, `Missing`, `AddDeck`, `Assign`, `Report`, `Verify`), and
 `PhoneTodayClass`.
 
@@ -183,3 +183,33 @@ Pro person picks a theme and sees its card, background, covers and picture, a da
 pick one, and one whose Pro lapsed never draws it. The app tells the test what it draws through an invisible element
 (`ThemeAudit`, debug builds only).
 
+## Motion, swiping, haptics and sharing
+
+The owner's first TestFlight notes (2026-10-01), end to end in `LucidaUITests/PolishTests.swift`; `ios/tools/e2e-polish.sh <simulator id>`
+runs it on a fresh server on port 3914 (`ONLY=PolishTests/test4SwipeToChangePages` runs one flow, `SHOTS=<folder>` saves a picture
+when a check fails) and then lists every haptic in the app.
+
+- **Today has no profile picture** (the Profile tab is the way to your profile); the title stays in the middle.
+- **Remove from folder**, not "No folder": a deck's ⋯ menu in the Library and Deck settings' Folder chips offer it only for a deck that is
+  in a folder, first, above the folders. Making a copy of someone's deck starts in "Library" (the top level).
+- **Share opens the phone's share sheet** (`ShareSheet.present`, `Design/PageViews.swift`): Share profile (both buttons), a deck's Share link,
+  a class's Share invite link, and a shared deck's share button. Connect AI's link is for pasting into another app, so it still copies.
+- **Swiping** (`Design/Swipe.swift`): from the left edge goes back on every pushed page (`BackSwipe`: the pages hide the navigation bar,
+  which turns UIKit's own swipe off; this turns it back on, and still isn't allowed while something is over the page or a page is
+  moving), and a swipe on a tab's first page moves to the next tab or the one before (`TabPager`: the page follows the finger and
+  settles without a bounce; the tab bar follows). A row of decks or chips that scrolls sideways keeps its own swipe; study cards and
+  Learn are full screens, so a swipe there does nothing to the tabs; at either end the swipe is still taken (so it can't tap the row
+  it lifts off) but nothing moves.
+- **Haptics** (`Design/Haptics.swift`, iOS 17's `.sensoryFeedback`, which follows the phone's own setting): selection for a tab, a
+  segmented control, a switch and a picked answer or option; light for flipping a card, a grade button, and adding or removing
+  something; success for a right answer in Learn mode and a deck made; warning for a wrong answer and confirming a delete. Plain links
+  and rows give none. Each is one `.haptic(kind, on: trigger, "why")`, so `grep "\.haptic("` lists them; a debug build started with
+  `-hapticAudit` writes each one that fires into an invisible element (`hapticAudit`) that the test reads.
+- **Motion** (`Design/Motion.swift`, timings from `design/motion.mjs` through `Generated.motion`, the same ones the web's CSS uses):
+  menus, pop-ups, toasts, sheets and full screens slide in 10 points while they fade (220 to 250 ms, one ease-out curve, no bounce),
+  go away a little faster, and a switch's knob and a segmented control's or the tab bar's pill slide to the new choice. Reduce
+  Motion turns the slides off (debug builds also take `-still 1`).
+- **The deck cover's parallax** (`Design/Parallax.swift`): scrolling up, the cover on a deck's page and on a shared deck's page moves at
+  half the page's speed; pulled down it stretches. Reduce Motion keeps it still. `-parallaxAudit` writes the numbers the test reads.
+
+`-popAudit` (debug builds) writes what the edge swipe decided into an invisible element, for the swipe test.
