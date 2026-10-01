@@ -209,6 +209,11 @@ when a check fails) and then lists every haptic in the app.
   menus, pop-ups, toasts, sheets and full screens slide in 10 points while they fade (220 to 250 ms, one ease-out curve, no bounce),
   go away a little faster, and a switch's knob and a segmented control's or the tab bar's pill slide to the new choice. Reduce
   Motion turns the slides off (debug builds also take `-still 1`).
+- **Explain opens under the card** (`Screens/Review.swift`, `Screens/Learn.swift`, `Screens/Explain.swift`): once a flashcard is turned over (or a Learn
+  question answered), Explain offers the AI's explanation of the answer. On a flashcard it opens UNDER the card, never over it: the card gets a
+  little shorter (60% of the room, at least 250 pt; a theme's face is drawn for that height too, `ThemeLayout.reviewCardOpen`) and the explanation
+  takes what is left, scrolling inside itself when it is longer. In Learn mode it opens under the answers and the line that says why, and comes into
+  view without sliding. A short fade, none with Reduce Motion. (The web app does the same on a phone; on a computer it opens beside the card.)
 - **The deck cover's parallax** (`Design/Parallax.swift`): scrolling up, the cover on a deck's page and on a shared deck's page moves at
   half the page's speed; pulled down it stretches. Reduce Motion keeps it still. `-parallaxAudit` writes the numbers the test reads.
 

@@ -206,17 +206,23 @@ private struct LearnBody: View {
     let sample = v.type == "type" ? Store.demoExplain.type : Store.demoExplain.learn
     let ex = store.demo ? ExplainVM(on: true, text: exMock ? sample : "", note: exMock ? "2 free explanations left today" : "") : store.explainOf(v.id)
     if answered && ex.on && !v.id.isEmpty {
-      if exFor == v.id {
-        ExplainPanel(ex: ex, look: .learn(look)) { withAnimation(Motion.pop) { exFor = nil } }
-          .padding(.vertical, 14).padding(.horizontal, 16)
-          .background(RoundedRectangle(cornerRadius: 18, style: .continuous).fill(look.card).learnShadow(look.shadow))
-          .popTransition()
-      } else {
-        ExplainButton(label: ex.label, look: .learn(look)) {
-          withAnimation(Motion.pop) { exFor = v.id }
-          if store.demo { exMock = true } else if ex.text.isEmpty { Task { await store.explain(v.id, question: v.text) } }
+      // (it opens in the same place for every question: under the answers and the line that says why, never over them; it
+      // fades in, nothing slides)
+      Group {
+        if exFor == v.id {
+          ExplainPanel(ex: ex, look: .learn(look)) { exFor = nil }
+            .padding(.vertical, 14).padding(.horizontal, 16)
+            .background(RoundedRectangle(cornerRadius: 18, style: .continuous).fill(look.card).learnShadow(look.shadow))
+            .id("explanation")
+            .transition(.opacity)
+        } else {
+          ExplainButton(label: ex.label, look: .learn(look)) {
+            exFor = v.id
+            if store.demo { exMock = true } else if ex.text.isEmpty { Task { await store.explain(v.id, question: v.text) } }
+          }
         }
       }
+      .animation(Motion.fade, value: exFor)
     }
   }
 
@@ -301,16 +307,31 @@ private struct LearnBody: View {
   /// A question page: the top, then the question (it scrolls when it runs long), then Next at the bottom, over the deck's
   /// study background.
   private func page<Top: View, C: View, B: View>(_ spacing: CGFloat = 18, @ViewBuilder top: () -> Top, @ViewBuilder content: () -> C, @ViewBuilder bottom: () -> B) -> some View {
-    VStack(alignment: .leading, spacing: spacing) {
+    let inner = content()
+    return VStack(alignment: .leading, spacing: spacing) {
       top()
-      ScrollView(showsIndicators: false) { content().frame(maxWidth: .infinity, alignment: .leading) }
-        .scrollBounceBehavior(.basedOnSize)
+      // (the explanation, when it opens or its words arrive, is brought into view, with no sliding: it opens under the answers,
+      // which on a long question is below the fold)
+      ScrollViewReader { proxy in
+        ScrollView(showsIndicators: false) { inner.frame(maxWidth: .infinity, alignment: .leading) }
+          .scrollBounceBehavior(.basedOnSize)
+          .onChange(of: exFor) { _, open in if open != nil { reveal(proxy) } }
+          .onChange(of: store.explaining) { _, _ in if exFor != nil { reveal(proxy) } }
+      }
       bottom()
     }
     .padding(.top, Screen.top(60)).padding(.horizontal, 16).padding(.bottom, 34)
     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
     .background(StudyBackground(bg: store.studyBg(deckId)))
     .ignoresSafeArea(.container)
+  }
+
+  /// Scrolls the open explanation (the one place it opens: `.id("explanation")`) to the bottom of the screen, at once.
+  private func reveal(_ proxy: ScrollViewProxy) {
+    DispatchQueue.main.async {
+      var tx = Transaction(); tx.disablesAnimations = true
+      withTransaction(tx) { proxy.scrollTo("explanation", anchor: .bottom) }
+    }
   }
 
   // A choice question (multiple choice, true or false, fill in the blank). A question the learner's AI wrote brings its

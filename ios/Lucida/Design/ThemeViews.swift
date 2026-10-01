@@ -61,6 +61,12 @@ enum ThemeLayout {
   /// bar, over the grade buttons.
   static var reviewCard: CGSize { CGSize(width: screen.width - 32, height: screen.height - Screen.top(60) - 186) }
   static var reviewMargins: UIEdgeInsets { UIEdgeInsets(top: Screen.top(60) + 60, left: 16, bottom: 126, right: 16) }
+  /// The same flashcard while its explanation is open under it: 60% of the room (at least 250 pt), in steps of 8 so the
+  /// theme's face is drawn for one size, and warmed up with the other.
+  static var reviewCardOpen: CGSize { CGSize(width: reviewCard.width, height: min(reviewCard.height, max(250, (reviewCard.height * 0.6 / 8).rounded() * 8))) }
+  static var reviewMarginsOpen: UIEdgeInsets {
+    UIEdgeInsets(top: reviewMargins.top, left: 16, bottom: reviewMargins.bottom + reviewCard.height - reviewCardOpen.height, right: 16)
+  }
 }
 
 // ---------- a picture, where it goes ----------
