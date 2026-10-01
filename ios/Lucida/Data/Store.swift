@@ -87,6 +87,13 @@ struct DemoProps {
   /// A page's Report sheet open (the deck page, a profile, a suggestion), and your verification for the boards that show it
   /// ("", "Waiting for review", "Teacher", or "School": a verified teacher sees Check this deck; Settings says so).
   var report = false, verified = ""
+  /// The Account group and the AI apps (their Tweaks): Delete account's question open ("Asking", "Deleting", or "Failed"), Password
+  /// open, nobody blocked, and no apps allowed.
+  var deleteOpen = "", passwordOpen = false, noBlocks = false, noApps = false
+  /// Sign-in with a password instead of the code (the board's `passwordMode`).
+  var passwordMode = false
+  /// Someone else's profile: its ⋯ menu open, its Block question open, and the person blocked (Unblock).
+  var moreOpen = false, blockOpen = false, blocked = false
   /// The sample deck's sharing (the deck page's Tweaks): "Link only" or "Public" (yours, shared), or from Maria:
   /// "study" (as it is) or "copy" (with her changes waiting); and the changes' sheet open.
   var shared = "", linked = "", updatesOpen = false

@@ -1,5 +1,6 @@
-// iPhone · Connect AI (PhoneConnect): your personal MCP link on the Apricot card, and which AI apps use it. It's a page
-// inside Settings (its row there says Connect AI): a back button to Settings and no tab bar, like Settings › Theme.
+// iPhone · Connect AI (PhoneConnect): your personal MCP link on the Apricot card, which AI apps use it, and the apps you allowed
+// (each signed in to Lucida, with Disconnect). It's a page inside Settings (its row there says Connect AI): a back button to
+// Settings and no tab bar, like Settings › Theme.
 import SwiftUI
 
 struct ConnectVM {
@@ -11,7 +12,8 @@ struct ConnectVM {
 extension Store {
   func connect() -> ConnectVM {
     if demo { return ConnectVM(url: "https://app.lucida.cards/mcp/lk_5b1f0c6e9a2d4b7f8e3a1c0d9b8a7f6e2Hq9xWrT4kLm1ZpVb8sNc3Yd7Ga0uEfJ", short: "https://app.lucida.cards/mcp/lk_5b1f0c6e…", clients: ["claude": true, "openai": true, "cursor": false, "mcp": false]) }
-    let url = API.base.absoluteString + (lib.ai.key.map { "/mcp/" + $0 } ?? "/mcp"), names = Array(lib.ai.clients.keys)
+    // (The AI apps that used your link, and the ones you allowed to sign in, like the web's db.ai().)
+    let url = API.base.absoluteString + (lib.ai.key.map { "/mcp/" + $0 } ?? "/mcp"), names = Array(lib.ai.clients.keys) + (netApps()?.value?.apps.map(\.name) ?? [])
     let known = ["Claude", "ChatGPT", "Cursor"]
     return ConnectVM(url: url, short: String(url.prefix(40)) + (url.count > 40 ? "…" : ""),
                      clients: ["claude": names.contains("Claude"), "openai": names.contains("ChatGPT"), "cursor": names.contains("Cursor"), "mcp": names.contains { !known.contains($0) }])
@@ -23,6 +25,9 @@ struct ConnectScreen: View {
   @EnvironmentObject private var store: Store
   @EnvironmentObject private var nav: Nav
   @State private var copied = false
+  /// The app a Disconnect is asked about.
+  @State private var leaving: ConnectedApp? = nil
+  @State private var err = ""
 
   var body: some View {
     let c = store.connect(), hero = Mesh.palette("Apricot")
@@ -69,6 +74,7 @@ struct ConnectScreen: View {
             .overlay(alignment: .bottom) { Rectangle().fill(t.line).frame(height: 1) }
           }
         }
+        appsAllowed
       }
       .foregroundStyle(t.text)
       .padding(.horizontal, 20).padding(.top, Screen.top(64)).padding(.bottom, 34)
@@ -76,6 +82,81 @@ struct ConnectScreen: View {
     .debugScroll()
     .ignoresSafeArea()
     .toolbar(.hidden, for: .navigationBar)
+    .confirmationDialog(leaving.map { "Disconnect \($0.name)?" } ?? "", isPresented: Binding(get: { leaving != nil }, set: { if !$0 { leaving = nil } }), titleVisibility: .visible) {
+      Button("Disconnect", role: .destructive) { if let a = leaving { disconnect(a) } }
+    } message: { Text("It can’t use your decks until you connect it again.") }
+  }
+
+  // ---------- the apps you allowed ----------
+  /// Apps you allowed: each signed in to Lucida (not with your link), with when, and Disconnect.
+  private var appsAllowed: some View {
+    let list = store.netApps()?.value?.apps ?? []
+    return VStack(alignment: .leading, spacing: 4) {
+      VStack(alignment: .leading, spacing: 2) {
+        Text("Apps you allowed").css(15, .semibold).line(15)
+        CSSText("Each one signed in to Lucida and can use your decks.", 13, color: t.muted)
+      }
+      .padding(.bottom, 8)
+      ForEach(list) { a in
+        HStack(spacing: 12) {
+          LogoView(name: logoName(a.name), size: 22).frame(width: 38, height: 38).background(Circle().fill(t.bg))
+          VStack(alignment: .leading, spacing: 2) {
+            Text(a.name).css(15, .semibold).lineLimit(1).line(15)
+            Text(sub(a)).css(12).foregroundStyle(t.muted).lineLimit(1).line(12)
+          }
+          .frame(maxWidth: .infinity, alignment: .leading)
+          SmallButton(label: "Disconnect", bg: t.bg) { leaving = a }
+        }
+        .frame(minHeight: 58)
+        .padding(.top, 1)
+        .overlay(alignment: .top) { Rectangle().fill(t.line).frame(height: 1) }
+        .accessibilityElement(children: .contain)
+      }
+      if list.isEmpty && store.netApps() != nil { none }
+      if !err.isEmpty { CSSText(err, 13, lh: 1.4, color: t.again).padding(.top, 6) }
+    }
+    .padding(.horizontal, 18).padding(.vertical, 16)
+    .frame(maxWidth: .infinity, alignment: .leading)
+    .background(RoundedRectangle(cornerRadius: 24, style: .continuous).fill(t.surf))
+  }
+
+  /// "None yet. Add Lucida to your AI app and sign in: how." with how opening the page that says how (the sentence wraps the way a
+  /// browser wraps it, so the link starts the next line when it doesn't fit).
+  private var none: some View {
+    VStack(alignment: .leading, spacing: 0) {
+      CSSText("None yet. Add Lucida to your AI app and sign in:", 14, lh: 1.4, color: t.muted)
+      Button { nav.open(URL(string: "https://lucida.cards/connect")) } label: {
+        HStack(spacing: 0) { Text("how").css(14, lh: 1.4).foregroundStyle(t.text).underline(); Text(".").css(14, lh: 1.4).foregroundStyle(t.muted) }
+      }
+      .buttonStyle(.plain)
+      .accessibilityLabel("how").accessibilityAddTraits(.isLink)
+    }
+    .padding(.top, 10).padding(.bottom, 2)
+  }
+
+  private func logoName(_ name: String) -> String {
+    let n = name.lowercased()
+    return n.hasPrefix("claude") ? "claude" : n.contains("chatgpt") || n.contains("openai") ? "openai" : n.contains("cursor") ? "cursor" : "mcp"
+  }
+  /// "claude.ai · Connected Sep 12 · Used Sep 29".
+  private func sub(_ a: ConnectedApp) -> String {
+    let day = { (iso: String) -> String in
+      guard let d = NetFmt.date(iso) else { return "" }
+      var cal = Calendar(identifier: .gregorian)
+      // (The design screens always show the canvas's own days.)
+      if store.demo { cal.timeZone = TimeZone(identifier: "UTC")! }
+      return NetFmt.months3[cal.component(.month, from: d) - 1] + " \(cal.component(.day, from: d))"
+    }
+    let c = day(a.connected), u = a.lastUsed.isEmpty ? "" : day(a.lastUsed)
+    return [a.host, c.isEmpty ? "" : "Connected " + c, !u.isEmpty && u != c ? "Used " + u : ""].filter { !$0.isEmpty }.joined(separator: " · ")
+  }
+
+  private func disconnect(_ a: ConnectedApp) {
+    err = ""
+    Task {
+      do { try await store.disconnectApp(a.id) }
+      catch { err = error.localizedDescription.nilIfEmpty ?? "That didn’t work. Try again." }
+    }
   }
 }
 

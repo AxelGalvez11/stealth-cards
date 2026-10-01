@@ -19,6 +19,8 @@ enum SheetKind: Identifiable, Equatable {
   case classForm(ClassForm), classAdd(String), classAssign(String), report(kind: String, id: String, name: String), verify
   /// Go Pro (the paywall: Lucida Pro with the App Store), over any page or full screen.
   case goPro
+  /// Delete account's question (Settings → Account), and Block's (someone's handle and name).
+  case deleteAccount, block(handle: String, name: String)
   var id: String {
     switch self {
     case .newDeck: return "newDeck"
@@ -36,6 +38,8 @@ enum SheetKind: Identifiable, Equatable {
     case .report(let k, let i, _): return "report-\(k)-\(i)"
     case .verify: return "verify"
     case .goPro: return "goPro"
+    case .deleteAccount: return "deleteAccount"
+    case .block(let h, _): return "block-" + h
     }
   }
 }
@@ -71,6 +75,10 @@ final class Nav: ObservableObject {
   /// Edit profile opens once your profile is showing (Settings → Edit profile).
   var wantsEdit = false
 
+  /// A question is waiting for its answer from the server (Delete account, Block): its sheet stays until it comes.
+  @Published var asking = false
+  /// Back to Today with nothing open (signed out, or the account is gone).
+  func reset() { sheet = nil; full = nil; boardFull = nil; path = []; tab = .today; libCards = false; libClasses = false; asking = false; barHidden = false }
   func push(_ r: Route) { path.append(r) }
   func back() { if !path.isEmpty { path.removeLast() } }
   func study(deckId: String?, pile: String? = nil) { withAnimation(.out(0.35)) { full = .review(deckId: deckId, pile: pile) } }

@@ -83,6 +83,8 @@ struct RootView: View {
     }
     #endif
     .onChange(of: store.skinKey) { _, k in if let k, !store.demo { ThemeArt.shared.warm(k, store) } }
+    // Signed out (or the account deleted): nothing of the last person's is left open for the next.
+    .onChange(of: store.phase) { _, p in if p == .signedOut && !store.demo { nav.reset() } }
     // Back after a while away: decks you study from other people get their owners' newest changes.
     .onChange(of: scenePhase) { _, p in if p == .background { store.away = Date() } else if p == .active { store.cameBack() } }
     // What went wrong saving a change or uploading a photo, like the web app's alert.
@@ -286,6 +288,11 @@ extension Board {
     case "PhoneProfileLoading": store.props.netLoading = true; nav.tab = .profile
     case "PhoneProfileMissing": store.props.missing = true; nav.path = [.profile("nobody")]
     case "PhoneProfileReport": store.props.report = true; nav.path = [.profile("mariasantos")]
+    // Someone else's ⋯ menu (`-moreOpen`), its Block question, and someone you blocked (Unblock).
+    case "PhoneProfileBlock": store.props.blockOpen = true; nav.path = [.profile("mariasantos")]
+    case "PhoneProfileBlocked": store.props.blocked = true; nav.path = [.profile("mariasantos")]
+    // Settings with Delete account's question open.
+    case "PhoneSettingsDelete": store.props.deleteOpen = "Asking"; nav.path = [.settings]
     case "PhoneActivity": nav.path = [.news]
     case "PhoneActivityEmpty": store.props.netEmpty = true; nav.path = [.news]
     case "PhoneDeckStudied": store.props.linked = "study"; nav.tab = .library; nav.path = [.deck("cell")]
@@ -345,8 +352,18 @@ extension Board {
       }
     }
     if let k = Board.arg("-goPro") { store.props.goPro = k }
-    // Settings' plan (the board's `plan`): `-plan "Pro, billed by Apple"`.
+    // The Settings, Profile, Connect AI, and sign-in boards' Tweaks: `-plan "Pro, billed by Apple"`, `-deleteOpen Asking|Deleting|Failed`,
+    // `-passwordOpen`, `-noBlocks`, `-noApps`, `-moreOpen`, `-blocked`, `-passwordMode`.
     if let k = Board.arg("-plan") { store.props.plan = k }
+    if let k = Board.arg("-deleteOpen") { store.props.deleteOpen = k }
+    let flags = ProcessInfo.processInfo.arguments
+    if flags.contains("-passwordOpen") { store.props.passwordOpen = true }
+    if flags.contains("-noBlocks") { store.props.noBlocks = true }
+    if flags.contains("-noApps") { store.props.noApps = true }
+    if flags.contains("-moreOpen") { store.props.moreOpen = true }
+    if flags.contains("-blockOpen") { store.props.blockOpen = true }
+    if flags.contains("-blocked") { store.props.blocked = true }
+    if flags.contains("-passwordMode") { store.props.passwordMode = true }
     // `-theme <key>`: any board in a theme (the Theme boards' `skin`).
     if let k = Board.arg("-theme") { store.props.theme = k }
     // The Settings boards' Tune to you state (their `tune` Tweak): `-tune Off`, `-tune "Not enough reviews"`, or `-tune Tuning`.
@@ -477,6 +494,8 @@ struct SheetHost: View {
     case .report(let kind, let id, let name): SheetOverlay(top: nil, close: nav.close) { ReportSheet(kind: kind, id: id, name: name) }
     case .verify: SheetOverlay(top: nil, close: nav.close) { VerifySheet() }
     case .goPro: SheetOverlay(top: 56, radius: 32, close: nav.close) { GoProSheet(shop: store.shop) }
+    case .deleteAccount: SheetOverlay(top: nil, close: { if !nav.asking { nav.close() } }) { DeleteAccountSheet() }
+    case .block(let handle, let name): SheetOverlay(top: nil, close: { if !nav.asking { nav.close() } }) { BlockSheet(handle: handle, name: name) }
     }
   }
 }

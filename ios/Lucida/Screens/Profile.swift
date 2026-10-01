@@ -3,7 +3,8 @@
 // someone's picture, their numbers (decks, followers, following), name, what they study, their bio, and the decks they
 // share, pinned ones first. Your own adds Edit profile, ⋯ on each deck to pin it (up to 3), the decks you saved, and
 // the suggestions you sent with what became of them. The first time you open yours, it's made (the handle comes from
-// your name). Someone else's has Report, a quiet button after Share (a sheet).
+// your name). Someone else's has ⋯ after Share: Report (a sheet) and Block (a question first; for someone you blocked,
+// Unblock). Someone you blocked shows without their decks, with Unblock where Follow was.
 import SwiftUI
 
 /// What you changed on a profile (PROFILE_LOGIC's `over`): a follow, pins, your bio. It shows at once, and stays while
@@ -11,13 +12,19 @@ import SwiftUI
 struct ProfilePatch {
   var following: Bool? = nil, followers: Int? = nil, featured: [String]? = nil
   var name: String? = nil, bio: String? = nil, school: String? = nil, subject: String? = nil
+  /// You just blocked them (their page comes without decks, at once), or are unblocking them (their page says so until it
+  /// comes back with their decks).
+  var blocked: Bool? = nil, unblocking: Bool? = nil
   mutating func merge(_ o: ProfilePatch) {
     following = o.following ?? following; followers = o.followers ?? followers; featured = o.featured ?? featured
+    blocked = o.blocked ?? blocked; unblocking = o.unblocking ?? unblocking
     name = o.name ?? name; bio = o.bio ?? bio; school = o.school ?? school; subject = o.subject ?? subject
   }
   func applied(to p: ProfilePage) -> ProfilePage {
     var p = p
-    if let v = following { p.me = .init(isSelf: p.me?.isSelf ?? false, following: v) }
+    if let v = following { p.me = .init(isSelf: p.me?.isSelf ?? false, following: v, blocked: p.me?.blocked ?? false) }
+    if blocked == true { p.me = .init(isSelf: p.me?.isSelf ?? false, following: false, blocked: true); p.decks = []; p.saved = []; p.stars = 0 }
+    if unblocking == true { p.unblocking = true }
     if let v = followers { p.followers = v }
     if let v = featured { p.featured = v }
     if let v = name { p.name = v }
@@ -69,7 +76,7 @@ struct ProfileScreen: View {
   /// Whose ("": yours).
   let handle: String
   @State private var tab: String? = nil
-  /// The deck whose ⋯ menu is open (your own profile).
+  /// The deck whose ⋯ menu is open (your own profile), or "more": the ⋯ after Share on someone else's.
   @State private var menu: String? = nil
   @State private var copied = false
   @State private var copiedTask: Task<Void, Never>? = nil
@@ -135,13 +142,17 @@ struct ProfileScreen: View {
 
   /// The Report board has its sheet open, on someone else's profile.
   private func openReportIfWanted(_ pr: ProfilePage?, isSelf: Bool) {
-    guard store.demo, store.props.report, let pr, !isSelf, nav.sheet == nil else { return }
+    guard store.demo, let pr, !isSelf, nav.sheet == nil else { return }
+    // (The Block boards: the ⋯ menu open, and its question.)
+    if store.props.moreOpen { store.props.moreOpen = false; menu = "more" }
+    if store.props.blockOpen { store.props.blockOpen = false; nav.sheet = .block(handle: pr.handle, name: pr.name); return }
+    guard store.props.report else { return }
     store.props.report = false
     nav.sheet = .report(kind: "profile", id: pr.handle, name: pr.name)
   }
 
   // ---------- the parts ----------
-  /// Back (someone else's), the handle, Share, your gear (Settings), and on someone else's, Report.
+  /// Back (someone else's), the handle, Share, your gear (Settings), and on someone else's, ⋯ (Report, and Block or Unblock).
   private func header(_ h: String, ok: Bool, isSelf: Bool, report: (handle: String, name: String)?) -> some View {
     HStack(spacing: 10) {
       if !isSelf { RoundButton(icon: "back", label: "Back") { nav.back() } }
@@ -149,7 +160,10 @@ struct ProfileScreen: View {
         .frame(maxWidth: .infinity, alignment: .leading)
       if ok { RoundButton(icon: "share", label: "Share profile") { share(h) } }
       if isSelf { RoundButton(icon: "gear", label: "Settings") { nav.push(.settings) } }
-      if ok, !isSelf, let report { QuietButton(label: "Report") { withAnimation(.out(0.35)) { nav.sheet = .report(kind: "profile", id: report.handle, name: report.name) } } }
+      if ok, !isSelf, let report {
+        RoundButton(icon: "more", label: "More for " + report.name) { menu = menu == "more" ? nil : "more" }
+          .anchorPreference(key: PinAnchors.self, value: .bounds) { ["more": $0] }
+      }
     }
     .frame(minHeight: 44)
   }
@@ -168,12 +182,14 @@ struct ProfileScreen: View {
     let saved = isSelf ? pr.saved.map { TileVM($0) } : []
     let current = isSelf ? tab ?? "Decks" : "Decks"
     let name = isSelf ? store.myName : pr.name
+    // Someone you blocked: their page comes without their decks, and says so; Unblock takes Follow's place.
+    let blocked = !isSelf && (pr.me?.blocked ?? false)
     let line = [pr.subject, pr.school].filter { !$0.isEmpty }.joined(separator: " · ")
     return Group {
       HStack(spacing: 20) {
         if isSelf { MyAvatar(size: 84) } else { PersonAvatar(p: pr.person, size: 84) }
         HStack(spacing: 0) {
-          count(NetFmt.k(decks.count), "Decks")
+          if !blocked { count(NetFmt.k(decks.count), "Decks") }
           count(NetFmt.k(pr.followers), "Followers")
           count(NetFmt.k(pr.following), "Following")
         }
@@ -187,6 +203,7 @@ struct ProfileScreen: View {
       .foregroundStyle(t.text)
       HStack(spacing: 8) {
         if isSelf { wide("Edit profile") { nav.sheet = .editProfile } }
+        else if blocked { wide(pr.unblocking ? "Unblocking…" : "Unblock", inv: true) { if !pr.unblocking { unblock(pr, h: h) } } }
         else { wide(following ? "Following" : "Follow", inv: !following) { toggleFollow(pr, h: h) }.accessibilityAddTraits(following ? .isSelected : []) }
         wide(copied ? "Link copied" : "Share profile") { share(h) }
       }
@@ -198,7 +215,8 @@ struct ProfileScreen: View {
         else { grid(saved) { d in savedCell(d) } }
       case "Suggestions": sentList()
       default:
-        if decks.isEmpty { empty("No public decks yet") { if isSelf { Pill(label: "Open Library", inv: true) { nav.pick(.library) } } } }
+        if blocked { empty("You blocked \(name).") { EmptyView() } }
+        else if decks.isEmpty { empty("No public decks yet") { if isSelf { Pill(label: "Open Library", inv: true) { nav.pick(.library) } } } }
         else { grid(decks) { d in deckCell(d, isSelf: isSelf) } }
       }
     }
@@ -277,7 +295,8 @@ struct ProfileScreen: View {
 
   /// ⋯ on one of your decks: Pin to profile (up to 3), or Unpin; with 3 pinned already, Pin says so.
   @ViewBuilder private func pinMenu(_ anchors: [String: Anchor<CGRect>], _ pr: ProfilePage?, h: String) -> some View {
-    if let m = menu, let a = anchors[m], let pr {
+    if menu == "more", let a = anchors["more"], let pr { moreMenu(a, pr, h: h) }
+    else if let m = menu, let a = anchors[m], let pr {
       GeometryReader { g in
         let r = g[a], feat = pr.featured, pinned = feat.contains(m)
         // The left column's opens to the right of its ⋯, the right column's to the left.
@@ -306,6 +325,33 @@ struct ProfileScreen: View {
       }
       .transition(.opacity)
     }
+  }
+
+  /// ⋯ after Share on someone else's profile: Report, and Block (or Unblock, for someone you blocked).
+  private func moreMenu(_ a: Anchor<CGRect>, _ pr: ProfilePage, h: String) -> some View {
+    GeometryReader { g in
+      let r = g[a], blocked = pr.me?.blocked ?? false, who = pr.handle.nilIfEmpty ?? h
+      ZStack(alignment: .topLeading) {
+        Color.black.opacity(0.001).frame(width: 4000, height: 8000).offset(x: -2000, y: -4000).onTapGesture { menu = nil }
+        VStack(alignment: .leading, spacing: 4) {
+          moreItem("Report", t.text) { menu = nil; withAnimation(.out(0.35)) { nav.sheet = .report(kind: "profile", id: who, name: pr.name) } }
+          if blocked { moreItem("Unblock", t.text) { menu = nil; unblock(pr, h: h) } }
+          else { moreItem("Block", t.again) { menu = nil; withAnimation(.out(0.35)) { nav.sheet = .block(handle: who, name: pr.name) } } }
+        }
+        .padding(8)
+        .frame(width: 190, alignment: .leading)
+        .modifier(PopBox())
+        .offset(x: r.maxX - 190, y: r.minY + 52)
+        .accessibilityElement(children: .contain).accessibilityLabel("More for " + pr.name)
+      }
+    }
+    .transition(.opacity)
+  }
+  private func moreItem(_ label: String, _ color: Color, _ action: @escaping () -> Void) -> some View {
+    Button(action: action) {
+      Text(label).css(14).foregroundStyle(color).line(14).frame(maxWidth: .infinity, alignment: .leading).padding(.horizontal, 12).frame(height: 38).contentShape(Rectangle())
+    }
+    .buttonStyle(.flat)
   }
 
   private func menuItem(_ label: String, _ action: @escaping () -> Void) -> some View {
@@ -394,6 +440,14 @@ struct ProfileScreen: View {
     err = ""; menu = nil
     Task {
       do { try await store.changeProfile(h, ProfilePatch(following: on, followers: max(0, pr.followers + (on ? 1 : -1)))) { try await store.follow(pr.handle, on) } }
+      catch { err = error.localizedDescription.nilIfEmpty ?? "Something went wrong. Try again." }
+    }
+  }
+  /// Unblock: they're shown as being unblocked until their page comes back with their decks.
+  private func unblock(_ pr: ProfilePage, h: String) {
+    err = ""; menu = nil
+    Task {
+      do { try await store.changeProfile(h, ProfilePatch(unblocking: true)) { try await store.block(pr.handle.nilIfEmpty ?? h, false) } }
       catch { err = error.localizedDescription.nilIfEmpty ?? "Something went wrong. Try again." }
     }
   }

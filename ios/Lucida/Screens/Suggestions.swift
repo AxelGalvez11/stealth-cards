@@ -1,7 +1,8 @@
 // iPhone · Suggestions (PhoneSuggestions, PhoneSuggestionsOpen, PhoneSuggestionsEmpty, PhoneSuggestionsDark): for one of your
 // shared decks, or all of them: who suggested what (and the cards your own AI made, waiting for you first), and the picked
 // one's changes, each to take or skip (Take all / Skip all for the lot; Keep and Toss for your AI's cards). A person's
-// suggestion, once it's opened, also has Report (a sheet); the cards your own AI made don't.
+// suggestion, once it's opened, also has Report (a sheet) and Block (a question: they can't suggest to your decks again, and
+// their suggestions go); the cards your own AI made have neither.
 import SwiftUI
 
 /// A row in the list: someone's suggestion, or the cards one of your AI apps made that wait for you.
@@ -14,8 +15,9 @@ private struct SugItem: Identifiable {
   var many = false
   var takeAllAction: () -> Void = {}, skipAllAction: () -> Void = {}
   var changes: [SugChange] = []
-  /// Someone's suggestion can be reported (its id, and whose it is); the cards your own AI made can't.
-  var reportId: String? = nil, reportName = ""
+  /// Someone's suggestion can be reported (its id, and whose it is) and its sender blocked (their handle and name); the cards
+  /// your own AI made can't.
+  var reportId: String? = nil, reportName = "", blockHandle: String? = nil, blockName = ""
 }
 private struct SugChange: Identifiable {
   var id: String
@@ -66,6 +68,11 @@ struct SuggestionsScreen: View {
         store.props.report = false
         nav.sheet = .report(kind: "suggestion", id: id, name: cur.reportName)
       }
+      // The board with Block's question open, on the suggestion that's opened.
+      if open, store.demo, store.props.blockOpen, let cur, let h = cur.blockHandle, nav.sheet == nil {
+        store.props.blockOpen = false
+        nav.sheet = .block(handle: h, name: cur.blockName)
+      }
     }
     .onDisappear { nav.barHidden = false }
   }
@@ -111,6 +118,7 @@ struct SuggestionsScreen: View {
       it.takeAll = "Take all \(open.count)"; it.skipAll = "Skip all"; it.many = open.count > 1
       it.takeAllAction = { decide(s, ["$all": "take"]) }; it.skipAllAction = { decide(s, ["$all": "skip"]) }
       it.reportId = s.id; it.reportName = s.authorName.nilIfEmpty ?? "Someone"
+      if let h = s.person?.handle.nilIfEmpty { it.blockHandle = h; it.blockName = s.person?.name.nilIfEmpty ?? s.authorName.nilIfEmpty ?? "this person" }
       it.changes = s.changes.map { c in
         let x = statusOf(c), v = PageText.changeView(c)
         var ch = SugChange(id: c.id, label: v.label, context: v.context, before: v.before, after: v.after)
@@ -211,9 +219,19 @@ struct SuggestionsScreen: View {
       WhoAvatar(who: c.who, size: 40)
       // (The browser rounds these lines 20 high, 16 across, a point higher than UIKit does: measured against the board.)
       CSSText(c.head, 16, .semibold, lh: 1.25, color: t.text).frame(maxWidth: .infinity, alignment: .leading).offset(y: -1)
-      if let id = c.reportId { QuietButton(label: "Report") { withAnimation(.out(0.35)) { nav.sheet = .report(kind: "suggestion", id: id, name: c.reportName) } } }
     }
-    if !c.message.isEmpty { CSSText(c.message, 15, lh: 1.4, color: t.muted).frame(maxWidth: .infinity, alignment: .leading) }
+    // What they said, and quietly at its end Report and Block (a person's suggestion only).
+    if !c.message.isEmpty || c.reportId != nil || c.blockHandle != nil {
+      HStack(spacing: 12) {
+        if !c.message.isEmpty { CSSText(c.message, 15, lh: 1.4, color: t.muted).frame(maxWidth: .infinity, alignment: .leading) } else { Spacer(minLength: 0) }
+        HStack(spacing: 0) {
+          if let id = c.reportId { QuietButton(label: "Report", height: 36) { withAnimation(.out(0.35)) { nav.sheet = .report(kind: "suggestion", id: id, name: c.reportName) } } }
+          if let h = c.blockHandle { QuietButton(label: "Block", height: 36) { withAnimation(.out(0.35)) { nav.sheet = .block(handle: h, name: c.blockName) } } }
+        }
+        .fixedSize()
+      }
+      .frame(minHeight: 36)
+    }
     if c.many {
       TakeSkipButtons(skip: c.skipAll, take: c.takeAll, height: 48, gap: 7, skipAction: c.skipAllAction, takeAction: c.takeAllAction)
     }

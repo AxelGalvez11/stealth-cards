@@ -1,4 +1,5 @@
-// iPhone · Settings (PhoneSettings), from the gear on Today: your account, studying, the look, and your AI.
+// iPhone · Settings (PhoneSettings), from the gear on Today: your account, studying, the look, your AI, and what Apple asks every
+// app to have inside it (the Account group: a password, the people you blocked, and Delete account).
 import StoreKit
 import SwiftUI
 
@@ -100,6 +101,16 @@ struct SettingsScreen: View {
   @EnvironmentObject private var store: Store
   @EnvironmentObject private var nav: Nav
   @State private var account = false
+  /// Account → Password: its form open, what's typed, what the server said, and whether it worked.
+  @State private var pwOpen = false
+  @State private var pw = ""
+  @State private var pwBusy = false
+  @State private var pwMsg = ""
+  @State private var pwOk = false
+  /// Account → Blocked people: who was just unblocked (gone from the list before the server has answered), and a failure.
+  @State private var unblocked: Set<String> = []
+  @State private var blockErr = ""
+  @FocusState private var pwFocus: Bool
 
   var body: some View {
     let s = store.settings, demo = store.demo
@@ -179,13 +190,20 @@ struct SettingsScreen: View {
           divider
           Button { nav.push(.inbox) } label: { row("Cards to check") { value("\(store.pendingCount)") } }.buttonStyle(.plain)
         }
+        if demo || store.lib.me != nil { accountGroup }
       }
       .foregroundStyle(t.text)
       .padding(.horizontal, 20).padding(.top, Screen.top(64)).padding(.bottom, 34)
     }
+    // (Password's Save sits under the keyboard on a short screen: scrolling puts the keyboard away.)
+    .scrollDismissesKeyboard(.interactively)
     .debugScroll()
     .ignoresSafeArea()
     .toolbar(.hidden, for: .navigationBar)
+    .onAppear {
+      // (The design screens' Tweaks: Password open, and Delete account's question.)
+      if store.demo { pwOpen = store.props.passwordOpen; if !store.props.deleteOpen.isEmpty && nav.sheet == nil { nav.sheet = .deleteAccount } }
+    }
   }
 
   /// Profile picture (photoPanel on the canvas), on the gray row.
@@ -237,6 +255,93 @@ struct SettingsScreen: View {
     Task { @MainActor in
       if let scene = UIApplication.shared.connectedScenes.compactMap({ $0 as? UIWindowScene }).first, (try? await AppStore.showManageSubscriptions(in: scene)) != nil { return }
       nav.open(url)
+    }
+  }
+
+  // ---------- ACCOUNT: a password, the people you blocked, Delete account ----------
+  private var accountGroup: some View {
+    let list = store.netBlocks(), people = (list?.value?.people ?? []).filter { !unblocked.contains($0.handle) }
+    let count = list?.value == nil ? "" : people.isEmpty ? "None" : String(people.count)
+    return group("Account") {
+      Button { withAnimation(.out(0.2)) { pwOpen.toggle(); pw = ""; pwMsg = ""; pwOk = false } } label: {
+        row("Password", sub: "Optional. Sign in without an email code.") { value("") }
+      }
+      .buttonStyle(.plain)
+      if pwOpen { passwordForm }
+      divider
+      row("Blocked people") { Text(count).css(15).foregroundStyle(t.muted) }
+      ForEach(people, id: \.handle) { b in
+        divider
+        HStack(spacing: 12) {
+          PersonAvatar(p: b, size: 36)
+          VStack(alignment: .leading, spacing: 2) {
+            Text(b.name).css(16).lineLimit(1)
+            Text("@" + b.handle).css(12).foregroundStyle(t.muted).lineLimit(1)
+          }
+          .frame(maxWidth: .infinity, alignment: .leading)
+          SmallButton(label: "Unblock", bg: t.bg) { unblock(b) }
+        }
+        .padding(.horizontal, 16).padding(.vertical, 8).frame(minHeight: 52)
+        .accessibilityElement(children: .contain)
+      }
+      if !blockErr.isEmpty {
+        divider
+        CSSText(blockErr, 13, lh: 1.4, color: t.again).padding(.horizontal, 16).padding(.vertical, 10).frame(maxWidth: .infinity, alignment: .leading)
+      }
+      divider
+      Button { withAnimation(.out(0.35)) { nav.sheet = .deleteAccount } } label: { row("Delete account", color: t.again) { EmptyView() } }.buttonStyle(.plain)
+    }
+  }
+
+  /// Unblock works at once (the row goes); if the server won't, it comes back with the server's words.
+  private func unblock(_ b: NetPerson) {
+    unblocked.insert(b.handle); blockErr = ""
+    Task {
+      do { try await store.block(b.handle, false) }
+      catch { unblocked.remove(b.handle); blockErr = error.localizedDescription.nilIfEmpty ?? "Something went wrong. Try again." }
+    }
+  }
+
+  /// Password's form: a new password (8 to 72 characters), Save and Close, and what happened.
+  private var passwordForm: some View {
+    VStack(alignment: .leading, spacing: 10) {
+      CSSText("Sign in with your email and a password instead of a code. You can still use a code any time.", 13, lh: 1.45, color: t.muted)
+      SecureField("", text: $pw, prompt: Text("New password, 8 or more characters").foregroundStyle(PLACEHOLDER))
+        .focused($pwFocus)
+        .textContentType(.newPassword).textInputAutocapitalization(.never).autocorrectionDisabled()
+        .submitLabel(.done).onSubmit(savePassword)
+        .font(.geist(16)).foregroundStyle(t.text)
+        .padding(.horizontal, 16).frame(height: 44)
+        .background(Capsule().fill(t.bg))
+        // (Typing clears what was said; emptying the field after a save must not clear "Password saved.")
+        .onChange(of: pw) { _, v in if !v.isEmpty { pwMsg = ""; pwOk = false } }
+        .accessibilityLabel("New password")
+      HStack(spacing: 8) {
+        Button(action: savePassword) {
+          Text(pwBusy ? "Saving…" : "Save").css(14, .semibold).foregroundStyle(t.invText).padding(.horizontal, 20).frame(height: 40).background(Capsule().fill(t.inv))
+        }
+        .buttonStyle(.press)
+        Button { withAnimation(.out(0.2)) { pwOpen = false; pw = ""; pwMsg = ""; pwOk = false } } label: {
+          Text("Close").css(14, .semibold).foregroundStyle(t.text).padding(.horizontal, 16).frame(height: 40).background(Capsule().fill(t.bg))
+        }
+        .buttonStyle(.press)
+      }
+      if !pwMsg.isEmpty { CSSText(pwMsg, 13, lh: 1.4, color: pwOk ? t.good : t.again).accessibilityAddTraits(.isStaticText) }
+    }
+    .padding(.horizontal, 16).padding(.top, 4).padding(.bottom, 16)
+    .frame(maxWidth: .infinity, alignment: .leading)
+  }
+
+  private func savePassword() {
+    guard !pwBusy else { return }
+    guard pw.count >= 8, pw.count <= 72 else { pwMsg = "Use 8 to 72 characters."; pwOk = false; return }
+    pwFocus = false; pwBusy = true; pwMsg = ""
+    let typed = pw
+    Task {
+      do { try await store.setPassword(typed); pwOk = true; pwMsg = "Password saved."; pw = "" }
+      catch APIError.signedOut { store.phase = .signedOut }
+      catch { pwOk = false; pwMsg = error.localizedDescription.nilIfEmpty ?? "That didn’t work. Try again in a minute." }
+      pwBusy = false
     }
   }
 

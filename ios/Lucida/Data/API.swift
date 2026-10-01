@@ -136,6 +136,22 @@ final class API {
     catch { throw APIError.server(API.unreachable) }
   }
 
+  /// Whatever the server says, with a lost connection in plain words (a request's own error is "The Internet connection appears
+  /// to be offline.", which isn't Lucida's way of saying it).
+  private func said(_ path: String, _ json: [String: Any]) async throws {
+    do { _ = try await request(path, method: "POST", json: json) }
+    catch let e as APIError { throw e }
+    catch { throw APIError.server(API.unreachable) }
+  }
+  /// A password to sign in with next to the email code (POST /api/auth/password/set; 8 to 72 characters).
+  func setPassword(_ password: String) async throws { try await said("api/auth/password/set", ["password": password]) }
+  /// Signing in with an email and a password (POST /api/auth/password): the session's cookies come back with the answer.
+  func password(_ email: String, _ password: String) async throws { try await said("api/auth/password", ["email": email, "password": password]) }
+  /// Deleting your account (POST /api/account/delete): the server clears the session itself.
+  func deleteAccount() async throws { try await said("api/account/delete", ["confirm": true]) }
+  /// An AI app you allowed loses its sign-in (POST /api/oauth/disconnect).
+  func disconnectApp(_ id: String) async throws { try await said("api/oauth/disconnect", ["id": id]) }
+
   func sendCode(_ email: String) async throws { _ = try await request("api/auth/code", method: "POST", json: ["email": email]) }
   func verify(_ email: String, _ code: String) async throws { _ = try await request("api/auth/verify", method: "POST", json: ["email": email, "code": code]) }
   func signOut() async { _ = try? await request("api/auth/signout", method: "POST", json: [:]) }
