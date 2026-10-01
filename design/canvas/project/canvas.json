@@ -4280,7 +4280,7 @@
    "x": 0,
    "y": 5272,
    "w": 1440,
-   "h": 6021,
+   "h": 7205,
    "page": "landing",
    "title": "Site · The blog, comparisons, alternatives, the hubs and the 404 · lucida.cards",
    "is_interactive": true
@@ -4298,7 +4298,7 @@
    "x": 1990,
    "y": 5272,
    "w": 1440,
-   "h": 6997,
+   "h": 8028,
    "page": "landing",
    "title": "Site · Features and who Lucida is for · lucida.cards",
    "is_interactive": true
@@ -4307,7 +4307,7 @@
    "x": 3510,
    "y": 5272,
    "w": 390,
-   "h": 9658,
+   "h": 10797,
    "page": "landing",
    "title": "Site · Features and who Lucida is for · lucida.cards on a phone",
    "is_interactive": true
@@ -4332,16 +4332,16 @@
   },
   "SiteConnect.dc.html": {
    "x": 0,
-   "y": 15350,
+   "y": 16489,
    "w": 1440,
-   "h": 3336,
+   "h": 4207,
    "page": "landing",
    "title": "Connect Lucida to your AI · lucida.cards/connect",
    "is_interactive": true
   },
   "SiteOg.dc.html": {
    "x": 1520,
-   "y": 15350,
+   "y": 16489,
    "w": 1200,
    "h": 630,
    "page": "landing",
@@ -4951,7 +4951,7 @@
    "text": "Connect Lucida (lucida.cards/connect), and the link-preview pictures",
    "w": 240,
    "x": 0,
-   "y": 15050
+   "y": 16189
   },
   "aThemes0": {
    "kind": "title1",
