@@ -11,9 +11,10 @@ import { join } from 'node:path';
 const now = () => new Date().toISOString();
 export const TABLES = {
   // `listed`: whether the profile shows in search (a profile made just by studying, following, saving... stays unlisted until its
-  // person edits it or shares a deck publicly). supabase/hardening.sql adds it, and the two columns below.
-  profiles: { key: ['id'], unique: [['handle']], defaults: () => ({ name: '', bio: '', school: '', subject: '', avatar: null, color: 0, kind: 'person', verified: '', featured: [], theme: '', followers: 0, following: 0, contributions: 0, listed: false, created_at: now(), updated_at: now() }) },
-  shared_decks: { key: ['id'], unique: [['owner', 'slug'], ['owner', 'deck_id']], defaults: () => ({ visibility: 'link', name: '', description: '', tags: [], cover: {}, card_count: 0, rev: 1, version: 0, maintained: 'creator', helpers: [], contributors: [], checked: null, stars: 0, learners: 0, copies: 0, score: 0, theme: '', class_id: null, media: [], hidden: false, created_at: now(), updated_at: now() }) },
+  // person edits it or shares a deck publicly). supabase/hardening.sql adds it, and the two columns below. supabase/school.sql adds a
+  // person's school id, level, year, and whether their school shows (school_show), and a deck's level, subject, school and `labeled`.
+  profiles: { key: ['id'], unique: [['handle']], defaults: () => ({ name: '', bio: '', school: '', subject: '', avatar: null, color: 0, kind: 'person', verified: '', featured: [], theme: '', followers: 0, following: 0, contributions: 0, listed: false, school_id: '', level: '', year: '', school_show: false, created_at: now(), updated_at: now() }) },
+  shared_decks: { key: ['id'], unique: [['owner', 'slug'], ['owner', 'deck_id']], defaults: () => ({ visibility: 'link', name: '', description: '', tags: [], cover: {}, card_count: 0, rev: 1, version: 0, maintained: 'creator', helpers: [], contributors: [], checked: null, stars: 0, learners: 0, copies: 0, score: 0, theme: '', class_id: null, media: [], hidden: false, level: '', subject: '', school_id: '', school: '', labeled: false, created_at: now(), updated_at: now() }) },
   shared_cards: { key: ['shared_id', 'id'], defaults: () => ({ pos: 0, data: {}, deleted: false, rev: 1, updated_at: now() }) },
   deck_versions: { key: ['id'], serial: 'id', unique: [['shared_id', 'version']], defaults: () => ({ author: null, author_name: '', ai: '', kind: 'edit', summary: '', changes: [], n_changes: 0, created_at: now() }) },
   suggestions: { key: ['id'], defaults: () => ({ author: null, author_name: '', ai: '', message: '', changes: [], status: 'open', created_at: now(), decided_at: null }) },

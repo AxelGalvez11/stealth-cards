@@ -82,8 +82,10 @@ async function publicApi(req, res, path, viewer) {
   if (path === '/api/public/deck') return out(await social.deckPage({ handle: q.get('h'), slug: q.get('s'), id: q.get('id') }, viewer), 'This deck isn’t shared.');
   if (path === '/api/public/profile') return out(await social.profilePage(q.get('h'), viewer), 'No one has that name.');
   if (path === '/api/public/history') return out(await social.historyPage(q.get('id'), viewer), 'This deck isn’t shared.');
-  if (path === '/api/public/discover') return send(res, 200, await social.discover(viewer, { tag: q.get('tag') || '' }));
-  if (path === '/api/public/search') return send(res, 200, await social.search(q.get('q') || '', viewer));
+  // Discover and search can be narrowed by level, subject, and school (a school's id from web/schools.json).
+  const narrow = { level: q.get('level') || '', subject: q.get('subject') || '', school: q.get('school') || '' };
+  if (path === '/api/public/discover') return send(res, 200, await social.discover(viewer, { tag: q.get('tag') || '', ...narrow }));
+  if (path === '/api/public/search') return send(res, 200, await social.search(q.get('q') || '', viewer, narrow));
   // A class (classes.mjs): what an invite shows to anyone, and the whole class to the people in it.
   if (path === '/api/public/class') return out(await classes.page(q.get('code'), viewer), 'No class has that code.');
   return send(res, 404, { error: 'Not found' });
