@@ -54,7 +54,8 @@ const held = () => {
 };
 // What the app gets: the library, plus who is signed in (online), and whether Pro is on (so this computer can show the
 // Free app too, with LUCIDA_PLAN=free; see store.mjs).
-const view = me => ({ ...state(), me, aiOn: aiReady(), pro: isPro() });
+// `quizLeft`: how many batches of Lucida's own Learn mode questions are left today (the app asks for none when it's 0).
+const view = me => ({ ...state(), me, aiOn: aiReady(), pro: isPro(), quizLeft: aiReady() ? quizLeft(new Date().toISOString().slice(0, 10), isPro() ? PRO_QUIZ_BATCHES : FREE_QUIZ_BATCHES) : 0 });
 // The study network's actions (see social.mjs), each run in the signed-in person's library.
 const SOCIAL = {
   'profile.ensure': (uid, me) => social.ensureProfile(uid, me).then(p => ({ handle: p.handle })),

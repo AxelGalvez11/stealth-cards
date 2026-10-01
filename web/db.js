@@ -513,7 +513,7 @@ export async function createDb({ onChange, go }) {
   const hasQuiz = c => (c.quiz || []).length > 0;
   function wantQuiz() {
     const L = learning;
-    if (!S.aiOn || quizOff || quizBusy || !L || L.done || now() < quizRetryAt || !L.kinds.some(k => k === 'mc' || k === 'tf' || k === 'blank')) return;
+    if (!S.aiOn || S.quizLeft === 0 || quizOff || quizBusy || !L || L.done || now() < quizRetryAt || !L.kinds.some(k => k === 'mc' || k === 'tf' || k === 'blank')) return;
     const open = L.queue.filter(x => !L.st[x].learned).map(cardById).filter(Boolean);
     let ahead = 0;
     for (const c of open) { if (hasQuiz(c)) ahead++; else if (!c.quizTried) break; }
@@ -525,6 +525,7 @@ export async function createDb({ onChange, go }) {
       .then(async r => {
         const j = await r.json().catch(() => ({}));
         if (r.ok) {
+          if (typeof j.left === 'number') S.quizLeft = j.left;
           for (const [id, list] of Object.entries(j.questions || {})) { const c = cardById(id); if (c && !hasQuiz(c)) c.quiz = list; }
           for (const id of j.tried || []) { const c = cardById(id); if (c && !hasQuiz(c)) c.quizTried = now(); }
         } else if (r.status === 402 || r.status === 503) quizOff = true;
