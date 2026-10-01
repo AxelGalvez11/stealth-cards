@@ -96,6 +96,10 @@ struct RootView: View {
         await store.load()
         // A theme in use is warmed up (its details, background, card faces, pictures, and covers), so nothing flashes.
         if let k = store.skinKey { ThemeArt.shared.warm(k, store) }
+        // A practice test that was open when the app closed is open again, where it was (its deck's or folder's page under it).
+        if let T = store.testing {
+          nav.tab = .library; nav.path = [T.scope.folderId.map { Route.folder($0) } ?? .deck(T.deckId ?? "")]; nav.full = .test(T.scope)
+        }
         Task { try? await Task.sleep(nanoseconds: 5_000_000_000); await store.retuneWhenDue() }
         #if DEBUG
         // `-check pause|exam|grade|learn|tune|free`: an end-to-end check of the Pro tools against the server (DebugChecks.swift).
@@ -154,6 +158,9 @@ struct RootView: View {
           case let o where o.hasPrefix("class:"): nav.tab = .library; nav.libClasses = true; nav.path = [.classPage(String(o.dropFirst(6)))]
           case let o where o.hasPrefix("deck:"):
             if let d = store.lib.decks.first(where: { $0.name == String(o.dropFirst(5)) }) { nav.tab = .library; nav.path = [.deck(d.id)] }
+          // `folder:<name>`: the folder with that name.
+          case let o where o.hasPrefix("folder:"):
+            if let f = store.lib.folders.first(where: { $0.name == String(o.dropFirst(7)) }) { nav.tab = .library; nav.path = [.folder(f.id)] }
           default: break
           }
         }

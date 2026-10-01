@@ -104,6 +104,17 @@ final class Nav: ObservableObject {
     withTransaction(now) { if let id = deckId { path.append(.deck(id)) } else { pick(.today) } }
     DispatchQueue.main.async { withAnimation(.out(0.35)) { self.full = nil } }
   }
+  /// Leaving a practice test (Leave, or Done on its results): the page it was started from, a deck's or a folder's.
+  func leave(test scope: TestScope) {
+    switch scope {
+    case .deck(let id): leave(to: id)
+    case .folder(let id):
+      if path.last == .folder(id) { withAnimation(.out(0.35)) { full = nil }; return }
+      var now = Transaction(); now.disablesAnimations = true
+      withTransaction(now) { tab = .library; path = [.folder(id)] }
+      DispatchQueue.main.async { withAnimation(.out(0.35)) { self.full = nil } }
+    }
+  }
   func pick(_ t: Tab) { path = []; tab = t }
   /// Someone's profile (`handle` "": yours). Yours is the Profile tab (`mine` says your handle), so opening it goes there
   /// instead of stacking a second copy of it on the page you're on.

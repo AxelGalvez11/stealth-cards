@@ -121,6 +121,10 @@ extension Store {
       if !testBox.loaded {
         testBox.loaded = true
         if let data = UserDefaults.standard.data(forKey: Store.testKey), let s = try? JSONDecoder().decode(TestSession.self, from: data), s.v == 1 { testBox.session = s }
+        #if DEBUG
+        // `-testSpent <milliseconds>`: the test picked up from this phone has already been open that long (to check the clock without waiting).
+        if var s = testBox.session, let v = Board.arg("-testSpent"), let ms = Double(v) { s.spent = ms; s.tick = nowMs(); testBox.session = s }
+        #endif
       }
       guard let s = testBox.session, testOk(s) else { return nil }
       return s
@@ -337,9 +341,11 @@ extension Store {
       T.answers[String(T.at)] = TestAnswer(pairs: a)
     }
   }
-  func testType(_ text: String) {
+  /// What's written in the box of question `i` (the box tells which question it's for: when it lets go of its words as the next
+  /// question comes up, they must not land on that one).
+  func testType(_ text: String, at i: Int? = nil) {
     if demo { demoTest.typed = text; return }
-    guard var T = testBox.session, T.phase == "taking", T.questions[T.at].type == "type" else { return }
+    guard var T = testBox.session, T.phase == "taking", i == nil || i == T.at, T.questions[T.at].type == "type" else { return }
     T.answers[String(T.at)] = TestAnswer(typed: String(text.prefix(300)))
     testBox.session = T
     saveTest()
@@ -500,3 +506,26 @@ extension Store {
     return "Last practice test: \(t.day) · \(t.line) · \(t.pct)%"
   }
 }
+
+#if DEBUG
+/// `-testAudit`: an invisible element tells the end-to-end test which answer is right for the question on screen (debug builds only).
+enum TestAudit {
+  static let on = ProcessInfo.processInfo.arguments.contains("-testAudit")
+}
+extension Store {
+  func testAuditValue() -> String {
+    guard let T = testBox.session else { return "{}" }
+    var o: [String: Any] = ["phase": T.phase, "n": T.questions.count]
+    if T.phase == "results", let R = T.result { o["right"] = R.right; o["pct"] = R.pct; o["missed"] = R.items.filter { !$0.ok }.map(\.n) }
+    else {
+      let q = T.questions[T.at]
+      o["at"] = T.at; o["kind"] = q.kind; o["type"] = q.type; o["text"] = q.text
+      if let r = q.right, let opts = q.options { o["right"] = r; o["answer"] = opts[r]; o["options"] = opts }
+      if let a = q.answer { o["answer"] = a }
+      if let terms = q.terms, let defs = q.defs { o["terms"] = terms.map { t in ["label": t.label, "letter": Store.letters[defs.firstIndex { $0.id == t.id } ?? 0]] } }
+      o["spent"] = Int(T.spent / 1000)
+    }
+    return (try? JSONSerialization.data(withJSONObject: o)).flatMap { String(data: $0, encoding: .utf8) } ?? "{}"
+  }
+}
+#endif
