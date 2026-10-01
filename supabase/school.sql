@@ -1,7 +1,7 @@
 -- Lucida's school labels (2026-10-01): finding shared decks by school, level and subject, and a person's school on their profile
 -- (what web/social.mjs, web/schools.mjs and web/school.js read and write).
 -- Run it on the live database BEFORE deploying that code. It is safe while the old code is still running:
---   * it only adds: nine columns, each with a default the old code never notices, and three indexes;
+--   * it only adds: ten columns, each with a default the old code never notices, and three indexes;
 --   * nothing is dropped, renamed, or emptied, and no old column changes meaning;
 --   * every statement can run again (if not exists), so running it once more right after the deploy is fine.
 -- The columns match web/localrest.mjs, which stands in for these tables on a computer without Supabase.
@@ -29,6 +29,9 @@ alter table public.shared_decks add column if not exists subject text not null d
 alter table public.shared_decks add column if not exists school_id text not null default '';
 alter table public.shared_decks add column if not exists school text not null default '';
 alter table public.shared_decks add column if not exists labeled boolean not null default false;
+-- The school was copied from its owner's the first time the deck went public, not picked for the deck: it goes again when the owner stops
+-- showing their school or changes it (social.mjs dropOwnSchool). Picking a school for the deck turns it off.
+alter table public.shared_decks add column if not exists school_auto boolean not null default false;
 
 -- 3. Indexes for Discover's filters (public decks, best first) ---------------------------------------------------------------
 create index if not exists shared_decks_level on public.shared_decks (level, score desc) where visibility = 'public' and level <> '';

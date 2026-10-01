@@ -140,7 +140,14 @@ export async function updateProfile(uid, me, patch) {
   catch (e) { if (e.status === 409) throw err('That name is taken. Try another.'); throw e; }
   Object.assign(p, next);
   if (next.handle) { state().profile = { handle: p.handle }; saved(); }
+  if (['school_show', 'school_id', 'school', 'level'].some(k => k in next)) await dropOwnSchool(p);
   return p;
+}
+// A deck's school that started as its owner's (not one they picked for the deck) goes when they stop showing their school, take it
+// off, change it, or become a high school student: "Only you can see it unless this is on" stays true of what was copied from it.
+async function dropOwnSchool(p) {
+  const keep = p.school_show && p.school && p.level !== 'highschool';
+  await rest('/shared_decks?owner=eq.' + val(p.id) + '&school_auto=is.true' + (keep ? '&school=neq.' + exact(p.school) : ''), { method: 'PATCH', body: { school_id: '', school: '', school_auto: false } });
 }
 const personOf = p => (p ? { id: p.id, handle: p.handle, name: p.name, avatar: p.avatar || null, color: p.color || 0, verified: p.verified || '', kind: p.kind || 'person' } : null);
 // What pages get of a person: never their account id.
@@ -413,7 +420,7 @@ export async function shareDeck(uid, me, deckId, o = {}) {
 // The labels a deck's sharing settings send: `level`, `subject`, and the school (`schoolId` from the list, or `school` typed). A school
 // typed on a high school deck is left out, like a person's (no high school names), and a high school deck doesn't start with its owner's
 // college. `start` is the owner's profile when this is the first time the deck goes public: its school becomes the deck's, if they
-// show it.
+// show it (`school_auto`: it was copied, not picked; it follows their profile until they pick one for the deck themselves).
 async function deckLabels(o, was, start) {
   const out = {};
   if ('level' in o) out.level = levelOf(o.level);
@@ -427,7 +434,8 @@ async function deckLabels(o, was, start) {
       out.school_id = row[0]; out.school = row[1];
     } else { out.school_id = ''; out.school = oneLine(o.school, 60); }
     if (!out.school_id && ('level' in out ? out.level : was && was.level) === 'highschool') out.school = '';
-  } else if (start && start.school_show && start.school && start.level !== 'highschool' && ('level' in out ? out.level : was && was.level) !== 'highschool') Object.assign(out, { school_id: start.school_id || '', school: start.school });
+    out.school_auto = false;
+  } else if (start && start.school_show && start.school && start.level !== 'highschool' && ('level' in out ? out.level : was && was.level) !== 'highschool') Object.assign(out, { school_id: start.school_id || '', school: start.school, school_auto: true });
   if (Object.keys(out).length) out.labeled = true;
   return out;
 }
@@ -1008,8 +1016,8 @@ export async function profilePage(handle, viewer) {
   list.sort((a, b) => (feat.includes(b.id) - feat.includes(a.id)));
   // Someone's school, level and year are on their page only if they switched it on (their own page always has them, with the switch, so
   // Edit can show them). A school's own account is an organization, so its name is always on its page.
-  const open = self || p.school_show || p.kind === 'school', mine = self ? { showSchool: !!p.school_show, schoolId: p.school_id || '' } : {};
-  return { ...face(p), bio: p.bio || '', school: open ? p.school || '' : '', level: open ? p.level || '' : '', year: open ? p.year || '' : '', ...mine, subject: p.subject || '', followers: p.followers || 0, following: p.following || 0, contributions: p.contributions || 0,
+  const open = self || p.school_show || p.kind === 'school', own = self ? { showSchool: !!p.school_show, schoolId: p.school_id || '' } : {};
+  return { ...face(p), bio: p.bio || '', school: open ? p.school || '' : '', level: open ? p.level || '' : '', year: open ? p.year || '' : '', ...own, subject: p.subject || '', followers: p.followers || 0, following: p.following || 0, contributions: p.contributions || 0,
     featured: feat, decks: list.map(d => ({ ...d, pinned: feat.includes(d.id) })), saved: self ? await withOwners(saved.map(s => savedRows.find(r => r.id === s.shared_id)).filter(Boolean)) : [],
     stars: list.reduce((n, d) => n + d.stars, 0), me: vid ? { self, following: following.length > 0, blocked } : null };
 }
@@ -1035,18 +1043,18 @@ const exact = s => encodeURIComponent('"' + String(s ?? '').replace(/[*%,()"\\]/
 // school (as well as a topic), it's one list of decks, best first. Studying stays in your library; this is only for finding more.
 export async function discover(viewer, { tag = '', level = '', subject = '', school = '' } = {}) {
   const t = String(tag || '').slice(0, 40), byTag = t ? '&tags=cs.' + encodeURIComponent('{' + qvalRaw(t) + '}') : '';
-  const vid = viewer ? socialId(viewer) : null, f = await filtersOf({ level, subject, school });
+  const vid = viewer ? socialId(viewer) : null, narrow = await filtersOf({ level, subject, school });
   // Decks of people you blocked aren't here.
   const skip = vid ? await blockedBy(vid) : [], gone = new Set(skip), hide = without('owner', skip);
-  const base = '/shared_decks?visibility=eq.public&hidden=is.false' + byTag + f.q + hide + '&select=' + LIST, best = '&order=score.desc,updated_at.desc';
+  const base = '/shared_decks?visibility=eq.public&hidden=is.false' + byTag + narrow.q + hide + '&select=' + LIST, best = '&order=score.desc,updated_at.desc';
   const topicsOf = rows => {
     const count = {};
     for (const r of rows) for (const g of r.tags || []) count[g] = (count[g] || 0) + 1;
     return Object.keys(count).sort((a, b) => count[b] - count[a] || a.localeCompare(b)).slice(0, 10);
   };
   const tagsQ = rest('/shared_decks?visibility=eq.public&hidden=is.false' + hide + '&select=tags,owner&order=score.desc&limit=300');
-  const echo = { tag: t, level: f.level, subject: f.subject, school: f.school, filtered: f.on };
-  if (f.on) {
+  const echo = { tag: t, level: narrow.level, subject: narrow.subject, school: narrow.school, filtered: narrow.on };
+  if (narrow.on) {
     const [rows, tagRows] = (await Promise.all([rest(base + best + '&limit=24'), tagsQ])).map(rows => rows.filter(r => !gone.has(r.owner)));
     const decks = await withOwners(rows);
     return { topics: topicsOf(tagRows), ...echo, sections: decks.length ? [{ id: 'results', title: 'Decks', decks }] : [] };
