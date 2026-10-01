@@ -114,7 +114,7 @@ function resolve(path, q) {
     if (deck[2]) return narrow.matches ? { name: 'PhoneEditor', props: { deckId: id, cardId: deck[3] || '', from: q.get('from') || '', keyboard: false } }
       : { name: 'WebCardsScreen', props: { deckId: id, cardId: deck[3] || '', from: q.get('from') || '' } };
     // An empty deck shows its empty page, unless you opened its settings.
-    return { name: P + (db.cards(id).length || q.get('settings') === '1' || (dRow && (dRow.hasGuide || dRow.hasSources)) ? 'Deck' : 'DeckEmpty'), props: { deckId: id, settingsOpen: q.get('settings') === '1', sourceOpen: q.get('source') || '', sourceAt: q.get('at') || '' } };
+    return { name: P + (db.cards(id).length || q.get('settings') === '1' || (dRow && (dRow.hasGuide || dRow.hasSources)) ? 'Deck' : 'DeckEmpty'), props: { deckId: id, settingsOpen: q.get('settings') === '1', sourceOpen: q.get('source') || '', sourceAt: q.get('at') || '', tab: q.get('tab') || '' } };
   }
   // A Learn mode session: the board for its current question, or the end once every card is learned.
   const ln = /^\/learn\/([^/]+)$/.exec(path);

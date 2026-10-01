@@ -56,13 +56,13 @@
     {
       "h2": "Make cards in Lucida",
       "paras": [
-        "Choose Make cards, add what you want to learn from, and Lucida writes the cards with its own AI. You pick the deck (new or one you have), how many cards (Auto, 10, 20 or 50), the kinds (basic or fill in the blank) and the language. Lucida first shows the new cards. You edit, remove or keep each one, or keep them all, and then they are saved in the deck.",
+        "Choose Make cards, add what you want to learn from, and Lucida writes the cards with its own AI. You pick the deck (new or one you have), how many cards (Auto, 10, 20 or 50), the kinds (basic or fill in the blank, and audio cards once a language is set) and the language. Lucida first shows the new cards. You edit, remove or keep each one, or keep them all, and then they are saved in the deck.",
         "You can add:"
       ],
       "bullets": [
-        "**A file.** A PDF, a PowerPoint (.pptx), a Word file (.docx) or a text file.",
+        "**A file.** A PDF, a PowerPoint (.pptx), a Word file (.docx), a text file, or a lecture’s captions (.srt or .vtt).",
         "**Pictures.** A photo of notes, slides, a whiteboard or a book page. On the web, the file picker offers the camera on phones.",
-        "**A recording.** An audio file, or a lecture recorded in the app with the microphone, with a timer, pause and stop.",
+        "**A recording.** An audio file (a long one is cut into parts of ten minutes or less on your device, up to your plan’s time), or a lecture recorded in the app with the microphone, with a timer, pause and stop.",
         "**A YouTube link.** Lucida watches a public video, or you can paste the video’s transcript instead.",
         "**Pasted text.** Paste your notes or any other text.",
         "**A topic.** Type it in words, like “the Krebs cycle”."
@@ -71,7 +71,7 @@
     {
       "h2": "What happens to what you add",
       "paras": [
-        "Text is pulled out of PDFs, slides and Word files on Lucida’s server, without an AI. Then an AI service writes the cards from that text, your pictures, scanned pages, audio, or the topic. A YouTube link goes to Google’s Gemini so it can watch the video.",
+        "Text is pulled out of PDFs, slides, Word files and caption files on Lucida’s server, without an AI. Then an AI service writes the cards from that text, your pictures, scanned pages, audio, or the topic. A YouTube link goes to Google’s Gemini so it can watch the video.",
         "Lucida asks for services that say they don’t keep it or train on it. Uploaded files are deleted after the make unless you keep them as the deck’s Source."
       ],
       "bullets": []
@@ -81,6 +81,8 @@
       "paras": [
         "Every deck keeps its Sources: what its cards were made from, whether a file, a recording, a video, pasted text or a topic. Each card remembers its page or time and can open the source there. Deleting a source removes its file, and the cards stay. Stored Sources have room for 500 files and 500 MB on Free, and 5,000 files and 5 GB on Pro.",
         "Sources are private, even on a shared deck. A public deck’s page may only say “Made from 3 sources”.",
+        "When Lucida makes cards it also drafts starter notes for the deck from the same material: a title, a short overview, and the main ideas as headings in order, each with the page or time it came from. You see them next to the cards and can turn them off. A deck with no Guide gets them as its Guide. A deck that has one keeps it, and the notes become a new page named after the source.",
+        "For learning a language, choose the language and turn on Audio: Lucida writes words and short phrases that your device’s voice reads aloud, and the back says what they mean.",
         "A deck can also have a Guide: a page written in Markdown (headings, lists, task lists, links, tables, code, quotes and pictures), shown under the deck’s header like a README. A Guide can have extra pages and a short history of versions, and “Make cards from this guide” turns it into cards. On a shared deck, the Guide shows on its public page."
       ],
       "bullets": []

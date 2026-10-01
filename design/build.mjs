@@ -1347,7 +1347,8 @@ const webDeck = webRoot(`${sidebar('Library')}
     <div style="border-radius: 16px; height: 104px; box-sizing: border-box; padding: 18px 20px; background: {{t.surf}}; display: flex; flex-direction: column; justify-content: space-between;"><span style="font-size: 13px; font-weight: 500; color: {{t.muted}};">Due next 7 days</span><div style="display: flex; align-items: flex-end; gap: 6px; height: 36px;"><sc-for list="{{spark}}" as="s" hint-placeholder-count="7"><div style="flex-grow: 1; border-radius: 4px; background: {{s.c}}; height: {{s.h}};"></div></sc-for></div></div>
   </div>
   ${examLine(14, -4)}
-  <div style="display: grid; grid-template-columns: {{gs.columns}}; gap: 16px; align-items: start;">${DB.guide}${DB.sources}</div>
+  ${DB.tabs}${DB.guide}${DB.sources}
+  <sc-if value="{{gs.showCards}}" hint-placeholder-val="{{ true }}">
   <div style="display: flex; align-items: center; gap: 8px;">
     <sc-for list="{{filters}}" as="f" hint-placeholder-count="6">
       <button type="button" onClick="{{f.pick}}" aria-pressed="{{f.pressed}}" style="height: 36px; padding: 0 16px; display: inline-flex; align-items: center; border: 0; border-radius: 999px; font: inherit; font-size: 13px; font-weight: 500; cursor: pointer; background: {{f.bg}}; color: {{f.fg}};">{{f.label}}</button>
@@ -1367,6 +1368,8 @@ const webDeck = webRoot(`${sidebar('Library')}
       </a>
     </sc-for>
   </div>
+  <sc-if value="{{gs.noCards}}" hint-placeholder-val="{{ false }}"><span style="font-size: 14px; color: {{t.muted}};">No cards in this deck yet. Add some from the Add cards menu.</span></sc-if>
+  </sc-if>
 </main>
 ${moveTray('tray', false)}
 <sc-if value="{{settingsOpen}}" hint-placeholder-val="{{ false }}">
@@ -1408,7 +1411,7 @@ renderVals() {
   const rows = allRows.filter(r => (f === 'All' || r.kind === f || r.tags.includes(f)) && (!q || [r.front, r.back, ...r.tags].join(' ').toLowerCase().includes(q)))
     .map(r => ({ ...r, glyph: glyphs[r.icon], aiNote: r.ai ? ' · ' + r.ai : '', ...cardFit(r.tags) }));
   return {
-    t, rows, ...chrome, ...coverVals, ...cardDrag, gs: { ...gs, columns: gs.guideShow && gs.sourcesShow ? 'minmax(0, 1fr) 340px' : 'minmax(0, 1fr)' }, vw, query: this.state.q || '', setQuery: e => this.setState({ q: e && e.target ? e.target.value : '' }),
+    t, rows, ...chrome, ...coverVals, ...cardDrag, gs, vw, query: this.state.q || '', setQuery: e => this.setState({ q: e && e.target ? e.target.value : '' }),
     filters: labels.map(l => ({ label: l, pressed: l === f ? 'true' : 'false', bg: l === f ? t.inv : t.surf, fg: l === f ? t.invText : t.text, pick: () => this.setState({ filter: l, tagMenuOpen: false }) })),
     tagBtn: { label: tagOn ? f : 'Tags', pressed: tagOn ? 'true' : 'false', bg: tagOn ? t.inv : t.surf, fg: tagOn ? t.invText : t.text, dot: tagOn ? tagCol(f) : 'transparent', dotW: tagOn ? '8px' : '0px' },
     tagMenu: { open: menuOpen, expanded: menuOpen ? 'true' : 'false', query: this.state.tagQ || '',
@@ -3729,12 +3732,15 @@ const phoneDeck = phone(`<div style="height: 100%; overflow-y: auto; scrollbar-w
     </div>
     ${examLine(14)}
     <div style="display: flex; gap: 8px;"><a href="PhoneReview.dc.html" style="flex: 2 1 0; height: 56px; border-radius: 999px; background: {{t.inv}}; color: {{t.invText}}; display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 17px; font-weight: 600; white-space: nowrap;">${svg(I.decks, 17, 2)}<span>{{studyLabel}}</span><sc-if value="{{hasStudyCount}}" hint-placeholder-val="{{ true }}">${STUDY_COUNT(24, 'rgba(128,128,128,.32)', 'inherit')}</sc-if></a><a href="{{learnHref}}" style="flex: 1 1 0; height: 56px; border-radius: 999px; background: {{t.surf}}; display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 17px; font-weight: 600; white-space: nowrap;">${svg(I.sparkle, 17, 2)}{{learnShort}}</a></div>
-    ${DBP.guide}${DBP.sources}
+    ${DBP.tabs}${DBP.guide}${DBP.sources}
+    <sc-if value="{{gs.showCards}}" hint-placeholder-val="{{ true }}">
     <div data-sc-list="cards" ref="{{dragList}}" onPointerDown="{{grab}}" style="display: flex; flex-direction: column;">
       <sc-for list="{{rows}}" as="r" hint-placeholder-count="4">
         <a href="{{r.href}}" data-sc-item="{{r.id}}" draggable="false" class="sc-drag" style="display: flex; flex-direction: column; gap: 3px; padding: 12px 0; border-bottom: 1px solid {{t.line}};"><span style="font-size: 15px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{r.front}}</span><span style="display: flex; align-items: center; gap: 8px; min-width: 0; font-size: 13px; color: {{t.muted}};"><span style="white-space: nowrap;">{{r.kind}} · {{r.next}}</span>${cardTag('c1')}${cardTag('c2')}${cardMore}</span></a>
       </sc-for>
     </div>
+    <sc-if value="{{gs.noCards}}" hint-placeholder-val="{{ false }}"><span style="font-size: 14px; color: {{t.muted}};">No cards in this deck yet. Add some from the Add cards menu.</span></sc-if>
+    </sc-if>
   </div>
 </div></div>`, 'Library', `${moveTray('tray', true)}
 <sc-if value="{{settingsOpen}}" hint-placeholder-val="{{ false }}">
@@ -8766,7 +8772,7 @@ const PROFILE_PROPS = { ...DARK, grain: MESH('Iris').grain, tab: { editor: 'enum
 const FREE_PROP = { editor: 'boolean', default: false };
 const PRO_DECK_PROPS = { free: FREE_PROP, stepGoal: { editor: 'boolean', default: false } };
 // The deck page's Guide and Sources: with both, with the Guide's extra pages, a long Guide, a source opened, nothing yet, or a deck you only study.
-const GUIDE_STATE = { guide: { editor: 'enum', default: 'Guide and sources', options: GUIDE_STATES }, sourceOpen: { editor: 'string', default: '' }, sourceAt: { editor: 'string', default: '' } };
+const GUIDE_STATE = { section: { editor: 'enum', default: 'Cards', options: ['Cards', 'Notes', 'Sources'] }, guide: { editor: 'enum', default: 'Guide and sources', options: GUIDE_STATES }, sourceOpen: { editor: 'string', default: '' }, sourceAt: { editor: 'string', default: '' } };
 const STATS_PROPS = { tab: { editor: 'enum', default: 'Overview', options: ['Overview', 'Memory', 'Weak spots', 'Pace'] }, free: FREE_PROP };
 const LEVEL_PROP = { editor: 'enum', default: 'all', options: ['all', 'new', 'easy', 'medium', 'hard', 'leech', 'paused'] };
 const TUNE_PROP = { editor: 'enum', default: 'On', options: ['On', 'Off', 'Not enough reviews', 'Tuning'] };

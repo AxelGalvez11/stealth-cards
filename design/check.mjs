@@ -67,14 +67,14 @@ PROP_SETS.push({ verified: 'Teacher' }, { verified: 'School' }, { verified: 'Tea
 
 // Making cards: every step the Make boards offer, light and dark.
 for (const step of MAKE_STEPS) PROP_SETS.push({ step }, { step, dark: true });
-// The deck page's Guide and Sources, in each state (and dark).
-for (const guide of GUIDE_STATES) PROP_SETS.push({ guide }, { guide, dark: true });
+// The deck page's Cards, Notes (the Guide) and Sources sections, each with the Guide and Sources in every state (and dark).
+for (const guide of GUIDE_STATES) PROP_SETS.push({ guide }, { guide, dark: true }, { guide, section: 'Notes' }, { guide, section: 'Notes', dark: true }, { guide, section: 'Sources' }, { guide, section: 'Sources', dark: true });
 // The Guide's editor: writing, previewing, older versions, a new page, nothing written yet (and dark).
 for (const view of GUIDE_VIEWS) PROP_SETS.push({ view }, { view, dark: true });
 for (const liveFrom of LIVE_FROM) PROP_SETS.push({ liveFrom }, { liveFrom, dark: true });
 for (const topicState of LIVE_TOPIC_STATES) PROP_SETS.push({ topicState });
 // A card made from a source says so in the editor (and the deck page's source opens where the card points).
-PROP_SETS.push({ madeFrom: false }, { madeFrom: true, dark: true }, { guide: 'A source open', sourceAt: 'p. 4' });
+PROP_SETS.push({ madeFrom: false }, { madeFrom: true, dark: true }, { guide: 'A source open', sourceAt: 'p. 4' }, { guide: 'A source open', sourceAt: 'p. 4', section: 'Sources' });
 
 function walk(str, sc, miss) {
   let i = 0;

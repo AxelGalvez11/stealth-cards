@@ -1918,7 +1918,7 @@ renderVals() {
   const when = t0 => new Date(t0).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
   const versions = (st.hist || (mock && histOpen ? [] : [])).map(v => ({ when: when(v.at), size: plural(v.text.length, 'character'), excerpt: v.text.slice(0, 220), restore: async () => { await am.restoreGuide(deckId, pageId, v.at); this.setState({ drafts: Object.fromEntries(Object.entries(this.state.drafts).filter(([k]) => k !== key)), histOpen: false, hist: null }); } }));
   const histNow = mock && histOpen && st.hist === null ? (dm.guideHistory(deckId, pageId).then(v => this.setState({ hist: v })), []) : versions;
-  const goBack = () => (mock ? null : db.act.go('/deck/' + deckId));
+  const goBack = () => (mock ? null : db.act.go('/deck/' + deckId + '?tab=notes'));
   return {
     t, ...chrome, dark: !!p.dark, dim: !!p.dim, deckId, deckName: dk.name || 'Cell Biology',
     done: async () => { await this._flush(); goBack(); },

@@ -36,7 +36,7 @@
       ],
       [
         "Making cards",
-        "Type cards in the editor (bold, italics, math, lists), import a list, make cards from a PDF, slides, a Word file, pictures, a recording, a YouTube video or a topic (3 makes a day on Free, 30 on Pro), or ask your own AI. Lucida shows new cards first, and you keep, edit or remove each one.",
+        "Type cards in the editor (bold, italics, math, lists), import a list, make cards from a PDF, slides, a Word file, caption files, pictures, a recording, a YouTube video or a topic (3 makes a day on Free, 30 on Pro), or ask your own AI. Lucida shows new cards first, and you keep, edit or remove each one.",
         "You add notes, and a note type (fields plus HTML and CSS templates) makes the cards. Very flexible, with more to learn."
       ],
       [
@@ -101,7 +101,7 @@
       "h2": "Where Lucida is better",
       "bullets": [
         "**Nothing to install or set up.** Open a browser on any computer or phone. Anki’s iPhone app costs $24.99, and Lucida works in Safari for free.",
-        "**AI that makes and works on your cards.** Lucida makes cards from a PDF, slides, a Word file, pictures, a recording, a YouTube video or a topic, and shows them to you before they are saved. Your own AI (Claude, ChatGPT, Cursor or any MCP app) can also add cards, fix them, write quiz questions and see what is due, through one private link. You choose what it may do and can check its cards before they join a deck. In Anki this takes an add-on and your own API key.",
+        "**AI that makes and works on your cards.** Lucida makes cards from a PDF, slides, a Word file, caption files, pictures, a recording, a YouTube video or a topic, and shows them to you before they are saved. Your own AI (Claude, ChatGPT, Cursor or any MCP app) can also add cards, fix them, write quiz questions and see what is due, through one private link. You choose what it may do and can check its cards before they join a deck. In Anki this takes an add-on and your own API key.",
         "**Learn mode is built in and free:** multiple choice, true or false, fill in the blank, matching and typing questions made from your cards.",
         "**Live games.** Play any deck with up to 60 friends on their phones. Anki has no games built in.",
         "**Classes and sharing.** Assign a deck by a date, see progress students choose to share, suggest changes to someone else’s deck and go back to any version.",
