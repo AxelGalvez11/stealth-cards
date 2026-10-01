@@ -333,8 +333,9 @@ const ART_METHOD = `art(p, variant) {
   const name = p.fid + (variant ? '-' + variant : ''), on = !!(this.props.site || this.props.db) && ${JSON.stringify(ART_FILES)}.includes(name);
   return { ...p, art: on ? 'url(/art/' + name + '.webp)' : '', live: !on };
 }`;
-const ART_LAYERS = key => `<sc-if value="{{${key}.art}}" hint-placeholder-val="{{ false }}"><div style="position: absolute; inset: 0; background: {{${key}.art}} center / 100% 100% no-repeat;"></div><div class="sc-grain" style="opacity: {{grain}};"></div></sc-if><sc-if value="{{${key}.live}}" hint-placeholder-val="{{ true }}">${flowLayer(key)}${GRAIN_LAYER}</sc-if>`;
-const artCard = (key, outer, inner, body) => `<div style="position: relative; overflow: hidden; color: {{${key}.ink}}; background: {{${key}.base}}; ${outer}">${ART_LAYERS(key)}<div style="position: relative; text-shadow: {{${key}.shadow}}; ${inner}">${body}</div></div>`;
+// `flow`: the layer drifts slowly (SKY_CSS, .sc-flow), the grain over it stays still.
+const ART_LAYERS = (key, flow = false) => `<sc-if value="{{${key}.art}}" hint-placeholder-val="{{ false }}"><div${flow ? ' class="sc-flow"' : ''} style="position: absolute; inset: 0; background: {{${key}.art}} center / 100% 100% no-repeat;"></div><div class="sc-grain" style="opacity: {{grain}};"></div></sc-if><sc-if value="{{${key}.live}}" hint-placeholder-val="{{ true }}">${flow ? `<div class="sc-flow" style="position: absolute; inset: 0;">${flowLayer(key)}</div>` : flowLayer(key)}${GRAIN_LAYER}</sc-if>`;
+const artCard = (key, outer, inner, body, flow = false) => `<div style="position: relative; overflow: hidden; color: {{${key}.ink}}; background: {{${key}.base}}; ${outer}">${ART_LAYERS(key, flow)}<div style="position: relative; text-shadow: {{${key}.shadow}}; ${inner}">${body}</div></div>`;
 writeFileSync(new URL('../web/fast.css', import.meta.url), `/* Made by design/build.mjs. Film grain for gradient cards drawn from pictures (web/art): one tile, drawn once. */
 .sc-grain { position: absolute; inset: 0; pointer-events: none; mix-blend-mode: soft-light; background: url("data:image/svg+xml,${encodeURIComponent(grainTile(256)).replace(/'/g, '%27')}") 0 0 / 256px 256px; }
 `);
@@ -4718,15 +4719,21 @@ const learnStartBody = (back, start, deep) => `${deep ? deepHead('sparkle', 'Lea
     <div style="display: flex; gap: 10px;">${quizBtn('Cancel', back, false, 1)}${quizBtn('Start learning', start, true, 2, 'sparkle', 'start')}</div>`;
 // A daylight sky behind the top of the page (a night sky in dark mode): deep blue up high, paler toward the page,
 // a soft glow, and clouds of three soft puffs each, drifting slowly. The wall and the words sit over it.
+// Each cloud's last number is the seconds one way of its drift takes (72 to 120: slow enough that you notice only that they have moved).
 const SKY_CLOUDS = {
-  web: [[-4, 118, 440, 150, 52], [79, 84, 470, 160, 64], [8, 404, 540, 170, 58], [67, 372, 500, 160, 70], [41, 22, 280, 96, 46]],
-  phone: [[-24, 104, 260, 100, 44], [62, 64, 250, 94, 52], [48, 372, 300, 110, 60]]
+  web: [[-4, 118, 440, 150, 96], [79, 84, 470, 160, 112], [8, 404, 540, 170, 104], [67, 372, 500, 160, 120], [41, 22, 280, 96, 72]],
+  phone: [[-24, 104, 260, 100, 80], [62, 64, 250, 94, 96], [48, 372, 300, 110, 108]]
 };
 const skyLayer = phone => `<div aria-hidden="true" class="sc-demo" style="position: absolute; left: 0; right: 0; top: 0; height: ${phone ? 600 : 700}px; z-index: -1; overflow: hidden; pointer-events: none; background: linear-gradient(180deg, {{sky.top}} 0%, {{sky.mid}} 30%, {{sky.low}} 55%, {{t.bg}} 100%);">
   <div style="position: absolute; left: 50%; top: -35%; width: 120%; height: 90%; transform: translateX(-50%); background: radial-gradient(closest-side, {{sky.glow}}, transparent);"></div>
-  ${SKY_CLOUDS[phone ? 'phone' : 'web'].map(([x, y, w, h, secs], i) => `<div class="sc-cloud" style="position: absolute; left: ${x}%; top: ${y}px; width: ${w}px; height: ${h}px; animation: scCloud ${secs}s ease-in-out -${i * 11}s infinite alternate;">${[[0, 30, 60, 70], [24, 0, 56, 88], [46, 24, 54, 76]].map(([l, t, pw, ph]) => `<span style="position: absolute; left: ${l}%; top: ${t}%; width: ${pw}%; height: ${ph}%; background: radial-gradient(closest-side, {{sky.cloud}} 40%, transparent);"></span>`).join('')}</div>`).join('')}
+  ${SKY_CLOUDS[phone ? 'phone' : 'web'].map(([x, y, w, h, secs], i) => `<div class="sc-cloud" style="position: absolute; left: ${x}%; top: ${y}px; width: ${w}px; height: ${h}px; animation: scCloud ${secs}s ease-in-out -${i * 23}s infinite alternate;">${[[0, 30, 60, 70], [24, 0, 56, 88], [46, 24, 54, 76]].map(([l, t, pw, ph]) => `<span style="position: absolute; left: ${l}%; top: ${t}%; width: ${pw}%; height: ${ph}%; background: radial-gradient(closest-side, {{sky.cloud}} 40%, transparent);"></span>`).join('')}</div>`).join('')}
 </div>`;
-const SKY_CSS = '@keyframes scCloud{from{transform:translateX(-28px)}to{transform:translateX(28px)}}@media (prefers-reduced-motion:reduce){.sc-cloud{animation:none!important}}';
+// The clouds drift slowly, to one side and back (a cloud moves 16% of its own width each way, about 170 px for a computer's big ones, in 72 to 120
+// seconds, eased at both ends, so the loop has no jump). The gradient that ends a page flows as the app's Today card does (the app's scDrift:
+// it grows 14% and drifts a few percent, back and forth, 16 s). Both are transforms only, and both stop with reduced motion.
+const SKY_CSS = '@keyframes scCloud{from{transform:translate3d(-16%,0,0)}to{transform:translate3d(16%,0,0)}}.sc-cloud{will-change:transform}'
+  + '@keyframes scDrift{from{transform:scale(1.14) translate(-3%,-2%)}to{transform:scale(1.14) translate(3%,2%)}}.sc-flow{animation:scDrift 16s ease-in-out infinite alternate;will-change:transform}'
+  + '@media (prefers-reduced-motion:reduce){.sc-cloud,.sc-flow{animation:none!important}}';
 // Learn mode's sky: only the faint blue fade, with no clouds or glow (the owner: "remove the clouds, i only want the
 // faint blue fade", V75). A night sky in dark mode.
 // The sky's colors, for renderVals: daylight, or a night sky in dark mode (the landing page's top, Learn mode's end).
@@ -5387,7 +5394,7 @@ ${featureRow(L, '', 'Flip, rate, remember.', 'Tap a card to see the answer, then
   </div>
 </section>
 <section style="padding-top: ${L.gapTop}px;">
-  ${artCard('hero', '', `box-sizing: border-box; padding: ${phone ? '64px 24px' : '104px 32px'}; display: flex; flex-direction: column; align-items: center; text-align: center;`, `<h2 style="margin: 0; font-size: ${L.ctaH1}px; font-weight: 600; line-height: 1.04; letter-spacing: -.04em; text-wrap: balance;">Your next exam, in cards.</h2><p style="margin: 16px 0 0; max-width: 480px; font-size: ${phone ? 16 : 18}px; line-height: 1.5; opacity: .8; text-wrap: balance;">Start with one deck. Your AI can fill it in a few minutes.</p><div style="margin-top: 28px;">${landPill('Get started', '{{startHref}}', true, L.btn, 'background: #FFFFFF; color: #000000;')}</div>`)}
+  ${artCard('hero', '', `box-sizing: border-box; padding: ${phone ? '64px 24px' : '104px 32px'}; display: flex; flex-direction: column; align-items: center; text-align: center;`, `<h2 style="margin: 0; font-size: ${L.ctaH1}px; font-weight: 600; line-height: 1.04; letter-spacing: -.04em; text-wrap: balance;">Your next exam, in cards.</h2><p style="margin: 16px 0 0; max-width: 480px; font-size: ${phone ? 16 : 18}px; line-height: 1.5; opacity: .8; text-wrap: balance;">Start with one deck. Your AI can fill it in a few minutes.</p><div style="margin-top: 28px;">${landPill('Get started', '{{startHref}}', true, L.btn, 'background: #FFFFFF; color: #000000;')}</div>`, true)}
 </section>
 </main>
 ${landFooter(phone, `<a href="#how">How it works</a><a href="#cards">Card types</a>`)}
@@ -5898,10 +5905,10 @@ const spH2 = (text, attrs = '') => `<h2 class="sp-h2"${attrs}>${text}</h2>`;
 // how the <img> loads: the hero at once, cards lazily.
 const spPic = (key, cls, alt, load, scale) => `<sc-if value="{{site}}" hint-placeholder-val="{{ false }}"><span class="sp-pw"><img class="sp-pic ${cls}" src="{{${key}.src}}" alt="${alt}" width="1200" height="630" ${load} decoding="async"><span class="sc-grain" aria-hidden="true" style="opacity: {{grain}};"></span></span></sc-if><sc-if value="{{canvas}}" hint-placeholder-val="{{ true }}"><div class="sp-pic sp-og ${cls}" style="--k: {{${scale}}};"><div class="sp-og-in"><dc-import name="SiteOg" page="{{${key}.key}}" hint-size="1200px,630px"></dc-import></div>${GRAIN_LAYER}</div></sc-if>`;
 // A page as a card: its picture with a chip on it, its title, and "7 min · Sep 30, 2026". `data-s` is what the blog's search looks in.
-const spCard = (k, scale = 'cardK') => `<a class="sp-card" href="{{${k}.href}}" data-s="{{${k}.s}}"><span class="sp-card-pic"><sc-if value="{{${k}.hasPic}}" hint-placeholder-val="{{ true }}">${spPic(k, 'sp-card-img', '', 'loading="lazy"', scale)}</sc-if><sc-if value="{{${k}.chip}}" hint-placeholder-val="{{ true }}"><span class="sp-card-chip">{{${k}.chip}}</span></sc-if></span><h3 class="sp-card-t">{{${k}.title}}</h3><p class="sp-card-m">{{${k}.meta}}</p></a>`;
+const spCard = (k, scale = 'cardK') => `<a class="sp-card" href="{{${k}.href}}" data-s="{{${k}.s}}"><span class="sp-card-pic"><sc-if value="{{${k}.hasPic}}" hint-placeholder-val="{{ true }}">${spPic(k, 'sp-card-img', '', 'loading="lazy"', scale)}</sc-if></span><h3 class="sp-card-t">{{${k}.title}}</h3><p class="sp-card-m">{{${k}.meta}}</p></a>`;
 const spCards = (list, hint = '', scale = 'cardK') => `<div class="sp-cards sp-wide"><sc-for list="{{${list}}}" as="k"${hint}>${spCard('k', scale)}</sc-for></div>`;
 // The featured page on a hub or the blog: a big picture, a chip, the minutes and the day, the title, two lines, and "Read now".
-const spFeat = `<a class="sp-feat sp-wide" href="{{feat.href}}" data-s="{{feat.s}}"><span class="sp-feat-pic">${spPic('feat', 'sp-feat-img', '', 'fetchpriority="high"', 'featK')}</span><span class="sp-feat-body"><span class="sp-feat-row"><span class="sp-kchip">{{feat.chip}}</span><span>{{feat.meta}}</span></span><h2 class="sp-feat-t">{{feat.title}}</h2><span class="sp-feat-d">{{feat.desc}}</span><span class="sp-btn">Read now</span></span></a>`;
+const spFeat = `<a class="sp-feat sp-wide" href="{{feat.href}}" data-s="{{feat.s}}"><span class="sp-feat-pic">${spPic('feat', 'sp-feat-img', '', 'fetchpriority="high"', 'featK')}</span><span class="sp-feat-body"><span class="sp-feat-row"><span>{{feat.meta}}</span></span><h2 class="sp-feat-t">{{feat.title}}</h2><span class="sp-feat-d">{{feat.desc}}</span><span class="sp-btn">Read now</span></span></a>`;
 // A + that becomes a − when its <details> opens (nothing moves: it opens at once).
 const spPm = '<span class="sp-pm" aria-hidden="true"></span>';
 // A question: a closed row with its answer under it. The question is still an h3.
@@ -6061,13 +6068,12 @@ const SITE_CSS = [
   '.sp-card{display:block;min-width:0}',
   '.sp-card-pic{display:block;position:relative;aspect-ratio:1200/630;border-radius:16px;overflow:hidden;background:var(--sp-surf);outline:1px solid var(--sp-edge);outline-offset:-1px}',
   '.sp-card-pic .sp-pic{border-radius:0;outline:0}',
-  '.sp-card-chip{position:absolute;left:10px;bottom:10px;height:26px;padding:0 12px;border-radius:999px;background:var(--sp-chipbg);color:var(--sp-chipfg);font-size:13px;font-weight:500;line-height:26px;box-shadow:0 0 0 1px var(--sp-edge)}',
   '.sp-card-t{margin:12px 0 0;font-size:17px;font-weight:600;line-height:1.3;letter-spacing:-.01em;text-wrap:balance}',
   '.sp-card-m{margin:6px 0 0;font-size:14px;line-height:1.4;color:var(--sp-muted)}',
   '.sp-feat{display:block;margin-top:28px}',
   '.sp-feat-pic{display:block;position:relative;aspect-ratio:1200/630;border-radius:20px;overflow:hidden;background:var(--sp-surf);outline:1px solid var(--sp-edge);outline-offset:-1px}',
   '.sp-feat-pic .sp-pic{border-radius:0;outline:0}.sp-feat-body{display:block;margin-top:16px}',
-  '.sp-feat-row{display:flex;align-items:center;gap:10px;font-size:14px;color:var(--sp-muted)}.sp-kchip{display:none}',
+  '.sp-feat-row{display:flex;align-items:center;gap:10px;font-size:14px;color:var(--sp-muted)}',
   '.sp-feat-t{margin:8px 0 0;font-size:24px;font-weight:700;line-height:1.2;letter-spacing:-.025em;text-wrap:balance}',
   '.sp-feat-d{display:none;margin-top:10px;font-size:16px;line-height:1.55;color:var(--sp-muted)}',
   '.sp-btn{display:flex;align-items:center;justify-content:center;box-sizing:border-box;height:46px;margin-top:16px;padding:0 22px;border-radius:14px;background:var(--sp-surf2);color:var(--sp-text);font-size:15px;font-weight:600}',
@@ -6242,8 +6248,7 @@ const SITE_CSS = [
   '.sp-qcard{padding:24px 28px 8px}.sp-qcard .sp-h2{font-size:26px}.sp-cta{padding:32px 32px 30px}.sp-cta-t{font-size:28px;max-width:520px}',
   '.sp-cards{grid-template-columns:repeat(3,minmax(0,1fr));gap:32px 24px}.sp-card-t{font-size:17px}',
   '.sp-feat{display:grid;grid-template-columns:minmax(0,1.45fr) minmax(0,1fr);gap:32px;align-items:center;margin-top:36px}.sp-feat-body{margin-top:0}',
-  '.sp-kchip{display:inline-flex;align-items:center;height:26px;padding:0 12px;border-radius:999px;background:var(--sp-surf2);color:var(--sp-text);font-size:13px;font-weight:500}',
-  '.sp-feat-row{justify-content:space-between}.sp-feat-t{margin-top:14px;font-size:30px}.sp-feat-d{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:3;overflow:hidden}',
+  '.sp-feat-t{margin-top:14px;font-size:30px}.sp-feat-d{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:3;overflow:hidden}',
   '.sp-btn{display:inline-flex;height:44px;margin-top:20px;border-radius:12px}',
   '.sp-bhead{padding-top:56px}.sp-bh1{font-size:60px;line-height:1.05;letter-spacing:-.045em}.sp-blead{margin-top:18px;font-size:20px}',
   '.sp-bar{margin-top:44px;flex-direction:row-reverse;align-items:center;justify-content:space-between;gap:24px;border-bottom:1px solid var(--sp-hair)}',
@@ -6284,7 +6289,7 @@ const SITE_CSS = [
   SKY_CSS, HEAD_CSS, NO_RISE
 ].join('');
 // The colors the site's CSS reads (--sp-…), from the page's theme and its extras; set on the page's root, or on a wrapper round figures on a plain page.
-const SP_VARS = '--sp-inv: {{t.inv}}; --sp-invtext: {{t.invText}}; --sp-bg: {{t.bg}}; --sp-line: {{t.line}}; --sp-muted: {{t.muted}}; --sp-surf: {{t.surf}}; --sp-surf2: {{t.surf2}}; --sp-text: {{t.text}}; --sp-hair: {{ink.hair}}; --sp-sub: {{ink.sub}}; --sp-edge: {{ink.edge}}; --sp-chipbg: {{ink.chipbg}}; --sp-chipfg: {{ink.chipfg}}; --sp-g1: {{ink.g1}}; --sp-g2: {{ink.g2}}; --sp-g3: {{ink.g3}}; --sp-good: {{t.good}}; --sp-again: {{t.again}}; --sp-hard: {{t.hard}}; --sp-easy: {{t.easy}}; --sp-fstage: {{ink.fstage}}; --sp-fcard: {{ink.fcard}}; --sp-fedge: {{ink.fedge}}; --sp-fsoft: {{ink.fsoft}}; --sp-fline: {{ink.fline}}; --sp-fshadow: {{ink.fshadow}};';
+const SP_VARS = '--sp-inv: {{t.inv}}; --sp-invtext: {{t.invText}}; --sp-bg: {{t.bg}}; --sp-line: {{t.line}}; --sp-muted: {{t.muted}}; --sp-surf: {{t.surf}}; --sp-surf2: {{t.surf2}}; --sp-text: {{t.text}}; --sp-hair: {{ink.hair}}; --sp-sub: {{ink.sub}}; --sp-edge: {{ink.edge}}; --sp-g1: {{ink.g1}}; --sp-g2: {{ink.g2}}; --sp-g3: {{ink.g3}}; --sp-good: {{t.good}}; --sp-again: {{t.again}}; --sp-hard: {{t.hard}}; --sp-easy: {{t.easy}}; --sp-fstage: {{ink.fstage}}; --sp-fcard: {{ink.fcard}}; --sp-fedge: {{ink.fedge}}; --sp-fsoft: {{ink.fsoft}}; --sp-fline: {{ink.fline}}; --sp-fshadow: {{ink.fshadow}};';
 const sitePage = (w, h) => `<div class="sp" style="position: relative; isolation: isolate; width: ${w}px; height: ${h}px; box-sizing: border-box; font-family: ${FONT}; background: {{t.bg}}; color: {{t.text}}; overflow: hidden; overflow: clip; ${SP_VARS}">
 ${skyLayer(false)}
 ${siteHeader()}
@@ -6331,8 +6336,8 @@ ${spSections('sections')}
 ${spSections('sectionsAfter')}
 ${spTest}
 <aside class="sp-cta" aria-label="Start with Lucida" style="color: {{hero.ink}}; background: {{hero.base}};">
-  <div class="sp-band-wide" aria-hidden="true" style="position: absolute; inset: 0;">${ART_LAYERS('hero')}</div>
-  <div class="sp-band-tall" aria-hidden="true" style="position: absolute; inset: 0; display: none;">${ART_LAYERS('heroTall')}</div>
+  <div class="sp-band-wide" aria-hidden="true" style="position: absolute; inset: 0;">${ART_LAYERS('hero', true)}</div>
+  <div class="sp-band-tall" aria-hidden="true" style="position: absolute; inset: 0; display: none;">${ART_LAYERS('heroTall', true)}</div>
   <p class="sp-cta-t" style="text-shadow: {{hero.shadow}};">{{cta}}</p><p class="sp-cta-d">Free: unlimited decks and cards, Learn mode and live games.</p>
   <div class="sp-cta-b">${landPill('Start free', '{{links.start}}', true, 44, 'background: #FFFFFF; color: #000000;')}</div>
 </aside>
@@ -6652,7 +6657,6 @@ const ogPage = `<div style="position: relative; isolation: isolate; width: 1200p
   <div data-og-text style="position: absolute; left: 80px; top: 62px; display: flex; align-items: center; gap: 14px; font-size: 32px; font-weight: 600; letter-spacing: -.02em;">${mark(30)}Lucida</div>
   <div style="position: absolute; left: 80px; top: 0; bottom: 0; width: 600px; display: flex; flex-direction: column; justify-content: center; padding-top: 18px;">
     <div data-og-text style="font-size: {{size}}px; font-weight: 600; line-height: 1; letter-spacing: -.05em; text-wrap: balance;">{{h1}}</div>
-    <div data-og-text style="margin-top: 30px; font-size: 26px; color: {{ink2}};">{{url}}</div>
   </div>
   ${OG_SCENES}
 </div>`;
@@ -6714,7 +6718,7 @@ renderVals() { ${T}
   // An exam week: a column of cards for each day, fewer as the exam comes, and the exam.
   const days = [['Mon', 5], ['Tue', 4], ['Wed', 3], ['Thu', 2], ['Fri', 1]].map(([label, kk], i) => ({ label, x: 22 + i * 92, h: 40 + kk * 44, y: 330 - (40 + kk * 44), c1: acc(i).b0.c, c2: acc(i).b3.c }));
   return { t, grain: '0', h1: it.h1, size: n <= 14 ? 112 : n <= 22 ? 96 : n <= 34 ? 80 : n <= 50 ? 68 : 58, bg,
-    url: 'lucida.cards' + (it.slug ? '/' + it.slug : ''), other: it.picture.other, otherFs: it.picture.other.length <= 6 ? 46 : it.picture.other.length <= 8 ? 38 : 31, otherFsWide: it.picture.other.length <= 6 ? 50 : it.picture.other.length <= 8 ? 42 : 34, ink2: '#2A2A30',
+    other: it.picture.other, otherFs: it.picture.other.length <= 6 ? 46 : it.picture.other.length <= 8 ? 38 : 31, otherFsWide: it.picture.other.length <= 6 ? 50 : it.picture.other.length <= 8 ? 42 : 34,
     scene: Object.fromEntries(${JSON.stringify(SCENES)}.map(s => [s, s === it.picture.scene + (${JSON.stringify(SCENE_ARRANGEMENTS)}[it.picture.scene] ? (it.picture.v || 0) % ${JSON.stringify(SCENE_ARRANGEMENTS)}[it.picture.scene] : '')])),
     card: '#FFFFFF', glass: 'rgba(255,255,255,.62)', glassEdge: 'rgba(255,255,255,.75)', edge: 'rgba(0,0,0,.06)',
     bar: 'rgba(0,0,0,.11)', sh: 'rgba(20,20,60,.45)', surf: '#F1F1F4',
