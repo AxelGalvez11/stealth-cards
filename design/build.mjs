@@ -6,6 +6,7 @@ import { PALETTE_NAMES, PALETTES, flowSvg, grainSvg, grainTile, paletteData } fr
 import { GEN_METHOD } from './generator.mjs';
 import { MOCK_METHOD, SAMPLE, SAMPLE_WAVE } from './mock.mjs';
 import { DRAG_METHOD } from './drag.mjs';
+import { MOTION, EASE, MOTION_CSS } from './motion.mjs';
 import { WALL_CARDS } from './wall.mjs';
 import { PRIVACY, TERMS, UPDATED } from './legal.mjs';
 import { CONNECT } from './connect-guide.mjs';
@@ -87,23 +88,21 @@ ${logic}
 // Motion on every board, as the Motion board shows it: a page's content rises in (each part a moment after the one
 // before), pills and buttons press in, empty states float in a soft light with a
 // shine crossing the top card, the Today card's colors drift, the session meter draws in, and forecast bars grow.
-// Switches spring across (the owner: "could you add toggle switch animation"), and side panels and sheets (deck
-// settings, the card editor) slide in over a dimming page (the owner: "add a move in animation for the right sidebar");
-// the app slides them back out as they close (web/app.js, sc-gone).
+// Menus, pop-ups, dropdowns, switches, segmented controls, sheets and side panels (deck settings, the card editor) share
+// one set of timings with the iPhone app (design/motion.mjs): quick, a short slide plus a fade, and nothing bounces (the
+// owner: "add slide in animations to app components, like menu popup, button toggle etc."). The app slides sheets and
+// panels back out as they close (web/app.js, sc-gone).
 // Reduced motion turns all of it off.
 const APP_MOTION_CSS = [
   '@keyframes scRise{from{opacity:0;transform:translateY(14px)}}main>*{animation:scRise .5s cubic-bezier(.2,.8,.2,1) backwards}',
   [2, 3, 4, 5].map(n => `main>*:nth-child(${n}){animation-delay:${((n - 1) * 0.06).toFixed(2)}s}`).join('') + 'main>*:nth-child(n+6){animation-delay:.3s}',
   'button,.sc-press{transition:transform .1s ease}button:active,.sc-press:active{transform:scale(.96)}',
-  '.sc-sw{transition:background-color .3s ease,transform .1s ease}.sc-sw>span{transition:transform .32s cubic-bezier(.34,1.56,.64,1),background-color .3s ease}',
+  MOTION_CSS,
   // Deck, folder and class tiles stay still under the pointer (the owner, 2026-10-01: "remove the deck hover in webapp effect");
   // .sc-lift only marks them now. Links dim a little under the pointer (a:hover), but not these.
   '.sc-lift:hover{opacity:1}',
   // A theme's deck cover has its own shadow (a cartoon's hard ink shadow, a glow).
   '.sk-cover{box-shadow:var(--sk-shadow)}',
-  '@keyframes scScrimIn{from{opacity:0}}@keyframes scScrimOut{to{opacity:0}}.sc-scrim{animation:scScrimIn .35s ease backwards}.sc-scrim.sc-gone{animation:scScrimOut .26s ease forwards}',
-  '@keyframes scPanelIn{from{opacity:0;transform:translateX(calc(100% + 12px))}}@keyframes scPanelOut{to{opacity:0;transform:translateX(calc(100% + 12px))}}.sc-panel{animation:scPanelIn .35s cubic-bezier(.2,.8,.2,1) backwards}.sc-panel.sc-gone{animation:scPanelOut .26s cubic-bezier(.4,0,1,1) forwards}',
-  '@keyframes scSheetIn{from{transform:translateY(100%)}}@keyframes scSheetOut{to{transform:translateY(100%)}}.sc-sheet{animation:scSheetIn .35s cubic-bezier(.2,.8,.2,1) backwards}.sc-sheet.sc-gone{animation:scSheetOut .26s cubic-bezier(.4,0,1,1) forwards}',
   '@keyframes scFloat{50%{transform:translateY(-6px)}}@keyframes scSwayA{50%{transform:rotate(-13deg) translateX(-3px)}}@keyframes scSwayB{50%{transform:rotate(10deg) translateX(3px)}}@keyframes scGlow{50%{opacity:.55}}',
   '@keyframes scSheen{0%,58%{transform:translateX(-160%) skewX(-18deg)}86%,100%{transform:translateX(260%) skewX(-18deg)}}',
   '.sc-float{animation:scFloat 6s ease-in-out infinite}.sc-sway-a{animation:scSwayA 6s ease-in-out infinite}.sc-sway-b{animation:scSwayB 6s ease-in-out infinite}.sc-glow{animation:scGlow 6s ease-in-out infinite}',
@@ -113,7 +112,7 @@ const APP_MOTION_CSS = [
   '@keyframes scKnob{from{opacity:0;transform:scale(.3)}}.sc-knob{transform-box:fill-box;transform-origin:center;animation:scKnob .35s .75s cubic-bezier(.34,1.56,.64,1) backwards}',
   '@keyframes scGrow{from{transform:scaleY(0)}}.sc-grow{transform-origin:bottom;animation:scGrow .6s cubic-bezier(.2,.8,.2,1) backwards}',
   Array.from({ length: 13 }, (_, i) => `:nth-child(${i + 2})>.sc-grow{animation-delay:${((i + 1) * 0.04).toFixed(2)}s}`).join(''),
-  '@media (prefers-reduced-motion:reduce){main>*,.sc-float,.sc-sway-a,.sc-sway-b,.sc-glow,.sc-alive>svg,.sc-draw,.sc-knob,.sc-grow,.sc-scrim,.sc-panel,.sc-sheet{animation:none!important}.sc-sheen{display:none}button:active,.sc-press:active{transform:none}.sc-sw>span{transition:background-color .3s ease}}'
+  '@media (prefers-reduced-motion:reduce){main>*,.sc-float,.sc-sway-a,.sc-sway-b,.sc-glow,.sc-alive>svg,.sc-draw,.sc-knob,.sc-grow{animation:none!important}.sc-sheen{display:none}button:active,.sc-press:active{transform:none}}'
 ].join('');
 // Dark mode, and its gray look (dim): the app sets both from Settings (Appearance, and Dark mode: Gray or Black).
 const DARK = { dark: { editor: 'boolean', default: false }, dim: { editor: 'boolean', default: false } };
@@ -723,13 +722,10 @@ const moveTray = (key, phone) => `<div data-sc-tray="1" style="display: {{traySh
   </div>
 </div>`;
 // Decks and cards you can drag (see drag.mjs): a held finger drags instead of selecting words or opening the phone's
-// link menu. A deck's row lights up under the pointer, since all of it opens the deck. The popup and the Move to tray
-// rise in; reduced motion keeps them still.
+// link menu. A deck's row lights up under the pointer, since all of it opens the deck. (The popup and the Move to tray rise
+// in like every menu, design/motion.mjs.)
 const DRAG_CSS = '.sc-drag{-webkit-touch-callout:none;-webkit-user-select:none;user-select:none}.sc-hit:focus-visible{outline:2px solid currentColor;outline-offset:-2px}'
-  + '.sc-row .sc-hit::before{content:"";position:absolute;inset:4px -12px;border-radius:14px;background:currentColor;opacity:0;transition:opacity .15s}.sc-row:hover .sc-hit::before{opacity:.05}'
-  + '@keyframes scTray{from{opacity:0;transform:translateY(18px) scale(.98)}}.sc-tray{animation:scTray .3s cubic-bezier(.2,.8,.2,1)}'
-  + '@keyframes scPop{from{opacity:0;transform:translateY(12px) scale(.97)}}.sc-pop{animation:scPop .26s cubic-bezier(.2,.8,.2,1)}@keyframes scFade{from{opacity:0}}.sc-fade{animation:scFade .2s ease}'
-  + '@media (prefers-reduced-motion:reduce){.sc-tray,.sc-pop,.sc-fade{animation:none}}';
+  + '.sc-row .sc-hit::before{content:"";position:absolute;inset:4px -12px;border-radius:14px;background:currentColor;opacity:0;transition:opacity .15s}.sc-row:hover .sc-hit::before{opacity:.05}';
 // How a dragged deck or card looks while it's lifted: a tile gets a deeper shadow; a row gets the page behind it, a
 // little room around its words, and a shadow.
 const LIFT_JS = `const liftTile = 'border-radius:20px!important;box-shadow:0 30px 60px -18px rgba(0,0,0,.5)!important;';
@@ -2646,7 +2642,7 @@ const CARD_VIEW_JS = `const R = this.rich(), ro = this.cardPal || { t, dark: !!t
       imageMock: c.image === 'mock', imageUrl: c.image && c.image !== 'mock' ? c.image : '',
       labelLines: show(c.backLabel || c.back), bigLines: show(c.backBig || c.back), subLines: show(c.backSub != null ? c.backSub : c.note) };
   };`;
-const BLANK_JS = `rev ? { text: c.back, bg: t.inv, fg: t.invText, cls: 'sc-pop' } : { text: '\\u2003\\u2003\\u2003\\u2003', bg: t.surf2, fg: 'transparent', cls: '' }`;
+const BLANK_JS = `rev ? { text: c.back, bg: t.inv, fg: t.invText, cls: 'sc-blank' } : { text: '\\u2003\\u2003\\u2003\\u2003', bg: t.surf2, fg: 'transparent', cls: '' }`;
 const REVIEW_LOGIC = (total, phone = false) => `
 constructor(props) { super(props); this.state = { revealed: !!props.startRevealed, settings: null, pileDraft: props.newPileOpen ? 'Tricky ones' : null, exOpen: !!props.explainOpen, exFor: props.explainOpen ? 'r0' : null }; }
 renderVals() {
@@ -2721,7 +2717,7 @@ renderVals() {
     flipLabel: card.isCloze ? (rev ? 'Hide the answer' : 'Show the blank') : card.isOcc ? (rev ? 'Hide the answer' : 'Show what’s under the box') : (rev ? 'Flip back' : 'Flip card'),
     // The note under a card that stays put (clozeShown: fill in the blank, or a picture with boxes) shows with the answer.
     clozeShown: rev && (card.isCloze || card.isOcc),
-    blank: Fs ? (rev ? { text: c.back, bg: Fs.blankBg, fg: Fs.blankFg, cls: 'sc-pop' } : { text: '\u2003\u2003\u2003\u2003', bg: Fs.blankOff, fg: 'transparent', cls: '' }) : ${BLANK_JS},
+    blank: Fs ? (rev ? { text: c.back, bg: Fs.blankBg, fg: Fs.blankFg, cls: 'sc-blank' } : { text: '\u2003\u2003\u2003\u2003', bg: Fs.blankOff, fg: 'transparent', cls: '' }) : ${BLANK_JS},
     reveal: () => this.setState({ revealed: !rev, moved: false }),
     undo: () => { if (done > 0 || !db.mock) { this.setState({ revealed: true, moved: false }); db.act.undo(); } },
     editHref: rv.editHref, editLabel: rv.editLabel || 'Edit', endHref: db.mock ? '${phone ? 'PhoneDeck' : 'WebDeck'}.dc.html' : rv.endHref,
@@ -3381,17 +3377,17 @@ const cardTypes = `<div style="width: 1440px; height: 900px; box-sizing: border-
   </div>
 </div>`;
 const cardTypesCss = `${WAVE_CSS}
-@keyframes scPop{0%{transform:scale(.6) translateY(4px);opacity:0}60%{transform:scale(1.08);opacity:1}100%{transform:none;opacity:1}}
+@keyframes scBlank{0%{transform:scale(.6) translateY(4px);opacity:0}60%{transform:scale(1.08);opacity:1}100%{transform:none;opacity:1}}
 @keyframes scFadeA{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
 @keyframes scFadeB{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
 @keyframes scInA{from{opacity:0;transform:translateY(14px) scale(.98)}to{opacity:1;transform:none}}
 @keyframes scInB{from{opacity:0;transform:translateY(14px) scale(.98)}to{opacity:1;transform:none}}
-.sc-pop{animation:scPop .5s cubic-bezier(.34,1.56,.64,1) both}
+.sc-blank{animation:scBlank .5s cubic-bezier(.34,1.56,.64,1) both}
 .sc-fade-a{animation:scFadeA .4s cubic-bezier(.2,.8,.2,1) both}
 .sc-fade-b{animation:scFadeB .4s cubic-bezier(.2,.8,.2,1) both}
 .sc-in-a{animation:scInA .32s cubic-bezier(.2,.8,.2,1) both}
 .sc-in-b{animation:scInB .32s cubic-bezier(.2,.8,.2,1) both}
-@media (prefers-reduced-motion:reduce){.sc-pop,.sc-fade-a,.sc-fade-b,.sc-in-a,.sc-in-b,[data-anim]{animation:none!important}}`;
+@media (prefers-reduced-motion:reduce){.sc-blank,.sc-fade-a,.sc-fade-b,.sc-in-a,.sc-in-b,[data-anim]{animation:none!important}}`;
 const REVIEW_CSS = cardTypesCss + OCC_VIEW_CSS;
 const cardTypesLogic = `
 constructor(props) { super(props); this.state = { basic: false, blanks: 0, image: false, audio: false, playing: false }; }
@@ -3399,7 +3395,7 @@ renderVals() {
   ${T}
   const s = this.state;
   // Revealed blanks pop in; answers fade up (two class names so the animation replays each way).
-  const blank = (shown, word) => shown ? { text: word, bg: t.inv, fg: t.invText, cls: 'sc-pop' } : { text: '\\u2003\\u2003\\u2003', bg: t.surf2, fg: t.text, cls: '' };
+  const blank = (shown, word) => shown ? { text: word, bg: t.inv, fg: t.invText, cls: 'sc-blank' } : { text: '\\u2003\\u2003\\u2003', bg: t.surf2, fg: t.text, cls: '' };
   const fade = on => on ? 'sc-fade-a' : 'sc-fade-b';
   return {
     t,
@@ -3422,11 +3418,11 @@ const tile = (title, spec, stage) => `<div style="background: #F4F4F4; border-ra
   <div style="display: flex; flex-direction: column; gap: 4px;"><span style="font-size: 16px; font-weight: 600;">${title}</span><span style="font-family: ${MONO}; font-size: 12px; color: #666666;">${spec}</span></div>
 </div>`;
 const mcard = (txt, extra = '', cls = '') => `<div class="${cls}" style="width: 180px; height: 120px; box-sizing: border-box; padding: 16px; border-radius: 22px; background: #FFFFFF; border: 1px solid #EBEBEB; box-shadow: 0 12px 28px -12px rgba(0,0,0,.22); display: flex; align-items: flex-end; font-size: 15px; font-weight: 600; ${extra}">${txt}</div>`;
-const MOTION_H = 1260;
+const MOTION_H = 1734;
 // Drawn when the boards are made, since its tiles use parts defined further down (EMPTY_ART).
 const motion = () => `<div style="width: 1440px; height: ${MOTION_H}px; box-sizing: border-box; padding: 56px 64px; display: flex; flex-direction: column; gap: 28px; font-family: ${FONT}; background: #FFFFFF; color: #000000;">
   <div style="display: flex; flex-direction: column; gap: 8px;"><h1 style="margin: 0; font-size: 44px; font-weight: 600; letter-spacing: -.035em;">Motion</h1><p style="margin: 0; font-size: 16px; color: #666666;">Every animation loops here so you can watch it. In the app most play once; empty states and the Today card keep moving, slowly. All of them turn off when Reduce Motion is on.</p></div>
-  <div style="flex-grow: 1; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); grid-template-rows: repeat(3, minmax(0, 1fr)); gap: 16px;">
+  <div style="flex-grow: 1; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); grid-template-rows: repeat(4, minmax(0, 1fr)); gap: 16px;">
     ${tile('Card flip', '500 ms · 3D turn · ease in-out', `<div style="perspective: 900px;"><div class="m-flip" style="position: relative; width: 180px; height: 120px; transform-style: preserve-3d;">${mcard('Question', 'position: absolute; inset: 0; backface-visibility: hidden;')}${mcard('Answer', 'position: absolute; inset: 0; backface-visibility: hidden; transform: rotateY(180deg); background: #000000; color: #FFFFFF; border-color: #000000;')}</div></div>`)}
     ${tile('Grade → next card', 'out 220 ms · in 320 ms · slight lift', `<div style="position: relative; width: 180px; height: 120px;">${mcard('Next card', 'position: absolute; inset: 0;', 'm-in')}${mcard('Graded card', 'position: absolute; inset: 0;', 'm-out')}</div>`)}
     ${tile('Button press', '100 ms · shrinks to 96%', `<div class="m-press" style="height: 56px; padding: 0 36px; border-radius: 999px; background: #000000; color: #FFFFFF; display: flex; align-items: center; font-size: 15px; font-weight: 600;">Save card</div>`)}
@@ -3437,10 +3433,31 @@ const motion = () => `<div style="width: 1440px; height: ${MOTION_H}px; box-sizi
     ${tile('Light ↔ dark', 'cross-fade · 250 ms', `<div class="m-theme" style="width: 200px; height: 130px; border-radius: 24px; display: flex; flex-direction: column; justify-content: space-between; padding: 18px; box-sizing: border-box; border: 1px solid #EBEBEB;"><span style="font-size: 13px; font-weight: 600;">64 cards due</span><span class="m-theme-btn" style="height: 36px; border-radius: 999px; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 600;">Study</span></div>`)}
     ${tile('Page opens', 'rises 14 px · 500 ms · each part 60 ms later', `<div style="width: 220px; display: flex; flex-direction: column; gap: 10px;"><div class="m-rise1" style="width: 120px; height: 20px; border-radius: 6px; background: #000000;"></div><div class="m-rise2" style="height: 64px; border-radius: 16px; background: #F4F4F4;"></div><div class="m-rise3" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;"><div style="height: 40px; border-radius: 12px; background: #F4F4F4;"></div><div style="height: 40px; border-radius: 12px; background: #F4F4F4;"></div></div></div>`)}
     ${tile('Empty state', 'floats and fans · 6 s · a shine every 5 s', EMPTY_ART(150, 'plus'))}
-    ${tile('Deck card hover', 'lifts 4 px · 1 s · eases out · shadow grows', meshCard('hero', 'width: 200px; height: 132px; border-radius: 20px;', 'height: 100%; box-sizing: border-box; padding: 16px; display: flex; align-items: flex-end; font-size: 15px; font-weight: 600;', 'Cell Biology', 'div', ' class="m-lift"'))}
+    ${tile('Menu and pop-up', `slides up ${MOTION.slide} px · fades in · ${Math.round(MOTION.pop * 1000)} ms · eased out, no bounce`, `<div style="position: relative; width: 220px; height: 190px;"><span style="position: absolute; left: 0; top: 0; width: 44px; height: 44px; border-radius: 22px; background: #F4F4F4; display: flex; align-items: center; justify-content: center;">${svg(I.more, 16, 2)}</span><div class="m-pop" style="position: absolute; left: 0; top: 54px; width: 220px; box-sizing: border-box; padding: 8px; border-radius: 22px; background: #FFFFFF; box-shadow: 0 18px 48px rgba(0,0,0,.2), 0 0 0 1px #EBEBEB; display: flex; flex-direction: column; gap: 4px; font-size: 14px;"><span style="padding: 8px 12px 4px; font-size: 12px; font-weight: 600; color: #666666;">Move to</span><span style="height: 38px; padding: 0 12px; display: flex; align-items: center; gap: 10px;"><span style="display: flex; color: #666666;">${svg(I.folder, 16, 1.8)}</span>Remove from folder</span><span style="height: 38px; padding: 0 12px; display: flex; align-items: center; gap: 10px;"><span style="display: flex; color: #666666;">${svg(I.folder, 16, 1.8)}</span><span style="flex-grow: 1;">Languages</span>${svg(I.check, 14, 2.4)}</span></div></div>`)}
+    ${tile('Switch', `the knob slides · ${Math.round(MOTION.knob * 1000)} ms · the colors fade with it`, `<span class="m-sw-track" style="width: 96px; height: 56px; box-sizing: border-box; padding: 6px; border-radius: 28px; display: block; background: #E8E8E8;"><span class="m-sw-knob" style="display: block; width: 44px; height: 44px; border-radius: 22px; background: #FFFFFF;"></span></span>`)}
+    ${tile('Segmented control', `the selected pill slides · ${Math.round(MOTION.knob * 1000)} ms`, `<div style="position: relative; width: 276px; height: 48px; box-sizing: border-box; padding: 4px; border-radius: 24px; background: #F4F4F4; display: flex; font-size: 14px; font-weight: 600;"><span class="m-pill" style="position: absolute; left: 4px; top: 4px; width: 89px; height: 40px; border-radius: 20px; background: #FFFFFF; box-shadow: 0 1px 3px rgba(0,0,0,.14);"></span><span style="position: relative; width: 89px; display: flex; align-items: center; justify-content: center;">Decks</span><span style="position: relative; width: 89px; display: flex; align-items: center; justify-content: center; color: #666666;">All cards</span><span style="position: relative; width: 89px; display: flex; align-items: center; justify-content: center; color: #666666;">Classes</span></div>`)}
+    ${tile('Sheet', `slides up from the bottom · ${Math.round(MOTION.sheet * 1000)} ms · leaves in ${Math.round(MOTION.leave * 1000)} ms`, `<div style="position: relative; width: 150px; height: 230px; border-radius: 28px; background: #F4F4F4; overflow: hidden;"><div class="m-sheet" style="position: absolute; left: 0; right: 0; bottom: 0; top: 58px; box-sizing: border-box; padding: 16px; border-radius: 24px 24px 0 0; background: #FFFFFF; box-shadow: 0 -12px 32px -12px rgba(0,0,0,.25); display: flex; flex-direction: column; gap: 10px;"><span style="width: 70px; height: 12px; border-radius: 6px; background: #000000;"></span><span style="height: 36px; border-radius: 12px; background: #F4F4F4;"></span><span style="height: 36px; border-radius: 12px; background: #F4F4F4;"></span></div></div>`)}
+    ${tile('Deck cover parallax', 'the cover moves at half speed as you scroll', `<div style="position: relative; width: 210px; height: 230px; border-radius: 22px; overflow: hidden; background: #FFFFFF; border: 1px solid #EBEBEB;"><div class="m-par-front" style="position: absolute; inset: 0;"><div style="position: relative; height: 120px; overflow: hidden;"><div class="m-par-cover" style="position: absolute; inset: 0;">${meshCard('art', 'position: absolute; inset: 0;', 'height: 100%;', '', 'div')}</div><span style="position: absolute; left: 16px; bottom: 14px; color: #FFFFFF; font-size: 17px; font-weight: 700; letter-spacing: -.02em; text-shadow: 0 1px 8px rgba(0,0,0,.3);">Cell Biology</span></div><div style="padding: 16px; display: flex; flex-direction: column; gap: 12px;"><span style="height: 12px; width: 150px; border-radius: 6px; background: #EBEBEB;"></span><span style="height: 12px; width: 120px; border-radius: 6px; background: #EBEBEB;"></span><span style="height: 12px; width: 160px; border-radius: 6px; background: #EBEBEB;"></span><span style="height: 12px; width: 100px; border-radius: 6px; background: #EBEBEB;"></span></div></div></div>`)}
     ${tile('Today card', 'colors drift · 16 s · back and forth', meshCard('hero', 'width: 240px; height: 132px; border-radius: 20px;', 'height: 100%; box-sizing: border-box; padding: 18px; display: flex; flex-direction: column; justify-content: flex-end; gap: 4px;', '<span style="font-size: 12px; opacity: .8;">Tuesday</span><span style="font-size: 26px; font-weight: 500; letter-spacing: -.03em; line-height: 1;">64 cards due</span>', 'div', ' class="sc-alive"'))}
   </div>
 </div>`;
+// The new tiles loop every L seconds: it comes in at `at`, stays, and goes at `out`; a percent of the loop is a time in it.
+const pc = (sec, L) => +(100 * sec / L).toFixed(2);
+const mLoopCss = `.m-pop{animation:mpop 3.2s ${EASE} infinite}
+@keyframes mpop{0%,${pc(.4, 3.2)}%{opacity:0;transform:translateY(${MOTION.slide}px)}${pc(.4 + MOTION.pop, 3.2)}%,${pc(2.4, 3.2)}%{opacity:1;transform:none}${pc(2.4 + MOTION.leave, 3.2)}%,100%{opacity:0;transform:translateY(${MOTION.slide}px)}}
+.m-sw-knob{animation:mknob 3.2s ${EASE} infinite}
+@keyframes mknob{0%,${pc(.6, 3.2)}%{transform:none;background:#FFFFFF}${pc(.6 + MOTION.knob, 3.2)}%,${pc(2.2, 3.2)}%{transform:translateX(40px);background:#000000}${pc(2.2 + MOTION.knob, 3.2)}%,100%{transform:none;background:#FFFFFF}}
+.m-sw-track{animation:mtrack 3.2s ease infinite}
+@keyframes mtrack{0%,${pc(.6, 3.2)}%{background:#E8E8E8}${pc(.6 + MOTION.knob, 3.2)}%,${pc(2.2, 3.2)}%{background:#FFFFFF;box-shadow:inset 0 0 0 2px #000000}${pc(2.2 + MOTION.knob, 3.2)}%,100%{background:#E8E8E8;box-shadow:none}}
+.m-pill{animation:mpill 4s ${EASE} infinite}
+@keyframes mpill{0%,${pc(.6, 4)}%{transform:none}${pc(.6 + MOTION.knob, 4)}%,${pc(1.8, 4)}%{transform:translateX(89px)}${pc(1.8 + MOTION.knob, 4)}%,${pc(3, 4)}%{transform:translateX(178px)}${pc(3 + MOTION.knob, 4)}%,100%{transform:none}}
+.m-sheet{animation:msheet 3.4s ${EASE} infinite}
+@keyframes msheet{0%,${pc(.5, 3.4)}%{transform:translateY(100%)}${pc(.5 + MOTION.sheet, 3.4)}%,${pc(2.6, 3.4)}%{transform:none}${pc(2.6 + MOTION.leave, 3.4)}%,100%{transform:translateY(100%)}}
+.m-par-front{animation:mparf 4.4s ease-in-out infinite}
+@keyframes mparf{0%,12%{transform:none}48%,62%{transform:translateY(-90px)}98%,100%{transform:none}}
+.m-par-cover{animation:mparc 4.4s ease-in-out infinite}
+@keyframes mparc{0%,12%{transform:none}48%,62%{transform:translateY(45px)}98%,100%{transform:none}}
+`;
 const motionCss = `.m-flip{animation:flip 3.2s cubic-bezier(.4,0,.2,1) infinite}
 @keyframes flip{0%,25%{transform:rotateY(0)}40%,75%{transform:rotateY(180deg)}90%,100%{transform:rotateY(360deg)}}
 .m-out{animation:out 2.8s infinite}
@@ -3467,9 +3484,7 @@ const motionCss = `.m-flip{animation:flip 3.2s cubic-bezier(.4,0,.2,1) infinite}
 @keyframes themebtn{0%,40%{background:#000000;color:#FFFFFF}50%,90%{background:#FFFFFF;color:#000000}100%{background:#000000;color:#FFFFFF}}
 .m-rise1,.m-rise2,.m-rise3{animation:rise 2.4s cubic-bezier(.2,.8,.2,1) infinite}.m-rise2{animation-delay:.06s}.m-rise3{animation-delay:.12s}
 @keyframes rise{0%{opacity:0;transform:translateY(14px)}21%,85%{opacity:1;transform:none}100%{opacity:0;transform:none}}
-.m-lift{animation:lift 5s ease-out infinite}
-@keyframes lift{0%,10%,80%,100%{transform:none;box-shadow:0 8px 20px -14px rgba(0,0,0,.3)}30%,60%{transform:translateY(-4px);box-shadow:0 24px 48px -24px rgba(0,0,0,.45)}}
-@media (prefers-reduced-motion:reduce){[class^="m-"]{animation:none!important}}`;
+${mLoopCss}@media (prefers-reduced-motion:reduce){[class^="m-"]{animation:none!important}}`;
 
 
 // ---------- Gradient cards: every palette in the reference style ----------
@@ -7555,7 +7570,6 @@ const phoneActivity = phone(`<div style="padding: 64px 20px 34px; display: flex;
 // Suggest a change opens a panel (a sheet on the iPhone): fix a card's words, take a card out, or add cards, several in
 // one go, then send them to the owner. The owner takes or skips each change on Suggestions, where the cards their own
 // AI made wait for them too, and every version of a shared deck is on its History, where the owner can go back to one.
-const NETX_CSS = '@keyframes scPop{from{opacity:0;transform:translateY(12px) scale(.97)}}.sc-pop{animation:scPop .26s cubic-bezier(.2,.8,.2,1)}@keyframes scFade{from{opacity:0}}.sc-fade{animation:scFade .2s ease}@media (prefers-reduced-motion:reduce){.sc-pop,.sc-fade{animation:none}}';
 // For the logic of these pages (after NET_JS): names, times, a card's words, what a change did, and what a version was,
 // in plain words. The canvas counts time from its sample's own morning, so it reads like the app does.
 const NETX_JS = `const RT = this.rich(), flat = x => RT.plain(String(x || ''), { join: ' ', math: 'show' }).replace(/\\s+/g, ' ').trim();
@@ -9047,7 +9061,7 @@ const files = {
   'PhoneActivityDark': ['iPhone · News (dark)', darkOf('PhoneActivity', PW, PH), { logic: darkLogic, w: PW, h: PH }],
   'PhoneActivityGray': ['iPhone · News (dark, gray)', grayOf('PhoneActivity', PW, PH), { logic: darkLogic, w: PW, h: PH }],
   // A shared deck's page, suggesting changes, Suggestions, and History.
-  'WebPublicDeck': ['Web · Shared deck page', webPublicDeck, { props: PD_PROPS, logic: PUBLIC_DECK_LOGIC(false), css: NETX_CSS, w: W, h: H }],
+  'WebPublicDeck': ['Web · Shared deck page', webPublicDeck, { props: PD_PROPS, logic: PUBLIC_DECK_LOGIC(false), w: W, h: H }],
   'WebPublicDeckStudying': ['Web · Shared deck page · a deck you study', attrOf('WebPublicDeck', W, H, 'studying="{{yes}}"'), { logic: darkLogic, w: W, h: H }],
   'WebPublicDeckOwner': ['Web · Shared deck page · your own deck', attrOf('WebPublicDeck', W, H, 'owner="{{yes}}"'), { logic: darkLogic, w: W, h: H }],
   'WebPublicDeckCopy': ['Web · Shared deck page · Make a copy', attrOf('WebPublicDeck', W, H, 'copy-open="{{yes}}"'), { logic: darkLogic, w: W, h: H }],
@@ -9062,7 +9076,7 @@ const files = {
   'WebPublicDeckMissing': ['Web · Shared deck page · not shared', attrOf('WebPublicDeck', W, H, 'missing="{{yes}}"'), { logic: darkLogic, w: W, h: H }],
   'WebPublicDeckDark': ['Web · Shared deck page · dark', darkOf('WebPublicDeck', W, H), { logic: darkLogic, w: W, h: H }],
   'WebPublicDeckGray': ['Web · Shared deck page · gray', grayOf('WebPublicDeck', W, H), { logic: darkLogic, w: W, h: H }],
-  'PhonePublicDeck': ['iPhone · Shared deck page', phonePublicDeck, { props: PD_PROPS, logic: PUBLIC_DECK_LOGIC(true), css: NETX_CSS, w: PW, h: PH }],
+  'PhonePublicDeck': ['iPhone · Shared deck page', phonePublicDeck, { props: PD_PROPS, logic: PUBLIC_DECK_LOGIC(true), w: PW, h: PH }],
   'PhonePublicDeckStudying': ['iPhone · Shared deck page · a deck you study', attrOf('PhonePublicDeck', PW, PH, 'studying="{{yes}}"'), { logic: darkLogic, w: PW, h: PH }],
   'PhonePublicDeckOwner': ['iPhone · Shared deck page · your own deck', attrOf('PhonePublicDeck', PW, PH, 'owner="{{yes}}"'), { logic: darkLogic, w: PW, h: PH }],
   'PhonePublicDeckCopy': ['iPhone · Shared deck page · Make a copy', attrOf('PhonePublicDeck', PW, PH, 'copy-open="{{yes}}"'), { logic: darkLogic, w: PW, h: PH }],
