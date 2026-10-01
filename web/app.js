@@ -66,7 +66,7 @@ function resolve(path, q) {
     if (!L || L.code !== lv[1]) return { redirect: '/' };
     return { name: { question: 'LiveQuestion', reveal: 'LiveReveal', board: 'LiveLeaderboard', end: 'LivePodium' }[L.phase] || 'LiveLobby', props: { deckId: L.deckId } };
   }
-  const deck = /^\/deck\/([^/]+)(\/card(?:\/([^/]+))?|\/import|\/learn|\/suggestions|\/live)?$/.exec(path);
+  const deck = /^\/deck\/([^/]+)(\/card(?:\/([^/]+))?|\/import|\/learn|\/test|\/suggestions|\/live)?$/.exec(path);
   // Your first time in: the welcome (connect your AI, bring your cards) comes before Today.
   if (path === '/' && !db.settings().welcomed && !db.decks().length) return { redirect: '/welcome' };
   if (path === '/welcome') return { name: P + 'Welcome' };
@@ -77,6 +77,16 @@ function resolve(path, q) {
   if (path === '/library/classes' || path === '/verify') return { name: P + 'Classes', props: { newOpen: q.get('new') === '1', joinOpen: q.get('join') === '1', verifyOpen: path === '/verify' } };
   // The admin page: verification requests and reports. It's made for a big screen, so phones get it too.
   if (path === '/admin') return { name: 'WebAdmin' };
+  // A practice test of a folder's decks (it starts from a sheet over the folder), and a test in progress or finished: /test/<deck id>
+  // or /test/folder/<folder id>. Without one going (a reload after leaving it), its set-up opens instead.
+  const ft = /^\/library\/folder\/([^/]+)\/test$/.exec(path);
+  if (ft) return db.raw().folders.some(f => f.id === ft[1]) ? { name: P + 'Test', props: { folderId: ft[1], step: 'setup' } } : { redirect: '/library' };
+  const tn = /^\/test\/(folder\/)?([^/]+)$/.exec(path);
+  if (tn) {
+    const sc = tn[1] ? { folderId: tn[2] } : { deckId: tn[2] }, T = db.test();
+    if (T && (T.folderId || T.deckId) === tn[2]) return { name: P + 'Test', props: sc };
+    return { redirect: tn[1] ? '/library/folder/' + tn[2] + '/test' : '/deck/' + tn[2] + '/test' };
+  }
   const lib = /^\/library(?:\/(cards)|\/folder\/([^/]+))?$/.exec(path);
   if (lib) {
     if (lib[2] && !db.raw().folders.some(f => f.id === lib[2])) return { redirect: '/library' };
@@ -98,8 +108,9 @@ function resolve(path, q) {
     if (deck[2] === '/suggestions') return { name: P + 'Suggestions', props: { deckId: id } };
     // Playing a deck live needs a big screen, so it starts from a computer.
     if (deck[2] === '/live') return narrow.matches ? { redirect: '/deck/' + id } : { name: 'LiveSetup', props: { deckId: id } };
-    // Learn mode starts from a sheet over the deck.
+    // Learn mode starts from a sheet over the deck, and so does a practice test.
     if (deck[2] === '/learn') return { name: P + 'QuizStart', props: { deckId: id } };
+    if (deck[2] === '/test') return { name: P + 'Test', props: { deckId: id, step: 'setup' } };
     // Writing and editing cards: on a computer, the deck's cards on a screen of their own (the owner's pick, Option B),
     // opened on the card you picked or on a new card. The iPhone editor board starts with its keyboard up, as the canvas
     // shows it; on a phone it starts with no field picked (the phone brings up its own keyboard).
@@ -144,7 +155,7 @@ function linkFor(name) {
     WebImport: id ? '/deck/' + id + '/import' : '/decks/import', WebDeck: id ? '/deck/' + id : '/library', WebDeckSettings: id ? '/deck/' + id + '?settings=1' : '/library',
     WebEditor: id ? '/deck/' + id + '/card' : db.signedOut ? '/' : db.today().newCardHref, WebCardsScreenNew: id ? '/deck/' + id + '/card' : db.signedOut ? '/' : db.today().newCardHref,
     WebCardsScreen: id ? '/deck/' + id + '/card' : '/library', WebReview: id ? '/review/' + id : '/review', WebDone: '/review/done', WebDonePiles: '/review/done',
-    WebQuizStart: id ? '/deck/' + id + '/learn' : '/library', PhoneQuizStart: id ? '/deck/' + id + '/learn' : '/library', PhoneDeck: id ? '/deck/' + id : '/library', Pricing: 'https://lucida.cards/pricing', PricingPhone: 'https://lucida.cards/pricing',
+    WebQuizStart: id ? '/deck/' + id + '/learn' : '/library', PhoneQuizStart: id ? '/deck/' + id + '/learn' : '/library', WebTest: id ? '/deck/' + id + '/test' : '/library', PhoneDeck: id ? '/deck/' + id : '/library', Pricing: 'https://lucida.cards/pricing', PricingPhone: 'https://lucida.cards/pricing',
     WebStats: '/stats', WebStatsEmpty: '/stats', WebConnect: '/connect', WebWelcome: '/welcome', WebSettings: '/settings', ThemePicker: '/settings/theme', PhoneThemePicker: '/settings/theme', WebTheme: '/settings/theme/lucida', WebSignIn: '/sign-in', WebSignInCode: '/sign-in/code', PhoneSignIn: '/sign-in', PhoneSignInCode: '/sign-in/code', PhoneToday: '/', Privacy: '/privacy', Terms: '/terms',
     WebDiscover: '/discover', WebActivity: '/activity', WebProfile: '/you', WebSuggestions: id ? '/deck/' + id + '/suggestions' : '/suggestions',
     LiveSetup: id ? '/deck/' + id + '/live' : '/library', LiveJoin: '/join',
