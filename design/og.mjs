@@ -68,11 +68,12 @@ try {
       entry.bytes = readFileSync(file).length;
       console.log(ogFile(it.slug).padEnd(34), Math.round(entry.bytes / 1024) + ' KB, words read ' + entry.read + ' to 1');
     }
-    // The icon, from web/icon.svg (the tab icon), as pictures: the tile with its rounded corners, and for iPhones a full square.
+    // The app icon, from web/icon.svg's dots, as pictures: black dots on white (like the iPhone app's icon), the tile with its rounded
+    // corners, and for iPhones a full square. (The tab icon itself stays white dots on black, so it shows on any tab strip.)
     const svg = readFileSync(new URL('icon.svg', WEB), 'utf8');
-    const dots = svg.match(/<g fill="#fff"[\s\S]*?<\/g>/)[0];
-    const tile = px => `<svg xmlns="http://www.w3.org/2000/svg" width="${px}" height="${px}" viewBox="0 0 32 32"><rect x="1" y="1" width="30" height="30" rx="8.4" fill="#000"/>${dots.replace('translate(8.41 9) scale(.46)', 'translate(7.6 8.3) scale(.51)')}</svg>`;
-    const square = px => `<svg xmlns="http://www.w3.org/2000/svg" width="${px}" height="${px}" viewBox="0 0 32 32"><rect width="32" height="32" fill="#000"/>${dots.replace('translate(8.41 9) scale(.46)', 'translate(7.6 8.3) scale(.51)')}</svg>`;
+    const dots = svg.match(/<g fill="#fff"[\s\S]*?<\/g>/)[0].replace('fill="#fff"', 'fill="#000"');
+    const tile = px => `<svg xmlns="http://www.w3.org/2000/svg" width="${px}" height="${px}" viewBox="0 0 32 32"><rect x="1" y="1" width="30" height="30" rx="8.4" fill="#fff"/>${dots.replace('translate(8.41 9) scale(.46)', 'translate(7.6 8.3) scale(.51)')}</svg>`;
+    const square = px => `<svg xmlns="http://www.w3.org/2000/svg" width="${px}" height="${px}" viewBox="0 0 32 32"><rect width="32" height="32" fill="#fff"/>${dots.replace('translate(8.41 9) scale(.46)', 'translate(7.6 8.3) scale(.51)')}</svg>`;
     for (const [name, px, draw, transparent] of [['icon-192.png', 192, tile, true], ['icon-512.png', 512, tile, true], ['apple-touch-icon.png', 180, square, false]]) {
       await chrome.size(px, px);
       await show(`<!doctype html><html><head><meta charset="utf-8"><style>html,body{margin:0;background:transparent;overflow:hidden}svg{display:block}</style></head><body>${draw(px)}</body></html>`);
