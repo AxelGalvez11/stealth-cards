@@ -213,8 +213,9 @@ final class StudyNetworkTests: XCTestCase {
     button(app, "Back").tap()
     button(app, "Back").tap()
     check(wait(button(app, "News"), 10), "News is read a moment after opening it (the count goes)")
-    button(app, "Your profile").tap()
-    check(wait(app.staticTexts["@" + ownerHandle]), "your picture on Today opens your profile")
+    check(!button(app, "Your profile").exists, "Today has no profile picture")
+    button(app, "Profile").tap()
+    check(wait(app.staticTexts["@" + ownerHandle]), "the Profile tab opens your profile")
     let more = button(app, "More for MCAT Biochemistry")
     check(wait(more), "your decks have ⋯")
     more.tap()
@@ -247,7 +248,7 @@ final class StudyNetworkTests: XCTestCase {
 
     // ---------- the learner: Edit profile, a handle someone has, then a free one ----------
     app = launch(as: learner)
-    button(app, "Your profile").tap()
+    button(app, "Profile").tap()
     let learnerHandle = (state(learner)["profile"] as? [String: Any])?["handle"] as? String ?? ""
     check(wait(app.staticTexts["@" + learnerHandle]), "the learner's own profile opens (@\(learnerHandle))")
     button(app, "Edit profile").tap()

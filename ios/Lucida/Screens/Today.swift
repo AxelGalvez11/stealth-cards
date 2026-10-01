@@ -1,4 +1,5 @@
-// iPhone · Today (PhoneToday, PhoneTodayCaughtUp, PhoneTodayNew): the day's review on the Iris card, then your decks.
+// iPhone · Today (PhoneToday, PhoneTodayCaughtUp, PhoneTodayNew): the day's review on the Iris card, then your decks. No picture
+// at the top left: your profile is the Profile tab.
 import SwiftUI
 
 struct TodayScreen: View {
@@ -10,13 +11,11 @@ struct TodayScreen: View {
     let vm = store.today()
     ScrollView(showsIndicators: false) {
       VStack(alignment: .leading, spacing: 18) {
-        // Your picture on the left opens your profile (whose gear opens Settings); the title sits in the middle of the
-        // screen; news (with how many are new) and + on the right (todayTitle).
+        // The title sits in the middle of the screen; news (with how many are new) and + on the right (todayTitle). Your
+        // profile is the Profile tab: Today has no picture (the owner's notes, 2026-10-01).
         ZStack {
           Text("Today").css(34, .bold, ls: -0.03).foregroundStyle(t.text).accessibilityAddTraits(.isHeader)
           HStack(spacing: 8) {
-            Button { nav.profile("") } label: { MyAvatar(size: 44) }
-              .buttonStyle(.press).accessibilityLabel("Your profile")
             Spacer(minLength: 0)
             NewsBell(count: store.netUnread()) { nav.push(.news) }
             RoundButton(icon: "plus", label: vm.hasDecks ? "New card" : "New deck") { vm.hasDecks ? nav.newCard(deckId: vm.newCardDeck) : nav.newDeck() }

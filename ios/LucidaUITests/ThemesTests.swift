@@ -132,10 +132,10 @@ final class ThemesTests: XCTestCase {
     return bio
   }
 
-  /// Today → your picture → Settings.
+  /// Today → the Profile tab → Settings.
   private func openSettings(_ app: XCUIApplication) -> Bool {
-    guard wait(button(app, "Your profile"), 15) else { return false }
-    button(app, "Your profile").tap()
+    guard wait(button(app, "Profile"), 15) else { return false }
+    button(app, "Profile").tap()
     guard wait(button(app, "Settings")) else { return false }
     button(app, "Settings").tap()
     return wait(app.staticTexts["Settings"])
