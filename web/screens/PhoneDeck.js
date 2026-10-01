@@ -640,7 +640,8 @@ renderVals() { const t = this.theme(!!this.props.dark, !!this.props.dim);const d
   const pick = (key, { title, rows = [], value = '', choose, any = '', find = null, other = null, ph = '', noneLine = 'Nothing matches' }) => {
     const open = ('pickIs' in this.state ? this.state.pickIs : typeof pickDefault === 'undefined' ? '' : pickDefault) === key;
     const q = open ? ('pickQ' in this.state ? this.state.pickQ : typeof pickQDefault === 'undefined' ? '' : pickQDefault) || '' : '', typed = q.trim(), shut = { pickIs: '', pickQ: '' };
-    const found = find ? (typed ? find(typed) : []) : rows;
+    // (The first time a school picker opens, asking for nothing gets the list on its way.)
+    const found = find ? (typed ? find(typed) : open ? find('') : []) : rows;
     const row = (r, on, go) => ({ label: r[1], sub: r[2] || '', hasSub: !!r[2], on, pressed: on ? 'true' : 'false', pick: () => { this.setState(shut); go(); } });
     const head = any && !typed ? [row(['', any], !value, () => choose('', null))] : [];
     const list = found.map(r => row(r, !!value && r[0] === value, () => choose(r[0], r)));
