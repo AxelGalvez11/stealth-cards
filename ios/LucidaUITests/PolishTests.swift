@@ -53,6 +53,15 @@ final class PolishTests: XCTestCase {
   private func tap(_ e: XCUIElement, _ what: String = "") {
     if e.waitForExistence(timeout: 12) { e.tap() } else { check(false, "found " + (what.isEmpty ? e.description : what) + " to tap") }
   }
+  /// Taps something and waits for what it opens; if that doesn't come (a tap just as the page redraws can be lost on a busy Mac),
+  /// taps again, up to three times.
+  private func tapOpening(_ e: XCUIElement, _ opens: XCUIElement, _ what: String) {
+    for _ in 0..<3 {
+      guard e.waitForExistence(timeout: 12) else { check(false, "found " + what + " to tap"); return }
+      e.tap()
+      if opens.waitForExistence(timeout: 5) { return }
+    }
+  }
   /// A request as one of the made-up people; the answer's JSON.
   @discardableResult
   private func api(_ who: String, _ method: String, _ path: String, _ body: [String: Any]? = nil) -> (status: Int, json: Any?) {
@@ -220,7 +229,7 @@ final class PolishTests: XCTestCase {
     let biology = makeDeck(rae, "Biology Basics")
     let app = launch(as: rae, ["-open", "library"])
     // In a folder: the menu has it, first, and the folder is ticked.
-    tap(buttonHaving(app, "Languages"), "the Languages folder")
+    tapOpening(buttonHaving(app, "Languages"), button(app, "Move Spanish Verbs to a folder"), "the Languages folder")
     let more = button(app, "Move Spanish Verbs to a folder")
     tap(more, "⋯ on Spanish Verbs")
     check(wait(button(app, "Remove from folder")), "a deck in a folder: its menu has Remove from folder")
@@ -493,6 +502,8 @@ final class PolishTests: XCTestCase {
     let handle = social(other, "profile.ensure")["handle"] as? String ?? ""
     let page = launch(as: pam, ["-open", "deckpage:/@\(handle)/\(sh["slug"] as? String ?? "")", "-parallaxAudit"])
     check(wait(button(page, "Study")), "a shared deck's page opens")
+    _ = wait(page.staticTexts["Ola Shared question 1"], 15)   // (its cards have come, so the page is long enough to scroll)
+    Thread.sleep(forTimeInterval: 0.6)
     let p0 = page.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.8)), p1 = page.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.62))
     p0.press(forDuration: 0.05, thenDragTo: p1, withVelocity: .slow, thenHoldForDuration: 0.6)
     Thread.sleep(forTimeInterval: 0.6)
