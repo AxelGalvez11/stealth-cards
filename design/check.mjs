@@ -59,6 +59,11 @@ PROP_SETS.push({ handle: 'mariasantos', moreOpen: true }, { handle: 'mariasantos
 // Connecting an AI app: the sign-in page on a password, Settings with Password open, the Connect AI page with no apps, and the consent page (an app
 // Lucida vouches for, one it doesn't, one on this computer, loading, and a link that failed).
 PROP_SETS.push({ passwordMode: true }, { passwordOpen: true }, { passwordOpen: true, dark: true }, { noApps: true }, { consent: 'Claude' }, { consent: 'ChatGPT' }, { consent: 'Other app' }, { consent: 'App on this computer' }, { consent: 'Loading' }, { consent: 'Error' }, { consent: 'Error', dark: true });
+// Go Pro on the iPhone (the paywall) in each state (yearly, monthly, buying, an error, not on the App Store yet, loading, and Pro already),
+// and Settings' plan for Pro bought on the web (no Manage plan or Cancel Pro).
+PROP_SETS.push({ state: 'Yearly' }, { state: 'Monthly' }, { state: 'Buying' }, { state: 'Error' }, { state: 'Not yet' }, { state: 'Offline' }, { state: 'Loading' }, { state: 'Pro' },
+  { state: 'Monthly', dark: true }, { state: 'Not yet', dark: true, dim: true }, { state: 'Pro', dark: true }, { state: 'Error', $state: { pick: 'monthly' } },
+  { plan: 'Pro, billed on the web' }, { plan: 'Pro, billed on the web', dark: true });
 // A verified teacher's or school's shared deck page (Check this deck, pressing it, one being pressed, on their own deck,
 // signed out), and your verification in Settings.
 PROP_SETS.push({ verified: 'Teacher' }, { verified: 'School' }, { verified: 'Teacher', $state: { $m: { checked: true } } }, { verified: 'Teacher', $state: { busy: 'check', error: 'That didn’t save.' } },

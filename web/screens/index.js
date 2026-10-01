@@ -475,6 +475,18 @@ export default [
   "h": 844
  },
  {
+  "name": "PhoneGoPro",
+  "title": "iPhone · Go Pro (Lucida Pro from the App Store: yearly or monthly, Restore purchases)",
+  "w": 390,
+  "h": 844
+ },
+ {
+  "name": "PhoneGoProSoon",
+  "title": "iPhone · Go Pro · the subscriptions aren’t on the App Store yet",
+  "w": 390,
+  "h": 844
+ },
+ {
   "name": "PhoneHistory",
   "title": "iPhone · History",
   "w": 390,

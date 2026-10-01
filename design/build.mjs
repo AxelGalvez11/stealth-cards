@@ -3888,6 +3888,7 @@ const sGroup = (title, rows) => `<div style="display: flex; flex-direction: colu
 const THEME_ROW = board => sRow(`<span style="display: inline-flex; align-items: center; gap: 8px;"><span>Theme</span><sc-if value="{{themeLocked}}" hint-placeholder-val="{{ false }}">${PRO_BADGE}</sc-if></span>`, sVal('{{themeName}}'), { href: board + '.dc.html' });
 const PRO_PILL = `<a href="{{proHref}}" style="height: 36px; padding: 0 16px; display: inline-flex; align-items: center; border-radius: 999px; background: {{t.inv}}; color: {{t.invText}}; font-size: 14px; font-weight: 600; white-space: nowrap;">Go Pro</a>`;
 const planGroups = `<sc-if value="{{planFree}}" hint-placeholder-val="{{ false }}">${sGroup('Plan', [sRow('Free', PRO_PILL, { sub: 'Pro adds exam tools, deeper stats, and more' })])}</sc-if>
+      <sc-if value="{{planWebOnly}}" hint-placeholder-val="{{ false }}">${sGroup('Plan', [sRow(`<span style="display: inline-flex; align-items: center; gap: 8px;">Lucida ${PRO_BADGE}</span>`, '', { sub: '{{planSub}}' })])}</sc-if>
       <sc-if value="{{planPro}}" hint-placeholder-val="{{ true }}">${sGroup('Plan', [
         sRow(`<span style="display: inline-flex; align-items: center; gap: 8px;">Lucida ${PRO_BADGE}</span>`, '', { sub: '{{planSub}}' }),
         sRow('Manage plan', sVal(''), { href: '{{manageHref}}' }),
@@ -3903,11 +3904,14 @@ const TUNE_JS = `const ti = db.tuneInfo(), n2 = n => Number(n).toLocaleString('e
       : ti.tuned ? 'Off: the standard schedule' : ti.can ? 'Fit the schedule to your ' + n2(ti.reviews) + ' reviews' : 'After ' + n2(ti.need) + ' reviews · you have ' + n2(ti.reviews),
     toggle: () => { if (tuneOk) db.act.useTuned(!ti.on); } };`;
 // The plan's values for renderVals: the app's plan (db.plan()), or on the canvas the board's `plan` setting.
-const PLAN_JS = pricingBoard => `const planOf = { Free: { pro: false }, Pro: { pro: true, every: 'year', until: '2027-09-24T12:00:00Z', ending: false, manage: '#' }, 'Pro, ending': { pro: true, every: 'year', until: '2027-09-24T12:00:00Z', ending: true, manage: '#' }, 'Pro, billed by Apple': { pro: true, every: 'year', until: '2027-09-24T12:00:00Z', ending: false, by: 'apple', manage: '#' } };
+const PLAN_JS = pricingBoard => `const planOf = { Free: { pro: false }, Pro: { pro: true, every: 'year', until: '2027-09-24T12:00:00Z', ending: false, manage: '#' }, 'Pro, ending': { pro: true, every: 'year', until: '2027-09-24T12:00:00Z', ending: true, manage: '#' }, 'Pro, billed by Apple': { pro: true, every: 'year', until: '2027-09-24T12:00:00Z', ending: false, by: 'apple', manage: '#' },
+    // The iPhone app never opens Stripe: for Pro bought on the web it says so, and shows no Manage plan or Cancel Pro (the web app, which
+    // is Stripe's customer, keeps them).
+    'Pro, billed on the web': { pro: true, every: 'year', until: '2027-09-24T12:00:00Z', ending: false, by: 'stripe', manage: '#', webOnly: true } };
   const plan = db.mock ? planOf[this.props.plan] || planOf.Pro : db.plan && db.plan();
   const planDay = plan && plan.until ? new Date(plan.until).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : '';
-  const planVals = { planFree: !!plan && !plan.pro, planPro: !!plan && !!plan.pro, planRenews: !!plan && !plan.ending, planEnding: !!plan && !!plan.ending,
-    planSub: plan ? [({ month: 'Monthly', year: 'Yearly' })[plan.every] || '', planDay ? (plan.ending ? 'ends ' : 'renews ') + planDay : '', plan.by === 'apple' ? 'Billed by Apple' : ''].filter(Boolean).join(' · ') : '',
+  const planVals = { planFree: !!plan && !plan.pro, planPro: !!plan && !!plan.pro && !plan.webOnly, planWebOnly: !!plan && !!plan.pro && !!plan.webOnly, planRenews: !!plan && !plan.ending, planEnding: !!plan && !!plan.ending,
+    planSub: plan ? [({ month: 'Monthly', year: 'Yearly' })[plan.every] || '', planDay ? (plan.ending ? 'ends ' : 'renews ') + planDay : '', plan.by === 'apple' ? 'Billed by Apple' : plan.webOnly ? 'Billed on the web' : ''].filter(Boolean).join(' · ') : '',
     manageHref: plan && plan.manage || 'https://lucida.cards/pricing', proHref: db.mock ? '${pricingBoard}.dc.html' : 'https://lucida.cards/pricing' };`;
 // Settings → Profile picture (web and iPhone): the Google photo (for people signed in with Google), a photo you upload,
 // or your initial on a color. `full`: the choices span the row (iPhone).
@@ -4026,7 +4030,7 @@ renderVals() {
   const set = patch => db.act.setSettings(patch), piles = st.grading === 'piles';
   // A row's list (sPick): the value it shows, and saving a pick. The list shows the current value as picked.
   const pickOf = (cur, label, save) => ({ label, set: e => save(e.target.value), ref: el => { if (el && el.value !== String(cur)) el.value = String(cur); } });
-  ${PLAN_JS('PricingPhone')}
+  ${PLAN_JS('PhoneGoPro')}
   ${PHOTO_JS}
   ${PROFILE_ROW_JS('PhoneProfile')}
   ${TUNE_JS}
@@ -8473,7 +8477,7 @@ const EDITOR_CSS = RICH_CSS + OCC_EDIT_CSS;
 // Settings' plan on the canvas (Tweaks): Free, Pro (billed by Stripe), Pro ending, or Pro billed by Apple (the plan line says so, and
 // Delete account's question tells you Apple's subscription goes on). And its Account group: Delete account's question open (asking,
 // working, or failed), and nobody blocked.
-const SETTINGS_PLAN_PROP = { editor: 'enum', default: 'Pro', options: ['Free', 'Pro', 'Pro, ending', 'Pro, billed by Apple'] };
+const SETTINGS_PLAN_PROP = { editor: 'enum', default: 'Pro', options: ['Free', 'Pro', 'Pro, ending', 'Pro, billed by Apple', 'Pro, billed on the web'] };
 const ACCOUNT_PROPS = { deleteOpen: { editor: 'enum', default: '', options: ['', 'Asking', 'Deleting', 'Failed'] }, noBlocks: BOOL };
 // ---------- An AI app asks to connect (web/oauth.mjs) ----------
 // Claude, ChatGPT and other apps send the person to /oauth/authorize once they have signed in to Lucida. This is the page they
@@ -8532,6 +8536,61 @@ const consentLogic = `renderVals() {
     hasError: !!c.decideError, error: c.decideError || ''
   };
 }`;
+
+// ---------- Go Pro on the iPhone (the paywall) ----------
+// The iPhone app sells Lucida Pro through the App Store (StoreKit): yearly or monthly, with the pricing page's Pro list, Restore
+// purchases, and what Apple wants a subscription to say. Every Go Pro in the app opens this sheet over the page you're on (Settings
+// here). The prices on the canvas are samples: the app always shows the App Store's own, and the line under the price (what a year
+// comes to a month) is worked out from them. States (Tweaks): which plan is picked, buying, an error, the subscriptions not on the
+// App Store yet (PhoneGoProSoon), still loading, and someone who is Pro already (billed by Apple or on the web, with nothing to buy).
+const GOPRO_STATE_PROP = { editor: 'enum', default: 'Yearly', options: ['Yearly', 'Monthly', 'Buying', 'Error', 'Not yet', 'Offline', 'Loading', 'Pro'] };
+const GP_PILL = 'height: 50px; box-sizing: border-box; display: flex; align-items: center; justify-content: center; border-radius: 999px; font: inherit; font-size: 15px; font-weight: 600; text-align: center;';
+const goProBody = `<div style="flex-shrink: 0; display: flex; align-items: center; justify-content: space-between; gap: 12px;"><span style="font-size: 22px; font-weight: 600; letter-spacing: -.02em;">{{gp.title}}</span>${closeX('gp.close')}</div>
+    <div style="flex: 1 1 auto; min-height: 0; overflow-y: auto; scrollbar-width: none; display: flex; flex-direction: column; gap: 14px;">
+      <sc-if value="{{gp.choose}}" hint-placeholder-val="{{ true }}"><div role="group" aria-label="Billing" style="flex-shrink: 0; display: flex; padding: 4px; border-radius: 999px; background: {{t.surf}};"><sc-for list="{{gp.billing}}" as="b" hint-placeholder-count="2"><button type="button" onClick="{{b.pick}}" aria-pressed="{{b.pressed}}" style="flex: 1 1 0; height: 40px; padding: 0; display: inline-flex; align-items: center; justify-content: center; gap: 8px; border: 0; border-radius: 999px; background: {{b.bg}}; color: {{b.fg}}; font: inherit; font-size: 14px; font-weight: 600; cursor: pointer;">{{b.label}}<sc-if value="{{b.hasTag}}" hint-placeholder-val="{{ false }}"><span style="height: 22px; padding: 0 8px; display: inline-flex; align-items: center; border-radius: 999px; background: {{t.goodTint}}; color: {{t.good}}; font-size: 12px; font-weight: 600;">{{b.tag}}</span></sc-if></button></sc-for></div></sc-if>
+      ${artCard('pro', 'flex-shrink: 0; border-radius: 28px;', 'box-sizing: border-box; padding: 22px 24px 24px; display: flex; flex-direction: column; gap: 20px;', `<div><h2 style="margin: 0; display: flex; align-items: center; gap: 8px; font-size: 20px; font-weight: 600; letter-spacing: -.01em;">${svg(I.sparkle, 18, 1.8)}Pro</h2><p style="margin: 6px 0 0; font-size: 15px; opacity: .8;">Make Lucida yours.</p></div>
+        <sc-if value="{{gp.priced}}" hint-placeholder-val="{{ true }}"><div style="display: flex; flex-direction: column; gap: 6px;"><div style="display: flex; align-items: baseline; gap: 8px;"><span style="font-size: 56px; font-weight: 600; letter-spacing: -.04em; line-height: 1;">{{gp.price}}</span><span style="font-size: 16px; opacity: .75;">{{gp.per}}</span></div><span style="min-height: 20px; font-size: 14px; opacity: .75;">{{gp.note}}</span></div></sc-if>
+        <sc-if value="{{gp.waiting}}" hint-placeholder-val="{{ false }}"><div aria-label="Loading" style="display: flex; flex-direction: column; gap: 14px;"><span style="width: 190px; height: 56px; border-radius: 14px; background: rgba(255,255,255,.18);"></span><span style="width: 230px; height: 18px; border-radius: 9px; background: rgba(255,255,255,.18);"></span></div></sc-if>
+        <sc-if value="{{gp.buyable}}" hint-placeholder-val="{{ true }}"><button type="button" onClick="{{gp.buy}}" aria-disabled="{{gp.off}}" style="${GP_PILL} border: 0; background: #FFFFFF; color: #000000; cursor: pointer; opacity: {{gp.buyOpacity}};">{{gp.buyLabel}}</button></sc-if>
+        <sc-if value="{{gp.soon}}" hint-placeholder-val="{{ false }}"><span role="status" style="${GP_PILL} background: rgba(255,255,255,.16); box-shadow: inset 0 0 0 1px rgba(255,255,255,.35);">Pro isn’t available on iPhone yet</span></sc-if>
+        <sc-if value="{{gp.offline}}" hint-placeholder-val="{{ false }}"><div style="display: flex; flex-direction: column; gap: 10px;"><span role="status" style="${GP_PILL} background: rgba(255,255,255,.16); box-shadow: inset 0 0 0 1px rgba(255,255,255,.35);">Couldn’t reach the App Store</span><button type="button" onClick="{{gp.retry}}" style="${GP_PILL} border: 0; background: #FFFFFF; color: #000000; cursor: pointer;">Try again</button></div></sc-if>
+        <sc-if value="{{gp.isPro}}" hint-placeholder-val="{{ false }}"><div style="display: flex; flex-direction: column; gap: 6px;"><span style="display: flex; align-items: center; gap: 10px; font-size: 24px; font-weight: 600; letter-spacing: -.02em;">${svg(I.check, 22, 2.4)}You’re on Pro</span><span style="font-size: 14px; opacity: .75;">{{gp.proLine}}</span></div></sc-if>
+        <div style="display: flex; flex-direction: column; gap: 12px;"><span style="font-size: 14px; opacity: .9;">Everything in Free, plus:</span>${planList(PLAN_PRO, 'color: #FFFFFF;')}</div>`)}
+      <sc-if value="{{gp.hasLine}}" hint-placeholder-val="{{ false }}"><span role="alert" style="flex-shrink: 0; font-size: 13px; line-height: 1.4; color: {{gp.lineColor}};">{{gp.line}}</span></sc-if>
+    </div>
+    <sc-if value="{{gp.footer}}" hint-placeholder-val="{{ true }}"><div style="flex-shrink: 0; display: flex; flex-direction: column; align-items: center; gap: 8px;">
+      <button type="button" onClick="{{gp.restore}}" aria-disabled="{{gp.restoreOff}}" style="height: 40px; padding: 0 16px; border: 0; background: transparent; color: {{t.text}}; font: inherit; font-size: 15px; font-weight: 600; cursor: pointer;">{{gp.restoreLabel}}</button>
+      <sc-if value="{{gp.priced}}" hint-placeholder-val="{{ true }}"><span style="max-width: 310px; font-size: 12px; line-height: 1.5; color: {{t.muted}}; text-align: center;">{{gp.legal}}</span></sc-if>
+      <span style="display: flex; align-items: center; gap: 14px; font-size: 13px; color: {{t.muted}};"><a href="{{gp.termsHref}}" style="text-decoration: underline;">Terms</a><a href="{{gp.privacyHref}}" style="text-decoration: underline;">Privacy</a></span>
+    </div></sc-if>
+    <sc-if value="{{gp.isPro}}" hint-placeholder-val="{{ false }}"><button type="button" onClick="{{gp.close}}" style="flex-shrink: 0; height: 52px; border: 0; border-radius: 999px; background: {{t.inv}}; color: {{t.invText}}; font: inherit; font-size: 16px; font-weight: 600; cursor: pointer;">Done</button></sc-if>`;
+const GOPRO_SHEET = cSheet('gp.show', 'Go Pro', goProBody, 'gp.close', true);
+// Its values. `state` (the board's Tweak) says where it stands; a tap on Monthly or Yearly (or on Go Pro, which shows Going Pro…
+// for a moment) works on the canvas too.
+const GOPRO_JS = `const gpOffers = [{ id: 'monthly', label: 'Monthly', price: '$5.99', per: 'a month', note: 'Paid monthly. Cancel anytime.', tag: '', every: 'month' },
+    { id: 'yearly', label: 'Yearly', price: '$49.99', per: 'a year', note: 'That’s $4.17 a month, paid once a year.', tag: 'Save 30%', every: 'year' }];
+  const gpWant = this.props.state || 'Yearly', gpPick = this.state.pick || (gpWant === 'Monthly' ? 'monthly' : 'yearly'), gpOffer = gpOffers.find(o => o.id === gpPick) || gpOffers[0];
+  const gpOpen = !('gpShut' in this.state), gpBusy = this.state.buying ?? gpWant === 'Buying';
+  const gpSoon = gpWant === 'Not yet', gpOffline = gpWant === 'Offline', gpLoading = gpWant === 'Loading', gpPro = gpWant === 'Pro', gpPriced = !gpSoon && !gpOffline && !gpLoading && !gpPro;
+  const gp = { show: gpOpen, title: gpPro ? 'Lucida Pro' : 'Go Pro', close: () => this.setState({ gpShut: true }),
+    choose: gpPriced, billing: gpOffers.map(o => { const on = o.id === gpPick; return { id: o.id, label: o.label, bg: on ? t.inv : 'transparent', fg: on ? t.invText : t.text, pressed: on ? 'true' : 'false', hasTag: !!o.tag, tag: o.tag, pick: () => { if (!gpBusy) this.setState({ pick: o.id }); } }; }),
+    priced: gpPriced, price: gpOffer.price, per: gpOffer.per, note: gpOffer.note, waiting: gpLoading, soon: gpSoon, offline: gpOffline, retry: () => {}, isPro: gpPro, proLine: 'Yearly · renews September 24, 2027 · Billed on the web',
+    buyable: gpPriced || gpLoading, off: gpBusy || gpLoading ? 'true' : 'false', buyOpacity: gpBusy || gpLoading ? '.55' : '1', buyLabel: gpBusy ? 'Going Pro…' : 'Go Pro',
+    buy: () => { if (gpBusy || gpLoading) return; this.setState({ buying: true }); setTimeout(() => this.setState({ buying: false }), 1200); },
+    hasLine: gpWant === 'Error', line: gpWant === 'Error' ? 'That didn’t go through. Try again.' : '', lineColor: t.again,
+    footer: !gpPro, restore: () => {}, restoreOff: gpBusy ? 'true' : 'false', restoreLabel: 'Restore purchases',
+    legal: 'Billed to your Apple Account. Renews every ' + gpOffer.every + ' until you cancel it, in iPhone Settings under Subscriptions.',
+    termsHref: 'https://lucida.cards/terms', privacyHref: 'https://lucida.cards/privacy' };`;
+const goProLogic = `${ART_METHOD}
+renderVals() { ${T}
+  ${GOPRO_JS}
+  return { t, grain: String(this.props.grain ?? 0.7), pro: this.art(${MIDNIGHT}, ''), gp, dark: !!this.props.dark, dim: !!this.props.dim };
+}`;
+// Behind the sheet: the Settings page on Free, where its Go Pro pill is.
+const phoneGoPro = `<div style="position: relative; width: 390px; height: 844px; box-sizing: border-box; font-family: ${FONT}; background: {{t.bg}}; color: {{t.text}}; overflow: hidden;">
+  <div style="width: 390px; height: 844px; overflow: hidden;"><dc-import name="PhoneSettings" plan="Free" dark="{{dark}}" dim="{{dim}}" hint-size="390px,${PHONE_SETTINGS_H}px"></dc-import></div>
+  ${GOPRO_SHEET}
+</div>`;
 
 const files = {
   'Main': ['Web · Today', webToday, { props: { ...DARK, ...MESH('Iris'), caughtUp: { editor: 'boolean', default: false }, assignments: { editor: 'boolean', default: false } }, logic: todayLogic, css: DRAG_CSS, w: W, h: H }],
@@ -8742,6 +8801,8 @@ const files = {
   'PhoneReviewGray': ['iPhone · Review (dark, gray)', grayOf('PhoneReview', PW, PH), { logic: darkLogic, css: REVIEW_CSS, w: PW, h: PH }],
   'PhoneQuizGray': ['iPhone · Learn mode (dark, gray)', grayOf('PhoneQuiz', PW, PH), { logic: darkLogic, css: LEARN_CSS, w: PW, h: PH }],
   'PhoneStatsGray': ['iPhone · Stats (dark, gray)', grayOf('PhoneStats', PW, PH), { logic: darkLogic, w: PW, h: PH }],
+  'PhoneGoPro': ['iPhone · Go Pro (Lucida Pro from the App Store: yearly or monthly, Restore purchases)', phoneGoPro, { props: { ...DARK, grain: MESH('Iris').grain, state: GOPRO_STATE_PROP }, logic: goProLogic, w: PW, h: PH }],
+  'PhoneGoProSoon': ['iPhone · Go Pro · the subscriptions aren’t on the App Store yet', attrOf('PhoneGoPro', PW, PH, 'state="Not yet"'), { logic: darkLogic, w: PW, h: PH }],
   'PhoneSettingsGray': ['iPhone · Settings (dark, gray)', grayOf('PhoneSettings', PW, PHONE_SETTINGS_H), { logic: darkLogic, w: PW, h: PHONE_SETTINGS_H }],
   // Onboarding: WebWelcome and PhoneWelcome hold the whole flow; the others open it on one screen each.
   'WebWelcome': ['Web · Onboarding · pick your AI', webWelcome, { props: OB_PROPS, logic: OB_LOGIC(false), css: OB_CSS, w: W, h: H }],
