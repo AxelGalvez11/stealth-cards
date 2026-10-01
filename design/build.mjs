@@ -5972,7 +5972,7 @@ const FIG_CHUNKS_2 = {
 Object.assign(FIG_CHUNKS, FIG_CHUNKS_2);
 const spFig = `<figure class="sp-fig sp-f-{{f.kind}}">${KINDS.map(k => { if (!FIG_CHUNKS[k]) throw new Error('visuals: no drawing for the figure kind "' + k + '"'); return `<sc-if value="{{f.is${k.charAt(0).toUpperCase() + k.slice(1)}}}" hint-placeholder-val="{{ false }}">${FIG_CHUNKS[k]}</sc-if>`; }).join('')}<sc-if value="{{f.hasCaption}}" hint-placeholder-val="{{ false }}"><figcaption class="sp-fcap">{{f.caption}}</figcaption></sc-if></figure>`;
 // A table made from a section's bullets: what, and its words.
-const spT2 = `<sc-if value="{{s.hasTable}}" hint-placeholder-val="{{ false }}"><div class="sp-t2w"><table class="sp-t2"><thead><tr><sc-for list="{{s.table.head}}" as="c"><th scope="col">{{c.label}}</th></sc-for></tr></thead><tbody><sc-for list="{{s.table.rows}}" as="r">${idTag('r', 'tr', 'sp-t2r', '', `<th scope="row">{{r.label}}</th><td>${spParts('r.parts')}</td>`)}</sc-for></tbody></table></div></sc-if>`;
+const spT2 = `<sc-if value="{{s.hasTable}}" hint-placeholder-val="{{ false }}"><div class="sp-t2w sp-tsc" role="region" aria-label="Table, scrolls sideways" tabindex="0"><table class="sp-t2"><thead><tr><sc-for list="{{s.table.head}}" as="c"><th scope="col">{{c.label}}</th></sc-for></tr></thead><tbody><sc-for list="{{s.table.rows}}" as="r">${idTag('r', 'tr', 'sp-t2r', '', `<th scope="row">{{r.label}}</th><td>${spParts('r.parts')}</td>`)}</sc-for></tbody></table></div></sc-if>`;
 // "Test yourself": each card is a <details>: the question on the card, and a tap shows the answer on the same card, at once.
 const spTcInner = `<summary class="sp-tq"><span class="sp-tn sp-cv{{c.cv}}">{{c.n}}</span><span class="sp-tt">{{c.q}}</span><span class="sp-th">Show the answer</span></summary><div class="sp-ta"><span class="sp-ta-l">Answer</span>{{c.a}}</div>`;
 const spTest = `<sc-if value="{{hasTest}}" hint-placeholder-val="{{ false }}"><section class="sp-sec sp-test" id="test-yourself">${spH2('Test yourself')}<div class="sp-tcs sp-wide{{testCols}}"><sc-for list="{{test}}" as="c"><sc-if value="{{c.open}}" hint-placeholder-val="{{ false }}"><details class="sp-tc" open>${spTcInner}</details></sc-if><sc-if value="{{c.closed}}" hint-placeholder-val="{{ true }}"><details class="sp-tc">${spTcInner}</details></sc-if></sc-for></div><p class="sp-tmore"><a class="sp-u" href="{{links.start}}">Make your own cards free</a></p></section></sc-if>`;
@@ -5987,18 +5987,6 @@ const spSections = key => `<sc-for list="{{${key}}}" as="s" hint-placeholder-cou
 // "On this page": the page's sections, each with its parts under it (a tree). `cur` marks the one being read.
 const spTree = `<ol><sc-for list="{{toc}}" as="o" hint-placeholder-count="5"><li class="{{o.cls}}"><a href="#{{o.id}}" aria-current="{{o.cur}}">{{o.label}}</a><sc-if value="{{o.hasKids}}" hint-placeholder-val="{{ false }}"><ol><sc-for list="{{o.kids}}" as="k"><li><a href="#{{k.id}}">{{k.label}}</a></li></sc-for></ol></sc-if></li></sc-for></ol>`;
 const spTocIcon = svg('<path d="M4 7h16M4 12h10M4 17h13"/>', 14, 1.8);
-// On a narrow page a table's rows stack: the feature in bold, then a paragraph per app that begins with the app's name in bold.
-const spStack = s => [
-  `${s} table,${s} tbody,${s} tr,${s} th,${s} td{display:block}`,
-  `${s} thead{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}`,
-  `${s} tr{padding:16px 0;border-top:1px solid var(--sp-line)}`,
-  `${s} th,${s} td{padding:0;border:0}`,
-  `${s} tbody th{width:auto;margin-bottom:2px;font-size:17px;line-height:1.4;font-weight:700}`,
-  `${s} td{margin-top:8px;font-size:16px;line-height:1.55}${s} td:empty{display:none}`,
-  `${s} td[data-label]:not([data-label=""])::before{content:attr(data-label);margin-right:.35em;font-weight:600}`,
-  // Rows past the sixth wait for "Show all": shown as blocks while the table is stacked.
-  `@supports selector(:has(*)){${s}:has(.sp-more[open]) tr.sp-x{display:block}}`
-].join('');
 // The deck covers' gradients (the app's palettes), as small classes: the number chips on the test cards, and Lucida's cards in the diagrams.
 const coverOf = n => { const m = paletteData(n); return `radial-gradient(circle at 18% 88%,${m.b0.c},transparent 62%),radial-gradient(circle at 86% 10%,${m.b3.c},transparent 58%),${m.base}`; };
 const COVER_CSS = ['Iris', 'Apricot', 'Mint', 'Rose', 'Aqua', 'Lemon', 'Lilac', 'Sun'].map((n, i) => `.sp-cv${i}{background:${coverOf(n)}}`).join('');
@@ -6009,11 +5997,12 @@ const SITE_CSS = [
   '.sp [id]{scroll-margin-top:24px}picture{display:contents}[hidden]{display:none!important}',
   '.sp-u{text-decoration:underline;text-underline-offset:3px;text-decoration-thickness:1px}',
   '.sp strong{font-weight:600}',
-  // The page: one column of words (680 px), with "On this page" beside it on a wide screen. A wide block (a table of four or more
-  // columns, a row of cards) breaks out of the column by as much as the window allows, up to 1040 px.
+  // The page: one column of words (680 px), centered on the page at every width, with "On this page" in the left margin on a wide screen
+  // (1280 px and more, where the margin has room for it; it never moves the column). Nothing breaks out of the column: a table wider than
+  // the column scrolls sideways inside its own box, and cards stay in the column's width. A hub or the blog is one wider container instead.
   '.sp-art{box-sizing:border-box;padding:0 20px}',
   '.sp-main{max-width:680px;margin:0 auto;overflow-wrap:break-word}',
-  '.sp-wide{--bo:clamp(0px,calc((100cqw - 680px) / 2 - 20px),180px);margin-left:calc(-1 * var(--bo));margin-right:calc(-1 * var(--bo))}',
+  '.sp-wide{margin-left:0;margin-right:0}',
   '.sp-toc{display:none}',
   // The header: breadcrumb pills, the title, chips, the lead.
   '.sp-top{padding-top:24px}',
@@ -6052,9 +6041,15 @@ const SITE_CSS = [
   '.sp-pills{display:flex;flex-wrap:wrap;gap:8px;margin-top:24px}',
   '.sp-pill{display:inline-flex;align-items:center;height:38px;box-sizing:border-box;padding:0 16px;border-radius:999px;background:var(--sp-surf);font-size:14px;font-weight:600}',
   '.sp-jump{margin:24px 0 0;padding:0;list-style:none;font-size:16px;line-height:1.5}.sp-jump li{padding:6px 0}',
-  // Tables have no box: a header row and thin lines. Past six rows, "Show all 12" (a closed row under the table) opens the rest.
+  // Tables have no box: a header row and thin lines, in the column and centered with it, with their real columns on every screen. A table
+  // wider than its box (its columns need room: the first column and 168 px for each other) scrolls sideways inside it, and a soft shade at the edge says there is more: it
+  // sits on the edge that has more to show and goes when the end is reached (two layers: shades fixed to the box, and covers that move
+  // with the table and hide a shade at the start and at the end). The page itself never scrolls sideways. Past six rows, "Show all 12" (a
+  // closed row under the table) opens the rest.
   '.sp-table{margin-top:18px}',
-  '.sp-table table{width:100%;border-collapse:collapse;text-align:left;font-size:16px;line-height:1.5}',
+  '.sp-tsc{--sp-shade:color-mix(in srgb,var(--sp-text) 13%,transparent);overflow-x:auto;overscroll-behavior-x:contain;background:linear-gradient(to right,var(--sp-bg) 60%,transparent) 0 0/48px 100% no-repeat local,linear-gradient(to left,var(--sp-bg) 60%,transparent) 100% 0/48px 100% no-repeat local,linear-gradient(to right,var(--sp-shade),transparent) 0 0/28px 100% no-repeat scroll,linear-gradient(to left,var(--sp-shade),transparent) 100% 0/28px 100% no-repeat scroll}',
+  '.sp-tsc:focus-visible{outline:2px solid var(--sp-text);outline-offset:2px;border-radius:6px}',
+  '.sp-table table{--first:var(--f);width:100%;min-width:calc(var(--first) + (var(--cols) - 1) * 168px);border-collapse:collapse;text-align:left;font-size:16px;line-height:1.5}',
   '.sp-table th,.sp-table td{padding:12px 16px 12px 0;vertical-align:top;border-top:1px solid var(--sp-line)}',
   '.sp-table td:last-child{padding-right:0}.sp-table thead th{padding-top:0;padding-bottom:10px;border-top:0;font-weight:600}',
   '.sp-table tbody th{width:var(--first);font-weight:600}',
@@ -6113,6 +6108,13 @@ const SITE_CSS = [
   '.sp-bsec{margin-top:44px}.sp-bsec .sp-h2{margin-top:0;font-size:26px}',
   '.sp-bsec .sp-cards{margin-top:18px}',
   '.sp-none{margin:44px 0 0;font-size:16px;color:var(--sp-muted)}',
+  // A hub (compare, features) is the blog's front page in small: one container as wide as the blog's, and everything in it starts at the
+  // container's left edge (the crumbs, the title, the lead, the featured page, the cards, the table, the headings, the lists; words keep a
+  // readable 720 px), with the blog's gaps: 44 px between parts (64 px on a computer).
+  '.sp-art.sp-hub{max-width:1344px;margin:0 auto;padding:0 clamp(20px,4cqw,48px)}',
+  '.sp-hub .sp-main{max-width:none;margin:0}.sp-hub .sp-top{padding-top:28px}.sp-hub .sp-h1{max-width:880px}',
+  '.sp-hub .sp-lead,.sp-hub .sp-p,.sp-hub .sp-ul,.sp-hub .sp-qcard,.sp-hub .sp-src{max-width:720px}',
+  '.sp-hub .sp-sec,.sp-hub .sp-qcard,.sp-hub .sp-cta,.sp-hub .sp-src{margin-top:44px}.sp-hub .sp-sec>.sp-h2{margin-top:0;font-size:26px}',
   // The diagrams, tables, screens and flashcards in the articles. A drawn diagram sits on a quiet stage; its cards are white (a dark gray when
   // dark) with a soft shadow, and Lucida's wears the deck cover's gradient.
   '.sp-fig{margin:26px 0 0}.sp-fig:not(.sp-f-screen){box-sizing:border-box;padding:16px;border-radius:24px;background:var(--sp-fstage);box-shadow:inset 0 0 0 1px var(--sp-fedge)}',
@@ -6141,7 +6143,7 @@ const SITE_CSS = [
   '.sp-shotc{position:relative;overflow:hidden;max-width:none;aspect-ratio:var(--ard)}.sp-shot-in{position:absolute;left:0;top:0;transform-origin:0 0}',
   '.sp-fig.sp-f-screen .sp-fcap{text-align:center}',
   // A table made from bullets: no box, a muted header row, thin lines; two columns stay a table on a phone.
-  '.sp-t2w{margin-top:20px}.sp-t2{width:100%;border-collapse:collapse;font-size:16px;line-height:1.5}',
+  '.sp-t2w{margin-top:20px}.sp-t2{width:100%;min-width:min(100%,420px);border-collapse:collapse;font-size:16px;line-height:1.5}',
   '.sp-t2 th,.sp-t2 td{padding:13px 14px 13px 0;text-align:left;vertical-align:top;border-top:1px solid var(--sp-line)}.sp-t2 td{padding-right:0}',
   '.sp-t2 thead th{padding-top:10px;padding-bottom:10px;border-top:0;border-bottom:1px solid var(--sp-line);font-size:13px;font-weight:500;color:var(--sp-muted)}',
   '.sp-t2 tbody th{width:32%;font-weight:600;color:var(--sp-text)}.sp-t2 tbody tr:first-child th,.sp-t2 tbody tr:first-child td{border-top:0}',
@@ -6248,14 +6250,15 @@ const SITE_CSS = [
   '.sp-search{flex:0 1 320px}.sp-tabs{margin:0;padding:0;overflow:visible}',
   '.sp-tab{height:52px;padding:0 4px;margin-right:16px;border-radius:0;background:none;border-bottom:2px solid transparent;margin-bottom:-1px}.sp-tab[aria-current="true"]{background:none;color:var(--sp-text);border-bottom-color:var(--sp-text)}',
   '.sp-bsec .sp-h2{font-size:30px}.sp-bsec{margin-top:64px}',
+  '.sp-hub .sp-top{padding-top:56px}.sp-hub .sp-sec,.sp-hub .sp-qcard,.sp-hub .sp-cta,.sp-hub .sp-src{margin-top:64px}.sp-hub .sp-sec>.sp-h2{font-size:30px}',
   '.sp-fig{margin-top:32px}.sp-fig:not(.sp-f-screen){padding:22px}',
   '.sp-picks{grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;align-items:start}',
   '.sp-steps{flex-direction:row;align-items:stretch}.sp-steps.sp-n5,.sp-steps.sp-n6,.sp-steps.sp-n7{grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}.sp-step{flex:1 1 0;flex-direction:column;gap:10px;padding:14px}.sp-plan .sp-step{gap:8px}.sp-plan .sp-day{min-width:0;justify-content:flex-start}.sp-arrow{flex:none;width:30px;height:auto}.sp-arrow svg{transform:none}',
   '.sp-apps{grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}',
   '.sp-shot{max-width:min(100%,calc(560px * var(--ard)))}.sp-shotc{max-width:none}',
   '.sp-t2 tbody th{width:28%}.sp-t2 th,.sp-t2 td{font-size:17px}.sp-t2 thead th{font-size:13px}',
-  '.sp-tcs{display:grid;grid-template-columns:repeat(var(--tn,4),minmax(0,1fr));gap:16px;overflow:visible;scroll-snap-type:none;margin-top:22px;padding:4px 0 0}.sp-tcs.sp-n3{--tn:3}.sp-tcs.sp-n4{--tn:4}',
-  '.sp-tcs.sp-wide{margin-left:calc(-1 * var(--bo));margin-right:calc(-1 * var(--bo))}.sp-tc{flex:none}',
+  '.sp-tcs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;overflow:visible;scroll-snap-type:none;margin:22px 0 0;padding:4px 0 0}',
+  '.sp-tc{flex:none}',
   '.sp-gaps{flex-direction:row;padding-top:4px}.sp-gc{flex-direction:column;gap:8px;width:60px}.sp-gsp{flex:var(--w) 1 0;width:auto;min-width:58px;height:36px;justify-content:center}.sp-gsp::before{left:4px;right:4px;top:50%;bottom:auto;border-left:0;border-top:2px dashed var(--sp-fline)}.sp-gt{position:relative;margin:0;padding:0 6px;background:var(--sp-fstage)}',
   '.sp-chat{flex-direction:row;align-items:center;gap:10px}.sp-chat>.sp-bub{flex:1.25}.sp-chat>.sp-dk{flex:1}.sp-chat>.sp-arrow{align-self:center;width:30px;height:auto}.sp-chat>.sp-arrow svg{transform:none}',
   '.sp-lm{flex-direction:row;align-items:stretch;gap:20px}.sp-lq{flex:1.15}.sp-lp{flex:1}',
@@ -6267,17 +6270,17 @@ const SITE_CSS = [
   '.sp-wd{grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}',
   '.sp-lps{flex-direction:column}.sp-lpi{flex:none;padding:10px 14px}.sp-lps .sp-arrow{width:auto;height:22px}.sp-lps .sp-arrow svg{transform:rotate(90deg)}',
   '}',
-  // A wide screen: the tree stands on the left of the column and sticks; a wide block can only grow to the right.
-  '@container (min-width: 1100px){.sp-art.sp-has-toc{display:grid;grid-template-columns:minmax(170px,1fr) 680px minmax(0,1fr);column-gap:40px;max-width:1344px;margin:0 auto;padding:0 24px}',
-  '.sp-has-toc .sp-toc{display:block;position:sticky;top:24px;align-self:start;justify-self:end;width:min(260px,100%);height:calc(100vh - 96px);margin-top:118px;overflow:hidden}',
+  // A wide screen (1280 px and more): the page is three tracks, the column in the middle and a margin of the same width on each side, so
+  // the column is centered; the tree stands in the left margin (224 px and a gap of 40 fit in it from 1280 px) and sticks as the page
+  // scrolls. Narrower than that the tree is the closed row under the lead.
+  '@container (min-width: 1280px){.sp-art.sp-has-toc{display:grid;grid-template-columns:minmax(0,1fr) 680px minmax(0,1fr);max-width:1344px;margin:0 auto;padding:0 24px}',
+  '.sp-has-toc .sp-toc{display:block;position:sticky;top:24px;align-self:start;justify-self:end;width:min(224px,100%);margin-right:40px;height:calc(100vh - 96px);margin-top:118px;overflow:hidden}',
   '.sp-has-toc .sp-toc::after{content:"";position:absolute;left:0;right:0;bottom:0;height:56px;background:linear-gradient(transparent,var(--sp-bg));pointer-events:none}',
   '.sp-has-toc .sp-tocd{display:none}',
-  '.sp-has-toc .sp-main{grid-column:2}.sp-has-toc .sp-wide{--bo:clamp(0px,calc((100cqw - 680px) / 2 - 64px),300px);margin-left:0}}',
-  // On a narrow page (a phone, or a window under 761 px) the header's nav goes, the card's art changes, and tables stack.
-  '@container (max-width: 760px){.sp-band-wide{display:none!important}.sp-band-tall{display:block!important}',
-  spStack('.sp-table'), '}',
-  // Six or more columns need room: they stack on any window under 1280 px.
-  '@container (max-width: 1279px){' + spStack('.sp-table.sp-tx') + '.sp-table.sp-tx.sp-wide{--bo:0px}}',
+  '.sp-has-toc .sp-main{grid-column:2}}',
+  // On a narrow page (a phone, or a window under 761 px) the call-to-action card changes its art.
+  '@container (max-width: 760px){.sp-band-wide{display:none!important}.sp-band-tall{display:block!important}.sp-table table{--first:min(var(--f),132px)}',
+  '}',
   SKY_CSS, HEAD_CSS, NO_RISE
 ].join('');
 // The colors the site's CSS reads (--sp-…), from the page's theme and its extras; set on the page's root, or on a wrapper round figures on a plain page.
@@ -6311,11 +6314,11 @@ ${siteHeader()}
 <sc-for list="{{groups}}" as="g" hint-placeholder-count="1"><section class="sp-sec">${spH2('{{g.title}}')}${spCards('g.cards', ' hint-placeholder-count="3"')}</section></sc-for>
 <sc-if value="{{hasTable}}" hint-placeholder-val="{{ true }}"><section class="sp-sec">
   ${spH2('At a glance', ' id="at-a-glance"')}
-  <div class="sp-table{{table.cls}}">
-    <table style="--first: {{table.first}};">
+  <div class="sp-table">
+    <div class="sp-tsc" role="region" aria-label="Table, scrolls sideways" tabindex="0"><table style="--f: {{table.first}}px; --cols: {{table.cols}};">
       <thead><tr><sc-for list="{{table.head}}" as="c" hint-placeholder-count="3"><th scope="col"><sc-if value="{{c.blank}}"><span class="sp-sr">Feature</span></sc-if>{{c.label}}</th></sc-for></tr></thead>
       <tbody><sc-for list="{{table.rows}}" as="r" hint-placeholder-count="6"><tr class="{{r.cls}}"><th scope="row">{{r.label}}</th><sc-for list="{{r.cells}}" as="c" hint-placeholder-count="2"><td data-label="{{c.col}}">${spParts('c.parts')}</td></sc-for></tr></sc-for></tbody>
-    </table>
+    </table></div>
     <sc-if value="{{table.more}}" hint-placeholder-val="{{ false }}"><details class="sp-more"><summary><span class="sp-more-a">Show all {{table.total}}</span><span class="sp-more-b">Show fewer</span>${spPm}</summary></details></sc-if>
   </div>
 </section></sc-if>
@@ -6421,13 +6424,13 @@ renderVals() {
   }
   toc.forEach((o, i) => { o.cur = i ? '' : 'location'; o.cls = i ? '' : 'sp-open'; o.hasKids = o.kids.length > 0; });
   // On the canvas the SiteOg board (1200 wide) is scaled to the width it has: the column's 680 px (or a phone's 350); in a row of cards
-  // or a featured page, a share of a wide block (980 px beside "On this page", 1040 px without it), or of the blog's 1248 px.
+  // or a featured page, a share of the column, or on a hub and the blog, of their 1248 px container.
   const hasToc = toc.length >= 2, scale = px => (px / 1200).toFixed(5);
-  const wideW = PHONE ? 350 : hasToc ? 680 + Math.min(300, (${W} - 680) / 2 - 64) : 680 + 2 * Math.min(180, (${W} - 680) / 2 - 20), blogW = PHONE ? 350 : Math.min(1248, ${W} - 96);
-  // A comparison's columns: a table of four or more may be wider than the words, six or more stack on any window under 1280 px. Its
-  // first column is as wide as its longest label needs, at most. Past six rows the rest wait behind "Show all".
+  const wideW = PHONE ? 350 : isHub ? Math.min(1248, ${W} - 96) : 680, blogW = PHONE ? 350 : Math.min(1248, ${W} - 96);
+  // A comparison's columns: the first is as wide as its longest label needs (112 to 190 px, 132 at most on a narrow page) and each of the
+  // others 168 px at least, and a table that is wider than its box scrolls sideways inside it. Past six rows the rest wait behind "Show all".
   const cols = tb ? tb.columns.length : 0, widest = tb ? Math.max(...tb.rows.map(r => plain(r[0]).length)) : 0, KEEP = 6;
-  const first = cols >= 6 ? (widest <= 14 ? '11%' : '15%') : cols >= 4 ? (widest <= 14 ? '16%' : widest <= 30 ? '20%' : '26%') : (widest <= 14 ? '20%' : widest <= 30 ? '26%' : '32%');
+  const first = Math.min(190, Math.max(112, Math.round(widest * 8 + 36)));
   const words = plain(P.h1).split(' ');
   return { t, sky, ink, dark: !!this.props.dark, grain: String(this.props.grain ?? 0.7), hero: this.art(${MIDNIGHT}, 'wide'), heroTall: this.art(${MIDNIGHT}, ''),
     pic: { src: ogSrc(P.slug), key: ogKey(P.slug), alt: /^lucida\\b/i.test(h1) ? h1 : 'Lucida: ' + h1, k: scale(PHONE ? 350 : 680) },
@@ -6440,8 +6443,8 @@ renderVals() {
     isBlog, notBlog: !isBlog, blog: { l1: words.slice(0, 2).join(' '), l2: words.slice(2).join(' ') }, tabs, blogSections, searchCls: site ? 'sp-nojs' : '',
     layout: (hasToc ? ' sp-has-toc' : '') + (isHub ? ' sp-hub' : ''), hasToc, toc, tocOpen: !site, tocClosed: site,
     hasMeta: !gone && !isHub && !!P.updated, hasHero: !gone && !isHub, hasFeat: !!featIt, feat,
-    hasTable: !!tb, table: tb ? { cls: (cols >= 4 ? ' sp-wide' : '') + (cols >= 6 ? ' sp-tx' : ''), first, head: tb.columns.map(c => ({ label: c, blank: !c })), more: tb.rows.length > KEEP, total: String(tb.rows.length),
-      rows: tb.rows.map((r, i) => ({ cls: i >= KEEP ? 'sp-x' : '', label: plain(r[0]), cells: r.slice(1).map((c, j) => ({ col: plain(tb.columns[j + 1] || ''), parts: this.parts(c) })) })) } : { cls: '', first: '22%', head: [], rows: [], more: false, total: '0' },
+    hasTable: !!tb, table: tb ? { first: String(first), cols: String(cols), head: tb.columns.map(c => ({ label: c, blank: !c })), more: tb.rows.length > KEEP, total: String(tb.rows.length),
+      rows: tb.rows.map((r, i) => ({ cls: i >= KEEP ? 'sp-x' : '', label: plain(r[0]), cells: r.slice(1).map((c, j) => ({ col: plain(tb.columns[j + 1] || ''), parts: this.parts(c) })) })) } : { first: '120', cols: '1', head: [], rows: [], more: false, total: '0' },
     groups: groups.filter(g => g.cards.length),
     sections: isFaq ? [] : sections, sectionsAfter: isFaq ? sections : [],
     test: V.test, hasTest: V.hasTest && !isFaq, testCols: V.testCols || '',
