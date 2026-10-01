@@ -496,15 +496,43 @@ export async function createDb({ onChange, go }) {
   // Which kind of question a card gets: a choice first; once it's right, typing it (or another kind of choice).
   function kindFor(s, c, play) {
     const on = k => learning.kinds.includes(k), fits = {
-      mc: distractors(c, 3).length >= 1 || aiQuiz(c, 'choice').length > 0, tf: distractors(c, 1).length >= 1 || aiQuiz(c, 'true_false').length > 0, blank: c.kind === 'cloze' && distractors(c, 3).length >= 1,
+      mc: distractors(c, 3).length >= 1 || aiQuiz(c, 'choice').length > 0, tf: distractors(c, 1).length >= 1 || aiQuiz(c, 'true_false').length > 0, blank: (c.kind === 'cloze' && distractors(c, 3).length >= 1) || aiQuiz(c, 'blank').length > 0,
       match: short(c) && play.filter(x => learning.st[x].streak === 0 && short(cardById(x))).length >= 4, type: answerOf(c).length <= 40 };
     const pickFrom = ks => ks.filter(k => on(k) && fits[k]);
     const choice = pickFrom(['mc', 'tf', 'blank', 'match']), recall = pickFrom(['type']);
     if (s.streak === 1) { const r = recall.length ? recall : choice.filter(k => k !== s.lastKind); if (r.length) return oneOf(r); }
     return oneOf(choice.length ? choice : recall.length ? recall : ['mc']);
   }
-  // Questions the learner's AI app wrote for a card (mcp.mjs add_quiz), of one kind.
+  // Questions written for a card (the learner's AI app over MCP, add_quiz, or Lucida's own AI, below), of one kind.
   const aiQuiz = (c, kind) => (c.quiz || []).filter(x => x.kind === kind);
+  // Lucida's own questions (quizai.mjs, POST /api/quiz): when the cards coming up in Learn mode have no question yet, up to 20 are written at once
+  // and saved on the cards, where Learn mode and the practice test find them. Nobody waits: until they arrive the question builders ask as
+  // always, and when the AI is off or the day's batches are used up nothing is asked and nothing is shown. About 5 questions from the end of
+  // the ones written, the next 20 are asked for.
+  let quizBusy = false, quizOff = false, quizRetryAt = 0;
+  const hasQuiz = c => (c.quiz || []).length > 0;
+  function wantQuiz() {
+    const L = learning;
+    if (!S.aiOn || quizOff || quizBusy || !L || L.done || now() < quizRetryAt || !L.kinds.some(k => k === 'mc' || k === 'tf' || k === 'blank')) return;
+    const open = L.queue.filter(x => !L.st[x].learned).map(cardById).filter(Boolean);
+    let ahead = 0;
+    for (const c of open) { if (hasQuiz(c)) ahead++; else if (!c.quizTried) break; }
+    if (ahead > 5) return;
+    const want = open.filter(c => !hasQuiz(c) && !c.quizTried && (c.kind === 'basic' || c.kind === 'cloze')).slice(0, 20);
+    if (!want.length) return;
+    quizBusy = true;
+    fetch('/api/quiz', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ cardIds: want.map(c => c.id) }) })
+      .then(async r => {
+        const j = await r.json().catch(() => ({}));
+        if (r.ok) {
+          for (const [id, list] of Object.entries(j.questions || {})) { const c = cardById(id); if (c && !hasQuiz(c)) c.quiz = list; }
+          for (const id of j.tried || []) { const c = cardById(id); if (c && !hasQuiz(c)) c.quizTried = now(); }
+        } else if (r.status === 402 || r.status === 503) quizOff = true;
+        else quizRetryAt = now() + 60000;
+      })
+      .catch(() => { quizRetryAt = now() + 60000; })
+      .finally(() => { quizBusy = false; });
+  }
   // Moves a card a few places later among the cards still to learn, so something else comes first.
   function later(cid, k) {
     const q = learning.queue; q.splice(q.indexOf(cid), 1);
@@ -519,7 +547,7 @@ export async function createDb({ onChange, go }) {
     for (const x of list) send('learn.log', x).catch(() => {});
   }
   function nextQuestion() {
-    sendAnswers();
+    sendAnswers(); wantQuiz();
     const L = learning, open = L.queue.filter(x => !L.st[x].learned);
     L.qAt = now();
     if (!open.length) { L.q = null; L.done = true; L.ended = now(); finishLearn(); return; }
@@ -537,8 +565,9 @@ export async function createDb({ onChange, go }) {
   // the time; now and then the card's own words), else the card's words with other cards' answers. A fill-in-the-blank card is a
   // "blank" question when `blank` is on. Learn mode and the practice test both ask this way.
   function choiceQuestion(c, kind, blank, cap) {
-    const cid = c.id, ai = kind === 'tf' ? aiQuiz(c, 'true_false') : kind === 'mc' ? aiQuiz(c, 'choice') : [];
-    if (ai.length && (Math.random() < .8 || !distractors(c, 1, cap).length)) {
+    const cid = c.id, ai = kind === 'tf' ? aiQuiz(c, 'true_false') : kind === 'mc' ? aiQuiz(c, 'choice') : kind === 'blank' ? aiQuiz(c, 'blank') : [];
+    // (A blank that isn't a fill-in-the-blank card exists only as the written question, so that is always the one asked.)
+    if (ai.length && (Math.random() < .8 || !distractors(c, 1, cap).length || (kind === 'blank' && c.kind !== 'cloze'))) {
       const x = oneOf(ai);
       if (kind === 'tf') return { type: 'choice', kind, id: cid, text: 'True or false?', claim: x.question, options: ['True', 'False'], right: x.answer === 'true' ? 0 : 1, pick: null, why: x.why, ai: true };
       const options = shuffle([x.answer, ...x.wrong]);
@@ -615,7 +644,7 @@ export async function createDb({ onChange, go }) {
     const c = e.c, more = answersN(c.deckId) >= 2, ks = [];
     if (on('mc') && !(c.kind === 'cloze' && on('blank')) && (more || aiQuiz(c, 'choice').length)) ks.push('mc');
     if (on('tf') && (more || aiQuiz(c, 'true_false').length)) ks.push('tf');
-    if (on('blank') && c.kind === 'cloze' && more) ks.push('blank');
+    if (on('blank') && ((c.kind === 'cloze' && more) || aiQuiz(c, 'blank').length)) ks.push('blank');
     if (on('type') && e.a.length <= 40) ks.push('type');
     if (matchOk && shortE(e)) ks.push('match');
     return ks;
@@ -654,7 +683,7 @@ export async function createDb({ onChange, go }) {
       for (const x of shuffle(from)) { const a = x.a.toLowerCase(); if (seen.has(a)) continue; seen.add(a); group.push(x); if (group.length >= 5) break; }
       return group.length >= 4 ? matchQuestion(group) : null;
     }
-    const q = choiceQuestion(c, kind === 'blank' ? 'mc' : kind, kind === 'blank', 300);
+    const q = choiceQuestion(c, kind, kind === 'blank', 300);
     if (q.options.length < 2 || q.right < 0 || (q.kind === 'tf' && !q.claim)) return null;
     delete q.pick;
     return { ...q, text: q.text || e.q, ...pictureOf(c) };
