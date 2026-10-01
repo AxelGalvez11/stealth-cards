@@ -31,7 +31,7 @@ for (const file of readdirSync(SRC).filter(f => f.endsWith('.dc.html')).sort()) 
   // Live's player screens fill the phone the same way: joining and the final leaderboard grow, the rest fit the screen.
   const grow = ['PhoneSignIn', 'PhoneSignInCode', 'PhoneConnectConsent', 'PhoneQuizStart', 'PhoneQuiz', 'PhoneQuizMatch', 'PhoneQuizType', 'PhoneQuizDone', 'LiveJoin', 'LiveFinal'];
   const phoneFill = [...grow, 'PhoneToday', 'PhoneTodayNew', 'PhoneDeck', 'PhoneDeckEmpty', 'PhoneEditor', 'PhoneReview', 'PhoneDone', 'PhoneDonePiles',
-    'PhoneStats', 'PhoneStatsEmpty', 'PhoneConnect', 'PhoneSettings', 'PhoneNewDeck', 'PhoneLibrary', 'PhoneDecksEmpty', 'PhoneWelcome', 'PhoneThemePicker', 'PhoneTheme',
+    'PhoneTest', 'PhoneStats', 'PhoneStatsEmpty', 'PhoneConnect', 'PhoneSettings', 'PhoneNewDeck', 'PhoneLibrary', 'PhoneDecksEmpty', 'PhoneWelcome', 'PhoneThemePicker', 'PhoneTheme',
     'PhoneDiscover', 'PhoneProfile', 'PhonePublicDeck', 'PhoneHistory', 'PhoneSuggestions', 'PhoneActivity', 'PhoneClasses', 'PhoneClass',
     'LiveWaiting', 'LiveAnswer', 'LiveResult', 'LiveEnded'].includes(name), fill = (w === 1440 && h === 900) || phoneFill;
   if (phoneFill) template = template.replace(/width: 390px; height: \d+px;/, grow.includes(name) ? 'width: 100%; min-height: 100vh; min-height: 100dvh;' : 'width: 100%; height: 100vh; height: 100dvh; min-height: 100%; max-height: 100%;');

@@ -84,7 +84,7 @@ function resolve(path, q) {
   const tn = /^\/test\/(folder\/)?([^/]+)$/.exec(path);
   if (tn) {
     const sc = tn[1] ? { folderId: tn[2] } : { deckId: tn[2] }, T = db.test();
-    if (T && (T.folderId || T.deckId) === tn[2]) return { name: P + 'Test', props: sc };
+    if (T && (T.folderId || T.deckId) === tn[2]) return { name: P + 'Test', props: { ...sc, screen: '' } };
     return { redirect: tn[1] ? '/library/folder/' + tn[2] + '/test' : '/deck/' + tn[2] + '/test' };
   }
   const lib = /^\/library(?:\/(cards)|\/folder\/([^/]+))?$/.exec(path);
@@ -302,6 +302,8 @@ const base = () => {
   const st = db.settings(), look = st.look;
   return { db, dark: look === 'dark' || (look === 'system' && dark.matches), dim: st.darkMode === 'gray' };
 };
+// On /b, a board's Tweaks can be set from the address (/b/WebTest?screen=Results): any setting the board has, with its value.
+const tweaks = s => Object.fromEntries([...current.query].filter(([k]) => k in s.props && k !== 'dark' && k !== 'dim').map(([k, v]) => [k, v === 'true' ? true : v === 'false' ? false : v]));
 function schedule() { if (!queued) { queued = true; queueMicrotask(() => { queued = false; paint(); }); } }
 function paint() {
   if (!current) return;
@@ -312,7 +314,7 @@ function paint() {
     if (r.name !== current.name) return go(current.path + current.search, false, true);
   }
   handlers = []; refs = []; drawn = [];
-  const s = loaded[current.name], props = { ...s.props, ...current.props, ...base() };
+  const s = loaded[current.name], props = { ...s.props, ...current.props, ...(current.design ? tweaks(s) : {}), ...base() };
   // The page behind the screen: the boards' background (theme(): white, black, or gray #1E1E20). Live's screens stay
   // bright in dark mode (all but setting up, which sits over the deck's page).
   document.body.style.background = props.dark && !/^Live(?!Setup)/.test(current.name) ? (props.dim ? '#1E1E20' : '#000000') : '#FFFFFF';

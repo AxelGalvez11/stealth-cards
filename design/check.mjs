@@ -64,6 +64,15 @@ PROP_SETS.push({ passwordMode: true }, { passwordOpen: true }, { passwordOpen: t
 PROP_SETS.push({ verified: 'Teacher' }, { verified: 'School' }, { verified: 'Teacher', $state: { $m: { checked: true } } }, { verified: 'Teacher', $state: { busy: 'check', error: 'That didn’t save.' } },
   { verified: 'Teacher', owner: true }, { verified: 'Teacher', signedOut: true }, { verified: 'Waiting for review' }, { verified: 'Teacher', $state: { checkedAt: 14 } }, { verified: 'Teacher', dark: true });
 
+// The practice test: each state the canvas can show (set up; each kind of question; its Submit and Leave questions; the results, all
+// of them or the ones missed), with and without the timer, in dark and gray, the question list open on a phone, the results with an
+// explanation open and a written answer counted, the set-up on other choices and over a folder.
+PROP_SETS.push({ screen: 'Set up' }, { screen: 'Multiple choice' }, { screen: 'True or false' }, { screen: 'Fill in the blank' }, { screen: 'Written' }, { screen: 'Matching' }, { screen: 'Submit' }, { screen: 'Leave' },
+  { screen: 'Results' }, { screen: 'Results · missed' }, { screen: 'Multiple choice', timed: false }, { screen: 'Matching', dark: true, dim: true }, { screen: 'Results', dark: true }, { screen: 'Submit', dark: true },
+  { screen: 'Multiple choice', $state: { sheet: true } }, { screen: 'Results', $state: { exOpen: { 3: true }, exOn: { 3: true } } }, { screen: 'Results', $state: { counted: { 18: true } } },
+  { screen: 'Set up', $state: { kinds: ['mc'], count: 10, limit: 20 } }, { screen: 'Set up', folderId: 'f1' }, { screen: 'Set up', dark: true, dim: true }, { screen: 'Written', $state: { m: { type: '' } } },
+  { screen: 'Matching', $state: { m: { match: { 0: 1, 1: 3, 2: 4, 3: 0, 4: 2 } } } }, { tests: false });
+
 function walk(str, sc, miss) {
   let i = 0;
   const check = chunk => {

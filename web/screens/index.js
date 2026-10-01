@@ -949,6 +949,12 @@ export default [
   "h": 844
  },
  {
+  "name": "PhoneTest",
+  "title": "iPhone · Practice test",
+  "w": 390,
+  "h": 844
+ },
+ {
   "name": "PhoneTheme",
   "title": "iPhone · Settings › Theme › a theme’s page",
   "w": 390,
@@ -2829,6 +2835,12 @@ export default [
  {
   "name": "WebSuggestionsReport",
   "title": "Web · Suggestions · Report",
+  "w": 1440,
+  "h": 900
+ },
+ {
+  "name": "WebTest",
+  "title": "Web · Practice test",
   "w": 1440,
   "h": 900
  },
