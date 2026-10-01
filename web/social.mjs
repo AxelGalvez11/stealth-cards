@@ -19,6 +19,7 @@ import { state, saved, onSave, onReviewed, afterSaving, withLibrary, withCredit,
 import { deckCards } from './order.js';
 import { newCard } from './fsrs.js';
 import { createHash } from 'node:crypto';
+import guide from './guide.js';
 
 const MIN = 60000, DAY = 86400000;
 const nowIso = () => new Date().toISOString();
@@ -140,6 +141,35 @@ async function mediaFor(uid, sh, c) {
   }
   return out;
 }
+// A deck's Guide (and its extra pages) as it is shared: the words, with the pictures in them made public like a card's (the
+// Markdown's /media/<name> links become links anyone can open), and how many Sources the deck was made from (just the number:
+// the files and their names stay private, since they may be someone else's work). Null while the deck has neither.
+async function guideFor(uid, sh, d) {
+  const g = d.guide || {}, n = (d.sources || []).length;
+  const pages = [{ id: 'main', title: 'Guide', text: g.text || '' }, ...(g.pages || []).map(p => ({ id: p.id, title: p.title, text: p.text || '' }))];
+  if (!pages.some(p => p.text.trim()) && !n) return null;
+  for (const p of pages) {
+    const names = [...p.text.matchAll(/\]\(\/media\/([\w-]+\.\w+)(?=[\s)"'])/g)].map(m => m[1]);
+    if (!names.length || !publicMedia.on() || isDev(uid) || uid === 'local') continue;
+    for (const name of new Set(names)) {
+      if (!sh.media.includes(name)) { await publicMedia.publish(uid, name); sh.media.push(name); sh.mediaDirty = true; }
+      p.text = p.text.split('/media/' + name).join(publicMedia.url(uid, name));
+    }
+  }
+  return { pages, sources: n };
+}
+// A shared deck's Guide as the guide of a deck in someone's library (studying it, or a copy of it).
+const guideCopy = g => {
+  const pages = (g && Array.isArray(g.pages) ? g.pages : []).filter(p => p && typeof p.text === 'string'), t = Date.now();
+  if (!pages.length) return undefined;
+  const main = pages.find(p => p.id === 'main') || { text: '' };
+  return { text: clean(main.text, 40000), at: t, pages: pages.filter(p => p.id !== 'main').slice(0, 10).map(p => ({ id: clean(p.id, 30), title: clean(p.title, 80), text: clean(p.text, 40000), at: t })) };
+};
+// The pictures a public Guide may show: ones this app made public (its public storage), or, on this computer, its own /media.
+const publicImage = src => {
+  if (/^\/media\/[\w-]+\.(png|jpe?g|gif|webp)$/i.test(src)) return publicMedia.on() ? '' : src;
+  try { const u = new URL(src), base = new URL(publicMedia.url('00000000-0000-0000-0000-000000000000', 'x.png')); return u.origin === base.origin && u.pathname.startsWith('/storage/v1/object/public/shared/') && /\.(png|jpe?g|gif|webp)$/i.test(u.pathname) ? src : ''; } catch { return ''; }
+};
 // A deck's address. A public deck is at its owner's name and its own (lucida.cards/@maria/cell-biology); every other deck
 // (Link only, or a class's) only at its lasting link, /d/<id>, which nobody can guess.
 const urlOf = (handle, slug) => '/@' + handle + '/' + slug;
@@ -279,7 +309,7 @@ async function publish(uid, d, info = {}) {
     if (pub[c.id] !== h) changed.push({ id: c.id, pos: i, data });
   }
   const removed = Object.keys(pub).filter(id => !(id in next));
-  const meta = { name: d.name, tags: d.tags, cover: coverOf(d) }, metaH = hash(meta);
+  const meta = { name: d.name, tags: d.tags, cover: coverOf(d), guide: await guideFor(uid, box, d) }, metaH = hash(meta);
   if (!changed.length && !removed.length && sh.meta === metaH) return;
   const rev = (row.rev || 0) + 1;
   // What those cards said before, for the version's before-and-after.
@@ -444,6 +474,7 @@ export async function addShared(uid, me, sharedId, { copy = false, name = '', fo
   await ensureProfile(uid, me, S);
   const d = makeDeck({ name: copy && name ? name : sh.name, tags: sh.tags, folder });
   d.cover = { style: (sh.cover && sh.cover.style) || 'mix', round: (sh.cover && sh.cover.round) || 0, image: (sh.cover && sh.cover.image) || null, seed: (sh.cover && sh.cover.seed) || sh.name };
+  const g = guideCopy(sh.guide); if (g) d.guide = g;
   d.link = { id: sharedId, mode: copy ? 'copy' : 'study', rev: sh.rev, slug: sh.slug, vis: sh.visibility, owner: { handle: owner ? owner.handle : '', name: owner ? owner.name : '' }, updates: copy ? !!updates : true, pending: [] };
   const cards = rows.map(r => fromShared(r, d.id));
   S.cards.push(...cards);
@@ -492,7 +523,7 @@ export async function sync(uid) {
 async function copyChanges(S, d, sh, cap, t0) {
   const link = d.link, since = link.rev, study = link.mode === 'study', pos = new Map();
   let cur = link.cur && typeof link.cur.id === 'string' && link.cur.rev >= since ? link.cur : null, took = 0, done = false;
-  if (study) applyMeta(d, sh);
+  if (study) { applyMeta(d, sh); const g = guideCopy(((await sharedRow(sh.id, 'guide')) || {}).guide); if (g) d.guide = g; else delete d.guide; }
   while (true) {
     const size = Math.min(LIMITS.syncPage, cap - took);
     if (size <= 0 || Date.now() - t0 > LIMITS.syncMs) break;
@@ -940,6 +971,8 @@ export async function deckPage({ handle, slug, id }, viewer) {
     people: faces.map(face),
     cardsList: rows.map(r => ({ id: r.id, kind: r.data.kind, front: r.data.front, back: r.data.back, text: r.data.text, image: r.data.image, box: r.data.box, boxes: r.data.boxes, cloze: r.data.cloze, tags: r.data.tags || [], source: r.data.source || '', trail: r.data.trail || [] })),
     moreCards: Math.max(0, (sh.card_count || 0) - rows.length),
+    // The Guide (Markdown pages, the first the Guide itself) and how many Sources the deck was made from (a number only).
+    guide: sh.guide && Array.isArray(sh.guide.pages) ? { pages: sh.guide.pages.map(p => ({ id: p.id, title: p.title, text: p.text })), sources: sh.guide.sources || 0 } : null,
     made: vers.map(v => ({ version: v.version, kind: v.kind, summary: v.summary, ai: v.ai, at: v.created_at, by: face(faces.find(f => f.id === v.author)) || (v.author_name ? { name: v.author_name } : null), n: v.n_changes || 0 })),
     me: vid ? { owner, helper, studying: (subs.find(x => x.mode === 'study') || {}).deck_id || '', copied: (subs.find(x => x.mode === 'copy') || {}).deck_id || '', watching: subs.some(x => x.mode === 'watch'), starred: starred.length > 0, open } : null };
 }
@@ -1033,8 +1066,11 @@ export async function metaFor(path) {
   if (d || m[2]) {
     const page = await deckPage(d ? { id: d[1] } : { handle: m[1], slug: m[2] }, null);
     if (!page) return { status: 404, title: 'Not found · Lucida', description: '' };
-    return { title: page.name + ' · ' + (page.owner ? page.owner.name : '') + ' · Lucida', description: plural(page.cards, 'flashcard') + (page.description ? '. ' + page.description : '') + (page.cardsList[0] ? '. ' + (page.cardsList[0].front || page.cardsList[0].text || '').slice(0, 120) : ''),
-      noindex: page.visibility !== 'public', url: page.url, cards: page.cardsList.slice(0, 50),
+    // The Guide, drawn safely (there is no raw HTML in it, and links say nofollow ugc), is part of the page's words for search engines.
+    const gp = (page.guide ? page.guide.pages : []).filter(p => p.text.trim()), about = page.description || (gp[0] ? guide.plain(gp[0].text, 140).replace(/\s+/g, ' ').trim() : '');
+    const guideHtml = gp.map(p => (p.id === 'main' ? '' : '<h2>' + String(p.title).replace(/&/g, '&amp;').replace(/</g, '&lt;') + '</h2>') + guide.render(p.text, { image: publicImage })).join('');
+    return { title: page.name + ' · ' + (page.owner ? page.owner.name : '') + ' · Lucida', description: plural(page.cards, 'flashcard') + (about ? '. ' + about : '') + (page.cardsList[0] ? '. ' + (page.cardsList[0].front || page.cardsList[0].text || '').slice(0, 120) : ''),
+      noindex: page.visibility !== 'public', url: page.url, cards: page.cardsList.slice(0, 50), guideHtml,
       // The facts for the page's structured data (web/jsonld.mjs).
       ld: { kind: 'deck', name: page.name, description: page.description, cards: page.cards, updated: page.updated, tags: page.tags, owner: page.owner } };
   }

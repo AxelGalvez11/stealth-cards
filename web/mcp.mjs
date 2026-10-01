@@ -78,6 +78,10 @@ async function speakFile(words, lang, notes, room) {
   catch (e) { if (e.full) throw e; notes.add(e.message + ' Those cards use the device’s voice for now.'); return null; }
 }
 
+const CHECK_GUIDE = 'The learner asked to check AI changes first, and a Guide can’t wait for that check. Show them the text in the chat so they can paste it into the Guide themselves.';
+// A deck's Guide as a list of pages: the Guide itself ("main") first, then its extra pages.
+const guidePages = d => { const g = d.guide || { text: '', pages: [] }; return [{ id: 'main', title: 'Guide', characters: (g.text || '').length }, ...(g.pages || []).map(p => ({ id: p.id, title: p.title, characters: (p.text || '').length }))]; };
+
 const TOOLS = [
   { name: 'list_decks', perm: 'read', description: 'List the learner’s decks, each with its id, folder, tags, how many cards it has, how many are due and new, its exam date, and whether it is shared or came from someone else. Use it first: the other tools take a deck’s name or id.', inputSchema: { type: 'object', properties: {} },
     run: () => text(state().decks.map(d => { const cs = state().cards.filter(c => c.deckId === d.id), paused = cs.filter(c => c.paused).length;
@@ -231,6 +235,41 @@ const TOOLS = [
       if (state().ai.perms.check) { const kept = cs.filter(c => !c.pending); for (const c of kept) apply({ type: 'card.propose', id: c.id, remove: true }, who); const rest = cs.filter(c => c.pending).map(c => c.id); if (rest.length) apply({ type: 'card.delete', ids: rest }, who); return text((kept.length ? kept.length + ' wait for the learner to agree. ' : '') + (rest.length ? 'Deleted ' + rest.length + '.' : '')); }
       return text(apply({ type: 'card.delete', ids: a.ids }, who));
     } },
+  // A deck's Guide: a Markdown page like a README, with extra pages beside it (store.mjs "A deck's Guide").
+  { name: 'list_guide_pages', perm: 'read', description: 'List a deck’s Guide pages: the Guide itself (its main page) and any extra pages, each with its id, title and length. The Guide is a Markdown page the learner keeps about the deck, like a README.',
+    inputSchema: { type: 'object', properties: { deck: { type: 'string', description: 'Deck name or id.' } }, required: ['deck'] },
+    run: a => { const d = deckBy(a.deck); if (!d) return fail('No deck called ' + a.deck); return text(guidePages(d)); } },
+  { name: 'get_guide', perm: 'read', description: 'Read a deck’s Guide (the page like a README that the learner keeps about the deck), or one of its extra pages. It is Markdown. Use list_guide_pages to see the extra pages.',
+    inputSchema: { type: 'object', properties: { deck: { type: 'string', description: 'Deck name or id.' }, page: { type: 'string', description: 'An extra page’s id or title. Leave out for the Guide itself.' } }, required: ['deck'] },
+    run: a => {
+      const d = deckBy(a.deck); if (!d) return fail('No deck called ' + a.deck);
+      const pages = guidePages(d), p = a.page ? pages.find(x => x.id === a.page) || pages.find(x => x.title.toLowerCase() === String(a.page).trim().toLowerCase()) : pages[0];
+      if (!p) return fail('There is no page called ' + a.page + ' in ' + d.name + '.');
+      const g = p.id === 'main' ? d.guide : (d.guide.pages || []).find(x => x.id === p.id);
+      return text({ deck: d.name, page: { id: p.id, title: p.title }, text: (g && g.text) || '', updated: g && g.at ? new Date(g.at).toISOString() : undefined, pages: pages.map(x => ({ id: x.id, title: x.title, characters: x.characters })) });
+    } },
+  { name: 'update_guide', perm: 'edit', description: 'Write a deck’s Guide (a Markdown page like a README: headings, lists, task lists, links, tables, code and quotes) or one of its extra pages. By default the text replaces what is there; the old words are kept as an older version the learner can bring back. With mode "append" the text goes after what is there. If the deck is shared, its Guide is shown on its public page, so keep it fit to be seen. Up to 40,000 characters.',
+    inputSchema: { type: 'object', properties: { deck: { type: 'string', description: 'Deck name or id.' }, text: { type: 'string', description: 'The Markdown to write.' }, page: { type: 'string', description: 'An extra page’s id or title. Leave out for the Guide itself.' }, mode: { type: 'string', enum: ['replace', 'append'] } }, required: ['deck', 'text'] },
+    run: (a, who) => {
+      // A Guide can't wait for a check the way new cards do, so with "check AI cards and changes first" on, the learner writes it.
+      if (state().ai.perms.check) return fail(CHECK_GUIDE);
+      const d = deckBy(a.deck); if (!d) return fail('No deck called ' + a.deck);
+      const pages = guidePages(d), p = a.page ? pages.find(x => x.id === a.page) || pages.find(x => x.title.toLowerCase() === String(a.page).trim().toLowerCase()) : pages[0];
+      if (!p) return fail('There is no page called ' + a.page + ' in ' + d.name + '. Use add_guide_page to make one.');
+      const was = p.id === 'main' ? (d.guide && d.guide.text) || '' : ((d.guide.pages || []).find(x => x.id === p.id) || {}).text || '';
+      const body = String(a.text ?? ''), next = a.mode === 'append' ? was + (was && !was.endsWith('\n') ? '\n\n' : '') + body : body;
+      apply({ type: 'guide.save', deckId: d.id, page: p.id, text: next, snapshot: true }, who);
+      return text('Wrote ' + (p.id === 'main' ? 'the Guide' : 'the page “' + p.title + '”') + ' of ' + d.name + '. The old words are kept as an older version.');
+    } },
+  { name: 'add_guide_page', perm: 'text', description: 'Add an extra page beside a deck’s Guide, like a page of a small wiki ("Lecture 3 summary", "Mnemonics"). A deck can have up to 10. Give it Markdown text now, or fill it in later with update_guide.',
+    inputSchema: { type: 'object', properties: { deck: { type: 'string', description: 'Deck name or id.' }, title: { type: 'string' }, text: { type: 'string', description: 'The page’s Markdown.' } }, required: ['deck', 'title'] },
+    run: (a, who) => {
+      if (state().ai.perms.check) return fail(CHECK_GUIDE);
+      const d = deckBy(a.deck); if (!d) return fail('No deck called ' + a.deck);
+      const r = apply({ type: 'guide.page.add', deckId: d.id, title: a.title }, who);
+      if (a.text) apply({ type: 'guide.save', deckId: d.id, page: r.id, text: String(a.text) }, who);
+      return text('Added the page “' + String(a.title).trim().slice(0, 80) + '” to ' + d.name + '. Its id is ' + r.id + '.');
+    } },
   // The study network (social.mjs): decks other people share. The learner can study one as it is, or copy it; on a deck
   // from someone else, an AI can only suggest changes, which the owner takes or skips.
   { name: 'search_shared_decks', perm: 'read', description: 'Find decks other people share publicly on Lucida, by words or by topic (a tag). With neither it lists popular ones. Each deck comes with its id, name, author, card count and link. Use study_shared_deck to add one to the learner’s library.',
@@ -289,6 +328,10 @@ const META = {
   update_card: { title: 'Change a card', scope: 'cards:write', ro: false, destructive: true, open: false, idem: true },
   add_quiz: { title: 'Save Learn mode questions', scope: 'cards:write', ro: false, destructive: true, open: false, idem: true },
   delete_cards: { title: 'Delete cards', scope: 'cards:write', ro: false, destructive: true, open: false, idem: true },
+  list_guide_pages: { title: 'List a deck’s Guide pages', scope: 'cards:read', ro: true, destructive: false, open: false, idem: true },
+  get_guide: { title: 'Read a deck’s Guide', scope: 'cards:read', ro: true, destructive: false, open: false, idem: true },
+  update_guide: { title: 'Write a deck’s Guide', scope: 'cards:write', ro: false, destructive: true, open: false, idem: true },
+  add_guide_page: { title: 'Add a Guide page', scope: 'cards:write', ro: false, destructive: false, open: false, idem: false },
   search_shared_decks: { title: 'Search shared decks', scope: 'cards:read', ro: true, destructive: false, open: true, idem: true },
   get_shared_deck: { title: 'Read a shared deck', scope: 'cards:read', ro: true, destructive: false, open: true, idem: true },
   study_shared_deck: { title: 'Add a shared deck to the library', scope: 'cards:write', ro: false, destructive: false, open: true, idem: false },
@@ -321,6 +364,7 @@ async function handle(m, sid, ctx) {
           instructions: 'Lucida holds the learner’s flashcards. Use list_decks first. Make clear, short cards with one idea each; use cloze cards with [[blanks]] for facts inside sentences. ' + FORMAT +
             ' Image cards show a picture: a link, a file the learner uploaded in the chat, or a file on this computer. Audio cards read words aloud (put them in "speak" and the language in "lang"); use them for languages and pronunciation.' +
             ' Learn mode quizzes the learner on a deck: add_quiz gives cards better questions (multiple choice with plausible wrong answers, or true or false) and an explanation. Decks can sit in folders and have a cover picture and a background (update_deck).' +
+            ' A deck can have a Guide, a Markdown page like a README (get_guide, update_guide, and extra pages with list_guide_pages and add_guide_page); a shared deck shows it on its public page.' +
             ' To help with what the learner finds hard, get_weak_spots lists their weakest tags and hardest cards (with ids to quiz them or fix the cards), and get_review_history sums up their recent reviews.' });
       }
       case 'ping': return ok({});
