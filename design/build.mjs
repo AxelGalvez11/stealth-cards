@@ -13,6 +13,7 @@ import { PRO_LINKS } from '../web/plans.mjs';
 import { PLAN_FREE, PLAN_PRO, PRICING_FAQ, SOCIALS as SITE_SOCIALS, BOARDS as SITE_BOARDS, APP as SITE_APP, SCENES, SCENE_ARRANGEMENTS, GRAD, CATEGORIES, FEATURED, pageSet, footerLinks, boardData, partsOf, indexOf, ogKey } from './site.mjs';
 import { G_LOGO, APPLE_LOGO } from './logos.mjs';
 import { VARS, SKY_VARS, EXTRA_VARS, EXTRA_LIGHT, EXTRA_DARK } from './scheme.mjs';
+import { SCREENS, KINDS, shotFile, visualsOf, CONNECT_FIGS } from './visuals.mjs';
 import { THEMES } from '../web/themes/index.js';
 import { THEME_KEYS, themeCss, themeFonts, themeStatic } from './themes.mjs';
 // The themes (Pro), for boards' logic: key, board name, short and full names.
@@ -5799,7 +5800,7 @@ renderVals() { ${TS}
 // ---------- Privacy and Terms (lucida.cards/privacy and /terms) ----------
 // Plain pages from legal.mjs: one column of text that fits any window. design/to-site.mjs makes them pages.
 const LEGAL_H = { Privacy: 2338, Terms: 1963, Connect: 3336 };
-const legalPage = (doc, hgt) => `<div style="width: 1440px; height: ${hgt}px; box-sizing: border-box; font-family: ${FONT}; background: {{t.bg}}; color: {{t.text}}; overflow: hidden;">
+const legalPage = (doc, hgt, marks = {}) => `<div style="width: 1440px; height: ${hgt}px; box-sizing: border-box; font-family: ${FONT}; background: {{t.bg}}; color: {{t.text}}; overflow: hidden;">
 <header style="max-width: 1344px; margin: 0 auto; height: 76px; box-sizing: border-box; padding: 0 clamp(20px, 4vw, 48px); display: flex; align-items: center; justify-content: space-between; gap: 12px;">
   <a href="{{homeHref}}" aria-label="Lucida home">${logo(28)}</a>
   <nav style="display: flex; align-items: center; gap: 4px;"><a href="{{signInHref}}" style="height: 36px; padding: 0 14px; display: inline-flex; align-items: center; border-radius: 999px; font-size: 14px; color: {{t.muted}};">Sign in</a>${landPill('Get started', '{{startHref}}', true, 36)}</nav>
@@ -5808,7 +5809,8 @@ const legalPage = (doc, hgt) => `<div style="width: 1440px; height: ${hgt}px; bo
   <h1 style="margin: 0; font-size: clamp(38px, 5vw, 52px); font-weight: 600; line-height: 1.05; letter-spacing: -.045em;">${doc.title}</h1>
   <p style="margin: 0; font-size: 14px; color: {{t.muted}};">Last updated ${doc.updated || UPDATED}</p>
   <p style="margin: 8px 0 0; font-size: 19px; line-height: 1.55; text-wrap: pretty;">${doc.intro}</p>
-  ${doc.sections.map(x => `<section style="margin-top: 24px; display: flex; flex-direction: column; gap: 12px;"><h2 style="margin: 0; font-size: 22px; font-weight: 600; letter-spacing: -.02em;">${x.h}</h2>${x.body.map(b => Array.isArray(b) ? `<ul style="margin: 0; padding-left: 22px; display: flex; flex-direction: column; gap: 8px; font-size: 16px; line-height: 1.6; color: {{t.muted}};">${b.slice(1).map(li => `<li>${li}</li>`).join('')}</ul>` : `<p style="margin: 0; font-size: 16px; line-height: 1.6; color: {{t.muted}};">${b}</p>`).join('')}</section>`).join('\n  ')}
+  ${marks.top || ''}
+  ${doc.sections.map(x => `<section style="margin-top: 24px; display: flex; flex-direction: column; gap: 12px;"><h2 style="margin: 0; font-size: 22px; font-weight: 600; letter-spacing: -.02em;">${x.h}</h2>${x.body.map(b => Array.isArray(b) ? `<ul style="margin: 0; padding-left: 22px; display: flex; flex-direction: column; gap: 8px; font-size: 16px; line-height: 1.6; color: {{t.muted}};">${b.slice(1).map(li => `<li>${li}</li>`).join('')}</ul>` : `<p style="margin: 0; font-size: 16px; line-height: 1.6; color: {{t.muted}};">${b}</p>`).join('')}${(marks.after || {})[x.h] || ''}</section>`).join('\n  ')}
 </main>
 ${landFooter(false)}
 </div>`;
@@ -5876,10 +5878,81 @@ const spPm = '<span class="sp-pm" aria-hidden="true"></span>';
 const spQ = `<details class="sp-qd" id="{{f.id}}"><summary class="sp-qs"><h3 class="sp-qt">{{f.q}}</h3>${spPm}</summary><div class="sp-qa"><sc-for list="{{f.paras}}" as="p"><p class="sp-p">${spParts('p.parts')}</p></sc-for></div></details>`;
 // A bullet. A step ("1. Open Connect AI.") and a bullet that begins with a bold lead-in have an address ("On this page" lists them).
 const spLi = `<sc-if value="{{b.id}}"><li id="{{b.id}}" class="{{b.cls}}">${spParts('b.parts')}</li></sc-if><sc-if value="{{b.plain}}"><li class="{{b.cls}}">${spParts('b.parts')}</li></sc-if>`;
+// ---------- Visuals in the articles (design/visuals.mjs says where each goes and what it carries; these draw them) ----------
+// Diagrams are made of flashcards like the app's: white rounded cards with a soft shadow on a quiet stage, the deck covers' gradients
+// for accents, Geist. They are drawn in the board with HTML and CSS (inline SVG for lines), so the canvas and the site show the same
+// thing, and every color is a variable (--sp-f…) with a light and a dark value. The real screens come as pictures (web/shots/).
+const SHOT_BOARDS = [...new Set(Object.values(SCREENS).flatMap(s => [s.desk.board, s.phone.board]))];
+// An element that has an address ("On this page" links to it) only when it has an id.
+const idTag = (k, tag, cls, extra, inner) => `<sc-if value="{{${k}.id}}"><${tag} id="{{${k}.id}}" class="${cls}"${extra}>${inner}</${tag}></sc-if><sc-if value="{{${k}.noId}}"><${tag} class="${cls}"${extra}>${inner}</${tag}></sc-if>`;
+const spArrowLi = `<li class="sp-arrow" aria-hidden="true">${svg('<path d="M5 12h14M13 6l6 6-6 6"/>', 20, 1.8)}</li>`;
+const FIG_CHUNKS = {
+  // The two bullets "Pick X if …" as two flashcards side by side: the other app's plain card, and Lucida's with its cover.
+  pick: `<ul class="sp-picks"><sc-for list="{{f.items}}" as="it">${idTag('it', 'li', 'sp-pk', ' data-l="{{it.lucida}}"', `<span class="sp-pk-top"><sc-if value="{{it.lucida}}" hint-placeholder-val="{{ false }}"><span class="sp-pk-mark">${mark(13)}</span></sc-if><span class="sp-pk-name">{{it.name}}</span></span><span class="sp-pk-body">${spParts('it.parts')}</span>`)}</sc-for></ul>`,
+  // Step cards with arrows between them.
+  steps: `<ol class="sp-steps{{f.cols}}"><sc-for list="{{f.steps}}" as="st"><li class="sp-step"><span class="sp-sn">{{st.n}}</span><span class="sp-st-b"><span class="sp-st-t">{{st.t}}</span><sc-if value="{{st.hasD}}" hint-placeholder-val="{{ false }}"><span class="sp-st-d">{{st.d}}</span></sc-if></span></li><sc-if value="{{st.more}}" hint-placeholder-val="{{ true }}">${spArrowLi}</sc-if></sc-for></ol>`,
+  // Small cards, each an app and its one line (Lucida's with the cover).
+  apps: `<ul class="sp-apps"><sc-for list="{{f.cards}}" as="a"><li class="sp-app" data-l="{{a.lucida}}"><span class="sp-app-n">{{a.name}}</span><span class="sp-app-l">{{a.line}}</span></li></sc-for></ul>`,
+  // The bullets as a checklist card.
+  checklist: `<ul class="sp-chk"><sc-for list="{{f.rows}}" as="r">${idTag('r', 'li', 'sp-chk-r', '', `<span class="sp-chk-i" aria-hidden="true">${svg(I.check, 14, 2.4)}</span><span class="sp-chk-t">${spParts('r.parts')}</span>`)}</sc-for></ul>`,
+  // One of the app's real screens. On lucida.cards a picture (a phone gets the phone's, a dark system the dark one, with its size so nothing
+  // jumps); on the canvas the app's own board, cropped to the same part and scaled to the column.
+  screen: `<sc-if value="{{site}}" hint-placeholder-val="{{ false }}"><picture><source media="(max-width: 760px) and (prefers-color-scheme: dark)" srcset="{{f.src.pd}}" width="{{f.p.w}}" height="{{f.p.h}}"><source media="(max-width: 760px)" srcset="{{f.src.p}}" width="{{f.p.w}}" height="{{f.p.h}}"><source media="(prefers-color-scheme: dark)" srcset="{{f.src.dd}}" width="{{f.d.w}}" height="{{f.d.h}}"><img class="sp-shot" src="{{f.src.d}}" alt="{{f.alt}}" width="{{f.d.w}}" height="{{f.d.h}}" loading="lazy" decoding="async" style="--ard: {{f.d.ar}}; --arp: {{f.p.ar}};"></picture></sc-if>`
+    + `<sc-if value="{{canvas}}" hint-placeholder-val="{{ true }}"><div class="sp-shot sp-shotc" role="img" aria-label="{{f.alt}}" style="width: {{f.dw}}px; --ard: {{f.ar}}; --arp: {{f.ar}};"><div class="sp-shot-in" style="width: {{f.bw}}px; height: {{f.bh}}px; transform: scale({{f.k}}) translate({{f.tx}}px, {{f.ty}}px);">${SHOT_BOARDS.map(n => `<sc-if value="{{f.b.${n}}}" hint-placeholder-val="{{ false }}"><dc-import name="${n}" dark="{{dark}}" hint-size="${/^Phone|^LiveAnswer$/.test(n) ? '390px,844px' : '1440px,900px'}"></dc-import></sc-if>`).join('')}</div></div></sc-if>`
+};
+// ---- the single-page drawings (batch 2) ----
+const spLn = w => `<span class="sp-ln" style="width: ${w}%;"></span>`;
+const spPlay = `<span class="sp-play" aria-hidden="true">${svg('<path d="M8 5.5v13l11-6.5z" fill="currentColor" stroke="none"/>', 16, 1.8)}</span>`;
+// The memory curve: after each review the chance of remembering is back at the top and falls more slowly; the card comes back at the goal.
+const CURVE_SEGS = (() => {
+  const widths = [36, 52, 76, 110]; let x = 38, paths = '', links = '', dots = '';
+  widths.forEach(w => {
+    paths += `<path class="sp-cc" d="M${x} 14Q${(x + w * 0.24).toFixed(1)} 38 ${x + w} 46"/>`;
+    dots += `<circle class="sp-cdot" cx="${x}" cy="14" r="3.6"/>`;
+    x += w;
+    links += `<path class="sp-ccd" d="M${x} 46V14"/>`;
+  });
+  return links + paths + dots + `<circle class="sp-cdot" cx="${x}" cy="14" r="3.6"/>`;
+})();
+const FIG_CHUNKS_2 = {
+  // One card's reviews along a line: cards at widening gaps (a column on a phone).
+  gaps: `<ol class="sp-gaps"><sc-for list="{{f.items}}" as="g"><sc-if value="{{g.isCard}}" hint-placeholder-val="{{ true }}"><li class="sp-gc"><span class="sp-gcard" aria-hidden="true"><span class="sp-gcv sp-cv{{g.cv}}"></span>${spLn(70)}${spLn(44)}</span><span class="sp-gl">{{g.t}}</span></li></sc-if><sc-if value="{{g.isGap}}" hint-placeholder-val="{{ false }}"><li class="sp-gsp" style="--w: {{g.w}}; --h: {{g.h}}px;"><span class="sp-gt">{{g.t}}</span></li></sc-if></sc-for></ol>`,
+  curve: `<svg class="sp-curve" viewBox="0 0 320 150" role="img" aria-label="{{f.label}}"><path class="sp-cax" d="M34 8V126H314"/><path class="sp-cgoal" d="M34 46H314"/><text class="sp-ctx" x="314" y="62" text-anchor="end">{{f.goal}}</text><text class="sp-ctx" x="314" y="143" text-anchor="end">{{f.time}}</text><text class="sp-ctx" transform="rotate(-90 14 68)" x="14" y="68" text-anchor="middle">{{f.chance}}</text>${CURVE_SEGS}</svg>`,
+  // A message to your AI, and the deck it lands in.
+  chat: `<div class="sp-chat"><div class="sp-bub"><span class="sp-bub-w">{{f.who}}</span><span class="sp-bub-t">{{f.prompt}}</span></div><span class="sp-arrow" aria-hidden="true">${svg('<path d="M5 12h14M13 6l6 6-6 6"/>', 20, 1.8)}</span><div class="sp-dk"><span class="sp-dk-fan" aria-hidden="true"><span class="sp-mc"><span class="sp-mt sp-cv1"></span></span><span class="sp-mc"><span class="sp-mt sp-cv2"></span></span><span class="sp-mc"><span class="sp-mt sp-cv0"></span>${spLn(60)}${spLn(36)}</span></span><span class="sp-dk-b"><span class="sp-dk-n">{{f.deck}}</span><span class="sp-dk-m"><span class="sp-chp">{{f.tag}}</span><span>{{f.note}}</span></span></span></div></div>`,
+  // Learn mode: a question card with four answers, one right; and the way a card gets to "learned".
+  learn: `<div class="sp-lm"><div class="sp-lq"><span class="sp-chp">{{f.chip}}</span><span class="sp-lq-q">${spLn(92)}${spLn(62)}</span><ul class="sp-lq-a" aria-hidden="true"><li class="sp-lq-o sp-lq-ok"><span class="sp-lq-n" style="background: #5B63F0;">1</span>${spLn(54)}<span class="sp-lq-t">${svg(I.check, 14, 2.6)}</span></li><li class="sp-lq-o"><span class="sp-lq-n" style="background: #F2761D;">2</span>${spLn(40)}</li><li class="sp-lq-o"><span class="sp-lq-n" style="background: #1E9BB2;">3</span>${spLn(48)}</li><li class="sp-lq-o"><span class="sp-lq-n" style="background: #EA3F7F;">4</span>${spLn(34)}</li></ul></div><div class="sp-lp"><ol class="sp-lps"><sc-for list="{{f.path}}" as="p"><li class="sp-lpi" data-d="{{p.done}}"><span class="sp-lpt">{{p.t}}</span><sc-if value="{{p.hasD}}" hint-placeholder-val="{{ false }}"><span class="sp-lpd">{{p.d}}</span></sc-if></li><sc-if value="{{p.more}}" hint-placeholder-val="{{ true }}">${spArrowLi}</sc-if></sc-for></ol><p class="sp-lmiss"><span class="sp-lmk" aria-hidden="true">${svg('<path d="M6 6l12 12M18 6L6 18"/>', 12, 2.6)}</span>{{f.miss}}</p></div></div>`,
+  // Live: the code on the big screen, the four answers, and the leaderboard (example numbers).
+  live: `<div class="sp-lv"><div class="sp-lv-code"><span class="sp-lv-j">{{f.join}}</span><span class="sp-lv-c">{{f.code}}</span></div><ul class="sp-lv-t" aria-hidden="true"><li class="sp-lt0">${svg('<circle cx="12" cy="12" r="6" fill="currentColor" stroke="none"/>', 20, 1)}</li><li class="sp-lt1">${svg('<path d="M12 5l8 14H4z" fill="currentColor" stroke="none"/>', 20, 1)}</li><li class="sp-lt2">${svg('<rect x="6" y="6" width="12" height="12" rx="2" fill="currentColor" stroke="none"/>', 20, 1)}</li><li class="sp-lt3">${svg('<path d="M12 4l8 8-8 8-8-8z" fill="currentColor" stroke="none"/>', 20, 1)}</li></ul><ol class="sp-lv-b"><sc-for list="{{f.board}}" as="r"><li><span class="sp-lv-r">{{r.n}}</span><span class="sp-av" style="background: {{r.c}};">{{r.i}}</span><span class="sp-lv-w">{{r.who}}</span><span class="sp-lv-p">{{r.pts}}</span></li></sc-for></ol></div>`,
+  // Shared decks: someone's deck, and the two ways to use it.
+  fork: `<div class="sp-fk"><div class="sp-fk-top"><span class="sp-mc sp-cv0 sp-fk-cv" aria-hidden="true"></span><span class="sp-fk-tt">{{f.from}}</span></div><svg class="sp-fk-l" width="100%" height="30" aria-hidden="true"><line x1="50%" y1="0" x2="50%" y2="14"/><line x1="25%" y1="14" x2="75%" y2="14"/><line x1="25%" y1="14" x2="25%" y2="30"/><line x1="75%" y1="14" x2="75%" y2="30"/></svg><div class="sp-fk-bs"><sc-for list="{{f.ways}}" as="w">${idTag('w', 'div', 'sp-fk-b', '', `<span class="sp-fk-h">{{w.t}}</span><ul class="sp-fk-u"><sc-for list="{{w.lines}}" as="l"><li>${spParts('l.parts')}</li></sc-for></ul>`)}</sc-for></div></div>`,
+  // A class: its card (name, six-letter code, people), and the steps of setting it up.
+  class: `<div class="sp-cl"><div class="sp-cl-card"><span class="sp-cl-top"><span class="sp-cl-n">{{f.name}}</span><span class="sp-cl-s">{{f.sub}}</span></span><span class="sp-cl-code" role="img" aria-label="{{f.codeLabel}}"><sc-for list="{{f.letters}}" as="l"><span>{{l}}</span></sc-for></span><span class="sp-cl-pp" aria-hidden="true"><sc-for list="{{f.people}}" as="p"><span class="sp-av" style="background: {{p.c}};">{{p.i}}</span></sc-for></span></div><ol class="sp-cl-flow"><sc-for list="{{f.steps}}" as="st"><li><span class="sp-sn">{{st.n}}</span><span>{{st.t}}</span></li></sc-for></ol></div>`,
+  // A picture with covered labels, one of them shown.
+  occlusion: `<div class="sp-oc"><svg class="sp-oc-s" viewBox="0 0 320 190" role="img" aria-label="{{f.label}}"><ellipse class="sp-oc-l" cx="106" cy="96" rx="96" ry="72"/><ellipse class="sp-oc-l" cx="62" cy="62" rx="15" ry="9"/><circle class="sp-oc-l" cx="120" cy="100" r="30"/><circle class="sp-oc-d" cx="120" cy="100" r="9"/><path class="sp-oc-l" d="M77 60L222 41M202 98L222 100M141 121L190 163"/><g class="sp-oc-c"><rect x="222" y="28" width="82" height="26" rx="7"/><rect x="222" y="87" width="82" height="26" rx="7"/><rect x="190" y="150" width="114" height="26" rx="7" class="sp-oc-r"/></g><text class="sp-oc-n" x="263" y="46" text-anchor="middle">1</text><text class="sp-oc-n" x="263" y="105" text-anchor="middle">2</text><text class="sp-oc-w" x="247" y="168" text-anchor="middle">{{f.shown}}</text></svg></div>`,
+  // Import: text from Anki, Quizlet or a spreadsheet, into Import cards, into cards.
+  import: `<div class="sp-im"><ul class="sp-im-src"><sc-for list="{{f.sources}}" as="s"><li class="sp-im-s"><span class="sp-im-n">{{s.t}}</span><span class="sp-im-d">{{s.d}}</span></li></sc-for></ul><span class="sp-arrow" aria-hidden="true">${svg('<path d="M5 12h14M13 6l6 6-6 6"/>', 20, 1.8)}</span><div class="sp-im-box"><span class="sp-im-h">{{f.box}}</span><span class="sp-im-r" aria-hidden="true">${spLn(34)}<i></i>${spLn(40)}</span><span class="sp-im-r" aria-hidden="true">${spLn(26)}<i></i>${spLn(48)}</span><span class="sp-im-r" aria-hidden="true">${spLn(38)}<i></i>${spLn(30)}</span></div><span class="sp-arrow" aria-hidden="true">${svg('<path d="M5 12h14M13 6l6 6-6 6"/>', 20, 1.8)}</span><span class="sp-im-out" aria-hidden="true"><span class="sp-mc"><span class="sp-mt sp-cv3"></span>${spLn(60)}</span><span class="sp-mc"><span class="sp-mt sp-cv4"></span>${spLn(48)}</span><span class="sp-mc"><span class="sp-mt sp-cv5"></span>${spLn(66)}</span></span></div><p class="sp-im-no"><span class="sp-im-x" aria-hidden="true">${svg('<path d="M6 6l12 12M18 6L6 18"/>', 12, 2.6)}</span>{{f.no}}</p>`,
+  // A plan: small cards along the way, each with its day.
+  plan: `<ol class="sp-steps sp-plan{{f.cols}}"><sc-for list="{{f.steps}}" as="st"><li class="sp-step"><span class="sp-day sp-cv{{st.cv}}">{{st.n}}</span><span class="sp-st-b"><span class="sp-st-t">{{st.t}}</span><sc-if value="{{st.hasD}}" hint-placeholder-val="{{ false }}"><span class="sp-st-d">{{st.d}}</span></sc-if></span></li><sc-if value="{{st.more}}" hint-placeholder-val="{{ true }}">${spArrowLi}</sc-if></sc-for></ol>`,
+  // One example card, front and back, and what a day looks like.
+  example: `<div class="sp-ex"><div class="sp-ex-cards"><div class="sp-exc"><span class="sp-exc-l">{{f.frontLabel}}</span><span class="sp-exc-t">{{f.front}}</span></div><span class="sp-arrow" aria-hidden="true">${svg('<path d="M5 12h14M13 6l6 6-6 6"/>', 20, 1.8)}</span><div class="sp-exc sp-exc-b"><span class="sp-exc-l">{{f.backLabel}}</span><span class="sp-exc-t">{{f.back}}</span></div></div><ul class="sp-ex-load"><sc-for list="{{f.load}}" as="l"><li><span class="sp-ex-i sp-cv{{l.cv}}" aria-hidden="true"></span><span>{{l.t}}</span></li></sc-for></ul></div>`,
+  // Word cards: a sentence with the word hidden, and a sound card with its play button.
+  words: `<div class="sp-wd"><div class="sp-wc"><span class="sp-wl">{{f.a.label}}</span><span class="sp-wt">{{f.a.before}} <span class="sp-wb" aria-hidden="true"></span> {{f.a.after}}</span>${spPlay}</div><div class="sp-wc"><span class="sp-wl">{{f.b.label}}</span><span class="sp-wave" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span><span class="sp-wch"><sc-for list="{{f.b.ways}}" as="w"><span class="sp-chp">{{w}}</span></sc-for></span>${spPlay}</div></div>`
+};
+Object.assign(FIG_CHUNKS, FIG_CHUNKS_2);
+const spFig = `<figure class="sp-fig sp-f-{{f.kind}}">${KINDS.map(k => { if (!FIG_CHUNKS[k]) throw new Error('visuals: no drawing for the figure kind "' + k + '"'); return `<sc-if value="{{f.is${k.charAt(0).toUpperCase() + k.slice(1)}}}" hint-placeholder-val="{{ false }}">${FIG_CHUNKS[k]}</sc-if>`; }).join('')}<sc-if value="{{f.hasCaption}}" hint-placeholder-val="{{ false }}"><figcaption class="sp-fcap">{{f.caption}}</figcaption></sc-if></figure>`;
+// A table made from a section's bullets: what, and its words.
+const spT2 = `<sc-if value="{{s.hasTable}}" hint-placeholder-val="{{ false }}"><div class="sp-t2w"><table class="sp-t2"><thead><tr><sc-for list="{{s.table.head}}" as="c"><th scope="col">{{c.label}}</th></sc-for></tr></thead><tbody><sc-for list="{{s.table.rows}}" as="r">${idTag('r', 'tr', 'sp-t2r', '', `<th scope="row">{{r.label}}</th><td>${spParts('r.parts')}</td>`)}</sc-for></tbody></table></div></sc-if>`;
+// "Test yourself": each card is a <details>: the question on the card, and a tap shows the answer on the same card, at once.
+const spTcInner = `<summary class="sp-tq"><span class="sp-tn sp-cv{{c.cv}}">{{c.n}}</span><span class="sp-tt">{{c.q}}</span><span class="sp-th">Show the answer</span></summary><div class="sp-ta"><span class="sp-ta-l">Answer</span>{{c.a}}</div>`;
+const spTest = `<sc-if value="{{hasTest}}" hint-placeholder-val="{{ false }}"><section class="sp-sec sp-test" id="test-yourself">${spH2('Test yourself')}<div class="sp-tcs sp-wide{{testCols}}"><sc-for list="{{test}}" as="c"><sc-if value="{{c.open}}" hint-placeholder-val="{{ false }}"><details class="sp-tc" open>${spTcInner}</details></sc-if><sc-if value="{{c.closed}}" hint-placeholder-val="{{ true }}"><details class="sp-tc">${spTcInner}</details></sc-if></sc-for></div><p class="sp-tmore"><a class="sp-u" href="{{links.start}}">Make your own cards free</a></p></section></sc-if>`;
 const spSections = key => `<sc-for list="{{${key}}}" as="s" hint-placeholder-count="3"><section class="sp-sec">
   <sc-if value="{{s.h2}}" hint-placeholder-val="{{ true }}">${spH2('{{s.h2}}', ' id="{{s.id}}"')}</sc-if>
+  <sc-for list="{{s.figsBefore}}" as="f">${spFig}</sc-for>
   <sc-for list="{{s.paras}}" as="p"><p class="sp-p">${spParts('p.parts')}</p></sc-for>
+  ${spT2}
   <sc-if value="{{s.hasBullets}}" hint-placeholder-val="{{ false }}"><ul class="sp-ul"><sc-for list="{{s.bullets}}" as="b">${spLi}</sc-for></ul></sc-if>
+  <sc-for list="{{s.figsAfter}}" as="f">${spFig}</sc-for>
 </section></sc-for>`;
 // "On this page": the page's sections, each with its parts under it (a tree). `cur` marks the one being read.
 const spTree = `<ol><sc-for list="{{toc}}" as="o" hint-placeholder-count="5"><li class="{{o.cls}}"><a href="#{{o.id}}" aria-current="{{o.cur}}">{{o.label}}</a><sc-if value="{{o.hasKids}}" hint-placeholder-val="{{ false }}"><ol><sc-for list="{{o.kids}}" as="k"><li><a href="#{{k.id}}">{{k.label}}</a></li></sc-for></ol></sc-if></li></sc-for></ol>`;
@@ -5896,6 +5969,10 @@ const spStack = s => [
   // Rows past the sixth wait for "Show all": shown as blocks while the table is stacked.
   `@supports selector(:has(*)){${s}:has(.sp-more[open]) tr.sp-x{display:block}}`
 ].join('');
+// The deck covers' gradients (the app's palettes), as small classes: the number chips on the test cards, and Lucida's cards in the diagrams.
+const coverOf = n => { const m = paletteData(n); return `radial-gradient(circle at 18% 88%,${m.b0.c},transparent 62%),radial-gradient(circle at 86% 10%,${m.b3.c},transparent 58%),${m.base}`; };
+const COVER_CSS = ['Iris', 'Apricot', 'Mint', 'Rose', 'Aqua', 'Lemon', 'Lilac', 'Sun'].map((n, i) => `.sp-cv${i}{background:${coverOf(n)}}`).join('');
+const MID = coverOf('Midnight');
 const SITE_CSS = [
   '.sp{container-type:inline-size;-webkit-text-size-adjust:100%}',
   '.sp-sr{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}',
@@ -6006,6 +6083,126 @@ const SITE_CSS = [
   '.sp-bsec{margin-top:44px}.sp-bsec .sp-h2{margin-top:0;font-size:26px}',
   '.sp-bsec .sp-cards{margin-top:18px}',
   '.sp-none{margin:44px 0 0;font-size:16px;color:var(--sp-muted)}',
+  // The diagrams, tables, screens and flashcards in the articles. A drawn diagram sits on a quiet stage; its cards are white (a dark gray when
+  // dark) with a soft shadow, and Lucida's wears the deck cover's gradient.
+  '.sp-fig{margin:26px 0 0}.sp-fig:not(.sp-f-screen){box-sizing:border-box;padding:16px;border-radius:24px;background:var(--sp-fstage);box-shadow:inset 0 0 0 1px var(--sp-fedge)}',
+  '.sp-fcap{margin:12px 2px 0;font-size:14px;line-height:1.45;color:var(--sp-muted)}.sp-fig:not(.sp-f-screen) .sp-fcap{margin:14px 2px 0}',
+  '.sp-picks{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:minmax(0,1fr);gap:12px}',
+  '.sp-pk{display:block;box-sizing:border-box;padding:16px 18px 18px;border-radius:20px;background:var(--sp-fcard);box-shadow:var(--sp-fshadow),0 0 0 1px var(--sp-fedge);font-size:16px;line-height:1.5}',
+  '.sp-pk-top{display:flex;align-items:center;gap:8px;margin-bottom:8px}.sp-pk-name{font-size:17px;font-weight:700;letter-spacing:-.01em}.sp-pk-body{display:block}',
+  `.sp-pk[data-l="true"]{padding:0;overflow:hidden}.sp-pk[data-l="true"] .sp-pk-top{margin:0;padding:14px 18px;color:#FFFFFF;background:${MID}}.sp-pk[data-l="true"] .sp-pk-body{padding:14px 18px 18px}`,
+  '.sp-steps{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;align-items:stretch}',
+  '.sp-step{display:flex;align-items:flex-start;gap:12px;box-sizing:border-box;padding:12px 14px;border-radius:16px;background:var(--sp-fcard);box-shadow:var(--sp-fshadow),0 0 0 1px var(--sp-fedge)}',
+  '.sp-sn{flex:none;display:flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:9px;background:var(--sp-text);color:var(--sp-bg);font-size:13px;font-weight:600}',
+  '.sp-st-b{display:flex;flex-direction:column;gap:3px;min-width:0}.sp-st-t{font-size:16px;font-weight:600;line-height:1.35}.sp-st-d{font-size:14px;line-height:1.45;color:var(--sp-muted)}',
+  '.sp-arrow{display:flex;align-items:center;justify-content:center;height:24px;color:var(--sp-fline)}.sp-arrow svg{transform:rotate(90deg)}',
+  // Five or more steps are a grid of cards (two across on a phone, three on a computer), numbered, without arrows.
+  '.sp-steps.sp-n5,.sp-steps.sp-n6,.sp-steps.sp-n7{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.sp-steps.sp-n5 .sp-arrow,.sp-steps.sp-n6 .sp-arrow,.sp-steps.sp-n7 .sp-arrow{display:none}',
+  '.sp-apps{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}',
+  '.sp-app{display:flex;flex-direction:column;gap:4px;box-sizing:border-box;padding:12px 14px;border-radius:16px;background:var(--sp-fcard);box-shadow:var(--sp-fshadow),0 0 0 1px var(--sp-fedge)}',
+  '.sp-app-n{font-size:16px;font-weight:700;line-height:1.3}.sp-app-l{font-size:14px;line-height:1.4;color:var(--sp-muted)}',
+  `.sp-app[data-l="true"]{color:#FFFFFF;background:${MID}}.sp-app[data-l="true"] .sp-app-l{color:rgba(255,255,255,.84)}`,
+  '.sp-chk{list-style:none;margin:0;padding:4px 16px;border-radius:18px;background:var(--sp-fcard);box-shadow:var(--sp-fshadow),0 0 0 1px var(--sp-fedge)}',
+  '.sp-chk-r{display:flex;gap:12px;padding:13px 0;border-top:1px solid var(--sp-line);font-size:16px;line-height:1.5}.sp-chk-r:first-child{border-top:0}',
+  '.sp-chk-i{flex:none;display:flex;align-items:center;justify-content:center;width:22px;height:22px;margin-top:1px;border-radius:50%;background:var(--sp-good);color:var(--sp-bg)}',
+  '.sp-chk-t{min-width:0}',
+  // A real screen: its picture (or on the canvas, the board cropped); no taller than 420 px on a phone, 560 on a computer.
+  '.sp-shot{display:block;box-sizing:border-box;width:100%;height:auto;max-width:min(100%,calc(420px * var(--arp)));margin:0 auto;border-radius:16px;background:var(--sp-surf);box-shadow:var(--sp-fshadow),0 0 0 1px var(--sp-fedge)}',
+  '.sp-shotc{position:relative;overflow:hidden;max-width:none;aspect-ratio:var(--ard)}.sp-shot-in{position:absolute;left:0;top:0;transform-origin:0 0}',
+  '.sp-fig.sp-f-screen .sp-fcap{text-align:center}',
+  // A table made from bullets: no box, a muted header row, thin lines; two columns stay a table on a phone.
+  '.sp-t2w{margin-top:20px}.sp-t2{width:100%;border-collapse:collapse;font-size:16px;line-height:1.5}',
+  '.sp-t2 th,.sp-t2 td{padding:13px 14px 13px 0;text-align:left;vertical-align:top;border-top:1px solid var(--sp-line)}.sp-t2 td{padding-right:0}',
+  '.sp-t2 thead th{padding-top:10px;padding-bottom:10px;border-top:0;border-bottom:1px solid var(--sp-line);font-size:13px;font-weight:500;color:var(--sp-muted)}',
+  '.sp-t2 tbody th{width:32%;font-weight:600;color:var(--sp-text)}.sp-t2 tbody tr:first-child th,.sp-t2 tbody tr:first-child td{border-top:0}',
+  // "Test yourself": flashcards in a row; on a phone one row that scrolls sideways and snaps (the page itself never does).
+  '.sp-tcs{display:flex;gap:12px;align-items:flex-start;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none;margin:18px -20px 0;padding:6px 20px 16px;overscroll-behavior-x:contain}.sp-tcs::-webkit-scrollbar{display:none}',
+  '.sp-tc{flex:0 0 82%;box-sizing:border-box;scroll-snap-align:center;border-radius:22px;background:var(--sp-fcard);box-shadow:var(--sp-fshadow),0 0 0 1px var(--sp-fedge)}',
+  '.sp-tq{display:flex;flex-direction:column;align-items:flex-start;gap:14px;padding:16px 18px 18px;cursor:pointer;list-style:none}.sp-tq::-webkit-details-marker{display:none}',
+  '.sp-tn{display:flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:10px;color:#000000;font-size:14px;font-weight:700}',
+  '.sp-tt{font-size:18px;font-weight:600;line-height:1.35;letter-spacing:-.01em;text-wrap:balance}',
+  '.sp-th{display:inline-flex;align-items:center;height:32px;box-sizing:border-box;padding:0 14px;border-radius:999px;background:var(--sp-surf);color:var(--sp-text);font-size:14px;font-weight:600}.sp-tc[open] .sp-th{display:none}',
+  '.sp-ta{padding:0 18px 20px;font-size:16px;line-height:1.5}.sp-ta-l{display:block;margin-bottom:6px;font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--sp-muted)}',
+  '.sp-tmore{margin:4px 0 0;font-size:16px}',
+  // The drawings of single pages: cards, bars for text, chips, avatars; each a few small pieces on the stage.
+  '.sp-ln{display:block;height:6px;border-radius:3px;background:var(--sp-fsoft)}',
+  '.sp-mc{position:relative;display:flex;flex-direction:column;gap:6px;box-sizing:border-box;padding:8px 9px;border-radius:10px;background:var(--sp-fcard);box-shadow:var(--sp-fshadow),0 0 0 1px var(--sp-fedge);overflow:hidden}.sp-mt{display:block;width:16px;height:6px;border-radius:3px}',
+  '.sp-chp{display:inline-flex;align-items:center;height:24px;box-sizing:border-box;padding:0 10px;border-radius:999px;background:var(--sp-fsoft);color:var(--sp-text);font-size:12px;font-weight:600;white-space:nowrap}',
+  '.sp-av{display:inline-flex;align-items:center;justify-content:center;flex:none;width:24px;height:24px;border-radius:50%;color:#FFFFFF;font-size:11px;font-weight:700}',
+  '.sp-play{display:inline-flex;align-items:center;justify-content:center;flex:none;width:36px;height:36px;border-radius:50%;background:var(--sp-text);color:var(--sp-bg)}',
+  '.sp-day{display:inline-flex;align-items:center;flex:none;align-self:flex-start;height:24px;box-sizing:border-box;padding:0 10px;border-radius:8px;color:#000000;font-size:12px;font-weight:700;white-space:nowrap}',
+  '.sp-fig .sp-arrow{flex:none}',
+  // Cards at widening gaps (a column on a phone, a row on a computer).
+  '.sp-gaps{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;align-items:flex-start}',
+  '.sp-gc{display:flex;align-items:center;gap:12px;flex:none}.sp-gcard{display:flex;flex-direction:column;gap:5px;box-sizing:border-box;width:52px;height:36px;padding:6px 7px;border-radius:9px;background:var(--sp-fcard);box-shadow:var(--sp-fshadow),0 0 0 1px var(--sp-fedge);overflow:hidden}',
+  '.sp-gcv{display:block;width:14px;height:5px;border-radius:3px}.sp-gl{font-size:14px;font-weight:600}',
+  '.sp-gsp{position:relative;flex:none;width:52px;height:var(--h);display:flex;align-items:center}.sp-gsp::before{content:"";position:absolute;left:25px;top:3px;bottom:3px;border-left:2px dashed var(--sp-fline)}.sp-gt{margin-left:66px;font-size:13px;font-weight:600;white-space:nowrap;color:var(--sp-muted)}',
+  '.sp-curve{display:block;width:100%;height:auto;max-height:210px}.sp-cax{fill:none;stroke:var(--sp-fline);stroke-width:1.5}.sp-cgoal{fill:none;stroke:var(--sp-fline);stroke-width:1.5;stroke-dasharray:4 4}',
+  '.sp-ctx{font-size:12px;fill:var(--sp-muted);font-family:inherit}.sp-cc{fill:none;stroke:var(--sp-g1);stroke-width:2.6;stroke-linecap:round}.sp-ccd{fill:none;stroke:var(--sp-fline);stroke-width:1.5;stroke-dasharray:3 3}.sp-cdot{fill:var(--sp-g1)}',
+  // A message and the deck it lands in.
+  '.sp-chat{display:flex;flex-direction:column;align-items:stretch;gap:4px}.sp-chat>.sp-arrow{align-self:center}',
+  '.sp-bub{display:flex;flex-direction:column;gap:6px;box-sizing:border-box;padding:14px 16px;border-radius:18px 18px 18px 6px;background:var(--sp-fcard);box-shadow:var(--sp-fshadow),0 0 0 1px var(--sp-fedge)}',
+  '.sp-bub-w{font-size:12px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:var(--sp-muted)}.sp-bub-t{font-size:16px;line-height:1.45}',
+  '.sp-dk{display:flex;align-items:center;gap:16px;box-sizing:border-box;padding:14px 16px;border-radius:18px;background:var(--sp-fcard);box-shadow:var(--sp-fshadow),0 0 0 1px var(--sp-fedge)}',
+  '.sp-dk-fan{position:relative;flex:none;width:68px;height:56px}.sp-dk-fan .sp-mc{position:absolute;width:46px;height:36px;padding:6px 7px;gap:5px}',
+  '.sp-dk-fan .sp-mc:nth-child(1){left:0;top:12px;transform:rotate(-9deg)}.sp-dk-fan .sp-mc:nth-child(2){left:11px;top:6px;transform:rotate(-2deg)}.sp-dk-fan .sp-mc:nth-child(3){left:22px;top:10px;transform:rotate(7deg)}',
+  '.sp-dk-b{display:flex;flex-direction:column;gap:6px;min-width:0}.sp-dk-n{font-size:17px;font-weight:700;line-height:1.25}.sp-dk-m{display:flex;flex-wrap:wrap;align-items:center;gap:6px 8px;font-size:14px;line-height:1.4;color:var(--sp-muted)}',
+  // Learn mode.
+  '.sp-lm{display:flex;flex-direction:column;gap:12px}',
+  '.sp-lq{display:flex;flex-direction:column;gap:10px;box-sizing:border-box;padding:14px;border-radius:18px;background:var(--sp-fcard);box-shadow:var(--sp-fshadow),0 0 0 1px var(--sp-fedge)}.sp-lq .sp-chp{align-self:flex-start}',
+  '.sp-lq-q{display:flex;flex-direction:column;gap:6px}.sp-lq-a{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}',
+  '.sp-lq-o{display:flex;align-items:center;gap:10px;height:30px;box-sizing:border-box;padding:0 10px;border-radius:12px;background:var(--sp-fstage);box-shadow:inset 0 0 0 1px var(--sp-fedge)}',
+  '.sp-lq-n{display:flex;align-items:center;justify-content:center;flex:none;width:22px;height:22px;border-radius:50%;color:#FFFFFF;font-size:12px;font-weight:700}.sp-lq-ok{box-shadow:inset 0 0 0 2px var(--sp-good)}.sp-lq-t{margin-left:auto;display:flex;color:var(--sp-good)}',
+  '.sp-lp{display:flex;flex-direction:column;justify-content:center;gap:12px}.sp-lps{list-style:none;margin:0;padding:0;display:flex;flex-direction:row;align-items:stretch}.sp-lps .sp-arrow{width:20px;height:auto}.sp-lps .sp-arrow svg{transform:none;width:16px}',
+  '.sp-lpi{display:flex;flex:1 1 0;min-width:0;flex-direction:column;gap:2px;box-sizing:border-box;padding:9px 11px;border-radius:14px;background:var(--sp-fcard);box-shadow:var(--sp-fshadow),0 0 0 1px var(--sp-fedge)}.sp-lpi[data-d="true"]{box-shadow:var(--sp-fshadow),0 0 0 2px var(--sp-good)}',
+  '.sp-lpt{font-size:15px;font-weight:600}.sp-lpd{font-size:14px;line-height:1.4;color:var(--sp-muted)}.sp-lmiss{margin:0;display:flex;gap:8px;align-items:flex-start;font-size:14px;line-height:1.45;color:var(--sp-muted)}.sp-lmk{flex:none;margin-top:3px;color:var(--sp-again)}',
+  // Live: the code, the four answers, the leaderboard.
+  '.sp-lv{display:grid;grid-template-columns:minmax(0,1fr);gap:12px}',
+  `.sp-lv-code{display:flex;flex-direction:column;gap:2px;box-sizing:border-box;padding:12px 16px;border-radius:16px;color:#FFFFFF;background:${MID}}`,
+  '.sp-lv-j{font-size:13px;opacity:.9}.sp-lv-c{font-size:30px;font-weight:700;letter-spacing:.04em;line-height:1.1;font-variant-numeric:tabular-nums}',
+  '.sp-lv-t{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.sp-lv-t li{display:flex;align-items:center;height:42px;box-sizing:border-box;padding:0 14px;border-radius:14px;color:#FFFFFF}',
+  '.sp-lt0{background:linear-gradient(135deg,#1F8FDB,#35C1F3)}.sp-lt1{background:linear-gradient(135deg,#8E3FC4,#C07AE0)}.sp-lt2{background:linear-gradient(135deg,#D9501A,#FF9A4D)}.sp-lt3{background:linear-gradient(135deg,#9C2D8B,#E04DAE)}',
+  '.sp-lv-b{list-style:none;margin:0;padding:6px 14px;border-radius:16px;background:var(--sp-fcard);box-shadow:var(--sp-fshadow),0 0 0 1px var(--sp-fedge)}.sp-lv-b li{display:flex;align-items:center;gap:10px;padding:6px 0;border-top:1px solid var(--sp-line);font-size:14px}.sp-lv-b li:first-child{border-top:0}',
+  '.sp-lv-r{width:12px;font-weight:600;color:var(--sp-muted)}.sp-lv-w{flex:1;min-width:0;font-weight:600}.sp-lv-p{font-weight:600;font-variant-numeric:tabular-nums}',
+  // Shared decks: someone's deck and the two ways to use it.
+  '.sp-fk{display:flex;flex-direction:column;align-items:stretch}.sp-fk-top{display:flex;align-items:center;gap:12px;box-sizing:border-box;padding:12px 14px;border-radius:16px;background:var(--sp-fcard);box-shadow:var(--sp-fshadow),0 0 0 1px var(--sp-fedge)}',
+  '.sp-fk-cv{flex:none;width:34px;height:26px;padding:0}.sp-fk-tt{font-size:16px;font-weight:700}.sp-fk-l{display:none;stroke:var(--sp-fline);stroke-width:2;fill:none}',
+  '.sp-fk-bs{display:flex;flex-direction:column;gap:10px;margin:10px 0 0 18px;padding-left:18px;border-left:2px solid var(--sp-fline)}',
+  '.sp-fk-b{position:relative;box-sizing:border-box;padding:14px 16px;border-radius:16px;background:var(--sp-fcard);box-shadow:var(--sp-fshadow),0 0 0 1px var(--sp-fedge)}.sp-fk-b::before{content:"";position:absolute;left:-20px;top:26px;width:18px;border-top:2px solid var(--sp-fline)}',
+  '.sp-fk-h{display:block;margin-bottom:6px;font-size:16px;font-weight:700}.sp-fk-u{margin:0;padding-left:18px;font-size:16px;line-height:1.5}',
+  // Classes: the class card and the way to set it up.
+  '.sp-cl{display:flex;flex-direction:column;gap:14px}',
+  `.sp-cl-card{display:flex;flex-direction:column;gap:12px;box-sizing:border-box;padding:16px;border-radius:18px;color:#FFFFFF;background:${MID}}`,
+  '.sp-cl-top{display:flex;flex-direction:column;gap:2px}.sp-cl-n{font-size:20px;font-weight:700;line-height:1.2}.sp-cl-s{font-size:13px;opacity:.9}',
+  '.sp-cl-code{display:flex;gap:6px}.sp-cl-code span{display:flex;align-items:center;justify-content:center;width:30px;height:38px;border-radius:9px;background:rgba(255,255,255,.16);box-shadow:inset 0 0 0 1px rgba(255,255,255,.4);font-size:17px;font-weight:700}',
+  '.sp-cl-pp{display:flex}.sp-cl-pp .sp-av{margin-left:-6px;box-shadow:0 0 0 2px #1B2378}.sp-cl-pp .sp-av:first-child{margin-left:0}',
+  '.sp-cl-flow{list-style:none;margin:0;padding:0;display:flex;flex-direction:row;flex-wrap:wrap;gap:8px;min-width:0}.sp-cl-flow li{display:flex;align-items:center;gap:8px;box-sizing:border-box;padding:6px 12px 6px 7px;border-radius:14px;background:var(--sp-fcard);box-shadow:var(--sp-fshadow),0 0 0 1px var(--sp-fedge);font-size:14px;font-weight:600;line-height:1.35}',
+  // A picture with covered labels.
+  '.sp-oc{display:flex;justify-content:center}.sp-oc-s{display:block;box-sizing:border-box;width:100%;max-width:460px;height:auto;padding:8px;border-radius:18px;color:var(--sp-text);background:var(--sp-fcard);box-shadow:var(--sp-fshadow),0 0 0 1px var(--sp-fedge)}',
+  '.sp-oc-l{fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round}.sp-oc-d{fill:currentColor}.sp-oc-c rect{fill:var(--sp-text)}.sp-oc-c .sp-oc-r{fill:var(--sp-fcard);stroke:var(--sp-good);stroke-width:2.4}',
+  '.sp-oc-n{fill:var(--sp-bg);font-size:15px;font-weight:700;font-family:inherit}.sp-oc-w{fill:var(--sp-text);font-size:15px;font-weight:700;font-family:inherit}',
+  // Import: text from somewhere into Import cards, and into cards.
+  '.sp-im{display:flex;flex-direction:column;align-items:stretch;gap:2px}.sp-im>.sp-arrow{align-self:center}',
+  '.sp-im-src{list-style:none;margin:0;padding:0;display:flex;flex-direction:row;flex-wrap:wrap;gap:8px}.sp-im-s{flex:1 1 40%;min-width:0;display:flex;flex-direction:column;gap:1px;box-sizing:border-box;padding:9px 12px;border-radius:14px;background:var(--sp-fcard);box-shadow:var(--sp-fshadow),0 0 0 1px var(--sp-fedge)}',
+  '.sp-im-n{font-size:14px;font-weight:700;line-height:1.3}.sp-im-d{font-size:13px;line-height:1.35;color:var(--sp-muted)}',
+  '.sp-im-box{display:flex;flex-direction:column;gap:10px;box-sizing:border-box;padding:12px 14px;border-radius:14px;background:var(--sp-fcard);box-shadow:var(--sp-fshadow),0 0 0 1px var(--sp-fedge)}',
+  '.sp-im-h{font-size:12px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:var(--sp-muted)}.sp-im-r{display:flex;align-items:center;gap:8px}.sp-im-r i{flex:none;width:14px;border-top:2px dotted var(--sp-fline)}',
+  '.sp-im-out{display:flex;gap:8px}.sp-im-out .sp-mc{flex:1;height:46px}.sp-im-no{margin:14px 2px 0;display:flex;align-items:center;gap:8px;font-size:14px;line-height:1.4;color:var(--sp-muted)}.sp-im-x{display:flex;flex:none;color:var(--sp-again)}',
+  // A plan: small cards, each with its day.
+  '.sp-plan .sp-step{gap:12px}.sp-plan .sp-day{min-width:76px;justify-content:center}',
+  // One example card, front and back, and what a day looks like.
+  '.sp-ex{display:flex;flex-direction:column;gap:10px}.sp-ex-cards{display:flex;flex-direction:column;align-items:stretch;gap:2px}.sp-ex-cards>.sp-arrow{align-self:center}',
+  '.sp-exc{display:flex;flex-direction:column;gap:6px;box-sizing:border-box;padding:12px 14px;border-radius:18px;background:var(--sp-fcard);box-shadow:var(--sp-fshadow),0 0 0 1px var(--sp-fedge)}.sp-exc-b{box-shadow:var(--sp-fshadow),0 0 0 2px var(--sp-g1)}',
+  '.sp-exc-l{font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--sp-muted)}.sp-exc-t{font-size:17px;font-weight:600;line-height:1.35}',
+  '.sp-ex-load{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}.sp-ex-load li{display:flex;align-items:center;gap:10px;font-size:14px;line-height:1.4}.sp-ex-i{flex:none;width:12px;height:12px;border-radius:4px}',
+  // Word cards.
+  '.sp-wd{display:grid;grid-template-columns:minmax(0,1fr);gap:12px}.sp-wc{position:relative;display:flex;flex-direction:column;gap:10px;box-sizing:border-box;min-height:118px;padding:14px 16px;border-radius:18px;background:var(--sp-fcard);box-shadow:var(--sp-fshadow),0 0 0 1px var(--sp-fedge)}',
+  '.sp-wl{font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--sp-muted)}.sp-wt{padding-right:48px;font-size:20px;font-weight:600;line-height:1.5}',
+  '.sp-wb{display:inline-block;width:72px;height:24px;margin:0 2px;vertical-align:-5px;border-radius:7px;background:var(--sp-fsoft);box-shadow:inset 0 0 0 1px var(--sp-fedge)}.sp-wc .sp-play{position:absolute;right:14px;bottom:14px}',
+  '.sp-wave{display:flex;align-items:center;gap:3px;height:40px}.sp-wave i{display:block;width:3px;border-radius:2px;background:var(--sp-text)}',
+  '.sp-wave i:nth-child(1){height:8px}.sp-wave i:nth-child(2){height:14px}.sp-wave i:nth-child(3){height:22px}.sp-wave i:nth-child(4){height:30px}.sp-wave i:nth-child(5){height:38px}.sp-wave i:nth-child(6){height:30px}.sp-wave i:nth-child(7){height:22px}.sp-wave i:nth-child(8){height:34px}.sp-wave i:nth-child(9){height:26px}.sp-wave i:nth-child(10){height:16px}.sp-wave i:nth-child(11){height:22px}.sp-wave i:nth-child(12){height:12px}.sp-wave i:nth-child(13){height:8px}',
+  '.sp-wch{display:flex;flex-wrap:wrap;gap:6px;padding-right:48px}',
+  COVER_CSS,
   // A computer: a little larger.
   '@container (min-width: 761px){.sp-top{padding-top:48px}.sp-h1{margin-top:22px;font-size:44px;line-height:1.1;letter-spacing:-.035em}.sp-lead{margin-top:20px;font-size:20px}',
   '.sp-hero{margin-top:32px}.sp-pic,.sp-pw{border-radius:24px}',
@@ -6021,6 +6218,24 @@ const SITE_CSS = [
   '.sp-search{flex:0 1 320px}.sp-tabs{margin:0;padding:0;overflow:visible}',
   '.sp-tab{height:52px;padding:0 4px;margin-right:16px;border-radius:0;background:none;border-bottom:2px solid transparent;margin-bottom:-1px}.sp-tab[aria-current="true"]{background:none;color:var(--sp-text);border-bottom-color:var(--sp-text)}',
   '.sp-bsec .sp-h2{font-size:30px}.sp-bsec{margin-top:64px}',
+  '.sp-fig{margin-top:32px}.sp-fig:not(.sp-f-screen){padding:22px}',
+  '.sp-picks{grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;align-items:start}',
+  '.sp-steps{flex-direction:row;align-items:stretch}.sp-steps.sp-n5,.sp-steps.sp-n6,.sp-steps.sp-n7{grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}.sp-step{flex:1 1 0;flex-direction:column;gap:10px;padding:14px}.sp-plan .sp-step{gap:8px}.sp-plan .sp-day{min-width:0;justify-content:flex-start}.sp-arrow{flex:none;width:30px;height:auto}.sp-arrow svg{transform:none}',
+  '.sp-apps{grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}',
+  '.sp-shot{max-width:min(100%,calc(560px * var(--ard)))}.sp-shotc{max-width:none}',
+  '.sp-t2 tbody th{width:28%}.sp-t2 th,.sp-t2 td{font-size:17px}.sp-t2 thead th{font-size:13px}',
+  '.sp-tcs{display:grid;grid-template-columns:repeat(var(--tn,4),minmax(0,1fr));gap:16px;overflow:visible;scroll-snap-type:none;margin-top:22px;padding:4px 0 0}.sp-tcs.sp-n3{--tn:3}.sp-tcs.sp-n4{--tn:4}',
+  '.sp-tcs.sp-wide{margin-left:calc(-1 * var(--bo));margin-right:calc(-1 * var(--bo))}.sp-tc{flex:none}',
+  '.sp-gaps{flex-direction:row;padding-top:4px}.sp-gc{flex-direction:column;gap:8px;width:60px}.sp-gsp{flex:var(--w) 1 0;width:auto;min-width:58px;height:36px;justify-content:center}.sp-gsp::before{left:4px;right:4px;top:50%;bottom:auto;border-left:0;border-top:2px dashed var(--sp-fline)}.sp-gt{position:relative;margin:0;padding:0 6px;background:var(--sp-fstage)}',
+  '.sp-chat{flex-direction:row;align-items:center;gap:10px}.sp-chat>.sp-bub{flex:1.25}.sp-chat>.sp-dk{flex:1}.sp-chat>.sp-arrow{align-self:center;width:30px;height:auto}.sp-chat>.sp-arrow svg{transform:none}',
+  '.sp-lm{flex-direction:row;align-items:stretch;gap:20px}.sp-lq{flex:1.15}.sp-lp{flex:1}',
+  '.sp-lv{grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);grid-template-areas:"code board" "tiles board"}.sp-lv-code{grid-area:code}.sp-lv-t{grid-area:tiles}.sp-lv-b{grid-area:board;align-self:stretch;display:flex;flex-direction:column;justify-content:center}',
+  '.sp-fk-top{align-self:center}.sp-fk-l{display:block}.sp-fk-bs{flex-direction:row;gap:16px;margin:0;padding:0;border:0}.sp-fk-b{flex:1}.sp-fk-b::before{display:none}',
+  '.sp-cl{flex-direction:row;align-items:stretch;gap:16px}.sp-cl-card{flex:0 0 252px;justify-content:space-between}.sp-cl-flow{flex:1;flex-direction:column;flex-wrap:nowrap;justify-content:center}.sp-cl-flow li{padding:9px 12px;font-size:15px;gap:10px}',
+  '.sp-im{flex-direction:row;align-items:center;gap:10px}.sp-im-src{flex:1.05;flex-direction:column;flex-wrap:nowrap}.sp-im-s{flex:none;padding:10px 14px}.sp-im-n{font-size:15px}.sp-im-d{font-size:14px}.sp-im-box{flex:1.15}.sp-im-out{flex:.8;flex-direction:column}.sp-im>.sp-arrow{width:26px;height:auto}.sp-im>.sp-arrow svg{transform:none}',
+  '.sp-ex-cards{flex-direction:row;align-items:center;gap:10px}.sp-ex-cards>.sp-exc{flex:1}.sp-ex-cards>.sp-arrow{width:30px;height:auto}.sp-ex-cards>.sp-arrow svg{transform:none}',
+  '.sp-wd{grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}',
+  '.sp-lps{flex-direction:column}.sp-lpi{flex:none;padding:10px 14px}.sp-lps .sp-arrow{width:auto;height:22px}.sp-lps .sp-arrow svg{transform:rotate(90deg)}',
   '}',
   // A wide screen: the tree stands on the left of the column and sticks; a wide block can only grow to the right.
   '@container (min-width: 1100px){.sp-art.sp-has-toc{display:grid;grid-template-columns:minmax(170px,1fr) 680px minmax(0,1fr);column-gap:40px;max-width:1344px;margin:0 auto;padding:0 24px}',
@@ -6035,7 +6250,9 @@ const SITE_CSS = [
   '@container (max-width: 1279px){' + spStack('.sp-table.sp-tx') + '.sp-table.sp-tx.sp-wide{--bo:0px}}',
   SKY_CSS, NO_RISE
 ].join('');
-const sitePage = (w, h) => `<div class="sp" style="position: relative; isolation: isolate; width: ${w}px; height: ${h}px; box-sizing: border-box; font-family: ${FONT}; background: {{t.bg}}; color: {{t.text}}; overflow: hidden; overflow: clip; --sp-bg: {{t.bg}}; --sp-line: {{t.line}}; --sp-muted: {{t.muted}}; --sp-surf: {{t.surf}}; --sp-surf2: {{t.surf2}}; --sp-text: {{t.text}}; --sp-hair: {{ink.hair}}; --sp-sub: {{ink.sub}}; --sp-edge: {{ink.edge}}; --sp-chipbg: {{ink.chipbg}}; --sp-chipfg: {{ink.chipfg}}; --sp-g1: {{ink.g1}}; --sp-g2: {{ink.g2}}; --sp-g3: {{ink.g3}};">
+// The colors the site's CSS reads (--sp-…), from the page's theme and its extras; set on the page's root, or on a wrapper round figures on a plain page.
+const SP_VARS = '--sp-bg: {{t.bg}}; --sp-line: {{t.line}}; --sp-muted: {{t.muted}}; --sp-surf: {{t.surf}}; --sp-surf2: {{t.surf2}}; --sp-text: {{t.text}}; --sp-hair: {{ink.hair}}; --sp-sub: {{ink.sub}}; --sp-edge: {{ink.edge}}; --sp-chipbg: {{ink.chipbg}}; --sp-chipfg: {{ink.chipfg}}; --sp-g1: {{ink.g1}}; --sp-g2: {{ink.g2}}; --sp-g3: {{ink.g3}}; --sp-good: {{t.good}}; --sp-again: {{t.again}}; --sp-hard: {{t.hard}}; --sp-easy: {{t.easy}}; --sp-fstage: {{ink.fstage}}; --sp-fcard: {{ink.fcard}}; --sp-fedge: {{ink.fedge}}; --sp-fsoft: {{ink.fsoft}}; --sp-fline: {{ink.fline}}; --sp-fshadow: {{ink.fshadow}};';
+const sitePage = (w, h) => `<div class="sp" style="position: relative; isolation: isolate; width: ${w}px; height: ${h}px; box-sizing: border-box; font-family: ${FONT}; background: {{t.bg}}; color: {{t.text}}; overflow: hidden; overflow: clip; ${SP_VARS}">
 ${skyLayer(false)}
 <header class="sp-head" style="max-width: 1344px; margin: 0 auto; height: 76px; box-sizing: border-box; padding: 0 clamp(20px, 4cqw, 48px); display: flex; align-items: center; justify-content: space-between; gap: 12px;">
   <a href="{{links.home}}" aria-label="Lucida home">${logo(30)}</a>
@@ -6082,6 +6299,7 @@ ${spSections('sections')}
   <sc-for list="{{faqGroups}}" as="g"><section class="sp-qcard" id="{{g.id}}">${spH2('{{g.title}}')}<sc-for list="{{g.items}}" as="f">${spQ}</sc-for></section></sc-for>
 </sc-if>
 ${spSections('sectionsAfter')}
+${spTest}
 <aside class="sp-cta" aria-label="Start with Lucida" style="color: {{hero.ink}}; background: {{hero.base}};">
   <div class="sp-band-wide" aria-hidden="true" style="position: absolute; inset: 0;">${ART_LAYERS('hero')}</div>
   <div class="sp-band-tall" aria-hidden="true" style="position: absolute; inset: 0; display: none;">${ART_LAYERS('heroTall')}</div>
@@ -6146,9 +6364,16 @@ renderVals() {
   const lead = b => { const m = /^\\*\\*([^*]+)\\*\\*/.exec(b); return m ? plain(m[1]).replace(/[\\s.:,;]+$/, '') : ''; };
   const sections = P.sections.map(s => {
     const id = uniq(slugify(s.h2)), leads = s.bullets.map(lead), many = leads.filter(Boolean).length >= 2;
-    const bullets = s.bullets.map((b, i) => ({ parts: this.parts(b), cls: /^\\*\\*\\d+\\./.test(b) ? 'sp-n' : '', id: many && leads[i] ? uniq(id + '-' + slugify(leads[i])) : '' }));
+    const bullets = s.bullets.map((b, i) => ({ raw: b, parts: this.parts(b), cls: /^\\*\\*\\d+\\./.test(b) ? 'sp-n' : '', id: many && leads[i] ? uniq(id + '-' + slugify(leads[i])) : '' }));
     bullets.forEach(b => { b.plain = !b.id; });
     return { id, h2: s.h2, paras: s.paras.map(p => ({ parts: this.parts(p) })), hasBullets: s.bullets.length > 0, bullets, kids: bullets.map((b, i) => ({ id: b.id, label: leads[i] })).filter(k => k.id) };
+  });
+  // Diagrams, tables, screens and the flashcards (design/visuals.mjs): where each goes, from the page's visuals.
+  const V = (${visualsOf.toString()})(P, { plain, parts: s => this.parts(s), PHONE, site, SCREENS: ${JSON.stringify(SCREENS)}, BOARDS: ${JSON.stringify(SHOT_BOARDS)}, KINDS: ${JSON.stringify(KINDS)}, shotFile: ${shotFile.toString()} }, sections);
+  sections.forEach(s => {
+    const v = V.bySection[s.h2] || { before: [], after: [], table: null, hide: [] };
+    s.figsBefore = v.before; s.figsAfter = v.after; s.table = v.table || { head: [], rows: [] }; s.hasTable = !!v.table;
+    if (v.hide.length) { s.bullets = s.bullets.filter((_, i) => !v.hide.includes(i)); s.hasBullets = s.bullets.length > 0; }
   });
   // The FAQ page's questions are in cards, a card for each group; an article's are in one card ("Questions").
   if (isFaq) for (const f of P.faq) { const title = f.group || 'Questions'; let g = faqGroups.find(x => x.title === title); if (!g) faqGroups.push(g = { title, id: uniq('g-' + slugify(title)), items: [] }); g.items.push(item(f)); }
@@ -6163,6 +6388,7 @@ renderVals() {
     if (tb) toc.push({ id: 'at-a-glance', label: 'At a glance', kids: [] });
     if (isFaq) faqGroups.forEach(g => toc.push({ id: g.id, label: g.title, kids: g.items.map(f => ({ id: f.id, label: f.q })) }));
     sections.forEach(s => { if (s.h2) toc.push({ id: s.id, label: s.h2, kids: s.kids }); });
+    if (V.hasTest && !isFaq) toc.push({ id: 'test-yourself', label: 'Test yourself', kids: [] });
     if (!isFaq && P.faq.length) toc.push({ id: 'questions', label: 'Questions', kids: [] });
   }
   toc.forEach((o, i) => { o.cur = i ? '' : 'location'; o.cls = i ? '' : 'sp-open'; o.hasKids = o.kids.length > 0; });
@@ -6190,6 +6416,7 @@ renderVals() {
       rows: tb.rows.map((r, i) => ({ cls: i >= KEEP ? 'sp-x' : '', label: plain(r[0]), cells: r.slice(1).map((c, j) => ({ col: plain(tb.columns[j + 1] || ''), parts: this.parts(c) })) })) } : { cls: '', first: '22%', head: [], rows: [], more: false, total: '0' },
     groups: groups.filter(g => g.cards.length),
     sections: isFaq ? [] : sections, sectionsAfter: isFaq ? sections : [],
+    test: V.test, hasTest: V.hasTest && !isFaq, testCols: V.testCols || '',
     faq, faqGroups, hasFaqPage: isFaq && P.faq.length > 0, hasFaqBlock: !isFaq && P.faq.length > 0, hasJumpPills: isFaq && grouped && faqGroups.length > 1, hasJumpList: isFaq && !grouped && P.faq.length >= 8, jump: faqGroups.flatMap(g => g.items).map(f => ({ href: '#' + f.id, q: f.q })),
     hasSources: P.sources.length > 0, sourcesTitle: 'Sources (' + P.sources.length + ')', sources: P.sources.map(o => ({ label: o.label || o.url, href: o.url, note: o.checkedLabel ? ' · checked ' + o.checkedLabel : '' })),
     hasRelated: related.length > 0, related };
@@ -6466,6 +6693,18 @@ renderVals() { ${T}
   // older one.
   return `// og-art: ${createHash('sha1').update(ogPage + body).digest('hex').slice(0, 10)}\n${body}`;
 };
+// The Connect guide's figures: a .sp wrapper (the site's colors as variables) round a list of drawings.
+const guideFigs = list => `<div class="sp" style="margin-top: 8px; ${SP_VARS}"><sc-for list="{{${list}}}" as="f">${spFig}</sc-for></div>`;
+const guideLogic = () => `${FOOT_METHOD}
+renderVals() {
+  const site = !!this.props.site;
+  // On lucida.cards the colors are CSS variables with a light and a dark set (design/scheme.mjs), so the page follows the system.
+  const t = site ? ${JSON.stringify(VARS)} : this.theme(!!this.props.dark, !!this.props.dim);
+  const ink = site ? ${JSON.stringify(EXTRA_VARS)} : this.props.dark ? ${JSON.stringify(EXTRA_DARK)} : ${JSON.stringify(EXTRA_LIGHT)};
+  const V = (${visualsOf.toString()})({ visuals: { figs: ${JSON.stringify(CONNECT_FIGS)} } }, { plain: s => s, parts: s => [{ text: s, plain: true }], PHONE: false, site, SCREENS: ${JSON.stringify(SCREENS)}, BOARDS: ${JSON.stringify(SHOT_BOARDS)}, KINDS: ${JSON.stringify(KINDS)}, shotFile: ${shotFile.toString()} }, ${JSON.stringify(CONNECT.sections.map(x => ({ h2: x.h, paras: [], bullets: [] })))});
+  const at = (h, k) => (V.bySection[h] || { before: [], after: [] })[k];
+  return { t, ink, site, canvas: !site, dark: !!this.props.dark, figsTop: at('What you need', 'before'), figsClaude: at('Claude', 'after'), foot: this.foot(false), homeHref: site ? 'https://lucida.cards/' : 'Landing.dc.html', signInHref: site ? 'https://app.lucida.cards/sign-in' : 'WebSignIn.dc.html', startHref: site ? 'https://app.lucida.cards/' : 'WebSignIn.dc.html',
+    privacyHref: site ? '/privacy' : 'Privacy.dc.html', termsHref: site ? '/terms' : 'Terms.dc.html', pricingHref: site ? '/pricing' : 'Pricing.dc.html' }; }`;
 function siteFiles() {
   const out = {};
   for (const b of SITE_BOARDS) {
@@ -8706,7 +8945,8 @@ const files = {
   'PricingPhone': ['Pricing · lucida.cards/pricing on a phone', pricing(LAND.phone, PW, PRICING_PHONE_H), { props: { ...DARK, grain: MESH('Iris').grain }, logic: pricingLogic(true), css: SKY_CSS + NO_RISE, w: PW, h: PRICING_PHONE_H }],
   'Privacy': ['Privacy Policy · lucida.cards/privacy', legalPage(PRIVACY, LEGAL_H.Privacy), { props: DARK, logic: legalLogic, w: W, h: LEGAL_H.Privacy }],
   'Terms': ['Terms of Service · lucida.cards/terms', legalPage(TERMS, LEGAL_H.Terms), { props: DARK, logic: legalLogic, w: W, h: LEGAL_H.Terms }],
-  'SiteConnect': ['Connect Lucida to your AI · lucida.cards/connect', legalPage(CONNECT, LEGAL_H.Connect), { props: DARK, logic: legalLogic, w: W, h: LEGAL_H.Connect }],
+  // The Connect guide has its steps as cards and the consent screen (the same drawings as the articles', in a .sp wrapper that sets their colors).
+  'SiteConnect': ['Connect Lucida to your AI · lucida.cards/connect', legalPage(CONNECT, LEGAL_H.Connect, { top: guideFigs('figsTop'), after: { Claude: guideFigs('figsClaude') } }), { props: DARK, logic: guideLogic(), css: SITE_CSS, w: W, h: LEGAL_H.Connect }],
   'LandingPhone': ['Landing page · lucida.cards on a phone', landing(LAND.phone, PW, LANDING_PHONE_H), { props: { ...DARK, grain: MESH('Iris').grain }, logic: landingLogic(true), css: WALL_CSS + DEMO_CSS + SKY_CSS + NO_RISE, w: PW, h: LANDING_PHONE_H }],
   'PhoneStats': ['iPhone · Stats', phoneStats, { props: { ...DARK, ...STATS_PROPS }, logic: phoneStatsLogic, w: PW, h: PH }],
   'PhoneStatsMemory': ['iPhone · Stats · Memory (Pro)', attrOf('PhoneStats', PW, PH, 'tab="Memory"'), { logic: darkLogic, w: PW, h: PH }],

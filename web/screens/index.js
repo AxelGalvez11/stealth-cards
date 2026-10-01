@@ -1072,7 +1072,7 @@ export default [
   "name": "SiteCompare",
   "title": "Site · The blog, comparisons, alternatives, the hubs and the 404 · lucida.cards",
   "w": 1440,
-  "h": 6021
+  "h": 7205
  },
  {
   "name": "SiteComparePhone",
@@ -1102,13 +1102,13 @@ export default [
   "name": "SiteFeature",
   "title": "Site · Features and who Lucida is for · lucida.cards",
   "w": 1440,
-  "h": 6997
+  "h": 8028
  },
  {
   "name": "SiteFeaturePhone",
   "title": "Site · Features and who Lucida is for · lucida.cards on a phone",
   "w": 390,
-  "h": 9658
+  "h": 10797
  },
  {
   "name": "SiteOg",
