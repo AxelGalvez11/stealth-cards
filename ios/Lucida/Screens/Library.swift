@@ -627,11 +627,12 @@ struct LibraryScreen: View {
     }
   }
 
-  /// Move to: No folder or a folder (ticked where it is), then New folder.
+  /// Move to: Remove from folder (only for a deck that's in one: a deck in none just doesn't get it), then the folders (ticked
+  /// where it is), then New folder.
   private func moveMenu(_ d: LibDeck, _ folders: [LibFolder]) -> some View {
     VStack(alignment: .leading, spacing: 4) {
       Text("Move to").css(12, .semibold).foregroundStyle(t.muted).padding(.horizontal, 12).padding(.top, 8).padding(.bottom, 4)
-      ForEach([(key: "", id: String?.none, name: "No folder")] + folders.map { (key: $0.id, id: Optional($0.id), name: $0.name) }, id: \.key) { f in
+      ForEach((d.folder != nil ? [(key: "", id: String?.none, name: "Remove from folder")] : []) + folders.map { (key: $0.id, id: Optional($0.id), name: $0.name) }, id: \.key) { f in
         let on = d.folder == f.id
         Button { store.moveDeck(d.id, to: f.id); menu = nil } label: {
           HStack(spacing: 10) {

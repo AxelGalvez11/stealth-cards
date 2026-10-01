@@ -523,12 +523,12 @@ struct DeckSettingsSheet: View {
     }
   }
 
-  // Its folder: No folder, or one of the Library's.
+  // Its folder: one of the Library's, or Remove from folder (only for a deck that's in one).
   private var folder: some View {
     VStack(alignment: .leading, spacing: 8) {
       label("Folder")
       FlowLayout(spacing: 6, lineSpacing: 6) {
-        ForEach([(key: "", id: String?.none, name: "No folder")] + d.folders.map { (key: $0.id, id: Optional($0.id), name: $0.name) }, id: \.key) { f in
+        ForEach((d.folder != nil ? [(key: "", id: String?.none, name: "Remove from folder")] : []) + d.folders.map { (key: $0.id, id: Optional($0.id), name: $0.name) }, id: \.key) { f in
           let on = d.folder == f.id
           Button { store.moveDeck(d.id, to: f.id) } label: {
             HStack(spacing: 6) { Icon("folder", 14, 1.8); Text(f.name).css(13, .semibold).lineLimit(1) }
@@ -540,6 +540,7 @@ struct DeckSettingsSheet: View {
       }
       if d.folders.isEmpty { Text("Make folders on the Library page.").css(12).foregroundStyle(t.muted) }
     }
+    .haptic(.selection, on: d.folder ?? "", "option")
   }
 
   private var studying: some View {

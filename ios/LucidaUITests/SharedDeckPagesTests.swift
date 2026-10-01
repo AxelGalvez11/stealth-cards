@@ -249,7 +249,7 @@ final class SharedDeckPagesTests: XCTestCase {
     check(text(app, "5 cards from Alex Kim").exists, "and says how many cards and whose")
     let cpName = "My Cell Bio " + run
     setText(app.textFields["Name"].firstMatch, cpName)
-    tap(button(app, "Folder: No folder"))
+    tap(button(app, "Folder: Library"))
     check(wait(button(app, w.folderName)), "the Folder button lists her folders")
     tap(button(app, w.folderName))
     check(wait(button(app, "Folder: " + w.folderName)), "a folder can be picked")

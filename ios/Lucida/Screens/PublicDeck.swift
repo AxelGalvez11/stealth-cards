@@ -458,7 +458,7 @@ struct CopyDeckSheet: View {
     let p = store.netDeckPage(addr)?.value, d = p?.deck
     let title = name ?? d?.name ?? "", ready = !title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty && !busy
     let owner = d?.owner?.name ?? ""
-    let folders: [(id: String, name: String)] = [("", "No folder")] + (store.demo ? store.demoFolders.map { ($0.id, $0.name) } : store.lib.folders.map { ($0.id, $0.name) })
+    let folders: [(id: String, name: String)] = [("", "Library")] + (store.demo ? store.demoFolders.map { ($0.id, $0.name) } : store.lib.folders.map { ($0.id, $0.name) })
     VStack(alignment: .leading, spacing: 16) {
       HStack(spacing: 14) {
         thumb(d)
@@ -479,8 +479,8 @@ struct CopyDeckSheet: View {
       }
       VStack(alignment: .leading, spacing: 8) {
         Text("Folder").css(13, .semibold).line(13)
-        let label = folders.first { $0.id == folder }?.name ?? "No folder"
-        Button { withAnimation(.out(0.2)) { foldersOpen.toggle() } } label: {
+        let label = folders.first { $0.id == folder }?.name ?? "Library"
+        Button { withAnimation(Motion.pop) { foldersOpen.toggle() } } label: {
           HStack(spacing: 10) { Text(label).css(16).lineLimit(1); Spacer(minLength: 0); Icon("chevDown", 16, 2) }
             .foregroundStyle(t.text).padding(.horizontal, 16).frame(height: 50)
             .background(RoundedRectangle(cornerRadius: 16, style: .continuous).fill(t.surf))
