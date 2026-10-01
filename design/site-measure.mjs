@@ -10,6 +10,7 @@ import { withChrome } from './chrome.mjs';
 import { board } from './render.mjs';
 import { pageSet, boardData, BOARDS } from './site.mjs';
 import { BASE_CSS, FONTS } from './seo.mjs';
+import { SCHEME_CSS } from './scheme.mjs';
 
 const WEB = new URL('../web/', import.meta.url);
 const FAST = readFileSync(new URL('fast.css', WEB), 'utf8').trim();
@@ -25,7 +26,7 @@ try {
         await chrome.size(width, 900);
         for (const slug of slugs) {
           const b = board(name, { page: slug, site: true, dark: false });
-          const html = `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><link href="${FONTS}" rel="stylesheet"><style>${BASE_CSS}\n${b.css}\n${FAST}</style></head><body>${b.html.replace(/url\(\/art\//g, 'url(' + pathToFileURL(new URL('art/', WEB).pathname).href + '/').replace(/src="\/og\//g, 'src="' + pathToFileURL(new URL('og/', WEB).pathname).href + '/')}</body></html>`;
+          const html = `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><link href="${FONTS}" rel="stylesheet"><style>${BASE_CSS}\n${SCHEME_CSS}\n${b.css}\n${FAST}</style></head><body>${b.html.replace(/url\(\/art\//g, 'url(' + pathToFileURL(new URL('art/', WEB).pathname).href + '/').replace(/(src|srcset)="\/og\//g, '$1="' + pathToFileURL(new URL('og/', WEB).pathname).href + '/')}</body></html>`;
           const file = join(dir, name + '-' + width + '-' + slug.replace(/\W+/g, '-') + '.html');
           writeFileSync(file, html);
           await chrome.open(pathToFileURL(file).href);

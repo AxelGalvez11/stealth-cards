@@ -9,7 +9,7 @@
 import { readFileSync, writeFileSync, mkdirSync, rmSync } from 'node:fs';
 import { dirname } from 'node:path';
 import { board } from './render.mjs';
-import { pageSet, boardData, FIXED, KINDS, ORIGIN, urlOf, ogFile } from './site.mjs';
+import { pageSet, boardData, FIXED, KINDS, ORIGIN, urlOf, ogFile, crumbsOf } from './site.mjs';
 import { head, allPages, sitemap, robots, llmsTxt, llmsFull } from './seo.mjs';
 
 const WEB = new URL('../web/', import.meta.url);
@@ -29,14 +29,14 @@ const write = (file, text) => {
   writeFileSync(at, text);
   SIZES.push(file + ': ' + Math.round(text.length / 1024) + ' KB');
 };
-const fixed = slug => ({ ...FIXED.find(f => f.slug === slug), url: urlOf(slug), og: ogFile(slug), crumbs: [{ label: 'Home', slug: '' }, ...(slug ? [{ label: FIXED.find(f => f.slug === slug).crumb, slug }] : [])],
+const fixed = slug => ({ ...FIXED.find(f => f.slug === slug), url: urlOf(slug), og: ogFile(slug), crumbs: crumbsOf(FIXED.find(f => f.slug === slug)),
   faq: slug === 'pricing' ? allPages(pages).find(p => p.slug === 'pricing').faq : [] });
 // Only one of the two boards shows at a time.
 const DUAL = `/* Phones get the phone board. */
 .phone { display: none; }
 @media (max-width: 760px) { .computer { display: none; } .phone { display: block; } }`;
 
-write('landing.html', head(fixed(''), { css: `${DUAL}
+write('landing.html', head(fixed(''), { scheme: true, css: `${DUAL}
 ${web.css.includes(phone.css) ? web.css : web.css + '\n' + phone.css}
 ${FAST}
 /* The card wall, the sky and the demos stop while they're off screen (and start over when they're back), so a phone
@@ -60,7 +60,7 @@ if ('IntersectionObserver' in window) {
 {
   const pw = board('Pricing', { site: true, dark: false }), pp = board('PricingPhone', { site: true, dark: false });
   pp.html = pp.html.replace(/\sid="([^"]+)"/g, ' id="$1-m"').replace(/url\(#([^)]+)\)/g, 'url(#$1-m)');
-  write('pricing.html', head(fixed('pricing'), { css: `${DUAL}
+  write('pricing.html', head(fixed('pricing'), { scheme: true, css: `${DUAL}
 ${pw.css.includes(pp.css) ? pw.css : pw.css + '\n' + pp.css}
 ${FAST}
 /* The sky's clouds stop while they're off screen. */
@@ -90,27 +90,75 @@ if ('IntersectionObserver' in window) {
 // Privacy and Terms: one column of text, the same on every screen.
 for (const slug of ['privacy', 'terms']) {
   const b = board(FIXED.find(f => f.slug === slug).board, { site: true, dark: false });
-  write(slug + '.html', head(fixed(slug), { css: b.css }) + `\n<body>\n${b.html}\n</body>\n</html>\n`);
+  write(slug + '.html', head(fixed(slug), { css: b.css, scheme: true }) + `\n<body>\n${b.html}\n</body>\n</html>\n`);
 }
 
 // Every other page: one markup for every width, drawn by the board of its kind. A page file that changed since the boards
 // were built would be drawn from old words, so that stops the build.
 const FRESH = /site-data: ([0-9a-f]+)/;
 const css = b => `${b.css}\n${FAST}`;
+// The one script of these pages (every part of it is an extra: without it the pages read the same):
+//   - "On this page" marks the section the reader is in as the page scrolls (nothing else moves) and keeps open only the branch the
+//     reader is in;
+//   - a link to a closed row (#q-…) opens it;
+//   - the blog's front page: its tabs show one category, and its search box filters the cards as you type.
+const PAGE_SCRIPT = `<script>
+(() => {
+  const $ = (s, r = document) => [...r.querySelectorAll(s)];
+  const open = () => { const el = location.hash && document.getElementById(decodeURIComponent(location.hash.slice(1))), d = el && (el.tagName === 'DETAILS' ? el : el.closest('details')); if (d) d.open = true; };
+  open(); addEventListener('hashchange', open);
+  const toc = document.querySelector('.sp-toc');
+  if (toc) {
+    const links = $('a', toc), heads = links.map(a => document.getElementById(a.getAttribute('href').slice(1))), tops = $('.sp-toc > ol > li');
+    let queued = 0;
+    const mark = () => {
+      queued = 0; let at = 0;
+      heads.forEach((h, i) => { if (h && h.getBoundingClientRect().top < 160) at = i; });
+      if (innerHeight + scrollY >= document.documentElement.scrollHeight - 4) at = links.length - 1;
+      links.forEach((a, i) => (i === at ? a.setAttribute('aria-current', 'location') : a.removeAttribute('aria-current')));
+      tops.forEach(li => li.classList.toggle('sp-open', !!li.querySelector('[aria-current="location"]')));
+    };
+    addEventListener('scroll', () => { if (!queued) queued = requestAnimationFrame(mark); }, { passive: true });
+    mark();
+  }
+  const blog = document.querySelector('.sp-blog');
+  if (blog) {
+    const tabs = $('.sp-tab', blog), secs = $('[data-cat]', blog), feat = $('.sp-feat', blog)[0], none = $('.sp-none', blog)[0], box = $('.sp-search input', blog)[0];
+    let cat = 'all';
+    const show = () => {
+      const q = (box ? box.value : '').trim().toLowerCase().split(/\s+/).filter(Boolean);
+      let seen = 0;
+      const hit = el => !q.length || q.every(w => (el.getAttribute('data-s') || '').includes(w));
+      secs.forEach(sec => {
+        const cards = $('[data-s]', sec); let n = 0;
+        cards.forEach(c => { const on = hit(c); c.hidden = !on; if (on) n++; });
+        sec.hidden = !(cat === 'all' || cat === sec.getAttribute('data-cat')) || !n; seen += sec.hidden ? 0 : n;
+      });
+      if (feat) { const on = cat === 'all' && hit(feat); feat.hidden = !on; seen += on ? 1 : 0; }
+      if (none) none.hidden = seen > 0;
+    };
+    tabs.forEach(t => t.addEventListener('click', e => { e.preventDefault(); cat = t.getAttribute('data-tab'); tabs.forEach(x => (x === t ? x.setAttribute('aria-current', 'true') : x.removeAttribute('aria-current'))); history.replaceState(null, '', cat === 'all' ? location.pathname : '#' + cat); show(); }));
+    if (box) { box.addEventListener('input', show); box.form.addEventListener('submit', e => e.preventDefault()); }
+    $('.sp-nojs', blog).forEach(el => el.classList.remove('sp-nojs'));
+    const from = location.hash.slice(1), t = tabs.find(x => x.getAttribute('data-tab') === from);
+    if (t) t.click();
+  }
+})();
+</script>`;
 const stale = [];
 for (const p of pages) {
   const name = KINDS[p.kind] && KINDS[p.kind].board;
   if (!name) throw new Error(p.source + ': "' + p.kind + '" isn\'t a kind of page (' + Object.keys(KINDS).join(', ') + ').');
   const b = board(name, { page: p.slug, site: true, dark: false });
   if ((FRESH.exec(b.logic) || [])[1] !== boardData(name, pages).hash && !stale.includes(name)) stale.push(name);
-  write(p.file, head(p, { css: css(b) }) + `\n<body>\n${b.html}\n</body>\n</html>\n`);
+  write(p.file, head(p, { css: css(b), scheme: true }) + `\n<body>\n${b.html}\n${PAGE_SCRIPT}\n</body>\n</html>\n`);
 }
 if (stale.length) throw new Error('design/site changed since the boards were built (' + stale.join(', ') + '). Run `node design/build.mjs` and commit the boards, then build again.');
 
 // The page nobody meant to visit, for any address on lucida.cards that is neither a page nor the app's (SiteCompare's "404").
 {
   const nf = board('SiteCompare', { page: '404', site: true, dark: false });
-  write('404.html', head({ title: 'Page not found · Lucida', description: 'There is no page at this address. Lucida is a flashcard app: start from the home page, or see how it compares with other apps.', url: ORIGIN + '/404', og: ogFile(''), h1: 'Page not found', kind: 'notfound', updated: '', crumbs: [] }, { css: css(nf), noindex: true }) + `\n<body>\n${nf.html}\n</body>\n</html>\n`);
+  write('404.html', head({ title: 'Page not found · Lucida', description: 'There is no page at this address. Lucida is a flashcard app: start from the home page, or see how it compares with other apps.', url: ORIGIN + '/404', og: ogFile(''), h1: 'Page not found', kind: 'notfound', updated: '', crumbs: [] }, { css: css(nf), noindex: true, scheme: true }) + `\n<body>\n${nf.html}\n</body>\n</html>\n`);
 }
 
 write('site/sitemap.xml', sitemap(pages));
@@ -124,5 +172,5 @@ console.log(SIZES.join('\n'));
 // lucida.cards/connect.
 {
   const b = board('SiteConnect', { site: true, dark: false });
-  write('connect-guide.html', head(fixed('connect'), { css: b.css }) + `\n<body>\n${b.html}\n</body>\n</html>\n`);
+  write('connect-guide.html', head(fixed('connect'), { css: b.css, scheme: true }) + `\n<body>\n${b.html}\n</body>\n</html>\n`);
 }

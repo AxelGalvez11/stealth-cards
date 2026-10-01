@@ -1,6 +1,7 @@
 // Generates every board of the Lucida design canvas (https://claude.ai/artifact/VLXyuTGdroHdrJ2qNAmiGs).
 // The web app is made from these boards too (design/to-web.mjs), so the canvas and the app always match.
 import { writeFileSync, mkdirSync, readFileSync, readdirSync, existsSync } from 'node:fs';
+import { createHash } from 'node:crypto';
 import { PALETTE_NAMES, PALETTES, flowSvg, grainSvg, grainTile, paletteData } from './surfaces.mjs';
 import { GEN_METHOD } from './generator.mjs';
 import { MOCK_METHOD, SAMPLE, SAMPLE_WAVE } from './mock.mjs';
@@ -9,8 +10,9 @@ import { WALL_CARDS } from './wall.mjs';
 import { PRIVACY, TERMS, UPDATED } from './legal.mjs';
 import { CONNECT } from './connect-guide.mjs';
 import { PRO_LINKS } from '../web/plans.mjs';
-import { PLAN_FREE, PLAN_PRO, PRICING_FAQ, SOCIALS as SITE_SOCIALS, BOARDS as SITE_BOARDS, APP as SITE_APP, pageSet, footerLinks, boardData, partsOf, indexOf, ogKey } from './site.mjs';
+import { PLAN_FREE, PLAN_PRO, PRICING_FAQ, SOCIALS as SITE_SOCIALS, BOARDS as SITE_BOARDS, APP as SITE_APP, SCENES, SCENE_ARRANGEMENTS, GRAD, CATEGORIES, FEATURED, pageSet, footerLinks, boardData, partsOf, indexOf, ogKey } from './site.mjs';
 import { G_LOGO, APPLE_LOGO } from './logos.mjs';
+import { VARS, SKY_VARS, EXTRA_VARS, EXTRA_LIGHT, EXTRA_DARK } from './scheme.mjs';
 import { THEMES } from '../web/themes/index.js';
 import { THEME_KEYS, themeCss, themeFonts, themeStatic } from './themes.mjs';
 // The themes (Pro), for boards' logic: key, board name, short and full names.
@@ -5388,13 +5390,17 @@ const landFooter = phone => phone
 const LANDING_H = 4002, LANDING_PHONE_H = 4852;
 // The band that ends the page runs edge to edge in the site's dark Midnight gradient (surfaces.mjs).
 const MIDNIGHT = JSON.stringify(paletteData('Midnight'));
+// On lucida.cards the landing page and Pricing follow the system's light or dark look too: their colors are CSS variables with a light
+// set and a dark set (design/scheme.mjs); on the canvas the Dark switch gives the same two looks.
+const TS = `const t = this.props.site ? ${JSON.stringify(VARS)} : this.theme(!!this.props.dark, !!this.props.dim);`;
+const SKYS = `(this.props.site ? ${JSON.stringify(SKY_VARS)} : ${SKY})`;
 const landingLogic = phone => `${ART_METHOD}
 ${FOOT_METHOD}
-renderVals() { ${T}
+renderVals() { ${TS}
   // On lucida.cards (props.site) the links open the app; on the canvas they open the sign-in board.
   const site = !!this.props.site, signIn = site ? 'https://app.lucida.cards/sign-in' : '${phone ? 'PhoneSignIn' : 'WebSignIn'}.dc.html';
   const deck = name => this.art(this.gen(name, 'vivid'));
-  return { t, foot: this.foot(${phone}), sky: ${SKY}, grain: String(this.props.grain ?? 0.7), hero: this.art(${MIDNIGHT}, '${phone ? '' : 'wide'}'), ${WALL_VALS(phone ? [50, 60, 55, 65] : [64, 78, 70, 84, 74, 88, 68, 80, 72], phone ? PHONE_K : 1, phone ? FLIPS.phone : FLIPS.busy)}
+  return { t, foot: this.foot(${phone}), sky: ${SKYS}, grain: String(this.props.grain ?? 0.7), hero: this.art(${MIDNIGHT}, '${phone ? '' : 'wide'}'), ${WALL_VALS(phone ? [50, 60, 55, 65] : [64, 78, 70, 84, 74, 88, 68, 80, 72], phone ? PHONE_K : 1, phone ? FLIPS.phone : FLIPS.busy)}
     q1: deck('Cell Biology'), q2: deck('Genetics'), q3: deck('Anatomy'), q4: deck('Korean'), m1: deck('Cell Biology'),
     homeHref: site ? '/' : '${phone ? 'LandingPhone' : 'Landing'}.dc.html', signInHref: signIn, startHref: site ? 'https://app.lucida.cards/' : signIn,
     privacyHref: site ? '/privacy' : 'Privacy.dc.html', termsHref: site ? '/terms' : 'Terms.dc.html', pricingHref: site ? '/pricing' : '${phone ? 'PricingPhone' : 'Pricing'}.dc.html' }; }`;
@@ -5743,7 +5749,7 @@ ${skyLayer(phone)}
 <section style="padding: ${phone ? 44 : 80}px ${L.pad}px 0; display: flex; flex-direction: column; align-items: center; text-align: center;">
   <h1 style="margin: 0; font-size: ${phone ? 44 : 72}px; font-weight: 600; line-height: 1; letter-spacing: -.05em; text-wrap: balance;">Simple pricing.</h1>
   ${leadP(L, 'Your cards are always free. Pro is for making Lucida yours.', true)}
-  <div role="group" aria-label="Billing" style="margin-top: ${phone ? 26 : 32}px; display: inline-flex; padding: 4px; border-radius: 999px; background: {{t.bg}}; box-shadow: 0 1px 2px rgba(0,0,0,.06), 0 10px 24px -14px rgba(0,0,0,.25);"><sc-for list="{{billing}}" as="b" hint-placeholder-count="2"><button type="button" onClick="{{b.pick}}" data-plan-pick="{{b.id}}" aria-pressed="{{b.pressed}}" style="height: 40px; padding: 0 18px; display: inline-flex; align-items: center; gap: 8px; border: 0; border-radius: 999px; background: {{b.bg}}; color: {{b.fg}}; font: inherit; font-size: 14px; font-weight: 600; cursor: pointer;">{{b.label}}<sc-if value="{{b.hasTag}}" hint-placeholder-val="{{ false }}"><span style="height: 22px; padding: 0 8px; display: inline-flex; align-items: center; border-radius: 999px; background: {{t.goodTint}}; color: {{t.good}}; font-size: 12px; font-weight: 600;">Save 30%</span></sc-if></button></sc-for></div>
+  <div role="group" aria-label="Billing" style="margin-top: ${phone ? 26 : 32}px; display: inline-flex; padding: 4px; border-radius: 999px; background: {{t.bg}}; box-shadow: 0 1px 2px rgba(0,0,0,.06), 0 10px 24px -14px rgba(0,0,0,.25);"><sc-for list="{{billing}}" as="b" hint-placeholder-count="2"><button type="button" onClick="{{b.pick}}" data-plan-pick="{{b.id}}" aria-pressed="{{b.pressed}}" style="height: 40px; padding: 0 18px; display: inline-flex; align-items: center; gap: 8px; border: 0; border-radius: 999px; background: {{b.bg}}; color: {{b.fg}}; font: inherit; font-size: 14px; font-weight: 600; cursor: pointer;">{{b.label}}<sc-if value="{{b.hasTag}}" hint-placeholder-val="{{ false }}"><span style="height: 22px; padding: 0 8px; display: inline-flex; align-items: center; border-radius: 999px; background: #E6F4EC; color: #067647; font-size: 12px; font-weight: 600;">Save 30%</span></sc-if></button></sc-for></div>
 </section>
 <section style="padding: ${phone ? 28 : 44}px ${phone ? 16 : L.pad}px 0;">
   <div style="max-width: 960px; margin: 0 auto; display: grid; grid-template-columns: ${phone ? '1fr' : '1fr 1fr'}; gap: ${phone ? 12 : 16}px;">
@@ -5756,7 +5762,7 @@ ${skyLayer(phone)}
     ${artCard('pro', `border-radius: ${phone ? 28 : 32}px; box-shadow: 0 24px 56px -28px rgba(20,22,90,.55);`, `height: 100%; box-sizing: border-box; padding: ${pad}px; display: flex; flex-direction: column; gap: 24px;`, `<div><h2 style="margin: 0; display: flex; align-items: center; gap: 8px; font-size: 20px; font-weight: 600; letter-spacing: -.01em;">${svg(I.sparkle, 18, 1.8)}Pro</h2><p style="margin: 6px 0 0; font-size: 15px; opacity: .8;">Make Lucida yours.</p></div>
       ${proPlan('yearly', '$49.99', 'a year', 'That’s $4.17 a month, paid once a year.')}
       ${proPlan('monthly', '$5.99', 'a month', 'Paid monthly. Cancel anytime.')}
-      <div style="display: flex; flex-direction: column; gap: 12px;"><span style="font-size: 14px; opacity: .8;">Everything in Free, plus:</span>${planList(PLAN_PRO, 'color: #FFFFFF;')}</div>`)}
+      <div style="display: flex; flex-direction: column; gap: 12px;"><span style="font-size: 14px; opacity: .9;">Everything in Free, plus:</span>${planList(PLAN_PRO, 'color: #FFFFFF;')}</div>`)}
   </div>
 </section>
 <section style="max-width: 1024px; margin: 0 auto; box-sizing: border-box; padding: ${phone ? 72 : 112}px ${phone ? 20 : 32}px 0;">
@@ -5777,12 +5783,12 @@ const PRICING_H = 1678, PRICING_PHONE_H = 2353;
 const pricingLogic = phone => `${ART_METHOD}
 ${FOOT_METHOD}
 constructor(props) { super(props); this.state = { yearly: true }; }
-renderVals() { ${T}
+renderVals() { ${TS}
   // On lucida.cards (props.site) the links open the app and the landing page; on the canvas, the boards.
   const site = !!this.props.site, y = this.state.yearly, signIn = site ? 'https://app.lucida.cards/sign-in' : '${phone ? 'PhoneSignIn' : 'WebSignIn'}.dc.html';
   const seg = on => ({ bg: on ? t.inv : 'transparent', fg: on ? t.invText : t.text, pressed: on ? 'true' : 'false' });
   const links = ${JSON.stringify(PRO_LINKS)}, selling = !!(links.monthly && links.yearly), start = site ? 'https://app.lucida.cards/' : signIn;
-  return { t, foot: this.foot(${phone}), sky: ${SKY}, grain: String(this.props.grain ?? 0.7), pro: this.art(${MIDNIGHT}, ''),
+  return { t, foot: this.foot(${phone}), sky: ${SKYS}, grain: String(this.props.grain ?? 0.7), pro: this.art(${MIDNIGHT}, ''),
     billing: [{ id: 'monthly', label: 'Monthly', ...seg(!y), hasTag: false, pick: () => this.setState({ yearly: false }) }, { id: 'yearly', label: 'Yearly', ...seg(y), hasTag: true, pick: () => this.setState({ yearly: true }) }],
     yearlyShow: y ? 'flex' : 'none', monthlyShow: y ? 'none' : 'flex',
     yearlyHref: selling ? (site ? 'https://app.lucida.cards/pro?plan=yearly' : links.yearly) : start, monthlyHref: selling ? (site ? 'https://app.lucida.cards/pro?plan=monthly' : links.monthly) : start,
@@ -5808,167 +5814,288 @@ ${landFooter(false)}
 </div>`;
 // On lucida.cards (props.site) the links open the site and the app; on the canvas, the boards.
 const legalLogic = `${FOOT_METHOD}
-renderVals() { ${T}
+renderVals() {
   const site = !!this.props.site;
+  // On lucida.cards the colors are CSS variables with a light and a dark set (design/scheme.mjs), so the page follows the system.
+  const t = site ? ${JSON.stringify(VARS)} : this.theme(!!this.props.dark, !!this.props.dim);
   return { t, foot: this.foot(false), homeHref: site ? 'https://lucida.cards/' : 'Landing.dc.html', signInHref: site ? 'https://app.lucida.cards/sign-in' : 'WebSignIn.dc.html', startHref: site ? 'https://app.lucida.cards/' : 'WebSignIn.dc.html',
     privacyHref: site ? '/privacy' : 'Privacy.dc.html', termsHref: site ? '/terms' : 'Terms.dc.html', pricingHref: site ? '/pricing' : 'Pricing.dc.html' }; }`;
 
-// ---------- The site's other pages: comparisons, features, the FAQ, the 404, and their link-preview pictures ----------
-// (lucida.cards/vs/anki, /compare, /features/…, /for/…, /faq. design/site.mjs says what a page file holds.)
+// ---------- The site's other pages: comparisons, features, the FAQ, the 404, the blog and their pictures ----------
+// (lucida.cards/vs/anki, /compare, /features/…, /for/…, /faq, /blog. design/site.mjs says what a page file holds.)
 // Three boards draw every one of those pages, each with a phone twin and a page picker, since the canvas has room for few files:
-//   SiteCompare  comparisons, alternatives, the hubs (compare, features) and the "404" page
+//   SiteCompare  comparisons, alternatives, the hubs (blog, compare, features) and the "404" page
 //   SiteFeature  features, and who Lucida is for
 //   SiteFaq      the FAQ
 // A page is one markup that fits any width (container queries, so a frame on the canvas and a window on the site behave the
 // same): the page at lucida.cards holds one copy of it with one h1, and a phone board is that markup in a 390-wide frame. The
 // pages' words are embedded in each board (`site-data`); design/to-site.mjs stops if a page file changed after the boards were
-// built. SiteOg draws any page's 1200 × 630 link-preview picture (design/og.mjs). Board heights are measured
+// built. SiteOg draws any page's 1200 × 630 picture (design/og.mjs). Board heights are measured
 // (design/site-measure.mjs → site-heights.json): a frame must be as tall as its tallest page.
 //
-// A page reads like an article (the owner, 2026-09-30, on an iPhone, after higgsfield.ai/blog: "more of an article type", since
-// the boxed table with its small gray labels was dense and hard to read):
-//   - one column, its words left-aligned: 680 px at most on a computer, the phone's width less 20 px a side on a phone;
-//   - breadcrumbs as small pills, a big title, chips (Lucida's mark and name, the day it was updated, minutes to read), the lead;
-//   - the page's link-preview picture (web/og/<page>.png) under the header as the hero: an <img> on lucida.cards, and on the canvas
-//     the SiteOg board itself (a dc-import, drawn at its own size and scaled to the column), so both show the same picture;
+// A page reads like an article (the owner, 2026-09-30, on an iPhone, after higgsfield.ai/blog: "more of an article type"), and like
+// that blog's articles in length (the owner: "I don't want it to be super long"):
+//   - one column, its words left-aligned: 680 px at most, 16 px on a phone and 17 px on a computer; on a wide screen (1100 px)
+//     "On this page", a tree of the sections and their parts, stands on its left and sticks as the page scrolls: a rail, the
+//     section being read bright with its parts open under it. On a phone it is one closed row under the lead;
+//   - breadcrumbs as small pills that start at the blog (Blog › Comparisons › the page), a big title, chips (Lucida's mark and name,
+//     the day it was updated, minutes to read), the lead;
+//   - the page's own picture (web/og/<page>.png, drawn by SiteOg) under the header as the hero: an <img> on lucida.cards, and on the
+//     canvas the SiteOg board itself (a dc-import, drawn at its own size and scaled to the column), with the app's film grain over
+//     it either way; it looks the same on a dark screen as on a light one;
 //   - tables without a box: a header row and thin lines on a computer; on a phone each row is the feature in bold and then a
-//     paragraph per app that starts with the app's name in bold (still one <table>, restyled by CSS);
-//   - questions as h3 headings with their answers under thin lines; related pages as cards (their picture, title and one line);
-//     sources last, small and muted.
-// Type sizes are CSS classes with container queries (a phone-sized frame and a narrow window both count as a phone).
+//     paragraph per app that starts with the app's name in bold (still one <table>, restyled by CSS). Past six rows the rest
+//     wait behind "Show all 12";
+//   - one card in Lucida's colors with the page's own title and "Start free", then the questions as one rounded card of closed
+//     rows (a + that becomes a −); at most three related pages as picture cards; the sources in one closed row, last;
+//   - the hubs (compare, features) open with a featured page, then cards with their picture, a chip, the title, and
+//     "7 min · Sep 30, 2026"; the blog (lucida.cards/blog, the hub board's "blog" page) is Higgsfield's blog front page: a
+//     headline, tabs and a search box, a featured page and a section of cards for each category.
+// On lucida.cards the colors are CSS variables with a light set and a dark set (design/scheme.mjs), so one markup follows the
+// system's light or dark look; on the canvas the Dark switch gives the same two looks.
 const SITE_H_FILE = new URL('./site-heights.json', import.meta.url);
 const SITE_H = existsSync(SITE_H_FILE) ? JSON.parse(readFileSync(SITE_H_FILE, 'utf8')) : {};
-const SITE_NAMES = { SiteCompare: 'Comparisons, alternatives, the hubs and the 404', SiteFeature: 'Features and who Lucida is for', SiteFaq: 'FAQ' };
+const SITE_NAMES = { SiteCompare: 'The blog, comparisons, alternatives, the hubs and the 404', SiteFeature: 'Features and who Lucida is for', SiteFaq: 'FAQ' };
 // Words with [links](…) and **bold** in them, as pieces (design/site.mjs partsOf).
 const spParts = key => `<sc-for list="{{${key}}}" as="w"><sc-if value="{{w.plain}}">{{w.text}}</sc-if><sc-if value="{{w.href}}"><a class="sp-u" href="{{w.href}}">{{w.text}}</a></sc-if><sc-if value="{{w.bold}}"><strong>{{w.text}}</strong></sc-if></sc-for>`;
 const spH2 = (text, attrs = '') => `<h2 class="sp-h2"${attrs}>${text}</h2>`;
-// A page's picture: an <img> of its link-preview picture on lucida.cards (`site`), and on the canvas the SiteOg board itself, drawn at
-// 1200 × 630 and scaled down by `scale` (CSS `--k`) to the width it has there. `load` is how the <img> loads: the hero at once, cards lazily.
-const spPic = (key, cls, alt, load, scale) => `<sc-if value="{{site}}" hint-placeholder-val="{{ false }}"><img class="sp-pic ${cls}" src="{{${key}.src}}" alt="${alt}" width="1200" height="630" ${load} decoding="async"></sc-if><sc-if value="{{canvas}}" hint-placeholder-val="{{ true }}"><div class="sp-pic sp-og ${cls}" style="--k: {{${scale}}};"><div class="sp-og-in"><dc-import name="SiteOg" page="{{${key}.key}}" hint-size="1200px,630px"></dc-import></div></div></sc-if>`;
-// A related page as a card: its picture, then its title and one line.
-const spCard = k => `<a class="sp-card" href="{{${k}.href}}"><sc-if value="{{${k}.hasPic}}" hint-placeholder-val="{{ true }}">${spPic(k, 'sp-card-img', '', 'loading="lazy"', 'cardK')}</sc-if><h3 class="sp-card-t">{{${k}.title}}</h3><p class="sp-card-d">{{${k}.desc}}</p></a>`;
-const spCards = (list, hint = '') => `<div class="sp-cards"><sc-for list="{{${list}}}" as="k"${hint}>${spCard('k')}</sc-for></div>`;
-// A question with its answer, under a thin line (an h3 under an h2; an h2 when nothing else heads the group).
-const spQ = level => `<div id="{{f.id}}" class="sp-q"><h${level} class="sp-h3">{{f.q}}</h${level}><sc-for list="{{f.paras}}" as="p"><p class="sp-p">${spParts('p.parts')}</p></sc-for></div>`;
-const spSections = key => `<sc-for list="{{${key}}}" as="s" hint-placeholder-count="3"><section class="sp-col">
+// A page's picture: on lucida.cards (`site`) an <img> of its picture, with the app's film grain laid over it (`.sc-grain`, web/fast.css: one
+// tile, soft-light, at the screen's own pixels, so it shows at any size); on the canvas the SiteOg board itself, drawn at 1200 × 630 and
+// scaled down by `scale` (CSS `--k`) to the width it has there, with the same grain over it (GRAIN_LAYER). The picture is the same on a
+// light screen and a dark one (the owner: the gradients keep their look in dark mode; only the page around them turns dark). `load` is
+// how the <img> loads: the hero at once, cards lazily.
+const spPic = (key, cls, alt, load, scale) => `<sc-if value="{{site}}" hint-placeholder-val="{{ false }}"><span class="sp-pw"><img class="sp-pic ${cls}" src="{{${key}.src}}" alt="${alt}" width="1200" height="630" ${load} decoding="async"><span class="sc-grain" aria-hidden="true" style="opacity: {{grain}};"></span></span></sc-if><sc-if value="{{canvas}}" hint-placeholder-val="{{ true }}"><div class="sp-pic sp-og ${cls}" style="--k: {{${scale}}};"><div class="sp-og-in"><dc-import name="SiteOg" page="{{${key}.key}}" hint-size="1200px,630px"></dc-import></div>${GRAIN_LAYER}</div></sc-if>`;
+// A page as a card: its picture with a chip on it, its title, and "7 min · Sep 30, 2026". `data-s` is what the blog's search looks in.
+const spCard = (k, scale = 'cardK') => `<a class="sp-card" href="{{${k}.href}}" data-s="{{${k}.s}}"><span class="sp-card-pic"><sc-if value="{{${k}.hasPic}}" hint-placeholder-val="{{ true }}">${spPic(k, 'sp-card-img', '', 'loading="lazy"', scale)}</sc-if><sc-if value="{{${k}.chip}}" hint-placeholder-val="{{ true }}"><span class="sp-card-chip">{{${k}.chip}}</span></sc-if></span><h3 class="sp-card-t">{{${k}.title}}</h3><p class="sp-card-m">{{${k}.meta}}</p></a>`;
+const spCards = (list, hint = '', scale = 'cardK') => `<div class="sp-cards sp-wide"><sc-for list="{{${list}}}" as="k"${hint}>${spCard('k', scale)}</sc-for></div>`;
+// The featured page on a hub or the blog: a big picture, a chip, the minutes and the day, the title, two lines, and "Read now".
+const spFeat = `<a class="sp-feat sp-wide" href="{{feat.href}}" data-s="{{feat.s}}"><span class="sp-feat-pic">${spPic('feat', 'sp-feat-img', '', 'fetchpriority="high"', 'featK')}</span><span class="sp-feat-body"><span class="sp-feat-row"><span class="sp-kchip">{{feat.chip}}</span><span>{{feat.meta}}</span></span><h2 class="sp-feat-t">{{feat.title}}</h2><span class="sp-feat-d">{{feat.desc}}</span><span class="sp-btn">Read now</span></span></a>`;
+// A + that becomes a − when its <details> opens (nothing moves: it opens at once).
+const spPm = '<span class="sp-pm" aria-hidden="true"></span>';
+// A question: a closed row with its answer under it. The question is still an h3.
+const spQ = `<details class="sp-qd" id="{{f.id}}"><summary class="sp-qs"><h3 class="sp-qt">{{f.q}}</h3>${spPm}</summary><div class="sp-qa"><sc-for list="{{f.paras}}" as="p"><p class="sp-p">${spParts('p.parts')}</p></sc-for></div></details>`;
+// A bullet. A step ("1. Open Connect AI.") and a bullet that begins with a bold lead-in have an address ("On this page" lists them).
+const spLi = `<sc-if value="{{b.id}}"><li id="{{b.id}}" class="{{b.cls}}">${spParts('b.parts')}</li></sc-if><sc-if value="{{b.plain}}"><li class="{{b.cls}}">${spParts('b.parts')}</li></sc-if>`;
+const spSections = key => `<sc-for list="{{${key}}}" as="s" hint-placeholder-count="3"><section class="sp-sec">
   <sc-if value="{{s.h2}}" hint-placeholder-val="{{ true }}">${spH2('{{s.h2}}', ' id="{{s.id}}"')}</sc-if>
   <sc-for list="{{s.paras}}" as="p"><p class="sp-p">${spParts('p.parts')}</p></sc-for>
-  <sc-if value="{{s.hasBullets}}" hint-placeholder-val="{{ false }}"><ul class="sp-ul"><sc-for list="{{s.bullets}}" as="b"><li class="{{b.cls}}">${spParts('b.parts')}</li></sc-for></ul></sc-if>
+  <sc-if value="{{s.hasBullets}}" hint-placeholder-val="{{ false }}"><ul class="sp-ul"><sc-for list="{{s.bullets}}" as="b">${spLi}</sc-for></ul></sc-if>
 </section></sc-for>`;
+// "On this page": the page's sections, each with its parts under it (a tree). `cur` marks the one being read.
+const spTree = `<ol><sc-for list="{{toc}}" as="o" hint-placeholder-count="5"><li class="{{o.cls}}"><a href="#{{o.id}}" aria-current="{{o.cur}}">{{o.label}}</a><sc-if value="{{o.hasKids}}" hint-placeholder-val="{{ false }}"><ol><sc-for list="{{o.kids}}" as="k"><li><a href="#{{k.id}}">{{k.label}}</a></li></sc-for></ol></sc-if></li></sc-for></ol>`;
+const spTocIcon = svg('<path d="M4 7h16M4 12h10M4 17h13"/>', 14, 1.8);
 // On a narrow page a table's rows stack: the feature in bold, then a paragraph per app that begins with the app's name in bold.
 const spStack = s => [
   `${s} table,${s} tbody,${s} tr,${s} th,${s} td{display:block}`,
   `${s} thead{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}`,
-  `${s} tr{padding:20px 0;border-top:1px solid var(--sp-line)}`,
+  `${s} tr{padding:16px 0;border-top:1px solid var(--sp-line)}`,
   `${s} th,${s} td{padding:0;border:0}`,
-  `${s} tbody th{width:auto;margin-bottom:4px;font-size:18px;line-height:1.4;font-weight:700}`,
-  `${s} td{margin-top:10px;font-size:17px;line-height:1.6}${s} td:empty{display:none}`,
-  `${s} td[data-label]:not([data-label=""])::before{content:attr(data-label);margin-right:.35em;font-weight:600}`
+  `${s} tbody th{width:auto;margin-bottom:2px;font-size:17px;line-height:1.4;font-weight:700}`,
+  `${s} td{margin-top:8px;font-size:16px;line-height:1.55}${s} td:empty{display:none}`,
+  `${s} td[data-label]:not([data-label=""])::before{content:attr(data-label);margin-right:.35em;font-weight:600}`,
+  // Rows past the sixth wait for "Show all": shown as blocks while the table is stacked.
+  `@supports selector(:has(*)){${s}:has(.sp-more[open]) tr.sp-x{display:block}}`
 ].join('');
 const SITE_CSS = [
   '.sp{container-type:inline-size;-webkit-text-size-adjust:100%}',
   '.sp-sr{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}',
-  '.sp [id]{scroll-margin-top:24px}',
-  // The column: 680 px of words (720 with its padding) in the middle of the page. A wide table breaks out of it.
-  '.sp-col{max-width:720px;margin:0 auto;box-sizing:border-box;padding:0 20px;overflow-wrap:break-word}',
-  '.sp-col.sp-tw{max-width:1080px}.sp-in{max-width:680px;margin:0 auto}',
+  '.sp [id]{scroll-margin-top:24px}picture{display:contents}[hidden]{display:none!important}',
   '.sp-u{text-decoration:underline;text-underline-offset:3px;text-decoration-thickness:1px}',
   '.sp strong{font-weight:600}',
+  // The page: one column of words (680 px), with "On this page" beside it on a wide screen. A wide block (a table of four or more
+  // columns, a row of cards) breaks out of the column by as much as the window allows, up to 1040 px.
+  '.sp-art{box-sizing:border-box;padding:0 20px}',
+  '.sp-main{max-width:680px;margin:0 auto;overflow-wrap:break-word}',
+  '.sp-wide{--bo:clamp(0px,calc((100cqw - 680px) / 2 - 20px),180px);margin-left:calc(-1 * var(--bo));margin-right:calc(-1 * var(--bo))}',
+  '.sp-toc{display:none}',
   // The header: breadcrumb pills, the title, chips, the lead.
-  '.sp-top{padding-top:28px}',
+  '.sp-top{padding-top:24px}',
   // One row: the last pill (the page's own title) shortens with "…" when the row is full.
   '.sp-crumbs{margin:0;padding:0;list-style:none;display:flex;align-items:center;gap:6px;font-size:14px}',
   '.sp-crumbs li{display:flex;align-items:center;gap:6px;flex:none}.sp-crumbs li:last-child{flex:0 1 auto;min-width:0}.sp-crumbs li:not(:last-child)::after{content:"/";color:var(--sp-muted);opacity:.5}',
   '.sp-crumbs a,.sp-crumbs span{display:block;box-sizing:border-box;height:30px;line-height:30px;padding:0 12px;border-radius:999px;background:var(--sp-surf);color:var(--sp-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}',
   '.sp-crumbs [aria-current]{background:var(--sp-surf2);color:var(--sp-text);font-weight:600}',
-  '.sp-h1{margin:20px 0 0;font-size:33px;font-weight:700;line-height:1.14;letter-spacing:-.03em;text-wrap:balance}',
-  '.sp-chips{margin-top:20px;display:flex;flex-wrap:wrap;gap:8px}',
+  '.sp-h1{margin:18px 0 0;font-size:32px;font-weight:700;line-height:1.15;letter-spacing:-.03em;text-wrap:balance}',
+  '.sp-chips{margin-top:16px;display:flex;flex-wrap:wrap;gap:8px}',
   '.sp-chip{display:inline-flex;align-items:center;gap:6px;height:30px;box-sizing:border-box;padding:0 12px;border-radius:999px;background:var(--sp-surf);font-size:14px;line-height:1;color:var(--sp-muted);white-space:nowrap}',
   '.sp-chip svg{flex-shrink:0}.sp-chip-a{color:var(--sp-text);font-weight:600}',
-  '.sp-lead{margin:20px 0 0;font-size:19px;line-height:1.6;color:var(--sp-muted);text-wrap:pretty}',
-  // The pictures: the hero under the header, and the cards' (an <img>, or on the canvas the SiteOg board scaled by --k).
-  '.sp-pic{display:block;width:100%;height:auto;aspect-ratio:1200/630;border-radius:20px;background:var(--sp-surf);outline:1px solid rgba(0,0,0,.07);outline-offset:-1px}',
-  '.sp-hero{margin-top:28px}.sp-card-img{border-radius:16px}',
+  '.sp-lead{margin:16px 0 0;font-size:18px;line-height:1.55;color:var(--sp-sub);text-wrap:pretty}',
+  // The pictures: the hero under the header, the cards', the featured page's (an <img>, or on the canvas the SiteOg board scaled by --k).
+  '.sp-pic{display:block;width:100%;height:auto;aspect-ratio:1200/630;border-radius:20px;background:var(--sp-surf);outline:1px solid var(--sp-edge);outline-offset:-1px}',
+  '.sp-hero{margin-top:24px}',
   '.sp-og{position:relative;height:auto;overflow:hidden}.sp-og-in{position:absolute;left:0;top:0;width:1200px;height:630px;transform:scale(var(--k));transform-origin:0 0}',
+  // The grain over a picture (web/fast.css's .sc-grain) is clipped to the picture's own rounded corners; a card or a featured page clips it itself.
+  '.sp-pw{display:block;position:relative;border-radius:20px}.sp-pw .sc-grain{border-radius:inherit}.sp-card-pic .sp-pw,.sp-feat-pic .sp-pw{border-radius:0}',
   // The words.
-  '.sp-h2{margin:48px 0 0;font-size:27px;font-weight:700;line-height:1.2;letter-spacing:-.025em;text-wrap:balance}',
-  '.sp-h3{margin:0;font-size:19px;font-weight:600;line-height:1.35;letter-spacing:-.01em;text-wrap:balance}',
-  '.sp-p{margin:18px 0 0;font-size:17px;line-height:1.7;text-wrap:pretty}.sp-h2+.sp-p,.sp-h2+.sp-ul{margin-top:16px}',
-  '.sp-ul{margin:18px 0 0;padding-left:22px;font-size:17px;line-height:1.7}.sp-ul li{margin-top:12px;padding-left:4px}.sp-ul li:first-child{margin-top:0}',
+  '.sp-sec{margin:0}',
+  '.sp-h2{margin:44px 0 0;font-size:24px;font-weight:700;line-height:1.25;letter-spacing:-.02em;text-wrap:balance}',
+  '.sp-p{margin:16px 0 0;font-size:16px;line-height:1.6;text-wrap:pretty}.sp-h2+.sp-p,.sp-h2+.sp-ul{margin-top:14px}',
+  '.sp-ul{margin:16px 0 0;padding-left:20px;font-size:16px;line-height:1.6}.sp-ul li{margin-top:10px;padding-left:4px}.sp-ul li:first-child{margin-top:0}',
   // A step that begins with its own number ("1. Open Connect AI.") has no bullet dot, and sits flush with the words.
-  '.sp-ul li.sp-n{list-style:none;margin-left:-22px;padding-left:0}',
-  // Questions: a heading and its answer, under a thin line.
-  '.sp-q{padding:22px 0 26px;border-top:1px solid var(--sp-line)}.sp-q .sp-p{margin-top:10px}.sp-h2+.sp-q{margin-top:20px}',
-  '.sp-pills{display:flex;flex-wrap:wrap;gap:8px;margin-top:28px}',
+  '.sp-ul li.sp-n{list-style:none;margin-left:-20px;padding-left:0}',
+  // Closed rows: a question, "Show all", the sources. A + that is a − when open; they open at once, with no movement.
+  'summary{list-style:none;cursor:pointer}summary::-webkit-details-marker{display:none}summary:focus-visible{outline:2px solid var(--sp-text);outline-offset:2px;border-radius:6px}',
+  '.sp-pm{position:relative;flex:none;width:16px;height:16px}.sp-pm::before,.sp-pm::after{content:"";position:absolute;left:0;right:0;top:7px;height:2px;border-radius:1px;background:currentColor}',
+  '.sp-pm::after{transform:rotate(90deg)}details[open]>summary .sp-pm::after{display:none}',
+  '.sp-qcard{margin-top:44px;padding:20px 20px 6px;border-radius:24px;background:var(--sp-surf)}.sp-qcard .sp-h2{margin:0 0 6px;font-size:22px}',
+  '.sp-qd{border-top:1px solid var(--sp-hair)}.sp-h2+.sp-qd{border-top:0}',
+  '.sp-qs{display:flex;align-items:center;justify-content:space-between;gap:16px;box-sizing:border-box;min-height:52px;padding:12px 0}',
+  '.sp-qt{margin:0;font-size:16px;font-weight:600;line-height:1.4}',
+  '.sp-qa{padding:0 0 4px}.sp-qa .sp-p{margin:0 0 12px}',
+  '.sp-pills{display:flex;flex-wrap:wrap;gap:8px;margin-top:24px}',
   '.sp-pill{display:inline-flex;align-items:center;height:38px;box-sizing:border-box;padding:0 16px;border-radius:999px;background:var(--sp-surf);font-size:14px;font-weight:600}',
-  '.sp-jump{margin:28px 0 0;padding:0;list-style:none;font-size:16px;line-height:1.5}.sp-jump li{padding:6px 0}',
-  // Tables have no box: a header row and thin lines.
-  '.sp-table{margin-top:24px}',
-  '.sp-table table{width:100%;border-collapse:collapse;text-align:left;font-size:16px;line-height:1.55}',
-  '.sp-table th,.sp-table td{padding:14px 20px 14px 0;vertical-align:top;border-top:1px solid var(--sp-line)}',
-  '.sp-table td:last-child{padding-right:0}.sp-table thead th{padding-top:0;padding-bottom:12px;border-top:0;font-weight:600}',
+  '.sp-jump{margin:24px 0 0;padding:0;list-style:none;font-size:16px;line-height:1.5}.sp-jump li{padding:6px 0}',
+  // Tables have no box: a header row and thin lines. Past six rows, "Show all 12" (a closed row under the table) opens the rest.
+  '.sp-table{margin-top:18px}',
+  '.sp-table table{width:100%;border-collapse:collapse;text-align:left;font-size:16px;line-height:1.5}',
+  '.sp-table th,.sp-table td{padding:12px 16px 12px 0;vertical-align:top;border-top:1px solid var(--sp-line)}',
+  '.sp-table td:last-child{padding-right:0}.sp-table thead th{padding-top:0;padding-bottom:10px;border-top:0;font-weight:600}',
   '.sp-table tbody th{width:var(--first);font-weight:600}',
-  // Cards: two across on a computer, one on a phone.
-  '.sp-cards{margin-top:24px;display:grid;grid-template-columns:minmax(0,1fr);gap:32px}',
-  '.sp-card{display:block;min-width:0}.sp-card-t{margin:14px 0 0;font-size:19px;font-weight:600;line-height:1.3;letter-spacing:-.01em;text-wrap:balance}',
-  '.sp-card-d{margin:6px 0 0;font-size:16px;line-height:1.55;color:var(--sp-muted);display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden}',
-  // Sources: small and muted, last.
-  '.sp-src{margin-top:64px;color:var(--sp-muted)}.sp-src h2{margin:0;font-size:20px;font-weight:600;letter-spacing:-.015em;color:var(--sp-text)}',
-  '.sp-src p{margin:8px 0 0;font-size:14px;line-height:1.55}.sp-src ol{margin:14px 0 0;padding-left:22px;font-size:14px;line-height:1.55}.sp-src li{margin-top:8px;padding-left:4px}',
-  // A computer: a little larger, two cards across, and a wide table (four or more columns) may be wider than the words.
-  '@container (min-width: 761px){.sp-top{padding-top:56px}.sp-h1{margin-top:24px;font-size:46px;line-height:1.1;letter-spacing:-.035em}.sp-lead{margin-top:24px;font-size:21px}',
-  '.sp-hero{margin-top:36px}.sp-pic{border-radius:24px}.sp-card-img{border-radius:16px}',
-  '.sp-h2{margin-top:64px;font-size:32px}.sp-h3{font-size:20px}.sp-p,.sp-ul{font-size:18px}',
-  '.sp-cards{grid-template-columns:repeat(2,minmax(0,1fr));gap:40px 24px}.sp-src{margin-top:80px}}',
-  // On a narrow page (a phone, or a window under 761 px) the header's nav goes, the band's art changes, and tables stack.
+  '.sp-more{display:none;border-top:1px solid var(--sp-line)}.sp-more summary{display:flex;align-items:center;justify-content:space-between;min-height:52px;font-size:16px;font-weight:600}',
+  '.sp-more-b,.sp-more[open] .sp-more-a{display:none}.sp-more[open] .sp-more-b{display:inline}',
+  '@supports selector(:has(*)){.sp-more{display:block}.sp-table:has(.sp-more) tr.sp-x{display:none}.sp-table:has(.sp-more[open]) tr.sp-x{display:table-row}}',
+  // Pages as cards (related pages, a hub's pages, the blog's): the picture with a chip on it, the title, "7 min · Sep 30, 2026".
+  '.sp-cards{margin-top:18px;display:grid;grid-template-columns:minmax(0,1fr);gap:28px}',
+  '.sp-card{display:block;min-width:0}',
+  '.sp-card-pic{display:block;position:relative;aspect-ratio:1200/630;border-radius:16px;overflow:hidden;background:var(--sp-surf);outline:1px solid var(--sp-edge);outline-offset:-1px}',
+  '.sp-card-pic .sp-pic{border-radius:0;outline:0}',
+  '.sp-card-chip{position:absolute;left:10px;bottom:10px;height:26px;padding:0 12px;border-radius:999px;background:var(--sp-chipbg);color:var(--sp-chipfg);font-size:13px;font-weight:500;line-height:26px;box-shadow:0 0 0 1px var(--sp-edge)}',
+  '.sp-card-t{margin:12px 0 0;font-size:17px;font-weight:600;line-height:1.3;letter-spacing:-.01em;text-wrap:balance}',
+  '.sp-card-m{margin:6px 0 0;font-size:14px;line-height:1.4;color:var(--sp-muted)}',
+  '.sp-feat{display:block;margin-top:28px}',
+  '.sp-feat-pic{display:block;position:relative;aspect-ratio:1200/630;border-radius:20px;overflow:hidden;background:var(--sp-surf);outline:1px solid var(--sp-edge);outline-offset:-1px}',
+  '.sp-feat-pic .sp-pic{border-radius:0;outline:0}.sp-feat-body{display:block;margin-top:16px}',
+  '.sp-feat-row{display:flex;align-items:center;gap:10px;font-size:14px;color:var(--sp-muted)}.sp-kchip{display:none}',
+  '.sp-feat-t{margin:8px 0 0;font-size:24px;font-weight:700;line-height:1.2;letter-spacing:-.025em;text-wrap:balance}',
+  '.sp-feat-d{display:none;margin-top:10px;font-size:16px;line-height:1.55;color:var(--sp-muted)}',
+  '.sp-btn{display:flex;align-items:center;justify-content:center;box-sizing:border-box;height:46px;margin-top:16px;padding:0 22px;border-radius:14px;background:var(--sp-surf2);color:var(--sp-text);font-size:15px;font-weight:600}',
+  // The card before the questions: Lucida's colors (the band's art), the page's title, one button.
+  '.sp-cta{position:relative;overflow:hidden;margin-top:44px;padding:26px 22px 24px;border-radius:24px;color:#FFFFFF}',
+  '.sp-cta-t{position:relative;margin:0;font-size:24px;font-weight:700;line-height:1.2;letter-spacing:-.025em;text-wrap:balance}.sp-cta-d{position:relative;margin:10px 0 0;font-size:15px;line-height:1.5;opacity:.85}.sp-cta-b{position:relative;margin-top:20px}',
+  // Sources: one closed row, small and muted, last.
+  '.sp-src{margin-top:40px;border-top:1px solid var(--sp-hair);color:var(--sp-muted)}',
+  '.sp-src summary{display:flex;align-items:center;justify-content:space-between;min-height:52px;font-size:15px;font-weight:600}',
+  '.sp-src p{margin:0;font-size:14px;line-height:1.55}.sp-src ol{margin:12px 0 0;padding-left:22px;font-size:14px;line-height:1.55}.sp-src li{margin-top:8px;padding-left:4px}',
+  // "On this page", on a phone or a narrow window: one closed row under the lead; open, it is the whole tree.
+  '.sp-tocd{margin-top:20px;border-radius:16px;background:var(--sp-surf)}',
+  '.sp-tocd summary{display:flex;align-items:center;gap:10px;min-height:52px;padding:0 16px;font-size:15px;font-weight:600}.sp-tocd summary .sp-pm{margin-left:auto}',
+  '.sp-tocd nav{padding:0 16px 12px}.sp-tocd ol{margin:0;padding:0;list-style:none}.sp-tocd ol ol{margin:0 0 6px 6px;padding-left:12px;border-left:1px solid var(--sp-hair)}',
+  '.sp-tocd a{display:block;padding:7px 0;font-size:15px;line-height:1.35}.sp-tocd ol ol a{padding:5px 0;font-size:14px;color:var(--sp-muted)}',
+  // "On this page", on a wide screen: stands on the left of the column and sticks. A rail runs down it; a section's parts are indented
+  // on the rail; the one being read is bright with a short bar on the rail; only its branch is open; the bottom fades out.
+  '.sp-toc-h{display:flex;align-items:center;gap:8px;margin:0;font-size:12px;font-weight:500;letter-spacing:.05em;text-transform:uppercase;color:var(--sp-sub)}',
+  '.sp-toc ol{margin:0;padding:0;list-style:none}.sp-toc>ol{margin-top:14px;border-left:1px solid var(--sp-hair)}',
+  '.sp-toc li>ol{display:none}.sp-toc li.sp-open>ol{display:block;margin-bottom:6px}',
+  '.sp-toc a{display:block;margin-left:-1px;padding:6px 0 6px 16px;border-left:2px solid transparent;font-size:13px;line-height:1.35;color:var(--sp-sub)}',
+  '.sp-toc li li a{padding-left:34px;font-size:12.5px}',
+  '.sp-toc a:hover{color:var(--sp-text)}.sp-toc a[aria-current="location"]{border-left-color:var(--sp-text);color:var(--sp-text);font-weight:500}',
+  // The blog's front page.
+  '.sp-blog{box-sizing:border-box;max-width:1344px;margin:0 auto;padding:0 clamp(20px,4cqw,48px)}.sp-blog .sp-wide{margin-left:0;margin-right:0}',
+  '.sp-bhead{padding-top:28px}',
+  '.sp-bh1{margin:0;font-size:34px;font-weight:700;line-height:1.1;letter-spacing:-.035em}.sp-bh1 span{display:block;text-wrap:balance}',
+  '.sp-grad{background:linear-gradient(100deg,var(--sp-g1),var(--sp-g2) 55%,var(--sp-g3));-webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-fill-color:transparent}',
+  '.sp-blead{margin:14px 0 0;max-width:560px;font-size:18px;line-height:1.5;color:var(--sp-sub)}',
+  '.sp-bar{margin-top:28px;display:flex;flex-direction:column;gap:12px}',
+  '.sp-search{display:flex;align-items:center;gap:10px;box-sizing:border-box;height:48px;margin:0;padding:0 16px;border-radius:14px;background:var(--sp-surf);color:var(--sp-muted)}',
+  '.sp-search input{flex:1;min-width:0;height:100%;border:0;outline:0;background:none;color:var(--sp-text);font:inherit;font-size:16px}.sp-search input::placeholder{color:var(--sp-muted);opacity:1}',
+  '.sp-search:focus-within{box-shadow:0 0 0 2px var(--sp-text)}.sp-search input::-webkit-search-cancel-button{display:none}',
+  '.sp-nojs{display:none}',
+  '.sp-tabs{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;scroll-snap-type:x proximity;margin:0 -20px;padding:0 20px}.sp-tabs::-webkit-scrollbar{display:none}',
+  '.sp-tab{flex:none;display:inline-flex;align-items:center;height:40px;box-sizing:border-box;padding:0 16px;border-radius:999px;background:var(--sp-surf);color:var(--sp-muted);font-size:15px;font-weight:500;scroll-snap-align:start}',
+  '.sp-tab[aria-current="true"]{background:var(--sp-text);color:var(--sp-bg)}',
+  '.sp-bsec{margin-top:44px}.sp-bsec .sp-h2{margin-top:0;font-size:26px}',
+  '.sp-bsec .sp-cards{margin-top:18px}',
+  '.sp-none{margin:44px 0 0;font-size:16px;color:var(--sp-muted)}',
+  // A computer: a little larger.
+  '@container (min-width: 761px){.sp-top{padding-top:48px}.sp-h1{margin-top:22px;font-size:44px;line-height:1.1;letter-spacing:-.035em}.sp-lead{margin-top:20px;font-size:20px}',
+  '.sp-hero{margin-top:32px}.sp-pic,.sp-pw{border-radius:24px}',
+  '.sp-h2{margin-top:56px;font-size:28px}.sp-p,.sp-ul{font-size:17px;line-height:1.65}.sp-qt,.sp-more summary{font-size:17px}.sp-qa .sp-p{font-size:16px;line-height:1.65}',
+  '.sp-qcard{padding:24px 28px 8px}.sp-qcard .sp-h2{font-size:26px}.sp-cta{padding:32px 32px 30px}.sp-cta-t{font-size:28px;max-width:520px}',
+  '.sp-cards{grid-template-columns:repeat(3,minmax(0,1fr));gap:32px 24px}.sp-card-t{font-size:17px}',
+  '.sp-feat{display:grid;grid-template-columns:minmax(0,1.45fr) minmax(0,1fr);gap:32px;align-items:center;margin-top:36px}.sp-feat-body{margin-top:0}',
+  '.sp-kchip{display:inline-flex;align-items:center;height:26px;padding:0 12px;border-radius:999px;background:var(--sp-surf2);color:var(--sp-text);font-size:13px;font-weight:500}',
+  '.sp-feat-row{justify-content:space-between}.sp-feat-t{margin-top:14px;font-size:30px}.sp-feat-d{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:3;overflow:hidden}',
+  '.sp-btn{display:inline-flex;height:44px;margin-top:20px;border-radius:12px}',
+  '.sp-bhead{padding-top:56px}.sp-bh1{font-size:60px;line-height:1.05;letter-spacing:-.045em}.sp-blead{margin-top:18px;font-size:20px}',
+  '.sp-bar{margin-top:44px;flex-direction:row-reverse;align-items:center;justify-content:space-between;gap:24px;border-bottom:1px solid var(--sp-hair)}',
+  '.sp-search{flex:0 1 320px}.sp-tabs{margin:0;padding:0;overflow:visible}',
+  '.sp-tab{height:52px;padding:0 4px;margin-right:16px;border-radius:0;background:none;border-bottom:2px solid transparent;margin-bottom:-1px}.sp-tab[aria-current="true"]{background:none;color:var(--sp-text);border-bottom-color:var(--sp-text)}',
+  '.sp-bsec .sp-h2{font-size:30px}.sp-bsec{margin-top:64px}',
+  '}',
+  // A wide screen: the tree stands on the left of the column and sticks; a wide block can only grow to the right.
+  '@container (min-width: 1100px){.sp-art.sp-has-toc{display:grid;grid-template-columns:minmax(170px,1fr) 680px minmax(0,1fr);column-gap:40px;max-width:1344px;margin:0 auto;padding:0 24px}',
+  '.sp-has-toc .sp-toc{display:block;position:sticky;top:24px;align-self:start;justify-self:end;width:min(260px,100%);height:calc(100vh - 96px);margin-top:118px;overflow:hidden}',
+  '.sp-has-toc .sp-toc::after{content:"";position:absolute;left:0;right:0;bottom:0;height:56px;background:linear-gradient(transparent,var(--sp-bg));pointer-events:none}',
+  '.sp-has-toc .sp-tocd{display:none}',
+  '.sp-has-toc .sp-main{grid-column:2}.sp-has-toc .sp-wide{--bo:clamp(0px,calc((100cqw - 680px) / 2 - 64px),300px);margin-left:0}}',
+  // On a narrow page (a phone, or a window under 761 px) the header's nav goes, the card's art changes, and tables stack.
   '@container (max-width: 760px){.sp-nav{display:none!important}.sp-head{height:64px!important}.sp-band-wide{display:none!important}.sp-band-tall{display:block!important}',
   spStack('.sp-table'), '}',
-  // Six or more columns need room: they stack on any window under 1001 px.
-  '@container (max-width: 1000px){' + spStack('.sp-tx .sp-table') + '.sp-tx.sp-col{max-width:720px}}',
+  // Six or more columns need room: they stack on any window under 1280 px.
+  '@container (max-width: 1279px){' + spStack('.sp-table.sp-tx') + '.sp-table.sp-tx.sp-wide{--bo:0px}}',
   SKY_CSS, NO_RISE
 ].join('');
-const sitePage = (w, h) => `<div class="sp" style="position: relative; isolation: isolate; width: ${w}px; height: ${h}px; box-sizing: border-box; font-family: ${FONT}; background: {{t.bg}}; color: {{t.text}}; overflow: hidden; --sp-line: {{t.line}}; --sp-muted: {{t.muted}}; --sp-surf: {{t.surf}}; --sp-surf2: {{t.surf2}}; --sp-text: {{t.text}};">
+const sitePage = (w, h) => `<div class="sp" style="position: relative; isolation: isolate; width: ${w}px; height: ${h}px; box-sizing: border-box; font-family: ${FONT}; background: {{t.bg}}; color: {{t.text}}; overflow: hidden; overflow: clip; --sp-bg: {{t.bg}}; --sp-line: {{t.line}}; --sp-muted: {{t.muted}}; --sp-surf: {{t.surf}}; --sp-surf2: {{t.surf2}}; --sp-text: {{t.text}}; --sp-hair: {{ink.hair}}; --sp-sub: {{ink.sub}}; --sp-edge: {{ink.edge}}; --sp-chipbg: {{ink.chipbg}}; --sp-chipfg: {{ink.chipfg}}; --sp-g1: {{ink.g1}}; --sp-g2: {{ink.g2}}; --sp-g3: {{ink.g3}};">
 ${skyLayer(false)}
 <header class="sp-head" style="max-width: 1344px; margin: 0 auto; height: 76px; box-sizing: border-box; padding: 0 clamp(20px, 4cqw, 48px); display: flex; align-items: center; justify-content: space-between; gap: 12px;">
   <a href="{{links.home}}" aria-label="Lucida home">${logo(30)}</a>
   <nav aria-label="Main" style="display: flex; align-items: center; gap: 4px;"><sc-for list="{{nav}}" as="n" hint-placeholder-count="3"><a class="sp-nav" href="{{n.href}}" style="height: 36px; padding: 0 14px; display: inline-flex; align-items: center; border-radius: 999px; font-size: 14px; color: {{t.text}};">{{n.label}}</a></sc-for><a href="{{links.signIn}}" style="height: 36px; padding: 0 14px; display: inline-flex; align-items: center; border-radius: 999px; font-size: 14px; color: {{t.text}};">Sign in</a>${landPill('Get started', '{{links.start}}', true, 36)}</nav>
 </header>
 <main>
-<section class="sp-col sp-top">
+<sc-if value="{{isBlog}}" hint-placeholder-val="{{ false }}"><div class="sp-blog" id="top">
+  <div class="sp-bhead"><h1 class="sp-bh1"><span>{{blog.l1}}</span><span class="sp-grad">{{blog.l2}}</span></h1><p class="sp-blead">${spParts('page.lead')}</p></div>
+  <div class="sp-bar">
+    <form class="sp-search {{searchCls}}" role="search" action="/blog" aria-label="Search the blog">${svg('<circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/>', 18, 1.8)}<input type="search" name="q" placeholder="Search the blog" aria-label="Search the blog" autocomplete="off"></form>
+    <nav class="sp-tabs" aria-label="Categories"><sc-for list="{{tabs}}" as="t"><a class="sp-tab" href="{{t.href}}" data-tab="{{t.id}}" aria-current="{{t.cur}}">{{t.label}}</a></sc-for></nav>
+  </div>
+  <sc-if value="{{hasFeat}}" hint-placeholder-val="{{ true }}">${spFeat}</sc-if>
+  <sc-for list="{{blogSections}}" as="g" hint-placeholder-count="3"><section class="sp-bsec" id="{{g.id}}" data-cat="{{g.id}}">${spH2('{{g.title}}')}${spCards('g.cards', ' hint-placeholder-count="3"', 'blogK')}</section></sc-for>
+  <p class="sp-none" hidden>Nothing here matches your search.</p>
+</div></sc-if>
+<sc-if value="{{notBlog}}" hint-placeholder-val="{{ true }}"><div class="sp-art{{layout}}">
+<sc-if value="{{hasToc}}" hint-placeholder-val="{{ true }}"><nav class="sp-toc" aria-label="On this page"><p class="sp-toc-h">${spTocIcon}On this page</p>${spTree}</nav></sc-if>
+<div class="sp-main">
+<section class="sp-top">
   <nav aria-label="Breadcrumb"><ol class="sp-crumbs"><sc-for list="{{crumbs}}" as="c" hint-placeholder-count="3"><li><sc-if value="{{c.link}}"><a href="{{c.href}}">{{c.label}}</a></sc-if><sc-if value="{{c.current}}"><span aria-current="page">{{c.label}}</span></sc-if></li></sc-for></ol></nav>
   <h1 class="sp-h1">{{page.h1}}</h1>
   <sc-if value="{{hasMeta}}" hint-placeholder-val="{{ true }}"><div class="sp-chips"><span class="sp-chip sp-chip-a">${mark(13)}Lucida</span><span class="sp-chip"><time datetime="{{page.updated}}" title="Updated {{page.updatedShort}}">{{page.updatedShort}}</time></span><span class="sp-chip">${svg(I.today, 14, 1.8)}{{page.minutes}} min read</span></div></sc-if>
   <p class="sp-lead">${spParts('page.lead')}</p>
 </section>
-<sc-if value="{{hasHero}}" hint-placeholder-val="{{ true }}"><section class="sp-col">${spPic('pic', 'sp-hero', '{{pic.alt}}', 'fetchpriority="high"', 'pic.k')}</section></sc-if>
-<sc-if value="{{hasTable}}" hint-placeholder-val="{{ true }}"><section class="sp-col{{table.cls}}">
-  <div class="sp-in">${spH2('At a glance')}</div>
-  <div class="sp-table">
+<sc-if value="{{hasToc}}" hint-placeholder-val="{{ true }}"><sc-if value="{{tocOpen}}"><details class="sp-tocd" open><summary>${spTocIcon}On this page${spPm}</summary><nav aria-label="On this page">${spTree}</nav></details></sc-if><sc-if value="{{tocClosed}}"><details class="sp-tocd"><summary>${spTocIcon}On this page${spPm}</summary><nav aria-label="On this page">${spTree}</nav></details></sc-if></sc-if>
+<sc-if value="{{hasHero}}" hint-placeholder-val="{{ true }}">${spPic('pic', 'sp-hero', '{{pic.alt}}', 'fetchpriority="high"', 'pic.k')}</sc-if>
+<sc-if value="{{hasFeat}}" hint-placeholder-val="{{ false }}">${spFeat}</sc-if>
+<sc-for list="{{groups}}" as="g" hint-placeholder-count="1"><section class="sp-sec">${spH2('{{g.title}}')}${spCards('g.cards', ' hint-placeholder-count="3"')}</section></sc-for>
+<sc-if value="{{hasTable}}" hint-placeholder-val="{{ true }}"><section class="sp-sec">
+  ${spH2('At a glance', ' id="at-a-glance"')}
+  <div class="sp-table{{table.cls}}">
     <table style="--first: {{table.first}};">
       <thead><tr><sc-for list="{{table.head}}" as="c" hint-placeholder-count="3"><th scope="col"><sc-if value="{{c.blank}}"><span class="sp-sr">Feature</span></sc-if>{{c.label}}</th></sc-for></tr></thead>
-      <tbody><sc-for list="{{table.rows}}" as="r" hint-placeholder-count="6"><tr><th scope="row">{{r.label}}</th><sc-for list="{{r.cells}}" as="c" hint-placeholder-count="2"><td data-label="{{c.col}}">${spParts('c.parts')}</td></sc-for></tr></sc-for></tbody>
+      <tbody><sc-for list="{{table.rows}}" as="r" hint-placeholder-count="6"><tr class="{{r.cls}}"><th scope="row">{{r.label}}</th><sc-for list="{{r.cells}}" as="c" hint-placeholder-count="2"><td data-label="{{c.col}}">${spParts('c.parts')}</td></sc-for></tr></sc-for></tbody>
     </table>
+    <sc-if value="{{table.more}}" hint-placeholder-val="{{ false }}"><details class="sp-more"><summary><span class="sp-more-a">Show all {{table.total}}</span><span class="sp-more-b">Show fewer</span>${spPm}</summary></details></sc-if>
   </div>
 </section></sc-if>
-<sc-for list="{{groups}}" as="g" hint-placeholder-count="1"><section class="sp-col">${spH2('{{g.title}}')}${spCards('g.cards', ' hint-placeholder-count="3"')}</section></sc-for>
 ${spSections('sections')}
-<sc-if value="{{hasFaqPage}}" hint-placeholder-val="{{ false }}"><section class="sp-col">
+<sc-if value="{{hasFaqPage}}" hint-placeholder-val="{{ false }}">
   <sc-if value="{{hasJumpPills}}"><nav aria-label="Jump to a group of questions" class="sp-pills"><sc-for list="{{faqGroups}}" as="g"><a class="sp-pill" href="#{{g.id}}">{{g.title}}</a></sc-for></nav></sc-if>
   <sc-if value="{{hasJumpList}}"><nav aria-label="All questions"><ul class="sp-jump"><sc-for list="{{jump}}" as="j"><li><a class="sp-u" href="{{j.href}}">{{j.q}}</a></li></sc-for></ul></nav></sc-if>
-  <sc-for list="{{faqGroups}}" as="g"><div id="{{g.id}}"><sc-if value="{{g.title}}">${spH2('{{g.title}}')}</sc-if><sc-for list="{{g.items}}" as="f"><sc-if value="{{g.title}}">${spQ(3)}</sc-if><sc-if value="{{g.plain}}">${spQ(2)}</sc-if></sc-for></div></sc-for>
-</section></sc-if>
+  <sc-for list="{{faqGroups}}" as="g"><section class="sp-qcard" id="{{g.id}}">${spH2('{{g.title}}')}<sc-for list="{{g.items}}" as="f">${spQ}</sc-for></section></sc-for>
+</sc-if>
 ${spSections('sectionsAfter')}
-<sc-if value="{{hasFaqBlock}}" hint-placeholder-val="{{ false }}"><section class="sp-col">${spH2('Questions')}<sc-for list="{{faq}}" as="f">${spQ(3)}</sc-for></section></sc-if>
-<sc-if value="{{hasRelated}}" hint-placeholder-val="{{ false }}"><section class="sp-col">${spH2('Keep reading')}${spCards('related')}</section></sc-if>
-<sc-if value="{{hasSources}}" hint-placeholder-val="{{ false }}"><section class="sp-col sp-src"><h2>Sources</h2><p>The pages this one was written from, and the day each was checked.</p>
-  <ol><sc-for list="{{sources}}" as="o"><li><a class="sp-u" href="{{o.href}}" target="_blank" rel="noopener">{{o.label}}</a><span>{{o.note}}</span></li></sc-for></ol></section></sc-if>
-<section style="margin-top: clamp(64px, 10cqw, 128px); position: relative; overflow: hidden; color: {{hero.ink}}; background: {{hero.base}};">
+<aside class="sp-cta" aria-label="Start with Lucida" style="color: {{hero.ink}}; background: {{hero.base}};">
   <div class="sp-band-wide" aria-hidden="true" style="position: absolute; inset: 0;">${ART_LAYERS('hero')}</div>
   <div class="sp-band-tall" aria-hidden="true" style="position: absolute; inset: 0; display: none;">${ART_LAYERS('heroTall')}</div>
-  <div style="position: relative; text-shadow: {{hero.shadow}}; box-sizing: border-box; padding: clamp(56px, 9cqw, 104px) clamp(20px, 4cqw, 32px); display: flex; flex-direction: column; align-items: center; text-align: center;"><h2 style="margin: 0; font-size: clamp(34px, 4.4cqw, 56px); font-weight: 600; line-height: 1.04; letter-spacing: -.04em; text-wrap: balance;">Your next exam, in cards.</h2><p style="margin: 16px 0 0; max-width: 480px; font-size: clamp(16px, 1.4cqw, 18px); line-height: 1.5; opacity: .8; text-wrap: balance;">Start with one deck. Your AI can fill it in a few minutes.</p><div style="margin-top: 28px;">${landPill('Get started', '{{links.start}}', true, 48, 'background: #FFFFFF; color: #000000;')}</div></div>
-</section>
+  <p class="sp-cta-t" style="text-shadow: {{hero.shadow}};">{{cta}}</p><p class="sp-cta-d">Free: unlimited decks and cards, Learn mode and live games.</p>
+  <div class="sp-cta-b">${landPill('Start free', '{{links.start}}', true, 44, 'background: #FFFFFF; color: #000000;')}</div>
+</aside>
+<sc-if value="{{hasFaqBlock}}" hint-placeholder-val="{{ false }}"><section class="sp-qcard" id="questions">${spH2('Questions')}<sc-for list="{{faq}}" as="f">${spQ}</sc-for></section></sc-if>
+<sc-if value="{{hasRelated}}" hint-placeholder-val="{{ false }}"><section class="sp-sec">${spH2('Keep reading')}${spCards('related')}</section></sc-if>
+<sc-if value="{{hasSources}}" hint-placeholder-val="{{ false }}"><details class="sp-src"><summary><span>{{sourcesTitle}}</span>${spPm}</summary><p>The pages this one was written from, and the day each was checked.</p>
+  <ol><sc-for list="{{sources}}" as="o"><li><a class="sp-u" href="{{o.href}}" target="_blank" rel="noopener">{{o.label}}</a><span>{{o.note}}</span></li></sc-for></ol></details></sc-if>
+</div>
+</div></sc-if>
 </main>
-<footer style="max-width: 1344px; margin: 0 auto; box-sizing: border-box; padding: 48px clamp(20px, 4cqw, 48px); display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 20px 16px; font-size: 14px; color: {{t.muted}};">
+<footer style="max-width: 1344px; margin: 64px auto 0; box-sizing: border-box; padding: 48px clamp(20px, 4cqw, 48px); display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 20px 16px; font-size: 14px; color: {{t.muted}};">
   ${logo(26)}<span style="display: flex; flex-wrap: wrap; align-items: center; gap: 16px 20px;"><nav aria-label="Footer" style="display: contents;"><sc-for list="{{foot}}" as="l" hint-placeholder-count="5"><a href="{{l.href}}">{{l.label}}</a></sc-for></nav><span>© 2026 Lucida</span><span style="margin-left: 8px;">${socialLinks(20)}</span></span>
 </footer>
 </div>`;
@@ -5978,88 +6105,366 @@ const siteLogic = (board, phone) => {
 ${FOOT_METHOD}
 data() { return Component._site || (Component._site = ${JSON.stringify(data).replace(/</g, '\\u003c')}); }
 parts(text) { return (${partsOf.toString()})(text); }
-renderVals() { ${T}
+renderVals() {
   // site-data: ${data.hash}
   const site = !!this.props.site, PHONE = ${phone}, D = this.data(), P = D.pages.find(p => p.slug === this.props.page) || D.pages[0];
+  // On lucida.cards the colors are CSS variables with a light set and a dark set (design/scheme.mjs), so one markup follows the
+  // system's look; on the canvas the Dark switch gives the same two looks, from the app's theme.
+  const t = site ? ${JSON.stringify(VARS)} : this.theme(!!this.props.dark, !!this.props.dim);
+  const sky = site ? ${JSON.stringify(SKY_VARS)} : ${SKY};
+  const ink = site ? ${JSON.stringify(EXTRA_VARS)} : this.props.dark ? ${JSON.stringify(EXTRA_DARK)} : ${JSON.stringify(EXTRA_LIGHT)};
   const plain = s => this.parts(s).map(x => x.text).join('');
   const slugify = s => plain(s).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 48);
+  // Every address on the page (a heading, a step, a question) is its own.
+  const used = new Set(['top', 'at-a-glance', 'questions', 'test-yourself']);
+  const uniq = id => { let u = id || 'part', n = 2; while (used.has(u)) u = (id || 'part') + '-' + n++; used.add(u); return u; };
   // Where a link goes: the real page on lucida.cards, or on the canvas the board that draws it.
   const BOARD = { compare: 'SiteCompare', alternative: 'SiteCompare', hub: 'SiteCompare', notfound: 'SiteCompare', feature: 'SiteFeature', use: 'SiteFeature', faq: 'SiteFaq', home: 'Landing', pricing: 'Pricing' };
-  const href = it => site ? (it.slug ? '/' + it.slug : '/') : (it.kind === 'legal' ? (it.slug === 'privacy' ? 'Privacy' : 'Terms') : BOARD[it.kind] + (PHONE ? 'Phone' : '')) + '.dc.html';
+  const href = it => site ? (it.slug ? '/' + it.slug : '/') : (it.kind === 'legal' ? (it.slug === 'privacy' ? 'Privacy' : 'Terms') : it.kind === 'guide' ? 'SiteConnect' : BOARD[it.kind] + (PHONE ? 'Phone' : '')) + '.dc.html';
   const find = slug => D.index.find(i => i.slug === slug);
   const signIn = site ? '${SITE_APP}/sign-in' : (PHONE ? 'PhoneSignIn' : 'WebSignIn') + '.dc.html';
-  // A page's link-preview picture (web/og/<page>.png, drawn by the SiteOg board; design/site.mjs ogKey and ogFile).
+  // A page's picture (web/og/<page>.png, drawn by the SiteOg board; design/site.mjs ogKey and ogFile).
   const ogKey = slug => slug || 'home', ogSrc = slug => '/og/' + ogKey(slug).replace(/\\//g, '-') + '.png';
-  const card = it => ({ href: href(it), title: plain(it.label || it.h1), desc: plain(it.description), hasPic: true, key: ogKey(it.slug), src: ogSrc(it.slug) });
-  const of = (...kinds) => D.index.filter(i => kinds.includes(i.kind) && i.slug !== P.slug).map(card);
-  let groups = [];
-  if (P.kind === 'hub' && P.slug === 'compare') groups = [{ title: 'Comparisons', cards: of('compare') }, { title: 'Alternatives', cards: of('alternative') }];
-  else if (P.kind === 'hub') groups = [{ title: 'Features', cards: of('feature') }, { title: 'Made for', cards: of('use') }];
-  // A hub whose own text already links to every page under it doesn't need the cards too.
-  const linked = new Set(P.sections.flatMap(s => [...s.paras, ...s.bullets]).flatMap(x => this.parts(x)).map(w => w.href.replace(/^https?:\\/\\/lucida\\.cards/, '').replace(/\\/$/, '')).filter(Boolean));
-  const below = P.kind === 'hub' ? D.index.filter(i => (P.slug === 'compare' ? ['compare', 'alternative'] : ['feature', 'use']).includes(i.kind)).map(i => i.slug) : [];
-  if (below.length && below.every(x => linked.has('/' + x))) groups = [];
-  else if (P.kind === 'notfound') groups = [{ title: 'Start here', cards: ['', 'compare', 'features', 'faq', 'pricing'].map(find).filter(Boolean).map(card).concat([{ href: site ? '${SITE_APP}/' : signIn, title: 'Open the app', desc: 'Sign in, or start a deck, at app.lucida.cards.', hasPic: false, key: '', src: '' }]) }];
-  const item = f => ({ id: 'q-' + slugify(f.q), q: plain(f.q), paras: f.a.split(/\\n\\s*\\n/).map(a => ({ parts: this.parts(a) })) });
-  const tb = P.table, faq = P.faq.map(item), isFaq = P.kind === 'faq', grouped = P.faq.some(f => f.group), faqGroups = [];
-  for (const f of P.faq) { const title = f.group || ''; let g = faqGroups.find(x => x.title === title); if (!g) faqGroups.push(g = { title, id: title ? 'g-' + slugify(title) : 'questions', plain: !title, items: [] }); g.items.push(item(f)); }
-  const related = P.related.filter(x => !below.includes(x)).map(find).filter(Boolean).map(card).slice(0, 9);
-  const sections = P.sections.map(s => ({ id: slugify(s.h2), h2: s.h2, paras: s.paras.map(p => ({ parts: this.parts(p) })), hasBullets: s.bullets.length > 0, bullets: s.bullets.map(b => ({ parts: this.parts(b), cls: /^\\*\\*\\d+\\./.test(b) ? 'sp-n' : '' })) }));
-  // The chips under the title: the day it was updated ("Sep 30, 2026"), and minutes to read (its words at about 230 a minute, at least 1).
-  const MON = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'], dm = /^(\\d{4})-(\\d{2})-(\\d{2})$/.exec(P.updated || '');
-  const count = s => plain(s).split(/\\s+/).filter(Boolean).length, sum = (list, f) => list.reduce((n, x) => n + f(x), 0);
-  const words = count(P.lead) + (tb ? sum(tb.columns.concat(...tb.rows), count) : 0) + sum(P.sections, s => count(s.h2) + sum(s.paras.concat(s.bullets), count)) + sum(P.faq, f => count(f.q) + count(f.a));
-  // The hero is the page's own picture; the pages with no picture of their own (the 404) have none.
-  const h1 = plain(P.h1).replace(/\\.$/, ''), gone = P.kind === 'notfound';
-  // On the canvas the SiteOg board (1200 wide) is scaled to the width it has: the column's 680 px (or a phone's 350), and a card's
-  // (a computer's two across, with 24 px between, or a phone's 350).
-  const colW = PHONE ? 350 : 680, scale = px => (px / 1200).toFixed(5);
-  // A comparison's columns: a table of four or more may be wider than the words, six or more stack on any window under 1001 px. Its
-  // first column is as wide as its longest label needs, at most.
-  const cols = tb ? tb.columns.length : 0, widest = tb ? Math.max(...tb.rows.map(r => plain(r[0]).length)) : 0;
+  const meta = it => [it.minutes ? it.minutes + ' min' : '', it.date].filter(Boolean).join(' · ');
+  const card = it => ({ href: href(it), title: plain(it.label || it.h1), desc: plain(it.description), hasPic: true, key: ogKey(it.slug), src: ogSrc(it.slug), chip: it.chip, meta: meta(it), s: (plain(it.label || it.h1) + ' ' + plain(it.description)).toLowerCase() });
+  const isBlog = P.slug === 'blog', isHub = P.kind === 'hub', isFaq = P.kind === 'faq', gone = P.kind === 'notfound';
+  const FEAT = ${JSON.stringify(FEATURED)}, CATS = ${JSON.stringify(CATEGORIES)};
+  // A hub is a blog's front page in small: its first page featured, then every page under it as cards, a group for each kind. The 404
+  // page offers a few places to start.
+  const under = isHub && !isBlog ? (P.slug === 'compare' ? [['Comparisons', 'compare'], ['Alternatives', 'alternative']] : [['Features', 'feature'], ['Made for', 'use']]) : [];
+  const below = under.flatMap(([, kind]) => D.index.filter(i => i.kind === kind).map(i => i.slug));
+  const featIt = isHub ? (find(FEAT[P.slug]) || D.index.find(i => i.cat && i.slug !== P.slug)) : null;
+  let groups = under.map(([title, kind]) => ({ title, cards: D.index.filter(i => i.kind === kind && i.slug !== P.slug && (!featIt || i.slug !== featIt.slug)).map(card) }));
+  if (gone) groups = [{ title: 'Start here', cards: ['', 'blog', 'compare', 'features', 'faq', 'pricing'].map(find).filter(Boolean).map(card).concat([{ href: site ? '${SITE_APP}/' : signIn, title: 'Open the app', desc: 'Sign in, or start a deck, at app.lucida.cards.', hasPic: false, key: '', src: '', chip: 'App', meta: 'app.lucida.cards', s: '' }]) }];
+  const feat = featIt ? card(featIt) : { href: '', title: '', desc: '', chip: '', meta: '', key: '', src: '', s: '' };
+  // The blog: a section for each category (its pages, the featured one left out, "Help" with the FAQ before the guide), and the tabs.
+  const blogSections = isBlog ? CATS.map(c => ({ id: c.id, title: c.label, cards: D.index.filter(i => i.cat === c.id && i.slug !== P.slug && (!featIt || i.slug !== featIt.slug)).sort((a, b) => (a.kind === 'guide') - (b.kind === 'guide')).map(card) })).filter(g => g.cards.length) : [];
+  const tabs = isBlog ? [{ id: 'all', label: 'All', href: '#top', cur: 'true' }, ...blogSections.map(g => ({ id: g.id, label: g.title, href: '#' + g.id, cur: '' }))] : [];
+  const item = f => ({ id: uniq('q-' + slugify(f.q)), q: plain(f.q), paras: f.a.split(/\\n\\s*\\n/).map(a => ({ parts: this.parts(a) })) });
+  const tb = P.table, grouped = P.faq.some(f => f.group), faqGroups = [];
+  // A section's parts, for "On this page": its numbered steps and the bold lead-ins of its bullets (two or more).
+  const lead = b => { const m = /^\\*\\*([^*]+)\\*\\*/.exec(b); return m ? plain(m[1]).replace(/[\\s.:,;]+$/, '') : ''; };
+  const sections = P.sections.map(s => {
+    const id = uniq(slugify(s.h2)), leads = s.bullets.map(lead), many = leads.filter(Boolean).length >= 2;
+    const bullets = s.bullets.map((b, i) => ({ parts: this.parts(b), cls: /^\\*\\*\\d+\\./.test(b) ? 'sp-n' : '', id: many && leads[i] ? uniq(id + '-' + slugify(leads[i])) : '' }));
+    bullets.forEach(b => { b.plain = !b.id; });
+    return { id, h2: s.h2, paras: s.paras.map(p => ({ parts: this.parts(p) })), hasBullets: s.bullets.length > 0, bullets, kids: bullets.map((b, i) => ({ id: b.id, label: leads[i] })).filter(k => k.id) };
+  });
+  // The FAQ page's questions are in cards, a card for each group; an article's are in one card ("Questions").
+  if (isFaq) for (const f of P.faq) { const title = f.group || 'Questions'; let g = faqGroups.find(x => x.title === title); if (!g) faqGroups.push(g = { title, id: uniq('g-' + slugify(title)), items: [] }); g.items.push(item(f)); }
+  const faq = isFaq ? [] : P.faq.map(item);
+  const related = P.related.filter(x => !below.includes(x) && x !== (featIt || {}).slug).map(find).filter(Boolean).map(card).slice(0, 3);
+  // The chips under the title: the day it was updated ("Sep 30, 2026"), and minutes to read (design/site.mjs minutesOf).
+  const me = find(P.slug) || {}, MON = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'], dm = /^(\\d{4})-(\\d{2})-(\\d{2})$/.exec(P.updated || '');
+  const h1 = plain(P.h1).replace(/\\.$/, '');
+  // "On this page": a tree. The sections come first (an FAQ's groups, with their questions under them), then the questions of an article.
+  const toc = [];
+  if (!isHub && !gone) {
+    if (tb) toc.push({ id: 'at-a-glance', label: 'At a glance', kids: [] });
+    if (isFaq) faqGroups.forEach(g => toc.push({ id: g.id, label: g.title, kids: g.items.map(f => ({ id: f.id, label: f.q })) }));
+    sections.forEach(s => { if (s.h2) toc.push({ id: s.id, label: s.h2, kids: s.kids }); });
+    if (!isFaq && P.faq.length) toc.push({ id: 'questions', label: 'Questions', kids: [] });
+  }
+  toc.forEach((o, i) => { o.cur = i ? '' : 'location'; o.cls = i ? '' : 'sp-open'; o.hasKids = o.kids.length > 0; });
+  // On the canvas the SiteOg board (1200 wide) is scaled to the width it has: the column's 680 px (or a phone's 350); in a row of cards
+  // or a featured page, a share of a wide block (980 px beside "On this page", 1040 px without it), or of the blog's 1248 px.
+  const hasToc = toc.length >= 2, scale = px => (px / 1200).toFixed(5);
+  const wideW = PHONE ? 350 : hasToc ? 680 + Math.min(300, (${W} - 680) / 2 - 64) : 680 + 2 * Math.min(180, (${W} - 680) / 2 - 20), blogW = PHONE ? 350 : Math.min(1248, ${W} - 96);
+  // A comparison's columns: a table of four or more may be wider than the words, six or more stack on any window under 1280 px. Its
+  // first column is as wide as its longest label needs, at most. Past six rows the rest wait behind "Show all".
+  const cols = tb ? tb.columns.length : 0, widest = tb ? Math.max(...tb.rows.map(r => plain(r[0]).length)) : 0, KEEP = 6;
   const first = cols >= 6 ? (widest <= 14 ? '11%' : '15%') : cols >= 4 ? (widest <= 14 ? '16%' : widest <= 30 ? '20%' : '26%') : (widest <= 14 ? '20%' : widest <= 30 ? '26%' : '32%');
-  return { t, sky: ${SKY}, grain: String(this.props.grain ?? 0.7), hero: this.art(${MIDNIGHT}, 'wide'), heroTall: this.art(${MIDNIGHT}, ''),
-    pic: { src: ogSrc(P.slug), key: ogKey(P.slug), alt: /^lucida\\b/i.test(h1) ? h1 : 'Lucida: ' + h1, k: scale(colW) },
-    site, canvas: !site, cardK: scale(PHONE ? 350 : (680 - 24) / 2),
+  const words = plain(P.h1).split(' ');
+  return { t, sky, ink, dark: !!this.props.dark, grain: String(this.props.grain ?? 0.7), hero: this.art(${MIDNIGHT}, 'wide'), heroTall: this.art(${MIDNIGHT}, ''),
+    pic: { src: ogSrc(P.slug), key: ogKey(P.slug), alt: /^lucida\\b/i.test(h1) ? h1 : 'Lucida: ' + h1, k: scale(PHONE ? 350 : 680) },
+    site, canvas: !site, cardK: scale(PHONE ? 350 : (wideW - 48) / 3), blogK: scale(PHONE ? 350 : (blogW - 48) / 3), featK: scale(PHONE ? 350 : ((isBlog ? blogW : wideW) - 32) * 1.45 / 2.45),
     foot: this.foot(PHONE), nav: D.header.map(l => ({ label: l.label, href: href(find(l.slug)) })),
     links: { home: site ? '/' : (PHONE ? 'LandingPhone' : 'Landing') + '.dc.html', signIn, start: site ? '${SITE_APP}/' : signIn },
-    crumbs: P.crumbs.map((c, i) => ({ label: c.label, link: i < P.crumbs.length - 1 && !!find(c.slug), current: i === P.crumbs.length - 1, href: find(c.slug) ? href(find(c.slug)) : '' })),
-    page: { h1: P.h1, lead: this.parts(P.lead), updated: P.updated || '', updatedShort: dm ? MON[+dm[2] - 1] + ' ' + +dm[3] + ', ' + dm[1] : P.updatedLabel || '', minutes: String(Math.max(1, Math.round(words / 230))) },
-    hasMeta: !gone && !!P.updated, hasHero: !gone,
-    hasTable: !!tb, table: tb ? { cls: (cols >= 4 ? ' sp-tw' : '') + (cols >= 6 ? ' sp-tx' : ''), first, head: tb.columns.map(c => ({ label: c, blank: !c })),
-      rows: tb.rows.map(r => ({ label: plain(r[0]), cells: r.slice(1).map((c, i) => ({ col: plain(tb.columns[i + 1] || ''), parts: this.parts(c) })) })) } : { cls: '', first: '22%', head: [], rows: [] },
+    crumbs: P.crumbs.map((c, i) => ({ label: c.label, link: i < P.crumbs.length - 1 && !!find(c.slug), current: i === P.crumbs.length - 1, href: find(c.slug) ? href(find(c.slug)) + (site && c.hash ? '#' + c.hash : '') : '' })),
+    page: { h1: P.h1, lead: this.parts(P.lead), updated: P.updated || '', updatedShort: me.date || (dm ? MON[+dm[2] - 1] + ' ' + +dm[3] + ', ' + dm[1] : P.updatedLabel || ''), minutes: String(me.minutes || 1) },
+    cta: gone || isFaq ? 'Your next exam, in cards.' : h1,
+    isBlog, notBlog: !isBlog, blog: { l1: words.slice(0, 2).join(' '), l2: words.slice(2).join(' ') }, tabs, blogSections, searchCls: site ? 'sp-nojs' : '',
+    layout: (hasToc ? ' sp-has-toc' : '') + (isHub ? ' sp-hub' : ''), hasToc, toc, tocOpen: !site, tocClosed: site,
+    hasMeta: !gone && !isHub && !!P.updated, hasHero: !gone && !isHub, hasFeat: !!featIt, feat,
+    hasTable: !!tb, table: tb ? { cls: (cols >= 4 ? ' sp-wide' : '') + (cols >= 6 ? ' sp-tx' : ''), first, head: tb.columns.map(c => ({ label: c, blank: !c })), more: tb.rows.length > KEEP, total: String(tb.rows.length),
+      rows: tb.rows.map((r, i) => ({ cls: i >= KEEP ? 'sp-x' : '', label: plain(r[0]), cells: r.slice(1).map((c, j) => ({ col: plain(tb.columns[j + 1] || ''), parts: this.parts(c) })) })) } : { cls: '', first: '22%', head: [], rows: [], more: false, total: '0' },
     groups: groups.filter(g => g.cards.length),
     sections: isFaq ? [] : sections, sectionsAfter: isFaq ? sections : [],
-    faq, faqGroups, hasFaqPage: isFaq && faq.length > 0, hasFaqBlock: !isFaq && faq.length > 0, hasJumpPills: isFaq && grouped && faqGroups.length > 1, hasJumpList: isFaq && !grouped && faq.length >= 8, jump: faq.map(f => ({ href: '#' + f.id, q: f.q })),
-    hasSources: P.sources.length > 0, sources: P.sources.map(o => ({ label: o.label || o.url, href: o.url, note: o.checkedLabel ? ' · checked ' + o.checkedLabel : '' })),
+    faq, faqGroups, hasFaqPage: isFaq && P.faq.length > 0, hasFaqBlock: !isFaq && P.faq.length > 0, hasJumpPills: isFaq && grouped && faqGroups.length > 1, hasJumpList: isFaq && !grouped && P.faq.length >= 8, jump: faqGroups.flatMap(g => g.items).map(f => ({ href: '#' + f.id, q: f.q })),
+    hasSources: P.sources.length > 0, sourcesTitle: 'Sources (' + P.sources.length + ')', sources: P.sources.map(o => ({ label: o.label || o.url, href: o.url, note: o.checkedLabel ? ' · checked ' + o.checkedLabel : '' })),
     hasRelated: related.length > 0, related };
 }`;
 };
-// A page's link-preview picture (what Facebook, X, Slack, iMessage and the AI chat apps show when its address is shared): the
-// sky, its kind and title large, its address, and three deck cards. Any page by `page` (its address, "home" for the landing
-// page). design/og.mjs draws each one with Chrome into web/og/.
-const OG_KINDS = { pricing: 'Pricing', legal: 'Legal', compare: 'Comparison', alternative: 'Alternative', feature: 'Feature', use: 'Who it’s for', faq: 'FAQ' };
-const ogCard = (key, x, y, rot, text) => `<div style="position: absolute; left: ${x}px; top: ${y}px; width: 330px; height: 214px; transform: rotate(${rot}deg); border-radius: 30px; box-shadow: 0 34px 60px -26px rgba(20,30,90,.5);">${artCard(key, 'width: 100%; height: 100%; border-radius: 30px;', 'height: 100%; box-sizing: border-box; padding: 26px; display: flex; align-items: center; justify-content: center; text-align: center; font-size: 34px; font-weight: 500; line-height: 1.2; letter-spacing: -.02em;', text)}</div>`;
-const ogPage = `<div style="position: relative; isolation: isolate; width: 1200px; height: 630px; box-sizing: border-box; overflow: hidden; font-family: ${FONT}; background: {{t.bg}}; color: {{t.text}};">
-  <div aria-hidden="true" style="position: absolute; inset: 0; z-index: -1; background: linear-gradient(180deg, {{sky.top}} 0%, {{sky.mid}} 40%, {{sky.low}} 70%, {{t.bg}} 100%);"><div style="position: absolute; left: 0; top: -45%; width: 80%; height: 100%; background: radial-gradient(closest-side, {{sky.glow}}, transparent);"></div></div>
-  <div style="position: absolute; left: 80px; top: 62px; display: flex; align-items: center; gap: 14px; font-size: 32px; font-weight: 600; letter-spacing: -.02em;">${mark(30)}Lucida</div>
+// A page's picture (what Facebook, X, Slack, iMessage and the AI chat apps show when its address is shared, and the hero and the card of
+// the page on the site): a bold full-bleed gradient (one of 13 styles in one of 16 vivid palettes, after Awwwards' "Trendy Gradients in
+// Web Design"), a light film grain over it, the title on a calm veil, and on the right a SCENE of the page's own, drawn from white cards
+// with soft shadows and the app's deck gradients as small accents: two cards facing each other for a comparison, a question with its
+// four answers for Learn mode, cards at widening gaps for spaced repetition, and so on. Which scene, style and palette a page gets is in
+// design/site.mjs (pictureOf). It looks the same on a dark screen as on a light one (the owner: the gradients keep their look in dark
+// mode); only the page around it turns dark. CSS and SVG only: no photos, no other company's logo (a comparison writes the other app's
+// name in plain text). Any page by `page` (its address, "home" for the landing page). design/og.mjs draws each one with Chrome into
+// web/og/. On the site and in the boards the picture wears the app's grain on top (spPic).
+const ogAt = (x, y, w, h, rot = 0) => `position: absolute; left: ${x}px; top: ${y}px; width: ${w}px; height: ${h}px;${rot ? ` transform: rotate(${rot}deg);` : ''}`;
+// A white card with a hairline edge and a soft shadow.
+const ogCard = (x, y, w, h, rot, body, o = {}) => `<div style="${ogAt(x, y, w, h, rot)} box-sizing: border-box; border-radius: ${o.r ?? 26}px; background: {{card}}; box-shadow: 0 0 0 1.5px {{edge}}, ${o.sh ?? '0 30px 56px -24px {{sh}}'}; ${o.css ?? ''}">${body}</div>`;
+// A frosted card: the gradient behind it shows through, blurred.
+const ogGlass = (x, y, w, h, rot, body, o = {}) => `<div style="${ogAt(x, y, w, h, rot)} box-sizing: border-box; border-radius: ${o.r ?? 26}px; background: {{glass}}; -webkit-backdrop-filter: blur(18px) saturate(1.5); backdrop-filter: blur(18px) saturate(1.5); box-shadow: 0 0 0 1.5px {{glassEdge}}, ${o.sh ?? '0 30px 56px -24px {{sh}}'}; ${o.css ?? ''}">${body}</div>`;
+// A deck's cover, small: its gradient, as a rounded block (a palette slot c1…c6).
+const ogSw = (slot, x, y, w, h, r = 14, extra = '') => `<div style="${ogAt(x, y, w, h)} border-radius: ${r}px; background: radial-gradient(circle at 18% 88%, {{${slot}.b0.c}}, transparent 62%), radial-gradient(circle at 86% 10%, {{${slot}.b3.c}}, transparent 58%), {{${slot}.base}}; box-shadow: inset 0 0 0 1px rgba(255,255,255,.35); ${extra}"></div>`;
+// A pill on the picture (white by default).
+const ogPill = (x, y, h, body, o = {}) => `<div style="position: absolute; left: ${x}px; top: ${y}px; height: ${h}px; padding: 0 ${o.px ?? 18}px; box-sizing: border-box; display: inline-flex; align-items: center; gap: 8px; border-radius: 999px; background: ${o.bg ?? '{{card}}'}; color: ${o.fg ?? '{{t.text}}'}; box-shadow: ${o.sh ?? '0 0 0 1.5px {{edge}}, 0 14px 28px -12px {{sh}}'}; font-size: ${o.fs ?? 22}px; font-weight: ${o.fw ?? 600}; letter-spacing: -.01em; white-space: nowrap;">${body}</div>`;
+// A round avatar (a palette's colors), and a bar for a line of text that isn't there.
+const ogDot = (slot, x, y, d, ring = 3) => `<div style="position: absolute; left: ${x}px; top: ${y}px; width: ${d}px; height: ${d}px; border-radius: 50%; background: linear-gradient(140deg, {{${slot}.b0.c}}, {{${slot}.b2.c}}); box-shadow: 0 0 0 ${ring}px {{card}}, 0 8px 18px -8px {{sh}};"></div>`;
+const ogBar = (x, y, w, h = 10, bg = '{{bar}}') => `<div style="position: absolute; left: ${x}px; top: ${y}px; width: ${w}px; height: ${h}px; border-radius: ${h}px; background: ${bg};"></div>`;
+const ogTxt = (x, y, w, text, o = {}) => `<div style="position: absolute; left: ${x}px; top: ${y}px; width: ${w}px; font-size: ${o.fs ?? 24}px; font-weight: ${o.fw ?? 500}; line-height: ${o.lh ?? 1.25}; letter-spacing: -.02em; color: ${o.fg ?? '{{t.text}}'}; text-align: ${o.align ?? 'left'};">${text}</div>`;
+const ogIc = (path, size, sw = 2) => svg(path, size, sw);
+const OGI = {
+  arrow: '<path d="M4 12h15M13 6l6 6-6 6"/>', star: '<path d="M12 3.6l2.5 5.2 5.7.8-4.1 4 1 5.7L12 16.6l-5.1 2.7 1-5.7-4.1-4 5.7-.8z" fill="currentColor"/>',
+  speaker: '<path d="M4 9.5v5h3.5L12 18.5v-13L7.5 9.5z"/><path d="M15.5 9a4.5 4.5 0 0 1 0 6M18 6.5a8 8 0 0 1 0 11"/>', check: '<path d="M5 12l5 5 9-10"/>',
+  lock: '<rect x="5" y="11" width="14" height="10" rx="2.5"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/>', link: '<path d="M10 14a4 4 0 0 0 5.66 0l3-3a4 4 0 0 0-5.66-5.66l-1 1"/><path d="M14 10a4 4 0 0 0-5.66 0l-3 3a4 4 0 0 0 5.66 5.66l1-1"/>',
+  spark: '<path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z"/><path d="M19 15.5l.8 2.2 2.2.8-2.2.8-.8 2.2-.8-2.2-2.2-.8 2.2-.8z"/>', search: '<circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/>'
+};
+// A comparison's two cards: the other app's, plain, with its name in text, and Lucida's, and the "vs" between them.
+const ogOther = (x, y, w, h, rot) => ogCard(x, y, w, h, rot, `<div style="height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px;"><div style="font-size: {{${w > 300 ? 'otherFsWide' : 'otherFs'}}}px; font-weight: 600; letter-spacing: -.035em; white-space: nowrap;">{{other}}</div><div style="width: 130px; height: 10px; border-radius: 10px; background: {{bar}};"></div><div style="width: 88px; height: 10px; border-radius: 10px; background: {{bar}};"></div></div>`);
+const ogLu = (x, y, w, h, rot) => ogCard(x, y, w, h, rot, `<div style="height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px;">${mark(44)}<span style="font-size: 40px; font-weight: 600; letter-spacing: -.035em;">Lucida</span><span style="width: 150px; height: 12px; border-radius: 12px; background: linear-gradient(90deg, {{c1.b0.c}}, {{c1.b3.c}}, {{c1.b2.c}});"></span></div>`);
+const ogVs = (x, y) => `<div style="${ogAt(x, y, 76, 76)} z-index: 3; border-radius: 50%; background: {{t.inv}}; color: {{t.invText}}; display: flex; align-items: center; justify-content: center; font-size: 28px; font-weight: 700; letter-spacing: -.02em; box-shadow: 0 14px 28px -10px {{sh}};">vs</div>`;
+// A small white card of words (a deck's card), with a gradient strip on its left.
+const ogWords = (x, y, w, h, rot, body, slot, o = {}) => ogCard(x, y, w, h, rot, `<div style="position: absolute; left: 0; top: 0; bottom: 0; width: 16px; border-radius: ${o.r ?? 24}px 0 0 ${o.r ?? 24}px; background: linear-gradient(180deg, {{${slot}.b0.c}}, {{${slot}.b2.c}});"></div><div style="height: 100%; box-sizing: border-box; padding: ${o.pad ?? '18px 22px 18px 34px'}; display: flex; align-items: center; font-size: ${o.fs ?? 26}px; font-weight: ${o.fw ?? 500}; line-height: 1.22; letter-spacing: -.02em;">${body}</div>`, { r: o.r ?? 24 });
+// What the right of a picture draws, a scene for each kind of page (500 × 630 from x = 700; a card may run past the edge).
+const ogScene = (name, body) => `<sc-if value="{{scene.${name}}}" hint-placeholder-val="{{ false }}"><div style="position: absolute; left: 696px; top: 8px; width: 500px; height: 630px; transform: scale(1.08); transform-origin: 50% 50%;">${body}</div></sc-if>`;
+const OG_SCENES = [
+  // A comparison, in four arrangements, so that eight of them side by side don't all look alike.
+  ogScene('versus0', ogOther(215, 130, 280, 186, -6) + ogLu(20, 270, 300, 196, 6) + ogVs(216, 262)),
+  ogScene('versus1', ogOther(12, 128, 280, 186, 5) + ogLu(186, 276, 300, 196, -6) + ogVs(200, 246)),
+  ogScene('versus2', ogOther(150, 64, 330, 176, -5) + ogLu(10, 330, 330, 196, 5) + ogVs(300, 268)),
+  ogScene('versus3', ogLu(0, 214, 232, 198, -4) + ogOther(262, 178, 232, 198, 5) + ogVs(218, 276)),
+  // An alternative: the other app's card, an arrow, and Lucida's card in front.
+  ogScene('switch', [
+    ogCard(10, 330, 250, 160, -7, `<div style="height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; opacity: .8;"><div style="font-size: {{otherFs}}px; font-weight: 600; letter-spacing: -.035em; white-space: nowrap;">{{other}}</div><div style="width: 110px; height: 10px; border-radius: 10px; background: {{bar}};"></div></div>`),
+    `<div style="${ogAt(232, 288, 64, 64)} z-index: 3; border-radius: 50%; background: {{t.inv}}; color: {{t.invText}}; display: flex; align-items: center; justify-content: center; box-shadow: 0 14px 28px -10px {{sh}};">${ogIc(OGI.arrow, 30, 2.2)}</div>`,
+    ogLu(160, 70, 330, 214, 6),
+    ogPill(350, 50, 46, ogIc(OGI.check, 24, 2.6) + 'Free', { bg: '{{t.inv}}', fg: '{{t.invText}}', fs: 20, sh: '0 12px 24px -10px {{sh}}' })
+  ].join('')),
+  // Spaced repetition: cards spread along a line, the gaps widening, each a little higher.
+  ogScene('intervals', [
+    ogBar(0, 508, 500, 3),
+    '<sc-for list="{{steps}}" as="s">',
+    `<div style="position: absolute; left: {{s.x}}px; top: {{s.y}}px; width: {{s.w}}px; height: {{s.h}}px; transform: rotate({{s.rot}}deg); box-sizing: border-box; border-radius: 20px; background: {{card}}; box-shadow: 0 0 0 1.5px {{edge}}, 0 20px 36px -18px {{sh}}; overflow: hidden;"><div style="position: absolute; left: 0; right: 0; top: 0; height: 46%; background: {{s.cover}};"></div></div>`,
+    `<div style="position: absolute; left: {{s.tx}}px; top: 518px; width: 80px; text-align: center; font-size: 20px; font-weight: 600; color: {{t.text}};">{{s.label}}</div><div style="position: absolute; left: {{s.cx}}px; top: 500px; width: 3px; height: 19px; border-radius: 3px; background: {{t.text}};"></div>`,
+    '</sc-for>'
+  ].join('')),
+  // Picture with hidden parts: a drawing with labels, some covered by boxes.
+  ogScene('occlusion', ogCard(10, 80, 470, 340, 3, [
+    ogSw('c1', 34, 56, 210, 210, 105, 'box-shadow: 0 20px 40px -20px {{sh}};'), ogSw('c3', 78, 96, 92, 92, 46), ogSw('c2', 150, 170, 70, 42, 21, 'transform: rotate(-24deg);'), ogSw('c2', 58, 204, 56, 34, 17, 'transform: rotate(18deg);'),
+    `<svg width="470" height="340" viewBox="0 0 470 340" style="position: absolute; inset: 0; fill: none; stroke: {{bar}}; stroke-width: 2.5; stroke-linecap: round;"><path d="M150 120 L300 66"/><path d="M196 186 L300 140"/><path d="M126 252 L300 214"/><path d="M226 100 L300 290"/></svg>`,
+    ogPill(300, 44, 44, 'Nucleus', { fs: 21, sh: '0 0 0 1.5px {{edge}}' }),
+    `<div style="${ogAt(300, 118, 150, 44)} border-radius: 12px; background: {{t.inv}}; color: {{t.invText}}; display: flex; align-items: center; justify-content: center; font-size: 26px; font-weight: 700; box-shadow: 0 12px 22px -10px {{sh}};">?</div>`,
+    ogPill(300, 192, 44, 'Membrane', { fs: 21, sh: '0 0 0 1.5px {{edge}}' }),
+    `<div style="${ogAt(300, 266, 150, 44)} border-radius: 12px; background: {{t.inv}}; color: {{t.invText}}; display: flex; align-items: center; justify-content: center; font-size: 26px; font-weight: 700; box-shadow: 0 12px 22px -10px {{sh}};">?</div>`
+  ].join(''))),
+  // Learn mode: a question and four answers, one of them right.
+  ogScene('quiz', [
+    ogWords(10, 60, 460, 160, -2, `Which organelle makes most of a cell’s ATP?`, 'c1', { fs: 30, fw: 600, r: 28 }),
+    ogCard(10, 252, 222, 70, 1, `<div style="height: 100%; display: flex; align-items: center; padding: 0 22px; font-size: 24px; font-weight: 500;">Ribosome</div>`, { r: 22 }),
+    ogCard(246, 248, 230, 70, -1, `<div style="height: 100%; display: flex; align-items: center; justify-content: space-between; padding: 0 16px 0 18px; font-size: 21px; font-weight: 600;">Mitochondrion<span style="flex: none; width: 32px; height: 32px; border-radius: 50%; background: #1FA971; color: #FFFFFF; display: inline-flex; align-items: center; justify-content: center;">${ogIc(OGI.check, 20, 3)}</span></div>`, { r: 22, css: 'box-shadow: 0 0 0 3px #1FA971, 0 30px 56px -28px {{sh}};' }),
+    ogCard(10, 336, 222, 70, -1, `<div style="height: 100%; display: flex; align-items: center; padding: 0 22px; font-size: 24px; font-weight: 500;">Golgi body</div>`, { r: 22 }),
+    ogCard(246, 332, 230, 70, 1, `<div style="height: 100%; display: flex; align-items: center; padding: 0 22px; font-size: 24px; font-weight: 500;">Nucleus</div>`, { r: 22 }),
+    ogPill(10, 440, 42, `<span style="width: 140px; height: 10px; border-radius: 10px; background: {{bar}}; position: relative; overflow: hidden;"><span style="position: absolute; left: 0; top: 0; bottom: 0; width: 84px; border-radius: 10px; background: linear-gradient(90deg, {{c1.b0.c}}, {{c1.b2.c}});"></span></span>7 of 12`, { fs: 19, fw: 600 })
+  ].join('')),
+  // Live games: four answer tiles and a join code.
+  ogScene('live', [
+    ogCard(10, 50, 460, 128, -2, `<div style="height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px;"><div style="font-size: 21px; font-weight: 500; color: {{t.muted}};">Join at lucida.cards/join</div><div style="font-size: 64px; font-weight: 700; letter-spacing: .08em; line-height: 1;">482 913</div></div>`),
+    ...[['c1', 'A', 10, 212, 2], ['c2', 'B', 248, 206, -2], ['c3', 'C', 10, 380, -1], ['c4', 'D', 248, 372, 2]].map(([s, l, x, y, r]) => ogCard(x, y, 222, 150, r, `<div style="height: 100%; display: flex; align-items: center; gap: 18px; padding: 0 22px;"><span style="flex: none; width: 76px; height: 76px; border-radius: 22px; background: radial-gradient(circle at 20% 85%, {{${s}.b0.c}}, transparent 65%), radial-gradient(circle at 85% 10%, {{${s}.b3.c}}, transparent 60%), {{${s}.base}}; display: inline-flex; align-items: center; justify-content: center; font-size: 44px; font-weight: 700; color: #000000;">${l}</span><span style="width: 56px; height: 12px; border-radius: 12px; background: {{bar}};"></span></div>`, { r: 30 }))
+  ].join('')),
+  // Shared decks: a deck card with people and stars.
+  ogScene('shared', [
+    ogCard(36, 78, 330, 214, -10, '', { r: 30, css: 'opacity: .7;' }), ogCard(62, 66, 330, 214, -4, '', { r: 30, css: 'opacity: .85;' }),
+    ogCard(90, 96, 360, 232, 4, `<div style="position: absolute; left: 16px; top: 16px; right: 16px; height: 108px; border-radius: 20px; background: radial-gradient(circle at 18% 88%, {{c1.b0.c}}, transparent 62%), radial-gradient(circle at 86% 10%, {{c1.b3.c}}, transparent 58%), {{c1.base}};"></div><div style="position: absolute; left: 24px; right: 24px; bottom: 20px;"><div style="font-size: 38px; font-weight: 600; letter-spacing: -.03em; line-height: 1.05;">Cell Biology</div><div style="margin-top: 6px; font-size: 22px; font-weight: 500; color: {{t.muted}};">412 cards · shared deck</div></div>`, { r: 32 }),
+    ogDot('c2', 100, 392, 60), ogDot('c3', 140, 392, 60), ogDot('c4', 180, 392, 60), ogDot('c5', 220, 392, 60),
+    ogPill(300, 396, 54, ogIc(OGI.star, 24, 2) + '4.8 <span style="color: {{t.muted}}; font-weight: 500;">· 1.2k</span>', { fs: 24 }),
+    ogPill(100, 480, 44, 'Anyone with the link', { fs: 20, fw: 500 })
+  ].join('')),
+  // Classes: a class card with members and how far each has got.
+  ogScene('class', ogCard(20, 60, 450, 440, 2, [
+    ogSw('c1', 26, 26, 160, 56, 18), ogTxt(26, 38, 160, 'Bio 101', { fs: 28, fw: 600, align: 'center', fg: '#000000' }), ogPill(282, 32, 44, 'KQ4 7TD', { fs: 20, fw: 600, bg: '{{surf}}', sh: 'none' }),
+    ogDot('c2', 30, 122, 56), ogBar(106, 128, 130, 14, '{{bar}}'), ogBar(106, 156, 210, 10), ogBar(340, 140, 80, 12), `<div style="${ogAt(340, 140, 62, 12)} border-radius: 12px; background: linear-gradient(90deg, {{c1.b0.c}}, {{c1.b2.c}});"></div>`,
+    ogDot('c3', 30, 214, 56), ogBar(106, 220, 100, 14, '{{bar}}'), ogBar(106, 248, 170, 10), ogBar(340, 232, 80, 12), `<div style="${ogAt(340, 232, 40, 12)} border-radius: 12px; background: linear-gradient(90deg, {{c1.b0.c}}, {{c1.b2.c}});"></div>`,
+    ogDot('c4', 30, 306, 56), ogBar(106, 312, 150, 14, '{{bar}}'), ogBar(106, 340, 190, 10), ogBar(340, 324, 80, 12), `<div style="${ogAt(340, 324, 74, 12)} border-radius: 12px; background: linear-gradient(90deg, {{c1.b0.c}}, {{c1.b2.c}});"></div>`,
+    ogPill(26, 380, 46, ogIc(OGI.check, 22, 2.6) + 'Due Friday', { fs: 20, bg: '{{surf}}', sh: 'none' })
+  ].join(''))),
+  // Import: a file turning into cards.
+  ogScene('import', [
+    ogCard(0, 190, 190, 250, -7, [
+      ogBar(26, 40, 100, 12), ogBar(26, 70, 130, 10), ogBar(26, 94, 112, 10), ogBar(26, 118, 124, 10), ogBar(26, 142, 80, 10),
+      ogSw('c1', 26, 184, 96, 38, 12), ogTxt(26, 190, 96, '.csv', { fs: 22, fw: 600, align: 'center', fg: '#000000' })
+    ].join(''), { r: 24 }),
+    `<div style="${ogAt(198, 288, 70, 70)} z-index: 3; border-radius: 50%; background: {{t.inv}}; color: {{t.invText}}; display: flex; align-items: center; justify-content: center; box-shadow: 0 14px 28px -10px {{sh}};">${ogIc(OGI.arrow, 32, 2.2)}</div>`,
+    ogWords(250, 70, 230, 148, 8, 'Term', 'c3', { fs: 30, r: 26, pad: '18px 22px 18px 38px' }), ogWords(262, 214, 230, 148, -3, 'Definition', 'c2', { fs: 30, r: 26, pad: '18px 22px 18px 38px' }), ogWords(252, 358, 230, 148, 6, 'Card', 'c1', { fs: 30, r: 26, pad: '18px 22px 18px 38px' })
+  ].join('')),
+  // AI flashcards: a message turning into a card.
+  ogScene('chat', [
+    ogCard(10, 56, 440, 150, -2, `<div style="height: 100%; box-sizing: border-box; padding: 22px 24px; display: flex; gap: 16px; align-items: flex-start;"><span style="flex: none; width: 46px; height: 46px; border-radius: 50%; background: {{t.inv}}; color: {{t.invText}}; display: inline-flex; align-items: center; justify-content: center;">${ogIc(OGI.spark, 24, 2)}</span><span style="font-size: 25px; font-weight: 500; line-height: 1.3; letter-spacing: -.02em;">Make 20 flashcards from my lecture on cell respiration.</span></div>`, { r: 30 }),
+    `<div style="${ogAt(210, 224, 60, 60)} z-index: 3; border-radius: 50%; background: {{t.inv}}; color: {{t.invText}}; display: flex; align-items: center; justify-content: center; box-shadow: 0 14px 28px -10px {{sh}}; transform: rotate(90deg);">${ogIc(OGI.arrow, 28, 2.2)}</div>`,
+    ogWords(70, 290, 380, 244, 4, `What does glycolysis produce?`, 'c1', { fs: 36, fw: 600, r: 32, pad: '24px 28px 24px 44px' }),
+    ogPill(310, 266, 44, ogIc(OGI.spark, 20, 2) + '20 cards', { fs: 19, fw: 600 })
+  ].join('')),
+  // MCAT: three cards of a content review.
+  ogScene('mcat', [
+    ogWords(40, 60, 410, 140, -5, 'pH = pKa + log([A⁻] / [HA])', 'c2', { fs: 30, r: 28 }),
+    ogWords(20, 220, 430, 140, 3, 'Which amino acid side chain is basic?', 'c1', { fs: 29, r: 28 }),
+    ogWords(70, 380, 400, 140, -3, 'ΔG = ΔH − TΔS', 'c3', { fs: 34, r: 28 }),
+    ogPill(250, 200, 46, 'MCAT · 230 questions', { fs: 19, fw: 600 })
+  ].join('')),
+  // Medical school: a stack of cards from the ward and the lecture hall.
+  ogScene('med', [
+    ogWords(20, 60, 440, 130, 3, 'Brachial plexus: roots, trunks, divisions…', 'c1', { fs: 27, r: 26 }),
+    ogWords(50, 206, 430, 130, -4, 'Beta-blockers end in -olol', 'c3', { fs: 30, r: 26 }),
+    ogWords(10, 352, 440, 130, 2, 'Krebs cycle: where does CO₂ leave?', 'c2', { fs: 28, r: 26 }),
+    `<div style="${ogAt(372, 168, 76, 76)} z-index: 3; border-radius: 50%; background: {{card}}; color: {{c4.b0.c}}; display: flex; align-items: center; justify-content: center; box-shadow: 0 0 0 1.5px {{edge}}, 0 14px 28px -10px {{sh}};">${ogIc('<path d="M12 5v14M5 12h14"/>', 40, 3.2)}</div>`
+  ].join('')),
+  // Language learning: words and what they mean.
+  ogScene('words', [
+    ogWords(30, 50, 300, 170, -6, `<div><div style="font-size: 56px; font-weight: 600;">犬</div><div style="margin-top: 6px; font-size: 26px; color: {{t.muted}};">dog</div></div>`, 'c1', { r: 28 }),
+    ogWords(170, 210, 310, 170, 4, `<div><div style="font-size: 46px; font-weight: 600;">gracias</div><div style="margin-top: 6px; font-size: 26px; color: {{t.muted}};">thank you</div></div>`, 'c3', { r: 28 }),
+    ogWords(40, 380, 300, 170, -3, `<div><div style="font-size: 46px; font-weight: 600;">Guten Tag</div><div style="margin-top: 6px; font-size: 26px; color: {{t.muted}};">good day</div></div>`, 'c2', { r: 28 }),
+    `<div style="${ogAt(384, 150, 66, 66)} z-index: 3; border-radius: 50%; background: {{t.inv}}; color: {{t.invText}}; display: flex; align-items: center; justify-content: center; box-shadow: 0 14px 28px -10px {{sh}};">${ogIc(OGI.speaker, 30, 2)}</div>`
+  ].join('')),
+  // Teachers: a class, its next deck due, and a live game.
+  ogScene('teach', [
+    ogCard(10, 60, 450, 250, -3, [
+      ogTxt(28, 26, 300, 'Period 3 · Chemistry', { fs: 28, fw: 600 }), ogPill(28, 80, 42, ogIc(OGI.check, 20, 2.6) + 'Moles due Friday', { fs: 19, bg: '{{surf}}', sh: 'none' }),
+      ogDot('c1', 28, 160, 52), ogDot('c2', 68, 160, 52), ogDot('c3', 108, 160, 52), ogDot('c4', 148, 160, 52), ogDot('c5', 188, 160, 52),
+      ogBar(28, 232, 330, 12), `<div style="${ogAt(28, 232, 250, 12)} border-radius: 12px; background: linear-gradient(90deg, {{c1.b0.c}}, {{c1.b2.c}});"></div>`
+    ].join(''), { r: 30 }),
+    ogCard(120, 340, 340, 200, 4, `<div style="position: absolute; left: 14px; top: 14px; right: 14px; height: 92px; border-radius: 20px; background: radial-gradient(circle at 18% 88%, {{c3.b0.c}}, transparent 62%), radial-gradient(circle at 86% 10%, {{c3.b3.c}}, transparent 58%), {{c3.base}};"></div><span style="position: absolute; left: 28px; top: 28px; padding: 5px 14px; border-radius: 999px; background: {{card}}; font-size: 19px; font-weight: 600;">Live</span><div style="position: absolute; left: 26px; bottom: 22px; font-size: 38px; font-weight: 600; letter-spacing: -.03em; line-height: 1.1;">Quiz: the mole</div>`, { r: 30 })
+  ].join('')),
+  // A student's exam week: a column of cards for each day, fewer as the exam comes, and the exam.
+  ogScene('week', ogCard(0, 100, 500, 440, 0, [
+    '<sc-for list="{{days}}" as="d">',
+    `<div style="position: absolute; left: {{d.x}}px; top: 24px; width: 70px; text-align: center; font-size: 20px; font-weight: 600; color: {{t.muted}};">{{d.label}}</div>`,
+    `<div style="position: absolute; left: {{d.x}}px; top: {{d.y}}px; width: 70px; height: {{d.h}}px; border-radius: 22px; background: linear-gradient(170deg, {{d.c1}}, {{d.c2}}); box-shadow: 0 16px 30px -16px {{sh}};"></div>`,
+    '</sc-for>',
+    ogPill(262, 362, 50, ogIc(OGI.check, 22, 2.6) + 'Exam Friday', { fs: 21, bg: '{{t.inv}}', fg: '{{t.invText}}', sh: '0 12px 24px -10px {{sh}}' })
+  ].join(''), { r: 32 })),
+  // The FAQ: a big question and a card with its answer behind it.
+  ogScene('question', [
+    ogCard(30, 250, 400, 220, -7, [ogBar(30, 44, 250, 14), ogBar(30, 78, 320, 10), ogBar(30, 104, 290, 10), ogBar(30, 130, 180, 10)].join(''), { r: 28 }),
+    ogCard(70, 70, 400, 300, 5, `<div style="height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;"><div style="font-size: 190px; font-weight: 700; line-height: .9; letter-spacing: -.05em; background: linear-gradient(135deg, {{c1.b0.c}}, {{c1.b2.c}}); -webkit-background-clip: text; background-clip: text; color: transparent;">?</div><div style="font-size: 30px; font-weight: 600;">Got a question?</div></div>`, { r: 36 }),
+    ogPill(330, 410, 48, 'Q & A', { fs: 21 })
+  ].join('')),
+  // A hub: a grid of small cards.
+  ogScene('grid', '<sc-for list="{{tiles}}" as="g">' + ogCard('{{g.x}}', '{{g.y}}', 148, 104, 0, `<div style="position: absolute; left: 12px; top: 12px; width: 26px; height: 26px; border-radius: 8px; background: {{g.cover}};"></div><div style="position: absolute; left: 12px; right: 10px; bottom: 10px; font-size: {{g.fs}}px; font-weight: 600; line-height: 1.12; letter-spacing: -.02em;">{{g.label}}</div>`, { r: 22, sh: '0 22px 40px -20px {{sh}}' }) + '</sc-for>'),
+  // The blog: a search field over a featured card and two smaller ones.
+  ogScene('blog', [
+    ogPill(10, 52, 52, ogIc(OGI.search, 24, 2) + '<span style="font-weight: 500; color: {{t.muted}};">Search the blog</span>', { fs: 22 }),
+    ogCard(10, 130, 460, 210, -3, `<div style="position: absolute; left: 16px; top: 16px; right: 16px; height: 96px; border-radius: 20px; background: radial-gradient(circle at 18% 88%, {{c1.b0.c}}, transparent 62%), radial-gradient(circle at 86% 10%, {{c1.b3.c}}, transparent 58%), {{c1.base}};"></div><div style="position: absolute; left: 26px; bottom: 22px; font-size: 38px; font-weight: 600; letter-spacing: -.03em; line-height: 1.05;">Lucida vs Quizlet</div>`, { r: 30 }),
+    ogCard(10, 372, 222, 150, 2, `<div style="position: absolute; left: 14px; top: 14px; width: 56px; height: 56px; border-radius: 16px; background: radial-gradient(circle at 18% 88%, {{c2.b0.c}}, transparent 62%), {{c2.base}};"></div><div style="position: absolute; left: 18px; bottom: 16px; font-size: 30px; font-weight: 600; letter-spacing: -.02em;">Features</div>`, { r: 26 }),
+    ogCard(248, 366, 222, 150, -2, `<div style="position: absolute; left: 14px; top: 14px; width: 56px; height: 56px; border-radius: 16px; background: radial-gradient(circle at 18% 88%, {{c3.b0.c}}, transparent 62%), {{c3.base}};"></div><div style="position: absolute; left: 18px; bottom: 16px; font-size: 30px; font-weight: 600; letter-spacing: -.02em;">Guides</div>`, { r: 26 })
+  ].join('')),
+  // The home page: three deck cards.
+  ogScene('cards', ogWords(42, 50, 330, 214, -8, 'Carpe diem', 'c1', { fs: 36, r: 28 }) + ogWords(162, 232, 330, 214, 5, 'でんしゃ', 'c2', { fs: 36, r: 28 }) + ogWords(24, 410, 330, 214, -5, 'F = m · a', 'c3', { fs: 36, r: 28 })),
+  // Pricing: the free card and the Pro card.
+  ogScene('plans', [
+    ogCard(10, 130, 250, 330, -5, `<div style="height: 100%; box-sizing: border-box; padding: 26px 24px; display: flex; flex-direction: column; gap: 14px;"><div style="font-size: 24px; font-weight: 600; color: {{t.muted}};">Free</div><div style="font-size: 64px; font-weight: 700; letter-spacing: -.05em; line-height: 1;">$0</div><div style="display: flex; flex-direction: column; gap: 12px; margin-top: 8px; font-size: 20px; font-weight: 500;"><span style="display: flex; gap: 10px; align-items: center;">${ogIc(OGI.check, 20, 2.8)}Unlimited cards</span><span style="display: flex; gap: 10px; align-items: center;">${ogIc(OGI.check, 20, 2.8)}Learn mode</span><span style="display: flex; gap: 10px; align-items: center;">${ogIc(OGI.check, 20, 2.8)}Live games</span></div></div>`),
+    ogCard(236, 90, 260, 350, 5, `<div style="position: absolute; left: 0; right: 0; top: 0; height: 120px; border-radius: 32px 32px 0 0; background: radial-gradient(circle at 18% 88%, {{c1.b0.c}}, transparent 62%), radial-gradient(circle at 86% 10%, {{c1.b3.c}}, transparent 58%), {{c1.base}};"></div><div style="position: absolute; left: 26px; top: 26px; font-size: 24px; font-weight: 600; color: #000000;">Pro</div><div style="position: absolute; left: 26px; top: 148px;"><div style="font-size: 62px; font-weight: 700; letter-spacing: -.05em; line-height: 1;">$5.99</div><div style="font-size: 20px; font-weight: 500; color: {{t.muted}};">a month</div><div style="display: flex; flex-direction: column; gap: 12px; margin-top: 20px; font-size: 20px; font-weight: 500;"><span style="display: flex; gap: 10px; align-items: center;">${ogIc(OGI.check, 20, 2.8)}Exam dates</span><span style="display: flex; gap: 10px; align-items: center;">${ogIc(OGI.check, 20, 2.8)}Themes</span></div></div>`, { r: 32 })
+  ].join('')),
+  // Privacy: a padlock card.
+  ogScene('lock', [
+    ogCard(40, 90, 400, 280, 4, `<div style="height: 100%; display: flex; align-items: center; justify-content: center;"><div style="width: 150px; height: 150px; border-radius: 50%; background: radial-gradient(circle at 20% 85%, {{c1.b0.c}}, transparent 65%), radial-gradient(circle at 85% 12%, {{c1.b3.c}}, transparent 60%), {{c1.base}}; display: flex; align-items: center; justify-content: center; color: #000000;">${ogIc(OGI.lock, 64, 2)}</div></div>`, { r: 36 }),
+    ogCard(90, 360, 360, 150, -3, `<div style="height: 100%; box-sizing: border-box; padding: 24px 26px; display: flex; flex-direction: column; justify-content: center; gap: 20px;">${[['Your cards', true], ['Ads', false], ['AI training', false]].map(([l, on]) => `<div style="display: flex; align-items: center; justify-content: space-between; font-size: 22px; font-weight: 500;">${l}<span style="width: 50px; height: 28px; border-radius: 28px; background: ${on ? '#1FA971' : '{{bar}}'}; position: relative;"><span style="position: absolute; top: 3px; ${on ? 'right' : 'left'}: 3px; width: 22px; height: 22px; border-radius: 50%; background: #FFFFFF;"></span></span></div>`).join('')}</div>`, { r: 26 })
+  ].join('')),
+  // Terms: a document with a tick.
+  ogScene('terms', [
+    ogCard(60, 60, 340, 440, -4, [ogBar(34, 44, 170, 16), ogBar(34, 92, 270, 10), ogBar(34, 118, 250, 10), ogBar(34, 144, 270, 10), ogBar(34, 170, 190, 10), ogBar(34, 220, 270, 10), ogBar(34, 246, 240, 10), ogBar(34, 272, 270, 10), ogBar(34, 298, 150, 10)].join(''), { r: 28 }),
+    ogSw('c1', 250, 330, 200, 130, 28, 'transform: rotate(6deg); box-shadow: 0 30px 56px -24px {{sh}};'), `<div style="${ogAt(250, 330, 200, 130, 6)} display: flex; align-items: center; justify-content: center; color: #000000;">${ogIc(OGI.check, 64, 2.6)}</div>`
+  ].join('')),
+  // Connect: Lucida's card and an AI's message, joined by a link.
+  ogScene('link', [
+    ogLu(10, 330, 300, 196, -5),
+    ogCard(160, 60, 300, 150, 4, `<div style="height: 100%; box-sizing: border-box; padding: 22px; display: flex; gap: 14px; align-items: flex-start;"><span style="flex: none; width: 42px; height: 42px; border-radius: 50%; background: {{t.inv}}; color: {{t.invText}}; display: inline-flex; align-items: center; justify-content: center;">${ogIc(OGI.spark, 22, 2)}</span><span style="font-size: 23px; font-weight: 500; line-height: 1.3;">Add my Lucida link, then ask for cards.</span></div>`, { r: 28 }),
+    `<div style="${ogAt(190, 236, 70, 70)} z-index: 3; border-radius: 50%; background: {{t.inv}}; color: {{t.invText}}; display: flex; align-items: center; justify-content: center; box-shadow: 0 14px 28px -10px {{sh}};">${ogIc(OGI.link, 32, 2.2)}</div>`
+  ].join(''))
+].join('\n  ');
+// The background: its layers (each a box, a CSS background, how much it shows, its blend and blur) are worked out in the logic.
+const ogPage = `<div style="position: relative; isolation: isolate; width: 1200px; height: 630px; box-sizing: border-box; overflow: hidden; font-family: ${FONT}; background: {{bg.base}}; color: {{t.text}};">
+  <svg width="0" height="0" style="position: absolute;" aria-hidden="true"><defs><filter id="og-liquid" x="-10%" y="-10%" width="120%" height="120%" color-interpolation-filters="sRGB"><feTurbulence type="fractalNoise" baseFrequency=".0032 .0052" numOctaves="2" seed="4" result="n"/><feDisplacementMap in="SourceGraphic" in2="n" scale="190" xChannelSelector="R" yChannelSelector="G"/></filter></defs></svg>
+  <div aria-hidden="true" style="position: absolute; inset: 0; z-index: -1; overflow: hidden;"><sc-for list="{{bg.layers}}" as="l"><div style="position: absolute; left: {{l.x}}px; top: {{l.y}}px; width: {{l.w}}px; height: {{l.h}}px; background: {{l.bg}}; opacity: {{l.o}}; mix-blend-mode: {{l.blend}}; filter: {{l.filter}}; border-radius: {{l.r}}; transform: rotate({{l.rot}}deg);"></div></sc-for></div>
+  <div aria-hidden="true" style="position: absolute; inset: 0; z-index: -1; background: {{bg.veil}};"></div>
+  ${grainSvg('{{bg.grain}}', { blend: 'soft-light', freq: 0.85, slope: 3.4, id: 'og-grain' }).replace('style="position: absolute; inset: 0;', 'style="position: absolute; inset: 0; z-index: -1;')}
+  <div data-og-text style="position: absolute; left: 80px; top: 62px; display: flex; align-items: center; gap: 14px; font-size: 32px; font-weight: 600; letter-spacing: -.02em;">${mark(30)}Lucida</div>
   <div style="position: absolute; left: 80px; top: 0; bottom: 0; width: 600px; display: flex; flex-direction: column; justify-content: center; padding-top: 18px;">
-    <sc-if value="{{kind}}" hint-placeholder-val="{{ true }}"><span style="align-self: flex-start; height: 44px; padding: 0 20px; box-sizing: border-box; display: inline-flex; align-items: center; border-radius: 999px; background: rgba(255,255,255,.72); box-shadow: inset 0 0 0 1px rgba(0,0,0,.08); font-size: 22px; font-weight: 600;">{{kind}}</span></sc-if>
-    <div style="margin-top: 24px; font-size: {{size}}px; font-weight: 600; line-height: 1; letter-spacing: -.05em; text-wrap: balance;">{{h1}}</div>
+    <div data-og-text style="font-size: {{size}}px; font-weight: 600; line-height: 1; letter-spacing: -.05em; text-wrap: balance;">{{h1}}</div>
+    <div data-og-text style="margin-top: 30px; font-size: 26px; color: {{ink2}};">{{url}}</div>
   </div>
-  <div style="position: absolute; left: 80px; bottom: 54px; font-size: 26px; color: {{t.muted}};">{{url}}</div>
-  ${ogCard('k1', 742, 50, -8, 'Carpe diem')}${ogCard('k2', 862, 232, 5, 'でんしゃ')}${ogCard('k3', 724, 410, -5, 'F = m · a')}
+  ${OG_SCENES}
 </div>`;
 const ogLogic = () => {
-  const index = indexOf(SITE.pages).map(i => ({ key: ogKey(i.slug), slug: i.slug, kind: i.kind, h1: i.h1 }));
-  return `${ART_METHOD}
+  const index = indexOf(SITE.pages).map(i => ({ key: ogKey(i.slug), slug: i.slug, kind: i.kind, h1: i.h1, chip: i.chip, short: i.short, picture: i.picture }));
+  const body = `${ART_METHOD}
 renderVals() { ${T}
-  const I = ${JSON.stringify(index)}, it = I.find(i => i.key === this.props.page) || I[0];
-  const KINDS = ${JSON.stringify(OG_KINDS)}, n = it.h1.length, deck = name => this.art(this.gen(name, 'vivid'));
-  const kind = it.kind === 'hub' ? (it.slug === 'compare' ? 'Compare' : 'Features') : KINDS[it.kind] || '';
-  return { t, sky: ${SKY}, grain: '0', kind, h1: it.h1, size: n <= 14 ? 112 : n <= 22 ? 96 : n <= 34 ? 80 : n <= 50 ? 68 : 58,
-    url: 'lucida.cards' + (it.slug ? '/' + it.slug : ''), k1: deck('Latin'), k2: deck('Japanese'), k3: deck('Physics') };
+  const I = ${JSON.stringify(index)}, it = I.find(i => i.key === this.props.page) || I[0], n = it.h1.length, seed = (it.picture.v || 0) + I.indexOf(it) * 7;
+  const GRAD = ${JSON.stringify(GRAD)}, c = GRAD[it.picture.grad] || GRAD.Iris, MESH = ['Iris', 'Apricot', 'Mint', 'Rose', 'Aqua', 'Lemon', 'Lilac', 'Sun'];
+  const slot = name => this.mesh(name), rgba = (hex, a) => { const v = parseInt(hex.slice(1), 16); return 'rgba(' + (v >> 16) + ',' + ((v >> 8) & 255) + ',' + (v & 255) + ',' + a + ')'; };
+  const mix = (a, b, k) => { const x = parseInt(a.slice(1), 16), y = parseInt(b.slice(1), 16), m = s => Math.round(((x >> s) & 255) * (1 - k) + ((y >> s) & 255) * k).toString(16).padStart(2, '0'); return '#' + m(16) + m(8) + m(0); };
+  // The gradient: layers on a base. A "blob" is a soft round patch of one color; a "fill" covers the picture.
+  const blob = (x, y, w, h, col, o, ex) => Object.assign({ x, y, w, h, bg: 'radial-gradient(closest-side, ' + col + ', transparent)', o: o == null ? 1 : o, blend: 'normal', filter: 'none', r: '0', rot: 0 }, ex || {});
+  const fill = (bg, o, ex) => Object.assign({ x: 0, y: 0, w: 1200, h: 630, bg, o: o == null ? 1 : o, blend: 'normal', filter: 'none', r: '0', rot: 0 }, ex || {});
+  const j = ((seed * 37) % 100) / 100, k = ((seed * 53 + 11) % 100) / 100;
+  const [c0, c1, c2, c3, c4] = c, steps = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9].map(i => mix(c3, i < 5 ? c0 : c1, i < 5 ? 0.2 + i * 0.16 : (i - 4) * 0.17));
+  const STYLE = {
+    // Irregular mesh: soft patches of several colors running into each other.
+    mesh: [blob(-150, -130, 840, 720, c0), blob(470 - j * 70, -110, 780, 640, c1), blob(200, 230 + k * 40, 920, 660, c2), blob(840, 250, 640, 540, c4), blob(-110, 350, 660, 480, c3)],
+    // Radial ramp: rings of color from a bright core.
+    radial: [fill('radial-gradient(ellipse 92% 138% at ' + (68 + j * 14) + '% 114%, ' + c4 + ' 0%, ' + c2 + ' 19%, ' + c0 + ' 38%, ' + c1 + ' 60%, ' + c3 + ' 84%)')],
+    // Blurred: a diagonal wash with a white highlight and a deep patch.
+    blurred: [fill('linear-gradient(' + (120 + j * 30) + 'deg, ' + c0 + ' 0%, ' + c1 + ' 54%, ' + c2 + ' 100%)'), blob(700 + k * 120, -170, 560, 440, '#FFFFFF', .9), blob(520, 320, 760, 460, c4, .5)],
+    // Edgy: shapes with a soft edge over a wash.
+    edgy: [fill('linear-gradient(200deg, ' + c4 + ', ' + c0 + ' 56%, ' + c1 + ')'), blob(520 + j * 50, 20, 440, 380, c3, 1, { bg: 'linear-gradient(145deg, ' + c3 + ', ' + c2 + ')', filter: 'blur(7px)', r: '48% 52% 60% 40% / 52% 40% 60% 48%', rot: 12 }), blob(760, 250, 420, 360, c1, 1, { bg: 'linear-gradient(145deg, ' + c1 + ', ' + c3 + ')', filter: 'blur(7px)', r: '55% 45% 42% 58% / 48% 58% 42% 52%', rot: -18 }), blob(-80, 330, 520, 420, c2, .9, { filter: 'blur(26px)' })],
+    // Landscape: soft horizontal bands, a light one across the middle.
+    bands: [fill('linear-gradient(180deg, ' + c3 + ' 0%, ' + c0 + ' 22%, ' + c1 + ' 42%, ' + mix(c1, '#FFFFFF', .55) + ' 50%, ' + c2 + ' 63%, ' + c4 + ' 100%)'), fill('linear-gradient(180deg, transparent 40%, rgba(255,255,255,.4) 49%, transparent 58%)', 1, { filter: 'blur(10px)' })],
+    // Multicolor: a wash, a diagonal swath of a fourth color, a deep bottom.
+    multi: [fill('linear-gradient(150deg, ' + c1 + ' 0%, ' + c0 + ' 46%, ' + c2 + ' 100%)'), fill('linear-gradient(118deg, transparent 36%, ' + c3 + ' 56%, transparent 76%)', .9), fill('linear-gradient(0deg, ' + c4 + ' 0%, transparent 52%)')],
+    // Retro: a diagonal rainbow.
+    retro: [fill('linear-gradient(' + (112 + j * 14) + 'deg, ' + c3 + ' 0%, ' + c0 + ' 20%, ' + c1 + ' 38%, ' + c2 + ' 56%, ' + c4 + ' 76%, ' + c0 + ' 100%)', 1, { filter: 'blur(8px)', x: -30, y: -30, w: 1260, h: 690 })],
+    // Duotone: two colors, corner to corner.
+    duo: [fill('linear-gradient(' + (125 + j * 20) + 'deg, ' + c3 + ' 0%, ' + c0 + ' 100%)'), fill('radial-gradient(ellipse 60% 80% at ' + (80 - k * 20) + '% 20%, rgba(255,255,255,.45), transparent)')],
+    // Tricolor: three colors, each from a side.
+    tri: [fill('linear-gradient(135deg, ' + c2 + ', ' + c1 + ')'), blob(-120, 120, 760, 680, c2), blob(620, -160, 820, 660, c0), blob(260 + j * 60, 300, 860, 580, c4)],
+    // Volume mesh: a shaded sphere that fills the picture.
+    volume: [fill('radial-gradient(farthest-corner at ' + (22 + j * 12) + '% 42%, ' + mix(c3, '#FFFFFF', .55) + ' 0%, ' + c0 + ' 32%, ' + c1 + ' 62%, ' + c4 + ' 100%)')],
+    // Banding: hard steps of one color getting darker.
+    banding: [fill('linear-gradient(180deg, ' + steps.map((s, i) => s + ' ' + i * 10 + '% ' + (i + 1) * 10 + '%').join(', ') + ')')],
+    // Swirl: liquid ribbons of color (an SVG turbulence bends them), after St. Martin.
+    swirl: [fill('conic-gradient(from ' + (20 + j * 60) + 'deg at 24% 90%, ' + c0 + ', ' + c1 + ', ' + c2 + ', ' + c3 + ', ' + c4 + ', ' + c0 + ')', 1, { filter: 'url(#og-liquid)', x: -80, y: -80, w: 1360, h: 800 }), fill('conic-gradient(from ' + (200 + k * 60) + 'deg at 96% 6%, ' + c2 + ', ' + c3 + ', ' + c1 + ', ' + c0 + ', ' + c2 + ')', .5, { filter: 'url(#og-liquid)', blend: 'soft-light', x: -80, y: -80, w: 1360, h: 800 })],
+    // Grainy blur: big soft patches on warm white, with heavy grain, after Richard Sancho.
+    grainy: [fill('#F6F3EE'), blob(560, 120, 920, 760, c0, .85), blob(-200, -260, 800, 720, '#8E8A86', .4), blob(200 + j * 120, 330, 640, 520, c2, .5), blob(900, -120, 560, 460, c1, .5)]
+  };
+  const layers = STYLE[it.picture.style] || STYLE.mesh, strong = it.picture.style === 'grainy' || it.picture.style === 'swirl';
+  // Only a light grain is drawn into the picture itself (the link preview shows it as it is). On the site and in the boards the pictures
+  // wear the app's own grain on top (the sc-grain tile, soft-light, at the screen's pixels), so it shows at any size.
+  const bg = { base: it.picture.style === 'grainy' ? '#F6F3EE' : c3, layers, grain: strong ? 0.3 : 0.2,
+    veil: 'linear-gradient(90deg, rgba(255,255,255,.78) 0%, rgba(255,255,255,.66) 38%, rgba(255,255,255,0) 70%)' };
+  // The deck covers on the cards: a few palettes of the app's own, turned by the page.
+  const acc = i => slot(MESH[(seed + i * 3) % MESH.length]);
+  // Hubs: a grid of nine small cards, each a deck cover, named for the pages under the hub.
+  const names = it.kind === 'hub' ? (it.slug === 'compare' ? I.filter(i => i.kind === 'compare').map(i => i.picture.other).concat('Lucida') : I.filter(i => i.kind === 'feature').map(i => i.short || i.h1)).slice(0, 9) : [];
+  while (names.length > 0 && names.length < 9) names.push('And more');
+  const cover = m => 'radial-gradient(circle at 18% 88%, ' + m.b0.c + ', transparent 62%), radial-gradient(circle at 86% 10%, ' + m.b3.c + ', transparent 58%), ' + m.base;
+  const tiles = names.map((label, i) => ({ label, cover: cover(acc(i)), x: 6 + (i % 3) * 164, y: 70 + Math.floor(i / 3) * 124 + (i % 3) * 14, fs: label.length > 12 ? 19 : label.length > 8 ? 22 : 26 }));
+  // Spaced repetition: five cards, the gap before each one wider, each a little higher.
+  const stepsOf = [[44, 80, '1d'], [126, 92, '3d'], [222, 104, '1w'], [334, 118, '3w'], [440, 132, '2mo']].map(([cx, w, label], i) => ({ cover: cover(acc(i)), x: cx - w / 2, y: 476 - w * 2 / 3 - i * 34, w, h: Math.round(w * 2 / 3), rot: [-5, 4, -3, 5, -4][i], label, tx: cx - 40, cx: cx - 1 }));
+  // An exam week: a column of cards for each day, fewer as the exam comes, and the exam.
+  const days = [['Mon', 5], ['Tue', 4], ['Wed', 3], ['Thu', 2], ['Fri', 1]].map(([label, kk], i) => ({ label, x: 22 + i * 92, h: 40 + kk * 44, y: 330 - (40 + kk * 44), c1: acc(i).b0.c, c2: acc(i).b3.c }));
+  return { t, grain: '0', h1: it.h1, size: n <= 14 ? 112 : n <= 22 ? 96 : n <= 34 ? 80 : n <= 50 ? 68 : 58, bg,
+    url: 'lucida.cards' + (it.slug ? '/' + it.slug : ''), other: it.picture.other, otherFs: it.picture.other.length <= 6 ? 46 : it.picture.other.length <= 8 ? 38 : 31, otherFsWide: it.picture.other.length <= 6 ? 50 : it.picture.other.length <= 8 ? 42 : 34, ink2: '#2A2A30',
+    scene: Object.fromEntries(${JSON.stringify(SCENES)}.map(s => [s, s === it.picture.scene + (${JSON.stringify(SCENE_ARRANGEMENTS)}[it.picture.scene] ? (it.picture.v || 0) % ${JSON.stringify(SCENE_ARRANGEMENTS)}[it.picture.scene] : '')])),
+    card: '#FFFFFF', glass: 'rgba(255,255,255,.62)', glassEdge: 'rgba(255,255,255,.75)', edge: 'rgba(0,0,0,.06)',
+    bar: 'rgba(0,0,0,.11)', sh: 'rgba(20,20,60,.45)', surf: '#F1F1F4',
+    c1: acc(0), c2: acc(1), c3: acc(2), c4: acc(3), c5: acc(4), c6: acc(5), tiles, steps: stepsOf, days };
 }`;
+  // A mark of this drawing (its template and code), so design/og.mjs and design/check-site.mjs can tell when the pictures were drawn by an
+  // older one.
+  return `// og-art: ${createHash('sha1').update(ogPage + body).digest('hex').slice(0, 10)}\n${body}`;
 };
 function siteFiles() {
   const out = {};
@@ -6072,7 +6477,7 @@ function siteFiles() {
     }
   }
   const keys = indexOf(SITE.pages).map(i => ogKey(i.slug));
-  out.SiteOg = ['Site · Link preview picture (1200 × 630) for any page', ogPage, { props: { ...DARK, page: { editor: 'enum', default: 'vs/anki' in Object.fromEntries(keys.map(k => [k, 1])) ? 'vs/anki' : keys[0], options: keys }, grain: { editor: 'range', default: 0, min: 0, max: 1, step: 0.05 } }, logic: ogLogic(), w: 1200, h: 630 }];
+  out.SiteOg = ['Site · Link preview picture (1200 × 630) for any page', ogPage, { props: { page: { editor: 'enum', default: 'vs/anki' in Object.fromEntries(keys.map(k => [k, 1])) ? 'vs/anki' : keys[0], options: keys } }, logic: ogLogic(), w: 1200, h: 630 }];
   return out;
 }
 
