@@ -2167,6 +2167,7 @@ mockMaterials() {
       'Making': { step: 'making', kind: 'file', progress: { word: 'Writing cards…', phase: 'write', i: 3, n: 8 } },
       'Making a recording': { step: 'making', kind: 'record', progress: { word: 'Listening to your recording…', phase: 'read', i: 1, n: 2 } },
       'Review': { step: 'review', kind: 'file', cards, name: 'Lecture 3 slides', notes }, 'Review (notes open)': { step: 'review', kind: 'file', cards, name: 'Lecture 3 slides', notes }, 'Review (notes off)': { step: 'review', kind: 'file', cards, name: 'Lecture 3 slides', notes, keepNotes: false },
+      'Review (no room for notes)': { step: 'review', kind: 'file', cards, name: 'Lecture 3 slides', notes, notesFull: true },
       'Review (audio cards)': { step: 'review', kind: 'paste', cards: spanish, name: 'Spanish words', notes: { ...notes, title: 'Spanish words', sections: notes.sections.slice(0, 2).map(x => ({ ...x, at: '' })), text: '# Spanish words\n\nGreetings and words for the home and school.\n\n## Greetings\n\n**buenos días** means good morning. Use **usted** to be polite.\n\n## The home\n\n**la casa** is the house.\n' } },
       'Review (editing a card)': { step: 'review', kind: 'file', cards, name: 'Lecture 3 slides', notes, editing: 'k2' },
       'Limit reached': { step: 'error', kind: 'file', limits: free, error: { message: 'That’s today’s 3 free makes. Go Pro for 30 a day.', pro: true, code: 'day' } },
@@ -2425,13 +2426,17 @@ renderVals() { const t = this.theme(!!this.props.dark, !!this.props.dim);const d
       ref: hit ? el => { if (this._seen !== viewing + '|' + at) { this._seen = viewing + '|' + at; el.scrollIntoView({ block: 'center' }); } } : () => {} }); };
     if (raw) { const bits = String(raw).split(/\n*<<([^>\n]*)>>\n/); if (bits[0].trim()) push('', bits[0].trim()); for (let i = 1; i < bits.length; i += 2) if ((bits[i + 1] || '').trim()) push(bits[i], bits[i + 1].trim()); }
     const sourceRow = vs ? sourceRows.find(x => x.id === vs.id) : null;
-    const kind = vs ? vs.kind : '', fileHref = vs && vs.files[0] ? vs.files[0].href : '';
+    const kind = vs ? vs.kind : '';
+    // A recording kept in several files (a long one is cut into parts, and the microphone makes a file every ten minutes): the time asked for is in the part that covers it.
+    let part = vs && vs.files[0] ? vs.files[0] : null, off = 0;
+    if (vs && kind === 'recording' && vs.files.length > 1) { let o = 0; for (const f of vs.files) { part = f; off = o; if (!f.seconds || secs < o + f.seconds) break; o += f.seconds; } }
+    const fileHref = part ? part.href : '', secsIn = Math.max(0, secs - off);
     const vw = vs ? { open: true, name: vs.name, line: sourceRow.line, close: () => this.setState({ viewing: '' }),
-      hasAudio: kind === 'recording' && !!fileHref, audio: fileHref + (secs ? '#t=' + secs : ''), hasPhotos: kind === 'photo', photos: vs.files, hasTopic: kind === 'topic', topic: vs.text,
+      hasAudio: kind === 'recording' && !!fileHref, audio: fileHref + (secsIn ? '#t=' + secsIn : ''), hasPhotos: kind === 'photo', photos: vs.files, hasTopic: kind === 'topic', topic: vs.text,
       hasParts: parts.length > 0, parts, loading: !!vs.textName && raw === null, noText: !parts.length && !!vs.textName && raw === '' || kind === 'file',
       noTextLine: kind === 'file' ? (vs.pages ? plural(vs.pages, 'page') + '. ' : '') + 'The cards from it say which page they came from.' : 'Nothing to show.',
       hasOpen: kind === 'video' ? !!vs.url : (kind === 'file' || kind === 'recording') && !!fileHref,
-      openHref: kind === 'video' ? vs.url + (secs ? (/\?/.test(vs.url) ? '&' : '?') + 't=' + secs + 's' : '') : kind === 'file' && pageNo ? fileHref + '#page=' + pageNo : kind === 'recording' && secs ? fileHref + '#t=' + secs : fileHref, openLabel: kind === 'video' ? 'Open the video' : kind === 'recording' ? 'Open the recording' : 'Open the file',
+      openHref: kind === 'video' ? vs.url + (secs ? (/\?/.test(vs.url) ? '&' : '?') + 't=' + secs + 's' : '') : kind === 'file' && pageNo ? fileHref + '#page=' + pageNo : kind === 'recording' && secsIn ? fileHref + '#t=' + secsIn : fileHref, openLabel: kind === 'video' ? 'Open the video' : kind === 'recording' ? 'Open the recording' : 'Open the file',
       canEdit: G.can, moreHref: mock ? 'WebMake.dc.html' : '/make?from=' + encodeURIComponent(vs.id) + '&deck=' + encodeURIComponent(dk.id), remove: () => { if (mock) return; db.act.deleteSource(dk.id, vs.id).then(() => this.setState({ viewing: '' })); } }
       : { open: false, name: '', line: '', close: () => {}, hasAudio: false, audio: '', hasPhotos: false, photos: [], hasTopic: false, topic: '', hasParts: false, parts: [], loading: false, noText: false, noTextLine: '', hasOpen: false, openHref: '', openLabel: '', canEdit: false, moreHref: '', remove: () => {} };
     // The section on show (Cards unless the address or a tap says another, and only a section that is there): ?tab= in the address, a source opened from a card, or the canvas's setting.

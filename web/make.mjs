@@ -24,7 +24,7 @@ import { state, isPro, madeLeft, useMake, refundMake, uploadsOf, addUpload, drop
   withLibrary, isDev, sourceNames } from './store.mjs';
 import { cloud } from './supa.mjs';
 import { blobs } from './blobs.mjs';
-import { MAKE, MAKE_AUDIO_MB, MAKE_CARDS_MAX } from './plans.mjs';
+import { MAKE, MAKE_AUDIO_MB, MAKE_CARDS_MAX, GUIDE } from './plans.mjs';
 import { sniff } from './sniff.js';
 import * as X from './extract.mjs';
 import { readCaptions, looksLikeCaptions } from './captions.mjs';
@@ -49,7 +49,7 @@ const VIDEO_MODEL = () => process.env.LUCIDA_MAKE_VIDEO_MODEL || 'gemini-3.1-fla
 export const makeReady = () => !!process.env.OPENROUTER_API_KEY;
 export const videoReady = () => !!process.env.GEMINI_API_KEY;
 // What the app needs to know about making cards: whether it's on, whether videos can be watched, and this person's limits.
-export const makeInfo = pro => ({ on: makeReady(), video: videoReady(), ...MAKE[pro ? 'pro' : 'free'], audioMB: MAKE_AUDIO_MB, cards: MAKE_CARDS_MAX });
+export const makeInfo = pro => ({ on: makeReady(), video: videoReady(), ...MAKE[pro ? 'pro' : 'free'], audioMB: MAKE_AUDIO_MB, cards: MAKE_CARDS_MAX, guidePages: GUIDE.pages });
 
 // ---------- sizes ----------
 const CHUNK = 20000;       // characters of text the AI reads in one part (about 5,000 tokens)
@@ -178,12 +178,13 @@ const LANGS = { en: 'English', es: 'Spanish', fr: 'French', de: 'German', it: 'I
 function cleanOptions(o) {
   o = o && typeof o === 'object' ? o : {};
   // `mode: 'quiz'`: questions with four answers for a Live game (web/live.js), not cards to study. Any number from 5 to 20.
-  const quiz = o.mode === 'quiz', lang = LANGS[o.lang] ? o.lang : '';
+  const quiz = o.mode === 'quiz', lang = typeof o.lang === 'string' && Object.hasOwn(LANGS, o.lang) ? o.lang : '';
   // The kinds of card: basic and fill in the blank, and audio (a word read aloud, for learning the language that is set: it is only there when one is).
   const kinds = [...new Set((Array.isArray(o.kinds) ? o.kinds : ['basic', 'cloze']).filter(k => k === 'basic' || k === 'cloze' || (k === 'audio' && lang && !quiz)))];
   const n = Math.round(+o.count), num = Math.min(20, Math.max(5, n || 10));
-  // `notes`: a starter note for the deck is drafted too (each part of the material also gives a few short notes). Not for a Live quiz.
-  return { count: quiz ? num : [10, 20, 50].includes(n) ? n : 'auto', kinds: kinds.length ? kinds : ['basic', 'cloze'], lang, notes: !quiz && o.notes !== false,
+  // `notes: true`: a starter note for the deck is drafted too (each part of the material also gives a few short notes). Only when asked for (a page or an app that doesn't know about
+  // notes, an older one, would save them into a Guide without anyone choosing it), and never for a Live quiz.
+  return { count: quiz ? num : [10, 20, 50].includes(n) ? n : 'auto', kinds: kinds.length ? kinds : ['basic', 'cloze'], lang, notes: !quiz && o.notes === true,
     deckId: clip(o.deckId, 60), deckName: clip(o.deckName, 120), ...(quiz ? { mode: 'quiz' } : {}) };
 }
 // (`plan` is MAKE.free or MAKE.pro: these run outside a library save, where isPro() can't be asked, so the plan says which.)
@@ -205,6 +206,7 @@ export function youtubeId(url) {
 // Reads the source: its text (or pictures, or recordings, or the video's address) and breaks it into parts. Returns what the job needs.
 async function material(uid, b, info) {
   const plan = info.plan, from = info.from, opts = cleanOptions(b.options), pro = isProPlan(plan), src = from ? from.source : null;
+  if (from) opts.notes = false;                     // (more cards from a source: its notes were drafted when it was made)
   const out = { name: '', kind: '', pages: 0, seconds: 0, photos: 0, files: [], read: [], parts: [], url: '', topic: '', text: false, minutes: 0 };
   const load = async list => {
     const got = [];
@@ -312,6 +314,8 @@ async function material(uid, b, info) {
     // Captions (.srt, .vtt): the words with the time each starts, so cards say where in the lecture they came from. The plan's minutes are the limit (as for a recording).
     const cap = reading(() => readCaptions(f.buf));
     if (cap.seconds > plan.minutes * 60 * 1.03) throw fail('Those captions cover ' + plural(Math.round(cap.seconds / 60), 'minute') + '. ' + (pro ? 'Pro makes from up to ' + plan.minutes + ' minutes at a time.' : 'Free makes from up to ' + plan.minutes + ' minutes at a time. Go Pro for up to ' + MAKE.pro.minutes + '.'), 413, 'minutes', { pro: !pro });
+    const capPages = Math.max(1, Math.ceil(cap.units.reduce((n, u) => n + u.text.length, 0) / PAGE));
+    if (capPages > plan.pages) throw pageError('caption file', capPages, plan);
     textParts(cap.units, 'file', name, 0);
     out.seconds = cap.seconds; out.text = true;
   } else if (fam === 'text') {
@@ -357,12 +361,14 @@ const parseJson = s => { try { return JSON.parse(String(s).trim().replace(/^```(
 const stripThink = s => String(s || '').replace(/<think>[\s\S]*?<\/think>/gi, '').replace(/<think>[\s\S]*$/i, '').trim();
 // One chat call that answers with JSON in the shape of `schema`; returns the answer (an object with a list under `key`). `user` is text, or a list of parts
 // (pictures, a PDF). `text`: it goes to the text model (with its fallback, its hosts and its thinking settings above), not to the one that sees.
-async function chatCards({ model, system, user, plugins, schema, key = 'cards', text = false }) {
+async function chatCards({ model, system, user, plugins, schema, key = 'cards', text = false, retry = null }) {
   for (let attempt = 0; attempt < 2; attempt++) {
+    // (The second try, after an answer that was cut off or wasn't JSON, is the same ask with what `retry` changes: fewer cards, no notes.)
+    const shape = attempt && retry ? { system, user, schema, ...retry } : { system, user, schema };
     const fallback = [model, ...(model === TEXT_FALLBACK ? [] : [TEXT_FALLBACK])];
     const res = await post(aiBase() + '/chat/completions', { model, ...(text ? { models: fallback, reasoning: REASONING() } : {}), max_tokens: MAX_TOKENS, temperature: 0.3, usage: { include: true },
-      messages: [{ role: 'system', content: system }, { role: 'user', content: user }],
-      response_format: { type: 'json_schema', json_schema: { name: key === 'cards' ? 'flashcards' : 'quiz', strict: true, schema } },
+      messages: [{ role: 'system', content: shape.system }, { role: 'user', content: shape.user }],
+      response_format: { type: 'json_schema', json_schema: { name: key === 'cards' ? 'flashcards' : 'quiz', strict: true, schema: shape.schema } },
       // Only providers that take every one of these settings, and that say they don't train on or keep what they're sent.
       provider: { require_parameters: true, data_collection: 'deny', ...(text ? TEXT_HOSTS : {}) }, ...(plugins ? { plugins } : {}) }, aiHeaders(), 'the AI');
     if (!res.ok) throw why(res.status, 'the AI (' + model + ')');
@@ -406,10 +412,14 @@ function system(o, mode) {
 const ask = n => 'Write about ' + n + ' cards (no more than ' + (n + 3) + '), the ones most worth knowing, spread across everything given.';
 // Cards from text. `labels` are the places the text came from, so a card's "at" can be checked.
 async function cardsFromText(text, o, n, labels) {
-  return gathered(await chatCards({ model: TEXT_MODEL(), text: true, system: system(o, labels && labels.size ? 'text' : 'plain'), user: ask(n) + '\n\n<material>\n' + text + '\n</material>', schema: cardSchema(o) }), o, labels);
+  const mode = labels && labels.size ? 'text' : 'plain', body = '\n\n<material>\n' + text + '\n</material>', lean = { ...o, notes: false };
+  return gathered(await chatCards({ model: TEXT_MODEL(), text: true, system: system(o, mode), user: ask(n) + body, schema: cardSchema(o),
+    retry: { system: system(lean, mode), user: ask(Math.max(2, Math.ceil(n / 2))) + body, schema: cardSchema(lean) } }), o, labels);
 }
 async function cardsFromTopic(topic, o, n) {
-  return gathered(await chatCards({ model: TEXT_MODEL(), text: true, system: system(o, 'topic'), user: ask(n) + '\n\nThe topic: ' + topic, schema: cardSchema(o) }), o, null);
+  const lean = { ...o, notes: false };
+  return gathered(await chatCards({ model: TEXT_MODEL(), text: true, system: system(o, 'topic'), user: ask(n) + '\n\nThe topic: ' + topic, schema: cardSchema(o),
+    retry: { system: system(lean, 'topic'), user: ask(Math.max(2, Math.ceil(n / 2))) + '\n\nThe topic: ' + topic, schema: cardSchema(lean) } }), o, null);
 }
 // A quiz about a topic, for Live: questions with four answers, as cards that carry their wrong answers (the AI link's quiz format, so Learn mode can use them too).
 async function quizFromTopic(topic, o, n) {
@@ -450,15 +460,18 @@ export function langCode(given, want) {
 // What came back for one part: its cards, and (when notes are on) an overview and a few notes.
 function gathered(data, o, labels) {
   const out = { cards: tidy(data.cards, o, labels) };
-  if (o.notes) { out.overview = clip(data.overview, 600); out.notes = tidyNotes(data.notes, labels); }
+  if (o.notes) { out.overview = plainNote(clip(data.overview, 600)).replace(/\s+/g, ' ').trim(); out.notes = tidyNotes(data.notes, labels); }
   return out;
 }
+// What an AI-written note may hold: words, bold, lists and tables, but no link, picture, address or HTML (it read material someone else may have written, the notes are saved
+// without being read unless the person opens them, and a shared deck shows its Guide to everyone).
+const plainNote = t => String(t || '').replace(/!\[[^\]]*\]\([^)]*\)/g, '').replace(/\[([^\]]*)\]\([^)]*\)/g, '$1').replace(/<[^>\n]{0,200}>/g, '').replace(/\b(?:https?:\/\/|www\.|mailto:)\S+/gi, '').replace(/[ \t]+\n/g, '\n');
 // A note: its heading (a few words, no marks of its own), the part it comes from (a label that exists), and its text (Markdown: bold terms, a small table).
 function tidyNotes(list, labels) {
   const out = [];
   for (const x of Array.isArray(list) ? list : []) {
     if (!x || typeof x !== 'object') continue;
-    const heading = clip(x.heading, 120).replace(/^[#\s>*-]+/, '').replace(/\s+/g, ' ').trim(), text = clip(x.text, 1500);
+    const heading = plainNote(clip(x.heading, 120)).replace(/^[#\s>*-]+/, '').replace(/\s+/g, ' ').trim(), text = plainNote(clip(x.text, 1500)).trim();
     if (!heading || !text) continue;
     let at = clip(x.at, 40).replace(/^<<|>>$/g, '').trim(); if (!labels || !labels.has(at)) at = '';
     out.push({ heading, at, text });
@@ -704,7 +717,7 @@ export function draftNotes(name, results) {
   // Overview: one part says up to three sentences; several parts give their first sentence, from the first, the middle and the last.
   const withWords = parts.filter(r => r.overview.length), pick = withWords.length > 3 ? [0, Math.floor((withWords.length - 1) / 2), withWords.length - 1].map(i => withWords[i]) : withWords;
   const overview = (pick.length === 1 ? pick[0].overview.slice(0, 3) : pick.map(r => r.overview[0])).join(' ');
-  const title = clip(name, 100) || 'Notes';
+  const title = plainNote(clip(name, 100)).replace(/\s+/g, ' ').replace(/^[#>\s-]+/, '').trim() || 'Notes';      // (a video's title is its uploader's: one line, no links)
   const text = ['# ' + title, '', ...(overview ? [overview, ''] : []), ...list.flatMap(x => ['## ' + x.heading + (x.at ? ' (' + x.at + ')' : ''), '', x.text, ''])].join('\n').trim() + '\n';
   return { title, overview, sections: list, text };
 }

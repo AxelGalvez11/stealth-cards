@@ -7,7 +7,7 @@
 
 // What the Make boards' "step" picker offers on the canvas (the app's own flow follows web/make.js).
 export const MAKE_STEPS = ['Pick', 'Upload', 'Upload (a file added)', 'Photos', 'Record', 'Recording', 'Paused', 'Paste', 'Paste (a language set)', 'YouTube', 'YouTube transcript', 'Topic', 'More from a source',
-  'Making', 'Making a recording', 'Review', 'Review (notes open)', 'Review (notes off)', 'Review (audio cards)', 'Review (editing a card)', 'Limit reached', 'File too big', 'Error'];
+  'Making', 'Making a recording', 'Review', 'Review (notes open)', 'Review (notes off)', 'Review (no room for notes)', 'Review (audio cards)', 'Review (editing a card)', 'Limit reached', 'File too big', 'Error'];
 
 // Icons these boards use that the main set doesn't have (the onboarding's paste icon).
 const EXTRA = { paste: '<rect x="5.5" y="4.5" width="13" height="16" rx="2.5"/><path d="M9 4.5v-.3a1.7 1.7 0 0 1 1.7-1.7h2.6A1.7 1.7 0 0 1 15 4.2v.3"/><path d="M9 11h6M9 15h4"/>' };
@@ -110,7 +110,7 @@ export function makeBoards(H) {
     <section aria-label="Notes" style="box-sizing: border-box; padding: 14px 16px; border-radius: 20px; background: {{t.surf}}; display: flex; flex-direction: column; gap: 10px;">
       <div style="display: flex; align-items: center; gap: 12px;">
         <span style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px;"><span style="font-size: 15px; font-weight: 600;">Notes for the deck</span><span style="font-size: 13px; line-height: 1.4; color: {{t.muted}};">{{notesLine}}</span></span>
-        <button type="button" role="switch" aria-checked="{{notesSw.checked}}" aria-label="Save these notes with the cards" onClick="{{toggleNotes}}" class="sc-sw" style="width: 48px; height: 28px; flex-shrink: 0; padding: 3px; box-sizing: border-box; border: 0; border-radius: 14px; background: {{notesSw.track}}; cursor: pointer;"><span style="display: block; width: 22px; height: 22px; border-radius: 11px; background: {{notesSw.knobColor}}; transform: {{notesSw.knob}};"></span></button>
+        <button type="button" role="switch" aria-checked="{{notesSw.checked}}" aria-disabled="{{notesSw.disabled}}" aria-label="Save these notes with the cards" onClick="{{toggleNotes}}" class="sc-sw" style="width: 48px; height: 28px; flex-shrink: 0; padding: 3px; box-sizing: border-box; border: 0; border-radius: 14px; background: {{notesSw.track}}; opacity: {{notesSw.op}}; cursor: pointer;"><span style="display: block; width: 22px; height: 22px; border-radius: 11px; background: {{notesSw.knobColor}}; transform: {{notesSw.knob}};"></span></button>
       </div>
       <button type="button" onClick="{{toggleNotesOpen}}" aria-expanded="{{notesExpanded}}" style="align-self: flex-start; padding: 0; border: 0; background: transparent; color: {{t.text}}; font: inherit; font-size: 14px; font-weight: 600; text-decoration: underline; cursor: pointer;">{{notesOpenLabel}}</button>
       <sc-if value="{{notesOpen}}" hint-placeholder-val="{{ false }}"><div class="gd" ref="{{notesRef}}" data-sc-own style="--gd-text: {{t.text}}; --gd-muted: {{t.muted}}; --gd-line: {{t.line}}; --gd-code: {{t.bg}}; max-height: ${'${PHONE_NOTES_H}'}px; overflow-y: auto; scrollbar-width: none; opacity: {{notesOp}};"></div></sc-if>
@@ -185,10 +185,11 @@ renderVals() {
       toggleEdit: () => M.openCard(c.key), toggleGone: () => M.remove(c.key, !c.gone), say: () => (mock ? null : db.act.speak(c.speak, c.lang)),
       setFront: e => M.edit(c.key, { front: e && e.target ? e.target.value : '' }), setBack: e => M.edit(c.key, { back: e && e.target ? e.target.value : '' }), setText: e => M.edit(c.key, { text: e && e.target ? e.target.value : '' }), setSpeak: e => M.edit(c.key, { speak: e && e.target ? e.target.value : '' }) }; });
   // The notes drafted beside the cards: a line on what is in them, the switch that keeps them, and the draft itself (drawn as a Guide page is).
-  const N = v.notes, keepN = v.keepNotes !== false, nOpen = this.state.notesOpen != null ? !!this.state.notesOpen : mock && p.step === 'Review (notes open)';
-  const sw = on => ({ checked: on ? 'true' : 'false', track: on ? t.inv : t.surf2, knob: on ? 'translateX(20px)' : 'translateX(0)', knobColor: on ? t.invText : t.bg });
+  const N = v.notes, full = !!v.notesFull, keepN = v.keepNotes !== false && !full, nOpen = this.state.notesOpen != null ? !!this.state.notesOpen : mock && p.step === 'Review (notes open)';
+  const sw = (on, enabled = true) => ({ checked: on ? 'true' : 'false', track: on ? t.inv : t.surf2, knob: on ? 'translateX(20px)' : 'translateX(0)', knobColor: on ? t.invText : t.bg, op: enabled ? '1' : '.4', disabled: enabled ? 'false' : 'true' });
   const noteAts = N ? N.sections.map(x => x.at).filter(Boolean) : [];
-  const notesLine = N ? plural(N.sections.length, 'note') + (noteAts.length > 1 ? ' · ' + noteAts[0] + ' to ' + noteAts[noteAts.length - 1] : noteAts.length ? ' · ' + noteAts[0] : '') + (keepN ? ' · saved with the cards' : ' · not saved') : '';
+  const notesLine = N ? (full ? 'This deck has every page a Guide can have, so these notes can’t be added. Delete a page in its Guide to make room.'
+    : plural(N.sections.length, 'note') + (noteAts.length > 1 ? ' · ' + noteAts[0] + ' to ' + noteAts[noteAts.length - 1] : noteAts.length ? ' · ' + noteAts[0] : '') + (keepN ? ' · saved with the cards' : ' · not saved')) : '';
   const keep = cards.filter(c => !c.gone).length, err = v.error;
   const into = chosen ? chosen.name : (o.deckName.trim() || v.title || v.name || 'a new deck');
   const LANGS = [['', 'Same as the material'], ['en', 'English'], ['es', 'Spanish'], ['fr', 'French'], ['de', 'German'], ['it', 'Italian'], ['pt', 'Portuguese'], ['zh', 'Chinese'], ['ja', 'Japanese'], ['ko', 'Korean'], ['ar', 'Arabic'], ['hi', 'Hindi']];
@@ -226,9 +227,9 @@ renderVals() {
     showMake: addable, makeBg: v.ready ? t.inv : t.surf2, makeFg: v.ready ? t.invText : t.muted,
     hasWarn: !!(err && err.soft), warn: err && err.soft ? err.message : '',
     progWord: prog.word || 'Getting ready…', progLine: prog.phase === 'write' || prog.phase === 'read' ? plural(prog.i, 'part') + ' of ' + prog.n + ' done' : prog.phase === 'send' && prog.n > 1 ? prog.i + ' of ' + prog.n + ' sent' : 'This takes a moment', progPct: pct, progWidth: Math.max(4, pct) + '%',
-    hasNotes: step === 'review' && !!N, notesLine, notesSw: sw(keepN), toggleNotes: () => M.setKeepNotes(!keepN), toggleNotesOpen: () => this.setState({ notesOpen: !nOpen }), notesOpen: nOpen, notesExpanded: nOpen ? 'true' : 'false',
+    hasNotes: step === 'review' && !!N, notesLine, notesSw: sw(keepN, !full), toggleNotes: () => (full ? null : M.setKeepNotes(!keepN)), toggleNotesOpen: () => this.setState({ notesOpen: !nOpen }), notesOpen: nOpen, notesExpanded: nOpen ? 'true' : 'false',
     notesOpenLabel: nOpen ? 'Hide the notes' : 'Read the notes', notesOp: keepN ? '1' : '.5',
-    notesRef: el => { const k = N ? N.text.length + ':' + N.title : ''; if (el.getAttribute('data-k') !== k) { el.innerHTML = N ? md.render(N.text) : ''; el.setAttribute('data-k', k); } },
+    notesRef: el => { const k = N ? N.text.length + ':' + (() => { let h = 0; for (let i = 0; i < N.text.length; i++) h = (h * 31 + N.text.charCodeAt(i)) | 0; return h; })() : ''; if (el.getAttribute('data-k') !== k) { el.innerHTML = N ? md.render(N.text) : ''; el.setAttribute('data-k', k); } },
     cards, reviewLine: plural(keep, 'card') + (v.name || v.title ? ' from ' + (v.name || v.title) : ''), saveLabel: v.saving ? 'Saving…' : keep ? 'Add ' + plural(keep, 'card') + ' to ' + into : 'No cards to add', saveBg: keep ? t.inv : t.surf2, saveFg: keep ? t.invText : t.muted,
     errMessage: err && !err.soft ? err.message : '', errMore: err && err.code === 'video-failed' ? 'You can paste the video’s transcript instead.' : err && err.code === 'video-off' ? 'On YouTube, open the video’s description, tap Show transcript, then copy it.' : '',
     errPro: !!(err && err.pro), errRetry: !!(err && !err.pro && err.again)
@@ -350,13 +351,17 @@ export const DECK_MATERIALS_JS = String.raw`
       ref: hit ? el => { if (this._seen !== viewing + '|' + at) { this._seen = viewing + '|' + at; el.scrollIntoView({ block: 'center' }); } } : () => {} }); };
     if (raw) { const bits = String(raw).split(/\n*<<([^>\n]*)>>\n/); if (bits[0].trim()) push('', bits[0].trim()); for (let i = 1; i < bits.length; i += 2) if ((bits[i + 1] || '').trim()) push(bits[i], bits[i + 1].trim()); }
     const sourceRow = vs ? sourceRows.find(x => x.id === vs.id) : null;
-    const kind = vs ? vs.kind : '', fileHref = vs && vs.files[0] ? vs.files[0].href : '';
+    const kind = vs ? vs.kind : '';
+    // A recording kept in several files (a long one is cut into parts, and the microphone makes a file every ten minutes): the time asked for is in the part that covers it.
+    let part = vs && vs.files[0] ? vs.files[0] : null, off = 0;
+    if (vs && kind === 'recording' && vs.files.length > 1) { let o = 0; for (const f of vs.files) { part = f; off = o; if (!f.seconds || secs < o + f.seconds) break; o += f.seconds; } }
+    const fileHref = part ? part.href : '', secsIn = Math.max(0, secs - off);
     const vw = vs ? { open: true, name: vs.name, line: sourceRow.line, close: () => this.setState({ viewing: '' }),
-      hasAudio: kind === 'recording' && !!fileHref, audio: fileHref + (secs ? '#t=' + secs : ''), hasPhotos: kind === 'photo', photos: vs.files, hasTopic: kind === 'topic', topic: vs.text,
+      hasAudio: kind === 'recording' && !!fileHref, audio: fileHref + (secsIn ? '#t=' + secsIn : ''), hasPhotos: kind === 'photo', photos: vs.files, hasTopic: kind === 'topic', topic: vs.text,
       hasParts: parts.length > 0, parts, loading: !!vs.textName && raw === null, noText: !parts.length && !!vs.textName && raw === '' || kind === 'file',
       noTextLine: kind === 'file' ? (vs.pages ? plural(vs.pages, 'page') + '. ' : '') + 'The cards from it say which page they came from.' : 'Nothing to show.',
       hasOpen: kind === 'video' ? !!vs.url : (kind === 'file' || kind === 'recording') && !!fileHref,
-      openHref: kind === 'video' ? vs.url + (secs ? (/\?/.test(vs.url) ? '&' : '?') + 't=' + secs + 's' : '') : kind === 'file' && pageNo ? fileHref + '#page=' + pageNo : kind === 'recording' && secs ? fileHref + '#t=' + secs : fileHref, openLabel: kind === 'video' ? 'Open the video' : kind === 'recording' ? 'Open the recording' : 'Open the file',
+      openHref: kind === 'video' ? vs.url + (secs ? (/\?/.test(vs.url) ? '&' : '?') + 't=' + secs + 's' : '') : kind === 'file' && pageNo ? fileHref + '#page=' + pageNo : kind === 'recording' && secsIn ? fileHref + '#t=' + secsIn : fileHref, openLabel: kind === 'video' ? 'Open the video' : kind === 'recording' ? 'Open the recording' : 'Open the file',
       canEdit: G.can, moreHref: mock ? 'WebMake.dc.html' : '/make?from=' + encodeURIComponent(vs.id) + '&deck=' + encodeURIComponent(dk.id), remove: () => { if (mock) return; db.act.deleteSource(dk.id, vs.id).then(() => this.setState({ viewing: '' })); } }
       : { open: false, name: '', line: '', close: () => {}, hasAudio: false, audio: '', hasPhotos: false, photos: [], hasTopic: false, topic: '', hasParts: false, parts: [], loading: false, noText: false, noTextLine: '', hasOpen: false, openHref: '', openLabel: '', canEdit: false, moreHref: '', remove: () => {} };
     // The section on show (Cards unless the address or a tap says another, and only a section that is there): ?tab= in the address, a source opened from a card, or the canvas's setting.
@@ -423,6 +428,7 @@ export const MATERIALS_MOCK = String.raw`mockMaterials() {
       'Making': { step: 'making', kind: 'file', progress: { word: 'Writing cards…', phase: 'write', i: 3, n: 8 } },
       'Making a recording': { step: 'making', kind: 'record', progress: { word: 'Listening to your recording…', phase: 'read', i: 1, n: 2 } },
       'Review': { step: 'review', kind: 'file', cards, name: 'Lecture 3 slides', notes }, 'Review (notes open)': { step: 'review', kind: 'file', cards, name: 'Lecture 3 slides', notes }, 'Review (notes off)': { step: 'review', kind: 'file', cards, name: 'Lecture 3 slides', notes, keepNotes: false },
+      'Review (no room for notes)': { step: 'review', kind: 'file', cards, name: 'Lecture 3 slides', notes, notesFull: true },
       'Review (audio cards)': { step: 'review', kind: 'paste', cards: spanish, name: 'Spanish words', notes: { ...notes, title: 'Spanish words', sections: notes.sections.slice(0, 2).map(x => ({ ...x, at: '' })), text: '# Spanish words\n\nGreetings and words for the home and school.\n\n## Greetings\n\n**buenos días** means good morning. Use **usted** to be polite.\n\n## The home\n\n**la casa** is the house.\n' } },
       'Review (editing a card)': { step: 'review', kind: 'file', cards, name: 'Lecture 3 slides', notes, editing: 'k2' },
       'Limit reached': { step: 'error', kind: 'file', limits: free, error: { message: 'That’s today’s 3 free makes. Go Pro for 30 a day.', pro: true, code: 'day' } },

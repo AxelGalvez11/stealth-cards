@@ -89,6 +89,7 @@ export function createMake({ state, reload, changed, go, sniff, shrink }) {
         let why = null;
         try { cut = await splitAudio(fromBlob(f), { bytes: Math.min(PART_BYTES, lim.audioMB * 1e6, lim.fileMB * 1e6), seconds: PART_SECONDS }); } catch (e) { why = e; }
         if (cut && cut.seconds > lim.minutes * 60 * 1.03) { tip.push(longRecording(cut.seconds, lim)); continue; }
+        if (cut && cut.parts.length > 100) { tip.push('That recording would go up in ' + cut.parts.length + ' parts, and Lucida takes up to 100. Save it as an MP3 or M4A first, which is much smaller.'); continue; }
         if (cut && cut.whole) cut = null;
         if (!cut && f.size > lim.audioMB * 1e6) { tip.push(bigRecording(f.size, lim, why)); continue; }
       } else if (file.size > lim.fileMB * 1e6) { tip.push('That file is over ' + lim.fileMB + ' MB.' + (lim.fileMB < 40 ? ' Go Pro for up to 40 MB.' : '')); continue; }
@@ -117,6 +118,8 @@ export function createMake({ state, reload, changed, go, sniff, shrink }) {
     M.opts = o; bump();
   };
   const setKeepNotes = on => { M.keepNotes = !!on; bump(); };
+  // Whether the deck the cards go into already has every page a Guide may have: then the notes can't be added (the server would keep the cards and drop the notes).
+  const deckFull = () => { const d = ((state() || {}).decks || []).find(x => x.id === M.opts.deckId), g = d && d.guide, pages = (g && g.pages) || []; return !!(g && (String(g.text || '').trim() || pages.length) && pages.length >= (info().guidePages || 10)); };
 
   // ---------- recording a lecture ----------
   // The microphone, one file for every ten minutes (a long recording is several files, so no one request is long: the speech service gives up after a
@@ -175,8 +178,8 @@ export function createMake({ state, reload, changed, go, sniff, shrink }) {
 
   // ---------- making ----------
   const sourceBody = () => {
-    // (Audio cards are for learning a language, so they only go along when a language is set. Notes are drafted with the cards, except from a Guide page, which already is notes.)
-    const o = M.opts, options = { count: o.count, kinds: [o.basic && 'basic', o.cloze && 'cloze', o.audio && o.lang && 'audio'].filter(Boolean), lang: o.lang, deckId: o.deckId, deckName: o.deckName, ...(M.noNotes ? { notes: false } : {}) };
+    // (Audio cards are for learning a language, so they only go along when a language is set. Notes are asked for with the cards, except from a Guide page, which already is notes.)
+    const o = M.opts, options = { count: o.count, kinds: [o.basic && 'basic', o.cloze && 'cloze', o.audio && o.lang && 'audio'].filter(Boolean), lang: o.lang, deckId: o.deckId, deckName: o.deckName, notes: !M.noNotes };
     if (M.from) return { fromSource: { deckId: M.from.deckId, id: M.from.id }, options };
     if (M.kind === 'topic') return { kind: 'topic', topic: M.topic, options };
     if (M.kind === 'video') return { kind: 'video', url: M.url, ...(M.transcript ? { text: M.text } : {}), ...(M.title ? { title: M.title } : {}), options };
@@ -282,7 +285,7 @@ export function createMake({ state, reload, changed, go, sniff, shrink }) {
     M.saving = true; M.error = null; bump();
     try {
       const o = M.opts, deck = o.deckId ? { id: o.deckId } : { name: o.deckName.trim() || M.title || M.name || 'New deck' };
-      const r = await call('/api/make/save', { job: M.job, deck, cards: keep, ...(M.notes ? { notes: M.keepNotes } : {}) });
+      const r = await call('/api/make/save', { job: M.job, deck, cards: keep, ...(M.notes ? { notes: M.keepNotes && !deckFull() } : {}) });
       try { sessionStorage.removeItem('lucida.make'); } catch { /* private window */ }
       const id = r.deckId; M = fresh(); await reload(); bump(); go('/deck/' + id);
     } catch (e) { M.saving = false; M.error = { message: e.message, pro: !!e.pro, code: e.code || '', soft: true }; bump(); }
@@ -329,7 +332,7 @@ export function createMake({ state, reload, changed, go, sniff, shrink }) {
       step: M.step, kind: M.kind, from: M.from, on: lim.on !== false, videoOn: !!lim.video, limits: lim,
       files: M.files.map((f, i) => ({ i, name: f.name, size: mb(f.size) + (f.cut ? ' · ' + plural(f.cut.parts.length, 'part') : ''), fam: f.fam })), text: M.text, topic: M.topic, url: M.url, transcript: M.transcript, title: M.title, opts: M.opts,
       rec: M.rec ? { state: rec ? rec.state : 'saving', secs, levels: rec ? rec.levels.slice() : [], level: rec ? rec.level : 0, limit: lim.minutes * 60 } : null,
-      notes: M.notes, keepNotes: M.keepNotes, progress: M.progress, cards: M.cards, editing: M.editing, error: M.error, saving: M.saving, ready: ready(), name: M.name || '', job: M.job
+      notes: M.notes, keepNotes: M.keepNotes, notesFull: !!M.notes && deckFull(), progress: M.progress, cards: M.cards, editing: M.editing, error: M.error, saving: M.saving, ready: ready(), name: M.name || '', job: M.job
     };
   }
   return { view, enter, begin, choose, back, close, pickFiles, addFiles, removeFile, setText, setTopic, setUrl, useTranscript, setOpt, setKeepNotes, recStart, recPause, recResume, recStop, recDiscard,

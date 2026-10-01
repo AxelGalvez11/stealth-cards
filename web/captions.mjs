@@ -39,11 +39,11 @@ const entities = s => s.replace(/&(?:#(\d{1,7})|#x([0-9a-f]{1,6})|([a-z]{2,6}));
 // Control characters and the invisible marks (zero-width spaces, direction marks, the byte order mark) are not words.
 const invisible = c => c < 9 || c === 11 || (c > 13 && c < 32) || c === 127 || (c >= 0x200b && c <= 0x200f) || (c >= 0x202a && c <= 0x202e) || c === 0x2060 || c === 0xfeff;
 const plain = s => { let o = ''; for (const ch of s) if (!invisible(ch.codePointAt(0))) o += ch; return o; };
-const TAGS = /<\/?[a-z][^>]*>|<\d{1,3}:\d{2}(?::\d{2})?[.,]\d{1,3}>/gi;
+const TAGS = /<\/?[a-z][^>]{0,200}>|<\d{1,3}:\d{2}(?::\d{2})?[.,]\d{1,3}>/gi;
 const NOTE = /^[♪\s]*[[(][^\])]*[\])][♪\s]*$/;              // [Music]   (applause)   ♪ [Music] ♪
 // One line of a cue's words, cleaned; '' when nothing real is left.
 function clean(line) {
-  let t = entities(line.replace(/\{\\[^}]*\}/g, '').replace(TAGS, ''));
+  let t = entities(line.replace(/\{\\[^}]{0,200}\}/g, '').replace(TAGS, ''));
   t = plain(t).replace(/\[[^\]]{1,30}\]/g, ' ').replace(/\s+/g, ' ').trim();     // [Music], [Applause], [Roger] inside a line
   if (/^[♪\s]*$/.test(t) || NOTE.test(t)) return '';
   return t;
@@ -77,7 +77,7 @@ export function readCaptions(input) {
     if (!cur) continue;                                                      // a header, a NOTE, a STYLE, a cue id: no words
     if (line === '') { cur = null; continue; }
     if (/^\s*\d{1,6}\s*$/.test(line) && TIME.test(lines[i + 1] || '')) { cur = null; continue; }
-    const words = clean(line); if (words) cur.lines.push(words);
+    const words = clean(line.length > 2000 ? line.slice(0, 2000) : line); if (words) cur.lines.push(words);      // (one line is never more than a couple of thousand characters of words)
   }
   // 2. The lines, each once, with when its cue started and when it was last on screen.
   const out = []; let size = 0;

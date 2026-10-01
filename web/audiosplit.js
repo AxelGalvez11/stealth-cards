@@ -242,7 +242,8 @@ async function scanOgg(R, lim) {
     for (; p + 27 <= R.size; p++) {
       if (!R.has(p, 27 + 255)) await R.fill(p, 27 + 255);
       if (R.u8(p) !== 0x4f || R.str(p, 4) !== 'OggS' || R.u8(p + 4) !== 0) continue;
-      const nseg = R.u8(p + 26); let len = 27 + nseg; for (let k = 0; k < nseg; k++) len += R.u8(p + 27 + k);
+      const nseg = R.u8(p + 26); if (p + 27 + nseg > R.size) continue;
+      let len = 27 + nseg; for (let k = 0; k < nseg; k++) len += R.u8(p + 27 + k);
       if (p + len === R.size) return p;
       if (p + len + 4 <= R.size) { await R.need(p + len, 5); if (R.str(p + len, 4) === 'OggS' && R.u8(p + len + 4) === 0) return p; }
     }
@@ -252,6 +253,7 @@ async function scanOgg(R, lim) {
     await R.need(pos, 27 + 255);
     if (R.str(pos, 4) !== 'OggS' || R.u8(pos + 4) !== 0) { pos = await find(pos + 1); if (pos < 0) break; continue; }
     const flags = R.u8(pos + 5), lo = R.u32(pos + 6), hi = R.u32(pos + 10), ser = R.u32(pos + 14), nseg = R.u8(pos + 26);
+    if (pos + 27 + nseg > R.size) break;                         // (the file ends inside this page's header)
     let body = 0, done = 0;
     for (let k = 0; k < nseg; k++) { const l = R.u8(pos + 27 + k); body += l; if (l < 255) done++; }
     const len = 27 + nseg + body; if (pos + len > R.size) break;
@@ -335,7 +337,7 @@ async function scanM4a(R, lim) {
     if (size < hdr) throw broken();
     if (pos + size > R.size) { if (type !== 'mdat') throw broken(); size = R.size - pos; }
     if (type === 'ftyp' && size < 4096) ftyp = await R.copy(pos, size);
-    else if (type === 'moov') { if (size > 1 << 27) throw broken(); moov = await R.copy(pos, size); }
+    else if (type === 'moov') { if (size > 1 << 25) throw broken(); moov = await R.copy(pos, size); }
     else if (type === 'moof') throw unsupported('an MP4 that comes in fragments');
     pos += size;
   }
@@ -366,6 +368,7 @@ async function scanM4a(R, lim) {
   // the tables: how big each sample is, how long it lasts, and where it is in the file
   const sz = st.stsz, fixed = be32(moov, sz.body + 4), count = be32(moov, sz.body + 8);
   if (!count || (!fixed && sz.body + 12 + count * 4 > sz.end)) throw broken();
+  if (count > 4e6 || count > R.size) throw unsupported('this kind of MP4');             // (a sample is at least a byte; a recording has far fewer than four million)
   const size = new Uint32Array(count); for (let i = 0; i < count; i++) size[i] = fixed || be32(moov, sz.body + 12 + i * 4);
   const delta = new Uint32Array(count), tt = st.stts, runsN = be32(moov, tt.body + 4);
   if (tt.body + 8 + runsN * 8 > tt.end) throw broken();
@@ -380,7 +383,8 @@ async function scanM4a(R, lim) {
     const first = be32(moov, sc.body + 8 + r * 12), per = be32(moov, sc.body + 12 + r * 12), index = be32(moov, sc.body + 16 + r * 12);
     const to = r + 1 < scN ? be32(moov, sc.body + 8 + (r + 1) * 12) : chunks + 1;
     if (index !== 1) throw unsupported('this kind of MP4');
-    for (let c = first; c < to && c <= chunks; c++) { let off = chunkAt(c - 1); for (let k = 0; k < per && at < count; k++, at++) { S.push(off, delta[at] / timescale, 1, size[at] + 4); off += size[at]; } }
+    if (!per) continue;
+    for (let c = first; c < to && c <= chunks && at < count; c++) { let off = chunkAt(c - 1); for (let k = 0; k < per && at < count; k++, at++) { S.push(off, delta[at] / timescale, 1, size[at] + 4); off += size[at]; } }
   }
   if (at < count) throw broken();
   S.end = R.size;

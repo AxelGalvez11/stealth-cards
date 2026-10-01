@@ -451,7 +451,7 @@ export async function createDb({ onChange, go }) {
   const guideOf = d => d.guide || { text: '', at: 0, pages: [] };
   const fileHref = x => (x.files && x.files[0] ? '/media/' + x.files[0].name : '');
   const sourceRow = x => ({ id: x.id, kind: x.kind, name: x.name, cards: x.cards || 0, at: x.at || 0, url: x.url || '', text: x.text || '', textName: x.textFile ? x.textFile.name : '', seconds: x.seconds || 0, pages: x.pages || 0,
-    files: (x.files || []).map(f => ({ name: f.name, href: '/media/' + f.name, type: f.type, size: f.size, file: f.file || '' })), href: fileHref(x) });
+    files: (x.files || []).map(f => ({ name: f.name, href: '/media/' + f.name, type: f.type, size: f.size, file: f.file || '', seconds: f.seconds || 0 })), href: fileHref(x) });
   let sourceTexts = {};
   const guideSaves = {};
 
