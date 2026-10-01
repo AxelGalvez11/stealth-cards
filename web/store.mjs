@@ -9,12 +9,13 @@ import { fileURLToPath } from 'node:url';
 import { join, dirname } from 'node:path';
 import { cloud, library, files } from './supa.mjs';
 import { newLink } from './auth.mjs';
-import { FREE_MEDIA } from './plans.mjs';
+import { FREE_MEDIA, GUIDE } from './plans.mjs';
 import { grade as fsrsGrade, newCard, cleanW } from './fsrs.js';
 import { GAPS, LEECH_AT, LEECH_TAG, leechAt, leechAct, scheduled } from './sched.js';
 import R from './rich.js';
 import { placeBefore, cardBefore, cardToDeck } from './order.js';
 import { THEME_KEYS } from './themes/index.js';
+import { blobs } from './blobs.mjs';
 
 export const DATA = process.env.STEALTH_DATA || fileURLToPath(new URL('../data/', import.meta.url));
 export const MEDIA = join(DATA, 'media');
@@ -27,6 +28,9 @@ const fresh = () => ({
     // public profile and decks show it to visitors.
     theme: 'lucida', themeProfile: true },
   ai: { perms: { read: true, text: true, media: true, edit: true, check: false, del: false }, clients: {} },
+  // Making cards from files, photos and topics (make.mjs): the job being made and the uploads waiting for it. And the older versions
+  // of each deck's Guide (guide.save), which the app asks for one deck at a time instead of getting them all with the library.
+  make: { job: '', up: [] }, guideHistory: {},
   folders: [], decks: [], cards: [], logs: []
 });
 // Saved data from an older version gets any settings added since. The welcome after your first sign-in (`welcomed`)
@@ -60,6 +64,9 @@ function devLib(uid) {
 // Delete account on this computer (account.mjs): a made-up person's library is deleted, and if they come back they start over.
 export function eraseDev(uid) {
   if (!isDev(uid)) return false;
+  // Their Sources' files sit with the pictures here, so they go by name; uploads still waiting are in a folder of their own.
+  for (const d of devLib(uid).S.decks) for (const src of d.sources || []) for (const n of sourceNames(src)) rmSync(join(MEDIA, n), { force: true });
+  blobs.clear(uid);
   devLibs.delete(uid);
   rmSync(join(DATA, 'users', uid.slice(4) + '.json'), { force: true });
   return true;
@@ -224,7 +231,9 @@ function makeCards(deck, o, source = 'you') {
   const kind = ['basic', 'cloze', 'image', 'audio'].includes(o.kind) ? o.kind : 'basic';
   const base = { deckId: deck.id, kind, front: clean(o.front), back: clean(o.back), note: clean(o.note, 2000), text: clean(o.text),
     tags: cleanTags(o.tags), image: o.image || null, audio: o.audio || null, wave: o.audio ? cleanWave(o.wave) : null, speak: clean(o.speak, 500), lang: clean(o.lang, 20), auto: o.auto !== false,
-    source: clean(source, 60), pending: !!o.pending, created: Date.now(), srs: newCard(), pile: null, trail: [] };
+    source: clean(source, 60), pending: !!o.pending, created: Date.now(), srs: newCard(), pile: null, trail: [],
+    // A card made from a source (make.mjs) remembers which one and where in it (a page, a slide, a time), even after the source is gone.
+    ...(o.src && typeof o.src === 'object' && o.src.id ? { src: { id: clean(o.src.id, 40), name: clean(o.src.name, 120), at: clean(o.src.at, 40) } } : {}) };
   trailStep(base, source === 'import' ? 'imported' : 'made', source);
   const n = kind === 'cloze' ? blanks(base.text).length : 0;
   // An image card with boxes: one card per box, each asking its own box.
@@ -301,6 +310,70 @@ export function saveExplain(cardId, text, by) {
   sibs.forEach(x => { x.explain = { text: clean(text, 2000), by: clean(by, 60), at: Date.now() }; });
   save(); return true;
 }
+
+
+// ---------- Making cards from files, photos and topics (make.mjs) ----------
+// How many makes today: counted when a make starts and given back when it fails before the AI was asked, like the day's explanations.
+export const madeLeft = (day, limit) => { const u = state().ai.made; return Math.max(0, limit - (u && u.day === day ? u.n : 0)); };
+export function useMake(day, limit) {
+  const S = state(), n = S.ai.made && S.ai.made.day === day ? S.ai.made.n : 0;
+  if (n >= limit) return false;
+  S.ai.made = { day, n: n + 1 }; save(); return true;
+}
+export function refundMake(day) { const S = state(); if (S.ai.made && S.ai.made.day === day && S.ai.made.n > 0) { S.ai.made = { day, n: S.ai.made.n - 1 }; save(); } }
+// Uploads waiting for a make: { id, name (the stored file's name), file (what the person called it), type, size, at }. Kept in the library so
+// any server that gets the person's next request knows about them; those nobody used go after six hours (blobs.sweep deletes the files).
+export const uploadsOf = () => { const M = state().make || (state().make = { job: '', up: [] }); M.up = (M.up || []).filter(u => Date.now() - u.at < 6 * 3600000); return M.up; };
+export function addUpload(u) { const up = uploadsOf(); up.push(u); state().make.up = up.slice(-120); save(); return u; }
+export function dropUploads(ids) { const M = state().make; if (M) { M.up = (M.up || []).filter(u => !ids.includes(u.id)); save(); } }
+export function setJob(id) { const M = state().make || (state().make = { job: '', up: [] }); M.job = id || ''; save(); }
+// A deck's Sources (make.mjs): { id, kind: file|photo|recording|video|text|topic, name, at, cards, files: [{ name, type, size, file }], textFile: { name, size },
+// url, text, seconds, pages }. The files are in the person's own storage and count toward their upload room, so deleting a source frees it.
+export const sourceNames = src => [...(src.files || []).map(f => f.name), ...(src.textFile ? [src.textFile.name] : [])];
+export function addSource(deckId, rec) {
+  const d = findDeck(deckId); if (!d) throw new Error('No such deck');
+  const src = { ...rec, id: rec.id || id('x'), at: rec.at || Date.now() };
+  d.sources = [...(d.sources || []), src]; save();
+  return src;
+}
+export function bumpSource(deckId, sourceId, n) { const d = findDeck(deckId), x = d && (d.sources || []).find(y => y.id === sourceId); if (x) { x.cards = (x.cards || 0) + n; save(); } return x || null; }
+const sizeOfSource = src => [...(src.files || []), ...(src.textFile ? [src.textFile] : [])];
+// Gives back the room a source's files took, and deletes them once the library has saved.
+function dropSourceFiles(src) {
+  for (const f of sizeOfSource(src)) unreserveMedia(f.name, f.size || 0);
+  const names = sourceNames(src), uid = lib().uid;
+  if (names.length) afterSaving(() => blobs.remove(uid, names).catch(e => console.error('source files', e.message)));
+}
+// Room given back when a kept file goes: the count forgets it, so the same file can be kept again.
+export function unreserveMedia(name, bytes) {
+  const L = lib(), used = L.S.uploads, key = keyOf(name), names = ' ' + ((used && used.names) || '') + ' ';
+  if (!used || !key || !names.includes(' ' + key + ' ')) return;
+  L.S.uploads = { n: Math.max(0, used.n - 1), bytes: Math.max(0, used.bytes - bytes), names: names.replace(' ' + key + ' ', ' ').trim() }; save();
+}
+
+// ---------- A deck's Guide (like a README) ----------
+// Markdown the deck's owner writes about it (web/guide.js draws it), and extra pages beside it, like a small wiki:
+//   deck.guide = { text, at, pages: [{ id, title, text, at }] }       (`at`: when it was last saved)
+// It saves as it is typed. Older versions are kept for each page (S.guideHistory[deckId][page], newest first, up to GUIDE.versions), a new one
+// at most every GUIDE.gapMin minutes, and any can come back. The history stays out of what the app downloads with the library (handler.mjs).
+const pageTitle = t => clean(t, 80).replace(/\s+/g, ' ').trim();
+function guidePage(d, page) {
+  const g = d.guide || (d.guide = { text: '', at: 0, pages: [] });
+  if (!page || page === 'main') return g;
+  const p = (g.pages || []).find(x => x.id === page);
+  if (!p) throw new Error('There’s no such page.');
+  return p;
+}
+function keepVersion(d, key, pg, force) {
+  const S = state(), H = ((S.guideHistory ||= {})[d.id] ||= {})[key] ||= [], now = Date.now();
+  if (String(pg.text || '').trim() && (force || !H.length || now - H[0].saved >= GUIDE.gapMin * 60000)) {
+    // (A version is found by when its words were written, so two kept in the same moment must not share it.)
+    let at = pg.at || now; while (H.some(v => v.at === at)) at++;
+    H.unshift({ at, saved: now, text: pg.text }); H.length = Math.min(H.length, GUIDE.versions);
+  }
+}
+// The older versions of one page (the Guide when `page` is empty), newest first, for the History list.
+export function guideVersions(deckId, page) { const d = findDeck(deckId); return d ? (((state().guideHistory || {})[d.id] || {})[page || 'main'] || []).map(v => ({ at: v.at, saved: v.saved, text: v.text })) : []; }
 
 // A deck someone else shares, which you study as it is (social.mjs): its cards follow the owner's, so you can't change
 // them here; you suggest a change instead. Only your own study settings for it are yours to change. A copy
@@ -390,6 +463,9 @@ function run(a, who) {
     case 'deck.delete': {
       const d = findDeck(a.id); if (!d) throw new Error('No such deck');
       S.decks = S.decks.filter(x => x !== d); S.cards = S.cards.filter(c => c.deckId !== d.id); S.logs = S.logs.filter(l => l.deckId !== d.id);
+      // Its Sources' files and its Guide's older versions go with it.
+      for (const src of d.sources || []) dropSourceFiles(src);
+      if (S.guideHistory) delete S.guideHistory[d.id];
       // A shared deck stops being shared when it goes (people who copied it keep their copies), and one you studied or
       // copied from someone stops counting you.
       if (d.share) L.touched.set(d.id, { gone: d.share.id });
@@ -589,6 +665,64 @@ function run(a, who) {
       if ('yourPhoto' in p && p.yourPhoto !== null && !/^\/media\/[\w-]+\.(png|jpg|gif|webp)$/.test(String(p.yourPhoto))) throw new Error('Your photo has to be a picture you uploaded.');
       Object.assign(S.settings, p); return {};
     }
+    // The Guide and its pages (see "A deck's Guide" above). Only the deck's owner writes them; a deck you study as it is has its owner's.
+    case 'guide.save': {
+      const d = findDeck(a.deckId); if (!d) throw new Error('No such deck');
+      if (readOnly(d)) throw notYours(d);
+      const pg = guidePage(d, a.page), text = String(a.text ?? '').replace(/\r\n?/g, '\n').slice(0, GUIDE.chars);
+      if (text === (pg.text || '')) return { at: pg.at || 0 };
+      keepVersion(d, a.page || 'main', pg, !!a.snapshot);
+      pg.text = text; pg.at = Date.now();
+      touch(d.id, who);
+      return { at: pg.at };
+    }
+    case 'guide.page.add': {
+      const d = findDeck(a.deckId); if (!d) throw new Error('No such deck');
+      if (readOnly(d)) throw notYours(d);
+      const g = guidePage(d, 'main');
+      if ((g.pages || []).length >= GUIDE.pages) throw new Error('A deck can have ' + GUIDE.pages + ' extra pages.');
+      const pg = { id: id('g'), title: pageTitle(a.title) || 'New page', text: '', at: Date.now() };
+      g.pages = [...(g.pages || []), pg];
+      touch(d.id, who);
+      return { id: pg.id };
+    }
+    case 'guide.page.rename': {
+      const d = findDeck(a.deckId); if (!d) throw new Error('No such deck');
+      if (readOnly(d)) throw notYours(d);
+      const pg = guidePage(d, a.page); if (pg === d.guide) throw new Error('The Guide keeps its name.');
+      pg.title = pageTitle(a.title) || pg.title;
+      touch(d.id, who);
+      return { id: pg.id };
+    }
+    case 'guide.page.delete': {
+      const d = findDeck(a.deckId); if (!d) throw new Error('No such deck');
+      if (readOnly(d)) throw notYours(d);
+      const pg = guidePage(d, a.page); if (pg === d.guide) throw new Error('The Guide stays. Clear its words instead.');
+      d.guide.pages = d.guide.pages.filter(x => x !== pg);
+      if (S.guideHistory && S.guideHistory[d.id]) delete S.guideHistory[d.id][pg.id];
+      touch(d.id, who);
+      return { id: pg.id };
+    }
+    // An older version comes back; the words it replaces are kept as a version first, so going back can be undone.
+    case 'guide.restore': {
+      const d = findDeck(a.deckId); if (!d) throw new Error('No such deck');
+      if (readOnly(d)) throw notYours(d);
+      const key = a.page || 'main', pg = guidePage(d, key), v = (((S.guideHistory || {})[d.id] || {})[key] || []).find(x => x.at === +a.at);
+      if (!v) throw new Error('That version is gone.');
+      keepVersion(d, key, pg, true);
+      pg.text = v.text; pg.at = Date.now();
+      touch(d.id, who);
+      return { at: pg.at };
+    }
+    // A source goes: its files too (the room they took comes back). The cards made from it stay, and still say where they came from.
+    case 'source.delete': {
+      const d = findDeck(a.deckId); if (!d) throw new Error('No such deck');
+      const src = (d.sources || []).find(x => x.id === a.id); if (!src) throw new Error('That source is gone.');
+      d.sources = d.sources.filter(x => x !== src);
+      dropSourceFiles(src);
+      touch(d.id, who);
+      return { id: src.id };
+    }
     case 'ai.perm': { if (a.id in S.ai.perms) S.ai.perms[a.id] = !!a.on; return {}; }
     case 'ai.client': { const n = clean(a.name, 80) || 'MCP app'; S.ai.clients[n] = { name: n, version: clean(a.version, 40), seen: Date.now() }; return {}; }
     case 'data.import': {
@@ -606,8 +740,8 @@ function run(a, who) {
       for (const d of S.decks) if (d.share) L.touched.set(d.id, { gone: d.share.id });
       // The rev keeps counting up, so every copy of the app sees the reset as the newest data.
       // The day's AI explanations used stay counted, so deleting your data doesn't give them back.
-      const next = fresh(); next.ai.clients = S.ai.clients; next.ai.key = S.ai.key; next.ai.used = S.ai.used; next.rev = S.rev; next.settings.welcomed = true; L.S = next;
-      if (cloud()) L.later.push(files.clear(L.uid)); else { rmSync(MEDIA, { recursive: true, force: true }); mkdirSync(MEDIA, { recursive: true }); }
+      const next = fresh(); next.ai.clients = S.ai.clients; next.ai.key = S.ai.key; next.ai.used = S.ai.used; next.ai.made = S.ai.made; next.rev = S.rev; next.settings.welcomed = true; L.S = next;
+      if (cloud()) L.later.push(files.clear(L.uid)); else { rmSync(MEDIA, { recursive: true, force: true }); mkdirSync(MEDIA, { recursive: true }); blobs.clear(L.uid); }
       return {};
     }
     // A new personal MCP link; the old one stops working.
