@@ -100,8 +100,14 @@ export function afterSignIn() {
   let next = ''; try { next = sessionStorage.getItem('lucida.next') || ''; sessionStorage.removeItem('lucida.next'); } catch {}
   return localPath(next);
 }
-// A request that finds you signed out (your session ended) goes back to signing in.
-const toSignIn = () => location.assign('/sign-in');
+// A request that finds you signed out (your session ended) goes back to signing in. An AI app's request to connect
+// (/oauth/…) comes back after, so it isn't lost. A page already on its way to signing in (Use another account) is left to it:
+// the checks every few seconds see the sign-out too, and their plain /sign-in would forget where it was going.
+const toSignIn = () => {
+  if (globalThis.__lucidaLeaving) return;
+  const at = location.pathname + location.search;
+  location.assign(location.pathname.startsWith('/oauth/') ? '/sign-in?next=' + encodeURIComponent(at) : '/sign-in');
+};
 
 // The library (/api/state). With `sync`, decks you study from other people also take their owners' newest changes first
 // (?sync=1), which asks the server for more. That must never keep the app from opening: if it fails or takes too long, the

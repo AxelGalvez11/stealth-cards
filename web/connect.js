@@ -52,6 +52,7 @@ export function createConnect({ changed = () => {}, go = () => {} } = {}) {
   // Signed in as the wrong person: sign out, sign in again, and come back to this same request.
   async function switchAccount() {
     const back = here();
+    globalThis.__lucidaLeaving = true;   // the app's own checks would see the sign-out and send you to a plain /sign-in (db.js toSignIn)
     await fetch('/api/auth/signout', { method: 'POST' }).catch(() => {});
     location.assign('/sign-in?next=' + encodeURIComponent(back));
   }
