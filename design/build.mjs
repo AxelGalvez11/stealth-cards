@@ -242,6 +242,36 @@ const sidebar = active => `<nav id="sidebar" class="sc-side" aria-label="Main" d
   <div style="flex-grow: 1;"></div>
   ${navRow('Settings', svg(I.gear), 'WebSettings.dc.html', active === 'Settings', '', ' aria-label="Settings"')}
 </nav>`;
+// ---- Settings' sections and sidebar (used by Settings, and by the pages inside it: Theme and Connect AI) ----
+const SETTINGS_SECTIONS = [['account', 'Account', 'user'], ['plan', 'Plan', 'star'], ['studying', 'Studying', 'decks'], ['appearance', 'Appearance', 'palette'],
+  ['connect-ai', 'Connect AI', 'connect'], ['privacy', 'Privacy', 'lock'], ['help', 'Help & legal', 'help']];
+const SEC_ID = k => k.replace(/-(\w)/g, (_, c) => c.toUpperCase());
+const SEC_NAME = name => name.replace('&', '&amp;');
+const WEB_SECTION_PROP = { editor: 'enum', default: 'Account', options: SETTINGS_SECTIONS.map(x => x[1]) };
+const PHONE_SECTION_PROP = { editor: 'enum', default: 'All', options: ['All', 'List', ...SETTINGS_SECTIONS.map(x => x[1])] };
+// Which section shows, and each one's link: a page of its own in the app (/settings/<section>), a switch on the board on the canvas.
+const SECTIONS_JS = `const SEC = ${JSON.stringify(SETTINGS_SECTIONS.map(x => [x[0], x[1]]))}, secId = k => k.replace(/-(\\w)/g, (_, c) => c.toUpperCase());
+  const secOf = want => (SEC.find(x => x[0] === want || x[1] === want) || [''])[0];
+  const secLinks = cur => Object.fromEntries(SEC.map(([k]) => [secId(k), { href: db.mock ? '#' : '/settings/' + k, current: k === cur ? 'page' : 'false', bg: k === cur ? t.surf : 'transparent', fg: k === cur ? t.text : t.muted, weight: k === cur ? '600' : '400',
+    pick: db.mock ? e => { if (e && e.preventDefault) e.preventDefault(); this.setState({ section: k }); } : undefined }]));`;
+// On Settings' pages (computer width) the Settings sidebar replaces the app's, in the same place with the same width and style (the owner:
+// "make the settings sidebar replace the apps sidebar so it looks cleaner"): a Back row on top (to the page you came from, or Today when
+// Settings was opened directly), then the seven sections with their icons, the current one lit the way the app sidebar lights its place.
+// It is always open (the app sidebar's open or collapsed choice is kept, and is there again when you leave), and the swap is instant.
+// The page body holds just the section's title and its rows, laid out like the other pages.
+// The pages Settings opens wear it too (on a computer, any page Settings opens shows Settings' sidebar, not the app's): Appearance › Theme (the picker and
+// each theme's own page, with Appearance lit) and Connect AI (with Connect AI lit). See SETTINGS_SIDE_JS.
+const SETTINGS_SIDEBAR = `<nav aria-label="Settings sections" style="width: 240px; flex-shrink: 0; box-sizing: border-box; padding: 24px 16px; display: flex; flex-direction: column; gap: 4px; border-right: 1px solid {{t.line}}; overflow: hidden;">
+  <a href="{{backHref}}" style="display: flex; align-items: center; gap: 12px; height: 36px; margin-bottom: 16px; padding: 0 14px; border-radius: 999px; font-size: 14px; color: {{t.muted}};">${svg(I.back, 18, 1.8)}<span>Back</span></a>
+  ${SETTINGS_SECTIONS.map(([k, name, ic]) => { const id = SEC_ID(k), a = `<a href="{{sec.${id}.href}}" onClick="{{sec.${id}.pick}}" aria-current="{{sec.${id}.current}}" style="position: relative; display: flex; align-items: center; gap: 12px; height: 36px; padding: 0 14px; border-radius: 999px; font-size: 14px; white-space: nowrap; background: {{sec.${id}.bg}}; color: {{sec.${id}.fg}}; font-weight: {{sec.${id}.weight}};">${svg(I[ic], 18, 1.8)}<span>${SEC_NAME(name)}</span></a>`;
+    return k === 'plan' ? `<sc-if value="{{hasPlan}}" hint-placeholder-val="{{ true }}">${a}</sc-if>` : a; }).join('\n  ')}
+</nav>`;
+// What Settings' sidebar needs from a page inside Settings (Theme, Connect AI): its sections with `cur` lit, whether Plan is there (`hasPlan`), and Back
+// (the page you came from, which the app gives it as `back`, or Today). The computer pages of Appearance › Theme and Connect AI wear it too.
+// On the canvas its links open the Settings board (which section that shows is that board's own Tweak).
+const SETTINGS_SIDE_JS = (cur, hasPlan) => `${SECTIONS_JS}
+  const settingsSide = { sec: Object.fromEntries(Object.entries(secLinks('${cur}')).map(([id, v]) => [id, db.mock ? { ...v, href: 'WebSettings.dc.html', pick: () => {} } : v])),
+    hasPlan: ${hasPlan}, backHref: db.mock ? 'Main.dc.html' : this.props.back || '/' };`;
 // `board`: the page has things to drag (see drag.mjs), and popups and trays drawn over the whole page.
 // `over`: a popup drawn over the whole page (Settings' Delete account question), nothing to drag.
 const webRoot = (inner, board = false, over = false) => `<div${board ? ' data-sc-board="{{dragKey}}"' : ''} style="width: 1440px; height: 900px; box-sizing: border-box; display: flex; overflow: hidden; font-family: ${FONT}; background: {{t.bg}}; color: {{t.text}};${board || over ? ' position: relative;' : ''}">
@@ -3218,7 +3248,7 @@ const APPS_JS = `// Each app that signed in: its name, the site it sends you bac
 
 // Connect
 const aiKind = (icon, title, text) => `<div style="background: {{t.bg}}; border-radius: 22px; padding: 16px; display: flex; flex-direction: column; gap: 10px;"><span style="width: 36px; height: 36px; border-radius: 18px; background: {{t.surf}}; display: flex; align-items: center; justify-content: center;">${svg(I[icon], 16, 2)}</span><span style="font-size: 14px; font-weight: 600;">${title}</span><span style="font-size: 13px; line-height: 1.4; color: {{t.muted}};">${text}</span></div>`;
-const webConnect = webRoot(`${sidebar('Settings')}
+const webConnect = webRoot(`${SETTINGS_SIDEBAR}
 <main style="flex-grow: 1; box-sizing: border-box; padding: 36px 48px; display: flex; flex-direction: column; gap: 24px; min-width: 0;">
   <a href="WebSettings.dc.html" data-section="connect-ai" style="align-self: flex-start; margin-bottom: -14px; display: inline-flex; align-items: center; gap: 6px; font-size: 14px; color: {{t.muted}};">${svg(I.back, 16, 2)}Settings</a>
   <div style="display: flex; flex-direction: column; gap: 8px;"><h1 style="margin: 0; font-size: 32px; font-weight: 600; letter-spacing: -.03em;">Connect your AI</h1><p style="margin: 0; font-size: 16px; line-height: 1.5; color: {{t.muted}}; max-width: 640px;">Your cards live here. Claude, ChatGPT, or any app that speaks MCP can add text, fill-in-the-blank, image, and audio cards straight from the chat.</p></div>
@@ -3272,9 +3302,10 @@ renderVals() {
   const perms = defs.map(d => { const on = ai.perms[d.id]; return { ...d, ...sw(on), toggle: () => db.act.setPerm(d.id, !on) }; });
   ${PROVIDERS('ai.clients')}
   ${APPS_JS}
+  ${SETTINGS_SIDE_JS('connect-ai', 'db.mock ? true : !!(db.plan && db.plan())')}
   // Online, a link that got out can be swapped for a new one; AI apps with the old link lose access.
   const renew = () => { if (db.mock) return this.setState({ renewed: true }); if (!confirm('Make a new link? AI apps using the old one will stop working until you give them the new link.')) return; db.act.newLink().then(() => this.setState({ renewed: true, copied: false })); };
-  return { ${MESH_VALS('Apricot')} t, ...chrome, ...appVals, perms, providers, mcpUrl: ai.url, copyLabel: this.state.copied ? 'Copied' : 'Copy', copy: () => { db.act.copy(ai.url); this.setState({ copied: true }); },
+  return { ${MESH_VALS('Apricot')} t, ...chrome, ...settingsSide, ...appVals, perms, providers, mcpUrl: ai.url, copyLabel: this.state.copied ? 'Copied' : 'Copy', copy: () => { db.act.copy(ai.url); this.setState({ copied: true }); },
     canRenew: db.mock || db.settings().signedIn, renew, renewLabel: this.state.renewed ? 'New link made' : 'Make a new link' };
 }`;
 
@@ -4043,17 +4074,6 @@ const REMINDER_PROP = { editor: 'enum', default: '9:00 AM', options: ['Off', ...
 // WebSettings, and its `section` Tweak picks the one it shows. On a narrow screen the list is one page and each section a page of its own
 // with a back arrow: that is PhoneSettings with section List (or a section's name). The iPhone app keeps its native list, its rows grouped
 // into the same sections in the same order (PhoneSettings, section All, the default).
-const SETTINGS_SECTIONS = [['account', 'Account', 'user'], ['plan', 'Plan', 'star'], ['studying', 'Studying', 'decks'], ['appearance', 'Appearance', 'palette'],
-  ['connect-ai', 'Connect AI', 'connect'], ['privacy', 'Privacy', 'lock'], ['help', 'Help & legal', 'help']];
-const SEC_ID = k => k.replace(/-(\w)/g, (_, c) => c.toUpperCase());
-const SEC_NAME = name => name.replace('&', '&amp;');
-const WEB_SECTION_PROP = { editor: 'enum', default: 'Account', options: SETTINGS_SECTIONS.map(x => x[1]) };
-const PHONE_SECTION_PROP = { editor: 'enum', default: 'All', options: ['All', 'List', ...SETTINGS_SECTIONS.map(x => x[1])] };
-// Which section shows, and each one's link: a page of its own in the app (/settings/<section>), a switch on the board on the canvas.
-const SECTIONS_JS = `const SEC = ${JSON.stringify(SETTINGS_SECTIONS.map(x => [x[0], x[1]]))}, secId = k => k.replace(/-(\\w)/g, (_, c) => c.toUpperCase());
-  const secOf = want => (SEC.find(x => x[0] === want || x[1] === want) || [''])[0];
-  const secLinks = cur => Object.fromEntries(SEC.map(([k]) => [secId(k), { href: db.mock ? '#' : '/settings/' + k, current: k === cur ? 'page' : 'false', bg: k === cur ? t.surf : 'transparent', fg: k === cur ? t.text : t.muted, weight: k === cur ? '600' : '400',
-    pick: db.mock ? e => { if (e && e.preventDefault) e.preventDefault(); this.setState({ section: k }); } : undefined }]));`;
 const YOUR_DATA_ROWS = [
   sRow('Import cards', sVal('Anki, Quizlet, or CSV'), { href: 'WebImport.dc.html' }),
   sRow('Export all cards', sVal(''), { click: 'exportAll' }),
@@ -4153,16 +4173,6 @@ renderVals() {
 
 
 // ---- the web page ----
-// On Settings' pages (computer width) the Settings sidebar replaces the app's, in the same place with the same width and style (the owner:
-// "make the settings sidebar replace the apps sidebar so it looks cleaner"): a Back row on top (to the page you came from, or Today when
-// Settings was opened directly), then the seven sections with their icons, the current one lit the way the app sidebar lights its place.
-// It is always open (the app sidebar's open or collapsed choice is kept, and is there again when you leave), and the swap is instant.
-// The page body holds just the section's title and its rows, laid out like the other pages.
-const SETTINGS_SIDEBAR = `<nav aria-label="Settings sections" style="width: 240px; flex-shrink: 0; box-sizing: border-box; padding: 24px 16px; display: flex; flex-direction: column; gap: 4px; border-right: 1px solid {{t.line}}; overflow: hidden;">
-  <a href="{{backHref}}" style="display: flex; align-items: center; gap: 12px; height: 36px; margin-bottom: 16px; padding: 0 14px; border-radius: 999px; font-size: 14px; color: {{t.muted}};">${svg(I.back, 18, 1.8)}<span>Back</span></a>
-  ${SETTINGS_SECTIONS.map(([k, name, ic]) => { const id = SEC_ID(k), a = `<a href="{{sec.${id}.href}}" onClick="{{sec.${id}.pick}}" aria-current="{{sec.${id}.current}}" style="position: relative; display: flex; align-items: center; gap: 12px; height: 36px; padding: 0 14px; border-radius: 999px; font-size: 14px; white-space: nowrap; background: {{sec.${id}.bg}}; color: {{sec.${id}.fg}}; font-weight: {{sec.${id}.weight}};">${svg(I[ic], 18, 1.8)}<span>${SEC_NAME(name)}</span></a>`;
-    return k === 'plan' ? `<sc-if value="{{hasPlan}}" hint-placeholder-val="{{ true }}">${a}</sc-if>` : a; }).join('\n  ')}
-</nav>`;
 const WEB_PAGE = (k, name, cards) => `<sc-if value="{{on.${SEC_ID(k)}}}" hint-placeholder-val="{{ ${k === 'account'} }}"><section aria-labelledby="st-title" style="max-width: 720px; display: flex; flex-direction: column; gap: 24px;"><h1 id="st-title" style="margin: 0; font-size: 32px; font-weight: 600; letter-spacing: -.03em;">${SEC_NAME(name)}</h1>
 ${cards.join('\n')}
 </section></sc-if>`;
@@ -4278,7 +4288,7 @@ const themeTile = (W, H, fs, gap, r = 16) => `<a href="{{x.href}}" aria-label="{
 const themeUpgrade = phone => `<sc-if value="{{locked}}" hint-placeholder-val="{{ false }}"><div style="box-sizing: border-box; padding: ${phone ? '16px' : '18px 22px'}; border-radius: ${phone ? 24 : 20}px; background: {{t.surf}}; display: flex; align-items: center; gap: 16px;"><span style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px;"><span style="display: flex; align-items: center; gap: 8px; font-size: 15px; font-weight: 600;"><span>Themes are part of Pro</span>${PRO_BADGE}</span><span style="font-size: 13px; line-height: 1.4; color: {{t.muted}};">Yearly works out to $4.17 a month. Cancel anytime.</span></span><a href="{{proHref}}" class="sc-press" style="height: 36px; padding: 0 16px; flex-shrink: 0; display: inline-flex; align-items: center; border-radius: 999px; background: {{t.inv}}; color: {{t.invText}}; font-size: 14px; font-weight: 600; white-space: nowrap;">Go Pro</a></div></sc-if>`;
 // On Pro: your profile can show your theme to people who visit it (public profiles and decks; on by default).
 const themeOnProfile = phone => `<sc-if value="{{unlocked}}" hint-placeholder-val="{{ true }}"><div style="box-sizing: border-box; padding: ${phone ? '14px 16px' : '18px 22px'}; border-radius: ${phone ? 24 : 20}px; background: {{t.surf}}; display: flex; align-items: center; gap: 16px;"><span style="display: flex; flex-direction: column; gap: 2px; flex-grow: 1; min-width: 0;"><span style="font-size: 15px; font-weight: 600;">Show my theme on my profile</span><span style="font-size: 13px; line-height: 1.4; color: {{t.muted}};">People who visit see your decks the way you do.</span></span>${SWITCH('showSw', 'toggleShow', 'Show my theme on my profile')}</div></sc-if>`;
-const themePicker = webRoot(`${sidebar('Settings')}
+const themePicker = webRoot(`${SETTINGS_SIDEBAR}
 <main style="flex-grow: 1; box-sizing: border-box; padding: 36px 48px; display: flex; flex-direction: column; gap: 22px; min-width: 0; overflow-y: auto;">
   <a href="WebSettings.dc.html" data-section="appearance" style="align-self: flex-start; margin-bottom: -12px; display: inline-flex; align-items: center; gap: 6px; font-size: 14px; color: {{t.muted}};">${svg(I.back, 16, 2)}Settings</a>
   <h1 style="margin: 0; font-size: 32px; font-weight: 600; letter-spacing: -.03em;">Theme</h1>
@@ -4302,7 +4312,7 @@ renderVals() {
   ${OPTS_JS}
   const set = patch => db.act.setSettings(patch);
   ${PLAN_JS(phone ? 'PricingPhone' : 'Pricing')}
-  ${PHOTO_JS}
+  ${PHOTO_JS}${phone ? '' : '\n  ' + SETTINGS_SIDE_JS('appearance', '!!plan')}
   // On Free the themes are locked (and a Pro theme picked before stays off); on this computer everything is on.
   const locked = planVals.planFree, cur = locked ? 'lucida' : st.theme || 'lucida';
   const themes = ${THEME_LIST}.map(x => {
@@ -4311,7 +4321,7 @@ renderVals() {
       current: on ? 'true' : 'false', on, off: !on && !(locked && !lucida), locked: locked && !lucida, pro: !lucida, lucida, skin: !!S, art: S ? S.tile(chrome.me.initial) : null,
       ring: on ? '0 0 0 2px ' + t.bg + ', 0 0 0 4px ' + t.text : '0 0 0 1px ' + t.line };
   });
-  return { t, ...chrome, grain: String(this.props.grain ?? 0.7), themes, locked, unlocked: !locked, ringOff: this.props.dark ? '#5A5A5E' : '#CFCFCF',
+  return { t, ...chrome, ${phone ? '' : '...settingsSide, '}grain: String(this.props.grain ?? 0.7), themes, locked, unlocked: !locked, ringOff: this.props.dark ? '#5A5A5E' : '#CFCFCF',
     lu: { bg: photoVals.avatarBg, initial: chrome.me.initial }, lu1: this.mesh('Iris'), lu2: this.mesh('Apricot'),
     proHref: db.mock ? '${phone ? 'PricingPhone' : 'Pricing'}.dc.html' : '/pro?plan=yearly',
     showSw: sw(st.themeProfile !== false), toggleShow: () => set({ themeProfile: st.themeProfile === false }) };
@@ -4332,7 +4342,7 @@ const sheetScene = (w, h, cw, ch, fs) => `<div style="position: relative; width:
       <sc-if value="{{sh.lucida}}" hint-placeholder-val="{{ false }}"><div style="position: absolute; inset: 0; background: {{lu1.base}};">${flowLayer('lu1')}</div><div style="position: absolute; inset: 0; background: rgba(255,255,255,.55);"></div></sc-if>
       <div style="position: absolute; left: 50%; top: 50%; width: ${cw}px; height: ${ch}px; transform: translate(-50%, -50%);"><sc-if value="{{sh.skin}}" hint-placeholder-val="{{ true }}"><div ref="{{sh.card}}" data-sc-own aria-hidden="true" style="position: absolute; inset: 0;"></div></sc-if><sc-if value="{{sh.lucida}}" hint-placeholder-val="{{ false }}">${luCard(fs, '28px 30px', 'front')}</sc-if></div>
     </div>`;
-const webTheme = webRoot(`${sidebar('Settings')}
+const webTheme = webRoot(`${SETTINGS_SIDEBAR}
 <main style="flex-grow: 1; box-sizing: border-box; padding: 36px 48px; display: flex; flex-direction: column; gap: 22px; min-width: 0; overflow-y: auto;">
   <a href="ThemePicker.dc.html" style="align-self: flex-start; margin-bottom: -12px; display: inline-flex; align-items: center; gap: 6px; font-size: 14px; color: {{t.muted}};">${svg(I.back, 16, 2)}Theme</a>
   <div style="display: flex; align-items: center; gap: 16px;"><h1 style="flex-grow: 1; min-width: 0; margin: 0; display: flex; align-items: center; gap: 12px; font-size: 32px; font-weight: 600; letter-spacing: -.03em;"><span>{{sh.name}}</span><sc-if value="{{sh.pro}}" hint-placeholder-val="{{ true }}">${PRO_BADGE}</sc-if></h1>${sheetButton(44)}</div>
@@ -4362,7 +4372,7 @@ renderVals() {
   ${OPTS_JS}
   const set = patch => db.act.setSettings(patch);
   ${PLAN_JS(phone ? 'PricingPhone' : 'Pricing')}
-  ${PHOTO_JS}
+  ${PHOTO_JS}${phone ? '' : '\n  ' + SETTINGS_SIDE_JS('appearance', '!!plan')}
   const list = ${THEME_LIST}, info = list.find(x => x.key === this.props.sheet) || list[0], key = info.key, lucida = key === 'lucida', S = lucida ? null : this.skinFor(key);
   const locked = planVals.planFree && !lucida, inUse = (planVals.planFree ? 'lucida' : st.theme || 'lucida') === key;
   // Your first decks (the canvas's sample decks), in this theme's covers; a new library borrows the samples' names.
@@ -4370,7 +4380,7 @@ renderVals() {
   const covers = decks.map(d => { const C = S ? S.coverOf(d, 'tall', 16, 16) : null;
     const g = this.gen(d.seed + (d.round ? ' #' + d.round : ''), d.style);
     return { ...g, name: d.name, ...(C ? { base: C.base, ink: C.ink, boxShadow: C.shadow, textShadow: 'none', plain: false, skin: true, art: C.art, title: C.title } : { boxShadow: 'none', textShadow: g.shadow, plain: true, skin: false, art: null, title: '' }) }; });
-  return { t, ...chrome, grain: String(this.props.grain ?? 0.7), lu: { bg: photoVals.avatarBg, initial: chrome.me.initial }, lu1: this.mesh('Iris'),
+  return { t, ...chrome, ${phone ? '' : '...settingsSide, '}grain: String(this.props.grain ?? 0.7), lu: { bg: photoVals.avatarBg, initial: chrome.me.initial }, lu1: this.mesh('Iris'),
     sh: { name: info.name, pro: !lucida, skin: !!S, lucida, covers, bg: S ? S.ref('bg') : null,
       card: S ? S.card({ q: '${SHEET_Q}', side: 'front', fs: ${phone ? 18 : 22}, r: 22, pad: '${phone ? '24px 26px' : '28px 32px'}' }) : null,
       front: S ? S.card({ q: '${SHEET_Q}', side: 'front', fs: ${phone ? 18 : 17}, r: 18, pad: '20px 22px' }) : null,
