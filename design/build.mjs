@@ -8,6 +8,7 @@ import { MOCK_METHOD, SAMPLE, SAMPLE_WAVE } from './mock.mjs';
 import { DRAG_METHOD } from './drag.mjs';
 import { MOTION, EASE, MOTION_CSS } from './motion.mjs';
 import { WALL_CARDS } from './wall.mjs';
+import { SHARE_METHOD } from './share.mjs';
 import { PRIVACY, TERMS, UPDATED } from './legal.mjs';
 import { CONNECT } from './connect-guide.mjs';
 import { PRO_LINKS } from '../web/plans.mjs';
@@ -78,7 +79,7 @@ skinFor(k) {
 }
 ${GEN_METHOD}
 ${MOCK_METHOD}
-${logic.includes('this.rich(') ? RICH_METHOD : ''}${logic.includes('this.drag(') ? '\n' + DRAG_METHOD : ''}
+${logic.includes('this.rich(') ? RICH_METHOD : ''}${logic.includes('this.drag(') ? '\n' + DRAG_METHOD : ''}${logic.includes('this.shareOrCopy(') ? '\n' + SHARE_METHOD : ''}
 ${logic}
 }
 </script>
@@ -1110,8 +1111,8 @@ const COVER_LOGIC = `
     canShare: !ro, isShared: !!shr, notShared: !shr && !linked, isLinked: linked, isStudy: ro, isCopy: !!(linked && lk.mode === 'copy'), isGone: !!(lk && lk.gone),
     visOpts: [['private', 'Private'], ['link', 'Link only'], ['public', 'Public']].map(([id, label]) => ({ label, ...segOf(id, vis), pick: () => id !== vis && shareSet({ visibility: id }).catch(() => {}) })),
     visLine: vis0 === 'class' ? 'Only you and your classes.' : { private: 'Only you.', link: 'Anyone with the link.', public: 'On your profile and in Discover.' }[vis],
-    shareLink: shareUrl.replace(/^https?:\\/\\//, ''), copyLabel: cs.copied ? 'Copied' : 'Copy link',
-    copyShareLink: () => { db.act.copy(shareUrl); this.setState({ copied: true }); clearTimeout(this.copiedT); this.copiedT = setTimeout(() => this.setState({ copied: false }), 1600); },
+    shareLink: shareUrl.replace(/^https?:\\/\\//, ''), copyLabel: this.sharing() ? 'Share link' : cs.copied ? 'Copied' : 'Copy link',
+    copyShareLink: () => this.shareOrCopy(dk.name, shareUrl, () => { this.setState({ copied: true }); clearTimeout(this.copiedT); this.copiedT = setTimeout(() => this.setState({ copied: false }), 1600); }),
     aboutText: cs.about ?? (netRow ? netRow.description || '' : db.mock ? 'For BIO 201. Suggestions welcome.' : ''), setAbout: e => this.setState({ about: e && e.target ? e.target.value : '' }),
     saveAbout: () => { if (cs.about != null) shareSet({ description: cs.about }).catch(() => {}); },
     helperChips: helperList.map(h => ({ label: '@' + h.handle, remove: () => shareSet({ helpers: helperList.filter(x => x.handle !== h.handle).map(x => x.handle) }).catch(() => {}) })), hasHelpers: helperList.length > 0,
@@ -7286,12 +7287,10 @@ renderVals() {
   const tab = self ? s.tab || p.tab || 'Decks' : 'Decks';
   const tabOf = (id, n) => ({ n: n == null ? '' : kfmt(n), sel: tab === id ? 'true' : 'false', fg: tab === id ? t.text : t.muted, bar: tab === id ? t.text : 'transparent', pick: () => this.setState({ tab: id, menu: null }) });
   const stars = pr.stars ?? (pr.decks || []).reduce((n, d) => n + (+d.stars || 0), 0), n1 = (n, one, many) => (n === 1 ? one : many);
-  // Share copies the profile's link, and says so for a moment.
+  // Share opens the browser's share sheet where it has one (phones, Safari); without one it copies the profile's link, and
+  // says so for a moment.
   const link = (db.mock ? 'https://app.lucida.cards' : location.origin) + '/@' + (pr.handle || h);
-  const share = () => {
-    try { const r = db.act.copy ? db.act.copy(link) : navigator.clipboard && navigator.clipboard.writeText(link); if (r && r.catch) r.catch(() => {}); } catch (e) { /* no clipboard here */ }
-    clearTimeout(this.copiedT); this.copiedT = setTimeout(() => this.setState({ copied: false }), 2000); this.setState({ copied: true });
-  };
+  const share = () => this.shareOrCopy(name, link, () => { clearTimeout(this.copiedT); this.copiedT = setTimeout(() => this.setState({ copied: false }), 2000); this.setState({ copied: true }); });
   // Edit profile: your name (the one in Settings), handle, bio, school, and subject, and your picture (Settings' own
   // controls, which save as you pick). Save sends the rest; a handle someone has says so under the handle.
   const set = patch => db.act.setSettings(patch);
@@ -7351,7 +7350,7 @@ renderVals() {
     counts3: [{ n: kfmt(decks.length), label: 'Decks' }, { n: kfmt(followers), label: 'Followers' }, { n: kfmt(pr.following), label: 'Following' }].filter((c, i) => !blocked || i > 0), cols3: String(blocked ? 2 : 3),
     canFollow: ok && !self && !out && !blocked, canUnblock: blocked, unblock, unblockLabel: unblocking ? 'Unblocking…' : 'Unblock', followSignIn: ok && out, toggleFollow, followLabel: following ? 'Following' : 'Follow', followPressed: following ? 'true' : 'false',
     followBg: following ? t.surf : t.inv, followFg: following ? t.text : t.invText,
-    share, copied: !!s.copied, notCopied: !s.copied, shareLabel: s.copied ? 'Link copied' : 'Share', shareLong: s.copied ? 'Link copied' : 'Share profile',
+    share, copied: !!s.copied, notCopied: !s.copied, copiedCls: s.copied ? 'sc-pop' : '', shareLabel: s.copied ? 'Link copied' : 'Share', shareLong: s.copied ? 'Link copied' : 'Share profile',
     hasErr: !!err, err, makeFailed: !!s.makeErr, makeErr: s.makeErr || '', retryMake: () => { this.making = false; this.setState({ makeErr: '' }); },
     tabs: { decks: tabOf('Decks', blocked ? null : decks.length), saved: tabOf('Saved', saved.length), sugg: tabOf('Suggestions', sentData === undefined ? null : sentList.length) },
     decks, showDecks: tab === 'Decks' && decks.length > 0, noDecks: tab === 'Decks' && !decks.length && !blocked, blockedNote: blocked,
@@ -7455,7 +7454,7 @@ const webProfile = profileRoot(`
           <sc-if value="{{canFollow}}" hint-placeholder-val="{{ false }}"><button type="button" onClick="{{toggleFollow}}" aria-pressed="{{followPressed}}" class="sc-press" style="height: 36px; padding: 0 20px; display: inline-flex; align-items: center; border: 0; border-radius: 999px; background: {{followBg}}; color: {{followFg}}; font: inherit; font-size: 14px; font-weight: 600; cursor: pointer; transition: background-color .15s, color .15s;">{{followLabel}}</button></sc-if>
           <sc-if value="{{canUnblock}}" hint-placeholder-val="{{ false }}"><button type="button" onClick="{{unblock}}" class="sc-press" style="height: 36px; padding: 0 20px; display: inline-flex; align-items: center; border: 0; border-radius: 999px; background: {{t.inv}}; color: {{t.invText}}; font: inherit; font-size: 14px; font-weight: 600; cursor: pointer;">{{unblockLabel}}</button></sc-if>
           <sc-if value="{{followSignIn}}" hint-placeholder-val="{{ false }}">${pill('Follow', { inv: true, href: '{{signInHref}}' })}</sc-if>
-          <button type="button" onClick="{{share}}" class="sc-press" style="height: 36px; padding: 0 16px; display: inline-flex; align-items: center; gap: 8px; border: 0; border-radius: 999px; background: {{t.surf}}; color: {{t.text}}; font: inherit; font-size: 14px; font-weight: 600; cursor: pointer;"><sc-if value="{{copied}}" hint-placeholder-val="{{ false }}">${svg(I.check, 16, 2)}</sc-if><sc-if value="{{notCopied}}" hint-placeholder-val="{{ true }}">${svg(I.share, 16, 2)}</sc-if>{{shareLabel}}</button>
+          <button type="button" onClick="{{share}}" class="sc-press" style="height: 36px; padding: 0 16px; display: inline-flex; align-items: center; gap: 8px; border: 0; border-radius: 999px; background: {{t.surf}}; color: {{t.text}}; font: inherit; font-size: 14px; font-weight: 600; cursor: pointer;"><sc-if value="{{copied}}" hint-placeholder-val="{{ false }}"><span class="sc-pop" style="display: flex;">${svg(I.check, 16, 2)}</span></sc-if><sc-if value="{{notCopied}}" hint-placeholder-val="{{ true }}">${svg(I.share, 16, 2)}</sc-if><span class="{{copiedCls}}">{{shareLabel}}</span></button>
           <sc-if value="{{showMore}}" hint-placeholder-val="{{ true }}"><div style="position: relative; flex-shrink: 0;">${MORE_BTN(36)}${MORE_MENU(44)}</div></sc-if>
           <sc-if value="{{quietReport}}" hint-placeholder-val="{{ false }}">${QUIET_BTN('Report', 'reportIt', { h: 36, size: 14 })}</sc-if>
         </div>
@@ -7495,7 +7494,7 @@ const phoneProfile = phone(`<div style="padding: 64px 20px 120px; display: flex;
       <sc-if value="{{canFollow}}" hint-placeholder-val="{{ false }}"><button type="button" onClick="{{toggleFollow}}" aria-pressed="{{followPressed}}" class="sc-press" style="height: 44px; border: 0; border-radius: 999px; background: {{followBg}}; color: {{followFg}}; font: inherit; font-size: 15px; font-weight: 600; cursor: pointer; transition: background-color .15s, color .15s;">{{followLabel}}</button></sc-if>
       <sc-if value="{{canUnblock}}" hint-placeholder-val="{{ false }}"><button type="button" onClick="{{unblock}}" class="sc-press" style="height: 44px; border: 0; border-radius: 999px; background: {{t.inv}}; color: {{t.invText}}; font: inherit; font-size: 15px; font-weight: 600; cursor: pointer;">{{unblockLabel}}</button></sc-if>
       <sc-if value="{{followSignIn}}" hint-placeholder-val="{{ false }}"><a href="{{signInHref}}" class="sc-press" style="height: 44px; border-radius: 999px; background: {{t.inv}}; color: {{t.invText}}; display: flex; align-items: center; justify-content: center; font-size: 15px; font-weight: 600;">Follow</a></sc-if>
-      <button type="button" onClick="{{share}}" class="sc-press" style="height: 44px; border: 0; border-radius: 999px; background: {{t.surf}}; color: {{t.text}}; font: inherit; font-size: 15px; font-weight: 600; cursor: pointer;">{{shareLong}}</button>
+      <button type="button" onClick="{{share}}" class="sc-press" style="height: 44px; border: 0; border-radius: 999px; background: {{t.surf}}; color: {{t.text}}; font: inherit; font-size: 15px; font-weight: 600; cursor: pointer;"><span class="{{copiedCls}}" style="display: inline-block;">{{shareLong}}</span></button>
     </div>
     <sc-if value="{{hasErr}}" hint-placeholder-val="{{ false }}"><span role="alert" style="font-size: 13px; color: {{t.again}};">{{err}}</span></sc-if>
     <sc-if value="{{self}}" hint-placeholder-val="{{ true }}"><div role="tablist" aria-label="Profile" style="margin: 0 -20px; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); border-bottom: 1px solid {{t.line}};">${PROFILE_TAB('decks', 'grid', 'Decks', true)}${PROFILE_TAB('saved', 'star', 'Saved', true)}${PROFILE_TAB('sugg', 'message', 'Suggestions', true)}</div></sc-if>
@@ -7867,8 +7866,8 @@ renderVals() {
     openSuggestAny: () => openSuggest(''),
     editHref: goTo(deckHref, B + 'Deck'), suggestionsHref: goTo(mine ? '/deck/' + mine.id + '/suggestions' : '/suggestions', B + 'Suggestions'), shareHref: goTo(mine ? deckHref + '?settings=1' : deckHref, B + 'DeckSettings'),
     suggestionsLabel: me && me.open ? 'Suggestions · ' + me.open : 'Suggestions', openCount: String((me && me.open) || ''), hasOpen: !!(me && me.open),
-    linkLabel: st.linkCopied ? 'Copied' : 'Copy link',
-    copyLink: () => { ${phone ? "if (!db.mock && navigator.share) { navigator.share({ title: d.name, url: shareUrl }).catch(() => {}); return; } " : ''}if (db.act.copy) Promise.resolve(db.act.copy(shareUrl)).catch(() => {}); set({ linkCopied: true }); clearTimeout(this.copiedT); this.copiedT = setTimeout(() => this.setState({ linkCopied: false }), 1600); },
+    linkLabel: this.sharing() ? 'Share link' : st.linkCopied ? 'Copied' : 'Copy link',
+    copyLink: () => this.shareOrCopy(d.name, shareUrl, () => { set({ linkCopied: true }); clearTimeout(this.copiedT); this.copiedT = setTimeout(() => this.setState({ linkCopied: false }), 1600); }),
     hasError: !!st.error, error: st.error || '',
     tabs: [['Cards', kfmt(d.cards)], ['History', ''], ['People', peopleRows.length ? String(peopleRows.length) : '']].map(([id, count]) => ({ label: id, count, hasCount: !!count, sel: tab === id ? 'true' : 'false',
       fg: tab === id ? t.text : t.muted, bar: tab === id ? 'inset 0 -2px 0 ' + t.text : 'none', pick: () => set({ tab: id }) })),
@@ -8463,8 +8462,8 @@ renderVals() {
     showProg: staff && asg.length > 0, selChips, progHead: selA && selA.goal === 'daily' ? 'Today' : 'Learned', hasProg: staff && !!selA && learners.length > 0, progRows,
     progEmpty: staff && !!selA && !learners.length,
     deckTiles, hasDecks: decks.length > 0, noDecks: inClass && !decks.length, noDecksLine: 'No decks in this class yet.',
-    code, inviteLink: inviteUrl.replace(/^https?:\\/\\//, ''), copyLabel: s.copied ? 'Copied' : 'Copy invite link',
-    copyInvite: () => { db.act.copy(inviteUrl); this.setState({ copied: true }); clearTimeout(this.copiedT); this.copiedT = setTimeout(() => this.setState({ copied: false }), 1600); },
+    code, inviteLink: inviteUrl.replace(/^https?:\\/\\//, ''), copyLabel: this.sharing() ? 'Share invite link' : s.copied ? 'Copied' : 'Copy invite link',
+    copyInvite: () => this.shareOrCopy('Join ' + ((k && k.name) || 'my class') + ' on Lucida', inviteUrl, () => { this.setState({ copied: true }); clearTimeout(this.copiedT); this.copiedT = setTimeout(() => this.setState({ copied: false }), 1600); }),
     toClassroom: () => db.act.classroom(inviteUrl, 'Join ' + ((k && k.name) || 'my class') + ' on Lucida'),
     showVerify: staff && !verified, verifyLabel: vst.open ? 'Waiting for review' : 'Get verified', openVerify,
     peopleN: String(people.length), peopleRows, morePeople: people.length > shown, morePeopleLabel: 'Show all ' + people.length, showAllPeople: () => this.setState({ allPeople: true }),
