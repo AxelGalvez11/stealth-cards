@@ -23,6 +23,7 @@ import { createHash } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import { join, relative } from 'node:path';
 import { CONTACT, UPDATED as LEGAL_UPDATED } from './legal.mjs';
+import { MAKE } from '../web/plans.mjs';
 
 export const ORIGIN = 'https://lucida.cards', APP = 'https://app.lucida.cards', NAME = 'Lucida', EMAIL = CONTACT;
 // Where the page files are. LUCIDA_SITE_DIR points somewhere else (to try pages without touching the real ones).
@@ -33,10 +34,14 @@ export const SOCIALS = [['tiktok', 'TikTok', 'https://www.tiktok.com/@lucidacard
 
 // Pro's prices in dollars (the pricing board draws the same numbers), and what each plan holds.
 export const PRICE = { monthly: '5.99', yearly: '49.99', currency: 'USD' };
-export const PLAN_FREE = ['Unlimited decks and cards', 'Your AI makes cards and quizzes for you', 'Reviews planned by spaced repetition', 'Learn mode', 'Share decks and study anyone’s', 'Live games with friends', 'Up to 100 pictures and sounds', 'Import and export anytime'];
-export const PLAN_PRO = ['Exam dates: ready in time for the test', 'Stats on what you’re weak at', 'Unlimited pictures and sounds', 'Themes for cards, covers and your profile', 'The hardest cards on decks you share', 'Photo covers and your own colors', 'Natural voices for sound cards', 'More AI explanations'];
+// How long a make may be, in words (the numbers come from web/plans.mjs, which the apps and the server read, so a change there changes this page).
+const LONG = m => (m % 60 === 0 ? m / 60 + (m === 60 ? ' hour' : ' hours') : m + ' minutes');
+export const PLAN_FREE = ['Unlimited decks and cards', 'Make cards from files, photos, recordings and links: ' + MAKE.free.perDay + ' a day', 'Your own AI makes cards and quizzes too', 'Reviews planned by spaced repetition', 'Learn mode', 'Share decks and study anyone’s', 'Live games with friends', 'Up to 100 pictures and sounds', 'Import and export anytime'];
+export const PLAN_PRO = ['Make cards from bigger sources: ' + MAKE.pro.perDay + ' a day, up to ' + MAKE.pro.pages + ' pages or ' + LONG(MAKE.pro.minutes), 'Exam dates: ready in time for the test', 'Stats on what you’re weak at', 'Unlimited pictures and sounds', 'Themes for cards, covers and your profile', 'The hardest cards on decks you share', 'Photo covers and your own colors', 'Natural voices for sound cards', 'More AI explanations'];
 export const PRICING_FAQ = [
-  ['Do I need Pro for my AI to make cards?', 'No. On Free, your AI can make as many cards as you want.'],
+  ['What can Lucida make cards from?', 'A PDF, slides, a Word file, pictures, a recording, a YouTube link, pasted text or a topic you type. You check the new cards before they’re saved, and the deck keeps what they were made from.'],
+  ['How much can I make?', 'Free: ' + MAKE.free.perDay + ' makes a day, each up to ' + MAKE.free.pages + ' pages, ' + LONG(MAKE.free.minutes) + ' of recording or video, or ' + MAKE.free.photos + ' pictures. Pro: ' + MAKE.pro.perDay + ' a day, up to ' + MAKE.pro.pages + ' pages, ' + LONG(MAKE.pro.minutes) + ' or ' + MAKE.pro.photos + ' pictures.'],
+  ['Do I need Pro for my AI to make cards?', 'No. On Free, your own AI app can make as many cards as you want through your Lucida link. Lucida’s own maker has the daily limits above.'],
   ['What happens to my cards if I stop Pro?', 'Nothing. Every deck and card stays yours. Only the Pro extras switch off.'],
   ['Can I cancel anytime?', 'Yes, from Settings. Pro stays on until the end of the time you paid for.'],
   ['What counts toward the 100 pictures and sounds?', 'Each picture or sound on a card. Text cards never count.']
@@ -49,7 +54,7 @@ export const LLMS = (() => { try { return JSON.parse(readFileSync(join(DATA_DIR,
 export const VISUALS = (() => { try { return JSON.parse(readFileSync(join(DATA_DIR, '_visuals.json'), 'utf8')); } catch { return {}; } })();
 // What Lucida is, in one paragraph: the top of llms.txt, and the description of the organization and the site in the
 // structured data. Only what's true today (the iPhone app isn't in the App Store yet).
-export const ABOUT = LLMS && LLMS.intro ? LLMS.intro : 'Lucida is a flashcard app that runs in the browser at app.lucida.cards, on phones and computers. It plans every review with FSRS spaced repetition, and your own AI (Claude, ChatGPT, Cursor or any app that supports MCP) can make and edit your cards through your personal Lucida link. Free: unlimited decks and cards, Learn mode, shared decks and live games with friends. Pro costs $' + PRICE.monthly + ' a month or $' + PRICE.yearly + ' a year.';
+export const ABOUT = LLMS && LLMS.intro ? LLMS.intro : 'Lucida is a flashcard app that runs in the browser at app.lucida.cards, on phones and computers. It plans every review with FSRS spaced repetition, makes cards from your files, photos, recordings and links, and lets your own AI (Claude, ChatGPT, Cursor or any app that supports MCP) make and edit your cards through your personal Lucida link. Free: unlimited decks and cards, Learn mode, shared decks and live games with friends. Pro costs $' + PRICE.monthly + ' a month or $' + PRICE.yearly + ' a year.';
 
 const iso = label => { const d = new Date(label + ' 12:00 UTC'); return isNaN(d) ? '' : d.toISOString().slice(0, 10); };
 
@@ -262,7 +267,7 @@ function fallbacks(map) {
   if (!map.has('features') && of('feature', 'use').length) {
     out.push({ slug: 'features', kind: 'hub', title: 'Lucida features and who it’s for', h1: 'Everything Lucida does',
       description: 'What Lucida does, from spaced repetition and Learn mode to shared decks and live games, and how students, teachers and language learners use it.',
-      lead: 'Lucida is a flashcard app that plans your reviews and lets your own AI make the cards. These pages explain each part, and who it helps.', updated: newest(of('feature', 'use')) });
+      lead: 'Lucida is a flashcard app that plans your reviews and makes cards from your files, photos, recordings and links, or lets your own AI make them. These pages explain each part, and who it helps.', updated: newest(of('feature', 'use')) });
   }
   if (!map.has('faq')) {
     const seen = new Set(), faq = [];
