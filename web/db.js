@@ -15,6 +15,7 @@ import { createConnect } from './connect.js';
 import { createLive } from './live.js';
 import { progressOf, doneOf } from './progress.js';
 import { loadTheme } from './themes/load.js';
+import { schoolSearch } from './school.js';
 
 const DAY = 86400000, MIN = 60000, GAPS = [30, 90, 180, 365, 730, 1825, 3650];
 const SHORT_MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
@@ -67,9 +68,19 @@ function signedOut(go, onChange = () => {}) {
   // signs you in first and comes back.
   const net = createNet({ signedOut: true, go, changed: onChange });
   const live = createLive({ onChange, go, signedOut: true }).player;
-  return { signedOut: true, mock: false, auth, net, settings: () => ({ look: 'system' }), me: () => null, decks: () => [], folders: () => [],
+  return { signedOut: true, mock: false, auth, net, schools: createSchools(onChange), settings: () => ({ look: 'system' }), me: () => null, decks: () => [], folders: () => [],
     chrome: () => ({ nav: { today: '', news: '', hasNews: false }, me: { bg: COLORS[0], initial: '', color: true, photo: '', href: '/sign-in' } }),
     join: () => live.view(), joinAt: (kind, code) => live.at(kind, code), act: { go, ...playerActs(live, go) } };
+}
+// The school list (web/schools.json, about 4,000 colleges and universities): fetched the first time a picker searches it, and kept; the
+// page draws again when it arrives. `find` gives the schools some typed words find (rows of [id, name, city, state, other names]).
+function createSchools(changed) {
+  let rows = null, asked = false;
+  return { find: (q, limit = 30) => {
+    // (If it doesn't come, the next try is ten seconds later.)
+    if (!asked) { asked = true; fetch('/schools.json').then(r => r.json()).then(j => { rows = Array.isArray(j.rows) ? j.rows : []; changed(); }).catch(() => { setTimeout(() => { asked = false; }, 10000); }); }
+    return rows ? schoolSearch(rows, q, limit) : [];
+  } };
 }
 // A path on Lucida (like /pro?plan=yearly), or '' for anything else. A browser drops tabs and line breaks inside an address, so
 // "/<tab>/evil.com" would mean "//evil.com", another site: those go first, and what's left must still be an address on this
@@ -162,6 +173,7 @@ export async function createDb({ onChange, go }) {
   };
   // The study network (web/net.js): shared decks, profiles, Discover, suggestions, History, news.
   const net = createNet({ accept, changed, go });
+  const schools = createSchools(changed);
   // AI apps (web/connect.js): the apps that signed in to Lucida, the page where an app asks to connect, and the password.
   const connect = createConnect({ changed, go });
   const handle = () => (S.profile && S.profile.handle) || '';
@@ -874,7 +886,7 @@ export async function createDb({ onChange, go }) {
   }, 5000);
 
   return {
-    mock: false, act, net,
+    mock: false, act, net, schools,
     raw: () => S,
     // Your classes as your library has them; your progress on a class's deck (null until you study it); and what Today
     // lists: the assignments of the classes you're a member of, soonest first. A done one stays until its date passes,

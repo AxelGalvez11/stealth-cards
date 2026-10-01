@@ -373,6 +373,14 @@ extension Board {
     if let k = Board.arg("-theme") { store.props.theme = k }
     // The Settings boards' Tune to you state (their `tune` Tweak): `-tune Off`, `-tune "Not enough reviews"`, or `-tune Tuning`.
     if let k = Board.arg("-tune") { store.props.tune = ["Off": "off", "Not enough reviews": "few", "Tuning": "busy"][k] ?? "on" }
+    // Discover's filters and pickers (their Tweaks): `-level College`, `-subject Biology`, `-school "University of California-Davis"`,
+    // `-pick School` (or Level, Subject) with `-pickQ davis` typed in it, and `-mySchool false` for someone with no school.
+    if let v = Board.arg("-level") { store.props.level = v }
+    if let v = Board.arg("-subject") { store.props.subject = v }
+    if let v = Board.arg("-school") { store.props.school = v }
+    if let v = Board.arg("-pick") { store.props.pick = v }
+    if let v = Board.arg("-pickQ") { store.props.pickQ = v }
+    if Board.arg("-mySchool") == "false" { store.props.mySchool = false }
     // The boards that show your verification (their `verified` Tweak): `-verified "Waiting for review"`, `Teacher`, or `School`.
     if let v = Board.arg("-verified") { store.props.verified = v }
     // The Settings boards' photo setting (their Tweak on the canvas): `-photo "Google photo"` or `-photo "Your photo"`
@@ -436,6 +444,8 @@ struct MainView: View {
       MoveTray()
       if let s = nav.sheet { SheetHost(kind: s).zIndex(s == .goPro ? 8 : 5) }
       if let f = nav.full { FullHost(kind: f).zIndex(6).transition(.move(edge: .bottom)) }
+      // A list to pick from (a filter, a school, a label), over a page or a sheet.
+      if let p = nav.picker { PickHost(request: p).id(p.id).zIndex(7) }
       // The welcome after your first sign-in, over everything until it's done or skipped.
       if store.welcoming { WelcomeScreen().zIndex(10).transition(.opacity) }
     }

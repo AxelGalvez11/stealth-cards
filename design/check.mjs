@@ -71,6 +71,18 @@ PROP_SETS.push({ reminder: 'Off' }, { reminder: '6:00 PM' }, { reminder: 'Off', 
 PROP_SETS.push({ verified: 'Teacher' }, { verified: 'School' }, { verified: 'Teacher', $state: { $m: { checked: true } } }, { verified: 'Teacher', $state: { busy: 'check', error: 'That didn’t save.' } },
   { verified: 'Teacher', owner: true }, { verified: 'Teacher', signedOut: true }, { verified: 'Waiting for review' }, { verified: 'Teacher', $state: { checkedAt: 14 } }, { verified: 'Teacher', dark: true });
 
+// School labels: Discover narrowed (each filter, together, searching, the pickers open with what's typed in them, a search nobody
+// matches, someone with no school), Edit profile (the school picker open, a high school level, a school typed as Other), and a public deck's
+// labels with each picker open.
+PROP_SETS.push({ level: 'College' }, { subject: 'Biology' }, { school: 'Stanford University' }, { level: 'College', subject: 'Biology', school: 'University of California-Davis' },
+  { level: 'Graduate', subject: 'Law' }, { level: 'Other' }, { q: 'bio', level: 'College' }, { q: 'bio', subject: 'Biology', school: 'Stanford University' }, { level: 'College', loading: true }, { level: 'College', signedOut: true },
+  { pick: 'Level' }, { pick: 'Subject' }, { pick: 'School' }, { pick: 'School', pickQ: 'davis' }, { pick: 'School', pickQ: 'zzzz' }, { pick: 'School', pickQ: 'my own college' }, { mySchool: false }, { level: 'College', pick: 'Level', dark: true },
+  { editOpen: true, pick: 'School' }, { editOpen: true, pick: 'School', pickQ: 'stan' }, { editOpen: true, pick: 'School', pickQ: 'my own college' }, { editOpen: true, dark: true },
+  { editOpen: true, $state: { draft: { level: 'highschool', school: '', schoolId: '', year: '2', showSchool: true } } }, { editOpen: true, $state: { draft: { school: 'Small Town College', schoolId: '', showSchool: false } } },
+  { shared: 'Public', settingsOpen: true, settingsTab: 'Sharing' }, { shared: 'Public', settingsOpen: true, settingsTab: 'Sharing', pick: 'Level' }, { shared: 'Public', settingsOpen: true, settingsTab: 'Sharing', pick: 'Subject' },
+  { shared: 'Public', settingsOpen: true, settingsTab: 'Sharing', pick: 'School', pickQ: 'stan' }, { shared: 'Public', settingsOpen: true, settingsTab: 'Sharing', pick: 'School', pickQ: 'my own college' },
+  { shared: 'Link only', settingsOpen: true, settingsTab: 'Sharing' }, { shared: 'Public', settingsOpen: true, settingsTab: 'Sharing', dark: true, pick: 'School', pickQ: 'stan' });
+
 function walk(str, sc, miss) {
   let i = 0;
   const check = chunk => {

@@ -42,15 +42,18 @@ struct NetDeck: Decodable, Identifiable {
   var cover = NetCover()
   var cards = 0, stars = 0, learners = 0, copies = 0, version = 1
   var updated = "", visibility = "public", maintained = "creator"
+  /// A public deck's labels (what its owner kept): a level and a subject (ids from Generated.levels and subjects), and a school.
+  var level = "", subject = "", school = "", schoolId = ""
   var checked: Checked? = nil
   var owner: NetPerson? = nil
   var pinned = false
-  enum CodingKeys: String, CodingKey { case id, url, name, description, tags, cover, cards, stars, learners, copies, version, updated, visibility, maintained, checked, owner, pinned }
+  enum CodingKeys: String, CodingKey { case id, url, name, description, tags, cover, cards, stars, learners, copies, version, updated, visibility, maintained, level, subject, school, schoolId, checked, owner, pinned }
   init(from d: Decoder) throws {
     let c = try d.container(keyedBy: CodingKeys.self)
     id = c.v(.id, ""); url = c.v(.url, ""); name = c.v(.name, ""); description = c.v(.description, ""); tags = c.v(.tags, []); cover = c.v(.cover, NetCover())
     cards = c.v(.cards, 0); stars = c.v(.stars, 0); learners = c.v(.learners, 0); copies = c.v(.copies, 0); version = c.v(.version, 1)
     updated = c.v(.updated, ""); visibility = c.v(.visibility, "public"); maintained = c.v(.maintained, "creator"); checked = c.v(.checked, nil)
+    level = c.v(.level, ""); subject = c.v(.subject, ""); school = c.v(.school, ""); schoolId = c.v(.schoolId, "")
     owner = c.v(.owner, nil); pinned = c.v(.pinned, false)
   }
 }
@@ -66,6 +69,10 @@ struct ProfilePage: Decodable {
   }
   var handle = "", name = "", avatar: String? = nil, color = 0, verified = "", kind = "person"
   var bio = "", school = "", subject = ""
+  /// Their school, level, and year show only if they switched it on (blank for someone else's page when it's off). On your own page they
+  /// always come, with `showSchool` (the switch) and `schoolId` (the list's id; empty for a school you typed).
+  var level = "", year = "", schoolId = ""
+  var showSchool: Bool? = nil
   var followers = 0, following = 0, contributions = 0
   var featured: [String] = []
   var decks: [NetDeck] = [], saved: [NetDeck] = []
@@ -73,11 +80,12 @@ struct ProfilePage: Decodable {
   var me: Me? = nil
   /// Someone you just chose to unblock, until their page comes back with their decks (set by what you did here, not by the server).
   var unblocking = false
-  enum CodingKeys: String, CodingKey { case handle, name, avatar, color, verified, kind, bio, school, subject, followers, following, contributions, featured, decks, saved, stars, me }
+  enum CodingKeys: String, CodingKey { case handle, name, avatar, color, verified, kind, bio, school, subject, level, year, schoolId, showSchool, followers, following, contributions, featured, decks, saved, stars, me }
   init(from d: Decoder) throws {
     let c = try d.container(keyedBy: CodingKeys.self)
     handle = c.v(.handle, ""); name = c.v(.name, ""); avatar = c.v(.avatar, nil); color = c.v(.color, 0); verified = c.v(.verified, ""); kind = c.v(.kind, "person")
     bio = c.v(.bio, ""); school = c.v(.school, ""); subject = c.v(.subject, "")
+    level = c.v(.level, ""); year = c.v(.year, ""); schoolId = c.v(.schoolId, ""); showSchool = c.v(.showSchool, nil)
     followers = c.v(.followers, 0); following = c.v(.following, 0); contributions = c.v(.contributions, 0); featured = c.v(.featured, [])
     decks = c.v(.decks, []); saved = c.v(.saved, []); stars = c.v(.stars, nil); me = c.v(.me, nil)
   }
@@ -93,10 +101,23 @@ struct DiscoverPage: Decodable {
     init(id: String, title: String, decks: [NetDeck]) { self.id = id; self.title = title; self.decks = decks }
     init(from d: Decoder) throws { let c = try d.container(keyedBy: CodingKeys.self); id = c.v(.id, ""); title = c.v(.title, ""); decks = c.v(.decks, []) }
   }
-  var topics: [String] = [], tag = "", sections: [Section] = []
-  enum CodingKeys: String, CodingKey { case topics, tag, sections }
-  init(topics: [String], tag: String, sections: [Section]) { self.topics = topics; self.tag = tag; self.sections = sections }
-  init(from d: Decoder) throws { let c = try d.container(keyedBy: CodingKeys.self); topics = c.v(.topics, []); tag = c.v(.tag, ""); sections = c.v(.sections, []) }
+  /// The school a filter named (its id and name), as the server found it.
+  struct School: Decodable {
+    var id = "", name = ""
+    enum CodingKeys: String, CodingKey { case id, name }
+    init(id: String, name: String) { self.id = id; self.name = name }
+    init(from d: Decoder) throws { let c = try d.container(keyedBy: CodingKeys.self); id = c.v(.id, ""); name = c.v(.name, "") }
+  }
+  /// `filtered`: narrowed by a level, subject, or school, the sections are one list of decks ("results").
+  var topics: [String] = [], tag = "", sections: [Section] = [], filtered = false, level = "", subject = "", school: School? = nil
+  enum CodingKeys: String, CodingKey { case topics, tag, sections, filtered, level, subject, school }
+  init(topics: [String], tag: String, sections: [Section], filtered: Bool = false, level: String = "", subject: String = "", school: School? = nil) {
+    self.topics = topics; self.tag = tag; self.sections = sections; self.filtered = filtered; self.level = level; self.subject = subject; self.school = school
+  }
+  init(from d: Decoder) throws {
+    let c = try d.container(keyedBy: CodingKeys.self)
+    topics = c.v(.topics, []); tag = c.v(.tag, ""); sections = c.v(.sections, []); filtered = c.v(.filtered, false); level = c.v(.level, ""); subject = c.v(.subject, ""); school = c.v(.school, nil)
+  }
 }
 
 /// Search (social.mjs search): decks and people.
@@ -171,15 +192,20 @@ struct MinePage: Decodable {
   struct Row: Decodable {
     var id = "", slug = "", visibility = "", description = "", maintained = "creator"
     var stars = 0, learners = 0, copies = 0, version = 1, open = 0
+    /// Its labels: level and subject (ids), and its school (the list's id, or "" for one typed, and its name).
+    var level = "", subject = "", schoolId = "", school = ""
     var helpers: [LinkOwner] = []
-    enum CodingKeys: String, CodingKey { case id, slug, visibility, description, maintained, stars, learners, copies, version, open, helpers }
-    init(id: String, slug: String, visibility: String, description: String, stars: Int, learners: Int, copies: Int, open: Int, helpers: [LinkOwner]) {
+    enum CodingKeys: String, CodingKey { case id, slug, visibility, description, maintained, stars, learners, copies, version, open, helpers, level, subject, schoolId, school }
+    init(id: String, slug: String, visibility: String, description: String, stars: Int, learners: Int, copies: Int, open: Int, helpers: [LinkOwner],
+         level: String = "", subject: String = "", schoolId: String = "", school: String = "") {
       self.id = id; self.slug = slug; self.visibility = visibility; self.description = description; self.stars = stars; self.learners = learners; self.copies = copies; self.open = open; self.helpers = helpers
+      self.level = level; self.subject = subject; self.schoolId = schoolId; self.school = school
     }
     init(from d: Decoder) throws {
       let c = try d.container(keyedBy: CodingKeys.self)
       id = c.v(.id, ""); slug = c.v(.slug, ""); visibility = c.v(.visibility, ""); description = c.v(.description, ""); maintained = c.v(.maintained, "creator")
       stars = c.v(.stars, 0); learners = c.v(.learners, 0); copies = c.v(.copies, 0); version = c.v(.version, 1); open = c.v(.open, 0); helpers = c.v(.helpers, [])
+      level = c.v(.level, ""); subject = c.v(.subject, ""); schoolId = c.v(.schoolId, ""); school = c.v(.school, "")
     }
   }
   var handle = "", decks: [Row] = []
@@ -280,15 +306,19 @@ extension Store {
     if demo { return demoProfile(h) }
     return netGet("api/public/profile?h=" + enc(h), ProfilePage.self)
   }
-  func netDiscover(_ tag: String) -> NetAnswer<DiscoverPage>? {
-    if demo { return props.netLoading ? nil : .ok(demoDiscover()) }
-    return netGet("api/public/discover?tag=" + enc(tag), DiscoverPage.self)
+  /// Discover, narrowed by level and subject (ids) and school (its id, or words that find one) when they're given (web/net.js narrow).
+  func netDiscover(_ tag: String, level: String = "", subject: String = "", school: String = "") -> NetAnswer<DiscoverPage>? {
+    if demo { return props.netLoading ? nil : .ok(demoDiscover(tag, level: level, subject: subject, school: school)) }
+    return netGet("api/public/discover?tag=" + enc(tag) + narrow(level, subject, school), DiscoverPage.self)
   }
-  func netSearch(_ q: String) -> NetAnswer<SearchPage>? {
+  func netSearch(_ q: String, level: String = "", subject: String = "", school: String = "") -> NetAnswer<SearchPage>? {
     let words = q.trimmingCharacters(in: .whitespacesAndNewlines)
     if words.isEmpty { return .ok(SearchPage()) }
-    if demo { return props.netLoading ? nil : .ok(demoSearch(words)) }
-    return netGet("api/public/search?q=" + enc(words), ttl: 60, SearchPage.self)
+    if demo { return props.netLoading ? nil : .ok(demoSearch(words, level: level, subject: subject, school: school)) }
+    return netGet("api/public/search?q=" + enc(words) + narrow(level, subject, school), ttl: 60, SearchPage.self)
+  }
+  private func narrow(_ level: String, _ subject: String, _ school: String) -> String {
+    (level.isEmpty ? "" : "&level=" + enc(level)) + (subject.isEmpty ? "" : "&subject=" + enc(subject)) + (school.isEmpty ? "" : "&school=" + enc(school))
   }
   func netActivity() -> NetAnswer<ActivityPage>? {
     if demo { return props.netLoading ? nil : .ok(demoActivity()) }
@@ -356,7 +386,17 @@ extension Store {
     _ = try? await social("news.read", ["ids": NSNull()])
   }
   func shareDeck(_ deckId: String, _ o: [String: Any]) async throws {
-    if demo { if let v = o["visibility"] as? String { demoNet.vis = v }; return }
+    if demo {
+      if let v = o["visibility"] as? String { demoNet.vis = v }
+      if let v = o["level"] as? String { demoNet.labels["level"] = v }
+      if let v = o["subject"] as? String { demoNet.labels["subject"] = v }
+      // A school by its id, from the list, or the words typed.
+      if o["schoolId"] != nil || o["school"] != nil {
+        let hit = SchoolList.shared.school(o["schoolId"] as? String ?? "")
+        demoNet.labels["schoolId"] = hit?.id ?? ""; demoNet.labels["school"] = hit?.name ?? o["school"] as? String ?? ""
+      }
+      return
+    }
     var p = o; p["deckId"] = deckId
     try await social("deck.share", p)
   }
@@ -424,6 +464,8 @@ struct NetSample: Decodable {
   let NEWS: [NewsItem]
   let PROFILE: ProfilePage
   let OTHER: ProfilePage
+  /// A few real schools out of the list, for the design screens' school pickers: [id, name, city, state, other names].
+  let SCHOOLS: [[String]]
   let DISCOVER: Discover
   static let shared: NetSample = try! JSONDecoder().decode(NetSample.self, from: Data(Generated.netSampleJSON.utf8))
 }
@@ -436,6 +478,8 @@ struct DemoNet {
   var blocks: [String: Bool] = [:]
   var gone: Set<String> = []
   var profile: [String: Any] = [:]
+  /// The sample deck's labels as you picked them in its Sharing settings: "level", "subject", "schoolId", and "school".
+  var labels: [String: String] = [:]
   var read = false
   /// The sample deck's Who can see it (nil: the board's `shared`), made your own, its changes taken, and Get updates.
   var vis: String? = nil
@@ -447,14 +491,31 @@ struct DemoNet {
 
 extension Store {
   private var X: NetSample { NetSample.shared }
-  func demoDiscover() -> DiscoverPage {
-    DiscoverPage(topics: X.DISCOVER.topics, tag: "", sections: X.DISCOVER.sections.map { s in .init(id: s.id, title: s.title, decks: s.decks.compactMap { X.DECKS[$0] }) })
+  /// The sample's decks narrowed by level, subject, or school (mock.mjs net.discover): one list of decks, best first; not narrowed, the
+  /// sections, and first the one for your school (the board's `mySchool`: University of California-Davis).
+  func demoDiscover(_ tag: String = "", level: String = "", subject: String = "", school: String = "") -> DiscoverPage {
+    let sch = school.isEmpty ? nil : SchoolList.shared.rows.first { $0.id == school || $0.name == school }
+    let on = !(level.isEmpty && subject.isEmpty && school.isEmpty)
+    let best = { (list: [NetDeck]) in list.sorted { $0.stars != $1.stars ? $0.stars > $1.stars : $0.id < $1.id } }
+    let echo = (level: level, subject: subject, school: sch.map { DiscoverPage.School(id: $0.id, name: $0.name) })
+    if on {
+      let list = best(Array(X.DECKS.values.filter { (level.isEmpty || $0.level == level) && (subject.isEmpty || $0.subject == subject) && (school.isEmpty || (sch != nil && $0.schoolId == sch!.id)) })).prefix(24)
+      return DiscoverPage(topics: X.DISCOVER.topics, tag: tag, sections: list.isEmpty ? [] : [.init(id: "results", title: "Decks", decks: Array(list))], filtered: true, level: echo.level, subject: echo.subject, school: echo.school)
+    }
+    let home = props.mySchool ? Array(best(Array(X.DECKS.values.filter { $0.schoolId == "110644" })).prefix(12)) : []
+    var sections: [DiscoverPage.Section] = home.isEmpty ? [] : [.init(id: "school", title: "Popular at University of California-Davis", decks: home)]
+    sections += X.DISCOVER.sections.map { s in .init(id: s.id, title: s.title, decks: s.decks.compactMap { X.DECKS[$0] }) }
+    return DiscoverPage(topics: X.DISCOVER.topics, tag: tag, sections: sections)
   }
-  func demoSearch(_ q: String) -> SearchPage {
+  func demoSearch(_ q: String, level: String = "", subject: String = "", school: String = "") -> SearchPage {
     var maria = X.P["maria"]!, okafor = X.P["okafor"]!
-    maria.bio = "Biochem TA"; maria.school = "UC Davis"; maria.followers = 1280
-    okafor.school = "UC Davis"; okafor.followers = 3400
-    return SearchPage(q: q, decks: ["mcat", "bio2a", "cell"].compactMap { X.DECKS[$0] }, people: [maria, okafor])
+    maria.bio = "Biochem TA"; maria.followers = 1280
+    okafor.followers = 3400
+    let sch = school.isEmpty ? nil : SchoolList.shared.rows.first { $0.id == school || $0.name == school }
+    let on = !(level.isEmpty && subject.isEmpty && school.isEmpty)
+    let decks = ["mcat", "bio2a", "cell"].compactMap { X.DECKS[$0] }.filter { (level.isEmpty || $0.level == level) && (subject.isEmpty || $0.subject == subject) && (school.isEmpty || (sch != nil && $0.schoolId == sch!.id)) }
+    // People aren't narrowed by school or level (nothing lists the people at a school), so with a filter there are none.
+    return SearchPage(q: q, decks: decks, people: on ? [] : [maria, okafor])
   }
   /// Maria's profile for any other handle (the board's `following`: you follow her), or yours, with what you changed on
   /// this screen (your handle, bio, pins).
@@ -477,6 +538,10 @@ extension Store {
     p.handle = mine
     if let v = demoNet.profile["bio"] as? String { p.bio = v }
     if let v = demoNet.profile["school"] as? String { p.school = v }
+    if let v = demoNet.profile["schoolId"] as? String { p.schoolId = v }
+    if let v = demoNet.profile["level"] as? String { p.level = v }
+    if let v = demoNet.profile["year"] as? String { p.year = v }
+    if let v = demoNet.profile["showSchool"] as? Bool { p.showSchool = v }
     if let v = demoNet.profile["subject"] as? String { p.subject = v }
     if let v = demoNet.profile["featured"] as? [String] { p.featured = v }
     let feat = p.featured
@@ -491,8 +556,11 @@ extension Store {
     if props.netEmpty { return ActivityPage(unread: 0, items: []) }
     return ActivityPage(unread: demoNet.read ? 0 : 2, items: X.NEWS.map { x in var x = x; if demoNet.read { x.read = true }; return x })
   }
+  /// Cell Biology's labels: college, biology, and Davis, until you pick others in its Sharing settings.
   func demoMine() -> MinePage {
-    MinePage(handle: "alexkim", decks: [.init(id: "s9", slug: "cell-biology", visibility: "public", description: "For BIO 201. Suggestions welcome.", stars: 1300, learners: 214, copies: 86, open: 3,
-                                              helpers: [LinkOwner(name: "Dev Patel", handle: "devp")])])
+    let l = demoNet.labels
+    return MinePage(handle: "alexkim", decks: [.init(id: "s9", slug: "cell-biology", visibility: "public", description: "For BIO 201. Suggestions welcome.", stars: 1300, learners: 214, copies: 86, open: 3,
+                                                     helpers: [LinkOwner(name: "Dev Patel", handle: "devp")], level: l["level"] ?? "college", subject: l["subject"] ?? "biology",
+                                                     schoolId: l["schoolId"] ?? "110644", school: l["school"] ?? "University of California-Davis")])
   }
 }

@@ -18,6 +18,8 @@ import { rest, val, qval, inList, like, publicMedia, cloud } from './supa.mjs';
 import { state, saved, onSave, onReviewed, afterSaving, withLibrary, withCredit, apply, uidOf, makeDeck, newId, isDev, isPro, cleanBoxes } from './store.mjs';
 import { deckCards } from './order.js';
 import { newCard } from './fsrs.js';
+import { levelOf, subjectOf, yearOf } from './school.js';
+import { schoolById, findSchools } from './schools.mjs';
 import { createHash } from 'node:crypto';
 
 const MIN = 60000, DAY = 86400000;
@@ -95,7 +97,27 @@ export async function ensureProfile(uid, me, S) {
   if (L && (!L.profile || L.profile.handle !== p.handle)) { L.profile = { handle: p.handle }; saved(); }
   return p;
 }
-// Editing your profile (Settings and your profile page): your handle, a short bio, and your school and subject.
+// A person's school, level and year, and whether they show on their profile (Profile → Edit). The school is picked from the list
+// (`schoolId`: its name comes from the list), or typed ("Other": `school`); a high school student has a level and nothing else, since
+// there is no list of high schools and they may be minors. Nothing here is public until `showSchool` is on, and none of it makes a
+// profile findable.
+async function schoolPatch(patch, was) {
+  const next = {};
+  if ('level' in patch) next.level = levelOf(patch.level);
+  if ('year' in patch) next.year = yearOf(patch.year);
+  if ('showSchool' in patch) next.school_show = patch.showSchool === true;
+  if ('schoolId' in patch || 'school' in patch) {
+    const id = 'schoolId' in patch ? String(patch.schoolId ?? '').trim() : '';
+    if (id) {
+      const row = await schoolById(id);
+      if (!row) throw err('Pick a school from the list.');
+      next.school_id = row[0]; next.school = row[1];
+    } else { next.school_id = ''; next.school = oneLine(patch.school, 60); }
+  }
+  if (('level' in next ? next.level : was.level) === 'highschool') { next.school_id = ''; next.school = ''; }
+  return next;
+}
+// Editing your profile (Settings and your profile page): your handle, a short bio, your subject, and your school.
 export async function updateProfile(uid, me, patch) {
   const p = await ensureProfile(uid, me);
   const next = {};
@@ -105,17 +127,27 @@ export async function updateProfile(uid, me, patch) {
     if (h !== p.handle) { if (reservedHandle(h)) throw err('That name is taken. Try another.'); next.handle = h; }
   }
   if ('bio' in patch) next.bio = clean(patch.bio, 160).replace(/\s+\n/g, '\n').trim();
-  if ('school' in patch) next.school = oneLine(patch.school, 60);
   if ('subject' in patch) next.subject = oneLine(patch.subject, 60);
   if ('featured' in patch) next.featured = (Array.isArray(patch.featured) ? patch.featured : []).map(x => clean(x, 40)).slice(0, 3);
+  // Editing your profile is choosing to be found: it shows in search from now on. (Your school isn't that: it stays yours until you
+  // switch it on, and even then it's on your profile, never a list.)
+  const visible = Object.keys(next).length > 0;
+  Object.assign(next, await schoolPatch(patch, p));
   if (!Object.keys(next).length) return p;
-  // Editing your profile is choosing to be found: it shows in search from now on.
-  next.updated_at = nowIso(); next.listed = true;
+  next.updated_at = nowIso();
+  if (visible) next.listed = true;
   try { await rest('/profiles?id=eq.' + val(p.id), { method: 'PATCH', body: next }); }
   catch (e) { if (e.status === 409) throw err('That name is taken. Try another.'); throw e; }
   Object.assign(p, next);
   if (next.handle) { state().profile = { handle: p.handle }; saved(); }
+  if (['school_show', 'school_id', 'school', 'level'].some(k => k in next)) await dropOwnSchool(p);
   return p;
+}
+// A deck's school that started as its owner's (not one they picked for the deck) goes when they stop showing their school, take it
+// off, change it, or become a high school student: "Only you can see it unless this is on" stays true of what was copied from it.
+async function dropOwnSchool(p) {
+  const keep = p.school_show && p.school && p.level !== 'highschool';
+  await rest('/shared_decks?owner=eq.' + val(p.id) + '&school_auto=is.true' + (keep ? '&school=neq.' + exact(p.school) : ''), { method: 'PATCH', body: { school_id: '', school: '', school_auto: false } });
 }
 const personOf = p => (p ? { id: p.id, handle: p.handle, name: p.name, avatar: p.avatar || null, color: p.color || 0, verified: p.verified || '', kind: p.kind || 'person' } : null);
 // What pages get of a person: never their account id.
@@ -360,6 +392,10 @@ export async function shareDeck(uid, me, deckId, o = {}) {
   if ('description' in o) extra.description = clean(o.description, 300).trim();
   if ('maintained' in o) extra.maintained = o.maintained === 'community' ? 'community' : 'creator';
   if ('helpers' in o) extra.helpers = await helpersFrom(o.helpers, sid);
+  // A public deck's labels (level, subject, school), which Discover narrows by. Making a deck public the first time gives it its
+  // owner's school, if they show it; the owner can clear it, and it stays cleared.
+  const was = d.share ? await sharedRow(d.share.id, 'id,level,labeled') : null;
+  Object.assign(extra, await deckLabels(o, was, vis === 'public' && (!d.share || d.share.vis !== 'public') && !(was && was.labeled) ? owner : null));
   if (!d.share) {
     if (vis === 'private') return { vis };
     // The same deck always gets the same id, so a request that runs again (its save lost a race) reuses it.
@@ -380,6 +416,28 @@ export async function shareDeck(uid, me, deckId, o = {}) {
   if (vis !== 'private') await publish(sid, d, {});
   saved();
   return { id: d.share.id, vis, slug: d.share.slug };
+}
+// The labels a deck's sharing settings send: `level`, `subject`, and the school (`schoolId` from the list, or `school` typed). A school
+// typed on a high school deck is left out, like a person's (no high school names), and a high school deck doesn't start with its owner's
+// college. `start` is the owner's profile when this is the first time the deck goes public: its school becomes the deck's, if they
+// show it (`school_auto`: it was copied, not picked; it follows their profile until they pick one for the deck themselves).
+async function deckLabels(o, was, start) {
+  const out = {};
+  if ('level' in o) out.level = levelOf(o.level);
+  if ('subject' in o) out.subject = subjectOf(o.subject);
+  const school = 'schoolId' in o || 'school' in o;
+  if (school) {
+    const id = 'schoolId' in o ? String(o.schoolId ?? '').trim() : '';
+    if (id) {
+      const row = await schoolById(id);
+      if (!row) throw err('Pick a school from the list.');
+      out.school_id = row[0]; out.school = row[1];
+    } else { out.school_id = ''; out.school = oneLine(o.school, 60); }
+    if (!out.school_id && ('level' in out ? out.level : was && was.level) === 'highschool') out.school = '';
+    out.school_auto = false;
+  } else if (start && start.school_show && start.school && start.level !== 'highschool' && ('level' in out ? out.level : was && was.level) !== 'highschool') Object.assign(out, { school_id: start.school_id || '', school: start.school, school_auto: true });
+  if (Object.keys(out).length) out.labeled = true;
+  return out;
 }
 const sharedIdOf = (owner, d) => 's' + createHash('sha1').update(owner + ':' + d.id).digest('hex').slice(0, 14);
 async function helpersFrom(list, owner) {
@@ -911,14 +969,14 @@ function card(sh, o) {
   return { id: sh.id, url: deckUrl(sh, o), name: sh.name, description: sh.description || '', tags: sh.tags || [], cover: sh.cover || {}, cards: sh.card_count || 0,
     stars: sh.stars || 0, learners: sh.learners || 0, copies: sh.copies || 0, version: sh.version || 1, updated: sh.updated_at, visibility: sh.visibility,
     checked: sh.checked ? { name: sh.checked.name, handle: sh.checked.handle, current: sh.checked.version === sh.version } : null,
-    maintained: sh.maintained || 'creator', owner: face(o), theme: (o && o.theme) || '' };
+    maintained: sh.maintained || 'creator', level: sh.level || '', subject: sh.subject || '', school: sh.school || '', schoolId: sh.school_id || '', owner: face(o), theme: (o && o.theme) || '' };
 }
 export async function withOwners(rows) {
   const ids = [...new Set(rows.map(r => r.owner))];
   const people = ids.length ? await rest('/profiles?id=in.' + inList(ids) + '&select=*') : [];
   return rows.map(r => card(r, people.find(p => p.id === r.owner)));
 }
-export const LIST = 'id,owner,slug,name,description,tags,cover,card_count,stars,learners,copies,version,updated_at,visibility,hidden,checked,maintained';
+export const LIST = 'id,owner,slug,name,description,tags,cover,card_count,stars,learners,copies,version,updated_at,visibility,hidden,checked,maintained,level,subject,school_id,school';
 // A shared deck's page: the deck, its cards (content only), how it was made, who helped, and what you have to do with it.
 export async function deckPage({ handle, slug, id }, viewer) {
   let sh = null, o = null;
@@ -956,49 +1014,85 @@ export async function profilePage(handle, viewer) {
   const savedRows = saved.length ? await rest('/shared_decks?id=in.' + inList(saved.map(s => s.shared_id)) + '&visibility=in.(link,public)&hidden=is.false&select=' + LIST) : [];
   const feat = p.featured || [], list = decks.map(r => card(r, p));
   list.sort((a, b) => (feat.includes(b.id) - feat.includes(a.id)));
-  return { ...face(p), bio: p.bio || '', school: p.school || '', subject: p.subject || '', followers: p.followers || 0, following: p.following || 0, contributions: p.contributions || 0,
+  // Someone's school, level and year are on their page only if they switched it on (their own page always has them, with the switch, so
+  // Edit can show them). A school's own account is an organization, so its name is always on its page.
+  const open = self || p.school_show || p.kind === 'school', own = self ? { showSchool: !!p.school_show, schoolId: p.school_id || '' } : {};
+  return { ...face(p), bio: p.bio || '', school: open ? p.school || '' : '', level: open ? p.level || '' : '', year: open ? p.year || '' : '', ...own, subject: p.subject || '', followers: p.followers || 0, following: p.following || 0, contributions: p.contributions || 0,
     featured: feat, decks: list.map(d => ({ ...d, pinned: feat.includes(d.id) })), saved: self ? await withOwners(saved.map(s => savedRows.find(r => r.id === s.shared_id)).filter(Boolean)) : [],
     stars: list.reduce((n, d) => n + d.stars, 0), me: vid ? { self, following: following.length > 0, blocked } : null };
 }
+// The School filter: a school's id from the list, or words that find one ("Stanford", "UCLA"). A name nobody picked from the list (a
+// school typed as "Other") matches the decks labeled with those words.
+async function schoolFilter(x) {
+  const w = String(x ?? '').trim().slice(0, 60);
+  if (!w) return null;
+  const row = /^\d{1,8}$/.test(w) ? await schoolById(w) : (await findSchools(w, 1))[0];
+  return row ? { q: '&school_id=eq.' + val(row[0]), id: row[0], name: row[1] } : { q: '&school=ilike.' + like(w), id: '', name: w };
+}
+// Level, subject and school as the query and the answer's echo: `on` is whether any is set (then Discover lists decks instead of
+// sections), and `q` what narrows a decks query.
+async function filtersOf({ level = '', subject = '', school = '' } = {}) {
+  const lv = levelOf(level), sj = subjectOf(subject), sc = await schoolFilter(school);
+  const q = (lv ? '&level=eq.' + val(lv) : '') + (sj ? '&subject=eq.' + val(sj) : '') + (sc ? sc.q : '');
+  return { on: !!q, q, level: lv, subject: sj, school: sc ? { id: sc.id, name: sc.name } : null };
+}
+// A school written exactly (a typed one), without letting the words add wildcards of their own.
+const exact = s => encodeURIComponent('"' + String(s ?? '').replace(/[*%,()"\\]/g, ' ').replace(/\s+/g, ' ').trim() + '"');
 // Discover: decks people like this week, decks a teacher checked, new ones, and ones from people you follow, with
-// topics to narrow it down. Studying stays in your library; this is only for finding more.
-export async function discover(viewer, { tag = '' } = {}) {
+// topics to narrow it down; for someone who set their school, the decks labeled with it come first. Narrowed by level, subject or
+// school (as well as a topic), it's one list of decks, best first. Studying stays in your library; this is only for finding more.
+export async function discover(viewer, { tag = '', level = '', subject = '', school = '' } = {}) {
   const t = String(tag || '').slice(0, 40), byTag = t ? '&tags=cs.' + encodeURIComponent('{' + qvalRaw(t) + '}') : '';
-  const vid = viewer ? socialId(viewer) : null;
+  const vid = viewer ? socialId(viewer) : null, narrow = await filtersOf({ level, subject, school });
   // Decks of people you blocked aren't here.
   const skip = vid ? await blockedBy(vid) : [], gone = new Set(skip), hide = without('owner', skip);
-  const base = '/shared_decks?visibility=eq.public&hidden=is.false' + byTag + hide + '&select=' + LIST;
+  const base = '/shared_decks?visibility=eq.public&hidden=is.false' + byTag + narrow.q + hide + '&select=' + LIST, best = '&order=score.desc,updated_at.desc';
+  const topicsOf = rows => {
+    const count = {};
+    for (const r of rows) for (const g of r.tags || []) count[g] = (count[g] || 0) + 1;
+    return Object.keys(count).sort((a, b) => count[b] - count[a] || a.localeCompare(b)).slice(0, 10);
+  };
+  const tagsQ = rest('/shared_decks?visibility=eq.public&hidden=is.false' + hide + '&select=tags,owner&order=score.desc&limit=300');
+  const echo = { tag: t, level: narrow.level, subject: narrow.subject, school: narrow.school, filtered: narrow.on };
+  if (narrow.on) {
+    const [rows, tagRows] = (await Promise.all([rest(base + best + '&limit=24'), tagsQ])).map(rows => rows.filter(r => !gone.has(r.owner)));
+    const decks = await withOwners(rows);
+    return { topics: topicsOf(tagRows), ...echo, sections: decks.length ? [{ id: 'results', title: 'Decks', decks }] : [] };
+  }
   const follows = vid ? await rest('/follows?follower=eq.' + val(vid) + '&select=followee&limit=500') : [];
-  const [popular, checked, fresh, friends, tagRows] = (await Promise.all([
-    rest(base + '&order=score.desc,updated_at.desc&limit=12'),
+  // The decks labeled with your school (the one you set, shown on your profile or not), if you set one.
+  const me = vid ? await profileOf(vid) : null, home = me && me.level !== 'highschool' && (me.school_id ? '&school_id=eq.' + val(me.school_id) : me.school ? '&school=ilike.' + exact(me.school) : '');
+  const [popular, checked, fresh, friends, tagRows, atSchool] = (await Promise.all([
+    rest(base + best + '&limit=12'),
     rest(base + '&checked=not.is.null&order=score.desc&limit=8'),
     rest(base + '&order=created_at.desc&limit=12'),
     follows.length ? rest(base + '&owner=in.' + inList(follows.map(f => f.followee)) + '&order=updated_at.desc&limit=12') : [],
-    rest('/shared_decks?visibility=eq.public&hidden=is.false' + hide + '&select=tags,owner&order=score.desc&limit=300')])).map(rows => rows.filter(r => !gone.has(r.owner)));
-  const count = {};
-  for (const r of tagRows) for (const g of r.tags || []) count[g] = (count[g] || 0) + 1;
-  const topics = Object.keys(count).sort((a, b) => count[b] - count[a] || a.localeCompare(b)).slice(0, 10);
-  const all = await withOwners([...popular, ...checked, ...fresh, ...friends]), pickOf = rows => rows.map(r => all.find(x => x.id === r.id));
-  return { topics, tag: t, sections: [
+    tagsQ,
+    home ? rest(base + home + best + '&limit=12') : []])).map(rows => rows.filter(r => !gone.has(r.owner)));
+  const all = await withOwners([...popular, ...checked, ...fresh, ...friends, ...atSchool]), pickOf = rows => rows.map(r => all.find(x => x.id === r.id));
+  return { topics: topicsOf(tagRows), ...echo, sections: [
+    { id: 'school', title: me && me.school ? 'Popular at ' + me.school : '', decks: pickOf(atSchool) },
     { id: 'popular', title: t ? 'Popular in ' + t : 'Popular this week', decks: pickOf(popular) },
     { id: 'friends', title: 'From people you follow', decks: pickOf(friends) },
     { id: 'checked', title: 'Checked by teachers', decks: pickOf(checked) },
     { id: 'new', title: 'New', decks: pickOf(fresh).filter(d => !popular.slice(0, 4).some(p => p.id === d.id)) }].filter(s => s.decks.length) };
 }
 const qvalRaw = s => (/^[\w-]+$/.test(s) ? s : '"' + String(s).replace(/["\\]/g, '\\$&') + '"');
-export async function search(q, viewer) {
-  const words = String(q || '').trim().slice(0, 60);
+// Search: decks (by name, about line, or topic) and people (by name, handle, or subject), narrowed by level, subject or school. People
+// aren't narrowed that way (nothing lists the people at a school), so with any of those set only decks come back.
+export async function search(q, viewer, filters = {}) {
+  const words = String(q || '').trim().slice(0, 60), f = await filtersOf(filters);
   if (!words) return { q: '', decks: [], people: [] };
   const pat = like(words);
   // Decks and profiles of people you blocked aren't found.
-  const skip = viewer ? await blockedBy(socialId(viewer)) : [], gone = new Set(skip);
+  const skip = viewer ? await blockedBy(socialId(viewer)) : [], gone = new Set(skip), narrow = f.q + without('owner', skip);
   const [decks, tagged, people] = await Promise.all([
-    rest('/shared_decks?visibility=eq.public&hidden=is.false' + without('owner', skip) + '&or=' + encodeURIComponent('(') + 'name.ilike.' + pat + ',description.ilike.' + pat + encodeURIComponent(')') + '&select=' + LIST + '&order=score.desc&limit=24'),
-    rest('/shared_decks?visibility=eq.public&hidden=is.false' + without('owner', skip) + '&tags=cs.' + encodeURIComponent('{' + qvalRaw(words) + '}') + '&select=' + LIST + '&order=score.desc&limit=12'),
-    rest('/profiles?listed=is.true' + without('id', skip) + '&or=' + encodeURIComponent('(') + 'handle.ilike.' + pat + ',name.ilike.' + pat + ',school.ilike.' + pat + ',subject.ilike.' + pat + encodeURIComponent(')') + '&select=*&order=followers.desc&limit=12')])
+    rest('/shared_decks?visibility=eq.public&hidden=is.false' + narrow + '&or=' + encodeURIComponent('(') + 'name.ilike.' + pat + ',description.ilike.' + pat + encodeURIComponent(')') + '&select=' + LIST + '&order=score.desc&limit=24'),
+    rest('/shared_decks?visibility=eq.public&hidden=is.false' + narrow + '&tags=cs.' + encodeURIComponent('{' + qvalRaw(words) + '}') + '&select=' + LIST + '&order=score.desc&limit=12'),
+    f.on ? [] : rest('/profiles?listed=is.true' + without('id', skip) + '&or=' + encodeURIComponent('(') + 'handle.ilike.' + pat + ',name.ilike.' + pat + ',subject.ilike.' + pat + encodeURIComponent(')') + '&select=*&order=followers.desc&limit=12')])
     .then(([d, t, pe]) => [d.filter(r => !gone.has(r.owner)), t.filter(r => !gone.has(r.owner)), pe.filter(r => !gone.has(r.id))]);
   const seen = new Set(), rows = [...decks, ...tagged].filter(r => !seen.has(r.id) && seen.add(r.id));
-  return { q: words, decks: await withOwners(rows), people: people.map(p => ({ ...face(p), bio: p.bio || '', school: p.school || '', followers: p.followers || 0 })) };
+  return { q: words, level: f.level, subject: f.subject, school: f.school, filtered: f.on, decks: await withOwners(rows), people: people.map(p => ({ ...face(p), bio: p.bio || '', followers: p.followers || 0 })) };
 }
 // Your shared decks and the decks you study, for your library's sharing labels and the pages that open them.
 // How people do on your shared deck's cards, without names: one row per learner and card with their totals (a learner
@@ -1022,9 +1116,9 @@ export async function creatorStats(uid, sharedId) {
 export async function mine(uid) {
   const sid = socialId(uid);
   const p = await profileOf(sid);
-  const rows = p ? await rest('/shared_decks?owner=eq.' + val(sid) + '&select=id,slug,visibility,stars,learners,copies,version,description,maintained,helpers') : [];
+  const rows = p ? await rest('/shared_decks?owner=eq.' + val(sid) + '&select=id,slug,visibility,stars,learners,copies,version,description,maintained,helpers,level,subject,school_id,school') : [];
   const open = p ? (await rest('/suggestions?owner=eq.' + val(sid) + '&status=eq.open&select=shared_id&limit=500')) : [];
-  return { handle: p ? p.handle : '', profile: face(p), decks: rows.map(r => ({ ...r, helpers: (r.helpers || []).map(h => ({ handle: h.handle, name: h.name })), open: open.filter(x => x.shared_id === r.id).length })) };
+  return { handle: p ? p.handle : '', profile: face(p), decks: rows.map(({ school_id, ...r }) => ({ ...r, schoolId: school_id || '', helpers: (r.helpers || []).map(h => ({ handle: h.handle, name: h.name })), open: open.filter(x => x.shared_id === r.id).length })) };
 }
 // For search engines and link previews: a public page's title and a line about it.
 export async function metaFor(path) {

@@ -1072,7 +1072,7 @@ export default [
   "name": "Privacy",
   "title": "Privacy Policy · lucida.cards/privacy",
   "w": 1440,
-  "h": 2338
+  "h": 2685
  },
  {
   "name": "Reference",
@@ -2205,6 +2205,12 @@ export default [
  {
   "name": "WebDiscover",
   "title": "Web · Discover",
+  "w": 1440,
+  "h": 900
+ },
+ {
+  "name": "WebDiscoverFilters",
+  "title": "Web · Discover · narrowed by level, subject, and school (choosing a school)",
   "w": 1440,
   "h": 900
  },

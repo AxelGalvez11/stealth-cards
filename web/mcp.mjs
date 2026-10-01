@@ -3,6 +3,7 @@
 // What an AI may do is set on the Connect AI page; tools it isn't allowed to use aren't offered.
 import { apply, state, blanks, mediaLeft, MEDIA_FULL, BG_KINDS, isPro, tunedW } from './store.mjs';
 import * as social from './social.mjs';
+import { LEVELS, SUBJECTS, levelWords, subjectWords } from './school.js';
 import { dayAt } from './fsrs.js';
 import { isDue, scheduled, examStatus } from './sched.js';
 import { insights, history } from './insights.js';
@@ -233,12 +234,17 @@ const TOOLS = [
     } },
   // The study network (social.mjs): decks other people share. The learner can study one as it is, or copy it; on a deck
   // from someone else, an AI can only suggest changes, which the owner takes or skips.
-  { name: 'search_shared_decks', perm: 'read', description: 'Find decks other people share publicly on Lucida, by words or by topic (a tag). With neither it lists popular ones. Each deck comes with its id, name, author, card count and link. Use study_shared_deck to add one to the learner’s library.',
-    inputSchema: { type: 'object', properties: { query: { type: 'string' }, topic: { type: 'string', description: 'A topic (a tag), like "MCAT" or "Spanish".' } } },
+  { name: 'search_shared_decks', perm: 'read', description: 'Find decks other people share publicly on Lucida, by words, by topic (a tag), or narrowed by level, subject and school. With none of these it lists popular ones. Each deck comes with its id, name, author, card count, labels and link. Use study_shared_deck to add one to the learner’s library.',
+    inputSchema: { type: 'object', properties: { query: { type: 'string' }, topic: { type: 'string', description: 'A topic (a tag), like "MCAT" or "Spanish".' },
+      level: { type: 'string', enum: LEVELS.map(l => l[1]), description: 'Only decks for this level of study.' },
+      subject: { type: 'string', enum: SUBJECTS.map(l => l[1]), description: 'Only decks about this subject.' },
+      school: { type: 'string', description: 'Only decks labeled with this college or university, like "University of Michigan" or "UCLA".' } } },
     run: async (a, who, ctx) => {
-      const r = a.query ? await social.search(a.query, ctx.uid) : await social.discover(ctx.uid, { tag: a.topic || '' });
-      const list = a.query ? r.decks : (r.sections[0] || { decks: [] }).decks;
-      return text(list.map(d => ({ id: d.id, name: d.name, by: d.owner ? d.owner.name + ' (@' + d.owner.handle + ')' : undefined, cards: d.cards, saves: d.stars, studying: d.learners, checked_by_a_teacher: !!d.checked || undefined, about: d.description || undefined, link: 'https://lucida.cards' + d.url })));
+      const narrow = { level: a.level, subject: a.subject, school: a.school };
+      const r = a.query ? await social.search(a.query, ctx.uid, narrow) : await social.discover(ctx.uid, { tag: a.topic || '', ...narrow });
+      const list = a.query ? r.decks : (r.sections.find(s => s.id === 'popular' || s.id === 'results') || { decks: [] }).decks;
+      return text(list.map(d => ({ id: d.id, name: d.name, by: d.owner ? d.owner.name + ' (@' + d.owner.handle + ')' : undefined, cards: d.cards, saves: d.stars, studying: d.learners, checked_by_a_teacher: !!d.checked || undefined, about: d.description || undefined,
+        level: levelWords(d.level) || undefined, subject: subjectWords(d.subject) || undefined, school: d.school || undefined, link: 'https://lucida.cards' + d.url })));
     } },
   { name: 'get_shared_deck', perm: 'read', description: 'Read a shared deck: who made it, its version, its first 100 cards, and whether the learner already studies or copied it. Takes the deck’s id (from search_shared_decks) or its link.',
     inputSchema: { type: 'object', properties: { id: { type: 'string', description: 'Its id, or its link (lucida.cards/@name/deck).' } }, required: ['id'] },
@@ -246,7 +252,7 @@ const TOOLS = [
       const m = /@([a-z0-9_.]{3,30})\/([a-z0-9-]{1,60})/i.exec(String(a.id)), id = (/\b(s[a-z0-9]{6,40})\b/.exec(String(a.id)) || [])[1];
       const p = await social.deckPage(m ? { handle: m[1], slug: m[2] } : { id: id || a.id }, ctx.uid);
       if (!p) return fail('That deck isn’t shared.');
-      return text({ id: p.id, name: p.name, by: p.owner && p.owner.name, about: p.description || undefined, cards: p.cards, version: p.version, learner: p.me ? { studying: !!p.me.studying, copied: !!p.me.copied, saved: p.me.starred } : undefined,
+      return text({ id: p.id, name: p.name, by: p.owner && p.owner.name, about: p.description || undefined, level: levelWords(p.level) || undefined, subject: subjectWords(p.subject) || undefined, school: p.school || undefined, cards: p.cards, version: p.version, learner: p.me ? { studying: !!p.me.studying, copied: !!p.me.copied, saved: p.me.starred } : undefined,
         sample: p.cardsList.slice(0, 100).map(c => ({ id: c.id, kind: c.kind === 'cloze' ? 'fill in the blank' : c.kind, front: c.front || undefined, back: c.back || undefined, text: c.text || undefined })) });
     } },
   { name: 'study_shared_deck', perm: 'text', description: 'Add a shared deck to the learner’s library. By default they study it as it is, and its cards follow the owner’s changes; with copy: true it becomes the learner’s own copy to change.',

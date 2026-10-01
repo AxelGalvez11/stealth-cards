@@ -5,7 +5,7 @@
 // Support: the address Lucida's sign-in emails come from (Resend). It needs receiving turned on in Resend (an MX record
 // on lucida.cards) before replies arrive.
 export const CONTACT = 'team@lucida.cards';
-export const UPDATED = 'September 30, 2026';
+export const UPDATED = 'October 1, 2026';
 
 export const PRIVACY = {
   title: 'Privacy Policy',
@@ -17,6 +17,7 @@ export const PRIVACY = {
         'What you put in Lucida: your decks, cards, pictures and sounds, your reviews and grades, and your settings.',
         'Your personal AI link, the private address your AI apps use to reach your cards, and the AI apps you allowed to sign in to Lucida (their name, the site they belong to, and when you connected them). Their sign-in keys are kept only in scrambled form.',
         'Your profile, if you share decks or edit it: your name, @handle, picture, and what you add about yourself.',
+        'Your school, level, and year, if you add them: a college or university picked from a list (or typed in), and a level: high school, college, graduate, medical or professional, or other. A high school student picks the level only. Lucida has no list of high schools and keeps no high school’s name.',
         'If you buy Pro: whether you have it and until when. Stripe or Apple takes the payment; we never see your card number.',
         'Reports you send, and the people you block.',
         'Basic technical records. Our hosting and database providers log things like IP addresses and request times, so they can keep Lucida running and secure.']
@@ -30,7 +31,9 @@ export const PRIVACY = {
     ] },
     { h: 'What others can see', body: [
       'A deck you share publicly, and your profile, can be seen by anyone, including search engines. A Link only deck is seen only by people with its link. Private decks are only yours.',
-      'If someone studies or copies your deck, they see it as you shared it. A copy stays theirs if you stop sharing.'
+      'If someone studies or copies your deck, they see it as you shared it. A copy stays theirs if you stop sharing.',
+      'Your school, level, and year show on your profile only if you turn on “Show my school on my profile”. It starts off. Nothing in Lucida lists the people at a school, and searching for a school never finds people.',
+      'A public deck can have a level, a subject, and a school. A deck’s school shows only if you keep it, and you can clear any of them in the deck’s Sharing settings. Discover uses them to narrow decks, and if you add a school to your own profile it shows you the public decks labeled with it.'
     ] },
     { h: 'AI apps you connect', body: [
       'When you add Lucida to Claude, ChatGPT, or another AI app, you either sign in to Lucida and press Allow, or paste your private link. That app can then read and change your cards, within what you allow on the Connect AI page. What you share with the AI app itself is covered by that company’s privacy policy.',
@@ -56,6 +59,7 @@ export const PRIVACY = {
         'Export every deck, card, and review from Settings whenever you want.',
         'Delete decks and cards at any time, or everything at once from Settings.',
         'Make a deck private again, or block someone, at any time.',
+        'Turn off “Show my school on my profile”, or clear your school, level, or year, at any time.',
         `To delete your account completely, including your email address, use Delete account in Settings, or write to ${CONTACT}. Backups expire on their own soon after.`]
     ] },
     { h: 'Children', body: [

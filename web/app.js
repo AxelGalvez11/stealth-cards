@@ -16,7 +16,7 @@ const narrow = matchMedia('(max-width: 760px)');
 // The study network's pages (web/net.js): Discover, a profile (/@alexkim), a shared deck (/@alexkim/cell-biology, or its
 // lasting link /d/<id>), and a deck's History. Anyone can open them, signed in or not.
 function network(path, q, P) {
-  if (path === '/discover') return { name: P + 'Discover', props: { tag: q.get('topic') || '', q: q.get('q') || '' } };
+  if (path === '/discover') return { name: P + 'Discover', props: { tag: q.get('topic') || '', q: q.get('q') || '', level: q.get('level') || '', subject: q.get('subject') || '', school: q.get('school') || '' } };
   const m = /^\/@([A-Za-z0-9_.]{3,30})(?:\/([A-Za-z0-9-]{1,60})(\/history)?)?\/?$/.exec(path);
   if (m && !m[2]) return { name: P + 'Profile', props: { handle: m[1].toLowerCase(), editOpen: q.get('edit') === '1' } };
   if (m && m[3]) return { name: P + 'History', props: { handle: m[1].toLowerCase(), slug: m[2].toLowerCase() } };
