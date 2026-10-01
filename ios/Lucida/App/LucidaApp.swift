@@ -80,6 +80,7 @@ struct RootView: View {
     }
     // The haptics that fired (`-hapticAudit`) and what the deck cover is doing (`-parallaxAudit`), read the same way.
     .overlay(alignment: .topLeading) { if HapticLog.on { HapticAudit() } }
+    .overlay(alignment: .topLeading) { if PopAudit.on { PopReadout() } }
     #endif
     .onChange(of: store.skinKey) { _, k in if let k, !store.demo { ThemeArt.shared.warm(k, store) } }
     // Back after a while away: decks you study from other people get their owners' newest changes.
@@ -369,16 +370,23 @@ struct MainView: View {
   @EnvironmentObject private var store: Store
   @EnvironmentObject private var nav: Nav
   @Environment(\.theme) private var t
+  @Environment(DragCenter.self) private var drag
   /// Tabs the person changed (a tap on the tab bar, or a swipe): each gives a selection haptic.
   @State private var tabTicks = 0
   /// Haptics for what happens as a sheet closes or a deck goes (Buzz).
   @ObservedObject private var buzz = Buzz.shared
 
+  /// A swipe between tabs can start: a tab's first page is showing, and nothing is over it.
+  private var swipesBetweenTabs: Bool { nav.path.isEmpty && nav.sheet == nil && nav.full == nil && !store.welcoming && drag.list == nil }
+
   var body: some View {
     ZStack(alignment: .bottom) {
       NavigationStack(path: $nav.path) {
-        tabRoot
+        // A swipe left or right on a tab's first page moves to the next tab or the one before (Design/Swipe.swift).
+        TabPager(tab: $nav.tab, enabled: swipesBetweenTabs, changed: { tabTicks += 1 }) { tab in tabRoot(tab) }
           .toolbar(.hidden, for: .navigationBar)
+          // A swipe from the left edge goes back on every pushed page (the pages draw their own Back button, which turns UIKit's off).
+          .background(BackSwipe(canPop: { nav.sheet == nil && nav.full == nil && drag.list == nil }))
           // Every page on the theme's page color (the stack's own is the system's white or black, not dark mode's gray).
           .containerBackground(t.bg, for: .navigation)
           .navigationDestination(for: Route.self) { route in
@@ -400,6 +408,7 @@ struct MainView: View {
               }
             }
             .toolbar(.hidden, for: .navigationBar)
+            .background(BackSwipe(canPop: { nav.sheet == nil && nav.full == nil && drag.list == nil }))
             .containerBackground(t.bg, for: .navigation)
           }
       }
@@ -421,8 +430,9 @@ struct MainView: View {
     .task { if let f = nav.boardFull { nav.boardFull = nil; try? await Task.sleep(nanoseconds: 100_000_000); nav.full = f } }
   }
 
-  @ViewBuilder private var tabRoot: some View {
-    switch nav.tab {
+  /// A tab's first page.
+  @ViewBuilder private func tabRoot(_ tab: Tab) -> some View {
+    switch tab {
     case .today: TodayScreen()
     case .library: LibraryScreen()
     case .discover: DiscoverScreen()
