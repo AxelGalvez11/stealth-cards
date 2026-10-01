@@ -12,6 +12,10 @@
 //      answer, a deck made, a delete), read from the debug-only audit (`-hapticAudit`, Design/Haptics.swift).
 //   6  The deck cover's parallax: half the scroll, still with Reduce Motion, on a deck and on a shared deck's page (`-parallaxAudit`).
 //      (Pulled down past the top it stretches: that was already there and its bounce is over before a test can ask.)
+//   7  Explain on a flashcard (the owner, later that day: "in ios just make it open below questions and flashcards"): the explanation
+//      opens UNDER the card, which gets a little shorter and stays whole; closing puts it back; a saved one shows again without
+//      asking the AI; a failing AI says so; Free's fourth of the day offers Go Pro. The AI is a stand-in (ios/tools/explain-stub.mjs).
+//   8  Explain in Learn mode: under the answers and the line that says why, in view, for a choice question and a typed answer.
 //
 // Run it with ios/tools/e2e-polish.sh (it starts a fresh server on port 3914). It only runs when LUCIDA_POLISH is set, so the other
 // scripts keep running their own checks alone.
@@ -19,6 +23,8 @@ import XCTest
 
 final class PolishTests: XCTestCase {
   static let server = ProcessInfo.processInfo.environment["LUCIDA_SERVER"] ?? "http://127.0.0.1:3914"
+  /// The stand-in for the AI that writes explanations (ios/tools/explain-stub.mjs): it counts how many it has been asked for.
+  static let ai = ProcessInfo.processInfo.environment["LUCIDA_AI"] ?? "http://127.0.0.1:3916"
   private static var passed = 0, failed = 0
   // A run's own people (lc_dev names are letters and numbers), so the test can run again on the same server.
   private let run = String(Int(Date().timeIntervalSince1970) % 100000, radix: 36)
@@ -492,6 +498,120 @@ final class PolishTests: XCTestCase {
     Thread.sleep(forTimeInterval: 0.6)
     let pa = audit(page, "parallaxAudit")
     check(number(pa, "scroll") > 30 && abs(number(pa, "cover") - number(pa, "scroll") / 2) <= 1.5, "and so does a shared deck's page (half the scroll)", pa)
+  }
+
+  // ---------- 7: Explain on a flashcard ----------
+  /// How many explanations the stand-in AI has been asked for (a saved one isn't asked for again).
+  private func asked() -> Int {
+    var n = -1
+    let done = DispatchSemaphore(value: 0)
+    URLSession.shared.dataTask(with: URL(string: Self.ai + "/__count")!) { d, _, _ in
+      n = (d.flatMap { try? JSONSerialization.jsonObject(with: $0) } as? [String: Any])?["count"] as? Int ?? -1
+      done.signal()
+    }.resume()
+    _ = done.wait(timeout: .now() + 10)
+    return n
+  }
+  private func explanation(_ app: XCUIApplication) -> XCUIElement { app.otherElements["Explanation"].firstMatch }
+  private func words(_ app: XCUIApplication, _ w: String) -> XCUIElement { app.staticTexts.matching(NSPredicate(format: "label CONTAINS %@", w)).firstMatch }
+  /// Turns a flashcard over (the card is the "Flip card" button, and "Flip back" once it's turned).
+  private func flip(_ app: XCUIApplication) -> Bool { tap(button(app, "Flip card"), "the card"); return wait(button(app, "Flip back")) }
+
+  func test7ExplainOpensUnderTheCard() throws {
+    let eve = "eve" + run
+    person(eve, "Eve Explain", deck: nil)
+    _ = makeDeck(eve, "Explain Ok", cards: 1)
+    let app = launch(as: eve, ["-open", "review"])
+    check(wait(button(app, "Flip card")), "a flashcard comes up")
+    check(!button(app, "Explain").exists, "before it is turned over, there is no Explain")
+    check(flip(app) && wait(button(app, "Explain")), "once it is turned over, Explain is in its corner")
+    let screen = app.frame, card0 = button(app, "Flip back").frame
+    tap(button(app, "Explain"), "Explain")
+    check(wait(explanation(app)) && wait(words(app, "Because Answer 1")), "the explanation opens, with its words")
+    let card = button(app, "Flip back").frame, panel = explanation(app).frame, grade = buttonStarting(app, "Good").frame
+    check(panel.minY >= card.maxY, "it is UNDER the card, not over it", "card \(card) panel \(panel)")
+    check(card.height >= 250 && card.height < card0.height && abs(card.minY - card0.minY) <= 1, "the card is a little shorter (\(Int(card0.height)) to \(Int(card.height))) and still whole", "\(card0) \(card)")
+    check(card.minY >= 0 && panel.maxY <= screen.maxY && grade.minY >= panel.maxY, "the card, the explanation and the grade buttons all fit, in that order", "card \(card) panel \(panel) grade \(grade)")
+    check(abs(panel.minX - card.minX) <= 30 && panel.width >= card.width - 70, "the explanation is as wide as the card", "card \(card) panel \(panel)")
+    check(!button(app, "Explain").exists && button(app, "Close the explanation").exists, "Explain gives way to the panel, which has its close button")
+    snap("explain-review-open")
+    tap(button(app, "Close the explanation"), "Close")
+    check(gone(explanation(app)) && wait(button(app, "Explanation")), "closing it takes the panel away, and the button now says Explanation")
+    check(abs(button(app, "Flip back").frame.height - card0.height) <= 1, "and the card has its whole height back", "\(button(app, "Flip back").frame) \(card0)")
+    // saved: it shows again at once, and the AI isn't asked again
+    let before = asked()
+    tap(button(app, "Explanation"), "Explanation")
+    check(wait(explanation(app), 4) && wait(words(app, "Because Answer 1"), 4) && asked() == before, "a saved explanation shows again, and the AI isn’t asked again", "asked \(before) then \(asked())")
+    check(!words(app, "**").exists, "its words have no ** marks")
+
+    // the AI fails
+    let bad = "bad" + run
+    person(bad, "Bea Bad", deck: nil)
+    _ = makeDeck(bad, "FAILAI Fail", cards: 1)
+    let app2 = launch(as: bad, ["-open", "review"])
+    check(flip(app2) && wait(button(app2, "Explain")), "another card, turned over")
+    tap(button(app2, "Explain"), "Explain")
+    check(wait(words(app2, "didn’t answer"), 15) && wait(explanation(app2), 4), "the AI fails: the panel says so")
+    check(!button(app2, "Go Pro").exists, "and offers no Go Pro (a Pro person)")
+    tap(button(app2, "Close the explanation"), "Close")
+    check(wait(button(app2, "Explain")), "the button still says Explain: nothing was saved")
+
+    // Free: three a day, then Go Pro
+    let fre = "free" + run
+    person(fre, "Fran Free", deck: nil)
+    _ = makeDeck(fre, "Free Explain", cards: 4)
+    let app3 = launch(as: fre, ["-open", "review"])
+    for i in 1...4 {
+      check(flip(app3) && wait(button(app3, "Explain")), "Free, card \(i): turned over")
+      tap(button(app3, "Explain"), "Explain")
+      if i < 4 { check(wait(words(app3, "\(3 - i) free explanation"), 15), "Free, explanation \(i): the panel says \(3 - i) left today") }
+      else {
+        check(wait(words(app3, "free explanations"), 15) && wait(button(app3, "Go Pro"), 4), "Free’s fourth is turned away, with Go Pro")
+        snap("explain-review-gopro")
+      }
+      if i < 4 { tap(buttonStarting(app3, "Good"), "Good"); Thread.sleep(forTimeInterval: 0.8) }
+    }
+  }
+
+  // ---------- 8: Explain in Learn mode ----------
+  func test8ExplainInLearnMode() throws {
+    // The canvas's sample question (no server): answered, then Explain.
+    let b = launchBoard("PhoneQuizAnswered")
+    tap(button(b, "Explain"), "Explain")
+    check(wait(explanation(b)) && wait(words(b, "It drops. ATP synthase")), "Learn: the explanation opens")
+    let panel = explanation(b).frame, last = buttonHaving(b, "Only glycolysis").frame, why = words(b, "Not quite").frame, next = button(b, "Next question").frame
+    check(panel.minY >= last.maxY && panel.minY >= why.maxY, "it is under the answers and under the line that says why", "answers \(last) why \(why) panel \(panel)")
+    check(panel.minY >= 0 && panel.maxY <= next.minY + 1, "and it is in view, above Next question", "panel \(panel) next \(next)")
+    snap("explain-learn-open")
+    tap(button(b, "Close the explanation"), "Close")
+    check(gone(explanation(b)) && wait(button(b, "Explanation")), "closing it brings the button back (it says Explanation: there is one to read)")
+    // a typed answer, for real: any answer is checked, and Explain is offered
+    let lea = "lea" + run
+    person(lea, "Lea Learn", deck: nil)
+    _ = makeDeck(lea, "Learn Explain", cards: 3)
+    let app = launch(as: lea, ["-open", "learn"])
+    check(wait(button(app, "Start learning")), "Learn mode’s start sheet opens")
+    tap(button(app, "Type the answer"), "Type the answer")
+    for kind in ["Multiple choice", "Matching", "True or false", "Fill in the blank"] where button(app, kind).exists && button(app, kind).isSelected { button(app, kind).tap() }
+    tap(button(app, "Start learning"), "Start learning")
+    let field = app.textFields.firstMatch
+    if wait(field, 15) { field.tap(); field.typeText("zzz") } else { check(false, "found the answer box") }
+    tap(button(app, "Check"), "Check")
+    check(wait(button(app, "Explain"), 10), "a checked answer: Explain is offered under the line that says why")
+    let asked0 = asked()
+    tap(button(app, "Explain"), "Explain")
+    check(wait(explanation(app), 15) && wait(words(app, "Because Answer"), 15), "the explanation opens, with its words")
+    let p = explanation(app).frame, box = field.frame, nxt = button(app, "Next question").frame
+    check(p.minY >= box.maxY && p.minY >= 0 && p.maxY <= nxt.minY + 1, "under the answer box, in view", "box \(box) panel \(p) next \(nxt)")
+    check(asked() == asked0 + 1, "the AI was asked once", "\(asked0) then \(asked())")
+    tap(button(app, "Close the explanation"), "Close")
+    check(wait(button(app, "Explanation")), "closed: the button says Explanation now (there is one to read)")
+    let again = asked()
+    tap(button(app, "Explanation"), "Explanation")
+    check(wait(explanation(app), 4) && asked() == again, "saved: it shows again, and the AI isn’t asked again")
+    // the next question starts with it closed
+    tap(button(app, "Next question"), "Next question")
+    check(gone(explanation(app)), "the next question starts with the explanation closed")
   }
 
   private func check(_ ok: Bool, _ name: String, _ extra: String) { check(ok, ok ? name : name + "  → " + extra) }

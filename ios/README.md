@@ -218,3 +218,6 @@ when a check fails) and then lists every haptic in the app.
   half the page's speed; pulled down it stretches. Reduce Motion keeps it still. `-parallaxAudit` writes the numbers the test reads.
 
 `-popAudit` (debug builds) writes what the edge swipe decided into an invisible element, for the swipe test.
+
+`ios/tools/e2e-polish.sh` also starts `ios/tools/explain-stub.mjs` (on `AIPORT`, 3916), a stand-in for the AI that writes explanations, and tells the
+server about it (`OPENROUTER_API_KEY`, `OPENROUTER_BASE`), so flows 7 and 8 can ask for explanations: a card whose front says FAILAI makes the AI fail.
