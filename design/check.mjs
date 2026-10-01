@@ -68,6 +68,12 @@ PROP_SETS.push({ state: 'Yearly' }, { state: 'Monthly' }, { state: 'Buying' }, {
 PROP_SETS.push({ reminder: 'Off' }, { reminder: '6:00 PM' }, { reminder: 'Off', dark: true }, { reminderNote: true }, { reminderNote: true, dark: true }, { reminderNote: true, dark: true, dim: true });
 // The web sidebar as the rail of icons (Main's collapsed Tweak; the mock gives every board with a sidebar the same).
 PROP_SETS.push({ collapsed: true }, { collapsed: true, dark: true }, { collapsed: true, caughtUp: true });
+// Settings' sections: the web page shows one at a time (WebSettings' section), the iPhone's list shows all of them (PhoneSettings, All),
+// and a narrow web screen shows the list of sections (List) or one of them.
+for (const name of ['Account', 'Plan', 'Studying', 'Appearance', 'Connect AI', 'Privacy', 'Help & legal']) PROP_SETS.push({ section: name }, { section: name, dark: true, dim: true }, { section: name, plan: 'Free' });
+PROP_SETS.push({ section: 'All' }, { section: 'List' }, { section: 'List', dark: true }, { section: 'Account', verified: 'Teacher', passwordOpen: true }, { section: 'Account', deleteOpen: 'Asking' }, { section: 'Privacy', noBlocks: true },
+  { section: 'Plan', plan: 'Pro, billed by Apple' }, { section: 'Plan', plan: 'Pro, billed on the web' }, { section: 'Plan', plan: 'Pro, ending' }, { section: 'Studying', tune: 'Not enough reviews', reminder: 'Off', reminderNote: true }, { section: 'Studying', tune: 'Tuning' },
+  { section: 'All', reminder: 'Off', reminderNote: true }, { section: 'Appearance', photo: 'Your photo', theme: 'aero' });
 // A verified teacher's or school's shared deck page (Check this deck, pressing it, one being pressed, on their own deck,
 // signed out), and your verification in Settings.
 PROP_SETS.push({ verified: 'Teacher' }, { verified: 'School' }, { verified: 'Teacher', $state: { $m: { checked: true } } }, { verified: 'Teacher', $state: { busy: 'check', error: 'That didn’t save.' } },

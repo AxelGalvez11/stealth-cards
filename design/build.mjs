@@ -3220,7 +3220,7 @@ const APPS_JS = `// Each app that signed in: its name, the site it sends you bac
 const aiKind = (icon, title, text) => `<div style="background: {{t.bg}}; border-radius: 22px; padding: 16px; display: flex; flex-direction: column; gap: 10px;"><span style="width: 36px; height: 36px; border-radius: 18px; background: {{t.surf}}; display: flex; align-items: center; justify-content: center;">${svg(I[icon], 16, 2)}</span><span style="font-size: 14px; font-weight: 600;">${title}</span><span style="font-size: 13px; line-height: 1.4; color: {{t.muted}};">${text}</span></div>`;
 const webConnect = webRoot(`${sidebar('Settings')}
 <main style="flex-grow: 1; box-sizing: border-box; padding: 36px 48px; display: flex; flex-direction: column; gap: 24px; min-width: 0;">
-  <a href="WebSettings.dc.html" style="align-self: flex-start; margin-bottom: -14px; display: inline-flex; align-items: center; gap: 6px; font-size: 14px; color: {{t.muted}};">${svg(I.back, 16, 2)}Settings</a>
+  <a href="WebSettings.dc.html" data-section="connect-ai" style="align-self: flex-start; margin-bottom: -14px; display: inline-flex; align-items: center; gap: 6px; font-size: 14px; color: {{t.muted}};">${svg(I.back, 16, 2)}Settings</a>
   <div style="display: flex; flex-direction: column; gap: 8px;"><h1 style="margin: 0; font-size: 32px; font-weight: 600; letter-spacing: -.03em;">Connect your AI</h1><p style="margin: 0; font-size: 16px; line-height: 1.5; color: {{t.muted}}; max-width: 640px;">Your cards live here. Claude, ChatGPT, or any app that speaks MCP can add text, fill-in-the-blank, image, and audio cards straight from the chat.</p></div>
   <div style="display: flex; gap: 16px; min-height: 0;">
     <section style="flex-grow: 1; display: flex; flex-direction: column; gap: 12px; min-width: 0;">
@@ -3611,7 +3611,7 @@ const phoneLibrary = phone(`<div style="padding: 64px 20px 120px; display: flex;
 </div>`, 'Library', `${moveTray('tray', true)}
 ${folderPopup(true)}`);
 const pTitle = (txt, right = '') => `<div style="display: flex; align-items: center; justify-content: space-between;"><div style="font-size: 34px; font-weight: 700; letter-spacing: -.03em;">${txt}</div>${right}</div>`;
-const roundBtn = (ic, label, href = '') => href ? `<a href="${href}" aria-label="${label}" style="width: 44px; height: 44px; border-radius: 22px; background: {{t.surf}}; display: flex; align-items: center; justify-content: center;">${svg(I[ic], 18, 2)}</a>` : `<button type="button" aria-label="${label}" style="width: 44px; height: 44px; border: 0; border-radius: 22px; background: {{t.surf}}; color: {{t.text}}; display: flex; align-items: center; justify-content: center; cursor: pointer;">${svg(I[ic], 18, 2)}</button>`;
+const roundBtn = (ic, label, href = '', attrs = '') => href ? `<a href="${href}"${attrs} aria-label="${label}" style="width: 44px; height: 44px; border-radius: 22px; background: {{t.surf}}; display: flex; align-items: center; justify-content: center;">${svg(I[ic], 18, 2)}</a>` : `<button type="button" aria-label="${label}" style="width: 44px; height: 44px; border: 0; border-radius: 22px; background: {{t.surf}}; color: {{t.text}}; display: flex; align-items: center; justify-content: center; cursor: pointer;">${svg(I[ic], 18, 2)}</button>`;
 // Today's header: your picture on the left (it opens your profile, whose gear opens Settings, like Profile in the web's
 // sidebar), the title in the middle of the screen, and news (with how many are new) and + on the right.
 const NEWS_BTN = `<a href="PhoneActivity.dc.html" aria-label="News" style="position: relative; width: 44px; height: 44px; flex-shrink: 0; border-radius: 22px; background: {{t.surf}}; display: flex; align-items: center; justify-content: center;">${svg(I.bell, 18, 2)}<sc-if value="{{nav.hasNews}}" hint-placeholder-val="{{ true }}"><span style="position: absolute; top: -3px; right: -3px; min-width: 18px; height: 18px; padding: 0 5px; box-sizing: border-box; border-radius: 9px; background: #E5484D; color: #FFFFFF; box-shadow: 0 0 0 2px {{t.bg}}; font-size: 11px; font-weight: 700; line-height: 18px; text-align: center;">{{nav.news}}</span></sc-if></a>`;
@@ -3863,7 +3863,7 @@ const phoneStatsLogic = `renderVals() { ${T}${DB_JS}
 // Settings > Theme. The page's content plus the apps that signed in: two sample apps on the canvas.
 const PHONE_CONNECT_H = 889;
 const phoneConnect = phone(`<div style="padding: 64px 20px 34px; display: flex; flex-direction: column; gap: 16px;">
-  <div style="display: flex; align-items: center; gap: 12px;">${roundBtn('back', 'Back', 'PhoneSettings.dc.html')}<div style="flex-grow: 1; font-size: 17px; font-weight: 600; text-align: center;">Connect AI</div><div style="width: 44px;"></div></div>
+  <div style="display: flex; align-items: center; gap: 12px;">${roundBtn('back', 'Back', 'PhoneSettings.dc.html', ' data-section="connect-ai"')}<div style="flex-grow: 1; font-size: 17px; font-weight: 600; text-align: center;">Connect AI</div><div style="width: 44px;"></div></div>
   <div style="font-size: 15px; line-height: 1.45; color: {{t.muted}};">Make cards from any chat: text, fill-in-the-blank, images, and audio.</div>
   ${meshCard('hero', 'border-radius: 32px;', 'box-sizing: border-box; padding: 20px; display: flex; flex-direction: column; gap: 12px;', `
     <span style="font-size: 12px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; opacity: .8;">Your MCP link</span>
@@ -3885,15 +3885,16 @@ renderVals() { ${T}${DB_JS}
   ${APPS_JS}
   return { ${MESH_VALS('Apricot')} t, ...appVals, providers, mcpUrl: ai.url, copyLabel: this.state.copied ? 'Copied' : 'Copy link', copy: () => { db.act.copy(ai.url); this.setState({ copied: true }); } }; }`;
 
-// iPhone Settings, from the gear on your profile. Appearance switches this screen right away, and so does Dark mode (gray or
-// black, for whenever the app is dark). The page scrolls; the board is tall enough to show all of it: the page's content
-// (on Pro) plus 14, so a row added to Settings adds 53 here (node tests/board-fit.mjs PhoneSettings says if it's cut off). The
-// Account group adds 274 with the two blocked people of the sample (each person listed adds 56 more), and its Password row 53.
-const PHONE_SETTINGS_H = 1942;
-const sRow = (label, right, { href = '', sub = '', click = '' } = {}) => {
+// iPhone Settings, from the gear on your profile: the seven sections of Settings (see SETTINGS_SECTIONS), each one group of rows. Appearance
+// switches this screen right away, and so does Dark mode (gray or black, for whenever the app is dark). The page scrolls; the board is tall
+// enough to show all of it: the page's content (on Pro, every section, the sample's two blocked people) plus 11, so a row added to Settings
+// adds 53 here and a blocked person 56 (`node tools/content-height.mjs PhoneSettings` says how tall it is, and the board is cut off if
+// the content is taller than this).
+const PHONE_SETTINGS_H = 2134;
+const sRow = (label, right, { href = '', sub = '', click = '', ext = false } = {}) => {
   const inner = `<span style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px;"><span style="font-size: 16px;">${label}</span>${sub ? `<span style="font-size: 12px; color: {{t.muted}};">${sub}</span>` : ''}</span>${right}`;
   const st = 'min-height: 52px; box-sizing: border-box; padding: 8px 16px; display: flex; align-items: center; gap: 12px;';
-  return href ? `<a href="${href}" style="${st}">${inner}</a>` : click ? `<button type="button" onClick="{{${click}}}" style="${st} width: 100%; border: 0; background: transparent; color: inherit; font: inherit; text-align: left; cursor: pointer;">${inner}</button>` : `<div style="${st}">${inner}</div>`;
+  return href ? `<a href="${href}"${ext ? ' target="_blank" rel="noopener"' : ''} style="${st}">${inner}</a>` : click ? `<button type="button" onClick="{{${click}}}" style="${st} width: 100%; border: 0; background: transparent; color: inherit; font: inherit; text-align: left; cursor: pointer;">${inner}</button>` : `<div style="${st}">${inner}</div>`;
 };
 const sVal = v => `<span style="display: flex; align-items: center; gap: 6px; font-size: 15px; color: {{t.muted}}; white-space: nowrap;">${v}${svg(I.chev, 14, 2.2)}</span>`;
 // A row that picks from a list: tapping it opens the phone's own picker (an invisible <select> over the row, with 16px
@@ -3907,14 +3908,21 @@ const sPick = (label, k, options, note = null) => {
 };
 const S_LINE = '<div style="height: 1px; margin-left: 16px; background: {{t.bg}};"></div>';
 const sGroup = (title, rows) => `<div style="display: flex; flex-direction: column; gap: 8px;"><span style="padding: 0 4px; font-size: 13px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: {{t.muted}};">${title}</span><div style="border-radius: 24px; background: {{t.surf}}; overflow: hidden;">${rows.join(S_LINE)}</div></div>`;
+// Rows in a card (sBox), with its name above it (sNamed, the iPhone's groups: ACCOUNT, PLAN, ...). A row that may not be there is
+// { when: 'hole', row }: it carries its own hairline, so a missing one leaves no stray line (only the first row may be one, and then its
+// hairline comes after it). `hole` says when a group's name shows (it doesn't on a page of a section's own).
+const sRows = items => { const lead = items.length > 1 && typeof items[0] !== 'string';
+  return items.map((it, i) => (typeof it === 'string' ? (i && !(lead && i === 1) ? S_LINE : '') + it : `<sc-if value="{{${it.when}}}" hint-placeholder-val="{{ ${it.hint ?? true} }}">${i ? S_LINE : ''}${it.row}${i === 0 && lead ? S_LINE : ''}</sc-if>`)).join(''); };
+const sBox = items => `<div style="border-radius: 24px; background: {{t.surf}}; overflow: hidden;">${sRows(items)}</div>`;
+const sNamed = (title, items, hole = '') => `<div style="display: flex; flex-direction: column; gap: 8px;">${hole ? `<sc-if value="{{${hole}}}" hint-placeholder-val="{{ true }}">` : ''}<span style="padding: 0 4px; font-size: 13px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: {{t.muted}};">${title}</span>${hole ? '</sc-if>' : ''}${sBox(items)}</div>`;
 // Settings → Plan: Free, with a way to Go Pro; or Pro, when it renews (or ends), and Stripe's page to manage or cancel it.
 // Online only: on your own computer everything is on, so there's no plan to show.
 // Settings › Look › Theme: the theme you use, and on Free, that themes are part of Pro.
 const THEME_ROW = board => sRow(`<span style="display: inline-flex; align-items: center; gap: 8px;"><span>Theme</span><sc-if value="{{themeLocked}}" hint-placeholder-val="{{ false }}">${PRO_BADGE}</sc-if></span>`, sVal('{{themeName}}'), { href: board + '.dc.html' });
 const PRO_PILL = `<a href="{{proHref}}" style="height: 36px; padding: 0 16px; display: inline-flex; align-items: center; border-radius: 999px; background: {{t.inv}}; color: {{t.invText}}; font-size: 14px; font-weight: 600; white-space: nowrap;">Go Pro</a>`;
-const planGroups = `<sc-if value="{{planFree}}" hint-placeholder-val="{{ false }}">${sGroup('Plan', [sRow('Free', PRO_PILL, { sub: 'Pro adds exam tools, deeper stats, and more' })])}</sc-if>
-      <sc-if value="{{planWebOnly}}" hint-placeholder-val="{{ false }}">${sGroup('Plan', [sRow(`<span style="display: inline-flex; align-items: center; gap: 8px;">Lucida ${PRO_BADGE}</span>`, '', { sub: '{{planSub}}' })])}</sc-if>
-      <sc-if value="{{planPro}}" hint-placeholder-val="{{ true }}">${sGroup('Plan', [
+const planGroups = group => `<sc-if value="{{planFree}}" hint-placeholder-val="{{ false }}">${group([sRow('Free', PRO_PILL, { sub: 'Pro adds exam tools, deeper stats, and more' })])}</sc-if>
+      <sc-if value="{{planWebOnly}}" hint-placeholder-val="{{ false }}">${group([sRow(`<span style="display: inline-flex; align-items: center; gap: 8px;">Lucida ${PRO_BADGE}</span>`, '', { sub: '{{planSub}}' })])}</sc-if>
+      <sc-if value="{{planPro}}" hint-placeholder-val="{{ true }}">${group([
         sRow(`<span style="display: inline-flex; align-items: center; gap: 8px;">Lucida ${PRO_BADGE}</span>`, '', { sub: '{{planSub}}' }),
         sRow('Manage plan', sVal(''), { href: '{{manageHref}}' }),
         `<sc-if value="{{planRenews}}" hint-placeholder-val="{{ true }}">${sRow('<span style="color: {{t.again}};">Cancel Pro</span>', '', { href: '{{manageHref}}' })}</sc-if><sc-if value="{{planEnding}}" hint-placeholder-val="{{ false }}">${sRow('Keep Pro', sVal(''), { href: '{{manageHref}}' })}</sc-if>`
@@ -3957,8 +3965,8 @@ const PHOTO_JS = `const colors = [['Periwinkle', 'linear-gradient(135deg, #8C9AF
 // Settings → Profile (web and iPhone): your handle, which opens your profile, Edit profile, which opens it with its editor
 // open, and Get verified (teachers and schools; it opens the request, /verify), which says Verified teacher (or school), with
 // the check and no link, once you are. Before you have a handle it says Your profile (opening it makes one).
-const SETTINGS_PROFILE = board => sGroup('Profile', [sRow('{{profileLabel}}', sVal('View profile'), { href: board + '.dc.html' }), sRow('Edit profile', sVal(''), { href: '{{editProfileHref}}' }),
-  `<sc-if value="{{verifyGet}}" hint-placeholder-val="{{ true }}">${sRow('Get verified', sVal('{{verifyValue}}'), { href: '{{verifyHref}}' })}</sc-if><sc-if value="{{verifyDone}}" hint-placeholder-val="{{ false }}">${sRow('{{verifiedLabel}}', `<span title="Verified" style="display: flex; color: #3E63DD;">${svg(I.shield, 20, 2)}</span>`)}</sc-if>`]);
+const SETTINGS_PROFILE_ROWS = board => [sRow('{{profileLabel}}', sVal('View profile'), { href: board + '.dc.html' }), sRow('Edit profile', sVal(''), { href: '{{editProfileHref}}' }),
+  `<sc-if value="{{verifyGet}}" hint-placeholder-val="{{ true }}">${sRow('Get verified', sVal('{{verifyValue}}'), { href: '{{verifyHref}}' })}</sc-if><sc-if value="{{verifyDone}}" hint-placeholder-val="{{ false }}">${sRow('{{verifiedLabel}}', `<span title="Verified" style="display: flex; color: #3E63DD;">${svg(I.shield, 20, 2)}</span>`)}</sc-if>`];
 const PROFILE_ROW_JS = board => `const you = (db.me && db.me()) || {}, vst = (db.net && db.net.verify && db.net.verify()) || {}, profileVals = { profileLabel: you.handle ? '@' + you.handle : 'Your profile',
     editProfileHref: db.mock ? '${board}Edit.dc.html' : you.handle ? '/@' + you.handle + '?edit=1' : '/you?edit=1',
     verifyGet: !vst.verified, verifyDone: !!vst.verified, verifyValue: vst.open ? 'Waiting for review' : '', verifiedLabel: vst.verified === 'school' ? 'Verified school' : 'Verified teacher',
@@ -3994,7 +4002,8 @@ const ACCOUNT_BLOCKED_ROW = sRow('Blocked people', '<span style="font-size: 15px
   + `<sc-for list="{{acct.people}}" as="b" hint-placeholder-count="2">${S_LINE}<div style="min-height: 52px; box-sizing: border-box; padding: 8px 16px; display: flex; align-items: center; gap: 12px;">${PERSON_AV('b', 36)}<span style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px;"><span style="font-size: 16px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{b.name}}</span><span style="font-size: 12px; color: {{t.muted}}; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{b.at}}</span></span>${smallBtn('Unblock', 'b.unblock', '', '{{t.bg}}')}</div></sc-for>`
   + `<sc-if value="{{acct.hasErr}}" hint-placeholder-val="{{ false }}">${S_LINE}<div style="padding: 10px 16px;"><span role="alert" style="font-size: 13px; line-height: 1.4; color: {{t.again}};">{{acct.err}}</span></div></sc-if>`;
 const ACCOUNT_DELETE_ROW = sRow('<span style="color: {{t.again}};">Delete account</span>', '', { click: 'acct.askDelete' });
-const ACCOUNT_GROUP = `<sc-if value="{{signedIn}}" hint-placeholder-val="{{ true }}">${sGroup('Account', [PASSWORD_ROW, ACCOUNT_BLOCKED_ROW, ACCOUNT_DELETE_ROW])}</sc-if>`;
+// Help & legal: Lucida's help, and the two pages the App Store asks every app to have inside it (they open on lucida.cards, in another tab).
+const HELP_ROWS = [sRow('Help', sVal(''), { href: 'https://lucida.cards/faq', ext: true }), sRow('Terms of Service', sVal(''), { href: 'https://lucida.cards/terms', ext: true }), sRow('Privacy Policy', sVal(''), { href: 'https://lucida.cards/privacy', ext: true })];
 const DELETE_BODY = `<div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 12px;"><span style="min-width: 0; font-size: 22px; font-weight: 600; letter-spacing: -.02em; line-height: 1.2;">{{acct.del.title}}</span>${closeX('acct.del.close')}</div>
     <div style="display: flex; flex-direction: column; gap: 10px; font-size: 14px; line-height: 1.45; color: {{t.muted}};"><span>This deletes your decks, cards, and reviews, your profile, and the decks you shared. It can’t be undone.</span><sc-if value="{{acct.del.stripe}}" hint-placeholder-val="{{ true }}"><span>Your Lucida Pro subscription will be cancelled.</span></sc-if><sc-if value="{{acct.del.apple}}" hint-placeholder-val="{{ false }}"><span>You pay for Lucida Pro through Apple, and deleting your account doesn’t cancel it. To stop it, open Settings on your iPhone, tap your name, then Subscriptions.</span></sc-if></div>
     ${errLine('acct.del')}
@@ -4027,27 +4036,67 @@ const ACCOUNT_JS = `const acct = (() => {
 // and says how to allow them (the `reminderNote` Tweak shows that).
 const REMINDER_TIMES = ['7:00 AM', '8:00 AM', '9:00 AM', '12:00 PM', '6:00 PM', '8:00 PM', '9:00 PM'];
 const REMINDER_PROP = { editor: 'enum', default: '9:00 AM', options: ['Off', ...REMINDER_TIMES] };
+// ---------- Settings: its own page, with the same seven sections on the web and the iPhone (the owner: "make settings into its own page,
+// like chatgpt") ----------
+// The web has a page of its own at /settings (and /settings/<section>, so Back and links work): the sections down the left, the chosen one
+// on the right, its rows in rounded cards (a title, a short line only where the title isn't clear, and the control on the right). That is
+// WebSettings, and its `section` Tweak picks the one it shows. On a narrow screen the list is one page and each section a page of its own
+// with a back arrow: that is PhoneSettings with section List (or a section's name). The iPhone app keeps its native list, its rows grouped
+// into the same sections in the same order (PhoneSettings, section All, the default).
+const SETTINGS_SECTIONS = [['account', 'Account', 'user'], ['plan', 'Plan', 'star'], ['studying', 'Studying', 'decks'], ['appearance', 'Appearance', 'palette'],
+  ['connect-ai', 'Connect AI', 'connect'], ['privacy', 'Privacy', 'lock'], ['help', 'Help & legal', 'help']];
+const SEC_ID = k => k.replace(/-(\w)/g, (_, c) => c.toUpperCase());
+const SEC_NAME = name => name.replace('&', '&amp;');
+const WEB_SECTION_PROP = { editor: 'enum', default: 'Account', options: SETTINGS_SECTIONS.map(x => x[1]) };
+const PHONE_SECTION_PROP = { editor: 'enum', default: 'All', options: ['All', 'List', ...SETTINGS_SECTIONS.map(x => x[1])] };
+// Which section shows, and each one's link: a page of its own in the app (/settings/<section>), a switch on the board on the canvas.
+const SECTIONS_JS = `const SEC = ${JSON.stringify(SETTINGS_SECTIONS.map(x => [x[0], x[1]]))}, secId = k => k.replace(/-(\\w)/g, (_, c) => c.toUpperCase());
+  const secOf = want => (SEC.find(x => x[0] === want || x[1] === want) || [''])[0];
+  const secLinks = cur => Object.fromEntries(SEC.map(([k]) => [secId(k), { href: db.mock ? '#' : '/settings/' + k, current: k === cur ? 'page' : 'false', bg: k === cur ? t.surf : 'transparent', fg: k === cur ? t.text : t.muted, weight: k === cur ? '600' : '400',
+    pick: db.mock ? e => { if (e && e.preventDefault) e.preventDefault(); this.setState({ section: k }); } : undefined }]));`;
+const YOUR_DATA_ROWS = [
+  sRow('Import cards', sVal('Anki, Quizlet, or CSV'), { href: 'WebImport.dc.html' }),
+  sRow('Export all cards', sVal(''), { click: 'exportAll' }),
+  sRow('<span style="color: {{t.again}};">Delete my data</span>', '', { click: 'deleteData' })
+];
+
+// ---- iPhone (and a narrow web screen) ----
+const PHONE_LIST = sBox(SETTINGS_SECTIONS.map(([k, name, ic]) => { const id = SEC_ID(k), row = `<a href="{{sec.${id}.href}}" onClick="{{sec.${id}.pick}}" style="min-height: 56px; box-sizing: border-box; padding: 8px 16px; display: flex; align-items: center; gap: 14px;"><span style="display: flex; color: {{t.muted}};">${svg(I[ic], 20, 1.8)}</span><span style="flex-grow: 1; font-size: 16px;">${SEC_NAME(name)}</span><span style="display: flex; color: {{t.muted}};">${svg(I.chev, 14, 2.2)}</span></a>`;
+  return k === 'plan' ? { when: 'hasPlan', row } : row; }));
+const PHONE_ON = (hole, inner, hint = true) => `<sc-if value="{{on.${hole}}}" hint-placeholder-val="{{ ${hint} }}">${inner}</sc-if>`;
 const phoneSettings = phone(`<div style="padding: 64px 20px 34px; display: flex; flex-direction: column; gap: 18px;">
-  <div style="display: flex; align-items: center; gap: 12px;">${roundBtn('back', 'Back', 'PhoneToday.dc.html')}<div style="flex-grow: 1; font-size: 17px; font-weight: 600; text-align: center;">Settings</div><div style="width: 44px;"></div></div>
-  <button type="button" onClick="{{account}}" style="width: 100%; border: 0; border-radius: 24px; background: {{t.surf}}; padding: 14px 16px; display: flex; align-items: center; gap: 14px; color: inherit; font: inherit; text-align: left; cursor: pointer;">${AVATAR_ME(44)}<span style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px;"><span style="font-size: 16px; font-weight: 600;">Your account</span><span style="font-size: 13px; color: {{t.muted}}; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{accountSub}}</span></span><span style="display: flex; color: {{t.muted}};">${svg(I.chev, 14, 2.2)}</span></button>
-  ${SETTINGS_PROFILE('PhoneProfile')}
-  ${sGroup('Profile picture', [`<div style="padding: 12px 16px 16px; display: flex; flex-direction: column; gap: 12px;">${photoPanel(true)}</div>`])}
-  ${planGroups}
-  ${sGroup('Studying', [
-    sPick('Daily reminder', 'reminder', ['Off', ...REMINDER_TIMES].map(x => [x, x]), ['reminderNote', 'reminderPlain', 'Allow notifications for Lucida in iPhone Settings.']),
+  <div style="display: flex; align-items: center; gap: 12px;">${roundBtn('back', 'Back', '{{backHref}}')}<div style="flex-grow: 1; font-size: 17px; font-weight: 600; text-align: center;">{{title}}</div><div style="width: 44px;"></div></div>
+  ${PHONE_ON('card', `<button type="button" onClick="{{account}}" style="width: 100%; border: 0; border-radius: 24px; background: {{t.surf}}; padding: 14px 16px; display: flex; align-items: center; gap: 14px; color: inherit; font: inherit; text-align: left; cursor: pointer;">${AVATAR_ME(44)}<span style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px;"><span style="font-size: 16px; font-weight: 600;">Your account</span><span style="font-size: 13px; color: {{t.muted}}; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{accountSub}}</span></span><span style="display: flex; color: {{t.muted}};">${svg(I.chev, 14, 2.2)}</span></button>`)}
+  ${PHONE_ON('list', PHONE_LIST, false)}
+  ${PHONE_ON('account', sNamed('Account', [
+    ...SETTINGS_PROFILE_ROWS('PhoneProfile'),
+    `<div style="padding: 12px 16px 16px; display: flex; flex-direction: column; gap: 12px;"><span style="font-size: 16px;">Profile picture</span>${photoPanel(true)}</div>`,
+    { when: 'signedIn', row: PASSWORD_ROW },
+    { when: 'signedIn', row: ACCOUNT_DELETE_ROW }
+  ], 'showTitles'))}
+  ${PHONE_ON('plan', planGroups(rows => sNamed('Plan', rows, 'showTitles')))}
+  ${PHONE_ON('studying', sNamed('Studying', [
+    // Off, or a time: the iPhone's own (the web has no reminder, so a screen in the web app doesn't show the row).
+    { when: 'hasReminder', row: sPick('Daily reminder', 'reminder', ['Off', ...REMINDER_TIMES].map(x => [x, x]), ['reminderNote', 'reminderPlain', 'Allow notifications for Lucida in iPhone Settings.']) },
     sPick('New cards a day', 'perDay', [0, 5, 10, 15, 20, 30, 50].map(n => [n, n])),
     sPick('Remember goal', 'goal', [80, 85, 90, 93, 95].map(n => [n, n + '%'])),
     sRow('Schedule with FSRS', SWITCH('fsrsSw', 'toggleFsrs', 'Schedule with FSRS'), { sub: '{{fsrsSub}}' }),
     sRow('Flip animation', SWITCH('flipSw', 'toggleFlip', 'Flip animation')),
     TUNE_ROW
-  ])}
-  ${sGroup('Look', [sRow('Appearance', SEG('looks', 'Appearance')), sRow('Dark mode', SEG('darks', 'Dark mode', 2), { sub: 'When the app is dark' }), THEME_ROW('PhoneThemePicker'), sRow('<span style="display: flex; flex-direction: column; gap: 2px;"><span>Card gradients</span><sc-if value="{{gradsThemed}}" hint-placeholder-val="{{ false }}"><span style="font-size: 12px; color: {{t.muted}};">With the Lucida theme</span></sc-if></span>', SEG('grads', 'Card gradients'))])}
-  ${sGroup('Your AI', [
+  ], 'showTitles'))}
+  ${PHONE_ON('appearance', sNamed('Appearance', [
+    sRow('Appearance', SEG('looks', 'Appearance')),
+    sRow('Dark mode', SEG('darks', 'Dark mode', 2), { sub: 'When the app is dark' }),
+    THEME_ROW('PhoneThemePicker'),
+    sRow('<span style="display: flex; flex-direction: column; gap: 2px;"><span>Card gradients</span><sc-if value="{{gradsThemed}}" hint-placeholder-val="{{ false }}"><span style="font-size: 12px; color: {{t.muted}};">With the Lucida theme</span></sc-if></span>', SEG('grads', 'Card gradients'))
+  ], 'showTitles'))}
+  ${PHONE_ON('connectAi', sNamed('Connect AI', [
     sRow('Connect AI', sVal('{{connected}}'), { href: 'PhoneConnect.dc.html' }),
-    sRow('Check AI cards first', SWITCH('checkSw', 'toggleCheck', 'Check AI cards first'))
-      + `<sc-if value="{{hasInbox}}" hint-placeholder-val="{{ true }}">${S_LINE}${sRow('Cards to check', sVal('{{toCheck}}'), { href: 'PhoneInbox.dc.html' })}</sc-if>`
-  ])}
-  ${ACCOUNT_GROUP}
+    sRow('Check AI cards first', SWITCH('checkSw', 'toggleCheck', 'Check AI cards first')),
+    { when: 'hasInbox', row: sRow('Cards to check', sVal('{{toCheck}}'), { href: 'PhoneInbox.dc.html' }) }
+  ], 'showTitles'))}
+  ${PHONE_ON('privacy', `<sc-if value="{{signedIn}}" hint-placeholder-val="{{ true }}">${sNamed('Privacy', [ACCOUNT_BLOCKED_ROW], 'showTitles')}</sc-if>`)}
+  ${PHONE_ON('help', sNamed('Help &amp; legal', HELP_ROWS, 'showTitles'))}
 </div>`, '', DELETE_SHEET(true), PHONE_SETTINGS_H);
 const phoneSettingsLogic = `
 renderVals() {
@@ -4069,8 +4118,15 @@ renderVals() {
   ${NET_JS}
   ${ACCOUNT_JS}
   ${PASSWORD_JS}
+  ${SECTIONS_JS}
+  // The iPhone's list shows every section (All); on a narrow web screen the list is a page (List) and each section is a page of its own.
+  const mode = this.state.section ?? this.props.section ?? 'All', key = secOf(mode), all = mode === 'All', list = mode === 'List', show = k => all || key === k;
+  const secName = (SEC.find(x => x[0] === key) || ['', 'Settings'])[1];
   return {
     t, ...chrome, ...planVals, ...photoVals, ...profileVals, ...pwVals, tune, acct, signedIn: st.signedIn,
+    on: { card: all || key === 'account', list, account: show('account'), plan: show('plan'), studying: show('studying'), appearance: show('appearance'), connectAi: show('connect-ai'), privacy: show('privacy'), help: show('help') },
+    sec: secLinks(key), showTitles: all, hasPlan: !!plan, hasReminder: !!db.mock,
+    title: all || list ? 'Settings' : secName, backHref: all || list ? (db.mock ? 'PhoneToday.dc.html' : '/') : (db.mock ? 'PhoneSettings.dc.html' : '/settings'),
     // Your account: tap it to sign out (online).
     accountSub: db.mock ? 'Synced on all your devices · just now' : st.sub,
     account: () => { if (!db.mock && st.signedIn && confirm('Sign out of Lucida?')) db.act.signOut(); },
@@ -4095,13 +4151,29 @@ renderVals() {
   };
 }`;
 
-// Web Settings, from the Settings row at the bottom of the sidebar. Profile picture: the Google photo, your own photo, or a color.
+
+// ---- the web page ----
+// (A div with the navigation role rather than a second <nav>: the sidebar is the page's one <nav>, which other checks and scripts look for.)
+const SET_LIST = `<div role="navigation" aria-label="Settings sections" class="st-nav" style="display: flex; flex-direction: column; gap: 2px;">
+  ${SETTINGS_SECTIONS.map(([k, name, ic]) => { const id = SEC_ID(k), a = `<a href="{{sec.${id}.href}}" onClick="{{sec.${id}.pick}}" aria-current="{{sec.${id}.current}}" class="sc-press" style="height: 38px; box-sizing: border-box; padding: 0 14px; border-radius: 999px; display: flex; align-items: center; gap: 12px; font-size: 15px; white-space: nowrap; background: {{sec.${id}.bg}}; color: {{sec.${id}.fg}}; font-weight: {{sec.${id}.weight}};">${svg(I[ic], 18, 1.8)}${SEC_NAME(name)}</a>`;
+    return k === 'plan' ? `<sc-if value="{{hasPlan}}" hint-placeholder-val="{{ true }}">${a}</sc-if>` : a; }).join('\n  ')}
+</div>`;
+const WEB_PAGE = (k, name, cards) => `<sc-if value="{{on.${SEC_ID(k)}}}" hint-placeholder-val="{{ ${k === 'account'} }}"><section aria-labelledby="st-title" style="display: flex; flex-direction: column; gap: 20px;"><h2 id="st-title" style="margin: 0 0 4px; font-size: 28px; font-weight: 600; letter-spacing: -.03em; line-height: 1.15;">${SEC_NAME(name)}</h2>
+${cards.join('\n')}
+</section></sc-if>`;
+// (side by side down to 861 px; from there to 761 the list is a row of pills above the section; under 761 the app shows the iPhone boards)
+const SETTINGS_CSS = '@media (max-width:1100px){.st-wrap{gap:28px!important;padding-left:28px!important;padding-right:28px!important}.st-list{width:184px!important}}'
+  + '@media (max-width:860px){.st-wrap{flex-direction:column!important;gap:20px!important;padding:28px 24px 48px!important}.st-list{width:auto!important;position:static!important;align-self:stretch!important}.st-nav{flex-direction:row!important;flex-wrap:wrap!important;gap:6px!important}.st-body{width:100%!important;max-width:none!important}}';
 const webSettings = webRoot(`${sidebar('Settings')}
-<main style="flex-grow: 1; box-sizing: border-box; padding: 36px 48px; display: flex; flex-direction: column; gap: 24px; min-width: 0; overflow-y: auto;">
-  <h1 style="margin: 0; font-size: 32px; font-weight: 600; letter-spacing: -.03em;">Settings</h1>
-  <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px; align-items: start;">
-    <div style="display: flex; flex-direction: column; gap: 24px;">
-      <div style="border-radius: 18px; background: {{t.surf}}; padding: 22px; display: flex; flex-direction: column; gap: 18px;">
+<main style="flex-grow: 1; box-sizing: border-box; min-width: 0; overflow-y: auto;">
+  <div class="st-wrap" style="box-sizing: border-box; width: 100%; max-width: 1056px; margin: 0 auto; padding: 36px 48px 64px; display: flex; align-items: flex-start; gap: 56px;">
+    <div class="st-list" style="width: 216px; flex-shrink: 0; position: sticky; top: 36px; display: flex; flex-direction: column; gap: 20px;">
+      <h1 style="margin: 0; font-size: 32px; font-weight: 600; letter-spacing: -.03em; line-height: 1.15;">Settings</h1>
+      ${SET_LIST}
+    </div>
+    <div class="st-body" style="flex-grow: 1; min-width: 0; max-width: 720px;">
+      ${WEB_PAGE('account', 'Account', [
+        `<div style="border-radius: 18px; background: {{t.surf}}; padding: 22px; display: flex; flex-direction: column; gap: 18px;">
         <div style="display: flex; align-items: center; gap: 16px;">
           <sc-if value="{{photoColor}}" hint-placeholder-val="{{ true }}"><span style="width: 64px; height: 64px; flex-shrink: 0; border-radius: 20px; background: {{avatarBg}}; color: #FFFFFF; display: flex; align-items: center; justify-content: center; font-size: 26px; font-weight: 600;">{{initial}}</span></sc-if>
           <sc-if value="{{photoPic}}" hint-placeholder-val="{{ false }}">${AVATAR_ME(64)}</sc-if>
@@ -4111,37 +4183,32 @@ const webSettings = webRoot(`${sidebar('Settings')}
         <div style="display: flex; flex-direction: column; gap: 12px;">
           ${photoPanel(false)}
         </div>
-      </div>
-      ${sGroup('Studying', [
-        sRow('Daily reminder', sVal('{{reminder}}')),
+      </div>`,
+        sBox(SETTINGS_PROFILE_ROWS('WebProfile')),
+        `<sc-if value="{{signedIn}}" hint-placeholder-val="{{ true }}">${sBox([PASSWORD_ROW])}${sBox([ACCOUNT_DELETE_ROW])}</sc-if>`
+      ])}
+      ${WEB_PAGE('plan', 'Plan', [planGroups(sBox)])}
+      ${WEB_PAGE('studying', 'Studying', [sBox([
         sRow('New cards a day', miniStep('perDay', 'lessDay', 'moreDay', '{{t.bg}}', 'perDayIn')),
         sRow('Remember goal', miniStep('goal', 'lessGoal', 'moreGoal')),
         sRow('Schedule with FSRS', SWITCH('fsrsSw', 'toggleFsrs', 'Schedule with FSRS'), { sub: '{{fsrsSub}}' }),
         sRow('Flip animation', SWITCH('flipSw', 'toggleFlip', 'Flip animation')),
         sRow('Grade with', SEG('gradeOpts', 'Grade with')),
-        sRow('Progress', SEG('progOpts', 'Progress'))
-      ])}
-      ${sGroup('Your data', [
-        sRow('Import cards', sVal('Anki, Quizlet, or CSV'), { href: 'WebImport.dc.html' }),
-        sRow('Export all cards', sVal(''), { click: 'exportAll' }),
-        sRow('<span style="color: {{t.again}};">Delete my data</span>', '', { click: 'deleteData' })
-      ])}
-      ${ACCOUNT_GROUP}
-    </div>
-    <div style="display: flex; flex-direction: column; gap: 24px;">
-      ${SETTINGS_PROFILE('WebProfile')}
-      ${planGroups}
-      ${sGroup('Look', [
+        sRow('Progress', SEG('progOpts', 'Progress')),
+        TUNE_ROW
+      ])])}
+      ${WEB_PAGE('appearance', 'Appearance', [sBox([
         sRow('Appearance', SEG('looks', 'Appearance')),
         sRow('Dark mode', SEG('darks', 'Dark mode', 2), { sub: 'When the app is dark' }),
         THEME_ROW('ThemePicker'),
         `<div style="padding: 10px 16px 16px; display: flex; flex-direction: column; gap: 12px;"><div style="display: flex; align-items: center; gap: 12px;"><span style="flex-grow: 1; display: flex; flex-direction: column; gap: 2px;"><span style="font-size: 16px;">Card gradients</span><sc-if value="{{gradsThemed}}" hint-placeholder-val="{{ false }}"><span style="font-size: 12px; color: {{t.muted}};">With the Lucida theme</span></sc-if></span>${SEG('grads', 'Card gradients')}</div><div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px;"><sc-for list="{{gradPreview}}" as="k" hint-placeholder-count="4">${meshCard('k', 'height: 60px; border-radius: 14px;', 'height: 100%; box-sizing: border-box; padding: 8px 10px; display: flex; align-items: flex-end; font-size: 11px; font-weight: 600;', '{{k.name}}')}</sc-for></div></div>`
-      ])}
-      ${sGroup('Your AI', [
+      ])])}
+      ${WEB_PAGE('connect-ai', 'Connect AI', [sBox([
         sRow('Connect AI', sVal('{{connected}}'), { href: 'WebConnect.dc.html' }),
         sRow('Check AI cards first', SWITCH('checkSw', 'toggleCheck', 'Check AI cards first'), { sub: 'New cards and changes wait until you keep them' })
-      ])}
-      ${sGroup('Schedule', [TUNE_ROW])}
+      ])])}
+      ${WEB_PAGE('privacy', 'Privacy', [`<sc-if value="{{signedIn}}" hint-placeholder-val="{{ true }}">${sBox([ACCOUNT_BLOCKED_ROW])}</sc-if>`, sBox(YOUR_DATA_ROWS)])}
+      ${WEB_PAGE('help', 'Help & legal', [sBox(HELP_ROWS)])}
     </div>
   </div>
 </main>
@@ -4164,9 +4231,12 @@ renderVals() {
   ${NET_JS}
   ${ACCOUNT_JS}
   ${PASSWORD_JS}
+  ${SECTIONS_JS}
+  const cur = secOf(this.state.section ?? this.props.section ?? '') || 'account';
   return {
     t, ...chrome, grain: String(this.props.grain ?? 0.7), ...planVals, ...photoVals, ...profileVals, ...pwVals, tune, acct,
     name: st.name, sub: st.sub, signedIn: st.signedIn,
+    on: Object.fromEntries(SEC.map(([k]) => [secId(k), k === cur])), sec: secLinks(cur), hasPlan: !!plan,
     ...themeRow(),
     looks: opts([['system', 'System'], ['light', 'Light'], ['dark', 'Dark']], look, id => set({ look: id })),
     darks: opts([['gray', 'Gray'], ['black', 'Black']], darkMode, id => set({ darkMode: id })),
@@ -4182,7 +4252,7 @@ renderVals() {
     perDay: String(st.perDay), goal: st.goal + '%', perDayIn: typed('perDay', st.perDay, n => set({ perDay: n }), 'New cards a day'),
     lessDay: () => set({ perDay: Math.max(0, st.perDay - 5) }), moreDay: () => set({ perDay: Math.min(999, st.perDay + 5) }),
     lessGoal: () => set({ goal: Math.max(70, st.goal - 1) }), moreGoal: () => set({ goal: Math.min(97, st.goal + 1) }),
-    reminder: st.reminder, connected: db.ai().connected,
+    connected: db.ai().connected,
     exportAll: () => db.act.exportAll(), deleteData: () => db.act.resetAll(), signOut: () => db.act.signOut && db.act.signOut()
   };
 }`;
@@ -4216,7 +4286,7 @@ const themeUpgrade = phone => `<sc-if value="{{locked}}" hint-placeholder-val="{
 const themeOnProfile = phone => `<sc-if value="{{unlocked}}" hint-placeholder-val="{{ true }}"><div style="box-sizing: border-box; padding: ${phone ? '14px 16px' : '18px 22px'}; border-radius: ${phone ? 24 : 20}px; background: {{t.surf}}; display: flex; align-items: center; gap: 16px;"><span style="display: flex; flex-direction: column; gap: 2px; flex-grow: 1; min-width: 0;"><span style="font-size: 15px; font-weight: 600;">Show my theme on my profile</span><span style="font-size: 13px; line-height: 1.4; color: {{t.muted}};">People who visit see your decks the way you do.</span></span>${SWITCH('showSw', 'toggleShow', 'Show my theme on my profile')}</div></sc-if>`;
 const themePicker = webRoot(`${sidebar('Settings')}
 <main style="flex-grow: 1; box-sizing: border-box; padding: 36px 48px; display: flex; flex-direction: column; gap: 22px; min-width: 0; overflow-y: auto;">
-  <a href="WebSettings.dc.html" style="align-self: flex-start; margin-bottom: -12px; display: inline-flex; align-items: center; gap: 6px; font-size: 14px; color: {{t.muted}};">${svg(I.back, 16, 2)}Settings</a>
+  <a href="WebSettings.dc.html" data-section="appearance" style="align-self: flex-start; margin-bottom: -12px; display: inline-flex; align-items: center; gap: 6px; font-size: 14px; color: {{t.muted}};">${svg(I.back, 16, 2)}Settings</a>
   <h1 style="margin: 0; font-size: 32px; font-weight: 600; letter-spacing: -.03em;">Theme</h1>
   <div style="margin-top: -10px; font-size: 14px; color: {{t.muted}};">Changes your deck covers, flashcards, study background, and profile picture.</div>
   <div role="list" aria-label="Themes" style="display: grid; grid-template-columns: repeat(8, 126px); gap: 20px 12px; margin-top: 6px;"><sc-for list="{{themes}}" as="x" hint-placeholder-count="15">${themeTile(126, 168, 12, 8)}</sc-for></div>
@@ -4226,7 +4296,7 @@ const PHONE_THEMES_H = 1260;
 // A theme’s own page is longer: its covers, both sides of the card, and the profile pictures.
 const PHONE_THEME_H = 1382;
 const phoneThemePicker = phone(`<div style="padding: 64px 20px 34px; display: flex; flex-direction: column; gap: 18px;">
-  <div style="display: flex; align-items: center; gap: 12px;">${roundBtn('back', 'Back', 'PhoneSettings.dc.html')}<div style="flex-grow: 1; font-size: 17px; font-weight: 600; text-align: center;">Theme</div><div style="width: 44px;"></div></div>
+  <div style="display: flex; align-items: center; gap: 12px;">${roundBtn('back', 'Back', 'PhoneSettings.dc.html', ' data-section="appearance"')}<div style="flex-grow: 1; font-size: 17px; font-weight: 600; text-align: center;">Theme</div><div style="width: 44px;"></div></div>
   <div style="font-size: 14px; line-height: 1.45; color: {{t.muted}};">Changes your deck covers, flashcards, study background, and profile picture.</div>
   <div role="list" aria-label="Themes" style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px 10px;"><sc-for list="{{themes}}" as="x" hint-placeholder-count="15">${themeTile(110, 146, 11.5, 7, 14)}</sc-for></div>
   ${themeUpgrade(true)}${themeOnProfile(true)}
@@ -8947,10 +9017,10 @@ const files = {
   'WebDecksTags': ['Web · Library · a deck with 11 tags (+9 shows them all)', attrOf('WebDecks', W, H, 'open-tags="{{yes}}"'), { logic: darkLogic, css: DRAG_CSS, w: W, h: H }],
   'WebDecksMoreTags': ['Web · Library · More (find any tag)', attrOf('WebDecks', W, H, 'more-tags="{{yes}}"'), { logic: darkLogic, css: DRAG_CSS, w: W, h: H }],
   'WebDecksList': ['Web · Library · list view', listOf('WebDecks', W, H), { logic: 'renderVals() { return {}; }', css: DRAG_CSS, w: W, h: H }],
-  'WebSettings': ['Web · Settings', webSettings, { props: { ...DARK, grain: MESH('Iris').grain, passwordOpen: BOOL, photo: PHOTO_PROP, plan: SETTINGS_PLAN_PROP, tune: TUNE_PROP, verified: VERIFIED_PROP, ...ACCOUNT_PROPS }, logic: webSettingsLogic, css: NUM_CSS, w: W, h: H }],
-  'WebSettingsDelete': ['Web · Settings · Delete account (the question)', attrOf('WebSettings', W, H, 'delete-open="Asking"'), { logic: darkLogic, css: NUM_CSS, w: W, h: H }],
-  'WebSettingsFree': ['Web · Settings · on Free (Tune to you is Pro)', attrOf('WebSettings', W, H, 'plan="Free"'), { logic: darkLogic, css: NUM_CSS, w: W, h: H }],
-  'WebSettingsVerified': ['Web · Settings · a verified teacher (Get verified says Verified teacher)', attrOf('WebSettings', W, H, 'verified="Teacher"'), { logic: darkLogic, css: NUM_CSS, w: W, h: H }],
+  'WebSettings': ['Web · Settings', webSettings, { props: { ...DARK, grain: MESH('Iris').grain, passwordOpen: BOOL, photo: PHOTO_PROP, plan: SETTINGS_PLAN_PROP, tune: TUNE_PROP, verified: VERIFIED_PROP, section: WEB_SECTION_PROP, collapsed: BOOL, ...ACCOUNT_PROPS }, logic: webSettingsLogic, css: NUM_CSS + SETTINGS_CSS, w: W, h: H }],
+  'WebSettingsDelete': ['Web · Settings · Delete account (the question)', attrOf('WebSettings', W, H, 'delete-open="Asking" section="Account"'), { logic: darkLogic, css: NUM_CSS + SETTINGS_CSS, w: W, h: H }],
+  'WebSettingsFree': ['Web · Settings · on Free (Tune to you is Pro)', attrOf('WebSettings', W, H, 'plan="Free" section="Studying"'), { logic: darkLogic, css: NUM_CSS + SETTINGS_CSS, w: W, h: H }],
+  'WebSettingsVerified': ['Web · Settings · a verified teacher (Get verified says Verified teacher)', attrOf('WebSettings', W, H, 'verified="Teacher" section="Account"'), { logic: darkLogic, css: NUM_CSS + SETTINGS_CSS, w: W, h: H }],
   'IconOptions': ['Web · Icon options', iconOptions, { props: DARK, logic: iconOptionsLogic, w: W, h: H }],
   'WebTodayNew': ['Web · Today · new user', webTodayNew, { props: { ...DARK, ...MESH('Iris') }, logic: emptyLogic(), w: W, h: H }],
   'WebTodayCaughtUp': ['Web · Today · all caught up', caughtOf('Main', W, H), { logic: darkLogic, css: DRAG_CSS, w: W, h: H }],
@@ -9023,7 +9093,7 @@ const files = {
   'WebQuizGray': ['Web · Learn mode (dark, gray)', grayOf('WebQuiz', W, H), { logic: darkLogic, css: LEARN_CSS, w: W, h: H }],
   'WebStatsGray': ['Web · Stats (dark, gray)', grayOf('WebStats', W, H), { logic: darkLogic, w: W, h: H }],
   'WebStatsPaceGray': ['Web · Stats · Pace (dark, gray)', `<div style="width: ${W}px; height: ${H}px; overflow: hidden; background: #1E1E20;"><dc-import name="WebStats" tab="Pace" dark="{{yes}}" dim="{{yes}}" hint-size="${W}px,${H}px"></dc-import></div>`, { logic: darkLogic, w: W, h: H }],
-  'WebSettingsGray': ['Web · Settings (dark, gray)', grayOf('WebSettings', W, H), { logic: darkLogic, css: NUM_CSS, w: W, h: H }],
+  'WebSettingsGray': ['Web · Settings (dark, gray)', grayOf('WebSettings', W, H), { logic: darkLogic, css: NUM_CSS + SETTINGS_CSS, w: W, h: H }],
   'TopToday': ['Top tabs · Today', topToday, { props: { ...DARK, ...MESH('Iris') }, logic: topTodayLogic, w: W, h: H }],
   'TopDeck': ['Top tabs · Deck', topDeck, { props: DARK, logic: topDeckLogic, w: W, h: H }],
   'TopTodayDark': ['Top tabs · Today (dark)', darkOf('TopToday', W, H), { logic: darkLogic, w: W, h: H }],
@@ -9132,7 +9202,7 @@ const files = {
   'PhoneEditorImage': ['iPhone · Card editor · image with boxes', attrOf('PhoneEditor', PW, PH, 'card-type="Image" keyboard="{{no}}"'), { logic: 'renderVals() { return { yes: true, no: false }; }', css: EDITOR_CSS, w: PW, h: PH }],
   'PhoneSettingsFree': ['iPhone · Settings · on Free (Tune to you is Pro)', attrOf('PhoneSettings', PW, PHONE_SETTINGS_H, 'plan="Free"'), { logic: darkLogic, w: PW, h: PHONE_SETTINGS_H }],
   'PhoneSettingsVerified': ['iPhone · Settings · a verified teacher (Get verified says Verified teacher)', attrOf('PhoneSettings', PW, PHONE_SETTINGS_H, 'verified="Teacher"'), { logic: darkLogic, w: PW, h: PHONE_SETTINGS_H }],
-  'PhoneSettings': ['iPhone · Settings', phoneSettings, { props: { ...DARK, passwordOpen: BOOL, photo: PHOTO_PROP, plan: SETTINGS_PLAN_PROP, tune: TUNE_PROP, verified: VERIFIED_PROP, reminder: REMINDER_PROP, reminderNote: BOOL, ...ACCOUNT_PROPS }, logic: phoneSettingsLogic, w: PW, h: PHONE_SETTINGS_H }],
+  'PhoneSettings': ['iPhone · Settings', phoneSettings, { props: { ...DARK, passwordOpen: BOOL, photo: PHOTO_PROP, plan: SETTINGS_PLAN_PROP, tune: TUNE_PROP, verified: VERIFIED_PROP, reminder: REMINDER_PROP, reminderNote: BOOL, section: PHONE_SECTION_PROP, ...ACCOUNT_PROPS }, logic: phoneSettingsLogic, w: PW, h: PHONE_SETTINGS_H }],
   'PhoneSettingsDelete': ['iPhone · Settings · Delete account (the question)', attrOf('PhoneSettings', PW, PHONE_SETTINGS_H, 'delete-open="Asking"'), { logic: darkLogic, w: PW, h: PHONE_SETTINGS_H }],
   'PhoneDeckSettings': ['iPhone · Deck settings', openOf('PhoneDeck', PW, PH), { logic: darkLogic, css: NUM_CSS + DRAG_CSS, w: PW, h: PH }],
   'PhoneDeckDark': ['iPhone · Deck page (dark)', darkOf('PhoneDeck', PW, PH), { logic: darkLogic, css: NUM_CSS + DRAG_CSS, w: PW, h: PH }],

@@ -127,11 +127,17 @@ function resolve(path, q) {
   if (path === '/review/done') return { name: P + (db.session().onlyPiles ? 'DonePiles' : 'Done') };
   if (path === '/stats') return { name: P + (db.hasReviews() ? 'Stats' : 'StatsEmpty') };
   if (path === '/connect') return { name: P + 'Connect' };
-  if (path === '/settings') return { name: P + 'Settings' };
+  // Settings is a page of its own: the sections down the left and the chosen one on the right (/settings is Account, and /settings/<section> is
+  // the others), so Back and links work. A narrow screen shows the list of sections as one page, and each section as a page of its own.
+  if (path === '/settings') return { name: P + 'Settings', props: narrow.matches ? { section: 'List' } : {} };
+  const sec = /^\/settings\/(account|plan|studying|appearance|connect-ai|privacy|help)$/.exec(path);
+  if (sec) return sec[1] === 'plan' && !db.plan() ? { redirect: '/settings' } : { name: P + 'Settings', props: { section: sec[1] } };
   // Settings › Theme, and each theme's page (where you use it, or Go Pro on Free).
   if (path === '/settings/theme') return { name: narrow.matches ? 'PhoneThemePicker' : 'ThemePicker' };
   const th = /^\/settings\/theme\/([a-z]+)$/.exec(path);
   if (th) return THEME_KEYS.includes(th[1]) ? { name: P + 'Theme', props: { sheet: th[1] } } : { redirect: '/settings/theme' };
+  // (a section that isn't one lands on Settings)
+  if (path.startsWith('/settings/')) return { redirect: '/settings' };
   return { redirect: '/' };
 }
 // Links between boards: in the app they go to the matching page (for the deck you're on); on /b they stay on /b.
@@ -306,7 +312,7 @@ function paint() {
   // bright in dark mode (all but setting up, which sits over the deck's page).
   document.body.style.background = props.dark && !/^Live(?!Setup)/.test(current.name) ? (props.dim ? '#1E1E20' : '#000000') : '#FFFFFF';
   const tpl = document.createElement('template');
-  tpl.innerHTML = renderScreen(s, current.key, props).replace(/href="([A-Za-z0-9]+)\.dc\.html"/g, (_, n) => 'href="' + linkFor(n) + '"');
+  tpl.innerHTML = renderScreen(s, current.key, props).replace(/href="([A-Za-z0-9]+)\.dc\.html"( data-section="([a-z-]+)")?/g, (_, n, __, sec) => 'href="' + linkFor(n) + (sec ? '/' + sec : '') + '"');
   const was = tpl.content.querySelector('.sc-panel, .sc-sheet') ? [] : panels();
   morphChildren(app, tpl.content);
   const fns = refs, done = drawn;

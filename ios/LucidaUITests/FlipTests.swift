@@ -5,6 +5,8 @@
 //   1  The switch: Settings has "Flip animation" in Studying, On to start with; pressing it turns it Off and the server keeps it; in Review
 //      the card now just shows its other side ("appears"), and still reads Flip card, then Flip back; opened again, the switch still says Off.
 //   2  Another device: the choice made on the web (Off, then On) is what this phone shows, in Settings and in Review.
+//   3  Settings' sections: the list is grouped into the same seven sections as the web's Settings page, in the same order (Account, Plan,
+//      Studying, Appearance, Connect AI, Privacy, Help & legal), each with its rows.
 // Run it with ios/tools/e2e-flip.sh (it starts a fresh server). It only runs when LUCIDA_FLIP is set.
 import XCTest
 
@@ -68,6 +70,30 @@ final class FlipTests: AppCase {
     r = review(who)
     check(r.mode == "turns", "On again, the card turns over")
     r.app.terminate()
+  }
+
+  // ---------- 3: Settings' sections ----------
+  func test3Sections() throws {
+    try XCTSkipIf(api("x", "GET", "/api/rev").status != 200, "No server at " + Self.server)
+    let who = "flipc" + run
+    name(who, "Flip Wren")
+    let app = launch(as: who, ["-open", "settings"])
+    let titles = ["ACCOUNT", "PLAN", "STUDYING", "APPEARANCE", "CONNECT AI", "PRIVACY", "HELP & LEGAL"]
+    let rows: [String: [String]] = ["ACCOUNT": ["Edit profile", "Password", "Delete account"], "PLAN": [], "STUDYING": ["Daily reminder", "New cards a day", "Flip animation"],
+                                    "APPEARANCE": ["Theme"], "CONNECT AI": ["Connect AI", "Check AI cards first", "Cards to check"], "PRIVACY": ["Blocked people"], "HELP & LEGAL": ["Help", "Terms of Service", "Privacy Policy"]]
+    check(wait(text(app, "ACCOUNT"), 30), "Settings opens on its first section, ACCOUNT")
+    // Scroll down the list, noting each section's name the first time it is on screen (top to bottom within a screen).
+    var seen: [String] = [], found: [String: [String]] = [:]
+    for _ in 0..<14 {
+      let here = titles.filter { !seen.contains($0) && text(app, $0).exists && text(app, $0).isHittable }.sorted { text(app, $0).frame.minY < text(app, $1).frame.minY }
+      seen += here
+      for t in titles { for r in rows[t] ?? [] where found[t]?.contains(r) != true && any(app, r).exists && any(app, r).isHittable { found[t, default: []].append(r) } }
+      if seen.count == titles.count && titles.allSatisfy({ (found[$0] ?? []).count == (rows[$0] ?? []).count }) { break }
+      app.swipeUp(velocity: .slow)
+    }
+    check(seen == titles, "the sections are " + titles.joined(separator: ", ") + ", in that order (saw: " + seen.joined(separator: ", ") + ")")
+    for t in titles { check((found[t] ?? []).count == (rows[t] ?? []).count, t + " has " + (rows[t] ?? []).joined(separator: ", ") + " (saw: " + (found[t] ?? []).joined(separator: ", ") + ")") }
+    app.terminate()
   }
 
   // ---------- 2: another device ----------
