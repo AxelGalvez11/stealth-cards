@@ -133,12 +133,13 @@ final class QuizTests: XCTestCase {
     check(q.count == 20 && q.allSatisfy { $0["by"] as? String == "Lucida" && $0["kind"] as? String == "choice" }, "each marked as written by Lucida, a multiple choice")
     var sawWritten = false, why = false
     for _ in 0..<40 where !sawWritten {
+      // (a picture of the written question while it is on screen)
+      if options(app).contains(where: { $0.contains("Not Answer number") }) { snap("quiz-written"); sawWritten = true }
       guard let r = answerOne(app) else { break }
-      if r.options.contains(where: { $0.contains("Not Answer number") }) { sawWritten = true; why = r.why }
+      if sawWritten { why = r.why }
     }
     check(sawWritten, "then a written question comes up, with its own wrong answers")
     check(why, "and it says why")
-    snap("quiz-written")
     check(app.alerts.count == 0, "no alerts along the way")
     let asked = stubRequests().count
     check(asked <= 2, "and no more than two requests so far (the next 20 only when the first are about to run out): \(stubRequests())")
