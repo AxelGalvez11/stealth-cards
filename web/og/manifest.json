@@ -3,193 +3,193 @@
  "home": {
   "file": "og/home.png",
   "fingerprint": "1162841b7c",
-  "bytes": 145760,
+  "bytes": 145534,
   "read": 13.7
  },
  "pricing": {
   "file": "og/pricing.png",
   "fingerprint": "64d9f825ea",
-  "bytes": 166647,
+  "bytes": 166421,
   "read": 12.7
  },
  "privacy": {
   "file": "og/privacy.png",
   "fingerprint": "3dfa006a7d",
-  "bytes": 134528,
+  "bytes": 134315,
   "read": 13.4
  },
  "terms": {
   "file": "og/terms.png",
   "fingerprint": "1ef08c2624",
-  "bytes": 180279,
+  "bytes": 180053,
   "read": 11
  },
  "connect": {
   "file": "og/connect.png",
   "fingerprint": "6c6e863288",
-  "bytes": 208465,
+  "bytes": 208239,
   "read": 9.9
  },
  "blog": {
   "file": "og/blog.png",
   "fingerprint": "f368e687b4",
-  "bytes": 213419,
+  "bytes": 213206,
   "read": 9.3
  },
  "compare": {
   "file": "og/compare.png",
   "fingerprint": "cd36d08af1",
-  "bytes": 177057,
+  "bytes": 176831,
   "read": 11.4
  },
  "features": {
   "file": "og/features.png",
   "fingerprint": "6459ae6ab8",
-  "bytes": 142319,
+  "bytes": 142106,
   "read": 13.3
  },
  "vs/anki": {
   "file": "og/vs-anki.png",
   "fingerprint": "45efd7fd6f",
-  "bytes": 215628,
+  "bytes": 215402,
   "read": 9.5
  },
  "vs/quizlet": {
   "file": "og/vs-quizlet.png",
   "fingerprint": "2d9eb94403",
-  "bytes": 215036,
+  "bytes": 214810,
   "read": 10.4
  },
  "vs/knowt": {
   "file": "og/vs-knowt.png",
   "fingerprint": "9b914ce701",
-  "bytes": 201496,
+  "bytes": 201270,
   "read": 12.5
  },
  "vs/remnote": {
   "file": "og/vs-remnote.png",
   "fingerprint": "a350de5ada",
-  "bytes": 199469,
+  "bytes": 199256,
   "read": 9.7
  },
  "vs/brainscape": {
   "file": "og/vs-brainscape.png",
   "fingerprint": "274dcb512c",
-  "bytes": 182210,
+  "bytes": 181984,
   "read": 12
  },
  "vs/mochi": {
   "file": "og/vs-mochi.png",
   "fingerprint": "8a708ea276",
-  "bytes": 147144,
+  "bytes": 146918,
   "read": 13.4
  },
  "vs/kahoot": {
   "file": "og/vs-kahoot.png",
   "fingerprint": "c9c84c5a52",
-  "bytes": 206457,
+  "bytes": 206231,
   "read": 9.5
  },
  "vs/gizmo": {
   "file": "og/vs-gizmo.png",
   "fingerprint": "f93936041a",
-  "bytes": 150835,
+  "bytes": 150622,
   "read": 11.8
  },
  "anki-alternative": {
   "file": "og/anki-alternative.png",
   "fingerprint": "ea29182b9a",
-  "bytes": 148131,
+  "bytes": 147905,
   "read": 12.4
  },
  "quizlet-alternative": {
   "file": "og/quizlet-alternative.png",
   "fingerprint": "279b416237",
-  "bytes": 208264,
+  "bytes": 208038,
   "read": 8.6
  },
  "features/spaced-repetition": {
   "file": "og/features-spaced-repetition.png",
   "fingerprint": "999b362993",
-  "bytes": 210897,
+  "bytes": 210671,
   "read": 9.4
  },
  "features/ai-flashcards": {
   "file": "og/features-ai-flashcards.png",
   "fingerprint": "57348f59f9",
-  "bytes": 201707,
+  "bytes": 201494,
   "read": 9.5
  },
  "features/learn-mode": {
   "file": "og/features-learn-mode.png",
   "fingerprint": "72bd78232f",
-  "bytes": 177482,
+  "bytes": 177256,
   "read": 11.1
  },
  "features/shared-decks": {
   "file": "og/features-shared-decks.png",
   "fingerprint": "4bd646ca2c",
-  "bytes": 192319,
+  "bytes": 192106,
   "read": 10.5
  },
  "features/classes": {
   "file": "og/features-classes.png",
   "fingerprint": "6f4000bef5",
-  "bytes": 186031,
+  "bytes": 185805,
   "read": 10.8
  },
  "features/live-games": {
   "file": "og/features-live-games.png",
   "fingerprint": "c316cfb2ce",
-  "bytes": 172292,
+  "bytes": 172066,
   "read": 9
  },
  "features/image-occlusion": {
   "file": "og/features-image-occlusion.png",
   "fingerprint": "605c08946e",
-  "bytes": 159056,
+  "bytes": 158843,
   "read": 11.5
  },
  "features/import": {
   "file": "og/features-import.png",
   "fingerprint": "ab83795bed",
-  "bytes": 148702,
+  "bytes": 148489,
   "read": 9.7
  },
  "for/students": {
   "file": "og/for-students.png",
   "fingerprint": "e9772c2322",
-  "bytes": 156623,
+  "bytes": 156410,
   "read": 11.1
  },
  "for/med-school": {
   "file": "og/for-med-school.png",
   "fingerprint": "16a5e3cb99",
-  "bytes": 180772,
+  "bytes": 180546,
   "read": 9.8
  },
  "for/mcat": {
   "file": "og/for-mcat.png",
   "fingerprint": "4cc6c633b4",
-  "bytes": 210644,
+  "bytes": 210418,
   "read": 10
  },
  "for/language-learning": {
   "file": "og/for-language-learning.png",
   "fingerprint": "472f456bda",
-  "bytes": 181765,
+  "bytes": 181539,
   "read": 10.1
  },
  "for/teachers": {
   "file": "og/for-teachers.png",
   "fingerprint": "52f8f720fd",
-  "bytes": 132436,
+  "bytes": 132223,
   "read": 13.1
  },
  "faq": {
   "file": "og/faq.png",
   "fingerprint": "4944aaed05",
-  "bytes": 159488,
+  "bytes": 159262,
   "read": 10.8
  }
 }

@@ -45,6 +45,8 @@ export const PRICING_FAQ = [
 // What llms.txt and llms-full.txt say, written by hand in design/site/_llms.json: an intro paragraph, a name and one line for
 // each page (in the order to list them), and quick facts. Without that file they are made from the pages' own words.
 export const LLMS = (() => { try { return JSON.parse(readFileSync(join(DATA_DIR, '_llms.json'), 'utf8')); } catch { return null; } })();
+// What the articles show besides their words (design/visuals.mjs): diagrams, tables made from bullets, the app's screens, and "Test yourself".
+export const VISUALS = (() => { try { return JSON.parse(readFileSync(join(DATA_DIR, '_visuals.json'), 'utf8')); } catch { return {}; } })();
 // What Lucida is, in one paragraph: the top of llms.txt, and the description of the organization and the site in the
 // structured data. Only what's true today (the iPhone app isn't in the App Store yet).
 export const ABOUT = LLMS && LLMS.intro ? LLMS.intro : 'Lucida is a flashcard app that runs in the browser at app.lucida.cards, on phones and computers. It plans every review with FSRS spaced repetition, and your own AI (Claude, ChatGPT, Cursor or any app that supports MCP) can make and edit your cards through your personal Lucida link. Free: unlimited decks and cards, Learn mode, shared decks and live games with friends. Pro costs $' + PRICE.monthly + ' a month or $' + PRICE.yearly + ' a year.';
@@ -299,6 +301,7 @@ export function pageSet(dir = DATA_DIR) {
   const list = [...map.values()].sort((a, b) => ORDER.indexOf(a.kind) - ORDER.indexOf(b.kind) || rank(a.slug) - rank(b.slug) || a.slug.localeCompare(b.slug));
   for (const p of list) {
     p.url = urlOf(p.slug); p.file = fileOf(p.slug); p.og = ogFile(p.slug); p.updatedLabel = dateLabel(p.updated);
+    if (VISUALS[p.slug] && !p.synthetic && !p.sample) p.visuals = VISUALS[p.slug];
     p.sources = p.sources.map(s => ({ ...s, checkedLabel: dateLabel(s.checked) }));
   }
   const by = new Map(list.map(p => [p.slug, p]));

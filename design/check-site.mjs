@@ -13,7 +13,9 @@ import { readFileSync, existsSync, readdirSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { join } from 'node:path';
-import { pageSet, KINDS, FIXED, PRICE, ORIGIN, APP, EMAIL, SOCIALS, CATEGORIES, STYLES, GRAD_NAMES, categoryOf, pictureOf, ogFingerprint, plain, DATA_DIR } from './site.mjs';
+import { pageSet, KINDS, FIXED, PRICE, ORIGIN, APP, EMAIL, SOCIALS, CATEGORIES, STYLES, GRAD_NAMES, categoryOf, pictureOf, ogFingerprint, plain, DATA_DIR, VISUALS } from './site.mjs';
+import { KINDS as FIG_KINDS, SCREENS, CONNECT_FIGS } from './visuals.mjs';
+import { wanted as screenPictures } from './screens.mjs';
 import { readPng, thumb, distance } from './png.mjs';
 import { LIGHT, DARK, SCHEME_CSS } from './scheme.mjs';
 import { allPages, AI_BOTS, OG, crumbUrl } from './seo.mjs';
@@ -145,7 +147,7 @@ for (const [p, file] of pageFiles) {
     const same = img => { const f = (img.attrs.src || '').slice(1), at = t.findIndex(x => x === img), wrap = t[at - 1], grain = t[at + 1];
       return /^og\/[\w-]+\.png$/.test(f) && !/-dark\.png$/.test(f) && existsSync(join(WEB, f)) && JSON.stringify(png(f)) === JSON.stringify([OG.width, OG.height])
         && !!wrap && wrap.tag === 'span' && has(wrap, 'sp-pw') && !!grain && grain.tag === 'span' && has(grain, 'sc-grain') && grain.attrs['aria-hidden'] === 'true' && /opacity: 0\.7;?$/.test(grain.attrs.style || ''); };
-    ok(!imgs.some(x => /-dark\.png/.test(x.attrs.src || '')) && !t.some(x => x.tag === 'source' && !x.close) && !t.some(x => x.tag === 'picture' && !x.close), 'the pictures are the same in a dark screen: no -dark file, no <picture> source');
+    ok(!imgs.some(x => /-dark\.png/.test(x.attrs.src || '')) && !t.some(x => x.tag === 'source' && /\/og\//.test(x.attrs.srcset || '')), 'the gradient pictures are the same in a dark screen: no -dark file, no <picture> source for them');
     const isHub = p.kind === 'hub', big = isHub ? feats : heroes;
     ok(big.length === 1 && (isHub ? !heroes.length : !feats.length), isHub ? 'a hub has a featured page and no hero' : 'one hero picture', [heroes.length, feats.length]);
     const hero = (big[0] || { attrs: {} }).attrs;
@@ -175,9 +177,44 @@ for (const [p, file] of pageFiles) {
       if (p.table) { const rows = (body.match(/<tbody>[\s\S]*?<\/tbody>/) || [''])[0].match(/<tr[\s>]/g) || [], more = body.includes('<details class="sp-more">'); ok(rows.length === p.table.rows.length && more === (rows.length > 6) && (!more || body.includes('Show all ' + rows.length)), 'a table past six rows has "Show all N", and every row is in the page', [rows.length, more]); }
       // "On this page": a tree (every address in it exists: the link check below), once for a wide screen and once, closed, for a phone.
       const tocs = body.match(/<nav class="sp-toc"[\s\S]*?<\/nav>/g) || [], top = tocs.length ? [...tocs[0].matchAll(/<li class="[^"]*"><a href="#([^"]+)"/g)].map(m => m[1]) : [];
-      const sections = p.sections.filter(x => x.h2).length + (p.table ? 1 : 0) + (p.kind === 'faq' ? new Set(p.faq.map(f => f.group || '')).size : p.faq.length ? 1 : 0);
+      const sections = p.sections.filter(x => x.h2).length + (p.table ? 1 : 0) + ((p.visuals && (p.visuals.test || []).length >= 3) ? 1 : 0) + (p.kind === 'faq' ? new Set(p.faq.map(f => f.group || '')).size : p.faq.length ? 1 : 0);
       ok(tocs.length === 1 && top.length >= 2 && top.length === sections, '"On this page" is a tree of the page’s sections', [tocs.length, top.length, sections]);
       ok(/<details class="sp-tocd"><summary>[\s\S]*?On this page/.test(body), 'a phone’s "On this page" is a closed row under the lead');
+      // Visuals (design/visuals.mjs, design/site/_visuals.json): every article has two or more (diagrams and the app's screens), a "Test yourself"
+      // set of three or four flashcards before "Questions", tables made from the bullets that were already a table, and nothing in them but the
+      // page's own words.
+      if (['compare', 'alternative', 'feature', 'use'].includes(p.kind)) {
+        const V = p.visuals || {}, figs = [...body.matchAll(/<figure class="sp-fig sp-f-([a-z]+)">([\s\S]*?)<\/figure>/g)];
+        ok(figs.length >= 2, p.slug + ' has two or more visuals', figs.length);
+        ok(figs.length === (V.figs || []).length && figs.every((f, i) => FIG_KINDS.includes(f[1])), 'every visual of ' + p.slug + ' is drawn, and every drawing is one of the known kinds', [figs.length, (V.figs || []).length]);
+        ok(figs.every(f => /<figcaption class="sp-fcap">[^<]+<\/figcaption>/.test(f[2])), 'every visual of ' + p.slug + ' has a caption');
+        const cards = body.match(/<details class="sp-tc"[^>]*>/g) || [], tsec = (body.match(/<section class="sp-sec sp-test" id="test-yourself">[\s\S]*?<\/section>/) || [''])[0];
+        ok(cards.length >= 3 && cards.length <= 4 && cards.length === (V.test || []).length, p.slug + ' has a "Test yourself" set of three or four cards', cards.length);
+        ok(cards.every(c => !/\bopen\b/.test(c)) && /<a class="sp-u" href="https:\/\/app\.lucida\.cards\/">Make your own cards free<\/a>/.test(tsec), 'the cards are closed (a tap shows the answer), and "Make your own cards free" goes to the app');
+        ok(body.indexOf('id="test-yourself"') > 0 && body.indexOf('id="test-yourself"') < body.indexOf('id="questions"'), '"Test yourself" comes before "Questions"');
+        ok(top.includes('test-yourself'), '"On this page" lists "Test yourself"', top);
+        // The screens: a picture for a computer and for a phone, light and dark, each with its size and a real alt text.
+        for (const f of figs.filter(x => x[1] === 'screen')) {
+          const srcs = [...f[2].matchAll(/<source media="([^"]*)" srcset="([^"]*)" width="(\d+)" height="(\d+)">/g)], im = (f[2].match(/<img class="sp-shot" src="([^"]*)" alt="([^"]*)" width="(\d+)" height="(\d+)" loading="lazy"/) || []);
+          const files = [...srcs.map(x => x[2]), im[1]];
+          ok(srcs.length === 3 && im.length > 0 && /^\(max-width: 760px\) and \(prefers-color-scheme: dark\)$/.test(srcs[0][1]) && srcs[1][1] === '(max-width: 760px)' && srcs[2][1] === '(prefers-color-scheme: dark)', 'a screen picture has sources for a phone (dark, light) and a dark computer, then the light computer', srcs.map(x => x[1]));
+          ok(files.every(x => /^\/shots\/[a-z-]+\.webp$/.test(x || '') && existsSync(join(WEB, (x || '').slice(1)))), 'every picture of a screen exists in web/shots', files);
+          ok(files.every(x => !/phone/.test(x) === /^\/shots\/[a-z]+(-dark)?\.webp$/.test(x)) && files[0].includes('-phone-dark') && files[3] && !/phone|dark/.test(files[3]), 'the phone’s pictures are the phone ones, and the light computer’s is the plain one', files);
+          ok((im[2] || '').trim().length >= 30 && srcs.every(x => +x[3] > 0 && +x[4] > 0) && +im[3] > 0 && +im[4] > 0, 'a screen picture has a real alt text and a width and height (nothing jumps)', im[2]);
+        }
+        // Tables made from bullets say what the bullets said.
+        const norm = x => plain(x).toLowerCase().replace(/[^a-z0-9]+/g, ''), t2 = [...body.matchAll(/<table class="sp-t2">([\s\S]*?)<\/table>/g)];
+        ok(t2.length === (V.tables || []).length, p.slug + ' has the tables it asks for', [t2.length, (V.tables || []).length]);
+        (V.tables || []).forEach((tb, i) => {
+          const sec = p.sections.find(x => x.h2 === tb.at), want = sec ? sec.bullets.filter(b => /^\*\*[^*]+\*\*/.test(b)).map(norm) : [], got = t2[i] ? [...t2[i][1].matchAll(/<tr[^>]*><th scope="row">([\s\S]*?)<\/th><td>([\s\S]*?)<\/td><\/tr>/g)].map(m => norm(un(m[1].replace(/<[^>]+>/g, '')) + ' ' + un(m[2].replace(/<[^>]+>/g, '')))) : [];
+          ok(want.length >= 2 && JSON.stringify(want) === JSON.stringify(got), 'a table of "' + tb.at + '" has its bullets’ words, in their order', [want.length, got.length]);
+        });
+        // A "pick" card or a checklist row, and a fork's lines, are the bullets' own words.
+        for (const f of figs.filter(x => ['pick', 'checklist'].includes(x[1]))) {
+          const spec = V.figs.find(x => x.kind === f[1]), sec = p.sections.find(x => x.h2 === spec.at), text = norm(un(f[2].replace(/<[^>]+>/g, ' ')));
+          ok(sec && sec.bullets.every(b => text.includes(norm(b))), 'the ' + f[1] + ' of ' + p.slug + ' holds every bullet’s words', spec.at);
+        }
+      }
     }
   }
   // The hubs: the featured page and the cards, each page once. The blog: tabs, a search box, a section for each category.
@@ -281,6 +318,56 @@ for (const path of ['/sign-in', '/discover', '/@maria', '/@maria/cell-biology', 
 ok(via('lucida.cards', '/landing.html').to === '/' && via('lucida.cards', '/pricing.html').to === '/pricing', 'the old .html addresses go to the clean ones');
 ok(file('app.lucida.cards', '/pricing', 'pricing.html') && file('app.lucida.cards', '/zzz', 'app.html') && via('app.lucida.cards', '/@maria').type === 'function' && via('app.lucida.cards', '/d/sabc').type === 'function' && via('app.lucida.cards', '/api/state').type === 'function', 'app.lucida.cards: pages, the app, /@…, /d/… and /api unchanged');
 ok(via('app.lucida.cards', '/vs/anki').rewritten === '/app.html' && via('app.lucida.cards', '/compare').rewritten === '/app.html', 'app.lucida.cards doesn’t serve the site’s pages');
+
+console.log('Visuals (design/site/_visuals.json, design/visuals.mjs, web/shots)');
+{
+  // The data: every entry is an article page; every figure, table and card says where it goes and what it needs; the test cards say only what
+  // the page says (the numbers and names in an answer are on the page, and nearly all of its longer words).
+  const articles = pages.filter(p => ['compare', 'alternative', 'feature', 'use'].includes(p.kind) && !p.sample && !p.synthetic);
+  ok(articles.every(p => VISUALS[p.slug]), 'every article page has visuals', articles.filter(p => !VISUALS[p.slug]).map(p => p.slug));
+  ok(Object.keys(VISUALS).every(k => articles.some(p => p.slug === k)), '_visuals.json has only article pages', Object.keys(VISUALS).filter(k => !articles.some(p => p.slug === k)));
+  const text = p => plain([p.lead, ...(p.table ? [...p.table.columns, ...p.table.rows.flat()] : []), ...p.sections.flatMap(x => [x.h2, ...x.paras, ...x.bullets]), ...p.faq.flatMap(f => [f.q, f.a])].join(' ')).toLowerCase().replace(/[‘’]/g, '\'').replace(/[“”]/g, '"');
+  for (const p of articles) {
+    const V = VISUALS[p.slug] || {}, h2s = p.sections.map(x => x.h2), txt = text(p), words = new Set(txt.match(/[a-z0-9]+/g));
+    for (const f of V.figs || []) {
+      ok(FIG_KINDS.includes(f.kind) && h2s.includes(f.at), p.slug + ': a ' + f.kind + ' figure goes in a section the page has', [f.kind, f.at]);
+      if (f.kind === 'screen') ok(!!SCREENS[f.id], p.slug + ': the screen "' + f.id + '" is in the table of screens', f.id);
+      if (f.kind === 'pick') ok(p.sections.find(x => x.h2 === f.at).bullets.length === 2 && p.sections.find(x => x.h2 === f.at).bullets.every(b => /^\*\*Pick [^*]+\*\*/.test(b)), p.slug + ': a pick figure takes two "Pick X if …" bullets');
+      if (f.kind === 'steps' && f.auto) ok(p.sections.find(x => x.h2 === f.at).bullets.filter(b => /^\*\*\d+\./.test(b)).length >= 3, p.slug + ': an automatic steps figure takes three or more numbered steps');
+      if (f.kind === 'steps' && !f.auto) ok((f.steps || []).length >= 3 && f.steps.length <= 4, p.slug + ': a steps figure has three or four step cards', (f.steps || []).length);
+      // A step card's words are the section's own: its title and its line are made of words the section says.
+      if (f.kind === 'steps' && !f.auto) { const sec = text({ lead: '', table: null, sections: [p.sections.find(x => x.h2 === f.at)], faq: [] }); const miss = (f.steps || []).flatMap(x => (x.t + ' ' + (x.d || '')).toLowerCase().match(/[a-z]{4,}/g) || []).filter(w => !sec.includes(w.replace(/s$/, ''))); ok(!miss.length, p.slug + ': a step card says only what its section says', miss); }
+    }
+    for (const tb of V.tables || []) { const sec = p.sections.find(x => x.h2 === tb.at); ok(sec && sec.bullets.filter(b => /^\*\*[^*]+\*\*/.test(b)).length >= 2 && (tb.columns || []).length === 2, p.slug + ': a table is made from a section with two or more bullets that begin with a bold lead-in', tb.at); }
+    const cards = V.test || [];
+    ok(cards.length >= 3 && cards.length <= 4, p.slug + ' has three or four test cards', cards.length);
+    const seen = new Set();
+    cards.forEach((c, i) => {
+      const tag = p.slug + ' test card ' + (i + 1), q = plain(c.q || ''), a = plain(c.a || '');
+      ok(q.split(/\s+/).length <= 14 && /\?$/.test(q) && a.split(/\s+/).length <= 24 && !seen.has(q.toLowerCase()), tag + ': the question is short and ends in ?, the answer short, and no question twice', [q, a]);
+      seen.add(q.toLowerCase());
+      const al = a.toLowerCase().replace(/[‘’]/g, '\'');
+      const nums = (al.match(/\d[\d,.]*%?/g) || []).map(n => n.replace(/[.,]+$/, '')).filter(n => !txt.includes(n) && !txt.replace(/,/g, '').includes(n.replace(/,/g, '')));
+      const caps = a.split(/\s+/).slice(1).map(w => w.replace(/[^A-Za-z0-9’']/g, '')).filter(w => /^[A-Z]/.test(w) && !txt.includes(w.toLowerCase().replace(/[‘’]/g, '\'')) && !words.has(w.toLowerCase().replace(/[’']s$/, '')));
+      const long = al.match(/[a-z]{5,}/g) || [], missing = long.filter(w => !words.has(w) && !words.has(w.replace(/s$/, '')) && !words.has(w + 's') && !txt.includes(w.slice(0, -3)));
+      ok(!nums.length && !caps.length && (!long.length || missing.length / long.length <= 0.3), tag + ': the answer says only what the page says', { numbers: nums, names: caps, words: missing });
+    });
+  }
+  // The pictures of the app's screens: every one is drawn (web/shots), from the boards as they are now (a note when a board has changed since).
+  let man = {}; try { man = JSON.parse(read('shots/manifest.json')); } catch {}
+  const want = screenPictures();
+  ok(want.every(w => existsSync(join(WEB, 'shots', w.file)) && man[w.file]), 'every screen picture is in web/shots (node design/screens.mjs)', want.filter(w => !existsSync(join(WEB, 'shots', w.file))).map(w => w.file));
+  const old = want.filter(w => man[w.file] && man[w.file].hash !== w.hash).map(w => w.file);
+  if (old.length) note('web/shots: ' + old.length + ' screen pictures were drawn from older boards or crops than the current ones (node design/screens.mjs redraws them)');
+  ok(Object.keys(man).length === want.length && existsSync(join(WEB, 'shots')) && readdirSync(join(WEB, 'shots')).filter(f => f.endsWith('.webp')).length === want.length, 'web/shots has the screen pictures and no others', readdirSync(join(WEB, 'shots')).length + ' files vs ' + want.length);
+  // The canvas boards draw each screen with the app's own board (a dc-import) and each article's figures from the same markup.
+  for (const name of ['SiteCompare', 'SiteFeature']) for (const suffix of ['', 'Phone']) {
+    const src = readFileSync(join(ROOT, 'design/canvas/project', name + suffix + '.dc.html'), 'utf8'), boards = [...new Set(Object.values(SCREENS).flatMap(x => [x.desk.board, x.phone.board]))];
+    ok(boards.every(b => src.includes('<dc-import name="' + b + '" dark="{{dark}}"')) && src.includes('class="sp-fig sp-f-{{f.kind}}"') && src.includes('id="test-yourself"'), name + suffix + ' draws the screens with the app’s boards, the figures, and the test cards');
+  }
+  { const src = readFileSync(join(ROOT, 'design/canvas/project/SiteConnect.dc.html'), 'utf8'); ok(src.includes('class="sp-fig sp-f-{{f.kind}}"') && src.includes('<dc-import name="WebConnectConsent"') && CONNECT_FIGS.length === 2, 'the Connect guide board has its steps and the consent screen'); }
+  { const html = read('connect-guide.html'); ok((html.match(/<figure class="sp-fig sp-f-/g) || []).length === 2 && /<ol class="sp-steps sp-n4">/.test(html) && html.includes('/shots/consent.webp'), 'the Connect guide has its four steps as cards and the screen where an AI app asks to use your decks'); }
+}
 
 console.log('Link-preview pictures, icons, boards');
 let manifest = {}; try { manifest = JSON.parse(read('og/manifest.json')); } catch {}
