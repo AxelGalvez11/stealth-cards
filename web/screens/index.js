@@ -1084,7 +1084,7 @@ export default [
   "name": "SiteConnect",
   "title": "Connect Lucida to your AI · lucida.cards/connect",
   "w": 1440,
-  "h": 3336
+  "h": 4207
  },
  {
   "name": "SiteFaq",
