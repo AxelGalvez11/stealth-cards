@@ -188,6 +188,8 @@ enum DebugChecks {
     s.setExam(d.id, iso(dayAt(nowMs(), 10)))
     let e1 = await error(s)
     say(e1.contains("Pro"), "free: an exam date is turned away, and says why", e1)
+    // (The server's words name the web's pricing page; on iPhone Pro is bought in the app, so the app leaves the page out.)
+    say(!e1.contains("pricing") && !e1.contains("lucida.cards"), "free: and doesn't send anyone to a web page to pay", e1)
     say((s.lib.decks.first { $0.id == d.id }?.exam ?? "").isEmpty, "free: and the deck still has none")
     s.updateDeck(d.id, ["leechAt": 12])
     let e2 = await error(s)

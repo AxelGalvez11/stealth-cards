@@ -206,7 +206,7 @@ struct DeckShareTab: View {
     } else {
       HStack(spacing: 12) {
         Text("Hardest cards").css(14, .semibold).frame(maxWidth: .infinity, alignment: .leading)
-        Button { UIApplication.shared.open(API.pricing) } label: {
+        Button { nav.goPro() } label: {
           Text("Go Pro").css(13, .semibold).foregroundStyle(t.invText).padding(.horizontal, 14).frame(height: 34).background(Capsule().fill(t.inv))
         }
         .buttonStyle(.press)

@@ -1,4 +1,5 @@
 // iPhone · Settings (PhoneSettings), from the gear on Today: your account, studying, the look, and your AI.
+import StoreKit
 import SwiftUI
 
 extension Store {
@@ -192,7 +193,8 @@ struct SettingsScreen: View {
     PhotoChoices().frame(maxWidth: .infinity, alignment: .leading).padding(.horizontal, 16).padding(.top, 12).padding(.bottom, 16)
   }
 
-  /// PLAN: Free with Go Pro, or Pro with when it renews (or ends) and Stripe's page to manage or cancel it (PhoneSettings).
+  /// PLAN: Free with Go Pro; or Pro with when it renews (or ends) and who bills it. A plan billed by Apple has Manage plan and Cancel
+  /// Pro (the system's own subscriptions screen); Pro bought on the web says so and has no link (PhoneSettings, `plan`).
   @ViewBuilder private var planGroup: some View {
     let plan = store.plan
     if plan.pro {
@@ -200,23 +202,25 @@ struct SettingsScreen: View {
         HStack(spacing: 12) {
           VStack(alignment: .leading, spacing: 2) {
             HStack(spacing: 8) { Text("Lucida").css(16); ProBadge() }
-            Text(planLine(plan)).css(12).foregroundStyle(t.muted)
+            Text(plan.line(web: store.plansWeb)).css(12).foregroundStyle(t.muted)
           }
           .frame(maxWidth: .infinity, alignment: .leading)
         }
         .padding(.horizontal, 16).padding(.vertical, 8).frame(minHeight: 52)
-        divider
-        Button { openManage() } label: { row("Manage plan") { value("") } }.buttonStyle(.plain)
-        divider
-        Button { openManage() } label: {
-          if plan.ending { row("Keep Pro") { value("") } } else { row("Cancel Pro", color: t.again) { EmptyView() } }
+        if store.plansManage {
+          divider
+          Button { openManage() } label: { row("Manage plan") { value("") } }.buttonStyle(.plain)
+          divider
+          Button { openManage() } label: {
+            if plan.ending { row("Keep Pro") { value("") } } else { row("Cancel Pro", color: t.again) { EmptyView() } }
+          }
+          .buttonStyle(.plain)
         }
-        .buttonStyle(.plain)
       }
     } else {
       group("Plan") {
         row("Free", sub: "Pro adds exam tools, deeper stats, and more") {
-          Button { UIApplication.shared.open(API.pricing) } label: {
+          Button { nav.goPro() } label: {
             Text("Go Pro").css(14, .semibold).foregroundStyle(t.invText).padding(.horizontal, 16).frame(height: 36).background(Capsule().fill(t.inv))
           }
           .buttonStyle(.press)
@@ -225,23 +229,15 @@ struct SettingsScreen: View {
     }
   }
 
-  /// "Yearly · renews September 24, 2027".
-  private func planLine(_ p: Plan) -> String {
-    let every = ["month": "Monthly", "year": "Yearly"][p.every] ?? ""
-    let iso = ISO8601DateFormatter(), frac = ISO8601DateFormatter()
-    frac.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
-    var day = ""
-    if let d = iso.date(from: p.until) ?? frac.date(from: p.until) {
-      let f = DateFormatter(); f.locale = Locale(identifier: "en_US"); f.dateFormat = "MMMM d, yyyy"; f.timeZone = TimeZone(identifier: "UTC")
-      day = (p.ending ? "ends " : "renews ") + f.string(from: d)
-    }
-    return [every, day].filter { !$0.isEmpty }.joined(separator: " · ")
-  }
-
-  /// Stripe's page, where Stripe emails a code to the address that paid and then shows the plan.
+  /// Manage plan, Cancel Pro, and Keep Pro: the system's own subscriptions screen (a subscription bought with the App Store can
+  /// only be changed there), or if it can't open, Apple's page for it.
   private func openManage() {
-    guard !store.demo, let url = URL(string: store.lib.me?.manage.nilIfEmpty ?? "https://lucida.cards/pricing") else { return }
-    UIApplication.shared.open(url)
+    guard !store.demo else { return }
+    let url = URL(string: store.lib.me?.manage.nilIfEmpty ?? "https://apps.apple.com/account/subscriptions")
+    Task { @MainActor in
+      if let scene = UIApplication.shared.connectedScenes.compactMap({ $0 as? UIWindowScene }).first, (try? await AppStore.showManageSubscriptions(in: scene)) != nil { return }
+      nav.open(url)
+    }
   }
 
   private var connected: String {

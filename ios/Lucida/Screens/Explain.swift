@@ -80,6 +80,7 @@ struct ExplainButton: View {
 /// when that would help), and how many free ones are left today.
 struct ExplainPanel: View {
   @Environment(\.theme) private var t
+  @EnvironmentObject private var nav: Nav
   let ex: ExplainVM
   let look: ExplainLook
   var size: CGFloat = 15
@@ -103,7 +104,7 @@ struct ExplainPanel: View {
       if !ex.error.isEmpty && !ex.busy {
         Text(ex.error).css(14, lh: 1.4).foregroundStyle(t.again).fixedSize(horizontal: false, vertical: true)
         if ex.goPro {
-          Button { UIApplication.shared.open(API.pricing) } label: {
+          Button { nav.goPro() } label: {
             Text("Go Pro").css(13, .semibold).foregroundStyle(look.btnFg).padding(.horizontal, 16).frame(height: 34).background(Capsule().fill(look.btn))
           }
           .buttonStyle(.press)

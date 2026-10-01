@@ -192,6 +192,9 @@ enum Generated {
     ("swiss", "Swiss", "Swiss poster", "Swiss poster")
   ]
 
+  /// What Pro adds (the pricing page's list, design/site.mjs PLAN_PRO), for the paywall.
+  static let proPlan: [String] = ["Exam dates: ready in time for the test","Stats on what you’re weak at","Unlimited pictures and sounds","Themes for cards, covers and your profile","The hardest cards on decks you share","Photo covers and your own colors","Natural voices for sound cards","More AI explanations"]
+
   /// The sample sound's waveform (design/mock.mjs SAMPLE_WAVE): 96 peaks, 0 to 1.
   static let sampleWave: [Double] = [0.05,0.05,0.05,0.07,0.08,0.11,0.1,0.13,0.16,0.22,0.22,0.21,0.3,0.4,0.38,0.34,0.45,0.59,0.55,0.51,0.57,0.74,0.67,0.7,0.65,0.79,0.7,0.87,0.81,0.74,0.7,0.92,0.85,0.64,0.66,0.82,0.76,0.54,0.52,0.62,0.56,0.38,0.34,0.39,0.35,0.26,0.24,0.21,0.19,0.16,0.15,0.14,0.18,0.25,0.32,0.29,0.29,0.43,0.53,0.47,0.43,0.58,0.7,0.59,0.56,0.62,0.73,0.58,0.64,0.53,0.62,0.5,0.6,0.49,0.43,0.4,0.46,0.37,0.26,0.26,0.28,0.22,0.14,0.13,0.14,0.1,0.07,0.05,0.05,0.05,0.05,0.05,0.05,0.05,0.05,0.05]
 

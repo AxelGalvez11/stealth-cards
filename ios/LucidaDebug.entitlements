@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<!-- Sign in with Apple (the App ID cards.lucida.app has it turned on, team 27AW3HBC3Z). -->
+	<key>com.apple.developer.applesignin</key>
+	<array>
+		<string>Default</string>
+	</array>
+	<!-- Debug builds only (Lucida.entitlements is the one Release and the App Store use): the simulator's StoreKit test store
+	     (what Xcode's StoreKit configuration and the UI tests buy with) only talks to an app that is entitled as a development
+	     build. Device builds signed for development get this automatically. -->
+	<key>get-task-allow</key>
+	<true/>
+</dict>
+</plist>

@@ -4,19 +4,20 @@
    version = "1.7">
    <BuildAction
       parallelizeBuildables = "YES"
-      buildImplicitDependencies = "YES">
+      buildImplicitDependencies = "YES"
+      buildArchitectures = "Automatic">
       <BuildActionEntries>
          <BuildActionEntry
             buildForTesting = "YES"
-            buildForRunning = "NO"
-            buildForProfiling = "NO"
-            buildForArchiving = "NO"
-            buildForAnalyzing = "NO">
+            buildForRunning = "YES"
+            buildForProfiling = "YES"
+            buildForArchiving = "YES"
+            buildForAnalyzing = "YES">
             <BuildableReference
                BuildableIdentifier = "primary"
-               BlueprintIdentifier = "4C0000000000000000000015"
-               BuildableName = "LucidaUITests.xctest"
-               BlueprintName = "LucidaUITests"
+               BlueprintIdentifier = "4C0000000000000000000006"
+               BuildableName = "Lucida.app"
+               BlueprintName = "Lucida"
                ReferencedContainer = "container:Lucida.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
@@ -53,6 +54,16 @@
       debugDocumentVersioning = "YES"
       debugServiceExtension = "internal"
       allowLocationSimulation = "YES">
+      <BuildableProductRunnable
+         runnableDebuggingMode = "0">
+         <BuildableReference
+            BuildableIdentifier = "primary"
+            BlueprintIdentifier = "4C0000000000000000000006"
+            BuildableName = "Lucida.app"
+            BlueprintName = "Lucida"
+            ReferencedContainer = "container:Lucida.xcodeproj">
+         </BuildableReference>
+      </BuildableProductRunnable>
       <StoreKitConfigurationFileReference
          identifier = "../../Lucida/Lucida.storekit">
       </StoreKitConfigurationFileReference>
@@ -63,6 +74,16 @@
       savedToolIdentifier = ""
       useCustomWorkingDirectory = "NO"
       debugDocumentVersioning = "YES">
+      <BuildableProductRunnable
+         runnableDebuggingMode = "0">
+         <BuildableReference
+            BuildableIdentifier = "primary"
+            BlueprintIdentifier = "4C0000000000000000000006"
+            BuildableName = "Lucida.app"
+            BlueprintName = "Lucida"
+            ReferencedContainer = "container:Lucida.xcodeproj">
+         </BuildableReference>
+      </BuildableProductRunnable>
    </ProfileAction>
    <AnalyzeAction
       buildConfiguration = "Debug">

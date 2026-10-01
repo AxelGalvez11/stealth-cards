@@ -122,23 +122,28 @@ struct Me: Decodable {
   var email = "", provider = "", name = ""
   /// The photo on a Google account (an https link, web/auth.mjs); Apple and email sign-ins have none.
   var picture = ""
-  /// Lucida Pro (the server hears it from Stripe, web/billing.mjs), and Stripe's page for changing or cancelling it.
+  /// Lucida Pro (the server hears it from Stripe, web/billing.mjs, or from Apple, web/apple.mjs), and the page for changing or
+  /// cancelling it (the iPhone app never opens Stripe's: it manages an Apple plan in the system's own subscriptions screen).
   var plan = Plan(), manage = ""
-  enum CodingKeys: String, CodingKey { case email, provider, name, picture, plan, manage }
+  /// What the iPhone buys Pro with, so a purchase is this person's own (a UUID, web/apple.mjs tokenOf).
+  var appAccountToken = ""
+  enum CodingKeys: String, CodingKey { case email, provider, name, picture, plan, manage, appAccountToken }
   init(from d: Decoder) throws {
     let c = try d.container(keyedBy: CodingKeys.self)
     email = c.v(.email, ""); provider = c.v(.provider, ""); name = c.v(.name, ""); picture = c.v(.picture, ""); plan = c.v(.plan, Plan()); manage = c.v(.manage, "")
+    appAccountToken = c.v(.appAccountToken, "")
   }
 }
 
-/// Free or Pro: monthly or yearly ("month"/"year"), until when (ISO date), and whether it's set to end then.
+/// Free or Pro: monthly or yearly ("month"/"year"), until when (ISO date), whether it's set to end then, and who bills it
+/// ("apple" or "stripe"; nothing on a copy of the server on a computer, where everything is on).
 struct Plan: Decodable {
-  var pro = false, every = "", until = "", ending = false
-  enum CodingKeys: String, CodingKey { case pro, every, until, ending }
-  init(pro: Bool = false, every: String = "", until: String = "", ending: Bool = false) { self.pro = pro; self.every = every; self.until = until; self.ending = ending }
+  var pro = false, every = "", until = "", ending = false, by = ""
+  enum CodingKeys: String, CodingKey { case pro, every, until, ending, by }
+  init(pro: Bool = false, every: String = "", until: String = "", ending: Bool = false, by: String = "") { self.pro = pro; self.every = every; self.until = until; self.ending = ending; self.by = by }
   init(from d: Decoder) throws {
     let c = try d.container(keyedBy: CodingKeys.self)
-    pro = c.v(.pro, false); every = c.v(.every, ""); until = c.v(.until, ""); ending = c.v(.ending, false)
+    pro = c.v(.pro, false); every = c.v(.every, ""); until = c.v(.until, ""); ending = c.v(.ending, false); by = c.v(.by, "")
   }
 }
 

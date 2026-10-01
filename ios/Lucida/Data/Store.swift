@@ -57,8 +57,11 @@ struct DemoProps {
   /// Deck settings opened with the goal already stepped up to 95% (the canvas's stepGoal), Stats on this tab, the Library's
   /// All cards on this filter ("leech" or "paused"), the card editor on this card, and the Tune to you row's state.
   var stepGoal = false, statsTab = "Overview", libState = "", editCard: String? = nil, tune = "on"
-  /// Settings' plan: "Free", "Pro", or "Pro, ending" (the canvas board's `plan`).
+  /// Settings' plan: "Free", "Pro", "Pro, ending", "Pro, billed by Apple", or "Pro, billed on the web" (the canvas board's `plan`).
   var plan = "Pro"
+  /// The Go Pro sheet's state on a design screen (its `state`: Yearly, Monthly, Buying, Error, Not yet, Offline, Loading, or
+  /// Pro), the way to pay a tap picked, and whether a tap on Go Pro is going.
+  var goPro = "Yearly", goProPick: String? = nil, goProBuying: Bool? = nil
   /// Settings' profile picture (the canvas board's `photo`: Color, Google photo, or Your photo, from `-photo`), as the
   /// canvas keeps it: the choice ("color", "google", or "yours"), the photo you uploaded ("mock", its stand-in), and
   /// the circle's color. The canvas's person signed in with Google, so Google photo is always there.
@@ -168,6 +171,8 @@ final class Store: ObservableObject {
   @Published var welcoming = false
   @Published var error: String?
   let api = API()
+  /// Lucida Pro bought with the App Store (Purchases.swift).
+  lazy var shop = Shop(store: self)
   private var poll: Task<Void, Never>?
   private var renameTask: Task<Void, Never>?
   /// Changes shown before the server has them (saveNow): each stays on top of any newer copy until it's saved. And the
@@ -189,7 +194,8 @@ final class Store: ObservableObject {
   /// Lucida Pro: from the server (Stripe), or on the design screens the board's setting.
   var plan: Plan {
     guard demo else { return lib.me?.plan ?? Plan() }
-    return props.plan == "Free" || props.free ? Plan() : Plan(pro: true, every: "year", until: "2027-09-24T12:00:00Z", ending: props.plan == "Pro, ending")
+    return props.plan == "Free" || props.free ? Plan() : Plan(pro: true, every: "year", until: "2027-09-24T12:00:00Z", ending: props.plan == "Pro, ending",
+                                                               by: ["Pro, billed by Apple": "apple", "Pro, billed on the web": "stripe"][props.plan] ?? "")
   }
   /// Pro's tools (an exam date, tuning, deep stats): on for Pro. A copy of the server on your own computer has nobody
   /// signed in, and everything is on there unless it runs as the Free app (like db.js isPro()).
@@ -210,6 +216,14 @@ final class Store: ObservableObject {
       // Decks you study from other people take their owners' newest changes as the app opens.
       lib = try await api.syncedState(); phase = .ready; startPolling()
       if !lib.settings.welcomed && lib.decks.isEmpty { welcoming = true }
+      // Purchases made with the App Store reach the server (renewals, ones made elsewhere), and any this phone holds that it
+      // hasn't heard about yet.
+      shop.listen()
+      Task {
+        // Free: the App Store's prices are asked for now, so an upgrade card has them (and a purchase made elsewhere is found).
+        if !plan.pro { await shop.load() }
+        await shop.catchUp()
+      }
     }
     catch APIError.signedOut { phase = .signedOut }
     catch { self.error = error.localizedDescription; if phase == .loading { phase = .signedOut } }
