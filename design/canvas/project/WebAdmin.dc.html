@@ -356,8 +356,8 @@ mock() {
           const school = f.school ? N.SCHOOLS.find(r => r[0] === f.school || r[1] === f.school) : null, on = !!(f.level || f.subject || f.school);
           const same = d => (!f.level || d.level === f.level) && (!f.subject || d.subject === f.subject) && (!f.school || (school && d.schoolId === school[0]));
           const echo = { topics: N.DISCOVER.topics, tag: tag || '', level: f.level || '', subject: f.subject || '', school: school ? { id: school[0], name: school[1] } : null, filtered: on };
-          if (on) { const list = Object.values(D).filter(same).sort((a, b) => b.stars - a.stars).slice(0, 24); return { ...echo, sections: list.length ? [{ id: 'results', title: 'Decks', decks: list.map(deckCard) }] : [] }; }
-          const home = p.mySchool === false ? [] : Object.values(D).filter(d => d.schoolId === '110644').sort((a, b) => b.stars - a.stars).slice(0, 12);
+          if (on) { const list = Object.values(D).filter(same).sort((a, b) => b.stars - a.stars || (a.id < b.id ? -1 : 1)).slice(0, 24); return { ...echo, sections: list.length ? [{ id: 'results', title: 'Decks', decks: list.map(deckCard) }] : [] }; }
+          const home = p.mySchool === false ? [] : Object.values(D).filter(d => d.schoolId === '110644').sort((a, b) => b.stars - a.stars || (a.id < b.id ? -1 : 1)).slice(0, 12);
           return { ...echo, sections: [...(home.length ? [{ id: 'school', title: 'Popular at University of California-Davis', decks: home.map(deckCard) }] : []), ...N.DISCOVER.sections.map(s => ({ ...s, decks: s.decks.map(pick).map(deckCard) }))] };
         },
         search: (q, f = {}) => {

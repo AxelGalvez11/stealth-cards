@@ -471,8 +471,8 @@ mock() {
           const school = f.school ? N.SCHOOLS.find(r => r[0] === f.school || r[1] === f.school) : null, on = !!(f.level || f.subject || f.school);
           const same = d => (!f.level || d.level === f.level) && (!f.subject || d.subject === f.subject) && (!f.school || (school && d.schoolId === school[0]));
           const echo = { topics: N.DISCOVER.topics, tag: tag || '', level: f.level || '', subject: f.subject || '', school: school ? { id: school[0], name: school[1] } : null, filtered: on };
-          if (on) { const list = Object.values(D).filter(same).sort((a, b) => b.stars - a.stars).slice(0, 24); return { ...echo, sections: list.length ? [{ id: 'results', title: 'Decks', decks: list.map(deckCard) }] : [] }; }
-          const home = p.mySchool === false ? [] : Object.values(D).filter(d => d.schoolId === '110644').sort((a, b) => b.stars - a.stars).slice(0, 12);
+          if (on) { const list = Object.values(D).filter(same).sort((a, b) => b.stars - a.stars || (a.id < b.id ? -1 : 1)).slice(0, 24); return { ...echo, sections: list.length ? [{ id: 'results', title: 'Decks', decks: list.map(deckCard) }] : [] }; }
+          const home = p.mySchool === false ? [] : Object.values(D).filter(d => d.schoolId === '110644').sort((a, b) => b.stars - a.stars || (a.id < b.id ? -1 : 1)).slice(0, 12);
           return { ...echo, sections: [...(home.length ? [{ id: 'school', title: 'Popular at University of California-Davis', decks: home.map(deckCard) }] : []), ...N.DISCOVER.sections.map(s => ({ ...s, decks: s.decks.map(pick).map(deckCard) }))] };
         },
         search: (q, f = {}) => {
@@ -904,7 +904,7 @@ renderVals() { const t = this.theme(!!this.props.dark, !!this.props.dim);const d
     labelsShow: !ro && !!shr && vis === 'public',
     lbLevel: label(pick('dlv', { title: 'Level', rows: PL.levels, value: lab.level || '', any: 'None', choose: id => setLabel({ level: id }) }), lvWords(lab.level)),
     lbSubject: label(pick('dsj', { title: 'Subject', rows: PL.subjects, value: lab.subject || '', any: 'None', choose: id => setLabel({ subject: id }) }), sjWords(lab.subject)),
-    lbSchool: label(pick('dsc', { title: 'School', find: findSchool, value: lab.schoolId || '', any: 'None', ph: 'Search schools', noneLine: 'No school matches', choose: (id, r) => setLabel(id ? { schoolId: id } : { schoolId: '', school: '' }),
+    lbSchool: label(pick('dsc', { title: 'School', find: findSchool, value: lab.schoolId || (lab.school ? '~' : ''), any: 'None', ph: 'Search schools', noneLine: 'No school matches', choose: (id, r) => setLabel(id ? { schoolId: id } : { schoolId: '', school: '' }),
       other: x => ({ label: 'Other: “' + x + '”', choose: () => setLabel({ schoolId: '', school: x.slice(0, 60) }) }) }), lab.school),
     canShare: !ro, isShared: !!shr, notShared: !shr && !linked, isLinked: linked, isStudy: ro, isCopy: !!(linked && lk.mode === 'copy'), isGone: !!(lk && lk.gone),
     visOpts: [['private', 'Private'], ['link', 'Link only'], ['public', 'Public']].map(([id, label]) => ({ label, ...segOf(id, vis), pick: () => id !== vis && shareSet({ visibility: id }).catch(() => {}) })),

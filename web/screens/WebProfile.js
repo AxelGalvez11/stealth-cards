@@ -297,8 +297,8 @@ mock() {
           const school = f.school ? N.SCHOOLS.find(r => r[0] === f.school || r[1] === f.school) : null, on = !!(f.level || f.subject || f.school);
           const same = d => (!f.level || d.level === f.level) && (!f.subject || d.subject === f.subject) && (!f.school || (school && d.schoolId === school[0]));
           const echo = { topics: N.DISCOVER.topics, tag: tag || '', level: f.level || '', subject: f.subject || '', school: school ? { id: school[0], name: school[1] } : null, filtered: on };
-          if (on) { const list = Object.values(D).filter(same).sort((a, b) => b.stars - a.stars).slice(0, 24); return { ...echo, sections: list.length ? [{ id: 'results', title: 'Decks', decks: list.map(deckCard) }] : [] }; }
-          const home = p.mySchool === false ? [] : Object.values(D).filter(d => d.schoolId === '110644').sort((a, b) => b.stars - a.stars).slice(0, 12);
+          if (on) { const list = Object.values(D).filter(same).sort((a, b) => b.stars - a.stars || (a.id < b.id ? -1 : 1)).slice(0, 24); return { ...echo, sections: list.length ? [{ id: 'results', title: 'Decks', decks: list.map(deckCard) }] : [] }; }
+          const home = p.mySchool === false ? [] : Object.values(D).filter(d => d.schoolId === '110644').sort((a, b) => b.stars - a.stars || (a.id < b.id ? -1 : 1)).slice(0, 12);
           return { ...echo, sections: [...(home.length ? [{ id: 'school', title: 'Popular at University of California-Davis', decks: home.map(deckCard) }] : []), ...N.DISCOVER.sections.map(s => ({ ...s, decks: s.decks.map(pick).map(deckCard) }))] };
         },
         search: (q, f = {}) => {
@@ -621,7 +621,7 @@ renderVals() {
       pick: () => draftSet(on ? { level: '' } : id === 'highschool' ? { level: id, school: '', schoolId: '' } : { level: id }) }; }),
     yearOpts: PL.years.map(([id]) => { const on = dr.year === id; return { label: id === '5' ? '5th+' : id + ['st', 'nd', 'rd', 'th'][+id - 1], pressed: on ? 'true' : 'false', bg: on ? t.inv : t.surf, fg: on ? t.invText : t.text, pick: () => draftSet({ year: on ? '' : id }) }; }),
     hasSchoolRow: dr.level !== 'highschool',
-    scp: { ...pick('sc', { title: 'School', find: findSchool, value: dr.schoolId, any: 'None', ph: 'Search schools', noneLine: 'No school matches', choose: (id, r) => draftSet(id ? { schoolId: id, school: r[1] } : { schoolId: '', school: '' }),
+    scp: { ...pick('sc', { title: 'School', find: findSchool, value: dr.schoolId || (dr.school ? '~' : ''), any: 'None', ph: 'Search schools', noneLine: 'No school matches', choose: (id, r) => draftSet(id ? { schoolId: id, school: r[1] } : { schoolId: '', school: '' }),
       other: x => ({ label: 'Other: “' + x + '”', choose: () => draftSet({ schoolId: '', school: x.slice(0, 60) }) }) }), value: dr.school || 'Add', valueFg: dr.school ? t.text : t.muted },
     schoolSw: sw(!!dr.showSchool), toggleSchool: () => draftSet({ showSchool: !dr.showSchool }),
     bioCount: String(dr.bio || '').length + '/160', hasHandleMsg: !!handleMsg, handleMsg, handleInvalid: handleMsg ? 'true' : 'false', handleRing: handleMsg ? 'inset 0 0 0 2px ' + t.again : 'none',
