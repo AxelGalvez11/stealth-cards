@@ -132,6 +132,13 @@ set-up, a test of choices and true-or-false (numbers, back, flags, the list, Sub
 results on the deck page), written answers with typos, Count it as right and Study the missed cards now, matching, the clock (the test
 open again after the app closes, running out by itself, leaving), a folder's test, and fill in the blank; a test changes no schedule.
 
+## Questions Lucida writes for Learn mode
+
+When Learn mode starts and the next cards have no question yet, the app asks the server's Lucida AI for 20 at once (`Store.wantQuiz` in `Data/LearnEngine.swift`, `API.quizBatch`, `POST /api/quiz`, like the web's), and again about 5 questions from the end;
+the questions are saved on the cards (marked `by: "Lucida"`; a fill-in-the-blank one is `kind: "blank"`) and Learn mode and the practice test use them with the card's own words. Nobody waits: until
+they arrive Learn mode asks with its builders, and when the AI is off or the day's batches are used (Free 3, Pro 30) it goes on with them without a word. `tools/e2e-quiz.sh <simulator id>` is the
+end-to-end test (`LucidaUITests/QuizTests.swift`), with a pretend OpenRouter (`tools/stub-openrouter.mjs`) and a second server that has no AI.
+
 ## Report, Check this deck, and Get verified
 
 Apple's rule for apps where people share things (guideline 1.2) wants a way to report content, and the web app has one: a
