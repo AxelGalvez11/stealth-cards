@@ -8,6 +8,7 @@ import { SAMPLE, SAMPLE_WAVE, SAMPLE_INSIGHTS } from './mock.mjs';
 import { NET_SAMPLE } from './net-sample.mjs';
 import { G_LOGO, APPLE_LOGO } from './logos.mjs';
 import { THEMES } from '../web/themes/index.js';
+import { LEVELS, YEARS, SUBJECTS } from '../web/school.js';
 
 const OUT = new URL('../ios/Lucida/Design/Generated.swift', import.meta.url);
 const src = readFileSync(new URL('./build.mjs', import.meta.url), 'utf8');
@@ -116,6 +117,11 @@ ${Object.entries(logos).map(([k, v]) => `    ${str(k)}: (${str(v.vb)}, [${v.path
   static let themes: [(key: String, board: String, name: String, short: String)] = [
 ${THEMES.map(t => `    (${str(t.key)}, ${str(t.board || '')}, ${str(t.name)}, ${str(t.short || t.name)})`).join(',\n')}
   ]
+
+  /// What people say about where they study (web/school.js): levels, years, and the thirty subjects, each as its id and its words.
+  static let levels: [(id: String, words: String)] = [${LEVELS.map(([k, v]) => `(${str(k)}, ${str(v)})`).join(', ')}]
+  static let years: [(id: String, words: String)] = [${YEARS.map(([k, v]) => `(${str(k)}, ${str(v)})`).join(', ')}]
+  static let subjects: [(id: String, words: String)] = [${SUBJECTS.map(([k, v]) => `(${str(k)}, ${str(v)})`).join(', ')}]
 
   /// The sample sound's waveform (design/mock.mjs SAMPLE_WAVE): 96 peaks, 0 to 1.
   static let sampleWave: [Double] = ${str(SAMPLE_WAVE)}
