@@ -14,6 +14,11 @@
 #       The server taking purchases from Xcode's StoreKit test store (what the iPhone app's UI tests buy with), and only when
 #       told to: on the module and over HTTP against two local servers (ports PORT and PORT + 1, default 3905). No simulator.
 #
+#   ios/tests/run.sh signin
+#       Sign in with Apple from the iPhone app (audience cards.lucida.app, the web's is cards.lucida.web) against the real server and
+#       a pretend Supabase: the server forwards the token and nonce and has no list of its own; the list that matters is Supabase's
+#       (Apple "Client IDs"), which the owner has to check. Ports PORT and PORT + 1 (default 3907). No simulator.
+#
 # Everything it makes goes in a folder of its own under the temp folder (TESTDIR to move it).
 H=${0:A:h}; REPO=${H:h:h}; TESTDIR=${TESTDIR:-${TMPDIR:-/tmp}/lucida-ios-tests}; mkdir -p $TESTDIR
 DATA=$REPO/ios/Lucida/Data
@@ -77,6 +82,7 @@ e2e() {
 
 case "$1" in
   xcode) node $H/js/xcode-purchase.mjs ${PORT:-3905} ;;
+  signin) node $H/js/apple-signin.mjs ${PORT:-3907} ;;
   parity) parity ;;
   e2e) shift; e2e "$@" ;;
   *) sed -n '2,15p' $0 ;;
