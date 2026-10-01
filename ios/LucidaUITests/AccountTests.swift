@@ -30,6 +30,23 @@ final class AccountTests: AppCase {
   }
   /// The red button of a question sheet (Delete account, Block), and its Cancel.
   private func go(_ app: XCUIApplication) -> XCUIElement { app.buttons["danger.go"] }
+  /// Answers a question sheet with Cancel. A tap that lands while the sheet is still sliding is lost, so it looks, and tries again.
+  private func cancelQuestion(_ app: XCUIApplication, _ title: String) -> Bool {
+    for _ in 0..<3 {
+      if wait(cancel(app), 10) { cancel(app).tap() }
+      if gone(text(app, title), 8) { return true }
+    }
+    return false
+  }
+  /// Opens a question from its row (Delete account), trying again if the tap was lost.
+  private func ask(_ app: XCUIApplication, _ row: XCUIElement, _ title: String) -> Bool {
+    for _ in 0..<3 {
+      scrollTo(app, row)
+      if wait(row, 10) { row.tap() }
+      if wait(text(app, title), 8) { return true }
+    }
+    return false
+  }
   /// Opens the ⋯ after Share on someone's profile, to Report and Block (a tap that lands while a sheet is still closing is lost, so
   /// it tries again).
   private func openMore(_ app: XCUIApplication, _ name: String) -> Bool {
@@ -102,8 +119,7 @@ final class AccountTests: AppCase {
     button(app, "Block").tap()
     check(wait(text(app, "Block Ned Ito?")), "Block asks first: “Block Ned Ito?”")
     check(any(app, "They won’t be able to follow you or suggest changes to your decks, and you won’t see their decks. You can unblock them in Settings.").exists, "in words: what they can't do, what you won't see, and where to undo it")
-    tap(cancel(app), "Cancel")
-    check(gone(text(app, "Block Ned Ito?")), "Cancel closes it")
+    check(cancelQuestion(app, "Block Ned Ito?"), "Cancel closes it")
     Thread.sleep(forTimeInterval: 0.6)
     check(blocked(maya).isEmpty && button(app, "Follow").exists, "and nothing changed: not blocked, still Follow")
     _ = openMore(app, "Ned Ito")
@@ -211,16 +227,12 @@ final class AccountTests: AppCase {
     let d = shareDeck(who, deckName, n: 2)
     check(((state(who)["decks"] as? [[String: Any]])?.count ?? 0) == 1 && get("x", "/api/public/deck?id=" + d.id)["name"] as? String == deckName, "Gina has a deck, and shared it")
     var app = launch(as: who, ["-open", "settings"])
-    scrollTo(app, button(app, "Delete account"))
-    tap(button(app, "Delete account"), "Delete account")
-    check(wait(text(app, "Delete your account?")), "Delete account asks first: “Delete your account?”")
+    check(ask(app, button(app, "Delete account"), "Delete your account?"), "Delete account asks first: “Delete your account?”")
     check(any(app, "This deletes your decks, cards, and reviews, your profile, and the decks you shared. It can’t be undone.").exists, "what goes, in words")
     check(any(app, "Your Lucida Pro subscription will be cancelled.").exists, "and, since she has Pro, what happens to it")
-    tap(cancel(app), "Cancel")
-    check(gone(text(app, "Delete your account?")), "Cancel closes it")
+    check(cancelQuestion(app, "Delete your account?"), "Cancel closes it")
     check(((state(who)["decks"] as? [[String: Any]])?.count ?? 0) == 1 && get("x", "/api/public/deck?id=" + d.id)["name"] as? String == deckName, "and nothing is deleted")
-    tap(button(app, "Delete account"), "Delete account")
-    check(wait(text(app, "Delete your account?")), "again")
+    check(ask(app, button(app, "Delete account"), "Delete your account?"), "again")
     tap(go(app), "the red Delete account")
     check(wait(text(app, "Sign in to Lucida"), 25), "deleting returns the app to the sign-in screen")
     check(!button(app, "Profile").exists && !text(app, "Delete your account?").exists, "with nothing of hers left on it")
