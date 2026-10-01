@@ -168,7 +168,7 @@ extension Store {
     var ks: [String] = []
     if on("mc") && !(c.kind == "cloze" && on("blank")) && (more || !aiQuiz(c, "choice").isEmpty) { ks.append("mc") }
     if on("tf") && (more || !aiQuiz(c, "true_false").isEmpty) { ks.append("tf") }
-    if on("blank") && c.kind == "cloze" && more { ks.append("blank") }
+    if on("blank") && ((c.kind == "cloze" && more) || !aiQuiz(c, "blank").isEmpty) { ks.append("blank") }
     if on("type") && e.a.count <= 40 { ks.append("type") }
     if matchOk && shortE(e) { ks.append("match") }
     return ks
@@ -221,7 +221,7 @@ extension Store {
       }
       return group.count >= 4 ? matchQuestion(group) : nil
     }
-    let q = choiceQuestion(c, kind: kind == "blank" ? "mc" : kind, blank: kind == "blank", cap: 300)
+    let q = choiceQuestion(c, kind: kind, blank: kind == "blank", cap: 300)
     guard let opts = q.options, opts.count >= 2, let r = q.right, r >= 0 else { return nil }
     if q.kind == "tf" && (q.claim ?? "").isEmpty { return nil }
     return TestQuestion(type: "choice", kind: q.kind, id: c.id, text: q.text ?? e.q, claim: q.claim, options: opts, right: r, image: pic.image, occ: pic.occ)

@@ -126,6 +126,13 @@ final class API {
     return (http.statusCode, (try? JSONSerialization.jsonObject(with: data)) as? [String: Any] ?? [:])
   }
 
+  /// Asks Lucida's AI to write a question for each of these cards (the server takes up to 20 of them that have none): 200 has
+  /// `questions` ({ card id: [question] }) and `tried`; 402 is past today's batches; 503, no AI on the server; else an error.
+  func quizBatch(_ cardIds: [String]) async throws -> (status: Int, body: [String: Any]) {
+    let (data, http) = try await raw("api/quiz", method: "POST", json: ["cardIds": cardIds])
+    return (http.statusCode, (try? JSONSerialization.jsonObject(with: data)) as? [String: Any] ?? [:])
+  }
+
   func sendCode(_ email: String) async throws { _ = try await request("api/auth/code", method: "POST", json: ["email": email]) }
   func verify(_ email: String, _ code: String) async throws { _ = try await request("api/auth/verify", method: "POST", json: ["email": email, "code": code]) }
   func signOut() async { _ = try? await request("api/auth/signout", method: "POST", json: [:]) }

@@ -178,14 +178,48 @@ extension Store {
     return true
   }
 
-  /// Questions the learner's AI app wrote for a card (MCP add_quiz), of one kind ("choice" or "true_false").
+  /// Questions written for a card (the learner's AI app over MCP, add_quiz, or Lucida's own AI, below), of one kind ("choice",
+  /// "true_false", or Lucida's "blank").
   func aiQuiz(_ c: Card, _ kind: String) -> [QuizQuestion] { c.quiz.filter { $0.kind == kind } }
+
+  /// Lucida's own questions (web/quizai.mjs, POST /api/quiz): when the cards coming up have no question yet, up to 20 are written at
+  /// once and saved on the cards, where Learn mode and the practice test find them. Nobody waits: until they arrive the question
+  /// builders ask as always, and when the AI is off or the day's batches are used up nothing is asked and nothing is shown. About 5
+  /// questions from the end of the ones written, the next 20 are asked for.
+  private func wantQuiz(_ L: LearnSession) {
+    guard !demo, lib.aiOn, lib.quizLeft != 0, !quizOff, !quizBusy, !L.done, nowMs() >= quizRetryAt, L.kinds.contains(where: { ["mc", "tf", "blank"].contains($0) }) else { return }
+    let open = L.queue.filter { L.st[$0]?.learned != true }.compactMap { card($0) }
+    var ahead = 0
+    for c in open { if !c.quiz.isEmpty { ahead += 1 } else if !c.quizTried { break } }
+    guard ahead <= 5 else { return }
+    let want = open.filter { $0.quiz.isEmpty && !$0.quizTried && ($0.kind == "basic" || $0.kind == "cloze") }.prefix(20).map(\.id)
+    guard !want.isEmpty else { return }
+    quizBusy = true
+    Task { [weak self] in
+      guard let self else { return }
+      defer { self.quizBusy = false }
+      do {
+        let r = try await self.api.quizBatch(want)
+        if (200..<300).contains(r.status) {
+          let written = r.body["questions"] as? [String: Any] ?? [:], tried = Set((r.body["tried"] as? [String]) ?? [])
+          var cards = self.lib.cards
+          for i in cards.indices where cards[i].quiz.isEmpty {
+            if let list = written[cards[i].id], let data = try? JSONSerialization.data(withJSONObject: list), let made = try? JSONDecoder().decode([QuizQuestion].self, from: data), !made.isEmpty { cards[i].quiz = made }
+            else if tried.contains(cards[i].id) { cards[i].quizTried = true }
+          }
+          self.lib.cards = cards
+          if let left = r.body["left"] as? Int { self.lib.quizLeft = left }
+        } else if r.status == 402 || r.status == 503 { self.quizOff = true }
+        else { self.quizRetryAt = nowMs() + 60_000 }
+      } catch { self.quizRetryAt = nowMs() + 60_000 }
+    }
+  }
 
   /// Which kind of question a card gets: a choice first; once it's right, typing it (or another kind of choice).
   private func kindFor(_ L: LearnSession, _ s: LearnCard, _ c: Card, _ play: [String]) -> String {
     let fits: [String: Bool] = [
       "mc": distractors(c, 3).count >= 1 || !aiQuiz(c, "choice").isEmpty, "tf": distractors(c, 1).count >= 1 || !aiQuiz(c, "true_false").isEmpty,
-      "blank": c.kind == "cloze" && distractors(c, 3).count >= 1,
+      "blank": (c.kind == "cloze" && distractors(c, 3).count >= 1) || !aiQuiz(c, "blank").isEmpty,
       "match": short(c) && play.filter { L.st[$0]?.streak == 0 && card($0).map(short) == true }.count >= 4, "type": answerOf(c).count <= 40
     ]
     let pickFrom = { (ks: [String]) in ks.filter { L.kinds.contains($0) && fits[$0] == true } }
@@ -212,7 +246,7 @@ extension Store {
   }
 
   private func nextQuestion(_ L: inout LearnSession) {
-    sendAnswers(&L)
+    sendAnswers(&L); wantQuiz(L)
     let open = L.queue.filter { L.st[$0]?.learned != true }
     L.qAt = nowMs()
     guard !open.isEmpty else { L.q = nil; L.done = true; L.ended = nowMs(); finishLearn(&L); return }
@@ -233,8 +267,9 @@ extension Store {
   /// (most of the time; now and then the card's own words), else the card's words with other cards' answers. A
   /// fill-in-the-blank card is a "blank" question when `blank` is on. Learn mode and the practice test both ask this way.
   func choiceQuestion(_ c: Card, kind: String, blank: Bool, cap: Int = .max) -> LearnQuestion {
-    let ai = kind == "tf" ? aiQuiz(c, "true_false") : kind == "mc" ? aiQuiz(c, "choice") : []
-    if let x = ai.randomElement(), Double.random(in: 0..<1) < 0.8 || distractors(c, 1, cap: cap).isEmpty {
+    let ai = kind == "tf" ? aiQuiz(c, "true_false") : kind == "mc" ? aiQuiz(c, "choice") : kind == "blank" ? aiQuiz(c, "blank") : []
+    // (A blank that isn't a fill-in-the-blank card exists only as the written question, so that is always the one asked.)
+    if let x = ai.randomElement(), Double.random(in: 0..<1) < 0.8 || distractors(c, 1, cap: cap).isEmpty || (kind == "blank" && c.kind != "cloze") {
       if kind == "tf" {
         return LearnQuestion(type: "choice", kind: "tf", id: c.id, text: "True or false?", why: x.why, ai: true, claim: x.question, options: ["True", "False"], right: x.answer == "true" ? 0 : 1)
       }
