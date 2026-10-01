@@ -27,6 +27,7 @@ import { blobs } from './blobs.mjs';
 import { MAKE, MAKE_AUDIO_MB, MAKE_CARDS_MAX } from './plans.mjs';
 import { sniff } from './sniff.js';
 import * as X from './extract.mjs';
+import { readCaptions, looksLikeCaptions } from './captions.mjs';
 
 // ---------- the models ----------
 // Text (a topic, text from a file, a transcript, a quiz for Live): DeepSeek V4.1 Flash, the same cheap model Explain uses, with V4 Flash as the
@@ -86,7 +87,7 @@ async function inLib(uid, fn, pro) {
 
 // ---------- what can be uploaded ----------
 const TYPES = { pdf: 'application/pdf', pptx: 'application/vnd.openxmlformats-officedocument.presentationml.presentation', docx: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-  txt: 'text/plain', md: 'text/plain', png: 'image/png', jpg: 'image/jpeg', jpeg: 'image/jpeg', gif: 'image/gif', webp: 'image/webp',
+  txt: 'text/plain', md: 'text/plain', srt: 'application/x-subrip', vtt: 'text/vtt', png: 'image/png', jpg: 'image/jpeg', jpeg: 'image/jpeg', gif: 'image/gif', webp: 'image/webp',
   mp3: 'audio/mpeg', m4a: 'audio/mp4', mp4: 'audio/mp4', wav: 'audio/wav', ogg: 'audio/ogg', oga: 'audio/ogg', opus: 'audio/ogg', webm: 'audio/webm', aac: 'audio/aac', flac: 'audio/flac' };
 const AUDIO_EXT = new Set(['mp3', 'm4a', 'mp4', 'wav', 'ogg', 'oga', 'opus', 'webm', 'aac', 'flac']);
 const IMAGE_EXT = new Set(['png', 'jpg', 'jpeg', 'gif', 'webp']);
@@ -98,7 +99,7 @@ const extOf = (name, type) => {
   const t = String(type || '').split(';')[0].trim().toLowerCase();
   return Object.keys(TYPES).find(k => TYPES[k] === t && !['jpeg', 'oga', 'opus', 'mp4', 'md'].includes(k)) || '';
 };
-const NOT_READABLE = 'Lucida can’t read that kind of file. Try a PDF, slides, a Word file, pictures, or a recording.';
+const NOT_READABLE = 'Lucida can’t read that kind of file. Try a PDF, slides, a Word file, captions, pictures, or a recording.';
 const HEIC = 'That photo is in a format Lucida can’t read (HEIC). Pick a JPEG or PNG picture.';
 const room = pro => `Your account has no room for more files. Delete a source to make room${pro ? '' : ', or go Pro'}.`;
 // A recording the speech service can't take in one go. (The page and the app cut MP3, WAV, Ogg, AAC and M4A recordings into parts before sending, so this is
@@ -304,6 +305,12 @@ async function material(uid, b, info) {
     const r = reading(() => X.readDocx(f.buf));
     if (r.pages > plan.pages) throw pageError('document', r.pages, plan);
     textParts(r.units, 'file', name, r.pages);
+  } else if (fam === 'text' && (f.ext === 'srt' || f.ext === 'vtt' || looksLikeCaptions(f.buf))) {
+    // Captions (.srt, .vtt): the words with the time each starts, so cards say where in the lecture they came from. The plan's minutes are the limit (as for a recording).
+    const cap = reading(() => readCaptions(f.buf));
+    if (cap.seconds > plan.minutes * 60 * 1.03) throw fail('Those captions cover ' + plural(Math.round(cap.seconds / 60), 'minute') + '. ' + (pro ? 'Pro makes from up to ' + plan.minutes + ' minutes at a time.' : 'Free makes from up to ' + plan.minutes + ' minutes at a time. Go Pro for up to ' + MAKE.pro.minutes + '.'), 413, 'minutes', { pro: !pro });
+    textParts(cap.units, 'file', name, 0);
+    out.seconds = cap.seconds; out.text = true;
   } else if (fam === 'text') {
     const units = reading(() => X.readText(f.buf).units), pages = Math.max(1, Math.ceil(units.reduce((n, u) => n + u.text.length, 0) / PAGE));
     if (pages > plan.pages) throw pageError('file', pages, plan);

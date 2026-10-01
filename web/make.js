@@ -19,7 +19,7 @@ export function createMake({ state, reload, changed, go, sniff, shrink }) {
   const mb = n => (n >= 1e6 ? (n / 1e6).toFixed(n >= 1e7 ? 0 : 1) + ' MB' : Math.max(1, Math.round(n / 1000)) + ' KB');
   const plural = (n, w) => n + ' ' + w + (n === 1 ? '' : 's');
   const EXT = f => ((/\.([A-Za-z0-9]{1,5})$/.exec(f.name || '') || [])[1] || '').toLowerCase();
-  const DOC = new Set(['pdf', 'pptx', 'docx', 'txt', 'md']), IMG = new Set(['png', 'jpg', 'jpeg', 'gif', 'webp']), AUD = new Set(['mp3', 'm4a', 'mp4', 'wav', 'ogg', 'oga', 'opus', 'webm', 'aac', 'flac']);
+  const DOC = new Set(['pdf', 'pptx', 'docx', 'txt', 'md', 'srt', 'vtt']), IMG = new Set(['png', 'jpg', 'jpeg', 'gif', 'webp']), AUD = new Set(['mp3', 'm4a', 'mp4', 'wav', 'ogg', 'oga', 'opus', 'webm', 'aac', 'flac']);
   const familyOf = f => { const e = EXT(f), t = String(f.type || ''); return DOC.has(e) ? 'doc' : IMG.has(e) || /^image\//.test(t) ? 'image' : AUD.has(e) || /^audio\//.test(t) ? 'audio' : ''; };
   const call = async (url, body, method = 'POST') => {
     let r;
@@ -70,7 +70,7 @@ export function createMake({ state, reload, changed, go, sniff, shrink }) {
     if (capture) i.setAttribute('capture', 'environment');
     i.onchange = () => done([...i.files]); i.addEventListener('cancel', () => done([])); document.body.appendChild(i); i.click();
   });
-  const ACCEPT = { file: '.pdf,.pptx,.docx,.txt,.md,image/*,audio/*', photo: 'image/*', record: 'audio/*' };
+  const ACCEPT = { file: '.pdf,.pptx,.docx,.txt,.md,.srt,.vtt,image/*,audio/*', photo: 'image/*', record: 'audio/*' };
   async function pickFiles(capture = false) {
     const list = await askFiles(ACCEPT[M.kind] || ACCEPT.file, M.kind !== 'record' && !capture, capture);
     if (list.length) await addFiles(list);
@@ -80,7 +80,7 @@ export function createMake({ state, reload, changed, go, sniff, shrink }) {
     for (const f of list) {
       const fam = familyOf(f);
       if (/\.hei[cf]$/i.test(f.name) || /hei[cf]/i.test(f.type)) { tip.push('That photo is in a format Lucida can’t read (HEIC). Pick a JPEG or PNG picture.'); continue; }
-      if (!fam) { tip.push('Lucida can’t read that kind of file. Try a PDF, slides, a Word file, pictures, or a recording.'); continue; }
+      if (!fam) { tip.push('Lucida can’t read that kind of file. Try a PDF, slides, a Word file, captions, pictures, or a recording.'); continue; }
       if (have.length && (have[0].fam !== fam || fam === 'doc')) { tip.push(fam === 'doc' || have[0].fam === 'doc' ? 'Pick one document at a time.' : 'Pick one kind of file at a time: pictures, or a recording, or one document.'); continue; }
       let file = f, cut = null;
       if (fam === 'image') { try { file = (await shrink(f)) || f; } catch { file = f; } }
