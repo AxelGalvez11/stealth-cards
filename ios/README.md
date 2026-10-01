@@ -183,3 +183,56 @@ Pro person picks a theme and sees its card, background, covers and picture, a da
 pick one, and one whose Pro lapsed never draws it. The app tells the test what it draws through an invisible element
 (`ThemeAudit`, debug builds only).
 
+
+## For the App Store
+
+What App Review asks of an app like this one is inside the app, drawn from boards like every other screen.
+
+**Go Pro** (`Screens/GoPro.swift`, `Data/Purchases.swift`; boards `PhoneGoPro` and `PhoneGoProSoon`, and Settings' plan in `PhoneSettings`
+with `-plan "Pro, billed by Apple"` or `"Pro, billed on the web"`). Pro is bought with StoreKit 2: `cards.lucida.pro.monthly` and
+`cards.lucida.pro.yearly`, with the pricing page's Pro list less natural voices, which only the web has (`PLAN_PRO_PHONE` in design/site.mjs; the web's list is `PLAN_PRO`), Terms and Privacy, and Restore purchases. Every price on screen is the App
+Store's own (`displayPrice`, and the yearly price divided by twelve for "That's $4.17 a month", worked out in its currency); nothing is
+typed in the app. Buying uses the person's id as the purchase's `appAccountToken` (`me.appAccountToken`), the signed transaction goes to
+`POST /api/iap`, and `Transaction.updates` sends renewals and purchases made elsewhere the same way. Pro itself comes back from the server
+(`me.plan`), as on the web, and a purchase is finished only after the server has it. With no products on the App Store yet (they aren't
+approved, or aren't set up) the sheet says "Pro isn't available on iPhone yet". Pro bought on the web says "Billed on the web" and has
+nothing to press (the app never opens Stripe: `ios/tools/e2e-store.sh` greps for it). Every Go Pro (Settings, Stats' weak spots, Themes,
+Deck settings, Explain) opens this one sheet. `-open gopro` opens it over the page you're on.
+
+**Testing it.** `Lucida/Lucida.storekit` has both products. The `Lucida` scheme uses it for runs from Xcode. The UI tests can't use the scheme's
+file (Xcode doesn't hand it to an app a test launches), so a Debug build in the simulator starts its own StoreKit test session when asked
+(`-storekit <file>`, `-storekitReset`, `-storekitBuy <product id>`: `App/StoreKitTesting.swift`; it needs the `get-task-allow` entitlement in
+`LucidaDebug.entitlements`, and the test hands the app its `DYLD_FRAMEWORK_PATH`). Nothing of this exists in a Release build or on a device.
+The test store signs purchases with its own self-signed certificate (`environment: "Xcode"`), which `web/apple.mjs` takes only on a computer
+told `LUCIDA_APPLE_TEST_XCODE=1` and never online. `ios/tools/e2e-store.sh <simulator id>` is the end-to-end test
+(`LucidaUITests/StoreTests`): buying monthly turns Pro on through the local server (Settings says Billed by Apple, with Manage plan), Restore
+purchases, Pro bought on the web, no products, and every Go Pro. `ios/tests/run.sh xcode` tests the server's side of the test store.
+
+**Delete account, Block, password, and the apps you allowed** (`Screens/AccountSheets.swift`, `Data/AccountData.swift`, Settings' Account group,
+Profile's ⋯, Suggestions, SignIn, Connect; boards `PhoneSettingsDelete`, `PhoneProfileBlock`, `PhoneProfileBlocked`, the Account group of
+`PhoneSettings`, `PhoneSignIn` with `-passwordMode`, and `PhoneConnect`). Delete account asks first, then the server removes the library, the
+profile, the shared decks and the sign-in itself, and the app goes back to the sign-in screen (for Apple billing the question says to stop it in
+iPhone Settings). Block is on a profile's ⋯ and on a suggestion; Settings › Account › Blocked people lists them with Unblock. Settings ›
+Account › Password sets one, and the sign-in screen has "Use a password" (App Review can't get an email code). Connect AI lists the apps you
+allowed, each with Disconnect. `ios/tools/e2e-account.sh <simulator id>` is the end-to-end test (`LucidaUITests/AccountTests`); it starts the
+server and, in front of it, `ios/tools/password-proxy.mjs`, which asks for a sign-in when nobody is signed in and takes passwords, as the real
+server does online and a copy on a computer can't. A debug build can open any of these states on a board (`-deleteOpen Asking|Deleting|Failed`,
+`-passwordOpen`, `-noBlocks`, `-noApps`, `-moreOpen`, `-blockOpen`, `-blocked`).
+
+**Daily reminder** (`Data/Reminder.swift`; the row in Settings › Studying, board `PhoneSettings` with its `reminder` and `reminderNote` Tweaks, or `-reminder Off|"6:00 PM"`
+and `-reminderNote` on a design screen). Off, or a time. Picking a time turns it on and the phone is asked then, never when the app opens, to
+send notifications; it then schedules one local notification a day at that time (UNUserNotificationCenter), "Time to review your cards". Another
+time sets it again, Off removes it, and signing out removes it. If notifications are refused the row stays Off and says how to allow them in
+iPhone Settings. The row says what the phone has scheduled (not a saved setting), so it is always what will happen; the time is also kept with
+the settings. Local notifications need no entitlement, no Info.plist text and no privacy declaration. `ios/tools/e2e-reminder.sh <simulator id>`
+is the end-to-end test (`LucidaUITests/ReminderTests`, reading what is scheduled through `-reminderAudit`); it takes the app off the simulator before
+each flow so the phone has never been asked.
+
+**Sign in with Apple** sends the token Apple made for this app (audience `cards.lucida.app`) and its nonce to `/api/auth/token`; the server
+forwards both to Supabase, which accepts the audiences in the Apple provider's "Client IDs". That list already holds both the app's and the
+web's (`cards.lucida.web,cards.lucida.app`, read in the Supabase dashboard on 2026-10-01), so nothing is left to set there. `ios/tests/run.sh
+signin` shows the server's part against a pretend Supabase.
+
+**The listing and the screenshots** are in `AppStore/`: `listing.md` (name, subtitle, description, keywords, URLs, the two subscriptions, App
+Review notes, App Privacy answers) and `screenshots/` (1320 x 2868, made by `AppStore/screenshots.sh`). `Lucida/PrivacyInfo.xcprivacy` declares
+what the app keeps: email, name, user id, photos, audio, other content, and purchase history, none of it for tracking.

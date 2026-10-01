@@ -11,6 +11,9 @@ struct LucidaApp: App {
 
   init() {
     Fonts.register()
+    #if DEBUG && targetEnvironment(simulator)
+    StoreKitTesting.startIfAsked()
+    #endif
     let store = Store(demo: Board.requested != nil), nav = Nav(), drag = DragCenter()
     nav.mine = { [weak store] in store?.myHandle ?? "" }
     // A design screen starts where its board is, before anything draws.
@@ -70,6 +73,8 @@ struct RootView: View {
     .preferredColorScheme(over ?? (dark ? .dark : .light))
     .onChange(of: scheme, initial: true) { _, s in if over == nil { system = s } }
     #if DEBUG
+    // The reminder's end-to-end test reads what is scheduled from this invisible element (`-reminderAudit`).
+    .overlay(alignment: .bottomLeading) { if ProcessInfo.processInfo.arguments.contains("-reminderAudit") { ReminderAuditView() } }
     // The end-to-end test reads which themes' pictures are on screen from this invisible element (ThemeAudit).
     .overlay(alignment: .topLeading) {
       if ThemeAudit.on {
@@ -80,6 +85,8 @@ struct RootView: View {
     }
     #endif
     .onChange(of: store.skinKey) { _, k in if let k, !store.demo { ThemeArt.shared.warm(k, store) } }
+    // Signed out (or the account deleted): nothing of the last person's is left open for the next.
+    .onChange(of: store.phase) { _, p in if p == .signedOut && !store.demo { nav.reset() } }
     // Back after a while away: decks you study from other people get their owners' newest changes.
     .onChange(of: scenePhase) { _, p in if p == .background { store.away = Date() } else if p == .active { store.cameBack() } }
     // What went wrong saving a change or uploading a photo, like the web app's alert.
@@ -128,6 +135,8 @@ struct RootView: View {
           // Connect AI is a page inside Settings: Settings › Connect AI.
           case "connect": nav.path = [.settings, .connect]
           case "settings": nav.path = [.settings]
+          // The Go Pro sheet over the page you're on.
+          case "gopro": nav.goPro()
           case "discover": nav.tab = .discover
           case "news": nav.path = [.news]
           // Your classes (the Library's third view), or one class's page by its code (`class:<CODE>`).
@@ -238,6 +247,9 @@ extension Board {
     case "PhoneConnect": nav.path = [.settings, .connect]
     case "PhoneSettings": nav.path = [.settings]
     case "PhoneSettingsFree": store.props.plan = "Free"; nav.path = [.settings]
+    // The Go Pro sheet over Settings on Free (its states with `-goPro Monthly|Buying|Error|"Not yet"|Offline|Loading|Pro`), and before the subscriptions are on the App Store.
+    case "PhoneGoPro": store.props.plan = "Free"; nav.path = [.settings]; nav.sheet = .goPro
+    case "PhoneGoProSoon": store.props.plan = "Free"; store.props.goPro = "Not yet"; nav.path = [.settings]; nav.sheet = .goPro
     // A verified teacher's Settings: Get verified says Verified teacher (the board's `verified`: -verified "Waiting for review" or School).
     case "PhoneSettingsVerified": store.props.verified = "Teacher"; nav.path = [.settings]
     case "PhoneNewDeck": nav.sheet = .newDeck
@@ -278,6 +290,11 @@ extension Board {
     case "PhoneProfileLoading": store.props.netLoading = true; nav.tab = .profile
     case "PhoneProfileMissing": store.props.missing = true; nav.path = [.profile("nobody")]
     case "PhoneProfileReport": store.props.report = true; nav.path = [.profile("mariasantos")]
+    // Someone else's ⋯ menu (`-moreOpen`), its Block question, and someone you blocked (Unblock).
+    case "PhoneProfileBlock": store.props.blockOpen = true; nav.path = [.profile("mariasantos")]
+    case "PhoneProfileBlocked": store.props.blocked = true; nav.path = [.profile("mariasantos")]
+    // Settings with Delete account's question open.
+    case "PhoneSettingsDelete": store.props.deleteOpen = "Asking"; nav.path = [.settings]
     case "PhoneActivity": nav.path = [.news]
     case "PhoneActivityEmpty": store.props.netEmpty = true; nav.path = [.news]
     case "PhoneDeckStudied": store.props.linked = "study"; nav.tab = .library; nav.path = [.deck("cell")]
@@ -336,6 +353,22 @@ extension Board {
         if b.screen == "review" { store.props.revealed = true; nav.full = .review(deckId: "cell", pile: nil) } else { nav.path = [.settings] }
       }
     }
+    if let k = Board.arg("-goPro") { store.props.goPro = k }
+    // Settings' Daily reminder: `-reminder Off|"6:00 PM"|...`, and `-reminderNote` (Off, with the line about allowing notifications).
+    if let k = Board.arg("-reminder") { store.props.reminder = k }
+    if ProcessInfo.processInfo.arguments.contains("-reminderNote") { store.props.reminderNote = true; store.props.reminder = "Off" }
+    // The Settings, Profile, Connect AI, and sign-in boards' Tweaks: `-plan "Pro, billed by Apple"`, `-deleteOpen Asking|Deleting|Failed`,
+    // `-passwordOpen`, `-noBlocks`, `-noApps`, `-moreOpen`, `-blocked`, `-passwordMode`.
+    if let k = Board.arg("-plan") { store.props.plan = k }
+    if let k = Board.arg("-deleteOpen") { store.props.deleteOpen = k }
+    let flags = ProcessInfo.processInfo.arguments
+    if flags.contains("-passwordOpen") { store.props.passwordOpen = true }
+    if flags.contains("-noBlocks") { store.props.noBlocks = true }
+    if flags.contains("-noApps") { store.props.noApps = true }
+    if flags.contains("-moreOpen") { store.props.moreOpen = true }
+    if flags.contains("-blockOpen") { store.props.blockOpen = true }
+    if flags.contains("-blocked") { store.props.blocked = true }
+    if flags.contains("-passwordMode") { store.props.passwordMode = true }
     // `-theme <key>`: any board in a theme (the Theme boards' `skin`).
     if let k = Board.arg("-theme") { store.props.theme = k }
     // The Settings boards' Tune to you state (their `tune` Tweak): `-tune Off`, `-tune "Not enough reviews"`, or `-tune Tuning`.
@@ -401,7 +434,7 @@ struct MainView: View {
       // A deck or card being dragged, over the page and the tab bar; and the Move to tray over it while a card is.
       DragGhost()
       MoveTray()
-      if let s = nav.sheet { SheetHost(kind: s).zIndex(5) }
+      if let s = nav.sheet { SheetHost(kind: s).zIndex(s == .goPro ? 8 : 5) }
       if let f = nav.full { FullHost(kind: f).zIndex(6).transition(.move(edge: .bottom)) }
       // The welcome after your first sign-in, over everything until it's done or skipped.
       if store.welcoming { WelcomeScreen().zIndex(10).transition(.opacity) }
@@ -465,6 +498,9 @@ struct SheetHost: View {
     case .classAssign(let code): SheetOverlay(top: 56, close: nav.close) { ClassAssignSheet(code: code) }
     case .report(let kind, let id, let name): SheetOverlay(top: nil, close: nav.close) { ReportSheet(kind: kind, id: id, name: name) }
     case .verify: SheetOverlay(top: nil, close: nav.close) { VerifySheet() }
+    case .goPro: SheetOverlay(top: 56, radius: 32, close: nav.close) { GoProSheet(shop: store.shop) }
+    case .deleteAccount: SheetOverlay(top: nil, close: { if !nav.asking { nav.close() } }) { DeleteAccountSheet() }
+    case .block(let handle, let name): SheetOverlay(top: nil, close: { if !nav.asking { nav.close() } }) { BlockSheet(handle: handle, name: name) }
     }
   }
 }

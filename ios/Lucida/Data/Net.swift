@@ -59,10 +59,10 @@ struct NetDeck: Decodable, Identifiable {
 /// your own, the decks you saved. `me`: you follow them, or it's you.
 struct ProfilePage: Decodable {
   struct Me: Decodable {
-    var isSelf = false, following = false
-    enum CodingKeys: String, CodingKey { case isSelf = "self", following }
-    init(isSelf: Bool, following: Bool) { self.isSelf = isSelf; self.following = following }
-    init(from d: Decoder) throws { let c = try d.container(keyedBy: CodingKeys.self); isSelf = c.v(.isSelf, false); following = c.v(.following, false) }
+    var isSelf = false, following = false, blocked = false
+    enum CodingKeys: String, CodingKey { case isSelf = "self", following, blocked }
+    init(isSelf: Bool, following: Bool, blocked: Bool = false) { self.isSelf = isSelf; self.following = following; self.blocked = blocked }
+    init(from d: Decoder) throws { let c = try d.container(keyedBy: CodingKeys.self); isSelf = c.v(.isSelf, false); following = c.v(.following, false); blocked = c.v(.blocked, false) }
   }
   var handle = "", name = "", avatar: String? = nil, color = 0, verified = "", kind = "person"
   var bio = "", school = "", subject = ""
@@ -71,6 +71,8 @@ struct ProfilePage: Decodable {
   var decks: [NetDeck] = [], saved: [NetDeck] = []
   var stars: Int? = nil
   var me: Me? = nil
+  /// Someone you just chose to unblock, until their page comes back with their decks (set by what you did here, not by the server).
+  var unblocking = false
   enum CodingKeys: String, CodingKey { case handle, name, avatar, color, verified, kind, bio, school, subject, followers, following, contributions, featured, decks, saved, stars, me }
   init(from d: Decoder) throws {
     let c = try d.container(keyedBy: CodingKeys.self)
@@ -430,6 +432,9 @@ struct NetSample: Decodable {
 /// the sample deck's sharing.
 struct DemoNet {
   var follows: [String: Bool] = [:]
+  /// People blocked or unblocked on this screen, and AI apps disconnected.
+  var blocks: [String: Bool] = [:]
+  var gone: Set<String> = []
   var profile: [String: Any] = [:]
   var read = false
   /// The sample deck's Who can see it (nil: the board's `shared`), made your own, its changes taken, and Get updates.
@@ -459,11 +464,13 @@ extension Store {
     let mine = myHandle
     if !h.isEmpty && h != mine {
       var p = X.OTHER
-      let was = props.following, on = demoNet.follows[h] ?? was
+      // Someone you blocked (the board's `blocked`, or one you chose here): their page comes without their decks, like the server's.
+      let was = props.following, blocked = demoNet.blocks[h] ?? props.blocked, on = !blocked && (demoNet.follows[h] ?? was)
       p.followers += (on ? 1 : 0) - (was ? 1 : 0)
-      p.decks = props.netEmpty ? [] : ["mcat", "spanish"].compactMap { X.DECKS[$0] }.enumerated().map { i, d in var d = d; d.pinned = i == 0; return d }
+      p.decks = props.netEmpty || blocked ? [] : ["mcat", "spanish"].compactMap { X.DECKS[$0] }.enumerated().map { i, d in var d = d; d.pinned = i == 0; return d }
       p.saved = []
-      p.me = .init(isSelf: false, following: on)
+      if blocked { p.stars = 0 }
+      p.me = .init(isSelf: false, following: on, blocked: blocked)
       return .ok(p)
     }
     var p = X.PROFILE

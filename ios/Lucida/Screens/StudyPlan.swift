@@ -59,6 +59,7 @@ struct WorkloadLine: View {
 struct StudyPro: View {
   @Environment(\.theme) private var t
   @EnvironmentObject private var store: Store
+  @EnvironmentObject private var nav: Nav
   let d: DeckVM
   var body: some View {
     if store.isPro {
@@ -96,7 +97,7 @@ struct StudyPro: View {
     VStack(alignment: .leading, spacing: 8) {
       HStack(spacing: 8) { Text("Plan your reviews").css(15, .semibold); ProBadge() }
       WebText(text: "See how many reviews a day each goal means, set an exam date, and choose what happens to cards you keep forgetting.", size: 13, lh: 1.45, color: t.muted)
-      Button { UIApplication.shared.open(API.pricing) } label: {
+      Button { nav.goPro() } label: {
         Text("Go Pro").css(14, .semibold).foregroundStyle(t.invText).padding(.horizontal, 16).frame(height: 36).background(Capsule().fill(t.inv))
       }
       .buttonStyle(.press)

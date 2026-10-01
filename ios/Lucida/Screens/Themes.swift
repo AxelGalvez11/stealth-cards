@@ -112,10 +112,12 @@ struct ThemePickerScreen: View {
     HStack(spacing: 16) {
       VStack(alignment: .leading, spacing: 3) {
         HStack(spacing: 8) { Text("Themes are part of Pro").css(15, .semibold); ProBadge() }
-        WebText(text: "Yearly works out to $4.17 a month. Cancel anytime.", size: 13, lh: 1.4, color: t.muted)
+        // (What a year comes to a month is the App Store's own price, divided; the canvas shows its sample.)
+        let line = store.demo ? "Yearly works out to $4.17 a month. Cancel anytime." : store.shop.yearlyLine
+        if !line.isEmpty { WebText(text: line, size: 13, lh: 1.4, color: t.muted) }
       }
       .frame(maxWidth: .infinity, alignment: .leading)
-      Button { UIApplication.shared.open(API.pricing) } label: {
+      Button { nav.goPro() } label: {
         Text("Go Pro").css(14, .semibold).foregroundStyle(t.invText).padding(.horizontal, 16).frame(height: 36).background(Capsule().fill(t.inv))
       }
       .buttonStyle(.press)
@@ -216,7 +218,7 @@ struct ThemePageScreen: View {
   // Use this theme, In use, or Go Pro (on Free).
   @ViewBuilder private func button(locked: Bool, inUse: Bool) -> some View {
     if locked {
-      Button { UIApplication.shared.open(API.pricing) } label: {
+      Button { nav.goPro() } label: {
         HStack(spacing: 8) { Icon("lock", 15, 2.2); Text("Go Pro").css(15, .semibold) }
           .foregroundStyle(t.invText).frame(maxWidth: .infinity).frame(height: 48).background(Capsule().fill(t.inv))
       }

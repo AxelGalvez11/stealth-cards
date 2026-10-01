@@ -420,7 +420,11 @@ struct MiniBars: View {
 /// On Free, the deep tabs are this: a sky with three sample cards, what Pro adds, and the price (statsUpgrade).
 struct StatsUpgrade: View {
   @Environment(\.theme) private var t
+  @EnvironmentObject private var nav: Nav
+  @EnvironmentObject private var store: Store
   var body: some View {
+    // (The canvas shows its sample prices; the app shows the App Store's own, once it has them, and Go Pro until then.)
+    let shop = store.shop, offers = store.demo ? [] : shop.offers.sorted { $0.id == "monthly" && $1.id != "monthly" }
     let sky = t.gray ? (top: 0x1B2A48, mid: 0x1F2B45, low: 0x212637) : t.dark ? (top: 0x081733, mid: 0x0D2148, low: 0x0A1530) : (top: 0x86BDF3, mid: 0xC9E2FB, low: 0xEDF5FE)
     let stops: [Gradient.Stop] = [.init(color: Color(hex: UInt32(sky.top)), location: 0), .init(color: Color(hex: UInt32(sky.mid)), location: 0.58),
                                   .init(color: Color(hex: UInt32(sky.low)), location: 0.82), .init(color: t.bg, location: 1)]
@@ -443,15 +447,21 @@ struct StatsUpgrade: View {
             }
           }
         }
-        WebText(text: "Yearly works out to $4.17 a month. Cancel anytime.", size: 14, color: t.muted)
-        // Each price is its own button, so paying never picks yearly for you.
+        let line = store.demo ? "Yearly works out to $4.17 a month. Cancel anytime." : shop.yearlyLine
+        if !line.isEmpty { WebText(text: line, size: 14, color: t.muted) }
+        // Each price is its own button, so paying never picks yearly for you (it opens Go Pro with that one picked).
         HStack(spacing: 10) {
-          Button { UIApplication.shared.open(API.pro("monthly")) } label: {
-            Text("$5.99 a month").css(15, .semibold).foregroundStyle(t.text).frame(maxWidth: .infinity).frame(height: 52).background(Capsule().fill(t.surf))
-          }.buttonStyle(.press)
-          Button { UIApplication.shared.open(API.pro("yearly")) } label: {
-            Text("$49.99 a year").css(15, .semibold).foregroundStyle(t.invText).frame(maxWidth: .infinity).frame(height: 52).background(Capsule().fill(t.inv))
-          }.buttonStyle(.press)
+          if store.demo || offers.count > 1 {
+            ForEach(store.demo ? [("monthly", "$5.99 a month"), ("yearly", "$49.99 a year")] : offers.map { ($0.id, $0.price + " " + $0.per) }, id: \.0) { id, label in
+              Button { shop.pick = id; nav.goPro() } label: {
+                Text(label).css(15, .semibold).foregroundStyle(id == "yearly" ? t.invText : t.text).frame(maxWidth: .infinity).frame(height: 52).background(Capsule().fill(id == "yearly" ? t.inv : t.surf))
+              }.buttonStyle(.press)
+            }
+          } else {
+            Button { nav.goPro() } label: {
+              Text("Go Pro").css(15, .semibold).foregroundStyle(t.invText).frame(maxWidth: .infinity).frame(height: 52).background(Capsule().fill(t.inv))
+            }.buttonStyle(.press)
+          }
         }
       }
       .foregroundStyle(t.text)

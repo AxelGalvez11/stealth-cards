@@ -389,11 +389,14 @@ renderVals() {
   const db = this.props.db || this.mock(), chrome = db.chrome(), st = db.settings(), t = this.theme(!!this.props.dark, !!this.props.dim);
   const opts = (list, cur, set) => list.map(([id, label]) => ({ label, pressed: id === cur ? 'true' : 'false', bg: id === cur ? t.inv : 'transparent', fg: id === cur ? t.invText : t.muted, pick: () => set(id) }));
   const set = patch => db.act.setSettings(patch);
-  const planOf = { Free: { pro: false }, Pro: { pro: true, every: 'year', until: '2027-09-24T12:00:00Z', ending: false, manage: '#' }, 'Pro, ending': { pro: true, every: 'year', until: '2027-09-24T12:00:00Z', ending: true, manage: '#' }, 'Pro, billed by Apple': { pro: true, every: 'year', until: '2027-09-24T12:00:00Z', ending: false, by: 'apple', manage: '#' } };
+  const planOf = { Free: { pro: false }, Pro: { pro: true, every: 'year', until: '2027-09-24T12:00:00Z', ending: false, manage: '#' }, 'Pro, ending': { pro: true, every: 'year', until: '2027-09-24T12:00:00Z', ending: true, manage: '#' }, 'Pro, billed by Apple': { pro: true, every: 'year', until: '2027-09-24T12:00:00Z', ending: false, by: 'apple', manage: '#' },
+    // The iPhone app never opens Stripe: for Pro bought on the web it says so, and shows no Manage plan or Cancel Pro (the web app, which
+    // is Stripe's customer, keeps them).
+    'Pro, billed on the web': { pro: true, every: 'year', until: '2027-09-24T12:00:00Z', ending: false, by: 'stripe', manage: '#', webOnly: true } };
   const plan = db.mock ? planOf[this.props.plan] || planOf.Pro : db.plan && db.plan();
   const planDay = plan && plan.until ? new Date(plan.until).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : '';
-  const planVals = { planFree: !!plan && !plan.pro, planPro: !!plan && !!plan.pro, planRenews: !!plan && !plan.ending, planEnding: !!plan && !!plan.ending,
-    planSub: plan ? [({ month: 'Monthly', year: 'Yearly' })[plan.every] || '', planDay ? (plan.ending ? 'ends ' : 'renews ') + planDay : '', plan.by === 'apple' ? 'Billed by Apple' : ''].filter(Boolean).join(' · ') : '',
+  const planVals = { planFree: !!plan && !plan.pro, planPro: !!plan && !!plan.pro && !plan.webOnly, planWebOnly: !!plan && !!plan.pro && !!plan.webOnly, planRenews: !!plan && !plan.ending, planEnding: !!plan && !!plan.ending,
+    planSub: plan ? [({ month: 'Monthly', year: 'Yearly' })[plan.every] || '', planDay ? (plan.ending ? 'ends ' : 'renews ') + planDay : '', plan.by === 'apple' ? 'Billed by Apple' : plan.webOnly ? 'Billed on the web' : ''].filter(Boolean).join(' · ') : '',
     manageHref: plan && plan.manage || 'https://lucida.cards/pricing', proHref: db.mock ? 'PricingPhone.dc.html' : 'https://lucida.cards/pricing' };
   const colors = [['Periwinkle', 'linear-gradient(135deg, #8C9AFC 0%, #4F60E6 100%)'], ['Orange', 'linear-gradient(135deg, #FFC857 0%, #EE5A36 100%)'], ['Green', 'linear-gradient(135deg, #7EE0B0 0%, #1F8F5F 100%)'], ['Pink', 'linear-gradient(135deg, #F9A8D4 0%, #D6336C 100%)'], ['Teal', 'linear-gradient(135deg, #7DE3F0 0%, #0E8A9E 100%)'], ['Violet', 'linear-gradient(135deg, #C4A7FF 0%, #7C3AED 100%)']];
   // Settings › Look › Theme: your theme's name (Lucida on Free, where the others are locked).

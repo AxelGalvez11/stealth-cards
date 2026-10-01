@@ -21,9 +21,22 @@
 		};
 /* End PBXContainerItemProxy section */
 
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		4C0000000000000000000020 /* Exceptions for "Lucida" folder in "Lucida" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Lucida.storekit,
+			);
+			target = 4C0000000000000000000006 /* Lucida */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		4C0000000000000000000002 /* Lucida */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				4C0000000000000000000020 /* Exceptions for "Lucida" folder in "Lucida" target */,
+			);
 			path = Lucida;
 			sourceTree = "<group>";
 		};
@@ -264,7 +277,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
-				CODE_SIGN_ENTITLEMENTS = Lucida.entitlements;
+				CODE_SIGN_ENTITLEMENTS = LucidaDebug.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 2;
 				DEVELOPMENT_TEAM = 27AW3HBC3Z;

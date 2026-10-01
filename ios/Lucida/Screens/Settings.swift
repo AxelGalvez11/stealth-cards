@@ -1,4 +1,6 @@
-// iPhone · Settings (PhoneSettings), from the gear on Today: your account, studying, the look, and your AI.
+// iPhone · Settings (PhoneSettings), from the gear on Today: your account, studying, the look, your AI, and what Apple asks every
+// app to have inside it (the Account group: a password, the people you blocked, and Delete account).
+import StoreKit
 import SwiftUI
 
 extension Store {
@@ -90,6 +92,8 @@ extension Store {
     guard !demo else { return }
     await api.signOut()
     HTTPCookieStorage.shared.cookies?.forEach { HTTPCookieStorage.shared.deleteCookie($0) }
+    // (Their daily reminder goes with them. Only on purpose: a session that ran out, or opening the app with no network, leaves it.)
+    Reminder.shared.remove()
     lib = Library(); session = nil; signInStep = .email; phase = .signedOut
   }
 }
@@ -99,6 +103,18 @@ struct SettingsScreen: View {
   @EnvironmentObject private var store: Store
   @EnvironmentObject private var nav: Nav
   @State private var account = false
+  /// The daily reminder (what the phone has scheduled, and whether notices are allowed), which the row below reads.
+  @ObservedObject private var reminder = Reminder.shared
+  /// Account → Password: its form open, what's typed, what the server said, and whether it worked.
+  @State private var pwOpen = false
+  @State private var pw = ""
+  @State private var pwBusy = false
+  @State private var pwMsg = ""
+  @State private var pwOk = false
+  /// Account → Blocked people: who was just unblocked (gone from the list before the server has answered), and a failure.
+  @State private var unblocked: Set<String> = []
+  @State private var blockErr = ""
+  @FocusState private var pwFocus: Bool
 
   var body: some View {
     let s = store.settings, demo = store.demo
@@ -150,7 +166,9 @@ struct SettingsScreen: View {
         group("Profile picture") { photoPanel }
         planGroup
         group("Studying") {
-          menuRow("Daily reminder", demo ? "9:00 AM" : s.reminder, options: ["7:00 AM", "8:00 AM", "9:00 AM", "12:00 PM", "6:00 PM", "8:00 PM", "9:00 PM"]) { store.setSetting(["reminder": $0]) }
+          // Off, or a time: picking a time turns the reminder on (the phone asks to send notices then), Off turns it off, and with notices off
+          // for Lucida in iPhone Settings the row stays Off and says how to allow them.
+          menuRow("Daily reminder", store.reminderValue, options: [Reminder.off] + Reminder.times, sub: store.reminderRefused ? Reminder.refusedLine : nil) { chooseReminder($0) }
           divider
           menuRow("New cards a day", "\(s.perDay)", options: ["0", "5", "10", "15", "20", "30", "50"]) { store.setSetting(["perDay": Int($0) ?? 20]) }
           divider
@@ -178,13 +196,23 @@ struct SettingsScreen: View {
           divider
           Button { nav.push(.inbox) } label: { row("Cards to check") { value("\(store.pendingCount)") } }.buttonStyle(.plain)
         }
+        if demo || store.lib.me != nil { accountGroup }
       }
       .foregroundStyle(t.text)
       .padding(.horizontal, 20).padding(.top, Screen.top(64)).padding(.bottom, 34)
     }
+    // (Password's Save sits under the keyboard on a short screen: scrolling puts the keyboard away.)
+    .scrollDismissesKeyboard(.interactively)
+    // The daily reminder is read from the phone when this opens and when you come back (from iPhone Settings, say, after allowing notices).
+    .task { if !store.demo { await reminder.refresh() } }
+    .onReceive(NotificationCenter.default.publisher(for: UIApplication.willEnterForegroundNotification)) { _ in if !store.demo { Task { await reminder.refresh() } } }
     .debugScroll()
     .ignoresSafeArea()
     .toolbar(.hidden, for: .navigationBar)
+    .onAppear {
+      // (The design screens' Tweaks: Password open, and Delete account's question.)
+      if store.demo { pwOpen = store.props.passwordOpen; if !store.props.deleteOpen.isEmpty && nav.sheet == nil { nav.sheet = .deleteAccount } }
+    }
   }
 
   /// Profile picture (photoPanel on the canvas), on the gray row.
@@ -192,7 +220,8 @@ struct SettingsScreen: View {
     PhotoChoices().frame(maxWidth: .infinity, alignment: .leading).padding(.horizontal, 16).padding(.top, 12).padding(.bottom, 16)
   }
 
-  /// PLAN: Free with Go Pro, or Pro with when it renews (or ends) and Stripe's page to manage or cancel it (PhoneSettings).
+  /// PLAN: Free with Go Pro; or Pro with when it renews (or ends) and who bills it. A plan billed by Apple has Manage plan and Cancel
+  /// Pro (the system's own subscriptions screen); Pro bought on the web says so and has no link (PhoneSettings, `plan`).
   @ViewBuilder private var planGroup: some View {
     let plan = store.plan
     if plan.pro {
@@ -200,23 +229,25 @@ struct SettingsScreen: View {
         HStack(spacing: 12) {
           VStack(alignment: .leading, spacing: 2) {
             HStack(spacing: 8) { Text("Lucida").css(16); ProBadge() }
-            Text(planLine(plan)).css(12).foregroundStyle(t.muted)
+            Text(plan.line(web: store.plansWeb)).css(12).foregroundStyle(t.muted)
           }
           .frame(maxWidth: .infinity, alignment: .leading)
         }
         .padding(.horizontal, 16).padding(.vertical, 8).frame(minHeight: 52)
-        divider
-        Button { openManage() } label: { row("Manage plan") { value("") } }.buttonStyle(.plain)
-        divider
-        Button { openManage() } label: {
-          if plan.ending { row("Keep Pro") { value("") } } else { row("Cancel Pro", color: t.again) { EmptyView() } }
+        if store.plansManage {
+          divider
+          Button { openManage() } label: { row("Manage plan") { value("") } }.buttonStyle(.plain)
+          divider
+          Button { openManage() } label: {
+            if plan.ending { row("Keep Pro") { value("") } } else { row("Cancel Pro", color: t.again) { EmptyView() } }
+          }
+          .buttonStyle(.plain)
         }
-        .buttonStyle(.plain)
       }
     } else {
       group("Plan") {
         row("Free", sub: "Pro adds exam tools, deeper stats, and more") {
-          Button { UIApplication.shared.open(API.pricing) } label: {
+          Button { nav.goPro() } label: {
             Text("Go Pro").css(14, .semibold).foregroundStyle(t.invText).padding(.horizontal, 16).frame(height: 36).background(Capsule().fill(t.inv))
           }
           .buttonStyle(.press)
@@ -225,23 +256,102 @@ struct SettingsScreen: View {
     }
   }
 
-  /// "Yearly · renews September 24, 2027".
-  private func planLine(_ p: Plan) -> String {
-    let every = ["month": "Monthly", "year": "Yearly"][p.every] ?? ""
-    let iso = ISO8601DateFormatter(), frac = ISO8601DateFormatter()
-    frac.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
-    var day = ""
-    if let d = iso.date(from: p.until) ?? frac.date(from: p.until) {
-      let f = DateFormatter(); f.locale = Locale(identifier: "en_US"); f.dateFormat = "MMMM d, yyyy"; f.timeZone = TimeZone(identifier: "UTC")
-      day = (p.ending ? "ends " : "renews ") + f.string(from: d)
+  /// Manage plan, Cancel Pro, and Keep Pro: the system's own subscriptions screen (a subscription bought with the App Store can
+  /// only be changed there), or if it can't open, Apple's page for it.
+  private func openManage() {
+    guard !store.demo else { return }
+    let url = URL(string: store.lib.me?.manage.nilIfEmpty ?? "https://apps.apple.com/account/subscriptions")
+    Task { @MainActor in
+      if let scene = UIApplication.shared.connectedScenes.compactMap({ $0 as? UIWindowScene }).first, (try? await AppStore.showManageSubscriptions(in: scene)) != nil { return }
+      nav.open(url)
     }
-    return [every, day].filter { !$0.isEmpty }.joined(separator: " · ")
   }
 
-  /// Stripe's page, where Stripe emails a code to the address that paid and then shows the plan.
-  private func openManage() {
-    guard !store.demo, let url = URL(string: store.lib.me?.manage.nilIfEmpty ?? "https://lucida.cards/pricing") else { return }
-    UIApplication.shared.open(url)
+  // ---------- ACCOUNT: a password, the people you blocked, Delete account ----------
+  private var accountGroup: some View {
+    let list = store.netBlocks(), people = (list?.value?.people ?? []).filter { !unblocked.contains($0.handle) }
+    let count = list?.value == nil ? "" : people.isEmpty ? "None" : String(people.count)
+    return group("Account") {
+      Button { withAnimation(.out(0.2)) { pwOpen.toggle(); pw = ""; pwMsg = ""; pwOk = false } } label: {
+        row("Password", sub: "Optional. Sign in without an email code.") { value("") }
+      }
+      .buttonStyle(.plain)
+      if pwOpen { passwordForm }
+      divider
+      row("Blocked people") { Text(count).css(15).foregroundStyle(t.muted) }
+      ForEach(people, id: \.handle) { b in
+        divider
+        HStack(spacing: 12) {
+          PersonAvatar(p: b, size: 36)
+          VStack(alignment: .leading, spacing: 2) {
+            Text(b.name).css(16).lineLimit(1)
+            Text("@" + b.handle).css(12).foregroundStyle(t.muted).lineLimit(1)
+          }
+          .frame(maxWidth: .infinity, alignment: .leading)
+          SmallButton(label: "Unblock", bg: t.bg) { unblock(b) }
+        }
+        .padding(.horizontal, 16).padding(.vertical, 8).frame(minHeight: 52)
+        .accessibilityElement(children: .contain)
+      }
+      if !blockErr.isEmpty {
+        divider
+        CSSText(blockErr, 13, lh: 1.4, color: t.again).padding(.horizontal, 16).padding(.vertical, 10).frame(maxWidth: .infinity, alignment: .leading)
+      }
+      divider
+      Button { withAnimation(.out(0.35)) { nav.sheet = .deleteAccount } } label: { row("Delete account", color: t.again) { EmptyView() } }.buttonStyle(.plain)
+    }
+  }
+
+  /// Unblock works at once (the row goes); if the server won't, it comes back with the server's words.
+  private func unblock(_ b: NetPerson) {
+    unblocked.insert(b.handle); blockErr = ""
+    Task {
+      do { try await store.block(b.handle, false) }
+      catch { unblocked.remove(b.handle); blockErr = error.localizedDescription.nilIfEmpty ?? "Something went wrong. Try again." }
+    }
+  }
+
+  /// Password's form: a new password (8 to 72 characters), Save and Close, and what happened.
+  private var passwordForm: some View {
+    VStack(alignment: .leading, spacing: 10) {
+      CSSText("Sign in with your email and a password instead of a code. You can still use a code any time.", 13, lh: 1.45, color: t.muted)
+      SecureField("", text: $pw, prompt: Text("New password, 8 or more characters").foregroundStyle(PLACEHOLDER))
+        .focused($pwFocus)
+        .textContentType(.newPassword).textInputAutocapitalization(.never).autocorrectionDisabled()
+        .submitLabel(.done).onSubmit(savePassword)
+        .font(.geist(16)).foregroundStyle(t.text)
+        .padding(.horizontal, 16).frame(height: 44)
+        .background(Capsule().fill(t.bg))
+        // (Typing clears what was said; emptying the field after a save must not clear "Password saved.")
+        .onChange(of: pw) { _, v in if !v.isEmpty { pwMsg = ""; pwOk = false } }
+        .accessibilityLabel("New password")
+      HStack(spacing: 8) {
+        Button(action: savePassword) {
+          Text(pwBusy ? "Saving…" : "Save").css(14, .semibold).foregroundStyle(t.invText).padding(.horizontal, 20).frame(height: 40).background(Capsule().fill(t.inv))
+        }
+        .buttonStyle(.press)
+        Button { withAnimation(.out(0.2)) { pwOpen = false; pw = ""; pwMsg = ""; pwOk = false } } label: {
+          Text("Close").css(14, .semibold).foregroundStyle(t.text).padding(.horizontal, 16).frame(height: 40).background(Capsule().fill(t.bg))
+        }
+        .buttonStyle(.press)
+      }
+      if !pwMsg.isEmpty { CSSText(pwMsg, 13, lh: 1.4, color: pwOk ? t.good : t.again).accessibilityAddTraits(.isStaticText) }
+    }
+    .padding(.horizontal, 16).padding(.top, 4).padding(.bottom, 16)
+    .frame(maxWidth: .infinity, alignment: .leading)
+  }
+
+  private func savePassword() {
+    guard !pwBusy else { return }
+    guard pw.count >= 8, pw.count <= 72 else { pwMsg = "Use 8 to 72 characters."; pwOk = false; return }
+    pwFocus = false; pwBusy = true; pwMsg = ""
+    let typed = pw
+    Task {
+      do { try await store.setPassword(typed); pwOk = true; pwMsg = "Password saved."; pw = "" }
+      catch APIError.signedOut { store.phase = .signedOut }
+      catch { pwOk = false; pwMsg = error.localizedDescription.nilIfEmpty ?? "That didn’t work. Try again in a minute." }
+      pwBusy = false
+    }
   }
 
   private var connected: String {
@@ -293,10 +403,16 @@ struct SettingsScreen: View {
     HStack(spacing: 6) { Text(v).css(15).lineLimit(1); Icon("chev", 14, 2.2) }.foregroundStyle(t.muted)
   }
 
-  private func menuRow(_ label: String, _ current: String, options: [String], pick: @escaping (String) -> Void) -> some View {
+  private func menuRow(_ label: String, _ current: String, options: [String], sub: String? = nil, pick: @escaping (String) -> Void) -> some View {
     Menu {
       ForEach(options, id: \.self) { o in Button(o) { pick(o) } }
-    } label: { row(label) { value(current) } }
+    } label: { row(label, sub: sub) { value(current) } }
+  }
+
+  /// Daily reminder: Off removes it; a time sets it (the phone asks to send notices then) and is kept with your settings.
+  private func chooseReminder(_ pick: String) {
+    if store.demo { store.props.reminder = pick; store.props.reminderNote = false; return }
+    Task { if await reminder.choose(pick) { store.setSetting(["reminder": pick]) } }
   }
 
   /// SEG: a small segmented control on the gray row (white track, black pick).

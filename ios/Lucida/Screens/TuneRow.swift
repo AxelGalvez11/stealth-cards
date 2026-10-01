@@ -5,6 +5,7 @@ import SwiftUI
 struct TuneRow: View {
   @Environment(\.theme) private var t
   @EnvironmentObject private var store: Store
+  @EnvironmentObject private var nav: Nav
   var body: some View {
     let ti = store.tuneInfo(), n2 = { (n: Int) in grouped(n) }
     let ok = ti.pro && !ti.busy && (ti.can || ti.tuned)
@@ -24,7 +25,7 @@ struct TuneRow: View {
       if ti.pro {
         Toggle48(on: ti.on || ti.busy, enabled: ok, label: "Tune to you") { if ok { store.useTuned(!ti.on) } }
       } else {
-        Button { UIApplication.shared.open(API.pricing) } label: {
+        Button { nav.goPro() } label: {
           Text("Go Pro").css(14, .semibold).foregroundStyle(t.invText).padding(.horizontal, 16).frame(height: 36).background(Capsule().fill(t.inv))
         }
         .buttonStyle(.press)

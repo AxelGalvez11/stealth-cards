@@ -1,5 +1,6 @@
 // iPhone · Sign in (PhoneSignIn, PhoneSignInCode): a wall of flashcards drifting over near-black, then Apple, Google,
-// or a 6-digit code sent by email.
+// or a 6-digit code sent by email. "Use a password" (for people who set one in Settings, and for App Review, which can't get
+// an email code) swaps the code for an email and a password.
 import SwiftUI
 
 extension Store {
@@ -7,6 +8,12 @@ extension Store {
   func sendCode(_ email: String) async -> String? {
     if demo { signInEmail = email; return nil }
     do { try await api.sendCode(email); signInEmail = email; return nil }
+    catch { return error.localizedDescription }
+  }
+  /// Signs in with an email and a password (the server says "That email and password don’t match." when they don't).
+  func signIn(email: String, password: String) async -> String? {
+    if demo { return nil }
+    do { try await api.password(email, password); await load(); return nil }
     catch { return error.localizedDescription }
   }
   /// Checks the code; the session's cookies come back with the answer, then the library loads.
@@ -21,10 +28,14 @@ struct SignInScreen: View {
   @Environment(\.theme) private var t
   @EnvironmentObject private var store: Store
   @State private var email = ""
+  @State private var password = ""
+  /// A password instead of the code (the toggle under the button; the board's `passwordMode`).
+  @State private var pw = false
   @State private var busy = false
   @State private var working = false
   @State private var error = ""
   @FocusState private var typing: Bool
+  @FocusState private var passwordFocus: Bool
 
   var body: some View {
     VStack(spacing: 0) {
@@ -37,17 +48,31 @@ struct SignInScreen: View {
           .padding(.vertical, 4)
         TextField("", text: $email, prompt: Text("Email").foregroundStyle(t.muted))
           .focused($typing)
-          .keyboardType(.emailAddress).textContentType(.emailAddress).textInputAutocapitalization(.never).autocorrectionDisabled()
-          .submitLabel(.continue).onSubmit(send)
+          .keyboardType(.emailAddress).textContentType(pw ? .username : .emailAddress).textInputAutocapitalization(.never).autocorrectionDisabled()
+          .submitLabel(pw ? .next : .continue).onSubmit { if pw { passwordFocus = true } else { send() } }
           .font(.geist(16)).foregroundStyle(t.text)
           .padding(.horizontal, 20).frame(height: 50)
           .background(Capsule().fill(t.surf))
           .onChange(of: email) { _, _ in error = "" }
+          .accessibilityLabel("Email").accessibilityIdentifier("signIn.email")
+        if pw {
+          SecureField("", text: $password, prompt: Text("Password").foregroundStyle(t.muted))
+            .focused($passwordFocus)
+            .textContentType(.password).textInputAutocapitalization(.never).autocorrectionDisabled()
+            .submitLabel(.go).onSubmit(send)
+            .font(.geist(16)).foregroundStyle(t.text)
+            .padding(.horizontal, 20).frame(height: 50)
+            .background(Capsule().fill(t.surf))
+            .onChange(of: password) { _, _ in error = "" }
+            .accessibilityLabel("Password").accessibilityIdentifier("signIn.password")
+        }
         Button(action: send) {
-          Text(busy ? "Sending…" : "Continue").css(15, .semibold).foregroundStyle(t.invText).frame(maxWidth: .infinity).frame(height: 50).background(Capsule().fill(t.inv))
+          Text(pw ? (busy ? "Signing in…" : "Sign in") : (busy ? "Sending…" : "Continue")).css(15, .semibold).foregroundStyle(t.invText).frame(maxWidth: .infinity).frame(height: 50).background(Capsule().fill(t.inv))
         }
         .buttonStyle(.press)
         if !error.isEmpty { Text(error).css(14, lh: 1.4).foregroundStyle(t.again).multilineTextAlignment(.center).padding(.top, 2).padding(.horizontal, 4) }
+        Button { pw.toggle(); error = "" } label: { Text(pw ? "Use an email code instead" : "Use a password").css(14).foregroundStyle(t.muted).line(14) }
+          .buttonStyle(.plain)
         agree
       }
       .foregroundStyle(t.text)
@@ -55,6 +80,7 @@ struct SignInScreen: View {
     }
     .background(t.bg)
     .ignoresSafeArea(.container)
+    .onAppear { if store.demo { pw = store.props.passwordMode } }
   }
 
   private func authButton(_ label: String, logo: AnyView, action: @escaping () -> Void) -> some View {
@@ -91,6 +117,16 @@ struct SignInScreen: View {
     let e = email.trimmingCharacters(in: .whitespaces)
     guard e.range(of: #"^[^\s@]+@[^\s@]+\.[^\s@]+$"#, options: .regularExpression) != nil else { error = "Type your email address."; return }
     guard !busy else { return }
+    if pw {
+      guard !password.isEmpty else { error = "Type your password."; return }
+      busy = true; error = ""
+      Task {
+        let err = await store.signIn(email: e, password: password)
+        busy = false
+        if let err { error = err }
+      }
+      return
+    }
     busy = true; error = ""
     Task {
       let err = await store.sendCode(e)

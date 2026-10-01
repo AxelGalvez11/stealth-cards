@@ -17,6 +17,10 @@ enum SheetKind: Identifiable, Equatable {
   /// Classes: the New class, Join a class, or Rename popup; a class's Add a deck and Assign sheets (by its code); Report a
   /// deck, a person, or a suggestion (its kind, id, and name); and Get verified.
   case classForm(ClassForm), classAdd(String), classAssign(String), report(kind: String, id: String, name: String), verify
+  /// Go Pro (the paywall: Lucida Pro with the App Store), over any page or full screen.
+  case goPro
+  /// Delete account's question (Settings → Account), and Block's (someone's handle and name).
+  case deleteAccount, block(handle: String, name: String)
   var id: String {
     switch self {
     case .newDeck: return "newDeck"
@@ -33,6 +37,9 @@ enum SheetKind: Identifiable, Equatable {
     case .classAssign(let c): return "classAssign-" + c
     case .report(let k, let i, _): return "report-\(k)-\(i)"
     case .verify: return "verify"
+    case .goPro: return "goPro"
+    case .deleteAccount: return "deleteAccount"
+    case .block(let h, _): return "block-" + h
     }
   }
 }
@@ -68,6 +75,10 @@ final class Nav: ObservableObject {
   /// Edit profile opens once your profile is showing (Settings → Edit profile).
   var wantsEdit = false
 
+  /// A question is waiting for its answer from the server (Delete account, Block): its sheet stays until it comes.
+  @Published var asking = false
+  /// Back to Today with nothing open (signed out, or the account is gone).
+  func reset() { sheet = nil; full = nil; boardFull = nil; path = []; tab = .today; libCards = false; libClasses = false; asking = false; barHidden = false }
   func push(_ r: Route) { path.append(r) }
   func back() { if !path.isEmpty { path.removeLast() } }
   func study(deckId: String?, pile: String? = nil) { withAnimation(.out(0.35)) { full = .review(deckId: deckId, pile: pile) } }
@@ -75,6 +86,8 @@ final class Nav: ObservableObject {
   func study(set: String) { withAnimation(.out(0.35)) { full = .reviewSet(set) } }
   func newCard(deckId: String?, cardId: String? = nil) { withAnimation(.out(0.35)) { sheet = .newCard(deckId: deckId, cardId: cardId) } }
   func newDeck() { withAnimation(.out(0.35)) { sheet = .newDeck } }
+  /// Go Pro: the paywall opens over whatever is showing.
+  func goPro() { withAnimation(.out(0.35)) { sheet = .goPro } }
   func importCards() { /* Import comes with the card editor. */ }
   /// Learn mode: pick up where you stopped, or start from the sheet.
   func learn(deckId: String, resume: Bool) { withAnimation(.out(0.35)) { if resume { full = .learn(deckId) } else { sheet = .learnStart(deckId) } } }

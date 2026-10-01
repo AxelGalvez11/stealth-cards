@@ -5,7 +5,7 @@ import Foundation
 enum APIError: LocalizedError {
   case signedOut, server(String)
   var errorDescription: String? {
-    switch self { case .signedOut: return "Sign in to Lucida."; case .server(let m): return m }
+    switch self { case .signedOut: return "Sign in to Lucida."; case .server(let m): return API.plain(m) }
   }
 }
 
@@ -18,21 +18,22 @@ final class API {
     #endif
     return URL(string: "https://app.lucida.cards")!
   }()
+  /// The server's own words, for the phone. Some of them send people to the pricing page to go Pro, which is the web's way: on iPhone
+  /// Pro is bought in the app (Go Pro), so the page isn't named. ("Exam dates are part of Lucida Pro: <the page>" says "Exam dates are
+  /// part of Lucida Pro.")
+  static func plain(_ words: String) -> String {
+    var w = words
+    for (pattern, with) in [(#"\s+Go Pro at lucida\.cards/pricing\.?"#, ""), (#":\s*lucida\.cards/pricing\.?"#, "."), (#"\s*lucida\.cards/pricing"#, "")] {
+      w = w.replacingOccurrences(of: pattern, with: with, options: .regularExpression)
+    }
+    return w
+  }
   private let session: URLSession = {
     let c = URLSessionConfiguration.default
     c.httpCookieStorage = .shared; c.httpShouldSetCookies = true; c.httpCookieAcceptPolicy = .always
     c.requestCachePolicy = .reloadIgnoringLocalCacheData
     return URLSession(configuration: c)
   }()
-
-  /// Going Pro on the server's own site (Stripe's checkout), paying "monthly" or "yearly".
-  static func pro(_ plan: String) -> URL {
-    var u = URLComponents(url: base.appendingPathComponent("pro"), resolvingAgainstBaseURL: false)!
-    u.queryItems = [URLQueryItem(name: "plan", value: plan)]
-    return u.url!
-  }
-  /// The plans side by side, Monthly or Yearly.
-  static let pricing = URL(string: "https://lucida.cards/pricing")!
 
   /// A request and its answer, whatever the status (only a signed-out session throws).
   private func raw(_ path: String, method: String = "GET", json: [String: Any]? = nil) async throws -> (Data, HTTPURLResponse) {
@@ -125,6 +126,31 @@ final class API {
     let (data, http) = try await raw("api/explain", method: "POST", json: ["cardId": cardId, "question": question])
     return (http.statusCode, (try? JSONSerialization.jsonObject(with: data)) as? [String: Any] ?? [:])
   }
+
+  /// Signed transactions from StoreKit (Pro bought with the App Store), for the person who is signed in (web/handler.mjs
+  /// iapReq). The server's own words come back as the error when it won't take one.
+  func iap(_ signed: [String]) async throws {
+    let body: [String: Any] = signed.count == 1 ? ["signedTransaction": signed[0]] : ["signedTransactions": signed]
+    do { _ = try await request("api/iap", method: "POST", json: body) }
+    catch let e as APIError { throw e }
+    catch { throw APIError.server(API.unreachable) }
+  }
+
+  /// Whatever the server says, with a lost connection in plain words (a request's own error is "The Internet connection appears
+  /// to be offline.", which isn't Lucida's way of saying it).
+  private func said(_ path: String, _ json: [String: Any]) async throws {
+    do { _ = try await request(path, method: "POST", json: json) }
+    catch let e as APIError { throw e }
+    catch { throw APIError.server(API.unreachable) }
+  }
+  /// A password to sign in with next to the email code (POST /api/auth/password/set; 8 to 72 characters).
+  func setPassword(_ password: String) async throws { try await said("api/auth/password/set", ["password": password]) }
+  /// Signing in with an email and a password (POST /api/auth/password): the session's cookies come back with the answer.
+  func password(_ email: String, _ password: String) async throws { try await said("api/auth/password", ["email": email, "password": password]) }
+  /// Deleting your account (POST /api/account/delete): the server clears the session itself.
+  func deleteAccount() async throws { try await said("api/account/delete", ["confirm": true]) }
+  /// An AI app you allowed loses its sign-in (POST /api/oauth/disconnect).
+  func disconnectApp(_ id: String) async throws { try await said("api/oauth/disconnect", ["id": id]) }
 
   func sendCode(_ email: String) async throws { _ = try await request("api/auth/code", method: "POST", json: ["email": email]) }
   func verify(_ email: String, _ code: String) async throws { _ = try await request("api/auth/verify", method: "POST", json: ["email": email, "code": code]) }
