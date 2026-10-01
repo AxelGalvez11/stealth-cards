@@ -1,157 +1,195 @@
 {
+ "_art": "6defc65300",
  "home": {
   "file": "og/home.png",
-  "fingerprint": "fa22d15268",
-  "bytes": 141217
+  "fingerprint": "1162841b7c",
+  "bytes": 145760,
+  "read": 13.7
  },
  "pricing": {
   "file": "og/pricing.png",
-  "fingerprint": "023e2eb5c4",
-  "bytes": 143220
+  "fingerprint": "64d9f825ea",
+  "bytes": 166647,
+  "read": 12.7
  },
  "privacy": {
   "file": "og/privacy.png",
-  "fingerprint": "0b43fd5a45",
-  "bytes": 139922
+  "fingerprint": "3dfa006a7d",
+  "bytes": 134528,
+  "read": 13.4
  },
  "terms": {
   "file": "og/terms.png",
-  "fingerprint": "f9abfe4c25",
-  "bytes": 136934
+  "fingerprint": "1ef08c2624",
+  "bytes": 180279,
+  "read": 11
  },
  "connect": {
   "file": "og/connect.png",
-  "fingerprint": "66abc1b4d5",
-  "bytes": 139197
+  "fingerprint": "6c6e863288",
+  "bytes": 208465,
+  "read": 9.9
+ },
+ "blog": {
+  "file": "og/blog.png",
+  "fingerprint": "f368e687b4",
+  "bytes": 213419,
+  "read": 9.3
  },
  "compare": {
   "file": "og/compare.png",
-  "fingerprint": "1e44179a58",
-  "bytes": 143885
+  "fingerprint": "cd36d08af1",
+  "bytes": 177057,
+  "read": 11.4
  },
  "features": {
   "file": "og/features.png",
-  "fingerprint": "ff91869f94",
-  "bytes": 145722
+  "fingerprint": "6459ae6ab8",
+  "bytes": 142319,
+  "read": 13.3
  },
  "vs/anki": {
   "file": "og/vs-anki.png",
-  "fingerprint": "09784c9f5a",
-  "bytes": 142349
+  "fingerprint": "45efd7fd6f",
+  "bytes": 215628,
+  "read": 9.5
  },
  "vs/quizlet": {
   "file": "og/vs-quizlet.png",
-  "fingerprint": "28d9fbdacb",
-  "bytes": 137280
+  "fingerprint": "2d9eb94403",
+  "bytes": 215036,
+  "read": 10.4
  },
  "vs/knowt": {
   "file": "og/vs-knowt.png",
-  "fingerprint": "c6bda01749",
-  "bytes": 143060
+  "fingerprint": "9b914ce701",
+  "bytes": 201496,
+  "read": 12.5
  },
  "vs/remnote": {
   "file": "og/vs-remnote.png",
-  "fingerprint": "7797021764",
-  "bytes": 142849
+  "fingerprint": "a350de5ada",
+  "bytes": 199469,
+  "read": 9.7
  },
  "vs/brainscape": {
   "file": "og/vs-brainscape.png",
-  "fingerprint": "3d4a307ad8",
-  "bytes": 143117
+  "fingerprint": "274dcb512c",
+  "bytes": 182210,
+  "read": 12
  },
  "vs/mochi": {
   "file": "og/vs-mochi.png",
-  "fingerprint": "b7ac66f623",
-  "bytes": 138297
+  "fingerprint": "8a708ea276",
+  "bytes": 147144,
+  "read": 13.4
  },
  "vs/kahoot": {
   "file": "og/vs-kahoot.png",
-  "fingerprint": "2507056834",
-  "bytes": 141228
+  "fingerprint": "c9c84c5a52",
+  "bytes": 206457,
+  "read": 9.5
  },
  "vs/gizmo": {
   "file": "og/vs-gizmo.png",
-  "fingerprint": "7d1503cbe6",
-  "bytes": 138065
+  "fingerprint": "f93936041a",
+  "bytes": 150835,
+  "read": 11.8
  },
  "anki-alternative": {
   "file": "og/anki-alternative.png",
-  "fingerprint": "4effb6af19",
-  "bytes": 147654
+  "fingerprint": "ea29182b9a",
+  "bytes": 148131,
+  "read": 12.4
  },
  "quizlet-alternative": {
   "file": "og/quizlet-alternative.png",
-  "fingerprint": "a50792bb38",
-  "bytes": 138713
+  "fingerprint": "279b416237",
+  "bytes": 208264,
+  "read": 8.6
  },
  "features/spaced-repetition": {
   "file": "og/features-spaced-repetition.png",
-  "fingerprint": "0ec019e57b",
-  "bytes": 139796
+  "fingerprint": "999b362993",
+  "bytes": 210897,
+  "read": 9.4
  },
  "features/ai-flashcards": {
   "file": "og/features-ai-flashcards.png",
-  "fingerprint": "4525dd60da",
-  "bytes": 147645
+  "fingerprint": "57348f59f9",
+  "bytes": 201707,
+  "read": 9.5
  },
  "features/learn-mode": {
   "file": "og/features-learn-mode.png",
-  "fingerprint": "e5f85bcbd8",
-  "bytes": 135492
+  "fingerprint": "72bd78232f",
+  "bytes": 177482,
+  "read": 11.1
  },
  "features/shared-decks": {
   "file": "og/features-shared-decks.png",
-  "fingerprint": "e6949ce4b5",
-  "bytes": 138934
+  "fingerprint": "4bd646ca2c",
+  "bytes": 192319,
+  "read": 10.5
  },
  "features/classes": {
   "file": "og/features-classes.png",
-  "fingerprint": "8936f5ed19",
-  "bytes": 138805
+  "fingerprint": "6f4000bef5",
+  "bytes": 186031,
+  "read": 10.8
  },
  "features/live-games": {
   "file": "og/features-live-games.png",
-  "fingerprint": "aba96f64a6",
-  "bytes": 137815
+  "fingerprint": "c316cfb2ce",
+  "bytes": 172292,
+  "read": 9
  },
  "features/image-occlusion": {
   "file": "og/features-image-occlusion.png",
-  "fingerprint": "04c694ddc1",
-  "bytes": 144369
+  "fingerprint": "605c08946e",
+  "bytes": 159056,
+  "read": 11.5
  },
  "features/import": {
   "file": "og/features-import.png",
-  "fingerprint": "04917cece1",
-  "bytes": 136434
+  "fingerprint": "ab83795bed",
+  "bytes": 148702,
+  "read": 9.7
  },
  "for/students": {
   "file": "og/for-students.png",
-  "fingerprint": "175e13e7ea",
-  "bytes": 136549
+  "fingerprint": "e9772c2322",
+  "bytes": 156623,
+  "read": 11.1
  },
  "for/med-school": {
   "file": "og/for-med-school.png",
-  "fingerprint": "1bb566d9be",
-  "bytes": 136938
+  "fingerprint": "16a5e3cb99",
+  "bytes": 180772,
+  "read": 9.8
  },
  "for/mcat": {
   "file": "og/for-mcat.png",
-  "fingerprint": "6d88e54e1d",
-  "bytes": 146359
+  "fingerprint": "4cc6c633b4",
+  "bytes": 210644,
+  "read": 10
  },
  "for/language-learning": {
   "file": "og/for-language-learning.png",
-  "fingerprint": "3ed94fa51b",
-  "bytes": 139315
+  "fingerprint": "472f456bda",
+  "bytes": 181765,
+  "read": 10.1
  },
  "for/teachers": {
   "file": "og/for-teachers.png",
-  "fingerprint": "b76ab24d26",
-  "bytes": 145471
+  "fingerprint": "52f8f720fd",
+  "bytes": 132436,
+  "read": 13.1
  },
  "faq": {
   "file": "og/faq.png",
-  "fingerprint": "e7351264de",
-  "bytes": 139741
+  "fingerprint": "4944aaed05",
+  "bytes": 159488,
+  "read": 10.8
  }
 }
