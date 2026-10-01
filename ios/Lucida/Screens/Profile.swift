@@ -11,9 +11,11 @@ import SwiftUI
 struct ProfilePatch {
   var following: Bool? = nil, followers: Int? = nil, featured: [String]? = nil
   var name: String? = nil, bio: String? = nil, school: String? = nil, subject: String? = nil
+  var schoolId: String? = nil, level: String? = nil, year: String? = nil, showSchool: Bool? = nil
   mutating func merge(_ o: ProfilePatch) {
     following = o.following ?? following; followers = o.followers ?? followers; featured = o.featured ?? featured
     name = o.name ?? name; bio = o.bio ?? bio; school = o.school ?? school; subject = o.subject ?? subject
+    schoolId = o.schoolId ?? schoolId; level = o.level ?? level; year = o.year ?? year; showSchool = o.showSchool ?? showSchool
   }
   func applied(to p: ProfilePage) -> ProfilePage {
     var p = p
@@ -23,6 +25,10 @@ struct ProfilePatch {
     if let v = name { p.name = v }
     if let v = bio { p.bio = v }
     if let v = school { p.school = v }
+    if let v = schoolId { p.schoolId = v }
+    if let v = level { p.level = v }
+    if let v = year { p.year = v }
+    if let v = showSchool { p.showSchool = v }
     if let v = subject { p.subject = v }
     return p
   }
@@ -168,7 +174,8 @@ struct ProfileScreen: View {
     let saved = isSelf ? pr.saved.map { TileVM($0) } : []
     let current = isSelf ? tab ?? "Decks" : "Decks"
     let name = isSelf ? store.myName : pr.name
-    let line = [pr.subject, pr.school].filter { !$0.isEmpty }.joined(separator: " · ")
+    // What you study, and (if it's on, or someone else's page) your school, level, and year.
+    let line = [pr.subject, !isSelf || pr.showSchool == true ? SchoolWords.line(school: pr.school, level: pr.level, year: pr.year) : ""].filter { !$0.isEmpty }.joined(separator: " · ")
     return Group {
       HStack(spacing: 20) {
         if isSelf { MyAvatar(size: 84) } else { PersonAvatar(p: pr.person, size: 84) }
@@ -439,7 +446,8 @@ struct Pill: View {
 
 // ---------- Edit profile ----------
 /// Edit profile (EDIT_SHEET): your picture (Settings' own choices, which save as you pick), your name (the one in
-/// Settings), handle, bio (160 letters), school, and subject. Save sends the rest; a handle someone has says so under
+/// Settings), handle, bio (160 letters), your level, school, and year (with a switch for showing them on your profile, off to
+/// start with; a high school student has no school), and subject. Save sends the rest; a handle someone has says so under
 /// the handle, and one that isn't a handle says so as you type.
 struct EditProfileSheet: View {
   @Environment(\.theme) private var t
@@ -456,7 +464,8 @@ struct EditProfileSheet: View {
 
   var body: some View {
     let h = store.myHandle, pr = store.shownProfile(h)?.value
-    let was = ["name": store.myName, "handle": pr?.handle ?? h, "bio": pr?.bio ?? "", "school": pr?.school ?? "", "subject": pr?.subject ?? ""]
+    let was = ["name": store.myName, "handle": pr?.handle ?? h, "bio": pr?.bio ?? "", "school": pr?.school ?? "", "subject": pr?.subject ?? "",
+               "schoolId": pr?.schoolId ?? "", "level": pr?.level ?? "", "year": pr?.year ?? "", "showSchool": pr?.showSchool == true ? "1" : "0"]
     let value = { (k: String) in draft[k] ?? was[k] ?? "" }
     let hv = handleValue(value("handle")), handleOk = hv.range(of: "^[a-z0-9_.]{3,30}$", options: .regularExpression) != nil
     let handleMsg = !handleOk ? "Use 3 to 30 letters, numbers, dots, or underscores." : handleErr ?? ""
@@ -515,7 +524,7 @@ struct EditProfileSheet: View {
                 .accessibilityLabel("Bio")
             }
             .id("bio")
-            line("School", "school", value, max: 60).id("school")
+            schoolFields(value).id("school")
             line("Subject or course", "subject", value, max: 60).id("subject")
             if !saveErr.isEmpty { CSSText(saveErr, 13, color: t.again) }
           }
@@ -531,6 +540,12 @@ struct EditProfileSheet: View {
     .foregroundStyle(t.text)
     .padding(.top, 10).padding(.horizontal, 20).padding(.bottom, 34)
     .onChange(of: hv) { _, v in check(v, was: was["handle"] ?? "", ok: handleOk) }
+    .onAppear {
+      // The design screen's Tweaks: the school search open, with what's typed in it (-pick School, -pickQ).
+      guard store.demo, store.props.pick == "School", nav.picker == nil else { return }
+      store.props.pick = ""
+      DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { askSchool(was["schoolId"] ?? "", typed: was["school"] ?? "") }
+    }
     .onDisappear { checking?.cancel() }
   }
 
@@ -573,6 +588,70 @@ struct EditProfileSheet: View {
     }
   }
 
+  /// Level (chips), School (a row that opens a search of the list, or "Other": what you type), Year (chips), and the switch for showing
+  /// them on your profile. A high school student has no School row: there is no list of high schools.
+  @ViewBuilder private func schoolFields(_ value: @escaping (String) -> String) -> some View {
+    VStack(alignment: .leading, spacing: 14) {
+      VStack(alignment: .leading, spacing: 8) {
+        label("Level")
+        FlowLayout(spacing: 6, lineSpacing: 6) {
+          ForEach(Generated.levels, id: \.id) { l in
+            let on = value("level") == l.id
+            chip(l.words, on: on) { draft["level"] = on ? "" : l.id; if !on && l.id == "highschool" { draft["school"] = ""; draft["schoolId"] = "" } }
+          }
+        }
+      }
+      if value("level") != "highschool" { schoolRow(value) }
+      VStack(alignment: .leading, spacing: 8) {
+        label("Year")
+        FlowLayout(spacing: 6, lineSpacing: 6) {
+          ForEach(Generated.years, id: \.id) { y in
+            let on = value("year") == y.id
+            chip(SchoolWords.yearChip(y.id), on: on) { draft["year"] = on ? "" : y.id }
+          }
+        }
+      }
+      HStack(spacing: 12) {
+        VStack(alignment: .leading, spacing: 2) {
+          Text("Show my school on my profile").css(14, .semibold).line(14)
+          Text("Only you can see it unless this is on.").css(12).foregroundStyle(t.muted).line(12)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        Toggle48(on: value("showSchool") == "1", label: "Show my school on my profile") { draft["showSchool"] = value("showSchool") == "1" ? "0" : "1" }
+      }
+      .frame(minHeight: 44)
+    }
+  }
+  private func chip(_ words: String, on: Bool, _ action: @escaping () -> Void) -> some View {
+    Button(action: action) {
+      Text(words).css(13, .semibold).lineLimit(1).fixedSize().foregroundStyle(on ? t.invText : t.text).padding(.horizontal, 12).frame(height: 34)
+        .background(Capsule().fill(on ? t.inv : t.surf))
+    }
+    .buttonStyle(.press)
+    .accessibilityAddTraits(on ? .isSelected : [])
+  }
+  private func schoolRow(_ value: @escaping (String) -> String) -> some View {
+    let name = value("school")
+    return Button { askSchool(value("schoolId"), typed: name) } label: {
+      HStack(spacing: 12) {
+        Text("School").css(13, .semibold).line(13)
+        Text(name.isEmpty ? "Add" : name).css(16).lineLimit(1).truncationMode(.tail).foregroundStyle(name.isEmpty ? t.muted : t.text).frame(maxWidth: .infinity, alignment: .trailing)
+        Icon("chevDown", 14, 2.2).foregroundStyle(t.muted)
+      }
+      .padding(.leading, 16).padding(.trailing, 14).frame(height: 46)
+      .background(RoundedRectangle(cornerRadius: 16, style: .continuous).fill(t.surf))
+    }
+    .buttonStyle(.press)
+    .accessibilityLabel("School").accessibilityValue(name)
+  }
+  /// The school search: pick one from the list, None, or what you typed as "Other" (a school typed, not on the list, has no id).
+  private func askSchool(_ id: String, typed: String) {
+    nav.picker = PickRequest(title: "School", find: store.demo ? PickRow.sampleSchools : PickRow.schools, value: id.isEmpty && !typed.isEmpty ? "~" : id, any: "None", noneLine: "No school matches", full: true,
+                             query: store.demo ? store.props.pickQ : "", other: { "Other: “" + $0 + "”" }, chooseOther: { x in draft["schoolId"] = ""; draft["school"] = x.limited(60) }) { row in
+      draft["schoolId"] = row?.id ?? ""; draft["school"] = row?.words ?? ""
+    }
+  }
+
   /// Closing also brings your public picture up to date with the one you picked.
   private func close() {
     nav.close()
@@ -582,12 +661,14 @@ struct EditProfileSheet: View {
   private func save(_ was: [String: String], _ hv: String, _ off: Bool) {
     guard !off else { return }
     var patch: [String: Any] = [:], shown = ProfilePatch()
-    for k in ["bio", "school", "subject"] {
-      if let v = draft[k], v != was[k] { patch[k] = v }
-    }
+    let now = { (k: String) in draft[k] ?? was[k] ?? "" }
+    for k in ["bio", "subject", "level", "year"] where now(k) != was[k] { patch[k] = now(k) }
+    if now("showSchool") != was["showSchool"] { patch["showSchool"] = now("showSchool") == "1" }
+    if now("schoolId") != was["schoolId"] || now("school") != was["school"] { patch["schoolId"] = now("schoolId"); patch["school"] = now("school") }
     if hv != was["handle"] { patch["handle"] = hv }
     let nm = String((draft["name"] ?? was["name"] ?? "").trimmingCharacters(in: .whitespacesAndNewlines).prefix(60))
     shown.bio = patch["bio"] as? String; shown.school = patch["school"] as? String; shown.subject = patch["subject"] as? String
+    shown.schoolId = patch["schoolId"] as? String; shown.level = patch["level"] as? String; shown.year = patch["year"] as? String; shown.showSchool = patch["showSchool"] as? Bool
     shown.name = nm.isEmpty ? was["name"] : nm
     saving = true; saveErr = ""; handleErr = nil
     Task {

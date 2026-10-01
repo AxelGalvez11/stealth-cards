@@ -81,6 +81,9 @@ struct DemoProps {
   var netLoading = false, netEmpty = false, missing = false, following = false, editOpen = false
   var profileTab = "Decks"
   var q = ""
+  /// Discover's filters (the board's Tweaks, as words or ids), a school or level picker open ("Level", "Subject", or "School", with
+  /// what's typed in it), and whether the sample person set a school (then "Popular at" it is the first row).
+  var level = "", subject = "", school = "", pick = "", pickQ = "", mySchool = true
   /// A page's Report sheet open (the deck page, a profile, a suggestion), and your verification for the boards that show it
   /// ("", "Waiting for review", "Teacher", or "School": a verified teacher sees Check this deck; Settings says so).
   var report = false, verified = ""

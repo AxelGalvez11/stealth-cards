@@ -1,6 +1,8 @@
-// iPhone · Discover (PhoneDiscover, PhoneDiscoverSearch): decks people share, by topic, in sections (popular this week,
-// from people you follow, checked by teachers, new); or search decks and people. Studying stays in your library;
-// Discover is only for finding more. A deck opens its page; a name opens that person's profile.
+// iPhone · Discover (PhoneDiscover, PhoneDiscoverSearch): decks people share, by topic, in sections (popular at your school, if you set
+// one, popular this week, from people you follow, checked by teachers, new); or search decks and people. Level, Subject, and School
+// narrow either to one list of decks (a school is searched as you type; nothing lists the people at a school, so a search with a
+// filter finds no people). Studying stays in your library; Discover is only for finding more. A deck opens its page; a name opens
+// that person's profile.
 import SwiftUI
 
 struct DiscoverScreen: View {
@@ -9,10 +11,17 @@ struct DiscoverScreen: View {
   @EnvironmentObject private var nav: Nav
   @State private var q = ""
   @State private var tag = ""
+  /// Narrowed by a level and a subject (ids from Generated.levels and subjects) and a school.
+  @State private var level = ""
+  @State private var subject = ""
+  @State private var school: Chosen? = nil
+  struct Chosen: Equatable { var id: String; var name: String }
 
   var body: some View {
     let words = q.trimmingCharacters(in: .whitespacesAndNewlines), searching = !words.isEmpty
-    let disc = searching ? nil : store.netDiscover(tag), found = searching ? store.netSearch(words) : nil
+    let narrowed = !level.isEmpty || !subject.isEmpty || school != nil
+    let disc = searching ? nil : store.netDiscover(tag, level: level, subject: subject, school: school?.id ?? "")
+    let found = searching ? store.netSearch(words, level: level, subject: subject, school: school?.id ?? "") : nil
     let loading = searching ? found == nil : disc == nil
     let bad = searching ? (found?.isMissing == true || found?.isOffline == true) : (disc?.isMissing == true || disc?.isOffline == true)
     let sections = (disc?.value?.sections ?? []).map { (id: $0.id, title: $0.title, decks: $0.decks.prefix(6).map { TileVM($0) }) }
@@ -21,6 +30,7 @@ struct DiscoverScreen: View {
       VStack(alignment: .leading, spacing: 16) {
         Text("Discover").css(32, .semibold, ls: -0.03).line(32).foregroundStyle(t.text).accessibilityAddTraits(.isHeader)
         search
+        filters(narrowed)
         if !searching { topics(["" ] + (disc?.value?.topics ?? [])) }
         if loading && !bad { NetLoading(rows: 2) }
         if !searching && !loading && !bad {
@@ -30,7 +40,7 @@ struct DiscoverScreen: View {
               grid(x.decks, owners: true)
             }
           }
-          if sections.isEmpty { NetNote(text: "No one has shared a deck here yet.") }
+          if sections.isEmpty { NetNote(text: narrowed ? "No decks match." : "No one has shared a deck here yet.") }
         }
         if searching && !loading {
           if !hits.people.isEmpty { people(hits.people) }
@@ -48,7 +58,77 @@ struct DiscoverScreen: View {
     }
     .scrollDismissesKeyboard(.immediately)
     .ignoresSafeArea(edges: .top)
-    .onAppear { if store.demo && q.isEmpty { q = store.props.q } }
+    .onAppear { if store.demo { showBoard() } }
+  }
+
+  /// The design screen's Tweaks: its search, its filters (words or ids), and a picker open with what's typed in it.
+  private func showBoard() {
+    let p = store.props
+    if q.isEmpty { q = p.q }
+    level = Generated.levels.first { $0.words == p.level || $0.id == p.level }?.id ?? level
+    subject = Generated.subjects.first { $0.words == p.subject || $0.id == p.subject }?.id ?? subject
+    if !p.school.isEmpty, school == nil, let s = SchoolList.shared.rows.first(where: { $0.name == p.school || $0.id == p.school }) { school = Chosen(id: s.id, name: s.name) }
+    guard !p.pick.isEmpty, nav.picker == nil else { return }
+    store.props.pick = ""
+    DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
+      switch p.pick {
+      case "Level": askLevel()
+      case "Subject": askSubject()
+      default: askSchool(start: p.pickQ)
+      }
+    }
+  }
+
+  // ---------- the filters ----------
+  private func askLevel() {
+    nav.picker = PickRequest(title: "Level", rows: PickRow.levels, value: level, any: "Any level") { level = $0?.id ?? "" }
+  }
+  private func askSubject() {
+    nav.picker = PickRequest(title: "Subject", rows: PickRow.subjects, value: subject, any: "Any subject", full: true) { subject = $0?.id ?? "" }
+  }
+  private func askSchool(start: String = "") {
+    nav.picker = PickRequest(title: "School", find: store.demo ? PickRow.sampleSchools : PickRow.schools, value: school?.id ?? "", any: "Any school", noneLine: "No school matches", full: true, query: start) { row in
+      school = row.map { Chosen(id: $0.id, name: $0.words) }
+    }
+  }
+
+  /// A pill each for Level, Subject, and School (black once it holds a choice), and Clear while any does.
+  private func filters(_ narrowed: Bool) -> some View {
+    // The pills scroll sideways; Clear stays at the right edge, where it can always be reached.
+    HStack(spacing: 0) {
+      ScrollView(.horizontal, showsIndicators: false) {
+        HStack(spacing: 8) {
+          pill("Level", on: !level.isEmpty, text: SchoolWords.level(level), action: askLevel)
+          pill("Subject", on: !subject.isEmpty, text: SchoolWords.subject(subject), action: askSubject)
+          pill("School", on: school != nil, text: school?.name ?? "") { askSchool() }
+        }
+        .padding(.leading, 20).padding(.trailing, 8)
+      }
+      .padding(.leading, -20)
+      if narrowed {
+        Button { level = ""; subject = ""; school = nil } label: { Text("Clear").css(13, .semibold).lineLimit(1).fixedSize().foregroundStyle(t.muted).padding(.horizontal, 6).frame(height: 36) }
+          .buttonStyle(.press)
+      }
+    }
+    .padding(.top, -4)
+    .accessibilityElement(children: .contain)
+    .accessibilityLabel("Filters")
+  }
+
+  private func pill(_ name: String, on: Bool, text: String, action: @escaping () -> Void) -> some View {
+    Button(action: action) {
+      HStack(spacing: 6) {
+        Text(on ? text : name).css(13, .semibold).lineLimit(1).truncationMode(.tail)
+        Icon("chevDown", 14, 2.2)
+      }
+      .foregroundStyle(on ? t.invText : t.text).padding(.leading, 14).padding(.trailing, 10).frame(height: 36).frame(maxWidth: 240)
+      .fixedSize(horizontal: true, vertical: false)
+      .background(Capsule().fill(on ? t.inv : .clear))
+      .overlay(Capsule().strokeBorder(on ? .clear : t.surf2, lineWidth: 1))
+    }
+    .buttonStyle(.press)
+    .accessibilityLabel(on ? text : name)
+    .accessibilityAddTraits(on ? .isSelected : [])
   }
 
   private var search: some View {

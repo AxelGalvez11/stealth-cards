@@ -60,6 +60,8 @@ final class Nav: ObservableObject {
   @Published var libClasses = false
   @Published var path: [Route] = []
   @Published var sheet: SheetKind?
+  /// A list to pick from, over everything (Discover's filters, Edit profile's school, a deck's labels): see PickSheet.swift.
+  @Published var picker: PickRequest?
   @Published var full: FullKind?
   /// A design screen's full screen, waiting for the page under it to be drawn (see MainView).
   var boardFull: FullKind?

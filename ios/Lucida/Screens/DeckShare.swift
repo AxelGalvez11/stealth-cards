@@ -77,8 +77,9 @@ extension Store {
 let UPDATE_KIND = ["new": "New card", "answer": "Answer", "question": "Question", "typo": "Small fix", "media": "Picture or sound", "edit": "Note or tags", "remove": "Removed"]
 
 /// Deck settings → Sharing (deckShareBody). A deck of yours: who can see it, its link, how many study, copy, and save it,
-/// its hardest cards (Pro), its page, suggestions, and History, a line about it, and helpers who fix cards directly. A
-/// deck from someone else: whose it is, and a copy's Get updates switch, or making a deck you study your own.
+/// its hardest cards (Pro), its page, suggestions, and History, a line about it, (when it's public) its labels (level, subject, and
+/// school, which Discover narrows by), and helpers who fix cards directly. A deck from someone else: whose it is, and a copy's Get
+/// updates switch, or making a deck you study your own.
 struct DeckShareTab: View {
   @Environment(\.theme) private var t
   @EnvironmentObject private var store: Store
@@ -126,6 +127,21 @@ struct DeckShareTab: View {
       }
     }
     .onDisappear { copiedTask?.cancel(); if focus == "about", let a = about { set(["description": a]) } }
+    .onAppear { if store.demo { showBoard(row) } }
+  }
+
+  /// The design screen's Tweaks: a labels picker open, with what's typed in it (-pick Level, Subject, or School; -pickQ).
+  private func showBoard(_ row: MinePage.Row?) {
+    let p = store.props
+    guard !p.pick.isEmpty, nav.picker == nil else { return }
+    store.props.pick = ""
+    DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+      switch p.pick {
+      case "Level": askLevel(row)
+      case "Subject": askSubject(row)
+      default: askSchool(row, start: p.pickQ)
+      }
+    }
   }
 
   private func label(_ s: String) -> some View { Text(s).css(13, .semibold).line(13) }
@@ -230,6 +246,15 @@ struct DeckShareTab: View {
         .accessibilityLabel("About this deck")
     }
     .id("about")
+    if shr.vis == "public" {
+      VStack(alignment: .leading, spacing: 8) {
+        label("Labels")
+        Text("People can find your deck by these.").css(12).foregroundStyle(t.muted).line(12).padding(.top, -4)
+        labelRow("Level", SchoolWords.level(row?.level ?? "")) { askLevel(row) }
+        labelRow("Subject", SchoolWords.subject(row?.subject ?? "")) { askSubject(row) }
+        labelRow("School", row?.school ?? "") { askSchool(row) }
+      }
+    }
     VStack(alignment: .leading, spacing: 8) {
       label("Helpers")
       Text("They fix cards directly.").css(12).foregroundStyle(t.muted).line(12).padding(.top, -4)
@@ -266,6 +291,35 @@ struct DeckShareTab: View {
         Toggle48(on: on, label: "Helpers take suggestions too") { set(["maintained": on ? "creator" : "community"]) }
       }
       .frame(minHeight: 44)
+    }
+  }
+
+  // ---------- the labels ----------
+  /// A row that opens a list: what it's for, and what's picked (or "Add").
+  private func labelRow(_ title: String, _ value: String, _ action: @escaping () -> Void) -> some View {
+    Button(action: action) {
+      HStack(spacing: 12) {
+        Text(title).css(13, .semibold).line(13)
+        Text(value.isEmpty ? "Add" : value).css(16).lineLimit(1).truncationMode(.tail).foregroundStyle(value.isEmpty ? t.muted : t.text).frame(maxWidth: .infinity, alignment: .trailing)
+        Icon("chevDown", 14, 2.2).foregroundStyle(t.muted)
+      }
+      .padding(.leading, 16).padding(.trailing, 14).frame(height: 46)
+      .background(RoundedRectangle(cornerRadius: 16, style: .continuous).fill(t.surf))
+    }
+    .buttonStyle(.press)
+    .accessibilityLabel(title).accessibilityValue(value)
+  }
+  private func askLevel(_ row: MinePage.Row?) {
+    nav.picker = PickRequest(title: "Level", rows: PickRow.levels, value: row?.level ?? "", any: "None") { set(["level": $0?.id ?? ""]) }
+  }
+  private func askSubject(_ row: MinePage.Row?) {
+    nav.picker = PickRequest(title: "Subject", rows: PickRow.subjects, value: row?.subject ?? "", any: "None", full: true) { set(["subject": $0?.id ?? ""]) }
+  }
+  private func askSchool(_ row: MinePage.Row?, start: String = "") {
+    let id = row?.schoolId ?? "", name = row?.school ?? ""
+    nav.picker = PickRequest(title: "School", find: store.demo ? PickRow.sampleSchools : PickRow.schools, value: id.isEmpty && !name.isEmpty ? "~" : id, any: "None", noneLine: "No school matches", full: true,
+                             query: start, other: { "Other: “" + $0 + "”" }, chooseOther: { x in set(["schoolId": "", "school": x.limited(60)]) }) { picked in
+      set(picked.map { ["schoolId": $0.id] } ?? ["schoolId": "", "school": ""])
     }
   }
 
