@@ -15,6 +15,7 @@ import { createConnect } from './connect.js';
 import { createLive } from './live.js';
 import { progressOf, doneOf } from './progress.js';
 import { loadTheme } from './themes/load.js';
+import { sideView, readSide, writeSide, SIDE_KEY } from './side.js';
 
 const DAY = 86400000, MIN = 60000, GAPS = [30, 90, 180, 365, 730, 1825, 3650];
 const SHORT_MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
@@ -67,8 +68,12 @@ function signedOut(go, onChange = () => {}) {
   // signs you in first and comes back.
   const net = createNet({ signedOut: true, go, changed: onChange });
   const live = createLive({ onChange, go, signedOut: true }).player;
+  // The sidebar's rail (web/side.js) works for these pages too.
+  let side = readSide();
+  const toggleSide = () => { side = !side; writeSide(side); onChange(); };
+  addEventListener('storage', e => { if (e.key === SIDE_KEY) { side = readSide(); onChange(); } });
   return { signedOut: true, mock: false, auth, net, settings: () => ({ look: 'system' }), me: () => null, decks: () => [], folders: () => [],
-    chrome: () => ({ nav: { today: '', news: '', hasNews: false }, me: { bg: COLORS[0], initial: '', color: true, photo: '', href: '/sign-in' } }),
+    chrome: () => ({ nav: { today: '', news: '', hasNews: false, ...sideView(side, toggleSide) }, me: { bg: COLORS[0], initial: '', color: true, photo: '', href: '/sign-in' } }),
     join: () => live.view(), joinAt: (kind, code) => live.at(kind, code), act: { go, ...playerActs(live, go) } };
 }
 // A path on Lucida (like /pro?plan=yearly), or '' for anything else. A browser drops tabs and line breaks inside an address, so
@@ -122,6 +127,10 @@ export async function createDb({ onChange, go }) {
   const shownFor = id => (shown && shown.id === id ? now() - shown.at : undefined);
   let memo = {};
   const changed = () => { memo = {}; onChange(); };
+  // The sidebar's rail (web/side.js), kept on this device and shared with the other tabs of it.
+  let side = readSide();
+  const toggleSide = () => { side = !side; writeSide(side); changed(); };
+  addEventListener('storage', e => { if (e.key === SIDE_KEY) { side = readSide(); changed(); } });
   // Your theme (Pro, Settings › Theme): its key while it applies (you have Pro; on this computer everything is on), or ''
   // for Lucida's own look. Its code loads the first time a screen needs it (web/themes/load.js), and the screens draw
   // again once it's here; a theme you already use loads before the first page, so it doesn't flash in.
@@ -900,7 +909,7 @@ export async function createDb({ onChange, go }) {
       const due = S.decks.filter(d => !d.paused).reduce((n, d) => n + deckStat(d).due, 0), ph = photoOf(), T = skinNow(), color = ph === 'color';
       const initial = (((S.settings.name || (S.me && S.me.name) || '').trim() || 'You')[0]).toUpperCase();
       const news = net.unread();
-      return { nav: { today: due ? String(due) : '', news: news ? String(news > 99 ? '99+' : news) : '', hasNews: news > 0 }, me: { bg: T && color ? 'transparent' : COLORS[S.settings.color] || COLORS[0], initial,
+      return { nav: { today: due ? String(due) : '', news: news ? String(news > 99 ? '99+' : news) : '', hasNews: news > 0, ...sideView(side, toggleSide) }, me: { bg: T && color ? 'transparent' : COLORS[S.settings.color] || COLORS[0], initial,
         color: color && !T, photo: ph === 'google' ? S.me.picture : ph === 'yours' ? S.settings.yourPhoto : '', href: '/you', skinned: !!T, art: T ? T.me(initial, !color) : null } };
     },
     settings: () => ({ ...S.settings, name: S.settings.name || (S.me && S.me.name) || 'You', sub: S.me ? S.me.email : 'Saved on this computer', signedIn: !!S.me,

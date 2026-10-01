@@ -10,6 +10,7 @@ The design canvas is the source of truth for how the app looks: https://claude.a
 - `design/to-web.mjs` turns those boards into the web app's screens, so the app matches the canvas.
 - `web/` is the web app. Run it with `npm run dev` and open http://localhost:3000 (no packages to install).
 - http://localhost:3000/b lists every board, including empty states and dark mode.
+- **The web sidebar collapses** to a 78 px rail of icons (the small button at its top, "Collapse sidebar", which becomes "Expand sidebar"; at most a .2 s width change, none with Reduce Motion). Each icon keeps its name as its tooltip (`title`) and its accessible name, the page takes the freed width, and the choice is kept on that device in `localStorage` (`lucida.sidebar`; if storage throws it starts open). `web/side.js` is the state, `sidebar` in `design/build.mjs` the markup and its CSS (`.sc-side`), and the canvas's Main board has a `collapsed` Tweak (any board with the sidebar follows it through the sample data's `chrome`). Phones have no sidebar.
 
 ## Online (Vercel + Supabase)
 

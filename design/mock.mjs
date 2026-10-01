@@ -1,4 +1,5 @@
 import { qrMatrix } from '../web/qr.js';
+import { SIDE_TIPS, sideView } from '../web/side.js';
 // Sample data for the canvas. The web app hands every screen its real database (web/db.js) as `this.props.db`;
 // the canvas has none, so boards call this.mock(), which answers the same questions with the sample decks and cards
 // the canvas has always shown. Edits made on a canvas board (a new tag, a grade, a setting) stay on that board.
@@ -115,6 +116,8 @@ export const SAMPLE_INSIGHTS = Object.fromEntries(['Week', 'Month', 'Year'].map(
 export const MOCK_METHOD = String.raw`mock() {
   const p = this.props, m = this.state.$m || {};
   const N = __NET__;
+  // The web sidebar's rail (web/side.js): the board's collapsed Tweak, and its button.
+  const SIDE_TIPS = __SIDE_TIPS__, side = __SIDE__;
   const set = patch => this.setState({ $m: { ...m, ...patch } });
   const X = __SAMPLE__, WAVE = __WAVE__, LS = __LIVE__, INSIGHTS = __INSIGHTS__;
   const caught = !!p.caughtUp;
@@ -173,8 +176,8 @@ export const MOCK_METHOD = String.raw`mock() {
     mock: true,
     // Pro: on for the canvas's boards, off for the ones that show Free (their free or plan setting).
     pro: () => !(p.free || p.plan === 'Free'),
-    chrome: () => { const S = skinned(), color = st.photo === 'color';
-      return { nav: { today: caught ? '' : '64', news: m.read ? '' : '2', hasNews: !m.read }, me: { bg: S && color ? 'transparent' : 'linear-gradient(135deg, #8C9AFC 0%, #4F60E6 100%)', initial: 'A', color: color && !S, photo: '', sampleGoogle: st.photo === 'google', sampleYours: st.photo === 'yours',
+    chrome: () => { const S = skinned(), color = st.photo === 'color', col = m.collapsed ?? !!p.collapsed;
+      return { nav: { today: caught ? '' : '64', news: m.read ? '' : '2', hasNews: !m.read, ...side(col, () => set({ collapsed: !col })) }, me: { bg: S && color ? 'transparent' : 'linear-gradient(135deg, #8C9AFC 0%, #4F60E6 100%)', initial: 'A', color: color && !S, photo: '', sampleGoogle: st.photo === 'google', sampleYours: st.photo === 'yours',
         href: 'WebProfile.dc.html', skinned: !!S, art: S ? S.me('A', !color) : null } }; },
     settings: () => st,
     theme: () => (st.theme && st.theme !== 'lucida' ? st.theme : ''),
@@ -373,4 +376,4 @@ export const MOCK_METHOD = String.raw`mock() {
       adminVerify: () => Promise.resolve({}), adminReport: () => Promise.resolve({}), classroom: noop
     }
   };
-}`.replace('__SAMPLE__', () => JSON.stringify(SAMPLE)).replace('__WAVE__', () => JSON.stringify(SAMPLE_WAVE)).replace('__NET__', () => JSON.stringify(NET_SAMPLE)).replace('__LIVE__', () => JSON.stringify(LIVE_SAMPLE)).replace('__INSIGHTS__', () => JSON.stringify(SAMPLE_INSIGHTS));
+}`.replace('__SIDE_TIPS__', () => JSON.stringify(SIDE_TIPS)).replace('__SIDE__', () => sideView.toString()).replace('__SAMPLE__', () => JSON.stringify(SAMPLE)).replace('__WAVE__', () => JSON.stringify(SAMPLE_WAVE)).replace('__NET__', () => JSON.stringify(NET_SAMPLE)).replace('__LIVE__', () => JSON.stringify(LIVE_SAMPLE)).replace('__INSIGHTS__', () => JSON.stringify(SAMPLE_INSIGHTS));

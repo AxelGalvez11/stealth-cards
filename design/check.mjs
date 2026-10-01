@@ -66,6 +66,8 @@ PROP_SETS.push({ state: 'Yearly' }, { state: 'Monthly' }, { state: 'Buying' }, {
   { plan: 'Pro, billed on the web' }, { plan: 'Pro, billed on the web', dark: true });
 // Settings' Daily reminder on iPhone: Off, a time, and the line that says how to allow notifications when the phone has them off.
 PROP_SETS.push({ reminder: 'Off' }, { reminder: '6:00 PM' }, { reminder: 'Off', dark: true }, { reminderNote: true }, { reminderNote: true, dark: true }, { reminderNote: true, dark: true, dim: true });
+// The web sidebar as the rail of icons (Main's collapsed Tweak; the mock gives every board with a sidebar the same).
+PROP_SETS.push({ collapsed: true }, { collapsed: true, dark: true }, { collapsed: true, caughtUp: true });
 // A verified teacher's or school's shared deck page (Check this deck, pressing it, one being pressed, on their own deck,
 // signed out), and your verification in Settings.
 PROP_SETS.push({ verified: 'Teacher' }, { verified: 'School' }, { verified: 'Teacher', $state: { $m: { checked: true } } }, { verified: 'Teacher', $state: { busy: 'check', error: 'That didn’t save.' } },

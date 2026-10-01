@@ -112,6 +112,13 @@ const APP_MOTION_CSS = [
   '@keyframes scKnob{from{opacity:0;transform:scale(.3)}}.sc-knob{transform-box:fill-box;transform-origin:center;animation:scKnob .35s .75s cubic-bezier(.34,1.56,.64,1) backwards}',
   '@keyframes scGrow{from{transform:scaleY(0)}}.sc-grow{transform-origin:bottom;animation:scGrow .6s cubic-bezier(.2,.8,.2,1) backwards}',
   Array.from({ length: 13 }, (_, i) => `:nth-child(${i + 2})>.sc-grow{animation-delay:${((i + 1) * 0.04).toFixed(2)}s}`).join(''),
+  // The web sidebar: open it is 240 wide; collapsed (the button at its top; the choice is kept on this device) it is a 78 wide rail of icons
+  // (their words go, and each icon's name is its tooltip). The icons stay where they are, so only the width changes: at most .2 s.
+  '.sc-side{width:240px;transition:width .2s ease}.sc-side[data-collapsed="true"]{width:78px}',
+  '.sc-side-head{padding:0 4px 20px 12px;display:flex;align-items:center;justify-content:space-between;gap:4px}.sc-side-btns{display:flex;align-items:center;gap:4px}',
+  '.sc-side[data-collapsed="true"] .sc-side-head{padding:0 0 12px;justify-content:center}.sc-side[data-collapsed="true"] .sc-side-btns{flex-direction:column-reverse;gap:6px}',
+  '.sc-side[data-collapsed="true"] :is(.sc-logo,.sc-lab,.sc-num){display:none}.sc-side .sc-dot{display:none}.sc-side[data-collapsed="true"] .sc-dot{display:block}',
+  '@media (prefers-reduced-motion:reduce){.sc-side{transition:none}}',
   '@media (prefers-reduced-motion:reduce){main>*,.sc-float,.sc-sway-a,.sc-sway-b,.sc-glow,.sc-alive>svg,.sc-draw,.sc-knob,.sc-grow,.sc-scrim,.sc-panel,.sc-sheet{animation:none!important}.sc-sheen{display:none}button:active,.sc-press:active,.sc-lift:hover{transform:none}.sc-sw>span{transition:background-color .3s ease}}'
 ].join('');
 // Dark mode, and its gray look (dim): the app sets both from Settings (Appearance, and Dark mode: Gray or Black).
@@ -195,7 +202,10 @@ const I = {
   // Classes: joining one, a due date, a school, and reporting something.
   enter: '<path d="M14 4h3.5A2.5 2.5 0 0 1 20 6.5v11a2.5 2.5 0 0 1-2.5 2.5H14"/><path d="M9.5 16l4-4-4-4M13.5 12H4"/>',
   cap: '<path d="M2.5 9.5L12 5l9.5 4.5L12 14z"/><path d="M6.5 11.5V16c0 1.3 2.5 3 5.5 3s5.5-1.7 5.5-3v-4.5M21.5 9.5v5"/>',
-  flag: '<path d="M5.5 21V4.5M5.5 4.5h11l-2.2 4 2.2 4h-11"/>'
+  flag: '<path d="M5.5 21V4.5M5.5 4.5h11l-2.2 4 2.2 4h-11"/>',
+  // The sidebar's button (collapse it to a rail, open it again), and Settings' Help & legal.
+  sidebar: '<rect x="3" y="4.5" width="18" height="15" rx="4"/><path d="M9.5 4.5v15"/>',
+  help: '<circle cx="12" cy="12" r="9"/><path d="M9.6 9.4a2.5 2.5 0 1 1 3.4 2.3c-.6.3-1 .8-1 1.5M12 17h.01"/>'
 };
 
 // The mark: three dots, two above and one below, in the text color. The viewBox hugs the ink, so `h` is its real height.
@@ -218,12 +228,17 @@ const AVATAR_ME = size => `<span style="position: relative; width: ${size}px; he
 // A place in the sidebar: its icon, its name, and (lit, on the page you're on) a gray pill. Profile's icon is your own
 // circle, 22 wide in the 18 of the others (the margin keeps its name lined up with theirs).
 const MY_ICON_A = `<span style="margin: 0 -2px; display: flex;">${AVATAR_ME(22)}</span>`;
-const navRow = (label, icon, href, on, more = '', attrs = '') => `<a href="${href}"${attrs} style="display: flex; align-items: center; gap: 12px; height: 36px; padding: 0 14px; border-radius: 999px; font-size: 14px; ${on ? 'background: {{t.surf}}; color: {{t.text}}; font-weight: 600;' : 'color: {{t.muted}};'}">${icon}${label}${more}</a>`;
+// Collapsed (web/side.js, the button at the top), the sidebar is a rail of icons: each place's words go (.sc-lab), and its name is its
+// tooltip (title) and its accessible name (aria-label), filled in by `nav.tip` only while it's collapsed (while it's open the words are on
+// screen, so there's no tooltip and the name is the words). A lit place has aria-current. Today's count becomes a small dot on its icon.
+const TIP_KEY = { Today: 'today', Library: 'library', Discover: 'discover', Stats: 'stats', Profile: 'profile', Settings: 'settings' };
+const navRow = (label, icon, href, on, more = '', attrs = '') => `<a href="${href}"${attrs}${/aria-label=/.test(attrs) ? '' : ` aria-label="{{nav.tip.${TIP_KEY[label]}}}"`} title="{{nav.tip.${TIP_KEY[label]}}}"${on ? ' aria-current="page"' : ''} style="position: relative; display: flex; align-items: center; gap: 12px; height: 36px; padding: 0 14px; border-radius: 999px; font-size: 14px; white-space: nowrap; ${on ? 'background: {{t.surf}}; color: {{t.text}}; font-weight: 600;' : 'color: {{t.muted}};'}">${icon}<span class="sc-lab">${label}</span>${more}</a>`;
 // News (the study network: suggestions on your decks, people following you, updates to decks you follow) is the bell
-// by the logo, with how many are new.
-const sidebar = active => `<nav style="width: 240px; flex-shrink: 0; box-sizing: border-box; padding: 24px 16px; display: flex; flex-direction: column; gap: 4px; border-right: 1px solid {{t.line}};">
-  <div style="padding: 0 4px 20px 12px; display: flex; align-items: center; justify-content: space-between;">${logo()}<a href="WebActivity.dc.html" aria-label="News" style="position: relative; width: 32px; height: 32px; border-radius: 16px; display: flex; align-items: center; justify-content: center; ${active === 'News' ? 'background: {{t.surf}}; color: {{t.text}};' : 'color: {{t.muted}};'}">${svg(I.bell, 18, 1.8)}<sc-if value="{{nav.hasNews}}" hint-placeholder-val="{{ true }}"><span style="position: absolute; top: 1px; right: 0; min-width: 16px; height: 16px; padding: 0 4px; box-sizing: border-box; border-radius: 8px; background: #E5484D; color: #FFFFFF; font-size: 10px; font-weight: 700; line-height: 16px; text-align: center;">{{nav.news}}</span></sc-if></a></div>
-  ${NAV_A.map(([label, ic, href]) => navRow(label, ic === 'me' ? MY_ICON_A : svg(I[ic]), href, label === active, label === 'Today' ? `<sc-if value="{{nav.today}}" hint-placeholder-val="{{ true }}"><span style="margin-left: auto; font-family: ${MONO}; font-size: 12px;">{{nav.today}}</span></sc-if>` : '', label === 'Profile' ? ' aria-label="Your profile"' : '')).join('\n  ')}
+// by the logo, with how many are new. The button beside it collapses the sidebar to the rail, and opens it again (aria-expanded);
+// its place in the page doesn't move, so a keyboard keeps its focus when it's pressed.
+const sidebar = active => `<nav id="sidebar" class="sc-side" aria-label="Main" data-collapsed="{{nav.collapsed}}" style="flex-shrink: 0; box-sizing: border-box; padding: 24px 16px; display: flex; flex-direction: column; gap: 4px; border-right: 1px solid {{t.line}}; overflow: hidden;">
+  <div class="sc-side-head"><div class="sc-logo">${logo()}</div><div class="sc-side-btns"><a href="WebActivity.dc.html" aria-label="News" title="{{nav.tip.news}}"${active === 'News' ? ' aria-current="page"' : ''} style="position: relative; width: 32px; height: 32px; border-radius: 16px; display: flex; align-items: center; justify-content: center; ${active === 'News' ? 'background: {{t.surf}}; color: {{t.text}};' : 'color: {{t.muted}};'}">${svg(I.bell, 18, 1.8)}<sc-if value="{{nav.hasNews}}" hint-placeholder-val="{{ true }}"><span style="position: absolute; top: 1px; right: 0; min-width: 16px; height: 16px; padding: 0 4px; box-sizing: border-box; border-radius: 8px; background: #E5484D; color: #FFFFFF; font-size: 10px; font-weight: 700; line-height: 16px; text-align: center;">{{nav.news}}</span></sc-if></a><button type="button" onClick="{{nav.toggleSide}}" aria-label="{{nav.sideLabel}}" aria-expanded="{{nav.sideOpen}}" aria-controls="sidebar" title="{{nav.sideLabel}}" class="sc-press" style="width: 32px; height: 32px; flex-shrink: 0; padding: 0; border: 0; border-radius: 16px; background: transparent; color: {{t.muted}}; display: flex; align-items: center; justify-content: center; cursor: pointer;">${svg(I.sidebar, 18, 1.8)}</button></div></div>
+  ${NAV_A.map(([label, ic, href]) => navRow(label, ic === 'me' ? MY_ICON_A : svg(I[ic]), href, label === active, label === 'Today' ? `<sc-if value="{{nav.today}}" hint-placeholder-val="{{ true }}"><span class="sc-num" style="margin-left: auto; font-family: ${MONO}; font-size: 12px;">{{nav.today}}</span><span class="sc-dot" aria-hidden="true" style="position: absolute; top: 6px; left: 29px; width: 7px; height: 7px; border-radius: 4px; background: {{t.text}};"></span></sc-if>` : '', label === 'Profile' ? ' aria-label="Your profile"' : '')).join('\n  ')}
   <div style="flex-grow: 1;"></div>
   ${navRow('Settings', svg(I.gear), 'WebSettings.dc.html', active === 'Settings', '', ' aria-label="Settings"')}
 </nav>`;
@@ -4482,7 +4497,7 @@ const emptyLogic = (cover = '', phone = false) => `renderVals() { ${T}${DB_JS}
   const pic = dk.cover.image || '', photo = pic !== 'mock' ? pic : '';
   // With a theme on (Pro), the theme draws the cover, and letters the deck's name.
   const S = this.skin(db), C = S && !pic && dk.name ? S.coverOf({ ...dk, round: dk.cover.round }, 'head', 34) : null;
-  return { ${MESH_VALS('Iris')} t, ...chrome, modes, nav: db.mock ? { today: ${cover ? "'64'" : "''"}, news: '', hasNews: false } : chrome.nav, art: this.mesh('Iris'), art2: this.mesh('Mint'), art3: this.mesh('Apricot'), noop: () => {},
+  return { ${MESH_VALS('Iris')} t, ...chrome, modes, nav: db.mock ? { ...chrome.nav, today: ${cover ? "'64'" : "''"}, news: '', hasNews: false } : chrome.nav, art: this.mesh('Iris'), art2: this.mesh('Mint'), art3: this.mesh('Apricot'), noop: () => {},
     date: db.today().date, deckName: dk.name, cover: { ...this.gen(dk.seed + (dk.cover.round ? ' #' + dk.cover.round : ''), dk.cover.style), ...(photo ? { ink: '#FFFFFF', shadow: '0 1px 14px rgba(0,0,0,.45)' } : {}),
       ...(C ? { base: C.base, ink: C.ink, shadow: 'none', plain: false, skin: true, art: C.art } : { plain: true, skin: false, art: null }) },
     coverTitle: C ? C.titleAt(34) : '', coverTitleS: C ? C.titleHead(32, dk.name) : '',
@@ -8918,7 +8933,8 @@ const phoneGoPro = `<div style="position: relative; width: 390px; height: 844px;
 </div>`;
 
 const files = {
-  'Main': ['Web · Today', webToday, { props: { ...DARK, ...MESH('Iris'), caughtUp: { editor: 'boolean', default: false }, assignments: { editor: 'boolean', default: false } }, logic: todayLogic, css: DRAG_CSS, w: W, h: H }],
+  // (Its `collapsed` Tweak shows the sidebar as the rail of icons; any board with the sidebar shows it so if it has the Tweak, and the sidebar's button collapses it on the board.)
+  'Main': ['Web · Today', webToday, { props: { ...DARK, ...MESH('Iris'), caughtUp: { editor: 'boolean', default: false }, assignments: { editor: 'boolean', default: false }, collapsed: { editor: 'boolean', default: false } }, logic: todayLogic, css: DRAG_CSS, w: W, h: H }],
   'WebNewDeck': ['Web · New deck', webNewDeck, { props: { ...DARK, grain: MESH('Iris').grain }, logic: NEW_DECK_LOGIC, css: NUM_CSS + COVER_FADE_CSS, w: W, h: H }],
   'WebImport': ['Web · Import cards', webImport, { props: { ...DARK, grain: MESH('Iris').grain }, logic: importLogic, w: W, h: H }],
   'WebDecks': ['Web · Library', webDecks, { props: { ...DARK, grain: MESH('Iris').grain, mode: LIB_MODE, folder: LIB_FOLDER, level: LEVEL_PROP, view: { editor: 'enum', default: 'Cards', options: ['Cards', 'List'] }, openTags: { editor: 'boolean', default: false }, moreTags: { editor: 'boolean', default: false } }, logic: decksLogic, css: DRAG_CSS, w: W, h: H }],
