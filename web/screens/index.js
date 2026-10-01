@@ -2197,6 +2197,12 @@ export default [
   "h": 900
  },
  {
+  "name": "WebDiscoverFilters",
+  "title": "Web · Discover · narrowed by level, subject, and school (choosing a school)",
+  "w": 1440,
+  "h": 900
+ },
+ {
   "name": "WebDiscoverSearch",
   "title": "Web · Discover · search",
   "w": 1440,
