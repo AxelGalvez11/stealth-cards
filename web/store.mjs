@@ -373,7 +373,12 @@ function keepVersion(d, key, pg, force) {
   }
 }
 // The older versions of one page (the Guide when `page` is empty), newest first, for the History list.
-export function guideVersions(deckId, page) { const d = findDeck(deckId); return d ? (((state().guideHistory || {})[d.id] || {})[page || 'main'] || []).map(v => ({ at: v.at, saved: v.saved, text: v.text })) : []; }
+export function guideVersions(deckId, page) {
+  const d = findDeck(deckId), key = String(page || 'main');
+  if (!d || !/^[\w-]{1,30}$/.test(key)) return [];
+  const H = (state().guideHistory || {})[d.id] || {}, list = Object.hasOwn(H, key) ? H[key] : [];
+  return (Array.isArray(list) ? list : []).map(v => ({ at: v.at, saved: v.saved, text: v.text }));
+}
 
 // A deck someone else shares, which you study as it is (social.mjs): its cards follow the owner's, so you can't change
 // them here; you suggest a change instead. Only your own study settings for it are yours to change. A copy

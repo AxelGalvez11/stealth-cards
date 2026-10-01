@@ -29,10 +29,19 @@ import { sniff } from './sniff.js';
 import * as X from './extract.mjs';
 
 // ---------- the models ----------
-// Text (a topic, text from a file, a transcript): DeepSeek, the same cheap model Explain uses. Pictures and scanned pages: Gemini Flash-Lite
-// through OpenRouter. Recordings: Whisper large v3 turbo (a speech-to-text model; it also gives the time of each line). Videos: Gemini
-// Flash-Lite directly. Each can be changed with its own environment variable.
-const TEXT_MODEL = () => process.env.LUCIDA_MAKE_MODEL || 'deepseek/deepseek-v4-flash';
+// Text (a topic, text from a file, a transcript, a quiz for Live): DeepSeek V4.1 Flash, the same cheap model Explain uses, with V4 Flash as the
+// fallback when no host can answer. Pictures and scanned pages: Gemini Flash-Lite through OpenRouter. Recordings: Whisper large v3 turbo (a
+// speech-to-text model; it also gives the time of each line). Videos: Gemini Flash-Lite directly. Each can be changed with its own environment variable.
+const TEXT_MODEL = () => process.env.LUCIDA_MAKE_MODEL || 'deepseek/deepseek-v4.1-flash';
+const TEXT_FALLBACK = 'deepseek/deepseek-v4-flash';
+// Only the full-precision hosts (the 4-bit ones are the cheapest routes for V4.1 Flash and answer worse), and the fastest at writing: a step has to
+// finish inside Vercel's 60 seconds, so how fast the words come out matters more than how soon the first one does.
+const TEXT_HOSTS = { quantizations: ['fp8', 'fp16', 'bf16', 'fp32'], sort: 'throughput' };
+// The model thinks before it answers only if LUCIDA_MAKE_REASONING=low says so. Thinking counts in max_tokens, and the slowest host writes about 100
+// tokens a second, so with MAX_TOKENS at 5,000 a step (the thinking and the cards) still ends inside 50 seconds; "low" is the only setting that is
+// allowed, anything else is off.
+const REASONING = () => (process.env.LUCIDA_MAKE_REASONING === 'low' ? { effort: 'low' } : { enabled: false });
+const MAX_TOKENS = 5000;
 const SEE_MODEL = () => process.env.LUCIDA_MAKE_SEE_MODEL || 'google/gemini-3.1-flash-lite';
 const STT_MODEL = () => process.env.LUCIDA_MAKE_STT_MODEL || 'openai/whisper-large-v3-turbo';
 const VIDEO_MODEL = () => process.env.LUCIDA_MAKE_VIDEO_MODEL || 'gemini-3.1-flash-lite';
@@ -325,20 +334,24 @@ const CARD_SCHEMA = { type: 'object', additionalProperties: false, required: ['c
 const QUIZ_SCHEMA = { type: 'object', additionalProperties: false, required: ['questions'], properties: { questions: { type: 'array', items: { type: 'object', additionalProperties: false,
   required: ['question', 'answer', 'wrong', 'why'], properties: { question: { type: 'string' }, answer: { type: 'string' }, wrong: { type: 'array', items: { type: 'string' } }, why: { type: 'string' } } } } } };
 const parseJson = s => { try { return JSON.parse(String(s).trim().replace(/^```(?:json)?\s*|\s*```$/g, '')); } catch { return null; } };
-// One chat call that answers with JSON in the cards' shape. `user` is text, or a list of parts (pictures, a PDF).
-async function chatCards({ model, system, user, plugins, schema = CARD_SCHEMA, key = 'cards' }) {
+// Some hosts put the model's thinking in the answer, between <think> tags; it is not the answer.
+const stripThink = s => String(s || '').replace(/<think>[\s\S]*?<\/think>/gi, '').replace(/<think>[\s\S]*$/i, '').trim();
+// One chat call that answers with JSON in the cards' shape. `user` is text, or a list of parts (pictures, a PDF). `text`: it goes to the text model
+// (with its fallback, its hosts and its thinking settings above), not to the one that sees.
+async function chatCards({ model, system, user, plugins, schema = CARD_SCHEMA, key = 'cards', text = false }) {
   for (let attempt = 0; attempt < 2; attempt++) {
-    const res = await post(aiBase() + '/chat/completions', { model, max_tokens: 6000, temperature: 0.3, usage: { include: true },
+    const fallback = [model, ...(model === TEXT_FALLBACK ? [] : [TEXT_FALLBACK])];
+    const res = await post(aiBase() + '/chat/completions', { model, ...(text ? { models: fallback, reasoning: REASONING() } : {}), max_tokens: MAX_TOKENS, temperature: 0.3, usage: { include: true },
       messages: [{ role: 'system', content: system }, { role: 'user', content: user }],
       response_format: { type: 'json_schema', json_schema: { name: key === 'cards' ? 'flashcards' : 'quiz', strict: true, schema } },
       // Only providers that take every one of these settings, and that say they don't train on or keep what they're sent.
-      provider: { require_parameters: true, data_collection: 'deny' }, ...(plugins ? { plugins } : {}) }, aiHeaders(), 'the AI');
+      provider: { require_parameters: true, data_collection: 'deny', ...(text ? TEXT_HOSTS : {}) }, ...(plugins ? { plugins } : {}) }, aiHeaders(), 'the AI');
     if (!res.ok) throw why(res.status, 'the AI (' + model + ')');
     const j = await res.json().catch(() => ({})), u = j.usage || {};
-    console.log('make ' + model + ' in=' + (u.prompt_tokens ?? '?') + ' out=' + (u.completion_tokens ?? '?') + (u.cost != null ? ' cost=$' + u.cost : ''));
+    console.log('make ' + (j.model || model) + ' in=' + (u.prompt_tokens ?? '?') + ' out=' + (u.completion_tokens ?? '?') + (u.cost != null ? ' cost=$' + u.cost : ''));
     const done = ((j.choices || [])[0] || {});
     if (done.finish_reason === 'content_filter') throw fail('Lucida couldn’t make cards from that.', 422, 'filtered');
-    const data = parseJson(((done.message || {}).content) || '');
+    const data = parseJson(stripThink(((done.message || {}).content) || ''));
     if (data && Array.isArray(data[key])) return data[key];
   }
   throw fail('The AI sent back something Lucida couldn’t read. Try again.', 502, 'ai');
@@ -364,11 +377,11 @@ function system(o, mode) {
 const ask = n => 'Write about ' + n + ' cards (no more than ' + (n + 3) + '), the ones most worth knowing, spread across everything given.';
 // Cards from text. `labels` are the places the text came from, so a card's "at" can be checked.
 async function cardsFromText(text, o, n, labels) {
-  const list = await chatCards({ model: TEXT_MODEL(), system: system(o, labels && labels.size ? 'text' : 'plain'), user: ask(n) + '\n\n<material>\n' + text + '\n</material>' });
+  const list = await chatCards({ model: TEXT_MODEL(), text: true, system: system(o, labels && labels.size ? 'text' : 'plain'), user: ask(n) + '\n\n<material>\n' + text + '\n</material>' });
   return tidy(list, o, labels);
 }
 async function cardsFromTopic(topic, o, n) {
-  return tidy(await chatCards({ model: TEXT_MODEL(), system: system(o, 'topic'), user: ask(n) + '\n\nThe topic: ' + topic }), o, null);
+  return tidy(await chatCards({ model: TEXT_MODEL(), text: true, system: system(o, 'topic'), user: ask(n) + '\n\nThe topic: ' + topic }), o, null);
 }
 // A quiz about a topic, for Live: questions with four answers, as cards that carry their wrong answers (the AI link's quiz format, so Learn mode can use them too).
 async function quizFromTopic(topic, o, n) {
@@ -380,7 +393,7 @@ async function quizFromTopic(topic, o, n) {
     '- "why" is one short sentence on why the answer is right.',
     '- Write in ' + (o.lang ? LANGS[o.lang] : 'the language the topic is written in') + '.',
     'Answer with JSON only.'].join('\n');
-  const list = await chatCards({ model: TEXT_MODEL(), system, user: 'Write ' + n + ' questions.\n\nThe topic: ' + topic, schema: QUIZ_SCHEMA, key: 'questions' });
+  const list = await chatCards({ model: TEXT_MODEL(), text: true, system, user: 'Write ' + n + ' questions.\n\nThe topic: ' + topic, schema: QUIZ_SCHEMA, key: 'questions' });
   const out = [];
   for (const q of Array.isArray(list) ? list : []) {
     const question = clip(q && q.question, 300), answer = clip(q && q.answer, 120), wrong = [...new Set((Array.isArray(q && q.wrong) ? q.wrong : []).map(w => clip(w, 120)).filter(w => w && w !== answer))].slice(0, 3);
