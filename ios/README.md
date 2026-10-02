@@ -259,7 +259,7 @@ another, Saving… and Saved at the top, what went wrong in the same place). Pic
 
 **Sources** (`Data/GuideData.swift`, `Screens/DeckMaterials.swift`): the list (name, kind, pages or minutes, cards, date, newest first) and a source opened as a sheet: a recording
 plays at the card's time (a long one is kept as several files: the viewer walks their seconds, as the web does, and plays the part that covers the time at the second inside it:
-a card from 1:30:00 of thirteen parts of 550 seconds opens part 10 at 7:30), a PDF opens in PDFKit at its page and slides and Word files in QuickLook, a video opens its
+a card from 1:30:00 of thirteen parts of 550 seconds opens part 10 at 7:30), a PDF opens in PDFKit at its page, slides and Word files in Lucida's own document viewer (`Design/DocumentView.swift`: the phone's web engine draws them, Lucida's loading mark shows meanwhile, and plain text and captions are drawn as text; Quick Look is not used, since its bar, share button and spinner are the system's), a video opens its
 YouTube link at the time (`&t=90s`), photos full screen, a topic its words, what was said in parts with the one a card pointed at marked. More cards makes more from it, Delete asks
 first ("Delete “<name>”? Its file goes, and the 6 cards made from it stay in the deck."). A card the maker made says "Made from <source> · p. 4" in the card editor, which opens that
 source at that place (the deck's Sources, viewer open; plain words once the source is deleted). A shared deck's page shows its Guide and "Made from 2 sources" (a number only).
@@ -279,8 +279,8 @@ the hostile text, History and Restore, pages, Make cards from the Guide, the Gui
 Delete, a shared deck's page, the Add cards menu and dark mode).
 
 Two things worth knowing when writing flows like these: a tap on a card row right after the page was scrolled is ignored on purpose (`HoldOrTap` fails a touch that lands on a
-page that is still moving, like a button's), so `GuideTests.cardRow` brings the row to the middle and lets the page settle first; and on iOS 26 a `confirmationDialog` is a
-small popover with only its action button and no Cancel, so a flow closes it with a touch outside (`PopoverDismissRegion`) and taps `app.popovers.buttons[...]`.
+page that is still moving, like a button's), so `GuideTests.cardRow` brings the row to the middle and lets the page settle first; and a question is Lucida's own sheet (no
+system dialog), so a flow answers it with `app.buttons["question.go"]` (or `question.cancel`), and closes it with a touch on the dimmed top of the screen.
 
 ## Classes and schools
 
@@ -401,6 +401,35 @@ what the app keeps: email, name, user id, photos, audio, other content, and purc
 ## Schools
 
 Discover has Level, Subject, and School filters (a pill each; a sheet of choices, and for School a search of the bundled list as you type), "Popular at <your school>" as its first row when you set one, and Clear. Edit profile has Level, School (a search; None; or what you typed as "Other"), Year, and the switch "Show my school on my profile" (off to start with; a high school student has no School row); a public deck's Sharing settings have Labels (Level, Subject, School). The list is `Resources/schools.json` (`web/schools.json`: the US Department of Education's IPEDS list of 4,049 colleges and universities, no high schools), searched by `Data/Schools.swift` with the web app's rules (`ios/tests/schools.sh` asks both the same 432 questions); the levels, years, and subjects are in `Generated.swift`. The sheets are one view (`Design/PickSheet.swift`, opened through `nav.picker`). Boards: `PhoneDiscover` (a board's `-level College`, `-subject Biology`, `-school "University of California-Davis"`, `-pick Level|Subject|School` with `-pickQ davis`, and `-mySchool false`), `PhoneProfileEdit` and `PhoneDeckSettingsShare` (`-pick`). `ios/tools/e2e-school.sh <simulator id>` starts a server on port 3955 and runs `LucidaUITests/SchoolTests`: Edit profile, a deck's labels, and Discover's filters.
+
+## Lucida's own UI (nothing the phone draws itself)
+
+The owner, 2026-10-01: "i dont want anything that has ios or google default ui". Every button, action, menu, dialog, picker, message and loading state is Lucida's
+own, with the app's themes and the motion of `Generated.motion`; the same things the web app and the canvas show (`design/ui.mjs`, README.md). `node design/check-own-ui.mjs`
+fails on a system `.alert`, `.confirmationDialog`, `Menu`, `Picker`, `DatePicker`, `Stepper`, `ProgressView`, `Toggle`, toolbar item, `UIImagePickerController`, `.refreshable`,
+`.contextMenu` or `.popover` in `ios/Lucida`.
+
+- **A question** (`nav.ask(title, line:, action:, danger:) { … }`, `Design/Question.swift`): a sheet from the bottom over the dimmed page, with a grabber, a title, at most one short
+  line, Cancel (`question.cancel`) and the answer (`question.go`; red when it deletes). A tap on the dimmed part is Cancel. It asks for Delete deck / Remove from library (Deck settings),
+  Remove folder, Delete card (the editor), Delete source (a source's page), Delete page (the Guide's editor), Disconnect (Connect AI), Leave class, Delete class and Take out of class
+  (a class's page), and Sign out (Settings' account card). The words are the web's (`AskSample` has the canvas's, for `-ask "Delete deck"` on a design screen).
+- **A message** (`ToastHost`, in `RootView`): `store.error` (a save that failed, a picture that couldn't be used) is a quiet pill near the bottom for about five seconds, or until it is
+  tapped; VoiceOver says it when it comes. It replaces the system alert.
+- **Lists** open Lucida's list sheet (`Design/PickSheet.swift`, `nav.picker`): Settings' New cards a day, Remember goal and Daily reminder, and the language of made cards in Make cards.
+  `-dropdown "Daily reminder"` (or `"New cards a day"`, `"Remember goal"`) opens one on Settings' design screen; `-board PhoneMake -state "Paste (language list)"` the language list.
+- **A calendar** (`Design/CalendarPicker.swift`, `nav.openCalendar`): a deck's exam date and a class's due date open a small popover under the button, like the web's: the month and its arrows, the
+  days (today ringed, the day picked filled, days before today dimmed), a tap on a day picks it and closes it. `-calendar "Exam date"` (Deck settings → Studying) and `-calendar "Due date"` (Assign a deck).
+- **The recording's player** (`SourcePlayerView`): a round Play and Pause button, the time, a thin track to touch or drag (and VoiceOver's adjust), the length, and a speed button (1×, 1.25×, 1.5×, 2×, .75×).
+  A photo's page has Lucida's dots; **the loading mark** (`Design/Loading.swift`, three dots rising one after another, still with Reduce Motion) replaces the system spinner.
+- **The camera** (`Screens/Camera.swift`, `nav.openCamera`): Take a photo in Make cards opens a full screen over everything with the camera's picture (AVFoundation), a close button, the flash (Off, Auto,
+  On), the switch between the cameras and the shutter, then Retake and Use photo; a phone with no camera, or one told no, says so in a few plain words (the phone asks for the camera once, in its own question).
+  The simulator has no camera: `-fakeCamera` gives it a picture to take, and `-board PhoneMake -state Camera` shows the screen.
+- **Task boxes** in a Guide are Lucida's own check (`GuideCheckbox`), like the web's `.gd-box`. No system navigation bar shows on any page.
+- `ios/tools/e2e-ownui.sh [simulator id]` is the end-to-end test (`LucidaUITests/OwnUITests.swift`, a fresh server on port 3993 and `ios/tools/fail-proxy.mjs` on 3995, which fails every save while a file exists): the
+  questions (Remove folder, Delete deck, Delete card, Sign out), the lists, the calendars, the camera, the message, and no system navigation bar, toolbar, alert, sheet, date picker, wheel or menu on any page.
+- **A keyboard still up** is put away when a question, a calendar, a list without a search of its own or the camera opens (`Keyboard.hide()`): Lucida's sheets are not above the keyboard the way a system alert is.
+- **What stays**: the permission questions, Sign in with Apple's sheet and Google's account window, the App Store's purchase sheet, the keyboard and the text editing menu, the Files picker and Apple's photo
+  library picker, and the share sheet.
 
 ## Motion, swiping, haptics and sharing
 
