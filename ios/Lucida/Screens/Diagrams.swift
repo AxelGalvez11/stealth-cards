@@ -196,13 +196,10 @@ struct DiagramsCard: View {
         .background(RoundedRectangle(cornerRadius: 16, style: .continuous).fill(t.bg))
       }
       if rows.isEmpty && can {
-        VStack(alignment: .leading, spacing: 6) {
-          Text("Nothing here yet").css(15, .semibold)
-          Text("When Lucida makes cards from slides, a PDF, a Word file or photos, the diagrams in them are kept here, and you can turn their labels into picture cards. You can also make a table or a mind map from your cards, or upload a picture.")
-            .css(13, lh: 1.5).foregroundStyle(t.muted)
-        }
-        .padding(.top, 14).padding(.bottom, 6).frame(maxWidth: .infinity, alignment: .leading)
-        .overlay(alignment: .top) { t.line.frame(height: 1) }
+        // (Just the one plain line: Make diagram and Upload say what to do, the owner's rule of no tips.)
+        Text("Nothing here yet").css(14).foregroundStyle(t.muted)
+          .padding(.top, 14).padding(.bottom, 6).frame(maxWidth: .infinity, alignment: .leading)
+          .overlay(alignment: .top) { t.line.frame(height: 1) }
       }
       ForEach(groups, id: \.title) { g in
         VStack(alignment: .leading, spacing: 10) {

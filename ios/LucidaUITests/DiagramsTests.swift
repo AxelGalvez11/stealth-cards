@@ -124,7 +124,8 @@ final class DiagramsTests: AppCase {
     // the tab keeps its number when the deck page is opened again, and a deck with no diagrams says so
     let e = launch(as: S("empty"), ["-open", "deck:" + S("emptyDeckName"), "-deckTab", "diagrams"])
     check(wait(text(e, "Nothing here yet")) && button(e, "Make diagram").exists && button(e, "Upload").exists, "a deck with none says “Nothing here yet”, and its owner can make or upload one")
-    check(selected(buttonStarting(e, "Diagrams")) && textHas(e, "turn their labels into picture cards").exists, "and says what they are for")
+    // (One plain line and the buttons, no paragraph about what diagrams are for: the owner's rule of no tips.)
+    check(selected(buttonStarting(e, "Diagrams")) && !textHas(e, "turn their labels into picture cards").exists && !textHas(e, "kept here").exists, "and nothing more (no paragraph about them)")
     snap("diagrams-none")
   }
 
