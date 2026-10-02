@@ -64,6 +64,7 @@ func sig(_ b: GuideBlock) -> String {
   case .table(let align, let head, let rows):
     return "TABLE(" + align.joined(separator: ",") + ")<" + head.map { $0.map(sig).joined(separator: ",") }.joined(separator: "|") + ">"
       + rows.map { "<" + $0.map { $0.map(sig).joined(separator: ",") }.joined(separator: "|") + ">" }.joined()
+  case .toggle(let inline, let bs): return "TG[" + inline.map(sig).joined(separator: ",") + "]{" + sig(bs) + "}"
   }
 }
 /// A string as JSON text, the way JSON.stringify writes it (only for code blocks, whose text is compared whole).
@@ -97,6 +98,25 @@ for (i, want) in sigs.enumerated() {
   report(sig(tree) == wantText, "case \(i) tree: got \(sig(tree).prefix(200)) want \(wantText.prefix(200))")
 }
 print("trees: \(cases) of \(sigs.count) decoded and flattened like node's")
+
+// ---------- the Notes page's blocks, in Swift ----------
+// Each text's blocks (node's) decoded into NoteBlock, encoded again and written by the engine: the same Markdown as node wrote; and the engine's own blocks of
+// each text are the same as node's once decoded.
+var bcases = 0
+for (i, line) in lines("blocks.txt").enumerated() {
+  guard let tab = line.firstIndex(of: "\t") else { continue }
+  let json = String(line[..<tab]), wantMd = (try? JSONSerialization.jsonObject(with: Data(line[line.index(after: tab)...].utf8), options: [.fragmentsAllowed])) as? String ?? "?"
+  guard let bs = try? JSONDecoder().decode([NoteBlock].self, from: Data(json.utf8)) else { report(false, "blocks \(i) decode into NoteBlock"); continue }
+  bcases += 1
+  report(engine.markdown(bs) == wantMd, "blocks \(i): Swift's blocks write \(engine.markdown(bs).prefix(160).debugDescription) want \(wantMd.prefix(160).debugDescription)")
+  let again = engine.blocks(wantMd)
+  report(again.map { [$0.k, String($0.d), Notes.plain($0.r)] } == GuideEngine(source: source).blocks(wantMd).map { [$0.k, String($0.d), Notes.plain($0.r)] }, "blocks \(i) read the same twice")
+}
+print("blocks: \(bcases) pages decoded into Swift, written back like node writes them")
+report(engine.href("example.com") == "https://example.com" && engine.href("javascript:alert(1)") == "", "href")
+let page = engine.blocks(":::toggle T\n- a\n:::")
+report(page.count == 2 && page[0].k == "toggle" && page[1].k == "ul" && page[1].d == 1, "blocks gives a toggle and what it holds")
+report(engine.markdown(page) == ":::toggle T\n- a\n:::\n", "markdown writes it back")
 
 // ---------- the typed helpers ----------
 report(engine.parse("# Hi *there*\n\n- [x] done").count == 2, "parse gives blocks")

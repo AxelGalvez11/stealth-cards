@@ -109,6 +109,8 @@ final class Nav: ObservableObject {
   /// A deck page asked to show a section (and maybe a source): the Guide editor's Done asks for Notes, a card's "Made from" line for Sources with that source
   /// open. The deck's page takes it as soon as it's on screen.
   @Published var deckWants: DeckWant?
+  /// Where the caret goes when the Notes page opens (the page takes it once).
+  var guideAt = ""
 
   /// A question is waiting for its answer from the server (Delete account, Block): its sheet stays until it comes.
   @Published var asking = false
@@ -205,8 +207,8 @@ final class Nav: ObservableObject {
     deckWants = DeckWant(deckId: deckId, tab: "sources", source: id, at: at)
     if path.last != .deck(deckId) { tab = .library; path = [.deck(deckId)] }
   }
-  /// A deck's Guide editor, on a page of it ("" for the Guide itself).
-  func guide(deckId: String, page: String = "") { push(.guide(deckId, page)) }
+  /// A deck's Notes page, on a page of it ("" for the Guide itself), with the caret at a place in it (`at`, "block:offset": where its words were tapped).
+  func guide(deckId: String, page: String = "", at: String = "") { guideAt = at; push(.guide(deckId, page)) }
   /// A class's page, by its code.
   func classPage(_ code: String) { push(.classPage(code)) }
   /// A page on another site (Google Classroom's share page), in Safari.

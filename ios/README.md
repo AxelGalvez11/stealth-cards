@@ -224,9 +224,8 @@ topic or a YouTube link already typed, and the folder a new deck made this way g
 
 **Notes.** `/api/make/finish` also answers `notes` (null, or a title, an overview, a note for each part of the material with where it comes from,
 and the whole draft as Markdown). The review shows a "Notes for the deck" panel above the cards: how many ("6 notes · p. 4 to p. 9 · saved with the
-cards"), a switch (on) that keeps them, and "Read the notes" / "Hide the notes", which unfolds the draft drawn the way a Guide page is (a title and
-headings with a line under them, paragraphs, bullets, numbers, a table, **bold** terms: `MakeMarkdown` in `Screens/Make.swift`, a small reader until
-the Guide's own Markdown view comes). The server drafts notes only when asked: every make sends `options.notes: true`, except a make from a Guide
+cards"), a switch (on) that keeps them, and "Read the notes" / "Hide the notes", which unfolds the draft as the Notes page will read it (a section for
+each part, each note a toggle that opens there too: `MakeNotesPage` in `Screens/Make.swift`, the Notes page's own view). The server drafts notes only when asked: every make sends `options.notes: true`, except a make from a Guide
 page or from a selection of one (`nav.make(guide:page:)`, `nav.make(text:)`), which says `options.notes: false` and shows no panel, and more cards from
 a source, which says nothing (its notes were drafted when it was made). Saving sends `notes: true|false` (only when finish gave notes), and the server
 makes them the deck's Guide, or a new Guide page when the deck has one. When the deck the cards go into already has every page a Guide can have (the
@@ -265,24 +264,33 @@ with no cookie, what can be picked, a long recording cut into parts and sent in 
 
 ## A deck's Guide and Sources
 
-Every deck can have a **Guide** (a page written in Markdown, like a README, with extra pages and a short history of versions) and **Sources** (what its cards
-were made from: a file, pictures, a recording, a video, pasted text, a topic). The deck page has tabs, **Cards | Notes | Sources** (`Screens/DeckMaterials.swift`
-`DeckTabs`: plain underlined tabs, a small count on Cards and Sources, room for a fourth that scrolls sideways): Notes is the Guide, Sources only shows on a deck of
-yours (a deck you only study has Cards, and Notes when it has a Guide, read only; an address for a tab that isn't there falls back to Cards). The cover has **Make cards**
-(the Make flow, into this deck) and **New card**, plainly.
+Every deck can have **Notes** (the Guide: a page like Apple Notes, with extra pages and a short history of versions) and **Sources** (what its cards were made from:
+a file, pictures, a recording, a video, pasted text, a topic). The deck page has tabs, **Cards | Notes | Diagrams | Sources** (`Screens/DeckMaterials.swift` `DeckTabs`: plain
+underlined tabs, a small count on Cards and Sources): Sources only shows on a deck of yours (a deck you only study has Cards, and Notes when it has a Guide, read only; an address
+for a tab that isn't there falls back to Cards). The cover has **Make cards** (the Make flow, into this deck) and **New card**, plainly.
 
-**The words are read by `web/guide.js` itself**, run in JavaScriptCore (`Data/GuideEngine.swift`; `design/to-ios.mjs` copies the file to `Resources/guide.js`). The same parser,
-the same safety (nothing in a Guide can run: raw HTML is shown as words, links are only http(s), mailto and in-page, a picture only from the app's own `/media/` storage, a shared
-deck's also from its public storage), and the same toolbar (Heading, Bold, Italic, Code, Link, Bulleted list, Numbered list, Task list, Quote, Table, Picture) and Enter in a list as
-the web. `parse()`'s tree is drawn natively by `Design/GuideViews.swift` the way the canvas's `.gd` CSS draws it: headings with their rules, lists, task boxes, quotes, code
-(rounded boxes for inline code), tables sized like a browser's, links that open in Safari (a link to one of the Guide's headings scrolls the page to it). `ios/tests/guide-check.sh` (also part of `ios/tests/run.sh parity`) feeds the web test's
-341-text table, the toolbar, Enter and Tab, and every call the web's own test makes to both node and the engine and compares the answers (29,000 calls), checks the app's `guide.js`
-is the same file as `web/guide.js`, and runs the editor's saving logic against a stand-in server (30 checks).
+**The page** (`Design/NotesViews.swift`; its memory and rules are `NotesPage` in `Data/Notes.swift`; web/notes.js on the web) is always formatted: a row for each block
+(text, Heading, Subheading, bullets, numbers, a to-do with Lucida's own box, a toggle, a quote, a divider, code, a picture, a table), each line's words a text field of its own
+(a UITextView on the older text system, its words' marks kept as attributes). A heading's ▸ (always there on a phone) folds its section, up to the next heading of the same or a
+higher level; a toggle's ▸ opens what it holds; which are folded and open is how this phone shows the page (`UserDefaults` `lucida.notes.view`, by deck, page and each one's
+words, the same shape as the web's), not part of the note. Enter makes a line of the same kind (an empty item turns into text), Backspace at the start of a line turns it into text,
+then out a level, then joins it to the line above, Tab and Shift+Tab nest (a hardware keyboard), and `# ` `## ` `- ` `1. ` `[] ` `> ` (a toggle) `---` make blocks as they're typed.
+Lucida's own bar sits above the keyboard (`NotesKeys`): Aa (Heading, Subheading, Text), To-do, Bullets, Toggle, Picture and keyboard down; while words are selected, Bold, Italic,
+Strikethrough, Code and Link (its address in the bar). Reading (the deck page's Notes, a shared deck's page, the maker's starter notes) is the same rows without the editing: a
+reader opens toggles and folds sections too, a link to one of the page's headings scrolls to it, and on your own deck a tap on the words opens the Notes page with the caret there.
 
-**The editor** (`Screens/Guide.swift`, the canvas's `PhoneGuide`; opened by Edit, Write or Add a guide on the Notes tab; `Route.guide`): a text field (a UITextView) with the toolbar over
-it, Write and Preview, page tabs with Add page, a name field and Delete page (asks first) on an extra page, History (older versions, Restore keeps what it replaced), Make cards (from
-the page, or from what is selected), and Done, which goes back to the deck's Notes. It saves as it is typed (`Data/GuideEditor.swift`: 700 ms after the last key, one save after
-another, Saving… and Saved at the top, what went wrong in the same place). Pictures go up like a card's.
+**What is saved is Markdown, read and written by `web/guide.js` itself**, run in JavaScriptCore (`Data/GuideEngine.swift`; `design/to-ios.mjs` copies the file to
+`Resources/guide.js`): `blocks()` turns the Markdown into the page's blocks and `markdown()` writes them back, so the iPhone keeps exactly what the web keeps and what AI apps
+write (a toggle is `:::toggle Its title` … `:::`). The same safety (nothing in a Guide can run: raw HTML is shown as words, links are only http(s), mailto and in-page, a picture
+only from the app's own `/media/` storage, a shared deck's also from its public storage). `ios/tests/guide-check.sh` (also part of `ios/tests/run.sh parity`) feeds the web test's
+table and every call the web's own test makes to both node and the engine and compares the answers (31,000 checks, the blocks decoded into Swift and written back included),
+checks the app's `guide.js` is the same file as `web/guide.js`, runs the page's saving logic against a stand-in server, and the page's rules (`ios/tests/swift/notes`: a blank
+note, the shortcuts, Enter, Backspace, Tab, Aa, the marks, links, pasting, toggles and folds and what this Mac remembers, and what is saved: 101 checks), and that its icons are web/notes.js's.
+
+**The Notes page** (`Screens/Guide.swift`, the canvas's `PhoneGuide`; opened by a tap on the deck page's Notes, `Route.guide` with `nav.guideAt` for the caret): back, the deck's name,
+the quiet saving line and ⋯ (Make cards from this page or what is selected, Older versions, Rename page, Delete page, which asks first), the pages as pills and + for a new one
+(a new page is called by its first heading until it's renamed). It saves as it is typed (`Data/GuideEditor.swift`: 700 ms after the last key, one save after another, Saving… and
+Saved at the top, what went wrong in the same place, "This page is full." over 40,000 characters). Pictures go up like a card's.
 
 **Sources** (`Data/GuideData.swift`, `Screens/DeckMaterials.swift`): the list (name, kind, pages or minutes, cards, date, newest first) and a source opened as a sheet: a recording
 plays at the card's time (a long one is kept as several files: the viewer walks their seconds, as the web does, and plays the part that covers the time at the second inside it:
@@ -293,17 +301,19 @@ source at that place (the deck's Sources, viewer open; plain words once the sour
 
 Library data: each deck's `guide` and `sources` and each card's `src` come with `/api/state` and are all optional (`MakeModels.swift`), so an older library still opens. The acts are
 `guide.save`, `guide.page.add`, `.rename`, `.delete`, `guide.restore`, `source.delete` (`Store.guide*`); History is `GET /api/guide/history`. The boards: `PhoneGuide` (and Dark, Gray;
-`-state Write|Preview|"Older versions"|"A new page"|"Nothing written yet"`), `PhoneDeck` (`-state Cards|Notes|Sources` or `-state "Guide and sources"|"Guide pages"|"Long guide"|"A source
+`-state Writing|"Block menu"|"Format bar"|"Toggle open"|"Toggle closed"|"Section folded"|"Blank note"|"Reading on a shared deck"|"Older versions"|"A new page"`), `PhoneDeck` (`-state Cards|Notes|Sources` or `-state "Guide and sources"|"Guide pages"|"Long guide"|"A source
 open"|"No guide yet"|"Studying (read only)"`; or `-section`, `-guide`, `-sourceOpen <id>`, `-sourceAt "p. 4"`), `PhonePublicDeck` (`-state` is the Guide setting) and `PhoneEditor`
-(`-madeFrom no` leaves the line out), with the sample in `Design/GuideSample.swift`. More launch arguments (debug builds): `-open guide[:<deck name>[:<page id>]]` opens the editor, and
+(`-madeFrom no` leaves the line out), with the sample in `Design/GuideSample.swift`. More launch arguments (debug builds): `-open guide[:<deck name>[:<page id>]]` opens the Notes page, and
 `-deckTab notes|sources` (with `-deckSource <id>` and `-deckAt "1:30:00"`) asks the open deck page for a section, and a source open at that place (like the web's `?tab=&source=&at=`).
 
     ios/tools/e2e-guide.sh <simulator id>
 
 starts a fresh server on port 3934 and the stand-in AI on 3939, makes the Sources with the server's own make steps (`ios/tests/js/guide-seed.mjs`: a PDF, a recording of thirteen files, a
-video, pictures, text, a topic, under a Guide with two pages), and runs `LucidaUITests/GuideTests` in twelve flows (no Guide and "Add a guide", the toolbar and Enter in a list, Preview and
-the hostile text, History and Restore, pages, Make cards from the Guide, the Guide on the deck page, a deck you only study, the Sources and each viewer, "Made from", More cards and
-Delete, a shared deck's page, the Add cards menu and dark mode).
+video, pictures, text, a topic, under a Guide with sections, toggles and two pages), and runs `LucidaUITests/GuideTests` in thirteen flows (no Guide and the blank note, writing: the
+shortcuts, Enter, Backspace, Aa, To-do, Bullets, Bold and a link from the bar; reading and the hostile text, Older versions and Restore, pages, Make cards from the page, the Notes
+on the deck page (toggles, folds, a link to a heading, a tap that opens the page there), a deck you only study, the Sources and each viewer, "Made from", More cards and Delete, a
+shared deck's page, the Add cards menu and dark mode, and a toggle and a section folding, remembered and never saved into the note). Ports and the simulator: `PORT=3960
+STUB_PORT=3969 ios/tools/e2e-guide.sh <simulator id>` runs it beside other servers.
 
 Two things worth knowing when writing flows like these: a tap on a card row right after the page was scrolled is ignored on purpose (`HoldOrTap` fails a touch that lands on a
 page that is still moving, like a button's), so `GuideTests.cardRow` brings the row to the middle and lets the page settle first; and a question is Lucida's own sheet (no

@@ -482,7 +482,7 @@ export default [
  },
  {
   "name": "PhoneGuide",
-  "title": "iPhone · Deck Guide editor (pick the view)",
+  "title": "iPhone · Notes page (pick the view)",
   "w": 390,
   "h": 844
  },
@@ -2294,7 +2294,7 @@ export default [
  },
  {
   "name": "WebGuide",
-  "title": "Web · Deck Guide editor (pick the view)",
+  "title": "Web · Notes page (pick the view)",
   "w": 1440,
   "h": 900
  },

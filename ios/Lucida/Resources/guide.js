@@ -14,9 +14,12 @@
 //   - Every link gets rel="nofollow ugc noopener", and target="_blank" unless it only jumps within the page.
 //   - A picture shows only if the caller allows it (opts.image). By default only our own /media/name.png files.
 //   - Work is bounded, so nobody can make the server or a browser spend long on a Guide: the text is cut at MAX characters,
-//     lists and quotes nest at most 12 deep, bold/italic/strike/links at most 20 deep (deeper ones lose their marks but keep
+//     lists, quotes and toggles nest at most 12 deep, bold/italic/strike/links at most 20 deep (deeper ones lose their marks but keep
 //     their words), scans for the end of a link, label or address have a budget, and one Guide shows at most 100 pictures
 //     and uses at most 200,000 characters of addresses (a [ref] used again counts again).
+//   - A toggle (":::toggle Its title" ... ":::") is made only of this file's own tags: its title is read like a heading's words
+//     (escaped, marks and links checked like any other), it nests like a list, and one that is never closed ends where the page does.
+//     A copy of this file from before toggles shows those two lines as words.
 //   - Nothing throws. null and undefined are "", anything else is turned into a string. A lone half of an emoji becomes U+FFFD.
 //
 // WHAT IT READS. CommonMark plus the usual GitHub extras: # headings (and === / --- under a line), paragraphs (a single
@@ -26,6 +29,9 @@
 // (nested by indentation, loose or tight), - [ ] task lists, --- thematic breaks, | pipe | tables |, [links](url "title"),
 // [text][ref] with [ref]: url definitions, <https://autolinks>, bare http(s):// addresses (a trailing . , ! ? : ; ' " ] and
 // an unmatched ) are left out), and ![pictures](src). A link to (#some-heading) points at that heading's id.
+// And Lucida's one addition, a toggle: a line ":::toggle Its title" (up to three spaces in, three or more colons, the word toggle,
+// then the title), anything as Markdown under it (paragraphs, lists, more toggles...), and a line ":::" that closes the innermost
+// toggle still open (not one inside a fenced code block). It can start anywhere a block can, in a list item or a quote too.
 // Not supported, and shown as text: raw HTML, HTML blocks and comments, footnotes, math, emoji :shortcodes:, bare www.
 // and email addresses, named entities outside the safe list.
 //
@@ -51,6 +57,7 @@
 //     { t:'ol',    start:1, tight:bool, items:[{ checked:null|true|false, blocks:[...] }] }
 //     { t:'hr' }
 //     { t:'table', align:['left'|'right'|'center'|''], head:[[inline]], rows:[[[inline]]] }   a cell is an array of inline
+//     { t:'toggle', inline:[...], blocks:[...] }                   a toggle: its title, and what opens under it
 //   checked is null for an ordinary item and true/false for a task item ("- [x] done"). In a tight list the paragraphs of an
 //   item are drawn without paragraph spacing.
 //   Inline nodes (what is inside a heading, paragraph or table cell) are
@@ -65,6 +72,8 @@
 //   bold italic strike code (text, a, b)     heading(text, a, b, level)     bullets numbers tasks quote (text, a, b)
 //   link(text, a, b, url)   image(text, a, b, src, alt)   codeBlock table rule (text, a, b)   -> { text, a, b }
 //   continueList(text, pos) -> { text, pos } | null (Enter in a list)      indent(text, a, b, out) (Tab / Shift+Tab)
+//   blocks(md) -> the page as the Notes editor shows it        markdown(blocks) -> md        (see "blocks", below)
+//   href(address) -> the address as a link may have it (percent-encoded; https:// added to a bare domain), or '' when it can't be one
 //   MAX (60000), and errors (how many unexpected errors were caught and hidden; 0 unless there is a bug).
 export function makeGuide() {
   // ---------- limits ----------
@@ -621,7 +630,7 @@ export function makeGuide() {
     const doc = mk('doc', 0);
     let tip = doc, oldtip = doc, lastMatched = doc, allClosed = true;
     let ln = '', lineNo = 0, offset = 0, column = 0, nextNonspace = 0, nextCol = 0, indent = 0, indented = false, blank = false, partialTab = false;
-    const canContain = (p, t) => (p === 'doc' || p === 'quote' || p === 'item' ? t !== 'item' : p === 'list' ? t === 'item' : false);
+    const canContain = (p, t) => (p === 'doc' || p === 'quote' || p === 'item' || p === 'toggle' ? t !== 'item' : p === 'list' ? t === 'item' : false);
 
     function findNextNonspace() {
       let i = offset, cols = column;
@@ -651,7 +660,7 @@ export function makeGuide() {
     }
     function addChild(type) {
       while (!canContain(tip.type, type)) finalize(tip);
-      const n = mk(type, tip.depth + (type === 'quote' || type === 'item' ? 1 : 0));
+      const n = mk(type, tip.depth + (type === 'quote' || type === 'item' || type === 'toggle' ? 1 : 0));
       n.parent = tip; n.line = lineNo;
       tip.kids.push(n);
       tip = n;
@@ -746,6 +755,16 @@ export function makeGuide() {
           else if (indent >= c.ld.markerOffset + c.ld.padding) advanceOffset(c.ld.markerOffset + c.ld.padding, true);
           else return 1;
           return 0;
+        case 'toggle': {
+          // ":::" on a line of its own closes the innermost toggle still open: a toggle further in, or a fenced code block, takes the line first.
+          if (indented || ln.charCodeAt(nextNonspace) !== 58) return 0;
+          let j = nextNonspace; while (ln.charCodeAt(j) === 58) j++;
+          if (j - nextNonspace < 3 || !blankFrom(ln, j)) return 0;
+          for (let b = c.kids[c.kids.length - 1]; b && b.open; b = b.kids[b.kids.length - 1]) if (b.type === 'toggle' || (b.type === 'code' && b.fenced)) return 0;
+          while (tip !== c) finalize(tip);
+          finalize(c);
+          return 2;
+        }
         case 'heading': case 'hr': return 1;
         case 'para': case 'table': return blank ? 1 : 0;
         case 'code':
@@ -802,6 +821,18 @@ export function makeGuide() {
       const b = addChild('code');
       b.fenced = true; b.fenceLen = n; b.fenceChar = c; b.fenceOffset = indent;
       advanceNextNonspace(); advanceOffset(n, false);
+      return 2;
+    }
+    // ":::toggle Its title": a toggle, whose title is the rest of the line. (Like a list, it nests at most MAX_NEST deep.)
+    function toggleStart(container) {
+      if (indented || ln.charCodeAt(nextNonspace) !== 58 || container.depth >= MAX_NEST) return 0;
+      let j = nextNonspace; while (ln.charCodeAt(j) === 58) j++;
+      if (j - nextNonspace < 3) return 0;
+      while (isSp(ln.charCodeAt(j))) j++;
+      if (ln.slice(j, j + 6).toLowerCase() !== 'toggle' || !(j + 6 >= ln.length || isSp(ln.charCodeAt(j + 6)))) return 0;
+      closeUnmatched();
+      addChild('toggle').title = trimWS(ln.slice(j + 6));
+      advanceOffset(ln.length - offset, false);
       return 2;
     }
     function setextStart(container) {
@@ -895,7 +926,7 @@ export function makeGuide() {
       addChild('code').fenced = false;
       return 2;
     }
-    const STARTS = [quoteStart, atxStart, fenceStart, setextStart, hrStart, itemStart, tableStart, codeStart];
+    const STARTS = [quoteStart, atxStart, fenceStart, toggleStart, setextStart, hrStart, itemStart, tableStart, codeStart];
     const special = c => (c >= 48 && c <= 58) || c === 35 || c === 96 || c === 126 || c === 42 || c === 43 || c === 95 || c === 61 || c === 62 || c === 45 || c === 124;
 
     function incorporateLine(line) {
@@ -927,7 +958,7 @@ export function makeGuide() {
       closeUnmatched();
       if (blank && container.kids.length) container.kids[container.kids.length - 1].blankEnd = true;
       const t = container.type;
-      const lastBlank = blank && !(t === 'quote' || (t === 'code' && container.fenced) || (t === 'item' && !container.kids.length && container.line === lineNo));
+      const lastBlank = blank && !(t === 'quote' || t === 'toggle' || (t === 'code' && container.fenced) || (t === 'item' && !container.kids.length && container.line === lineNo));
       for (let c = container; c; c = c.parent) c.blankEnd = lastBlank;
       if (t === 'code' || t === 'para') addLine();
       else if (offset < ln.length && !blank) {
@@ -967,6 +998,7 @@ export function makeGuide() {
         case 'code': { const lit = k.literal || '';           // the language is the first word of a fence's info string
           out.push({ t: 'code', lang: k.fenced ? k.info.split(/[ \t]/, 1)[0] : '', text: lit.endsWith('\n') ? lit.slice(0, -1) : lit }); break; }
         case 'quote': out.push({ t: 'quote', blocks: build(k, refs, ctx) }); break;
+        case 'toggle': out.push({ t: 'toggle', inline: inlineOf(k.title || '', refs, ctx), blocks: build(k, refs, ctx) }); break;
         case 'list': {
           const items = k.kids.map(it => {
             let checked = null;
@@ -1014,12 +1046,13 @@ export function makeGuide() {
       if (used.has(f)) a.href = encodeUrl('#g-' + f);
     }
   }
-  function parse(md) {
+  // (`asWritten`: links to a heading keep the address they were written with; the HTML's own ids are only for rendering)
+  function parse(md, asWritten) {
     const src = clean(md);
     try {
       const refs = new Map(), ctx = { urls: 0, links: [], heads: [] };
       const blocks = build(parseBlocks(src, refs), refs, ctx);
-      assignIds(ctx.heads, ctx.links);
+      assignIds(ctx.heads, asWritten ? [] : ctx.links);
       return blocks;
     } catch (e) {
       errors++;
@@ -1029,7 +1062,7 @@ export function makeGuide() {
 
   // ---------- showing: the tree -> HTML ----------
   // Only these tags are ever written: div h1-h6 p br strong em del code pre blockquote ul ol li span hr table thead
-  // tbody tr th td a img. And only these attributes: class (gd, gd-task, gd-box, gd-on, language-x), id (on headings), href data-tip rel
+  // tbody tr th td a img details summary. And only these attributes: class (gd, gd-task, gd-box, gd-on, gd-tg, language-x), id (on headings), href data-tip rel
   // target (a), src alt data-tip loading decoding (img), start (ol), role="img" and aria-label (a task's box, a span: Lucida's own
   // check, drawn by CSS, never a browser's checkbox), style="text-align:x" (th, td).
   // No line breaks between tags (only inside pre), so the same text always gives the same HTML.
@@ -1092,6 +1125,8 @@ export function makeGuide() {
         case 'p': { const h = inline(b.inline); return h ? '<p>' + h + '</p>' : ''; }
         case 'code': return '<pre><code' + (LANG.test(b.lang) ? ' class="language-' + escA(b.lang) + '"' : '') + '>' + esc(b.text) + (b.text ? '\n' : '') + '</code></pre>';
         case 'quote': return '<blockquote>' + b.blocks.map(block).join('') + '</blockquote>';
+        // A toggle opens and closes with no script (it starts closed; a page that remembers what was open opens it again).
+        case 'toggle': return '<details class="gd-tg"><summary>' + inline(b.inline) + '</summary>' + b.blocks.map(block).join('') + '</details>';
         case 'hr': return '<hr>';
         case 'ul': return '<ul>' + b.items.map(it => item(it, b.tight)).join('') + '</ul>';
         case 'ol': return (b.start !== 1 ? '<ol start="' + (b.start | 0) + '">' : '<ol>') + b.items.map(it => item(it, b.tight)).join('') + '</ol>';
@@ -1123,6 +1158,7 @@ export function makeGuide() {
         case 'h': case 'p': { const t = textOf(b.inline); if (t) out.push(t); break; }
         case 'code': for (const l of b.text.split('\n')) if (l) out.push(l); break;
         case 'quote': plainLines(b.blocks, out); break;
+        case 'toggle': { const t = textOf(b.inline); if (t) out.push(t); plainLines(b.blocks, out); break; }
         case 'ul': case 'ol': for (const it of b.items) plainLines(it.blocks, out); break;
         case 'table': for (const r of [b.head, ...b.rows]) { const t = r.map(textOf).filter(Boolean).join(' '); if (t) out.push(t); } break;
         default: break;
@@ -1147,12 +1183,375 @@ export function makeGuide() {
     const walk = blocks => {
       for (const b of blocks) {
         if (b.t === 'h') out.push({ level: b.level, text: textOf(b.inline), id: b.id });
-        else if (b.t === 'quote') walk(b.blocks);
+        else if (b.t === 'quote' || b.t === 'toggle') walk(b.blocks);
         else if (b.t === 'ul' || b.t === 'ol') b.items.forEach(it => walk(it.blocks));
       }
     };
     try { walk(parse(md)); } catch (e) { errors++; }
     return out;
+  }
+
+  // ---------- blocks: the page the Notes editor shows (web/notes.js; the iPhone's Data/Notes.swift asks for them through JavaScriptCore) ----------
+  // A page of notes is a list of blocks, one under the other, each one line of the page. What is inside a list item, a toggle or a quote follows it,
+  // one level in (d is how far in a block is, 0 at the left):
+  //   { k:'p', d, r }                text              { k:'h', d, level, r }     heading (level 1 to 6)
+  //   { k:'ul', d, r }               bulleted item     { k:'ol', d, r, start }    numbered item (start: the first number of a list, only when it isn't 1)
+  //   { k:'todo', d, r, on }         to-do (on: done)  { k:'toggle', d, r }       toggle (r is its line; what is in it follows one level in)
+  //   { k:'quote', d, r }            quote             { k:'code', d, lang, text } code
+  //   { k:'hr', d }                  divider           { k:'img', d, src, alt, title } picture
+  //   { k:'table', d, align, rows }  table: rows[0] is the header, a cell is runs
+  // r is the line's words as runs: [{ t, b, i, s, c, a, lt }], t the words and the rest what they are: bold, italic, strikethrough, code (true or
+  // left out), and a link's address (a, always one guide.js allows) and title (lt). t may hold a line break (\n), except in a heading, a toggle's
+  // line and a table cell. ul, ol, todo, toggle and quote hold what follows them one level in; nothing else holds anything.
+  //   blocks(md)      reads any Markdown into blocks. What a line can't hold goes onto a line of its own and no words are lost: a picture between words
+  //                   (or in a heading) is a picture block after them, a list item's or a quote's second paragraph is a block inside it, a picture in a
+  //                   table cell is its description.
+  //   markdown(list)  writes blocks as Markdown: blocks(markdown(list)) is the same list again (once the list is as blocks() would read it: runs merged,
+  //                   no space at the edges of a line or of a mark). Marks Markdown can't say (bold that ends in a comma right before a letter) are
+  //                   left off, never words. An empty text line is written as &nbsp; so it stays.
+  const BK_TEXT = { p: 1, h: 1, ul: 1, ol: 1, todo: 1, toggle: 1, quote: 1 }, BK_HOLDS = { ul: 1, ol: 1, todo: 1, toggle: 1, quote: 1 };
+  const BK_KINDS = { ...BK_TEXT, code: 1, hr: 1, img: 1, table: 1 }, BK_DEPTH = 16, BK_MAX = 20000;
+  const RUN_MARKS = ['b', 'i', 's', 'c'];
+  const sameRun = (x, y) => !!x.b === !!y.b && !!x.i === !!y.i && !!x.s === !!y.s && !!x.c === !!y.c && (x.a || '') === (y.a || '') && (x.lt || '') === (y.lt || '');
+  // A run with only the marks it has (an address only when it is one a link may have).
+  function mkRun(t, m) {
+    const r = { t };
+    for (const k of RUN_MARKS) if (m && m[k]) r[k] = true;
+    const a = m && typeof m.a === 'string' ? m.a : '';
+    if (a && linkOk(a)) { r.a = a; if (m.lt) r.lt = str(m.lt).replace(/\n/g, ' '); }
+    return r;
+  }
+  // Runs as Markdown keeps them: neighbours with the same marks joined, nothing empty, no line break in code; spaces next to a line break and at
+  // the line's two ends gone (the parser drops them); a mark never starts or ends on a space; `oneLine` turns line breaks into spaces.
+  function canonRuns(list, oneLine) {
+    const ch = [], of = [];
+    for (const x of Array.isArray(list) ? list : []) {
+      if (!x || typeof x !== 'object') continue;
+      let t = str(x.t);
+      if (!t) continue;
+      const r = mkRun('', x);
+      if (r.c || oneLine) t = t.replace(/\n/g, ' ');
+      for (let i = 0; i < t.length; i++) { ch.push(t[i]); of.push(r); }
+    }
+    const n = ch.length, drop = new Uint8Array(n), ws = i => !of[i].c && (ch[i] === ' ' || ch[i] === '\t' || ch[i] === '\n');
+    for (let i = 0; i < n; i++) {
+      if (of[i].c || ch[i] !== '\n') continue;
+      for (let j = i - 1; j >= 0 && !of[j].c && ch[j] === ' '; j--) drop[j] = 1;
+      for (let j = i + 1; j < n && !of[j].c && ch[j] === ' '; j++) drop[j] = 1;
+    }
+    for (let i = 0; i < n && (drop[i] || ws(i)); i++) drop[i] = 1;
+    for (let i = n - 1; i >= 0 && (drop[i] || ws(i)); i--) drop[i] = 1;
+    const keep = [];
+    for (let i = 0; i < n; i++) if (!drop[i]) keep.push({ c: ch[i], m: { ...of[i] } });
+    // bold, italic and strikethrough come off the spaces at the two ends of a stretch of them
+    for (const k of ['b', 'i', 's']) {
+      for (let i = 0; i < keep.length;) {
+        if (!keep[i].m[k]) { i++; continue; }
+        let j = i; while (j < keep.length && keep[j].m[k]) j++;
+        const space = x => !x.m.c && (x.c === ' ' || x.c === '\t' || x.c === '\n');
+        for (let a = i; a < j && space(keep[a]); a++) delete keep[a].m[k];
+        for (let b = j - 1; b >= i && space(keep[b]); b--) delete keep[b].m[k];
+        i = j;
+      }
+    }
+    const out = [];
+    for (const x of keep) { const p = out[out.length - 1]; if (p && sameRun(p, x.m)) p.t += x.c; else out.push(mkRun(x.c, x.m)); }
+    return out;
+  }
+  const runsText = rs => rs.map(r => r.t).join('');
+  // The inline nodes of a block as runs, with its pictures where they were: [{ t, ... } | { img }].
+  function bkPieces(nodes) {
+    const out = [], stack = [{ list: nodes, i: 0, m: {} }];
+    while (stack.length) {
+      const f = stack[stack.length - 1];
+      if (f.i >= f.list.length) { stack.pop(); continue; }
+      const x = f.list[f.i++];
+      if (x.t === 'text') out.push({ ...f.m, t: x.v });
+      else if (x.t === 'code') out.push({ ...f.m, c: true, t: x.v });
+      else if (x.t === 'br') out.push({ ...f.m, t: '\n' });
+      else if (x.t === 'img') out.push({ img: { src: x.src, alt: x.alt.replace(/\s+/g, ' ').trim(), title: x.title.replace(/\s+/g, ' ').trim() } });
+      else if (x.t === 'b' || x.t === 'i' || x.t === 's') stack.push({ list: x.c, i: 0, m: { ...f.m, [x.t]: true } });
+      else if (x.t === 'a') stack.push({ list: x.c, i: 0, m: { ...f.m, a: x.href, lt: x.title } });
+    }
+    return out;
+  }
+  const NBSP_ONLY = rs => rs.length === 1 && !rs[0].c && !rs[0].a && rs[0].t === '\u00A0';
+  // The tree parse() gives, as blocks one under the other.
+  function flatten(tree, d, out) {
+    const pic = (p, at) => out.push({ k: 'img', d: at, src: p.img.src, alt: p.img.alt, title: p.img.title });
+    // A line of words: `split` (a paragraph) makes a block of each stretch of words between its pictures; otherwise the words make one line and the
+    // pictures follow it, inside it when it holds things (`inner`).
+    const line = (blk, inline, split, inner) => {
+      const ps = bkPieces(inline), words = [], pics = [];
+      let seg = [];
+      for (const p of ps) { if (p.img) { words.push(seg); seg = []; pics.push(p); } else seg.push(p); }
+      words.push(seg);
+      if (split) {
+        if (!pics.length && NBSP_ONLY(canonRuns(seg))) { out.push({ ...blk, r: [] }); return; }
+        words.forEach((w, i) => { const r = canonRuns(w); if (r.length) out.push({ ...blk, r }); if (i < pics.length) pic(pics[i], blk.d); });
+        return;
+      }
+      let r = canonRuns(words.flat(), blk.k === 'h' || blk.k === 'toggle');
+      if (NBSP_ONLY(r)) r = [];
+      out.push({ ...blk, r });
+      for (const p of pics) pic(p, inner ? blk.d + 1 : blk.d);
+    };
+    // A list item or a quote: its first paragraph is its line; the rest goes inside it.
+    const holder = (blk, blocks) => {
+      const f = blocks[0];
+      if (f && f.t === 'p') { line(blk, f.inline, false, true); flatten(blocks.slice(1), d + 1, out); }
+      else { out.push({ ...blk, r: [] }); flatten(blocks, d + 1, out); }
+    };
+    for (const b of tree) {
+      if (out.length >= BK_MAX) return out;
+      switch (b.t) {
+        case 'h': line({ k: 'h', d, level: Math.max(1, Math.min(6, b.level | 0)) }, b.inline, false, false); break;
+        case 'p': line({ k: 'p', d }, b.inline, true, false); break;
+        case 'code': out.push({ k: 'code', d, lang: LANG.test(b.lang) ? b.lang : '', text: b.text }); break;
+        case 'hr': out.push({ k: 'hr', d }); break;
+        case 'table': {
+          const cell = c => canonRuns(bkPieces(c).map(p => (p.img ? { t: p.img.alt } : p)), true);
+          out.push({ k: 'table', d, align: b.align.slice(), rows: [b.head.map(cell), ...b.rows.map(r => r.map(cell))] });
+          break;
+        }
+        case 'quote': holder({ k: 'quote', d }, b.blocks); break;
+        case 'toggle': line({ k: 'toggle', d }, b.inline, false, true); flatten(b.blocks, d + 1, out); break;
+        case 'ul': case 'ol':
+          b.items.forEach((it, n) => {
+            const blk = { k: it.checked === true || it.checked === false ? 'todo' : b.t, d };
+            if (blk.k === 'todo') blk.on = it.checked;
+            if (blk.k === 'ol' && n === 0 && b.start !== 1) blk.start = b.start;
+            const at = out.length;
+            holder(blk, it.blocks);
+            // "- [ ]" with nothing after it is an empty to-do (Markdown reads it as an item that says "[ ]").
+            const me = out[at];
+            if (me && me.k === 'ul' && me.r.length === 1 && !me.r[0].b && !me.r[0].i && !me.r[0].s && !me.r[0].c && !me.r[0].a && /^\[[ xX]\]$/.test(me.r[0].t)) { me.k = 'todo'; me.on = me.r[0].t !== '[ ]'; me.r = []; }
+          });
+          break;
+        default: break;
+      }
+    }
+    return out;
+  }
+  function blocksOf(md) {
+    try { return flatten(parse(md, true), 0, []).slice(0, BK_MAX); } catch (e) { errors++; const t = clean(md).trim(); return t ? [{ k: 'p', d: 0, r: [{ t: t.slice(0, 5000) }] }] : []; }
+  }
+
+  // ---------- blocks -> Markdown ----------
+  // Text as Markdown: every character that could start a mark, a link, a picture, an entity or an address is escaped (a _ inside a word can't, so it
+  // stays); in a table cell a | too. At the start of a line, one that could start a block (# > - + = | : and "1." or "1)") is escaped too.
+  function escText(s, cell, bol) {
+    let out = '';
+    for (let i = 0; i < s.length; i++) {
+      const ch = s[i], c = s.charCodeAt(i);
+      if (c === 92 || c === 42 || c === 126 || c === 96 || c === 91 || c === 93) out += '\\' + ch;
+      else if (c === 95) out += isAlnum(s.charCodeAt(i - 1)) && isAlnum(s.charCodeAt(i + 1)) ? '_' : '\\_';
+      else if (c === 60) out += i + 1 >= s.length || isAlpha(s.charCodeAt(i + 1)) || s.charCodeAt(i + 1) === 47 ? '\\<' : '<';
+      else if (c === 38) out += entityAt(s, i) ? '\\&' : '&';
+      else if (c === 124 && cell) out += '\\|';
+      else if (c === 58 && s.charCodeAt(i + 1) === 47 && /https?$/i.test(s.slice(Math.max(0, i - 5), i))) out += '\\:';
+      else out += ch;
+    }
+    if (bol) {
+      const c = out.charCodeAt(0), m = /^(\d{1,9})([.)])/.exec(out);
+      if (c === 35 || c === 62 || c === 45 || c === 43 || c === 61 || c === 124 || c === 58) out = '\\' + out;
+      else if (m) out = m[1] + '\\' + out.slice(m[1].length);
+    }
+    return out;
+  }
+  // Code: in enough backticks, with a space at each end when it starts or ends with one (or with a backtick). In a table cell a | is \| even in code
+  // (the row is cut into cells before the words are read).
+  function codeSpan(t, cell) {
+    let longest = 0;
+    for (let i = 0, r = 0; i < t.length; i++) { r = t[i] === '`' ? r + 1 : 0; if (r > longest) longest = r; }
+    const f = '`'.repeat(longest + 1), pad = t[0] === '`' || t[t.length - 1] === '`' || (t[0] === ' ' && t[t.length - 1] === ' ' && /[^ ]/.test(t));
+    return f + (pad ? ' ' + t + ' ' : t).replace(cell ? /\|/g : /$^/, '\\|') + f;
+  }
+  // An entity in an address or a title would be read as the character it stands for, so its & is escaped.
+  const ampEsc = s => s.replace(/&/g, (m, i) => (entityAt(s, i) ? '\\&' : '&'));
+  // An address between ( and ): as it is, or between < and > when it has a parenthesis (guide.js's addresses never hold a space, < > or \\).
+  const destOf = u => { const v = ampEsc(u); return /[()]/.test(v) ? '<' + v + '>' : v; };
+  const titleOf = t => (t ? ' "' + ampEsc(t.replace(/["\\]/g, '\\$&')) + '"' : '');
+  // Which stretch of each mark every run is in: 'b0' the first stretch of bold, 'i2' the third of italic, 'c4' the fifth piece of code, 'a1' the second
+  // link. (A stretch of a mark goes on through links; a link is the runs side by side with the same address and title.)
+  function spansOf(runs) {
+    const n = { s: 0, b: 0, i: 0, c: 0, a: 0 }, ids = [];
+    const out = runs.map(() => ({}));
+    for (const k of ['s', 'b', 'i']) runs.forEach((r, x) => { if (r[k]) { if (!(x > 0 && runs[x - 1][k])) ids.push(k + n[k]++); out[x][k] = k + (n[k] - 1); } });
+    runs.forEach((r, x) => { if (r.c) { ids.push('c' + n.c); out[x].c = 'c' + n.c++; } });
+    runs.forEach((r, x) => { if (r.a) { if (!(x > 0 && runs[x - 1].a === r.a && (runs[x - 1].lt || '') === (r.lt || ''))) ids.push('a' + n.a++); out[x].a = 'a' + (n.a - 1); } });
+    return { of: out, ids };
+  }
+  // Runs as Markdown. Marks and links open and close like brackets: the ones still wanted stay open, from the outside in. o.cell: in a table cell.
+  // o.alt: bold and italic as __ and _. o.drop: the stretches to leave out (spansOf's ids). o.nl: what follows a line break (the indent of the line
+  // after it). A line break is "\\\n".
+  function runsMd(runs, o) {
+    const D = o.alt ? { s: '~~', b: '__', i: '_' } : { s: '~~', b: '**', i: '*' }, sp = spansOf(runs).of;
+    const on = (x, k) => !!sp[x][k] && !(o.drop && o.drop.has(sp[x][k]));
+    const stack = [];
+    let out = '', bol = true;
+    const shut = e => { out += e.k === 'a' ? '](' + destOf(e.a) + titleOf(e.lt) + ')' : D[e.k]; bol = false; };
+    for (let x = 0; x < runs.length; x++) {
+      const r = runs[x], want = ['s', 'b', 'i'].filter(k => on(x, k)), link = on(x, 'a') ? sp[x].a : '';
+      let keep = 0;
+      while (keep < stack.length && (stack[keep].k === 'a' ? stack[keep].id === link : want.includes(stack[keep].k))) keep++;
+      while (stack.length > keep) shut(stack.pop());
+      for (const k of want) if (!stack.some(e => e.k === k)) { out += D[k]; stack.push({ k }); bol = false; }
+      if (link && !stack.some(e => e.k === 'a')) {
+        // (a ! right before it would make the link a picture)
+        if (/(^|[^\\])(\\\\)*!$/.test(out)) out = out.slice(0, -1) + '\\!';
+        out += '['; stack.push({ k: 'a', id: link, a: r.a, lt: r.lt || '' }); bol = false;
+      }
+      if (on(x, 'c')) { out += codeSpan(r.t, o.cell); bol = false; continue; }
+      const lines = r.t.split('\n');
+      lines.forEach((ln, n) => { if (n > 0) { out += '\\\n' + (o.nl || ''); bol = true; } if (ln) { out += escText(ln, o.cell, bol); bol = false; } });
+    }
+    while (stack.length) shut(stack.pop());
+    return out;
+  }
+  // What a line of words reads back as: parsed as a paragraph of its own, or as the one cell of a table.
+  function readBack(md, cell) {
+    const t = parse(cell ? '| ' + md + ' |\n| --- |' : md);
+    if (cell) return t.length === 1 && t[0].t === 'table' && t[0].head.length === 1 ? canonRuns(bkPieces(t[0].head[0]), true) : null;
+    if (t.length !== 1 || t[0].t !== 'p') return null;
+    return canonRuns(bkPieces(t[0].inline));
+  }
+  const runsKey = rs => rs.map(r => r.t.length + ':' + (r.b ? 'b' : '') + (r.i ? 'i' : '') + (r.s ? 's' : '') + (r.c ? 'c' : '') + (r.a ? '@' + r.a + '|' + (r.lt || '') : '') + ':' + r.t).join('\u0001');
+  // Runs as Markdown that reads back as the same runs: as written, else with __ and _; else without the stretches of marks Markdown can't say (each
+  // one that can't be said even alone, then one more at a time from the last); and at the very last, the words alone.
+  const MEMO = new Map();
+  function lineMd(runs, o) {
+    if (!runs.length) return '';
+    const key = (o.cell ? 'c' : '') + (o.nl || '').length + '\u0002' + runsKey(runs);
+    const hit = MEMO.get(key);
+    if (hit !== undefined) return hit;
+    // the runs with some stretches left out, written both ways: the options that read back right
+    const works = drop => {
+      const want = runsKey(drop.size ? dropped(runs, drop) : runs);
+      for (const alt of [false, true]) { const got = readBack(runsMd(runs, { ...o, alt, drop, nl: '' }), o.cell); if (got && runsKey(got) === want) return { alt, drop }; }
+      return null;
+    };
+    let found = works(new Set());
+    if (!found) {
+      const ids = spansOf(runs).ids, drop = new Set();
+      for (const id of ids) if (!works(new Set(ids.filter(x => x !== id)))) drop.add(id);
+      found = works(drop);
+      for (let k = ids.length - 1; !found && k >= 0; k--) { if (drop.has(ids[k])) continue; drop.add(ids[k]); found = works(drop); }
+    }
+    const res = found ? runsMd(runs, { ...o, ...found }) : runsMd([{ t: runsText(runs) }], o);
+    if (MEMO.size > 4000) MEMO.clear();
+    MEMO.set(key, res);
+    return res;
+  }
+  // The runs without the stretches in `drop`.
+  function dropped(runs, drop) {
+    const sp = spansOf(runs).of, out = runs.map((r, x) => { const y = { ...r }; for (const k of ['s', 'b', 'i', 'c']) if (drop.has(sp[x][k])) delete y[k]; if (drop.has(sp[x].a)) { delete y.a; delete y.lt; } return y; });
+    return canonRuns(out);
+  }
+
+  // The blocks as a tree: each one with what it holds (the blocks after it one level in).
+  function bkTree(list) {
+    const root = { kids: [] }, stack = [{ node: root, d: -1 }];
+    let prev = null;
+    for (const b of list) {
+      const most = prev ? prev.d + (BK_HOLDS[prev.k] ? 1 : 0) : 0, d = Math.max(0, Math.min(b.d, most, BK_DEPTH));
+      while (stack.length > 1 && stack[stack.length - 1].d >= d) stack.pop();
+      const node = { b: { ...b, d }, kids: [] };
+      stack[stack.length - 1].node.kids.push(node);
+      if (BK_HOLDS[b.k]) stack.push({ node, d });
+      prev = node.b;
+    }
+    return root.kids;
+  }
+  // A block as guide.js would read it: known kind, whole numbers, runs as Markdown keeps them, an address only when it may be one.
+  function bkClean(x) {
+    if (!x || typeof x !== 'object' || !BK_KINDS[x.k]) return null;
+    const d = Math.max(0, Math.min(BK_DEPTH, Math.floor(+x.d) || 0)), b = { k: x.k, d };
+    if (BK_TEXT[x.k]) b.r = canonRuns(x.r, x.k === 'h' || x.k === 'toggle');
+    if (x.k === 'h') b.level = Math.max(1, Math.min(6, Math.floor(+x.level) || 1));
+    if (x.k === 'todo') b.on = !!x.on;
+    if (x.k === 'ol' && x.start != null) { const n = Math.floor(+x.start); if (isFinite(n) && n >= 0 && n !== 1) b.start = Math.min(n, 999999999); }
+    if (x.k === 'code') { b.lang = LANG.test(str(x.lang)) ? str(x.lang) : ''; b.text = str(x.text).replace(/\r\n?/g, '\n'); }
+    if (x.k === 'img') {
+      const src = encodeUrl(str(x.src).trim());
+      if (!imgOk(src)) { const alt = str(x.alt).trim(); return alt ? { k: 'p', d, r: [{ t: alt }] } : null; }
+      b.src = src; b.alt = str(x.alt).replace(/\s+/g, ' ').trim(); b.title = str(x.title).replace(/\s+/g, ' ').trim();
+    }
+    if (x.k === 'table') {
+      const rows = (Array.isArray(x.rows) ? x.rows : []).filter(Array.isArray).slice(0, 1000);
+      const n = Math.max(1, Math.min(64, rows.length ? rows[0].length : 1));
+      b.rows = (rows.length ? rows : [[]]).map(r => Array.from({ length: n }, (_, i) => canonRuns(r[i], true)));
+      const al = Array.isArray(x.align) ? x.align : [];
+      b.align = Array.from({ length: n }, (_, i) => (al[i] === 'left' || al[i] === 'right' || al[i] === 'center' ? al[i] : ''));
+    }
+    return b;
+  }
+  const indentBy = (lines, by) => lines.map(l => (l ? by + l : l));
+  // Lines of Markdown for blocks side by side (a blank line between them, except between the items of one list).
+  function nodesMd(nodes) {
+    const lines = [], fam = b => (b.k === 'ul' || b.k === 'todo' ? 'u' : b.k === 'ol' ? 'o' : '');
+    let num = 1;
+    nodes.forEach((n, i) => {
+      const p = i ? nodes[i - 1].b : null, same = p && fam(p) && fam(p) === fam(n.b);
+      if (i) { if (!same) lines.push(''); }
+      if (n.b.k === 'ol') num = same ? num + 1 : n.b.start != null ? n.b.start : 1;
+      lines.push(...nodeMd(n, num));
+    });
+    return lines;
+  }
+  function nodeMd(n, num) {
+    const b = n.b, kids = n.kids, text = (w, nl) => lineMd(b.r, { nl: ' '.repeat(w || 0) + (nl || '') });
+    switch (b.k) {
+      case 'p': return (b.r.length ? text(0) : '&nbsp;').split('\n');
+      // (a # at the very end would be read as closing the heading, unless it is escaped)
+      case 'h': { let t = lineMd(b.r, {}); const m = /(\\*)#$/.exec(t); if (m && m[1].length % 2 === 0) t = t.slice(0, -1) + '\\#'; return ['#'.repeat(b.level) + (t ? ' ' + t : '')]; }
+      case 'toggle': { const t = lineMd(b.r, {}); return [':::toggle' + (t ? ' ' + t : ''), ...nodesMd(kids), ':::']; }
+      case 'quote': {
+        const own = (b.r.length || !kids.length ? (b.r.length ? text(0) : '') : '&nbsp;').split('\n');
+        const all = kids.length ? [...own, '', ...nodesMd(kids)] : own;
+        return all.map(l => (l ? '> ' + l : '>'));
+      }
+      case 'ul': case 'ol': case 'todo': {
+        const mark = b.k === 'ol' ? num + '.' : b.k === 'todo' ? (b.on ? '- [x]' : '- [ ]') : '-', w = b.k === 'ol' ? String(num).length + 2 : 2;
+        const own = b.r.length ? text(w).split('\n') : kids.length ? ['&nbsp;'] : [''];
+        const first = mark + (own[0] ? ' ' + own[0] : ''), rest = own.slice(1);
+        const inner = kids.length ? nodesMd(kids) : [];
+        // (A list right under the line needs no blank line, unless Markdown would read it as more of the line: an empty item, or numbers that don't start at 1.)
+        const f = kids.length ? kids[0].b : null, joins = f && f.r && f.r.length && (f.k === 'ul' || f.k === 'todo' || (f.k === 'ol' && (f.start == null || f.start === 1)));
+        const gap = kids.length && !joins ? [''] : [];
+        return [first, ...rest, ...gap, ...indentBy(inner, ' '.repeat(w))];
+      }
+      case 'code': {
+        let longest = 0;
+        for (let i = 0, r = 0; i < b.text.length; i++) { r = b.text[i] === '`' ? r + 1 : 0; if (r > longest) longest = r; }
+        const f = '`'.repeat(Math.max(3, longest + 1));
+        return [f + b.lang, ...(b.text ? b.text.split('\n') : []), f];
+      }
+      case 'hr': return ['---'];
+      case 'img': return ['![' + escText(b.alt, false, false) + '](' + destOf(b.src) + titleOf(b.title) + ')'];
+      case 'table': {
+        const row = r => '| ' + r.map(c => lineMd(c, { cell: true })).join(' | ') + ' |';
+        const delim = '| ' + b.align.map(a => (a === 'left' ? ':---' : a === 'right' ? '---:' : a === 'center' ? ':---:' : '---')).join(' | ') + ' |';
+        return [row(b.rows[0]), delim, ...b.rows.slice(1).map(row)];
+      }
+      default: return [];
+    }
+  }
+  // An address someone typed for a link: as guide.js would write it, or '' (a bare "example.com/x" gets https://; nothing but http(s), mailto and #).
+  function hrefOf(u) {
+    let v = str(u).trim();
+    if (!v) return '';
+    if (/^www\.|^[a-z0-9-]+(?:\.[a-z0-9-]+)+(?:[/?#:]|$)/i.test(v) && !/^[a-z][a-z0-9+.-]*:/i.test(v)) v = 'https://' + v;
+    else if (/^[^\s@/:]+@[^\s@/:]+\.[^\s@/:]+$/.test(v)) v = 'mailto:' + v;
+    const e = encodeUrl(v);
+    return linkOk(e) ? e : '';
+  }
+  function markdownOf(list) {
+    try {
+      const clean = (Array.isArray(list) ? list : []).slice(0, BK_MAX).map(bkClean).filter(Boolean);
+      const lines = nodesMd(bkTree(clean));
+      return lines.length ? lines.join('\n') + '\n' : '';
+    } catch (e) { errors++; return ''; }
   }
 
   // ---------- the toolbar: editing a text field's text ----------
@@ -1432,7 +1831,7 @@ export function makeGuide() {
   }
 
   return {
-    MAX, parse, render, plain, headings,
+    MAX, parse, render, plain, headings, blocks: blocksOf, markdown: markdownOf, href: hrefOf,
     bold, italic, strike, code, heading, bullets, numbers, tasks, quote, link, codeBlock, table, rule, image, continueList, indent: indentLines,
     // How many unexpected errors were caught and hidden (always 0 unless there is a bug).
     get errors() { return errors; }

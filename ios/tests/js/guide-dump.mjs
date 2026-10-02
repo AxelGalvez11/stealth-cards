@@ -3,8 +3,10 @@
 //   calls.txt     one call a line: the function, a tab, its arguments as JSON text (an array)
 //   expected.txt  one line for each of those: the answer as JSON text (or "__throws")
 //   sigs.txt      one line for each of the table's 341 texts: its tree flattened to one line (to compare with the Swift tree the app draws)
-// The calls: the table's 341 texts through parse, render, plain and headings; each of them through every toolbar button with three selections (and
-// Enter and Tab at a few places); and every call the web's own test of the engine makes (ios/tests/fixtures/guide-cases.json, made by guide-record.mjs).
+// The calls: the table's 341 texts (and a few with toggles) through parse, render, plain and headings; each of them through every toolbar button with three
+// selections (and Enter and Tab at a few places); each read into the Notes page's blocks and written back as Markdown (blocks, markdown); a few typed link
+// addresses (href); and every call the web's own test of the engine makes (ios/tests/fixtures/guide-cases.json, made by guide-record.mjs).
+// blocks.txt: for each text, its blocks as JSON, and what they write back as (the Swift side decodes them, encodes them again, and writes them).
 //   node ios/tests/js/guide-dump.mjs <out folder>
 import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 import { fileURLToPath, pathToFileURL } from 'node:url';
@@ -15,8 +17,13 @@ mkdirSync(out, { recursive: true });
 const guide = (await import(pathToFileURL(fileURLToPath(new URL('../../../web/guide.js', import.meta.url))).href)).default;
 const fx = JSON.parse(readFileSync(fileURLToPath(new URL('../fixtures/guide-cases.json', import.meta.url)), 'utf8'));
 
+// (texts with toggles, the Notes page's own syntax, after the table's: their trees are flattened too)
+const TOGGLES = [':::toggle Key **idea**\nWhy it is so.\n:::', ':::toggle A\na\n:::toggle B\nb\n:::\nmore\n:::\nafter', ':::toggle Open\n- a\n- b', '- item\n  :::toggle T\n  in\n  :::\n- next',
+  '> :::toggle Q\n> x\n> :::', ':::toggle A\n```\n:::\n```\n:::', '# Notes\n\n## Section (p. 4 to p. 5)\n\n:::toggle The **mitochondrion** makes ATP\nIt has two membranes.\n:::\n\n:::toggle Protons\n1. one\n2. two\n:::\n',
+  ':::toggle <script>alert(1)</script> [x](javascript:alert(1))\nhidden\n:::', '&nbsp;\n\n- [ ]\n- &nbsp;\n\n  inside\n'];
+const cases = [...fx.cases.map(([, md]) => md), ...TOGGLES];
 const calls = [];
-for (const [, md] of fx.cases) {
+for (const md of cases) {
   calls.push(['parse', md], ['render', md], ['plain', md], ['plain', md, 20], ['headings', md]);
   const n = md.length;
   for (const [a, b] of [[0, 0], [0, n], [n >> 1, n]]) {
@@ -25,6 +32,8 @@ for (const [, md] of fx.cases) {
   }
   for (const p of [0, n >> 1, n]) calls.push(['continueList', md, p]);
 }
+for (const md of cases) { calls.push(['blocks', md]); calls.push(['markdown', guide.blocks(md)]); }
+for (const u of ['example.com', 'www.x.org/a b', 'https://x.com/(y)', 'javascript:alert(1)', 'me@x.co', '#g-top', '/media/a.png', '']) calls.push(['href', u]);
 for (const c of fx.calls) calls.push(c);
 
 const lines = [], expected = [];
@@ -49,12 +58,15 @@ function sigB(b) {
     case 'ol': return 'OL(' + b.start + ',' + b.tight + '){' + b.items.map(sigIt).join('') + '}';
     case 'hr': return 'HR';
     case 'table': return 'TABLE(' + b.align.join(',') + ')<' + b.head.map(c => c.map(sigI).join(',')).join('|') + '>' + b.rows.map(r => '<' + r.map(c => c.map(sigI).join(',')).join('|') + '>').join('');
+    case 'toggle': return 'TG[' + b.inline.map(sigI).join(',') + ']{' + sigBs(b.blocks) + '}';
   }
   return '?';
 }
-const sigs = fx.cases.map(([, md]) => JSON.stringify(sigBs(guide.parse(md))));
+const sigs = cases.map(md => JSON.stringify(sigBs(guide.parse(md))));
+const blockLines = cases.map(md => { const b = guide.blocks(md); return JSON.stringify(b) + '\t' + JSON.stringify(guide.markdown(b)); });
 
 writeFileSync(out + '/calls.txt', lines.join('\n') + '\n');
 writeFileSync(out + '/expected.txt', expected.join('\n') + '\n');
 writeFileSync(out + '/sigs.txt', sigs.join('\n') + '\n');
+writeFileSync(out + '/blocks.txt', blockLines.join('\n') + '\n');
 console.log(calls.length + ' calls, ' + sigs.length + ' trees');

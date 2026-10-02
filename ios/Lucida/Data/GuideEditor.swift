@@ -36,8 +36,9 @@ final class GuideEditorModel: ObservableObject {
   var env: Env
   /// How long after the last key a save goes out.
   var delay: TimeInterval = 0.7
+  /// The most a page holds (the server's limit too).
+  static let most = 40000
   @Published var page: String
-  @Published var preview = false
   @Published var historyOpen = false
   /// What is typed, by deck and page (the key `deck|page`): it shows instead of what's saved until the page is left, restored or deleted.
   @Published var drafts: [String: String] = [:]
@@ -68,6 +69,8 @@ final class GuideEditorModel: ObservableObject {
   func type(_ text: String) {
     let k = key(page)
     drafts[k] = text; error = ""
+    // (a page over what a Guide may hold says so, and waits)
+    if (text as NSString).length > Self.most { pending[k] = nil; timer?.cancel(); error = "This page is full."; return }
     pending[k] = Job(deckId: deckId, page: page, text: text)
     timer?.cancel()
     timer = Task { [weak self, delay] in
@@ -107,10 +110,10 @@ final class GuideEditorModel: ObservableObject {
   /// The words of the page being shown: what is typed, or what's saved.
   func text(saved: String) -> String { drafts[key(page)] ?? saved }
 
-  func pick(_ id: String) async { await flush(); page = id; historyOpen = false; preview = false; versions = nil }
+  func pick(_ id: String) async { await flush(); page = id; historyOpen = false; versions = nil }
   func addPage() async {
     await flush()
-    do { let id = try await env.addPage(deckId, "New page"); page = id; historyOpen = false; preview = false; versions = nil }
+    do { let id = try await env.addPage(deckId, "New page"); page = id; historyOpen = false; versions = nil }
     catch { self.error = GuideEditorModel.words(error, "Couldn’t add a page. Try again.") }
   }
   /// A page's name changes 600 ms after the last key, or at once when the page is left (Done, another page: like the web's field, which sends its name when it loses

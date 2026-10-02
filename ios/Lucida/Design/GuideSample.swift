@@ -6,21 +6,23 @@ import Foundation
 enum GuideSample {
   /// The deck page's `guide` setting (the canvas's GUIDE_STATES): what the Guide and the Sources hold.
   static let states = ["Guide and sources", "Guide pages", "Long guide", "A source open", "No guide yet", "Studying (read only)"]
-  /// The PhoneGuide board's `view`.
-  static let views = ["Write", "Preview", "Older versions", "A new page", "Nothing written yet"]
+  /// The PhoneGuide board's `view` (design/materials.mjs GUIDE_VIEWS).
+  static let views = ["Writing", "Block menu", "Format bar", "Toggle open", "Toggle closed", "Section folded", "Blank note", "Reading on a shared deck", "Older versions", "A new page"]
   static let deckId = "cell"
 
   static let text = [
-    "# Cell Biology: Exam 1", "", "Everything for the first exam, in the order we covered it. Start with the checklist, then the mnemonics.", "", "## Checklist",
-    "- [x] Organelles and what each one does", "- [x] The electron transport chain", "- [ ] Glycolysis, step by step", "- [ ] Mitosis versus meiosis", "", "## Mnemonics",
-    "| Phase | Remember it as |", "| --- | --- |", "| Prophase | **P**ut your chromosomes in **P**lace |", "| Metaphase | **M**iddle of the cell |",
+    "# Cell Biology: Exam 1", "", "Everything for the first exam, in the order we covered it.", "", "## Checklist", "", "- [x] Organelles and what each one does",
+    "- [x] The electron transport chain", "- [ ] Glycolysis, step by step", "- [ ] Mitosis versus meiosis", "", "## The mitochondrion (p. 4 to p. 5)", "",
+    ":::toggle The **mitochondrion** makes most of the cell’s **ATP**", "It has two membranes. The inner one folds into **cristae**, where the electron transport chain sits.", ":::", "",
+    ":::toggle **ATP synthase** lets protons flow back and makes ATP", "1. NADH gives up its electrons.", "2. Protons are pumped out of the matrix.", "3. They flow back through ATP synthase.", ":::", "",
+    "## Mnemonics", "", "| Phase | Remember it as |", "| --- | --- |", "| Prophase | **P**ut your chromosomes in **P**lace |", "| Metaphase | **M**iddle of the cell |",
     "| Anaphase | **A**part they go |", "| Telophase | **T**wo new cells |", "", "> The mitochondrion makes most of the cell’s ATP.", "",
-    "Questions? Ask in [office hours](https://example.edu/office-hours)."].joined(separator: "\n")
+    "Questions? Ask in [office hours](https://example.edu/office-hours).", ""].joined(separator: "\n")
   /// The Long guide state: the same Guide twice over.
   static var longText: String { text + "\n\n" + text.replacingOccurrences(of: "# Cell Biology: Exam 1", with: "## More for the exam") }
   static let pages = [
-    MakeGuidePage(id: "g1", title: "Lecture 3 summary", text: "## Lecture 3\n\nThe **electron transport chain** pumps protons across the inner membrane.\n\n1. NADH gives up its electrons.\n2. Protons are pumped out of the matrix.\n3. ATP synthase lets them flow back and makes ATP."),
-    MakeGuidePage(id: "g2", title: "Mnemonics", text: "- **PMAT** for the phases of mitosis\n- *Please Do Not Throw Sausage Pizza Away* for the layers")]
+    MakeGuidePage(id: "g1", title: "Lecture 3 summary", text: "## Lecture 3\n\n:::toggle The **electron transport chain** pumps protons across the inner membrane\n1. NADH gives up its electrons.\n2. Protons are pumped out of the matrix.\n3. ATP synthase lets them flow back and makes ATP.\n:::\n"),
+    MakeGuidePage(id: "g2", title: "Mnemonics", text: "- **PMAT** for the phases of mitosis\n- *Please Do Not Throw Sausage Pizza Away* for the layers\n")]
 
   /// A day of September 2026 at ten in the morning, in this phone's time (the canvas's day(8, d)).
   static func day(_ d: Int) -> Double {
@@ -43,7 +45,7 @@ enum GuideSample {
   /// The older versions the History shows (newest first).
   static var versions: [GuideVersion] {
     [GuideVersion(at: day(21), saved: 0, text: text.replacingOccurrences(of: "- [x] The electron transport chain", with: "- [ ] The electron transport chain")),
-     GuideVersion(at: day(18), saved: 0, text: "# Cell Biology: Exam 1\n\nEverything for the first exam.")]
+     GuideVersion(at: day(18), saved: 0, text: "# Cell Biology: Exam 1\n\nEverything for the first exam.\n")]
   }
 
   /// The Guide a state shows (the canvas's guide()): its words and pages, and whether it can be changed (not when it's only studied).

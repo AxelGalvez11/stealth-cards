@@ -115,7 +115,7 @@ struct DemoProps {
   /// The Guide and Sources boards' settings (their Tweaks): the deck page's section ("Cards", "Notes", "Sources"), what the Guide and Sources hold (the
   /// canvas's `guide`: GuideSample.states), a source opened (its id) at a card's place, the Guide editor's view (GuideSample.views), and whether the card
   /// editor says where its card came from.
-  var section = "Cards", guideState = "Guide and sources", sourceOpen = "", sourceAt = "", guideView = "Write", madeFrom = true
+  var section = "Cards", guideState = "Guide and sources", sourceOpen = "", sourceAt = "", guideView = "Writing", madeFrom = true
 }
 
 @MainActor

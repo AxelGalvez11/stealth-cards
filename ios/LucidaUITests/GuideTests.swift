@@ -1,20 +1,24 @@
-// A deck's Guide and Sources, end to end in the iPhone app, against a copy of the server on this Mac with made-up people (its lc_dev cookie, which the debug-only
-// `-dev <name>` launch argument sets) and the AI stood in for (tests/stub-ai.mjs): the same story as the web's own tests (guide-ui, sources-ui, deck-tabs-ui), in flows that
-// each set up their own people. The Sources come from ios/tests/js/guide-seed.mjs, which makes them with the server's own make steps (a PDF, a recording kept as thirteen
-// files that is almost two hours long, a video, pictures, pasted text, a topic).
-//   01  a deck with no Guide offers "Add a guide"; the deck page opens on Cards with its tabs and counts; the editor saves what is typed by itself; Done lands on Notes
-//   02  each toolbar button's result (on the whole text selected), Enter in a list, Preview and Write keep the words
-//   03  Preview draws the heading, table, task list and quote, and does not run or show a script, an onerror picture, a javascript: link or an outside picture
-//   04  History lists the older versions; Restore brings one back and keeps what it replaced
-//   05  extra pages: add, rename, write, switch, delete (asks first), and at ten pages Add page goes away
-//   06  Make cards from the Guide opens the maker with its words (and with a selection, just that), for this deck
-//   07  the Guide on the deck page: Show more and Show less, a link to a heading scrolls up to it, page tabs, the owner's Edit opens that page, Done comes back to Notes
-//   08  a deck you only study shows the Guide with no editing, has no Sources tab, and has no editor
+// A deck's Notes (the Guide and its pages) and Sources, end to end in the iPhone app, against a copy of the server on this Mac with made-up people (its lc_dev cookie,
+// which the debug-only `-dev <name>` launch argument sets) and the AI stood in for (tests/stub-ai.mjs): the same story as the web's own tests (notes-ui, notes-editor,
+// sources-ui, deck-tabs-ui), in flows that each set up their own people. The Sources come from ios/tests/js/guide-seed.mjs, which makes them with the server's own make
+// steps (a PDF, a recording kept as thirteen files that is almost two hours long, a video, pictures, pasted text, a topic).
+//   01  a deck with no Guide shows a blank note on Notes (Title, Start writing); a tap opens the Notes page there; what is typed is saved by itself; Done lands on Notes
+//   02  writing: the shortcuts (# - [] 1. ---), Enter and Backspace, Aa (Heading, Text), To-do and Bullets, Bold on selected words, a link, the keyboard-down button,
+//       the bar above the keyboard and the header staying put
+//   03  reading: the heading, table, boxes and quote are drawn, and nothing in a page can run: a script, an onerror picture, a javascript: link, an outside picture
+//   04  Older versions (⋯) lists them; Restore brings one back and keeps what it replaced
+//   05  pages: + makes one, named by its first heading; Rename page and Delete page (asks first) from ⋯; at ten pages + goes away
+//   06  Make cards (⋯) from the page, or from just what is selected
+//   07  the deck page's Notes: toggles open and close (and this phone remembers), a section folds, a link to a heading jumps up to it, page tabs, a tap on the
+//       words opens the Notes page at that line, Done comes back to Notes
+//   08  a deck you only study shows its Notes with no editing, has no Sources tab, and has no Notes page to write in
 //   09  the Sources list, each kind's viewer, a recording of thirteen files plays the part that covers the card's time, a PDF opens at its page, a video opens at the time
 //   10  the "Made from" line in the card editor opens the source at that spot (Sources, viewer open); More cards from a source; Delete (asks first: the file goes, the cards stay,
 //       the line turns to plain words)
-//   11  a shared deck's page shows the Guide and "Made from 2 sources", with no names
+//   11  a shared deck's page shows its Notes (a toggle anyone can open) and "Made from 2 sources", with no names
 //   12  the deck cover's Make cards and New card (no Add cards menu); dark mode; nothing says "AI generated"
+//   13  a toggle and a section: "> " makes a toggle, Enter writes inside it, it closes and opens, a heading's ▸ folds its section; none of that changes the words saved,
+//       and this phone remembers it (the Notes page and the deck page alike)
 // Run it with ios/tools/e2e-guide.sh (it starts a fresh server on port 3934 and the stand-in AI on 3939). It only runs when LUCIDA_GUIDE is set, so the other scripts keep running
 // their own checks alone.
 import XCTest
@@ -175,34 +179,47 @@ final class GuideTests: XCTestCase {
     check(bad == 0, where_ + ": nothing says “AI generated”")
   }
 
-  // ---------- the editor ----------
-  private func field(_ app: XCUIApplication) -> XCUIElement { app.textViews["Guide, in Markdown"] }
-  private func value(_ app: XCUIApplication) -> String { field(app).value as? String ?? "" }
-  /// Puts words in the editor, replacing what's there (select everything with the keyboard, then type).
-  private func write(_ app: XCUIApplication, _ words: String) {
-    let f = field(app)
-    guard wait(f) else { check(false, "found the editor to type in"); return }
-    f.tap()
-    f.typeKey("a", modifierFlags: .command)
-    // (Typing over the selection replaces it; with nothing to type, the delete key does.)
-    if words.isEmpty { f.typeText(XCUIKeyboardKey.delete.rawValue) } else { f.typeText(words) }
-  }
-  private func selectAll(_ app: XCUIApplication) { field(app).typeKey("a", modifierFlags: .command) }
-  /// The toolbar: a button, found even where the bar has to scroll sideways to show it.
-  private func tool(_ app: XCUIApplication, _ label: String) {
-    let b = app.buttons[label].firstMatch
-    guard wait(b, 6) else { check(false, "found the toolbar button " + label); return }
-    if !b.isHittable { app.descendants(matching: .any)["Formatting"].firstMatch.swipeLeft() }
-    b.tap()
-  }
-  private func openEditor(_ who: String, deck name: String, page: String = "", extra: [String] = []) -> XCUIApplication {
+  // ---------- the Notes page ----------
+  /// A line of the page, by its words (a line is a text field of its own, whether it's being written in or read).
+  private func line(_ app: XCUIApplication, _ words: String) -> XCUIElement { app.textViews.matching(NSPredicate(format: "value == %@", words)).firstMatch }
+  private func lineHas(_ app: XCUIApplication, _ words: String) -> XCUIElement { app.textViews.matching(NSPredicate(format: "value CONTAINS %@", words)).firstMatch }
+  /// The line being written in.
+  private func focused(_ app: XCUIApplication) -> XCUIElement { app.textViews.matching(NSPredicate(format: "hasKeyboardFocus == true")).firstMatch }
+  private func focusedValue(_ app: XCUIApplication) -> String { focused(app).value as? String ?? "" }
+  /// The Notes page is on screen (its back button, and a line to write in).
+  private func onPage(_ app: XCUIApplication, _ s: TimeInterval = 15) -> Bool { wait(app.buttons["backButton"], s) && wait(app.textViews.firstMatch, s) }
+  private func openPage(_ who: String, deck name: String, page: String = "", extra: [String] = []) -> XCUIApplication {
     let app = launch(as: who, ["-open", "guide:" + name + (page.isEmpty ? "" : ":" + page)] + extra)
-    check(wait(field(app), 15), "the editor opens")
+    check(onPage(app), "the Notes page opens")
     return app
   }
-  private func done(_ app: XCUIApplication) { tap(app.buttons["doneButton"], "Done") }
+  /// Words typed where the caret is (Enter goes separately: the caret moves to another line, and the next words wait for it to be there).
+  private func type(_ app: XCUIApplication, _ words: String) {
+    let parts = words.components(separatedBy: "\n")
+    for (i, p) in parts.enumerated() {
+      if !p.isEmpty { app.typeText(p) }
+      if i < parts.count - 1 { let before = focused(app).frame; app.typeText("\n"); _ = eventually(3) { self.focused(app).frame != before }; Thread.sleep(forTimeInterval: 0.3) }
+    }
+  }
+  /// The caret at the end of a line (a tap at its far right).
+  private func tapEnd(_ e: XCUIElement) { e.coordinate(withNormalizedOffset: CGVector(dx: 0.99, dy: 0.5)).tap(); Thread.sleep(forTimeInterval: 0.6) }
+  private func key(_ app: XCUIApplication, _ label: String) { tap(app.buttons[label].firstMatch, label) }
+  /// The last word of a line (the caret at its end) selected: ⌥⇧← first; with the phone's own keyboard up a hardware key may not reach the field, so then a
+  /// double tap on the word (Geist at 16 points is about 7.6 points a letter).
+  private func selectLastWord(_ app: XCUIApplication, _ e: XCUIElement, _ text: String) {
+    app.typeKey(XCUIKeyboardKey.leftArrow.rawValue, modifierFlags: [.option, .shift])
+    if app.buttons["Bold"].waitForExistence(timeout: 2) { return }
+    let last = CGFloat(text.components(separatedBy: " ").last?.count ?? 1), x = (CGFloat(text.count) - last / 2) * 7.6
+    e.coordinate(withNormalizedOffset: CGVector(dx: 0, dy: 0.5)).withOffset(CGVector(dx: x, dy: 0)).doubleTap()
+    Thread.sleep(forTimeInterval: 0.6)
+  }
+  /// ⋯, then one of its rows.
+  private func more(_ app: XCUIApplication, _ row: String) { tap(app.buttons["More"].firstMatch, "More"); tap(app.buttons[row].firstMatch, row) }
+  private func done(_ app: XCUIApplication) { tap(app.buttons["backButton"], "Done") }
+  private func saved(_ who: String, _ id: String, page: String = "") -> String { page.isEmpty ? guide(who, id).text : (guide(who, id).pages.first { $0["id"] as? String == page }?["text"] as? String ?? "") }
+  private func shown(_ e: XCUIElement) -> Bool { e.exists && e.frame.height > 1 && e.isHittable }
 
-  // ---------- 01: no Guide, "Add a guide", the editor saves as it's typed ----------
+  // ---------- 01: no Guide: a blank note; a tap opens the Notes page, which saves as it's typed ----------
   func test01NoGuide() throws {
     try XCTSkipIf(api("x", "GET", "/api/rev").status != 200, "No server at " + Self.server)
     let who = "gdn" + run, name = "Plain deck " + run
@@ -211,26 +228,25 @@ final class GuideTests: XCTestCase {
     check(wait(buttonStarting(app, "Cards 2")), "the deck page has a Cards tab with the number of cards")
     check(selected(buttonStarting(app, "Cards")) && !selected(buttonStarting(app, "Notes")) && !selected(buttonStarting(app, "Sources")), "it opens on Cards")
     check(button(app, "Notes").exists && buttonStarting(app, "Diagrams").exists && button(app, "Sources").exists, "with Notes, Diagrams and Sources beside it (a deck of your own)")
-    check(textHas(app, "Question 1 of").exists && !text(app, "GUIDE").exists && !text(app, "SOURCES").exists, "the cards show, and no Guide or Sources in the way")
+    check(textHas(app, "Question 1 of").exists && !line(app, "Title").exists, "the cards show, and no Notes in the way")
     tap(button(app, "Notes"), "Notes")
-    check(wait(text(app, "GUIDE")) && button(app, "Add a guide").exists && button(app, "Write").exists, "Notes with no Guide says “Add a guide”, with Write")
-    check(!button(app, "Edit").exists && !textHas(app, "Question 1 of").exists, "(no Edit yet, and the cards give way)")
+    check(wait(line(app, "Title")) && line(app, "Start writing").exists, "Notes with no Guide is a blank note: a heading that says Title and a line that says Start writing")
+    check(!button(app, "Edit").exists && !button(app, "Make cards").exists && !textHas(app, "Question 1 of").exists, "(no Edit button or Make cards yet, and the cards give way)")
     snap("guide-empty")
-    tap(button(app, "Add a guide"), "Add a guide")
-    check(wait(field(app)), "it opens the editor")
-    check(button(app, "Write").exists && button(app, "Preview").exists && button(app, "History").exists && button(app, "Add a page").exists && button(app, "Make cards").exists && app.buttons["doneButton"].exists, "with Write, Preview, History, Add a page, Make cards and Done")
-    check(text(app, "Guide").exists && text(app, name).exists, "and the Guide’s name and the deck’s")
-    noLabel(app, "the editor")
-    // typing saves by itself
-    let words = "# Cell Biology: Exam 1\n\nEverything for the first exam."
-    write(app, words)
-    check(eventually { self.guide(who, id).text == words }, "what is typed is saved a moment later, with no button")
-    check(wait(app.staticTexts["saveLabel"]) && eventually(4) { (app.staticTexts["saveLabel"].label) == "Saved" }, "the editor says Saved")
-    check(value(app) == words, "and the words stay in the field")
-    // Done lands on Notes
+    tap(line(app, "Title"), "the blank note's title")
+    check(onPage(app) && eventually(5) { self.focusedValue(app) == "Title" }, "a tap opens the Notes page with the caret in the title")
+    check(wait(app.buttons["Text style"]) && app.buttons["To-do"].exists && app.buttons["Bullets"].exists && app.buttons["Toggle"].exists && app.buttons["Hide the keyboard"].exists,
+          "Lucida's own bar is above the keyboard: Aa, To-do, Bullets, Toggle, the keyboard-down button")
+    check(app.buttons["More"].exists && app.buttons["Add a page"].exists && text(app, name).exists, "with ⋯, + for a page, and the deck's name")
+    check(!button(app, "Write").exists && !button(app, "Preview").exists, "and no Write or Preview: the page is always formatted")
+    noLabel(app, "the Notes page")
+    type(app, "Cell Biology: Exam 1\nEverything for the first exam.")
+    check(eventually { self.guide(who, id).text == "# Cell Biology: Exam 1\n\nEverything for the first exam.\n" }, "what is typed is saved a moment later as Markdown, with no button (" + guide(who, id).text.replacingOccurrences(of: "\n", with: "\\n") + ")")
+    check(wait(app.staticTexts["saveLabel"]) && eventually(4) { app.staticTexts["saveLabel"].label == "Saved" }, "the page says Saved")
+    check(line(app, "Cell Biology: Exam 1").exists && (line(app, "Cell Biology: Exam 1").label == "Heading"), "the title is a heading")
     done(app)
-    check(wait(text(app, "Cell Biology: Exam 1")) && text(app, "GUIDE").exists, "Done goes back to the deck’s Notes, which draw the Guide")
-    check(selected(button(app, "Notes")) && button(app, "Edit").exists && button(app, "Make cards").exists, "with Edit and Make cards now")
+    check(wait(line(app, "Cell Biology: Exam 1")) && selected(button(app, "Notes")), "Done goes back to the deck's Notes, which read the page")
+    check(button(app, "Make cards").exists, "with Make cards now")
     noLabel(app, "the Notes")
     // a tab that isn't there opens Cards
     let app2 = launch(as: who, ["-open", "deck:" + name, "-deckTab", "nowhere"])
@@ -241,255 +257,269 @@ final class GuideTests: XCTestCase {
     let app3 = launch(as: who, ["-open", "deck:" + bare])
     check(wait(buttonStarting(app3, "Cards 0")) && button(app3, "Notes").exists && wait(text(app3, "No cards in this deck yet.")), "a deck with no cards but a Guide keeps its tabs, and says so on Cards")
     tap(button(app3, "Notes"), "Notes")
-    check(wait(text(app3, "Plan")) && textHas(app3, "Write the cards later.").exists, "and its Notes show the Guide")
+    check(wait(line(app3, "Plan")) && line(app3, "Write the cards later.").exists, "and its Notes show the Guide")
   }
 
-  // ---------- 02: the toolbar ----------
-  func test02Toolbar() throws {
+  // ---------- 02: writing ----------
+  func test02Writing() throws {
     try XCTSkipIf(api("x", "GET", "/api/rev").status != 200, "No server at " + Self.server)
-    let who = "gdt" + run, name = "Toolbar deck " + run
-    person(who, deck: name)
-    let app = openEditor(who, deck: name)
-    // with the keyboard up the page keeps its place: the header under the status bar, the text field with room, Make cards and Done above the keyboard
-    let back = app.buttons["backButton"], done = app.buttons["doneButton"], top = back.frame.minY
-    field(app).tap()
-    Thread.sleep(forTimeInterval: 1.5)
-    let kb = app.keyboards.firstMatch
-    check(kb.exists && top > 40 && abs(back.frame.minY - top) <= 1, "the header stays under the status bar while the keyboard is up (the back button is \(pt(back.frame.minY)) points down, as before: \(pt(top)))")
-    check(kb.exists && done.frame.maxY <= kb.frame.minY && field(app).frame.height > 100, "and Make cards and Done sit above the keyboard, with the text field still tall (\(pt(field(app).frame.height)) points)")
-    func press(_ label: String, on start: String, expect: String, exact: Bool = true) {
-      write(app, start); selectAll(app); tool(app, label)
-      let v = value(app)
-      check(exact ? v == expect : v.range(of: expect, options: .regularExpression) != nil, label + " on “" + start.replacingOccurrences(of: "\n", with: "\\n") + "”: " + v.replacingOccurrences(of: "\n", with: "\\n"))
-    }
-    press("Bold", on: "hello world", expect: "**hello world**")
-    press("Italic", on: "hello world", expect: "*hello world*")
-    press("Code", on: "hello world", expect: "`hello world`")
-    press("Heading", on: "hello world", expect: "## hello world")
-    press("Bulleted list", on: "one\ntwo", expect: "- one\n- two")
-    press("Numbered list", on: "one\ntwo", expect: "1. one\n2. two")
-    press("Task list", on: "one", expect: "- [ ] one")
-    press("Quote", on: "one", expect: "> one")
-    press("Link", on: "see world now", expect: #"^\[see world now\]\([^)]*\)$"#, exact: false)
-    write(app, ""); tool(app, "Table")
-    check(value(app) == "| Column 1 | Column 2 |\n| --- | --- |\n| Cell | Cell |\n| Cell | Cell |\n", "Table inserts a table: " + value(app).replacingOccurrences(of: "\n", with: "\\n"))
-    // pressing a button again takes it off
-    write(app, "pick bold"); selectAll(app); tool(app, "Bold"); selectAll(app); tool(app, "Bold")
-    check(value(app) == "pick bold", "pressing Bold again takes it off: " + value(app))
-    // with nothing selected, the marks go in with the caret between them
-    write(app, ""); tool(app, "Bold"); field(app).typeText("x")
-    check(value(app) == "**x**", "Bold with nothing selected puts the marks in with the caret between: " + value(app))
-    // Enter carries a list on, and ends it on an empty item
-    write(app, "- one")
-    field(app).typeText("\n")
-    check(value(app) == "- one\n- ", "Enter in a list starts the next item: " + value(app).replacingOccurrences(of: "\n", with: "\\n"))
-    field(app).typeText("\n")
-    check(!value(app).hasSuffix("- "), "Enter on an empty item ends the list: " + value(app).replacingOccurrences(of: "\n", with: "\\n"))
-    write(app, "1. a")
-    field(app).typeText("\n")
-    check(value(app) == "1. a\n2. ", "and a numbered list goes on counting: " + value(app).replacingOccurrences(of: "\n", with: "\\n"))
-    write(app, "- [ ] task")
-    field(app).typeText("\n")
-    check(value(app) == "- [ ] task\n- [ ] ", "a task list goes on with an unchecked box: " + value(app).replacingOccurrences(of: "\n", with: "\\n"))
-    write(app, "plain")
-    field(app).typeText("\nnext")
-    check(value(app) == "plain\nnext", "Enter outside a list is an ordinary new line: " + value(app).replacingOccurrences(of: "\n", with: "\\n"))
-    // the words are Markdown as typed: no curly quotes, no long dashes
-    write(app, "a \"b\" -- c")
-    check(value(app) == "a \"b\" -- c", "no curly quotes or long dashes are put in: " + value(app))
-    snap("guide-toolbar")
+    let who = "gdw" + run, name = "Writing deck " + run
+    let id = person(who, deck: name)
+    let app = openPage(who, deck: name)
+    // an empty Guide opens with the caret in its title, the keyboard up, and the bar right above it
+    check(eventually(6) { self.focusedValue(app) == "Title" }, "an empty Guide opens on its title, ready to type")
+    let kb = app.keyboards.firstMatch, back = app.buttons["backButton"], top = back.frame.minY
+    check(wait(app.buttons["Text style"]), "the bar is up while a line is written in")
+    Thread.sleep(forTimeInterval: 1.5)   // (the keyboard has come up)
+    // (with the phone's own keyboard the bar sits right on it; with a hardware keyboard, at the bottom of the screen above the home indicator)
+    let screen = app.windows.firstMatch.frame.maxY, up = kb.exists && kb.frame.minY < screen - 10
+    let barBottom = app.buttons["Text style"].frame.maxY, floor = up ? kb.frame.minY : screen - 34
+    // (the keyboard's own frame here starts below its row of suggestions, which the bar sits on)
+    check(barBottom <= floor + 1 && floor - barBottom < (up ? 56 : 14), "the bar sits right on top of the " + (up ? "keyboard" : "home indicator (a hardware keyboard)") + " (\(pt(barBottom)) and \(pt(floor)))")
+    check(top > 40 && abs(back.frame.minY - top) <= 1, "and the header stays under the status bar")
+    type(app, "Plan\n- one\ntwo\n\nthree\n[] milk\n\n1. first\n\n## Part two\n---")
+    check(eventually { self.saved(who, id) == "# Plan\n\n- one\n- two\n\nthree\n\n- [ ] milk\n\n1. first\n\n## Part two\n\n---\n" },
+          "the shortcuts make blocks (“- ” a bullet, “[] ” a to-do, “1. ” a numbered item, “## ” a subheading, “---” a divider), Enter goes on with the same kind, and Enter on an empty item makes text: " + saved(who, id).replacingOccurrences(of: "\n", with: "\\n"))
+    check(line(app, "one").label == "List" && line(app, "milk").label == "To-do" && line(app, "Part two").label == "Subheading", "each line is its kind, with no marks to see")
+    check(!lineHas(app, "- one").exists && !lineHas(app, "[]").exists && !lineHas(app, "##").exists, "(the marks are gone once typed)")
+    snap("guide-writing")
+    // Backspace at the start of a line makes it text (with its words kept: ios/tests/swift/notes and the web's own tests check that part)
+    type(app, "- ")
+    check(eventually(4) { self.focused(app).label == "List" }, "“- ” makes a bullet")
+    app.typeText(XCUIKeyboardKey.delete.rawValue)
+    check(eventually(4) { self.focused(app).label == "Text" }, "Backspace at the start of an item makes it text")
+    type(app, "gone")
+    // Aa: Heading, then Text; To-do and Bullets
+    key(app, "Text style")
+    check(wait(app.buttons["Heading"]) && app.buttons["Subheading"].exists && app.buttons["Text"].exists, "Aa shows Heading, Subheading and Text")
+    key(app, "Heading")
+    check(eventually(4) { self.focused(app).label == "Heading" } && gone(app.buttons["Subheading"], 4), "Heading makes the line a heading (and Aa's choices close)")
+    key(app, "Text style"); key(app, "Text")
+    check(eventually(4) { self.focused(app).label == "Text" }, "and Text makes it text again")
+    key(app, "Text style"); key(app, "Close")
+    check(gone(app.buttons["Subheading"], 4) && app.buttons["To-do"].exists, "✕ closes Aa's choices")
+    key(app, "To-do")
+    check(eventually(4) { self.focused(app).label == "To-do" }, "To-do makes it a to-do")
+    key(app, "Bullets")
+    check(eventually(4) { self.focused(app).label == "List" }, "Bullets makes it a bullet")
+    key(app, "Bullets")
+    check(eventually(4) { self.focused(app).label == "Text" }, "and Bullets again makes it text")
+    // a box is checked with a tap, and saved
+    let box = app.descendants(matching: .any).matching(identifier: "notes.box").firstMatch
+    tap(box, "the to-do's box")
+    check(eventually { self.saved(who, id).contains("- [x] milk") }, "a tap on a to-do's box checks it, and that is saved")
+    // Bold on what is selected, and a link
+    tapEnd(focused(app))
+    type(app, "\nmake this bold")
+    selectLastWord(app, line(app, "make this bold"), "make this bold")
+    check(wait(app.buttons["Bold"], 6) && app.buttons["Italic"].exists && app.buttons["Strikethrough"].exists && app.buttons["Code"].exists && app.buttons["Link"].exists,
+          "with words selected the bar has Bold, Italic, Strikethrough, Code and Link")
+    snap("guide-format")
+    key(app, "Bold")
+    check(eventually { self.saved(who, id).contains("make this **bold**") }, "Bold makes them bold: " + saved(who, id).components(separatedBy: "\n").filter { $0.contains("make this") }.joined())
+    check(app.buttons["Bold"].isSelected, "and Bold says it's on")
+    tapEnd(line(app, "make this bold"))
+    type(app, "\nread the plan here")
+    selectLastWord(app, line(app, "read the plan here"), "read the plan here")
+    key(app, "Link")
+    let field = app.textFields["Link"]
+    check(wait(field), "Link asks for the address, in the bar")
+    field.typeText("example.com/plan")
+    key(app, "Add the link")
+    check(eventually { self.saved(who, id).contains("read the plan [here](https://example.com/plan)") }, "and puts it on the words (example.com/plan is https://example.com/plan)")
+    // the keyboard goes down with its button (once nothing is selected: with words selected the bar is Bold and the rest, as on the web)
+    tapEnd(line(app, "read the plan here"))
+    key(app, "Hide the keyboard")
+    check(gone(app.keyboards.firstMatch, 6) && gone(app.buttons["Text style"], 4), "the keyboard-down button puts the keyboard and the bar away")
+    noLabel(app, "writing")
   }
 
-  // ---------- 03: Preview, and nothing in a Guide can run ----------
-  func test03Preview() throws {
+  // ---------- 03: reading, and nothing in a page can run ----------
+  func test03Reading() throws {
     try XCTSkipIf(api("x", "GET", "/api/rev").status != 200, "No server at " + Self.server)
-    let who = "gdp" + run, name = "Preview deck " + run
+    let who = "gdp" + run, name = "Reading deck " + run
     let id = person(who, deck: name)
     // a picture of its own (the app's storage), and the hostile words
     let png = FileManager.default.contents(atPath: fx("a.png")) ?? Data()
     let mine = ((api(who, "POST", "/api/media", raw: png, type: "image/png").json as? [String: Any])?["url"] as? String) ?? "/media/none.png"
     let HOSTILE = "# A heading\n\nSome **bold** words and `code`.\n\n- [x] done\n- [ ] todo\n\n| a | b |\n| - | - |\n| 1 | 2 |\n\n> a quote\n\n<script>window.__pwn = 2</script>\n\n<img src=x onerror=\"window.__pwn = 1\">\n\n[click me](javascript:window.__pwn=3)\n\n[fine](https://example.com/page)\n\n![remote](http://evil.example/p.png)\n\n![mine](\(mine))"
     act(who, "guide.save", ["deckId": id, "text": HOSTILE])
-    let app = openEditor(who, deck: name)
-    check(value(app) == HOSTILE, "the editor shows the words as saved")
-    tap(button(app, "Preview"), "Preview")
-    check(wait(text(app, "A heading")), "Preview draws the heading")
-    check(app.staticTexts["A heading"].firstMatch.exists && textHas(app, "Some bold words and code.").exists, "and the paragraph with its bold and code")
-    check(text(app, "a").exists && text(app, "b").exists && text(app, "1").exists && text(app, "2").exists, "the table’s cells")
-    check(app.descendants(matching: .any).matching(NSPredicate(format: "label == %@", "Done")).count >= 1 && app.descendants(matching: .any).matching(NSPredicate(format: "label == %@", "Not done")).count >= 1, "the task list’s boxes (one done, one not)")
-    check(text(app, "a quote").exists && text(app, "todo").exists, "the quote and the task’s words")
-    snap("guide-preview")
-    // nothing ran, nothing is a script or a picture it shouldn't be
-    check(textHas(app, "<script>window.__pwn = 2</script>").exists, "a script is shown as plain words, not run")
-    check(textHas(app, "<img src=x onerror=").exists && app.webViews.count == 0, "so is an onerror picture (and there is no web page at all)")
-    check(text(app, "click me").exists && !anyValue(app, "click me ->").exists, "a javascript: link is not a link: its words are plain")
-    check(anyValue(app, "fine -> https://example.com/page").exists, "a normal link is one, to its address")
-    check(!app.images["remote"].exists && text(app, "remote").exists, "an outside picture is not shown: its description is")
-    let pic = app.descendants(matching: .any).matching(NSPredicate(format: "label == %@ AND elementType != %d", "mine", XCUIElement.ElementType.staticText.rawValue)).firstMatch
-    check(wait(pic, 15), "only the app’s own pictures show (\(mine))")
-    // going back to Write brings the same words
-    tap(button(app, "Write"), "Write")
-    check(wait(field(app)) && value(app) == HOSTILE, "going back to Write brings the same text")
+    let app = launch(as: who, ["-open", "deck:" + name, "-deckTab", "notes"])
+    check(wait(line(app, "A heading")) && line(app, "A heading").label == "Heading", "the Notes draw the heading as a heading")
+    check(line(app, "Some bold words and code.").exists, "the paragraph, its marks drawn (no stars or backticks)")
+    check(line(app, "a").exists && line(app, "b").exists && line(app, "1").exists && line(app, "2").exists, "the table's cells")
+    check(app.descendants(matching: .any).matching(identifier: "notes.box").count == 2 && app.descendants(matching: .any)["Done"].exists && app.descendants(matching: .any)["Not done"].exists,
+          "the to-dos' boxes (one done, one not)")
+    check(line(app, "a quote").label == "Quote" && line(app, "todo").exists, "the quote and the to-do's words")
+    snap("guide-reading")
+    check(lineHas(app, "<script>window.__pwn = 2</script>").exists, "a script is shown as plain words, not run")
+    check(lineHas(app, "<img src=x onerror=").exists && app.webViews.count == 0, "so is an onerror picture (and there is no web page at all)")
+    check(line(app, "click me").exists && line(app, "click me").identifier.isEmpty, "a javascript: link is not a link: its words are plain")
+    check(line(app, "fine").identifier == "links: fine -> https://example.com/page", "a normal link is one, to its address")
+    check(!app.images["remote"].exists && app.staticTexts["remote"].exists, "an outside picture is not shown: its description is")
+    check(wait(app.images["mine"], 15), "only the app’s own pictures show (\(mine))")
+    // the same words on the Notes page
+    tap(line(app, "A heading"), "the heading")
+    check(onPage(app) && line(app, "A heading").exists && lineHas(app, "<script>").exists, "a tap opens the same page to write in, drawn the same")
+    check(saved(who, id) == HOSTILE, "and opening it changes nothing that's saved")
   }
 
-  // ---------- 04: History ----------
+  // ---------- 04: Older versions ----------
   func test04History() throws {
     try XCTSkipIf(api("x", "GET", "/api/rev").status != 200, "No server at " + Self.server)
     let who = "gdh" + run, name = "History deck " + run
     let id = person(who, deck: name)
     for t in ["First draft", "Second draft", "Third draft"] { act(who, "guide.save", ["deckId": id, "text": t, "snapshot": true]) }
-    let app = openEditor(who, deck: name)
-    tap(button(app, "History"), "History")
-    check(wait(textHas(app, "Older versions of the Guide.")), "History says what it lists")
+    let app = openPage(who, deck: name)
+    more(app, "Older versions")
+    check(wait(textHas(app, "Older versions of the Guide")), "Older versions (in ⋯) says what it lists")
     check(wait(textHas(app, "First draft")) && textHas(app, "Second draft").exists && !textHas(app, "There are no older versions yet").exists, "the older versions, with their words")
     snap("guide-history")
     let restores = app.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", "Restore"))
     check(restores.count >= 2, "each has a Restore (\(restores.count))")
-    check(text(app, "11 characters").exists || textHas(app, " characters").exists, "and says how long it was")
+    check(textHas(app, " characters").exists, "and says how long it was")
     // The newest is the Second draft; the First draft is under it.
     restores.element(boundBy: 1).tap()
     check(eventually { self.guide(who, id).text == "First draft" }, "Restore brings that version back")
-    check(wait(field(app)) && eventually { self.value(app) == "First draft" }, "and the editor shows it")
+    check(wait(line(app, "First draft")), "and the page shows it")
     check(history(who, id).contains("Third draft"), "what it replaced is kept as a version, so it can be undone")
-    tap(button(app, "History"), "History")
-    check(wait(button(app, "Back to writing")), "History opens again")
-    tap(button(app, "Back to writing"), "Back to writing")
-    check(wait(button(app, "Preview")) && field(app).exists, "Back to writing closes it")
-    noLabel(app, "History")
+    more(app, "Older versions")
+    check(wait(button(app, "Back to the page")), "Older versions opens again")
+    tap(button(app, "Back to the page"), "Back to the page")
+    check(wait(line(app, "First draft")) && !textHas(app, "Older versions of").exists, "Back to the page closes it")
+    noLabel(app, "Older versions")
   }
 
-  // ---------- 05: extra pages ----------
+  // ---------- 05: pages ----------
   func test05Pages() throws {
     try XCTSkipIf(api("x", "GET", "/api/rev").status != 200, "No server at " + Self.server)
     let who = "gdg" + run, name = "Pages deck " + run
     let id = person(who, deck: name)
     act(who, "guide.save", ["deckId": id, "text": "First draft"])
-    let app = openEditor(who, deck: name)
-    check(button(app, "Guide").exists && button(app, "Add a page").exists && !app.textFields["Page name"].exists, "the Guide has a tab and Add page, and no page name")
+    let app = openPage(who, deck: name)
+    check(button(app, "Guide").exists && button(app, "Add a page").exists, "the Guide has a pill, and + for a page")
     tap(button(app, "Add a page"), "Add a page")
-    check(eventually { self.guide(who, id).pages.count == 1 }, "Add page makes one")
-    check(wait(app.textFields["Page name"]) && button(app, "Delete page").exists, "with a name field and Delete page")
-    let name1 = app.textFields["Page name"]
-    // (To replace a name, a tap at the far right puts the caret at its end; then the words are deleted.)
-    name1.coordinate(withNormalizedOffset: CGVector(dx: 0.97, dy: 0.5)).tap()
-    name1.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: (name1.value as? String ?? "").count) + "Mnemonics")
-    check(eventually { (self.guide(who, id).pages.first?["title"] as? String) == "Mnemonics" }, "renaming a page saves (the name is now “\(self.guide(who, id).pages.first?["title"] as? String ?? "?")”, the field says “\(name1.value as? String ?? "?")”)")
-    check(wait(button(app, "Mnemonics")), "and its tab says so")
-    write(app, "## Remember\n\nP-M-A-T")
-    check(eventually { (self.guide(who, id).pages.first?["text"] as? String) == "## Remember\n\nP-M-A-T" }, "a page has its own words, saved as they are typed")
-    check(guide(who, id).text == "First draft", "and the Guide’s own words are untouched")
-    tap(button(app, "Guide"), "the Guide tab")
-    check(wait(field(app)) && eventually { self.value(app) == "First draft" }, "the Guide tab shows the Guide: " + value(app))
-    tap(button(app, "Mnemonics"), "the Mnemonics tab")
-    check(eventually { self.value(app) == "## Remember\n\nP-M-A-T" }, "the page tab shows the page: " + value(app))
+    check(eventually { self.guide(who, id).pages.count == 1 }, "+ makes one")
+    check(wait(button(app, "New page")) && eventually(6) { self.focusedValue(app) == "Title" }, "it opens as a blank note, with the caret in its title")
+    type(app, "Mnemonics\nP-M-A-T")
+    let pid = guide(who, id).pages.first?["id"] as? String ?? ""
+    check(eventually { self.saved(who, id, page: pid) == "# Mnemonics\n\nP-M-A-T\n" }, "a page has its own words, saved as they are typed")
+    check(eventually { (self.guide(who, id).pages.first?["title"] as? String) == "Mnemonics" } && wait(button(app, "Mnemonics")), "and a new page is called by its first heading")
+    check(guide(who, id).text == "First draft", "the Guide's own words are untouched")
+    tap(button(app, "Guide"), "the Guide's pill")
+    check(wait(line(app, "First draft")), "the Guide's pill shows the Guide")
+    tap(button(app, "Mnemonics"), "the page's pill")
+    check(wait(line(app, "P-M-A-T")), "the page's pill shows the page")
     snap("guide-page")
-    // delete asks first
-    tap(button(app, "Delete page"), "Delete page")
-    check(wait(any(app, "Delete the page “Mnemonics”?")), "Delete page asks first, with the page’s name")
+    // Rename page, from ⋯
+    more(app, "Rename page")
+    let nameField = app.textFields["Page name"]
+    check(wait(nameField) && (nameField.value as? String) == "Mnemonics", "Rename page shows the page's name in a field")
+    nameField.coordinate(withNormalizedOffset: CGVector(dx: 0.97, dy: 0.5)).tap()
+    nameField.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: 9) + "Memory aids\n")
+    check(eventually { (self.guide(who, id).pages.first?["title"] as? String) == "Memory aids" } && wait(button(app, "Memory aids")), "and saves the new name")
+    // Delete page asks first
+    more(app, "Delete page")
+    check(wait(any(app, "Delete the page “Memory aids”?")), "Delete page asks first, with the page’s name")
     dismissDialog(app)
-    check(gone(any(app, "Delete the page “Mnemonics”?")) && guide(who, id).pages.count == 1, "closing it keeps the page")
-    tap(button(app, "Delete page"), "Delete page")
-    check(wait(any(app, "Delete the page “Mnemonics”?")), "it asks again")
+    check(gone(any(app, "Delete the page “Memory aids”?")) && guide(who, id).pages.count == 1, "closing it keeps the page")
+    more(app, "Delete page")
+    check(wait(any(app, "Delete the page “Memory aids”?")), "it asks again")
     tap(dialogButton(app, "Delete"), "Delete")
     check(eventually { self.guide(who, id).pages.isEmpty }, "Delete removes the page")
-    check(wait(field(app)) && eventually { self.value(app) == "First draft" } && !app.textFields["Page name"].exists, "and the Guide shows again")
-    // a page can be named like a source, however long its name
+    check(wait(line(app, "First draft")) && !button(app, "Memory aids").exists, "and the Guide shows again")
+    // a page named like a source, however long its name
     let long = "Lecture 3 slides, with every term the first exam asks for and then some more besides"
-    let again = openEditor(who, deck: name)
-    check(wait(button(again, "Guide")), "the editor opens again")
     act(who, "guide.page.add", ["deckId": id, "title": long])
-    let again2 = openEditor(who, deck: name)
-    // (The server keeps the first 80 letters of a page's name.)
-    check(wait(button(again2, String(long.prefix(80)).trimmingCharacters(in: .whitespaces))), "a page named like a source, and as long as that, has its tab (its first 80 letters)")
-    snap("guide-long-page-name")
-    // a name still being typed is sent when the page is left (Done right after the last key)
-    let temp = act(who, "guide.page.add", ["deckId": id, "title": "Temp"])["id"] as? String ?? ""
-    let app3 = openEditor(who, deck: name, page: temp)
-    let tempName = app3.textFields["Page name"]
-    if wait(tempName) {
-      tempName.coordinate(withNormalizedOffset: CGVector(dx: 0.97, dy: 0.5)).tap()
-      tempName.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: 4) + "Quick")
-      done(app3)
-      check(eventually { (self.guide(who, id).pages.first { $0["id"] as? String == temp }?["title"] as? String) == "Quick" }, "a name that is still being typed is sent when Done is tapped")
-    } else { check(false, "found the page’s name to type in") }
-    // at ten pages Add page goes away
+    let again = openPage(who, deck: name)
+    check(wait(button(again, String(long.prefix(80)).trimmingCharacters(in: .whitespaces))), "a page named like a source, and as long as that, has its pill (its first 80 letters)")
+    // at ten pages + goes away
     for i in 0..<10 { act(who, "guide.page.add", ["deckId": id, "title": "P\(i)"]) }
-    let app2 = openEditor(who, deck: name)
-    check(wait(button(app2, "Guide")) && !button(app2, "Add a page").exists, "at ten pages, Add page goes away")
+    let app2 = openPage(who, deck: name)
+    check(wait(button(app2, "Guide")) && !button(app2, "Add a page").exists, "at ten pages, + goes away")
   }
 
-  // ---------- 06: Make cards from the Guide ----------
+  // ---------- 06: Make cards from the page ----------
   func test06MakeFromGuide() throws {
     try XCTSkipIf(api("x", "GET", "/api/rev").status != 200, "No server at " + Self.server)
     let who = "gdm" + run, name = "Maker deck " + run
     let id = person(who, deck: name)
     let GUIDE = "The mitochondrion makes most of the cell’s ATP from sugar and oxygen. The nucleus stores the cell’s DNA and steers what the cell does."
     act(who, "guide.save", ["deckId": id, "text": GUIDE])
-    var app = openEditor(who, deck: name)
-    tap(button(app, "Make cards"), "Make cards")
-    check(wait(app.textViews["Text to make cards from"]) && (app.textViews["Text to make cards from"].value as? String) == GUIDE, "Make cards opens the maker with the whole Guide as the text")
+    var app = openPage(who, deck: name)
+    more(app, "Make cards from this guide")
+    let maker = app.textViews["Text to make cards from"]
+    check(wait(maker) && (maker.value as? String) == GUIDE, "Make cards (in ⋯) opens the maker with the whole Guide as the text")
     check(text(app, name).exists || any(app, name).exists, "and the cards go to this deck")
     tap(button(app, "Close"), "Close")
     // just what is selected
-    act(who, "guide.save", ["deckId": id, "text": "alpha beta gamma delta\nsecond line here"])
-    app = openEditor(who, deck: name)
-    let maker = app.textViews["Text to make cards from"]
-    // (The keys that select can get lost when the Mac is busy: if the maker shows the whole page, close it and select again.)
+    act(who, "guide.save", ["deckId": id, "text": "alpha beta gamma delta\n\nsecond line here"])
+    app = openPage(who, deck: name)
     var cut = false
     for _ in 0..<3 where !cut {
-      let f = field(app)
-      f.tap()
-      Thread.sleep(forTimeInterval: 1)   // (the keyboard comes up first)
-      f.typeKey(XCUIKeyboardKey.upArrow.rawValue, modifierFlags: .command)
-      f.typeKey(XCUIKeyboardKey.rightArrow.rawValue, modifierFlags: [.command, .shift])
+      tapEnd(line(app, "alpha beta gamma delta"))
+      selectLastWord(app, line(app, "alpha beta gamma delta"), "alpha beta gamma delta")
       Thread.sleep(forTimeInterval: 0.6)
-      tap(button(app, "Make cards"), "Make cards")
-      cut = wait(maker) && eventually(5) { (maker.value as? String) == "alpha beta gamma delta" }
-      if !cut { tap(button(app, "Close"), "Close"); _ = wait(field(app)) }
+      more(app, "Make cards from this guide")
+      cut = wait(maker) && eventually(5) { (maker.value as? String) == "delta" }
+      if !cut { tap(button(app, "Close"), "Close"); _ = onPage(app) }
     }
-    check(cut, "with a selection it makes cards from just that: " + (maker.value as? String ?? ""))
+    check(cut, "with words selected it makes cards from just those: " + (maker.value as? String ?? ""))
   }
 
-  // ---------- 07: the Guide on the deck page ----------
+  // ---------- 07: the deck page's Notes ----------
   func test07DeckGuide() throws {
     try XCTSkipIf(api("x", "GET", "/api/rev").status != 200, "No server at " + Self.server)
     let who = S("owner"), deckId = S("deckId")
     let n = cards(who, in: deckId).count
-    let app = launch(as: who, ["-open", "deck:Cell Biology", "-deckTab", "notes"])
-    check(wait(text(app, "Cell Biology: Exam 1")), "Notes draw the Guide (the heading, the first words)")
+    var app = launch(as: who, ["-open", "deck:Cell Biology", "-deckTab", "notes"])
+    check(wait(line(app, "Cell Biology: Exam 1")), "Notes read the Guide (its title, as a heading)")
     check(buttonStarting(app, "Cards \(n)").exists && selected(button(app, "Notes")) && buttonStarting(app, "Sources \(sourceCount)").exists, "the tabs say how many cards and Sources (Cards \(n), Sources \(sourceCount)), and Notes is the one on show")
-    check(textHas(app, "Everything for the first exam").exists && !textHas(app, "Question 1 of").exists, "the Guide shows, the cards don’t")
-    check(button(app, "Show more").exists && button(app, "Guide").exists && button(app, "Lecture 3 summary").exists && button(app, "Mnemonics").exists, "a long Guide is cut short with Show more, and the pages have tabs")
-    // (How far down the page the button is says how long the card is: the card's own frame in the accessibility tree also holds the words that are cut off.)
-    let cut = button(app, "Show more").frame.minY
-    snap("deck-guide-long")
-    tap(button(app, "Show more"), "Show more")
-    check(wait(button(app, "Show less")) && eventually(4) { self.button(app, "Show less").frame.minY > cut + 100 }, "Show more opens it all, and says Show less (the button moved from \(pt(cut)) to \(pt(self.button(app, "Show less").frame.minY)) points down)")
-    app.swipeUp()
-    check(textHas(app, "Questions? Ask in office hours.").exists, "its last line is there")
-    check(anyValue(app, "office hours -> https://example.edu/office-hours").exists, "its link goes to its address")
-    // a link inside the Guide to one of its headings scrolls the page up to it
-    // (A link in a paragraph is an element of its own, a Link, inside it.)
-    let top = text(app, "Cell Biology: Exam 1"), back = app.links["Back to the top"].firstMatch
-    check(anyValue(app, "Back to the top -> #g-cell-biology-exam-1").exists && !top.isHittable, "a link to a heading is a jump within the page, and the heading is far above, out of sight")
-    Thread.sleep(forTimeInterval: 1.2)
-    tap(back, "Back to the top")
-    check(eventually(8) { top.exists && top.frame.minY > 40 && top.frame.maxY < 400 && top.isHittable }, "tapping it scrolls up to that heading (now at \(pt(top.frame.minY)))")
-    app.swipeUp(); Thread.sleep(forTimeInterval: 1.2)
-    tap(button(app, "Show less"), "Show less")
-    check(wait(button(app, "Show more")), "Show less folds it again")
-    app.swipeDown(); app.swipeDown()
+    check(lineHas(app, "Everything for the first exam").exists && !textHas(app, "Question 1 of").exists, "the Guide shows, the cards don’t")
+    check(button(app, "Make cards").exists && button(app, "Guide").exists && button(app, "Lecture 3 summary").exists && button(app, "Mnemonics").exists, "Make cards, and the pages as tabs")
+    // toggles: closed at first on this phone; opened, and remembered
+    let idea = line(app, "The mitochondrion makes most of the cell’s ATP"), inside = line(app, "It has two membranes. The inner one folds into cristae.")
+    check(idea.exists && !inside.exists, "a toggle shows its line, and what it holds is hidden")
+    let opens = app.buttons.matching(identifier: "notes.toggle")
+    check(opens.count == 2 && opens.element(boundBy: 0).label == "Open", "each toggle has its ▸ (Open)")
+    opens.element(boundBy: 0).tap()
+    check(wait(inside) && opens.element(boundBy: 0).label == "Close", "a tap on ▸ opens it")
+    snap("deck-notes-toggle-open")
+    app = launch(as: who, ["-open", "deck:Cell Biology", "-deckTab", "notes"])
+    check(wait(line(app, "It has two membranes. The inner one folds into cristae.")), "this phone remembers it's open")
+    app.buttons.matching(identifier: "notes.toggle").element(boundBy: 0).tap()
+    check(gone(line(app, "It has two membranes. The inner one folds into cristae.")), "and another tap closes it")
+    // a section folds
+    let fold = app.buttons.matching(NSPredicate(format: "identifier == %@ AND label == %@", "notes.fold", "Fold this section")).element(boundBy: 1)
+    check(fold.exists, "a heading has its ▸ in the margin")
+    fold.tap()
+    check(gone(line(app, "Glycolysis, step by step")) && line(app, "Mnemonics").exists, "a tap folds its section (the Checklist's items go; the next section's heading stays)")
+    check(saved(who, deckId) == S("guide"), "folding is how this phone shows the page, not a change to it")
+    app.buttons["Show this section"].firstMatch.tap()
+    check(wait(line(app, "Glycolysis, step by step")), "and it unfolds")
+    // a link to a heading jumps up to it
+    app.swipeUp(); app.swipeUp()
+    let back = lineHas(app, "Back to the top"), top = line(app, "Cell Biology: Exam 1")
+    check(wait(back) && back.identifier.contains("Back to the top -> #cell-biology-exam-1"), "a link to a heading is kept as it was written")
+    back.coordinate(withNormalizedOffset: CGVector(dx: 0.08, dy: 0.5)).tap()
+    check(eventually(8) { top.exists && top.isHittable && top.frame.minY > 40 && top.frame.maxY < 500 }, "a tap on it scrolls up to that heading (now at \(pt(top.frame.minY)))")
+    // the pages
     tap(button(app, "Lecture 3 summary"), "the page tab")
-    check(wait(text(app, "Lecture 3")) && textHas(app, "NADH gives up its electrons.").exists, "a page tab shows that page (its heading and its list)")
-    check(text(app, "1.").exists && text(app, "3.").exists, "with its numbers")
+    check(wait(line(app, "Lecture 3")) && line(app, "NADH gives up its electrons.").exists, "a page tab shows that page (its heading and its list)")
+    check(line(app, "NADH gives up its electrons.").label == "List", "with its numbered items")
     tap(button(app, "Mnemonics"), "the other page tab")
-    check(wait(textHas(app, "PMAT for the phases of mitosis")), "the other shows its bullets")
-    tap(button(app, "Edit"), "Edit")
-    check(wait(field(app)) && eventually { self.value(app).hasPrefix("- **PMAT**") }, "Edit opens that page: " + value(app))
-    check(button(app, "Mnemonics").exists, "its tab is the one lit")
+    check(wait(line(app, "PMAT for the phases of mitosis")), "the other shows its bullets")
+    // a tap on the words opens the Notes page at that line
+    tapEnd(line(app, "PMAT for the phases of mitosis"))
+    check(onPage(app) && eventually(6) { self.focusedValue(app) == "PMAT for the phases of mitosis" }, "a tap on the words opens the Notes page on that page, with the caret in that line")
+    check(button(app, "Mnemonics").isSelected, "its pill is the one lit")
+    type(app, "!")
+    let g2 = (seed["pages"] as? [String: String])?["g2"] ?? ""
+    check(eventually { self.saved(who, deckId, page: g2).contains("- **PMAT** for the phases of mitosis!") }, "what is typed goes where it was tapped: " + saved(who, deckId, page: g2).replacingOccurrences(of: "\n", with: "\\n"))
+    app.typeText(XCUIKeyboardKey.delete.rawValue)
+    check(eventually { self.saved(who, deckId, page: g2).hasPrefix("- **PMAT** for the phases of mitosis\n") }, "(and taken out again)")
     done(app)
-    check(wait(button(app, "Show more")) || wait(text(app, "Cell Biology: Exam 1"), 4) || wait(textHas(app, "PMAT")), "Done comes back to Notes")
-    check(selected(button(app, "Notes")), "with Notes the section on show")
+    check(wait(line(app, "PMAT for the phases of mitosis")) && selected(button(app, "Notes")), "Done comes back to Notes")
     noLabel(app, "the deck’s Notes")
   }
 
@@ -502,15 +532,19 @@ final class GuideTests: XCTestCase {
     check(buttonStarting(app, "Cards").exists && button(app, "Notes").exists && !button(app, "Sources").exists && !buttonStarting(app, "Sources").exists, "it has Cards and Notes, and no Sources tab")
     check(!button(app, "Add cards").exists, "and no Add cards")
     tap(button(app, "Notes"), "Notes")
-    check(wait(text(app, "Cell Biology: Exam 1")) && text(app, "GUIDE").exists, "the Guide shows")
-    check(!button(app, "Edit").exists && !button(app, "Write").exists && !button(app, "Make cards").exists && !button(app, "Add a guide").exists, "with no Edit, Write, Make cards or Add a guide")
+    check(wait(line(app, "Cell Biology: Exam 1")), "the Guide shows")
+    check(!button(app, "Edit").exists && !button(app, "Make cards").exists && !line(app, "Title").exists, "with no Make cards and nothing to write in")
     check(button(app, "Lecture 3 summary").exists && button(app, "Mnemonics").exists, "and its pages")
+    app.buttons.matching(identifier: "notes.toggle").element(boundBy: 0).tap()
+    check(wait(line(app, "It has two membranes. The inner one folds into cristae.")), "its toggles open for someone studying it too")
+    tap(line(app, "Cell Biology: Exam 1"), "the words")
+    check(!app.buttons["backButton"].waitForExistence(timeout: 3) && button(app, "Notes").exists, "a tap on the words doesn't open a page to write in")
     // an address for a tab that isn't there falls back to Cards
     app = launch(as: who, ["-open", "deck:Cell Biology", "-deckTab", "sources"])
     check(wait(buttonStarting(app, "Cards")) && selected(buttonStarting(app, "Cards")) && !text(app, "SOURCES").exists, "asking for Sources lands on Cards")
-    // and there is no editor
+    // and there is no Notes page to write in
     app = launch(as: who, ["-open", "guide:Cell Biology"])
-    check(wait(button(app, "Notes")) && !field(app).exists, "a deck someone else shares has no editor (it stays on the deck page)")
+    check(wait(button(app, "Notes")) && !app.buttons["backButton"].exists, "a deck someone else shares has no Notes page to write in (it stays on the deck page)")
     // the deck a studier has no Guide for: Notes isn't there at all
     let plain = "Studied plain " + run
     let owner = "gdo2" + run, id = person(owner, deck: plain, cards: 1)
@@ -679,10 +713,13 @@ final class GuideTests: XCTestCase {
     try XCTSkipIf(api("x", "GET", "/api/rev").status != 200, "No server at " + Self.server)
     let app = launch(as: S("newcomer"), ["-open", "deckpage:/d/" + S("sharedId")])
     check(wait(text(app, "Shared Cells"), 20), "the shared deck’s page opens")
-    check(wait(text(app, "GUIDE")) && textHas(app, "A short Guide anyone can read.").exists, "it draws the Guide for anyone")
+    check(wait(text(app, "NOTES")) && line(app, "A short Guide anyone can read.").exists, "it reads its Notes for anyone")
+    check(line(app, "Open me").exists && !line(app, "Hidden until it is opened.").exists, "a toggle shows its line")
+    app.buttons.matching(identifier: "notes.toggle").firstMatch.tap()
+    check(wait(line(app, "Hidden until it is opened.")), "and anyone can open it")
     check(wait(textHas(app, "Made from 2 sources")), "and says how many sources the deck was made from, nothing more")
     check(!any(app, "Secret source name").exists && !any(app, "Another private source").exists, "no source names")
-    check(!button(app, "Edit").exists && !button(app, "Write").exists, "and nothing to edit")
+    check(!button(app, "Edit").exists && !button(app, "Make cards").exists, "and nothing to edit")
     snap("public-guide")
     noLabel(app, "the shared deck’s page")
   }
@@ -692,7 +729,7 @@ final class GuideTests: XCTestCase {
     try XCTSkipIf(api("x", "GET", "/api/rev").status != 200, "No server at " + Self.server)
     let who = "gdd" + run, name = "Dark deck " + run
     let id = person(who, deck: name, cards: 2)
-    act(who, "guide.save", ["deckId": id, "text": "# Dark heading\n\n- [x] done\n- [ ] todo\n\n| a | b |\n| - | - |\n| 1 | 2 |\n\n> a quote\n\nSome `code` here."])
+    act(who, "guide.save", ["deckId": id, "text": "# Dark heading\n\n- [x] done\n- [ ] todo\n\n:::toggle A toggle\nInside it.\n:::\n\n| a | b |\n| - | - |\n| 1 | 2 |\n\n> a quote\n\nSome `code` here."])
     act(who, "settings.update", ["patch": ["look": "dark"]])
     let app = launch(as: who, ["-open", "deck:" + name])
     check(wait(button(app, "New card")) && button(app, "Make cards").exists && !button(app, "Add cards").exists, "the deck’s cover has Make cards and New card, plainly (no Add cards menu)")
@@ -704,13 +741,53 @@ final class GuideTests: XCTestCase {
     tap(button(app, "Close"), "Close")
     // dark
     tap(button(app, "Notes"), "Notes")
-    check(wait(text(app, "Dark heading")), "in dark mode the Guide shows")
+    check(wait(line(app, "Dark heading")) && line(app, "a quote").exists, "in dark mode the Notes read")
     snap("dark-notes")
-    tap(button(app, "Edit"), "Edit")
-    check(wait(field(app)), "and the editor opens")
-    tap(button(app, "Preview"), "Preview")
-    check(wait(text(app, "Dark heading")) && text(app, "a quote").exists, "its Preview draws too")
-    snap("dark-preview")
+    tap(line(app, "Dark heading"), "the heading")
+    check(onPage(app) && line(app, "Dark heading").exists, "and the Notes page opens")
+    snap("dark-page")
     noLabel(app, "dark mode")
+  }
+
+  // ---------- 13: a toggle and a section ----------
+  func test13ToggleAndSection() throws {
+    try XCTSkipIf(api("x", "GET", "/api/rev").status != 200, "No server at " + Self.server)
+    let who = "gdt" + run, name = "Toggle deck " + run
+    let id = person(who, deck: name)
+    var app = openPage(who, deck: name)
+    check(eventually(6) { self.focusedValue(app) == "Title" }, "the caret starts in the title")
+    type(app, "Toggles\n> Key idea\nWhy it matters.")
+    snap("guide-typed-toggle")
+    check(wait(line(app, "Key idea"), 4) && line(app, "Key idea").label == "Toggle" && line(app, "Why it matters.").exists, "“> ” makes a toggle, and Enter at its end writes inside it")
+    // a section: two headings with words under them
+    tap(app.buttons.matching(identifier: "notes.toggle").firstMatch, "the toggle's ▸")
+    check(gone(line(app, "Why it matters.")), "a tap on ▸ closes the toggle: what it holds goes")
+    tapEnd(line(app, "Key idea"))
+    type(app, "\n")
+    // (Enter at the end of a closed toggle makes the next toggle; Backspace turns it back into text)
+    app.typeText(XCUIKeyboardKey.delete.rawValue)
+    type(app, "## Part one\nFirst words.\n## Part two\nSecond words.")
+    let want = "# Toggles\n\n:::toggle Key idea\nWhy it matters.\n:::\n\n## Part one\n\nFirst words.\n\n## Part two\n\nSecond words.\n"
+    check(eventually { self.saved(who, id) == want }, "it all is saved as Markdown, the toggle as :::toggle … ::: — " + saved(who, id).replacingOccurrences(of: "\n", with: "\\n"))
+    snap("guide-toggle-closed")
+    // fold Part one
+    let fold = app.buttons.matching(NSPredicate(format: "identifier == %@ AND label == %@", "notes.fold", "Fold this section")).element(boundBy: 1)
+    tap(fold, "Part one's ▸")
+    check(gone(line(app, "First words.")) && line(app, "Part two").exists && line(app, "Second words.").exists, "a heading's ▸ folds its section, up to the next heading of its level")
+    check(app.buttons["Show this section"].exists, "and says it can be shown again")
+    snap("guide-section-folded")
+    Thread.sleep(forTimeInterval: 2)
+    check(saved(who, id) == want, "folding and closing change nothing that's saved")
+    // this phone remembers, on the Notes page and on the deck page
+    app = openPage(who, deck: name)
+    check(wait(line(app, "Part two")) && !line(app, "First words.").exists && !line(app, "Why it matters.").exists, "opened again, the section is still folded and the toggle still closed")
+    tap(app.buttons.matching(identifier: "notes.toggle").firstMatch, "the toggle's ▸")
+    check(wait(line(app, "Why it matters.")), "the toggle opens again")
+    snap("guide-toggle-open")
+    done(app)
+    check(wait(line(app, "Key idea")) && line(app, "Why it matters.").exists && !line(app, "First words.").exists && app.buttons["Show this section"].exists,
+          "the deck page's Notes show it the same way (the toggle open, the section folded)")
+    app.buttons["Show this section"].firstMatch.tap()
+    check(wait(line(app, "First words.")), "and unfold it there too")
   }
 }
