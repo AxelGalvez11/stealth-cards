@@ -35,6 +35,18 @@ enum Rich {
     guard let m = re.firstMatch(in: s, range: NSRange(location: 0, length: ns.length)) else { return nil }
     return ns.substring(with: m.range)
   }
+  /// JavaScript's \s (rich.js's WS), on one UTF-16 code unit: tab to carriage return, the space separators, the line and paragraph separators,
+  /// and the BOM (not U+0085, which Swift's isWhitespace has).
+  static func space(_ c: UInt16) -> Bool {
+    switch c {
+    case 0x09...0x0D, 0x20, 0xA0, 0x1680, 0x2000...0x200A, 0x2028, 0x2029, 0x202F, 0x205F, 0x3000, 0xFEFF: return true
+    default: return false
+    }
+  }
+  /// WS on the code unit beside a mark: the first letter of what follows, or (`last`) the last of what's before.
+  private static func ws(_ c: Character, last: Bool = false) -> Bool {
+    (last ? c.unicodeScalars.last : c.unicodeScalars.first).map { $0.value <= 0xFFFF && space(UInt16($0.value)) } ?? false
+  }
   private static func isPunct(_ c: Character) -> Bool {
     guard let a = c.asciiValue else { return false }
     return (33...47).contains(a) || (58...64).contains(a) || (91...96).contains(a) || (123...126).contains(a)
@@ -42,11 +54,11 @@ enum Rich {
 
   /// $x$ is math when the $ hugs the formula: "$5 and $6" stays money.
   private static func mathEnd(_ s: [Character], _ i: Int) -> Int {
-    guard i + 1 < s.count, !s[i + 1].isWhitespace, s[i + 1] != "$" else { return -1 }
+    guard i + 1 < s.count, !ws(s[i + 1]), s[i + 1] != "$" else { return -1 }
     var j = i + 1
     while j < s.count {
       if s[j] == "\\" { j += 2; continue }
-      if s[j] == "$" && !s[j - 1].isWhitespace && !(j + 1 < s.count && s[j + 1].isNumber) { return j }
+      if s[j] == "$" && !ws(s[j - 1], last: true) && !(j + 1 < s.count && (s[j + 1].unicodeScalars.first.map { (48...57).contains($0.value) } ?? false)) { return j }
       j += 1
     }
     return -1
@@ -96,8 +108,8 @@ enum Rich {
       let t = toks[n], o = open[t.m]
       if t.role == "open" { if o == nil { open[t.m] = n }; continue }
       if t.role == "close" { if let o { toks[n].on = true; toks[o].on = true; open[t.m] = nil }; continue }
-      if o == nil { if let p = t.post, !p.isWhitespace { open[t.m] = n } }
-      else if let p = t.pre, !p.isWhitespace { toks[n].on = true; toks[o!].on = true; open[t.m] = nil }
+      if o == nil { if let p = t.post, !ws(p) { open[t.m] = n } }
+      else if let p = t.pre, !ws(p, last: true) { toks[n].on = true; toks[o!].on = true; open[t.m] = nil }
     }
     var runs: [Run] = [], on: [Character] = []
     for t in toks {
