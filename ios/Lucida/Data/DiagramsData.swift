@@ -126,6 +126,7 @@ final class DiagramsFlow: ObservableObject {
       await reload(s)
       guard mine == run else { return }
       making = false
+      Buzz.shared.success("diagram made")
       onDone(r["id"] as? String ?? "")
     } catch {
       if mine != run { await reload(s); return }
@@ -161,7 +162,7 @@ final class DiagramsFlow: ObservableObject {
     guard !s.demo else { return false }
     busy = "delete"; msg = ""
     defer { busy = "" }
-    do { try await s.guideAct("diagram.delete", ["deckId": deckId, "id": id]); confirm = false; return true }
+    do { try await s.guideAct("diagram.delete", ["deckId": deckId, "id": id]); confirm = false; Buzz.shared.light("diagram deleted"); return true }
     catch { if !lost(s, error) { msg = say(error) }; return false }
   }
 
@@ -188,6 +189,7 @@ final class DiagramsFlow: ObservableObject {
       let id = try await net.sendFile(MakeFile(name: file, type: "image/jpeg", size: jpg.count, fam: .image, url: to))
       _ = try await net.call("api/diagrams/keep", ["deckId": deckId, "upload": id, "name": name])
       await reload(s)
+      Buzz.shared.light("diagram uploaded")
     } catch { if !lost(s, error) { upError = say(error) } }
   }
   /// A picture picked in Files: read with the permission the picker gave for it.
