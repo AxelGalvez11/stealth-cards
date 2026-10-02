@@ -176,7 +176,7 @@
    540
   ],
   "scale": 0.9855072463768116,
-  "hash": "ebf16c0d27",
+  "hash": "630bb86db5",
   "width": 1360,
   "height": 532,
   "bytes": 139392
@@ -190,7 +190,7 @@
    540
   ],
   "scale": 0.9855072463768116,
-  "hash": "3b91934e57",
+  "hash": "7f61da2710",
   "width": 1360,
   "height": 532,
   "bytes": 139392
@@ -232,10 +232,10 @@
    640
   ],
   "scale": 1.2035398230088497,
-  "hash": "7e370da321",
+  "hash": "67c55716c7",
   "width": 1360,
   "height": 770,
-  "bytes": 136040
+  "bytes": 99962
  },
  "deck-dark.webp": {
   "board": "WebPublicDeck",
@@ -246,10 +246,10 @@
    640
   ],
   "scale": 1.2035398230088497,
-  "hash": "491bdfdfcd",
+  "hash": "bb55eeccbd",
   "width": 1360,
   "height": 770,
-  "bytes": 137750
+  "bytes": 101394
  },
  "deck-phone.webp": {
   "board": "PhonePublicDeck",
@@ -260,10 +260,10 @@
    440
   ],
   "scale": 2,
-  "hash": "10d6161c90",
+  "hash": "de4b304204",
   "width": 780,
   "height": 880,
-  "bytes": 113014
+  "bytes": 110428
  },
  "deck-phone-dark.webp": {
   "board": "PhonePublicDeck",
@@ -274,10 +274,10 @@
    440
   ],
   "scale": 2,
-  "hash": "b46f95bad9",
+  "hash": "7119042338",
   "width": 780,
   "height": 880,
-  "bytes": 113746
+  "bytes": 111016
  },
  "class.webp": {
   "board": "WebClass",
@@ -568,10 +568,10 @@
    640
   ],
   "scale": 1.2035398230088497,
-  "hash": "92fbba5a5f",
+  "hash": "35aea524a8",
   "width": 1360,
   "height": 770,
-  "bytes": 83928
+  "bytes": 84862
  },
  "decks-dark.webp": {
   "board": "WebDecks",
@@ -582,10 +582,10 @@
    640
   ],
   "scale": 1.2035398230088497,
-  "hash": "965e708c61",
+  "hash": "cacdb5ba34",
   "width": 1360,
   "height": 770,
-  "bytes": 83678
+  "bytes": 84496
  },
  "decks-phone.webp": {
   "board": "PhoneLibrary",
@@ -596,7 +596,7 @@
    480
   ],
   "scale": 2,
-  "hash": "71447abaef",
+  "hash": "6d8e86dbab",
   "width": 780,
   "height": 960,
   "bytes": 22800
@@ -610,7 +610,7 @@
    480
   ],
   "scale": 2,
-  "hash": "1c59ff8bd0",
+  "hash": "5b577925b6",
   "width": 780,
   "height": 960,
   "bytes": 22810
