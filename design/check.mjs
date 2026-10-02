@@ -3,6 +3,7 @@
 import { readFileSync, readdirSync } from 'node:fs';
 import { readBoard } from './slim.mjs';
 import { MAKE_STEPS, GUIDE_STATES, GUIDE_VIEWS, LIVE_FROM, LIVE_TOPIC_STATES } from './materials.mjs';
+import { ASK_SAMPLES } from './ui.mjs';
 
 const DIR = new URL('./canvas/project/', import.meta.url);
 const get = (o, p) => p.trim().split('.').reduce((a, k) => (a == null ? undefined : a[k]), o);
@@ -104,6 +105,13 @@ PROP_SETS.push({ screen: 'Set up' }, { screen: 'Multiple choice' }, { screen: 'T
   { screen: 'Set up', $state: { kinds: ['mc'], count: 10, limit: 20 } }, { screen: 'Set up', folderId: 'f1' }, { screen: 'Set up', dark: true, dim: true }, { screen: 'Written', $state: { m: { type: '' } } },
   { screen: 'Matching', $state: { m: { match: { 0: 1, 1: 3, 2: 4, 3: 0, 4: 2 } } } }, { tests: false });
 
+// The questions that ask before a delete (Lucida's own dialog, design/ui.mjs): each one open, light, dark and gray.
+for (const ask of Object.keys(ASK_SAMPLES)) PROP_SETS.push({ ask }, { ask, dark: true }, { ask, dark: true, dim: true });
+// Settings' lists (Lucida's own dropdown, a sheet on the iPhone): each one open.
+for (const dropdown of ['Daily reminder', 'New cards a day', 'Remember goal']) PROP_SETS.push({ dropdown, section: 'Studying' }, { dropdown, section: 'Studying', dark: true, dim: true });
+// Lucida's own calendar (a deck's exam date, a class's due date), open, light and dark.
+PROP_SETS.push({ calendar: 'Exam date', settingsOpen: true, settingsTab: 'Studying' }, { calendar: 'Exam date', settingsOpen: true, settingsTab: 'Studying', dark: true }, { calendar: 'Exam date', settingsOpen: true, settingsTab: 'Studying', free: true },
+  { calendar: 'Due date', panel: 'Assign' }, { calendar: 'Due date', panel: 'Assign', dark: true });
 // Making cards: every step the Make boards offer, light and dark.
 for (const step of MAKE_STEPS) PROP_SETS.push({ step }, { step, dark: true });
 // The deck page's Cards, Notes (the Guide) and Sources sections, each with the Guide and Sources in every state (and dark).

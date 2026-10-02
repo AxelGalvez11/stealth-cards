@@ -58,7 +58,7 @@ export function createUi({ schedule, app }) {
       seen.set(el, held);
       if (el.contains(document.activeElement)) continue;
       const list = focusables(el), ask = el.closest('[data-lu="ask"]');
-      const pick = ask ? (asking && asking.danger ? list[0] : list[list.length - 1]) : list.find(x => !x.matches('[aria-label="Close"]')) || list[0];
+      const pick = ask ? (asking && asking.danger ? list[0] : list[list.length - 1]) : el.querySelector('[role="option"][aria-selected="true"]') || list.find(x => !x.matches('[aria-label="Close"]')) || list[0];
       if (pick) pick.focus({ preventScroll: true });
       else { el.tabIndex = -1; el.focus({ preventScroll: true }); }
     }
