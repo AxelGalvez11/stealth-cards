@@ -108,7 +108,6 @@ struct SettingsScreen: View {
   @Environment(\.theme) private var t
   @EnvironmentObject private var store: Store
   @EnvironmentObject private var nav: Nav
-  @State private var account = false
   /// The daily reminder (what the phone has scheduled, and whether notices are allowed), which the row below reads.
   @ObservedObject private var reminder = Reminder.shared
   /// Account → Password: its form open, what's typed, what the server said, and whether it worked.
@@ -134,7 +133,7 @@ struct SettingsScreen: View {
           Text("Settings").css(17, .semibold).frame(maxWidth: .infinity)
           Color.clear.frame(width: 44, height: 44)
         }
-        Button { account = true } label: {
+        Button { nav.ask("Sign out of Lucida?", action: "Sign out") { Task { await store.signOut() } } } label: {
           HStack(spacing: 14) {
             MyAvatar(size: 44)
             VStack(alignment: .leading, spacing: 2) {
@@ -149,9 +148,7 @@ struct SettingsScreen: View {
           .background(RoundedRectangle(cornerRadius: 24, style: .continuous).fill(t.surf))
         }
         .buttonStyle(.press)
-        .confirmationDialog("Your account", isPresented: $account) {
-          Button("Sign out", role: .destructive) { Task { await store.signOut() } }
-        }
+        .accessibilityHint("Signs you out")
         // ACCOUNT: your handle opens your profile; Edit profile opens it with its editor open. Before you have a handle it says
         // Your profile (opening it makes one). Get verified (teachers and schools) opens its sheet, and says Waiting for
         // review once a request is in; once you are verified, the row says Verified teacher (or school), with the check
@@ -229,6 +226,15 @@ struct SettingsScreen: View {
     .onAppear {
       // (The design screens' Tweaks: Password open, and Delete account's question.)
       if store.demo { pwOpen = store.props.passwordOpen; if !store.props.deleteOpen.isEmpty && nav.sheet == nil { nav.sheet = .deleteAccount } }
+      // (And `-dropdown "Daily reminder"`, "New cards a day" or "Remember goal": the board's dropdown Tweak, a list open.)
+      if store.demo, let d = Board.arg("-dropdown") {
+        switch d {
+        case "Daily reminder": openList(d, store.reminderValue, [Reminder.off] + Reminder.times) { _ in }
+        case "New cards a day": openList(d, "\(store.settings.perDay)", ["0", "5", "10", "15", "20", "30", "50"]) { _ in }
+        case "Remember goal": openList(d, "\(store.settings.goal)%", ["80%", "85%", "90%", "93%", "95%"]) { _ in }
+        default: break
+        }
+      }
     }
   }
 
@@ -436,10 +442,14 @@ struct SettingsScreen: View {
     HStack(spacing: 6) { Text(v).css(15).lineLimit(1); Icon("chev", 14, 2.2) }.foregroundStyle(t.muted)
   }
 
+  /// A row that picks from a short list: it opens Lucida's own list, a sheet from the bottom (Design/PickSheet.swift), never the system's menu.
   private func menuRow(_ label: String, _ current: String, options: [String], sub: String? = nil, pick: @escaping (String) -> Void) -> some View {
-    Menu {
-      ForEach(options, id: \.self) { o in Button(o) { pick(o) } }
-    } label: { row(label, sub: sub) { value(current) } }
+    Button { openList(label, current, options, pick) } label: { row(label, sub: sub) { value(current) } }
+      .buttonStyle(.plain)
+      .accessibilityValue(current)
+  }
+  private func openList(_ label: String, _ current: String, _ options: [String], _ pick: @escaping (String) -> Void) {
+    withAnimation(Motion.sheet) { nav.picker = PickRequest(title: label, rows: options.map { PickRow(id: $0, words: $0) }, value: current, choose: { if let r = $0 { pick(r.id) } }) }
   }
 
   /// Daily reminder: Off removes it; a time sets it (the phone asks to send notices then) and is kept with your settings.

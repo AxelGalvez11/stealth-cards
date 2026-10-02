@@ -1028,9 +1028,10 @@ export function makeGuide() {
   }
 
   // ---------- showing: the tree -> HTML ----------
-  // Only these tags are ever written: div h1-h6 p br strong em del code pre blockquote ul ol li input hr table thead
-  // tbody tr th td a img. And only these attributes: class (gd, gd-task, language-x), id (on headings), href title rel
-  // target (a), src alt title loading decoding (img), start (ol), type disabled checked (input), style="text-align:x" (th, td).
+  // Only these tags are ever written: div h1-h6 p br strong em del code pre blockquote ul ol li span hr table thead
+  // tbody tr th td a img. And only these attributes: class (gd, gd-task, gd-box, gd-on, language-x), id (on headings), href data-tip rel
+  // target (a), src alt data-tip loading decoding (img), start (ol), role="img" and aria-label (a task's box, a span: Lucida's own
+  // check, drawn by CSS, never a browser's checkbox), style="text-align:x" (th, td).
   // No line breaks between tags (only inside pre), so the same text always gives the same HTML.
   // opts.image(src) says whether a picture may show: it returns the address to use or '' to refuse.
   const LANG = /^[A-Za-z0-9_+#-]{1,20}$/;
@@ -1060,12 +1061,12 @@ export function makeGuide() {
           case 'br': h += '<br>'; break;
           case 'a':
             h += linkOk(x.href)
-              ? '<a href="' + escA(x.href) + '"' + (x.title ? ' title="' + escA(x.title) + '"' : '') + ' rel="nofollow ugc noopener"' + (x.href.charCodeAt(0) === 35 ? '' : ' target="_blank"') + '>' + inline(x.c) + '</a>'
+              ? '<a href="' + escA(x.href) + '"' + (x.title ? ' data-tip="' + escA(x.title) + '"' : '') + ' rel="nofollow ugc noopener"' + (x.href.charCodeAt(0) === 35 ? '' : ' target="_blank"') + '>' + inline(x.c) + '</a>'
               : inline(x.c);
             break;
           case 'img': {
             const u = picture(x.src);
-            h += u ? '<img src="' + escA(u) + '" alt="' + escA(x.alt) + '"' + (x.title ? ' title="' + escA(x.title) + '"' : '') + ' loading="lazy" decoding="async">' : esc(x.alt);
+            h += u ? '<img src="' + escA(u) + '" alt="' + escA(x.alt) + '"' + (x.title ? ' data-tip="' + escA(x.title) + '"' : '') + ' loading="lazy" decoding="async">' : esc(x.alt);
             break;
           }
           default: break;
@@ -1075,7 +1076,7 @@ export function makeGuide() {
     }
     function item(it, tight) {
       const task = it.checked === true || it.checked === false;
-      const box = '<input type="checkbox" disabled' + (it.checked ? ' checked' : '') + '>';
+      const box = '<span class="gd-box' + (it.checked ? ' gd-on' : '') + '" role="img" aria-label="' + (it.checked ? 'Done' : 'Not done') + '"></span>';
       let h = '';
       it.blocks.forEach((b, i) => {
         if (b.t === 'p' && i === 0 && task) h += tight ? box + ' ' + inline(b.inline) : '<p>' + box + ' ' + inline(b.inline) + '</p>';

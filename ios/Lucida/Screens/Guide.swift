@@ -145,8 +145,8 @@ struct GuideScreen: View {
   @StateObject private var field = GuideTextControl()
   let deckId: String
   @State private var picking = false
-  @State private var asking = false
   @State private var name = ""
+
   @FocusState private var nameFocus: Bool
   /// The design screen's page that doesn't exist yet (A new page).
   private let demoNewPage = MakeGuidePage(id: "gnew", title: "New page")
@@ -202,9 +202,6 @@ struct GuideScreen: View {
     .onAppear { start(pageId); if !store.demo && !g.can { nav.back() } }
     .onChange(of: pageId) { _, p in name = p == "main" ? "" : (extra.first { $0.id == p }?.title ?? "") }
     .photoPicker($picking) { field.picture($0) }
-    .confirmationDialog("Delete the page “\(cur.title)”?", isPresented: $asking, titleVisibility: .visible) {
-      Button("Delete", role: .destructive) { Task { await model.deletePage() } }
-    }
   }
 
   private var previewing: Bool { model.preview || demoView == "Preview" }
@@ -284,7 +281,7 @@ struct GuideScreen: View {
         // (A touch anywhere on the pill, its edges too, writes in it.)
         .contentShape(RoundedRectangle(cornerRadius: 12, style: .continuous)).onTapGesture { nameFocus = true }
         .accessibilityLabel("Page name")
-      Button { asking = true } label: {
+      Button { nav.ask("Delete the page “\(cur.title)”?", action: "Delete page", danger: true) { Task { await model.deletePage() } } } label: {
         Text("Delete page").css(14, .semibold).foregroundStyle(t.again).padding(.horizontal, 14).frame(height: 40).background(RoundedRectangle(cornerRadius: 12, style: .continuous).fill(t.surf))
       }
       .buttonStyle(.press)

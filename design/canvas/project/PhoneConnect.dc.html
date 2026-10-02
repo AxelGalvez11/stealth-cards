@@ -40,13 +40,25 @@
 </div></div>
 
 
-</div>
+<sc-if value="{{ask.show}}" hint-placeholder-val="{{ false }}"><div data-lu="ask" style="position: absolute; inset: 0; z-index: 2000; display: flex; justify-content: center; align-items: flex-end;">
+  <div class="sc-scrim" onClick="{{ask.no}}" style="position: absolute; inset: 0; background: {{t.dim}};"></div>
+  <div role="alertdialog" aria-modal="true" aria-labelledby="lu-ask-title" aria-describedby="lu-ask-line" data-danger="{{ask.danger}}" class="sc-sheet" style="position: relative; box-sizing: border-box; width: 100%; padding: 10px 20px 34px; border-radius: 32px 32px 0 0; background: {{t.bg}}; color: {{t.text}}; font-family: Geist, -apple-system, system-ui, sans-serif; display: flex; flex-direction: column; gap: 14px; text-shadow: none;">
+    <div aria-hidden="true" style="align-self: center; width: 40px; height: 5px; border-radius: 3px; background: {{t.surf2}};"></div>
+    <span id="lu-ask-title" style="font-size: 22px; font-weight: 600; letter-spacing: -.02em; line-height: 1.2;">{{ask.title}}</span>
+    <sc-if value="{{ask.hasLine}}" hint-placeholder-val="{{ true }}"><p id="lu-ask-line" style="margin: 0; font-size: 15px; line-height: 1.45; color: {{t.muted}};">{{ask.line}}</p></sc-if>
+    <div style="display: flex; gap: 10px; margin-top: 6px;"><button type="button" data-key="escape" onClick="{{ask.no}}" class="sc-press" style="flex: 1 1 0; height: 48px; border: 0; border-radius: 999px; background: {{t.surf}}; color: {{t.text}}; font: inherit; font-size: 15px; font-weight: 600; cursor: pointer;">Cancel</button><button type="button" onClick="{{ask.yes}}" class="sc-press" style="flex: 1 1 0; height: 48px; border: 0; border-radius: 999px; background: {{ask.bg}}; color: {{ask.fg}}; font: inherit; font-size: 15px; font-weight: 600; cursor: pointer;">{{ask.action}}</button></div>
+  </div></div></sc-if></div>
 </x-dc>
-<script type="text/x-dc" data-dc-script data-props='{"dark":{"editor":"boolean","default":false},"dim":{"editor":"boolean","default":false},"gradient":{"editor":"enum","default":"Apricot","options":["Iris","Apricot","Lilac","Mint","Aqua","Rose","Lemon","Dusk","Grove","Forest","Ember","Meadow","Ocean","Sun"]},"grain":{"editor":"range","default":0.7,"min":0,"max":1,"step":0.05},"noApps":{"editor":"boolean","default":false},"$preview":{"width":390,"height":889}}'>
+<script type="text/x-dc" data-dc-script data-props='{"dark":{"editor":"boolean","default":false},"dim":{"editor":"boolean","default":false},"gradient":{"editor":"enum","default":"Apricot","options":["Iris","Apricot","Lilac","Mint","Aqua","Rose","Lemon","Dusk","Grove","Forest","Ember","Meadow","Ocean","Sun"]},"grain":{"editor":"range","default":0.7,"min":0,"max":1,"step":0.05},"noApps":{"editor":"boolean","default":false},"ask":{"editor":"enum","default":"","options":["","Disconnect app","New link"]},"$preview":{"width":390,"height":889}}'>
 class Component extends LucidaLogic(DCLogic, 0) {
 
 constructor(props) { super(props); this.state = { copied: false }; }
-renderVals() { const t = this.theme(!!this.props.dark, !!this.props.dim);const db = this.props.db || this.mock(); const chrome = db.chrome();
+renderVals() { const v = this.renderVals0(); return { ...v, ask: this.askPreview(v.t || this.theme(!!this.props.dark, !!this.props.dim), {"Disconnect app":{"title":"Disconnect Claude?","line":"It can’t use your decks until you connect it again.","action":"Disconnect","danger":false},"New link":{"title":"Make a new link?","line":"AI apps using the old one stop working until you give them the new one.","action":"Make a new link","danger":false}}) }; }
+askPreview(t, samples) {
+  const q = samples[this.props.ask || ''];
+  return q ? { show: true, title: q.title, line: q.line, hasLine: !!q.line, action: q.action, danger: q.danger ? 'yes' : '', bg: q.danger ? t.againTint : t.inv, fg: q.danger ? t.again : t.invText, yes: () => {}, no: () => {} } : { show: false };
+}
+renderVals0() { const t = this.theme(!!this.props.dark, !!this.props.dim);const db = this.props.db || this.mock(); const chrome = db.chrome();
   const ai = db.ai();
   const providers = [['claude', 'Claude'], ['openai', 'ChatGPT'], ['cursor', 'Cursor'], ['mcp', 'Any MCP app']].map(([id, name]) => ({ name, status: (ai.clients)[id] ? 'Connected' : 'Connect', color: (ai.clients)[id] ? t.good : t.muted,
     isClaude: id === 'claude', isOpenAI: id === 'openai', isCursor: id === 'cursor', isMcp: id === 'mcp', cursorInk: this.props.dark ? '#edecec' : '#26251e' }));

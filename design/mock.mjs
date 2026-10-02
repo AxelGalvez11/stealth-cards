@@ -175,6 +175,8 @@ export const MOCK_METHOD = String.raw`mock() {
   const liveRows = (p.final ? LS.final : LS.board.map(([name, score]) => [name, name === LS.me ? jordan : score])).slice().sort((a, b) => b[1] - a[1]);
   return {
     mock: true,
+    // The canvas asks nothing and says nothing: a board shows a question or a message open through its Tweaks (design/ui.mjs).
+    ask: () => Promise.resolve(false), say: noop,
     // The school list (web/schools.json): the sample's few schools, found by the words they start with.
     schools: { find: q => { const w = String(q || '').toLowerCase().split(/[^a-z0-9]+/).filter(Boolean);
       return w.length ? N.SCHOOLS.filter(r => w.every(x => (r[1] + ' ' + r[2] + ' ' + r[3] + ' ' + (r[4] || '')).toLowerCase().split(/[^a-z0-9]+/).some(y => y.startsWith(x)))) : []; } },

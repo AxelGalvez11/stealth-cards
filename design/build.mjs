@@ -22,6 +22,7 @@ import { LEVELS, YEARS, SUBJECTS } from '../web/school.js';
 import testKit from './test-boards.mjs';
 import { makeBoards, deckBlocks, publicGuideBlocks, PUBLIC_GUIDE_JS, DECK_MATERIALS_JS, GUIDE_CSS, GUIDE_STATES, MATERIALS_MOCK, LIVE_FROM, LIVE_TOPIC_STATES } from './materials.mjs';
 import { DIAGRAM_METHOD, DIAGRAM_CSS, PUBLIC_DIAGRAMS_JS, publicDiagramBlocks } from './diagrams.mjs';
+import { askMarkup, toastMarkup, ASK_SAMPLES, ASK_JS, askProp, dateMarkup, DATE_JS, dropMarkup, dropSheet, dropPill, DROP_JS, PLAYER_JS } from './ui.mjs';
 // The themes (Pro), for boards' logic: key, board name, short and full names.
 const THEME_LIST = JSON.stringify(THEMES.map(({ key, board, short, name }) => ({ key, board: board || '', short, name })));
 const MESH_DATA = JSON.stringify(Object.fromEntries(PALETTE_NAMES.map(n => [n, { ...paletteData(n), shadow: PALETTES[n].ink === '#FFFFFF' ? '0 1px 14px rgba(0,0,0,.16)' : 'none' }])));
@@ -32,6 +33,8 @@ const RICH_METHOD = `rich() { return Component._rich || (Component._rich = (${RI
 const GUIDE_FILE = new URL('../web/guide.js', import.meta.url), GUIDE_SRC = existsSync(GUIDE_FILE) ? readFileSync(GUIDE_FILE, 'utf8') : '';
 const GUIDE_METHOD = GUIDE_SRC ? `md() { return Component._md || (Component._md = (${GUIDE_SRC.slice(GUIDE_SRC.indexOf('function makeGuide'), GUIDE_SRC.lastIndexOf('export default')).trim()})()); }`
   : `md() { return { render: s => String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;'), plain: s => String(s || '') }; }`;
+// Lucida's own tooltip (web/tip.js), put once in the canvas's shared logic file (design/slim.mjs) so a board shows it on the canvas as the app does.
+const TIP_SRC = readFileSync(new URL('../web/tip.js', import.meta.url), 'utf8').replace(/^[\s\S]*?export default /, '').trim();
 const OUT = new URL('./canvas/project/', import.meta.url).pathname;
 mkdirSync(OUT, { recursive: true });
 
@@ -128,6 +131,12 @@ const APP_MOTION_CSS = [
   '.sc-side[data-collapsed="true"] .sc-side-head{padding:0 0 12px;justify-content:center}.sc-side[data-collapsed="true"] .sc-side-btns{flex-direction:column-reverse;gap:6px}',
   '.sc-side[data-collapsed="true"] :is(.sc-logo,.sc-lab,.sc-num){display:none}.sc-side .sc-dot{display:none}.sc-side[data-collapsed="true"] .sc-dot{display:block}',
   '@media (prefers-reduced-motion:reduce){.sc-side{transition:none}}',
+  // Lucida's own focus ring and scrollbars (the owner: nothing the browser draws itself): a 2 px ring in the text's own color around what the keyboard is on
+  // (a text field's box shows it when you tab into it), and thin scrollbars in the same color, faint, so they follow light, dark and gray.
+  'a:focus-visible,button:focus-visible,summary:focus-visible,[role="button"]:focus-visible,[role="tab"]:focus-visible,[role="radio"]:focus-visible,[role="switch"]:focus-visible,[role="menuitem"]:focus-visible,[role="option"]:focus-visible,[tabindex]:focus-visible{outline:2px solid currentColor;outline-offset:2px}',
+  '[role="option"]:focus-visible,[role="menuitem"]:focus-visible{outline-offset:-2px}',
+  'label:has(input:focus-visible,textarea:focus-visible):not([style*="box-shadow"]){box-shadow:0 0 0 2px color-mix(in srgb,currentColor 45%,transparent)}',
+  '*{scrollbar-width:thin;scrollbar-color:color-mix(in srgb,currentColor 30%,transparent) transparent}::-webkit-scrollbar{width:8px;height:8px}::-webkit-scrollbar-thumb{border-radius:8px;background:color-mix(in srgb,currentColor 30%,transparent)}::-webkit-scrollbar-track,::-webkit-scrollbar-corner{background:transparent}',
   '@media (prefers-reduced-motion:reduce){main>*,.sc-float,.sc-sway-a,.sc-sway-b,.sc-glow,.sc-alive>svg,.sc-draw,.sc-knob,.sc-grow{animation:none!important}.sc-sheen{display:none}button:active,.sc-press:active,.sc-lift:hover{transform:none}}'
 ].join('');
 // Dark mode, and its gray look (dim): the app sets both from Settings (Appearance, and Dark mode: Gray or Black).
@@ -217,7 +226,11 @@ const I = {
   help: '<circle cx="12" cy="12" r="9"/><path d="M9.6 9.4a2.5 2.5 0 1 1 3.4 2.3c-.6.3-1 .8-1 1.5M12 17h.01"/>',
   // A deck's Diagrams: a table, and a mind map.
   table: '<rect x="3.5" y="4.5" width="17" height="15" rx="2.5"/><path d="M3.5 9.5h17M9.5 9.5v10"/>',
-  mindmap: '<circle cx="6" cy="12" r="2.5"/><circle cx="18" cy="6" r="2"/><circle cx="18" cy="12" r="2"/><circle cx="18" cy="18" r="2"/><path d="M8.4 11.1 16 6.9M8.6 12h7.4M8.4 12.9 16 17.1"/>'
+  mindmap: '<circle cx="6" cy="12" r="2.5"/><circle cx="18" cy="6" r="2"/><circle cx="18" cy="12" r="2"/><circle cx="18" cy="18" r="2"/><path d="M8.4 11.1 16 6.9M8.6 12h7.4M8.4 12.9 16 17.1"/>',
+  // Lucida's own camera screen (the iPhone's Take a photo): the flash (on, and off with a slash through it) and the switch between the cameras.
+  bolt: '<path d="M13 2.5L5 13.5h6l-1 8 8-11h-6z"/>',
+  boltOff: '<path d="M13 2.5L5 13.5h6l-1 8 8-11h-6z"/><path d="M4 3l16 18"/>',
+  flip: '<path d="M19 9.5A7.5 7.5 0 0 0 5.6 7"/><path d="M5 3.5V7.5H9"/><path d="M5 14.5A7.5 7.5 0 0 0 18.4 17"/><path d="M19 20.5V16.5H15"/>'
 };
 
 // The mark: three dots, two above and one below, in the text color. The viewBox hugs the ink, so `h` is its real height.
@@ -244,12 +257,12 @@ const MY_ICON_A = `<span style="margin: 0 -2px; display: flex;">${AVATAR_ME(22)}
 // tooltip (title) and its accessible name (aria-label), filled in by `nav.tip` only while it's collapsed (while it's open the words are on
 // screen, so there's no tooltip and the name is the words). A lit place has aria-current. Today's count becomes a small dot on its icon.
 const TIP_KEY = { Today: 'today', Library: 'library', Discover: 'discover', Stats: 'stats', Profile: 'profile', Settings: 'settings' };
-const navRow = (label, icon, href, on, more = '', attrs = '') => `<a href="${href}"${attrs}${/aria-label=/.test(attrs) ? '' : ` aria-label="{{nav.tip.${TIP_KEY[label]}}}"`} title="{{nav.tip.${TIP_KEY[label]}}}"${on ? ' aria-current="page"' : ''} style="position: relative; display: flex; align-items: center; gap: 12px; height: 36px; padding: 0 14px; border-radius: 999px; font-size: 14px; white-space: nowrap; ${on ? 'background: {{t.surf}}; color: {{t.text}}; font-weight: 600;' : 'color: {{t.muted}};'}">${icon}<span class="sc-lab">${label}</span>${more}</a>`;
+const navRow = (label, icon, href, on, more = '', attrs = '') => `<a href="${href}"${attrs}${/aria-label=/.test(attrs) ? '' : ` aria-label="{{nav.tip.${TIP_KEY[label]}}}"`} data-tip="{{nav.tip.${TIP_KEY[label]}}}" data-tip-side="right"${on ? ' aria-current="page"' : ''} style="position: relative; display: flex; align-items: center; gap: 12px; height: 36px; padding: 0 14px; border-radius: 999px; font-size: 14px; white-space: nowrap; ${on ? 'background: {{t.surf}}; color: {{t.text}}; font-weight: 600;' : 'color: {{t.muted}};'}">${icon}<span class="sc-lab">${label}</span>${more}</a>`;
 // News (the study network: suggestions on your decks, people following you, updates to decks you follow) is the bell
 // by the logo, with how many are new. The button beside it collapses the sidebar to the rail, and opens it again (aria-expanded);
 // its place in the page doesn't move, so a keyboard keeps its focus when it's pressed.
 const sidebar = active => `<nav id="sidebar" class="sc-side" aria-label="Main" data-collapsed="{{nav.collapsed}}" style="flex-shrink: 0; box-sizing: border-box; padding: 24px 16px; display: flex; flex-direction: column; gap: 4px; border-right: 1px solid {{t.line}}; overflow: hidden;">
-  <div class="sc-side-head"><div class="sc-logo">${logo()}</div><div class="sc-side-btns"><a href="WebActivity.dc.html" aria-label="News" title="{{nav.tip.news}}"${active === 'News' ? ' aria-current="page"' : ''} style="position: relative; width: 32px; height: 32px; border-radius: 16px; display: flex; align-items: center; justify-content: center; ${active === 'News' ? 'background: {{t.surf}}; color: {{t.text}};' : 'color: {{t.muted}};'}">${svg(I.bell, 18, 1.8)}<sc-if value="{{nav.hasNews}}" hint-placeholder-val="{{ true }}"><span style="position: absolute; top: 1px; right: 0; min-width: 16px; height: 16px; padding: 0 4px; box-sizing: border-box; border-radius: 8px; background: #E5484D; color: #FFFFFF; font-size: 10px; font-weight: 700; line-height: 16px; text-align: center;">{{nav.news}}</span></sc-if></a><button type="button" onClick="{{nav.toggleSide}}" aria-label="{{nav.sideLabel}}" aria-expanded="{{nav.sideOpen}}" aria-controls="sidebar" title="{{nav.sideLabel}}" class="sc-press" style="width: 32px; height: 32px; flex-shrink: 0; padding: 0; border: 0; border-radius: 16px; background: transparent; color: {{t.muted}}; display: flex; align-items: center; justify-content: center; cursor: pointer;">${svg(I.sidebar, 18, 1.8)}</button></div></div>
+  <div class="sc-side-head"><div class="sc-logo">${logo()}</div><div class="sc-side-btns"><a href="WebActivity.dc.html" aria-label="News" data-tip="{{nav.tip.news}}"${active === 'News' ? ' aria-current="page"' : ''} style="position: relative; width: 32px; height: 32px; border-radius: 16px; display: flex; align-items: center; justify-content: center; ${active === 'News' ? 'background: {{t.surf}}; color: {{t.text}};' : 'color: {{t.muted}};'}">${svg(I.bell, 18, 1.8)}<sc-if value="{{nav.hasNews}}" hint-placeholder-val="{{ true }}"><span style="position: absolute; top: 1px; right: 0; min-width: 16px; height: 16px; padding: 0 4px; box-sizing: border-box; border-radius: 8px; background: #E5484D; color: #FFFFFF; font-size: 10px; font-weight: 700; line-height: 16px; text-align: center;">{{nav.news}}</span></sc-if></a><button type="button" onClick="{{nav.toggleSide}}" aria-label="{{nav.sideLabel}}" aria-expanded="{{nav.sideOpen}}" aria-controls="sidebar" data-tip="{{nav.sideLabel}}" class="sc-press" style="width: 32px; height: 32px; flex-shrink: 0; padding: 0; border: 0; border-radius: 16px; background: transparent; color: {{t.muted}}; display: flex; align-items: center; justify-content: center; cursor: pointer;">${svg(I.sidebar, 18, 1.8)}</button></div></div>
   ${NAV_A.map(([label, ic, href]) => navRow(label, ic === 'me' ? MY_ICON_A : svg(I[ic]), href, label === active, label === 'Today' ? `<sc-if value="{{nav.today}}" hint-placeholder-val="{{ true }}"><span class="sc-num" style="margin-left: auto; font-family: ${MONO}; font-size: 12px;">{{nav.today}}</span><span class="sc-dot" aria-hidden="true" style="position: absolute; top: 6px; left: 29px; width: 7px; height: 7px; border-radius: 4px; background: {{t.text}};"></span></sc-if>` : '', label === 'Profile' ? ' aria-label="Your profile"' : '')).join('\n  ')}
   <div style="flex-grow: 1;"></div>
   ${navRow('Settings', svg(I.gear), 'WebSettings.dc.html', active === 'Settings', '', ' aria-label="Settings"')}
@@ -305,7 +318,7 @@ const chip = (txt, extra = '') => `<span style="display: inline-flex; align-item
 // The grading-style switcher (web: compact pill in the header; phone: full-width row).
 const modeSeg = full => `<div role="group" aria-label="Grading style" style="display: ${full ? 'grid; grid-template-columns: repeat(3, minmax(0, 1fr))' : 'flex'}; gap: 4px; padding: 4px; border-radius: 999px; background: {{t.surf}};">
   <sc-for list="{{modes}}" as="m" hint-placeholder-count="3">
-    <button type="button" onClick="{{m.pick}}" aria-pressed="{{m.pressed}}" title="{{m.long}}" style="height: ${full ? 34 : 36}px; padding: 0 ${full ? 8 : 16}px; border: 0; border-radius: 999px; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; white-space: nowrap; background: {{m.bg}}; color: {{m.fg}}; box-shadow: {{m.sh}};">{{m.label}}</button>
+    <button type="button" onClick="{{m.pick}}" aria-pressed="{{m.pressed}}" data-tip="{{m.long}}" style="height: ${full ? 34 : 36}px; padding: 0 ${full ? 8 : 16}px; border: 0; border-radius: 999px; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; white-space: nowrap; background: {{m.bg}}; color: {{m.fg}}; box-shadow: {{m.sh}};">{{m.label}}</button>
   </sc-for>
 </div>`;
 const stepper = (label, val, dec, inc, stacked = false, num = '') => stacked ? `<div style="padding: 12px 14px; border-radius: 18px; background: {{t.surf}}; display: flex; flex-direction: column; gap: 4px;">
@@ -605,8 +618,8 @@ const TAG_EDIT = (list, pk, phone = false, up = false) => `<div style="${phone ?
 const viewBtn = (key, handler, label, icon) => `<button type="button" onClick="{{${handler}}}" aria-label="${label}" aria-pressed="{{${key}.pressed}}" style="width: 42px; height: 36px; border: 0; border-radius: 999px; background: {{${key}.bg}}; color: {{${key}.fg}}; box-shadow: {{${key}.sh}}; display: flex; align-items: center; justify-content: center; cursor: pointer;">${svg(I[icon], 16, 2)}</button>`;
 // One glass chip per tag on a deck's gradient card (a chip in list view). Clicking one shows every deck with that tag,
 // like the chips in the +N menu, instead of opening the deck.
-const glassTag = k => `<sc-if value="{{d.${k}.show}}" hint-placeholder-val="{{ true }}"><button type="button" onClick="{{d.${k}.pick}}" title="Every deck tagged {{d.${k}.label}}" style="height: 26px; padding: 0 11px; display: inline-flex; align-items: center; border: 0; border-radius: 999px; background: {{d.glass}}; box-shadow: inset 0 0 0 1px {{d.glassLine}}; color: inherit; font: inherit; font-size: 12px; font-weight: 600; white-space: nowrap; text-shadow: none; cursor: pointer; pointer-events: auto;">{{d.${k}.label}}</button></sc-if>`;
-const tagSlot = k => `<sc-if value="{{d.${k}.show}}" hint-placeholder-val="{{ true }}"><button type="button" onClick="{{d.${k}.pick}}" title="Every deck tagged {{d.${k}.label}}" style="height: 24px; padding: 0 10px; display: inline-flex; align-items: center; border: 0; border-radius: 999px; background: {{d.${k}.bg}}; color: {{d.${k}.fg}}; font: inherit; font-size: 12px; font-weight: 600; white-space: nowrap; cursor: pointer; pointer-events: auto;">{{d.${k}.label}}</button></sc-if>`;
+const glassTag = k => `<sc-if value="{{d.${k}.show}}" hint-placeholder-val="{{ true }}"><button type="button" onClick="{{d.${k}.pick}}" data-tip="Every deck tagged {{d.${k}.label}}" style="height: 26px; padding: 0 11px; display: inline-flex; align-items: center; border: 0; border-radius: 999px; background: {{d.glass}}; box-shadow: inset 0 0 0 1px {{d.glassLine}}; color: inherit; font: inherit; font-size: 12px; font-weight: 600; white-space: nowrap; text-shadow: none; cursor: pointer; pointer-events: auto;">{{d.${k}.label}}</button></sc-if>`;
+const tagSlot = k => `<sc-if value="{{d.${k}.show}}" hint-placeholder-val="{{ true }}"><button type="button" onClick="{{d.${k}.pick}}" data-tip="Every deck tagged {{d.${k}.label}}" style="height: 24px; padding: 0 10px; display: inline-flex; align-items: center; border: 0; border-radius: 999px; background: {{d.${k}.bg}}; color: {{d.${k}.fg}}; font: inherit; font-size: 12px; font-weight: 600; white-space: nowrap; cursor: pointer; pointer-events: auto;">{{d.${k}.label}}</button></sc-if>`;
 // A deck's +N chip opens a menu with all of its tags; pick one to see every deck that has it.
 const deckTagsPop = pos => `<sc-if value="{{d.tagsOpen}}" hint-placeholder-val="{{ false }}"><div role="dialog" aria-label="Tags on {{d.name}}" data-sc-pop style="position: absolute; ${pos} z-index: 20; pointer-events: auto; width: 320px; box-sizing: border-box; padding: 16px; border-radius: 24px; background: {{t.bg}}; color: {{t.text}}; box-shadow: 0 18px 48px rgba(0,0,0,.2), 0 0 0 1px {{t.line}}; display: flex; flex-direction: column; gap: 12px; text-shadow: none;">
   <div style="display: flex; align-items: center; justify-content: space-between;"><span style="font-size: 14px; font-weight: 600;">{{d.tagCount}}</span><button type="button" onClick="{{d.toggleTags}}" aria-label="Close" style="width: 28px; height: 28px; border: 0; border-radius: 14px; background: {{t.surf}}; color: {{t.text}}; display: flex; align-items: center; justify-content: center; cursor: pointer;">${svg(I.close, 10, 2.4)}</button></div>
@@ -617,7 +630,7 @@ const moreTag = (bg, h) => `<sc-if value="{{d.more.show}}" hint-placeholder-val=
 // A card's tag as a small chip; `k` names the row's tag slot (c1, c2).
 const cardTag = k => `<sc-if value="{{r.${k}.show}}" hint-placeholder-val="{{ true }}"><span style="height: 22px; padding: 0 9px; display: inline-flex; align-items: center; border-radius: 999px; background: {{r.${k}.bg}}; color: {{r.${k}.fg}}; font-size: 11px; font-weight: 600; white-space: nowrap;">{{r.${k}.label}}</span></sc-if>`;
 // Cards show up to two tags; with more, the first one and a +N (hover it to read the rest).
-const cardMore = `<sc-if value="{{r.cMore.show}}" hint-placeholder-val="{{ false }}"><span title="{{r.cMore.title}}" style="height: 22px; padding: 0 8px; flex-shrink: 0; display: inline-flex; align-items: center; border-radius: 999px; background: {{t.surf}}; color: {{t.muted}}; font-size: 11px; font-weight: 600; white-space: nowrap;">{{r.cMore.label}}</span></sc-if>`;
+const cardMore = `<sc-if value="{{r.cMore.show}}" hint-placeholder-val="{{ false }}"><span data-tip="{{r.cMore.title}}" aria-label="{{r.cMore.title}}" role="img" style="height: 22px; padding: 0 8px; flex-shrink: 0; display: inline-flex; align-items: center; border-radius: 999px; background: {{t.surf}}; color: {{t.muted}}; font-size: 11px; font-weight: 600; white-space: nowrap;">{{r.cMore.label}}</span></sc-if>`;
 const CARD_TAGS_JS = `const cardSlot = (tags, i) => (tags && tags[i] ? { show: true, ...tagChip(tags[i]) } : { show: false, label: '', bg: 'transparent', fg: t.text });
   const cardFit = tags => { const fit = tagFit(tags, 2); return { c1: cardSlot(fit.vis, 0), c2: cardSlot(fit.vis, 1), cMore: { show: fit.more > 0, label: '+' + fit.more, title: (tags || []).slice(fit.vis.length).join(', ') } }; };`;
 // ---------- Study network: shared pieces (profiles, shared decks, Discover, suggestions, History, news) ----------
@@ -657,7 +670,7 @@ const NET_TILE = (k, h, name = 22) => `<a href="{{${k}.href}}" class="sc-lift" s
 // A person's round picture: their photo, or their initial on their color.
 const PERSON_AV = (k, size) => `<span style="position: relative; width: ${size}px; height: ${size}px; flex-shrink: 0; border-radius: ${size / 2}px; overflow: hidden; background: {{${k}.bg}}; color: #FFFFFF; display: inline-flex; align-items: center; justify-content: center; font-size: ${Math.round(size * 0.42)}px; font-weight: 600; line-height: 1;"><sc-if value="{{${k}.noPhoto}}" hint-placeholder-val="{{ true }}">{{${k}.initial}}</sc-if><sc-if value="{{${k}.hasPhoto}}" hint-placeholder-val="{{ false }}"><img src="{{${k}.photo}}" alt="" referrerpolicy="no-referrer" style="position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover;"></sc-if></span>`;
 // The small check a verified teacher or school has next to their name.
-const VERIFIED = k => `<sc-if value="{{${k}.verified}}" hint-placeholder-val="{{ false }}"><span title="Verified" style="display: inline-flex; color: #3E63DD; flex-shrink: 0;">${svg(I.shield, 14, 2.2)}</span></sc-if>`;
+const VERIFIED = k => `<sc-if value="{{${k}.verified}}" hint-placeholder-val="{{ false }}"><span data-tip="Verified" aria-label="Verified" role="img" style="display: inline-flex; color: #3E63DD; flex-shrink: 0;">${svg(I.shield, 14, 2.2)}</span></sc-if>`;
 // Signed out, a public page has no sidebar: the logo, Discover, and Sign in across the top.
 const NET_TOP = `<header style="height: 64px; flex-shrink: 0; box-sizing: border-box; padding: 0 48px; display: flex; align-items: center; gap: 16px; border-bottom: 1px solid {{t.line}};"><a href="{{homeHref}}" aria-label="Lucida">${logo()}</a><span style="flex-grow: 1;"></span><a href="WebDiscover.dc.html" style="height: 36px; padding: 0 14px; display: inline-flex; align-items: center; border-radius: 999px; font-size: 14px; font-weight: 600; color: {{t.muted}};">Discover</a>${pill('Sign in', { inv: true, href: '{{signInHref}}' })}</header>`;
 // A page of the study network on the web: the sidebar when you're signed in, the top bar when you aren't. `inner` is
@@ -1178,6 +1191,7 @@ const COVER_LOGIC = `
   ${TAG_JS}
   ${NET_JS}
   ${PICK_JS}
+  ${DATE_JS}
   const dk = db.deck(this.props.deckId);
   const up = (patch, typing) => db.act.updateDeck(dk.id, patch, typing);
   ${TEST.deckJs}
@@ -1269,9 +1283,9 @@ const COVER_LOGIC = `
       return { label, sub: g + '% · ' + perDayOf(g) + ' a day', pressed: on ? 'true' : 'false', bg: on ? t.inv : t.surf, fg: on ? t.invText : t.text, pick: () => { this.setState({ goalStepped: true }); up({ goal: g }); } }; }),
     line: db.workload(dk.id, goalNow) < 0.5 ? 'Under 1 review a day' : 'About ' + plural(costNow, 'review') + ' a day', hasDelta: goalNow !== this.goalFrom && change !== 0, delta: (change > 0 ? '+' : '−') + Math.abs(change) + ' a day' };
   const ex = dk.exam, pad = n => String(n).padStart(2, '0'), d0 = new Date(), todayIso = d0.getFullYear() + '-' + pad(d0.getMonth() + 1) + '-' + pad(d0.getDate());
-  const examVals = { on: !!dk.examDay, none: !dk.examDay, pick: pro, fixed: !pro, value: dk.examDay || '', min: todayIso, day: ex ? ex.day : dk.examDay, line: ex ? ex.line : 'This exam has passed',
-    set: e => { const v = e && e.target ? e.target.value : ''; if (v) up({ exam: v }); },
-    open: e => { try { if (e && e.target && e.target.showPicker) e.target.showPicker(); } catch (err) { /* the browser opens its own */ } },
+  const examVals = { on: !!dk.examDay, none: !dk.examDay, pick: pro, fixed: !pro, day: ex ? ex.day : dk.examDay, line: ex ? ex.line : 'This exam has passed',
+    // Lucida's own calendar, not the browser's date picker; a board's \`calendar\` Tweak shows it open.
+    cal: datePick('exam', { value: dk.examDay || '', min: todayIso, today: todayIso, title: 'Exam date', choose: iso => up({ exam: iso }), shown: this.props.calendar === 'Exam date' }),
     clear: () => up({ exam: null }) };
   const coverVals = {
     grain: String(this.props.grain ?? 0.7),
@@ -1368,9 +1382,8 @@ const deckShareBody = phone => `<sc-if value="{{isLinked}}" hint-placeholder-val
 // how many reviews a day it means for this deck, and how that changed since you opened the settings.
 const GOAL_PLANS = `<sc-if value="{{plan.show}}" hint-placeholder-val="{{ true }}"><div role="radiogroup" aria-label="Memory goal" style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px;"><sc-for list="{{plan.presets}}" as="p" hint-placeholder-count="3"><button type="button" role="radio" aria-checked="{{p.pressed}}" onClick="{{p.pick}}" class="sc-press" style="min-width: 0; padding: 10px 12px; border: 0; border-radius: 16px; background: {{p.bg}}; color: {{p.fg}}; display: flex; flex-direction: column; align-items: flex-start; gap: 2px; font: inherit; text-align: left; cursor: pointer;"><span style="font-size: 13px; font-weight: 600;">{{p.label}}</span><span style="max-width: 100%; font-size: 12px; opacity: .72; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{p.sub}}</span></button></sc-for></div></sc-if>`;
 const GOAL_COST = `<sc-if value="{{plan.show}}" hint-placeholder-val="{{ true }}"><div role="status" style="display: flex; align-items: center; gap: 8px; min-height: 24px; font-size: 13px;"><span>{{plan.line}}</span><sc-if value="{{plan.hasDelta}}" hint-placeholder-val="{{ false }}"><span style="height: 22px; padding: 0 9px; display: inline-flex; align-items: center; border-radius: 999px; background: {{t.surf}}; color: {{t.muted}}; font-size: 12px; font-weight: 600; font-variant-numeric: tabular-nums; white-space: nowrap;">{{plan.delta}}</span></sc-if></div></sc-if>`;
-// An exam date: pick a day (the phone's or browser's own date picker, under the pill), change it, or take it off; and how
-// the deck stands for it.
-const examPill = (label, extra = '') => `<label class="sc-press" style="position: relative; height: 34px; padding: 0 14px; display: inline-flex; align-items: center; gap: 6px; border-radius: 999px; background: {{t.surf}}; font-size: 13px; font-weight: 600; white-space: nowrap; cursor: pointer; overflow: hidden;">${svg(I.calendar, 14, 2)}<span>${label}</span><input type="date" value="{{exam.value}}" min="{{exam.min}}" onChange="{{exam.set}}" onClick="{{exam.open}}" aria-label="Exam date" style="position: absolute; inset: 0; width: 100%; height: 100%; box-sizing: border-box; margin: 0; padding: 0; border: 0; opacity: 0; font-size: 16px; cursor: pointer;${extra}"></label>`;
+// An exam date: pick a day (Lucida's own calendar, under the pill), change it, or take it off; and how the deck stands for it.
+const examPill = label => dateMarkup('exam.cal', `<button type="button" onClick="{{exam.cal.toggle}}" aria-haspopup="dialog" aria-expanded="{{exam.cal.expanded}}" aria-label="Exam date" class="sc-press" style="height: 34px; padding: 0 14px; display: inline-flex; align-items: center; gap: 6px; border: 0; border-radius: 999px; background: {{t.surf}}; color: {{t.text}}; font: inherit; font-size: 13px; font-weight: 600; white-space: nowrap; cursor: pointer;">${svg(I.calendar, 14, 2)}<span>${label}</span></button>`);
 // On Free, a deck that still has an exam (from when it was Pro) shows its day, which can only be taken off.
 const EXAM_ROW = `<div style="display: flex; flex-direction: column; gap: 6px;"><div style="display: flex; align-items: center; gap: 8px; min-height: 36px;"><span style="flex-grow: 1; font-size: 14px; font-weight: 600;">Exam date</span><sc-if value="{{exam.none}}" hint-placeholder-val="{{ false }}">${examPill('Add a date')}</sc-if><sc-if value="{{exam.on}}" hint-placeholder-val="{{ true }}"><sc-if value="{{exam.pick}}" hint-placeholder-val="{{ true }}">${examPill('{{exam.day}}')}</sc-if><sc-if value="{{exam.fixed}}" hint-placeholder-val="{{ false }}"><span style="height: 34px; padding: 0 14px; display: inline-flex; align-items: center; gap: 6px; border-radius: 999px; background: {{t.surf}}; font-size: 13px; font-weight: 600; white-space: nowrap;">${svg(I.calendar, 14, 2)}<span>{{exam.day}}</span></span></sc-if><button type="button" onClick="{{exam.clear}}" aria-label="Remove the exam date" style="width: 34px; height: 34px; flex-shrink: 0; border: 0; border-radius: 17px; background: {{t.surf}}; color: {{t.text}}; display: flex; align-items: center; justify-content: center; cursor: pointer;">${svg(I.close, 12, 2.4)}</button></sc-if></div><sc-if value="{{exam.on}}" hint-placeholder-val="{{ true }}"><span style="font-size: 12px; line-height: 1.4; color: {{t.muted}};">{{exam.line}}</span></sc-if></div>`;
 // Cards you keep forgetting: how many forgets make one, and whether it gets the Leech tag or is paused.
@@ -1573,7 +1586,7 @@ const occPicture = h => `<div style="${h ? `height: ${h}px;` : 'flex: 1 1 0; min
     <div class="sc-occ-pic" ref="{{occ.ref}}" tabindex="0" role="group" aria-label="The picture. Drag on it to hide a part behind a box." style="position: relative; max-width: 100%; line-height: 0; border-radius: 8px; color: {{t.text}}; touch-action: none; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; cursor: crosshair; outline: 0;">
       <sc-if value="{{img.mock}}" hint-placeholder-val="{{ true }}">${h ? CELL(Math.round((h - 28) * 22 / 15), h - 28, false) : `<div style="width: min(100cqw, 100cqh * 22 / 15); aspect-ratio: 22 / 15;">${CELL('100%', '100%', false, .9)}</div>`}</sc-if>
       <sc-if value="{{img.url}}" hint-placeholder-val="{{ false }}"><img src="{{img.url}}" alt="" draggable="false" style="display: block; ${h ? `max-width: 100%; max-height: ${h - 28}px;` : 'max-width: 100cqw; max-height: 100cqh;'} border-radius: 8px; pointer-events: none;"></sc-if>
-      <sc-for list="{{occ.boxes}}" as="b" hint-placeholder-count="3"><div data-occ-box="{{b.id}}" style="position: absolute; z-index: {{b.z}}; left: {{b.x}}; top: {{b.y}}; width: {{b.w}}; height: {{b.h}}; box-sizing: border-box; border-radius: 6px; background: {{b.bg}}; color: {{b.fg}}; box-shadow: {{b.ring}}; display: flex; align-items: center; justify-content: center; font-size: ${h ? 12 : 14}px; font-weight: 700; line-height: 1; cursor: move;">{{b.num}}<sc-if value="{{b.sel}}" hint-placeholder-val="{{ false }}">${occHandle('nw', 'left: -6px; top: -6px;', 'nwse-resize')}${occHandle('sw', 'left: -6px; bottom: -6px;', 'nesw-resize')}${occHandle('se', 'right: -6px; bottom: -6px;', 'nwse-resize')}<button type="button" data-occ-del="1" class="sc-occ-x" onClick="{{b.del}}" aria-label="Remove box {{b.n}}" title="Remove box {{b.n}}" style="position: absolute; {{b.delAt}} width: 24px; height: 24px; padding: 0; border: 0; border-radius: 12px; background: {{t.inv}}; color: {{t.invText}}; box-shadow: 0 0 0 2px {{t.bg}}; display: flex; align-items: center; justify-content: center; cursor: pointer;">${svg(I.close, 10, 2.8)}</button></sc-if></div></sc-for>
+      <sc-for list="{{occ.boxes}}" as="b" hint-placeholder-count="3"><div data-occ-box="{{b.id}}" style="position: absolute; z-index: {{b.z}}; left: {{b.x}}; top: {{b.y}}; width: {{b.w}}; height: {{b.h}}; box-sizing: border-box; border-radius: 6px; background: {{b.bg}}; color: {{b.fg}}; box-shadow: {{b.ring}}; display: flex; align-items: center; justify-content: center; font-size: ${h ? 12 : 14}px; font-weight: 700; line-height: 1; cursor: move;">{{b.num}}<sc-if value="{{b.sel}}" hint-placeholder-val="{{ false }}">${occHandle('nw', 'left: -6px; top: -6px;', 'nwse-resize')}${occHandle('sw', 'left: -6px; bottom: -6px;', 'nesw-resize')}${occHandle('se', 'right: -6px; bottom: -6px;', 'nwse-resize')}<button type="button" data-occ-del="1" class="sc-occ-x" onClick="{{b.del}}" aria-label="Remove box {{b.n}}" data-tip="Remove box {{b.n}}" style="position: absolute; {{b.delAt}} width: 24px; height: 24px; padding: 0; border: 0; border-radius: 12px; background: {{t.inv}}; color: {{t.invText}}; box-shadow: 0 0 0 2px {{t.bg}}; display: flex; align-items: center; justify-content: center; cursor: pointer;">${svg(I.close, 10, 2.8)}</button></sc-if></div></sc-for>
     </div>
   </div>`;
 // One row per box under the picture: its number (tap to pick the box), what's under it (the card's answer), and ×.
@@ -1582,7 +1595,7 @@ const occAnswers = `<sc-if value="{{occ.has}}" hint-placeholder-val="{{ true }}"
     <div style="display: flex; flex-direction: column; gap: 6px;"><sc-for list="{{occ.boxes}}" as="b" hint-placeholder-count="3"><div style="height: 34px; box-sizing: border-box; padding: 0 6px; display: flex; align-items: center; gap: 8px; border-radius: 14px; background: {{t.surf}}; box-shadow: {{b.rowRing}}; transition: box-shadow .15s;">
       <button type="button" onClick="{{b.pick}}" aria-label="Pick box {{b.n}}" aria-pressed="{{b.pressed}}" style="width: 24px; height: 24px; flex-shrink: 0; padding: 0; border: 0; border-radius: 8px; background: {{b.chip}}; color: {{b.chipFg}}; font: inherit; font-size: 12px; font-weight: 700; cursor: pointer;">{{b.n}}</button>
       <input type="text" value="{{b.label}}" onChange="{{b.setLabel}}" onFocus="{{b.pick}}" onKeyDown="{{b.key}}" data-occ-label="{{b.id}}" placeholder="What’s under box {{b.n}}" aria-label="What’s under box {{b.n}}" maxlength="200" autocomplete="off" style="flex-grow: 1; min-width: 0; height: 100%; padding: 0; border: 0; outline: 0; background: transparent; color: {{t.text}}; font: inherit; font-size: 15px;">
-      <button type="button" onClick="{{b.remove}}" aria-label="Remove box {{b.n}}" title="Remove box {{b.n}}" style="width: 28px; height: 28px; flex-shrink: 0; padding: 0; border: 0; border-radius: 14px; background: transparent; color: {{t.muted}}; display: flex; align-items: center; justify-content: center; cursor: pointer;">${svg(I.close, 12, 2.2)}</button>
+      <button type="button" onClick="{{b.remove}}" aria-label="Remove box {{b.n}}" data-tip="Remove box {{b.n}}" style="width: 28px; height: 28px; flex-shrink: 0; padding: 0; border: 0; border-radius: 14px; background: transparent; color: {{t.muted}}; display: flex; align-items: center; justify-content: center; cursor: pointer;">${svg(I.close, 12, 2.2)}</button>
     </div></sc-for></div>
   </div></sc-if>
   <sc-if value="{{occ.tip}}" hint-placeholder-val="{{ false }}"><span style="font-size: 13px; line-height: 1.45; color: {{t.muted}};">Drag on the picture to hide a part behind a box. Each box becomes its own card, with what’s under it as the answer.</span></sc-if>`;
@@ -1704,7 +1717,7 @@ const editorFieldsOf = (phone, big = false, side = 380) => {
 };
 // Web formatting bar: text styles, blank, list, math, image, audio, undo. It works on the field you're typing in,
 // and pressing a button leaves the caret there.
-const webFmtBtn = (label, glyph, key, toggle = true) => `<button type="button" onMouseDown="{{keepFocus}}" onClick="{{fmt.${key}.toggle}}"${toggle ? ` aria-pressed="{{fmt.${key}.pressed}}"` : ''} aria-label="${label}" title="${label}" style="width: 36px; height: 36px; flex-shrink: 0; border: 0; border-radius: 12px; background: {{fmt.${key}.webBg}}; box-shadow: {{fmt.${key}.webSh}}; color: {{t.text}}; font: inherit; display: flex; align-items: center; justify-content: center; cursor: pointer;">${glyph}</button>`;
+const webFmtBtn = (label, glyph, key, toggle = true) => `<button type="button" onMouseDown="{{keepFocus}}" onClick="{{fmt.${key}.toggle}}"${toggle ? ` aria-pressed="{{fmt.${key}.pressed}}"` : ''} aria-label="${label}" data-tip="${label}" style="width: 36px; height: 36px; flex-shrink: 0; border: 0; border-radius: 12px; background: {{fmt.${key}.webBg}}; box-shadow: {{fmt.${key}.webSh}}; color: {{t.text}}; font: inherit; display: flex; align-items: center; justify-content: center; cursor: pointer;">${glyph}</button>`;
 const webFmtLine = '<span style="width: 1px; height: 20px; margin: 0 4px; flex-shrink: 0; background: {{t.surf2}};"></span>';
 const WEB_FMT = `<div role="toolbar" aria-label="Formatting" style="display: flex; align-items: center; gap: 2px; padding: 4px; border-radius: 16px; background: {{t.surf}};">
       ${webFmtBtn('Bold', '<span style="font-size: 16px; font-weight: 700;">B</span>', 'b')}${webFmtBtn('Italic', '<span style="font-size: 17px; font-style: italic; font-family: Georgia, serif;">I</span>', 'i')}${webFmtBtn('Underline', '<span style="font-size: 16px; text-decoration: underline; text-underline-offset: 3px;">U</span>', 'u')}${webFmtBtn('Strikethrough', '<span style="font-size: 16px; text-decoration: line-through;">S</span>', 's')}${webFmtBtn('Highlight', svg(I.marker, 18, 1.7), 'hl')}${webFmtLine}${webFmtBtn('Make a blank', svg(I.bracket, 19, 1.7), 'blank')}${webFmtBtn('List', svg(I.list, 18, 1.7), 'list')}${webFmtBtn('Math', svg(I.sqrt, 18, 1.7), 'math')}${webFmtLine}${webFmtBtn('Add image', svg(I.image, 18, 1.7), 'img', false)}${webFmtBtn('Add audio', svg(I.mic, 18, 1.7), 'audio', false)}<span style="flex-grow: 1;"></span>${webFmtBtn('Undo', svg(I.undo, 18, 1.7), 'undo', false)}
@@ -2569,7 +2582,7 @@ addDraft() {
     if (err instanceof TypeError) this.offline = true;
     const cur = this.eds.new;
     if (!cur || !this.hasWords(cur.edits)) this.eds.new = this.fresh({ type: ty, edits: { ...n.edits } });
-    else if (err instanceof TypeError) alert('You’re offline, so a card you just added didn’t save. Add it again once you’re back online.');
+    else if (err instanceof TypeError && this.props.db && this.props.db.say) this.props.db.say('You’re offline, so a card you just added didn’t save. Add it again once you’re back online.');
     if (this.pick === 'new' || this.pick === card.id) { this.pick = 'new'; this.ed = this.eds.new; }
     this.forceUpdate();
     throw err;
@@ -2579,8 +2592,13 @@ addDraft() {
 // card when none are left). Discard: the new card goes, and the card you were on opens again.
 dropSaved(ids) {
   const db = this.props.db || this.mock(), id = this.pick;
+  if (db.mock) return this.dropNow(ids, id, db);
+  if (this.temp(id)) return;
+  // It asks first, in Lucida's own question (never the browser's confirm()).
+  return db.ask({ title: 'Delete this card?', action: 'Delete card', danger: true }).then(yes => { if (yes && this.pick === id) this.dropNow(ids, id, db); });
+}
+dropNow(ids, id, db) {
   if (!db.mock) {
-    if (this.temp(id) || !confirm('Delete this card?')) return;
     clearTimeout(this.timers[id]);
     delete this.timers[id];
     this.track(db.act.removeCards(db.group(id).map(c => c.id)).catch(err => { this.gone = this.gone.filter(x => x !== id); this.forceUpdate(); throw err; }));
@@ -2655,10 +2673,10 @@ unsaved() {
 async leave(href) {
   const db = this.props.db, u = this.unsaved(), cards = u.held.length;
   if (cards || u.draft === 'unfinished') {
-    const msg = cards && u.draft === 'unfinished' ? 'Some changes and your new card are missing something, so they won’t be saved. Leave anyway?'
-      : cards ? (cards === 1 ? 'A card you changed is missing something, so the change won’t be saved. Leave anyway?' : cards + ' cards you changed are missing something, so the changes won’t be saved. Leave anyway?')
-      : 'Your new card isn’t finished, so it won’t be added. Leave anyway?';
-    if (!confirm(msg)) return;
+    const msg = cards && u.draft === 'unfinished' ? 'Some changes and your new card are missing something, so they won’t be saved.'
+      : cards ? (cards === 1 ? 'A card you changed is missing something, so the change won’t be saved.' : cards + ' cards you changed are missing something, so the changes won’t be saved.')
+      : 'Your new card isn’t finished, so it won’t be added.';
+    if (!(await db.ask({ title: 'Leave anyway?', line: msg, action: 'Leave' }))) return;
   }
   this.saveAll(false);
   if (u.draft === 'ready') this.addDraft();
@@ -2669,7 +2687,7 @@ async leave(href) {
   this.exiting = false;
   if (this.addFailed || Object.values(this.eds).some(e => e.failed)) {
     this.forceUpdate();
-    if (this.offline) alert('You’re offline, so this didn’t save. Try Done again once you’re back online.');
+    if (this.offline && db.say) db.say('You’re offline, so this didn’t save. Try Done again once you’re back online.');
     return;
   }
   db.act.go(href);
@@ -2877,11 +2895,11 @@ const progSeg = `<div role="group" aria-label="Progress style" style="display: g
 </div>`;
 // Anki-style counts: new (blue) · learning (red) · review (green); the current card's queue is underlined.
 const COUNTS = small => `<span role="status" aria-label="{{countsLabel}}" style="display: flex; align-items: center; gap: ${small ? 12 : 16}px; font-family: ${MONO}; font-size: ${small ? 15 : 16}px; font-weight: 600;">${[['cNew', 'easy'], ['cLearn', 'again'], ['cRev', 'good']].map(([k, c]) => `<span style="color: {{t.${c}}}; text-decoration: {{${k}.u}}; text-decoration-thickness: 2px; text-underline-offset: 5px;">{{${k}.n}}</span>`).join('')}</span>`;
-const settingsBtn = `<button type="button" onClick="{{toggleSettings}}" aria-label="Review settings" title="Review settings" aria-expanded="{{settingsExpanded}}" style="width: 44px; height: 44px; flex-shrink: 0; border: 0; border-radius: 22px; background: {{settingsBtnBg}}; color: {{settingsBtnFg}}; display: flex; align-items: center; justify-content: center; cursor: pointer;">${svg(I.sliders, 18, 2)}</button>`;
+const settingsBtn = `<button type="button" onClick="{{toggleSettings}}" aria-label="Review settings" data-tip="Review settings" aria-expanded="{{settingsExpanded}}" style="width: 44px; height: 44px; flex-shrink: 0; border: 0; border-radius: 22px; background: {{settingsBtnBg}}; color: {{settingsBtnFg}}; display: flex; align-items: center; justify-content: center; cursor: pointer;">${svg(I.sliders, 18, 2)}</button>`;
 const settingsGroups = `<div style="display: flex; flex-direction: column; gap: 8px;"><span style="font-size: 13px; font-weight: 600;">Grade with</span>${modeSeg(true)}</div>
       <div style="display: flex; flex-direction: column; gap: 8px;"><span style="font-size: 13px; font-weight: 600;">Progress</span>${progSeg}<span style="font-size: 12px; line-height: 1.4; color: {{t.muted}};">{{progHint}}</span></div>`;
 // Check / x: two big answers.
-const binaryBtns = phoneSize => ['missed', 'knew'].map(k => `<button type="button" onClick="{{${k}.pick}}" aria-label="{{${k}.label}}" title="{{${k}.title}}" data-key="${k === 'knew' ? 2 : 1}" style="width: ${phoneSize ? 68 : 76}px; height: ${phoneSize ? 68 : 76}px; flex-shrink: 0; border: 0; border-radius: 50%; background: {{t.${k === 'knew' ? 'good' : 'again'}}}; color: {{t.bg}}; display: flex; align-items: center; justify-content: center; cursor: pointer;">${svg(I[k === 'knew' ? 'check' : 'close'], phoneSize ? 28 : 30, 2.8)}</button>`).join('\n    ');
+const binaryBtns = phoneSize => ['missed', 'knew'].map(k => `<button type="button" onClick="{{${k}.pick}}" aria-label="{{${k}.label}}" data-tip="{{${k}.title}}" data-key="${k === 'knew' ? 2 : 1}" style="width: ${phoneSize ? 68 : 76}px; height: ${phoneSize ? 68 : 76}px; flex-shrink: 0; border: 0; border-radius: 50%; background: {{t.${k === 'knew' ? 'good' : 'again'}}}; color: {{t.bg}}; display: flex; align-items: center; justify-content: center; cursor: pointer;">${svg(I[k === 'knew' ? 'check' : 'close'], phoneSize ? 28 : 30, 2.8)}</button>`).join('\n    ');
 // Piles: plain tiles with a count and a name; the last tile opens the New pile popup.
 const pileTiles = phoneSize => `<sc-for list="{{piles}}" as="p" hint-placeholder-count="3">
       <button type="button" onClick="{{p.pick}}" aria-label="Put in {{p.name}}" data-key="{{p.key}}" style="flex: 1 1 0; min-width: 0; position: relative; padding: 0; border: 0; background: transparent; font: inherit; color: inherit; cursor: pointer;">
@@ -2953,7 +2971,7 @@ const flipCard = (w, h, pad, big) => `<button type="button" onClick="{{reveal}}"
 const webReview = `<div style="position: relative; isolation: isolate; width: 1440px; height: 900px; box-sizing: border-box; display: flex; flex-direction: column; font-family: ${FONT}; background: {{t.bg}}; color: {{t.text}};">
   ${studyBgLayer}
   <header style="height: 76px; box-sizing: border-box; padding: 0 32px; display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: center; gap: 16px;">
-    <div style="display: flex;"><a href="{{endHref}}" aria-label="End review" title="End review" style="width: 36px; height: 36px; border-radius: 18px; background: {{t.surf}}; display: flex; align-items: center; justify-content: center;">${svg(I.close, 16, 2.2)}</a></div>
+    <div style="display: flex;"><a href="{{endHref}}" aria-label="End review" data-tip="End review" style="width: 36px; height: 36px; border-radius: 18px; background: {{t.surf}}; display: flex; align-items: center; justify-content: center;">${svg(I.close, 16, 2.2)}</a></div>
     <div style="display: flex; align-items: center; justify-content: center; gap: 14px; min-width: 420px; min-height: 24px;">
       <sc-if value="{{showBar}}" hint-placeholder-val="{{ true }}"><div style="width: 360px; height: 6px; border-radius: 3px; background: {{t.surf}}; overflow: hidden;"><div style="height: 6px; border-radius: 3px; background: {{t.text}}; width: {{progress}}; transition: width .3s cubic-bezier(.2,.8,.2,1);"></div></div><span style="font-family: ${MONO}; font-size: 13px; color: {{t.muted}};">{{left}} left</span></sc-if>
       <sc-if value="{{showCounts}}" hint-placeholder-val="{{ false }}">${COUNTS(false)}</sc-if>
@@ -3039,7 +3057,7 @@ const webDone = `<div style="width: 1440px; height: 900px; box-sizing: border-bo
 </div>`;
 // Session done after sorting into piles. Piles don't grade, so there's no score: each pile shows how many cards
 // went in this time, with a bar for its share of the session.
-const donePiles = big => `<div role="list" aria-label="Your piles" style="width: 100%; display: flex; flex-wrap: wrap; gap: ${big ? 10 : 8}px;"><sc-for list="{{piles}}" as="p" hint-placeholder-count="3"><a role="listitem" href="{{p.href}}" aria-label="Go over {{p.name}}" title="Go over {{p.name}}" style="flex: 1 1 ${big ? '0' : '96px'}; min-width: 0; position: relative; box-sizing: border-box; padding: ${big ? '22px 20px 20px' : '16px 14px 14px'}; border-radius: ${big ? 28 : 22}px; background: {{t.surf}}; display: flex; flex-direction: column; gap: ${big ? 6 : 4}px; text-align: left; pointer-events: {{p.pe}};"><span style="position: absolute; top: ${big ? 18 : 12}px; right: ${big ? 16 : 12}px; width: ${big ? 28 : 24}px; height: ${big ? 28 : 24}px; border-radius: 50%; background: {{t.bg}}; color: {{p.arrow}}; display: flex; align-items: center; justify-content: center;">${svg(I.chev, big ? 14 : 12, 2.2)}</span><span style="font-size: ${big ? 44 : 34}px; font-weight: 600; letter-spacing: -.03em; line-height: 1;">{{p.count}}</span><span style="font-size: ${big ? 14 : 13}px; font-weight: 600; color: {{t.muted}}; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{p.name}}</span><div style="margin-top: ${big ? 10 : 8}px; height: 6px; border-radius: 3px; background: {{t.surf2}}; overflow: hidden;"><div style="height: 6px; border-radius: 3px; width: {{p.w}}; background: {{fill}};"></div></div></a></sc-for></div>`;
+const donePiles = big => `<div role="list" aria-label="Your piles" style="width: 100%; display: flex; flex-wrap: wrap; gap: ${big ? 10 : 8}px;"><sc-for list="{{piles}}" as="p" hint-placeholder-count="3"><a role="listitem" href="{{p.href}}" aria-label="Go over {{p.name}}" style="flex: 1 1 ${big ? '0' : '96px'}; min-width: 0; position: relative; box-sizing: border-box; padding: ${big ? '22px 20px 20px' : '16px 14px 14px'}; border-radius: ${big ? 28 : 22}px; background: {{t.surf}}; display: flex; flex-direction: column; gap: ${big ? 6 : 4}px; text-align: left; pointer-events: {{p.pe}};"><span style="position: absolute; top: ${big ? 18 : 12}px; right: ${big ? 16 : 12}px; width: ${big ? 28 : 24}px; height: ${big ? 28 : 24}px; border-radius: 50%; background: {{t.bg}}; color: {{p.arrow}}; display: flex; align-items: center; justify-content: center;">${svg(I.chev, big ? 14 : 12, 2.2)}</span><span style="font-size: ${big ? 44 : 34}px; font-weight: 600; letter-spacing: -.03em; line-height: 1;">{{p.count}}</span><span style="font-size: ${big ? 14 : 13}px; font-weight: 600; color: {{t.muted}}; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{p.name}}</span><div style="margin-top: ${big ? 10 : 8}px; height: 6px; border-radius: 3px; background: {{t.surf2}}; overflow: hidden;"><div style="height: 6px; border-radius: 3px; width: {{p.w}}; background: {{fill}};"></div></div></a></sc-for></div>`;
 const noSplit = '<div style="width: 100%; display: flex; flex-direction: column; gap: 10px; text-align: left;">' + splitBar + '</div>';
 const webDonePiles = webDone.replace(/<div style="display: flex; flex-direction: column; align-items: center; gap: 12px;">[\s\S]*?\{\{goalLine\}\}<\/span><\/div>/, () => donePiles(true)).replace(noSplit, () => '');
 const donePilesLogic = phone => `renderVals() { ${T}${DB_JS}
@@ -3103,7 +3121,7 @@ const tagBar = (study, phone) => `<div style="display: flex; align-items: center
 const hardRow = `<a href="{{h.href}}" style="display: flex; flex-direction: column; justify-content: center; gap: 2px; min-height: 52px; border-top: 1px solid {{t.line}};"><span style="font-size: 14px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{h.front}}</span><span style="font-size: 12px; color: {{t.muted}}; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{h.sub}}</span></a>`;
 const smallPill = (label, href, inv = false) => `<a href="${href}" class="sc-press" style="flex-shrink: 0; height: 32px; padding: 0 14px; display: inline-flex; align-items: center; border-radius: 999px; background: ${inv ? '{{t.inv}}' : '{{t.bg}}'}; color: ${inv ? '{{t.invText}}' : '{{t.text}}'}; font-size: 13px; font-weight: 600; white-space: nowrap;">${label}</a>`;
 // A small histogram (bars only, labels under).
-const miniHist = (key, n, H) => `<div style="display: flex; flex-direction: column; gap: 6px;"><div style="height: ${H}px; display: flex; align-items: flex-end; gap: 4px;"><sc-for list="{{${key}}}" as="b" hint-placeholder-count="${n}"><div class="sc-grow" title="{{b.title}}" style="flex: 1 1 0; min-width: 0; border-radius: 4px; background: {{b.c}}; height: {{b.h}};"></div></sc-for></div><div style="display: flex; gap: 4px;"><sc-for list="{{${key}}}" as="b" hint-placeholder-count="${n}"><span style="flex: 1 1 0; min-width: 0; text-align: center; font-family: ${MONO}; font-size: 10px; color: {{t.muted}}; white-space: nowrap; overflow: hidden;">{{b.label}}</span></sc-for></div></div>`;
+const miniHist = (key, n, H) => `<div style="display: flex; flex-direction: column; gap: 6px;"><div style="height: ${H}px; display: flex; align-items: flex-end; gap: 4px;"><sc-for list="{{${key}}}" as="b" hint-placeholder-count="${n}"><div class="sc-grow" data-tip="{{b.title}}" aria-label="{{b.title}}" role="img" style="flex: 1 1 0; min-width: 0; border-radius: 4px; background: {{b.c}}; height: {{b.h}};"></div></sc-for></div><div style="display: flex; gap: 4px;"><sc-for list="{{${key}}}" as="b" hint-placeholder-count="${n}"><span style="flex: 1 1 0; min-width: 0; text-align: center; font-family: ${MONO}; font-size: 10px; color: {{t.muted}}; white-space: nowrap; overflow: hidden;">{{b.label}}</span></sc-for></div></div>`;
 // Which decks the cards you keep forgetting are in.
 const LEECH_DECKS = `<div style="display: flex; flex-direction: column;"><sc-for list="{{weak.leech.decks}}" as="x" hint-placeholder-count="3"><div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 34px; border-top: 1px solid {{t.line}}; font-size: 14px;"><span style="min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{x.name}}</span><span style="font-family: ${MONO}; font-size: 13px; font-weight: 600;">{{x.n}}</span></div></sc-for></div>`;
 const bigNum = (v, sub) => `<div style="display: flex; align-items: baseline; gap: 8px; min-width: 0;"><span style="font-size: 34px; font-weight: 600; letter-spacing: -.035em; line-height: 1;">${v}</span><span style="min-width: 0; font-size: 13px; color: {{t.muted}}; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${sub}</span></div>`;
@@ -3412,7 +3430,7 @@ renderVals() {
   ${APPS_JS}
   ${SETTINGS_SIDE_JS('connect-ai', 'db.mock ? true : !!(db.plan && db.plan())')}
   // Online, a link that got out can be swapped for a new one; AI apps with the old link lose access.
-  const renew = () => { if (db.mock) return this.setState({ renewed: true }); if (!confirm('Make a new link? AI apps using the old one will stop working until you give them the new link.')) return; db.act.newLink().then(() => this.setState({ renewed: true, copied: false })); };
+  const renew = () => { if (db.mock) return this.setState({ renewed: true }); db.ask({ title: 'Make a new link?', line: 'AI apps using the old one stop working until you give them the new one.', action: 'Make a new link' }).then(yes => yes && db.act.newLink().then(() => this.setState({ renewed: true, copied: false }))); };
   return { ${MESH_VALS('Apricot')} t, ...chrome, ...settingsSide, ...appVals, perms, providers, mcpUrl: ai.url, copyLabel: this.state.copied ? 'Copied' : 'Copy', copy: () => { db.act.copy(ai.url); this.setState({ copied: true }); },
     canRenew: db.mock || db.settings().signedIn, renew, renewLabel: this.state.renewed ? 'New link made' : 'Make a new link' };
 }`;
@@ -4076,19 +4094,18 @@ renderVals() { ${T}${DB_JS}
 // adds 53 here and a blocked person 56 (`node tools/content-height.mjs PhoneSettings` says how tall it is, and the board is cut off if
 // the content is taller than this).
 const PHONE_SETTINGS_H = 2134;
-const sRow = (label, right, { href = '', sub = '', click = '', ext = false } = {}) => {
+const sRow = (label, right, { href = '', sub = '', click = '', ext = false, attrs = '' } = {}) => {
   const inner = `<span style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px;"><span style="font-size: 16px;">${label}</span>${sub ? `<span style="font-size: 12px; color: {{t.muted}};">${sub}</span>` : ''}</span>${right}`;
   const st = 'min-height: 52px; box-sizing: border-box; padding: 8px 16px; display: flex; align-items: center; gap: 12px;';
-  return href ? `<a href="${href}"${ext ? ' target="_blank" rel="noopener"' : ''} style="${st}">${inner}</a>` : click ? `<button type="button" onClick="{{${click}}}" style="${st} width: 100%; border: 0; background: transparent; color: inherit; font: inherit; text-align: left; cursor: pointer;">${inner}</button>` : `<div style="${st}">${inner}</div>`;
+  return href ? `<a href="${href}"${ext ? ' target="_blank" rel="noopener"' : ''} style="${st}">${inner}</a>` : click ? `<button type="button" onClick="{{${click}}}"${attrs} style="${st} width: 100%; border: 0; background: transparent; color: inherit; font: inherit; text-align: left; cursor: pointer;">${inner}</button>` : `<div style="${st}">${inner}</div>`;
 };
 const sVal = v => `<span style="display: flex; align-items: center; gap: 6px; font-size: 15px; color: {{t.muted}}; white-space: nowrap;">${v}${svg(I.chev, 14, 2.2)}</span>`;
-// A row that picks from a list: tapping it opens the phone's own picker (an invisible <select> over the row, with 16px
-// text so the phone doesn't zoom in), like the iPhone app's menus. `k` names a renderVals object made by pickOf()
-// (phoneSettingsLogic); `options` are [value, label]. `note` = [flag, its opposite, words]: with the flag on, the row says
-// something small under its name (Daily reminder, when the phone has notifications off for Lucida).
-const sPick = (label, k, options, note = null) => {
-  const select = `<select onChange="{{${k}.set}}" ref="{{${k}.ref}}" aria-label="${label}" style="position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; border: 0; font-size: 16px; cursor: pointer;">${options.map(([v, l]) => `<option value="${v}">${l}</option>`).join('')}</select>`;
-  const row = sub => `<div style="position: relative;">${sRow(label, sVal(`{{${k}.label}}`), sub ? { sub } : {})}${select}</div>`;
+// A row that picks from a list: tapping it opens Lucida's own list, a sheet from the bottom (design/ui.mjs dropSheet, at the end of the board; the
+// canvas shows one open through the board's `dropdown` Tweak), like the iPhone app's. `k` names a renderVals object made by this.dropPick();
+// its rows are what the list offers. `note` = [flag, its opposite, words]: with the flag on, the row says something small under its name
+// (Daily reminder, when the phone has notifications off for Lucida).
+const sPick = (label, k, note = null) => {
+  const row = sub => sRow(label, sVal(`{{${k}.label}}`), { click: `${k}.toggle`, attrs: ` aria-haspopup="listbox" aria-expanded="{{${k}.expanded}}"`, ...(sub ? { sub } : {}) });
   return note ? `<sc-if value="{{${note[0]}}}" hint-placeholder-val="{{ false }}">${row(note[2])}</sc-if><sc-if value="{{${note[1]}}}" hint-placeholder-val="{{ true }}">${row('')}</sc-if>` : row('');
 };
 const S_LINE = '<div style="height: 1px; margin-left: 16px; background: {{t.bg}};"></div>';
@@ -4151,7 +4168,7 @@ const PHOTO_JS = `const colors = [['Periwinkle', 'linear-gradient(135deg, #8C9AF
 // open, and Get verified (teachers and schools; it opens the request, /verify), which says Verified teacher (or school), with
 // the check and no link, once you are. Before you have a handle it says Your profile (opening it makes one).
 const SETTINGS_PROFILE_ROWS = board => [sRow('{{profileLabel}}', sVal('View profile'), { href: board + '.dc.html' }), sRow('Edit profile', sVal(''), { href: '{{editProfileHref}}' }),
-  `<sc-if value="{{verifyGet}}" hint-placeholder-val="{{ true }}">${sRow('Get verified', sVal('{{verifyValue}}'), { href: '{{verifyHref}}' })}</sc-if><sc-if value="{{verifyDone}}" hint-placeholder-val="{{ false }}">${sRow('{{verifiedLabel}}', `<span title="Verified" style="display: flex; color: #3E63DD;">${svg(I.shield, 20, 2)}</span>`)}</sc-if>`];
+  `<sc-if value="{{verifyGet}}" hint-placeholder-val="{{ true }}">${sRow('Get verified', sVal('{{verifyValue}}'), { href: '{{verifyHref}}' })}</sc-if><sc-if value="{{verifyDone}}" hint-placeholder-val="{{ false }}">${sRow('{{verifiedLabel}}', `<span data-tip="Verified" aria-label="Verified" role="img" style="display: flex; color: #3E63DD;">${svg(I.shield, 20, 2)}</span>`)}</sc-if>`];
 const PROFILE_ROW_JS = board => `const you = (db.me && db.me()) || {}, vst = (db.net && db.net.verify && db.net.verify()) || {}, profileVals = { profileLabel: you.handle ? '@' + you.handle : 'Your profile',
     editProfileHref: db.mock ? '${board}Edit.dc.html' : you.handle ? '/@' + you.handle + '?edit=1' : '/you?edit=1',
     verifyGet: !vst.verified, verifyDone: !!vst.verified, verifyValue: vst.open ? 'Waiting for review' : '', verifiedLabel: vst.verified === 'school' ? 'Verified school' : 'Verified teacher',
@@ -4251,9 +4268,9 @@ const phoneSettings = phone(`<div style="padding: 64px 20px 34px; display: flex;
   ${PHONE_ON('plan', planGroups(rows => sNamed('Plan', rows, 'showTitles')))}
   ${PHONE_ON('studying', sNamed('Studying', [
     // Off, or a time: the iPhone's own (the web has no reminder, so a screen in the web app doesn't show the row).
-    { when: 'hasReminder', row: sPick('Daily reminder', 'reminder', ['Off', ...REMINDER_TIMES].map(x => [x, x]), ['reminderNote', 'reminderPlain', 'Allow notifications for Lucida in iPhone Settings.']) },
-    sPick('New cards a day', 'perDay', [0, 5, 10, 15, 20, 30, 50].map(n => [n, n])),
-    sPick('Remember goal', 'goal', [80, 85, 90, 93, 95].map(n => [n, n + '%'])),
+    { when: 'hasReminder', row: sPick('Daily reminder', 'reminder', ['reminderNote', 'reminderPlain', 'Allow notifications for Lucida in iPhone Settings.']) },
+    sPick('New cards a day', 'perDay'),
+    sPick('Remember goal', 'goal'),
     sRow('Schedule with FSRS', SWITCH('fsrsSw', 'toggleFsrs', 'Schedule with FSRS'), { sub: '{{fsrsSub}}' }),
     sRow('Flip animation', SWITCH('flipSw', 'toggleFlip', 'Flip animation')),
     TUNE_ROW
@@ -4271,8 +4288,9 @@ const phoneSettings = phone(`<div style="padding: 64px 20px 34px; display: flex;
   ], 'showTitles'))}
   ${PHONE_ON('privacy', `<sc-if value="{{signedIn}}" hint-placeholder-val="{{ true }}">${sNamed('Privacy', [ACCOUNT_BLOCKED_ROW], 'showTitles')}</sc-if>`)}
   ${PHONE_ON('help', sNamed('Help &amp; legal', HELP_ROWS, 'showTitles'))}
-</div>`, '', DELETE_SHEET(true), PHONE_SETTINGS_H);
+</div>`, '', DELETE_SHEET(true) + dropSheet('reminder') + dropSheet('perDay') + dropSheet('goal'), PHONE_SETTINGS_H);
 const phoneSettingsLogic = `
+${DROP_JS}
 renderVals() {
   const db = this.props.db || this.mock(), chrome = db.chrome(), st = db.settings();
   // Appearance: on the canvas System follows the board's dark setting, and Light and Dark switch this screen right
@@ -4283,8 +4301,8 @@ renderVals() {
   ${OPTS_JS}
   const set = patch => db.act.setSettings(patch), piles = st.grading === 'piles';
   const remNow = db.mock ? (this.state.rem ?? (this.props.reminderNote ? 'Off' : this.props.reminder || st.reminder)) : st.reminder, remNote = db.mock && !!this.props.reminderNote && remNow === 'Off';
-  // A row's list (sPick): the value it shows, and saving a pick. The list shows the current value as picked.
-  const pickOf = (cur, label, save) => ({ label, set: e => save(e.target.value), ref: el => { if (el && el.value !== String(cur)) el.value = String(cur); } });
+  // A row's list (sPick): Lucida's own, a sheet from the bottom with the rows to pick from; the board's \`dropdown\` Tweak shows one open.
+  const shownList = { 'Daily reminder': 'reminder', 'New cards a day': 'perDay', 'Remember goal': 'goal' }[this.props.dropdown || ''] || '';
   ${PLAN_JS('PhoneGoPro')}
   ${PHOTO_JS}
   ${PROFILE_ROW_JS('PhoneProfile')}
@@ -4303,14 +4321,14 @@ renderVals() {
     title: all || list ? 'Settings' : secName, backHref: all || list ? (db.mock ? 'PhoneToday.dc.html' : '/') : (db.mock ? 'PhoneSettings.dc.html' : '/settings'),
     // Your account: tap it to sign out (online).
     accountSub: db.mock ? 'Synced on all your devices · just now' : st.sub,
-    account: () => { if (!db.mock && st.signedIn && confirm('Sign out of Lucida?')) db.act.signOut(); },
+    account: () => { if (!db.mock && st.signedIn) db.ask({ title: 'Sign out of Lucida?', action: 'Sign out' }).then(yes => yes && db.act.signOut()); },
     ...themeRow(),
     // Daily reminder: on the canvas the Tweaks say where it starts (Off, a time, or Off with the line about allowing notifications) and a pick
     // shows at once; online it is the saved time.
-    reminder: pickOf(remNow, remNow, v => { if (db.mock) this.setState({ rem: v }); else set({ reminder: v }); }),
+    reminder: this.dropPick('reminder', { title: 'Daily reminder', rows: ['Off', ...${JSON.stringify(REMINDER_TIMES)}].map(x => [x, x]), value: remNow, shown: shownList === 'reminder', choose: v => { if (db.mock) this.setState({ rem: v }); else set({ reminder: v }); } }),
     reminderNote: remNote, reminderPlain: !remNote,
-    perDay: pickOf(st.perDay, String(st.perDay), v => set({ perDay: +v })),
-    goal: pickOf(st.goal, st.goal + '%', v => set({ goal: +v })),
+    perDay: this.dropPick('perDay', { title: 'New cards a day', rows: [0, 5, 10, 15, 20, 30, 50].map(n => [String(n), String(n)]), value: String(st.perDay), shown: shownList === 'perDay', choose: v => set({ perDay: +v }) }),
+    goal: this.dropPick('goal', { title: 'Remember goal', rows: [80, 85, 90, 93, 95].map(n => [String(n), n + '%']), value: String(st.goal), shown: shownList === 'goal', choose: v => set({ goal: +v }) }),
     fsrsSw: sw(st.fsrs && !piles, !piles), toggleFsrs: () => !piles && set({ fsrs: !st.fsrs }),
     fsrsSub: piles ? 'Off while you grade with piles' : 'For 4 grades and ✓ / ✗',
     // Flip animation (on unless you turned it off): the Review screens read the same setting.
@@ -4945,7 +4963,7 @@ const learnBar = w => `<div style="${w ? `width: ${w}px;` : 'flex-grow: 1;'} hei
 const learnPlus = `<sc-if value="{{plusOne}}" hint-placeholder-val="{{ false }}"><span class="sc-plus" aria-hidden="true" style="position: absolute; left: 100%; top: -3px; margin-left: 6px; font-size: 13px; font-weight: 700; color: {{k.bar}}; animation: {{plusAnim}};">+1</span></sc-if>`;
 // The top: stop, settings, progress, and the set, on soft glass chips over the sky.
 // Settings (a gear by X) open a panel on the web and a sheet on the iPhone with the deck's background, as flashcards' do.
-const learnGear = size => `<button type="button" onClick="{{toggleSettings}}" aria-label="Learn settings" title="Learn settings" aria-expanded="{{settingsExpanded}}" style="width: ${size}px; height: ${size}px; flex-shrink: 0; border: 0; border-radius: ${size / 2}px; background: {{settingsBtnBg}}; color: {{settingsBtnFg}}; display: flex; align-items: center; justify-content: center; cursor: pointer;">${svg(I.gear, size > 40 ? 18 : 16, 2)}</button>`;
+const learnGear = size => `<button type="button" onClick="{{toggleSettings}}" aria-label="Learn settings" data-tip="Learn settings" aria-expanded="{{settingsExpanded}}" style="width: ${size}px; height: ${size}px; flex-shrink: 0; border: 0; border-radius: ${size / 2}px; background: {{settingsBtnBg}}; color: {{settingsBtnFg}}; display: flex; align-items: center; justify-content: center; cursor: pointer;">${svg(I.gear, size > 40 ? 18 : 16, 2)}</button>`;
 const learnSettings = phone => phone ? `<sc-if value="{{settingsOpen}}" hint-placeholder-val="{{ false }}">
     <div style="position: absolute; inset: 0; z-index: 5; background: {{t.dim}};"></div>
     <div role="dialog" aria-label="Learn settings" style="position: absolute; left: 0; right: 0; bottom: 0; z-index: 5; box-sizing: border-box; padding: 10px 20px 34px; border-radius: 32px 32px 0 0; background: {{t.bg}}; color: {{t.text}}; display: flex; flex-direction: column; gap: 18px;">
@@ -4960,7 +4978,7 @@ const learnSettings = phone => phone ? `<sc-if value="{{settingsOpen}}" hint-pla
     </div>
   </sc-if>`;
 const learnTop = back => `<header style="height: 76px; flex-shrink: 0; box-sizing: border-box; padding: 0 32px; display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: center; gap: 16px;">
-    <div style="display: flex; gap: 8px;"><a href="${back}" aria-label="Stop for now" title="Stop for now" style="width: 40px; height: 40px; border-radius: 20px; background: {{k.chip}}; display: flex; align-items: center; justify-content: center;">${svg(I.close, 16, 2.2)}</a>${learnGear(40)}</div>
+    <div style="display: flex; gap: 8px;"><a href="${back}" aria-label="Stop for now" data-tip="Stop for now" style="width: 40px; height: 40px; border-radius: 20px; background: {{k.chip}}; display: flex; align-items: center; justify-content: center;">${svg(I.close, 16, 2.2)}</a>${learnGear(40)}</div>
     <div style="display: flex; align-items: center; gap: 14px;">${learnBar(360)}<span role="status" style="position: relative; font-size: 14px; white-space: nowrap;"><span style="font-weight: 700;">{{learned}}</span> of {{total}} learned${learnPlus}</span></div>
     <div style="display: flex; justify-content: flex-end; min-width: 0;"><span style="height: 34px; padding: 0 14px; display: inline-flex; align-items: center; gap: 6px; border-radius: 999px; background: {{k.chip}}; font-size: 13px; font-weight: 600; white-space: nowrap;">${svg(I.sparkle, 14, 1.8)}<span>Learn · {{setName}}</span></span></div>
   </header>`;
@@ -5705,7 +5723,7 @@ const HEAD_METHOD = `hd(phone) {
 }`;
 // Landing and Pricing gained a <main>, whose children rise in on the app's boards; these two pages never did.
 const NO_RISE = 'main>*{animation:none}';
-const socialLinks = gap => `<span style="display: flex; align-items: center; gap: ${gap}px;">${SOCIALS.map(([ic, name, href]) => `<a href="${href}" target="_blank" rel="noopener" aria-label="Lucida on ${name}" title="${name}" style="width: 36px; height: 36px; margin: -8px; display: inline-flex; align-items: center; justify-content: center;">${svg(I[ic], 20, 1.8)}</a>`).join('')}</span>`;
+const socialLinks = gap => `<span style="display: flex; align-items: center; gap: ${gap}px;">${SOCIALS.map(([ic, name, href]) => `<a href="${href}" target="_blank" rel="noopener" aria-label="Lucida on ${name}" style="width: 36px; height: 36px; margin: -8px; display: inline-flex; align-items: center; justify-content: center;">${svg(I[ic], 20, 1.8)}</a>`).join('')}</span>`;
 // On phones: the logo and the accounts, then the links. On computers it's one row, which wraps on a narrow window.
 const landFooter = (phone, extra = '') => phone
   ? `<footer style="box-sizing: border-box; padding: 36px 20px 40px; display: flex; flex-direction: column; gap: 24px; font-size: 14px; color: {{t.muted}};">
@@ -6640,7 +6658,7 @@ ${siteHeader()}
 <section class="sp-top">
   <nav aria-label="Breadcrumb"><ol class="sp-crumbs"><sc-for list="{{crumbs}}" as="c" hint-placeholder-count="3"><li><sc-if value="{{c.link}}"><a href="{{c.href}}">{{c.label}}</a></sc-if><sc-if value="{{c.current}}"><span aria-current="page">{{c.label}}</span></sc-if></li></sc-for></ol></nav>
   <h1 class="sp-h1">{{page.h1}}</h1>
-  <sc-if value="{{hasMeta}}" hint-placeholder-val="{{ true }}"><div class="sp-chips"><span class="sp-chip sp-chip-a">${mark(13)}Lucida</span><span class="sp-chip"><time datetime="{{page.updated}}" title="Updated {{page.updatedShort}}">{{page.updatedShort}}</time></span><span class="sp-chip">${svg(I.today, 14, 1.8)}{{page.minutes}} min read</span></div></sc-if>
+  <sc-if value="{{hasMeta}}" hint-placeholder-val="{{ true }}"><div class="sp-chips"><span class="sp-chip sp-chip-a">${mark(13)}Lucida</span><span class="sp-chip"><time datetime="{{page.updated}}">{{page.updatedShort}}</time></span><span class="sp-chip">${svg(I.today, 14, 1.8)}{{page.minutes}} min read</span></div></sc-if>
   <p class="sp-lead">${spParts('page.lead')}</p>
 </section>
 <sc-if value="{{hasToc}}" hint-placeholder-val="{{ true }}"><sc-if value="{{tocOpen}}"><details class="sp-tocd" open><summary>${spTocIcon}On this page${spPm}</summary><nav aria-label="On this page">${spTree}</nav></details></sc-if><sc-if value="{{tocClosed}}"><details class="sp-tocd"><summary>${spTocIcon}On this page${spPm}</summary><nav aria-label="On this page">${spTree}</nav></details></sc-if></sc-if>
@@ -8041,7 +8059,7 @@ const NETX_JS = `const RT = this.rich(), flat = x => RT.plain(String(x || ''), {
   };
   const inkOf = this.props.dark ? { before: '#FDA29B', after: '#75E0A7' } : { before: '#912018', after: '#085D3A' };`;
 // Round pictures: a person's, or an AI app's spark; a version made with an AI app has its spark in the corner too.
-const WHO_AV = (k, s) => `<sc-if value="{{${k}.isAI}}" hint-placeholder-val="{{ false }}"><span title="{{${k}.aiName}}" style="width: ${s}px; height: ${s}px; flex-shrink: 0; border-radius: ${s / 2}px; background: {{${k}.aiBg}}; color: {{${k}.aiInk}}; display: inline-flex; align-items: center; justify-content: center;">${svg(I.sparkle, Math.round(s * .56), 2)}</span></sc-if><sc-if value="{{${k}.isPerson}}" hint-placeholder-val="{{ true }}">${PERSON_AV(k + '.who', s)}</sc-if>`;
+const WHO_AV = (k, s) => `<sc-if value="{{${k}.isAI}}" hint-placeholder-val="{{ false }}"><span data-tip="{{${k}.aiName}}" aria-label="{{${k}.aiName}}" role="img" style="width: ${s}px; height: ${s}px; flex-shrink: 0; border-radius: ${s / 2}px; background: {{${k}.aiBg}}; color: {{${k}.aiInk}}; display: inline-flex; align-items: center; justify-content: center;">${svg(I.sparkle, Math.round(s * .56), 2)}</span></sc-if><sc-if value="{{${k}.isPerson}}" hint-placeholder-val="{{ true }}">${PERSON_AV(k + '.who', s)}</sc-if>`;
 const VER_AV = (k, s) => `<span style="position: relative; display: inline-flex; flex-shrink: 0;">${WHO_AV(k, s)}<sc-if value="{{${k}.withAI}}" hint-placeholder-val="{{ false }}"><span style="position: absolute; right: -${Math.round(s * .28)}px; bottom: -3px; width: ${Math.round(s * .58)}px; height: ${Math.round(s * .58)}px; border-radius: 50%; background: {{${k}.badgeBg}}; color: {{${k}.badgeInk}}; box-shadow: 0 0 0 2px {{t.bg}}; display: flex; align-items: center; justify-content: center;">${svg(I.sparkle, Math.round(s * .34), 2.2)}</span></sc-if></span>`;
 // A change: its kind, the card it's on, the words before (struck, on light red) and after (on light green), and, where
 // the owner decides, Skip and Take it (Toss and Keep for their AI's cards).
@@ -8866,6 +8884,7 @@ renderVals() {
     close: () => this.setState({ ren: false }), save: () => rn.trim() && run(() => db.act.updateClass(k.id, { name: rn.trim(), school: rs.trim() }), () => this.setState({ ren: false })),
     key: e => { if (e.key === 'Enter') { e.preventDefault(); if (rn.trim()) run(() => db.act.updateClass(k.id, { name: rn.trim(), school: rs.trim() }), () => this.setState({ ren: false })); } if (e.key === 'Escape') { e.preventDefault(); this.setState({ ren: false }); } } };
   const inv = this.gen((k && k.name) || 'Class', 'mix');
+  ${DATE_JS}
   return {
     t, ...chrome, ${NET_VALS}
     loading, missing, missingHref: signedOut ? (db.mock ? 'WebSignIn.dc.html' : '/sign-in') : goTo('/library/classes', B + 'Classes'), missingAction: signedOut ? 'Sign in' : 'Your classes',
@@ -8895,7 +8914,9 @@ renderVals() {
     goalOpts: [['learn', 'Learn every card'], ['daily', 'Review what’s due']].map(([id, label]) => ({ label, pressed: id === goal ? 'true' : 'false', bg: id === goal ? t.bg : 'transparent', fg: id === goal ? t.text : t.muted, sh: id === goal ? '0 1px 3px rgba(0,0,0,.14)' : 'none', pick: () => this.setState({ goal: id }) })),
     dueLabel: goal === 'daily' ? 'Until' : 'Due',
     dueChips: [['Tomorrow', addDays(1)], ['Friday', friday], ['In a week', addDays(7)], ['In 2 weeks', addDays(14)]].map(([label, at]) => { const v = isoDay(at), on = v === dueV; return { label, pressed: on ? 'true' : 'false', bg: on ? t.inv : t.surf, fg: on ? t.invText : t.text, pick: () => this.setState({ due: v }) }; }),
-    dueValue: dueV, dueMin: isoDay(todayAt), setDue: e => this.setState({ due: e && e.target ? e.target.value : '' }), scheme: p.dark ? 'dark' : 'light',
+    // Lucida's own calendar, not the browser's date picker; a board's \`calendar\` Tweak shows it open.
+    dueText: (() => { const [y, m, d] = dueV.split('-').map(Number); return new Date(y, m - 1, d).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }); })(),
+    dueCal: datePick('due', { value: dueV, min: isoDay(todayAt), today: isoDay(todayAt), title: 'Due date', choose: iso => this.setState({ due: iso }), shown: p.calendar === 'Due date' }),
     assignOff: okAssign ? 'false' : 'true', assignBg: okAssign ? t.inv : t.surf2, assignFg: okAssign ? t.invText : t.muted,
     doAssign: () => okAssign && run(() => db.act.assign(k.id, { sharedId: pickId, goal, due: dueV }), () => this.setState({ panel: '', sel: '' })),
     rep, ver, pop, drawKb: !!db.mock${phone ? ', kb' : ''}
@@ -9000,7 +9021,7 @@ const ASSIGN_BODY = phone => `<div style="display: flex; align-items: center; ju
       <div style="display: flex; flex-direction: column; gap: 8px;"><span style="font-size: 13px; font-weight: 600;">Goal</span>${panelSeg('goalOpts', 'Goal', 2)}</div>
       <div style="display: flex; flex-direction: column; gap: 8px;"><span style="font-size: 13px; font-weight: 600;">{{dueLabel}}</span>
         <div style="display: flex; gap: 6px; flex-wrap: wrap;"><sc-for list="{{dueChips}}" as="c" hint-placeholder-count="4"><button type="button" onClick="{{c.pick}}" aria-pressed="{{c.pressed}}" style="height: 34px; padding: 0 14px; border: 0; border-radius: 999px; background: {{c.bg}}; color: {{c.fg}}; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer;">{{c.label}}</button></sc-for></div>
-        <label style="display: flex; align-items: center; gap: 10px; height: 48px; padding: 0 16px; box-sizing: border-box; border-radius: 16px; background: {{t.surf}}; color: {{t.muted}};">${svg(I.calendar, 18, 1.8)}<input type="date" value="{{dueValue}}" min="{{dueMin}}" onChange="{{setDue}}" aria-label="Date" style="flex-grow: 1; min-width: 0; height: 100%; border: 0; outline: 0; background: transparent; font: inherit; font-size: 15px; color: {{t.text}}; color-scheme: {{scheme}};"></label>
+        ${dateMarkup('dueCal', `<button type="button" onClick="{{dueCal.toggle}}" aria-haspopup="dialog" aria-expanded="{{dueCal.expanded}}" aria-label="Date" class="sc-press" style="width: 100%; height: 48px; padding: 0 16px; box-sizing: border-box; display: flex; align-items: center; gap: 10px; border: 0; border-radius: 16px; background: {{t.surf}}; color: {{t.text}}; font: inherit; font-size: 15px; text-align: left; cursor: pointer;">${svg(I.calendar, 18, 1.8)}<span style="flex-grow: 1;">{{dueText}}</span></button>`, { pos: 'left: 0; top: calc(100% + 8px);' })}
       </div>
     </div>
     ${CLASS_ERR}
@@ -9125,7 +9146,7 @@ const W = 1440, H = 900, PW = 390, PH = 844;
 const SHARE_PROPS = { shared: { editor: 'enum', default: '', options: ['', 'Link only', 'Public'] }, linked: { editor: 'enum', default: '', options: ['', 'study', 'copy'] }, updatesOpen: { editor: 'boolean', default: false }, pick: { editor: 'enum', default: 'None', options: ['None', 'Level', 'Subject', 'School'] } };
 // A class's boards on the canvas (Tweaks): which class (yours, one you joined, or an invite you haven't taken), sharing
 // your progress, a class with nothing in it yet, a panel or sheet open, and the loading, missing, and signed-out looks.
-const CLASS_PROPS = { ...DARK, grain: MESH('Iris').grain, view: { editor: 'enum', default: 'Yours', options: ['Yours', 'Member', 'Invite'] }, sharing: { editor: 'boolean', default: false }, empty: { editor: 'boolean', default: false },
+const CLASS_PROPS = { ...DARK, grain: MESH('Iris').grain, calendar: { editor: 'enum', default: '', options: ['', 'Due date'] }, view: { editor: 'enum', default: 'Yours', options: ['Yours', 'Member', 'Invite'] }, sharing: { editor: 'boolean', default: false }, empty: { editor: 'boolean', default: false },
   panel: { editor: 'enum', default: '', options: ['', 'Add a deck', 'Assign'] }, report: { editor: 'boolean', default: false }, verify: { editor: 'boolean', default: false },
   loading: { editor: 'boolean', default: false }, missing: { editor: 'boolean', default: false }, signedOut: { editor: 'boolean', default: false }, code: { editor: 'string', default: '' } };
 const CLASSES_PROPS = { ...DARK, grain: MESH('Iris').grain, loading: { editor: 'boolean', default: false }, empty: { editor: 'boolean', default: false }, newOpen: { editor: 'boolean', default: false },
@@ -9289,7 +9310,7 @@ const files = {
   'WebDecksEmpty': ['Web · Library · no decks yet', webDecksEmpty, { props: { ...DARK, grain: MESH('Iris').grain }, logic: emptyLogic(), w: W, h: H }],
   'WebDeckEmpty': ['Web · Deck · no cards yet', webDeckEmpty, { props: { ...DARK, grain: MESH('Iris').grain }, logic: emptyLogic('Pharmacology'), w: W, h: H }],
   'WebStatsEmpty': ['Web · Stats · no reviews yet', webStatsEmpty, { props: { ...DARK, grain: MESH('Iris').grain }, logic: emptyLogic(), w: W, h: H }],
-  'WebDeck': ['Web · Deck page', webDeck, { props: { ...DARK, grain: MESH('Iris').grain, settingsOpen: { editor: 'boolean', default: false }, settingsTab: { editor: 'enum', default: 'General', options: ['General', 'Studying', 'Sharing'] }, tagPicker: { editor: 'boolean', default: false }, ...SHARE_PROPS, ...PRO_DECK_PROPS, tests: { editor: 'boolean', default: true }, ...GUIDE_STATE }, logic: deckLogic, css: NUM_CSS + PARALLAX_CSS + DRAG_CSS + GUIDE_CSS + DIAGRAM_CSS, w: W, h: H }],
+  'WebDeck': ['Web · Deck page', webDeck, { props: { ...DARK, grain: MESH('Iris').grain, calendar: { editor: 'enum', default: '', options: ['', 'Exam date'] }, settingsOpen: { editor: 'boolean', default: false }, settingsTab: { editor: 'enum', default: 'General', options: ['General', 'Studying', 'Sharing'] }, tagPicker: { editor: 'boolean', default: false }, ...SHARE_PROPS, ...PRO_DECK_PROPS, tests: { editor: 'boolean', default: true }, ...GUIDE_STATE }, logic: deckLogic, css: NUM_CSS + PARALLAX_CSS + DRAG_CSS + GUIDE_CSS + DIAGRAM_CSS, w: W, h: H }],
   'WebDeckTagPicker': ['Web · Deck settings · Add tag', attrOf('WebDeck', W, H, 'settings-open="{{yes}}" tag-picker="{{yes}}"'), { logic: darkLogic, css: NUM_CSS + DRAG_CSS, w: W, h: H }],
   'WebEditor': ['Web · Card editor', webEditor, { props: { ...DARK, cardType: { editor: 'enum', default: 'Basic', options: ['Basic', 'Blank', 'Image', 'Audio'] }, recording: { editor: 'boolean', default: false }, slashDemo: { editor: 'boolean', default: false } }, logic: EDITOR_LOGIC, css: EDITOR_CSS, w: W, h: H }],
   'WebEditorSlash': ['Web · Card editor · / menu', attrOf('WebEditor', W, H, 'slash-demo="{{yes}}"'), { logic: darkLogic, css: EDITOR_CSS, w: W, h: H }],
@@ -9382,7 +9403,7 @@ const files = {
   'PhoneStatsEmpty': ['iPhone · Stats · no reviews yet', phoneStatsEmpty, { props: { ...DARK, grain: MESH('Iris').grain }, logic: emptyLogic(), w: PW, h: PH }],
   'PhoneNewDeck': ['iPhone · New deck', phoneNewDeck, { props: { ...DARK, grain: MESH('Iris').grain }, logic: NEW_DECK_LOGIC, css: NUM_CSS + COVER_FADE_CSS, w: PW, h: PH }],
   'PhoneInbox': ['iPhone · Check AI cards', phoneInbox, { props: DARK, logic: phoneInboxLogic, css: REVIEW_CSS, w: PW, h: PH }],
-  'PhoneDeck': ['iPhone · Deck page', phoneDeck, { props: { ...DARK, grain: MESH('Iris').grain, settingsOpen: { editor: 'boolean', default: false }, settingsTab: { editor: 'enum', default: 'General', options: ['General', 'Studying', 'Sharing'] }, tagPicker: { editor: 'boolean', default: false }, ...SHARE_PROPS, ...PRO_DECK_PROPS, tests: { editor: 'boolean', default: true }, ...GUIDE_STATE }, logic: phoneDeckLogic, css: NUM_CSS + PARALLAX_CSS + DRAG_CSS + GUIDE_CSS + DIAGRAM_CSS, w: PW, h: PH }],
+  'PhoneDeck': ['iPhone · Deck page', phoneDeck, { props: { ...DARK, grain: MESH('Iris').grain, calendar: { editor: 'enum', default: '', options: ['', 'Exam date'] }, settingsOpen: { editor: 'boolean', default: false }, settingsTab: { editor: 'enum', default: 'General', options: ['General', 'Studying', 'Sharing'] }, tagPicker: { editor: 'boolean', default: false }, ...SHARE_PROPS, ...PRO_DECK_PROPS, tests: { editor: 'boolean', default: true }, ...GUIDE_STATE }, logic: phoneDeckLogic, css: NUM_CSS + PARALLAX_CSS + DRAG_CSS + GUIDE_CSS + DIAGRAM_CSS, w: PW, h: PH }],
   'PhoneDeckTagPicker': ['iPhone · Deck settings · Add tag', attrOf('PhoneDeck', PW, PH, 'settings-open="{{yes}}" tag-picker="{{yes}}"'), { logic: darkLogic, css: NUM_CSS + DRAG_CSS, w: PW, h: PH }],
   'PhoneDeckSettingsStudy': ['iPhone · Deck settings · Studying (FSRS)', studyOf('PhoneDeck', PW, PH), { logic: darkLogic, css: NUM_CSS + DRAG_CSS, w: PW, h: PH }],
   'PhoneDeckSettingsGoal': ['iPhone · Deck settings · Studying · goal raised to 95% (reviews a day)', attrOf('PhoneDeck', PW, PH, 'settings-open="{{yes}}" settings-tab="Studying" step-goal="{{yes}}"'), { logic: darkLogic, css: NUM_CSS + DRAG_CSS, w: PW, h: PH }],
@@ -9468,7 +9489,7 @@ const files = {
   'PhoneEditorImage': ['iPhone · Card editor · image with boxes', attrOf('PhoneEditor', PW, PH, 'card-type="Image" keyboard="{{no}}"'), { logic: 'renderVals() { return { yes: true, no: false }; }', css: EDITOR_CSS, w: PW, h: PH }],
   'PhoneSettingsFree': ['iPhone · Settings · on Free (Tune to you is Pro)', attrOf('PhoneSettings', PW, PHONE_SETTINGS_H, 'plan="Free"'), { logic: darkLogic, w: PW, h: PHONE_SETTINGS_H }],
   'PhoneSettingsVerified': ['iPhone · Settings · a verified teacher (Get verified says Verified teacher)', attrOf('PhoneSettings', PW, PHONE_SETTINGS_H, 'verified="Teacher"'), { logic: darkLogic, w: PW, h: PHONE_SETTINGS_H }],
-  'PhoneSettings': ['iPhone · Settings', phoneSettings, { props: { ...DARK, passwordOpen: BOOL, photo: PHOTO_PROP, plan: SETTINGS_PLAN_PROP, tune: TUNE_PROP, verified: VERIFIED_PROP, reminder: REMINDER_PROP, reminderNote: BOOL, section: PHONE_SECTION_PROP, ...ACCOUNT_PROPS }, logic: phoneSettingsLogic, w: PW, h: PHONE_SETTINGS_H }],
+  'PhoneSettings': ['iPhone · Settings', phoneSettings, { props: { ...DARK, passwordOpen: BOOL, dropdown: { editor: 'enum', default: '', options: ['', 'Daily reminder', 'New cards a day', 'Remember goal'] }, photo: PHOTO_PROP, plan: SETTINGS_PLAN_PROP, tune: TUNE_PROP, verified: VERIFIED_PROP, reminder: REMINDER_PROP, reminderNote: BOOL, section: PHONE_SECTION_PROP, ...ACCOUNT_PROPS }, logic: phoneSettingsLogic, w: PW, h: PHONE_SETTINGS_H }],
   'PhoneSettingsDelete': ['iPhone · Settings · Delete account (the question)', attrOf('PhoneSettings', PW, PHONE_SETTINGS_H, 'delete-open="Asking"'), { logic: darkLogic, w: PW, h: PHONE_SETTINGS_H }],
   'PhoneDeckSettings': ['iPhone · Deck settings', openOf('PhoneDeck', PW, PH), { logic: darkLogic, css: NUM_CSS + DRAG_CSS, w: PW, h: PH }],
   'PhoneDeckDark': ['iPhone · Deck page (dark)', darkOf('PhoneDeck', PW, PH), { logic: darkLogic, css: NUM_CSS + DRAG_CSS, w: PW, h: PH }],
@@ -9673,10 +9694,34 @@ for (const T of THEMES.filter(x => x.key !== 'lucida')) {
 Object.assign(files, siteFiles());
 // Making cards from anything, a deck's Guide, and its Sources (design/materials.mjs; web/make.js, web/guide.js).
 Object.assign(files, makeBoards({ svg, I, FONT, MONO, T, DB_JS, DARK, MESH, W, HH: H, PW, PH }));
+// The questions that ask before something is deleted or left (design/ui.mjs): each board that asks one shows it open through its `ask` Tweak, drawn
+// over the whole board, with the words the app puts in the same dialog. (The app draws its own over any page: web/ui.js.)
+const ASKS = {
+  WebDeck: ['Delete deck', 'Remove from library', 'Delete source'], PhoneDeck: ['Delete deck', 'Remove from library', 'Delete source'],
+  WebDecks: ['Remove folder'], PhoneLibrary: ['Remove folder'],
+  WebCardsScreen: ['Delete card', 'Leave without saving'], PhoneEditor: ['Delete card'],
+  WebSettings: ['Delete my data'], PhoneSettings: ['Sign out'],
+  WebGuide: ['Delete page'], PhoneGuide: ['Delete page'],
+  WebConnect: ['Disconnect app', 'New link'], PhoneConnect: ['Disconnect app', 'New link'],
+  WebClass: ['Leave class', 'Delete class', 'Take out of class'], PhoneClass: ['Leave class', 'Delete class', 'Take out of class']
+};
+for (const [name, list] of Object.entries(ASKS)) {
+  const f = files[name];
+  if (!f) throw new Error('design/build.mjs: ASKS names a board that does not exist: ' + name);
+  const opts = f[2], root = /^<div[^>]*?style="([^"]*)"/.exec(f[1].trimStart());
+  if (!root || !f[1].includes('</div>')) throw new Error('design/build.mjs: ' + name + ' has no root box to draw a question in');
+  // The question goes at the end of the board's page, over the rest of it (the page's box has to be positioned for that).
+  const body = /position:\s*(relative|absolute)/.test(root[1]) ? f[1] : f[1].replace(root[0], root[0].replace('style="', 'style="position: relative; ')), last = body.lastIndexOf('</div>');
+  f[1] = body.slice(0, last) + askMarkup({ phone: opts.w === 390, layer: 'absolute' }) + body.slice(last);
+  const samples = JSON.stringify(Object.fromEntries(list.map(k => [k, ASK_SAMPLES[k]])));
+  if (!opts.logic.includes('renderVals() {')) throw new Error('design/build.mjs: ' + name + ' has no renderVals to add a question to');
+  f[2] = { ...opts, props: { ...opts.props, ask: askProp(list) },
+    logic: opts.logic.replace('renderVals() {', `${name === 'WebDeck' || name === 'PhoneDeck' ? PLAYER_JS + '\n' : ''}renderVals() { const v = this.renderVals0(); return { ...v, ask: this.askPreview(v.t || this.theme(!!this.props.dark, !!this.props.dim), ${samples}) }; }\n${ASK_JS}\nrenderVals0() {`) };
+}
 // The canvas keeps what every board shares once, in three files beside the boards (design/slim.mjs): the logic every board
 // has, the themes' code and the CSS every board starts with. Each board keeps its own markup, props and logic.
 const { slimBoards } = await import('./slim.mjs');
-const slim = slimBoards(Object.entries(files).map(([name, [title, body, opts]]) => [name, page(title, body, opts), opts]), { rich: RICH_METHOD, drag: DRAG_METHOD });
+const slim = slimBoards(Object.entries(files).map(([name, [title, body, opts]]) => [name, page(title, body, opts), opts]), { rich: RICH_METHOD, drag: DRAG_METHOD, tip: TIP_SRC });
 for (const [name, text] of slim.boards) writeFileSync(OUT + name + '.dc.html', text);
 for (const [file, text] of Object.entries(slim.files)) writeFileSync(OUT + file, text);
 

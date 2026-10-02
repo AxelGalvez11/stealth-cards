@@ -80,7 +80,10 @@ if (n & 2) Component = class extends Component {
 ${s.drag}${JS_END}};
 return Component;
 };
-`;
+${s.tip ? `// Lucida's own tooltip (web/tip.js, the same code as the app's): anything with data-tip shows its words in a small pill, so a board
+// shows it on the canvas too. It runs once for the page this file is loaded in.
+(${s.tip})(document);
+` : ''}`;
 const themesFile = code => `'use strict';
 // Made by design/build.mjs (design/slim.mjs). The themes' code (web/themes: the kit, then each theme), kept here once for
 // the boards that draw a theme: \`static { LucidaCanvasThemes(["aero"]); }\` in a board's logic does what its own copy of the
@@ -104,7 +107,7 @@ ${prefix}${CSS_END}`;
 
 // design/build.mjs: [[name, text from page(), its opts]] → { boards: [[name, slim text]], files: { shared file: text } }.
 // rich and drag are the two methods page() adds to the boards that use them.
-export function slimBoards(list, { rich, drag }) {
+export function slimBoards(list, { rich, drag, tip }) {
   const code = themeCode(), seen = {}, whole = [];
   // The parts every board has in common must really be the same in every board.
   const same = (k, v) => (seen[k] === undefined ? ((seen[k] = v), true) : seen[k] === v);
@@ -140,7 +143,7 @@ export function slimBoards(list, { rich, drag }) {
     memo.set(b.name, v);
     return v;
   };
-  const s = { base: seen.base, rich, drag, prefix: seen.prefix, code };
+  const s = { base: seen.base, rich, drag, prefix: seen.prefix, code, tip };
   for (const [k, v] of Object.entries({ base: s.base, rich, drag, ...code })) if (v && v.includes(JS_END)) throw new Error('design/slim.mjs: the shared ' + k + ' code holds the end marker ' + JSON.stringify(JS_END));
   if (s.prefix && s.prefix.includes(CSS_END)) throw new Error('design/slim.mjs: the shared CSS holds its end marker');
   const files = { [LOGIC_FILE]: logicFile(s), [THEMES_FILE]: themesFile(code), [CSS_FILE]: cssFile(s.prefix || '') };

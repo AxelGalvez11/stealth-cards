@@ -114,9 +114,10 @@ struct StudyPro: View {
 struct ExamRow: View {
   @Environment(\.theme) private var t
   @EnvironmentObject private var store: Store
+  @EnvironmentObject private var nav: Nav
   let d: DeckVM
-  @State private var picking = false
-  @State private var picked = Date()
+  /// Where the pill is on the screen: the calendar opens under it.
+  @State private var frame = CGRect.zero
 
   var body: some View {
     let on = !d.examDay.isEmpty, pro = store.isPro
@@ -134,32 +135,16 @@ struct ExamRow: View {
       .frame(minHeight: 36)
       if on { Text(d.exam?.line ?? "This exam has passed").css(12, lh: 1.4).foregroundStyle(t.muted).fixedSize(horizontal: false, vertical: true) }
     }
-    .sheet(isPresented: $picking) { calendar }
     #if DEBUG
-    // `-popover exam` opens the calendar as soon as the settings are up (for looking at it).
-    .task { if Board.arg("-popover") == "exam" && pro { try? await Task.sleep(nanoseconds: 1_500_000_000); picked = Store.examDate(d.examDay, demo: store.demo) ?? Store.examMin(demo: store.demo); picking = true } }
+    // `-calendar "Exam date"` (or `-popover exam`) opens the calendar as soon as the settings are up (a board's Calendar Tweak, for looking at it).
+    .task { if (Board.arg("-calendar") == "Exam date" || Board.arg("-popover") == "exam") && pro { try? await Task.sleep(nanoseconds: 1_500_000_000); open() } }
     #endif
   }
 
-  /// Pick the day (it's set, and the calendar closes): from today on.
-  private var calendar: some View {
-    VStack(alignment: .leading, spacing: 8) {
-      HStack { Text("Exam date").css(18, .semibold, ls: -0.01); Spacer(); SheetDone { picking = false } }
-      DatePicker("", selection: $picked, in: Store.examMin(demo: store.demo)..., displayedComponents: .date)
-        .datePickerStyle(.graphical).labelsHidden().tint(t.text)
-        .onChange(of: picked) { _, day in
-          store.setExam(d.id, Store.examIso(day))
-          Task { try? await Task.sleep(nanoseconds: 250_000_000); picking = false }
-        }
-    }
-    .foregroundStyle(t.text)
-    .padding(.horizontal, 20).padding(.top, 20).padding(.bottom, 12)
-    .frame(maxHeight: .infinity, alignment: .top)
-    .background(t.bg.ignoresSafeArea())
-    .presentationDetents([.height(480)])
-    .presentationDragIndicator(.visible)
-    .presentationBackground(t.bg)
-    .environment(\.theme, t)
+  /// Lucida's calendar under the pill: from today on, the day picked is the exam's.
+  private func open() {
+    let min = CalDay.iso(of: Store.examMin(demo: store.demo))
+    nav.openCalendar(CalendarRequest(anchor: frame, trailing: true, title: "Exam date", value: d.examDay, min: min, today: min) { iso in store.setExam(d.id, iso) })
   }
 
   private func label(_ text: String) -> some View {
@@ -168,7 +153,7 @@ struct ExamRow: View {
   }
   /// The pill that opens the calendar.
   private func pill(_ text: String) -> some View {
-    Button { picked = Store.examDate(d.examDay, demo: store.demo) ?? Store.examMin(demo: store.demo); picking = true } label: { label(text) }
+    Button { open() } label: { label(text).screenFrame($frame) }
       .buttonStyle(.press)
       .accessibilityLabel(text == "Add a date" ? "Add an exam date" : "Exam date, \(text)")
   }

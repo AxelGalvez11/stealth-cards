@@ -507,6 +507,20 @@ struct DeckSettingsSheet: View {
 
   private func label(_ s: String) -> some View { Text(s).css(13, .semibold) }
 
+  /// Delete deck, or Remove from library for a deck from someone (your progress on it goes too): it asks first, in Lucida's own question.
+  private func askDelete() {
+    let id = d.id, n = store.cardCount(id)
+    if d.sharing.linked {
+      nav.ask("Remove “\(d.name)” from your library?", line: "Your progress on it goes too.", action: "Remove", danger: true) { removeDeck(id) }
+    } else {
+      nav.ask("Delete “\(d.name)”?", line: (n == 0 ? "" : n == 1 ? "Its card goes too. " : "Its \(n) cards go too. ") + "This can’t be undone.", action: "Delete deck", danger: true) { removeDeck(id) }
+    }
+  }
+  private func removeDeck(_ id: String) {
+    Buzz.shared.warning("delete deck")
+    Task { await store.deleteDeck(id); nav.close(); nav.pick(.library) }
+  }
+
   // General scrolls once it's taller than the sheet; Export and Delete stay at the bottom when there's room.
   private var general: some View {
     GeometryReader { g in
@@ -542,7 +556,7 @@ struct DeckSettingsSheet: View {
               Text("Export cards").css(14, .semibold).foregroundStyle(t.text).frame(maxWidth: .infinity).frame(height: 44).background(Capsule().fill(t.surf))
             }
             .buttonStyle(.press)
-            Button { store.confirmDelete = d.id } label: {
+            Button { askDelete() } label: {
               Text(d.sharing.linked ? "Remove from library" : "Delete deck").css(14, .semibold).foregroundStyle(t.again).lineLimit(1)
                 .frame(maxWidth: .infinity).frame(height: 44).background(Capsule().fill(t.againTint))
             }

@@ -54,7 +54,7 @@ struct RootView: View {
   @ObservedObject private var chrome = StudyChrome.shared
   @State private var system: ColorScheme? = nil
   /// The theme's light or dark, while its study screen is up (not once it starts to slide away).
-  private var over: ColorScheme? { nav.full != nil ? chrome.scheme : nil }
+  private var over: ColorScheme? { nav.full != nil || nav.camera != nil ? chrome.scheme : nil }
 
   var body: some View {
     let look = store.demo ? store.props.look : store.settings.look
@@ -94,10 +94,9 @@ struct RootView: View {
     .onChange(of: store.phase) { _, p in if p == .signedOut && !store.demo { nav.reset() } }
     // Back after a while away: decks you study from other people get their owners' newest changes.
     .onChange(of: scenePhase) { _, p in if p == .background { store.away = Date() } else if p == .active { store.cameBack() } }
-    // What went wrong saving a change or uploading a photo, like the web app's alert.
-    .alert(store.error ?? "", isPresented: Binding(get: { store.error != nil && store.phase == .ready }, set: { if !$0 { store.error = nil } })) {
-      Button("OK", role: .cancel) {}
-    }
+    // What went wrong saving a change or uploading a photo, in a quiet message (the web app's too), never the system's alert.
+    .overlay { if let e = store.error, store.phase == .ready { ToastHost(text: e) { withAnimation(Motion.leave) { store.error = nil } }.id(e) } }
+    .animation(Motion.pop, value: store.error)
     .task {
       #if DEBUG
       // `-themeProbe <theme> -probeOut <folder>`: paints a few pieces of a theme and saves them (ThemeProbe.swift).
@@ -474,7 +473,10 @@ struct MainView: View {
   private var swipesBetweenTabs: Bool { nav.path.isEmpty && nav.sheet == nil && nav.full == nil && !store.welcoming && drag.list == nil }
 
   var body: some View {
-    ZStack(alignment: .bottom) {
+    // A question, a calendar or the camera is over everything: VoiceOver reads only that, so the page under it is hidden from it. (Only the views that
+    // have something to read get the modifier: it would also make the empty drag layer a thing on screen, one the tests' taps would land on.)
+    let behind = nav.question != nil || nav.calendar != nil || nav.camera != nil
+    return ZStack(alignment: .bottom) {
       NavigationStack(path: $nav.path) {
         // A swipe left or right on a tab's first page moves to the next tab or the one before (Design/Swipe.swift).
         TabPager(tab: $nav.tab, enabled: swipesBetweenTabs, changed: { tabTicks += 1 }) { tab in tabRoot(tab) }
@@ -507,24 +509,42 @@ struct MainView: View {
             .containerBackground(t.bg, for: .navigation)
           }
       }
-      if showsTabBar { TabBar(active: lit, pick: { tab in if tab != nav.tab { tabTicks += 1 }; nav.pick(tab) }) }
+      .accessibilityHidden(behind)
+      if showsTabBar { TabBar(active: lit, pick: { tab in if tab != nav.tab { tabTicks += 1 }; nav.pick(tab) }).accessibilityHidden(behind) }
       // A deck or card being dragged, over the page and the tab bar; and the Move to tray over it while a card is.
       DragGhost()
       MoveTray()
-      if let s = nav.sheet { SheetHost(kind: s).zIndex(s == .goPro ? 8 : 5) }
-      if let f = nav.full { FullHost(kind: f).zIndex(6).sheetTransition() }
+      if let s = nav.sheet { SheetHost(kind: s).accessibilityHidden(behind).zIndex(s == .goPro ? 8 : 5) }
+      if let f = nav.full { FullHost(kind: f).accessibilityHidden(behind).zIndex(6).sheetTransition() }
       // A list to pick from (a filter, a school, a label), over a page or a sheet.
-      if let p = nav.picker { PickHost(request: p).id(p.id).zIndex(7) }
+      if let p = nav.picker { PickHost(request: p).accessibilityHidden(behind).id(p.id).zIndex(7) }
       // The welcome after your first sign-in, over everything until it's done or skipped.
-      if store.welcoming { WelcomeScreen().zIndex(10).transition(.opacity) }
+      if store.welcoming { WelcomeScreen().accessibilityHidden(behind).zIndex(10).transition(.opacity) }
+      // A calendar under the button that opened it (an exam date, a due date), over a page or a sheet.
+      if let c = nav.calendar { CalendarHost(request: c).id(c.id).zIndex(9) }
+      // A question (Delete deck, Sign out, ...), over everything: Lucida's own sheet, never the system's confirmation dialog.
+      if let q = nav.question { QuestionHost(request: q).id(q.id).zIndex(11) }
+      // Lucida's own camera (Take a photo in Make cards), over everything.
+      if let c = nav.camera { CameraHost(request: c).id(c.id).zIndex(12).sheetTransition() }
     }
     .ignoresSafeArea(edges: .bottom)
+    // What opens over everything puts the keyboard away first (a list with a search of its own, the school list, keeps it for that).
+    .onChange(of: nav.question?.id) { _, id in if id != nil { Keyboard.hide() } }
+    .onChange(of: nav.calendar?.id) { _, id in if id != nil { Keyboard.hide() } }
+    .onChange(of: nav.camera?.id) { _, id in if id != nil { Keyboard.hide() } }
+    .onChange(of: nav.picker?.id) { _, id in if id != nil, nav.picker?.find == nil { Keyboard.hide() } }
     .haptic(.selection, on: tabTicks, "tab")
     .sensoryFeedback(.impact(weight: .light), trigger: buzz.lights)
     .sensoryFeedback(.success, trigger: buzz.successes)
     .sensoryFeedback(.warning, trigger: buzz.warnings)
     // A design screen's full screen, over its page once that's drawn (Board.setUp).
     .task { if let f = nav.boardFull { nav.boardFull = nil; try? await Task.sleep(nanoseconds: 100_000_000); nav.full = f } }
+    // A design screen's open question (the boards' `ask` Tweak: `-ask "Delete deck"`, the same words the app asks), over the page once that's drawn.
+    .task {
+      guard store.demo, let name = Board.arg("-ask"), let q = AskSample.request(name) else { return }
+      try? await Task.sleep(nanoseconds: 700_000_000)
+      withAnimation(Motion.sheet) { nav.question = q }
+    }
   }
 
   /// A tab's first page.
@@ -602,21 +622,11 @@ struct DeckSettingsHost: View {
   @State private var tab = "general"
   @State private var tagPicker = false
   var body: some View {
-    let d = store.deck(id), linked = d.sharing.linked
-    // Like the web's confirm: a deck from someone leaves your library (your progress on it goes too); your own is
-    // deleted with its cards.
-    let ask = linked ? "Remove “\(d.name)” from your library? Your progress on it goes too."
-      : "Delete “\(d.name)” and its \(plural(store.cardCount(id), "card"))? This can’t be undone."
+    let d = store.deck(id)
     SheetOverlay(top: 56, close: nav.close) {
       DeckSettingsSheet(d: d, tab: $tab, tagPicker: $tagPicker, close: nav.close)
     }
     .onAppear { if store.demo { tab = store.props.deckSettings ?? "general"; tagPicker = store.props.tagPicker } }
-    .confirmationDialog(ask, isPresented: Binding(get: { store.confirmDelete == id }, set: { if !$0 { store.confirmDelete = nil } }), titleVisibility: .visible) {
-      Button(linked ? "Remove from library" : "Delete deck", role: .destructive) {
-        Buzz.shared.warning("delete deck")
-        Task { await store.deleteDeck(id); nav.close(); nav.pick(.library) }
-      }
-    }
   }
 }
 

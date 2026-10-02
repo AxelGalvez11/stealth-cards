@@ -5,7 +5,6 @@
 import SwiftUI
 import AVFoundation
 import PDFKit
-import QuickLook
 
 // ---------- the tabs ----------
 /// Plain underlined tabs, a small count after a name that has one: the chosen one is black with a bar under it (one point of black over the hairline, as the canvas shows it). A fourth fits, and the row scrolls sideways when
@@ -225,13 +224,12 @@ struct SourceViewer: View {
   let deckId: String
   let view: SourceView
   @StateObject private var player = SourcePlayer()
-  @State private var asking = false
   @State private var error = ""
   @State private var showing: ShownFile?
   @State private var photo: Int?
   @State private var seen = ""
 
-  /// A kept file shown full screen: a PDF at its page, or anything else in Quick Look.
+  /// A kept file shown full screen: a PDF at its page, or anything else in Lucida's own document viewer (Design/DocumentView.swift).
   struct ShownFile: Identifiable { let id = UUID(); let url: URL; let pdf: Bool; let page: Int }
 
   var body: some View {
@@ -269,9 +267,6 @@ struct SourceViewer: View {
     .foregroundStyle(t.text)
     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
     .task(id: s.textName) { await store.loadSourceText(s.textName) }
-    .confirmationDialog("Delete “\(s.name)”? Its file goes, and the \(plural(s.cards, "card")) made from it stay in the deck.", isPresented: $asking, titleVisibility: .visible) {
-      Button("Delete", role: .destructive) { Task { await delete() } }
-    }
     .fullScreenCover(item: $showing) { f in FileCover(file: f) { showing = nil } }
     .fullScreenCover(isPresented: Binding(get: { photo != nil }, set: { if !$0 { photo = nil } })) { PhotosCover(files: view.photos, start: photo ?? 0) { photo = nil } }
   }
@@ -339,7 +334,7 @@ struct SourceViewer: View {
             .foregroundStyle(t.invText).frame(maxWidth: .infinity).frame(height: 48).background(Capsule().fill(t.inv))
         }
         .buttonStyle(.press).flexMin(130).flexBasisZero().flexGrow().accessibilityLabel("More cards")
-        Button { asking = true } label: {
+        Button { askDelete() } label: {
           Text("Delete").css(15, .semibold).foregroundStyle(t.again).padding(.horizontal, 20).frame(height: 48).background(Capsule().fill(t.surf))
         }
         .buttonStyle(.press).accessibilityLabel("Delete")
@@ -363,6 +358,11 @@ struct SourceViewer: View {
         } catch { self.error = (error as? APIError)?.errorDescription ?? "That file didn’t open. Try again." }
       }
     }
+  }
+  /// Delete asks first, in Lucida's own question: the file goes, and the cards made from it stay in the deck.
+  private func askDelete() {
+    let s = view.source
+    nav.ask("Delete “\(s.name)”?", line: "Its file goes. The \(plural(s.cards, "card")) made from it stay in the deck.", action: "Delete", danger: true) { Task { await delete() } }
   }
   private func delete() async {
     do { try await store.sourceDelete(deckId, id: view.source.id); nav.close() }
@@ -445,56 +445,67 @@ final class SourcePlayer: ObservableObject {
   deinit { timer?.invalidate() }
 }
 
+/// Lucida's own player for a source's recording (design/ui.mjs playerMarkup, the web's too), never a system bar: a round play and pause button, the time,
+/// a thin track to touch or drag, the length, and the speed (a tap goes 1×, 1.25×, 1.5×, 2×, 0.75×).
 struct SourcePlayerView: View {
+  @Environment(\.theme) private var t
   @EnvironmentObject private var store: Store
   @ObservedObject var player: SourcePlayer
   let file: SourceFile
   let start: Double
   /// "part 10 of 13" for a recording kept as several files.
   let label: String
-  // (Like a browser's own audio control, which the canvas shows: a light bar in every look, its controls dark.)
-  private let ink = Color(hex: 0x202124), faint = Color(hex: 0x202124, opacity: 0.2)
+  static let rates: [Float] = [1, 1.25, 1.5, 2, 0.75]
+
   var body: some View {
     HStack(spacing: 12) {
       Button { player.playing ? player.pause() : player.play() } label: {
-        Icon(player.playing ? "pause" : "play", 16, 2).foregroundStyle(ink).frame(width: 36, height: 36).contentShape(Rectangle())
+        Icon(player.playing ? "pause" : "play", 16, 2).foregroundStyle(t.invText).frame(width: 40, height: 40).background(Circle().fill(t.inv)).opacity(player.loading || player.failed ? 0.5 : 1)
       }
-      .buttonStyle(.flat).disabled(player.loading || player.failed).accessibilityLabel(player.playing ? "Pause" : "Play")
-      Text(player.failed ? "This recording didn’t open." : clock(player.position) + " / " + clock(player.length)).font(.geist(14)).foregroundStyle(ink).fixedSize()
-      GeometryReader { g in
-        let frac = player.length > 0 ? min(1, player.position / player.length) : 0
-        ZStack(alignment: .leading) {
-          Capsule().fill(faint).frame(height: 4)
-          Capsule().fill(ink).frame(width: max(4, g.size.width * frac), height: 4)
-          Circle().fill(ink).frame(width: 12, height: 12).offset(x: max(0, g.size.width * frac - 6))
+      .buttonStyle(.press).disabled(player.loading || player.failed).accessibilityLabel(player.playing ? "Pause" : "Play")
+      if player.failed {
+        Text("This recording didn’t open.").css(13).foregroundStyle(t.muted).frame(maxWidth: .infinity, alignment: .leading)
+      } else {
+        Text(clock(player.position)).css(12, mono: true).monospacedDigit().foregroundStyle(t.muted).frame(minWidth: 38, alignment: .leading).fixedSize()
+        track
+        Text(player.length > 0 ? clock(player.length) : "0:00").css(12, mono: true).monospacedDigit().foregroundStyle(t.muted).frame(minWidth: 38, alignment: .trailing).fixedSize()
+        Button { player.speed(Self.rates[(Self.rates.firstIndex(of: player.rate).map { $0 + 1 } ?? 0) % Self.rates.count]) } label: {
+          Text(rateLabel).css(12, .semibold).monospacedDigit().foregroundStyle(t.text).frame(minWidth: 46).frame(height: 30).background(Capsule().fill(t.bg))
         }
-        .frame(maxHeight: .infinity)
-        .contentShape(Rectangle())
-        .gesture(DragGesture(minimumDistance: 0).onChanged { v in if player.length > 0 { player.seek(max(0, min(1, v.location.x / g.size.width)) * player.length) } })
+        .buttonStyle(.press).accessibilityLabel("Speed, " + rateLabel)
       }
-      .frame(height: 36)
-      // (Like the browser's control too: the speaker, and the three dots, which here hold how fast it plays.)
-      Button { player.mute(!player.muted) } label: {
-        Image(systemName: player.muted ? "speaker.slash.fill" : "speaker.wave.2.fill").font(.system(size: 15)).foregroundStyle(Color(hex: 0x9AA0A6)).frame(width: 28, height: 36).contentShape(Rectangle())
-      }
-      .buttonStyle(.flat).accessibilityLabel(player.muted ? "Unmute" : "Mute")
-      Menu {
-        Picker("Playback speed", selection: Binding(get: { player.rate }, set: { player.speed($0) })) {
-          ForEach([Float(0.5), 0.75, 1, 1.25, 1.5, 2], id: \.self) { r in Text(r == 1 ? "Normal speed" : String(format: "%g", r) + "×").tag(r) }
-        }
-      } label: {
-        Image(systemName: "ellipsis").font(.system(size: 15, weight: .bold)).rotationEffect(.degrees(90)).foregroundStyle(ink).frame(width: 24, height: 36).contentShape(Rectangle())
-      }
-      .accessibilityLabel("Playback speed")
     }
-    .padding(.horizontal, 14).frame(height: 54)
-    .background(Capsule().fill(Color(hex: 0xF1F3F4)))
+    .padding(.leading, 8).padding(.trailing, 12).padding(.vertical, 8).frame(minHeight: 56)
+    .background(Capsule().fill(t.surf))
     .onAppear { player.load(file, start: start, store: store) }
     .onChange(of: file.name + "@\(Int(start))") { _, _ in player.load(file, start: start, store: store) }
     .accessibilityElement(children: .contain)
     .accessibilityLabel(label.isEmpty ? "Recording" : "Recording, " + label)
     .accessibilityValue(label.isEmpty ? clock(start) : label + ", at " + clock(start))
   }
+
+  /// The thin track: the part played in the text's color, a small knob, a touch or a drag anywhere on it moves there.
+  private var track: some View {
+    GeometryReader { g in
+      let frac = player.length > 0 ? min(1, player.position / player.length) : 0
+      ZStack(alignment: .leading) {
+        Capsule().fill(t.surf2).frame(height: 4)
+        Capsule().fill(t.inv).frame(width: max(4, g.size.width * frac), height: 4)
+        Circle().fill(t.inv).frame(width: 12, height: 12).offset(x: max(0, g.size.width * frac - 6))
+      }
+      .frame(maxHeight: .infinity)
+      .contentShape(Rectangle())
+      .gesture(DragGesture(minimumDistance: 0).onChanged { v in if player.length > 0 { player.seek(max(0, min(1, v.location.x / g.size.width)) * player.length) } })
+    }
+    .frame(height: 36)
+    .accessibilityElement().accessibilityLabel("Position")
+    .accessibilityValue(clock(player.position) + (player.length > 0 ? " of " + clock(player.length) : ""))
+    .accessibilityAdjustableAction { dir in
+      guard player.length > 0 else { return }
+      player.seek(max(0, min(player.length, player.position + (dir == .increment ? 5 : -5))))
+    }
+  }
+  private var rateLabel: String { player.rate == 0.75 ? ".75×" : String(format: "%g", player.rate) + "×" }
   private func clock(_ s: Double) -> String {
     let n = Int(max(0, s)); return n >= 3600 ? String(format: "%d:%02d:%02d", n / 3600, n / 60 % 60, n % 60) : String(format: "%d:%02d", n / 60, n % 60)
   }
@@ -517,7 +528,7 @@ struct FileCover: View {
   let close: () -> Void
   var body: some View {
     ZStack(alignment: .topTrailing) {
-      if file.pdf { PDFPageView(url: file.url, page: file.page).ignoresSafeArea() } else { QuickLookView(url: file.url).ignoresSafeArea() }
+      if file.pdf { PDFPageView(url: file.url, page: file.page).ignoresSafeArea() } else { DocumentView(url: file.url) }
       Button(action: close) {
         Text("Done").font(.geist(15, .semibold)).foregroundStyle(.white).padding(.horizontal, 16).frame(height: 40).background(Capsule().fill(Color.black.opacity(0.7)))
       }
@@ -564,20 +575,6 @@ struct PDFPageView: UIViewRepresentable {
     deinit { if let t = token { NotificationCenter.default.removeObserver(t) }; timer?.invalidate() }
   }
 }
-struct QuickLookView: UIViewControllerRepresentable {
-  let url: URL
-  func makeUIViewController(context: Context) -> QLPreviewController {
-    let c = QLPreviewController(); c.dataSource = context.coordinator; return c
-  }
-  func updateUIViewController(_ c: QLPreviewController, context: Context) {}
-  func makeCoordinator() -> Coordinator { Coordinator(url) }
-  final class Coordinator: NSObject, QLPreviewControllerDataSource {
-    let url: URL
-    init(_ u: URL) { url = u }
-    func numberOfPreviewItems(in c: QLPreviewController) -> Int { 1 }
-    func previewController(_ c: QLPreviewController, previewItemAt i: Int) -> QLPreviewItem { url as NSURL }
-  }
-}
 struct PhotosCover: View {
   let files: [SourceFile]
   let start: Int
@@ -587,11 +584,17 @@ struct PhotosCover: View {
     ZStack(alignment: .topTrailing) {
       TabView(selection: $index) {
         ForEach(Array(files.enumerated()), id: \.offset) { i, f in
-          AsyncImage(url: API.media("/media/" + f.name)) { $0.resizable().scaledToFit() } placeholder: { ProgressView().tint(.white) }
+          AsyncImage(url: API.media("/media/" + f.name)) { $0.resizable().scaledToFit() } placeholder: { LoadingMark(color: .white) }
             .tag(i).accessibilityLabel(f.file.isEmpty ? f.name : f.file)
         }
       }
-      .tabViewStyle(.page(indexDisplayMode: files.count > 1 ? .automatic : .never))
+      .tabViewStyle(.page(indexDisplayMode: .never))
+      // (Lucida's own dots, not the system's.)
+      if files.count > 1 {
+        HStack(spacing: 8) { ForEach(0..<files.count, id: \.self) { i in Circle().fill(Color.white.opacity(i == index ? 1 : 0.35)).frame(width: 7, height: 7) } }
+          .frame(maxHeight: .infinity, alignment: .bottom).padding(.bottom, 34).allowsHitTesting(false)
+          .accessibilityElement().accessibilityLabel("Photo \(index + 1) of \(files.count)")
+      }
       Button(action: close) {
         Text("Done").font(.geist(15, .semibold)).foregroundStyle(.white).padding(.horizontal, 16).frame(height: 40).background(Capsule().fill(Color.white.opacity(0.18)))
       }

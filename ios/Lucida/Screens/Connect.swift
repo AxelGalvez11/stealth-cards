@@ -25,8 +25,6 @@ struct ConnectScreen: View {
   @EnvironmentObject private var store: Store
   @EnvironmentObject private var nav: Nav
   @State private var copied = false
-  /// The app a Disconnect is asked about.
-  @State private var leaving: ConnectedApp? = nil
   @State private var err = ""
 
   var body: some View {
@@ -85,9 +83,6 @@ struct ConnectScreen: View {
     .debugScroll()
     .ignoresSafeArea()
     .toolbar(.hidden, for: .navigationBar)
-    .confirmationDialog(leaving.map { "Disconnect \($0.name)?" } ?? "", isPresented: Binding(get: { leaving != nil }, set: { if !$0 { leaving = nil } }), titleVisibility: .visible) {
-      Button("Disconnect", role: .destructive) { if let a = leaving { disconnect(a) } }
-    } message: { Text("It can’t use your decks until you connect it again.") }
   }
 
   // ---------- the apps you allowed ----------
@@ -108,7 +103,7 @@ struct ConnectScreen: View {
             Text(sub(a)).css(12).foregroundStyle(t.muted).lineLimit(1).line(12)
           }
           .frame(maxWidth: .infinity, alignment: .leading)
-          SmallButton(label: "Disconnect", bg: t.bg) { leaving = a }
+          SmallButton(label: "Disconnect", bg: t.bg) { nav.ask("Disconnect \(a.name)?", line: "It can’t use your decks until you connect it again.", action: "Disconnect") { disconnect(a) } }
         }
         .frame(minHeight: 58)
         .padding(.top, 1)

@@ -90,7 +90,6 @@ struct MakeSheet: View {
   @StateObject private var keyboard = Keyboard()
   @State private var choosing = false
   @State private var picking = false
-  @State private var camera = false
   @State private var items: [PhotosPickerItem] = []
   @FocusState private var focus: Field?
   enum Field: Hashable { case topic, url, deck, text, transcript, question(String), answer(String) }
@@ -124,6 +123,14 @@ struct MakeSheet: View {
     .padding(.top, 16).padding(.horizontal, 20).padding(.bottom, keyboard.height > 0 ? keyboard.height + 12 : 30)
     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
     .foregroundStyle(t.text)
+    // (The design screens' states that have something open over the step: the camera, and the list of languages.)
+    .task {
+      guard store.demo else { return }
+      let state = MakeSample.name(Board.arg("-state"))
+      try? await Task.sleep(nanoseconds: 700_000_000)
+      if state == "Camera" { nav.openCamera { _ in } }
+      if state == "Paste (language list)" { openLanguages(flow.m.opts.lang) }
+    }
     // (Each picker is on a view of its own: several of them on one view can fight over the one place a presentation has.)
     .background(Color.clear.fileImporter(isPresented: $choosing, allowedContentTypes: Self.fileTypes, allowsMultipleSelection: true) { r in
       if case .success(let urls) = r { picked(urls) }
@@ -135,14 +142,6 @@ struct MakeSheet: View {
       items = []
       Task { await pickedPhotos(list) }
     }
-    .background(Color.clear.fullScreenCover(isPresented: $camera) {
-      CameraPicker { image in
-        camera = false
-        guard let image, let data = image.jpegData(compressionQuality: 0.9) else { return }
-        Task { await pickedCamera(data) }
-      }
-      .ignoresSafeArea()
-    })
   }
 
   // ---------- the top ----------
@@ -224,8 +223,8 @@ struct MakeSheet: View {
       GrowWrap(spacing: 8, lineSpacing: 8) {
         Button { guard m.note.isEmpty else { return }; if photo { picking = true } else { choosing = true } } label: { MakePill(label: photo ? "Choose photos" : "Choose a file", icon: "upload", inv: true, height: 40, hPad: 18, fill: true) }
           .buttonStyle(.press)
-        if photo && (CameraPicker.available || store.demo) {
-          Button { camera = true } label: { MakePill(label: "Take a photo", icon: "image", height: 40, hPad: 18, bg: t.bg, fill: true) }
+        if photo && (CameraSupport.available || store.demo) {
+          Button { openCamera() } label: { MakePill(label: "Take a photo", icon: "image", height: 40, hPad: 18, bg: t.bg, fill: true) }
             .buttonStyle(.press)
         }
       }
@@ -349,11 +348,8 @@ struct MakeSheet: View {
         }
       }
       MakeLabeled("Language") {
-        Menu {
-          ForEach(Self.langs, id: \.0) { code, name in
-            Button { flow.setOpt { $0.lang = code } } label: { if o.lang == code { Label(name, systemImage: "checkmark") } else { Text(name) } }
-          }
-        } label: {
+        // Lucida's own list, a sheet from the bottom (Design/PickSheet.swift), never the system's menu.
+        Button { openLanguages(o.lang) } label: {
           HStack(spacing: 0) {
             Text(Self.langs.first { $0.0 == o.lang }?.1 ?? "Same as the material").css(13, .semibold).lineLimit(1).foregroundStyle(t.text)
             Spacer(minLength: 8)
@@ -362,9 +358,18 @@ struct MakeSheet: View {
           .padding(.leading, 14).padding(.trailing, 12).frame(height: 36).frame(maxWidth: .infinity)
           .background(Capsule().fill(t.surf)).contentShape(Capsule())
         }
+        .buttonStyle(.plain)
         .accessibilityLabel("Language of the cards")
         .accessibilityValue(Self.langs.first { $0.0 == o.lang }?.1 ?? "Same as the material")
       }
+    }
+  }
+
+  /// The language of the cards: "Same as the material", then each language, in a list sheet over this one.
+  private func openLanguages(_ current: String) {
+    withAnimation(Motion.sheet) {
+      nav.picker = PickRequest(title: "Language of the cards", rows: Self.langs.filter { !$0.0.isEmpty }.map { PickRow(id: $0.0, words: $0.1) }, value: current, any: "Same as the material",
+                               choose: { row in flow.setOpt { $0.lang = row?.id ?? "" } })
     }
   }
 
@@ -571,6 +576,13 @@ struct MakeSheet: View {
       }
     }
     await flow.addFiles(out)
+  }
+  /// Take a photo: Lucida's own camera over everything; the picture it gives comes back as a file to make cards from.
+  private func openCamera() {
+    nav.openCamera { image in
+      guard let image, let data = image.jpegData(compressionQuality: 0.9) else { return }
+      Task { await pickedCamera(data) }
+    }
   }
   private func pickedCamera(_ data: Data) async {
     let to = flow.scratch("Photo \(flow.m.files.count + 1).jpg")
@@ -1044,29 +1056,6 @@ private struct RecorderCard: View {
     }
     .padding(.vertical, 22).padding(.horizontal, 20).frame(maxWidth: .infinity)
     .background(RoundedRectangle(cornerRadius: 22, style: .continuous).fill(t.surf))
-  }
-}
-
-// ---------- the camera ----------
-/// The phone's camera (the Photo source's Take a photo): the picture comes back as it was taken, or nil when it's cancelled.
-struct CameraPicker: UIViewControllerRepresentable {
-  let done: (UIImage?) -> Void
-  /// Whether this phone has a camera to take a picture with. (The simulator on iOS 26 says it can use the camera but has no camera to
-  /// use, so the system's answer isn't enough: there must be a camera device too.)
-  static var available: Bool { UIImagePickerController.isSourceTypeAvailable(.camera) && AVCaptureDevice.default(for: .video) != nil }
-  func makeUIViewController(context: Context) -> UIImagePickerController {
-    let p = UIImagePickerController()
-    p.sourceType = CameraPicker.available ? .camera : .photoLibrary
-    p.delegate = context.coordinator
-    return p
-  }
-  func updateUIViewController(_ p: UIImagePickerController, context: Context) {}
-  func makeCoordinator() -> Coordinator { Coordinator(done) }
-  final class Coordinator: NSObject, UIImagePickerControllerDelegate, UINavigationControllerDelegate {
-    let done: (UIImage?) -> Void
-    init(_ d: @escaping (UIImage?) -> Void) { done = d }
-    func imagePickerController(_ p: UIImagePickerController, didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey: Any]) { done(info[.originalImage] as? UIImage) }
-    func imagePickerControllerDidCancel(_ p: UIImagePickerController) { done(nil) }
   }
 }
 

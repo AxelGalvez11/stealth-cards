@@ -8,7 +8,8 @@
 import { diagramBlocks, publicDiagramBlocks, DIAGRAMS_JS, DIAGRAMS_MOCK, DIAGRAM_STATES, DIAGRAM_STATE_RE } from './diagrams.mjs';
 
 // What the Make boards' "step" picker offers on the canvas (the app's own flow follows web/make.js).
-export const MAKE_STEPS = ['Pick', 'Upload', 'Upload (a file added)', 'Upload (picture cards on)', 'Photos', 'Record', 'Recording', 'Paused', 'Paste', 'Paste (a language set)', 'YouTube', 'YouTube transcript', 'Topic', 'More from a source',
+import { dropMarkup, dropSheet, dropPill, DROP_JS, playerMarkup } from './ui.mjs';
+export const MAKE_STEPS = ['Pick', 'Upload', 'Upload (a file added)', 'Upload (picture cards on)', 'Photos', 'Camera', 'Record', 'Recording', 'Paused', 'Paste', 'Paste (a language set)', 'Paste (language list)', 'YouTube', 'YouTube transcript', 'Topic', 'More from a source',
   'Making', 'Making a recording', 'Review', 'Review (notes open)', 'Review (notes off)', 'Review (no room for notes)', 'Review (audio cards)', 'Review (picture cards)', 'Review (editing a card)', 'Limit reached', 'File too big', 'Error'];
 
 // Icons these boards use that the main set doesn't have (the onboarding's paste icon).
@@ -83,7 +84,7 @@ export function makeBoards(H) {
     ${field('How many cards', seg('counts'))}
     <div style="display: grid; grid-template-columns: ${phone ? '1fr' : 'minmax(0, 1fr) minmax(0, 1fr)'}; gap: 16px;">
       ${field('Kinds', `<div style="display: flex; flex-direction: column; gap: 8px;"><div style="display: flex; gap: 8px; flex-wrap: wrap;">${chip(svg(I.check, 13, 2.4) + 'Basic', 'basic', 'toggleBasic')}${chip(svg(I.check, 13, 2.4) + 'Fill in the blank', 'cloze', 'toggleCloze')}<sc-if value="{{canAudio}}" hint-placeholder-val="{{ false }}">${chip(svg(I.check, 13, 2.4) + 'Audio', 'audio', 'toggleAudio')}</sc-if><sc-if value="{{canImage}}" hint-placeholder-val="{{ false }}">${chip(svg(I.check, 13, 2.4) + 'Image', 'image', 'toggleImage')}</sc-if></div><sc-if value="{{audioOn}}" hint-placeholder-val="{{ false }}"><span style="font-size: 12px; line-height: 1.45; color: {{t.muted}};">{{audioLine}}</span></sc-if><sc-if value="{{imageOn}}" hint-placeholder-val="{{ false }}"><span style="font-size: 12px; line-height: 1.45; color: {{t.muted}};">{{imageLine}}</span></sc-if></div>`)}
-      ${field('Language', `<label style="position: relative; display: flex; align-items: center;"><select onChange="{{setLang}}" aria-label="Language of the cards" style="appearance: none; -webkit-appearance: none; width: 100%; height: 36px; padding: 0 34px 0 14px; border: 0; outline: 0; border-radius: 999px; background: {{t.surf}}; color: {{t.text}}; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer;"><sc-for list="{{langs}}" as="l" hint-placeholder-count="3"><sc-if value="{{l.on}}" hint-placeholder-val="{{ false }}"><option value="{{l.code}}" selected>{{l.name}}</option></sc-if><sc-if value="{{l.off}}" hint-placeholder-val="{{ true }}"><option value="{{l.code}}">{{l.name}}</option></sc-if></sc-for></select><span style="position: absolute; right: 12px; display: flex; pointer-events: none; color: {{t.muted}};">${svg(I.chevDown, 14, 2)}</span></label>`)}
+      ${field('Language', phone ? dropPill('langPick', 'Language of the cards') : dropMarkup('langPick', dropPill('langPick', 'Language of the cards'), { w: 260 }))}
     </div>
   </div>`;
 
@@ -156,17 +157,28 @@ export function makeBoards(H) {
     ${body(false)}
   </div>
 </div>`;
+  // The iPhone app's own camera (Take a photo: a full screen with the picture the camera sees, a close button, the flash, the switch between the cameras and the
+  // shutter; once a picture is taken, Retake and Use photo). The canvas shows it open as a state of this board; on the web, a phone takes a photo with its own camera app.
+  const camBtn = (label, icon, pos) => `<button type="button" aria-label="${label}" style="position: absolute; ${pos} width: 44px; height: 44px; padding: 0; border: 0; border-radius: 22px; background: rgba(255,255,255,.18); color: #FFFFFF; display: flex; align-items: center; justify-content: center; cursor: pointer;">${svg(I[icon], 18, 2)}</button>`;
+  const camera = `<sc-if value="{{cameraOpen}}" hint-placeholder-val="{{ false }}"><div role="dialog" aria-modal="true" aria-label="Camera" style="position: absolute; inset: 0; z-index: 70; overflow: hidden; background: linear-gradient(160deg, #9EC7F3 0%, #4A5C9E 100%); color: #FFFFFF; font-family: ${FONT};">
+    ${camBtn('Close', 'close', 'left: 16px; top: 55px;')}${camBtn('Flash, off', 'boltOff', 'right: 16px; top: 55px;')}
+    <button type="button" aria-label="Take photo" style="position: absolute; left: 50%; bottom: 34px; width: 76px; height: 76px; margin-left: -38px; padding: 4px; box-sizing: border-box; border: 4px solid #FFFFFF; border-radius: 38px; background: transparent; cursor: pointer;"><span style="display: block; width: 100%; height: 100%; border-radius: 50%; background: #FFFFFF;"></span></button>
+    ${camBtn('Switch camera', 'flip', 'right: 28px; bottom: 50px;')}
+  </div></sc-if>`;
   const phoneMake = `<div style="position: relative; width: 390px; height: 844px; overflow: hidden; font-family: ${FONT}; color: {{t.text}};">
   <dc-import name="PhoneToday" dark="{{dark}}" dim="{{dim}}" hint-size="390px,844px"></dc-import>
   <div style="position: absolute; inset: 0; background: {{t.dim}};"></div>
   <div role="dialog" aria-label="Make cards" style="position: absolute; left: 0; right: 0; bottom: 0; top: 46px; box-sizing: border-box; padding: 16px 20px 30px; border-radius: 36px 36px 0 0; background: {{t.bg}}; display: flex; flex-direction: column; gap: 16px;">
     ${body(true)}
   </div>
+  ${dropSheet('langPick')}
+  ${camera}
 </div>`;
 
   // ----- the logic: what the page draws comes from db.make.view() (web/make.js), or on the canvas from a sample for the board's step
   const logic = phone => `
 constructor(props) { super(props); this.state = {}; }
+${DROP_JS}
 renderVals() {
   ${T}${DB_JS}
   const p = this.props, R = this.rich(), md = this.md(), M = db.mock ? this.mockMaterials().make : db.make, plural = (n, w) => n + ' ' + w + (n === 1 ? '' : 's');
@@ -235,7 +247,9 @@ renderVals() {
     hasFigs: step === 'review' && v.figures > 0, figLine: plural(v.figures, 'diagram') + ' found. ' + (v.figures === 1 ? 'It is' : 'They are') + ' kept in the deck’s Diagrams tab.',
     basicPressed: o.basic ? 'true' : 'false', basicBg: o.basic ? t.inv : t.surf, basicFg: o.basic ? t.invText : t.text, toggleBasic: () => M.setOpt('basic', !o.basic),
     clozePressed: o.cloze ? 'true' : 'false', clozeBg: o.cloze ? t.inv : t.surf, clozeFg: o.cloze ? t.invText : t.text, toggleCloze: () => M.setOpt('cloze', !o.cloze),
-    langs: LANGS.map(([code, name]) => ({ code, name, on: o.lang === code, off: o.lang !== code })), setLang: e => M.setOpt('lang', e && e.target ? e.target.value : ''),
+    // The language of the cards: Lucida's own dropdown (a list under its button, a sheet on a phone), never the browser's select.
+    cameraOpen: mock && p.step === 'Camera',
+    langPick: this.dropPick('lang', { title: 'Language of the cards', rows: LANGS, value: o.lang || '', choose: id => M.setOpt('lang', id), shown: mock && p.step === 'Paste (language list)' }),
     showMake: addable, makeBg: v.ready ? t.inv : t.surf2, makeFg: v.ready ? t.invText : t.muted,
     hasWarn: !!(err && err.soft), warn: err && err.soft ? err.message : '',
     progWord: prog.word || 'Getting ready…', progLine: prog.phase === 'write' || prog.phase === 'read' ? plural(prog.i, 'part') + ' of ' + prog.n + ' done' : prog.phase === 'see' ? prog.i + ' of ' + plural(prog.n, 'step') + ' done' : prog.phase === 'send' && prog.n > 1 ? prog.i + ' of ' + prog.n + ' sent' : 'This takes a moment', progPct: pct, progWidth: Math.max(4, pct) + '%',
@@ -263,7 +277,9 @@ export const GUIDE_CSS = [
   '.gd h1,.gd h2,.gd h3,.gd h4,.gd h5,.gd h6{margin:1.3em 0 .5em;line-height:1.25;font-weight:600;letter-spacing:-.02em}',
   '.gd h1{font-size:1.65em;padding-bottom:.3em;border-bottom:1px solid var(--gd-line)}.gd h2{font-size:1.32em;padding-bottom:.25em;border-bottom:1px solid var(--gd-line)}.gd h3{font-size:1.12em}.gd h4,.gd h5,.gd h6{font-size:1em}.gd h6{color:var(--gd-muted)}',
   '.gd p{margin:0 0 .9em}.gd ul,.gd ol{margin:0 0 .9em;padding-left:1.5em}.gd li{margin:.25em 0}.gd li>ul,.gd li>ol{margin:.25em 0 0}',
-  '.gd li.gd-task{list-style:none;margin-left:-1.5em;display:flex;gap:.55em;align-items:baseline}.gd li.gd-task>input{flex-shrink:0;margin:0;accent-color:var(--gd-text)}',
+  '.gd li.gd-task{list-style:none;margin-left:-1.5em}',
+  // A task's box is Lucida's own check (not a browser's checkbox): empty with a thin border, or filled in the text's color with a check in the page's.
+  '.gd .gd-box{display:inline-block;box-sizing:border-box;width:1.05em;height:1.05em;margin-right:.3em;vertical-align:-.17em;border:1.5px solid var(--gd-muted);border-radius:.3em}.gd .gd-on{border-color:var(--gd-text);background:var(--gd-text)}.gd .gd-on::after{content:"";display:block;width:.3em;height:.55em;margin:.02em auto 0;border:solid var(--gd-code);border-width:0 2px 2px 0;transform:rotate(45deg)}',
   '.gd blockquote{margin:0 0 .9em;padding:0 1em;border-left:3px solid var(--gd-line);color:var(--gd-muted)}.gd blockquote>:last-child{margin-bottom:0}',
   ".gd code{font-family:'Geist Mono',ui-monospace,monospace;font-size:.88em;padding:.15em .4em;border-radius:6px;background:var(--gd-code)}",
   '.gd pre{margin:0 0 .9em;padding:12px 14px;border-radius:12px;background:var(--gd-code);overflow:auto;line-height:1.5}.gd pre code{padding:0;background:none;font-size:.85em}',
@@ -315,7 +331,7 @@ export function deckBlocks(H, phone) {
   // A source opened: what it is, what it holds (its text with where each part is from, the recording, the pictures), and what can be done with it.
   const viewerBody = `<div style="display: flex; align-items: center; gap: 12px;"><span style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px;"><span style="font-size: 22px; font-weight: 600; letter-spacing: -.02em; overflow-wrap: anywhere;">{{vw.name}}</span><span style="font-size: 13px; color: {{t.muted}};">{{vw.line}}</span></span><button type="button" onClick="{{vw.close}}" aria-label="Close" style="width: 40px; height: 40px; flex-shrink: 0; border: 0; border-radius: 20px; background: {{t.surf}}; color: {{t.text}}; display: flex; align-items: center; justify-content: center; cursor: pointer;">${icon('close', 16, 2)}</button></div>
     <div style="flex-grow: 1; min-height: 0; overflow-y: auto; scrollbar-width: none; display: flex; flex-direction: column; gap: 14px;">
-      <sc-if value="{{vw.hasAudio}}" hint-placeholder-val="{{ false }}"><audio controls preload="none" src="{{vw.audio}}" style="width: 100%;"></audio></sc-if>
+      <sc-if value="{{vw.hasAudio}}" hint-placeholder-val="{{ false }}">${playerMarkup('vw.player')}</sc-if>
       <sc-if value="{{vw.hasPhotos}}" hint-placeholder-val="{{ false }}"><div style="display: grid; grid-template-columns: repeat(${phone ? 2 : 3}, minmax(0, 1fr)); gap: 8px;"><sc-for list="{{vw.photos}}" as="x" hint-placeholder-count="3"><a href="{{x.href}}" target="_blank" rel="noopener" style="display: block; border-radius: 14px; overflow: hidden; background: {{t.surf}}; aspect-ratio: 1;"><img src="{{x.href}}" alt="{{x.file}}" loading="lazy" style="width: 100%; height: 100%; object-fit: cover; display: block;"></a></sc-for></div></sc-if>
       <sc-if value="{{vw.hasTopic}}" hint-placeholder-val="{{ false }}"><div style="padding: 16px 18px; border-radius: 18px; background: {{t.surf}}; font-size: 16px; line-height: 1.5;">{{vw.topic}}</div></sc-if>
       <sc-if value="{{vw.hasParts}}" hint-placeholder-val="{{ true }}"><div style="display: flex; flex-direction: column; gap: 12px; padding: 16px 18px; border-radius: 18px; background: {{t.surf}};"><sc-for list="{{vw.parts}}" as="p" hint-placeholder-count="3"><div ref="{{p.ref}}" data-hit="{{p.hit}}" style="display: flex; flex-direction: column; gap: 4px; margin: -6px -10px; padding: 6px 10px; border-radius: 12px; background: {{p.bg}};"><sc-if value="{{p.hasAt}}" hint-placeholder-val="{{ true }}"><span style="font-family: ${MONO}; font-size: 12px; color: {{p.atColor}};">{{p.at}}</span></sc-if><span style="font-size: 14px; line-height: 1.55; white-space: pre-wrap; overflow-wrap: anywhere;">{{p.text}}</span></div></sc-for></div></sc-if>
@@ -369,14 +385,14 @@ export const DECK_MATERIALS_JS = String.raw`
     let part = vs && vs.files[0] ? vs.files[0] : null, off = 0;
     if (vs && kind === 'recording' && vs.files.length > 1) { let o = 0; for (const f of vs.files) { part = f; off = o; if (!f.seconds || secs < o + f.seconds) break; o += f.seconds; } }
     const fileHref = part ? part.href : '', secsIn = Math.max(0, secs - off);
-    const vw = vs ? { open: true, name: vs.name, line: sourceRow.line, close: () => this.setState({ viewing: '' }),
-      hasAudio: kind === 'recording' && !!fileHref, audio: fileHref + (secsIn ? '#t=' + secsIn : ''), hasPhotos: kind === 'photo', photos: vs.files, hasTopic: kind === 'topic', topic: vs.text,
+    const vw = vs ? { open: true, name: vs.name, line: sourceRow.line, close: () => { this.stopPlayer(); this.setState({ viewing: '' }); },
+      hasAudio: kind === 'recording' && !!fileHref, player: kind === 'recording' && fileHref ? this.playerVals(t, fileHref, secsIn, mock) : null, hasPhotos: kind === 'photo', photos: vs.files, hasTopic: kind === 'topic', topic: vs.text,
       hasParts: parts.length > 0, parts, loading: !!vs.textName && raw === null, noText: !parts.length && !!vs.textName && raw === '' || kind === 'file',
       noTextLine: kind === 'file' ? (vs.pages ? plural(vs.pages, 'page') + '. ' : '') + 'The cards from it say which page they came from.' : 'Nothing to show.',
       hasOpen: kind === 'video' ? !!vs.url : (kind === 'file' || kind === 'recording') && !!fileHref,
       openHref: kind === 'video' ? vs.url + (secs ? (/\?/.test(vs.url) ? '&' : '?') + 't=' + secs + 's' : '') : kind === 'file' && pageNo ? fileHref + '#page=' + pageNo : kind === 'recording' && secsIn ? fileHref + '#t=' + secsIn : fileHref, openLabel: kind === 'video' ? 'Open the video' : kind === 'recording' ? 'Open the recording' : 'Open the file',
       canEdit: G.can, moreHref: mock ? 'WebMake.dc.html' : '/make?from=' + encodeURIComponent(vs.id) + '&deck=' + encodeURIComponent(dk.id), remove: () => { if (mock) return; db.act.deleteSource(dk.id, vs.id).then(() => this.setState({ viewing: '' })); } }
-      : { open: false, name: '', line: '', close: () => {}, hasAudio: false, audio: '', hasPhotos: false, photos: [], hasTopic: false, topic: '', hasParts: false, parts: [], loading: false, noText: false, noTextLine: '', hasOpen: false, openHref: '', openLabel: '', canEdit: false, moreHref: '', remove: () => {} };
+      : { open: false, name: '', line: '', close: () => {}, hasAudio: false, player: null, hasPhotos: false, photos: [], hasTopic: false, topic: '', hasParts: false, parts: [], loading: false, noText: false, noTextLine: '', hasOpen: false, openHref: '', openLabel: '', canEdit: false, moreHref: '', remove: () => {} };
     // The section on show (Cards unless the address or a tap says another, and only a section that is there): ?tab= in the address, a source opened from a card, or the canvas's setting.
     const cardsN = db.cards(dk.id).length, notesTab = hasAny || G.can, sourcesTab = !!G.can, dgTab = !!G.can || dgRows.length > 0;
     const dgState = mock && new RegExp(${JSON.stringify(DIAGRAM_STATE_RE)}).test(p.guide || '');
@@ -438,9 +454,12 @@ const MATERIALS_MOCK_BASE = String.raw`mockMaterials() {
       'Pick': { step: 'pick' }, 'Upload': { kind: 'file' }, 'Upload (a file added)': { kind: 'file', files: [slides], ready: true, canImage: true },
       'Upload (picture cards on)': { kind: 'file', files: [slides], ready: true, canImage: true, opts: { count: 'auto', basic: true, cloze: true, audio: false, image: true, lang: '', deckId: '', deckName: '' } },
       'Photos': { kind: 'photo', ready: true, canImage: true, files: ['IMG_2041.jpg', 'IMG_2042.jpg', 'IMG_2043.jpg'].map((name, i) => ({ i, name, size: (1.1 + i * .3).toFixed(1) + ' MB', fam: 'image' })) },
+      // (Camera is Photos with the iPhone app's own camera screen open over it: Take a photo.)
+      'Camera': { kind: 'photo', ready: true, canImage: true, files: ['IMG_2041.jpg', 'IMG_2042.jpg', 'IMG_2043.jpg'].map((name, i) => ({ i, name, size: (1.1 + i * .3).toFixed(1) + ' MB', fam: 'image' })) },
       'Record': { kind: 'record' }, 'Recording': { kind: 'record', rec: { state: 'recording', secs: 754, levels, level: .4, limit: 7200 } }, 'Paused': { kind: 'record', rec: { state: 'paused', secs: 754, levels, level: 0, limit: 7200 } },
       'Paste': { kind: 'paste', ready: true, text: 'The mitochondrion is the powerhouse of the cell. It makes most of the cell’s ATP through the electron transport chain, which pumps protons across the inner membrane.\n\nThe nucleus holds the cell’s DNA, and the ribosomes translate mRNA into protein.' },
       'Paste (a language set)': { kind: 'paste', ready: true, text: 'la casa · the house\nbuenos días · good morning\n¿Dónde está la biblioteca? · Where is the library?\nElla tiene dos hermanos · She has two siblings', opts: { count: 'auto', basic: true, cloze: true, audio: true, lang: 'es', deckId: '', deckName: '' } },
+      'Paste (language list)': { kind: 'paste', ready: true, text: 'la casa · the house\nbuenos días · good morning\n¿Dónde está la biblioteca? · Where is the library?\nElla tiene dos hermanos · She has two siblings', opts: { count: 'auto', basic: true, cloze: true, audio: true, lang: 'es', deckId: '', deckName: '' } },
       'YouTube': { kind: 'video', ready: true, url: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ' },
       'YouTube transcript': { kind: 'video', ready: true, transcript: true, url: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ', text: '0:00\nWelcome to the lecture on enzymes\n0:20\nAn enzyme lowers the activation energy of a reaction' },
       'Topic': { kind: 'topic', ready: true, topic: 'The Krebs cycle' }, 'More from a source': { kind: 'file', ready: true, from: { deckId: 'cell', id: 'x1', name: 'Lecture 3 slides', kind: 'file' } },
@@ -490,7 +509,7 @@ function guideBoards(H) {
   const icon = (name, size = 16, w = 2) => svg(I[name] || EXTRA[name], size, w);
   const ROUND = 'width: 40px; height: 40px; flex-shrink: 0; border: 0; border-radius: 20px; background: {{t.surf}}; color: {{t.text}}; display: flex; align-items: center; justify-content: center; cursor: pointer;';
   // A toolbar button acts on a mouse press (so the text field keeps its place and selection) and on a click from the keyboard.
-  const tb = (handler, label, inner, extra = '') => `<button type="button" onMouseDown="{{${handler}.down}}" onClick="{{${handler}.click}}" aria-label="${label}" title="${label}" style="min-width: 36px; height: 34px; flex-shrink: 0; padding: 0 8px; border: 0; border-radius: 10px; background: transparent; color: {{t.text}}; font: inherit; font-size: 14px; font-weight: 600; display: flex; align-items: center; justify-content: center; cursor: pointer; ${extra}">${inner}</button>`;
+  const tb = (handler, label, inner, extra = '') => `<button type="button" onMouseDown="{{${handler}.down}}" onClick="{{${handler}.click}}" aria-label="${label}" data-tip="${label}" style="min-width: 36px; height: 34px; flex-shrink: 0; padding: 0 8px; border: 0; border-radius: 10px; background: transparent; color: {{t.text}}; font: inherit; font-size: 14px; font-weight: 600; display: flex; align-items: center; justify-content: center; cursor: pointer; ${extra}">${inner}</button>`;
   const toolbar = `<div role="toolbar" aria-label="Formatting" style="display: flex; align-items: center; gap: 2px; overflow-x: auto; scrollbar-width: none;">
     ${tb('tbHeading', 'Heading', 'H')}${tb('tbBold', 'Bold', 'B', 'font-weight: 800;')}${tb('tbItalic', 'Italic', 'I', 'font-style: italic; font-family: Georgia, serif; font-size: 15px;')}${tb('tbCode', 'Code', '&lt;/&gt;', 'font-family: ' + MONO + '; font-size: 12px;')}
     <span aria-hidden="true" style="width: 1px; height: 18px; flex-shrink: 0; margin: 0 6px; background: {{t.line}};"></span>
@@ -583,7 +602,7 @@ renderVals() {
     tabs: [{ id: 'main', title: 'Guide' }, ...extra].map(x => ({ title: x.title, pressed: x.id === pageId ? 'true' : 'false', bg: x.id === pageId ? t.inv : t.surf, fg: x.id === pageId ? t.invText : t.text, pick: async () => { await this._flush(); this.setState({ page: x.id, histOpen: false, tab: 'write' }); } })),
     canAddPage, addPage: async () => { await this._flush(); const id = await am.addGuidePage(deckId, 'New page'); this.setState({ page: id, histOpen: false, tab: 'write' }); },
     pageTools: G.can && pageId !== 'main', pageTitle: cur.title, setPageTitle: e => { const v = e && e.target ? e.target.value : ''; clearTimeout(this._tt); this._tt = setTimeout(() => am.renameGuidePage(deckId, pageId, v).catch(() => {}), 600); },
-    deletePage: async () => { if (!mock && !confirm('Delete the page “' + cur.title + '”?')) return; await am.deleteGuidePage(deckId, pageId); this.setState({ page: 'main', drafts: Object.fromEntries(Object.entries(this.state.drafts).filter(([k]) => k !== key)) }); },
+    deletePage: async () => { if (!mock && !(await db.ask({ title: 'Delete the page “' + cur.title + '”?', action: 'Delete page', danger: true }))) return; await am.deleteGuidePage(deckId, pageId); this.setState({ page: 'main', drafts: Object.fromEntries(Object.entries(this.state.drafts).filter(([k]) => k !== key)) }); },
     showEditor: !histOpen, isWrite: tab === 'write', isPreview: tab === 'preview',
     tabsWP: [seg('Write', tab === 'write', () => this.setState({ tab: 'write' })), seg('Preview', tab === 'preview', () => this.setState({ tab: 'preview' }))],
     text, type: e => setText(e && e.target ? e.target.value : ''), taRef: el => { this._ta = el; },

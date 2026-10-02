@@ -4,7 +4,7 @@ import Foundation
 
 enum MakeSample {
   /// The names the board's step setting offers (MAKE_STEPS).
-  static let steps = ["Pick", "Upload", "Upload (a file added)", "Upload (picture cards on)", "Photos", "Record", "Recording", "Paused", "Paste", "Paste (a language set)", "YouTube", "YouTube transcript", "Topic",
+  static let steps = ["Pick", "Upload", "Upload (a file added)", "Upload (picture cards on)", "Photos", "Camera", "Record", "Recording", "Paused", "Paste", "Paste (a language set)", "Paste (language list)", "YouTube", "YouTube transcript", "Topic",
                       "More from a source", "Making", "Making a recording", "Review", "Review (notes open)", "Review (notes off)", "Review (no room for notes)", "Review (audio cards)", "Review (picture cards)",
                       "Review (editing a card)", "Limit reached", "File too big", "Error"]
 
@@ -64,7 +64,8 @@ enum MakeSample {
     case "Upload": m.kind = "file"
     case "Upload (a file added)": m.kind = "file"; m.files = [slides]
     case "Upload (picture cards on)": m.kind = "file"; m.files = [slides]; m.opts.image = true
-    case "Photos":
+    // (Camera is Photos with Lucida's own camera screen open over it: MakeScreen opens it.)
+    case "Photos", "Camera":
       m.kind = "photo"
       m.files = ["IMG_2041.jpg", "IMG_2042.jpg", "IMG_2043.jpg"].enumerated().map { i, n in file(n, 1_100_000 + i * 300_000, .image, "image/jpeg") }
     case "Record": m.kind = "record"
@@ -73,7 +74,8 @@ enum MakeSample {
     case "Paste":
       m.kind = "paste"
       m.text = "The mitochondrion is the powerhouse of the cell. It makes most of the cell’s ATP through the electron transport chain, which pumps protons across the inner membrane.\n\nThe nucleus holds the cell’s DNA, and the ribosomes translate mRNA into protein."
-    case "Paste (a language set)":
+    // (Paste (language list) is the same with the language list open: MakeScreen opens it.)
+    case "Paste (a language set)", "Paste (language list)":
       m.kind = "paste"
       m.text = "la casa · the house\nbuenos días · good morning\n¿Dónde está la biblioteca? · Where is the library?\nElla tiene dos hermanos · She has two siblings"
       m.opts.audio = true; m.opts.lang = "es"

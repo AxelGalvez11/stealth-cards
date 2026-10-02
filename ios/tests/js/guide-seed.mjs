@@ -81,7 +81,7 @@ await owner.act('guide.save', { deckId, page: g2, text: '- **PMAT** for the phas
 
 const src = {};
 src.pdf = await owner.make(deckId, { kind: 'file', title: 'Lecture 3 slides' }, [{ name: 'cups.pdf', type: 'application/pdf', buf: fx('cups.pdf') }]);
-// (a Word file opens in Quick Look, not in the PDF viewer)
+// (a Word file opens in the document viewer, not in the PDF viewer)
 src.doc = await owner.make(deckId, { kind: 'file', title: 'Lecture 2 handout' }, [{ name: 'tu.docx', type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', buf: fx('tu.docx') }]);
 // A two-hour recording of thirteen files of 550 seconds each (the page cuts a long one into parts like these): a card from 1:30:00 is in the tenth, 7 and a half minutes in.
 const PARTS = 13, PART = 550;

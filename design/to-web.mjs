@@ -6,6 +6,7 @@ import { readFileSync, writeFileSync, readdirSync, mkdirSync, rmSync } from 'nod
 import { readBoard } from './slim.mjs';
 import { withoutThemes, appPictures } from './themes.mjs';
 import { MOTION } from './motion.mjs';
+import { overlayTemplates } from './ui.mjs';
 
 const SRC = new URL('./canvas/project/', import.meta.url);
 const OUT = new URL('../web/screens/', import.meta.url);
@@ -62,6 +63,11 @@ return Component;
 // knob's speed.
 writeFileSync(new URL('../web/motion-timings.js', import.meta.url), `// Made by design/to-web.mjs from design/motion.mjs, the one set of timings the web app and the iPhone app share. Change that, not this file.
 export default ${JSON.stringify(MOTION)};
+`);
+// What the app draws over a page for a question that asks before a delete and for a message (design/ui.mjs, web/ui.js): the same markup as the
+// boards that show one open on the canvas.
+writeFileSync(new URL('../web/ui-templates.js', import.meta.url), `// Made by design/to-web.mjs from design/ui.mjs: the markup of Lucida's own question and message, for a computer and for a phone. Change that, not this file.
+export default ${JSON.stringify(overlayTemplates(), null, 1)};
 `);
 writeFileSync(new URL('index.js', OUT), `// Every screen, for the screen list at /b. Made by design/to-web.mjs.\nexport default ${JSON.stringify(list, null, 1)};\n`);
 console.log(list.length, 'screens');

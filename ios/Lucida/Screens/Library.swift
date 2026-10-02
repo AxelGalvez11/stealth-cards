@@ -206,7 +206,6 @@ struct LibraryScreen: View {
   @State private var cardTags: [String] = []
   @State private var pick = ""
   @State private var shown = 60
-  @State private var confirmRemove = false
   /// The difficulty control's sliding pill, and its taps.
   @Namespace private var levelPill
   @State private var levelTaps = 0
@@ -256,10 +255,15 @@ struct LibraryScreen: View {
       AddMenuRow(icon: "decks", title: "New deck", line: "Start from scratch") { nav.newDeck() },
       AddMenuRow(icon: "sparkle", title: "Make cards", line: "From a file, photo, video or topic") { nav.make() },
       AddMenuRow(icon: "upload", title: "Import cards", line: "From Anki, Quizlet or a CSV") { nav.importCards() }])
-    .confirmationDialog("Remove the folder “\(folder?.name ?? "")”?", isPresented: $confirmRemove, titleVisibility: .visible) {
-      // Back to the Library (the page also goes back by itself once its folder is gone).
-      Button("Remove folder", role: .destructive) { Buzz.shared.warning("remove folder"); if let id = folderId { Task { await store.deleteFolder(id); if nav.path.last == .folder(id) { nav.back() } } } }
-    } message: { Text("Its decks stay in your library.") }
+  }
+
+  /// Remove folder asks first, in Lucida's own question; its decks stay in the library, and the page goes back to the Library once its folder is gone.
+  private func askRemove(_ folder: LibFolder?) {
+    guard let id = folderId else { return }
+    nav.ask("Remove the folder “\(folder?.name ?? "")”?", line: "Its decks stay in your library.", action: "Remove folder", danger: true) {
+      Buzz.shared.warning("remove folder")
+      Task { await store.deleteFolder(id); if nav.path.last == .folder(id) { nav.back() } }
+    }
   }
 
   /// The title with New folder and the + menu; in cards mode, just the menu.
@@ -338,7 +342,7 @@ struct LibraryScreen: View {
       ForEach(list) { deckRow($0, ids: ids) }
     }
     if folder != nil {
-      Button { confirmRemove = true } label: {
+      Button { askRemove(folder) } label: {
         Text("Remove folder").css(14, .semibold).foregroundStyle(t.again).padding(.horizontal, 16).frame(height: 40).contentShape(Capsule())
       }
       .buttonStyle(.press)

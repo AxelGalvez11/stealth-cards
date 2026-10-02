@@ -2,7 +2,7 @@
 // Disconnect), the page where an app asks to connect (/oauth/authorize: what it is, Allow or Cancel), and the password
 // (Settings → Account). Like the study network's answers (net.js), what a screen asks for isn't here the first time, so it shows
 // its loading look and draws again when the answer comes.
-export function createConnect({ changed = () => {}, go = () => {} } = {}) {
+export function createConnect({ changed = () => {}, go = () => {}, question = async () => false, say = () => {} } = {}) {
   const here = () => location.pathname + location.search;
   const signInFirst = () => location.assign('/sign-in?next=' + encodeURIComponent(here()));
 
@@ -59,13 +59,13 @@ export function createConnect({ changed = () => {}, go = () => {} } = {}) {
 
   // Disconnect an app (it asks first); the list comes back without it.
   async function disconnectApp(id, name) {
-    if (!confirm('Disconnect ' + (name || 'this app') + '? It can’t use your decks until you connect it again.')) return;
+    if (!(await question({ title: 'Disconnect ' + (name || 'this app') + '?', line: 'It can’t use your decks until you connect it again.', action: 'Disconnect' }))) return;
     try {
       const r = await fetch('/api/oauth/disconnect', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ id }) });
       if (r.status === 401) return signInFirst();
       const j = await r.json().catch(() => ({}));
       if (r.ok && j.apps) { apps = j.apps; appsAt = Date.now(); changed(); } else throw new Error(j.error || 'That didn’t work. Try again.');
-    } catch (e) { alert(e.message); }
+    } catch (e) { say(e.message); }
   }
 
   // A new password for signing in (8 to 72 characters). Rejected with the server's own plain sentence.
