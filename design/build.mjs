@@ -9551,7 +9551,7 @@ for (const T of THEMES.filter(x => x.key !== 'lucida')) {
 }
 Object.assign(files, siteFiles());
 // Making cards from anything, a deck's Guide, and its Sources (design/materials.mjs; web/make.js, web/guide.js).
-Object.assign(files, makeBoards({ svg, I, FONT, MONO, T, DB_JS, DARK, MESH, W, HH: H, PW, PH }));
+Object.assign(files, makeBoards({ svg, I, FONT, MONO, T, DB_JS, DARK, MESH, W, HH: H, PW, PH, sidebar }));
 // The questions that ask before something is deleted or left (design/ui.mjs): each board that asks one shows it open through its `ask` Tweak, drawn
 // over the whole board, with the words the app puts in the same dialog. (The app draws its own over any page: web/ui.js.)
 const ASKS = {

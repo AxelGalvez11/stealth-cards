@@ -170,7 +170,8 @@ export function makeNotes(G) {
       memWrite(m);
     }
     let rememberT = 0;
-    const rememberSoon = () => { clearTimeout(rememberT); rememberT = setTimeout(remember, 800); };
+    // (a page that has gone, like the Notes page left for the deck, writes nothing late over what the deck's Notes since opened and folded)
+    const rememberSoon = () => { clearTimeout(rememberT); rememberT = setTimeout(() => { if (root.isConnected) remember(); }, 800); };
 
     // ---------- what shows: hidden in closed toggles and folded sections, numbers, sections ----------
     function view() {
@@ -391,13 +392,14 @@ export function makeNotes(G) {
       const row = st.rows.get(sel.b.id);
       if (row) visible(row.el);
     }
-    // Keeps a row in view inside what scrolls the page (only when it is out of it).
+    // Keeps a row in view inside what scrolls the page (only when it is out of it). On a phone, what the bar and the keyboard under it cover is out of view.
     function visible(rowE) {
       let p = root.parentElement;
       while (p && p !== document.body) { const cs = getComputedStyle(p); if (/(auto|scroll)/.test(cs.overflowY) && p.scrollHeight > p.clientHeight) break; p = p.parentElement; }
       if (!p || p === document.body) return;
       const r = rowE.getBoundingClientRect(), q = p.getBoundingClientRect();
-      if (r.bottom > q.bottom - 24) p.scrollTop += r.bottom - q.bottom + 24 + (o.phone ? 56 : 0);
+      const k = o.phone && keysEl.classList.contains('nb-show') ? keysEl.getBoundingClientRect() : null, bottom = k && k.height ? Math.min(q.bottom, k.top) : q.bottom;
+      if (r.bottom > bottom - 24) p.scrollTop += r.bottom - bottom + 24;
       else if (r.top < q.top + 8) p.scrollTop -= q.top + 8 - r.top;
     }
     // Two places in page order: { s, e } with their block indexes.
@@ -1150,10 +1152,10 @@ export function makeNotes(G) {
     }
     // The phone's bar above the keyboard: Aa, To-do, Bullets, Toggle, Picture and Done; while words are selected, Bold, Italic, Strikethrough, Code and Link.
     function drawKeys(sel) {
-      const show = !!(o.editable && (st.focused || (o.demo && o.demo.keys)));
+      const show = !!(o.editable && (st.focused || (o.demo && o.demo.keys))), host = o.keysHost || root;
       keysEl.classList.toggle('nb-show', show);
-      if (!keysEl.isConnected) (o.keysHost || root).appendChild(keysEl);
-      if (!show) return;
+      if (keysEl.parentNode !== host) host.appendChild(keysEl);
+      if (!show) return placeKeys();
       keysEl.textContent = '';
       const b = sel ? st.blocks[by(ordered(sel).s.id)] : null, words = sel && !collapsed(sel) && rangesOf(sel).length;
       const btn = (act, label, inner, on) => el('button', 'nb-kb' + (on ? ' nb-on' : ''), { type: 'button', 'aria-label': label, 'aria-pressed': on ? 'true' : 'false', 'data-act': act, html: inner, tabindex: '-1' });
@@ -1169,10 +1171,21 @@ export function makeNotes(G) {
       }
       placeKeys();
     }
+    // Where the bar goes on a phone's web page: right above the phone's keyboard while a line is written, and at the bottom of the screen with no keyboard on
+    // it (a hardware one), as in the iPhone app. The keyboard covers the bottom of the page without making it shorter; the browser says what is still seen
+    // (visualViewport: how tall it is and how far down, which change as the keyboard comes and goes and as the phone moves the view), so the bar follows
+    // that, with no motion of its own. While the bar shows, the page has room at its end for the keyboard, so its last line can be written above the bar.
+    // (On the canvas the board gives the bar a box of its own, over its drawn keyboard: `keysHost`.)
     function placeKeys() {
-      if (o.keysHost || !window.visualViewport) return;
-      const vv = window.visualViewport, gap = Math.max(0, innerHeight - vv.height - vv.offsetTop);
-      keysEl.style.position = 'fixed'; keysEl.style.bottom = gap + 'px';
+      if (o.keysHost || !o.phone || !keysEl.classList.contains('nb-show')) { keysEl.style.position = keysEl.style.top = keysEl.style.bottom = ''; root.style.removeProperty('--nb-kb'); return; }
+      const vv = window.visualViewport, low = vv ? vv.offsetTop + vv.height : innerHeight, h = keysEl.offsetHeight || 50;
+      keysEl.style.position = 'fixed'; keysEl.style.bottom = 'auto'; keysEl.style.top = Math.round(low - h) + 'px';
+      root.style.setProperty('--nb-kb', Math.max(0, Math.round(innerHeight - low)) + 'px');
+    }
+    // (the keyboard came or went: the line being written stays in view above the bar)
+    function onViewport(ev) {
+      placeKeys();
+      if (ev && ev.type === 'resize' && st.focused && st.sel && keysEl.classList.contains('nb-show')) { const row = st.rows.get(st.sel.b.id); if (row) visible(row.el); }
     }
     // The canvas's selection: none (its states show the menu and the bar as drawn).
     function demoSel() {
@@ -1236,18 +1249,18 @@ export function makeNotes(G) {
     docEl.addEventListener('focusin', () => { st.focused = true; placeUi(); });
     docEl.addEventListener('focusout', () => { setTimeout(() => { if (root.contains(document.activeElement)) return; st.focused = false; st.aa = false; closeMenu(); placeUi(); if (o.phone) drawKeys(null); }, 0); });
     const onSel = () => {
-      if (!root.isConnected) { document.removeEventListener('selectionchange', onSel); if (window.visualViewport) window.visualViewport.removeEventListener('resize', placeKeys); return; }
+      if (!root.isConnected) { document.removeEventListener('selectionchange', onSel); if (window.visualViewport) { window.visualViewport.removeEventListener('resize', onViewport); window.visualViewport.removeEventListener('scroll', onViewport); } return; }
       if (st.comp) return;
       const s = readSel();
       if (s) { st.sel = s; if (st.pend && !(collapsed(s) && s.a.id === st.pend.id && s.a.off === st.pend.off)) st.pend = null; }
       placeUi();
     };
     document.addEventListener('selectionchange', onSel);
-    if (window.visualViewport) window.visualViewport.addEventListener('resize', placeKeys);
+    if (window.visualViewport) { window.visualViewport.addEventListener('resize', onViewport); window.visualViewport.addEventListener('scroll', onViewport); }
 
     const api = {
       focus(at) { if (!o.editable) return; let b, off = 0; if (at === 'end' || at == null) { b = st.blocks[st.blocks.length - 1]; off = b ? rlen(wordsOf(b)) : 0; } else { b = st.blocks[Math.max(0, Math.min(at.i | 0, st.blocks.length - 1))]; off = at.off | 0; } if (!b) return; reveal(by(b.id)); if (!TEXT[b.k] && b.k !== 'code') return pick(b.id); off = Math.min(off, rlen(wordsOf(b))); st.sel = caret(b.id, off); st.restore = true; render(); },
-      flush() { changed(); remember(); },
+      flush() { clearTimeout(rememberT); changed(); remember(); },
       selectedText() { const s = readSel(); return s && !collapsed(s) ? G.plain(G.markdown(selectionBlocks(s))) : ''; },
       blocks: () => st.blocks
     };
