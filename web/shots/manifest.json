@@ -232,10 +232,10 @@
    640
   ],
   "scale": 1.2035398230088497,
-  "hash": "f64486a557",
+  "hash": "fe63b9e1f5",
   "width": 1360,
   "height": 770,
-  "bytes": 100546
+  "bytes": 98936
  },
  "deck-dark.webp": {
   "board": "WebPublicDeck",
@@ -246,10 +246,10 @@
    640
   ],
   "scale": 1.2035398230088497,
-  "hash": "f99d438985",
+  "hash": "b0d1137954",
   "width": 1360,
   "height": 770,
-  "bytes": 101650
+  "bytes": 99888
  },
  "deck-phone.webp": {
   "board": "PhonePublicDeck",
@@ -260,10 +260,10 @@
    440
   ],
   "scale": 2,
-  "hash": "e3829ba1c0",
+  "hash": "729ecb5692",
   "width": 780,
   "height": 880,
-  "bytes": 110428
+  "bytes": 110510
  },
  "deck-phone-dark.webp": {
   "board": "PhonePublicDeck",
@@ -274,10 +274,10 @@
    440
   ],
   "scale": 2,
-  "hash": "3afd141d73",
+  "hash": "81dbb6da18",
   "width": 780,
   "height": 880,
-  "bytes": 111016
+  "bytes": 111094
  },
  "class.webp": {
   "board": "WebClass",
