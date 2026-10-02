@@ -7,8 +7,9 @@
 //                    flow on that kind (web/make.js); an empty deck shows the same row, set to that deck
 //   the due line     "12 cards due · About 6 min" and Review (the review of every deck), only when something is due
 //   Assigned         what your classes assigned you, only when they did
-// The boards that carry them are the Library's (WebDecks, PhoneLibrary, their folder pages and their new account's WebDecksEmpty and
-// PhoneDecksEmpty) and the empty deck's (WebDeckEmpty, PhoneDeckEmpty). The iPhone app draws the same pieces natively
+// The boards that carry them are the iPhone Library's (PhoneLibrary and its folder page), the new account's (WebDecksEmpty, PhoneDecksEmpty)
+// and the empty deck's (WebDeckEmpty, PhoneDeckEmpty). The computer's Library (WebDecks) has only Assigned, with Make cards and New deck in
+// its header: the owner, 2026-10-02, "remove the upload composer and upload buttons, and the '64 cards due'". The iPhone app draws the same pieces natively
 // (ios/Lucida/Screens/LibraryTop.swift).
 const PASTE = '<rect x="5.5" y="4.5" width="13" height="16" rx="2.5"/><path d="M9 4.5v-.3a1.7 1.7 0 0 1 1.7-1.7h2.6A1.7 1.7 0 0 1 15 4.2v.3"/><path d="M9 11h6M9 15h4"/>';
 

@@ -792,12 +792,11 @@ const webDecks = webRoot(`${sidebar('Library')}
     <label style="display: flex; align-items: center; gap: 10px; width: 280px; height: 36px; padding: 0 16px; box-sizing: border-box; border-radius: 999px; background: {{t.surf}}; color: {{t.muted}};">${svg(I.search, 16)}<span style="position: absolute; left: -9999px;">{{searchHint}}</span><input value="{{query}}" onChange="{{setQuery}}" placeholder="{{searchHint}}" style="flex-grow: 1; min-width: 0; border: 0; outline: 0; background: transparent; font: inherit; font-size: 14px; color: {{t.text}};"></label>
     <sc-if value="{{inFolder}}" hint-placeholder-val="{{ false }}">${TEST.folderWebPill}${pill('Rename', { onClick: '{{renameFolder}}' })}${pill('Remove folder', { onClick: '{{removeFolder}}' })}</sc-if>
     <sc-if value="{{deckView}}" hint-placeholder-val="{{ true }}"><sc-if value="{{atTop}}" hint-placeholder-val="{{ true }}">${pill('New folder', { icon: 'folder', onClick: '{{newFolder}}' })}</sc-if></sc-if>
-    ${pill('New deck', { inv: true, icon: 'plus', href: 'WebNewDeck.dc.html' })}
+    ${pill('Make cards', { icon: 'sparkle', href: 'WebMake.dc.html' })}${pill('New deck', { inv: true, icon: 'plus', href: 'WebNewDeck.dc.html' })}
   </div>
   ${TEST.folderLine}
   <sc-if value="{{deckView}}" hint-placeholder-val="{{ true }}">
-    ${HB.top}
-    <sc-if value="{{atTop}}" hint-placeholder-val="{{ true }}">${HB.due}${ASSIGNED_WEB}</sc-if>
+    <sc-if value="{{atTop}}" hint-placeholder-val="{{ true }}">${ASSIGNED_WEB}</sc-if>
     <div style="display: flex; align-items: center; gap: 16px;">
       <div role="group" aria-label="Filter by tag" style="flex-grow: 1; display: flex; flex-wrap: wrap; gap: 8px;">
         <sc-for list="{{tagFilters}}" as="g" hint-placeholder-count="6"><button type="button" onClick="{{g.pick}}" aria-pressed="{{g.pressed}}" style="height: 36px; padding: 0 14px; display: inline-flex; align-items: center; border: 0; border-radius: 999px; background: {{g.bg}}; color: {{g.fg}}; font: inherit; font-size: 13px; font-weight: 500; cursor: pointer;"><span style="width: {{g.dotW}}; height: 8px; margin-right: {{g.dotM}}; border-radius: 4px; background: {{g.dot}};"></span>{{g.label}}<span style="margin-left: 8px; font-family: ${MONO}; font-size: 11px; opacity: .6;">{{g.count}}</span></button></sc-for>
@@ -1399,7 +1398,6 @@ const webDeck = webRoot(`${sidebar('Library')}
     </sc-for>
     <div style="border-radius: 16px; height: 104px; box-sizing: border-box; padding: 18px 20px; background: {{t.surf}}; display: flex; flex-direction: column; justify-content: space-between;"><span style="font-size: 13px; font-weight: 500; color: {{t.muted}};">Due next 7 days</span><div style="display: flex; align-items: flex-end; gap: 6px; height: 36px;"><sc-for list="{{spark}}" as="s" hint-placeholder-count="7"><div style="flex-grow: 1; border-radius: 4px; background: {{s.c}}; height: {{s.h}};"></div></sc-for></div></div>
   </div>
-  ${examLine(14, -4)}
   ${TEST.pastList(false)}
   ${DB.tabs}${DB.guide}${DB.diagrams}${DB.sources}
   <sc-if value="{{gs.showCards}}" hint-placeholder-val="{{ true }}">

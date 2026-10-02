@@ -568,10 +568,10 @@
    640
   ],
   "scale": 1.2035398230088497,
-  "hash": "403a9af5ad",
+  "hash": "5e68c1e0fb",
   "width": 1360,
   "height": 770,
-  "bytes": 25248
+  "bytes": 84700
  },
  "decks-dark.webp": {
   "board": "WebDecks",
@@ -582,10 +582,10 @@
    640
   ],
   "scale": 1.2035398230088497,
-  "hash": "de08218da3",
+  "hash": "98d8b8a420",
   "width": 1360,
   "height": 770,
-  "bytes": 25610
+  "bytes": 84540
  },
  "decks-phone.webp": {
   "board": "PhoneLibrary",
