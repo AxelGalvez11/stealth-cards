@@ -233,6 +233,7 @@ struct WelcomeScreen: View {
   }
 
   // ---------- step 1: connect your AI ----------
+  /// Lucida's address, with no secret in it (the app signs in to Lucida there).
   private var link: String { store.connect().url }
 
   @ViewBuilder private var aiSteps: some View {
@@ -316,10 +317,12 @@ struct WelcomeScreen: View {
     .buttonStyle(.press)
   }
 
-  /// Cursor installs from a link in one tap, so it has no link to copy.
+  /// Cursor installs from a link in one tap, so it has no link to copy. Cursor can't sign in to Lucida, so what it installs is your private
+  /// link (never shown; a server with no sign-in has none, and its address works as it is).
   private var cursorButton: some View {
     Button {
-      let config = (try? JSONSerialization.data(withJSONObject: ["url": link], options: [.withoutEscapingSlashes]))?.base64EncodedString() ?? ""
+      let url = store.connect().privateURL.nilIfEmpty ?? link
+      let config = (try? JSONSerialization.data(withJSONObject: ["url": url], options: [.withoutEscapingSlashes]))?.base64EncodedString() ?? ""
       var c = URLComponents(string: "cursor://anysphere.cursor-deeplink/mcp/install")!
       c.queryItems = [URLQueryItem(name: "name", value: "lucida"), URLQueryItem(name: "config", value: config)]
       if live, let u = c.url { openURL(u) } else { connectSoon() }

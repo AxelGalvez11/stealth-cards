@@ -148,7 +148,7 @@ final class NavTests: XCTestCase {
     check(button(app, "Settings").exists && !button(app, "Back").exists, "with the gear for Settings, and no back button (it's a tab)")
     // The Library has no picture; the tab is the way to your profile.
     tap(button(app, "Library"), "the Library tab")
-    check(litIs(app, "Library") && wait(any(app, "What do you want to study?")), "the Library is lit again")
+    check(litIs(app, "Library") && wait(button(app, "Add")), "the Library is lit again")
     check(!button(app, "Your profile").exists, "and has no profile picture")
     tap(button(app, "Profile"), "the Profile tab")
     check(wait(button(app, "Edit profile")) && litIs(app, "Profile"), "the Profile tab opens your profile, with Profile lit")

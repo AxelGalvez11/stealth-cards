@@ -6,7 +6,7 @@
 # gives the make back; the Free plan's three a day and what the 4th says; a file over the plan's size; pictures go up as small JPEGs (even a
 # phone's HEIC); the recorder's timer, Pause, Resume, Stop and Discard, its stop at the plan's minutes and a new file every ten minutes; a long
 # recording picked from Files (70 minutes, 33 MB) is cut into seven parts of ten minutes, which go up in order; caption files (.srt and .vtt);
-# when the AI fails, Try again goes on; the Library's + menu and its Make box's row, and an empty deck's row; the flow opens the way the web's /make
+# when the AI fails, Try again goes on; a deck cover's Make cards (the Library's + makes no cards) and an empty deck's; the flow opens the way the web's /make
 # link does; and nothing on screen says "AI generated". It starts web/server.mjs on PORT (3934) with an empty data folder and the stand-in AI on
 # STUB_PORT (3939), runs the test on a simulator, prints each check, and stops both.
 #   ios/tools/e2e-make.sh [simulator id]      (DD=<folder> keeps the build somewhere else; the ports must be free; SLOW=3 waits three times as

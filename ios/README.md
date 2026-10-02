@@ -51,31 +51,25 @@ The background's shader is compiled when the app first shows it (Design/Aura.swi
 
 There is no Today page (the owner, 2026-10-01: "could we just get rid of the 'today' page so users just focus on the library and deck creation in there?").
 The tab bar is Library, Discover, Stats and Profile, the app opens on the Library, and everything that went to Today goes there: the welcome's end, a
-review of every deck's X and Done, a practice test opened again, `-open today`, and the daily reminder's notice. Its top (`Screens/LibraryTop.swift`,
-like `design/home.mjs`; each piece a small view of its own) is, after Gizmo's "make cards from home":
+review of every deck's X and Done, a practice test opened again, `-open today`, and the daily reminder's notice.
 
-- the **Make box**, "What do you want to study?": typed words and Return (or its Make cards) open Make cards on A topic with them in; a YouTube link
-  opens YouTube, and a long text (more than one line, or over 200 characters) opens Paste (`StudyWords.kind`, the web's rule); a link or a long text
-  pasted into an empty box opens its kind at once. Its + is Upload.
-- one row under it: **Upload, Paste, YouTube and More** (Lucida's own menu, `.addMenu(id: "more")`: Photos, Record a lecture, A topic, Import cards,
-  New deck). Each opens the Make flow on that kind, whose Into deck says where the cards go. On a folder's page the box and the row carry the folder,
-  and a new deck made from them goes in it.
-- **the due line** ("12 cards due · About 6 min" and Review, the review of every deck), only when something is due, and **Assigned** (what your
-  classes assigned you), only when there is something.
-
-A brand-new account's Library is the box (and Assigned), then Import cards and Connect AI side by side. A deck's cover has Make cards and New card,
-and an empty deck (where New deck opens) has the box and row set to it (its More has no New deck). News is the bell in Discover's header. While a
-sheet covers the page (Make cards, a source, a diagram, Make diagram), the page under it is hidden from VoiceOver, so only the sheet's buttons are found.
-Boards: `PhoneLibrary` (`-caughtUp`, `-assignments`, `-menu more`), `PhoneLibraryFolder`, `PhoneLibraryAssigned`, `PhoneDecksEmpty`, `PhoneDeckEmpty`, `PhoneDiscover`.
+The Library makes no cards itself (the owner, 2026-10-02: "remove the library composer, upload buttons, cards due accross all canvas screens", then
+"remove the 'make cards from library'"): no Make box, no Upload, Paste, YouTube and More row, no line of what's due, and its + is New deck and Import
+cards. Its top is **Assigned** (what your classes assigned you, `Screens/LibraryTop.swift`), only when there is something. A brand-new account's Library
+is Assigned, then three plain tiles side by side, New deck, Import cards and Connect AI, with no other words (`StartTiles`). Cards are made from a
+deck: its cover's Make cards and New card (an empty deck, where New deck opens, is its cover and nothing under it). News is the bell in Discover's
+header. While a sheet covers the page (Make cards, a source, a diagram, Make diagram), the page under it is hidden from VoiceOver, so only the
+sheet's buttons are found. Boards: `PhoneLibrary` (`-caughtUp`, `-assignments`, `-menu open`), `PhoneLibraryFolder`, `PhoneLibraryAssigned`,
+`PhoneDecksEmpty`, `PhoneDeckEmpty`, `PhoneDiscover`.
 
     ios/tools/e2e-home.sh <simulator id>
 
-starts a fresh server on port 3953 and the stand-in AI on 3954, and runs `LucidaUITests/HomeTests` in eight flows (the first page and its due line,
-every way in, words and pastes in the box, decks taking material, a brand-new account, Assigned, News on Discover, a folder's box).
+starts a fresh server on port 3953 and the stand-in AI on 3954, and runs `LucidaUITests/HomeTests`: the first page (no box, row or due line, the +
+menu), a deck's Make cards and New card, an empty deck, a brand-new account's three tiles, Assigned, and News on Discover.
 
 ## Import cards
 
-The Library's +, the Make box's More, a brand-new account's Import cards and an empty deck's More (with that deck chosen) open Import cards
+The Library's + and a brand-new account's Import cards open Import cards
 (`Screens/Import.swift`, `nav.importCards(deckId:)`): the web's Import page (WebImport) one for one, as a sheet. A box to paste cards into (Geist
 Mono, eight lines, a tab as wide as eight spaces, as in the browser's textarea), Choose a file (the phone's Files picker: a .txt, .csv or .tsv),
 what was found ("3 cards found", or "No cards yet. Put the front and back on one line, split by a tab or comma."), Into deck (a name, and chips
@@ -161,7 +155,8 @@ simulator), and `tests/run.sh e2e` runs the `-check`s in the simulator against a
 
 ## Practice test
 
-**Practice test** sits under Flashcards and Learn on a deck's page and on a folder's page (every deck in it that isn't paused). It opens
+**Practice test** is on a folder's page (every deck in it that isn't paused); a deck's page has none (the owner, 2026-10-02: "remove practice
+tests"). It opens
 a sheet (how many questions, which kinds, a time limit, and "Tests don’t change your review schedule."), then the test: numbered
 questions you can go back through and flag, a list of all the questions, a quiet clock when you asked for one, and nothing about right or
 wrong until Submit (which asks first when some are unanswered). The results show the score, the time, every question with your answer
@@ -169,12 +164,12 @@ and the right one, Explain where the card has it, **Count it as right** on a wri
 missed**, and **Study the missed cards now** (a normal review of just those cards, then back to the results). `Data/TestEngine.swift` is a
 port of the web's engine (`web/db.js`, "Practice test": Learn's `choiceQuestion`, a card of its own for each question, matching as four
 or five pairs, the kinds in sections); `Data/TestDemo.swift` is the design screens' sample test; `Screens/PracticeTest.swift` has the
-pieces (`TestStartButton`, `TestPastList`, `TestFolderBits`, `TestStartSheet`, `TestScreen`). A test never changes a schedule or logs a
+pieces (`TestStartButton`, `TestFolderBits`, `TestStartSheet`, `TestScreen`). A test never changes a schedule or logs a
 review. The test in progress is kept on the phone (`UserDefaults`, `lucida.test`) and is open again, where it was, when the app opens; its
 clock counts only while it shows. A finished test is saved with the library (`test.save`, and `test.fix` for Count it as right), and the
-deck's page lists the last three.
+folder's page says how its last one went.
 
-The board is `PhoneTest` (the deck's and folder's pieces are states of `PhoneDeck` and `PhoneLibrary`); with it, `-screen "Set up"`,
+The board is `PhoneTest` (the folder's pieces are states of `PhoneLibrary`); with it, `-screen "Set up"`,
 `Multiple choice`, `True or false`, `Fill in the blank`, `Written`, `Matching`, `Submit`, `Leave`, `Results` or `"Results · missed"` picks the
 screen and `-timed false` takes the clock off. More launch arguments (debug builds): `-open folder:<name>` (the folder with that name),
 `-testAudit` (an invisible element tells the end-to-end test which answer is right for the question on screen) and `-testSpent <ms>` (the
@@ -244,12 +239,10 @@ parts go up one after another in the same make ("Lecture (part 3 of 12).m4a", wi
 each one's length to the next one's times. A recording longer than the plan makes from is turned away at once with the server's own words (nothing
 is cut or sent); one that can't be cut and is over 25 MB says so. Take a photo shows only on a phone with a camera (the iOS 26 simulator says it can use the camera but has none).
 
-It opens from the Library's Make box and its row (see The Library, above), the Library's + menu (New deck, Make cards, Import cards;
-`Screens/AddMenu.swift` draws Lucida's own menus), a deck cover's Make cards, and an empty deck's box and row. Any screen opens it with
-`nav.make(kind:deckId:from:guide:page:text:title:topic:url:folder:box:)`, like the web's `/make?source=&deck=&from=&guide=&page=&folder=`: `kind` (file,
-photo, record, paste, video, topic, or none), the deck the cards go to, a kept source's id to make more cards from, a deck's id (and its page) to make
-cards from its Guide, words already in hand (a Guide's selection; with `box`, words pasted in the Make box, which get notes like any material), a
-topic or a YouTube link already typed, and the folder a new deck made this way goes in.
+It opens from a deck cover's Make cards (an empty deck's too), a source's More cards, a Guide's Make cards and a diagram's Make cards. Any screen
+opens it with `nav.make(kind:deckId:from:guide:page:text:title:)`, like the web's `/make?source=&deck=&from=&guide=&page=`: `kind` (file, photo,
+record, paste, video, topic, or none), the deck the cards go to, a kept source's id to make more cards from, a deck's id (and its page) to make
+cards from its Guide, and words already in hand (a Guide's selection, which gets no notes).
 
 **Notes.** `/api/make/finish` also answers `notes` (null, or a title, an overview, a note for each part of the material with where it comes from,
 and the whole draft as Markdown). The review shows a "Notes for the deck" panel above the cards: how many ("6 notes · p. 4 to p. 9 · saved with the
@@ -272,7 +265,7 @@ AVSpeechSynthesizer, in the card's language), "Read aloud · es-ES", and two fie
 The boards: `PhoneMake` (and `PhoneMakeDark`, `PhoneMakeGray`); `-state <the canvas's step>` shows any of its 24 states (`Pick`, `Upload`,
 `Upload (a file added)`, `Photos`, `Record`, `Recording`, `Paused`, `Paste`, `Paste (a language set)`, `YouTube`, `YouTube transcript`, `Topic`,
 `More from a source`, `Making`, `Making a recording`, `Review`, `Review (notes open)`, `Review (notes off)`, `Review (no room for notes)`, `Review (audio cards)`,
-`Review (editing a card)`, `Limit reached`, `File too big`, `Error`), with the sample in `Design/MakeSample.swift`. Also changed: `PhoneLibrary` (its + menu; `-menu open` opens it, `-menu more` the Make box's More) and `PhoneDeckEmpty` (the box and row).
+`Review (editing a card)`, `Limit reached`, `File too big`, `Error`), with the sample in `Design/MakeSample.swift`. Also changed: `PhoneLibrary` (its + menu; `-menu open` opens it) and `PhoneDeckEmpty` (its cover's Make cards).
 
 More launch arguments (debug builds): `-makeFile <path>`, `-makePhoto <path>` (several: paths with commas between), `-makeRecording <path>` (a
 file for the microphone, which the simulator doesn't have: the timer, Pause, Resume and Stop run as they do for real, and Stop uses that file;
@@ -294,9 +287,11 @@ with no cookie, what can be picked, a long recording cut into parts and sent in 
 ## A deck's Guide and Sources
 
 Every deck can have **Notes** (the Guide: a page like Apple Notes, with extra pages and a short history of versions) and **Sources** (what its cards were made from:
-a file, pictures, a recording, a video, pasted text, a topic). The deck page has tabs, **Cards | Notes | Diagrams | Sources** (`Screens/DeckMaterials.swift` `DeckTabs`: plain
-underlined tabs, a small count on Cards and Sources): Sources only shows on a deck of yours (a deck you only study has Cards, and Notes when it has a Guide, read only; an address
-for a tab that isn't there falls back to Cards). The cover has **Make cards** (the Make flow, into this deck) and **New card**, plainly.
+a file, pictures, a recording, a video, pasted text, a topic). The deck page has tabs right under Flashcards and Learn, **Sources | Cards | Notes | Diagrams** (the owner, 2026-10-02;
+`Screens/DeckMaterials.swift` `DeckTabs`: plain underlined tabs, a small count on Sources, Cards and Diagrams; the page still opens on Cards): Sources only shows on a deck of yours (a deck you only study has Cards, and Notes when it has a Guide, read only; an address
+for a tab that isn't there falls back to Cards). The cover has **Make cards** (the Make flow, into this deck) and **New card**, plainly, and
+the line under the deck's name says how many cards ("412 cards"). The page has no numbers of its own (the Flashcards button keeps its count) and no exam line (the exam date is in
+Deck settings → Studying).
 
 **The page** (`Design/NotesViews.swift`; its memory and rules are `NotesPage` in `Data/Notes.swift`; web/notes.js on the web) is always formatted: a row for each block
 (text, Heading, Subheading, bullets, numbers, a to-do with Lucida's own box, a toggle, a quote, a divider, code, a picture, a table), each line's words a text field of its own
@@ -350,7 +345,7 @@ system dialog), so a flow answers it with `app.buttons["question.go"]` (or `ques
 
 ## A deck's Diagrams
 
-The deck page's fourth tab, **Cards | Notes | Diagrams | Sources** (`Screens/Diagrams.swift`, `Data/DiagramsData.swift`; the web's `web/diagrams.js` and `web/diagram.js` ported; the canvas's PhoneDeck draws the same
+The deck page's fourth tab, **Sources | Cards | Notes | Diagrams** (`Screens/Diagrams.swift`, `Data/DiagramsData.swift`; the web's `web/diagrams.js` and `web/diagram.js` ported; the canvas's PhoneDeck draws the same
 pieces). It is there for the deck's owner, and for anyone when the deck has made diagrams (a deck you only study has the tables and mind maps that came with it, read only; an address
 for a tab that isn't there still falls back to Cards). The tab's card has Make diagram and Upload (for the owner) and the diagrams in three groups, two tiles across: **Made** (tables and
 mind maps), **From your lectures** (pictures a make found in the slides, PDFs, Word files and photos the cards were made from) and **Uploaded**.

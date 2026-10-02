@@ -240,7 +240,7 @@ mock() {
       sorted: 12, piles: [{ name: 'Know it', n: 7, total: 18 }, { name: 'Almost', n: 3, total: 6 }, { name: 'No clue', n: 2, total: 3 }], onlyPiles: false }),
     stats: () => ({ streak: 12, best: 31, reviews: '1,284', cards: '2,470', ai: 312, remembered: 90, goal: 90, heat: null, forecast: X.DUE_14,
       byDeck: X.DECKS.map(d => ({ name: d.name, ret: d.ret })) }),
-    ai: () => ({ url: 'https://app.lucida.cards/mcp/lk_5b1f0c6e9a2d4b7f8e3a1c0d9b8a7f6e2Hq9xWrT4kLm1ZpVb8sNc3Yd7Ga0uEfJ', perms, clients: { claude: true, openai: true, cursor: false, mcp: false }, connected: 'Claude, ChatGPT' }),
+    ai: () => ({ url: 'https://app.lucida.cards/mcp', privateUrl: 'https://app.lucida.cards/mcp/lk_5b1f0c6e9a2d4b7f8e3a1c0d9b8a7f6e2Hq9xWrT4kLm1ZpVb8sNc3Yd7Ga0uEfJ', perms, clients: { claude: true, openai: true, cursor: false, mcp: false }, connected: 'Claude, ChatGPT' }),
     // Sound: the sample clip, a little way in (paused, or playing on the boards that say so). Play and the waveform work.
     sound: c => ({ key: c && (c.audio || c.speak) ? 'mock' : '', peaks: WAVE, dur: 2.6, speech: !!c && !c.audio, on: m.playing ?? !!p.playing, frac: m.frac ?? .42, busy: false }),
     // The Recording boards: a clip being recorded, 3 seconds in.
@@ -1048,7 +1048,9 @@ renderVals() { const t = this.theme(!!this.props.dark, !!this.props.dim);const d
       bg: on ? t.bg : 'transparent', fg: on ? t.text : t.muted, sh: on ? '0 1px 3px rgba(0,0,0,.14)' : 'none', op: on ? '1' : '.45' }; };
   const ai = Object.fromEntries(AIS.map(([id]) => [id, choice(id, aiId, 'Pick AI', !!s.ai, () => go('Steps', { ai: id, copied: false }))]));
   const src = Object.fromEntries(SRCS.map(([id]) => [id, choice(id, srcId, 'Pick source', !!s.src, () => go('Source steps', { src: id }))]));
-  // Step 1. Claude's and ChatGPT's own pages open in a new tab; Cursor installs from its link.
+  // Step 1. Claude's and ChatGPT's own pages open in a new tab; Cursor installs from its link. The link shown is Lucida's address, with no secret
+  // in it (the app signs in there); Cursor can't sign in, so its install carries the person's private link (never shown; on this computer
+  // there is none, and /mcp needs no sign-in).
   const link = A.url, OPEN = { claude: 'https://claude.ai/customize/connectors', openai: 'https://chatgpt.com/#settings' };
   const copyLink = () => { if (live) db.act.copy(link); this.setState({ copied: true }); soon(); };
   const openApp = e => { if (live) return; stop(e); soon(); };
@@ -1107,7 +1109,7 @@ renderVals() { const t = this.theme(!!this.props.dark, !!this.props.dim);const d
     finish: () => { if (live) db.act.setSettings({ welcomed: true }); },
     back: () => go(step === 'Found' ? 'Source steps' : step === 'Source steps' ? 'Pick source' : step !== 'Steps' && s.ai && !s.skippedAI ? 'Connected' : 'Pick AI'),
     linkShown: link.replace(/^https?:\/\//, ''), copyLink, copyLabel: s.copied ? 'Copied' : 'Copy', openApp, openHref: OPEN[aiId] || link,
-    cursorHref: 'cursor://anysphere.cursor-deeplink/mcp/install?name=lucida&config=' + encodeURIComponent(btoa(JSON.stringify({ url: link }))),
+    cursorHref: 'cursor://anysphere.cursor-deeplink/mcp/install?name=lucida&config=' + encodeURIComponent(btoa(JSON.stringify({ url: A.privateUrl || link }))),
     waitLine: 'Waiting for ' + who + '…', connectedTitle: Who + ' is connected',
     copyAsk: () => { if (live) db.act.copy(ASK); this.setState({ asked: true }); }, askCopied: !!s.asked, askFresh: !s.asked, askLabel: s.asked ? 'Copied' : 'Copy',
     askHead: 'Try asking ' + who, showAsk: !s.skippedAI,

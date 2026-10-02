@@ -13,7 +13,7 @@ SIM=${1:-$(xcrun simctl list devices available | grep -m1 "iPhone 17 Pro Max" | 
 DD=${DD:-${TMPDIR:-/tmp}/lucida-screenshots}
 # name  board  [extra launch arguments after a |, split at |]
 SHOTS=(
-  "1-today|PhoneToday"
+  "1-library|PhoneLibrary"
   "2-study|PhoneReviewFour"
   "3-learn|PhoneQuizAnswered"
   "4-deck|PhoneDeck"

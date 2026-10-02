@@ -10,7 +10,7 @@ const ADDRESS = `<span style="display: inline-block; max-width: 100%; box-sizing
 
 export const CONNECT = {
   title: 'Connect Lucida to your AI',
-  updated: 'September 30, 2026',
+  updated: 'October 2, 2026',
   intro: 'Lucida keeps your flashcards. Add it to Claude, ChatGPT, Grok, Gemini, Perplexity or Mistral, and your AI can make cards, fix them, and quiz you right in the chat. It takes about a minute.',
   sections: [
     { h: 'What you need', body: [
@@ -46,7 +46,7 @@ export const CONNECT = {
       'Sign in to Lucida when it asks, then press Allow. These menus change. If you don’t see the same words, look for where the app adds a custom connector, or MCP server, by its address.'
     ] },
     { h: 'If your app can’t sign in', body: [
-      'Some tools, like Cursor, may not be able to sign in to Lucida. Use your private link instead: Settings, then Connect AI, shows it. Keep it to yourself, because anyone with the link can reach your cards. Make a new link there and the old one stops working.'
+      'Some tools, like Cursor, can’t sign in to Lucida. For them, open Settings, then Connect AI, and press “Private link for apps that can’t sign in”. It copies a link of your own that works without signing in. Keep it to yourself, because anyone with the link can reach your cards. “Make a new link” there turns the old one off.'
     ] },
     { h: 'Try asking', body: [
       ['list',

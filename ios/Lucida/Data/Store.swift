@@ -373,13 +373,4 @@ final class Store: ObservableObject {
     }
   }
   func exportDeck(_ id: String) {}
-
-  // ---------- what's due (the Library's due line) ----------
-  /// Cards due in your decks that aren't paused, and about how long they take (db.js today: ten seconds a card). The design screens: the
-  /// canvas's sample (the boards' caughtUp Tweak: nothing due).
-  func dueLine() -> (due: Int, minutes: Int) {
-    if demo { return props.caughtUp || props.newUser ? (0, 0) : (64, 11) }
-    let td = engine.today
-    return (td.due, td.minutes)
-  }
 }

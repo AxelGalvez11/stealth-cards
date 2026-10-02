@@ -1332,7 +1332,7 @@ export async function createDb({ onChange, go, ask = async () => false, say = ()
     // The cards made together with this one: every blank of one text, or every box of one picture (just it, alone).
     group: id => { const c = cardIndex().get(id); return !c ? [] : c.group ? groupIndex().get(c.group) : [c]; },
     draft: type => ({ kind: { Basic: 'basic', Blank: 'cloze', Image: 'image', Audio: 'audio' }[type] || 'basic', front: '', back: '', text: '', note: '', tags: [], image: null, audio: null, speak: '', auto: true, boxes: [], occ: 'one' }),
-    // What's due across your decks, for the Library's due line (and the review of every deck it starts), and where a new card goes.
+    // What's due across your decks (Stats' forecast; the iPhone app's engine gives the same, ios/tests checks they agree), and where a new card goes.
     today: () => {
       const t = new Date(), live = S.decks.filter(d => !d.paused), sum = k => live.reduce((n, d) => n + deckStat(d)[k], 0);
       const due = sum('due'), fresh = sum('fresh'), { streak, best, days } = streaks(), monday = dayAt(t, -((t.getDay() + 6) % 7)), today = dayAt(t);
@@ -1435,11 +1435,12 @@ export async function createDb({ onChange, go, ask = async () => false, say = ()
       return { streak, best, reviews: logs.length.toLocaleString('en-US'), cards: S.cards.length.toLocaleString('en-US'), ai: S.cards.filter(byAI).length,
         remembered: rememberedPct(logs), goal: S.settings.goal, heat, forecast: forecast(14, S.decks, true), byDeck: S.decks.map(d => ({ name: d.name, ret: deckStat(d).ret })) };
     },
-    // The AI apps: the ones that called the personal link (S.ai.clients) and the ones that signed in to Lucida (`apps`, each with an id
-    // and what it is called; Disconnect ends one).
+    // The AI apps: the ones that called Lucida (S.ai.clients) and the ones that signed in to Lucida (`apps`, each with an id and what it is
+    // called; Disconnect ends one). `url` is the address every app is given, with no secret in it (an app signs in there); `privateUrl` is the
+    // person's own link, for the apps that can't sign in (online only: on this computer /mcp needs no sign-in).
     ai: () => {
       const apps = connect.apps(), names = [...new Set([...Object.keys(S.ai.clients), ...apps.map(a => a.name)])], has = n => names.includes(n);
-      return { url: location.origin + (S.me && S.ai.key ? '/mcp/' + S.ai.key : '/mcp'), perms: S.ai.perms, connected: names.length ? names.join(', ') : 'None yet', apps,
+      return { url: location.origin + '/mcp', privateUrl: S.me && S.ai.key ? location.origin + '/mcp/' + S.ai.key : '', perms: S.ai.perms, connected: names.length ? names.join(', ') : 'None yet', apps,
         clients: { claude: has('Claude'), openai: has('ChatGPT'), cursor: has('Cursor'), mcp: names.some(n => !['Claude', 'ChatGPT', 'Cursor'].includes(n)) } };
     },
     // Making cards (web/make.js), a deck's Guide, its Sources, and its Diagrams (web/diagrams.js).

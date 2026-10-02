@@ -115,9 +115,8 @@ function resolve(path, q) {
   }
   if (path === '/decks/new') return { name: P + 'NewDeck' };
   // Making cards from a file, photos, a recording, a video, text or a topic (web/make.js). `source` opens one kind's page, `deck` is where
-  // the cards go, `from` is a kept source to make more cards from, `guide` (with `page`) is a deck's Guide to make cards from, and `folder`
-  // is where a new deck made this way goes (the Library's Make box on a folder's page).
-  if (path === '/make') return { name: P + 'Make', props: { kind: q.get('source') || '', deckId: q.get('deck') || '', from: q.get('from') || '', guide: q.get('guide') || '', page: q.get('page') || '', folder: q.get('folder') || '' } };
+  // the cards go, `from` is a kept source to make more cards from, and `guide` (with `page`) is a deck's Guide to make cards from.
+  if (path === '/make') return { name: P + 'Make', props: { kind: q.get('source') || '', deckId: q.get('deck') || '', from: q.get('from') || '', guide: q.get('guide') || '', page: q.get('page') || '' } };
   if (path === '/decks/import') return { name: P + 'Import' };
   if (deck) {
     const id = deck[1];

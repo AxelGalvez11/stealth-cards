@@ -93,7 +93,7 @@
     "a": "Claude, ChatGPT and Cursor. Gemini and Grok can add the same link, but Lucida has no steps for them."
    },
    {
-    "q": "What do you do if your Lucida link leaks?",
+    "q": "What do you do if your private link leaks?",
     "a": "Open Connect AI and choose Make a new link. The old link stops working right away."
    },
    {
@@ -846,7 +846,7 @@
    },
    {
     "q": "What does Anki need to connect to Claude or ChatGPT?",
-    "a": "An add-on and your own API key. In Lucida, your own AI works through one private link."
+    "a": "An add-on and your own API key. In Lucida, your own AI connects through one link and a sign-in."
    },
    {
     "q": "Can Lucida read Anki’s .apkg deck files?",

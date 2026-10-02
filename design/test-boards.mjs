@@ -1,6 +1,7 @@
 // The practice test's boards: WebTest and PhoneTest (one board each, with a state picker on the canvas: Set up, each kind of question,
-// the questions' dialogs, and the results), and the small pieces the deck page and a folder's page get for it (the Practice test
-// button, and the list of past results). design/build.mjs wires them in; web/db.js runs the test (see "Practice test" there).
+// the questions' dialogs, and the results), and the small pieces a folder's page gets for it (the Practice test button, and how the
+// last one went). A deck's page has none (the owner, 2026-10-02: "remove practice tests"). design/build.mjs wires them in; web/db.js
+// runs the test (see "Practice test" there).
 //
 // The look: a calm, professional exam, not a game. Plain words, no colors but the app's own, no confetti, streaks, or points; the
 // timer is a quiet number; nothing says right or wrong until you submit. Motion is quick and subtle (a question slides in 6 px), and
@@ -28,7 +29,7 @@ export const TEST_SAMPLE = {
     ['type', 'Which sugar is in DNA?', '', 'deoxyribose', 'Deoxyribose'], ['type', 'What do ribosomes make?', '', 'proteins', 'Proteins']
   ],
   wrong: [3, 10, 15, 18],
-  // The deck page's and the folder's past results: day, "x of y", percent.
+  // The folder's last result: day, "x of y", percent.
   past: [['Sep 28', '16 of 20', 80], ['Sep 24', '14 of 20', 70], ['Sep 19', '11 of 20', 55]], explain: 'The cell’s ATP mostly comes from the mitochondrion, which uses the energy in food to charge ATP. The Golgi apparatus only packages proteins, and the nucleus holds the DNA.'
 };
 export default function testKit(c) {
@@ -322,13 +323,6 @@ renderVals() { ${DB_JS}
   return { t, dark: !!P.dark, dim: !!P.dim, isSetup: setup, isQuestion: question, isResults: results, ...setupVals, ...questionVals, ...resultVals };
 }`;
 
-  // ---------- the deck page's pieces (the Practice test button and past results) ----------
-  // `testVals` goes in the deck board's values (it knows `db` and `dk`); the markup places them.
-  const deckJs = `const testVals = (() => { const rows = db.mock ? ${JSON.stringify(TEST_SAMPLE.past)}.map(([day, line, pct]) => ({ day, line, pct: pct + '%' })) : db.tests({ deckId: dk.id }).slice(0, 3).map(x => ({ day: x.day, line: x.line, pct: x.pct + '%' }));
-    return { testHref: db.mock ? 'WebTest.dc.html' : '/deck/' + dk.id + '/test', hasTests: rows.length > 0 && this.props.tests !== false, testRows: rows.map((x, i) => ({ ...x, sep: i ? '1px solid ' + t.line : 'none' })) }; })();`;
-  const pastList = phone => `<sc-if value="{{hasTests}}" hint-placeholder-val="{{ true }}"><div style="display: flex; flex-direction: column; gap: 8px;"><span style="font-size: 13px; font-weight: 600; color: {{t.muted}};">Practice tests</span><div style="${phone ? '' : 'max-width: 560px; '}border-radius: ${phone ? 18 : 16}px; background: {{t.surf}}; padding: 2px ${phone ? 16 : 18}px;"><sc-for list="{{testRows}}" as="x" hint-placeholder-count="3"><div style="display: flex; align-items: center; gap: 16px; height: ${phone ? 44 : 40}px; border-top: {{x.sep}}; font-size: 14px;"><span style="flex-grow: 1;">{{x.day}}</span><span style="color: {{t.muted}};">{{x.line}}</span><span style="width: 48px; text-align: right; font-family: ${MONO}; font-weight: 600;">{{x.pct}}</span></div></sc-for></div></div></sc-if>`;
-  const webButton = onCover => `<a href="{{testHref}}" style="height: 36px; padding: 0 16px; display: inline-flex; align-items: center; gap: 8px; border-radius: 999px; ${onCover} font-size: 14px; font-weight: 600;">${svg(I.file, 15, 2)}Practice test</a>`;
-  const phoneButton = `<a href="{{testHref}}" style="height: 56px; flex-shrink: 0; border-radius: 999px; background: {{t.surf}}; display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 17px; font-weight: 600; white-space: nowrap;">${svg(I.file, 17, 2)}Practice test</a>`;
   // A folder's page: a button to start one over all its decks, and how the last one went.
   const folderJs = `const testScope = folder ? { folderId: folder.id } : null, lastTest = !db.mock && testScope ? db.tests(testScope)[0] : db.mock && folder ? (([day, line, pct]) => ({ day, line, pct }))(${JSON.stringify(TEST_SAMPLE.past[0])}) : null;
   const testVals = { testHref: db.mock ? 'WebTest.dc.html' : folder ? '/library/folder/' + folder.id + '/test' : '', canTest: !!folder && decks.length > 0, hasLastTest: !!lastTest, lastTest: lastTest ? 'Last practice test: ' + lastTest.day + ' · ' + lastTest.line + ' · ' + lastTest.pct + '%' : '' };`;
@@ -336,5 +330,5 @@ renderVals() { ${DB_JS}
   const folderWebPill = `<sc-if value="{{canTest}}" hint-placeholder-val="{{ true }}"><a href="{{testHref}}" class="sc-press" style="height: 36px; padding: 0 16px; display: inline-flex; align-items: center; justify-content: center; gap: 8px; border-radius: 999px; background: {{t.surf}}; color: {{t.text}}; font-size: 14px; font-weight: 600;">${svg(I.file, 16, 2)}Practice test</a></sc-if>`;
   const folderPhoneButton = `<sc-if value="{{canTest}}" hint-placeholder-val="{{ true }}"><a href="{{testHref}}" class="sc-press" style="height: 48px; border-radius: 999px; background: {{t.surf}}; color: {{t.text}}; display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 16px; font-weight: 600;">${svg(I.file, 17, 2)}Practice test</a></sc-if>`;
 
-  return { props, css, board, logic, deckJs, pastList, webButton, phoneButton, folderJs, folderLine, folderWebPill, folderPhoneButton, SCREENS };
+  return { props, css, board, logic, folderJs, folderLine, folderWebPill, folderPhoneButton, SCREENS };
 }

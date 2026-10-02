@@ -23,7 +23,6 @@ import testKit from './test-boards.mjs';
 import { makeBoards, deckBlocks, publicGuideBlocks, PUBLIC_GUIDE_JS, DECK_MATERIALS_JS, GUIDE_CSS, GUIDE_STATES, MATERIALS_MOCK, LIVE_FROM, LIVE_TOPIC_STATES } from './materials.mjs';
 import { DIAGRAM_METHOD, DIAGRAM_CSS, PUBLIC_DIAGRAMS_JS, publicDiagramBlocks } from './diagrams.mjs';
 import { askMarkup, toastMarkup, ASK_SAMPLES, ASK_JS, askProp, dateMarkup, DATE_JS, dropMarkup, dropSheet, dropPill, DROP_JS, PLAYER_JS } from './ui.mjs';
-import { homeBlocks, MAKE_BOX_METHOD } from './home.mjs';
 // The themes (Pro), for boards' logic: key, board name, short and full names.
 const THEME_LIST = JSON.stringify(THEMES.map(({ key, board, short, name }) => ({ key, board: board || '', short, name })));
 const MESH_DATA = JSON.stringify(Object.fromEntries(PALETTE_NAMES.map(n => [n, { ...paletteData(n), shadow: PALETTES[n].ink === '#FFFFFF' ? '0 1px 14px rgba(0,0,0,.16)' : 'none' }])));
@@ -317,8 +316,6 @@ const TEST = testKit({ svg, I, FONT, MONO, DB_JS, T, get OCC_JS() { return OCC_J
 // The Pro badge, beside what Pro adds (Settings → Plan, Learn mode and Pro scheduling on Free).
 const PRO_BADGE = '<span style="height: 22px; padding: 0 9px; display: inline-flex; align-items: center; border-radius: 999px; background: linear-gradient(90deg, #7E94FB, #2CB2EA); color: #FFFFFF; font-size: 12px; font-weight: 700; letter-spacing: .01em;">Pro</span>';
 const eyebrow = txt => `<div style="font-size: 12px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: {{t.muted}};">${txt}</div>`;
-// The Library's top (design/home.mjs): the Make box and its row, what's due, on a computer (HB) and on a phone (HBP).
-const HB = homeBlocks({ svg, I }, false), HBP = homeBlocks({ svg, I }, true);
 const chip = (txt, extra = '') => `<span style="display: inline-flex; align-items: center; gap: 6px; height: 26px; padding: 0 10px; border-radius: 999px; background: {{t.surf}}; font-size: 12px; font-weight: 500; ${extra}">${txt}</span>`;
 // The grading-style switcher (web: compact pill in the header; phone: full-width row).
 const modeSeg = full => `<div role="group" aria-label="Grading style" style="display: ${full ? 'grid; grid-template-columns: repeat(3, minmax(0, 1fr))' : 'flex'}; gap: 4px; padding: 4px; border-radius: 999px; background: {{t.surf}};">
@@ -780,10 +777,11 @@ const bulkBtn = h => `<sc-if value="{{bulk.show}}" hint-placeholder-val="{{ fals
 // Picked tags, each with an x; and the menus to add a tag or pick a deck.
 const pickedTags = h => `<sc-for list="{{pickedTags}}" as="g" hint-placeholder-count="1"><button type="button" onClick="{{g.remove}}" aria-label="Stop filtering by {{g.label}}" style="height: ${h}px; flex-shrink: 0; padding: 0 10px 0 12px; display: inline-flex; align-items: center; gap: 6px; border: 0; border-radius: 999px; background: {{g.bg}}; color: {{g.fg}}; font: inherit; font-size: 13px; font-weight: 600; white-space: nowrap; cursor: pointer;">{{g.label}}<span style="display: flex; opacity: .7;">${svg(I.close, 10, 2.4)}</span></button></sc-for>`;
 const menuBtn = (m, label, h) => `<button type="button" onClick="{{${m}.toggle}}" aria-expanded="{{${m}.expanded}}" style="height: ${h}px; flex-shrink: 0; padding: 0 12px 0 14px; display: inline-flex; align-items: center; gap: 6px; border: 0; border-radius: 999px; background: {{t.surf}}; color: {{t.text}}; font: inherit; font-size: 13px; font-weight: 600; white-space: nowrap; cursor: pointer;">${label}${svg(I.chevDown, 14, 2)}</button>`;
-// The Library is the first page (the app opens on it): its top is where decks are made and material goes in (design/home.mjs: the Make box,
-// its row, what's due, and what your classes assigned), then your folders and decks. A file dropped anywhere on the page goes to Upload.
+// The Library is the first page (the app opens on it): what your classes assigned, then your folders and decks. It makes no cards itself (the
+// owner, 2026-10-02: "remove the library composer, upload buttons, cards due accross all canvas screens", then "remove the 'make cards from
+// library'"): cards are made from a deck, on its cover. Its header has New folder and New deck.
 const webDecks = webRoot(`${sidebar('Library')}
-<main data-make-drop="1" onDragOver="{{mk.over}}" onDragLeave="{{mk.leave}}" onDrop="{{mk.drop}}" style="flex-grow: 1; box-sizing: border-box; padding: 36px 48px; display: flex; flex-direction: column; gap: 22px; min-width: 0; overflow-y: auto;">
+<main style="flex-grow: 1; box-sizing: border-box; padding: 36px 48px; display: flex; flex-direction: column; gap: 22px; min-width: 0; overflow-y: auto;">
   <sc-if value="{{inFolder}}" hint-placeholder-val="{{ false }}"><a href="{{libraryHref}}" data-sc-drop="folder:" data-sc-look="chip" draggable="false" style="align-self: flex-start; margin: -6px 0 -18px -10px; height: 32px; padding: 0 14px 0 8px; display: inline-flex; align-items: center; gap: 6px; border-radius: 999px; font-size: 14px; color: {{t.muted}};">${svg(I.back, 16, 2)}Library</a></sc-if>
   <div style="display: flex; align-items: center; gap: 12px;">
     <h1 style="margin: 0; font-size: 32px; font-weight: 600; letter-spacing: -.03em; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{title}}</h1>
@@ -792,7 +790,7 @@ const webDecks = webRoot(`${sidebar('Library')}
     <label style="display: flex; align-items: center; gap: 10px; width: 280px; height: 36px; padding: 0 16px; box-sizing: border-box; border-radius: 999px; background: {{t.surf}}; color: {{t.muted}};">${svg(I.search, 16)}<span style="position: absolute; left: -9999px;">{{searchHint}}</span><input value="{{query}}" onChange="{{setQuery}}" placeholder="{{searchHint}}" style="flex-grow: 1; min-width: 0; border: 0; outline: 0; background: transparent; font: inherit; font-size: 14px; color: {{t.text}};"></label>
     <sc-if value="{{inFolder}}" hint-placeholder-val="{{ false }}">${TEST.folderWebPill}${pill('Rename', { onClick: '{{renameFolder}}' })}${pill('Remove folder', { onClick: '{{removeFolder}}' })}</sc-if>
     <sc-if value="{{deckView}}" hint-placeholder-val="{{ true }}"><sc-if value="{{atTop}}" hint-placeholder-val="{{ true }}">${pill('New folder', { icon: 'folder', onClick: '{{newFolder}}' })}</sc-if></sc-if>
-    ${pill('Make cards', { icon: 'sparkle', href: 'WebMake.dc.html' })}${pill('New deck', { inv: true, icon: 'plus', href: 'WebNewDeck.dc.html' })}
+    ${pill('New deck', { inv: true, icon: 'plus', href: 'WebNewDeck.dc.html' })}
   </div>
   ${TEST.folderLine}
   <sc-if value="{{deckView}}" hint-placeholder-val="{{ true }}">
@@ -882,7 +880,6 @@ ${folderPopup(false)}
 ${moveTray('tray', false)}`, true);
 // The Library's logic, for the web and iPhone boards.
 const libraryLogic = phone => `
-${MAKE_BOX_METHOD}
 constructor(props) { super(props); this.state = { tag: 'All', view: props.view === 'List' ? 'list' : 'cards', openDeck: props.openTags ? 'cell' : null, moreOpen: !!props.moreTags, moreQ: '', q: '',
   level: ['new', 'easy', 'medium', 'hard'].includes(props.level) ? props.level : 'all', state: ['leech', 'paused'].includes(props.level) ? props.level : '', cardTags: [], deck: '', tagPickOpen: false, tagPickQ: '', deckPickOpen: false, deckPickQ: '', shown: 60, naming: props.naming ? 'new' : null, name: props.naming ? 'Biology' : '', namingAt: 0,
   moveDeck: props.moveOpen ? ({ f1: 'jlpt', f2: 'orgo' }[props.folder] || 'cell') : null, moveAfter: null }; }
@@ -971,12 +968,11 @@ renderVals() {
   const deckOptions = allOptions.filter(o => !dq || o.label.toLowerCase().includes(dq)), pickedName = (allOptions.find(o => o.id === pick) || allOptions[0]).label;
   const title = folder ? folder.name : 'Library';
   ${TEST.folderJs}
-  // The top: the Make box and its row (in a folder, a new deck made from it goes in the folder), then what's due and what your classes assigned.
-  const mk = this.makeBox(t, db, { folder: folder ? folder.id : '', board: '${phone ? 'Phone' : 'Web'}' }), due = this.dueLine(db, '${phone ? 'Phone' : 'Web'}');
+  // The top: what your classes assigned.
   ${ASSIGNED_JS(phone)}
   return {
     t, ...chrome, ...testVals, grain: String(this.props.grain ?? 0.7), decks, title, atTop, inFolder: !!folder, libraryHref: db.mock ? board('Decks') : '/library',
-    mk, due, assignments: assignRows, hasAssignments: assignRows.length > 0,
+    assignments: assignRows, hasAssignments: assignRows.length > 0,
     query: s.q || '', setQuery: e => this.setState({ q: e && e.target ? e.target.value : '', shown: 60 }), searchHint: cards ? 'Search all cards' : folder ? 'Search this folder' : 'Search decks and cards',
     modes: [['Decks', !cards, db.mock ? board('Decks') : '/library'], ['All cards', cards, db.mock ? board('LibraryCards') : '/library/cards'], ['Classes', false, db.mock ? board('Classes') : '/library/classes']]
       .map(([label, on, href]) => ({ label, href, current: on ? 'page' : 'false', ...seg(on) })),
@@ -1110,8 +1106,6 @@ const coverFill = `<sc-if value="{{coverIsGradient}}" hint-placeholder-val="{{ t
 // the top, so no gap opens above it). Browsers without scroll-linked animations, and Reduce Motion, keep it still.
 const parallax = (h, from = 0) => `<div class="sc-parallax" style="position: absolute; inset: 0; --px: ${h}px; --from: ${from}px; --to: ${from + 2 * h}px;">${coverFill}</div>`;
 const PARALLAX_CSS = '@keyframes scParallax{to{transform:translateY(var(--px))}}@supports (animation-timeline: scroll()){.sc-parallax{animation:scParallax linear both;animation-timeline:--deck;animation-range:var(--from) var(--to)}}@media (prefers-reduced-motion:reduce){.sc-parallax{animation:none!important}}';
-// Deck stat tiles are plain, so the header stays the only gradient on the page.
-const deckTile = big => `<div style="border-radius: ${big ? 24 : 22}px; height: ${big ? 104 : 80}px; box-sizing: border-box; padding: ${big ? '18px 20px' : '12px 14px'}; background: {{t.surf}}; display: flex; flex-direction: column; justify-content: space-between;"><span style="font-size: ${big ? 13 : 12}px; font-weight: 500; color: {{t.muted}};">{{k.label}}</span><span style="font-size: ${big ? 34 : 26}px; font-weight: ${big ? 600 : 700}; letter-spacing: -.03em; line-height: 1; color: {{k.color}};">{{k.value}}</span></div>`;
 const COVER_LOGIC = `
   const cs = this.state;
   ${TAG_JS}
@@ -1120,7 +1114,6 @@ const COVER_LOGIC = `
   ${DATE_JS}
   const dk = db.deck(this.props.deckId);
   const up = (patch, typing) => db.act.updateDeck(dk.id, patch, typing);
-  ${TEST.deckJs}
   ${NUM_JS}
   const tagList = dk.tags;
   const segOf = (id, cur) => ({ pressed: id === cur ? 'true' : 'false', bg: id === cur ? t.bg : 'transparent', fg: id === cur ? t.text : t.muted, sh: id === cur ? '0 1px 3px rgba(0,0,0,.14)' : 'none' });
@@ -1232,7 +1225,6 @@ const COVER_LOGIC = `
     plan: planVals, exam: examVals, proOn: pro && fsrsOn, proTeaser: !pro && fsrsOn, examLeft: !pro && fsrsOn && !!dk.examDay, proHref: db.mock ? 'Pricing.dc.html' : 'https://lucida.cards/pricing',
     leechN: String(dk.leechAt), lessLeech: () => up({ leechAt: Math.max(3, dk.leechAt - 1) }), moreLeech: () => up({ leechAt: Math.min(30, dk.leechAt + 1) }),
     leechActs: [['tag', 'Tag it “Leech”'], ['pause', 'Pause it']].map(([id, label]) => ({ label, ...segOf(id, dk.leechAct), pick: () => up({ leechAct: id }) })),
-    examShow: !!ex, examLine: ex ? ex.line : '',
     pause: sw(paused),
     togglePause: () => up({ paused: !paused }),
     fsrsOn, fsrsSw: sw(fsrsOn, fsrsAllowed), toggleFsrs: () => fsrsAllowed && up({ fsrs: !fsrsOn }),
@@ -1243,20 +1235,19 @@ const COVER_LOGIC = `
     addStep: () => { const nx = stepPool.find(q => !steps.includes(q)); if (nx) up({ steps: stepPool.filter(q => q === nx || steps.includes(q)) }); },
     dsGeneral: dsTab === 'general', dsStudy: dsTab === 'study', dsShare: dsTab === 'share',
     dsTabs: [['general', 'General'], ['study', 'Studying'], ['share', 'Sharing']].map(([id, label]) => ({ label, ...segOf(id, dsTab), pick: () => this.setState({ dsTab: id }) })),
-    tiles: [{ label: 'Due now', value: String(dk.due), color: t.text }, { label: 'New', value: String(dk.fresh), color: t.text },
-      { label: 'Remembered', value: dk.ret == null ? '—' : dk.ret + '%', color: dk.ret == null ? t.muted : dk.ret >= goal ? t.good : dk.ret >= goal - 5 ? t.hard : t.again }],
     deckTags: tagList.map(g => ({ ...tagChip(g), remove: () => up({ tags: tagList.filter(x => x !== g) }) })),
     deckPick: tagPicker(tagList, next => up({ tags: next }), 'dp', db.mock ? null : db.tags()),
     exportDeck: () => db.act.exportDeck(dk.id), deleteDeck: () => db.act.deleteDeck(dk.id), deleteLabel: lk && !lk.gone ? 'Remove from library' : 'Delete deck',
     // The deck's folder, and its background for Learn mode, flashcards, and Live.
     folderChips: [...(dk.folder ? [{ id: null, name: 'Remove from folder' }] : []), ...db.folders()].map(f => { const on = (dk.folder || null) === f.id; return { label: f.name, pressed: on ? 'true' : 'false', bg: on ? t.inv : t.surf, fg: on ? t.invText : t.text, pick: () => db.act.moveDeck(dk.id, f.id) }; }),
     noFolders: !db.folders().length, ...bgPick(dk, S),
-    deckLine: plural(dk.total, 'card').replace(String(dk.total), dk.totalLabel) + (lk ? ' · from ' + lk.owner.name : dk.aiCount ? ' · ' + dk.aiCount + ' added by your AI' : ''),
-    deckLineShort: plural(dk.total, 'card').replace(String(dk.total), dk.totalLabel) + (dk.aiCount ? ' · ' + dk.aiCount + ' from your AI' : ''),
+    // How many cards, and whose deck it is when it's someone else's (the owner, 2026-10-02: "remove the '38 added by ai'").
+    deckLine: plural(dk.total, 'card').replace(String(dk.total), dk.totalLabel) + (lk ? ' · from ' + lk.owner.name : ''),
+    deckLineShort: plural(dk.total, 'card').replace(String(dk.total), dk.totalLabel),
     // The owner: "learn button needs to be 'learn', flashcards need to have flashcards button". So this one always says
     // Flashcards ("Learn 10 new cards" read like Learn mode), with how many cards wait for it today.
     studyLabel: 'Flashcards', studyCount: String(dk.due || dk.fresh || 0), hasStudyCount: !!(dk.due || dk.fresh), noStudyCount: !(dk.due || dk.fresh),
-    studyHref: dk.studyHref, newCardHref: dk.newCardHref, ...shareVals, ...testVals
+    studyHref: dk.studyHref, newCardHref: dk.newCardHref, ...shareVals
   };`;
 // Deck settings: shared by the web side panel and the iPhone sheet. The web panel sits over the page, not inside its
 // scrolling <main>, so it stays in place however far the page is scrolled. Both come last on their page: the app
@@ -1360,8 +1351,6 @@ const deckUpdatesBody = phone => `<div style="display: flex; align-items: center
       <div style="display: flex; gap: 8px; justify-content: flex-end;"><sc-if value="{{u.notMine}}" hint-placeholder-val="{{ true }}">${smallBtn('Skip', 'u.skip')}${smallBtn('Take it', 'u.take', 'check', '{{t.inv}}').replace('color: {{t.text}}', 'color: {{t.invText}}')}</sc-if><sc-if value="{{u.mine}}" hint-placeholder-val="{{ false }}">${smallBtn('Keep mine', 'u.skip')}${smallBtn('Take theirs', 'u.take', '', '{{t.inv}}').replace('color: {{t.text}}', 'color: {{t.invText}}')}</sc-if></div>
     </div></sc-for></div>`;
 
-// A deck's exam, in a word under its numbers (web and iPhone deck pages).
-const examLine = (fs, mt = 0) => `<sc-if value="{{examShow}}" hint-placeholder-val="{{ true }}"><div role="note" style="${mt ? `margin-top: ${mt}px; ` : ''}display: flex; align-items: center; gap: 8px; font-size: ${fs}px; color: {{t.muted}};"><span style="display: flex; color: {{t.text}};">${svg(I.calendar, fs + 2, 2)}</span><span>{{examLine}}</span></div></sc-if>`;
 // How many cards wait for Flashcards today, as a small round count inside its button.
 const STUDY_COUNT = (h, bg, fg) => `<span style="min-width: ${h}px; height: ${h}px; padding: 0 7px; box-sizing: border-box; display: inline-flex; align-items: center; justify-content: center; border-radius: ${h / 2}px; background: ${bg}; color: ${fg}; font-family: ${MONO}; font-size: ${h > 22 ? 13 : 12}px; font-weight: 600;">{{studyCount}}</span>`;
 const DB = deckBlocks({ svg, I, MONO }, false), DBP = deckBlocks({ svg, I, MONO }, true);
@@ -1383,7 +1372,6 @@ const webDeck = webRoot(`${sidebar('Library')}
         <div style="display: flex; gap: 10px; flex-shrink: 0;">
           <sc-if value="{{showLive}}" hint-placeholder-val="{{ false }}"><a href="LiveSetup.dc.html" style="height: 36px; padding: 0 16px; display: inline-flex; align-items: center; gap: 8px; border-radius: 999px; ${onCover} font-size: 14px; font-weight: 600;">${svg(I.live, 15, 2)}Play live</a></sc-if>
           <a href="{{learnHref}}" style="height: 36px; padding: 0 16px; display: inline-flex; align-items: center; gap: 8px; border-radius: 999px; ${onCover} font-size: 14px; font-weight: 600;">${svg(I.sparkle, 15, 2)}{{learnLabel}}</a>
-          ${TEST.webButton(onCover)}
           <sc-if value="{{canEdit}}" hint-placeholder-val="{{ true }}"><a href="{{gs.newCardHref}}" style="height: 36px; padding: 0 16px; display: inline-flex; align-items: center; gap: 8px; border-radius: 999px; ${onCover} font-size: 14px; font-weight: 600;">${svg(I.plus, 15, 2)}New card</a><a href="{{gs.makeHref}}" style="height: 36px; padding: 0 16px; display: inline-flex; align-items: center; gap: 8px; border-radius: 999px; ${onCover} font-size: 14px; font-weight: 600;">${svg(I.sparkle, 15, 2)}Make cards</a></sc-if>
           <sc-if value="{{isStudy}}" hint-placeholder-val="{{ false }}"><a href="{{suggestHref}}" style="height: 36px; padding: 0 18px; display: inline-flex; align-items: center; gap: 8px; border-radius: 999px; ${onCover} font-size: 14px; font-weight: 600;">${svg(I.message, 15, 2)}Suggest a change</a></sc-if>
           <a href="{{studyHref}}" style="height: 36px; padding: 0 8px 0 18px; display: inline-flex; align-items: center; gap: 8px; border-radius: 999px; background: #FFFFFF; color: #000000; box-shadow: 0 1px 2px rgba(0,0,0,.1); font-size: 14px; font-weight: 600;">${svg(I.decks, 15, 2)}<span>{{studyLabel}}</span><sc-if value="{{hasStudyCount}}" hint-placeholder-val="{{ true }}">${STUDY_COUNT(22, '#EDEDED', '#000000')}</sc-if><sc-if value="{{noStudyCount}}" hint-placeholder-val="{{ false }}"><span style="width: 2px;"></span></sc-if></a>
@@ -1392,13 +1380,6 @@ const webDeck = webRoot(`${sidebar('Library')}
     </div>
   </div>
   <sc-if value="{{hasUpdates}}" hint-placeholder-val="{{ false }}"><div style="flex-shrink: 0; height: 56px; box-sizing: border-box; padding: 0 10px 0 16px; border-radius: 18px; background: {{t.surf}}; display: flex; align-items: center; gap: 12px;">${PERSON_AV('fromWho', 28)}<span style="flex-grow: 1; font-size: 14px; font-weight: 600;">{{updLine}}</span>${pill('See changes', { inv: true, onClick: '{{openUpdates}}' })}</div></sc-if>
-  <div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px;">
-    <sc-for list="{{tiles}}" as="k" hint-placeholder-count="3">
-      ${deckTile(true)}
-    </sc-for>
-    <div style="border-radius: 16px; height: 104px; box-sizing: border-box; padding: 18px 20px; background: {{t.surf}}; display: flex; flex-direction: column; justify-content: space-between;"><span style="font-size: 13px; font-weight: 500; color: {{t.muted}};">Due next 7 days</span><div style="display: flex; align-items: flex-end; gap: 6px; height: 36px;"><sc-for list="{{spark}}" as="s" hint-placeholder-count="7"><div style="flex-grow: 1; border-radius: 4px; background: {{s.c}}; height: {{s.h}};"></div></sc-for></div></div>
-  </div>
-  ${TEST.pastList(false)}
   ${DB.tabs}${DB.guide}${DB.diagrams}${DB.sources}
   <sc-if value="{{gs.showCards}}" hint-placeholder-val="{{ true }}">
   <div style="display: flex; align-items: center; gap: 8px;">
@@ -1448,7 +1429,7 @@ const CARD_DRAG_JS = phone => `const others = db.decks().filter(d => d.id !== dk
 const deckLogic = `
 constructor(props) { super(props); this.state = { filter: 'All', tagMenuOpen: false, tagQ: '', q: '' }; }
 renderVals() {
-  ${T}${DB_JS}${COVER_LOGIC}${DECK_MATERIALS_JS}${FORECAST_JS('{ vals: dk.forecast, labels: [], tops: null, names: [] }', 40)}
+  ${T}${DB_JS}${COVER_LOGIC}${DECK_MATERIALS_JS}
   ${CARD_TAGS_JS}
   ${LIFT_JS}
   ${CARD_DRAG_JS(false)}
@@ -1469,7 +1450,6 @@ renderVals() {
     tagMenu: { open: menuOpen, expanded: menuOpen ? 'true' : 'false', query: this.state.tagQ || '',
       toggle: () => this.setState({ tagMenuOpen: !menuOpen, tagQ: '' }), setQuery: e => this.setState({ tagQ: e && e.target ? e.target.value : '' }),
       rows: found.map(g => ({ ...tagChip(g), count: String(uses[g]), on: g === f, pressed: g === f ? 'true' : 'false', pick: () => this.setState({ filter: g === f ? 'All' : g, tagMenuOpen: false, tagQ: '' }) })), none: found.length === 0 },
-    spark: forecast,
     // Learn mode: start one, or go back to the one you stopped.
     learnHref: db.mock ? 'WebQuizStart.dc.html' : db.learnOn(dk.id) ? '/learn/' + dk.id : '/deck/' + dk.id + '/learn', learnLabel: 'Learn',
     // Live (play with friends): play this deck on a big screen, with friends on their phones.
@@ -3298,6 +3278,13 @@ const APPS_JS = `// Each app that signed in: its name, the site it sends you bac
     noApps: !appList.length };`;
 
 // Connect
+// Under the address: one quiet line that copies the person's private link, for the apps that can't sign in (it is never shown), and on the
+// web Make a new link beside it (the old private link stops working). Only where there is a private link: online, signed in.
+const QUIET_LINK = 'border: 0; padding: 0; background: transparent; color: inherit; opacity: .8; font: inherit; font-size: 13px; font-weight: 500; text-align: left; cursor: pointer;';
+const privateLine = renew => `<sc-if value="{{hasPrivate}}" hint-placeholder-val="{{ true }}"><div style="display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px;"><button type="button" onClick="{{copyPrivate}}" style="${QUIET_LINK}">{{privateLabel}}</button>${renew ? `<span aria-hidden="true" style="opacity: .5; font-size: 13px;">·</span><button type="button" onClick="{{renew}}" style="${QUIET_LINK}">{{renewLabel}}</button>` : ''}</div></sc-if>`;
+const PRIVATE_JS = `const privateUrl = ai.privateUrl || '';
+  const privateVals = { hasPrivate: !!privateUrl, privateLabel: this.state.privCopied ? 'Private link copied' : 'Private link for apps that can’t sign in',
+    copyPrivate: () => { db.act.copy(privateUrl); this.setState({ privCopied: true, copied: false }); } };`;
 const aiKind = (icon, title, text) => `<div style="background: {{t.bg}}; border-radius: 22px; padding: 16px; display: flex; flex-direction: column; gap: 10px;"><span style="width: 36px; height: 36px; border-radius: 18px; background: {{t.surf}}; display: flex; align-items: center; justify-content: center;">${svg(I[icon], 16, 2)}</span><span style="font-size: 14px; font-weight: 600;">${title}</span><span style="font-size: 13px; line-height: 1.4; color: {{t.muted}};">${text}</span></div>`;
 const webConnect = webRoot(`${SETTINGS_SIDEBAR}
 <main style="flex-grow: 1; box-sizing: border-box; padding: 36px 48px; display: flex; flex-direction: column; gap: 24px; min-width: 0;">
@@ -3308,7 +3295,7 @@ const webConnect = webRoot(`${SETTINGS_SIDEBAR}
       ${meshCard('hero', 'border-radius: 20px; flex-shrink: 0;', 'box-sizing: border-box; padding: 26px; display: flex; flex-direction: column; gap: 14px;', `
         <div style="font-size: 12px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; opacity: .8;">Your MCP link</div>
         <div style="display: flex; gap: 10px;"><div style="flex-grow: 1; min-width: 0; height: 50px; box-sizing: border-box; padding: 0 20px; display: flex; align-items: center; border-radius: 999px; ${glass} font-family: ${MONO}; font-size: 15px;"><span style="min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis;">{{mcpUrl}}</span></div><button type="button" onClick="{{copy}}" style="flex-shrink: 0; height: 50px; padding: 0 24px; border: 0; border-radius: 999px; background: #FFFFFF; color: #000000; font: inherit; font-size: 14px; font-weight: 600; cursor: pointer;">{{copyLabel}}</button></div>
-        <sc-if value="{{canRenew}}" hint-placeholder-val="{{ true }}"><button type="button" onClick="{{renew}}" style="align-self: flex-start; border: 0; padding: 0; background: transparent; color: inherit; opacity: .8; font: inherit; font-size: 13px; font-weight: 500; cursor: pointer;">{{renewLabel}}</button></sc-if>`)}
+        ${privateLine(true)}`)}
       <div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px;">
         <sc-for list="{{providers}}" as="p" hint-placeholder-count="4">
           <div style="background: {{t.surf}}; border-radius: 16px; padding: 16px; display: flex; flex-direction: column; gap: 12px;"><span style="width: 36px; height: 36px; border-radius: 18px; background: {{t.bg}}; display: flex; align-items: center; justify-content: center;">${PROVIDER_LOGO(22)}</span><span style="font-size: 15px; font-weight: 600;">{{p.name}}</span><span style="font-size: 13px; color: {{p.color}};">{{p.status}}</span></div>
@@ -3354,10 +3341,11 @@ renderVals() {
   ${PROVIDERS('ai.clients')}
   ${APPS_JS}
   ${SETTINGS_SIDE_JS('connect-ai', 'db.mock ? true : !!(db.plan && db.plan())')}
-  // Online, a link that got out can be swapped for a new one; AI apps with the old link lose access.
-  const renew = () => { if (db.mock) return this.setState({ renewed: true }); db.ask({ title: 'Make a new link?', line: 'AI apps using the old one stop working until you give them the new one.', action: 'Make a new link' }).then(yes => yes && db.act.newLink().then(() => this.setState({ renewed: true, copied: false }))); };
-  return { ${MESH_VALS('Apricot')} t, ...chrome, ...settingsSide, ...appVals, perms, providers, mcpUrl: ai.url, copyLabel: this.state.copied ? 'Copied' : 'Copy', copy: () => { db.act.copy(ai.url); this.setState({ copied: true }); },
-    canRenew: db.mock || db.settings().signedIn, renew, renewLabel: this.state.renewed ? 'New link made' : 'Make a new link' };
+  // Online, a private link that got out can be swapped for a new one; AI apps with the old one lose access.
+  ${PRIVATE_JS}
+  const renew = () => { if (db.mock) return this.setState({ renewed: true }); db.ask({ title: 'Make a new link?', line: 'AI apps using the old one stop working until you give them the new one.', action: 'Make a new link' }).then(yes => yes && db.act.newLink().then(() => this.setState({ renewed: true, copied: false, privCopied: false }))); };
+  return { ${MESH_VALS('Apricot')} t, ...chrome, ...settingsSide, ...appVals, ...privateVals, perms, providers, mcpUrl: ai.url, copyLabel: this.state.copied ? 'Copied' : 'Copy', copy: () => { db.act.copy(ai.url); this.setState({ copied: true, privCopied: false }); },
+    renew, renewLabel: this.state.renewed ? 'New link made' : 'Make a new link' };
 }`;
 
 // ---------- Structure B: top tabs, one centered column ----------
@@ -3542,7 +3530,7 @@ const motion = () => `<div style="width: 1440px; height: ${MOTION_H}px; box-sizi
     ${tile('Keep or toss', 'swipe · follows your finger · 250 ms', `<span style="position: absolute; left: 20px; font-size: 13px; font-weight: 600; color: #666666;">Toss</span><span style="position: absolute; right: 20px; font-size: 13px; font-weight: 600; color: #666666;">Keep</span>${mcard('AI card', '', 'm-swipe')}`)}
     ${tile('Session done', 'ring fills · 900 ms · ease out', `<div style="position: relative; width: 140px; height: 140px;"><svg width="140" height="140" viewBox="0 0 140 140" style="transform: rotate(-90deg);"><circle cx="70" cy="70" r="60" fill="none" stroke="#EBEBEB" stroke-width="12"/><circle class="m-ring" cx="70" cy="70" r="60" fill="none" stroke="#000000" stroke-width="12" stroke-linecap="round" stroke-dasharray="377"/></svg><div class="m-fade" style="position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 32px; font-weight: 600; letter-spacing: -.03em;">91%</div></div>`)}
     ${tile('Progress bar', 'moves after each card · 300 ms', `<div style="width: 220px; height: 8px; border-radius: 4px; background: #EBEBEB; overflow: hidden;"><div class="m-bar" style="height: 8px; border-radius: 4px; background: #000000;"></div></div>`)}
-    ${tile('Light ↔ dark', 'cross-fade · 250 ms', `<div class="m-theme" style="width: 200px; height: 130px; border-radius: 24px; display: flex; flex-direction: column; justify-content: space-between; padding: 18px; box-sizing: border-box; border: 1px solid #EBEBEB;"><span style="font-size: 13px; font-weight: 600;">64 cards due</span><span class="m-theme-btn" style="height: 36px; border-radius: 999px; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 600;">Study</span></div>`)}
+    ${tile('Light ↔ dark', 'cross-fade · 250 ms', `<div class="m-theme" style="width: 200px; height: 130px; border-radius: 24px; display: flex; flex-direction: column; justify-content: space-between; padding: 18px; box-sizing: border-box; border: 1px solid #EBEBEB;"><span style="font-size: 13px; font-weight: 600;">Cell Biology</span><span class="m-theme-btn" style="height: 36px; border-radius: 999px; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 600;">Flashcards</span></div>`)}
     ${tile('Page opens', 'rises 14 px · 500 ms · each part 60 ms later', `<div style="width: 220px; display: flex; flex-direction: column; gap: 10px;"><div class="m-rise1" style="width: 120px; height: 20px; border-radius: 6px; background: #000000;"></div><div class="m-rise2" style="height: 64px; border-radius: 16px; background: #F4F4F4;"></div><div class="m-rise3" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;"><div style="height: 40px; border-radius: 12px; background: #F4F4F4;"></div><div style="height: 40px; border-radius: 12px; background: #F4F4F4;"></div></div></div>`)}
     ${tile('Empty state', 'floats and fans · 6 s · a shine every 5 s', EMPTY_ART(150, 'plus'))}
     ${tile('Menu and pop-up', `slides up ${MOTION.slide} px · fades in · ${Math.round(MOTION.pop * 1000)} ms · eased out, no bounce`, `<div style="position: relative; width: 220px; height: 190px;"><span style="position: absolute; left: 0; top: 0; width: 44px; height: 44px; border-radius: 22px; background: #F4F4F4; display: flex; align-items: center; justify-content: center;">${svg(I.more, 16, 2)}</span><div class="m-pop" style="position: absolute; left: 0; top: 54px; width: 220px; box-sizing: border-box; padding: 8px; border-radius: 22px; background: #FFFFFF; box-shadow: 0 18px 48px rgba(0,0,0,.2), 0 0 0 1px #EBEBEB; display: flex; flex-direction: column; gap: 4px; font-size: 14px;"><span style="padding: 8px 12px 4px; font-size: 12px; font-weight: 600; color: #666666;">Move to</span><span style="height: 38px; padding: 0 12px; display: flex; align-items: center; gap: 10px;"><span style="display: flex; color: #666666;">${svg(I.folder, 16, 1.8)}</span>Remove from folder</span><span style="height: 38px; padding: 0 12px; display: flex; align-items: center; gap: 10px;"><span style="display: flex; color: #666666;">${svg(I.folder, 16, 1.8)}</span><span style="flex-grow: 1;">Languages</span>${svg(I.check, 14, 2.4)}</span></div></div>`)}
@@ -3602,7 +3590,7 @@ ${mLoopCss}@media (prefers-reduced-motion:reduce){[class^="m-"]{animation:none!i
 
 
 // ---------- Gradient cards: every palette in the reference style ----------
-const GALLERY = [['Iris', '64 cards due'], ['Apricot', 'Connect your AI'], ['Lilac', 'Session complete'], ['Mint', 'Cell Biology'], ['Aqua', 'Japanese · N4'], ['Rose', '12-day streak'], ['Lemon', 'Spanish Verbs']];
+const GALLERY = [['Iris', 'Anatomy'], ['Apricot', 'Connect your AI'], ['Lilac', 'Session complete'], ['Mint', 'Cell Biology'], ['Aqua', 'Japanese · N4'], ['Rose', '12-day streak'], ['Lemon', 'Spanish Verbs']];
 const galleryCard = ([name, text]) => {
   const d = paletteData(name);
   const flow = flowSvg(k => pick(d, k));
@@ -3679,7 +3667,7 @@ const phoneLibrary = phone(`<div style="padding: 64px 20px 120px; display: flex;
     <h1 style="margin: 0; flex-grow: 1; min-width: 0; font-size: 32px; font-weight: 700; letter-spacing: -.03em;">Library</h1>
     <sc-if value="{{deckView}}" hint-placeholder-val="{{ true }}">${libRound('folder', 'New folder', { onClick: '{{newFolder}}' })}</sc-if>
     ${DBP.addMenu(`<button type="button" onClick="{{gs.toggleAdd}}" aria-expanded="{{gs.addExpanded}}" aria-haspopup="menu" aria-label="Add" class="sc-press" style="width: 40px; height: 40px; flex-shrink: 0; border: 0; border-radius: 20px; background: {{t.inv}}; color: {{t.invText}}; display: flex; align-items: center; justify-content: center; cursor: pointer;">${svg(I.plus, 18, 2)}</button>`, 'right: 0; top: 48px;',
-      [['decks', 'New deck', 'Start from scratch', 'PhoneNewDeck.dc.html'], ['sparkle', 'Make cards', 'From a file, photo, video or topic', 'PhoneMake.dc.html'], ['upload', 'Import cards', 'From Anki, Quizlet or a CSV', 'PhoneImport.dc.html']])}
+      [['decks', 'New deck', 'Start from scratch', 'PhoneNewDeck.dc.html'], ['upload', 'Import cards', 'From Anki, Quizlet or a CSV', 'PhoneImport.dc.html']])}
   </div></sc-if>
   <sc-if value="{{inFolder}}" hint-placeholder-val="{{ false }}"><div style="display: flex; align-items: center; gap: 8px;">
     ${libRound('back', 'Library', { href: '{{libraryHref}}', attrs: ' data-sc-drop="folder:" data-sc-look="chip" draggable="false"' })}<span style="flex-grow: 1;"></span>
@@ -3688,7 +3676,7 @@ const phoneLibrary = phone(`<div style="padding: 64px 20px 120px; display: flex;
   </div>
   <h1 style="margin: 0; font-size: 32px; font-weight: 700; letter-spacing: -.03em; overflow-wrap: anywhere;">{{title}}</h1>${TEST.folderLine}${TEST.folderPhoneButton}</sc-if>
   <sc-if value="{{atTop}}" hint-placeholder-val="{{ true }}">${libModes(36, 14, true)}</sc-if>
-  <sc-if value="{{deckView}}" hint-placeholder-val="{{ true }}">${HBP.top}<sc-if value="{{atTop}}" hint-placeholder-val="{{ true }}">${HBP.due}${ASSIGNED_PHONE}</sc-if></sc-if>
+  <sc-if value="{{deckView}}" hint-placeholder-val="{{ true }}"><sc-if value="{{atTop}}" hint-placeholder-val="{{ true }}">${ASSIGNED_PHONE}</sc-if></sc-if>
   <label style="display: flex; align-items: center; gap: 10px; height: 44px; padding: 0 16px; box-sizing: border-box; border-radius: 999px; background: {{t.surf}}; color: {{t.muted}};">${svg(I.search, 16)}<span style="position: absolute; left: -9999px;">{{searchHint}}</span><input value="{{query}}" onChange="{{setQuery}}" placeholder="{{searchHint}}" style="flex-grow: 1; min-width: 0; border: 0; outline: 0; background: transparent; font: inherit; font-size: 16px; color: {{t.text}};"></label>
   <sc-if value="{{deckView}}" hint-placeholder-val="{{ true }}">
     <sc-if value="{{showFolders}}" hint-placeholder-val="{{ true }}">
@@ -3797,13 +3785,7 @@ const phoneDeck = phone(`<div style="height: 100%; overflow-y: auto; scrollbar-w
   <div style="padding: 0 20px; display: flex; flex-direction: column; gap: 16px;">
     <sc-if value="{{isLinked}}" hint-placeholder-val="{{ false }}"><a href="{{fromHref}}" style="display: flex; align-items: center; gap: 10px; min-height: 44px; font-size: 14px; font-weight: 600;">${PERSON_AV('fromWho', 28)}<span style="flex-grow: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{fromChip}}</span><span style="display: flex; color: {{t.muted}};">${svg(I.chev, 16, 2)}</span></a></sc-if>
     <sc-if value="{{hasUpdates}}" hint-placeholder-val="{{ false }}"><button type="button" onClick="{{openUpdates}}" style="height: 56px; box-sizing: border-box; padding: 0 16px; border: 0; border-radius: 18px; background: {{t.surf}}; color: {{t.text}}; display: flex; align-items: center; gap: 10px; font: inherit; font-size: 15px; font-weight: 600; text-align: left; cursor: pointer;"><span style="flex-grow: 1;">{{updLine}}</span><span style="font-size: 14px; color: {{t.muted}};">See changes</span></button></sc-if>
-    <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px;">
-      <sc-for list="{{tiles}}" as="k" hint-placeholder-count="3">${deckTile(false)}</sc-for>
-    </div>
-    ${examLine(14)}
     <div style="display: flex; gap: 8px;"><a href="PhoneReview.dc.html" style="flex: 2 1 0; height: 56px; border-radius: 999px; background: {{t.inv}}; color: {{t.invText}}; display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 17px; font-weight: 600; white-space: nowrap;">${svg(I.decks, 17, 2)}<span>{{studyLabel}}</span><sc-if value="{{hasStudyCount}}" hint-placeholder-val="{{ true }}">${STUDY_COUNT(24, 'rgba(128,128,128,.32)', 'inherit')}</sc-if></a><a href="{{learnHref}}" style="flex: 1 1 0; height: 56px; border-radius: 999px; background: {{t.surf}}; display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 17px; font-weight: 600; white-space: nowrap;">${svg(I.sparkle, 17, 2)}{{learnShort}}</a></div>
-    ${TEST.phoneButton}
-    ${TEST.pastList(true)}
     ${DBP.tabs}${DBP.guide}${DBP.diagrams}${DBP.sources}
     <sc-if value="{{gs.showCards}}" hint-placeholder-val="{{ true }}">
     <div data-sc-list="cards" ref="{{dragList}}" onPointerDown="{{grab}}" style="display: flex; flex-direction: column;">
@@ -3835,7 +3817,7 @@ renderVals() { ${T}${DB_JS}${COVER_LOGIC}${DECK_MATERIALS_JS}
   ${CARD_TAGS_JS}
   ${LIFT_JS}
   ${CARD_DRAG_JS(true)}
-  return { t, ...chrome, dark: !!this.props.dark, ...coverVals, ...cardDrag, gs, vw, dg, tiles: coverVals.tiles.map(k => k.label === 'Due now' ? { ...k, label: 'Due' } : k),
+  return { t, ...chrome, dark: !!this.props.dark, ...coverVals, ...cardDrag, gs, vw, dg,
     // Every card (all six sample cards on the canvas, so the page scrolls and shows the cover's parallax); each opens
     // in the editor.
     rows: db.cards(dk.id).map(r => ({ ...r, ...cardFit(r.tags), href: db.mock ? 'PhoneEditor.dc.html' : r.href })),
@@ -3949,14 +3931,15 @@ const phoneStatsLogic = `renderVals() { ${T}${DB_JS}
 
 // A page inside Settings (its row says Connect AI): a back button to Settings, its name in the middle, no tab bar, like
 // Settings > Theme. The page's content plus the apps that signed in: two sample apps on the canvas.
-const PHONE_CONNECT_H = 889;
+const PHONE_CONNECT_H = 918;
 const phoneConnect = phone(`<div style="padding: 64px 20px 34px; display: flex; flex-direction: column; gap: 16px;">
   <div style="display: flex; align-items: center; gap: 12px;">${roundBtn('back', 'Back', 'PhoneSettings.dc.html', ' data-section="connect-ai"')}<div style="flex-grow: 1; font-size: 17px; font-weight: 600; text-align: center;">Connect AI</div><div style="width: 44px;"></div></div>
   <div style="font-size: 15px; line-height: 1.45; color: {{t.muted}};">Make cards from any chat: text, fill-in-the-blank, images, and audio.</div>
   ${meshCard('hero', 'border-radius: 32px;', 'box-sizing: border-box; padding: 20px; display: flex; flex-direction: column; gap: 12px;', `
     <span style="font-size: 12px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; opacity: .8;">Your MCP link</span>
     <span style="font-family: ${MONO}; font-size: 14px; white-space: nowrap; padding: 14px 16px; border-radius: 999px; ${glass}">{{mcpUrl}}</span>
-    <button type="button" onClick="{{copy}}" style="height: 48px; border: 0; border-radius: 999px; background: #FFFFFF; color: #000000; font: inherit; font-size: 15px; font-weight: 600; cursor: pointer;">{{copyLabel}}</button>`)}
+    <button type="button" onClick="{{copy}}" style="height: 48px; border: 0; border-radius: 999px; background: #FFFFFF; color: #000000; font: inherit; font-size: 15px; font-weight: 600; cursor: pointer;">{{copyLabel}}</button>
+    ${privateLine(false)}`)}
   <div style="display: flex; flex-direction: column;">
     <sc-for list="{{providers}}" as="p" hint-placeholder-count="4">
       <div style="display: flex; align-items: center; gap: 12px; min-height: 60px; border-bottom: 1px solid {{t.line}};"><span style="width: 38px; height: 38px; border-radius: 19px; background: {{t.surf}}; display: flex; align-items: center; justify-content: center;">${PROVIDER_LOGO(20)}</span><span style="flex-grow: 1; font-size: 16px; font-weight: 500;">{{p.name}}</span><span style="font-size: 13px; font-weight: 600; color: {{p.color}};">{{p.status}}</span></div>
@@ -3964,14 +3947,14 @@ const phoneConnect = phone(`<div style="padding: 64px 20px 34px; display: flex; 
   </div>
   ${appsSection(true)}
 </div>`, '', '', PHONE_CONNECT_H);
-// Your MCP link runs on past its pill to the card's edge, as on the canvas.
 const phoneConnectLogic = `
 constructor(props) { super(props); this.state = { copied: false }; }
 renderVals() { ${T}${DB_JS}
   const ai = db.ai();
   ${PROVIDERS('ai.clients')}
   ${APPS_JS}
-  return { ${MESH_VALS('Apricot')} t, ...appVals, providers, mcpUrl: ai.url, copyLabel: this.state.copied ? 'Copied' : 'Copy link', copy: () => { db.act.copy(ai.url); this.setState({ copied: true }); } }; }`;
+  ${PRIVATE_JS}
+  return { ${MESH_VALS('Apricot')} t, ...appVals, ...privateVals, providers, mcpUrl: ai.url, copyLabel: this.state.copied ? 'Copied' : 'Copy link', copy: () => { db.act.copy(ai.url); this.setState({ copied: true, privCopied: false }); } }; }`;
 
 // iPhone Settings, from the gear on your profile: the seven sections of Settings (see SETTINGS_SECTIONS), each one group of rows. Appearance
 // switches this screen right away, and so does Dark mode (gray or black, for whenever the app is dark). The page scrolls; the board is tall
@@ -4511,31 +4494,28 @@ const EMPTY_ART = (w, icon) => { const r = Math.round(w * 0.14); return `<div ar
 </div>`; };
 const emptyBlock = ({ art, title, body, actions = '', size = 24, w = 420 }) => `<div style="display: flex; flex-direction: column; align-items: center; gap: 18px; text-align: center;">${art}<div style="max-width: ${w}px; display: flex; flex-direction: column; gap: 8px;"><span style="font-size: ${size}px; font-weight: 600; letter-spacing: -.02em;">${title}</span><span style="font-size: 15px; line-height: 1.5; color: {{t.muted}};">${body}</span></div>${actions}</div>`;
 const webActions = btns => `<div style="display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; padding-top: 2px;">${btns}</div>`;
-// A brand-new account's other two ways in, under the Make box, side by side: bring cards from another app, or let your own AI make them.
-const startTiles = phone => `<div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: ${phone ? 8 : 12}px;">${[['enter', 'Import cards', 'From Anki, Quizlet or a CSV', '{{importHref}}'], ['connect', 'Connect AI', 'Let Claude or ChatGPT make cards', '{{connectHref}}']].map(([ic, title, line, href]) => phone
-  ? `<a href="${href}" class="sc-press" style="min-width: 0; min-height: 132px; box-sizing: border-box; padding: 18px; border-radius: 22px; background: {{t.surf}}; display: flex; flex-direction: column; gap: 6px;"><span style="width: 36px; height: 36px; border-radius: 18px; background: {{t.bg}}; display: flex; align-items: center; justify-content: center;">${svg(I[ic], 18, 2)}</span><span style="flex-grow: 1;"></span><span style="font-size: 16px; font-weight: 600;">${title}</span><span style="font-size: 13px; line-height: 1.4; color: {{t.muted}};">${line}</span></a>`
-  : `<a href="${href}" class="sc-press" style="min-width: 0; min-height: 88px; box-sizing: border-box; padding: 18px 20px; border-radius: 22px; background: {{t.surf}}; display: flex; align-items: center; gap: 16px;"><span style="width: 44px; height: 44px; flex-shrink: 0; border-radius: 22px; background: {{t.bg}}; display: flex; align-items: center; justify-content: center;">${svg(I[ic], 20, 2)}</span><span style="min-width: 0; display: flex; flex-direction: column; gap: 3px;"><span style="font-size: 16px; font-weight: 600;">${title}</span><span style="font-size: 14px; color: {{t.muted}};">${line}</span></span></a>`).join('')}</div>`;
-// A brand-new account's Library: the Make box first (decks are made from what you bring), what your classes assigned (a student who joined
-// one before making a deck), then Import cards and Connect AI.
+// A brand-new account's ways in: three plain tiles side by side, New deck, Import cards and Connect AI, with no other words (the owner,
+// 2026-10-02). The same on a computer and a phone: the icon in a round, the word under it.
+const startTiles = phone => `<div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: ${phone ? 8 : 12}px;">${[['decks', 'New deck', '{{newDeckHref}}'], ['enter', 'Import cards', '{{importHref}}'], ['connect', 'Connect AI', '{{connectHref}}']].map(([ic, title, href]) =>
+  `<a href="${href}" class="sc-press" style="min-width: 0; height: ${phone ? 96 : 112}px; box-sizing: border-box; padding: 0 ${phone ? 4 : 16}px; border-radius: 22px; background: {{t.surf}}; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: ${phone ? 8 : 10}px;"><span style="width: ${phone ? 36 : 44}px; height: ${phone ? 36 : 44}px; flex-shrink: 0; border-radius: 50%; background: {{t.bg}}; display: flex; align-items: center; justify-content: center;">${svg(I[ic], phone ? 18 : 20, 2)}</span><span style="font-size: ${phone ? 14 : 16}px; font-weight: 600; white-space: nowrap;">${title}</span></a>`).join('')}</div>`;
+// A brand-new account's Library: what your classes assigned (a student who joined one before making a deck), then the three tiles.
 const webDecksEmpty = webRoot(`${sidebar('Library')}
-<main data-make-drop="1" onDragOver="{{mk.over}}" onDragLeave="{{mk.leave}}" onDrop="{{mk.drop}}" style="flex-grow: 1; box-sizing: border-box; padding: 36px 48px; display: flex; flex-direction: column; gap: 22px; min-width: 0; overflow-y: auto;">
+<main style="flex-grow: 1; box-sizing: border-box; padding: 36px 48px; display: flex; flex-direction: column; gap: 22px; min-width: 0; overflow-y: auto;">
   <div style="display: flex; align-items: center; gap: 12px;"><h1 style="margin: 0; font-size: 32px; font-weight: 600; letter-spacing: -.03em;">Library</h1><span style="margin-left: 10px; display: flex;">${libModes(32)}</span><span style="flex-grow: 1;"></span>${pill('New deck', { inv: true, icon: 'plus', href: 'WebNewDeck.dc.html' })}</div>
-  ${HB.top}
   ${ASSIGNED_WEB}
   ${startTiles(false)}
 </main>`);
-// A deck with no cards yet: the cover (with New card on it), then the Library's Make box and its row, set to this deck (a new deck opens here,
-// ready for material).
+// A deck with no cards yet (a new deck opens here): its cover, with "No cards yet" under the name and New card and Make cards on it, and
+// nothing under it (the owner, 2026-10-02: no Make box or row).
 const webDeckEmpty = webRoot(`${sidebar('Library')}
-<main data-make-drop="1" onDragOver="{{mk.over}}" onDragLeave="{{mk.leave}}" onDrop="{{mk.drop}}" style="flex-grow: 1; box-sizing: border-box; padding: 24px 48px 20px; display: flex; flex-direction: column; gap: 20px; min-width: 0;">
+<main style="flex-grow: 1; box-sizing: border-box; padding: 24px 48px 20px; display: flex; flex-direction: column; gap: 20px; min-width: 0;">
   <div style="position: relative; height: 184px; flex-shrink: 0; border-radius: 20px; overflow: hidden;">
     ${meshCard('cover', 'position: absolute; inset: 0;', 'height: 100%;', '', 'div', '', true)}${coverPicture}
     <div style="position: absolute; inset: 0; box-sizing: border-box; padding: 20px 24px 24px 28px; display: flex; flex-direction: column; justify-content: space-between; color: {{cover.ink}};">
       <div style="display: flex; align-items: center; justify-content: space-between;"><a href="WebDecks.dc.html" style="height: 36px; padding: 0 14px 0 10px; display: inline-flex; align-items: center; gap: 4px; border-radius: 999px; ${onCover} font-size: 13px; font-weight: 600;">${svg(I.back, 14, 2.2)}Library</a>${coverBtn('Deck settings', 'openSettings', 'gear')}</div>
-      <div style="display: flex; align-items: flex-end; justify-content: space-between; gap: 16px;"><div style="display: flex; flex-direction: column; gap: 6px; min-width: 0; text-shadow: {{cover.shadow}};"><h1 style="margin: 0; font-size: 34px; font-weight: 600; letter-spacing: -.035em; line-height: 1; {{coverTitle}}">{{deckName}}</h1><div style="font-size: 14px; opacity: .8;">No cards yet</div></div><a href="{{newCardHref}}" style="height: 36px; flex-shrink: 0; padding: 0 16px; display: inline-flex; align-items: center; gap: 8px; border-radius: 999px; ${onCover} font-size: 14px; font-weight: 600;">${svg(I.plus, 15, 2)}New card</a></div>
+      <div style="display: flex; align-items: flex-end; justify-content: space-between; gap: 16px;"><div style="display: flex; flex-direction: column; gap: 6px; min-width: 0; text-shadow: {{cover.shadow}};"><h1 style="margin: 0; font-size: 34px; font-weight: 600; letter-spacing: -.035em; line-height: 1; {{coverTitle}}">{{deckName}}</h1><div style="font-size: 14px; opacity: .8;">No cards yet</div></div><div style="display: flex; gap: 10px; flex-shrink: 0;"><a href="{{newCardHref}}" style="height: 36px; padding: 0 16px; display: inline-flex; align-items: center; gap: 8px; border-radius: 999px; ${onCover} font-size: 14px; font-weight: 600;">${svg(I.plus, 15, 2)}New card</a><a href="{{makeHref}}" style="height: 36px; padding: 0 16px; display: inline-flex; align-items: center; gap: 8px; border-radius: 999px; ${onCover} font-size: 14px; font-weight: 600;">${svg(I.sparkle, 15, 2)}Make cards</a></div></div>
     </div>
   </div>
-  ${HB.top}
 </main>`);
 const emptyKpis = (list, big) => `<div style="display: grid; grid-template-columns: repeat(${big ? 4 : 2}, minmax(0, 1fr)); gap: ${big ? 12 : 8}px;">${list.map(([l, v]) => `<div style="background: {{t.surf}}; border-radius: ${big ? 28 : 24}px; padding: ${big ? 22 : 16}px; display: flex; flex-direction: column; gap: ${big ? 6 : 2}px;"><span style="font-size: ${big ? 13 : 12}px; color: {{t.muted}};">${l}</span><span style="font-size: ${big ? 40 : 28}px; font-weight: ${big ? 600 : 700}; letter-spacing: -.035em; line-height: 1.05; color: {{t.muted}};">${v}</span></div>`).join('')}</div>`;
 const webStatsEmpty = webRoot(`${sidebar('Stats')}
@@ -4550,17 +4530,15 @@ const phoneDeckEmpty = phone(`<div style="height: 100%; box-sizing: border-box; 
   <div style="position: relative; height: 232px; flex-shrink: 0; overflow: hidden; container-type: inline-size;">
     ${meshCard('cover', 'position: absolute; inset: 0;', 'height: 100%;', '', 'div', '', true)}${coverPicture}
     <div style="position: absolute; inset: 0; box-sizing: border-box; padding: 54px 16px 18px 20px; display: flex; flex-direction: column; justify-content: space-between; color: {{cover.ink}};">
-      <div style="display: flex; justify-content: space-between;">${coverRound('back', 'Back', 'PhoneLibrary.dc.html')}<div style="display: flex; gap: 8px;">${coverRound('gear', 'Deck settings', '', '{{openSettings}}')}${coverRound('plus', 'New card', 'PhoneEditor.dc.html')}</div></div>
+      <div style="display: flex; justify-content: space-between;">${coverRound('back', 'Back', 'PhoneLibrary.dc.html')}<div style="display: flex; gap: 8px;">${coverRound('gear', 'Deck settings', '', '{{openSettings}}')}${coverRound('sparkle', 'Make cards', '{{makeHref}}')}${coverRound('plus', 'New card', '{{newCardHref}}')}</div></div>
       <div style="display: flex; flex-direction: column; gap: 4px; text-shadow: {{cover.shadow}};"><div style="font-size: 32px; font-weight: 700; letter-spacing: -.03em; line-height: 1.05; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; {{coverTitleS}}">{{deckName}}</div><div style="font-size: 14px; opacity: .8;">No cards yet</div></div>
     </div>
   </div>
-  <div style="box-sizing: border-box; padding: 20px 20px 0; display: flex; flex-direction: column; gap: 14px;">${HBP.top}</div>
 </div>`, 'Library');
-// The Library before there are any decks: the Make box first, what your classes assigned, then Import cards and Connect AI.
+// The Library before there are any decks: what your classes assigned, then the three tiles.
 const phoneDecksEmpty = phone(`<div style="padding: 64px 20px 120px; display: flex; flex-direction: column; gap: 14px;">
   ${pTitle('Library', roundBtn('plus', 'New deck', 'PhoneNewDeck.dc.html'))}
   ${libModes(36, 14, true)}
-  ${HBP.top}
   ${ASSIGNED_PHONE}
   ${startTiles(true)}
 </div>`, 'Library');
@@ -4571,10 +4549,9 @@ const phoneStatsEmpty = phone(`<div style="height: 100%; box-sizing: border-box;
     ${emptyBlock({ art: EMPTY_ART(130, 'stats'), title: 'No stats yet', size: 22, body: 'Your streak, study days, and how much you remember show up after your first review.', actions: `<a href="PhoneNewDeck.dc.html" style="height: 48px; padding: 0 22px; border-radius: 999px; background: {{t.inv}}; color: {{t.invText}}; display: flex; align-items: center; gap: 8px; font-size: 15px; font-weight: 600;">${svg(I.plus, 16, 2)}Make a deck</a>` })}
   </div>
 </div>`, 'Stats');
-// \`phone\`: the iPhone board (the Library's Decks · All cards · Classes switch, and where the Make box's links go on the canvas). \`cover\`: the empty deck's
-// name (its row is set to that deck); '' is a brand-new account's Library.
-const emptyLogic = (cover = '', phone = false) => `${MAKE_BOX_METHOD}
-renderVals() { ${T}${DB_JS}
+// \`phone\`: the iPhone board (the Library's Decks · All cards · Classes switch, and where the links go on the canvas). \`cover\`: the empty deck's
+// name; '' is a brand-new account's Library.
+const emptyLogic = (cover = '', phone = false) => `renderVals() { ${T}${DB_JS}
   // The Library with no decks yet still has its switch, so Classes are there before the first deck (web/classes.mjs).
   const modes = [['Decks', '${phone ? 'PhoneLibrary' : 'WebDecks'}', '/library'], ['All cards', '${phone ? 'PhoneLibraryCards' : 'WebLibraryCards'}', '/library/cards'], ['Classes', '${phone ? 'PhoneClasses' : 'WebClasses'}', '/library/classes']]
     .map(([label, b, href], i) => ({ label, href: db.mock ? b + '.dc.html' : href, current: !i ? 'page' : 'false', bg: !i ? t.bg : 'transparent', fg: !i ? t.text : t.muted, sh: !i ? '0 1px 3px rgba(0,0,0,.14)' : 'none' }));
@@ -4586,12 +4563,12 @@ renderVals() { ${T}${DB_JS}
   const S = this.skin(db), C = S && !pic && dk.name ? S.coverOf({ ...dk, round: dk.cover.round }, 'head', 34) : null;
   ${ASSIGNED_JS(phone)}
   return { ${MESH_VALS('Iris')} t, ...chrome, modes, assignments: assignRows, hasAssignments: ${cover ? 'false' : 'assignRows.length > 0'}, nav: db.mock ? { ...chrome.nav, news: '', hasNews: false } : chrome.nav, art: this.mesh('Iris'), art2: this.mesh('Mint'), art3: this.mesh('Apricot'), noop: () => {},
-    mk: this.makeBox(t, db, { deckId: ${cover ? 'dk.id' : "''"}, board: '${phone ? 'Phone' : 'Web'}', newDeck: ${!cover} }),
     deckName: dk.name, cover: { ...this.gen(dk.seed + (dk.cover.round ? ' #' + dk.cover.round : ''), dk.cover.style), ...(photo ? { ink: '#FFFFFF', shadow: '0 1px 14px rgba(0,0,0,.45)' } : {}),
       ...(C ? { base: C.base, ink: C.ink, shadow: 'none', plain: false, skin: true, art: C.art } : { plain: true, skin: false, art: null }) },
     coverTitle: C ? C.titleAt(34) : '', coverTitleS: C ? C.titleHead(32, dk.name) : '',
     coverIsImage: pic === 'mock', coverHasPhoto: !!photo, coverPhoto: photo,
-    newCardHref: db.mock ? '${phone ? 'PhoneEditor' : 'WebCardsScreenNew'}.dc.html' : dk.newCardHref, importHref: db.mock ? '${phone ? 'PhoneImport' : 'WebImport'}.dc.html' : db.href('import', ${cover ? 'dk.id' : "''"}), connectHref: db.mock ? '${phone ? 'PhoneConnect' : 'WebConnect'}.dc.html' : db.href('connect'),
+    newCardHref: db.mock ? '${phone ? 'PhoneEditor' : 'WebCardsScreenNew'}.dc.html' : dk.newCardHref, makeHref: db.mock ? '${phone ? 'PhoneMake' : 'WebMake'}.dc.html' : '/make?deck=' + encodeURIComponent(dk.id),
+    newDeckHref: db.mock ? '${phone ? 'PhoneNewDeck' : 'WebNewDeck'}.dc.html' : db.href('newDeck'), importHref: db.mock ? '${phone ? 'PhoneImport' : 'WebImport'}.dc.html' : db.href('import', ${cover ? 'dk.id' : "''"}), connectHref: db.mock ? '${phone ? 'PhoneConnect' : 'WebConnect'}.dc.html' : db.href('connect'),
     openSettings: () => { if (!db.mock) db.act.go(dk.settingsHref); } }; }`;
 
 // New deck. The cover starts white. Its colors (generated from the name) fade in over 2 s once you stop typing the name
@@ -6040,7 +6017,7 @@ renderVals() { ${TS}
 
 // ---------- Privacy and Terms (lucida.cards/privacy and /terms) ----------
 // Plain pages from legal.mjs: one column of text that fits any window. design/to-site.mjs makes them pages.
-const LEGAL_H = { Privacy: 2685, Terms: 1963, Connect: 4207 };
+const LEGAL_H = { Privacy: 2685, Terms: 1963, Connect: 4233 };
 const legalPage = (doc, hgt, marks = {}) => `<div class="sp-c" style="width: 1440px; height: ${hgt}px; box-sizing: border-box; font-family: ${FONT}; background: {{t.bg}}; color: {{t.text}}; overflow: hidden; ${HEAD_VARS}">
 ${siteHeader()}
 <main style="max-width: 720px; margin: 0 auto; box-sizing: border-box; padding: clamp(40px, 7vw, 88px) 24px 72px; display: flex; flex-direction: column; gap: 16px;">
@@ -7089,7 +7066,7 @@ const obB = txt => `<b style="font-weight: 600; color: {{t.text}};">${txt}</b>`;
 const obHow = html => `<span style="font-size: 14px; line-height: 1.5; color: {{t.muted}};">${html}</span>`;
 const obStep = (n, title, body) => `<div style="display: flex; gap: 14px;"><span style="width: 26px; height: 26px; flex-shrink: 0; border-radius: 13px; background: {{t.surf}}; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 600;">${n}</span><div style="flex-grow: 1; min-width: 0; padding-top: 3px; display: flex; flex-direction: column; gap: 10px;"><span style="font-size: 15px; font-weight: 600;">${title}</span>${body}</div></div>`;
 const obNote = (icon, txt) => `<span style="display: flex; align-items: center; gap: 8px; font-size: 13px; color: {{t.muted}};"><span style="display: flex; flex-shrink: 0;">${svg(icon, 15, 1.9)}</span><span>${txt}</span></span>`;
-// Your MCP link with Copy: the sample link on the canvas, yours in the app.
+// Lucida's MCP address with Copy (https://app.lucida.cards/mcp, no secret in it: the app signs in to Lucida there).
 const obLink = m => `<div style="height: ${obZ(m).field}px; box-sizing: border-box; padding: 0 5px 0 18px; display: flex; align-items: center; gap: 8px; border-radius: 999px; background: {{t.surf}};"><span style="flex-grow: 1; min-width: 0; font-family: ${MONO}; font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{linkShown}}</span><button type="button" onClick="{{copyLink}}" class="sc-press" style="height: ${obZ(m).field - 10}px; flex-shrink: 0; padding: 0 16px; border: 0; border-radius: 999px; background: {{t.inv}}; color: {{t.invText}}; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer;">{{copyLabel}}</button></div>`;
 const obOpen = (m, label) => `<a href="{{openHref}}" target="_blank" rel="noopener" onClick="{{openApp}}" class="sc-press" style="align-self: flex-start; height: ${obZ(m).open}px; box-sizing: border-box; padding: 0 14px 0 16px; display: inline-flex; align-items: center; gap: 8px; border-radius: 999px; background: {{t.bg}}; box-shadow: inset 0 0 0 1px {{t.surf2}}; font-size: 14px; font-weight: 600;">${label}${svg(OB_I.out, 14, 2)}</a>`;
 // Cursor installs from a link in one click, so it has no link to copy.
@@ -7336,7 +7313,9 @@ renderVals() { ${T}${DB_JS}${READ_CARDS_JS}
       bg: on ? t.bg : 'transparent', fg: on ? t.text : t.muted, sh: on ? '0 1px 3px rgba(0,0,0,.14)' : 'none', op: on ? '1' : '.45' }; };
   const ai = Object.fromEntries(AIS.map(([id]) => [id, choice(id, aiId, 'Pick AI', !!s.ai, () => go('Steps', { ai: id, copied: false }))]));
   const src = Object.fromEntries(SRCS.map(([id]) => [id, choice(id, srcId, 'Pick source', !!s.src, () => go('Source steps', { src: id }))]));
-  // Step 1. Claude's and ChatGPT's own pages open in a new tab; Cursor installs from its link.
+  // Step 1. Claude's and ChatGPT's own pages open in a new tab; Cursor installs from its link. The link shown is Lucida's address, with no secret
+  // in it (the app signs in there); Cursor can't sign in, so its install carries the person's private link (never shown; on this computer
+  // there is none, and /mcp needs no sign-in).
   const link = A.url, OPEN = { claude: 'https://claude.ai/customize/connectors', openai: 'https://chatgpt.com/#settings' };
   const copyLink = () => { if (live) db.act.copy(link); this.setState({ copied: true }); soon(); };
   const openApp = e => { if (live) return; stop(e); soon(); };
@@ -7395,7 +7374,7 @@ renderVals() { ${T}${DB_JS}${READ_CARDS_JS}
     finish: () => { if (live) db.act.setSettings({ welcomed: true }); },
     back: () => go(step === 'Found' ? 'Source steps' : step === 'Source steps' ? 'Pick source' : step !== 'Steps' && s.ai && !s.skippedAI ? 'Connected' : 'Pick AI'),
     linkShown: link.replace(/^https?:\\/\\//, ''), copyLink, copyLabel: s.copied ? 'Copied' : 'Copy', openApp, openHref: OPEN[aiId] || link,
-    cursorHref: 'cursor://anysphere.cursor-deeplink/mcp/install?name=lucida&config=' + encodeURIComponent(btoa(JSON.stringify({ url: link }))),
+    cursorHref: 'cursor://anysphere.cursor-deeplink/mcp/install?name=lucida&config=' + encodeURIComponent(btoa(JSON.stringify({ url: A.privateUrl || link }))),
     waitLine: 'Waiting for ' + who + '…', connectedTitle: Who + ' is connected',
     copyAsk: () => { if (live) db.act.copy(ASK); this.setState({ asked: true }); }, askCopied: !!s.asked, askFresh: !s.asked, askLabel: s.asked ? 'Copied' : 'Copy',
     askHead: 'Try asking ' + who, showAsk: !s.skippedAI,
@@ -9045,24 +9024,28 @@ const ACCOUNT_PROPS = { deleteOpen: { editor: 'enum', default: '', options: ['',
 // A request that can't be trusted (an app Lucida doesn't know, a return address it never gave) says so and sends nobody anywhere.
 const CONSENT_PROPS = { ...DARK, grain: MESH('Iris').grain, consent: { editor: 'enum', default: 'Claude', options: ['Claude', 'ChatGPT', 'Other app', 'App on this computer', 'Loading', 'Error'] } };
 const CONSENT_BTN = h => `height: ${h}px; padding: 0 22px; box-sizing: border-box; display: flex; align-items: center; justify-content: center; border: 0; border-radius: 999px; font: inherit; font-size: 15px; font-weight: 600; cursor: pointer;`;
+// One centered column (the owner, 2026-10-02: "this whole thing should have a centerred look"): the two icons, the title, the account line,
+// what the app may do (its list centered as one block, so the checks line up), where you go back to, and the buttons, in every state (loading
+// and a link that failed too).
 const consentBody = phone => {
   const h1 = phone ? 26 : 32, btn = phone ? 52 : 48, node = (inner) => `<span style="width: 56px; height: 56px; flex-shrink: 0; border-radius: 28px; background: {{t.surf}}; display: flex; align-items: center; justify-content: center;">${inner}</span>`;
-  const buttons = `<div style="display: flex; ${phone ? 'flex-direction: column;' : ''} gap: 10px;"><button type="button" onClick="{{allow}}" style="${CONSENT_BTN(btn)} ${phone ? '' : 'flex: 1 1 0;'} background: {{t.inv}}; color: {{t.invText}};">{{allowLabel}}</button><button type="button" onClick="{{cancel}}" style="${CONSENT_BTN(btn)} ${phone ? '' : 'flex: 1 1 0;'} background: {{t.surf}}; color: {{t.text}};">Cancel</button></div>`;
-  return `<sc-if value="{{ready}}" hint-placeholder-val="{{ true }}"><div style="display: flex; flex-direction: column; gap: ${phone ? 18 : 22}px;">
-    <div style="display: flex; align-items: center; gap: 10px;">${node(APP_LOGO(30, 'logo'))}<span style="display: flex; color: {{t.muted}};">${svg(I.link, 18, 2)}</span>${node(mark(22))}</div>
+  const col = gap => `display: flex; flex-direction: column; align-items: center; gap: ${gap}px; text-align: center;`;
+  const buttons = `<div style="align-self: stretch; display: flex; ${phone ? 'flex-direction: column;' : ''} gap: 10px;"><button type="button" onClick="{{allow}}" style="${CONSENT_BTN(btn)} ${phone ? '' : 'flex: 1 1 0;'} background: {{t.inv}}; color: {{t.invText}};">{{allowLabel}}</button><button type="button" onClick="{{cancel}}" style="${CONSENT_BTN(btn)} ${phone ? '' : 'flex: 1 1 0;'} background: {{t.surf}}; color: {{t.text}};">Cancel</button></div>`;
+  return `<sc-if value="{{ready}}" hint-placeholder-val="{{ true }}"><div style="${col(phone ? 18 : 22)}">
+    <div style="display: flex; align-items: center; justify-content: center; gap: 10px;">${node(APP_LOGO(30, 'logo'))}<span style="display: flex; color: {{t.muted}};">${svg(I.link, 18, 2)}</span>${node(mark(22))}</div>
     <h1 style="margin: 0; font-size: ${h1}px; font-weight: 600; line-height: 1.1; letter-spacing: -.03em; text-wrap: balance;">{{app}} wants to use your Lucida decks</h1>
     <sc-if value="{{hasEmail}}" hint-placeholder-val="{{ true }}"><div style="font-size: 14px; color: {{t.muted}};">Signed in as <span style="color: {{t.text}}; font-weight: 500;">{{email}}</span><sc-if value="{{canSwitch}}" hint-placeholder-val="{{ true }}"> · <button type="button" onClick="{{switchAccount}}" style="border: 0; padding: 0; background: transparent; color: {{t.muted}}; font: inherit; font-size: 14px; text-decoration: underline; cursor: pointer;">Use another account</button></sc-if></div></sc-if>
-    <div style="background: {{t.surf}}; border-radius: 22px; padding: 18px 20px; display: flex; flex-direction: column; gap: 12px;">
+    <div style="align-self: stretch; background: {{t.surf}}; border-radius: 22px; padding: 18px 20px; ${col(12)}">
       ${eyebrow('It will be able to')}
-      <sc-for list="{{permissions}}" as="x" hint-placeholder-count="2"><div style="display: flex; align-items: flex-start; gap: 10px; font-size: 15px; line-height: 1.4;"><span style="display: flex; margin-top: 2px; color: {{t.good}};">${svg(I.check, 16, 2.4)}</span><span>{{x.text}}</span></div></sc-for>
+      <div style="display: flex; flex-direction: column; align-items: flex-start; gap: 12px; text-align: left;"><sc-for list="{{permissions}}" as="x" hint-placeholder-count="2"><div style="display: flex; align-items: flex-start; gap: 10px; font-size: 15px; line-height: 1.4;"><span style="display: flex; margin-top: 2px; color: {{t.good}};">${svg(I.check, 16, 2.4)}</span><span>{{x.text}}</span></div></sc-for></div>
       <div style="font-size: 13px; line-height: 1.45; color: {{t.muted}};">You choose what it can do, and you can disconnect it any time, in Settings → Connect AI.</div>
     </div>
-    <div style="font-size: 14px; line-height: 1.45; color: {{t.muted}};">{{goLine}}<sc-if value="{{warn}}" hint-placeholder-val="{{ false }}"> <span style="color: {{t.text}}; font-weight: 500;">{{warnLine}}</span></sc-if></div>
+    <div style="font-size: 14px; line-height: 1.45; color: {{t.muted}}; text-wrap: balance;">{{goLine}}<sc-if value="{{warn}}" hint-placeholder-val="{{ false }}"> <span style="color: {{t.text}}; font-weight: 500;">{{warnLine}}</span></sc-if></div>
     <sc-if value="{{hasError}}" hint-placeholder-val="{{ false }}"><div role="alert" style="font-size: 14px; line-height: 1.4; color: {{t.again}};">{{error}}</div></sc-if>
     ${buttons}
   </div></sc-if>
-  <sc-if value="{{loading}}" hint-placeholder-val="{{ false }}"><div style="display: flex; flex-direction: column; gap: 14px;"><h1 style="margin: 0; font-size: ${h1}px; font-weight: 600; letter-spacing: -.03em;">One moment…</h1><div style="font-size: 15px; color: {{t.muted}};">Checking the app that sent you here.</div></div></sc-if>
-  <sc-if value="{{failed}}" hint-placeholder-val="{{ false }}"><div style="display: flex; flex-direction: column; gap: 16px;"><h1 style="margin: 0; font-size: ${h1}px; font-weight: 600; line-height: 1.1; letter-spacing: -.03em;">This link didn’t work</h1><div style="font-size: 15px; line-height: 1.5; color: {{t.muted}};">{{problem}}</div><div style="font-size: 15px; line-height: 1.5; color: {{t.muted}};">Go back to the app and start again.</div><a href="${phone ? 'PhoneLibrary' : 'WebDecks'}.dc.html" style="${CONSENT_BTN(btn)} background: {{t.inv}}; color: {{t.invText}};">Open Lucida</a></div></sc-if>`;
+  <sc-if value="{{loading}}" hint-placeholder-val="{{ false }}"><div style="${col(14)}"><h1 style="margin: 0; font-size: ${h1}px; font-weight: 600; letter-spacing: -.03em;">One moment…</h1><div style="font-size: 15px; color: {{t.muted}};">Checking the app that sent you here.</div></div></sc-if>
+  <sc-if value="{{failed}}" hint-placeholder-val="{{ false }}"><div style="${col(16)}"><h1 style="margin: 0; font-size: ${h1}px; font-weight: 600; line-height: 1.1; letter-spacing: -.03em;">This link didn’t work</h1><div style="font-size: 15px; line-height: 1.5; color: {{t.muted}}; text-wrap: balance;">{{problem}}</div><div style="font-size: 15px; line-height: 1.5; color: {{t.muted}};">Go back to the app and start again.</div><a href="${phone ? 'PhoneLibrary' : 'WebDecks'}.dc.html" style="${CONSENT_BTN(btn)} align-self: stretch; background: {{t.inv}}; color: {{t.invText}};">Open Lucida</a></div></sc-if>`;
 };
 const webConnectConsent = `<div style="width: 1440px; height: 900px; box-sizing: border-box; display: flex; flex-direction: column; font-family: ${FONT}; background: {{t.bg}}; color: {{t.text}}; overflow: hidden;">
   <header style="height: 76px; flex-shrink: 0; box-sizing: border-box; padding: 0 40px; display: flex; align-items: center;"><a href="https://lucida.cards" aria-label="Lucida home">${logo()}</a></header>
@@ -9174,7 +9157,7 @@ const files = {
   'WebDecksEmpty': ['Web · Library · no decks yet', webDecksEmpty, { props: { ...DARK, grain: MESH('Iris').grain }, logic: emptyLogic(), w: W, h: H }],
   'WebDeckEmpty': ['Web · Deck · no cards yet', webDeckEmpty, { props: { ...DARK, grain: MESH('Iris').grain }, logic: emptyLogic('Pharmacology'), w: W, h: H }],
   'WebStatsEmpty': ['Web · Stats · no reviews yet', webStatsEmpty, { props: { ...DARK, grain: MESH('Iris').grain }, logic: emptyLogic(), w: W, h: H }],
-  'WebDeck': ['Web · Deck page', webDeck, { props: { ...DARK, grain: MESH('Iris').grain, calendar: { editor: 'enum', default: '', options: ['', 'Exam date'] }, settingsOpen: { editor: 'boolean', default: false }, settingsTab: { editor: 'enum', default: 'General', options: ['General', 'Studying', 'Sharing'] }, tagPicker: { editor: 'boolean', default: false }, ...SHARE_PROPS, ...PRO_DECK_PROPS, tests: { editor: 'boolean', default: true }, ...GUIDE_STATE }, logic: deckLogic, css: NUM_CSS + PARALLAX_CSS + DRAG_CSS + GUIDE_CSS + DIAGRAM_CSS, w: W, h: H }],
+  'WebDeck': ['Web · Deck page', webDeck, { props: { ...DARK, grain: MESH('Iris').grain, calendar: { editor: 'enum', default: '', options: ['', 'Exam date'] }, settingsOpen: { editor: 'boolean', default: false }, settingsTab: { editor: 'enum', default: 'General', options: ['General', 'Studying', 'Sharing'] }, tagPicker: { editor: 'boolean', default: false }, ...SHARE_PROPS, ...PRO_DECK_PROPS, ...GUIDE_STATE }, logic: deckLogic, css: NUM_CSS + PARALLAX_CSS + DRAG_CSS + GUIDE_CSS + DIAGRAM_CSS, w: W, h: H }],
   'WebDeckTagPicker': ['Web · Deck settings · Add tag', attrOf('WebDeck', W, H, 'settings-open="{{yes}}" tag-picker="{{yes}}"'), { logic: darkLogic, css: NUM_CSS + DRAG_CSS, w: W, h: H }],
   'WebEditor': ['Web · Card editor', webEditor, { props: { ...DARK, cardType: { editor: 'enum', default: 'Basic', options: ['Basic', 'Blank', 'Image', 'Audio'] }, recording: { editor: 'boolean', default: false }, slashDemo: { editor: 'boolean', default: false } }, logic: EDITOR_LOGIC, css: EDITOR_CSS, w: W, h: H }],
   'WebEditorSlash': ['Web · Card editor · / menu', attrOf('WebEditor', W, H, 'slash-demo="{{yes}}"'), { logic: darkLogic, css: EDITOR_CSS, w: W, h: H }],
@@ -9263,7 +9246,7 @@ const files = {
   'PhoneNewDeck': ['iPhone · New deck', phoneNewDeck, { props: { ...DARK, grain: MESH('Iris').grain }, logic: NEW_DECK_LOGIC, css: NUM_CSS + COVER_FADE_CSS, w: PW, h: PH }],
   'PhoneImport': ['iPhone · Import cards (paste or choose a file, the deck, Import; its Tweak shows each state)', phoneImport, { props: { ...DARK, grain: MESH('Iris').grain, state: { editor: 'enum', default: 'Deck chosen', options: IMPORT_STATES } }, logic: IMPORT_LOGIC(true), w: PW, h: PH }],
   'PhoneInbox': ['iPhone · Check AI cards', phoneInbox, { props: DARK, logic: phoneInboxLogic, css: REVIEW_CSS, w: PW, h: PH }],
-  'PhoneDeck': ['iPhone · Deck page', phoneDeck, { props: { ...DARK, grain: MESH('Iris').grain, calendar: { editor: 'enum', default: '', options: ['', 'Exam date'] }, settingsOpen: { editor: 'boolean', default: false }, settingsTab: { editor: 'enum', default: 'General', options: ['General', 'Studying', 'Sharing'] }, tagPicker: { editor: 'boolean', default: false }, ...SHARE_PROPS, ...PRO_DECK_PROPS, tests: { editor: 'boolean', default: true }, ...GUIDE_STATE }, logic: phoneDeckLogic, css: NUM_CSS + PARALLAX_CSS + DRAG_CSS + GUIDE_CSS + DIAGRAM_CSS, w: PW, h: PH }],
+  'PhoneDeck': ['iPhone · Deck page', phoneDeck, { props: { ...DARK, grain: MESH('Iris').grain, calendar: { editor: 'enum', default: '', options: ['', 'Exam date'] }, settingsOpen: { editor: 'boolean', default: false }, settingsTab: { editor: 'enum', default: 'General', options: ['General', 'Studying', 'Sharing'] }, tagPicker: { editor: 'boolean', default: false }, ...SHARE_PROPS, ...PRO_DECK_PROPS, ...GUIDE_STATE }, logic: phoneDeckLogic, css: NUM_CSS + PARALLAX_CSS + DRAG_CSS + GUIDE_CSS + DIAGRAM_CSS, w: PW, h: PH }],
   'PhoneDeckTagPicker': ['iPhone · Deck settings · Add tag', attrOf('PhoneDeck', PW, PH, 'settings-open="{{yes}}" tag-picker="{{yes}}"'), { logic: darkLogic, css: NUM_CSS + DRAG_CSS, w: PW, h: PH }],
   'PhoneDeckSettingsStudy': ['iPhone · Deck settings · Studying (FSRS)', studyOf('PhoneDeck', PW, PH), { logic: darkLogic, css: NUM_CSS + DRAG_CSS, w: PW, h: PH }],
   'PhoneDeckSettingsGoal': ['iPhone · Deck settings · Studying · goal raised to 95% (reviews a day)', attrOf('PhoneDeck', PW, PH, 'settings-open="{{yes}}" settings-tab="Studying" step-goal="{{yes}}"'), { logic: darkLogic, css: NUM_CSS + DRAG_CSS, w: PW, h: PH }],

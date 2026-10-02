@@ -166,7 +166,7 @@ export function llmsTxt(pages) {
 
 > ${ABOUT}
 
-${LLMS && LLMS.intro ? '' : `Lucida works in the browser on any device. There is no App Store app yet. Your cards are yours: you can export everything, and your AI works through a personal link you can replace at any time. Support: ${EMAIL}.
+${LLMS && LLMS.intro ? '' : `Lucida works in the browser on any device. There is no App Store app yet. Your cards are yours: you can export everything, and your AI connects at app.lucida.cards/mcp, signs in, and can be disconnected at any time. Support: ${EMAIL}.
 
 `}` + section('Product', [...llmsOrder([...of('home'), ...of('pricing'), ...hub('blog'), ...of('guide')]).map(line), `- [Open the app](${APP}/): sign in and start making decks`])
     + section('Comparisons', llmsOrder([...hub('compare'), ...of('compare', 'alternative')]).map(line))

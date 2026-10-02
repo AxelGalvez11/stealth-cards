@@ -1,6 +1,5 @@
 // iPhone · Library (PhoneLibrary, PhoneLibraryCards, PhoneLibraryFolder, PhoneLibraryAssigned, PhoneDecksEmpty): it was called Decks, and the app
-// opens on it. Its top is where decks are made and material goes in (LibraryTop.swift: the Make box and its row, what's due, and what your
-// classes assigned). Then your folders and decks, or one folder's decks, with a search and a ⋯ menu on each deck to move it between folders; or
+// opens on it. Its top is what your classes assigned (LibraryTop.swift); it makes no cards itself (a deck's cover does). Then your folders and decks, or one folder's decks, with a search and a ⋯ menu on each deck to move it between folders; or
 // every card in one list (All cards), to filter by how hard it is, its tags, and its deck or folder. Tap a deck to open
 // it; hold one to drag it to another spot, onto a folder, or (in a folder) onto the Library button to take it out. In
 // All cards, hold a card to drag it onto another deck in the Move to tray (Drag.swift).
@@ -210,9 +209,8 @@ struct LibraryScreen: View {
   /// The difficulty control's sliding pill, and its taps.
   @Namespace private var levelPill
   @State private var levelTaps = 0
-  /// The + menu (New deck, Make cards, Import cards) is open, and the Make box's More.
+  /// The + menu (New deck, Import cards) is open.
   @State private var addOpen = false
-  @State private var moreOpen = false
 
   var body: some View {
     let decks = store.libraryDecks(), folders = store.libraryFolders(decks)
@@ -244,7 +242,7 @@ struct LibraryScreen: View {
         if folder == nil {
           LibraryModes(current: cards ? "cards" : "decks") { menu = nil }
         }
-        if !cards { makeTop(folder) }
+        if !cards && folder == nil { AssignedList() }
         search(cards ? "Search all cards" : folder != nil ? "Search this folder" : "Search decks and cards")
         if cards { allCards(ql, decks, folders) } else { deckList(ql, decks, folders, folder) }
       }
@@ -256,20 +254,7 @@ struct LibraryScreen: View {
     .overlayPreferenceValue(MenuAnchors.self) { anchors in menus(anchors, decks, folders).animation(Motion.pop, value: menu) }
     .addMenu(open: $addOpen, rows: [
       AddMenuRow(icon: "decks", title: "New deck", line: "Start from scratch") { nav.newDeck() },
-      AddMenuRow(icon: "sparkle", title: "Make cards", line: "From a file, photo, video or topic") { nav.make() },
       AddMenuRow(icon: "upload", title: "Import cards", line: "From Anki, Quizlet or a CSV") { nav.importCards() }])
-    .addMenu(open: $moreOpen, rows: MakeKinds.more(nav: nav, folder: folder?.id ?? ""), id: "more", width: 220, label: "More ways to add cards")
-  }
-
-  /// The top of the Library (or a folder's page, where a new deck made from it goes in the folder): the Make box and its row, then (in the
-  /// Library itself) what's due and what your classes assigned.
-  @ViewBuilder private func makeTop(_ folder: LibFolder?) -> some View {
-    MakeBox(folder: folder?.id ?? "")
-    MakeKinds(folder: folder?.id ?? "", moreOpen: $moreOpen)
-    if folder == nil {
-      DueLine()
-      AssignedList()
-    }
   }
 
   /// Remove folder asks first, in Lucida's own question; its decks stay in the library, and the page goes back to the Library once its folder is gone.
@@ -729,23 +714,19 @@ struct LibraryScreen: View {
   }
 
   // ---------- no decks yet ----------
-  // PhoneDecksEmpty, a brand-new account: the Make box first (decks are made from what you bring), what your classes assigned (a student who joined
-  // one before making a deck), then Import cards and Connect AI.
+  // PhoneDecksEmpty, a brand-new account: what your classes assigned (a student who joined one before making a deck), then three plain tiles:
+  // New deck, Import cards and Connect AI.
   private var empty: some View {
     ScrollView(showsIndicators: false) {
       VStack(spacing: 14) {
         PageTitle("Library") { RoundButton(icon: "plus", label: "New deck") { nav.newDeck() } }
         LibraryModes(current: "decks")
-        MakeBox()
-        MakeKinds(moreOpen: $moreOpen)
         AssignedList()
         StartTiles()
       }
       .padding(.horizontal, 20).padding(.top, Screen.top(64)).padding(.bottom, 120)
     }
-    .scrollDismissesKeyboard(.immediately)
     .ignoresSafeArea(edges: .top)
-    .addMenu(open: $moreOpen, rows: MakeKinds.more(nav: nav), id: "more", width: 220, label: "More ways to add cards")
   }
 }
 

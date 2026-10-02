@@ -1,8 +1,8 @@
 // iPhone · Import cards (PhoneImport, and its Dark and Gray twins; `-board PhoneImport -state Pasted` shows any of the canvas's states): the web's
 // Import page (WebImport, design/build.mjs importLogic) one for one, as a sheet over the page it came from. Paste cards into the box or choose a
 // text file (an Anki or Quizlet export, a CSV), read the way the web reads them (Data/ReadCards.swift), the deck (a name, or one of your decks),
-// and Import, which sends data.import (a thousand cards at a time) and opens the deck. It opens from the Library's +, the Make box's More, a new
-// account's Import cards and an empty deck's More (with that deck). What goes wrong is a quiet line in the sheet, never an alert. Each part is a
+// and Import, which sends data.import (a thousand cards at a time) and opens the deck. It opens from the Library's + and a new
+// account's Import cards. What goes wrong is a quiet line in the sheet, never an alert. Each part is a
 // small view of its own, so the sheet stays light to lay out.
 import SwiftUI
 import UniformTypeIdentifiers

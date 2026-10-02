@@ -2,10 +2,11 @@
 // made-up people. Each flow sets up its own people, so any one can run alone, and none ever sees a system alert:
 //   1  The Library's +: Import cards opens the sheet (the box, Choose a file, the deck, Cancel and Import), Cancel closes it; cards pasted with
 //      tabs say how many, Import goes into a new deck named in the field, and that deck's page opens with them (as the server has them).
-//   2  The Make box's More: Import cards opens it; words that aren't cards say how to write them (and Import does nothing), a comma line counts;
-//      a deck's chip picks it, and Import adds the cards to that deck (no new deck), whose page opens.
+//   2  The count and a deck you have: words that aren't cards say how to write them (and Import does nothing), a comma line counts; a deck's
+//      chip picks it, and Import adds the cards to that deck (no new deck), whose page opens.
 //   3  A brand-new account's Import cards: no decks to pick, and Import with no name makes "Imported cards".
-//   4  An empty deck's More: Import cards starts on that deck (its name in the field, its chip picked), and the cards go into it.
+//   4  An empty deck: its page has no More (the Library makes no cards and an empty deck has no row, the owner, 2026-10-02); the Library's +
+//      Import cards and the deck's chip put the cards into it.
 //   5  Files (`-importFile`, as if chosen in the Files picker): UTF-16 with its mark, Latin-1, an Anki export with its headers, HTML and a
 //      blank, and 2,500 cards (sent a thousand at a time); a file that isn't text says so in the line; Choose a file opens the Files picker.
 //   6  The quiet line: a save that fails (a stand-in in front of the server) says so in the sheet, which stays; Import again goes on, with no card
@@ -124,14 +125,14 @@ final class ImportTests: AppCase {
     noAlert(app, "after the import")
   }
 
-  // ---------- 2: the Make box's More, the count, and a deck you have ----------
+  // ---------- 2: the count, and a deck you have ----------
   func test2MoreAndChip() throws {
     let who = "ipb" + run
     let ids = person(who, decks: [("Biology", 2), ("History", 1)])
     let app = launch(as: who)
-    tap(button(app, "More"), "the Make box's More")
+    tap(button(app, "Add"), "the Library's +")
     tap(button(app, "Import cards"), "its Import cards")
-    check(isOpen(app), "More → Import cards opens Import cards")
+    check(isOpen(app), "+ → Import cards opens Import cards")
     let b = box(app)
     b.tap()
     b.typeText("Notes from class")
@@ -175,16 +176,21 @@ final class ImportTests: AppCase {
     noAlert(app, "after the import")
   }
 
-  // ---------- 4: an empty deck's More ----------
+  // ---------- 4: an empty deck ----------
   func test4EmptyDeck() throws {
     let who = "ipd" + run, empty = "Empty " + run
     let ids = person(who, decks: [("Biology", 1), (empty, 0)])
-    let app = launch(as: who, ["-open", "deck:" + empty])
-    check(wait(text(app, "No cards yet")), "the empty deck's page")
-    tap(button(app, "More"), "its More")
+    var app = launch(as: who, ["-open", "deck:" + empty])
+    check(wait(text(app, "No cards yet")) && wait(button(app, "Make cards")), "the empty deck's page, with Make cards on its cover")
+    check(!button(app, "More").exists && !button(app, "Import cards").exists, "and no More under it (no Make box row)")
+    app.terminate()
+    app = launch(as: who)
+    tap(button(app, "Add"), "the Library's +")
     tap(button(app, "Import cards"), "its Import cards")
-    check(isOpen(app), "an empty deck's More → Import cards opens Import cards")
-    check(eventually(4) { (self.deckField(app).value as? String) == empty } && button(app, empty).isSelected, "on that deck: its name in the field, its chip picked")
+    check(isOpen(app), "+ → Import cards opens Import cards")
+    reach(app, button(app, empty))
+    tap(button(app, empty), "the empty deck's chip")
+    check(eventually(4) { (self.deckField(app).value as? String) == empty && self.button(app, empty).isSelected }, "its chip puts the empty deck in the field, picked")
     snap("import-deck")
     let b = box(app)
     b.tap()

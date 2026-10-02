@@ -877,7 +877,7 @@ async function save(uid, b, pro) {
     if (state().make.job !== J.id) throw fail('That make was already saved or replaced.', 409, 'gone');
     let d = (b.deck && b.deck.id && state().decks.find(x => x.id === b.deck.id)) || null;
     if (b.deck && b.deck.id && !d) throw fail('That deck is gone.', 404);
-    // (A new deck can go into a folder: the Library's Make box on a folder's page.)
+    // (A new deck can go into a folder: older iPhone builds send one from a folder page's Make box, which is gone now.)
     if (!d) d = makeDeck({ name: clip(b.deck && b.deck.name, 120) || J.name || 'New deck', folder: b.deck && typeof b.deck.folder === 'string' ? b.deck.folder : null });
     if (d.link && d.link.mode === 'study' && !d.link.gone) throw fail('This deck is ' + ((d.link.owner && d.link.owner.name) || 'someone else') + '’s. Make a copy of it first.', 403);
     // The files the source keeps: waiting uploads become kept files (moved, not copied), and the room they take is counted now.
