@@ -507,10 +507,13 @@ addEventListener('keydown', e => {
   if (e.altKey || e.repeat) return;
   const t = e.target, mod = e.metaKey || e.ctrlKey;
   const key = (mod ? 'mod+' : '') + (e.key === ' ' ? 'space' : e.key.toLowerCase());
-  if (!mod && t.closest && t.closest('input, textarea, select, [contenteditable="true"]')) return;
-  if (!mod && (key === 'space' || key === 'enter') && t.closest && t.closest('button, a')) return;
   // (With a dialog open, only its own keys count: Escape is its Cancel, not a button on the page behind it.)
   const dialogs = [...app.querySelectorAll('[role="alertdialog"], [role="dialog"][aria-modal="true"]')], scope = dialogs.length ? dialogs[dialogs.length - 1] : app;
+  // Typing in a field presses nothing, except that Escape in a dialog's own field still closes the dialog, as its Cancel would (a dialog
+  // puts the cursor in its first field; a menu or list open over it closes first, below).
+  const escapeInDialog = key === 'escape' && dialogs.length && scope.contains(t) && !app.querySelector('[data-sc-pop]');
+  if (!mod && !escapeInDialog && t.closest && t.closest('input, textarea, select, [contenteditable="true"]')) return;
+  if (!mod && (key === 'space' || key === 'enter') && t.closest && t.closest('button, a')) return;
   const el = [...scope.querySelectorAll('[data-key]')].find(x => x.getAttribute('data-key').toLowerCase() === key && x.getClientRects().length);
   if (el) { e.preventDefault(); el.click(); }
 });
