@@ -103,16 +103,14 @@
       <span style="font-size: 13px; color: {{t.muted}};">{{cardCount}}</span>
     </div>
     <div style="display: flex; flex-direction: column;">
-      <div style="display: grid; grid-template-columns: 36px minmax(0, 1.5fr) minmax(0, 1fr) minmax(0, .9fr) 170px 80px 96px; gap: 16px; align-items: center; height: 36px; font-size: 12px; font-weight: 600; letter-spacing: .05em; text-transform: uppercase; color: {{t.muted}}; border-bottom: 1px solid {{t.line}};"><span></span><span>Card</span><span>Answer</span><span>Deck</span><span>Tags</span><span>Difficulty</span><span style="text-align: right;">Next</span></div>
+      <div style="display: grid; grid-template-columns: 36px minmax(0, 1.5fr) minmax(0, 1fr) minmax(0, .9fr) 170px; gap: 16px; align-items: center; height: 36px; font-size: 12px; font-weight: 600; letter-spacing: .05em; text-transform: uppercase; color: {{t.muted}}; border-bottom: 1px solid {{t.line}};"><span></span><span>Card</span><span>Answer</span><span>Deck</span><span>Tags</span></div>
       <div data-sc-list="cards" ref="{{dragList}}" onPointerDown="{{grabCard}}" style="display: flex; flex-direction: column;"><sc-for list="{{rows}}" as="r" hint-placeholder-count="8">
-        <a href="{{r.href}}" data-sc-item="{{r.id}}" data-sc-from="{{r.deckId}}" draggable="false" class="sc-drag" style="display: grid; grid-template-columns: 36px minmax(0, 1.5fr) minmax(0, 1fr) minmax(0, .9fr) 170px 80px 96px; gap: 16px; align-items: center; height: 60px; border-bottom: 1px solid {{t.line}}; font-size: 14px;">
+        <a href="{{r.href}}" data-sc-item="{{r.id}}" data-sc-from="{{r.deckId}}" draggable="false" class="sc-drag" style="display: grid; grid-template-columns: 36px minmax(0, 1.5fr) minmax(0, 1fr) minmax(0, .9fr) 170px; gap: 16px; align-items: center; height: 60px; border-bottom: 1px solid {{t.line}}; font-size: 14px;">
           <span style="width: 32px; height: 32px; border-radius: 16px; background: {{t.surf}}; display: flex; align-items: center; justify-content: center; font-size: 13px;">{{r.glyph}}</span>
           <span style="min-width: 0; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{r.front}}</span>
           <span style="min-width: 0; color: {{t.muted}}; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{r.back}}</span>
           <span style="min-width: 0; display: flex; align-items: center; gap: 8px;"><span style="width: 14px; height: 14px; flex-shrink: 0; border-radius: 5px; background: {{r.swatch}};"></span><span style="font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{r.deckName}}</span></span>
           <span style="display: flex; gap: 6px; min-width: 0; overflow: hidden;"><sc-if value="{{r.c1.show}}" hint-placeholder-val="{{ true }}"><span style="height: 22px; padding: 0 9px; display: inline-flex; align-items: center; border-radius: 999px; background: {{r.c1.bg}}; color: {{r.c1.fg}}; font-size: 11px; font-weight: 600; white-space: nowrap;">{{r.c1.label}}</span></sc-if><sc-if value="{{r.c2.show}}" hint-placeholder-val="{{ true }}"><span style="height: 22px; padding: 0 9px; display: inline-flex; align-items: center; border-radius: 999px; background: {{r.c2.bg}}; color: {{r.c2.fg}}; font-size: 11px; font-weight: 600; white-space: nowrap;">{{r.c2.label}}</span></sc-if><sc-if value="{{r.cMore.show}}" hint-placeholder-val="{{ false }}"><span data-tip="{{r.cMore.title}}" aria-label="{{r.cMore.title}}" role="img" style="height: 22px; padding: 0 8px; flex-shrink: 0; display: inline-flex; align-items: center; border-radius: 999px; background: {{t.surf}}; color: {{t.muted}}; font-size: 11px; font-weight: 600; white-space: nowrap;">{{r.cMore.label}}</span></sc-if></span>
-          <span style="display: inline-flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 600; color: {{r.levelFg}};"><span style="width: 8px; height: 8px; border-radius: 4px; background: {{r.levelFg}};"></span>{{r.level}}</span>
-          <span style="font-size: 13px; text-align: right;">{{r.next}}</span>
         </a>
       </sc-for></div>
     </div>
@@ -235,7 +233,6 @@ renderVals0() {
     swatches: f.decks.slice(0, 3).map((d, i) => { const C = S && !(d.image && d.image !== 'mock') ? S.coverOf(d, 'wide', 12, 12) : null;
       return { base: C ? C.base : grad(d).base, skin: !!C, art: C ? C.art : null, x: fanned[i][0], y: fanned[i][1], r: fanned[i][2] }; }) }));
   // All cards, filtered by tags (every picked one), by deck or folder, and by the search. Each row says how hard its card is.
-  const LV = { new: ['New', t.easy], easy: ['Easy', t.good], medium: ['Medium', t.hard], hard: ['Hard', t.again] };
   const every = cards ? db.allCards() : [];
   const picked = s.cardTags || [], pick = s.deck || '';
   const inPick = c => !pick || (pick.startsWith('f:') ? c.folder === pick.slice(2) : c.deckId === pick);
@@ -246,7 +243,7 @@ renderVals0() {
   const matched = base.filter(c => inState(c, s.state));
   const toPause = s.state === 'leech' ? matched.filter(c => !c.paused) : s.state === 'paused' ? matched : [];
   const glyphs = { text: 'Aa', blank: '_', image: '▢', audio: '♪' };
-  const rows = matched.slice(0, s.shown).map(c => ({ ...c, glyph: glyphs[c.icon], level: LV[c.level][0], levelFg: LV[c.level][1], swatch: grad(c).base,
+  const rows = matched.slice(0, s.shown).map(c => ({ ...c, glyph: glyphs[c.icon], stateNote: c.pending ? ' · Waiting for you' : c.paused ? ' · Paused' : '', swatch: grad(c).base,
     href: db.mock ? 'WebCardsScreen.dc.html' : c.href, ...cardFit(c.tags) }));
   const cardUses = {}; every.forEach(c => c.tags.forEach(g => { cardUses[g] = (cardUses[g] || 0) + 1; }));
   const tq = (s.tagPickQ || '').trim().toLowerCase(), cardTagNames = Object.keys(cardUses).sort((a, b) => cardUses[b] - cardUses[a] || a.localeCompare(b)).filter(g => !tq || g.toLowerCase().includes(tq));

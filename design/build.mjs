@@ -721,7 +721,7 @@ const SKIN_THUMB = `<sc-if value="{{d.skin}}" hint-placeholder-val="{{ false }}"
 // still says how hard its card is). One board is the whole Library: your folders and decks, one folder's decks (prop
 // `folder`), or all your cards (prop `mode`). The app gives each its own address: /library, /library/folder/<id>, /library/cards.
 const LIST_COLS = 'display: grid; grid-template-columns: 44px minmax(0, 1fr) 70px 80px 120px 164px; gap: 16px; align-items: center;';
-const CARD_COLS = 'display: grid; grid-template-columns: 36px minmax(0, 1.5fr) minmax(0, 1fr) minmax(0, .9fr) 170px 80px 96px; gap: 16px; align-items: center;';
+const CARD_COLS = 'display: grid; grid-template-columns: 36px minmax(0, 1.5fr) minmax(0, 1fr) minmax(0, .9fr) 170px; gap: 16px; align-items: center;';
 // Decks or All cards: two links, since each is its own page.
 const libModes = (h, fs = 13, grow = false) => `<div role="group" aria-label="Show" style="display: flex; gap: 2px; padding: 4px; border-radius: 999px; background: {{t.surf}};"><sc-for list="{{modes}}" as="m" hint-placeholder-count="2"><a href="{{m.href}}" aria-current="{{m.current}}" style="height: ${h}px; padding: 0 16px; ${grow ? 'flex: 1 1 0; ' : ''}display: inline-flex; align-items: center; justify-content: center; border-radius: 999px; background: {{m.bg}}; color: {{m.fg}}; box-shadow: {{m.sh}}; font-size: ${fs}px; font-weight: 600; white-space: nowrap;">{{m.label}}</a></sc-for></div>`;
 // A folder: its first decks' colors fanned like cards, its name, and how many decks and due cards are in it.
@@ -762,7 +762,6 @@ const LIFT_JS = `const liftTile = 'border-radius:20px!important;box-shadow:0 30p
 const moveMenu = pos => `<sc-if value="{{d.moveOpen}}" hint-placeholder-val="{{ false }}"><div role="dialog" aria-label="Move {{d.name}}" data-sc-pop style="position: absolute; ${pos} z-index: 25; width: 240px; ${popBox} text-shadow: none;"><span style="padding: 8px 12px 4px; font-size: 12px; font-weight: 600; color: {{t.muted}};">Move to</span><sc-for list="{{d.moveTo}}" as="o" hint-placeholder-count="3"><button type="button" onClick="{{o.pick}}" aria-pressed="{{o.pressed}}" style="height: 38px; flex-shrink: 0; padding: 0 12px; display: flex; align-items: center; gap: 10px; border: 0; border-radius: 12px; background: transparent; color: {{t.text}}; font: inherit; font-size: 14px; text-align: left; cursor: pointer;"><span style="display: flex; color: {{t.muted}};">${svg(I.folder, 16, 1.8)}</span><span style="flex-grow: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{o.label}}</span><sc-if value="{{o.on}}" hint-placeholder-val="{{ false }}"><span style="display: flex;">${svg(I.check, 14, 2.4)}</span></sc-if></button></sc-for><button type="button" onClick="{{d.newFolder}}" style="height: 38px; flex-shrink: 0; padding: 0 12px; display: flex; align-items: center; gap: 10px; border: 0; border-radius: 12px; background: {{t.surf}}; color: {{t.text}}; font: inherit; font-size: 14px; font-weight: 600; text-align: left; cursor: pointer;">${svg(I.plus, 13, 2.4)}New folder</button></div></sc-if>`;
 const moveBtn = (bg, size = 32) => `<button type="button" onClick="{{d.toggleMove}}" aria-label="Move {{d.name}} to a folder" aria-expanded="{{d.moveExpanded}}" style="width: ${size}px; height: ${size}px; flex-shrink: 0; border: 0; border-radius: ${size / 2}px; ${bg} display: flex; align-items: center; justify-content: center; cursor: pointer; pointer-events: auto;">${svg(I.more, 16, 2)}</button>`;
 // All cards: how hard each one is, as a colored dot and word.
-const levelTag = `<span style="display: inline-flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 600; color: {{r.levelFg}};"><span style="width: 8px; height: 8px; border-radius: 4px; background: {{r.levelFg}};"></span>{{r.level}}</span>`;
 // All cards: the cards you keep forgetting, and the ones you paused, each a filter of its own (shown once there are
 // some); and, filtered to one of them, pausing or unpausing them all.
 const stateChips = h => `<sc-for list="{{states}}" as="x" hint-placeholder-count="2"><button type="button" onClick="{{x.pick}}" aria-pressed="{{x.pressed}}" style="height: ${h}px; flex-shrink: 0; padding: 0 14px 0 12px; display: inline-flex; align-items: center; gap: 7px; border: 0; border-radius: 999px; background: {{x.bg}}; color: {{x.fg}}; font: inherit; font-size: 13px; font-weight: 600; white-space: nowrap; cursor: pointer;"><sc-if value="{{x.isLeech}}" hint-placeholder-val="{{ true }}">${svg(I.again, 14, 2)}</sc-if><sc-if value="{{x.isPaused}}" hint-placeholder-val="{{ false }}">${svg(I.pauseRing, 14, 2)}</sc-if><span>{{x.label}}</span><span style="font-family: ${MONO}; font-size: 11px; opacity: .6;">{{x.count}}</span></button></sc-for>`;
@@ -844,7 +843,7 @@ const webDecks = webRoot(`${sidebar('Library')}
       <span style="font-size: 13px; color: {{t.muted}};">{{cardCount}}</span>
     </div>
     <div style="display: flex; flex-direction: column;">
-      <div style="${CARD_COLS} height: 36px; font-size: 12px; font-weight: 600; letter-spacing: .05em; text-transform: uppercase; color: {{t.muted}}; border-bottom: 1px solid {{t.line}};"><span></span><span>Card</span><span>Answer</span><span>Deck</span><span>Tags</span><span>Difficulty</span><span style="text-align: right;">Next</span></div>
+      <div style="${CARD_COLS} height: 36px; font-size: 12px; font-weight: 600; letter-spacing: .05em; text-transform: uppercase; color: {{t.muted}}; border-bottom: 1px solid {{t.line}};"><span></span><span>Card</span><span>Answer</span><span>Deck</span><span>Tags</span></div>
       <div data-sc-list="cards" ref="{{dragList}}" onPointerDown="{{grabCard}}" style="display: flex; flex-direction: column;"><sc-for list="{{rows}}" as="r" hint-placeholder-count="8">
         <a href="{{r.href}}" data-sc-item="{{r.id}}" data-sc-from="{{r.deckId}}" draggable="false" class="sc-drag" style="${CARD_COLS} height: 60px; border-bottom: 1px solid {{t.line}}; font-size: 14px;">
           <span style="width: 32px; height: 32px; border-radius: 16px; background: {{t.surf}}; display: flex; align-items: center; justify-content: center; font-size: 13px;">{{r.glyph}}</span>
@@ -852,8 +851,6 @@ const webDecks = webRoot(`${sidebar('Library')}
           <span style="min-width: 0; color: {{t.muted}}; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{r.back}}</span>
           <span style="min-width: 0; display: flex; align-items: center; gap: 8px;"><span style="width: 14px; height: 14px; flex-shrink: 0; border-radius: 5px; background: {{r.swatch}};"></span><span style="font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{r.deckName}}</span></span>
           <span style="display: flex; gap: 6px; min-width: 0; overflow: hidden;">${cardTag('c1')}${cardTag('c2')}${cardMore}</span>
-          ${levelTag}
-          <span style="font-size: 13px; text-align: right;">{{r.next}}</span>
         </a>
       </sc-for></div>
     </div>
@@ -924,7 +921,6 @@ renderVals() {
     swatches: f.decks.slice(0, 3).map((d, i) => { const C = S && !(d.image && d.image !== 'mock') ? S.coverOf(d, 'wide', 12, 12) : null;
       return { base: C ? C.base : grad(d).base, skin: !!C, art: C ? C.art : null, x: fanned[i][0], y: fanned[i][1], r: fanned[i][2] }; }) }));
   // All cards, filtered by tags (every picked one), by deck or folder, and by the search. Each row says how hard its card is.
-  const LV = { new: ['New', t.easy], easy: ['Easy', t.good], medium: ['Medium', t.hard], hard: ['Hard', t.again] };
   const every = cards ? db.allCards() : [];
   const picked = s.cardTags || [], pick = s.deck || '';
   const inPick = c => !pick || (pick.startsWith('f:') ? c.folder === pick.slice(2) : c.deckId === pick);
@@ -935,7 +931,7 @@ renderVals() {
   const matched = base.filter(c => inState(c, s.state));
   const toPause = s.state === 'leech' ? matched.filter(c => !c.paused) : s.state === 'paused' ? matched : [];
   const glyphs = { text: 'Aa', blank: '_', image: '▢', audio: '♪' };
-  const rows = matched.slice(0, s.shown).map(c => ({ ...c, glyph: glyphs[c.icon], level: LV[c.level][0], levelFg: LV[c.level][1], swatch: grad(c).base,
+  const rows = matched.slice(0, s.shown).map(c => ({ ...c, glyph: glyphs[c.icon], stateNote: c.pending ? ' · Waiting for you' : c.paused ? ' · Paused' : '', swatch: grad(c).base,
     href: db.mock ? ${phone ? "'PhoneEditor.dc.html'" : "'WebCardsScreen.dc.html'"} : c.href, ...cardFit(c.tags) }));
   const cardUses = {}; every.forEach(c => c.tags.forEach(g => { cardUses[g] = (cardUses[g] || 0) + 1; }));
   const tq = (s.tagPickQ || '').trim().toLowerCase(), cardTagNames = Object.keys(cardUses).sort((a, b) => cardUses[b] - cardUses[a] || a.localeCompare(b)).filter(g => !tq || g.toLowerCase().includes(tq));
@@ -1367,11 +1363,10 @@ const webDeck = webRoot(`${sidebar('Library')}
   </div>
   <div data-sc-list="cards" ref="{{dragList}}" onPointerDown="{{grab}}" style="display: flex; flex-direction: column;">
     <sc-for list="{{rows}}" as="r" hint-placeholder-count="6">
-      <a href="{{r.href}}" data-sc-item="{{r.id}}" draggable="false" class="sc-drag" style="display: grid; grid-template-columns: 36px minmax(0, 1.4fr) minmax(0, 1fr) 100px; gap: 16px; align-items: center; height: 64px; border-bottom: 1px solid {{t.line}}; font-size: 14px;">
+      <a href="{{r.href}}" data-sc-item="{{r.id}}" draggable="false" class="sc-drag" style="display: grid; grid-template-columns: 36px minmax(0, 1.4fr) minmax(0, 1fr); gap: 16px; align-items: center; height: 64px; border-bottom: 1px solid {{t.line}}; font-size: 14px;">
         <span style="width: 32px; height: 32px; border-radius: 16px; background: {{t.surf}}; display: flex; align-items: center; justify-content: center;">{{r.glyph}}</span>
-        <span style="min-width: 0; display: flex; flex-direction: column; gap: 2px;"><span style="font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{r.front}}</span><span style="font-size: 12px; color: {{t.muted}};">{{r.kind}}{{r.aiNote}}</span></span>
+        <span style="min-width: 0; display: flex; flex-direction: column; gap: 2px;"><span style="font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{r.front}}</span><span style="font-size: 12px; color: {{t.muted}};">{{r.kind}}{{r.aiNote}}{{r.stateNote}}</span></span>
         <span style="color: {{t.muted}}; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{r.back}}</span>
-        <span style="font-size: 13px; text-align: right;">{{r.next}}</span>
       </a>
     </sc-for>
   </div>
@@ -1416,7 +1411,7 @@ renderVals() {
   const menuOpen = !!this.state.tagMenuOpen;
   // A row is the card: its icon, question and kind, answer, and when it's next (no tag chips, like the iPhone's, 2026-10-02; Tags ▾ filters).
   const rows = allRows.filter(r => (f === 'All' || r.kind === f || r.tags.includes(f)) && (!q || [r.front, r.back, ...r.tags].join(' ').toLowerCase().includes(q)))
-    .map(r => ({ ...r, glyph: glyphs[r.icon], aiNote: r.ai ? ' · ' + r.ai : '' }));
+    .map(r => ({ ...r, glyph: glyphs[r.icon], aiNote: r.ai ? ' · ' + r.ai : '', stateNote: r.pending ? ' · Waiting for you' : r.paused ? ' · Paused' : '' }));
   return {
     t, rows, ...chrome, ...coverVals, ...cardDrag, gs, vw, dg, query: this.state.q || '', setQuery: e => this.setState({ q: e && e.target ? e.target.value : '' }),
     filters: labels.map(l => ({ label: l, pressed: l === f ? 'true' : 'false', bg: l === f ? t.inv : t.surf, fg: l === f ? t.invText : t.text, pick: () => this.setState({ filter: l, tagMenuOpen: false }) })),
@@ -3707,7 +3702,7 @@ const phoneLibrary = phone(`<div style="padding: 64px 20px 120px; display: flex;
       <sc-for list="{{rows}}" as="r" hint-placeholder-count="6">
         <a href="{{r.href}}" data-sc-item="{{r.id}}" data-sc-from="{{r.deckId}}" draggable="false" class="sc-drag" style="display: flex; flex-direction: column; gap: 6px; padding: 12px 0; border-bottom: 1px solid {{t.line}};">
           <span style="font-size: 15px; font-weight: 500; line-height: 1.35; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">{{r.front}}</span>
-          <span style="display: flex; align-items: center; gap: 8px; min-width: 0; font-size: 13px; color: {{t.muted}};"><span style="width: 12px; height: 12px; flex-shrink: 0; border-radius: 4px; background: {{r.swatch}};"></span><span style="min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{r.deckName}}</span>${levelTag}<span style="flex-grow: 1;"></span><span style="flex-shrink: 0;">{{r.next}}</span></span>
+          <span style="display: flex; align-items: center; gap: 8px; min-width: 0; font-size: 13px; color: {{t.muted}};"><span style="width: 12px; height: 12px; flex-shrink: 0; border-radius: 4px; background: {{r.swatch}};"></span><span style="min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{r.deckName}}{{r.stateNote}}</span></span>
         </a>
       </sc-for>
     </div>
@@ -3794,7 +3789,7 @@ const phoneDeck = phone(`<div style="height: 100%; overflow-y: auto; scrollbar-w
     <sc-if value="{{gs.showCards}}" hint-placeholder-val="{{ true }}">
     <div data-sc-list="cards" ref="{{dragList}}" onPointerDown="{{grab}}" style="display: flex; flex-direction: column;">
       <sc-for list="{{rows}}" as="r" hint-placeholder-count="4">
-        <a href="{{r.href}}" data-sc-item="{{r.id}}" draggable="false" class="sc-drag" style="display: flex; flex-direction: column; gap: 3px; padding: 12px 0; border-bottom: 1px solid {{t.line}};"><span style="font-size: 15px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{r.front}}</span><span style="font-size: 13px; color: {{t.muted}}; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{r.kind}} · {{r.next}}</span></a>
+        <a href="{{r.href}}" data-sc-item="{{r.id}}" draggable="false" class="sc-drag" style="display: flex; flex-direction: column; gap: 3px; padding: 12px 0; border-bottom: 1px solid {{t.line}};"><span style="font-size: 15px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{r.front}}</span><span style="font-size: 13px; color: {{t.muted}}; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{r.kind}}{{r.stateNote}}</span></a>
       </sc-for>
     </div>
     <sc-if value="{{gs.noCards}}" hint-placeholder-val="{{ false }}"><span style="font-size: 14px; color: {{t.muted}};">No cards in this deck yet.</span></sc-if>
@@ -3823,7 +3818,7 @@ renderVals() { ${T}${DB_JS}${COVER_LOGIC}${DECK_MATERIALS_JS}
   return { t, ...chrome, dark: !!this.props.dark, ...coverVals, ...cardDrag, gs, vw, dg,
     // Every card (all six sample cards on the canvas, so the page scrolls and shows the cover's parallax); each opens
     // in the editor. A row is the card: its question, then its kind and when it's next (no tag chips, 2026-10-02).
-    rows: db.cards(dk.id).map(r => ({ ...r, href: db.mock ? 'PhoneEditor.dc.html' : r.href })),
+    rows: db.cards(dk.id).map(r => ({ ...r, href: db.mock ? 'PhoneEditor.dc.html' : r.href, stateNote: r.pending ? ' · Waiting for you' : r.paused ? ' · Paused' : '' })),
     learnHref: db.mock ? 'PhoneQuizStart.dc.html' : db.learnOn(dk.id) ? '/learn/' + dk.id : '/deck/' + dk.id + '/learn', learnShort: 'Learn' }; }`;
 
 // The fields scroll under the header when they're taller than the sheet. The keyboard is drawn on the canvas only: in

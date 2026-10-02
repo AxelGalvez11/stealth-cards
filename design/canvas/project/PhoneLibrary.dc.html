@@ -65,7 +65,7 @@
       <sc-for list="{{rows}}" as="r" hint-placeholder-count="6">
         <a href="{{r.href}}" data-sc-item="{{r.id}}" data-sc-from="{{r.deckId}}" draggable="false" class="sc-drag" style="display: flex; flex-direction: column; gap: 6px; padding: 12px 0; border-bottom: 1px solid {{t.line}};">
           <span style="font-size: 15px; font-weight: 500; line-height: 1.35; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">{{r.front}}</span>
-          <span style="display: flex; align-items: center; gap: 8px; min-width: 0; font-size: 13px; color: {{t.muted}};"><span style="width: 12px; height: 12px; flex-shrink: 0; border-radius: 4px; background: {{r.swatch}};"></span><span style="min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{r.deckName}}</span><span style="display: inline-flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 600; color: {{r.levelFg}};"><span style="width: 8px; height: 8px; border-radius: 4px; background: {{r.levelFg}};"></span>{{r.level}}</span><span style="flex-grow: 1;"></span><span style="flex-shrink: 0;">{{r.next}}</span></span>
+          <span style="display: flex; align-items: center; gap: 8px; min-width: 0; font-size: 13px; color: {{t.muted}};"><span style="width: 12px; height: 12px; flex-shrink: 0; border-radius: 4px; background: {{r.swatch}};"></span><span style="min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{r.deckName}}{{r.stateNote}}</span></span>
         </a>
       </sc-for>
     </div>
@@ -204,7 +204,6 @@ renderVals0() {
     swatches: f.decks.slice(0, 3).map((d, i) => { const C = S && !(d.image && d.image !== 'mock') ? S.coverOf(d, 'wide', 12, 12) : null;
       return { base: C ? C.base : grad(d).base, skin: !!C, art: C ? C.art : null, x: fanned[i][0], y: fanned[i][1], r: fanned[i][2] }; }) }));
   // All cards, filtered by tags (every picked one), by deck or folder, and by the search. Each row says how hard its card is.
-  const LV = { new: ['New', t.easy], easy: ['Easy', t.good], medium: ['Medium', t.hard], hard: ['Hard', t.again] };
   const every = cards ? db.allCards() : [];
   const picked = s.cardTags || [], pick = s.deck || '';
   const inPick = c => !pick || (pick.startsWith('f:') ? c.folder === pick.slice(2) : c.deckId === pick);
@@ -215,7 +214,7 @@ renderVals0() {
   const matched = base.filter(c => inState(c, s.state));
   const toPause = s.state === 'leech' ? matched.filter(c => !c.paused) : s.state === 'paused' ? matched : [];
   const glyphs = { text: 'Aa', blank: '_', image: '▢', audio: '♪' };
-  const rows = matched.slice(0, s.shown).map(c => ({ ...c, glyph: glyphs[c.icon], level: LV[c.level][0], levelFg: LV[c.level][1], swatch: grad(c).base,
+  const rows = matched.slice(0, s.shown).map(c => ({ ...c, glyph: glyphs[c.icon], stateNote: c.pending ? ' · Waiting for you' : c.paused ? ' · Paused' : '', swatch: grad(c).base,
     href: db.mock ? 'PhoneEditor.dc.html' : c.href, ...cardFit(c.tags) }));
   const cardUses = {}; every.forEach(c => c.tags.forEach(g => { cardUses[g] = (cardUses[g] || 0) + 1; }));
   const tq = (s.tagPickQ || '').trim().toLowerCase(), cardTagNames = Object.keys(cardUses).sort((a, b) => cardUses[b] - cardUses[a] || a.localeCompare(b)).filter(g => !tq || g.toLowerCase().includes(tq));

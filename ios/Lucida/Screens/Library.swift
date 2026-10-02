@@ -34,7 +34,9 @@ struct LibFolder: Identifiable {
 
 /// A card in All cards (db.js allCards): its words, its deck, how hard it is, and when it's next.
 struct LibCard: Identifiable {
-  var id = "", front = "", back = "", tags: [String] = [], next = "", level = "new"
+  var id = "", front = "", back = "", tags: [String] = []
+  /// "Paused" or "Waiting for you"; a card's grade and next date aren't shown in lists (the owner, 2026-10-02: "remove the 'difficulty and next columns'").
+  var state = ""
   var deckId = "", deckName = ""
   var mesh: Mesh
   var folder: String? = nil
@@ -83,7 +85,7 @@ extension Store {
         let deckId = demoCardDeck["a\(i)"] ?? a.deckId, name = X.DECKS.first { $0.id == deckId }?.name ?? ""
         // Three of the sample cards are ones you keep forgetting; Markovnikov's rule is paused (mock.mjs).
         let paused = isPaused("a\(i)")
-        return LibCard(id: "a\(i)", front: a.front, back: a.back, tags: a.tags, next: paused ? "Paused" : a.next, level: a.level, deckId: deckId, deckName: name,
+        return LibCard(id: "a\(i)", front: a.front, back: a.back, tags: a.tags, state: paused ? "Paused" : "", deckId: deckId, deckName: name,
                        mesh: Mesh.deck(seed: name), folder: demoFolderOf(deckId), paused: paused, leech: [1, 6, 10].contains(i))
       }
     }
@@ -91,12 +93,9 @@ extension Store {
     let E = engine
     var decks: [String: (deck: Deck, mesh: Mesh)] = [:]
     for d in lib.decks where decks[d.id] == nil { decks[d.id] = (d, Mesh.deck(seed: d.cover.seed ?? d.name, round: d.cover.round, style: d.cover.style)) }
-    // Each card's last answer, for decks that don't schedule.
-    var last: [String: Int] = [:]
-    for l in lib.logs { if let r = l.rating, r > 0 { last[l.cardId] = r } }
     let out = lib.cards.filter { !$0.pending }.reversed().map { c -> LibCard in
       let d = decks[c.deckId]
-      return LibCard(id: c.id, front: Store.listFront(c), back: Store.listBack(c), tags: c.tags, next: E.nextLabel(c), level: difficulty(c, deck: d?.deck, last: last[c.id]),
+      return LibCard(id: c.id, front: Store.listFront(c), back: Store.listBack(c), tags: c.tags, state: c.pending ? "Waiting for you" : c.paused ? "Paused" : "",
                      deckId: c.deckId, deckName: d?.deck.name ?? "", mesh: d?.mesh ?? Mesh.deck(seed: ""), folder: d?.deck.folder,
                      paused: c.paused, leech: Sched.isLeech(c, d?.deck))
     }
@@ -558,11 +557,8 @@ struct LibraryScreen: View {
       LabelText(text: Rich.nsText([Rich.Run(t: c.front, m: "")], size: 15, weight: .medium, lh: 1.35, color: UIColor(t.text), dark: t.dark), lines: 2, clamp: true)
       HStack(spacing: 8) {
         CSSLinearGradient(angle: c.mesh.angle, stops: c.mesh.stops).frame(width: 12, height: 12).clipShape(RoundedRectangle(cornerRadius: 4, style: .continuous))
-        Text(c.deckName).css(13).foregroundStyle(t.muted).lineLimit(1)
-        HStack(spacing: 6) { Circle().frame(width: 8, height: 8); Text(Level.name(c.level)).css(13, .semibold) }
-          .foregroundStyle(Level.color(c.level, t)).fixedSize()
+        Text(c.deckName + (c.state.isEmpty ? "" : " · " + c.state)).css(13).foregroundStyle(t.muted).lineLimit(1)
         Spacer(minLength: 0)
-        Text(c.next).css(13).foregroundStyle(t.muted).fixedSize()
       }
     }
     .padding(.vertical, 12)

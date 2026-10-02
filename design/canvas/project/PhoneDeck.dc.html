@@ -73,7 +73,7 @@
     <sc-if value="{{gs.showCards}}" hint-placeholder-val="{{ true }}">
     <div data-sc-list="cards" ref="{{dragList}}" onPointerDown="{{grab}}" style="display: flex; flex-direction: column;">
       <sc-for list="{{rows}}" as="r" hint-placeholder-count="4">
-        <a href="{{r.href}}" data-sc-item="{{r.id}}" draggable="false" class="sc-drag" style="display: flex; flex-direction: column; gap: 3px; padding: 12px 0; border-bottom: 1px solid {{t.line}};"><span style="font-size: 15px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{r.front}}</span><span style="font-size: 13px; color: {{t.muted}}; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{r.kind}} · {{r.next}}</span></a>
+        <a href="{{r.href}}" data-sc-item="{{r.id}}" draggable="false" class="sc-drag" style="display: flex; flex-direction: column; gap: 3px; padding: 12px 0; border-bottom: 1px solid {{t.line}};"><span style="font-size: 15px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{r.front}}</span><span style="font-size: 13px; color: {{t.muted}}; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{r.kind}}{{r.stateNote}}</span></a>
       </sc-for>
     </div>
     <sc-if value="{{gs.noCards}}" hint-placeholder-val="{{ false }}"><span style="font-size: 14px; color: {{t.muted}};">No cards in this deck yet.</span></sc-if>
@@ -4523,7 +4523,7 @@ renderVals0() { const t = this.theme(!!this.props.dark, !!this.props.dim);const 
   return { t, ...chrome, dark: !!this.props.dark, ...coverVals, ...cardDrag, gs, vw, dg,
     // Every card (all six sample cards on the canvas, so the page scrolls and shows the cover's parallax); each opens
     // in the editor. A row is the card: its question, then its kind and when it's next (no tag chips, 2026-10-02).
-    rows: db.cards(dk.id).map(r => ({ ...r, href: db.mock ? 'PhoneEditor.dc.html' : r.href })),
+    rows: db.cards(dk.id).map(r => ({ ...r, href: db.mock ? 'PhoneEditor.dc.html' : r.href, stateNote: r.pending ? ' · Waiting for you' : r.paused ? ' · Paused' : '' })),
     learnHref: db.mock ? 'PhoneQuizStart.dc.html' : db.learnOn(dk.id) ? '/learn/' + dk.id : '/deck/' + dk.id + '/learn', learnShort: 'Learn' }; }
 }
 </script>

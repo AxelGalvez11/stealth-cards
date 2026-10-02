@@ -64,7 +64,7 @@ extension Store {
       let d = DeckVM(id: "cell", name: e.name ?? "Cell Biology", seed: "Cell Biology", style: e.style ?? "mix", round: e.round, image: e.image,
                      lineShort: "412 cards", studyCount: 28,
                      rows: demoCardOrder.compactMap { id in X.CARDS.first { $0.id == id } }.filter { (demoCardDeck[$0.id] ?? "cell") == "cell" }
-                       .map { CardRowVM(id: $0.id, front: $0.front, meta: $0.kind + " · " + (isPaused($0.id) ? "Paused" : $0.next), tags: $0.tags) },
+                       .map { CardRowVM(id: $0.id, front: $0.front, meta: $0.kind + (isPaused($0.id) ? " · Paused" : ""), tags: $0.tags) },
                      tags: e.tags ?? X.TAGS["cell"] ?? [],
                      paused: e.paused, grading: e.grading ?? props.grading, fsrs: e.fsrs, goal: e.goal, gapIdx: e.gapIdx, steps: e.steps, perDay: e.perDay,
                      exam: Store.demoExam(day: examDay), examDay: examDay ?? "", leechAt: e.leechAt, leechAct: e.leechAct,
@@ -78,7 +78,7 @@ extension Store {
     let total = plural(st.total, "card").replacingOccurrences(of: String(st.total), with: grouped(st.total))
     return DeckVM(id: d.id, name: d.name, seed: d.cover.seed ?? d.name, style: d.cover.style ?? "mix", round: d.cover.round, image: d.cover.image,
                   lineShort: total, studyCount: st.due > 0 ? st.due : st.fresh, resume: learnOn(id),
-                  rows: cards.map { c in CardRowVM(id: c.id, front: Store.listFront(c), meta: (KIND_LABEL[c.kind] ?? "Basic") + " · " + E.nextLabel(c), tags: c.tags, origin: c.origin) },
+                  rows: cards.map { c in CardRowVM(id: c.id, front: Store.listFront(c), meta: (KIND_LABEL[c.kind] ?? "Basic") + (c.pending ? " · Waiting for you" : c.paused ? " · Paused" : ""), tags: c.tags, origin: c.origin) },
                   tags: d.tags, paused: d.paused, grading: d.grading, fsrs: d.fsrs, goal: d.goal, gapIdx: d.gapIdx, steps: d.steps, perDay: d.perDay,
                   exam: st.exam, examDay: d.exam ?? "", leechAt: Sched.leechAt(d), leechAct: Sched.leechAct(d),
                   folder: d.folder, folders: lib.folders.map { ($0.id, $0.name) }, bg: d.bg, sharing: sharing(d))
