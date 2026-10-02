@@ -37,20 +37,20 @@ export const overlayTemplates = () => ({
 // The question as a board's Tweak shows it: each board lists the questions it can ask (ASK_SAMPLES holds their words, the same as the
 // app's), and `this.askPreview(t, ASK_SAMPLES)` turns the Tweak's choice into the holes the markup reads.
 export const ASK_SAMPLES = {
-  'Delete deck': { title: 'Delete “MCAT Biochemistry”?', line: 'Its 42 cards go too. This can’t be undone.', action: 'Delete deck', danger: true },
-  'Remove from library': { title: 'Remove “MCAT Biochemistry”?', line: 'Your progress on it goes too.', action: 'Remove', danger: true },
-  'Remove folder': { title: 'Remove the folder “Med school”?', line: 'Its decks stay in your library.', action: 'Remove folder', danger: true },
+  'Delete deck': { title: 'Delete “Cell Biology”?', line: 'Its 412 cards go too. This can’t be undone.', action: 'Delete deck', danger: true },
+  'Remove from library': { title: 'Remove “MCAT Biochemistry” from your library?', line: 'Your progress on it goes too.', action: 'Remove', danger: true },
+  'Remove folder': { title: 'Remove the folder “Languages”?', line: 'Its decks stay in your library.', action: 'Remove folder', danger: true },
   'Delete card': { title: 'Delete this card?', line: '', action: 'Delete card', danger: true },
   'Leave without saving': { title: 'Leave anyway?', line: 'Your new card isn’t finished, so it won’t be added.', action: 'Leave', danger: false },
-  'Delete my data': { title: 'Delete all your data?', line: 'Every deck, card and review goes. This can’t be undone.', action: 'Delete my data', danger: true },
+  'Delete my data': { title: 'Delete all your data?', line: 'Every deck, card and review goes, and your profile and shared decks. This can’t be undone.', action: 'Delete my data', danger: true },
   'Sign out': { title: 'Sign out of Lucida?', line: '', action: 'Sign out', danger: false },
-  'Delete source': { title: 'Delete “Lecture 4.m4a”?', line: 'Its file goes. The 6 cards made from it stay in the deck.', action: 'Delete', danger: true },
-  'Delete page': { title: 'Delete the page “Week 3”?', line: '', action: 'Delete page', danger: true },
-  'Disconnect app': { title: 'Disconnect Claude?', line: 'It can’t use your decks until you connect it again.', action: 'Disconnect', danger: true },
+  'Delete source': { title: 'Delete “Lecture 4 · Sep 21”?', line: 'Its file goes. The 18 cards made from it stay in the deck.', action: 'Delete', danger: true },
+  'Delete page': { title: 'Delete the page “Lecture 3 summary”?', line: '', action: 'Delete page', danger: true },
+  'Disconnect app': { title: 'Disconnect Claude?', line: 'It can’t use your decks until you connect it again.', action: 'Disconnect', danger: false },
   'New link': { title: 'Make a new link?', line: 'AI apps using the old one stop working until you give them the new one.', action: 'Make a new link', danger: false },
-  'Leave class': { title: 'Leave “Biology 101”?', line: 'The decks you study from it stay in your library.', action: 'Leave class', danger: true },
-  'Delete class': { title: 'Delete “Biology 101”?', line: 'Everyone in it keeps the decks they study.', action: 'Delete class', danger: true },
-  'Take out of class': { title: 'Take Maria out of the class?', line: '', action: 'Take out', danger: true }
+  'Leave class': { title: 'Leave “BIO 201”?', line: 'The decks you study from it stay in your library.', action: 'Leave class', danger: false },
+  'Delete class': { title: 'Delete “BIO 201”?', line: 'Everyone in it keeps the decks they study.', action: 'Delete class', danger: true },
+  'Take out of class': { title: 'Take Sam Rivera out of the class?', line: '', action: 'Take out', danger: false }
 };
 export const ASK_JS = `askPreview(t, samples) {
   const q = samples[this.props.ask || ''];

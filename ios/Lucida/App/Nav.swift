@@ -104,8 +104,14 @@ final class Nav: ObservableObject {
 
   /// A question is waiting for its answer from the server (Delete account, Block): its sheet stays until it comes.
   @Published var asking = false
+  /// A question over everything, in Lucida's own sheet (Design/Question.swift): the system's confirmation dialog and alert never show.
+  @Published var question: AskRequest?
+  /// A calendar open under a button (an exam date, a class's due date): Lucida's own, never the system's date picker (Design/CalendarPicker.swift).
+  @Published var calendar: CalendarRequest?
+  /// Lucida's own camera, over everything (Screens/Camera.swift), never the system's camera sheet.
+  @Published var camera: CameraRequest?
   /// Back to Today with nothing open (signed out, or the account is gone).
-  func reset() { sheet = nil; full = nil; boardFull = nil; path = []; tab = .today; libCards = false; libClasses = false; asking = false; barHidden = false }
+  func reset() { sheet = nil; full = nil; boardFull = nil; path = []; tab = .today; libCards = false; libClasses = false; asking = false; barHidden = false; question = nil; calendar = nil; camera = nil }
   func push(_ r: Route) { path.append(r) }
   func back() { if !path.isEmpty { path.removeLast() } }
   func study(deckId: String?, pile: String? = nil) { withAnimation(Motion.sheet) { full = .review(deckId: deckId, pile: pile) } }

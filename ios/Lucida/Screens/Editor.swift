@@ -166,7 +166,7 @@ struct EditorSheet: View {
                   }
                   .buttonStyle(.plain)
                   .accessibilityAddTraits(paused ? .isSelected : [])
-                  Button { Buzz.shared.light("card deleted"); Task { await store.deleteCard(id); nav.close() } } label: { Text("Delete card").css(14, .semibold).foregroundStyle(t.again).frame(minHeight: 44) }.buttonStyle(.plain)
+                  Button { nav.ask("Delete this card?", action: "Delete card", danger: true) { Buzz.shared.light("card deleted"); Task { await store.deleteCard(id); nav.close() } } } label: { Text("Delete card").css(14, .semibold).foregroundStyle(t.again).frame(minHeight: 44) }.buttonStyle(.plain)
                 }
               }
             }

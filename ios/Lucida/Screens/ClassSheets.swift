@@ -95,7 +95,8 @@ struct ClassAssignSheet: View {
   @State private var due: String? = nil
   @State private var err = ""
   @State private var busy = false
-  @State private var calendar = false
+  /// Where the date's row is on the screen: the calendar opens under it.
+  @State private var dateFrame = CGRect.zero
 
   var body: some View {
     let k = store.netClass(code.uppercased())?.value, decks = k?.deckList ?? []
@@ -176,35 +177,28 @@ struct ClassAssignSheet: View {
     .accessibilityAddTraits(on ? [.isButton, .isSelected] : .isButton)
   }
 
-  /// The date: the browser's own field on the web (10/05/2026, its parts a little apart, and its calendar mark); here the
-  /// same look, and a calendar to pick from.
+  /// The date: a row with a calendar mark and the day (like the web's), which opens Lucida's own calendar under it.
   private func dateField(_ v: String, min: Date) -> some View {
-    let day = ClassWords.dateAt(v)
-    let f = DateFormatter(); f.locale = Locale(identifier: "en_US"); f.dateFormat = "MM/dd/yyyy"
-    let parts = f.string(from: day).split(separator: "/").map(String.init)
-    return Button { calendar = true } label: {
+    let minIso = ClassWords.isoDay(min)
+    return Button {
+      nav.openCalendar(CalendarRequest(anchor: dateFrame, trailing: false, title: "Due date", value: v, min: minIso, today: minIso) { iso in due = iso })
+    } label: {
       HStack(spacing: 10) {
         Icon("calendar", 18, 1.8).foregroundStyle(t.muted)
-        HStack(spacing: 0) {
-          ForEach(Array(parts.enumerated()), id: \.offset) { i, p in
-            if i > 0 { Text("/").padding(.horizontal, 0.45) }
-            Text(p).padding(.horizontal, i == 0 ? 0 : 0.45)
-          }
-        }
-        .css(15).foregroundStyle(t.text).padding(.leading, 2).frame(maxWidth: .infinity, alignment: .leading)
-        DateMark().foregroundStyle(t.text).padding(.trailing, 3.8)
+        Text(CalDay.short(v)).css(15).foregroundStyle(t.text).frame(maxWidth: .infinity, alignment: .leading)
       }
       .padding(.horizontal, 16).frame(height: 48)
       .background(RoundedRectangle(cornerRadius: 16, style: .continuous).fill(t.surf))
       .contentShape(Rectangle())
+      .screenFrame($dateFrame)
     }
     .buttonStyle(.flat)
     .accessibilityLabel("Date")
-    .accessibilityValue(f.string(from: day))
-    .popover(isPresented: $calendar) {
-      DatePicker("", selection: Binding(get: { day }, set: { due = ClassWords.isoDay($0) }), in: min..., displayedComponents: .date)
-        .datePickerStyle(.graphical).labelsHidden().padding(8).frame(width: 328).presentationCompactAdaptation(.popover)
-    }
+    .accessibilityValue(CalDay.short(v))
+    #if DEBUG
+    // `-calendar "Due date"`: the calendar open as soon as the sheet is up (a board's Calendar Tweak, for looking at it).
+    .task { if Board.arg("-calendar") == "Due date" { try? await Task.sleep(nanoseconds: 1_200_000_000); nav.openCalendar(CalendarRequest(anchor: dateFrame, trailing: false, title: "Due date", value: v, min: minIso, today: minIso) { iso in due = iso }) } }
+    #endif
   }
 
   private func assign(_ k: ClassPage?, _ pickId: String, _ dueV: String) {
@@ -214,22 +208,6 @@ struct ClassAssignSheet: View {
       do { try await store.assign(k.id, sharedId: pickId, goal: goal, due: dueV); busy = false; nav.close() }
       catch { err = error.localizedDescription.nilIfEmpty ?? "Something went wrong. Try again."; busy = false }
     }
-  }
-}
-
-/// The browser's calendar mark on a date field: a box with a solid top and two little tabs, 11.5 by 13.
-private struct DateMark: View {
-  var body: some View {
-    Canvas { ctx, size in
-      let w = size.width
-      var box = Path(roundedRect: CGRect(x: 0.65, y: 2.1, width: w - 1.3, height: 10.1), cornerRadius: 1.6)
-      ctx.stroke(box, with: .foreground, lineWidth: 1.3)
-      box = Path(CGRect(x: 0.65, y: 2.1, width: w - 1.3, height: 3.1)); ctx.fill(box, with: .foreground)
-      ctx.fill(Path(CGRect(x: 2.2, y: 0, width: 1.3, height: 3.4)), with: .foreground)
-      ctx.fill(Path(CGRect(x: w - 3.5, y: 0, width: 1.3, height: 3.4)), with: .foreground)
-    }
-    .frame(width: 11.5, height: 12.9)
-    .accessibilityHidden(true)
   }
 }
 

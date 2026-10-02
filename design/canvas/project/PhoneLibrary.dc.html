@@ -113,7 +113,7 @@ class Component extends LucidaLogic(DCLogic, 2) {
 constructor(props) { super(props); this.state = { tag: 'All', view: props.view === 'List' ? 'list' : 'cards', openDeck: props.openTags ? 'cell' : null, moreOpen: !!props.moreTags, moreQ: '', q: '',
   level: ['new', 'easy', 'medium', 'hard'].includes(props.level) ? props.level : 'all', state: ['leech', 'paused'].includes(props.level) ? props.level : '', cardTags: [], deck: '', tagPickOpen: false, tagPickQ: '', deckPickOpen: false, deckPickQ: '', shown: 60, naming: props.naming ? 'new' : null, name: props.naming ? 'Biology' : '', namingAt: 0,
   moveDeck: props.moveOpen ? ({ f1: 'jlpt', f2: 'orgo' }[props.folder] || 'cell') : null, moveAfter: null }; }
-renderVals() { const v = this.renderVals0(); return { ...v, ask: this.askPreview(v.t || this.theme(!!this.props.dark, !!this.props.dim), {"Remove folder":{"title":"Remove the folder “Med school”?","line":"Its decks stay in your library.","action":"Remove folder","danger":true}}) }; }
+renderVals() { const v = this.renderVals0(); return { ...v, ask: this.askPreview(v.t || this.theme(!!this.props.dark, !!this.props.dim), {"Remove folder":{"title":"Remove the folder “Languages”?","line":"Its decks stay in your library.","action":"Remove folder","danger":true}}) }; }
 askPreview(t, samples) {
   const q = samples[this.props.ask || ''];
   return q ? { show: true, title: q.title, line: q.line, hasLine: !!q.line, action: q.action, bg: q.danger ? t.againTint : t.inv, fg: q.danger ? t.again : t.invText, yes: () => {}, no: () => {} } : { show: false };

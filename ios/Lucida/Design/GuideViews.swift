@@ -494,27 +494,22 @@ struct GuideListItem: View {
   }
 }
 
-/// A task's box (a browser's disabled checkbox, 13 points, a 2 point corner): empty with a thin border, or filled with a check. The colors are the ones the canvas shows
-/// (measured on its boards): they differ a little in dark and gray, as the browser mixes them with the card.
+/// A task's box: Lucida's own check, never a browser's checkbox (design/materials.mjs GUIDE_CSS `.gd-box`): 15 points, a 4.5 point corner, a thin border in the muted
+/// color when it's empty; filled in the text's color with a check in the page's color when it's done.
 struct GuideCheckbox: View {
   @Environment(\.theme) private var t
   let checked: Bool
   var body: some View {
-    // (checked fill, check, empty fill, border)
-    let c: (Color, Color, Color, Color) = t.gray ? (Color(hex: 0xA1A1A2), Color(hex: 0xD9D9DA), Color(hex: 0xB4B4B5), Color(hex: 0xA1A1A2))
-      : t.dark ? (Color(hex: 0x9C9C9C), Color(hex: 0xD7D7D7), Color(hex: 0xADADAD), Color(hex: 0x9C9C9C))
-      : (Color(hex: 0xCFCFCF), Color(hex: 0xECECEC), Color(hex: 0xF4F4F4), Color(hex: 0xCDCDCD))
     ZStack {
       if checked {
-        RoundedRectangle(cornerRadius: 2, style: .continuous).fill(c.0)
-        Path { p in p.move(to: CGPoint(x: 3.2, y: 6.9)); p.addLine(to: CGPoint(x: 5.7, y: 9.3)); p.addLine(to: CGPoint(x: 10, y: 4.1)) }
-          .stroke(c.1, style: StrokeStyle(lineWidth: 1.7, lineCap: .round, lineJoin: .round))
+        RoundedRectangle(cornerRadius: 4.5, style: .continuous).fill(t.text)
+        Path { p in p.move(to: CGPoint(x: 4, y: 7.8)); p.addLine(to: CGPoint(x: 6.6, y: 10.4)); p.addLine(to: CGPoint(x: 11.2, y: 4.6)) }
+          .stroke(t.bg, style: StrokeStyle(lineWidth: 1.8, lineCap: .round, lineJoin: .round))
       } else {
-        RoundedRectangle(cornerRadius: 2, style: .continuous).fill(c.2)
-        RoundedRectangle(cornerRadius: 2, style: .continuous).strokeBorder(c.3, lineWidth: 1)
+        RoundedRectangle(cornerRadius: 4.5, style: .continuous).strokeBorder(t.muted, lineWidth: 1.5)
       }
     }
-    .frame(width: 13, height: 13)
+    .frame(width: 15, height: 15)
     .accessibilityElement(children: .ignore).accessibilityLabel(checked ? "Done" : "Not done")
   }
 }

@@ -418,7 +418,7 @@ mock() {
 }
 
 
-renderVals() { const v = this.renderVals0(); return { ...v, ask: this.askPreview(v.t || this.theme(!!this.props.dark, !!this.props.dim), {"Delete my data":{"title":"Delete all your data?","line":"Every deck, card and review goes. This can’t be undone.","action":"Delete my data","danger":true},"Sign out":{"title":"Sign out of Lucida?","line":"","action":"Sign out","danger":false}}) }; }
+renderVals() { const v = this.renderVals0(); return { ...v, ask: this.askPreview(v.t || this.theme(!!this.props.dark, !!this.props.dim), {"Delete my data":{"title":"Delete all your data?","line":"Every deck, card and review goes, and your profile and shared decks. This can’t be undone.","action":"Delete my data","danger":true}}) }; }
 askPreview(t, samples) {
   const q = samples[this.props.ask || ''];
   return q ? { show: true, title: q.title, line: q.line, hasLine: !!q.line, action: q.action, bg: q.danger ? t.againTint : t.inv, fg: q.danger ? t.again : t.invText, yes: () => {}, no: () => {} } : { show: false };

@@ -222,7 +222,11 @@ const I = {
   flag: '<path d="M5.5 21V4.5M5.5 4.5h11l-2.2 4 2.2 4h-11"/>',
   // The sidebar's button (collapse it to a rail, open it again), and Settings' Help & legal.
   sidebar: '<rect x="3" y="4.5" width="18" height="15" rx="4"/><path d="M9.5 4.5v15"/>',
-  help: '<circle cx="12" cy="12" r="9"/><path d="M9.6 9.4a2.5 2.5 0 1 1 3.4 2.3c-.6.3-1 .8-1 1.5M12 17h.01"/>'
+  help: '<circle cx="12" cy="12" r="9"/><path d="M9.6 9.4a2.5 2.5 0 1 1 3.4 2.3c-.6.3-1 .8-1 1.5M12 17h.01"/>',
+  // Lucida's own camera screen (the iPhone's Take a photo): the flash (on, and off with a slash through it) and the switch between the cameras.
+  bolt: '<path d="M13 2.5L5 13.5h6l-1 8 8-11h-6z"/>',
+  boltOff: '<path d="M13 2.5L5 13.5h6l-1 8 8-11h-6z"/><path d="M4 3l16 18"/>',
+  flip: '<path d="M19 9.5A7.5 7.5 0 0 0 5.6 7"/><path d="M5 3.5V7.5H9"/><path d="M5 14.5A7.5 7.5 0 0 0 18.4 17"/><path d="M19 20.5V16.5H15"/>'
 };
 
 // The mark: three dots, two above and one below, in the text color. The viewBox hugs the ink, so `h` is its real height.
@@ -9687,7 +9691,7 @@ const ASKS = {
   WebDeck: ['Delete deck', 'Remove from library', 'Delete source'], PhoneDeck: ['Delete deck', 'Remove from library', 'Delete source'],
   WebDecks: ['Remove folder'], PhoneLibrary: ['Remove folder'],
   WebCardsScreen: ['Delete card', 'Leave without saving'], PhoneEditor: ['Delete card'],
-  WebSettings: ['Delete my data', 'Sign out'], PhoneSettings: ['Delete my data', 'Sign out'],
+  WebSettings: ['Delete my data'], PhoneSettings: ['Sign out'],
   WebGuide: ['Delete page'], PhoneGuide: ['Delete page'],
   WebConnect: ['Disconnect app', 'New link'], PhoneConnect: ['Disconnect app', 'New link'],
   WebClass: ['Leave class', 'Delete class', 'Take out of class'], PhoneClass: ['Leave class', 'Delete class', 'Take out of class']

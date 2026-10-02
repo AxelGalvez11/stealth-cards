@@ -425,7 +425,7 @@ dropPick(key, { title = 'Pick one', rows = [], value = '', choose, shown = false
     rows: rows.map(r => { const on = String(r[0]) === String(value); return { label: r[1], on, pressed: on ? 'true' : 'false', pick: () => { shut(); choose(r[0]); } }; }),
     toggle: () => this.setState({ dropIs: open ? '' : key }), close: shut };
 }
-renderVals() { const v = this.renderVals0(); return { ...v, ask: this.askPreview(v.t || this.theme(!!this.props.dark, !!this.props.dim), {"Delete my data":{"title":"Delete all your data?","line":"Every deck, card and review goes. This can’t be undone.","action":"Delete my data","danger":true},"Sign out":{"title":"Sign out of Lucida?","line":"","action":"Sign out","danger":false}}) }; }
+renderVals() { const v = this.renderVals0(); return { ...v, ask: this.askPreview(v.t || this.theme(!!this.props.dark, !!this.props.dim), {"Sign out":{"title":"Sign out of Lucida?","line":"","action":"Sign out","danger":false}}) }; }
 askPreview(t, samples) {
   const q = samples[this.props.ask || ''];
   return q ? { show: true, title: q.title, line: q.line, hasLine: !!q.line, action: q.action, bg: q.danger ? t.againTint : t.inv, fg: q.danger ? t.again : t.invText, yes: () => {}, no: () => {} } : { show: false };

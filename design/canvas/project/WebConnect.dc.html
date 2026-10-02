@@ -83,7 +83,7 @@
 class Component extends LucidaLogic(DCLogic, 0) {
 
 constructor(props) { super(props); this.state = { copied: false }; }
-renderVals() { const v = this.renderVals0(); return { ...v, ask: this.askPreview(v.t || this.theme(!!this.props.dark, !!this.props.dim), {"Disconnect app":{"title":"Disconnect Claude?","line":"It can’t use your decks until you connect it again.","action":"Disconnect","danger":true},"New link":{"title":"Make a new link?","line":"AI apps using the old one stop working until you give them the new one.","action":"Make a new link","danger":false}}) }; }
+renderVals() { const v = this.renderVals0(); return { ...v, ask: this.askPreview(v.t || this.theme(!!this.props.dark, !!this.props.dim), {"Disconnect app":{"title":"Disconnect Claude?","line":"It can’t use your decks until you connect it again.","action":"Disconnect","danger":false},"New link":{"title":"Make a new link?","line":"AI apps using the old one stop working until you give them the new one.","action":"Make a new link","danger":false}}) }; }
 askPreview(t, samples) {
   const q = samples[this.props.ask || ''];
   return q ? { show: true, title: q.title, line: q.line, hasLine: !!q.line, action: q.action, bg: q.danger ? t.againTint : t.inv, fg: q.danger ? t.again : t.invText, yes: () => {}, no: () => {} } : { show: false };

@@ -2358,7 +2358,7 @@ playerVals(t, src, start, mock) {
 }
 stopPlayer() { const P = this._pl; if (P && P.a) { P.a.pause(); P.a.removeAttribute('src'); } this._pl = null; }
 componentWillUnmount() { this.stopPlayer(); }
-renderVals() { const v = this.renderVals0(); return { ...v, ask: this.askPreview(v.t || this.theme(!!this.props.dark, !!this.props.dim), {"Delete deck":{"title":"Delete “MCAT Biochemistry”?","line":"Its 42 cards go too. This can’t be undone.","action":"Delete deck","danger":true},"Remove from library":{"title":"Remove “MCAT Biochemistry”?","line":"Your progress on it goes too.","action":"Remove","danger":true},"Delete source":{"title":"Delete “Lecture 4.m4a”?","line":"Its file goes. The 6 cards made from it stay in the deck.","action":"Delete","danger":true}}) }; }
+renderVals() { const v = this.renderVals0(); return { ...v, ask: this.askPreview(v.t || this.theme(!!this.props.dark, !!this.props.dim), {"Delete deck":{"title":"Delete “Cell Biology”?","line":"Its 412 cards go too. This can’t be undone.","action":"Delete deck","danger":true},"Remove from library":{"title":"Remove “MCAT Biochemistry” from your library?","line":"Your progress on it goes too.","action":"Remove","danger":true},"Delete source":{"title":"Delete “Lecture 4 · Sep 21”?","line":"Its file goes. The 18 cards made from it stay in the deck.","action":"Delete","danger":true}}) }; }
 askPreview(t, samples) {
   const q = samples[this.props.ask || ''];
   return q ? { show: true, title: q.title, line: q.line, hasLine: !!q.line, action: q.action, bg: q.danger ? t.againTint : t.inv, fg: q.danger ? t.again : t.invText, yes: () => {}, no: () => {} } : { show: false };

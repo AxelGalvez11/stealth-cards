@@ -1868,7 +1868,7 @@ mockMaterials() {
 
 constructor(props) { super(props); this.state = { tab: props.view === 'Preview' ? 'preview' : 'write', histOpen: props.view === 'Older versions', drafts: {}, saving: false, err: '', hist: null }; }
 componentWillUnmount() { clearTimeout(this._t); if (this._pending) this._flush(); }
-renderVals() { const v = this.renderVals0(); return { ...v, ask: this.askPreview(v.t || this.theme(!!this.props.dark, !!this.props.dim), {"Delete page":{"title":"Delete the page “Week 3”?","line":"","action":"Delete page","danger":true}}) }; }
+renderVals() { const v = this.renderVals0(); return { ...v, ask: this.askPreview(v.t || this.theme(!!this.props.dark, !!this.props.dim), {"Delete page":{"title":"Delete the page “Lecture 3 summary”?","line":"","action":"Delete page","danger":true}}) }; }
 askPreview(t, samples) {
   const q = samples[this.props.ask || ''];
   return q ? { show: true, title: q.title, line: q.line, hasLine: !!q.line, action: q.action, bg: q.danger ? t.againTint : t.inv, fg: q.danger ? t.again : t.invText, yes: () => {}, no: () => {} } : { show: false };

@@ -197,7 +197,6 @@ final class Store: ObservableObject {
   /// The card on screen in a review, and when it came up: how long you take to answer it goes with its grade.
   var shown: (id: String, at: Double)?
   /// A deck waiting for "Delete" to be confirmed.
-  @Published var confirmDelete: String?
   @Published var phase: Phase = .loading
   /// The welcome after your first sign-in is showing (Welcome.swift): it opens when your library is new (not welcomed
   /// yet, no decks) and stays until you finish or skip it, even once cards come in.

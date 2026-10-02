@@ -4,6 +4,7 @@ import { readFileSync, readdirSync } from 'node:fs';
 import { readBoard } from './slim.mjs';
 import { MAKE_STEPS, GUIDE_STATES, GUIDE_VIEWS, LIVE_FROM, LIVE_TOPIC_STATES } from './materials.mjs';
 import { ASK_SAMPLES } from './ui.mjs';
+import { webProblems } from './check-own-ui.mjs';
 
 const DIR = new URL('./canvas/project/', import.meta.url);
 const get = (o, p) => p.trim().split('.').reduce((a, k) => (a == null ? undefined : a[k]), o);
@@ -178,6 +179,8 @@ for (const f of readdirSync(DIR).filter(f => f.endsWith('.dc.html')).sort()) {
   try { props = JSON.parse(src.match(/data-props='([^']*)'/)[1]); } catch (e) { errs.push('props JSON: ' + e.message); }
   const body = src.split('<x-dc>')[1].split('</x-dc>')[0].replace(/<helmet>[\s\S]*?<\/helmet>/, '');
   errs.push(...balance(body));
+  // Nothing the browser draws itself (a confirm, an alert, a select, a date picker, a checkbox, a player, a tooltip): design/check-own-ui.mjs.
+  errs.push(...webProblems(src).map(w => 'uses ' + w));
   const js = src.split('data-dc-script')[1].split('>').slice(1).join('>').split('</script>')[0];
   let C;
   try { C = new Function('DCLogic', js + ';return Component')(class { constructor(p) { this.props = p || {}; this.state = {}; } setState(u) { this.state = { ...this.state, ...u }; } }); } catch (e) { errs.push('class: ' + e.message); }

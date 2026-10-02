@@ -17,8 +17,6 @@ private struct ClassMenuAnchors: PreferenceKey {
 private struct MenuRow { let label: String; var danger = false; let action: () -> Void }
 
 /// A question before something that can't be undone.
-private struct Ask { let title: String; var message: String? = nil; let button: String; let action: () -> Void }
-
 struct ClassScreen: View {
   @Environment(\.theme) private var t
   @EnvironmentObject private var store: Store
@@ -28,7 +26,6 @@ struct ClassScreen: View {
   @State private var menu: String? = nil
   @State private var sel: String? = nil
   @State private var allPeople = false
-  @State private var ask: Ask? = nil
   @State private var opened = false
 
   private var upper: String { code.uppercased() }
@@ -53,9 +50,6 @@ struct ClassScreen: View {
     .debugScroll()
     .onAppear { openDemoSheets(k) }
     .onChange(of: k?.id) { _, _ in openDemoSheets(k) }
-    .confirmationDialog(ask?.title ?? "", isPresented: Binding(get: { ask != nil }, set: { if !$0 { ask = nil } }), titleVisibility: .visible) {
-      if let a = ask { Button(a.button, role: .destructive) { Buzz.shared.warning("class"); a.action() } }
-    } message: { if let m = ask?.message { Text(m) } }
   }
 
   /// The design screens with a sheet open (the canvas's Tweaks) open it once the class is showing.
@@ -172,14 +166,15 @@ struct ClassScreen: View {
         if owner {
           SmallButton(label: "Rename", icon: "pencil") { nav.sheet = .classForm(.rename(id: k.id, name: k.name, school: k.school)) }
           DangerButton(label: "Delete class") {
-            ask = Ask(title: "Delete “\(k.name)”?", message: "Everyone in it keeps the decks they study.", button: "Delete class") {
+            nav.ask("Delete “\(k.name)”?", line: "Everyone in it keeps the decks they study.", action: "Delete class", danger: true) {
+              Buzz.shared.warning("class")
               run({ try await store.deleteClass(k.id) }, then: { nav.back() })
             }
           }
         }
         if !owner {
           DangerButton(label: "Leave class") {
-            ask = Ask(title: "Leave “\(k.name)”?", message: "The decks you study from it stay in your library.", button: "Leave class") {
+            nav.ask("Leave “\(k.name)”?", line: "The decks you study from it stay in your library.", action: "Leave class") {
               run({ try await store.leaveClass(k.id) }, then: { nav.back() })
             }
           }
@@ -553,7 +548,7 @@ struct ClassScreen: View {
     if owner && x.role == "member" { rows.append(MenuRow(label: "Make a helper") { run { try await store.setMember(k.id, handle: x.person.handle, role: "helper") } }) }
     if owner && x.role == "helper" { rows.append(MenuRow(label: "Make a member") { run { try await store.setMember(k.id, handle: x.person.handle, role: "member") } }) }
     rows.append(MenuRow(label: "Take out of class", danger: true) {
-      ask = Ask(title: "Take \(x.person.name) out of the class?", button: "Take out of class") { run { try await store.setMember(k.id, handle: x.person.handle, remove: true) } }
+      nav.ask("Take \(x.person.name) out of the class?", action: "Take out") { run { try await store.setMember(k.id, handle: x.person.handle, remove: true) } }
     })
     return rows
   }

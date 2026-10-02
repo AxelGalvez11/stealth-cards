@@ -432,7 +432,7 @@ shareOrCopy(title, url, copied) {
 }
 
 constructor(props) { super(props); this.state = { popN: 0 }; }
-renderVals() { const v = this.renderVals0(); return { ...v, ask: this.askPreview(v.t || this.theme(!!this.props.dark, !!this.props.dim), {"Leave class":{"title":"Leave “Biology 101”?","line":"The decks you study from it stay in your library.","action":"Leave class","danger":true},"Delete class":{"title":"Delete “Biology 101”?","line":"Everyone in it keeps the decks they study.","action":"Delete class","danger":true},"Take out of class":{"title":"Take Maria out of the class?","line":"","action":"Take out","danger":true}}) }; }
+renderVals() { const v = this.renderVals0(); return { ...v, ask: this.askPreview(v.t || this.theme(!!this.props.dark, !!this.props.dim), {"Leave class":{"title":"Leave “BIO 201”?","line":"The decks you study from it stay in your library.","action":"Leave class","danger":false},"Delete class":{"title":"Delete “BIO 201”?","line":"Everyone in it keeps the decks they study.","action":"Delete class","danger":true},"Take out of class":{"title":"Take Sam Rivera out of the class?","line":"","action":"Take out","danger":false}}) }; }
 askPreview(t, samples) {
   const q = samples[this.props.ask || ''];
   return q ? { show: true, title: q.title, line: q.line, hasLine: !!q.line, action: q.action, bg: q.danger ? t.againTint : t.inv, fg: q.danger ? t.again : t.invText, yes: () => {}, no: () => {} } : { show: false };
