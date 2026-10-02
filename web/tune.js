@@ -19,7 +19,7 @@ const clamp = (x, a, b) => Math.min(b, Math.max(a, x));
 // the review before }]. A card whose history doesn't start from new (it was reset, or reviewed while FSRS was off) is
 // left out, since its memory can't be replayed.
 export function histories(S) {
-  const on = new Set(S.decks.filter(d => d.fsrs !== false && d.grading !== 'piles').map(d => d.id));
+  const on = new Set(S.decks.filter(d => d.grading !== 'piles').map(d => d.id));
   const byCard = new Map();
   for (const l of S.logs) {
     if (!l.rating || l.kind || !on.has(l.deckId)) continue;

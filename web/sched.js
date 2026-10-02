@@ -7,7 +7,9 @@ const DAY = 86400000;
 // A deck's longest gap (its gapIdx picks one), in days.
 export const GAPS = [30, 90, 180, 365, 730, 1825, 3650];
 // FSRS picks when a deck's cards come back, unless it grades with piles or has FSRS turned off.
-export const scheduled = d => !!d && d.fsrs !== false && d.grading !== 'piles';
+// FSRS always schedules 4 grades and check / x; piles only sort cards. A deck's old `fsrs: false` no longer turns it off (the owner, 2026-10-02:
+// "4 grades and check and x modes should always be FSRS").
+export const scheduled = d => !!d && d.grading !== 'piles';
 
 // ---------- cards you keep forgetting ----------
 // After this many forgets a card is marked (Anki calls them leeches), and gets the Leech tag or is paused, as its deck

@@ -63,7 +63,7 @@ extension Store {
       let hardD = days(2), goodD = min(maxGap, max(hardD + 1, days(4))), easyD = min(maxGap, max(goodD + 1, days(9)))
       return ReviewVM(card: c, done: done, left: left, total: 64, lane: ["basic": "rev", "cloze": "new", "image": "new", "audio": "learn"][c.kind] ?? "rev",
                       counts: (8, 3, max(left - 11, 0)), iv: (d.steps.first ?? "1m", fmt(hardD), fmt(goodD), fmt(easyD)),
-                      mode: d.grading, fsrsOn: d.grading != "piles" && d.fsrs, prog: props.prog, piles: demoPiles, deckId: "cell")
+                      mode: d.grading, fsrsOn: d.grading != "piles", prog: props.prog, piles: demoPiles, deckId: "cell")
     }
     let key = Store.sessionKey(deckId, pile, set)
     if session == nil || session!.key != key { session = ReviewSession(key: key, deckId: deckId, pile: pile, set: set) }

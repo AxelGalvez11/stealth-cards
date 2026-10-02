@@ -124,7 +124,7 @@ struct SettingsScreen: View {
   var body: some View {
     let s = store.settings, demo = store.demo
     let look = demo ? store.props.look : s.look, grads = demo ? store.props.grads : s.grads, darkMode = demo ? store.props.darkMode : s.darkMode
-    let fsrs = demo ? store.props.fsrs : s.fsrs, check = demo ? store.props.check : store.lib.ai.perms.check, flip = store.flipOn
+    let check = demo ? store.props.check : store.lib.ai.perms.check, flip = store.flipOn
     let vst = store.netVerify()
     ScrollView(showsIndicators: false) {
       VStack(alignment: .leading, spacing: 18) {
@@ -179,7 +179,6 @@ struct SettingsScreen: View {
           divider
           menuRow("Remember goal", "\(s.goal)%", options: ["80%", "85%", "90%", "93%", "95%"]) { store.setSetting(["goal": Int($0.dropLast()) ?? 90]) }
           divider
-          row("Schedule with FSRS", sub: "For 4 grades and ✓ / ✗") { Toggle48(on: fsrs, label: "Schedule with FSRS") { store.setSetting(["fsrs": !fsrs]) } }
           divider
           row("Flip animation") { Toggle48(on: flip, label: "Flip animation") { store.setSetting(["flip": !flip]) } }
           divider

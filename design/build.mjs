@@ -386,8 +386,6 @@ const NUM_JS = `const typed = (id, value, save, label) => {
       key: e => { if (e.key === 'Enter' || e.key === 'Escape') { e.preventDefault(); e.target.blur(); } } };
   };`;
 const miniStep = (val, dec, inc, btnBg = '{{t.bg}}', num = '') => `<span style="display: flex; align-items: center; gap: ${num ? 8 : 10}px;"><button type="button" onClick="{{${dec}}}" aria-label="Less" style="width: 30px; height: 30px; border: 0; border-radius: 15px; background: ${btnBg}; color: {{t.text}}; font: inherit; font-size: 17px; font-weight: 600; cursor: pointer;">−</button>${num ? numInput(num) : `<span style="min-width: 40px; text-align: center; font-size: 15px; font-weight: 600;">{{${val}}}</span>`}<button type="button" onClick="{{${inc}}}" aria-label="More" style="width: 30px; height: 30px; border: 0; border-radius: 15px; background: ${btnBg}; color: {{t.text}}; font: inherit; font-size: 17px; font-weight: 600; cursor: pointer;">+</button></span>`;
-// FSRS learning steps: the first short gaps for new cards. Tap one to remove it, + adds the next.
-const STEPS_ROW = `<div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap;"><span style="font-size: 12px; color: {{t.muted}}; margin-right: 4px;">Learning steps</span><sc-for list="{{stepChips}}" as="x" hint-placeholder-count="2"><button type="button" onClick="{{x.remove}}" aria-label="Remove {{x.label}} step" style="height: 30px; padding: 0 10px 0 12px; display: inline-flex; align-items: center; gap: 6px; border: 0; border-radius: 999px; background: {{t.surf}}; color: {{t.text}}; font-family: ${MONO}; font-size: 12px; font-weight: 500; cursor: pointer;">{{x.label}}<span style="display: flex; color: {{t.muted}};">${svg(I.close, 10, 2.4)}</span></button></sc-for><sc-if value="{{canAddStep}}" hint-placeholder-val="{{ true }}"><button type="button" onClick="{{addStep}}" aria-label="Add a step" style="width: 30px; height: 30px; border: 0; border-radius: 15px; background: {{t.surf}}; color: {{t.text}}; display: inline-flex; align-items: center; justify-content: center; cursor: pointer;">${svg(I.plus, 12, 2.4)}</button></sc-if></div>`;
 // Two-way segmented control on a panel (gray track, white pick); `key` names a list of { label, pressed, bg, fg, sh, pick }.
 const panelSeg = (key, label, n = 2) => `<div role="group" aria-label="${label}" style="display: grid; grid-template-columns: repeat(${n}, minmax(0, 1fr)); gap: 4px; padding: 4px; border-radius: 999px; background: {{t.surf}};"><sc-for list="{{${key}}}" as="o" hint-placeholder-count="${n}"><button type="button" onClick="{{o.pick}}" aria-pressed="{{o.pressed}}" style="height: 34px; padding: 0 10px; border: 0; border-radius: 999px; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; white-space: nowrap; background: {{o.bg}}; color: {{o.fg}}; box-shadow: {{o.sh}};">{{o.label}}</button></sc-for></div>`;
 
@@ -1102,11 +1100,12 @@ const COVER_LOGIC = `
   ${STUDY_BG_JS}
   ${BG_PICK_JS}
   const perDay = dk.perDay, goal = dk.goal, grading = dk.grading, paused = dk.paused;
-  // FSRS is set per deck. It schedules the four grades and check / x; piles only sort cards.
+  // FSRS always schedules the four grades and check / x; piles only sort cards (the owner, 2026-10-02: "4 grades and check and x modes should
+  // always be FSRS"). Learning steps aren't a setting ("remove learning steps because i dont get what that is"): a deck keeps the default ones.
   ${SW_JS}
-  const fsrsAllowed = grading !== 'piles', fsrsOn = fsrsAllowed && dk.fsrs !== false;
+  const fsrsOn = grading !== 'piles';
   const gaps = [[30, '1 mo'], [90, '3 mo'], [180, '6 mo'], [365, '1 yr'], [730, '2 yr'], [1825, '5 yr'], [3650, '10 yr']];
-  const gi = dk.gapIdx, steps = dk.steps, stepPool = ['1m', '10m', '1h', '1d'];
+  const gi = dk.gapIdx;
   const dsTab = cs.dsTab || ({ Studying: 'study', Sharing: 'share' }[this.props.settingsTab] || 'general');
   const plural = (n, w) => n + ' ' + w + (n === 1 ? '' : 's');
   // Sharing (the study network, social.mjs): who can see a deck of yours and its page; or, for a deck from someone else,
@@ -1201,12 +1200,8 @@ const COVER_LOGIC = `
     leechActs: [['tag', 'Tag it “Leech”'], ['pause', 'Pause it']].map(([id, label]) => ({ label, ...segOf(id, dk.leechAct), pick: () => up({ leechAct: id }) })),
     pause: sw(paused),
     togglePause: () => up({ paused: !paused }),
-    fsrsOn, fsrsSw: sw(fsrsOn, fsrsAllowed), toggleFsrs: () => fsrsAllowed && up({ fsrs: !fsrsOn }),
-    fsrsHint: !fsrsAllowed ? 'Piles only sort cards, so there’s nothing to schedule.' : fsrsOn ? 'Picks the best day to bring each card back.' : 'Off: cards don’t get a next review date.',
+    fsrsOn,
     gapLabel: gaps[gi][1], lessGap: () => up({ gapIdx: Math.max(0, gi - 1) }), moreGap: () => up({ gapIdx: Math.min(gaps.length - 1, gi + 1) }),
-    stepChips: steps.map(x => ({ label: x, remove: () => steps.length > 1 && up({ steps: steps.filter(y => y !== x) }) })),
-    canAddStep: steps.length < stepPool.length,
-    addStep: () => { const nx = stepPool.find(q => !steps.includes(q)); if (nx) up({ steps: stepPool.filter(q => q === nx || steps.includes(q)) }); },
     dsGeneral: dsTab === 'general', dsStudy: dsTab === 'study', dsShare: dsTab === 'share',
     dsTabs: [['general', 'General'], ['study', 'Studying'], ['share', 'Sharing']].map(([id, label]) => ({ label, ...segOf(id, dsTab), pick: () => this.setState({ dsTab: id }) })),
     exportDeck: () => db.act.exportDeck(dk.id), deleteDeck: () => db.act.deleteDeck(dk.id), deleteLabel: lk && !lk.gone ? 'Remove from library' : 'Delete deck',
@@ -1302,8 +1297,7 @@ const deckSettingsBody = phone => `<div style="display: flex; align-items: cente
       </div></sc-if>
       <sc-if value="{{dsStudy}}" hint-placeholder-val="{{ false }}"><div style="flex-grow: 1; min-height: 0; overflow-y: auto; scrollbar-width: thin; display: flex; flex-direction: column; gap: 16px;">
         <div style="display: flex; flex-direction: column; gap: 8px;"><span style="font-size: 13px; font-weight: 600;">Grade with</span>${modeSeg(true)}</div>
-        <div style="display: flex; align-items: center; gap: 12px;"><span style="flex-grow: 1; display: flex; flex-direction: column; gap: 2px;"><span style="font-size: 14px; font-weight: 600;">Schedule with FSRS</span><span style="font-size: 12px; line-height: 1.35; color: {{t.muted}};">{{fsrsHint}}</span></span>${SWITCH('fsrsSw', 'toggleFsrs', 'Schedule with FSRS')}</div>
-        <sc-if value="{{fsrsOn}}" hint-placeholder-val="{{ true }}"><div style="display: flex; flex-direction: column; gap: 12px;">${GOAL_PLANS}<div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px;">${stepper('Remember goal', 'goal', 'lessGoal', 'moreGoal', true)}${stepper('Longest gap', 'gapLabel', 'lessGap', 'moreGap', true)}</div>${GOAL_COST}${STEPS_ROW}</div></sc-if>
+        <sc-if value="{{fsrsOn}}" hint-placeholder-val="{{ true }}"><div style="display: flex; flex-direction: column; gap: 12px;">${GOAL_PLANS}<div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px;">${stepper('Remember goal', 'goal', 'lessGoal', 'moreGoal', true)}${stepper('Longest gap', 'gapLabel', 'lessGap', 'moreGap', true)}</div>${GOAL_COST}</div></sc-if>
         <div style="display: flex; align-items: center; gap: 12px; min-height: 44px;"><span style="flex-grow: 1; display: flex; flex-direction: column; gap: 2px;"><span style="font-size: 14px; font-weight: 600;">New cards a day</span><span style="font-size: 12px; color: {{t.muted}};">Unseen cards added each day</span></span>${miniStep('perDay', 'lessDay', 'moreDay', '{{t.surf}}', 'perDayIn')}</div>
         <sc-if value="{{proOn}}" hint-placeholder-val="{{ true }}">${EXAM_ROW}${LEECH_ROW}</sc-if>
         <sc-if value="{{examLeft}}" hint-placeholder-val="{{ false }}">${EXAM_ROW}</sc-if>
@@ -4137,7 +4131,6 @@ const phoneSettings = phone(`<div style="padding: 64px 20px 34px; display: flex;
     { when: 'hasReminder', row: sPick('Daily reminder', 'reminder', ['reminderNote', 'reminderPlain', 'Allow notifications for Lucida in iPhone Settings.']) },
     sPick('New cards a day', 'perDay'),
     sPick('Remember goal', 'goal'),
-    sRow('Schedule with FSRS', SWITCH('fsrsSw', 'toggleFsrs', 'Schedule with FSRS'), { sub: '{{fsrsSub}}' }),
     sRow('Flip animation', SWITCH('flipSw', 'toggleFlip', 'Flip animation')),
     TUNE_ROW
   ], 'showTitles'))}
@@ -4195,8 +4188,6 @@ renderVals() {
     reminderNote: remNote, reminderPlain: !remNote,
     perDay: this.dropPick('perDay', { title: 'New cards a day', rows: [0, 5, 10, 15, 20, 30, 50].map(n => [String(n), String(n)]), value: String(st.perDay), shown: shownList === 'perDay', choose: v => set({ perDay: +v }) }),
     goal: this.dropPick('goal', { title: 'Remember goal', rows: [80, 85, 90, 93, 95].map(n => [String(n), n + '%']), value: String(st.goal), shown: shownList === 'goal', choose: v => set({ goal: +v }) }),
-    fsrsSw: sw(st.fsrs && !piles, !piles), toggleFsrs: () => !piles && set({ fsrs: !st.fsrs }),
-    fsrsSub: piles ? 'Off while you grade with piles' : 'For 4 grades and ✓ / ✗',
     // Flip animation (on unless you turned it off): the Review screens read the same setting.
     flipSw: sw(st.flip !== false), toggleFlip: () => set({ flip: st.flip === false }),
     looks: opts([['system', 'System'], ['light', 'Light'], ['dark', 'Dark']], look, id => set({ look: id })),
@@ -4235,7 +4226,6 @@ const webSettings = webRoot(`${SETTINGS_SIDEBAR}
       ${WEB_PAGE('studying', 'Studying', [sBox([
         sRow('New cards a day', miniStep('perDay', 'lessDay', 'moreDay', '{{t.bg}}', 'perDayIn')),
         sRow('Remember goal', miniStep('goal', 'lessGoal', 'moreGoal')),
-        sRow('Schedule with FSRS', SWITCH('fsrsSw', 'toggleFsrs', 'Schedule with FSRS'), { sub: '{{fsrsSub}}' }),
         sRow('Flip animation', SWITCH('flipSw', 'toggleFlip', 'Flip animation')),
         sRow('Grade with', SEG('gradeOpts', 'Grade with')),
         sRow('Progress', SEG('progOpts', 'Progress')),
@@ -4286,8 +4276,6 @@ renderVals() {
     gradPreview: ['Cell Biology', 'Japanese', 'Chemistry', 'History'].map(n => ({ ...this.gen(n, st.grads), name: n })),
     gradeOpts: opts([['four', '4 grades'], ['binary', '✓ / ✗'], ['piles', 'Piles']], st.grading, id => set({ grading: id })),
     progOpts: opts([['bar', 'Bar'], ['counts', 'Counts'], ['none', 'None']], st.prog, id => set({ prog: id })),
-    fsrsSw: sw(st.fsrs && !piles, !piles), toggleFsrs: () => !piles && set({ fsrs: !st.fsrs }),
-    fsrsSub: piles ? 'Off while you grade with piles' : 'For 4 grades and ✓ / ✗',
     // Flip animation (on unless you turned it off): the Review screens read the same setting.
     flipSw: sw(st.flip !== false), toggleFlip: () => set({ flip: st.flip === false }),
     checkSw: sw(st.check), toggleCheck: () => db.act.setPerm('check', !st.check),

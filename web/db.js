@@ -1314,7 +1314,7 @@ export async function createDb({ onChange, go, ask = async () => false, say = ()
       if (!d) return { id: '', name: '', tags: [], seed: '', cover: { style: 'mix', round: 0, image: null }, paused: false, grading: S.settings.grading, fsrs: true, goal: 90, gapIdx: 3, steps: ['1m', '10m'], perDay: 20,
         total: 0, totalLabel: '0', due: 0, fresh: 0, ret: null, aiCount: 0, forecast: Array(7).fill(0), piles: [], folder: null, bg: { kind: 'deck', image: null }, href: '/library', studyHref: '/review', settingsHref: '/library', newCardHref: '/decks/new',
         exam: null, examDay: '', leechAt: 8, leechAct: 'tag' };
-      return { ...deckRow(d), cover: d.cover, grading: d.grading, fsrs: d.fsrs !== false, goal: d.goal, gapIdx: d.gapIdx ?? 3, steps: d.steps, perDay: d.perDay,
+      return { ...deckRow(d), cover: d.cover, grading: d.grading, fsrs: d.grading !== 'piles', goal: d.goal, gapIdx: d.gapIdx ?? 3, steps: d.steps, perDay: d.perDay,
         examDay: d.exam || '', leechAt: leechAt(d), leechAct: leechAct(d),
         forecast: forecast(7, [d]).vals, piles: (d.piles || []).map(p => ({ name: p.name, n: cardsOf(d.id).filter(c => c.pile === p.name).length })) };
     },

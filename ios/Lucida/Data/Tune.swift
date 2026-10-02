@@ -26,7 +26,7 @@ enum Tune {
   /// reset, or reviewed while FSRS was off) is left out, since its memory can't be replayed.
   @_optimize(speed)
   static func histories(_ lib: Library) -> Histories {
-    let on = Set(lib.decks.filter { $0.fsrs && $0.grading != "piles" }.map(\.id))
+    let on = Set(lib.decks.filter { $0.grading != "piles" }.map(\.id))
     var order: [String] = [], byCard: [String: [ReviewLog]] = [:]
     for l in lib.logs {
       guard let r = l.rating, r != 0, l.kind == nil || l.kind == "", on.contains(l.deckId) else { continue }

@@ -4,7 +4,7 @@
 // pile), cards due now, how often you remembered a card when it came back (the last 30 days), and when you last studied.
 const DAY = 86400000;
 export function progressOf(d, cards, logs, now = Date.now()) {
-  const cs = cards.filter(c => c.deckId === d.id && !c.pending), piles = d.grading === 'piles', timed = d.fsrs !== false && !piles;
+  const cs = cards.filter(c => c.deckId === d.id && !c.pending), piles = d.grading === 'piles', timed = !piles;
   const learned = cs.filter(c => (piles ? !!c.pile : timed ? c.srs.state === 'review' || c.srs.state === 'relearning' : (c.srs.reps || 0) > 0)).length;
   const due = timed ? cs.filter(c => c.srs.state !== 'new' && c.srs.due <= now).length : 0;
   const mine = logs.filter(l => l.deckId === d.id), back = mine.filter(l => l.at >= now - 30 * DAY && l.rating && l.was === 'review');

@@ -7,7 +7,8 @@ enum Sched {
   // A deck's longest gap (its gapIdx picks one), in days.
   static let GAPS = [30, 90, 180, 365, 730, 1825, 3650]
   /// FSRS picks when a deck's cards come back, unless it grades with piles or has FSRS turned off.
-  static func scheduled(_ d: Deck?) -> Bool { d != nil && d!.fsrs && d!.grading != "piles" }
+  /// FSRS always schedules 4 grades and ✓ / ✗; piles only sort cards. A deck's old `fsrs: false` no longer turns it off (the owner, 2026-10-02).
+  static func scheduled(_ d: Deck?) -> Bool { d != nil && d!.grading != "piles" }
 
   // ---------- cards you keep forgetting ----------
   // After this many forgets a card is marked (Anki calls them leeches), and gets the Leech tag or is paused, as its deck

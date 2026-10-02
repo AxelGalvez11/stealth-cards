@@ -442,7 +442,6 @@ struct DeckSettingsSheet: View {
   /// The goal the settings opened with (the cost of a goal counts from there).
   @State private var goalFrom: Int? = nil
   private let gaps = [(30, "1 mo"), (90, "3 mo"), (180, "6 mo"), (365, "1 yr"), (730, "2 yr"), (1825, "5 yr"), (3650, "10 yr")]
-  private let stepPool = ["1m", "10m", "1h", "1d"]
 
   var body: some View {
     VStack(alignment: .leading, spacing: 14) {
@@ -575,20 +574,13 @@ struct DeckSettingsSheet: View {
   }
 
   private var studying: some View {
-    let fsrsAllowed = d.grading != "piles", fsrsOn = fsrsAllowed && d.fsrs
+    // FSRS always schedules 4 grades and ✓ / ✗, with the default learning steps (no switch and no steps to set: the owner, 2026-10-02:
+    // "remove learning steps because i dont get what that is, also 4 grades and check and x modes should always be FSRS").
+    let fsrsOn = d.grading != "piles"
     return VStack(alignment: .leading, spacing: 16) {
       VStack(alignment: .leading, spacing: 8) {
         label("Grade with")
         Segmented(options: [("four", "4 grades"), ("binary", "✓ / ✗"), ("piles", "Piles")], current: d.grading, hPad: 8) { store.updateDeck(d.id, ["grading": $0]) }
-      }
-      HStack(spacing: 12) {
-        VStack(alignment: .leading, spacing: 2) {
-          Text("Schedule with FSRS").css(14, .semibold)
-          Text(!fsrsAllowed ? "Piles only sort cards, so there’s nothing to schedule." : fsrsOn ? "Picks the best day to bring each card back." : "Off: cards don’t get a next review date.")
-            .css(12, lh: 1.35).foregroundStyle(t.muted)
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        Toggle48(on: fsrsOn, enabled: fsrsAllowed, label: "Schedule with FSRS") { store.updateDeck(d.id, ["fsrs": !fsrsOn]) }
       }
       if fsrsOn {
         VStack(alignment: .leading, spacing: 12) {
@@ -598,24 +590,6 @@ struct DeckSettingsSheet: View {
             StackedStepper(label: "Longest gap", value: gaps[min(max(d.gapIdx, 0), 6)].1, less: { store.updateDeck(d.id, ["gapIdx": max(0, d.gapIdx - 1)]) }, more: { store.updateDeck(d.id, ["gapIdx": min(6, d.gapIdx + 1)]) })
           }
           if store.isPro { WorkloadLine(d: d, from: goalFrom ?? d.goal) }
-          HStack(spacing: 6) {
-            Text("Learning steps").css(12).foregroundStyle(t.muted).padding(.trailing, 4)
-            ForEach(d.steps, id: \.self) { x in
-              Button { if d.steps.count > 1 { store.updateDeck(d.id, ["steps": d.steps.filter { $0 != x }]) } } label: {
-                HStack(spacing: 6) { Text(x).css(12, .medium, mono: true); Icon("close", 10, 2.4).foregroundStyle(t.muted) }
-                  .foregroundStyle(t.text).padding(.leading, 12).padding(.trailing, 10).frame(height: 30).background(Capsule().fill(t.surf))
-              }
-              .buttonStyle(.press)
-              .accessibilityLabel("Remove \(x) step")
-            }
-            if d.steps.count < stepPool.count {
-              Button {
-                if let nx = stepPool.first(where: { !d.steps.contains($0) }) { store.updateDeck(d.id, ["steps": stepPool.filter { $0 == nx || d.steps.contains($0) }]) }
-              } label: { Icon("plus", 12, 2.4).foregroundStyle(t.text).frame(width: 30, height: 30).background(Circle().fill(t.surf)) }
-              .buttonStyle(.press)
-              .accessibilityLabel("Add a step")
-            }
-          }
         }
       }
       HStack(spacing: 12) {
