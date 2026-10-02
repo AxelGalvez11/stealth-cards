@@ -258,7 +258,10 @@ final class SharedDeckPagesTests: XCTestCase {
     let s = state(w.maria)
     let fold = (s["folders"] as? [[String: Any]] ?? []).first { $0["name"] as? String == w.folderName }
     let mc = (s["decks"] as? [[String: Any]] ?? []).first { $0["name"] as? String == cpName }, link = mc?["link"] as? [String: Any]
-    check(link?["mode"] as? String == "copy" && link?["updates"] as? Bool == true && mc?["folder"] as? String == fold?["id"] as? String, "it's named, in the folder, with updates on")
+    // (If not, it says what it found.)
+    let named = link?["mode"] as? String == "copy" && link?["updates"] as? Bool == true && mc?["folder"] as? String == fold?["id"] as? String
+    let found = mc == nil ? "no deck named " + cpName : "mode \(link?["mode"] ?? "none"), updates \(link?["updates"] ?? "none"), folder \(mc?["folder"] ?? "none"), hers \(fold?["id"] ?? "none")"
+    check(named, "it's named, in the folder, with updates on" + (named ? "" : " (" + found + ")"))
     tap(button(app, "From Alex Kim"))
     check(wait(button(app, "Your copy")), "the page now says Your copy")
     // A link that asks for Make a copy opens it; Cancel closes it.

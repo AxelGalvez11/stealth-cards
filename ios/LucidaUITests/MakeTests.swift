@@ -144,6 +144,8 @@ final class MakeTests: XCTestCase {
   private func button(_ app: XCUIApplication, _ label: String) -> XCUIElement { app.buttons[label].firstMatch }
   private func buttonStarting(_ app: XCUIApplication, _ words: String) -> XCUIElement { app.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", words)).firstMatch }
   private func text(_ app: XCUIApplication, _ label: String) -> XCUIElement { app.staticTexts[label].firstMatch }
+  /// A line of a page of notes: the Notes page draws each line (a heading, a toggle's title) as a text view, read through its value.
+  private func noteLine(_ app: XCUIApplication, _ words: String) -> XCUIElement { app.textViews.matching(NSPredicate(format: "value == %@", words)).firstMatch }
   private func wait(_ e: XCUIElement, _ s: TimeInterval = 12) -> Bool { e.waitForExistence(timeout: s * Self.slow) }
   private func gone(_ e: XCUIElement, _ s: TimeInterval = 12) -> Bool {
     let end = Date().addingTimeInterval(s * Self.slow)
@@ -775,17 +777,17 @@ final class MakeTests: XCTestCase {
     let sw = button(app, "Save these notes with the cards")
     check(sw.exists && (sw.value as? String) == "On" && button(app, "Read the notes").exists, "with its switch (on) and “Read the notes”")
     noLabel(app, "the notes panel")
-    check(!text(app, "About " + topic + " 1").exists, "the draft is folded away")
+    check(!noteLine(app, "About " + topic + " 1").exists, "the draft is folded away")
     button(app, "Read the notes").tap()
-    check(wait(button(app, "Hide the notes")) && wait(text(app, "About " + topic + " 1")) && text(app, topic).exists, "Read the notes unfolds the draft: its title, and a heading for each note")
+    check(wait(button(app, "Hide the notes")) && wait(noteLine(app, "About " + topic + " 1")) && noteLine(app, topic).exists, "Read the notes unfolds the draft: its title, and a toggle for each note")
     button(app, "Hide the notes").tap()
-    check(wait(button(app, "Read the notes")) && !text(app, "About " + topic + " 1").exists, "and Hide the notes folds it again")
+    check(wait(button(app, "Read the notes")) && gone(noteLine(app, "About " + topic + " 1")), "and Hide the notes folds it again")
     // the cards are still there below it
     check(edits(app).count >= 5, "the cards are listed below the notes (\(edits(app).count))")
     save(app, into: name)
     var d = deck(who, name)
     let guide = ((d?["guide"] as? [String: Any])?["text"] as? String) ?? ""
-    check(guide.hasPrefix("# " + topic) && guide.contains("## About " + topic + " 1"), "saved with the cards, a deck with no Guide gets the notes as its Guide (\(guide.prefix(40))…)")
+    check(guide.hasPrefix("# " + topic) && guide.contains(":::toggle About " + topic + " 1"), "saved with the cards, a deck with no Guide gets the notes as its Guide, each note a toggle (\(guide.prefix(40))…)")
     // the switch off: the cards are saved, the notes aren't
     stubReset()
     let again = "Plants two " + run
@@ -905,7 +907,7 @@ final class MakeTests: XCTestCase {
     check(text(app, line).exists && (sw.value as? String) == "Off", "pressing it changes nothing")
     check(button(app, "Read the notes").exists, "the notes can still be read")
     button(app, "Read the notes").tap()
-    check(wait(button(app, "Hide the notes")) && wait(text(app, "About " + topic + " 1")), "(and they open)")
+    check(wait(button(app, "Hide the notes")) && wait(noteLine(app, "About " + topic + " 1")), "(and they open)")
     button(app, "Hide the notes").tap()
     noLabel(app, "the review with no room for notes")
     save(app, into: name)

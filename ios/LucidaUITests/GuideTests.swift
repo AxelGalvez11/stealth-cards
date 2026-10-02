@@ -136,6 +136,8 @@ final class GuideTests: XCTestCase {
   }
   private func button(_ app: XCUIApplication, _ label: String) -> XCUIElement { app.buttons.matching(NSPredicate(format: "label == %@", label)).firstMatch }
   private func buttonStarting(_ app: XCUIApplication, _ words: String) -> XCUIElement { app.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", words)).firstMatch }
+  /// How many Make cards buttons show: the deck's cover has one (your own deck), and the Notes their own when there is something to make cards from.
+  private func makeButtons(_ app: XCUIApplication) -> Int { app.buttons.matching(NSPredicate(format: "label == %@", "Make cards")).count }
   private func text(_ app: XCUIApplication, _ label: String) -> XCUIElement { app.staticTexts.matching(NSPredicate(format: "label == %@", label)).firstMatch }
   private func textHas(_ app: XCUIApplication, _ words: String) -> XCUIElement { app.staticTexts.matching(NSPredicate(format: "label CONTAINS %@", words)).firstMatch }
   private func wait(_ e: XCUIElement, _ s: TimeInterval = 12) -> Bool { e.waitForExistence(timeout: s * Self.slow) }
@@ -231,7 +233,8 @@ final class GuideTests: XCTestCase {
     check(textHas(app, "Question 1 of").exists && !line(app, "Title").exists, "the cards show, and no Notes in the way")
     tap(button(app, "Notes"), "Notes")
     check(wait(line(app, "Title")) && line(app, "Start writing").exists, "Notes with no Guide is a blank note: a heading that says Title and a line that says Start writing")
-    check(!button(app, "Edit").exists && !button(app, "Make cards").exists && !textHas(app, "Question 1 of").exists, "(no Edit button or Make cards yet, and the cards give way)")
+    // (The deck's cover has its own Make cards, at the top: the Notes add theirs once there is something to make cards from.)
+    check(!button(app, "Edit").exists && makeButtons(app) == 1 && !textHas(app, "Question 1 of").exists, "(no Edit button or Make cards of their own yet, and the cards give way)")
     snap("guide-empty")
     tap(line(app, "Title"), "the blank note's title")
     check(onPage(app) && eventually(5) { self.focusedValue(app) == "Title" }, "a tap opens the Notes page with the caret in the title")
@@ -246,7 +249,7 @@ final class GuideTests: XCTestCase {
     check(line(app, "Cell Biology: Exam 1").exists && (line(app, "Cell Biology: Exam 1").label == "Heading"), "the title is a heading")
     done(app)
     check(wait(line(app, "Cell Biology: Exam 1")) && selected(button(app, "Notes")), "Done goes back to the deck's Notes, which read the page")
-    check(button(app, "Make cards").exists, "with Make cards now")
+    check(makeButtons(app) == 2, "with Make cards of their own now (beside the cover's)")
     noLabel(app, "the Notes")
     // a tab that isn't there opens Cards
     let app2 = launch(as: who, ["-open", "deck:" + name, "-deckTab", "nowhere"])
