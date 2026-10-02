@@ -73,6 +73,7 @@
 //   link(text, a, b, url)   image(text, a, b, src, alt)   codeBlock table rule (text, a, b)   -> { text, a, b }
 //   continueList(text, pos) -> { text, pos } | null (Enter in a list)      indent(text, a, b, out) (Tab / Shift+Tab)
 //   blocks(md) -> the page as the Notes editor shows it        markdown(blocks) -> md        (see "blocks", below)
+//   href(address) -> the address as a link may have it (percent-encoded; https:// added to a bare domain), or '' when it can't be one
 //   MAX (60000), and errors (how many unexpected errors were caught and hidden; 0 unless there is a bug).
 export function makeGuide() {
   // ---------- limits ----------
@@ -1045,12 +1046,13 @@ export function makeGuide() {
       if (used.has(f)) a.href = encodeUrl('#g-' + f);
     }
   }
-  function parse(md) {
+  // (`asWritten`: links to a heading keep the address they were written with; the HTML's own ids are only for rendering)
+  function parse(md, asWritten) {
     const src = clean(md);
     try {
       const refs = new Map(), ctx = { urls: 0, links: [], heads: [] };
       const blocks = build(parseBlocks(src, refs), refs, ctx);
-      assignIds(ctx.heads, ctx.links);
+      assignIds(ctx.heads, asWritten ? [] : ctx.links);
       return blocks;
     } catch (e) {
       errors++;
@@ -1332,7 +1334,7 @@ export function makeGuide() {
     return out;
   }
   function blocksOf(md) {
-    try { return flatten(parse(md), 0, []).slice(0, BK_MAX); } catch (e) { errors++; const t = clean(md).trim(); return t ? [{ k: 'p', d: 0, r: [{ t: t.slice(0, 5000) }] }] : []; }
+    try { return flatten(parse(md, true), 0, []).slice(0, BK_MAX); } catch (e) { errors++; const t = clean(md).trim(); return t ? [{ k: 'p', d: 0, r: [{ t: t.slice(0, 5000) }] }] : []; }
   }
 
   // ---------- blocks -> Markdown ----------
@@ -1534,6 +1536,15 @@ export function makeGuide() {
       }
       default: return [];
     }
+  }
+  // An address someone typed for a link: as guide.js would write it, or '' (a bare "example.com/x" gets https://; nothing but http(s), mailto and #).
+  function hrefOf(u) {
+    let v = str(u).trim();
+    if (!v) return '';
+    if (/^www\.|^[a-z0-9-]+(?:\.[a-z0-9-]+)+(?:[/?#:]|$)/i.test(v) && !/^[a-z][a-z0-9+.-]*:/i.test(v)) v = 'https://' + v;
+    else if (/^[^\s@/:]+@[^\s@/:]+\.[^\s@/:]+$/.test(v)) v = 'mailto:' + v;
+    const e = encodeUrl(v);
+    return linkOk(e) ? e : '';
   }
   function markdownOf(list) {
     try {
@@ -1820,7 +1831,7 @@ export function makeGuide() {
   }
 
   return {
-    MAX, parse, render, plain, headings, blocks: blocksOf, markdown: markdownOf,
+    MAX, parse, render, plain, headings, blocks: blocksOf, markdown: markdownOf, href: hrefOf,
     bold, italic, strike, code, heading, bullets, numbers, tasks, quote, link, codeBlock, table, rule, image, continueList, indent: indentLines,
     // How many unexpected errors were caught and hidden (always 0 unless there is a bug).
     get errors() { return errors; }

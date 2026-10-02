@@ -1,6 +1,6 @@
 // The boards for making cards from anything, a deck's Guide, and its Sources (web/make.js, web/make.mjs, web/guide.js):
 //   WebMake / PhoneMake    the flow: pick a source, add it (and a few options), watch it work, check the cards
-//   WebGuide / PhoneGuide  the Guide's editor: Write and Preview, a small toolbar, older versions, extra pages
+//   WebGuide / PhoneGuide  the Notes page (a deck's Guide and its extra pages): always formatted, click and type (web/notes.js), older versions
 // and the pieces other boards carry: the deck page's Guide and Sources, the shared deck page's Guide, the add menu, and Live's topic.
 // This file holds them so design/build.mjs stays small; build.mjs hands it the helpers its boards are made with (H).
 // The app draws these boards (design/to-web.mjs), so what you see on the canvas is what runs.
@@ -9,11 +9,13 @@ import { diagramBlocks, publicDiagramBlocks, DIAGRAMS_JS, DIAGRAMS_MOCK, DIAGRAM
 
 // What the Make boards' "step" picker offers on the canvas (the app's own flow follows web/make.js).
 import { dropMarkup, dropSheet, dropPill, DROP_JS, playerMarkup } from './ui.mjs';
+import { MOTION, EASE } from './motion.mjs';
 export const MAKE_STEPS = ['Pick', 'Upload', 'Upload (a file added)', 'Upload (picture cards on)', 'Photos', 'Camera', 'Record', 'Recording', 'Paused', 'Paste', 'Paste (a language set)', 'Paste (language list)', 'YouTube', 'YouTube transcript', 'Topic', 'More from a source',
   'Making', 'Making a recording', 'Review', 'Review (notes open)', 'Review (notes off)', 'Review (no room for notes)', 'Review (audio cards)', 'Review (picture cards)', 'Review (editing a card)', 'Limit reached', 'File too big', 'Error'];
 
 // Icons these boards use that the main set doesn't have (the onboarding's paste icon).
-const EXTRA = { paste: '<rect x="5.5" y="4.5" width="13" height="16" rx="2.5"/><path d="M9 4.5v-.3a1.7 1.7 0 0 1 1.7-1.7h2.6A1.7 1.7 0 0 1 15 4.2v.3"/><path d="M9 11h6M9 15h4"/>' };
+const EXTRA = { paste: '<rect x="5.5" y="4.5" width="13" height="16" rx="2.5"/><path d="M9 4.5v-.3a1.7 1.7 0 0 1 1.7-1.7h2.6A1.7 1.7 0 0 1 15 4.2v.3"/><path d="M9 11h6M9 15h4"/>',
+  bin: '<path d="M5 7h14M10 7V5h4v2M7 7l1 12h8l1-12"/>' };
 
 // What the deck page's Guide setting offers on the canvas.
 export const GUIDE_STATES = ['Guide and sources', 'Guide pages', 'Long guide', 'A source open', 'No guide yet', 'Studying (read only)', ...DIAGRAM_STATES];
@@ -118,7 +120,7 @@ export function makeBoards(H) {
         <button type="button" role="switch" aria-checked="{{notesSw.checked}}" aria-disabled="{{notesSw.disabled}}" aria-label="Save these notes with the cards" onClick="{{toggleNotes}}" class="sc-sw" style="width: 48px; height: 28px; flex-shrink: 0; padding: 3px; box-sizing: border-box; border: 0; border-radius: 14px; background: {{notesSw.track}}; opacity: {{notesSw.op}}; cursor: pointer;"><span style="display: block; width: 22px; height: 22px; border-radius: 11px; background: {{notesSw.knobColor}}; transform: {{notesSw.knob}};"></span></button>
       </div>
       <button type="button" onClick="{{toggleNotesOpen}}" aria-expanded="{{notesExpanded}}" style="align-self: flex-start; padding: 0; border: 0; background: transparent; color: {{t.text}}; font: inherit; font-size: 14px; font-weight: 600; text-decoration: underline; cursor: pointer;">{{notesOpenLabel}}</button>
-      <sc-if value="{{notesOpen}}" hint-placeholder-val="{{ false }}"><div class="gd" ref="{{notesRef}}" data-sc-own style="--gd-text: {{t.text}}; --gd-muted: {{t.muted}}; --gd-line: {{t.line}}; --gd-code: {{t.bg}}; max-height: ${'${PHONE_NOTES_H}'}px; overflow-y: auto; scrollbar-width: none; opacity: {{notesOp}};"></div></sc-if>
+      <sc-if value="{{notesOpen}}" hint-placeholder-val="{{ false }}"><div style="max-height: ${'${PHONE_NOTES_H}'}px; overflow-y: auto; scrollbar-width: none; opacity: {{notesOp}}; padding-left: 22px;"><div ref="{{notesRef}}" data-sc-own style="${NOTES_VARS('t.bg')}"></div></div></sc-if>
     </section>
   </sc-if>`;
   const review = phone => `<div style="display: flex; flex-direction: column; gap: 14px; min-height: 0;">
@@ -255,7 +257,8 @@ renderVals() {
     progWord: prog.word || 'Getting ready…', progLine: prog.phase === 'write' || prog.phase === 'read' ? plural(prog.i, 'part') + ' of ' + prog.n + ' done' : prog.phase === 'see' ? prog.i + ' of ' + plural(prog.n, 'step') + ' done' : prog.phase === 'send' && prog.n > 1 ? prog.i + ' of ' + prog.n + ' sent' : 'This takes a moment', progPct: pct, progWidth: Math.max(4, pct) + '%',
     hasNotes: step === 'review' && !!N, notesLine, notesSw: sw(keepN, !full), toggleNotes: () => (full ? null : M.setKeepNotes(!keepN)), toggleNotesOpen: () => this.setState({ notesOpen: !nOpen }), notesOpen: nOpen, notesExpanded: nOpen ? 'true' : 'false',
     notesOpenLabel: nOpen ? 'Hide the notes' : 'Read the notes', notesOp: keepN ? '1' : '.5',
-    notesRef: el => { const k = N ? N.text.length + ':' + (() => { let h = 0; for (let i = 0; i < N.text.length; i++) h = (h * 31 + N.text.charCodeAt(i)) | 0; return h; })() : ''; if (el.getAttribute('data-k') !== k) { el.innerHTML = N ? md.render(N.text) : ''; el.setAttribute('data-k', k); } },
+    // (the draft is read like any page of notes: a section for each part, a toggle for each note, closed)
+    notesRef: el => { if (el) this.notes().mount(el, { md: N ? N.text : '', key: '', editable: false, phone: ${phone ? 'true' : 'false'} }); },
     cards, reviewLine: plural(keep, 'card') + (v.name || v.title ? ' from ' + (v.name || v.title) : ''), saveLabel: v.saving ? 'Saving…' : keep ? 'Add ' + plural(keep, 'card') + ' to ' + into : 'No cards to add', saveBg: keep ? t.inv : t.surf2, saveFg: keep ? t.invText : t.muted,
     errMessage: err && !err.soft ? err.message : '', errMore: err && err.code === 'video-failed' ? 'You can paste the video’s transcript instead.' : err && err.code === 'video-off' ? 'On YouTube, open the video’s description, tap Show transcript, then copy it.' : '',
     errPro: !!(err && err.pro), errRetry: !!(err && !err.pro && err.again)
@@ -270,23 +273,64 @@ renderVals() {
   };
 }
 
-// ---------- the rendered Guide's look (the markup comes from web/guide.js; every board that draws one carries this) ----------
-// The wrapper sets four colors (--gd-text, --gd-muted, --gd-line, --gd-code) from the board's theme, so one set of rules serves light, dark and gray.
-export const GUIDE_CSS = [
-  '.gd{font-size:15px;line-height:1.6;color:var(--gd-text);overflow-wrap:anywhere}.gd>:first-child{margin-top:0}.gd>:last-child{margin-bottom:0}',
-  '.gd h1,.gd h2,.gd h3,.gd h4,.gd h5,.gd h6{margin:1.3em 0 .5em;line-height:1.25;font-weight:600;letter-spacing:-.02em}',
-  '.gd h1{font-size:1.65em;padding-bottom:.3em;border-bottom:1px solid var(--gd-line)}.gd h2{font-size:1.32em;padding-bottom:.25em;border-bottom:1px solid var(--gd-line)}.gd h3{font-size:1.12em}.gd h4,.gd h5,.gd h6{font-size:1em}.gd h6{color:var(--gd-muted)}',
-  '.gd p{margin:0 0 .9em}.gd ul,.gd ol{margin:0 0 .9em;padding-left:1.5em}.gd li{margin:.25em 0}.gd li>ul,.gd li>ol{margin:.25em 0 0}',
-  '.gd li.gd-task{list-style:none;margin-left:-1.5em}',
-  // A task's box is Lucida's own check (not a browser's checkbox): empty with a thin border, or filled in the text's color with a check in the page's.
-  '.gd .gd-box{display:inline-block;box-sizing:border-box;width:1.05em;height:1.05em;margin-right:.3em;vertical-align:-.17em;border:1.5px solid var(--gd-muted);border-radius:.3em}.gd .gd-on{border-color:var(--gd-text);background:var(--gd-text)}.gd .gd-on::after{content:"";display:block;width:.3em;height:.55em;margin:.02em auto 0;border:solid var(--gd-code);border-width:0 2px 2px 0;transform:rotate(45deg)}',
-  '.gd blockquote{margin:0 0 .9em;padding:0 1em;border-left:3px solid var(--gd-line);color:var(--gd-muted)}.gd blockquote>:last-child{margin-bottom:0}',
-  ".gd code{font-family:'Geist Mono',ui-monospace,monospace;font-size:.88em;padding:.15em .4em;border-radius:6px;background:var(--gd-code)}",
-  '.gd pre{margin:0 0 .9em;padding:12px 14px;border-radius:12px;background:var(--gd-code);overflow:auto;line-height:1.5}.gd pre code{padding:0;background:none;font-size:.85em}',
-  '.gd table{display:block;border-collapse:collapse;margin:0 0 .9em;overflow:auto;max-width:100%}.gd th,.gd td{padding:6px 12px;border:1px solid var(--gd-line);text-align:left}.gd th{font-weight:600;background:var(--gd-code)}',
-  '.gd hr{border:0;border-top:1px solid var(--gd-line);margin:1.3em 0}.gd a{color:inherit;text-decoration:underline;text-underline-offset:2px}.gd img{max-width:100%;height:auto;border-radius:12px}'
+
+// ---------- the Notes page's look (web/notes.js draws it; every board with a page of notes carries this) ----------
+// One calm style for writing and reading: 16 px words at 1.6, a heading 1.6 and a subheading 1.25 times that, a level in is 26 px, bullets, numbers, to-dos
+// and toggles in that indent, a heading's ▸ in the margin to its left. The wrapper sets the colors (NOTES_VARS: the words, the muted words, lines, code's
+// background, and the page, surfaces and inverted colors the menus use). Motion is the app's (design/motion.mjs): a toggle's ▸ turns and what it opens eases
+// in, a menu and the format bar come in like every pop-up; none of it with Reduce Motion. The iPhone app draws the same numbers (Design/NotesViews.swift).
+const s3 = n => String(+n.toFixed(3)).replace(/^0\./, '.') + 's';
+export const NOTES_CSS = [
+  '.nb{position:relative;color:var(--gd-text);font-size:16px;line-height:1.6;overflow-wrap:anywhere;--nb-ind:26px;-webkit-text-size-adjust:100%}',
+  '.nb-doc{outline:0;white-space:pre-wrap;caret-color:var(--gd-text);padding-bottom:8px}.nb-doc ::selection{background:rgba(0,122,255,.22)}',
+  '.nb-row{position:relative;box-sizing:border-box;margin-left:calc(var(--d) * var(--nb-ind));padding:2px 0}.nb-tx{position:relative;min-height:1.6em;outline:0}',
+  '.nb-row.nb-ph>.nb-tx::before{content:attr(data-ph);position:absolute;left:0;top:0;color:var(--gd-muted);opacity:.75;pointer-events:none;white-space:nowrap}',
+  '.nb-h{font-weight:600;letter-spacing:-.02em}.nb-h1{font-size:1.6em;line-height:1.25;margin-top:.75em}.nb-h2{font-size:1.25em;line-height:1.3;margin-top:.8em}.nb-h3{font-size:1.08em;line-height:1.4;margin-top:.6em}.nb-h4{margin-top:.5em}',
+  '.nb-doc>.nb-row:first-child{margin-top:0}.nb-h .nb-tx{min-height:1.25em}',
+  // the indent's markers: a dot, a number, Lucida's own box, a toggle's ▸
+  '.nb-ul,.nb-ol,.nb-todo,.nb-toggle{padding-left:var(--nb-ind)}',
+  '.nb-ul::before{content:"";position:absolute;left:9px;top:calc(2px + .8em - 2.5px);width:5px;height:5px;border-radius:50%;background:currentColor}',
+  '.nb-ol::before{content:attr(data-n);position:absolute;left:0;top:2px;width:calc(var(--nb-ind) - 7px);text-align:right;font-variant-numeric:tabular-nums}',
+  '.nb-mk{position:absolute;left:0;top:2px;width:var(--nb-ind);height:1.6em;display:flex;align-items:center;cursor:pointer;-webkit-user-select:none;user-select:none}',
+  '.nb-box{left:1px;width:16px;height:16px;top:calc(2px + .8em - 8px);box-sizing:border-box;border:1.5px solid var(--gd-muted);border-radius:4.5px;justify-content:center;color:var(--nb-bg)}.nb-box svg{opacity:0}',
+  '.nb-on>.nb-box{border-color:var(--gd-text);background:var(--gd-text)}.nb-on>.nb-box svg{opacity:1}.nb-todo.nb-on>.nb-tx{color:var(--gd-muted);text-decoration:line-through;text-decoration-color:var(--gd-muted)}',
+  '.nb-read .nb-box{cursor:default}',
+  `.nb-tg{left:2px;width:20px;justify-content:center;color:var(--gd-text);border-radius:6px}.nb-tg svg{transition:transform ${s3(MOTION.knob)} ${EASE}}.nb-open>.nb-tg svg{transform:rotate(90deg)}.nb-tg:hover{background:var(--nb-surf)}`,
+  // a heading's ▸, in the margin: on hover on a computer, always on a phone and while its section is folded
+  `.nb-fold{position:absolute;left:-26px;top:calc(2px + .62em - 10px);width:20px;height:20px;border-radius:6px;display:flex;align-items:center;justify-content:center;color:var(--gd-muted);cursor:pointer;opacity:0;transition:opacity ${s3(MOTION.fade)} ease;-webkit-user-select:none;user-select:none}`,
+  `.nb-fold svg{transform:rotate(90deg);transition:transform ${s3(MOTION.knob)} ${EASE}}.nb-folded>.nb-fold svg{transform:none}.nb-row:hover>.nb-fold,.nb-folded>.nb-fold,.nb-phone .nb-fold{opacity:1}.nb-fold:hover{background:var(--nb-surf);color:var(--gd-text)}`,
+  '.nb-phone .nb-fold{left:-22px}',
+  '.nb-quote{padding-left:15px}.nb-quote::before{content:"";position:absolute;left:0;top:5px;bottom:5px;width:3px;border-radius:2px;background:var(--gd-muted);opacity:.45}',
+  ".nb-codetx{font-family:'Geist Mono',ui-monospace,monospace;font-size:13.5px;line-height:1.6;background:var(--nb-code);border-radius:12px;padding:12px 14px;tab-size:2;overflow-wrap:anywhere}",
+  ".nb-c{font-family:'Geist Mono',ui-monospace,monospace;font-size:.88em;padding:.12em .36em;border-radius:6px;background:var(--nb-code)}",
+  '.nb-b{font-weight:600}.nb-i{font-style:italic}.nb-s{text-decoration:line-through}.nb-a{color:inherit;text-decoration:underline;text-underline-offset:2px;text-decoration-thickness:1px}a.nb-a{cursor:pointer}',
+  '.nb-hr{padding:10px 0}.nb-line{height:1px;background:var(--gd-line)}',
+  '.nb-img img{display:block;max-width:100%;height:auto;border-radius:12px}.nb-alt{color:var(--gd-muted)}',
+  '.nb-tablewrap{overflow-x:auto;scrollbar-width:thin}.nb-table table{border-collapse:collapse;font-size:15px;line-height:1.5}.nb-table th,.nb-table td{border:1px solid var(--gd-line);padding:6px 12px;vertical-align:top;text-align:left;min-width:56px}.nb-table th{font-weight:600;background:var(--nb-code)}',
+  '.nb-cell{min-height:1.5em}.nb-tablemore{display:none;gap:14px;padding-top:6px}.nb-table:focus-within>.nb-tablemore{display:flex}',
+  '.nb-tbtn{border:0;padding:0;background:none;color:var(--gd-muted);font:inherit;font-size:13px;font-weight:500;cursor:pointer}.nb-tbtn:hover{color:var(--gd-text)}',
+  '.nb-picked{box-shadow:0 0 0 2px var(--gd-text);border-radius:12px}.nb-virtual>.nb-tx{color:var(--gd-muted);opacity:.6;cursor:text}',
+  '.nb-hl{background:rgba(0,122,255,.22);border-radius:2px}.nb-owner .nb-doc{cursor:text}',
+  `@keyframes nbIn{from{opacity:0;transform:translateY(-4px)}}.nb-in{animation:nbIn ${s3(MOTION.pop)} ${EASE} both}`,
+  // the + on an empty line, the block menu, the format bar
+  '.nb-plus{position:absolute;display:none;z-index:2;width:24px;height:24px;padding:0;border:0;border-radius:7px;background:transparent;color:var(--gd-muted);align-items:center;justify-content:center;cursor:pointer}.nb-plus.nb-show{display:flex}.nb-plus:hover{background:var(--nb-surf);color:var(--gd-text)}',
+  `.nb-menu{position:absolute;display:none;z-index:30;width:248px;max-height:388px;overflow-y:auto;scrollbar-width:none;box-sizing:border-box;padding:6px;border-radius:18px;background:var(--nb-bg);box-shadow:0 0 0 1px var(--gd-line),0 18px 44px rgba(0,0,0,.22);flex-direction:column;gap:2px;text-shadow:none}`,
+  `@keyframes nbPop{from{opacity:0;transform:translateY(${MOTION.slide}px)}}.nb-menu.nb-show,.nb-bar.nb-show{animation:nbPop ${s3(MOTION.pop)} ${EASE} backwards}.nb-menu.nb-show{display:flex}`,
+  '.nb-item{flex-shrink:0;height:40px;padding:0 8px;display:flex;align-items:center;gap:10px;border:0;border-radius:12px;background:transparent;color:var(--gd-text);font:inherit;font-size:14px;font-weight:500;line-height:1.2;text-align:left;cursor:pointer}.nb-item.nb-on{background:var(--nb-surf)}',
+  '.nb-chip{width:28px;height:28px;flex-shrink:0;border-radius:8px;background:var(--nb-surf);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;letter-spacing:-.02em}.nb-item.nb-on .nb-chip{background:var(--nb-bg)}.nb-chip.nb-small{font-size:10.5px}',
+  '.nb-bar{position:absolute;display:none;z-index:31;padding:4px;gap:2px;align-items:center;border-radius:14px;background:var(--nb-bg);box-shadow:0 0 0 1px var(--gd-line),0 12px 32px rgba(0,0,0,.18);text-shadow:none}.nb-bar.nb-show{display:flex}',
+  '.nb-bb{width:32px;height:32px;flex-shrink:0;padding:0;border:0;border-radius:9px;background:transparent;color:var(--gd-text);font:inherit;font-size:15px;line-height:1;display:flex;align-items:center;justify-content:center;cursor:pointer}.nb-bb:hover,.nb-bb.nb-on{background:var(--nb-surf)}.nb-bb b{font-weight:800}.nb-bb i{font-family:Georgia,serif;font-size:16px}',
+  '.nb-linkfield{width:210px;height:32px;box-sizing:border-box;padding:0 10px;border:0;outline:0;border-radius:9px;background:var(--nb-surf);color:var(--gd-text);font:inherit;font-size:14px}.nb-linkfield.nb-bad{box-shadow:inset 0 0 0 1.5px #D92D20}',
+  // the phone's bar above the keyboard
+  '.nb-keys{position:absolute;display:none;left:0;right:0;bottom:0;z-index:40;height:50px;box-sizing:border-box;padding:0 6px;align-items:center;gap:2px;background:var(--nb-bg);border-top:1px solid var(--gd-line)}.nb-keys.nb-show{display:flex}',
+  '.nb-kb{height:40px;min-width:46px;flex-shrink:0;padding:0 8px;border:0;border-radius:10px;background:transparent;color:var(--gd-text);font:inherit;font-size:17px;display:flex;align-items:center;justify-content:center;cursor:pointer}.nb-kb.nb-on{background:var(--nb-surf)}.nb-kb b{font-weight:800}.nb-kb i{font-family:Georgia,serif}',
+  '.nb-kt{font-size:15px;font-weight:600}.nb-aa{font-size:17px;font-weight:700;letter-spacing:-.02em}.nb-kgap{flex-grow:1}',
+  '@media (prefers-reduced-motion:reduce){.nb-in,.nb-menu.nb-show,.nb-bar.nb-show{animation:none}.nb-tg svg,.nb-fold svg,.nb-fold{transition:none}}'
 ].join('');
-const GUIDE_VARS = 'style="--gd-text: {{t.text}}; --gd-muted: {{t.muted}}; --gd-line: {{t.line}}; --gd-code: {{t.bg}};"';
+// The colors a page of notes is drawn in, from a board's theme (`code`: what code sits on, the other color of the page it is on).
+export const NOTES_VARS = (code = 't.surf') => `--gd-text: {{t.text}}; --gd-muted: {{t.muted}}; --gd-line: {{t.line}}; --nb-code: {{${code}}}; --nb-bg: {{t.bg}}; --nb-surf: {{t.surf}}; --nb-surf2: {{t.surf2}};`;
+// Every board that shows a page of notes carries this (it was the rendered Guide's .gd look; a page is drawn by web/notes.js now).
+export const GUIDE_CSS = NOTES_CSS;
 
 // ---------- what the deck pages carry: Guide, Sources, the Add cards menu, and a source opened ----------
 // `phone` draws the iPhone page's version. Each returns a piece of template; `DECK_MATERIALS_JS` is the logic they read (it goes in each deck
@@ -296,21 +340,16 @@ export function deckBlocks(H, phone) {
   const icon = (name, size = 16, w = 2) => svg(I[name] || EXTRA[name], size, w);
   const small = (label, handler, ic, attrs = '') => `<button type="button" onClick="{{${handler}}}" ${attrs} style="height: 34px; padding: 0 14px; display: inline-flex; align-items: center; gap: 6px; border: 0; border-radius: 999px; background: {{t.bg}}; color: {{t.text}}; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer;">${ic ? icon(ic, 14, 2) : ''}${label}</button>`;
   const link = (label, href, ic) => `<a href="${href}" style="height: 34px; padding: 0 14px; display: inline-flex; align-items: center; gap: 6px; border-radius: 999px; background: {{t.bg}}; color: {{t.text}}; font-size: 13px; font-weight: 600;">${ic ? icon(ic, 14, 2) : ''}${label}</a>`;
+  // The Notes tab: the page of notes as it reads (web/notes.js), with its pages as tabs. For its owner a press on the words opens it to write in, there, and an
+  // empty one is a blank note waiting (a heading and a line); Make cards makes cards from it.
   const guide = `<sc-if value="{{gs.guideShow}}" hint-placeholder-val="{{ true }}">
-    <section aria-label="Guide" style="min-width: 0; box-sizing: border-box; padding: ${phone ? '18px 18px 16px' : '20px 24px 18px'}; border-radius: ${phone ? 22 : 24}px; background: {{t.surf}}; display: flex; flex-direction: column; gap: 12px;">
-      <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
-        <span style="font-size: 13px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: {{t.muted}};">Guide</span>
-        <sc-if value="{{gs.hasTabs}}" hint-placeholder-val="{{ true }}"><div role="group" aria-label="Guide pages" style="display: flex; gap: 4px; flex-wrap: wrap;"><sc-for list="{{gs.tabs}}" as="g" hint-placeholder-count="3"><button type="button" onClick="{{g.pick}}" aria-pressed="{{g.pressed}}" style="height: 28px; max-width: 180px; padding: 0 12px; border: 0; border-radius: 999px; background: {{g.bg}}; color: {{g.fg}}; font: inherit; font-size: 12.5px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: pointer;">{{g.title}}</button></sc-for></div></sc-if>
+    <section aria-label="Notes" style="min-width: 0; box-sizing: border-box; padding: ${phone ? '16px 18px 18px 24px' : '18px 28px 22px 30px'}; border-radius: ${phone ? 22 : 24}px; background: {{t.surf}}; display: flex; flex-direction: column; gap: 12px;">
+      <sc-if value="{{gs.hasBar}}" hint-placeholder-val="{{ true }}"><div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+        <sc-if value="{{gs.hasTabs}}" hint-placeholder-val="{{ true }}"><div role="group" aria-label="Pages" style="display: flex; gap: 4px; flex-wrap: wrap;"><sc-for list="{{gs.tabs}}" as="g" hint-placeholder-count="3"><button type="button" onClick="{{g.pick}}" aria-pressed="{{g.pressed}}" style="height: 30px; max-width: 200px; padding: 0 13px; border: 0; border-radius: 999px; background: {{g.bg}}; color: {{g.fg}}; font: inherit; font-size: 13px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: pointer;">{{g.title}}</button></sc-for></div></sc-if>
         <span style="flex-grow: 1;"></span>
-        <sc-if value="{{gs.canEdit}}" hint-placeholder-val="{{ true }}"><div style="display: flex; gap: 6px;"><sc-if value="{{gs.hasText}}" hint-placeholder-val="{{ true }}">${link('Make cards', '{{gs.makeHref}}', 'sparkle')}</sc-if>${link('{{gs.editLabel}}', '{{gs.editHref}}', 'pencil')}</div></sc-if>
-      </div>
-      <sc-if value="{{gs.hasText}}" hint-placeholder-val="{{ true }}">
-        <div style="position: relative; ${'{{gs.clip}}'}">
-          <div class="gd" ref="{{gs.ref}}" data-sc-own ${GUIDE_VARS}></div>
-        </div>
-        <sc-if value="{{gs.long}}" hint-placeholder-val="{{ true }}"><button type="button" onClick="{{gs.toggle}}" aria-expanded="{{gs.expanded}}" style="align-self: flex-start; padding: 0; border: 0; background: transparent; color: {{t.text}}; font: inherit; font-size: 14px; font-weight: 600; text-decoration: underline; cursor: pointer;">{{gs.toggleLabel}}</button></sc-if>
-      </sc-if>
-      <sc-if value="{{gs.empty}}" hint-placeholder-val="{{ false }}"><a href="{{gs.editHref}}" style="min-height: 64px; box-sizing: border-box; padding: 14px 18px; display: flex; align-items: center; gap: 12px; border-radius: 16px; background: {{t.bg}}; color: {{t.text}};"><span style="width: 36px; height: 36px; flex-shrink: 0; border-radius: 18px; background: {{t.surf}}; display: flex; align-items: center; justify-content: center;">${icon('plus', 16, 2)}</span><span style="display: flex; flex-direction: column; gap: 1px;"><span style="font-size: 15px; font-weight: 600;">Add a guide</span><span style="font-size: 13px; color: {{t.muted}};">Notes, links and a plan for this deck</span></span></a></sc-if>
+        <sc-if value="{{gs.canMake}}" hint-placeholder-val="{{ true }}">${link('Make cards', '{{gs.makeHref}}', 'sparkle')}</sc-if>
+      </div></sc-if>
+      <div ref="{{gs.ref}}" data-sc-own data-phone="${phone ? 'yes' : ''}" style="${NOTES_VARS('t.bg')}"></div>
     </section>
   </sc-if>`;
   // The deck page's sections: Cards, Notes (the Guide and its pages) and Sources (what the cards were made from; only for the deck's owner). A row of tabs with room for
@@ -356,15 +395,13 @@ export function deckBlocks(H, phone) {
   return { guide, sources, tabs, viewer: viewer(phone), addMenu, ...diagramBlocks(H, phone) };
 }
 
-// The logic those pieces read, for a deck's own page (`dk` is the deck, and `this.md()` draws the Guide). Returns `gs`.
+// The logic those pieces read, for a deck's own page (`dk` is the deck, and `this.notes()` draws the Guide). Returns `gs`.
 export const DECK_MATERIALS_JS = String.raw`
   const GS = (() => {
-    const st = this.state, p = this.props, mock = !!db.mock, dm = mock ? this.mockMaterials() : db, G = dm.guide(dk.id), srcs = dm.sources(dk.id), md = this.md();
+    const st = this.state, p = this.props, mock = !!db.mock, dm = mock ? this.mockMaterials() : db, G = dm.guide(dk.id), srcs = dm.sources(dk.id);
     const DGM = dm.diagrams, dgRows = DGM.rows(dk.id), dgv = DGM.view(dk.id, p.diagram || '');
     const pageId = G.pages.some(x => x.id === st.gpage) ? st.gpage : 'main', cur = pageId === 'main' ? { id: 'main', title: 'Guide', text: G.text } : G.pages.find(x => x.id === pageId);
-    const text = (cur && cur.text) || '', hasAny = !!(G.text.trim() || G.pages.length), open = !!st.gopen, long = text.length > 640 || text.split('\n').length > 14;
-    const sum = s => { let h = 0; for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) | 0; return h; };
-    const key = pageId + ':' + text.length + ':' + sum(text);
+    const text = (cur && cur.text) || '', hasAny = !!(G.text.trim() || G.pages.length);
     const KIND = { file: 'File', photo: 'Photos', recording: 'Recording', video: 'YouTube', text: 'Text', topic: 'Topic' };
     const when = t => (t ? new Date(t).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '');
     const plural = (n, w) => n + ' ' + w + (n === 1 ? '' : 's');
@@ -402,12 +439,13 @@ export const DECK_MATERIALS_JS = String.raw`
       .map(x => ({ ...x, hasCount: !!x.count, selected: x.id === tab ? 'true' : 'false', fg: x.id === tab ? t.text : t.muted, bar: x.id === tab ? t.text : 'transparent', pick: () => this.setState({ tab: x.id }) }));
     const gs = {
       sections: tabList, showSections: tabList.length > 1, showCards: tab === 'cards', noCards: tab === 'cards' && cardsN === 0, sourcesNone: sourceRows.length === 0,
-      guideShow: tab === 'notes', empty: !hasAny && G.can, hasText: !!text.trim(), canEdit: G.can, editHref: mock ? 'WebGuide.dc.html' : db.href('guide', dk.id) + (pageId === 'main' ? '' : '?page=' + pageId), editLabel: hasAny ? 'Edit' : 'Write',
+      guideShow: tab === 'notes', hasText: !!text.trim(), canEdit: G.can, canMake: G.can && !!text.trim(), hasBar: G.pages.length > 0 || (G.can && !!text.trim()),
       makeHref: mock ? 'WebMake.dc.html' : '/make?deck=' + encodeURIComponent(dk.id), newCardHref: dk.newCardHref, importHref: db.href('import', dk.id),
-      hasTabs: G.pages.length > 0, tabs: [{ id: 'main', title: 'Guide' }, ...G.pages].map(x => ({ title: x.title, pressed: x.id === pageId ? 'true' : 'false', bg: x.id === pageId ? t.bg : 'transparent', fg: x.id === pageId ? t.text : t.muted, pick: () => this.setState({ gpage: x.id, gopen: false }) })),
-      long, expanded: open ? 'true' : 'false', toggle: () => this.setState({ gopen: !open }), toggleLabel: open ? 'Show less' : 'Show more',
-      clip: long && !open ? 'max-height: 230px; overflow: hidden; -webkit-mask-image: linear-gradient(180deg, #000 62%, transparent); mask-image: linear-gradient(180deg, #000 62%, transparent);' : '',
-      ref: el => { if (el.getAttribute('data-k') !== key) { el.innerHTML = md.render(text); el.setAttribute('data-k', key); } },
+      hasTabs: G.pages.length > 0, tabs: [{ id: 'main', title: 'Guide' }, ...G.pages].map(x => ({ title: x.title, pressed: x.id === pageId ? 'true' : 'false', bg: x.id === pageId ? t.bg : 'transparent', fg: x.id === pageId ? t.text : t.muted, pick: () => this.setState({ gpage: x.id }) })),
+      // the page as it reads; the owner's opens to write in where it was pressed (and an empty one is a blank note)
+      ref: el => { if (!el) return; const href = (mock ? 'WebGuide.dc.html' : db.href('guide', dk.id)), q = (pageId === 'main' ? '' : 'page=' + pageId);
+        this.notes().mount(el, { md: text, key: (mock ? 'canvas|' : '') + dk.id + '|' + pageId, editable: false, blank: G.can, phone: el.getAttribute('data-phone') === 'yes', image: s => (/^\/media\/[\w-]+\.(png|jpe?g|gif|webp)$/i.test(s) ? s : ''),
+          onOpen: G.can ? at => { if (mock) return; db.act.go(href + '?' + [q, 'at=' + at.i + ':' + at.off].filter(Boolean).join('&')); } : undefined }); },
       sourcesShow: tab === 'sources', sourceCount: String(sourceRows.length), sources: sourceRows,
       addOpen: !!st.addOpen, addExpanded: st.addOpen ? 'true' : 'false', toggleAdd: () => this.setState({ addOpen: !st.addOpen }) };
     ${DIAGRAMS_JS}
@@ -433,14 +471,17 @@ const MATERIALS_MOCK_BASE = String.raw`mockMaterials() {
       { key: 'k4', kind: 'basic', front: 'Where does glycolysis happen?', back: 'In the cytoplasm.', text: '', at: 'p. 7', gone: true },
       { key: 'k5', kind: 'cloze', front: '', back: '', text: 'The Krebs cycle runs in the [[mitochondrial matrix]].', at: 'p. 8', gone: false },
       { key: 'k6', kind: 'basic', front: 'What carries electrons to the transport chain?', back: 'NADH and FADH₂.', text: '', at: 'p. 9', gone: false }];
+    // (the starter notes as web/make.mjs drafts them: a section for the part, each note a toggle)
     const notes = { title: 'Lecture 3 slides', overview: 'How cells make energy: the mitochondrion, the electron transport chain and the Krebs cycle. It ends with how ATP is made and what runs out without oxygen.',
-      sections: [{ heading: 'The mitochondrion', at: 'p. 4', text: 'The **mitochondrion** makes most of the cell’s **ATP**. It has two membranes and is the site of the electron transport chain.' },
-        { heading: 'The electron transport chain', at: 'p. 5', text: '- **NADH** and **FADH₂** pass electrons along the chain\n- Protons (H⁺) are pumped into the intermembrane space\n- **ATP synthase** lets them flow back and makes ATP' },
-        { heading: 'Glycolysis', at: 'p. 7', text: 'Happens in the **cytoplasm** and splits one glucose into two **pyruvate**.' },
-        { heading: 'The Krebs cycle', at: 'p. 8', text: '| Where | What it makes |\n| --- | --- |\n| **Matrix** | NADH, FADH₂ and a little ATP |' }],
-      text: ['# Lecture 3 slides', '', 'How cells make energy: the mitochondrion, the electron transport chain and the Krebs cycle. It ends with how ATP is made and what runs out without oxygen.', '', '## The mitochondrion (p. 4)', '', 'The **mitochondrion** makes most of the cell’s **ATP**. It has two membranes and is the site of the electron transport chain.', '',
-        '## The electron transport chain (p. 5)', '', '- **NADH** and **FADH₂** pass electrons along the chain', '- Protons (H⁺) are pumped into the intermembrane space', '- **ATP synthase** lets them flow back and makes ATP', '', '## Glycolysis (p. 7)', '', 'Happens in the **cytoplasm** and splits one glucose into two **pyruvate**.', '',
-        '## The Krebs cycle (p. 8)', '', '| Where | What it makes |', '| --- | --- |', '| **Matrix** | NADH, FADH₂ and a little ATP |', ''].join('\n') };
+      sections: [{ heading: 'The **mitochondrion** makes most of the cell’s **ATP**', at: 'p. 4', text: 'It has two membranes and is the site of the electron transport chain.' },
+        { heading: 'The **electron transport chain** pumps protons', at: 'p. 5', text: '- **NADH** and **FADH₂** pass electrons along the chain\n- Protons (H⁺) are pumped into the intermembrane space\n- **ATP synthase** lets them flow back and makes ATP' },
+        { heading: '**Glycolysis** happens in the cytoplasm', at: 'p. 7', text: 'It splits one glucose into two **pyruvate**.' },
+        { heading: 'The **Krebs cycle** runs in the matrix', at: 'p. 8', text: '| Where | What it makes |\n| --- | --- |\n| **Matrix** | NADH, FADH₂ and a little ATP |' }],
+      text: ['# Lecture 3 slides', '', 'How cells make energy: the mitochondrion, the electron transport chain and the Krebs cycle. It ends with how ATP is made and what runs out without oxygen.', '', '## Energy in the cell (p. 4 to p. 8)', '',
+        ':::toggle The **mitochondrion** makes most of the cell’s **ATP**', 'It has two membranes and is the site of the electron transport chain.', ':::', '',
+        ':::toggle The **electron transport chain** pumps protons', '- **NADH** and **FADH₂** pass electrons along the chain', '- Protons (H⁺) are pumped into the intermembrane space', '- **ATP synthase** lets them flow back and makes ATP', ':::', '',
+        ':::toggle **Glycolysis** happens in the cytoplasm', 'It splits one glucose into two **pyruvate**.', ':::', '',
+        ':::toggle The **Krebs cycle** runs in the matrix', '| Where | What it makes |', '| --- | --- |', '| **Matrix** | NADH, FADH₂ and a little ATP |', ':::', ''].join('\n') };
     const spanish = [
       { key: 'k1', kind: 'audio', front: '', back: 'the house', text: '', speak: 'la casa', lang: 'es', at: '', gone: false },
       { key: 'k2', kind: 'audio', front: '', back: 'Good morning', text: '', speak: 'buenos días', lang: 'es', at: '', gone: false },
@@ -468,7 +509,7 @@ const MATERIALS_MOCK_BASE = String.raw`mockMaterials() {
       'Review': { step: 'review', kind: 'file', cards, name: 'Lecture 3 slides', notes },
       'Review (picture cards)': { step: 'review', kind: 'file', cards: [...cards.slice(0, 3), ...pics], name: 'Lecture 3 slides', notes, figures: 3, canImage: true }, 'Review (notes open)': { step: 'review', kind: 'file', cards, name: 'Lecture 3 slides', notes }, 'Review (notes off)': { step: 'review', kind: 'file', cards, name: 'Lecture 3 slides', notes, keepNotes: false },
       'Review (no room for notes)': { step: 'review', kind: 'file', cards, name: 'Lecture 3 slides', notes, notesFull: true },
-      'Review (audio cards)': { step: 'review', kind: 'paste', cards: spanish, name: 'Spanish words', notes: { ...notes, title: 'Spanish words', sections: notes.sections.slice(0, 2).map(x => ({ ...x, at: '' })), text: '# Spanish words\n\nGreetings and words for the home and school.\n\n## Greetings\n\n**buenos días** means good morning. Use **usted** to be polite.\n\n## The home\n\n**la casa** is the house.\n' } },
+      'Review (audio cards)': { step: 'review', kind: 'paste', cards: spanish, name: 'Spanish words', notes: { ...notes, title: 'Spanish words', sections: [{ heading: '**buenos días** means good morning', at: '', text: 'Use **usted** to be polite.' }, { heading: '**la casa** is the house', at: '', text: 'A word for the home.' }], text: '# Spanish words\n\nGreetings and words for the home and school.\n\n## Greetings and the home\n\n:::toggle **buenos días** means good morning\nUse **usted** to be polite.\n:::\n\n:::toggle **la casa** is the house\nA word for the home.\n:::\n' } },
       'Review (editing a card)': { step: 'review', kind: 'file', cards, name: 'Lecture 3 slides', notes, editing: 'k2' },
       'Limit reached': { step: 'error', kind: 'file', limits: free, error: { message: 'That’s today’s 3 free makes. Go Pro for 30 a day.', pro: true, code: 'day' } },
       'File too big': { step: 'add', kind: 'file', limits: free, files: [slides], ready: true, error: { message: 'That file is over 20 MB. Go Pro for up to 40 MB.', soft: true } },
@@ -477,10 +518,13 @@ const MATERIALS_MOCK_BASE = String.raw`mockMaterials() {
       recStart: noop, recPause: noop, recResume: noop, recStop: noop, recDiscard: noop, setKeepNotes: noop, make: noop, cancel: noop, retry: noop, edit: noop, openCard: noop, remove: noop, save: noop, discard: noop };
   })();
   const GD = (() => {
-    const text = ['# Cell Biology: Exam 1', '', 'Everything for the first exam, in the order we covered it. Start with the checklist, then the mnemonics.', '', '## Checklist', '- [x] Organelles and what each one does', '- [x] The electron transport chain',
-      '- [ ] Glycolysis, step by step', '- [ ] Mitosis versus meiosis', '', '## Mnemonics', '| Phase | Remember it as |', '| --- | --- |', '| Prophase | **P**ut your chromosomes in **P**lace |', '| Metaphase | **M**iddle of the cell |',
-      '| Anaphase | **A**part they go |', '| Telophase | **T**wo new cells |', '', '> The mitochondrion makes most of the cell’s ATP.', '', 'Questions? Ask in [office hours](https://example.edu/office-hours).'].join('\n');
-    const pages = [{ id: 'g1', title: 'Lecture 3 summary', text: '## Lecture 3\n\nThe **electron transport chain** pumps protons across the inner membrane.\n\n1. NADH gives up its electrons.\n2. Protons are pumped out of the matrix.\n3. ATP synthase lets them flow back and makes ATP.', at: 0 }, { id: 'g2', title: 'Mnemonics', text: '- **PMAT** for the phases of mitosis\n- *Please Do Not Throw Sausage Pizza Away* for the layers', at: 0 }];
+    const text = ['# Cell Biology: Exam 1', '', 'Everything for the first exam, in the order we covered it.', '', '## Checklist', '', '- [x] Organelles and what each one does', '- [x] The electron transport chain',
+      '- [ ] Glycolysis, step by step', '- [ ] Mitosis versus meiosis', '', '## The mitochondrion (p. 4 to p. 5)', '', ':::toggle The **mitochondrion** makes most of the cell’s **ATP**',
+      'It has two membranes. The inner one folds into **cristae**, where the electron transport chain sits.', ':::', '', ':::toggle **ATP synthase** lets protons flow back and makes ATP',
+      '1. NADH gives up its electrons.', '2. Protons are pumped out of the matrix.', '3. They flow back through ATP synthase.', ':::', '', '## Mnemonics', '', '| Phase | Remember it as |', '| --- | --- |',
+      '| Prophase | **P**ut your chromosomes in **P**lace |', '| Metaphase | **M**iddle of the cell |', '| Anaphase | **A**part they go |', '| Telophase | **T**wo new cells |', '',
+      '> The mitochondrion makes most of the cell’s ATP.', '', 'Questions? Ask in [office hours](https://example.edu/office-hours).', ''].join('\n');
+    const pages = [{ id: 'g1', title: 'Lecture 3 summary', text: '## Lecture 3\n\n:::toggle The **electron transport chain** pumps protons across the inner membrane\n1. NADH gives up its electrons.\n2. Protons are pumped out of the matrix.\n3. ATP synthase lets them flow back and makes ATP.\n:::\n', at: 0 }, { id: 'g2', title: 'Mnemonics', text: '- **PMAT** for the phases of mitosis\n- *Please Do Not Throw Sausage Pizza Away* for the layers\n', at: 0 }];
     const file = (name, type, size, f) => ({ name, href: '/media/' + name, type, size, file: f });
     const sources = [
       { id: 'x1', kind: 'file', name: 'Lecture 3 slides', cards: 24, at: day(8, 18), url: '', text: '', textName: '', seconds: 0, pages: 32, files: [file('sx1-0.pdf', 'application/pdf', 4200000, 'Lecture 3 slides.pdf')], href: '/media/sx1-0.pdf' },
@@ -497,135 +541,154 @@ const MATERIALS_MOCK_BASE = String.raw`mockMaterials() {
     guide: () => ({ deckId: 'cell', text: GMODE === 'No guide yet' ? '' : GMODE === 'Long guide' ? GD.text + '\n\n' + GD.text.replace('# Cell Biology: Exam 1', '## More for the exam') : GD.text, at: 0, pages: GMODE === 'Guide pages' ? GD.pages : [], can: !RO, studying: RO }),
     sources: () => (GMODE === 'No guide yet' || RO ? [] : GD.sources),
     sourceText: name => (/^sx2/.test(name) || /^sx3/.test(name) ? GD.talk : ''),
-    guideHistory: () => Promise.resolve([{ at: day(8, 21), saved: 0, text: GD.text.replace('- [x] The electron transport chain', '- [ ] The electron transport chain') }, { at: day(8, 18), saved: 0, text: '# Cell Biology: Exam 1\n\nEverything for the first exam.' }]),
+    guideHistory: () => Promise.resolve([{ at: day(8, 21), saved: 0, text: GD.text.replace('- [x] The electron transport chain', '- [ ] The electron transport chain') }, { at: day(8, 18), saved: 0, text: '# Cell Biology: Exam 1\n\nEverything for the first exam.\n' }]),
     saveGuide: () => Promise.resolve({}), addGuidePage: () => Promise.resolve('g9'), renameGuidePage: () => Promise.resolve({}), deleteGuidePage: () => Promise.resolve({}), restoreGuide: () => Promise.resolve({}), deleteSource: () => Promise.resolve({}) };
 }`;
 export const MATERIALS_MOCK = MATERIALS_MOCK_BASE + '\n' + DIAGRAMS_MOCK;
 
-// ---------- the Guide's editor (WebGuide, PhoneGuide) ----------
-export const GUIDE_VIEWS = ['Write', 'Preview', 'Older versions', 'A new page', 'Nothing written yet'];
+// ---------- the Notes page (WebGuide, PhoneGuide) ----------
+// A deck's Guide and its extra pages as one page that is always formatted (web/notes.js): click and type, no marks to see, nothing to switch between. At the
+// top, the pages as tabs (and + for a new one), the quiet saving line, and ⋯ (Make cards from this page, Older versions, Rename page, Delete page); a phone
+// has a bar above the keyboard. It saves as it is typed (a moment after the last key, one save after another), and Done (✕, Escape, the back arrow) sends
+// what is waiting first. The canvas's `view` shows its states.
+export const GUIDE_VIEWS = ['Writing', 'Block menu', 'Format bar', 'Toggle open', 'Toggle closed', 'Section folded', 'Blank note', 'Reading on a shared deck', 'Older versions', 'A new page'];
+// What each state shows (web/notes.js `demo`; the sample's blocks: 0 title, 1 its line, 2 Checklist, 7 The mitochondrion, 8 its first toggle, ...).
+const GUIDE_DEMOS = phone => ({
+  'Writing': { open: 'first', keys: phone },
+  'Block menu': phone ? { open: 'first', keys: true, aa: true, caret: 1 } : { open: 'first', emptyAt: 7, caret: 7, menu: true },
+  'Format bar': { open: 'first', bar: { i: 1, a: 19, b: 29 }, keys: phone },
+  'Toggle open': { open: 'all' }, 'Toggle closed': { open: 'none' }, 'Section folded': { open: 'none', fold: [2] },
+  'Blank note': { keys: phone }, 'Reading on a shared deck': { open: 'first' }, 'A new page': { keys: phone }
+});
 function guideBoards(H) {
-  const { svg, I, FONT, MONO, T, DB_JS, DARK, MESH, W, HH, PW, PH } = H;
+  const { svg, I, FONT, T, DB_JS, DARK, MESH, W, HH, PW, PH } = H;
   const icon = (name, size = 16, w = 2) => svg(I[name] || EXTRA[name], size, w);
   const ROUND = 'width: 40px; height: 40px; flex-shrink: 0; border: 0; border-radius: 20px; background: {{t.surf}}; color: {{t.text}}; display: flex; align-items: center; justify-content: center; cursor: pointer;';
-  // A toolbar button acts on a mouse press (so the text field keeps its place and selection) and on a click from the keyboard.
-  const tb = (handler, label, inner, extra = '') => `<button type="button" onMouseDown="{{${handler}.down}}" onClick="{{${handler}.click}}" aria-label="${label}" data-tip="${label}" style="min-width: 36px; height: 34px; flex-shrink: 0; padding: 0 8px; border: 0; border-radius: 10px; background: transparent; color: {{t.text}}; font: inherit; font-size: 14px; font-weight: 600; display: flex; align-items: center; justify-content: center; cursor: pointer; ${extra}">${inner}</button>`;
-  const toolbar = `<div role="toolbar" aria-label="Formatting" style="display: flex; align-items: center; gap: 2px; overflow-x: auto; scrollbar-width: none;">
-    ${tb('tbHeading', 'Heading', 'H')}${tb('tbBold', 'Bold', 'B', 'font-weight: 800;')}${tb('tbItalic', 'Italic', 'I', 'font-style: italic; font-family: Georgia, serif; font-size: 15px;')}${tb('tbCode', 'Code', '&lt;/&gt;', 'font-family: ' + MONO + '; font-size: 12px;')}
-    <span aria-hidden="true" style="width: 1px; height: 18px; flex-shrink: 0; margin: 0 6px; background: {{t.line}};"></span>
-    ${tb('tbLink', 'Link', icon('link', 16, 2))}${tb('tbBullets', 'Bulleted list', icon('list', 16, 2))}${tb('tbNumbers', 'Numbered list', '1.', 'font-family: ' + MONO + '; font-size: 12px;')}${tb('tbTasks', 'Task list', icon('check', 16, 2.2))}${tb('tbQuote', 'Quote', '“', 'font-size: 20px; font-family: Georgia, serif;')}${tb('tbTable', 'Table', icon('grid', 16, 2))}${tb('tbImage', 'Picture', icon('image', 16, 2))}
-  </div>`;
-  const body = phone => `
-    <div style="display: flex; align-items: center; gap: 10px;">
-      <button type="button" onClick="{{done}}" aria-label="Done" style="${ROUND}">${icon(phone ? 'back' : 'close', phone ? 18 : 16, 2)}</button>
-      <span style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px;"><span style="font-size: ${phone ? 20 : 22}px; font-weight: 600; letter-spacing: -.02em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">Guide</span><span style="font-size: 13px; color: {{t.muted}}; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{deckName}}</span></span>
-      <span aria-live="polite" style="font-size: 13px; color: {{saveColor}};">{{saveLabel}}</span>
-      <button type="button" onClick="{{toggleHistory}}" aria-pressed="{{histPressed}}" class="sc-press" style="height: 40px; padding: 0 ${phone ? 12 : 16}px; border: 0; border-radius: 20px; background: {{histBg}}; color: {{histFg}}; font: inherit; font-size: 14px; font-weight: 600; display: flex; align-items: center; gap: 6px; cursor: pointer;">${icon('history', 15, 2)}${phone ? '' : 'History'}</button>
-    </div>
-    <div role="group" aria-label="Pages" style="display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; flex-shrink: 0;"><sc-for list="{{tabs}}" as="g" hint-placeholder-count="3"><button type="button" onClick="{{g.pick}}" aria-pressed="{{g.pressed}}" style="height: 34px; max-width: 220px; flex-shrink: 0; padding: 0 14px; border: 0; border-radius: 999px; background: {{g.bg}}; color: {{g.fg}}; font: inherit; font-size: 13px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: pointer;">{{g.title}}</button></sc-for><sc-if value="{{canAddPage}}" hint-placeholder-val="{{ true }}"><button type="button" onClick="{{addPage}}" aria-label="Add a page" style="height: 34px; flex-shrink: 0; padding: 0 14px 0 10px; border: 0; border-radius: 999px; background: transparent; box-shadow: inset 0 0 0 1px {{t.line}}; color: {{t.text}}; font: inherit; font-size: 13px; font-weight: 600; display: flex; align-items: center; gap: 4px; cursor: pointer;">${icon('plus', 14, 2.2)}Add page</button></sc-if></div>
-    <sc-if value="{{pageTools}}" hint-placeholder-val="{{ false }}"><div style="display: flex; align-items: center; gap: 8px; flex-shrink: 0;"><input type="text" value="{{pageTitle}}" onChange="{{setPageTitle}}" aria-label="Page name" placeholder="Page name" style="flex-grow: 1; min-width: 0; height: 40px; box-sizing: border-box; padding: 0 14px; border: 0; outline: 0; border-radius: 12px; background: {{t.surf}}; color: {{t.text}}; font: inherit; font-size: 15px; font-weight: 600;"><button type="button" onClick="{{deletePage}}" style="height: 40px; padding: 0 14px; border: 0; border-radius: 12px; background: {{t.surf}}; color: {{t.again}}; font: inherit; font-size: 14px; font-weight: 600; cursor: pointer;">Delete page</button></div></sc-if>
-    <sc-if value="{{showEditor}}" hint-placeholder-val="{{ true }}">
-      <div style="display: flex; align-items: center; gap: 10px; flex-shrink: 0; ${phone ? 'flex-wrap: wrap;' : ''}">
-        <div role="group" aria-label="Write or Preview" style="display: flex; padding: 3px; border-radius: 999px; background: {{t.surf}}; flex-shrink: 0;"><sc-for list="{{tabsWP}}" as="o" hint-placeholder-count="2"><button type="button" onClick="{{o.pick}}" aria-pressed="{{o.pressed}}" style="height: 32px; padding: 0 16px; border: 0; border-radius: 999px; background: {{o.bg}}; color: {{o.fg}}; box-shadow: {{o.sh}}; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer;">{{o.label}}</button></sc-for></div>
-        <sc-if value="{{isWrite}}" hint-placeholder-val="{{ true }}"><div style="min-width: 0; ${phone ? 'width: 100%; order: 3;' : 'flex-grow: 1;'}">${toolbar}</div></sc-if>
+  // The pages: a pill for the Guide and for each extra page, and + for a new one.
+  const pages = phone => `<sc-if value="{{showTabs}}" hint-placeholder-val="{{ true }}"><div role="group" aria-label="Pages" style="display: flex; align-items: center; gap: 4px; min-width: 0; overflow-x: auto; scrollbar-width: none; ${phone ? 'flex-shrink: 0; padding: 0 16px 4px;' : 'flex-grow: 1;'}"><sc-for list="{{tabs}}" as="g" hint-placeholder-count="3"><button type="button" onClick="{{g.pick}}" aria-pressed="{{g.pressed}}" style="height: 32px; max-width: 220px; flex-shrink: 0; padding: 0 13px; border: 0; border-radius: 999px; background: {{g.bg}}; color: {{g.fg}}; font: inherit; font-size: 13px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: pointer;">{{g.title}}</button></sc-for><sc-if value="{{canAddPage}}" hint-placeholder-val="{{ true }}"><button type="button" onClick="{{addPage}}" aria-label="Add a page" data-tip="Add a page" style="width: 32px; height: 32px; flex-shrink: 0; border: 0; border-radius: 16px; background: transparent; color: {{t.muted}}; display: flex; align-items: center; justify-content: center; cursor: pointer;">${icon('plus', 15, 2.2)}</button></sc-if></div></sc-if>`;
+  const item = (handler, ic, label, danger) => `<button type="button" role="menuitem" onClick="{{${handler}}}" style="height: 40px; flex-shrink: 0; padding: 0 10px; display: flex; align-items: center; gap: 10px; border: 0; border-radius: 12px; background: transparent; color: ${danger ? '{{t.again}}' : '{{t.text}}'}; font: inherit; font-size: 14px; font-weight: 500; text-align: left; cursor: pointer;"><span style="display: flex; flex-shrink: 0;">${icon(ic, 16, 2)}</span><span style="min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${label}</span></button>`;
+  // ⋯: what else a page can do (Lucida's own menu: Escape or a press outside closes it, web/app.js).
+  const more = `<div style="position: relative; flex-shrink: 0;"><button type="button" onClick="{{toggleMore}}" aria-label="More" data-tip="More" aria-haspopup="menu" aria-expanded="{{moreExpanded}}" style="${ROUND} background: {{moreBg}};">${icon('more', 18, 2)}</button><sc-if value="{{moreOpen}}" hint-placeholder-val="{{ false }}"><div role="menu" aria-label="More" data-sc-pop style="position: absolute; right: 0; top: calc(100% + 8px); z-index: 50; width: 252px; box-sizing: border-box; padding: 6px; border-radius: 18px; background: {{t.bg}}; color: {{t.text}}; box-shadow: 0 0 0 1px {{t.line}}, 0 18px 44px rgba(0,0,0,.22); display: flex; flex-direction: column; gap: 2px; text-shadow: none;">
+      ${item('makeCards', 'sparkle', '{{makeLabel}}')}${item('openHistory', 'history', 'Older versions')}<sc-if value="{{pageTools}}" hint-placeholder-val="{{ false }}">${item('startRename', 'pencil', 'Rename page')}${item('deletePage', 'bin', 'Delete page', true)}</sc-if>
+    </div></sc-if></div>`;
+  const saving = `<span aria-live="polite" style="flex-shrink: 0; font-size: 13px; color: {{saveColor}}; white-space: nowrap;">{{saveLabel}}</span>`;
+  // the page itself (and, for an extra page being renamed, its name above it)
+  const page = phone => `<sc-if value="{{showPage}}" hint-placeholder-val="{{ true }}"><div style="flex-grow: 1; min-height: 0; overflow-y: auto; scrollbar-width: ${phone ? 'none' : 'thin'};">
+      <div style="box-sizing: border-box; ${phone ? 'padding: 10px 20px 120px 30px;' : 'max-width: 728px; margin: 0 auto; padding: 30px 54px 140px;'}">
+        <sc-if value="{{renaming}}" hint-placeholder-val="{{ false }}"><input type="text" value="{{pageTitle}}" onChange="{{setPageTitle}}" onKeyDown="{{renameKey}}" onBlur="{{endRename}}" ref="{{renameRef}}" aria-label="Page name" placeholder="Page name" autocomplete="off" style="display: block; width: 100%; box-sizing: border-box; margin: 0 0 14px; padding: 8px 12px; border: 0; outline: 0; border-radius: 12px; background: {{t.surf}}; color: {{t.text}}; font: inherit; font-size: 16px; font-weight: 600;"></sc-if>
+        <div ref="{{nbRef}}" data-sc-own style="${NOTES_VARS()}"></div>
       </div>
-      <sc-if value="{{isWrite}}" hint-placeholder-val="{{ true }}"><textarea ref="{{taRef}}" onChange="{{type}}" onKeyDown="{{keys}}" aria-label="Guide, in Markdown" placeholder="Write about this deck in Markdown: a plan, links, a summary, a table of terms." spellcheck="true" style="flex-grow: 1; min-height: 0; resize: none; box-sizing: border-box; border: 0; outline: 0; border-radius: 18px; padding: 16px 18px; background: {{t.surf}}; color: {{t.text}}; font-family: ${MONO}; font-size: ${phone ? 14 : 14}px; line-height: 1.65; tab-size: 2;">{{text}}</textarea></sc-if>
-      <sc-if value="{{isPreview}}" hint-placeholder-val="{{ false }}"><div style="flex-grow: 1; min-height: 0; overflow-y: auto; box-sizing: border-box; padding: 18px 22px; border-radius: 18px; background: {{t.surf}};"><div class="gd" ref="{{previewRef}}" data-sc-own style="--gd-text: {{t.text}}; --gd-muted: {{t.muted}}; --gd-line: {{t.line}}; --gd-code: {{t.bg}};"></div><sc-if value="{{previewEmpty}}" hint-placeholder-val="{{ false }}"><span style="font-size: 15px; color: {{t.muted}};">Nothing to show yet.</span></sc-if></div></sc-if>
-      <div style="display: flex; gap: 10px; flex-shrink: 0;">
-        <button type="button" onClick="{{makeCards}}" class="sc-press" style="flex: 1 1 0; min-width: 0; height: ${phone ? 50 : 52}px; padding: 0 16px; border: 0; border-radius: 999px; background: {{t.surf}}; color: {{t.text}}; font: inherit; font-size: 15px; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 8px; white-space: nowrap; overflow: hidden; cursor: pointer;">${icon('sparkle', 16, 2)}<span style="overflow: hidden; text-overflow: ellipsis;">{{makeLabel}}</span></button>
-        <button type="button" onClick="{{done}}" class="sc-press" style="flex: 1 1 0; height: ${phone ? 50 : 52}px; padding: 0 16px; border: 0; border-radius: 999px; background: {{t.inv}}; color: {{t.invText}}; font: inherit; font-size: 15px; font-weight: 600; cursor: pointer;">Done</button>
-      </div>
-    </sc-if>
-    <sc-if value="{{histOpen}}" hint-placeholder-val="{{ false }}">
-      <div style="flex-grow: 1; min-height: 0; overflow-y: auto; scrollbar-width: none; display: flex; flex-direction: column; gap: 10px;">
-        <span style="font-size: 14px; color: {{t.muted}};">{{histLine}}</span>
+    </div></sc-if>`;
+  // Older versions, in place of the page: each with when it was written, how long it is, the start of it, and Restore.
+  const history = phone => `<sc-if value="{{histOpen}}" hint-placeholder-val="{{ false }}"><div style="flex-grow: 1; min-height: 0; overflow-y: auto; scrollbar-width: none;">
+      <div style="box-sizing: border-box; display: flex; flex-direction: column; gap: 10px; ${phone ? 'padding: 10px 16px 30px;' : 'max-width: 728px; margin: 0 auto; padding: 30px 54px 40px;'}">
+        <div style="display: flex; align-items: center; gap: 10px;"><span style="flex-grow: 1; font-size: 17px; font-weight: 600; letter-spacing: -.01em;">{{histTitle}}</span><button type="button" onClick="{{closeHistory}}" class="sc-press" style="height: 36px; padding: 0 16px; border: 0; border-radius: 999px; background: {{t.surf}}; color: {{t.text}}; font: inherit; font-size: 14px; font-weight: 600; cursor: pointer;">Back to the page</button></div>
+        <span style="font-size: 14px; line-height: 1.45; color: {{t.muted}};">Restoring one keeps what you have now as a version too.</span>
         <sc-for list="{{versions}}" as="v" hint-placeholder-count="2"><div style="box-sizing: border-box; padding: 14px 16px; border-radius: 18px; background: {{t.surf}}; display: flex; flex-direction: column; gap: 8px;">
-          <div style="display: flex; align-items: center; gap: 10px;"><span style="flex-grow: 1; font-size: 14px; font-weight: 600;">{{v.when}}</span><span style="font-size: 12px; color: {{t.muted}};">{{v.size}}</span><button type="button" onClick="{{v.restore}}" class="sc-press" style="height: 32px; padding: 0 14px; border: 0; border-radius: 999px; background: {{t.inv}}; color: {{t.invText}}; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer;">Restore</button></div>
+          <div style="display: flex; align-items: center; gap: 10px;"><span style="flex-grow: 1; font-size: 14px; font-weight: 600;">{{v.when}}</span><span style="font-size: 12px; color: {{t.muted}};">{{v.size}}</span><button type="button" onClick="{{v.restore}}" aria-label="Restore {{v.when}}" class="sc-press" style="height: 32px; padding: 0 14px; border: 0; border-radius: 999px; background: {{t.inv}}; color: {{t.invText}}; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer;">Restore</button></div>
           <span style="font-size: 13px; line-height: 1.5; color: {{t.muted}}; white-space: pre-wrap; overflow-wrap: anywhere; max-height: 84px; overflow: hidden;">{{v.excerpt}}</span>
         </div></sc-for>
         <sc-if value="{{noVersions}}" hint-placeholder-val="{{ false }}"><span style="font-size: 15px; color: {{t.muted}};">There are no older versions yet. They show up here as you write.</span></sc-if>
       </div>
-      <div style="display: flex; gap: 10px; flex-shrink: 0;"><button type="button" onClick="{{toggleHistory}}" class="sc-press" style="flex-grow: 1; height: ${phone ? 50 : 52}px; border: 0; border-radius: 999px; background: {{t.surf}}; color: {{t.text}}; font: inherit; font-size: 15px; font-weight: 600; cursor: pointer;">Back to writing</button></div>
-    </sc-if>`;
+    </div></sc-if>`;
   const webGuide = `<div style="position: relative; width: 1440px; height: 900px; overflow: hidden; font-family: ${FONT}; color: {{t.text}};">
   <dc-import name="WebDeck" dark="{{dark}}" dim="{{dim}}" deck-id="{{deckId}}" hint-size="1440px,900px"></dc-import>
-  <div style="position: absolute; inset: 0; z-index: 40; background: {{t.dim}};"></div>
-  <div role="dialog" aria-label="Guide" style="position: absolute; z-index: 40; left: 50%; top: 50%; transform: translate(-50%, -50%); width: 980px; height: 800px; box-sizing: border-box; padding: 24px 28px 26px; border-radius: 32px; background: {{t.bg}}; box-shadow: 0 24px 64px rgba(0,0,0,.24); display: flex; flex-direction: column; gap: 14px;">
-    ${body(false)}
+  <div class="sc-fade" onClick="{{done}}" style="position: absolute; inset: 0; z-index: 40; background: {{t.dim}};"></div>
+  <div role="dialog" aria-label="Notes" style="position: absolute; z-index: 40; left: 50%; top: 50%; transform: translate(-50%, -50%); width: 940px; height: 830px; box-sizing: border-box; border-radius: 32px; background: {{t.bg}}; box-shadow: 0 24px 64px rgba(0,0,0,.24); display: flex; flex-direction: column; overflow: hidden;">
+    <div style="display: flex; align-items: center; gap: 8px; padding: 18px 18px 0 24px; flex-shrink: 0; min-height: 40px;">
+      ${pages(false)}<sc-if value="{{noTabs}}" hint-placeholder-val="{{ false }}"><span style="flex-grow: 1;"></span></sc-if>
+      ${saving}
+      <sc-if value="{{canEdit}}" hint-placeholder-val="{{ true }}">${more}</sc-if>
+      <button type="button" onClick="{{done}}" data-key="escape" aria-label="Done" data-tip="Done" style="${ROUND}">${icon('close', 16, 2)}</button>
+    </div>
+    ${page(false)}${history(false)}
   </div>
 </div>`;
-  const phoneGuide = `<div style="position: relative; width: 390px; height: 844px; box-sizing: border-box; padding: 58px 16px 22px; display: flex; flex-direction: column; gap: 12px; overflow: hidden; font-family: ${FONT}; background: {{t.bg}}; color: {{t.text}};">
-    ${body(true)}
+  const phoneGuide = `<div style="position: relative; width: 390px; height: 844px; box-sizing: border-box; padding-top: 52px; display: flex; flex-direction: column; overflow: hidden; font-family: ${FONT}; background: {{t.bg}}; color: {{t.text}};">
+    <div style="display: flex; align-items: center; gap: 8px; padding: 0 12px 0 12px; height: 52px; flex-shrink: 0;">
+      <button type="button" onClick="{{done}}" aria-label="Done" style="${ROUND} background: transparent;">${icon('back', 20, 2)}</button>
+      <span style="flex-grow: 1; min-width: 0; font-size: 15px; font-weight: 600; color: {{t.muted}}; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{deckName}}</span>
+      ${saving}
+      <sc-if value="{{canEdit}}" hint-placeholder-val="{{ true }}">${more}</sc-if>
+    </div>
+    ${pages(true)}
+    ${page(true)}${history(true)}
+    <div ref="{{keysRef}}" data-sc-own style="position: absolute; left: 0; right: 0; bottom: 0; ${NOTES_VARS()}"></div>
   </div>`;
 
   const logic = phone => `
-constructor(props) { super(props); this.state = { tab: props.view === 'Preview' ? 'preview' : 'write', histOpen: props.view === 'Older versions', drafts: {}, saving: false, err: '', hist: null }; }
-componentWillUnmount() { clearTimeout(this._t); if (this._pending) this._flush(); }
+constructor(props) { super(props); this.state = { histOpen: props.view === 'Older versions', drafts: {}, saving: false, err: '', hist: null, moreOpen: false, renaming: false }; }
+componentWillUnmount() { clearTimeout(this._t); if (this._nbc) this._nbc.flush(); if (this._pending) this._flush(); }
 renderVals() {
   ${T}${DB_JS}
-  const p = this.props, st = this.state, mock = !!db.mock, dm = mock ? this.mockMaterials() : db, am = mock ? dm : db.act, md = this.md();
+  const p = this.props, st = this.state, mock = !!db.mock, dm = mock ? this.mockMaterials() : db, am = mock ? dm : db.act, view = mock ? p.view || 'Writing' : '';
   const dk = db.deck(p.deckId || (mock ? 'cell' : '')), G = dm.guide(dk.id), deckId = dk.id;
-  const extra = mock && p.view === 'A new page' ? [...G.pages, { id: 'gnew', title: 'New page', text: '' }] : G.pages;
-  const want = st.page || p.page || (mock && p.view === 'A new page' ? 'gnew' : ''), pageId = extra.some(x => x.id === want) ? want : 'main';
+  const extra = mock && view === 'A new page' ? [...G.pages, { id: 'gnew', title: 'New page', text: '' }] : G.pages;
+  const want = st.page || p.page || (mock && view === 'A new page' ? 'gnew' : ''), pageId = extra.some(x => x.id === want) ? want : 'main';
   const cur = pageId === 'main' ? { id: 'main', title: 'Guide', text: G.text } : extra.find(x => x.id === pageId), key = deckId + '|' + pageId;
-  const text = key in st.drafts ? st.drafts[key] : mock && p.view === 'Nothing written yet' ? '' : cur.text;
-  const tab = st.tab, histOpen = !!st.histOpen, plural = (n, w) => n + ' ' + w + (n === 1 ? '' : 's');
-  // Saving as it's typed: a moment after the last key, one save after another. Leaving sends what's waiting.
+  const text = key in st.drafts ? st.drafts[key] : mock && view === 'Blank note' ? '' : cur.text;
+  const histOpen = !!st.histOpen, plural = (n, w) => n + ' ' + w + (n === 1 ? '' : 's'), reading = view === 'Reading on a shared deck', canEdit = G.can && !reading;
+  // Saving as it's typed: a moment after the last key, one save after another. Leaving sends what's waiting. (A page over what a Guide may hold says so, and waits.)
   this._pending = this._pending || {};
   this._flush = async () => {
     clearTimeout(this._t);
+    if (this._nbc) this._nbc.flush();
     const jobs = Object.values(this._pending); this._pending = {};
     if (!jobs.length) return;
     this.setState({ saving: true, err: '' });
     try { for (const j of jobs) await am.saveGuide(j.deckId, j.page, j.text); this.setState({ saving: false, savedAt: Date.now() }); }
     catch (e) { for (const j of jobs) this._pending[j.deckId + '|' + j.page] = j; this.setState({ saving: false, err: e.message || 'Couldn’t save. Try again.' }); }
   };
-  const setText = v => { this.setState({ drafts: { ...this.state.drafts, [key]: v }, err: '' }); this._pending[key] = { deckId, page: pageId, text: v }; clearTimeout(this._t); this._t = setTimeout(() => this._flush(), 700); };
-  const ta = () => this._ta;
-  // A formatting button: the text field's own text and selection go through guide.js, and the result goes back in.
-  const act = (name, ...args) => { const el = ta(); if (!el) return; const r = md[name](el.value, el.selectionStart, el.selectionEnd, ...args); el.value = r.text; el.setSelectionRange(r.a, r.b); el.focus(); setText(r.text); };
-  const btn = (fn) => ({ down: e => { if (e && e.preventDefault) e.preventDefault(); this._did = true; fn(); }, click: () => { if (this._did) { this._did = false; return; } fn(); } });
-  const pickPicture = () => (mock ? Promise.resolve(null) : db.act.pickFile('image')).then(url => { if (url) act('image', url, ''); });
-  const seg = (label, on, go) => ({ label, pressed: on ? 'true' : 'false', bg: on ? t.bg : 'transparent', fg: on ? t.text : t.muted, sh: on ? '0 1px 3px rgba(0,0,0,.14)' : 'none', pick: go });
+  const setText = v => {
+    // an extra page is called by its title (its first line, a heading) until it is renamed
+    if (pageId !== 'main' && (cur.title === 'New page' || cur.title === this._named)) {
+      const m = /^#{1,6} +(.+)$/.exec(v.split('\\n')[0]), name = m ? this.md().plain(m[0]).replace(/\\s+/g, ' ').trim().slice(0, 80) : '';
+      if (name && name !== cur.title) { this._named = name; clearTimeout(this._tt); this._tt = setTimeout(() => am.renameGuidePage(deckId, pageId, name).catch(() => {}), 600); }
+    }
+    this.setState({ drafts: { ...this.state.drafts, [key]: v }, err: v.length > 40000 ? 'This page is full.' : '' });
+    if (v.length > 40000) { clearTimeout(this._t); return; }
+    this._pending[key] = { deckId, page: pageId, text: v }; clearTimeout(this._t); this._t = setTimeout(() => this._flush(), 700);
+  };
+  const pickPicture = () => (mock ? Promise.resolve(null) : db.act.pickFile('image'));
   const saved = st.err ? st.err : st.saving ? 'Saving…' : st.savedAt || Object.keys(st.drafts).length ? 'Saved' : '';
-  const canAddPage = G.can && extra.length < 10, mark = G.can;
-  const openHist = async () => { this.setState({ histOpen: true, hist: null }); await this._flush(); const v = await dm.guideHistory(deckId, pageId); this.setState({ hist: v }); };
+  const canAddPage = canEdit && extra.length < 10;
+  const openHist = async () => { this.setState({ histOpen: true, hist: null, moreOpen: false }); await this._flush(); const v = await dm.guideHistory(deckId, pageId); this.setState({ hist: v }); };
   const when = t0 => new Date(t0).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
-  const versions = (st.hist || (mock && histOpen ? [] : [])).map(v => ({ when: when(v.at), size: plural(v.text.length, 'character'), excerpt: v.text.slice(0, 220), restore: async () => { await am.restoreGuide(deckId, pageId, v.at); this.setState({ drafts: Object.fromEntries(Object.entries(this.state.drafts).filter(([k]) => k !== key)), histOpen: false, hist: null }); } }));
+  const versions = (st.hist || []).map(v => ({ when: when(v.at), size: plural(v.text.length, 'character'), excerpt: this.md().plain(v.text, 220), restore: async () => { await am.restoreGuide(deckId, pageId, v.at); this.setState({ drafts: Object.fromEntries(Object.entries(this.state.drafts).filter(([k]) => k !== key)), histOpen: false, hist: null }); } }));
   const histNow = mock && histOpen && st.hist === null ? (dm.guideHistory(deckId, pageId).then(v => this.setState({ hist: v })), []) : versions;
-  const goBack = () => (mock ? null : db.act.go('/deck/' + deckId + '?tab=notes'));
+  const done = async () => { await this._flush(); if (mock || this.state.err) return; db.act.go('/deck/' + deckId + '?tab=notes'); };
+  const at = /^(\\d+):(\\d+)$/.exec(p.at || '');
+  const demos = ${JSON.stringify(GUIDE_DEMOS(phone))}, demo = mock ? demos[view] : undefined;
+  const image = s => (/^\\/media\\/[\\w-]+\\.(png|jpe?g|gif|webp)$/i.test(s) ? s : '');
+  const tabs = [{ id: 'main', title: 'Guide' }, ...extra];
   return {
-    t, ...chrome, dark: !!p.dark, dim: !!p.dim, deckId, deckName: dk.name || 'Cell Biology',
-    done: async () => { await this._flush(); goBack(); },
-    saveLabel: saved, saveColor: st.err ? t.again : t.muted,
-    toggleHistory: () => (histOpen ? this.setState({ histOpen: false }) : openHist()), histPressed: histOpen ? 'true' : 'false', histBg: histOpen ? t.inv : t.surf, histFg: histOpen ? t.invText : t.text,
-    tabs: [{ id: 'main', title: 'Guide' }, ...extra].map(x => ({ title: x.title, pressed: x.id === pageId ? 'true' : 'false', bg: x.id === pageId ? t.inv : t.surf, fg: x.id === pageId ? t.invText : t.text, pick: async () => { await this._flush(); this.setState({ page: x.id, histOpen: false, tab: 'write' }); } })),
-    canAddPage, addPage: async () => { await this._flush(); const id = await am.addGuidePage(deckId, 'New page'); this.setState({ page: id, histOpen: false, tab: 'write' }); },
-    pageTools: G.can && pageId !== 'main', pageTitle: cur.title, setPageTitle: e => { const v = e && e.target ? e.target.value : ''; clearTimeout(this._tt); this._tt = setTimeout(() => am.renameGuidePage(deckId, pageId, v).catch(() => {}), 600); },
-    deletePage: async () => { if (!mock && !(await db.ask({ title: 'Delete the page “' + cur.title + '”?', action: 'Delete page', danger: true }))) return; await am.deleteGuidePage(deckId, pageId); this.setState({ page: 'main', drafts: Object.fromEntries(Object.entries(this.state.drafts).filter(([k]) => k !== key)) }); },
-    showEditor: !histOpen, isWrite: tab === 'write', isPreview: tab === 'preview',
-    tabsWP: [seg('Write', tab === 'write', () => this.setState({ tab: 'write' })), seg('Preview', tab === 'preview', () => this.setState({ tab: 'preview' }))],
-    text, type: e => setText(e && e.target ? e.target.value : ''), taRef: el => { this._ta = el; },
-    keys: e => {
-      if (!e || !this._ta) return;
-      const el = this._ta, mod = e.metaKey || e.ctrlKey;
-      if (mod && !e.shiftKey && !e.altKey && ['b', 'i', 'k'].includes(e.key.toLowerCase())) { e.preventDefault(); return act(e.key.toLowerCase() === 'b' ? 'bold' : e.key.toLowerCase() === 'i' ? 'italic' : 'link', ''); }
-      if (e.key === 'Enter' && !e.shiftKey && !mod && !e.isComposing && el.selectionStart === el.selectionEnd) { const r = md.continueList(el.value, el.selectionStart); if (r) { e.preventDefault(); el.value = r.text; el.setSelectionRange(r.pos, r.pos); setText(r.text); } }
-      if (e.key === 'Tab' && !mod && !e.altKey) { const r = md.indent(el.value, el.selectionStart, el.selectionEnd, !!e.shiftKey); if (r && r.text !== el.value) { e.preventDefault(); el.value = r.text; el.setSelectionRange(r.a, r.b); setText(r.text); } }
-    },
-    tbHeading: btn(() => act('heading', 2)), tbBold: btn(() => act('bold')), tbItalic: btn(() => act('italic')), tbCode: btn(() => act('code')), tbLink: btn(() => act('link', '')), tbBullets: btn(() => act('bullets')),
-    tbNumbers: btn(() => act('numbers')), tbTasks: btn(() => act('tasks')), tbQuote: btn(() => act('quote')), tbTable: btn(() => act('table')), tbImage: btn(pickPicture),
-    previewRef: el => { const k = key + ':' + text.length + ':' + text.slice(0, 40) + text.slice(-40); if (el.getAttribute('data-k') !== k) { el.innerHTML = md.render(text); el.setAttribute('data-k', k); } },
-    previewEmpty: !text.trim(),
-    makeLabel: ${phone ? "'Make cards'" : "'Make cards from this ' + (pageId === 'main' ? 'guide' : 'page')"},
-    makeCards: () => { const el = ta(), sel = el && el.selectionEnd > el.selectionStart ? el.value.slice(el.selectionStart, el.selectionEnd) : ''; if (mock) return; this._flush().then(() => db.make.begin({ kind: 'paste', noNotes: true, text: sel || text, title: sel ? dk.name + ' (selection)' : dk.name + (pageId === 'main' ? ' Guide' : ': ' + cur.title), opts: { deckId } })); },
-    histOpen, versions: histNow, noVersions: histOpen && st.hist !== null && !versions.length, histLine: 'Older versions of ' + (pageId === 'main' ? 'the Guide' : cur.title) + '. Restoring one keeps what you have now as a version too.'
+    t, ...chrome, dark: !!p.dark, dim: !!p.dim, deckId, deckName: dk.name || 'Cell Biology', canEdit,
+    done, saveLabel: reading ? '' : saved, saveColor: st.err ? t.again : t.muted,
+    showTabs: tabs.length > 1 || canAddPage, noTabs: !(tabs.length > 1 || canAddPage),
+    tabs: tabs.map(x => ({ title: x.title, pressed: x.id === pageId ? 'true' : 'false', bg: x.id === pageId ? t.surf : 'transparent', fg: x.id === pageId ? t.text : t.muted, pick: async () => { await this._flush(); this.setState({ page: x.id, histOpen: false, renaming: false }); } })),
+    canAddPage, addPage: async () => { await this._flush(); const id = await am.addGuidePage(deckId, 'New page'); this.setState({ page: id, histOpen: false, renaming: false }); },
+    moreOpen: !!st.moreOpen, moreExpanded: st.moreOpen ? 'true' : 'false', moreBg: st.moreOpen ? t.surf : 'transparent', toggleMore: () => this.setState({ moreOpen: !st.moreOpen }),
+    pageTools: canEdit && pageId !== 'main',
+    makeLabel: 'Make cards from this ' + (pageId === 'main' ? 'guide' : 'page'),
+    makeCards: () => { const sel = this._nbc ? this._nbc.selectedText() : ''; this.setState({ moreOpen: false }); if (mock) return; this._flush().then(() => db.make.begin({ kind: 'paste', noNotes: true, text: sel || text, title: sel ? dk.name + ' (selection)' : dk.name + (pageId === 'main' ? ' Guide' : ': ' + cur.title), opts: { deckId } })); },
+    openHistory: openHist, closeHistory: () => this.setState({ histOpen: false }),
+    startRename: () => this.setState({ moreOpen: false, renaming: true }), renaming: !!st.renaming && canEdit && pageId !== 'main', pageTitle: cur.title,
+    renameRef: el => { if (el && this._renameFocus !== pageId) { this._renameFocus = pageId; el.focus(); el.select(); } },
+    setPageTitle: e => { const v = e && e.target ? e.target.value : ''; clearTimeout(this._tt); this._tt = setTimeout(() => am.renameGuidePage(deckId, pageId, v).catch(() => {}), 600); },
+    renameKey: e => { if (e && (e.key === 'Enter' || e.key === 'Escape')) { e.preventDefault(); this._renameFocus = ''; this.setState({ renaming: false }); if (this._nbc) this._nbc.focus('end'); } },
+    endRename: () => { this._renameFocus = ''; this.setState({ renaming: false }); },
+    deletePage: async () => { this.setState({ moreOpen: false }); if (!mock && !(await db.ask({ title: 'Delete the page “' + cur.title + '”?', action: 'Delete page', danger: true }))) return; await am.deleteGuidePage(deckId, pageId); this.setState({ page: 'main', drafts: Object.fromEntries(Object.entries(this.state.drafts).filter(([k]) => k !== key)) }); },
+    showPage: !histOpen, histOpen, versions: histNow, noVersions: histOpen && st.hist !== null && !versions.length, histTitle: 'Older versions of ' + (pageId === 'main' ? 'the Guide' : cur.title),
+    // the page (web/notes.js): the same for writing and reading; on the canvas, its states
+    nbRef: el => { if (!el) return; this._nbc = this.notes().mount(el, { md: text, key: (mock ? 'canvas|' + view + '|' : '') + key, editable: canEdit, phone: ${phone ? 'true' : 'false'}, image, demo,
+      onChange: setText, onPicture: canEdit ? pickPicture : undefined, onEscape: ${phone ? 'undefined' : 'done'}, focusAt: at ? { i: +at[1], off: +at[2] } : !mock && !text.trim() ? { i: 0, off: 0 } : undefined, keysHost: mock ? this._keys : undefined }); },
+    keysRef: el => { this._keys = el || this._keys; }
   };
 }`;
-  const props = { ...DARK, grain: MESH('Iris').grain, view: { editor: 'enum', default: 'Write', options: GUIDE_VIEWS }, deckId: { editor: 'string', default: '' }, page: { editor: 'string', default: '' } };
+  const props = { ...DARK, grain: MESH('Iris').grain, view: { editor: 'enum', default: 'Writing', options: GUIDE_VIEWS }, deckId: { editor: 'string', default: '' }, page: { editor: 'string', default: '' }, at: { editor: 'string', default: '' } };
   return {
-    'WebGuide': ['Web · Deck Guide editor (pick the view)', webGuide, { props, logic: logic(false), css: GUIDE_CSS, w: W, h: HH }],
-    'PhoneGuide': ['iPhone · Deck Guide editor (pick the view)', phoneGuide, { props, logic: logic(true), css: GUIDE_CSS, w: PW, h: PH }]
+    'WebGuide': ['Web · Notes page (pick the view)', webGuide, { props, logic: logic(false), css: GUIDE_CSS, w: W, h: HH }],
+    'PhoneGuide': ['iPhone · Notes page (pick the view)', phoneGuide, { props, logic: logic(true), css: GUIDE_CSS, w: PW, h: PH }]
   };
 }
 
@@ -635,31 +698,30 @@ renderVals() {
 export function publicGuideBlocks(H, phone) {
   const { svg, I } = H;
   const guide = `<sc-if value="{{gd.show}}" hint-placeholder-val="{{ true }}">
-    <section aria-label="Guide" style="min-width: 0; box-sizing: border-box; padding: ${phone ? '18px 18px 16px' : '22px 26px 20px'}; border-radius: ${phone ? 22 : 26}px; background: {{t.surf}}; display: flex; flex-direction: column; gap: 12px; margin-bottom: ${phone ? 4 : 20}px;">
-      <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;"><span style="font-size: 13px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: {{t.muted}};">Guide</span>
+    <section aria-label="Notes" style="min-width: 0; box-sizing: border-box; padding: ${phone ? '18px 18px 16px 20px' : '22px 26px 20px 26px'}; border-radius: ${phone ? 22 : 26}px; background: {{t.surf}}; display: flex; flex-direction: column; gap: 12px; margin-bottom: ${phone ? 4 : 20}px;">
+      <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;"><span style="font-size: 13px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: {{t.muted}};">Notes</span>
         <sc-if value="{{gd.hasTabs}}" hint-placeholder-val="{{ false }}"><div role="group" aria-label="Guide pages" style="display: flex; gap: 4px; flex-wrap: wrap;"><sc-for list="{{gd.tabs}}" as="g" hint-placeholder-count="3"><button type="button" onClick="{{g.pick}}" aria-pressed="{{g.pressed}}" style="height: 28px; max-width: 180px; padding: 0 12px; border: 0; border-radius: 999px; background: {{g.bg}}; color: {{g.fg}}; font: inherit; font-size: 12.5px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: pointer;">{{g.title}}</button></sc-for></div></sc-if></div>
-      <div style="position: relative; {{gd.clip}}"><div class="gd" ref="{{gd.ref}}" data-sc-own style="--gd-text: {{t.text}}; --gd-muted: {{t.muted}}; --gd-line: {{t.line}}; --gd-code: {{t.bg}};"></div></div>
+      <div style="position: relative; margin-left: -${phone ? 20 : 26}px; padding-left: ${phone ? 26 : 30}px; {{gd.clip}}"><div ref="{{gd.ref}}" data-sc-own data-phone="${phone ? 'yes' : ''}" style="${NOTES_VARS('t.bg')}"></div></div>
       <sc-if value="{{gd.long}}" hint-placeholder-val="{{ true }}"><button type="button" onClick="{{gd.toggle}}" aria-expanded="{{gd.expanded}}" style="align-self: flex-start; padding: 0; border: 0; background: transparent; color: {{t.text}}; font: inherit; font-size: 14px; font-weight: 600; text-decoration: underline; cursor: pointer;">{{gd.toggleLabel}}</button></sc-if>
     </section>
   </sc-if>`;
   const made = `<sc-if value="{{gd.hasMade}}" hint-placeholder-val="{{ true }}"><div style="display: flex; align-items: center; gap: 8px; font-size: 13px; color: {{t.muted}};">${svg(I.file, 14, 2)}<span>{{gd.madeLine}}</span></div></sc-if>`;
   return { guide, made };
 }
-// The logic for it, inside a shared deck page's renderVals (`d` is the page's deck, `t` its theme; this.md() draws the words).
+// The logic for it, inside a shared deck page's renderVals (`d` is the page's deck, `t` its theme; this.notes() draws the words).
 export const PUBLIC_GUIDE_JS = String.raw`
   const GD = (() => {
-    const st = this.state, p = this.props, md = this.md(), mock = !!db.mock, g = mock ? this.mockMaterials().publicGuide() : d.guide;
+    const st = this.state, p = this.props, mock = !!db.mock, g = mock ? this.mockMaterials().publicGuide() : d.guide;
     const pages = g && Array.isArray(g.pages) ? g.pages.filter(x => x.text && x.text.trim()) : [], n = (g && g.sources) || 0;
     const id = pages.some(x => x.id === st.gpage) ? st.gpage : pages.length ? pages[0].id : '', cur = pages.find(x => x.id === id), text = cur ? cur.text : '';
     const open = !!st.gopen, long = text.length > 640 || text.split('\n').length > 14;
-    const sum = s => { let h = 0; for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) | 0; return h; };
-    const key = id + ':' + text.length + ':' + sum(text);
     // Pictures only from this app's own storage (or, on this computer, its own /media), never from anywhere else.
     const image = src => (/^\/media\/[\w-]+\.(png|jpe?g|gif|webp)$/i.test(src) || /^https:\/\/[^/]+\/storage\/v1\/object\/public\/shared\/[\w./-]+\.(png|jpe?g|gif|webp)$/i.test(src) ? src : '');
     return { show: !!text, hasTabs: pages.length > 1, tabs: pages.map(x => ({ title: x.id === 'main' ? 'Guide' : x.title, pressed: x.id === id ? 'true' : 'false', bg: x.id === id ? t.bg : 'transparent', fg: x.id === id ? t.text : t.muted, pick: () => this.setState({ gpage: x.id, gopen: false }) })),
       long, expanded: open ? 'true' : 'false', toggle: () => this.setState({ gopen: !open }), toggleLabel: open ? 'Show less' : 'Show more',
       clip: long && !open ? 'max-height: 230px; overflow: hidden; -webkit-mask-image: linear-gradient(180deg, #000 62%, transparent); mask-image: linear-gradient(180deg, #000 62%, transparent);' : '',
-      ref: el => { if (el.getAttribute('data-k') !== key) { el.innerHTML = md.render(text, { image }); el.setAttribute('data-k', key); } },
+      // read as the page of notes it is: a reader opens and closes its toggles and folds its sections (this device remembers)
+      ref: el => { if (el) this.notes().mount(el, { md: text, key: 'shared|' + (d.id || d.slug || '') + '|' + id, editable: false, phone: el.getAttribute('data-phone') === 'yes', image }); },
       hasMade: n > 0, madeLine: 'Made from ' + n + (n === 1 ? ' source' : ' sources') };
   })();`;
 

@@ -3,8 +3,8 @@ export default {
   name: "PhoneMake", title: "iPhone · Make cards (pick the step)", w: 390, h: 844, fill: true,
   props: {"dark":false,"dim":false,"grain":0.7,"step":"Pick"},
   imports: ["PhoneToday"],
-  css: "body{margin:0;font-family:Geist, -apple-system, system-ui, sans-serif}\na{color:inherit;text-decoration:none}a:hover{opacity:.8}\n@keyframes scRise{from{opacity:0;transform:translateY(14px)}}main>*{animation:scRise .5s cubic-bezier(.2,.8,.2,1) backwards}main>*:nth-child(2){animation-delay:0.06s}main>*:nth-child(3){animation-delay:0.12s}main>*:nth-child(4){animation-delay:0.18s}main>*:nth-child(5){animation-delay:0.24s}main>*:nth-child(n+6){animation-delay:.3s}button,.sc-press{transition:transform .1s ease}button:active,.sc-press:active{transform:scale(.96)}@keyframes scPopIn{from{opacity:0;transform:translateY(10px)}}.sc-pop,[data-sc-pop],.sc-tray{animation:scPopIn .22s cubic-bezier(0.2,0.8,0.2,1) backwards}@keyframes scFade{from{opacity:0}}.sc-fade{animation:scFade .18s ease-out backwards}@keyframes scScrimIn{from{opacity:0}}@keyframes scScrimOut{to{opacity:0}}.sc-scrim{animation:scScrimIn .25s ease backwards}.sc-scrim.sc-gone{animation:scScrimOut .18s ease forwards}@keyframes scPanelIn{from{opacity:0;transform:translateX(calc(100% + 12px))}}@keyframes scPanelOut{to{opacity:0;transform:translateX(calc(100% + 12px))}}.sc-panel{animation:scPanelIn .25s cubic-bezier(0.2,0.8,0.2,1) backwards}.sc-panel.sc-gone{animation:scPanelOut .18s cubic-bezier(.4,0,1,1) forwards}@keyframes scSheetIn{from{transform:translateY(100%)}}@keyframes scSheetOut{to{transform:translateY(100%)}}.sc-sheet{animation:scSheetIn .25s cubic-bezier(0.2,0.8,0.2,1) backwards}.sc-sheet.sc-gone{animation:scSheetOut .18s cubic-bezier(.4,0,1,1) forwards}.sc-sw{transition:background-color .2s ease,transform .1s ease}.sc-sw>span{transition:transform .2s cubic-bezier(0.2,0.8,0.2,1),background-color .2s ease}[role=\"group\"]>button,[role=\"tablist\"]>button{transition:color .2s ease,transform .1s ease}@media (prefers-reduced-motion:reduce){.sc-pop,[data-sc-pop],.sc-tray,.sc-fade,.sc-scrim,.sc-panel,.sc-sheet{animation:none!important}.sc-sw>span,[role=\"group\"]>button,[role=\"tablist\"]>button{transition:none}.sc-sw{transition:background-color .2s ease}}.sc-lift{transition:transform 0.2s ease-out,box-shadow 0.2s ease-out}.sc-lift:hover{transform:translateY(-4px);box-shadow:0 24px 48px -24px rgba(0,0,0,.45)}.sk-cover{box-shadow:var(--sk-shadow)}.sk-cover.sc-lift:hover{box-shadow:var(--sk-shadow),0 24px 48px -24px rgba(0,0,0,.45)}@keyframes scFloat{50%{transform:translateY(-6px)}}@keyframes scSwayA{50%{transform:rotate(-13deg) translateX(-3px)}}@keyframes scSwayB{50%{transform:rotate(10deg) translateX(3px)}}@keyframes scGlow{50%{opacity:.55}}@keyframes scSheen{0%,58%{transform:translateX(-160%) skewX(-18deg)}86%,100%{transform:translateX(260%) skewX(-18deg)}}.sc-float{animation:scFloat 6s ease-in-out infinite}.sc-sway-a{animation:scSwayA 6s ease-in-out infinite}.sc-sway-b{animation:scSwayB 6s ease-in-out infinite}.sc-glow{animation:scGlow 6s ease-in-out infinite}.sc-sheen{position:absolute;top:0;bottom:0;left:0;width:45%;background:linear-gradient(90deg,transparent,rgba(255,255,255,.4),transparent);animation:scSheen 5s cubic-bezier(.4,0,.2,1) infinite;pointer-events:none}@keyframes scDrift{from{transform:scale(1.14) translate(-3%,-2%)}to{transform:scale(1.14) translate(3%,2%)}}.sc-alive>svg:first-of-type{animation:scDrift 16s ease-in-out infinite alternate}@keyframes scDraw{from{stroke-dashoffset:1.02}}.sc-draw{stroke-dasharray:1 2;animation:scDraw .9s cubic-bezier(.2,.8,.2,1) backwards}@keyframes scKnob{from{opacity:0;transform:scale(.3)}}.sc-knob{transform-box:fill-box;transform-origin:center;animation:scKnob .35s .75s cubic-bezier(.34,1.56,.64,1) backwards}@keyframes scGrow{from{transform:scaleY(0)}}.sc-grow{transform-origin:bottom;animation:scGrow .6s cubic-bezier(.2,.8,.2,1) backwards}:nth-child(2)>.sc-grow{animation-delay:0.04s}:nth-child(3)>.sc-grow{animation-delay:0.08s}:nth-child(4)>.sc-grow{animation-delay:0.12s}:nth-child(5)>.sc-grow{animation-delay:0.16s}:nth-child(6)>.sc-grow{animation-delay:0.20s}:nth-child(7)>.sc-grow{animation-delay:0.24s}:nth-child(8)>.sc-grow{animation-delay:0.28s}:nth-child(9)>.sc-grow{animation-delay:0.32s}:nth-child(10)>.sc-grow{animation-delay:0.36s}:nth-child(11)>.sc-grow{animation-delay:0.40s}:nth-child(12)>.sc-grow{animation-delay:0.44s}:nth-child(13)>.sc-grow{animation-delay:0.48s}:nth-child(14)>.sc-grow{animation-delay:0.52s}.sc-side{width:240px;transition:width .2s ease}.sc-side[data-collapsed=\"true\"]{width:78px}.sc-side-head{padding:0 4px 20px 12px;display:flex;align-items:center;justify-content:space-between;gap:4px}.sc-side-btns{display:flex;align-items:center;gap:4px}.sc-side[data-collapsed=\"true\"] .sc-side-head{padding:0 0 12px;justify-content:center}.sc-side[data-collapsed=\"true\"] .sc-side-btns{flex-direction:column-reverse;gap:6px}.sc-side[data-collapsed=\"true\"] :is(.sc-logo,.sc-lab,.sc-num){display:none}.sc-side .sc-dot{display:none}.sc-side[data-collapsed=\"true\"] .sc-dot{display:block}@media (prefers-reduced-motion:reduce){.sc-side{transition:none}}a:focus-visible,button:focus-visible,summary:focus-visible,[role=\"button\"]:focus-visible,[role=\"tab\"]:focus-visible,[role=\"radio\"]:focus-visible,[role=\"switch\"]:focus-visible,[role=\"menuitem\"]:focus-visible,[role=\"option\"]:focus-visible,[tabindex]:focus-visible{outline:2px solid currentColor;outline-offset:2px}[role=\"option\"]:focus-visible,[role=\"menuitem\"]:focus-visible{outline-offset:-2px}label:has(input:focus-visible,textarea:focus-visible):not([style*=\"box-shadow\"]){box-shadow:0 0 0 2px color-mix(in srgb,currentColor 45%,transparent)}*{scrollbar-width:thin;scrollbar-color:color-mix(in srgb,currentColor 30%,transparent) transparent}::-webkit-scrollbar{width:8px;height:8px}::-webkit-scrollbar-thumb{border-radius:8px;background:color-mix(in srgb,currentColor 30%,transparent)}::-webkit-scrollbar-track,::-webkit-scrollbar-corner{background:transparent}@media (prefers-reduced-motion:reduce){main>*,.sc-float,.sc-sway-a,.sc-sway-b,.sc-glow,.sc-alive>svg,.sc-draw,.sc-knob,.sc-grow{animation:none!important}.sc-sheen{display:none}button:active,.sc-press:active,.sc-lift:hover{transform:none}}\n.gd{font-size:15px;line-height:1.6;color:var(--gd-text);overflow-wrap:anywhere}.gd>:first-child{margin-top:0}.gd>:last-child{margin-bottom:0}.gd h1,.gd h2,.gd h3,.gd h4,.gd h5,.gd h6{margin:1.3em 0 .5em;line-height:1.25;font-weight:600;letter-spacing:-.02em}.gd h1{font-size:1.65em;padding-bottom:.3em;border-bottom:1px solid var(--gd-line)}.gd h2{font-size:1.32em;padding-bottom:.25em;border-bottom:1px solid var(--gd-line)}.gd h3{font-size:1.12em}.gd h4,.gd h5,.gd h6{font-size:1em}.gd h6{color:var(--gd-muted)}.gd p{margin:0 0 .9em}.gd ul,.gd ol{margin:0 0 .9em;padding-left:1.5em}.gd li{margin:.25em 0}.gd li>ul,.gd li>ol{margin:.25em 0 0}.gd li.gd-task{list-style:none;margin-left:-1.5em}.gd .gd-box{display:inline-block;box-sizing:border-box;width:1.05em;height:1.05em;margin-right:.3em;vertical-align:-.17em;border:1.5px solid var(--gd-muted);border-radius:.3em}.gd .gd-on{border-color:var(--gd-text);background:var(--gd-text)}.gd .gd-on::after{content:\"\";display:block;width:.3em;height:.55em;margin:.02em auto 0;border:solid var(--gd-code);border-width:0 2px 2px 0;transform:rotate(45deg)}.gd blockquote{margin:0 0 .9em;padding:0 1em;border-left:3px solid var(--gd-line);color:var(--gd-muted)}.gd blockquote>:last-child{margin-bottom:0}.gd code{font-family:'Geist Mono',ui-monospace,monospace;font-size:.88em;padding:.15em .4em;border-radius:6px;background:var(--gd-code)}.gd pre{margin:0 0 .9em;padding:12px 14px;border-radius:12px;background:var(--gd-code);overflow:auto;line-height:1.5}.gd pre code{padding:0;background:none;font-size:.85em}.gd table{display:block;border-collapse:collapse;margin:0 0 .9em;overflow:auto;max-width:100%}.gd th,.gd td{padding:6px 12px;border:1px solid var(--gd-line);text-align:left}.gd th{font-weight:600;background:var(--gd-code)}.gd hr{border:0;border-top:1px solid var(--gd-line);margin:1.3em 0}.gd a{color:inherit;text-decoration:underline;text-underline-offset:2px}.gd img{max-width:100%;height:auto;border-radius:12px}",
-  template: "<div style=\"position: relative; width: 100%; height: 100vh; height: 100dvh; min-height: 100%; max-height: 100%; overflow: hidden; font-family: Geist, -apple-system, system-ui, sans-serif; color: {{t.text}};\">\n  <dc-import name=\"PhoneToday\" dark=\"{{dark}}\" dim=\"{{dim}}\" hint-size=\"390px,844px\"></dc-import>\n  <div style=\"position: absolute; inset: 0; background: {{t.dim}};\"></div>\n  <div role=\"dialog\" aria-label=\"Make cards\" style=\"position: absolute; left: 0; right: 0; bottom: 0; top: 46px; box-sizing: border-box; padding: 16px 20px 30px; border-radius: 36px 36px 0 0; background: {{t.bg}}; display: flex; flex-direction: column; gap: 16px;\">\n    \n    <div style=\"display: flex; align-items: center; gap: 10px; min-height: 44px;\">\n      <sc-if value=\"{{canBack}}\" hint-placeholder-val=\"{{ false }}\"><button type=\"button\" onClick=\"{{back}}\" aria-label=\"Back\" style=\"width: 40px; height: 40px; flex-shrink: 0; border: 0; border-radius: 20px; background: {{t.surf}}; color: {{t.text}}; display: flex; align-items: center; justify-content: center; cursor: pointer;\"><svg width=\"18\" height=\"18\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M15 18l-6-6 6-6\"/></svg></button></sc-if>\n      <span style=\"flex-grow: 1; min-width: 0; font-size: 22px; font-weight: 600; letter-spacing: -.02em;\">{{title}}</span>\n      <sc-if value=\"{{canClose}}\" hint-placeholder-val=\"{{ true }}\"><button type=\"button\" onClick=\"{{close}}\" aria-label=\"Close\" style=\"width: 40px; height: 40px; flex-shrink: 0; border: 0; border-radius: 20px; background: {{t.surf}}; color: {{t.text}}; display: flex; align-items: center; justify-content: center; cursor: pointer;\"><svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M6 6l12 12M18 6L6 18\"/></svg></button></sc-if>\n    </div>\n    <div style=\"flex-grow: 1; min-height: 0; display: flex; flex-direction: column; gap: 16px; overflow-y: auto; scrollbar-width: none;\">\n      <sc-if value=\"{{isPick}}\" hint-placeholder-val=\"{{ false }}\"><div style=\"display: flex; flex-direction: column; gap: 10px;\">\n    <button type=\"button\" onClick=\"{{pickFile}}\" class=\"sc-press\" style=\"width: 100%; min-height: 68px; box-sizing: border-box; padding: 12px 16px 12px 12px; display: flex; align-items: center; gap: 14px; border: 0; border-radius: 20px; background: {{t.surf}}; color: {{t.text}}; font: inherit; text-align: left; cursor: pointer;\"><span style=\"width: 44px; height: 44px; flex-shrink: 0; border-radius: 22px; background: {{t.bg}}; display: flex; align-items: center; justify-content: center;\"><svg width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M12 15V4M7 9l5-5 5 5\"/><path d=\"M4 15v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3\"/></svg></span><span style=\"flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px;\"><span style=\"font-size: 16px; font-weight: 600; letter-spacing: -.01em;\">Upload</span><span style=\"font-size: 13px; color: {{t.muted}};\">A PDF, slides, a Word file, captions, pictures or audio</span></span><span style=\"display: flex; color: {{t.muted}};\"><svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M9 6l6 6-6 6\"/></svg></span></button>\n    <button type=\"button\" onClick=\"{{pickPhoto}}\" class=\"sc-press\" style=\"width: 100%; min-height: 68px; box-sizing: border-box; padding: 12px 16px 12px 12px; display: flex; align-items: center; gap: 14px; border: 0; border-radius: 20px; background: {{t.surf}}; color: {{t.text}}; font: inherit; text-align: left; cursor: pointer;\"><span style=\"width: 44px; height: 44px; flex-shrink: 0; border-radius: 22px; background: {{t.bg}}; display: flex; align-items: center; justify-content: center;\"><svg width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><rect x=\"3\" y=\"4\" width=\"18\" height=\"16\" rx=\"3\"/><circle cx=\"9\" cy=\"10\" r=\"2\"/><path d=\"M21 16l-5-5-9 9\"/></svg></span><span style=\"flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px;\"><span style=\"font-size: 16px; font-weight: 600; letter-spacing: -.01em;\">Photo</span><span style=\"font-size: 13px; color: {{t.muted}};\">Notes, slides, a whiteboard or a book page</span></span><span style=\"display: flex; color: {{t.muted}};\"><svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M9 6l6 6-6 6\"/></svg></span></button>\n    <button type=\"button\" onClick=\"{{pickRecord}}\" class=\"sc-press\" style=\"width: 100%; min-height: 68px; box-sizing: border-box; padding: 12px 16px 12px 12px; display: flex; align-items: center; gap: 14px; border: 0; border-radius: 20px; background: {{t.surf}}; color: {{t.text}}; font: inherit; text-align: left; cursor: pointer;\"><span style=\"width: 44px; height: 44px; flex-shrink: 0; border-radius: 22px; background: {{t.bg}}; display: flex; align-items: center; justify-content: center;\"><svg width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><rect x=\"9\" y=\"3\" width=\"6\" height=\"11\" rx=\"3\"/><path d=\"M5 11a7 7 0 0 0 14 0M12 18v3\"/></svg></span><span style=\"flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px;\"><span style=\"font-size: 16px; font-weight: 600; letter-spacing: -.01em;\">Record a lecture</span><span style=\"font-size: 13px; color: {{t.muted}};\">Use your microphone</span></span><span style=\"display: flex; color: {{t.muted}};\"><svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M9 6l6 6-6 6\"/></svg></span></button>\n    <button type=\"button\" onClick=\"{{pickPaste}}\" class=\"sc-press\" style=\"width: 100%; min-height: 68px; box-sizing: border-box; padding: 12px 16px 12px 12px; display: flex; align-items: center; gap: 14px; border: 0; border-radius: 20px; background: {{t.surf}}; color: {{t.text}}; font: inherit; text-align: left; cursor: pointer;\"><span style=\"width: 44px; height: 44px; flex-shrink: 0; border-radius: 22px; background: {{t.bg}}; display: flex; align-items: center; justify-content: center;\"><svg width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><rect x=\"5.5\" y=\"4.5\" width=\"13\" height=\"16\" rx=\"2.5\"/><path d=\"M9 4.5v-.3a1.7 1.7 0 0 1 1.7-1.7h2.6A1.7 1.7 0 0 1 15 4.2v.3\"/><path d=\"M9 11h6M9 15h4\"/></svg></span><span style=\"flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px;\"><span style=\"font-size: 16px; font-weight: 600; letter-spacing: -.01em;\">Paste</span><span style=\"font-size: 13px; color: {{t.muted}};\">Text or notes</span></span><span style=\"display: flex; color: {{t.muted}};\"><svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M9 6l6 6-6 6\"/></svg></span></button>\n    <button type=\"button\" onClick=\"{{pickVideo}}\" class=\"sc-press\" style=\"width: 100%; min-height: 68px; box-sizing: border-box; padding: 12px 16px 12px 12px; display: flex; align-items: center; gap: 14px; border: 0; border-radius: 20px; background: {{t.surf}}; color: {{t.text}}; font: inherit; text-align: left; cursor: pointer;\"><span style=\"width: 44px; height: 44px; flex-shrink: 0; border-radius: 22px; background: {{t.bg}}; display: flex; align-items: center; justify-content: center;\"><svg width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><rect x=\"2.5\" y=\"5\" width=\"19\" height=\"14\" rx=\"4.5\"/><path d=\"M10 9.2v5.6l4.8-2.8z\" fill=\"currentColor\"/></svg></span><span style=\"flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px;\"><span style=\"font-size: 16px; font-weight: 600; letter-spacing: -.01em;\">YouTube</span><span style=\"font-size: 13px; color: {{t.muted}};\">A public video</span></span><span style=\"display: flex; color: {{t.muted}};\"><svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M9 6l6 6-6 6\"/></svg></span></button>\n    <button type=\"button\" onClick=\"{{pickTopic}}\" class=\"sc-press\" style=\"width: 100%; min-height: 68px; box-sizing: border-box; padding: 12px 16px 12px 12px; display: flex; align-items: center; gap: 14px; border: 0; border-radius: 20px; background: {{t.surf}}; color: {{t.text}}; font: inherit; text-align: left; cursor: pointer;\"><span style=\"width: 44px; height: 44px; flex-shrink: 0; border-radius: 22px; background: {{t.bg}}; display: flex; align-items: center; justify-content: center;\"><svg width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M11 3l1.9 5.1L18 10l-5.1 1.9L11 17l-1.9-5.1L4 10l5.1-1.9z\"/><path d=\"M18.5 15l.8 2.2 2.2.8-2.2.8-.8 2.2-.8-2.2-2.2-.8 2.2-.8z\"/></svg></span><span style=\"flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px;\"><span style=\"font-size: 16px; font-weight: 600; letter-spacing: -.01em;\">A topic</span><span style=\"font-size: 13px; color: {{t.muted}};\">Say what you want to study</span></span><span style=\"display: flex; color: {{t.muted}};\"><svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M9 6l6 6-6 6\"/></svg></span></button>\n  </div></sc-if>\n      <sc-if value=\"{{isAdd}}\" hint-placeholder-val=\"{{ true }}\">\n    <sc-if value=\"{{isFile}}\" hint-placeholder-val=\"{{ false }}\"><div onDragOver=\"{{dragOver}}\" onDrop=\"{{drop}}\" style=\"box-sizing: border-box; padding: 20px 20px; border-radius: 22px; background: {{t.surf}}; box-shadow: inset 0 0 0 1.5px {{t.line}}; display: flex; flex-direction: column; align-items: center; gap: 12px; text-align: center;\">\n      <span style=\"display: flex; color: {{t.muted}};\"><svg width=\"26\" height=\"26\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.6\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M12 15V4M7 9l5-5 5 5\"/><path d=\"M4 15v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3\"/></svg></span>\n      <span style=\"font-size: 15px; font-weight: 600;\">{{dropLine}}</span>\n      <div style=\"display: flex; gap: 8px; flex-wrap: wrap; justify-content: center;\"><button type=\"button\" onClick=\"{{choose}}\" class=\"sc-press\" style=\"flex-grow: 1; height: 40px; padding: 0 20px; border: 0; border-radius: 999px; background: {{t.inv}}; color: {{t.invText}}; font: inherit; font-size: 15px; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer; padding: 0 18px;\"><svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M12 15V4M7 9l5-5 5 5\"/><path d=\"M4 15v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3\"/></svg>{{chooseLabel}}</button><sc-if value=\"{{canCamera}}\" hint-placeholder-val=\"{{ false }}\"><button type=\"button\" onClick=\"{{camera}}\" class=\"sc-press\" style=\"flex-grow: 1; height: 40px; padding: 0 20px; border: 0; border-radius: 999px; background: {{t.surf}}; color: {{t.text}}; font: inherit; font-size: 15px; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer; padding: 0 18px; background: {{t.bg}};\"><svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><rect x=\"3\" y=\"4\" width=\"18\" height=\"16\" rx=\"3\"/><circle cx=\"9\" cy=\"10\" r=\"2\"/><path d=\"M21 16l-5-5-9 9\"/></svg>Take a photo</button></sc-if></div>\n      <span style=\"font-size: 12px; color: {{t.muted}};\">{{acceptLine}}</span>\n    </div>\n    <sc-if value=\"{{hasFiles}}\" hint-placeholder-val=\"{{ true }}\"><div style=\"display: flex; flex-direction: column; gap: 8px;\"><sc-for list=\"{{files}}\" as=\"f\" hint-placeholder-count=\"1\"><div style=\"min-height: 56px; box-sizing: border-box; padding: 8px 8px 8px 12px; display: flex; align-items: center; gap: 12px; border-radius: 16px; background: {{t.surf}};\"><span style=\"width: 36px; height: 36px; flex-shrink: 0; border-radius: 18px; background: {{t.bg}}; display: flex; align-items: center; justify-content: center;\"><sc-if value=\"{{f.isDoc}}\" hint-placeholder-val=\"{{ true }}\"><svg width=\"17\" height=\"17\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z\"/><path d=\"M14 3v5h5\"/></svg></sc-if><sc-if value=\"{{f.isImage}}\" hint-placeholder-val=\"{{ false }}\"><svg width=\"17\" height=\"17\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><rect x=\"3\" y=\"4\" width=\"18\" height=\"16\" rx=\"3\"/><circle cx=\"9\" cy=\"10\" r=\"2\"/><path d=\"M21 16l-5-5-9 9\"/></svg></sc-if><sc-if value=\"{{f.isAudio}}\" hint-placeholder-val=\"{{ false }}\"><svg width=\"17\" height=\"17\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M4 10v4M8 7v10M12 4v16M16 8v8M20 11v2\"/></svg></sc-if></span><span style=\"flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px;\"><span style=\"font-size: 14px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;\">{{f.name}}</span><span style=\"font-size: 12px; color: {{t.muted}};\">{{f.size}}</span></span><button type=\"button\" onClick=\"{{f.remove}}\" aria-label=\"Remove {{f.name}}\" style=\"width: 32px; height: 32px; flex-shrink: 0; border: 0; border-radius: 16px; background: transparent; color: {{t.muted}}; display: flex; align-items: center; justify-content: center; cursor: pointer;\"><svg width=\"14\" height=\"14\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M6 6l12 12M18 6L6 18\"/></svg></button></div></sc-for></div></sc-if></sc-if>\n    <sc-if value=\"{{isPhoto}}\" hint-placeholder-val=\"{{ false }}\"><div onDragOver=\"{{dragOver}}\" onDrop=\"{{drop}}\" style=\"box-sizing: border-box; padding: 20px 20px; border-radius: 22px; background: {{t.surf}}; box-shadow: inset 0 0 0 1.5px {{t.line}}; display: flex; flex-direction: column; align-items: center; gap: 12px; text-align: center;\">\n      <span style=\"display: flex; color: {{t.muted}};\"><svg width=\"26\" height=\"26\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.6\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M12 15V4M7 9l5-5 5 5\"/><path d=\"M4 15v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3\"/></svg></span>\n      <span style=\"font-size: 15px; font-weight: 600;\">{{dropLine}}</span>\n      <div style=\"display: flex; gap: 8px; flex-wrap: wrap; justify-content: center;\"><button type=\"button\" onClick=\"{{choose}}\" class=\"sc-press\" style=\"flex-grow: 1; height: 40px; padding: 0 20px; border: 0; border-radius: 999px; background: {{t.inv}}; color: {{t.invText}}; font: inherit; font-size: 15px; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer; padding: 0 18px;\"><svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M12 15V4M7 9l5-5 5 5\"/><path d=\"M4 15v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3\"/></svg>{{chooseLabel}}</button><sc-if value=\"{{canCamera}}\" hint-placeholder-val=\"{{ false }}\"><button type=\"button\" onClick=\"{{camera}}\" class=\"sc-press\" style=\"flex-grow: 1; height: 40px; padding: 0 20px; border: 0; border-radius: 999px; background: {{t.surf}}; color: {{t.text}}; font: inherit; font-size: 15px; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer; padding: 0 18px; background: {{t.bg}};\"><svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><rect x=\"3\" y=\"4\" width=\"18\" height=\"16\" rx=\"3\"/><circle cx=\"9\" cy=\"10\" r=\"2\"/><path d=\"M21 16l-5-5-9 9\"/></svg>Take a photo</button></sc-if></div>\n      <span style=\"font-size: 12px; color: {{t.muted}};\">{{acceptLine}}</span>\n    </div>\n    <sc-if value=\"{{hasFiles}}\" hint-placeholder-val=\"{{ true }}\"><div style=\"display: flex; flex-direction: column; gap: 8px;\"><sc-for list=\"{{files}}\" as=\"f\" hint-placeholder-count=\"1\"><div style=\"min-height: 56px; box-sizing: border-box; padding: 8px 8px 8px 12px; display: flex; align-items: center; gap: 12px; border-radius: 16px; background: {{t.surf}};\"><span style=\"width: 36px; height: 36px; flex-shrink: 0; border-radius: 18px; background: {{t.bg}}; display: flex; align-items: center; justify-content: center;\"><sc-if value=\"{{f.isDoc}}\" hint-placeholder-val=\"{{ true }}\"><svg width=\"17\" height=\"17\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z\"/><path d=\"M14 3v5h5\"/></svg></sc-if><sc-if value=\"{{f.isImage}}\" hint-placeholder-val=\"{{ false }}\"><svg width=\"17\" height=\"17\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><rect x=\"3\" y=\"4\" width=\"18\" height=\"16\" rx=\"3\"/><circle cx=\"9\" cy=\"10\" r=\"2\"/><path d=\"M21 16l-5-5-9 9\"/></svg></sc-if><sc-if value=\"{{f.isAudio}}\" hint-placeholder-val=\"{{ false }}\"><svg width=\"17\" height=\"17\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M4 10v4M8 7v10M12 4v16M16 8v8M20 11v2\"/></svg></sc-if></span><span style=\"flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px;\"><span style=\"font-size: 14px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;\">{{f.name}}</span><span style=\"font-size: 12px; color: {{t.muted}};\">{{f.size}}</span></span><button type=\"button\" onClick=\"{{f.remove}}\" aria-label=\"Remove {{f.name}}\" style=\"width: 32px; height: 32px; flex-shrink: 0; border: 0; border-radius: 16px; background: transparent; color: {{t.muted}}; display: flex; align-items: center; justify-content: center; cursor: pointer;\"><svg width=\"14\" height=\"14\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M6 6l12 12M18 6L6 18\"/></svg></button></div></sc-for></div></sc-if></sc-if>\n    <sc-if value=\"{{isRecord}}\" hint-placeholder-val=\"{{ false }}\"><div style=\"box-sizing: border-box; padding: 22px 20px; border-radius: 22px; background: {{t.surf}}; display: flex; flex-direction: column; align-items: center; gap: 16px;\">\n      <span style=\"font-size: 13px; font-weight: 600; color: {{t.muted}};\">{{recState}}</span>\n      <span style=\"font-family: 'Geist Mono', ui-monospace, monospace; font-size: 44px; font-weight: 500; letter-spacing: -.02em; line-height: 1;\">{{recTime}}</span>\n      <div aria-hidden=\"true\" style=\"width: 100%; height: 36px; display: flex; align-items: center; justify-content: center; gap: 3px;\"><sc-for list=\"{{bars}}\" as=\"b\" hint-placeholder-count=\"40\"><span style=\"width: 3px; height: {{b.h}}; border-radius: 2px; background: {{b.bg}};\"></span></sc-for></div>\n      <div style=\"display: flex; gap: 10px; align-items: center; justify-content: center;\">\n        <sc-if value=\"{{recIdle}}\" hint-placeholder-val=\"{{ false }}\"><button type=\"button\" onClick=\"{{recStart}}\" class=\"sc-press\" style=\"flex-grow: 1; height: 52px; padding: 0 20px; border: 0; border-radius: 999px; background: {{t.inv}}; color: {{t.invText}}; font: inherit; font-size: 15px; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer; padding: 0 26px;\"><svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><rect x=\"9\" y=\"3\" width=\"6\" height=\"11\" rx=\"3\"/><path d=\"M5 11a7 7 0 0 0 14 0M12 18v3\"/></svg>Start recording</button></sc-if>\n        <sc-if value=\"{{recLive}}\" hint-placeholder-val=\"{{ true }}\"><button type=\"button\" onClick=\"{{recPause}}\" class=\"sc-press\" style=\"flex-grow: 1; height: 52px; padding: 0 20px; border: 0; border-radius: 999px; background: {{t.surf}}; color: {{t.text}}; font: inherit; font-size: 15px; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer; padding: 0 22px; background: {{t.bg}};\"><svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><rect x=\"7\" y=\"5\" width=\"3.5\" height=\"14\" rx=\"1\" fill=\"currentColor\" stroke=\"none\"/><rect x=\"13.5\" y=\"5\" width=\"3.5\" height=\"14\" rx=\"1\" fill=\"currentColor\" stroke=\"none\"/></svg>{{recPauseLabel}}</button><button type=\"button\" onClick=\"{{recStop}}\" class=\"sc-press\" style=\"flex-grow: 1; height: 52px; padding: 0 20px; border: 0; border-radius: 999px; background: {{t.inv}}; color: {{t.invText}}; font: inherit; font-size: 15px; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer; padding: 0 28px;\">Stop</button><button type=\"button\" onClick=\"{{recDiscard}}\" aria-label=\"Discard the recording\" style=\"width: 40px; height: 40px; flex-shrink: 0; border: 0; border-radius: 20px; background: {{t.surf}}; color: {{t.text}}; display: flex; align-items: center; justify-content: center; cursor: pointer; width: 52px; height: 52px; border-radius: 26px; background: {{t.bg}}; color: {{t.muted}};\"><svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M6 6l12 12M18 6L6 18\"/></svg></button></sc-if>\n      </div>\n      <span style=\"max-width: 420px; font-size: 12px; line-height: 1.45; text-align: center; color: {{t.muted}};\">{{recNote}}</span>\n    </div></sc-if>\n    <sc-if value=\"{{isPaste}}\" hint-placeholder-val=\"{{ false }}\"><textarea rows=\"7\" onChange=\"{{setText}}\" placeholder=\"Paste your text or notes\" style=\"resize: none; border: 0; outline: 0; border-radius: 20px; padding: 14px 16px; background: {{t.surf}}; color: {{t.text}}; font: inherit; font-size: 15px; line-height: 1.5;\">{{text}}</textarea></sc-if>\n    <sc-if value=\"{{isVideo}}\" hint-placeholder-val=\"{{ false }}\">\n      <div style=\"display: flex; flex-direction: column; gap: 10px;\">\n        <input type=\"text\" value=\"{{url}}\" onChange=\"{{setUrl}}\" placeholder=\"youtube.com/watch?v=…\" autocomplete=\"off\" style=\"height: 48px; box-sizing: border-box; padding: 0 16px; border: 0; outline: 0; border-radius: 16px; background: {{t.surf}}; color: {{t.text}}; font: inherit; font-size: 16px; \">\n        <sc-if value=\"{{videoLine}}\" hint-placeholder-val=\"{{ true }}\"><span style=\"font-size: 13px; line-height: 1.45; color: {{t.muted}};\">{{videoLine}}</span></sc-if>\n        <sc-if value=\"{{showTranscript}}\" hint-placeholder-val=\"{{ false }}\"><div style=\"display: flex; flex-direction: column; gap: 8px;\"><textarea rows=\"5\" onChange=\"{{setText}}\" placeholder=\"Paste the transcript\" style=\"resize: none; border: 0; outline: 0; border-radius: 20px; padding: 14px 16px; background: {{t.surf}}; color: {{t.text}}; font: inherit; font-size: 15px; line-height: 1.5;\">{{text}}</textarea><span style=\"font-size: 13px; line-height: 1.45; color: {{t.muted}};\">On YouTube, open the video’s description, tap Show transcript, then copy it.</span></div></sc-if>\n        <button type=\"button\" onClick=\"{{toggleTranscript}}\" style=\"align-self: flex-start; padding: 0; border: 0; background: transparent; color: {{t.text}}; font: inherit; font-size: 14px; font-weight: 600; text-decoration: underline; cursor: pointer;\">{{transcriptLabel}}</button>\n      </div>\n    </sc-if>\n    <sc-if value=\"{{isTopic}}\" hint-placeholder-val=\"{{ false }}\">\n      <div style=\"display: flex; flex-direction: column; gap: 12px;\">\n        <input type=\"text\" value=\"{{topic}}\" onChange=\"{{setTopic}}\" placeholder=\"I want to study…\" autocomplete=\"off\" style=\"height: 48px; box-sizing: border-box; padding: 0 16px; border: 0; outline: 0; border-radius: 16px; background: {{t.surf}}; color: {{t.text}}; font: inherit; font-size: 16px; height: 52px; font-size: 17px;\">\n        <div style=\"display: flex; flex-wrap: wrap; gap: 6px;\"><sc-for list=\"{{topics}}\" as=\"x\" hint-placeholder-count=\"4\"><button type=\"button\" onClick=\"{{x.pick}}\" style=\"height: 32px; padding: 0 14px; border: 0; border-radius: 999px; background: {{t.surf}}; color: {{t.text}}; font: inherit; font-size: 13px; font-weight: 500; cursor: pointer;\">{{x.label}}</button></sc-for></div>\n        \n      </div>\n    </sc-if>\n    <sc-if value=\"{{isFrom}}\" hint-placeholder-val=\"{{ false }}\"><div style=\"min-height: 56px; box-sizing: border-box; padding: 10px 16px; display: flex; align-items: center; gap: 12px; border-radius: 16px; background: {{t.surf}};\"><span style=\"width: 36px; height: 36px; flex-shrink: 0; border-radius: 18px; background: {{t.bg}}; display: flex; align-items: center; justify-content: center;\"><svg width=\"17\" height=\"17\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M4 12a8 8 0 1 0 2.4-5.7L4 8.5\"/><path d=\"M4 4v4.5h4.5M12 8v4.5l3 1.8\"/></svg></span><span style=\"display: flex; flex-direction: column; gap: 1px; min-width: 0;\"><span style=\"font-size: 14px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;\">{{fromName}}</span><span style=\"font-size: 12px; color: {{t.muted}};\">More cards from this source</span></span></div></sc-if><sc-if value=\"{{hasWarn}}\" hint-placeholder-val=\"{{ false }}\"><span role=\"alert\" style=\"font-size: 14px; line-height: 1.4; color: {{t.again}};\">{{warn}}</span></sc-if><div style=\"display: flex; flex-direction: column; gap: 16px;\">\n    <div style=\"display: flex; flex-direction: column; gap: 8px;\"><span style=\"font-size: 13px; font-weight: 600;\">Into deck</span><div style=\"display: flex; flex-direction: column; gap: 8px;\"><input type=\"text\" value=\"{{deckName}}\" onChange=\"{{setDeckName}}\" placeholder=\"{{deckPlaceholder}}\" autocomplete=\"off\" style=\"height: 48px; box-sizing: border-box; padding: 0 16px; border: 0; outline: 0; border-radius: 16px; background: {{t.surf}}; color: {{t.text}}; font: inherit; font-size: 16px; height: 44px; font-size: 15px;\"><div style=\"display: flex; flex-wrap: wrap; gap: 6px;\"><sc-for list=\"{{deckChips}}\" as=\"d\" hint-placeholder-count=\"3\"><button type=\"button\" onClick=\"{{d.pick}}\" aria-pressed=\"{{d.pressed}}\" style=\"height: 32px; max-width: 100%; padding: 0 12px; border: 0; border-radius: 999px; background: {{d.bg}}; color: {{d.fg}}; font: inherit; font-size: 13px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: pointer;\">{{d.name}}</button></sc-for></div></div></div>\n    <div style=\"display: flex; flex-direction: column; gap: 8px;\"><span style=\"font-size: 13px; font-weight: 600;\">How many cards</span><div role=\"group\" style=\"display: flex; padding: 4px; border-radius: 999px; background: {{t.surf}};\"><sc-for list=\"{{counts}}\" as=\"o\" hint-placeholder-count=\"4\"><button type=\"button\" onClick=\"{{o.pick}}\" aria-pressed=\"{{o.pressed}}\" style=\"flex: 1 1 0; min-width: 0; height: 36px; padding: 0 6px; border: 0; border-radius: 999px; background: {{o.bg}}; color: {{o.fg}}; box-shadow: {{o.sh}}; font: inherit; font-size: 13px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: pointer;\">{{o.label}}</button></sc-for></div></div>\n    <div style=\"display: grid; grid-template-columns: 1fr; gap: 16px;\">\n      <div style=\"display: flex; flex-direction: column; gap: 8px;\"><span style=\"font-size: 13px; font-weight: 600;\">Kinds</span><div style=\"display: flex; flex-direction: column; gap: 8px;\"><div style=\"display: flex; gap: 8px; flex-wrap: wrap;\"><button type=\"button\" onClick=\"{{toggleBasic}}\" aria-pressed=\"{{basicPressed}}\" style=\"height: 36px; padding: 0 14px; display: inline-flex; align-items: center; gap: 6px; border: 0; border-radius: 999px; background: {{basicBg}}; color: {{basicFg}}; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer;\"><svg width=\"13\" height=\"13\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.4\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M5 12l5 5 9-10\"/></svg>Basic</button><button type=\"button\" onClick=\"{{toggleCloze}}\" aria-pressed=\"{{clozePressed}}\" style=\"height: 36px; padding: 0 14px; display: inline-flex; align-items: center; gap: 6px; border: 0; border-radius: 999px; background: {{clozeBg}}; color: {{clozeFg}}; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer;\"><svg width=\"13\" height=\"13\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.4\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M5 12l5 5 9-10\"/></svg>Fill in the blank</button><sc-if value=\"{{canAudio}}\" hint-placeholder-val=\"{{ false }}\"><button type=\"button\" onClick=\"{{toggleAudio}}\" aria-pressed=\"{{audioPressed}}\" style=\"height: 36px; padding: 0 14px; display: inline-flex; align-items: center; gap: 6px; border: 0; border-radius: 999px; background: {{audioBg}}; color: {{audioFg}}; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer;\"><svg width=\"13\" height=\"13\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.4\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M5 12l5 5 9-10\"/></svg>Audio</button></sc-if><sc-if value=\"{{canImage}}\" hint-placeholder-val=\"{{ false }}\"><button type=\"button\" onClick=\"{{toggleImage}}\" aria-pressed=\"{{imagePressed}}\" style=\"height: 36px; padding: 0 14px; display: inline-flex; align-items: center; gap: 6px; border: 0; border-radius: 999px; background: {{imageBg}}; color: {{imageFg}}; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer;\"><svg width=\"13\" height=\"13\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.4\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M5 12l5 5 9-10\"/></svg>Image</button></sc-if></div><sc-if value=\"{{audioOn}}\" hint-placeholder-val=\"{{ false }}\"><span style=\"font-size: 12px; line-height: 1.45; color: {{t.muted}};\">{{audioLine}}</span></sc-if><sc-if value=\"{{imageOn}}\" hint-placeholder-val=\"{{ false }}\"><span style=\"font-size: 12px; line-height: 1.45; color: {{t.muted}};\">{{imageLine}}</span></sc-if></div></div>\n      <div style=\"display: flex; flex-direction: column; gap: 8px;\"><span style=\"font-size: 13px; font-weight: 600;\">Language</span><button type=\"button\" onClick=\"{{langPick.toggle}}\" aria-haspopup=\"listbox\" aria-expanded=\"{{langPick.expanded}}\" aria-label=\"Language of the cards\" class=\"sc-press\" style=\"width: 100%; height: 36px; box-sizing: border-box; padding: 0 12px 0 14px; display: flex; align-items: center; gap: 8px; border: 0; border-radius: 999px; background: {{t.surf}}; color: {{t.text}}; font: inherit; font-size: 13px; font-weight: 600; text-align: left; cursor: pointer;\"><span style=\"flex-grow: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;\">{{langPick.label}}</span><span style=\"display: flex; flex-shrink: 0; color: {{t.muted}};\"><svg width=\"14\" height=\"14\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M6 9l6 6 6-6\"/></svg></span></button></div>\n    </div>\n  </div></sc-if>\n      <sc-if value=\"{{isMaking}}\" hint-placeholder-val=\"{{ false }}\"><div style=\"display: flex; flex-direction: column; gap: 22px; padding: 18px 0 6px;\">\n    <div style=\"display: flex; flex-direction: column; gap: 8px;\"><span style=\"font-size: 17px; font-weight: 600; letter-spacing: -.01em;\">{{progWord}}</span><span style=\"font-size: 14px; color: {{t.muted}};\">{{progLine}}</span></div>\n    <div role=\"progressbar\" aria-valuemin=\"0\" aria-valuemax=\"100\" aria-valuenow=\"{{progPct}}\" style=\"height: 6px; border-radius: 3px; background: {{t.surf2}}; overflow: hidden;\"><div style=\"width: {{progWidth}}; height: 100%; border-radius: 3px; background: {{t.inv}}; transition: width .5s ease;\"></div></div>\n  </div></sc-if>\n      <sc-if value=\"{{isReview}}\" hint-placeholder-val=\"{{ false }}\"><div style=\"display: flex; flex-direction: column; gap: 14px; min-height: 0;\">\n    <span style=\"font-size: 14px; color: {{t.muted}};\">{{reviewLine}}</span>\n    <sc-if value=\"{{hasFigs}}\" hint-placeholder-val=\"{{ false }}\"><span style=\"display: flex; align-items: center; gap: 8px; font-size: 13px; line-height: 1.4; color: {{t.muted}};\"><span style=\"display: flex; flex-shrink: 0; color: {{t.text}};\"><svg width=\"15\" height=\"15\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><rect x=\"3\" y=\"4\" width=\"18\" height=\"16\" rx=\"3\"/><circle cx=\"9\" cy=\"10\" r=\"2\"/><path d=\"M21 16l-5-5-9 9\"/></svg></span>{{figLine}}</span></sc-if>\n    <sc-if value=\"{{hasNotes}}\" hint-placeholder-val=\"{{ true }}\">\n    <section aria-label=\"Notes\" style=\"box-sizing: border-box; padding: 14px 16px; border-radius: 20px; background: {{t.surf}}; display: flex; flex-direction: column; gap: 10px;\">\n      <div style=\"display: flex; align-items: center; gap: 12px;\">\n        <span style=\"flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px;\"><span style=\"font-size: 15px; font-weight: 600;\">Notes for the deck</span><span style=\"font-size: 13px; line-height: 1.4; color: {{t.muted}};\">{{notesLine}}</span></span>\n        <button type=\"button\" role=\"switch\" aria-checked=\"{{notesSw.checked}}\" aria-disabled=\"{{notesSw.disabled}}\" aria-label=\"Save these notes with the cards\" onClick=\"{{toggleNotes}}\" class=\"sc-sw\" style=\"width: 48px; height: 28px; flex-shrink: 0; padding: 3px; box-sizing: border-box; border: 0; border-radius: 14px; background: {{notesSw.track}}; opacity: {{notesSw.op}}; cursor: pointer;\"><span style=\"display: block; width: 22px; height: 22px; border-radius: 11px; background: {{notesSw.knobColor}}; transform: {{notesSw.knob}};\"></span></button>\n      </div>\n      <button type=\"button\" onClick=\"{{toggleNotesOpen}}\" aria-expanded=\"{{notesExpanded}}\" style=\"align-self: flex-start; padding: 0; border: 0; background: transparent; color: {{t.text}}; font: inherit; font-size: 14px; font-weight: 600; text-decoration: underline; cursor: pointer;\">{{notesOpenLabel}}</button>\n      <sc-if value=\"{{notesOpen}}\" hint-placeholder-val=\"{{ false }}\"><div class=\"gd\" ref=\"{{notesRef}}\" data-sc-own style=\"--gd-text: {{t.text}}; --gd-muted: {{t.muted}}; --gd-line: {{t.line}}; --gd-code: {{t.bg}}; max-height: 220px; overflow-y: auto; scrollbar-width: none; opacity: {{notesOp}};\"></div></sc-if>\n    </section>\n  </sc-if>\n    <div style=\"display: flex; flex-direction: column; gap: 8px; max-height: 520px; overflow-y: auto; scrollbar-width: none; margin: 0 -4px; padding: 0 4px;\"><sc-for list=\"{{cards}}\" as=\"c\" hint-placeholder-count=\"4\"><div style=\"box-sizing: border-box; padding: 14px 8px 14px 16px; border-radius: 20px; background: {{t.surf}}; display: flex; align-items: flex-start; gap: 8px; opacity: {{c.op}};\">\n      <sc-if value=\"{{c.isImage}}\" hint-placeholder-val=\"{{ false }}\"><div aria-hidden=\"true\" style=\"position: relative; width: 84px; height: 64px; flex-shrink: 0; border-radius: 10px; overflow: hidden; background: #FFFFFF; box-shadow: inset 0 0 0 1px {{t.line}};\"><img src=\"{{c.thumb}}\" alt=\"\" draggable=\"false\" style=\"width: 100%; height: 100%; object-fit: contain; display: block;\"><sc-for list=\"{{c.shapes}}\" as=\"b\" hint-placeholder-count=\"3\"><div style=\"position: absolute; left: {{b.x}}; top: {{b.y}}; width: {{b.w}}; height: {{b.h}}; box-sizing: border-box; border: 1px solid #000000; background: rgba(255,255,255,.4);\"></div></sc-for></div></sc-if>\n      <div style=\"flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px;\">\n        <sc-if value=\"{{c.isImage}}\" hint-placeholder-val=\"{{ false }}\"><span style=\"font-size: 15px; font-weight: 600; line-height: 1.35; overflow-wrap: anywhere; text-decoration: {{c.strike}};\">{{c.q}}</span><span style=\"font-size: 14px; line-height: 1.4; color: {{t.muted}}; overflow-wrap: anywhere;\">{{c.a}}</span></sc-if>\n        <sc-if value=\"{{c.reading}}\" hint-placeholder-val=\"{{ true }}\"><div style=\"display: flex; align-items: flex-start; gap: 8px;\"><sc-if value=\"{{c.isAudio}}\" hint-placeholder-val=\"{{ false }}\"><button type=\"button\" onClick=\"{{c.say}}\" aria-label=\"Hear {{c.q}}\" style=\"width: 28px; height: 28px; flex-shrink: 0; margin-top: -3px; border: 0; border-radius: 14px; background: {{t.bg}}; color: {{t.text}}; display: flex; align-items: center; justify-content: center; cursor: pointer;\"><svg width=\"14\" height=\"14\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M4 10v4M8 7v10M12 4v16M16 8v8M20 11v2\"/></svg></button></sc-if><span style=\"font-size: 15px; font-weight: 600; line-height: 1.35; overflow-wrap: anywhere; text-decoration: {{c.strike}};\">{{c.q}}</span></div><span style=\"font-size: 14px; line-height: 1.4; color: {{t.muted}}; overflow-wrap: anywhere;\">{{c.a}}</span></sc-if>\n        <sc-if value=\"{{c.editing}}\" hint-placeholder-val=\"{{ false }}\">\n          <sc-if value=\"{{c.isBasic}}\" hint-placeholder-val=\"{{ true }}\"><div style=\"display: flex; flex-direction: column; gap: 6px;\"><input type=\"text\" value=\"{{c.front}}\" onChange=\"{{c.setFront}}\" aria-label=\"Question\" style=\"height: 40px; box-sizing: border-box; padding: 0 12px; border: 0; outline: 0; border-radius: 12px; background: {{t.bg}}; color: {{t.text}}; font: inherit; font-size: 15px;\"><input type=\"text\" value=\"{{c.back}}\" onChange=\"{{c.setBack}}\" aria-label=\"Answer\" style=\"height: 40px; box-sizing: border-box; padding: 0 12px; border: 0; outline: 0; border-radius: 12px; background: {{t.bg}}; color: {{t.text}}; font: inherit; font-size: 15px;\"></div></sc-if>\n          <sc-if value=\"{{c.isAudio}}\" hint-placeholder-val=\"{{ false }}\"><div style=\"display: flex; flex-direction: column; gap: 6px;\"><input type=\"text\" value=\"{{c.speak}}\" onChange=\"{{c.setSpeak}}\" aria-label=\"Words to say\" style=\"height: 40px; box-sizing: border-box; padding: 0 12px; border: 0; outline: 0; border-radius: 12px; background: {{t.bg}}; color: {{t.text}}; font: inherit; font-size: 15px;\"><input type=\"text\" value=\"{{c.back}}\" onChange=\"{{c.setBack}}\" aria-label=\"What it means\" style=\"height: 40px; box-sizing: border-box; padding: 0 12px; border: 0; outline: 0; border-radius: 12px; background: {{t.bg}}; color: {{t.text}}; font: inherit; font-size: 15px;\"></div></sc-if>\n          <sc-if value=\"{{c.isCloze}}\" hint-placeholder-val=\"{{ false }}\"><textarea rows=\"2\" onChange=\"{{c.setText}}\" aria-label=\"Sentence with a blank in [[double brackets]]\" style=\"resize: none; border: 0; outline: 0; border-radius: 12px; padding: 10px 12px; background: {{t.bg}}; color: {{t.text}}; font: inherit; font-size: 15px; line-height: 1.4;\">{{c.text}}</textarea></sc-if>\n        </sc-if>\n        <sc-if value=\"{{c.hasAt}}\" hint-placeholder-val=\"{{ true }}\"><span style=\"font-family: 'Geist Mono', ui-monospace, monospace; font-size: 11px; color: {{t.muted}};\">{{c.at}}</span></sc-if>\n      </div>\n      <div style=\"display: flex; flex-shrink: 0; gap: 2px;\">\n        <sc-if value=\"{{c.canEdit}}\" hint-placeholder-val=\"{{ true }}\"><button type=\"button\" onClick=\"{{c.toggleEdit}}\" aria-label=\"{{c.editLabel}}\" style=\"width: 36px; height: 36px; border: 0; border-radius: 18px; background: transparent; color: {{t.muted}}; display: flex; align-items: center; justify-content: center; cursor: pointer;\"><sc-if value=\"{{c.editing}}\" hint-placeholder-val=\"{{ false }}\"><svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M5 12l5 5 9-10\"/></svg></sc-if><sc-if value=\"{{c.notEditing}}\" hint-placeholder-val=\"{{ true }}\"><svg width=\"15\" height=\"15\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M15.5 5.5l3 3L9 18H6v-3z\"/><path d=\"M13.5 7.5l3 3\"/></svg></sc-if></button></sc-if>\n        <button type=\"button\" onClick=\"{{c.toggleGone}}\" aria-label=\"{{c.goneLabel}}\" style=\"width: 36px; height: 36px; border: 0; border-radius: 18px; background: transparent; color: {{t.muted}}; display: flex; align-items: center; justify-content: center; cursor: pointer;\"><sc-if value=\"{{c.gone}}\" hint-placeholder-val=\"{{ false }}\"><svg width=\"15\" height=\"15\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M9 14L4 9l5-5\"/><path d=\"M4 9h11a5 5 0 0 1 0 10h-3\"/></svg></sc-if><sc-if value=\"{{c.kept}}\" hint-placeholder-val=\"{{ true }}\"><svg width=\"15\" height=\"15\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M6 6l12 12M18 6L6 18\"/></svg></sc-if></button>\n      </div>\n    </div></sc-for></div>\n  </div><sc-if value=\"{{hasWarn}}\" hint-placeholder-val=\"{{ false }}\"><span role=\"alert\" style=\"font-size: 14px; line-height: 1.4; color: {{t.again}};\">{{warn}}</span></sc-if></sc-if>\n      <sc-if value=\"{{isError}}\" hint-placeholder-val=\"{{ false }}\"><div style=\"display: flex; flex-direction: column; gap: 14px; padding: 8px 0 0;\"><span style=\"font-size: 17px; font-weight: 600; line-height: 1.35;\">{{errMessage}}</span><span style=\"font-size: 14px; line-height: 1.45; color: {{t.muted}};\">{{errMore}}</span></div></sc-if>\n    </div>\n    \n    <sc-if value=\"{{showFooter}}\" hint-placeholder-val=\"{{ true }}\"><div style=\"display: flex; gap: 10px;\"><button type=\"button\" onClick=\"{{back}}\" class=\"sc-press\" style=\"flex-grow: 1; height: 52px; padding: 0 20px; border: 0; border-radius: 999px; background: {{t.surf}}; color: {{t.text}}; font: inherit; font-size: 15px; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer; \">Back</button><sc-if value=\"{{showMake}}\" hint-placeholder-val=\"{{ true }}\"><button type=\"button\" onClick=\"{{make}}\" class=\"sc-press\" style=\"flex-grow: 2; height: 52px; padding: 0 20px; border: 0; border-radius: 999px; background: {{makeBg}}; color: {{makeFg}}; font: inherit; font-size: 15px; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer;\"><svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M11 3l1.9 5.1L18 10l-5.1 1.9L11 17l-1.9-5.1L4 10l5.1-1.9z\"/><path d=\"M18.5 15l.8 2.2 2.2.8-2.2.8-.8 2.2-.8-2.2-2.2-.8 2.2-.8z\"/></svg>Make cards</button></sc-if></div></sc-if>\n    <sc-if value=\"{{isMaking}}\" hint-placeholder-val=\"{{ false }}\"><div style=\"display: flex; gap: 10px;\"><button type=\"button\" onClick=\"{{cancel}}\" class=\"sc-press\" style=\"flex-grow: 1; height: 52px; padding: 0 20px; border: 0; border-radius: 999px; background: {{t.surf}}; color: {{t.text}}; font: inherit; font-size: 15px; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer; \">Cancel</button></div></sc-if>\n    <sc-if value=\"{{isReview}}\" hint-placeholder-val=\"{{ false }}\"><div style=\"display: flex; gap: 10px;\"><button type=\"button\" onClick=\"{{discard}}\" class=\"sc-press\" style=\"flex-grow: 1; height: 52px; padding: 0 20px; border: 0; border-radius: 999px; background: {{t.surf}}; color: {{t.text}}; font: inherit; font-size: 15px; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer; \">Discard</button><button type=\"button\" onClick=\"{{save}}\" class=\"sc-press\" style=\"flex: 2 1 0; min-width: 0; height: 52px; padding: 0 20px; border: 0; border-radius: 999px; background: {{saveBg}}; color: {{saveFg}}; font: inherit; font-size: 15px; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer;\"><span style=\"min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;\">{{saveLabel}}</span></button></div></sc-if>\n    <sc-if value=\"{{isError}}\" hint-placeholder-val=\"{{ false }}\"><div style=\"display: flex; gap: 10px;\"><button type=\"button\" onClick=\"{{back}}\" class=\"sc-press\" style=\"flex-grow: 1; height: 52px; padding: 0 20px; border: 0; border-radius: 999px; background: {{t.surf}}; color: {{t.text}}; font: inherit; font-size: 15px; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer; \">Back</button><sc-if value=\"{{errPro}}\" hint-placeholder-val=\"{{ false }}\"><a href=\"Pricing.dc.html\" class=\"sc-press\" style=\"flex-grow: 2; height: 52px; border-radius: 999px; background: {{t.inv}}; color: {{t.invText}}; display: flex; align-items: center; justify-content: center; font-size: 15px; font-weight: 600;\">Go Pro</a></sc-if><sc-if value=\"{{errRetry}}\" hint-placeholder-val=\"{{ true }}\"><button type=\"button\" onClick=\"{{retry}}\" class=\"sc-press\" style=\"flex-grow: 2; height: 52px; padding: 0 20px; border: 0; border-radius: 999px; background: {{t.inv}}; color: {{t.invText}}; font: inherit; font-size: 15px; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer; \">Try again</button></sc-if></div></sc-if>\n  </div>\n  <sc-if value=\"{{langPick.open}}\" hint-placeholder-val=\"{{ false }}\"><div class=\"sc-scrim\" onClick=\"{{langPick.close}}\" style=\"position: absolute; inset: 0; z-index: 60; background: {{t.dim}};\"></div>\n  <div role=\"dialog\" aria-modal=\"true\" aria-label=\"{{langPick.title}}\" class=\"sc-sheet\" style=\"position: absolute; left: 0; right: 0; bottom: 0; z-index: 61; max-height: calc(100% - 56px); box-sizing: border-box; padding: 20px 20px 34px; border-radius: 32px 32px 0 0; background: {{t.bg}}; color: {{t.text}}; font-family: Geist, -apple-system, system-ui, sans-serif; display: flex; flex-direction: column; gap: 14px; overflow: hidden;\">\n    <div style=\"display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-shrink: 0;\"><span style=\"font-size: 20px; font-weight: 600; letter-spacing: -.02em;\">{{langPick.title}}</span><button type=\"button\" data-key=\"escape\" onClick=\"{{langPick.close}}\" aria-label=\"Close\" style=\"width: 36px; height: 36px; flex-shrink: 0; border: 0; border-radius: 18px; background: {{t.surf}}; color: {{t.text}}; display: flex; align-items: center; justify-content: center; cursor: pointer;\"><svg width=\"14\" height=\"14\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M6 6l12 12M18 6L6 18\"/></svg></button></div>\n    <div role=\"listbox\" aria-label=\"{{langPick.title}}\" style=\"min-height: 0; overflow-y: auto; display: flex; flex-direction: column;\"><sc-for list=\"{{langPick.rows}}\" as=\"o\" hint-placeholder-count=\"5\"><button type=\"button\" role=\"option\" aria-selected=\"{{o.pressed}}\" onClick=\"{{o.pick}}\" class=\"sc-press\" style=\"min-height: 52px; flex-shrink: 0; padding: 8px 4px; display: flex; align-items: center; gap: 10px; border: 0; border-bottom: 1px solid {{t.line}}; border-radius: 0px; background: transparent; color: {{t.text}}; font: inherit; text-align: left; cursor: pointer;\"><span style=\"flex-grow: 1; min-width: 0; font-size: 16px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;\">{{o.label}}</span><sc-if value=\"{{o.on}}\" hint-placeholder-val=\"{{ false }}\"><span style=\"display: flex; flex-shrink: 0;\"><svg width=\"15\" height=\"15\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.4\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M5 12l5 5 9-10\"/></svg></span></sc-if></button></sc-for></div>\n  </div></sc-if>\n  <sc-if value=\"{{cameraOpen}}\" hint-placeholder-val=\"{{ false }}\"><div role=\"dialog\" aria-modal=\"true\" aria-label=\"Camera\" style=\"position: absolute; inset: 0; z-index: 70; overflow: hidden; background: linear-gradient(160deg, #9EC7F3 0%, #4A5C9E 100%); color: #FFFFFF; font-family: Geist, -apple-system, system-ui, sans-serif;\">\n    <button type=\"button\" aria-label=\"Close\" style=\"position: absolute; left: 16px; top: 55px; width: 44px; height: 44px; padding: 0; border: 0; border-radius: 22px; background: rgba(255,255,255,.18); color: #FFFFFF; display: flex; align-items: center; justify-content: center; cursor: pointer;\"><svg width=\"18\" height=\"18\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M6 6l12 12M18 6L6 18\"/></svg></button><button type=\"button\" aria-label=\"Flash, off\" style=\"position: absolute; right: 16px; top: 55px; width: 44px; height: 44px; padding: 0; border: 0; border-radius: 22px; background: rgba(255,255,255,.18); color: #FFFFFF; display: flex; align-items: center; justify-content: center; cursor: pointer;\"><svg width=\"18\" height=\"18\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M13 2.5L5 13.5h6l-1 8 8-11h-6z\"/><path d=\"M4 3l16 18\"/></svg></button>\n    <button type=\"button\" aria-label=\"Take photo\" style=\"position: absolute; left: 50%; bottom: 34px; width: 76px; height: 76px; margin-left: -38px; padding: 4px; box-sizing: border-box; border: 4px solid #FFFFFF; border-radius: 38px; background: transparent; cursor: pointer;\"><span style=\"display: block; width: 100%; height: 100%; border-radius: 50%; background: #FFFFFF;\"></span></button>\n    <button type=\"button\" aria-label=\"Switch camera\" style=\"position: absolute; right: 28px; bottom: 50px; width: 44px; height: 44px; padding: 0; border: 0; border-radius: 22px; background: rgba(255,255,255,.18); color: #FFFFFF; display: flex; align-items: center; justify-content: center; cursor: pointer;\"><svg width=\"18\" height=\"18\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M19 9.5A7.5 7.5 0 0 0 5.6 7\"/><path d=\"M5 3.5V7.5H9\"/><path d=\"M5 14.5A7.5 7.5 0 0 0 18.4 17\"/><path d=\"M19 20.5V16.5H15\"/></svg></button>\n  </div></sc-if>\n</div>",
+  css: "body{margin:0;font-family:Geist, -apple-system, system-ui, sans-serif}\na{color:inherit;text-decoration:none}a:hover{opacity:.8}\n@keyframes scRise{from{opacity:0;transform:translateY(14px)}}main>*{animation:scRise .5s cubic-bezier(.2,.8,.2,1) backwards}main>*:nth-child(2){animation-delay:0.06s}main>*:nth-child(3){animation-delay:0.12s}main>*:nth-child(4){animation-delay:0.18s}main>*:nth-child(5){animation-delay:0.24s}main>*:nth-child(n+6){animation-delay:.3s}button,.sc-press{transition:transform .1s ease}button:active,.sc-press:active{transform:scale(.96)}@keyframes scPopIn{from{opacity:0;transform:translateY(10px)}}.sc-pop,[data-sc-pop],.sc-tray{animation:scPopIn .22s cubic-bezier(0.2,0.8,0.2,1) backwards}@keyframes scFade{from{opacity:0}}.sc-fade{animation:scFade .18s ease-out backwards}@keyframes scScrimIn{from{opacity:0}}@keyframes scScrimOut{to{opacity:0}}.sc-scrim{animation:scScrimIn .25s ease backwards}.sc-scrim.sc-gone{animation:scScrimOut .18s ease forwards}@keyframes scPanelIn{from{opacity:0;transform:translateX(calc(100% + 12px))}}@keyframes scPanelOut{to{opacity:0;transform:translateX(calc(100% + 12px))}}.sc-panel{animation:scPanelIn .25s cubic-bezier(0.2,0.8,0.2,1) backwards}.sc-panel.sc-gone{animation:scPanelOut .18s cubic-bezier(.4,0,1,1) forwards}@keyframes scSheetIn{from{transform:translateY(100%)}}@keyframes scSheetOut{to{transform:translateY(100%)}}.sc-sheet{animation:scSheetIn .25s cubic-bezier(0.2,0.8,0.2,1) backwards}.sc-sheet.sc-gone{animation:scSheetOut .18s cubic-bezier(.4,0,1,1) forwards}.sc-sw{transition:background-color .2s ease,transform .1s ease}.sc-sw>span{transition:transform .2s cubic-bezier(0.2,0.8,0.2,1),background-color .2s ease}[role=\"group\"]>button,[role=\"tablist\"]>button{transition:color .2s ease,transform .1s ease}@media (prefers-reduced-motion:reduce){.sc-pop,[data-sc-pop],.sc-tray,.sc-fade,.sc-scrim,.sc-panel,.sc-sheet{animation:none!important}.sc-sw>span,[role=\"group\"]>button,[role=\"tablist\"]>button{transition:none}.sc-sw{transition:background-color .2s ease}}.sc-lift{transition:transform 0.2s ease-out,box-shadow 0.2s ease-out}.sc-lift:hover{transform:translateY(-4px);box-shadow:0 24px 48px -24px rgba(0,0,0,.45)}.sk-cover{box-shadow:var(--sk-shadow)}.sk-cover.sc-lift:hover{box-shadow:var(--sk-shadow),0 24px 48px -24px rgba(0,0,0,.45)}@keyframes scFloat{50%{transform:translateY(-6px)}}@keyframes scSwayA{50%{transform:rotate(-13deg) translateX(-3px)}}@keyframes scSwayB{50%{transform:rotate(10deg) translateX(3px)}}@keyframes scGlow{50%{opacity:.55}}@keyframes scSheen{0%,58%{transform:translateX(-160%) skewX(-18deg)}86%,100%{transform:translateX(260%) skewX(-18deg)}}.sc-float{animation:scFloat 6s ease-in-out infinite}.sc-sway-a{animation:scSwayA 6s ease-in-out infinite}.sc-sway-b{animation:scSwayB 6s ease-in-out infinite}.sc-glow{animation:scGlow 6s ease-in-out infinite}.sc-sheen{position:absolute;top:0;bottom:0;left:0;width:45%;background:linear-gradient(90deg,transparent,rgba(255,255,255,.4),transparent);animation:scSheen 5s cubic-bezier(.4,0,.2,1) infinite;pointer-events:none}@keyframes scDrift{from{transform:scale(1.14) translate(-3%,-2%)}to{transform:scale(1.14) translate(3%,2%)}}.sc-alive>svg:first-of-type{animation:scDrift 16s ease-in-out infinite alternate}@keyframes scDraw{from{stroke-dashoffset:1.02}}.sc-draw{stroke-dasharray:1 2;animation:scDraw .9s cubic-bezier(.2,.8,.2,1) backwards}@keyframes scKnob{from{opacity:0;transform:scale(.3)}}.sc-knob{transform-box:fill-box;transform-origin:center;animation:scKnob .35s .75s cubic-bezier(.34,1.56,.64,1) backwards}@keyframes scGrow{from{transform:scaleY(0)}}.sc-grow{transform-origin:bottom;animation:scGrow .6s cubic-bezier(.2,.8,.2,1) backwards}:nth-child(2)>.sc-grow{animation-delay:0.04s}:nth-child(3)>.sc-grow{animation-delay:0.08s}:nth-child(4)>.sc-grow{animation-delay:0.12s}:nth-child(5)>.sc-grow{animation-delay:0.16s}:nth-child(6)>.sc-grow{animation-delay:0.20s}:nth-child(7)>.sc-grow{animation-delay:0.24s}:nth-child(8)>.sc-grow{animation-delay:0.28s}:nth-child(9)>.sc-grow{animation-delay:0.32s}:nth-child(10)>.sc-grow{animation-delay:0.36s}:nth-child(11)>.sc-grow{animation-delay:0.40s}:nth-child(12)>.sc-grow{animation-delay:0.44s}:nth-child(13)>.sc-grow{animation-delay:0.48s}:nth-child(14)>.sc-grow{animation-delay:0.52s}.sc-side{width:240px;transition:width .2s ease}.sc-side[data-collapsed=\"true\"]{width:78px}.sc-side-head{padding:0 4px 20px 12px;display:flex;align-items:center;justify-content:space-between;gap:4px}.sc-side-btns{display:flex;align-items:center;gap:4px}.sc-side[data-collapsed=\"true\"] .sc-side-head{padding:0 0 12px;justify-content:center}.sc-side[data-collapsed=\"true\"] .sc-side-btns{flex-direction:column-reverse;gap:6px}.sc-side[data-collapsed=\"true\"] :is(.sc-logo,.sc-lab,.sc-num){display:none}.sc-side .sc-dot{display:none}.sc-side[data-collapsed=\"true\"] .sc-dot{display:block}@media (prefers-reduced-motion:reduce){.sc-side{transition:none}}a:focus-visible,button:focus-visible,summary:focus-visible,[role=\"button\"]:focus-visible,[role=\"tab\"]:focus-visible,[role=\"radio\"]:focus-visible,[role=\"switch\"]:focus-visible,[role=\"menuitem\"]:focus-visible,[role=\"option\"]:focus-visible,[tabindex]:focus-visible{outline:2px solid currentColor;outline-offset:2px}[role=\"option\"]:focus-visible,[role=\"menuitem\"]:focus-visible{outline-offset:-2px}label:has(input:focus-visible,textarea:focus-visible):not([style*=\"box-shadow\"]){box-shadow:0 0 0 2px color-mix(in srgb,currentColor 45%,transparent)}*{scrollbar-width:thin;scrollbar-color:color-mix(in srgb,currentColor 30%,transparent) transparent}::-webkit-scrollbar{width:8px;height:8px}::-webkit-scrollbar-thumb{border-radius:8px;background:color-mix(in srgb,currentColor 30%,transparent)}::-webkit-scrollbar-track,::-webkit-scrollbar-corner{background:transparent}@media (prefers-reduced-motion:reduce){main>*,.sc-float,.sc-sway-a,.sc-sway-b,.sc-glow,.sc-alive>svg,.sc-draw,.sc-knob,.sc-grow{animation:none!important}.sc-sheen{display:none}button:active,.sc-press:active,.sc-lift:hover{transform:none}}\n.nb{position:relative;color:var(--gd-text);font-size:16px;line-height:1.6;overflow-wrap:anywhere;--nb-ind:26px;-webkit-text-size-adjust:100%}.nb-doc{outline:0;white-space:pre-wrap;caret-color:var(--gd-text);padding-bottom:8px}.nb-doc ::selection{background:rgba(0,122,255,.22)}.nb-row{position:relative;box-sizing:border-box;margin-left:calc(var(--d) * var(--nb-ind));padding:2px 0}.nb-tx{position:relative;min-height:1.6em;outline:0}.nb-row.nb-ph>.nb-tx::before{content:attr(data-ph);position:absolute;left:0;top:0;color:var(--gd-muted);opacity:.75;pointer-events:none;white-space:nowrap}.nb-h{font-weight:600;letter-spacing:-.02em}.nb-h1{font-size:1.6em;line-height:1.25;margin-top:.75em}.nb-h2{font-size:1.25em;line-height:1.3;margin-top:.8em}.nb-h3{font-size:1.08em;line-height:1.4;margin-top:.6em}.nb-h4{margin-top:.5em}.nb-doc>.nb-row:first-child{margin-top:0}.nb-h .nb-tx{min-height:1.25em}.nb-ul,.nb-ol,.nb-todo,.nb-toggle{padding-left:var(--nb-ind)}.nb-ul::before{content:\"\";position:absolute;left:9px;top:calc(2px + .8em - 2.5px);width:5px;height:5px;border-radius:50%;background:currentColor}.nb-ol::before{content:attr(data-n);position:absolute;left:0;top:2px;width:calc(var(--nb-ind) - 7px);text-align:right;font-variant-numeric:tabular-nums}.nb-mk{position:absolute;left:0;top:2px;width:var(--nb-ind);height:1.6em;display:flex;align-items:center;cursor:pointer;-webkit-user-select:none;user-select:none}.nb-box{left:1px;width:16px;height:16px;top:calc(2px + .8em - 8px);box-sizing:border-box;border:1.5px solid var(--gd-muted);border-radius:4.5px;justify-content:center;color:var(--nb-bg)}.nb-box svg{opacity:0}.nb-on>.nb-box{border-color:var(--gd-text);background:var(--gd-text)}.nb-on>.nb-box svg{opacity:1}.nb-todo.nb-on>.nb-tx{color:var(--gd-muted);text-decoration:line-through;text-decoration-color:var(--gd-muted)}.nb-read .nb-box{cursor:default}.nb-tg{left:2px;width:20px;justify-content:center;color:var(--gd-text);border-radius:6px}.nb-tg svg{transition:transform .2s cubic-bezier(0.2,0.8,0.2,1)}.nb-open>.nb-tg svg{transform:rotate(90deg)}.nb-tg:hover{background:var(--nb-surf)}.nb-fold{position:absolute;left:-26px;top:calc(2px + .62em - 10px);width:20px;height:20px;border-radius:6px;display:flex;align-items:center;justify-content:center;color:var(--gd-muted);cursor:pointer;opacity:0;transition:opacity .18s ease;-webkit-user-select:none;user-select:none}.nb-fold svg{transform:rotate(90deg);transition:transform .2s cubic-bezier(0.2,0.8,0.2,1)}.nb-folded>.nb-fold svg{transform:none}.nb-row:hover>.nb-fold,.nb-folded>.nb-fold,.nb-phone .nb-fold{opacity:1}.nb-fold:hover{background:var(--nb-surf);color:var(--gd-text)}.nb-phone .nb-fold{left:-22px}.nb-quote{padding-left:15px}.nb-quote::before{content:\"\";position:absolute;left:0;top:5px;bottom:5px;width:3px;border-radius:2px;background:var(--gd-muted);opacity:.45}.nb-codetx{font-family:'Geist Mono',ui-monospace,monospace;font-size:13.5px;line-height:1.6;background:var(--nb-code);border-radius:12px;padding:12px 14px;tab-size:2;overflow-wrap:anywhere}.nb-c{font-family:'Geist Mono',ui-monospace,monospace;font-size:.88em;padding:.12em .36em;border-radius:6px;background:var(--nb-code)}.nb-b{font-weight:600}.nb-i{font-style:italic}.nb-s{text-decoration:line-through}.nb-a{color:inherit;text-decoration:underline;text-underline-offset:2px;text-decoration-thickness:1px}a.nb-a{cursor:pointer}.nb-hr{padding:10px 0}.nb-line{height:1px;background:var(--gd-line)}.nb-img img{display:block;max-width:100%;height:auto;border-radius:12px}.nb-alt{color:var(--gd-muted)}.nb-tablewrap{overflow-x:auto;scrollbar-width:thin}.nb-table table{border-collapse:collapse;font-size:15px;line-height:1.5}.nb-table th,.nb-table td{border:1px solid var(--gd-line);padding:6px 12px;vertical-align:top;text-align:left;min-width:56px}.nb-table th{font-weight:600;background:var(--nb-code)}.nb-cell{min-height:1.5em}.nb-tablemore{display:none;gap:14px;padding-top:6px}.nb-table:focus-within>.nb-tablemore{display:flex}.nb-tbtn{border:0;padding:0;background:none;color:var(--gd-muted);font:inherit;font-size:13px;font-weight:500;cursor:pointer}.nb-tbtn:hover{color:var(--gd-text)}.nb-picked{box-shadow:0 0 0 2px var(--gd-text);border-radius:12px}.nb-virtual>.nb-tx{color:var(--gd-muted);opacity:.6;cursor:text}.nb-hl{background:rgba(0,122,255,.22);border-radius:2px}.nb-owner .nb-doc{cursor:text}@keyframes nbIn{from{opacity:0;transform:translateY(-4px)}}.nb-in{animation:nbIn .22s cubic-bezier(0.2,0.8,0.2,1) both}.nb-plus{position:absolute;display:none;z-index:2;width:24px;height:24px;padding:0;border:0;border-radius:7px;background:transparent;color:var(--gd-muted);align-items:center;justify-content:center;cursor:pointer}.nb-plus.nb-show{display:flex}.nb-plus:hover{background:var(--nb-surf);color:var(--gd-text)}.nb-menu{position:absolute;display:none;z-index:30;width:248px;max-height:388px;overflow-y:auto;scrollbar-width:none;box-sizing:border-box;padding:6px;border-radius:18px;background:var(--nb-bg);box-shadow:0 0 0 1px var(--gd-line),0 18px 44px rgba(0,0,0,.22);flex-direction:column;gap:2px;text-shadow:none}@keyframes nbPop{from{opacity:0;transform:translateY(10px)}}.nb-menu.nb-show,.nb-bar.nb-show{animation:nbPop .22s cubic-bezier(0.2,0.8,0.2,1) backwards}.nb-menu.nb-show{display:flex}.nb-item{flex-shrink:0;height:40px;padding:0 8px;display:flex;align-items:center;gap:10px;border:0;border-radius:12px;background:transparent;color:var(--gd-text);font:inherit;font-size:14px;font-weight:500;line-height:1.2;text-align:left;cursor:pointer}.nb-item.nb-on{background:var(--nb-surf)}.nb-chip{width:28px;height:28px;flex-shrink:0;border-radius:8px;background:var(--nb-surf);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;letter-spacing:-.02em}.nb-item.nb-on .nb-chip{background:var(--nb-bg)}.nb-chip.nb-small{font-size:10.5px}.nb-bar{position:absolute;display:none;z-index:31;padding:4px;gap:2px;align-items:center;border-radius:14px;background:var(--nb-bg);box-shadow:0 0 0 1px var(--gd-line),0 12px 32px rgba(0,0,0,.18);text-shadow:none}.nb-bar.nb-show{display:flex}.nb-bb{width:32px;height:32px;flex-shrink:0;padding:0;border:0;border-radius:9px;background:transparent;color:var(--gd-text);font:inherit;font-size:15px;line-height:1;display:flex;align-items:center;justify-content:center;cursor:pointer}.nb-bb:hover,.nb-bb.nb-on{background:var(--nb-surf)}.nb-bb b{font-weight:800}.nb-bb i{font-family:Georgia,serif;font-size:16px}.nb-linkfield{width:210px;height:32px;box-sizing:border-box;padding:0 10px;border:0;outline:0;border-radius:9px;background:var(--nb-surf);color:var(--gd-text);font:inherit;font-size:14px}.nb-linkfield.nb-bad{box-shadow:inset 0 0 0 1.5px #D92D20}.nb-keys{position:absolute;display:none;left:0;right:0;bottom:0;z-index:40;height:50px;box-sizing:border-box;padding:0 6px;align-items:center;gap:2px;background:var(--nb-bg);border-top:1px solid var(--gd-line)}.nb-keys.nb-show{display:flex}.nb-kb{height:40px;min-width:46px;flex-shrink:0;padding:0 8px;border:0;border-radius:10px;background:transparent;color:var(--gd-text);font:inherit;font-size:17px;display:flex;align-items:center;justify-content:center;cursor:pointer}.nb-kb.nb-on{background:var(--nb-surf)}.nb-kb b{font-weight:800}.nb-kb i{font-family:Georgia,serif}.nb-kt{font-size:15px;font-weight:600}.nb-aa{font-size:17px;font-weight:700;letter-spacing:-.02em}.nb-kgap{flex-grow:1}@media (prefers-reduced-motion:reduce){.nb-in,.nb-menu.nb-show,.nb-bar.nb-show{animation:none}.nb-tg svg,.nb-fold svg,.nb-fold{transition:none}}",
+  template: "<div style=\"position: relative; width: 100%; height: 100vh; height: 100dvh; min-height: 100%; max-height: 100%; overflow: hidden; font-family: Geist, -apple-system, system-ui, sans-serif; color: {{t.text}};\">\n  <dc-import name=\"PhoneToday\" dark=\"{{dark}}\" dim=\"{{dim}}\" hint-size=\"390px,844px\"></dc-import>\n  <div style=\"position: absolute; inset: 0; background: {{t.dim}};\"></div>\n  <div role=\"dialog\" aria-label=\"Make cards\" style=\"position: absolute; left: 0; right: 0; bottom: 0; top: 46px; box-sizing: border-box; padding: 16px 20px 30px; border-radius: 36px 36px 0 0; background: {{t.bg}}; display: flex; flex-direction: column; gap: 16px;\">\n    \n    <div style=\"display: flex; align-items: center; gap: 10px; min-height: 44px;\">\n      <sc-if value=\"{{canBack}}\" hint-placeholder-val=\"{{ false }}\"><button type=\"button\" onClick=\"{{back}}\" aria-label=\"Back\" style=\"width: 40px; height: 40px; flex-shrink: 0; border: 0; border-radius: 20px; background: {{t.surf}}; color: {{t.text}}; display: flex; align-items: center; justify-content: center; cursor: pointer;\"><svg width=\"18\" height=\"18\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M15 18l-6-6 6-6\"/></svg></button></sc-if>\n      <span style=\"flex-grow: 1; min-width: 0; font-size: 22px; font-weight: 600; letter-spacing: -.02em;\">{{title}}</span>\n      <sc-if value=\"{{canClose}}\" hint-placeholder-val=\"{{ true }}\"><button type=\"button\" onClick=\"{{close}}\" aria-label=\"Close\" style=\"width: 40px; height: 40px; flex-shrink: 0; border: 0; border-radius: 20px; background: {{t.surf}}; color: {{t.text}}; display: flex; align-items: center; justify-content: center; cursor: pointer;\"><svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M6 6l12 12M18 6L6 18\"/></svg></button></sc-if>\n    </div>\n    <div style=\"flex-grow: 1; min-height: 0; display: flex; flex-direction: column; gap: 16px; overflow-y: auto; scrollbar-width: none;\">\n      <sc-if value=\"{{isPick}}\" hint-placeholder-val=\"{{ false }}\"><div style=\"display: flex; flex-direction: column; gap: 10px;\">\n    <button type=\"button\" onClick=\"{{pickFile}}\" class=\"sc-press\" style=\"width: 100%; min-height: 68px; box-sizing: border-box; padding: 12px 16px 12px 12px; display: flex; align-items: center; gap: 14px; border: 0; border-radius: 20px; background: {{t.surf}}; color: {{t.text}}; font: inherit; text-align: left; cursor: pointer;\"><span style=\"width: 44px; height: 44px; flex-shrink: 0; border-radius: 22px; background: {{t.bg}}; display: flex; align-items: center; justify-content: center;\"><svg width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M12 15V4M7 9l5-5 5 5\"/><path d=\"M4 15v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3\"/></svg></span><span style=\"flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px;\"><span style=\"font-size: 16px; font-weight: 600; letter-spacing: -.01em;\">Upload</span><span style=\"font-size: 13px; color: {{t.muted}};\">A PDF, slides, a Word file, captions, pictures or audio</span></span><span style=\"display: flex; color: {{t.muted}};\"><svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M9 6l6 6-6 6\"/></svg></span></button>\n    <button type=\"button\" onClick=\"{{pickPhoto}}\" class=\"sc-press\" style=\"width: 100%; min-height: 68px; box-sizing: border-box; padding: 12px 16px 12px 12px; display: flex; align-items: center; gap: 14px; border: 0; border-radius: 20px; background: {{t.surf}}; color: {{t.text}}; font: inherit; text-align: left; cursor: pointer;\"><span style=\"width: 44px; height: 44px; flex-shrink: 0; border-radius: 22px; background: {{t.bg}}; display: flex; align-items: center; justify-content: center;\"><svg width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><rect x=\"3\" y=\"4\" width=\"18\" height=\"16\" rx=\"3\"/><circle cx=\"9\" cy=\"10\" r=\"2\"/><path d=\"M21 16l-5-5-9 9\"/></svg></span><span style=\"flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px;\"><span style=\"font-size: 16px; font-weight: 600; letter-spacing: -.01em;\">Photo</span><span style=\"font-size: 13px; color: {{t.muted}};\">Notes, slides, a whiteboard or a book page</span></span><span style=\"display: flex; color: {{t.muted}};\"><svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M9 6l6 6-6 6\"/></svg></span></button>\n    <button type=\"button\" onClick=\"{{pickRecord}}\" class=\"sc-press\" style=\"width: 100%; min-height: 68px; box-sizing: border-box; padding: 12px 16px 12px 12px; display: flex; align-items: center; gap: 14px; border: 0; border-radius: 20px; background: {{t.surf}}; color: {{t.text}}; font: inherit; text-align: left; cursor: pointer;\"><span style=\"width: 44px; height: 44px; flex-shrink: 0; border-radius: 22px; background: {{t.bg}}; display: flex; align-items: center; justify-content: center;\"><svg width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><rect x=\"9\" y=\"3\" width=\"6\" height=\"11\" rx=\"3\"/><path d=\"M5 11a7 7 0 0 0 14 0M12 18v3\"/></svg></span><span style=\"flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px;\"><span style=\"font-size: 16px; font-weight: 600; letter-spacing: -.01em;\">Record a lecture</span><span style=\"font-size: 13px; color: {{t.muted}};\">Use your microphone</span></span><span style=\"display: flex; color: {{t.muted}};\"><svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M9 6l6 6-6 6\"/></svg></span></button>\n    <button type=\"button\" onClick=\"{{pickPaste}}\" class=\"sc-press\" style=\"width: 100%; min-height: 68px; box-sizing: border-box; padding: 12px 16px 12px 12px; display: flex; align-items: center; gap: 14px; border: 0; border-radius: 20px; background: {{t.surf}}; color: {{t.text}}; font: inherit; text-align: left; cursor: pointer;\"><span style=\"width: 44px; height: 44px; flex-shrink: 0; border-radius: 22px; background: {{t.bg}}; display: flex; align-items: center; justify-content: center;\"><svg width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><rect x=\"5.5\" y=\"4.5\" width=\"13\" height=\"16\" rx=\"2.5\"/><path d=\"M9 4.5v-.3a1.7 1.7 0 0 1 1.7-1.7h2.6A1.7 1.7 0 0 1 15 4.2v.3\"/><path d=\"M9 11h6M9 15h4\"/></svg></span><span style=\"flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px;\"><span style=\"font-size: 16px; font-weight: 600; letter-spacing: -.01em;\">Paste</span><span style=\"font-size: 13px; color: {{t.muted}};\">Text or notes</span></span><span style=\"display: flex; color: {{t.muted}};\"><svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M9 6l6 6-6 6\"/></svg></span></button>\n    <button type=\"button\" onClick=\"{{pickVideo}}\" class=\"sc-press\" style=\"width: 100%; min-height: 68px; box-sizing: border-box; padding: 12px 16px 12px 12px; display: flex; align-items: center; gap: 14px; border: 0; border-radius: 20px; background: {{t.surf}}; color: {{t.text}}; font: inherit; text-align: left; cursor: pointer;\"><span style=\"width: 44px; height: 44px; flex-shrink: 0; border-radius: 22px; background: {{t.bg}}; display: flex; align-items: center; justify-content: center;\"><svg width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><rect x=\"2.5\" y=\"5\" width=\"19\" height=\"14\" rx=\"4.5\"/><path d=\"M10 9.2v5.6l4.8-2.8z\" fill=\"currentColor\"/></svg></span><span style=\"flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px;\"><span style=\"font-size: 16px; font-weight: 600; letter-spacing: -.01em;\">YouTube</span><span style=\"font-size: 13px; color: {{t.muted}};\">A public video</span></span><span style=\"display: flex; color: {{t.muted}};\"><svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M9 6l6 6-6 6\"/></svg></span></button>\n    <button type=\"button\" onClick=\"{{pickTopic}}\" class=\"sc-press\" style=\"width: 100%; min-height: 68px; box-sizing: border-box; padding: 12px 16px 12px 12px; display: flex; align-items: center; gap: 14px; border: 0; border-radius: 20px; background: {{t.surf}}; color: {{t.text}}; font: inherit; text-align: left; cursor: pointer;\"><span style=\"width: 44px; height: 44px; flex-shrink: 0; border-radius: 22px; background: {{t.bg}}; display: flex; align-items: center; justify-content: center;\"><svg width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M11 3l1.9 5.1L18 10l-5.1 1.9L11 17l-1.9-5.1L4 10l5.1-1.9z\"/><path d=\"M18.5 15l.8 2.2 2.2.8-2.2.8-.8 2.2-.8-2.2-2.2-.8 2.2-.8z\"/></svg></span><span style=\"flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px;\"><span style=\"font-size: 16px; font-weight: 600; letter-spacing: -.01em;\">A topic</span><span style=\"font-size: 13px; color: {{t.muted}};\">Say what you want to study</span></span><span style=\"display: flex; color: {{t.muted}};\"><svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M9 6l6 6-6 6\"/></svg></span></button>\n  </div></sc-if>\n      <sc-if value=\"{{isAdd}}\" hint-placeholder-val=\"{{ true }}\">\n    <sc-if value=\"{{isFile}}\" hint-placeholder-val=\"{{ false }}\"><div onDragOver=\"{{dragOver}}\" onDrop=\"{{drop}}\" style=\"box-sizing: border-box; padding: 20px 20px; border-radius: 22px; background: {{t.surf}}; box-shadow: inset 0 0 0 1.5px {{t.line}}; display: flex; flex-direction: column; align-items: center; gap: 12px; text-align: center;\">\n      <span style=\"display: flex; color: {{t.muted}};\"><svg width=\"26\" height=\"26\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.6\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M12 15V4M7 9l5-5 5 5\"/><path d=\"M4 15v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3\"/></svg></span>\n      <span style=\"font-size: 15px; font-weight: 600;\">{{dropLine}}</span>\n      <div style=\"display: flex; gap: 8px; flex-wrap: wrap; justify-content: center;\"><button type=\"button\" onClick=\"{{choose}}\" class=\"sc-press\" style=\"flex-grow: 1; height: 40px; padding: 0 20px; border: 0; border-radius: 999px; background: {{t.inv}}; color: {{t.invText}}; font: inherit; font-size: 15px; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer; padding: 0 18px;\"><svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M12 15V4M7 9l5-5 5 5\"/><path d=\"M4 15v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3\"/></svg>{{chooseLabel}}</button><sc-if value=\"{{canCamera}}\" hint-placeholder-val=\"{{ false }}\"><button type=\"button\" onClick=\"{{camera}}\" class=\"sc-press\" style=\"flex-grow: 1; height: 40px; padding: 0 20px; border: 0; border-radius: 999px; background: {{t.surf}}; color: {{t.text}}; font: inherit; font-size: 15px; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer; padding: 0 18px; background: {{t.bg}};\"><svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><rect x=\"3\" y=\"4\" width=\"18\" height=\"16\" rx=\"3\"/><circle cx=\"9\" cy=\"10\" r=\"2\"/><path d=\"M21 16l-5-5-9 9\"/></svg>Take a photo</button></sc-if></div>\n      <span style=\"font-size: 12px; color: {{t.muted}};\">{{acceptLine}}</span>\n    </div>\n    <sc-if value=\"{{hasFiles}}\" hint-placeholder-val=\"{{ true }}\"><div style=\"display: flex; flex-direction: column; gap: 8px;\"><sc-for list=\"{{files}}\" as=\"f\" hint-placeholder-count=\"1\"><div style=\"min-height: 56px; box-sizing: border-box; padding: 8px 8px 8px 12px; display: flex; align-items: center; gap: 12px; border-radius: 16px; background: {{t.surf}};\"><span style=\"width: 36px; height: 36px; flex-shrink: 0; border-radius: 18px; background: {{t.bg}}; display: flex; align-items: center; justify-content: center;\"><sc-if value=\"{{f.isDoc}}\" hint-placeholder-val=\"{{ true }}\"><svg width=\"17\" height=\"17\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z\"/><path d=\"M14 3v5h5\"/></svg></sc-if><sc-if value=\"{{f.isImage}}\" hint-placeholder-val=\"{{ false }}\"><svg width=\"17\" height=\"17\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><rect x=\"3\" y=\"4\" width=\"18\" height=\"16\" rx=\"3\"/><circle cx=\"9\" cy=\"10\" r=\"2\"/><path d=\"M21 16l-5-5-9 9\"/></svg></sc-if><sc-if value=\"{{f.isAudio}}\" hint-placeholder-val=\"{{ false }}\"><svg width=\"17\" height=\"17\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M4 10v4M8 7v10M12 4v16M16 8v8M20 11v2\"/></svg></sc-if></span><span style=\"flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px;\"><span style=\"font-size: 14px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;\">{{f.name}}</span><span style=\"font-size: 12px; color: {{t.muted}};\">{{f.size}}</span></span><button type=\"button\" onClick=\"{{f.remove}}\" aria-label=\"Remove {{f.name}}\" style=\"width: 32px; height: 32px; flex-shrink: 0; border: 0; border-radius: 16px; background: transparent; color: {{t.muted}}; display: flex; align-items: center; justify-content: center; cursor: pointer;\"><svg width=\"14\" height=\"14\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M6 6l12 12M18 6L6 18\"/></svg></button></div></sc-for></div></sc-if></sc-if>\n    <sc-if value=\"{{isPhoto}}\" hint-placeholder-val=\"{{ false }}\"><div onDragOver=\"{{dragOver}}\" onDrop=\"{{drop}}\" style=\"box-sizing: border-box; padding: 20px 20px; border-radius: 22px; background: {{t.surf}}; box-shadow: inset 0 0 0 1.5px {{t.line}}; display: flex; flex-direction: column; align-items: center; gap: 12px; text-align: center;\">\n      <span style=\"display: flex; color: {{t.muted}};\"><svg width=\"26\" height=\"26\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.6\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M12 15V4M7 9l5-5 5 5\"/><path d=\"M4 15v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3\"/></svg></span>\n      <span style=\"font-size: 15px; font-weight: 600;\">{{dropLine}}</span>\n      <div style=\"display: flex; gap: 8px; flex-wrap: wrap; justify-content: center;\"><button type=\"button\" onClick=\"{{choose}}\" class=\"sc-press\" style=\"flex-grow: 1; height: 40px; padding: 0 20px; border: 0; border-radius: 999px; background: {{t.inv}}; color: {{t.invText}}; font: inherit; font-size: 15px; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer; padding: 0 18px;\"><svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M12 15V4M7 9l5-5 5 5\"/><path d=\"M4 15v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3\"/></svg>{{chooseLabel}}</button><sc-if value=\"{{canCamera}}\" hint-placeholder-val=\"{{ false }}\"><button type=\"button\" onClick=\"{{camera}}\" class=\"sc-press\" style=\"flex-grow: 1; height: 40px; padding: 0 20px; border: 0; border-radius: 999px; background: {{t.surf}}; color: {{t.text}}; font: inherit; font-size: 15px; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer; padding: 0 18px; background: {{t.bg}};\"><svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><rect x=\"3\" y=\"4\" width=\"18\" height=\"16\" rx=\"3\"/><circle cx=\"9\" cy=\"10\" r=\"2\"/><path d=\"M21 16l-5-5-9 9\"/></svg>Take a photo</button></sc-if></div>\n      <span style=\"font-size: 12px; color: {{t.muted}};\">{{acceptLine}}</span>\n    </div>\n    <sc-if value=\"{{hasFiles}}\" hint-placeholder-val=\"{{ true }}\"><div style=\"display: flex; flex-direction: column; gap: 8px;\"><sc-for list=\"{{files}}\" as=\"f\" hint-placeholder-count=\"1\"><div style=\"min-height: 56px; box-sizing: border-box; padding: 8px 8px 8px 12px; display: flex; align-items: center; gap: 12px; border-radius: 16px; background: {{t.surf}};\"><span style=\"width: 36px; height: 36px; flex-shrink: 0; border-radius: 18px; background: {{t.bg}}; display: flex; align-items: center; justify-content: center;\"><sc-if value=\"{{f.isDoc}}\" hint-placeholder-val=\"{{ true }}\"><svg width=\"17\" height=\"17\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z\"/><path d=\"M14 3v5h5\"/></svg></sc-if><sc-if value=\"{{f.isImage}}\" hint-placeholder-val=\"{{ false }}\"><svg width=\"17\" height=\"17\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><rect x=\"3\" y=\"4\" width=\"18\" height=\"16\" rx=\"3\"/><circle cx=\"9\" cy=\"10\" r=\"2\"/><path d=\"M21 16l-5-5-9 9\"/></svg></sc-if><sc-if value=\"{{f.isAudio}}\" hint-placeholder-val=\"{{ false }}\"><svg width=\"17\" height=\"17\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M4 10v4M8 7v10M12 4v16M16 8v8M20 11v2\"/></svg></sc-if></span><span style=\"flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px;\"><span style=\"font-size: 14px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;\">{{f.name}}</span><span style=\"font-size: 12px; color: {{t.muted}};\">{{f.size}}</span></span><button type=\"button\" onClick=\"{{f.remove}}\" aria-label=\"Remove {{f.name}}\" style=\"width: 32px; height: 32px; flex-shrink: 0; border: 0; border-radius: 16px; background: transparent; color: {{t.muted}}; display: flex; align-items: center; justify-content: center; cursor: pointer;\"><svg width=\"14\" height=\"14\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M6 6l12 12M18 6L6 18\"/></svg></button></div></sc-for></div></sc-if></sc-if>\n    <sc-if value=\"{{isRecord}}\" hint-placeholder-val=\"{{ false }}\"><div style=\"box-sizing: border-box; padding: 22px 20px; border-radius: 22px; background: {{t.surf}}; display: flex; flex-direction: column; align-items: center; gap: 16px;\">\n      <span style=\"font-size: 13px; font-weight: 600; color: {{t.muted}};\">{{recState}}</span>\n      <span style=\"font-family: 'Geist Mono', ui-monospace, monospace; font-size: 44px; font-weight: 500; letter-spacing: -.02em; line-height: 1;\">{{recTime}}</span>\n      <div aria-hidden=\"true\" style=\"width: 100%; height: 36px; display: flex; align-items: center; justify-content: center; gap: 3px;\"><sc-for list=\"{{bars}}\" as=\"b\" hint-placeholder-count=\"40\"><span style=\"width: 3px; height: {{b.h}}; border-radius: 2px; background: {{b.bg}};\"></span></sc-for></div>\n      <div style=\"display: flex; gap: 10px; align-items: center; justify-content: center;\">\n        <sc-if value=\"{{recIdle}}\" hint-placeholder-val=\"{{ false }}\"><button type=\"button\" onClick=\"{{recStart}}\" class=\"sc-press\" style=\"flex-grow: 1; height: 52px; padding: 0 20px; border: 0; border-radius: 999px; background: {{t.inv}}; color: {{t.invText}}; font: inherit; font-size: 15px; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer; padding: 0 26px;\"><svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><rect x=\"9\" y=\"3\" width=\"6\" height=\"11\" rx=\"3\"/><path d=\"M5 11a7 7 0 0 0 14 0M12 18v3\"/></svg>Start recording</button></sc-if>\n        <sc-if value=\"{{recLive}}\" hint-placeholder-val=\"{{ true }}\"><button type=\"button\" onClick=\"{{recPause}}\" class=\"sc-press\" style=\"flex-grow: 1; height: 52px; padding: 0 20px; border: 0; border-radius: 999px; background: {{t.surf}}; color: {{t.text}}; font: inherit; font-size: 15px; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer; padding: 0 22px; background: {{t.bg}};\"><svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><rect x=\"7\" y=\"5\" width=\"3.5\" height=\"14\" rx=\"1\" fill=\"currentColor\" stroke=\"none\"/><rect x=\"13.5\" y=\"5\" width=\"3.5\" height=\"14\" rx=\"1\" fill=\"currentColor\" stroke=\"none\"/></svg>{{recPauseLabel}}</button><button type=\"button\" onClick=\"{{recStop}}\" class=\"sc-press\" style=\"flex-grow: 1; height: 52px; padding: 0 20px; border: 0; border-radius: 999px; background: {{t.inv}}; color: {{t.invText}}; font: inherit; font-size: 15px; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer; padding: 0 28px;\">Stop</button><button type=\"button\" onClick=\"{{recDiscard}}\" aria-label=\"Discard the recording\" style=\"width: 40px; height: 40px; flex-shrink: 0; border: 0; border-radius: 20px; background: {{t.surf}}; color: {{t.text}}; display: flex; align-items: center; justify-content: center; cursor: pointer; width: 52px; height: 52px; border-radius: 26px; background: {{t.bg}}; color: {{t.muted}};\"><svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M6 6l12 12M18 6L6 18\"/></svg></button></sc-if>\n      </div>\n      <span style=\"max-width: 420px; font-size: 12px; line-height: 1.45; text-align: center; color: {{t.muted}};\">{{recNote}}</span>\n    </div></sc-if>\n    <sc-if value=\"{{isPaste}}\" hint-placeholder-val=\"{{ false }}\"><textarea rows=\"7\" onChange=\"{{setText}}\" placeholder=\"Paste your text or notes\" style=\"resize: none; border: 0; outline: 0; border-radius: 20px; padding: 14px 16px; background: {{t.surf}}; color: {{t.text}}; font: inherit; font-size: 15px; line-height: 1.5;\">{{text}}</textarea></sc-if>\n    <sc-if value=\"{{isVideo}}\" hint-placeholder-val=\"{{ false }}\">\n      <div style=\"display: flex; flex-direction: column; gap: 10px;\">\n        <input type=\"text\" value=\"{{url}}\" onChange=\"{{setUrl}}\" placeholder=\"youtube.com/watch?v=…\" autocomplete=\"off\" style=\"height: 48px; box-sizing: border-box; padding: 0 16px; border: 0; outline: 0; border-radius: 16px; background: {{t.surf}}; color: {{t.text}}; font: inherit; font-size: 16px; \">\n        <sc-if value=\"{{videoLine}}\" hint-placeholder-val=\"{{ true }}\"><span style=\"font-size: 13px; line-height: 1.45; color: {{t.muted}};\">{{videoLine}}</span></sc-if>\n        <sc-if value=\"{{showTranscript}}\" hint-placeholder-val=\"{{ false }}\"><div style=\"display: flex; flex-direction: column; gap: 8px;\"><textarea rows=\"5\" onChange=\"{{setText}}\" placeholder=\"Paste the transcript\" style=\"resize: none; border: 0; outline: 0; border-radius: 20px; padding: 14px 16px; background: {{t.surf}}; color: {{t.text}}; font: inherit; font-size: 15px; line-height: 1.5;\">{{text}}</textarea><span style=\"font-size: 13px; line-height: 1.45; color: {{t.muted}};\">On YouTube, open the video’s description, tap Show transcript, then copy it.</span></div></sc-if>\n        <button type=\"button\" onClick=\"{{toggleTranscript}}\" style=\"align-self: flex-start; padding: 0; border: 0; background: transparent; color: {{t.text}}; font: inherit; font-size: 14px; font-weight: 600; text-decoration: underline; cursor: pointer;\">{{transcriptLabel}}</button>\n      </div>\n    </sc-if>\n    <sc-if value=\"{{isTopic}}\" hint-placeholder-val=\"{{ false }}\">\n      <div style=\"display: flex; flex-direction: column; gap: 12px;\">\n        <input type=\"text\" value=\"{{topic}}\" onChange=\"{{setTopic}}\" placeholder=\"I want to study…\" autocomplete=\"off\" style=\"height: 48px; box-sizing: border-box; padding: 0 16px; border: 0; outline: 0; border-radius: 16px; background: {{t.surf}}; color: {{t.text}}; font: inherit; font-size: 16px; height: 52px; font-size: 17px;\">\n        <div style=\"display: flex; flex-wrap: wrap; gap: 6px;\"><sc-for list=\"{{topics}}\" as=\"x\" hint-placeholder-count=\"4\"><button type=\"button\" onClick=\"{{x.pick}}\" style=\"height: 32px; padding: 0 14px; border: 0; border-radius: 999px; background: {{t.surf}}; color: {{t.text}}; font: inherit; font-size: 13px; font-weight: 500; cursor: pointer;\">{{x.label}}</button></sc-for></div>\n        \n      </div>\n    </sc-if>\n    <sc-if value=\"{{isFrom}}\" hint-placeholder-val=\"{{ false }}\"><div style=\"min-height: 56px; box-sizing: border-box; padding: 10px 16px; display: flex; align-items: center; gap: 12px; border-radius: 16px; background: {{t.surf}};\"><span style=\"width: 36px; height: 36px; flex-shrink: 0; border-radius: 18px; background: {{t.bg}}; display: flex; align-items: center; justify-content: center;\"><svg width=\"17\" height=\"17\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M4 12a8 8 0 1 0 2.4-5.7L4 8.5\"/><path d=\"M4 4v4.5h4.5M12 8v4.5l3 1.8\"/></svg></span><span style=\"display: flex; flex-direction: column; gap: 1px; min-width: 0;\"><span style=\"font-size: 14px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;\">{{fromName}}</span><span style=\"font-size: 12px; color: {{t.muted}};\">More cards from this source</span></span></div></sc-if><sc-if value=\"{{hasWarn}}\" hint-placeholder-val=\"{{ false }}\"><span role=\"alert\" style=\"font-size: 14px; line-height: 1.4; color: {{t.again}};\">{{warn}}</span></sc-if><div style=\"display: flex; flex-direction: column; gap: 16px;\">\n    <div style=\"display: flex; flex-direction: column; gap: 8px;\"><span style=\"font-size: 13px; font-weight: 600;\">Into deck</span><div style=\"display: flex; flex-direction: column; gap: 8px;\"><input type=\"text\" value=\"{{deckName}}\" onChange=\"{{setDeckName}}\" placeholder=\"{{deckPlaceholder}}\" autocomplete=\"off\" style=\"height: 48px; box-sizing: border-box; padding: 0 16px; border: 0; outline: 0; border-radius: 16px; background: {{t.surf}}; color: {{t.text}}; font: inherit; font-size: 16px; height: 44px; font-size: 15px;\"><div style=\"display: flex; flex-wrap: wrap; gap: 6px;\"><sc-for list=\"{{deckChips}}\" as=\"d\" hint-placeholder-count=\"3\"><button type=\"button\" onClick=\"{{d.pick}}\" aria-pressed=\"{{d.pressed}}\" style=\"height: 32px; max-width: 100%; padding: 0 12px; border: 0; border-radius: 999px; background: {{d.bg}}; color: {{d.fg}}; font: inherit; font-size: 13px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: pointer;\">{{d.name}}</button></sc-for></div></div></div>\n    <div style=\"display: flex; flex-direction: column; gap: 8px;\"><span style=\"font-size: 13px; font-weight: 600;\">How many cards</span><div role=\"group\" style=\"display: flex; padding: 4px; border-radius: 999px; background: {{t.surf}};\"><sc-for list=\"{{counts}}\" as=\"o\" hint-placeholder-count=\"4\"><button type=\"button\" onClick=\"{{o.pick}}\" aria-pressed=\"{{o.pressed}}\" style=\"flex: 1 1 0; min-width: 0; height: 36px; padding: 0 6px; border: 0; border-radius: 999px; background: {{o.bg}}; color: {{o.fg}}; box-shadow: {{o.sh}}; font: inherit; font-size: 13px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: pointer;\">{{o.label}}</button></sc-for></div></div>\n    <div style=\"display: grid; grid-template-columns: 1fr; gap: 16px;\">\n      <div style=\"display: flex; flex-direction: column; gap: 8px;\"><span style=\"font-size: 13px; font-weight: 600;\">Kinds</span><div style=\"display: flex; flex-direction: column; gap: 8px;\"><div style=\"display: flex; gap: 8px; flex-wrap: wrap;\"><button type=\"button\" onClick=\"{{toggleBasic}}\" aria-pressed=\"{{basicPressed}}\" style=\"height: 36px; padding: 0 14px; display: inline-flex; align-items: center; gap: 6px; border: 0; border-radius: 999px; background: {{basicBg}}; color: {{basicFg}}; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer;\"><svg width=\"13\" height=\"13\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.4\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M5 12l5 5 9-10\"/></svg>Basic</button><button type=\"button\" onClick=\"{{toggleCloze}}\" aria-pressed=\"{{clozePressed}}\" style=\"height: 36px; padding: 0 14px; display: inline-flex; align-items: center; gap: 6px; border: 0; border-radius: 999px; background: {{clozeBg}}; color: {{clozeFg}}; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer;\"><svg width=\"13\" height=\"13\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.4\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M5 12l5 5 9-10\"/></svg>Fill in the blank</button><sc-if value=\"{{canAudio}}\" hint-placeholder-val=\"{{ false }}\"><button type=\"button\" onClick=\"{{toggleAudio}}\" aria-pressed=\"{{audioPressed}}\" style=\"height: 36px; padding: 0 14px; display: inline-flex; align-items: center; gap: 6px; border: 0; border-radius: 999px; background: {{audioBg}}; color: {{audioFg}}; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer;\"><svg width=\"13\" height=\"13\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.4\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M5 12l5 5 9-10\"/></svg>Audio</button></sc-if><sc-if value=\"{{canImage}}\" hint-placeholder-val=\"{{ false }}\"><button type=\"button\" onClick=\"{{toggleImage}}\" aria-pressed=\"{{imagePressed}}\" style=\"height: 36px; padding: 0 14px; display: inline-flex; align-items: center; gap: 6px; border: 0; border-radius: 999px; background: {{imageBg}}; color: {{imageFg}}; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer;\"><svg width=\"13\" height=\"13\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.4\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M5 12l5 5 9-10\"/></svg>Image</button></sc-if></div><sc-if value=\"{{audioOn}}\" hint-placeholder-val=\"{{ false }}\"><span style=\"font-size: 12px; line-height: 1.45; color: {{t.muted}};\">{{audioLine}}</span></sc-if><sc-if value=\"{{imageOn}}\" hint-placeholder-val=\"{{ false }}\"><span style=\"font-size: 12px; line-height: 1.45; color: {{t.muted}};\">{{imageLine}}</span></sc-if></div></div>\n      <div style=\"display: flex; flex-direction: column; gap: 8px;\"><span style=\"font-size: 13px; font-weight: 600;\">Language</span><button type=\"button\" onClick=\"{{langPick.toggle}}\" aria-haspopup=\"listbox\" aria-expanded=\"{{langPick.expanded}}\" aria-label=\"Language of the cards\" class=\"sc-press\" style=\"width: 100%; height: 36px; box-sizing: border-box; padding: 0 12px 0 14px; display: flex; align-items: center; gap: 8px; border: 0; border-radius: 999px; background: {{t.surf}}; color: {{t.text}}; font: inherit; font-size: 13px; font-weight: 600; text-align: left; cursor: pointer;\"><span style=\"flex-grow: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;\">{{langPick.label}}</span><span style=\"display: flex; flex-shrink: 0; color: {{t.muted}};\"><svg width=\"14\" height=\"14\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M6 9l6 6 6-6\"/></svg></span></button></div>\n    </div>\n  </div></sc-if>\n      <sc-if value=\"{{isMaking}}\" hint-placeholder-val=\"{{ false }}\"><div style=\"display: flex; flex-direction: column; gap: 22px; padding: 18px 0 6px;\">\n    <div style=\"display: flex; flex-direction: column; gap: 8px;\"><span style=\"font-size: 17px; font-weight: 600; letter-spacing: -.01em;\">{{progWord}}</span><span style=\"font-size: 14px; color: {{t.muted}};\">{{progLine}}</span></div>\n    <div role=\"progressbar\" aria-valuemin=\"0\" aria-valuemax=\"100\" aria-valuenow=\"{{progPct}}\" style=\"height: 6px; border-radius: 3px; background: {{t.surf2}}; overflow: hidden;\"><div style=\"width: {{progWidth}}; height: 100%; border-radius: 3px; background: {{t.inv}}; transition: width .5s ease;\"></div></div>\n  </div></sc-if>\n      <sc-if value=\"{{isReview}}\" hint-placeholder-val=\"{{ false }}\"><div style=\"display: flex; flex-direction: column; gap: 14px; min-height: 0;\">\n    <span style=\"font-size: 14px; color: {{t.muted}};\">{{reviewLine}}</span>\n    <sc-if value=\"{{hasFigs}}\" hint-placeholder-val=\"{{ false }}\"><span style=\"display: flex; align-items: center; gap: 8px; font-size: 13px; line-height: 1.4; color: {{t.muted}};\"><span style=\"display: flex; flex-shrink: 0; color: {{t.text}};\"><svg width=\"15\" height=\"15\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><rect x=\"3\" y=\"4\" width=\"18\" height=\"16\" rx=\"3\"/><circle cx=\"9\" cy=\"10\" r=\"2\"/><path d=\"M21 16l-5-5-9 9\"/></svg></span>{{figLine}}</span></sc-if>\n    <sc-if value=\"{{hasNotes}}\" hint-placeholder-val=\"{{ true }}\">\n    <section aria-label=\"Notes\" style=\"box-sizing: border-box; padding: 14px 16px; border-radius: 20px; background: {{t.surf}}; display: flex; flex-direction: column; gap: 10px;\">\n      <div style=\"display: flex; align-items: center; gap: 12px;\">\n        <span style=\"flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px;\"><span style=\"font-size: 15px; font-weight: 600;\">Notes for the deck</span><span style=\"font-size: 13px; line-height: 1.4; color: {{t.muted}};\">{{notesLine}}</span></span>\n        <button type=\"button\" role=\"switch\" aria-checked=\"{{notesSw.checked}}\" aria-disabled=\"{{notesSw.disabled}}\" aria-label=\"Save these notes with the cards\" onClick=\"{{toggleNotes}}\" class=\"sc-sw\" style=\"width: 48px; height: 28px; flex-shrink: 0; padding: 3px; box-sizing: border-box; border: 0; border-radius: 14px; background: {{notesSw.track}}; opacity: {{notesSw.op}}; cursor: pointer;\"><span style=\"display: block; width: 22px; height: 22px; border-radius: 11px; background: {{notesSw.knobColor}}; transform: {{notesSw.knob}};\"></span></button>\n      </div>\n      <button type=\"button\" onClick=\"{{toggleNotesOpen}}\" aria-expanded=\"{{notesExpanded}}\" style=\"align-self: flex-start; padding: 0; border: 0; background: transparent; color: {{t.text}}; font: inherit; font-size: 14px; font-weight: 600; text-decoration: underline; cursor: pointer;\">{{notesOpenLabel}}</button>\n      <sc-if value=\"{{notesOpen}}\" hint-placeholder-val=\"{{ false }}\"><div style=\"max-height: 220px; overflow-y: auto; scrollbar-width: none; opacity: {{notesOp}}; padding-left: 22px;\"><div ref=\"{{notesRef}}\" data-sc-own style=\"--gd-text: {{t.text}}; --gd-muted: {{t.muted}}; --gd-line: {{t.line}}; --nb-code: {{t.bg}}; --nb-bg: {{t.bg}}; --nb-surf: {{t.surf}}; --nb-surf2: {{t.surf2}};\"></div></div></sc-if>\n    </section>\n  </sc-if>\n    <div style=\"display: flex; flex-direction: column; gap: 8px; max-height: 520px; overflow-y: auto; scrollbar-width: none; margin: 0 -4px; padding: 0 4px;\"><sc-for list=\"{{cards}}\" as=\"c\" hint-placeholder-count=\"4\"><div style=\"box-sizing: border-box; padding: 14px 8px 14px 16px; border-radius: 20px; background: {{t.surf}}; display: flex; align-items: flex-start; gap: 8px; opacity: {{c.op}};\">\n      <sc-if value=\"{{c.isImage}}\" hint-placeholder-val=\"{{ false }}\"><div aria-hidden=\"true\" style=\"position: relative; width: 84px; height: 64px; flex-shrink: 0; border-radius: 10px; overflow: hidden; background: #FFFFFF; box-shadow: inset 0 0 0 1px {{t.line}};\"><img src=\"{{c.thumb}}\" alt=\"\" draggable=\"false\" style=\"width: 100%; height: 100%; object-fit: contain; display: block;\"><sc-for list=\"{{c.shapes}}\" as=\"b\" hint-placeholder-count=\"3\"><div style=\"position: absolute; left: {{b.x}}; top: {{b.y}}; width: {{b.w}}; height: {{b.h}}; box-sizing: border-box; border: 1px solid #000000; background: rgba(255,255,255,.4);\"></div></sc-for></div></sc-if>\n      <div style=\"flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px;\">\n        <sc-if value=\"{{c.isImage}}\" hint-placeholder-val=\"{{ false }}\"><span style=\"font-size: 15px; font-weight: 600; line-height: 1.35; overflow-wrap: anywhere; text-decoration: {{c.strike}};\">{{c.q}}</span><span style=\"font-size: 14px; line-height: 1.4; color: {{t.muted}}; overflow-wrap: anywhere;\">{{c.a}}</span></sc-if>\n        <sc-if value=\"{{c.reading}}\" hint-placeholder-val=\"{{ true }}\"><div style=\"display: flex; align-items: flex-start; gap: 8px;\"><sc-if value=\"{{c.isAudio}}\" hint-placeholder-val=\"{{ false }}\"><button type=\"button\" onClick=\"{{c.say}}\" aria-label=\"Hear {{c.q}}\" style=\"width: 28px; height: 28px; flex-shrink: 0; margin-top: -3px; border: 0; border-radius: 14px; background: {{t.bg}}; color: {{t.text}}; display: flex; align-items: center; justify-content: center; cursor: pointer;\"><svg width=\"14\" height=\"14\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M4 10v4M8 7v10M12 4v16M16 8v8M20 11v2\"/></svg></button></sc-if><span style=\"font-size: 15px; font-weight: 600; line-height: 1.35; overflow-wrap: anywhere; text-decoration: {{c.strike}};\">{{c.q}}</span></div><span style=\"font-size: 14px; line-height: 1.4; color: {{t.muted}}; overflow-wrap: anywhere;\">{{c.a}}</span></sc-if>\n        <sc-if value=\"{{c.editing}}\" hint-placeholder-val=\"{{ false }}\">\n          <sc-if value=\"{{c.isBasic}}\" hint-placeholder-val=\"{{ true }}\"><div style=\"display: flex; flex-direction: column; gap: 6px;\"><input type=\"text\" value=\"{{c.front}}\" onChange=\"{{c.setFront}}\" aria-label=\"Question\" style=\"height: 40px; box-sizing: border-box; padding: 0 12px; border: 0; outline: 0; border-radius: 12px; background: {{t.bg}}; color: {{t.text}}; font: inherit; font-size: 15px;\"><input type=\"text\" value=\"{{c.back}}\" onChange=\"{{c.setBack}}\" aria-label=\"Answer\" style=\"height: 40px; box-sizing: border-box; padding: 0 12px; border: 0; outline: 0; border-radius: 12px; background: {{t.bg}}; color: {{t.text}}; font: inherit; font-size: 15px;\"></div></sc-if>\n          <sc-if value=\"{{c.isAudio}}\" hint-placeholder-val=\"{{ false }}\"><div style=\"display: flex; flex-direction: column; gap: 6px;\"><input type=\"text\" value=\"{{c.speak}}\" onChange=\"{{c.setSpeak}}\" aria-label=\"Words to say\" style=\"height: 40px; box-sizing: border-box; padding: 0 12px; border: 0; outline: 0; border-radius: 12px; background: {{t.bg}}; color: {{t.text}}; font: inherit; font-size: 15px;\"><input type=\"text\" value=\"{{c.back}}\" onChange=\"{{c.setBack}}\" aria-label=\"What it means\" style=\"height: 40px; box-sizing: border-box; padding: 0 12px; border: 0; outline: 0; border-radius: 12px; background: {{t.bg}}; color: {{t.text}}; font: inherit; font-size: 15px;\"></div></sc-if>\n          <sc-if value=\"{{c.isCloze}}\" hint-placeholder-val=\"{{ false }}\"><textarea rows=\"2\" onChange=\"{{c.setText}}\" aria-label=\"Sentence with a blank in [[double brackets]]\" style=\"resize: none; border: 0; outline: 0; border-radius: 12px; padding: 10px 12px; background: {{t.bg}}; color: {{t.text}}; font: inherit; font-size: 15px; line-height: 1.4;\">{{c.text}}</textarea></sc-if>\n        </sc-if>\n        <sc-if value=\"{{c.hasAt}}\" hint-placeholder-val=\"{{ true }}\"><span style=\"font-family: 'Geist Mono', ui-monospace, monospace; font-size: 11px; color: {{t.muted}};\">{{c.at}}</span></sc-if>\n      </div>\n      <div style=\"display: flex; flex-shrink: 0; gap: 2px;\">\n        <sc-if value=\"{{c.canEdit}}\" hint-placeholder-val=\"{{ true }}\"><button type=\"button\" onClick=\"{{c.toggleEdit}}\" aria-label=\"{{c.editLabel}}\" style=\"width: 36px; height: 36px; border: 0; border-radius: 18px; background: transparent; color: {{t.muted}}; display: flex; align-items: center; justify-content: center; cursor: pointer;\"><sc-if value=\"{{c.editing}}\" hint-placeholder-val=\"{{ false }}\"><svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M5 12l5 5 9-10\"/></svg></sc-if><sc-if value=\"{{c.notEditing}}\" hint-placeholder-val=\"{{ true }}\"><svg width=\"15\" height=\"15\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M15.5 5.5l3 3L9 18H6v-3z\"/><path d=\"M13.5 7.5l3 3\"/></svg></sc-if></button></sc-if>\n        <button type=\"button\" onClick=\"{{c.toggleGone}}\" aria-label=\"{{c.goneLabel}}\" style=\"width: 36px; height: 36px; border: 0; border-radius: 18px; background: transparent; color: {{t.muted}}; display: flex; align-items: center; justify-content: center; cursor: pointer;\"><sc-if value=\"{{c.gone}}\" hint-placeholder-val=\"{{ false }}\"><svg width=\"15\" height=\"15\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M9 14L4 9l5-5\"/><path d=\"M4 9h11a5 5 0 0 1 0 10h-3\"/></svg></sc-if><sc-if value=\"{{c.kept}}\" hint-placeholder-val=\"{{ true }}\"><svg width=\"15\" height=\"15\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M6 6l12 12M18 6L6 18\"/></svg></sc-if></button>\n      </div>\n    </div></sc-for></div>\n  </div><sc-if value=\"{{hasWarn}}\" hint-placeholder-val=\"{{ false }}\"><span role=\"alert\" style=\"font-size: 14px; line-height: 1.4; color: {{t.again}};\">{{warn}}</span></sc-if></sc-if>\n      <sc-if value=\"{{isError}}\" hint-placeholder-val=\"{{ false }}\"><div style=\"display: flex; flex-direction: column; gap: 14px; padding: 8px 0 0;\"><span style=\"font-size: 17px; font-weight: 600; line-height: 1.35;\">{{errMessage}}</span><span style=\"font-size: 14px; line-height: 1.45; color: {{t.muted}};\">{{errMore}}</span></div></sc-if>\n    </div>\n    \n    <sc-if value=\"{{showFooter}}\" hint-placeholder-val=\"{{ true }}\"><div style=\"display: flex; gap: 10px;\"><button type=\"button\" onClick=\"{{back}}\" class=\"sc-press\" style=\"flex-grow: 1; height: 52px; padding: 0 20px; border: 0; border-radius: 999px; background: {{t.surf}}; color: {{t.text}}; font: inherit; font-size: 15px; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer; \">Back</button><sc-if value=\"{{showMake}}\" hint-placeholder-val=\"{{ true }}\"><button type=\"button\" onClick=\"{{make}}\" class=\"sc-press\" style=\"flex-grow: 2; height: 52px; padding: 0 20px; border: 0; border-radius: 999px; background: {{makeBg}}; color: {{makeFg}}; font: inherit; font-size: 15px; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer;\"><svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M11 3l1.9 5.1L18 10l-5.1 1.9L11 17l-1.9-5.1L4 10l5.1-1.9z\"/><path d=\"M18.5 15l.8 2.2 2.2.8-2.2.8-.8 2.2-.8-2.2-2.2-.8 2.2-.8z\"/></svg>Make cards</button></sc-if></div></sc-if>\n    <sc-if value=\"{{isMaking}}\" hint-placeholder-val=\"{{ false }}\"><div style=\"display: flex; gap: 10px;\"><button type=\"button\" onClick=\"{{cancel}}\" class=\"sc-press\" style=\"flex-grow: 1; height: 52px; padding: 0 20px; border: 0; border-radius: 999px; background: {{t.surf}}; color: {{t.text}}; font: inherit; font-size: 15px; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer; \">Cancel</button></div></sc-if>\n    <sc-if value=\"{{isReview}}\" hint-placeholder-val=\"{{ false }}\"><div style=\"display: flex; gap: 10px;\"><button type=\"button\" onClick=\"{{discard}}\" class=\"sc-press\" style=\"flex-grow: 1; height: 52px; padding: 0 20px; border: 0; border-radius: 999px; background: {{t.surf}}; color: {{t.text}}; font: inherit; font-size: 15px; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer; \">Discard</button><button type=\"button\" onClick=\"{{save}}\" class=\"sc-press\" style=\"flex: 2 1 0; min-width: 0; height: 52px; padding: 0 20px; border: 0; border-radius: 999px; background: {{saveBg}}; color: {{saveFg}}; font: inherit; font-size: 15px; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer;\"><span style=\"min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;\">{{saveLabel}}</span></button></div></sc-if>\n    <sc-if value=\"{{isError}}\" hint-placeholder-val=\"{{ false }}\"><div style=\"display: flex; gap: 10px;\"><button type=\"button\" onClick=\"{{back}}\" class=\"sc-press\" style=\"flex-grow: 1; height: 52px; padding: 0 20px; border: 0; border-radius: 999px; background: {{t.surf}}; color: {{t.text}}; font: inherit; font-size: 15px; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer; \">Back</button><sc-if value=\"{{errPro}}\" hint-placeholder-val=\"{{ false }}\"><a href=\"Pricing.dc.html\" class=\"sc-press\" style=\"flex-grow: 2; height: 52px; border-radius: 999px; background: {{t.inv}}; color: {{t.invText}}; display: flex; align-items: center; justify-content: center; font-size: 15px; font-weight: 600;\">Go Pro</a></sc-if><sc-if value=\"{{errRetry}}\" hint-placeholder-val=\"{{ true }}\"><button type=\"button\" onClick=\"{{retry}}\" class=\"sc-press\" style=\"flex-grow: 2; height: 52px; padding: 0 20px; border: 0; border-radius: 999px; background: {{t.inv}}; color: {{t.invText}}; font: inherit; font-size: 15px; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer; \">Try again</button></sc-if></div></sc-if>\n  </div>\n  <sc-if value=\"{{langPick.open}}\" hint-placeholder-val=\"{{ false }}\"><div class=\"sc-scrim\" onClick=\"{{langPick.close}}\" style=\"position: absolute; inset: 0; z-index: 60; background: {{t.dim}};\"></div>\n  <div role=\"dialog\" aria-modal=\"true\" aria-label=\"{{langPick.title}}\" class=\"sc-sheet\" style=\"position: absolute; left: 0; right: 0; bottom: 0; z-index: 61; max-height: calc(100% - 56px); box-sizing: border-box; padding: 20px 20px 34px; border-radius: 32px 32px 0 0; background: {{t.bg}}; color: {{t.text}}; font-family: Geist, -apple-system, system-ui, sans-serif; display: flex; flex-direction: column; gap: 14px; overflow: hidden;\">\n    <div style=\"display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-shrink: 0;\"><span style=\"font-size: 20px; font-weight: 600; letter-spacing: -.02em;\">{{langPick.title}}</span><button type=\"button\" data-key=\"escape\" onClick=\"{{langPick.close}}\" aria-label=\"Close\" style=\"width: 36px; height: 36px; flex-shrink: 0; border: 0; border-radius: 18px; background: {{t.surf}}; color: {{t.text}}; display: flex; align-items: center; justify-content: center; cursor: pointer;\"><svg width=\"14\" height=\"14\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M6 6l12 12M18 6L6 18\"/></svg></button></div>\n    <div role=\"listbox\" aria-label=\"{{langPick.title}}\" style=\"min-height: 0; overflow-y: auto; display: flex; flex-direction: column;\"><sc-for list=\"{{langPick.rows}}\" as=\"o\" hint-placeholder-count=\"5\"><button type=\"button\" role=\"option\" aria-selected=\"{{o.pressed}}\" onClick=\"{{o.pick}}\" class=\"sc-press\" style=\"min-height: 52px; flex-shrink: 0; padding: 8px 4px; display: flex; align-items: center; gap: 10px; border: 0; border-bottom: 1px solid {{t.line}}; border-radius: 0px; background: transparent; color: {{t.text}}; font: inherit; text-align: left; cursor: pointer;\"><span style=\"flex-grow: 1; min-width: 0; font-size: 16px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;\">{{o.label}}</span><sc-if value=\"{{o.on}}\" hint-placeholder-val=\"{{ false }}\"><span style=\"display: flex; flex-shrink: 0;\"><svg width=\"15\" height=\"15\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.4\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M5 12l5 5 9-10\"/></svg></span></sc-if></button></sc-for></div>\n  </div></sc-if>\n  <sc-if value=\"{{cameraOpen}}\" hint-placeholder-val=\"{{ false }}\"><div role=\"dialog\" aria-modal=\"true\" aria-label=\"Camera\" style=\"position: absolute; inset: 0; z-index: 70; overflow: hidden; background: linear-gradient(160deg, #9EC7F3 0%, #4A5C9E 100%); color: #FFFFFF; font-family: Geist, -apple-system, system-ui, sans-serif;\">\n    <button type=\"button\" aria-label=\"Close\" style=\"position: absolute; left: 16px; top: 55px; width: 44px; height: 44px; padding: 0; border: 0; border-radius: 22px; background: rgba(255,255,255,.18); color: #FFFFFF; display: flex; align-items: center; justify-content: center; cursor: pointer;\"><svg width=\"18\" height=\"18\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M6 6l12 12M18 6L6 18\"/></svg></button><button type=\"button\" aria-label=\"Flash, off\" style=\"position: absolute; right: 16px; top: 55px; width: 44px; height: 44px; padding: 0; border: 0; border-radius: 22px; background: rgba(255,255,255,.18); color: #FFFFFF; display: flex; align-items: center; justify-content: center; cursor: pointer;\"><svg width=\"18\" height=\"18\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M13 2.5L5 13.5h6l-1 8 8-11h-6z\"/><path d=\"M4 3l16 18\"/></svg></button>\n    <button type=\"button\" aria-label=\"Take photo\" style=\"position: absolute; left: 50%; bottom: 34px; width: 76px; height: 76px; margin-left: -38px; padding: 4px; box-sizing: border-box; border: 4px solid #FFFFFF; border-radius: 38px; background: transparent; cursor: pointer;\"><span style=\"display: block; width: 100%; height: 100%; border-radius: 50%; background: #FFFFFF;\"></span></button>\n    <button type=\"button\" aria-label=\"Switch camera\" style=\"position: absolute; right: 28px; bottom: 50px; width: 44px; height: 44px; padding: 0; border: 0; border-radius: 22px; background: rgba(255,255,255,.18); color: #FFFFFF; display: flex; align-items: center; justify-content: center; cursor: pointer;\"><svg width=\"18\" height=\"18\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M19 9.5A7.5 7.5 0 0 0 5.6 7\"/><path d=\"M5 3.5V7.5H9\"/><path d=\"M5 14.5A7.5 7.5 0 0 0 18.4 17\"/><path d=\"M19 20.5V16.5H15\"/></svg></button>\n  </div></sc-if>\n</div>",
   Logic: DCLogic => {
 class Component extends DCLogic {
 // Dark mode has two looks, picked in Settings → Dark mode: black (the first one, and still the default) or gray (the
@@ -1491,7 +1491,7 @@ md() { return Component._md || (Component._md = (function makeGuide() {
     const doc = mk('doc', 0);
     let tip = doc, oldtip = doc, lastMatched = doc, allClosed = true;
     let ln = '', lineNo = 0, offset = 0, column = 0, nextNonspace = 0, nextCol = 0, indent = 0, indented = false, blank = false, partialTab = false;
-    const canContain = (p, t) => (p === 'doc' || p === 'quote' || p === 'item' ? t !== 'item' : p === 'list' ? t === 'item' : false);
+    const canContain = (p, t) => (p === 'doc' || p === 'quote' || p === 'item' || p === 'toggle' ? t !== 'item' : p === 'list' ? t === 'item' : false);
 
     function findNextNonspace() {
       let i = offset, cols = column;
@@ -1521,7 +1521,7 @@ md() { return Component._md || (Component._md = (function makeGuide() {
     }
     function addChild(type) {
       while (!canContain(tip.type, type)) finalize(tip);
-      const n = mk(type, tip.depth + (type === 'quote' || type === 'item' ? 1 : 0));
+      const n = mk(type, tip.depth + (type === 'quote' || type === 'item' || type === 'toggle' ? 1 : 0));
       n.parent = tip; n.line = lineNo;
       tip.kids.push(n);
       tip = n;
@@ -1616,6 +1616,16 @@ md() { return Component._md || (Component._md = (function makeGuide() {
           else if (indent >= c.ld.markerOffset + c.ld.padding) advanceOffset(c.ld.markerOffset + c.ld.padding, true);
           else return 1;
           return 0;
+        case 'toggle': {
+          // ":::" on a line of its own closes the innermost toggle still open: a toggle further in, or a fenced code block, takes the line first.
+          if (indented || ln.charCodeAt(nextNonspace) !== 58) return 0;
+          let j = nextNonspace; while (ln.charCodeAt(j) === 58) j++;
+          if (j - nextNonspace < 3 || !blankFrom(ln, j)) return 0;
+          for (let b = c.kids[c.kids.length - 1]; b && b.open; b = b.kids[b.kids.length - 1]) if (b.type === 'toggle' || (b.type === 'code' && b.fenced)) return 0;
+          while (tip !== c) finalize(tip);
+          finalize(c);
+          return 2;
+        }
         case 'heading': case 'hr': return 1;
         case 'para': case 'table': return blank ? 1 : 0;
         case 'code':
@@ -1672,6 +1682,18 @@ md() { return Component._md || (Component._md = (function makeGuide() {
       const b = addChild('code');
       b.fenced = true; b.fenceLen = n; b.fenceChar = c; b.fenceOffset = indent;
       advanceNextNonspace(); advanceOffset(n, false);
+      return 2;
+    }
+    // ":::toggle Its title": a toggle, whose title is the rest of the line. (Like a list, it nests at most MAX_NEST deep.)
+    function toggleStart(container) {
+      if (indented || ln.charCodeAt(nextNonspace) !== 58 || container.depth >= MAX_NEST) return 0;
+      let j = nextNonspace; while (ln.charCodeAt(j) === 58) j++;
+      if (j - nextNonspace < 3) return 0;
+      while (isSp(ln.charCodeAt(j))) j++;
+      if (ln.slice(j, j + 6).toLowerCase() !== 'toggle' || !(j + 6 >= ln.length || isSp(ln.charCodeAt(j + 6)))) return 0;
+      closeUnmatched();
+      addChild('toggle').title = trimWS(ln.slice(j + 6));
+      advanceOffset(ln.length - offset, false);
       return 2;
     }
     function setextStart(container) {
@@ -1765,7 +1787,7 @@ md() { return Component._md || (Component._md = (function makeGuide() {
       addChild('code').fenced = false;
       return 2;
     }
-    const STARTS = [quoteStart, atxStart, fenceStart, setextStart, hrStart, itemStart, tableStart, codeStart];
+    const STARTS = [quoteStart, atxStart, fenceStart, toggleStart, setextStart, hrStart, itemStart, tableStart, codeStart];
     const special = c => (c >= 48 && c <= 58) || c === 35 || c === 96 || c === 126 || c === 42 || c === 43 || c === 95 || c === 61 || c === 62 || c === 45 || c === 124;
 
     function incorporateLine(line) {
@@ -1797,7 +1819,7 @@ md() { return Component._md || (Component._md = (function makeGuide() {
       closeUnmatched();
       if (blank && container.kids.length) container.kids[container.kids.length - 1].blankEnd = true;
       const t = container.type;
-      const lastBlank = blank && !(t === 'quote' || (t === 'code' && container.fenced) || (t === 'item' && !container.kids.length && container.line === lineNo));
+      const lastBlank = blank && !(t === 'quote' || t === 'toggle' || (t === 'code' && container.fenced) || (t === 'item' && !container.kids.length && container.line === lineNo));
       for (let c = container; c; c = c.parent) c.blankEnd = lastBlank;
       if (t === 'code' || t === 'para') addLine();
       else if (offset < ln.length && !blank) {
@@ -1837,6 +1859,7 @@ md() { return Component._md || (Component._md = (function makeGuide() {
         case 'code': { const lit = k.literal || '';           // the language is the first word of a fence's info string
           out.push({ t: 'code', lang: k.fenced ? k.info.split(/[ \t]/, 1)[0] : '', text: lit.endsWith('\n') ? lit.slice(0, -1) : lit }); break; }
         case 'quote': out.push({ t: 'quote', blocks: build(k, refs, ctx) }); break;
+        case 'toggle': out.push({ t: 'toggle', inline: inlineOf(k.title || '', refs, ctx), blocks: build(k, refs, ctx) }); break;
         case 'list': {
           const items = k.kids.map(it => {
             let checked = null;
@@ -1884,12 +1907,13 @@ md() { return Component._md || (Component._md = (function makeGuide() {
       if (used.has(f)) a.href = encodeUrl('#g-' + f);
     }
   }
-  function parse(md) {
+  // (`asWritten`: links to a heading keep the address they were written with; the HTML's own ids are only for rendering)
+  function parse(md, asWritten) {
     const src = clean(md);
     try {
       const refs = new Map(), ctx = { urls: 0, links: [], heads: [] };
       const blocks = build(parseBlocks(src, refs), refs, ctx);
-      assignIds(ctx.heads, ctx.links);
+      assignIds(ctx.heads, asWritten ? [] : ctx.links);
       return blocks;
     } catch (e) {
       errors++;
@@ -1899,7 +1923,7 @@ md() { return Component._md || (Component._md = (function makeGuide() {
 
   // ---------- showing: the tree -> HTML ----------
   // Only these tags are ever written: div h1-h6 p br strong em del code pre blockquote ul ol li span hr table thead
-  // tbody tr th td a img. And only these attributes: class (gd, gd-task, gd-box, gd-on, language-x), id (on headings), href data-tip rel
+  // tbody tr th td a img details summary. And only these attributes: class (gd, gd-task, gd-box, gd-on, gd-tg, language-x), id (on headings), href data-tip rel
   // target (a), src alt data-tip loading decoding (img), start (ol), role="img" and aria-label (a task's box, a span: Lucida's own
   // check, drawn by CSS, never a browser's checkbox), style="text-align:x" (th, td).
   // No line breaks between tags (only inside pre), so the same text always gives the same HTML.
@@ -1962,6 +1986,8 @@ md() { return Component._md || (Component._md = (function makeGuide() {
         case 'p': { const h = inline(b.inline); return h ? '<p>' + h + '</p>' : ''; }
         case 'code': return '<pre><code' + (LANG.test(b.lang) ? ' class="language-' + escA(b.lang) + '"' : '') + '>' + esc(b.text) + (b.text ? '\n' : '') + '</code></pre>';
         case 'quote': return '<blockquote>' + b.blocks.map(block).join('') + '</blockquote>';
+        // A toggle opens and closes with no script (it starts closed; a page that remembers what was open opens it again).
+        case 'toggle': return '<details class="gd-tg"><summary>' + inline(b.inline) + '</summary>' + b.blocks.map(block).join('') + '</details>';
         case 'hr': return '<hr>';
         case 'ul': return '<ul>' + b.items.map(it => item(it, b.tight)).join('') + '</ul>';
         case 'ol': return (b.start !== 1 ? '<ol start="' + (b.start | 0) + '">' : '<ol>') + b.items.map(it => item(it, b.tight)).join('') + '</ol>';
@@ -1993,6 +2019,7 @@ md() { return Component._md || (Component._md = (function makeGuide() {
         case 'h': case 'p': { const t = textOf(b.inline); if (t) out.push(t); break; }
         case 'code': for (const l of b.text.split('\n')) if (l) out.push(l); break;
         case 'quote': plainLines(b.blocks, out); break;
+        case 'toggle': { const t = textOf(b.inline); if (t) out.push(t); plainLines(b.blocks, out); break; }
         case 'ul': case 'ol': for (const it of b.items) plainLines(it.blocks, out); break;
         case 'table': for (const r of [b.head, ...b.rows]) { const t = r.map(textOf).filter(Boolean).join(' '); if (t) out.push(t); } break;
         default: break;
@@ -2017,12 +2044,375 @@ md() { return Component._md || (Component._md = (function makeGuide() {
     const walk = blocks => {
       for (const b of blocks) {
         if (b.t === 'h') out.push({ level: b.level, text: textOf(b.inline), id: b.id });
-        else if (b.t === 'quote') walk(b.blocks);
+        else if (b.t === 'quote' || b.t === 'toggle') walk(b.blocks);
         else if (b.t === 'ul' || b.t === 'ol') b.items.forEach(it => walk(it.blocks));
       }
     };
     try { walk(parse(md)); } catch (e) { errors++; }
     return out;
+  }
+
+  // ---------- blocks: the page the Notes editor shows (web/notes.js; the iPhone's Data/Notes.swift asks for them through JavaScriptCore) ----------
+  // A page of notes is a list of blocks, one under the other, each one line of the page. What is inside a list item, a toggle or a quote follows it,
+  // one level in (d is how far in a block is, 0 at the left):
+  //   { k:'p', d, r }                text              { k:'h', d, level, r }     heading (level 1 to 6)
+  //   { k:'ul', d, r }               bulleted item     { k:'ol', d, r, start }    numbered item (start: the first number of a list, only when it isn't 1)
+  //   { k:'todo', d, r, on }         to-do (on: done)  { k:'toggle', d, r }       toggle (r is its line; what is in it follows one level in)
+  //   { k:'quote', d, r }            quote             { k:'code', d, lang, text } code
+  //   { k:'hr', d }                  divider           { k:'img', d, src, alt, title } picture
+  //   { k:'table', d, align, rows }  table: rows[0] is the header, a cell is runs
+  // r is the line's words as runs: [{ t, b, i, s, c, a, lt }], t the words and the rest what they are: bold, italic, strikethrough, code (true or
+  // left out), and a link's address (a, always one guide.js allows) and title (lt). t may hold a line break (\n), except in a heading, a toggle's
+  // line and a table cell. ul, ol, todo, toggle and quote hold what follows them one level in; nothing else holds anything.
+  //   blocks(md)      reads any Markdown into blocks. What a line can't hold goes onto a line of its own and no words are lost: a picture between words
+  //                   (or in a heading) is a picture block after them, a list item's or a quote's second paragraph is a block inside it, a picture in a
+  //                   table cell is its description.
+  //   markdown(list)  writes blocks as Markdown: blocks(markdown(list)) is the same list again (once the list is as blocks() would read it: runs merged,
+  //                   no space at the edges of a line or of a mark). Marks Markdown can't say (bold that ends in a comma right before a letter) are
+  //                   left off, never words. An empty text line is written as &nbsp; so it stays.
+  const BK_TEXT = { p: 1, h: 1, ul: 1, ol: 1, todo: 1, toggle: 1, quote: 1 }, BK_HOLDS = { ul: 1, ol: 1, todo: 1, toggle: 1, quote: 1 };
+  const BK_KINDS = { ...BK_TEXT, code: 1, hr: 1, img: 1, table: 1 }, BK_DEPTH = 16, BK_MAX = 20000;
+  const RUN_MARKS = ['b', 'i', 's', 'c'];
+  const sameRun = (x, y) => !!x.b === !!y.b && !!x.i === !!y.i && !!x.s === !!y.s && !!x.c === !!y.c && (x.a || '') === (y.a || '') && (x.lt || '') === (y.lt || '');
+  // A run with only the marks it has (an address only when it is one a link may have).
+  function mkRun(t, m) {
+    const r = { t };
+    for (const k of RUN_MARKS) if (m && m[k]) r[k] = true;
+    const a = m && typeof m.a === 'string' ? m.a : '';
+    if (a && linkOk(a)) { r.a = a; if (m.lt) r.lt = str(m.lt).replace(/\n/g, ' '); }
+    return r;
+  }
+  // Runs as Markdown keeps them: neighbours with the same marks joined, nothing empty, no line break in code; spaces next to a line break and at
+  // the line's two ends gone (the parser drops them); a mark never starts or ends on a space; `oneLine` turns line breaks into spaces.
+  function canonRuns(list, oneLine) {
+    const ch = [], of = [];
+    for (const x of Array.isArray(list) ? list : []) {
+      if (!x || typeof x !== 'object') continue;
+      let t = str(x.t);
+      if (!t) continue;
+      const r = mkRun('', x);
+      if (r.c || oneLine) t = t.replace(/\n/g, ' ');
+      for (let i = 0; i < t.length; i++) { ch.push(t[i]); of.push(r); }
+    }
+    const n = ch.length, drop = new Uint8Array(n), ws = i => !of[i].c && (ch[i] === ' ' || ch[i] === '\t' || ch[i] === '\n');
+    for (let i = 0; i < n; i++) {
+      if (of[i].c || ch[i] !== '\n') continue;
+      for (let j = i - 1; j >= 0 && !of[j].c && ch[j] === ' '; j--) drop[j] = 1;
+      for (let j = i + 1; j < n && !of[j].c && ch[j] === ' '; j++) drop[j] = 1;
+    }
+    for (let i = 0; i < n && (drop[i] || ws(i)); i++) drop[i] = 1;
+    for (let i = n - 1; i >= 0 && (drop[i] || ws(i)); i--) drop[i] = 1;
+    const keep = [];
+    for (let i = 0; i < n; i++) if (!drop[i]) keep.push({ c: ch[i], m: { ...of[i] } });
+    // bold, italic and strikethrough come off the spaces at the two ends of a stretch of them
+    for (const k of ['b', 'i', 's']) {
+      for (let i = 0; i < keep.length;) {
+        if (!keep[i].m[k]) { i++; continue; }
+        let j = i; while (j < keep.length && keep[j].m[k]) j++;
+        const space = x => !x.m.c && (x.c === ' ' || x.c === '\t' || x.c === '\n');
+        for (let a = i; a < j && space(keep[a]); a++) delete keep[a].m[k];
+        for (let b = j - 1; b >= i && space(keep[b]); b--) delete keep[b].m[k];
+        i = j;
+      }
+    }
+    const out = [];
+    for (const x of keep) { const p = out[out.length - 1]; if (p && sameRun(p, x.m)) p.t += x.c; else out.push(mkRun(x.c, x.m)); }
+    return out;
+  }
+  const runsText = rs => rs.map(r => r.t).join('');
+  // The inline nodes of a block as runs, with its pictures where they were: [{ t, ... } | { img }].
+  function bkPieces(nodes) {
+    const out = [], stack = [{ list: nodes, i: 0, m: {} }];
+    while (stack.length) {
+      const f = stack[stack.length - 1];
+      if (f.i >= f.list.length) { stack.pop(); continue; }
+      const x = f.list[f.i++];
+      if (x.t === 'text') out.push({ ...f.m, t: x.v });
+      else if (x.t === 'code') out.push({ ...f.m, c: true, t: x.v });
+      else if (x.t === 'br') out.push({ ...f.m, t: '\n' });
+      else if (x.t === 'img') out.push({ img: { src: x.src, alt: x.alt.replace(/\s+/g, ' ').trim(), title: x.title.replace(/\s+/g, ' ').trim() } });
+      else if (x.t === 'b' || x.t === 'i' || x.t === 's') stack.push({ list: x.c, i: 0, m: { ...f.m, [x.t]: true } });
+      else if (x.t === 'a') stack.push({ list: x.c, i: 0, m: { ...f.m, a: x.href, lt: x.title } });
+    }
+    return out;
+  }
+  const NBSP_ONLY = rs => rs.length === 1 && !rs[0].c && !rs[0].a && rs[0].t === '\u00A0';
+  // The tree parse() gives, as blocks one under the other.
+  function flatten(tree, d, out) {
+    const pic = (p, at) => out.push({ k: 'img', d: at, src: p.img.src, alt: p.img.alt, title: p.img.title });
+    // A line of words: `split` (a paragraph) makes a block of each stretch of words between its pictures; otherwise the words make one line and the
+    // pictures follow it, inside it when it holds things (`inner`).
+    const line = (blk, inline, split, inner) => {
+      const ps = bkPieces(inline), words = [], pics = [];
+      let seg = [];
+      for (const p of ps) { if (p.img) { words.push(seg); seg = []; pics.push(p); } else seg.push(p); }
+      words.push(seg);
+      if (split) {
+        if (!pics.length && NBSP_ONLY(canonRuns(seg))) { out.push({ ...blk, r: [] }); return; }
+        words.forEach((w, i) => { const r = canonRuns(w); if (r.length) out.push({ ...blk, r }); if (i < pics.length) pic(pics[i], blk.d); });
+        return;
+      }
+      let r = canonRuns(words.flat(), blk.k === 'h' || blk.k === 'toggle');
+      if (NBSP_ONLY(r)) r = [];
+      out.push({ ...blk, r });
+      for (const p of pics) pic(p, inner ? blk.d + 1 : blk.d);
+    };
+    // A list item or a quote: its first paragraph is its line; the rest goes inside it.
+    const holder = (blk, blocks) => {
+      const f = blocks[0];
+      if (f && f.t === 'p') { line(blk, f.inline, false, true); flatten(blocks.slice(1), d + 1, out); }
+      else { out.push({ ...blk, r: [] }); flatten(blocks, d + 1, out); }
+    };
+    for (const b of tree) {
+      if (out.length >= BK_MAX) return out;
+      switch (b.t) {
+        case 'h': line({ k: 'h', d, level: Math.max(1, Math.min(6, b.level | 0)) }, b.inline, false, false); break;
+        case 'p': line({ k: 'p', d }, b.inline, true, false); break;
+        case 'code': out.push({ k: 'code', d, lang: LANG.test(b.lang) ? b.lang : '', text: b.text }); break;
+        case 'hr': out.push({ k: 'hr', d }); break;
+        case 'table': {
+          const cell = c => canonRuns(bkPieces(c).map(p => (p.img ? { t: p.img.alt } : p)), true);
+          out.push({ k: 'table', d, align: b.align.slice(), rows: [b.head.map(cell), ...b.rows.map(r => r.map(cell))] });
+          break;
+        }
+        case 'quote': holder({ k: 'quote', d }, b.blocks); break;
+        case 'toggle': line({ k: 'toggle', d }, b.inline, false, true); flatten(b.blocks, d + 1, out); break;
+        case 'ul': case 'ol':
+          b.items.forEach((it, n) => {
+            const blk = { k: it.checked === true || it.checked === false ? 'todo' : b.t, d };
+            if (blk.k === 'todo') blk.on = it.checked;
+            if (blk.k === 'ol' && n === 0 && b.start !== 1) blk.start = b.start;
+            const at = out.length;
+            holder(blk, it.blocks);
+            // "- [ ]" with nothing after it is an empty to-do (Markdown reads it as an item that says "[ ]").
+            const me = out[at];
+            if (me && me.k === 'ul' && me.r.length === 1 && !me.r[0].b && !me.r[0].i && !me.r[0].s && !me.r[0].c && !me.r[0].a && /^\[[ xX]\]$/.test(me.r[0].t)) { me.k = 'todo'; me.on = me.r[0].t !== '[ ]'; me.r = []; }
+          });
+          break;
+        default: break;
+      }
+    }
+    return out;
+  }
+  function blocksOf(md) {
+    try { return flatten(parse(md, true), 0, []).slice(0, BK_MAX); } catch (e) { errors++; const t = clean(md).trim(); return t ? [{ k: 'p', d: 0, r: [{ t: t.slice(0, 5000) }] }] : []; }
+  }
+
+  // ---------- blocks -> Markdown ----------
+  // Text as Markdown: every character that could start a mark, a link, a picture, an entity or an address is escaped (a _ inside a word can't, so it
+  // stays); in a table cell a | too. At the start of a line, one that could start a block (# > - + = | : and "1." or "1)") is escaped too.
+  function escText(s, cell, bol) {
+    let out = '';
+    for (let i = 0; i < s.length; i++) {
+      const ch = s[i], c = s.charCodeAt(i);
+      if (c === 92 || c === 42 || c === 126 || c === 96 || c === 91 || c === 93) out += '\\' + ch;
+      else if (c === 95) out += isAlnum(s.charCodeAt(i - 1)) && isAlnum(s.charCodeAt(i + 1)) ? '_' : '\\_';
+      else if (c === 60) out += i + 1 >= s.length || isAlpha(s.charCodeAt(i + 1)) || s.charCodeAt(i + 1) === 47 ? '\\<' : '<';
+      else if (c === 38) out += entityAt(s, i) ? '\\&' : '&';
+      else if (c === 124 && cell) out += '\\|';
+      else if (c === 58 && s.charCodeAt(i + 1) === 47 && /https?$/i.test(s.slice(Math.max(0, i - 5), i))) out += '\\:';
+      else out += ch;
+    }
+    if (bol) {
+      const c = out.charCodeAt(0), m = /^(\d{1,9})([.)])/.exec(out);
+      if (c === 35 || c === 62 || c === 45 || c === 43 || c === 61 || c === 124 || c === 58) out = '\\' + out;
+      else if (m) out = m[1] + '\\' + out.slice(m[1].length);
+    }
+    return out;
+  }
+  // Code: in enough backticks, with a space at each end when it starts or ends with one (or with a backtick). In a table cell a | is \| even in code
+  // (the row is cut into cells before the words are read).
+  function codeSpan(t, cell) {
+    let longest = 0;
+    for (let i = 0, r = 0; i < t.length; i++) { r = t[i] === '`' ? r + 1 : 0; if (r > longest) longest = r; }
+    const f = '`'.repeat(longest + 1), pad = t[0] === '`' || t[t.length - 1] === '`' || (t[0] === ' ' && t[t.length - 1] === ' ' && /[^ ]/.test(t));
+    return f + (pad ? ' ' + t + ' ' : t).replace(cell ? /\|/g : /$^/, '\\|') + f;
+  }
+  // An entity in an address or a title would be read as the character it stands for, so its & is escaped.
+  const ampEsc = s => s.replace(/&/g, (m, i) => (entityAt(s, i) ? '\\&' : '&'));
+  // An address between ( and ): as it is, or between < and > when it has a parenthesis (guide.js's addresses never hold a space, < > or \\).
+  const destOf = u => { const v = ampEsc(u); return /[()]/.test(v) ? '<' + v + '>' : v; };
+  const titleOf = t => (t ? ' "' + ampEsc(t.replace(/["\\]/g, '\\$&')) + '"' : '');
+  // Which stretch of each mark every run is in: 'b0' the first stretch of bold, 'i2' the third of italic, 'c4' the fifth piece of code, 'a1' the second
+  // link. (A stretch of a mark goes on through links; a link is the runs side by side with the same address and title.)
+  function spansOf(runs) {
+    const n = { s: 0, b: 0, i: 0, c: 0, a: 0 }, ids = [];
+    const out = runs.map(() => ({}));
+    for (const k of ['s', 'b', 'i']) runs.forEach((r, x) => { if (r[k]) { if (!(x > 0 && runs[x - 1][k])) ids.push(k + n[k]++); out[x][k] = k + (n[k] - 1); } });
+    runs.forEach((r, x) => { if (r.c) { ids.push('c' + n.c); out[x].c = 'c' + n.c++; } });
+    runs.forEach((r, x) => { if (r.a) { if (!(x > 0 && runs[x - 1].a === r.a && (runs[x - 1].lt || '') === (r.lt || ''))) ids.push('a' + n.a++); out[x].a = 'a' + (n.a - 1); } });
+    return { of: out, ids };
+  }
+  // Runs as Markdown. Marks and links open and close like brackets: the ones still wanted stay open, from the outside in. o.cell: in a table cell.
+  // o.alt: bold and italic as __ and _. o.drop: the stretches to leave out (spansOf's ids). o.nl: what follows a line break (the indent of the line
+  // after it). A line break is "\\\n".
+  function runsMd(runs, o) {
+    const D = o.alt ? { s: '~~', b: '__', i: '_' } : { s: '~~', b: '**', i: '*' }, sp = spansOf(runs).of;
+    const on = (x, k) => !!sp[x][k] && !(o.drop && o.drop.has(sp[x][k]));
+    const stack = [];
+    let out = '', bol = true;
+    const shut = e => { out += e.k === 'a' ? '](' + destOf(e.a) + titleOf(e.lt) + ')' : D[e.k]; bol = false; };
+    for (let x = 0; x < runs.length; x++) {
+      const r = runs[x], want = ['s', 'b', 'i'].filter(k => on(x, k)), link = on(x, 'a') ? sp[x].a : '';
+      let keep = 0;
+      while (keep < stack.length && (stack[keep].k === 'a' ? stack[keep].id === link : want.includes(stack[keep].k))) keep++;
+      while (stack.length > keep) shut(stack.pop());
+      for (const k of want) if (!stack.some(e => e.k === k)) { out += D[k]; stack.push({ k }); bol = false; }
+      if (link && !stack.some(e => e.k === 'a')) {
+        // (a ! right before it would make the link a picture)
+        if (/(^|[^\\])(\\\\)*!$/.test(out)) out = out.slice(0, -1) + '\\!';
+        out += '['; stack.push({ k: 'a', id: link, a: r.a, lt: r.lt || '' }); bol = false;
+      }
+      if (on(x, 'c')) { out += codeSpan(r.t, o.cell); bol = false; continue; }
+      const lines = r.t.split('\n');
+      lines.forEach((ln, n) => { if (n > 0) { out += '\\\n' + (o.nl || ''); bol = true; } if (ln) { out += escText(ln, o.cell, bol); bol = false; } });
+    }
+    while (stack.length) shut(stack.pop());
+    return out;
+  }
+  // What a line of words reads back as: parsed as a paragraph of its own, or as the one cell of a table.
+  function readBack(md, cell) {
+    const t = parse(cell ? '| ' + md + ' |\n| --- |' : md);
+    if (cell) return t.length === 1 && t[0].t === 'table' && t[0].head.length === 1 ? canonRuns(bkPieces(t[0].head[0]), true) : null;
+    if (t.length !== 1 || t[0].t !== 'p') return null;
+    return canonRuns(bkPieces(t[0].inline));
+  }
+  const runsKey = rs => rs.map(r => r.t.length + ':' + (r.b ? 'b' : '') + (r.i ? 'i' : '') + (r.s ? 's' : '') + (r.c ? 'c' : '') + (r.a ? '@' + r.a + '|' + (r.lt || '') : '') + ':' + r.t).join('\u0001');
+  // Runs as Markdown that reads back as the same runs: as written, else with __ and _; else without the stretches of marks Markdown can't say (each
+  // one that can't be said even alone, then one more at a time from the last); and at the very last, the words alone.
+  const MEMO = new Map();
+  function lineMd(runs, o) {
+    if (!runs.length) return '';
+    const key = (o.cell ? 'c' : '') + (o.nl || '').length + '\u0002' + runsKey(runs);
+    const hit = MEMO.get(key);
+    if (hit !== undefined) return hit;
+    // the runs with some stretches left out, written both ways: the options that read back right
+    const works = drop => {
+      const want = runsKey(drop.size ? dropped(runs, drop) : runs);
+      for (const alt of [false, true]) { const got = readBack(runsMd(runs, { ...o, alt, drop, nl: '' }), o.cell); if (got && runsKey(got) === want) return { alt, drop }; }
+      return null;
+    };
+    let found = works(new Set());
+    if (!found) {
+      const ids = spansOf(runs).ids, drop = new Set();
+      for (const id of ids) if (!works(new Set(ids.filter(x => x !== id)))) drop.add(id);
+      found = works(drop);
+      for (let k = ids.length - 1; !found && k >= 0; k--) { if (drop.has(ids[k])) continue; drop.add(ids[k]); found = works(drop); }
+    }
+    const res = found ? runsMd(runs, { ...o, ...found }) : runsMd([{ t: runsText(runs) }], o);
+    if (MEMO.size > 4000) MEMO.clear();
+    MEMO.set(key, res);
+    return res;
+  }
+  // The runs without the stretches in `drop`.
+  function dropped(runs, drop) {
+    const sp = spansOf(runs).of, out = runs.map((r, x) => { const y = { ...r }; for (const k of ['s', 'b', 'i', 'c']) if (drop.has(sp[x][k])) delete y[k]; if (drop.has(sp[x].a)) { delete y.a; delete y.lt; } return y; });
+    return canonRuns(out);
+  }
+
+  // The blocks as a tree: each one with what it holds (the blocks after it one level in).
+  function bkTree(list) {
+    const root = { kids: [] }, stack = [{ node: root, d: -1 }];
+    let prev = null;
+    for (const b of list) {
+      const most = prev ? prev.d + (BK_HOLDS[prev.k] ? 1 : 0) : 0, d = Math.max(0, Math.min(b.d, most, BK_DEPTH));
+      while (stack.length > 1 && stack[stack.length - 1].d >= d) stack.pop();
+      const node = { b: { ...b, d }, kids: [] };
+      stack[stack.length - 1].node.kids.push(node);
+      if (BK_HOLDS[b.k]) stack.push({ node, d });
+      prev = node.b;
+    }
+    return root.kids;
+  }
+  // A block as guide.js would read it: known kind, whole numbers, runs as Markdown keeps them, an address only when it may be one.
+  function bkClean(x) {
+    if (!x || typeof x !== 'object' || !BK_KINDS[x.k]) return null;
+    const d = Math.max(0, Math.min(BK_DEPTH, Math.floor(+x.d) || 0)), b = { k: x.k, d };
+    if (BK_TEXT[x.k]) b.r = canonRuns(x.r, x.k === 'h' || x.k === 'toggle');
+    if (x.k === 'h') b.level = Math.max(1, Math.min(6, Math.floor(+x.level) || 1));
+    if (x.k === 'todo') b.on = !!x.on;
+    if (x.k === 'ol' && x.start != null) { const n = Math.floor(+x.start); if (isFinite(n) && n >= 0 && n !== 1) b.start = Math.min(n, 999999999); }
+    if (x.k === 'code') { b.lang = LANG.test(str(x.lang)) ? str(x.lang) : ''; b.text = str(x.text).replace(/\r\n?/g, '\n'); }
+    if (x.k === 'img') {
+      const src = encodeUrl(str(x.src).trim());
+      if (!imgOk(src)) { const alt = str(x.alt).trim(); return alt ? { k: 'p', d, r: [{ t: alt }] } : null; }
+      b.src = src; b.alt = str(x.alt).replace(/\s+/g, ' ').trim(); b.title = str(x.title).replace(/\s+/g, ' ').trim();
+    }
+    if (x.k === 'table') {
+      const rows = (Array.isArray(x.rows) ? x.rows : []).filter(Array.isArray).slice(0, 1000);
+      const n = Math.max(1, Math.min(64, rows.length ? rows[0].length : 1));
+      b.rows = (rows.length ? rows : [[]]).map(r => Array.from({ length: n }, (_, i) => canonRuns(r[i], true)));
+      const al = Array.isArray(x.align) ? x.align : [];
+      b.align = Array.from({ length: n }, (_, i) => (al[i] === 'left' || al[i] === 'right' || al[i] === 'center' ? al[i] : ''));
+    }
+    return b;
+  }
+  const indentBy = (lines, by) => lines.map(l => (l ? by + l : l));
+  // Lines of Markdown for blocks side by side (a blank line between them, except between the items of one list).
+  function nodesMd(nodes) {
+    const lines = [], fam = b => (b.k === 'ul' || b.k === 'todo' ? 'u' : b.k === 'ol' ? 'o' : '');
+    let num = 1;
+    nodes.forEach((n, i) => {
+      const p = i ? nodes[i - 1].b : null, same = p && fam(p) && fam(p) === fam(n.b);
+      if (i) { if (!same) lines.push(''); }
+      if (n.b.k === 'ol') num = same ? num + 1 : n.b.start != null ? n.b.start : 1;
+      lines.push(...nodeMd(n, num));
+    });
+    return lines;
+  }
+  function nodeMd(n, num) {
+    const b = n.b, kids = n.kids, text = (w, nl) => lineMd(b.r, { nl: ' '.repeat(w || 0) + (nl || '') });
+    switch (b.k) {
+      case 'p': return (b.r.length ? text(0) : '&nbsp;').split('\n');
+      // (a # at the very end would be read as closing the heading, unless it is escaped)
+      case 'h': { let t = lineMd(b.r, {}); const m = /(\\*)#$/.exec(t); if (m && m[1].length % 2 === 0) t = t.slice(0, -1) + '\\#'; return ['#'.repeat(b.level) + (t ? ' ' + t : '')]; }
+      case 'toggle': { const t = lineMd(b.r, {}); return [':::toggle' + (t ? ' ' + t : ''), ...nodesMd(kids), ':::']; }
+      case 'quote': {
+        const own = (b.r.length || !kids.length ? (b.r.length ? text(0) : '') : '&nbsp;').split('\n');
+        const all = kids.length ? [...own, '', ...nodesMd(kids)] : own;
+        return all.map(l => (l ? '> ' + l : '>'));
+      }
+      case 'ul': case 'ol': case 'todo': {
+        const mark = b.k === 'ol' ? num + '.' : b.k === 'todo' ? (b.on ? '- [x]' : '- [ ]') : '-', w = b.k === 'ol' ? String(num).length + 2 : 2;
+        const own = b.r.length ? text(w).split('\n') : kids.length ? ['&nbsp;'] : [''];
+        const first = mark + (own[0] ? ' ' + own[0] : ''), rest = own.slice(1);
+        const inner = kids.length ? nodesMd(kids) : [];
+        // (A list right under the line needs no blank line, unless Markdown would read it as more of the line: an empty item, or numbers that don't start at 1.)
+        const f = kids.length ? kids[0].b : null, joins = f && f.r && f.r.length && (f.k === 'ul' || f.k === 'todo' || (f.k === 'ol' && (f.start == null || f.start === 1)));
+        const gap = kids.length && !joins ? [''] : [];
+        return [first, ...rest, ...gap, ...indentBy(inner, ' '.repeat(w))];
+      }
+      case 'code': {
+        let longest = 0;
+        for (let i = 0, r = 0; i < b.text.length; i++) { r = b.text[i] === '`' ? r + 1 : 0; if (r > longest) longest = r; }
+        const f = '`'.repeat(Math.max(3, longest + 1));
+        return [f + b.lang, ...(b.text ? b.text.split('\n') : []), f];
+      }
+      case 'hr': return ['---'];
+      case 'img': return ['![' + escText(b.alt, false, false) + '](' + destOf(b.src) + titleOf(b.title) + ')'];
+      case 'table': {
+        const row = r => '| ' + r.map(c => lineMd(c, { cell: true })).join(' | ') + ' |';
+        const delim = '| ' + b.align.map(a => (a === 'left' ? ':---' : a === 'right' ? '---:' : a === 'center' ? ':---:' : '---')).join(' | ') + ' |';
+        return [row(b.rows[0]), delim, ...b.rows.slice(1).map(row)];
+      }
+      default: return [];
+    }
+  }
+  // An address someone typed for a link: as guide.js would write it, or '' (a bare "example.com/x" gets https://; nothing but http(s), mailto and #).
+  function hrefOf(u) {
+    let v = str(u).trim();
+    if (!v) return '';
+    if (/^www\.|^[a-z0-9-]+(?:\.[a-z0-9-]+)+(?:[/?#:]|$)/i.test(v) && !/^[a-z][a-z0-9+.-]*:/i.test(v)) v = 'https://' + v;
+    else if (/^[^\s@/:]+@[^\s@/:]+\.[^\s@/:]+$/.test(v)) v = 'mailto:' + v;
+    const e = encodeUrl(v);
+    return linkOk(e) ? e : '';
+  }
+  function markdownOf(list) {
+    try {
+      const clean = (Array.isArray(list) ? list : []).slice(0, BK_MAX).map(bkClean).filter(Boolean);
+      const lines = nodesMd(bkTree(clean));
+      return lines.length ? lines.join('\n') + '\n' : '';
+    } catch (e) { errors++; return ''; }
   }
 
   // ---------- the toolbar: editing a text field's text ----------
@@ -2302,12 +2692,1247 @@ md() { return Component._md || (Component._md = (function makeGuide() {
   }
 
   return {
-    MAX, parse, render, plain, headings,
+    MAX, parse, render, plain, headings, blocks: blocksOf, markdown: markdownOf, href: hrefOf,
     bold, italic, strike, code, heading, bullets, numbers, tasks, quote, link, codeBlock, table, rule, image, continueList, indent: indentLines,
     // How many unexpected errors were caught and hidden (always 0 unless there is a bug).
     get errors() { return errors; }
   };
 })()); }
+notes() { return Component._nb || (Component._nb = (function makeNotes(G) {
+  const TEXT = { p: 1, h: 1, ul: 1, ol: 1, todo: 1, toggle: 1, quote: 1 }, HOLDS = { ul: 1, ol: 1, todo: 1, toggle: 1, quote: 1 }, ONE_LINE = { h: 1, toggle: 1 };
+  const ATOM = { hr: 1, img: 1, table: 1 }, MAX_DEPTH = 8, MEM = 'lucida.notes.view';
+  const ownImage = src => (/^\/media\/[\w-]+\.(?:png|jpe?g|gif|webp)$/i.test(src) ? src : '');
+
+  // ---------- runs: a line's words and what they are ----------
+  const MK = ['b', 'i', 's', 'c'];
+  const sameM = (x, y) => !!x.b === !!y.b && !!x.i === !!y.i && !!x.s === !!y.s && !!x.c === !!y.c && (x.a || '') === (y.a || '') && (x.lt || '') === (y.lt || '');
+  function mk(t, m) { const r = { t }; for (const k of MK) if (m && m[k]) r[k] = true; if (m && m.a) { r.a = m.a; if (m.lt) r.lt = m.lt; } return r; }
+  function tidy(rs) { const out = []; for (const x of rs) { if (!x || !x.t) continue; const p = out[out.length - 1]; if (p && sameM(p, x)) p.t += x.t; else out.push(mk(x.t, x)); } return out; }
+  const rlen = rs => { let n = 0; for (const x of rs) n += x.t.length; return n; };
+  const rtext = rs => rs.map(x => x.t).join('');
+  function rcut(rs, a, b) {
+    const out = []; let at = 0;
+    for (const x of rs) { const s = at, e = at + x.t.length; at = e; const f = Math.max(a, s), t = Math.min(b, e); if (f < t) out.push(mk(x.t.slice(f - s, t - s), x)); }
+    return out;
+  }
+  const rsplice = (rs, a, b, ins) => tidy([...rcut(rs, 0, a), ...(ins || []), ...rcut(rs, b, rlen(rs))]);
+  const rmap = (rs, a, b, fn) => tidy([...rcut(rs, 0, a), ...rcut(rs, a, b).map(x => mk(x.t, fn({ ...x }))), ...rcut(rs, b, rlen(rs))]);
+  function markAt(rs, i) { let at = 0; for (const x of rs) { if (i < at + x.t.length) return x; at += x.t.length; } return null; }
+  // What typing at i is written with: bold, italic and strikethrough of the letter before (or of the one after, at the start); code and a link only inside them.
+  function typing(rs, i) {
+    const before = i > 0 ? markAt(rs, i - 1) : null, after = markAt(rs, i), m = {}, from = before || after;
+    if (from) for (const k of ['b', 'i', 's']) if (from[k]) m[k] = true;
+    if (before && after && before.c && after.c) m.c = true;
+    if (before && after && before.a && after.a === before.a) { m.a = before.a; if (before.lt) m.lt = before.lt; }
+    return m;
+  }
+  const oneLine = rs => tidy(rs.map(x => mk(x.t.replace(/\n/g, ' '), x)));
+
+  // ---------- blocks ----------
+  let uid = 0;
+  const withId = b => ({ ...b, id: 'n' + (++uid) });
+  const wordsOf = b => (TEXT[b.k] ? b.r : b.k === 'code' ? (b.text ? [{ t: b.text }] : []) : []);
+  const isEmpty = b => (TEXT[b.k] ? !rlen(b.r) : b.k === 'code' ? !b.text : false);
+  // Depths as Markdown can hold them: never more than one level further in than the block before can hold.
+  function settle(list) {
+    let prev = null;
+    return list.map(b => { const most = prev ? prev.d + (HOLDS[prev.k] ? 1 : 0) : 0, d = Math.max(0, Math.min(b.d, most, MAX_DEPTH)), out = d === b.d ? b : { ...b, d }; prev = out; return out; });
+  }
+  // The index after block i and what it holds.
+  const endOf = (list, i) => { let j = i + 1; while (j < list.length && list[j].d > list[i].d) j++; return j; };
+  // What is saved: no empty lines at the end, and nothing at all when every line is empty.
+  function saved(list) {
+    let n = list.length;
+    while (n > 0 && list[n - 1].k === 'p' && !list[n - 1].d && isEmpty(list[n - 1])) n--;
+    const keep = list.slice(0, n);
+    return keep.every(b => TEXT[b.k] && isEmpty(b)) ? '' : G.markdown(keep);
+  }
+
+  // ---------- what this device remembers: toggles open, sections folded ----------
+  function memRead() { try { const v = JSON.parse(localStorage.getItem(MEM) || 'null'); return v && typeof v === 'object' && v.pages && typeof v.pages === 'object' ? v : { pages: {} }; } catch (e) { return { pages: {} }; } }
+  function memWrite(v) { try { localStorage.setItem(MEM, JSON.stringify(v)); } catch (e) { /* no storage (a private window): it is kept while the page is open */ } }
+  // A toggle's or a heading's name on this device: its words, and which of the ones with the same words it is.
+  function viewKeys(list) {
+    const seen = new Map(), out = new Map();
+    for (const b of list) if (b.k === 'toggle' || b.k === 'h') { const w = b.k + ':' + rtext(b.r).trim().slice(0, 160), n = seen.get(w) || 0; seen.set(w, n + 1); out.set(b.id, w + '#' + n); }
+    return out;
+  }
+
+  // ---------- drawing ----------
+  const SVG = {
+    chev: '<path d="M9 6l6 6-6 6"/>', check: '<path d="M5 12.5l4.5 4.5L19 7.5"/>', plus: '<path d="M12 5v14M5 12h14"/>', link: '<path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"/><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/>',
+    list: '<path d="M9 6h11M9 12h11M9 18h11"/><circle cx="4.5" cy="6" r="1" fill="currentColor"/><circle cx="4.5" cy="12" r="1" fill="currentColor"/><circle cx="4.5" cy="18" r="1" fill="currentColor"/>',
+    todo: '<rect x="4" y="4" width="16" height="16" rx="4"/><path d="M8.5 12.2l2.4 2.4 4.6-5"/>', toggle: '<path d="M8 6l8 6-8 6z" fill="currentColor" stroke="none"/>',
+    quote: '<path d="M6 7v10M11 9h8M11 15h6"/>', hr: '<path d="M4 12h16"/>', code: '<path d="M9 8l-4 4 4 4M15 8l4 4-4 4"/>',
+    image: '<rect x="3.5" y="5" width="17" height="14" rx="3"/><circle cx="9" cy="10" r="1.6"/><path d="M5 17l4.5-4.5 3 3L15 13l4 4"/>', table: '<rect x="3.5" y="5" width="17" height="14" rx="2.5"/><path d="M3.5 10h17M10 10v9"/>',
+    down: '<path d="M6 9l6 6 6-6"/>', close: '<path d="M6 6l12 12M18 6L6 18"/>', num: '<path d="M10 6h10M10 12h10M10 18h10"/><path d="M4 5.5l1.5-1V9M3.8 14.2a1.4 1.4 0 1 1 2.2 1.4L4 18h2.4" stroke-width="1.5"/>'
+  };
+  const svg = (k, s = 16, w = 2) => '<svg width="' + s + '" height="' + s + '" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="' + w + '" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + SVG[k] + '</svg>';
+  function el(tag, cls, attrs) {
+    const e = document.createElement(tag);
+    if (cls) e.className = cls;
+    if (attrs) for (const k in attrs) { const v = attrs[k]; if (v === false || v == null) continue; if (k === 'html') e.innerHTML = v; else if (k === 'text') e.textContent = v; else e.setAttribute(k, v === true ? '' : String(v)); }
+    return e;
+  }
+  // The block menu: what a line can be. Toggle list and Heading come first.
+  const MENU = [
+    { id: 'toggle', label: 'Toggle list', icon: 'toggle', keys: 'toggle list collapse fold' }, { id: 'h1', label: 'Heading', glyph: 'H', keys: 'heading title h1' },
+    { id: 'h2', label: 'Subheading', glyph: 'H', small: true, keys: 'subheading heading h2' }, { id: 'p', label: 'Text', glyph: 'Aa', keys: 'text plain paragraph' },
+    { id: 'ul', label: 'Bulleted list', icon: 'list', keys: 'bulleted list bullets unordered' }, { id: 'ol', label: 'Numbered list', icon: 'num', keys: 'numbered list numbers ordered' },
+    { id: 'todo', label: 'To-do', icon: 'todo', keys: 'to-do todo task checkbox check' }, { id: 'quote', label: 'Quote', icon: 'quote', keys: 'quote' },
+    { id: 'hr', label: 'Divider', icon: 'hr', keys: 'divider line rule separator' }, { id: 'code', label: 'Code', icon: 'code', keys: 'code' },
+    { id: 'img', label: 'Picture', icon: 'image', keys: 'picture image photo' }, { id: 'table', label: 'Table', icon: 'table', keys: 'table grid' }
+  ];
+  const PH = { h1: 'Heading', h2: 'Subheading', h3: 'Heading', ul: 'List', ol: 'List', todo: 'To-do', toggle: 'Toggle', quote: 'Quote' };
+
+  // ---------- a page ----------
+  function Page(host, opts) {
+    let o = opts || {};
+    const st = { blocks: [], idx: new Map(), open: new Map(), fold: new Map(), sel: null, restore: false, bsel: '', pend: null, past: [], future: [], last: '', lastAt: 0,
+      md: null, sent: null, key: '', comp: null, menu: null, bar: false, link: null, focused: false, rows: new Map(), easing: '', focusedOnce: false, aa: false };
+    host.textContent = '';
+    const root = el('div', 'nb'), docEl = el('div', 'nb-doc', { role: 'textbox', 'aria-multiline': 'true', 'aria-label': 'Notes', spellcheck: 'true', autocapitalize: 'sentences' });
+    const plusEl = el('button', 'nb-plus', { type: 'button', 'aria-label': 'Add a block', 'data-tip': 'Add a block', html: svg('plus', 16, 2.2), tabindex: '-1' });
+    const menuEl = el('div', 'nb-menu', { role: 'listbox', 'aria-label': 'Add a block' }), barEl = el('div', 'nb-bar', { role: 'toolbar', 'aria-label': 'Format' });
+    const keysEl = el('div', 'nb-keys', { role: 'toolbar', 'aria-label': 'Format' });
+    root.append(docEl, plusEl, menuEl, barEl);
+    host.appendChild(root);
+    const by = id => st.idx.get(id);
+    const reindex = () => { st.idx = new Map(st.blocks.map((b, i) => [b.id, i])); };
+
+    // ---------- reading Markdown into the page ----------
+    function load(md, key) {
+      st.key = key; st.md = md; st.sent = md;
+      let list = G.blocks(md).map(withId);
+      if (!list.length && (o.editable || o.blank)) list = [withId({ k: 'h', d: 0, level: 1, r: [] }), withId({ k: 'p', d: 0, r: [] })];
+      if (o.demo && o.demo.emptyAt != null) list.splice(Math.min(o.demo.emptyAt, list.length), 0, withId({ k: 'p', d: 0, r: [] }));
+      st.blocks = settle(list); reindex();
+      // (what the page writes before anything is changed: while it still writes that, the words stay exactly as they came)
+      st.base = saved(st.blocks);
+      st.past = []; st.future = []; st.sel = null; st.bsel = ''; st.pend = null; st.menu = null; st.link = null; st.aa = !!(o.demo && o.demo.aa);
+      const mem = (memRead().pages[key] || {}), keys = viewKeys(st.blocks), O = new Set(mem.o || []), F = new Set(mem.f || []);
+      st.open = new Map(); st.fold = new Map();
+      let tn = 0, hn = 0;
+      for (const b of st.blocks) {
+        const k = keys.get(b.id), D = o.demo || {};
+        if (b.k === 'toggle') { st.open.set(b.id, D.open === 'all' ? true : D.open === 'none' ? false : D.open === 'first' ? tn === 0 : O.has(k)); tn++; }
+        if (b.k === 'h') { st.fold.set(b.id, D.fold ? D.fold.includes(hn) : F.has(k)); hn++; }
+      }
+      for (const [, r] of st.rows) r.el.remove();
+      st.rows = new Map();
+      render();
+      if (o.demo) demoUi();
+    }
+    function remember() {
+      if (!st.key || o.demo) return;
+      const keys = viewKeys(st.blocks), m = memRead(), oo = [], ff = [];
+      for (const b of st.blocks) { const k = keys.get(b.id); if (b.k === 'toggle' && st.open.get(b.id)) oo.push(k); if (b.k === 'h' && st.fold.get(b.id)) ff.push(k); }
+      if (oo.length || ff.length) m.pages[st.key] = { o: oo.slice(0, 400), f: ff.slice(0, 400), t: Date.now() }; else delete m.pages[st.key];
+      const names = Object.keys(m.pages);
+      if (names.length > 80) names.sort((a, b) => (m.pages[a].t || 0) - (m.pages[b].t || 0)).slice(0, names.length - 80).forEach(n => delete m.pages[n]);
+      memWrite(m);
+    }
+    let rememberT = 0;
+    const rememberSoon = () => { clearTimeout(rememberT); rememberT = setTimeout(remember, 800); };
+
+    // ---------- what shows: hidden in closed toggles and folded sections, numbers, sections ----------
+    function view() {
+      const out = [], list = st.blocks, cnt = [];
+      let hide = null;
+      for (let i = 0; i < list.length; i++) {
+        const b = list[i];
+        cnt.length = b.d + 1;
+        if (b.k === 'ol') cnt[b.d] = cnt[b.d] != null ? cnt[b.d] + 1 : b.start != null ? b.start : 1; else cnt[b.d] = null;
+        const n = b.k === 'ol' ? cnt[b.d] : 0;
+        if (hide) { const ends = hide.k === 't' ? b.d <= hide.d : b.d < hide.d || (b.d === hide.d && b.k === 'h' && b.level <= hide.level); if (!ends) continue; hide = null; }
+        const next = list[i + 1], kids = !!next && next.d > b.d;
+        const section = b.k === 'h' && !!next && !(next.d < b.d || (next.d === b.d && next.k === 'h' && next.level <= b.level));
+        const open = b.k === 'toggle' && !!st.open.get(b.id), folded = section && !!st.fold.get(b.id);
+        out.push({ b, i, n, kids, section, open, folded });
+        if (b.k === 'toggle' && !open && kids) hide = { k: 't', d: b.d };
+        else if (folded) hide = { k: 'h', d: b.d, level: b.level };
+        // an open toggle with nothing in it: a quiet line to write in
+        if (b.k === 'toggle' && open && !kids && o.editable) out.push({ virtual: b.id, d: b.d + 1, i });
+      }
+      return out;
+    }
+    const caretBlock = () => (st.sel && st.sel.a.id === st.sel.b.id && st.sel.a.off === st.sel.b.off && !st.sel.a.cell ? st.sel.a.id : '');
+    // A quiet word on an empty line: a blank note's "Title" and "Start writing", and on the line being written in, what kind of line it is.
+    function placeholder(v) {
+      const b = v.b, list = st.blocks;
+      if (!TEXT[b.k] || !isEmpty(b)) return '';
+      const blank = list.length <= 2 && list.every(x => TEXT[x.k] && isEmpty(x));
+      if (blank && v.i === 0 && b.k === 'h') return 'Title';
+      if (blank && v.i === 1 && b.k === 'p' && list[0].k === 'h') return 'Start writing';
+      if (!o.editable || (caretBlock() !== b.id && !(o.demo && o.demo.caret === v.i))) return '';
+      return b.k === 'h' ? PH['h' + Math.min(b.level, 3)] : PH[b.k] || '';
+    }
+    function sigOf(v) {
+      if (v.virtual) return 'v' + v.d + (o.editable ? 1 : 0);
+      const b = v.b;
+      return JSON.stringify([b.k, b.d, b.level, b.on, v.n, b.r, b.text, b.lang, b.src, b.alt, b.title, b.rows, b.align, v.open, v.folded, v.section, v.kids, placeholder(v), !!o.editable, !!o.phone, st.bsel === b.id,
+        o.demo && o.demo.bar && o.demo.bar.i === v.i ? o.demo.bar : 0]);
+    }
+    // Words as text nodes (a link is an <a> only when reading), a line break as <br>, and a last <br> that holds an empty line open (it counts for nothing).
+    function fillText(tx, rs, hl) {
+      tx.textContent = '';
+      const put = (r, t) => {
+        const parts = r.c ? [t] : t.split('\n');
+        parts.forEach((p, k) => {
+          if (k > 0) tx.appendChild(document.createElement('br'));
+          if (!p) return;
+          let node = document.createTextNode(p);
+          const cls = [r.b && 'nb-b', r.i && 'nb-i', r.s && 'nb-s', r.c && 'nb-c', r.a && 'nb-a', r.hl && 'nb-hl'].filter(Boolean).join(' ');
+          if (cls) {
+            const link = r.a && !o.editable, span = document.createElement(link ? 'a' : 'span');
+            span.className = cls;
+            if (r.a) { span.setAttribute('data-href', r.a); if (link) { span.setAttribute('href', r.a); span.setAttribute('rel', 'nofollow ugc noopener'); if (r.a[0] !== '#') span.setAttribute('target', '_blank'); } if (r.lt) span.setAttribute('data-tip', r.lt); }
+            span.appendChild(node); node = span;
+          }
+          tx.appendChild(node);
+        });
+      };
+      // (the canvas's format bar state draws the words it is over as selected)
+      const list = hl ? [...rcut(rs, 0, hl.a), ...rcut(rs, hl.a, hl.b).map(x => ({ ...x, hl: true })), ...rcut(rs, hl.b, rlen(rs))] : rs;
+      for (const r of list) put(r, r.t);
+      const t = rtext(rs);
+      if (!t || t.endsWith('\n')) tx.appendChild(el('br', '', { 'data-s': '' }));
+    }
+    function rowEl(v) {
+      if (v.virtual) {
+        const row = el('div', 'nb-row nb-p nb-virtual', { 'data-for': v.virtual, contenteditable: 'false' });
+        row.style.setProperty('--d', v.d);
+        row.appendChild(el('div', 'nb-tx', { text: 'Empty' }));
+        return row;
+      }
+      const b = v.b, ed = !!o.editable;
+      const row = el('div', 'nb-row nb-' + b.k + (b.k === 'h' ? ' nb-h' + Math.min(b.level, 4) : '') + (b.k === 'todo' && b.on ? ' nb-on' : '') + (v.open ? ' nb-open' : '') + (v.folded ? ' nb-folded' : '') + (st.bsel === b.id ? ' nb-picked' : ''), { 'data-id': b.id });
+      row.style.setProperty('--d', b.d);
+      if (b.k === 'ol') row.setAttribute('data-n', v.n + '.');
+      if (ATOM[b.k] && ed) row.setAttribute('contenteditable', 'false');
+      if (b.k === 'h' && v.section && (v.folded || rtext(b.r).trim())) row.appendChild(el('span', 'nb-fold', { contenteditable: 'false', role: 'button', 'aria-expanded': v.folded ? 'false' : 'true', 'aria-label': v.folded ? 'Show this section' : 'Fold this section', html: svg('chev', 14, 2.4) }));
+      if (b.k === 'toggle') row.appendChild(el('span', 'nb-mk nb-tg', { contenteditable: 'false', role: 'button', 'aria-expanded': v.open ? 'true' : 'false', 'aria-label': v.open ? 'Close' : 'Open', html: svg('toggle', 14, 2) }));
+      if (b.k === 'todo') row.appendChild(el('span', 'nb-mk nb-box', { contenteditable: 'false', role: 'checkbox', 'aria-checked': b.on ? 'true' : 'false', 'aria-label': b.on ? 'Done' : 'Not done', html: svg('check', 12, 2.6) }));
+      if (TEXT[b.k]) {
+        const ph = placeholder(v), tx = el('div', 'nb-tx', ph ? { 'data-ph': ph } : null);
+        if (ph) row.classList.add('nb-ph');
+        fillText(tx, b.r, o.demo && o.demo.bar && o.demo.bar.i === v.i ? o.demo.bar : null);
+        row.appendChild(tx);
+      } else if (b.k === 'code') {
+        const tx = el('div', 'nb-tx nb-codetx', { spellcheck: 'false' });
+        tx.appendChild(document.createTextNode(b.text));
+        if (!b.text || b.text.endsWith('\n')) tx.appendChild(el('br', '', { 'data-s': '' }));
+        row.appendChild(tx);
+      } else if (b.k === 'hr') row.appendChild(el('div', 'nb-line'));
+      else if (b.k === 'img') {
+        const src = (o.image || ownImage)(b.src);
+        if (src) { const im = el('img', '', { src, alt: b.alt || '', loading: 'lazy', decoding: 'async', draggable: 'false' }); if (b.title) im.setAttribute('data-tip', b.title); row.appendChild(im); }
+        else row.appendChild(el('div', 'nb-alt', { text: b.alt || 'Picture' }));
+      } else if (b.k === 'table') {
+        const wrap = el('div', 'nb-tablewrap'), table = el('table');
+        b.rows.forEach((r, ri) => {
+          const tr = el('tr');
+          r.forEach((cell, ci) => {
+            const td = el(ri ? 'td' : 'th', '', b.align[ci] ? { style: 'text-align: ' + b.align[ci] } : null), tx = el('div', 'nb-tx nb-cell', { 'data-r': ri, 'data-c': ci });
+            if (ed) tx.setAttribute('contenteditable', 'true');
+            fillText(tx, cell);
+            td.appendChild(tx); tr.appendChild(td);
+          });
+          table.appendChild(tr);
+        });
+        wrap.appendChild(table); row.appendChild(wrap);
+        if (ed) {
+          const more = el('div', 'nb-tablemore');
+          more.append(el('button', 'nb-tbtn', { type: 'button', 'data-act': 'row', text: 'Add a row', tabindex: '-1' }), el('button', 'nb-tbtn', { type: 'button', 'data-act': 'col', text: 'Add a column', tabindex: '-1' }));
+          row.appendChild(more);
+        }
+      }
+      return row;
+    }
+    function render() {
+      docEl.setAttribute('contenteditable', o.editable ? 'true' : 'false');
+      docEl.classList.toggle('nb-read', !o.editable);
+      root.classList.toggle('nb-phone', !!o.phone);
+      root.classList.toggle('nb-owner', !o.editable && !!o.onOpen);
+      const vis = view(), keep = new Set();
+      let prev = null;
+      const easing = st.easing; st.easing = '';
+      for (const v of vis) {
+        const id = v.virtual ? 'v' + v.virtual : v.b.id, sig = sigOf(v);
+        let r = st.rows.get(id), fresh = false;
+        if (!r || r.sig !== sig) { const e = rowEl(v); if (r && r.el.parentNode === docEl) docEl.replaceChild(e, r.el); r = { el: e, sig }; st.rows.set(id, r); fresh = true; }
+        const want = prev ? prev.nextSibling : docEl.firstChild;
+        if (r.el !== want) { docEl.insertBefore(r.el, want); fresh = true; }
+        // (what a toggle or a section opens eases in)
+        if (fresh && easing && v.b && isInside(v.i, easing)) { r.el.classList.remove('nb-in'); void r.el.offsetWidth; r.el.classList.add('nb-in'); }
+        prev = r.el; keep.add(id);
+      }
+      for (const [id, r] of st.rows) if (!keep.has(id)) { r.el.remove(); st.rows.delete(id); }
+      while (prev ? prev.nextSibling : docEl.firstChild) (prev ? prev.nextSibling : docEl.firstChild).remove();
+      if (st.restore) { st.restore = false; putSel(st.sel); }
+      placeUi();
+    }
+    // Is block i inside block id (a toggle) or in its section (a heading)?
+    function isInside(i, id) {
+      const j = by(id); if (j == null || i <= j) return false;
+      const b = st.blocks[j];
+      if (b.k === 'toggle') return i < endOf(st.blocks, j);
+      for (let k = j + 1; k <= i; k++) { const x = st.blocks[k]; if (x.d < b.d || (x.d === b.d && x.k === 'h' && x.level <= b.level)) return false; }
+      return true;
+    }
+
+    // ---------- where the caret is: the page's blocks and the browser's selection ----------
+    // A place on the page: { id, off } (off counts UTF-16 units of a line's words, or of code), with cell: [row, column] in a table.
+    function charsTo(tx, node, offset) {
+      let n = 0, done = false;
+      const walk = cur => {
+        if (done) return;
+        if (cur === node && cur.nodeType === 3) { n += Math.min(offset, cur.length); done = true; return; }
+        if (cur.nodeType === 3) { n += cur.length; return; }
+        if (cur.nodeName === 'BR') { if (!cur.hasAttribute('data-s')) n += 1; return; }
+        const kids = cur.childNodes;
+        for (let i = 0; i < kids.length; i++) { if (cur === node && i === offset) { done = true; return; } walk(kids[i]); if (done) return; }
+        if (cur === node) done = true;
+      };
+      walk(tx);
+      return n;
+    }
+    function posOf(node, offset) {
+      if (!node || !docEl.contains(node)) return null;
+      if (node === docEl) {
+        // between rows: the start of the row after, or the end of the last one
+        const kids = [...docEl.children];
+        let row = kids.slice(offset).find(x => x.hasAttribute('data-id')), end = false;
+        if (!row) { row = kids.reverse().find(x => x.hasAttribute('data-id')); end = true; }
+        const b = row && st.blocks[by(row.getAttribute('data-id'))];
+        return b ? { id: b.id, off: end ? rlen(wordsOf(b)) : 0 } : null;
+      }
+      const e = node.nodeType === 1 ? node : node.parentNode, tx = e.closest('.nb-tx'), row = e.closest('.nb-row');
+      if (!row || !row.hasAttribute('data-id')) return null;
+      const id = row.getAttribute('data-id'), b = st.blocks[by(id)];
+      if (!b) return null;
+      if (tx && tx.hasAttribute('data-r')) return { id, off: charsTo(tx, node, offset), cell: [+tx.getAttribute('data-r'), +tx.getAttribute('data-c')] };
+      if (tx && row.contains(tx) && (tx.contains(node) || tx === node)) return { id, off: charsTo(tx, node, offset) };
+      // (on the row around its words: before the marker is the start, after the words the end)
+      const t = row.querySelector(':scope > .nb-tx');
+      return { id, off: t && node === row && offset > [...row.childNodes].indexOf(t) ? rlen(wordsOf(b)) : 0 };
+    }
+    function readSel() {
+      const s = document.getSelection();
+      if (!s || !s.rangeCount || !docEl.contains(s.anchorNode)) return null;
+      const a = posOf(s.anchorNode, s.anchorOffset), b = posOf(s.focusNode, s.focusOffset);
+      return a && b ? { a, b } : null;
+    }
+    // The text box and place in it for a place on the page.
+    function domAt(tx, off) {
+      let left = off, last = null;
+      const walk = cur => {
+        for (let i = 0; i < cur.childNodes.length; i++) {
+          const k = cur.childNodes[i];
+          if (k.nodeType === 3) { if (left <= k.length) return [k, left]; left -= k.length; last = [k, k.length]; }
+          else if (k.nodeName === 'BR') { if (k.hasAttribute('data-s')) continue; if (left === 0) return [cur, i]; left -= 1; last = [cur, i + 1]; }
+          else { const r = walk(k); if (r) return r; }
+        }
+        return null;
+      };
+      return walk(tx) || last || [tx, 0];
+    }
+    function txOf(p) {
+      const r = st.rows.get(p.id);
+      if (!r) return null;
+      return p.cell ? r.el.querySelector('.nb-cell[data-r="' + p.cell[0] + '"][data-c="' + p.cell[1] + '"]') : r.el.querySelector(':scope > .nb-tx');
+    }
+    function putSel(sel) {
+      if (!sel || !o.editable) return;
+      const ta = txOf(sel.a), tb = txOf(sel.b);
+      if (!ta || !tb) return;
+      const [an, ao] = domAt(ta, sel.a.off), [bn, bo] = domAt(tb, sel.b.off);
+      const target = sel.a.cell ? ta : docEl;
+      if (document.activeElement !== target && !target.contains(document.activeElement)) target.focus({ preventScroll: true });
+      const s = document.getSelection();
+      try { s.setBaseAndExtent(an, ao, bn, bo); } catch (e) { return; }
+      const row = st.rows.get(sel.b.id);
+      if (row) visible(row.el);
+    }
+    // Keeps a row in view inside what scrolls the page (only when it is out of it).
+    function visible(rowE) {
+      let p = root.parentElement;
+      while (p && p !== document.body) { const cs = getComputedStyle(p); if (/(auto|scroll)/.test(cs.overflowY) && p.scrollHeight > p.clientHeight) break; p = p.parentElement; }
+      if (!p || p === document.body) return;
+      const r = rowE.getBoundingClientRect(), q = p.getBoundingClientRect();
+      if (r.bottom > q.bottom - 24) p.scrollTop += r.bottom - q.bottom + 24 + (o.phone ? 56 : 0);
+      else if (r.top < q.top + 8) p.scrollTop -= q.top + 8 - r.top;
+    }
+    // Two places in page order: { s, e } with their block indexes.
+    function ordered(sel) {
+      const ia = by(sel.a.id), ib = by(sel.b.id);
+      const aFirst = ia < ib || (ia === ib && (sel.a.cell && sel.b.cell ? (sel.a.cell[0] - sel.b.cell[0] || sel.a.cell[1] - sel.b.cell[1] || sel.a.off - sel.b.off) <= 0 : sel.a.off <= sel.b.off));
+      const s = aFirst ? sel.a : sel.b, e = aFirst ? sel.b : sel.a;
+      return { s: { ...s, i: by(s.id) }, e: { ...e, i: by(e.id) } };
+    }
+    const collapsed = sel => sel.a.id === sel.b.id && sel.a.off === sel.b.off && (!sel.a.cell) === (!sel.b.cell) && (!sel.a.cell || (sel.a.cell[0] === sel.b.cell[0] && sel.a.cell[1] === sel.b.cell[1]));
+    const sameCell = sel => !!sel.a.cell && !!sel.b.cell && sel.a.id === sel.b.id && sel.a.cell[0] === sel.b.cell[0] && sel.a.cell[1] === sel.b.cell[1];
+    const caret = (id, off, cell) => { const p = cell ? { id, off, cell } : { id, off }; return { a: p, b: p }; };
+
+    // ---------- changes ----------
+    // Every change goes through here: Undo steps back through them (typing in a row is one step), and the page says it changed.
+    function commit(list, sel, kind) {
+      const now = Date.now(), again = kind && /^type|^del/.test(kind) && kind === st.last && now - st.lastAt < 1000;
+      if (!again) { st.past.push({ blocks: st.blocks, sel: st.sel }); if (st.past.length > 200) st.past.shift(); st.future = []; }
+      st.last = kind || ''; st.lastAt = now;
+      st.blocks = settle(list); reindex();
+      st.sel = sel; st.restore = !!sel; st.bsel = '';
+      if (sel) reveal(by(sel.b.id));
+      render();
+      changed();
+      rememberSoon();
+    }
+    // The line at i shows: the toggles it is in open, the sections it is in unfold.
+    function reveal(i) {
+      if (i == null) return;
+      for (let j = i - 1; j >= 0; j--) {
+        const x = st.blocks[j];
+        if (x.k === 'toggle' && !st.open.get(x.id) && i < endOf(st.blocks, j)) st.open.set(x.id, true);
+        if (x.k === 'h' && st.fold.get(x.id) && isInside(i, x.id)) st.fold.set(x.id, false);
+      }
+    }
+    function changed() {
+      let md = saved(st.blocks);
+      // nothing changed (or it was changed back): the words as they were written, so a page opened and left is never saved again in other words
+      if (md === st.base) md = st.md;
+      if (md === st.sent) return;
+      st.sent = md;
+      if (o.onChange) o.onChange(md);
+    }
+    function step(from, to) {
+      if (!from.length) return;
+      to.push({ blocks: st.blocks, sel: st.sel });
+      const p = from.pop();
+      st.blocks = p.blocks; reindex(); st.sel = p.sel; st.restore = !!p.sel; st.last = ''; st.bsel = ''; st.pend = null;
+      render(); changed();
+    }
+    const undo = () => step(st.past, st.future), redo = () => step(st.future, st.past);
+    const put = (list, i, b) => { const out = list.slice(); out[i] = b; return out; };
+    // The words between two places, taken out: the first block keeps what comes before, the last gives what comes after, everything between goes.
+    function cut(list, s, e) {
+      if (s.i === e.i) {
+        const b = list[s.i];
+        if (s.cell) return put(list, s.i, { ...b, rows: b.rows.map((r, ri) => r.map((c, ci) => (ri === s.cell[0] && ci === s.cell[1] ? rsplice(c, s.off, e.off, []) : c))) });
+        if (TEXT[b.k]) return put(list, s.i, { ...b, r: rsplice(b.r, s.off, e.off, []) });
+        if (b.k === 'code') return put(list, s.i, { ...b, text: b.text.slice(0, s.off) + b.text.slice(e.off) });
+        return list;
+      }
+      const first = list[s.i], last = list[e.i];
+      const tail = last.k === 'code' ? (last.text.slice(e.off) ? [{ t: last.text.slice(e.off) }] : []) : TEXT[last.k] && !e.cell ? rcut(last.r, e.off, rlen(last.r)) : [];
+      let head;
+      if (ATOM[first.k] || s.cell) head = tail.length ? { ...withId({ k: 'p', d: first.d, r: tail }) } : null;
+      else if (first.k === 'code') head = { ...first, text: first.text.slice(0, s.off) + rtext(tail) };
+      else head = { ...first, r: tidy([...rcut(first.r, 0, s.off), ...(ONE_LINE[first.k] ? oneLine(tail) : tail)]) };
+      return [...list.slice(0, s.i), ...(head ? [head] : []), ...list.slice(e.i + 1)];
+    }
+    // The selection's words taken out; the caret where they were.
+    function cutSel(sel) {
+      const { s, e } = ordered(sel);
+      if (collapsed(sel)) return { list: st.blocks, at: s };
+      const list = cut(st.blocks, s, e), first = st.blocks[s.i];
+      if (ATOM[first.k] || (s.cell && !sameCell(sel))) { const b = list[s.i]; return { list, at: b ? { id: b.id, off: 0, i: s.i } : null }; }
+      return { list, at: s };
+    }
+
+    // Typing.
+    function typeText(sel, text) {
+      if (!text) return;
+      if (st.bsel) { const i = by(st.bsel); if (i != null) return insertAfter(i, withId({ k: 'p', d: st.blocks[i].d, r: [{ t: text }] }), text.length); }
+      const { list, at } = cutSel(sel);
+      if (!at) return;
+      const i = at.i != null ? at.i : by(at.id), b = list[i];
+      if (!b) return;
+      if (at.cell) {
+        const cell = b.rows[at.cell[0]][at.cell[1]], m = st.pend && st.pend.id === b.id ? st.pend.m : typing(cell, at.off);
+        const nb = { ...b, rows: b.rows.map((r, ri) => r.map((c, ci) => (ri === at.cell[0] && ci === at.cell[1] ? rsplice(c, at.off, at.off, [mk(text.replace(/\n/g, ' '), m)]) : c))) };
+        st.pend = null;
+        return commit(put(list, i, nb), caret(b.id, at.off + text.length, at.cell), 'type');
+      }
+      if (b.k === 'code') return commit(put(list, i, { ...b, text: b.text.slice(0, at.off) + text + b.text.slice(at.off) }), caret(b.id, at.off + text.length), 'type');
+      if (!TEXT[b.k]) return;
+      const m = st.pend && st.pend.id === b.id && st.pend.off === at.off ? st.pend.m : typing(b.r, at.off);
+      st.pend = null;
+      let nb = { ...b, r: rsplice(b.r, at.off, at.off, [mk(ONE_LINE[b.k] ? text.replace(/\n/g, ' ') : text, m)]) }, off = at.off + text.length, out = put(list, i, nb);
+      // "# " and the rest at the start of a line of text
+      const sc = text.length <= 3 ? shortcut(nb, off) : null;
+      if (sc) {
+        if (sc.k === 'hr') { const p = withId({ k: 'p', d: nb.d, r: [] }); out = [...out.slice(0, i), { k: 'hr', d: nb.d, id: nb.id }, p, ...out.slice(i + 1)]; return commit(out, caret(p.id, 0), 'shortcut'); }
+        nb = { ...nb, ...sc, r: rsplice(nb.r, 0, sc.cut, []) }; delete nb.cut;
+        if (sc.k === 'code') { nb = { k: 'code', d: nb.d, id: nb.id, lang: '', text: rtext(nb.r) }; }
+        if (sc.k === 'toggle') st.open.set(nb.id, true);
+        return commit(put(out, i, nb), caret(nb.id, off - sc.cut), 'shortcut');
+      }
+      // **bold**, *italic*, ~~strike~~ and `code` finish as their last mark is typed
+      if (/^[*_~`]$/.test(text)) {
+        const fin = finish(nb, off);
+        if (fin) { st.pend = { id: nb.id, off: fin.off, m: fin.m }; return commit(put(out, i, fin.b), caret(nb.id, fin.off), 'fmt'); }
+      }
+      commit(out, caret(nb.id, off), 'type');
+      // A / at the start of a line or after a space opens the block menu (keep typing to narrow it).
+      if (text === '/' && b.k !== 'code') { const before = rtext(nb.r).slice(0, off - 1); if (!before || /\s$/.test(before)) openMenu({ id: nb.id, from: off - 1, slash: true }); }
+    }
+    function shortcut(b, off) {
+      if (b.k !== 'p') return null;
+      const t = rtext(b.r).slice(0, off);
+      if (/^#{1,3} $/.test(t)) return { k: 'h', level: t.length - 1, cut: t.length };
+      if (/^[-*+] $/.test(t)) return { k: 'ul', cut: 2 };
+      const n = /^(\d{1,9})[.)] $/.exec(t);
+      if (n) { const x = { k: 'ol', cut: t.length }; if (+n[1] !== 1) x.start = +n[1]; return x; }
+      if (/^\[ ?\] $/.test(t)) return { k: 'todo', on: false, cut: t.length };
+      if (/^\[[xX]\] $/.test(t)) return { k: 'todo', on: true, cut: t.length };
+      if (t === '> ') return { k: 'toggle', cut: 2 };
+      if (t === '```') return { k: 'code', cut: 3 };
+      if (t === '---' && rtext(b.r) === '---') return { k: 'hr', cut: 3 };
+      return null;
+    }
+    function finish(b, off) {
+      const t = rtext(b.r);
+      for (const [mark, m] of [['**', 'b'], ['__', 'b'], ['~~', 's'], ['*', 'i'], ['_', 'i'], ['`', 'c']]) {
+        if (t.slice(off - mark.length, off) !== mark) continue;
+        const end = off - mark.length, start = t.lastIndexOf(mark, end - 1);
+        if (start < 0 || start + mark.length >= end) continue;
+        const inner = t.slice(start + mark.length, end);
+        if (/^\s|\s$/.test(inner) || inner.includes('\n')) continue;
+        if (mark.length === 1 && (t[start - 1] === mark || t[start + 1] === mark || t[end - 1] === mark)) continue;
+        if (mark[0] === '_' && /[\p{L}\p{N}]/u.test(t[start - 1] || '')) continue;
+        const mm = markAt(b.r, start + mark.length);
+        if (mm && mm.c && m !== 'c') continue;
+        let r = rsplice(b.r, end, off, []);
+        r = rmap(r, start + mark.length, end, x => { x[m] = true; return x; });
+        r = rsplice(r, start, start + mark.length, []);
+        const after = typing(r, end - mark.length); delete after[m];
+        return { b: { ...b, r }, off: end - mark.length, m: after };
+      }
+      return null;
+    }
+    function insertAfter(i, nb, off) {
+      const list = st.blocks, j = endOf(list, i);
+      commit([...list.slice(0, j), nb, ...list.slice(j)], caret(nb.id, off || 0), 'line');
+    }
+
+    // Enter: a line of the same kind; an empty item becomes text, empty text goes out a level; in code, a line break.
+    function enter(sel) {
+      if (st.bsel) { const i = by(st.bsel); if (i != null) return insertAfter(i, withId({ k: 'p', d: st.blocks[i].d, r: [] })); }
+      if (sel.a.cell || sel.b.cell) return tableEnter(sel);
+      const { list, at } = cutSel(sel);
+      if (!at) return;
+      const i = at.i != null ? at.i : by(at.id), b = list[i];
+      if (b.k === 'code') return commit(put(list, i, { ...b, text: b.text.slice(0, at.off) + '\n' + b.text.slice(at.off) }), caret(b.id, at.off + 1), 'type');
+      if (!TEXT[b.k]) return;
+      if (isEmpty(b) && b.k !== 'p' && b.k !== 'h') return commit(put(list, i, { k: 'p', d: b.d, id: b.id, r: [] }), caret(b.id, 0), 'line');
+      if (isEmpty(b) && b.k === 'p' && b.d > 0) return commit(outdentAt(list, i), caret(b.id, 0), 'line');
+      const len = rlen(b.r);
+      // at the end of an open toggle's line: the first line inside it; a closed one: the next toggle after what it holds
+      if (b.k === 'toggle' && at.off === len) {
+        if (st.open.get(b.id)) { const p = withId({ k: 'p', d: b.d + 1, r: [] }); return commit([...list.slice(0, i + 1), p, ...list.slice(i + 1)], caret(p.id, 0), 'line'); }
+        const t = withId({ k: 'toggle', d: b.d, r: [] }), j = endOf(list, i); st.open.set(t.id, true);
+        return commit([...list.slice(0, j), t, ...list.slice(j)], caret(t.id, 0), 'line');
+      }
+      // at the end of a heading with an empty line under it (a blank note's second line): the caret goes there
+      const nx = list[i + 1];
+      if (b.k === 'h' && at.off === len && nx && nx.k === 'p' && nx.d === b.d && isEmpty(nx)) return commit(list, caret(nx.id, 0), 'line');
+      const kind = b.k === 'h' ? 'p' : b.k, left = rcut(b.r, 0, at.off), right = rcut(b.r, at.off, len);
+      // at the very start of a line with words: an empty line goes above it, of its kind (text above a heading)
+      if (at.off === 0 && len) {
+        const above = withId({ k: b.k === 'h' ? 'p' : b.k, d: b.d, r: [] }); if (above.k === 'todo') above.on = false;
+        return commit([...list.slice(0, i), above, ...list.slice(i)], caret(b.id, 0), 'line');
+      }
+      const nb = withId({ k: kind, d: b.d, r: right });
+      if (kind === 'todo') nb.on = false;
+      if (kind === 'toggle') st.open.set(nb.id, true);
+      return commit([...list.slice(0, i), { ...b, r: left }, nb, ...list.slice(i + 1)], caret(nb.id, 0), 'line');
+    }
+    function softBreak(sel) {
+      if (sel.a.cell || sel.b.cell) return;
+      const i = by(ordered(sel).s.id), b = st.blocks[i];
+      if (!b || ONE_LINE[b.k]) return enter(sel);
+      typeText(sel, '\n');
+    }
+
+    // Deleting.
+    function del(sel, back, word, line, exact) {
+      if (st.bsel) return removeBlock(st.bsel);
+      if (exact || !collapsed(sel)) {
+        if (sel.a.cell && sel.b.cell && !sameCell(sel)) return;
+        const { list, at } = cutSel(sel);
+        return at ? commit(list, caret(at.id, at.off, at.cell), 'del') : commit(list, null, 'del');
+      }
+      const p = sel.a, i = by(p.id), b = st.blocks[i];
+      if (p.cell) return cellDelete(i, p, back, word);
+      const words = rtext(wordsOf(b)), len = words.length;
+      if (back && p.off === 0) return startBackspace(i);
+      if (!back && p.off === len) return endDelete(i);
+      let a = p.off, z = p.off;
+      if (back) a = line ? 0 : word ? wordStart(words, p.off) : prevChar(words, p.off);
+      else z = line ? len : word ? wordEnd(words, p.off) : nextChar(words, p.off);
+      const list = cut(st.blocks, { ...p, i, off: a }, { ...p, i, off: z });
+      commit(list, caret(b.id, a), 'del');
+    }
+    const prevChar = (t, i) => { const c = t.charCodeAt(i - 1); return i - (c >= 0xdc00 && c <= 0xdfff && i >= 2 ? 2 : 1); };
+    const nextChar = (t, i) => { const c = t.charCodeAt(i); return i + (c >= 0xd800 && c <= 0xdbff && i + 1 < t.length ? 2 : 1); };
+    const wordStart = (t, i) => { let j = i; while (j > 0 && /\s/.test(t[j - 1])) j--; while (j > 0 && !/\s/.test(t[j - 1])) j--; return j; };
+    const wordEnd = (t, i) => { let j = i; while (j < t.length && /\s/.test(t[j])) j++; while (j < t.length && !/\s/.test(t[j])) j++; return j; };
+    // Backspace at the start of a line: it becomes text, then goes out a level, then joins the line above (a picture, divider or table above is picked first).
+    function startBackspace(i) {
+      const list = st.blocks, b = list[i];
+      if (b.k === 'code') return commit(put(list, i, { k: 'p', d: b.d, id: b.id, r: b.text ? [{ t: b.text }] : [] }), caret(b.id, 0), 'line');
+      if (b.k !== 'p') { const nb = { k: 'p', d: b.d, id: b.id, r: b.r }; return commit(put(list, i, nb), caret(b.id, 0), 'line'); }
+      if (b.d > 0) return commit(outdentAt(list, i), caret(b.id, 0), 'line');
+      const vis = view().filter(v => v.b), at = vis.findIndex(v => v.b.id === b.id), pv = at > 0 ? vis[at - 1].b : null;
+      if (!pv) return;
+      const j = by(pv.id);
+      if (ATOM[pv.k]) { if (isEmpty(b)) commit(list.filter((_, k) => k !== i), null, 'line'); return pick(pv.id); }
+      if (pv.k === 'code') { const nb = { ...pv, text: pv.text + rtext(b.r) }; return commit(put(list, j, nb).filter((_, k) => k !== i), caret(pv.id, pv.text.length), 'line'); }
+      const off = rlen(pv.r), nb = { ...pv, r: tidy([...pv.r, ...(ONE_LINE[pv.k] ? oneLine(b.r) : b.r)]) };
+      commit(put(list, j, nb).filter((_, k) => k !== i), caret(pv.id, off), 'line');
+    }
+    // Delete at the end of a line: the line below joins it.
+    function endDelete(i) {
+      const list = st.blocks, b = list[i], vis = view().filter(v => v.b), at = vis.findIndex(v => v.b.id === b.id), nx = at >= 0 && at + 1 < vis.length ? vis[at + 1].b : null;
+      if (!nx) return;
+      const j = by(nx.id);
+      if (ATOM[nx.k]) return pick(nx.id);
+      if (b.k === 'code') return commit(put(list, i, { ...b, text: b.text + rtext(wordsOf(nx)) }).filter((_, k) => k !== j), caret(b.id, b.text.length), 'line');
+      const off = rlen(b.r), add = wordsOf(nx), nb = { ...b, r: tidy([...b.r, ...(ONE_LINE[b.k] ? oneLine(add) : add)]) };
+      commit(put(list, i, nb).filter((_, k) => k !== j), caret(b.id, off), 'line');
+    }
+    // A picture, a divider or a table picked: a ring shows it, and Backspace or Delete takes it away.
+    function pick(id) { st.bsel = id; st.sel = null; render(); const s = document.getSelection(); if (s) s.removeAllRanges(); docEl.focus({ preventScroll: true }); }
+    function removeBlock(id) {
+      const i = by(id); if (i == null) return;
+      const list = st.blocks.filter((_, k) => k !== i), nb = list[i] || list[i - 1];
+      if (!list.length) { const p = withId({ k: 'p', d: 0, r: [] }); return commit([p], caret(p.id, 0), 'line'); }
+      const target = TEXT[nb.k] || nb.k === 'code' ? nb : null;
+      commit(list, target ? caret(target.id, list[i] === nb ? 0 : rlen(wordsOf(target))) : null, 'line');
+    }
+    // Out one level: the block and what it holds.
+    function outdentAt(list, i) {
+      const j = endOf(list, i), out = list.slice();
+      for (let k = i; k < j; k++) out[k] = { ...out[k], d: Math.max(0, out[k].d - 1) };
+      return out;
+    }
+
+    // Tab and Shift+Tab: in and out a level (with what the lines hold). In code, two spaces; in a table, the next cell.
+    function nest(sel, out) {
+      if (sel.a.cell) return tableTab(sel, out);
+      const { s, e } = ordered(sel), list = st.blocks.slice(), b = list[s.i];
+      if (b.k === 'code' && !out) return typeText(sel, '  ');
+      const vis = view().filter(v => v.b), ids = new Set();
+      for (let k = s.i; k <= e.i; k++) ids.add(list[k].id);
+      let done = false;
+      for (let k = s.i; k <= e.i; k++) {
+        const x = list[k], parentPicked = (() => { for (let q = k - 1; q >= s.i; q--) if (list[q].d < x.d) return ids.has(list[q].id); return false; })();
+        if (parentPicked) continue;
+        const end = endOf(list, k);
+        if (out) { if (x.d === 0) continue; for (let q = k; q < end; q++) list[q] = { ...list[q], d: list[q].d - 1 }; done = true; continue; }
+        const at = vis.findIndex(v => v.b.id === x.id), pv = at > 0 ? vis[at - 1].b : null;
+        if (!pv || x.d + 1 > pv.d + (HOLDS[pv.k] ? 1 : 0) || x.d + 1 > MAX_DEPTH) continue;
+        for (let q = k; q < end; q++) list[q] = { ...list[q], d: list[q].d + 1 };
+        // (nested into a closed toggle: it opens, so the line stays in view)
+        let up = by(pv.id); while (up != null && list[up].d >= x.d + 1) up--;
+        if (up != null && up >= 0 && list[up].k === 'toggle') st.open.set(list[up].id, true);
+        done = true;
+      }
+      if (done) commit(list, st.sel, 'nest');
+    }
+
+    // Marks: bold, italic, strikethrough, code, a link. With nothing selected, the word at the caret, or what is typed next.
+    function rangesOf(sel) {
+      const { s, e } = ordered(sel), out = [];
+      for (let k = s.i; k <= e.i; k++) {
+        const b = st.blocks[k];
+        if (s.cell && k === s.i) { if (sameCell(sel)) out.push({ k, cell: s.cell, a: s.off, z: e.off }); continue; }
+        if (!TEXT[b.k]) continue;
+        out.push({ k, a: k === s.i ? s.off : 0, z: k === e.i && !e.cell ? e.off : rlen(b.r) });
+      }
+      return out.filter(x => x.z > x.a);
+    }
+    const runsIn = (b, x) => (x.cell ? b.rows[x.cell[0]][x.cell[1]] : b.r);
+    function withRuns(b, x, rs) { return x.cell ? { ...b, rows: b.rows.map((r, ri) => r.map((c, ci) => (ri === x.cell[0] && ci === x.cell[1] ? rs : c))) } : { ...b, r: rs }; }
+    function has(sel, m) { const rs = rangesOf(sel); return rs.length > 0 && rs.every(x => rcut(runsIn(st.blocks[x.k], x), x.a, x.z).every(r => (m === 'a' ? !!r.a : !!r[m]))); }
+    function toggleMark(m) {
+      let sel = st.sel || readSel(); if (!sel) return;
+      if (collapsed(sel)) {
+        const p = sel.a, b = st.blocks[by(p.id)]; if (!b || (!TEXT[b.k] && !p.cell)) return;
+        const rs = p.cell ? b.rows[p.cell[0]][p.cell[1]] : b.r, t = rtext(rs), a = wordStart(t, p.off), z = wordEnd(t, p.off);
+        if (a < p.off && p.off < z) sel = { a: { ...p, off: a }, b: { ...p, off: z } };
+        else { const cur = st.pend && st.pend.id === b.id ? st.pend.m : typing(rs, p.off); const next = { ...cur }; if (next[m]) delete next[m]; else next[m] = true; st.pend = { id: b.id, off: p.off, m: next }; return; }
+      }
+      const on = !has(sel, m), list = st.blocks.slice();
+      for (const x of rangesOf(sel)) list[x.k] = withRuns(list[x.k], x, rmap(runsIn(list[x.k], x), x.a, x.z, r => { if (on) r[m] = true; else delete r[m]; return r; }));
+      commit(list, sel, 'fmt');
+    }
+    function setLink(sel, href) {
+      const list = st.blocks.slice();
+      for (const x of rangesOf(sel)) list[x.k] = withRuns(list[x.k], x, rmap(runsIn(list[x.k], x), x.a, x.z, r => { if (href) { r.a = href; delete r.lt; } else { delete r.a; delete r.lt; } return r; }));
+      commit(list, sel, 'fmt');
+    }
+    // What a line becomes (the block menu, the phone's bar, ⌘⌥ keys): its words stay.
+    function setKind(sel, id) {
+      const { s, e } = ordered(sel), list = st.blocks.slice(), first = list[s.i];
+      if (id === 'hr' || id === 'table' || id === 'img') {
+        const empty = TEXT[first.k] && isEmpty(first) && s.i === e.i;
+        const make = src => {
+          const nb = id === 'hr' ? withId({ k: 'hr', d: first.d }) : id === 'img' ? withId({ k: 'img', d: first.d, src, alt: '', title: '' }) : withId({ k: 'table', d: first.d, align: ['', ''], rows: [[[], []], [[], []], [[], []]] });
+          const p = withId({ k: 'p', d: first.d, r: [] }), cur = st.blocks, at = by(first.id);
+          if (at == null) return;
+          const j = empty ? at : endOf(cur, at), rest = empty ? cur.slice(at + 1) : cur.slice(j), next = rest[0], keepLine = next && TEXT[next.k] && isEmpty(next) && next.d === first.d;
+          const out = [...cur.slice(0, j), nb, ...(keepLine ? [] : [p]), ...rest];
+          commit(out, id === 'table' ? caret(nb.id, 0, [0, 0]) : caret(keepLine ? next.id : p.id, 0), 'kind');
+        };
+        if (id === 'img') { if (o.onPicture) Promise.resolve(o.onPicture()).then(src => { if (src) make(src); }, () => {}); return; }
+        return make();
+      }
+      const to = id === 'h1' || id === 'h2' || id === 'h3' ? 'h' : id;
+      for (let k = s.i; k <= e.i; k++) {
+        const b = list[k];
+        if (!TEXT[b.k] && b.k !== 'code') continue;
+        const r = b.k === 'code' ? (b.text ? [{ t: b.text }] : []) : b.r, nb = { id: b.id, k: to, d: b.d };
+        if (to === 'code') { nb.lang = ''; nb.text = rtext(r); }
+        else nb.r = ONE_LINE[to] ? oneLine(r) : r;
+        if (to === 'h') nb.level = +id.slice(1);
+        if (to === 'todo') nb.on = b.k === 'todo' ? !!b.on : false;
+        if (to === 'ol' && b.k === 'ol' && b.start != null) nb.start = b.start;
+        if (to === 'toggle') st.open.set(b.id, true);
+        list[k] = nb;
+      }
+      const at = list[s.i], len = rlen(wordsOf(at));
+      commit(list, caret(at.id, Math.min(s.off, len)), 'kind');
+    }
+
+    // Tables: Enter and Tab go to the next cell (a new row after the last), Backspace in an empty row takes the row away.
+    function tableEnter(sel) { return tableTab(sel, false); }
+    function tableTab(sel, back) {
+      const p = sel.b.cell ? sel.b : sel.a, i = by(p.id), b = st.blocks[i], R = b.rows.length, C = b.rows[0].length;
+      let r = p.cell[0], c = p.cell[1] + (back ? -1 : 1);
+      if (c >= C) { c = 0; r++; } if (c < 0) { c = C - 1; r--; }
+      if (r < 0) return;
+      if (r >= R) { const nb = { ...b, rows: [...b.rows, Array.from({ length: C }, () => [])] }; return commit(put(st.blocks, i, nb), caret(b.id, 0, [r, 0]), 'line'); }
+      st.sel = caret(b.id, rlen(b.rows[r][c]), [r, c]); st.restore = true; putSel(st.sel); st.restore = false;
+    }
+    function cellDelete(i, p, back, word) {
+      const b = st.blocks[i], rs = b.rows[p.cell[0]][p.cell[1]], t = rtext(rs);
+      if (back && p.off === 0) {
+        const row = b.rows[p.cell[0]];
+        if (p.cell[0] > 0 && row.every(c => !rlen(c)) && b.rows.length > 2) { const nb = { ...b, rows: b.rows.filter((_, k) => k !== p.cell[0]) }; const r = p.cell[0] - 1; return commit(put(st.blocks, i, nb), caret(b.id, rlen(nb.rows[r][0]), [r, 0]), 'line'); }
+        return;
+      }
+      if (!back && p.off === t.length) return;
+      const a = back ? (word ? wordStart(t, p.off) : prevChar(t, p.off)) : p.off, z = back ? p.off : word ? wordEnd(t, p.off) : nextChar(t, p.off);
+      commit(cut(st.blocks, { ...p, i, off: a }, { ...p, i, off: z }), caret(b.id, a, p.cell), 'del');
+    }
+    function tableMore(id, what) {
+      const i = by(id), b = st.blocks[i];
+      if (!b) return;
+      const nb = what === 'row' ? { ...b, rows: [...b.rows, b.rows[0].map(() => [])] } : { ...b, rows: b.rows.map(r => [...r, []]), align: [...b.align, ''] };
+      commit(put(st.blocks, i, nb), what === 'row' ? caret(b.id, 0, [nb.rows.length - 1, 0]) : caret(b.id, 0, [0, nb.rows[0].length - 1]), 'line');
+    }
+
+    // ---------- copy, cut and paste ----------
+    function selectionBlocks(sel) {
+      const { s, e } = ordered(sel), out = [];
+      for (let k = s.i; k <= e.i; k++) {
+        const b = st.blocks[k];
+        if (s.cell && sameCell(sel)) { out.push({ k: 'p', d: 0, r: rcut(b.rows[s.cell[0]][s.cell[1]], s.off, e.off) }); break; }
+        if (TEXT[b.k]) out.push({ ...b, r: rcut(b.r, k === s.i ? s.off : 0, k === e.i && !e.cell ? e.off : rlen(b.r)) });
+        else if (b.k === 'code') out.push(s.i === e.i ? { k: 'p', d: 0, r: [{ t: b.text.slice(s.off, e.off) }] } : b);
+        else out.push(b);
+      }
+      const base = out.length ? Math.min(...out.map(b => b.d)) : 0;
+      return out.map(b => ({ ...b, d: b.d - base }));
+    }
+    function onCopy(ev, isCut) {
+      const sel = readSel();
+      if (!sel || collapsed(sel) || !ev.clipboardData) return;
+      ev.preventDefault();
+      const list = selectionBlocks(sel), md = G.markdown(list);
+      ev.clipboardData.setData('text/plain', list.length === 1 && TEXT[list[0].k] ? rtext(list[0].r) : md);
+      ev.clipboardData.setData('text/html', G.render(md));
+      ev.clipboardData.setData('text/x-lucida-notes', md);
+      if (isCut && o.editable) del(sel, true, false, false, true);
+    }
+    function onPaste(ev) {
+      ev.preventDefault();
+      if (!o.editable) return;
+      const dt = ev.clipboardData, sel = readSel() || st.sel;
+      if (!dt || !sel) return;
+      const own = dt.getData('text/x-lucida-notes'), html = dt.getData('text/html'), plain = dt.getData('text/plain');
+      let list = own ? G.blocks(own) : html ? fromHtml(html) : fromPlain(plain || '');
+      if (!list.length && plain) list = fromPlain(plain);
+      if (!list.length) return;
+      insertBlocks(sel, list);
+    }
+    // Plain text: Markdown when it looks like it, else a line of text for each line.
+    function fromPlain(t) {
+      const s = String(t).replace(/\r\n?/g, '\n').slice(0, 200000);
+      if (/^(?: {0,3}(?:#{1,6} |[-*+] |\d{1,9}[.)] |> |```|~~~|:::toggle|\|)|.*(?:\*\*|__|~~|`|\]\())/m.test(s)) return G.blocks(s);
+      return s.split('\n').filter(l => l.trim()).map(l => ({ k: 'p', d: 0, r: [{ t: l }] }));
+    }
+    // A web page's or a document's HTML (read without running anything: a document of its own, never on the page), as blocks.
+    function fromHtml(html) {
+      let doc;
+      try { doc = new DOMParser().parseFromString(String(html).slice(0, 400000), 'text/html'); } catch (e) { return []; }
+      const out = [], BLOCK = /^(P|DIV|H[1-6]|UL|OL|LI|BLOCKQUOTE|PRE|HR|TABLE|DETAILS|SUMMARY|SECTION|ARTICLE|HEADER|FOOTER|MAIN|FIGURE|TR|TD|TH|THEAD|TBODY)$/;
+      const inline = (node, m, acc) => {
+        for (const k of node.childNodes) {
+          if (k.nodeType === 3) { acc.push(mk(m.pre ? k.data : k.data.replace(/\s+/g, ' '), m)); continue; }
+          if (k.nodeType !== 1 || /^(SCRIPT|STYLE|TEMPLATE|NOSCRIPT|IFRAME|OBJECT|SVG|HEAD|META|LINK)$/.test(k.tagName)) continue;
+          const t = k.tagName, css = (k.getAttribute('style') || '').toLowerCase(), x = { ...m };
+          if (t === 'BR') { acc.push(mk('\n', m)); continue; }
+          if (t === 'IMG' || t === 'INPUT') continue;
+          if (t === 'B' || t === 'STRONG' || /font-weight:\s*(bold|[6-9]00)/.test(css)) x.b = true;
+          if (/font-weight:\s*(normal|[1-5]00)/.test(css)) delete x.b;
+          if (t === 'I' || t === 'EM' || /font-style:\s*italic/.test(css)) x.i = true;
+          if (t === 'S' || t === 'DEL' || t === 'STRIKE' || /line-through/.test(css)) x.s = true;
+          if (t === 'CODE' || t === 'KBD' || t === 'SAMP') x.c = true;
+          if (t === 'A') { const h = G.href(k.getAttribute('href') || ''); if (h) x.a = h; }
+          if (BLOCK.test(t)) acc.push(mk('\n', m));
+          inline(k, x, acc);
+        }
+        return acc;
+      };
+      const line = (node, blk) => { const r = tidy(inline(node, {}, [])); const t = rtext(r); if (!t.trim() && blk.k === 'p') return; out.push({ ...blk, r: ONE_LINE[blk.k] ? oneLine(r) : r }); };
+      const walk = (node, d) => {
+        for (const k of node.childNodes) {
+          if (out.length > 4000) return;
+          if (k.nodeType === 3) { if (k.data.trim()) out.push({ k: 'p', d, r: [{ t: k.data.replace(/\s+/g, ' ').trim() }] }); continue; }
+          if (k.nodeType !== 1 || /^(SCRIPT|STYLE|TEMPLATE|NOSCRIPT|IFRAME|OBJECT|SVG|HEAD|META|LINK|TITLE)$/.test(k.tagName)) continue;
+          const t = k.tagName;
+          if (/^H[1-6]$/.test(t)) line(k, { k: 'h', d, level: +t[1] });
+          else if (t === 'UL' || t === 'OL') {
+            for (const li of k.children) {
+              if (li.tagName !== 'LI') continue;
+              const box = li.querySelector(':scope > input[type="checkbox"], :scope > p > input[type="checkbox"]'), nested = [...li.children].filter(c => c.tagName === 'UL' || c.tagName === 'OL');
+              const own = li.cloneNode(true); for (const c of [...own.children]) if (c.tagName === 'UL' || c.tagName === 'OL') c.remove();
+              const r = tidy(inline(own, {}, [])), blk = { k: box ? 'todo' : t === 'OL' ? 'ol' : 'ul', d, r: trimRuns(r) };
+              if (box) blk.on = box.hasAttribute('checked');
+              out.push(blk);
+              for (const n of nested) walk({ childNodes: [n] }, d + 1);
+            }
+          } else if (t === 'BLOCKQUOTE') line(k, { k: 'quote', d });
+          else if (t === 'PRE') out.push({ k: 'code', d, lang: '', text: k.textContent.replace(/\n$/, '') });
+          else if (t === 'HR') out.push({ k: 'hr', d });
+          else if (t === 'TABLE') {
+            const rows = [...k.querySelectorAll('tr')].slice(0, 200).map(tr => [...tr.children].filter(c => c.tagName === 'TD' || c.tagName === 'TH').slice(0, 20).map(c => oneLine(trimRuns(tidy(inline(c, {}, []))))));
+            const n = Math.max(1, ...rows.map(r => r.length));
+            if (rows.length) out.push({ k: 'table', d, align: Array(n).fill(''), rows: rows.map(r => Array.from({ length: n }, (_, i) => r[i] || [])) });
+          } else if (t === 'DETAILS') {
+            const sum = k.querySelector(':scope > summary'), body = k.cloneNode(true); const s2 = body.querySelector(':scope > summary'); if (s2) s2.remove();
+            out.push({ k: 'toggle', d, r: sum ? oneLine(trimRuns(tidy(inline(sum, {}, [])))) : [] });
+            walk(body, d + 1);
+          } else if (t === 'IMG') { const src = (o.image || ownImage)(k.getAttribute('src') || ''); if (src) out.push({ k: 'img', d, src, alt: k.getAttribute('alt') || '', title: '' }); }
+          else if ([...k.children].some(c => BLOCK.test(c.tagName))) walk(k, d);
+          else line(k, { k: 'p', d });
+        }
+      };
+      walk(doc.body, 0);
+      return out.map(b => (b.r ? { ...b, r: trimRuns(b.r) } : b)).filter(b => !b.r || rlen(b.r) || b.k !== 'p');
+    }
+    function trimRuns(rs) {
+      let r = tidy(rs);
+      while (r.length && !r[0].c && /^\s/.test(r[0].t)) { const t = r[0].t.replace(/^\s+/, ''); r = t ? [mk(t, r[0]), ...r.slice(1)] : r.slice(1); }
+      while (r.length && !r[r.length - 1].c && /\s$/.test(r[r.length - 1].t)) { const x = r[r.length - 1], t = x.t.replace(/\s+$/, ''); r = t ? [...r.slice(0, -1), mk(t, x)] : r.slice(0, -1); }
+      return r;
+    }
+    // Blocks put in at the caret: one line of words goes in among the words; more lines split the line and go between.
+    function insertBlocks(sel, pasted) {
+      const { list, at } = cutSel(sel);
+      if (!at) return;
+      const i = at.i != null ? at.i : by(at.id), b = list[i];
+      const words = pasted.length === 1 && TEXT[pasted[0].k] ? pasted[0].r : null;
+      if (at.cell) { const r = oneLine(words || pasted.flatMap(x => wordsOf(x).concat([{ t: ' ' }]))); const nb = { ...b, rows: b.rows.map((rr, ri) => rr.map((c, ci) => (ri === at.cell[0] && ci === at.cell[1] ? rsplice(c, at.off, at.off, r) : c))) }; return commit(put(list, i, nb), caret(b.id, at.off + rlen(r), at.cell), 'paste'); }
+      if (b.k === 'code') { const t = words ? rtext(words) : G.plain(G.markdown(pasted)); return commit(put(list, i, { ...b, text: b.text.slice(0, at.off) + t + b.text.slice(at.off) }), caret(b.id, at.off + t.length), 'paste'); }
+      if (words && TEXT[b.k]) { const r = ONE_LINE[b.k] ? oneLine(words) : words; return commit(put(list, i, { ...b, r: rsplice(b.r, at.off, at.off, r) }), caret(b.id, at.off + rlen(r)), 'paste'); }
+      const add = pasted.map(x => withId({ ...x, d: Math.min(MAX_DEPTH, x.d + (TEXT[b.k] || b.k === 'code' ? b.d : b.d)) }));
+      if (!TEXT[b.k]) { const j = endOf(list, i); const last = add[add.length - 1]; return commit([...list.slice(0, j), ...add, ...list.slice(j)], TEXT[last.k] ? caret(last.id, rlen(last.r)) : null, 'paste'); }
+      // more lines: an empty line is used up; plain text joins the words before the caret; what comes after the caret follows the last line pasted
+      const left = rcut(b.r, 0, at.off), right = rcut(b.r, at.off, rlen(b.r)), first = add[0], out = list.slice(0, i);
+      if (!left.length && right.length) { const last = add[add.length - 1]; return commit([...out, ...add, b, ...list.slice(i + 1)], TEXT[last.k] ? caret(last.id, rlen(last.r)) : caret(b.id, 0), 'paste'); }
+      if (left.length && first.k === 'p') { out.push({ ...b, r: tidy([...left, ...first.r]) }); add.shift(); }
+      else if (left.length) out.push({ ...b, r: left });
+      out.push(...add);
+      let caretAt = null;
+      const tail = out[out.length - 1];
+      if (right.length) { if (add.length && tail.k === 'p') { out[out.length - 1] = { ...tail, r: tidy([...tail.r, ...right]) }; caretAt = caret(tail.id, rlen(tail.r)); } else { const p = withId({ k: b.k === 'h' ? 'p' : b.k, d: b.d, r: right }); out.push(p); caretAt = caret(p.id, 0); } }
+      else caretAt = TEXT[tail.k] ? caret(tail.id, rlen(tail.r)) : tail.k === 'code' ? caret(tail.id, tail.text.length) : null;
+      commit([...out, ...list.slice(i + 1)], caretAt, 'paste');
+    }
+
+    // ---------- the keys and the mouse ----------
+    function onBeforeInput(ev) {
+      const ty = ev.inputType || '';
+      if (ev.isComposing || ty === 'insertCompositionText') return;
+      ev.preventDefault();
+      if (!o.editable) return;
+      if (ty === 'historyUndo') return undo();
+      if (ty === 'historyRedo') return redo();
+      const F = { formatBold: 'b', formatItalic: 'i', formatStrikeThrough: 's' }[ty];
+      if (F) return toggleMark(F);
+      if (/ByDrag$|ByCut$|ByComposition$/.test(ty)) return;
+      const live = readSel(), sel = live || st.sel;
+      if (!sel && !st.bsel) return;
+      if (live) st.sel = live;
+      const tr = ev.getTargetRanges ? ev.getTargetRanges() : [];
+      let exact = null;
+      if (tr.length && (ty === 'insertReplacementText' || (ty.startsWith('delete') && !(live && collapsed(live) && ((/Backward/.test(ty) && live.a.off === 0) || /Forward/.test(ty)))))) {
+        const a = posOf(tr[0].startContainer, tr[0].startOffset), b = posOf(tr[0].endContainer, tr[0].endOffset);
+        if (a && b && !(a.id === b.id && a.off === b.off && !a.cell === !b.cell)) exact = { a, b };
+      }
+      if (ty === 'insertText' || ty === 'insertReplacementText') return typeText(exact || sel, ev.data != null ? ev.data : ev.dataTransfer ? ev.dataTransfer.getData('text/plain') : '');
+      if (ty === 'insertParagraph') return closeMenu(), enter(sel);
+      if (ty === 'insertLineBreak') return softBreak(sel);
+      if (ty.startsWith('insertFrom')) { const dt = ev.dataTransfer; if (dt) insertBlocks(sel, fromPlain(dt.getData('text/plain'))); return; }
+      if (ty.startsWith('delete')) return del(exact || sel, /Backward/.test(ty), /Word/.test(ty), /Line|Soft|Hard/.test(ty), !!exact);
+    }
+    function onKey(ev) {
+      if (!o.editable) return;
+      const mod = ev.metaKey || ev.ctrlKey, key = ev.key || '', low = key.toLowerCase();
+      if (st.menu && !ev.isComposing) {
+        const items = menuItems();
+        if (/^(ArrowDown|ArrowUp|Enter|Tab|Escape)$/.test(key)) {
+          ev.preventDefault();
+          if (key === 'Escape') return closeMenu();
+          if (key === 'Enter' || key === 'Tab') { if (items[st.menu.on]) choose(items[st.menu.on].id); return; }
+          st.menu.on = (st.menu.on + (key === 'ArrowDown' ? 1 : items.length - 1)) % Math.max(1, items.length);
+          return drawMenu();
+        }
+      }
+      if (st.bsel) {
+        if (key === 'Backspace' || key === 'Delete') { ev.preventDefault(); return removeBlock(st.bsel); }
+        if (key === 'Escape') { ev.preventDefault(); st.bsel = ''; return render(); }
+        if (key === 'Enter') { ev.preventDefault(); return enter(st.sel || caret(st.bsel, 0)); }
+        if (/^Arrow/.test(key)) {
+          ev.preventDefault();
+          const vis = view().filter(v => v.b), at = vis.findIndex(v => v.b.id === st.bsel), dir = key === 'ArrowUp' || key === 'ArrowLeft' ? -1 : 1;
+          for (let k = at + dir; k >= 0 && k < vis.length; k += dir) { const b = vis[k].b; if (TEXT[b.k] || b.k === 'code') { st.bsel = ''; st.sel = caret(b.id, dir < 0 ? rlen(wordsOf(b)) : 0); st.restore = true; return render(); } if (ATOM[b.k]) return pick(b.id); }
+          return;
+        }
+        if (key.length === 1 && !mod) { ev.preventDefault(); return typeText(null, key); }
+      }
+      if (key === 'Tab' && !mod && !ev.altKey) { ev.preventDefault(); const sel = readSel() || st.sel; if (sel) nest(sel, ev.shiftKey); return; }
+      if (key === 'Escape') { if (st.link) return closeLink(); if (st.bar && readSel() && !collapsed(readSel())) { const s = readSel(); st.sel = caret(s.b.id, s.b.off, s.b.cell); st.restore = true; return render(); } if (o.onEscape) { ev.preventDefault(); o.onEscape(); } return; }
+      if (!mod) return;
+      const sel = readSel() || st.sel;
+      if (low === 'z' && !ev.altKey) { ev.preventDefault(); return ev.shiftKey ? redo() : undo(); }
+      if (low === 'y' && !ev.shiftKey) { ev.preventDefault(); return redo(); }
+      if (!sel) return;
+      if (ev.altKey) {
+        const k = { Digit1: 'h1', Digit2: 'h2', Digit3: 'h3', Digit0: 'p', Digit5: 'ul', Digit6: 'ol', Digit7: 'todo', Digit8: 'toggle' }[ev.code];
+        if (k) { ev.preventDefault(); return setKind(sel, k); }
+        return;
+      }
+      const m = ev.shiftKey ? { x: 's', s: 's' }[low] : { b: 'b', i: 'i', e: 'c' }[low];
+      if (m) { ev.preventDefault(); st.sel = sel; return toggleMark(m); }
+      if (low === 'k' && !ev.shiftKey) { ev.preventDefault(); st.sel = sel; if (!collapsed(sel)) openLink(); return; }
+      if (key === 'Enter' && !ev.shiftKey) { const b = st.blocks[by(sel.a.id)]; if (b && b.k === 'todo') { ev.preventDefault(); return commit(put(st.blocks, by(b.id), { ...b, on: !b.on }), sel, 'check'); } }
+    }
+    function onDown(ev) {
+      const t = ev.target, row = t.closest && t.closest('.nb-row');
+      const tg = t.closest && t.closest('.nb-tg'), box = t.closest && t.closest('.nb-box'), fold = t.closest && t.closest('.nb-fold'), more = t.closest && t.closest('.nb-tbtn');
+      if (tg || fold) { ev.preventDefault(); const id = row.getAttribute('data-id'); return tg ? flipOpen(id) : flipFold(id); }
+      if (!o.editable) return;
+      if (box) { ev.preventDefault(); const i = by(row.getAttribute('data-id')), b = st.blocks[i]; return commit(put(st.blocks, i, { ...b, on: !b.on }), st.sel, 'check'); }
+      if (more) { ev.preventDefault(); return tableMore(row.getAttribute('data-id'), more.getAttribute('data-act')); }
+      if (row && row.classList.contains('nb-virtual')) { ev.preventDefault(); const i = by(row.getAttribute('data-for')), b = st.blocks[i]; if (!b) return; const p = withId({ k: 'p', d: b.d + 1, r: [] }); return commit([...st.blocks.slice(0, i + 1), p, ...st.blocks.slice(i + 1)], caret(p.id, 0), 'line'); }
+      if (row && ATOM[(st.blocks[by(row.getAttribute('data-id'))] || {}).k] && !(t.closest && t.closest('.nb-cell'))) { ev.preventDefault(); return pick(row.getAttribute('data-id')); }
+      // a press below the last line: write at the end (a new line when the last one isn't empty text)
+      if (t === docEl) {
+        const lastRow = docEl.lastElementChild;
+        if (lastRow && ev.clientY > lastRow.getBoundingClientRect().bottom) {
+          ev.preventDefault();
+          const last = st.blocks[st.blocks.length - 1];
+          if (last && last.k === 'p' && !last.d && isEmpty(last)) { st.sel = caret(last.id, 0); st.restore = true; return render(); }
+          const p = withId({ k: 'p', d: 0, r: [] }); return commit([...st.blocks, p], caret(p.id, 0), 'line');
+        }
+      }
+      if (st.bsel) { st.bsel = ''; render(); }
+      // ⌘ or Ctrl and a press on a link opens it
+      const a = t.closest && t.closest('.nb-a');
+      if (a && (ev.metaKey || ev.ctrlKey)) { ev.preventDefault(); const h = a.getAttribute('data-href'); if (h && h[0] !== '#') window.open(h, '_blank', 'noopener'); }
+    }
+    // Reading: a link to one of the page's headings goes there (opening what it is folded in); on the owner's page a press on its words opens it to write in, at that place.
+    function onClick(ev) {
+      const t = ev.target, ln = !o.editable && t.closest ? t.closest('a.nb-a') : null;
+      if (ln && (ln.getAttribute('href') || '')[0] === '#') { ev.preventDefault(); return jump(ln.getAttribute('href')); }
+      if (o.editable || !o.onOpen) return;
+      if (t.closest && (t.closest('a') || t.closest('.nb-tg') || t.closest('.nb-fold'))) return;
+      const s = document.getSelection();
+      if (s && !s.isCollapsed && docEl.contains(s.anchorNode)) return;
+      const p = s && s.rangeCount && docEl.contains(s.anchorNode) ? posOf(s.anchorNode, s.anchorOffset) : null, row = t.closest && t.closest('.nb-row');
+      const id = p ? p.id : row ? row.getAttribute('data-id') : '', i = id ? by(id) : st.blocks.length - 1;
+      o.onOpen({ i: i == null ? 0 : i, off: p && !p.cell ? p.off : 0 });
+    }
+    // A link "#some-heading" (as guide.js names headings: lower case, - for spaces): that heading, brought to the top.
+    function jump(href) {
+      let f = href.slice(1);
+      try { f = decodeURIComponent(f); } catch (e) { /* as written */ }
+      f = f.toLowerCase();
+      const ids = G.headings(st.md || '').map(x => x.id), heads = st.blocks.filter(b => b.k === 'h'), k = ids.findIndex(id => id === f || id === 'g-' + f), b = k >= 0 ? heads[k] : null;
+      if (!b) return;
+      reveal(by(b.id)); render(); remember();
+      const row = st.rows.get(b.id), still = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+      if (row) row.el.scrollIntoView({ block: 'start', behavior: still ? 'auto' : 'smooth' });
+    }
+    function flipOpen(id) {
+      const was = !!st.open.get(id); st.open.set(id, !was);
+      if (!was) st.easing = id;
+      render(); remember();
+    }
+    function flipFold(id) {
+      const was = !!st.fold.get(id); st.fold.set(id, !was);
+      if (was) st.easing = id;
+      // the caret was in what folds away: it goes to the heading
+      if (!was && st.sel) { const i = by(st.sel.b.id); if (i != null && isInside(i, id)) { const b = st.blocks[by(id)]; st.sel = caret(id, rlen(b.r)); st.restore = true; } }
+      render(); remember();
+    }
+
+    // ---------- typing in another script (Japanese, Chinese, accents): the browser writes, then the page reads what it wrote ----------
+    function onComposeStart() { st.comp = readSel() || st.sel; root.setAttribute('data-composing', '1'); }
+    function onComposeEnd(ev) {
+      root.removeAttribute('data-composing');
+      const at = st.comp; st.comp = null;
+      // the browser changed the row itself: draw it again from the page's blocks, then put in what was written
+      if (at) { const r = st.rows.get(at.a.id); if (r) r.sig = ''; }
+      st.sel = at; st.restore = true; render();
+      if (at && ev.data) typeText(at, ev.data);
+    }
+
+    // ---------- the + on an empty line, the block menu, the format bar, the phone's bar ----------
+    function menuItems() {
+      const q = st.menu && st.menu.slash ? st.menu.q || '' : '', w = q.trim().toLowerCase();
+      return MENU.filter(it => (it.id !== 'img' || o.onPicture) && (!w || it.label.toLowerCase().includes(w) || it.keys.split(' ').some(k => k.startsWith(w))));
+    }
+    function openMenu(m) { st.menu = { on: 0, q: '', ...m }; drawMenu(); }
+    function closeMenu() { if (!st.menu) return; st.menu = null; drawMenu(); }
+    // A choice from the menu: "/" and what was typed after it go, then the line becomes that kind.
+    function choose(id) {
+      const m = st.menu; closeMenu();
+      if (!m) return;
+      const i = by(m.id), b = st.blocks[i];
+      if (!b) return;
+      let list = st.blocks, sel = caret(b.id, m.from || 0);
+      if (m.slash) { const end = m.from + 1 + (m.q || '').length; list = put(list, i, { ...b, r: rsplice(b.r, m.from, end, []) }); st.blocks = settle(list); reindex(); }
+      setKind(sel, id);
+    }
+    function drawMenu() {
+      menuEl.textContent = '';
+      if (!st.menu) { menuEl.classList.remove('nb-show'); return; }
+      const items = menuItems();
+      if (!items.length) { st.menu = null; menuEl.classList.remove('nb-show'); return; }
+      st.menu.on = Math.min(st.menu.on, items.length - 1);
+      items.forEach((it, k) => {
+        const b = el('button', 'nb-item' + (k === st.menu.on ? ' nb-on' : ''), { type: 'button', role: 'option', 'aria-selected': k === st.menu.on ? 'true' : 'false', tabindex: '-1', 'data-id': it.id });
+        const chip = el('span', 'nb-chip' + (it.small ? ' nb-small' : ''), it.icon ? { html: svg(it.icon, 15, 2) } : { text: it.glyph });
+        b.append(chip, el('span', 'nb-label', { text: it.label }));
+        menuEl.appendChild(b);
+      });
+      menuEl.classList.add('nb-show');
+      placeMenu();
+      const on = menuEl.querySelector('.nb-on'); if (on && on.scrollIntoView) on.scrollIntoView({ block: 'nearest' });
+    }
+    // Where the root's own pieces go: in the root's box (the page may be scaled on the canvas).
+    function local(rect) { const rr = root.getBoundingClientRect(), z = rr.width / (root.offsetWidth || rr.width) || 1; return { x: (rect.left - rr.left) / z, y: (rect.top - rr.top) / z, b: (rect.bottom - rr.top) / z, r: (rect.right - rr.left) / z, w: rect.width / z, h: rect.height / z, z }; }
+    function placeMenu() {
+      if (!st.menu) return;
+      const row = st.rows.get(st.menu.id);
+      if (!row) return;
+      const tx = row.el.querySelector(':scope > .nb-tx') || row.el, r = local(tx.getBoundingClientRect()), w = 248, h = menuEl.offsetHeight || 300;
+      const room = scrollBox(), below = room ? (room.bottom - tx.getBoundingClientRect().bottom) / r.z : 9999;
+      const y = below < h + 16 && r.y > h + 16 ? r.y - h - 8 : r.b + 6;
+      menuEl.style.left = Math.max(0, Math.min(r.x - 4, root.offsetWidth - w)) + 'px';
+      menuEl.style.top = y + 'px';
+    }
+    function scrollBox() {
+      let p = root.parentElement;
+      while (p && p !== document.body) { const cs = getComputedStyle(p); if (/(auto|scroll|hidden)/.test(cs.overflowY)) return p.getBoundingClientRect(); p = p.parentElement; }
+      return { top: 0, bottom: innerHeight };
+    }
+    function drawBar(sel) {
+      barEl.textContent = '';
+      if (st.link) {
+        const f = el('input', 'nb-linkfield', { type: 'text', 'aria-label': 'Link', placeholder: 'Paste a link', value: st.link.value || '', autocomplete: 'off', spellcheck: 'false' });
+        const ok = el('button', 'nb-bb', { type: 'button', 'aria-label': 'Add the link', 'data-tip': 'Add the link', html: svg('check', 15, 2.4), tabindex: '-1' });
+        barEl.append(f, ok);
+        if (st.link.had) barEl.appendChild(el('button', 'nb-bb', { type: 'button', 'aria-label': 'Take the link off', 'data-tip': 'Take the link off', 'data-act': 'unlink', html: svg('close', 14, 2.2), tabindex: '-1' }));
+        setTimeout(() => { if (st.link && document.activeElement !== f) { f.focus(); f.select(); } }, 0);
+        return;
+      }
+      const btn = (act, label, inner, on) => el('button', 'nb-bb' + (on ? ' nb-on' : ''), { type: 'button', 'aria-label': label, 'data-tip': label, 'aria-pressed': on ? 'true' : 'false', 'data-act': act, html: inner, tabindex: '-1' });
+      barEl.append(btn('b', 'Bold', '<b>B</b>', has(sel, 'b')), btn('i', 'Italic', '<i>I</i>', has(sel, 'i')), btn('s', 'Strikethrough', '<s>S</s>', has(sel, 's')), btn('c', 'Code', svg('code', 16, 2), has(sel, 'c')), btn('link', 'Link', svg('link', 16, 2), has(sel, 'a')));
+    }
+    function openLink() {
+      const sel = st.sel; if (!sel) return;
+      const rs = rangesOf(sel), first = rs[0], cur = first ? rcut(runsIn(st.blocks[first.k], first), first.a, first.z).find(r => r.a) : null;
+      st.link = { sel, value: cur ? cur.a : '', had: !!cur };
+      st.bar = true; drawBar(sel); placeBar(sel);
+    }
+    function closeLink(apply) {
+      const l = st.link; st.link = null;
+      if (apply !== undefined && l) setLink(l.sel, apply);
+      else if (l) { st.sel = l.sel; st.restore = true; render(); }
+    }
+    function placeBar(sel) {
+      const s = document.getSelection();
+      let rect = null;
+      if (o.demo && o.demo.bar) { const e = root.querySelector('.nb-hl'); if (e) rect = e.getBoundingClientRect(); }
+      else if (s && s.rangeCount && docEl.contains(s.anchorNode)) rect = s.getRangeAt(0).getBoundingClientRect();
+      else if (st.link) { const row = st.rows.get(st.link.sel.a.id); if (row) rect = row.el.getBoundingClientRect(); }
+      if (!rect || (!rect.width && !rect.height)) return;
+      const r = local(rect), w = barEl.offsetWidth || 190, h = barEl.offsetHeight || 40;
+      barEl.style.left = Math.max(0, Math.min(r.x + r.w / 2 - w / 2, root.offsetWidth - w)) + 'px';
+      barEl.style.top = (r.y - h - 8 < 0 ? r.b + 8 : r.y - h - 8) + 'px';
+      void sel;
+    }
+    function placeUi() {
+      const live = st.comp ? null : (o.demo ? demoSel() : readSel()), sel = live || (st.link ? st.link.sel : null);
+      // the + on an empty line of text with the caret
+      const one = live && collapsed(live) && !live.a.cell ? st.blocks[by(live.a.id)] : null;
+      const showPlus = !!(o.editable && !o.phone && one && one.k === 'p' && isEmpty(one) && !st.menu && (st.focused || o.demo));
+      plusEl.classList.toggle('nb-show', showPlus);
+      if (showPlus) { const row = st.rows.get(one.id); if (row) { const r = local((row.el.querySelector(':scope > .nb-tx') || row.el).getBoundingClientRect()); plusEl.style.left = (r.x - 30) + 'px'; plusEl.style.top = (r.y + (r.h - 24) / 2) + 'px'; plusEl.setAttribute('data-for', one.id); } }
+      // the format bar over words that are selected (on a phone, the bar above the keyboard does it)
+      const words = !!(o.editable && sel && !collapsed(sel) && rangesOf(sel).length && (!sel.a.cell || sameCell(sel)));
+      st.bar = words && !o.phone || !!st.link;
+      barEl.classList.toggle('nb-show', st.bar);
+      if (st.bar) { if (!st.link) drawBar(sel); placeBar(sel); }
+      if (st.menu) {
+        // the / menu follows what is typed after the "/", and closes when the caret leaves it
+        if (st.menu.slash) {
+          const b = st.blocks[by(st.menu.id)], t = b && TEXT[b.k] ? rtext(b.r) : '', c = live && collapsed(live) && live.a.id === st.menu.id ? live.a.off : -1;
+          if (!b || t[st.menu.from] !== '/' || c <= st.menu.from || c - st.menu.from > 25 || /\s/.test(t.slice(st.menu.from + 1, c))) { if (!o.demo) closeMenu(); }
+          else if (st.menu.q !== t.slice(st.menu.from + 1, c)) { st.menu.q = t.slice(st.menu.from + 1, c); st.menu.on = 0; drawMenu(); }
+          else placeMenu();
+        } else placeMenu();
+      }
+      if (o.phone) drawKeys(live);
+    }
+    // The phone's bar above the keyboard: Aa, To-do, Bullets, Toggle, Picture and Done; while words are selected, Bold, Italic, Strikethrough, Code and Link.
+    function drawKeys(sel) {
+      const show = !!(o.editable && (st.focused || (o.demo && o.demo.keys)));
+      keysEl.classList.toggle('nb-show', show);
+      if (!keysEl.isConnected) (o.keysHost || root).appendChild(keysEl);
+      if (!show) return;
+      keysEl.textContent = '';
+      const b = sel ? st.blocks[by(ordered(sel).s.id)] : null, words = sel && !collapsed(sel) && rangesOf(sel).length;
+      const btn = (act, label, inner, on) => el('button', 'nb-kb' + (on ? ' nb-on' : ''), { type: 'button', 'aria-label': label, 'aria-pressed': on ? 'true' : 'false', 'data-act': act, html: inner, tabindex: '-1' });
+      if (st.aa && !words) {
+        keysEl.append(btn('h1', 'Heading', '<span class="nb-kt">Heading</span>', b && b.k === 'h' && b.level === 1), btn('h2', 'Subheading', '<span class="nb-kt">Subheading</span>', b && b.k === 'h' && b.level === 2), btn('p', 'Text', '<span class="nb-kt">Text</span>', b && b.k === 'p'), btn('aa', 'Close', svg('close', 15, 2.2)));
+      } else if (words) {
+        keysEl.append(btn('b', 'Bold', '<b>B</b>', has(sel, 'b')), btn('i', 'Italic', '<i>I</i>', has(sel, 'i')), btn('s', 'Strikethrough', '<s>S</s>', has(sel, 's')), btn('c', 'Code', svg('code', 17, 2), has(sel, 'c')), btn('link', 'Link', svg('link', 17, 2), has(sel, 'a')));
+      } else {
+        keysEl.append(btn('aa', 'Text style', '<span class="nb-kt nb-aa">Aa</span>', false), btn('todo', 'To-do', svg('todo', 18, 1.9), b && b.k === 'todo'), btn('ul', 'Bullets', svg('list', 18, 1.9), b && b.k === 'ul'), btn('toggle', 'Toggle', svg('toggle', 13, 2), b && b.k === 'toggle'));
+        if (o.onPicture) keysEl.appendChild(btn('img', 'Picture', svg('image', 18, 1.9)));
+        keysEl.appendChild(el('span', 'nb-kgap'));
+        keysEl.appendChild(btn('done', 'Hide the keyboard', svg('down', 18, 2.2)));
+      }
+      placeKeys();
+    }
+    function placeKeys() {
+      if (o.keysHost || !window.visualViewport) return;
+      const vv = window.visualViewport, gap = Math.max(0, innerHeight - vv.height - vv.offsetTop);
+      keysEl.style.position = 'fixed'; keysEl.style.bottom = gap + 'px';
+    }
+    // The canvas's selection: none (its states show the menu and the bar as drawn).
+    function demoSel() {
+      const D = o.demo;
+      if (D.bar) { const b = st.blocks[D.bar.i]; return b ? { a: { id: b.id, off: D.bar.a }, b: { id: b.id, off: D.bar.b } } : null; }
+      if (D.caret != null) { const b = st.blocks[D.caret]; return b ? caret(b.id, rlen(wordsOf(b))) : null; }
+      return null;
+    }
+    function demoUi() {
+      const D = o.demo;
+      if (D.menu && D.caret != null) { const b = st.blocks[D.caret]; if (b) { st.menu = { id: b.id, from: 0, on: 0, q: '', slash: false }; drawMenu(); } }
+      placeUi();
+    }
+
+    plusEl.addEventListener('mousedown', ev => { ev.preventDefault(); const id = plusEl.getAttribute('data-for'); if (id) openMenu({ id, from: 0, slash: false }); });
+    menuEl.addEventListener('mousedown', ev => { ev.preventDefault(); const b = ev.target.closest && ev.target.closest('.nb-item'); if (b) choose(b.getAttribute('data-id')); });
+    barEl.addEventListener('mousedown', ev => {
+      const b = ev.target.closest && ev.target.closest('button');
+      if (ev.target.closest && ev.target.closest('.nb-linkfield')) return;
+      ev.preventDefault();
+      if (!b) return;
+      if (st.link) { const f = barEl.querySelector('.nb-linkfield'); return b.getAttribute('data-act') === 'unlink' ? closeLink('') : closeLink(G.href(f ? f.value : '')); }
+      const act = b.getAttribute('data-act'), sel = readSel() || st.sel;
+      if (!sel) return;
+      st.sel = sel;
+      if (act === 'link') return openLink();
+      toggleMark(act);
+    });
+    barEl.addEventListener('keydown', ev => {
+      if (!st.link) return;
+      if (ev.key === 'Enter') { ev.preventDefault(); const f = barEl.querySelector('.nb-linkfield'), h = G.href(f ? f.value : ''); if (h || !f.value.trim()) closeLink(h); else f.classList.add('nb-bad'); }
+      if (ev.key === 'Escape') { ev.preventDefault(); closeLink(); }
+    });
+    keysEl.addEventListener('mousedown', ev => { if (ev.target.closest && ev.target.closest('button')) ev.preventDefault(); });
+    keysEl.addEventListener('click', ev => {
+      const b = ev.target.closest && ev.target.closest('button'); if (!b) return;
+      const act = b.getAttribute('data-act'), sel = readSel() || st.sel;
+      if (act === 'done') { const s = document.getSelection(); if (s) s.removeAllRanges(); docEl.blur(); st.focused = false; st.aa = false; return placeUi(); }
+      if (act === 'aa') { st.aa = !st.aa; return drawKeys(sel); }
+      if (!sel) return;
+      st.sel = sel;
+      if (act === 'b' || act === 'i' || act === 's' || act === 'c') return toggleMark(act);
+      if (act === 'link') return openLink();
+      if (act === 'img') return setKind(sel, 'img');
+      const cur = st.blocks[by(ordered(sel).s.id)], same = cur && (act === cur.k || (cur.k === 'h' && act === 'h' + cur.level));
+      st.aa = false;
+      setKind(sel, same && act !== 'p' ? 'p' : act);
+    });
+
+    docEl.addEventListener('beforeinput', onBeforeInput);
+    docEl.addEventListener('keydown', onKey);
+    docEl.addEventListener('mousedown', onDown);
+    docEl.addEventListener('click', onClick);
+    docEl.addEventListener('compositionstart', onComposeStart);
+    docEl.addEventListener('compositionend', onComposeEnd);
+    docEl.addEventListener('copy', ev => onCopy(ev, false));
+    docEl.addEventListener('cut', ev => onCopy(ev, true));
+    docEl.addEventListener('paste', onPaste);
+    docEl.addEventListener('dragstart', ev => ev.preventDefault());
+    docEl.addEventListener('drop', ev => ev.preventDefault());
+    docEl.addEventListener('focusin', () => { st.focused = true; placeUi(); });
+    docEl.addEventListener('focusout', () => { setTimeout(() => { if (root.contains(document.activeElement)) return; st.focused = false; st.aa = false; closeMenu(); placeUi(); if (o.phone) drawKeys(null); }, 0); });
+    const onSel = () => {
+      if (!root.isConnected) { document.removeEventListener('selectionchange', onSel); if (window.visualViewport) window.visualViewport.removeEventListener('resize', placeKeys); return; }
+      if (st.comp) return;
+      const s = readSel();
+      if (s) { st.sel = s; if (st.pend && !(collapsed(s) && s.a.id === st.pend.id && s.a.off === st.pend.off)) st.pend = null; }
+      placeUi();
+    };
+    document.addEventListener('selectionchange', onSel);
+    if (window.visualViewport) window.visualViewport.addEventListener('resize', placeKeys);
+
+    const api = {
+      focus(at) { if (!o.editable) return; let b, off = 0; if (at === 'end' || at == null) { b = st.blocks[st.blocks.length - 1]; off = b ? rlen(wordsOf(b)) : 0; } else { b = st.blocks[Math.max(0, Math.min(at.i | 0, st.blocks.length - 1))]; off = at.off | 0; } if (!b) return; reveal(by(b.id)); if (!TEXT[b.k] && b.k !== 'code') return pick(b.id); off = Math.min(off, rlen(wordsOf(b))); st.sel = caret(b.id, off); st.restore = true; render(); },
+      flush() { changed(); remember(); },
+      selectedText() { const s = readSel(); return s && !collapsed(s) ? G.plain(G.markdown(selectionBlocks(s))) : ''; },
+      blocks: () => st.blocks
+    };
+    function update(next) {
+      const was = o; o = { ...(next || {}) };
+      const key = String(o.key || ''), md = String(o.md == null ? '' : o.md);
+      if (key !== st.key || (md !== st.sent && md !== st.md) || JSON.stringify(was.demo || null) !== JSON.stringify(o.demo || null)) load(md, key);
+      else if (!!was.editable !== !!o.editable || !!was.phone !== !!o.phone) { st.rows.forEach(r => { r.sig = ''; }); render(); }
+      if (o.focusAt != null && !st.focusedOnce && o.editable) { st.focusedOnce = true; setTimeout(() => api.focus(o.focusAt), 0); }
+    }
+    return { root, api, update };
+  }
+
+  function mount(host, opts) {
+    if (!host || typeof document === 'undefined') return null;
+    let p = host.__nb;
+    if (!p || !host.contains(p.root)) p = host.__nb = Page(host, opts);
+    p.update(opts);
+    return p.api;
+  }
+  return { mount };
+})(this.md())); }
 mockMaterials() {
   const p = this.props, noop = () => {};
   const day = (m, d) => new Date(2026, m, d, 10).getTime();
@@ -2324,14 +3949,17 @@ mockMaterials() {
       { key: 'k4', kind: 'basic', front: 'Where does glycolysis happen?', back: 'In the cytoplasm.', text: '', at: 'p. 7', gone: true },
       { key: 'k5', kind: 'cloze', front: '', back: '', text: 'The Krebs cycle runs in the [[mitochondrial matrix]].', at: 'p. 8', gone: false },
       { key: 'k6', kind: 'basic', front: 'What carries electrons to the transport chain?', back: 'NADH and FADH₂.', text: '', at: 'p. 9', gone: false }];
+    // (the starter notes as web/make.mjs drafts them: a section for the part, each note a toggle)
     const notes = { title: 'Lecture 3 slides', overview: 'How cells make energy: the mitochondrion, the electron transport chain and the Krebs cycle. It ends with how ATP is made and what runs out without oxygen.',
-      sections: [{ heading: 'The mitochondrion', at: 'p. 4', text: 'The **mitochondrion** makes most of the cell’s **ATP**. It has two membranes and is the site of the electron transport chain.' },
-        { heading: 'The electron transport chain', at: 'p. 5', text: '- **NADH** and **FADH₂** pass electrons along the chain\n- Protons (H⁺) are pumped into the intermembrane space\n- **ATP synthase** lets them flow back and makes ATP' },
-        { heading: 'Glycolysis', at: 'p. 7', text: 'Happens in the **cytoplasm** and splits one glucose into two **pyruvate**.' },
-        { heading: 'The Krebs cycle', at: 'p. 8', text: '| Where | What it makes |\n| --- | --- |\n| **Matrix** | NADH, FADH₂ and a little ATP |' }],
-      text: ['# Lecture 3 slides', '', 'How cells make energy: the mitochondrion, the electron transport chain and the Krebs cycle. It ends with how ATP is made and what runs out without oxygen.', '', '## The mitochondrion (p. 4)', '', 'The **mitochondrion** makes most of the cell’s **ATP**. It has two membranes and is the site of the electron transport chain.', '',
-        '## The electron transport chain (p. 5)', '', '- **NADH** and **FADH₂** pass electrons along the chain', '- Protons (H⁺) are pumped into the intermembrane space', '- **ATP synthase** lets them flow back and makes ATP', '', '## Glycolysis (p. 7)', '', 'Happens in the **cytoplasm** and splits one glucose into two **pyruvate**.', '',
-        '## The Krebs cycle (p. 8)', '', '| Where | What it makes |', '| --- | --- |', '| **Matrix** | NADH, FADH₂ and a little ATP |', ''].join('\n') };
+      sections: [{ heading: 'The **mitochondrion** makes most of the cell’s **ATP**', at: 'p. 4', text: 'It has two membranes and is the site of the electron transport chain.' },
+        { heading: 'The **electron transport chain** pumps protons', at: 'p. 5', text: '- **NADH** and **FADH₂** pass electrons along the chain\n- Protons (H⁺) are pumped into the intermembrane space\n- **ATP synthase** lets them flow back and makes ATP' },
+        { heading: '**Glycolysis** happens in the cytoplasm', at: 'p. 7', text: 'It splits one glucose into two **pyruvate**.' },
+        { heading: 'The **Krebs cycle** runs in the matrix', at: 'p. 8', text: '| Where | What it makes |\n| --- | --- |\n| **Matrix** | NADH, FADH₂ and a little ATP |' }],
+      text: ['# Lecture 3 slides', '', 'How cells make energy: the mitochondrion, the electron transport chain and the Krebs cycle. It ends with how ATP is made and what runs out without oxygen.', '', '## Energy in the cell (p. 4 to p. 8)', '',
+        ':::toggle The **mitochondrion** makes most of the cell’s **ATP**', 'It has two membranes and is the site of the electron transport chain.', ':::', '',
+        ':::toggle The **electron transport chain** pumps protons', '- **NADH** and **FADH₂** pass electrons along the chain', '- Protons (H⁺) are pumped into the intermembrane space', '- **ATP synthase** lets them flow back and makes ATP', ':::', '',
+        ':::toggle **Glycolysis** happens in the cytoplasm', 'It splits one glucose into two **pyruvate**.', ':::', '',
+        ':::toggle The **Krebs cycle** runs in the matrix', '| Where | What it makes |', '| --- | --- |', '| **Matrix** | NADH, FADH₂ and a little ATP |', ':::', ''].join('\n') };
     const spanish = [
       { key: 'k1', kind: 'audio', front: '', back: 'the house', text: '', speak: 'la casa', lang: 'es', at: '', gone: false },
       { key: 'k2', kind: 'audio', front: '', back: 'Good morning', text: '', speak: 'buenos días', lang: 'es', at: '', gone: false },
@@ -2359,7 +3987,7 @@ mockMaterials() {
       'Review': { step: 'review', kind: 'file', cards, name: 'Lecture 3 slides', notes },
       'Review (picture cards)': { step: 'review', kind: 'file', cards: [...cards.slice(0, 3), ...pics], name: 'Lecture 3 slides', notes, figures: 3, canImage: true }, 'Review (notes open)': { step: 'review', kind: 'file', cards, name: 'Lecture 3 slides', notes }, 'Review (notes off)': { step: 'review', kind: 'file', cards, name: 'Lecture 3 slides', notes, keepNotes: false },
       'Review (no room for notes)': { step: 'review', kind: 'file', cards, name: 'Lecture 3 slides', notes, notesFull: true },
-      'Review (audio cards)': { step: 'review', kind: 'paste', cards: spanish, name: 'Spanish words', notes: { ...notes, title: 'Spanish words', sections: notes.sections.slice(0, 2).map(x => ({ ...x, at: '' })), text: '# Spanish words\n\nGreetings and words for the home and school.\n\n## Greetings\n\n**buenos días** means good morning. Use **usted** to be polite.\n\n## The home\n\n**la casa** is the house.\n' } },
+      'Review (audio cards)': { step: 'review', kind: 'paste', cards: spanish, name: 'Spanish words', notes: { ...notes, title: 'Spanish words', sections: [{ heading: '**buenos días** means good morning', at: '', text: 'Use **usted** to be polite.' }, { heading: '**la casa** is the house', at: '', text: 'A word for the home.' }], text: '# Spanish words\n\nGreetings and words for the home and school.\n\n## Greetings and the home\n\n:::toggle **buenos días** means good morning\nUse **usted** to be polite.\n:::\n\n:::toggle **la casa** is the house\nA word for the home.\n:::\n' } },
       'Review (editing a card)': { step: 'review', kind: 'file', cards, name: 'Lecture 3 slides', notes, editing: 'k2' },
       'Limit reached': { step: 'error', kind: 'file', limits: free, error: { message: 'That’s today’s 3 free makes. Go Pro for 30 a day.', pro: true, code: 'day' } },
       'File too big': { step: 'add', kind: 'file', limits: free, files: [slides], ready: true, error: { message: 'That file is over 20 MB. Go Pro for up to 40 MB.', soft: true } },
@@ -2368,10 +3996,13 @@ mockMaterials() {
       recStart: noop, recPause: noop, recResume: noop, recStop: noop, recDiscard: noop, setKeepNotes: noop, make: noop, cancel: noop, retry: noop, edit: noop, openCard: noop, remove: noop, save: noop, discard: noop };
   })();
   const GD = (() => {
-    const text = ['# Cell Biology: Exam 1', '', 'Everything for the first exam, in the order we covered it. Start with the checklist, then the mnemonics.', '', '## Checklist', '- [x] Organelles and what each one does', '- [x] The electron transport chain',
-      '- [ ] Glycolysis, step by step', '- [ ] Mitosis versus meiosis', '', '## Mnemonics', '| Phase | Remember it as |', '| --- | --- |', '| Prophase | **P**ut your chromosomes in **P**lace |', '| Metaphase | **M**iddle of the cell |',
-      '| Anaphase | **A**part they go |', '| Telophase | **T**wo new cells |', '', '> The mitochondrion makes most of the cell’s ATP.', '', 'Questions? Ask in [office hours](https://example.edu/office-hours).'].join('\n');
-    const pages = [{ id: 'g1', title: 'Lecture 3 summary', text: '## Lecture 3\n\nThe **electron transport chain** pumps protons across the inner membrane.\n\n1. NADH gives up its electrons.\n2. Protons are pumped out of the matrix.\n3. ATP synthase lets them flow back and makes ATP.', at: 0 }, { id: 'g2', title: 'Mnemonics', text: '- **PMAT** for the phases of mitosis\n- *Please Do Not Throw Sausage Pizza Away* for the layers', at: 0 }];
+    const text = ['# Cell Biology: Exam 1', '', 'Everything for the first exam, in the order we covered it.', '', '## Checklist', '', '- [x] Organelles and what each one does', '- [x] The electron transport chain',
+      '- [ ] Glycolysis, step by step', '- [ ] Mitosis versus meiosis', '', '## The mitochondrion (p. 4 to p. 5)', '', ':::toggle The **mitochondrion** makes most of the cell’s **ATP**',
+      'It has two membranes. The inner one folds into **cristae**, where the electron transport chain sits.', ':::', '', ':::toggle **ATP synthase** lets protons flow back and makes ATP',
+      '1. NADH gives up its electrons.', '2. Protons are pumped out of the matrix.', '3. They flow back through ATP synthase.', ':::', '', '## Mnemonics', '', '| Phase | Remember it as |', '| --- | --- |',
+      '| Prophase | **P**ut your chromosomes in **P**lace |', '| Metaphase | **M**iddle of the cell |', '| Anaphase | **A**part they go |', '| Telophase | **T**wo new cells |', '',
+      '> The mitochondrion makes most of the cell’s ATP.', '', 'Questions? Ask in [office hours](https://example.edu/office-hours).', ''].join('\n');
+    const pages = [{ id: 'g1', title: 'Lecture 3 summary', text: '## Lecture 3\n\n:::toggle The **electron transport chain** pumps protons across the inner membrane\n1. NADH gives up its electrons.\n2. Protons are pumped out of the matrix.\n3. ATP synthase lets them flow back and makes ATP.\n:::\n', at: 0 }, { id: 'g2', title: 'Mnemonics', text: '- **PMAT** for the phases of mitosis\n- *Please Do Not Throw Sausage Pizza Away* for the layers\n', at: 0 }];
     const file = (name, type, size, f) => ({ name, href: '/media/' + name, type, size, file: f });
     const sources = [
       { id: 'x1', kind: 'file', name: 'Lecture 3 slides', cards: 24, at: day(8, 18), url: '', text: '', textName: '', seconds: 0, pages: 32, files: [file('sx1-0.pdf', 'application/pdf', 4200000, 'Lecture 3 slides.pdf')], href: '/media/sx1-0.pdf' },
@@ -2388,7 +4019,7 @@ mockMaterials() {
     guide: () => ({ deckId: 'cell', text: GMODE === 'No guide yet' ? '' : GMODE === 'Long guide' ? GD.text + '\n\n' + GD.text.replace('# Cell Biology: Exam 1', '## More for the exam') : GD.text, at: 0, pages: GMODE === 'Guide pages' ? GD.pages : [], can: !RO, studying: RO }),
     sources: () => (GMODE === 'No guide yet' || RO ? [] : GD.sources),
     sourceText: name => (/^sx2/.test(name) || /^sx3/.test(name) ? GD.talk : ''),
-    guideHistory: () => Promise.resolve([{ at: day(8, 21), saved: 0, text: GD.text.replace('- [x] The electron transport chain', '- [ ] The electron transport chain') }, { at: day(8, 18), saved: 0, text: '# Cell Biology: Exam 1\n\nEverything for the first exam.' }]),
+    guideHistory: () => Promise.resolve([{ at: day(8, 21), saved: 0, text: GD.text.replace('- [x] The electron transport chain', '- [ ] The electron transport chain') }, { at: day(8, 18), saved: 0, text: '# Cell Biology: Exam 1\n\nEverything for the first exam.\n' }]),
     saveGuide: () => Promise.resolve({}), addGuidePage: () => Promise.resolve('g9'), renameGuidePage: () => Promise.resolve({}), deleteGuidePage: () => Promise.resolve({}), restoreGuide: () => Promise.resolve({}), deleteSource: () => Promise.resolve({}) };
 }
 diagramsMock() {
@@ -2506,7 +4137,8 @@ renderVals() {
     progWord: prog.word || 'Getting ready…', progLine: prog.phase === 'write' || prog.phase === 'read' ? plural(prog.i, 'part') + ' of ' + prog.n + ' done' : prog.phase === 'see' ? prog.i + ' of ' + plural(prog.n, 'step') + ' done' : prog.phase === 'send' && prog.n > 1 ? prog.i + ' of ' + prog.n + ' sent' : 'This takes a moment', progPct: pct, progWidth: Math.max(4, pct) + '%',
     hasNotes: step === 'review' && !!N, notesLine, notesSw: sw(keepN, !full), toggleNotes: () => (full ? null : M.setKeepNotes(!keepN)), toggleNotesOpen: () => this.setState({ notesOpen: !nOpen }), notesOpen: nOpen, notesExpanded: nOpen ? 'true' : 'false',
     notesOpenLabel: nOpen ? 'Hide the notes' : 'Read the notes', notesOp: keepN ? '1' : '.5',
-    notesRef: el => { const k = N ? N.text.length + ':' + (() => { let h = 0; for (let i = 0; i < N.text.length; i++) h = (h * 31 + N.text.charCodeAt(i)) | 0; return h; })() : ''; if (el.getAttribute('data-k') !== k) { el.innerHTML = N ? md.render(N.text) : ''; el.setAttribute('data-k', k); } },
+    // (the draft is read like any page of notes: a section for each part, a toggle for each note, closed)
+    notesRef: el => { if (el) this.notes().mount(el, { md: N ? N.text : '', key: '', editable: false, phone: true }); },
     cards, reviewLine: plural(keep, 'card') + (v.name || v.title ? ' from ' + (v.name || v.title) : ''), saveLabel: v.saving ? 'Saving…' : keep ? 'Add ' + plural(keep, 'card') + ' to ' + into : 'No cards to add', saveBg: keep ? t.inv : t.surf2, saveFg: keep ? t.invText : t.muted,
     errMessage: err && !err.soft ? err.message : '', errMore: err && err.code === 'video-failed' ? 'You can paste the video’s transcript instead.' : err && err.code === 'video-off' ? 'On YouTube, open the video’s description, tap Show transcript, then copy it.' : '',
     errPro: !!(err && err.pro), errRetry: !!(err && !err.pro && err.again)

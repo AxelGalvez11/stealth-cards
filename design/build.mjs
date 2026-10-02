@@ -33,6 +33,9 @@ const RICH_METHOD = `rich() { return Component._rich || (Component._rich = (${RI
 const GUIDE_FILE = new URL('../web/guide.js', import.meta.url), GUIDE_SRC = existsSync(GUIDE_FILE) ? readFileSync(GUIDE_FILE, 'utf8') : '';
 const GUIDE_METHOD = GUIDE_SRC ? `md() { return Component._md || (Component._md = (${GUIDE_SRC.slice(GUIDE_SRC.indexOf('function makeGuide'), GUIDE_SRC.lastIndexOf('export default')).trim()})()); }`
   : `md() { return { render: s => String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;'), plain: s => String(s || '') }; }`;
+// The Notes page (web/notes.js), copied into every board that shows a page of notes, the same way: `this.notes().mount(element, options)`.
+const NOTES_FILE = new URL('../web/notes.js', import.meta.url), NOTES_SRC = existsSync(NOTES_FILE) ? readFileSync(NOTES_FILE, 'utf8') : '';
+const NOTES_METHOD = NOTES_SRC ? `notes() { return Component._nb || (Component._nb = (${NOTES_SRC.slice(NOTES_SRC.indexOf('function makeNotes'), NOTES_SRC.lastIndexOf('export default')).trim()})(this.md())); }` : `notes() { return { mount: () => null }; }`;
 // Lucida's own tooltip (web/tip.js), put once in the canvas's shared logic file (design/slim.mjs) so a board shows it on the canvas as the app does.
 const TIP_SRC = readFileSync(new URL('../web/tip.js', import.meta.url), 'utf8').replace(/^[\s\S]*?export default /, '').trim();
 const OUT = new URL('./canvas/project/', import.meta.url).pathname;
@@ -90,7 +93,7 @@ skinFor(k) {
 }
 ${GEN_METHOD}
 ${MOCK_METHOD}
-${logic.includes('this.rich(') ? RICH_METHOD : ''}${logic.includes('this.drag(') ? '\n' + DRAG_METHOD : ''}${logic.includes('this.shareOrCopy(') ? '\n' + SHARE_METHOD : ''}${logic.includes('this.md(') ? '\n' + GUIDE_METHOD : ''}${logic.includes('this.mockMaterials(') ? '\n' + MATERIALS_MOCK : ''}${logic.includes('this.dg(') ? '\n' + DIAGRAM_METHOD : ''}
+${logic.includes('this.rich(') ? RICH_METHOD : ''}${logic.includes('this.drag(') ? '\n' + DRAG_METHOD : ''}${logic.includes('this.shareOrCopy(') ? '\n' + SHARE_METHOD : ''}${logic.includes('this.md(') || logic.includes('this.notes(') ? '\n' + GUIDE_METHOD : ''}${logic.includes('this.notes(') ? '\n' + NOTES_METHOD : ''}${logic.includes('this.mockMaterials(') ? '\n' + MATERIALS_MOCK : ''}${logic.includes('this.dg(') ? '\n' + DIAGRAM_METHOD : ''}
 ${logic}
 }
 </script>
