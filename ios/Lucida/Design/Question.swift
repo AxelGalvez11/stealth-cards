@@ -42,8 +42,8 @@ struct QuestionSheet: View {
     }
     .foregroundStyle(t.text)
     .padding(.top, 10).padding(.horizontal, 20).padding(.bottom, 34)
-    // VoiceOver reads only the question while it is up.
-    .accessibilityElement(children: .contain).accessibilityAddTraits(.isModal)
+    // (VoiceOver reads only the question while it is up: MainView hides the page under it.)
+    .accessibilityElement(children: .contain)
   }
 }
 

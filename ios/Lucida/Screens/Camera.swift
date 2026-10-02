@@ -160,7 +160,7 @@ struct CameraScreen: View {
     .studyChrome(dark: true)
     .onAppear { cam.pretend = store.demo || CameraSupport.fake; cam.start() }
     .onDisappear { cam.stop() }
-    .accessibilityElement(children: .contain).accessibilityAddTraits(.isModal).accessibilityLabel("Camera")
+    .accessibilityElement(children: .contain).accessibilityLabel("Camera")
     .haptic(.light, on: taps, "shutter")
   }
 

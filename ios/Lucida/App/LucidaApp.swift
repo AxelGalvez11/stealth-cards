@@ -469,7 +469,10 @@ struct MainView: View {
   private var swipesBetweenTabs: Bool { nav.path.isEmpty && nav.sheet == nil && nav.full == nil && !store.welcoming && drag.list == nil }
 
   var body: some View {
-    ZStack(alignment: .bottom) {
+    // A question, a calendar or the camera is over everything: VoiceOver reads only that, so the page under it is hidden from it. (Only the views that
+    // have something to read get the modifier: it would also make the empty drag layer a thing on screen, one the tests' taps would land on.)
+    let behind = nav.question != nil || nav.calendar != nil || nav.camera != nil
+    return ZStack(alignment: .bottom) {
       NavigationStack(path: $nav.path) {
         // A swipe left or right on a tab's first page moves to the next tab or the one before (Design/Swipe.swift).
         TabPager(tab: $nav.tab, enabled: swipesBetweenTabs, changed: { tabTicks += 1 }) { tab in tabRoot(tab) }
@@ -502,16 +505,17 @@ struct MainView: View {
             .containerBackground(t.bg, for: .navigation)
           }
       }
-      if showsTabBar { TabBar(active: lit, pick: { tab in if tab != nav.tab { tabTicks += 1 }; nav.pick(tab) }) }
+      .accessibilityHidden(behind)
+      if showsTabBar { TabBar(active: lit, pick: { tab in if tab != nav.tab { tabTicks += 1 }; nav.pick(tab) }).accessibilityHidden(behind) }
       // A deck or card being dragged, over the page and the tab bar; and the Move to tray over it while a card is.
       DragGhost()
       MoveTray()
-      if let s = nav.sheet { SheetHost(kind: s).zIndex(s == .goPro ? 8 : 5) }
-      if let f = nav.full { FullHost(kind: f).zIndex(6).sheetTransition() }
+      if let s = nav.sheet { SheetHost(kind: s).accessibilityHidden(behind).zIndex(s == .goPro ? 8 : 5) }
+      if let f = nav.full { FullHost(kind: f).accessibilityHidden(behind).zIndex(6).sheetTransition() }
       // A list to pick from (a filter, a school, a label), over a page or a sheet.
-      if let p = nav.picker { PickHost(request: p).id(p.id).zIndex(7) }
+      if let p = nav.picker { PickHost(request: p).accessibilityHidden(behind).id(p.id).zIndex(7) }
       // The welcome after your first sign-in, over everything until it's done or skipped.
-      if store.welcoming { WelcomeScreen().zIndex(10).transition(.opacity) }
+      if store.welcoming { WelcomeScreen().accessibilityHidden(behind).zIndex(10).transition(.opacity) }
       // A calendar under the button that opened it (an exam date, a due date), over a page or a sheet.
       if let c = nav.calendar { CalendarHost(request: c).id(c.id).zIndex(9) }
       // A question (Delete deck, Sign out, ...), over everything: Lucida's own sheet, never the system's confirmation dialog.

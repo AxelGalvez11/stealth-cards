@@ -99,7 +99,7 @@ struct CalendarPopup: View {
     .foregroundStyle(t.text)
     .padding(14)
     .modifier(PopBox())
-    .accessibilityElement(children: .contain).accessibilityLabel(request.title).accessibilityAddTraits(.isModal)
+    .accessibilityElement(children: .contain).accessibilityLabel(request.title)
     .onAppear {
       guard !ready else { return }
       ready = true
