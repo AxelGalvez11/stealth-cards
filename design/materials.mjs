@@ -7,7 +7,7 @@
 
 // What the Make boards' "step" picker offers on the canvas (the app's own flow follows web/make.js).
 import { dropMarkup, dropSheet, dropPill, DROP_JS, playerMarkup } from './ui.mjs';
-export const MAKE_STEPS = ['Pick', 'Upload', 'Upload (a file added)', 'Photos', 'Record', 'Recording', 'Paused', 'Paste', 'Paste (a language set)', 'Paste (language list)', 'YouTube', 'YouTube transcript', 'Topic', 'More from a source',
+export const MAKE_STEPS = ['Pick', 'Upload', 'Upload (a file added)', 'Photos', 'Camera', 'Record', 'Recording', 'Paused', 'Paste', 'Paste (a language set)', 'Paste (language list)', 'YouTube', 'YouTube transcript', 'Topic', 'More from a source',
   'Making', 'Making a recording', 'Review', 'Review (notes open)', 'Review (notes off)', 'Review (no room for notes)', 'Review (audio cards)', 'Review (editing a card)', 'Limit reached', 'File too big', 'Error'];
 
 // Icons these boards use that the main set doesn't have (the onboarding's paste icon).
@@ -152,6 +152,14 @@ export function makeBoards(H) {
     ${body(false)}
   </div>
 </div>`;
+  // The iPhone app's own camera (Take a photo: a full screen with the picture the camera sees, a close button, the flash, the switch between the cameras and the
+  // shutter; once a picture is taken, Retake and Use photo). The canvas shows it open as a state of this board; on the web, a phone takes a photo with its own camera app.
+  const camBtn = (label, icon, pos) => `<button type="button" aria-label="${label}" style="position: absolute; ${pos} width: 44px; height: 44px; padding: 0; border: 0; border-radius: 22px; background: rgba(255,255,255,.18); color: #FFFFFF; display: flex; align-items: center; justify-content: center; cursor: pointer;">${svg(I[icon], 18, 2)}</button>`;
+  const camera = `<sc-if value="{{cameraOpen}}" hint-placeholder-val="{{ false }}"><div role="dialog" aria-modal="true" aria-label="Camera" style="position: absolute; inset: 0; z-index: 70; overflow: hidden; background: linear-gradient(160deg, #9EC7F3 0%, #4A5C9E 100%); color: #FFFFFF; font-family: ${FONT};">
+    ${camBtn('Close', 'close', 'left: 16px; top: 55px;')}${camBtn('Flash, off', 'boltOff', 'right: 16px; top: 55px;')}
+    <button type="button" aria-label="Take photo" style="position: absolute; left: 50%; bottom: 34px; width: 76px; height: 76px; margin-left: -38px; padding: 4px; box-sizing: border-box; border: 4px solid #FFFFFF; border-radius: 38px; background: transparent; cursor: pointer;"><span style="display: block; width: 100%; height: 100%; border-radius: 50%; background: #FFFFFF;"></span></button>
+    ${camBtn('Switch camera', 'flip', 'right: 28px; bottom: 50px;')}
+  </div></sc-if>`;
   const phoneMake = `<div style="position: relative; width: 390px; height: 844px; overflow: hidden; font-family: ${FONT}; color: {{t.text}};">
   <dc-import name="PhoneToday" dark="{{dark}}" dim="{{dim}}" hint-size="390px,844px"></dc-import>
   <div style="position: absolute; inset: 0; background: {{t.dim}};"></div>
@@ -159,6 +167,7 @@ export function makeBoards(H) {
     ${body(true)}
   </div>
   ${dropSheet('langPick')}
+  ${camera}
 </div>`;
 
   // ----- the logic: what the page draws comes from db.make.view() (web/make.js), or on the canvas from a sample for the board's step
@@ -227,6 +236,7 @@ renderVals() {
     basicPressed: o.basic ? 'true' : 'false', basicBg: o.basic ? t.inv : t.surf, basicFg: o.basic ? t.invText : t.text, toggleBasic: () => M.setOpt('basic', !o.basic),
     clozePressed: o.cloze ? 'true' : 'false', clozeBg: o.cloze ? t.inv : t.surf, clozeFg: o.cloze ? t.invText : t.text, toggleCloze: () => M.setOpt('cloze', !o.cloze),
     // The language of the cards: Lucida's own dropdown (a list under its button, a sheet on a phone), never the browser's select.
+    cameraOpen: mock && p.step === 'Camera',
     langPick: this.dropPick('lang', { title: 'Language of the cards', rows: LANGS, value: o.lang || '', choose: id => M.setOpt('lang', id), shown: mock && p.step === 'Paste (language list)' }),
     showMake: addable, makeBg: v.ready ? t.inv : t.surf2, makeFg: v.ready ? t.invText : t.muted,
     hasWarn: !!(err && err.soft), warn: err && err.soft ? err.message : '',
@@ -425,6 +435,8 @@ export const MATERIALS_MOCK = String.raw`mockMaterials() {
     const by = {
       'Pick': { step: 'pick' }, 'Upload': { kind: 'file' }, 'Upload (a file added)': { kind: 'file', files: [slides], ready: true },
       'Photos': { kind: 'photo', ready: true, files: ['IMG_2041.jpg', 'IMG_2042.jpg', 'IMG_2043.jpg'].map((name, i) => ({ i, name, size: (1.1 + i * .3).toFixed(1) + ' MB', fam: 'image' })) },
+      // (Camera is Photos with the iPhone app's own camera screen open over it: Take a photo.)
+      'Camera': { kind: 'photo', ready: true, files: ['IMG_2041.jpg', 'IMG_2042.jpg', 'IMG_2043.jpg'].map((name, i) => ({ i, name, size: (1.1 + i * .3).toFixed(1) + ' MB', fam: 'image' })) },
       'Record': { kind: 'record' }, 'Recording': { kind: 'record', rec: { state: 'recording', secs: 754, levels, level: .4, limit: 7200 } }, 'Paused': { kind: 'record', rec: { state: 'paused', secs: 754, levels, level: 0, limit: 7200 } },
       'Paste': { kind: 'paste', ready: true, text: 'The mitochondrion is the powerhouse of the cell. It makes most of the cell’s ATP through the electron transport chain, which pumps protons across the inner membrane.\n\nThe nucleus holds the cell’s DNA, and the ribosomes translate mRNA into protein.' },
       'Paste (a language set)': { kind: 'paste', ready: true, text: 'la casa · the house\nbuenos días · good morning\n¿Dónde está la biblioteca? · Where is the library?\nElla tiene dos hermanos · She has two siblings', opts: { count: 'auto', basic: true, cloze: true, audio: true, lang: 'es', deckId: '', deckName: '' } },

@@ -2341,6 +2341,8 @@ mockMaterials() {
     const by = {
       'Pick': { step: 'pick' }, 'Upload': { kind: 'file' }, 'Upload (a file added)': { kind: 'file', files: [slides], ready: true },
       'Photos': { kind: 'photo', ready: true, files: ['IMG_2041.jpg', 'IMG_2042.jpg', 'IMG_2043.jpg'].map((name, i) => ({ i, name, size: (1.1 + i * .3).toFixed(1) + ' MB', fam: 'image' })) },
+      // (Camera is Photos with the iPhone app's own camera screen open over it: Take a photo.)
+      'Camera': { kind: 'photo', ready: true, files: ['IMG_2041.jpg', 'IMG_2042.jpg', 'IMG_2043.jpg'].map((name, i) => ({ i, name, size: (1.1 + i * .3).toFixed(1) + ' MB', fam: 'image' })) },
       'Record': { kind: 'record' }, 'Recording': { kind: 'record', rec: { state: 'recording', secs: 754, levels, level: .4, limit: 7200 } }, 'Paused': { kind: 'record', rec: { state: 'paused', secs: 754, levels, level: 0, limit: 7200 } },
       'Paste': { kind: 'paste', ready: true, text: 'The mitochondrion is the powerhouse of the cell. It makes most of the cell’s ATP through the electron transport chain, which pumps protons across the inner membrane.\n\nThe nucleus holds the cell’s DNA, and the ribosomes translate mRNA into protein.' },
       'Paste (a language set)': { kind: 'paste', ready: true, text: 'la casa · the house\nbuenos días · good morning\n¿Dónde está la biblioteca? · Where is the library?\nElla tiene dos hermanos · She has two siblings', opts: { count: 'auto', basic: true, cloze: true, audio: true, lang: 'es', deckId: '', deckName: '' } },
@@ -2455,6 +2457,7 @@ renderVals() {
     basicPressed: o.basic ? 'true' : 'false', basicBg: o.basic ? t.inv : t.surf, basicFg: o.basic ? t.invText : t.text, toggleBasic: () => M.setOpt('basic', !o.basic),
     clozePressed: o.cloze ? 'true' : 'false', clozeBg: o.cloze ? t.inv : t.surf, clozeFg: o.cloze ? t.invText : t.text, toggleCloze: () => M.setOpt('cloze', !o.cloze),
     // The language of the cards: Lucida's own dropdown (a list under its button, a sheet on a phone), never the browser's select.
+    cameraOpen: mock && p.step === 'Camera',
     langPick: this.dropPick('lang', { title: 'Language of the cards', rows: LANGS, value: o.lang || '', choose: id => M.setOpt('lang', id), shown: mock && p.step === 'Paste (language list)' }),
     showMake: addable, makeBg: v.ready ? t.inv : t.surf2, makeFg: v.ready ? t.invText : t.muted,
     hasWarn: !!(err && err.soft), warn: err && err.soft ? err.message : '',
