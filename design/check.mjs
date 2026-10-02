@@ -117,6 +117,8 @@ for (const dropdown of ['Daily reminder', 'New cards a day', 'Remember goal']) P
 // Lucida's own calendar (a deck's exam date, a class's due date), open, light and dark.
 PROP_SETS.push({ calendar: 'Exam date', settingsOpen: true, settingsTab: 'Studying' }, { calendar: 'Exam date', settingsOpen: true, settingsTab: 'Studying', dark: true }, { calendar: 'Exam date', settingsOpen: true, settingsTab: 'Studying', free: true },
   { calendar: 'Due date', panel: 'Assign' }, { calendar: 'Due date', panel: 'Assign', dark: true });
+// Import cards on the iPhone (PhoneImport's state Tweak, build.mjs IMPORT_STATES): each state, light and dark.
+for (const state of ['Deck chosen', 'Empty', 'Pasted', 'A file picked', 'No cards', 'Importing', 'Error']) PROP_SETS.push({ state }, { state, dark: true });
 // Making cards: every step the Make boards offer, light and dark.
 for (const step of MAKE_STEPS) PROP_SETS.push({ step }, { step, dark: true });
 // The deck page's Cards, Notes (the Guide) and Sources sections, each with the Guide and Sources in every state (and dark).

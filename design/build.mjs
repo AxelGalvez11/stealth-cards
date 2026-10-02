@@ -3678,7 +3678,7 @@ const phoneLibrary = phone(`<div style="padding: 64px 20px 120px; display: flex;
     <h1 style="margin: 0; flex-grow: 1; min-width: 0; font-size: 32px; font-weight: 700; letter-spacing: -.03em;">Library</h1>
     <sc-if value="{{deckView}}" hint-placeholder-val="{{ true }}">${libRound('folder', 'New folder', { onClick: '{{newFolder}}' })}</sc-if>
     ${DBP.addMenu(`<button type="button" onClick="{{gs.toggleAdd}}" aria-expanded="{{gs.addExpanded}}" aria-haspopup="menu" aria-label="Add" class="sc-press" style="width: 40px; height: 40px; flex-shrink: 0; border: 0; border-radius: 20px; background: {{t.inv}}; color: {{t.invText}}; display: flex; align-items: center; justify-content: center; cursor: pointer;">${svg(I.plus, 18, 2)}</button>`, 'right: 0; top: 48px;',
-      [['decks', 'New deck', 'Start from scratch', 'PhoneNewDeck.dc.html'], ['sparkle', 'Make cards', 'From a file, photo, video or topic', 'PhoneMake.dc.html'], ['upload', 'Import cards', 'From Anki, Quizlet or a CSV', 'WebImport.dc.html']])}
+      [['decks', 'New deck', 'Start from scratch', 'PhoneNewDeck.dc.html'], ['sparkle', 'Make cards', 'From a file, photo, video or topic', 'PhoneMake.dc.html'], ['upload', 'Import cards', 'From Anki, Quizlet or a CSV', 'PhoneImport.dc.html']])}
   </div></sc-if>
   <sc-if value="{{inFolder}}" hint-placeholder-val="{{ false }}"><div style="display: flex; align-items: center; gap: 8px;">
     ${libRound('back', 'Library', { href: '{{libraryHref}}', attrs: ' data-sc-drop="folder:" data-sc-look="chip" draggable="false"' })}<span style="flex-grow: 1;"></span>
@@ -4590,7 +4590,7 @@ renderVals() { ${T}${DB_JS}
       ...(C ? { base: C.base, ink: C.ink, shadow: 'none', plain: false, skin: true, art: C.art } : { plain: true, skin: false, art: null }) },
     coverTitle: C ? C.titleAt(34) : '', coverTitleS: C ? C.titleHead(32, dk.name) : '',
     coverIsImage: pic === 'mock', coverHasPhoto: !!photo, coverPhoto: photo,
-    newCardHref: db.mock ? '${phone ? 'PhoneEditor' : 'WebCardsScreenNew'}.dc.html' : dk.newCardHref, importHref: db.mock ? 'WebImport.dc.html' : db.href('import', ${cover ? 'dk.id' : "''"}), connectHref: db.mock ? '${phone ? 'PhoneConnect' : 'WebConnect'}.dc.html' : db.href('connect'),
+    newCardHref: db.mock ? '${phone ? 'PhoneEditor' : 'WebCardsScreenNew'}.dc.html' : dk.newCardHref, importHref: db.mock ? '${phone ? 'PhoneImport' : 'WebImport'}.dc.html' : db.href('import', ${cover ? 'dk.id' : "''"}), connectHref: db.mock ? '${phone ? 'PhoneConnect' : 'WebConnect'}.dc.html' : db.href('connect'),
     openSettings: () => { if (!db.mock) db.act.go(dk.settingsHref); } }; }`;
 
 // New deck. The cover starts white. Its colors (generated from the name) fade in over 2 s once you stop typing the name
@@ -4617,17 +4617,28 @@ const webNewDeck = `<div style="position: relative; width: 1440px; height: 900px
     ${newDeckBody(false, 'WebDecks.dc.html', 'WebDeckEmpty.dc.html')}
   </div>
 </div>`;
-// Import cards: paste text or pick a file (Anki and Quizlet exports, CSV), then pick the deck. Opens over Decks.
+// Import cards: paste text or pick a file (Anki and Quizlet exports, CSV), then pick the deck. Opens over Decks on the web; on the iPhone it is a
+// sheet over the Library (PhoneImport, ios/Lucida/Screens/Import.swift), whose `state` Tweak shows what was pasted or picked, the deck chosen,
+// Import on its way, and the quiet line when it didn't go.
+const importBody = phone => `<div style="display: flex; align-items: center; justify-content: space-between;"><span style="font-size: 22px; font-weight: 600; letter-spacing: -.02em;">Import cards</span><a href="{{backHref}}" aria-label="Close" style="width: ${phone ? 40 : 36}px; height: ${phone ? 40 : 36}px; border-radius: ${phone ? 20 : 18}px; background: {{t.surf}}; display: flex; align-items: center; justify-content: center;">${svg(I.close, 16, 2)}</a></div>
+    <label style="display: flex; flex-direction: column; gap: 8px;"><span style="font-size: 13px; font-weight: 600;">Cards</span><textarea rows="8" onChange="{{setText}}" placeholder="One card per line: front, then back" style="resize: none; border: 0; outline: 0; border-radius: 20px; padding: 14px 16px; background: {{t.surf}}; color: {{t.text}}; font-family: ${MONO}; font-size: 13px; line-height: 1.6;">{{text}}</textarea></label>
+    <div style="display: flex; align-items: center; gap: 12px;">${phone ? `<span style="flex-shrink: 0; display: flex;">${smallBtn('Choose a file', 'pickText', 'upload')}</span>` : smallBtn('Choose a file', 'pickText', 'upload')}<span style="font-size: 13px;${phone ? ' line-height: 1.4;' : ''} color: {{t.muted}};">{{foundLine}}</span></div>
+    <div style="display: flex; flex-direction: column; gap: 8px;"><span style="font-size: 13px; font-weight: 600;">Into deck</span><input type="text" value="{{deckName}}" onChange="{{setDeck}}" placeholder="New deck name" style="height: 40px; box-sizing: border-box; padding: 0 16px; border: 0; outline: 0; border-radius: 16px; background: {{t.surf}}; color: {{t.text}}; font: inherit; font-size: 16px;">
+      <div style="display: flex; flex-wrap: wrap; gap: 6px;"><sc-for list="{{deckChips}}" as="d" hint-placeholder-count="4"><button type="button" onClick="{{d.pick}}" aria-pressed="{{d.pressed}}" style="height: 32px; padding: 0 12px; border: 0; border-radius: 999px; background: {{d.bg}}; color: {{d.fg}}; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer;">{{d.name}}</button></sc-for></div></div>${phone ? `
+    <sc-if value="{{hasError}}" hint-placeholder-val="{{ false }}"><span role="status" style="font-size: 13px; line-height: 1.4; color: {{t.again}};">{{errorLine}}</span></sc-if>` : ''}
+    <div style="display: flex; gap: 10px;"><a href="{{backHref}}" style="flex-grow: 1; height: 52px; border-radius: 999px; background: {{t.surf}}; display: flex; align-items: center; justify-content: center; font-size: 15px; font-weight: 600;">Cancel</a><a href="{{backHref}}" onClick="{{doImport}}" style="flex-grow: 2; height: 52px; border-radius: 999px; background: {{importBg}}; color: {{importFg}}; display: flex; align-items: center; justify-content: center; font-size: 15px; font-weight: 600;">{{importLabel}}</a></div>`;
 const webImport = `<div style="position: relative; width: 1440px; height: 900px; overflow: hidden; font-family: ${FONT}; color: {{t.text}};">
   <dc-import name="WebDecks" dark="{{dark}}" dim="{{dim}}" hint-size="1440px,900px"></dc-import>
   <div style="position: absolute; inset: 0; z-index: 40; background: {{t.dim}};"></div>
   <div role="dialog" aria-label="Import cards" style="position: absolute; z-index: 40; left: 420px; top: 50%; transform: translateY(-50%); width: 600px; box-sizing: border-box; padding: 28px; border-radius: 36px; background: {{t.bg}}; box-shadow: 0 24px 64px rgba(0,0,0,.24); display: flex; flex-direction: column; gap: 18px;">
-    <div style="display: flex; align-items: center; justify-content: space-between;"><span style="font-size: 22px; font-weight: 600; letter-spacing: -.02em;">Import cards</span><a href="{{backHref}}" aria-label="Close" style="width: 36px; height: 36px; border-radius: 18px; background: {{t.surf}}; display: flex; align-items: center; justify-content: center;">${svg(I.close, 16, 2)}</a></div>
-    <label style="display: flex; flex-direction: column; gap: 8px;"><span style="font-size: 13px; font-weight: 600;">Cards</span><textarea rows="8" onChange="{{setText}}" placeholder="One card per line: front, then back" style="resize: none; border: 0; outline: 0; border-radius: 20px; padding: 14px 16px; background: {{t.surf}}; color: {{t.text}}; font-family: ${MONO}; font-size: 13px; line-height: 1.6;">{{text}}</textarea></label>
-    <div style="display: flex; align-items: center; gap: 12px;">${smallBtn('Choose a file', 'pickText', 'upload')}<span style="font-size: 13px; color: {{t.muted}};">{{foundLine}}</span></div>
-    <div style="display: flex; flex-direction: column; gap: 8px;"><span style="font-size: 13px; font-weight: 600;">Into deck</span><input type="text" value="{{deckName}}" onChange="{{setDeck}}" placeholder="New deck name" style="height: 40px; box-sizing: border-box; padding: 0 16px; border: 0; outline: 0; border-radius: 16px; background: {{t.surf}}; color: {{t.text}}; font: inherit; font-size: 16px;">
-      <div style="display: flex; flex-wrap: wrap; gap: 6px;"><sc-for list="{{deckChips}}" as="d" hint-placeholder-count="4"><button type="button" onClick="{{d.pick}}" aria-pressed="{{d.pressed}}" style="height: 32px; padding: 0 12px; border: 0; border-radius: 999px; background: {{d.bg}}; color: {{d.fg}}; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer;">{{d.name}}</button></sc-for></div></div>
-    <div style="display: flex; gap: 10px;"><a href="{{backHref}}" style="flex-grow: 1; height: 52px; border-radius: 999px; background: {{t.surf}}; display: flex; align-items: center; justify-content: center; font-size: 15px; font-weight: 600;">Cancel</a><a href="{{backHref}}" onClick="{{doImport}}" style="flex-grow: 2; height: 52px; border-radius: 999px; background: {{importBg}}; color: {{importFg}}; display: flex; align-items: center; justify-content: center; font-size: 15px; font-weight: 600;">{{importLabel}}</a></div>
+    ${importBody(false)}
+  </div>
+</div>`;
+const phoneImport = `<div style="position: relative; width: 390px; height: 844px; overflow: hidden; font-family: ${FONT}; color: {{t.text}};">
+  <dc-import name="PhoneLibrary" dark="{{dark}}" dim="{{dim}}" hint-size="390px,844px"></dc-import>
+  <div style="position: absolute; inset: 0; background: {{t.dim}};"></div>
+  <div role="dialog" aria-label="Import cards" style="position: absolute; left: 0; right: 0; bottom: 0; box-sizing: border-box; padding: 16px 20px 34px; border-radius: 36px 36px 0 0; background: {{t.bg}}; display: flex; flex-direction: column; gap: 16px;">
+    ${importBody(true)}
   </div>
 </div>`;
 // Reading cards from text, for Import and the onboarding. One card per line: a tab (Anki, Quizlet), a comma or semicolon
@@ -4636,6 +4647,7 @@ const webImport = `<div style="position: relative; width: 1440px; height: 900px;
 // into their decks (the last part of "Languages::Spanish"), and its note type, tags, and ID columns are left out.
 // Anki and other apps export HTML (<b>, <br>): its bold, italics, and line breaks come along. Anki's {{c1::word}}
 // blanks become fill-in-the-blank cards. readCards(text, name) gives [[deck name, cards]], `name` for cards with no deck.
+// The iPhone app's copy is ios/Lucida/Data/ReadCards.swift; ios/tests/import-check.sh gives both the same texts, so change them together.
 const READ_CARDS_JS = `
   const splitAt = (l, seps) => { const out = []; let cur = '', q = false, start = true;
     for (let i = 0; i < l.length; i++) { const ch = l[i];
@@ -4667,14 +4679,24 @@ const READ_CARDS_JS = `
     }
     return [...decks];
   };`;
-const importLogic = `
+// \`phone\`: PhoneImport, which shows the iPhone sheet's states on the canvas (its Tweak) and goes back to the iPhone's Library.
+const IMPORT_STATES = ['Deck chosen', 'Empty', 'Pasted', 'A file picked', 'No cards', 'Importing', 'Error'];
+const IMPORT_FILE = '#separator:tab\n#html:false\n' + [['What organelle makes most of the cell’s ATP?', 'The mitochondria'], ['What do ribosomes do?', 'They build proteins'],
+  ['Which organelle packages and ships proteins?', 'The Golgi apparatus'], ['What surrounds and protects a cell?', 'The plasma membrane'], ['What do lysosomes do?', 'Break down waste'],
+  ['Where does photosynthesis happen?', 'In the chloroplasts'], ['What does rough ER have that smooth ER lacks?', 'Ribosomes'], ['Where is DNA kept?', 'In the nucleus'],
+  ['What is the cytoplasm?', 'The gel that fills the cell'], ['What do mitochondria have of their own?', 'Their own DNA'], ['What is the cytoskeleton?', 'A network of protein fibers'],
+  ['What do vacuoles store?', 'Water, food and waste']].map(c => c.join('\t')).join('\n');
+const IMPORT_LOGIC = phone => `
 constructor(props) { super(props); this.state = {}; }
 renderVals() {
   ${T}${DB_JS}
-  const s = this.state, decks = db.decks();
-  const text = s.text ?? (db.mock ? 'でんしゃ\\ttrain\\nねこ\\tcat\\nみず\\twater' : '');${READ_CARDS_JS}
+  const s = this.state, decks = db.decks();${phone ? `
+  // (The canvas's states: what was pasted or picked, the deck chosen, Import on its way, and the line when it didn't go.)
+  const ST = db.mock ? (${JSON.stringify(IMPORT_STATES)}.includes(this.props.state) ? this.props.state : 'Deck chosen') : '', chosen = ['Deck chosen', 'Importing', 'Error'].includes(ST);
+  const sample = { Empty: '', 'A file picked': ${JSON.stringify(IMPORT_FILE)}, 'No cards': 'Notes from Tuesday’s class' }[ST];` : ''}
+  const text = s.text ?? (db.mock ? ${phone ? "sample ?? 'でんしゃ\\ttrain\\nねこ\\tcat\\nみず\\twater'" : "'でんしゃ\\ttrain\\nねこ\\tcat\\nみず\\twater'"} : '');${READ_CARDS_JS}
   const cards = readCards(text, '').flatMap(([, cs]) => cs);
-  const here = db.mock ? { name: 'Japanese · JLPT N4' } : this.props.deckId ? db.deck(this.props.deckId) : null;
+  const here = db.mock ? ${phone ? "(chosen ? { name: 'Japanese · JLPT N4' } : null)" : "{ name: 'Japanese · JLPT N4' }"} : this.props.deckId ? db.deck(this.props.deckId) : null;
   const deckName = s.deck ?? (here ? here.name : '');
   const plural = (n, w) => n + ' ' + w + (n === 1 ? '' : 's');
   return {
@@ -4683,14 +4705,16 @@ renderVals() {
     pickText: () => db.act.pickText().then(txt => txt != null && this.setState({ text: txt })),
     foundLine: cards.length ? plural(cards.length, 'card') + ' found' : text.trim() ? 'No cards yet. Put the front and back on one line, split by a tab or comma.' : '',
     deckChips: decks.slice(0, 6).map(d => { const on = d.name === deckName; return { name: d.name, pressed: on ? 'true' : 'false', bg: on ? t.inv : t.surf, fg: on ? t.invText : t.text, pick: () => this.setState({ deck: d.name }) }; }),
-    importLabel: cards.length ? 'Import ' + plural(cards.length, 'card') : 'Import cards', importBg: cards.length ? t.inv : t.surf2, importFg: cards.length ? t.invText : t.muted,
-    backHref: here && !db.mock ? here.href : db.href('decks'),
+    importLabel: ${phone ? "ST === 'Importing' ? 'Importing…' : " : ''}cards.length ? 'Import ' + plural(cards.length, 'card') : 'Import cards', importBg: cards.length ? t.inv : t.surf2, importFg: cards.length ? t.invText : t.muted,
+    backHref: ${phone ? "db.mock ? 'PhoneLibrary.dc.html' : " : ''}here && !db.mock ? here.href : db.href('decks'),${phone ? `
+    hasError: ST === 'Error', errorLine: 'Couldn’t reach Lucida. Check your connection and try again.',` : ''}
     // Into the deck with that name (this deck first), or a new deck when no deck has it.
     doImport: e => { if (db.mock) return; e.preventDefault(); if (!cards.length) return;
       const name = deckName.trim() || 'Imported cards', same = here && here.id && here.name === name ? here : decks.find(d => d.name.trim().toLowerCase() === name.toLowerCase());
       db.act.importCards({ deckId: same ? same.id : '', deckName: name, cards }); }
   };
 }`;
+const importLogic = IMPORT_LOGIC(false);
 const phoneNewDeck = `<div style="position: relative; width: 390px; height: 844px; overflow: hidden; font-family: ${FONT}; color: {{t.text}};">
   <dc-import name="PhoneLibrary" dark="{{dark}}" dim="{{dim}}" hint-size="390px,844px"></dc-import>
   <div style="position: absolute; inset: 0; background: {{t.dim}};"></div>
@@ -9236,6 +9260,7 @@ const files = {
   'PhoneDeckMoveTray': ['iPhone · Deck · Move to tray (while a card is dragged)', attrOf('PhoneDeck', PW, PH, 'tray-open="{{yes}}"'), { logic: darkLogic, css: NUM_CSS + DRAG_CSS, w: PW, h: PH }],
   'PhoneStatsEmpty': ['iPhone · Stats · no reviews yet', phoneStatsEmpty, { props: { ...DARK, grain: MESH('Iris').grain }, logic: emptyLogic(), w: PW, h: PH }],
   'PhoneNewDeck': ['iPhone · New deck', phoneNewDeck, { props: { ...DARK, grain: MESH('Iris').grain }, logic: NEW_DECK_LOGIC, css: NUM_CSS + COVER_FADE_CSS, w: PW, h: PH }],
+  'PhoneImport': ['iPhone · Import cards (paste or choose a file, the deck, Import; its Tweak shows each state)', phoneImport, { props: { ...DARK, grain: MESH('Iris').grain, state: { editor: 'enum', default: 'Deck chosen', options: IMPORT_STATES } }, logic: IMPORT_LOGIC(true), w: PW, h: PH }],
   'PhoneInbox': ['iPhone · Check AI cards', phoneInbox, { props: DARK, logic: phoneInboxLogic, css: REVIEW_CSS, w: PW, h: PH }],
   'PhoneDeck': ['iPhone · Deck page', phoneDeck, { props: { ...DARK, grain: MESH('Iris').grain, calendar: { editor: 'enum', default: '', options: ['', 'Exam date'] }, settingsOpen: { editor: 'boolean', default: false }, settingsTab: { editor: 'enum', default: 'General', options: ['General', 'Studying', 'Sharing'] }, tagPicker: { editor: 'boolean', default: false }, ...SHARE_PROPS, ...PRO_DECK_PROPS, tests: { editor: 'boolean', default: true }, ...GUIDE_STATE }, logic: phoneDeckLogic, css: NUM_CSS + PARALLAX_CSS + DRAG_CSS + GUIDE_CSS + DIAGRAM_CSS, w: PW, h: PH }],
   'PhoneDeckTagPicker': ['iPhone · Deck settings · Add tag', attrOf('PhoneDeck', PW, PH, 'settings-open="{{yes}}" tag-picker="{{yes}}"'), { logic: darkLogic, css: NUM_CSS + DRAG_CSS, w: PW, h: PH }],

@@ -110,7 +110,7 @@ struct MakeKinds: View {
     [AddMenuRow(icon: "image", title: "Photos", line: "") { nav.make(kind: "photo", deckId: deckId, folder: folder) },
      AddMenuRow(icon: "mic", title: "Record a lecture", line: "") { nav.make(kind: "record", deckId: deckId, folder: folder) },
      AddMenuRow(icon: "sparkle", title: "A topic", line: "") { nav.make(kind: "topic", deckId: deckId, folder: folder) },
-     AddMenuRow(icon: "enter", title: "Import cards", line: "") { nav.importCards() }]
+     AddMenuRow(icon: "enter", title: "Import cards", line: "") { nav.importCards(deckId: deckId) }]
       + (deckId.isEmpty ? [AddMenuRow(icon: "decks", title: "New deck", line: "") { nav.newDeck() }] : [])
   }
 }

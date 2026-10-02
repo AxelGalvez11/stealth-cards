@@ -505,6 +505,12 @@ export default [
   "h": 844
  },
  {
+  "name": "PhoneImport",
+  "title": "iPhone · Import cards (paste or choose a file, the deck, Import; its Tweak shows each state)",
+  "w": 390,
+  "h": 844
+ },
+ {
   "name": "PhoneInbox",
   "title": "iPhone · Check AI cards",
   "w": 390,

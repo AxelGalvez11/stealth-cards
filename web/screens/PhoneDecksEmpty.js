@@ -437,7 +437,7 @@ makeBox(t, db, { deckId = '', folder = '', board = 'Web', newDeck = true } = {})
     key: e => { if (!e || e.key !== 'Enter' || e.shiftKey || e.isComposing || (e.nativeEvent && e.nativeEvent.isComposing)) return; if (e.preventDefault) e.preventDefault(); begin(e.target && typeof e.target.value === 'string' ? e.target.value : text); },
     go: () => begin(text),
     uploadHref: href('file'), fileHref: href('file'), pasteHref: href('paste'), videoHref: href('video'), photoHref: href('photo'), recordHref: href('record'), topicHref: href('topic'),
-    importHref: mock ? 'WebImport.dc.html' : db.href('import', deckId), newDeckHref: mock ? board + 'NewDeck.dc.html' : db.href('newDeck'), newDeck,
+    importHref: mock ? board + 'Import.dc.html' : db.href('import', deckId), newDeckHref: mock ? board + 'NewDeck.dc.html' : db.href('newDeck'), newDeck,
     more: { open, expanded: open ? 'true' : 'false', toggle: () => this.setState({ mkMore: !open }), close },
     // A file over the page rings the box; dropped, it goes to Upload.
     ring: s.mkOver ? 'inset 0 0 0 2px ' + t.text : 'none',
@@ -486,7 +486,7 @@ renderVals() { const t = this.theme(!!this.props.dark, !!this.props.dim);const d
       ...(C ? { base: C.base, ink: C.ink, shadow: 'none', plain: false, skin: true, art: C.art } : { plain: true, skin: false, art: null }) },
     coverTitle: C ? C.titleAt(34) : '', coverTitleS: C ? C.titleHead(32, dk.name) : '',
     coverIsImage: pic === 'mock', coverHasPhoto: !!photo, coverPhoto: photo,
-    newCardHref: db.mock ? 'PhoneEditor.dc.html' : dk.newCardHref, importHref: db.mock ? 'WebImport.dc.html' : db.href('import', ''), connectHref: db.mock ? 'PhoneConnect.dc.html' : db.href('connect'),
+    newCardHref: db.mock ? 'PhoneEditor.dc.html' : dk.newCardHref, importHref: db.mock ? 'PhoneImport.dc.html' : db.href('import', ''), connectHref: db.mock ? 'PhoneConnect.dc.html' : db.href('connect'),
     openSettings: () => { if (!db.mock) db.act.go(dk.settingsHref); } }; }
 }
 return Component;

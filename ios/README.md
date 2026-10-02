@@ -73,6 +73,35 @@ Boards: `PhoneLibrary` (`-caughtUp`, `-assignments`, `-menu more`), `PhoneLibrar
 starts a fresh server on port 3953 and the stand-in AI on 3954, and runs `LucidaUITests/HomeTests` in eight flows (the first page and its due line,
 every way in, words and pastes in the box, decks taking material, a brand-new account, Assigned, News on Discover, a folder's box).
 
+## Import cards
+
+The Library's +, the Make box's More, a brand-new account's Import cards and an empty deck's More (with that deck chosen) open Import cards
+(`Screens/Import.swift`, `nav.importCards(deckId:)`): the web's Import page (WebImport) one for one, as a sheet. A box to paste cards into (Geist
+Mono, eight lines, a tab as wide as eight spaces, as in the browser's textarea), Choose a file (the phone's Files picker: a .txt, .csv or .tsv),
+what was found ("3 cards found", or "No cards yet. Put the front and back on one line, split by a tab or comma."), Into deck (a name, and chips
+of your first six decks), Cancel and Import. The cards are read as the web reads them (`Data/ReadCards.swift`, design/build.mjs READ_CARDS_JS
+ported: Anki's and Quizlet's text exports and CSV, Anki's header lines, HTML through a port of what the browser's DOMParser does, `{{c1::…}}`
+blanks), a long text off the main thread. A file is read as UTF-8, then UTF-16 (by its mark, or by its zero bytes), then Windows-1252 or
+Latin-1 (`ReadCards.text`). Import sends `data.import` a thousand cards at a time (a send that stopped part way goes on from there), into the
+deck with that name (the one it opened with first) or a new one ("Imported cards" when there's no name), then that deck's page opens. What
+goes wrong is a quiet line in the sheet (the server's own words, "Couldn’t reach Lucida. Check your connection and try again.", or "That file
+couldn’t be read."), never an alert.
+
+The board is `PhoneImport` (and `PhoneImportDark`, `PhoneImportGray`) with its `-state`: `"Deck chosen"` (when it's left out), `Empty`,
+`Pasted`, `"A file picked"`, `"No cards"`, `Importing` or `Error`. Debug builds also take `-open import` (over the Library), `-open
+import:<deck name>` (over that deck, with it chosen) and `-importFile <path>` (that file, read as if it was chosen).
+
+    ios/tests/import-check.sh
+    ios/tools/e2e-import.sh <simulator id>
+
+The first gives the app's reader and the web's (taken from the built WebImport board and run with web/rich.js in Chrome, so HTML is read by
+the browser's own parser) the same 1,237 texts (the web's samples, quotes, empty lines, a BOM, CRLF, tabs inside quotes, Anki's headers, HTML,
+1,200 made up; `IMPORT_FUZZ` and `IMPORT_SEED` make more) and compares every deck and card, then reads a text file written 13 ways; it is part
+of `tests/run.sh parity` too. The second starts a fresh server on port 3971 and `ios/tools/fail-proxy.mjs` on 3972, makes its files, and runs
+`LucidaUITests/ImportTests` in six flows: every way in, pasting and typing (the count and the line), into a new deck and one of yours, files
+(UTF-16, Latin-1, an Anki export, 2,500 cards, one that isn't text) and the Files picker, a save that fails and goes on when tried again, and a
+deck you only study; no system alert in any of them.
+
 ## The study network
 
 The tab bar is Library, Discover, Stats, and Profile (your own picture is its icon), and the app opens on the Library (there is no Today: see

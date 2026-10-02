@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>iPhone · Import cards (paste or choose a file, the deck, Import; its Tweak shows each state)</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./lucida.css">
+<script src="./lucida-logic.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&amp;family=Geist+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>
+@import url("./lucida.css");
+
+</style>
+</helmet>
+<div style="position: relative; width: 390px; height: 844px; overflow: hidden; font-family: Geist, -apple-system, system-ui, sans-serif; color: {{t.text}};">
+  <dc-import name="PhoneLibrary" dark="{{dark}}" dim="{{dim}}" hint-size="390px,844px"></dc-import>
+  <div style="position: absolute; inset: 0; background: {{t.dim}};"></div>
+  <div role="dialog" aria-label="Import cards" style="position: absolute; left: 0; right: 0; bottom: 0; box-sizing: border-box; padding: 16px 20px 34px; border-radius: 36px 36px 0 0; background: {{t.bg}}; display: flex; flex-direction: column; gap: 16px;">
+    <div style="display: flex; align-items: center; justify-content: space-between;"><span style="font-size: 22px; font-weight: 600; letter-spacing: -.02em;">Import cards</span><a href="{{backHref}}" aria-label="Close" style="width: 40px; height: 40px; border-radius: 20px; background: {{t.surf}}; display: flex; align-items: center; justify-content: center;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 6l12 12M18 6L6 18"/></svg></a></div>
+    <label style="display: flex; flex-direction: column; gap: 8px;"><span style="font-size: 13px; font-weight: 600;">Cards</span><textarea rows="8" onChange="{{setText}}" placeholder="One card per line: front, then back" style="resize: none; border: 0; outline: 0; border-radius: 20px; padding: 14px 16px; background: {{t.surf}}; color: {{t.text}}; font-family: 'Geist Mono', ui-monospace, monospace; font-size: 13px; line-height: 1.6;">{{text}}</textarea></label>
+    <div style="display: flex; align-items: center; gap: 12px;"><span style="flex-shrink: 0; display: flex;"><button type="button" onClick="{{pickText}}" style="height: 34px; padding: 0 12px; display: inline-flex; align-items: center; gap: 6px; border: 0; border-radius: 999px; background: {{t.surf}}; color: {{t.text}}; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V4M7 9l5-5 5 5"/><path d="M4 15v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3"/></svg>Choose a file</button></span><span style="font-size: 13px; line-height: 1.4; color: {{t.muted}};">{{foundLine}}</span></div>
+    <div style="display: flex; flex-direction: column; gap: 8px;"><span style="font-size: 13px; font-weight: 600;">Into deck</span><input type="text" value="{{deckName}}" onChange="{{setDeck}}" placeholder="New deck name" style="height: 40px; box-sizing: border-box; padding: 0 16px; border: 0; outline: 0; border-radius: 16px; background: {{t.surf}}; color: {{t.text}}; font: inherit; font-size: 16px;">
+      <div style="display: flex; flex-wrap: wrap; gap: 6px;"><sc-for list="{{deckChips}}" as="d" hint-placeholder-count="4"><button type="button" onClick="{{d.pick}}" aria-pressed="{{d.pressed}}" style="height: 32px; padding: 0 12px; border: 0; border-radius: 999px; background: {{d.bg}}; color: {{d.fg}}; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer;">{{d.name}}</button></sc-for></div></div>
+    <sc-if value="{{hasError}}" hint-placeholder-val="{{ false }}"><span role="status" style="font-size: 13px; line-height: 1.4; color: {{t.again}};">{{errorLine}}</span></sc-if>
+    <div style="display: flex; gap: 10px;"><a href="{{backHref}}" style="flex-grow: 1; height: 52px; border-radius: 999px; background: {{t.surf}}; display: flex; align-items: center; justify-content: center; font-size: 15px; font-weight: 600;">Cancel</a><a href="{{backHref}}" onClick="{{doImport}}" style="flex-grow: 2; height: 52px; border-radius: 999px; background: {{importBg}}; color: {{importFg}}; display: flex; align-items: center; justify-content: center; font-size: 15px; font-weight: 600;">{{importLabel}}</a></div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"dark":{"editor":"boolean","default":false},"dim":{"editor":"boolean","default":false},"grain":{"editor":"range","default":0.7,"min":0,"max":1,"step":0.05},"state":{"editor":"enum","default":"Deck chosen","options":["Deck chosen","Empty","Pasted","A file picked","No cards","Importing","Error"]},"$preview":{"width":390,"height":844}}'>
+class Component extends LucidaLogic(DCLogic, 1) {
+
+constructor(props) { super(props); this.state = {}; }
+renderVals() {
+  const t = this.theme(!!this.props.dark, !!this.props.dim);const db = this.props.db || this.mock(); const chrome = db.chrome();
+  const s = this.state, decks = db.decks();
+  // (The canvas's states: what was pasted or picked, the deck chosen, Import on its way, and the line when it didn't go.)
+  const ST = db.mock ? (["Deck chosen","Empty","Pasted","A file picked","No cards","Importing","Error"].includes(this.props.state) ? this.props.state : 'Deck chosen') : '', chosen = ['Deck chosen', 'Importing', 'Error'].includes(ST);
+  const sample = { Empty: '', 'A file picked': "#separator:tab\n#html:false\nWhat organelle makes most of the cell’s ATP?\tThe mitochondria\nWhat do ribosomes do?\tThey build proteins\nWhich organelle packages and ships proteins?\tThe Golgi apparatus\nWhat surrounds and protects a cell?\tThe plasma membrane\nWhat do lysosomes do?\tBreak down waste\nWhere does photosynthesis happen?\tIn the chloroplasts\nWhat does rough ER have that smooth ER lacks?\tRibosomes\nWhere is DNA kept?\tIn the nucleus\nWhat is the cytoplasm?\tThe gel that fills the cell\nWhat do mitochondria have of their own?\tTheir own DNA\nWhat is the cytoskeleton?\tA network of protein fibers\nWhat do vacuoles store?\tWater, food and waste", 'No cards': 'Notes from Tuesday’s class' }[ST];
+  const text = s.text ?? (db.mock ? sample ?? 'でんしゃ\ttrain\nねこ\tcat\nみず\twater' : '');
+  const splitAt = (l, seps) => { const out = []; let cur = '', q = false, start = true;
+    for (let i = 0; i < l.length; i++) { const ch = l[i];
+      if (q) { if (ch !== '"') cur += ch; else if (l[i + 1] === '"') { cur += '"'; i++; } else q = false; }
+      else if (ch === '"' && start) { q = true; start = false; }
+      else if (seps.includes(ch)) { out.push(cur); cur = ''; start = true; }
+      else { cur += ch; start = false; } }
+    out.push(cur); return out; };
+  const cells = (l, sep) => sep ? splitAt(l, sep) : l.includes('\t') ? l.split('\t') : l.includes(' - ') ? l.split(' - ') : splitAt(l, ',;');
+  const R = this.rich(), cell = x => (R.looksHtml(x) ? R.fromHtml(x) : x.trim());
+  const toCard = ([front, ...rest]) => {
+    const back = rest.filter(Boolean).join(', ');
+    return /\{\{c\d+::/.test(front) ? { kind: 'cloze', text: front.replace(/\{\{c\d+::([\s\S]+?)(?:::[^}]*)?\}\}/g, '[[$1]]'), note: back } : { front, back };
+  };
+  const readCards = (text, name) => {
+    const lines = String(text || '').split(/\r?\n/), head = {};
+    for (const l of lines) { const m = /^#([a-z ]+):(.*)$/i.exec(l.trim()); if (m) head[m[1].toLowerCase()] = m[2].trim(); }
+    const sep = { tab: '\t', comma: ',', semicolon: ';', pipe: '|', colon: ':', space: ' ' }[String(head.separator || '').toLowerCase()] || '';
+    const col = k => (parseInt(head[k + ' column'], 10) || 0) - 1, deckCol = col('deck');
+    const skip = new Set([deckCol, col('notetype'), col('tags'), col('guid')].filter(i => i >= 0));
+    const decks = new Map();
+    for (const l of lines) {
+      if (!l.trim() || l.trim().startsWith('#')) continue;
+      const cs = cells(sep === '\t' ? l : l.trim(), sep), card = toCard(cs.filter((x, i) => !skip.has(i)).map(cell));
+      if (card.kind === 'cloze' ? !R.blanks(card.text).length : !(card.front && card.back)) continue;
+      const deck = (deckCol >= 0 && String(cs[deckCol] || '').split('::').pop().trim()) || name;
+      if (!decks.has(deck)) decks.set(deck, []);
+      decks.get(deck).push(card);
+    }
+    return [...decks];
+  };
+  const cards = readCards(text, '').flatMap(([, cs]) => cs);
+  const here = db.mock ? (chosen ? { name: 'Japanese · JLPT N4' } : null) : this.props.deckId ? db.deck(this.props.deckId) : null;
+  const deckName = s.deck ?? (here ? here.name : '');
+  const plural = (n, w) => n + ' ' + w + (n === 1 ? '' : 's');
+  return {
+    t, ...chrome, dark: !!this.props.dark, dim: !!this.props.dim, text, deckName,
+    setText: e => this.setState({ text: e && e.target ? e.target.value : '' }), setDeck: e => this.setState({ deck: e && e.target ? e.target.value : '' }),
+    pickText: () => db.act.pickText().then(txt => txt != null && this.setState({ text: txt })),
+    foundLine: cards.length ? plural(cards.length, 'card') + ' found' : text.trim() ? 'No cards yet. Put the front and back on one line, split by a tab or comma.' : '',
+    deckChips: decks.slice(0, 6).map(d => { const on = d.name === deckName; return { name: d.name, pressed: on ? 'true' : 'false', bg: on ? t.inv : t.surf, fg: on ? t.invText : t.text, pick: () => this.setState({ deck: d.name }) }; }),
+    importLabel: ST === 'Importing' ? 'Importing…' : cards.length ? 'Import ' + plural(cards.length, 'card') : 'Import cards', importBg: cards.length ? t.inv : t.surf2, importFg: cards.length ? t.invText : t.muted,
+    backHref: db.mock ? 'PhoneLibrary.dc.html' : here && !db.mock ? here.href : db.href('decks'),
+    hasError: ST === 'Error', errorLine: 'Couldn’t reach Lucida. Check your connection and try again.',
+    // Into the deck with that name (this deck first), or a new deck when no deck has it.
+    doImport: e => { if (db.mock) return; e.preventDefault(); if (!cards.length) return;
+      const name = deckName.trim() || 'Imported cards', same = here && here.id && here.name === name ? here : decks.find(d => d.name.trim().toLowerCase() === name.toLowerCase());
+      db.act.importCards({ deckId: same ? same.id : '', deckName: name, cards }); }
+  };
+}
+}
+</script>
+</body>
+</html>
