@@ -321,8 +321,9 @@ export const NOTES_CSS = [
   '.nb-bar{position:absolute;display:none;z-index:31;padding:4px;gap:2px;align-items:center;border-radius:14px;background:var(--nb-bg);box-shadow:0 0 0 1px var(--gd-line),0 12px 32px rgba(0,0,0,.18);text-shadow:none}.nb-bar.nb-show{display:flex}',
   '.nb-bb{width:32px;height:32px;flex-shrink:0;padding:0;border:0;border-radius:9px;background:transparent;color:var(--gd-text);font:inherit;font-size:15px;line-height:1;display:flex;align-items:center;justify-content:center;cursor:pointer}.nb-bb:hover,.nb-bb.nb-on{background:var(--nb-surf)}.nb-bb b{font-weight:800}.nb-bb i{font-family:Georgia,serif;font-size:16px}',
   '.nb-linkfield{width:210px;height:32px;box-sizing:border-box;padding:0 10px;border:0;outline:0;border-radius:9px;background:var(--nb-surf);color:var(--gd-text);font:inherit;font-size:14px}.nb-linkfield.nb-bad{box-shadow:inset 0 0 0 1.5px #D92D20}',
-  // the phone's bar above the keyboard
+  // the phone's bar above the keyboard (on a phone's web page web/notes.js puts it there, and gives the page room at its end for the keyboard: --nb-kb)
   '.nb-keys{position:absolute;display:none;left:0;right:0;bottom:0;z-index:40;height:50px;box-sizing:border-box;padding:0 6px;align-items:center;gap:2px;background:var(--nb-bg);border-top:1px solid var(--gd-line)}.nb-keys.nb-show{display:flex}',
+  '.nb-phone>.nb-doc{padding-bottom:calc(8px + var(--nb-kb, 0px))}',
   '.nb-kb{height:40px;min-width:46px;flex-shrink:0;padding:0 8px;border:0;border-radius:10px;background:transparent;color:var(--gd-text);font:inherit;font-size:17px;display:flex;align-items:center;justify-content:center;cursor:pointer}.nb-kb.nb-on{background:var(--nb-surf)}.nb-kb b{font-weight:800}.nb-kb i{font-family:Georgia,serif}',
   '.nb-kt{font-size:15px;font-weight:600}.nb-aa{font-size:17px;font-weight:700;letter-spacing:-.02em}.nb-kgap{flex-grow:1}',
   '@media (prefers-reduced-motion:reduce){.nb-in,.nb-menu.nb-show,.nb-bar.nb-show{animation:none}.nb-tg svg,.nb-fold svg,.nb-fold{transition:none}}'
@@ -548,9 +549,15 @@ export const MATERIALS_MOCK = MATERIALS_MOCK_BASE + '\n' + DIAGRAMS_MOCK;
 
 // ---------- the Notes page (WebGuide, PhoneGuide) ----------
 // A deck's Guide and its extra pages as one page that is always formatted (web/notes.js): click and type, no marks to see, nothing to switch between. At the
-// top, the pages as tabs (and + for a new one), the quiet saving line, and ⋯ (Make cards from this page, Older versions, Rename page, Delete page); a phone
-// has a bar above the keyboard. It saves as it is typed (a moment after the last key, one save after another), and Done (✕, Escape, the back arrow) sends
-// what is waiting first. The canvas's `view` shows its states.
+// top, the pages as tabs (and + for a new one), the quiet saving line, and ⋯ (Make cards from this page, Older versions, Rename page, Delete page). It saves as
+// it is typed (a moment after the last key, one save after another), and going back to the deck sends what is waiting first.
+// On a computer it is a page of its own (the owner, 2026-10-02: "notes should not be a popup"), like the Cards screen: the app's sidebar stays, and the main
+// area is the page: at the top left the deck's name, which goes back to the deck's Notes, then the page tabs, the saving line and ⋯, and the note in a readable
+// column down the middle. Escape closes what is open on it (a menu, the link field, a question), never the page.
+// On a phone, the back arrow and the deck's name, and Lucida's bar for formatting rides on top of the keyboard (the owner: "formatting buttons should be in
+// toolbar above keyboard in iphones"): the board draws a plain keyboard under it while a line is written (on the canvas only; the app never draws one), and
+// the web app places the bar above the phone's own keyboard (web/notes.js, from visualViewport), or at the bottom with no keyboard on screen.
+// The canvas's `view` shows its states.
 export const GUIDE_VIEWS = ['Writing', 'Block menu', 'Format bar', 'Toggle open', 'Toggle closed', 'Section folded', 'Blank note', 'Reading on a shared deck', 'Older versions', 'A new page'];
 // What each state shows (web/notes.js `demo`; the sample's blocks: 0 title, 1 its line, 2 Checklist, 7 The mitochondrion, 8 its first toggle, ...).
 const GUIDE_DEMOS = phone => ({
@@ -560,9 +567,17 @@ const GUIDE_DEMOS = phone => ({
   'Toggle open': { open: 'all' }, 'Toggle closed': { open: 'none' }, 'Section folded': { open: 'none', fold: [2] },
   'Blank note': { keys: phone }, 'Reading on a shared deck': { open: 'first' }, 'A new page': { keys: phone }
 });
+// The keyboard the iPhone board draws under the bar while a line is written: a plain panel with rows of rounded keys in the theme's colors (no letters, no
+// logos), only so the canvas shows where the bar goes. The app never draws one (the phone has its own).
+export const GUIDE_KEYBOARD_H = 266;
 function guideBoards(H) {
-  const { svg, I, FONT, T, DB_JS, DARK, MESH, W, HH, PW, PH } = H;
+  const { svg, I, FONT, T, DB_JS, DARK, MESH, W, HH, PW, PH, sidebar } = H;
   const icon = (name, size = 16, w = 2) => svg(I[name] || EXTRA[name], size, w);
+  const key = w => `<span style="${w ? `width: ${w}px; flex-shrink: 0;` : 'flex: 1 1 0;'} height: 42px; border-radius: 7px; background: {{kb.key}};"></span>`, keys = n => Array.from({ length: n }, () => key(33)).join('');
+  const keyRow = inner => `<div style="display: flex; justify-content: center; gap: 6px;">${inner}</div>`, gap = '<span style="width: 2px; flex-shrink: 0;"></span>';
+  const keyboard = `<sc-if value="{{kb.show}}" hint-placeholder-val="{{ false }}"><div aria-hidden="true" data-keyboard style="position: absolute; left: 0; right: 0; bottom: 0; height: ${GUIDE_KEYBOARD_H}px; box-sizing: border-box; padding: 10px 3px 0; display: flex; flex-direction: column; gap: 12px; background: {{kb.panel}};">
+      ${keyRow(keys(10))}${keyRow(keys(9))}${keyRow(key(42) + gap + keys(7) + gap + key(42))}${keyRow(key(87) + key(0) + key(87))}
+    </div></sc-if>`;
   const ROUND = 'width: 40px; height: 40px; flex-shrink: 0; border: 0; border-radius: 20px; background: {{t.surf}}; color: {{t.text}}; display: flex; align-items: center; justify-content: center; cursor: pointer;';
   // The pages: a pill for the Guide and for each extra page, and + for a new one.
   const pages = phone => `<sc-if value="{{showTabs}}" hint-placeholder-val="{{ true }}"><div role="group" aria-label="Pages" style="display: flex; align-items: center; gap: 4px; min-width: 0; overflow-x: auto; scrollbar-width: none; ${phone ? 'flex-shrink: 0; padding: 0 16px 4px;' : 'flex-grow: 1;'}"><sc-for list="{{tabs}}" as="g" hint-placeholder-count="3"><button type="button" onClick="{{g.pick}}" aria-pressed="{{g.pressed}}" style="height: 32px; max-width: 220px; flex-shrink: 0; padding: 0 13px; border: 0; border-radius: 999px; background: {{g.bg}}; color: {{g.fg}}; font: inherit; font-size: 13px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: pointer;">{{g.title}}</button></sc-for><sc-if value="{{canAddPage}}" hint-placeholder-val="{{ true }}"><button type="button" onClick="{{addPage}}" aria-label="Add a page" data-tip="Add a page" style="width: 32px; height: 32px; flex-shrink: 0; border: 0; border-radius: 16px; background: transparent; color: {{t.muted}}; display: flex; align-items: center; justify-content: center; cursor: pointer;">${icon('plus', 15, 2.2)}</button></sc-if></div></sc-if>`;
@@ -591,19 +606,23 @@ function guideBoards(H) {
         <sc-if value="{{noVersions}}" hint-placeholder-val="{{ false }}"><span style="font-size: 15px; color: {{t.muted}};">There are no older versions yet. They show up here as you write.</span></sc-if>
       </div>
     </div></sc-if>`;
-  const webGuide = `<div style="position: relative; width: 1440px; height: 900px; overflow: hidden; font-family: ${FONT}; color: {{t.text}};">
-  <dc-import name="WebDeck" dark="{{dark}}" dim="{{dim}}" deck-id="{{deckId}}" hint-size="1440px,900px"></dc-import>
-  <div class="sc-fade" onClick="{{done}}" style="position: absolute; inset: 0; z-index: 40; background: {{t.dim}};"></div>
-  <div role="dialog" aria-label="Notes" style="position: absolute; z-index: 40; left: 50%; top: 50%; transform: translate(-50%, -50%); width: 940px; height: 830px; box-sizing: border-box; border-radius: 32px; background: {{t.bg}}; box-shadow: 0 24px 64px rgba(0,0,0,.24); display: flex; flex-direction: column; overflow: hidden;">
-    <div style="display: flex; align-items: center; gap: 8px; padding: 18px 18px 0 24px; flex-shrink: 0; min-height: 40px;">
-      ${pages(false)}<sc-if value="{{noTabs}}" hint-placeholder-val="{{ false }}"><span style="flex-grow: 1;"></span></sc-if>
-      ${saving}
-      <sc-if value="{{canEdit}}" hint-placeholder-val="{{ true }}">${more}</sc-if>
-      <button type="button" onClick="{{done}}" data-key="escape" aria-label="Done" data-tip="Done" style="${ROUND}">${icon('close', 16, 2)}</button>
-    </div>
-    ${page(false)}${history(false)}
-  </div>
+  // A computer: a page of its own beside the app's sidebar (the deck is in the Library, so that is lit). Its top: the deck's name, back to the deck's Notes
+  // (the Cards screen's pill), the page tabs and +, the saving line and ⋯; under it, the note in a column down the middle.
+  const webGuide = `<div style="width: 1440px; height: 900px; box-sizing: border-box; display: flex; overflow: hidden; font-family: ${FONT}; background: {{t.bg}}; color: {{t.text}};">
+${sidebar('Library')}
+<main aria-label="Notes" style="position: relative; flex-grow: 1; min-width: 0; display: flex; flex-direction: column; overflow: hidden;">
+  <header style="height: 64px; flex-shrink: 0; box-sizing: border-box; padding: 0 20px 0 24px; display: flex; align-items: center; gap: 8px; border-bottom: 1px solid {{t.line}};">
+    <a href="{{backHref}}" onClick="{{back}}" aria-label="Back to {{deckName}}" style="height: 36px; max-width: 280px; flex-shrink: 0; box-sizing: border-box; padding: 0 14px 0 10px; display: inline-flex; align-items: center; gap: 4px; border-radius: 999px; background: {{t.surf}}; color: {{t.text}}; font-size: 13px; font-weight: 600; white-space: nowrap;">${icon('back', 14, 2.2)}<span style="min-width: 0; overflow: hidden; text-overflow: ellipsis;">{{deckName}}</span></a>
+    <span aria-hidden="true" style="width: 1px; height: 20px; flex-shrink: 0; margin: 0 6px 0 2px; background: {{t.line}};"></span>
+    ${pages(false)}<sc-if value="{{noTabs}}" hint-placeholder-val="{{ false }}"><span style="flex-grow: 1;"></span></sc-if>
+    ${saving}
+    <sc-if value="{{canEdit}}" hint-placeholder-val="{{ true }}">${more}</sc-if>
+  </header>
+  ${page(false)}${history(false)}
+</main>
 </div>`;
+  // A phone: the back arrow and the deck's name, the pages, the note, and the bar on top of the keyboard while a line is written (the keyboard drawn on the
+  // canvas only). (On the canvas the bar is drawn in its own box, which comes before the page so the page finds it when it is first drawn.)
   const phoneGuide = `<div style="position: relative; width: 390px; height: 844px; box-sizing: border-box; padding-top: 52px; display: flex; flex-direction: column; overflow: hidden; font-family: ${FONT}; background: {{t.bg}}; color: {{t.text}};">
     <div style="display: flex; align-items: center; gap: 8px; padding: 0 12px 0 12px; height: 52px; flex-shrink: 0;">
       <button type="button" onClick="{{done}}" aria-label="Done" style="${ROUND} background: transparent;">${icon('back', 20, 2)}</button>
@@ -611,9 +630,10 @@ function guideBoards(H) {
       ${saving}
       <sc-if value="{{canEdit}}" hint-placeholder-val="{{ true }}">${more}</sc-if>
     </div>
+    <div ref="{{keysRef}}" data-sc-own style="position: absolute; left: 0; right: 0; bottom: {{kb.bottom}}; ${NOTES_VARS()}"></div>
     ${pages(true)}
     ${page(true)}${history(true)}
-    <div ref="{{keysRef}}" data-sc-own style="position: absolute; left: 0; right: 0; bottom: 0; ${NOTES_VARS()}"></div>
+    ${keyboard}
   </div>`;
 
   const logic = phone => `
@@ -656,14 +676,21 @@ renderVals() {
   const when = t0 => new Date(t0).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
   const versions = (st.hist || []).map(v => ({ when: when(v.at), size: plural(v.text.length, 'character'), excerpt: this.md().plain(v.text, 220), restore: async () => { await am.restoreGuide(deckId, pageId, v.at); this.setState({ drafts: Object.fromEntries(Object.entries(this.state.drafts).filter(([k]) => k !== key)), histOpen: false, hist: null }); } }));
   const histNow = mock && histOpen && st.hist === null ? (dm.guideHistory(deckId, pageId).then(v => this.setState({ hist: v })), []) : versions;
+  // Back to the deck's Notes, once what is waiting is saved (it stays when a save didn't work, so nothing written is lost).
   const done = async () => { await this._flush(); if (mock || this.state.err) return; db.act.go('/deck/' + deckId + '?tab=notes'); };
   const at = /^(\\d+):(\\d+)$/.exec(p.at || '');
   const demos = ${JSON.stringify(GUIDE_DEMOS(phone))}, demo = mock ? demos[view] : undefined;
   const image = s => (/^\\/media\\/[\\w-]+\\.(png|jpe?g|gif|webp)$/i.test(s) ? s : '');
   const tabs = [{ id: 'main', title: 'Guide' }, ...extra];
+  // (the canvas's iPhone states where a line is written draw a keyboard, with the bar on it)
+  const kbOn = ${phone ? 'true' : 'false'} && mock && !!(demo && demo.keys) && canEdit && !histOpen;
   return {
     t, ...chrome, dark: !!p.dark, dim: !!p.dim, deckId, deckName: dk.name || 'Cell Biology', canEdit,
     done, saveLabel: reading ? '' : saved, saveColor: st.err ? t.again : t.muted,
+    // the deck's name at the top left of the page on a computer (a press with ⌘ or Ctrl opens it in another tab, as a link does)
+    backHref: mock ? 'WebDeck.dc.html' : '/deck/' + deckId + '?tab=notes',
+    back: e => { if (mock || (e && (e.metaKey || e.ctrlKey || e.shiftKey || e.button))) return; if (e && e.preventDefault) e.preventDefault(); done(); },
+    kb: { show: kbOn, bottom: kbOn ? '${GUIDE_KEYBOARD_H}px' : '0px', panel: p.dark ? t.surf : t.surf2, key: p.dark ? t.surf2 : t.bg },
     showTabs: tabs.length > 1 || canAddPage, noTabs: !(tabs.length > 1 || canAddPage),
     tabs: tabs.map(x => ({ title: x.title, pressed: x.id === pageId ? 'true' : 'false', bg: x.id === pageId ? t.surf : 'transparent', fg: x.id === pageId ? t.text : t.muted, pick: async () => { await this._flush(); this.setState({ page: x.id, histOpen: false, renaming: false }); } })),
     canAddPage, addPage: async () => { await this._flush(); const id = await am.addGuidePage(deckId, 'New page'); this.setState({ page: id, histOpen: false, renaming: false }); },
@@ -681,7 +708,7 @@ renderVals() {
     showPage: !histOpen, histOpen, versions: histNow, noVersions: histOpen && st.hist !== null && !versions.length, histTitle: 'Older versions of ' + (pageId === 'main' ? 'the Guide' : cur.title),
     // the page (web/notes.js): the same for writing and reading; on the canvas, its states
     nbRef: el => { if (!el) return; this._nbc = this.notes().mount(el, { md: text, key: (mock ? 'canvas|' + view + '|' : '') + key, editable: canEdit, phone: ${phone ? 'true' : 'false'}, image, demo,
-      onChange: setText, onPicture: canEdit ? pickPicture : undefined, onEscape: ${phone ? 'undefined' : 'done'}, focusAt: at ? { i: +at[1], off: +at[2] } : !mock && !text.trim() ? { i: 0, off: 0 } : undefined, keysHost: mock ? this._keys : undefined }); },
+      onChange: setText, onPicture: canEdit ? pickPicture : undefined, focusAt: at ? { i: +at[1], off: +at[2] } : !mock && !text.trim() ? { i: 0, off: 0 } : undefined, keysHost: mock ? this._keys : undefined }); },
     keysRef: el => { this._keys = el || this._keys; }
   };
 }`;
