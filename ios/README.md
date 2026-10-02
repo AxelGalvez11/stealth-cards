@@ -201,6 +201,52 @@ temporary folder. `ios/tests/make-check.sh` runs the flow's own code on the Mac 
 three at a time and tried again twice, a bad file not tried again, the server's words, a 401, Cancel while it's starting, a direct upload
 with no cookie, what can be picked, a long recording cut into parts and sent in order, the recorder's ten-minute files); no simulator.
 
+## A deck's Guide and Sources
+
+Every deck can have a **Guide** (a page written in Markdown, like a README, with extra pages and a short history of versions) and **Sources** (what its cards
+were made from: a file, pictures, a recording, a video, pasted text, a topic). The deck page has tabs, **Cards | Notes | Sources** (`Screens/DeckMaterials.swift`
+`DeckTabs`: plain underlined tabs, a small count on Cards and Sources, room for a fourth that scrolls sideways): Notes is the Guide, Sources only shows on a deck of
+yours (a deck you only study has Cards, and Notes when it has a Guide, read only; an address for a tab that isn't there falls back to Cards). The + on the cover is the
+**Add cards** menu (New card, From a file, photo, video or topic, Import cards: `Screens/AddMenu.swift`).
+
+**The words are read by `web/guide.js` itself**, run in JavaScriptCore (`Data/GuideEngine.swift`; `design/to-ios.mjs` copies the file to `Resources/guide.js`). The same parser,
+the same safety (nothing in a Guide can run: raw HTML is shown as words, links are only http(s), mailto and in-page, a picture only from the app's own `/media/` storage, a shared
+deck's also from its public storage), and the same toolbar (Heading, Bold, Italic, Code, Link, Bulleted list, Numbered list, Task list, Quote, Table, Picture) and Enter in a list as
+the web. `parse()`'s tree is drawn natively by `Design/GuideViews.swift` the way the canvas's `.gd` CSS draws it: headings with their rules, lists, task boxes, quotes, code
+(rounded boxes for inline code), tables sized like a browser's, links that open in Safari (a link to one of the Guide's headings scrolls the page to it). `ios/tests/guide-check.sh` (also part of `ios/tests/run.sh parity`) feeds the web test's
+341-text table, the toolbar, Enter and Tab, and every call the web's own test makes to both node and the engine and compares the answers (29,000 calls), checks the app's `guide.js`
+is the same file as `web/guide.js`, and runs the editor's saving logic against a stand-in server (30 checks).
+
+**The editor** (`Screens/Guide.swift`, the canvas's `PhoneGuide`; opened by Edit, Write or Add a guide on the Notes tab; `Route.guide`): a text field (a UITextView) with the toolbar over
+it, Write and Preview, page tabs with Add page, a name field and Delete page (asks first) on an extra page, History (older versions, Restore keeps what it replaced), Make cards (from
+the page, or from what is selected), and Done, which goes back to the deck's Notes. It saves as it is typed (`Data/GuideEditor.swift`: 700 ms after the last key, one save after
+another, Saving… and Saved at the top, what went wrong in the same place). Pictures go up like a card's.
+
+**Sources** (`Data/GuideData.swift`, `Screens/DeckMaterials.swift`): the list (name, kind, pages or minutes, cards, date, newest first) and a source opened as a sheet: a recording
+plays at the card's time (a long one is kept as several files: the viewer walks their seconds, as the web does, and plays the part that covers the time at the second inside it:
+a card from 1:30:00 of thirteen parts of 550 seconds opens part 10 at 7:30), a PDF opens in PDFKit at its page and slides and Word files in QuickLook, a video opens its
+YouTube link at the time (`&t=90s`), photos full screen, a topic its words, what was said in parts with the one a card pointed at marked. More cards makes more from it, Delete asks
+first ("Delete “<name>”? Its file goes, and the 6 cards made from it stay in the deck."). A card the maker made says "Made from <source> · p. 4" in the card editor, which opens that
+source at that place (the deck's Sources, viewer open; plain words once the source is deleted). A shared deck's page shows its Guide and "Made from 2 sources" (a number only).
+
+Library data: each deck's `guide` and `sources` and each card's `src` come with `/api/state` and are all optional (`MakeModels.swift`), so an older library still opens. The acts are
+`guide.save`, `guide.page.add`, `.rename`, `.delete`, `guide.restore`, `source.delete` (`Store.guide*`); History is `GET /api/guide/history`. The boards: `PhoneGuide` (and Dark, Gray;
+`-state Write|Preview|"Older versions"|"A new page"|"Nothing written yet"`), `PhoneDeck` (`-state Cards|Notes|Sources` or `-state "Guide and sources"|"Guide pages"|"Long guide"|"A source
+open"|"No guide yet"|"Studying (read only)"`; or `-section`, `-guide`, `-sourceOpen <id>`, `-sourceAt "p. 4"`), `PhonePublicDeck` (`-state` is the Guide setting) and `PhoneEditor`
+(`-madeFrom no` leaves the line out), with the sample in `Design/GuideSample.swift`. More launch arguments (debug builds): `-open guide[:<deck name>[:<page id>]]` opens the editor, and
+`-deckTab notes|sources` (with `-deckSource <id>` and `-deckAt "1:30:00"`) asks the open deck page for a section, and a source open at that place (like the web's `?tab=&source=&at=`).
+
+    ios/tools/e2e-guide.sh <simulator id>
+
+starts a fresh server on port 3934 and the stand-in AI on 3939, makes the Sources with the server's own make steps (`ios/tests/js/guide-seed.mjs`: a PDF, a recording of thirteen files, a
+video, pictures, text, a topic, under a Guide with two pages), and runs `LucidaUITests/GuideTests` in twelve flows (no Guide and "Add a guide", the toolbar and Enter in a list, Preview and
+the hostile text, History and Restore, pages, Make cards from the Guide, the Guide on the deck page, a deck you only study, the Sources and each viewer, "Made from", More cards and
+Delete, a shared deck's page, the Add cards menu and dark mode).
+
+Two things worth knowing when writing flows like these: a tap on a card row right after the page was scrolled is ignored on purpose (`HoldOrTap` fails a touch that lands on a
+page that is still moving, like a button's), so `GuideTests.cardRow` brings the row to the middle and lets the page settle first; and on iOS 26 a `confirmationDialog` is a
+small popover with only its action button and no Cancel, so a flow closes it with a touch outside (`PopoverDismissRegion`) and taps `app.popovers.buttons[...]`.
+
 ## Classes and schools
 
 The Library's third view (Decks · All cards · Classes): your classes as tiles, Join a class with its 6-letter code, New

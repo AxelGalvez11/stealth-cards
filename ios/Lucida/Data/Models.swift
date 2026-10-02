@@ -355,7 +355,9 @@ struct Card: Decodable, Identifiable {
   var quiz: [QuizQuestion] = []
   /// A card of a deck from someone else: the shared card it came from.
   var origin: String?
-  enum CodingKeys: String, CodingKey { case id, deckId, kind, front, back, note, text, tags, image, audio, wave, speak, lang, auto, source, pending, paused, created, srs, pile, cloze, group, boxes, box, occ, explain, quiz, origin }
+  /// A card Lucida made from one of its deck's sources: which one, and where in it.
+  var src: CardSource?
+  enum CodingKeys: String, CodingKey { case id, deckId, kind, front, back, note, text, tags, image, audio, wave, speak, lang, auto, source, pending, paused, created, srs, pile, cloze, group, boxes, box, occ, explain, quiz, origin, src }
   init(from d: Decoder) throws {
     let c = try d.container(keyedBy: CodingKeys.self)
     id = c.v(.id, UUID().uuidString); deckId = c.v(.deckId, ""); kind = c.v(.kind, "basic")
@@ -364,7 +366,7 @@ struct Card: Decodable, Identifiable {
     source = c.v(.source, "you"); pending = c.v(.pending, false); paused = c.v(.paused, false); created = c.v(.created, 0); srs = c.v(.srs, SRS())
     pile = c.v(.pile, nil); cloze = c.v(.cloze, nil); group = c.v(.group, nil)
     boxes = c.v(.boxes, []); box = c.v(.box, nil); occ = c.v(.occ, "one")
-    explain = c.v(.explain, nil); quiz = c.v(.quiz, []); origin = c.v(.origin, nil)
+    explain = c.v(.explain, nil); quiz = c.v(.quiz, []); origin = c.v(.origin, nil); src = c.v(.src, nil)
   }
 }
 

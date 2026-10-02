@@ -153,6 +153,17 @@ final class API {
     return url
   }
 
+  /// A file of your library (/media/…) saved to `file`: this server sends it, or (online) a redirect to a signed address, which the session follows.
+  func download(_ path: String, to file: URL) async throws {
+    guard let url = API.media(path) else { throw APIError.server("That file isn’t here.") }
+    let tmp: URL, resp: URLResponse
+    do { (tmp, resp) = try await session.download(from: url) }
+    catch { throw APIError.server(API.unreachable) }
+    guard let http = resp as? HTTPURLResponse, (200..<300).contains(http.statusCode) else { throw APIError.server("That file isn’t here any more.") }
+    try? FileManager.default.removeItem(at: file)
+    try FileManager.default.moveItem(at: tmp, to: file)
+  }
+
   /// Pictures and sound: /media/… answers with a short-lived link to the file.
   func mediaURL(_ path: String) -> URL? { API.media(path) }
   static func media(_ path: String) -> URL? { path.hasPrefix("http") ? URL(string: path) : URL(string: path, relativeTo: API.base)?.absoluteURL }

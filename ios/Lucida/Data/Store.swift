@@ -93,6 +93,10 @@ struct DemoProps {
   /// Your theme (the Theme boards' `theme`: a key from web/themes/index.js, "lucida" for the app's own look), whether people
   /// who visit your profile see it, and which theme's page is open (PhoneTheme's `sheet`).
   var theme = "lucida", themeProfile = true, themeSheet = "aero"
+  /// The Guide and Sources boards' settings (their Tweaks): the deck page's section ("Cards", "Notes", "Sources"), what the Guide and Sources hold (the
+  /// canvas's `guide`: GuideSample.states), a source opened (its id) at a card's place, the Guide editor's view (GuideSample.views), and whether the card
+  /// editor says where its card came from.
+  var section = "Cards", guideState = "Guide and sources", sourceOpen = "", sourceAt = "", guideView = "Write", madeFrom = true
 }
 
 struct TodayVM {
@@ -130,6 +134,8 @@ final class Store: ObservableObject {
   @Published var demoClass = DemoClass()
   /// The study network's answers (Net.swift, like web/net.js).
   let netCache = NetCache()
+  /// What the sources of your decks said, as it comes (Data/GuideData.swift).
+  let sourceTexts = SourceTexts()
   /// What you changed on a profile, shown before the server's answer has it (Profile.swift), by handle.
   @Published var profileOver: [String: ProfileOver] = [:]
   /// When the app went to the background (coming back after ten minutes brings shared decks up to date).

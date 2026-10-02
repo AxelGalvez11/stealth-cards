@@ -4,8 +4,9 @@ import SwiftUI
 
 /// Pages pushed on a tab: Settings, a deck, a folder, Check AI cards, someone's profile (yours is the Profile tab, not a
 /// page: see `profile`), News, a shared deck's page, its suggestions (`suggestions("")`: every deck of yours), its History,
-/// a class (by its code), Settings › Theme with a theme's page (its key), and Settings › Connect AI.
-enum Route: Hashable { case settings, deck(String), folder(String), inbox, profile(String), news, publicDeck(DeckAddress), suggestions(String), history(DeckAddress), classPage(String), themes, theme(String), connect }
+/// a class (by its code), Settings › Theme with a theme's page (its key), Settings › Connect AI, and a deck's Guide editor
+/// (its deck, and the page it opens on: "" for the Guide itself).
+enum Route: Hashable { case settings, deck(String), folder(String), inbox, profile(String), news, publicDeck(DeckAddress), suggestions(String), history(DeckAddress), classPage(String), themes, theme(String), connect, guide(String, String) }
 enum SheetKind: Identifiable, Equatable {
   case newDeck, newCard(deckId: String?, cardId: String?), deckSettings(String), learnStart(String)
   /// The New folder popup (maybe for a deck that goes in it), or Rename on a folder's page; `name`: what's typed to start.
@@ -19,6 +20,8 @@ enum SheetKind: Identifiable, Equatable {
   case classForm(ClassForm), classAdd(String), classAssign(String), report(kind: String, id: String, name: String), verify
   /// Make cards from a file, pictures, a recording, text, a link, or a topic (Screens/Make.swift), starting where the MakeStart says.
   case make(MakeStart)
+  /// A deck's source opened (Screens/DeckMaterials.swift): the deck, the source, and the place in it a card pointed at ("p. 4", "12:40", or "").
+  case source(deckId: String, id: String, at: String)
   var id: String {
     switch self {
     case .newDeck: return "newDeck"
@@ -36,6 +39,7 @@ enum SheetKind: Identifiable, Equatable {
     case .report(let k, let i, _): return "report-\(k)-\(i)"
     case .verify: return "verify"
     case .make: return "make"
+    case .source(let d, let i, _): return "source-\(d)-\(i)"
     }
   }
 }
@@ -51,6 +55,13 @@ enum FullKind: Identifiable, Equatable {
     case .learn(let d): return "learn-" + d
     }
   }
+}
+
+/// What the deck page is asked to show: a section ("cards", "notes" or "sources"), and in Sources a source (its id) open at a place in it ("p. 4", "12:40").
+struct DeckWant: Equatable {
+  var deckId: String, tab: String
+  var source = "", at = ""
+  var token = UUID()
 }
 
 @MainActor
@@ -70,6 +81,9 @@ final class Nav: ObservableObject {
   @Published var barHidden = false
   /// Edit profile opens once your profile is showing (Settings → Edit profile).
   var wantsEdit = false
+  /// A deck page asked to show a section (and maybe a source): the Guide editor's Done asks for Notes, a card's "Made from" line for Sources with that source
+  /// open. The deck's page takes it as soon as it's on screen.
+  @Published var deckWants: DeckWant?
 
   func push(_ r: Route) { path.append(r) }
   func back() { if !path.isEmpty { path.removeLast() } }
@@ -130,6 +144,14 @@ final class Nav: ObservableObject {
     tab = .library; path = [.deck(id)]
     sheet = settings ? .deckSettings(id) : nil
   }
+  /// A deck's source opened where a card came from: the deck's page on Sources, with the source open at that place (the card editor's "Made from" line).
+  func openSource(deckId: String, id: String, at: String) {
+    sheet = nil
+    deckWants = DeckWant(deckId: deckId, tab: "sources", source: id, at: at)
+    if path.last != .deck(deckId) { tab = .library; path = [.deck(deckId)] }
+  }
+  /// A deck's Guide editor, on a page of it ("" for the Guide itself).
+  func guide(deckId: String, page: String = "") { push(.guide(deckId, page)) }
   /// A class's page, by its code.
   func classPage(_ code: String) { push(.classPage(code)) }
   /// A page on another site (Google Classroom's share page), in Safari.

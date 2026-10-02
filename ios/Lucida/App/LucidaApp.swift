@@ -114,6 +114,11 @@ struct RootView: View {
               if !rv.empty { store.grade(rv.card.id, rating) }
             }
           case "deck": nav.tab = .library; nav.path = [.deck(first)]
+          // A deck's Guide editor: the first deck's, or `guide:<deck name>` (and `guide:<deck name>:<page id>`).
+          case "guide": nav.tab = .library; nav.path = [.deck(first), .guide(first, "")]
+          case let o where o.hasPrefix("guide:"):
+            let x = String(o.dropFirst(6)).split(separator: ":", maxSplits: 1, omittingEmptySubsequences: false).map(String.init)
+            if let d = store.lib.decks.first(where: { $0.name == x[0] }) { nav.tab = .library; nav.path = [.deck(d.id), .guide(d.id, x.count > 1 ? x[1] : "")] }
           case "library": nav.tab = .library
           // The New deck sheet, and Settings › Theme (with `-theme <key>` a theme's page).
           case "newdeck": nav.tab = .library; nav.sheet = .newDeck
@@ -160,6 +165,9 @@ struct RootView: View {
           }
         }
         if let s = MakeDebug.start { nav.sheet = .make(s) }
+        // `-deckTab notes|sources` (with `-deckSource <id>` and `-deckAt "p. 4"`): the deck page that is open asks for that section, and a source open at that place (like the web's
+        // /deck/<id>?tab=sources&source=<id>&at=p.%204).
+        if let tab = Board.arg("-deckTab"), case .deck(let did)? = nav.path.last { nav.deckWants = DeckWant(deckId: did, tab: tab, source: Board.arg("-deckSource") ?? "", at: Board.arg("-deckAt") ?? "") }
         // `-upload profile|cover|bg <file>`: that picture goes up as a picked photo would (your profile photo, or the first
         // deck's header or background); `-sound <file>`: that sound, as the card editor's Upload would.
         if let i = a.firstIndex(of: "-upload"), i + 2 < a.count, let data = FileManager.default.contents(atPath: a[i + 2]) {
@@ -203,6 +211,8 @@ extension Board {
     case "PhoneTodayCaughtUp": store.props.caughtUp = true
     case "PhoneTodayNew": store.props.newUser = true
     case "PhoneDeck": nav.tab = .library; nav.path = [.deck("cell")]
+    // A deck's Guide editor (its view: -state Write, Preview, "Older versions", "A new page" or "Nothing written yet").
+    case "PhoneGuide": nav.tab = .library; nav.path = [.guide(Board.sampleDeckId, "")]
     case "PhoneDeckEmpty": store.props.emptyDeck = true; nav.tab = .library; nav.path = [.deck("pharm")]
     case "PhoneDeckSettings": store.props.deckSettings = "general"; nav.tab = .library; nav.path = [.deck("cell")]
     case "PhoneDeckSettingsStudy": store.props.deckSettings = "study"; nav.tab = .library; nav.path = [.deck("cell")]
@@ -343,6 +353,9 @@ extension Board {
     }
     // `-theme <key>`: any board in a theme (the Theme boards' `skin`).
     if let k = Board.arg("-theme") { store.props.theme = k }
+    // The Guide and Sources boards' settings (their Tweaks): `-state <value>` is whichever setting the board has (the Guide editor's view; the deck page's section or what its
+    // Guide and Sources hold; the shared deck page's Guide), or by name: `-section Notes`, `-guide "Guide pages"`, `-sourceOpen x4`, `-sourceAt "p. 4"`, `-madeFrom no`.
+    guideSettings(name, store: store)
     // The Settings boards' Tune to you state (their `tune` Tweak): `-tune Off`, `-tune "Not enough reviews"`, or `-tune Tuning`.
     if let k = Board.arg("-tune") { store.props.tune = ["Off": "off", "Not enough reviews": "few", "Tuning": "busy"][k] ?? "on" }
     // The boards that show your verification (their `verified` Tweak): `-verified "Waiting for review"`, `Teacher`, or `School`.
@@ -361,6 +374,20 @@ extension Board {
 }
 
 extension Board {
+  /// The sample deck's id (Cell Biology) the boards use.
+  static let sampleDeckId = "cell"
+  /// The launch arguments that set the Guide and Sources boards (see setUp).
+  @MainActor static func guideSettings(_ board: String, store: Store) {
+    let st = arg("-state") ?? ""
+    if board.hasPrefix("PhoneGuide") { store.props.guideView = GuideSample.views.contains(st) ? st : "Write" }
+    else if ["Cards", "Notes", "Sources"].contains(st) { store.props.section = st }
+    else if GuideSample.states.contains(st) { store.props.guideState = st }
+    if let v = arg("-section") { store.props.section = v }
+    if let v = arg("-guide") { store.props.guideState = v }
+    if let v = arg("-sourceOpen") { store.props.sourceOpen = v }
+    if let v = arg("-sourceAt") { store.props.sourceAt = v }
+    if let v = arg("-madeFrom") { store.props.madeFrom = !["no", "false", "off", "0"].contains(v.lowercased()) }
+  }
   /// A class's page on a design screen: the Library's Classes with this class opened over it.
   @MainActor static func classBoard(_ code: String, store: Store, nav: Nav) {
     nav.tab = .library; nav.libClasses = true; nav.path = [.classPage(code)]
@@ -396,6 +423,7 @@ struct MainView: View {
               case .themes: ThemePickerScreen()
               case .theme(let key): ThemePageScreen(key: key)
               case .connect: ConnectScreen()
+              case .guide(let id, let page): GuideScreen(deckId: id, page: page)
               }
             }
             .toolbar(.hidden, for: .navigationBar)
@@ -471,6 +499,7 @@ struct SheetHost: View {
     case .report(let kind, let id, let name): SheetOverlay(top: nil, close: nav.close) { ReportSheet(kind: kind, id: id, name: name) }
     case .verify: SheetOverlay(top: nil, close: nav.close) { VerifySheet() }
     case .make(let s): MakeHost(start: s, store: store, nav: nav)
+    case .source(let d, let i, let at): SourceHost(deckId: d, id: i, at: at)
     }
   }
 }

@@ -135,6 +135,7 @@ struct EditorSheet: View {
           ScrollView(showsIndicators: false) {
             VStack(alignment: .leading, spacing: 16) {
               fields
+              madeFrom
               // The deck, then the tags as one group, which goes under the deck when it doesn't fit beside it.
               ChipThenGroup(gap: 6) {
                 HStack(spacing: 6) { Icon("decks", 12, 2); Text(deck.name).css(13, .semibold) }
@@ -201,6 +202,31 @@ struct EditorSheet: View {
     .onAppear(perform: load)
     // Leaving the editor while it records throws the recording away.
     .onDisappear { if store.isRecording { store.discardRecording() }; store.stopSound() }
+  }
+
+  // ---------- where the card came from ----------
+  /// "Made from Lecture 3 slides · p. 4": a card Lucida made says which of its deck's sources it came from, and where in it. The line opens that source at that
+  /// place (the deck's Sources, with it open); once the source is deleted the card still says so, in plain words.
+  @ViewBuilder private var madeFrom: some View {
+    let card = cardId.flatMap { id in store.lib.cards.first { $0.id == id } }
+    let x: CardSource? = store.demo ? (store.props.madeFrom ? CardSource(id: "x1", name: "Lecture 3 slides", at: "p. 4") : nil) : card?.src
+    if let x, !x.name.isEmpty {
+      let did = card?.deckId ?? deckId ?? "", here = store.demo || store.source(did, x.id) != nil
+      let label = "Made from " + x.name + (x.at.isEmpty ? "" : " · " + x.at)
+      let line = HStack(spacing: 8) {
+        Icon("file", 14, 1.8)
+        Text(label).css(13, .medium).lineLimit(1)
+      }
+      .foregroundStyle(t.muted).padding(.leading, 12).padding(.trailing, 14).frame(minHeight: 44)
+      .background(Capsule().fill(t.surf))
+      if here {
+        Button { if !store.demo { nav.openSource(deckId: did, id: x.id, at: x.at) } } label: { line }
+          .buttonStyle(.press).accessibilityLabel(label).accessibilityHint("Opens it")
+          .frame(maxWidth: .infinity, alignment: .leading)
+      } else {
+        line.accessibilityElement(children: .ignore).accessibilityLabel(label).accessibilityAddTraits(.isStaticText).frame(maxWidth: .infinity, alignment: .leading)
+      }
+    }
   }
 
   // ---------- fields ----------

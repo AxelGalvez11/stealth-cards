@@ -117,15 +117,18 @@ struct PublicDeckPage: Decodable {
   var moreCards = 0
   var made: [VersionRow] = []
   var me: Me? = nil
+  /// Its Guide for anyone: the pages with words, and how many sources it was made from (a number only). nil: it has neither.
+  var guide: PublicGuide? = nil
   var id: String { deck.id }
-  enum CodingKeys: String, CodingKey { case helpers, contributors, people, cardsList, moreCards, made, me }
-  init(deck: NetDeck, helpers: [Mini], contributors: [Mini], people: [NetPerson], cardsList: [SharedCard], moreCards: Int, made: [VersionRow], me: Me?) {
-    self.deck = deck; self.helpers = helpers; self.contributors = contributors; self.people = people; self.cardsList = cardsList; self.moreCards = moreCards; self.made = made; self.me = me
+  enum CodingKeys: String, CodingKey { case helpers, contributors, people, cardsList, moreCards, made, me, guide }
+  init(deck: NetDeck, helpers: [Mini], contributors: [Mini], people: [NetPerson], cardsList: [SharedCard], moreCards: Int, made: [VersionRow], me: Me?, guide: PublicGuide? = nil) {
+    self.deck = deck; self.helpers = helpers; self.contributors = contributors; self.people = people; self.cardsList = cardsList; self.moreCards = moreCards; self.made = made; self.me = me; self.guide = guide
   }
   init(from d: Decoder) throws {
     deck = try NetDeck(from: d)
     let c = try d.container(keyedBy: CodingKeys.self)
     helpers = c.v(.helpers, []); contributors = c.v(.contributors, []); people = c.v(.people, []); cardsList = c.v(.cardsList, []); moreCards = c.v(.moreCards, 0); made = c.v(.made, []); me = c.v(.me, nil)
+    guide = c.v(.guide, nil)
   }
 }
 
@@ -414,7 +417,8 @@ extension Store {
     if pr.checked { deck.checked = .init(name: "Alex Kim", handle: "alexkim", current: true) }
     return .ok(PublicDeckPage(deck: deck, helpers: [.init(handle: "devp", name: "Dev Patel")], contributors: [.init(handle: "devp", name: "Dev Patel", n: 6), .init(handle: "alexkim", name: "Alex Kim", n: 3)],
                               people: [P["maria"]!, P["dev"]!, P["okafor"]!, P["alex"]!], cardsList: PagesSample.shared.CARDS, moreCards: 634, made: PagesSample.shared.MADE,
-                              me: .init(owner: pr.owner, studying: pr.studying ? "cell" : "", copied: pr.copied ? "cell" : "", watching: pr.watching, starred: pr.starred, open: pr.owner ? 3 : 0)))
+                              me: .init(owner: pr.owner, studying: pr.studying ? "cell" : "", copied: pr.copied ? "cell" : "", watching: pr.watching, starred: pr.starred, open: pr.owner ? 3 : 0),
+                              guide: GuideSample.publicGuide(props.guideState)))
   }
   func demoHistory() -> NetAnswer<HistoryPage>? {
     if props.netLoading { return nil }

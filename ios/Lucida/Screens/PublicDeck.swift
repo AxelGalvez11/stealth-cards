@@ -25,6 +25,9 @@ struct PublicDeckScreen: View {
   @State private var checkedAt: Int? = nil
   /// A link's ?copy=1 or ?suggest=<card> opens its sheet once, when the page is here.
   @State private var opened = false
+  /// Its Guide: which page shows, and whether it's unfolded (Show more).
+  @State private var gpage = ""
+  @State private var gopen = false
 
   var body: some View {
     let answer = store.netDeckPage(addr), page = answer?.value
@@ -50,6 +53,24 @@ struct PublicDeckScreen: View {
       opened = true
       SuggestModel.of(addr.plain.key).startFresh()
       withAnimation(.out(0.35)) { nav.sheet = .suggest(addr.plain, start: addr.suggest) }
+    }
+  }
+
+  // ---------- its Guide ----------
+  /// The deck's Guide for anyone (the owner's words, drawn safely: pictures only from the app's own public storage), with its pages as tabs when it has more than
+  /// one, and how many sources it was made from (a number only: the files and their names stay private).
+  @ViewBuilder private func guideBlock(_ p: PublicDeckPage) -> some View {
+    let pages = (p.guide?.pages ?? []).filter { !$0.text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
+    let n = p.guide?.sources ?? 0
+    let pageId = pages.contains { $0.id == gpage } ? gpage : pages.first?.id ?? ""
+    if let cur = pages.first(where: { $0.id == pageId }) {
+      GuideCard(deckId: "", tabs: pages.count > 1 ? pages.map { (id: $0.id, title: $0.id == "main" ? "Guide" : $0.title) } : [], page: Binding(get: { pageId }, set: { gpage = $0 }),
+                text: cur.text, open: $gopen, canEdit: false, hasAny: true, images: GuideImages.shared)
+        .padding(.bottom, 4)
+    }
+    if n > 0 {
+      HStack(spacing: 8) { Icon("file", 14, 2); Text("Made from " + plural(n, "source")).css(13) }
+        .foregroundStyle(t.muted).frame(maxWidth: .infinity, alignment: .leading).accessibilityElement(children: .combine)
     }
   }
 
@@ -126,6 +147,7 @@ struct PublicDeckScreen: View {
           }
         }
         if !err.isEmpty { CSSText(err, 13, color: t.again).padding(.top, -6) }
+        guideBlock(p)
         VStack(spacing: 0) {
           tabs(p, people: people.count)
           switch tab {
