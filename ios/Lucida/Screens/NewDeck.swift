@@ -1,6 +1,7 @@
 // iPhone · New deck (PhoneNewDeck): a sheet over the Library; Create deck opens the new deck on its empty page, ready for material. The cover starts white; its colors (made from the name) fade in
 // over 2 seconds once you stop typing or press Shuffle. Image picks a photo for its header instead. The name is typed on the cover itself (the owner, 2026-10-02: "remove 'name' section, allow
-// users to directly edit the name in the box above"); a deck has no tags (only cards do), and it grades the way Settings says until Deck settings → Studying changes it.
+// users to directly edit the name in the box above"); a deck has no tags (only cards do). Its new cards a day, remember goal and grading are Settings' until Deck settings →
+// Studying changes them (the owner, 2026-10-02, on its two steppers: "remove this from 'new deck' screens").
 import SwiftUI
 
 extension Store {
@@ -21,8 +22,6 @@ struct NewDeckSheet: View {
   /// The name's field on the cover is being typed in (with a theme on, the theme's lettering shows when it isn't).
   @FocusState private var naming: Bool
   @State private var round = 0
-  @State private var perDay: Int? = nil
-  @State private var goal: Int? = nil
   /// The cover's seed on show, and the one fading out under it.
   @State private var shown: String? = nil
   @State private var fade = 0.0
@@ -39,7 +38,6 @@ struct NewDeckSheet: View {
 
   var body: some View {
     let s = store.settings, title = name.trimmingCharacters(in: .whitespaces).isEmpty ? "Untitled deck" : name.trimmingCharacters(in: .whitespaces)
-    let perDay = self.perDay ?? s.perDay, goal = self.goal ?? s.goal
     let style = store.demo ? store.props.grads : s.grads
     VStack(alignment: .leading, spacing: 16) {
       HStack {
@@ -49,10 +47,6 @@ struct NewDeckSheet: View {
           .buttonStyle(.press).accessibilityLabel("Close")
       }
       cover(title, style: style)
-      HStack(spacing: 8) {
-        StackedStepper(label: "New cards a day", value: "\(perDay)", less: { self.perDay = max(0, perDay - 5) }, more: { self.perDay = min(999, perDay + 5) })
-        StackedStepper(label: "Remember goal", value: "\(goal)%", less: { self.goal = max(70, goal - 1) }, more: { self.goal = min(97, goal + 1) })
-      }
       FlexRow(spacing: 10) {
         Button(action: nav.close) { Text("Cancel").css(15, .semibold).foregroundStyle(t.text).frame(maxWidth: .infinity).frame(height: 52).background(Capsule().fill(t.surf)) }
           .buttonStyle(.press)
@@ -60,7 +54,7 @@ struct NewDeckSheet: View {
           guard !busy else { return }
           busy = true
           Task {
-            if let id = await store.addDeck(name: title, perDay: perDay, goal: goal, round: round, image: image) {
+            if let id = await store.addDeck(name: title, perDay: s.perDay, goal: s.goal, round: round, image: image) {
               Buzz.shared.success("deck made")
               nav.sheet = nil
               if !store.demo { nav.tab = .library; nav.path = [.deck(id)] }

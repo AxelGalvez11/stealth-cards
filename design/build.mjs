@@ -323,6 +323,7 @@ const modeSeg = full => `<div role="group" aria-label="Grading style" style="dis
     <button type="button" onClick="{{m.pick}}" aria-pressed="{{m.pressed}}" data-tip="{{m.long}}" style="height: ${full ? 34 : 36}px; padding: 0 ${full ? 8 : 16}px; border: 0; border-radius: 999px; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; white-space: nowrap; background: {{m.bg}}; color: {{m.fg}}; box-shadow: {{m.sh}};">{{m.label}}</button>
   </sc-for>
 </div>`;
+
 const stepper = (label, val, dec, inc, stacked = false, num = '') => stacked ? `<div style="padding: 12px 14px; border-radius: 18px; background: {{t.surf}}; display: flex; flex-direction: column; gap: 4px;">
   <span style="font-size: 12px; color: {{t.muted}}; white-space: nowrap;">${label}</span>
   <span style="display: flex; align-items: center; justify-content: space-between; gap: 8px;">${num ? numInput(num, { size: 20, w: 64, h: 32, radius: 10, left: true }) : `<span style="font-size: 20px; font-weight: 600; letter-spacing: -.02em; white-space: nowrap;">{{${val}}}</span>`}<span style="display: flex; gap: 6px;"><button type="button" onClick="{{${dec}}}" aria-label="Less" style="width: 32px; height: 32px; border: 0; border-radius: 16px; background: {{t.bg}}; color: {{t.text}}; font: inherit; font-size: 18px; font-weight: 600; cursor: pointer;">−</button><button type="button" onClick="{{${inc}}}" aria-label="More" style="width: 32px; height: 32px; border: 0; border-radius: 16px; background: {{t.bg}}; color: {{t.text}}; font: inherit; font-size: 18px; font-weight: 600; cursor: pointer;">+</button></span></span>
@@ -330,7 +331,6 @@ const stepper = (label, val, dec, inc, stacked = false, num = '') => stacked ? `
   <span style="display: flex; flex-direction: column; gap: 2px;"><span style="font-size: 12px; color: {{t.muted}};">${label}</span><span style="font-size: 20px; font-weight: 600; letter-spacing: -.02em;">{{${val}}}</span></span>
   <span style="display: flex; gap: 6px;"><button type="button" onClick="{{${dec}}}" aria-label="Less" style="width: 32px; height: 32px; border: 0; border-radius: 16px; background: {{t.bg}}; color: {{t.text}}; font: inherit; font-size: 18px; font-weight: 600; cursor: pointer;">−</button><button type="button" onClick="{{${inc}}}" aria-label="More" style="width: 32px; height: 32px; border: 0; border-radius: 16px; background: {{t.bg}}; color: {{t.text}}; font: inherit; font-size: 18px; font-weight: 600; cursor: pointer;">+</button></span>
 </div>`;
-
 // On/off switch; `v` names a renderVals object made by sw() below. Every switch is this one, so they all spring the
 // same way (sc-sw in APP_MOTION_CSS); the app shows the change as you click, before it's saved (web/db.js).
 // The boxes that hide parts of a picture (see OCC_JS): yellow, black numbers, softer ones on the boxes not asked, and the editor's
@@ -4586,7 +4586,6 @@ const newDeckBody = (phone, back, done) => `<div style="display: flex; align-ite
       ${coverLayer('prev')}${coverLayer('cover', ' animation: {{coverFade}};')}<sc-if value="{{skinCover.on}}" hint-placeholder-val="{{ false }}"><div ref="{{skinCover.art}}" data-sc-own aria-hidden="true" style="position: absolute; inset: 0; overflow: hidden;"></div></sc-if>${coverPicture}
       <div style="position: relative; height: 100%; box-sizing: border-box; padding: 14px 16px 16px 18px; display: flex; flex-direction: column; justify-content: space-between; text-shadow: {{coverShadow}};"><div style="display: flex; justify-content: flex-end; gap: 8px;">${coverBtn('Shuffle', 'shuffle', 'shuffle')}${coverBtn(phone ? 'Image' : 'Upload image', 'pickCover', 'image')}</div><label style="display: block; min-width: 0; margin: -2px -8px; padding: 2px 8px; border-radius: 12px;"><span style="position: absolute; left: -9999px;">Deck name</span><input type="text" value="{{name}}" onChange="{{setName}}"${phone ? '' : ' ref="{{nameRef}}"'} placeholder="Untitled deck" maxlength="120" autocomplete="off" class="sc-cover-name" style="display: block; width: 100%; box-sizing: border-box; margin: 0; padding: 0; border: 0; outline: 0; background: transparent; color: inherit; font: inherit; font-size: ${phone ? 22 : 26}px; font-weight: 600; letter-spacing: -.02em; line-height: 1.25; text-shadow: inherit; text-overflow: ellipsis; {{${phone ? 'coverTitleS' : 'coverTitle'}}}"></label></div>
     </div>
-    <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px;">${stepper('New cards a day', 'perDay', 'lessDay', 'moreDay', true, 'perDayIn')}${stepper('Remember goal', 'goal', 'lessGoal', 'moreGoal', true)}</div>
     <div style="display: flex; gap: 10px;"><a href="${back}" style="flex-grow: 1; height: 52px; border-radius: 999px; background: {{t.surf}}; display: flex; align-items: center; justify-content: center; font-size: 15px; font-weight: 600;">Cancel</a><a href="${done}" onClick="{{create}}" style="flex-grow: 2; height: 52px; border-radius: 999px; background: {{t.inv}}; color: {{t.invText}}; display: flex; align-items: center; justify-content: center; font-size: 15px; font-weight: 600;">Create deck</a></div>`;
 // New deck and Import open over the Library, above its deck tiles' ⋯ buttons (they showed through the dialog).
 const webNewDeck = `<div style="position: relative; width: 1440px; height: 900px; overflow: hidden; font-family: ${FONT}; color: {{t.text}};">
@@ -4714,11 +4713,11 @@ renderVals() {
     this.setState({ ...more, prev: this.state.shown, shown: seed, k });
     clearTimeout(this.faded); this.faded = setTimeout(() => { if (this.state.k === k) this.setState({ prev: null }); }, 2100);
   };
-  // A new deck starts from your Settings (new cards a day, goal; and its grading, which Deck settings → Studying changes) until you change them
-  // here. Its name is typed on the cover itself (the owner, 2026-10-02: "remove 'name' section, allow users to directly edit the name in the box
+  // A new deck takes your Settings' new cards a day, remember goal and grading, which Deck settings → Studying changes (the owner, 2026-10-02, on
+  // New deck's two steppers: "remove this from 'new deck' screens"). Its name is typed on the cover itself (the owner, 2026-10-02: "remove 'name' section, allow users to directly edit the name in the box
   // above"); decks have no tags, only cards do.
   const name = db.mock ? s.name : s.name === 'Pharmacology' && s.typed == null ? '' : s.name;
-  const perDay = s.perDay ?? st.perDay, goal = s.goal ?? st.goal;
+  const perDay = st.perDay, goal = st.goal;
   const title = (name || '').trim() || 'Untitled deck';
   const img = s.image || '', photo = img !== 'mock' ? img : '';
   const S = this.skin(db), C = S && !img ? S.coverOf({ seed: s.shown ? s.shown.replace(/ #\d+$/, '') : title, name: title, round: s.round, tags: [] }, 'wide', 26) : null;
@@ -4743,9 +4742,6 @@ renderVals() {
     pickCover: () => (db.mock ? Promise.resolve('mock') : db.act.pickFile('image')).then(url => url && this.setState({ image: url })),
     // On a computer the name field is ready to type in when New deck opens (in the app; a phone's keyboard waits for a tap).
     nameRef: el => { if (!el || db.mock || this.nameFocused) return; this.nameFocused = true; el.focus(); },
-    perDay: String(perDay), goal: goal + '%', perDayIn: typed('perDay', perDay, n => this.setState({ perDay: n }), 'New cards a day'),
-    lessDay: () => this.setState({ perDay: Math.max(0, perDay - 5) }), moreDay: () => this.setState({ perDay: Math.min(999, perDay + 5) }),
-    lessGoal: () => this.setState({ goal: Math.max(70, goal - 1) }), moreGoal: () => this.setState({ goal: Math.min(97, goal + 1) }),
     create: e => { if (db.mock) return; e.preventDefault(); db.act.addDeck({ name: title, perDay, goal, style: st.grads, round: s.round, image: s.image || null }); }
   };
 }`;

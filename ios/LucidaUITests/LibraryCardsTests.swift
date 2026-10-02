@@ -127,7 +127,7 @@ final class LibraryCardsTests: AppCase {
     check(wait(field), "its name is a field on the cover (Deck name)")
     check(!text(app, "Name").exists && !text(app, "Tags").exists && !button(app, "Add tag").exists && !text(app, "Grade with").exists && !button(app, "4 grades").exists,
           "with no Name, Tags or Grade with section")
-    check(text(app, "New cards a day").exists && text(app, "Remember goal").exists, "New cards a day and Remember goal stay")
+    check(!text(app, "New cards a day").exists && !text(app, "Remember goal").exists, "no New cards a day or Remember goal (a new deck takes Settings')")
     check((field.placeholderValue ?? "") == "Untitled deck", "the field says Untitled deck until you type")
     check(app.keyboards.count == 0, "and waits for a tap (no keyboard over the sheet)")
     snap("libcards-newdeck")
