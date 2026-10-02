@@ -448,6 +448,8 @@ final class PolishTests: XCTestCase {
     // a deck made, and a delete
     _ = wait(button(app, "Deck settings"))
     tap(button(app, "Library"), "the Library tab")
+    // (The Library's + is a menu: New deck is one of its rows.)
+    tap(button(app, "Add"), "the Library's + menu")
     tap(button(app, "New deck"), "New deck")
     let name = app.textFields.firstMatch
     if wait(name, 8) { name.tap(); name.typeText("Buzz two") } else { check(false, "found the deck's name field") }
@@ -459,7 +461,8 @@ final class PolishTests: XCTestCase {
     tap(button(app, "Deck settings"), "Deck settings")
     tap(button(app, "Delete deck"), "Delete deck")
     Thread.sleep(forTimeInterval: 1.0)
-    tap(front(app, "Delete deck"), "the confirmation")
+    // (It asks in Lucida's own question sheet: its answer is the one button with this identifier.)
+    tap(app.buttons["question.go"], "the question's Delete deck")
     check(buzzed(app, "warning:delete deck", 10), "confirming a delete gives a warning")
     _ = deck
     // the sample Learn question: a right answer, then (on its own run) a wrong one

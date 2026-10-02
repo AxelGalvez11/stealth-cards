@@ -307,8 +307,9 @@ final class StudyNetworkTests: XCTestCase {
     studiedRow.tap()
     button(app, "Deck settings").tap()
     button(app, "Remove from library").tap()
-    check(wait(app.staticTexts["Remove “MCAT Biochemistry” from your library? Your progress on it goes too."]), "Remove from library asks first, in plain words")
-    reachable(app, "Remove from library").tap()
+    check(wait(app.staticTexts["Remove “MCAT Biochemistry” from your library?"]) && app.staticTexts["Your progress on it goes too."].exists, "Remove from library asks first, in plain words")
+    check(app.alerts.count == 0 && app.sheets.count == 0, "in Lucida’s own question, not the system’s")
+    app.buttons["question.go"].tap()
     check(gone(any(app, "From Maria Santos"), 10), "and the deck leaves the Library")
     check(!((state(learner)["decks"] as? [[String: Any]]) ?? []).contains { $0["id"] as? String == studied }, "the server has it gone too")
 

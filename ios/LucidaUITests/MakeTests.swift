@@ -806,13 +806,15 @@ final class MakeTests: XCTestCase {
   }
 
   // ---------- 20: audio cards for a language ----------
-  /// Chooses a language in the Language menu.
+  /// Chooses a language in the Language list.
   private func pickLanguage(_ app: XCUIApplication, _ language: String) {
     let menu = app.buttons["Language of the cards"].firstMatch
     guard wait(menu, 10) else { check(false, "found the Language menu"); return }
     menu.tap()
-    let item = app.buttons[language].firstMatch, other = app.menuItems[language].firstMatch
-    if wait(item, 4) { item.tap() } else if wait(other, 4) { other.tap() } else { check(false, "found \(language) in the Language menu") }
+    // (Lucida's own list sheet, a row for each language: never the system's menu.)
+    let item = app.buttons[language].firstMatch
+    check(app.menus.count == 0, "the language list is Lucida’s own, not a system menu")
+    if wait(item, 4) { item.tap() } else { check(false, "found \(language) in the Language list") }
   }
   func test20AudioCards() throws {
     try XCTSkipIf(api("x", "GET", "/api/rev").status != 200, "No server at " + Self.server)

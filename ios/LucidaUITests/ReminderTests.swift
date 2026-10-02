@@ -99,7 +99,8 @@ final class ReminderTests: AppCase {
     let account = buttonStarting(app, "Your account")
     for _ in 0..<8 where !(account.exists && account.isHittable) { app.swipeDown(velocity: .fast) }
     tap(account, "Your account")
-    tap(app.sheets.buttons["Sign out"].firstMatch, "Sign out")
+    check(wait(any(app, "Sign out of Lucida?")) && app.alerts.count == 0 && app.sheets.count == 0, "Sign out asks in Lucida’s own question")
+    tap(app.buttons["question.go"], "Sign out")
     check(wait(text(app, "Sign in to Lucida"), 20), "signing out goes to the sign-in screen")
     check(auditHas(app, "none"), "and takes the reminder off the phone")
   }

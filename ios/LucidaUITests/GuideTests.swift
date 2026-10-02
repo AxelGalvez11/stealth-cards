@@ -147,14 +147,14 @@ final class GuideTests: XCTestCase {
   private func selected(_ e: XCUIElement) -> Bool { e.isSelected }
   /// A position for a message (an element that isn't there has an infinite one).
   private func pt(_ v: CGFloat) -> Int { v.isFinite ? Int(v) : -1 }
-  /// A confirmation dialog (iOS 26) is a small card with its one button and no Cancel: a touch outside it closes it.
+  /// A question is Lucida's own sheet from the bottom, over a dimmed page: a touch on the dimmed part (the top of the screen) closes it, as Cancel does.
   private func dismissDialog(_ app: XCUIApplication) {
-    let outside = app.otherElements["PopoverDismissRegion"].firstMatch
-    guard outside.waitForExistence(timeout: 8 * Self.slow) else { check(false, "found the dialog to close"); return }
-    outside.coordinate(withNormalizedOffset: CGVector(dx: 0.04, dy: 0.5)).tap()
+    guard app.buttons["question.cancel"].waitForExistence(timeout: 8 * Self.slow) else { check(false, "found the question to close"); return }
+    check(app.alerts.count == 0 && app.sheets.count == 0 && app.popovers.count == 0, "(it is Lucida’s own question, not the system’s)")
+    app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.08)).tap()
   }
-  /// The dialog's own button (the page behind it has buttons of the same name).
-  private func dialogButton(_ app: XCUIApplication, _ label: String) -> XCUIElement { app.popovers.buttons[label].firstMatch }
+  /// The question's own answer (the page behind it has buttons of the same name).
+  private func dialogButton(_ app: XCUIApplication, _ label: String) -> XCUIElement { app.buttons["question.go"].firstMatch }
   /// A card's row on the deck page, brought to the middle of the screen and left to settle: the page keeps moving a moment after it is scrolled, and a touch that
   /// lands on a moving page only stops it (a tap is not a tap then).
   private func cardRow(_ app: XCUIApplication, _ front: String) -> XCUIElement {
@@ -595,11 +595,14 @@ final class GuideTests: XCTestCase {
     let pdf = app3.otherElements["pdfView"]
     check(wait(pdf, 20) && eventually { (pdf.value as? String ?? "").hasPrefix("page 3") }, "a card from p. 3 opens the PDF at page 3: " + (pdf.value as? String ?? ""))
     tap(button(app3, "Close the file"), "Close the file")
-    // a Word file opens in Quick Look
+    // a Word file opens full screen in Lucida's own viewer (the phone's web engine draws it; Quick Look's bar, share button and spinner are the system's)
     let appD = launch(as: who, ["-open", "deck:Cell Biology", "-deckTab", "sources", "-deckSource", sid("doc")])
     tap(button(appD, "Open the file"), "Open the file (a Word file)")
-    check(wait(button(appD, "Close the file"), 25), "a Word file opens full screen in Quick Look")
-    snap("quicklook")
+    check(wait(button(appD, "Close the file"), 25), "a Word file opens full screen")
+    check(wait(appD.webViews.firstMatch, 25), "drawn by the document viewer (a web view), not by Quick Look")
+    check(eventually(20) { !self.any(appD, "Loading").exists }, "and Lucida’s loading mark has gone once it is drawn")
+    check(appD.navigationBars.count == 0 && appD.toolbars.count == 0 && appD.alerts.count == 0 && appD.sheets.count == 0, "with none of the system’s bars or sheets around it")
+    snap("document-word")
     tap(button(appD, "Close the file"), "Close the file")
     // a video at the time
     let app4 = launch(as: who, ["-open", "deck:Cell Biology", "-deckTab", "sources", "-deckSource", sid("video"), "-deckAt", "1:30"])
@@ -644,7 +647,7 @@ final class GuideTests: XCTestCase {
     app = launch(as: who, ["-open", "deck:Cell Biology", "-deckTab", "sources", "-deckSource", sid("file")])
     tap(button(app, "Delete"), "Delete")
     let n = src("file")["cards"] as? Int ?? 0
-    check(wait(any(app, "Delete “Lecture 3 slides”? Its file goes, and the \(n) card\(n == 1 ? "" : "s") made from it stay in the deck.")), "Delete asks first, in the web’s words")
+    check(wait(any(app, "Delete “Lecture 3 slides”?")) && any(app, "Its file goes. The \(n) card\(n == 1 ? "" : "s") made from it stay in the deck.").exists, "Delete asks first, in the web’s words")
     dismissDialog(app)
     Thread.sleep(forTimeInterval: 1)
     check(gone(any(app, "Delete “Lecture 3 slides”?")) && ((decks(who).first { $0["id"] as? String == deckId }?["sources"] as? [[String: Any]]) ?? []).contains { $0["id"] as? String == sid("file") }, "closing it keeps the source")
