@@ -4,7 +4,8 @@
 #   ios/tests/run.sh parity
 #       The app's Swift ports against the web app's own code (web/db.js, fsrs.js, sched.js, insights.js, tune.js), on a seeded
 #       library and on made-up variations of it: exam dates near and far, goals, piles, FSRS off, paused and waiting cards.
-#       Same numbers to 1e-9 (the tune fit to 1e-6). Needs node and swiftc; no simulator.
+#       Same numbers to 1e-9 (the tune fit to 1e-6). The Guide's engine (web/guide.js in JavaScriptCore) answers like node on the web's own cases (guide-check.sh).
+#       Needs node and swiftc; no simulator.
 #   ios/tests/run.sh e2e [pause exam grade learn tune free]
 #       The app in the simulator against a local server on a fresh copy of the seeded library, through the app's own code
 #       (App/DebugChecks.swift, run with -check <name>): pausing a card, an exam date, the time a grade sends, Learn mode's
@@ -31,7 +32,7 @@ parity() {
   seed
   local W=$TESTDIR/parity; rm -rf $W; mkdir -p $W/variants
   local S=$TESTDIR/seed/stealth-cards.json NOW=$(node -e 'console.log(Date.now())')
-  swiftc -O -o $W/parity $DATA/Models.swift $DATA/Rich.swift $DATA/FSRS.swift $DATA/Sched.swift $DATA/Tune.swift $DATA/Insights.swift $DATA/Engine.swift $H/swift/stubs.swift $H/swift/main.swift 2>&1 | grep -E "error" && return 1
+  swiftc -O -o $W/parity $DATA/Models.swift $DATA/MakeModels.swift $DATA/Rich.swift $DATA/FSRS.swift $DATA/Sched.swift $DATA/Tune.swift $DATA/Insights.swift $DATA/Engine.swift $H/swift/stubs.swift $H/swift/main.swift 2>&1 | grep -E "error" && return 1
   local bad=0
   say() { echo "$1: $2"; [[ $2 == *" 0 differ"* ]] || bad=$((bad+1)); }
   WT=$REPO node $H/js/oracle-dump.mjs $S $NOW $W/js.json > /dev/null && $W/parity $S $NOW $W/swift.json > /dev/null
@@ -46,6 +47,7 @@ parity() {
   say "FSRS grades, 4000 random cards with standard and tuned parameters" "$(node $H/js/compare.mjs $W/fsrs-js.json $W/fsrs-swift.json 1e-9 | head -1)"
   WT=$REPO node $H/js/tune-js.mjs $S $W/tune-js.json > /dev/null; $W/parity tune $S $W/tune-swift.json > /dev/null
   say "the Tune to you fit (19 numbers, loss, gain)" "$(node $H/js/compare.mjs $W/tune-js.json $W/tune-swift.json 1e-6 | head -1)"
+  say "the Guide's engine against node (the web test's 341 texts, the toolbar, Enter and Tab; the app's guide.js is web/guide.js)" "$(TESTDIR=$TESTDIR $H/guide-check.sh 2>&1 | grep -E 'Guide parity|differs from' | head -1)"
   echo; [[ $bad -eq 0 ]] && echo "parity: every check agrees" || { echo "parity: $bad checks differ"; return 1 }
 }
 

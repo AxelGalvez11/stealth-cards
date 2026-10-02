@@ -13,7 +13,7 @@
      },
      {
       "name": "Lucida",
-      "line": "FSRS in a browser, with your own AI making the cards",
+      "line": "FSRS in a browser, with cards made from your files or by your own AI",
       "lucida": true
      },
      {
@@ -949,7 +949,7 @@
    },
    {
     "q": "What daily limits does Gizmo’s free plan have?",
-    "a": "15 hearts, then a 10-minute wait, and 2 Magic Imports a day, 20 minutes apart. Lucida has no waiting times."
+    "a": "15 hearts, then a 10-minute wait, 2 Magic Imports a day, 20 minutes apart. Lucida has no hearts; Free allows 3 makes a day."
    },
    {
     "q": "Can you export your cards from Gizmo?",

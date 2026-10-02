@@ -4,8 +4,9 @@ import SwiftUI
 
 /// Pages pushed on a tab: Settings, a deck, a folder, Check AI cards, someone's profile (yours is the Profile tab, not a
 /// page: see `profile`), News, a shared deck's page, its suggestions (`suggestions("")`: every deck of yours), its History,
-/// a class (by its code), Settings › Theme with a theme's page (its key), and Settings › Connect AI.
-enum Route: Hashable { case settings, deck(String), folder(String), inbox, profile(String), news, publicDeck(DeckAddress), suggestions(String), history(DeckAddress), classPage(String), themes, theme(String), connect }
+/// a class (by its code), Settings › Theme with a theme's page (its key), Settings › Connect AI, and a deck's Guide editor
+/// (its deck, and the page it opens on: "" for the Guide itself).
+enum Route: Hashable { case settings, deck(String), folder(String), inbox, profile(String), news, publicDeck(DeckAddress), suggestions(String), history(DeckAddress), classPage(String), themes, theme(String), connect, guide(String, String) }
 enum SheetKind: Identifiable, Equatable {
   case newDeck, newCard(deckId: String?, cardId: String?), deckSettings(String), learnStart(String)
   /// The start of a practice test, over a deck's page or a folder's.
@@ -23,6 +24,10 @@ enum SheetKind: Identifiable, Equatable {
   case goPro
   /// Delete account's question (Settings → Account), and Block's (someone's handle and name).
   case deleteAccount, block(handle: String, name: String)
+  /// Make cards from a file, pictures, a recording, text, a link, or a topic (Screens/Make.swift), starting where the MakeStart says.
+  case make(MakeStart)
+  /// A deck's source opened (Screens/DeckMaterials.swift): the deck, the source, and the place in it a card pointed at ("p. 4", "12:40", or "").
+  case source(deckId: String, id: String, at: String)
   var id: String {
     switch self {
     case .newDeck: return "newDeck"
@@ -43,6 +48,8 @@ enum SheetKind: Identifiable, Equatable {
     case .goPro: return "goPro"
     case .deleteAccount: return "deleteAccount"
     case .block(let h, _): return "block-" + h
+    case .make: return "make"
+    case .source(let d, let i, _): return "source-\(d)-\(i)"
     }
   }
 }
@@ -61,6 +68,13 @@ enum FullKind: Identifiable, Equatable {
     case .test(let s): return "test-" + s.key
     }
   }
+}
+
+/// What the deck page is asked to show: a section ("cards", "notes" or "sources"), and in Sources a source (its id) open at a place in it ("p. 4", "12:40").
+struct DeckWant: Equatable {
+  var deckId: String, tab: String
+  var source = "", at = ""
+  var token = UUID()
 }
 
 @MainActor
@@ -84,6 +98,9 @@ final class Nav: ObservableObject {
   @Published var barHidden = false
   /// Edit profile opens once your profile is showing (Settings → Edit profile).
   var wantsEdit = false
+  /// A deck page asked to show a section (and maybe a source): the Guide editor's Done asks for Notes, a card's "Made from" line for Sources with that source
+  /// open. The deck's page takes it as soon as it's on screen.
+  @Published var deckWants: DeckWant?
 
   /// A question is waiting for its answer from the server (Delete account, Block): its sheet stays until it comes.
   @Published var asking = false
@@ -99,6 +116,13 @@ final class Nav: ObservableObject {
   /// Go Pro: the paywall opens over whatever is showing.
   func goPro() { withAnimation(Motion.sheet) { sheet = .goPro } }
   func importCards() { /* Import comes with the card editor. */ }
+  /// Make cards from anything (the web's /make?source=&deck=&from=&guide=&page=): `kind` opens one kind's page (file, photo, record, paste,
+  /// video, or topic; "" for the list), `deckId` is where the cards go, `from` is a kept source (its id) to make more cards from, and
+  /// `guide` (a deck's id, with its `page`: "" or "main" for the Guide itself) is a Guide to make cards from. `text` starts it on Paste
+  /// with those words (a Guide's selection), named `title`.
+  func make(kind: String = "", deckId: String = "", from: String = "", guide: String = "", page: String = "", text: String = "", title: String = "") {
+    withAnimation(.out(0.35)) { sheet = .make(MakeStart(kind: kind, deckId: deckId, from: from, guide: guide, page: page, text: text, title: title)) }
+  }
   /// Learn mode: pick up where you stopped, or start from the sheet.
   func learn(deckId: String, resume: Bool) { withAnimation(Motion.sheet) { if resume { full = .learn(deckId) } else { sheet = .learnStart(deckId) } } }
   func close() { withAnimation(Motion.leave) { sheet = nil } }
@@ -156,6 +180,14 @@ final class Nav: ObservableObject {
     tab = .library; path = [.deck(id)]
     sheet = settings ? .deckSettings(id) : nil
   }
+  /// A deck's source opened where a card came from: the deck's page on Sources, with the source open at that place (the card editor's "Made from" line).
+  func openSource(deckId: String, id: String, at: String) {
+    sheet = nil
+    deckWants = DeckWant(deckId: deckId, tab: "sources", source: id, at: at)
+    if path.last != .deck(deckId) { tab = .library; path = [.deck(deckId)] }
+  }
+  /// A deck's Guide editor, on a page of it ("" for the Guide itself).
+  func guide(deckId: String, page: String = "") { push(.guide(deckId, page)) }
   /// A class's page, by its code.
   func classPage(_ code: String) { push(.classPage(code)) }
   /// A page on another site (Google Classroom's share page), in Safari.

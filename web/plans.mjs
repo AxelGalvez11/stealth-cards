@@ -15,3 +15,16 @@ export const FREE_EXPLAINS = 3, PRO_EXPLAINS = 200;
 // Lucida's own quiz questions for Learn mode (quizai.mjs): each batch is up to 20 cards, so a batch costs Lucida a little. Free gets this
 // many batches a day, Pro more (a fair-use ceiling).
 export const FREE_QUIZ_BATCHES = 3, PRO_QUIZ_BATCHES = 30;
+// Making cards from files, photos, recordings, videos, text and topics (make.mjs). These numbers are the owner's to change; the
+// server, the apps and the Pricing page all read them from here.
+//   perDay: makes a day.    pages: pages in one make (a page is 3,000 characters of text; a slide or a scan is one page).
+//   minutes: of recording or video in one make.    photos: pictures in one make.    fileMB: the biggest single file.
+// The speech service takes audio files up to AUDIO_MB, so a recording is held to that too. One make returns at most CARDS_MAX cards.
+export const MAKE = {
+  free: { perDay: 3, pages: 30, minutes: 15, photos: 10, fileMB: 20 },
+  pro: { perDay: 30, pages: 300, minutes: 120, photos: 50, fileMB: 40 }
+};
+export const MAKE_AUDIO_MB = 25, MAKE_CARDS_MAX = 100;
+// A deck's Guide (like a README) and its extra pages: how long a page can be, how many pages a deck has, how many older versions are
+// kept for each, and how far apart (in minutes) two kept versions are.
+export const GUIDE = { chars: 40000, pages: 10, versions: 10, gapMin: 5 };

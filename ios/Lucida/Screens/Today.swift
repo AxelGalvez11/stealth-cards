@@ -6,6 +6,8 @@ struct TodayScreen: View {
   @Environment(\.theme) private var t
   @EnvironmentObject private var store: Store
   @EnvironmentObject private var nav: Nav
+  /// The + menu (New card, Make cards, New deck) is open.
+  @State private var addOpen = false
 
   var body: some View {
     let vm = store.today()
@@ -18,7 +20,7 @@ struct TodayScreen: View {
           HStack(spacing: 8) {
             Spacer(minLength: 0)
             NewsBell(count: store.netUnread()) { nav.push(.news) }
-            RoundButton(icon: "plus", label: vm.hasDecks ? "New card" : "New deck") { vm.hasDecks ? nav.newCard(deckId: vm.newCardDeck) : nav.newDeck() }
+            RoundButton(icon: "plus", label: vm.hasDecks ? "Add" : "New deck") { vm.hasDecks ? addOpen.toggle() : nav.newDeck() }.addMenuAnchor()
           }
         }
         .frame(height: 44)
@@ -29,6 +31,10 @@ struct TodayScreen: View {
       .padding(.bottom, 120)
     }
     .ignoresSafeArea(edges: .top)
+    .addMenu(open: $addOpen, rows: [
+      AddMenuRow(icon: "plus", title: "New card", line: "Write one yourself") { nav.newCard(deckId: vm.newCardDeck) },
+      AddMenuRow(icon: "sparkle", title: "Make cards", line: "From a file, photo, video or topic") { nav.make() },
+      AddMenuRow(icon: "decks", title: "New deck", line: "Start from scratch") { nav.newDeck() }])
   }
 
   // The Iris card: what's due, then one button.

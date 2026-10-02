@@ -2,10 +2,10 @@
   "slug": "for/mcat",
   "kind": "use",
   "title": "MCAT flashcards: spaced repetition, free",
-  "description": "Make MCAT flashcards from your notes with your own AI, review on an FSRS schedule, and set a test date on Pro. What flashcards can and can’t do here.",
+  "description": "Make MCAT flashcards from your notes with Lucida or your own AI, review on an FSRS schedule, and set a test date on Pro. What cards can’t do.",
   "h1": "Lucida for the MCAT",
-  "lead": "Lucida is a free flashcard app for MCAT content review: your AI turns your notes into cards, FSRS schedules the reviews, and Pro can set your test date so cards you’d forget by then come up early. Flashcards cover recall, not the whole exam: the AAMC says learning through practice is key and that CARS needs no specific content knowledge, so pair your cards with practice questions and full-length exams.",
-  "updated": "2026-09-30",
+  "lead": "Lucida is a free flashcard app for MCAT content review: it turns your notes into cards (or your own AI does), FSRS schedules the reviews, and Pro can set your test date so cards you’d forget by then come up early. Flashcards cover recall, not the whole exam: the AAMC says learning through practice is key and that CARS needs no specific content knowledge, so pair your cards with practice questions and full-length exams.",
+  "updated": "2026-10-01",
   "table": {
     "columns": [
       "MCAT section (AAMC)",
@@ -60,7 +60,7 @@
       "bullets": [
         "**1. Understand first.** Piotr Wozniak’s first rule of formulating knowledge is not to learn what you don’t understand. Cards are for holding what you’ve already understood, so read or watch a topic, then make its cards.",
         "**2. One deck per subject.** Use tags for topics, like Kinematics or Amino acids. Tags give you Learn mode sets and, on Pro, weak-topic stats.",
-        "**3. Make the cards with your AI.** Share your notes and ask for one fact per card, blanks for definitions, and picture cards for diagrams. Then read them (see [AI flashcards](/features/ai-flashcards)).",
+        "**3. Make the cards.** Use Make cards in Lucida with your notes, slides or a PDF, or share your notes with your own AI and ask for one fact per card, blanks for definitions, and picture cards for diagrams. Then read them (see [AI flashcards](/features/ai-flashcards)).",
         "**4. Learn, then review.** Use [Learn mode](/features/learn-mode) to drill a new set, then review a little each day.",
         "**5. Set your test date (Pro).** From 30 days out, the cards you’d likely forget by test day come up early.",
         "**6. Mix in practice.** Work passages and questions alongside your cards, and check the AAMC’s official prep."
@@ -104,7 +104,7 @@
     },
     {
       "q": "What are the best MCAT flashcards?",
-      "a": "There’s no single best deck. A good one is made or edited by you from sources you trust, with one fact per card. Lucida lets your AI draft cards from your notes, and you read them before you study. No deck replaces practice questions."
+      "a": "There’s no single best deck. A good one is made or edited by you from sources you trust, with one fact per card. Lucida can draft cards from your notes, or your own AI can, and you read them before you study. No deck replaces practice questions."
     },
     {
       "q": "How many flashcards should I do a day for the MCAT?",
@@ -117,6 +117,10 @@
     {
       "q": "Can I make MCAT flashcards with ChatGPT or Claude?",
       "a": "Yes. Connect your AI app to Lucida, share your notes and ask for cards. Give it your source material, read the cards, and use Let me check AI cards first if you like. See [AI flashcards](/features/ai-flashcards)."
+    },
+    {
+      "q": "Can Lucida make MCAT flashcards from my notes itself?",
+      "a": "Yes. Choose Make cards and add your notes: a PDF, slides, a Word file, captions, pictures or pasted text. Lucida shows the new cards first, so you read them before you keep them. Free allows 3 makes a day."
     },
     {
       "q": "Do flashcards help with CARS?",
@@ -173,7 +177,7 @@
     {
       "label": "Lucida pricing (what Free and Pro include, as of September 2026)",
       "url": "https://lucida.cards/pricing",
-      "checked": "2026-09-30"
+      "checked": "2026-10-01"
     }
   ],
   "related": [

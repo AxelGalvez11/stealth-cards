@@ -4,8 +4,8 @@
   "title": "Lucida vs RemNote: flashcard apps compared (2026)",
   "description": "Lucida vs RemNote: price, FSRS, AI, Anki import, offline and classes, with sources. RemNote mixes notes and cards. Lucida is flashcards only, in a browser.",
   "h1": "Lucida vs RemNote",
-  "lead": "RemNote is a note-taking app with flashcards built in, so it fits if you want notes and cards in one place, with desktop and phone apps that work offline. Lucida is flashcards only, in a browser, so it fits if you want a simple deck app where your own AI (Claude, ChatGPT) makes the cards.",
-  "updated": "2026-09-30",
+  "lead": "RemNote is a note-taking app with flashcards built in, so it fits if you want notes and cards in one place, with desktop and phone apps that work offline. Lucida is flashcards only, in a browser, so it fits if you want a simple deck app where Lucida makes the cards from your files, or your own AI (Claude, ChatGPT) does.",
+  "updated": "2026-10-01",
   "published": "2026-09-30",
   "table": {
     "columns": [
@@ -31,12 +31,12 @@
       ],
       [
         "AI",
-        "Your own AI (Claude, ChatGPT, Cursor or any MCP app) makes and edits cards and Learn quizzes through your personal Lucida link. You choose what it may do and can check its cards first.",
+        "Built in: makes cards, writes live-game questions from a topic and explains answers. Your own AI (Claude, ChatGPT, Cursor or any MCP app) can also make and edit cards and Learn quizzes through your personal Lucida link. You choose what it may do and can check its cards first.",
         "Built in, with monthly AI credits: 250 on Free, 1,000 on Pro, 20,000 on Pro with AI. Cards from text, PDFs and slides, tutor chat and AI grading."
       ],
       [
         "Making cards",
-        "Type cards in the editor (bold, italics, math, lists), import a list, or ask your AI.",
+        "Type cards in the editor (bold, italics, math, lists), import a list, make cards from a PDF, slides, a Word file, caption files, pictures, a recording, a YouTube video or a topic (3 makes a day on Free, 30 on Pro), or ask your own AI. Lucida shows new cards first, and you keep, edit or remove each one.",
         "Write notes, and any bullet can become a card (type Question == Answer). Cards live inside your notes."
       ],
       [
@@ -93,7 +93,7 @@
         "**Bring your Anki decks with their history.** RemNote imports .apkg files including review history. Lucida can’t read .apkg files.",
         "**More card kinds.** Reverse and two-way cards, concept and descriptor cards, multiple choice, tables and lists.",
         "**An exam scheduler on the free plan** (1 exam), plus plugins and themes. On Lucida, exam dates are Pro.",
-        "**AI built in,** with monthly credits, including cards from PDFs and slides."
+        "**More AI built in,** with monthly credits: cards from text, PDFs and slides, tutor chat and AI grading. Lucida’s own AI makes cards, starts live games from a topic and explains answers."
       ]
     },
     {
@@ -119,13 +119,13 @@
       "h2": "Who should pick which",
       "bullets": [
         "**Pick RemNote** if you want notes and flashcards in one app, offline apps, or an Anki import that keeps your history.",
-        "**Pick Lucida** if you want flashcards only, kept simple, with your own AI making the cards and free live games and Learn mode."
+        "**Pick Lucida** if you want flashcards only, kept simple, with cards made from your files or by your own AI, and free live games and Learn mode."
       ]
     },
     {
       "h2": "How we checked this page",
       "paras": [
-        "Facts about RemNote come from RemNote’s pricing page and help center, opened on September 30, 2026. Facts about Lucida come from the app, its pricing page and its privacy policy. Where we couldn’t confirm something about RemNote, we left it out. If anything here is wrong, write to team@lucida.cards."
+        "Facts about RemNote come from RemNote’s pricing page and help center, opened on September 30, 2026. Facts about Lucida come from the app, its pricing page and its privacy policy, and are as of October 1, 2026. Where we couldn’t confirm something about RemNote, we left it out. If anything here is wrong, write to team@lucida.cards."
       ]
     }
   ],
@@ -152,7 +152,7 @@
     },
     {
       "q": "Does RemNote have AI?",
-      "a": "Yes. RemNote includes monthly AI credits (250 on Free, 1,000 on Pro, 20,000 on Pro with AI) for cards from text, PDFs and slides, tutor chat and AI grading. Lucida doesn’t write cards itself; your own AI app does through your Lucida link."
+      "a": "Yes. RemNote includes monthly AI credits (250 on Free, 1,000 on Pro, 20,000 on Pro with AI) for cards from text, PDFs and slides, tutor chat and AI grading. Lucida makes cards itself too, from your files, pictures, recordings, YouTube links or a topic (3 makes a day on Free), and your own AI app can make cards through your Lucida link."
     },
     {
       "q": "Is RemNote better than Anki?",
@@ -217,12 +217,12 @@
     {
       "label": "Lucida pricing",
       "url": "https://lucida.cards/pricing",
-      "checked": "2026-09-30"
+      "checked": "2026-10-01"
     },
     {
       "label": "Lucida privacy policy",
       "url": "https://lucida.cards/privacy",
-      "checked": "2026-09-30"
+      "checked": "2026-10-01"
     }
   ],
   "related": [

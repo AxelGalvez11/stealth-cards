@@ -15,6 +15,7 @@ export const PRIVACY = {
       ['list',
         'Your email address, so we can send you sign-in codes. If you sign in with Google or Apple, we get your email and name from them. If you set a password, it’s kept only in scrambled form.',
         'What you put in Lucida: your decks, cards, pictures and sounds, your reviews and grades, and your settings.',
+        'What a deck keeps about where its cards came from: its Guide (the page you write under a deck) and its Sources, which are the files, recordings, videos, pasted text and topics you made cards from, with the file or recording itself if you kept it. Sources are private to you, even on a shared deck; a shared deck’s page may say how many it has, and shows its Guide.',
         'Your personal AI link, the private address your AI apps use to reach your cards, and the AI apps you allowed to sign in to Lucida (their name, the site they belong to, and when you connected them). Their sign-in keys are kept only in scrambled form.',
         'Your profile, if you share decks or edit it: your name, @handle, picture, and what you add about yourself.',
         'Your school, level, and year, if you add them: a college or university picked from a list (or typed in), and a level: high school, college, graduate, medical or professional, or other. A high school student picks the level only. Lucida has no list of high schools and keeps no high school’s name.',
@@ -25,6 +26,7 @@ export const PRIVACY = {
     { h: 'How we use it', body: [
       ['list',
         'To run Lucida: show your cards, plan your reviews, keep you signed in, and send sign-in codes.',
+        'To make what you ask for: cards from a file, pictures, a recording, a link, pasted text or a topic, and questions for a live game.',
         'To show what you share to the people you share it with.',
         'To keep it safe: stop abuse, look at reports, and fix problems.'],
       'We don’t sell your data, use it for ads, or use your cards to train AI models.'
@@ -46,6 +48,9 @@ export const PRIVACY = {
         'Resend sends our emails.',
         'Stripe takes payments for Pro on the web, and Apple for Pro bought in the iPhone app.',
         'When you ask Lucida to explain an answer, or Learn mode asks it to write quiz questions, the card’s text goes to OpenRouter, which passes it to an AI model that writes the explanation or the questions.',
+        'When you ask Lucida to make cards (or live questions) from a file, pictures, a recording, pasted text or a topic, what the AI needs goes to OpenRouter, which passes it to an AI model that writes them: the text Lucida pulled out of your file, your pictures or scanned pages, or your topic. A recording goes first to a speech-to-text model, which turns it into text. We ask for services that say they don’t keep what they’re sent or train on it. They see only what you chose to make cards from, never your other cards.',
+        'When you give Lucida a YouTube link, the link goes to Google (Gemini), which watches the public video and writes notes from it for Lucida.',
+        'The files you upload to make cards are kept in your own private storage while Lucida works, and deleted when it’s done, unless you keep them as the deck’s Source. A file you never finish with is deleted the next time you make cards, or when you delete your data.',
         'Themes load their fonts from Google Fonts.',
         'When Lucida makes a voice for a sound card, the card’s text goes to the speech service that makes it.',
         'When you or your AI add a picture or sound from a link, Lucida downloads it from that site.'],
@@ -58,6 +63,7 @@ export const PRIVACY = {
       ['list',
         'Export every deck, card, and review from Settings whenever you want.',
         'Delete decks and cards at any time, or everything at once from Settings.',
+        'Delete a Source to remove its file and recording (the cards stay). Deleting a deck, your data or your account removes its Sources too.',
         'Make a deck private again, or block someone, at any time.',
         'Turn off “Show my school on my profile”, or clear your school, level, or year, at any time.',
         `To delete your account completely, including your email address, use Delete account in Settings, or write to ${CONTACT}. Backups expire on their own soon after.`]
@@ -82,11 +88,11 @@ export const TERMS = {
       'You need to be at least 13 to use Lucida. Keep your email account, your password (if you set one), and your Lucida AI link to yourself: anyone with them can reach your cards. You’re responsible for what happens in your account, so tell us if something looks wrong.'
     ] },
     { h: 'Your cards', body: [
-      'Your cards are yours. You let us store, copy, and show them only to run Lucida for you, for example to show them to you and to the AI apps you connect. Only add things you have the right to use.',
+      'Your cards are yours. You let us store, copy, and show them only to run Lucida for you, for example to show them to you and to the AI apps you connect. Only add things you have the right to use, and only make cards from files, recordings and videos you may use.',
       'When you share a deck, you also let the people you share it with see it, study it, and copy it into their own library. Their copies stay theirs.'
     ] },
     { h: 'Cards made by AI', body: [
-      'AI apps can make mistakes, and so can the cards they make. Check what matters, especially before an exam, and don’t rely on Lucida for medical, legal, or other professional advice.'
+      'Lucida’s own AI, and the AI apps you connect, can make mistakes, and so can the cards and questions they make. Lucida shows you new cards before they’re saved. Check what matters, especially before an exam, and don’t rely on Lucida for medical, legal, or other professional advice.'
     ] },
     { h: 'Fair use', body: [
       'Please don’t:',

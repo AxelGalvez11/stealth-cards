@@ -2,6 +2,7 @@
 // every {{hole}} resolves (handlers to functions), sc-for lists are arrays, and tags balance.
 import { readFileSync, readdirSync } from 'node:fs';
 import { readBoard } from './slim.mjs';
+import { MAKE_STEPS, GUIDE_STATES, GUIDE_VIEWS, LIVE_FROM, LIVE_TOPIC_STATES } from './materials.mjs';
 
 const DIR = new URL('./canvas/project/', import.meta.url);
 const get = (o, p) => p.trim().split('.').reduce((a, k) => (a == null ? undefined : a[k]), o);
@@ -102,6 +103,17 @@ PROP_SETS.push({ screen: 'Set up' }, { screen: 'Multiple choice' }, { screen: 'T
   { screen: 'Multiple choice', $state: { sheet: true } }, { screen: 'Results', $state: { exOpen: { 3: true }, exOn: { 3: true } } }, { screen: 'Results', $state: { counted: { 18: true } } },
   { screen: 'Set up', $state: { kinds: ['mc'], count: 10, limit: 20 } }, { screen: 'Set up', folderId: 'f1' }, { screen: 'Set up', dark: true, dim: true }, { screen: 'Written', $state: { m: { type: '' } } },
   { screen: 'Matching', $state: { m: { match: { 0: 1, 1: 3, 2: 4, 3: 0, 4: 2 } } } }, { tests: false });
+
+// Making cards: every step the Make boards offer, light and dark.
+for (const step of MAKE_STEPS) PROP_SETS.push({ step }, { step, dark: true });
+// The deck page's Cards, Notes (the Guide) and Sources sections, each with the Guide and Sources in every state (and dark).
+for (const guide of GUIDE_STATES) PROP_SETS.push({ guide }, { guide, dark: true }, { guide, section: 'Notes' }, { guide, section: 'Notes', dark: true }, { guide, section: 'Sources' }, { guide, section: 'Sources', dark: true });
+// The Guide's editor: writing, previewing, older versions, a new page, nothing written yet (and dark).
+for (const view of GUIDE_VIEWS) PROP_SETS.push({ view }, { view, dark: true });
+for (const liveFrom of LIVE_FROM) PROP_SETS.push({ liveFrom }, { liveFrom, dark: true });
+for (const topicState of LIVE_TOPIC_STATES) PROP_SETS.push({ topicState });
+// A card made from a source says so in the editor (and the deck page's source opens where the card points).
+PROP_SETS.push({ madeFrom: false }, { madeFrom: true, dark: true }, { guide: 'A source open', sourceAt: 'p. 4' }, { guide: 'A source open', sourceAt: 'p. 4', section: 'Sources' });
 
 function walk(str, sc, miss) {
   let i = 0;

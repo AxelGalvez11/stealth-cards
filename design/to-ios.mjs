@@ -1,8 +1,8 @@
 // Copies what the iPhone app (ios/) shares with the design canvas into Swift: the theme colors, the icons, the gradient
 // palettes (plus the site's Midnight, for the Learn sheet's deep top), the onboarding's icons and moving background, tag colors, the sign-in wall's cards, and the canvas's sample data
 // (its sample sound's waveform, Pro's deep stats, the study network's sample: net-sample.mjs, and the practice test's), the themes' list,
-// and the motion timings (motion.mjs). Run it after changing any of those.
-import { readFileSync, writeFileSync } from 'node:fs';
+// and the motion timings (motion.mjs); and copies the Guide's engine (web/guide.js) into the app's resources. Run it after changing any of those.
+import { readFileSync, writeFileSync, copyFileSync } from 'node:fs';
 import { PALETTES, PALETTE_NAMES, SITE_PALETTES } from './surfaces.mjs';
 import { WALL_CARDS } from './wall.mjs';
 import { SAMPLE, SAMPLE_WAVE, SAMPLE_INSIGHTS } from './mock.mjs';
@@ -144,4 +144,7 @@ ${THEMES.map(t => `    (${str(t.key)}, ${str(t.board || '')}, ${str(t.name)}, ${
 }
 `;
 writeFileSync(OUT, out);
+// The Guide's engine, web/guide.js, goes into the app as it is: the iPhone runs the same file in JavaScriptCore (ios/Lucida/Data/GuideEngine.swift),
+// so what a Guide says is read the same everywhere. (ios/tests/guide-check.sh fails when the two files differ.)
+copyFileSync(new URL('../web/guide.js', import.meta.url), new URL('../ios/Lucida/Resources/guide.js', import.meta.url));
 console.log('wrote', OUT.pathname.split('/stealth-cards/')[1], Object.keys(I).length, 'icons,', PALETTE_NAMES.length, 'palettes');

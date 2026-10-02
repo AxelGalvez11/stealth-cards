@@ -202,7 +202,7 @@ enum Generated {
   ]
 
   /// What Pro adds on iPhone (the pricing page's list less what only the web has, design/site.mjs PLAN_PRO_PHONE), for the paywall.
-  static let proPlan: [String] = ["Exam dates: ready in time for the test","Stats on what you’re weak at","Unlimited pictures and sounds","Themes for cards, covers and your profile","The hardest cards on decks you share","Photo covers and your own colors","More AI explanations"]
+  static let proPlan: [String] = ["Make cards from bigger sources: 30 a day, up to 300 pages or 2 hours","Exam dates: ready in time for the test","Stats on what you’re weak at","Unlimited pictures and sounds","Themes for cards, covers and your profile","The hardest cards on decks you share","Photo covers and your own colors","More AI explanations"]
   /// What people say about where they study (web/school.js): levels, years, and the thirty subjects, each as its id and its words.
   static let levels: [(id: String, words: String)] = [("highschool", "High school"), ("college", "College"), ("graduate", "Graduate"), ("medical", "Medical or professional"), ("other", "Other")]
   static let years: [(id: String, words: String)] = [("1", "1st year"), ("2", "2nd year"), ("3", "3rd year"), ("4", "4th year"), ("5", "5th year or more")]

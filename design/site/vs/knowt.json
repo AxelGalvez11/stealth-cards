@@ -2,10 +2,10 @@
   "slug": "vs/knowt",
   "kind": "compare",
   "title": "Lucida vs Knowt: flashcard apps compared (2026)",
-  "description": "Lucida vs Knowt: price, AI, spaced repetition, import, classes and games, with sources. Knowt has AI built in. Lucida has no ads and uses your own AI.",
+  "description": "Lucida vs Knowt: price, AI, spaced repetition, import, classes and games, with sources. Knowt adds AI notes and a tutor. Lucida has no ads and easy export.",
   "h1": "Lucida vs Knowt",
-  "lead": "Knowt has AI built in (note summarizers, a tutor, exam prep), but its free plan limits the AI and shows ads. Lucida has no ads and lets your own AI (Claude, ChatGPT) make the cards, so pick Knowt for one-stop AI and a big library, and Lucida for FSRS reviews, export and free live games.",
-  "updated": "2026-09-30",
+  "lead": "Knowt has AI built in (note summarizers, a tutor, exam prep), but its free plan limits the AI and shows ads. Lucida has no ads, makes cards from your files itself and lets your own AI (Claude, ChatGPT) make them too, so pick Knowt for one-stop AI and a big library, and Lucida for FSRS reviews, export and free live games.",
+  "updated": "2026-10-01",
   "published": "2026-09-30",
   "table": {
     "columns": [
@@ -31,12 +31,12 @@
       ],
       [
         "AI",
-        "Your own AI (Claude, ChatGPT, Cursor or any MCP app) makes and edits cards and Learn quizzes through your personal Lucida link. You choose what it may do and can check its cards first.",
+        "Built in: makes cards, writes live-game questions from a topic and explains answers. Your own AI (Claude, ChatGPT, Cursor or any MCP app) can also make and edit cards and Learn quizzes through your personal Lucida link. You choose what it may do and can check its cards first.",
         "Built in: a Kai chat in the editor, summarizers for PDFs, video, images and slides, a live-lecture note taker, AI podcasts and a voice tutor. The free plan allows 1 summary a month."
       ],
       [
         "Making cards",
-        "Type cards in the editor (bold, italics, math, lists), import a list, or ask your AI.",
+        "Type cards in the editor (bold, italics, math, lists), import a list, make cards from a PDF, slides, a Word file, caption files, pictures, a recording, a YouTube video or a topic (3 makes a day on Free, 30 on Pro), or ask your own AI. Lucida shows new cards first, and you keep, edit or remove each one.",
         "Type terms, paste a list, import, or make cards from PDFs, video, audio or a live recording with AI."
       ],
       [
@@ -81,13 +81,13 @@
       "h2": "The short version",
       "paras": [
         "Knowt is a flashcard and notes app with AI built in. You upload a PDF, video or lecture, and it writes notes and cards for you. The free plan covers every study mode on your own sets, and limits the AI.",
-        "Lucida doesn’t write cards from your files itself. Your own AI app does, through your Lucida link, and Lucida puts no limit on how many cards it makes on Free. Lucida also has no ads."
+        "Lucida makes cards from your files too: choose Make cards, and Lucida writes them and shows them to you first. Your own AI app can also make cards through your Lucida link, and Lucida puts no limit on how many cards your AI app makes on Free. Lucida also has no ads."
       ]
     },
     {
       "h2": "Where Knowt is better",
       "bullets": [
-        "**AI built in.** Summarizers for PDFs, video, images and slides, a live-lecture note taker, AI podcasts and a voice tutor, all without a separate AI subscription.",
+        "**More AI tools built in.** Summarizers for PDFs, video, images and slides, a live-lecture note taker, AI podcasts and a voice tutor, all without a separate AI subscription. Lucida’s own AI makes cards, starts live games from a topic and explains answers.",
         "**Phone apps** for iPhone and Android, plus a Chrome extension for bringing in PDFs, YouTube videos and Quizlet sets.",
         "**Exam prep.** Full access to AP, SAT and ACT prep is part of Ultra, and the free plan includes one full-length mock exam.",
         "**Knowt Play.** Five live game modes (Classic, Race, Clash, Blitz and Survival) with short-answer questions as well as multiple choice.",
@@ -99,11 +99,11 @@
       "h2": "Where Lucida is better",
       "bullets": [
         "**No ads,** free or Pro. Knowt’s Ultra plan is what removes its ads.",
-        "**No cap on AI card-making from Lucida.** Your own AI app has its own limits, but on Free, Lucida lets your AI make as many cards as you want. Knowt’s free plan allows 1 AI summary a month.",
+        "**Free card-making.** Lucida’s own card maker allows 3 makes a day on Free, up to 100 cards each. Your own AI app has its own limits, but on Free, Lucida lets your AI make as many cards as you want. Knowt’s free plan allows 1 AI summary a month.",
         "**FSRS reviews** with a goal you set, and exam dates on Pro. Knowt names no algorithm for its spaced repetition mode.",
         "**Cloze and picture-hiding cards.** Lucida has fill-in-the-blank cards and pictures with hidden parts, free (up to 100 pictures and sounds). Knowt’s help center doesn’t describe either kind.",
         "**Your data out.** Export a deck as CSV, or everything including reviews as JSON. Knowt exports flashcards as PDF.",
-        "**Live games need no setup:** any deck, up to 60 players, and your AI can write the questions."
+        "**Live games need no setup:** any deck or a topic you type, up to 60 players, and your AI can write the questions for your cards."
       ]
     },
     {
@@ -116,14 +116,14 @@
     {
       "h2": "Who should pick which",
       "bullets": [
-        "**Pick Knowt** if you want AI built in, phone apps, AP, SAT or ACT prep, or a class game with several modes.",
-        "**Pick Lucida** if you want no ads, FSRS reviews, easy export and your own AI making the cards."
+        "**Pick Knowt** if you want more AI built in, phone apps, AP, SAT or ACT prep, or a class game with several modes.",
+        "**Pick Lucida** if you want no ads, FSRS reviews, easy export, and cards made from your files or by your own AI."
       ]
     },
     {
       "h2": "How we checked this page",
       "paras": [
-        "Facts about Knowt come from Knowt’s plans page, help center, privacy policy and home page, opened on September 30, 2026. Facts about Lucida come from the app, its pricing page and its privacy policy. Where we couldn’t confirm something about Knowt, we left it out. If anything here is wrong, write to team@lucida.cards."
+        "Facts about Knowt come from Knowt’s plans page, help center, privacy policy and home page, opened on September 30, 2026. Facts about Lucida come from the app, its pricing page and its privacy policy, and are as of October 1, 2026. Where we couldn’t confirm something about Knowt, we left it out. If anything here is wrong, write to team@lucida.cards."
       ]
     }
   ],
@@ -150,7 +150,7 @@
     },
     {
       "q": "Is Lucida a good Knowt alternative?",
-      "a": "If you want no ads, FSRS reviews, easy export and your own AI, yes. If you want AI built into the app, phone apps or AP, SAT and ACT prep, Knowt fits better."
+      "a": "If you want no ads, FSRS reviews, easy export, and cards made from your files or by your own AI, yes. If you want more AI built into the app, phone apps or AP, SAT and ACT prep, Knowt fits better."
     },
     {
       "q": "Does Knowt have live games like Kahoot?",
@@ -235,12 +235,12 @@
     {
       "label": "Lucida pricing",
       "url": "https://lucida.cards/pricing",
-      "checked": "2026-09-30"
+      "checked": "2026-10-01"
     },
     {
       "label": "Lucida privacy policy",
       "url": "https://lucida.cards/privacy",
-      "checked": "2026-09-30"
+      "checked": "2026-10-01"
     }
   ],
   "related": [

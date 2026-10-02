@@ -193,18 +193,45 @@ struct DeckScreen: View {
   let id: String
   /// This page, for dragging its cards.
   @State private var board = UUID().uuidString
+  /// Which section of the page shows (Cards, Notes or Sources; nil: Cards, unless an address or a board says another), which page of the Guide, and whether it's
+  /// unfolded (Show more); and the Add cards menu (the + on the cover) is open.
+  @State private var tab: String? = nil
+  @State private var gpage = "main"
+  @State private var gopen = false
+  @State private var addOpen = false
   var body: some View {
-    let d = store.deck(id)
+    let d = store.deck(id), g = store.guide(id), srcs = store.sources(id)
     Group {
-      if d.rows.isEmpty && store.cardCount(id) == 0 { empty(d) } else { page(d) }
+      // (A deck with no cards but a Guide or Sources has its page, like the web's.)
+      if d.rows.isEmpty && store.cardCount(id) == 0 && !g.hasAny && srcs.isEmpty { empty(d) } else { page(d, g, srcs) }
     }
     .toolbar(.hidden, for: .navigationBar)
-    .onAppear { if store.demo && store.props.deckSettings != nil { nav.sheet = .deckSettings(id) } }
+    .addMenu(open: $addOpen, rows: [
+      AddMenuRow(icon: "plus", title: "New card", line: "Write one yourself") { nav.newCard(deckId: id) },
+      AddMenuRow(icon: "sparkle", title: "From a file, photo, video or topic", line: "Lucida makes the cards") { nav.make(deckId: id) },
+      AddMenuRow(icon: "upload", title: "Import cards", line: "From Anki, Quizlet or a CSV") { nav.importCards() }])
+    .onAppear { if store.demo { demoOpen() } }
+    // Something asked for a section (the Guide editor's Done: Notes; a card's "Made from" line: Sources, with that source open).
+    .onChange(of: nav.deckWants, initial: true) { _, w in
+      guard let w, w.deckId == id else { return }
+      nav.deckWants = nil
+      tab = w.tab
+      if !w.source.isEmpty { withAnimation(.out(0.35)) { nav.sheet = .source(deckId: id, id: w.source, at: w.at) } }
+    }
+  }
+
+  /// A design screen opens as its board's settings say: Notes or Sources, a source open at a card's place, or a deck's settings.
+  private func demoOpen() {
+    let p = store.props
+    if p.deckSettings != nil { nav.sheet = .deckSettings(id) }
+    else if p.guideState == "A source open" { tab = "sources"; nav.sheet = .source(deckId: id, id: "x2", at: "1:00") }
+    else if !p.sourceOpen.isEmpty { tab = "sources"; nav.sheet = .source(deckId: id, id: p.sourceOpen, at: p.sourceAt) }
+    else if let want = ["Notes": "notes", "Sources": "sources"][p.section] { tab = want }
   }
 
   // The header: the deck's gradient (or its photo), with round buttons and its name. With a theme on (Pro), the theme's
   // cover and lettering take their place (a deck with a photo of its own keeps it).
-  private func header(_ d: DeckVM, sub: String) -> some View {
+  private func header(_ d: DeckVM, sub: String, menu: Bool = false) -> some View {
     let skin = d.image == nil ? store.skin(art) : nil, size = CGSize(width: ThemeLayout.screen.width, height: Screen.top(232))
     let themed = skin.flatMap { s in art.picture(.head(s, deck: d.look, size: size)).map { (s, $0) } }
     let ink = themed.flatMap { RGBA(css: $0.1.string("ink")) }
@@ -221,7 +248,10 @@ struct DeckScreen: View {
           if let sh = d.sharing.shared { CoverButton(icon: "globe", label: sh.label, size: 40) { nav.deckPage(sh.url) } }
           CoverButton(icon: "gear", label: "Deck settings") { withAnimation(Motion.sheet) { nav.sheet = .deckSettings(d.id) } }
           if !d.rows.isEmpty { CoverButton(icon: "search", label: "Search") {} }
-          if !d.sharing.readOnly { CoverButton(icon: "plus", label: "New card") { nav.newCard(deckId: d.id) } }
+          if !d.sharing.readOnly {
+            if menu { CoverButton(icon: "plus", label: "Add cards") { addOpen.toggle() }.addMenuAnchor() }
+            else { CoverButton(icon: "plus", label: "New card") { nav.newCard(deckId: d.id) } }
+          }
           if d.sharing.readOnly, let lk = d.sharing.link { CoverButton(icon: "message", label: "Suggest a change", size: 40) { nav.deckPage(lk.url, suggest: "1") } }
         }
         .padding(.top, Screen.top(54))
@@ -253,10 +283,16 @@ struct DeckScreen: View {
     }
   }
 
-  private func page(_ d: DeckVM) -> some View {
-    ScrollView(showsIndicators: false) {
+  private func page(_ d: DeckVM, _ g: GuideVM, _ srcs: [SourceVM]) -> some View {
+    // The sections: Cards (the cards), Notes (the Guide: its owner's, or one that has words), Sources (what the cards were made from: only its owner's).
+    let notesTab = g.hasAny || g.can, sourcesTab = g.can
+    let items = [DeckTabs.Item(id: "cards", label: "Cards", count: String(d.rows.count))]
+      + (notesTab ? [DeckTabs.Item(id: "notes", label: "Notes", count: "")] : [])
+      + (sourcesTab ? [DeckTabs.Item(id: "sources", label: "Sources", count: srcs.isEmpty ? "" : String(srcs.count))] : [])
+    let want = tab ?? "cards", section = want == "notes" && notesTab ? "notes" : want == "sources" && sourcesTab ? "sources" : "cards"
+    return ScrollView(showsIndicators: false) {
       VStack(spacing: 16) {
-        header(d, sub: d.lineShort)
+        header(d, sub: d.lineShort, menu: true)
         VStack(spacing: 16) {
           if d.sharing.linked, let lk = d.sharing.link { fromRow(d, lk) }
           let upd = d.sharing.isCopy ? max(store.deckUpdates(d.id).count, d.sharing.link?.pending ?? 0) : 0
@@ -304,8 +340,12 @@ struct DeckScreen: View {
           }
           TestStartButton(scope: .deck(d.id))
           TestPastList(scope: .deck(d.id))
+          if items.count > 1 { DeckTabs(items: items, selected: section) { tab = $0 } }
+          if section == "notes" { notes(d, g) }
+          if section == "sources" { SourcesCard(deckId: d.id, rows: srcs, can: g.can) { s in withAnimation(Motion.sheet) { nav.sheet = .source(deckId: d.id, id: s.id, at: "") } } }
           let list = board + "/cards", ids = d.rows.map(\.id)
-          VStack(spacing: 0) {
+          if section == "cards" && d.rows.isEmpty { Text("No cards in this deck yet. Add some from the Add cards menu.").css(14).foregroundStyle(t.muted).frame(maxWidth: .infinity, alignment: .leading) }
+          if section == "cards" { VStack(spacing: 0) {
             ForEach(d.rows) { r in
               // A card of a deck you study as it is opens Suggest a change on it (on its deck's page).
               let open = d.sharing.readOnly && d.sharing.link != nil
@@ -319,7 +359,7 @@ struct DeckScreen: View {
                 .gesture(drag.hold(list, r.id, tap: open, ids: { ids }, face: { AnyView(row(r)) }, options: { cardDrag(d) }))
                 .dragItem(drag, list: list, id: r.id)
             }
-          }
+          } }
         }
         .padding(.horizontal, 20)
       }
@@ -327,6 +367,13 @@ struct DeckScreen: View {
       .dragScroller(drag, board: board)
     }
     .ignoresSafeArea(edges: .top)
+  }
+
+  /// The Notes: the deck's Guide as a card (its pages as tabs when it has some).
+  private func notes(_ d: DeckVM, _ g: GuideVM) -> some View {
+    let pageId = g.pages.contains { $0.id == gpage } ? gpage : "main"
+    let tabs = g.pages.isEmpty ? [] : [(id: "main", title: "Guide")] + g.pages.map { (id: $0.id, title: $0.title) }
+    return GuideCard(deckId: d.id, tabs: tabs, page: Binding(get: { pageId }, set: { gpage = $0 }), text: g.page(pageId).text, open: $gopen, canEdit: g.can, hasAny: g.hasAny)
   }
 
   /// Whose deck it is: their picture and name (tap: its page).
@@ -390,7 +437,8 @@ struct DeckScreen: View {
     VStack(spacing: 0) {
       header(d, sub: "No cards yet")
       EmptyBlock(art: 140, icon: "plus", title: "This deck is empty", line: "Add your first card, import some, or ask your AI to make them.") {
-        EmptyActions(primary: ("New card", "plus", { nav.newCard(deckId: d.id) }), a: ("Import cards", "upload", { nav.importCards() }), b: ("Ask your AI", "sparkle", { nav.openConnect() }))
+        EmptyActions(primary: ("New card", "plus", { nav.newCard(deckId: d.id) }), second: ("Make cards", "sparkle", { nav.make(deckId: d.id) }),
+                     a: ("Import cards", "upload", { nav.importCards() }), b: ("Ask your AI", "connect", { nav.openConnect() }))
       }
       .padding(.horizontal, 28)
       .frame(maxHeight: .infinity)
@@ -694,15 +742,18 @@ struct EmptyBlock<Actions: View>: View {
   }
 }
 
-/// One black button, then two lighter ones side by side (phoneActionRow), like the web's row of pills.
+/// One black button (and maybe a gray one under it, full width too), then two lighter ones side by side (phoneActionRow), like the web's
+/// row of pills.
 struct EmptyActions: View {
   @Environment(\.theme) private var t
   let primary: (String, String, () -> Void)
+  var second: (String, String, () -> Void)? = nil
   let a: (String, String, () -> Void)
   let b: (String, String, () -> Void)
   var body: some View {
     VStack(spacing: 10) {
       BigButton(label: primary.0, icon: primary.1, action: primary.2)
+      if let second { BigButton(label: second.0, icon: second.1, inv: false, action: second.2) }
       HStack(spacing: 10) { small(a); small(b) }
     }
   }

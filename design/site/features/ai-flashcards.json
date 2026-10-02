@@ -1,11 +1,11 @@
 {
   "slug": "features/ai-flashcards",
   "kind": "feature",
-  "title": "AI flashcards: your own AI makes the cards",
-  "description": "Add your Lucida link to Claude, ChatGPT or Cursor and ask for flashcards. They land in your decks on an FSRS schedule, at no extra cost on the free plan.",
+  "title": "AI flashcards: made by Lucida or your own AI",
+  "description": "Make flashcards from a PDF, photos, a recording, a YouTube link or a topic, or add your Lucida link to Claude, ChatGPT or Cursor and ask for them.",
   "h1": "AI flashcards that land in your decks",
-  "lead": "Add your personal Lucida link to your AI app once, then ask it for flashcards: it writes them straight into your decks, and Lucida plans the reviews. It works with Claude, ChatGPT and Cursor, and with any other app that can add a remote MCP server by its web address, and on the free plan your AI can make as many cards as you want.",
-  "updated": "2026-09-30",
+  "lead": "Lucida can make cards from your files, pictures, recordings, YouTube links or a topic, and your own AI app can make and edit them too: add your personal Lucida link to Claude, ChatGPT, Cursor or any app that can add a remote MCP server by its web address, and ask it for flashcards. Either way the cards land in your decks, Lucida plans the reviews, and on the free plan your own AI can make as many cards as you want.",
+  "updated": "2026-10-01",
   "table": {
     "columns": [
       "App",
@@ -54,14 +54,48 @@
   },
   "sections": [
     {
+      "h2": "Make cards in Lucida",
+      "paras": [
+        "Choose Make cards, add what you want to learn from, and Lucida writes the cards with its own AI. You pick the deck (new or one you have), how many cards (Auto, 10, 20 or 50), the kinds (basic or fill in the blank, and audio cards once a language is set) and the language. Lucida first shows the new cards. You edit, remove or keep each one, or keep them all, and then they are saved in the deck.",
+        "You can add:"
+      ],
+      "bullets": [
+        "**A file.** A PDF, a PowerPoint (.pptx), a Word file (.docx), a text file, or a lecture’s captions (.srt or .vtt).",
+        "**Pictures.** A photo of notes, slides, a whiteboard or a book page. On the web, the file picker offers the camera on phones.",
+        "**A recording.** An audio file (a long one is cut into parts of ten minutes or less on your device, up to your plan’s time), or a lecture recorded in the app with the microphone, with a timer, pause and stop.",
+        "**A YouTube link.** Lucida watches a public video, or you can paste the video’s transcript instead.",
+        "**Pasted text.** Paste your notes or any other text.",
+        "**A topic.** Type it in words, like “the Krebs cycle”."
+      ]
+    },
+    {
+      "h2": "What happens to what you add",
+      "paras": [
+        "Text is pulled out of PDFs, slides, Word files and caption files on Lucida’s server, without an AI. Then an AI service writes the cards from that text, your pictures, scanned pages, audio, or the topic. A YouTube link goes to Google’s Gemini so it can watch the video.",
+        "Lucida asks for services that say they don’t keep it or train on it. Uploaded files are deleted after the make unless you keep them as the deck’s Source."
+      ],
+      "bullets": []
+    },
+    {
+      "h2": "Sources and the Guide",
+      "paras": [
+        "Every deck keeps its Sources: what its cards were made from, whether a file, a recording, a video, pasted text or a topic. Each card remembers its page or time and can open the source there. Deleting a source removes its file, and the cards stay. Stored Sources have room for 500 files and 500 MB on Free, and 5,000 files and 5 GB on Pro.",
+        "Sources are private, even on a shared deck. A public deck’s page may only say “Made from 3 sources”.",
+        "When Lucida makes cards it also drafts starter notes for the deck from the same material: a title, a short overview, and the main ideas as headings in order, each with the page or time it came from. You see them next to the cards and can turn them off. A deck with no Guide gets them as its Guide. A deck that has one keeps it, and the notes become a new page named after the source.",
+        "For learning a language, choose the language and turn on Audio: Lucida writes words and short phrases that your device’s voice reads aloud, and the back says what they mean.",
+        "A deck can also have a Guide: a page written in Markdown (headings, lists, task lists, links, tables, code, quotes and pictures), shown under the deck’s header like a README. A Guide can have extra pages and a short history of versions, and “Make cards from this guide” turns it into cards. On a shared deck, the Guide shows on its public page."
+      ],
+      "bullets": []
+    },
+    {
       "h2": "How it works, step by step",
       "paras": [
-        "MCP, the Model Context Protocol, is an open standard for connecting AI apps to outside tools and data. Your Lucida link is an MCP server that lets your AI read and write your flashcards. Lucida shows step-by-step setup for Claude, ChatGPT and Cursor. Gemini and Grok can add the same link, but Lucida has no steps for them, and menu names change, so follow each app’s own help page (linked under Sources)."
+        "To make cards with your own AI app, you connect it once and then ask it for cards. MCP, the Model Context Protocol, is an open standard for connecting AI apps to outside tools and data. Your Lucida link is an MCP server that lets your AI read and write your flashcards. Lucida shows step-by-step setup for Claude, ChatGPT and Cursor. Gemini and Grok can add the same link, but Lucida has no steps for them, and menu names change, so follow each app’s own help page (linked under Sources)."
       ],
       "bullets": [
         "**1. Open Connect AI.** Sign in at [app.lucida.cards](https://app.lucida.cards) and open Connect AI. Your personal link is there. It looks like app.lucida.cards/mcp/lk_ followed by a long code.",
         "**2. Add the link to your AI app.** Use the steps in the table above. You only do this once.",
-        "**3. Ask for cards.** For example: “Make 20 flashcards from these lecture notes, one idea per card.” Attach your notes or slides. Your AI reads them. Lucida doesn’t read files itself.",
+        "**3. Ask for cards.** For example: “Make 20 flashcards from these lecture notes, one idea per card.” Attach your notes or slides. Your AI reads them and sends Lucida the cards.",
         "**4. Study.** The cards are in your decks, each one already on the review schedule. If you turned on Let me check AI cards first, they wait under Cards to check until you keep or toss them."
       ]
     },
@@ -88,7 +122,7 @@
         "Draw the hidden boxes for picture cards. You add those in the editor (see [image occlusion](/features/image-occlusion)).",
         "Delete cards, unless you switch that on.",
         "Change anything on other people’s decks. It can only suggest changes.",
-        "Read PDFs or slides through Lucida. Your AI app reads them and sends Lucida the cards."
+        "Read PDFs or slides through your link. Your AI app reads them and sends Lucida the cards. To have Lucida make cards from a file, use Make cards in Lucida."
       ]
     },
     {
@@ -108,7 +142,7 @@
     {
       "h2": "Getting good cards from an AI",
       "paras": [
-        "An AI is quick at drafting cards and not always good at it. In a 2026 test by Ozzie Kirkby and Andy Matuschak, using cards written from a reader’s highlights, even the best model they tried, GPT-5.2, made cards the authors rated unusable (off target, or too vague to work months later) 36% of the time. That was a different job from studying for a class, but the lesson holds: read what it makes, and turn on Let me check AI cards first for anything that matters, like an exam.",
+        "An AI is quick at drafting cards and not always good at it. In a 2026 test by Ozzie Kirkby and Andy Matuschak, using cards written from a reader’s highlights, even the best model they tried, GPT-5.2, made cards the authors rated unusable (off target, or too vague to work months later) 36% of the time. That was a different job from studying for a class, but the lesson holds: read what it makes. Lucida shows the cards it makes before they are saved, and with your own AI you can turn on Let me check AI cards first for anything that matters, like an exam.",
         "Some prompt habits help. They come from Piotr Wozniak’s twenty rules of formulating knowledge, which Anki’s manual recommends too:"
       ],
       "bullets": [
@@ -129,13 +163,17 @@
       "h2": "Quizzes and explanations",
       "paras": [
         "Learn mode uses the questions your AI wrote when a card has them (about four times in five), and otherwise asks from the card’s own words and your other answers. Questions can ask about cause and effect instead of repeating the card.",
-        "When you tap Explain on a card, you see a two-to-four-sentence explanation: your AI’s, if it wrote one, or one from Lucida’s own AI (3 a day on Free, up to 200 a day on Pro). Each explanation is saved on the card, so seeing it again costs nothing. That’s the only place Lucida’s own AI is used. Making cards and quizzes uses your own AI app."
+        "When you tap Explain on a card, you see a two-to-four-sentence explanation: your AI’s, if it wrote one, or one from Lucida’s own AI (3 a day on Free, up to 200 a day on Pro). Each explanation is saved on the card, so seeing it again costs nothing. Explain is one of three places Lucida’s own AI is used. The others are making cards and starting a live game from a topic. Everything else your AI does for you happens in your own AI app, through your link."
       ]
     },
     {
       "h2": "Limits and costs",
       "bullets": [
-        "Making cards with your AI is free, with no cap on the number of cards.",
+        "**Making cards in Lucida, Free:** 3 makes a day. One make takes up to 30 pages (a slide or a scanned page counts as a page), 15 minutes of recording or video, or 10 pictures, in files of up to 20 MB.",
+        "**Making cards in Lucida, Pro:** 30 makes a day, up to 300 pages, 2 hours of recording or video, or 50 pictures, in files of up to 40 MB (25 MB for an audio file).",
+        "One make gives at most 100 cards. A live game started from a topic counts as a make.",
+        "Lucida can’t make cards from a web page address. Paste the page’s text, or save the page as a PDF and add that.",
+        "Making cards with your own AI app is free, with no cap from Lucida on the number of cards on the free plan.",
         "Free includes up to 100 pictures and sounds. A picture with hidden parts counts once.",
         "Sound cards: on Pro, Lucida makes a natural-sounding voice for the sound cards your AI writes. On Free, the app reads them aloud with your device’s voice.",
         "Photo covers for decks are Pro, including ones your AI sets.",
@@ -152,6 +190,14 @@
   ],
   "faq": [
     {
+      "q": "Can Lucida make flashcards without my own AI app?",
+      "a": "Yes. Choose Make cards and add a PDF, PowerPoint, Word or text file, pictures, an audio file or a recording, a YouTube link, pasted text, or a topic. Lucida writes the cards, shows them to you first, and saves the ones you keep in your deck. Your own AI app can still make and edit cards through your Lucida link."
+    },
+    {
+      "q": "What are the limits for making cards in Lucida?",
+      "a": "Free: 3 makes a day, each up to 30 pages, 15 minutes of recording or video, or 10 pictures, with files up to 20 MB. Pro: 30 makes a day, up to 300 pages, 2 hours of recording or video, or 50 pictures, with files up to 40 MB (25 MB for an audio file). One make gives at most 100 cards."
+    },
+    {
       "q": "Can ChatGPT make flashcards?",
       "a": "Yes. ChatGPT can write flashcards in a chat, and OpenAI describes flip-card flashcards in ChatGPT too. With your Lucida link added as a developer-mode app, it can save the cards straight into your Lucida decks, where they get a review schedule."
     },
@@ -165,7 +211,7 @@
     },
     {
       "q": "Do I need a paid AI subscription?",
-      "a": "Not for Lucida itself. Claude’s free plan allows one custom connector. OpenAI lists ChatGPT’s developer mode for Pro, Plus, Business, Enterprise and Education accounts. Check your AI app’s own plan rules."
+      "a": "Not for Lucida itself: Lucida makes cards with its own AI, 3 makes a day on the free plan, with no AI subscription. To use your own AI app, Claude’s free plan allows one custom connector. OpenAI lists ChatGPT’s developer mode for Pro, Plus, Business, Enterprise and Education accounts. Check your AI app’s own plan rules."
     },
     {
       "q": "What is MCP?",
@@ -173,7 +219,7 @@
     },
     {
       "q": "Can I make flashcards from a PDF or lecture slides?",
-      "a": "Yes, through your AI app: attach the file in Claude or ChatGPT and ask for flashcards. Your AI reads the file and sends Lucida the cards. Lucida doesn’t open PDFs itself."
+      "a": "Yes, two ways. In Lucida, choose Make cards and add the PDF, PowerPoint or Word file: Lucida makes the cards and shows them to you first (Free: 3 makes a day, up to 30 pages each). Or attach the file in your own AI app, such as Claude or ChatGPT, and ask for flashcards: your AI reads the file and sends Lucida the cards."
     },
     {
       "q": "Can the AI delete or change my cards?",
@@ -184,12 +230,16 @@
       "a": "The link is the key to your library, so keep it private. If it leaks, choose Make a new link on the Connect AI page and the old one stops working at once. Lucida’s privacy policy says it doesn’t use your cards to train AI models."
     },
     {
+      "q": "Is what I add sent to an AI service?",
+      "a": "Yes, to write the cards. Text is pulled out of PDFs, slides and Word files on Lucida’s server without an AI, and then that text, your pictures, scanned pages, audio or the topic go to an AI service. A YouTube link goes to Google’s Gemini so it can watch the video. Lucida asks for services that say they don’t keep it or train on it, and uploaded files are deleted after the make unless you keep them as the deck’s Source."
+    },
+    {
       "q": "Are AI-made flashcards accurate?",
-      "a": "Not always. Lucida’s terms say AI apps can make mistakes and to check what matters, especially before an exam. Give your AI your own notes, read the cards, or use Let me check AI cards first."
+      "a": "Not always. Lucida’s terms say AI apps can make mistakes and to check what matters, especially before an exam. Lucida shows the cards it makes before they are saved, so you can edit, remove or keep each one. With your own AI, give it your own notes, read the cards, or use Let me check AI cards first."
     },
     {
       "q": "Does making AI cards cost extra?",
-      "a": "No. On the free plan your AI can make as many cards as you want. Pro ($5.99 a month or $49.99 a year, as of September 2026) adds extras like exam dates, weak-spot stats and natural voices for sound cards."
+      "a": "No. On the free plan your own AI app can make as many cards as you want, and Lucida’s own card maker is free for 3 makes a day. Pro ($5.99 a month or $49.99 a year, as of September 2026) adds extras like 30 makes a day, exam dates, weak-spot stats and natural voices for sound cards."
     }
   ],
   "sources": [
@@ -251,7 +301,7 @@
     {
       "label": "Lucida Privacy Policy (updated September 24, 2026)",
       "url": "https://lucida.cards/privacy",
-      "checked": "2026-09-30"
+      "checked": "2026-10-01"
     },
     {
       "label": "Lucida Terms of Service (updated September 24, 2026)",
@@ -261,7 +311,7 @@
     {
       "label": "Lucida pricing (what Free and Pro include, as of September 2026)",
       "url": "https://lucida.cards/pricing",
-      "checked": "2026-09-30"
+      "checked": "2026-10-01"
     }
   ],
   "related": [

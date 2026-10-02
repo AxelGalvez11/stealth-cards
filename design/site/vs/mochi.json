@@ -4,8 +4,8 @@
   "title": "Lucida vs Mochi: flashcard apps compared (2026)",
   "description": "Lucida vs Mochi: price, FSRS, AI, Anki import, offline and sharing, with sources. Mochi is local-first and Markdown-based. Lucida is a browser app.",
   "h1": "Lucida vs Mochi",
-  "lead": "Mochi is a local-first, Markdown-based flashcard and notes app with offline apps on every platform, and Pro is $5 a month (billed yearly) for sync and AI. Lucida runs in the browser with free sync, sharing, Learn mode and live games, and your own AI (Claude, ChatGPT) makes the cards.",
-  "updated": "2026-09-30",
+  "lead": "Mochi is a local-first, Markdown-based flashcard and notes app with offline apps on every platform, and Pro is $5 a month (billed yearly) for sync and AI. Lucida runs in the browser with free sync, sharing, Learn mode and live games, and it makes cards from your files, while your own AI (Claude, ChatGPT) can make them too.",
+  "updated": "2026-10-01",
   "published": "2026-09-30",
   "table": {
     "columns": [
@@ -31,12 +31,12 @@
       ],
       [
         "AI",
-        "Your own AI (Claude, ChatGPT, Cursor or any MCP app) makes and edits cards and Learn quizzes through your personal Lucida link. You choose what it may do and can check its cards first.",
+        "Built in: makes cards, writes live-game questions from a topic and explains answers. Your own AI (Claude, ChatGPT, Cursor or any MCP app) can also make and edit cards and Learn quizzes through your personal Lucida link. You choose what it may do and can check its cards first.",
         "Built in, with monthly limits. Pro: AI completion (500,000 tokens), dictionary, translation, transcription, text to speech and image search. Free gets small amounts (for example 5,000 tokens)."
       ],
       [
         "Making cards",
-        "Type cards in the editor (bold, italics, math, lists), import a list, or ask your AI.",
+        "Type cards in the editor (bold, italics, math, lists), import a list, make cards from a PDF, slides, a Word file, caption files, pictures, a recording, a YouTube video or a topic (3 makes a day on Free, 30 on Pro), or ask your own AI. Lucida shows new cards first, and you keep, edit or remove each one.",
         "Markdown cards: write text and put --- between the sides. Templates with fields, references between cards and tags."
       ],
       [
@@ -81,7 +81,7 @@
       "h2": "The short version",
       "paras": [
         "Mochi is for people who like plain text. You write cards in Markdown, your data lives on your own device, and the apps work offline on Mac, Windows, Linux, iPhone and Android. You pay only if you want sync, publishing or the AI tools.",
-        "Lucida is for people who want no setup. It runs in a browser, your cards follow you to every device you sign in on, and your own AI makes the cards."
+        "Lucida is for people who want no setup. It runs in a browser, your cards follow you to every device you sign in on, and Lucida can make cards from your files, or your own AI can."
       ]
     },
     {
@@ -118,13 +118,13 @@
       "h2": "Who should pick which",
       "bullets": [
         "**Pick Mochi** if you like Markdown, want your cards on your own device, need offline apps, or want to bring over Anki decks with their history.",
-        "**Pick Lucida** if you want free sync and sharing, Learn mode and live games, and your own AI making the cards."
+        "**Pick Lucida** if you want free sync and sharing, Learn mode and live games, and cards made from your files or by your own AI."
       ]
     },
     {
       "h2": "How we checked this page",
       "paras": [
-        "Facts about Mochi come from Mochi’s home page, pricing page, docs and privacy policy, opened on September 30, 2026. Facts about Lucida come from the app, its pricing page and its privacy policy. Where we couldn’t confirm something about Mochi, we left it out. If anything here is wrong, write to team@lucida.cards."
+        "Facts about Mochi come from Mochi’s home page, pricing page, docs and privacy policy, opened on September 30, 2026. Facts about Lucida come from the app, its pricing page and its privacy policy, and are as of October 1, 2026. Where we couldn’t confirm something about Mochi, we left it out. If anything here is wrong, write to team@lucida.cards."
       ]
     }
   ],
@@ -155,7 +155,7 @@
     },
     {
       "q": "Does Mochi have AI?",
-      "a": "Yes. Mochi’s AI features (completion, dictionary, translation, transcription, text to speech and image search) have monthly limits: Free gets small amounts and Pro gets much more. Lucida doesn’t write cards itself; your own AI app does through your Lucida link."
+      "a": "Yes. Mochi’s AI features (completion, dictionary, translation, transcription, text to speech and image search) have monthly limits: Free gets small amounts and Pro gets much more. Lucida makes cards itself too, from your files, pictures, recordings, YouTube links or a topic (3 makes a day on Free), and your own AI app can make cards through your Lucida link."
     },
     {
       "q": "Is Lucida a good Mochi alternative?",
@@ -216,12 +216,12 @@
     {
       "label": "Lucida pricing",
       "url": "https://lucida.cards/pricing",
-      "checked": "2026-09-30"
+      "checked": "2026-10-01"
     },
     {
       "label": "Lucida privacy policy",
       "url": "https://lucida.cards/privacy",
-      "checked": "2026-09-30"
+      "checked": "2026-10-01"
     }
   ],
   "related": [

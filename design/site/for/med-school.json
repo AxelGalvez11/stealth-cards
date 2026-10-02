@@ -2,10 +2,10 @@
   "slug": "for/med-school",
   "kind": "use",
   "title": "Flashcards for med school: spaced repetition and AI",
-  "description": "Make cards from lectures with your own AI, review on an FSRS schedule, hide labels on anatomy pictures and set exam dates. Free, with what it can’t do.",
+  "description": "Make cards from lectures with Lucida or your own AI, review on an FSRS schedule, hide labels on anatomy pictures, set exam dates. What it can’t do.",
   "h1": "Lucida for medical school",
-  "lead": "Lucida is a flashcard app for medical students: your own AI turns lectures into cards, FSRS plans the reviews, and image occlusion and fill-in-the-blank cards cover anatomy, histology and facts inside sentences. It can’t open Anki’s .apkg decks or run Anki add-ons, so it fits best if you make your own cards instead of studying someone else’s mega-deck.",
-  "updated": "2026-09-30",
+  "lead": "Lucida is a flashcard app for medical students: it makes cards from your lectures and slides (your own AI can too), FSRS plans the reviews, and image occlusion and fill-in-the-blank cards cover anatomy, histology and facts inside sentences. It can’t open Anki’s .apkg decks or run Anki add-ons, so it fits best if you make your own cards instead of studying someone else’s mega-deck.",
+  "updated": "2026-10-01",
   "sections": [
     {
       "h2": "What the research says about flashcards in medical school",
@@ -18,8 +18,9 @@
     {
       "h2": "Make cards from your lectures",
       "paras": [
-        "Connect your AI app once (see [AI flashcards](/features/ai-flashcards)), then share a lecture or your notes and ask for cards. For medical school, ask for one fact per card, fill-in-the-blank cards for facts inside sentences (a mechanism, a drug’s target), and a one-line why in each note. Try: “Make flashcards from this lecture for my Pharmacology deck. One fact per card. Use fill-in-the-blank for mechanisms and side effects, and add a one-line why. Tag each card with its drug class.”",
-        "Read every card before you study it, or turn on Let me check AI cards first. Lucida’s terms say not to rely on Lucida for medical advice. In one 2026 test of cards written from a reader’s highlights (a different job from studying for class), even the best model made cards its authors rated unusable 36% of the time. For medical facts, check the cards against your course material."
+        "In Lucida, choose Make cards and add your slides, a PDF, a recording of the lecture, pictures of your notes or pasted text. You pick the deck, how many cards and whether you want basic or fill-in-the-blank cards, and Lucida shows the new cards first, so you can keep, edit or remove each one.",
+        "You can also connect your AI app once (see [AI flashcards](/features/ai-flashcards)), then share a lecture or your notes and ask for cards. For medical school, ask your AI for one fact per card, fill-in-the-blank cards for facts inside sentences (a mechanism, a drug’s target), and a one-line why in each note. Try: “Make flashcards from this lecture for my Pharmacology deck. One fact per card. Use fill-in-the-blank for mechanisms and side effects, and add a one-line why. Tag each card with its drug class.”",
+        "Read every card before you study it. Lucida shows the cards it makes before they are saved, and with your own AI you can turn on Let me check AI cards first. Lucida’s terms say not to rely on Lucida for medical advice. In one 2026 test of cards written from a reader’s highlights (a different job from studying for class), even the best model made cards its authors rated unusable 36% of the time. For medical facts, check the cards against your course material."
       ]
     },
     {
@@ -79,6 +80,10 @@
       "a": "Not directly. The AnKing Step Deck is delivered through AnkiHub for use in Anki, and Lucida can’t open .apkg files. A text export from Anki can be imported, but it drops pictures, tags and review history. If your plan depends on a big premade Anki deck, Anki is the better fit."
     },
     {
+      "q": "Can Lucida make cards from my lecture slides or recordings itself?",
+      "a": "Yes. Choose Make cards and add your slides (PowerPoint or PDF), a lecture recording, pictures of your notes or pasted text. Lucida shows the new cards first. Free allows 3 makes a day, each up to 30 pages or 15 minutes of recording or video."
+    },
+    {
       "q": "Can I make cards from lecture slides with ChatGPT or Claude?",
       "a": "Yes. Attach the slides in your AI app and ask for cards, and it adds them to your Lucida decks. Read them before you study. See [AI flashcards](/features/ai-flashcards)."
     },
@@ -92,7 +97,7 @@
     },
     {
       "q": "Are AI-made medical flashcards accurate?",
-      "a": "Not always. Lucida’s terms say AI apps can make mistakes and not to rely on Lucida for medical advice. Check cards against your course material, and use Let me check AI cards first."
+      "a": "Not always. Lucida’s terms say AI apps can make mistakes and not to rely on Lucida for medical advice. Check cards against your course material. Lucida shows the cards it makes before they are saved, and with your own AI you can use Let me check AI cards first."
     },
     {
       "q": "Does this work for the MCAT too?",
@@ -138,7 +143,7 @@
     {
       "label": "Lucida pricing (what Free and Pro include, as of September 2026)",
       "url": "https://lucida.cards/pricing",
-      "checked": "2026-09-30"
+      "checked": "2026-10-01"
     }
   ],
   "related": [

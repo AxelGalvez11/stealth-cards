@@ -5,7 +5,7 @@
   "description": "Lucida vs Kahoot: live games, player limits, flashcards, spaced repetition, price and privacy, with sources. Kahoot is built for classes. Lucida for study.",
   "h1": "Lucida vs Kahoot",
   "lead": "Kahoot is the well-known live quiz game for classrooms and events, built for large groups, reports and many question types. Lucida is a flashcard app with spaced repetition whose Live mode turns any of your decks into a game for up to 60 friends on their phones, free.",
-  "updated": "2026-09-30",
+  "updated": "2026-10-01",
   "published": "2026-09-30",
   "table": {
     "columns": [
@@ -31,12 +31,12 @@
       ],
       [
         "AI",
-        "Your own AI (Claude, ChatGPT, Cursor or any MCP app) makes and edits cards and Learn quizzes through your personal Lucida link. You choose what it may do and can check its cards first.",
+        "Built in: makes cards, writes live-game questions from a topic and explains answers. Your own AI (Claude, ChatGPT, Cursor or any MCP app) can also make and edit cards and Learn quizzes through your personal Lucida link. You choose what it may do and can check its cards first.",
         "AI builds kahoots and study sets from topics, PDFs, URLs and Wikipedia. These tools are paid: Bronze, from $3 a month billed yearly, reads up to 3 pages, and higher plans up to 150."
       ],
       [
         "Making cards",
-        "Type cards in the editor (bold, italics, math, lists), import a list, or ask your AI.",
+        "Type cards in the editor (bold, italics, math, lists), import a list, make cards from a PDF, slides, a Word file, caption files, pictures, a recording, a YouTube video or a topic (3 makes a day on Free, 30 on Pro), or ask your own AI. Lucida shows new cards first, and you keep, edit or remove each one.",
         "A creator with templates and a question bank of community questions, plus AI. Flashcards are free to create."
       ],
       [
@@ -100,9 +100,9 @@
       "bullets": [
         "**Flashcards with spaced repetition.** FSRS plans every review. Kahoot has flashcards and a Learn mode, and its help center mentions spaced repetition without describing a schedule.",
         "**A free game for more players.** Live hosts up to 60 players on the free plan. Kahoot’s free plan lists 40 players on its school page and 10 on its personal page.",
-        "**No quiz to build.** The game uses your deck’s cards, or questions your AI wrote, so a deck you already study is ready to play.",
+        "**No quiz to build.** The game uses your deck’s cards, or questions your AI wrote, so a deck you already study is ready to play. You can also type a topic, and Lucida writes about 10 questions.",
         "**Players need no account.** Friends join with a code or a QR code and a name.",
-        "**Everything else in one place:** Learn mode, cards your own AI makes, sharing, classes and export."
+        "**Everything else in one place:** Learn mode, cards Lucida or your own AI makes, sharing, classes and export."
       ]
     },
     {
@@ -122,7 +122,7 @@
     {
       "h2": "How we checked this page",
       "paras": [
-        "Facts about Kahoot come from Kahoot’s plans pages, help center, company page and privacy notice, opened on September 30, 2026. Facts about Lucida come from the app, its pricing page and its privacy policy. Where we couldn’t confirm something about Kahoot, we left it out. If anything here is wrong, write to team@lucida.cards."
+        "Facts about Kahoot come from Kahoot’s plans pages, help center, company page and privacy notice, opened on September 30, 2026. Facts about Lucida come from the app, its pricing page and its privacy policy, and are as of October 1, 2026. Where we couldn’t confirm something about Kahoot, we left it out. If anything here is wrong, write to team@lucida.cards."
       ]
     }
   ],
@@ -157,7 +157,7 @@
     },
     {
       "q": "Does Lucida Live have teams or many question types?",
-      "a": "No. Lucida Live is for individuals, and its questions are multiple choice, made from your deck’s cards or written by your AI. Kahoot has team experiences and many more question types on paid plans."
+      "a": "No. Lucida Live is for individuals, and its questions are multiple choice, made from your deck’s cards, written by your AI, or written by Lucida for a topic you type. Kahoot has team experiences and many more question types on paid plans."
     },
     {
       "q": "What does Kahoot say about privacy?",
@@ -233,12 +233,12 @@
     {
       "label": "Lucida pricing",
       "url": "https://lucida.cards/pricing",
-      "checked": "2026-09-30"
+      "checked": "2026-10-01"
     },
     {
       "label": "Lucida privacy policy",
       "url": "https://lucida.cards/privacy",
-      "checked": "2026-09-30"
+      "checked": "2026-10-01"
     }
   ],
   "related": [

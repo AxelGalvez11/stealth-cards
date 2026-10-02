@@ -5,7 +5,7 @@
   "description": "Compare Lucida with Anki, Quizlet, Knowt, RemNote, Brainscape, Mochi, Kahoot and Gizmo on price, spaced repetition, AI and importing, with dated sources.",
   "h1": "Lucida compared with other flashcard apps",
   "lead": "These pages compare Lucida with Anki, Quizlet, Knowt, RemNote, Brainscape, Mochi, Kahoot and Gizmo on price, spaced repetition, AI, importing, sharing and games, with a source and a date for every fact. Each page says plainly where the other app is better.",
-  "updated": "2026-09-30",
+  "updated": "2026-10-01",
   "published": "2026-09-30",
   "table": {
     "columns": [
@@ -21,7 +21,7 @@
         "Lucida",
         "Free. Pro $5.99 a month or $49.99 a year.",
         "FSRS",
-        "Your own AI (Claude, ChatGPT, any MCP app)",
+        "Built in for making cards, plus your own AI (Claude, ChatGPT, any MCP app)",
         "No",
         "A quick start in a browser, AI-made cards, free Learn mode and live games"
       ],
@@ -97,12 +97,12 @@
       "bullets": [
         "**Full control, add-ons and offline study:** Anki. It is free on computers and Android, and [Lucida vs Anki](https://lucida.cards/vs/anki) shows the trade-offs.",
         "**The biggest library and classroom tools:** Quizlet. See [Lucida vs Quizlet](https://lucida.cards/vs/quizlet) for what its free plan covers.",
-        "**AI built into the app:** Knowt, RemNote, Brainscape, Mochi or Gizmo. Their free plans limit it.",
+        "**AI built into the app:** Knowt, RemNote, Brainscape, Mochi or Gizmo. Their free plans limit it. Lucida’s own AI makes cards too, up to 3 makes a day on Free.",
         "**Notes and cards in one place:** RemNote. See [Lucida vs RemNote](https://lucida.cards/vs/remnote).",
         "**Markdown, local-first and offline:** Mochi. See [Lucida vs Mochi](https://lucida.cards/vs/mochi).",
         "**Expert-made decks and a simple 1 to 5 rating:** Brainscape. See [Lucida vs Brainscape](https://lucida.cards/vs/brainscape).",
         "**Live games for a class or event:** Kahoot. See [Lucida vs Kahoot](https://lucida.cards/vs/kahoot).",
-        "**A quick start in a browser, cards your own AI makes, and free Learn mode and live games:** Lucida."
+        "**A quick start in a browser, cards made from your files or by your own AI, and free Learn mode and live games:** Lucida."
       ]
     },
     {
@@ -110,12 +110,12 @@
       "bullets": [
         "[Lucida vs Anki](https://lucida.cards/vs/anki): price, FSRS, add-ons, offline study, and how to bring your Anki decks over.",
         "[Lucida vs Quizlet](https://lucida.cards/vs/quizlet): what Quizlet’s free plan limits, and how to move your sets.",
-        "[Lucida vs Knowt](https://lucida.cards/vs/knowt): built-in AI and ads against your own AI and export.",
+        "[Lucida vs Knowt](https://lucida.cards/vs/knowt): built-in AI and ads against Lucida’s card maker, your own AI and export.",
         "[Lucida vs RemNote](https://lucida.cards/vs/remnote): notes plus cards against flashcards only.",
         "[Lucida vs Brainscape](https://lucida.cards/vs/brainscape): Certified decks and confidence ratings against free pictures and export.",
         "[Lucida vs Mochi](https://lucida.cards/vs/mochi): local-first Markdown against a browser app with free sync.",
         "[Lucida vs Kahoot](https://lucida.cards/vs/kahoot): live games for classes against flashcards with a game mode.",
-        "[Lucida vs Gizmo](https://lucida.cards/vs/gizmo): AI flashcards on your phone against export and no daily limits.",
+        "[Lucida vs Gizmo](https://lucida.cards/vs/gizmo): AI flashcards on your phone against export and no hearts.",
         "[Anki alternatives](https://lucida.cards/anki-alternative) and [Quizlet alternatives](https://lucida.cards/quizlet-alternative): side-by-side tables of the options."
       ]
     },
@@ -131,13 +131,13 @@
         "It can’t read Anki .apkg files, only Anki’s plain-text export, and pictures, sounds and review history don’t come across.",
         "Its library of shared decks is new and much smaller than Quizlet’s or AnkiWeb’s.",
         "Live is multiple choice, for individuals, with up to 60 players, and you host it from a computer.",
-        "Lucida doesn’t write cards from your files itself. Your own AI app does."
+        "It doesn’t make cards from a web page address. You can paste the text or save the page as a PDF."
       ]
     },
     {
       "h2": "How we check facts",
       "paras": [
-        "Every fact about another app comes from its own site, help pages, privacy policy or app store listing, opened on September 30, 2026. Where we couldn’t confirm something, we left it out. Prices are as of September 2026 and can change. Facts about Lucida come from the app, its pricing page and its privacy policy.",
+        "Every fact about another app comes from its own site, help pages, privacy policy or app store listing, opened on September 30, 2026. Where we couldn’t confirm something, we left it out. Prices are as of September 2026 and can change. Facts about Lucida come from the app, its pricing page and its privacy policy, and are as of October 1, 2026.",
         "If you find a mistake, write to team@lucida.cards and we will fix it."
       ]
     }
@@ -145,7 +145,7 @@
   "faq": [
     {
       "q": "What is the best flashcard app?",
-      "a": "It depends on what you need. Anki is best for control, add-ons and offline study. Quizlet is best for a huge library and classroom tools. Knowt, RemNote, Brainscape, Mochi and Gizmo each build in AI in different ways. Lucida is for a quick start in a browser with cards your own AI makes, plus free Learn mode and live games."
+      "a": "It depends on what you need. Anki is best for control, add-ons and offline study. Quizlet is best for a huge library and classroom tools. Knowt, RemNote, Brainscape, Mochi and Gizmo each build in AI in different ways. Lucida is for a quick start in a browser with cards made from your files or by your own AI, plus free Learn mode and live games."
     },
     {
       "q": "Anki vs Quizlet: which is better?",
@@ -161,7 +161,7 @@
     },
     {
       "q": "Which flashcard apps have AI built in?",
-      "a": "Quizlet, Knowt, RemNote, Brainscape, Mochi (on Pro, with small free amounts), Gizmo and Kahoot (paid tools) have AI built in, usually with monthly or daily limits. Anki gets AI through add-ons. Lucida has your own AI (Claude, ChatGPT, Cursor or any MCP app) make and edit cards through your Lucida link."
+      "a": "Quizlet, Knowt, RemNote, Brainscape, Mochi (on Pro, with small free amounts), Gizmo and Kahoot (paid tools) have AI built in, usually with monthly or daily limits. Anki gets AI through add-ons. Lucida has AI built in for making cards from your files, pictures, recordings, YouTube links or a topic (3 makes a day on Free, 30 on Pro), and your own AI (Claude, ChatGPT, Cursor or any MCP app) can also make and edit cards through your Lucida link."
     },
     {
       "q": "Which flashcard apps can import Anki decks?",
@@ -177,7 +177,7 @@
     },
     {
       "q": "What is Lucida?",
-      "a": "Lucida is a flashcard app that runs in the browser at app.lucida.cards. It plans every review with FSRS spaced repetition, and your own AI (Claude, ChatGPT, Cursor or any MCP app) can make and edit your cards through your personal Lucida link. The free plan has unlimited decks and cards, Learn mode, sharing and live games. Pro is $5.99 a month or $49.99 a year."
+      "a": "Lucida is a flashcard app that runs in the browser at app.lucida.cards. It plans every review with FSRS spaced repetition, makes cards from your files, pictures, recordings, YouTube links or a topic, and lets your own AI (Claude, ChatGPT, Cursor or any MCP app) make and edit your cards through your personal Lucida link. The free plan has unlimited decks and cards, Learn mode, sharing, live games and 3 card makes a day. Pro is $5.99 a month or $49.99 a year."
     },
     {
       "q": "Does Lucida work on iPhone?",
@@ -298,12 +298,12 @@
     {
       "label": "Lucida pricing",
       "url": "https://lucida.cards/pricing",
-      "checked": "2026-09-30"
+      "checked": "2026-10-01"
     },
     {
       "label": "Lucida privacy policy",
       "url": "https://lucida.cards/privacy",
-      "checked": "2026-09-30"
+      "checked": "2026-10-01"
     }
   ],
   "related": [

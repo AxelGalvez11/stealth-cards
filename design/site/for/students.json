@@ -2,10 +2,10 @@
   "slug": "for/students",
   "kind": "use",
   "title": "Flashcard app for students: free, with AI and FSRS",
-  "description": "Turn lectures into flashcards with your own AI, review on an FSRS schedule, quiz yourself in Learn mode and study with friends. Free to start.",
+  "description": "Turn lectures into flashcards with Lucida or your own AI, review on an FSRS schedule, quiz yourself in Learn mode and study with friends. Free to start.",
   "h1": "Lucida for students",
-  "lead": "Lucida is a free flashcard app where your own AI turns lectures and notes into cards, and spaced repetition brings each card back just before you’d forget it, so a few minutes a day add up. Start with one deck for your next exam, then add Learn mode quizzes, friends’ decks and live games when you want them.",
-  "updated": "2026-09-30",
+  "lead": "Lucida is a free flashcard app that makes cards from your lectures and notes (or lets your own AI do it), and spaced repetition brings each card back just before you’d forget it, so a few minutes a day add up. Start with one deck for your next exam, then add Learn mode quizzes, friends’ decks and live games when you want them.",
+  "updated": "2026-10-01",
   "table": {
     "columns": [
       "",
@@ -19,7 +19,12 @@
         "Same"
       ],
       [
-        "Your AI makes cards and quizzes",
+        "Making cards in Lucida",
+        "3 makes a day: up to 30 pages, 15 minutes of recording or video, or 10 pictures each",
+        "30 makes a day: up to 300 pages, 2 hours of recording or video, or 50 pictures each"
+      ],
+      [
+        "Your own AI makes cards and quizzes",
         "Yes, as many as you want",
         "Same"
       ],
@@ -60,7 +65,7 @@
       "h2": "A plan for your next exam, step by step",
       "bullets": [
         "**1. Make one deck for the exam.** Name it after the class. Add tags for topics, like Week 3 or Enzymes. Tags give you Learn mode sets and, on Pro, weak-topic stats.",
-        "**2. Get the cards in.** Ask your AI (Claude, ChatGPT or Cursor) to make them from your notes, import them from Quizlet, Anki or a CSV file, or type them. A fill-in-the-blank card is the quickest way to turn a sentence from your notes into a card.",
+        "**2. Get the cards in.** Choose Make cards and add your notes, slides, a PDF, pictures or a recording, ask your own AI (Claude, ChatGPT or Cursor) to make them, import them from Quizlet, Anki or a CSV file, or type them. A fill-in-the-blank card is the quickest way to turn a sentence from your notes into a card.",
         "**3. Learn them.** Start with [Learn mode](/features/learn-mode). It asks several ways until you’ve got each card right twice in a row, then hands new cards to the schedule.",
         "**4. Review a little each day.** Today shows what’s due and how long it will take. Try to answer before you flip.",
         "**5. Set your exam date (Pro).** From 30 days out, the cards you’d probably forget by then come up early.",
@@ -92,8 +97,8 @@
     {
       "h2": "What Lucida won’t do for you",
       "bullets": [
-        "It doesn’t come with ready-made textbook decks. You make cards, with your AI or by hand, or find decks other students shared.",
-        "It doesn’t read PDFs or slides itself. Your AI app does that and sends Lucida the cards.",
+        "It doesn’t come with ready-made textbook decks. You make cards, with Lucida, your own AI or by hand, or find decks other students shared.",
+        "It doesn’t make cards from a web page address. Paste the page’s text, or save the page as a PDF and add that.",
         "AI-made cards can be wrong. Check them, especially before an exam. Lucida’s terms say the same."
       ]
     }
@@ -113,7 +118,7 @@
     },
     {
       "q": "How do I make flashcards from my lecture notes?",
-      "a": "Connect your AI app with your Lucida link, share your notes and ask for flashcards, or paste or import your own cards. See [AI flashcards](/features/ai-flashcards)."
+      "a": "Choose Make cards in Lucida and add your notes: a PDF, slides, a Word file, a lecture’s captions, pictures of your notes, a recording or pasted text. Lucida shows the new cards first, and you keep, edit or remove each one. Or connect your own AI app with your Lucida link, share your notes and ask for flashcards, or paste or import your own cards. See [AI flashcards](/features/ai-flashcards)."
     },
     {
       "q": "Are flashcards or practice tests better?",
@@ -129,7 +134,7 @@
     },
     {
       "q": "Do I need a ChatGPT or Claude subscription?",
-      "a": "No. You can type cards, import them, or study shared decks without any AI. To have an AI make cards, you need an AI app that can add your Lucida link. Claude’s free plan allows one custom connector, and ChatGPT’s developer mode is for paid accounts."
+      "a": "No. You can make cards in Lucida (3 makes a day on Free), type them, import them, or study shared decks without any AI subscription. To have your own AI app make cards, you need an AI app that can add your Lucida link. Claude’s free plan allows one custom connector, and ChatGPT’s developer mode is for paid accounts."
     },
     {
       "q": "I already have Quizlet sets or Anki decks. Can I bring them?",
@@ -175,7 +180,7 @@
     {
       "label": "Lucida pricing (what Free and Pro include, as of September 2026)",
       "url": "https://lucida.cards/pricing",
-      "checked": "2026-09-30"
+      "checked": "2026-10-01"
     },
     {
       "label": "Lucida Terms of Service (updated September 24, 2026)",

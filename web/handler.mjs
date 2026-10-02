@@ -7,10 +7,12 @@ import { readFile, stat } from 'node:fs/promises';
 import { extname, join, normalize, sep } from 'node:path';
 import { createHash } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
-import { state, apply, withLibrary, revOf, putMediaLater, mediaLink, MEDIA, aiLeft, useAi, refundAi, saveExplain, quizLeft, useQuiz, refundQuiz, quizCandidates, saveQuiz, isPro } from './store.mjs';
+import { state, apply, withLibrary, revOf, putMediaLater, mediaLink, MEDIA, aiLeft, useAi, refundAi, saveExplain, quizLeft, useQuiz, refundQuiz, quizCandidates, saveQuiz, isPro, guideVersions } from './store.mjs';
 import { aiReady, explain } from './ai.mjs';
 import { writeQuiz, BATCH } from './quizai.mjs';
 import { FREE_EXPLAINS, PRO_EXPLAINS, FREE_QUIZ_BATCHES, PRO_QUIZ_BATCHES } from './plans.mjs';
+import * as make from './make.mjs';
+import { SMALL } from './blobs.mjs';
 import { mcp } from './mcp.mjs';
 import * as oauth from './oauth.mjs';
 import { EXT, HEIC, sniff } from './media.mjs';
@@ -29,7 +31,9 @@ import { publicLd } from './jsonld.mjs';
 
 const ROOT = fileURLToPath(new URL('.', import.meta.url));
 const TYPES = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.mjs': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8', '.json': 'application/json', '.svg': 'image/svg+xml',
-  '.png': 'image/png', '.jpg': 'image/jpeg', '.gif': 'image/gif', '.webp': 'image/webp', '.ico': 'image/x-icon', '.mp3': 'audio/mpeg', '.m4a': 'audio/mp4', '.wav': 'audio/wav', '.ogg': 'audio/ogg', '.webm': 'audio/webm' };
+  '.png': 'image/png', '.jpg': 'image/jpeg', '.gif': 'image/gif', '.webp': 'image/webp', '.ico': 'image/x-icon', '.mp3': 'audio/mpeg', '.m4a': 'audio/mp4', '.wav': 'audio/wav', '.ogg': 'audio/ogg', '.webm': 'audio/webm',
+  '.pdf': 'application/pdf', '.txt': 'text/plain; charset=utf-8', '.aac': 'audio/aac', '.flac': 'audio/flac', '.mp4': 'audio/mp4',
+  '.docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', '.pptx': 'application/vnd.openxmlformats-officedocument.presentationml.presentation' };
 
 const inside = (root, file) => file === root || file.startsWith(root.endsWith(sep) ? root : root + sep);
 const send = (res, code, body, type = 'application/json') => { res.writeHead(code, { 'content-type': type, 'cache-control': 'no-store' }); res.end(typeof body === 'string' || Buffer.isBuffer(body) ? body : JSON.stringify(body)); };
@@ -54,8 +58,9 @@ const held = () => {
 };
 // What the app gets: the library, plus who is signed in (online), and whether Pro is on (so this computer can show the
 // Free app too, with LUCIDA_PLAN=free; see store.mjs).
-// `quizLeft`: how many batches of Lucida's own Learn mode questions are left today (the app asks for none when it's 0).
-const view = me => ({ ...state(), me, aiOn: aiReady(), pro: isPro(), quizLeft: aiReady() ? quizLeft(new Date().toISOString().slice(0, 10), isPro() ? PRO_QUIZ_BATCHES : FREE_QUIZ_BATCHES) : 0 });
+// `quizLeft`: how many batches of Lucida's own Learn mode questions are left today (the app asks for none when it's 0). A deck's Guide
+// keeps older versions, which the app asks for one deck at a time; `make` is what making cards can do for this person.
+const view = me => { const { guideHistory, make: _bookkeeping, ...rest } = state(); return { ...rest, me, aiOn: aiReady(), pro: isPro(), quizLeft: aiReady() ? quizLeft(new Date().toISOString().slice(0, 10), isPro() ? PRO_QUIZ_BATCHES : FREE_QUIZ_BATCHES) : 0, make: make.makeInfo(isPro()) }; };
 // The study network's actions (see social.mjs), each run in the signed-in person's library.
 const SOCIAL = {
   'profile.ensure': (uid, me) => social.ensureProfile(uid, me).then(p => ({ handle: p.handle })),
@@ -115,7 +120,7 @@ async function publicPage(req, res, path) {
     // What the page is, in plain HTML, for anything that doesn't run the app (it's replaced as soon as the app starts).
     const list = m.cards ? '<ol>' + m.cards.map(c => '<li>' + escHtml(String(c.front || c.text || '').replace(/\[\[|\]\]/g, '')) + (c.back ? ' — ' + escHtml(c.back) : '') + '</li>').join('') + '</ol>'
       : m.decks ? '<ul>' + m.decks.map(d => '<li><a href="' + escHtml(d.url) + '">' + escHtml(d.name) + '</a> · ' + d.cards + ' cards</li>').join('') + '</ul>' : '';
-    html = html.replace('<div id="app"', () => '<noscript><h1>' + escHtml(m.title) + '</h1><p>' + escHtml(m.description) + '</p>' + list + '</noscript><div id="app"');
+    html = html.replace('<div id="app"', () => '<noscript><h1>' + escHtml(m.title) + '</h1><p>' + escHtml(m.description) + '</p>' + (m.guideHtml || '') + list + '</noscript><div id="app"');
   }
   res.writeHead(m && m.status === 404 ? 404 : 200, { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-store' });
   res.end(html);
@@ -167,6 +172,11 @@ async function api(req, res, path, body, me, uid) {
       return send(res, 200, { result, state: view(me) });
     }
     catch (e) { return send(res, 400, { error: e.message }); }
+  }
+  // A deck's Guide: the older versions of one page, newest first (the library itself only carries the current text).
+  if (path === '/api/guide/history' && req.method === 'GET') {
+    const q = new URL(req.url, 'http://x').searchParams;
+    return send(res, 200, { versions: guideVersions(q.get('deck') || '', q.get('page') || '') });
   }
   if (path === '/api/media' && req.method === 'POST') {
     const type = String(req.headers['content-type'] || '').split(';')[0], ext = EXT[type], real = sniff(body);
@@ -636,6 +646,12 @@ export async function handle(req, res) {
       if (path === '/api/rev' && req.method === 'GET') return send(res, 200, { rev: await revOf(uid) });
       // The app's first load asks Stripe's news afresh, so Pro shows right after paying.
       if (user) me = await meOf(user, path === '/api/state');
+      // Making cards from files and topics (make.mjs). A file the person uploads comes by PUT: this server takes only a small one online
+      // (Vercel takes no request over 4.5 MB), and the big ones go straight to storage.
+      if (path.startsWith('/api/make/')) {
+        const body = req.method === 'PUT' ? await readBody(req, cloud() ? SMALL + 1e5 : 80e6) : req.method === 'POST' ? await readBody(req, 5e6) : null;
+        if (await make.route(req, res, path, body, { uid, me, send })) return;
+      }
       const body = req.method === 'POST' ? await readBody(req, path === '/api/media' ? 20e6 : 5e6) : null;
       if (path.startsWith('/api/oauth/')) return await oauth.api(req, res, path, body, { uid: uid || 'local', email: (me && me.email) || '' });
       if (path === '/api/explain' && req.method === 'POST') return await explainReq(res, uid, me, jsonOf(body));

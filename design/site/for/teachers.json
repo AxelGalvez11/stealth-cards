@@ -5,7 +5,7 @@
   "description": "Assign decks with due dates, run live review games students join with a code, and see progress students choose to share. Free, for ages 13 and up.",
   "h1": "Lucida for teachers",
   "lead": "Lucida gives teachers a free class with a six-letter code, decks assigned by a due date, progress that students choose to share, and live review games they join on their phones with no account. It’s built for students 13 and up, teachers see only simple progress numbers and never individual answers, and there’s no link to Google Classroom or other school systems.",
-  "updated": "2026-09-30",
+  "updated": "2026-10-01",
   "table": {
     "columns": [
       "Tool",
@@ -30,7 +30,7 @@
       ],
       [
         "Making decks",
-        "Type cards, import from Quizlet, Anki or CSV, or ask your own AI to draft cards from your slides",
+        "Type cards, import from Quizlet, Anki or CSV, make cards in Lucida from your slides or documents, or ask your own AI to draft cards",
         "Only you need one"
       ]
     ]
@@ -45,7 +45,7 @@
     {
       "h2": "Run a unit, step by step",
       "bullets": [
-        "**1. Make the deck.** Type cards, import them, or ask your AI to draft cards from your slides. Turn on Let me check AI cards first so you read them before students do.",
+        "**1. Make the deck.** Type cards, import them, make cards in Lucida from your slides, or ask your own AI to draft cards. Lucida shows the cards it makes before they are saved, and with your own AI you can turn on Let me check AI cards first, so you read them before students do.",
         "**2. Make a class.** You get a six-letter code and an invite link. Post it where your students look.",
         "**3. Add and assign the deck.** Choose Learn every card or Review what’s due each day, and a due date.",
         "**4. Use Live for review days.** Open a room from the deck on your computer, show the code on the big screen, and students join on their phones.",
@@ -60,6 +60,7 @@
         "Students choose whether to share progress with the class. It’s off until they say yes.",
         "Teachers see numbers only: cards learned, cards due, how often a student remembered a card over the last 30 days, and when they last studied. They never see individual answers.",
         "Lucida’s privacy policy says it shows no ads, doesn’t sell your data, and doesn’t use cards to train AI models. Supabase stores the data in the United States, and students can export or delete it.",
+        "When you make cards in Lucida, the text, pictures or audio you add go to an AI service to write the cards. Lucida asks for services that say they don’t keep it or train on it.",
         "People who join a live game give a name and nothing else: no account and no email.",
         "The privacy policy doesn’t mention school-specific privacy laws, so check with your school before you use Lucida with students."
       ]
@@ -107,8 +108,8 @@
       "a": "Lucida covers flashcards, a free Learn mode, classes and a live quiz game. For side-by-side comparisons with sources, see [Lucida vs Quizlet](/vs/quizlet) and [Lucida vs Kahoot](/vs/kahoot)."
     },
     {
-      "q": "Can my AI make a deck from my slides?",
-      "a": "Yes, with your own AI app connected to Lucida. Attach your slides and ask for flashcards, and turn on Let me check AI cards first so you read them before sharing. See [AI flashcards](/features/ai-flashcards)."
+      "q": "Can Lucida or my AI make a deck from my slides?",
+      "a": "Yes, both. In Lucida, choose Make cards and add your slides (a PowerPoint, PDF or Word file): Lucida makes the cards and shows them to you first. Or use your own AI app connected to Lucida: attach your slides and ask for flashcards, and turn on Let me check AI cards first so you read them before sharing. See [AI flashcards](/features/ai-flashcards)."
     },
     {
       "q": "What age is Lucida for?",
@@ -142,12 +143,12 @@
     {
       "label": "Lucida Privacy Policy (updated September 24, 2026)",
       "url": "https://lucida.cards/privacy",
-      "checked": "2026-09-30"
+      "checked": "2026-10-01"
     },
     {
       "label": "Lucida pricing (what Free and Pro include, as of September 2026)",
       "url": "https://lucida.cards/pricing",
-      "checked": "2026-09-30"
+      "checked": "2026-10-01"
     }
   ],
   "related": [

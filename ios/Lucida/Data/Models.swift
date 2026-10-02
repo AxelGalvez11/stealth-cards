@@ -28,7 +28,11 @@ struct Library: Decodable {
   var tests: [PastTest]
   /// How many batches of Lucida's own Learn mode questions are left today (nil from a server that doesn't say; Learn mode asks for none at 0).
   var quizLeft: Int? = nil
-  enum CodingKeys: String, CodingKey { case rev, settings, ai, folders, decks, cards, logs, me, aiOn, profile, pro, classes, tests, quizLeft }
+  /// What making cards can do for you (your plan's limits), and what each deck kept of what it was made from and of its Guide,
+  /// by deck id (Data/MakeData.swift).
+  var make = MakeInfo()
+  var materials: [String: DeckMaterials] = [:]
+  enum CodingKeys: String, CodingKey { case rev, settings, ai, folders, decks, cards, logs, me, aiOn, profile, pro, classes, tests, quizLeft, make }
   init(from d: Decoder) throws {
     let c = try d.container(keyedBy: CodingKeys.self)
     rev = c.v(.rev, 0); settings = c.v(.settings, UserSettings()); ai = c.v(.ai, AIState()); folders = c.v(.folders, [])
@@ -36,6 +40,9 @@ struct Library: Decodable {
     pro = c.v(.pro, true)
     classes = c.v(.classes, [])
     tests = c.v(.tests, []); quizLeft = c.v(.quizLeft, nil)
+    make = c.v(.make, MakeInfo())
+    // (Each deck's sources and Guide are read from the same list of decks, apart from Deck itself.)
+    for row in c.v(.decks, [DeckMaterials]()) where !row.id.isEmpty && (!row.sources.isEmpty || row.guide != nil) { materials[row.id] = row }
   }
   init(rev: Int = 0, settings: UserSettings = UserSettings(), ai: AIState = AIState(), folders: [Folder] = [], decks: [Deck] = [], cards: [Card] = [], logs: [ReviewLog] = [], me: Me? = nil, aiOn: Bool = false) {
     self.rev = rev; self.settings = settings; self.ai = ai; self.folders = folders; self.decks = decks; self.cards = cards; self.logs = logs; self.me = me; self.aiOn = aiOn
@@ -376,7 +383,9 @@ struct Card: Decodable, Identifiable {
   var quizTried = false
   /// A card of a deck from someone else: the shared card it came from.
   var origin: String?
-  enum CodingKeys: String, CodingKey { case id, deckId, kind, front, back, note, text, tags, image, audio, wave, speak, lang, auto, source, pending, paused, created, srs, pile, cloze, group, boxes, box, occ, explain, quiz, quizTried, origin }
+  /// A card Lucida made from one of its deck's sources: which one, and where in it.
+  var src: CardSource?
+  enum CodingKeys: String, CodingKey { case id, deckId, kind, front, back, note, text, tags, image, audio, wave, speak, lang, auto, source, pending, paused, created, srs, pile, cloze, group, boxes, box, occ, explain, quiz, quizTried, origin, src }
   init(from d: Decoder) throws {
     let c = try d.container(keyedBy: CodingKeys.self)
     id = c.v(.id, UUID().uuidString); deckId = c.v(.deckId, ""); kind = c.v(.kind, "basic")
@@ -385,7 +394,7 @@ struct Card: Decodable, Identifiable {
     source = c.v(.source, "you"); pending = c.v(.pending, false); paused = c.v(.paused, false); created = c.v(.created, 0); srs = c.v(.srs, SRS())
     pile = c.v(.pile, nil); cloze = c.v(.cloze, nil); group = c.v(.group, nil)
     boxes = c.v(.boxes, []); box = c.v(.box, nil); occ = c.v(.occ, "one")
-    explain = c.v(.explain, nil); quiz = c.v(.quiz, []); quizTried = c.v(.quizTried, 0.0) > 0; origin = c.v(.origin, nil)
+    explain = c.v(.explain, nil); quiz = c.v(.quiz, []); quizTried = c.v(.quizTried, 0.0) > 0; origin = c.v(.origin, nil); src = c.v(.src, nil)
   }
 }
 

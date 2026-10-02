@@ -1,0 +1,35 @@
+1
+00:00:03,000 --> 00:00:09,500
+Welcome to this lecture on cellular respiration. Today we follow one glucose molecule through the cell.
+
+2
+00:00:42,000 --> 00:00:51,000
+Glycolysis happens in the cytoplasm and splits one glucose molecule into two molecules of pyruvate.
+
+3
+00:01:15,000 --> 00:01:24,500
+The net gain of glycolysis is two ATP and two NADH for every glucose that is broken down.
+
+4
+00:01:58,000 --> 00:02:08,000
+Pyruvate then enters the mitochondrion, where it is turned into acetyl CoA before the Krebs cycle begins.
+
+5
+00:02:40,000 --> 00:02:50,000
+Each turn of the Krebs cycle makes three NADH, one FADH2 and one ATP, and gives off two molecules of carbon dioxide.
+
+6
+00:03:21,000 --> 00:03:31,500
+The electron transport chain sits in the inner mitochondrial membrane and uses NADH and FADH2 to pump protons.
+
+7
+00:04:05,000 --> 00:04:15,000
+ATP synthase lets the protons flow back into the matrix, and that flow is what makes most of the ATP.
+
+8
+00:04:50,000 --> 00:05:00,000
+Oxygen is the final electron acceptor. Without it the chain stops, and the cell has to rely on fermentation.
+
+9
+00:05:32,000 --> 00:05:42,000
+In all, one glucose molecule can give about thirty ATP, though the exact number depends on the cell.
