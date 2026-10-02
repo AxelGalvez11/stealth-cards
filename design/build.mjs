@@ -1425,13 +1425,13 @@ const webDeck = webRoot(`${sidebar('Library')}
 </main>
 ${moveTray('tray', false)}
 <sc-if value="{{settingsOpen}}" hint-placeholder-val="{{ false }}">
-  <div class="sc-scrim" style="position: absolute; top: 0; right: 0; bottom: 0; left: 240px; background: {{t.dim}};"></div>
+  <div class="sc-scrim" style="position: absolute; inset: 0; background: color-mix(in srgb, {{t.dim}} 55%, transparent);"></div>
   <aside role="dialog" aria-label="Deck settings" class="sc-panel" style="position: absolute; top: 12px; right: 12px; bottom: 12px; width: 460px; box-sizing: border-box; padding: 24px; border-radius: 20px; background: {{t.bg}}; box-shadow: 0 24px 64px rgba(0,0,0,.24); display: flex; flex-direction: column; gap: 16px; overflow: hidden;">
     ${deckSettingsBody(false)}
   </aside>
 </sc-if>
 <sc-if value="{{updatesOpen}}" hint-placeholder-val="{{ false }}">
-  <div class="sc-scrim" onClick="{{closeUpdates}}" style="position: absolute; top: 0; right: 0; bottom: 0; left: 240px; background: {{t.dim}};"></div>
+  <div class="sc-scrim" onClick="{{closeUpdates}}" style="position: absolute; inset: 0; background: color-mix(in srgb, {{t.dim}} 55%, transparent);"></div>
   <aside role="dialog" aria-label="{{updTitle}}" class="sc-panel" style="position: absolute; top: 12px; right: 12px; bottom: 12px; width: 520px; box-sizing: border-box; padding: 24px; border-radius: 20px; background: {{t.bg}}; box-shadow: 0 24px 64px rgba(0,0,0,.24); display: flex; flex-direction: column; gap: 16px; overflow: hidden;">
     ${deckUpdatesBody(false)}
   </aside>
@@ -8236,7 +8236,7 @@ const webPublicDeck = netRoot('Discover', `
   </div>
 </div></sc-if>
 <sc-if value="{{sp.open}}" hint-placeholder-val="{{ false }}">
-  <div class="sc-scrim" onClick="{{sp.close}}" style="position: absolute; top: 0; right: 0; bottom: 0; left: 240px; background: {{t.dim}};"></div>
+  <div class="sc-scrim" onClick="{{sp.close}}" style="position: absolute; inset: 0; background: color-mix(in srgb, {{t.dim}} 55%, transparent);"></div>
   <aside role="dialog" aria-label="Suggest a change" class="sc-panel" style="position: absolute; top: 12px; right: 12px; bottom: 12px; width: 480px; box-sizing: border-box; padding: 24px; border-radius: 20px; background: {{t.bg}}; box-shadow: 0 24px 64px rgba(0,0,0,.24); display: flex; flex-direction: column; gap: 16px; overflow: hidden;">
     ${SUGGEST_BODY(false)}
   </aside>
