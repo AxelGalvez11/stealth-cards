@@ -20,12 +20,15 @@ enum Pictures {
   static let mockRatio: CGFloat = 220 / 150
 }
 
-/// The colors of boxes on a card: the asked box (and its number), a hidden one, and the ring that sets them off the picture.
-struct OccColors { var ask, askText, cover, coverText, ring: Color }
+/// A screen's own colors for the boxes on a card: the outline the asked box fades to once the answer shows, and the ring that
+/// sets the boxes off the picture. The boxes themselves are always yellow (Generated.occ).
+struct OccColors { var edge, ring: Color }
 
-/// Boxes over a picture (review and Learn): the asked box filled in with its number; with Hide all, the others gray with
-/// theirs. Once the answer shows, the asked box fades to an outline (at once with Reduce Motion; covering a new card's box
-/// is always at once, so its answer never shows through).
+/// Boxes over a picture (review, Cards to check, Learn and the practice test): every box that hides a part is yellow (the owner,
+/// 2026-10-02: "for hidden boxes can you make the box color yellow?"), with black numbers; the asked box has an edge inside it in
+/// the screen's outline color (black on a light card, white on a dark one), and with Hide all the others have softer numbers.
+/// Once the answer shows, its yellow fades and the edge stays as its outline (at once with Reduce Motion; covering a new card's
+/// box is always at once, so its answer never shows through).
 struct OccBoxes: View {
   @Environment(\.accessibilityReduceMotion) private var still
   /// Settings › Studying › Flip animation: off, and the box turns to an outline at once.
@@ -42,12 +45,12 @@ struct OccBoxes: View {
         ForEach(Array(boxes.enumerated()), id: \.element.id) { i, b in
           let asked = i == ask
           if asked || mode == "all" {
-            let c = colors, fade = asked && shown && !still && flips
+            let c = colors, o = Generated.occ, fade = asked && shown && !still && flips
             ZStack {
-              RoundedRectangle(cornerRadius: 6, style: .circular).fill(asked ? (shown ? .clear : c.ask) : c.cover)
+              RoundedRectangle(cornerRadius: 6, style: .circular).fill(asked && shown ? .clear : o.fill.color)
                 .animation(fade ? .out(0.45) : nil, value: shown)
-              if asked { RoundedRectangle(cornerRadius: 6, style: .circular).strokeBorder(c.ask, lineWidth: 2.5) }
-              Text("\(i + 1)").font(.geist(size, .bold)).foregroundStyle(asked ? (shown ? .clear : c.askText) : c.coverText)
+              if asked { RoundedRectangle(cornerRadius: 6, style: .circular).strokeBorder(c.edge, lineWidth: 2.5) }
+              Text("\(i + 1)").font(.geist(size, .bold)).foregroundStyle(asked ? (shown ? .clear : o.ink.color) : o.soft.color)
                 .animation(fade ? .easeOut(duration: 0.3) : nil, value: shown)
             }
             .background(RoundedRectangle(cornerRadius: 8, style: .circular).strokeBorder(c.ring, lineWidth: 2).padding(-2))
@@ -97,7 +100,7 @@ struct OccFace: View {
     let ask = Rich.plain(card.front).trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? "What’s under box \(i + 1)?" : card.front
     OccColumn(gap: big ? 14 : 12, ratio: ratio) {
       OccPicture(image: card.image, ui: ui, boxes: card.boxes, ask: i, mode: card.occ, shown: revealed,
-                 colors: OccColors(ask: t.inv, askText: t.invText, cover: t.surf2, coverText: t.muted, ring: t.bg), size: big ? 13 : 12, radius: big ? 16 : 14)
+                 colors: OccColors(edge: t.inv, ring: t.bg), size: big ? 13 : 12, radius: big ? 16 : 14)
         .opacity(ready ? 1 : 0)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel("The picture, with box \(i + 1)" + (revealed ? " showing" : " hidden"))
@@ -166,7 +169,7 @@ struct LearnPicture: View {
         Group { if let ui { Image(uiImage: ui).resizable() } else { t.surf } }
           .background(t.surf)
           .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
-        OccBoxes(boxes: occ.boxes, ask: occ.ask, mode: occ.mode, shown: shown, colors: OccColors(ask: look.btn, askText: look.btnFg, cover: look.gray, coverText: look.grayInk, ring: t.bg), size: 13)
+        OccBoxes(boxes: occ.boxes, ask: occ.ask, mode: occ.mode, shown: shown, colors: OccColors(edge: look.btn, ring: t.bg), size: 13)
           .opacity(ui == nil ? 0 : 1)
       }
     }
@@ -258,12 +261,12 @@ struct OccEditor: View {
   }
 
   @ViewBuilder private func boxView(_ b: OccBox, _ i: Int, _ pic: CGRect) -> some View {
-    let on = b.id == picked, r = rect(b, pic)
-    let tint = t.dark ? Color.white.opacity(0.14) : Color.black.opacity(0.08)
+    let on = b.id == picked, r = rect(b, pic), o = Generated.occ
+    // Yellow, like the boxes on a card; the picked one lets the picture show through while it's moved or sized.
     ZStack {
-      RoundedRectangle(cornerRadius: 6, style: .circular).fill(on ? tint : t.surf2)
+      RoundedRectangle(cornerRadius: 6, style: .circular).fill(on ? o.picked.color : o.fill.color)
       if on { RoundedRectangle(cornerRadius: 6, style: .circular).strokeBorder(t.inv, lineWidth: 2) }
-      else { Text("\(i + 1)").font(.geist(12, .bold)).foregroundStyle(t.text) }
+      else { Text("\(i + 1)").font(.geist(12, .bold)).foregroundStyle(o.ink.color) }
     }
     .background(RoundedRectangle(cornerRadius: 8, style: .circular).strokeBorder(t.bg, lineWidth: 2).padding(-2))
     .frame(width: r.width, height: r.height)

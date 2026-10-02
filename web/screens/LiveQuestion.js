@@ -363,8 +363,8 @@ mock() {
       reorderDeck: (id, b) => set({ deckOrder: before(order, id, b) }),
       reorderCard: (id, b) => set({ cardOrder: before(cardOrder, id, b) }),
       moveCard: (id, deckId) => set({ cardDeck: { ...cardDeck, [id]: deckId } }),
-      setBg: (id, kind) => set({ deck: { ...ed, bg: { ...(ed.bg || { kind: 'deck', image: null }), kind } } }),
-      pickBg: () => set({ deck: { ...ed, bg: { kind: 'photo', image: 'mock' } } }),
+      setBg: (id, kind, chosen = true) => set({ deck: { ...ed, bg: { ...(ed.bg || { kind: 'deck', image: null }), kind, chosen } } }),
+      pickBg: () => set({ deck: { ...ed, bg: { kind: 'photo', image: 'mock', chosen: true } } }),
       addDeck: noop, deleteDeck: noop, exportDeck: noop, saveCard: noop, deleteCard: noop, copy: noop, speak: noop, play: noop, importCards: noop, exportAll: noop, resetAll: noop,
       pickFile: () => Promise.resolve(null), pickText: () => Promise.resolve(null), pickSound: () => Promise.resolve(null),
       record: () => { set((p.recording && !m.recStop) || m.rec ? { rec: false, recStop: true } : { rec: true }); return Promise.resolve(null); },
@@ -420,9 +420,13 @@ mock() {
 
 renderVals() {
   const t = this.theme(false, false), db = this.props.db || this.mock();
+  const bgKindOf = (b, img, S) => {
+    const k = b && ['deck', 'plain', 'sky', 'sunset', 'photo'].includes(b.kind) && !(b.kind === 'photo' && !img) ? b.kind : '';
+    return k && (k !== 'deck' || b.chosen) ? k : S ? 'deck' : 'plain';
+  };
   const studyBg = (dk, dark, dim, S, phone) => {
     const b = (dk && dk.bg) || {}, img = b.image || (dk && dk.image) || '';
-    const kind = ['deck', 'plain', 'sky', 'sunset', 'photo'].includes(b.kind) && !(b.kind === 'photo' && !img) ? b.kind : 'deck';
+    const kind = bgKindOf(b, img, S);
     const mesh = this.gen(((dk && dk.seed) || 'Lucida') + (dk && dk.round ? ' #' + dk.round : ''), (dk && dk.style) || 'mix');
     const skin = !!S && kind === 'deck';
     // On the canvas a photo is a placeholder, so it shows the deck's colors at full strength instead.
@@ -432,7 +436,7 @@ renderVals() {
     // the gradient), light and soft, a pastel wash under the words. Dark and gray keep theirs.
     const mono = faint && !dark, hue = parseInt(mesh.base.split('hsl(')[2]) || 0;
     const pale = c => c.replace(/hsl\((\d+) (\d+)% (\d+)%\)/g, (_, h, s, l) => 'hsl(' + hue + ' 50% ' + Math.round(84 + l * .12) + '%)');
-    return { isDeck: faint || sample, isPhoto: !!photo, isSky: kind === 'sky', isSunset: kind === 'sunset', photo, skin, art: skin ? S.bg(!!phone) : null, dark: skin ? S.dark : dark,
+    return { isDeck: faint || sample, isPhoto: !!photo, isSky: kind === 'sky', isSunset: kind === 'sunset', isPlain: kind === 'plain', photo, skin, art: skin ? S.bg(!!phone) : null, dark: skin ? S.dark : dark,
       mesh: mono ? Object.fromEntries(Object.entries(mesh).map(([k, v]) => [k, typeof v === 'string' ? pale(v) : v && v.c ? { ...v, c: pale(v.c) } : v])) : mesh,
       filter: sample || !dark ? 'none' : gray ? 'saturate(.16) brightness(.34)' : 'saturate(.16) brightness(.42)',
       veil: faint ? (gray ? 'rgba(30,30,32,.45)' : dark ? 'rgba(0,0,0,.3)' : 'rgba(255,255,255,.35)') : photo || sample ? (gray ? 'rgba(30,30,32,.55)' : dark ? 'rgba(0,0,0,.5)' : 'rgba(255,255,255,.38)') : 'rgba(0,0,0,0)',
@@ -442,8 +446,8 @@ renderVals() {
   const occView = (boxes, ask, mode, shown, c) => (boxes || []).map((b, i) => {
     const asked = i === ask, hide = asked || mode === 'all', pct = v => +(v * 100).toFixed(3) + '%';
     return { n: hide ? String(i + 1) : '', x: pct(b.x), y: pct(b.y), w: pct(b.w), h: pct(b.h), z: asked ? '2' : '1',
-      bg: asked ? (shown ? 'transparent' : c.ask) : hide ? c.cover : 'transparent', fg: asked ? (shown ? 'transparent' : c.askText) : c.coverText,
-      ring: asked ? 'inset 0 0 0 2.5px ' + c.ask + ', 0 0 0 2px ' + c.ring : hide ? '0 0 0 2px ' + c.ring : 'none',
+      bg: asked ? (shown ? 'transparent' : '#FFD60A') : hide ? '#FFD60A' : 'transparent', fg: asked ? (shown ? 'transparent' : '#000000') : 'rgba(0,0,0,.6)',
+      ring: asked ? 'inset 0 0 0 2.5px ' + c.edge + ', 0 0 0 2px ' + c.ring : hide ? '0 0 0 2px ' + c.ring : 'none',
       // Only showing the answer fades; covering a new card's box is instant, so its answer never shows through.
       tr: asked && shown ? 'background-color .45s cubic-bezier(.2,.8,.2,1), color .3s ease' : 'none' };
   });
@@ -473,7 +477,7 @@ renderVals() {
     tileH: (pic ? 112 : 150) + 'px', tileFs: (long > 70 ? 22 : long > 40 ? 27 : 34) + 'px',
     o0: opt(0), o1: opt(1), o2: opt(2), o3: opt(3),
     pic: { has: pic, mock: q.image === 'mock', url: pic && q.image !== 'mock' ? q.image : '', inset: q.image === 'mock' ? '14px 20px' : '0',
-      boxes: pic && q.occ ? occView(q.occ.boxes, q.occ.ask, q.occ.mode, reveal, { ask: LVc.navy, askText: '#FFFFFF', cover: LVc.gray, coverText: LVc.grayInk, ring: '#FFFFFF' }) : [] },
+      boxes: pic && q.occ ? occView(q.occ.boxes, q.occ.ask, q.occ.mode, reveal, { edge: LVc.navy, ring: '#FFFFFF' }) : [] },
     answered: String(L.answered), answeredOf: 'of ' + L.playing + ' answered', gotText: L.got + ' of ' + L.playing,
     timer: { left: String(L.timer.left), frac: String(L.timer.frac), label: L.timer.left + ' seconds left', anim: db.mock ? 'scTimer ' + dur + 's linear infinite' : 'scTimer ' + dur + 's linear ' + L.timer.delay + 's both' },
     nextLabel: L.last ? 'Final results' : 'Leaderboard', nextHref: L.last ? 'LivePodium.dc.html' : 'LiveLeaderboard.dc.html', next: act(() => db.act.liveNext()),

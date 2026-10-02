@@ -336,6 +336,9 @@ const stepper = (label, val, dec, inc, stacked = false, num = '') => stacked ? `
 
 // On/off switch; `v` names a renderVals object made by sw() below. Every switch is this one, so they all spring the
 // same way (sc-sw in APP_MOTION_CSS); the app shows the change as you click, before it's saved (web/db.js).
+// The boxes that hide parts of a picture (see OCC_JS): yellow, black numbers, softer ones on the boxes not asked, and the editor's
+// picked box, which the picture shows through. design/to-ios.mjs copies it into Generated.occ.
+const OCC = { fill: '#FFD60A', ink: '#000000', soft: 'rgba(0,0,0,.6)', picked: 'rgba(255,214,10,.32)' };
 const SWITCH = (v, handler, label) => `<button type="button" role="switch" aria-checked="{{${v}.checked}}" aria-disabled="{{${v}.disabled}}" aria-label="${label}" onClick="{{${handler}}}" class="sc-sw" style="width: 48px; height: 28px; flex-shrink: 0; padding: 3px; box-sizing: border-box; border: 0; border-radius: 14px; background: {{${v}.track}}; opacity: {{${v}.op}}; cursor: pointer;"><span style="display: block; width: 22px; height: 22px; border-radius: 11px; background: {{${v}.knobColor}}; transform: {{${v}.knob}};"></span></button>`;
 const SW_JS = `const sw = (on, enabled = true) => ({ checked: on ? 'true' : 'false', track: on ? t.inv : t.surf2, knob: on ? 'translateX(20px)' : 'translateX(0)', knobColor: on ? t.invText : t.bg, op: enabled ? '1' : '.4', disabled: enabled ? 'false' : 'true' });`;
 // Small segmented control on a gray surface; `key` names a list made by opts() below.
@@ -1060,9 +1063,16 @@ const SUNSET_DUSK = 'radial-gradient(90% 60% at 88% 100%, rgba(238,142,98,.18), 
 // A theme (Pro; S, the board's theme) has a background of its own, which takes the place of a deck's colors (a deck set
 // to Plain, Sky, Sunset, or its own photo keeps that). It has its own light or dark look, and the page's buttons and
 // words follow it (dark). `phone`: the soft veil under the top and bottom bars is taller.
-const STUDY_BG_JS = `const studyBg = (dk, dark, dim, S, phone) => {
+// The default (the owner, 2026-10-02: "default background should be plain white") is a plain page, white, or dark at
+// night; with a theme on, the theme's own. Every deck is made with kind 'deck', so the deck's colors show only when they
+// were picked (web/store.mjs marks a pick `chosen`); Plain, Sky, Sunset and Photo were always picks.
+const STUDY_BG_JS = `const bgKindOf = (b, img, S) => {
+    const k = b && ['deck', 'plain', 'sky', 'sunset', 'photo'].includes(b.kind) && !(b.kind === 'photo' && !img) ? b.kind : '';
+    return k && (k !== 'deck' || b.chosen) ? k : S ? 'deck' : 'plain';
+  };
+  const studyBg = (dk, dark, dim, S, phone) => {
     const b = (dk && dk.bg) || {}, img = b.image || (dk && dk.image) || '';
-    const kind = ['deck', 'plain', 'sky', 'sunset', 'photo'].includes(b.kind) && !(b.kind === 'photo' && !img) ? b.kind : 'deck';
+    const kind = bgKindOf(b, img, S);
     const mesh = this.gen(((dk && dk.seed) || 'Lucida') + (dk && dk.round ? ' #' + dk.round : ''), (dk && dk.style) || 'mix');
     const skin = !!S && kind === 'deck';
     // On the canvas a photo is a placeholder, so it shows the deck's colors at full strength instead.
@@ -1072,7 +1082,7 @@ const STUDY_BG_JS = `const studyBg = (dk, dark, dim, S, phone) => {
     // the gradient), light and soft, a pastel wash under the words. Dark and gray keep theirs.
     const mono = faint && !dark, hue = parseInt(mesh.base.split('hsl(')[2]) || 0;
     const pale = c => c.replace(/hsl\\((\\d+) (\\d+)% (\\d+)%\\)/g, (_, h, s, l) => 'hsl(' + hue + ' 50% ' + Math.round(84 + l * .12) + '%)');
-    return { isDeck: faint || sample, isPhoto: !!photo, isSky: kind === 'sky', isSunset: kind === 'sunset', photo, skin, art: skin ? S.bg(!!phone) : null, dark: skin ? S.dark : dark,
+    return { isDeck: faint || sample, isPhoto: !!photo, isSky: kind === 'sky', isSunset: kind === 'sunset', isPlain: kind === 'plain', photo, skin, art: skin ? S.bg(!!phone) : null, dark: skin ? S.dark : dark,
       mesh: mono ? Object.fromEntries(Object.entries(mesh).map(([k, v]) => [k, typeof v === 'string' ? pale(v) : v && v.c ? { ...v, c: pale(v.c) } : v])) : mesh,
       filter: sample || !dark ? 'none' : gray ? 'saturate(.16) brightness(.34)' : 'saturate(.16) brightness(.42)',
       veil: faint ? (gray ? 'rgba(30,30,32,.45)' : dark ? 'rgba(0,0,0,.3)' : 'rgba(255,255,255,.35)') : photo || sample ? (gray ? 'rgba(30,30,32,.55)' : dark ? 'rgba(0,0,0,.5)' : 'rgba(255,255,255,.38)') : 'rgba(0,0,0,0)',
@@ -1093,13 +1103,16 @@ const studyBgLayer = `<div aria-hidden="true" style="position: absolute; inset: 
 // user to edit background from the review settings when in flashcard or learn mode"): it's saved with the deck, so the
 // page behind changes as soon as one is picked. Colors' tile shows light mode's look, like the Sky and Sunset tiles.
 // Needs STUDY_BG_JS.
-// With a theme on (S), the first choice is the theme's own background instead of the deck's colors.
+// With a theme on (S), the first choice is the theme's own background instead of the deck's colors. The ringed tile is
+// what shows (bgKindOf): Plain for a deck nobody picked one for, or the theme's tile with a theme on. Picking the theme's
+// tile puts the deck back to the default (so it is plain again once the theme is off); every other tile is a pick.
 const BG_PICK_JS = `const bgPick = (dk, S) => {
-    const kind = (dk.bg && dk.bg.kind) || 'deck', image = (dk.bg && dk.bg.image) || (dk.cover && dk.cover.image) || '', photo = image && image !== 'mock' ? image : '', tile = studyBg({ ...dk, bg: { kind: 'deck' } }, false);
+    const image = (dk.bg && dk.bg.image) || (dk.cover && dk.cover.image) || '', photo = image && image !== 'mock' ? image : '', tile = studyBg({ ...dk, bg: { kind: 'deck', chosen: true } }, false);
+    const kind = bgKindOf(dk.bg, image, S);
     return { bgTile: { base: tile.mesh.base, veil: tile.veil, skin: !!S, art: S ? S.ref('bg') : null }, hasBgPhoto: !!photo, bgPhoto: photo, bgIsPhoto: kind === 'photo', uploadBg: () => db.act.pickBg(dk.id),
       bgOptions: [['deck', S ? 'Theme' : 'Colors'], ['plain', 'Plain'], ['sky', 'Sky'], ['sunset', 'Sunset'], ['photo', 'Photo']].map(([id, label]) => { const on = kind === id;
         return { label, pressed: on ? 'true' : 'false', ring: on ? '0 0 0 2px ' + t.text : 'inset 0 0 0 1px ' + t.line, isDeck: id === 'deck', isPlain: id === 'plain', isSky: id === 'sky', isSunset: id === 'sunset', isPhoto: id === 'photo',
-          pick: () => (id === 'photo' && !image ? db.act.pickBg(dk.id) : db.act.setBg(dk.id, id)) }; }) };
+          pick: () => (id === 'photo' && !image ? db.act.pickBg(dk.id) : db.act.setBg(dk.id, id, !(S && id === 'deck'))) }; }) };
   };`;
 // A cover's picture: yours in the app, a placeholder on the canvas.
 const coverPicture = `<sc-if value="{{coverIsImage}}" hint-placeholder-val="{{ false }}"><div style="position: absolute; inset: 0; background: repeating-linear-gradient(135deg, {{t.surf}} 0 14px, {{t.surf2}} 14px 28px); display: flex; align-items: center; justify-content: center; gap: 8px; color: {{t.muted}}; font-size: 14px; font-weight: 500;">${svg(I.image, 18, 1.8)}[Your header image]</div></sc-if>
@@ -1364,7 +1377,7 @@ const deckUpdatesBody = phone => `<div style="display: flex; align-items: center
 const examLine = (fs, mt = 0) => `<sc-if value="{{examShow}}" hint-placeholder-val="{{ true }}"><div role="note" style="${mt ? `margin-top: ${mt}px; ` : ''}display: flex; align-items: center; gap: 8px; font-size: ${fs}px; color: {{t.muted}};"><span style="display: flex; color: {{t.text}};">${svg(I.calendar, fs + 2, 2)}</span><span>{{examLine}}</span></div></sc-if>`;
 // How many cards wait for Flashcards today, as a small round count inside its button.
 const STUDY_COUNT = (h, bg, fg) => `<span style="min-width: ${h}px; height: ${h}px; padding: 0 7px; box-sizing: border-box; display: inline-flex; align-items: center; justify-content: center; border-radius: ${h / 2}px; background: ${bg}; color: ${fg}; font-family: ${MONO}; font-size: ${h > 22 ? 13 : 12}px; font-weight: 600;">{{studyCount}}</span>`;
-const DB = deckBlocks({ svg, I, MONO }, false), DBP = deckBlocks({ svg, I, MONO }, true);
+const DB = deckBlocks({ svg, I, MONO, OCC }, false), DBP = deckBlocks({ svg, I, MONO, OCC }, true);
 const webDeck = webRoot(`${sidebar('Library')}
 <main style="position: relative; flex-grow: 1; box-sizing: border-box; padding: 24px 48px 20px; display: flex; flex-direction: column; gap: 20px; min-width: 0; scroll-timeline: --deck block;">
   <div style="position: relative; height: 184px; flex-shrink: 0; border-radius: 20px; overflow: hidden;">
@@ -1485,14 +1498,18 @@ const CELL = (w, h, pointer = true, sw = 2) => `<svg width="${w}" height="${h}" 
 // fill-in-the-blank card. A box's place and size are fractions of the picture (0 to 1), so it fits the picture at any
 // size, and each box has a label: what's under it, the answer. "What to hide": only the box being asked (the rest of
 // the picture shows), or every box, with one asked.
-// How the boxes look on a card (review and Learn): the asked box is filled in the inverse color with its number; in
-// "Hide all" the others are gray with theirs. Once the answer shows, the asked box fades to an outline. `c` holds the
-// colors: the asked box (ask, askText), a hidden one (cover, coverText), and the ring that sets them off the picture.
+// How the boxes look on a card (review, Cards to check, Learn, the practice test, and Live's big screen): every box that
+// hides a part is yellow (the owner, 2026-10-02: "for hidden boxes can you make the box color yellow?"), one yellow that
+// reads on a light picture and a dark one, with black numbers on it (OCC: the editor's boxes and the iPhone's are the
+// same). The asked box has an edge inside it in the screen's own outline color (c.edge: black on a light card, white on a
+// dark one), and in "Hide all" the others have softer numbers. Once the answer shows, its yellow fades and that edge stays
+// as its outline, as before. `c` holds the screen's own colors: that edge, and the ring that sets the boxes off the
+// picture (ring).
 const OCC_JS = `const occView = (boxes, ask, mode, shown, c) => (boxes || []).map((b, i) => {
     const asked = i === ask, hide = asked || mode === 'all', pct = v => +(v * 100).toFixed(3) + '%';
     return { n: hide ? String(i + 1) : '', x: pct(b.x), y: pct(b.y), w: pct(b.w), h: pct(b.h), z: asked ? '2' : '1',
-      bg: asked ? (shown ? 'transparent' : c.ask) : hide ? c.cover : 'transparent', fg: asked ? (shown ? 'transparent' : c.askText) : c.coverText,
-      ring: asked ? 'inset 0 0 0 2.5px ' + c.ask + ', 0 0 0 2px ' + c.ring : hide ? '0 0 0 2px ' + c.ring : 'none',
+      bg: asked ? (shown ? 'transparent' : '${OCC.fill}') : hide ? '${OCC.fill}' : 'transparent', fg: asked ? (shown ? 'transparent' : '${OCC.ink}') : '${OCC.soft}',
+      ring: asked ? 'inset 0 0 0 2.5px ' + c.edge + ', 0 0 0 2px ' + c.ring : hide ? '0 0 0 2px ' + c.ring : 'none',
       // Only showing the answer fades; covering a new card's box is instant, so its answer never shows through.
       tr: asked && shown ? 'background-color .45s cubic-bezier(.2,.8,.2,1), color .3s ease' : 'none' };
   });`;
@@ -2223,12 +2240,12 @@ renderVals() {
   // Image occlusion: the boxes as they are now (while one is dragged, where it is), the picked one, and each one's answer.
   // A picture with boxes needs no Answer: each box's label is its card's answer.
   const bx = this.boxes(), picked = bx.some(b => b.id === s.occSel) ? s.occSel : null, pct = v => +(v * 100).toFixed(3) + '%';
-  const tint = this.props.dark ? 'rgba(255,255,255,.14)' : 'rgba(0,0,0,.08)';
   const occ = { ref: this.occRef(), has: bx.length > 0, none: !bx.length, canAdd: !!f.image && bx.length < 30, tip: !!f.image && f.image !== 'mock' && !bx.length,
     hint: f.occ === 'all' ? 'Every box stays hidden while one is asked.' : 'Only the box being asked is hidden.',
     // The picked box sits on top of the others, so its corners can always be reached.
     boxes: bx.map((b, i) => { const on = b.id === picked; return { id: b.id, n: String(i + 1), num: on ? '' : String(i + 1), sel: on, pressed: on ? 'true' : 'false', z: on ? '2' : '1',
-      x: pct(b.x), y: pct(b.y), w: pct(b.w), h: pct(b.h), bg: on ? tint : t.surf2, fg: t.text, ring: on ? 'inset 0 0 0 2px ' + t.inv + ', 0 0 0 2px ' + t.bg : '0 0 0 2px ' + t.bg,
+      // Yellow, like the boxes on a card; the picked one lets the picture show through while it's moved or sized.
+      x: pct(b.x), y: pct(b.y), w: pct(b.w), h: pct(b.h), bg: on ? '${OCC.picked}' : '${OCC.fill}', fg: '${OCC.ink}', ring: on ? 'inset 0 0 0 2px ' + t.inv + ', 0 0 0 2px ' + t.bg : '0 0 0 2px ' + t.bg,
       // The × floats over the middle of the box, clear of its corners: above it, or below it near the picture's top
       // (inside a box that fills the picture's height).
       delAt: b.y >= .16 ? 'left: 50%; margin-left: -12px; bottom: calc(100% + 8px);' : b.y + b.h <= .84 ? 'left: 50%; margin-left: -12px; top: calc(100% + 8px);' : 'right: 8px; top: 8px;',
@@ -2719,7 +2736,7 @@ const CARD_VIEW_JS = `const R = this.rich(), ro = this.cardPal || { t, dark: !!t
     // A picture with boxes asks one box (c.box); a picture without is a plain image card, as before.
     const oi = c.kind === 'image' && c.image && Array.isArray(c.boxes) ? c.boxes.findIndex(b => b.id === c.box) : -1, ob = oi < 0 ? null : c.boxes[oi], ratio = ob ? ratioOf(c.image) : 0;
     return { ...c, isBasic: c.kind === 'basic', isCloze: c.kind === 'cloze', isImage: c.kind === 'image' && !ob, isOcc: !!ob, isAudio: c.kind === 'audio',
-      occ: ob ? occView(c.boxes, oi, c.occ, rev, { ask: t.inv, askText: t.invText, cover: t.surf2, coverText: t.muted, ring: t.bg }).map(b => (flipOn ? b : { ...b, tr: 'none' })) : [],
+      occ: ob ? occView(c.boxes, oi, c.occ, rev, { edge: t.inv, ring: t.bg }).map(b => (flipOn ? b : { ...b, tr: 'none' })) : [],
       occAsk: ob ? show(R.plain(c.front || '').trim() ? c.front : 'What’s under box ' + (oi + 1) + '?') : [], occRatio: String(+(ratio || 4 / 3).toFixed(4)), occVis: ratio ? 'visible' : 'hidden',
       occLabel: ob ? ob.label || '' : '', hasOccLabel: !!(ob && ob.label), occLabelCls: rev && flipOn ? 'sc-fade-a' : '', occLabelVis: rev ? 'visible' : 'hidden',
       occAlt: ob ? 'The picture, with box ' + (oi + 1) + (rev ? ' showing' : ' hidden') : '',
@@ -2746,8 +2763,12 @@ renderVals() {
   ${CARD_VIEW_JS}
   ${BG_PICK_JS}
   ${EXPLAIN_JS}
+  ${SW_JS}
   const rev = this.state.revealed;
   const ex = explainView(rv.ex, rv.card && rv.card.id, '', rev, ${JSON.stringify('It pumps protons (H⁺) out of the matrix into the space between the two membranes. That builds a gradient, like water held behind a dam, and ATP synthase uses the flow back in to make ATP. Remember it as pump uphill first, then cash in on the way down.')});
+  // Explain's round button, top right beside the settings: pressed while the explanation is open, like the settings button; on a
+  // phone it keeps its place, unseen, until the card is turned over.
+  const exBtn = { bg: ex.panel ? t.inv : t.surf, fg: ex.panel ? t.invText : t.text, vis: ex.show ? 'visible' : 'hidden' };
   const c = rv.card || { kind: 'basic', front: '', back: '' };
   const card = cardView(c, rev);
   const after = patch => this.setState({ revealed: false, moved: true, ...(patch || {}) });
@@ -2776,7 +2797,7 @@ renderVals() {
   ${SOUND_JS}
   const src = card.isAudio ? c : null, snd = soundView(src, 48, 'front'), sndBack = soundView(src, 36, 'back');
   return {
-    t, bg, ex, kb, card, grades, piles, modes, progs, snd, sndBack, sk, cp,
+    t, bg, ex, exBtn, kb, card, grades, piles, modes, progs, snd, sndBack, sk, cp,
     showBar: prog === 'bar', showCounts: prog === 'counts',
     cNew: { n: String(n.new), u: u('new') }, cLearn: { n: String(n.learn), u: u('learn') }, cRev: { n: String(n.rev), u: u('rev') },
     countsLabel: n.new + ' new, ' + n.learn + ' learning, ' + n.rev + ' to review',
@@ -2784,6 +2805,8 @@ renderVals() {
     settingsOpen, settingsExpanded: settingsOpen ? 'true' : 'false',
     settingsBtnBg: settingsOpen ? t.inv : t.surf, settingsBtnFg: settingsOpen ? t.invText : t.text,
     toggleSettings: () => this.setState({ settings: !settingsOpen }),
+    // Flip animation: saved with the person's settings (settings.update), so Settings, the iPhone and every review follow it.
+    flipSw: sw(flipOn), toggleFlip: () => db.act.setSettings({ flip: !flipOn }),
     knew: { label: 'Knew it', title: fsrsOn ? 'Knew it · ' + iv.good : 'Knew it', pick: grade(3) }, missed: { label: 'Didn’t know', title: fsrsOn ? 'Didn’t know · ' + iv.again : 'Didn’t know', pick: grade(1) },
     canAddPile: pileList.length < 5,
     // The iPhone's New pile shows a keyboard drawn on the canvas; in the app the phone shows its own.
@@ -2821,8 +2844,11 @@ const progSeg = `<div role="group" aria-label="Progress style" style="display: g
 // Anki-style counts: new (blue) · learning (red) · review (green); the current card's queue is underlined.
 const COUNTS = small => `<span role="status" aria-label="{{countsLabel}}" style="display: flex; align-items: center; gap: ${small ? 12 : 16}px; font-family: ${MONO}; font-size: ${small ? 15 : 16}px; font-weight: 600;">${[['cNew', 'easy'], ['cLearn', 'again'], ['cRev', 'good']].map(([k, c]) => `<span style="color: {{t.${c}}}; text-decoration: {{${k}.u}}; text-decoration-thickness: 2px; text-underline-offset: 5px;">{{${k}.n}}</span>`).join('')}</span>`;
 const settingsBtn = `<button type="button" onClick="{{toggleSettings}}" aria-label="Review settings" data-tip="Review settings" aria-expanded="{{settingsExpanded}}" style="width: 44px; height: 44px; flex-shrink: 0; border: 0; border-radius: 22px; background: {{settingsBtnBg}}; color: {{settingsBtnFg}}; display: flex; align-items: center; justify-content: center; cursor: pointer;">${svg(I.sliders, 18, 2)}</button>`;
+// Flip animation (the owner, 2026-10-02: "add a way for user to toggle flaschard flip animation on or off"): the same setting
+// as Settings › Studying › Flip animation, with Lucida's switch; off, the answer shows at once instead of the card turning over.
 const settingsGroups = `<div style="display: flex; flex-direction: column; gap: 8px;"><span style="font-size: 13px; font-weight: 600;">Grade with</span>${modeSeg(true)}</div>
-      <div style="display: flex; flex-direction: column; gap: 8px;"><span style="font-size: 13px; font-weight: 600;">Progress</span>${progSeg}<span style="font-size: 12px; line-height: 1.4; color: {{t.muted}};">{{progHint}}</span></div>`;
+      <div style="display: flex; flex-direction: column; gap: 8px;"><span style="font-size: 13px; font-weight: 600;">Progress</span>${progSeg}<span style="font-size: 12px; line-height: 1.4; color: {{t.muted}};">{{progHint}}</span></div>
+      <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px;"><span style="font-size: 13px; font-weight: 600;">Flip animation</span>${SWITCH('flipSw', 'toggleFlip', 'Flip animation')}</div>`;
 // Check / x: two big answers.
 const binaryBtns = phoneSize => ['missed', 'knew'].map(k => `<button type="button" onClick="{{${k}.pick}}" aria-label="{{${k}.label}}" data-tip="{{${k}.title}}" data-key="${k === 'knew' ? 2 : 1}" style="width: ${phoneSize ? 68 : 76}px; height: ${phoneSize ? 68 : 76}px; flex-shrink: 0; border: 0; border-radius: 50%; background: {{t.${k === 'knew' ? 'good' : 'again'}}}; color: {{t.bg}}; display: flex; align-items: center; justify-content: center; cursor: pointer;">${svg(I[k === 'knew' ? 'check' : 'close'], phoneSize ? 28 : 30, 2.8)}</button>`).join('\n    ');
 // Piles: plain tiles with a count and a name; the last tile opens the New pile popup.
@@ -2853,15 +2879,17 @@ const FACE_SKIN_JS = at => `const Fs = S ? S.faceOf('front', '${at}') : null, Bs
   this.cardPal = Fs ? { t: cp, dark: Fs.dark } : null;
   const sk = Fs ? { on: true, front: { css: Fs.css, deco: Fs.deco }, back: { css: Bs.css, deco: Bs.deco }, a: Fs.a, fs: Fs.fs, muted: Fs.muted }
     : { on: false, front: { css: '', deco: null }, back: { css: '', deco: null }, a: '', fs: '1', muted: t.muted };`;
-// Explain (V96): once a card is turned over, its corner offers an AI explanation of the answer. It shows only when Lucida's AI
-// is set up (or the card already has one); Free gets a few a day. The explanation never covers the card (the owner, 2026-10-01):
-// on a computer it opens as a panel to the RIGHT of the card, top-aligned with it, the two sitting side by side as one centered
-// group (the card may narrow down to 560 px, and below that the panel goes UNDER it); on a phone it opens UNDER the card, which
-// gets a little shorter. Closing it puts everything back. Only a short fade (none with reduced motion).
+// Explain (V96): once a card is turned over, the review offers an AI explanation of the answer. It shows only when Lucida's AI
+// is set up (or the card already has one); Free gets a few a day. Its button is in the top right (the owner, 2026-10-02: "move
+// it upper right similar shape to the flashcard settings"): round, the size of the review's settings button and just left of
+// it, with Lucida's tooltip "Explain"; while the explanation is open it is drawn pressed, like the settings button, and
+// pressing it again closes it. On a phone its place is kept while the card shows its question, so the progress bar beside it
+// never moves when a card turns. The explanation never covers the card (the owner, 2026-10-01): on a computer it opens as a
+// panel to the RIGHT of the card, top-aligned with it, the two sitting side by side as one centered group (the card may narrow
+// down to 560 px, and below that the panel goes UNDER it); on a phone it opens UNDER the card, which gets a little shorter.
+// Closing it puts everything back. Only a short fade (none with reduced motion).
 // What these classes do is in REVIEW_CSS (.sc-xg is the group, .sc-xo says the explanation is open).
-const explainButton = phone => `<sc-if value="{{ex.show}}" hint-placeholder-val="{{ false }}">
-  <sc-if value="{{ex.closed}}" hint-placeholder-val="{{ true }}"><button type="button" onClick="{{ex.ask}}" class="sc-press" style="position: absolute; top: ${phone ? 12 : 16}px; right: ${phone ? 12 : 16}px; z-index: 3; height: 34px; padding: 0 14px 0 12px; display: inline-flex; align-items: center; gap: 6px; border: 0; border-radius: 999px; background: {{t.surf}}; color: {{t.text}}; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer;">${svg(I.sparkle, 14, 2)}{{ex.label}}</button></sc-if>
-</sc-if>`;
+const explainButton = phone => `<sc-if value="{{${phone ? 'ex.avail' : 'ex.show'}}}" hint-placeholder-val="{{ false }}"><button type="button" onClick="{{ex.toggle}}" aria-label="Explain" data-tip="Explain" aria-expanded="{{ex.expanded}}" style="width: 44px; height: 44px; flex-shrink: 0; border: 0; border-radius: 22px; background: {{exBtn.bg}}; color: {{exBtn.fg}}; display: flex; align-items: center; justify-content: center; cursor: pointer;${phone ? ' visibility: {{exBtn.vis}};' : ''}">${svg(I.sparkle, 18, 2)}</button></sc-if>`;
 const explainPanel = phone => `<sc-if value="{{ex.panel}}" hint-placeholder-val="{{ false }}"><div role="region" aria-label="Explanation" class="sc-fade sc-xx" style="box-sizing: border-box; min-width: 0; overflow-y: auto; padding: ${phone ? '14px 16px' : '22px 24px'}; border-radius: ${phone ? 24 : 28}px; background: {{cp.card}}; border: 1px solid {{cp.line}}; box-shadow: {{cp.shadow}}; color: {{cp.text}}; display: flex; flex-direction: column; gap: ${phone ? 8 : 10}px; text-align: left;">
     <div style="display: flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 600; color: {{cp.muted}};">${svg(I.sparkle, 13, 2)}<span style="flex-grow: 1;">Explained by AI</span><button type="button" onClick="{{ex.close}}" aria-label="Close the explanation" style="width: 28px; height: 28px; border: 0; border-radius: 14px; background: {{cp.surf}}; color: {{cp.text}}; display: flex; align-items: center; justify-content: center; cursor: pointer;">${svg(I.close, 10, 2.4)}</button></div>
     <sc-if value="{{ex.busy}}" hint-placeholder-val="{{ false }}"><span style="font-size: 15px; color: {{cp.muted}};">Thinking…</span></sc-if>
@@ -2881,11 +2909,14 @@ const EXPLAIN_JS = `const explainView = (exv, id, question, answered, sample) =>
       const key = id + '|' + (exv.busy ? 'busy' : exv.text || exv.error || '');
       if (this.exKey !== key) { this.exKey = key; setTimeout(() => { const e = [...document.querySelectorAll('[role="region"][aria-label="Explanation"]')].find(x => x.offsetParent !== null); if (e && e.scrollIntoView) e.scrollIntoView({ block: 'nearest' }); }, 60); }
     }
-    return { show, closed: !open, open, panel: show && open, side: show && open ? 'sc-xo' : '', label: exv.text ? 'Explanation' : 'Explain',
+    const ask = () => { this.setState({ exOpen: true, exFor: id }); if (db.mock) this.setState({ exMock: true }); else if (!exv.text) db.act.explain(id, question); };
+    const close = () => this.setState({ exOpen: false });
+    // avail: the card can be explained once it's turned over (the review's button keeps its place on a phone meanwhile);
+    // toggle: the review's round button, which closes the explanation when it's open.
+    return { show, avail: !!(exv.on && id), closed: !open, open, panel: show && open, side: show && open ? 'sc-xo' : '', label: exv.text ? 'Explanation' : 'Explain', expanded: show && open ? 'true' : 'false',
       busy: !!exv.busy, hasText: !!exv.text && !exv.busy, text: exv.text || '', hasError: !!exv.error && !exv.busy, error: exv.error || '', goPro: !!exv.goPro,
       proHref: db.mock ? 'Pricing.dc.html' : 'https://lucida.cards/pricing', hasNote: !!exv.note && !!exv.text, note: exv.note || '',
-      ask: () => { this.setState({ exOpen: true, exFor: id }); if (db.mock) this.setState({ exMock: true }); else if (!exv.text) db.act.explain(id, question); },
-      close: () => this.setState({ exOpen: false }) };
+      ask, close, toggle: () => (show && open ? close() : ask()) };
   };`;
 const flipCard = (w, h, pad, big) => `<button type="button" onClick="{{reveal}}" aria-label="{{flipLabel}}" data-key="Space" class="{{cardIn}}" style="width: ${w}; height: ${h}; padding: 0; border: 0; background: transparent; perspective: 1600px; font: inherit; color: inherit; cursor: pointer; flex-grow: ${h === 'auto' ? 1 : 0};">
   <div style="position: relative; width: 100%; height: 100%; transform-style: preserve-3d; transition: {{flipTrans}}; transform: {{flipTransform}};">
@@ -2901,11 +2932,11 @@ const webReview = `<div style="position: relative; isolation: isolate; width: 14
       <sc-if value="{{showBar}}" hint-placeholder-val="{{ true }}"><div style="width: 360px; height: 6px; border-radius: 3px; background: {{t.surf}}; overflow: hidden;"><div style="height: 6px; border-radius: 3px; background: {{t.text}}; width: {{progress}}; transition: width .3s cubic-bezier(.2,.8,.2,1);"></div></div><span style="font-family: ${MONO}; font-size: 13px; color: {{t.muted}};">{{left}} left</span></sc-if>
       <sc-if value="{{showCounts}}" hint-placeholder-val="{{ false }}">${COUNTS(false)}</sc-if>
     </div>
-    <div style="display: flex; justify-content: flex-end;">${settingsBtn}</div>
+    <div style="display: flex; justify-content: flex-end; gap: 8px;">${explainButton(false)}${settingsBtn}</div>
   </header>
   <main style="flex-grow: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; justify-content: safe center; padding: 0 16px; container-type: inline-size;">
     <div class="sc-xg {{ex.side}}">
-    <div class="sc-xc" style="position: relative; height: 480px;">${flipCard('100%', '480px', '44px 56px', true)}${explainButton(false)}</div>
+    <div class="sc-xc" style="position: relative; height: 480px;">${flipCard('100%', '480px', '44px 56px', true)}</div>
     ${explainPanel(false)}
     <div class="sc-xb" style="width: 100%; height: 84px; display: flex;">
       <sc-if value="{{showBinary}}" hint-placeholder-val="{{ false }}">
@@ -3868,10 +3899,10 @@ const phoneReview = `<div style="position: relative; isolation: isolate; width: 
       <sc-if value="{{showBar}}" hint-placeholder-val="{{ true }}"><div style="flex-grow: 1; height: 6px; border-radius: 3px; background: {{t.surf}}; overflow: hidden;"><div style="height: 6px; border-radius: 3px; background: {{t.text}}; width: {{progress}}; transition: width .3s cubic-bezier(.2,.8,.2,1);"></div></div><span style="font-family: ${MONO}; font-size: 13px; color: {{t.muted}};">{{left}}</span></sc-if>
       <sc-if value="{{showCounts}}" hint-placeholder-val="{{ false }}">${COUNTS(true)}</sc-if>
     </div>
-    ${settingsBtn}
+    <div style="display: flex; gap: 8px;">${explainButton(true)}${settingsBtn}</div>
   </div>
   <div class="sc-px {{ex.side}}" style="position: relative; flex-grow: 1; min-height: 0; display: flex; flex-direction: column; gap: 12px;">
-    <div class="sc-pc" style="position: relative; flex: 1 0 auto; min-height: 250px; display: flex; flex-direction: column;">${flipCard('100%', 'auto', '26px 22px', false)}${explainButton(true)}</div>
+    <div class="sc-pc" style="position: relative; flex: 1 0 auto; min-height: 250px; display: flex; flex-direction: column;">${flipCard('100%', 'auto', '26px 22px', false)}</div>
     ${explainPanel(true)}
   </div>
   <div style="height: 76px; display: flex;">
@@ -4824,13 +4855,19 @@ const LEARN_K = `const K = sd && this.props.dim
     ? { ink: '#F2F3F7', ink2: 'rgba(242,243,247,.7)', card: '#2D2F36', shadow: '0 10px 24px -16px rgba(0,0,0,.6)', lift: '0 26px 48px -20px rgba(0,0,0,.75)', gray: '#393C45', grayInk: '#A3A9B6', chip: 'rgba(255,255,255,.12)', track: 'rgba(255,255,255,.16)', btn: '#F2F3F7', btnFg: '${LV.navy}', other: 'rgba(255,255,255,.16)', wrong: '#5A606E', bar: '#8C9AFC', part: 'rgba(140,154,252,.42)', check: '${LV.check}' }
     : sd
     ? { ink: '#F2F3F7', ink2: 'rgba(242,243,247,.66)', card: '#1B1D24', shadow: '0 10px 24px -16px rgba(0,0,0,.7)', lift: '0 26px 48px -20px rgba(0,0,0,.85)', gray: '#2A2D35', grayInk: '#8E95A3', chip: 'rgba(255,255,255,.1)', track: 'rgba(255,255,255,.14)', btn: '#F2F3F7', btnFg: '${LV.navy}', other: 'rgba(255,255,255,.14)', wrong: '#4A4F5C', bar: '#8C9AFC', part: 'rgba(140,154,252,.4)', check: '${LV.check}' }
-    : { ink: '${LV.navy}', ink2: '${LV.ink2}', card: '#FFFFFF', shadow: '${LV.shadow}', lift: '${LV.lift}', gray: '${LV.gray}', grayInk: '${LV.grayInk}', chip: 'rgba(255,255,255,.72)', track: 'rgba(13,21,66,.08)', btn: '${LV.navy}', btnFg: '#FFFFFF', other: 'rgba(13,21,66,.12)', wrong: '${LV.navy}', bar: '${LV.purple}', part: 'rgba(79,96,230,.38)', check: '${LV.check}' };`;
+    : { ink: '${LV.navy}', ink2: '${LV.ink2}', card: '#FFFFFF', shadow: '${LV.shadow}', lift: '${LV.lift}', gray: '${LV.gray}', grayInk: '${LV.grayInk}', chip: bg.isPlain ? t.surf : 'rgba(255,255,255,.72)', track: 'rgba(13,21,66,.08)', btn: '${LV.navy}', btnFg: '#FFFFFF', other: 'rgba(13,21,66,.12)', wrong: '${LV.navy}', bar: '${LV.purple}', part: 'rgba(79,96,230,.38)', check: '${LV.check}' };`;
 // Progress through the set: learned (purple), still learning (light purple), not yet (track), with "+1" when one is learned.
 const learnBar = w => `<div style="${w ? `width: ${w}px;` : 'flex-grow: 1;'} height: 10px; border-radius: 5px; background: {{k.track}}; overflow: hidden; display: flex;"><div style="width: {{doneW}}; background: {{k.bar}}; transition: width .5s cubic-bezier(.2,.8,.2,1);"></div><div style="width: {{partW}}; background: {{k.part}}; transition: width .5s cubic-bezier(.2,.8,.2,1);"></div></div>`;
 const learnPlus = `<sc-if value="{{plusOne}}" hint-placeholder-val="{{ false }}"><span class="sc-plus" aria-hidden="true" style="position: absolute; left: 100%; top: -3px; margin-left: 6px; font-size: 13px; font-weight: 700; color: {{k.bar}}; animation: {{plusAnim}};">+1</span></sc-if>`;
-// The top: stop, settings, progress, and the set, on soft glass chips over the sky.
+// The top: stop, settings, progress, and the set, on soft glass chips over the deck's background (on a plain white page, the
+// page's light gray, like flashcards' buttons, or they wouldn't show).
 // Settings (a gear by X) open a panel on the web and a sheet on the iPhone with the deck's background, as flashcards' do.
 const learnGear = size => `<button type="button" onClick="{{toggleSettings}}" aria-label="Learn settings" data-tip="Learn settings" aria-expanded="{{settingsExpanded}}" style="width: ${size}px; height: ${size}px; flex-shrink: 0; border: 0; border-radius: ${size / 2}px; background: {{settingsBtnBg}}; color: {{settingsBtnFg}}; display: flex; align-items: center; justify-content: center; cursor: pointer;">${svg(I.gear, size > 40 ? 18 : 16, 2)}</button>`;
+// Learn's Explain (the owner, 2026-10-02, as on a flashcard: "move it upper right similar shape to the flashcard settings"): a round
+// button just after Learn's settings gear and its size, once a question is answered, with Lucida's tooltip "Explain"; pressed
+// while the explanation is open, and pressing it again closes it. On a phone its place is kept while the question waits for its
+// answer, so the bar beside it doesn't move. The explanation opens where it did: beside the question, or under the answers.
+const learnExplainBtn = (size, phone) => `<sc-if value="{{${phone ? 'ex.avail' : 'ex.show'}}}" hint-placeholder-val="{{ false }}"><button type="button" onClick="{{ex.toggle}}" aria-label="Explain" data-tip="Explain" aria-expanded="{{ex.expanded}}" style="width: ${size}px; height: ${size}px; flex-shrink: 0; border: 0; border-radius: ${size / 2}px; background: {{exBtn.bg}}; color: {{exBtn.fg}}; display: flex; align-items: center; justify-content: center; cursor: pointer;${phone ? ' visibility: {{exBtn.vis}};' : ''}">${svg(I.sparkle, size > 40 ? 18 : 16, 2)}</button></sc-if>`;
 const learnSettings = phone => phone ? `<sc-if value="{{settingsOpen}}" hint-placeholder-val="{{ false }}">
     <div style="position: absolute; inset: 0; z-index: 5; background: {{t.dim}};"></div>
     <div role="dialog" aria-label="Learn settings" style="position: absolute; left: 0; right: 0; bottom: 0; z-index: 5; box-sizing: border-box; padding: 10px 20px 34px; border-radius: 32px 32px 0 0; background: {{t.bg}}; color: {{t.text}}; display: flex; flex-direction: column; gap: 18px;">
@@ -4844,12 +4881,12 @@ const learnSettings = phone => phone ? `<sc-if value="{{settingsOpen}}" hint-pla
       ${bgChooser(false)}
     </div>
   </sc-if>`;
-const learnTop = back => `<header style="height: 76px; flex-shrink: 0; box-sizing: border-box; padding: 0 32px; display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: center; gap: 16px;">
-    <div style="display: flex; gap: 8px;"><a href="${back}" aria-label="Stop for now" data-tip="Stop for now" style="width: 40px; height: 40px; border-radius: 20px; background: {{k.chip}}; display: flex; align-items: center; justify-content: center;">${svg(I.close, 16, 2.2)}</a>${learnGear(40)}</div>
+const learnTop = (back, explain = false) => `<header style="height: 76px; flex-shrink: 0; box-sizing: border-box; padding: 0 32px; display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: center; gap: 16px;">
+    <div style="display: flex; gap: 8px;"><a href="${back}" aria-label="Stop for now" data-tip="Stop for now" style="width: 40px; height: 40px; border-radius: 20px; background: {{k.chip}}; display: flex; align-items: center; justify-content: center;">${svg(I.close, 16, 2.2)}</a>${learnGear(40)}${explain ? learnExplainBtn(40, false) : ''}</div>
     <div style="display: flex; align-items: center; gap: 14px;">${learnBar(360)}<span role="status" style="position: relative; font-size: 14px; white-space: nowrap;"><span style="font-weight: 700;">{{learned}}</span> of {{total}} learned${learnPlus}</span></div>
     <div style="display: flex; justify-content: flex-end; min-width: 0;"><span style="height: 34px; padding: 0 14px; display: inline-flex; align-items: center; gap: 6px; border-radius: 999px; background: {{k.chip}}; font-size: 13px; font-weight: 600; white-space: nowrap;">${svg(I.sparkle, 14, 1.8)}<span>Learn · {{setName}}</span></span></div>
   </header>`;
-const learnTopPhone = back => `<div style="display: flex; align-items: center; gap: 12px;"><a href="${back}" aria-label="Stop for now" style="width: 44px; height: 44px; flex-shrink: 0; border-radius: 22px; background: {{k.chip}}; display: flex; align-items: center; justify-content: center;">${svg(I.close, 18, 2)}</a>${learnGear(44)}${learnBar(0)}<span role="status" style="position: relative; font-size: 13px; white-space: nowrap;"><span style="font-weight: 700;">{{learned}}</span>/{{total}}${learnPlus}</span></div>`;
+const learnTopPhone = (back, explain = false) => `<div style="display: flex; align-items: center; gap: 12px;"><a href="${back}" aria-label="Stop for now" style="width: 44px; height: 44px; flex-shrink: 0; border-radius: 22px; background: {{k.chip}}; display: flex; align-items: center; justify-content: center;">${svg(I.close, 18, 2)}</a>${explain ? `<div style="display: flex; gap: 8px;">${learnGear(44)}${learnExplainBtn(44, true)}</div>` : learnGear(44)}${learnBar(0)}<span role="status" style="position: relative; font-size: 13px; white-space: nowrap;"><span style="font-weight: 700;">{{learned}}</span>/{{total}}${learnPlus}</span></div>`;
 const quizSeg = list => `<div role="group" style="display: flex; padding: 4px; border-radius: 999px; background: {{t.surf}};"><sc-for list="{{${list}}}" as="o" hint-placeholder-count="4"><button type="button" onClick="{{o.pick}}" aria-pressed="{{o.pressed}}" style="flex: 1 1 0; min-width: 0; height: 38px; padding: 0 6px; border: 0; border-radius: 999px; background: {{o.bg}}; color: {{o.fg}}; box-shadow: {{o.sh}}; font: inherit; font-size: 13px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: pointer;">{{o.label}}</button></sc-for></div>`;
 const quizField = (label, body) => `<div style="display: flex; flex-direction: column; gap: 8px;"><span style="font-size: 13px; font-weight: 600;">${label}</span>${body}</div>`;
 const quizBtn = (label, href, inv, grow, icon = '', click = '') => `<a href="${href}"${click ? ` onClick="{{${click}}}"` : ''} style="flex-grow: ${grow}; height: 52px; border-radius: 999px; background: ${inv ? '{{t.inv}}' : '{{t.surf}}'}; color: ${inv ? '{{t.invText}}' : '{{t.text}}'}; display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 15px; font-weight: 600;">${icon ? svg(I[icon], 16, 2) : ''}${label}</a>`;
@@ -4966,7 +5003,7 @@ const learnPanel = (fs, cls, box) => `<div role="region" aria-label="Explanation
     <sc-if value="{{ex.hasError}}" hint-placeholder-val="{{ false }}"><span style="font-size: 14px; line-height: 1.4; color: {{t.again}};">{{ex.error}}</span><sc-if value="{{ex.goPro}}" hint-placeholder-val="{{ false }}"><a href="{{ex.proHref}}" style="align-self: flex-start; height: 34px; padding: 0 16px; display: inline-flex; align-items: center; border-radius: 999px; background: {{k.btn}}; color: {{k.btnFg}}; font-size: 13px; font-weight: 600;">Go Pro</a></sc-if></sc-if>
     <sc-if value="{{ex.hasNote}}" hint-placeholder-val="{{ false }}"><span style="font-size: 12px; color: {{k.ink2}};">{{ex.note}}</span></sc-if>
   </div>`;
-const learnExplain = fs => `<sc-if value="{{ex.show}}" hint-placeholder-val="{{ false }}"><sc-if value="{{ex.closed}}" hint-placeholder-val="{{ true }}"><button type="button" onClick="{{ex.ask}}" class="sc-press" style="align-self: flex-start; height: 34px; padding: 0 14px 0 12px; display: inline-flex; align-items: center; gap: 6px; border: 0; border-radius: 999px; background: {{k.card}}; box-shadow: {{k.shadow}}; color: {{k.ink}}; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer;">${svg(I.sparkle, 14, 2)}{{ex.label}}</button></sc-if><sc-if value="{{ex.open}}" hint-placeholder-val="{{ false }}">${learnPanel(fs, 'sc-lx-in', 'display: flex; padding: 14px 16px; border-radius: 18px; gap: 6px;')}</sc-if></sc-if>`;
+const learnExplain = fs => `<sc-if value="{{ex.panel}}" hint-placeholder-val="{{ false }}">${learnPanel(fs, 'sc-lx-in', 'display: flex; padding: 14px 16px; border-radius: 18px; gap: 6px;')}</sc-if>`;
 // The panel beside the question (a computer wide enough for it): a grid child after the question's column.
 const learnExplainSide = `<sc-if value="{{ex.panel}}" hint-placeholder-val="{{ false }}">${learnPanel(16, 'sc-lx-side', 'max-height: 560px; overflow-y: auto; padding: 18px 20px; border-radius: 22px; gap: 8px;')}</sc-if>`;
 const learnWhy = (fs = 17) => `<div style="font-size: ${fs}px; line-height: 1.5;"><span style="font-weight: 700; color: {{verdictColor}};">{{verdict}}</span> {{why}}</div>`;
@@ -4976,11 +5013,11 @@ const learnImage = h => `<sc-if value="{{hasImage}}" hint-placeholder-val="{{ fa
 // What learnImage shows: the picture (the canvas's sample diagram, or the card's), and its boxes.
 const LEARN_IMG_JS = `${OCC_JS}
   const learnImg = (img, o, shown) => ({ hasImage: !!img, imageMock: img === 'mock', imageUrl: img && img !== 'mock' ? img : '', occInset: img === 'mock' ? '10px 14px' : '0',
-    occBoxes: img && o ? occView(o.boxes, o.ask, o.mode, shown, { ask: K.btn, askText: K.btnFg, cover: K.gray, coverText: K.grayInk, ring: t.bg }) : [] });`;
+    occBoxes: img && o ? occView(o.boxes, o.ask, o.mode, shown, { edge: K.btn, ring: t.bg }) : [] });`;
 const learnClaim = fs => `<sc-if value="{{hasClaim}}" hint-placeholder-val="{{ false }}"><div style="position: relative; padding: 16px 20px; border-radius: 20px; background: {{k.card}}; box-shadow: {{k.shadow}}; font-size: ${fs}px; font-weight: 700; line-height: 1.35;">{{claim}}</div></sc-if>`;
 const webQuizOf = bg => `<div style="position: relative; isolation: isolate; width: 1440px; height: 900px; box-sizing: border-box; display: flex; flex-direction: column; overflow: hidden; font-family: ${FONT}; background: {{t.bg}}; color: {{k.ink}};">
   ${bg}
-  ${learnTop('WebDeck.dc.html')}
+  ${learnTop('WebDeck.dc.html', true)}
   <main style="flex-grow: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; justify-content: safe center; padding: 0 16px; container-type: inline-size;">
     <div class="sc-lg {{ex.side}}">
     <div class="sc-q" style="min-width: 0; display: flex; flex-direction: column; gap: 22px; animation: {{qAnim}};">
@@ -5001,7 +5038,7 @@ const webQuizOf = bg => `<div style="position: relative; isolation: isolate; wid
 const webQuiz = webQuizOf(studyBgLayer);
 const phoneQuizOf = bg => `<div style="position: relative; isolation: isolate; width: 390px; height: 844px; box-sizing: border-box; padding: 60px 16px 34px; display: flex; flex-direction: column; gap: 18px; overflow: hidden; font-family: ${FONT}; background: {{t.bg}}; color: {{k.ink}};">
   ${bg}
-  ${learnTopPhone('PhoneDeck.dc.html')}
+  ${learnTopPhone('PhoneDeck.dc.html', true)}
   <div class="sc-q" style="display: flex; flex-direction: column; gap: 16px; animation: {{qAnim}};">
     <div style="position: relative; display: flex; flex-direction: column; gap: 10px; padding: 8px 4px 0; {{qc.css}}">${learnCardDeco}<div style="position: relative; font-size: 24px; font-weight: 700; line-height: 1.2; letter-spacing: -.025em; text-wrap: pretty; {{qc.a}}">{{question}}</div>${learnImage(180)}${learnClaim(18)}</div>
     <div style="display: flex; flex-direction: column; gap: 8px;"><sc-for list="{{options}}" as="o" hint-placeholder-count="4">${learnOption(54, 20, 16, 34)}</sc-for></div>
@@ -5042,7 +5079,9 @@ renderVals() { ${DB_JS}
   const done = pick != null, ok = pick === q.right;
   const ex = explainView(L && L.ex, L ? L.id : 'q' + (this.state.i || 0), q.q, done, ${JSON.stringify(EX_SAMPLE_LEARN)});
   ${LEARN_IMG_JS}
-  return { t, ex, qc, dark: !!this.props.dark, ...v, kind: q.kind, question: q.q, hasClaim: !!q.claim, claim: q.claim || '', ...learnImg(L ? L.image : q.image, L ? L.occ : q.occ, done),
+  // Explain's round button beside the gear, in Learn's colors: pressed while the explanation is open.
+  const exBtn = { bg: ex.panel ? K.btn : K.chip, fg: ex.panel ? K.btnFg : K.ink, vis: ex.show ? 'visible' : 'hidden' };
+  return { t, ex, exBtn, qc, dark: !!this.props.dark, ...v, kind: q.kind, question: q.q, hasClaim: !!q.claim, claim: q.claim || '', ...learnImg(L ? L.image : q.image, L ? L.occ : q.occ, done),
     options: q.options.map((label, j) => {
       const right = done && j === q.right, wrong = done && j === pick && j !== q.right, other = done && !right && !wrong;
       return { label, key: String(j + 1), pressed: j === pick ? 'true' : 'false', plain: !right && !wrong, isRight: right, isWrong: wrong,
@@ -5112,7 +5151,7 @@ const typeRow = (h, fs) => `<div style="display: flex; gap: 10px;"><input type="
 const typeOverride = `<sc-if value="{{canOverride}}" hint-placeholder-val="{{ false }}"><button type="button" onClick="{{override}}" style="align-self: flex-start; height: 36px; padding: 0 14px; border: 0; border-radius: 999px; background: {{k.card}}; box-shadow: {{k.shadow}}; color: {{k.ink}}; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer;">I was right</button></sc-if>`;
 const webQuizType = `<div style="position: relative; isolation: isolate; width: 1440px; height: 900px; box-sizing: border-box; display: flex; flex-direction: column; overflow: hidden; font-family: ${FONT}; background: {{t.bg}}; color: {{k.ink}};">
   ${studyBgLayer}
-  ${learnTop('WebDeck.dc.html')}
+  ${learnTop('WebDeck.dc.html', true)}
   <main style="flex-grow: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; justify-content: safe center; padding: 0 16px; container-type: inline-size;">
     <div class="sc-lg {{ex.side}}">
     <div class="sc-q" style="min-width: 0; display: flex; flex-direction: column; gap: 20px; animation: {{qAnim}};">
@@ -5132,7 +5171,7 @@ const webQuizType = `<div style="position: relative; isolation: isolate; width: 
 </div>`;
 const phoneQuizType = `<div style="position: relative; isolation: isolate; width: 390px; height: 844px; box-sizing: border-box; padding: 60px 16px 34px; display: flex; flex-direction: column; gap: 16px; overflow: hidden; font-family: ${FONT}; background: {{t.bg}}; color: {{k.ink}};">
   ${studyBgLayer}
-  ${learnTopPhone('PhoneDeck.dc.html')}
+  ${learnTopPhone('PhoneDeck.dc.html', true)}
   <div class="sc-q" style="display: flex; flex-direction: column; gap: 16px; animation: {{qAnim}};">
     <div style="position: relative; display: flex; flex-direction: column; gap: 10px; padding: 8px 4px 0; {{qc.css}}">${learnCardDeco}<div style="position: relative; font-size: 24px; font-weight: 700; line-height: 1.2; letter-spacing: -.025em; {{qc.a}}">{{question}}</div>${learnImage(180)}</div>
     ${typeRow(56, 16)}
@@ -5168,7 +5207,8 @@ renderVals() { ${DB_JS}
   }
   const ex = explainView(L && L.ex, L ? L.id : 'typeq', question, checked, ${JSON.stringify("The Golgi apparatus takes proteins from the rough ER, finishes them with sugar tags, and ships them out in little bubbles called vesicles. Think of it as the cell’s post office: sort, label, send.")});
   ${LEARN_IMG_JS}
-  return { t, ex, qc, dark: !!this.props.dark, ...v, kind: 'Type the answer', question, ...learnImg(L && L.image, L && L.occ, checked), 
+  const exBtn = { bg: ex.panel ? K.btn : K.chip, fg: ex.panel ? K.btnFg : K.ink, vis: ex.show ? 'visible' : 'hidden' };
+  return { t, ex, exBtn, qc, dark: !!this.props.dark, ...v, kind: 'Type the answer', question, ...learnImg(L && L.image, L && L.occ, checked), 
     typed, checked, notChecked: !checked, canOverride: checked && !ok, check, override, next,
     setTyped: e => { const x = e && e.target ? e.target.value : ''; if (L) this.state.typed = x; else this.setState({ typed: x, checked: false }); },
     typedKey: e => { if (e && e.key === 'Enter' && !checked) { if (e.preventDefault) e.preventDefault(); check(); } },
@@ -5869,7 +5909,7 @@ renderVals() {
     tileH: (pic ? 112 : 150) + 'px', tileFs: (long > 70 ? 22 : long > 40 ? 27 : 34) + 'px',
     o0: opt(0), o1: opt(1), o2: opt(2), o3: opt(3),
     pic: { has: pic, mock: q.image === 'mock', url: pic && q.image !== 'mock' ? q.image : '', inset: q.image === 'mock' ? '14px 20px' : '0',
-      boxes: pic && q.occ ? occView(q.occ.boxes, q.occ.ask, q.occ.mode, reveal, { ask: LVc.navy, askText: '#FFFFFF', cover: LVc.gray, coverText: LVc.grayInk, ring: '#FFFFFF' }) : [] },
+      boxes: pic && q.occ ? occView(q.occ.boxes, q.occ.ask, q.occ.mode, reveal, { edge: LVc.navy, ring: '#FFFFFF' }) : [] },
     answered: String(L.answered), answeredOf: 'of ' + L.playing + ' answered', gotText: L.got + ' of ' + L.playing,
     timer: { left: String(L.timer.left), frac: String(L.timer.frac), label: L.timer.left + ' seconds left', anim: db.mock ? 'scTimer ' + dur + 's linear infinite' : 'scTimer ' + dur + 's linear ' + L.timer.delay + 's both' },
     nextLabel: L.last ? 'Final results' : 'Leaderboard', nextHref: L.last ? 'LivePodium.dc.html' : 'LiveLeaderboard.dc.html', next: act(() => db.act.liveNext()),
@@ -6429,8 +6469,9 @@ const SITE_CSS = [
   '.sp-cl-flow{list-style:none;margin:0;padding:0;display:flex;flex-direction:row;flex-wrap:wrap;gap:8px;min-width:0}.sp-cl-flow li{display:flex;align-items:center;gap:8px;box-sizing:border-box;padding:6px 12px 6px 7px;border-radius:14px;background:var(--sp-fcard);box-shadow:var(--sp-fshadow),0 0 0 1px var(--sp-fedge);font-size:14px;font-weight:600;line-height:1.35}',
   // A picture with covered labels.
   '.sp-oc{display:flex;justify-content:center}.sp-oc-s{display:block;box-sizing:border-box;width:100%;max-width:460px;height:auto;padding:8px;border-radius:18px;color:var(--sp-text);background:var(--sp-fcard);box-shadow:var(--sp-fshadow),0 0 0 1px var(--sp-fedge)}',
-  '.sp-oc-l{fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round}.sp-oc-d{fill:currentColor}.sp-oc-c rect{fill:var(--sp-text)}.sp-oc-c .sp-oc-r{fill:var(--sp-fcard);stroke:var(--sp-good);stroke-width:2.4}',
-  '.sp-oc-n{fill:var(--sp-bg);font-size:15px;font-weight:700;font-family:inherit}.sp-oc-w{fill:var(--sp-text);font-size:15px;font-weight:700;font-family:inherit}',
+  // The covered labels are the app's yellow boxes with black numbers (OCC), light and dark; the one shown keeps its green edge.
+  '.sp-oc-l{fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round}.sp-oc-d{fill:currentColor}.sp-oc-c rect{fill:' + OCC.fill + '}.sp-oc-c .sp-oc-r{fill:var(--sp-fcard);stroke:var(--sp-good);stroke-width:2.4}',
+  '.sp-oc-n{fill:' + OCC.ink + ';font-size:15px;font-weight:700;font-family:inherit}.sp-oc-w{fill:var(--sp-text);font-size:15px;font-weight:700;font-family:inherit}',
   // Import: text from somewhere into Import cards, and into cards.
   '.sp-im{display:flex;flex-direction:column;align-items:stretch;gap:2px}.sp-im>.sp-arrow{align-self:center}',
   '.sp-im-src{list-style:none;margin:0;padding:0;display:flex;flex-direction:row;flex-wrap:wrap;gap:8px}.sp-im-s{flex:1 1 40%;min-width:0;display:flex;flex-direction:column;gap:1px;box-sizing:border-box;padding:9px 12px;border-radius:14px;background:var(--sp-fcard);box-shadow:var(--sp-fshadow),0 0 0 1px var(--sp-fedge)}',
@@ -6749,9 +6790,9 @@ const OG_SCENES = [
     ogSw('c1', 34, 56, 210, 210, 105, 'box-shadow: 0 20px 40px -20px {{sh}};'), ogSw('c3', 78, 96, 92, 92, 46), ogSw('c2', 150, 170, 70, 42, 21, 'transform: rotate(-24deg);'), ogSw('c2', 58, 204, 56, 34, 17, 'transform: rotate(18deg);'),
     `<svg width="470" height="340" viewBox="0 0 470 340" style="position: absolute; inset: 0; fill: none; stroke: {{bar}}; stroke-width: 2.5; stroke-linecap: round;"><path d="M150 120 L300 66"/><path d="M196 186 L300 140"/><path d="M126 252 L300 214"/><path d="M226 100 L300 290"/></svg>`,
     ogPill(300, 44, 44, 'Nucleus', { fs: 21, sh: '0 0 0 1.5px {{edge}}' }),
-    `<div style="${ogAt(300, 118, 150, 44)} border-radius: 12px; background: {{t.inv}}; color: {{t.invText}}; display: flex; align-items: center; justify-content: center; font-size: 26px; font-weight: 700; box-shadow: 0 12px 22px -10px {{sh}};">?</div>`,
+    `<div style="${ogAt(300, 118, 150, 44)} border-radius: 12px; background: ${OCC.fill}; color: ${OCC.ink}; display: flex; align-items: center; justify-content: center; font-size: 26px; font-weight: 700; box-shadow: 0 12px 22px -10px {{sh}};">?</div>`,
     ogPill(300, 192, 44, 'Membrane', { fs: 21, sh: '0 0 0 1.5px {{edge}}' }),
-    `<div style="${ogAt(300, 266, 150, 44)} border-radius: 12px; background: {{t.inv}}; color: {{t.invText}}; display: flex; align-items: center; justify-content: center; font-size: 26px; font-weight: 700; box-shadow: 0 12px 22px -10px {{sh}};">?</div>`
+    `<div style="${ogAt(300, 266, 150, 44)} border-radius: 12px; background: ${OCC.fill}; color: ${OCC.ink}; display: flex; align-items: center; justify-content: center; font-size: 26px; font-weight: 700; box-shadow: 0 12px 22px -10px {{sh}};">?</div>`
   ].join('') })),
   // Learn mode: a question and four answers, one of them right.
   ogScene('quiz', [
@@ -9551,7 +9592,7 @@ for (const T of THEMES.filter(x => x.key !== 'lucida')) {
 }
 Object.assign(files, siteFiles());
 // Making cards from anything, a deck's Guide, and its Sources (design/materials.mjs; web/make.js, web/guide.js).
-Object.assign(files, makeBoards({ svg, I, FONT, MONO, T, DB_JS, DARK, MESH, W, HH: H, PW, PH }));
+Object.assign(files, makeBoards({ svg, I, FONT, MONO, T, DB_JS, DARK, MESH, W, HH: H, PW, PH, OCC }));
 // The questions that ask before something is deleted or left (design/ui.mjs): each board that asks one shows it open through its `ask` Tweak, drawn
 // over the whole board, with the words the app puts in the same dialog. (The app draws its own over any page: web/ui.js.)
 const ASKS = {

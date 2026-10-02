@@ -163,7 +163,7 @@ function createHost({ onChange, go }) {
   function state() {
     const q = G.qs[G.qi], asking = G.phase === 'question', after = G.phase === 'reveal' || G.phase === 'board';
     return { v: 1, game: G.game, phase: G.phase, n: G.qi + 1, of: G.qs.length, time: G.time,
-      deck: { name: G.deck.name, seed: G.deck.seed, style: G.deck.style, round: G.deck.round, bg: { kind: (G.deck.bg && G.deck.bg.kind) || 'deck' } },
+      deck: { name: G.deck.name, seed: G.deck.seed, style: G.deck.style, round: G.deck.round, bg: { kind: (G.deck.bg && G.deck.bg.kind) || 'deck', ...(G.deck.bg && G.deck.bg.chosen ? { chosen: true } : {}) } },
       q: q && (asking || after) ? { text: q.text, options: q.options } : null, right: q && after ? q.right : null,
       left: asking ? Math.max(0, G.deadline - Date.now()) : 0, answered: asking ? Object.keys(G.answers) : [],
       players: G.players.map(p => ({ id: p.id, name: p.name, color: p.color, score: p.score, streak: p.streak, right: p.right, gained: p.gained, pick: p.pick, since: p.since })) };
@@ -398,8 +398,8 @@ function createPlayer({ onChange, go, signedOut }) {
     const phase = ended ? 'ended' : !S || !p || S.phase === 'lobby' ? 'waiting' : S.phase === 'end' ? 'final' : p.since > S.n - 1 ? 'late' : S.phase === 'question' ? 'answer' : 'result';
     const k = S ? S.game + ':' + S.n : '';
     if (phase === 'answer' && bars[k] == null) bars[k] = -Math.round(Math.max(0, dur - left / 1000) * 100) / 100;
-    // A deck's own photo can't show on other people's phones, so they get its colors.
-    const deck = S ? { ...S.deck, bg: S.deck && S.deck.bg && S.deck.bg.kind !== 'photo' ? S.deck.bg : { kind: 'deck', image: null } } : { name: '', seed: 'Lucida', style: 'mix', round: 0, bg: { kind: 'deck', image: null } };
+    // A deck's own photo can't show on other people's phones, so they get its colors (a background that was picked).
+    const deck = S ? { ...S.deck, bg: S.deck && S.deck.bg && S.deck.bg.kind !== 'photo' ? S.deck.bg : { kind: 'deck', image: null, chosen: !!(S.deck && S.deck.bg) } } : { name: '', seed: 'Lucida', style: 'mix', round: 0, bg: { kind: 'deck', image: null } };
     const opts = S && S.q ? S.q.options : [];
     return {
       form: { ...form }, phase, deck, n: S ? S.n : 0, of: S ? S.of : 0, promo: !!signedOut,

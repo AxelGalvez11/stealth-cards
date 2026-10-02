@@ -1,6 +1,8 @@
 // Explain (PhoneReviewExplain, and under the "why" line in Learn mode): once a card is turned over or a question is
 // answered, Lucida's AI can explain the answer. It shows only when the server has AI set up (or the card already has
-// an explanation); it's written once and kept on the card, and Free gets a few a day.
+// an explanation); it's written once and kept on the card, and Free gets a few a day. On a flashcard its button is round,
+// in the top bar beside the review's settings (Review.swift), and in Learn mode the same one just after its gear (Learn.swift); the
+// practice test's results use ExplainButton on each question.
 import SwiftUI
 
 /// A card's explanation as a screen shows it (db.js explainOf).
@@ -59,7 +61,7 @@ struct ExplainLook {
   }
 }
 
-/// The Explain button (a sparkle and "Explain", or "Explanation" once there is one).
+/// The practice test's results' Explain on each question (a sparkle and "Explain", or "Explanation" once there is one).
 struct ExplainButton: View {
   @Environment(\.theme) private var t
   let label: String

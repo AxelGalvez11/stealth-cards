@@ -122,6 +122,7 @@ extension Store {
           let b = v as? [String: Any] ?? [:]
           if let k = b["kind"] as? String { e.bg.kind = k }
           if b.keys.contains("image") { e.bg.image = b["image"] as? String }
+          if let ch = b["chosen"] as? Bool { e.bg.chosen = ch }
         default: break
         }
       }
@@ -134,10 +135,11 @@ extension Store {
   // ---------- photos ----------
   /// A deck's header photo (cover.image). On a design screen it's the canvas's placeholder.
   func setCover(_ id: String, _ url: String) { updateDeck(id, ["cover": ["image": url]]) }
-  /// What shows behind studying a deck (Colors, Plain, Sky, Sunset, Photo); the server keeps its photo when the kind changes.
-  func setBg(_ id: String, _ kind: String) { updateDeck(id, ["bg": ["kind": kind]]) }
+  /// What shows behind studying a deck (Colors, Plain, Sky, Sunset, Photo); the server keeps its photo when the kind changes. A pick
+  /// is `chosen`; `chosen: false` (the theme's tile) puts the deck back to the default: a plain page, or the theme's own.
+  func setBg(_ id: String, _ kind: String, chosen: Bool = true) { updateDeck(id, ["bg": ["kind": kind, "chosen": chosen]]) }
   /// A photo of your own behind studying a deck.
-  func setBgPhoto(_ id: String, _ url: String) { updateDeck(id, ["bg": ["kind": "photo", "image": url]]) }
+  func setBgPhoto(_ id: String, _ url: String) { updateDeck(id, ["bg": ["kind": "photo", "image": url, "chosen": true]]) }
 
   /// A picked photo goes to your library's storage (a deck's header or background, a card's picture, your profile
   /// photo), made small enough first (Upload.jpeg: at most `side` pixels across); its link comes back.

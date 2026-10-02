@@ -190,10 +190,16 @@ const findDeck = x => state().decks.find(d => d.id === x) || state().decks.find(
 const deckOf = c => state().decks.find(d => d.id === c.deckId);
 // Folders hold decks (one level, no folders inside folders). A deck names its folder by id; null is the library itself.
 const folderOf = x => { const F = state().folders; return (F.find(f => f.id === x) || F.find(f => f.name.toLowerCase() === String(x || '').trim().toLowerCase()) || {}).id || null; };
-// What Learn mode, flashcards, and Live show behind a deck: its own colors, faint (the default), a plain page, the sky,
-// the sunset, or a photo.
+// What Learn mode, flashcards, and Live show behind a deck: its own colors, faint, a plain page, the sky, the sunset, or a
+// photo. A deck nobody picked one for shows a plain page (the owner, 2026-10-02: "default background should be plain white"),
+// or the theme's own with a theme on. Every deck is made with kind 'deck', so a pick is marked `chosen`: any kind that comes
+// in (from the app, an older app, or an AI app) is one, and `chosen: false` with it puts the deck back to the default.
 export const BG_KINDS = ['deck', 'plain', 'sky', 'sunset', 'photo'];
-const cleanBg = (was, o) => { const b = { kind: 'deck', image: null, ...was, ...pick(o, ['kind', 'image']) }; return { kind: BG_KINDS.includes(b.kind) ? b.kind : 'deck', image: b.image ? clean(b.image, 300) : null }; };
+const cleanBg = (was, o) => {
+  const q = o && typeof o === 'object' ? o : {}, b = { kind: 'deck', image: null, ...was, ...pick(q, ['kind', 'image']) };
+  const chosen = typeof q.chosen === 'boolean' ? q.chosen : q.kind != null ? true : !!(was && was.chosen);
+  return { kind: BG_KINDS.includes(b.kind) ? b.kind : 'deck', image: b.image ? clean(b.image, 300) : null, ...(chosen ? { chosen: true } : {}) };
+};
 // A card's sound, drawn as a waveform (web/sound.js): its length in seconds, and one letter per peak.
 const cleanWave = w => (w && typeof w === 'object' && typeof w.p === 'string' && /^[\w-]{8,256}$/.test(w.p) ? { d: Math.min(36000, Math.max(0, Math.round(+w.d * 100) / 100 || 0)), p: w.p } : null);
 // The words hidden in a fill-in-the-blank card's [[blanks]] (read the same way the app draws them).

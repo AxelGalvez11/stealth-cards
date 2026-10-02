@@ -363,8 +363,8 @@ mock() {
       reorderDeck: (id, b) => set({ deckOrder: before(order, id, b) }),
       reorderCard: (id, b) => set({ cardOrder: before(cardOrder, id, b) }),
       moveCard: (id, deckId) => set({ cardDeck: { ...cardDeck, [id]: deckId } }),
-      setBg: (id, kind) => set({ deck: { ...ed, bg: { ...(ed.bg || { kind: 'deck', image: null }), kind } } }),
-      pickBg: () => set({ deck: { ...ed, bg: { kind: 'photo', image: 'mock' } } }),
+      setBg: (id, kind, chosen = true) => set({ deck: { ...ed, bg: { ...(ed.bg || { kind: 'deck', image: null }), kind, chosen } } }),
+      pickBg: () => set({ deck: { ...ed, bg: { kind: 'photo', image: 'mock', chosen: true } } }),
       addDeck: noop, deleteDeck: noop, exportDeck: noop, saveCard: noop, deleteCard: noop, copy: noop, speak: noop, play: noop, importCards: noop, exportAll: noop, resetAll: noop,
       pickFile: () => Promise.resolve(null), pickText: () => Promise.resolve(null), pickSound: () => Promise.resolve(null),
       record: () => { set((p.recording && !m.recStop) || m.rec ? { rec: false, recStop: true } : { rec: true }); return Promise.resolve(null); },
@@ -424,8 +424,8 @@ renderVals() { const db = this.props.db || this.mock(); const chrome = db.chrome
   const occView = (boxes, ask, mode, shown, c) => (boxes || []).map((b, i) => {
     const asked = i === ask, hide = asked || mode === 'all', pct = v => +(v * 100).toFixed(3) + '%';
     return { n: hide ? String(i + 1) : '', x: pct(b.x), y: pct(b.y), w: pct(b.w), h: pct(b.h), z: asked ? '2' : '1',
-      bg: asked ? (shown ? 'transparent' : c.ask) : hide ? c.cover : 'transparent', fg: asked ? (shown ? 'transparent' : c.askText) : c.coverText,
-      ring: asked ? 'inset 0 0 0 2.5px ' + c.ask + ', 0 0 0 2px ' + c.ring : hide ? '0 0 0 2px ' + c.ring : 'none',
+      bg: asked ? (shown ? 'transparent' : '#FFD60A') : hide ? '#FFD60A' : 'transparent', fg: asked ? (shown ? 'transparent' : '#000000') : 'rgba(0,0,0,.6)',
+      ring: asked ? 'inset 0 0 0 2.5px ' + c.edge + ', 0 0 0 2px ' + c.ring : hide ? '0 0 0 2px ' + c.ring : 'none',
       // Only showing the answer fades; covering a new card's box is instant, so its answer never shows through.
       tr: asked && shown ? 'background-color .45s cubic-bezier(.2,.8,.2,1), color .3s ease' : 'none' };
   });
@@ -501,7 +501,7 @@ renderVals() { const db = this.props.db || this.mock(); const chrome = db.chrome
     kindLabel: q.kindLabel, question: q.text, hasClaim: !!q.claim, claim: q.claim || '', isChoice: q.type === 'choice', isType: q.type === 'type', isMatch: q.type === 'match', typed: q.typed || '', type: act.type,
     qAnim: (V.number % 2 ? 'scTA' : 'scTB') + ' .2s cubic-bezier(.2,.8,.2,1) both', colWidth: q.type === 'match' ? '100%' : '720px',
     hasImage: !!q.image || !!(q.occ && mock), imageMock: q.image === 'mock', imageUrl: q.image && q.image !== 'mock' ? q.image : '', occInset: q.image === 'mock' ? '10px 14px' : '0',
-    occBoxes: q.image && q.occ ? occView(q.occ.boxes, q.occ.ask, q.occ.mode, false, { ask: t.inv, askText: t.invText, cover: t.surf2, coverText: t.muted, ring: t.bg }) : [],
+    occBoxes: q.image && q.occ ? occView(q.occ.boxes, q.occ.ask, q.occ.mode, false, { edge: t.inv, ring: t.bg }) : [],
     options: (q.options || []).map((o, j) => ({ label: o.label, letter: LETTERS[j], key: String(j + 1), pressed: o.picked ? 'true' : 'false', ring: o.picked ? 'inset 0 0 0 2px ' + t.text : 'none',
       badge: o.picked ? t.inv : t.surf2, badgeFg: o.picked ? t.invText : t.muted, pick: () => act.choose(j) })),
     terms: (q.terms || []).map((m, mi) => ({ n: m.n, label: m.label, chips: m.chips.map((x, di) => ({ letter: x.letter, pressed: x.on ? 'true' : 'false', aria: 'Answer ' + x.letter + ' for ' + m.label, bg: x.on ? t.inv : t.bg, fg: x.on ? t.invText : t.muted, pick: () => act.match(m.id, x.id, mi, di) })) })),

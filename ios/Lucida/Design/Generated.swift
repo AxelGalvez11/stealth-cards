@@ -161,6 +161,10 @@ enum Generated {
       blur: 6, sblur: 2.2, disp: 10, darkInk: true)
   ]
 
+  /// The boxes that hide parts of a picture (design/build.mjs OCC): one yellow for light and dark, black numbers on it (softer on the
+  /// boxes not asked), and the card editor's picked box, which lets the picture show through while it's moved.
+  static let occ = (fill: RGBA(0xFFD60A), ink: RGBA(0x000000), soft: RGBA(r: 0, g: 0, b: 0, a: 0.6), picked: RGBA(r: 255, g: 214, b: 10, a: 0.32))
+
   static let tagColors: [String: UInt32] = ["Biology": 0x30A46C, "Chemistry": 0xF76B15, "Languages": 0x3E63DD, "MCAT": 0x8E4EC6, "History": 0xAD7F58, "Computer science": 0x12A594, "Exam": 0xE5484D, "Year 1": 0x0090FF, "Energy": 0xD6409F, "Organelles": 0x12A594, "Exam 1": 0xE5484D, "Exam 2": 0xF76B15, "Diagrams": 0x3E63DD, "Proteins": 0x8E4EC6, "Pronunciation": 0x0090FF, "Cells": 0x3E63DD, "BIO 201": 0x05A2C2, "Fall 2026": 0xAD7F58, "Midterm": 0xF76B15, "Final exam": 0xE5484D, "Pre-med": 0xE93D82, "Lab": 0x12A594, "Must know": 0xAB4ABA, "Mitochondria": 0x30A46C, "Tricky": 0xF76B15]
   static let tagPalette: [UInt32] = [0x30A46C, 0xF76B15, 0x3E63DD, 0x8E4EC6, 0xAD7F58, 0x12A594, 0xE5484D, 0x0090FF, 0xD6409F, 0x05A2C2]
 

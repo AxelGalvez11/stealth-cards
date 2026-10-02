@@ -257,15 +257,18 @@ struct Pile: Decodable {
   init(from d: Decoder) throws { name = try d.container(keyedBy: CodingKeys.self).v(.name, "Pile") }
 }
 
-/// What Learn mode, flashcards, and Live show behind a deck: its own colors, faint ("deck", the default), a plain page
-/// ("plain"), the sky, the sunset, or a photo (its own, or the deck's cover photo when it has none).
+/// What Learn mode, flashcards, and Live show behind a deck: its own colors, faint ("deck"), a plain page ("plain"), the
+/// sky, the sunset, or a photo (its own, or the deck's cover photo when it has none). Every deck is made with "deck", so a
+/// background someone picked is `chosen` (the server marks it); one nobody picked shows the default: a plain page, or the
+/// theme's own with a theme on (Store.bgKind).
 struct DeckBg: Decodable, Equatable {
   var kind = "deck"; var image: String?
-  enum CodingKeys: String, CodingKey { case kind, image }
-  init(kind: String = "deck", image: String? = nil) { self.kind = kind; self.image = image }
+  var chosen = false
+  enum CodingKeys: String, CodingKey { case kind, image, chosen }
+  init(kind: String = "deck", image: String? = nil, chosen: Bool = false) { self.kind = kind; self.image = image; self.chosen = chosen }
   init(from d: Decoder) throws {
     let c = try d.container(keyedBy: CodingKeys.self)
-    kind = c.v(.kind, "deck"); image = c.v(.image, nil)
+    kind = c.v(.kind, "deck"); image = c.v(.image, nil); chosen = c.v(.chosen, false)
   }
 }
 

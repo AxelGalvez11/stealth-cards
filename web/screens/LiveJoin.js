@@ -363,8 +363,8 @@ mock() {
       reorderDeck: (id, b) => set({ deckOrder: before(order, id, b) }),
       reorderCard: (id, b) => set({ cardOrder: before(cardOrder, id, b) }),
       moveCard: (id, deckId) => set({ cardDeck: { ...cardDeck, [id]: deckId } }),
-      setBg: (id, kind) => set({ deck: { ...ed, bg: { ...(ed.bg || { kind: 'deck', image: null }), kind } } }),
-      pickBg: () => set({ deck: { ...ed, bg: { kind: 'photo', image: 'mock' } } }),
+      setBg: (id, kind, chosen = true) => set({ deck: { ...ed, bg: { ...(ed.bg || { kind: 'deck', image: null }), kind, chosen } } }),
+      pickBg: () => set({ deck: { ...ed, bg: { kind: 'photo', image: 'mock', chosen: true } } }),
       addDeck: noop, deleteDeck: noop, exportDeck: noop, saveCard: noop, deleteCard: noop, copy: noop, speak: noop, play: noop, importCards: noop, exportAll: noop, resetAll: noop,
       pickFile: () => Promise.resolve(null), pickText: () => Promise.resolve(null), pickSound: () => Promise.resolve(null),
       record: () => { set((p.recording && !m.recStop) || m.rec ? { rec: false, recStop: true } : { rec: true }); return Promise.resolve(null); },
@@ -421,9 +421,13 @@ mock() {
 constructor(props) { super(props); this.state = { codeFocus: false }; }
 renderVals() {
   const t = this.theme(false, false), db = this.props.db || this.mock(), P = this.props;
+  const bgKindOf = (b, img, S) => {
+    const k = b && ['deck', 'plain', 'sky', 'sunset', 'photo'].includes(b.kind) && !(b.kind === 'photo' && !img) ? b.kind : '';
+    return k && (k !== 'deck' || b.chosen) ? k : S ? 'deck' : 'plain';
+  };
   const studyBg = (dk, dark, dim, S, phone) => {
     const b = (dk && dk.bg) || {}, img = b.image || (dk && dk.image) || '';
-    const kind = ['deck', 'plain', 'sky', 'sunset', 'photo'].includes(b.kind) && !(b.kind === 'photo' && !img) ? b.kind : 'deck';
+    const kind = bgKindOf(b, img, S);
     const mesh = this.gen(((dk && dk.seed) || 'Lucida') + (dk && dk.round ? ' #' + dk.round : ''), (dk && dk.style) || 'mix');
     const skin = !!S && kind === 'deck';
     // On the canvas a photo is a placeholder, so it shows the deck's colors at full strength instead.
@@ -433,7 +437,7 @@ renderVals() {
     // the gradient), light and soft, a pastel wash under the words. Dark and gray keep theirs.
     const mono = faint && !dark, hue = parseInt(mesh.base.split('hsl(')[2]) || 0;
     const pale = c => c.replace(/hsl\((\d+) (\d+)% (\d+)%\)/g, (_, h, s, l) => 'hsl(' + hue + ' 50% ' + Math.round(84 + l * .12) + '%)');
-    return { isDeck: faint || sample, isPhoto: !!photo, isSky: kind === 'sky', isSunset: kind === 'sunset', photo, skin, art: skin ? S.bg(!!phone) : null, dark: skin ? S.dark : dark,
+    return { isDeck: faint || sample, isPhoto: !!photo, isSky: kind === 'sky', isSunset: kind === 'sunset', isPlain: kind === 'plain', photo, skin, art: skin ? S.bg(!!phone) : null, dark: skin ? S.dark : dark,
       mesh: mono ? Object.fromEntries(Object.entries(mesh).map(([k, v]) => [k, typeof v === 'string' ? pale(v) : v && v.c ? { ...v, c: pale(v.c) } : v])) : mesh,
       filter: sample || !dark ? 'none' : gray ? 'saturate(.16) brightness(.34)' : 'saturate(.16) brightness(.42)',
       veil: faint ? (gray ? 'rgba(30,30,32,.45)' : dark ? 'rgba(0,0,0,.3)' : 'rgba(255,255,255,.35)') : photo || sample ? (gray ? 'rgba(30,30,32,.55)' : dark ? 'rgba(0,0,0,.5)' : 'rgba(255,255,255,.38)') : 'rgba(0,0,0,0)',

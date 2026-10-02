@@ -930,9 +930,10 @@ export async function createDb({ onChange, go, ask = async () => false, say = ()
     // A card dragged on its deck's page, or onto another deck.
     reorderCard: (id, before) => { const c = S.cards.find(x => x.id === id), d = c && deckById(c.deckId); if (!d) return; cardBefore(d, S.cards, c, before || null); changed(); return saveMove('card.move', { id, before: before || null }); },
     moveCard: (id, deckId) => { const c = S.cards.find(x => x.id === id); if (!c || !deckById(deckId) || c.deckId === deckId) return; cardToDeck(S, c, deckId); changed(); return saveMove('card.move', { id, deckId }); },
-    // What Learn mode, flashcards, and Live show behind a deck; a photo is uploaded here.
-    setBg: (id, kind) => act.updateDeck(id, { bg: { kind } }),
-    pickBg: async id => { const url = await act.pickFile('image'); if (url) await send('deck.update', { id, patch: { bg: { kind: 'photo', image: url } } }); },
+    // What Learn mode, flashcards, and Live show behind a deck; a photo is uploaded here. A pick is `chosen`; `chosen: false`
+    // puts the deck back to the default (a plain page, or the theme's own: a theme's tile).
+    setBg: (id, kind, chosen = true) => act.updateDeck(id, { bg: { kind, chosen } }),
+    pickBg: async id => { const url = await act.pickFile('image'); if (url) await send('deck.update', { id, patch: { bg: { kind: 'photo', image: url, chosen: true } } }); },
     exportDeck: id => {
       const d = deckById(id), q = x => '"' + String(x ?? '').replace(/"/g, '""') + '"';
       const rows = [['front', 'back', 'kind', 'text', 'note', 'tags'].join(',')].concat(cardsOf(id).map(c => [c.front, occOf(c) ? occOf(c).label : c.back, c.kind, c.text, c.note, c.tags.join(' ')].map(q).join(',')));

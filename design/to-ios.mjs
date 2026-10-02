@@ -31,6 +31,9 @@ for (const [k, v] of Object.entries(evalJs(grab(/const OB_I = (\{[\s\S]*?\n\});/
 // The onboarding's moving background (OB_AURA): the page, the folds' light and shadow, how much the edges fade, the
 // grain (its opacity, blend, and the slope and intercept that set how bright it is), and the card's shadow; per mode.
 const OB_AURA = evalJs(grab(/const OB_AURA = (\{[\s\S]*?\n\});/, 'the onboarding background')[1]);
+// The boxes that hide parts of a picture (OCC): their yellow, the numbers on them, the softer numbers of the boxes not asked,
+// and the editor's picked box, which lets the picture show through.
+const OCC = evalJs(grab(/const OCC = (\{[^}]+\});/, 'the picture boxes')[1]);
 // Tag colors.
 const tagC = evalJs(grab(/const tagC = (\{[\s\S]*?\});/, 'tag colors')[1]);
 const tagPal = evalJs(grab(/const tagPal = (\[[^\]]*\]);/, 'the tag palette')[1]);
@@ -100,6 +103,10 @@ ${['light', 'dark'].map(m => { const a = OB_AURA[m]; return `  static let aura${
   static let palettes: [String: Palette] = [
 ${[...PALETTE_NAMES.map(n => palette(n, PALETTES[n])), ...Object.keys(SITE_PALETTES).map(n => palette(n, SITE_PALETTES[n]))].join(',\n')}
   ]
+
+  /// The boxes that hide parts of a picture (design/build.mjs OCC): one yellow for light and dark, black numbers on it (softer on the
+  /// boxes not asked), and the card editor's picked box, which lets the picture show through while it's moved.
+  static let occ = (fill: ${color(OCC.fill)}, ink: ${color(OCC.ink)}, soft: ${color(OCC.soft)}, picked: ${color(OCC.picked)})
 
   static let tagColors: [String: UInt32] = [${Object.entries(tagC).map(([k, v]) => `${str(k)}: ${hex(v)}`).join(', ')}]
   static let tagPalette: [UInt32] = [${tagPal.map(hex).join(', ')}]

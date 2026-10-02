@@ -31,7 +31,7 @@ export const DIAGRAM_CSS = [
 
 // ---------- the pieces of the deck page ----------
 export function diagramBlocks(H, phone) {
-  const { svg, I, MONO } = H;
+  const { svg, I, MONO, OCC } = H;
   const icon = (name, size = 16, w = 2) => svg(I[name], size, w);
   const small = (label, handler, ic, attrs = '', bg = '{{t.bg}}') => `<button type="button" onClick="{{${handler}}}" ${attrs} class="sc-press" style="height: 34px; padding: 0 14px; display: inline-flex; align-items: center; gap: 6px; border: 0; border-radius: 999px; background: ${bg}; color: {{t.text}}; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer;">${ic ? icon(ic, 14, 2) : ''}${label}</button>`;
   const big = (label, handler, { inv = false, danger = false, grow = 1, attrs = '', ic = '' } = {}) => `<button type="button" onClick="{{${handler}}}" ${attrs} class="sc-press" style="flex: ${grow} 1 0; min-width: ${phone ? 120 : 140}px; height: 48px; padding: 0 20px; border: 0; border-radius: 999px; background: ${inv ? '{{t.inv}}' : '{{t.surf}}'}; color: ${inv ? '{{t.invText}}' : danger ? '{{t.again}}' : '{{t.text}}'}; font: inherit; font-size: 15px; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer;">${ic ? icon(ic, 16, 2) : ''}${label}</button>`;
@@ -65,7 +65,9 @@ export function diagramBlocks(H, phone) {
       <sc-if value="{{dg.v.showName}}" hint-placeholder-val="{{ true }}"><span style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px;"><span style="font-size: 22px; font-weight: 600; letter-spacing: -.02em; overflow-wrap: anywhere;">{{dg.v.name}}</span><span style="font-size: 13px; color: {{t.muted}};">{{dg.v.line}}</span></span></sc-if>
       <button type="button" onClick="{{dg.v.close}}" aria-label="Close" class="sc-press" style="width: 40px; height: 40px; flex-shrink: 0; border: 0; border-radius: 20px; background: {{t.surf}}; color: {{t.text}}; display: flex; align-items: center; justify-content: center; cursor: pointer;">${icon('close', 16, 2)}</button>
     </div>`;
-  const box = `<div style="position: absolute; left: {{b.x}}; top: {{b.y}}; width: {{b.w}}; height: {{b.h}}; box-sizing: border-box; border: 1.5px solid #000000; border-radius: 3px; background: rgba(255,255,255,.32); box-shadow: 0 0 0 1px rgba(255,255,255,.9);"></div>`;
+  // A box over each label, as a picture card's boxes will hide them: see-through yellow (the cards' boxes are yellow, the owner,
+  // 2026-10-02) with its black edge, so the label still reads.
+  const box = `<div style="position: absolute; left: {{b.x}}; top: {{b.y}}; width: {{b.w}}; height: {{b.h}}; box-sizing: border-box; border: 1.5px solid #000000; border-radius: 3px; background: ${OCC.picked}; box-shadow: 0 0 0 1px rgba(255,255,255,.9);"></div>`;
   const viewBody = `<div style="flex-grow: 1; min-height: 0; overflow-y: auto; scrollbar-width: none; display: flex; flex-direction: column; gap: 14px;">
       <sc-if value="{{dg.v.isPicture}}" hint-placeholder-val="{{ true }}">
         <div style="position: relative; align-self: stretch; border-radius: 14px; overflow: hidden; background: #FFFFFF; box-shadow: inset 0 0 0 1px {{t.line}};"><img src="{{dg.v.picture}}" alt="{{dg.v.alt}}" draggable="false" style="width: 100%; height: auto; display: block;"><sc-if value="{{dg.v.labelsOn}}" hint-placeholder-val="{{ true }}"><div aria-hidden="true" style="position: absolute; inset: 0; pointer-events: none;"><sc-for list="{{dg.v.boxes}}" as="b" hint-placeholder-count="4">${box}</sc-for></div></sc-if></div>

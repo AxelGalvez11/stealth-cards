@@ -256,8 +256,6 @@ private struct ReviewBody: View {
       VStack(spacing: 12) {
         FlipCard(card: rv.card, revealed: revealed, moved: moved, done: rv.done, tap: { flips += 1; withAnimation(nil) { moved = false }; revealed.toggle() }, compact: open)
           .frame(height: cardH)
-          // Explain, in the card's corner once it's turned over (the explanation has its own place under it).
-          .overlay(alignment: .topTrailing) { explainButton(rv, ex) }
         Group {
           if open { panel(ex, max: max(0, g.size.height - cardH - 12)).transition(.opacity) }
         }
@@ -267,14 +265,25 @@ private struct ReviewBody: View {
     }
   }
 
-  @ViewBuilder private func explainButton(_ rv: ReviewVM, _ ex: ExplainVM) -> some View {
-    let id = rv.card.id
-    if revealed && ex.on && !id.isEmpty && exFor != id {
-      ExplainButton(label: ex.label) {
-        exFor = id
-        if store.demo { exMock = true } else if ex.text.isEmpty { Task { await store.explain(id, question: "") } }
+  /// Explain, top right beside the review's settings (the owner, 2026-10-02: "move it upper right similar shape to the flashcard
+  /// settings"): a round button like the settings one, once the card is turned over. While the explanation is open it is drawn
+  /// pressed, like the settings button, and pressing it again closes it. Its place is kept while the card shows its question,
+  /// so the progress bar beside it never moves when a card turns.
+  @ViewBuilder private func explainButton(_ rv: ReviewVM) -> some View {
+    let ex = explanation(rv), id = rv.card.id
+    if ex.on && !id.isEmpty {
+      if revealed {
+        let open = isOpen(rv)
+        RoundButton(icon: "sparkle", label: "Explain", bg: open ? t.inv : t.surf, fg: open ? t.invText : t.text) {
+          if open { exFor = nil; return }
+          exFor = id
+          if store.demo { exMock = true } else if ex.text.isEmpty { Task { await store.explain(id, question: "") } }
+        }
+        .accessibilityAddTraits(open ? .isSelected : [])
+      } else {
+        // Its place while the card shows its question: nothing to see, press or hear.
+        Color.clear.frame(width: 44, height: 44)
       }
-      .padding(12)
     }
   }
 
@@ -316,8 +325,11 @@ private struct ReviewBody: View {
         }
       }
       .frame(maxWidth: .infinity)
-      RoundButton(icon: "sliders", label: "Review settings", bg: settingsOpen ? t.inv : t.surf, fg: settingsOpen ? t.invText : t.text) {
-        withAnimation(Motion.sheet) { settingsOpen.toggle() }
+      HStack(spacing: 8) {
+        explainButton(rv)
+        RoundButton(icon: "sliders", label: "Review settings", bg: settingsOpen ? t.inv : t.surf, fg: settingsOpen ? t.invText : t.text) {
+          withAnimation(Motion.sheet) { settingsOpen.toggle() }
+        }
       }
     }
   }
@@ -412,6 +424,13 @@ private struct ReviewBody: View {
         Segmented(options: [("bar", "Bar"), ("counts", "Counts"), ("none", "None")], current: rv.prog, hPad: 8) { store.setProgress($0) }
         Text(["bar": "A thin bar and how many cards are left.", "counts": "New · learning · review, like Anki. The current card’s queue is underlined.", "none": "Nothing on screen but the card."][rv.prog] ?? "")
           .css(12, lh: 1.4).foregroundStyle(t.muted)
+      }
+      // Flip animation (the owner, 2026-10-02: "add a way for user to toggle flaschard flip animation on or off"): the setting of
+      // Settings › Studying, so the web app and every phone follow it; off, the answer shows at once instead of the card turning.
+      HStack(spacing: 12) {
+        Text("Flip animation").css(13, .semibold)
+        Spacer(minLength: 0)
+        Toggle48(on: store.flipOn, label: "Flip animation") { store.setSetting(["flip": !store.flipOn]) }
       }
       // The background of the deck this card is from; reviewing every deck, it says which deck that is.
       if !rv.deckId.isEmpty {
