@@ -86,7 +86,8 @@ struct DeckWant: Equatable {
 
 @MainActor
 final class Nav: ObservableObject {
-  @Published var tab: Tab = .today
+  /// The app opens on the Library (there is no Today page).
+  @Published var tab: Tab = .library
   /// The Library shows All cards instead of your folders and decks, or (`libClasses`) your classes.
   @Published var libCards = false
   /// A filter for All cards to start on, from the Stats page: "hard", "leech", or "paused".
@@ -117,8 +118,8 @@ final class Nav: ObservableObject {
   @Published var calendar: CalendarRequest?
   /// Lucida's own camera, over everything (Screens/Camera.swift), never the system's camera sheet.
   @Published var camera: CameraRequest?
-  /// Back to Today with nothing open (signed out, or the account is gone).
-  func reset() { sheet = nil; full = nil; boardFull = nil; path = []; tab = .today; libCards = false; libClasses = false; asking = false; barHidden = false; question = nil; calendar = nil; camera = nil }
+  /// Back to the Library with nothing open (signed out, or the account is gone).
+  func reset() { sheet = nil; full = nil; boardFull = nil; path = []; tab = .library; libCards = false; libClasses = false; asking = false; barHidden = false; question = nil; calendar = nil; camera = nil }
   func push(_ r: Route) { path.append(r) }
   func back() { if !path.isEmpty { path.removeLast() } }
   func study(deckId: String?, pile: String? = nil) { withAnimation(Motion.sheet) { full = .review(deckId: deckId, pile: pile) } }
@@ -132,9 +133,14 @@ final class Nav: ObservableObject {
   /// Make cards from anything (the web's /make?source=&deck=&from=&guide=&page=): `kind` opens one kind's page (file, photo, record, paste,
   /// video, or topic; "" for the list), `deckId` is where the cards go, `from` is a kept source (its id) to make more cards from, and
   /// `guide` (a deck's id, with its `page`: "" or "main" for the Guide itself) is a Guide to make cards from. `text` starts it on Paste
-  /// with those words (a Guide's selection), named `title`.
-  func make(kind: String = "", deckId: String = "", from: String = "", guide: String = "", page: String = "", text: String = "", title: String = "") {
-    withAnimation(.out(0.35)) { sheet = .make(MakeStart(kind: kind, deckId: deckId, from: from, guide: guide, page: page, text: text, title: title)) }
+  /// with those words (a Guide's selection, named `title`; or, with `box`, words pasted in the Library's Make box, which get notes like any
+  /// other material), `topic` on A topic and `url` on YouTube with those already in, and `folder` is where a new deck made this way goes (the
+  /// Make box on a folder's page).
+  func make(kind: String = "", deckId: String = "", from: String = "", guide: String = "", page: String = "", text: String = "", title: String = "",
+            topic: String = "", url: String = "", folder: String = "", box: Bool = false) {
+    var s = MakeStart(kind: kind, deckId: deckId, from: from, guide: guide, page: page, text: text, title: title)
+    s.topic = topic; s.url = url; s.folder = folder; s.box = box
+    withAnimation(.out(0.35)) { sheet = .make(s) }
   }
   /// Learn mode: pick up where you stopped, or start from the sheet.
   func learn(deckId: String, resume: Bool) { withAnimation(Motion.sheet) { if resume { full = .learn(deckId) } else { sheet = .learnStart(deckId) } } }
@@ -144,16 +150,16 @@ final class Nav: ObservableObject {
   func closeFull() { withAnimation(Motion.sheet) { full = nil } }
   /// The end of a review of a set of cards: the page it was started from, or (cards missed in a test) the test's results.
   func endSet() { let back = afterSet; afterSet = nil; withAnimation(Motion.sheet) { full = back } }
-  /// Leaving flashcards or Learn mode (X, or Done on the summary): straight to the deck's page, or to Today after a
+  /// Leaving flashcards or Learn mode (X, or Done on the summary): straight to the deck's page, or to the Library after a
   /// review of every deck (the web's endHref and doneHref). Every grade is saved already.
   func leave(to deckId: String?) {
-    // Studying starts on the deck's page (or on Today, for every deck), so it's nearly always right there under the full
+    // Studying starts on the deck's page (or on the Library, for every deck), so it's nearly always right there under the full
     // screen already. When it isn't, the page underneath changes first, at once, while the full screen still covers it;
     // then the full screen slides away, a moment later (when both happen in one update, the slide can stall).
-    let there = deckId.map { path.last == .deck($0) } ?? (tab == .today && path.isEmpty)
+    let there = deckId.map { path.last == .deck($0) } ?? (tab == .library && path.isEmpty)
     if there { withAnimation(Motion.sheet) { full = nil }; return }
     var now = Transaction(); now.disablesAnimations = true
-    withTransaction(now) { if let id = deckId { path.append(.deck(id)) } else { pick(.today) } }
+    withTransaction(now) { if let id = deckId { path.append(.deck(id)) } else { pick(.library) } }
     DispatchQueue.main.async { withAnimation(Motion.sheet) { self.full = nil } }
   }
   /// Leaving a practice test (Leave, or Done on its results): the page it was started from, a deck's or a folder's.

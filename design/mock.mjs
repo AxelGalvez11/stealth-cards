@@ -183,7 +183,7 @@ export const MOCK_METHOD = String.raw`mock() {
     // Pro: on for the canvas's boards, off for the ones that show Free (their free or plan setting).
     pro: () => !(p.free || p.plan === 'Free'),
     chrome: () => { const S = skinned(), color = st.photo === 'color', col = m.collapsed ?? !!p.collapsed;
-      return { nav: { today: caught ? '' : '64', news: m.read ? '' : '2', hasNews: !m.read, ...side(col, () => set({ collapsed: !col })) }, me: { bg: S && color ? 'transparent' : 'linear-gradient(135deg, #8C9AFC 0%, #4F60E6 100%)', initial: 'A', color: color && !S, photo: '', sampleGoogle: st.photo === 'google', sampleYours: st.photo === 'yours',
+      return { nav: { news: m.read ? '' : '2', hasNews: !m.read, ...side(col, () => set({ collapsed: !col })) }, me: { bg: S && color ? 'transparent' : 'linear-gradient(135deg, #8C9AFC 0%, #4F60E6 100%)', initial: 'A', color: color && !S, photo: '', sampleGoogle: st.photo === 'google', sampleYours: st.photo === 'yours',
         href: 'WebProfile.dc.html', skinned: !!S, art: S ? S.me('A', !color) : null } }; },
     settings: () => st,
     theme: () => (st.theme && st.theme !== 'lucida' ? st.theme : ''),
@@ -254,11 +254,11 @@ export const MOCK_METHOD = String.raw`mock() {
         result: { ok: liveRight, timeUp: !!p.timeUp, pick: pick >= 0 ? LS.q.options[pick] : '', answer: LS.q.options[LS.q.right], gained: liveRight ? 870 : 0, streak: liveRight ? 3 : 0 },
         standings: liveRows.map(([name, score]) => ({ ...livePerson(name), score })) };
     },
-    href: kind => ({ decks: 'WebDecks.dc.html', newDeck: 'WebNewDeck.dc.html', import: 'WebImport.dc.html', connect: 'WebConnect.dc.html', today: 'Main.dc.html', stats: 'WebStats.dc.html' })[kind] || 'Main.dc.html',
+    href: kind => ({ decks: 'WebDecks.dc.html', newDeck: 'WebNewDeck.dc.html', import: 'WebImport.dc.html', connect: 'WebConnect.dc.html', today: 'WebDecks.dc.html', stats: 'WebStats.dc.html' })[kind] || 'WebDecks.dc.html',
     // The study network (net-sample.mjs): the same answers web/net.js gets from the server. Saving, following and the
     // like stay on this board. Prop "loading" shows a page before its answer arrives.
     me: () => { const h = (m.profile && m.profile.handle) || 'alexkim'; return { handle: h, url: '/@' + h, name: st.name }; },
-    // Classes (web/classes.mjs): what Today lists (prop "assignments" shows it), and your own progress on a class deck.
+    // Classes (web/classes.mjs): what the Library's Assigned lists (prop "assignments" shows it), and your own progress on a class deck.
     assignments: () => (p.assignments ? N.ASSIGNED : []),
     classProgress: id => N.MY_PROGRESS[id] || null,
     net: (() => {

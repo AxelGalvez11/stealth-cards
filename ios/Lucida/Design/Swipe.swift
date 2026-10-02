@@ -1,7 +1,7 @@
 // Swiping to change pages (the owner, 2026-10-01: "allow ios users to swipe to change pages").
 //   - Back: a swipe from the left edge goes back on every pushed page, the way it does in any iPhone app. The pages hide the
 //     navigation bar and draw their own Back button, which switches UIKit's own gesture off; BackSwipe turns it on again.
-//   - Between tabs: a swipe left or right on a tab's first page (Today, Library, Discover, Stats, Profile) moves to the next
+//   - Between tabs: a swipe left or right on a tab's first page (Library, Discover, Stats, Profile) moves to the next
 //     or the one before. The page follows the finger and settles at once, with no bounce, and the tab bar's choice follows.
 //     A swipe that starts on something that scrolls sideways (a row of decks, chips) is left to it. At either end nothing moves,
 //     but the swipe is still taken, so it never taps the row it lifts off. With Reduce Motion the page doesn't follow: a swipe

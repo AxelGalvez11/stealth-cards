@@ -4,7 +4,7 @@
 // open, and the button still works until the page is closed.
 export const SIDE_KEY = 'lucida.sidebar';
 // Each place's name, which the rail shows as a tooltip (title) and gives the icon as its accessible name.
-export const SIDE_TIPS = { today: 'Today', library: 'Library', discover: 'Discover', stats: 'Stats', profile: 'Profile', news: 'News', settings: 'Settings' };
+export const SIDE_TIPS = { library: 'Library', discover: 'Discover', stats: 'Stats', profile: 'Profile', news: 'News', settings: 'Settings' };
 export const readSide = () => { try { return localStorage.getItem(SIDE_KEY) === 'collapsed'; } catch { return false; } };
 export const writeSide = collapsed => { try { localStorage.setItem(SIDE_KEY, collapsed ? 'collapsed' : 'expanded'); } catch { /* blocked: the choice lasts until the page closes */ } };
 // The sidebar's holes for a screen (`nav` in the boards' chrome): whether it's collapsed ('true' or 'false', for the CSS), the button's

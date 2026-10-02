@@ -6,7 +6,7 @@
 import Foundation
 
 // ---------- what the server answers ----------
-/// A class in your library (classes.mjs keep): what Today needs, with its assignments.
+/// A class in your library (classes.mjs keep): what the Library's Assigned needs, with its assignments.
 struct LibClass: Decodable, Identifiable {
   struct Asg: Decodable, Identifiable {
     var id = "", sharedId = "", name = "", cards = 0, goal = "learn", due = ""
@@ -156,7 +156,7 @@ struct MyProgress: Decodable, Equatable {
 }
 
 /// The canvas's classes (design/net-sample.mjs): BIO 201 (yours), Organic Chemistry (you're in it), the pre-med study
-/// group (an invite), the list, what Today shows, and your own progress on the class decks you study.
+/// group (an invite), the list, what the Library's Assigned shows, and your own progress on the class decks you study.
 struct ClassSample: Decodable {
   struct Assigned: Decodable {
     var id = "", classId = "", className = "", code = "", sharedId = "", name = "", goal = "learn", due = "", cards = 0
@@ -187,8 +187,8 @@ struct DemoClass {
   var added: Set<String> = []
 }
 
-// ---------- your progress, and what Today lists ----------
-/// One row of Today's Assignments (db.js assignments): a deck a class gave you, and how it's going.
+// ---------- your progress, and what the Library's Assigned lists ----------
+/// One row of the Library's Assigned (db.js assignments): a deck a class gave you, and how it's going.
 struct AssignmentRow: Identifiable {
   var id = "", classId = "", className = "", code = "", sharedId = "", name = "", goal = "learn", due = ""
   var cards = 0
@@ -265,7 +265,7 @@ extension Store {
     return MyProgress(deckId: d.id, learned: learned, total: cs.count, due: due, remembered: remembered)
   }
 
-  /// What Today lists: the assignments of the classes you're a member of, soonest first. A done one stays until its date
+  /// What the Library's Assigned lists: the assignments of the classes you're a member of, soonest first. A done one stays until its date
   /// passes, one that isn't done until two weeks after (db.js assignments).
   func assignmentRows() -> [AssignmentRow] {
     let t0 = classToday

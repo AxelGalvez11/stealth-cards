@@ -550,7 +550,7 @@ final class SharedDeckPagesTests: XCTestCase {
     app.terminate()
     // News: a suggestion on his deck opens its suggestions.
     app = launch(as: w.alex)
-    tap(button(app, "Today"))
+    tap(button(app, "Discover"))
     tap(buttonStarting(app, "News"))
     let news = buttonStarting(app, "Maria Santos suggested")
     check(wait(news, 10), "News has Maria’s suggestions")

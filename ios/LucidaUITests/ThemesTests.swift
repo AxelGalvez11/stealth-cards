@@ -132,7 +132,7 @@ final class ThemesTests: XCTestCase {
     return bio
   }
 
-  /// Today → the Profile tab → Settings.
+  /// The Library → the Profile tab → Settings.
   private func openSettings(_ app: XCUIApplication) -> Bool {
     guard wait(button(app, "Profile"), 15) else { return false }
     button(app, "Profile").tap()
@@ -156,7 +156,7 @@ final class ThemesTests: XCTestCase {
 
     // ---------- the picker: Lucida and 14 themes, drawn ----------
     var app = launch(as: pro)
-    check(openSettings(app), "Today's picture opens the profile, whose gear opens Settings")
+    check(openSettings(app), "the Profile tab opens the profile, whose gear opens Settings")
     let row = themeRow(app)
     check(wait(row) && row.label.contains("Lucida") && !row.label.contains("Pro"), "Settings › Look shows Theme · Lucida (no Pro badge)")
     check(app.staticTexts["With the Lucida theme"].exists == false, "Card gradients says nothing about themes yet")
@@ -186,12 +186,11 @@ final class ThemesTests: XCTestCase {
     check(wait(button(app, "Theme")), "Profile picture's third choice reads Theme")
     check(drawing(app, "avatar=aero"), "your picture on Settings is the theme's")
 
-    // ---------- your picture on Today, the Library, the deck page ----------
+    // ---------- your picture in the tab bar, the Library, the deck page ----------
     front(app, "Back").tap()
-    check(wait(button(app, "Today")), "Settings goes back to the profile")
-    button(app, "Today").tap()
-    check(drawing(app, "avatar=aero"), "Today's picture is the theme's")
+    check(wait(button(app, "Library")), "Settings goes back to the profile")
     button(app, "Library").tap()
+    check(drawing(app, "avatar=aero"), "the tab bar's picture is the theme's")
     check(drawing(app, "thumb=aero"), "the Library's covers are the theme's")
     check(drawing(app, "swatch=aero"), "and so is its folder's fan")
     check(openDeck(app, "Spanish Verbs"), "the Library lists the decks")
@@ -296,7 +295,7 @@ final class ThemesTests: XCTestCase {
     button(app, "End review").tap()
     check(wait(button(app, "Library")), "back on the deck")
     button(app, "Library").tap()
-    check(wait(app.staticTexts["Library"]) && notDrawing(app, "thumb=", 4) && notDrawing(app, "avatar=", 4), "the Library and Today's picture are Lucida's own")
+    check(wait(app.staticTexts["Library"]) && notDrawing(app, "thumb=", 4) && notDrawing(app, "avatar=", 4), "the Library and the tab bar's picture are Lucida's own")
 
     print("Themes: \(passed) passed, \(failed) failed")
     XCTAssertEqual(failed, 0)

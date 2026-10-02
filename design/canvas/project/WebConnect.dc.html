@@ -117,7 +117,7 @@ renderVals0() {
   const secLinks = cur => Object.fromEntries(SEC.map(([k]) => [secId(k), { href: db.mock ? '#' : '/settings/' + k, current: k === cur ? 'page' : 'false', bg: k === cur ? t.surf : 'transparent', fg: k === cur ? t.text : t.muted, weight: k === cur ? '600' : '400',
     pick: db.mock ? e => { if (e && e.preventDefault) e.preventDefault(); this.setState({ section: k }); } : undefined }]));
   const settingsSide = { sec: Object.fromEntries(Object.entries(secLinks('connect-ai')).map(([id, v]) => [id, db.mock ? { ...v, href: 'WebSettings.dc.html', pick: () => {} } : v])),
-    hasPlan: db.mock ? true : !!(db.plan && db.plan()), backHref: db.mock ? 'Main.dc.html' : this.props.back || '/' };
+    hasPlan: db.mock ? true : !!(db.plan && db.plan()), backHref: db.mock ? 'WebDecks.dc.html' : this.props.back || '/library' };
   // Online, a link that got out can be swapped for a new one; AI apps with the old link lose access.
   const renew = () => { if (db.mock) return this.setState({ renewed: true }); db.ask({ title: 'Make a new link?', line: 'AI apps using the old one stop working until you give them the new one.', action: 'Make a new link' }).then(yes => yes && db.act.newLink().then(() => this.setState({ renewed: true, copied: false }))); };
   return { hero: this.mesh(this.props.gradient ?? 'Apricot'), grain: String(this.props.grain ?? 0.7), t, ...chrome, ...settingsSide, ...appVals, perms, providers, mcpUrl: ai.url, copyLabel: this.state.copied ? 'Copied' : 'Copy', copy: () => { db.act.copy(ai.url); this.setState({ copied: true }); },

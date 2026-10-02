@@ -1,6 +1,6 @@
 // iPhone · Session done (PhoneDone, PhoneDonePiles): how much you remembered on a half ring (or, after sorting into
 // piles, how many went in each), the grades, your streak, and when the next review is. Done goes back to the deck's page
-// (to Today after reviewing every deck).
+// (to the Library after reviewing every deck).
 import SwiftUI
 
 struct SessionVM {

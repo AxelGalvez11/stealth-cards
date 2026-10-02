@@ -228,7 +228,7 @@ renderVals() { const t = this.theme(!!this.props.dark, !!this.props.dim);const d
     isClaude: aiId === 'claude', isOpenAI: aiId === 'openai', isCursor: aiId === 'cursor', isMcp: aiId === 'mcp',
     isAnki: srcId === 'anki', isQuizlet: srcId === 'quizlet', isSheet: srcId === 'sheet', isPaste: srcId === 'paste',
     skipToCards: step === 'Pick AI' || step === 'Steps', skipToToday: step === 'Pick source' || step === 'Source steps' || step === 'Found',
-    skip: () => go('Pick source', { skippedAI: true }), todayHref: live ? '/' : 'PhoneToday.dc.html',
+    skip: () => go('Pick source', { skippedAI: true }), todayHref: live ? '/library' : 'PhoneLibrary.dc.html',
     finish: () => { if (live) db.act.setSettings({ welcomed: true }); },
     back: () => go(step === 'Found' ? 'Source steps' : step === 'Source steps' ? 'Pick source' : step !== 'Steps' && s.ai && !s.skippedAI ? 'Connected' : 'Pick AI'),
     linkShown: link.replace(/^https?:\/\//, ''), copyLink, copyLabel: s.copied ? 'Copied' : 'Copy', openApp, openHref: OPEN[aiId] || link,

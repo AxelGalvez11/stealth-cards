@@ -24,7 +24,7 @@ func dayAt(_ t: Double, _ n: Int = 0) -> Double {
 }
 func weekday(_ t: Double) -> Int { Calendar.current.component(.weekday, from: Date(timeIntervalSince1970: t / 1000)) - 1 }
 
-/// A deck's exam, for its page, its settings, and Today: "Exam in 12 days · 84 cards to review first" (db.js examOf).
+/// A deck's exam, for its page and its settings: "Exam in 12 days · 84 cards to review first" (db.js examOf).
 struct ExamInfo: Equatable {
   var status: Sched.ExamStatus
   /// "Oct 4" (with the year when it isn't this one), "Exam in 12 days", and the whole line.

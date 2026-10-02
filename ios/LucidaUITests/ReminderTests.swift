@@ -8,6 +8,8 @@
 //      signing out removes it.
 //   2  Refused: saying no leaves the row Off with one line on how to allow notices in iPhone Settings, nothing scheduled and no time saved;
 //      picking again doesn't ask again.
+//   3  The notice itself (one set to come a few seconds after launch, `-reminderIn`), tapped on the home screen: the app comes back on the
+//      Library (it opened Today until there was no Today), with its top and what's due, though it was on Stats.
 // Run it with ios/tools/e2e-reminder.sh (it starts a fresh server). It only runs when LUCIDA_REMINDER is set.
 import XCTest
 
@@ -125,5 +127,25 @@ final class ReminderTests: AppCase {
     pick(app, "7:00 AM", takes: false)
     Thread.sleep(forTimeInterval: 1.5)
     check(!asked() && rowSays(app, "Off") && any(app, line).exists && audit(app) == "none", "picking again doesn’t ask again: still Off, with the line, and nothing scheduled")
+  }
+
+  // ---------- 3: the notice opens the Library ----------
+  func test3NoticeOpensTheLibrary() throws {
+    try XCTSkipIf(api("x", "GET", "/api/rev").status != 200, "No server at " + Self.server)
+    let who = "remc" + run
+    name(who, "Remo Fox")
+    let deck = act(who, "deck.add", ["name": "Bones", "fsrs": false])["id"] as? String ?? ""
+    act(who, "card.add", ["deckId": deck, "kind": "basic", "front": "Longest bone?", "back": "Femur"])
+    let app = launch(as: who, ["-open", "stats", "-reminderIn", "8"])
+    if let allow = question("Allow", within: 12) { allow.tap() }
+    check(wait(app.buttons["Stats"]) && eventually(5) { app.buttons["Stats"].isSelected }, "the app is on Stats")
+    XCUIDevice.shared.press(.home)
+    // The notice comes a few seconds later, as a banner over the home screen.
+    let banner = springboard.descendants(matching: .any).matching(NSPredicate(format: "label CONTAINS %@", words)).firstMatch
+    check(banner.waitForExistence(timeout: 40), "the notice comes: “\(words)”")
+    banner.tap()
+    check(app.wait(for: .runningForeground, timeout: 15), "tapping it opens the app")
+    check(eventually(10) { app.buttons["Library"].isSelected }, "on the Library")
+    check(wait(any(app, "What do you want to study?")) && wait(any(app, "1 card due")), "its top, with what’s due")
   }
 }

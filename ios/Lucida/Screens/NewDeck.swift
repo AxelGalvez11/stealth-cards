@@ -1,4 +1,4 @@
-// iPhone · New deck (PhoneNewDeck): a sheet over Today. The cover starts white; its colors (made from the name) fade in
+// iPhone · New deck (PhoneNewDeck): a sheet over the Library; Create deck opens the new deck on its empty page, ready for material. The cover starts white; its colors (made from the name) fade in
 // over 2 seconds once you stop typing or press Shuffle. Image picks a photo for its header instead.
 import SwiftUI
 

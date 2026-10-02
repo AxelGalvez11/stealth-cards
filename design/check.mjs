@@ -72,8 +72,12 @@ PROP_SETS.push({ state: 'Yearly' }, { state: 'Monthly' }, { state: 'Buying' }, {
   { plan: 'Pro, billed on the web' }, { plan: 'Pro, billed on the web', dark: true });
 // Settings' Daily reminder on iPhone: Off, a time, and the line that says how to allow notifications when the phone has them off.
 PROP_SETS.push({ reminder: 'Off' }, { reminder: '6:00 PM' }, { reminder: 'Off', dark: true }, { reminderNote: true }, { reminderNote: true, dark: true }, { reminderNote: true, dark: true, dim: true });
-// The web sidebar as the rail of icons (Main's collapsed Tweak; the mock gives every board with a sidebar the same).
+// The web sidebar as the rail of icons (the Library's collapsed Tweak; the mock gives every board with a sidebar the same).
 PROP_SETS.push({ collapsed: true }, { collapsed: true, dark: true }, { collapsed: true, caughtUp: true });
+// The Library's top (design/home.mjs): with and without something due, with assignments, words in the Make box, its More menu open, and a file
+// held over the page.
+PROP_SETS.push({ assignments: true }, { assignments: true, caughtUp: true, dark: true }, { $state: { mkText: 'The Krebs cycle' } }, { $state: { mkMore: true } },
+  { $state: { mkMore: true }, dark: true, dim: true }, { $state: { mkOver: true } }, { folder: 'f1', $state: { mkMore: true } });
 // Settings' sections: the web page shows one at a time (WebSettings' section), the iPhone's list shows all of them (PhoneSettings, All),
 // and a narrow web screen shows the list of sections (List) or one of them.
 for (const name of ['Account', 'Plan', 'Studying', 'Appearance', 'Connect AI', 'Privacy', 'Help & legal']) PROP_SETS.push({ section: name }, { section: name, dark: true, dim: true }, { section: name, plan: 'Free' });

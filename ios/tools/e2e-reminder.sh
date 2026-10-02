@@ -1,7 +1,7 @@
 #!/bin/zsh
 # The daily reminder in the iPhone app, end to end (LucidaUITests/ReminderTests.swift): picking a time asks the phone to send notices (then,
 # not when the app opens) and schedules one notice a day saying "Time to review your cards"; another time sets it again; Off and signing
-# out remove it; and saying no leaves the row Off with a line on how to allow notices. Each flow needs a phone that has never been asked
+# out remove it; saying no leaves the row Off with a line on how to allow notices; and the notice itself, tapped, opens the Library. Each flow needs a phone that has never been asked
 # about notices, so the app is taken off the simulator before each one (the test puts it back). It starts web/server.mjs on PORT (3879) with
 # an empty data folder, runs the flows on a simulator, prints each check, and stops the server.
 #   ios/tools/e2e-reminder.sh [simulator id]      (DD=<folder> keeps the build somewhere else; the port must be free;
@@ -18,7 +18,7 @@ SIM=${1:-booted}
 DEST=${1:+id=$1}
 DEST=${DEST:-"platform=iOS Simulator,name=iPhone 17e"}
 TOTALS=$(mktemp)
-for t in ${(s:,:)${ONLY:-ReminderTests/test1Allowed,ReminderTests/test2Refused}}; do
+for t in ${(s:,:)${ONLY:-ReminderTests/test1Allowed,ReminderTests/test2Refused,ReminderTests/test3NoticeOpensTheLibrary}}; do
   xcrun simctl uninstall $SIM cards.lucida.app >/dev/null 2>&1
   TEST_RUNNER_LUCIDA_REMINDER=1 TEST_RUNNER_LUCIDA_SERVER=http://127.0.0.1:$PORT \
   xcodebuild test -project ios/Lucida.xcodeproj -scheme LucidaUITests -destination "$DEST" -derivedDataPath ${DD:-${TMPDIR:-/tmp}/lucida-e2e-reminder} \

@@ -1,6 +1,7 @@
 // Lucida for iPhone. Every screen is one of the design canvas's iPhone boards, drawn natively at the same sizes.
-// Launch with `-board <Name>` (for example -board PhoneToday) to open a board with the canvas's sample data.
+// Launch with `-board <Name>` (for example -board PhoneLibrary) to open a board with the canvas's sample data.
 import SwiftUI
+import UserNotifications
 
 @main
 struct LucidaApp: App {
@@ -16,6 +17,9 @@ struct LucidaApp: App {
     #endif
     let store = Store(demo: Board.requested != nil), nav = Nav(), drag = DragCenter()
     nav.mine = { [weak store] in store?.myHandle ?? "" }
+    // The daily reminder's notice opens the Library (Data/Reminder.swift), from a cold start too, so the phone hears about taps from here on.
+    ReminderTap.shared.open = { [weak nav] in guard let nav else { return }; nav.libCards = false; nav.libClasses = false; nav.pick(.library) }
+    UNUserNotificationCenter.current().delegate = ReminderTap.shared
     // A design screen starts where its board is, before anything draws.
     if let b = Board.requested { Board.setUp(b, store: store, nav: nav, drag: drag) }
     _store = StateObject(wrappedValue: store)
@@ -113,6 +117,8 @@ struct RootView: View {
         }
         Task { try? await Task.sleep(nanoseconds: 5_000_000_000); await store.retuneWhenDue() }
         #if DEBUG
+        // `-reminderIn <seconds>`: the daily reminder's notice, once, that many seconds from now (for the test that taps it).
+        if let s = Board.arg("-reminderIn").flatMap(Double.init) { Task { await Reminder.shared.soon(s) } }
         // `-check pause|exam|grade|learn|tune|free`: an end-to-end check of the Pro tools against the server (DebugChecks.swift).
         if let name = DebugChecks.requested { await DebugChecks.run(name, store) }
         // `-open review`, `-open deck`, `-open stats`, ...: go straight to a page (for checking screens with real data).
@@ -134,7 +140,8 @@ struct RootView: View {
           case let o where o.hasPrefix("guide:"):
             let x = String(o.dropFirst(6)).split(separator: ":", maxSplits: 1, omittingEmptySubsequences: false).map(String.init)
             if let d = store.lib.decks.first(where: { $0.name == x[0] }) { nav.tab = .library; nav.path = [.deck(d.id), .guide(d.id, x.count > 1 ? x[1] : "")] }
-          case "library": nav.tab = .library
+          // The Library (the app's first page; `today` is the old Today page's name for it).
+          case "library", "today": nav.tab = .library
           // The New deck sheet, and Settings › Theme (with `-theme <key>` a theme's page).
           case "newdeck": nav.tab = .library; nav.sheet = .newDeck
           // Make cards from anything (`-makeFile`, `-makePhoto`, `-makeRecording`, `-makeTopic`, `-makeText`, `-makeVideo` open it with that already in).
@@ -232,8 +239,6 @@ extension Board {
     store.props.dark = name.hasSuffix("Dark") || name.hasSuffix("Gray")
     if name.hasSuffix("Gray") { store.props.darkMode = "gray" }
     switch name.replacingOccurrences(of: "Dark", with: "").replacingOccurrences(of: "Gray", with: "") {
-    case "PhoneTodayCaughtUp": store.props.caughtUp = true
-    case "PhoneTodayNew": store.props.newUser = true
     case "PhoneDeck": nav.tab = .library; nav.path = [.deck("cell")]
     // A deck's Guide editor (its view: -state Write, Preview, "Older versions", "A new page" or "Nothing written yet").
     case "PhoneGuide": nav.tab = .library; nav.path = [.guide(Board.sampleDeckId, "")]
@@ -281,8 +286,8 @@ extension Board {
     // A verified teacher's Settings: Get verified says Verified teacher (the board's `verified`: -verified "Waiting for review" or School).
     case "PhoneSettingsVerified": store.props.verified = "Teacher"; nav.path = [.settings]
     case "PhoneNewDeck": nav.sheet = .newDeck
-    // Make cards over Today, on one of the canvas's steps (`-state Review`, or any name in MakeSample.steps; Pick when it's left out).
-    case "PhoneMake": nav.tab = .today; nav.sheet = .make(MakeStart(demo: MakeSample.name(Board.arg("-state"))))
+    // Make cards over the Library, on one of the canvas's steps (`-state Review`, or any name in MakeSample.steps; Pick when it's left out).
+    case "PhoneMake": nav.tab = .library; nav.sheet = .make(MakeStart(demo: MakeSample.name(Board.arg("-state"))))
     case "PhoneEditor": store.props.editorTyping = true; nav.tab = .library; nav.path = [.deck("cell")]; nav.sheet = .newCard(deckId: "cell", cardId: nil)
     // Editing a card that's paused (Unpause card), from the sample's first card.
     case "PhoneEditorPaused": store.props.editCard = "k1"; store.demoPaused["k1"] = true; nav.tab = .library; nav.path = [.deck("cell")]; nav.sheet = .newCard(deckId: "cell", cardId: "k1")
@@ -360,7 +365,7 @@ extension Board {
       nav.tab = .library; nav.path = [.history(Board.sampleDeck().plain)]
     case "PhoneHistoryOpen": store.demoNet.pages.openVersion = 14; nav.tab = .library; nav.path = [.history(Board.sampleDeck().plain)]
     // Classes: your classes, a class's page (yours, one you joined, or an invite you haven't taken) with its sheets, the
-    // popups over your classes, and Today with assignments.
+    // popups over your classes, and the Library with assignments.
     case "PhoneClasses": nav.tab = .library; nav.libClasses = true
     case "PhoneClassesEmpty": store.props.netEmpty = true; nav.tab = .library; nav.libClasses = true
     case "PhoneClassesNew": store.props.classForm = "new"; nav.tab = .library; nav.libClasses = true
@@ -375,7 +380,7 @@ extension Board {
     case "PhoneClassInvite": classBoard("PREMED", store: store, nav: nav)
     case "PhoneClassLoading": store.props.netLoading = true; classBoard("BIOKTZ", store: store, nav: nav)
     case "PhoneClassMissing": store.props.missing = true; classBoard("BIOKTZ", store: store, nav: nav)
-    case "PhoneTodayClass": store.props.assignments = true
+    case "PhoneLibraryAssigned": store.props.assignments = true; nav.tab = .library
     case "PhoneSignIn": store.phase = .signedOut
     case "PhoneSignInCode": store.phase = .signedOut; store.signInStep = .code
     // Settings › Theme (on Pro with Rubber hose in use, and on Free), and a theme's page (Frutiger Aero, not yet in use).
@@ -390,6 +395,9 @@ extension Board {
       }
     }
     if let k = Board.arg("-goPro") { store.props.goPro = k }
+    // The Library boards' Tweaks: `-caughtUp` (nothing due) and `-assignments` (what your classes assigned).
+    if ProcessInfo.processInfo.arguments.contains("-caughtUp") { store.props.caughtUp = true }
+    if ProcessInfo.processInfo.arguments.contains("-assignments") { store.props.assignments = true }
     // Settings' Flip animation on a design screen: `-flip Off` (on when it's left out).
     if Board.arg("-flip") == "Off" { store.props.flip = false }
     // Settings' Daily reminder: `-reminder Off|"6:00 PM"|...`, and `-reminderNote` (Off, with the line about allowing notifications).
@@ -476,6 +484,9 @@ struct MainView: View {
     // A question, a calendar or the camera is over everything: VoiceOver reads only that, so the page under it is hidden from it. (Only the views that
     // have something to read get the modifier: it would also make the empty drag layer a thing on screen, one the tests' taps would land on.)
     let behind = nav.question != nil || nav.calendar != nil || nav.camera != nil
+    // (A sheet that covers the page, like Make cards or a diagram opened, hides it the same way: the Make box's and a deck cover's own Make cards
+    // are under it, and only the sheet's should be found.)
+    let page = behind || covering
     return ZStack(alignment: .bottom) {
       NavigationStack(path: $nav.path) {
         // A swipe left or right on a tab's first page moves to the next tab or the one before (Design/Swipe.swift).
@@ -509,8 +520,8 @@ struct MainView: View {
             .containerBackground(t.bg, for: .navigation)
           }
       }
-      .accessibilityHidden(behind)
-      if showsTabBar { TabBar(active: lit, pick: { tab in if tab != nav.tab { tabTicks += 1 }; nav.pick(tab) }).accessibilityHidden(behind) }
+      .accessibilityHidden(page)
+      if showsTabBar { TabBar(active: lit, pick: { tab in if tab != nav.tab { tabTicks += 1 }; nav.pick(tab) }).accessibilityHidden(page) }
       // A deck or card being dragged, over the page and the tab bar; and the Move to tray over it while a card is.
       DragGhost()
       MoveTray()
@@ -547,10 +558,18 @@ struct MainView: View {
     }
   }
 
+  /// A sheet over the whole page (Make cards, a source or a diagram opened, Make diagram): the page under it is hidden from VoiceOver.
+  private var covering: Bool {
+    guard let s = nav.sheet else { return false }
+    switch s {
+    case .make, .source, .diagram, .makeDiagram, .publicDiagram: return true
+    default: return false
+    }
+  }
+
   /// A tab's first page.
   @ViewBuilder private func tabRoot(_ tab: Tab) -> some View {
     switch tab {
-    case .today: TodayScreen()
     case .library: LibraryScreen()
     case .discover: DiscoverScreen()
     case .stats: StatsScreen()

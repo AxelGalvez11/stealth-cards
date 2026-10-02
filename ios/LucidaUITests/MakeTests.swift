@@ -15,7 +15,7 @@
 //   11  the recorder: its timer, Pause, Resume, Stop, Discard
 //   12  the recorder stops at the plan's minutes, and a long one is several files (one for every ten minutes)
 //   13  when the AI fails, Try again goes on
-//   14  the + menus on Today and the Library, the empty deck's button, and a new person's +
+//   14  the Library's + menu and its Make box's row, an empty deck's row (set to that deck), and a new person's +
 //   15  the flow opens like the web's /make link (a kind, a deck, a kept source, a Guide)
 //   16  the file picker and the photo picker open
 //   17  a long recording picked from Files (70 minutes, 33 MB) is cut into seven parts of ten minutes, goes up as seven files in order, and its
@@ -562,30 +562,29 @@ final class MakeTests: XCTestCase {
     act(who, "card.add", ["deckId": did, "kind": "basic", "front": "One?", "back": "Yes"])
     act(who, "settings.update", ["patch": ["welcomed": true]])
     stubReset()
-    // Today's +
+    // the Library's + (the app opens on the Library: there is no Today)
     var app = launch(as: who)
-    check(wait(button(app, "Add")), "Today has a + (Add)")
-    app.buttons["Add"].firstMatch.tap()
-    check(wait(button(app, "New card")) && button(app, "Make cards").exists && button(app, "New deck").exists, "Today’s + opens New card, Make cards, New deck")
-    button(app, "Make cards").tap()
-    check(wait(text(app, "Make cards")) && ["Upload", "Photo", "Record a lecture", "Paste", "YouTube", "A topic"].allSatisfy { button(app, $0).exists }, "Make cards opens the six ways to start")
-    noLabel(app, "the list of sources")
-    button(app, "Close").tap()
-    check(gone(button(app, "Upload")), "the X closes it")
-    // the Library's +
-    app = launch(as: who, ["-open", "library"])
     check(wait(button(app, "Add")), "the Library has a + (Add)")
     app.buttons["Add"].firstMatch.tap()
     check(wait(button(app, "New deck")) && button(app, "Make cards").exists && button(app, "Import cards").exists, "the Library’s + opens New deck, Make cards, Import cards")
     button(app, "Make cards").tap()
-    check(wait(button(app, "A topic")), "Make cards opens the same list")
-    // an empty deck's button
+    check(wait(text(app, "Make cards")) && ["Upload", "Photo", "Record a lecture", "Paste", "YouTube", "A topic"].allSatisfy { button(app, $0).exists }, "Make cards opens the six ways to start")
+    noLabel(app, "the list of sources")
+    button(app, "Close").tap()
+    check(gone(button(app, "Photo")), "the X closes it")
+    // the Make box's row
+    tap(button(app, "YouTube"), "the row's YouTube")
+    check(wait(text(app, "YouTube")) && wait(app.textFields["Link to the video"]), "the row's YouTube opens the YouTube page")
+    button(app, "Close").tap()
+    // an empty deck's row
     let empty = "Empty one " + run, eid = act(who, "deck.add", ["name": empty])["id"] as? String ?? ""
     app = launch(as: who, ["-open", "deck:" + empty])
-    check(wait(text(app, "This deck is empty")) && button(app, "New card").exists && button(app, "Import cards").exists && button(app, "Ask your AI").exists, "an empty deck offers New card, Import cards, Ask your AI")
-    check(button(app, "Make cards").exists, "and Make cards")
-    button(app, "Make cards").tap()
-    check(wait(button(app, "A topic")), "it opens the list")
+    check(wait(text(app, "No cards yet")) && wait(button(app, "Upload")) && button(app, "Paste").exists && button(app, "YouTube").exists && button(app, "More").exists,
+          "an empty deck has the Make box's row: Upload, Paste, YouTube, More")
+    check(button(app, "New card").exists && button(app, "Upload").exists, "and New card on its cover, and the box's + (Upload)")
+    button(app, "More").tap()
+    check(wait(button(app, "A topic")) && button(app, "Photos").exists && button(app, "Record a lecture").exists && button(app, "Import cards").exists && !button(app, "New deck").exists,
+          "its More has Photos, Record a lecture, A topic and Import cards (no New deck)")
     button(app, "A topic").tap()
     typeInto(app.textFields["Topic"], "Fun facts")
     check(wait(button(app, empty)) && button(app, empty).isSelected, "the empty deck is picked to put the cards in")
@@ -598,7 +597,8 @@ final class MakeTests: XCTestCase {
     app = launch(as: "mkz" + run)
     check(wait(button(app, "New deck")), "a person with no decks has a + that makes a deck, as the canvas has it")
     app.buttons["New deck"].firstMatch.tap()
-    check(wait(text(app, "New deck")) && !button(app, "Make cards").exists, "straight to New deck, with no menu")
+    // (The one Make cards left is the Library's own Make box, under the sheet: a menu would add its own.)
+    check(wait(text(app, "New deck")) && app.buttons.matching(NSPredicate(format: "label == %@", "Make cards")).count == 1, "straight to New deck, with no menu")
   }
 
   // ---------- 15: opening it like the web's /make link ----------

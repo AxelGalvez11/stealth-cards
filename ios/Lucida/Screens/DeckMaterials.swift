@@ -159,14 +159,11 @@ struct SourcesCard: View {
       }
       .frame(minHeight: 34)
       if rows.isEmpty {
-        VStack(alignment: .leading, spacing: 6) {
-          Text("Nothing here yet").css(15, .semibold)
-          Text("When Lucida makes cards from a file, a recording, a link or a topic, the source is kept here. You can open it, make more cards from it, or delete it. Cards you write yourself have no source.")
-            .css(13, lh: 1.5).foregroundStyle(t.muted)
-        }
-        .padding(.top, 14).padding(.bottom, 20)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .overlay(alignment: .top) { t.line.frame(height: 1) }
+        // (Just the one plain line: Make cards beside it says what to do, the owner's rule of no tips.)
+        Text("Nothing here yet").css(14).foregroundStyle(t.muted)
+          .padding(.top, 14).padding(.bottom, 20)
+          .frame(maxWidth: .infinity, alignment: .leading)
+          .overlay(alignment: .top) { t.line.frame(height: 1) }
       }
       VStack(spacing: 0) {
         ForEach(rows) { s in

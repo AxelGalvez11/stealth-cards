@@ -1,7 +1,7 @@
 #!/bin/zsh
 # The iPhone app's classes and schools, end to end (LucidaUITests/ClassesTests.swift): taps through the app as made-up
 # people on a fresh copy of the server on this Mac: a teacher makes a class, adds and assigns a deck, students join with the
-# code (one shares their progress, one doesn't), study, and Today lists the assignment; then reports, Get verified (the
+# code (one shares their progress, one doesn't), study, and the Library's Assigned lists it; then reports, Get verified (the
 # made-up person "admin" approves it), helpers, leaving, taking people out, and deleting the class. It starts web/server.mjs
 # on PORT (3733) with an empty data folder, runs the test on a simulator, prints each check, and stops the server.
 #   ios/tools/e2e-classes.sh [simulator id]      (DD=<folder> keeps the build somewhere else; the port must be free)

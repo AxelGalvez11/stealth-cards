@@ -2,8 +2,8 @@
 // cookie, which the debug-only `-dev <name>` launch argument sets). A teacher makes a class in the app (a name, a school),
 // adds a deck of hers and assigns it (learn every card, by a date); one student joins with the class's code (a wrong code
 // says so first) and shares her progress, studies through the app, and the teacher sees how far she is; another student
-// opens the invite link and joins but doesn't share, so the teacher sees "Not shared" and nothing of hers; Today lists
-// the assignment for each of them; a student reports the class's deck; the teacher asks to be verified (a request that
+// opens the invite link and joins but doesn't share, so the teacher sees "Not shared" and nothing of hers; the Library's
+// Assigned lists the assignment for each of them; a student reports the class's deck; the teacher asks to be verified (a request that
 // isn't an email or a link says so first) and the made-up person "admin" approves it; then helpers, renaming, leaving,
 // taking someone out, and deleting the class; and the class a code doesn't have.
 //
@@ -183,7 +183,7 @@ final class ClassesTests: XCTestCase {
 
     // ---------- the teacher makes a class ----------
     var app = launch(as: teacher)
-    for tab in ["Today", "Library", "Discover", "Stats", "Profile"] { check(wait(button(app, tab)), "the tab bar has \(tab)") }
+    for tab in ["Library", "Discover", "Stats", "Profile"] { check(wait(button(app, tab)), "the tab bar has \(tab)") }
     button(app, "Library").tap()
     check(wait(button(app, "Classes")) && button(app, "Decks").exists && button(app, "All cards").exists, "the Library has Decks, All cards, and Classes")
     button(app, "Classes").tap()
@@ -282,9 +282,9 @@ final class ClassesTests: XCTestCase {
     button(app, "End review").tap()
     Thread.sleep(forTimeInterval: 1.5)
 
-    // Opening the app tells the class how far she is (she shares it); Today and Classes show it too.
+    // Opening the app tells the class how far she is (she shares it); the Library's Assigned and Classes show it too.
     app = launch(as: ana)
-    check(wait(any(app, "Chapter 3, due \(week) · BIO 201, 3 cards left"), 12), "Today lists her assignment: Chapter 3, due \(week) · BIO 201, 3 cards left")
+    check(wait(any(app, "Chapter 3, due \(week) · BIO 201, 3 cards left"), 12), "the Library's Assigned lists her assignment: Chapter 3, due \(week) · BIO 201, 3 cards left")
     check(eventually(10) { self.progress(code, of: me)?["learned"] as? Int == 3 }, "the teacher's page has her progress: 3 learned")
     let p3 = progress(code, of: me)
     check(p3?["total"] as? Int == 6 && p3?["last"] != nil, "of 6 cards, and when she last studied")
@@ -320,7 +320,7 @@ final class ClassesTests: XCTestCase {
 
     // ---------- the teacher, half way: what's shared, and what isn't ----------
     app = launch(as: teacher)
-    check(wait(button(app, "Today")) && gone(app.staticTexts["ASSIGNMENTS"], 3), "a teacher's Today has no assignments (they're for the students)")
+    check(wait(button(app, "Library")) && gone(app.staticTexts["ASSIGNED"], 3), "a teacher's Library has no Assigned (they're for the students)")
     button(app, "Library").tap()
     let classRow = any(app, "Class · 6 cards")
     check(wait(classRow, 10), "her Library marks the deck she added to the class: Class")
@@ -379,10 +379,10 @@ final class ClassesTests: XCTestCase {
     tapClear(app, app.buttons["Share my progress"].firstMatch)
     check(eventually(10) { self.progress(code, of: me)?["learned"] as? Int == 6 }, "turned back on, her progress goes out again (6 learned)")
 
-    // ---------- Today lists the assignment ----------
+    // ---------- the Library's Assigned lists the assignment ----------
     app = launch(as: ana)
-    check(wait(any(app, "Chapter 3, due \(week) · BIO 201, Done"), 12), "Today lists Maria's assignment as Done")
-    check(app.staticTexts["ASSIGNMENTS"].exists, "under Assignments")
+    check(wait(any(app, "Chapter 3, due \(week) · BIO 201, Done"), 12), "the Library's Assigned lists Maria's assignment as Done")
+    check(app.staticTexts["ASSIGNED"].exists, "under Assigned")
     app = launch(as: ben)
     let row = any(app, "Chapter 3, due \(week) · BIO 201, 4 cards left")
     check(wait(row, 12), "and Jordan's: Chapter 3, due \(week) · BIO 201, 4 cards left")

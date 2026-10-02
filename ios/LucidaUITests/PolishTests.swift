@@ -1,7 +1,7 @@
 // The owner's first TestFlight notes (2026-10-01), end to end in the iPhone app, against a copy of the server on this Mac with
 // made-up people (the `lc_dev` cookie that the debug-only `-dev <name>` launch argument sets). Each flow sets up its own people,
 // so any one can run alone (ONLY=PolishTests/test3ShareOpensTheShareSheet ios/tools/e2e-polish.sh):
-//   1  Today has no profile picture (the title stays in the middle, the bell and + stay on the right).
+//   1  The first page (the Library: there is no Today) has no profile picture; its + stays on the right, and the Profile tab is the way in.
 //   2  "Remove from folder": a deck's ⋯ menu and Deck settings have it only for a deck that's in a folder, and it takes the deck
 //      out; a copy of someone's deck picks "Library", not "No folder".
 //   3  Share opens the phone's share sheet: Share profile, a deck's Share link, a class's Share invite link. Connect AI's link
@@ -28,7 +28,7 @@ final class PolishTests: XCTestCase {
   private static var passed = 0, failed = 0
   // A run's own people (lc_dev names are letters and numbers), so the test can run again on the same server.
   private let run = String(Int(Date().timeIntervalSince1970) % 100000, radix: 36)
-  private let tabs = ["Today", "Library", "Discover", "Stats", "Profile"]
+  private let tabs = ["Library", "Discover", "Stats", "Profile"]
 
   override func setUpWithError() throws {
     continueAfterFailure = true
@@ -137,7 +137,7 @@ final class PolishTests: XCTestCase {
     while Date() < end { if lit(app) == tab { return true }; Thread.sleep(forTimeInterval: 0.25) }
     return lit(app) == tab
   }
-  /// A person who has been through the welcome, with a deck of their own (so Today is Today).
+  /// A person who has been through the welcome, with a deck of their own (so the Library is the full one).
   private func person(_ who: String, _ name: String, deck: String? = "Biology", cards: Int = 2) {
     act(who, "settings.update", ["patch": ["name": name, "welcomed": true]])
     if let deck {
@@ -200,21 +200,19 @@ final class PolishTests: XCTestCase {
     audit.split(separator: " ").compactMap { p -> Double? in p.hasPrefix(key + "=") ? Double(p.dropFirst(key.count + 1)) : nil }.first ?? -1
   }
 
-  // ---------- 1: Today ----------
-  func test1TodayHasNoProfilePicture() throws {
+  // ---------- 1: the first page ----------
+  func test1FirstPageHasNoProfilePicture() throws {
     let pia = "pia" + run
     person(pia, "Pia Polish")
     let app = launch(as: pia)
-    check(wait(button(app, "News")) && wait(button(app, "Add")), "Today has the bell and + on the right (the + is a menu: Add)")
-    check(button(app, "Your profile").exists == false, "Today has no profile picture button")
+    check(wait(button(app, "Add")) && litIs(app, "Library"), "the app opens on the Library, with its + on the right (a menu: Add)")
+    check(button(app, "Your profile").exists == false, "it has no profile picture button")
     check(!app.buttons.matching(NSPredicate(format: "label CONTAINS 'profile'")).firstMatch.exists, "nor any button about a profile (the Profile tab is the way in)")
-    // (the tab bar's own label says Today too: the title is the one at the top)
-    let title = app.staticTexts.matching(NSPredicate(format: "label == 'Today'")).allElementsBoundByIndex.first { $0.frame.minY < 200 }
-    check(title != nil && abs(title!.frame.midX - app.frame.midX) <= 2, "the title is in the middle of the screen")
+    let title = app.staticTexts.matching(NSPredicate(format: "label == 'Library'")).allElementsBoundByIndex.first { $0.frame.minY < 200 }
+    check(title != nil && abs(title!.frame.minX - (app.frame.minX + 20)) <= 2, "the title is on the left")
     let plus = button(app, "Add")
-    check(abs(plus.frame.maxX - (app.frame.maxX - 20)) <= 1, "the + is where it was (20 from the right edge)")
-    check(abs(button(app, "News").frame.maxX - (plus.frame.minX - 8)) <= 1 && abs(button(app, "News").frame.minY - plus.frame.minY) <= 1, "and the bell is beside it, level")
-    check(litIs(app, "Today") && button(app, "Profile").exists, "the Profile tab is still in the tab bar")
+    check(abs(plus.frame.maxX - (app.frame.maxX - 20)) <= 1, "the + is 20 from the right edge")
+    check(button(app, "Profile").exists && !button(app, "Today").exists, "the Profile tab is in the tab bar (and there is no Today)")
     tap(button(app, "Profile"), "the Profile tab")
     check(wait(button(app, "Edit profile")) && litIs(app, "Profile"), "and it opens your own profile")
   }
@@ -321,13 +319,11 @@ final class PolishTests: XCTestCase {
     let folder = act(ivy, "folder.add", ["name": "Languages"])["id"] as? String ?? ""
     _ = makeDeck(ivy, "Spanish Verbs", folder: folder)
     let app = launch(as: ivy, ["-popAudit"])
-    check(wait(button(app, "News")) && litIs(app, "Today"), "Today is showing")
+    check(wait(button(app, "New folder")) && litIs(app, "Library"), "the Library is showing")
 
     // ----- between tabs -----
     flick(app, from: 0.9, to: 0.1)
-    check(litIs(app, "Library") && wait(button(app, "New folder")), "a swipe left on Today moves to Library (and the tab bar follows)")
-    flick(app, from: 0.9, to: 0.1)
-    check(litIs(app, "Discover"), "another moves to Discover")
+    check(litIs(app, "Discover") && wait(button(app, "News")), "a swipe left on the Library moves to Discover (and the tab bar follows)")
     // A row of chips that scrolls sideways keeps its own swipe.
     let chip = buttonStarting(app, "For you")
     if wait(chip, 8) {
@@ -346,16 +342,15 @@ final class PolishTests: XCTestCase {
     check(litIs(app, "Stats"), "a swipe right goes back, to Stats")
     flick(app, from: 0.1, to: 0.9)
     flick(app, from: 0.1, to: 0.9)
-    flick(app, from: 0.1, to: 0.9)
-    check(litIs(app, "Today") && wait(button(app, "News")), "and back to Today")
+    check(litIs(app, "Library") && wait(button(app, "New folder")), "and back to the Library")
     flick(app, from: 0.1, to: 0.9)
     Thread.sleep(forTimeInterval: 0.8)
-    check(lit(app) == "Today" && button(app, "News").exists, "at the first tab a swipe right does nothing")
+    check(lit(app) == "Library" && button(app, "New folder").exists, "at the first tab a swipe right does nothing")
     // A page that is in the middle of the way is never left there: stop half-way and let go.
     let a = app.coordinate(withNormalizedOffset: CGVector(dx: 0.9, dy: 0.62)), b = app.coordinate(withNormalizedOffset: CGVector(dx: 0.78, dy: 0.62))
     a.press(forDuration: 0.05, thenDragTo: b, withVelocity: .slow, thenHoldForDuration: 0.1)
     Thread.sleep(forTimeInterval: 0.8)
-    check(lit(app) == "Today" && button(app, "News").isHittable, "a short drag that is let go goes back (the page isn't left half over)")
+    check(lit(app) == "Library" && button(app, "New folder").isHittable, "a short drag that is let go goes back (the page isn't left half over)")
 
     // ----- not while studying -----
     tap(buttonStarting(app, "Biology"), "the Biology deck")
@@ -364,12 +359,11 @@ final class PolishTests: XCTestCase {
     flick(app, from: 0.9, to: 0.1, y: 0.45)
     check(button(app, "End review").exists, "a swipe on the study card doesn't change tab")
     button(app, "End review").tap()
-    check(wait(button(app, "Deck settings")) && litIs(app, "Today"), "(and leaving the review lands on the deck, Today still lit)")
+    check(wait(button(app, "Deck settings")) && litIs(app, "Library"), "(and leaving the review lands on the deck, the Library still lit)")
 
     // ----- back, from the left edge, on every pushed page -----
     edgeBack(app)
-    check(wait(button(app, "News")) && gone(button(app, "Deck settings")), "a deck's page: the edge swipe goes back")
-    tap(button(app, "Library"), "the Library tab")
+    check(wait(button(app, "New folder")) && gone(button(app, "Deck settings")), "a deck's page: the edge swipe goes back")
     tap(buttonHaving(app, "Languages"), "the Languages folder")
     check(wait(button(app, "Rename")), "a folder's page opens")
     edgeBack(app)
@@ -386,25 +380,25 @@ final class PolishTests: XCTestCase {
     check(gone(app.staticTexts["YOUR MCP LINK"]) && wait(buttonStarting(app, "Connect AI")), "Connect AI: the edge swipe goes back to Settings")
     edgeBack(app)
     check(wait(button(app, "Share profile")), "and once more to your profile")
-    tap(button(app, "Today"), "the Today tab")
+    tap(button(app, "Discover"), "the Discover tab")
     tap(button(app, "News"), "the bell")
     check(wait(app.staticTexts["News"]) || wait(button(app, "Back")), "News opens")
     edgeBack(app)
-    check(wait(button(app, "News")) && gone(button(app, "Back")), "News: the edge swipe goes back")
+    check(wait(button(app, "News")) && gone(button(app, "Back")), "News: the edge swipe goes back (to Discover)")
     let app2 = launch(as: ivy, ["-open", "profile:" + otherHandle, "-popAudit"])
     check(wait(app2.staticTexts["@" + otherHandle]) && wait(button(app2, "Back")), "someone else's profile opens")
     edgeBack(app2)
-    check(gone(app2.staticTexts["@" + otherHandle]) && wait(button(app2, "News")), "someone else's profile: the edge swipe goes back")
+    check(gone(app2.staticTexts["@" + otherHandle]) && wait(button(app2, "New folder")), "someone else's profile: the edge swipe goes back")
     let app3 = launch(as: ivy, ["-open", "deckpage:/@\(otherHandle)/\(sh["slug"] as? String ?? "")", "-popAudit"])
     check(wait(button(app3, "Study")) && wait(button(app3, "Back")), "a shared deck's page opens")
     edgeBack(app3)
     check(gone(button(app3, "Study")) && litIs(app3, "Discover"), "a shared deck's page: the edge swipe goes back (to Discover, where it was opened from)")
     // Nothing to go back to on a tab's first page: a swipe from the edge there moves to the tab before, or nothing.
     let app4 = launch(as: ivy)
-    check(wait(button(app4, "News")), "Today again")
+    check(wait(button(app4, "New folder")), "the Library again")
     edgeBack(app4)
     Thread.sleep(forTimeInterval: 0.8)
-    check(lit(app4) == "Today" && button(app4, "News").exists, "the edge swipe on Today's first page does nothing")
+    check(lit(app4) == "Library" && button(app4, "New folder").exists, "the edge swipe on the Library's first page does nothing")
   }
 
   // ---------- 5: Haptics ----------
@@ -413,13 +407,14 @@ final class PolishTests: XCTestCase {
     person(hal, "Hal Buzz", deck: nil)
     let deck = makeDeck(hal, "Haptics Deck", cards: 4)
     let app = launch(as: hal, ["-hapticAudit"])
-    check(wait(button(app, "News")) && audit(app) == "", "nothing has buzzed yet")
-    tap(button(app, "Library"), "the Library tab")
+    check(wait(button(app, "New folder")) && audit(app) == "", "nothing has buzzed yet")
+    tap(button(app, "Stats"), "the Stats tab")
     check(buzzed(app, "selection:tab"), "a tab switch gives a selection tap")
     let before = audit(app).components(separatedBy: ",").filter { $0 == "selection:tab" }.count
-    tap(button(app, "Library"), "the lit tab")
+    tap(button(app, "Stats"), "the lit tab")
     Thread.sleep(forTimeInterval: 0.6)
     check(audit(app).components(separatedBy: ",").filter { $0 == "selection:tab" }.count == before, "a tap on the tab you're on gives none")
+    tap(button(app, "Library"), "the Library tab")
     tap(button(app, "All cards"), "All cards")
     check(buzzed(app, "selection:segmented"), "a segmented control (Decks, All cards, Classes) gives a selection tap")
     tap(button(app, "Decks"), "Decks")

@@ -107,7 +107,7 @@ struct DemoProps {
   /// "study" (as it is) or "copy" (with her changes waiting); and the changes' sheet open.
   var shared = "", linked = "", updatesOpen = false
   /// The classes boards (their Tweaks): sharing your progress on, a sheet open ("add" or "assign"), Report and Get verified
-  /// open, the New class or Join a class popup open ("new" or "join"), and Today with assignments from your classes.
+  /// open, the New class or Join a class popup open ("new" or "join"), and the Library with assignments from your classes.
   var classSharing = false, classPanel = "", classReport = false, classVerify = false, classForm = "", assignments = false
   /// Your theme (the Theme boards' `theme`: a key from web/themes/index.js, "lucida" for the app's own look), whether people
   /// who visit your profile see it, and which theme's page is open (PhoneTheme's `sheet`).
@@ -116,17 +116,6 @@ struct DemoProps {
   /// canvas's `guide`: GuideSample.states), a source opened (its id) at a card's place, the Guide editor's view (GuideSample.views), and whether the card
   /// editor says where its card came from.
   var section = "Cards", guideState = "Guide and sources", sourceOpen = "", sourceAt = "", guideView = "Write", madeFrom = true
-}
-
-struct TodayVM {
-  struct Row: Identifiable { let id: String; let name: String; let sub: String; let right: String; let mono: Bool; let muted: Bool }
-  var hasDecks = true
-  var caught = false
-  var nothingNew = false
-  var heroMeta = "", heroTitle = "", heroSub = "", heroCta = ""
-  var heroSize: CGFloat = 56
-  var rows: [Row] = []
-  var newCardDeck: String?
 }
 
 @MainActor
@@ -385,35 +374,12 @@ final class Store: ObservableObject {
   }
   func exportDeck(_ id: String) {}
 
-  // ---------- Today ----------
-  func today() -> TodayVM {
-    if demo {
-      let X = Sample.shared, caught = props.caughtUp, next = ["Tomorrow", "Tomorrow", "In 2 days", "In 3 days"]
-      if props.newUser { return TodayVM(hasDecks: false) }
-      return TodayVM(caught: caught,
-                     heroMeta: caught ? "Done for today · 13-day streak" : "Due now · 12-day streak", heroTitle: caught ? "All caught up" : "64 cards",
-                     heroSub: caught ? "Next review tomorrow · 32 cards" : "About 11 minutes", heroCta: caught ? "Study 10 new cards" : "Start review",
-                     heroSize: caught ? 42 : 56,
-                     rows: X.DECKS.prefix(4).enumerated().map { i, d in .init(id: d.id, name: d.name, sub: i == 0 ? (Store.demoExam(day: Store.sampleExamDay)?.line ?? "") : "\(d.fresh) new · \(d.total) cards", right: caught ? next[i] : String(d.due), mono: !caught, muted: caught) },
-                     newCardDeck: "cell")
-    }
-    let E = engine, td = E.today, caught = td.due == 0
-    // Most urgent first: overdue cards, then cards due today, then whatever is due soonest.
-    let decks = E.decks.filter { !$0.paused }.sorted { a, b in
-      if a.overdue != b.overdue { return a.overdue > b.overdue }
-      if a.due != b.due { return a.due > b.due }
-      return (a.soon ?? Int.max) < (b.soon ?? Int.max)
-    }
-    let rows = decks.map { d -> TodayVM.Row in
-      let later = d.soon == nil ? (d.fresh > 0 ? "\(d.fresh) new" : "—") : d.soon == 1 ? "Tomorrow" : "In \(d.soon!) days"
-      return .init(id: d.id, name: d.name, sub: d.exam?.line ?? "\(d.fresh) new · \(d.totalLabel) cards", right: d.due > 0 ? String(d.due) : later, mono: d.due > 0, muted: d.due == 0)
-    }
-    let streak = td.streak > 0 ? " · \(td.streak)-day streak" : ""
-    return TodayVM(hasDecks: !lib.decks.isEmpty, caught: caught, nothingNew: td.fresh == 0,
-                   heroMeta: (caught ? "Done for today" : "Due now") + streak,
-                   heroTitle: caught ? "All caught up" : plural(td.due, "card"),
-                   heroSub: caught ? (td.next.map { "Next review \($0.day) · " + plural($0.n, "card") } ?? "Nothing scheduled yet") : "About " + plural(td.minutes, "minute"),
-                   heroCta: caught ? (td.fresh > 0 ? "Study " + plural(td.fresh, "new card") : "Add cards") : "Start review",
-                   heroSize: caught ? 42 : 56, rows: rows, newCardDeck: lib.decks.first?.id)
+  // ---------- what's due (the Library's due line) ----------
+  /// Cards due in your decks that aren't paused, and about how long they take (db.js today: ten seconds a card). The design screens: the
+  /// canvas's sample (the boards' caughtUp Tweak: nothing due).
+  func dueLine() -> (due: Int, minutes: Int) {
+    if demo { return props.caughtUp || props.newUser ? (0, 0) : (64, 11) }
+    let td = engine.today
+    return (td.due, td.minutes)
   }
 }

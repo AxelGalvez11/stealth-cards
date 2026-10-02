@@ -1,9 +1,9 @@
 #!/bin/zsh
 # Profile in the tab bar and Connect AI inside Settings, end to end (LucidaUITests/NavTests.swift): taps through the app as
-# made-up people on a fresh copy of the server on this Mac. The tab bar has Today, Library, Discover, Stats and Profile (no
-# Connect); Profile opens your own profile and is lit there, and someone else's profile lights no tab; Settings' row says
-# Connect AI and opens the page, which has a back button and no tab bar; and the Library's empty state, Today's start tile and
-# `-open connect` open the same page. It starts web/server.mjs on PORT (3850) with an empty data folder, runs the test on a
+# made-up people on a fresh copy of the server on this Mac. The tab bar has Library, Discover, Stats and Profile (no Today, no
+# Connect), and the app opens on the Library; News is the bell in Discover's header; Profile opens your own profile and is lit there,
+# and someone else's profile lights no tab; Settings' row says Connect AI and opens the page, which has a back button and no tab
+# bar; and the Library's empty state and `-open connect` open the same page. It starts web/server.mjs on PORT (3850) with an empty data folder, runs the test on a
 # simulator, prints each check, and stops the server.
 #   ios/tools/e2e-nav.sh [simulator id]      (DD=<folder> keeps the build somewhere else; the port must be free;
 #                                             ONLY=NavTests/test3OtherWaysToConnectAI runs just that flow)

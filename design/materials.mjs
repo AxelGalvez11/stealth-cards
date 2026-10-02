@@ -166,7 +166,7 @@ export function makeBoards(H) {
     ${camBtn('Switch camera', 'flip', 'right: 28px; bottom: 50px;')}
   </div></sc-if>`;
   const phoneMake = `<div style="position: relative; width: 390px; height: 844px; overflow: hidden; font-family: ${FONT}; color: {{t.text}};">
-  <dc-import name="PhoneToday" dark="{{dark}}" dim="{{dim}}" hint-size="390px,844px"></dc-import>
+  <dc-import name="PhoneLibrary" dark="{{dark}}" dim="{{dim}}" hint-size="390px,844px"></dc-import>
   <div style="position: absolute; inset: 0; background: {{t.dim}};"></div>
   <div role="dialog" aria-label="Make cards" style="position: absolute; left: 0; right: 0; bottom: 0; top: 46px; box-sizing: border-box; padding: 16px 20px 30px; border-radius: 36px 36px 0 0; background: {{t.bg}}; display: flex; flex-direction: column; gap: 16px;">
     ${body(true)}
@@ -182,7 +182,7 @@ ${DROP_JS}
 renderVals() {
   ${T}${DB_JS}
   const p = this.props, R = this.rich(), md = this.md(), M = db.mock ? this.mockMaterials().make : db.make, plural = (n, w) => n + ' ' + w + (n === 1 ? '' : 's');
-  M.enter({ kind: p.kind, deckId: p.deckId, from: p.from, guide: p.guide, page: p.page, step: p.step });
+  M.enter({ kind: p.kind, deckId: p.deckId, from: p.from, guide: p.guide, page: p.page, folder: p.folder, step: p.step });
   const v = M.view(), step = v.step, kind = v.kind, o = v.opts, lim = v.limits, mock = !!db.mock;
   const TITLES = { file: 'Upload', photo: 'Photos', record: 'Record a lecture', paste: 'Paste', video: 'YouTube', topic: 'A topic' };
   const title = step === 'add' ? (v.from ? 'More cards' : TITLES[kind] || 'Make cards') : step === 'making' ? 'Making your cards' : step === 'review' ? 'Check your cards' : 'Make cards';
@@ -319,7 +319,7 @@ export function deckBlocks(H, phone) {
   const sources = `<sc-if value="{{gs.sourcesShow}}" hint-placeholder-val="{{ true }}">
     <section aria-label="Sources" style="min-width: 0; box-sizing: border-box; padding: ${phone ? '18px 18px 10px' : '20px 20px 10px'}; border-radius: ${phone ? 22 : 24}px; background: {{t.surf}}; display: flex; flex-direction: column; gap: 6px;">
       <div style="display: flex; align-items: center; gap: 10px; min-height: 34px;"><span style="font-size: 13px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: {{t.muted}};">Sources</span><span style="font-family: ${MONO}; font-size: 12px; color: {{t.muted}};">{{gs.sourceCount}}</span><span style="flex-grow: 1;"></span><sc-if value="{{gs.canEdit}}" hint-placeholder-val="{{ true }}">${link('Make cards', '{{gs.makeHref}}', 'sparkle')}</sc-if></div>
-      <sc-if value="{{gs.sourcesNone}}" hint-placeholder-val="{{ false }}"><div style="padding: 14px 0 20px; display: flex; flex-direction: column; gap: 6px; border-top: 1px solid {{t.line}};"><span style="font-size: 15px; font-weight: 600;">Nothing here yet</span><span style="font-size: 13px; line-height: 1.5; color: {{t.muted}};">When Lucida makes cards from a file, a recording, a link or a topic, the source is kept here. You can open it, make more cards from it, or delete it. Cards you write yourself have no source.</span></div></sc-if>
+      <sc-if value="{{gs.sourcesNone}}" hint-placeholder-val="{{ false }}"><div style="padding: 14px 0 20px; border-top: 1px solid {{t.line}};"><span style="font-size: 14px; color: {{t.muted}};">Nothing here yet</span></div></sc-if>
       <div style="display: flex; flex-direction: column;"><sc-for list="{{gs.sources}}" as="s" hint-placeholder-count="3">
         <button type="button" onClick="{{s.open}}" aria-label="Open {{s.name}}" style="min-height: 60px; box-sizing: border-box; padding: 8px 0; display: flex; align-items: center; gap: 12px; border: 0; border-top: 1px solid {{t.line}}; background: transparent; color: {{t.text}}; font: inherit; text-align: left; cursor: pointer;">
           <span style="width: 36px; height: 36px; flex-shrink: 0; border-radius: 18px; background: {{t.bg}}; display: flex; align-items: center; justify-content: center;"><sc-if value="{{s.isFile}}" hint-placeholder-val="{{ true }}">${icon('file', 17, 1.8)}</sc-if><sc-if value="{{s.isPhoto}}" hint-placeholder-val="{{ false }}">${icon('image', 17, 1.8)}</sc-if><sc-if value="{{s.isRecording}}" hint-placeholder-val="{{ false }}">${icon('mic', 17, 1.8)}</sc-if><sc-if value="{{s.isVideo}}" hint-placeholder-val="{{ false }}">${icon('youtube', 17, 1.8)}</sc-if><sc-if value="{{s.isText}}" hint-placeholder-val="{{ false }}">${icon('paste', 17, 1.8)}</sc-if><sc-if value="{{s.isTopic}}" hint-placeholder-val="{{ false }}">${icon('sparkle', 17, 1.8)}</sc-if></span>

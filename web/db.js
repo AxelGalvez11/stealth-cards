@@ -76,7 +76,7 @@ function signedOut(go, onChange = () => {}) {
   const toggleSide = () => { side = !side; writeSide(side); onChange(); };
   if (typeof addEventListener === 'function') addEventListener('storage', e => { if (e.key === SIDE_KEY) { side = readSide(); onChange(); } });
   return { signedOut: true, mock: false, ask: async () => false, say: () => {}, auth, net, schools: createSchools(onChange), settings: () => ({ look: 'system' }), me: () => null, decks: () => [], folders: () => [],
-    chrome: () => ({ nav: { today: '', news: '', hasNews: false, ...sideView(side, toggleSide) }, me: { bg: COLORS[0], initial: '', color: true, photo: '', href: '/sign-in' } }),
+    chrome: () => ({ nav: { news: '', hasNews: false, ...sideView(side, toggleSide) }, me: { bg: COLORS[0], initial: '', color: true, photo: '', href: '/sign-in' } }),
     join: () => live.view(), joinAt: (kind, code) => live.at(kind, code), act: { go, ...playerActs(live, go) } };
 }
 // The school list (web/schools.json, about 4,000 colleges and universities): fetched the first time a picker searches it, and kept; the
@@ -252,7 +252,7 @@ export async function createDb({ onChange, go, ask = async () => false, say = ()
     return (memo['s' + d.id] = { due, overdue, fresh, soon, next, total: all.length, aiCount: all.filter(byAI).length,
       ret: rememberedPct(S.logs.filter(l => l.deckId === d.id && l.at >= t - 30 * DAY)), exam: examOf(d, cs) });
   }
-  // A deck's exam, for its page, its settings, and Today: "Exam in 12 days · 84 cards to review first". Null without one,
+  // A deck's exam, for its page and its settings: "Exam in 12 days · 84 cards to review first". Null without one,
   // and once the day has passed.
   const shortDay = iso => { const [y, m, dd] = iso.split('-').map(Number); return SHORT_MONTHS[m - 1] + ' ' + dd + (y !== new Date(now()).getFullYear() ? ', ' + y : ''); };
   function examOf(d, cs) {
@@ -274,7 +274,7 @@ export async function createDb({ onChange, go, ask = async () => false, say = ()
   // A card of a deck you study as it is: fixing it means suggesting the fix to its owner, on the deck's page.
   const suggestHref = (d, c) => shareOf(d).link.url + '?suggest=' + encodeURIComponent((c && c.origin) || '1');
   // Classes (web/classes.mjs). The classes you're in come with your library (S.classes, brought up to date when the app
-  // opens), so Today shows your assignments right away; your progress on each is worked out here, from your own cards
+  // opens), so the Library shows your assignments right away; your progress on each is worked out here, from your own cards
   // (web/progress.js), the same way the server sends it to a class you share it with.
   const classDeck = sharedId => S.decks.find(d => d.link && d.link.id === sharedId && !d.link.gone);
   const classProgress = sharedId => { const d = classDeck(sharedId); return d ? { deckId: d.id, ...progressOf(d, S.cards, S.logs) } : null; };
@@ -1263,8 +1263,8 @@ export async function createDb({ onChange, go, ask = async () => false, say = ()
     // Lucida's own question and message, for a screen's logic to use (never the browser's confirm() or alert()).
     ask, say,
     raw: () => S,
-    // Your classes as your library has them; your progress on a class's deck (null until you study it); and what Today
-    // lists: the assignments of the classes you're a member of, soonest first. A done one stays until its date passes,
+    // Your classes as your library has them; your progress on a class's deck (null until you study it); and what the
+    // Library's Assigned lists: the assignments of the classes you're a member of, soonest first. A done one stays until its date passes,
     // one that isn't done until two weeks after.
     classes: () => S.classes || [],
     classProgress,
@@ -1280,14 +1280,13 @@ export async function createDb({ onChange, go, ask = async () => false, say = ()
     // A clip's waveform and where it's at (sound.js), and the recording under way, if there is one.
     sound: c => sound.view(c),
     recording: () => sound.recording(),
-    // Your picture wherever it shows (the sidebar, Today on a phone, Settings): your photo, your Google photo, or your
-    // initial on your color.
+    // Your picture wherever it shows (the sidebar, the iPhone's tab bar, Settings): your photo, your Google photo, or your initial on your color.
     // With a theme on, the theme draws the circle and your initial (or a ring around your photo): skinned, art.
     chrome: () => {
-      const due = S.decks.filter(d => !d.paused).reduce((n, d) => n + deckStat(d).due, 0), ph = photoOf(), T = skinNow(), color = ph === 'color';
+      const ph = photoOf(), T = skinNow(), color = ph === 'color';
       const initial = (((S.settings.name || (S.me && S.me.name) || '').trim() || 'You')[0]).toUpperCase();
       const news = net.unread();
-      return { nav: { today: due ? String(due) : '', news: news ? String(news > 99 ? '99+' : news) : '', hasNews: news > 0, ...sideView(side, toggleSide) }, me: { bg: T && color ? 'transparent' : COLORS[S.settings.color] || COLORS[0], initial,
+      return { nav: { news: news ? String(news > 99 ? '99+' : news) : '', hasNews: news > 0, ...sideView(side, toggleSide) }, me: { bg: T && color ? 'transparent' : COLORS[S.settings.color] || COLORS[0], initial,
         color: color && !T, photo: ph === 'google' ? S.me.picture : ph === 'yours' ? S.settings.yourPhoto : '', href: '/you', skinned: !!T, art: T ? T.me(initial, !color) : null } };
     },
     settings: () => ({ ...S.settings, name: S.settings.name || (S.me && S.me.name) || 'You', sub: S.me ? S.me.email : 'Saved on this computer', signedIn: !!S.me,
@@ -1333,6 +1332,7 @@ export async function createDb({ onChange, go, ask = async () => false, say = ()
     // The cards made together with this one: every blank of one text, or every box of one picture (just it, alone).
     group: id => { const c = cardIndex().get(id); return !c ? [] : c.group ? groupIndex().get(c.group) : [c]; },
     draft: type => ({ kind: { Basic: 'basic', Blank: 'cloze', Image: 'image', Audio: 'audio' }[type] || 'basic', front: '', back: '', text: '', note: '', tags: [], image: null, audio: null, speak: '', auto: true, boxes: [], occ: 'one' }),
+    // What's due across your decks, for the Library's due line (and the review of every deck it starts), and where a new card goes.
     today: () => {
       const t = new Date(), live = S.decks.filter(d => !d.paused), sum = k => live.reduce((n, d) => n + deckStat(d)[k], 0);
       const due = sum('due'), fresh = sum('fresh'), { streak, best, days } = streaks(), monday = dayAt(t, -((t.getDay() + 6) % 7)), today = dayAt(t);
@@ -1348,10 +1348,10 @@ export async function createDb({ onChange, go, ask = async () => false, say = ()
       if (cur && (!shown || shown.id !== cur.card.id)) shown = { id: cur.card.id, at: now() };
       const counts = { new: q.filter(x => x.lane === 'new').length, learn: q.filter(x => x.lane === 'learn').length, rev: q.filter(x => x.lane === 'rev').length };
       const d = cur ? cur.deck : deckById(id) || S.decks[0] || { grading: 'four', piles: [] };
-      // X goes straight back to the deck's page, or to Today from Today's review of every deck (the owner: "clicking 'x' on
+      // X goes straight back to the deck's page, or to the Library from its review of every deck (the owner: "clicking 'x' on
       // flashcards or learn should take one back to decks not to the finish screen"). Every grade is saved already.
       const base = { deckId: d.id, done, left: q.length, total: done + q.length, counts, mode: d.grading, prog: S.settings.prog, piles: (d.piles || []).map(p => ({ name: p.name, n: cardsOf(d.id).filter(c => c.pile === p.name).length })),
-        endHref: set ? setBack(set) : id ? '/deck/' + id : '/', setName: setName(set) };
+        endHref: set ? setBack(set) : id ? '/deck/' + id : '/library', setName: setName(set) };
       if (!cur) return { ...base, empty: true, card: null, queue: 'rev', iv: { again: '', hard: '', good: '', easy: '' }, fsrsOn: false, editHref: '' };
       const c = cur.card, t = now(), pv = scheduled(d) ? preview(c.srs, t, { goal: d.goal / 100, maxDays: GAPS[d.gapIdx ?? 3], steps: d.steps, w: wOf() }) : null;
       autoplay(c);
@@ -1400,8 +1400,8 @@ export async function createDb({ onChange, go, ask = async () => false, say = ()
         streak: streaks().streak, next: nx ? nx.short + ' · ' + nx.n : 'Nothing due',
         moreHref: left ? reviewHref(session.deckId, session.pile, session.set) : session && session.set ? setBack(session.set) : d ? '/deck/' + d.id + '/card' : '/library', moreLabel: left ? 'Keep going · ' + left + ' left' : session && session.set ? (session.set.startsWith('cards:') ? 'Back to the test' : 'Back to stats') : 'Add cards',
         // Done goes back to the deck the session was from (the owner: "finishing a deck takes one back to 'today' page and
-        // not deck page"), or to Today after reviewing every deck.
-        doneHref: session && session.set ? setBack(session.set) : d ? '/deck/' + d.id : '/',
+        // not deck page"), or to the Library after reviewing every deck.
+        doneHref: session && session.set ? setBack(session.set) : d ? '/deck/' + d.id : '/library',
         // Each pile: how many cards went in this time, how many are in it now, and a link to go over it.
         sorted: piled.length, onlyPiles: piled.length > 0 && !rated.length,
         piles: names.map(name => ({ name, n: piled.filter(x => x.pile === name).length, total: (d ? cardsOf(d.id) : S.cards).filter(c => c.pile === name).length, href: reviewHref(session && session.deckId, name) })) };
@@ -1452,7 +1452,7 @@ export async function createDb({ onChange, go, ask = async () => false, say = ()
     sourceText: name => { if (!name) return ''; if (sourceTexts[name] === undefined) { sourceTexts[name] = null; fetch('/media/' + encodeURIComponent(name), { cache: 'no-store' }).then(r => (r.ok ? r.text() : '')).then(t => { sourceTexts[name] = t; changed(); }).catch(() => { sourceTexts[name] = ''; }); } return sourceTexts[name]; },
     // The page where an AI app asks to connect (/oauth/authorize).
     consent: connect.consent,
-    href: (kind, id) => ({ decks: '/library', library: '/library', cards: '/library/cards', newDeck: '/decks/new', import: id ? '/deck/' + id + '/import' : '/decks/import', make: '/make' + (id ? '?deck=' + id : ''), guide: '/deck/' + id + '/guide', connect: '/connect', today: '/', done: '/review/done', stats: '/stats',
+    href: (kind, id) => ({ decks: '/library', library: '/library', cards: '/library/cards', newDeck: '/decks/new', import: id ? '/deck/' + id + '/import' : '/decks/import', make: '/make' + (id ? '?deck=' + id : ''), guide: '/deck/' + id + '/guide', connect: '/connect', today: '/library', done: '/review/done', stats: '/stats',
       review: id ? '/review/' + id : '/review', deck: '/deck/' + id })[kind] || '/'
   };
 }

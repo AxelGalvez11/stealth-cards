@@ -23,6 +23,7 @@ import testKit from './test-boards.mjs';
 import { makeBoards, deckBlocks, publicGuideBlocks, PUBLIC_GUIDE_JS, DECK_MATERIALS_JS, GUIDE_CSS, GUIDE_STATES, MATERIALS_MOCK, LIVE_FROM, LIVE_TOPIC_STATES } from './materials.mjs';
 import { DIAGRAM_METHOD, DIAGRAM_CSS, PUBLIC_DIAGRAMS_JS, publicDiagramBlocks } from './diagrams.mjs';
 import { askMarkup, toastMarkup, ASK_SAMPLES, ASK_JS, askProp, dateMarkup, DATE_JS, dropMarkup, dropSheet, dropPill, DROP_JS, PLAYER_JS } from './ui.mjs';
+import { homeBlocks, MAKE_BOX_METHOD } from './home.mjs';
 // The themes (Pro), for boards' logic: key, board name, short and full names.
 const THEME_LIST = JSON.stringify(THEMES.map(({ key, board, short, name }) => ({ key, board: board || '', short, name })));
 const MESH_DATA = JSON.stringify(Object.fromEntries(PALETTE_NAMES.map(n => [n, { ...paletteData(n), shadow: PALETTES[n].ink === '#FFFFFF' ? '0 1px 14px rgba(0,0,0,.16)' : 'none' }])));
@@ -99,7 +100,7 @@ ${logic}
 `;
 // Motion on every board, as the Motion board shows it: a page's content rises in (each part a moment after the one
 // before), pills and buttons press in, empty states float in a soft light with a
-// shine crossing the top card, the Today card's colors drift, the session meter draws in, and forecast bars grow.
+// shine crossing the top card, the session meter draws in, and forecast bars grow.
 // Menus, pop-ups, dropdowns, switches, segmented controls, sheets and side panels (deck settings, the card editor) share
 // one set of timings with the iPhone app (design/motion.mjs): quick, a short slide plus a fade, and nothing bounces (the
 // owner: "add slide in animations to app components, like menu popup, button toggle etc."). The app slides sheets and
@@ -119,7 +120,6 @@ const APP_MOTION_CSS = [
   '@keyframes scSheen{0%,58%{transform:translateX(-160%) skewX(-18deg)}86%,100%{transform:translateX(260%) skewX(-18deg)}}',
   '.sc-float{animation:scFloat 6s ease-in-out infinite}.sc-sway-a{animation:scSwayA 6s ease-in-out infinite}.sc-sway-b{animation:scSwayB 6s ease-in-out infinite}.sc-glow{animation:scGlow 6s ease-in-out infinite}',
   '.sc-sheen{position:absolute;top:0;bottom:0;left:0;width:45%;background:linear-gradient(90deg,transparent,rgba(255,255,255,.4),transparent);animation:scSheen 5s cubic-bezier(.4,0,.2,1) infinite;pointer-events:none}',
-  '@keyframes scDrift{from{transform:scale(1.14) translate(-3%,-2%)}to{transform:scale(1.14) translate(3%,2%)}}.sc-alive>svg:first-of-type{animation:scDrift 16s ease-in-out infinite alternate}',
   '@keyframes scDraw{from{stroke-dashoffset:1.02}}.sc-draw{stroke-dasharray:1 2;animation:scDraw .9s cubic-bezier(.2,.8,.2,1) backwards}',
   '@keyframes scKnob{from{opacity:0;transform:scale(.3)}}.sc-knob{transform-box:fill-box;transform-origin:center;animation:scKnob .35s .75s cubic-bezier(.34,1.56,.64,1) backwards}',
   '@keyframes scGrow{from{transform:scaleY(0)}}.sc-grow{transform-origin:bottom;animation:scGrow .6s cubic-bezier(.2,.8,.2,1) backwards}',
@@ -129,7 +129,7 @@ const APP_MOTION_CSS = [
   '.sc-side{width:240px;transition:width .2s ease}.sc-side[data-collapsed="true"]{width:78px}',
   '.sc-side-head{padding:0 4px 20px 12px;display:flex;align-items:center;justify-content:space-between;gap:4px}.sc-side-btns{display:flex;align-items:center;gap:4px}',
   '.sc-side[data-collapsed="true"] .sc-side-head{padding:0 0 12px;justify-content:center}.sc-side[data-collapsed="true"] .sc-side-btns{flex-direction:column-reverse;gap:6px}',
-  '.sc-side[data-collapsed="true"] :is(.sc-logo,.sc-lab,.sc-num){display:none}.sc-side .sc-dot{display:none}.sc-side[data-collapsed="true"] .sc-dot{display:block}',
+  '.sc-side[data-collapsed="true"] :is(.sc-logo,.sc-lab){display:none}',
   '@media (prefers-reduced-motion:reduce){.sc-side{transition:none}}',
   // Lucida's own focus ring and scrollbars (the owner: nothing the browser draws itself): a 2 px ring in the text's own color around what the keyboard is on
   // (a text field's box shows it when you tab into it), and thin scrollbars in the same color, faint, so they follow light, dark and gray.
@@ -137,7 +137,7 @@ const APP_MOTION_CSS = [
   '[role="option"]:focus-visible,[role="menuitem"]:focus-visible{outline-offset:-2px}',
   'label:has(input:focus-visible,textarea:focus-visible):not([style*="box-shadow"]){box-shadow:0 0 0 2px color-mix(in srgb,currentColor 45%,transparent)}',
   '*{scrollbar-width:thin;scrollbar-color:color-mix(in srgb,currentColor 30%,transparent) transparent}::-webkit-scrollbar{width:8px;height:8px}::-webkit-scrollbar-thumb{border-radius:8px;background:color-mix(in srgb,currentColor 30%,transparent)}::-webkit-scrollbar-track,::-webkit-scrollbar-corner{background:transparent}',
-  '@media (prefers-reduced-motion:reduce){main>*,.sc-float,.sc-sway-a,.sc-sway-b,.sc-glow,.sc-alive>svg,.sc-draw,.sc-knob,.sc-grow{animation:none!important}.sc-sheen{display:none}button:active,.sc-press:active,.sc-lift:hover{transform:none}}'
+  '@media (prefers-reduced-motion:reduce){main>*,.sc-float,.sc-sway-a,.sc-sway-b,.sc-glow,.sc-draw,.sc-knob,.sc-grow{animation:none!important}.sc-sheen{display:none}button:active,.sc-press:active,.sc-lift:hover{transform:none}}'
 ].join('');
 // Dark mode, and its gray look (dim): the app sets both from Settings (Appearance, and Dark mode: Gray or Black).
 const DARK = { dark: { editor: 'boolean', default: false }, dim: { editor: 'boolean', default: false } };
@@ -239,11 +239,11 @@ const mark = h => `<svg width="${Math.round(h * 33 / 30.5)}" height="${h}" viewB
 const logo = (size = 28) => `<div style="display: flex; align-items: center; gap: 9px;">${mark(Math.round(size / 2))}<div style="font-size: 17px; font-weight: 600; letter-spacing: -.02em;">Lucida</div></div>`;
 
 // ---------- Structure A: web sidebar ----------
-// Today, Library, Discover, Stats, and Profile (your own picture is its icon: 'me'). Settings sits at the bottom, lit on
-// Settings and on the pages inside it (Theme, Connect AI, a theme's page).
-const NAV_A = [['Today', 'today', 'Main.dc.html', '64'], ['Library', 'decks', 'WebDecks.dc.html', ''], ['Discover', 'compass', 'WebDiscover.dc.html', ''], ['Stats', 'stats', 'WebStats.dc.html', ''], ['Profile', 'me', '{{me.href}}', '']];
+// Library, Discover, Stats, and Profile (your own picture is its icon: 'me'). Settings sits at the bottom, lit on Settings and on the
+// pages inside it (Theme, Connect AI, a theme's page). There is no Today page (the owner, 2026-10-01): the app opens on the Library.
+const NAV_A = [['Library', 'decks', 'WebDecks.dc.html', ''], ['Discover', 'compass', 'WebDiscover.dc.html', ''], ['Stats', 'stats', 'WebStats.dc.html', ''], ['Profile', 'me', '{{me.href}}', '']];
 // Your profile circle follows Settings (your photo, your Google photo, or your initial on your color): in the web
-// sidebar and the iPhone's tab bar (Profile), on the iPhone's Today and Settings, and on Settings' profile card. The canvas
+// sidebar and the iPhone's tab bar (Profile), on the iPhone's Settings, and on Settings' profile card. The canvas
 // has no photos, so it draws stand-ins: one for the Google photo, one for a photo you uploaded.
 const STAND_IN = (size, label, bg) => `<span role="img" aria-label="${label}" style="width: ${size}px; height: ${size}px; flex-shrink: 0; border-radius: ${size / 2}px; overflow: hidden; background: ${bg}; display: flex;"><svg width="${size}" height="${size}" viewBox="0 0 64 64" aria-hidden="true"><circle cx="32" cy="26" r="11" fill="rgba(255,255,255,.92)"/><path d="M11 64c1.5-12 10-19 21-19s19.5 7 21 19z" fill="rgba(255,255,255,.92)"/></svg></span>`;
 const PHOTO = size => STAND_IN(size, 'Google profile photo', 'linear-gradient(160deg, #FFD9A8 0%, #F59E6B 55%, #D9677A 100%)');
@@ -255,15 +255,15 @@ const AVATAR_ME = size => `<span style="position: relative; width: ${size}px; he
 const MY_ICON_A = `<span style="margin: 0 -2px; display: flex;">${AVATAR_ME(22)}</span>`;
 // Collapsed (web/side.js, the button at the top), the sidebar is a rail of icons: each place's words go (.sc-lab), and its name is its
 // tooltip (title) and its accessible name (aria-label), filled in by `nav.tip` only while it's collapsed (while it's open the words are on
-// screen, so there's no tooltip and the name is the words). A lit place has aria-current. Today's count becomes a small dot on its icon.
-const TIP_KEY = { Today: 'today', Library: 'library', Discover: 'discover', Stats: 'stats', Profile: 'profile', Settings: 'settings' };
+// screen, so there's no tooltip and the name is the words). A lit place has aria-current.
+const TIP_KEY = { Library: 'library', Discover: 'discover', Stats: 'stats', Profile: 'profile', Settings: 'settings' };
 const navRow = (label, icon, href, on, more = '', attrs = '') => `<a href="${href}"${attrs}${/aria-label=/.test(attrs) ? '' : ` aria-label="{{nav.tip.${TIP_KEY[label]}}}"`} data-tip="{{nav.tip.${TIP_KEY[label]}}}" data-tip-side="right"${on ? ' aria-current="page"' : ''} style="position: relative; display: flex; align-items: center; gap: 12px; height: 36px; padding: 0 14px; border-radius: 999px; font-size: 14px; white-space: nowrap; ${on ? 'background: {{t.surf}}; color: {{t.text}}; font-weight: 600;' : 'color: {{t.muted}};'}">${icon}<span class="sc-lab">${label}</span>${more}</a>`;
 // News (the study network: suggestions on your decks, people following you, updates to decks you follow) is the bell
 // by the logo, with how many are new. The button beside it collapses the sidebar to the rail, and opens it again (aria-expanded);
 // its place in the page doesn't move, so a keyboard keeps its focus when it's pressed.
 const sidebar = active => `<nav id="sidebar" class="sc-side" aria-label="Main" data-collapsed="{{nav.collapsed}}" style="flex-shrink: 0; box-sizing: border-box; padding: 24px 16px; display: flex; flex-direction: column; gap: 4px; border-right: 1px solid {{t.line}}; overflow: hidden;">
   <div class="sc-side-head"><div class="sc-logo">${logo()}</div><div class="sc-side-btns"><a href="WebActivity.dc.html" aria-label="News" data-tip="{{nav.tip.news}}"${active === 'News' ? ' aria-current="page"' : ''} style="position: relative; width: 32px; height: 32px; border-radius: 16px; display: flex; align-items: center; justify-content: center; ${active === 'News' ? 'background: {{t.surf}}; color: {{t.text}};' : 'color: {{t.muted}};'}">${svg(I.bell, 18, 1.8)}<sc-if value="{{nav.hasNews}}" hint-placeholder-val="{{ true }}"><span style="position: absolute; top: 1px; right: 0; min-width: 16px; height: 16px; padding: 0 4px; box-sizing: border-box; border-radius: 8px; background: #E5484D; color: #FFFFFF; font-size: 10px; font-weight: 700; line-height: 16px; text-align: center;">{{nav.news}}</span></sc-if></a><button type="button" onClick="{{nav.toggleSide}}" aria-label="{{nav.sideLabel}}" aria-expanded="{{nav.sideOpen}}" aria-controls="sidebar" data-tip="{{nav.sideLabel}}" class="sc-press" style="width: 32px; height: 32px; flex-shrink: 0; padding: 0; border: 0; border-radius: 16px; background: transparent; color: {{t.muted}}; display: flex; align-items: center; justify-content: center; cursor: pointer;">${svg(I.sidebar, 18, 1.8)}</button></div></div>
-  ${NAV_A.map(([label, ic, href]) => navRow(label, ic === 'me' ? MY_ICON_A : svg(I[ic]), href, label === active, label === 'Today' ? `<sc-if value="{{nav.today}}" hint-placeholder-val="{{ true }}"><span class="sc-num" style="margin-left: auto; font-family: ${MONO}; font-size: 12px;">{{nav.today}}</span><span class="sc-dot" aria-hidden="true" style="position: absolute; top: 6px; left: 29px; width: 7px; height: 7px; border-radius: 4px; background: {{t.text}};"></span></sc-if>` : '', label === 'Profile' ? ' aria-label="Your profile"' : '')).join('\n  ')}
+  ${NAV_A.map(([label, ic, href]) => navRow(label, ic === 'me' ? MY_ICON_A : svg(I[ic]), href, label === active, '', label === 'Profile' ? ' aria-label="Your profile"' : '')).join('\n  ')}
   <div style="flex-grow: 1;"></div>
   ${navRow('Settings', svg(I.gear), 'WebSettings.dc.html', active === 'Settings', '', ' aria-label="Settings"')}
 </nav>`;
@@ -280,7 +280,7 @@ const SECTIONS_JS = `const SEC = ${JSON.stringify(SETTINGS_SECTIONS.map(x => [x[
   const secLinks = cur => Object.fromEntries(SEC.map(([k]) => [secId(k), { href: db.mock ? '#' : '/settings/' + k, current: k === cur ? 'page' : 'false', bg: k === cur ? t.surf : 'transparent', fg: k === cur ? t.text : t.muted, weight: k === cur ? '600' : '400',
     pick: db.mock ? e => { if (e && e.preventDefault) e.preventDefault(); this.setState({ section: k }); } : undefined }]));`;
 // On Settings' pages (computer width) the Settings sidebar replaces the app's, in the same place with the same width and style (the owner:
-// "make the settings sidebar replace the apps sidebar so it looks cleaner"): a Back row on top (to the page you came from, or Today when
+// "make the settings sidebar replace the apps sidebar so it looks cleaner"): a Back row on top (to the page you came from, or the Library when
 // Settings was opened directly), then the seven sections with their icons, the current one lit the way the app sidebar lights its place.
 // It is always open (the app sidebar's open or collapsed choice is kept, and is there again when you leave), and the swap is instant.
 // The page body holds just the section's title and its rows, laid out like the other pages.
@@ -292,11 +292,11 @@ const SETTINGS_SIDEBAR = `<nav aria-label="Settings sections" style="width: 240p
     return k === 'plan' ? `<sc-if value="{{hasPlan}}" hint-placeholder-val="{{ true }}">${a}</sc-if>` : a; }).join('\n  ')}
 </nav>`;
 // What Settings' sidebar needs from a page inside Settings (Theme, Connect AI): its sections with `cur` lit, whether Plan is there (`hasPlan`), and Back
-// (the page you came from, which the app gives it as `back`, or Today). The computer pages of Appearance › Theme and Connect AI wear it too.
+// (the page you came from, which the app gives it as `back`, or the Library). The computer pages of Appearance › Theme and Connect AI wear it too.
 // On the canvas its links open the Settings board (which section that shows is that board's own Tweak).
 const SETTINGS_SIDE_JS = (cur, hasPlan) => `${SECTIONS_JS}
   const settingsSide = { sec: Object.fromEntries(Object.entries(secLinks('${cur}')).map(([id, v]) => [id, db.mock ? { ...v, href: 'WebSettings.dc.html', pick: () => {} } : v])),
-    hasPlan: ${hasPlan}, backHref: db.mock ? 'Main.dc.html' : this.props.back || '/' };`;
+    hasPlan: ${hasPlan}, backHref: db.mock ? 'WebDecks.dc.html' : this.props.back || '/library' };`;
 // `board`: the page has things to drag (see drag.mjs), and popups and trays drawn over the whole page.
 // `over`: a popup drawn over the whole page (Settings' Delete account question), nothing to drag.
 const webRoot = (inner, board = false, over = false) => `<div${board ? ' data-sc-board="{{dragKey}}"' : ''} style="width: 1440px; height: 900px; box-sizing: border-box; display: flex; overflow: hidden; font-family: ${FONT}; background: {{t.bg}}; color: {{t.text}};${board || over ? ' position: relative;' : ''}">
@@ -314,6 +314,8 @@ const TEST = testKit({ svg, I, FONT, MONO, DB_JS, T, get OCC_JS() { return OCC_J
 // The Pro badge, beside what Pro adds (Settings → Plan, Learn mode and Pro scheduling on Free).
 const PRO_BADGE = '<span style="height: 22px; padding: 0 9px; display: inline-flex; align-items: center; border-radius: 999px; background: linear-gradient(90deg, #7E94FB, #2CB2EA); color: #FFFFFF; font-size: 12px; font-weight: 700; letter-spacing: .01em;">Pro</span>';
 const eyebrow = txt => `<div style="font-size: 12px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: {{t.muted}};">${txt}</div>`;
+// The Library's top (design/home.mjs): the Make box and its row, what's due, on a computer (HB) and on a phone (HBP).
+const HB = homeBlocks({ svg, I }, false), HBP = homeBlocks({ svg, I }, true);
 const chip = (txt, extra = '') => `<span style="display: inline-flex; align-items: center; gap: 6px; height: 26px; padding: 0 10px; border-radius: 999px; background: {{t.surf}}; font-size: 12px; font-weight: 500; ${extra}">${txt}</span>`;
 // The grading-style switcher (web: compact pill in the header; phone: full-width row).
 const modeSeg = full => `<div role="group" aria-label="Grading style" style="display: ${full ? 'grid; grid-template-columns: repeat(3, minmax(0, 1fr))' : 'flex'}; gap: 4px; padding: 4px; border-radius: 999px; background: {{t.surf}};">
@@ -453,7 +455,7 @@ const DUE_BARS = (n, gap, radius, twoLine = false) => `<div style="flex-grow: 1;
       </div>
       <div style="display: flex; align-items: center; gap: 8px; font-size: 12px; color: {{t.muted}};"><span style="width: 10px; height: 10px; border-radius: 3px; background: {{busy.c}};"></span>{{busy.text}}</div>`;
 
-// ---------- Classes: dates, and what Today shows of them (the rest is in the Classes section, after Discover) ----------
+// ---------- Classes: dates, and what the Library shows of them (the rest is in the Classes section, after Discover) ----------
 // Dates (for boards that show assignments): "due Friday", "until Oct 6" (review what's due each day, until then), "was
 // due Friday". They count from today; on the canvas, from Monday, September 28, so its boards always read the same.
 const CLASS_JS = `const DAYS7 = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'], MON3 = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
@@ -471,109 +473,22 @@ const CLASS_JS = `const DAYS7 = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Th
   const leftWord = (a, pr) => (!pr ? (a.goal === 'daily' ? 'Not started' : nOf(a.cards || 0, 'card'))
     : a.goal === 'daily' ? (!pr.learned ? 'Not started' : pr.due ? pr.due + ' to review' : 'Caught up') : pr.total && pr.learned >= pr.total ? 'Done' : nOf(Math.max(0, pr.total - pr.learned), 'card') + ' left');
   const isDone = (a, pr) => !!pr && (a.goal === 'daily' ? pr.learned > 0 && !pr.due : pr.total > 0 && pr.learned >= pr.total);`;
-// ---------- Today: what your classes assigned ----------
+// ---------- The Library's Assigned: what your classes assigned ----------
 // A calm row each, soonest first: "Chapter 3 · due Friday · 12 cards left", the class's name on the right. It opens the
-// deck (or the class, until you study it). The canvas shows them on WebTodayClass and PhoneTodayClass (prop assignments).
-const TODAY_ASSIGN_JS = phone => `${CLASS_JS}
+// deck (or the class, until you study it). Only there when you have assignments; the canvas shows them on WebLibraryAssigned and
+// PhoneLibraryAssigned (prop assignments).
+const ASSIGNED_JS = phone => `${CLASS_JS}
   const assignRows = (db.assignments ? db.assignments() : []).map(a => { const g = this.gen((a.cover && a.cover.seed) || a.name, (a.cover && a.cover.style) || 'mix'), left = leftWord(a, a.progress), done = isDone(a, a.progress), when = dueWord(a.goal, a.due);
     return { name: a.name, className: a.className, text: a.name + ' · ' + when + ' · ' + left, sub: when + ' · ' + a.className, left, dot: g.base, textColor: done ? t.muted : t.text, leftColor: done ? t.good : t.text,
       href: db.mock ? '${phone ? 'PhoneDeck' : 'WebDeck'}.dc.html' : a.progress ? '/deck/' + a.progress.deckId : '/class/' + a.code }; });`;
-const TODAY_ASSIGN_WEB = `<sc-if value="{{hasAssignments}}" hint-placeholder-val="{{ false }}"><div style="display: flex; flex-direction: column; gap: 6px;">
-      ${eyebrow('Assignments')}
+const ASSIGNED_WEB = `<sc-if value="{{hasAssignments}}" hint-placeholder-val="{{ false }}"><div style="display: flex; flex-direction: column; gap: 6px;">
+      ${eyebrow('Assigned')}
       <sc-for list="{{assignments}}" as="a" hint-placeholder-count="2"><a href="{{a.href}}" style="display: flex; align-items: center; gap: 14px; height: 56px; border-bottom: 1px solid {{t.line}};"><span style="width: 10px; height: 10px; flex-shrink: 0; border-radius: 5px; background: {{a.dot}};"></span><span style="flex-grow: 1; min-width: 0; font-size: 15px; font-weight: 500; color: {{a.textColor}}; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{a.text}}</span><span style="flex-shrink: 0; font-size: 13px; color: {{t.muted}};">{{a.className}}</span></a></sc-for>
     </div></sc-if>`;
-const TODAY_ASSIGN_PHONE = `<sc-if value="{{hasAssignments}}" hint-placeholder-val="{{ false }}"><div style="display: flex; flex-direction: column;">
-    <div style="font-size: 13px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: {{t.muted}}; padding: 6px 4px 4px;">Assignments</div>
+const ASSIGNED_PHONE = `<sc-if value="{{hasAssignments}}" hint-placeholder-val="{{ false }}"><div style="display: flex; flex-direction: column;">
+    <div style="font-size: 13px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: {{t.muted}}; padding: 6px 4px 4px;">Assigned</div>
     <sc-for list="{{assignments}}" as="a" hint-placeholder-count="2"><a href="{{a.href}}" style="display: flex; align-items: center; gap: 12px; min-height: 58px; border-bottom: 1px solid {{t.line}};"><span style="width: 10px; height: 10px; flex-shrink: 0; border-radius: 5px; background: {{a.dot}};"></span><span style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px;"><span style="font-size: 16px; font-weight: 500; color: {{a.textColor}}; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{a.name}}</span><span style="font-size: 13px; color: {{t.muted}}; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{a.sub}}</span></span><span style="flex-shrink: 0; font-size: 14px; font-weight: 600; color: {{a.leftColor}};">{{a.left}}</span></a></sc-for>
   </div></sc-if>`;
-
-// Main = Web Today
-const webToday = webRoot(`${sidebar('Today')}
-<main style="flex-grow: 1; box-sizing: border-box; padding: 36px 48px; display: flex; gap: 40px;">
-  <section style="flex-grow: 1; display: flex; flex-direction: column; gap: 36px; min-width: 0;">
-    ${meshCard('hero', 'border-radius: 20px; height: 160px; flex-shrink: 0;', 'height: 100%; box-sizing: border-box; padding: 28px 32px; display: flex; align-items: flex-end; justify-content: space-between;', `
-      <div style="display: flex; flex-direction: column; gap: 10px;">
-        <div style="font-size: 14px; opacity: .8;">{{heroMeta}}</div>
-        <h1 style="margin: 0; font-size: 42px; font-weight: 500; line-height: 1; letter-spacing: -.04em;">{{heroTitle}}</h1>
-        <div style="font-size: 14px; opacity: .8;">{{heroSub}}</div>
-      </div>
-      <div style="display: flex; gap: 10px;">
-        <a href="{{newCardHref}}" style="height: 36px; padding: 0 20px; display: inline-flex; align-items: center; gap: 8px; border-radius: 999px; ${glass} font-size: 14px; font-weight: 600;">${svg(I.plus, 16, 2)}New card</a>
-        <a href="WebMake.dc.html" style="height: 36px; padding: 0 20px; display: inline-flex; align-items: center; gap: 8px; border-radius: 999px; ${glass} font-size: 14px; font-weight: 600;">${svg(I.sparkle, 16, 2)}Make cards</a>
-        <a href="{{heroHref}}" style="height: 36px; padding: 0 24px; display: inline-flex; align-items: center; border-radius: 999px; background: #FFFFFF; color: #000000; font-size: 14px; font-weight: 600;">{{heroCta}}</a>
-      </div>`, 'div', ' class="sc-alive"')}
-
-    ${TODAY_ASSIGN_WEB}
-    <div style="display: flex; flex-direction: column; gap: 6px;">
-      <div style="display: flex; align-items: center; justify-content: space-between;">${eyebrow('Decks')}<span style="font-size: 12px; color: {{t.muted}};">Most urgent first</span></div>
-      <sc-for list="{{decks}}" as="d" hint-placeholder-count="6">
-        <div class="sc-row" style="position: relative; display: flex; align-items: center; gap: 16px; height: 56px; border-bottom: 1px solid {{t.line}};">
-          <a href="{{d.href}}" aria-label="{{d.name}}" class="sc-hit" style="position: absolute; inset: 0;"></a>
-          <span style="flex-grow: 1; min-width: 0; font-size: 15px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{d.name}}</span>
-          <sc-if value="{{d.hasExam}}" hint-placeholder-val="{{ false }}"><span style="flex-shrink: 0; display: inline-flex; align-items: center; gap: 6px; font-size: 13px; color: {{t.muted}}; white-space: nowrap;">${svg(I.calendar, 14, 2)}<span>{{d.examLine}}</span></span></sc-if>
-          <span style="flex-shrink: 0; height: 26px; padding: 0 10px; display: inline-flex; align-items: center; border-radius: 999px; font-size: 12px; font-weight: 600; background: {{d.tagBg}}; color: {{d.tagFg}};">{{d.tag}}</span>
-          <span style="flex-shrink: 0; width: 40px; text-align: right; font-family: ${MONO}; font-size: 15px; color: {{d.countColor}};">{{d.due}}</span>
-          <span style="position: relative; flex-shrink: 0; width: 100px; display: flex; justify-content: flex-end; pointer-events: none;">
-            <sc-if value="{{d.canStudy}}" hint-placeholder-val="{{ true }}"><span style="display: flex; pointer-events: auto;">${pill('Flashcards', { href: '{{d.studyHref}}', h: 32 })}</span></sc-if>
-            <sc-if value="{{d.noStudy}}" hint-placeholder-val="{{ false }}"><span style="font-size: 13px; color: {{t.muted}};">Up to date</span></sc-if>
-          </span>
-        </div>
-      </sc-for>
-    </div>
-  </section>
-
-  <aside style="width: 300px; flex-shrink: 0; display: flex; flex-direction: column; gap: 12px;">
-    <div style="background: {{t.surf}}; border-radius: 18px; padding: 22px; display: flex; flex-direction: column; gap: 16px;">
-      <div style="display: flex; align-items: center; gap: 12px;">
-        <span style="width: 36px; height: 36px; border-radius: 18px; background: linear-gradient(135deg, #FFC857 0%, #F58A3A 55%, #EE5A36 100%); color: #FFFFFF; display: flex; align-items: center; justify-content: center;">${svg(I.flame, 18, 2)}</span>
-        <span style="display: flex; flex-direction: column; gap: 1px;"><span style="font-size: 15px; font-weight: 600;">{{streakTitle}}</span><span style="font-size: 12px; color: {{t.muted}};">{{bestLine}}</span></span>
-      </div>
-      <div style="display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 6px;">
-        <sc-for list="{{week}}" as="w" hint-placeholder-count="7">
-          <div style="display: flex; flex-direction: column; align-items: center; gap: 6px;"><div style="width: 28px; height: 28px; border-radius: 14px; background: {{w.fill}}; box-shadow: {{w.ring}}; color: #FFFFFF; display: flex; align-items: center; justify-content: center;"><sc-if value="{{w.done}}" hint-placeholder-val="{{ false }}">${svg(I.check, 14, 3)}</sc-if></div><span style="font-size: 11px; color: {{w.labelColor}}; font-weight: {{w.weight}};">{{w.d}}</span></div>
-        </sc-for>
-      </div>
-    </div>
-    <div style="background: {{t.surf}}; border-radius: 18px; padding: 22px; display: flex; flex-direction: column; gap: 14px;">
-      ${DUE_HEAD('Next 7 days', true)}
-      ${DUE_BARS(7, 8, 8)}
-    </div>
-  </aside>
-</main>`);
-const todayLogic = `
-renderVals() {
-  ${T}${DB_JS}
-  ${TODAY_ASSIGN_JS(false)}
-  const td = db.today();
-  ${FORECAST_JS('td.forecast', 64)}
-  const streak = 'linear-gradient(135deg, #FFC857 0%, #F58A3A 55%, #EE5A36 100%)';
-  const plural = (n, w) => n + ' ' + w + (n === 1 ? '' : 's');
-  // Most urgent first: overdue cards, then cards due today, then whatever is due soonest.
-  // All caught up: nothing due today, so every deck shows when it's next due.
-  const caught = !td.due;
-  const decks = db.decks().filter(d => !d.paused).sort((a, b) => (b.overdue - a.overdue) || (b.due - a.due) || ((a.soon ?? 1e9) - (b.soon ?? 1e9))).map(d => {
-    const tag = d.overdue ? { tag: d.overdue + ' overdue', tagBg: t.againTint, tagFg: t.again }
-      : d.due ? { tag: 'Due today', tagBg: t.hardTint, tagFg: t.hard }
-      : d.soon == null ? { tag: d.fresh ? d.fresh + ' new' : 'No cards yet', tagBg: t.surf, tagFg: t.muted }
-      : { tag: d.soon === 1 ? 'Next: tomorrow' : 'Next: in ' + d.soon + ' days', tagBg: t.surf, tagFg: t.muted };
-    // Flashcards whenever there's something to study (cards due, or new ones to learn).
-    // A deck with an exam coming says so (the owner's note: "Exam in 12 days · 84 cards to review first").
-    return { ...d, ...tag, canStudy: d.due > 0 || d.fresh > 0, noStudy: !d.due && !d.fresh, countColor: d.due ? t.text : t.muted, hasExam: !!d.exam, examLine: d.exam ? d.exam.line : '' };
-  });
-  return {
-    ${MESH_VALS('Iris')}
-    t, decks, ...chrome,
-    heroMeta: td.date + (td.streak ? ' · ' + td.streak + '-day streak' : ''),
-    streakTitle: td.streak ? td.streak + '-day streak' : 'No streak yet', bestLine: 'Best: ' + plural(td.best, 'day'),
-    heroTitle: caught ? 'All caught up' : plural(td.due, 'card') + ' due',
-    heroSub: caught ? (td.next ? 'Next review ' + td.next.day + ' · ' + plural(td.next.n, 'card') : 'Nothing scheduled yet') : 'About ' + plural(td.minutes, 'minute'),
-    // Only Learn mode's button says Learn (the owner: "learn button needs to be 'learn'"); this one starts flashcards.
-    heroCta: caught ? (td.fresh ? 'Study ' + plural(td.fresh, 'new card') : 'Add cards') : 'Study all',
-    heroHref: caught && !td.fresh ? td.newCardHref : td.studyHref, newCardHref: td.newCardHref,
-    week: td.week.map(w => ({ d: w.d, done: w.done, fill: w.done ? streak : t.surf2, ring: w.today ? '0 0 0 2px ' + t.surf + ', 0 0 0 4px #F58A3A' : 'none', labelColor: w.today ? t.text : t.muted, weight: w.today ? '600' : '400' })),
-    forecast, dueTotal, busy, assignments: assignRows, hasAssignments: assignRows.length > 0
-  };
-}`;
 
 // Decks
 // Tags: each has a color. Decks are tagged; filter by tag on Decks, edit tags in New deck and Deck settings.
@@ -862,8 +777,10 @@ const bulkBtn = h => `<sc-if value="{{bulk.show}}" hint-placeholder-val="{{ fals
 // Picked tags, each with an x; and the menus to add a tag or pick a deck.
 const pickedTags = h => `<sc-for list="{{pickedTags}}" as="g" hint-placeholder-count="1"><button type="button" onClick="{{g.remove}}" aria-label="Stop filtering by {{g.label}}" style="height: ${h}px; flex-shrink: 0; padding: 0 10px 0 12px; display: inline-flex; align-items: center; gap: 6px; border: 0; border-radius: 999px; background: {{g.bg}}; color: {{g.fg}}; font: inherit; font-size: 13px; font-weight: 600; white-space: nowrap; cursor: pointer;">{{g.label}}<span style="display: flex; opacity: .7;">${svg(I.close, 10, 2.4)}</span></button></sc-for>`;
 const menuBtn = (m, label, h) => `<button type="button" onClick="{{${m}.toggle}}" aria-expanded="{{${m}.expanded}}" style="height: ${h}px; flex-shrink: 0; padding: 0 12px 0 14px; display: inline-flex; align-items: center; gap: 6px; border: 0; border-radius: 999px; background: {{t.surf}}; color: {{t.text}}; font: inherit; font-size: 13px; font-weight: 600; white-space: nowrap; cursor: pointer;">${label}${svg(I.chevDown, 14, 2)}</button>`;
+// The Library is the first page (the app opens on it): its top is where decks are made and material goes in (design/home.mjs: the Make box,
+// its row, what's due, and what your classes assigned), then your folders and decks. A file dropped anywhere on the page goes to Upload.
 const webDecks = webRoot(`${sidebar('Library')}
-<main style="flex-grow: 1; box-sizing: border-box; padding: 36px 48px; display: flex; flex-direction: column; gap: 22px; min-width: 0; overflow-y: auto;">
+<main data-make-drop="1" onDragOver="{{mk.over}}" onDragLeave="{{mk.leave}}" onDrop="{{mk.drop}}" style="flex-grow: 1; box-sizing: border-box; padding: 36px 48px; display: flex; flex-direction: column; gap: 22px; min-width: 0; overflow-y: auto;">
   <sc-if value="{{inFolder}}" hint-placeholder-val="{{ false }}"><a href="{{libraryHref}}" data-sc-drop="folder:" data-sc-look="chip" draggable="false" style="align-self: flex-start; margin: -6px 0 -18px -10px; height: 32px; padding: 0 14px 0 8px; display: inline-flex; align-items: center; gap: 6px; border-radius: 999px; font-size: 14px; color: {{t.muted}};">${svg(I.back, 16, 2)}Library</a></sc-if>
   <div style="display: flex; align-items: center; gap: 12px;">
     <h1 style="margin: 0; font-size: 32px; font-weight: 600; letter-spacing: -.03em; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{title}}</h1>
@@ -872,10 +789,12 @@ const webDecks = webRoot(`${sidebar('Library')}
     <label style="display: flex; align-items: center; gap: 10px; width: 280px; height: 36px; padding: 0 16px; box-sizing: border-box; border-radius: 999px; background: {{t.surf}}; color: {{t.muted}};">${svg(I.search, 16)}<span style="position: absolute; left: -9999px;">{{searchHint}}</span><input value="{{query}}" onChange="{{setQuery}}" placeholder="{{searchHint}}" style="flex-grow: 1; min-width: 0; border: 0; outline: 0; background: transparent; font: inherit; font-size: 14px; color: {{t.text}};"></label>
     <sc-if value="{{inFolder}}" hint-placeholder-val="{{ false }}">${TEST.folderWebPill}${pill('Rename', { onClick: '{{renameFolder}}' })}${pill('Remove folder', { onClick: '{{removeFolder}}' })}</sc-if>
     <sc-if value="{{deckView}}" hint-placeholder-val="{{ true }}"><sc-if value="{{atTop}}" hint-placeholder-val="{{ true }}">${pill('New folder', { icon: 'folder', onClick: '{{newFolder}}' })}</sc-if></sc-if>
-    ${pill('Make cards', { icon: 'sparkle', href: 'WebMake.dc.html' })}${pill('New deck', { inv: true, icon: 'plus', href: 'WebNewDeck.dc.html' })}
+    ${pill('New deck', { inv: true, icon: 'plus', href: 'WebNewDeck.dc.html' })}
   </div>
   ${TEST.folderLine}
   <sc-if value="{{deckView}}" hint-placeholder-val="{{ true }}">
+    ${HB.top}
+    <sc-if value="{{atTop}}" hint-placeholder-val="{{ true }}">${HB.due}${ASSIGNED_WEB}</sc-if>
     <div style="display: flex; align-items: center; gap: 16px;">
       <div role="group" aria-label="Filter by tag" style="flex-grow: 1; display: flex; flex-wrap: wrap; gap: 8px;">
         <sc-for list="{{tagFilters}}" as="g" hint-placeholder-count="6"><button type="button" onClick="{{g.pick}}" aria-pressed="{{g.pressed}}" style="height: 36px; padding: 0 14px; display: inline-flex; align-items: center; border: 0; border-radius: 999px; background: {{g.bg}}; color: {{g.fg}}; font: inherit; font-size: 13px; font-weight: 500; cursor: pointer;"><span style="width: {{g.dotW}}; height: 8px; margin-right: {{g.dotM}}; border-radius: 4px; background: {{g.dot}};"></span>{{g.label}}<span style="margin-left: 8px; font-family: ${MONO}; font-size: 11px; opacity: .6;">{{g.count}}</span></button></sc-for>
@@ -961,6 +880,7 @@ ${folderPopup(false)}
 ${moveTray('tray', false)}`, true);
 // The Library's logic, for the web and iPhone boards.
 const libraryLogic = phone => `
+${MAKE_BOX_METHOD}
 constructor(props) { super(props); this.state = { tag: 'All', view: props.view === 'List' ? 'list' : 'cards', openDeck: props.openTags ? 'cell' : null, moreOpen: !!props.moreTags, moreQ: '', q: '',
   level: ['new', 'easy', 'medium', 'hard'].includes(props.level) ? props.level : 'all', state: ['leech', 'paused'].includes(props.level) ? props.level : '', cardTags: [], deck: '', tagPickOpen: false, tagPickQ: '', deckPickOpen: false, deckPickQ: '', shown: 60, naming: props.naming ? 'new' : null, name: props.naming ? 'Biology' : '', namingAt: 0,
   moveDeck: props.moveOpen ? ({ f1: 'jlpt', f2: 'orgo' }[props.folder] || 'cell') : null, moveAfter: null }; }
@@ -1049,8 +969,12 @@ renderVals() {
   const deckOptions = allOptions.filter(o => !dq || o.label.toLowerCase().includes(dq)), pickedName = (allOptions.find(o => o.id === pick) || allOptions[0]).label;
   const title = folder ? folder.name : 'Library';
   ${TEST.folderJs}
+  // The top: the Make box and its row (in a folder, a new deck made from it goes in the folder), then what's due and what your classes assigned.
+  const mk = this.makeBox(t, db, { folder: folder ? folder.id : '', board: '${phone ? 'Phone' : 'Web'}' }), due = this.dueLine(db, '${phone ? 'Phone' : 'Web'}');
+  ${ASSIGNED_JS(phone)}
   return {
     t, ...chrome, ...testVals, grain: String(this.props.grain ?? 0.7), decks, title, atTop, inFolder: !!folder, libraryHref: db.mock ? board('Decks') : '/library',
+    mk, due, assignments: assignRows, hasAssignments: assignRows.length > 0,
     query: s.q || '', setQuery: e => this.setState({ q: e && e.target ? e.target.value : '', shown: 60 }), searchHint: cards ? 'Search all cards' : folder ? 'Search this folder' : 'Search decks and cards',
     modes: [['Decks', !cards, db.mock ? board('Decks') : '/library'], ['All cards', cards, db.mock ? board('LibraryCards') : '/library/cards'], ['Classes', false, db.mock ? board('Classes') : '/library/classes']]
       .map(([label, on, href]) => ({ label, href, current: on ? 'page' : 'false', ...seg(on) })),
@@ -1409,7 +1333,7 @@ const deckSettingsBody = phone => `<div style="display: flex; align-items: cente
         </div>
         <sc-if value="{{canEdit}}" hint-placeholder-val="{{ true }}"><label style="display: flex; flex-direction: column; gap: 8px;"><span style="font-size: 13px; font-weight: 600;">Name</span><input type="text" value="{{deckName}}" onChange="{{setDeckName}}" style="height: 46px; box-sizing: border-box; padding: 0 16px; border: 0; outline: 0; border-radius: 16px; background: {{t.surf}}; color: {{t.text}}; font: inherit; font-size: 15px;"></label>
         <div style="display: flex; flex-direction: column; gap: 8px;"><span style="font-size: 13px; font-weight: 600;">Tags</span>${TAG_EDIT('deckTags', 'deckPick', phone)}</div></sc-if>
-        <div style="display: flex; align-items: center; gap: 12px; min-height: 44px;"><span style="flex-grow: 1; display: flex; flex-direction: column; gap: 2px;"><span style="font-size: 14px; font-weight: 600;">Pause this deck</span><span style="font-size: 12px; line-height: 1.35; color: {{t.muted}};">No reminders, and it leaves Today until you turn it back on.</span></span>${SWITCH('pause', 'togglePause', 'Pause this deck')}</div>
+        <div style="display: flex; align-items: center; gap: 12px; min-height: 44px;"><span style="flex-grow: 1; display: flex; flex-direction: column; gap: 2px;"><span style="font-size: 14px; font-weight: 600;">Pause this deck</span><span style="font-size: 12px; line-height: 1.35; color: {{t.muted}};">No reminders, and nothing from it is due until you turn it back on.</span></span>${SWITCH('pause', 'togglePause', 'Pause this deck')}</div>
         <div style="display: flex; gap: 8px; margin-top: auto;"><button type="button" onClick="{{exportDeck}}" style="flex-grow: 1; height: 44px; border: 0; border-radius: 999px; background: {{t.surf}}; color: {{t.text}}; font: inherit; font-size: 14px; font-weight: 600; cursor: pointer;">Export cards</button><button type="button" onClick="{{deleteDeck}}" style="flex-grow: 1; height: 44px; border: 0; border-radius: 999px; background: {{t.againTint}}; color: {{t.again}}; font: inherit; font-size: 14px; font-weight: 600; cursor: pointer;">{{deleteLabel}}</button></div>
       </div></sc-if>
       <sc-if value="{{dsStudy}}" hint-placeholder-val="{{ false }}"><div style="flex-grow: 1; min-height: 0; overflow-y: auto; scrollbar-width: thin; display: flex; flex-direction: column; gap: 16px;">
@@ -1458,7 +1382,7 @@ const webDeck = webRoot(`${sidebar('Library')}
           <sc-if value="{{showLive}}" hint-placeholder-val="{{ false }}"><a href="LiveSetup.dc.html" style="height: 36px; padding: 0 16px; display: inline-flex; align-items: center; gap: 8px; border-radius: 999px; ${onCover} font-size: 14px; font-weight: 600;">${svg(I.live, 15, 2)}Play live</a></sc-if>
           <a href="{{learnHref}}" style="height: 36px; padding: 0 16px; display: inline-flex; align-items: center; gap: 8px; border-radius: 999px; ${onCover} font-size: 14px; font-weight: 600;">${svg(I.sparkle, 15, 2)}{{learnLabel}}</a>
           ${TEST.webButton(onCover)}
-          <sc-if value="{{canEdit}}" hint-placeholder-val="{{ true }}">${DB.addMenu(`<button type="button" onClick="{{gs.toggleAdd}}" aria-expanded="{{gs.addExpanded}}" aria-haspopup="menu" style="height: 36px; padding: 0 14px 0 18px; display: inline-flex; align-items: center; gap: 8px; border: 0; border-radius: 999px; ${onCover} font: inherit; font-size: 14px; font-weight: 600; cursor: pointer;">${svg(I.plus, 16, 2)}Add cards${svg(I.chevDown, 13, 2)}</button>`, 'right: 0; top: 44px;')}</sc-if>
+          <sc-if value="{{canEdit}}" hint-placeholder-val="{{ true }}"><a href="{{gs.newCardHref}}" style="height: 36px; padding: 0 16px; display: inline-flex; align-items: center; gap: 8px; border-radius: 999px; ${onCover} font-size: 14px; font-weight: 600;">${svg(I.plus, 15, 2)}New card</a><a href="{{gs.makeHref}}" style="height: 36px; padding: 0 16px; display: inline-flex; align-items: center; gap: 8px; border-radius: 999px; ${onCover} font-size: 14px; font-weight: 600;">${svg(I.sparkle, 15, 2)}Make cards</a></sc-if>
           <sc-if value="{{isStudy}}" hint-placeholder-val="{{ false }}"><a href="{{suggestHref}}" style="height: 36px; padding: 0 18px; display: inline-flex; align-items: center; gap: 8px; border-radius: 999px; ${onCover} font-size: 14px; font-weight: 600;">${svg(I.message, 15, 2)}Suggest a change</a></sc-if>
           <a href="{{studyHref}}" style="height: 36px; padding: 0 8px 0 18px; display: inline-flex; align-items: center; gap: 8px; border-radius: 999px; background: #FFFFFF; color: #000000; box-shadow: 0 1px 2px rgba(0,0,0,.1); font-size: 14px; font-weight: 600;">${svg(I.decks, 15, 2)}<span>{{studyLabel}}</span><sc-if value="{{hasStudyCount}}" hint-placeholder-val="{{ true }}">${STUDY_COUNT(22, '#EDEDED', '#000000')}</sc-if><sc-if value="{{noStudyCount}}" hint-placeholder-val="{{ false }}"><span style="width: 2px;"></span></sc-if></a>
         </div>
@@ -1495,7 +1419,7 @@ const webDeck = webRoot(`${sidebar('Library')}
       </a>
     </sc-for>
   </div>
-  <sc-if value="{{gs.noCards}}" hint-placeholder-val="{{ false }}"><span style="font-size: 14px; color: {{t.muted}};">No cards in this deck yet. Add some from the Add cards menu.</span></sc-if>
+  <sc-if value="{{gs.noCards}}" hint-placeholder-val="{{ false }}"><span style="font-size: 14px; color: {{t.muted}};">No cards in this deck yet.</span></sc-if>
   </sc-if>
 </main>
 ${moveTray('tray', false)}
@@ -3605,11 +3529,11 @@ const tile = (title, spec, stage) => `<div style="background: #F4F4F4; border-ra
   <div style="display: flex; flex-direction: column; gap: 4px;"><span style="font-size: 16px; font-weight: 600;">${title}</span><span style="font-family: ${MONO}; font-size: 12px; color: #666666;">${spec}</span></div>
 </div>`;
 const mcard = (txt, extra = '', cls = '') => `<div class="${cls}" style="width: 180px; height: 120px; box-sizing: border-box; padding: 16px; border-radius: 22px; background: #FFFFFF; border: 1px solid #EBEBEB; box-shadow: 0 12px 28px -12px rgba(0,0,0,.22); display: flex; align-items: flex-end; font-size: 15px; font-weight: 600; ${extra}">${txt}</div>`;
-const MOTION_H = 2115;
+const MOTION_H = 1733;
 // Drawn when the boards are made, since its tiles use parts defined further down (EMPTY_ART).
 const motion = () => `<div style="width: 1440px; height: ${MOTION_H}px; box-sizing: border-box; padding: 56px 64px; display: flex; flex-direction: column; gap: 28px; font-family: ${FONT}; background: #FFFFFF; color: #000000;">
-  <div style="display: flex; flex-direction: column; gap: 8px;"><h1 style="margin: 0; font-size: 44px; font-weight: 600; letter-spacing: -.035em;">Motion</h1><p style="margin: 0; font-size: 16px; color: #666666;">Every animation loops here so you can watch it. In the app most play once; empty states and the Today card keep moving, slowly. All of them turn off when Reduce Motion is on.</p></div>
-  <div style="flex-grow: 1; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); grid-template-rows: repeat(5, minmax(0, 1fr)); gap: 16px;">
+  <div style="display: flex; flex-direction: column; gap: 8px;"><h1 style="margin: 0; font-size: 44px; font-weight: 600; letter-spacing: -.035em;">Motion</h1><p style="margin: 0; font-size: 16px; color: #666666;">Every animation loops here so you can watch it. In the app most play once; empty states keep moving, slowly. All of them turn off when Reduce Motion is on.</p></div>
+  <div style="flex-grow: 1; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); grid-template-rows: repeat(4, minmax(0, 1fr)); gap: 16px;">
     ${tile('Card flip', '500 ms · 3D turn · ease in-out', `<div style="perspective: 900px;"><div class="m-flip" style="position: relative; width: 180px; height: 120px; transform-style: preserve-3d;">${mcard('Question', 'position: absolute; inset: 0; backface-visibility: hidden;')}${mcard('Answer', 'position: absolute; inset: 0; backface-visibility: hidden; transform: rotateY(180deg); background: #000000; color: #FFFFFF; border-color: #000000;')}</div></div>`)}
     ${tile('Grade → next card', 'out 220 ms · in 320 ms · slight lift', `<div style="position: relative; width: 180px; height: 120px;">${mcard('Next card', 'position: absolute; inset: 0;', 'm-in')}${mcard('Graded card', 'position: absolute; inset: 0;', 'm-out')}</div>`)}
     ${tile('Button press', '100 ms · shrinks to 96%', `<div class="m-press" style="height: 56px; padding: 0 36px; border-radius: 999px; background: #000000; color: #FFFFFF; display: flex; align-items: center; font-size: 15px; font-weight: 600;">Save card</div>`)}
@@ -3626,7 +3550,6 @@ const motion = () => `<div style="width: 1440px; height: ${MOTION_H}px; box-sizi
     ${tile('Sheet', `slides up from the bottom · ${Math.round(MOTION.sheet * 1000)} ms · leaves in ${Math.round(MOTION.leave * 1000)} ms`, `<div style="position: relative; width: 150px; height: 230px; border-radius: 28px; background: #F4F4F4; overflow: hidden;"><div class="m-sheet" style="position: absolute; left: 0; right: 0; bottom: 0; top: 58px; box-sizing: border-box; padding: 16px; border-radius: 24px 24px 0 0; background: #FFFFFF; box-shadow: 0 -12px 32px -12px rgba(0,0,0,.25); display: flex; flex-direction: column; gap: 10px;"><span style="width: 70px; height: 12px; border-radius: 6px; background: #000000;"></span><span style="height: 36px; border-radius: 12px; background: #F4F4F4;"></span><span style="height: 36px; border-radius: 12px; background: #F4F4F4;"></span></div></div>`)}
     ${tile('Deck cover parallax', 'the cover moves at half speed as you scroll', `<div style="position: relative; width: 210px; height: 230px; border-radius: 22px; overflow: hidden; background: #FFFFFF; border: 1px solid #EBEBEB;"><div class="m-par-front" style="position: absolute; inset: 0;"><div style="position: relative; height: 120px; overflow: hidden;"><div class="m-par-cover" style="position: absolute; inset: 0;">${meshCard('art', 'position: absolute; inset: 0;', 'height: 100%;', '', 'div')}</div><span style="position: absolute; left: 16px; bottom: 14px; color: #FFFFFF; font-size: 17px; font-weight: 700; letter-spacing: -.02em; text-shadow: 0 1px 8px rgba(0,0,0,.3);">Cell Biology</span></div><div style="padding: 16px; display: flex; flex-direction: column; gap: 12px;"><span style="height: 12px; width: 150px; border-radius: 6px; background: #EBEBEB;"></span><span style="height: 12px; width: 120px; border-radius: 6px; background: #EBEBEB;"></span><span style="height: 12px; width: 160px; border-radius: 6px; background: #EBEBEB;"></span><span style="height: 12px; width: 100px; border-radius: 6px; background: #EBEBEB;"></span></div></div></div>`)}
     ${tile('Deck card hover', `lifts 4 px · ${TILE_HOVER} s · eases out · shadow grows`, meshCard('hero', 'width: 200px; height: 132px; border-radius: 20px;', 'height: 100%; box-sizing: border-box; padding: 16px; display: flex; align-items: flex-end; font-size: 15px; font-weight: 600;', 'Cell Biology', 'div', ' class="m-lift"'))}
-    ${tile('Today card', 'colors drift · 16 s · back and forth', meshCard('hero', 'width: 240px; height: 132px; border-radius: 20px;', 'height: 100%; box-sizing: border-box; padding: 18px; display: flex; flex-direction: column; justify-content: flex-end; gap: 4px;', '<span style="font-size: 12px; opacity: .8;">Tuesday</span><span style="font-size: 26px; font-weight: 500; letter-spacing: -.03em; line-height: 1;">64 cards due</span>', 'div', ' class="sc-alive"'))}
   </div>
 </div>`;
 // The new tiles loop every L seconds: it comes in at `at`, stays, and goes at `out`; a percent of the loop is a time in it.
@@ -3734,10 +3657,10 @@ renderVals() {
 }`;
 
 // ---------- iPhone ----------
-// Today, Library, Discover, Stats, and Profile: your own circle is its icon ('me'), 22 wide in a 20 box so its name sits level
+// Library, Discover, Stats, and Profile (no Today: the app opens on the Library): your own circle is its icon ('me'), 22 wide in a 20 box so its name sits level
 // with the others'. A profile that isn't yours lights no tab. Connect AI is a page inside Settings now (no tab bar).
-const NAV_P = [['Today', 'today', 'PhoneToday.dc.html'], ['Library', 'decks', 'PhoneLibrary.dc.html'], ['Discover', 'compass', 'PhoneDiscover.dc.html'], ['Stats', 'stats', 'PhoneStats.dc.html'], ['Profile', 'me', 'PhoneProfile.dc.html']];
-const tabBar = active => `<nav style="position: absolute; left: 16px; right: 16px; bottom: 28px; height: 64px; box-sizing: border-box; padding: 6px; border-radius: 999px; background: {{t.surf}}; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 4px;">
+const NAV_P = [['Library', 'decks', 'PhoneLibrary.dc.html'], ['Discover', 'compass', 'PhoneDiscover.dc.html'], ['Stats', 'stats', 'PhoneStats.dc.html'], ['Profile', 'me', 'PhoneProfile.dc.html']];
+const tabBar = active => `<nav style="position: absolute; left: 16px; right: 16px; bottom: 28px; height: 64px; box-sizing: border-box; padding: 6px; border-radius: 999px; background: {{t.surf}}; display: grid; grid-template-columns: repeat(${NAV_P.length}, minmax(0, 1fr)); gap: 4px;">
   ${NAV_P.map(([l, ic, h]) => `<a href="${h}" style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; border-radius: 999px; font-size: 11px; font-weight: 600; ${l === active ? 'background: {{t.inv}}; color: {{t.invText}};' : 'color: {{t.muted}};'}">${ic === 'me' ? `<span style="width: 20px; height: 20px; display: flex; align-items: center; justify-content: center;">${AVATAR_ME(22)}</span>` : svg(I[ic], 20, 2)}${l}</a>`).join('\n  ')}
 </nav>`;
 // A page taller than the phone scrolls under the tab bar (in the app, phone pages are the screen's height).
@@ -3764,6 +3687,7 @@ const phoneLibrary = phone(`<div style="padding: 64px 20px 120px; display: flex;
   </div>
   <h1 style="margin: 0; font-size: 32px; font-weight: 700; letter-spacing: -.03em; overflow-wrap: anywhere;">{{title}}</h1>${TEST.folderLine}${TEST.folderPhoneButton}</sc-if>
   <sc-if value="{{atTop}}" hint-placeholder-val="{{ true }}">${libModes(36, 14, true)}</sc-if>
+  <sc-if value="{{deckView}}" hint-placeholder-val="{{ true }}">${HBP.top}<sc-if value="{{atTop}}" hint-placeholder-val="{{ true }}">${HBP.due}${ASSIGNED_PHONE}</sc-if></sc-if>
   <label style="display: flex; align-items: center; gap: 10px; height: 44px; padding: 0 16px; box-sizing: border-box; border-radius: 999px; background: {{t.surf}}; color: {{t.muted}};">${svg(I.search, 16)}<span style="position: absolute; left: -9999px;">{{searchHint}}</span><input value="{{query}}" onChange="{{setQuery}}" placeholder="{{searchHint}}" style="flex-grow: 1; min-width: 0; border: 0; outline: 0; background: transparent; font: inherit; font-size: 16px; color: {{t.text}};"></label>
   <sc-if value="{{deckView}}" hint-placeholder-val="{{ true }}">
     <sc-if value="{{showFolders}}" hint-placeholder-val="{{ true }}">
@@ -3801,50 +3725,10 @@ const phoneLibrary = phone(`<div style="padding: 64px 20px 120px; display: flex;
 ${folderPopup(true)}`);
 const pTitle = (txt, right = '') => `<div style="display: flex; align-items: center; justify-content: space-between;"><div style="font-size: 34px; font-weight: 700; letter-spacing: -.03em;">${txt}</div>${right}</div>`;
 const roundBtn = (ic, label, href = '', attrs = '') => href ? `<a href="${href}"${attrs} aria-label="${label}" style="width: 44px; height: 44px; border-radius: 22px; background: {{t.surf}}; display: flex; align-items: center; justify-content: center;">${svg(I[ic], 18, 2)}</a>` : `<button type="button" aria-label="${label}" style="width: 44px; height: 44px; border: 0; border-radius: 22px; background: {{t.surf}}; color: {{t.text}}; display: flex; align-items: center; justify-content: center; cursor: pointer;">${svg(I[ic], 18, 2)}</button>`;
-// Today's header: the title in the middle of the screen, and news (with how many are new) and + on the right. (Your picture
-// was on the left until the owner's TestFlight notes, 2026-10-01: "remove the profile icon on the today page"; your profile
-// is the Profile tab.)
+// The bell: News (suggestions on your decks, people following you, updates to decks you follow), with how many are new. On the iPhone it
+// is in Discover's header, for someone signed in (it was in Today's until there was no Today, 2026-10-01); the web keeps it in the
+// sidebar, by the logo.
 const NEWS_BTN = `<a href="PhoneActivity.dc.html" aria-label="News" style="position: relative; width: 44px; height: 44px; flex-shrink: 0; border-radius: 22px; background: {{t.surf}}; display: flex; align-items: center; justify-content: center;">${svg(I.bell, 18, 2)}<sc-if value="{{nav.hasNews}}" hint-placeholder-val="{{ true }}"><span style="position: absolute; top: -3px; right: -3px; min-width: 18px; height: 18px; padding: 0 5px; box-sizing: border-box; border-radius: 9px; background: #E5484D; color: #FFFFFF; box-shadow: 0 0 0 2px {{t.bg}}; font-size: 11px; font-weight: 700; line-height: 18px; text-align: center;">{{nav.news}}</span></sc-if></a>`;
-const todayTitle = (label, href) => `<div style="display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: center; gap: 12px;"><span></span><h1 style="margin: 0; font-size: 34px; font-weight: 700; letter-spacing: -.03em; text-align: center;">Today</h1><div style="justify-self: end; display: flex; gap: 8px;">${NEWS_BTN}${roundBtn('plus', label, href)}</div></div>`;
-const phoneToday = phone(`<div style="padding: 64px 20px 120px; display: flex; flex-direction: column; gap: 18px;">
-  ${todayTitle('New card', 'PhoneEditor.dc.html').replace(roundBtn('plus', 'New card', 'PhoneEditor.dc.html'), () => DBP.addMenu(`<button type="button" onClick="{{gs.toggleAdd}}" aria-expanded="{{gs.addExpanded}}" aria-haspopup="menu" aria-label="Add" style="width: 44px; height: 44px; border: 0; border-radius: 22px; background: {{t.surf}}; color: {{t.text}}; display: flex; align-items: center; justify-content: center; cursor: pointer;">${svg(I.plus, 18, 2)}</button>`, 'right: 0; top: 52px;',
-    [['plus', 'New card', 'Write one yourself', 'PhoneEditor.dc.html'], ['sparkle', 'Make cards', 'From a file, photo, video or topic', 'PhoneMake.dc.html'], ['decks', 'New deck', 'Start from scratch', 'PhoneNewDeck.dc.html']]))}
-  ${meshCard('hero', 'display: block; border-radius: 32px;', 'box-sizing: border-box; padding: 24px; display: flex; flex-direction: column; gap: 18px;', `
-    <span style="height: 56px;"></span>
-    <span style="display: flex; flex-direction: column; gap: 4px;"><span style="font-size: 14px; opacity: .85;">{{heroMeta}}</span><span style="font-size: {{heroSize}}; font-weight: 600; letter-spacing: -.045em; line-height: 1;">{{heroTitle}}</span><span style="font-size: 14px; opacity: .85;">{{heroSub}}</span></span>
-    <span style="height: 52px; border-radius: 999px; background: #FFFFFF; color: #000000; display: flex; align-items: center; justify-content: center; font-size: 16px; font-weight: 600; text-shadow: none;">{{heroCta}}</span>`, 'a', ' href="{{heroHref}}"')}
-  ${TODAY_ASSIGN_PHONE}
-  <div style="font-size: 13px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: {{t.muted}}; padding: 6px 4px 0;">Decks</div>
-  <div style="display: flex; flex-direction: column;">
-    <sc-for list="{{decks}}" as="d" hint-placeholder-count="4">
-      <a href="{{d.href}}" style="display: flex; align-items: center; gap: 12px; min-height: 58px; border-bottom: 1px solid {{t.line}};"><span style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px;"><span style="font-size: 16px; font-weight: 500;">{{d.name}}</span><span style="font-size: 13px; color: {{t.muted}}; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{d.sub}}</span></span><span style="font-family: {{d.rightFont}}; font-size: {{d.rightSize}}; color: {{d.rightColor}};">{{d.right}}</span></a>
-    </sc-for>
-  </div>
-</div>`, 'Today');
-// Your day on the Iris card, then your decks, most urgent first (like the web's Today). The canvas shows its sample day.
-const phoneDecksLogic = `renderVals() { ${T}${DB_JS}
-  ${TODAY_ASSIGN_JS(true)}
-  const assignVals = { assignments: assignRows, hasAssignments: assignRows.length > 0, gs: { addOpen: !!this.state.addOpen, addExpanded: this.state.addOpen ? 'true' : 'false', toggleAdd: () => this.setState({ addOpen: !this.state.addOpen }) } };
-  // A deck's count on the right: cards due now, or (muted) when it's next due.
-  const row = (d, right, later) => ({ ...d, right, rightColor: later ? t.muted : t.text, rightFont: later ? 'inherit' : "${MONO}", rightSize: later ? '14px' : '15px' });
-  if (db.mock) {
-    const caught = !!this.props.caughtUp, next = ['Tomorrow', 'Tomorrow', 'In 2 days', 'In 3 days'];
-    return { ${MESH_VALS('Iris')} t, ...chrome, ...assignVals, heroHref: 'PhoneReview.dc.html',
-      heroMeta: caught ? 'Done for today · 13-day streak' : 'Due now · 12-day streak', heroTitle: caught ? 'All caught up' : '64 cards', heroSize: caught ? '42px' : '56px',
-      heroSub: caught ? 'Next review tomorrow · 32 cards' : 'About 11 minutes', heroCta: caught ? 'Study 10 new cards' : 'Start review',
-      decks: ${DECKS}.slice(0, 4).map((d, i) => ({ ...row(d, caught ? next[i] : String(d.due), caught), sub: i ? d.fresh + ' new · ' + d.total + ' cards' : 'Exam in 12 days · 84 cards to review first', href: 'PhoneDeck.dc.html' })) };
-  }
-  const td = db.today(), caught = !td.due, plural = (n, w) => n + ' ' + w + (n === 1 ? '' : 's');
-  const decks = db.decks().filter(d => !d.paused).sort((a, b) => (b.overdue - a.overdue) || (b.due - a.due) || ((a.soon ?? 1e9) - (b.soon ?? 1e9)))
-    .map(d => row({ ...d, total: d.totalLabel, sub: d.exam ? d.exam.line : d.fresh + ' new · ' + d.totalLabel + ' cards' }, d.due ? String(d.due) : d.soon == null ? (d.fresh ? d.fresh + ' new' : '—') : d.soon === 1 ? 'Tomorrow' : 'In ' + d.soon + ' days', !d.due));
-  return { ${MESH_VALS('Iris')} t, ...chrome, ...assignVals, decks,
-    heroMeta: (caught ? 'Done for today' : 'Due now') + (td.streak ? ' · ' + td.streak + '-day streak' : ''),
-    heroTitle: caught ? 'All caught up' : plural(td.due, 'card'), heroSize: caught ? '42px' : '56px',
-    heroSub: caught ? (td.next ? 'Next review ' + td.next.day + ' · ' + plural(td.next.n, 'card') : 'Nothing scheduled yet') : 'About ' + plural(td.minutes, 'minute'),
-    heroCta: caught ? (td.fresh ? 'Study ' + plural(td.fresh, 'new card') : 'Add cards') : 'Start review',
-    // All caught up with nothing new to learn: the card adds cards instead.
-    heroHref: caught && !td.fresh ? td.newCardHref : td.studyHref };
-}`;
 
 // Check AI cards: tap the card to see its answer (a blank fills in place), then keep or toss it.
 const INBOX_ITEMS = `[
@@ -3905,7 +3789,7 @@ const phoneDeck = phone(`<div style="height: 100%; overflow-y: auto; scrollbar-w
   <div style="position: relative; height: 232px; overflow: hidden; container-type: inline-size;">
     ${parallax(232)}
     <div style="position: absolute; inset: 0; box-sizing: border-box; padding: 54px 16px 18px 20px; display: flex; flex-direction: column; justify-content: space-between; color: {{coverInk}};">
-      <div style="display: flex; justify-content: space-between;">${coverRound('back', 'Back', 'PhoneToday.dc.html')}<div style="display: flex; gap: 8px;"><sc-if value="{{isShared}}" hint-placeholder-val="{{ false }}"><a href="{{pageHref}}" aria-label="{{shareChip}}" style="width: 40px; height: 40px; border-radius: 20px; ${onCover} display: flex; align-items: center; justify-content: center;">${svg(I.globe, 18, 2)}</a></sc-if>${coverRound('gear', 'Deck settings', '', '{{openSettings}}')}${coverRound('search', 'Search')}<sc-if value="{{canEdit}}" hint-placeholder-val="{{ true }}">${DBP.addMenu(`<button type="button" onClick="{{gs.toggleAdd}}" aria-expanded="{{gs.addExpanded}}" aria-haspopup="menu" aria-label="Add cards" style="width: 44px; height: 44px; border: 0; border-radius: 22px; ${onCover} display: flex; align-items: center; justify-content: center; cursor: pointer;">${svg(I.plus, 18, 2)}</button>`, 'right: 0; top: 52px;')}</sc-if><sc-if value="{{isStudy}}" hint-placeholder-val="{{ false }}"><a href="{{suggestHref}}" aria-label="Suggest a change" style="width: 40px; height: 40px; border-radius: 20px; ${onCover} display: flex; align-items: center; justify-content: center;">${svg(I.message, 18, 2)}</a></sc-if></div></div>
+      <div style="display: flex; justify-content: space-between;">${coverRound('back', 'Back', 'PhoneLibrary.dc.html')}<div style="display: flex; gap: 8px;"><sc-if value="{{isShared}}" hint-placeholder-val="{{ false }}"><a href="{{pageHref}}" aria-label="{{shareChip}}" style="width: 40px; height: 40px; border-radius: 20px; ${onCover} display: flex; align-items: center; justify-content: center;">${svg(I.globe, 18, 2)}</a></sc-if>${coverRound('gear', 'Deck settings', '', '{{openSettings}}')}${coverRound('search', 'Search')}<sc-if value="{{canEdit}}" hint-placeholder-val="{{ true }}">${coverRound('sparkle', 'Make cards', '{{gs.makeHref}}')}${coverRound('plus', 'New card', '{{gs.newCardHref}}')}</sc-if><sc-if value="{{isStudy}}" hint-placeholder-val="{{ false }}"><a href="{{suggestHref}}" aria-label="Suggest a change" style="width: 40px; height: 40px; border-radius: 20px; ${onCover} display: flex; align-items: center; justify-content: center;">${svg(I.message, 18, 2)}</a></sc-if></div></div>
       <div style="display: flex; flex-direction: column; gap: 4px; text-shadow: {{coverShadow}};"><div style="font-size: 32px; font-weight: 700; letter-spacing: -.03em; line-height: 1.05; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; {{coverTitleS}}">{{deckName}}</div><div style="font-size: 14px; opacity: .8;">{{deckLineShort}}</div></div>
     </div>
   </div>
@@ -3926,7 +3810,7 @@ const phoneDeck = phone(`<div style="height: 100%; overflow-y: auto; scrollbar-w
         <a href="{{r.href}}" data-sc-item="{{r.id}}" draggable="false" class="sc-drag" style="display: flex; flex-direction: column; gap: 3px; padding: 12px 0; border-bottom: 1px solid {{t.line}};"><span style="font-size: 15px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{r.front}}</span><span style="display: flex; align-items: center; gap: 8px; min-width: 0; font-size: 13px; color: {{t.muted}};"><span style="white-space: nowrap;">{{r.kind}} · {{r.next}}</span>${cardTag('c1')}${cardTag('c2')}${cardMore}</span></a>
       </sc-for>
     </div>
-    <sc-if value="{{gs.noCards}}" hint-placeholder-val="{{ false }}"><span style="font-size: 14px; color: {{t.muted}};">No cards in this deck yet. Add some from the Add cards menu.</span></sc-if>
+    <sc-if value="{{gs.noCards}}" hint-placeholder-val="{{ false }}"><span style="font-size: 14px; color: {{t.muted}};">No cards in this deck yet.</span></sc-if>
     </sc-if>
   </div>
 </div></div>`, 'Library', `${moveTray('tray', true)}
@@ -4318,7 +4202,7 @@ renderVals() {
     t, ...chrome, ...planVals, ...photoVals, ...profileVals, ...pwVals, tune, acct, signedIn: st.signedIn,
     on: { card: all || key === 'account', list, account: show('account'), plan: show('plan'), studying: show('studying'), appearance: show('appearance'), connectAi: show('connect-ai'), privacy: show('privacy'), help: show('help') },
     sec: secLinks(key), showTitles: all, hasPlan: !!plan, hasReminder: !!db.mock,
-    title: all || list ? 'Settings' : secName, backHref: all || list ? (db.mock ? 'PhoneToday.dc.html' : '/') : (db.mock ? 'PhoneSettings.dc.html' : '/settings'),
+    title: all || list ? 'Settings' : secName, backHref: all || list ? (db.mock ? 'PhoneLibrary.dc.html' : '/library') : (db.mock ? 'PhoneSettings.dc.html' : '/settings'),
     // Your account: tap it to sign out (online).
     accountSub: db.mock ? 'Synced on all your devices · just now' : st.sub,
     account: () => { if (!db.mock && st.signedIn) db.ask({ title: 'Sign out of Lucida?', action: 'Sign out' }).then(yes => yes && db.act.signOut()); },
@@ -4412,7 +4296,7 @@ renderVals() {
   return {
     t, ...chrome, grain: String(this.props.grain ?? 0.7), ...planVals, ...photoVals, ...profileVals, ...pwVals, tune, acct,
     name: st.name, sub: st.sub, signedIn: st.signedIn,
-    on: Object.fromEntries(SEC.map(([k]) => [secId(k), k === cur])), sec: secLinks(cur), hasPlan: !!plan, backHref: db.mock ? 'Main.dc.html' : this.props.back || '/',
+    on: Object.fromEntries(SEC.map(([k]) => [secId(k), k === cur])), sec: secLinks(cur), hasPlan: !!plan, backHref: db.mock ? 'WebDecks.dc.html' : this.props.back || '/library',
     ...themeRow(),
     looks: opts([['system', 'System'], ['light', 'Light'], ['dark', 'Dark']], look, id => set({ look: id })),
     darks: opts([['gray', 'Gray'], ['black', 'Black']], darkMode, id => set({ darkMode: id })),
@@ -4626,61 +4510,31 @@ const EMPTY_ART = (w, icon) => { const r = Math.round(w * 0.14); return `<div ar
 </div>`; };
 const emptyBlock = ({ art, title, body, actions = '', size = 24, w = 420 }) => `<div style="display: flex; flex-direction: column; align-items: center; gap: 18px; text-align: center;">${art}<div style="max-width: ${w}px; display: flex; flex-direction: column; gap: 8px;"><span style="font-size: ${size}px; font-weight: 600; letter-spacing: -.02em;">${title}</span><span style="font-size: 15px; line-height: 1.5; color: {{t.muted}};">${body}</span></div>${actions}</div>`;
 const webActions = btns => `<div style="display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; padding-top: 2px;">${btns}</div>`;
-const phoneBtn = (label, href, icon = '', inv = false) => `<a href="${href}" style="height: 52px; border-radius: 999px; display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 16px; font-weight: 600; ${inv ? 'background: {{t.inv}}; color: {{t.invText}};' : 'background: {{t.surf}};'}">${icon ? svg(I[icon], 17, 2) : ''}${label}</a>`;
-// On phones: one black button, then the lighter choices side by side (like the web's row of pills).
-const phoneBtn2 = (label, href, icon) => `<a href="${href}" style="flex: 1 1 0; min-width: 0; height: 48px; border-radius: 999px; background: {{t.surf}}; display: flex; align-items: center; justify-content: center; gap: 7px; font-size: 15px; font-weight: 600; white-space: nowrap;">${svg(I[icon], 16, 2)}${label}</a>`;
-const phoneActionRow = (primary, a, b) => `<div style="align-self: stretch; width: 100%; display: flex; flex-direction: column; gap: 10px; padding-top: 2px;">${primary}<div style="display: flex; gap: 10px;">${a}${b}</div></div>`;
-// The web's Get started tiles, sized for a phone: Make a deck runs across in black, the other two sit side by side.
-const phoneStartTile = (icon, title, body, href, primary = false) => primary
-  ? `<a href="${href}" style="box-sizing: border-box; padding: 18px; border-radius: 22px; display: flex; align-items: center; gap: 14px; background: {{t.inv}}; color: {{t.invText}};"><span style="width: 40px; height: 40px; flex-shrink: 0; border-radius: 20px; background: rgba(128,128,128,.28); display: flex; align-items: center; justify-content: center;">${svg(I[icon], 20, 2)}</span><span style="flex-grow: 1; display: flex; flex-direction: column; gap: 3px;"><span style="font-size: 17px; font-weight: 600;">${title}</span><span style="font-size: 13px; opacity: .7;">${body}</span></span><span style="display: flex; opacity: .7;">${svg(I.chev, 14, 2.2)}</span></a>`
-  : `<a href="${href}" style="flex: 1 1 0; min-width: 0; min-height: 148px; box-sizing: border-box; padding: 18px; border-radius: 22px; display: flex; flex-direction: column; gap: 6px; background: {{t.surf}};"><span style="width: 36px; height: 36px; border-radius: 18px; background: rgba(128,128,128,.18); display: flex; align-items: center; justify-content: center;">${svg(I[icon], 18, 2)}</span><span style="flex-grow: 1;"></span><span style="font-size: 16px; font-weight: 600;">${title}</span><span style="font-size: 13px; line-height: 1.4; color: {{t.muted}};">${body}</span></a>`;
-const startTile = (icon, title, body, href, primary = false) => `<a href="${href}" style="min-height: 190px; box-sizing: border-box; padding: 22px; border-radius: 18px; display: flex; flex-direction: column; gap: 10px; ${primary ? 'background: {{t.inv}}; color: {{t.invText}};' : 'background: {{t.surf}};'}"><span style="width: 36px; height: 36px; border-radius: 18px; background: rgba(128,128,128,.18); display: flex; align-items: center; justify-content: center;">${svg(I[icon], 20, 2)}</span><span style="flex-grow: 1;"></span><span style="font-size: 17px; font-weight: 600;">${title}</span><span style="font-size: 14px; line-height: 1.45; ${primary ? 'opacity: .7;' : 'color: {{t.muted}};'}">${body}</span></a>`;
-const emptyWeek = `<div style="display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 6px;">${['M', 'T', 'W', 'T', 'F', 'S', 'S'].map((d, i) => `<div style="display: flex; flex-direction: column; align-items: center; gap: 6px;"><div style="width: 28px; height: 28px; border-radius: 14px; background: {{t.surf2}};${i === 1 ? ' box-shadow: 0 0 0 2px {{t.surf}}, 0 0 0 4px {{t.muted}};' : ''}"></div><span style="font-size: 11px; ${i === 1 ? 'font-weight: 600; color: {{t.text}};' : 'color: {{t.muted}};'}">${d}</span></div>`).join('')}</div>`;
-const webTodayNew = webRoot(`${sidebar('Today')}
-<main style="flex-grow: 1; box-sizing: border-box; padding: 36px 48px; display: flex; gap: 40px;">
-  <section style="flex-grow: 1; display: flex; flex-direction: column; gap: 32px; min-width: 0;">
-    ${meshCard('hero', 'border-radius: 20px; height: 160px; flex-shrink: 0;', 'height: 100%; box-sizing: border-box; padding: 28px 32px; display: flex; align-items: flex-end;', `
-      <div style="display: flex; flex-direction: column; gap: 10px;"><div style="font-size: 14px; opacity: .8;">{{date}}</div><h1 style="margin: 0; font-size: 42px; font-weight: 500; line-height: 1; letter-spacing: -.04em;">Welcome</h1><div style="font-size: 14px; opacity: .8;">Nothing to study yet. Start with a deck.</div></div>`)}
-    <div style="display: flex; flex-direction: column; gap: 12px;">
-      ${eyebrow('Get started')}
-      <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px;">
-        ${startTile('plus', 'Make a deck', 'Start from scratch and add your own cards.', 'WebNewDeck.dc.html', true)}
-        ${startTile('upload', 'Import cards', 'Bring your decks from Anki, Quizlet, or a CSV file.', 'WebImport.dc.html')}
-        ${startTile('connect', 'Connect your AI', 'Let Claude or ChatGPT make cards for you.', 'WebConnect.dc.html')}
-      </div>
-    </div>
-  </section>
-  <aside style="width: 300px; flex-shrink: 0; display: flex; flex-direction: column; gap: 12px;">
-    <div style="background: {{t.surf}}; border-radius: 18px; padding: 22px; display: flex; flex-direction: column; gap: 16px;">
-      <div style="display: flex; align-items: center; gap: 12px;"><span style="width: 36px; height: 36px; border-radius: 18px; background: {{t.surf2}}; color: {{t.muted}}; display: flex; align-items: center; justify-content: center;">${svg(I.flame, 18, 2)}</span><span style="display: flex; flex-direction: column; gap: 1px;"><span style="font-size: 15px; font-weight: 600;">No streak yet</span><span style="font-size: 12px; color: {{t.muted}};">Study today to start one</span></span></div>
-      ${emptyWeek}
-    </div>
-    <div style="background: {{t.surf}}; border-radius: 18px; padding: 22px; display: flex; flex-direction: column; gap: 14px;">
-      <div style="display: flex; flex-direction: column; gap: 2px;"><span style="font-size: 15px; font-weight: 600;">Cards due each day</span><span style="font-size: 12px; color: {{t.muted}};">Next 7 days</span></div>
-      <div style="height: 76px; display: flex; align-items: flex-end; gap: 8px;">${Array.from({ length: 7 }, () => '<div style="flex: 1 1 0; height: 6px; border-radius: 3px; background: {{t.surf2}};"></div>').join('')}</div>
-      <span style="font-size: 12px; color: {{t.muted}};">Nothing scheduled yet</span>
-    </div>
-  </aside>
-</main>`);
+// A brand-new account's other two ways in, under the Make box, side by side: bring cards from another app, or let your own AI make them.
+const startTiles = phone => `<div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: ${phone ? 8 : 12}px;">${[['enter', 'Import cards', 'From Anki, Quizlet or a CSV', '{{importHref}}'], ['connect', 'Connect AI', 'Let Claude or ChatGPT make cards', '{{connectHref}}']].map(([ic, title, line, href]) => phone
+  ? `<a href="${href}" class="sc-press" style="min-width: 0; min-height: 132px; box-sizing: border-box; padding: 18px; border-radius: 22px; background: {{t.surf}}; display: flex; flex-direction: column; gap: 6px;"><span style="width: 36px; height: 36px; border-radius: 18px; background: {{t.bg}}; display: flex; align-items: center; justify-content: center;">${svg(I[ic], 18, 2)}</span><span style="flex-grow: 1;"></span><span style="font-size: 16px; font-weight: 600;">${title}</span><span style="font-size: 13px; line-height: 1.4; color: {{t.muted}};">${line}</span></a>`
+  : `<a href="${href}" class="sc-press" style="min-width: 0; min-height: 88px; box-sizing: border-box; padding: 18px 20px; border-radius: 22px; background: {{t.surf}}; display: flex; align-items: center; gap: 16px;"><span style="width: 44px; height: 44px; flex-shrink: 0; border-radius: 22px; background: {{t.bg}}; display: flex; align-items: center; justify-content: center;">${svg(I[ic], 20, 2)}</span><span style="min-width: 0; display: flex; flex-direction: column; gap: 3px;"><span style="font-size: 16px; font-weight: 600;">${title}</span><span style="font-size: 14px; color: {{t.muted}};">${line}</span></span></a>`).join('')}</div>`;
+// A brand-new account's Library: the Make box first (decks are made from what you bring), what your classes assigned (a student who joined
+// one before making a deck), then Import cards and Connect AI.
 const webDecksEmpty = webRoot(`${sidebar('Library')}
-<main style="flex-grow: 1; box-sizing: border-box; padding: 36px 48px; display: flex; flex-direction: column; gap: 28px; min-width: 0;">
+<main data-make-drop="1" onDragOver="{{mk.over}}" onDragLeave="{{mk.leave}}" onDrop="{{mk.drop}}" style="flex-grow: 1; box-sizing: border-box; padding: 36px 48px; display: flex; flex-direction: column; gap: 22px; min-width: 0; overflow-y: auto;">
   <div style="display: flex; align-items: center; gap: 12px;"><h1 style="margin: 0; font-size: 32px; font-weight: 600; letter-spacing: -.03em;">Library</h1><span style="margin-left: 10px; display: flex;">${libModes(32)}</span><span style="flex-grow: 1;"></span>${pill('New deck', { inv: true, icon: 'plus', href: 'WebNewDeck.dc.html' })}</div>
-  <div style="flex-grow: 1; display: flex; align-items: center; justify-content: center; padding-bottom: 60px;">
-    ${emptyBlock({ art: EMPTY_ART(170, 'plus'), title: 'No decks yet', body: 'Make one, bring your cards from Anki or Quizlet, or let your AI make them for you.', actions: webActions(pill('New deck', { inv: true, icon: 'plus', href: 'WebNewDeck.dc.html' }) + pill('Import cards', { icon: 'upload', href: 'WebImport.dc.html' }) + pill('Connect your AI', { icon: 'connect', href: 'WebConnect.dc.html' })) })}
-  </div>
+  ${HB.top}
+  ${ASSIGNED_WEB}
+  ${startTiles(false)}
 </main>`);
+// A deck with no cards yet: the cover (with New card on it), then the Library's Make box and its row, set to this deck (a new deck opens here,
+// ready for material).
 const webDeckEmpty = webRoot(`${sidebar('Library')}
-<main style="flex-grow: 1; box-sizing: border-box; padding: 24px 48px 20px; display: flex; flex-direction: column; gap: 20px; min-width: 0;">
+<main data-make-drop="1" onDragOver="{{mk.over}}" onDragLeave="{{mk.leave}}" onDrop="{{mk.drop}}" style="flex-grow: 1; box-sizing: border-box; padding: 24px 48px 20px; display: flex; flex-direction: column; gap: 20px; min-width: 0;">
   <div style="position: relative; height: 184px; flex-shrink: 0; border-radius: 20px; overflow: hidden;">
     ${meshCard('cover', 'position: absolute; inset: 0;', 'height: 100%;', '', 'div', '', true)}${coverPicture}
     <div style="position: absolute; inset: 0; box-sizing: border-box; padding: 20px 24px 24px 28px; display: flex; flex-direction: column; justify-content: space-between; color: {{cover.ink}};">
       <div style="display: flex; align-items: center; justify-content: space-between;"><a href="WebDecks.dc.html" style="height: 36px; padding: 0 14px 0 10px; display: inline-flex; align-items: center; gap: 4px; border-radius: 999px; ${onCover} font-size: 13px; font-weight: 600;">${svg(I.back, 14, 2.2)}Library</a>${coverBtn('Deck settings', 'openSettings', 'gear')}</div>
-      <div style="display: flex; flex-direction: column; gap: 6px; text-shadow: {{cover.shadow}};"><h1 style="margin: 0; font-size: 34px; font-weight: 600; letter-spacing: -.035em; line-height: 1; {{coverTitle}}">{{deckName}}</h1><div style="font-size: 14px; opacity: .8;">No cards yet</div></div>
+      <div style="display: flex; align-items: flex-end; justify-content: space-between; gap: 16px;"><div style="display: flex; flex-direction: column; gap: 6px; min-width: 0; text-shadow: {{cover.shadow}};"><h1 style="margin: 0; font-size: 34px; font-weight: 600; letter-spacing: -.035em; line-height: 1; {{coverTitle}}">{{deckName}}</h1><div style="font-size: 14px; opacity: .8;">No cards yet</div></div><a href="{{newCardHref}}" style="height: 36px; flex-shrink: 0; padding: 0 16px; display: inline-flex; align-items: center; gap: 8px; border-radius: 999px; ${onCover} font-size: 14px; font-weight: 600;">${svg(I.plus, 15, 2)}New card</a></div>
     </div>
   </div>
-  <div style="flex-grow: 1; display: flex; align-items: center; justify-content: center; padding-bottom: 40px;">
-    ${emptyBlock({ art: EMPTY_ART(150, 'plus'), title: 'This deck is empty', body: 'Add your first card, import some, or ask your AI to make them.', actions: webActions(pill('New card', { inv: true, icon: 'plus', href: '{{newCardHref}}' }) + pill('Make cards', { icon: 'sparkle', href: '{{makeHref}}' }) + pill('Import cards', { icon: 'upload', href: '{{importHref}}' }) + pill('Ask your AI', { icon: 'connect', href: 'WebConnect.dc.html' })) })}
-  </div>
+  ${HB.top}
 </main>`);
 const emptyKpis = (list, big) => `<div style="display: grid; grid-template-columns: repeat(${big ? 4 : 2}, minmax(0, 1fr)); gap: ${big ? 12 : 8}px;">${list.map(([l, v]) => `<div style="background: {{t.surf}}; border-radius: ${big ? 28 : 24}px; padding: ${big ? 22 : 16}px; display: flex; flex-direction: column; gap: ${big ? 6 : 2}px;"><span style="font-size: ${big ? 13 : 12}px; color: {{t.muted}};">${l}</span><span style="font-size: ${big ? 40 : 28}px; font-weight: ${big ? 600 : 700}; letter-spacing: -.035em; line-height: 1.05; color: {{t.muted}};">${v}</span></div>`).join('')}</div>`;
 const webStatsEmpty = webRoot(`${sidebar('Stats')}
@@ -4691,39 +4545,23 @@ const webStatsEmpty = webRoot(`${sidebar('Stats')}
     ${emptyBlock({ art: EMPTY_ART(150, 'stats'), title: 'No stats yet', body: 'Your streak, study days, and how much you remember show up here after your first review.', actions: webActions(pill('Make a deck', { inv: true, icon: 'plus', href: 'WebNewDeck.dc.html' })) })}
   </div>
 </main>`);
-const phoneTodayNew = phone(`<div style="padding: 64px 20px 120px; display: flex; flex-direction: column; gap: 18px;">
-  ${todayTitle('New deck', 'PhoneNewDeck.dc.html')}
-  ${meshCard('hero', 'display: block; height: 168px; border-radius: 32px;', 'height: 100%; box-sizing: border-box; padding: 24px; display: flex; flex-direction: column; justify-content: flex-end; gap: 8px;', `
-    <span style="font-size: 14px; opacity: .85;">{{date}}</span><span style="font-size: 44px; font-weight: 600; letter-spacing: -.04em; line-height: 1;">Welcome</span><span style="font-size: 15px; opacity: .85;">Nothing to study yet. Start with a deck.</span>`)}
-  <div style="display: flex; flex-direction: column; gap: 10px;">
-    <div style="font-size: 13px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: {{t.muted}}; padding: 0 4px;">Get started</div>
-    ${phoneStartTile('plus', 'Make a deck', 'Start from scratch with your own cards', 'PhoneNewDeck.dc.html', true)}
-    <div style="display: flex; gap: 8px;">${phoneStartTile('upload', 'Import cards', 'From Anki, Quizlet, or a CSV file.', '{{importHref}}')}${phoneStartTile('connect', 'Connect your AI', 'Let Claude or ChatGPT make cards.', 'PhoneConnect.dc.html')}</div>
-  </div>
-  <div style="background: {{t.surf}}; border-radius: 24px; padding: 18px; display: flex; flex-direction: column; gap: 14px;">
-    <div style="display: flex; align-items: center; gap: 12px;"><span style="width: 36px; height: 36px; border-radius: 18px; background: {{t.surf2}}; color: {{t.muted}}; display: flex; align-items: center; justify-content: center;">${svg(I.flame, 18, 2)}</span><span style="display: flex; flex-direction: column; gap: 1px;"><span style="font-size: 15px; font-weight: 600;">No streak yet</span><span style="font-size: 12px; color: {{t.muted}};">Study today to start one</span></span></div>
-    ${emptyWeek}
-  </div>
-</div>`, 'Today');
 const phoneDeckEmpty = phone(`<div style="height: 100%; box-sizing: border-box; padding: 0 0 120px; display: flex; flex-direction: column;">
   <div style="position: relative; height: 232px; flex-shrink: 0; overflow: hidden; container-type: inline-size;">
     ${meshCard('cover', 'position: absolute; inset: 0;', 'height: 100%;', '', 'div', '', true)}${coverPicture}
     <div style="position: absolute; inset: 0; box-sizing: border-box; padding: 54px 16px 18px 20px; display: flex; flex-direction: column; justify-content: space-between; color: {{cover.ink}};">
-      <div style="display: flex; justify-content: space-between;">${coverRound('back', 'Back', 'PhoneToday.dc.html')}<div style="display: flex; gap: 8px;">${coverRound('gear', 'Deck settings', '', '{{openSettings}}')}${coverRound('plus', 'New card', 'PhoneEditor.dc.html')}</div></div>
+      <div style="display: flex; justify-content: space-between;">${coverRound('back', 'Back', 'PhoneLibrary.dc.html')}<div style="display: flex; gap: 8px;">${coverRound('gear', 'Deck settings', '', '{{openSettings}}')}${coverRound('plus', 'New card', 'PhoneEditor.dc.html')}</div></div>
       <div style="display: flex; flex-direction: column; gap: 4px; text-shadow: {{cover.shadow}};"><div style="font-size: 32px; font-weight: 700; letter-spacing: -.03em; line-height: 1.05; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; {{coverTitleS}}">{{deckName}}</div><div style="font-size: 14px; opacity: .8;">No cards yet</div></div>
     </div>
   </div>
-  <div style="flex-grow: 1; box-sizing: border-box; padding: 0 28px; display: flex; align-items: center; justify-content: center;">
-    ${emptyBlock({ art: EMPTY_ART(140, 'plus'), title: 'This deck is empty', size: 22, body: 'Add your first card, import some, or ask your AI to make them.', actions: phoneActionRow(phoneBtn('New card', 'PhoneEditor.dc.html', 'plus', true) + phoneBtn('Make cards', '{{makeHref}}', 'sparkle'), phoneBtn2('Import cards', '{{importHref}}', 'upload'), phoneBtn2('Ask your AI', 'PhoneConnect.dc.html', 'connect')) })}
-  </div>
+  <div style="box-sizing: border-box; padding: 20px 20px 0; display: flex; flex-direction: column; gap: 14px;">${HBP.top}</div>
 </div>`, 'Library');
-// The Decks tab before there are any decks.
-const phoneDecksEmpty = phone(`<div style="height: 100%; box-sizing: border-box; padding: 64px 20px 120px; display: flex; flex-direction: column; gap: 14px;">
+// The Library before there are any decks: the Make box first, what your classes assigned, then Import cards and Connect AI.
+const phoneDecksEmpty = phone(`<div style="padding: 64px 20px 120px; display: flex; flex-direction: column; gap: 14px;">
   ${pTitle('Library', roundBtn('plus', 'New deck', 'PhoneNewDeck.dc.html'))}
   ${libModes(36, 14, true)}
-  <div style="flex-grow: 1; box-sizing: border-box; padding: 0 8px 20px; display: flex; align-items: center; justify-content: center;">
-    ${emptyBlock({ art: EMPTY_ART(150, 'plus'), title: 'No decks yet', size: 22, body: 'Make one, bring your cards from Anki or Quizlet, or let your AI make them for you.', actions: phoneActionRow(phoneBtn('New deck', 'PhoneNewDeck.dc.html', 'plus', true), phoneBtn2('Import cards', 'PhoneDecksEmpty.dc.html', 'upload'), phoneBtn2('Connect AI', 'PhoneConnect.dc.html', 'connect')) })}
-  </div>
+  ${HBP.top}
+  ${ASSIGNED_PHONE}
+  ${startTiles(true)}
 </div>`, 'Library');
 const phoneStatsEmpty = phone(`<div style="height: 100%; box-sizing: border-box; padding: 64px 20px 120px; display: flex; flex-direction: column; gap: 14px;">
   ${pTitle('Stats')}
@@ -4732,23 +4570,27 @@ const phoneStatsEmpty = phone(`<div style="height: 100%; box-sizing: border-box;
     ${emptyBlock({ art: EMPTY_ART(130, 'stats'), title: 'No stats yet', size: 22, body: 'Your streak, study days, and how much you remember show up after your first review.', actions: `<a href="PhoneNewDeck.dc.html" style="height: 48px; padding: 0 22px; border-radius: 999px; background: {{t.inv}}; color: {{t.invText}}; display: flex; align-items: center; gap: 8px; font-size: 15px; font-weight: 600;">${svg(I.plus, 16, 2)}Make a deck</a>` })}
   </div>
 </div>`, 'Stats');
-// \`phone\`: the iPhone board (the Library's Decks · All cards · Classes switch links to the iPhone boards on the canvas).
-const emptyLogic = (cover = '', phone = false) => `renderVals() { ${T}${DB_JS}
+// \`phone\`: the iPhone board (the Library's Decks · All cards · Classes switch, and where the Make box's links go on the canvas). \`cover\`: the empty deck's
+// name (its row is set to that deck); '' is a brand-new account's Library.
+const emptyLogic = (cover = '', phone = false) => `${MAKE_BOX_METHOD}
+renderVals() { ${T}${DB_JS}
   // The Library with no decks yet still has its switch, so Classes are there before the first deck (web/classes.mjs).
   const modes = [['Decks', '${phone ? 'PhoneLibrary' : 'WebDecks'}', '/library'], ['All cards', '${phone ? 'PhoneLibraryCards' : 'WebLibraryCards'}', '/library/cards'], ['Classes', '${phone ? 'PhoneClasses' : 'WebClasses'}', '/library/classes']]
     .map(([label, b, href], i) => ({ label, href: db.mock ? b + '.dc.html' : href, current: !i ? 'page' : 'false', bg: !i ? t.bg : 'transparent', fg: !i ? t.text : t.muted, sh: !i ? '0 1px 3px rgba(0,0,0,.14)' : 'none' }));
-  // On the canvas these boards show a brand-new account, so the Today count stays hidden (except on the empty deck).
-  const dk = db.mock ? { name: '${cover}', seed: '${cover}', cover: { style: null, round: 0, image: null } } : (db.deck(this.props.deckId) || { name: '', seed: '', cover: {} });
+  // On the canvas these boards show a brand-new account, so there is no news yet.
+  const dk = db.mock ? { id: '', name: '${cover}', seed: '${cover}', cover: { style: null, round: 0, image: null } } : (db.deck(this.props.deckId) || { id: '', name: '', seed: '', cover: {} });
   // A new deck's picture shows on its empty page too, with white words over it.
   const pic = dk.cover.image || '', photo = pic !== 'mock' ? pic : '';
   // With a theme on (Pro), the theme draws the cover, and letters the deck's name.
   const S = this.skin(db), C = S && !pic && dk.name ? S.coverOf({ ...dk, round: dk.cover.round }, 'head', 34) : null;
-  return { ${MESH_VALS('Iris')} t, ...chrome, modes, nav: db.mock ? { ...chrome.nav, today: ${cover ? "'64'" : "''"}, news: '', hasNews: false } : chrome.nav, art: this.mesh('Iris'), art2: this.mesh('Mint'), art3: this.mesh('Apricot'), noop: () => {},
-    date: db.today().date, deckName: dk.name, cover: { ...this.gen(dk.seed + (dk.cover.round ? ' #' + dk.cover.round : ''), dk.cover.style), ...(photo ? { ink: '#FFFFFF', shadow: '0 1px 14px rgba(0,0,0,.45)' } : {}),
+  ${ASSIGNED_JS(phone)}
+  return { ${MESH_VALS('Iris')} t, ...chrome, modes, assignments: assignRows, hasAssignments: ${cover ? 'false' : 'assignRows.length > 0'}, nav: db.mock ? { ...chrome.nav, news: '', hasNews: false } : chrome.nav, art: this.mesh('Iris'), art2: this.mesh('Mint'), art3: this.mesh('Apricot'), noop: () => {},
+    mk: this.makeBox(t, db, { deckId: ${cover ? 'dk.id' : "''"}, board: '${phone ? 'Phone' : 'Web'}', newDeck: ${!cover} }),
+    deckName: dk.name, cover: { ...this.gen(dk.seed + (dk.cover.round ? ' #' + dk.cover.round : ''), dk.cover.style), ...(photo ? { ink: '#FFFFFF', shadow: '0 1px 14px rgba(0,0,0,.45)' } : {}),
       ...(C ? { base: C.base, ink: C.ink, shadow: 'none', plain: false, skin: true, art: C.art } : { plain: true, skin: false, art: null }) },
     coverTitle: C ? C.titleAt(34) : '', coverTitleS: C ? C.titleHead(32, dk.name) : '',
     coverIsImage: pic === 'mock', coverHasPhoto: !!photo, coverPhoto: photo,
-    newCardHref: db.mock ? 'WebCardsScreenNew.dc.html' : dk.newCardHref, importHref: db.href('import', dk.id), makeHref: db.mock ? 'WebMake.dc.html' : db.href('make', dk.id), connectHref: db.href('connect'),
+    newCardHref: db.mock ? '${phone ? 'PhoneEditor' : 'WebCardsScreenNew'}.dc.html' : dk.newCardHref, importHref: db.mock ? 'WebImport.dc.html' : db.href('import', ${cover ? 'dk.id' : "''"}), connectHref: db.mock ? '${phone ? 'PhoneConnect' : 'WebConnect'}.dc.html' : db.href('connect'),
     openSettings: () => { if (!db.mock) db.act.go(dk.settingsHref); } }; }`;
 
 // New deck. The cover starts white. Its colors (generated from the name) fade in over 2 s once you stop typing the name
@@ -4772,7 +4614,7 @@ const webNewDeck = `<div style="position: relative; width: 1440px; height: 900px
   <dc-import name="WebDecks" dark="{{dark}}" dim="{{dim}}" hint-size="1440px,900px"></dc-import>
   <div style="position: absolute; inset: 0; z-index: 40; background: {{t.dim}};"></div>
   <div role="dialog" aria-label="New deck" style="position: absolute; z-index: 40; left: 420px; top: 50%; transform: translateY(-50%); width: 600px; box-sizing: border-box; padding: 28px; border-radius: 36px; background: {{t.bg}}; box-shadow: 0 24px 64px rgba(0,0,0,.24); display: flex; flex-direction: column; gap: 18px;">
-    ${newDeckBody(false, 'WebDecks.dc.html', 'WebDeck.dc.html')}
+    ${newDeckBody(false, 'WebDecks.dc.html', 'WebDeckEmpty.dc.html')}
   </div>
 </div>`;
 // Import cards: paste text or pick a file (Anki and Quizlet exports, CSV), then pick the deck. Opens over Decks.
@@ -4850,10 +4692,10 @@ renderVals() {
   };
 }`;
 const phoneNewDeck = `<div style="position: relative; width: 390px; height: 844px; overflow: hidden; font-family: ${FONT}; color: {{t.text}};">
-  <dc-import name="PhoneToday" dark="{{dark}}" dim="{{dim}}" hint-size="390px,844px"></dc-import>
+  <dc-import name="PhoneLibrary" dark="{{dark}}" dim="{{dim}}" hint-size="390px,844px"></dc-import>
   <div style="position: absolute; inset: 0; background: {{t.dim}};"></div>
   <div role="dialog" aria-label="New deck" style="position: absolute; left: 0; right: 0; bottom: 0; box-sizing: border-box; padding: 16px 20px 34px; border-radius: 36px 36px 0 0; background: {{t.bg}}; display: flex; flex-direction: column; gap: 16px;">
-    ${newDeckBody(true, 'PhoneToday.dc.html', 'PhoneDeck.dc.html')}
+    ${newDeckBody(true, 'PhoneLibrary.dc.html', 'PhoneDeckEmpty.dc.html')}
   </div>
 </div>`;
 const NEW_DECK_LOGIC = `
@@ -5021,7 +4863,7 @@ const skyLayer = phone => `<div aria-hidden="true" class="sc-demo" style="positi
   ${SKY_CLOUDS[phone ? 'phone' : 'web'].map(([x, y, w, h, secs], i) => `<div class="sc-cloud" style="position: absolute; left: ${x}%; top: ${y}px; width: ${w}px; height: ${h}px; animation: scCloud ${secs}s ease-in-out -${i * 23}s infinite alternate;">${[[0, 30, 60, 70], [24, 0, 56, 88], [46, 24, 54, 76]].map(([l, t, pw, ph]) => `<span style="position: absolute; left: ${l}%; top: ${t}%; width: ${pw}%; height: ${ph}%; background: radial-gradient(closest-side, {{sky.cloud}} 40%, transparent);"></span>`).join('')}</div>`).join('')}
 </div>`;
 // The clouds drift slowly, to one side and back (a cloud moves 16% of its own width each way, about 170 px for a computer's big ones, in 72 to 120
-// seconds, eased at both ends, so the loop has no jump). The gradient that ends a page flows as the app's Today card does (the app's scDrift:
+// seconds, eased at both ends, so the loop has no jump). The gradient that ends a page flows slowly (scDrift:
 // it grows 14% and drifts a few percent, back and forth, 16 s). Both are transforms only, and both stop with reduced motion.
 const SKY_CSS = '@keyframes scCloud{from{transform:translate3d(-16%,0,0)}to{transform:translate3d(16%,0,0)}}.sc-cloud{will-change:transform}'
   + '@keyframes scDrift{from{transform:scale(1.14) translate(-3%,-2%)}to{transform:scale(1.14) translate(3%,2%)}}.sc-flow{animation:scDrift 16s ease-in-out infinite alternate;will-change:transform}'
@@ -5355,7 +5197,6 @@ const settingsOf = (name, w, h) => `<div style="width: ${w}px; height: ${h}px; o
 const openOf = (name, w, h) => `<div style="width: ${w}px; height: ${h}px; overflow: hidden;"><dc-import name="${name}" settings-open="{{yes}}" hint-size="${w}px,${h}px"></dc-import></div>`;
 const pileOf = (name, w, h) => `<div style="width: ${w}px; height: ${h}px; overflow: hidden;"><dc-import name="${name}" grading="Piles" start-revealed="{{yes}}" new-pile-open="{{yes}}" hint-size="${w}px,${h}px"></dc-import></div>`;
 const blankOf = (name, w, h) => `<div style="width: ${w}px; height: ${h}px; overflow: hidden;"><dc-import name="${name}" card="Fill in the blank" hint-size="${w}px,${h}px"></dc-import></div>`;
-const caughtOf = (name, w, h) => `<div style="width: ${w}px; height: ${h}px; overflow: hidden;"><dc-import name="${name}" caught-up="{{yes}}" hint-size="${w}px,${h}px"></dc-import></div>`;
 const listOf = (name, w, h) => `<div style="width: ${w}px; height: ${h}px; overflow: hidden;"><dc-import name="${name}" view="List" hint-size="${w}px,${h}px"></dc-import></div>`;
 const typeOf = (name, w, h, type) => `<div style="width: ${w}px; height: ${h}px; overflow: hidden;"><dc-import name="${name}" card-type="${type}" hint-size="${w}px,${h}px"></dc-import></div>`;
 const studyOf = (name, w, h) => `<div style="width: ${w}px; height: ${h}px; overflow: hidden;"><dc-import name="${name}" settings-open="{{yes}}" settings-tab="Studying" hint-size="${w}px,${h}px"></dc-import></div>`;
@@ -5449,7 +5290,7 @@ const webSignRoot = inner => `<div style="width: 1440px; height: 900px; box-sizi
   ${signPanel('flex-grow: 1; min-width: 0;', { cols: 4, w: 264, h: 176, gap: 16, r: 20, tilt: -14, k: 1 })}
 </div>`;
 const webSignIn = webSignRoot(`<h1 style="margin: 0; font-size: 32px; font-weight: 600; letter-spacing: -.03em; text-align: center;">Sign in to Lucida</h1>
-      <div style="display: flex; flex-direction: column; gap: 10px;">${authBtn('Continue with Google', G_LOGO, 'Main.dc.html', 44, 'google')}${authBtn('Continue with Apple', APPLE_LOGO, 'Main.dc.html', 44, 'apple')}</div>
+      <div style="display: flex; flex-direction: column; gap: 10px;">${authBtn('Continue with Google', G_LOGO, 'WebDecks.dc.html', 44, 'google')}${authBtn('Continue with Apple', APPLE_LOGO, 'WebDecks.dc.html', 44, 'apple')}</div>
       ${orLine}
       ${emailForm(44, 'WebSignInCode.dc.html')}
       ${AGREE}`);
@@ -5457,7 +5298,7 @@ const codeText = `<div style="display: flex; flex-direction: column; gap: 8px; t
 const webSignInCode = webSignRoot(`<a href="WebSignIn.dc.html" style="align-self: center; display: inline-flex; align-items: center; gap: 6px; font-size: 14px; color: {{t.muted}};">${svg(I.back, 16, 2)}Use another email</a>
       ${codeText}
       ${codeBoxes(52, 60)}${SIGN_ERROR}
-      <div style="display: flex; flex-direction: column; gap: 14px;"><a href="Main.dc.html" onClick="{{verify}}" style="height: 44px; display: flex; align-items: center; justify-content: center; border-radius: 999px; background: {{t.inv}}; color: {{t.invText}}; font-size: 15px; font-weight: 600;">{{verifyLabel}}</a><button type="button" onClick="{{resend}}" style="align-self: center; border: 0; padding: 0; background: transparent; color: {{t.muted}}; font: inherit; font-size: 14px; cursor: pointer;">{{resendLabel}}</button></div>`);
+      <div style="display: flex; flex-direction: column; gap: 14px;"><a href="WebDecks.dc.html" onClick="{{verify}}" style="height: 44px; display: flex; align-items: center; justify-content: center; border-radius: 999px; background: {{t.inv}}; color: {{t.invText}}; font-size: 15px; font-weight: 600;">{{verifyLabel}}</a><button type="button" onClick="{{resend}}" style="align-self: center; border: 0; padding: 0; background: transparent; color: {{t.muted}}; font: inherit; font-size: 14px; cursor: pointer;">{{resendLabel}}</button></div>`);
 // The phone sign-in pages fill any phone's screen in the app (design/to-web.mjs swaps this 390 x 844 frame for the
 // window), so the wall takes whatever height the form leaves.
 const signPhoneRoot = inner => `<div style="position: relative; width: 390px; height: 844px; box-sizing: border-box; display: flex; flex-direction: column; font-family: ${FONT}; background: {{t.bg}}; color: {{t.text}}; overflow: hidden;">
@@ -5468,7 +5309,7 @@ const phoneSignIn = signPhoneRoot(`<a href="${HOME}" style="position: absolute; 
   ${signPanel('flex: 1 1 0; min-height: 120px;', { cols: 4, w: 150, h: 100, gap: 10, r: 16, tilt: -14, k: PHONE_K })}
   <div style="flex-shrink: 0; box-sizing: border-box; padding: 22px 20px 34px; display: flex; flex-direction: column; gap: 10px;">
     <h1 style="margin: 0 0 8px; font-size: 28px; font-weight: 700; letter-spacing: -.03em; text-align: center;">Sign in to Lucida</h1>
-    ${authBtn('Continue with Apple', APPLE_LOGO, 'PhoneToday.dc.html', 50, 'apple')}${authBtn('Continue with Google', G_LOGO, 'PhoneToday.dc.html', 50, 'google')}
+    ${authBtn('Continue with Apple', APPLE_LOGO, 'PhoneLibrary.dc.html', 50, 'apple')}${authBtn('Continue with Google', G_LOGO, 'PhoneLibrary.dc.html', 50, 'google')}
     <div style="padding: 4px 0;">${orLine}</div>
     ${emailForm(50, 'PhoneSignInCode.dc.html', 16)}
     ${AGREE}
@@ -5478,7 +5319,7 @@ const phoneSignInCode = signPhoneRoot(`<div style="flex: 1 0 auto; box-sizing: b
   ${codeText}
   ${codeBoxes(50, 58)}${SIGN_ERROR}
   <div style="flex-grow: 1;"></div>
-  <div style="display: flex; flex-direction: column; gap: 14px;"><a href="PhoneToday.dc.html" onClick="{{verify}}" style="height: 52px; display: flex; align-items: center; justify-content: center; border-radius: 999px; background: {{t.inv}}; color: {{t.invText}}; font-size: 16px; font-weight: 600;">{{verifyLabel}}</a><button type="button" onClick="{{resend}}" style="align-self: center; border: 0; padding: 0; background: transparent; color: {{t.muted}}; font: inherit; font-size: 15px; cursor: pointer;">{{resendLabel}}</button></div>
+  <div style="display: flex; flex-direction: column; gap: 14px;"><a href="PhoneLibrary.dc.html" onClick="{{verify}}" style="height: 52px; display: flex; align-items: center; justify-content: center; border-radius: 999px; background: {{t.inv}}; color: {{t.invText}}; font-size: 16px; font-weight: 600;">{{verifyLabel}}</a><button type="button" onClick="{{resend}}" style="align-self: center; border: 0; padding: 0; background: transparent; color: {{t.muted}}; font: inherit; font-size: 15px; cursor: pointer;">{{resendLabel}}</button></div>
 </div>`);
 // On the canvas the code page shows three digits typed, with the fourth box next.
 const signInLogic = (code, secs, k = 1) => `${ART_METHOD}
@@ -7306,7 +7147,7 @@ const obScreens = m => {
     + `<sc-if value="{{isFound}}" hint-placeholder-val="{{ false }}">${obFound(m)}</sc-if>`
     + `<sc-if value="{{isDone}}" hint-placeholder-val="{{ false }}">${obDone(m)}</sc-if>`;
 };
-// Skip, in the top corner: in step 1 it moves on to step 2; in step 2 it goes to Today. On phones it's a small pill.
+// Skip, in the top corner: in step 1 it moves on to step 2; in step 2 it goes to the Library (there is no Today). On phones it's a small pill.
 const obSkip = m => {
   const st = m ? 'position: absolute; top: 58px; right: 16px; z-index: 2; height: 36px; box-sizing: border-box; padding: 0 10px 0 14px; border: 0; border-radius: 18px; background: {{t.surf}}; color: {{t.text}}; display: inline-flex; align-items: center; gap: 2px; font: inherit; font-size: 14px; font-weight: 600; cursor: pointer;'
     : 'position: absolute; top: 34px; right: 40px; display: inline-flex; align-items: center; gap: 4px; border: 0; padding: 0; background: transparent; color: {{t.muted}}; font: inherit; font-size: 14px; cursor: pointer;';
@@ -7525,7 +7366,7 @@ renderVals() { ${T}${DB_JS}${READ_CARDS_JS}
     isClaude: aiId === 'claude', isOpenAI: aiId === 'openai', isCursor: aiId === 'cursor', isMcp: aiId === 'mcp',
     isAnki: srcId === 'anki', isQuizlet: srcId === 'quizlet', isSheet: srcId === 'sheet', isPaste: srcId === 'paste',
     skipToCards: step === 'Pick AI' || step === 'Steps', skipToToday: step === 'Pick source' || step === 'Source steps' || step === 'Found',
-    skip: () => go('Pick source', { skippedAI: true }), todayHref: live ? '/' : '${m ? 'PhoneToday' : 'Main'}.dc.html',
+    skip: () => go('Pick source', { skippedAI: true }), todayHref: live ? '/library' : '${m ? 'PhoneLibrary' : 'WebDecks'}.dc.html',
     finish: () => { if (live) db.act.setSettings({ welcomed: true }); },
     back: () => go(step === 'Found' ? 'Source steps' : step === 'Source steps' ? 'Pick source' : step !== 'Steps' && s.ai && !s.skippedAI ? 'Connected' : 'Pick AI'),
     linkShown: link.replace(/^https?:\\/\\//, ''), copyLink, copyLabel: s.copied ? 'Copied' : 'Copy', openApp, openHref: OPEN[aiId] || link,
@@ -7614,7 +7455,7 @@ const webDiscover = netRoot('Discover', `
     </sc-if>
     <sc-if value="{{offline}}" hint-placeholder-val="{{ false }}"><div style="padding: 56px 24px; border-radius: 24px; background: {{t.surf}}; text-align: center; font-size: 15px; color: {{t.muted}};">Couldn’t reach Lucida. Check your connection.</div></sc-if>`);
 const phoneDiscover = phone(`<div style="padding: 64px 20px 120px; display: flex; flex-direction: column; gap: 16px;">
-  <h1 style="margin: 0; font-size: 32px; font-weight: 600; letter-spacing: -.03em;">Discover</h1>
+  <div style="display: flex; align-items: center; gap: 12px;"><h1 style="flex-grow: 1; min-width: 0; margin: 0; font-size: 32px; font-weight: 600; letter-spacing: -.03em;">Discover</h1><sc-if value="{{signedIn}}" hint-placeholder-val="{{ true }}">${NEWS_BTN}</sc-if></div>
   <label style="display: flex; align-items: center; gap: 10px; height: 44px; padding: 0 16px; box-sizing: border-box; border-radius: 999px; background: {{t.surf}}; color: {{t.muted}};">${svg(I.search, 16)}<span style="position: absolute; left: -9999px;">Search decks and people</span><input value="{{query}}" onChange="{{setQuery}}" placeholder="Search decks and people" style="flex-grow: 1; min-width: 0; border: 0; outline: 0; background: transparent; font: inherit; font-size: 16px; color: {{t.text}};"><sc-if value="{{hasQuery}}" hint-placeholder-val="{{ false }}"><button type="button" onClick="{{clearQuery}}" aria-label="Clear search" style="width: 26px; height: 26px; border: 0; border-radius: 13px; background: {{t.surf2}}; color: {{t.text}}; display: flex; align-items: center; justify-content: center;">${svg(I.close, 10, 2.4)}</button></sc-if></label>
   <div role="group" aria-label="Filters" style="display: flex; align-items: center; margin: -4px 0 0 -20px;"><div style="flex-grow: 1; min-width: 0; display: flex; align-items: center; gap: 8px; padding: 0 8px 0 20px; overflow-x: auto; scrollbar-width: none;">${FILTER_PILL('lv', true)}${FILTER_PILL('sj', true)}${FILTER_PILL('sc', true)}</div>${CLEAR_FILTERS}</div>
   <sc-if value="{{hasTopics}}" hint-placeholder-val="{{ true }}"><div role="group" aria-label="Topics" style="display: flex; gap: 8px; margin: 0 -20px; padding: 0 20px; overflow-x: auto; scrollbar-width: none;"><sc-for list="{{topics}}" as="g" hint-placeholder-count="5"><button type="button" onClick="{{g.pick}}" aria-pressed="{{g.pressed}}" style="flex-shrink: 0; height: 36px; padding: 0 14px; border: 0; border-radius: 999px; background: {{g.bg}}; color: {{g.fg}}; font: inherit; font-size: 13px; font-weight: 600; white-space: nowrap;">{{g.label}}</button></sc-for></div></sc-if>
@@ -7990,7 +7831,7 @@ const webActivity = netRoot('News', `
     <sc-if value="{{hasItems}}" hint-placeholder-val="{{ true }}"><div style="max-width: 800px; display: flex; flex-direction: column;"><sc-for list="{{items}}" as="n" hint-placeholder-count="5">${NEWS_ROW(false)}</sc-for></div></sc-if>
     ${NEWS_EMPTY(false)}`);
 const phoneActivity = phone(`<div style="padding: 64px 20px 34px; display: flex; flex-direction: column; gap: 16px;">
-  <div style="display: flex; align-items: center; gap: 12px;">${roundBtn('back', 'Back', 'PhoneToday.dc.html')}<div style="flex-grow: 1; font-size: 17px; font-weight: 600; text-align: center;">News</div><div style="width: 44px;"></div></div>
+  <div style="display: flex; align-items: center; gap: 12px;">${roundBtn('back', 'Back', 'PhoneDiscover.dc.html')}<div style="flex-grow: 1; font-size: 17px; font-weight: 600; text-align: center;">News</div><div style="width: 44px;"></div></div>
   ${NET_LOADING(3)}
   <sc-if value="{{hasItems}}" hint-placeholder-val="{{ true }}"><div style="display: flex; flex-direction: column;"><sc-for list="{{items}}" as="n" hint-placeholder-count="5">${NEWS_ROW(true)}</sc-for></div></sc-if>
   ${NEWS_EMPTY(true)}
@@ -8657,8 +8498,8 @@ const HI_PROPS = { ...DARK, loading: bool(), missing: bool(), signedOut: bool(),
 // ---------- Classes ----------
 // The owner's note: "Schools / organizations", as a study group that a teacher can also run (the owner: Lucida is for
 // "study groups and friends, not teachers"). Classes are the Library's third view (Decks · All cards · Classes): the
-// sidebar keeps its five places and the iPhone its five tabs, and people mostly arrive by an invite link anyway, with
-// their assignments on Today. A class page has its assignments, decks, and people; its owner and helpers also see the
+// sidebar and the iPhone's tabs stay as they are, and people mostly arrive by an invite link anyway, with
+// their assignments at the top of the Library (Assigned). A class page has its assignments, decks, and people; its owner and helpers also see the
 // progress of each member who shares it. /class/<code> is its invite too: one tap to join, then one question, once.
 // Data (web/classes.mjs): db.net.classes(), db.net.klass(code) (undefined while it loads), and your own progress on a
 // class's deck, db.classProgress(sharedId), worked out from your own cards (web/progress.js).
@@ -9286,11 +9127,11 @@ const phoneGoPro = `<div style="position: relative; width: 390px; height: 844px;
 </div>`;
 
 const files = {
-  // (Its `collapsed` Tweak shows the sidebar as the rail of icons; any board with the sidebar shows it so if it has the Tweak, and the sidebar's button collapses it on the board.)
-  'Main': ['Web · Today', webToday, { props: { ...DARK, ...MESH('Iris'), caughtUp: { editor: 'boolean', default: false }, assignments: { editor: 'boolean', default: false }, collapsed: { editor: 'boolean', default: false } }, logic: todayLogic, css: DRAG_CSS, w: W, h: H }],
   'WebNewDeck': ['Web · New deck', webNewDeck, { props: { ...DARK, grain: MESH('Iris').grain }, logic: NEW_DECK_LOGIC, css: NUM_CSS + COVER_FADE_CSS, w: W, h: H }],
   'WebImport': ['Web · Import cards', webImport, { props: { ...DARK, grain: MESH('Iris').grain }, logic: importLogic, w: W, h: H }],
-  'WebDecks': ['Web · Library', webDecks, { props: { ...DARK, grain: MESH('Iris').grain, mode: LIB_MODE, folder: LIB_FOLDER, level: LEVEL_PROP, view: { editor: 'enum', default: 'Cards', options: ['Cards', 'List'] }, openTags: { editor: 'boolean', default: false }, moreTags: { editor: 'boolean', default: false } }, logic: decksLogic, css: DRAG_CSS, w: W, h: H }],
+  // The Library, the app's first page. Its Tweaks: nothing due (caughtUp), what your classes assigned (assignments), and the sidebar as the rail of icons
+  // (collapsed: any board with the sidebar shows it so if it has the Tweak, and the sidebar's button collapses it on the board).
+  'WebDecks': ['Web · Library', webDecks, { props: { ...DARK, grain: MESH('Iris').grain, caughtUp: BOOL, assignments: BOOL, collapsed: BOOL, mode: LIB_MODE, folder: LIB_FOLDER, level: LEVEL_PROP, view: { editor: 'enum', default: 'Cards', options: ['Cards', 'List'] }, openTags: { editor: 'boolean', default: false }, moreTags: { editor: 'boolean', default: false } }, logic: decksLogic, css: DRAG_CSS, w: W, h: H }],
   'WebLibraryCards': ['Web · Library · all cards (filter by tags and difficulty)', attrOf('WebDecks', W, H, 'mode="cards"'), { logic: darkLogic, css: DRAG_CSS, w: W, h: H }],
   'WebLibraryLeeches': ['Web · Library · all cards · cards you keep forgetting (Pause all)', attrOf('WebDecks', W, H, 'mode="cards" level="leech"'), { logic: darkLogic, css: DRAG_CSS, w: W, h: H }],
   'WebLibraryFolder': ['Web · Library · a folder', attrOf('WebDecks', W, H, 'folder="f1"'), { logic: darkLogic, css: DRAG_CSS, w: W, h: H }],
@@ -9305,8 +9146,6 @@ const files = {
   'WebSettingsFree': ['Web · Settings · on Free (Tune to you is Pro)', attrOf('WebSettings', W, H, 'plan="Free" section="Studying"'), { logic: darkLogic, css: NUM_CSS, w: W, h: H }],
   'WebSettingsVerified': ['Web · Settings · a verified teacher (Get verified says Verified teacher)', attrOf('WebSettings', W, H, 'verified="Teacher" section="Account"'), { logic: darkLogic, css: NUM_CSS, w: W, h: H }],
   'IconOptions': ['Web · Icon options', iconOptions, { props: DARK, logic: iconOptionsLogic, w: W, h: H }],
-  'WebTodayNew': ['Web · Today · new user', webTodayNew, { props: { ...DARK, ...MESH('Iris') }, logic: emptyLogic(), w: W, h: H }],
-  'WebTodayCaughtUp': ['Web · Today · all caught up', caughtOf('Main', W, H), { logic: darkLogic, css: DRAG_CSS, w: W, h: H }],
   'WebDecksEmpty': ['Web · Library · no decks yet', webDecksEmpty, { props: { ...DARK, grain: MESH('Iris').grain }, logic: emptyLogic(), w: W, h: H }],
   'WebDeckEmpty': ['Web · Deck · no cards yet', webDeckEmpty, { props: { ...DARK, grain: MESH('Iris').grain }, logic: emptyLogic('Pharmacology'), w: W, h: H }],
   'WebStatsEmpty': ['Web · Stats · no reviews yet', webStatsEmpty, { props: { ...DARK, grain: MESH('Iris').grain }, logic: emptyLogic(), w: W, h: H }],
@@ -9344,7 +9183,6 @@ const files = {
   'WebStatsUpgrade': ['Web · Stats · on Free: go Pro for deep stats', attrOf('WebStats', W, H, 'tab="Weak spots" free="{{yes}}"'), { logic: darkLogic, w: W, h: H }],
   'WebConnectConsent': ['Web · An AI app asks to connect (Allow or Cancel)', webConnectConsent, { props: CONSENT_PROPS, logic: consentLogic, w: W, h: H }],
   'WebConnect': ['Web · Connect AI', webConnect, { props: { ...DARK, ...MESH('Apricot'), noApps: BOOL }, logic: connectLogic, w: W, h: H }],
-  'WebTodayDark': ['Web · Today (dark)', darkOf('Main', W, H), { logic: darkLogic, css: DRAG_CSS, w: W, h: H }],
   'WebReviewDark': ['Web · Review (dark)', darkOf('WebReview', W, H), { logic: darkLogic, css: REVIEW_CSS, w: W, h: H }],
   'WebReviewFour': ['Web · Review · 4 grades', styleOf('WebReview', W, H, 'Four buttons'), { logic: darkLogic, css: REVIEW_CSS, w: W, h: H }],
   'WebReviewCheck': ['Web · Review · ✓ or ✗', styleOf('WebReview', W, H, 'Check or X'), { logic: darkLogic, css: REVIEW_CSS, w: W, h: H }],
@@ -9369,7 +9207,6 @@ const files = {
   'WebDeckDark': ['Web · Deck page (dark)', darkOf('WebDeck', W, H), { logic: darkLogic, css: NUM_CSS + DRAG_CSS, w: W, h: H }],
   'WebStatsDark': ['Web · Stats (dark)', darkOf('WebStats', W, H), { logic: darkLogic, w: W, h: H }],
   'WebStatsWeakDark': ['Web · Stats · Weak spots (dark)', `<div style="width: ${W}px; height: ${H}px; overflow: hidden; background: #000000;"><dc-import name="WebStats" tab="Weak spots" dark="{{yes}}" hint-size="${W}px,${H}px"></dc-import></div>`, { logic: darkLogic, w: W, h: H }],
-  'WebTodayGray': ['Web · Today (dark, gray)', grayOf('Main', W, H), { logic: darkLogic, css: DRAG_CSS, w: W, h: H }],
   'WebLibraryGray': ['Web · Library (dark, gray)', grayOf('WebDecks', W, H), { logic: darkLogic, css: DRAG_CSS, w: W, h: H }],
   'WebDeckGray': ['Web · Deck page (dark, gray)', grayOf('WebDeck', W, H), { logic: darkLogic, css: NUM_CSS + DRAG_CSS, w: W, h: H }],
   'WebReviewGray': ['Web · Review (dark, gray)', grayOf('WebReview', W, H), { logic: darkLogic, css: REVIEW_CSS, w: W, h: H }],
@@ -9389,12 +9226,9 @@ const files = {
   'Generated': ['Generated gradients', generatedBoard, { props: { grain: MESH('Iris').grain }, logic: generatedLogic, w: W, h: H }],
   'Gallery': ['Gradient cards', galleryBoard, { props: { grain: MESH('Iris').grain }, logic: galleryLogic, w: W, h: H }],
   'Motion': ['Motion', motion(), { props: { grain: MESH('Iris').grain }, logic: `renderVals() { return { t: this.theme(false), grain: String(this.props.grain ?? 0.7), hero: this.mesh('Iris'), art: this.mesh('Iris'), art2: this.mesh('Mint'), art3: this.mesh('Apricot') }; }`, css: motionCss, w: W, h: MOTION_H }],
-  'PhoneToday': ['iPhone · Today', phoneToday, { props: { ...DARK, ...MESH('Iris'), caughtUp: { editor: 'boolean', default: false }, assignments: { editor: 'boolean', default: false } }, logic: phoneDecksLogic, w: PW, h: PH }],
-  'PhoneTodayNew': ['iPhone · Today · new user', phoneTodayNew, { props: { ...DARK, ...MESH('Iris') }, logic: emptyLogic(), w: PW, h: PH }],
-  'PhoneTodayCaughtUp': ['iPhone · Today · all caught up', caughtOf('PhoneToday', PW, PH), { logic: darkLogic, w: PW, h: PH }],
-  'PhoneDeckEmpty': ['iPhone · Deck · no cards yet', phoneDeckEmpty, { props: { ...DARK, grain: MESH('Iris').grain }, logic: emptyLogic('Pharmacology'), w: PW, h: PH }],
+  'PhoneDeckEmpty': ['iPhone · Deck · no cards yet', phoneDeckEmpty, { props: { ...DARK, grain: MESH('Iris').grain }, logic: emptyLogic('Pharmacology', true), w: PW, h: PH }],
   'PhoneDecksEmpty': ['iPhone · Library · no decks yet', phoneDecksEmpty, { props: { ...DARK, grain: MESH('Iris').grain }, logic: emptyLogic('', true), w: PW, h: PH }],
-  'PhoneLibrary': ['iPhone · Library', phoneLibrary, { props: { ...DARK, grain: MESH('Iris').grain, mode: LIB_MODE, folder: LIB_FOLDER, level: LEVEL_PROP }, logic: libraryLogic(true), css: DRAG_CSS, w: PW, h: PH }],
+  'PhoneLibrary': ['iPhone · Library', phoneLibrary, { props: { ...DARK, grain: MESH('Iris').grain, caughtUp: BOOL, assignments: BOOL, mode: LIB_MODE, folder: LIB_FOLDER, level: LEVEL_PROP }, logic: libraryLogic(true), css: DRAG_CSS, w: PW, h: PH }],
   'PhoneLibraryCards': ['iPhone · Library · all cards', attrOf('PhoneLibrary', PW, PH, 'mode="cards"'), { logic: darkLogic, css: DRAG_CSS, w: PW, h: PH }],
   'PhoneLibraryLeeches': ['iPhone · Library · all cards · cards you keep forgetting (Pause all)', attrOf('PhoneLibrary', PW, PH, 'mode="cards" level="leech"'), { logic: darkLogic, css: DRAG_CSS, w: PW, h: PH }],
   'PhoneLibraryFolder': ['iPhone · Library · a folder', attrOf('PhoneLibrary', PW, PH, 'folder="f1"'), { logic: darkLogic, css: DRAG_CSS, w: PW, h: PH }],
@@ -9475,7 +9309,6 @@ const files = {
   'PhoneStatsPaceGray': ['iPhone · Stats · Pace (dark, gray)', `<div style="width: ${PW}px; height: ${PH}px; overflow: hidden; background: #1E1E20;"><dc-import name="PhoneStats" tab="Pace" dark="{{yes}}" dim="{{yes}}" hint-size="${PW}px,${PH}px"></dc-import></div>`, { logic: darkLogic, w: PW, h: PH }],
   'PhoneConnectConsent': ['iPhone · An AI app asks to connect (Allow or Cancel)', phoneConnectConsent, { props: CONSENT_PROPS, logic: consentLogic, w: PW, h: PH }],
   'PhoneConnect': ['iPhone · Connect AI', phoneConnect, { props: { ...DARK, ...MESH('Apricot'), noApps: BOOL }, logic: phoneConnectLogic, w: PW, h: PHONE_CONNECT_H }],
-  'PhoneTodayDark': ['iPhone · Today (dark)', darkOf('PhoneToday', PW, PH), { logic: darkLogic, w: PW, h: PH }],
   'PhoneReviewDark': ['iPhone · Review (dark)', darkOf('PhoneReview', PW, PH), { logic: darkLogic, css: REVIEW_CSS, w: PW, h: PH }],
   'PhoneReviewFour': ['iPhone · Review · 4 grades', styleOf('PhoneReview', PW, PH, 'Four buttons'), { logic: darkLogic, css: REVIEW_CSS, w: PW, h: PH }],
   'PhoneReviewCheck': ['iPhone · Review · ✓ or ✗', styleOf('PhoneReview', PW, PH, 'Check or X'), { logic: darkLogic, css: REVIEW_CSS, w: PW, h: PH }],
@@ -9494,7 +9327,6 @@ const files = {
   'PhoneDeckSettings': ['iPhone · Deck settings', openOf('PhoneDeck', PW, PH), { logic: darkLogic, css: NUM_CSS + DRAG_CSS, w: PW, h: PH }],
   'PhoneDeckDark': ['iPhone · Deck page (dark)', darkOf('PhoneDeck', PW, PH), { logic: darkLogic, css: NUM_CSS + DRAG_CSS, w: PW, h: PH }],
   'PhoneStatsDark': ['iPhone · Stats (dark)', darkOf('PhoneStats', PW, PH), { logic: darkLogic, w: PW, h: PH }],
-  'PhoneTodayGray': ['iPhone · Today (dark, gray)', grayOf('PhoneToday', PW, PH), { logic: darkLogic, w: PW, h: PH }],
   'PhoneLibraryGray': ['iPhone · Library (dark, gray)', grayOf('PhoneLibrary', PW, PH), { logic: darkLogic, css: DRAG_CSS, w: PW, h: PH }],
   'PhoneDeckGray': ['iPhone · Deck page (dark, gray)', grayOf('PhoneDeck', PW, PH), { logic: darkLogic, css: NUM_CSS + DRAG_CSS, w: PW, h: PH }],
   'PhoneReviewGray': ['iPhone · Review (dark, gray)', grayOf('PhoneReview', PW, PH), { logic: darkLogic, css: REVIEW_CSS, w: PW, h: PH }],
@@ -9614,8 +9446,8 @@ const files = {
   'PhoneHistory': ['iPhone · History', phoneHistory, { props: HI_PROPS, logic: HISTORY_LOGIC(true), w: PW, h: PH }],
   'PhoneHistoryOpen': ['iPhone · History · a version opened', attrOf('PhoneHistory', PW, PH, 'open-version="14"'), { logic: darkLogic, w: PW, h: PH }],
   'PhoneHistoryDark': ['iPhone · History · dark', attrOf('PhoneHistory', PW, PH, 'open-version="14" dark="{{yes}}"'), { logic: darkLogic, w: PW, h: PH }],
-  // Classes (web/classes.mjs): the Library's Classes view, a class (yours, or one you're in), its invite, what Today
-  // lists, and the admin page.
+  // Classes (web/classes.mjs): the Library's Classes view, a class (yours, or one you're in), its invite, what the
+  // Library's Assigned lists, and the admin page.
   'WebClasses': ['Web · Library · Classes', webClasses, { props: CLASSES_PROPS, logic: CLASSES_LOGIC(false), css: DRAG_CSS, w: W, h: H }],
   'WebClassesEmpty': ['Web · Library · Classes · none yet', attrOf('WebClasses', W, H, 'empty="{{yes}}"'), { logic: darkLogic, css: DRAG_CSS, w: W, h: H }],
   'WebClassesNew': ['Web · Library · Classes · New class', attrOf('WebClasses', W, H, 'new-open="{{yes}}"'), { logic: darkLogic, css: DRAG_CSS, w: W, h: H }],
@@ -9637,7 +9469,7 @@ const files = {
   'WebClassDark': ['Web · Class (dark)', darkOf('WebClass', W, H), { logic: darkLogic, css: DRAG_CSS, w: W, h: H }],
   'WebClassGray': ['Web · Class (dark, gray)', grayOf('WebClass', W, H), { logic: darkLogic, css: DRAG_CSS, w: W, h: H }],
   'WebClassMemberDark': ['Web · Class · one you joined (dark)', attrOf('WebClass', W, H, 'view="Member" dark="{{yes}}"'), { logic: darkLogic, css: DRAG_CSS, w: W, h: H }],
-  'WebTodayClass': ['Web · Today · with assignments from your classes', attrOf('Main', W, H, 'assignments="{{yes}}"'), { logic: darkLogic, css: DRAG_CSS, w: W, h: H }],
+  'WebLibraryAssigned': ['Web · Library · with assignments from your classes', attrOf('WebDecks', W, H, 'assignments="{{yes}}"'), { logic: darkLogic, css: DRAG_CSS, w: W, h: H }],
   'WebAdmin': ['Web · Admin · verification requests', webAdmin, { props: { ...DARK, grain: MESH('Iris').grain, tab: { editor: 'enum', default: 'Verification', options: ['Verification', 'Reports'] }, loading: { editor: 'boolean', default: false }, empty: { editor: 'boolean', default: false }, denied: { editor: 'boolean', default: false } }, logic: ADMIN_LOGIC, w: W, h: H }],
   'WebAdminEmpty': ['Web · Admin · nothing waiting', attrOf('WebAdmin', W, H, 'empty="{{yes}}"'), { logic: darkLogic, w: W, h: H }],
   'WebAdminDenied': ['Web · Admin · someone who isn’t an admin', attrOf('WebAdmin', W, H, 'denied="{{yes}}"'), { logic: darkLogic, w: W, h: H }],
@@ -9661,7 +9493,7 @@ const files = {
   'PhoneClassMissing': ['iPhone · Class · no class has that code', attrOf('PhoneClass', PW, PH, 'missing="{{yes}}"'), { logic: darkLogic, css: DRAG_CSS, w: PW, h: PH }],
   'PhoneClassDark': ['iPhone · Class (dark)', darkOf('PhoneClass', PW, PH), { logic: darkLogic, css: DRAG_CSS, w: PW, h: PH }],
   'PhoneClassGray': ['iPhone · Class (dark, gray)', grayOf('PhoneClass', PW, PH), { logic: darkLogic, css: DRAG_CSS, w: PW, h: PH }],
-  'PhoneTodayClass': ['iPhone · Today · with assignments from your classes', attrOf('PhoneToday', PW, PH, 'assignments="{{yes}}"'), { logic: darkLogic, w: PW, h: PH }]
+  'PhoneLibraryAssigned': ['iPhone · Library · with assignments from your classes', attrOf('PhoneLibrary', PW, PH, 'assignments="{{yes}}"'), { logic: darkLogic, css: DRAG_CSS, w: PW, h: PH }]
 };
 // Themes (Pro): Settings › Theme (web and iPhone, on Pro and on Free), each theme's page, and the Themes page of the
 // canvas: every theme on the real screens (web Library, flashcards, Learn mode, and deck page; iPhone flashcards and
