@@ -205,13 +205,13 @@ final class PolishTests: XCTestCase {
     let pia = "pia" + run
     person(pia, "Pia Polish")
     let app = launch(as: pia)
-    check(wait(button(app, "News")) && wait(button(app, "New card")), "Today has the bell and + on the right")
+    check(wait(button(app, "News")) && wait(button(app, "Add")), "Today has the bell and + on the right (the + is a menu: Add)")
     check(button(app, "Your profile").exists == false, "Today has no profile picture button")
     check(!app.buttons.matching(NSPredicate(format: "label CONTAINS 'profile'")).firstMatch.exists, "nor any button about a profile (the Profile tab is the way in)")
     // (the tab bar's own label says Today too: the title is the one at the top)
     let title = app.staticTexts.matching(NSPredicate(format: "label == 'Today'")).allElementsBoundByIndex.first { $0.frame.minY < 200 }
     check(title != nil && abs(title!.frame.midX - app.frame.midX) <= 2, "the title is in the middle of the screen")
-    let plus = button(app, "New card")
+    let plus = button(app, "Add")
     check(abs(plus.frame.maxX - (app.frame.maxX - 20)) <= 1, "the + is where it was (20 from the right edge)")
     check(abs(button(app, "News").frame.maxX - (plus.frame.minX - 8)) <= 1 && abs(button(app, "News").frame.minY - plus.frame.minY) <= 1, "and the bell is beside it, level")
     check(litIs(app, "Today") && button(app, "Profile").exists, "the Profile tab is still in the tab bar")
