@@ -1886,31 +1886,31 @@ export default [
  },
  {
   "name": "WebCardsScreen",
-  "title": "Web · Edit cards (Option B)",
+  "title": "Web · Edit cards",
   "w": 1440,
   "h": 900
  },
  {
   "name": "WebCardsScreenBlank",
-  "title": "Web · Edit cards · fill in the blank (Option B)",
+  "title": "Web · Edit cards · fill in the blank",
   "w": 1440,
   "h": 900
  },
  {
   "name": "WebCardsScreenDark",
-  "title": "Web · Edit cards (dark, Option B)",
+  "title": "Web · Edit cards (dark)",
   "w": 1440,
   "h": 900
  },
  {
   "name": "WebCardsScreenImage",
-  "title": "Web · Edit cards · image with boxes (Option B)",
+  "title": "Web · Edit cards · image with boxes",
   "w": 1440,
   "h": 900
  },
  {
   "name": "WebCardsScreenNew",
-  "title": "Web · Edit cards · writing a new card (Option B)",
+  "title": "Web · Edit cards · writing a new card",
   "w": 1440,
   "h": 900
  },
