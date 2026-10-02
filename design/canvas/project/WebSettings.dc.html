@@ -199,7 +199,7 @@ renderVals0() {
   return {
     t, ...chrome, grain: String(this.props.grain ?? 0.7), ...planVals, ...photoVals, ...profileVals, ...pwVals, tune, acct,
     name: st.name, sub: st.sub, signedIn: st.signedIn,
-    on: Object.fromEntries(SEC.map(([k]) => [secId(k), k === cur])), sec: secLinks(cur), hasPlan: !!plan, backHref: db.mock ? 'Main.dc.html' : this.props.back || '/',
+    on: Object.fromEntries(SEC.map(([k]) => [secId(k), k === cur])), sec: secLinks(cur), hasPlan: !!plan, backHref: db.mock ? 'WebDecks.dc.html' : this.props.back || '/library',
     ...themeRow(),
     looks: opts([['system', 'System'], ['light', 'Light'], ['dark', 'Dark']], look, id => set({ look: id })),
     darks: opts([['gray', 'Gray'], ['black', 'Black']], darkMode, id => set({ darkMode: id })),

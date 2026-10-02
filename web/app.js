@@ -11,13 +11,14 @@ import installTips from './tip.js';
 import OVERLAYS from './ui-templates.js';
 
 // ---------- pages ----------
-// Which board shows for a page. Some depend on your data: no decks yet shows the new-user Today, and so on.
+// Which board shows for a page. Some depend on your data: no decks yet shows the new account's Library, and so on. There is no Today page
+// (the owner, 2026-10-01): the app opens on the Library, and "/", "/today" and any old link to them land there.
 // /b (every canvas board with sample data) is for working on the design, so it only opens on your own computer.
 const DESIGN = ['localhost', '127.0.0.1'].includes(location.hostname);
 // Phones get the iPhone boards, which fill the screen (design/to-web.mjs). Importing cards has no iPhone board, so phones
 // get the web's.
 const narrow = matchMedia('(max-width: 760px)');
-// Settings' own sidebar replaces the app's on Settings' pages (computer width), with a Back row to the page you came from, or to Today when
+// Settings' own sidebar replaces the app's on Settings' pages (computer width), with a Back row to the page you came from, or to the Library when
 // Settings was opened directly. That page is kept for this tab (sessionStorage), so reloading Settings keeps it; an address typed in, or a
 // link from somewhere else, starts again. Connect AI (/connect) and the themes are pages inside Settings, so going between them keeps it too.
 const IN_SETTINGS = p => /^\/(settings(\/|$)|connect$)/.test(p);
@@ -84,10 +85,11 @@ function resolve(path, q) {
     return { name: { question: 'LiveQuestion', reveal: 'LiveReveal', board: 'LiveLeaderboard', end: 'LivePodium' }[L.phase] || 'LiveLobby', props: { deckId: L.deckId } };
   }
   const deck = /^\/deck\/([^/]+)(\/card(?:\/([^/]+))?|\/import|\/learn|\/test|\/suggestions|\/live|\/guide)?$/.exec(path);
-  // Your first time in: the welcome (connect your AI, bring your cards) comes before Today.
+  // Your first time in: the welcome (connect your AI, bring your cards) comes before the Library.
   if (path === '/' && !db.settings().welcomed && !db.decks().length) return { redirect: '/welcome' };
   if (path === '/welcome') return { name: P + 'Welcome' };
-  if (path === '/') return { name: db.decks().length ? (narrow.matches ? 'PhoneToday' : 'Main') : P + 'TodayNew' };
+  // The app's first page is the Library ("/" and the old Today page's address open it).
+  if (path === '/' || path === '/today') return { redirect: '/library' };
   // The Library (it was called Decks): your folders and decks, one folder, or all your cards. Old /decks links land here.
   if (path === '/decks') return { redirect: '/library' };
   // Your classes are the Library's third view (web/classes.mjs); /verify opens Get verified over them.
@@ -114,8 +116,9 @@ function resolve(path, q) {
   }
   if (path === '/decks/new') return { name: P + 'NewDeck' };
   // Making cards from a file, photos, a recording, a video, text or a topic (web/make.js). `source` opens one kind's page, `deck` is where
-  // the cards go, `from` is a kept source to make more cards from, and `guide` (with `page`) is a deck's Guide to make cards from.
-  if (path === '/make') return { name: P + 'Make', props: { kind: q.get('source') || '', deckId: q.get('deck') || '', from: q.get('from') || '', guide: q.get('guide') || '', page: q.get('page') || '' } };
+  // the cards go, `from` is a kept source to make more cards from, `guide` (with `page`) is a deck's Guide to make cards from, and `folder`
+  // is where a new deck made this way goes (the Library's Make box on a folder's page).
+  if (path === '/make') return { name: P + 'Make', props: { kind: q.get('source') || '', deckId: q.get('deck') || '', from: q.get('from') || '', guide: q.get('guide') || '', page: q.get('page') || '', folder: q.get('folder') || '' } };
   if (path === '/decks/import') return { name: 'WebImport' };
   if (deck) {
     const id = deck[1];
@@ -159,16 +162,16 @@ function resolve(path, q) {
   // Sorting into piles doesn't grade, so that session ends on its own page.
   if (path === '/review/done') return { name: P + (db.session().onlyPiles ? 'DonePiles' : 'Done') };
   if (path === '/stats') return { name: P + (db.hasReviews() ? 'Stats' : 'StatsEmpty') };
-  if (path === '/connect') return { name: P + 'Connect', props: narrow.matches ? {} : { back: settingsFrom || '/' } };
+  if (path === '/connect') return { name: P + 'Connect', props: narrow.matches ? {} : { back: settingsFrom || '/library' } };
   // Settings is a page of its own: the sections down the left and the chosen one on the right (/settings is Account, and /settings/<section> is
   // the others), so Back and links work. A narrow screen shows the list of sections as one page, and each section as a page of its own.
-  if (path === '/settings') return { name: P + 'Settings', props: narrow.matches ? { section: 'List' } : { back: settingsFrom || '/' } };
+  if (path === '/settings') return { name: P + 'Settings', props: narrow.matches ? { section: 'List' } : { back: settingsFrom || '/library' } };
   const sec = /^\/settings\/(account|plan|studying|appearance|connect-ai|privacy|help)$/.exec(path);
-  if (sec) return sec[1] === 'plan' && !db.plan() ? { redirect: '/settings' } : { name: P + 'Settings', props: { section: sec[1], back: settingsFrom || '/' } };
+  if (sec) return sec[1] === 'plan' && !db.plan() ? { redirect: '/settings' } : { name: P + 'Settings', props: { section: sec[1], back: settingsFrom || '/library' } };
   // Settings › Theme, and each theme's page (where you use it, or Go Pro on Free).
-  if (path === '/settings/theme') return narrow.matches ? { name: 'PhoneThemePicker' } : { name: 'ThemePicker', props: { back: settingsFrom || '/' } };
+  if (path === '/settings/theme') return narrow.matches ? { name: 'PhoneThemePicker' } : { name: 'ThemePicker', props: { back: settingsFrom || '/library' } };
   const th = /^\/settings\/theme\/([a-z]+)$/.exec(path);
-  if (th) return THEME_KEYS.includes(th[1]) ? { name: P + 'Theme', props: narrow.matches ? { sheet: th[1] } : { sheet: th[1], back: settingsFrom || '/' } } : { redirect: '/settings/theme' };
+  if (th) return THEME_KEYS.includes(th[1]) ? { name: P + 'Theme', props: narrow.matches ? { sheet: th[1] } : { sheet: th[1], back: settingsFrom || '/library' } } : { redirect: '/settings/theme' };
   // (a section that isn't one lands on Settings)
   if (path.startsWith('/settings/')) return { redirect: '/settings' };
   return { redirect: '/' };
@@ -178,16 +181,16 @@ function resolve(path, q) {
 function linkFor(name) {
   if (current && current.design) return '/b/' + name;
   const id = current && current.props.deckId;
-  const pages = { Main: '/', WebTodayNew: '/', WebTodayCaughtUp: '/', WebDecks: '/library', WebDecksEmpty: '/library', WebDecksList: '/library', WebLibraryCards: '/library/cards', WebNewDeck: '/decks/new',
+  const pages = { WebDecks: '/library', WebDecksEmpty: '/library', WebDecksList: '/library', WebLibraryCards: '/library/cards', WebNewDeck: '/decks/new',
     PhoneLibrary: '/library', PhoneLibraryCards: '/library/cards', PhoneDecksEmpty: '/library',
     WebImport: id ? '/deck/' + id + '/import' : '/decks/import', WebDeck: id ? '/deck/' + id : '/library', WebDeckSettings: id ? '/deck/' + id + '?settings=1' : '/library',
     WebEditor: id ? '/deck/' + id + '/card' : db.signedOut ? '/' : db.today().newCardHref, WebCardsScreenNew: id ? '/deck/' + id + '/card' : db.signedOut ? '/' : db.today().newCardHref,
     WebCardsScreen: id ? '/deck/' + id + '/card' : '/library', WebReview: id ? '/review/' + id : '/review', WebDone: '/review/done', WebDonePiles: '/review/done',
     WebQuizStart: id ? '/deck/' + id + '/learn' : '/library', PhoneQuizStart: id ? '/deck/' + id + '/learn' : '/library', WebTest: id ? '/deck/' + id + '/test' : '/library', PhoneDeck: id ? '/deck/' + id : '/library', Pricing: 'https://lucida.cards/pricing', PricingPhone: 'https://lucida.cards/pricing',
-    WebStats: '/stats', WebStatsEmpty: '/stats', WebConnect: '/connect', WebWelcome: '/welcome', WebSettings: '/settings', ThemePicker: '/settings/theme', PhoneThemePicker: '/settings/theme', WebTheme: '/settings/theme/lucida', WebSignIn: '/sign-in', WebSignInCode: '/sign-in/code', PhoneSignIn: '/sign-in', PhoneSignInCode: '/sign-in/code', PhoneToday: '/', Privacy: '/privacy', Terms: '/terms',
+    WebStats: '/stats', WebStatsEmpty: '/stats', WebConnect: '/connect', WebWelcome: '/welcome', WebSettings: '/settings', ThemePicker: '/settings/theme', PhoneThemePicker: '/settings/theme', WebTheme: '/settings/theme/lucida', WebSignIn: '/sign-in', WebSignInCode: '/sign-in/code', PhoneSignIn: '/sign-in', PhoneSignInCode: '/sign-in/code', Privacy: '/privacy', Terms: '/terms',
     WebDiscover: '/discover', WebActivity: '/activity', WebProfile: '/you', WebSuggestions: id ? '/deck/' + id + '/suggestions' : '/suggestions',
     LiveSetup: id ? '/deck/' + id + '/live' : '/library', LiveJoin: '/join',
-    WebMake: '/make', PhoneMake: '/make', WebGuide: id ? '/deck/' + id + '/guide' : '/library', PhoneGuide: id ? '/deck/' + id + '/guide' : '/library',
+    WebMake: '/make', PhoneMake: '/make', WebDeckEmpty: id ? '/deck/' + id : '/library', WebGuide: id ? '/deck/' + id + '/guide' : '/library', PhoneGuide: id ? '/deck/' + id + '/guide' : '/library',
     WebClasses: '/library/classes', WebClass: current && current.props.code ? '/class/' + current.props.code : '/library/classes', WebAdmin: '/admin' };
   // Live's screens follow the game (their buttons act on it), so a link to one stays on the game's page.
   if (/^Live/.test(name) && !pages[name]) return current ? current.path : '/';
@@ -449,7 +452,7 @@ async function go(path, push, replace) {
   const was = panels(), pills = snapPills(app);
   app.textContent = '';
   const deck = current.props.deckId && !db.signedOut && db.raw().decks.find(d => d.id === current.props.deckId);
-  document.title = (r.name === 'Main' ? 'Today' : deck && /^(Web|Phone)Deck/.test(r.name) ? deck.name : s.title.replace(/^(Web|iPhone) · /, '').replace(/ page$/, '').replace(/ · .*$/, '').replace(/ \(.*\)$/, '')) + ' · Lucida';
+  document.title = (deck && /^(Web|Phone)Deck/.test(r.name) ? deck.name : s.title.replace(/^(Web|iPhone) · /, '').replace(/ page$/, '').replace(/ · .*$/, '').replace(/ \(.*\)$/, '')) + ' · Lucida';
   paint();
   slideOut(was);
   slidePills(app, pills);
@@ -495,8 +498,8 @@ app.addEventListener('input', e => {
   const el = e.target.closest && e.target.closest('[data-on-change]');
   if (el) handlers[el.getAttribute('data-on-change')]?.(e);
 });
-// onFocus, onBlur, and onKeyDown on a field, like on the canvas, and onDragOver and onDrop where a file can be dropped.
-for (const [type, attr] of [['focusin', 'data-on-focus'], ['focusout', 'data-on-blur'], ['keydown', 'data-on-keydown'], ['dragover', 'data-on-dragover'], ['drop', 'data-on-drop']]) {
+// onFocus, onBlur, and onKeyDown on a field, like on the canvas, and onDragOver, onDragLeave and onDrop where a file can be dropped.
+for (const [type, attr] of [['focusin', 'data-on-focus'], ['focusout', 'data-on-blur'], ['keydown', 'data-on-keydown'], ['dragover', 'data-on-dragover'], ['dragleave', 'data-on-dragleave'], ['drop', 'data-on-drop']]) {
   app.addEventListener(type, e => {
     const el = e.target.closest && e.target.closest('[' + attr + ']');
     if (el) handlers[el.getAttribute(attr)]?.(e);

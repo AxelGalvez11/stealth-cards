@@ -175,16 +175,10 @@ export default [
   "h": 844
  },
  {
-  "name": "Main",
-  "title": "Web · Today",
-  "w": 1440,
-  "h": 900
- },
- {
   "name": "Motion",
   "title": "Motion",
   "w": 1440,
-  "h": 2115
+  "h": 1733
  },
  {
   "name": "PhoneActivity",
@@ -519,6 +513,12 @@ export default [
  {
   "name": "PhoneLibrary",
   "title": "iPhone · Library",
+  "w": 390,
+  "h": 844
+ },
+ {
+  "name": "PhoneLibraryAssigned",
+  "title": "iPhone · Library · with assignments from your classes",
   "w": 390,
   "h": 844
  },
@@ -995,42 +995,6 @@ export default [
   "title": "iPhone · Settings › Theme · on Free (locked, Go Pro)",
   "w": 390,
   "h": 1260
- },
- {
-  "name": "PhoneToday",
-  "title": "iPhone · Today",
-  "w": 390,
-  "h": 844
- },
- {
-  "name": "PhoneTodayCaughtUp",
-  "title": "iPhone · Today · all caught up",
-  "w": 390,
-  "h": 844
- },
- {
-  "name": "PhoneTodayClass",
-  "title": "iPhone · Today · with assignments from your classes",
-  "w": 390,
-  "h": 844
- },
- {
-  "name": "PhoneTodayDark",
-  "title": "iPhone · Today (dark)",
-  "w": 390,
-  "h": 844
- },
- {
-  "name": "PhoneTodayGray",
-  "title": "iPhone · Today (dark, gray)",
-  "w": 390,
-  "h": 844
- },
- {
-  "name": "PhoneTodayNew",
-  "title": "iPhone · Today · new user",
-  "w": 390,
-  "h": 844
  },
  {
   "name": "PhoneWelcome",
@@ -2377,6 +2341,12 @@ export default [
   "h": 900
  },
  {
+  "name": "WebLibraryAssigned",
+  "title": "Web · Library · with assignments from your classes",
+  "w": 1440,
+  "h": 900
+ },
+ {
   "name": "WebLibraryCards",
   "title": "Web · Library · all cards (filter by tags and difficulty)",
   "w": 1440,
@@ -2889,36 +2859,6 @@ export default [
  {
   "name": "WebTheme",
   "title": "Web · Settings › Theme › Lucida (a theme’s page)",
-  "w": 1440,
-  "h": 900
- },
- {
-  "name": "WebTodayCaughtUp",
-  "title": "Web · Today · all caught up",
-  "w": 1440,
-  "h": 900
- },
- {
-  "name": "WebTodayClass",
-  "title": "Web · Today · with assignments from your classes",
-  "w": 1440,
-  "h": 900
- },
- {
-  "name": "WebTodayDark",
-  "title": "Web · Today (dark)",
-  "w": 1440,
-  "h": 900
- },
- {
-  "name": "WebTodayGray",
-  "title": "Web · Today (dark, gray)",
-  "w": 1440,
-  "h": 900
- },
- {
-  "name": "WebTodayNew",
-  "title": "Web · Today · new user",
   "w": 1440,
   "h": 900
  },

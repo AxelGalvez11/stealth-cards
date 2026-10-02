@@ -182,7 +182,7 @@ renderVals0() {
     t, ...chrome, ...planVals, ...photoVals, ...profileVals, ...pwVals, tune, acct, signedIn: st.signedIn,
     on: { card: all || key === 'account', list, account: show('account'), plan: show('plan'), studying: show('studying'), appearance: show('appearance'), connectAi: show('connect-ai'), privacy: show('privacy'), help: show('help') },
     sec: secLinks(key), showTitles: all, hasPlan: !!plan, hasReminder: !!db.mock,
-    title: all || list ? 'Settings' : secName, backHref: all || list ? (db.mock ? 'PhoneToday.dc.html' : '/') : (db.mock ? 'PhoneSettings.dc.html' : '/settings'),
+    title: all || list ? 'Settings' : secName, backHref: all || list ? (db.mock ? 'PhoneLibrary.dc.html' : '/library') : (db.mock ? 'PhoneSettings.dc.html' : '/settings'),
     // Your account: tap it to sign out (online).
     accountSub: db.mock ? 'Synced on all your devices · just now' : st.sub,
     account: () => { if (!db.mock && st.signedIn) db.ask({ title: 'Sign out of Lucida?', action: 'Sign out' }).then(yes => yes && db.act.signOut()); },

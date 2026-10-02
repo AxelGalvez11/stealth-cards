@@ -11,7 +11,7 @@ import { splitAudio, fromBlob, PART_BYTES, PART_SECONDS } from './audiosplit.js'
 export function createMake({ state, reload, changed, go, sniff, shrink }) {
   const info = () => ((state() || {}).make) || { on: false, video: false, perDay: 3, pages: 30, minutes: 15, photos: 10, fileMB: 20, audioMB: 25, cards: 100 };
   const fresh = () => ({ key: '', step: 'pick', kind: '', files: [], text: '', topic: '', url: '', transcript: false, title: '',
-    opts: { count: 'auto', basic: true, cloze: true, audio: false, image: false, lang: '', deckId: '', deckName: '' }, rec: null, job: '', progress: { word: '', i: 0, n: 1 }, cards: [], figures: 0, notes: null, keepNotes: true, noNotes: false, editing: '', error: null, from: null, saving: false, seconds: [] });
+    opts: { count: 'auto', basic: true, cloze: true, audio: false, image: false, lang: '', deckId: '', deckName: '', folder: '' }, rec: null, job: '', progress: { word: '', i: 0, n: 1 }, cards: [], figures: 0, notes: null, keepNotes: true, noNotes: false, editing: '', error: null, from: null, saving: false, seconds: [] });
   let M = fresh(), run = 0, rec = null;
   const bump = () => changed();
 
@@ -35,16 +35,18 @@ export function createMake({ state, reload, changed, go, sniff, shrink }) {
   const words = { file: 'Reading your file…', photo: 'Reading your pictures…', record: 'Listening to your recording…', paste: 'Reading your text…', video: 'Watching the video…', topic: 'Thinking about your topic…' };
 
   // ---------- starting ----------
-  // Opens the flow. `from`: more cards from a source ({ deckId, id }); `guide`: the words of a Guide page to make cards from.
+  // Opens the flow. `from`: more cards from a source ({ deckId, id }); `guide`: the words of a Guide page to make cards from; `folder`: where a
+  // new deck made this way goes (the Library's Make box on a folder's page).
   // Called again with the same address it changes nothing, so a page can ask on every draw.
   function enter(o = {}) {
-    const key = JSON.stringify([o.kind || '', o.deckId || '', o.from || '', o.guide || '', o.page || '']);
+    const key = JSON.stringify([o.kind || '', o.deckId || '', o.from || '', o.guide || '', o.page || '', o.folder || '']);
     // A flow begun with words in hand (begin) is kept as it is when its page opens.
     if (M.hold) { M.hold = false; M.key = key; return; }
     if (M.key === key) return;
     if (M.step === 'making' || M.step === 'review') { M.key = key; return; }
     M = fresh(); M.key = key;
     if (o.deckId) M.opts.deckId = o.deckId;
+    if (o.folder) M.opts.folder = o.folder;
     const decks = (state() || {}).decks || [];
     if (o.from && o.deckId) {
       const d = decks.find(x => x.id === o.deckId), s = d && (d.sources || []).find(x => x.id === o.from);
@@ -54,8 +56,12 @@ export function createMake({ state, reload, changed, go, sniff, shrink }) {
       if (d && text && text.trim()) { M.kind = 'paste'; M.text = text; M.title = d.name + (p ? ': ' + p.title : ' Guide'); M.step = 'add'; M.opts.deckId = d.id; M.noNotes = true; }
     } else if (['file', 'photo', 'record', 'paste', 'video', 'topic'].includes(o.kind)) { M.kind = o.kind; M.step = 'add'; }
   }
-  // Starts from words the page already has (the Guide editor's selection, say).
-  function begin(o) { M = fresh(); Object.assign(M, o, { opts: { ...M.opts, ...(o.opts || {}) } }); M.hold = true; if (o.kind) M.step = 'add'; bump(); go('/make' + (o.opts && o.opts.deckId ? '?deck=' + encodeURIComponent(o.opts.deckId) : '')); }
+  // Starts from words the page already has (the Guide editor's selection, the Library's Make box: a topic, a link or pasted text).
+  function begin(o) {
+    M = fresh(); Object.assign(M, o, { opts: { ...M.opts, ...(o.opts || {}) } }); M.hold = true; if (o.kind) M.step = 'add'; bump();
+    const q = [M.opts.deckId && 'deck=' + encodeURIComponent(M.opts.deckId), M.opts.folder && 'folder=' + encodeURIComponent(M.opts.folder)].filter(Boolean).join('&');
+    go('/make' + (q ? '?' + q : ''));
+  }
   const choose = kind => { M.kind = kind; M.step = 'add'; M.error = null; bump(); };
   const back = () => {
     if (M.step === 'add' && !M.from) { M.step = 'pick'; M.kind = ''; M.files = []; M.error = null; }
@@ -298,7 +304,7 @@ export function createMake({ state, reload, changed, go, sniff, shrink }) {
     if (!keep.length) { M.error = { message: 'There are no cards to save.', soft: true }; return bump(); }
     M.saving = true; M.error = null; bump();
     try {
-      const o = M.opts, deck = o.deckId ? { id: o.deckId } : { name: o.deckName.trim() || M.title || M.name || 'New deck' };
+      const o = M.opts, deck = o.deckId ? { id: o.deckId } : { name: o.deckName.trim() || M.title || M.name || 'New deck', ...(o.folder ? { folder: o.folder } : {}) };
       const r = await call('/api/make/save', { job: M.job, deck, cards: keep, ...(M.notes ? { notes: M.keepNotes && !deckFull() } : {}) });
       try { sessionStorage.removeItem('lucida.make'); } catch { /* private window */ }
       const id = r.deckId; M = fresh(); await reload(); bump(); go('/deck/' + id);
