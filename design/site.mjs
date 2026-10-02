@@ -198,7 +198,7 @@ const PICTURES = {
   'anki-alternative': { scene: 'switch', style: 'bands', grad: 'Berry', other: 'Anki' }, 'quizlet-alternative': { scene: 'switch', style: 'swirl', grad: 'Apricot', other: 'Quizlet' },
   features: { scene: 'grid', style: 'blurred', grad: 'Lime' }, 'features/spaced-repetition': { scene: 'intervals', style: 'edgy', grad: 'Sunset' }, 'features/ai-flashcards': { scene: 'chat', style: 'swirl', grad: 'Ocean' },
   'features/learn-mode': { scene: 'quiz', style: 'bands', grad: 'Tropic' }, 'features/shared-decks': { scene: 'shared', style: 'swirl', grad: 'Dusk' },
-  'features/live-games': { scene: 'live', style: 'volume', grad: 'Crimson' }, 'features/image-occlusion': { scene: 'occlusion', style: 'tri', grad: 'Lime' }, 'features/import': { scene: 'import', style: 'edgy', grad: 'Magenta' },
+  'features/live-games': { scene: 'live', style: 'volume', grad: 'Crimson' }, 'features/image-occlusion': { scene: 'occlusion', style: 'tri', grad: 'Lime' }, 'features/import': { scene: 'import', style: 'edgy', grad: 'Ember' },
   'for/students': { scene: 'week', style: 'duo', grad: 'Mint' }, 'for/med-school': { scene: 'med', style: 'retro', grad: 'Plum' }, 'for/mcat': { scene: 'mcat', style: 'radial', grad: 'Cobalt' },
   'for/language-learning': { scene: 'words', style: 'multi', grad: 'Cherry' }, 'for/teachers': { scene: 'teach', style: 'blurred', grad: 'Tropic' },
   faq: { scene: 'question', style: 'retro', grad: 'Berry' }, connect: { scene: 'link', style: 'banding', grad: 'Candy' },
