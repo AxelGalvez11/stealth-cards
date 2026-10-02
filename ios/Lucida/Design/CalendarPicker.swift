@@ -76,6 +76,11 @@ struct CalendarPopup: View {
   @State private var month = 0
   @State private var ready = false
   private var minDay: (y: Int, m: Int, d: Int)? { CalDay.parse(request.min) }
+  /// What the grid holds, each with an id of its own.
+  private enum Cell: Identifiable {
+    case weekday(Int), blank(Int), day(Int)
+    var id: String { switch self { case .weekday(let i): return "w\(i)"; case .blank(let i): return "b\(i)"; case .day(let d): return "d\(d)" } }
+  }
 
   var body: some View {
     let today = request.today.isEmpty ? CalDay.today() : request.today
@@ -88,12 +93,16 @@ struct CalendarPopup: View {
         Text("\(CalDay.months[month]) \(String(year))").css(15, .semibold, ls: -0.01).frame(maxWidth: .infinity).accessibilityAddTraits(.isHeader)
         arrow("chev", "Later month", enabled: true) { go(1) }
       }
+      // (One list with an id of its own for each cell: separate loops over 0...6, 0..<first and 1...count would share the numbers, and the grid would
+      // drop the first six days of every month.)
       LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 2), count: 7), spacing: 2) {
-        ForEach(Array(["S", "M", "T", "W", "T", "F", "S"].enumerated()), id: \.offset) { _, d in
-          Text(d).css(12, .semibold).foregroundStyle(t.muted).frame(height: 24).accessibilityHidden(true)
+        ForEach((0..<7).map { Cell.weekday($0) } + (0..<first).map { Cell.blank($0) } + (1...count).map { Cell.day($0) }) { c in
+          switch c {
+          case .weekday(let i): Text(["S", "M", "T", "W", "T", "F", "S"][i]).css(12, .semibold).foregroundStyle(t.muted).frame(height: 24).accessibilityHidden(true)
+          case .blank: Color.clear.frame(height: 36).accessibilityHidden(true)
+          case .day(let d): day(d, today: today)
+          }
         }
-        ForEach(0..<first, id: \.self) { _ in Color.clear.frame(height: 36).accessibilityHidden(true) }
-        ForEach(1...count, id: \.self) { d in day(d, today: today) }
       }
     }
     .foregroundStyle(t.text)
