@@ -45,7 +45,8 @@ export function createDiagrams({ state, reload, changed, go, shrink, choose, act
   const close = () => { reset(); U.open = ''; changed(); };
 
   // ---------- Make diagram ----------
-  const openSheet = deckId => { sync(deckId); U.sheet = true; U.making = false; U.error = null; changed(); };
+  // (The sheet always opens on a Table made from everything; what a person picked last time doesn't linger.)
+  const openSheet = deckId => { sync(deckId); U.sheet = true; U.making = false; U.error = null; U.type = 'table'; U.scope = { kind: 'all', value: '' }; changed(); };
   const closeSheet = () => { run++; U.sheet = false; U.making = false; U.error = null; changed(); };
   const setType = t => { U.type = t === 'mindmap' ? 'mindmap' : 'table'; U.error = null; changed(); };
   const setScope = (kind, value) => { U.scope = U.scope.kind === kind && U.scope.value === (value || '') ? { kind: 'all', value: '' } : { kind: kind || 'all', value: value || '' }; U.error = null; changed(); };
