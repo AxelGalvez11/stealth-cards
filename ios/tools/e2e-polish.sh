@@ -1,5 +1,5 @@
 #!/bin/zsh
-# The owner's first TestFlight notes (Today without a profile picture, Remove from folder, Share opening the share sheet, swiping
+# The owner's first TestFlight notes (no profile picture on the first page, Remove from folder, Share opening the share sheet, swiping
 # between tabs and back, haptics, and the deck cover's parallax), end to end (LucidaUITests/PolishTests.swift): taps through the
 # app as made-up people on a fresh copy of the server on this Mac. It starts web/server.mjs on PORT (3914) with an empty data
 # folder, runs the test on a simulator, prints each check, and stops the server. It also lists the app's haptics.

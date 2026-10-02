@@ -22,7 +22,7 @@ struct Library: Decodable {
   var profile: ProfileRef?
   /// False on a server started as the Free app (LUCIDA_PLAN=free, or a made-up person on Free); the Pro tools are off.
   var pro = true
-  /// The classes you're in, with their assignments (web/classes.mjs keeps them here, so Today shows what's due).
+  /// The classes you're in, with their assignments (web/classes.mjs keeps them here, so the Library shows what's assigned).
   var classes: [LibClass]
   /// Your finished practice tests, newest first (web/store.mjs test.save).
   var tests: [PastTest]

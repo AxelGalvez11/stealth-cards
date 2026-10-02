@@ -47,7 +47,7 @@ enum DebugChecks {
     if name != "all" { try? await Task.sleep(nanoseconds: 300_000_000); exit(0) }
   }
 
-  /// Pausing a card: it leaves the queue, the due counts, and Today; unpausing brings it back.
+  /// Pausing a card: it leaves the queue and the due counts; unpausing brings it back.
   static func pause(_ s: Store) async {
     let E = s.engine
     guard let first = E.queue(nil).first(where: { $0.lane == "rev" }) else { say(false, "pause: a due card to pause"); return }
@@ -58,7 +58,7 @@ enum DebugChecks {
     say(l?.cards.first { $0.id == id }?.paused == true, "pause: the server has the card paused")
     let E2 = s.engine
     say(!E2.queue(nil).contains { $0.card.id == id }, "pause: the card leaves the queue")
-    say(E2.today.due == due - 1, "pause: Today's count goes down by one", "\(due) to \(E2.today.due)")
+    say(E2.today.due == due - 1, "pause: the cards due go down by one", "\(due) to \(E2.today.due)")
     say(E2.stat(first.deck).due == deckDue - 1, "pause: the deck's count goes down by one")
     say(E2.nextLabel(s.lib.cards.first { $0.id == id }!) == "Paused", "pause: the card reads Paused")
     say(!E2.forecast(30, s.lib.decks).vals.isEmpty, "pause: forecasts still work")

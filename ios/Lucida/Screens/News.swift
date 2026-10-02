@@ -1,4 +1,4 @@
-// iPhone · News (PhoneActivity, PhoneActivityEmpty, and the Dark and Gray twins), from the bell on Today: suggestions on
+// iPhone · News (PhoneActivity, PhoneActivityEmpty, and the Dark and Gray twins), from the bell on Discover: suggestions on
 // your decks, people following you, new versions of decks you follow, what owners did with your suggestions, and
 // teachers checking your decks; and two things Lucida tells you itself (with its mark): you're verified as a teacher or
 // school, and a deck of yours was hidden after a report. What's new has a dot; opening the page marks it read a moment

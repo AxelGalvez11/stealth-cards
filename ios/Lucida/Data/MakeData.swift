@@ -24,9 +24,14 @@ struct MakeDeckRef: Equatable { var id: String, name: String, readOnly = false }
 struct MakeStart: Hashable {
   var kind = "", deckId = "", from = "", guide = "", page = ""
   var text = "", title = ""
-  /// Debug builds: what the -makeFile, -makePhoto, -makeRecording, -makeTopic, -makeText and -makeVideo launch arguments hand the flow, as if
-  /// it was picked or recorded (the simulator has no microphone); `speed` makes the stand-in microphone's clock run that many times faster.
-  var files: [String] = [], recording = "", topic = "", url = "", speed = 1.0
+  /// Where a new deck made this way goes (the Library's Make box on a folder's page), and whether the words came from that box (a source of
+  /// their own, so the make drafts notes for them; words from a Guide's selection don't get any).
+  var folder = "", box = false
+  /// A topic and a YouTube link already typed (the Make box, and the -makeTopic and -makeVideo launch arguments). Debug builds: what the -makeFile,
+  /// -makePhoto, -makeRecording and -makeText launch arguments hand the flow, as if it was picked or recorded (the simulator has no microphone);
+  /// `speed` makes the stand-in microphone's clock run that many times faster.
+  var topic = "", url = ""
+  var files: [String] = [], recording = "", speed = 1.0
   /// A design screen: which of the canvas's states to show (MakeSample).
   var demo = ""
   var isDemo: Bool { !demo.isEmpty }
@@ -111,6 +116,8 @@ struct MakeOpts: Equatable {
   /// Image cards: a card for each label of the diagrams found in the material, with the label hidden. Offered where there may be some (MakeFlow.canImage); off until turned on.
   var image = false
   var lang = "", deckId = "", deckName = ""
+  /// Where a new deck goes: the folder whose page the make started on ("" for the Library's top).
+  var folder = ""
 }
 struct MakeFrom: Equatable { var deckId: String, id: String, name: String, kind: String }
 
@@ -297,8 +304,9 @@ final class MakeFlow: ObservableObject {
   func enter(_ s: MakeStart) {
     pickToken += 1; cutStop?.stop(); dropParts(m.files)
     m = MakeState()
-    m.key = [s.kind, s.deckId, s.from, s.guide, s.page].joined(separator: "|")
+    m.key = [s.kind, s.deckId, s.from, s.guide, s.page, s.folder].joined(separator: "|")
     if !s.deckId.isEmpty { m.opts.deckId = s.deckId }
+    if !s.folder.isEmpty { m.opts.folder = s.folder }
     if !s.from.isEmpty && !s.deckId.isEmpty {
       if let src = env.materials(s.deckId)?.sources.first(where: { $0.id == s.from }) {
         m.from = MakeFrom(deckId: s.deckId, id: src.id, name: src.name, kind: src.kind)
@@ -315,9 +323,13 @@ final class MakeFlow: ObservableObject {
       }
     } else if !s.text.isEmpty && (s.kind.isEmpty || s.kind == "paste") {
       m.kind = "paste"; m.text = s.text; m.title = s.title; m.step = "add"
-      m.noNotes = true   // (words in hand come from a Guide's selection: notes for them would be notes on notes)
+      // (Words from a Guide's selection get no notes: they would be notes on notes. Words pasted in the Library's Make box are material like any other.)
+      m.noNotes = !s.box
     } else if ["file", "photo", "record", "paste", "video", "topic"].contains(s.kind) {
       m.kind = s.kind; m.step = "add"
+      // A topic or a link typed in the Library's Make box is already in its field.
+      if s.kind == "topic" { m.topic = s.topic }
+      if s.kind == "video" { m.url = s.url.trimmingCharacters(in: .whitespacesAndNewlines) }
     }
   }
   func choose(_ kind: String) { pickToken += 1; cutStop?.stop(); m.kind = kind; m.step = "add"; m.error = nil; m.note = "" }
@@ -695,7 +707,8 @@ final class MakeFlow: ObservableObject {
     m.saving = true; m.error = nil
     let job = m.job, o = m.opts, notes = m.notes, keepNotes = m.keepNotes && !notesFull
     let name = [o.deckName.trimmingCharacters(in: .whitespacesAndNewlines), m.title, m.name].first { !$0.isEmpty } ?? "New deck"
-    let deck: [String: Any] = o.deckId.isEmpty ? ["name": name] : ["id": o.deckId]
+    // (A new deck goes into the folder the make started on, if it did.)
+    let deck: [String: Any] = !o.deckId.isEmpty ? ["id": o.deckId] : o.folder.isEmpty ? ["name": name] : ["name": name, "folder": o.folder]
     Task {
       do {
         // (`notes` goes only when the make drafted some: true keeps them with the cards, false leaves them out, as it does for a deck that has no room for them.)

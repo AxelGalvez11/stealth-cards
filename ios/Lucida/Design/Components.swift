@@ -83,8 +83,9 @@ struct Eyebrow: View {
   }
 }
 
-/// The tabs (NAV_P). The Library was called Decks (it keeps the Decks icon). Profile's icon is your own picture.
-enum Tab: String, CaseIterable { case today = "Today", library = "Library", discover = "Discover", stats = "Stats", profile = "Profile" }
+/// The tabs (NAV_P). The Library was called Decks (it keeps the Decks icon), and the app opens on it: there is no Today (the owner, 2026-10-01).
+/// Profile's icon is your own picture.
+enum Tab: String, CaseIterable { case library = "Library", discover = "Discover", stats = "Stats", profile = "Profile" }
 
 /// The floating tab bar: a gray pill, 64 tall, 16 in from the sides and 28 up from the bottom; the current tab is a
 /// black pill that slides to the tab you pick (none on someone else's profile).
@@ -93,7 +94,7 @@ struct TabBar: View {
   @Namespace private var pill
   let active: Tab?
   let pick: (Tab) -> Void
-  private let icons: [Tab: String] = [.today: "today", .library: "decks", .discover: "compass", .stats: "stats"]
+  private let icons: [Tab: String] = [.library: "decks", .discover: "compass", .stats: "stats"]
   var body: some View {
     HStack(spacing: 4) {
       ForEach(Tab.allCases, id: \.self) { tab in

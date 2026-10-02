@@ -1,4 +1,4 @@
-// iPhone · Discover (PhoneDiscover, PhoneDiscoverSearch): decks people share, by topic, in sections (popular at your school, if you set
+// iPhone · Discover (PhoneDiscover, PhoneDiscoverSearch): the News bell in its header (it was on Today's), then decks people share, by topic, in sections (popular at your school, if you set
 // one, popular this week, from people you follow, checked by teachers, new); or search decks and people. Level, Subject, and School
 // narrow either to one list of decks (a school is searched as you type; nothing lists the people at a school, so a search with a
 // filter finds no people). Studying stays in your library; Discover is only for finding more. A deck opens its page; a name opens
@@ -28,7 +28,10 @@ struct DiscoverScreen: View {
     let hits = found?.value ?? SearchPage()
     ScrollView(showsIndicators: false) {
       VStack(alignment: .leading, spacing: 16) {
-        Text("Discover").css(32, .semibold, ls: -0.03).line(32).foregroundStyle(t.text).accessibilityAddTraits(.isHeader)
+        HStack(spacing: 12) {
+          Text("Discover").css(32, .semibold, ls: -0.03).line(32).foregroundStyle(t.text).accessibilityAddTraits(.isHeader).frame(maxWidth: .infinity, alignment: .leading)
+          NewsBell(count: store.netUnread()) { nav.push(.news) }
+        }
         search
         filters(narrowed)
         if !searching { topics(["" ] + (disc?.value?.topics ?? [])) }
@@ -208,5 +211,28 @@ struct DiscoverScreen: View {
         .accessibilityLabel(p.name + ", @" + p.handle)
       }
     }
+  }
+}
+
+/// NEWS_BTN: the bell, with how much news is new in a red dot on its corner (99+ past 99).
+struct NewsBell: View {
+  @Environment(\.theme) private var t
+  let count: Int
+  let action: () -> Void
+  var body: some View {
+    Button(action: action) {
+      Icon("bell", 18, 2).foregroundStyle(t.text).frame(width: 44, height: 44).background(Circle().fill(t.surf))
+        .overlay(alignment: .topTrailing) {
+          if count > 0 {
+            Text(count > 99 ? "99+" : String(count)).css(11, .bold).foregroundStyle(.white).lineLimit(1).fixedSize()
+              .padding(.horizontal, 5).frame(minWidth: 18, minHeight: 18, maxHeight: 18)
+              .background(Capsule().fill(Color(hex: 0xE5484D)))
+              .background(Capsule().fill(t.bg).padding(-2))
+              .offset(x: 3, y: -3)
+          }
+        }
+    }
+    .buttonStyle(.press)
+    .accessibilityLabel(count > 0 ? "News, \(count) new" : "News")
   }
 }

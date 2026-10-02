@@ -14,7 +14,7 @@
 //   10  the "Made from" line in the card editor opens the source at that spot (Sources, viewer open); More cards from a source; Delete (asks first: the file goes, the cards stay,
 //       the line turns to plain words)
 //   11  a shared deck's page shows the Guide and "Made from 2 sources", with no names
-//   12  the Add cards menu on the deck's cover; dark mode; nothing says "AI generated"
+//   12  the deck cover's Make cards and New card (no Add cards menu); dark mode; nothing says "AI generated"
 // Run it with ios/tools/e2e-guide.sh (it starts a fresh server on port 3934 and the stand-in AI on 3939). It only runs when LUCIDA_GUIDE is set, so the other scripts keep running
 // their own checks alone.
 import XCTest
@@ -239,7 +239,7 @@ final class GuideTests: XCTestCase {
     let bare = "Only a guide " + run, bid = person(who, deck: bare, cards: 0)
     act(who, "guide.save", ["deckId": bid, "text": "# Plan\n\nWrite the cards later."])
     let app3 = launch(as: who, ["-open", "deck:" + bare])
-    check(wait(buttonStarting(app3, "Cards 0")) && button(app3, "Notes").exists && wait(text(app3, "No cards in this deck yet. Add some from the Add cards menu.")), "a deck with no cards but a Guide keeps its tabs, and says so on Cards")
+    check(wait(buttonStarting(app3, "Cards 0")) && button(app3, "Notes").exists && wait(text(app3, "No cards in this deck yet.")), "a deck with no cards but a Guide keeps its tabs, and says so on Cards")
     tap(button(app3, "Notes"), "Notes")
     check(wait(text(app3, "Plan")) && textHas(app3, "Write the cards later.").exists, "and its Notes show the Guide")
   }
@@ -687,7 +687,7 @@ final class GuideTests: XCTestCase {
     noLabel(app, "the shared deck’s page")
   }
 
-  // ---------- 12: the Add cards menu, dark mode ----------
+  // ---------- 12: the cover's Make cards and New card, dark mode ----------
   func test12MenuAndDark() throws {
     try XCTSkipIf(api("x", "GET", "/api/rev").status != 200, "No server at " + Self.server)
     let who = "gdd" + run, name = "Dark deck " + run
@@ -695,15 +695,12 @@ final class GuideTests: XCTestCase {
     act(who, "guide.save", ["deckId": id, "text": "# Dark heading\n\n- [x] done\n- [ ] todo\n\n| a | b |\n| - | - |\n| 1 | 2 |\n\n> a quote\n\nSome `code` here."])
     act(who, "settings.update", ["patch": ["look": "dark"]])
     let app = launch(as: who, ["-open", "deck:" + name])
-    check(wait(button(app, "Add cards")), "the deck’s cover has an Add cards button")
-    tap(button(app, "Add cards"), "Add cards")
-    check(wait(button(app, "New card")) && button(app, "From a file, photo, video or topic").exists && button(app, "Import cards").exists, "it opens New card, From a file, photo, video or topic, and Import cards")
+    check(wait(button(app, "New card")) && button(app, "Make cards").exists && !button(app, "Add cards").exists, "the deck’s cover has Make cards and New card, plainly (no Add cards menu)")
     tap(button(app, "New card"), "New card")
     check(wait(text(app, "New card")) && (app.textViews.count > 0 || app.textFields.count > 0), "New card opens the card editor")
     tap(button(app, "Cancel"), "Cancel")
-    tap(button(app, "Add cards"), "Add cards")
-    tap(button(app, "From a file, photo, video or topic"), "the Make cards row")
-    check(wait(text(app, "Upload")) || wait(button(app, "Make cards")), "the second row opens the maker")
+    tap(button(app, "Make cards"), "Make cards")
+    check(wait(button(app, "A topic")) && button(app, "Upload").exists, "Make cards opens the maker")
     tap(button(app, "Close"), "Close")
     // dark
     tap(button(app, "Notes"), "Notes")

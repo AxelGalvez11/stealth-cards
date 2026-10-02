@@ -128,7 +128,7 @@ final class StudyNetworkTests: XCTestCase {
 
     // ---------- the learner: Discover, search, the owner's profile, Follow ----------
     var app = launch(as: learner)
-    for tab in ["Today", "Library", "Discover", "Stats", "Profile"] { check(wait(button(app, tab)), "the tab bar has \(tab)") }
+    for tab in ["Library", "Discover", "Stats", "Profile"] { check(wait(button(app, tab)), "the tab bar has \(tab)") }
     button(app, "Discover").tap()
     check(wait(any(app, "Popular this week")), "Discover shows its sections")
     check(wait(any(app, "MCAT Biochemistry")), "the shared deck is in Discover")
@@ -198,7 +198,7 @@ final class StudyNetworkTests: XCTestCase {
     app = launch(as: copier, ["-open", "deck:MCAT Biochemistry"])
     let banner = any(app, "Maria Santos changed 2 cards")
     check(wait(banner, 12), "the copy shows the owner's changes (Maria Santos changed 2 cards)")
-    check(button(app, "Add cards").exists && !button(app, "Suggest a change").exists, "a copy is yours to edit (its cover has the Add cards menu)")
+    check(button(app, "Make cards").exists && button(app, "New card").exists && !button(app, "Suggest a change").exists, "a copy is yours to edit (its cover has Make cards and New card)")
     banner.tap()
     check(wait(app.staticTexts["Changes from Maria Santos"]), "See changes opens the changes")
     check(button(app, "Take all 2").exists, "with Take all 2")
@@ -219,8 +219,9 @@ final class StudyNetworkTests: XCTestCase {
 
     // ---------- the owner: News of the follow, a pin, Share, who can see the deck ----------
     app = launch(as: owner)
+    button(app, "Discover").tap()
     let bell = button(app, "News, 1 new")
-    check(wait(bell, 10), "the bell on Today counts the news")
+    check(wait(bell, 10), "the bell in Discover's header counts the news")
     bell.tap()
     let news = any(app, "Bob Stone followed you")
     check(wait(news, 10), "News says Bob Stone followed you")
@@ -231,7 +232,7 @@ final class StudyNetworkTests: XCTestCase {
     button(app, "Back").tap()
     button(app, "Back").tap()
     check(wait(button(app, "News"), 10), "News is read a moment after opening it (the count goes)")
-    check(!button(app, "Your profile").exists, "Today has no profile picture")
+    check(!button(app, "Your profile").exists, "and there is no profile picture there (Profile is a tab)")
     button(app, "Profile").tap()
     check(wait(app.staticTexts["@" + ownerHandle]), "the Profile tab opens your profile")
     let more = button(app, "More for MCAT Biochemistry")

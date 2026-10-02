@@ -3,7 +3,8 @@
 // the time you chose, which is saved with your settings. Picking a time turns it on, and the phone asks to send notices then, never
 // when the app opens; picking another time sets it again; Off removes it. If you say no to notices the row stays Off and says how to
 // allow them in iPhone Settings. What the row says comes from the phone's own list of scheduled notices, so it is always what will
-// really happen (a notice that was turned off in iPhone Settings, or a phone that was reset, shows as Off).
+// really happen (a notice that was turned off in iPhone Settings, or a phone that was reset, shows as Off). Tapping the notice opens the
+// Library (ReminderTap), where the cards due wait with Review.
 import SwiftUI
 import UserNotifications
 
@@ -26,7 +27,7 @@ final class Reminder: ObservableObject {
   /// For the end-to-end test (debug builds, `-reminderAudit`): what is scheduled, in words.
   @Published private(set) var audit = "none"
 
-  private let center = UNUserNotificationCenter.current()
+  fileprivate let center = UNUserNotificationCenter.current()
 
   /// "9:00 AM" → 9 and 0; "6:00 PM" → 18 and 0.
   static func parse(_ time: String) -> DateComponents? {
@@ -94,6 +95,34 @@ final class Reminder: ObservableObject {
     }.joined(separator: "; ")
   }
 }
+
+/// Tapping the daily notice opens the Library's first page (it opened Today until there was no Today, 2026-10-01), where the cards due wait
+/// with Review: the tab that was showing goes back to the Library and its decks. What was over the page (a sheet, a review) stays as it was.
+final class ReminderTap: NSObject, UNUserNotificationCenterDelegate {
+  static let shared = ReminderTap()
+  /// What a tap does (the app sets it as it starts).
+  var open: () -> Void = {}
+  func userNotificationCenter(_ center: UNUserNotificationCenter, didReceive response: UNNotificationResponse, withCompletionHandler done: @escaping () -> Void) {
+    let mine = response.notification.request.identifier.hasPrefix(Reminder.id)
+    DispatchQueue.main.async { if mine { self.open() }; done() }
+  }
+}
+
+#if DEBUG
+extension Reminder {
+  /// Debug builds, `-reminderIn <seconds>`: the same notice, once, that many seconds from now (after the phone's question, if it hasn't
+  /// asked), so the end-to-end test can tap a real one.
+  func soon(_ seconds: Double) async {
+    var settings = await center.notificationSettings()
+    if settings.authorizationStatus == .notDetermined { _ = try? await center.requestAuthorization(options: [.alert, .sound]); settings = await center.notificationSettings() }
+    guard [.authorized, .provisional, .ephemeral].contains(settings.authorizationStatus) else { return }
+    let content = UNMutableNotificationContent()
+    content.body = Self.words
+    content.sound = .default
+    try? await center.add(UNNotificationRequest(identifier: Self.id + ".soon", content: content, trigger: UNTimeIntervalNotificationTrigger(timeInterval: max(1, seconds), repeats: false)))
+  }
+}
+#endif
 
 extension Store {
   /// What the Daily reminder row says: the board's value on a design screen, otherwise what the phone has scheduled.

@@ -568,10 +568,10 @@ struct WelcomeScreen: View {
     soon?.cancel()
     soon = Task { try? await Task.sleep(nanoseconds: 2_400_000_000); if !Task.isCancelled { moved = .connected } }
   }
-  /// Done or skipped: Today, and the welcome doesn't come back.
+  /// Done or skipped: the Library, and the welcome doesn't come back.
   private func finish() {
     if live { store.setSetting(["welcomed": true]) }
-    nav.pick(.today)
+    nav.pick(.library)
     withAnimation(Motion.sheet) { store.welcoming = false }
   }
 

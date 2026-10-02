@@ -1,4 +1,4 @@
-// iPhone · Settings (PhoneSettings), from the gear on Today: your account, plan, studying, appearance, Connect AI, privacy, and help and
+// iPhone · Settings (PhoneSettings), from the gear on your profile: your account, plan, studying, appearance, Connect AI, privacy, and help and
 // legal, in the same seven sections, in the same order and with the same names as the web's Settings page (and what Apple asks every app
 // to have inside it: a password, Delete account, the people you blocked, and the Terms and Privacy pages).
 import StoreKit
@@ -77,7 +77,7 @@ extension Store {
     let g = googlePhoto != nil, p = settings.photo
     return p == "google" && g ? "google" : p == "yours" && settings.yourPhoto != nil ? "yours" : p == "color" || !g ? "color" : "google"
   }
-  /// What your circle shows, wherever it is (Today's header, Settings); the design screens draw the canvas's stand-ins.
+  /// What your circle shows, wherever it is (the tab bar's Profile, Settings); the design screens draw the canvas's stand-ins.
   var avatar: AvatarPic {
     switch photoChoice {
     case "google": return demo ? .sampleGoogle : .photo(googlePhoto.flatMap(API.media))
@@ -601,8 +601,8 @@ struct StandInPhoto: View {
   }
 }
 
-/// A photo cropped to fill its box, kept once it's loaded so it shows at once on the next page (your circle is on
-/// Today and in Settings).
+/// A photo cropped to fill its box, kept once it's loaded so it shows at once on the next page (your circle is in
+/// the tab bar and in Settings).
 struct CachedPhoto: View {
   let url: URL?
   @State private var loaded: (url: URL, image: UIImage)?

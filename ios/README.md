@@ -22,7 +22,7 @@ so a deck looks the same everywhere. The film grain is one tile (`Lucida/Resourc
 
 A debug build opens any canvas board with the canvas's sample data (nothing is saved):
 
-    xcrun simctl launch booted cards.lucida.app -board PhoneToday
+    xcrun simctl launch booted cards.lucida.app -board PhoneLibrary
 
 Every iPhone board works, like `PhoneReviewFour`, `PhoneDeckSettings`, `PhoneQuizMatch`, `PhoneLibraryCards`,
 `PhoneLibraryNewFolder`, `PhoneDeckMoveTray`, or `PhoneSignIn` (add `Dark` to the name for its dark-mode twin, or `Gray`
@@ -44,16 +44,42 @@ that file as if it was picked (a .csv as a spreadsheet, anything else as an Anki
 imports it. `-auraOnly` (with a board) shows only its moving background, held still, for comparing with the canvas.
 The background's shader is compiled when the app first shows it (Design/Aura.swift), so building needs no Metal toolchain.
 
-`-open` goes straight to `deck`, `review`, `stats`, `connect` (Settings › Connect AI), `settings`, `learn`, `library`, or
+`-open` goes straight to `deck`, `review`, `stats`, `connect` (Settings › Connect AI), `settings`, `learn`, `library` (or `today`, the old page's name for it), or
 `cards` (the Library's All cards). Give that server `OPENROUTER_API_KEY` (and `OPENROUTER_BASE` pointing at a stand-in, for testing) to try Explain.
+
+## The Library: the first page, where decks are made
+
+There is no Today page (the owner, 2026-10-01: "could we just get rid of the 'today' page so users just focus on the library and deck creation in there?").
+The tab bar is Library, Discover, Stats and Profile, the app opens on the Library, and everything that went to Today goes there: the welcome's end, a
+review of every deck's X and Done, a practice test opened again, `-open today`, and the daily reminder's notice. Its top (`Screens/LibraryTop.swift`,
+like `design/home.mjs`; each piece a small view of its own) is, after Gizmo's "make cards from home":
+
+- the **Make box**, "What do you want to study?": typed words and Return (or its Make cards) open Make cards on A topic with them in; a YouTube link
+  opens YouTube, and a long text (more than one line, or over 200 characters) opens Paste (`StudyWords.kind`, the web's rule); a link or a long text
+  pasted into an empty box opens its kind at once. Its + is Upload.
+- one row under it: **Upload, Paste, YouTube and More** (Lucida's own menu, `.addMenu(id: "more")`: Photos, Record a lecture, A topic, Import cards,
+  New deck). Each opens the Make flow on that kind, whose Into deck says where the cards go. On a folder's page the box and the row carry the folder,
+  and a new deck made from them goes in it.
+- **the due line** ("12 cards due · About 6 min" and Review, the review of every deck), only when something is due, and **Assigned** (what your
+  classes assigned you), only when there is something.
+
+A brand-new account's Library is the box (and Assigned), then Import cards and Connect AI side by side. A deck's cover has Make cards and New card,
+and an empty deck (where New deck opens) has the box and row set to it (its More has no New deck). News is the bell in Discover's header. While a
+sheet covers the page (Make cards, a source, a diagram, Make diagram), the page under it is hidden from VoiceOver, so only the sheet's buttons are found.
+Boards: `PhoneLibrary` (`-caughtUp`, `-assignments`, `-menu more`), `PhoneLibraryFolder`, `PhoneLibraryAssigned`, `PhoneDecksEmpty`, `PhoneDeckEmpty`, `PhoneDiscover`.
+
+    ios/tools/e2e-home.sh <simulator id>
+
+starts a fresh server on port 3953 and the stand-in AI on 3954, and runs `LucidaUITests/HomeTests` in eight flows (the first page and its due line,
+every way in, words and pastes in the box, decks taking material, a brand-new account, Assigned, News on Discover, a folder's box).
 
 ## The study network
 
-The tab bar is Today, Library, Discover, Stats, and Profile (your own picture is its icon). Connect AI is a page inside Settings
-(its row there, a back button, no tab bar; `Nav.openConnect()` opens it from the empty states and Today's start tile).
+The tab bar is Library, Discover, Stats, and Profile (your own picture is its icon), and the app opens on the Library (there is no Today: see
+above). Connect AI is a page inside Settings (its row there, a back button, no tab bar; `Nav.openConnect()` opens it from the new account's Library).
 Discover (its own tab), profiles (yours is the Profile tab, and its gear opens Settings;
 anyone's, from their name, is a page that lights no tab),
-Edit profile, pins, News (the bell on Today), Settings → Profile, whose each deck is in the Library, and a deck's sharing:
+Edit profile, pins, News (the bell in Discover's header), Settings → Profile, whose each deck is in the Library, and a deck's sharing:
 the Sharing tab of Deck settings, a deck you study from someone (Suggest a change instead of New card), and your copy of
 one with the owner's changes to take or skip. The answers come from the same server as the web app's (`Data/Net.swift`,
 like `web/net.js`). The boards: `PhoneDiscover`, `PhoneDiscoverSearch`, `PhoneProfile` (and `Other`, `Following`, `Edit`,
@@ -189,11 +215,12 @@ parts go up one after another in the same make ("Lecture (part 3 of 12).m4a", wi
 each one's length to the next one's times. A recording longer than the plan makes from is turned away at once with the server's own words (nothing
 is cut or sent); one that can't be cut and is over 25 MB says so. Take a photo shows only on a phone with a camera (the iOS 26 simulator says it can use the camera but has none).
 
-It opens from Today's + menu (New card, Make cards, New deck), the Library's + menu (New deck, Make cards, Import cards; `Screens/AddMenu.swift`
-draws these menus, and a deck's Add cards can reuse it), and the empty deck's Make cards button. Any screen opens it with
-`nav.make(kind:deckId:from:guide:page:text:title:)`, like the web's `/make?source=&deck=&from=&guide=&page=`: `kind` (file, photo, record, paste,
-video, topic, or none), the deck the cards go to, a kept source's id to make more cards from, a deck's id (and its page) to make cards from its
-Guide, or words already in hand.
+It opens from the Library's Make box and its row (see The Library, above), the Library's + menu (New deck, Make cards, Import cards;
+`Screens/AddMenu.swift` draws Lucida's own menus), a deck cover's Make cards, and an empty deck's box and row. Any screen opens it with
+`nav.make(kind:deckId:from:guide:page:text:title:topic:url:folder:box:)`, like the web's `/make?source=&deck=&from=&guide=&page=&folder=`: `kind` (file,
+photo, record, paste, video, topic, or none), the deck the cards go to, a kept source's id to make more cards from, a deck's id (and its page) to make
+cards from its Guide, words already in hand (a Guide's selection; with `box`, words pasted in the Make box, which get notes like any material), a
+topic or a YouTube link already typed, and the folder a new deck made this way goes in.
 
 **Notes.** `/api/make/finish` also answers `notes` (null, or a title, an overview, a note for each part of the material with where it comes from,
 and the whole draft as Markdown). The review shows a "Notes for the deck" panel above the cards: how many ("6 notes · p. 4 to p. 9 · saved with the
@@ -217,7 +244,7 @@ AVSpeechSynthesizer, in the card's language), "Read aloud · es-ES", and two fie
 The boards: `PhoneMake` (and `PhoneMakeDark`, `PhoneMakeGray`); `-state <the canvas's step>` shows any of its 24 states (`Pick`, `Upload`,
 `Upload (a file added)`, `Photos`, `Record`, `Recording`, `Paused`, `Paste`, `Paste (a language set)`, `YouTube`, `YouTube transcript`, `Topic`,
 `More from a source`, `Making`, `Making a recording`, `Review`, `Review (notes open)`, `Review (notes off)`, `Review (no room for notes)`, `Review (audio cards)`,
-`Review (editing a card)`, `Limit reached`, `File too big`, `Error`), with the sample in `Design/MakeSample.swift`. Also changed: `PhoneToday` and `PhoneLibrary` (their + menus; `-menu open` opens it) and `PhoneDeckEmpty` (Make cards).
+`Review (editing a card)`, `Limit reached`, `File too big`, `Error`), with the sample in `Design/MakeSample.swift`. Also changed: `PhoneLibrary` (its + menu; `-menu open` opens it, `-menu more` the Make box's More) and `PhoneDeckEmpty` (the box and row).
 
 More launch arguments (debug builds): `-makeFile <path>`, `-makePhoto <path>` (several: paths with commas between), `-makeRecording <path>` (a
 file for the microphone, which the simulator doesn't have: the timer, Pause, Resume and Stop run as they do for real, and Stop uses that file;
@@ -241,8 +268,8 @@ with no cookie, what can be picked, a long recording cut into parts and sent in 
 Every deck can have a **Guide** (a page written in Markdown, like a README, with extra pages and a short history of versions) and **Sources** (what its cards
 were made from: a file, pictures, a recording, a video, pasted text, a topic). The deck page has tabs, **Cards | Notes | Sources** (`Screens/DeckMaterials.swift`
 `DeckTabs`: plain underlined tabs, a small count on Cards and Sources, room for a fourth that scrolls sideways): Notes is the Guide, Sources only shows on a deck of
-yours (a deck you only study has Cards, and Notes when it has a Guide, read only; an address for a tab that isn't there falls back to Cards). The + on the cover is the
-**Add cards** menu (New card, From a file, photo, video or topic, Import cards: `Screens/AddMenu.swift`).
+yours (a deck you only study has Cards, and Notes when it has a Guide, read only; an address for a tab that isn't there falls back to Cards). The cover has **Make cards**
+(the Make flow, into this deck) and **New card**, plainly.
 
 **The words are read by `web/guide.js` itself**, run in JavaScriptCore (`Data/GuideEngine.swift`; `design/to-ios.mjs` copies the file to `Resources/guide.js`). The same parser,
 the same safety (nothing in a Guide can run: raw HTML is shown as words, links are only http(s), mailto and in-page, a picture only from the app's own `/media/` storage, a shared
@@ -322,17 +349,17 @@ The Library's third view (Decks · All cards · Classes): your classes as tiles,
 class, and a class's own page: as its owner or a helper (assignments with how many who share are done, each member's
 progress, "Not shared" for the rest, decks, invite, Get verified, people, Rename, Delete), as a member (what's left for you
 on each assignment, whether you share your progress, Leave), or as an invite you haven't taken (Join). Add a deck, Assign
-(a deck, a goal, a date), Report, and Get verified are sheets. Today lists what your classes assigned you. The answers
+(a deck, a goal, a date), Report, and Get verified are sheets. The Library's Assigned lists what your classes assigned you. The answers
 come from the same server as the web app's (`Data/ClassData.swift`, like `web/classes.mjs` and `web/net.js`); your own
 progress on a class deck is worked out here from your own cards (a port of `web/progress.js`) and sent to a class only if
 you turned sharing on. Universal links aren't set up, so the way into a class is Join with its code; Share invite link opens the
 phone's share sheet with the web app's link. The boards: `PhoneClasses` (and `Dark`, `Empty`, `New`, `Join`),
 `PhoneClass` (and `Dark`, `Gray`, `Member`, `New`, `Invite`, `Loading`, `Missing`, `AddDeck`, `Assign`, `Report`, `Verify`), and
-`PhoneTodayClass`.
+`PhoneLibraryAssigned`.
 
 Against a copy of the server, `-open classes` opens Library → Classes and `-open class:<CODE>` opens one class's page
 (an invite, if you aren't in it). The whole thing is tested end to end by tapping through the app as five made-up people
-(a teacher makes a class, adds and assigns a deck; two students join, one shares progress and one doesn't; they study; Today
+(a teacher makes a class, adds and assigns a deck; two students join, one shares progress and one doesn't; they study; the Library
 lists the assignment; a report; Get verified, approved by the made-up person `admin`; helpers, leaving, taking someone out,
 deleting the class; a code no class has):
 
@@ -354,7 +381,7 @@ the families the theme names (as the web page does) and registers them; nothing 
 its card (padding, ink, weight, spacing, ...) is read from the theme's own styles (`ThemeFace.swift`).
 
 A theme changes only the flashcard, the study background (Review and Learn), deck covers (Library thumbnails and folder fans, the
-deck page's header, Deck settings' header, New deck's preview) and your picture (Today, Settings, your profile). Free never draws
+deck page's header, Deck settings' header, New deck's preview) and your picture (the tab bar, Settings, your profile). Free never draws
 one, whatever the library says. Boards: `PhoneThemePicker`, `PhoneThemePickerFree`, `PhoneTheme` (`-sheet <key>` for another
 theme) and, for each theme, `Theme<Board>ReviewPhone` and `Theme<Board>ProfilePhone`; `-theme <key>` puts any board in a theme.
 
@@ -416,7 +443,8 @@ time sets it again, Off removes it, and signing out removes it. If notifications
 iPhone Settings. The row says what the phone has scheduled (not a saved setting), so it is always what will happen; the time is also kept with
 the settings. Local notifications need no entitlement, no Info.plist text and no privacy declaration. `ios/tools/e2e-reminder.sh <simulator id>`
 is the end-to-end test (`LucidaUITests/ReminderTests`, reading what is scheduled through `-reminderAudit`); it takes the app off the simulator before
-each flow so the phone has never been asked.
+each flow so the phone has never been asked. Tapping the notice opens the Library (`ReminderTap`, the notification center's delegate, set as the app starts,
+so a cold start counts too); the third flow lets a real notice come (`-reminderIn <seconds>`, debug builds) and taps it on the home screen.
 
 **Flip animation** (Settings › Studying, `settings.flip`, on unless turned off; `Store.flipOn`, `Design/Theme.swift` `\.flipsOn`; boards `PhoneSettings` and `WebSettings`
 with their switch, `-flip Off` on a design screen). Off, the card's other side just appears in Review and Cards to check: no 3D turn, no blank's pop,
@@ -471,7 +499,7 @@ The owner's first TestFlight notes (2026-10-01), end to end in `LucidaUITests/Po
 runs it on a fresh server on port 3914 (`ONLY=PolishTests/test4SwipeToChangePages` runs one flow, `SHOTS=<folder>` saves a picture
 when a check fails) and then lists every haptic in the app.
 
-- **Today has no profile picture** (the Profile tab is the way to your profile); the title stays in the middle.
+- **No profile picture on the first page** (the Library; the Profile tab is the way to your profile).
 - **Remove from folder**, not "No folder": a deck's ⋯ menu in the Library and Deck settings' Folder chips offer it only for a deck that is
   in a folder, first, above the folders. Making a copy of someone's deck starts in "Library" (the top level).
 - **Share opens the phone's share sheet** (`ShareSheet.present`, `Design/PageViews.swift`): Share profile (both buttons), a deck's Share link,

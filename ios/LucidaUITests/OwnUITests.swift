@@ -278,7 +278,7 @@ final class OwnUITests: AppCase {
     _ = deckId(who, "Nav deck", cards: 2)
     _ = act(who, "folder.add", ["name": "Nav folder"])
     var app = launch(as: who)
-    for tab in ["Today", "Library", "Discover", "Stats", "Profile"] {
+    for tab in ["Library", "Discover", "Stats", "Profile"] {
       tap(button(app, tab), tab)
       Thread.sleep(forTimeInterval: 0.9)
       noSystemUI(app, "the " + tab + " tab")

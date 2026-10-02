@@ -71,7 +71,8 @@ struct DiagramDraft: Equatable {
 extension Store {
   /// A deck's diagrams as the list shows them, newest first (a design screen shows the canvas's sample).
   func diagramRows(_ deckId: String) -> [DiagramVM] {
-    (demo ? DiagramSample.rows(props.guideState) : (lib.materials[deckId]?.diagrams ?? []).reversed()).map(DiagramVM.init)
+    // (The design screens' empty deck, PhoneDeckEmpty, has none, like its Guide and Sources.)
+    (demo ? (props.emptyDeck ? [] : DiagramSample.rows(props.guideState)) : (lib.materials[deckId]?.diagrams ?? []).reversed()).map(DiagramVM.init)
   }
   func diagram(_ deckId: String, _ id: String) -> DiagramVM? { diagramRows(deckId).first { $0.id == id } }
 }
