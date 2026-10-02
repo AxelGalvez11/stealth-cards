@@ -146,18 +146,19 @@ const MAP_SYSTEM = ['You turn a student\'s flashcards and notes into a mind map 
   '- Every idea is a few words (at most 8), a term or a short phrase, never a whole sentence. At most 40 ideas in all, in 3 levels (the topic, main ideas, details).', ...RULES].join('\n');
 
 const nodeText = (x, max) => plainText(x && typeof x === 'object' ? x.text : x, max);
-/** A table the AI wrote, checked: 2 to 6 headings, rows of one cell each (made to fit), no empty or repeated rows, at most 30. null when there is not a table in it. */
+/** A table the AI wrote, checked: 2 to 6 headings, rows of one cell each (made to fit), no empty rows and none that says the same thing twice (the first cell is what a row is about), at most 30. null when there is not a table in it. */
 export function tidyTable(t) {
   if (!t || typeof t !== 'object') return null;
-  const columns = (Array.isArray(t.columns) ? t.columns : []).map(c => plainText(c, 60)).filter(Boolean).slice(0, 6);
-  if (columns.length < 2) return null;
-  const rows = [], seen = new Set();
+  // A heading with no words goes, and the cells under it go with it (each cell is found by its heading's place in what the AI sent).
+  const cols = (Array.isArray(t.columns) ? t.columns : []).map((c, i) => ({ i, text: plainText(c, 60) })).filter(c => c.text).slice(0, 6);
+  if (cols.length < 2) return null;
+  const columns = cols.map(c => c.text), rows = [], seen = new Set();
   for (const r of Array.isArray(t.rows) ? t.rows : []) {
     if (!Array.isArray(r)) continue;
-    const cells = columns.map((_, i) => plainText(r[i], 240));
+    const cells = cols.map(c => plainText(r[c.i], 240));
     if (!cells.some(Boolean)) continue;
-    const k = cells.join('\u0001').toLowerCase();
-    if (seen.has(k) || cells.every((c, i) => c.toLowerCase() === columns[i].toLowerCase())) continue;
+    const k = (cells[0] || cells.join(' ')).toLowerCase();
+    if (seen.has(k) || cells.every((c, i) => !c || c.toLowerCase() === columns[i].toLowerCase())) continue;
     seen.add(k); rows.push(cells);
     if (rows.length >= 30) break;
   }
@@ -231,6 +232,20 @@ export async function writeDiagram(type, mat, { deck = '', scope = null } = {}) 
   const out = type === 'table' ? tidyTable(data) : tidyTree(data);
   if (!out) throw fail('Lucida couldn’t make a ' + MAKE_WORDS[type] + ' from that. Try another selection.', 422, 'none');
   return { ...out, title: out.title || plainText(deck, 80) || 'Untitled' };
+}
+
+// What a shared deck carries of its diagrams: only the tables and the mind maps, as words (never a lecture or an uploaded picture, its file, its labels, nor what a table
+// was made from, which can name a source). social.mjs puts this in the shared deck's Guide record, and reads it back (`diagramsCopy`) for people who study or copy the deck.
+export const sharedDiagram = g => (isMadeDiagram(g) ? { id: g.id, kind: g.kind, name: g.name, at: g.at || 0, ...(g.kind === 'table' ? { table: g.table } : { tree: g.tree }) } : null);
+export function diagramsCopy(guide) {
+  const out = [];
+  for (const x of (guide && Array.isArray(guide.diagrams) ? guide.diagrams : []).slice(0, 200)) {
+    if (!x || typeof x !== 'object' || !/^[\w-]{1,30}$/.test(String(x.id || ''))) continue;
+    const made = x.kind === 'table' ? tidyTable({ title: x.name, ...(x.table || {}) }) : x.kind === 'mindmap' ? tidyTree({ title: x.name, root: (x.tree || {}) }) : null;
+    if (!made) continue;
+    out.push({ id: String(x.id), kind: x.kind, name: plainText(x.name, 80) || made.title || 'Untitled', at: +x.at || Date.now(), ...(x.kind === 'table' ? { table: made.table } : { tree: made.tree }) });
+  }
+  return out;
 }
 
 // ---------- the routes ----------
