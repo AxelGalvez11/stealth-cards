@@ -61,82 +61,93 @@ private struct LittlePill: View {
 }
 
 // ---------- Notes: the Guide ----------
-/// The Guide as a card: its name, its page tabs (when it has pages to choose from), Make cards and Edit (for its owner), its words (cut short, with Show more,
-/// when they are long), and "Add a guide" while it has none. The caller says which page is showing (`page`, one of `tabs`) and its words; `images` says which
-/// pictures may show (a deck's own, or a shared deck's public ones).
+/// The Guide as a card, as its page reads (web/notes.js's reading view: the same rows as the Notes page, its toggles opening and its sections folding, remembered on
+/// this phone): its page tabs (when it has pages), Make cards (for its owner, once it has words), and the page. For its owner a tap on the words opens the Notes page
+/// there, and an empty Guide is a blank note waiting (a heading and a line). On a shared deck's page (`shared`: the deck's address, which this phone remembers its
+/// toggles by) it says NOTES, and a long page is cut short with Show more. The caller says which page is showing (`page`, one of `tabs`) and its words; `images`
+/// says which pictures may show (a deck's own, or a shared deck's public ones).
 struct GuideCard: View {
   @Environment(\.theme) private var t
   @EnvironmentObject private var nav: Nav
+  @EnvironmentObject private var store: Store
   let deckId: String
   let tabs: [(id: String, title: String)]
   @Binding var page: String
   let text: String
   @Binding var open: Bool
-  /// Make cards and Edit (or Write) show: it's the deck's owner's.
+  /// Make cards shows, and a tap opens the page to write in: it's the deck's owner's.
   var canEdit = false
-  /// The Guide has words or pages already (else Edit says Write, and "Add a guide" shows).
+  /// The Guide has words or pages already.
   var hasAny = true
   var images: (String) -> URL? = GuideImages.own
+  /// A shared deck's page: its address.
+  var shared: String? = nil
+  @StateObject private var notes = NotesPage()
+  @State private var hooks = NotesHooks()
 
   var body: some View {
     let hasText = !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-    let long = (text as NSString).length > 640 || text.split(separator: "\n", omittingEmptySubsequences: false).count > 14
-    let width = UIScreen.main.bounds.width - 40 - 36
+    let long = shared != nil && ((text as NSString).length > 640 || text.split(separator: "\n", omittingEmptySubsequences: false).count > 14)
+    let key = shared.map { "shared|" + $0 + "|" + page } ?? ((store.demo ? "canvas|" : "") + deckId + "|" + page)
     VStack(alignment: .leading, spacing: 12) {
-      FlexWrap(gap: 10) {
-        Text("GUIDE").css(13, .semibold, ls: 0.06).foregroundStyle(t.muted).fixedSize().accessibilityAddTraits(.isHeader)
-        if !tabs.isEmpty {
-          FlexWrap(gap: 4, rowGap: 4) {
-            ForEach(tabs, id: \.id) { x in
-              let on = x.id == page
-              Button { page = x.id; open = false } label: {
-                Text(x.title).css(12.5, .semibold).lineLimit(1).foregroundStyle(on ? t.text : t.muted).padding(.horizontal, 12).frame(height: 28).frame(maxWidth: 180)
-                  .background(Capsule().fill(on ? t.bg : .clear))
-              }
-              .buttonStyle(.press).accessibilityLabel(x.title).accessibilityAddTraits(on ? .isSelected : [])
-            }
-          }
-        }
-        Color.clear.frame(width: 0, height: 0).flexGrow()
-        if canEdit {
-          HStack(spacing: 6) {
-            if hasText { LittlePill(label: "Make cards", icon: "sparkle") { nav.make(deckId: deckId) } }
-            LittlePill(label: hasAny ? "Edit" : "Write", icon: "pencil") { nav.guide(deckId: deckId, page: page == "main" ? "" : page) }
-          }
-        }
-      }
-      if hasText {
-        // (A link inside the page to a heading in the part that is cut off opens the rest first.)
-        let doc = GuideDoc(blocks: GuideEngine.shared.tree(text), width: width, image: images).environment(\.guideExpand, long && !open ? { open = true } : nil)
-        if long && !open {
-          doc.fixedSize(horizontal: false, vertical: true).frame(maxHeight: 230, alignment: .top).clipped()
-            .mask(LinearGradient(stops: [.init(color: .black, location: 0.62), .init(color: .clear, location: 1)], startPoint: .top, endPoint: .bottom))
-        } else { doc }
-        if long {
-          Button { open.toggle() } label: { Text(open ? "Show less" : "Show more").css(14, .semibold).underline().foregroundStyle(t.text) }
-            .buttonStyle(.flat).accessibilityLabel(open ? "Show less" : "Show more")
-        }
-      }
-      if !hasAny && canEdit {
-        Button { nav.guide(deckId: deckId) } label: {
-          HStack(spacing: 12) {
-            Icon("plus", 16, 2).foregroundStyle(t.text).frame(width: 36, height: 36).background(Circle().fill(t.surf))
-            VStack(alignment: .leading, spacing: 1) {
-              Text("Add a guide").css(15, .semibold)
-              Text("Notes, links and a plan for this deck").css(13).foregroundStyle(t.muted)
-            }
-            .frame(maxWidth: .infinity, alignment: .leading)
-          }
-          .foregroundStyle(t.text).padding(.horizontal, 18).padding(.vertical, 14).frame(minHeight: 64)
-          .background(RoundedRectangle(cornerRadius: 16, style: .continuous).fill(t.bg))
-        }
-        .buttonStyle(.press).accessibilityLabel("Add a guide")
+      if shared != nil || !tabs.isEmpty || (canEdit && hasText) { GuideCardBar(tabs: tabs, page: $page, open: $open, label: shared != nil, make: canEdit && hasText ? { nav.make(deckId: deckId) } : nil) }
+      // (on a shared deck's page what is cut short starts at the card's edge, so the headings' ▸ in the margin stay in it)
+      // (a link inside the page to a heading in the part that is cut off opens the rest first)
+      let pageView = NotesView(page: notes, setup: NotesSetup(colors: NotesColors(t, code: t.bg), owner: canEdit, hooks: hooks)).padding(.leading, shared != nil ? 26 : 0)
+        .environment(\.guideExpand, long && !open ? { open = true } : nil)
+      if long && !open {
+        pageView.fixedSize(horizontal: false, vertical: true).frame(maxHeight: 230, alignment: .top).clipped()
+          .mask(LinearGradient(stops: [.init(color: .black, location: 0.62), .init(color: .clear, location: 1)], startPoint: .top, endPoint: .bottom))
+          .padding(.leading, -20)
+      } else { pageView.padding(.leading, shared != nil ? -20 : 0) }
+      if long {
+        Button { open.toggle() } label: { Text(open ? "Show less" : "Show more").css(14, .semibold).underline().foregroundStyle(t.text) }
+          .buttonStyle(.flat).accessibilityLabel(open ? "Show less" : "Show more")
       }
     }
-    .padding(.horizontal, 18).padding(.top, 18).padding(.bottom, 16)
+    .padding(.top, shared != nil ? 18 : 16).padding(.bottom, shared != nil ? 16 : 18).padding(.leading, shared != nil ? 20 : 24).padding(.trailing, 18)
     .frame(maxWidth: .infinity, alignment: .leading)
     .background(RoundedRectangle(cornerRadius: 22, style: .continuous).fill(t.surf))
-    .accessibilityElement(children: .contain).accessibilityLabel("Guide")
+    .accessibilityElement(children: .contain).accessibilityLabel("Notes")
+    .onAppear { load(key) }
+    .onChange(of: key) { _, k in load(k) }
+    .onChange(of: text) { _, _ in load(key) }
+  }
+  /// The page's words, read as blocks (an owner's empty Guide is a blank note), and what a tap does.
+  private func load(_ key: String) {
+    hooks.image = images
+    let deck = deckId, pg = page
+    if canEdit { hooks.open = { [nav] i, off in nav.guide(deckId: deck, page: pg == "main" ? "" : pg, at: "\(i):\(off)") } } else { hooks.open = nil }
+    notes.load(text, key: key, editable: false, blank: canEdit)
+  }
+}
+
+/// The card's top: NOTES (on a shared deck's page), the pages as tabs, and Make cards.
+struct GuideCardBar: View {
+  @Environment(\.theme) private var t
+  let tabs: [(id: String, title: String)]
+  @Binding var page: String
+  @Binding var open: Bool
+  let label: Bool
+  let make: (() -> Void)?
+  var body: some View {
+    FlexWrap(gap: 10) {
+      if label { Text("NOTES").css(13, .semibold, ls: 0.06).foregroundStyle(t.muted).fixedSize().accessibilityAddTraits(.isHeader) }
+      if !tabs.isEmpty {
+        FlexWrap(gap: 4, rowGap: 4) {
+          ForEach(tabs, id: \.id) { x in
+            let on = x.id == page
+            Button { page = x.id; open = false } label: {
+              Text(x.title).css(label ? 12.5 : 13, .semibold).lineLimit(1).foregroundStyle(on ? t.text : t.muted).padding(.horizontal, label ? 12 : 13).frame(height: label ? 28 : 30).frame(maxWidth: label ? 180 : 200)
+                .background(Capsule().fill(on ? t.bg : .clear))
+            }
+            .buttonStyle(.press).accessibilityLabel(x.title).accessibilityAddTraits(on ? .isSelected : [])
+          }
+        }
+      }
+      Color.clear.frame(width: 0, height: 0).flexGrow()
+      if let make { LittlePill(label: "Make cards", icon: "sparkle", action: make) }
+    }
   }
 }
 

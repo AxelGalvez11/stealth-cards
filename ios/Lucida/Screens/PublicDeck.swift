@@ -67,15 +67,16 @@ struct PublicDeckScreen: View {
   }
 
   // ---------- its Guide ----------
-  /// The deck's Guide for anyone (the owner's words, drawn safely: pictures only from the app's own public storage), with its pages as tabs when it has more than
-  /// one, and how many sources it was made from (a number only: the files and their names stay private).
+  /// The deck's Notes for anyone (the owner's words, drawn safely: pictures only from the app's own public storage; a reader opens and closes its toggles and folds
+  /// its sections, and this phone remembers), with its pages as tabs when it has more than one, and how many sources it was made from (a number only: the files and
+  /// their names stay private).
   @ViewBuilder private func guideBlock(_ p: PublicDeckPage) -> some View {
     let pages = (p.guide?.pages ?? []).filter { !$0.text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
     let n = p.guide?.sources ?? 0
     let pageId = pages.contains { $0.id == gpage } ? gpage : pages.first?.id ?? ""
     if let cur = pages.first(where: { $0.id == pageId }) {
       GuideCard(deckId: "", tabs: pages.count > 1 ? pages.map { (id: $0.id, title: $0.id == "main" ? "Guide" : $0.title) } : [], page: Binding(get: { pageId }, set: { gpage = $0 }),
-                text: cur.text, open: $gopen, canEdit: false, hasAny: true, images: GuideImages.shared)
+                text: cur.text, open: $gopen, canEdit: false, hasAny: true, images: GuideImages.shared, shared: p.id.isEmpty ? addr.slug : p.id)
         .padding(.bottom, 4)
     }
     if n > 0 {

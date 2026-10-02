@@ -100,9 +100,9 @@ struct Down: LocalizedError { var errorDescription: String? { "Couldn’t reach 
   do {
     let spy = Spy()
     let m = make(spy, delay: 5)
-    m.type("words"); m.preview = true
+    m.type("words")
     await m.addPage()
-    check(spy.saves.count == 1 && spy.adds == ["New page"] && m.page == "g9" && !m.preview && !m.historyOpen, "Add page sends what is waiting, makes the page, and writes on it")
+    check(spy.saves.count == 1 && spy.adds == ["New page"] && m.page == "g9" && !m.historyOpen, "Add page sends what is waiting, makes the page, and writes on it")
     m.type("page"); await m.flush()
     await m.deletePage()
     check(spy.deletes.count == 1 && spy.deletes[0] == ("d1", "g9") && m.page == "main" && m.drafts["d1|g9"] == nil, "deleting a page goes back to the Guide and forgets what was typed for it")
@@ -133,6 +133,17 @@ struct Down: LocalizedError { var errorDescription: String? { "Couldn’t reach 
     check(spy.renames.count == 1 && spy.renames[0] == ("d1", "g1", "Mine"), "a name still waiting is sent when the page is left")
     await sleep(0.9)
     check(spy.renames.count == 1, "and not sent again a moment later")
+  }
+  // a page over what a Guide may hold says so and is not sent; once it's shorter again it saves
+  do {
+    let spy = Spy()
+    let m = make(spy, delay: 0.1)
+    m.type(String(repeating: "a", count: GuideEditorModel.most + 1))
+    await sleep(0.4)
+    check(spy.saves.isEmpty && m.error == "This page is full." && m.saveLabel == "This page is full.", "a page that is too long says “This page is full.” and waits")
+    m.type("short again")
+    await sleep(0.4)
+    check(spy.saves.map(\.text) == ["short again"] && m.error.isEmpty && m.saveLabel == "Saved", "and saves once it fits")
   }
   print("Guide editor: \(passed) passed, \(failed) failed")
   exit(failed == 0 ? 0 : 1)

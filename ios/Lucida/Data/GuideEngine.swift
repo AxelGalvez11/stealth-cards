@@ -26,6 +26,8 @@ indirect enum GuideBlock: Decodable, Equatable {
   case ol(start: Int, tight: Bool, items: [GuideItem])
   case hr
   case table(align: [String], head: [[GuideInline]], rows: [[[GuideInline]]])
+  /// A toggle: its title, and what opens under it (":::toggle Its title" ... ":::").
+  case toggle(inline: [GuideInline], blocks: [GuideBlock])
 
   private enum K: String, CodingKey { case t, level, inline, id, lang, text, blocks, tight, items, start, align, head, rows }
   init(from d: Decoder) throws {
@@ -39,6 +41,7 @@ indirect enum GuideBlock: Decodable, Equatable {
     case "ol": self = .ol(start: c.opt(.start, 1), tight: c.opt(.tight, true), items: try c.decode([GuideItem].self, forKey: .items))
     case "hr": self = .hr
     case "table": self = .table(align: c.opt(.align, []), head: try c.decode([[GuideInline]].self, forKey: .head), rows: try c.decode([[[GuideInline]]].self, forKey: .rows))
+    case "toggle": self = .toggle(inline: try c.decode([GuideInline].self, forKey: .inline), blocks: try c.decode([GuideBlock].self, forKey: .blocks))
     default: throw DecodingError.dataCorruptedError(forKey: .t, in: c, debugDescription: "Unknown block")
     }
   }
@@ -166,6 +169,17 @@ final class GuideEngine {
   /// The words with no marks, at most `n` characters.
   func plain(_ md: String, _ n: Int? = nil) -> String { decode(String.self, "plain", [md, n]) ?? "" }
   func headings(_ md: String) -> [GuideHeading] { decode([GuideHeading].self, "headings", [md]) ?? [] }
+
+  // ---------- the Notes page (guide.js blocks and markdown) ----------
+  /// A page's Markdown as the blocks the Notes page shows (Data/Notes.swift), each with an id of its own.
+  func blocks(_ md: String) -> [NoteBlock] { decode([NoteBlock].self, "blocks", [md]) ?? [] }
+  /// Blocks as Markdown (reading them again gives the same blocks).
+  func markdown(_ blocks: [NoteBlock]) -> String {
+    guard let data = try? JSONEncoder().encode([blocks]), let args = String(data: data, encoding: .utf8) else { return "" }
+    return callJSON("markdown", args).flatMap { try? JSONDecoder().decode(String.self, from: Data($0.utf8)) } ?? ""
+  }
+  /// An address typed for a link, as a link may have it (https:// added to a bare domain), or "" when it can't be one.
+  func href(_ u: String) -> String { decode(String.self, "href", [u]) ?? "" }
   /// How many unexpected errors guide.js caught and hid (0 unless there is a bug).
   var errors: Int {
     lock.lock(); defer { lock.unlock() }

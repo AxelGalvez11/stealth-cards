@@ -1,5 +1,5 @@
 // Makes the made-up people the Guide test (LucidaUITests/GuideTests.swift) taps through, on a running copy of the server, through the server's own acts and its
-// make steps with the stand-in AI (so a Source is exactly what a make leaves, not something written by hand): an owner with a deck, "Cell Biology", that has a Guide with
+// make steps with the stand-in AI (so a Source is exactly what a make leaves, not something written by hand): an owner with a deck, "Cell Biology", that has a Guide (sections, toggles) with
 // two extra pages and one of every kind of Source (a PDF and a Word file, a recording kept as thirteen files that is almost two hours long, a video, two pictures, pasted text, a topic),
 // a deck with two Sources that is shared (a shared page says "Made from 2 sources"), and someone who studies the first deck once it's shared. Writes what the test needs to
 // know (ids, names, the places in the Sources some cards point at) as JSON.
@@ -72,7 +72,10 @@ const SENT = ['The mitochondrion makes most of the cell’s ATP from sugar and o
 const { id: deckId } = await owner.act('deck.add', { name: 'Cell Biology' });
 await owner.act('card.add', { deckId, kind: 'basic', front: 'What is ATP?', back: 'The cell’s energy' });
 const GUIDE = ['# Cell Biology: Exam 1', '', 'Everything for the first exam, in the order we covered it. Start with the checklist, then the mnemonics.', '', '## Checklist', '- [x] Organelles and what each one does',
-  '- [x] The electron transport chain', '- [ ] Glycolysis, step by step', '- [ ] Mitosis versus meiosis', '', '## Mnemonics', '| Phase | Remember it as |', '| --- | --- |', '| Prophase | **P**ut your chromosomes in **P**lace |',
+  '- [x] The electron transport chain', '- [ ] Glycolysis, step by step', '- [ ] Mitosis versus meiosis', '', '## The mitochondrion (p. 4 to p. 5)', '',
+  ':::toggle The **mitochondrion** makes most of the cell’s **ATP**', 'It has two membranes. The inner one folds into **cristae**.', ':::', '',
+  ':::toggle **ATP synthase** lets protons flow back', 'That flow turns it like a turbine.', ':::', '',
+  '## Mnemonics', '| Phase | Remember it as |', '| --- | --- |', '| Prophase | **P**ut your chromosomes in **P**lace |',
   '| Metaphase | **M**iddle of the cell |', '| Anaphase | **A**part they go |', '| Telophase | **T**wo new cells |', '', '> The mitochondrion makes most of the cell’s ATP.', '', '[Back to the top](#cell-biology-exam-1)', '', 'Questions? Ask in [office hours](https://example.edu/office-hours).'].join('\n');
 await owner.act('guide.save', { deckId, text: GUIDE });
 const g1 = (await owner.act('guide.page.add', { deckId, title: 'Lecture 3 summary' })).id, g2 = (await owner.act('guide.page.add', { deckId, title: 'Mnemonics' })).id;
@@ -99,7 +102,7 @@ const sources = Object.fromEntries(deck.sources.map(s => [s.kind === 'file' && /
 
 // ---------- a shared deck with two Sources (its page says how many, and nothing else) ----------
 const { id: sharedDeck } = await owner.act('deck.add', { name: 'Shared Cells' });
-await owner.act('guide.save', { deckId: sharedDeck, text: '# Shared Cells\n\nA short Guide anyone can read.\n\n- one\n- two' });
+await owner.act('guide.save', { deckId: sharedDeck, text: '# Shared Cells\n\nA short Guide anyone can read.\n\n:::toggle Open me\nHidden until it is opened.\n:::\n\n- one\n- two' });
 await owner.make(sharedDeck, { kind: 'text', title: 'Secret source name', text: SENT.join('\n\n') });
 await owner.make(sharedDeck, { kind: 'topic', title: 'Another private source', topic: 'Cells again' });
 const shared = await owner.soc('deck.share', { deckId: sharedDeck, visibility: 'public' });

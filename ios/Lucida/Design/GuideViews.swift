@@ -26,7 +26,7 @@ enum GuideCSS {
     case .hr: return rule
     case .ul, .ol: return item                            // (the first item's margin comes through)
     case .quote(let bs): return bs.first.map(top) ?? 0
-    case .p, .code, .table: return 0
+    case .p, .code, .table, .toggle: return 0
     }
   }
   static func bottom(_ b: GuideBlock, nested: Bool = false, tight: Bool = false) -> CGFloat {
@@ -34,7 +34,7 @@ enum GuideCSS {
     case .h(let level, _, _): return 0.5 * headSize(level)
     case .hr: return rule
     case .p: return tight ? 0 : para
-    case .code, .table, .quote: return para
+    case .code, .table, .quote, .toggle: return para
     case .ul(let t, let items): return listBottom(items, tight: t, nested: nested)
     case .ol(_, let t, let items): return listBottom(items, tight: t, nested: nested)
     }
@@ -153,8 +153,8 @@ enum GuideLinks {
   }
 }
 
-/// A paragraph, heading or cell's words as a text view; a heading knows its id, which a link inside the page can jump to.
-final class GuideWords: UITextView {
+/// A paragraph, heading or cell's words as a text view; a heading knows its id, which a link inside the page can jump to (a Notes page's line is one too).
+class GuideWords: UITextView {
   var anchorID: String?
 }
 
@@ -342,6 +342,12 @@ struct GuideBlockView: View {
     case .ol(let start, let isTight, let items): GuideList(ordered: true, start: start, tight: isTight, items: items, width: width, image: image)
     case .hr: t.line.frame(height: 1)
     case .table(let align, let head, let rows): GuideTable(align: align, head: head, rows: rows, width: width, image: image)
+    // (a toggle's title, and what it holds under it: the Notes page draws toggles that open and close, Design/NotesViews.swift)
+    case .toggle(let inline, let bs):
+      VStack(alignment: .leading, spacing: 0) {
+        GuideInlineView(inline: inline, weight: .semibold, width: width, image: image)
+        GuideBlocks(blocks: bs, width: width - GuideCSS.indent, image: image, tight: false, nested: false).padding(.leading, GuideCSS.indent)
+      }
     }
   }
 }

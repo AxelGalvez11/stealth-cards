@@ -500,7 +500,7 @@ struct MakeSheet: View {
         Button { flow.toggleNotesOpen() } label: { Text(m.notesOpen ? "Hide the notes" : "Read the notes").css(14, .semibold).underline().foregroundStyle(t.text) }
           .buttonStyle(.plain).accessibilityAddTraits(m.notesOpen ? .isSelected : [])
         if m.notesOpen {
-          CappedList(max: 220) { MakeMarkdown(text: n.text) }.opacity(keep ? 1 : 0.5)
+          CappedList(max: 220) { MakeNotesPage(text: n.text) }.opacity(keep ? 1 : 0.5)
         }
       }
       .padding(.vertical, 14).padding(.horizontal, 16)
@@ -798,131 +798,18 @@ private struct MakeBar: View {
   }
 }
 
-/// The notes' Markdown, drawn the way a Guide page is (the canvas's .gd rules): a title and headings with a line under them, paragraphs, bullets,
-/// numbers, and a table; **bold** terms. (A small reader for what the make writes: the Guide's own view comes with the Guide.)
-private struct MakeMarkdown: View {
+/// The starter notes, read as the Notes page will show them (web/notes.js's reading view, Design/NotesViews.swift): a section for each part, each note a toggle
+/// that opens here too (nothing about them is remembered: they aren't the deck's yet).
+private struct MakeNotesPage: View {
   @Environment(\.theme) private var t
   let text: String
-  private enum Block { case heading(Int, String), paragraph(String), bullets([String]), numbers([String]), table([[String]]) }
-
-  private static func parse(_ md: String) -> [Block] {
-    var out: [Block] = []
-    let lines = md.replacingOccurrences(of: "\r\n", with: "\n").components(separatedBy: "\n")
-    var i = 0
-    func isBullet(_ l: String) -> Bool { l.hasPrefix("- ") || l.hasPrefix("* ") }
-    func isNumber(_ l: String) -> Bool { l.range(of: "^[0-9]+[.)] ", options: .regularExpression) != nil }
-    while i < lines.count {
-      let l = lines[i].trimmingCharacters(in: .whitespaces)
-      if l.isEmpty { i += 1; continue }
-      if let r = l.range(of: "^#{1,6} ", options: .regularExpression) {
-        out.append(.heading(l[r].count - 1, String(l[r.upperBound...]).trimmingCharacters(in: .whitespaces))); i += 1
-      } else if isBullet(l) {
-        var items: [String] = []
-        while i < lines.count, isBullet(lines[i].trimmingCharacters(in: .whitespaces)) { items.append(String(lines[i].trimmingCharacters(in: .whitespaces).dropFirst(2))); i += 1 }
-        out.append(.bullets(items))
-      } else if isNumber(l) {
-        var items: [String] = []
-        while i < lines.count, isNumber(lines[i].trimmingCharacters(in: .whitespaces)) {
-          let x = lines[i].trimmingCharacters(in: .whitespaces); items.append(String(x[x.range(of: "^[0-9]+[.)] ", options: .regularExpression)!.upperBound...])); i += 1
-        }
-        out.append(.numbers(items))
-      } else if l.hasPrefix("|") {
-        var rows: [[String]] = []
-        while i < lines.count, lines[i].trimmingCharacters(in: .whitespaces).hasPrefix("|") {
-          let row = lines[i].trimmingCharacters(in: .whitespaces)
-          let cells = row.trimmingCharacters(in: CharacterSet(charactersIn: "|")).components(separatedBy: "|").map { $0.trimmingCharacters(in: .whitespaces) }
-          // (The line of dashes under the header only marks it.)
-          if !cells.allSatisfy({ $0.range(of: "^:?-{2,}:?$", options: .regularExpression) != nil }) { rows.append(cells) }
-          i += 1
-        }
-        out.append(.table(rows))
-      } else {
-        var words: [String] = []
-        while i < lines.count {
-          let x = lines[i].trimmingCharacters(in: .whitespaces)
-          if x.isEmpty || x.hasPrefix("#") || x.hasPrefix("|") || isBullet(x) || isNumber(x) { break }
-          words.append(x); i += 1
-        }
-        out.append(.paragraph(words.joined(separator: " ")))
-      }
-    }
-    return out
-  }
-
-  /// Words with their **bold** parts, as the runs CSSText sets (links keep their words; other marks are dropped).
-  private static func runs(_ s: String) -> [(String, Font.Weight)] {
-    let clean = s.replacingOccurrences(of: "\\[([^\\]]+)\\]\\([^)]*\\)", with: "$1", options: .regularExpression).replacingOccurrences(of: "`", with: "")
-    var out: [(String, Font.Weight)] = []
-    for (k, piece) in clean.components(separatedBy: "**").enumerated() where !piece.isEmpty { out.append((piece.replacingOccurrences(of: "*", with: ""), k % 2 == 1 ? .bold : .regular)) }
-    return out.isEmpty ? [("", .regular)] : out
-  }
-  private func words(_ s: String, size: CGFloat = 15, weight: Font.Weight? = nil, lh: CGFloat = 1.6, color: Color? = nil) -> CSSText {
-    let r = Self.runs(s).map { ($0.0, weight ?? $0.1) }
-    return CSSText(parts: r, size, lh: lh, color: color ?? t.text)
-  }
-
+  @StateObject private var notes = NotesPage()
+  @State private var hooks = NotesHooks()
   var body: some View {
-    let blocks = Self.parse(text)
-    VStack(alignment: .leading, spacing: 0) {
-      ForEach(Array(blocks.enumerated()), id: \.offset) { i, b in block(b, first: i == 0) }
-    }
-    .frame(maxWidth: .infinity, alignment: .leading)
-  }
-
-  @ViewBuilder private func block(_ b: Block, first: Bool) -> some View {
-    switch b {
-    case .heading(let n, let s):
-      // h1 is 1.65 times the text, h2 1.32, h3 1.12, the rest as big as it; the first two have a line under them.
-      let size: CGFloat = n == 1 ? 24.75 : n == 2 ? 19.8 : n == 3 ? 16.8 : 15, rule = n <= 2
-      VStack(alignment: .leading, spacing: 0) {
-        CSSText(s, size, .semibold, lh: 1.25, color: t.text, ls: -0.02).padding(.bottom, rule ? size * (n == 1 ? 0.3 : 0.25) : 0)
-        if rule { Rectangle().fill(t.line).frame(height: 1) }
-      }
-      .padding(.top, first ? 0 : size * 1.3).padding(.bottom, size * 0.5)
-    case .paragraph(let s):
-      words(s).padding(.bottom, 13.5)
-    case .bullets(let items):
-      VStack(alignment: .leading, spacing: 3.75) {
-        ForEach(Array(items.enumerated()), id: \.offset) { _, x in
-          HStack(alignment: .firstTextBaseline, spacing: 0) {
-            Text("•").css(15).foregroundStyle(t.text).frame(width: 22.5, alignment: .center)
-            words(x).frame(maxWidth: .infinity, alignment: .leading)
-          }
-        }
-      }
-      .padding(.bottom, 13.5)
-    case .numbers(let items):
-      VStack(alignment: .leading, spacing: 3.75) {
-        ForEach(Array(items.enumerated()), id: \.offset) { k, x in
-          HStack(alignment: .firstTextBaseline, spacing: 0) {
-            Text("\(k + 1).").css(15).foregroundStyle(t.text).frame(width: 22.5, alignment: .trailing).padding(.trailing, 2)
-            words(x).frame(maxWidth: .infinity, alignment: .leading)
-          }
-        }
-      }
-      .padding(.bottom, 13.5)
-    case .table(let rows):
-      table(rows).padding(.bottom, 13.5)
-    }
-  }
-
-  /// A table: one line around every cell, its header bold on the page's own background.
-  private func table(_ rows: [[String]]) -> some View {
-    ScrollView(.horizontal, showsIndicators: false) {
-      Grid(horizontalSpacing: 0, verticalSpacing: 0) {
-        ForEach(Array(rows.enumerated()), id: \.offset) { r, cells in
-          GridRow {
-            ForEach(Array(cells.enumerated()), id: \.offset) { _, c in
-              words(c, weight: r == 0 ? .semibold : nil)
-                .padding(.vertical, 6).padding(.horizontal, 12)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .background(r == 0 ? t.bg : Color.clear)
-                .overlay(Rectangle().strokeBorder(t.line, lineWidth: 0.5))
-            }
-          }
-        }
-      }
-    }
+    NotesView(page: notes, setup: NotesSetup(colors: NotesColors(t, code: t.bg), hooks: hooks))
+      .padding(.leading, 22)
+      .onAppear { notes.load(text, key: "", editable: false, blank: false) }
+      .onChange(of: text) { _, v in notes.load(v, key: "", editable: false, blank: false) }
   }
 }
 

@@ -235,7 +235,8 @@ extension Board {
     case "PhoneTodayCaughtUp": store.props.caughtUp = true
     case "PhoneTodayNew": store.props.newUser = true
     case "PhoneDeck": nav.tab = .library; nav.path = [.deck("cell")]
-    // A deck's Guide editor (its view: -state Write, Preview, "Older versions", "A new page" or "Nothing written yet").
+    // A deck's Notes page (its view: -state Writing, "Block menu", "Format bar", "Toggle open", "Toggle closed", "Section folded", "Blank note",
+    // "Reading on a shared deck", "Older versions" or "A new page").
     case "PhoneGuide": nav.tab = .library; nav.path = [.guide(Board.sampleDeckId, "")]
     case "PhoneDeckEmpty": store.props.emptyDeck = true; nav.tab = .library; nav.path = [.deck("pharm")]
     case "PhoneDeckSettings": store.props.deckSettings = "general"; nav.tab = .library; nav.path = [.deck("cell")]
@@ -443,7 +444,7 @@ extension Board {
   /// The launch arguments that set the Guide and Sources boards (see setUp).
   @MainActor static func guideSettings(_ board: String, store: Store) {
     let st = arg("-state") ?? ""
-    if board.hasPrefix("PhoneGuide") { store.props.guideView = GuideSample.views.contains(st) ? st : "Write" }
+    if board.hasPrefix("PhoneGuide") { store.props.guideView = GuideSample.views.contains(st) ? st : "Writing" }
     else if ["Cards", "Notes", "Diagrams", "Sources"].contains(st) { store.props.section = st }
     else if GuideSample.states.contains(st) || DiagramSample.isState(st) { store.props.guideState = st }
     if let v = arg("-section") { store.props.section = v }

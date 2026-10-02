@@ -1,214 +1,103 @@
-// iPhone · A deck's Guide editor (PhoneGuide: Write, Preview, Older versions, A new page, Nothing written yet, and the Dark and Gray twins): the Guide and its
-// extra pages as a page of its own, opened from the deck page's Notes (Edit, Write, Add a guide). Write is Markdown in a text field with a toolbar over it (Heading,
-// Bold, Italic, Code, Link, Bulleted list, Numbered list, Task list, Quote, Table, Picture); Preview draws it the way the deck page will; it saves as it's typed
-// (a moment after the last key, one save after another: Saving… and Saved at the top); History lists older versions and brings one back; a page of its own has a
-// name and can go; Make cards makes cards from the page (or from what is selected); Done goes back to the deck's Notes.
-//
-// The words are Markdown read by web/guide.js (Data/GuideEngine.swift); what the toolbar makes of the text and the selection, and what Enter in a list does, come
-// from that same file, so the iPhone writes exactly what the web does. The memory of the page (what is typed, saving) is GuideEditorModel (Data/GuideData.swift).
+// iPhone · A deck's Notes page (PhoneGuide: Writing, Block menu, Format bar, Toggle open, Toggle closed, Section folded, Blank note, Reading on a shared deck,
+// Older versions, A new page, and the Dark and Gray twins): the Guide and its extra pages as one page that is always formatted, where you tap and type
+// (Design/NotesViews.swift; its rules in Data/Notes.swift), opened from the deck page's Notes (a tap on the words opens it there). At the top: back, the deck's
+// name, the quiet saving line and ⋯ (Make cards from this page, Older versions, Rename page, Delete page); under it the pages as pills, and + for a new one.
+// It saves as it's typed (a moment after the last key, one save after another: GuideEditorModel), and Done (the back arrow) sends what is waiting first.
+// What is saved is Markdown, written from the page's blocks by web/guide.js itself (GuideEngine), so the iPhone keeps exactly what the web keeps.
 import SwiftUI
-import PhotosUI
 
-// ---------- the text field ----------
-/// The editor's text field: Geist Mono at 14 on a line of 1.65, with the text and the selection in its own hands (so a button can ask what is selected and
-/// put the new text back with the new selection).
-final class GuideField: UITextView {
-  /// 16 points: the web's page makes a phone's text fields at least that big (so a phone's browser doesn't zoom in when one is touched).
-  static let size: CGFloat = 16
-  /// (The older text system, as the Markdown view uses: the newer one does not keep a line to the height a paragraph asks for, so the lines came out closer than the web's.)
-  convenience init() {
-    let storage = NSTextStorage(), lm = NSLayoutManager(), tc = NSTextContainer(size: CGSize(width: 0, height: CGFloat.greatestFiniteMagnitude))
-    storage.addLayoutManager(lm); lm.addTextContainer(tc)
-    tc.widthTracksTextView = true
-    self.init(frame: .zero, textContainer: tc)
-  }
-  var ink = UIColor.label
-  var attrs: [NSAttributedString.Key: Any] {
-    let L = Self.size * 1.65, shift = (L - Self.size * GEIST_LINE) / 2
-    let p = NSMutableParagraphStyle(); p.minimumLineHeight = L; p.maximumLineHeight = L
-    return [.font: GuideFont.mono(Self.size), .foregroundColor: ink, .paragraphStyle: p, .baselineOffset: shift]
-  }
-  /// Puts words in (the field's own text, in its type), keeping the keys that follow in the same type.
-  func setGuideText(_ s: String) {
-    attributedText = NSAttributedString(string: s, attributes: attrs)
-    typingAttributes = attrs
-  }
+/// The page on show: the deck's name, the extra pages, which page, its name and words, and what can be done.
+struct GuideNow {
+  var deckName = "", pages: [MakeGuidePage] = [], pageId = "main", title = "Guide", text = ""
+  var canEdit = false, reading = false, canAdd = false, hist = false, view = ""
+  var key: String { pageId }
+  var tabs: [MakeGuidePage] { [MakeGuidePage(id: "main", title: "Guide")] + pages }
 }
 
-/// What the screen's buttons ask of the text field.
-@MainActor
-final class GuideTextControl: ObservableObject {
-  fileprivate weak var view: GuideField?
-  /// Called when the words change (typed, or by a button).
-  var onChange: (String) -> Void = { _ in }
-  var text: String { view?.text ?? "" }
-  /// What's selected (nothing: an empty line).
-  var selected: String {
-    guard let v = view, v.selectedRange.length > 0 else { return "" }
-    return (v.text as NSString).substring(with: v.selectedRange)
-  }
-  /// A button's result goes in: the new text, and the selection in it.
-  func apply(_ e: GuideEdit) {
-    guard let v = view else { return }
-    v.setGuideText(e.text)
-    v.selectedRange = NSRange(location: min(max(0, e.a), (e.text as NSString).length), length: max(0, min(e.b, (e.text as NSString).length) - e.a))
-    v.scrollRangeToVisible(v.selectedRange)
-    onChange(e.text)
-  }
-  /// One of guide.js's toolbar helpers on the text and the selection: bold, italic, code, bullets, numbers, tasks, quote, table.
-  func act(_ fn: String) {
-    guard let v = view else { return }
-    let sel = v.selectedRange
-    if let e = GuideEngine.shared.edit(fn, v.text, sel.location, sel.location + sel.length) { apply(e); v.becomeFirstResponder() }
-  }
-  func heading(_ level: Int = 2) {
-    guard let v = view else { return }
-    let sel = v.selectedRange
-    if let e = GuideEngine.shared.heading(v.text, sel.location, sel.location + sel.length, level: level) { apply(e); v.becomeFirstResponder() }
-  }
-  func link() {
-    guard let v = view else { return }
-    let sel = v.selectedRange
-    if let e = GuideEngine.shared.link(v.text, sel.location, sel.location + sel.length, url: "") { apply(e); v.becomeFirstResponder() }
-  }
-  /// A picture that was uploaded goes in where the caret is.
-  func picture(_ src: String) {
-    guard let v = view else { return }
-    let sel = v.selectedRange
-    if let e = GuideEngine.shared.image(v.text, sel.location, sel.location + sel.length, src: src) { apply(e) }
-  }
-}
-
-struct GuideTextArea: UIViewRepresentable {
-  @Environment(\.theme) private var t
-  let text: String
-  /// Which page's words these are: when it changes the field is filled with the new page's.
-  let identity: String
-  let control: GuideTextControl
-  func makeUIView(context: Context) -> GuideField {
-    let v = GuideField()
-    v.ink = UIColor(t.text)
-    v.backgroundColor = .clear
-    v.textContainerInset = UIEdgeInsets(top: 16, left: 18, bottom: 16, right: 18); v.textContainer.lineFragmentPadding = 0
-    // Markdown is typed as it is: no curly quotes, long dashes or other tidying.
-    v.smartQuotesType = .no; v.smartDashesType = .no; v.smartInsertDeleteType = .no
-    v.alwaysBounceVertical = true; v.keyboardDismissMode = .interactive
-    v.accessibilityLabel = "Guide, in Markdown"
-    v.delegate = context.coordinator
-    v.setGuideText(text)
-    context.coordinator.identity = identity
-    control.view = v
-    return v
-  }
-  func updateUIView(_ v: GuideField, context: Context) {
-    context.coordinator.control = control
-    control.view = v
-    let ink = UIColor(t.text)
-    if v.ink != ink { v.ink = ink; v.setGuideText(v.text) }
-    if context.coordinator.identity != identity {
-      context.coordinator.identity = identity
-      v.setGuideText(text); v.selectedRange = NSRange(location: 0, length: 0)
-    } else if v.markedTextRange == nil && v.text != text {
-      // (Words that came from outside, like an older version brought back.)
-      v.setGuideText(text)
-    }
-  }
-  /// It takes the room it is given (a text view would otherwise answer with the height of its words).
-  func sizeThatFits(_ proposal: ProposedViewSize, uiView: GuideField, context: Context) -> CGSize? {
-    CGSize(width: proposal.width ?? 358, height: proposal.height ?? 300)
-  }
-  func makeCoordinator() -> Coordinator { Coordinator(control) }
-  final class Coordinator: NSObject, UITextViewDelegate {
-    var control: GuideTextControl
-    var identity = ""
-    init(_ c: GuideTextControl) { control = c }
-    func textViewDidChange(_ v: UITextView) { control.onChange(v.text) }
-    /// Enter in a list goes on to the next item (and on an empty item, ends the list), as guide.js says.
-    func textView(_ v: UITextView, shouldChangeTextIn range: NSRange, replacementText t: String) -> Bool {
-      guard t == "\n", range.length == 0, v.markedTextRange == nil, let f = v as? GuideField, let r = GuideEngine.shared.continueList(v.text, range.location) else { return true }
-      f.setGuideText(r.text)
-      f.selectedRange = NSRange(location: r.pos, length: 0)
-      f.scrollRangeToVisible(f.selectedRange)
-      control.onChange(r.text)
-      return false
-    }
-  }
-}
-
-// ---------- the screen ----------
 struct GuideScreen: View {
   @Environment(\.theme) private var t
   @EnvironmentObject private var store: Store
   @EnvironmentObject private var nav: Nav
   @StateObject private var keyboard = Keyboard()
   @StateObject private var model: GuideEditorModel
-  @StateObject private var field = GuideTextControl()
+  @StateObject private var notes = NotesPage()
+  @StateObject private var scroll = NotesScroll()
+  @State private var hooks = NotesHooks()
   let deckId: String
   @State private var picking = false
-  @State private var name = ""
-
-  @FocusState private var nameFocus: Bool
+  @State private var pictureAfter: String? = nil
+  @State private var more = false
+  @State private var renaming = false
+  @State private var aa = false
+  /// The name a new page took from its first heading (it goes on following it until the page is renamed).
+  @State private var named = ""
   /// The design screen's page that doesn't exist yet (A new page).
   private let demoNewPage = MakeGuidePage(id: "gnew", title: "New page")
 
   init(deckId: String, page: String = "") {
     self.deckId = deckId
-    let want = page.isEmpty ? "main" : page
-    _model = StateObject(wrappedValue: GuideEditorModel(deckId: deckId, page: want))
+    _model = StateObject(wrappedValue: GuideEditorModel(deckId: deckId, page: page.isEmpty ? "main" : page))
   }
 
-  private var demoView: String { store.demo ? store.props.guideView : "" }
+  private func now() -> GuideNow {
+    let g = store.guide(deckId), view = store.demo ? store.props.guideView : ""
+    var n = GuideNow(deckName: store.deck(deckId).name, view: view)
+    n.pages = g.pages + (view == "A new page" ? [demoNewPage] : [])
+    let want = store.demo && view == "A new page" && model.page == "main" ? "gnew" : model.page
+    n.pageId = n.pages.contains { $0.id == want } ? want : "main"
+    let page = n.pageId == "main" ? nil : n.pages.first { $0.id == n.pageId }
+    let cur: (title: String, text: String) = page.map { (title: $0.title, text: $0.text) } ?? (title: "Guide", text: g.text)
+    n.title = cur.title
+    n.text = model.drafts[model.key(n.pageId)] ?? (view == "Blank note" ? "" : cur.text)
+    n.reading = view == "Reading on a shared deck"
+    n.canEdit = g.can && !n.reading
+    n.canAdd = n.canEdit && n.pages.count < store.lib.make.guidePages
+    n.hist = model.historyOpen || view == "Older versions"
+    return n
+  }
 
   var body: some View {
-    let d = store.deck(deckId), g = store.guide(deckId)
-    let extra = g.pages + (demoView == "A new page" ? [demoNewPage] : [])
-    let want = store.demo && demoView == "A new page" && model.page == "main" ? "gnew" : model.page
-    let pageId = extra.contains(where: { $0.id == want }) ? want : "main"
-    let cur: (id: String, title: String, text: String) = pageId == "main" ? ("main", "Guide", g.text) : extra.first { $0.id == pageId }.map { ($0.id, $0.title, $0.text) } ?? ("main", "Guide", g.text)
-    let text = model.drafts[model.key(pageId)] ?? (demoView == "Nothing written yet" ? "" : cur.text)
-    let canAdd = g.can && extra.count < store.lib.make.guidePages
-    let hist = model.historyOpen || demoView == "Older versions"
+    let n = now()
+    // (the bar shows while a line is written in: above the keyboard, or at the bottom with a hardware keyboard)
+    let keys = n.canEdit && !n.hist && !renaming && (notes.editing != nil || notes.linking || (store.demo && (NotesDemo.of(n.view)?.keys ?? false)))
+    let under = keyboard.height > 0 ? keyboard.height : store.demo ? 0 : Self.safeBottom
     GeometryReader { geo in
-      VStack(spacing: 12) {
-        header(d.name, hist: hist)
-        pages(extra: extra, pageId: pageId, canAdd: canAdd)
-        if g.can && pageId != "main" { pageTools(cur) }
-        if !hist {
-          VStack(alignment: .leading, spacing: 10) {
-            Segmented(options: [("write", "Write"), ("preview", "Preview")], current: previewing ? "preview" : "write", height: 32, size: 13, equal: false, pad: 3, gap: 0, hPad: 16) { model.preview = $0 == "preview" }
-              .fixedSize()
-            if !previewing { toolbar }
+      ZStack(alignment: .bottom) {
+        VStack(spacing: 0) {
+          GuideTopBar(model: model, name: n.deckName, canEdit: n.canEdit, reading: n.reading, more: $more) { Task { await done() } }
+          if n.tabs.count > 1 || n.canAdd { GuidePagesRow(tabs: n.tabs, pageId: n.pageId, canAdd: n.canAdd, pick: pick, add: addPage) }
+          if n.hist { GuideHistory(model: model, title: "Older versions of " + (n.pageId == "main" ? "the Guide" : n.title)) { Task { await model.toggleHistory() } } }
+          else {
+            GuidePageArea(notes: notes, scroll: scroll, setup: setup(n), renaming: $renaming, title: n.title, hl: store.demo ? NotesDemo.of(n.view)?.bar : nil) { model.rename($0) }
           }
-          .frame(maxWidth: .infinity, alignment: .leading)
-          editor(text: text, pageId: pageId)
-          HStack(spacing: 10) {
-            pill("Make cards", icon: "sparkle", inv: false) { makeCards(pageId: pageId, deckName: d.name, title: cur.title) }
-            pill("Done", inv: true) { Task { await done() } }.accessibilityIdentifier("doneButton")
-          }
-        } else {
-          historyList(pageId: pageId, title: cur.title)
-          pill("Back to writing", inv: false) { Task { await model.toggleHistory() } }
         }
+        .padding(.top, Screen.top(52))
+        .padding(.bottom, keys ? under + 50 : keyboard.height)
+        if keys { NotesKeys(page: notes, aa: $aa, picture: store.demo ? {} : { pictureAfter = notes.editing; picking = true }).padding(.bottom, under) }
+        if more { GuideMoreMenu(n: n, close: { withAnimation(Motion.leave) { more = false } }, make: { makeCards(n) }, history: { more = false; Task { await model.toggleHistory() } },
+                                rename: { more = false; renaming = true }, delete: { more = false; askDelete(n) }) }
       }
       .foregroundStyle(t.text)
-      .padding(.top, Screen.top(58)).padding(.horizontal, 16).padding(.bottom, keyboard.height + 22)
-      // (The page lays itself out on the whole screen, and makes room for the keyboard with the padding above. With the keyboard up the system stretched this region 70 points
-      // above the top of the screen, which put the header under the status bar: so the page is put back where the screen starts, by however far its region has moved.)
+      .background(t.bg)
+      // (The page lays itself out on the whole screen and makes room for the keyboard itself; the system would otherwise move it up under the status bar.)
       .frame(width: geo.size.width, height: UIScreen.main.bounds.height, alignment: .top)
       .offset(y: -geo.frame(in: .global).minY)
     }
     .ignoresSafeArea(.all, edges: [.top, .bottom])
     .toolbar(.hidden, for: .navigationBar)
-    .onAppear { start(pageId); if !store.demo && !g.can { nav.back() } }
-    .onChange(of: pageId) { _, p in name = p == "main" ? "" : (extra.first { $0.id == p }?.title ?? "") }
-    .photoPicker($picking) { field.picture($0) }
+    .onAppear { start(n) }
+    .onChange(of: n.pageId) { _, _ in load(now()) }
+    .onChange(of: n.text) { _, md in notes.reload(md) }
+    .onDisappear { notes.flush(); Task { await model.flush() } }
+    .photoPicker($picking) { src in notes.insertPicture(after: pictureAfter, src: src) }
   }
 
-  private var previewing: Bool { model.preview || demoView == "Preview" }
+  /// The room the phone keeps at the bottom of the screen (the home indicator).
+  static var safeBottom: CGFloat { (UIApplication.shared.connectedScenes.compactMap { $0 as? UIWindowScene }.first?.windows.first?.safeAreaInsets.bottom) ?? 0 }
+  private func setup(_ n: GuideNow) -> NotesSetup { NotesSetup(colors: NotesColors(t, code: t.surf), editable: n.canEdit, hooks: hooks) }
 
-  /// The first time on screen: the model gets its acts from the app (the design screens save nothing), the field its way of saying words changed, and a
-  /// design screen its view.
-  private func start(_ pageId: String) {
+  /// The first time on screen: the model gets its acts from the app (the design screens save nothing), the page its words, and the caret its place.
+  private func start(_ n: GuideNow) {
     model.env = GuideEditorModel.Env(
       save: { [store] d, p, text in try await store.guideSave(d, page: p, text: text) },
       addPage: { [store] d, title in try await store.guideAddPage(d, title: title) },
@@ -216,160 +105,247 @@ struct GuideScreen: View {
       delete: { [store] d, p in try await store.guideDeletePage(d, page: p) },
       restore: { [store] d, p, at in try await store.guideRestore(d, page: p, at: at) },
       history: { [store] d, p in await store.guideHistory(d, page: p) })
-    field.onChange = { [model] in model.type($0) }
+    hooks.image = GuideImages.own
     if store.demo {
-      model.page = demoView == "A new page" ? "gnew" : "main"
-      if demoView == "Older versions" { model.versions = GuideSample.versions }
+      if n.view == "A new page" { model.page = "gnew" }
+      if n.view == "Older versions" { model.versions = GuideSample.versions }
+      aa = NotesDemo.of(n.view)?.aa ?? false
     }
-    let g = store.guide(deckId)
-    name = pageId == "main" ? "" : g.pages.first { $0.id == pageId }?.title ?? (store.demo && demoView == "A new page" ? "New page" : "")
+    if !store.demo && !store.guide(deckId).can { nav.back(); return }
+    load(n)
+    // the caret where the page was tapped on the deck page
+    let at = nav.guideAt.split(separator: ":").compactMap { Int($0) }
+    nav.guideAt = ""
+    if n.canEdit && !store.demo && at.count == 2 { notes.focusAt(at[0], at[1]) }
+  }
+  /// The page's words go in (a design screen's state picks which toggles are open, what is folded and what is selected).
+  private func load(_ n: GuideNow) {
+    let key = (store.demo ? "canvas|" + n.view + "|" : "") + deckId + "|" + n.pageId
+    notes.onChange = { [weak model] md in model?.type(md); nameFrom(md) }
+    notes.load(n.text, key: key, editable: n.canEdit, blank: n.canEdit, demo: store.demo ? NotesDemo.of(n.view) : nil)
+    // a blank note starts with the caret in its title
+    if n.canEdit && !store.demo && n.text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty { notes.focusAt(0, 0) }
+  }
+  /// A new page is called by its title (its first line, when that's a heading) until it is renamed.
+  private func nameFrom(_ md: String) {
+    let n = now()
+    guard n.pageId != "main", n.title == "New page" || n.title == named, let first = md.components(separatedBy: "\n").first,
+          first.range(of: #"^#{1,6} +\S"#, options: .regularExpression) != nil else { return }
+    let name = String(GuideEngine.shared.plain(first).components(separatedBy: .whitespacesAndNewlines).filter { !$0.isEmpty }.joined(separator: " ").prefix(80))
+    if !name.isEmpty && name != n.title { named = name; model.rename(name) }
   }
 
-  // ---------- the top ----------
-  private func header(_ deck: String, hist: Bool) -> some View {
-    HStack(spacing: 10) {
-      Button { Task { await done() } } label: {
-        Icon("back", 18, 2).foregroundStyle(t.text).frame(width: 40, height: 40).background(Circle().fill(t.surf))
-      }
-      .buttonStyle(.press).accessibilityLabel("Done").accessibilityIdentifier("backButton")
-      VStack(alignment: .leading, spacing: 1) {
-        Text("Guide").css(20, .semibold, ls: -0.02).lineLimit(1).accessibilityAddTraits(.isHeader)
-        Text(deck).css(13).foregroundStyle(t.muted).lineLimit(1)
-      }
-      .frame(maxWidth: .infinity, alignment: .leading)
-      Text(model.saveLabel).css(13).foregroundStyle(model.error.isEmpty ? t.muted : t.again).lineLimit(2).multilineTextAlignment(.trailing).fixedSize(horizontal: false, vertical: true)
-        .frame(maxWidth: 190, alignment: .trailing)
-        .accessibilityIdentifier("saveLabel")
-      Button { Task { await model.toggleHistory() } } label: {
-        Icon("history", 15, 2).foregroundStyle(hist ? t.invText : t.text).frame(width: 39, height: 40).background(Capsule().fill(hist ? t.inv : t.surf))
-      }
-      .buttonStyle(.press).accessibilityLabel("History").accessibilityAddTraits(hist ? .isSelected : [])
+  private func pick(_ id: String) { notes.flush(); renaming = false; Task { await model.pick(id) } }
+  private func addPage() { notes.flush(); renaming = false; Task { await model.addPage() } }
+
+  /// Done: what's waiting is saved, and the deck's Notes are on screen again (if it can't be saved, the page says why and stays).
+  private func done() async {
+    notes.flush()
+    await model.flush()
+    guard model.error.isEmpty else { return }
+    nav.deckWants = DeckWant(deckId: deckId, tab: "notes")
+    if nav.path.dropLast().last == .deck(deckId) { nav.back() } else { nav.tab = .library; nav.path = [.deck(deckId)] }
+  }
+  /// Make cards from this page, or from what is selected on it.
+  private func makeCards(_ n: GuideNow) {
+    let sel = notes.selectedText
+    more = false
+    Task {
+      notes.flush()
+      await model.flush()
+      guard model.error.isEmpty else { return }
+      if sel.isEmpty { nav.make(deckId: deckId, guide: deckId, page: n.pageId) } else { nav.make(deckId: deckId, text: sel, title: n.deckName + " (selection)") }
     }
   }
+  private func askDelete(_ n: GuideNow) {
+    nav.ask("Delete the page “\(n.title)”?", action: "Delete page", danger: true) { Task { notes.flush(); await model.deletePage() } }
+  }
+}
 
-  /// A tab for the Guide and each extra page, and Add page.
-  private func pages(extra: [MakeGuidePage], pageId: String, canAdd: Bool) -> some View {
+// ---------- the top ----------
+/// Back (Done), the deck's name, the quiet saving line and ⋯.
+struct GuideTopBar: View {
+  @Environment(\.theme) private var t
+  @ObservedObject var model: GuideEditorModel
+  let name: String
+  let canEdit: Bool
+  let reading: Bool
+  @Binding var more: Bool
+  let done: () -> Void
+  var body: some View {
+    HStack(spacing: 8) {
+      Button(action: done) { Icon("back", 20, 2).foregroundStyle(t.text).frame(width: 40, height: 40).contentShape(Circle()) }
+        .buttonStyle(.press).accessibilityLabel("Done").accessibilityIdentifier("backButton")
+      Text(name).css(15, .semibold).foregroundStyle(t.muted).lineLimit(1).frame(maxWidth: .infinity, alignment: .leading)
+      if !reading {
+        Text(model.saveLabel).css(13).foregroundStyle(model.error.isEmpty ? t.muted : t.again).lineLimit(1).fixedSize()
+          .accessibilityIdentifier("saveLabel")
+      }
+      if canEdit {
+        Button { withAnimation(Motion.pop) { more.toggle() } } label: {
+          Icon("more", 18, 2).foregroundStyle(t.text).frame(width: 40, height: 40).background(Circle().fill(more ? t.surf : .clear))
+        }
+        .buttonStyle(.press).accessibilityLabel("More").accessibilityAddTraits(more ? .isSelected : [])
+      }
+    }
+    .padding(.horizontal, 12).frame(height: 52)
+  }
+}
+
+/// A pill for the Guide and for each extra page, and + for a new one.
+struct GuidePagesRow: View {
+  @Environment(\.theme) private var t
+  let tabs: [MakeGuidePage]
+  let pageId: String
+  let canAdd: Bool
+  let pick: (String) -> Void
+  let add: () -> Void
+  var body: some View {
     ScrollView(.horizontal, showsIndicators: false) {
-      HStack(spacing: 6) {
-        ForEach([MakeGuidePage(id: "main", title: "Guide")] + extra) { x in
+      HStack(spacing: 4) {
+        ForEach(tabs) { x in
           let on = x.id == pageId
-          Button { Task { await model.pick(x.id) } } label: {
-            Text(x.title).css(13, .semibold).lineLimit(1).foregroundStyle(on ? t.invText : t.text).padding(.horizontal, 14).frame(height: 34).frame(maxWidth: 220)
-              .background(Capsule().fill(on ? t.inv : t.surf))
+          Button { pick(x.id) } label: {
+            Text(x.title).css(13, .semibold).lineLimit(1).foregroundStyle(on ? t.text : t.muted).padding(.horizontal, 13).frame(height: 32).frame(maxWidth: 220)
+              .background(Capsule().fill(on ? t.surf : .clear))
           }
           .buttonStyle(.press).accessibilityLabel(x.title).accessibilityAddTraits(on ? .isSelected : [])
         }
         if canAdd {
-          Button { Task { await model.addPage() } } label: {
-            HStack(spacing: 4) { Icon("plus", 14, 2.2); Text("Add page").css(13, .semibold) }
-              .foregroundStyle(t.text).padding(.leading, 10).padding(.trailing, 14).frame(height: 34)
-              .overlay(Capsule().strokeBorder(t.line, lineWidth: 1))
-          }
-          .buttonStyle(.press).accessibilityLabel("Add a page")
+          Button(action: add) { Icon("plus", 15, 2.2).foregroundStyle(t.muted).frame(width: 32, height: 32).contentShape(Circle()) }
+            .buttonStyle(.press).accessibilityLabel("Add a page")
         }
       }
+      .padding(.horizontal, 16)
     }
-    .frame(height: 34)
+    .frame(height: 32).padding(.bottom, 4)
   }
+}
 
-  /// A page of its own: its name, and Delete page.
-  private func pageTools(_ cur: (id: String, title: String, text: String)) -> some View {
-    HStack(spacing: 8) {
-      TextField("", text: Binding(get: { name }, set: { name = $0; if !store.demo { model.rename($0) } }), prompt: Text("Page name").foregroundStyle(PLACEHOLDER))
-        .font(.geist(15, .semibold)).foregroundStyle(t.text).focused($nameFocus).padding(.horizontal, 14).frame(height: 40)
-        .background(RoundedRectangle(cornerRadius: 12, style: .continuous).fill(t.surf))
-        // (A touch anywhere on the pill, its edges too, writes in it.)
-        .contentShape(RoundedRectangle(cornerRadius: 12, style: .continuous)).onTapGesture { nameFocus = true }
-        .accessibilityLabel("Page name")
-      Button { nav.ask("Delete the page “\(cur.title)”?", action: "Delete page", danger: true) { Task { await model.deletePage() } } } label: {
-        Text("Delete page").css(14, .semibold).foregroundStyle(t.again).padding(.horizontal, 14).frame(height: 40).background(RoundedRectangle(cornerRadius: 12, style: .continuous).fill(t.surf))
-      }
-      .buttonStyle(.press)
-    }
-  }
-
-  // ---------- writing ----------
-  /// Heading, Bold, Italic, Code | Link, Bulleted list, Numbered list, Task list, Quote, Table, Picture: it scrolls sideways when it's wider than the page.
-  private var toolbar: some View {
-    ScrollView(.horizontal, showsIndicators: false) {
-      HStack(spacing: 2) {
-        tb("Heading") { field.heading(2) } label: { Text("H").css(14, .semibold) }
-        tb("Bold") { field.act("bold") } label: { Text("B").css(14, .bold) }
-        tb("Italic") { field.act("italic") } label: { Text("I").font(.custom("Georgia-Italic", fixedSize: 15)).fontWeight(.semibold) }
-        tb("Code") { field.act("code") } label: { Text("</>").css(12, .semibold, mono: true) }
-        t.line.frame(width: 1, height: 18).padding(.horizontal, 6).accessibilityHidden(true)
-        tb("Link") { field.link() } label: { Icon("link", 16, 2) }
-        tb("Bulleted list") { field.act("bullets") } label: { Icon("list", 16, 2) }
-        tb("Numbered list") { field.act("numbers") } label: { Text("1.").css(12, .semibold, mono: true) }
-        tb("Task list") { field.act("tasks") } label: { Icon("check", 16, 2.2) }
-        tb("Quote") { field.act("quote") } label: { Text("“").font(.custom("Georgia", fixedSize: 20)).fontWeight(.semibold) }
-        tb("Table") { field.act("table") } label: { Icon("grid", 16, 2) }
-        tb("Picture") { if store.demo { return }; picking = true } label: { Icon("image", 16, 2) }
-      }
-    }
-    .frame(height: 34)
-    .accessibilityElement(children: .contain).accessibilityLabel("Formatting")
-  }
-  private func tb<L: View>(_ label: String, _ action: @escaping () -> Void, @ViewBuilder label content: () -> L) -> some View {
-    Button(action: action) { content().foregroundStyle(t.text).padding(.horizontal, 8).frame(minWidth: 36).frame(height: 34).contentShape(RoundedRectangle(cornerRadius: 10, style: .continuous)) }
-      .buttonStyle(.press).accessibilityLabel(label)
-  }
-
-  /// The words in a field to write in, or drawn as the deck page will (Preview).
-  @ViewBuilder private func editor(text: String, pageId: String) -> some View {
-    if previewing {
-      ScrollView(showsIndicators: false) {
-        let blocks = GuideEngine.shared.tree(text)
-        VStack(alignment: .leading, spacing: 0) {
-          if text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty { Text("Nothing to show yet.").css(15).foregroundStyle(t.muted) }
-          else { GuideDoc(blocks: blocks, width: UIScreen.main.bounds.width - 32 - 44) }
-        }
-        .padding(.horizontal, 22).padding(.vertical, 18)
-        .frame(maxWidth: .infinity, alignment: .leading)
-      }
-      .background(RoundedRectangle(cornerRadius: 18, style: .continuous).fill(t.surf))
-      .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
-      .frame(maxHeight: .infinity)
-    } else {
-      ZStack(alignment: .topLeading) {
-        GuideTextArea(text: text, identity: model.key(pageId), control: field)
-        if text.isEmpty {
-          Text("Write about this deck in Markdown: a plan, links, a summary, a table of terms.")
-            .font(Font(GuideFont.mono(GuideField.size))).lineSpacing(GuideField.size * 1.65 - GuideField.size * 1.3).foregroundStyle(PLACEHOLDER)
-            .padding(.horizontal, 18).padding(.vertical, 16).allowsHitTesting(false).accessibilityHidden(true)
+/// ⋯: what else a page can do (Lucida's own menu: a tap outside closes it).
+struct GuideMoreMenu: View {
+  @Environment(\.theme) private var t
+  let n: GuideNow
+  let close: () -> Void
+  let make: () -> Void
+  let history: () -> Void
+  let rename: () -> Void
+  let delete: () -> Void
+  var body: some View {
+    ZStack(alignment: .topTrailing) {
+      Color.black.opacity(0.001).contentShape(Rectangle()).onTapGesture(perform: close)
+      VStack(spacing: 2) {
+        item("sparkle", "Make cards from this " + (n.pageId == "main" ? "guide" : "page"), action: make)
+        item("history", "Older versions", action: history)
+        if n.pageId != "main" {
+          item("pencil", "Rename page", action: rename)
+          item("bin", "Delete page", danger: true, action: delete)
         }
       }
-      .background(RoundedRectangle(cornerRadius: 18, style: .continuous).fill(t.surf))
-      .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
-      .frame(maxHeight: .infinity)
+      .padding(6).frame(width: 252)
+      .background(RoundedRectangle(cornerRadius: 18, style: .continuous).fill(t.bg).shadow(color: .black.opacity(0.22), radius: 22, x: 0, y: 18))
+      .overlay(RoundedRectangle(cornerRadius: 18, style: .continuous).strokeBorder(t.line, lineWidth: 1))
+      .padding(.top, Screen.top(52) + 52).padding(.trailing, 12)
+      .popTransition()
+      .accessibilityElement(children: .contain).accessibilityLabel("More")
     }
+    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topTrailing)
   }
+  private func item(_ icon: String, _ label: String, danger: Bool = false, action: @escaping () -> Void) -> some View {
+    Button(action: action) {
+      HStack(spacing: 10) {
+        if icon == "bin" { NotesIcon("bin", 16, 2) } else { Icon(icon, 16, 2) }
+        Text(label).css(14, .medium).lineLimit(1)
+        Spacer(minLength: 0)
+      }
+      .foregroundStyle(danger ? t.again : t.text).padding(.horizontal, 10).frame(height: 40).contentShape(Rectangle())
+    }
+    .buttonStyle(.flat).accessibilityLabel(label)
+  }
+}
 
-  // ---------- History ----------
-  @ViewBuilder private func historyList(pageId: String, title: String) -> some View {
-    let versions = model.versions
+// ---------- the page ----------
+/// The page itself (and, for an extra page being renamed, its name above it), scrolling, with the caret kept above the bar.
+struct GuidePageArea: View {
+  @Environment(\.theme) private var t
+  @ObservedObject var notes: NotesPage
+  @ObservedObject var scroll: NotesScroll
+  let setup: NotesSetup
+  @Binding var renaming: Bool
+  let title: String
+  let hl: (i: Int, a: Int, b: Int)?
+  let rename: (String) -> Void
+  @State private var pos = ScrollPosition(edge: .top)
+  @State private var name = ""
+  @FocusState private var nameOn: Bool
+  var body: some View {
+    ScrollView(showsIndicators: false) {
+      VStack(alignment: .leading, spacing: 0) {
+        if renaming {
+          TextField("", text: $name, prompt: Text("Page name").foregroundStyle(PLACEHOLDER))
+            .font(.geist(16, .semibold)).foregroundStyle(t.text).focused($nameOn).submitLabel(.done)
+            .onSubmit { renaming = false }
+            .onChange(of: name) { _, v in rename(v) }
+            .padding(.horizontal, 12).padding(.vertical, 8)
+            .background(RoundedRectangle(cornerRadius: 12, style: .continuous).fill(t.surf))
+            .padding(.bottom, 14)
+            .accessibilityLabel("Page name")
+            .onAppear { name = title; nameOn = true }
+        }
+        NotesView(page: notes, setup: setup, hl: hl, below: setup.editable ? 120 : 0)
+      }
+      .padding(.top, 10).padding(.trailing, 20).padding(.leading, 30).padding(.bottom, setup.editable ? 0 : 120)
+      .environment(\.notesScroll, scroll)
+    }
+    .scrollPosition($pos)
+    .onScrollGeometryChange(for: CGFloat.self, of: { $0.contentOffset.y + $0.contentInsets.top }) { _, y in scroll.offset = y }
+    .onGeometryChange(for: CGRect.self) { $0.frame(in: .global) } action: { scroll.viewport = $0 }
+    .onAppear { let p = $pos; scroll.go = { y in p.wrappedValue.scrollTo(y: y) } }
+    .scrollDismissesKeyboard(.interactively)
+    .frame(maxHeight: .infinity)
+  }
+}
+
+// ---------- Older versions ----------
+/// In place of the page: each older version with when it was written, how long it is, the start of it, and Restore.
+struct GuideHistory: View {
+  @Environment(\.theme) private var t
+  @ObservedObject var model: GuideEditorModel
+  let title: String
+  let close: () -> Void
+  var body: some View {
     ScrollView(showsIndicators: false) {
       VStack(alignment: .leading, spacing: 10) {
-        Text("Older versions of " + (pageId == "main" ? "the Guide" : title) + ". Restoring one keeps what you have now as a version too.").css(14, lh: 1.5).foregroundStyle(t.muted)
-        ForEach(versions ?? []) { v in version(v) }
-        if let versions, versions.isEmpty { Text("There are no older versions yet. They show up here as you write.").css(15, lh: 1.5).foregroundStyle(t.muted) }
+        HStack(spacing: 10) {
+          Text(title).css(17, .semibold, ls: -0.01).frame(maxWidth: .infinity, alignment: .leading)
+          Button(action: close) { Text("Back to the page").css(14, .semibold).foregroundStyle(t.text).padding(.horizontal, 16).frame(height: 36).background(Capsule().fill(t.surf)) }
+            .buttonStyle(.press)
+        }
+        Text("Restoring one keeps what you have now as a version too.").css(14, lh: 1.45).foregroundStyle(t.muted)
+        ForEach(model.versions ?? []) { v in GuideVersionCard(v: v) { Task { await model.restore(v) } } }
+        if let v = model.versions, v.isEmpty { Text("There are no older versions yet. They show up here as you write.").css(15).foregroundStyle(t.muted) }
       }
+      .padding(.top, 10).padding(.horizontal, 16).padding(.bottom, 30)
       .frame(maxWidth: .infinity, alignment: .leading)
     }
     .frame(maxHeight: .infinity)
   }
-  private func version(_ v: GuideVersion) -> some View {
+}
+struct GuideVersionCard: View {
+  @Environment(\.theme) private var t
+  let v: GuideVersion
+  let restore: () -> Void
+  var body: some View {
     VStack(alignment: .leading, spacing: 8) {
       HStack(spacing: 10) {
-        Text(GuideScreen.when(v.at)).css(14, .semibold).frame(maxWidth: .infinity, alignment: .leading)
+        Text(GuideVersionCard.when(v.at)).css(14, .semibold).frame(maxWidth: .infinity, alignment: .leading)
         Text(plural((v.text as NSString).length, "character")).css(12).foregroundStyle(t.muted)
-        Button { Task { await model.restore(v) } } label: {
-          Text("Restore").css(13, .semibold).foregroundStyle(t.invText).padding(.horizontal, 14).frame(height: 32).background(Capsule().fill(t.inv))
-        }
-        .buttonStyle(.press).accessibilityLabel("Restore " + GuideScreen.when(v.at))
+        Button(action: restore) { Text("Restore").css(13, .semibold).foregroundStyle(t.invText).padding(.horizontal, 14).frame(height: 32).background(Capsule().fill(t.inv)) }
+          .buttonStyle(.press).accessibilityLabel("Restore " + GuideVersionCard.when(v.at))
       }
       // (Laid out whole and cut off by the frame, as the web cuts it: a Text in a short frame would end its last line with an ellipsis.)
-      Text(String(v.text.prefix(220))).css(13, lh: 1.5).foregroundStyle(t.muted).fixedSize(horizontal: false, vertical: true).frame(maxWidth: .infinity, maxHeight: 84, alignment: .topLeading).clipped()
+      Text(GuideEngine.shared.plain(v.text, 220)).css(13, lh: 1.5).foregroundStyle(t.muted).fixedSize(horizontal: false, vertical: true)
+        .frame(maxWidth: .infinity, maxHeight: 84, alignment: .topLeading).clipped()
     }
     .padding(.horizontal, 16).padding(.vertical, 14)
     .background(RoundedRectangle(cornerRadius: 18, style: .continuous).fill(t.surf))
@@ -378,32 +354,5 @@ struct GuideScreen: View {
   static func when(_ ms: Double) -> String {
     let f = DateFormatter(); f.locale = Locale(identifier: "en_US_POSIX"); f.dateFormat = "MMM d, h:mm a"
     return f.string(from: Date(timeIntervalSince1970: ms / 1000))
-  }
-
-  // ---------- the buttons ----------
-  private func pill(_ label: String, icon: String? = nil, inv: Bool, action: @escaping () -> Void) -> some View {
-    Button(action: action) {
-      HStack(spacing: 8) { if let icon { Icon(icon, 16, 2) }; Text(label).css(15, .semibold).lineLimit(1) }
-        .foregroundStyle(inv ? t.invText : t.text).padding(.horizontal, 16).frame(maxWidth: .infinity).frame(height: 50).background(Capsule().fill(inv ? t.inv : t.surf))
-    }
-    .buttonStyle(.press)
-  }
-
-  /// Done: what's waiting is saved, and the deck's Notes are on screen again (if it can't be saved, the page says why and stays).
-  private func done() async {
-    await model.flush()
-    guard model.error.isEmpty else { return }
-    nav.deckWants = DeckWant(deckId: deckId, tab: "notes")
-    if nav.path.dropLast().last == .deck(deckId) { nav.back() } else { nav.tab = .library; nav.path = [.deck(deckId)] }
-  }
-  /// Make cards from this page, or from what is selected on it.
-  private func makeCards(pageId: String, deckName: String, title: String) {
-    let sel = field.selected
-    Task {
-      await model.flush()
-      guard model.error.isEmpty else { return }
-      if sel.isEmpty { nav.make(deckId: deckId, guide: deckId, page: pageId) }
-      else { nav.make(deckId: deckId, text: sel, title: deckName + " (selection)") }
-    }
   }
 }
