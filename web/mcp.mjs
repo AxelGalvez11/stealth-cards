@@ -253,7 +253,7 @@ const TOOLS = [
   { name: 'list_guide_pages', perm: 'read', description: 'List a deck’s Guide pages: the Guide itself (its main page) and any extra pages, each with its id, title and length. The Guide is a Markdown page the learner keeps about the deck, like a README.',
     inputSchema: { type: 'object', properties: { deck: { type: 'string', description: 'Deck name or id.' } }, required: ['deck'] },
     run: a => { const d = deckBy(a.deck); if (!d) return fail('No deck called ' + a.deck); return text(guidePages(d)); } },
-  { name: 'get_guide', perm: 'read', description: 'Read a deck’s Guide (the page like a README that the learner keeps about the deck), or one of its extra pages. It is Markdown. Use list_guide_pages to see the extra pages.',
+  { name: 'get_guide', perm: 'read', description: 'Read a deck’s Guide (the notes page the learner keeps about the deck), or one of its extra pages. It is Markdown, plus toggles: a line ":::toggle Its title", what opens under it (any Markdown, even more toggles), and a line ":::" that closes it. Use list_guide_pages to see the extra pages.',
     inputSchema: { type: 'object', properties: { deck: { type: 'string', description: 'Deck name or id.' }, page: { type: 'string', description: 'An extra page’s id or title. Leave out for the Guide itself.' } }, required: ['deck'] },
     run: a => {
       const d = deckBy(a.deck); if (!d) return fail('No deck called ' + a.deck);
@@ -262,7 +262,7 @@ const TOOLS = [
       const g = p.id === 'main' ? d.guide : (d.guide.pages || []).find(x => x.id === p.id);
       return text({ deck: d.name, page: { id: p.id, title: p.title }, text: (g && g.text) || '', updated: g && g.at ? new Date(g.at).toISOString() : undefined, pages: pages.map(x => ({ id: x.id, title: x.title, characters: x.characters })) });
     } },
-  { name: 'update_guide', perm: 'edit', description: 'Save a deck’s Guide (a Markdown page like a README: headings, lists, task lists, links, tables, code and quotes) or one of its extra pages. By default the text replaces what is there; the old words are kept as an older version the learner can bring back. With mode "append" the text goes after what is there. If the deck is shared, its Guide is shown on its public page, so keep it fit to be seen. Up to 40,000 characters.',
+  { name: 'update_guide', perm: 'edit', description: 'Save a deck’s Guide (the notes page about the deck, in Markdown: headings, lists, task lists, links, tables, code and quotes) or one of its extra pages. Toggles fold what is under them: write a line ":::toggle Its title" (the key idea), what it holds on the lines after (any Markdown, even more toggles), and a line ":::" to close it; the learner opens and closes them. Notes read best as a ## heading for each topic with its points as toggles under it. A heading folds what is under it too. By default the text replaces what is there; the old words are kept as an older version the learner can bring back. With mode "append" the text goes after what is there. If the deck is shared, its Guide is shown on its public page, so keep it fit to be seen. Up to 40,000 characters.',
     inputSchema: { type: 'object', properties: { deck: { type: 'string', description: 'Deck name or id.' }, text: { type: 'string', description: 'The Markdown to write.' }, page: { type: 'string', description: 'An extra page’s id or title. Leave out for the Guide itself.' }, mode: { type: 'string', enum: ['replace', 'append'] } }, required: ['deck', 'text'] },
     run: (a, who) => {
       // A Guide can't wait for a check the way new cards do, so with "check AI cards and changes first" on, the learner writes it.
@@ -275,7 +275,7 @@ const TOOLS = [
       apply({ type: 'guide.save', deckId: d.id, page: p.id, text: next, snapshot: true }, who);
       return text('Wrote ' + (p.id === 'main' ? 'the Guide' : 'the page “' + p.title + '”') + ' of ' + d.name + '. The old words are kept as an older version.');
     } },
-  { name: 'add_guide_page', perm: 'text', description: 'Add an extra page beside a deck’s Guide, like a page of a small wiki ("Lecture 3 summary", "Mnemonics"). A deck can have up to 10. Give it Markdown text now, or fill it in later with update_guide.',
+  { name: 'add_guide_page', perm: 'text', description: 'Add an extra page beside a deck’s Guide, like a page of a small wiki ("Lecture 3 summary", "Mnemonics"). A deck can have up to 10. Give it Markdown text now (toggles too, as update_guide says), or fill it in later with update_guide.',
     inputSchema: { type: 'object', properties: { deck: { type: 'string', description: 'Deck name or id.' }, title: { type: 'string' }, text: { type: 'string', description: 'The page’s Markdown.' } }, required: ['deck', 'title'] },
     run: (a, who) => {
       if (state().ai.perms.check) return fail(CHECK_GUIDE);
@@ -384,7 +384,7 @@ async function handle(m, sid, ctx) {
           instructions: 'Lucida holds the learner’s flashcards. Use list_decks first. Make clear, short cards with one idea each; use cloze cards with [[blanks]] for facts inside sentences. ' + FORMAT +
             ' Image cards show a picture: a link, a file the learner uploaded in the chat, or a file on this computer. Audio cards read words aloud (put them in "speak" and the language in "lang"); use them for languages and pronunciation.' +
             ' Learn mode quizzes the learner on a deck: add_quiz gives cards better questions (multiple choice with plausible wrong answers, or true or false) and an explanation. Decks can sit in folders and have a cover picture and a background (update_deck).' +
-            ' A deck can have a Guide, a Markdown page like a README (get_guide, update_guide, and extra pages with list_guide_pages and add_guide_page); a shared deck shows it on its public page.' +
+            ' A deck can have a Guide, its notes page in Markdown with toggles (":::toggle Its title" ... ":::"; get_guide, update_guide, and extra pages with list_guide_pages and add_guide_page); a shared deck shows it on its public page.' +
             ' To help with what the learner finds hard, get_weak_spots lists their weakest tags and hardest cards (with ids to quiz them or fix the cards), and get_review_history sums up their recent reviews. get_test_results shows their practice tests: the scores and the questions they missed.' });
       }
       case 'ping': return ok({});
