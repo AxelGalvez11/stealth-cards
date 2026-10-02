@@ -5,7 +5,6 @@
 import SwiftUI
 import AVFoundation
 import PDFKit
-import QuickLook
 
 // ---------- the tabs ----------
 /// Plain underlined tabs, a small count after a name that has one: the chosen one is black with a bar under it (one point of black over the hairline, as the canvas shows it). A fourth fits, and the row scrolls sideways when
@@ -529,7 +528,7 @@ struct FileCover: View {
   let close: () -> Void
   var body: some View {
     ZStack(alignment: .topTrailing) {
-      if file.pdf { PDFPageView(url: file.url, page: file.page).ignoresSafeArea() } else { QuickLookView(url: file.url).ignoresSafeArea() }
+      if file.pdf { PDFPageView(url: file.url, page: file.page).ignoresSafeArea() } else { DocumentView(url: file.url) }
       Button(action: close) {
         Text("Done").font(.geist(15, .semibold)).foregroundStyle(.white).padding(.horizontal, 16).frame(height: 40).background(Capsule().fill(Color.black.opacity(0.7)))
       }
@@ -574,20 +573,6 @@ struct PDFPageView: UIViewRepresentable {
       timer = Timer.scheduledTimer(withTimeInterval: 0.3, repeats: true) { _ in say() }
     }
     deinit { if let t = token { NotificationCenter.default.removeObserver(t) }; timer?.invalidate() }
-  }
-}
-struct QuickLookView: UIViewControllerRepresentable {
-  let url: URL
-  func makeUIViewController(context: Context) -> QLPreviewController {
-    let c = QLPreviewController(); c.dataSource = context.coordinator; return c
-  }
-  func updateUIViewController(_ c: QLPreviewController, context: Context) {}
-  func makeCoordinator() -> Coordinator { Coordinator(url) }
-  final class Coordinator: NSObject, QLPreviewControllerDataSource {
-    let url: URL
-    init(_ u: URL) { url = u }
-    func numberOfPreviewItems(in c: QLPreviewController) -> Int { 1 }
-    func previewController(_ c: QLPreviewController, previewItemAt i: Int) -> QLPreviewItem { url as NSURL }
   }
 }
 struct PhotosCover: View {
