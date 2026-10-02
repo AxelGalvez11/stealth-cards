@@ -63,7 +63,7 @@ export function wordsShape(text) {
 // About how many letters a voice says in a second.
 const pace = text => (CJK.test(text) ? 7 : 14);
 
-export function createSound({ onChange, upload, measured, known }) {
+export function createSound({ onChange, upload, measured, known, say = () => {} }) {
   const reduce = matchMedia('(prefers-reduced-motion: reduce)');
   const synth = window.speechSynthesis;
   const said = c => R.plain(c.speak || '', { join: ' ', math: 'show' }).trim();
@@ -245,7 +245,7 @@ export function createSound({ onChange, upload, measured, known }) {
             const url = await upload(blob);
             if (url) { shapes[url] = s; out = { url, wave: packWave(s.peaks, s.dur) }; }
           }
-        } catch { alert('Couldn’t save the recording. Try again.'); }
+        } catch { say('Couldn’t save the recording. Try again.'); }
         rec = null; onChange();
         ok(out);
       };
@@ -258,7 +258,7 @@ export function createSound({ onChange, upload, measured, known }) {
       mr.start();
       listen(an, buf);
       onChange();
-    })).catch(() => { rec = null; if (ctx) ctx.close().catch(() => {}); alert('Your browser didn’t allow the microphone.'); onChange(); return null; });
+    })).catch(() => { rec = null; if (ctx) ctx.close().catch(() => {}); say('Your browser didn’t allow the microphone.'); onChange(); return null; });
   }
   // Every frame: how loud it is now (the loudest moment of each 60 ms makes a bar). The bars rise and settle smoothly
   // and slide along as it records; with reduced motion they just show the levels.

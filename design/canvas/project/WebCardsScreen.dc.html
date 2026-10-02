@@ -925,7 +925,7 @@ addDraft() {
     if (err instanceof TypeError) this.offline = true;
     const cur = this.eds.new;
     if (!cur || !this.hasWords(cur.edits)) this.eds.new = this.fresh({ type: ty, edits: { ...n.edits } });
-    else if (err instanceof TypeError) alert('You’re offline, so a card you just added didn’t save. Add it again once you’re back online.');
+    else if (err instanceof TypeError && this.props.db && this.props.db.say) this.props.db.say('You’re offline, so a card you just added didn’t save. Add it again once you’re back online.');
     if (this.pick === 'new' || this.pick === card.id) { this.pick = 'new'; this.ed = this.eds.new; }
     this.forceUpdate();
     throw err;
@@ -935,8 +935,13 @@ addDraft() {
 // card when none are left). Discard: the new card goes, and the card you were on opens again.
 dropSaved(ids) {
   const db = this.props.db || this.mock(), id = this.pick;
+  if (db.mock) return this.dropNow(ids, id, db);
+  if (this.temp(id)) return;
+  // It asks first, in Lucida's own question (never the browser's confirm()).
+  return db.ask({ title: 'Delete this card?', action: 'Delete card', danger: true }).then(yes => { if (yes && this.pick === id) this.dropNow(ids, id, db); });
+}
+dropNow(ids, id, db) {
   if (!db.mock) {
-    if (this.temp(id) || !confirm('Delete this card?')) return;
     clearTimeout(this.timers[id]);
     delete this.timers[id];
     this.track(db.act.removeCards(db.group(id).map(c => c.id)).catch(err => { this.gone = this.gone.filter(x => x !== id); this.forceUpdate(); throw err; }));
@@ -1011,10 +1016,10 @@ unsaved() {
 async leave(href) {
   const db = this.props.db, u = this.unsaved(), cards = u.held.length;
   if (cards || u.draft === 'unfinished') {
-    const msg = cards && u.draft === 'unfinished' ? 'Some changes and your new card are missing something, so they won’t be saved. Leave anyway?'
-      : cards ? (cards === 1 ? 'A card you changed is missing something, so the change won’t be saved. Leave anyway?' : cards + ' cards you changed are missing something, so the changes won’t be saved. Leave anyway?')
-      : 'Your new card isn’t finished, so it won’t be added. Leave anyway?';
-    if (!confirm(msg)) return;
+    const msg = cards && u.draft === 'unfinished' ? 'Some changes and your new card are missing something, so they won’t be saved.'
+      : cards ? (cards === 1 ? 'A card you changed is missing something, so the change won’t be saved.' : cards + ' cards you changed are missing something, so the changes won’t be saved.')
+      : 'Your new card isn’t finished, so it won’t be added.';
+    if (!(await db.ask({ title: 'Leave anyway?', line: msg, action: 'Leave' }))) return;
   }
   this.saveAll(false);
   if (u.draft === 'ready') this.addDraft();
@@ -1025,7 +1030,7 @@ async leave(href) {
   this.exiting = false;
   if (this.addFailed || Object.values(this.eds).some(e => e.failed)) {
     this.forceUpdate();
-    if (this.offline) alert('You’re offline, so this didn’t save. Try Done again once you’re back online.');
+    if (this.offline && db.say) db.say('You’re offline, so this didn’t save. Try Done again once you’re back online.');
     return;
   }
   db.act.go(href);

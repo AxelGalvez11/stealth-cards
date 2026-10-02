@@ -6,6 +6,9 @@ import { createDb, afterSignIn, localPath } from './db.js';
 import { THEME_KEYS } from './themes/index.js';
 import { loadTheme } from './themes/load.js';
 import { snapPills, slidePills, bindParallax } from './motion.js';
+import { createUi } from './ui.js';
+import installTips from './tip.js';
+import OVERLAYS from './ui-templates.js';
 
 // ---------- pages ----------
 // Which board shows for a page. Some depend on your data: no decks yet shows the new-user Today, and so on.
@@ -318,6 +321,9 @@ function morphChildren(from, to) {
 
 // ---------- the app ----------
 const app = document.getElementById('app');
+// Lucida's own questions, messages, dialogs and tooltips (web/ui.js, web/tip.js): nothing here is the browser's confirm(), alert() or title="".
+const ui = createUi({ schedule: () => schedule(), app });
+installTips();
 // A board that shows a theme loads its code the first time (on /b too, where boards have no database).
 globalThis.LucidaLoadTheme = key => loadTheme(key, schedule);
 const dark = matchMedia('(prefers-color-scheme: dark)');
@@ -346,7 +352,10 @@ function paint() {
   // bright in dark mode (all but setting up, which sits over the deck's page).
   document.body.style.background = props.dark && !/^Live(?!Setup)/.test(current.name) ? (props.dim ? '#1E1E20' : '#000000') : '#FFFFFF';
   const tpl = document.createElement('template');
-  tpl.innerHTML = renderScreen(s, current.key, props).replace(/href="([A-Za-z0-9]+)\.dc\.html"( data-section="([a-z-]+)")?/g, (_, n, __, sec) => 'href="' + linkFor(n) + (sec ? '/' + sec : '') + '"');
+  const page = renderScreen(s, current.key, props).replace(/href="([A-Za-z0-9]+)\.dc\.html"( data-section="([a-z-]+)")?/g, (_, n, __, sec) => 'href="' + linkFor(n) + (sec ? '/' + sec : '') + '"');
+  // Over the page: a question that asks before something is deleted, and a message (web/ui.js, drawn from the same markup as the canvas's boards).
+  const over = drawn[0] && !current.design ? render(OVERLAYS[narrow.matches ? 'phone' : 'web'], ui.vals(drawn[0].theme(props.dark, props.dim)), 'lu') : '';
+  tpl.innerHTML = page + over;
   const was = tpl.content.querySelector('.sc-panel, .sc-sheet') ? [] : panels(), pills = snapPills(app);
   morphChildren(app, tpl.content);
   const fns = refs, done = drawn;
@@ -359,6 +368,7 @@ function paint() {
   placePops();
   slidePills(app, pills);
   bindParallax(app);
+  ui.after();
 }
 // Side panels and sheets (deck settings, the card editor) slide in as they're drawn (sc-panel and sc-sheet in the
 // boards' motion CSS), and slide back out as they close: the one that was open stays on top for a moment, where it
@@ -499,7 +509,9 @@ addEventListener('keydown', e => {
   const key = (mod ? 'mod+' : '') + (e.key === ' ' ? 'space' : e.key.toLowerCase());
   if (!mod && t.closest && t.closest('input, textarea, select, [contenteditable="true"]')) return;
   if (!mod && (key === 'space' || key === 'enter') && t.closest && t.closest('button, a')) return;
-  const el = [...app.querySelectorAll('[data-key]')].find(x => x.getAttribute('data-key').toLowerCase() === key && x.getClientRects().length);
+  // (With a dialog open, only its own keys count: Escape is its Cancel, not a button on the page behind it.)
+  const dialogs = [...app.querySelectorAll('[role="alertdialog"], [role="dialog"][aria-modal="true"]')], scope = dialogs.length ? dialogs[dialogs.length - 1] : app;
+  const el = [...scope.querySelectorAll('[data-key]')].find(x => x.getAttribute('data-key').toLowerCase() === key && x.getClientRects().length);
   if (el) { e.preventDefault(); el.click(); }
 });
 // A menu or popover closes with Escape (even while you type in its search box) or a press anywhere outside it, the way
@@ -521,7 +533,7 @@ dark.addEventListener('change', schedule);
 narrow.addEventListener('change', schedule);
 
 // `replace`: the new page takes the old one's place in history (your profile's address after you change your handle).
-db = await createDb({ onChange: schedule, go: (path, replace) => go(path, !replace, !!replace) });
+db = await createDb({ onChange: schedule, go: (path, replace) => go(path, !replace, !!replace), ask: ui.ask, say: ui.say });
 // Just signed in on the way somewhere (like going Pro): go there now.
 const next = db.signedOut ? '' : localPath(afterSignIn());
 if (next) location.assign(next);

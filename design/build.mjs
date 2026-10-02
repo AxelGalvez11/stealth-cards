@@ -21,6 +21,7 @@ import { THEME_KEYS, themeCss, themeFonts, themeStatic } from './themes.mjs';
 import { LEVELS, YEARS, SUBJECTS } from '../web/school.js';
 import testKit from './test-boards.mjs';
 import { makeBoards, deckBlocks, publicGuideBlocks, PUBLIC_GUIDE_JS, DECK_MATERIALS_JS, GUIDE_CSS, GUIDE_STATES, MATERIALS_MOCK, LIVE_FROM, LIVE_TOPIC_STATES } from './materials.mjs';
+import { askMarkup, toastMarkup, ASK_SAMPLES, ASK_JS, askProp, dateMarkup, DATE_JS } from './ui.mjs';
 // The themes (Pro), for boards' logic: key, board name, short and full names.
 const THEME_LIST = JSON.stringify(THEMES.map(({ key, board, short, name }) => ({ key, board: board || '', short, name })));
 const MESH_DATA = JSON.stringify(Object.fromEntries(PALETTE_NAMES.map(n => [n, { ...paletteData(n), shadow: PALETTES[n].ink === '#FFFFFF' ? '0 1px 14px rgba(0,0,0,.16)' : 'none' }])));
@@ -31,6 +32,8 @@ const RICH_METHOD = `rich() { return Component._rich || (Component._rich = (${RI
 const GUIDE_FILE = new URL('../web/guide.js', import.meta.url), GUIDE_SRC = existsSync(GUIDE_FILE) ? readFileSync(GUIDE_FILE, 'utf8') : '';
 const GUIDE_METHOD = GUIDE_SRC ? `md() { return Component._md || (Component._md = (${GUIDE_SRC.slice(GUIDE_SRC.indexOf('function makeGuide'), GUIDE_SRC.lastIndexOf('export default')).trim()})()); }`
   : `md() { return { render: s => String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;'), plain: s => String(s || '') }; }`;
+// Lucida's own tooltip (web/tip.js), put once in the canvas's shared logic file (design/slim.mjs) so a board shows it on the canvas as the app does.
+const TIP_SRC = readFileSync(new URL('../web/tip.js', import.meta.url), 'utf8').replace(/^[\s\S]*?export default /, '').trim();
 const OUT = new URL('./canvas/project/', import.meta.url).pathname;
 mkdirSync(OUT, { recursive: true });
 
@@ -127,6 +130,11 @@ const APP_MOTION_CSS = [
   '.sc-side[data-collapsed="true"] .sc-side-head{padding:0 0 12px;justify-content:center}.sc-side[data-collapsed="true"] .sc-side-btns{flex-direction:column-reverse;gap:6px}',
   '.sc-side[data-collapsed="true"] :is(.sc-logo,.sc-lab,.sc-num){display:none}.sc-side .sc-dot{display:none}.sc-side[data-collapsed="true"] .sc-dot{display:block}',
   '@media (prefers-reduced-motion:reduce){.sc-side{transition:none}}',
+  // Lucida's own focus ring and scrollbars (the owner: nothing the browser draws itself): a 2 px ring in the text's own color around what the keyboard is on
+  // (a text field's box shows it when you tab into it), and thin scrollbars in the same color, faint, so they follow light, dark and gray.
+  'a:focus-visible,button:focus-visible,summary:focus-visible,[role="button"]:focus-visible,[role="tab"]:focus-visible,[role="radio"]:focus-visible,[role="switch"]:focus-visible,[role="menuitem"]:focus-visible,[role="option"]:focus-visible,[tabindex]:focus-visible{outline:2px solid currentColor;outline-offset:2px}',
+  'label:has(input:focus-visible,textarea:focus-visible):not([style*="box-shadow"]){box-shadow:0 0 0 2px color-mix(in srgb,currentColor 45%,transparent)}',
+  '*{scrollbar-width:thin;scrollbar-color:color-mix(in srgb,currentColor 30%,transparent) transparent}::-webkit-scrollbar{width:8px;height:8px}::-webkit-scrollbar-thumb{border-radius:8px;background:color-mix(in srgb,currentColor 30%,transparent)}::-webkit-scrollbar-track,::-webkit-scrollbar-corner{background:transparent}',
   '@media (prefers-reduced-motion:reduce){main>*,.sc-float,.sc-sway-a,.sc-sway-b,.sc-glow,.sc-alive>svg,.sc-draw,.sc-knob,.sc-grow{animation:none!important}.sc-sheen{display:none}button:active,.sc-press:active,.sc-lift:hover{transform:none}}'
 ].join('');
 // Dark mode, and its gray look (dim): the app sets both from Settings (Appearance, and Dark mode: Gray or Black).
@@ -2562,7 +2570,7 @@ addDraft() {
     if (err instanceof TypeError) this.offline = true;
     const cur = this.eds.new;
     if (!cur || !this.hasWords(cur.edits)) this.eds.new = this.fresh({ type: ty, edits: { ...n.edits } });
-    else if (err instanceof TypeError) alert('You’re offline, so a card you just added didn’t save. Add it again once you’re back online.');
+    else if (err instanceof TypeError && this.props.db && this.props.db.say) this.props.db.say('You’re offline, so a card you just added didn’t save. Add it again once you’re back online.');
     if (this.pick === 'new' || this.pick === card.id) { this.pick = 'new'; this.ed = this.eds.new; }
     this.forceUpdate();
     throw err;
@@ -2572,8 +2580,13 @@ addDraft() {
 // card when none are left). Discard: the new card goes, and the card you were on opens again.
 dropSaved(ids) {
   const db = this.props.db || this.mock(), id = this.pick;
+  if (db.mock) return this.dropNow(ids, id, db);
+  if (this.temp(id)) return;
+  // It asks first, in Lucida's own question (never the browser's confirm()).
+  return db.ask({ title: 'Delete this card?', action: 'Delete card', danger: true }).then(yes => { if (yes && this.pick === id) this.dropNow(ids, id, db); });
+}
+dropNow(ids, id, db) {
   if (!db.mock) {
-    if (this.temp(id) || !confirm('Delete this card?')) return;
     clearTimeout(this.timers[id]);
     delete this.timers[id];
     this.track(db.act.removeCards(db.group(id).map(c => c.id)).catch(err => { this.gone = this.gone.filter(x => x !== id); this.forceUpdate(); throw err; }));
@@ -2648,10 +2661,10 @@ unsaved() {
 async leave(href) {
   const db = this.props.db, u = this.unsaved(), cards = u.held.length;
   if (cards || u.draft === 'unfinished') {
-    const msg = cards && u.draft === 'unfinished' ? 'Some changes and your new card are missing something, so they won’t be saved. Leave anyway?'
-      : cards ? (cards === 1 ? 'A card you changed is missing something, so the change won’t be saved. Leave anyway?' : cards + ' cards you changed are missing something, so the changes won’t be saved. Leave anyway?')
-      : 'Your new card isn’t finished, so it won’t be added. Leave anyway?';
-    if (!confirm(msg)) return;
+    const msg = cards && u.draft === 'unfinished' ? 'Some changes and your new card are missing something, so they won’t be saved.'
+      : cards ? (cards === 1 ? 'A card you changed is missing something, so the change won’t be saved.' : cards + ' cards you changed are missing something, so the changes won’t be saved.')
+      : 'Your new card isn’t finished, so it won’t be added.';
+    if (!(await db.ask({ title: 'Leave anyway?', line: msg, action: 'Leave' }))) return;
   }
   this.saveAll(false);
   if (u.draft === 'ready') this.addDraft();
@@ -2662,7 +2675,7 @@ async leave(href) {
   this.exiting = false;
   if (this.addFailed || Object.values(this.eds).some(e => e.failed)) {
     this.forceUpdate();
-    if (this.offline) alert('You’re offline, so this didn’t save. Try Done again once you’re back online.');
+    if (this.offline && db.say) db.say('You’re offline, so this didn’t save. Try Done again once you’re back online.');
     return;
   }
   db.act.go(href);
@@ -3405,7 +3418,7 @@ renderVals() {
   ${APPS_JS}
   ${SETTINGS_SIDE_JS('connect-ai', 'db.mock ? true : !!(db.plan && db.plan())')}
   // Online, a link that got out can be swapped for a new one; AI apps with the old link lose access.
-  const renew = () => { if (db.mock) return this.setState({ renewed: true }); if (!confirm('Make a new link? AI apps using the old one will stop working until you give them the new link.')) return; db.act.newLink().then(() => this.setState({ renewed: true, copied: false })); };
+  const renew = () => { if (db.mock) return this.setState({ renewed: true }); db.ask({ title: 'Make a new link?', line: 'AI apps using the old one stop working until you give them the new one.', action: 'Make a new link' }).then(yes => yes && db.act.newLink().then(() => this.setState({ renewed: true, copied: false }))); };
   return { ${MESH_VALS('Apricot')} t, ...chrome, ...settingsSide, ...appVals, perms, providers, mcpUrl: ai.url, copyLabel: this.state.copied ? 'Copied' : 'Copy', copy: () => { db.act.copy(ai.url); this.setState({ copied: true }); },
     canRenew: db.mock || db.settings().signedIn, renew, renewLabel: this.state.renewed ? 'New link made' : 'Make a new link' };
 }`;
@@ -4296,7 +4309,7 @@ renderVals() {
     title: all || list ? 'Settings' : secName, backHref: all || list ? (db.mock ? 'PhoneToday.dc.html' : '/') : (db.mock ? 'PhoneSettings.dc.html' : '/settings'),
     // Your account: tap it to sign out (online).
     accountSub: db.mock ? 'Synced on all your devices · just now' : st.sub,
-    account: () => { if (!db.mock && st.signedIn && confirm('Sign out of Lucida?')) db.act.signOut(); },
+    account: () => { if (!db.mock && st.signedIn) db.ask({ title: 'Sign out of Lucida?', action: 'Sign out' }).then(yes => yes && db.act.signOut()); },
     ...themeRow(),
     // Daily reminder: on the canvas the Tweaks say where it starts (Off, a time, or Off with the line about allowing notifications) and a pick
     // shows at once; online it is the saved time.
@@ -9667,7 +9680,7 @@ Object.assign(files, makeBoards({ svg, I, FONT, MONO, T, DB_JS, DARK, MESH, W, H
 // The canvas keeps what every board shares once, in three files beside the boards (design/slim.mjs): the logic every board
 // has, the themes' code and the CSS every board starts with. Each board keeps its own markup, props and logic.
 const { slimBoards } = await import('./slim.mjs');
-const slim = slimBoards(Object.entries(files).map(([name, [title, body, opts]]) => [name, page(title, body, opts), opts]), { rich: RICH_METHOD, drag: DRAG_METHOD });
+const slim = slimBoards(Object.entries(files).map(([name, [title, body, opts]]) => [name, page(title, body, opts), opts]), { rich: RICH_METHOD, drag: DRAG_METHOD, tip: TIP_SRC });
 for (const [name, text] of slim.boards) writeFileSync(OUT + name + '.dc.html', text);
 for (const [file, text] of Object.entries(slim.files)) writeFileSync(OUT + file, text);
 

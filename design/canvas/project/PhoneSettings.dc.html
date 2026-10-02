@@ -154,7 +154,7 @@ renderVals() {
     title: all || list ? 'Settings' : secName, backHref: all || list ? (db.mock ? 'PhoneToday.dc.html' : '/') : (db.mock ? 'PhoneSettings.dc.html' : '/settings'),
     // Your account: tap it to sign out (online).
     accountSub: db.mock ? 'Synced on all your devices · just now' : st.sub,
-    account: () => { if (!db.mock && st.signedIn && confirm('Sign out of Lucida?')) db.act.signOut(); },
+    account: () => { if (!db.mock && st.signedIn) db.ask({ title: 'Sign out of Lucida?', action: 'Sign out' }).then(yes => yes && db.act.signOut()); },
     ...themeRow(),
     // Daily reminder: on the canvas the Tweaks say where it starts (Off, a time, or Off with the line about allowing notifications) and a pick
     // shows at once; online it is the saved time.

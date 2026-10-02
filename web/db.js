@@ -74,7 +74,7 @@ function signedOut(go, onChange = () => {}) {
   let side = readSide();
   const toggleSide = () => { side = !side; writeSide(side); onChange(); };
   if (typeof addEventListener === 'function') addEventListener('storage', e => { if (e.key === SIDE_KEY) { side = readSide(); onChange(); } });
-  return { signedOut: true, mock: false, auth, net, schools: createSchools(onChange), settings: () => ({ look: 'system' }), me: () => null, decks: () => [], folders: () => [],
+  return { signedOut: true, mock: false, ask: async () => false, say: () => {}, auth, net, schools: createSchools(onChange), settings: () => ({ look: 'system' }), me: () => null, decks: () => [], folders: () => [],
     chrome: () => ({ nav: { today: '', news: '', hasNews: false, ...sideView(side, toggleSide) }, me: { bg: COLORS[0], initial: '', color: true, photo: '', href: '/sign-in' } }),
     join: () => live.view(), joinAt: (kind, code) => live.at(kind, code), act: { go, ...playerActs(live, go) } };
 }
@@ -124,7 +124,9 @@ async function readState(sync) {
   return ask('/api/state', 0);
 }
 
-export async function createDb({ onChange, go }) {
+// `ask({ title, line, action, danger })` puts a question to the person in Lucida's own dialog and answers true or false, and `say('words')` shows
+// a quiet message (web/ui.js, given by web/app.js): never the browser's confirm() and alert().
+export async function createDb({ onChange, go, ask = async () => false, say = () => {} }) {
   const get = async url => { const r = await fetch(url, { cache: 'no-store' }); if (r.status === 401) { toSignIn(); throw new Error('Signed out'); } return r.json(); };
   // Opening the app also brings decks you study from other people up to date (their owners' newest changes).
   const first = await readState(true);
@@ -161,7 +163,7 @@ export async function createDb({ onChange, go }) {
   let mine = [], line = Promise.resolve();
   const accept = next => { if (next && next.rev >= S.rev) { S = next; mine.forEach(f => f(S)); changed(); } };
   // `keep`: the save still goes out if the page is closing (the cards screen saving as you leave).
-  // `quiet`: for a page that shows the error itself (Suggestions, keeping or tossing your AI's cards): no alert, and the
+  // `quiet`: for a page that shows the error itself (Suggestions, keeping or tossing your AI's cards): no message, and the
   // rejection's message is a plain sentence for the page to show.
   async function send(type, payload = {}, keep = false, quiet = false) {
     let r;
@@ -169,7 +171,7 @@ export async function createDb({ onChange, go }) {
     catch (e) { throw quiet ? new Error('Couldn’t reach Lucida. Check your connection and try again.') : e; }
     if (r.status === 401) { toSignIn(); throw new Error('Signed out'); }
     const j = quiet ? await r.json().catch(() => ({})) : await r.json();
-    if (!r.ok) { if (!quiet) alert(j.error || 'Something went wrong.'); throw new Error(j.error || (quiet ? 'Something went wrong. Try again.' : '')); }
+    if (!r.ok) { if (!quiet) say(j.error || 'Something went wrong.'); throw new Error(j.error || (quiet ? 'Something went wrong. Try again.' : '')); }
     accept(j.state);
     return j.result;
   }
@@ -191,7 +193,7 @@ export async function createDb({ onChange, go }) {
   const net = createNet({ accept, changed, go });
   const schools = createSchools(changed);
   // AI apps (web/connect.js): the apps that signed in to Lucida, the page where an app asks to connect, and the password.
-  const connect = createConnect({ changed, go });
+  const connect = createConnect({ changed, go, question: ask, say });
   const handle = () => (S.profile && S.profile.handle) || '';
   // Live: hosting a game from this page, and playing one.
   const live = createLive({ onChange: () => changed(), go });
@@ -439,28 +441,28 @@ export async function createDb({ onChange, go }) {
   async function fit(f, want, side) {
     const type = sniff(new Uint8Array(await f.slice(0, 16).arrayBuffer()));
     const heic = type === 'image/heic' || /^image\/hei[cf]$/.test(f.type) || /\.hei[cf]$/i.test(f.name || '');
-    if ((heic ? 'image' : (type || f.type).split('/')[0]) !== want) { alert(NOT[want]); return null; }
-    if (want === 'image') { f = await picture(f, heic ? 'image/heic' : type, side || 2400); if (!f) { alert(heic ? HEIC : NOT.image); return null; } }
-    else if (!type) { alert(NOT.audio); return null; }
+    if ((heic ? 'image' : (type || f.type).split('/')[0]) !== want) { say(NOT[want]); return null; }
+    if (want === 'image') { f = await picture(f, heic ? 'image/heic' : type, side || 2400); if (!f) { say(heic ? HEIC : NOT.image); return null; } }
+    else if (!type) { say(NOT.audio); return null; }
     else f = new Blob([f], { type });
-    if (f.size > LIMIT) { alert(OVER); return null; }
+    if (f.size > LIMIT) { say(OVER); return null; }
     return f;
   }
   const upload = async (blob, want, side) => {
     let f = null, r = null;
-    try { f = await fit(blob, want, side); } catch { alert('Couldn’t read that file. Try another one.'); }
+    try { f = await fit(blob, want, side); } catch { say('Couldn’t read that file. Try another one.'); }
     if (!f) return null;
-    try { r = await fetch('/api/media', { method: 'POST', headers: { 'content-type': f.type }, body: f }); } catch { alert('Couldn’t reach Lucida. Check your connection and try again.'); return null; }
+    try { r = await fetch('/api/media', { method: 'POST', headers: { 'content-type': f.type }, body: f }); } catch { say('Couldn’t reach Lucida. Check your connection and try again.'); return null; }
     if (r.status === 401) { toSignIn(); return null; }
     // An error from Vercel itself (like a file that's too big for it) is a page, not JSON.
     const j = await r.json().catch(() => ({}));
-    if (!r.ok || !j.url) { alert(r.status === 413 ? OVER : j.error || 'That didn’t upload. Try again in a minute.'); return null; }
+    if (!r.ok || !j.url) { say(r.status === 413 ? OVER : j.error || 'That didn’t upload. Try again in a minute.'); return null; }
     return j.url;
   };
   let typing = {}, typingTimer = null;
   // Recording, playing, and the waveforms of sound (sound.js). A clip's shape measured on this device is saved with the
   // cards that play it, quietly (if that fails, it's measured again next time).
-  const sound = createSound({ onChange: () => changed(), upload: b => upload(b, 'audio'), measured: (url, wave) => {
+  const sound = createSound({ onChange: () => changed(), say, upload: b => upload(b, 'audio'), measured: (url, wave) => {
     for (const c of S.cards) {
       if (c.audio !== url || c.wave) continue;
       c.wave = wave;
@@ -905,12 +907,13 @@ export async function createDb({ onChange, go }) {
       typingTimer = setTimeout(() => { const all = typing; typing = {}; for (const [k, p] of Object.entries(all)) send('deck.update', { id: k, patch: p }); }, 400);
     },
     deleteDeck: async id => { const d = deckById(id); if (!d) return;
-      const ask = d.link && !d.link.gone ? 'Remove “' + d.name + '” from your library? Your progress on it goes too.' : 'Delete “' + d.name + '” and its ' + plural(cardsOf(id).length, 'card') + '? This can’t be undone.';
-      if (!confirm(ask)) return; await send('deck.delete', { id }); go('/library'); },
+      const n = cardsOf(id).length, q = d.link && !d.link.gone ? { title: 'Remove “' + d.name + '” from your library?', line: 'Your progress on it goes too.', action: 'Remove' }
+        : { title: 'Delete “' + d.name + '”?', line: n ? (n === 1 ? 'Its card goes too. ' : 'Its ' + n + ' cards go too. ') + 'This can’t be undone.' : 'This can’t be undone.', action: 'Delete deck' };
+      if (!(await ask({ ...q, danger: true }))) return; await send('deck.delete', { id }); go('/library'); },
     // Folders: make one (optionally putting a deck in it), rename one, or remove one (its decks go back to the library).
     newFolder: async (name, deckId) => { const r = await send('folder.add', { name }); if (deckId) await send('deck.update', { id: deckId, patch: { folder: r.id } }); return r.id; },
     renameFolder: (id, name) => send('folder.update', { id, patch: { name } }),
-    deleteFolder: async id => { const f = S.folders.find(x => x.id === id); if (!f || !confirm('Remove the folder “' + f.name + '”? Its decks stay in your library.')) return; await send('folder.delete', { id }); go('/library'); },
+    deleteFolder: async id => { const f = S.folders.find(x => x.id === id); if (!f || !(await ask({ title: 'Remove the folder “' + f.name + '”?', line: 'Its decks stay in your library.', action: 'Remove folder', danger: true }))) return; await send('folder.delete', { id }); go('/library'); },
     // Into a folder (or out, with none): it goes last there. Dragging also puts a deck before another (or last).
     moveDeck: (id, folder) => { const d = deckById(id); if (!d || (d.folder || null) === (folder || null)) return; d.folder = folder || null; placeBefore(S.decks, d, null); changed(); return saveMove('deck.move', { id, folder: folder || null, before: null }); },
     reorderDeck: (id, before) => { const d = deckById(id); if (!d) return; placeBefore(S.decks, d, before ? deckById(before) : null); changed(); return saveMove('deck.move', { id, before: before || null }); },
@@ -927,7 +930,7 @@ export async function createDb({ onChange, go }) {
     },
     pickCover: async id => { const url = await act.pickFile('image'); if (url) await send('deck.update', { id, patch: { cover: { image: url } } }); },
     saveCard: async (id, deckId, o, back) => { if (id) await send('card.update', { id, patch: { ...o, pending: false } }); else await send('card.add', { deckId, ...o }); go(back); },
-    deleteCard: async (id, back) => { if (!confirm('Delete this card?')) return; await send('card.delete', { id }); go(back); },
+    deleteCard: async (id, back) => { if (!(await ask({ title: 'Delete this card?', action: 'Delete card', danger: true }))) return; await send('card.delete', { id }); go(back); },
     // The cards screen (a deck's cards down the left, the one you pick on the right) saves as you type: one save at a
     // time, in order (`leaving`: the page is closing, so it goes out now). Adding and deleting stay on the screen.
     updateCard: (id, patch, leaving) => {
@@ -971,7 +974,7 @@ export async function createDb({ onChange, go }) {
     record: () => sound.record(),
     stopRecording: discard => sound.stopRecording(discard),
     // A sound file over the limit is turned away before it's measured.
-    pickSound: () => sound.pick(accept => choose(accept).then(f => (f && f.size > LIMIT ? (alert(OVER), null) : f))),
+    pickSound: () => sound.pick(accept => choose(accept).then(f => (f && f.size > LIMIT ? (say(OVER), null) : f))),
     // A clip is a card's sound: { audio, wave } for a file, or { speak, lang } for words the device reads aloud (lang, like
     // "es", picks a voice that speaks the card's language). playSound plays it, or pauses it if it's playing.
     playSound: c => sound.play(c),
@@ -1078,7 +1081,7 @@ export async function createDb({ onChange, go }) {
       if (ids.length) go('/review?set=' + encodeURIComponent('cards:' + ids.join(',')));
     },
     exportAll: () => download('lucida.json', JSON.stringify({ decks: S.decks, cards: S.cards, logs: S.logs }, null, 1), 'application/json'),
-    resetAll: async () => { if (!confirm('Delete every deck, card, and review' + (S.me ? ', and your profile and shared decks' : ' on this computer') + '? This can’t be undone.')) return; await send('data.reset'); session = null; go('/'); },
+    resetAll: async () => { if (!(await ask({ title: 'Delete all your data?', line: 'Every deck, card and review goes' + (S.me ? ', and your profile and shared decks' : ' on this computer') + '. This can’t be undone.', action: 'Delete my data', danger: true }))) return; await send('data.reset'); session = null; go('/'); },
     signOut: async () => { await fetch('/api/auth/signout', { method: 'POST' }).catch(() => {}); toSignIn(); },
     // Delete account (Settings › Account; Apple asks for it inside the app): everything of yours goes, on the server too, and you're
     // signed out. A failure (like Pro that has to be cancelled first) comes back in plain words for the question to show.
@@ -1118,8 +1121,8 @@ export async function createDb({ onChange, go }) {
     deleteGuidePage: (deckId, page) => send('guide.page.delete', { deckId, page }, false, true),
     restoreGuide: (deckId, page, at) => send('guide.restore', { deckId, page: page || 'main', at }, false, true),
     deleteSource: async (deckId, id) => { const d = deckById(deckId), x = d && (d.sources || []).find(y => y.id === id); if (!x) return;
-      if (!confirm('Delete “' + x.name + '”? Its file goes, and the ' + plural(x.cards || 0, 'card') + ' made from it stay in the deck.')) return;
-      try { await send('source.delete', { deckId, id }, false, true); } catch (e) { alert(e.message); } },
+      if (!(await ask({ title: 'Delete “' + x.name + '”?', line: 'Its file goes. The ' + plural(x.cards || 0, 'card') + ' made from it stay in the deck.', action: 'Delete', danger: true }))) return;
+      try { await send('source.delete', { deckId, id }, false, true); } catch (e) { say(e.message); } },
     // A new link for AI apps; the old one stops working (for a link that got out).
     newLink: () => send('ai.link'),
     // AI apps that signed in (web/connect.js): Allow or Cancel on their page, Disconnect, switching account, and a password.
@@ -1151,7 +1154,7 @@ export async function createDb({ onChange, go }) {
       const d = deckById(id), qs = d ? liveQuestions(id, set, count) : [];
       if (!qs.length) return;
       try { await live.host.open({ deckId: id, deck: { name: d.name, seed: d.cover.seed || d.name, style: d.cover.style || 'mix', round: d.cover.round || 0, bg: d.bg || { kind: 'deck', image: null } }, qs, set, count, time }); }
-      catch (e) { alert(e.message || 'Couldn’t open a room. Try again.'); }
+      catch (e) { say(e.message || 'Couldn’t open a room. Try again.'); }
     },
     // Live from a topic: the maker writes the questions (counting as one of today's makes), then the room opens. `cancelLiveTopic` stops it.
     openLiveTopic: async (topic, count, time) => {
@@ -1220,10 +1223,10 @@ export async function createDb({ onChange, go }) {
     // errors); making or joining a class goes to it, and leaving or deleting one goes back to your classes.
     makeClass: async o => { const r = await net.act('class.make', o); if (r && r.code) go('/class/' + r.code); return r; },
     joinClass: async code => { const r = await net.act('class.join', { code }); if (r && r.code) go('/class/' + r.code); return r; },
-    leaveClass: async (id, name) => { if (!confirm('Leave “' + name + '”? The decks you study from it stay in your library.')) return null; const r = await net.act('class.leave', { id }); go('/library/classes'); return r; },
-    deleteClass: async (id, name) => { if (!confirm('Delete “' + name + '”? Everyone in it keeps the decks they study.')) return null; const r = await net.act('class.delete', { id }); go('/library/classes'); return r; },
+    leaveClass: async (id, name) => { if (!(await ask({ title: 'Leave “' + name + '”?', line: 'The decks you study from it stay in your library.', action: 'Leave class' }))) return null; const r = await net.act('class.leave', { id }); go('/library/classes'); return r; },
+    deleteClass: async (id, name) => { if (!(await ask({ title: 'Delete “' + name + '”?', line: 'Everyone in it keeps the decks they study.', action: 'Delete class', danger: true }))) return null; const r = await net.act('class.delete', { id }); go('/library/classes'); return r; },
     updateClass: (id, patch) => net.act('class.update', { id, patch }),
-    setMember: (id, handle, o) => (o && o.remove && o.name && !confirm('Take ' + o.name + ' out of the class?') ? Promise.resolve(null) : net.act('class.member', { id, handle, role: o && o.role, remove: !!(o && o.remove) })),
+    setMember: async (id, handle, o) => ((o && o.remove && o.name && !(await ask({ title: 'Take ' + o.name + ' out of the class?', action: 'Take out' }))) ? null : net.act('class.member', { id, handle, role: o && o.role, remove: !!(o && o.remove) })),
     shareProgress: (id, on) => net.act('class.share', { id, on }),
     addClassDeck: (id, deckId) => net.act('class.addDeck', { id, deckId }),
     removeClassDeck: (id, sharedId) => net.act('class.removeDeck', { id, sharedId }),
@@ -1247,6 +1250,8 @@ export async function createDb({ onChange, go }) {
 
   return {
     mock: false, act, net, schools,
+    // Lucida's own question and message, for a screen's logic to use (never the browser's confirm() or alert()).
+    ask, say,
     raw: () => S,
     // Your classes as your library has them; your progress on a class's deck (null until you study it); and what Today
     // lists: the assignments of the classes you're a member of, soonest first. A done one stays until its date passes,

@@ -107,7 +107,7 @@ renderVals() {
   const settingsSide = { sec: Object.fromEntries(Object.entries(secLinks('connect-ai')).map(([id, v]) => [id, db.mock ? { ...v, href: 'WebSettings.dc.html', pick: () => {} } : v])),
     hasPlan: db.mock ? true : !!(db.plan && db.plan()), backHref: db.mock ? 'Main.dc.html' : this.props.back || '/' };
   // Online, a link that got out can be swapped for a new one; AI apps with the old link lose access.
-  const renew = () => { if (db.mock) return this.setState({ renewed: true }); if (!confirm('Make a new link? AI apps using the old one will stop working until you give them the new link.')) return; db.act.newLink().then(() => this.setState({ renewed: true, copied: false })); };
+  const renew = () => { if (db.mock) return this.setState({ renewed: true }); db.ask({ title: 'Make a new link?', line: 'AI apps using the old one stop working until you give them the new one.', action: 'Make a new link' }).then(yes => yes && db.act.newLink().then(() => this.setState({ renewed: true, copied: false }))); };
   return { hero: this.mesh(this.props.gradient ?? 'Apricot'), grain: String(this.props.grain ?? 0.7), t, ...chrome, ...settingsSide, ...appVals, perms, providers, mcpUrl: ai.url, copyLabel: this.state.copied ? 'Copied' : 'Copy', copy: () => { db.act.copy(ai.url); this.setState({ copied: true }); },
     canRenew: db.mock || db.settings().signedIn, renew, renewLabel: this.state.renewed ? 'New link made' : 'Make a new link' };
 }
