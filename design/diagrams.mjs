@@ -150,7 +150,8 @@ export const DIAGRAMS_JS = String.raw`
     const dgLine = r => r.kind === 'table' ? 'Table · ' + plural(r.table ? r.table.rows.length : 0, 'row') : r.kind === 'mindmap' ? 'Mind map · ' + plural(r.tree ? dgCount(r.tree) : 0, 'idea')
       : r.kind === 'lecture' ? [r.src && r.src.at, r.src && r.src.name].filter(Boolean).join(' · ') || 'From your lecture' : 'Uploaded' + (r.w ? ' · ' + r.w + ' × ' + r.h : '');
     const dgColors = { text: t.text, muted: t.muted, line: t.line, bg: t.bg, surf: t.surf, surf2: t.surf2, inv: t.inv, invText: t.invText };
-    const dgRef = (kind, id, html) => el => { const k = kind + ':' + id + ':' + html.length + ':' + sum(html); if (el.getAttribute('data-k') !== k) { el.innerHTML = html; el.setAttribute('data-k', k); } };
+    const dgSum = s => { let h = 0; for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) | 0; return h; };
+    const dgRef = (kind, id, html) => el => { const k = kind + ':' + id + ':' + html.length + ':' + dgSum(html); if (el.getAttribute('data-k') !== k) { el.innerHTML = html; el.setAttribute('data-k', k); } };
     const dgPct = v => +(v * 100).toFixed(3) + '%';
     const dgCur = dgv.open ? dgRows.find(r => r.id === dgv.open) || null : null;
     const dgMade = !!dgCur && (dgCur.kind === 'table' || dgCur.kind === 'mindmap'), dgPic = !!dgCur && !!dgCur.picture;
