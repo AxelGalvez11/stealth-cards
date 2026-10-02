@@ -392,13 +392,16 @@ struct SettingsScreen: View {
 
   private var divider: some View { Rectangle().fill(t.bg).frame(height: 1).padding(.leading, 16) }
 
-  private func group<Content: View>(_ title: String, @ViewBuilder _ rows: () -> Content) -> some View {
-    VStack(alignment: .leading, spacing: 8) {
+  /// A section: its name, and its rows on one rounded panel. Each section comes boxed (AnyView). As one view, the whole page's
+  /// type nested so deep that working it out ran a real iPhone's main thread out of stack (it has about 1 MB, the simulator 8 MB):
+  /// TestFlight build 3 crashed opening Settings.
+  private func group<Content: View>(_ title: String, @ViewBuilder _ rows: () -> Content) -> AnyView {
+    AnyView(VStack(alignment: .leading, spacing: 8) {
       Text(title.uppercased()).css(13, .semibold, ls: 0.06).foregroundStyle(t.muted).padding(.horizontal, 4)
       VStack(spacing: 0) { rows() }
         .background(RoundedRectangle(cornerRadius: 24, style: .continuous).fill(t.surf))
         .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
-    }
+    })
   }
 
   private func row<Right: View>(_ label: String, sub: String? = nil, color: Color? = nil, @ViewBuilder right: () -> Right) -> some View {
