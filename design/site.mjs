@@ -70,7 +70,7 @@ export const FIXED = [
     title: 'Privacy Policy · Lucida', description: 'What Lucida keeps, why we keep it, who helps us run it, and how you can export or delete your data.' },
   { slug: 'terms', kind: 'legal', board: 'Terms', file: 'terms.html', updated: iso(LEGAL_UPDATED), crumb: 'Terms', h1: 'Terms of Service',
     title: 'Terms of Service · Lucida', description: 'The terms for using Lucida, on the website at lucida.cards and in the app at app.lucida.cards: your account, your cards and fair use.' },
-  { slug: 'connect', kind: 'guide', board: 'SiteConnect', file: 'connect-guide.html', updated: '2026-09-30', crumb: 'Connect', h1: 'Connect Lucida to your AI',
+  { slug: 'connect', kind: 'guide', board: 'SiteConnect', file: 'connect-guide.html', updated: '2026-10-02', crumb: 'Connect', h1: 'Connect Lucida to your AI',
     title: 'Connect Lucida to your AI · Lucida', description: 'Add Lucida to Claude, ChatGPT, Grok, Gemini, Perplexity or Mistral with one address, sign in, and your AI can make flashcards and quiz you.' }
 ];
 

@@ -1,5 +1,5 @@
 // iPhone · Deck page (PhoneDeck, PhoneDeckEmpty, PhoneDeckSettings, PhoneDeckSettingsStudy, PhoneDeckTagPicker,
-// PhoneDeckMoveTray): the deck's gradient header, its numbers, studying, its cards, and its settings in a sheet. Hold a
+// PhoneDeckMoveTray): the deck's gradient header, studying, its sections (Sources, Cards, Notes, Diagrams), and its settings in a sheet. Hold a
 // card to drag it to another spot, or onto another deck in the Move to tray that rises while you drag (Drag.swift).
 import SwiftUI
 import PhotosUI
@@ -15,7 +15,6 @@ struct DeckVM {
   var style = "mix", round = 0
   var image: String? = nil
   var lineShort = ""
-  var due = 0, fresh = 0, ret: Int? = nil
   /// Flashcards and Learn (the owner: "learn button needs to be 'learn', flashcards need to have flashcards button"):
   /// Flashcards shows how many cards wait today, and Learn picks up a session you left.
   var studyLabel = "Flashcards", studyCount = 0
@@ -62,7 +61,7 @@ extension Store {
       let examDay: String? = { if case .some(let v) = e.exam { return v }; return props.free ? nil : Store.sampleExamDay }()
       if empty { return DeckVM(id: "pharm", name: "Pharmacology", seed: "Pharmacology", lineShort: "No cards yet") }
       let d = DeckVM(id: "cell", name: e.name ?? "Cell Biology", seed: "Cell Biology", style: e.style ?? "mix", round: e.round, image: e.image,
-                     lineShort: "412 cards · 38 from your AI", due: 28, fresh: 10, ret: 91, studyCount: 28,
+                     lineShort: "412 cards", studyCount: 28,
                      rows: demoCardOrder.compactMap { id in X.CARDS.first { $0.id == id } }.filter { (demoCardDeck[$0.id] ?? "cell") == "cell" }
                        .map { CardRowVM(id: $0.id, front: $0.front, meta: $0.kind + " · " + (isPaused($0.id) ? "Paused" : $0.next), tags: $0.tags) },
                      tags: e.tags ?? X.TAGS["cell"] ?? [], allTags: Array(Generated.tagColors.keys),
@@ -77,8 +76,7 @@ extension Store {
     let st = E.stat(d), cards = lib.deckCards(d)
     let total = plural(st.total, "card").replacingOccurrences(of: String(st.total), with: grouped(st.total))
     return DeckVM(id: d.id, name: d.name, seed: d.cover.seed ?? d.name, style: d.cover.style ?? "mix", round: d.cover.round, image: d.cover.image,
-                  lineShort: total + (st.aiCount > 0 ? " · \(st.aiCount) from your AI" : ""), due: st.due, fresh: st.fresh, ret: st.ret,
-                  studyCount: st.due > 0 ? st.due : st.fresh, resume: learnOn(id),
+                  lineShort: total, studyCount: st.due > 0 ? st.due : st.fresh, resume: learnOn(id),
                   rows: cards.map { c in CardRowVM(id: c.id, front: Store.listFront(c), meta: (KIND_LABEL[c.kind] ?? "Basic") + " · " + E.nextLabel(c), tags: c.tags, origin: c.origin) },
                   tags: d.tags, allTags: E.tags, paused: d.paused, grading: d.grading, fsrs: d.fsrs, goal: d.goal, gapIdx: d.gapIdx, steps: d.steps, perDay: d.perDay,
                   exam: st.exam, examDay: d.exam ?? "", leechAt: Sched.leechAt(d), leechAct: Sched.leechAct(d),
@@ -193,12 +191,11 @@ struct DeckScreen: View {
   let id: String
   /// This page, for dragging its cards.
   @State private var board = UUID().uuidString
-  /// Which section of the page shows (Cards, Notes, Diagrams or Sources; nil: Cards, unless an address or a board says another), which page of the Guide, and whether it's
-  /// unfolded (Show more); and an empty deck's More (the Make box's row) is open.
+  /// Which section of the page shows (Sources, Cards, Notes or Diagrams; nil: Cards, unless an address or a board says another), which page of the
+  /// Guide, and whether it's unfolded (Show more).
   @State private var tab: String? = nil
   @State private var gpage = "main"
   @State private var gopen = false
-  @State private var moreOpen = false
   var body: some View {
     let d = store.deck(id), g = store.guide(id), srcs = store.sources(id), dgs = store.diagramRows(id)
     Group {
@@ -206,7 +203,6 @@ struct DeckScreen: View {
       if d.rows.isEmpty && store.cardCount(id) == 0 && !g.hasAny && srcs.isEmpty && dgs.isEmpty { empty(d) } else { page(d, g, srcs, dgs) }
     }
     .toolbar(.hidden, for: .navigationBar)
-    .addMenu(open: $moreOpen, rows: MakeKinds.more(nav: nav, deckId: id), id: "more", width: 220, label: "More ways to add cards")
     .onAppear { if store.demo { demoOpen() } }
     // Something asked for a section (the Guide editor's Done: Notes; a card's "Made from" line: Sources, with that source open).
     .onChange(of: nav.deckWants, initial: true) { _, w in
@@ -229,7 +225,7 @@ struct DeckScreen: View {
 
   // The header: the deck's gradient (or its photo), with round buttons and its name. With a theme on (Pro), the theme's
   // cover and lettering take their place (a deck with a photo of its own keeps it).
-  private func header(_ d: DeckVM, sub: String, make: Bool = false) -> some View {
+  private func header(_ d: DeckVM, sub: String) -> some View {
     let skin = d.image == nil ? store.skin(art) : nil, size = CGSize(width: ThemeLayout.screen.width, height: Screen.top(232))
     let themed = skin.flatMap { s in art.picture(.head(s, deck: d.look, size: size)).map { (s, $0) } }
     let ink = themed.flatMap { RGBA(css: $0.1.string("ink")) }
@@ -248,7 +244,7 @@ struct DeckScreen: View {
           if !d.rows.isEmpty { CoverButton(icon: "search", label: "Search") {} }
           // Your own deck takes material too: Make cards (from a file, a photo, a recording, a link or a topic, into this deck) and New card.
           if !d.sharing.readOnly {
-            if make { CoverButton(icon: "sparkle", label: "Make cards") { nav.make(deckId: d.id) } }
+            CoverButton(icon: "sparkle", label: "Make cards") { nav.make(deckId: d.id) }
             CoverButton(icon: "plus", label: "New card") { nav.newCard(deckId: d.id) }
           }
           if d.sharing.readOnly, let lk = d.sharing.link { CoverButton(icon: "message", label: "Suggest a change", size: 40) { nav.deckPage(lk.url, suggest: "1") } }
@@ -283,17 +279,18 @@ struct DeckScreen: View {
   }
 
   private func page(_ d: DeckVM, _ g: GuideVM, _ srcs: [SourceVM], _ dgs: [DiagramVM]) -> some View {
-    // The sections: Cards (the cards), Notes (the Guide: its owner's, or one that has words), Diagrams (the diagrams of its lectures and the tables and mind maps made from it: its
-    // owner's, or a deck that has some made ones), Sources (what the cards were made from: only its owner's).
+    // The sections, Sources first (the owner, 2026-10-02: "sources should be the first tab, so sources, cards, notes, diagrams"; the page still opens on
+    // Cards): Sources (what the cards were made from: only its owner's), Cards (the cards), Notes (the Guide: its owner's, or one that has words), Diagrams
+    // (the diagrams of its lectures and the tables and mind maps made from it: its owner's, or a deck that has some made ones).
     let notesTab = g.hasAny || g.can, diagramsTab = g.can || !dgs.isEmpty, sourcesTab = g.can
-    let items = [DeckTabs.Item(id: "cards", label: "Cards", count: String(d.rows.count))]
+    let items = (sourcesTab ? [DeckTabs.Item(id: "sources", label: "Sources", count: srcs.isEmpty ? "" : String(srcs.count))] : [])
+      + [DeckTabs.Item(id: "cards", label: "Cards", count: String(d.rows.count))]
       + (notesTab ? [DeckTabs.Item(id: "notes", label: "Notes", count: "")] : [])
       + (diagramsTab ? [DeckTabs.Item(id: "diagrams", label: "Diagrams", count: dgs.isEmpty ? "" : String(dgs.count))] : [])
-      + (sourcesTab ? [DeckTabs.Item(id: "sources", label: "Sources", count: srcs.isEmpty ? "" : String(srcs.count))] : [])
     let want = tab ?? "cards", section = want == "notes" && notesTab ? "notes" : want == "diagrams" && diagramsTab ? "diagrams" : want == "sources" && sourcesTab ? "sources" : "cards"
     return ScrollViewReader { proxy in ScrollView(showsIndicators: false) {
       VStack(spacing: 16) {
-        header(d, sub: d.lineShort, make: true)
+        header(d, sub: d.lineShort)
         VStack(spacing: 16) {
           if d.sharing.linked, let lk = d.sharing.link { fromRow(d, lk) }
           let upd = d.sharing.isCopy ? max(store.deckUpdates(d.id).count, d.sharing.link?.pending ?? 0) : 0
@@ -307,16 +304,6 @@ struct DeckScreen: View {
               .background(RoundedRectangle(cornerRadius: 18, style: .continuous).fill(t.surf))
             }
             .buttonStyle(.press)
-          }
-          HStack(spacing: 8) {
-            tile("Due", String(d.due), t.text)
-            tile("New", String(d.fresh), t.text)
-            tile("Remembered", d.ret.map { "\($0)%" } ?? "—", d.ret == nil ? t.muted : d.ret! >= d.goal ? t.good : d.ret! >= d.goal - 5 ? t.hard : t.again)
-          }
-          // An exam coming: how many days, and how many cards to review before it.
-          if let x = d.exam {
-            HStack(spacing: 8) { Icon("calendar", 16, 2).foregroundStyle(t.text); Text(x.line).css(14).foregroundStyle(t.muted) }
-              .frame(maxWidth: .infinity, alignment: .leading).accessibilityElement(children: .combine)
           }
           HStack(spacing: 8) {
             Button { store.startReview(d.id); nav.study(deckId: d.id) } label: {
@@ -339,8 +326,6 @@ struct DeckScreen: View {
             .buttonStyle(.press)
             .frame(width: learnWidth)
           }
-          TestStartButton(scope: .deck(d.id))
-          TestPastList(scope: .deck(d.id))
           if items.count > 1 { DeckTabs(items: items, selected: section) { tab = $0 }.id("deck-tabs") }
           if section == "notes" { notes(d, g) }
           if section == "diagrams" { DiagramsCard(flow: store.diagrams, deckId: d.id, rows: dgs, can: g.can) }
@@ -416,17 +401,6 @@ struct DeckScreen: View {
   /// The Learn button is half the Study button (flex 2 : 1 with an 8-point gap).
   private var learnWidth: CGFloat { ((UIScreen.main.bounds.width - 40 - 8) / 3).rounded(.down) }
 
-  private func tile(_ label: String, _ value: String, _ color: Color) -> some View {
-    VStack(alignment: .leading, spacing: 0) {
-      Text(label).css(12, .medium).foregroundStyle(t.muted)
-      Spacer(minLength: 0)
-      Text(value).css(26, .bold, ls: -0.03).foregroundStyle(color).lineBox(26)
-    }
-    .padding(.horizontal, 14).padding(.vertical, 12)
-    .frame(maxWidth: .infinity, alignment: .leading).frame(height: 80)
-    .background(RoundedRectangle(cornerRadius: 22, style: .continuous).fill(t.surf))
-  }
-
   private func row(_ r: CardRowVM) -> some View {
     let fit = Tags.fit(r.tags, 2)
     return VStack(alignment: .leading, spacing: 3) {
@@ -444,20 +418,12 @@ struct DeckScreen: View {
     .contentShape(Rectangle())
   }
 
-  // PhoneDeckEmpty: the header (with New card), then the Library's Make box and its row, set to this deck: a new deck opens here, ready for material.
+  // PhoneDeckEmpty (a new deck opens here): the header, with "No cards yet" under the name and Make cards and New card on it, and nothing under it
+  // (the owner, 2026-10-02: no Make box or row).
   private func empty(_ d: DeckVM) -> some View {
     ScrollView(showsIndicators: false) {
-      VStack(spacing: 20) {
-        header(d, sub: "No cards yet")
-        VStack(spacing: 14) {
-          MakeBox(deckId: d.id)
-          MakeKinds(deckId: d.id, moreOpen: $moreOpen)
-        }
-        .padding(.horizontal, 20)
-      }
-      .padding(.bottom, 120)
+      header(d, sub: "No cards yet").padding(.bottom, 120)
     }
-    .scrollDismissesKeyboard(.immediately)
     .ignoresSafeArea(edges: .top)
   }
 }

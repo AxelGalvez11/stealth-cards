@@ -184,7 +184,7 @@ ${DROP_JS}
 renderVals() {
   ${T}${DB_JS}
   const p = this.props, R = this.rich(), md = this.md(), M = db.mock ? this.mockMaterials().make : db.make, plural = (n, w) => n + ' ' + w + (n === 1 ? '' : 's');
-  M.enter({ kind: p.kind, deckId: p.deckId, from: p.from, guide: p.guide, page: p.page, folder: p.folder, step: p.step });
+  M.enter({ kind: p.kind, deckId: p.deckId, from: p.from, guide: p.guide, page: p.page, step: p.step });
   const v = M.view(), step = v.step, kind = v.kind, o = v.opts, lim = v.limits, mock = !!db.mock;
   const TITLES = { file: 'Upload', photo: 'Photos', record: 'Record a lecture', paste: 'Paste', video: 'YouTube', topic: 'A topic' };
   const title = step === 'add' ? (v.from ? 'More cards' : TITLES[kind] || 'Make cards') : step === 'making' ? 'Making your cards' : step === 'review' ? 'Check your cards' : 'Make cards';
@@ -352,8 +352,8 @@ export function deckBlocks(H, phone) {
       <div ref="{{gs.ref}}" data-sc-own data-phone="${phone ? 'yes' : ''}" style="${NOTES_VARS('t.bg')}"></div>
     </section>
   </sc-if>`;
-  // The deck page's sections: Cards, Notes (the Guide and its pages) and Sources (what the cards were made from; only for the deck's owner). A row of tabs with room for
-  // one more. A section with a count shows it (cards, sources).
+  // The deck page's sections, right under its header: Sources (what the cards were made from; only for the deck's owner), Cards, Notes (the Guide
+  // and its pages) and Diagrams. A section with a count shows it (sources, cards, diagrams).
   const tabs = `<sc-if value="{{gs.showSections}}" hint-placeholder-val="{{ true }}"><div role="tablist" aria-label="Deck sections" style="flex-shrink: 0; display: flex; gap: ${phone ? 22 : 28}px; border-bottom: 1px solid {{t.line}}; overflow-x: auto; scrollbar-width: none;"><sc-for list="{{gs.sections}}" as="x" hint-placeholder-count="3"><button type="button" role="tab" aria-selected="{{x.selected}}" onClick="{{x.pick}}" style="position: relative; height: ${phone ? 44 : 46}px; padding: 0; flex-shrink: 0; display: inline-flex; align-items: center; gap: 7px; border: 0; background: transparent; color: {{x.fg}}; font: inherit; font-size: 15px; font-weight: 600; white-space: nowrap; cursor: pointer;"><span>{{x.label}}</span><sc-if value="{{x.hasCount}}" hint-placeholder-val="{{ true }}"><span style="font-family: ${MONO}; font-size: 12px; font-weight: 500; color: {{t.muted}};">{{x.count}}</span></sc-if><span aria-hidden="true" style="position: absolute; left: 0; right: 0; bottom: -1px; height: 2px; border-radius: 1px; background: {{x.bar}};"></span></button></sc-for></div></sc-if>`;
   const sources = `<sc-if value="{{gs.sourcesShow}}" hint-placeholder-val="{{ true }}">
     <section aria-label="Sources" style="min-width: 0; box-sizing: border-box; padding: ${phone ? '18px 18px 10px' : '20px 20px 10px'}; border-radius: ${phone ? 22 : 24}px; background: {{t.surf}}; display: flex; flex-direction: column; gap: 6px;">
@@ -435,7 +435,8 @@ export const DECK_MATERIALS_JS = String.raw`
     const dgState = mock && new RegExp(${JSON.stringify(DIAGRAM_STATE_RE)}).test(p.guide || '');
     const wanted = st.tab !== undefined ? st.tab : p.sourceOpen ? 'sources' : p.diagram ? 'diagrams' : mock ? (p.guide === 'A source open' ? 'sources' : dgState ? 'diagrams' : { Notes: 'notes', Diagrams: 'diagrams', Sources: 'sources' }[p.section] || 'cards') : { notes: 'notes', diagrams: 'diagrams', sources: 'sources' }[p.tab] || 'cards';
     const tab = wanted === 'notes' && notesTab ? 'notes' : wanted === 'diagrams' && dgTab ? 'diagrams' : wanted === 'sources' && sourcesTab ? 'sources' : 'cards';
-    const tabList = [{ id: 'cards', label: 'Cards', count: String(cardsN) }, ...(notesTab ? [{ id: 'notes', label: 'Notes', count: '' }] : []), ...(dgTab ? [{ id: 'diagrams', label: 'Diagrams', count: dgRows.length ? String(dgRows.length) : '' }] : []), ...(sourcesTab ? [{ id: 'sources', label: 'Sources', count: sourceRows.length ? String(sourceRows.length) : '' }] : [])]
+    // Sources first (the owner, 2026-10-02: "sources should be the first tab, so sources, cards, notes, diagrams"); the page still opens on Cards.
+    const tabList = [...(sourcesTab ? [{ id: 'sources', label: 'Sources', count: sourceRows.length ? String(sourceRows.length) : '' }] : []), { id: 'cards', label: 'Cards', count: String(cardsN) }, ...(notesTab ? [{ id: 'notes', label: 'Notes', count: '' }] : []), ...(dgTab ? [{ id: 'diagrams', label: 'Diagrams', count: dgRows.length ? String(dgRows.length) : '' }] : [])]
       .map(x => ({ ...x, hasCount: !!x.count, selected: x.id === tab ? 'true' : 'false', fg: x.id === tab ? t.text : t.muted, bar: x.id === tab ? t.text : 'transparent', pick: () => this.setState({ tab: x.id }) }));
     const gs = {
       sections: tabList, showSections: tabList.length > 1, showCards: tab === 'cards', noCards: tab === 'cards' && cardsN === 0, sourcesNone: sourceRows.length === 0,

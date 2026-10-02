@@ -146,6 +146,6 @@ final class ReminderTests: AppCase {
     banner.tap()
     check(app.wait(for: .runningForeground, timeout: 15), "tapping it opens the app")
     check(eventually(10) { app.buttons["Library"].isSelected }, "on the Library")
-    check(wait(any(app, "What do you want to study?")) && wait(any(app, "1 card due")), "its top, with what’s due")
+    check(wait(button(app, "Add")) && wait(any(app, "Bones")), "the Library itself, with the deck that has a card due")
   }
 }

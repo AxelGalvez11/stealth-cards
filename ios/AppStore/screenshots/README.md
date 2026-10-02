@@ -5,10 +5,10 @@ the status bar at 9:41, full signal and a full battery. No text is put on top of
 
 | File | Board | What it shows |
 | --- | --- | --- |
-| `1-today.png` | `PhoneToday` | Today: the cards due, the streak, the decks |
+| `1-library.png` | `PhoneLibrary` | The Library, the first page: folders and decks, each with its cards due |
 | `2-study.png` | `PhoneReviewFour` | Studying a card, with Forgot, Hard, Good and Easy and when each brings it back |
 | `3-learn.png` | `PhoneQuizAnswered` | Learn mode: a multiple-choice question, what was right, and why |
-| `4-deck.png` | `PhoneDeck` | A deck: what's due, Flashcards and Learn, and its cards |
+| `4-deck.png` | `PhoneDeck` | A deck: Flashcards (with what's due) and Learn, its tabs (Sources, Cards, Notes, Diagrams) and its cards |
 | `5-stats.png` | `PhoneStatsMemory` | Stats: how much you remember, week by week and by tag (Pro) |
 | `6-discover.png` | `PhoneDiscover` | Discover: decks other people shared |
 | `7-shared-deck.png` | `PhonePublicDeck` | A shared deck: Study, Copy, Save, and the people who work on it |

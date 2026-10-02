@@ -2,51 +2,51 @@
   "slug": "features/ai-flashcards",
   "kind": "feature",
   "title": "AI flashcards: made by Lucida or your own AI",
-  "description": "Make flashcards from a PDF, photos, a recording, a YouTube link or a topic, or add your Lucida link to Claude, ChatGPT or Cursor and ask for them.",
+  "description": "Make flashcards from a PDF, photos, a recording, a YouTube link or a topic, or add Lucida’s link to Claude, ChatGPT or Cursor and ask for them.",
   "h1": "AI flashcards that land in your decks",
-  "lead": "Lucida can make cards from your files, pictures, recordings, YouTube links or a topic, and your own AI app can make and edit them too: add your personal Lucida link to Claude, ChatGPT, Cursor or any app that can add a remote MCP server by its web address, and ask it for flashcards. Either way the cards land in your decks, Lucida plans the reviews, and on the free plan your own AI can make as many cards as you want.",
-  "updated": "2026-10-01",
+  "lead": "Lucida can make cards from your files, pictures, recordings, YouTube links or a topic, and your own AI app can make and edit them too: add Lucida’s link to Claude, ChatGPT, Cursor or any app that can add a remote MCP server by its web address, sign in to Lucida, and ask it for flashcards. Either way the cards land in your decks, Lucida plans the reviews, and on the free plan your own AI can make as many cards as you want.",
+  "updated": "2026-10-02",
   "table": {
     "columns": [
       "App",
-      "How to add your link",
+      "How to add Lucida’s link",
       "Who can do it, per the app’s own docs",
       "Steps inside Lucida"
     ],
     "rows": [
       [
         "Claude",
-        "Customize, then Connectors, then Add custom connector. Paste the link. If Claude asks how to sign in, choose No sign-in, because the link itself is the key.",
+        "Customize, then Connectors, then Add custom connector. Paste the link, choose Connect, then sign in to Lucida and press Allow.",
         "Custom connectors work on the Free (one connector), Pro, Max, Team and Enterprise plans",
         "Yes"
       ],
       [
         "ChatGPT",
-        "Turn on Developer mode in ChatGPT’s settings, then add a developer-mode app for a remote MCP server and paste the link. No authentication is needed.",
+        "Turn on Developer mode in ChatGPT’s settings, then add a developer-mode app for a remote MCP server, paste the link and pick OAuth. Sign in to Lucida and press Allow.",
         "OpenAI lists Pro, Plus, Business, Enterprise and Education accounts, on the web",
         "Yes"
       ],
       [
         "Cursor",
-        "Use the Add to Cursor button in Lucida’s setup, or add the link to Cursor’s mcp.json file.",
+        "Use the Add to Cursor button in Lucida’s setup, or put your private link in Cursor’s mcp.json file (Connect AI copies it). Cursor can’t sign in to Lucida, so it uses that link.",
         "Cursor connects to remote servers over HTTP and SSE",
         "Yes"
       ],
       [
         "Gemini",
-        "In the Gemini web app, open Connected Apps, add a custom app and paste the link.",
+        "In the Gemini web app, open Connected Apps, add a custom app and paste the link, then sign in to Lucida and press Allow.",
         "Google says you must be 18 or over and in the US, use a personal Google Account with Keep Activity on, and use English",
         "No"
       ],
       [
         "Grok",
-        "Go to grok.com/connectors, choose New Connector, then Custom, and paste the link.",
+        "Go to grok.com/connectors, choose New Connector, then Custom, and paste the link. Sign in to Lucida when it asks, and press Allow.",
         "xAI says connectors are available to all Grok users, and the server must be reachable over the public internet",
         "No"
       ],
       [
         "Any other MCP app",
-        "Paste the link wherever the app asks for a remote MCP server URL.",
+        "Paste the link wherever the app asks for a remote MCP server URL, and sign in to Lucida. An app that can’t sign in can use your private link.",
         "Depends on the app",
         "Yes (Any MCP app)"
       ]
@@ -90,19 +90,19 @@
     {
       "h2": "How it works, step by step",
       "paras": [
-        "To make cards with your own AI app, you connect it once and then ask it for cards. MCP, the Model Context Protocol, is an open standard for connecting AI apps to outside tools and data. Your Lucida link is an MCP server that lets your AI read and write your flashcards. Lucida shows step-by-step setup for Claude, ChatGPT and Cursor. Gemini and Grok can add the same link, but Lucida has no steps for them, and menu names change, so follow each app’s own help page (linked under Sources)."
+        "To make cards with your own AI app, you connect it once and then ask it for cards. MCP, the Model Context Protocol, is an open standard for connecting AI apps to outside tools and data. Lucida’s link is an MCP server that lets your AI read and write your flashcards once you sign in to Lucida from it. Lucida shows step-by-step setup for Claude, ChatGPT and Cursor. Gemini and Grok can add the same link, but Lucida has no steps for them, and menu names change, so follow each app’s own help page (linked under Sources)."
       ],
       "bullets": [
-        "**1. Open Connect AI.** Sign in at [app.lucida.cards](https://app.lucida.cards) and open Connect AI. Your personal link is there. It looks like app.lucida.cards/mcp/lk_ followed by a long code.",
-        "**2. Add the link to your AI app.** Use the steps in the table above. You only do this once.",
+        "**1. Copy the link.** It is the same for everyone, with no secret in it: app.lucida.cards/mcp. Connect AI in [Lucida](https://app.lucida.cards) has it too, with a Copy button.",
+        "**2. Add the link to your AI app and sign in.** Use the steps in the table above: your AI app opens Lucida’s sign-in, and you press Allow. You only do this once.",
         "**3. Ask for cards.** For example: “Make 20 flashcards from these lecture notes, one idea per card.” Attach your notes or slides. Your AI reads them and sends Lucida the cards.",
         "**4. Study.** The cards are in your decks, each one already on the review schedule. If you turned on Let me check AI cards first, they wait under Cards to check until you keep or toss them."
       ]
     },
     {
-      "h2": "Keep the link private",
+      "h2": "Signing in, and your private link",
       "paras": [
-        "Anyone who has your link can reach your cards, so don’t share it or post it. If it leaks, open Connect AI and choose Make a new link. The old link stops working right away, and your AI apps need the new one."
+        "Lucida’s link opens nothing on its own: your AI app gets in only after you sign in and press Allow. Every app you allow is listed on the Connect AI page, and Disconnect ends it at once. An app that can’t sign in, like Cursor, can use your private link instead: Connect AI copies it without showing it. Anyone who has that link can reach your cards, so don’t share it or post it. If it leaks, open Connect AI and choose Make a new link. The old link stops working right away."
       ]
     },
     {
@@ -122,7 +122,7 @@
         "Draw the hidden boxes for picture cards. You add those in the editor (see [image occlusion](/features/image-occlusion)).",
         "Delete cards, unless you switch that on.",
         "Change anything on other people’s decks. It can only suggest changes.",
-        "Read PDFs or slides through your link. Your AI app reads them and sends Lucida the cards. To have Lucida make cards from a file, use Make cards in Lucida."
+        "Read PDFs or slides through Lucida’s link. Your AI app reads them and sends Lucida the cards. To have Lucida make cards from a file, use Make cards in Lucida."
       ]
     },
     {
@@ -163,7 +163,7 @@
       "h2": "Quizzes and explanations",
       "paras": [
         "Learn mode uses the questions your AI wrote when a card has them (about four times in five), and otherwise asks from the card’s own words and your other answers. Questions can ask about cause and effect instead of repeating the card.",
-        "When you tap Explain on a card, you see a two-to-four-sentence explanation: your AI’s, if it wrote one, or one from Lucida’s own AI (3 a day on Free, up to 200 a day on Pro). Each explanation is saved on the card, so seeing it again costs nothing. Explain is one of three places Lucida’s own AI is used. The others are making cards and starting a live game from a topic. Everything else your AI does for you happens in your own AI app, through your link."
+        "When you tap Explain on a card, you see a two-to-four-sentence explanation: your AI’s, if it wrote one, or one from Lucida’s own AI (3 a day on Free, up to 200 a day on Pro). Each explanation is saved on the card, so seeing it again costs nothing. Explain is one of three places Lucida’s own AI is used. The others are making cards and starting a live game from a topic. Everything else your AI does for you happens in your own AI app, through Lucida’s link."
       ]
     },
     {
@@ -191,7 +191,7 @@
   "faq": [
     {
       "q": "Can Lucida make flashcards without my own AI app?",
-      "a": "Yes. Choose Make cards and add a PDF, PowerPoint, Word or text file, pictures, an audio file or a recording, a YouTube link, pasted text, or a topic. Lucida writes the cards, shows them to you first, and saves the ones you keep in your deck. Your own AI app can still make and edit cards through your Lucida link."
+      "a": "Yes. Choose Make cards and add a PDF, PowerPoint, Word or text file, pictures, an audio file or a recording, a YouTube link, pasted text, or a topic. Lucida writes the cards, shows them to you first, and saves the ones you keep in your deck. Your own AI app can still make and edit cards through Lucida’s link."
     },
     {
       "q": "What are the limits for making cards in Lucida?",
@@ -199,15 +199,15 @@
     },
     {
       "q": "Can ChatGPT make flashcards?",
-      "a": "Yes. ChatGPT can write flashcards in a chat, and OpenAI describes flip-card flashcards in ChatGPT too. With your Lucida link added as a developer-mode app, it can save the cards straight into your Lucida decks, where they get a review schedule."
+      "a": "Yes. ChatGPT can write flashcards in a chat, and OpenAI describes flip-card flashcards in ChatGPT too. With Lucida’s link added as a developer-mode app (you sign in to Lucida once), it can save the cards straight into your Lucida decks, where they get a review schedule."
     },
     {
       "q": "Can Claude make flashcards for Lucida?",
-      "a": "Yes. Add your Lucida link as a custom connector in Claude (Customize, then Connectors), then ask for cards. Claude’s free plan allows one custom connector."
+      "a": "Yes. Add Lucida’s link as a custom connector in Claude (Customize, then Connectors), sign in to Lucida and press Allow, then ask for cards. Claude’s free plan allows one custom connector."
     },
     {
       "q": "Does Lucida work with Gemini or Grok?",
-      "a": "Both can add a custom MCP server by its web address, so your Lucida link should work, but Lucida’s Connect AI page has steps only for Claude, ChatGPT and Cursor. Google limits custom apps in Gemini to people 18 or over in the US, on personal accounts, in English."
+      "a": "Both can add a custom MCP server by its web address, so Lucida’s link should work, but Lucida’s Connect AI page has steps only for Claude, ChatGPT and Cursor. Google limits custom apps in Gemini to people 18 or over in the US, on personal accounts, in English."
     },
     {
       "q": "Do I need a paid AI subscription?",
@@ -215,7 +215,7 @@
     },
     {
       "q": "What is MCP?",
-      "a": "MCP, the Model Context Protocol, is an open standard for connecting AI apps to outside tools and data. Your Lucida link is an MCP server that lets your AI read and write your flashcards."
+      "a": "MCP, the Model Context Protocol, is an open standard for connecting AI apps to outside tools and data. Lucida’s link is an MCP server that lets your AI read and write your flashcards."
     },
     {
       "q": "Can I make flashcards from a PDF or lecture slides?",
@@ -226,8 +226,8 @@
       "a": "It can edit cards while Edit is on, and it can delete only if you switch Delete on, which is off by default. Turn on Let me check AI cards first and every new card and change waits for your OK."
     },
     {
-      "q": "Is my Lucida link safe?",
-      "a": "The link is the key to your library, so keep it private. If it leaks, choose Make a new link on the Connect AI page and the old one stops working at once. Lucida’s privacy policy says it doesn’t use your cards to train AI models."
+      "q": "Is connecting my AI to Lucida safe?",
+      "a": "Lucida’s link has no secret in it: an app gets in only after you sign in and press Allow, and Disconnect on the Connect AI page ends it. Your private link, for apps that can’t sign in, is the key to your library, so keep it private. If it leaks, choose Make a new link and the old one stops working at once. Lucida’s privacy policy says it doesn’t use your cards to train AI models."
     },
     {
       "q": "Is what I add sent to an AI service?",

@@ -1,6 +1,6 @@
 #!/bin/zsh
-# Import cards on the iPhone, end to end (LucidaUITests/ImportTests.swift): every way in (the Library's +, the Make box's More, a brand-new account's
-# Import cards, an empty deck's More with that deck), pasting and typing (the count, and the line when there are no cards), into a new deck and one of
+# Import cards on the iPhone, end to end (LucidaUITests/ImportTests.swift): every way in (the Library's +, a brand-new account's Import cards, and
+# a deck's chip, an empty deck's too), pasting and typing (the count, and the line when there are no cards), into a new deck and one of
 # yours, files read as if chosen in the Files picker (UTF-16, Latin-1, an Anki export, 2,500 cards, a file that isn't text) and the picker itself,
 # and the quiet line when a save fails (ios/tools/fail-proxy.mjs in front of the server fails every save while a file exists) or the server says no.
 # No system alert ever shows. It starts web/server.mjs on PORT (3971) with an empty data folder and the stand-in on PROXYPORT (3972), makes the files,

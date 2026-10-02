@@ -1,5 +1,4 @@
-// Lucida's own small menus (design/materials.mjs addMenu, design/home.mjs More): the Library's + (New deck, Make cards, Import cards) and the More
-// of the Make box's row (Photos, Record a lecture, A topic, Import cards, New deck). A small menu under its button, over everything, with a layer
+// Lucida's own small menu (design/materials.mjs addMenu): the Library's + (New deck, Import cards). A small menu under its button, over everything, with a layer
 // behind it that closes it: a round icon and a name on each row, and a line about it where the row has one. The button is marked with
 // `.addMenuAnchor(id)`, and the screen draws the menu with `.addMenu(open:rows:id:)` (one screen can have several, each with its own id).
 import SwiftUI
@@ -22,8 +21,8 @@ extension View {
   func addMenu(open: Binding<Bool>, rows: [AddMenuRow], id: String = "add", width: CGFloat = 300, label: String = "Add cards") -> some View {
     overlayPreferenceValue(AddMenuAnchor.self) { anchors in AddMenuPopup(open: open, rows: rows, anchor: anchors[id], width: width, label: label) }
       #if DEBUG
-      // `-menu open` (or `-menu more`): that menu is open when the screen is (to set it beside its board).
-      .onAppear { if Board.arg("-menu") == (id == "add" ? "open" : id) { open.wrappedValue = true } }
+      // `-menu open`: the + menu is open when the screen is (to set it beside its board).
+      .onAppear { if id == "add" && Board.arg("-menu") == "open" { open.wrappedValue = true } }
       #endif
   }
 }

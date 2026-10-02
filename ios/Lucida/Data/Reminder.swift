@@ -4,7 +4,7 @@
 // when the app opens; picking another time sets it again; Off removes it. If you say no to notices the row stays Off and says how to
 // allow them in iPhone Settings. What the row says comes from the phone's own list of scheduled notices, so it is always what will
 // really happen (a notice that was turned off in iPhone Settings, or a phone that was reset, shows as Off). Tapping the notice opens the
-// Library (ReminderTap), where the cards due wait with Review.
+// Library (ReminderTap), where each deck says how many of its cards are due.
 import SwiftUI
 import UserNotifications
 
@@ -96,8 +96,8 @@ final class Reminder: ObservableObject {
   }
 }
 
-/// Tapping the daily notice opens the Library's first page (it opened Today until there was no Today, 2026-10-01), where the cards due wait
-/// with Review: the tab that was showing goes back to the Library and its decks. What was over the page (a sheet, a review) stays as it was.
+/// Tapping the daily notice opens the Library's first page (it opened Today until there was no Today, 2026-10-01), where each deck says how
+/// many of its cards are due: the tab that was showing goes back to the Library and its decks. What was over the page (a sheet, a review) stays as it was.
 final class ReminderTap: NSObject, UNUserNotificationCenterDelegate {
   static let shared = ReminderTap()
   /// What a tap does (the app sets it as it starts).

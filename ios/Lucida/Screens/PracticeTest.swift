@@ -1,56 +1,26 @@
 // iPhone · Practice test (PhoneTest, with the board's picker: Set up, Multiple choice, True or false, Fill in the blank, Written,
-// Matching, Submit, Leave, Results, Results · missed), and its pieces on the deck page and a folder's page: the Practice test
-// button and the list of past results. A calm test like an exam, not a game: numbered questions you can go back through and flag,
+// Matching, Submit, Leave, Results, Results · missed), and its pieces on a folder's page: the Practice test button and how the last
+// one went (a deck's page has none: the owner, 2026-10-02, "remove practice tests"). A calm test like an exam, not a game: numbered questions you can go back through and flag,
 // a quiet timer when one is on, nothing said about right or wrong until you submit, then the score with every question. The
 // engine is Data/TestEngine.swift (a port of web/db.js's), the words and looks are the board's (design/test-boards.mjs).
 import SwiftUI
 
-// ---------- the deck page's and the folder's pieces ----------
+// ---------- the folder's pieces ----------
 
-/// The deck page's Practice test button (under Flashcards and Learn).
+/// The Practice test button (a folder's page).
 struct TestStartButton: View {
   @Environment(\.theme) private var t
   @Environment(\.accessibilityReduceMotion) private var still
   @EnvironmentObject private var nav: Nav
   let scope: TestScope
-  var height: CGFloat = 56
-  var size: CGFloat = 17
+  var height: CGFloat = 48
+  var size: CGFloat = 16
   var body: some View {
     Button { withAnimation(Motion.sheet) { nav.sheet = .testStart(scope) } } label: {
       HStack(spacing: 8) { Icon("file", size, 2); Text("Practice test").css(size, .semibold).lineLimit(1).fixedSize() }
         .foregroundStyle(t.text).frame(maxWidth: .infinity).frame(height: height).background(Capsule().fill(t.surf))
     }
     .buttonStyle(.press)
-  }
-}
-
-/// The deck's past results, a small list of dates and scores (nothing when there are none).
-struct TestPastList: View {
-  @Environment(\.theme) private var t
-  @EnvironmentObject private var store: Store
-  let scope: TestScope
-  var body: some View {
-    let rows = Array(store.pastTests(scope).prefix(3))
-    if !rows.isEmpty {
-      VStack(alignment: .leading, spacing: 8) {
-        Text("Practice tests").css(13, .semibold).foregroundStyle(t.muted)
-        VStack(spacing: 0) {
-          ForEach(Array(rows.enumerated()), id: \.element.id) { i, r in
-            HStack(spacing: 16) {
-              Text(r.day).css(14).frame(maxWidth: .infinity, alignment: .leading)
-              Text(r.line).css(14).foregroundStyle(t.muted)
-              Text("\(r.pct)%").css(14, .semibold, mono: true).frame(width: 48, alignment: .trailing)
-            }
-            .frame(height: 44).padding(.top, i > 0 ? 1 : 0)
-            .overlay(alignment: .top) { if i > 0 { Rectangle().fill(t.line).frame(height: 1) } }
-            .accessibilityElement(children: .combine)
-          }
-        }
-        .padding(.horizontal, 16).padding(.vertical, 2)
-        .background(RoundedRectangle(cornerRadius: 18, style: .continuous).fill(t.surf))
-      }
-      .frame(maxWidth: .infinity, alignment: .leading)
-    }
   }
 }
 
@@ -63,7 +33,7 @@ struct TestFolderBits: View {
     let scope = TestScope.folder(folder.id)
     VStack(alignment: .leading, spacing: 14) {
       if let line = store.lastTestLine(scope) { Text(line).css(14).foregroundStyle(t.muted).padding(.top, -8) }
-      if !folder.decks.isEmpty { TestStartButton(scope: scope, height: 48, size: 16) }
+      if !folder.decks.isEmpty { TestStartButton(scope: scope) }
     }
   }
 }

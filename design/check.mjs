@@ -74,10 +74,8 @@ PROP_SETS.push({ state: 'Yearly' }, { state: 'Monthly' }, { state: 'Buying' }, {
 PROP_SETS.push({ reminder: 'Off' }, { reminder: '6:00 PM' }, { reminder: 'Off', dark: true }, { reminderNote: true }, { reminderNote: true, dark: true }, { reminderNote: true, dark: true, dim: true });
 // The web sidebar as the rail of icons (the Library's collapsed Tweak; the mock gives every board with a sidebar the same).
 PROP_SETS.push({ collapsed: true }, { collapsed: true, dark: true }, { collapsed: true, caughtUp: true });
-// The Library's top (design/home.mjs): with and without something due, with assignments, words in the Make box, its More menu open, and a file
-// held over the page.
-PROP_SETS.push({ assignments: true }, { assignments: true, caughtUp: true, dark: true }, { $state: { mkText: 'The Krebs cycle' } }, { $state: { mkMore: true } },
-  { $state: { mkMore: true }, dark: true, dim: true }, { $state: { mkOver: true } }, { folder: 'f1', $state: { mkMore: true } });
+// The Library's top: with assignments, and with nothing due.
+PROP_SETS.push({ assignments: true }, { assignments: true, caughtUp: true, dark: true });
 // Settings' sections: the web page shows one at a time (WebSettings' section), the iPhone's list shows all of them (PhoneSettings, All),
 // and a narrow web screen shows the list of sections (List) or one of them.
 for (const name of ['Account', 'Plan', 'Studying', 'Appearance', 'Connect AI', 'Privacy', 'Help & legal']) PROP_SETS.push({ section: name }, { section: name, dark: true, dim: true }, { section: name, plan: 'Free' });
@@ -108,7 +106,7 @@ PROP_SETS.push({ screen: 'Set up' }, { screen: 'Multiple choice' }, { screen: 'T
   { screen: 'Results' }, { screen: 'Results · missed' }, { screen: 'Multiple choice', timed: false }, { screen: 'Matching', dark: true, dim: true }, { screen: 'Results', dark: true }, { screen: 'Submit', dark: true },
   { screen: 'Multiple choice', $state: { sheet: true } }, { screen: 'Results', $state: { exOpen: { 3: true }, exOn: { 3: true } } }, { screen: 'Results', $state: { counted: { 18: true } } },
   { screen: 'Set up', $state: { kinds: ['mc'], count: 10, limit: 20 } }, { screen: 'Set up', folderId: 'f1' }, { screen: 'Set up', dark: true, dim: true }, { screen: 'Written', $state: { m: { type: '' } } },
-  { screen: 'Matching', $state: { m: { match: { 0: 1, 1: 3, 2: 4, 3: 0, 4: 2 } } } }, { tests: false });
+  { screen: 'Matching', $state: { m: { match: { 0: 1, 1: 3, 2: 4, 3: 0, 4: 2 } } } });
 
 // The questions that ask before a delete (Lucida's own dialog, design/ui.mjs): each one open, light, dark and gray.
 for (const ask of Object.keys(ASK_SAMPLES)) PROP_SETS.push({ ask }, { ask, dark: true }, { ask, dark: true, dim: true });

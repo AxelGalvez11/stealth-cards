@@ -1,21 +1,22 @@
-// iPhone · Connect AI (PhoneConnect): your personal MCP link on the Apricot card, which AI apps use it, and the apps you allowed
-// (each signed in to Lucida, with Disconnect). It's a page inside Settings (its row there says Connect AI): a back button to
+// iPhone · Connect AI (PhoneConnect): Lucida's MCP address on the Apricot card (https://app.lucida.cards/mcp, with no secret in it: an AI app
+// signs in to Lucida there), a quiet line that copies your private link for the apps that can't sign in, which AI apps use Lucida, and the
+// apps you allowed (each signed in to Lucida, with Disconnect). It's a page inside Settings (its row there says Connect AI): a back button to
 // Settings and no tab bar, like Settings › Theme.
 import SwiftUI
 
 struct ConnectVM {
-  var url = ""
-  var short = ""
+  /// The address every app is given, and your own link (online, for the apps that can't sign in; it's never shown).
+  var url = "", privateURL = ""
   var clients: [String: Bool] = [:]
 }
 
 extension Store {
   func connect() -> ConnectVM {
-    if demo { return ConnectVM(url: "https://app.lucida.cards/mcp/lk_5b1f0c6e9a2d4b7f8e3a1c0d9b8a7f6e2Hq9xWrT4kLm1ZpVb8sNc3Yd7Ga0uEfJ", short: "https://app.lucida.cards/mcp/lk_5b1f0c6e…", clients: ["claude": true, "openai": true, "cursor": false, "mcp": false]) }
-    // (The AI apps that used your link, and the ones you allowed to sign in, like the web's db.ai().)
-    let url = API.base.absoluteString + (lib.ai.key.map { "/mcp/" + $0 } ?? "/mcp"), names = Array(lib.ai.clients.keys) + (netApps()?.value?.apps.map(\.name) ?? [])
+    if demo { return ConnectVM(url: "https://app.lucida.cards/mcp", privateURL: "https://app.lucida.cards/mcp/lk_5b1f0c6e9a2d4b7f8e3a1c0d9b8a7f6e2Hq9xWrT4kLm1ZpVb8sNc3Yd7Ga0uEfJ", clients: ["claude": true, "openai": true, "cursor": false, "mcp": false]) }
+    // (The AI apps that called Lucida, and the ones you allowed to sign in, like the web's db.ai().)
+    let base = API.base.absoluteString, names = Array(lib.ai.clients.keys) + (netApps()?.value?.apps.map(\.name) ?? [])
     let known = ["Claude", "ChatGPT", "Cursor"]
-    return ConnectVM(url: url, short: String(url.prefix(40)) + (url.count > 40 ? "…" : ""),
+    return ConnectVM(url: base + "/mcp", privateURL: lib.ai.key.map { base + "/mcp/" + $0 } ?? "",
                      clients: ["claude": names.contains("Claude"), "openai": names.contains("ChatGPT"), "cursor": names.contains("Cursor"), "mcp": names.contains { !known.contains($0) }])
   }
 }
@@ -24,7 +25,8 @@ struct ConnectScreen: View {
   @Environment(\.theme) private var t
   @EnvironmentObject private var store: Store
   @EnvironmentObject private var nav: Nav
-  @State private var copied = false
+  /// What was copied last: the address ("link") or your private link ("private").
+  @State private var copied = ""
   @State private var err = ""
 
   var body: some View {
@@ -50,14 +52,25 @@ struct ConnectScreen: View {
               .overlay(Capsule().strokeBorder(hero.glassLine.color, lineWidth: 1.5))
             Button {
               UIPasteboard.general.string = c.url
-              copied = true
+              copied = "link"
             } label: {
               // "Copied" slides in where "Copy link" was, like a toast.
-              ZStack { Text(copied ? "Copied" : "Copy link").css(15, .semibold).foregroundStyle(Color.black).id(copied).popTransition() }
+              ZStack { Text(copied == "link" ? "Copied" : "Copy link").css(15, .semibold).foregroundStyle(Color.black).id(copied == "link").popTransition() }
                 .animation(Motion.pop, value: copied)
                 .frame(maxWidth: .infinity).frame(height: 48).background(Capsule().fill(Color.white))
             }
             .buttonStyle(.press)
+            // Your own link, for the apps that can't sign in: copied, never shown.
+            if !c.privateURL.isEmpty {
+              Button {
+                UIPasteboard.general.string = c.privateURL
+                copied = "private"
+              } label: {
+                Text(copied == "private" ? "Private link copied" : "Private link for apps that can’t sign in").css(13, .medium).opacity(0.8)
+                  .frame(maxWidth: .infinity, alignment: .leading).contentShape(Rectangle())
+              }
+              .buttonStyle(.plain)
+            }
           }
           .padding(20)
         }

@@ -240,7 +240,7 @@ mock() {
       sorted: 12, piles: [{ name: 'Know it', n: 7, total: 18 }, { name: 'Almost', n: 3, total: 6 }, { name: 'No clue', n: 2, total: 3 }], onlyPiles: false }),
     stats: () => ({ streak: 12, best: 31, reviews: '1,284', cards: '2,470', ai: 312, remembered: 90, goal: 90, heat: null, forecast: X.DUE_14,
       byDeck: X.DECKS.map(d => ({ name: d.name, ret: d.ret })) }),
-    ai: () => ({ url: 'https://app.lucida.cards/mcp/lk_5b1f0c6e9a2d4b7f8e3a1c0d9b8a7f6e2Hq9xWrT4kLm1ZpVb8sNc3Yd7Ga0uEfJ', perms, clients: { claude: true, openai: true, cursor: false, mcp: false }, connected: 'Claude, ChatGPT' }),
+    ai: () => ({ url: 'https://app.lucida.cards/mcp', privateUrl: 'https://app.lucida.cards/mcp/lk_5b1f0c6e9a2d4b7f8e3a1c0d9b8a7f6e2Hq9xWrT4kLm1ZpVb8sNc3Yd7Ga0uEfJ', perms, clients: { claude: true, openai: true, cursor: false, mcp: false }, connected: 'Claude, ChatGPT' }),
     // Sound: the sample clip, a little way in (paused, or playing on the boards that say so). Play and the waveform work.
     sound: c => ({ key: c && (c.audio || c.speak) ? 'mock' : '', peaks: WAVE, dur: 2.6, speech: !!c && !c.audio, on: m.playing ?? !!p.playing, frac: m.frac ?? .42, busy: false }),
     // The Recording boards: a clip being recorded, 3 seconds in.
@@ -417,41 +417,6 @@ mock() {
   };
 }
 
-makeBox(t, db, { deckId = '', folder = '', board = 'Web', newDeck = true } = {}) {
-  const s = this.state, mock = !!db.mock, text = s.mkText || '', words = text.trim(), ready = words.length >= 2;
-  const at = k => '/make?source=' + k + (deckId ? '&deck=' + encodeURIComponent(deckId) : '') + (folder ? '&folder=' + encodeURIComponent(folder) : '');
-  const href = k => (mock ? board + 'Make.dc.html' : at(k));
-  // A YouTube link, a long paste (more than one line, or longer than a topic holds), or a topic in a few words.
-  const kindOf = v => { const w = String(v || '').trim(); return /^(https?:\/\/)?([\w-]+\.)*(youtube\.com|youtu\.be|youtube-nocookie\.com)\/\S+$/i.test(w) ? 'video' : /\n/.test(w) || w.length > 200 ? 'paste' : 'topic'; };
-  // The Make flow opens on that kind with the words already in, and the flow's own deck choice says where the cards go.
-  const begin = v => { const w = String(v || '').trim(), k = kindOf(w); if (mock || w.length < 2) return; this.setState({ mkText: '' });
-    db.make.begin({ kind: k, ...(k === 'video' ? { url: w } : k === 'paste' ? { text: w } : { topic: w }), opts: { deckId, folder } }); };
-  const upload = list => { this.setState({ mkOver: false }); if (mock || !list || !list.length) return; db.make.begin({ kind: 'file', opts: { deckId, folder } }); db.make.addFiles([...list]); };
-  const files = e => { const ty = e && e.dataTransfer && e.dataTransfer.types; return !!ty && [...ty].includes('Files'); };
-  const open = !!s.mkMore, close = () => this.setState({ mkMore: false });
-  return {
-    text, off: ready ? 'false' : 'true', goBg: ready ? t.inv : t.surf2, goFg: ready ? t.invText : t.muted,
-    set: e => { const v = e && e.target ? e.target.value : '', how = e && (e.inputType || (e.nativeEvent && e.nativeEvent.inputType));
-      if (how === 'insertFromPaste' && kindOf(v) !== 'topic') return begin(v);
-      this.setState({ mkText: v }); },
-    key: e => { if (!e || e.key !== 'Enter' || e.shiftKey || e.isComposing || (e.nativeEvent && e.nativeEvent.isComposing)) return; if (e.preventDefault) e.preventDefault(); begin(e.target && typeof e.target.value === 'string' ? e.target.value : text); },
-    go: () => begin(text),
-    uploadHref: href('file'), fileHref: href('file'), pasteHref: href('paste'), videoHref: href('video'), photoHref: href('photo'), recordHref: href('record'), topicHref: href('topic'),
-    importHref: mock ? board + 'Import.dc.html' : db.href('import', deckId), newDeckHref: mock ? board + 'NewDeck.dc.html' : db.href('newDeck'), newDeck,
-    more: { open, expanded: open ? 'true' : 'false', toggle: () => this.setState({ mkMore: !open }), close },
-    // A file over the page rings the box; dropped, it goes to Upload.
-    ring: s.mkOver ? 'inset 0 0 0 2px ' + t.text : 'none',
-    over: e => { if (!files(e)) return; e.preventDefault(); if (!s.mkOver) this.setState({ mkOver: true }); },
-    leave: e => { const el = e && e.target && e.target.closest ? e.target.closest('[data-make-drop]') || e.target : null, r = el && el.getBoundingClientRect ? el.getBoundingClientRect() : null;
-      if (s.mkOver && (!r || e.clientX <= r.left || e.clientX >= r.right || e.clientY <= r.top || e.clientY >= r.bottom)) this.setState({ mkOver: false }); },
-    drop: e => { if (!files(e)) return; e.preventDefault(); upload(e.dataTransfer.files); }
-  };
-}
-// What's due, for the due line: how many cards, about how long, and the review of every deck.
-dueLine(db, board = 'Web') {
-  const td = db.today(), n = td.due || 0;
-  return { show: n > 0, count: n + (n === 1 ? ' card' : ' cards') + ' due', time: 'About ' + Math.max(1, td.minutes || 1) + ' min', href: db.mock ? board + 'Review.dc.html' : td.studyHref };
-}
 renderVals() { const t = this.theme(!!this.props.dark, !!this.props.dim);const db = this.props.db || this.mock(); const chrome = db.chrome();
   // The Library with no decks yet still has its switch, so Classes are there before the first deck (web/classes.mjs).
   const modes = [['Decks', 'WebDecks', '/library'], ['All cards', 'WebLibraryCards', '/library/cards'], ['Classes', 'WebClasses', '/library/classes']]
@@ -481,12 +446,12 @@ renderVals() { const t = this.theme(!!this.props.dark, !!this.props.dim);const d
     return { name: a.name, className: a.className, text: a.name + ' · ' + when + ' · ' + left, sub: when + ' · ' + a.className, left, dot: g.base, textColor: done ? t.muted : t.text, leftColor: done ? t.good : t.text,
       href: db.mock ? 'WebDeck.dc.html' : a.progress ? '/deck/' + a.progress.deckId : '/class/' + a.code }; });
   return { hero: this.mesh(this.props.gradient ?? 'Iris'), grain: String(this.props.grain ?? 0.7), t, ...chrome, modes, assignments: assignRows, hasAssignments: assignRows.length > 0, nav: db.mock ? { ...chrome.nav, news: '', hasNews: false } : chrome.nav, art: this.mesh('Iris'), art2: this.mesh('Mint'), art3: this.mesh('Apricot'), noop: () => {},
-    mk: this.makeBox(t, db, { deckId: '', board: 'Web', newDeck: true }),
     deckName: dk.name, cover: { ...this.gen(dk.seed + (dk.cover.round ? ' #' + dk.cover.round : ''), dk.cover.style), ...(photo ? { ink: '#FFFFFF', shadow: '0 1px 14px rgba(0,0,0,.45)' } : {}),
       ...(C ? { base: C.base, ink: C.ink, shadow: 'none', plain: false, skin: true, art: C.art } : { plain: true, skin: false, art: null }) },
     coverTitle: C ? C.titleAt(34) : '', coverTitleS: C ? C.titleHead(32, dk.name) : '',
     coverIsImage: pic === 'mock', coverHasPhoto: !!photo, coverPhoto: photo,
-    newCardHref: db.mock ? 'WebCardsScreenNew.dc.html' : dk.newCardHref, importHref: db.mock ? 'WebImport.dc.html' : db.href('import', ''), connectHref: db.mock ? 'WebConnect.dc.html' : db.href('connect'),
+    newCardHref: db.mock ? 'WebCardsScreenNew.dc.html' : dk.newCardHref, makeHref: db.mock ? 'WebMake.dc.html' : '/make?deck=' + encodeURIComponent(dk.id),
+    newDeckHref: db.mock ? 'WebNewDeck.dc.html' : db.href('newDeck'), importHref: db.mock ? 'WebImport.dc.html' : db.href('import', ''), connectHref: db.mock ? 'WebConnect.dc.html' : db.href('connect'),
     openSettings: () => { if (!db.mock) db.act.go(dk.settingsHref); } }; }
 }
 return Component;

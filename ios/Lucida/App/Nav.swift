@@ -139,14 +139,9 @@ final class Nav: ObservableObject {
   /// Make cards from anything (the web's /make?source=&deck=&from=&guide=&page=): `kind` opens one kind's page (file, photo, record, paste,
   /// video, or topic; "" for the list), `deckId` is where the cards go, `from` is a kept source (its id) to make more cards from, and
   /// `guide` (a deck's id, with its `page`: "" or "main" for the Guide itself) is a Guide to make cards from. `text` starts it on Paste
-  /// with those words (a Guide's selection, named `title`; or, with `box`, words pasted in the Library's Make box, which get notes like any
-  /// other material), `topic` on A topic and `url` on YouTube with those already in, and `folder` is where a new deck made this way goes (the
-  /// Make box on a folder's page).
-  func make(kind: String = "", deckId: String = "", from: String = "", guide: String = "", page: String = "", text: String = "", title: String = "",
-            topic: String = "", url: String = "", folder: String = "", box: Bool = false) {
-    var s = MakeStart(kind: kind, deckId: deckId, from: from, guide: guide, page: page, text: text, title: title)
-    s.topic = topic; s.url = url; s.folder = folder; s.box = box
-    withAnimation(.out(0.35)) { sheet = .make(s) }
+  /// with those words (a Guide's selection, named `title`).
+  func make(kind: String = "", deckId: String = "", from: String = "", guide: String = "", page: String = "", text: String = "", title: String = "") {
+    withAnimation(.out(0.35)) { sheet = .make(MakeStart(kind: kind, deckId: deckId, from: from, guide: guide, page: page, text: text, title: title)) }
   }
   /// Learn mode: pick up where you stopped, or start from the sheet.
   func learn(deckId: String, resume: Bool) { withAnimation(Motion.sheet) { if resume { full = .learn(deckId) } else { sheet = .learnStart(deckId) } } }

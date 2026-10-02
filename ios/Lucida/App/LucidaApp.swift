@@ -492,8 +492,8 @@ struct MainView: View {
     // A question, a calendar or the camera is over everything: VoiceOver reads only that, so the page under it is hidden from it. (Only the views that
     // have something to read get the modifier: it would also make the empty drag layer a thing on screen, one the tests' taps would land on.)
     let behind = nav.question != nil || nav.calendar != nil || nav.camera != nil
-    // (A sheet that covers the page, like Make cards or a diagram opened, hides it the same way: the Make box's and a deck cover's own Make cards
-    // are under it, and only the sheet's should be found.)
+    // (A sheet that covers the page, like Make cards or a diagram opened, hides it the same way: a deck cover's own Make cards is under it, and
+    // only the sheet's should be found.)
     let page = behind || covering
     return ZStack(alignment: .bottom) {
       NavigationStack(path: $nav.path) {

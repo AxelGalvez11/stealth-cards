@@ -316,7 +316,7 @@ export default [
   "name": "PhoneConnect",
   "title": "iPhone · Connect AI",
   "w": 390,
-  "h": 889
+  "h": 918
  },
  {
   "name": "PhoneConnectConsent",
@@ -1084,7 +1084,7 @@ export default [
   "name": "SiteConnect",
   "title": "Connect Lucida to your AI · lucida.cards/connect",
   "w": 1440,
-  "h": 4207
+  "h": 4233
  },
  {
   "name": "SiteFaq",

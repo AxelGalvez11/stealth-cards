@@ -5,7 +5,7 @@
   "description": "Short answers about Lucida: what’s free, what Pro adds, how FSRS spaced repetition works, AI-made cards, Learn mode, live games, import and export.",
   "h1": "Questions about Lucida",
   "lead": "Short answers to the questions people ask most about Lucida, from pricing and spaced repetition to AI-made cards, importing, sharing and live games. If yours isn’t here, email team@lucida.cards.",
-  "updated": "2026-10-01",
+  "updated": "2026-10-02",
   "sections": [
     {
       "h2": "Read more",
@@ -23,7 +23,7 @@
     {
       "group": "The basics",
       "q": "What is Lucida?",
-      "a": "Lucida is a flashcard app that runs in your browser. It can make cards from your files, pictures, recordings, YouTube links or a topic, your own AI (Claude, ChatGPT, Cursor or any app that supports MCP) can make cards through a personal link, and FSRS spaced repetition plans every review."
+      "a": "Lucida is a flashcard app that runs in your browser. It can make cards from your files, pictures, recordings, YouTube links or a topic, your own AI (Claude, ChatGPT, Cursor or any app that supports MCP) can make cards through Lucida’s MCP link, and FSRS spaced repetition plans every review."
     },
     {
       "group": "The basics",
@@ -58,7 +58,7 @@
     {
       "group": "The basics",
       "q": "Who can see my cards?",
-      "a": "Only you, unless you share a deck, add it to a class or play it in a live game. A deck’s Sources, the files and recordings its cards were made from, stay private even on a shared deck. An AI app can see your cards only if you connect it with your personal link, and only as far as you allow on the Connect AI page."
+      "a": "Only you, unless you share a deck, add it to a class or play it in a live game. A deck’s Sources, the files and recordings its cards were made from, stay private even on a shared deck. An AI app can see your cards only if you connect it and sign in to Lucida (or give it your private link), and only as far as you allow on the Connect AI page."
     },
     {
       "group": "The basics",
@@ -168,12 +168,12 @@
     {
       "group": "AI cards",
       "q": "How do I make flashcards with ChatGPT or Claude?",
-      "a": "Copy your personal link from Connect AI, add it to your AI app (as a custom connector in Claude, or a developer-mode app in ChatGPT), then ask for cards. The cards land in your decks. See [AI flashcards](/features/ai-flashcards)."
+      "a": "Add Lucida’s link, app.lucida.cards/mcp, to your AI app (as a custom connector in Claude, or a developer-mode app in ChatGPT), sign in to Lucida and press Allow, then ask for cards. The cards land in your decks. See [AI flashcards](/features/ai-flashcards)."
     },
     {
       "group": "AI cards",
       "q": "Which AI apps work with Lucida?",
-      "a": "Claude, ChatGPT and Cursor have steps in Lucida, and any app that can add a remote MCP server by its web address can use your link. Gemini and Grok can add custom MCP servers too, but Lucida has no steps for them."
+      "a": "Claude, ChatGPT and Cursor have steps in Lucida, and any app that can add a remote MCP server by its web address can use Lucida’s link. Gemini and Grok can add custom MCP servers too, but Lucida has no steps for them."
     },
     {
       "group": "AI cards",
