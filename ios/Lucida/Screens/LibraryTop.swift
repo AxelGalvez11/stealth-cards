@@ -63,9 +63,12 @@ struct MakeBox: View {
     .contentShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
     .onTapGesture { focused = true }
   }
-  /// Return typed at the end makes the cards; a link or a long text pasted into an empty box opens its kind at once.
+  /// Return typed at the end makes the cards; a link or a long text pasted into an empty box opens its kind at once. Return is one new line
+  /// at the end: what came with it in the same change (autocorrect fixing the last word as Return is pressed, or a letter typed just before)
+  /// stays, and the new line goes.
   private func typed(_ old: String, _ new: String) {
-    if new == old + "\n" { text = old; go(old); return }
+    let lines = { (s: String) in s.reduce(0) { $1 == "\n" ? $0 + 1 : $0 } }
+    if new.hasSuffix("\n") && lines(new) == lines(old) + 1 { let words = String(new.dropLast()); text = words; go(words); return }
     let before = old.trimmingCharacters(in: .whitespacesAndNewlines)
     if before.isEmpty && new.utf16.count - old.utf16.count > 1 && StudyWords.kind(new) != "topic" { go(new) }
   }
