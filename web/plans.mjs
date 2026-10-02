@@ -28,3 +28,11 @@ export const MAKE_AUDIO_MB = 25, MAKE_CARDS_MAX = 100;
 // A deck's Guide (like a README) and its extra pages: how long a page can be, how many pages a deck has, how many older versions are
 // kept for each, and how far apart (in minutes) two kept versions are.
 export const GUIDE = { chars: 40000, pages: 10, versions: 10, gapMin: 5 };
+// Diagrams (diagrams.mjs): the pictures a make finds in a lecture file (the AI looks at up to `look` of them), the tables and mind maps made from a deck's cards and
+// notes (each one is an AI step: `perDay` a day), and how many diagrams one deck keeps (`keep`, of every kind). A picture kept in a deck counts toward the account's
+// room for files like a Source's, and a picture made into cards counts like any card's picture. One make asks for at most IMAGE_CARDS_MAX picture cards.
+export const DIAGRAMS = {
+  free: { perDay: 3, look: 8, keep: 30 },
+  pro: { perDay: 30, look: 40, keep: 200 }
+};
+export const IMAGE_CARDS_MAX = 60;

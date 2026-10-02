@@ -12,6 +12,7 @@ import { aiReady, explain } from './ai.mjs';
 import { writeQuiz, BATCH } from './quizai.mjs';
 import { FREE_EXPLAINS, PRO_EXPLAINS, FREE_QUIZ_BATCHES, PRO_QUIZ_BATCHES } from './plans.mjs';
 import * as make from './make.mjs';
+import * as diagrams from './diagrams.mjs';
 import { SMALL } from './blobs.mjs';
 import { mcp } from './mcp.mjs';
 import * as oauth from './oauth.mjs';
@@ -651,6 +652,11 @@ export async function handle(req, res) {
       if (path.startsWith('/api/make/')) {
         const body = req.method === 'PUT' ? await readBody(req, cloud() ? SMALL + 1e5 : 80e6) : req.method === 'POST' ? await readBody(req, 5e6) : null;
         if (await make.route(req, res, path, body, { uid, me, send })) return;
+      }
+      // A deck's Diagrams: tables and mind maps made from its cards, a picture kept in it, and a picture made ready for picture cards (diagrams.mjs).
+      if (path.startsWith('/api/diagrams/')) {
+        const body = req.method === 'POST' ? await readBody(req, 5e6) : null;
+        if (await diagrams.route(req, res, path, body, { uid, me, send })) return;
       }
       const body = req.method === 'POST' ? await readBody(req, path === '/api/media' ? 20e6 : 5e6) : null;
       if (path.startsWith('/api/oauth/')) return await oauth.api(req, res, path, body, { uid: uid || 'local', email: (me && me.email) || '' });

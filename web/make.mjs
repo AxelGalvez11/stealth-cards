@@ -19,15 +19,16 @@
 // pages to a cheap model that can see, recordings to a speech-to-text model (which also says when each part was said). YouTube links
 // go to Google's Gemini (GEMINI_API_KEY), which can watch a public video; without that key the page offers pasting the transcript.
 // Tests answer in place of all of them: OPENROUTER_BASE and GEMINI_BASE point at a stand-in.
-import { randomBytes } from 'node:crypto';
-import { state, isPro, madeLeft, useMake, refundMake, uploadsOf, addUpload, dropUploads, setJob, addSource, bumpSource, reserveMedia, mediaRoom, blanks, makeDeck, apply,
-  withLibrary, isDev, sourceNames } from './store.mjs';
+import { randomBytes, createHash } from 'node:crypto';
+import { state, isPro, madeLeft, useMake, refundMake, uploadsOf, addUpload, dropUploads, setJob, addSource, bumpSource, reserveMedia, unreserveMedia, putMedia, mediaLeft, mediaRoom, blanks, makeDeck, apply,
+  addDiagram, withLibrary, isDev, sourceNames } from './store.mjs';
 import { cloud } from './supa.mjs';
 import { blobs } from './blobs.mjs';
-import { MAKE, MAKE_AUDIO_MB, MAKE_CARDS_MAX, GUIDE } from './plans.mjs';
+import { MAKE, MAKE_AUDIO_MB, MAKE_CARDS_MAX, GUIDE, DIAGRAMS, IMAGE_CARDS_MAX } from './plans.mjs';
 import { sniff } from './sniff.js';
 import * as X from './extract.mjs';
 import { readCaptions, looksLikeCaptions } from './captions.mjs';
+import { seeFigures, plainText } from './diagrams.mjs';
 
 // ---------- the models ----------
 // Text (a topic, text from a file, a transcript, a quiz for Live): DeepSeek V4.1 Flash, the same cheap model Explain uses, with V4 Flash as the
@@ -49,7 +50,9 @@ const VIDEO_MODEL = () => process.env.LUCIDA_MAKE_VIDEO_MODEL || 'gemini-3.1-fla
 export const makeReady = () => !!process.env.OPENROUTER_API_KEY;
 export const videoReady = () => !!process.env.GEMINI_API_KEY;
 // What the app needs to know about making cards: whether it's on, whether videos can be watched, and this person's limits.
-export const makeInfo = pro => ({ on: makeReady(), video: videoReady(), ...MAKE[pro ? 'pro' : 'free'], audioMB: MAKE_AUDIO_MB, cards: MAKE_CARDS_MAX, guidePages: GUIDE.pages });
+// (`figures`: how many pictures of a file the AI looks at in one make, `diagrams`: how many tables, mind maps and picture readings it does in a day, `diagramsKeep`: how many a deck keeps.)
+export const makeInfo = pro => ({ on: makeReady(), video: videoReady(), ...MAKE[pro ? 'pro' : 'free'], audioMB: MAKE_AUDIO_MB, cards: MAKE_CARDS_MAX, guidePages: GUIDE.pages,
+  figures: DIAGRAMS[pro ? 'pro' : 'free'].look, diagrams: DIAGRAMS[pro ? 'pro' : 'free'].perDay, diagramsKeep: DIAGRAMS[pro ? 'pro' : 'free'].keep, imageCards: IMAGE_CARDS_MAX });
 
 // ---------- sizes ----------
 const CHUNK = 20000;       // characters of text the AI reads in one part (about 5,000 tokens)
@@ -181,10 +184,12 @@ function cleanOptions(o) {
   const quiz = o.mode === 'quiz', lang = typeof o.lang === 'string' && Object.hasOwn(LANGS, o.lang) ? o.lang : '';
   // The kinds of card: basic and fill in the blank, and audio (a word read aloud, for learning the language that is set: it is only there when one is).
   const kinds = [...new Set((Array.isArray(o.kinds) ? o.kinds : ['basic', 'cloze']).filter(k => k === 'basic' || k === 'cloze' || (k === 'audio' && lang && !quiz)))];
+  // `image` (the Image kind): the diagrams found in a file also become picture cards, one card for each label hidden, which wait with the other cards to be checked. Alone, it makes only those.
+  const image = !quiz && (o.image === true || (Array.isArray(o.kinds) && o.kinds.includes('image')));
   const n = Math.round(+o.count), num = Math.min(20, Math.max(5, n || 10));
   // `notes: true`: a starter note for the deck is drafted too (each part of the material also gives a few short notes). Only when asked for (a page or an app that doesn't know about
   // notes, an older one, would save them into a Guide without anyone choosing it), and never for a Live quiz.
-  return { count: quiz ? num : [10, 20, 50].includes(n) ? n : 'auto', kinds: kinds.length ? kinds : ['basic', 'cloze'], lang, notes: !quiz && o.notes === true,
+  return { count: quiz ? num : [10, 20, 50].includes(n) ? n : 'auto', kinds: kinds.length || image ? kinds : ['basic', 'cloze'], image, lang, notes: !quiz && o.notes === true,
     deckId: clip(o.deckId, 60), deckName: clip(o.deckName, 120), ...(quiz ? { mode: 'quiz' } : {}) };
 }
 // (`plan` is MAKE.free or MAKE.pro: these run outside a library save, where isPro() can't be asked, so the plan says which.)
@@ -207,7 +212,7 @@ export function youtubeId(url) {
 async function material(uid, b, info) {
   const plan = info.plan, from = info.from, opts = cleanOptions(b.options), pro = isProPlan(plan), src = from ? from.source : null;
   if (from) opts.notes = false;                     // (more cards from a source: its notes were drafted when it was made)
-  const out = { name: '', kind: '', pages: 0, seconds: 0, photos: 0, files: [], read: [], parts: [], url: '', topic: '', text: false, minutes: 0 };
+  const out = { name: '', kind: '', pages: 0, seconds: 0, photos: 0, files: [], read: [], parts: [], url: '', topic: '', text: false, minutes: 0, figs: [] };
   const load = async list => {
     const got = [];
     for (const u of list) {
@@ -272,6 +277,8 @@ async function material(uid, b, info) {
     if (files.length > plan.photos) throw fail('That’s ' + plural(files.length, 'picture') + '. ' + (pro ? 'Pro makes from up to ' + plan.photos + ' at a time.' : 'Free makes from up to ' + plan.photos + ' at a time. Go Pro for up to ' + MAKE.pro.photos + '.'), 413, 'photos', { pro: !pro });
     out.kind = 'photo'; out.photos = files.length; out.name = src ? src.name : given || (files.length === 1 ? baseName(files[0].file) : plural(files.length, 'photo'));
     for (let i = 0; i < files.length; i += PHOTOS) out.parts.push({ kind: 'photos', names: files.slice(i, i + PHOTOS).map(f => ({ name: f.name, type: sniff(f.buf) || f.type })), chars: 0 });
+    // (Each photo that is big enough to be a diagram is looked at too: Diagrams.)
+    if (!src) out.figs = files.flatMap(f => { const g = X.imageFigure(f.buf); return g ? [{ ...g, file: baseName(f.file) }] : []; });
     return { out, opts };
   }
   // recordings: each file is written out as text, then the text becomes cards
@@ -296,6 +303,7 @@ async function material(uid, b, info) {
   if (fam === 'pdf') {
     const pdf = reading(() => X.readPdf(f.buf));
     if (pdf.pages > plan.pages) throw pageError('PDF', pdf.pages, plan);
+    if (!pdf.scanned && !src) out.figs = X.figuresOf('pdf', f.buf);
     if (pdf.scanned) {
       out.kind = 'file'; out.name = name; out.pages = pdf.pages;
       for (let p = 1; p <= pdf.pages; p += SCANNED) out.parts.push({ kind: 'scan', name: f.name, from: p, to: Math.min(pdf.pages, p + SCANNED - 1), pages: pdf.pages, chars: 0 });
@@ -306,10 +314,12 @@ async function material(uid, b, info) {
     const r = reading(() => X.readPptx(f.buf));
     if (r.slides > plan.pages) throw pageError('slide show', r.slides, plan);
     textParts(r.units, 'file', name, r.slides);
+    if (!src) out.figs = X.figuresOf('pptx', f.buf);
   } else if (fam === 'docx') {
     const r = reading(() => X.readDocx(f.buf));
     if (r.pages > plan.pages) throw pageError('document', r.pages, plan);
     textParts(r.units, 'file', name, r.pages);
+    if (!src) out.figs = X.figuresOf('docx', f.buf);
   } else if (fam === 'text' && (f.ext === 'srt' || f.ext === 'vtt' || looksLikeCaptions(f.buf))) {
     // Captions (.srt, .vtt): the words with the time each starts, so cards say where in the lecture they came from. The plan's minutes are the limit (as for a recording).
     const cap = reading(() => readCaptions(f.buf));
@@ -557,7 +567,8 @@ async function jobOf(uid, id) {
 // Everything a job left in storage: the files it was made from while they wait, and its own bookkeeping.
 async function wipe(uid, J, { files = true } = {}) {
   // (A make from a source works on files that stay with that source, so those are never deleted here.)
-  const names = [jobName(J.id), ...J.read.map((_, i) => partName(J.id, 'r', i)), ...J.parts.map((_, i) => partName(J.id, 'w', i)), ...(files && !J.from ? J.files.map(f => f.name) : [])];
+  const names = [jobName(J.id), ...J.read.map((_, i) => partName(J.id, 'r', i)), ...J.parts.map((_, i) => partName(J.id, 'w', i)), ...(J.see || []).map((_, i) => partName(J.id, 's', i)),
+    ...(J.figs || []).map(f => f.name), ...(files && !J.from ? J.files.map(f => f.name) : [])];
   await blobs.remove(uid, names).catch(e => console.error('make: wipe', e.message));
 }
 
@@ -606,30 +617,45 @@ async function begin(uid, b, pro, ids) {
     const was = state().make.job; setJob(id);
     return was;
   }, pro);
+  // 4. The pictures found in the file wait in storage with the job: the AI looks at the biggest ones, up to the plan's number (the smallest are left out), a few at a time.
+  const figs = await keepFigures(uid, id, out.figs, DIAGRAMS[isProPlan(info.plan) ? 'pro' : 'free'].look);
+  // Only picture cards asked for: nothing is written from the text (the Image kind alone).
+  const imageOnly = opts.image && !opts.kinds.length && !info.from;
   const J = { id, day, kind: out.kind, name: out.name, opts, target, startedAt: J0, from: info.from ? { deckId: info.from.deckId, id: info.from.source.id } : null,
-    files: out.files, read: out.read, parts: out.parts, url: out.url, topic: out.topic, pages: out.pages, seconds: out.seconds, photos: out.photos, minutes: out.minutes || 0,
-    keepText: !!out.text, planned: !out.read.length };
+    files: out.files, read: out.read, parts: imageOnly ? [] : out.parts, url: out.url, topic: out.topic, pages: out.pages, seconds: out.seconds, photos: out.photos, minutes: out.minutes || 0,
+    keepText: !!out.text && !imageOnly, planned: !out.read.length, figs, see: Array.from({ length: Math.ceil(figs.length / FIG_BATCH) }, (_, i) => ({ ks: figs.slice(i * FIG_BATCH, (i + 1) * FIG_BATCH).map(f => f.k) })) };
   try { await putJson(uid, jobName(id), J); }
-  catch (e) { await inLib(uid, () => refundMake(day), pro).catch(() => {}); throw e; }
+  catch (e) { await blobs.remove(uid, figs.map(f => f.name)).catch(() => {}); await inLib(uid, () => refundMake(day), pro).catch(() => {}); throw e; }
   if (old && old !== id) getJson(uid, jobName(old)).then(O => O && wipe(uid, O)).catch(() => {});
   return summary(J);
 }
-const summary = J => ({ job: J.id, kind: J.kind, name: J.name, phase: J.planned ? 'write' : 'read', read: J.read.length, parts: J.parts.length, pages: J.pages, seconds: J.seconds, photos: J.photos, target: J.target });
+const summary = J => ({ job: J.id, kind: J.kind, name: J.name, phase: J.planned ? 'write' : 'read', read: J.read.length, parts: J.parts.length, see: (J.see || []).length, pages: J.pages, seconds: J.seconds, photos: J.photos, target: J.target });
+// The pictures a make found, kept with the job (tmp- names, deleted with it): the biggest `look` of them, in the order they were found, each with a number (k) that the steps and the review use.
+const FIG_BATCH = 3;
+async function keepFigures(uid, jobId, list, look) {
+  const picked = (list || []).map((f, i) => ({ f, i })).sort((a, b) => b.f.w * b.f.h - a.f.w * a.f.h || a.i - b.i).slice(0, look).sort((a, b) => a.i - b.i).map(x => x.f);
+  const todo = picked.map((f, k) => ({ k, f, name: 'tmp-' + jobId + '-f' + k + '.' + f.ext })), done = [];
+  let next = 0;
+  await Promise.all(Array.from({ length: Math.min(6, todo.length) }, async () => {
+    while (next < todo.length) { const j = todo[next++]; try { await blobs.put(uid, j.name, j.f.buf, j.f.type); done.push(j); } catch (e) { console.error('make: a picture', e.message); } }
+  }));
+  return done.sort((a, b) => a.k - b.k).map(({ k, f, name }) => ({ k, name, type: f.type, ext: f.ext, size: f.buf.length, w: f.w, h: f.h, at: f.at || '', alt: f.alt || '', file: f.file || '' }));
+}
 
 // One part of a job. The result is kept in storage under the part's own name, so asking again for a part that is done costs nothing,
 // and several parts can run at once.
 async function step(uid, b) {
   rate(uid, 'step', 120);
-  const J = await jobOf(uid, b.job), phase = b.phase === 'read' ? 'read' : 'write', i = Math.round(+b.i);
-  const list = phase === 'read' ? J.read : J.parts;
+  const J = await jobOf(uid, b.job), phase = b.phase === 'read' ? 'read' : b.phase === 'see' ? 'see' : 'write', i = Math.round(+b.i);
+  const list = phase === 'read' ? J.read : phase === 'see' ? J.see || [] : J.parts;
   if (!Number.isInteger(i) || i < 0 || i >= list.length) throw fail('That part isn’t there.', 400);
-  const key = partName(J.id, phase === 'read' ? 'r' : 'w', i);
+  const key = partName(J.id, phase === 'read' ? 'r' : phase === 'see' ? 's' : 'w', i);
   if (await blobs.has(uid, key)) return { ok: true, phase, i, n: list.length, again: true };
   const part = list[i];
-  const out = phase === 'read' ? await readPart(uid, J, part) : await writePart(uid, J, part, i);
+  const out = phase === 'read' ? await readPart(uid, J, part) : phase === 'see' ? await seePart(uid, J, part) : await writePart(uid, J, part, i);
   if (!(await blobs.has(uid, jobName(J.id)))) throw fail('That make was cancelled.', 409, 'gone');
   await putJson(uid, key, out);
-  return { ok: true, phase, i, n: list.length, items: (out.cards || out.units || []).length };
+  return { ok: true, phase, i, n: list.length, items: (out.cards || out.units || out.figs || []).length };
 }
 async function readPart(uid, J, part) {
   if (part.kind === 'transcribe') {
@@ -639,6 +665,17 @@ async function readPart(uid, J, part) {
   }
   if (part.kind === 'watch') return watch(J.url, part.from, part.to);
   throw fail('That part isn’t there.', 400);
+}
+// A few of the job's pictures looked at: which are diagrams worth studying, with a title and the words written in each. Pictures the AI read as no diagram aren't kept.
+async function seePart(uid, J, part) {
+  const pics = [];
+  for (const k of part.ks) {
+    const f = (J.figs || []).find(x => x.k === k), buf = f && await blobs.get(uid, f.name);
+    if (buf) pics.push({ k, buf, type: f.type });
+  }
+  if (!pics.length) return { figs: [] };
+  const seen = await seeFigures(pics);
+  return { figs: pics.map((p, n) => ({ k: p.k, fig: seen[n] })) };
 }
 async function writePart(uid, J, part, i) {
   const o = J.opts, total = J.parts.reduce((n, p) => n + (p.chars || 1), 0) || 1;
@@ -721,6 +758,33 @@ export function draftNotes(name, results) {
   const text = ['# ' + title, '', ...(overview ? [overview, ''] : []), ...list.flatMap(x => ['## ' + x.heading + (x.at ? ' (' + x.at + ')' : ''), '', x.text, ''])].join('\n').trim() + '\n';
   return { title, overview, sections: list, text };
 }
+// The pictures a make looked at and the AI read as diagrams, in the order they were found: each with the number it has in the job (k), its title, what kind it is, the
+// words written in it with their boxes, and where in the file it was. A part that wasn't looked at (or whose look failed) has none.
+async function foundFigures(uid, J) {
+  const out = [];
+  for (let i = 0; i < (J.see || []).length; i++) {
+    const r = await getJson(uid, partName(J.id, 's', i)); if (!r) continue;
+    for (const x of r.figs || []) {
+      const f = (J.figs || []).find(y => y.k === x.k);
+      if (f && x.fig) out.push({ k: f.k, name: f.name, mime: f.type, ext: f.ext, size: f.size, w: f.w, h: f.h, at: f.at, file: f.file, figure: x.fig.type, labels: x.fig.labels, title: x.fig.title || plainText(f.alt, 80) || (f.at ? f.at + ' diagram' : 'Diagram') });
+    }
+  }
+  return out;
+}
+// Diagrams a source already has, for more picture cards from it (no AI: what was found when it was made).
+const reusable = (d, J) => (J.from && J.opts.image && d ? (d.diagrams || []).filter(g => g.file && g.src && g.src.id === J.from.id && (g.labels || []).length) : []);
+// The picture cards a make offers for review, one for each picture, with a box over each label (a picture's cards are checked, kept or left out together). At most IMAGE_CARDS_MAX boxes in all.
+function pictureCards(J, found, stored) {
+  const out = []; let boxes = 0;
+  const add = (pic, title, at, image, labels) => {
+    if (!labels.length || boxes + labels.length > IMAGE_CARDS_MAX) return;
+    boxes += labels.length;
+    out.push({ kind: 'image', pic, front: title, back: '', text: '', at, image, parts: labels.map(l => l.label), boxes: labels.map(l => ({ x: l.x, y: l.y, w: l.w, h: l.h })) });
+  };
+  for (const f of found) add('f' + f.k, f.title, f.at, '/api/make/figure?job=' + J.id + '&k=' + f.k, f.labels);
+  for (const g of stored) add('d' + g.id, g.name, (g.src && g.src.at) || '', '/media/' + g.file.name, g.labels);
+  return out;
+}
 async function finish(uid, b, pro) {
   const J = await jobOf(uid, b.job), results = [];
   for (let i = 0; i < J.parts.length; i++) { const r = await getJson(uid, partName(J.id, 'w', i)); if (!r) return { ready: false, done: results.length, parts: J.parts.length }; results.push(r); }
@@ -729,14 +793,18 @@ async function finish(uid, b, pro) {
   const all = results.flatMap(r => r.cards || []);
   let cards = dedupe(all, seed);
   cards = thin(cards, Math.min(MAKE_CARDS_MAX, J.target));
-  if (!cards.length) {
+  // Diagrams found in the file (and, with the Image kind, picture cards made from them).
+  const found = await foundFigures(uid, J), stored = J.from && J.opts.image ? await inLib(uid, () => reusable(state().decks.find(x => x.id === J.from.deckId), J).map(g => JSON.parse(JSON.stringify(g))), pro) : [];
+  const pics = J.opts.image ? pictureCards(J, found, stored) : [];
+  if (!cards.length && !pics.length) {
     // Everything it wrote was in the deck already, or there was nothing to write.
     if (seed.length && dedupe(all).length) throw fail('Everything Lucida could make from that is already in this deck.', 422, 'have');
+    if (J.opts.image && !J.opts.kinds.length) throw fail('Lucida couldn’t find a diagram with labels in that to make picture cards from.', 422, 'none');
     throw fail('Lucida couldn’t find anything to make cards from there. Try something with more to read.', 422, 'none');
   }
   // (A Live quiz and more cards from a source don't draft notes: the first has none to write, and the second's source has had its notes already.)
   const notes = J.opts.notes && J.opts.mode !== 'quiz' && !J.from ? draftNotes(J.name, results) : null;
-  return { ready: true, name: J.name, kind: J.kind, cards: cards.map((c, i) => ({ k: i + 1, ...c })), notes };
+  return { ready: true, name: J.name, kind: J.kind, cards: [...cards, ...pics].map((c, i) => ({ k: i + 1, ...c })), notes, figures: found.length };
 }
 
 async function cancel(uid, b, pro) {
@@ -746,6 +814,7 @@ async function cancel(uid, b, pro) {
   let made = false;
   for (let i = 0; i < J.read.length && !made; i++) made = await blobs.has(uid, partName(J.id, 'r', i));
   for (let i = 0; i < J.parts.length && !made; i++) made = await blobs.has(uid, partName(J.id, 'w', i));
+  for (let i = 0; i < (J.see || []).length && !made; i++) made = await blobs.has(uid, partName(J.id, 's', i));
   await inLib(uid, () => { if (state().make.job === J.id) setJob(''); if (!made) refundMake(J.day); }, pro);
   await wipe(uid, J);
   return { ok: true };
@@ -767,8 +836,13 @@ const saveCard = c => {
 };
 async function save(uid, b, pro) {
   const J = await jobOf(uid, b.job);
-  const cards = (Array.isArray(b.cards) ? b.cards : []).slice(0, 200).map(saveCard).filter(Boolean);
-  if (!cards.length) throw fail('There are no cards to save.', 400);
+  const sent = (Array.isArray(b.cards) ? b.cards : []).slice(0, 260);
+  const cards = sent.slice(0, 200).map(saveCard).filter(Boolean);
+  // The picture cards kept: f<k> a picture this make found, d<id> a diagram the source already has.
+  const picks = [...new Set(sent.filter(c => c && c.kind === 'image').map(c => String(c.pic || '')))].filter(x => /^[fd][\w-]{1,30}$/.test(x)).slice(0, 80);
+  if (!cards.length && !picks.length) throw fail('There are no cards to save.', 400);
+  // The diagrams this make found (kept in the deck's Diagrams unless the page says `diagrams: false`).
+  const found = J.from ? [] : await foundFigures(uid, J);
   // The starter note is saved with the cards unless the person turned it off (`notes: false`). It is the one the AI wrote for this make, never text sent with the save.
   let draft = null;
   if (b.notes !== false && J.opts.notes && J.opts.mode !== 'quiz' && !J.from) {
@@ -805,6 +879,7 @@ async function save(uid, b, pro) {
     }
     let added = 0;
     const quizzes = [];
+    const pic = { diagrams: 0, images: 0, skipped: 0 };
     for (const c of cards) {
       const r = apply({ type: 'card.add', deckId: d.id, kind: c.kind, front: c.front, back: c.back, text: c.text, ...(c.kind === 'audio' ? { speak: c.speak, lang: c.lang, auto: true } : {}), src: { id: src.id, name: src.name, at: c.at } }, 'Lucida');
       added += r.ids.length;
@@ -812,7 +887,31 @@ async function save(uid, b, pro) {
     }
     // A quiz question for Live stays with its card, as a multiple-choice question for Learn mode and Live.
     if (quizzes.length) apply({ type: 'card.quiz', quizzes }, 'Lucida');
-    bumpSource(d.id, src.id, cards.length);
+    // The pictures. Picture cards first: each is a copy of the picture as the card's own (named by what is in it, like every card's picture), so deleting a Diagram never takes it
+    // away. Then the diagrams themselves are kept in the deck: moved to a name of their own and counted in the room. (A retry after a lost race finds them already moved.)
+    const keptName = f => 'gd' + f.k + '-' + sid + '.' + f.ext, bytes = async f => (await blobs.get(uid, f.name)) || (await blobs.get(uid, keptName(f)));
+    for (const ref of picks) {
+      let buf = null, labels = [], at = '', mime = '';
+      if (ref[0] === 'f') { const f = found.find(x => 'f' + x.k === ref); if (f) { buf = await bytes(f); labels = f.labels; at = f.at; mime = f.mime; } }
+      else { const g = (d.diagrams || []).find(x => 'd' + x.id === ref && x.file); if (g) { buf = await blobs.get(uid, g.file.name); labels = g.labels || []; at = (g.src && g.src.at) || ''; mime = g.file.type; } }
+      if (!buf || !labels.length || mediaLeft() < 1) { pic.skipped++; continue; }
+      const n = 'm' + createHash('sha256').update(buf).digest('hex').slice(0, 24) + '.' + ({ 'image/png': 'png', 'image/jpeg': 'jpg', 'image/gif': 'gif', 'image/webp': 'webp' })[mime];
+      try { await putMedia(n, buf, mime); } catch (e) { if (e.full) { pic.skipped++; continue; } throw e; }
+      const r = apply({ type: 'card.add', deckId: d.id, kind: 'image', image: '/media/' + n, boxes: labels.map(l => ({ id: l.id, x: l.x, y: l.y, w: l.w, h: l.h, label: l.label })), occ: 'one', src: { id: src.id, name: src.name, at } }, 'Lucida');
+      pic.images += r.ids.length; added += r.ids.length;
+    }
+    if (found.length && b.diagrams !== false) {
+      const plan = DIAGRAMS[isPro() ? 'pro' : 'free'];
+      for (const f of found) {
+        if ((d.diagrams || []).length >= plan.keep) { pic.skipped++; continue; }
+        const kept = keptName(f);
+        try { reserveMedia(kept, f.size); } catch (e) { if (e.full) { pic.skipped++; continue; } throw e; }
+        try { await blobs.move(uid, f.name, kept); } catch (e) { if (!(await blobs.has(uid, kept))) { unreserveMedia(kept, f.size); pic.skipped++; continue; } }
+        addDiagram(d.id, { kind: 'lecture', name: f.title, file: { name: kept, type: f.mime, size: f.size, w: f.w, h: f.h, file: f.file }, src: { id: src.id, name: src.name, at: f.at }, labels: f.labels, figure: f.figure });
+        pic.diagrams++;
+      }
+    }
+    bumpSource(d.id, src.id, cards.length + pic.images);
     // The notes: a deck with no Guide gets them as its Guide; one that has a Guide keeps it, and the notes become a new page named for the source.
     let notes = '';
     if (draft) {
@@ -823,7 +922,7 @@ async function save(uid, b, pro) {
       } catch (e) { notes = 'full'; }              // (the deck has all the pages a Guide may have)
     }
     setJob('');
-    return { deckId: d.id, deckName: d.name, added, sourceId: src.id, notes };
+    return { deckId: d.id, deckName: d.name, added, sourceId: src.id, notes, ...pic };
   }, pro);
   // What waited for this make is no longer needed (the kept files were moved).
   wipe(uid, J, { files: false }).catch(() => {});
@@ -836,10 +935,20 @@ async function status(uid, pro) {
   if (!id) return { job: '' };
   const J = await getJson(uid, jobName(id));
   if (!J) { await inLib(uid, () => setJob(''), pro); return { job: '' }; }
-  let read = 0, wrote = 0;
+  let read = 0, wrote = 0, saw = 0;
   for (let i = 0; i < J.read.length; i++) if (await blobs.has(uid, partName(id, 'r', i))) read++;
   for (let i = 0; i < J.parts.length; i++) if (await blobs.has(uid, partName(id, 'w', i))) wrote++;
-  return { ...summary(J), readDone: read, wrote, ready: J.parts.length > 0 && wrote === J.parts.length };
+  for (let i = 0; i < (J.see || []).length; i++) if (await blobs.has(uid, partName(id, 's', i))) saw++;
+  return { ...summary(J), readDone: read, wrote, sawDone: saw, ready: wrote === J.parts.length && (J.parts.length > 0 || (J.see || []).length > 0) };
+}
+
+// A picture a make found, for the review to show before anything is kept (the page can't read a waiting file by its name): /api/make/figure?job=<id>&k=<number>.
+async function figure(uid, req, res) {
+  const q = new URL(req.url, 'http://x').searchParams, J = await jobOf(uid, q.get('job')), f = (J.figs || []).find(x => x.k === +q.get('k'));
+  const buf = f && await blobs.get(uid, f.name);
+  if (!buf) throw fail('That picture isn’t there anymore.', 404);
+  res.writeHead(200, { 'content-type': f.type, 'cache-control': 'private, max-age=600', 'content-length': buf.length, 'x-content-type-options': 'nosniff' });
+  res.end(buf);
 }
 
 // ---------- the routes ----------
@@ -860,6 +969,7 @@ export async function route(req, res, path, body, { uid, me, send }) {
     else if (req.method === 'POST' && what === 'save') r = await save(uid, b, pro);
     else if (req.method === 'POST' && what === 'cancel') r = await cancel(uid, b, pro);
     else if (req.method === 'GET' && what === 'job') r = await status(uid, pro);
+    else if (req.method === 'GET' && what === 'figure') { await figure(uid, req, res); return true; }
     else { send(res, 404, { error: 'Not found' }); return true; }
     send(res, 200, r);
   } catch (e) {
