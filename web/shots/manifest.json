@@ -344,7 +344,7 @@
    620
   ],
   "scale": 1.2830188679245282,
-  "hash": "d9e75c77e7",
+  "hash": "b345b68199",
   "width": 1360,
   "height": 795,
   "bytes": 25786
@@ -358,7 +358,7 @@
    620
   ],
   "scale": 1.2830188679245282,
-  "hash": "d13d66a4a6",
+  "hash": "7136f40bca",
   "width": 1360,
   "height": 795,
   "bytes": 26160
@@ -512,7 +512,7 @@
    540
   ],
   "scale": 2,
-  "hash": "a9eaff7d85",
+  "hash": "4d3823cee6",
   "width": 1120,
   "height": 1080,
   "bytes": 38952
@@ -526,10 +526,10 @@
    540
   ],
   "scale": 2,
-  "hash": "7c7eda82e8",
+  "hash": "6a2accff03",
   "width": 1120,
   "height": 1080,
-  "bytes": 40038
+  "bytes": 40036
  },
  "consent-phone.webp": {
   "board": "PhoneConnectConsent",
@@ -540,7 +540,7 @@
    480
   ],
   "scale": 2,
-  "hash": "cbc3889e30",
+  "hash": "72c8b4ad5f",
   "width": 780,
   "height": 960,
   "bytes": 35716
@@ -554,7 +554,7 @@
    480
   ],
   "scale": 2,
-  "hash": "f17e812ced",
+  "hash": "cda98fc1b1",
   "width": 780,
   "height": 960,
   "bytes": 36680
@@ -568,10 +568,10 @@
    640
   ],
   "scale": 1.2035398230088497,
-  "hash": "72958d32e8",
+  "hash": "403a9af5ad",
   "width": 1360,
   "height": 770,
-  "bytes": 25240
+  "bytes": 25248
  },
  "decks-dark.webp": {
   "board": "WebDecks",
@@ -582,10 +582,10 @@
    640
   ],
   "scale": 1.2035398230088497,
-  "hash": "f9be96e5bb",
+  "hash": "de08218da3",
   "width": 1360,
   "height": 770,
-  "bytes": 25622
+  "bytes": 25610
  },
  "decks-phone.webp": {
   "board": "PhoneLibrary",
@@ -596,7 +596,7 @@
    480
   ],
   "scale": 2,
-  "hash": "ed1594c596",
+  "hash": "ee51ab8b05",
   "width": 780,
   "height": 960,
   "bytes": 21176
@@ -610,7 +610,7 @@
    480
   ],
   "scale": 2,
-  "hash": "5fcfd8e36e",
+  "hash": "94fab477e0",
   "width": 780,
   "height": 960,
   "bytes": 21384
