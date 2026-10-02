@@ -229,7 +229,7 @@ struct SourceViewer: View {
   @State private var photo: Int?
   @State private var seen = ""
 
-  /// A kept file shown full screen: a PDF at its page, or anything else in Quick Look.
+  /// A kept file shown full screen: a PDF at its page, or anything else in Lucida's own document viewer (Design/DocumentView.swift).
   struct ShownFile: Identifiable { let id = UUID(); let url: URL; let pdf: Bool; let page: Int }
 
   var body: some View {
