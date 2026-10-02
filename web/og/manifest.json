@@ -1,5 +1,5 @@
 {
- "_art": "5d81c828be",
+ "_art": "63b3283c23",
  "home": {
   "file": "og/home.png",
   "fingerprint": "f7bf565639",
@@ -341,7 +341,7 @@
  "features/image-occlusion": {
   "file": "og/features-image-occlusion.png",
   "fingerprint": "9e09c2facf",
-  "bytes": 205365,
+  "bytes": 204609,
   "text": [
    "Lucida",
    "Image occlusion flashcards",
