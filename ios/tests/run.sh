@@ -32,7 +32,7 @@ parity() {
   seed
   local W=$TESTDIR/parity; rm -rf $W; mkdir -p $W/variants
   local S=$TESTDIR/seed/stealth-cards.json NOW=$(node -e 'console.log(Date.now())')
-  swiftc -O -o $W/parity $DATA/Models.swift $DATA/MakeModels.swift $DATA/Rich.swift $DATA/FSRS.swift $DATA/Sched.swift $DATA/Tune.swift $DATA/Insights.swift $DATA/Engine.swift $H/swift/stubs.swift $H/swift/main.swift 2>&1 | grep -E "error" && return 1
+  swiftc -O -o $W/parity $DATA/Models.swift $DATA/MakeModels.swift $DATA/DiagramLayout.swift $DATA/Rich.swift $DATA/FSRS.swift $DATA/Sched.swift $DATA/Tune.swift $DATA/Insights.swift $DATA/Engine.swift $H/swift/stubs.swift $H/swift/main.swift 2>&1 | grep -E "error" && return 1
   local bad=0
   say() { echo "$1: $2"; [[ $2 == *" 0 differ"* ]] || bad=$((bad+1)); }
   WT=$REPO node $H/js/oracle-dump.mjs $S $NOW $W/js.json > /dev/null && $W/parity $S $NOW $W/swift.json > /dev/null
@@ -48,6 +48,7 @@ parity() {
   WT=$REPO node $H/js/tune-js.mjs $S $W/tune-js.json > /dev/null; $W/parity tune $S $W/tune-swift.json > /dev/null
   say "the Tune to you fit (19 numbers, loss, gain)" "$(node $H/js/compare.mjs $W/tune-js.json $W/tune-swift.json 1e-6 | head -1)"
   say "the Guide's engine against node (the web test's 341 texts, the toolbar, Enter and Tab; the app's guide.js is web/guide.js)" "$(TESTDIR=$TESTDIR $H/guide-check.sh 2>&1 | grep -E 'Guide parity|differs from' | head -1)"
+  say "the mind map layout against node (414 trees: every box and link, and the count of ideas)" "$(TESTDIR=$TESTDIR $H/diagram-check.sh 2>&1 | grep -E 'Diagram layout' | sed -E 's/every one the same as node/0 differ/' | head -1)"
   echo; [[ $bad -eq 0 ]] && echo "parity: every check agrees" || { echo "parity: $bad checks differ"; return 1 }
 }
 

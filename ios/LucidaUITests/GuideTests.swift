@@ -210,7 +210,7 @@ final class GuideTests: XCTestCase {
     let app = launch(as: who, ["-open", "deck:" + name])
     check(wait(buttonStarting(app, "Cards 2")), "the deck page has a Cards tab with the number of cards")
     check(selected(buttonStarting(app, "Cards")) && !selected(buttonStarting(app, "Notes")) && !selected(buttonStarting(app, "Sources")), "it opens on Cards")
-    check(button(app, "Notes").exists && button(app, "Sources").exists, "with Notes and Sources beside it (a deck of your own)")
+    check(button(app, "Notes").exists && buttonStarting(app, "Diagrams").exists && button(app, "Sources").exists, "with Notes, Diagrams and Sources beside it (a deck of your own)")
     check(textHas(app, "Question 1 of").exists && !text(app, "GUIDE").exists && !text(app, "SOURCES").exists, "the cards show, and no Guide or Sources in the way")
     tap(button(app, "Notes"), "Notes")
     check(wait(text(app, "GUIDE")) && button(app, "Add a guide").exists && button(app, "Write").exists, "Notes with no Guide says “Add a guide”, with Write")
@@ -233,8 +233,8 @@ final class GuideTests: XCTestCase {
     check(selected(button(app, "Notes")) && button(app, "Edit").exists && button(app, "Make cards").exists, "with Edit and Make cards now")
     noLabel(app, "the Notes")
     // a tab that isn't there opens Cards
-    let app2 = launch(as: who, ["-open", "deck:" + name, "-deckTab", "diagrams"])
-    check(wait(buttonStarting(app2, "Cards 2")) && selected(buttonStarting(app2, "Cards")) && !selected(button(app2, "Notes")), "a tab that isn’t there (diagrams) opens Cards")
+    let app2 = launch(as: who, ["-open", "deck:" + name, "-deckTab", "nowhere"])
+    check(wait(buttonStarting(app2, "Cards 2")) && selected(buttonStarting(app2, "Cards")) && !selected(button(app2, "Notes")), "a tab that isn’t there opens Cards")
     // a deck with no cards but a Guide keeps its page, and says so on Cards
     let bare = "Only a guide " + run, bid = person(who, deck: bare, cards: 0)
     act(who, "guide.save", ["deckId": bid, "text": "# Plan\n\nWrite the cards later."])

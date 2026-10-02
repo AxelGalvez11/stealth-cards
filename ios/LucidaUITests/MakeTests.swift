@@ -275,10 +275,14 @@ final class MakeTests: XCTestCase {
     }
     check(jpeg, "what was sent really is a JPEG (the phone’s HEIC and a PNG were turned into one)")
     check(small, "and none is more than 1600 pixels on a side (the 3000 pixel one was made smaller)")
-    let chat = asked("/chat/completions")
+    // (The pictures are also looked at once more, by the seeing model, for diagrams worth keeping in the deck's Diagrams: those asks have their own schema, "diagrams".)
+    func schema(_ e: [String: Any]) -> String { ((((e["body"] as? [String: Any])?["response_format"] as? [String: Any])?["json_schema"] as? [String: Any])?["name"] as? String) ?? "" }
+    let all = asked("/chat/completions"), chat = all.filter { schema($0) != "diagrams" }, looks = all.filter { schema($0) == "diagrams" }
     let parts = chat.flatMap { (($0["body"] as? [String: Any])?["messages"] as? [[String: Any]])?.last?["content"] as? [[String: Any]] ?? [] }
     let urls = parts.compactMap { ($0["image_url"] as? [String: Any])?["url"] as? String }
     check(urls.count == 2 && urls.allSatisfy { $0.hasPrefix("data:image/jpeg;base64,") }, "the AI was shown both pictures, as JPEG (\(urls.map { String($0.prefix(24)) }))")
+    let seen = looks.flatMap { (($0["body"] as? [String: Any])?["messages"] as? [[String: Any]])?.last?["content"] as? [[String: Any]] ?? [] }.compactMap { ($0["image_url"] as? [String: Any])?["url"] as? String }
+    check(!looks.isEmpty && seen.count == 2 && seen.allSatisfy { $0.hasPrefix("data:image/jpeg;base64,") }, "and the seeing model looked at both once more, for diagrams (\(looks.count) ask, \(seen.count) pictures)")
     check(chat.first.flatMap { $0["model"] as? String } == "google/gemini-3.1-flash-lite", "pictures go to the model that can see")
   }
 
