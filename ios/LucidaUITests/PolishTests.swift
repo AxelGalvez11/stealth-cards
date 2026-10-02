@@ -448,7 +448,7 @@ final class PolishTests: XCTestCase {
     // (The Library's + is a menu: New deck is one of its rows.)
     tap(button(app, "Add"), "the Library's + menu")
     tap(button(app, "New deck"), "New deck")
-    let name = app.textFields.firstMatch
+    let name = app.textFields["Deck name"].firstMatch   // (the name is typed on New deck's cover)
     if wait(name, 8) { name.tap(); name.typeText("Buzz two") } else { check(false, "found the deck's name field") }
     // (the keyboard covers the button: Done puts it away)
     let done = app.keyboards.buttons.matching(NSPredicate(format: "label IN {'Done','done','return','Return'}")).firstMatch
