@@ -63,8 +63,8 @@ async function dropAssignments(ids) {
 }
 
 // ---------- your classes, in your library ----------
-// The classes you're in live in your library too (like your profile's handle), with their assignments, so Today shows
-// what's due without asking the server each time. They're brought up to date when the app opens and after anything you
+// The classes you're in live in your library too (like your profile's handle), with their assignments, so the Library's
+// Assigned shows what's due without asking the server each time. They're brought up to date when the app opens and after anything you
 // do in a class.
 async function keep(uid) {
   const sid = socialId(uid);

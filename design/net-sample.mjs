@@ -142,7 +142,7 @@ const CLASS_LIST = [
   { id: 'k2', code: 'ORGCHM', name: 'Organic Chemistry', school: 'UC Davis', role: 'member', share: false, owner: P.okafor, official: false, people: 7, decks: 2, assignments: 2 },
   { id: 'k4', code: 'JPNFRK', name: 'Japanese N4 study group', school: '', role: 'helper', share: false, owner: P.jordan, official: false, people: 5, decks: 1, assignments: 0 }
 ];
-// What Today lists for you (the classes you're a member of).
+// What the Library's Assigned lists for you (the classes you're a member of).
 const ASSIGNED = [
   { id: 'a3', classId: 'k2', className: 'Organic Chemistry', code: 'ORGCHM', sharedId: 's23', name: 'Chapter 3', goal: 'learn', due: '2026-10-02', cards: 64, cover: CDECKS.ch3.cover, progress: MY_PROGRESS.s23, done: false },
   { id: 'a4', classId: 'k2', className: 'Organic Chemistry', code: 'ORGCHM', sharedId: 's7', name: 'Organic Reactions', goal: 'daily', due: '2026-10-06', cards: 256, cover: DECKS.orgo.cover, progress: MY_PROGRESS.s7, done: false }

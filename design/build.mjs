@@ -3726,7 +3726,8 @@ ${folderPopup(true)}`);
 const pTitle = (txt, right = '') => `<div style="display: flex; align-items: center; justify-content: space-between;"><div style="font-size: 34px; font-weight: 700; letter-spacing: -.03em;">${txt}</div>${right}</div>`;
 const roundBtn = (ic, label, href = '', attrs = '') => href ? `<a href="${href}"${attrs} aria-label="${label}" style="width: 44px; height: 44px; border-radius: 22px; background: {{t.surf}}; display: flex; align-items: center; justify-content: center;">${svg(I[ic], 18, 2)}</a>` : `<button type="button" aria-label="${label}" style="width: 44px; height: 44px; border: 0; border-radius: 22px; background: {{t.surf}}; color: {{t.text}}; display: flex; align-items: center; justify-content: center; cursor: pointer;">${svg(I[ic], 18, 2)}</button>`;
 // The bell: News (suggestions on your decks, people following you, updates to decks you follow), with how many are new. On the iPhone it
-// is in Discover's header (it was in Today's until there was no Today, 2026-10-01); the web keeps it in the sidebar, by the logo.
+// is in Discover's header, for someone signed in (it was in Today's until there was no Today, 2026-10-01); the web keeps it in the
+// sidebar, by the logo.
 const NEWS_BTN = `<a href="PhoneActivity.dc.html" aria-label="News" style="position: relative; width: 44px; height: 44px; flex-shrink: 0; border-radius: 22px; background: {{t.surf}}; display: flex; align-items: center; justify-content: center;">${svg(I.bell, 18, 2)}<sc-if value="{{nav.hasNews}}" hint-placeholder-val="{{ true }}"><span style="position: absolute; top: -3px; right: -3px; min-width: 18px; height: 18px; padding: 0 5px; box-sizing: border-box; border-radius: 9px; background: #E5484D; color: #FFFFFF; box-shadow: 0 0 0 2px {{t.bg}}; font-size: 11px; font-weight: 700; line-height: 18px; text-align: center;">{{nav.news}}</span></sc-if></a>`;
 
 // Check AI cards: tap the card to see its answer (a blank fills in place), then keep or toss it.
@@ -7146,7 +7147,7 @@ const obScreens = m => {
     + `<sc-if value="{{isFound}}" hint-placeholder-val="{{ false }}">${obFound(m)}</sc-if>`
     + `<sc-if value="{{isDone}}" hint-placeholder-val="{{ false }}">${obDone(m)}</sc-if>`;
 };
-// Skip, in the top corner: in step 1 it moves on to step 2; in step 2 it goes to Today. On phones it's a small pill.
+// Skip, in the top corner: in step 1 it moves on to step 2; in step 2 it goes to the Library (there is no Today). On phones it's a small pill.
 const obSkip = m => {
   const st = m ? 'position: absolute; top: 58px; right: 16px; z-index: 2; height: 36px; box-sizing: border-box; padding: 0 10px 0 14px; border: 0; border-radius: 18px; background: {{t.surf}}; color: {{t.text}}; display: inline-flex; align-items: center; gap: 2px; font: inherit; font-size: 14px; font-weight: 600; cursor: pointer;'
     : 'position: absolute; top: 34px; right: 40px; display: inline-flex; align-items: center; gap: 4px; border: 0; padding: 0; background: transparent; color: {{t.muted}}; font: inherit; font-size: 14px; cursor: pointer;';
@@ -7454,7 +7455,7 @@ const webDiscover = netRoot('Discover', `
     </sc-if>
     <sc-if value="{{offline}}" hint-placeholder-val="{{ false }}"><div style="padding: 56px 24px; border-radius: 24px; background: {{t.surf}}; text-align: center; font-size: 15px; color: {{t.muted}};">Couldn’t reach Lucida. Check your connection.</div></sc-if>`);
 const phoneDiscover = phone(`<div style="padding: 64px 20px 120px; display: flex; flex-direction: column; gap: 16px;">
-  <div style="display: flex; align-items: center; gap: 12px;"><h1 style="flex-grow: 1; min-width: 0; margin: 0; font-size: 32px; font-weight: 600; letter-spacing: -.03em;">Discover</h1>${NEWS_BTN}</div>
+  <div style="display: flex; align-items: center; gap: 12px;"><h1 style="flex-grow: 1; min-width: 0; margin: 0; font-size: 32px; font-weight: 600; letter-spacing: -.03em;">Discover</h1><sc-if value="{{signedIn}}" hint-placeholder-val="{{ true }}">${NEWS_BTN}</sc-if></div>
   <label style="display: flex; align-items: center; gap: 10px; height: 44px; padding: 0 16px; box-sizing: border-box; border-radius: 999px; background: {{t.surf}}; color: {{t.muted}};">${svg(I.search, 16)}<span style="position: absolute; left: -9999px;">Search decks and people</span><input value="{{query}}" onChange="{{setQuery}}" placeholder="Search decks and people" style="flex-grow: 1; min-width: 0; border: 0; outline: 0; background: transparent; font: inherit; font-size: 16px; color: {{t.text}};"><sc-if value="{{hasQuery}}" hint-placeholder-val="{{ false }}"><button type="button" onClick="{{clearQuery}}" aria-label="Clear search" style="width: 26px; height: 26px; border: 0; border-radius: 13px; background: {{t.surf2}}; color: {{t.text}}; display: flex; align-items: center; justify-content: center;">${svg(I.close, 10, 2.4)}</button></sc-if></label>
   <div role="group" aria-label="Filters" style="display: flex; align-items: center; margin: -4px 0 0 -20px;"><div style="flex-grow: 1; min-width: 0; display: flex; align-items: center; gap: 8px; padding: 0 8px 0 20px; overflow-x: auto; scrollbar-width: none;">${FILTER_PILL('lv', true)}${FILTER_PILL('sj', true)}${FILTER_PILL('sc', true)}</div>${CLEAR_FILTERS}</div>
   <sc-if value="{{hasTopics}}" hint-placeholder-val="{{ true }}"><div role="group" aria-label="Topics" style="display: flex; gap: 8px; margin: 0 -20px; padding: 0 20px; overflow-x: auto; scrollbar-width: none;"><sc-for list="{{topics}}" as="g" hint-placeholder-count="5"><button type="button" onClick="{{g.pick}}" aria-pressed="{{g.pressed}}" style="flex-shrink: 0; height: 36px; padding: 0 14px; border: 0; border-radius: 999px; background: {{g.bg}}; color: {{g.fg}}; font: inherit; font-size: 13px; font-weight: 600; white-space: nowrap;">{{g.label}}</button></sc-for></div></sc-if>
@@ -8497,8 +8498,8 @@ const HI_PROPS = { ...DARK, loading: bool(), missing: bool(), signedOut: bool(),
 // ---------- Classes ----------
 // The owner's note: "Schools / organizations", as a study group that a teacher can also run (the owner: Lucida is for
 // "study groups and friends, not teachers"). Classes are the Library's third view (Decks · All cards · Classes): the
-// sidebar keeps its five places and the iPhone its five tabs, and people mostly arrive by an invite link anyway, with
-// their assignments on Today. A class page has its assignments, decks, and people; its owner and helpers also see the
+// sidebar and the iPhone's tabs stay as they are, and people mostly arrive by an invite link anyway, with
+// their assignments at the top of the Library (Assigned). A class page has its assignments, decks, and people; its owner and helpers also see the
 // progress of each member who shares it. /class/<code> is its invite too: one tap to join, then one question, once.
 // Data (web/classes.mjs): db.net.classes(), db.net.klass(code) (undefined while it loads), and your own progress on a
 // class's deck, db.classProgress(sharedId), worked out from your own cards (web/progress.js).
@@ -9445,8 +9446,8 @@ const files = {
   'PhoneHistory': ['iPhone · History', phoneHistory, { props: HI_PROPS, logic: HISTORY_LOGIC(true), w: PW, h: PH }],
   'PhoneHistoryOpen': ['iPhone · History · a version opened', attrOf('PhoneHistory', PW, PH, 'open-version="14"'), { logic: darkLogic, w: PW, h: PH }],
   'PhoneHistoryDark': ['iPhone · History · dark', attrOf('PhoneHistory', PW, PH, 'open-version="14" dark="{{yes}}"'), { logic: darkLogic, w: PW, h: PH }],
-  // Classes (web/classes.mjs): the Library's Classes view, a class (yours, or one you're in), its invite, what Today
-  // lists, and the admin page.
+  // Classes (web/classes.mjs): the Library's Classes view, a class (yours, or one you're in), its invite, what the
+  // Library's Assigned lists, and the admin page.
   'WebClasses': ['Web · Library · Classes', webClasses, { props: CLASSES_PROPS, logic: CLASSES_LOGIC(false), css: DRAG_CSS, w: W, h: H }],
   'WebClassesEmpty': ['Web · Library · Classes · none yet', attrOf('WebClasses', W, H, 'empty="{{yes}}"'), { logic: darkLogic, css: DRAG_CSS, w: W, h: H }],
   'WebClassesNew': ['Web · Library · Classes · New class', attrOf('WebClasses', W, H, 'new-open="{{yes}}"'), { logic: darkLogic, css: DRAG_CSS, w: W, h: H }],
