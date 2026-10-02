@@ -42,7 +42,7 @@ struct PublicDeckScreen: View {
     }
     .ignoresSafeArea(edges: .top)
     .toolbar(.hidden, for: .navigationBar)
-    .onChange(of: page != nil, initial: true) { _, ok in if ok, let page { openWanted(page) } }
+    .onChange(of: page != nil, initial: true) { _, ok in if ok, let page { openWanted(page); openDiagramWanted() } }
     .haptic(.light, on: changes, "save or updates")
   }
 
@@ -57,6 +57,13 @@ struct PublicDeckScreen: View {
       SuggestModel.of(addr.plain.key).startFresh()
       withAnimation(Motion.sheet) { nav.sheet = .suggest(addr.plain, start: addr.suggest) }
     }
+  }
+
+  /// A design screen with a table or a mind map open (the canvas's `A table open`, `A mind map open`).
+  private func openDiagramWanted() {
+    guard store.demo, !opened, let id = ["A table open": "g1", "A mind map open": "g2"][store.props.guideState] else { return }
+    opened = true
+    nav.sheet = .publicDiagram(addr.plain, id)
   }
 
   // ---------- its Guide ----------
@@ -75,6 +82,12 @@ struct PublicDeckScreen: View {
       HStack(spacing: 8) { Icon("file", 14, 2); Text("Made from " + plural(n, "source")).css(13) }
         .foregroundStyle(t.muted).frame(maxWidth: .infinity, alignment: .leading).accessibilityElement(children: .combine)
     }
+  }
+
+  /// The tables and mind maps made from the deck's cards (the owner's lecture pictures and uploads never come with a shared deck).
+  @ViewBuilder private func diagramsBlock(_ p: PublicDeckPage) -> some View {
+    let rows = (p.guide?.diagrams ?? []).filter { $0.isMade && ($0.table != nil || $0.tree != nil) }.map(DiagramVM.init)
+    if !rows.isEmpty { PublicDiagramsCard(addr: addr.plain, rows: rows) }
   }
 
   // ---------- before the page is here ----------
@@ -151,6 +164,7 @@ struct PublicDeckScreen: View {
         }
         if !err.isEmpty { CSSText(err, 13, color: t.again).padding(.top, -6) }
         guideBlock(p)
+        diagramsBlock(p)
         VStack(spacing: 0) {
           tabs(p, people: people.count)
           switch tab {

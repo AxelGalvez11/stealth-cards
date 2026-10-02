@@ -48,14 +48,17 @@ enum GuideSample {
 
   /// The Guide a state shows (the canvas's guide()): its words and pages, and whether it can be changed (not when it's only studied).
   static func guide(_ state: String) -> GuideVM {
-    GuideVM(deckId: deckId, text: state == "No guide yet" ? "" : state == "Long guide" ? longText : text, at: 0, pages: state == "Guide pages" ? pages : [],
-            can: state != "Studying (read only)", studying: state == "Studying (read only)")
+    let ro = readOnly(state)
+    return GuideVM(deckId: deckId, text: state == "No guide yet" ? "" : state == "Long guide" ? longText : text, at: 0, pages: state == "Guide pages" ? pages : [], can: !ro, studying: ro)
   }
-  static func sources(_ state: String) -> [MakeSourceInfo] { ["No guide yet", "Studying (read only)"].contains(state) ? [] : sources }
+  /// A deck that is only studied (the canvas's Studying (read only), and Diagrams (studying)): nothing of it can be changed, and it has no Sources.
+  static func readOnly(_ state: String) -> Bool { state == "Studying (read only)" || DiagramSample.readOnly(state) }
+  static func sources(_ state: String) -> [MakeSourceInfo] { state == "No guide yet" || readOnly(state) ? [] : sources }
 
   /// What the shared deck's page shows (the canvas's publicGuide()): the pages anyone can read, and how many sources it was made from.
   static func publicGuide(_ state: String) -> PublicGuide {
     state == "No guide yet" ? PublicGuide(pages: [], sources: 0)
-      : PublicGuide(pages: [PublicGuide.Page(id: "main", title: "Guide", text: text)] + (state == "Guide pages" ? pages.map { PublicGuide.Page(id: $0.id, title: $0.title, text: $0.text) } : []), sources: 5)
+      : PublicGuide(pages: [PublicGuide.Page(id: "main", title: "Guide", text: text)] + (state == "Guide pages" ? pages.map { PublicGuide.Page(id: $0.id, title: $0.title, text: $0.text) } : []), sources: 5,
+                    diagrams: DiagramSample.all.filter(\.isMade))
   }
 }

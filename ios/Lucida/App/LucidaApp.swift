@@ -202,6 +202,10 @@ struct RootView: View {
           }
         }
         if let i = a.firstIndex(of: "-sound"), i + 1 < a.count { _ = await store.pickSound(URL(fileURLWithPath: a[i + 1])) }
+        // `-diagramUpload <file>`: that picture goes up as a diagram of the deck that is open, as Upload's picker would send it (the simulator has no photos to pick).
+        if let i = a.firstIndex(of: "-diagramUpload"), i + 1 < a.count, case .deck(let did)? = nav.path.last {
+          await store.diagrams.upload(store, deckId: did, file: URL(fileURLWithPath: a[i + 1]))
+        }
         // `-tap fsrs|check|pause|remove-photo`: taps that switch (or Remove on your photo) 2 seconds in, doing what the
         // button does (checks a switch moves before the server answers).
         if let i = a.firstIndex(of: "-tap"), i + 1 < a.count {
@@ -441,8 +445,8 @@ extension Board {
   @MainActor static func guideSettings(_ board: String, store: Store) {
     let st = arg("-state") ?? ""
     if board.hasPrefix("PhoneGuide") { store.props.guideView = GuideSample.views.contains(st) ? st : "Write" }
-    else if ["Cards", "Notes", "Sources"].contains(st) { store.props.section = st }
-    else if GuideSample.states.contains(st) { store.props.guideState = st }
+    else if ["Cards", "Notes", "Diagrams", "Sources"].contains(st) { store.props.section = st }
+    else if GuideSample.states.contains(st) || DiagramSample.isState(st) { store.props.guideState = st }
     if let v = arg("-section") { store.props.section = v }
     if let v = arg("-guide") { store.props.guideState = v }
     if let v = arg("-sourceOpen") { store.props.sourceOpen = v }
@@ -584,6 +588,9 @@ struct SheetHost: View {
     case .block(let handle, let name): SheetOverlay(top: nil, close: { if !nav.asking { nav.close() } }) { BlockSheet(handle: handle, name: name) }
     case .make(let s): MakeHost(start: s, store: store, nav: nav)
     case .source(let d, let i, let at): SourceHost(deckId: d, id: i, at: at)
+    case .diagram(let d, let i): DiagramHost(deckId: d, id: i)
+    case .makeDiagram(let d): MakeDiagramHost(deckId: d)
+    case .publicDiagram(let a, let i): PublicDiagramHost(addr: a, id: i)
     }
   }
 }

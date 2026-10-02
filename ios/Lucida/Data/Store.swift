@@ -166,6 +166,8 @@ final class Store: ObservableObject {
   let netCache = NetCache()
   /// What the sources of your decks said, as it comes (Data/GuideData.swift).
   let sourceTexts = SourceTexts()
+  /// A deck's Diagrams: what Make diagram, Upload and Make cards are doing (Data/DiagramsData.swift).
+  let diagrams = DiagramsFlow()
   /// What you changed on a profile, shown before the server's answer has it (Profile.swift), by handle.
   @Published var profileOver: [String: ProfileOver] = [:]
   /// When the app went to the background (coming back after ten minutes brings shared decks up to date).

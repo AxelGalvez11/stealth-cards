@@ -42,7 +42,7 @@ struct Library: Decodable {
     tests = c.v(.tests, []); quizLeft = c.v(.quizLeft, nil)
     make = c.v(.make, MakeInfo())
     // (Each deck's sources and Guide are read from the same list of decks, apart from Deck itself.)
-    for row in c.v(.decks, [DeckMaterials]()) where !row.id.isEmpty && (!row.sources.isEmpty || row.guide != nil) { materials[row.id] = row }
+    for row in c.v(.decks, [DeckMaterials]()) where !row.id.isEmpty && (!row.sources.isEmpty || row.guide != nil || !row.diagrams.isEmpty) { materials[row.id] = row }
   }
   init(rev: Int = 0, settings: UserSettings = UserSettings(), ai: AIState = AIState(), folders: [Folder] = [], decks: [Deck] = [], cards: [Card] = [], logs: [ReviewLog] = [], me: Me? = nil, aiOn: Bool = false) {
     self.rev = rev; self.settings = settings; self.ai = ai; self.folders = folders; self.decks = decks; self.cards = cards; self.logs = logs; self.me = me; self.aiOn = aiOn

@@ -648,14 +648,27 @@ struct FlexWrap: Layout {
       cur.items.append(i); cur.widths.append(w)
     }
     if !cur.items.isEmpty { out.append(cur) }
-    // What's left on a line goes to the items that grow.
+    // What's left on a line goes to the items that grow. An item that would end up narrower than its smallest width keeps that width, and the rest share what is left (CSS flex
+    // does the same: an item at its minimum is frozen and the others grow into the remainder).
     if let width {
       for k in out.indices {
-        let items = out[k].items, grow = items.map { subviews[$0][Grow.self] }, total = grow.reduce(0, +)
-        guard total > 0 else { continue }
-        let bases = items.map { subviews[$0][Zero.self] ? 0 : natural[$0] }
-        let free = width - bases.reduce(0, +) - gap * CGFloat(items.count - 1)
-        for (j, i) in items.enumerated() where grow[j] > 0 { out[k].widths[j] = max(subviews[i][MinW.self], bases[j] + max(0, free) * grow[j] / total) }
+        let items = out[k].items, grow = items.map { subviews[$0][Grow.self] }
+        guard grow.reduce(0, +) > 0 else { continue }
+        let bases = items.map { subviews[$0][Zero.self] ? 0 : natural[$0] }, mins = items.map { subviews[$0][MinW.self] }
+        var frozen = Set<Int>()
+        for _ in items.indices {
+          let live = items.indices.filter { grow[$0] > 0 && !frozen.contains($0) }, total = live.reduce(0) { $0 + grow[$1] }
+          guard total > 0 else { break }
+          let used = items.indices.reduce(CGFloat(0)) { $0 + (frozen.contains($1) ? mins[$1] : bases[$1]) }
+          let free = max(0, width - used - gap * CGFloat(items.count - 1))
+          var again = false
+          for j in live {
+            let w = bases[j] + free * grow[j] / total
+            if w < mins[j] { frozen.insert(j); again = true }
+          }
+          if !again { for j in live { out[k].widths[j] = bases[j] + free * grow[j] / total }; break }
+        }
+        for j in frozen { out[k].widths[j] = mins[j] }
       }
     }
     for k in out.indices {

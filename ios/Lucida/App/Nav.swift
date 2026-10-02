@@ -28,6 +28,10 @@ enum SheetKind: Identifiable, Equatable {
   case make(MakeStart)
   /// A deck's source opened (Screens/DeckMaterials.swift): the deck, the source, and the place in it a card pointed at ("p. 4", "12:40", or "").
   case source(deckId: String, id: String, at: String)
+  /// A deck's diagram opened (Screens/Diagrams.swift): the deck and the diagram; and the Make diagram sheet, for a deck.
+  case diagram(deckId: String, id: String), makeDiagram(String)
+  /// A shared deck's table or mind map opened, read only (the deck's address and the diagram).
+  case publicDiagram(DeckAddress, String)
   var id: String {
     switch self {
     case .newDeck: return "newDeck"
@@ -50,6 +54,9 @@ enum SheetKind: Identifiable, Equatable {
     case .block(let h, _): return "block-" + h
     case .make: return "make"
     case .source(let d, let i, _): return "source-\(d)-\(i)"
+    case .diagram(let d, let i): return "diagram-\(d)-\(i)"
+    case .makeDiagram(let d): return "makeDiagram-" + d
+    case .publicDiagram(let a, let i): return "pdiagram-\(a.key)-\(i)"
     }
   }
 }
