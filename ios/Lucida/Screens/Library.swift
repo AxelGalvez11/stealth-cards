@@ -368,7 +368,6 @@ struct LibraryScreen: View {
         Spacer(minLength: 0)
         VStack(alignment: .leading, spacing: 3) {
           Text(f.name).css(17, .semibold, ls: -0.01).lineLimit(1)
-          Text(f.line).css(13).foregroundStyle(t.muted).lineLimit(1)
         }
       }
       .foregroundStyle(t.text)
@@ -429,7 +428,6 @@ struct LibraryScreen: View {
       .frame(width: 48, height: 48).clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
       VStack(alignment: .leading, spacing: 2) {
         Text(d.name).css(16, .medium).foregroundStyle(t.text).lineLimit(1)
-        Text(d.line).css(13).foregroundStyle(t.muted).lineLimit(1)
       }
       .frame(maxWidth: .infinity, alignment: .leading)
       Text(d.due > 0 ? "\(d.due)" : "—").css(15, mono: true).foregroundStyle(d.due > 0 ? t.text : t.muted)
