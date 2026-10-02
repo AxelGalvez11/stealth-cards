@@ -293,7 +293,7 @@ const SAMPLES = [
     description: 'Lucida plans every review with FSRS, so the cards you forget come back sooner and the ones you know come back later.',
     lead: 'Lucida plans every review with FSRS, an open-source scheduler. Cards you forgot come back soon, and cards you knew come back much later.',
     sections: [{ h2: 'Flip, rate, remember', paras: ['Tap a card to see the answer, then say how well you knew it. Lucida picks the day it comes back: soon if you forgot, much later if it was easy.'], bullets: [] },
-      { h2: 'A few minutes a day', paras: ['Today shows what’s due, how long it takes, and your streak.'], bullets: ['Hard cards come back sooner.', 'Easy cards wait longer.'] }],
+      { h2: 'A few minutes a day', paras: ['Your Library shows what’s due and how long it takes, and Stats keeps your streak.'], bullets: ['Hard cards come back sooner.', 'Easy cards wait longer.'] }],
     faq: [{ q: 'Do I need Pro for spaced repetition?', a: 'No. Reviews planned by spaced repetition are free.' }] },
   { slug: 'for/students', kind: 'use', title: 'Lucida for students', h1: 'Lucida for students', updated: '2026-09-29',
     description: 'Ask your AI to turn a lecture into flashcards, then review them a few minutes a day. Free to start.',

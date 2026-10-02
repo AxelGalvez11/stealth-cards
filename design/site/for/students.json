@@ -67,7 +67,7 @@
         "**1. Make one deck for the exam.** Name it after the class. Add tags for topics, like Week 3 or Enzymes. Tags give you Learn mode sets and, on Pro, weak-topic stats.",
         "**2. Get the cards in.** Choose Make cards and add your notes, slides, a PDF, pictures or a recording, ask your own AI (Claude, ChatGPT or Cursor) to make them, import them from Quizlet, Anki or a CSV file, or type them. A fill-in-the-blank card is the quickest way to turn a sentence from your notes into a card.",
         "**3. Learn them.** Start with [Learn mode](/features/learn-mode). It asks several ways until you’ve got each card right twice in a row, then hands new cards to the schedule.",
-        "**4. Review a little each day.** Today shows what’s due and how long it will take. Try to answer before you flip.",
+        "**4. Review a little each day.** Your Library shows what’s due and how long it will take. Try to answer before you flip.",
         "**5. Set your exam date (Pro).** From 30 days out, the cards you’d probably forget by then come up early.",
         "**6. Look at your stats.** The free Stats page shows your streak, your reviews, how much you remember, and what’s due each day. Pro adds the topics you’re weakest at and your hardest cards.",
         "**7. Practice the real thing too.** Flashcards are for recall. For anything you have to work out, use past papers or problem sets."
@@ -126,7 +126,7 @@
     },
     {
       "q": "How long should I study each day?",
-      "a": "Short and often beats long and rarely. In Kornell’s flashcard experiments, spreading study out beat cramming for 90% of the people tested. Lucida’s Today screen shows how long your due cards will take."
+      "a": "Short and often beats long and rarely. In Kornell’s flashcard experiments, spreading study out beat cramming for 90% of the people tested. Lucida’s Library shows how long your due cards will take."
     },
     {
       "q": "Can I use Lucida on my phone?",

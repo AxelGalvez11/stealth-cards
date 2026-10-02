@@ -5508,7 +5508,7 @@ const REASONS = [
   ['connect', 'You stay in charge', 'Choose what your AI may do, and check its cards before they join a deck.'],
   ['upload', 'Bring your cards', 'Import from Anki, Quizlet, or a CSV file.'],
   ['decks', 'Decks with their own look', 'Every deck gets its own gradient, or a photo of your choice.'],
-  ['today', 'A few minutes a day', 'Today shows what’s due, how long it takes, and your streak.'],
+  ['today', 'A few minutes a day', 'Your Library shows what’s due and how long it takes, and Stats keeps your streak.'],
   ['list', 'Your cards stay yours', 'Export every deck, card, and review whenever you want.']
 ];
 const landing = (L, w, hgt) => { const phone = L === LAND.phone; return `<div class="sp-c" style="position: relative; isolation: isolate; width: ${w}px; height: ${hgt}px; box-sizing: border-box; font-family: ${FONT}; background: {{t.bg}}; color: {{t.text}}; overflow: hidden; ${HEAD_VARS}">

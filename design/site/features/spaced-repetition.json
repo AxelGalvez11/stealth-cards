@@ -89,7 +89,7 @@
         "**3. New cards start with short steps.** A new card comes back after 1 minute, then after 10 minutes. After the last step it graduates, and from then on it comes back after days. Press Easy on a new card and it skips the steps. Keep steps short: Anki’s manual recommends learning steps under a day when you use FSRS, because repeating a card many times in one day adds little to long-term memory.",
         "**4. Your goal sets the gap.** For a card you’ve learned, Lucida picks the whole number of days at which your chance of remembering falls to your goal (90% by default), up to the deck’s longest gap. A card you knew well gets a long gap. A card you found hard gets a shorter one.",
         "**5. Forgot means relearning.** The card goes to a 10-minute relearning step, then comes back with a shorter gap than before. For a card you’ve learned, Hard, Good and Easy each give a gap at least a day longer than the button before.",
-        "**6. Cards come due at the start of their day.** Today lists everything due: cards in a short step first, then reviews, then the day’s new cards. Made a slip? Undo puts the last card back."
+        "**6. Cards come due at the start of their day.** Review, at the top of your Library, takes everything due: cards in a short step first, then reviews, then the day’s new cards. Made a slip? Undo puts the last card back."
       ]
     },
     {

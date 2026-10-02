@@ -65,7 +65,7 @@
         "**1. Make the class.** In the Library, open Classes and choose New class. Give it a name, and a school if you like. You get a six-letter code and an invite link (lucida.cards/class/CODE). The code never uses the letters I, L or O, so it reads clearly when said out loud.",
         "**2. Share the code.** Students open the link, or choose Join a class and type the code, sign in, and join with one tap. Before joining, they see the class’s name, who runs it, and how many people and decks it has.",
         "**3. Add a deck.** Owners and helpers add decks they made themselves. A deck that isn’t set to Link only or Public is seen by the class alone. To use someone else’s deck, make a copy first.",
-        "**4. Assign it.** Pick the deck, a goal (Learn every card, or Review what’s due each day) and a due date. Assignments show on each member’s Today screen.",
+        "**4. Assign it.** Pick the deck, a goal (Learn every card, or Review what’s due each day) and a due date. Assignments show at the top of each member’s Library.",
         "**5. Check in.** The class page shows, for each assignment, how far each student who shares is."
       ]
     },
@@ -134,7 +134,7 @@
     },
     {
       "q": "Can I assign flashcards with a due date?",
-      "a": "Yes. Pick a deck in the class, choose Learn every card or Review what’s due each day, and set a due date. It shows on each member’s Today screen."
+      "a": "Yes. Pick a deck in the class, choose Learn every card or Review what’s due each day, and set a due date. It shows at the top of each member’s Library."
     },
     {
       "q": "Can a class have more than one teacher?",
