@@ -3994,14 +3994,14 @@ const sPick = (label, k, note = null) => {
   return note ? `<sc-if value="{{${note[0]}}}" hint-placeholder-val="{{ false }}">${row(note[2])}</sc-if><sc-if value="{{${note[1]}}}" hint-placeholder-val="{{ true }}">${row('')}</sc-if>` : row('');
 };
 const S_LINE = '<div style="height: 1px; margin-left: 16px; background: {{t.bg}};"></div>';
-const sGroup = (title, rows) => `<div style="display: flex; flex-direction: column; gap: 8px;"><span style="padding: 0 4px; font-size: 13px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: {{t.muted}};">${title}</span><div style="border-radius: 24px; background: {{t.surf}}; overflow: hidden;">${rows.join(S_LINE)}</div></div>`;
+const sGroup = (title, rows) => `<div style="display: flex; flex-direction: column; gap: 8px;"><span style="padding: 0 4px; font-size: 13px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: {{t.text}};">${title}</span><div style="border-radius: 24px; background: {{t.surf}}; overflow: hidden;">${rows.join(S_LINE)}</div></div>`;
 // Rows in a card (sBox), with its name above it (sNamed, the iPhone's groups: ACCOUNT, PLAN, ...). A row that may not be there is
 // { when: 'hole', row }: it carries its own hairline, so a missing one leaves no stray line (only the first row may be one, and then its
 // hairline comes after it). `hole` says when a group's name shows (it doesn't on a page of a section's own).
 const sRows = items => { const lead = items.length > 1 && typeof items[0] !== 'string';
   return items.map((it, i) => (typeof it === 'string' ? (i && !(lead && i === 1) ? S_LINE : '') + it : `<sc-if value="{{${it.when}}}" hint-placeholder-val="{{ ${it.hint ?? true} }}">${i ? S_LINE : ''}${it.row}${i === 0 && lead ? S_LINE : ''}</sc-if>`)).join(''); };
 const sBox = items => `<div style="border-radius: 24px; background: {{t.surf}}; overflow: hidden;">${sRows(items)}</div>`;
-const sNamed = (title, items, hole = '') => `<div style="display: flex; flex-direction: column; gap: 8px;">${hole ? `<sc-if value="{{${hole}}}" hint-placeholder-val="{{ true }}">` : ''}<span style="padding: 0 4px; font-size: 13px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: {{t.muted}};">${title}</span>${hole ? '</sc-if>' : ''}${sBox(items)}</div>`;
+const sNamed = (title, items, hole = '') => `<div style="display: flex; flex-direction: column; gap: 8px;">${hole ? `<sc-if value="{{${hole}}}" hint-placeholder-val="{{ true }}">` : ''}<span style="padding: 0 4px; font-size: 13px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: {{t.text}};">${title}</span>${hole ? '</sc-if>' : ''}${sBox(items)}</div>`;
 // Settings → Plan: Free, with a way to Go Pro; or Pro, when it renews (or ends), and Stripe's page to manage or cancel it.
 // Online only: on your own computer everything is on, so there's no plan to show.
 // Settings › Look › Theme: the theme you use, and on Free, that themes are part of Pro.

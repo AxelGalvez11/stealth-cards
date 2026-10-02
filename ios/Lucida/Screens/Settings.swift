@@ -403,7 +403,7 @@ struct SettingsScreen: View {
   /// TestFlight build 3 crashed opening Settings.
   private func group<Content: View>(_ title: String, @ViewBuilder _ rows: () -> Content) -> AnyView {
     AnyView(VStack(alignment: .leading, spacing: 8) {
-      Text(title.uppercased()).css(13, .semibold, ls: 0.06).foregroundStyle(t.muted).padding(.horizontal, 4)
+      Text(title.uppercased()).css(13, .bold, ls: 0.06).foregroundStyle(t.text).padding(.horizontal, 4)
       VStack(spacing: 0) { rows() }
         .background(RoundedRectangle(cornerRadius: 24, style: .continuous).fill(t.surf))
         .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
