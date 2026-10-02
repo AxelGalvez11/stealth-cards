@@ -30,7 +30,7 @@ export function createUi({ schedule, app }) {
   // What the markup reads (`t` is the page's colors).
   const vals = t => ({
     t,
-    ask: asking ? { show: true, title: asking.title, line: asking.line, hasLine: !!asking.line, action: asking.action, bg: asking.danger ? t.againTint : t.inv, fg: asking.danger ? t.again : t.invText, yes: () => answer(true), no: () => answer(false) } : { show: false },
+    ask: asking ? { show: true, title: asking.title, line: asking.line, hasLine: !!asking.line, action: asking.action, danger: asking.danger ? 'yes' : '', bg: asking.danger ? t.againTint : t.inv, fg: asking.danger ? t.again : t.invText, yes: () => answer(true), no: () => answer(false) } : { show: false },
     toast: toast && toast.text ? { show: true, text: toast.text } : { show: false }
   });
 
@@ -58,7 +58,7 @@ export function createUi({ schedule, app }) {
       seen.set(el, held);
       if (el.contains(document.activeElement)) continue;
       const list = focusables(el), ask = el.closest('[data-lu="ask"]');
-      const pick = ask ? (asking && asking.danger ? list[0] : list[list.length - 1]) : el.querySelector('[role="option"][aria-selected="true"]') || list.find(x => !x.matches('[aria-label="Close"]')) || list[0];
+      const pick = ask ? ((asking && asking.danger) || el.getAttribute('data-danger') === 'yes' ? list[0] : list[list.length - 1]) : el.querySelector('[role="option"][aria-selected="true"]') || list.find(x => !x.matches('[aria-label="Close"]')) || list[0];
       if (pick) pick.focus({ preventScroll: true });
       else { el.tabIndex = -1; el.focus({ preventScroll: true }); }
     }

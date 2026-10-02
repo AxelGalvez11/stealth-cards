@@ -190,7 +190,7 @@
 </sc-if>
 <sc-if value="{{ask.show}}" hint-placeholder-val="{{ false }}"><div data-lu="ask" style="position: absolute; inset: 0; z-index: 2000; display: flex; justify-content: center; align-items: flex-end;">
   <div class="sc-scrim" onClick="{{ask.no}}" style="position: absolute; inset: 0; background: {{t.dim}};"></div>
-  <div role="alertdialog" aria-modal="true" aria-labelledby="lu-ask-title" aria-describedby="lu-ask-line" class="sc-sheet" style="position: relative; box-sizing: border-box; width: 100%; padding: 10px 20px 34px; border-radius: 32px 32px 0 0; background: {{t.bg}}; color: {{t.text}}; font-family: Geist, -apple-system, system-ui, sans-serif; display: flex; flex-direction: column; gap: 14px; text-shadow: none;">
+  <div role="alertdialog" aria-modal="true" aria-labelledby="lu-ask-title" aria-describedby="lu-ask-line" data-danger="{{ask.danger}}" class="sc-sheet" style="position: relative; box-sizing: border-box; width: 100%; padding: 10px 20px 34px; border-radius: 32px 32px 0 0; background: {{t.bg}}; color: {{t.text}}; font-family: Geist, -apple-system, system-ui, sans-serif; display: flex; flex-direction: column; gap: 14px; text-shadow: none;">
     <div aria-hidden="true" style="align-self: center; width: 40px; height: 5px; border-radius: 3px; background: {{t.surf2}};"></div>
     <span id="lu-ask-title" style="font-size: 22px; font-weight: 600; letter-spacing: -.02em; line-height: 1.2;">{{ask.title}}</span>
     <sc-if value="{{ask.hasLine}}" hint-placeholder-val="{{ true }}"><p id="lu-ask-line" style="margin: 0; font-size: 15px; line-height: 1.45; color: {{t.muted}};">{{ask.line}}</p></sc-if>
@@ -627,7 +627,7 @@ constructor(props) { super(props); this.state = { popN: 0 }; }
 renderVals() { const v = this.renderVals0(); return { ...v, ask: this.askPreview(v.t || this.theme(!!this.props.dark, !!this.props.dim), {"Leave class":{"title":"Leave “BIO 201”?","line":"The decks you study from it stay in your library.","action":"Leave class","danger":false},"Delete class":{"title":"Delete “BIO 201”?","line":"Everyone in it keeps the decks they study.","action":"Delete class","danger":true},"Take out of class":{"title":"Take Sam Rivera out of the class?","line":"","action":"Take out","danger":false}}) }; }
 askPreview(t, samples) {
   const q = samples[this.props.ask || ''];
-  return q ? { show: true, title: q.title, line: q.line, hasLine: !!q.line, action: q.action, bg: q.danger ? t.againTint : t.inv, fg: q.danger ? t.again : t.invText, yes: () => {}, no: () => {} } : { show: false };
+  return q ? { show: true, title: q.title, line: q.line, hasLine: !!q.line, action: q.action, danger: q.danger ? 'yes' : '', bg: q.danger ? t.againTint : t.inv, fg: q.danger ? t.again : t.invText, yes: () => {}, no: () => {} } : { show: false };
 }
 renderVals0() {
   const t = this.theme(!!this.props.dark, !!this.props.dim);const db = this.props.db || this.mock(); const chrome = db.chrome();const PC = ["linear-gradient(135deg, #8C9AFC 0%, #4F60E6 100%)","linear-gradient(135deg, #FFC857 0%, #EE5A36 100%)","linear-gradient(135deg, #7EE0B0 0%, #1F8F5F 100%)","linear-gradient(135deg, #F9A8D4 0%, #D6336C 100%)","linear-gradient(135deg, #7DE3F0 0%, #0E8A9E 100%)","linear-gradient(135deg, #C4A7FF 0%, #7C3AED 100%)"];

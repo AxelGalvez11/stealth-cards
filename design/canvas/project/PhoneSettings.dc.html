@@ -64,7 +64,7 @@
   </div></sc-if>
 <sc-if value="{{ask.show}}" hint-placeholder-val="{{ false }}"><div data-lu="ask" style="position: absolute; inset: 0; z-index: 2000; display: flex; justify-content: center; align-items: flex-end;">
   <div class="sc-scrim" onClick="{{ask.no}}" style="position: absolute; inset: 0; background: {{t.dim}};"></div>
-  <div role="alertdialog" aria-modal="true" aria-labelledby="lu-ask-title" aria-describedby="lu-ask-line" class="sc-sheet" style="position: relative; box-sizing: border-box; width: 100%; padding: 10px 20px 34px; border-radius: 32px 32px 0 0; background: {{t.bg}}; color: {{t.text}}; font-family: Geist, -apple-system, system-ui, sans-serif; display: flex; flex-direction: column; gap: 14px; text-shadow: none;">
+  <div role="alertdialog" aria-modal="true" aria-labelledby="lu-ask-title" aria-describedby="lu-ask-line" data-danger="{{ask.danger}}" class="sc-sheet" style="position: relative; box-sizing: border-box; width: 100%; padding: 10px 20px 34px; border-radius: 32px 32px 0 0; background: {{t.bg}}; color: {{t.text}}; font-family: Geist, -apple-system, system-ui, sans-serif; display: flex; flex-direction: column; gap: 14px; text-shadow: none;">
     <div aria-hidden="true" style="align-self: center; width: 40px; height: 5px; border-radius: 3px; background: {{t.surf2}};"></div>
     <span id="lu-ask-title" style="font-size: 22px; font-weight: 600; letter-spacing: -.02em; line-height: 1.2;">{{ask.title}}</span>
     <sc-if value="{{ask.hasLine}}" hint-placeholder-val="{{ true }}"><p id="lu-ask-line" style="margin: 0; font-size: 15px; line-height: 1.45; color: {{t.muted}};">{{ask.line}}</p></sc-if>
@@ -84,7 +84,7 @@ dropPick(key, { title = 'Pick one', rows = [], value = '', choose, shown = false
 renderVals() { const v = this.renderVals0(); return { ...v, ask: this.askPreview(v.t || this.theme(!!this.props.dark, !!this.props.dim), {"Sign out":{"title":"Sign out of Lucida?","line":"","action":"Sign out","danger":false}}) }; }
 askPreview(t, samples) {
   const q = samples[this.props.ask || ''];
-  return q ? { show: true, title: q.title, line: q.line, hasLine: !!q.line, action: q.action, bg: q.danger ? t.againTint : t.inv, fg: q.danger ? t.again : t.invText, yes: () => {}, no: () => {} } : { show: false };
+  return q ? { show: true, title: q.title, line: q.line, hasLine: !!q.line, action: q.action, danger: q.danger ? 'yes' : '', bg: q.danger ? t.againTint : t.inv, fg: q.danger ? t.again : t.invText, yes: () => {}, no: () => {} } : { show: false };
 }
 renderVals0() {
   const db = this.props.db || this.mock(), chrome = db.chrome(), st = db.settings();

@@ -15,7 +15,7 @@ const CHEV = '<path d="M9 6l6 6-6 6"/>', BACK = '<path d="M15 18l-6-6 6-6"/>';
 // `layer`: 'fixed' over the whole page (the app), 'absolute' inside a board (the canvas, where a board is its own page).
 export const askMarkup = ({ phone = false, layer = 'fixed' } = {}) => `<sc-if value="{{ask.show}}" hint-placeholder-val="{{ false }}"><div data-lu="ask" style="position: ${layer}; inset: 0; z-index: 2000; display: flex; justify-content: center; align-items: ${phone ? 'flex-end' : 'center'};">
   <div class="${phone ? 'sc-scrim' : 'sc-fade'}" onClick="{{ask.no}}" style="position: absolute; inset: 0; background: {{t.dim}};"></div>
-  <div role="alertdialog" aria-modal="true" aria-labelledby="lu-ask-title" aria-describedby="lu-ask-line" class="${phone ? 'sc-sheet' : 'sc-pop'}" style="position: relative; box-sizing: border-box; ${phone ? 'width: 100%; padding: 10px 20px 34px; border-radius: 32px 32px 0 0;' : 'width: 440px; max-width: calc(100% - 32px); padding: 28px; border-radius: 32px; box-shadow: 0 24px 64px rgba(0,0,0,.24);'} background: {{t.bg}}; color: {{t.text}}; font-family: Geist, -apple-system, system-ui, sans-serif; display: flex; flex-direction: column; gap: 14px; text-shadow: none;">
+  <div role="alertdialog" aria-modal="true" aria-labelledby="lu-ask-title" aria-describedby="lu-ask-line" data-danger="{{ask.danger}}" class="${phone ? 'sc-sheet' : 'sc-pop'}" style="position: relative; box-sizing: border-box; ${phone ? 'width: 100%; padding: 10px 20px 34px; border-radius: 32px 32px 0 0;' : 'width: 440px; max-width: calc(100% - 32px); padding: 28px; border-radius: 32px; box-shadow: 0 24px 64px rgba(0,0,0,.24);'} background: {{t.bg}}; color: {{t.text}}; font-family: Geist, -apple-system, system-ui, sans-serif; display: flex; flex-direction: column; gap: 14px; text-shadow: none;">
     ${phone ? '<div aria-hidden="true" style="align-self: center; width: 40px; height: 5px; border-radius: 3px; background: {{t.surf2}};"></div>' : ''}
     <span id="lu-ask-title" style="font-size: 22px; font-weight: 600; letter-spacing: -.02em; line-height: 1.2;">{{ask.title}}</span>
     <sc-if value="{{ask.hasLine}}" hint-placeholder-val="{{ true }}"><p id="lu-ask-line" style="margin: 0; font-size: 15px; line-height: 1.45; color: {{t.muted}};">{{ask.line}}</p></sc-if>
@@ -54,7 +54,7 @@ export const ASK_SAMPLES = {
 };
 export const ASK_JS = `askPreview(t, samples) {
   const q = samples[this.props.ask || ''];
-  return q ? { show: true, title: q.title, line: q.line, hasLine: !!q.line, action: q.action, bg: q.danger ? t.againTint : t.inv, fg: q.danger ? t.again : t.invText, yes: () => {}, no: () => {} } : { show: false };
+  return q ? { show: true, title: q.title, line: q.line, hasLine: !!q.line, action: q.action, danger: q.danger ? 'yes' : '', bg: q.danger ? t.againTint : t.inv, fg: q.danger ? t.again : t.invText, yes: () => {}, no: () => {} } : { show: false };
 }`;
 // A board's Tweak that opens one of its questions.
 export const askProp = list => ({ editor: 'enum', default: '', options: ['', ...list] });
