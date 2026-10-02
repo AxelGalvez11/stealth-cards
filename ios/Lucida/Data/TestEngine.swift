@@ -500,11 +500,6 @@ extension Store {
     let y = cal.component(.year, from: d)
     return months[cal.component(.month, from: d) - 1] + " \(cal.component(.day, from: d))" + (y != cal.component(.year, from: Date()) ? ", \(y)" : "")
   }
-  /// How the last test of a folder went, in a line (nil without one).
-  func lastTestLine(_ s: TestScope) -> String? {
-    guard let t = pastTests(s).first else { return nil }
-    return "Last practice test: \(t.day) · \(t.line) · \(t.pct)%"
-  }
 }
 
 #if DEBUG

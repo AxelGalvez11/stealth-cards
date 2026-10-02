@@ -782,7 +782,6 @@ const webDecks = webRoot(`${sidebar('Library')}
     <sc-if value="{{deckView}}" hint-placeholder-val="{{ true }}"><sc-if value="{{atTop}}" hint-placeholder-val="{{ true }}">${pill('New folder', { icon: 'folder', onClick: '{{newFolder}}' })}</sc-if></sc-if>
     ${pill('New deck', { inv: true, icon: 'plus', href: 'WebNewDeck.dc.html' })}
   </div>
-  ${TEST.folderLine}
   <sc-if value="{{deckView}}" hint-placeholder-val="{{ true }}">
     <sc-if value="{{atTop}}" hint-placeholder-val="{{ true }}">${ASSIGNED_WEB}</sc-if>
     <div style="display: flex; align-items: center; justify-content: flex-end;">
@@ -3668,7 +3667,7 @@ const phoneLibrary = phone(`<div style="padding: 64px 20px 120px; display: flex;
     <button type="button" onClick="{{renameFolder}}" class="sc-press" style="height: 40px; padding: 0 16px; border: 0; border-radius: 20px; background: {{t.surf}}; color: {{t.text}}; font: inherit; font-size: 14px; font-weight: 600; cursor: pointer;">Rename</button>
     ${libRound('plus', 'New deck', { href: 'PhoneNewDeck.dc.html', inv: true })}
   </div>
-  <h1 style="margin: 0; font-size: 32px; font-weight: 700; letter-spacing: -.03em; overflow-wrap: anywhere;">{{title}}</h1>${TEST.folderLine}${TEST.folderPhoneButton}</sc-if>
+  <h1 style="margin: 0; font-size: 32px; font-weight: 700; letter-spacing: -.03em; overflow-wrap: anywhere;">{{title}}</h1>${TEST.folderPhoneButton}</sc-if>
   <sc-if value="{{atTop}}" hint-placeholder-val="{{ true }}">${libModes(36, 14, true)}</sc-if>
   <sc-if value="{{deckView}}" hint-placeholder-val="{{ true }}"><sc-if value="{{atTop}}" hint-placeholder-val="{{ true }}">${ASSIGNED_PHONE}</sc-if></sc-if>
   <label style="display: flex; align-items: center; gap: 10px; height: 44px; padding: 0 16px; box-sizing: border-box; border-radius: 999px; background: {{t.surf}}; color: {{t.muted}};">${svg(I.search, 16)}<span style="position: absolute; left: -9999px;">{{searchHint}}</span><input value="{{query}}" onChange="{{setQuery}}" placeholder="{{searchHint}}" style="flex-grow: 1; min-width: 0; border: 0; outline: 0; background: transparent; font: inherit; font-size: 16px; color: {{t.text}};"></label>

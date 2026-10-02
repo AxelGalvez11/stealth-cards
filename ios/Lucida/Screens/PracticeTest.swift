@@ -32,7 +32,6 @@ struct TestFolderBits: View {
   var body: some View {
     let scope = TestScope.folder(folder.id)
     VStack(alignment: .leading, spacing: 14) {
-      if let line = store.lastTestLine(scope) { Text(line).css(14).foregroundStyle(t.muted).padding(.top, -8) }
       if !folder.decks.isEmpty { TestStartButton(scope: scope) }
     }
   }

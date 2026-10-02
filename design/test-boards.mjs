@@ -323,12 +323,10 @@ renderVals() { ${DB_JS}
   return { t, dark: !!P.dark, dim: !!P.dim, isSetup: setup, isQuestion: question, isResults: results, ...setupVals, ...questionVals, ...resultVals };
 }`;
 
-  // A folder's page: a button to start one over all its decks, and how the last one went.
-  const folderJs = `const testScope = folder ? { folderId: folder.id } : null, lastTest = !db.mock && testScope ? db.tests(testScope)[0] : db.mock && folder ? (([day, line, pct]) => ({ day, line, pct }))(${JSON.stringify(TEST_SAMPLE.past[0])}) : null;
-  const testVals = { testHref: db.mock ? 'WebTest.dc.html' : folder ? '/library/folder/' + folder.id + '/test' : '', canTest: !!folder && decks.length > 0, hasLastTest: !!lastTest, lastTest: lastTest ? 'Last practice test: ' + lastTest.day + ' · ' + lastTest.line + ' · ' + lastTest.pct + '%' : '' };`;
-  const folderLine = `<sc-if value="{{hasLastTest}}" hint-placeholder-val="{{ false }}"><div style="margin: -8px 0 0; font-size: 14px; color: {{t.muted}};">{{lastTest}}</div></sc-if>`;
+  // A folder's page: a button to start one over all its decks (no line about the last one: the owner, 2026-10-02: "remove this").
+  const folderJs = `const testVals = { testHref: db.mock ? 'WebTest.dc.html' : folder ? '/library/folder/' + folder.id + '/test' : '', canTest: !!folder && decks.length > 0 };`;
   const folderWebPill = `<sc-if value="{{canTest}}" hint-placeholder-val="{{ true }}"><a href="{{testHref}}" class="sc-press" style="height: 36px; padding: 0 16px; display: inline-flex; align-items: center; justify-content: center; gap: 8px; border-radius: 999px; background: {{t.surf}}; color: {{t.text}}; font-size: 14px; font-weight: 600;">${svg(I.file, 16, 2)}Practice test</a></sc-if>`;
   const folderPhoneButton = `<sc-if value="{{canTest}}" hint-placeholder-val="{{ true }}"><a href="{{testHref}}" class="sc-press" style="height: 48px; border-radius: 999px; background: {{t.surf}}; color: {{t.text}}; display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 16px; font-weight: 600;">${svg(I.file, 17, 2)}Practice test</a></sc-if>`;
 
-  return { props, css, board, logic, folderJs, folderLine, folderWebPill, folderPhoneButton, SCREENS };
+  return { props, css, board, logic, folderJs, folderWebPill, folderPhoneButton, SCREENS };
 }
