@@ -133,10 +133,10 @@ function resolve(path, q) {
     // Writing and editing cards: on a computer, the deck's cards on a screen of their own (the owner's pick, Option B),
     // opened on the card you picked or on a new card. The iPhone editor board starts with its keyboard up, as the canvas
     // shows it; on a phone it starts with no field picked (the phone brings up its own keyboard).
-    if (deck[2]) return narrow.matches ? { name: 'PhoneEditor', props: { deckId: id, cardId: deck[3] || '', from: q.get('from') || '', keyboard: false } }
-      : { name: 'WebCardsScreen', props: { deckId: id, cardId: deck[3] || '', from: q.get('from') || '' } };
+    if (deck[2]) return narrow.matches ? { name: 'PhoneEditor', props: { deckId: id, cardId: deck[3] || '', from: q.get('from') || '', diagram: q.get('diagram') || '', keyboard: false } }
+      : { name: 'WebCardsScreen', props: { deckId: id, cardId: deck[3] || '', from: q.get('from') || '', diagram: q.get('diagram') || '' } };
     // An empty deck shows its empty page, unless you opened its settings.
-    return { name: P + (db.cards(id).length || q.get('settings') === '1' || (dRow && (dRow.hasGuide || dRow.hasSources)) ? 'Deck' : 'DeckEmpty'), props: { deckId: id, settingsOpen: q.get('settings') === '1', sourceOpen: q.get('source') || '', sourceAt: q.get('at') || '', tab: q.get('tab') || '' } };
+    return { name: P + (db.cards(id).length || q.get('settings') === '1' || (dRow && (dRow.hasGuide || dRow.hasSources || dRow.hasDiagrams)) ? 'Deck' : 'DeckEmpty'), props: { deckId: id, settingsOpen: q.get('settings') === '1', sourceOpen: q.get('source') || '', sourceAt: q.get('at') || '', tab: q.get('tab') || '', diagram: q.get('diagram') || '' } };
   }
   // A Learn mode session: the board for its current question, or the end once every card is learned.
   const ln = /^\/learn\/([^/]+)$/.exec(path);

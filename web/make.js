@@ -11,7 +11,7 @@ import { splitAudio, fromBlob, PART_BYTES, PART_SECONDS } from './audiosplit.js'
 export function createMake({ state, reload, changed, go, sniff, shrink }) {
   const info = () => ((state() || {}).make) || { on: false, video: false, perDay: 3, pages: 30, minutes: 15, photos: 10, fileMB: 20, audioMB: 25, cards: 100 };
   const fresh = () => ({ key: '', step: 'pick', kind: '', files: [], text: '', topic: '', url: '', transcript: false, title: '',
-    opts: { count: 'auto', basic: true, cloze: true, audio: false, lang: '', deckId: '', deckName: '' }, rec: null, job: '', progress: { word: '', i: 0, n: 1 }, cards: [], notes: null, keepNotes: true, noNotes: false, editing: '', error: null, from: null, saving: false, seconds: [] });
+    opts: { count: 'auto', basic: true, cloze: true, audio: false, image: false, lang: '', deckId: '', deckName: '' }, rec: null, job: '', progress: { word: '', i: 0, n: 1 }, cards: [], figures: 0, notes: null, keepNotes: true, noNotes: false, editing: '', error: null, from: null, saving: false, seconds: [] });
   let M = fresh(), run = 0, rec = null;
   const bump = () => changed();
 
@@ -110,10 +110,17 @@ export function createMake({ state, reload, changed, go, sniff, shrink }) {
   const setUrl = v => { M.url = String(v ?? '').trim(); M.error = null; bump(); };
   const useTranscript = on => { M.transcript = !!on; M.error = null; bump(); };
   // The kinds of card: at least one stays on. Audio only counts while a language is set; without one it is off (and a person who had only audio on gets the usual kinds back).
+  // The Image kind (picture cards from the diagrams found in the material): offered for a PDF, slides, a Word file or pictures, which may have diagrams, and for more cards from a
+  // source that already has diagrams. It starts off.
+  const canImage = () => {
+    if (M.from) { const d = ((state() || {}).decks || []).find(x => x.id === M.from.deckId); return !!d && (d.diagrams || []).some(g => g.src && g.src.id === M.from.id && (g.labels || []).length > 0); }
+    if (M.kind === 'photo') return M.files.length > 0;
+    return M.kind === 'file' && M.files.some(f => f.fam === 'image' || /^(pdf|pptx|docx)$/.test(EXT(f)));
+  };
   const setOpt = (k, v) => {
     const o = { ...M.opts, [k]: v };
     if (k === 'lang' && !v) o.audio = false;
-    const on = ['basic', 'cloze'].filter(x => o[x]).length + (o.audio && o.lang ? 1 : 0);
+    const on = ['basic', 'cloze'].filter(x => o[x]).length + (o.audio && o.lang ? 1 : 0) + (o.image && canImage() ? 1 : 0);
     if (!on) { if (k === 'lang') { o.basic = true; o.cloze = true; } else return; }
     M.opts = o; bump();
   };
@@ -179,7 +186,7 @@ export function createMake({ state, reload, changed, go, sniff, shrink }) {
   // ---------- making ----------
   const sourceBody = () => {
     // (Audio cards are for learning a language, so they only go along when a language is set. Notes are asked for with the cards, except from a Guide page, which already is notes.)
-    const o = M.opts, options = { count: o.count, kinds: [o.basic && 'basic', o.cloze && 'cloze', o.audio && o.lang && 'audio'].filter(Boolean), lang: o.lang, deckId: o.deckId, deckName: o.deckName, notes: !M.noNotes };
+    const o = M.opts, options = { count: o.count, kinds: [o.basic && 'basic', o.cloze && 'cloze', o.audio && o.lang && 'audio', o.image && canImage() && 'image'].filter(Boolean), lang: o.lang, deckId: o.deckId, deckName: o.deckName, notes: !M.noNotes };
     if (M.from) return { fromSource: { deckId: M.from.deckId, id: M.from.id }, options };
     if (M.kind === 'topic') return { kind: 'topic', topic: M.topic, options };
     if (M.kind === 'video') return { kind: 'video', url: M.url, ...(M.transcript ? { text: M.text } : {}), ...(M.title ? { title: M.title } : {}), options };
@@ -218,10 +225,15 @@ export function createMake({ state, reload, changed, go, sniff, shrink }) {
     };
     await Promise.all(Array.from({ length: Math.min(3, n) }, worker));
   }
+  // The pictures of the file looked at, a few at a time, for diagrams. They are a bonus: when the AI can't be reached for them the cards still come, without diagrams.
+  async function see(job, n, mine) {
+    if (!n) return;
+    try { await steps(job, 'see', n, mine, 'Looking at your pictures…'); } catch (e) { if (e && e.code === 'gone') throw e; }
+  }
   async function make() {
     if (!ready() || M.step === 'making') return;
     const mine = ++run, body = sourceBody();
-    M.step = 'making'; M.error = null; M.cards = []; M.job = ''; M.progress = { word: M.files.length ? 'Sending your ' + (M.kind === 'photo' ? 'pictures' : M.kind === 'record' ? 'recording' : 'file') + '…' : words[M.kind] || 'Getting ready…', phase: 'send', i: 0, n: 1 }; bump();
+    M.step = 'making'; M.error = null; M.cards = []; M.figures = 0; M.job = ''; M.progress = { word: M.files.length ? 'Sending your ' + (M.kind === 'photo' ? 'pictures' : M.kind === 'record' ? 'recording' : 'file') + '…' : words[M.kind] || 'Getting ready…', phase: 'send', i: 0, n: 1 }; bump();
     try {
       if (!M.from && ['file', 'photo', 'record'].includes(M.kind)) {
         // (A recording that was cut is sent a part at a time; the parts go to the server in order and are put back together there.)
@@ -246,8 +258,9 @@ export function createMake({ state, reload, changed, go, sniff, shrink }) {
         parts = (await call('/api/make/plan', { job: s.job })).parts; if (mine !== run) return;
       }
       await steps(s.job, 'write', parts, mine, 'Writing cards…'); if (mine !== run) return;
+      await see(s.job, s.see, mine); if (mine !== run) return;
       const f = await call('/api/make/finish', { job: s.job }); if (mine !== run) return;
-      M.cards = f.cards.map(c => ({ ...c, key: 'k' + c.k, gone: false })); M.notes = f.notes || null; M.keepNotes = true; M.title = M.title || f.name; M.step = 'review'; bump();
+      M.cards = f.cards.map(c => ({ ...c, key: 'k' + c.k, gone: false })); M.figures = f.figures || 0; M.notes = f.notes || null; M.keepNotes = true; M.title = M.title || f.name; M.step = 'review'; bump();
     } catch (e) {
       if (mine !== run) return;
       M.step = 'error'; M.error = { message: e.message || 'Something went wrong. Try again.', pro: !!e.pro, code: e.code || '', network: !!e.network, again: !!M.job && again(e) }; bump();
@@ -270,8 +283,9 @@ export function createMake({ state, reload, changed, go, sniff, shrink }) {
     let parts = s.parts;
     if (s.phase === 'read') { await steps(job, 'read', s.read, mine, words[M.kind] || 'Reading…'); if (mine !== run) return; parts = (await call('/api/make/plan', { job })).parts; }
     await steps(job, 'write', parts, mine, 'Writing cards…'); if (mine !== run) return;
+    await see(job, s.see, mine); if (mine !== run) return;
     const f = await call('/api/make/finish', { job }); if (mine !== run) return;
-    M.cards = f.cards.map(c => ({ ...c, key: 'k' + c.k, gone: false })); M.notes = f.notes || null; M.keepNotes = true; M.step = 'review'; bump();
+    M.cards = f.cards.map(c => ({ ...c, key: 'k' + c.k, gone: false })); M.figures = f.figures || 0; M.notes = f.notes || null; M.keepNotes = true; M.step = 'review'; bump();
   }
 
   // ---------- checking the cards ----------
@@ -280,7 +294,7 @@ export function createMake({ state, reload, changed, go, sniff, shrink }) {
   const remove = (key, gone = true) => { M.cards = M.cards.map(c => (c.key === key ? { ...c, gone } : c)); if (M.editing === key) M.editing = ''; bump(); };
   async function save() {
     if (M.saving) return;
-    const keep = M.cards.filter(c => !c.gone).map(({ kind, front, back, text, at, speak, lang }) => ({ kind, front, back, text, at, ...(kind === 'audio' ? { speak, lang } : {}) }));
+    const keep = M.cards.filter(c => !c.gone).map(({ kind, front, back, text, at, speak, lang, pic }) => ({ kind, front, back, text, at, ...(kind === 'audio' ? { speak, lang } : {}), ...(kind === 'image' ? { pic } : {}) }));
     if (!keep.length) { M.error = { message: 'There are no cards to save.', soft: true }; return bump(); }
     M.saving = true; M.error = null; bump();
     try {
@@ -332,7 +346,7 @@ export function createMake({ state, reload, changed, go, sniff, shrink }) {
       step: M.step, kind: M.kind, from: M.from, on: lim.on !== false, videoOn: !!lim.video, limits: lim,
       files: M.files.map((f, i) => ({ i, name: f.name, size: mb(f.size) + (f.cut ? ' · ' + plural(f.cut.parts.length, 'part') : ''), fam: f.fam })), text: M.text, topic: M.topic, url: M.url, transcript: M.transcript, title: M.title, opts: M.opts,
       rec: M.rec ? { state: rec ? rec.state : 'saving', secs, levels: rec ? rec.levels.slice() : [], level: rec ? rec.level : 0, limit: lim.minutes * 60 } : null,
-      notes: M.notes, keepNotes: M.keepNotes, notesFull: !!M.notes && deckFull(), progress: M.progress, cards: M.cards, editing: M.editing, error: M.error, saving: M.saving, ready: ready(), name: M.name || '', job: M.job
+      notes: M.notes, keepNotes: M.keepNotes, notesFull: !!M.notes && deckFull(), figures: M.figures, canImage: canImage(), progress: M.progress, cards: M.cards, editing: M.editing, error: M.error, saving: M.saving, ready: ready(), name: M.name || '', job: M.job
     };
   }
   return { view, enter, begin, choose, back, close, pickFiles, addFiles, removeFile, setText, setTopic, setUrl, useTranscript, setOpt, setKeepNotes, recStart, recPause, recResume, recStop, recDiscard,

@@ -1843,7 +1843,7 @@ mockMaterials() {
   const MK = (() => {
     const free = { perDay: 3, pages: 30, minutes: 15, photos: 10, fileMB: 20, audioMB: 25, cards: 100 }, pro = { perDay: 30, pages: 300, minutes: 120, photos: 50, fileMB: 40, audioMB: 25, cards: 100 };
     const base = { step: 'add', kind: '', from: null, on: true, videoOn: true, limits: pro, files: [], text: '', topic: '', url: '', transcript: false, title: '', opts: { count: 'auto', basic: true, cloze: true, audio: false, lang: '', deckId: '', deckName: '' },
-      rec: null, progress: { word: '', phase: '', i: 0, n: 1 }, cards: [], notes: null, keepNotes: true, editing: '', error: null, saving: false, ready: false, name: '', job: '' };
+      rec: null, progress: { word: '', phase: '', i: 0, n: 1 }, cards: [], figures: 0, canImage: false, notes: null, keepNotes: true, editing: '', error: null, saving: false, ready: false, name: '', job: '' };
     const slides = { i: 0, name: 'Lecture 3 slides.pdf', size: '4.2 MB', fam: 'doc' };
     const levels = Array.from({ length: 60 }, (_, i) => Math.round((.18 + .5 * Math.abs(Math.sin(i * .55)) * (.6 + .4 * Math.sin(i * .17))) * 100) / 100);
     const cards = [
@@ -1867,9 +1867,13 @@ mockMaterials() {
       { key: 'k3', kind: 'basic', front: 'When do you use “usted”?', back: 'To be formal or polite with someone, like a teacher or a stranger.', text: '', at: '', gone: false },
       { key: 'k4', kind: 'audio', front: '', back: 'Where is the library?', text: '', speak: '¿Dónde está la biblioteca?', lang: 'es', at: '', gone: false },
       { key: 'k5', kind: 'cloze', front: '', back: '', text: 'Ella [[tiene]] dos hermanos.', at: '', gone: false }];
+    const art = this.diagramsMock().rows().filter(r => r.picture), pics = [
+      { key: 'k7', kind: 'image', front: 'Animal cell', back: '', text: '', at: 'Slide 4', image: art[0] ? art[0].picture : '', parts: ['Nucleus', 'Mitochondrion', 'Mitochondrion'], boxes: [{ x: .41, y: .03, w: .12, h: .06 }, { x: .012, y: .785, w: .17, h: .06 }, { x: .8, y: .083, w: .17, h: .06 }], gone: false },
+      { key: 'k8', kind: 'image', front: 'The Krebs cycle', back: '', text: '', at: 'Slide 9', image: art[1] ? art[1].picture : '', parts: ['Acetyl-CoA', 'Citrate', 'Isocitrate'], boxes: [{ x: .11, y: .12, w: .125, h: .05 }, { x: .47, y: .12, w: .07, h: .05 }, { x: .79, y: .12, w: .1, h: .05 }], gone: false }];
     const by = {
-      'Pick': { step: 'pick' }, 'Upload': { kind: 'file' }, 'Upload (a file added)': { kind: 'file', files: [slides], ready: true },
-      'Photos': { kind: 'photo', ready: true, files: ['IMG_2041.jpg', 'IMG_2042.jpg', 'IMG_2043.jpg'].map((name, i) => ({ i, name, size: (1.1 + i * .3).toFixed(1) + ' MB', fam: 'image' })) },
+      'Pick': { step: 'pick' }, 'Upload': { kind: 'file' }, 'Upload (a file added)': { kind: 'file', files: [slides], ready: true, canImage: true },
+      'Upload (picture cards on)': { kind: 'file', files: [slides], ready: true, canImage: true, opts: { count: 'auto', basic: true, cloze: true, audio: false, image: true, lang: '', deckId: '', deckName: '' } },
+      'Photos': { kind: 'photo', ready: true, canImage: true, files: ['IMG_2041.jpg', 'IMG_2042.jpg', 'IMG_2043.jpg'].map((name, i) => ({ i, name, size: (1.1 + i * .3).toFixed(1) + ' MB', fam: 'image' })) },
       'Record': { kind: 'record' }, 'Recording': { kind: 'record', rec: { state: 'recording', secs: 754, levels, level: .4, limit: 7200 } }, 'Paused': { kind: 'record', rec: { state: 'paused', secs: 754, levels, level: 0, limit: 7200 } },
       'Paste': { kind: 'paste', ready: true, text: 'The mitochondrion is the powerhouse of the cell. It makes most of the cell’s ATP through the electron transport chain, which pumps protons across the inner membrane.\n\nThe nucleus holds the cell’s DNA, and the ribosomes translate mRNA into protein.' },
       'Paste (a language set)': { kind: 'paste', ready: true, text: 'la casa · the house\nbuenos días · good morning\n¿Dónde está la biblioteca? · Where is the library?\nElla tiene dos hermanos · She has two siblings', opts: { count: 'auto', basic: true, cloze: true, audio: true, lang: 'es', deckId: '', deckName: '' } },
@@ -1878,7 +1882,8 @@ mockMaterials() {
       'Topic': { kind: 'topic', ready: true, topic: 'The Krebs cycle' }, 'More from a source': { kind: 'file', ready: true, from: { deckId: 'cell', id: 'x1', name: 'Lecture 3 slides', kind: 'file' } },
       'Making': { step: 'making', kind: 'file', progress: { word: 'Writing cards…', phase: 'write', i: 3, n: 8 } },
       'Making a recording': { step: 'making', kind: 'record', progress: { word: 'Listening to your recording…', phase: 'read', i: 1, n: 2 } },
-      'Review': { step: 'review', kind: 'file', cards, name: 'Lecture 3 slides', notes }, 'Review (notes open)': { step: 'review', kind: 'file', cards, name: 'Lecture 3 slides', notes }, 'Review (notes off)': { step: 'review', kind: 'file', cards, name: 'Lecture 3 slides', notes, keepNotes: false },
+      'Review': { step: 'review', kind: 'file', cards, name: 'Lecture 3 slides', notes },
+      'Review (picture cards)': { step: 'review', kind: 'file', cards: [...cards.slice(0, 3), ...pics], name: 'Lecture 3 slides', notes, figures: 3, canImage: true }, 'Review (notes open)': { step: 'review', kind: 'file', cards, name: 'Lecture 3 slides', notes }, 'Review (notes off)': { step: 'review', kind: 'file', cards, name: 'Lecture 3 slides', notes, keepNotes: false },
       'Review (no room for notes)': { step: 'review', kind: 'file', cards, name: 'Lecture 3 slides', notes, notesFull: true },
       'Review (audio cards)': { step: 'review', kind: 'paste', cards: spanish, name: 'Spanish words', notes: { ...notes, title: 'Spanish words', sections: notes.sections.slice(0, 2).map(x => ({ ...x, at: '' })), text: '# Spanish words\n\nGreetings and words for the home and school.\n\n## Greetings\n\n**buenos días** means good morning. Use **usted** to be polite.\n\n## The home\n\n**la casa** is the house.\n' } },
       'Review (editing a card)': { step: 'review', kind: 'file', cards, name: 'Lecture 3 slides', notes, editing: 'k2' },
@@ -1903,14 +1908,44 @@ mockMaterials() {
     const talk = '<<0:00>>\nWelcome back. Today we finish the electron transport chain and see how it makes ATP.\n\n<<1:00>>\nThe chain pumps protons across the inner membrane, and ATP synthase lets them flow back.\n\n<<2:00>>\nWithout oxygen as the last acceptor, the chain backs up and ATP production stops.';
     return { text, pages, sources, talk };
   })();
-  const GMODE = p.guide || 'Guide and sources';
-  return { make: MK,
-    publicGuide: () => (GMODE === 'No guide yet' ? { pages: [], sources: 0 } : { pages: [{ id: 'main', title: 'Guide', text: GD.text }, ...(GMODE === 'Guide pages' ? GD.pages : [])], sources: 5 }),
-    guide: () => ({ deckId: 'cell', text: GMODE === 'No guide yet' ? '' : GMODE === 'Long guide' ? GD.text + '\n\n' + GD.text.replace('# Cell Biology: Exam 1', '## More for the exam') : GD.text, at: 0, pages: GMODE === 'Guide pages' ? GD.pages : [], can: GMODE !== 'Studying (read only)', studying: GMODE === 'Studying (read only)' }),
-    sources: () => (['No guide yet', 'Studying (read only)'].includes(GMODE) ? [] : GD.sources),
+  const GMODE = p.guide || 'Guide and sources', RO = GMODE === 'Studying (read only)' || GMODE === 'Diagrams (studying)';
+  return { make: MK, diagrams: this.diagramsMock(),
+    publicGuide: () => (GMODE === 'No guide yet' ? { pages: [], sources: 0 } : { pages: [{ id: 'main', title: 'Guide', text: GD.text }, ...(GMODE === 'Guide pages' ? GD.pages : [])], sources: 5, diagrams: this.diagramsMock().rows().filter(r => r.group === 'Made').map(r => ({ id: r.id, kind: r.kind, name: r.name, at: r.at, ...(r.table ? { table: r.table } : { tree: r.tree }) })) }),
+    guide: () => ({ deckId: 'cell', text: GMODE === 'No guide yet' ? '' : GMODE === 'Long guide' ? GD.text + '\n\n' + GD.text.replace('# Cell Biology: Exam 1', '## More for the exam') : GD.text, at: 0, pages: GMODE === 'Guide pages' ? GD.pages : [], can: !RO, studying: RO }),
+    sources: () => (GMODE === 'No guide yet' || RO ? [] : GD.sources),
     sourceText: name => (/^sx2/.test(name) || /^sx3/.test(name) ? GD.talk : ''),
     guideHistory: () => Promise.resolve([{ at: day(8, 21), saved: 0, text: GD.text.replace('- [x] The electron transport chain', '- [ ] The electron transport chain') }, { at: day(8, 18), saved: 0, text: '# Cell Biology: Exam 1\n\nEverything for the first exam.' }]),
     saveGuide: () => Promise.resolve({}), addGuidePage: () => Promise.resolve('g9'), renameGuidePage: () => Promise.resolve({}), deleteGuidePage: () => Promise.resolve({}), restoreGuide: () => Promise.resolve({}), deleteSource: () => Promise.resolve({}) };
+}
+diagramsMock() {
+  const p = this.props, noop = () => {}, G = p.guide || '';
+  const svgOf = s => 'data:image/svg+xml;utf8,' + encodeURIComponent(s);
+  const label = (x, y, text, anchor) => '<text x="' + x + '" y="' + y + '" font-family="Geist, system-ui, sans-serif" font-size="15" fill="#18181B" text-anchor="' + (anchor || 'start') + '">' + text + '</text>';
+  const CELL = svgOf('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 420"><rect width="640" height="420" fill="#fff"/><ellipse cx="320" cy="215" rx="200" ry="145" fill="#F7F8FC" stroke="#76767E" stroke-width="4"/><circle cx="310" cy="200" r="50" fill="#DCE2F2" stroke="#76767E" stroke-width="3"/><ellipse cx="210" cy="285" rx="40" ry="25" fill="#FFE8D6" stroke="#76767E" stroke-width="3"/><ellipse cx="435" cy="142" rx="35" ry="22" fill="#FFE8D6" stroke="#76767E" stroke-width="3"/><g stroke="#76767E" stroke-width="2"><path d="M310 150V40M210 285L60 330M470 145L560 60"/></g>' + label(270, 30, 'Nucleus') + label(10, 345, 'Mitochondrion') + label(515, 50, 'Mitochondrion') + '</svg>');
+  const FLOW = svgOf('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 480"><rect width="720" height="480" fill="#fff"/><g stroke="#76767E" stroke-width="2"><path d="M125 67H365M365 67H605M605 67V177M605 177V287"/></g><g fill="#EBEEF5" stroke="#76767E" stroke-width="3"><rect x="60" y="40" width="130" height="54" rx="10"/><rect x="300" y="40" width="130" height="54" rx="10"/><rect x="540" y="40" width="130" height="54" rx="10"/><rect x="540" y="150" width="130" height="54" rx="10"/><rect x="540" y="260" width="130" height="54" rx="10"/></g>' + label(125, 72, 'Acetyl-CoA', 'middle') + label(365, 72, 'Citrate', 'middle') + label(605, 72, 'Isocitrate', 'middle') + label(605, 182, 'Ketoglutarate', 'middle') + label(605, 292, 'Succinyl-CoA', 'middle') + '</svg>');
+  const CHART = svgOf('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 400"><rect width="600" height="400" fill="#fff"/><path d="M70 40V330H560" stroke="#18181B" stroke-width="3" fill="none"/><path d="M70 330L160 200 260 130 380 100 540 92" stroke="#285AC8" stroke-width="4" fill="none"/><path d="M70 330L160 280 260 230 380 170 540 140" stroke="#D2463C" stroke-width="4" fill="none"/>' + label(190, 365, 'Substrate concentration') + label(8, 24, 'Reaction rate') + label(400, 78, 'Enzyme A') + label(400, 198, 'Enzyme B') + '</svg>');
+  const day = (m, d) => new Date(2026, m, d, 10).getTime();
+  const box = (id, x, y, w, h, l) => ({ id, x, y, w, h, label: l });
+  const cellLabels = [box('b1', .41, .03, .12, .06, 'Nucleus'), box('b2', .012, .785, .17, .06, 'Mitochondrion'), box('b3', .8, .083, .17, .06, 'Mitochondrion')];
+  const flowLabels = [box('b1', .11, .12, .125, .05, 'Acetyl-CoA'), box('b2', .47, .12, .07, .05, 'Citrate'), box('b3', .79, .12, .1, .05, 'Isocitrate')];
+  const table = { columns: ['Organelle', 'What it does', 'Found in'], rows: [['Nucleus', 'Holds the cell’s DNA', 'Animal and plant cells'], ['Mitochondrion', 'Makes most of the cell’s ATP', 'Animal and plant cells'], ['Ribosome', 'Builds proteins from amino acids', 'Every cell'], ['Chloroplast', 'Turns light into sugar', 'Plant cells'], ['Golgi apparatus', 'Packs proteins to send out', 'Animal and plant cells']] };
+  const tree = { text: 'The cell', children: [{ text: 'Organelles', children: [{ text: 'Nucleus' }, { text: 'Ribosome' }, { text: 'Golgi apparatus' }] }, { text: 'Energy', children: [{ text: 'ATP' }, { text: 'Glycolysis' }, { text: 'Krebs cycle' }, { text: 'Electron transport chain' }] }, { text: 'Membrane', children: [{ text: 'Phospholipids' }, { text: 'Channel proteins' }] }] };
+  const lecture = (id, name, src, at, picture, w, h, labels, figure) => ({ id, kind: 'lecture', name, group: 'From your lectures', at: day(8, 18), src: { id: 'x1', name: src, at }, picture, w, h, labels, figure, table: null, tree: null, from: null, cards: 0, size: 0 });
+  const rows = [
+    { id: 'g1', kind: 'table', name: 'Organelles at a glance', group: 'Made', at: day(8, 22), src: null, picture: '', w: 0, h: 0, labels: null, figure: '', table, tree: null, from: { kind: 'all', value: '', label: 'All cards and notes' }, cards: 24, size: 0 },
+    { id: 'g2', kind: 'mindmap', name: 'The cell', group: 'Made', at: day(8, 22), src: null, picture: '', w: 0, h: 0, labels: null, figure: '', table: null, tree, from: { kind: 'tag', value: 'cell', label: 'cell' }, cards: 12, size: 0 },
+    lecture('g3', 'Animal cell', 'Lecture 3 slides', 'Slide 4', CELL, 640, 420, cellLabels, 'labelled figure'),
+    lecture('g4', 'The Krebs cycle', 'Lecture 3 slides', 'Slide 9', FLOW, 720, 480, flowLabels, 'flow diagram'),
+    lecture('g5', 'Enzyme reaction rates', 'Lecture 3 slides', 'Slide 14', CHART, 600, 400, [], 'chart'),
+    { id: 'g6', kind: 'upload', name: 'Whiteboard, Sep 22', group: 'Uploaded', at: day(8, 22), src: null, picture: FLOW, w: 720, h: 480, labels: null, figure: '', table: null, tree: null, from: null, cards: 0, size: 0 }
+  ];
+  const none = G === 'Diagrams (none yet)', study = G === 'Diagrams (studying)';
+  const list = none ? [] : study ? rows.filter(r => r.group === 'Made') : rows;
+  const open = { 'A picture open': 'g3', 'An uploaded picture open': 'g6', 'A table open': 'g1', 'A mind map open': 'g2', 'Renaming a diagram': 'g3', 'Delete asked': 'g3' }[G] || '';
+  const view = { open, sheet: /^Make diagram|^Making a diagram/.test(G), type: 'table', scope: { kind: 'all', value: '' }, making: G === 'Making a diagram', error: G === 'Make diagram (it didn’t work)' ? { message: 'That’s today’s 3 free diagrams. Go Pro for 30 a day.', pro: true, code: 'day', again: false } : null,
+    busy: '', msg: '', renaming: G === 'Renaming a diagram', draft: G === 'Renaming a diagram' ? 'Animal cell' : '', confirm: G === 'Delete asked', up: G === 'Uploading a picture' ? { name: 'IMG_2058.jpg' } : null, upErr: G === 'Upload didn’t work' ? 'That file is over 20 MB. Go Pro for up to 40 MB.' : '', labels: G === 'A picture open' };
+  return { rows: () => list, view: () => view, open: noop, close: noop, openSheet: noop, closeSheet: noop, cancel: noop, setType: noop, setScope: noop, make: noop, redo: noop, startRename: noop, setDraft: noop, cancelRename: noop, rename: noop,
+    askDelete: noop, keep: noop, remove: noop, upload: noop, dismissUploadError: noop, cards: noop, setLabels: noop, takeDraft: () => null, peekDraft: () => null };
 }
 
 constructor(props) { super(props); this.state = { tab: props.view === 'Preview' ? 'preview' : 'write', histOpen: props.view === 'Older versions', drafts: {}, saving: false, err: '', hist: null }; }

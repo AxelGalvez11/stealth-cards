@@ -66,6 +66,12 @@ struct MakeCard: Identifiable, Equatable {
   /// An audio card: the words a voice reads aloud (`speak`) and their language (`lang`, BCP 47 like es-ES); `back` says what they mean.
   var speak = "", lang = ""
   var gone = false
+  /// An image card (picture cards from the diagrams found in the material): `front` is the diagram's name; `pic` says which diagram of the make or the deck it is (sent back on
+  /// saving), `image` is where to see it (before anything is kept), `parts` the words hidden in it and `boxes` where each is (fractions of the picture). All the boxes of a picture
+  /// are checked, kept or left out together.
+  var pic = "", image = ""
+  var parts: [String] = []
+  var boxes: [OccBox] = []
   var id: String { key }
 }
 /// One note of the draft: a heading, where in the material it comes from ("p. 4", "12:40"; or nothing), and its words as Markdown.
@@ -102,6 +108,8 @@ struct MakeOpts: Equatable {
   var basic = true, cloze = true
   /// Audio cards (words read aloud, for learning the language that is set): offered only with a language, and off until turned on.
   var audio = false
+  /// Image cards: a card for each label of the diagrams found in the material, with the label hidden. Offered where there may be some (MakeFlow.canImage); off until turned on.
+  var image = false
   var lang = "", deckId = "", deckName = ""
 }
 struct MakeFrom: Equatable { var deckId: String, id: String, name: String, kind: String }
@@ -118,6 +126,8 @@ struct MakeState {
   var job = ""
   var progress = MakeProgress()
   var cards: [MakeCard] = []
+  /// How many diagrams the make found in the material (they are kept in the deck's Diagrams once the cards are saved).
+  var figures = 0
   var editing = ""
   var error: MakeErr?
   var from: MakeFrom?
@@ -399,13 +409,20 @@ final class MakeFlow: ObservableObject {
   func useTranscript(_ on: Bool) { m.transcript = on; m.error = nil }
   /// Where the video's words come from: the transcript (when the person chose to paste it, or this server can't watch videos), else the link.
   var usesTranscript: Bool { m.transcript || (!info.video && !env.demo) }
+  /// Picture cards (the Image kind) are offered for a PDF, slides, a Word file or pictures, which may have diagrams, and for more cards from a source that already has diagrams
+  /// with labels. It starts off.
+  var canImage: Bool {
+    if let f = m.from { return env.materials(f.deckId)?.diagrams.contains { $0.src?.id == f.id && !($0.labels ?? []).isEmpty } ?? false }
+    if m.kind == "photo" { return !m.files.isEmpty }
+    return m.kind == "file" && m.files.contains { $0.fam == .image || ["pdf", "pptx", "docx"].contains(($0.name as NSString).pathExtension.lowercased()) }
+  }
   /// Changes an option (web/make.js setOpt). At least one kind of card always stays on; Audio counts only while a language is set (clearing the
   /// language turns it off, and gives Basic and Fill in the blank back if Audio was the only kind left on).
   func setOpt(_ f: (inout MakeOpts) -> Void) {
     let was = m.opts
     var o = was; f(&o)
     if o.lang.isEmpty && !was.lang.isEmpty { o.audio = false }
-    if !o.basic && !o.cloze && !(o.audio && !o.lang.isEmpty) {
+    if !o.basic && !o.cloze && !(o.audio && !o.lang.isEmpty) && !(o.image && canImage) {
       guard o.lang != was.lang else { return }
       o.basic = true; o.cloze = true
     }
@@ -471,7 +488,7 @@ final class MakeFlow: ObservableObject {
     let o = m.opts
     // (Audio cards are for learning a language, so they only go along when one is set. Notes are asked for with the cards, which is the only way the server drafts them,
     // except from a Guide page, which already is notes: those say `notes: false`. More cards from a source say nothing: its notes were drafted when it was made.)
-    var options: [String: Any] = ["count": o.count == 0 ? "auto" : o.count, "kinds": [o.basic ? "basic" : nil, o.cloze ? "cloze" : nil, o.audio && !o.lang.isEmpty ? "audio" : nil].compactMap { $0 },
+    var options: [String: Any] = ["count": o.count == 0 ? "auto" : o.count, "kinds": [o.basic ? "basic" : nil, o.cloze ? "cloze" : nil, o.audio && !o.lang.isEmpty ? "audio" : nil, o.image && canImage ? "image" : nil].compactMap { $0 },
                                   "lang": o.lang, "deckId": o.deckId, "deckName": o.deckName]
     if m.from == nil { options["notes"] = !m.noNotes }
     if let f = m.from { return ["fromSource": ["deckId": f.deckId, "id": f.id], "options": options] }
@@ -503,7 +520,7 @@ final class MakeFlow: ObservableObject {
     guard ready, m.step != "making", !env.demo else { return }
     run += 1
     let mine = run, body = sourceBody()
-    m.step = "making"; m.error = nil; m.cards = []; m.notes = nil; m.job = ""
+    m.step = "making"; m.error = nil; m.cards = []; m.figures = 0; m.notes = nil; m.job = ""
     m.progress = MakeProgress(word: m.files.isEmpty ? MakeFlow.words[m.kind] ?? "Getting ready…" : "Sending your " + (m.kind == "photo" ? "pictures" : m.kind == "record" ? "recording" : "file") + "…", phase: "send", i: 0, n: max(1, m.files.reduce(0) { $0 + $1.uploads.count }))
     task = Task { await self.runMake(mine, body) }
   }
@@ -557,8 +574,16 @@ final class MakeFlow: ObservableObject {
       }
       try await steps(job, "write", parts, mine, "Writing cards…")
       guard isMine(mine) else { return }
+      try await see(job, s["see"] as? Int ?? 0, mine)
+      guard isMine(mine) else { return }
       try await finish(job, mine)
     } catch { fail(error, mine) }
+  }
+  /// The pictures of the file looked at, a few at a time, for diagrams. They are a bonus: when the AI can't be reached for them the cards still come, without diagrams.
+  private func see(_ job: String, _ n: Int, _ mine: Int) async throws {
+    guard n > 0 else { return }
+    do { try await steps(job, "see", n, mine, "Looking at your pictures…") }
+    catch let e as MakeError { if e.code == "gone" || e.signedOut { throw e } }
   }
   /// Every part's cards, joined: the cards to check.
   private func finish(_ job: String, _ mine: Int) async throws {
@@ -566,9 +591,15 @@ final class MakeFlow: ObservableObject {
     guard isMine(mine) else { return }
     guard let list = f["cards"] as? [[String: Any]] else { throw MakeError(message: MakeAPI.generic) }
     m.cards = list.enumerated().map { i, c in
-      MakeCard(key: "k" + String(c["k"] as? Int ?? i + 1), kind: c["kind"] as? String ?? "basic", front: c["front"] as? String ?? "", back: c["back"] as? String ?? "", text: c["text"] as? String ?? "",
-               at: c["at"] as? String ?? "", speak: c["speak"] as? String ?? "", lang: c["lang"] as? String ?? "")
+      let boxes = (c["boxes"] as? [[String: Any]] ?? []).enumerated().map { j, b -> OccBox in
+        let n = { (k: String) in (b[k] as? NSNumber)?.doubleValue ?? 0 }
+        return OccBox(id: "b\(j + 1)", x: n("x"), y: n("y"), w: n("w"), h: n("h"))
+      }
+      return MakeCard(key: "k" + String(c["k"] as? Int ?? i + 1), kind: c["kind"] as? String ?? "basic", front: c["front"] as? String ?? "", back: c["back"] as? String ?? "", text: c["text"] as? String ?? "",
+                      at: c["at"] as? String ?? "", speak: c["speak"] as? String ?? "", lang: c["lang"] as? String ?? "",
+                      pic: c["pic"] as? String ?? "", image: c["image"] as? String ?? "", parts: c["parts"] as? [String] ?? [], boxes: boxes)
     }
+    m.figures = f["figures"] as? Int ?? 0
     m.notes = MakeNotes(f["notes"]); m.keepNotes = true; m.notesOpen = false
     if m.title.isEmpty { m.title = f["name"] as? String ?? "" }
     m.step = "review"
@@ -633,6 +664,8 @@ final class MakeFlow: ObservableObject {
     }
     try await steps(job, "write", parts, mine, "Writing cards…")
     guard isMine(mine) else { return }
+    try await see(job, s["see"] as? Int ?? 0, mine)
+    guard isMine(mine) else { return }
     try await finish(job, mine)
   }
 
@@ -641,6 +674,8 @@ final class MakeFlow: ObservableObject {
   func openCard(_ key: String) { m.editing = m.editing == key ? "" : key }
   func remove(_ key: String, gone: Bool = true) { edit(key) { $0.gone = gone }; if m.editing == key { m.editing = "" } }
   var kept: [MakeCard] { m.cards.filter { !$0.gone } }
+  /// How many cards the kept rows make: a picture is one row to keep or leave out, and makes a card for each label hidden in it.
+  var keptCount: Int { kept.reduce(0) { $0 + ($1.kind == "image" ? max(1, $1.parts.count) : 1) } }
   /// The deck the kept cards go to, in words ("Cell Biology", what was typed, the source's name, or "a new deck").
   var into: String {
     let chosen = m.opts.deckId.isEmpty ? nil : env.decks().first { $0.id == m.opts.deckId }
@@ -653,6 +688,7 @@ final class MakeFlow: ObservableObject {
     let keep = kept.map { c -> [String: Any] in
       var d: [String: Any] = ["kind": c.kind, "front": c.front, "back": c.back, "text": c.text, "at": c.at]
       if c.kind == "audio" { d["speak"] = c.speak; d["lang"] = c.lang }
+      if c.kind == "image" { d["pic"] = c.pic }
       return d
     }
     if keep.isEmpty { m.error = MakeErr(message: "There are no cards to save.", soft: true); return }

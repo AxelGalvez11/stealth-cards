@@ -22,6 +22,7 @@ import { levelOf, subjectOf, yearOf } from './school.js';
 import { schoolById, findSchools } from './schools.mjs';
 import { createHash } from 'node:crypto';
 import guide from './guide.js';
+import { sharedDiagram, diagramsCopy } from './diagrams.mjs';
 
 const MIN = 60000, DAY = 86400000;
 const nowIso = () => new Date().toISOString();
@@ -177,9 +178,9 @@ async function mediaFor(uid, sh, c) {
 // Markdown's /media/<name> links become links anyone can open), and how many Sources the deck was made from (just the number:
 // the files and their names stay private, since they may be someone else's work). Null while the deck has neither.
 async function guideFor(uid, sh, d) {
-  const g = d.guide || {}, n = (d.sources || []).length;
+  const g = d.guide || {}, n = (d.sources || []).length, made = (d.diagrams || []).map(sharedDiagram).filter(Boolean);
   const pages = [{ id: 'main', title: 'Guide', text: g.text || '' }, ...(g.pages || []).map(p => ({ id: p.id, title: p.title, text: p.text || '' }))];
-  if (!pages.some(p => p.text.trim()) && !n) return null;
+  if (!pages.some(p => p.text.trim()) && !n && !made.length) return null;
   for (const p of pages) {
     const names = [...p.text.matchAll(/\]\(\/media\/([\w-]+\.\w+)(?=[\s)"'])/g)].map(m => m[1]);
     if (!names.length || !publicMedia.on() || isDev(uid) || uid === 'local') continue;
@@ -188,7 +189,8 @@ async function guideFor(uid, sh, d) {
       p.text = p.text.split('/media/' + name).join(publicMedia.url(uid, name));
     }
   }
-  return { pages, sources: n };
+  // The tables and mind maps made from the deck's cards go with it (diagrams.mjs sharedDiagram); the pictures of its lectures and the ones uploaded never do.
+  return { pages, sources: n, ...(made.length ? { diagrams: made } : {}) };
 }
 // A shared deck's Guide as the guide of a deck in someone's library (studying it, or a copy of it).
 const guideCopy = g => {
@@ -533,6 +535,7 @@ export async function addShared(uid, me, sharedId, { copy = false, name = '', fo
   const d = makeDeck({ name: copy && name ? name : sh.name, tags: sh.tags, folder });
   d.cover = { style: (sh.cover && sh.cover.style) || 'mix', round: (sh.cover && sh.cover.round) || 0, image: (sh.cover && sh.cover.image) || null, seed: (sh.cover && sh.cover.seed) || sh.name };
   const g = guideCopy(sh.guide); if (g) d.guide = g;
+  const dg = diagramsCopy(sh.guide); if (dg.length) d.diagrams = dg;
   d.link = { id: sharedId, mode: copy ? 'copy' : 'study', rev: sh.rev, slug: sh.slug, vis: sh.visibility, owner: { handle: owner ? owner.handle : '', name: owner ? owner.name : '' }, updates: copy ? !!updates : true, pending: [] };
   const cards = rows.map(r => fromShared(r, d.id));
   S.cards.push(...cards);
@@ -581,7 +584,12 @@ export async function sync(uid) {
 async function copyChanges(S, d, sh, cap, t0) {
   const link = d.link, since = link.rev, study = link.mode === 'study', pos = new Map();
   let cur = link.cur && typeof link.cur.id === 'string' && link.cur.rev >= since ? link.cur : null, took = 0, done = false;
-  if (study) { applyMeta(d, sh); const g = guideCopy(((await sharedRow(sh.id, 'guide')) || {}).guide); if (g) d.guide = g; else delete d.guide; }
+  if (study) {
+    applyMeta(d, sh);
+    const row = ((await sharedRow(sh.id, 'guide')) || {}).guide, g = guideCopy(row), dg = diagramsCopy(row);
+    if (g) d.guide = g; else delete d.guide;
+    if (dg.length) d.diagrams = dg; else delete d.diagrams;
+  }
   while (true) {
     const size = Math.min(LIMITS.syncPage, cap - took);
     if (size <= 0 || Date.now() - t0 > LIMITS.syncMs) break;
@@ -1030,7 +1038,7 @@ export async function deckPage({ handle, slug, id }, viewer) {
     cardsList: rows.map(r => ({ id: r.id, kind: r.data.kind, front: r.data.front, back: r.data.back, text: r.data.text, image: r.data.image, box: r.data.box, boxes: r.data.boxes, cloze: r.data.cloze, tags: r.data.tags || [], source: r.data.source || '', trail: r.data.trail || [] })),
     moreCards: Math.max(0, (sh.card_count || 0) - rows.length),
     // The Guide (Markdown pages, the first the Guide itself) and how many Sources the deck was made from (a number only).
-    guide: sh.guide && Array.isArray(sh.guide.pages) ? { pages: sh.guide.pages.map(p => ({ id: p.id, title: p.title, text: p.text })), sources: sh.guide.sources || 0 } : null,
+    guide: sh.guide && Array.isArray(sh.guide.pages) ? { pages: sh.guide.pages.map(p => ({ id: p.id, title: p.title, text: p.text })), sources: sh.guide.sources || 0, diagrams: diagramsCopy(sh.guide) } : null,
     made: vers.map(v => ({ version: v.version, kind: v.kind, summary: v.summary, ai: v.ai, at: v.created_at, by: face(faces.find(f => f.id === v.author)) || (v.author_name ? { name: v.author_name } : null), n: v.n_changes || 0 })),
     me: vid ? { owner, helper, studying: (subs.find(x => x.mode === 'study') || {}).deck_id || '', copied: (subs.find(x => x.mode === 'copy') || {}).deck_id || '', watching: subs.some(x => x.mode === 'watch'), starred: starred.length > 0, open } : null };
 }

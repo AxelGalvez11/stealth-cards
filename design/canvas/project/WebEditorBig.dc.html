@@ -77,6 +77,9 @@ constructor(props) {
   // The card as you write it: its fields, its type, where the caret is, and what Undo steps back to.
   // It lives outside state so fast typing never builds on an old copy.
   this.ed = { edits: {}, type: null, sel: null, pend: null, past: [], future: [], last: '', lastAt: 0, key: 0, restore: false, sig: '' };
+  // Make cards from a diagram (the deck's Diagrams tab) opens a new Image card with the diagram's picture and a box over each label, to check and move before saving.
+  const dd = props.diagram && props.db && props.db.diagrams ? props.db.diagrams.takeDraft(props.deckId) : null;
+  if (dd) { this.dgDraft = true; this.ed.type = 'Image'; this.ed.edits = { image: dd.image, boxes: dd.boxes.map(b => ({ ...b })), occ: 'one' }; }
   this.els = {};
   this.refFns = {};
 }
@@ -647,7 +650,7 @@ renderVals() {
       key: ev => { if (!ev || ev.key !== 'Enter' || ev.isComposing) return; ev.preventDefault(); const nx = bx[i + 1]; if (!nx || !this.focusLabel(nx.id)) ev.target.blur(); } }; }) };
   const missing = this.missingOf(ty, f, bx.length);
   // Back goes where you came from: the review, the Library's All cards, or the deck.
-  const backHref = this.props.from === 'review' ? db.href('review', dk.id) : this.props.from === 'library' ? db.href('cards') : this.props.from === 'stats' ? db.href('stats') : dk.href;
+  const backHref = this.props.from === 'review' ? db.href('review', dk.id) : this.props.from === 'library' ? db.href('cards') : this.props.from === 'stats' ? db.href('stats') : this.props.diagram ? dk.href + '?tab=diagrams' : dk.href;
   // The sound: its player (a file's waveform, or the words the device reads aloud) or, while recording, the live waveform
   // (the newest bar at the right), how long it's been, and Stop.
   const clock = s => { s = Math.max(0, Math.floor(s || 0)); return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0'); };

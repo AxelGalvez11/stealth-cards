@@ -9,7 +9,7 @@
 #   ios/tests/make-check.sh
 H=${0:A:h}; REPO=${H:h:h}; TESTDIR=${TESTDIR:-${TMPDIR:-/tmp}/lucida-ios-tests}; W=$TESTDIR/make; mkdir -p $W; rm -f $W/port
 DATA=$REPO/ios/Lucida/Data
-swiftc -O -D DEBUG -o $W/make-check $DATA/Models.swift $DATA/MakeModels.swift $DATA/Rich.swift $DATA/FSRS.swift $DATA/Sched.swift $DATA/Tune.swift $DATA/Insights.swift $DATA/Engine.swift \
+swiftc -O -D DEBUG -o $W/make-check $DATA/Models.swift $DATA/MakeModels.swift $DATA/DiagramLayout.swift $DATA/Rich.swift $DATA/FSRS.swift $DATA/Sched.swift $DATA/Tune.swift $DATA/Insights.swift $DATA/Engine.swift \
   $DATA/API.swift $DATA/Upload.swift $DATA/MakeData.swift $DATA/MakeSplit.swift $DATA/MakeRecorder.swift $H/swift/stubs.swift $H/swift/make/main.swift 2>&1 | grep -E "error:" && exit 1
 PORTFILE=$W/port node $H/js/make-server.mjs > $W/server.log 2>&1 &
 SERVER=$!

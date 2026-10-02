@@ -7,7 +7,7 @@
 // The files are not trusted. Every loop is bounded by the size of its input, a zip entry or a PDF stream is inflated with a
 // size limit (checked while inflating, never by the size a header claims), total work and memory are capped, and whatever
 // goes wrong inside a reader comes out as a short ExtractError a person can read (never a stack trace, never a hang).
-import { inflateSync, inflateRawSync, constants as Z } from 'node:zlib';
+import { inflateSync, inflateRawSync, deflateSync, constants as Z } from 'node:zlib';
 import { createHash, createDecipheriv, createCipheriv } from 'node:crypto';
 
 // What a person sees. `code` says what happened: 'encrypted' (locked with a password), 'broken' (can't be opened),
@@ -55,7 +55,7 @@ const trimLines = s => trimNewlines(s.split('\n').map(l => l.trimEnd()).join('\n
 // zip bomb (a few KB that becomes a gigabyte) is refused after a few hundred MB at most, and one that claims honestly to be
 // huge is refused before any work. `only` is an optional (name) => boolean: entries it rejects are never inflated.
 const SIG_EOCD = Buffer.from([0x50, 0x4b, 0x05, 0x06]);
-export function unzip(input, { maxEntries = 5000, maxTotal = 300e6, maxEntry = 150e6, only = null } = {}) {
+export function unzip(input, { maxEntries = 5000, maxTotal = 300e6, maxEntry = 150e6, only = null, skipOver = Infinity } = {}) {
   const buf = asBuffer(input), out = new Map();
   const end = findEnd(buf);
   if (!end) fail('broken');
@@ -86,6 +86,7 @@ export function unzip(input, { maxEntries = 5000, maxTotal = 300e6, maxEntry = 1
     }
     pos += 46 + nameLen + extraLen + commentLen;
     if (name.endsWith('/') || (only && !only(name))) continue;
+    if ((method === 0 ? comp : size) > skipOver) continue;                      // (`skipOver`: an entry bigger than that is left out, not refused)
     if (flags & 1 || method === 99) throw new ExtractError(LOCKED_FILE, 'encrypted');
     const lo = local + shift;
     if (!(lo >= 0) || lo + 30 > buf.length || buf.readUInt32LE(lo) !== 0x04034b50) fail('broken');
@@ -1391,7 +1392,8 @@ class PdfDoc {
     return out;
   }
   // The decoded data of a stream (every filter applied), or null when a filter can't be undone (a picture's JPEG, say).
-  streamData(st) {
+  // (With `jpeg`, a stream whose last filter is DCTDecode gives the JPEG file itself.)
+  streamData(st, jpeg = false) {
     let data = this.rawStream(st);
     if (this.crypt && st.num && nameOf(st.dict.Type) !== 'XRef' && !this.cryptIdentity(st)) data = this.crypt.stream(data, st.num, st.gen);
     const f = this.deref(st.dict.Filter), p = this.deref(st.dict.DecodeParms ?? st.dict.DP);
@@ -1405,6 +1407,7 @@ class PdfDoc {
       else if (name === 'ASCIIHexDecode' || name === 'AHx') data = hexDecode(data);
       else if (name === 'RunLengthDecode' || name === 'RL') data = runLengthDecode(data);
       else if (name === 'Crypt' && !(isDict(dp) && nameOf(dp.Name) && nameOf(dp.Name) !== 'Identity')) continue;
+      else if (jpeg && (name === 'DCTDecode' || name === 'DCT') && i === list.length - 1) return data;
       else return null;
     }
     return data;
@@ -1633,7 +1636,7 @@ class Extractor {
         case 'TJ': this.show(Array.isArray(args[0]) ? args[0] : []); break;
         case '\'': this.move(0, -gs.tl); this.show([args[0]]); break;
         case '"': gs.tw = n(0); gs.tc = n(1); this.move(0, -gs.tl); this.show([args[2]]); break;
-        case 'Do': if (args[0] instanceof Name) this.form(args[0].name, res, depth); break;
+        case 'Do': if (args[0] instanceof Name) { if (this.images) this.image(args[0].name, res); this.form(args[0].name, res, depth); } break;
         case 'BI': this.skipInline(lx); break;
         case 'BMC': this.mark(null); break;
         case 'BDC': {                                                              // marked content, perhaps with the text it really stands for
@@ -1746,6 +1749,13 @@ class Extractor {
       if (rtl) { const step = (g.x - pv.sx) * pv.ux + (g.y - pv.sy) * pv.uy, tol = 0.05 * Math.max(g.hem, pv.hem); if (step < -tol) this.cur.back++; else if (step > tol) this.cur.fwd++; }     // which way right-to-left text was drawn: each piece starts to the right or to the left of the one before
     }
     this.prev = { x: e.x, y: e.y, ux: g.ux, uy: g.uy, size: g.size, hem: g.hem, sx: g.x, sy: g.y, text, approx, rtl };
+  }
+  // A picture drawn here (an image XObject), noted with how big it is on the page, in points, when `images` is a list (figures: pdfFigures).
+  image(name, res) {
+    const doc = this.doc, r = doc.deref(res), xo = isDict(r) ? doc.deref(r.XObject) : null, obj = doc.deref(isDict(xo) ? xo[name] : undefined);
+    if (!(obj instanceof Stream) || nameOf(doc.deref(obj.dict.Subtype)) !== 'Image' || this.images.length >= 5000) return;
+    const c = this.gs.ctm;
+    this.images.push({ obj, w: Math.hypot(c[0], c[1]), h: Math.hypot(c[2], c[3]) });
   }
   // A form XObject (a reusable piece of page): its text is read where it is drawn, with its own resources, once for each time
   // it is drawn. A form that (however indirectly) draws itself, forms nested more than 12 deep and more than 20,000 forms
@@ -2269,3 +2279,228 @@ Object.assign(PdfDoc.prototype, {
     return !isDict(first) || !nameOf(first.Name) || nameOf(first.Name) === 'Identity';
   }
 });
+
+// ---------------------------------------------------------------------------------------------------------------------
+// Figures: the pictures inside a file. diagrams.mjs keeps the ones worth studying in a deck's Diagrams tab. A slide show gives the pictures
+// on each slide ("Slide 4"), a Word file the pictures in its text (each with the heading it is under, as readDocx labels its parts), a PDF
+// the pictures embedded in each page ("p. 4"), and a photo is a picture as it is. What is left out without any AI, by size and by use:
+//   - a picture that is small (under 160 x 120 pixels, or 48,000 pixels in all), or very long and thin (over 5 to 1: rules, banners);
+//   - a picture used on three pages or more (a logo, a background), and in a PDF one that fills the page (a scan);
+//   - a picture shown tiny on its slide or page (under an inch), and one over 3.5 MB;
+//   - kinds a browser can't show (EMF, WMF, SVG, TIFF).
+// Each figure comes as { buf, type, ext, w, h, at, alt, key }: the file's own bytes for a PNG, JPEG, GIF or WebP; a PDF's raw pictures are written
+// as PNG. Everything is as careful as the readers above: bounded work, and a file that can't be read has no figures (it never throws).
+export const FIGURE = { minW: 160, minH: 120, minArea: 48000, ratio: 5, maxBytes: 3.5e6, perFile: 120 };
+const EMU = 914400;
+// What a picture is, from its first bytes: its type and size, or null (not one a browser shows, or too small to be a diagram).
+export function figureInfo(buf) {
+  if (!Buffer.isBuffer(buf) || buf.length < 24 || buf.length > FIGURE.maxBytes) return null;
+  const type = buf[0] === 0x89 && ascii(buf, 1, 4) === 'PNG' ? 'image/png' : buf[0] === 0xff && buf[1] === 0xd8 ? 'image/jpeg' : ascii(buf, 0, 4) === 'GIF8' ? 'image/gif'
+    : ascii(buf, 0, 4) === 'RIFF' && ascii(buf, 8, 12) === 'WEBP' ? 'image/webp' : '';
+  const size = type && imageSize(buf);
+  if (!size) return null;
+  const { width: w, height: h } = size;
+  if (w < FIGURE.minW || h < FIGURE.minH || w * h < FIGURE.minArea || w / h > FIGURE.ratio || h / w > FIGURE.ratio || w > 20000 || h > 20000) return null;
+  return { type, ext: { 'image/png': 'png', 'image/jpeg': 'jpg', 'image/gif': 'gif', 'image/webp': 'webp' }[type], w, h };
+}
+const sha = b => createHash('sha1').update(b).digest('hex').slice(0, 20);
+// The list of pictures, once each: one used on three pages or more is dropped, and one used on two is kept where it came first.
+function onceEach(list) {
+  const uses = new Map();
+  for (const f of list) uses.set(f.key, (uses.get(f.key) || new Set()).add(f.at));
+  const seen = new Set(), out = [];
+  for (const f of list) { if (uses.get(f.key).size >= 3 || seen.has(f.key)) continue; seen.add(f.key); out.push(f); if (out.length >= FIGURE.perFile) break; }
+  return out;
+}
+// A picture picture a slide shows (a p:pic): its relationship, its alt text, and how big it is drawn (EMU).
+const shownTiny = (w, h) => w > 0 && h > 0 && (w < 0.9 * EMU || h < 0.6 * EMU);
+// The pictures of a slide show, slide by slide in the order of the show.
+export const pptxFigures = guarded(buf => {
+  const zip = openOffice(buf, n => /^ppt\/(presentation\.xml|_rels\/presentation\.xml\.rels|slides\/slide\d+\.xml|slides\/_rels\/)/.test(n));
+  const rels = relationships(zip, 'ppt/_rels/presentation.xml.rels'), slides = [];
+  const pres = rootOf(partXml(zip, 'ppt/presentation.xml')), list = pres && findAll(pres, 'sldId');
+  if (list) for (const s of list) { const rel = rels.get(attr(s, 'r:id')), path = rel && joinPath('ppt/presentation.xml', rel.target); if (path && zip.has(path) && !slides.includes(path)) slides.push(path); }
+  if (!slides.length) for (const m of [...zip.keys()].map(k => /^ppt\/slides\/slide(\d+)\.xml$/.exec(k)).filter(Boolean).sort((a, b) => a[1] - b[1])) slides.push(m[0]);
+  const used = [];
+  for (let i = 0; i < slides.length && used.length < 2000; i++) {
+    const root = rootOf(partXml(zip, slides[i])); if (!root) continue;
+    const rl = relationships(zip, slides[i].replace(/([^/]+)$/, '_rels/$1.rels'));
+    for (const pic of findAll(root, 'pic')) {
+      const blip = findAll(pic, 'blip')[0], rel = blip && rl.get(attr(blip, 'r:embed'));
+      if (!rel || !/\/image$/.test(rel.type) || /^https?:/i.test(rel.target)) continue;
+      const nv = kid(pic, 'nvPicPr'), c = nv && kid(nv, 'cNvPr'), sp = kid(pic, 'spPr'), xf = sp && kid(sp, 'xfrm'), ext = xf && kid(xf, 'ext');
+      const w = ext ? +attr(ext, 'cx') || 0 : 0, h = ext ? +attr(ext, 'cy') || 0 : 0;
+      if (shownTiny(w, h)) continue;
+      used.push({ path: joinPath(slides[i], rel.target), at: 'Slide ' + (i + 1), alt: c ? attr(c, 'descr') || '' : '' });
+    }
+  }
+  const want = new Set(used.map(u => u.path));
+  if (!want.size) return [];
+  const media = unzip(buf, { only: n => want.has(n), skipOver: FIGURE.maxBytes, maxEntries: 20000, maxTotal: 120e6, maxEntry: 20e6 });
+  const out = [];
+  for (const u of used) { const b = media.get(u.path), info = b && figureInfo(b); if (info) out.push({ buf: b, ...info, at: u.at, alt: String(u.alt).slice(0, 200), key: sha(b) }); }
+  return onceEach(out);
+});
+// The pictures in a Word file, in the order of the text, each with the top-level heading it is under (the label readDocx gives that part of the text).
+export const docxFigures = guarded(buf => {
+  const zip = openOffice(buf, n => /^word\/(document\.xml|styles\.xml|_rels\/document\.xml\.rels)$/.test(n));
+  const doc = rootOf(partXml(zip, 'word/document.xml')), body = doc && kid(doc, 'body');
+  if (!body) fail('broken');
+  const rels = relationships(zip, 'word/_rels/document.xml.rels'), styles = wordStyles(rootOf(partXml(zip, 'word/styles.xml')));
+  // The headings come first, so the top level is known, then the pictures are found going down the text.
+  const heads = [];
+  for (const c of body.k) { if (!isNode(c) || c.n !== 'p') continue; const t = []; wordBlocks({ k: [c] }, t, styles); for (const b of t) if (b.kind === 'h') heads.push(b.level); }
+  const top = heads.length ? Math.min(...heads) : 0, used = []; let at = '';
+  const take = (node) => {
+    for (const c of node.k) {
+      if (!isNode(c)) continue;
+      if (c.n === 'p') {
+        const t = []; wordBlocks({ k: [c] }, t, styles);
+        for (const b of t) if (b.kind === 'h' && b.level === top) at = b.text.replace(/\s+/g, ' ').slice(0, 120);
+        for (const d of findAll(c, 'drawing')) {
+          const blip = findAll(d, 'blip')[0], rel = blip && rels.get(attr(blip, 'r:embed')), ex = findAll(d, 'extent')[0], dp = findAll(d, 'docPr')[0];
+          const w = ex ? +attr(ex, 'cx') || 0 : 0, h = ex ? +attr(ex, 'cy') || 0 : 0;
+          if (!rel || /^https?:/i.test(rel.target) || shownTiny(w, h)) continue;
+          used.push({ path: joinPath('word/document.xml', rel.target), at, alt: dp ? attr(dp, 'descr') || '' : '' });
+        }
+        for (const v of findAll(c, 'imagedata')) { const rel = rels.get(attr(v, 'r:id')); if (rel && !/^https?:/i.test(rel.target)) used.push({ path: joinPath('word/document.xml', rel.target), at, alt: '' }); }
+      } else if (c.n === 'tbl') { for (const tr of kidsOf(c, 'tr')) for (const tc of tr.k) if (isNode(tc) && tc.n === 'tc') take(tc); }
+      else if (c.n === 'sdt') { const sc = kid(c, 'sdtContent'); if (sc) take(sc); }
+      else if (c.n === 'sdtContent') take(c);
+    }
+  };
+  take(body);
+  const want = new Set(used.map(u => u.path));
+  if (!want.size) return [];
+  const media = unzip(buf, { only: n => want.has(n), skipOver: FIGURE.maxBytes, maxEntries: 20000, maxTotal: 120e6, maxEntry: 20e6 });
+  const out = [];
+  for (const u of used) { const b = media.get(u.path), info = b && figureInfo(b); if (info) out.push({ buf: b, ...info, at: u.at, alt: String(u.alt).slice(0, 200), key: sha(b) }); }
+  return onceEach(out);
+});
+
+// A PNG file from raw rows (every row padded to whole bytes, as a PDF stores them). `type` is the PNG colour type: 0 grey, 2 colour, 3 a palette.
+const CRC = (() => { const t = new Uint32Array(256); for (let n = 0; n < 256; n++) { let c = n; for (let k = 0; k < 8; k++) c = c & 1 ? 0xedb88320 ^ (c >>> 1) : c >>> 1; t[n] = c >>> 0; } return t; })();
+const crc32 = b => { let c = 0xffffffff; for (let i = 0; i < b.length; i++) c = CRC[(c ^ b[i]) & 255] ^ (c >>> 8); return (c ^ 0xffffffff) >>> 0; };
+const chunk = (name, data) => { const out = Buffer.alloc(12 + data.length); out.writeUInt32BE(data.length, 0); out.write(name, 4, 'latin1'); data.copy(out, 8); out.writeUInt32BE(crc32(out.subarray(4, 8 + data.length)), 8 + data.length); return out; };
+export function encodePng(w, h, type, depth, rows, palette) {
+  const channels = type === 2 ? 3 : 1, row = Math.ceil(w * channels * depth / 8), raw = Buffer.alloc((row + 1) * h);
+  for (let y = 0; y < h; y++) rows.copy(raw, y * (row + 1) + 1, y * row, Math.min(rows.length, (y + 1) * row));
+  const head = Buffer.alloc(13); head.writeUInt32BE(w, 0); head.writeUInt32BE(h, 4); head[8] = depth; head[9] = type;
+  return Buffer.concat([Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]), chunk('IHDR', head), ...(palette ? [chunk('PLTE', palette)] : []), chunk('IDAT', deflateSync(raw, { level: 6 })), chunk('IEND', Buffer.alloc(0))]);
+}
+// How many colour components a JPEG has (1 grey, 3 colour, 4 CMYK), from its first frame header.
+function jpegComponents(b) {
+  for (let p = 2; p + 9 < b.length;) {
+    if (b[p] !== 0xff) { p++; continue; }
+    const m = b[p + 1];
+    if (m === 0xff) { p++; continue; }
+    if (m === 0xd8 || m === 0x01 || (m >= 0xd0 && m <= 0xd7)) { p += 2; continue; }
+    if (m >= 0xc0 && m <= 0xcf && m !== 0xc4 && m !== 0xc8 && m !== 0xcc) return b[p + 9];
+    p += 2 + b.readUInt16BE(p + 2);
+  }
+  return 0;
+}
+// A picture of a PDF as a file a browser shows, or null (a kind that isn't read: masks, CMYK, JPEG 2000, fax and scanned black and white).
+function pdfPicture(doc, st) {
+  const d = st.dict, w = doc.numberOf(d.Width), h = doc.numberOf(d.Height);
+  if (!(w > 0 && h > 0) || w * h > 40e6 || d.ImageMask === true) return null;
+  const f = doc.deref(d.Filter), list = f === null || f === undefined ? [] : Array.isArray(f) ? f : [f], last = nameOf(doc.deref(list[list.length - 1]));
+  if (last === 'DCTDecode' || last === 'DCT') {
+    const jpg = doc.streamData(st, true);
+    return jpg && jpg.length > 100 && jpg[0] === 0xff && jpg[1] === 0xd8 && [1, 3].includes(jpegComponents(jpg)) ? { buf: jpg, type: 'image/jpeg', w, h } : null;
+  }
+  const data = doc.streamData(st); if (!data || !data.length) return null;
+  const depth = doc.numberOf(d.BitsPerComponent) || 8;
+  if (![1, 2, 4, 8, 16].includes(depth)) return null;
+  // The colour space: how many components a pixel has, and (for a palette) the colours.
+  let cs = doc.deref(d.ColorSpace), n = 0, palette = null;
+  const comps = c => {
+    c = doc.deref(c); const nm = nameOf(c);
+    if (nm === 'DeviceGray' || nm === 'G' || nm === 'CalGray') return 1;
+    if (nm === 'DeviceRGB' || nm === 'RGB' || nm === 'CalRGB') return 3;
+    if (Array.isArray(c)) {
+      const k = nameOf(doc.deref(c[0]));
+      if (k === 'CalGray') return 1; if (k === 'CalRGB') return 3;
+      if (k === 'ICCBased') { const icc = doc.deref(c[1]); const nn = icc && icc.dict ? doc.numberOf(icc.dict.N) : NaN; return nn === 1 || nn === 3 ? nn : 0; }
+    }
+    return 0;
+  };
+  if (Array.isArray(cs) && ['Indexed', 'I'].includes(nameOf(doc.deref(cs[0])))) {
+    const base = comps(cs[1]), hival = doc.numberOf(cs[2]), look = doc.deref(cs[3]);
+    if (!base || !(hival >= 0) || hival > 255 || depth > 8) return null;
+    const bytes = look instanceof PStr ? Buffer.from(look.s, 'latin1') : look instanceof Stream ? doc.streamData(look) : null;
+    if (!bytes || bytes.length < base) return null;
+    palette = Buffer.alloc((hival + 1) * 3);
+    for (let i = 0; i <= hival; i++) for (let k = 0; k < 3; k++) palette[i * 3 + k] = bytes[Math.min(bytes.length - 1, i * base + (base === 1 ? 0 : k))];
+    n = 1;
+  } else n = comps(cs);
+  if (!n) return null;
+  const row = Math.ceil(w * n * depth / 8), rows = row * h;
+  if (rows > 60e6) return null;
+  const px = data.length >= rows ? data : Buffer.concat([data, Buffer.alloc(rows - data.length)]);
+  // A soft mask (transparency): blended onto white, so a diagram with a see-through background still reads.
+  const sm = doc.deref(d.SMask);
+  if (sm instanceof Stream && depth === 8) {
+    const mw = doc.numberOf(sm.dict.Width), mh = doc.numberOf(sm.dict.Height), md = doc.streamData(sm);
+    if (mw > 0 && mh > 0 && (doc.numberOf(sm.dict.BitsPerComponent) || 8) === 8 && md && md.length >= mw * mh) {
+      const out = Buffer.alloc(w * h * 3);
+      for (let y = 0; y < h; y++) {
+        const my = Math.min(mh - 1, Math.floor(y * mh / h));
+        for (let x = 0; x < w; x++) {
+          const a = md[my * mw + Math.min(mw - 1, Math.floor(x * mw / w))], o = (y * w + x) * 3, i = y * row + x * n;
+          for (let k = 0; k < 3; k++) { const c = palette ? palette[px[i] * 3 + k] : n === 1 ? px[i] : px[i + k]; out[o + k] = Math.round((c * a + 255 * (255 - a)) / 255); }
+        }
+      }
+      return { buf: encodePng(w, h, 2, 8, out), type: 'image/png', w, h };
+    }
+  }
+  if (palette) return { buf: encodePng(w, h, 3, depth, px, palette), type: 'image/png', w, h };
+  if (n === 1) return { buf: encodePng(w, h, 0, depth, px), type: 'image/png', w, h };
+  return depth === 8 || depth === 16 ? { buf: encodePng(w, h, 2, depth, px), type: 'image/png', w, h } : null;
+}
+// The pictures embedded in a PDF's pages, page by page. A picture that fills the page (a scan) and one drawn tiny are left out. Needs a few seconds at most.
+export function pdfFigures(input, { ms = 8000 } = {}) {
+  try {
+    const buf = asBuffer(input);
+    if (buf.length > 120e6 || buf.subarray(0, 1024).indexOf('%PDF-') < 0) return [];
+    const doc = new PdfDoc(buf);
+    if (doc.locked) return [];
+    doc.deadline = Math.min(doc.deadline, Date.now() + ms);
+    const pages = doc.pageList(), out = [], seen = new Map();
+    for (let i = 0; i < pages.length && i < MAX_PAGES && out.length < 600 && Date.now() < doc.deadline; i++) {
+      const ex = new Extractor(doc); ex.images = [];
+      const data = doc.pageContent(pages[i]);
+      if (data.length) { try { ex.run(data, pages[i].res, 0); } catch { /* the pictures found before are kept */ } }
+      let box = doc.deref(pages[i].dict.MediaBox); box = Array.isArray(box) && box.length >= 4 ? box.map(v => doc.numberOf(v)) : [0, 0, 612, 792];
+      const pw = Math.abs(box[2] - box[0]) || 612, ph = Math.abs(box[3] - box[1]) || 792;
+      for (const im of ex.images) {
+        if (im.w < 65 || im.h < 50 || (im.w > 0.9 * pw && im.h > 0.9 * ph)) continue;
+        const st = im.obj, id = st.start;
+        if (!seen.has(id)) {
+          let pic = null;
+          try { pic = pdfPicture(doc, st); } catch { pic = null; }
+          const info = pic && figureInfo(pic.buf);
+          seen.set(id, info ? { buf: pic.buf, ...info, key: sha(pic.buf) } : null);
+        }
+        const s = seen.get(id);
+        if (s) out.push({ ...s, at: 'p. ' + (i + 1), alt: '' });
+      }
+    }
+    return onceEach(out);
+  } catch { return []; }
+}
+// A photo is a picture as it is.
+export function imageFigure(buf) {
+  const info = figureInfo(Buffer.isBuffer(buf) ? buf : asBuffer(buf));
+  return info ? { buf, ...info, at: '', alt: '', key: sha(buf) } : null;
+}
+// The figures of one file by what it is ('pdf', 'pptx', 'docx', 'image'); a file that can't be read has none.
+export function figuresOf(fam, buf) {
+  try {
+    if (fam === 'pptx') return pptxFigures(buf);
+    if (fam === 'docx') return docxFigures(buf);
+    if (fam === 'pdf') return pdfFigures(buf);
+    if (fam === 'image') { const f = imageFigure(buf); return f ? [f] : []; }
+  } catch { /* a file that can't be read has no figures */ }
+  return [];
+}

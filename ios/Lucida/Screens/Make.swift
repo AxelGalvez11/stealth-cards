@@ -337,9 +337,14 @@ struct MakeSheet: View {
             kindChip("Fill in the blank", on: o.cloze) { flow.setOpt { $0.cloze.toggle() } }
             // Audio cards are for learning a language: the chip is there only once a language is set, and it starts off.
             if !o.lang.isEmpty { kindChip("Audio", on: o.audio) { flow.setOpt { $0.audio.toggle() } } }
+            // Picture cards, from the diagrams found in the material: offered where there may be some (slides, a PDF, a Word file, pictures), and they start off.
+            if flow.canImage { kindChip("Image", on: o.image) { flow.setOpt { $0.image.toggle() } } }
           }
           if o.audio && !o.lang.isEmpty {
             CSSText("Words and short phrases in \(Self.langs.first { $0.0 == o.lang }?.1 ?? "that language") are read aloud by your device’s voice. The back says what they mean.", 12, lh: 1.45, color: t.muted)
+          }
+          if o.image && flow.canImage {
+            CSSText(m.from != nil ? "A card for each label of this source’s diagrams, with the label hidden." : "A card for each label of the diagrams in it, with the label hidden.", 12, lh: 1.45, color: t.muted)
           }
         }
       }
@@ -390,10 +395,18 @@ struct MakeSheet: View {
 
   // ---------- 4: checking the cards ----------
   private func review(_ m: MakeState) -> some View {
-    let keep = m.cards.filter { !$0.gone }.count, from = m.name.isEmpty ? m.title : m.name
+    let keep = flow.keptCount, from = m.name.isEmpty ? m.title : m.name
     return VStack(alignment: .leading, spacing: 16) {
       VStack(alignment: .leading, spacing: 14) {
         Text(plural(keep, "card") + (from.isEmpty ? "" : " from " + from)).css(14).foregroundStyle(t.muted)
+        // The diagrams the make found go to the deck's Diagrams tab, whether or not their picture cards are kept.
+        if m.figures > 0 {
+          HStack(spacing: 8) {
+            Icon("image", 15, 1.8).foregroundStyle(t.text)
+            Text(plural(m.figures, "diagram") + " found. " + (m.figures == 1 ? "It is" : "They are") + " kept in the deck’s Diagrams tab.").css(13, lh: 1.4).foregroundStyle(t.muted)
+          }
+          .frame(maxWidth: .infinity, alignment: .leading).accessibilityElement(children: .combine)
+        }
         notesPanel(m)
         CappedList(max: 520, show: m.editing) {
           VStack(spacing: 8) { ForEach(m.cards) { card($0, editing: m.editing == $0.key).id($0.key) } }
@@ -405,12 +418,14 @@ struct MakeSheet: View {
   }
 
   private func card(_ c: MakeCard, editing: Bool) -> some View {
-    let cloze = c.kind == "cloze", audio = c.kind == "audio"
+    let cloze = c.kind == "cloze", audio = c.kind == "audio", picture = c.kind == "image"
     let q = cloze ? Rich.plain(c.text, cloze: true, blank: "____", join: " ", showMath: true) : audio ? c.speak : c.front
-    let a = cloze ? Rich.blanks(c.text, showMath: true).joined(separator: ", ") : c.back
+    // (A picture card says what is hidden in it: its labels, eight at most.)
+    let a = cloze ? Rich.blanks(c.text, showMath: true).joined(separator: ", ") : picture ? MakeSheet.hidden(c.parts) : c.back
     // An audio card says it is read aloud, and in what language, before where it came from.
-    let meta = [audio ? "Read aloud · " + c.lang : "", c.at].filter { !$0.isEmpty }.joined(separator: " · ")
+    let meta = [audio ? "Read aloud · " + c.lang : "", picture ? plural(c.parts.count, "card") + ", one for each label" : "", c.at].filter { !$0.isEmpty }.joined(separator: " · ")
     return HStack(alignment: .top, spacing: 8) {
+      if picture { MakeThumb(card: c) }
       VStack(alignment: .leading, spacing: 6) {
         if !editing {
           HStack(alignment: .top, spacing: 8) {
@@ -444,10 +459,13 @@ struct MakeSheet: View {
       }
       .frame(maxWidth: .infinity, alignment: .leading)
       HStack(spacing: 2) {
-        Button { flow.openCard(c.key) } label: {
-          (editing ? Icon("check", 16, 2.2) : Icon("pencil", 15, 2)).foregroundStyle(t.muted).frame(width: 36, height: 36).contentShape(Circle())
+        // (A picture card is kept or left out as a whole: its boxes are moved in the card editor, once it is in the deck.)
+        if !picture {
+          Button { flow.openCard(c.key) } label: {
+            (editing ? Icon("check", 16, 2.2) : Icon("pencil", 15, 2)).foregroundStyle(t.muted).frame(width: 36, height: 36).contentShape(Circle())
+          }
+          .buttonStyle(.press).accessibilityLabel(editing ? "Done editing" : "Edit this card")
         }
-        .buttonStyle(.press).accessibilityLabel(editing ? "Done editing" : "Edit this card")
         Button { flow.remove(c.key, gone: !c.gone) } label: {
           (c.gone ? Icon("undo", 15, 2) : Icon("close", 15, 2)).foregroundStyle(t.muted).frame(width: 36, height: 36).contentShape(Circle())
         }
@@ -510,7 +528,7 @@ struct MakeSheet: View {
       }
     case "making": FooterButton(label: "Cancel") { flow.cancel() }
     case "review":
-      let keep = m.cards.filter { !$0.gone }.count
+      let keep = flow.keptCount
       PairRow(spacing: 10, secondBasis: 40) {
         FooterButton(label: "Discard") { flow.discard() }
         FooterButton(label: m.saving ? "Saving…" : keep > 0 ? "Add \(plural(keep, "card")) to \(flow.into)" : "No cards to add", on: keep > 0) { flow.save() }
@@ -1063,5 +1081,41 @@ struct PickedImage: Transferable {
       try FileManager.default.copyItem(at: received.file, to: to)
       return PickedImage(url: to, name: to.lastPathComponent)
     }
+  }
+}
+
+extension MakeSheet {
+  /// What a picture card hides, for its row: the labels (eight at most, then "and 3 more").
+  static func hidden(_ parts: [String]) -> String {
+    parts.prefix(8).joined(separator: ", ") + (parts.count > 8 ? ", and \(parts.count - 8) more" : "")
+  }
+}
+
+/// A picture card's picture (a small one, on white, all of it) with a box over each label that is hidden.
+private struct MakeThumb: View {
+  @Environment(\.theme) private var t
+  let card: MakeCard
+  @State private var ui: UIImage?
+  var body: some View {
+    ZStack {
+      Color.white
+      if let ui { Image(uiImage: ui).resizable().scaledToFit() }
+      GeometryReader { g in
+        ZStack(alignment: .topLeading) {
+          ForEach(card.boxes) { b in
+            Rectangle().fill(Color.white.opacity(0.4)).overlay(Rectangle().strokeBorder(Color.black, lineWidth: 1))
+              .frame(width: b.w * g.size.width, height: b.h * g.size.height).offset(x: b.x * g.size.width, y: b.y * g.size.height)
+          }
+        }
+      }
+    }
+    .frame(width: 84, height: 64)
+    .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+    .overlay(RoundedRectangle(cornerRadius: 10, style: .continuous).strokeBorder(t.line, lineWidth: 1))
+    .task(id: card.image) {
+      if let sample = DiagramSample.picture(card.image) { ui = sample }
+      else if !card.image.isEmpty { ui = await Pictures.load(card.image) }
+    }
+    .accessibilityHidden(true)
   }
 }

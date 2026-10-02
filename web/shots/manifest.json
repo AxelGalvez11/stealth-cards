@@ -232,10 +232,10 @@
    640
   ],
   "scale": 1.2035398230088497,
-  "hash": "67c55716c7",
+  "hash": "1ab9fe7144",
   "width": 1360,
   "height": 770,
-  "bytes": 99962
+  "bytes": 99964
  },
  "deck-dark.webp": {
   "board": "WebPublicDeck",
@@ -246,10 +246,10 @@
    640
   ],
   "scale": 1.2035398230088497,
-  "hash": "bb55eeccbd",
+  "hash": "bbfaa567dd",
   "width": 1360,
   "height": 770,
-  "bytes": 101394
+  "bytes": 101396
  },
  "deck-phone.webp": {
   "board": "PhonePublicDeck",
@@ -260,7 +260,7 @@
    440
   ],
   "scale": 2,
-  "hash": "de4b304204",
+  "hash": "c457c05cc6",
   "width": 780,
   "height": 880,
   "bytes": 110428
@@ -274,7 +274,7 @@
    440
   ],
   "scale": 2,
-  "hash": "7119042338",
+  "hash": "aa82d4707c",
   "width": 780,
   "height": 880,
   "bytes": 111016

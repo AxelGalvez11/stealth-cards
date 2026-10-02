@@ -31,9 +31,11 @@ struct PublicGuide: Decodable, Equatable {
     init(from d: Decoder) throws { let c = try d.container(keyedBy: CodingKeys.self); id = c.v(.id, ""); title = c.v(.title, ""); text = c.v(.text, "") }
   }
   var pages: [Page] = [], sources = 0
-  enum CodingKeys: String, CodingKey { case pages, sources }
-  init(pages: [Page], sources: Int) { self.pages = pages; self.sources = sources }
-  init(from d: Decoder) throws { let c = try d.container(keyedBy: CodingKeys.self); pages = c.v(.pages, []); sources = c.v(.sources, 0) }
+  /// The tables and mind maps made from the deck's cards, which go with a shared deck (never its lecture pictures or uploads).
+  var diagrams: [DiagramInfo] = []
+  enum CodingKeys: String, CodingKey { case pages, sources, diagrams }
+  init(pages: [Page], sources: Int, diagrams: [DiagramInfo] = []) { self.pages = pages; self.sources = sources; self.diagrams = diagrams }
+  init(from d: Decoder) throws { let c = try d.container(keyedBy: CodingKeys.self); pages = c.v(.pages, []); sources = c.v(.sources, 0); diagrams = c.v(.diagrams, []) }
 }
 
 /// A Source as the Sources list shows it: its name, and a line like "File · 32 pages · 24 cards · Sep 18".

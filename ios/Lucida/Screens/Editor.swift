@@ -483,6 +483,8 @@ struct EditorSheet: View {
     // A saved box's card opens with its box picked (the canvas shows box 1 picked).
     picked = d.box.flatMap { id in d.boxes.contains { $0.id == id } ? id : nil }
     history = []
+    // Make cards from a diagram (the deck's Diagrams tab): a new Image card with the diagram's picture and a box over each label, to check and move before it is saved.
+    if cardId == nil, let dd = store.diagrams.takePrepared(deckId ?? "") { type = "Image"; image = dd.image; boxes = dd.boxes; occ = "one"; picked = nil }
     if store.demo && store.props.editorTyping { DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { focus = .front } }
   }
 

@@ -282,6 +282,40 @@ Two things worth knowing when writing flows like these: a tap on a card row righ
 page that is still moving, like a button's), so `GuideTests.cardRow` brings the row to the middle and lets the page settle first; and on iOS 26 a `confirmationDialog` is a
 small popover with only its action button and no Cancel, so a flow closes it with a touch outside (`PopoverDismissRegion`) and taps `app.popovers.buttons[...]`.
 
+## A deck's Diagrams
+
+The deck page's fourth tab, **Cards | Notes | Diagrams | Sources** (`Screens/Diagrams.swift`, `Data/DiagramsData.swift`; the web's `web/diagrams.js` and `web/diagram.js` ported; the canvas's PhoneDeck draws the same
+pieces). It is there for the deck's owner, and for anyone when the deck has made diagrams (a deck you only study has the tables and mind maps that came with it, read only; an address
+for a tab that isn't there still falls back to Cards). The tab's card has Make diagram and Upload (for the owner) and the diagrams in three groups, two tiles across: **Made** (tables and
+mind maps), **From your lectures** (pictures a make found in the slides, PDFs, Word files and photos the cards were made from) and **Uploaded**.
+
+A diagram opens as a sheet (`DiagramViewer`): a picture with a Show boxes switch (a box over each label, drawn from the labels' fractions as a card's boxes are) and the labels as chips; a
+table (`DiagramTableView`: headings in small capitals, the first column naming each row, sideways scrolling when it is wider than the phone); a mind map (`DiagramMapView`, laid out by
+`Data/DiagramLayout.swift` with the web's numbers, scrolling sideways). Make cards (a picture) asks the server to make the picture a card's own and to say where each label is (an
+uploaded picture is read first), then opens the card editor on a new Image card with a box and an answer for each label (`Store.diagrams.takePrepared`, in `EditorSheet.load`). Redo
+(made ones), Rename (a field in the viewer) and Delete (asked in the viewer: "Delete “<name>”?" with Keep it and Delete) are the web's, in the same words. **Make diagram** is a sheet
+(`MakeDiagramSheet`): Table or Mind map, from everything or one tag or one source, "Writing your table" with a calm bar and Cancel while it is made, and what went wrong in plain words
+with Back, Go Pro (a limit) or Try again. **Upload** asks Photo library or Files in a sheet of Lucida's own (`PickRequest`), and the phone's picker for that place comes after; the
+picture is made at most 2400 pixels across as a JPEG (a HEIC photo too) and goes up like a file for making cards, then `POST api/diagrams/keep`.
+
+Nothing here is the phone's own dialog, alert, menu or picker of choices: a question sits in the viewer, a problem is a line in the sheet or the viewer, and the choices are Lucida's own
+buttons (the Photos and Files pickers themselves are the phone's way to choose a file, as everywhere else in the app). The Make flow has the **Image** kind (`MakeOpts.image`, offered by
+`MakeFlow.canImage`; the `see` phase after the writing; the review's picture cards with their thumbnails and "3 diagrams found. They are kept in the deck's Diagrams tab."), a shared deck's
+page shows its tables and mind maps (`PublicDiagramsCard`, a read-only sheet) and never its owner's pictures.
+
+Library data: each deck's `diagrams` come with `/api/state` and are optional (`MakeModels.swift`), as a shared deck's `guide.diagrams`. The boards: `PhoneDeck` (`-state Diagrams|"Diagrams (none yet)"|
+"A picture open"|"An uploaded picture open"|"A table open"|"A mind map open"|"Renaming a diagram"|"Delete asked"|"Uploading a picture"|"Upload didn’t work"|"Make diagram"|"Making a diagram"|
+"Make diagram (it didn’t work)"|"Diagrams (studying)"`, with `-scrollTo tabs` to start the page at its tabs), `PhonePublicDeck` (`-state "A table open"|"A mind map open"`) and `PhoneMake`
+(`-state "Upload (picture cards on)"|"Review (picture cards)"`), with the sample in `Design/DiagramSample.swift` (three small drawings in `Resources/demo-*.png`). Debug builds also take
+`-diagramUpload <picture>` (sends a picture as an Upload would, on the open deck) beside `-deckTab diagrams`.
+
+    ios/tests/diagram-check.sh
+    ios/tools/e2e-diagrams.sh <simulator id>
+
+The first lays out mind maps of every shape in node and in Swift and compares every box and link (no simulator). The second starts a fresh server on port 3908 and the stand-in AI on 3909 (it needs
+the Diagrams answers: `STUB_AI=<stub-ai.mjs>`), makes seven owners with their lectures, tables, maps and uploads, a shared deck and someone who studies it (`ios/tests/js/diagrams-seed.mjs`),
+and runs `LucidaUITests/DiagramsTests` in nine flows (the tab, a picture and Make cards, Rename and Delete, Make diagram, the Free limit, Upload, the Image kind, a shared and a studied deck, dark mode).
+
 ## Classes and schools
 
 The Library's third view (Decks · All cards · Classes): your classes as tiles, Join a class with its 6-letter code, New

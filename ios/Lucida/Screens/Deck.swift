@@ -193,17 +193,17 @@ struct DeckScreen: View {
   let id: String
   /// This page, for dragging its cards.
   @State private var board = UUID().uuidString
-  /// Which section of the page shows (Cards, Notes or Sources; nil: Cards, unless an address or a board says another), which page of the Guide, and whether it's
+  /// Which section of the page shows (Cards, Notes, Diagrams or Sources; nil: Cards, unless an address or a board says another), which page of the Guide, and whether it's
   /// unfolded (Show more); and the Add cards menu (the + on the cover) is open.
   @State private var tab: String? = nil
   @State private var gpage = "main"
   @State private var gopen = false
   @State private var addOpen = false
   var body: some View {
-    let d = store.deck(id), g = store.guide(id), srcs = store.sources(id)
+    let d = store.deck(id), g = store.guide(id), srcs = store.sources(id), dgs = store.diagramRows(id)
     Group {
-      // (A deck with no cards but a Guide or Sources has its page, like the web's.)
-      if d.rows.isEmpty && store.cardCount(id) == 0 && !g.hasAny && srcs.isEmpty { empty(d) } else { page(d, g, srcs) }
+      // (A deck with no cards but a Guide, Sources or Diagrams has its page, like the web's.)
+      if d.rows.isEmpty && store.cardCount(id) == 0 && !g.hasAny && srcs.isEmpty && dgs.isEmpty { empty(d) } else { page(d, g, srcs, dgs) }
     }
     .toolbar(.hidden, for: .navigationBar)
     .addMenu(open: $addOpen, rows: [
@@ -220,13 +220,14 @@ struct DeckScreen: View {
     }
   }
 
-  /// A design screen opens as its board's settings say: Notes or Sources, a source open at a card's place, or a deck's settings.
+  /// A design screen opens as its board's settings say: Notes, Diagrams (a diagram or a sheet open) or Sources, a source open at a card's place, or a deck's settings.
   private func demoOpen() {
     let p = store.props
     if p.deckSettings != nil { nav.sheet = .deckSettings(id) }
     else if p.guideState == "A source open" { tab = "sources"; nav.sheet = .source(deckId: id, id: "x2", at: "1:00") }
     else if !p.sourceOpen.isEmpty { tab = "sources"; nav.sheet = .source(deckId: id, id: p.sourceOpen, at: p.sourceAt) }
-    else if let want = ["Notes": "notes", "Sources": "sources"][p.section] { tab = want }
+    else if DiagramSample.isState(p.guideState) { tab = "diagrams"; DiagramSample.open(p.guideState, deckId: id, flow: store.diagrams, nav: nav) }
+    else if let want = ["Notes": "notes", "Diagrams": "diagrams", "Sources": "sources"][p.section] { tab = want }
   }
 
   // The header: the deck's gradient (or its photo), with round buttons and its name. With a theme on (Pro), the theme's
@@ -283,14 +284,16 @@ struct DeckScreen: View {
     }
   }
 
-  private func page(_ d: DeckVM, _ g: GuideVM, _ srcs: [SourceVM]) -> some View {
-    // The sections: Cards (the cards), Notes (the Guide: its owner's, or one that has words), Sources (what the cards were made from: only its owner's).
-    let notesTab = g.hasAny || g.can, sourcesTab = g.can
+  private func page(_ d: DeckVM, _ g: GuideVM, _ srcs: [SourceVM], _ dgs: [DiagramVM]) -> some View {
+    // The sections: Cards (the cards), Notes (the Guide: its owner's, or one that has words), Diagrams (the diagrams of its lectures and the tables and mind maps made from it: its
+    // owner's, or a deck that has some made ones), Sources (what the cards were made from: only its owner's).
+    let notesTab = g.hasAny || g.can, diagramsTab = g.can || !dgs.isEmpty, sourcesTab = g.can
     let items = [DeckTabs.Item(id: "cards", label: "Cards", count: String(d.rows.count))]
       + (notesTab ? [DeckTabs.Item(id: "notes", label: "Notes", count: "")] : [])
+      + (diagramsTab ? [DeckTabs.Item(id: "diagrams", label: "Diagrams", count: dgs.isEmpty ? "" : String(dgs.count))] : [])
       + (sourcesTab ? [DeckTabs.Item(id: "sources", label: "Sources", count: srcs.isEmpty ? "" : String(srcs.count))] : [])
-    let want = tab ?? "cards", section = want == "notes" && notesTab ? "notes" : want == "sources" && sourcesTab ? "sources" : "cards"
-    return ScrollView(showsIndicators: false) {
+    let want = tab ?? "cards", section = want == "notes" && notesTab ? "notes" : want == "diagrams" && diagramsTab ? "diagrams" : want == "sources" && sourcesTab ? "sources" : "cards"
+    return ScrollViewReader { proxy in ScrollView(showsIndicators: false) {
       VStack(spacing: 16) {
         header(d, sub: d.lineShort, menu: true)
         VStack(spacing: 16) {
@@ -340,8 +343,9 @@ struct DeckScreen: View {
           }
           TestStartButton(scope: .deck(d.id))
           TestPastList(scope: .deck(d.id))
-          if items.count > 1 { DeckTabs(items: items, selected: section) { tab = $0 } }
+          if items.count > 1 { DeckTabs(items: items, selected: section) { tab = $0 }.id("deck-tabs") }
           if section == "notes" { notes(d, g) }
+          if section == "diagrams" { DiagramsCard(flow: store.diagrams, deckId: d.id, rows: dgs, can: g.can) }
           if section == "sources" { SourcesCard(deckId: d.id, rows: srcs, can: g.can) { s in withAnimation(Motion.sheet) { nav.sheet = .source(deckId: d.id, id: s.id, at: "") } } }
           let list = board + "/cards", ids = d.rows.map(\.id)
           if section == "cards" && d.rows.isEmpty { Text("No cards in this deck yet. Add some from the Add cards menu.").css(14).foregroundStyle(t.muted).frame(maxWidth: .infinity, alignment: .leading) }
@@ -367,6 +371,16 @@ struct DeckScreen: View {
       .dragScroller(drag, board: board)
     }
     .ignoresSafeArea(edges: .top)
+    .onAppear { boardScroll(proxy) }
+    }
+  }
+
+  /// A design screen starts scrolled to the tabs (`-scrollTo tabs`), to see what is under them (debug builds only).
+  private func boardScroll(_ proxy: ScrollViewProxy) {
+    #if DEBUG
+    guard store.demo, Board.arg("-scrollTo") == "tabs" else { return }
+    DispatchQueue.main.asyncAfter(deadline: .now() + 0.7) { proxy.scrollTo("deck-tabs", anchor: UnitPoint(x: 0.5, y: 0.09)) }
+    #endif
   }
 
   /// The Notes: the deck's Guide as a card (its pages as tabs when it has some).

@@ -5,15 +5,17 @@
 // This file holds them so design/build.mjs stays small; build.mjs hands it the helpers its boards are made with (H).
 // The app draws these boards (design/to-web.mjs), so what you see on the canvas is what runs.
 
+import { diagramBlocks, publicDiagramBlocks, DIAGRAMS_JS, DIAGRAMS_MOCK, DIAGRAM_STATES, DIAGRAM_STATE_RE } from './diagrams.mjs';
+
 // What the Make boards' "step" picker offers on the canvas (the app's own flow follows web/make.js).
-export const MAKE_STEPS = ['Pick', 'Upload', 'Upload (a file added)', 'Photos', 'Record', 'Recording', 'Paused', 'Paste', 'Paste (a language set)', 'YouTube', 'YouTube transcript', 'Topic', 'More from a source',
-  'Making', 'Making a recording', 'Review', 'Review (notes open)', 'Review (notes off)', 'Review (no room for notes)', 'Review (audio cards)', 'Review (editing a card)', 'Limit reached', 'File too big', 'Error'];
+export const MAKE_STEPS = ['Pick', 'Upload', 'Upload (a file added)', 'Upload (picture cards on)', 'Photos', 'Record', 'Recording', 'Paused', 'Paste', 'Paste (a language set)', 'YouTube', 'YouTube transcript', 'Topic', 'More from a source',
+  'Making', 'Making a recording', 'Review', 'Review (notes open)', 'Review (notes off)', 'Review (no room for notes)', 'Review (audio cards)', 'Review (picture cards)', 'Review (editing a card)', 'Limit reached', 'File too big', 'Error'];
 
 // Icons these boards use that the main set doesn't have (the onboarding's paste icon).
 const EXTRA = { paste: '<rect x="5.5" y="4.5" width="13" height="16" rx="2.5"/><path d="M9 4.5v-.3a1.7 1.7 0 0 1 1.7-1.7h2.6A1.7 1.7 0 0 1 15 4.2v.3"/><path d="M9 11h6M9 15h4"/>' };
 
 // What the deck page's Guide setting offers on the canvas.
-export const GUIDE_STATES = ['Guide and sources', 'Guide pages', 'Long guide', 'A source open', 'No guide yet', 'Studying (read only)'];
+export const GUIDE_STATES = ['Guide and sources', 'Guide pages', 'Long guide', 'A source open', 'No guide yet', 'Studying (read only)', ...DIAGRAM_STATES];
 
 export function makeBoards(H) {
   const { svg, I, FONT, MONO, T, DB_JS, DARK, MESH, W, HH, PW, PH } = H;
@@ -80,7 +82,7 @@ export function makeBoards(H) {
     ${field('Into deck', `<div style="display: flex; flex-direction: column; gap: 8px;">${input('deckName', 'setDeckName', '{{deckPlaceholder}}', 'height: 44px; font-size: 15px;')}<div style="display: flex; flex-wrap: wrap; gap: 6px;"><sc-for list="{{deckChips}}" as="d" hint-placeholder-count="3"><button type="button" onClick="{{d.pick}}" aria-pressed="{{d.pressed}}" style="height: 32px; max-width: 100%; padding: 0 12px; border: 0; border-radius: 999px; background: {{d.bg}}; color: {{d.fg}}; font: inherit; font-size: 13px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: pointer;">{{d.name}}</button></sc-for></div></div>`)}
     ${field('How many cards', seg('counts'))}
     <div style="display: grid; grid-template-columns: ${phone ? '1fr' : 'minmax(0, 1fr) minmax(0, 1fr)'}; gap: 16px;">
-      ${field('Kinds', `<div style="display: flex; flex-direction: column; gap: 8px;"><div style="display: flex; gap: 8px; flex-wrap: wrap;">${chip(svg(I.check, 13, 2.4) + 'Basic', 'basic', 'toggleBasic')}${chip(svg(I.check, 13, 2.4) + 'Fill in the blank', 'cloze', 'toggleCloze')}<sc-if value="{{canAudio}}" hint-placeholder-val="{{ false }}">${chip(svg(I.check, 13, 2.4) + 'Audio', 'audio', 'toggleAudio')}</sc-if></div><sc-if value="{{audioOn}}" hint-placeholder-val="{{ false }}"><span style="font-size: 12px; line-height: 1.45; color: {{t.muted}};">{{audioLine}}</span></sc-if></div>`)}
+      ${field('Kinds', `<div style="display: flex; flex-direction: column; gap: 8px;"><div style="display: flex; gap: 8px; flex-wrap: wrap;">${chip(svg(I.check, 13, 2.4) + 'Basic', 'basic', 'toggleBasic')}${chip(svg(I.check, 13, 2.4) + 'Fill in the blank', 'cloze', 'toggleCloze')}<sc-if value="{{canAudio}}" hint-placeholder-val="{{ false }}">${chip(svg(I.check, 13, 2.4) + 'Audio', 'audio', 'toggleAudio')}</sc-if><sc-if value="{{canImage}}" hint-placeholder-val="{{ false }}">${chip(svg(I.check, 13, 2.4) + 'Image', 'image', 'toggleImage')}</sc-if></div><sc-if value="{{audioOn}}" hint-placeholder-val="{{ false }}"><span style="font-size: 12px; line-height: 1.45; color: {{t.muted}};">{{audioLine}}</span></sc-if><sc-if value="{{imageOn}}" hint-placeholder-val="{{ false }}"><span style="font-size: 12px; line-height: 1.45; color: {{t.muted}};">{{imageLine}}</span></sc-if></div>`)}
       ${field('Language', `<label style="position: relative; display: flex; align-items: center;"><select onChange="{{setLang}}" aria-label="Language of the cards" style="appearance: none; -webkit-appearance: none; width: 100%; height: 36px; padding: 0 34px 0 14px; border: 0; outline: 0; border-radius: 999px; background: {{t.surf}}; color: {{t.text}}; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer;"><sc-for list="{{langs}}" as="l" hint-placeholder-count="3"><sc-if value="{{l.on}}" hint-placeholder-val="{{ false }}"><option value="{{l.code}}" selected>{{l.name}}</option></sc-if><sc-if value="{{l.off}}" hint-placeholder-val="{{ true }}"><option value="{{l.code}}">{{l.name}}</option></sc-if></sc-for></select><span style="position: absolute; right: 12px; display: flex; pointer-events: none; color: {{t.muted}};">${svg(I.chevDown, 14, 2)}</span></label>`)}
     </div>
   </div>`;
@@ -91,7 +93,9 @@ export function makeBoards(H) {
     <div role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="{{progPct}}" style="height: 6px; border-radius: 3px; background: {{t.surf2}}; overflow: hidden;"><div style="width: {{progWidth}}; height: 100%; border-radius: 3px; background: {{t.inv}}; transition: width .5s ease;"></div></div>
   </div>`;
   const reviewCard = `<div style="box-sizing: border-box; padding: 14px 8px 14px 16px; border-radius: 20px; background: {{t.surf}}; display: flex; align-items: flex-start; gap: 8px; opacity: {{c.op}};">
+      <sc-if value="{{c.isImage}}" hint-placeholder-val="{{ false }}"><div aria-hidden="true" style="position: relative; width: 84px; height: 64px; flex-shrink: 0; border-radius: 10px; overflow: hidden; background: #FFFFFF; box-shadow: inset 0 0 0 1px {{t.line}};"><img src="{{c.thumb}}" alt="" draggable="false" style="width: 100%; height: 100%; object-fit: contain; display: block;"><sc-for list="{{c.shapes}}" as="b" hint-placeholder-count="3"><div style="position: absolute; left: {{b.x}}; top: {{b.y}}; width: {{b.w}}; height: {{b.h}}; box-sizing: border-box; border: 1px solid #000000; background: rgba(255,255,255,.4);"></div></sc-for></div></sc-if>
       <div style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px;">
+        <sc-if value="{{c.isImage}}" hint-placeholder-val="{{ false }}"><span style="font-size: 15px; font-weight: 600; line-height: 1.35; overflow-wrap: anywhere; text-decoration: {{c.strike}};">{{c.q}}</span><span style="font-size: 14px; line-height: 1.4; color: {{t.muted}}; overflow-wrap: anywhere;">{{c.a}}</span></sc-if>
         <sc-if value="{{c.reading}}" hint-placeholder-val="{{ true }}"><div style="display: flex; align-items: flex-start; gap: 8px;"><sc-if value="{{c.isAudio}}" hint-placeholder-val="{{ false }}"><button type="button" onClick="{{c.say}}" aria-label="Hear {{c.q}}" style="width: 28px; height: 28px; flex-shrink: 0; margin-top: -3px; border: 0; border-radius: 14px; background: {{t.bg}}; color: {{t.text}}; display: flex; align-items: center; justify-content: center; cursor: pointer;">${svg(I.audio, 14, 2)}</button></sc-if><span style="font-size: 15px; font-weight: 600; line-height: 1.35; overflow-wrap: anywhere; text-decoration: {{c.strike}};">{{c.q}}</span></div><span style="font-size: 14px; line-height: 1.4; color: {{t.muted}}; overflow-wrap: anywhere;">{{c.a}}</span></sc-if>
         <sc-if value="{{c.editing}}" hint-placeholder-val="{{ false }}">
           <sc-if value="{{c.isBasic}}" hint-placeholder-val="{{ true }}"><div style="display: flex; flex-direction: column; gap: 6px;"><input type="text" value="{{c.front}}" onChange="{{c.setFront}}" aria-label="Question" style="height: 40px; box-sizing: border-box; padding: 0 12px; border: 0; outline: 0; border-radius: 12px; background: {{t.bg}}; color: {{t.text}}; font: inherit; font-size: 15px;"><input type="text" value="{{c.back}}" onChange="{{c.setBack}}" aria-label="Answer" style="height: 40px; box-sizing: border-box; padding: 0 12px; border: 0; outline: 0; border-radius: 12px; background: {{t.bg}}; color: {{t.text}}; font: inherit; font-size: 15px;"></div></sc-if>
@@ -101,7 +105,7 @@ export function makeBoards(H) {
         <sc-if value="{{c.hasAt}}" hint-placeholder-val="{{ true }}"><span style="font-family: ${MONO}; font-size: 11px; color: {{t.muted}};">{{c.at}}</span></sc-if>
       </div>
       <div style="display: flex; flex-shrink: 0; gap: 2px;">
-        <button type="button" onClick="{{c.toggleEdit}}" aria-label="{{c.editLabel}}" style="width: 36px; height: 36px; border: 0; border-radius: 18px; background: transparent; color: {{t.muted}}; display: flex; align-items: center; justify-content: center; cursor: pointer;"><sc-if value="{{c.editing}}" hint-placeholder-val="{{ false }}">${svg(I.check, 16, 2.2)}</sc-if><sc-if value="{{c.notEditing}}" hint-placeholder-val="{{ true }}">${svg(I.pencil, 15, 2)}</sc-if></button>
+        <sc-if value="{{c.canEdit}}" hint-placeholder-val="{{ true }}"><button type="button" onClick="{{c.toggleEdit}}" aria-label="{{c.editLabel}}" style="width: 36px; height: 36px; border: 0; border-radius: 18px; background: transparent; color: {{t.muted}}; display: flex; align-items: center; justify-content: center; cursor: pointer;"><sc-if value="{{c.editing}}" hint-placeholder-val="{{ false }}">${svg(I.check, 16, 2.2)}</sc-if><sc-if value="{{c.notEditing}}" hint-placeholder-val="{{ true }}">${svg(I.pencil, 15, 2)}</sc-if></button></sc-if>
         <button type="button" onClick="{{c.toggleGone}}" aria-label="{{c.goneLabel}}" style="width: 36px; height: 36px; border: 0; border-radius: 18px; background: transparent; color: {{t.muted}}; display: flex; align-items: center; justify-content: center; cursor: pointer;"><sc-if value="{{c.gone}}" hint-placeholder-val="{{ false }}">${svg(I.undo, 15, 2)}</sc-if><sc-if value="{{c.kept}}" hint-placeholder-val="{{ true }}">${svg(I.close, 15, 2)}</sc-if></button>
       </div>
     </div>`;
@@ -118,6 +122,7 @@ export function makeBoards(H) {
   </sc-if>`;
   const review = phone => `<div style="display: flex; flex-direction: column; gap: 14px; min-height: 0;">
     <span style="font-size: 14px; color: {{t.muted}};">{{reviewLine}}</span>
+    <sc-if value="{{hasFigs}}" hint-placeholder-val="{{ false }}"><span style="display: flex; align-items: center; gap: 8px; font-size: 13px; line-height: 1.4; color: {{t.muted}};"><span style="display: flex; flex-shrink: 0; color: {{t.text}};">${svg(I.image, 15, 1.8)}</span>{{figLine}}</span></sc-if>
     ${notesPanel.replace('${PHONE_NOTES_H}', phone ? '220' : '260')}
     <div style="display: flex; flex-direction: column; gap: 8px; ${phone ? 'max-height: 520px;' : 'max-height: 470px;'} overflow-y: auto; scrollbar-width: none; margin: 0 -4px; padding: 0 4px;"><sc-for list="{{cards}}" as="c" hint-placeholder-count="4">${reviewCard}</sc-for></div>
   </div>`;
@@ -179,8 +184,10 @@ renderVals() {
   const addable = step === 'add' && !(kind === 'record');
   const prog = v.progress, pct = prog.n ? Math.min(100, Math.round(100 * prog.i / prog.n)) : 0;
   const cards = v.cards.map(c => { const q = c.kind === 'cloze' ? R.plain(c.text, { cloze: true, blank: '____', join: ' ', math: 'show' }) : c.kind === 'audio' ? c.speak : c.front, a = c.kind === 'cloze' ? R.blanks(c.text, { math: 'show' }).join(', ') : c.back, ed = v.editing === c.key;
-    const meta = [c.kind === 'audio' ? 'Read aloud · ' + c.lang : '', c.at].filter(Boolean).join(' · ');
-    return { q, a, at: meta, hasAt: !!meta, editing: ed, notEditing: !ed, reading: !ed, isBasic: c.kind === 'basic', isCloze: c.kind === 'cloze', isAudio: c.kind === 'audio', front: c.front, back: c.back, text: c.text, speak: c.speak || '', gone: !!c.gone, kept: !c.gone, op: c.gone ? '.45' : '1', strike: c.gone ? 'line-through' : 'none',
+    const img = c.kind === 'image', parts = img ? (c.parts || []) : [];
+    const meta = [c.kind === 'audio' ? 'Read aloud · ' + c.lang : '', img ? plural(parts.length, 'card') + ', one for each label' : '', c.at].filter(Boolean).join(' · ');
+    return { q: img ? c.front : q, a: img ? parts.slice(0, 8).join(', ') + (parts.length > 8 ? ', and ' + (parts.length - 8) + ' more' : '') : a, at: meta, hasAt: !!meta, isImage: img, canEdit: !img, thumb: img ? c.image : '', shapes: img ? (c.boxes || []).map(b => ({ x: +(b.x * 100).toFixed(2) + '%', y: +(b.y * 100).toFixed(2) + '%', w: +(b.w * 100).toFixed(2) + '%', h: +(b.h * 100).toFixed(2) + '%' })) : [],
+      editing: ed && !img, notEditing: !ed, reading: !ed && !img, isBasic: c.kind === 'basic', isCloze: c.kind === 'cloze', isAudio: c.kind === 'audio', front: c.front, back: c.back, text: c.text, speak: c.speak || '', gone: !!c.gone, kept: !c.gone, op: c.gone ? '.45' : '1', strike: c.gone ? 'line-through' : 'none',
       editLabel: ed ? 'Done editing' : 'Edit this card', goneLabel: c.gone ? 'Put this card back' : 'Remove this card',
       toggleEdit: () => M.openCard(c.key), toggleGone: () => M.remove(c.key, !c.gone), say: () => (mock ? null : db.act.speak(c.speak, c.lang)),
       setFront: e => M.edit(c.key, { front: e && e.target ? e.target.value : '' }), setBack: e => M.edit(c.key, { back: e && e.target ? e.target.value : '' }), setText: e => M.edit(c.key, { text: e && e.target ? e.target.value : '' }), setSpeak: e => M.edit(c.key, { speak: e && e.target ? e.target.value : '' }) }; });
@@ -190,7 +197,8 @@ renderVals() {
   const noteAts = N ? N.sections.map(x => x.at).filter(Boolean) : [];
   const notesLine = N ? (full ? 'This deck has every page a Guide can have, so these notes can’t be added. Delete a page in its Guide to make room.'
     : plural(N.sections.length, 'note') + (noteAts.length > 1 ? ' · ' + noteAts[0] + ' to ' + noteAts[noteAts.length - 1] : noteAts.length ? ' · ' + noteAts[0] : '') + (keepN ? ' · saved with the cards' : ' · not saved')) : '';
-  const keep = cards.filter(c => !c.gone).length, err = v.error;
+  // (A picture is one row to keep or leave out, and makes a card for each label hidden in it.)
+  const keep = v.cards.filter(c => !c.gone).reduce((n, c) => n + (c.kind === 'image' ? Math.max(1, (c.parts || []).length) : 1), 0), err = v.error;
   const into = chosen ? chosen.name : (o.deckName.trim() || v.title || v.name || 'a new deck');
   const LANGS = [['', 'Same as the material'], ['en', 'English'], ['es', 'Spanish'], ['fr', 'French'], ['de', 'German'], ['it', 'Italian'], ['pt', 'Portuguese'], ['zh', 'Chinese'], ['ja', 'Japanese'], ['ko', 'Korean'], ['ar', 'Arabic'], ['hi', 'Hindi']];
   const files = v.files.map(f => ({ ...f, isDoc: f.fam === 'doc', isImage: f.fam === 'image', isAudio: f.fam === 'audio', remove: () => M.removeFile(f.i) }));
@@ -221,12 +229,16 @@ renderVals() {
     // Audio cards are for learning a language, so the choice is there only once a language is set, and it starts off.
     canAudio: !!o.lang, audioOn: !!o.lang && !!o.audio, audioPressed: o.audio ? 'true' : 'false', audioBg: o.audio ? t.inv : t.surf, audioFg: o.audio ? t.invText : t.text, toggleAudio: () => M.setOpt('audio', !o.audio),
     audioLine: 'Words and short phrases in ' + ((LANGS.find(x => x[0] === o.lang) || [])[1] || 'that language') + ' are read aloud by your device’s voice. The back says what they mean.',
+    // Image (picture cards from the diagrams found in the material): offered where there may be some; it starts off.
+    canImage: !!v.canImage, imageOn: !!v.canImage && !!o.image, imagePressed: o.image ? 'true' : 'false', imageBg: o.image ? t.inv : t.surf, imageFg: o.image ? t.invText : t.text, toggleImage: () => M.setOpt('image', !o.image),
+    imageLine: v.from ? 'A card for each label of this source’s diagrams, with the label hidden.' : 'A card for each label of the diagrams in it, with the label hidden.',
+    hasFigs: step === 'review' && v.figures > 0, figLine: plural(v.figures, 'diagram') + ' found. ' + (v.figures === 1 ? 'It is' : 'They are') + ' kept in the deck’s Diagrams tab.',
     basicPressed: o.basic ? 'true' : 'false', basicBg: o.basic ? t.inv : t.surf, basicFg: o.basic ? t.invText : t.text, toggleBasic: () => M.setOpt('basic', !o.basic),
     clozePressed: o.cloze ? 'true' : 'false', clozeBg: o.cloze ? t.inv : t.surf, clozeFg: o.cloze ? t.invText : t.text, toggleCloze: () => M.setOpt('cloze', !o.cloze),
     langs: LANGS.map(([code, name]) => ({ code, name, on: o.lang === code, off: o.lang !== code })), setLang: e => M.setOpt('lang', e && e.target ? e.target.value : ''),
     showMake: addable, makeBg: v.ready ? t.inv : t.surf2, makeFg: v.ready ? t.invText : t.muted,
     hasWarn: !!(err && err.soft), warn: err && err.soft ? err.message : '',
-    progWord: prog.word || 'Getting ready…', progLine: prog.phase === 'write' || prog.phase === 'read' ? plural(prog.i, 'part') + ' of ' + prog.n + ' done' : prog.phase === 'send' && prog.n > 1 ? prog.i + ' of ' + prog.n + ' sent' : 'This takes a moment', progPct: pct, progWidth: Math.max(4, pct) + '%',
+    progWord: prog.word || 'Getting ready…', progLine: prog.phase === 'write' || prog.phase === 'read' ? plural(prog.i, 'part') + ' of ' + prog.n + ' done' : prog.phase === 'see' ? prog.i + ' of ' + plural(prog.n, 'step') + ' done' : prog.phase === 'send' && prog.n > 1 ? prog.i + ' of ' + prog.n + ' sent' : 'This takes a moment', progPct: pct, progWidth: Math.max(4, pct) + '%',
     hasNotes: step === 'review' && !!N, notesLine, notesSw: sw(keepN, !full), toggleNotes: () => (full ? null : M.setKeepNotes(!keepN)), toggleNotesOpen: () => this.setState({ notesOpen: !nOpen }), notesOpen: nOpen, notesExpanded: nOpen ? 'true' : 'false',
     notesOpenLabel: nOpen ? 'Hide the notes' : 'Read the notes', notesOp: keepN ? '1' : '.5',
     notesRef: el => { const k = N ? N.text.length + ':' + (() => { let h = 0; for (let i = 0; i < N.text.length; i++) h = (h * 31 + N.text.charCodeAt(i)) | 0; return h; })() : ''; if (el.getAttribute('data-k') !== k) { el.innerHTML = N ? md.render(N.text) : ''; el.setAttribute('data-k', k); } },
@@ -325,13 +337,14 @@ export function deckBlocks(H, phone) {
   const addMenu = (btn, pos, rows = ADD_ROWS) => `<div style="position: relative;">${btn}<sc-if value="{{gs.addOpen}}" hint-placeholder-val="{{ false }}"><div role="menu" aria-label="Add cards" data-sc-pop style="position: absolute; ${pos} z-index: 30; width: 300px; box-sizing: border-box; padding: 8px; border-radius: 22px; background: {{t.bg}}; color: {{t.text}}; box-shadow: 0 18px 48px rgba(0,0,0,.2), 0 0 0 1px {{t.line}}; display: flex; flex-direction: column; gap: 2px; text-shadow: none;">
     ${rows.map(([ic, a, b, h]) => `<a href="${h}" role="menuitem" style="min-height: 52px; box-sizing: border-box; padding: 8px 12px; display: flex; align-items: center; gap: 12px; border-radius: 14px; color: {{t.text}};"><span style="width: 32px; height: 32px; flex-shrink: 0; border-radius: 16px; background: {{t.surf}}; display: flex; align-items: center; justify-content: center;">${icon(ic, 15, 2)}</span><span style="display: flex; flex-direction: column; gap: 1px; min-width: 0;"><span style="font-size: 14px; font-weight: 600; line-height: 1.25;">${a}</span><span style="font-size: 12px; color: {{t.muted}};">${b}</span></span></a>`).join('')}
   </div></sc-if></div>`;
-  return { guide, sources, tabs, viewer: viewer(phone), addMenu };
+  return { guide, sources, tabs, viewer: viewer(phone), addMenu, ...diagramBlocks(H, phone) };
 }
 
 // The logic those pieces read, for a deck's own page (`dk` is the deck, and `this.md()` draws the Guide). Returns `gs`.
 export const DECK_MATERIALS_JS = String.raw`
   const GS = (() => {
     const st = this.state, p = this.props, mock = !!db.mock, dm = mock ? this.mockMaterials() : db, G = dm.guide(dk.id), srcs = dm.sources(dk.id), md = this.md();
+    const DGM = dm.diagrams, dgRows = DGM.rows(dk.id), dgv = DGM.view(dk.id, p.diagram || '');
     const pageId = G.pages.some(x => x.id === st.gpage) ? st.gpage : 'main', cur = pageId === 'main' ? { id: 'main', title: 'Guide', text: G.text } : G.pages.find(x => x.id === pageId);
     const text = (cur && cur.text) || '', hasAny = !!(G.text.trim() || G.pages.length), open = !!st.gopen, long = text.length > 640 || text.split('\n').length > 14;
     const sum = s => { let h = 0; for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) | 0; return h; };
@@ -365,10 +378,11 @@ export const DECK_MATERIALS_JS = String.raw`
       canEdit: G.can, moreHref: mock ? 'WebMake.dc.html' : '/make?from=' + encodeURIComponent(vs.id) + '&deck=' + encodeURIComponent(dk.id), remove: () => { if (mock) return; db.act.deleteSource(dk.id, vs.id).then(() => this.setState({ viewing: '' })); } }
       : { open: false, name: '', line: '', close: () => {}, hasAudio: false, audio: '', hasPhotos: false, photos: [], hasTopic: false, topic: '', hasParts: false, parts: [], loading: false, noText: false, noTextLine: '', hasOpen: false, openHref: '', openLabel: '', canEdit: false, moreHref: '', remove: () => {} };
     // The section on show (Cards unless the address or a tap says another, and only a section that is there): ?tab= in the address, a source opened from a card, or the canvas's setting.
-    const cardsN = db.cards(dk.id).length, notesTab = hasAny || G.can, sourcesTab = !!G.can;
-    const wanted = st.tab !== undefined ? st.tab : p.sourceOpen ? 'sources' : mock ? (p.guide === 'A source open' ? 'sources' : { Notes: 'notes', Sources: 'sources' }[p.section] || 'cards') : { notes: 'notes', sources: 'sources' }[p.tab] || 'cards';
-    const tab = wanted === 'notes' && notesTab ? 'notes' : wanted === 'sources' && sourcesTab ? 'sources' : 'cards';
-    const tabList = [{ id: 'cards', label: 'Cards', count: String(cardsN) }, ...(notesTab ? [{ id: 'notes', label: 'Notes', count: '' }] : []), ...(sourcesTab ? [{ id: 'sources', label: 'Sources', count: sourceRows.length ? String(sourceRows.length) : '' }] : [])]
+    const cardsN = db.cards(dk.id).length, notesTab = hasAny || G.can, sourcesTab = !!G.can, dgTab = !!G.can || dgRows.length > 0;
+    const dgState = mock && new RegExp(${JSON.stringify(DIAGRAM_STATE_RE)}).test(p.guide || '');
+    const wanted = st.tab !== undefined ? st.tab : p.sourceOpen ? 'sources' : p.diagram ? 'diagrams' : mock ? (p.guide === 'A source open' ? 'sources' : dgState ? 'diagrams' : { Notes: 'notes', Diagrams: 'diagrams', Sources: 'sources' }[p.section] || 'cards') : { notes: 'notes', diagrams: 'diagrams', sources: 'sources' }[p.tab] || 'cards';
+    const tab = wanted === 'notes' && notesTab ? 'notes' : wanted === 'diagrams' && dgTab ? 'diagrams' : wanted === 'sources' && sourcesTab ? 'sources' : 'cards';
+    const tabList = [{ id: 'cards', label: 'Cards', count: String(cardsN) }, ...(notesTab ? [{ id: 'notes', label: 'Notes', count: '' }] : []), ...(dgTab ? [{ id: 'diagrams', label: 'Diagrams', count: dgRows.length ? String(dgRows.length) : '' }] : []), ...(sourcesTab ? [{ id: 'sources', label: 'Sources', count: sourceRows.length ? String(sourceRows.length) : '' }] : [])]
       .map(x => ({ ...x, hasCount: !!x.count, selected: x.id === tab ? 'true' : 'false', fg: x.id === tab ? t.text : t.muted, bar: x.id === tab ? t.text : 'transparent', pick: () => this.setState({ tab: x.id }) }));
     const gs = {
       sections: tabList, showSections: tabList.length > 1, showCards: tab === 'cards', noCards: tab === 'cards' && cardsN === 0, sourcesNone: sourceRows.length === 0,
@@ -380,19 +394,20 @@ export const DECK_MATERIALS_JS = String.raw`
       ref: el => { if (el.getAttribute('data-k') !== key) { el.innerHTML = md.render(text); el.setAttribute('data-k', key); } },
       sourcesShow: tab === 'sources', sourceCount: String(sourceRows.length), sources: sourceRows,
       addOpen: !!st.addOpen, addExpanded: st.addOpen ? 'true' : 'false', toggleAdd: () => this.setState({ addOpen: !st.addOpen }) };
-    return { gs, vw };
-  })(), gs = GS.gs, vw = GS.vw;`;
+    ${DIAGRAMS_JS}
+    return { gs, vw, dg };
+  })(), gs = GS.gs, vw = GS.vw, dg = GS.dg;`;
 
 // ---------- the canvas's sample for these boards ----------
 // Only the boards that draw them carry it (their logic calls this.mockMaterials()), so no other board changes. It answers like web/db.js:
 // `make` (the step the board's "step" setting names), and a deck's Guide and Sources (the deck board's "guide" setting).
-export const MATERIALS_MOCK = String.raw`mockMaterials() {
+const MATERIALS_MOCK_BASE = String.raw`mockMaterials() {
   const p = this.props, noop = () => {};
   const day = (m, d) => new Date(2026, m, d, 10).getTime();
   const MK = (() => {
     const free = { perDay: 3, pages: 30, minutes: 15, photos: 10, fileMB: 20, audioMB: 25, cards: 100 }, pro = { perDay: 30, pages: 300, minutes: 120, photos: 50, fileMB: 40, audioMB: 25, cards: 100 };
     const base = { step: 'add', kind: '', from: null, on: true, videoOn: true, limits: pro, files: [], text: '', topic: '', url: '', transcript: false, title: '', opts: { count: 'auto', basic: true, cloze: true, audio: false, lang: '', deckId: '', deckName: '' },
-      rec: null, progress: { word: '', phase: '', i: 0, n: 1 }, cards: [], notes: null, keepNotes: true, editing: '', error: null, saving: false, ready: false, name: '', job: '' };
+      rec: null, progress: { word: '', phase: '', i: 0, n: 1 }, cards: [], figures: 0, canImage: false, notes: null, keepNotes: true, editing: '', error: null, saving: false, ready: false, name: '', job: '' };
     const slides = { i: 0, name: 'Lecture 3 slides.pdf', size: '4.2 MB', fam: 'doc' };
     const levels = Array.from({ length: 60 }, (_, i) => Math.round((.18 + .5 * Math.abs(Math.sin(i * .55)) * (.6 + .4 * Math.sin(i * .17))) * 100) / 100);
     const cards = [
@@ -416,9 +431,13 @@ export const MATERIALS_MOCK = String.raw`mockMaterials() {
       { key: 'k3', kind: 'basic', front: 'When do you use “usted”?', back: 'To be formal or polite with someone, like a teacher or a stranger.', text: '', at: '', gone: false },
       { key: 'k4', kind: 'audio', front: '', back: 'Where is the library?', text: '', speak: '¿Dónde está la biblioteca?', lang: 'es', at: '', gone: false },
       { key: 'k5', kind: 'cloze', front: '', back: '', text: 'Ella [[tiene]] dos hermanos.', at: '', gone: false }];
+    const art = this.diagramsMock().rows().filter(r => r.picture), pics = [
+      { key: 'k7', kind: 'image', front: 'Animal cell', back: '', text: '', at: 'Slide 4', image: art[0] ? art[0].picture : '', parts: ['Nucleus', 'Mitochondrion', 'Mitochondrion'], boxes: [{ x: .41, y: .03, w: .12, h: .06 }, { x: .012, y: .785, w: .17, h: .06 }, { x: .8, y: .083, w: .17, h: .06 }], gone: false },
+      { key: 'k8', kind: 'image', front: 'The Krebs cycle', back: '', text: '', at: 'Slide 9', image: art[1] ? art[1].picture : '', parts: ['Acetyl-CoA', 'Citrate', 'Isocitrate'], boxes: [{ x: .11, y: .12, w: .125, h: .05 }, { x: .47, y: .12, w: .07, h: .05 }, { x: .79, y: .12, w: .1, h: .05 }], gone: false }];
     const by = {
-      'Pick': { step: 'pick' }, 'Upload': { kind: 'file' }, 'Upload (a file added)': { kind: 'file', files: [slides], ready: true },
-      'Photos': { kind: 'photo', ready: true, files: ['IMG_2041.jpg', 'IMG_2042.jpg', 'IMG_2043.jpg'].map((name, i) => ({ i, name, size: (1.1 + i * .3).toFixed(1) + ' MB', fam: 'image' })) },
+      'Pick': { step: 'pick' }, 'Upload': { kind: 'file' }, 'Upload (a file added)': { kind: 'file', files: [slides], ready: true, canImage: true },
+      'Upload (picture cards on)': { kind: 'file', files: [slides], ready: true, canImage: true, opts: { count: 'auto', basic: true, cloze: true, audio: false, image: true, lang: '', deckId: '', deckName: '' } },
+      'Photos': { kind: 'photo', ready: true, canImage: true, files: ['IMG_2041.jpg', 'IMG_2042.jpg', 'IMG_2043.jpg'].map((name, i) => ({ i, name, size: (1.1 + i * .3).toFixed(1) + ' MB', fam: 'image' })) },
       'Record': { kind: 'record' }, 'Recording': { kind: 'record', rec: { state: 'recording', secs: 754, levels, level: .4, limit: 7200 } }, 'Paused': { kind: 'record', rec: { state: 'paused', secs: 754, levels, level: 0, limit: 7200 } },
       'Paste': { kind: 'paste', ready: true, text: 'The mitochondrion is the powerhouse of the cell. It makes most of the cell’s ATP through the electron transport chain, which pumps protons across the inner membrane.\n\nThe nucleus holds the cell’s DNA, and the ribosomes translate mRNA into protein.' },
       'Paste (a language set)': { kind: 'paste', ready: true, text: 'la casa · the house\nbuenos días · good morning\n¿Dónde está la biblioteca? · Where is the library?\nElla tiene dos hermanos · She has two siblings', opts: { count: 'auto', basic: true, cloze: true, audio: true, lang: 'es', deckId: '', deckName: '' } },
@@ -427,7 +446,8 @@ export const MATERIALS_MOCK = String.raw`mockMaterials() {
       'Topic': { kind: 'topic', ready: true, topic: 'The Krebs cycle' }, 'More from a source': { kind: 'file', ready: true, from: { deckId: 'cell', id: 'x1', name: 'Lecture 3 slides', kind: 'file' } },
       'Making': { step: 'making', kind: 'file', progress: { word: 'Writing cards…', phase: 'write', i: 3, n: 8 } },
       'Making a recording': { step: 'making', kind: 'record', progress: { word: 'Listening to your recording…', phase: 'read', i: 1, n: 2 } },
-      'Review': { step: 'review', kind: 'file', cards, name: 'Lecture 3 slides', notes }, 'Review (notes open)': { step: 'review', kind: 'file', cards, name: 'Lecture 3 slides', notes }, 'Review (notes off)': { step: 'review', kind: 'file', cards, name: 'Lecture 3 slides', notes, keepNotes: false },
+      'Review': { step: 'review', kind: 'file', cards, name: 'Lecture 3 slides', notes },
+      'Review (picture cards)': { step: 'review', kind: 'file', cards: [...cards.slice(0, 3), ...pics], name: 'Lecture 3 slides', notes, figures: 3, canImage: true }, 'Review (notes open)': { step: 'review', kind: 'file', cards, name: 'Lecture 3 slides', notes }, 'Review (notes off)': { step: 'review', kind: 'file', cards, name: 'Lecture 3 slides', notes, keepNotes: false },
       'Review (no room for notes)': { step: 'review', kind: 'file', cards, name: 'Lecture 3 slides', notes, notesFull: true },
       'Review (audio cards)': { step: 'review', kind: 'paste', cards: spanish, name: 'Spanish words', notes: { ...notes, title: 'Spanish words', sections: notes.sections.slice(0, 2).map(x => ({ ...x, at: '' })), text: '# Spanish words\n\nGreetings and words for the home and school.\n\n## Greetings\n\n**buenos días** means good morning. Use **usted** to be polite.\n\n## The home\n\n**la casa** is the house.\n' } },
       'Review (editing a card)': { step: 'review', kind: 'file', cards, name: 'Lecture 3 slides', notes, editing: 'k2' },
@@ -452,15 +472,16 @@ export const MATERIALS_MOCK = String.raw`mockMaterials() {
     const talk = '<<0:00>>\nWelcome back. Today we finish the electron transport chain and see how it makes ATP.\n\n<<1:00>>\nThe chain pumps protons across the inner membrane, and ATP synthase lets them flow back.\n\n<<2:00>>\nWithout oxygen as the last acceptor, the chain backs up and ATP production stops.';
     return { text, pages, sources, talk };
   })();
-  const GMODE = p.guide || 'Guide and sources';
-  return { make: MK,
-    publicGuide: () => (GMODE === 'No guide yet' ? { pages: [], sources: 0 } : { pages: [{ id: 'main', title: 'Guide', text: GD.text }, ...(GMODE === 'Guide pages' ? GD.pages : [])], sources: 5 }),
-    guide: () => ({ deckId: 'cell', text: GMODE === 'No guide yet' ? '' : GMODE === 'Long guide' ? GD.text + '\n\n' + GD.text.replace('# Cell Biology: Exam 1', '## More for the exam') : GD.text, at: 0, pages: GMODE === 'Guide pages' ? GD.pages : [], can: GMODE !== 'Studying (read only)', studying: GMODE === 'Studying (read only)' }),
-    sources: () => (['No guide yet', 'Studying (read only)'].includes(GMODE) ? [] : GD.sources),
+  const GMODE = p.guide || 'Guide and sources', RO = GMODE === 'Studying (read only)' || GMODE === 'Diagrams (studying)';
+  return { make: MK, diagrams: this.diagramsMock(),
+    publicGuide: () => (GMODE === 'No guide yet' ? { pages: [], sources: 0 } : { pages: [{ id: 'main', title: 'Guide', text: GD.text }, ...(GMODE === 'Guide pages' ? GD.pages : [])], sources: 5, diagrams: this.diagramsMock().rows().filter(r => r.group === 'Made').map(r => ({ id: r.id, kind: r.kind, name: r.name, at: r.at, ...(r.table ? { table: r.table } : { tree: r.tree }) })) }),
+    guide: () => ({ deckId: 'cell', text: GMODE === 'No guide yet' ? '' : GMODE === 'Long guide' ? GD.text + '\n\n' + GD.text.replace('# Cell Biology: Exam 1', '## More for the exam') : GD.text, at: 0, pages: GMODE === 'Guide pages' ? GD.pages : [], can: !RO, studying: RO }),
+    sources: () => (GMODE === 'No guide yet' || RO ? [] : GD.sources),
     sourceText: name => (/^sx2/.test(name) || /^sx3/.test(name) ? GD.talk : ''),
     guideHistory: () => Promise.resolve([{ at: day(8, 21), saved: 0, text: GD.text.replace('- [x] The electron transport chain', '- [ ] The electron transport chain') }, { at: day(8, 18), saved: 0, text: '# Cell Biology: Exam 1\n\nEverything for the first exam.' }]),
     saveGuide: () => Promise.resolve({}), addGuidePage: () => Promise.resolve('g9'), renameGuidePage: () => Promise.resolve({}), deleteGuidePage: () => Promise.resolve({}), restoreGuide: () => Promise.resolve({}), deleteSource: () => Promise.resolve({}) };
 }`;
+export const MATERIALS_MOCK = MATERIALS_MOCK_BASE + '\n' + DIAGRAMS_MOCK;
 
 // ---------- the Guide's editor (WebGuide, PhoneGuide) ----------
 export const GUIDE_VIEWS = ['Write', 'Preview', 'Older versions', 'A new page', 'Nothing written yet'];

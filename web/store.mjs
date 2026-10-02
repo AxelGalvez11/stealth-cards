@@ -69,7 +69,7 @@ function devLib(uid) {
 export function eraseDev(uid) {
   if (!isDev(uid)) return false;
   // Their Sources' files sit with the pictures here, so they go by name; uploads still waiting are in a folder of their own.
-  for (const d of devLib(uid).S.decks) for (const src of d.sources || []) for (const n of sourceNames(src)) rmSync(join(MEDIA, n), { force: true });
+  for (const d of devLib(uid).S.decks) { for (const src of d.sources || []) for (const n of sourceNames(src)) rmSync(join(MEDIA, n), { force: true }); for (const g of d.diagrams || []) if (g.file) rmSync(join(MEDIA, g.file.name), { force: true }); }
   blobs.clear(uid);
   devLibs.delete(uid);
   rmSync(join(DATA, 'users', uid.slice(4) + '.json'), { force: true });
@@ -421,6 +421,53 @@ export function unreserveMedia(name, bytes) {
   L.S.uploads = { n: Math.max(0, used.n - 1), bytes: Math.max(0, used.bytes - bytes), names: names.replace(' ' + key + ' ', ' ').trim() }; save();
 }
 
+// ---------- A deck's Diagrams (diagrams.mjs) ----------
+// deck.diagrams: [{ id, kind: 'lecture' | 'upload' | 'table' | 'mindmap', name, at, ... }], oldest first.
+//   lecture   a picture found in a file a make read: file { name, type, size, w, h } (kept in the person's own storage and counted in their room, like a Source's),
+//             src { id, name, at } (the Source, and the slide, page or heading it was on), labels [{ id, text, x, y, w, h }] (a box is fractions of the picture, 0 to 1),
+//             figure (what the AI called it: labelled figure, chart, flow diagram, map, table or other)
+//   upload    a picture the person added: the same file, labels null until the AI has read it (for "Make cards"; [] when it found none)
+//   table     { table: { columns: [text], rows: [[text]] }, from }          shared with the deck
+//   mindmap   { tree: { text, children: [{ text, children: [{ text }] }] }, from }          shared with the deck
+// Lecture and uploaded pictures are private, like Sources: a shared deck carries only the tables and mind maps (social.mjs). `named`: the person renamed it, so Redo keeps the name.
+export const isMadeDiagram = g => !!g && (g.kind === 'table' || g.kind === 'mindmap');
+export const diagramsOf = d => (d && d.diagrams) || [];
+// How many Diagrams were made today by the AI (a table or mind map, or the labels of an uploaded picture), like the day's explanations; given back when a step fails.
+export const dgLeft = (day, limit) => { const u = state().ai.dg; return Math.max(0, limit - (u && u.day === day ? u.n : 0)); };
+export function useDg(day, limit) {
+  const S = state(), n = S.ai.dg && S.ai.dg.day === day ? S.ai.dg.n : 0;
+  if (n >= limit) return false;
+  S.ai.dg = { day, n: n + 1 }; save(); return true;
+}
+export function refundDg(day) { const S = state(); if (S.ai.dg && S.ai.dg.day === day && S.ai.dg.n > 0) { S.ai.dg = { day, n: S.ai.dg.n - 1 }; save(); } }
+// Adds a diagram to a deck (only the server does: the AI's work is checked first, diagrams.mjs). A table or mind map goes out with a shared deck.
+export function addDiagram(deckId, rec, who = 'Lucida') {
+  const d = findDeck(deckId); if (!d) throw new Error('No such deck');
+  if (readOnly(d)) throw notYours(d);
+  const g = { ...rec, id: rec.id || id('g'), at: rec.at || Date.now() };
+  d.diagrams = [...(d.diagrams || []), g];
+  if (isMadeDiagram(g)) touch(d.id, who);
+  save();
+  return g;
+}
+// Changes a diagram that is there (new content from Redo, the labels the AI read). Gives it back, or null when it is gone.
+export function setDiagram(deckId, gid, patch, who = 'Lucida') {
+  const d = findDeck(deckId), g = d && (d.diagrams || []).find(x => x.id === gid);
+  if (!g) return null;
+  if (readOnly(d)) throw notYours(d);
+  Object.assign(g, patch);
+  if (isMadeDiagram(g)) touch(d.id, who);
+  save();
+  return g;
+}
+// A picture's file goes: the room it took comes back, and the file is deleted once the library has saved.
+function dropDiagramFile(g) {
+  if (!g.file) return;
+  unreserveMedia(g.file.name, g.file.size || 0);
+  const name = g.file.name, uid = lib().uid;
+  afterSaving(() => blobs.remove(uid, [name]).catch(e => console.error('diagram file', e.message)));
+}
+
 // ---------- A deck's Guide (like a README) ----------
 // Markdown the deck's owner writes about it (web/guide.js draws it), and extra pages beside it, like a small wiki:
 //   deck.guide = { text, at, pages: [{ id, title, text, at }] }       (`at`: when it was last saved)
@@ -541,6 +588,7 @@ function run(a, who) {
       S.decks = S.decks.filter(x => x !== d); S.cards = S.cards.filter(c => c.deckId !== d.id); S.logs = S.logs.filter(l => l.deckId !== d.id); S.tests = (S.tests || []).filter(t => t.deckId !== d.id);
       // Its Sources' files and its Guide's older versions go with it.
       for (const src of d.sources || []) dropSourceFiles(src);
+      for (const g of d.diagrams || []) dropDiagramFile(g);
       if (S.guideHistory) delete S.guideHistory[d.id];
       // A shared deck stops being shared when it goes (people who copied it keep their copies), and one you studied or
       // copied from someone stops counting you.
@@ -816,6 +864,26 @@ function run(a, who) {
       touch(d.id, who);
       return { id: src.id };
     }
+    // A diagram is renamed, or goes (its picture too, which gives the room back). Only the deck's owner changes them; a made one is shared with the deck, so a change reaches it.
+    case 'diagram.rename': {
+      const d = findDeck(a.deckId); if (!d) throw new Error('No such deck');
+      if (readOnly(d)) throw notYours(d);
+      const g = (d.diagrams || []).find(x => x.id === a.id); if (!g) throw new Error('That diagram is gone.');
+      const name = clean(a.name, 80).replace(/\s+/g, ' ').trim();
+      if (!name) throw new Error('Give it a name.');
+      g.name = name; g.named = true;
+      if (isMadeDiagram(g)) touch(d.id, who);
+      return { id: g.id };
+    }
+    case 'diagram.delete': {
+      const d = findDeck(a.deckId); if (!d) throw new Error('No such deck');
+      if (readOnly(d)) throw notYours(d);
+      const g = (d.diagrams || []).find(x => x.id === a.id); if (!g) throw new Error('That diagram is gone.');
+      d.diagrams = d.diagrams.filter(x => x !== g);
+      dropDiagramFile(g);
+      if (isMadeDiagram(g)) touch(d.id, who);
+      return { id: g.id };
+    }
     case 'ai.perm': { if (a.id in S.ai.perms) S.ai.perms[a.id] = !!a.on; return {}; }
     case 'ai.client': { const n = clean(a.name, 80) || 'MCP app'; S.ai.clients[n] = { name: n, version: clean(a.version, 40), seen: Date.now() }; return {}; }
     case 'data.import': {
@@ -833,7 +901,7 @@ function run(a, who) {
       for (const d of S.decks) if (d.share) L.touched.set(d.id, { gone: d.share.id });
       // The rev keeps counting up, so every copy of the app sees the reset as the newest data.
       // The day's AI explanations used stay counted, so deleting your data doesn't give them back.
-      const next = fresh(); next.ai.clients = S.ai.clients; next.ai.key = S.ai.key; next.ai.used = S.ai.used; next.ai.made = S.ai.made; next.rev = S.rev; next.settings.welcomed = true; L.S = next;
+      const next = fresh(); next.ai.clients = S.ai.clients; next.ai.key = S.ai.key; next.ai.used = S.ai.used; next.ai.made = S.ai.made; next.ai.dg = S.ai.dg; next.rev = S.rev; next.settings.welcomed = true; L.S = next;
       if (cloud()) L.later.push(files.clear(L.uid)); else { rmSync(MEDIA, { recursive: true, force: true }); mkdirSync(MEDIA, { recursive: true }); blobs.clear(L.uid); }
       return {};
     }
