@@ -85,6 +85,12 @@ struct ToastHost: View {
   }
 }
 
+extension Keyboard {
+  /// Puts the keyboard away. A question, a calendar, a list or the camera opens over everything, and a keyboard still up would sit on top of it
+  /// (a system alert is above the keyboard; Lucida's own sheet is not).
+  static func hide() { UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil) }
+}
+
 extension Nav {
   /// Asks a question in Lucida's own sheet; `go` runs if the answer is the action.
   func ask(_ title: String, line: String = "", action: String, danger: Bool = false, go: @escaping () -> Void) {

@@ -524,6 +524,11 @@ struct MainView: View {
       if let c = nav.camera { CameraHost(request: c).id(c.id).zIndex(12).sheetTransition() }
     }
     .ignoresSafeArea(edges: .bottom)
+    // What opens over everything puts the keyboard away first (a list with a search of its own, the school list, keeps it for that).
+    .onChange(of: nav.question?.id) { _, id in if id != nil { Keyboard.hide() } }
+    .onChange(of: nav.calendar?.id) { _, id in if id != nil { Keyboard.hide() } }
+    .onChange(of: nav.camera?.id) { _, id in if id != nil { Keyboard.hide() } }
+    .onChange(of: nav.picker?.id) { _, id in if id != nil, nav.picker?.find == nil { Keyboard.hide() } }
     .haptic(.selection, on: tabTicks, "tab")
     .sensoryFeedback(.impact(weight: .light), trigger: buzz.lights)
     .sensoryFeedback(.success, trigger: buzz.successes)
