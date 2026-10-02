@@ -535,7 +535,7 @@ const TAG_EDIT = (list, pk, phone = false, up = false) => `<div style="${phone ?
   ? `<sc-if value="{{${pk}.open}}" hint-placeholder-val="{{ false }}"><div role="dialog" aria-label="Tags" style="position: absolute; inset: 0; z-index: 30; box-sizing: border-box; padding: 16px 20px 34px; border-radius: 32px 32px 0 0; background: {{t.bg}}; display: flex; flex-direction: column; gap: 12px;"><div style="display: flex; align-items: center; justify-content: space-between;"><span style="font-size: 18px; font-weight: 600;">Tags<span style="margin-left: 8px; font-family: ${MONO}; font-size: 13px; font-weight: 500; color: {{t.muted}};">{{${pk}.count}}</span></span><button type="button" onClick="{{${pk}.close}}" style="height: 36px; padding: 0 16px; border: 0; border-radius: 999px; background: {{t.inv}}; color: {{t.invText}}; font: inherit; font-size: 14px; font-weight: 600; cursor: pointer;">Done</button></div>${tagSearch(pk + '.query', pk + '.setQuery', 'Find or make a tag', 44)}<div style="flex-grow: 1; min-height: 0; overflow-y: auto; scrollbar-width: none; display: flex; flex-direction: column;">${makeRow(pk, 48)}<sc-for list="{{${pk}.options}}" as="o" hint-placeholder-count="8">${tagRow('o', { h: 48, line: true })}</sc-for></div></div></sc-if>`
   : `<sc-if value="{{${pk}.open}}" hint-placeholder-val="{{ false }}"><div role="dialog" aria-label="Add a tag" data-sc-pop style="position: absolute; left: 0; ${up ? 'bottom' : 'top'}: calc(100% + 8px); z-index: 30; width: 320px; ${popBox}">${tagSearch(pk + '.query', pk + '.setQuery', 'Find or make a tag')}<div style="max-height: 190px; overflow-y: auto; scrollbar-width: thin; display: flex; flex-direction: column;">${makeRow(pk)}<sc-for list="{{${pk}.options}}" as="o" hint-placeholder-count="5">${tagRow('o')}</sc-for></div></div></sc-if>`}</div>`;
 const viewBtn = (key, handler, label, icon) => `<button type="button" onClick="{{${handler}}}" aria-label="${label}" aria-pressed="{{${key}.pressed}}" style="width: 42px; height: 36px; border: 0; border-radius: 999px; background: {{${key}.bg}}; color: {{${key}.fg}}; box-shadow: {{${key}.sh}}; display: flex; align-items: center; justify-content: center; cursor: pointer;">${svg(I[icon], 16, 2)}</button>`;
-// A card's tag as a small chip; `k` names the row's tag slot (c1, c2).
+// A card's tag as a small chip, in All cards' Tags column (the other card lists show none); `k` names the row's tag slot (c1, c2).
 const cardTag = k => `<sc-if value="{{r.${k}.show}}" hint-placeholder-val="{{ true }}"><span style="height: 22px; padding: 0 9px; display: inline-flex; align-items: center; border-radius: 999px; background: {{r.${k}.bg}}; color: {{r.${k}.fg}}; font-size: 11px; font-weight: 600; white-space: nowrap;">{{r.${k}.label}}</span></sc-if>`;
 // Cards show up to two tags; with more, the first one and a +N (hover it to read the rest).
 const cardMore = `<sc-if value="{{r.cMore.show}}" hint-placeholder-val="{{ false }}"><span data-tip="{{r.cMore.title}}" aria-label="{{r.cMore.title}}" role="img" style="height: 22px; padding: 0 8px; flex-shrink: 0; display: inline-flex; align-items: center; border-radius: 999px; background: {{t.surf}}; color: {{t.muted}}; font-size: 11px; font-weight: 600; white-space: nowrap;">{{r.cMore.label}}</span></sc-if>`;
@@ -1373,11 +1373,10 @@ const webDeck = webRoot(`${sidebar('Library')}
   </div>
   <div data-sc-list="cards" ref="{{dragList}}" onPointerDown="{{grab}}" style="display: flex; flex-direction: column;">
     <sc-for list="{{rows}}" as="r" hint-placeholder-count="6">
-      <a href="{{r.href}}" data-sc-item="{{r.id}}" draggable="false" class="sc-drag" style="display: grid; grid-template-columns: 36px minmax(0, 1.4fr) minmax(0, 1fr) 190px 100px; gap: 16px; align-items: center; height: 64px; border-bottom: 1px solid {{t.line}}; font-size: 14px;">
+      <a href="{{r.href}}" data-sc-item="{{r.id}}" draggable="false" class="sc-drag" style="display: grid; grid-template-columns: 36px minmax(0, 1.4fr) minmax(0, 1fr) 100px; gap: 16px; align-items: center; height: 64px; border-bottom: 1px solid {{t.line}}; font-size: 14px;">
         <span style="width: 32px; height: 32px; border-radius: 16px; background: {{t.surf}}; display: flex; align-items: center; justify-content: center;">{{r.glyph}}</span>
         <span style="min-width: 0; display: flex; flex-direction: column; gap: 2px;"><span style="font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{r.front}}</span><span style="font-size: 12px; color: {{t.muted}};">{{r.kind}}{{r.aiNote}}</span></span>
         <span style="color: {{t.muted}}; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{r.back}}</span>
-        <span style="display: flex; gap: 6px; min-width: 0; overflow: hidden;">${cardTag('c1')}${cardTag('c2')}${cardMore}</span>
         <span style="font-size: 13px; text-align: right;">{{r.next}}</span>
       </a>
     </sc-for>
@@ -1411,7 +1410,6 @@ const deckLogic = `
 constructor(props) { super(props); this.state = { filter: 'All', tagMenuOpen: false, tagQ: '', q: '' }; }
 renderVals() {
   ${T}${DB_JS}${COVER_LOGIC}${DECK_MATERIALS_JS}${FORECAST_JS('{ vals: dk.forecast, labels: [], tops: null, names: [] }', 40)}
-  ${CARD_TAGS_JS}
   ${LIFT_JS}
   ${CARD_DRAG_JS(false)}
   const labels = ['All', 'Basic', 'Fill in the blank', 'Image', 'Audio'];
@@ -1422,8 +1420,9 @@ renderVals() {
   const tagNames = Object.keys(uses).sort((a, b) => uses[b] - uses[a] || a.localeCompare(b));
   const tagOn = tagNames.includes(f), tq = (this.state.tagQ || '').trim().toLowerCase(), found = tagNames.filter(g => !tq || g.toLowerCase().includes(tq));
   const menuOpen = !!this.state.tagMenuOpen;
+  // A row is the card: its icon, question and kind, answer, and when it's next (no tag chips, like the iPhone's, 2026-10-02; Tags ▾ filters).
   const rows = allRows.filter(r => (f === 'All' || r.kind === f || r.tags.includes(f)) && (!q || [r.front, r.back, ...r.tags].join(' ').toLowerCase().includes(q)))
-    .map(r => ({ ...r, glyph: glyphs[r.icon], aiNote: r.ai ? ' · ' + r.ai : '', ...cardFit(r.tags) }));
+    .map(r => ({ ...r, glyph: glyphs[r.icon], aiNote: r.ai ? ' · ' + r.ai : '' }));
   return {
     t, rows, ...chrome, ...coverVals, ...cardDrag, gs, vw, dg, query: this.state.q || '', setQuery: e => this.setState({ q: e && e.target ? e.target.value : '' }),
     filters: labels.map(l => ({ label: l, pressed: l === f ? 'true' : 'false', bg: l === f ? t.inv : t.surf, fg: l === f ? t.invText : t.text, pick: () => this.setState({ filter: l, tagMenuOpen: false }) })),
@@ -3782,7 +3781,7 @@ const phoneDeck = phone(`<div style="height: 100%; overflow-y: auto; scrollbar-w
     <sc-if value="{{gs.showCards}}" hint-placeholder-val="{{ true }}">
     <div data-sc-list="cards" ref="{{dragList}}" onPointerDown="{{grab}}" style="display: flex; flex-direction: column;">
       <sc-for list="{{rows}}" as="r" hint-placeholder-count="4">
-        <a href="{{r.href}}" data-sc-item="{{r.id}}" draggable="false" class="sc-drag" style="display: flex; flex-direction: column; gap: 3px; padding: 12px 0; border-bottom: 1px solid {{t.line}};"><span style="font-size: 15px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{r.front}}</span><span style="display: flex; align-items: center; gap: 8px; min-width: 0; font-size: 13px; color: {{t.muted}};"><span style="white-space: nowrap;">{{r.kind}} · {{r.next}}</span>${cardTag('c1')}${cardTag('c2')}${cardMore}</span></a>
+        <a href="{{r.href}}" data-sc-item="{{r.id}}" draggable="false" class="sc-drag" style="display: flex; flex-direction: column; gap: 3px; padding: 12px 0; border-bottom: 1px solid {{t.line}};"><span style="font-size: 15px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{r.front}}</span><span style="font-size: 13px; color: {{t.muted}}; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{r.kind}} · {{r.next}}</span></a>
       </sc-for>
     </div>
     <sc-if value="{{gs.noCards}}" hint-placeholder-val="{{ false }}"><span style="font-size: 14px; color: {{t.muted}};">No cards in this deck yet.</span></sc-if>
@@ -3806,13 +3805,12 @@ ${DBP.viewer}${DBP.dgViewer}${DBP.dgSheet}`);
 const phoneDeckLogic = `
 constructor(props) { super(props); this.state = {}; }
 renderVals() { ${T}${DB_JS}${COVER_LOGIC}${DECK_MATERIALS_JS}
-  ${CARD_TAGS_JS}
   ${LIFT_JS}
   ${CARD_DRAG_JS(true)}
   return { t, ...chrome, dark: !!this.props.dark, ...coverVals, ...cardDrag, gs, vw, dg, tiles: coverVals.tiles.map(k => k.label === 'Due now' ? { ...k, label: 'Due' } : k),
     // Every card (all six sample cards on the canvas, so the page scrolls and shows the cover's parallax); each opens
-    // in the editor.
-    rows: db.cards(dk.id).map(r => ({ ...r, ...cardFit(r.tags), href: db.mock ? 'PhoneEditor.dc.html' : r.href })),
+    // in the editor. A row is the card: its question, then its kind and when it's next (no tag chips, 2026-10-02).
+    rows: db.cards(dk.id).map(r => ({ ...r, href: db.mock ? 'PhoneEditor.dc.html' : r.href })),
     learnHref: db.mock ? 'PhoneQuizStart.dc.html' : db.learnOn(dk.id) ? '/learn/' + dk.id : '/deck/' + dk.id + '/learn', learnShort: 'Learn' }; }`;
 
 // The fields scroll under the header when they're taller than the sheet. The keyboard is drawn on the canvas only: in

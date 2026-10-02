@@ -79,7 +79,7 @@
     <sc-if value="{{gs.showCards}}" hint-placeholder-val="{{ true }}">
     <div data-sc-list="cards" ref="{{dragList}}" onPointerDown="{{grab}}" style="display: flex; flex-direction: column;">
       <sc-for list="{{rows}}" as="r" hint-placeholder-count="4">
-        <a href="{{r.href}}" data-sc-item="{{r.id}}" draggable="false" class="sc-drag" style="display: flex; flex-direction: column; gap: 3px; padding: 12px 0; border-bottom: 1px solid {{t.line}};"><span style="font-size: 15px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{r.front}}</span><span style="display: flex; align-items: center; gap: 8px; min-width: 0; font-size: 13px; color: {{t.muted}};"><span style="white-space: nowrap;">{{r.kind}} · {{r.next}}</span><sc-if value="{{r.c1.show}}" hint-placeholder-val="{{ true }}"><span style="height: 22px; padding: 0 9px; display: inline-flex; align-items: center; border-radius: 999px; background: {{r.c1.bg}}; color: {{r.c1.fg}}; font-size: 11px; font-weight: 600; white-space: nowrap;">{{r.c1.label}}</span></sc-if><sc-if value="{{r.c2.show}}" hint-placeholder-val="{{ true }}"><span style="height: 22px; padding: 0 9px; display: inline-flex; align-items: center; border-radius: 999px; background: {{r.c2.bg}}; color: {{r.c2.fg}}; font-size: 11px; font-weight: 600; white-space: nowrap;">{{r.c2.label}}</span></sc-if><sc-if value="{{r.cMore.show}}" hint-placeholder-val="{{ false }}"><span data-tip="{{r.cMore.title}}" aria-label="{{r.cMore.title}}" role="img" style="height: 22px; padding: 0 8px; flex-shrink: 0; display: inline-flex; align-items: center; border-radius: 999px; background: {{t.surf}}; color: {{t.muted}}; font-size: 11px; font-weight: 600; white-space: nowrap;">{{r.cMore.label}}</span></sc-if></span></a>
+        <a href="{{r.href}}" data-sc-item="{{r.id}}" draggable="false" class="sc-drag" style="display: flex; flex-direction: column; gap: 3px; padding: 12px 0; border-bottom: 1px solid {{t.line}};"><span style="font-size: 15px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{r.front}}</span><span style="font-size: 13px; color: {{t.muted}}; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{r.kind}} · {{r.next}}</span></a>
       </sc-for>
     </div>
     <sc-if value="{{gs.noCards}}" hint-placeholder-val="{{ false }}"><span style="font-size: 14px; color: {{t.muted}};">No cards in this deck yet.</span></sc-if>
@@ -4507,8 +4507,6 @@ renderVals0() { const t = this.theme(!!this.props.dark, !!this.props.dim);const 
       v: dgV, sheet: dgSheet };
     return { gs, vw, dg };
   })(), gs = GS.gs, vw = GS.vw, dg = GS.dg;
-  const cardSlot = (tags, i) => (tags && tags[i] ? { show: true, ...tagChip(tags[i]) } : { show: false, label: '', bg: 'transparent', fg: t.text });
-  const cardFit = tags => { const fit = tagFit(tags, 2); return { c1: cardSlot(fit.vis, 0), c2: cardSlot(fit.vis, 1), cMore: { show: fit.more > 0, label: '+' + fit.more, title: (tags || []).slice(fit.vis.length).join(', ') } }; };
   const liftTile = 'border-radius:20px!important;box-shadow:0 30px 60px -18px rgba(0,0,0,.5)!important;';
   const liftRow = 'background:' + t.bg + '!important;border-radius:12px!important;border-bottom-color:transparent!important;box-shadow:0 0 0 12px ' + t.bg + ',0 0 0 13px ' + t.line + ',0 24px 48px -12px rgba(0,0,0,' + (this.props.dark ? '.8' : '.25') + ')!important;';
   const dragKey = this.dragKey || (this.dragKey = 'b' + Math.random().toString(36).slice(2, 8)), dragList = el => this.dragList(el);
@@ -4520,8 +4518,8 @@ renderVals0() { const t = this.theme(!!this.props.dark, !!this.props.dim);const 
       drop: (id, w) => (w.to ? db.act.moveCard(id, w.to.slice(5)) : db.act.reorderCard(id, w.before)) }) };
   return { t, ...chrome, dark: !!this.props.dark, ...coverVals, ...cardDrag, gs, vw, dg, tiles: coverVals.tiles.map(k => k.label === 'Due now' ? { ...k, label: 'Due' } : k),
     // Every card (all six sample cards on the canvas, so the page scrolls and shows the cover's parallax); each opens
-    // in the editor.
-    rows: db.cards(dk.id).map(r => ({ ...r, ...cardFit(r.tags), href: db.mock ? 'PhoneEditor.dc.html' : r.href })),
+    // in the editor. A row is the card: its question, then its kind and when it's next (no tag chips, 2026-10-02).
+    rows: db.cards(dk.id).map(r => ({ ...r, href: db.mock ? 'PhoneEditor.dc.html' : r.href })),
     learnHref: db.mock ? 'PhoneQuizStart.dc.html' : db.learnOn(dk.id) ? '/learn/' + dk.id : '/deck/' + dk.id + '/learn', learnShort: 'Learn' }; }
 }
 </script>

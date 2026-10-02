@@ -5,6 +5,7 @@ import SwiftUI
 import PhotosUI
 
 struct CardRowVM: Identifiable {
+  /// Its tags aren't drawn in the row (2026-10-02), but Make diagram offers them ("Only the cards tagged …").
   let id: String; let front: String; let meta: String; let tags: [String]
   /// A card of a deck from someone else: the shared card it came from (a fix is suggested on it).
   var origin: String? = nil
@@ -427,17 +428,12 @@ struct DeckScreen: View {
     .background(RoundedRectangle(cornerRadius: 22, style: .continuous).fill(t.surf))
   }
 
+  /// A card's row: its question, then its kind and when it's next (no tag chips since 2026-10-02, like the web's lists).
   private func row(_ r: CardRowVM) -> some View {
-    let fit = Tags.fit(r.tags, 2)
-    return VStack(alignment: .leading, spacing: 3) {
+    VStack(alignment: .leading, spacing: 3) {
       Text(r.front).css(15, .medium).lineLimit(1).foregroundStyle(t.text)
-      HStack(spacing: 8) {
-        Text(r.meta).css(13).foregroundStyle(t.muted).lineLimit(1).fixedSize()
-        ForEach(fit.shown, id: \.self) { TagChip(label: $0) }
-        if fit.more > 0 { MoreChip(n: fit.more) }
-      }
-      .frame(maxWidth: .infinity, alignment: .leading)
-      .clipped()
+      Text(r.meta).css(13).foregroundStyle(t.muted).lineLimit(1)
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
     .padding(.vertical, 12)
     .frame(maxWidth: .infinity, alignment: .leading)

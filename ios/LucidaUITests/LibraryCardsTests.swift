@@ -7,6 +7,7 @@
 //      Background and Folder; decks have no tags any more ("remove 'tags' from decks, only cards have tags"); the name still renames the deck.
 //   4  New deck: no Name, Tags or Grade with; the name is typed on the cover ("allow users to directly edit the name in the box above"); the
 //      deck it makes has that name, no tags, and Settings' grading. Dark mode too.
+//   5  The card editor's Add tag offers the tags your cards have, and not a deck's old ones; the deck page's card rows show no tag chips.
 // Run it with ios/tools/e2e-libcards.sh (it starts a fresh server). It only runs when LUCIDA_LIBCARDS is set.
 import XCTest
 
@@ -145,5 +146,30 @@ final class LibraryCardsTests: AppCase {
     check(wait(app.textFields["Deck name"].firstMatch), "New deck in dark mode")
     snap("libcards-newdeck-dark")
     app.terminate()
+  }
+
+  // ---------- 5: the card editor's Add tag ----------
+  func test5CardTagsOnly() throws {
+    try XCTSkipIf(api("x", "GET", "/api/rev").status != 200, "No server at " + Self.server)
+    let who = "lct" + run
+    let deck = seed(who)
+    act(who, "deck.update", ["id": deck, "patch": ["tags": ["MCAT", "Year 1"]]])   // (an older deck's tags, which the server keeps)
+    let app = launch(as: who, ["-open", "cards"])
+    let row = buttonStarting(app, "Which organelle packages proteins?")
+    tap(row, "a card's row")
+    check(wait(button(app, "Add tag")), "the card editor opens, with its tags and Add tag")
+    tap(button(app, "Add tag"), "Add tag")
+    check(wait(app.textFields["Find or make a tag"].firstMatch), "Add tag opens its sheet")
+    check(buttonStarting(app, "Energy").exists && buttonStarting(app, "Proteins").exists, "it offers the tags your cards have")
+    check(!buttonStarting(app, "MCAT").exists && !buttonStarting(app, "Year 1").exists, "and not a deck's old tags (only cards have tags)")
+    snap("libcards-cardtags")
+    app.terminate()
+    // The deck page's card rows: the card (its question, kind and when it's next), with no tag chips, like the web's.
+    let deckPage = launch(as: who, ["-open", "deck:Cell Biology"])
+    check(wait(any(deckPage, "Which organelle packages proteins?")), "the deck page lists its cards")
+    check(!any(deckPage, "Energy").exists && !any(deckPage, "Organelles").exists && !any(deckPage, "Mitochondria").exists && !any(deckPage, "Proteins").exists,
+          "and its rows show no tag chips")
+    snap("libcards-deckrows")
+    deckPage.terminate()
   }
 }

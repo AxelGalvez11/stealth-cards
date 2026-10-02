@@ -8,35 +8,6 @@ enum Tags {
     let sum = g.unicodeScalars.reduce(0) { a, s in a + Int(s.value > 0xFFFF ? 0xD800 + ((s.value - 0x10000) >> 10) : s.value) }
     return RGBA(Generated.tagPalette[sum % Generated.tagPalette.count])
   }
-  /// Show the first few; with more than `max`, the last slot is "+N" (so never "+1").
-  static func fit(_ tags: [String], _ max: Int) -> (shown: [String], more: Int) {
-    let vis = tags.count > max ? Array(tags.prefix(max - 1)) : tags
-    return (vis, tags.count - vis.count)
-  }
-}
-
-/// A small tag chip (the card rows' cardTag: 22 tall, 11px).
-struct TagChip: View {
-  let label: String
-  var height: CGFloat = 22
-  var size: CGFloat = 11
-  var pad: CGFloat = 9
-  var body: some View {
-    let c = Tags.color(label)
-    Text(label).css(size, .semibold).lineLimit(1).fixedSize()
-      .foregroundStyle(c.color)
-      .padding(.horizontal, pad).frame(height: height)
-      .background(Capsule().fill(c.opacity(0.149).color))
-  }
-}
-
-/// "+N" after the tags that fit.
-struct MoreChip: View {
-  @Environment(\.theme) private var t
-  let n: Int
-  var body: some View {
-    Text("+\(n)").css(11, .semibold).fixedSize().foregroundStyle(t.muted).padding(.horizontal, 8).frame(height: 22).background(Capsule().fill(t.surf))
-  }
 }
 
 /// Lays children out in rows, wrapping like CSS flex-wrap.

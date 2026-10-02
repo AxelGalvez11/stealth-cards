@@ -1296,7 +1296,8 @@ export async function createDb({ onChange, go, ask = async () => false, say = ()
     theme,
     loadTheme: key => loadTheme(key, changed),
     plan: () => (S.me ? { ...(S.me.plan || { pro: false }), manage: S.me.manage || '' } : null),
-    tags: () => [...new Set([...S.decks.flatMap(d => d.tags), ...S.cards.flatMap(c => c.tags)])],
+    // Every tag on your cards, for the card editor's Add tag (only cards have tags; a deck's old ones aren't offered).
+    tags: () => [...new Set(S.cards.flatMap(c => c.tags))],
     decks: () => S.decks.map(deckRow),
     folders: () => S.folders.map(f => { const ds = S.decks.filter(d => d.folder === f.id).map(deckRow);
       return { id: f.id, name: f.name, n: ds.length, due: ds.filter(d => !d.paused).reduce((n, d) => n + d.due, 0), decks: ds, href: '/library/folder/' + f.id }; }),

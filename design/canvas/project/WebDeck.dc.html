@@ -111,11 +111,10 @@
   </div>
   <div data-sc-list="cards" ref="{{dragList}}" onPointerDown="{{grab}}" style="display: flex; flex-direction: column;">
     <sc-for list="{{rows}}" as="r" hint-placeholder-count="6">
-      <a href="{{r.href}}" data-sc-item="{{r.id}}" draggable="false" class="sc-drag" style="display: grid; grid-template-columns: 36px minmax(0, 1.4fr) minmax(0, 1fr) 190px 100px; gap: 16px; align-items: center; height: 64px; border-bottom: 1px solid {{t.line}}; font-size: 14px;">
+      <a href="{{r.href}}" data-sc-item="{{r.id}}" draggable="false" class="sc-drag" style="display: grid; grid-template-columns: 36px minmax(0, 1.4fr) minmax(0, 1fr) 100px; gap: 16px; align-items: center; height: 64px; border-bottom: 1px solid {{t.line}}; font-size: 14px;">
         <span style="width: 32px; height: 32px; border-radius: 16px; background: {{t.surf}}; display: flex; align-items: center; justify-content: center;">{{r.glyph}}</span>
         <span style="min-width: 0; display: flex; flex-direction: column; gap: 2px;"><span style="font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{r.front}}</span><span style="font-size: 12px; color: {{t.muted}};">{{r.kind}}{{r.aiNote}}</span></span>
         <span style="color: {{t.muted}}; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{r.back}}</span>
-        <span style="display: flex; gap: 6px; min-width: 0; overflow: hidden;"><sc-if value="{{r.c1.show}}" hint-placeholder-val="{{ true }}"><span style="height: 22px; padding: 0 9px; display: inline-flex; align-items: center; border-radius: 999px; background: {{r.c1.bg}}; color: {{r.c1.fg}}; font-size: 11px; font-weight: 600; white-space: nowrap;">{{r.c1.label}}</span></sc-if><sc-if value="{{r.c2.show}}" hint-placeholder-val="{{ true }}"><span style="height: 22px; padding: 0 9px; display: inline-flex; align-items: center; border-radius: 999px; background: {{r.c2.bg}}; color: {{r.c2.fg}}; font-size: 11px; font-weight: 600; white-space: nowrap;">{{r.c2.label}}</span></sc-if><sc-if value="{{r.cMore.show}}" hint-placeholder-val="{{ false }}"><span data-tip="{{r.cMore.title}}" aria-label="{{r.cMore.title}}" role="img" style="height: 22px; padding: 0 8px; flex-shrink: 0; display: inline-flex; align-items: center; border-radius: 999px; background: {{t.surf}}; color: {{t.muted}}; font-size: 11px; font-weight: 600; white-space: nowrap;">{{r.cMore.label}}</span></sc-if></span>
         <span style="font-size: 13px; text-align: right;">{{r.next}}</span>
       </a>
     </sc-for>
@@ -4525,8 +4524,6 @@ renderVals0() {
     c: fcScale[n === fcMax ? 3 : n >= fcMax * 0.75 ? 2 : n >= fcMax * 0.4 ? 1 : 0], strong: i === fcTop ? t.text : t.muted, weight: i === fcTop ? '600' : '400' }));
   const dueTotal = fc.vals.reduce((a, b) => a + b, 0) + ' cards';
   const busy = { c: fcScale[3], text: fcPeak ? 'Busiest: ' + fc.names[fcTop] + ', ' + fcMax + ' cards' : 'Nothing due yet' };
-  const cardSlot = (tags, i) => (tags && tags[i] ? { show: true, ...tagChip(tags[i]) } : { show: false, label: '', bg: 'transparent', fg: t.text });
-  const cardFit = tags => { const fit = tagFit(tags, 2); return { c1: cardSlot(fit.vis, 0), c2: cardSlot(fit.vis, 1), cMore: { show: fit.more > 0, label: '+' + fit.more, title: (tags || []).slice(fit.vis.length).join(', ') } }; };
   const liftTile = 'border-radius:20px!important;box-shadow:0 30px 60px -18px rgba(0,0,0,.5)!important;';
   const liftRow = 'background:' + t.bg + '!important;border-radius:12px!important;border-bottom-color:transparent!important;box-shadow:0 0 0 12px ' + t.bg + ',0 0 0 13px ' + t.line + ',0 24px 48px -12px rgba(0,0,0,' + (this.props.dark ? '.8' : '.25') + ')!important;';
   const dragKey = this.dragKey || (this.dragKey = 'b' + Math.random().toString(36).slice(2, 8)), dragList = el => this.dragList(el);
@@ -4544,8 +4541,9 @@ renderVals0() {
   const tagNames = Object.keys(uses).sort((a, b) => uses[b] - uses[a] || a.localeCompare(b));
   const tagOn = tagNames.includes(f), tq = (this.state.tagQ || '').trim().toLowerCase(), found = tagNames.filter(g => !tq || g.toLowerCase().includes(tq));
   const menuOpen = !!this.state.tagMenuOpen;
+  // A row is the card: its icon, question and kind, answer, and when it's next (no tag chips, like the iPhone's, 2026-10-02; Tags ▾ filters).
   const rows = allRows.filter(r => (f === 'All' || r.kind === f || r.tags.includes(f)) && (!q || [r.front, r.back, ...r.tags].join(' ').toLowerCase().includes(q)))
-    .map(r => ({ ...r, glyph: glyphs[r.icon], aiNote: r.ai ? ' · ' + r.ai : '', ...cardFit(r.tags) }));
+    .map(r => ({ ...r, glyph: glyphs[r.icon], aiNote: r.ai ? ' · ' + r.ai : '' }));
   return {
     t, rows, ...chrome, ...coverVals, ...cardDrag, gs, vw, dg, query: this.state.q || '', setQuery: e => this.setState({ q: e && e.target ? e.target.value : '' }),
     filters: labels.map(l => ({ label: l, pressed: l === f ? 'true' : 'false', bg: l === f ? t.inv : t.surf, fg: l === f ? t.invText : t.text, pick: () => this.setState({ filter: l, tagMenuOpen: false }) })),
