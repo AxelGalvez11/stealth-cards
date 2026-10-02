@@ -1096,7 +1096,7 @@ renderVals() {
     hasBack: !!deckId, backHref: goTo('/deck/' + deckId, B + 'Deck'), backLabel: dk ? dk.name : '', count: String(items.length), hasCount: items.length > 0,
     items: items.map(i => ({ ...i, sel: cur && i.key === cur.key ? 'true' : 'false', bg: cur && i.key === cur.key ? t.surf : 'transparent', pick: () => set({ sel: i.key, err: '', note: '' }) })),
     cur: cur || { head: '', message: '', changes: [], takeAll: () => {}, skipAll: () => {}, takeAllLabel: '', skipAllLabel: '', many: false, canReport: false, report: () => {}, canBlock: false, block: () => {}, isAI: false, isPerson: true, who: person({}), aiBg: '', aiInk: '', aiName: '' },
-    hasCur: !!cur, hasMessage: !!(cur && cur.message), hasMeta: !!(cur && (cur.message || cur.canReport || cur.canBlock)), listView: true, detailView: !!cur, closeItem: () => set({ sel: '', err: '', note: '' }),
+    hasCur: !!cur, hasMessage: !!(cur && cur.message), hasMeta: !!(cur && (cur.message || cur.canReport || cur.canBlock)), listView: true, barOn: !cur && !deckId, detailView: !!cur, closeItem: () => set({ sel: '', err: '', note: '' }),
     hasNote: !!st.note, note: st.note || '', hasErr: !!st.err, err: st.err || '', busyOp: busy ? '.6' : '1'
   };
 }

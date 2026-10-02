@@ -3800,7 +3800,7 @@ const phoneDeck = phone(`<div style="height: 100%; overflow-y: auto; scrollbar-w
     <sc-if value="{{gs.noCards}}" hint-placeholder-val="{{ false }}"><span style="font-size: 14px; color: {{t.muted}};">No cards in this deck yet.</span></sc-if>
     </sc-if>
   </div>
-</div></div>`, 'Library', `${moveTray('tray', true)}
+</div></div>`, '', `${moveTray('tray', true)}
 <sc-if value="{{settingsOpen}}" hint-placeholder-val="{{ false }}">
   <div class="sc-scrim" style="position: absolute; inset: 0; background: {{t.dim}};"></div>
   <div role="dialog" aria-label="Deck settings" class="sc-sheet" style="position: absolute; left: 0; right: 0; bottom: 0; top: 56px; box-sizing: border-box; padding: 16px 20px 34px; border-radius: 32px 32px 0 0; background: {{t.bg}}; display: flex; flex-direction: column; gap: 14px;">
@@ -4537,7 +4537,7 @@ const phoneDeckEmpty = phone(`<div style="height: 100%; box-sizing: border-box; 
       <div style="display: flex; flex-direction: column; gap: 4px; text-shadow: {{cover.shadow}};"><div style="font-size: 32px; font-weight: 700; letter-spacing: -.03em; line-height: 1.05; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; {{coverTitleS}}">{{deckName}}</div><div style="font-size: 14px; opacity: .8;">No cards yet</div></div>
     </div>
   </div>
-</div>`, 'Library');
+</div>`, '');
 // The Library before there are any decks: what your classes assigned, then the three tiles.
 const phoneDecksEmpty = phone(`<div style="padding: 64px 20px 120px; display: flex; flex-direction: column; gap: 14px;">
   ${pTitle('Library', roundBtn('plus', 'New deck', 'PhoneNewDeck.dc.html'))}
@@ -8273,7 +8273,7 @@ const phonePublicDeck = phone(`<div style="padding: 0 0 120px; display: flex; fl
     </div>
   </div>
   </sc-if>
-</div>`, '', `<sc-if value="{{signedIn}}" hint-placeholder-val="{{ true }}">${tabBar('Discover')}</sc-if>
+</div>`, '', `
 ${PGDP.viewer}<sc-if value="{{cp.open}}" hint-placeholder-val="{{ false }}">
   <div class="sc-scrim" onClick="{{cp.cancel}}" style="position: absolute; inset: 0; background: {{t.dim}};"></div>
   <div role="dialog" aria-label="Copy to your library" class="sc-sheet" style="position: absolute; left: 0; right: 0; bottom: 0; box-sizing: border-box; padding: 22px 20px 34px; border-radius: 32px 32px 0 0; background: {{t.bg}}; display: flex; flex-direction: column; gap: 16px;">
@@ -8363,7 +8363,7 @@ renderVals() {
     hasBack: !!deckId, backHref: goTo('/deck/' + deckId, B + 'Deck'), backLabel: dk ? dk.name : '', count: String(items.length), hasCount: items.length > 0,
     items: items.map(i => ({ ...i, sel: cur && i.key === cur.key ? 'true' : 'false', bg: cur && i.key === cur.key ? t.surf : 'transparent', pick: () => set({ sel: i.key, err: '', note: '' }) })),
     cur: cur || { head: '', message: '', changes: [], takeAll: () => {}, skipAll: () => {}, takeAllLabel: '', skipAllLabel: '', many: false, canReport: false, report: () => {}, canBlock: false, block: () => {}, isAI: false, isPerson: true, who: person({}), aiBg: '', aiInk: '', aiName: '' },
-    hasCur: !!cur, hasMessage: !!(cur && cur.message), hasMeta: !!(cur && (cur.message || cur.canReport || cur.canBlock)), listView: ${phone ? '!cur' : 'true'}, detailView: !!cur, closeItem: () => set({ sel: '', err: '', note: '' }),
+    hasCur: !!cur, hasMessage: !!(cur && cur.message), hasMeta: !!(cur && (cur.message || cur.canReport || cur.canBlock)), listView: ${phone ? '!cur' : 'true'}, barOn: !cur && !deckId, detailView: !!cur, closeItem: () => set({ sel: '', err: '', note: '' }),
     hasNote: !!st.note, note: st.note || '', hasErr: !!st.err, err: st.err || '', busyOp: busy ? '.6' : '1'
   };
 }`;
@@ -8403,7 +8403,7 @@ const phoneSuggestions = phone(`<div style="padding: 64px 20px 120px; display: f
     <sc-if value="{{hasErr}}" hint-placeholder-val="{{ false }}"><span role="alert" style="font-size: 13px; color: {{t.again}};">{{err}}</span></sc-if>
     <div style="display: flex; flex-direction: column; gap: 12px; opacity: {{busyOp}};"><sc-for list="{{cur.changes}}" as="c" hint-placeholder-count="3">${CHANGE_CARD('c', true)}</sc-for></div>
   </sc-if>
-</div>`, '', `<sc-if value="{{listView}}" hint-placeholder-val="{{ true }}">${tabBar('Library')}</sc-if>
+</div>`, '', `<sc-if value="{{barOn}}" hint-placeholder-val="{{ true }}">${tabBar('Library')}</sc-if>
 ${REPORT_SHEET(true)}
 ${BLOCK_SHEET(true)}`);
 
@@ -8494,7 +8494,7 @@ const phoneHistory = phone(`<div style="padding: 64px 20px 120px; display: flex;
     </div></sc-for>
     <sc-if value="{{noVersions}}" hint-placeholder-val="{{ false }}"><div style="padding: 40px 20px; border-radius: 22px; background: {{t.surf}}; text-align: center; font-size: 15px; color: {{t.muted}};">No versions yet</div></sc-if>
   </div></sc-if>
-</div>`, '', `<sc-if value="{{mineNav}}" hint-placeholder-val="{{ true }}">${tabBar('Library')}</sc-if><sc-if value="{{otherNav}}" hint-placeholder-val="{{ false }}">${tabBar('Discover')}</sc-if>`);
+</div>`, '', ``);
 
 // What the canvas's Tweaks can change on these boards (the app passes the rest: which deck, ?copy=1, ?suggest=…).
 const bool = (d = false) => ({ editor: 'boolean', default: d });

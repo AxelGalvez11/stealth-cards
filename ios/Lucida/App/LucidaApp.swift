@@ -584,11 +584,12 @@ struct MainView: View {
     }
   }
   /// Pages the canvas draws without the tab bar: Settings, Check AI cards, News (and a suggestion once it's opened), the
-  /// themes, and Connect AI (a page inside Settings).
+  /// themes, Connect AI (a page inside Settings), and everything inside a deck: its page, a shared deck's page, its History
+  /// and its Suggestions (the owner, 2026-10-02: "inside a deck remove this here").
   private var showsTabBar: Bool {
     switch nav.path.last {
-    case .none, .deck, .folder, .profile, .publicDeck, .history, .classPage: return true
-    case .suggestions: return !nav.barHidden
+    case .none, .folder, .profile, .classPage: return true
+    case .suggestions(let deckId): return deckId.isEmpty && !nav.barHidden
     default: return false
     }
   }
