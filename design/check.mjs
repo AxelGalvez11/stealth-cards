@@ -107,7 +107,7 @@ PROP_SETS.push({ screen: 'Set up' }, { screen: 'Multiple choice' }, { screen: 'T
 // Making cards: every step the Make boards offer, light and dark.
 for (const step of MAKE_STEPS) PROP_SETS.push({ step }, { step, dark: true });
 // The deck page's Cards, Notes (the Guide) and Sources sections, each with the Guide and Sources in every state (and dark).
-for (const guide of GUIDE_STATES) PROP_SETS.push({ guide }, { guide, dark: true }, { guide, section: 'Notes' }, { guide, section: 'Notes', dark: true }, { guide, section: 'Sources' }, { guide, section: 'Sources', dark: true });
+for (const guide of GUIDE_STATES) PROP_SETS.push({ guide }, { guide, dark: true }, { guide, section: 'Notes' }, { guide, section: 'Notes', dark: true }, { guide, section: 'Diagrams' }, { guide, section: 'Diagrams', dark: true }, { guide, section: 'Sources' }, { guide, section: 'Sources', dark: true });
 // The Guide's editor: writing, previewing, older versions, a new page, nothing written yet (and dark).
 for (const view of GUIDE_VIEWS) PROP_SETS.push({ view }, { view, dark: true });
 for (const liveFrom of LIVE_FROM) PROP_SETS.push({ liveFrom }, { liveFrom, dark: true });

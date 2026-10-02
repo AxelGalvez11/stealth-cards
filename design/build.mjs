@@ -21,6 +21,7 @@ import { THEME_KEYS, themeCss, themeFonts, themeStatic } from './themes.mjs';
 import { LEVELS, YEARS, SUBJECTS } from '../web/school.js';
 import testKit from './test-boards.mjs';
 import { makeBoards, deckBlocks, publicGuideBlocks, PUBLIC_GUIDE_JS, DECK_MATERIALS_JS, GUIDE_CSS, GUIDE_STATES, MATERIALS_MOCK, LIVE_FROM, LIVE_TOPIC_STATES } from './materials.mjs';
+import { DIAGRAM_METHOD, DIAGRAM_CSS, PUBLIC_DIAGRAMS_JS, publicDiagramBlocks } from './diagrams.mjs';
 // The themes (Pro), for boards' logic: key, board name, short and full names.
 const THEME_LIST = JSON.stringify(THEMES.map(({ key, board, short, name }) => ({ key, board: board || '', short, name })));
 const MESH_DATA = JSON.stringify(Object.fromEntries(PALETTE_NAMES.map(n => [n, { ...paletteData(n), shadow: PALETTES[n].ink === '#FFFFFF' ? '0 1px 14px rgba(0,0,0,.16)' : 'none' }])));
@@ -86,7 +87,7 @@ skinFor(k) {
 }
 ${GEN_METHOD}
 ${MOCK_METHOD}
-${logic.includes('this.rich(') ? RICH_METHOD : ''}${logic.includes('this.drag(') ? '\n' + DRAG_METHOD : ''}${logic.includes('this.shareOrCopy(') ? '\n' + SHARE_METHOD : ''}${logic.includes('this.md(') ? '\n' + GUIDE_METHOD : ''}${logic.includes('this.mockMaterials(') ? '\n' + MATERIALS_MOCK : ''}
+${logic.includes('this.rich(') ? RICH_METHOD : ''}${logic.includes('this.drag(') ? '\n' + DRAG_METHOD : ''}${logic.includes('this.shareOrCopy(') ? '\n' + SHARE_METHOD : ''}${logic.includes('this.md(') ? '\n' + GUIDE_METHOD : ''}${logic.includes('this.mockMaterials(') ? '\n' + MATERIALS_MOCK : ''}${logic.includes('this.dg(') ? '\n' + DIAGRAM_METHOD : ''}
 ${logic}
 }
 </script>
@@ -1457,7 +1458,7 @@ const webDeck = webRoot(`${sidebar('Library')}
   </div>
   ${examLine(14, -4)}
   ${TEST.pastList(false)}
-  ${DB.tabs}${DB.guide}${DB.sources}
+  ${DB.tabs}${DB.guide}${DB.diagrams}${DB.sources}
   <sc-if value="{{gs.showCards}}" hint-placeholder-val="{{ true }}">
   <div style="display: flex; align-items: center; gap: 8px;">
     <sc-for list="{{filters}}" as="f" hint-placeholder-count="6">
@@ -1494,7 +1495,7 @@ ${moveTray('tray', false)}
     ${deckUpdatesBody(false)}
   </aside>
 </sc-if>
-${DB.viewer}`, true);
+${DB.viewer}${DB.dgViewer}${DB.dgSheet}`, true);
 // Dragging a card (drag.mjs, both deck pages): to another spot in the deck, or onto another deck in the Move to tray.
 // The canvas shows the tray open (prop trayOpen), with a card over its first deck.
 const CARD_DRAG_JS = phone => `const others = db.decks().filter(d => d.id !== dk.id), trayOpen = !!this.props.trayOpen;
@@ -1521,7 +1522,7 @@ renderVals() {
   const rows = allRows.filter(r => (f === 'All' || r.kind === f || r.tags.includes(f)) && (!q || [r.front, r.back, ...r.tags].join(' ').toLowerCase().includes(q)))
     .map(r => ({ ...r, glyph: glyphs[r.icon], aiNote: r.ai ? ' · ' + r.ai : '', ...cardFit(r.tags) }));
   return {
-    t, rows, ...chrome, ...coverVals, ...cardDrag, gs, vw, query: this.state.q || '', setQuery: e => this.setState({ q: e && e.target ? e.target.value : '' }),
+    t, rows, ...chrome, ...coverVals, ...cardDrag, gs, vw, dg, query: this.state.q || '', setQuery: e => this.setState({ q: e && e.target ? e.target.value : '' }),
     filters: labels.map(l => ({ label: l, pressed: l === f ? 'true' : 'false', bg: l === f ? t.inv : t.surf, fg: l === f ? t.invText : t.text, pick: () => this.setState({ filter: l, tagMenuOpen: false }) })),
     tagBtn: { label: tagOn ? f : 'Tags', pressed: tagOn ? 'true' : 'false', bg: tagOn ? t.inv : t.surf, fg: tagOn ? t.invText : t.text, dot: tagOn ? tagCol(f) : 'transparent', dotW: tagOn ? '8px' : '0px' },
     tagMenu: { open: menuOpen, expanded: menuOpen ? 'true' : 'false', query: this.state.tagQ || '',
@@ -1750,6 +1751,9 @@ constructor(props) {
   // The card as you write it: its fields, its type, where the caret is, and what Undo steps back to.
   // It lives outside state so fast typing never builds on an old copy.
   this.ed = ${ED0};
+  // Make cards from a diagram (the deck's Diagrams tab) opens a new Image card with the diagram's picture and a box over each label, to check and move before saving.
+  const dd = props.diagram && props.db && props.db.diagrams ? props.db.diagrams.takeDraft(props.deckId) : null;
+  if (dd) { this.dgDraft = true; this.ed.type = 'Image'; this.ed.edits = { image: dd.image, boxes: dd.boxes.map(b => ({ ...b })), occ: 'one' }; }
   this.els = {};
   this.refFns = {};
 }
@@ -2296,7 +2300,7 @@ renderVals() {
       key: ev => { if (!ev || ev.key !== 'Enter' || ev.isComposing) return; ev.preventDefault(); const nx = bx[i + 1]; if (!nx || !this.focusLabel(nx.id)) ev.target.blur(); } }; }) };
   const missing = this.missingOf(ty, f, bx.length);
   // Back goes where you came from: the review, the Library's All cards, or the deck.
-  const backHref = this.props.from === 'review' ? db.href('review', dk.id) : this.props.from === 'library' ? db.href('cards') : this.props.from === 'stats' ? db.href('stats') : dk.href;
+  const backHref = this.props.from === 'review' ? db.href('review', dk.id) : this.props.from === 'library' ? db.href('cards') : this.props.from === 'stats' ? db.href('stats') : this.props.diagram ? dk.href + '?tab=diagrams' : dk.href;
   // The sound: its player (a file's waveform, or the words the device reads aloud) or, while recording, the live waveform
   // (the newest bar at the right), how long it's been, and Stop.
   ${SOUND_JS}
@@ -2483,9 +2487,9 @@ openCard(db) {
     const want = { Blank: 'blank', Image: 'image', Audio: 'audio' }[this.props.cardType] || 'text', ids = this.cardIds(db);
     let first = db.mock ? ids.find(r => r.icon === want) || ids[0] : null;
     if (!db.mock && this.props.cardId) { const sibs = db.group(this.props.cardId).map(c => c.id); first = ids.find(r => sibs.includes(r.id)) || ids[0]; }
-    this.pick = this.props.newCard || !first ? 'new' : first.id;
+    this.pick = this.props.newCard || this.dgDraft || !first ? 'new' : first.id;
     this.eds[this.pick] = this.ed;
-    if (this.pick === 'new') {
+    if (this.pick === 'new' && !this.dgDraft) {
       this.ed.type = ({ Blank: 'Blank', Image: 'Image', Audio: 'Audio' })[this.props.cardType] || 'Basic';
       this.ed.edits = { front: '', back: '', text: '', note: '', speak: '', boxes: [], ...(db.mock && this.ed.type === 'Basic' ? { front: 'Where in the cell does glycolysis happen?', back: 'In the cytoplasm' } : {}) };
       if (db.mock && this.props.newCard) Object.assign(this.state, { typing: true, focus: 'back' });
@@ -3894,7 +3898,7 @@ const phoneDeck = phone(`<div style="height: 100%; overflow-y: auto; scrollbar-w
     <div style="display: flex; gap: 8px;"><a href="PhoneReview.dc.html" style="flex: 2 1 0; height: 56px; border-radius: 999px; background: {{t.inv}}; color: {{t.invText}}; display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 17px; font-weight: 600; white-space: nowrap;">${svg(I.decks, 17, 2)}<span>{{studyLabel}}</span><sc-if value="{{hasStudyCount}}" hint-placeholder-val="{{ true }}">${STUDY_COUNT(24, 'rgba(128,128,128,.32)', 'inherit')}</sc-if></a><a href="{{learnHref}}" style="flex: 1 1 0; height: 56px; border-radius: 999px; background: {{t.surf}}; display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 17px; font-weight: 600; white-space: nowrap;">${svg(I.sparkle, 17, 2)}{{learnShort}}</a></div>
     ${TEST.phoneButton}
     ${TEST.pastList(true)}
-    ${DBP.tabs}${DBP.guide}${DBP.sources}
+    ${DBP.tabs}${DBP.guide}${DBP.diagrams}${DBP.sources}
     <sc-if value="{{gs.showCards}}" hint-placeholder-val="{{ true }}">
     <div data-sc-list="cards" ref="{{dragList}}" onPointerDown="{{grab}}" style="display: flex; flex-direction: column;">
       <sc-for list="{{rows}}" as="r" hint-placeholder-count="4">
@@ -3918,14 +3922,14 @@ ${pickSheet('lbLevel')}${pickSheet('lbSubject', true)}${pickSheet('lbSchool', tr
     ${deckUpdatesBody(true)}
   </div>
 </sc-if>
-${DBP.viewer}`);
+${DBP.viewer}${DBP.dgViewer}${DBP.dgSheet}`);
 const phoneDeckLogic = `
 constructor(props) { super(props); this.state = {}; }
 renderVals() { ${T}${DB_JS}${COVER_LOGIC}${DECK_MATERIALS_JS}
   ${CARD_TAGS_JS}
   ${LIFT_JS}
   ${CARD_DRAG_JS(true)}
-  return { t, ...chrome, dark: !!this.props.dark, ...coverVals, ...cardDrag, gs, vw, tiles: coverVals.tiles.map(k => k.label === 'Due now' ? { ...k, label: 'Due' } : k),
+  return { t, ...chrome, dark: !!this.props.dark, ...coverVals, ...cardDrag, gs, vw, dg, tiles: coverVals.tiles.map(k => k.label === 'Due now' ? { ...k, label: 'Due' } : k),
     // Every card (all six sample cards on the canvas, so the page scrolls and shows the cover's parallax); each opens
     // in the editor.
     rows: db.cards(dk.id).map(r => ({ ...r, ...cardFit(r.tags), href: db.mock ? 'PhoneEditor.dc.html' : r.href })),
@@ -8157,7 +8161,7 @@ renderVals() {
     ...(d.checked ? [{ label: 'Checked by ' + d.checked.name + (d.checked.current ? '' : checkedAt ? ' at version ' + checkedAt.version : ' earlier'), shield: true, people: false }] : []),
     ...(school ? [{ label: ownerName, shield: true, people: false }] : []),
     { label: d.maintained === 'community' ? 'Kept up by the community' : 'Kept up by ' + firstName(ownerName), shield: false, people: true }];
-  ${PUBLIC_GUIDE_JS}
+  ${PUBLIC_GUIDE_JS}${PUBLIC_DIAGRAMS_JS}
   const upd = rel(d.updated), cardsLine = kfmt(d.cards) + (d.cards === 1 ? ' card' : ' cards');
   // What you've done with it decides the buttons. Saving and getting updates show as you press them.
   const starOn = st.star ?? !!(me && me.starred), stars = Math.max(0, (d.stars || 0) + (me ? (starOn ? 1 : 0) - (me.starred ? 1 : 0) : 0));
@@ -8258,7 +8262,7 @@ renderVals() {
   const checkIt = async () => { if (this.state.busy || !checker) return; set({ busy: 'check', error: '' });
     try { await db.act.checkDeck(d.id); this.setState({ busy: '', checkedAt: d.version }); } catch (e) { this.setState({ busy: '', error: fail(e) }); } };
   return {
-    t, ...chrome, ${NET_VALS} ink: inkOf, gd: GD,
+    t, ...chrome, ${NET_VALS} ink: inkOf, gd: GD, pdg: PDG,
     canReport: ready && !owns, reportIt: () => openReport('deck', d.id, d.name), rep,
     canCheck: checker && !checkedNow && !mineChecked, mineChecked, checkLabel: busy === 'check' ? 'Checking…' : 'Check this deck', checkIt,
     loading: loading && !p.missing, missing: bad, ready, notReady: !ready, missingTitle: 'This deck isn’t here', missingLine: 'It may be private now, or the link is wrong.', discoverHref: goTo('/discover', B + 'Discover'),
@@ -8286,6 +8290,7 @@ renderVals() {
   };
 }`;
 const PGW = publicGuideBlocks({ svg, I }, false), PGP = publicGuideBlocks({ svg, I }, true);
+const PGDW = publicDiagramBlocks({ svg, I, MONO }, false), PGDP = publicDiagramBlocks({ svg, I, MONO }, true);
 const webPublicDeck = netRoot('Discover', `
     ${NET_LOADING(2)}
     ${NET_MISSING}
@@ -8329,6 +8334,7 @@ const webPublicDeck = netRoot('Discover', `
     <div style="display: flex; gap: 40px; align-items: flex-start;">
       <section style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column;">
         ${PGW.guide}
+        ${PGDW.card}
         ${PD_TABS}
         ${PD_CARDS(false)}
         ${PD_HISTORY(false)}
@@ -8336,7 +8342,7 @@ const webPublicDeck = netRoot('Discover', `
       </section>
       <aside style="width: 320px; flex-shrink: 0; display: flex; flex-direction: column; gap: 18px; padding-top: 14px;">${eyebrow('How it was made')}${PGW.made}${PD_STORY}</aside>
     </div>
-    </sc-if>`, `<sc-if value="{{cp.open}}" hint-placeholder-val="{{ false }}"><div style="position: absolute; inset: 0; z-index: 80; display: flex; align-items: center; justify-content: center;">
+    </sc-if>`, `${PGDW.viewer}<sc-if value="{{cp.open}}" hint-placeholder-val="{{ false }}"><div style="position: absolute; inset: 0; z-index: 80; display: flex; align-items: center; justify-content: center;">
   <div class="sc-fade" onClick="{{cp.cancel}}" style="position: absolute; inset: 0; background: {{t.dim}};"></div>
   <div role="dialog" aria-modal="true" aria-label="Copy to your library" class="sc-pop" style="position: relative; width: 480px; box-sizing: border-box; padding: 28px; border-radius: 32px; background: {{t.bg}}; color: {{t.text}}; box-shadow: 0 24px 64px rgba(0,0,0,.24); display: flex; flex-direction: column; gap: 18px;">
     ${COPY_FORM(false)}
@@ -8388,7 +8394,7 @@ const phonePublicDeck = phone(`<div style="padding: 0 0 120px; display: flex; fl
       ${pdRound(svg(I.copy, 20, 2), 'Make a copy', { href: '{{signInPhone}}' })}${pdRound(svg(I.star, 20, 2), 'Save', { href: '{{signInPhone}}' })}${pdRound(svg(I.message, 20, 2), 'Suggest a change', { href: '{{signInPhone}}' })}
     </div></sc-if>
     <sc-if value="{{hasError}}" hint-placeholder-val="{{ false }}"><div role="alert" style="margin-top: -6px; font-size: 13px; color: {{t.again}};">{{error}}</div></sc-if>
-    ${PGP.guide}${PGP.made}
+    ${PGP.guide}${PGDP.card}${PGP.made}
     <div style="display: flex; flex-direction: column;">
       ${PD_TABS}
       ${PD_CARDS(true)}
@@ -8398,7 +8404,7 @@ const phonePublicDeck = phone(`<div style="padding: 0 0 120px; display: flex; fl
   </div>
   </sc-if>
 </div>`, '', `<sc-if value="{{signedIn}}" hint-placeholder-val="{{ true }}">${tabBar('Discover')}</sc-if>
-<sc-if value="{{cp.open}}" hint-placeholder-val="{{ false }}">
+${PGDP.viewer}<sc-if value="{{cp.open}}" hint-placeholder-val="{{ false }}">
   <div class="sc-scrim" onClick="{{cp.cancel}}" style="position: absolute; inset: 0; background: {{t.dim}};"></div>
   <div role="dialog" aria-label="Copy to your library" class="sc-sheet" style="position: absolute; left: 0; right: 0; bottom: 0; box-sizing: border-box; padding: 22px 20px 34px; border-radius: 32px 32px 0 0; background: {{t.bg}}; display: flex; flex-direction: column; gap: 16px;">
     ${COPY_FORM(true)}
@@ -8624,7 +8630,7 @@ const phoneHistory = phone(`<div style="padding: 64px 20px 120px; display: flex;
 const bool = (d = false) => ({ editor: 'boolean', default: d });
 // Your verification, for the boards that show it (a verified teacher sees Check this deck; Settings says Verified teacher).
 const VERIFIED_PROP = { editor: 'enum', default: '', options: ['', 'Waiting for review', 'Teacher', 'School'] };
-const PD_PROPS = { ...DARK, grain: MESH('Iris').grain, guide: { editor: 'enum', default: 'Guide and sources', options: ['Guide and sources', 'Guide pages', 'No guide yet'] }, loading: bool(), signedOut: bool(), owner: bool(), studying: bool(), copyOpen: bool(), missing: bool(), report: bool(), verified: VERIFIED_PROP, deckTab: { editor: 'enum', default: 'Cards', options: ['Cards', 'History', 'People'] } };
+const PD_PROPS = { ...DARK, grain: MESH('Iris').grain, guide: { editor: 'enum', default: 'Guide and sources', options: ['Guide and sources', 'Guide pages', 'No guide yet', 'Diagrams', 'A table open', 'A mind map open'] }, loading: bool(), signedOut: bool(), owner: bool(), studying: bool(), copyOpen: bool(), missing: bool(), report: bool(), verified: VERIFIED_PROP, deckTab: { editor: 'enum', default: 'Cards', options: ['Cards', 'History', 'People'] } };
 const SG_PROPS = { ...DARK, loading: bool(), aiWaiting: bool(true), noSuggestions: bool(), report: bool(), block: bool() };
 const HI_PROPS = { ...DARK, loading: bool(), missing: bool(), signedOut: bool(), someoneElse: bool() };
 // ---------- Classes ----------
@@ -9132,7 +9138,7 @@ const PROFILE_PROPS = { ...DARK, grain: MESH('Iris').grain, tab: { editor: 'enum
 const FREE_PROP = { editor: 'boolean', default: false };
 const PRO_DECK_PROPS = { free: FREE_PROP, stepGoal: { editor: 'boolean', default: false } };
 // The deck page's Guide and Sources: with both, with the Guide's extra pages, a long Guide, a source opened, nothing yet, or a deck you only study.
-const GUIDE_STATE = { section: { editor: 'enum', default: 'Cards', options: ['Cards', 'Notes', 'Sources'] }, guide: { editor: 'enum', default: 'Guide and sources', options: GUIDE_STATES }, sourceOpen: { editor: 'string', default: '' }, sourceAt: { editor: 'string', default: '' } };
+const GUIDE_STATE = { section: { editor: 'enum', default: 'Cards', options: ['Cards', 'Notes', 'Diagrams', 'Sources'] }, guide: { editor: 'enum', default: 'Guide and sources', options: GUIDE_STATES }, sourceOpen: { editor: 'string', default: '' }, sourceAt: { editor: 'string', default: '' } };
 const STATS_PROPS = { tab: { editor: 'enum', default: 'Overview', options: ['Overview', 'Memory', 'Weak spots', 'Pace'] }, free: FREE_PROP };
 const LEVEL_PROP = { editor: 'enum', default: 'all', options: ['all', 'new', 'easy', 'medium', 'hard', 'leech', 'paused'] };
 const TUNE_PROP = { editor: 'enum', default: 'On', options: ['On', 'Off', 'Not enough reviews', 'Tuning'] };
@@ -9280,7 +9286,7 @@ const files = {
   'WebDecksEmpty': ['Web · Library · no decks yet', webDecksEmpty, { props: { ...DARK, grain: MESH('Iris').grain }, logic: emptyLogic(), w: W, h: H }],
   'WebDeckEmpty': ['Web · Deck · no cards yet', webDeckEmpty, { props: { ...DARK, grain: MESH('Iris').grain }, logic: emptyLogic('Pharmacology'), w: W, h: H }],
   'WebStatsEmpty': ['Web · Stats · no reviews yet', webStatsEmpty, { props: { ...DARK, grain: MESH('Iris').grain }, logic: emptyLogic(), w: W, h: H }],
-  'WebDeck': ['Web · Deck page', webDeck, { props: { ...DARK, grain: MESH('Iris').grain, settingsOpen: { editor: 'boolean', default: false }, settingsTab: { editor: 'enum', default: 'General', options: ['General', 'Studying', 'Sharing'] }, tagPicker: { editor: 'boolean', default: false }, ...SHARE_PROPS, ...PRO_DECK_PROPS, tests: { editor: 'boolean', default: true }, ...GUIDE_STATE }, logic: deckLogic, css: NUM_CSS + PARALLAX_CSS + DRAG_CSS + GUIDE_CSS, w: W, h: H }],
+  'WebDeck': ['Web · Deck page', webDeck, { props: { ...DARK, grain: MESH('Iris').grain, settingsOpen: { editor: 'boolean', default: false }, settingsTab: { editor: 'enum', default: 'General', options: ['General', 'Studying', 'Sharing'] }, tagPicker: { editor: 'boolean', default: false }, ...SHARE_PROPS, ...PRO_DECK_PROPS, tests: { editor: 'boolean', default: true }, ...GUIDE_STATE }, logic: deckLogic, css: NUM_CSS + PARALLAX_CSS + DRAG_CSS + GUIDE_CSS + DIAGRAM_CSS, w: W, h: H }],
   'WebDeckTagPicker': ['Web · Deck settings · Add tag', attrOf('WebDeck', W, H, 'settings-open="{{yes}}" tag-picker="{{yes}}"'), { logic: darkLogic, css: NUM_CSS + DRAG_CSS, w: W, h: H }],
   'WebEditor': ['Web · Card editor', webEditor, { props: { ...DARK, cardType: { editor: 'enum', default: 'Basic', options: ['Basic', 'Blank', 'Image', 'Audio'] }, recording: { editor: 'boolean', default: false }, slashDemo: { editor: 'boolean', default: false } }, logic: EDITOR_LOGIC, css: EDITOR_CSS, w: W, h: H }],
   'WebEditorSlash': ['Web · Card editor · / menu', attrOf('WebEditor', W, H, 'slash-demo="{{yes}}"'), { logic: darkLogic, css: EDITOR_CSS, w: W, h: H }],
@@ -9373,7 +9379,7 @@ const files = {
   'PhoneStatsEmpty': ['iPhone · Stats · no reviews yet', phoneStatsEmpty, { props: { ...DARK, grain: MESH('Iris').grain }, logic: emptyLogic(), w: PW, h: PH }],
   'PhoneNewDeck': ['iPhone · New deck', phoneNewDeck, { props: { ...DARK, grain: MESH('Iris').grain }, logic: NEW_DECK_LOGIC, css: NUM_CSS + COVER_FADE_CSS, w: PW, h: PH }],
   'PhoneInbox': ['iPhone · Check AI cards', phoneInbox, { props: DARK, logic: phoneInboxLogic, css: REVIEW_CSS, w: PW, h: PH }],
-  'PhoneDeck': ['iPhone · Deck page', phoneDeck, { props: { ...DARK, grain: MESH('Iris').grain, settingsOpen: { editor: 'boolean', default: false }, settingsTab: { editor: 'enum', default: 'General', options: ['General', 'Studying', 'Sharing'] }, tagPicker: { editor: 'boolean', default: false }, ...SHARE_PROPS, ...PRO_DECK_PROPS, tests: { editor: 'boolean', default: true }, ...GUIDE_STATE }, logic: phoneDeckLogic, css: NUM_CSS + PARALLAX_CSS + DRAG_CSS + GUIDE_CSS, w: PW, h: PH }],
+  'PhoneDeck': ['iPhone · Deck page', phoneDeck, { props: { ...DARK, grain: MESH('Iris').grain, settingsOpen: { editor: 'boolean', default: false }, settingsTab: { editor: 'enum', default: 'General', options: ['General', 'Studying', 'Sharing'] }, tagPicker: { editor: 'boolean', default: false }, ...SHARE_PROPS, ...PRO_DECK_PROPS, tests: { editor: 'boolean', default: true }, ...GUIDE_STATE }, logic: phoneDeckLogic, css: NUM_CSS + PARALLAX_CSS + DRAG_CSS + GUIDE_CSS + DIAGRAM_CSS, w: PW, h: PH }],
   'PhoneDeckTagPicker': ['iPhone · Deck settings · Add tag', attrOf('PhoneDeck', PW, PH, 'settings-open="{{yes}}" tag-picker="{{yes}}"'), { logic: darkLogic, css: NUM_CSS + DRAG_CSS, w: PW, h: PH }],
   'PhoneDeckSettingsStudy': ['iPhone · Deck settings · Studying (FSRS)', studyOf('PhoneDeck', PW, PH), { logic: darkLogic, css: NUM_CSS + DRAG_CSS, w: PW, h: PH }],
   'PhoneDeckSettingsGoal': ['iPhone · Deck settings · Studying · goal raised to 95% (reviews a day)', attrOf('PhoneDeck', PW, PH, 'settings-open="{{yes}}" settings-tab="Studying" step-goal="{{yes}}"'), { logic: darkLogic, css: NUM_CSS + DRAG_CSS, w: PW, h: PH }],
@@ -9537,7 +9543,7 @@ const files = {
   'PhoneActivityDark': ['iPhone · News (dark)', darkOf('PhoneActivity', PW, PH), { logic: darkLogic, w: PW, h: PH }],
   'PhoneActivityGray': ['iPhone · News (dark, gray)', grayOf('PhoneActivity', PW, PH), { logic: darkLogic, w: PW, h: PH }],
   // A shared deck's page, suggesting changes, Suggestions, and History.
-  'WebPublicDeck': ['Web · Shared deck page', webPublicDeck, { props: PD_PROPS, logic: PUBLIC_DECK_LOGIC(false), css: GUIDE_CSS, w: W, h: H }],
+  'WebPublicDeck': ['Web · Shared deck page', webPublicDeck, { props: PD_PROPS, logic: PUBLIC_DECK_LOGIC(false), css: GUIDE_CSS + DIAGRAM_CSS, w: W, h: H }],
   'WebPublicDeckStudying': ['Web · Shared deck page · a deck you study', attrOf('WebPublicDeck', W, H, 'studying="{{yes}}"'), { logic: darkLogic, w: W, h: H }],
   'WebPublicDeckOwner': ['Web · Shared deck page · your own deck', attrOf('WebPublicDeck', W, H, 'owner="{{yes}}"'), { logic: darkLogic, w: W, h: H }],
   'WebPublicDeckCopy': ['Web · Shared deck page · Make a copy', attrOf('WebPublicDeck', W, H, 'copy-open="{{yes}}"'), { logic: darkLogic, w: W, h: H }],
@@ -9552,7 +9558,7 @@ const files = {
   'WebPublicDeckMissing': ['Web · Shared deck page · not shared', attrOf('WebPublicDeck', W, H, 'missing="{{yes}}"'), { logic: darkLogic, w: W, h: H }],
   'WebPublicDeckDark': ['Web · Shared deck page · dark', darkOf('WebPublicDeck', W, H), { logic: darkLogic, w: W, h: H }],
   'WebPublicDeckGray': ['Web · Shared deck page · gray', grayOf('WebPublicDeck', W, H), { logic: darkLogic, w: W, h: H }],
-  'PhonePublicDeck': ['iPhone · Shared deck page', phonePublicDeck, { props: PD_PROPS, logic: PUBLIC_DECK_LOGIC(true), css: GUIDE_CSS, w: PW, h: PH }],
+  'PhonePublicDeck': ['iPhone · Shared deck page', phonePublicDeck, { props: PD_PROPS, logic: PUBLIC_DECK_LOGIC(true), css: GUIDE_CSS + DIAGRAM_CSS, w: PW, h: PH }],
   'PhonePublicDeckStudying': ['iPhone · Shared deck page · a deck you study', attrOf('PhonePublicDeck', PW, PH, 'studying="{{yes}}"'), { logic: darkLogic, w: PW, h: PH }],
   'PhonePublicDeckOwner': ['iPhone · Shared deck page · your own deck', attrOf('PhonePublicDeck', PW, PH, 'owner="{{yes}}"'), { logic: darkLogic, w: PW, h: PH }],
   'PhonePublicDeckCopy': ['iPhone · Shared deck page · Make a copy', attrOf('PhonePublicDeck', PW, PH, 'copy-open="{{yes}}"'), { logic: darkLogic, w: PW, h: PH }],

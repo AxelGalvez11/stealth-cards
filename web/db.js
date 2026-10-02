@@ -14,6 +14,7 @@ import { createNet } from './net.js';
 import { createConnect } from './connect.js';
 import { createLive } from './live.js';
 import { createMake } from './make.js';
+import { createDiagrams } from './diagrams.js';
 import { progressOf, doneOf } from './progress.js';
 import { loadTheme } from './themes/load.js';
 import { schoolSearch } from './school.js';
@@ -286,7 +287,7 @@ export async function createDb({ onChange, go }) {
       total: st.total, totalLabel: st.total.toLocaleString('en-US'), due: st.due, overdue: st.overdue, soon: st.soon, fresh: st.fresh, ret: st.ret, aiCount: st.aiCount, exam: st.exam,
       href: '/deck/' + d.id, studyHref: '/review/' + d.id, settingsHref: '/deck/' + d.id + '?settings=1', newCardHref: '/deck/' + d.id + '/card',
       // Whether it has a Guide (words, or extra pages) and Sources, for the deck page and the Library.
-      hasGuide: !!(d.guide && ((d.guide.text || '').trim() || (d.guide.pages || []).length)), hasSources: !!(d.sources || []).length, ...shareOf(d) };
+      hasGuide: !!(d.guide && ((d.guide.text || '').trim() || (d.guide.pages || []).length)), hasSources: !!(d.sources || []).length, hasDiagrams: (d.diagrams || []).length > 0, ...shareOf(d) };
   };
 
   // Days ahead: how many review cards come due each day (1 = tomorrow).
@@ -476,6 +477,15 @@ export async function createDb({ onChange, go }) {
       const type = sniff(new Uint8Array(await f.slice(0, 16).arrayBuffer())) || f.type, heic = type === 'image/heic' || /^image\/hei[cf]$/.test(f.type) || /\.hei[cf]$/i.test(f.name || '');
       const b = await picture(f, heic ? 'image/heic' : type, 1600);
       return b ? new File([b], f.name || 'photo', { type: b.type }) : null;
+    } });
+  // A deck's Diagrams (web/diagrams.js): tables and mind maps made from its cards, the diagrams of its lectures, and pictures people upload. A picture goes up as big as 2400 px across
+  // (the labels in a diagram have to stay readable), through the make flow's upload.
+  const diagrams = createDiagrams({ state: () => S, reload: async () => { accept(await get('/api/state')); }, changed, go, choose, act: (type, payload) => send(type, payload, false, true),
+    shrink: async f => {
+      const type = sniff(new Uint8Array(await f.slice(0, 16).arrayBuffer())) || f.type, heic = type === 'image/heic' || /^image\/hei[cf]$/.test(f.type) || /\.hei[cf]$/i.test(f.name || '');
+      if (!heic && !/^image\/(png|jpeg|gif|webp)$/.test(type)) return null;
+      const b = await picture(f, heic ? 'image/heic' : type, 2400);
+      return b ? new File([b], f.name || 'picture', { type: b.type }) : null;
     } });
   // A deck's Guide (like a README) and its Sources (what its cards were made from). The Guide saves as it is typed (a moment after the last
   // key), one save at a time and in order; what the screen shows meanwhile is the typing, kept by the screen itself.
@@ -1427,8 +1437,8 @@ export async function createDb({ onChange, go }) {
       return { url: location.origin + (S.me && S.ai.key ? '/mcp/' + S.ai.key : '/mcp'), perms: S.ai.perms, connected: names.length ? names.join(', ') : 'None yet', apps,
         clients: { claude: has('Claude'), openai: has('ChatGPT'), cursor: has('Cursor'), mcp: names.some(n => !['Claude', 'ChatGPT', 'Cursor'].includes(n)) } };
     },
-    // Making cards (web/make.js), a deck's Guide, and its Sources.
-    make,
+    // Making cards (web/make.js), a deck's Guide, its Sources, and its Diagrams (web/diagrams.js).
+    make, diagrams,
     guide: id => { const d = deckById(id); if (!d) return { deckId: '', text: '', at: 0, pages: [], can: false, studying: false };
       const g = guideOf(d), ro = shareOf(d).readOnly;
       return { deckId: d.id, text: g.text || '', at: g.at || 0, pages: (g.pages || []).map(p => ({ id: p.id, title: p.title, text: p.text || '', at: p.at || 0 })), can: !ro, studying: ro }; },
