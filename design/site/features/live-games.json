@@ -2,10 +2,10 @@
   "slug": "features/live-games",
   "kind": "feature",
   "title": "Live flashcard games: a free Kahoot-style quiz",
-  "description": "Turn a deck into a live quiz. Friends or a class join on their phones with a 6-digit code, no account, and race for points. Free, up to 60 players.",
+  "description": "Turn a deck into a live quiz. Friends or students join on their phones with a 6-digit code, no account, and race for points. Free, up to 60 players.",
   "h1": "Live games",
-  "lead": "Live turns any deck into a quiz game: you host on a computer, your friends or class join on their phones with a 6-digit code and no account, and everyone answers the same questions for points. It’s free, it takes up to 60 players, and the questions come from your own cards or from a topic you type.",
-  "updated": "2026-10-01",
+  "lead": "Live turns any deck into a quiz game: you host on a computer, your friends or students join on their phones with a 6-digit code and no account, and everyone answers the same questions for points. It’s free, it takes up to 60 players, and the questions come from your own cards or from a topic you type.",
+  "updated": "2026-10-02",
   "table": {
     "columns": [
       "",
@@ -80,9 +80,9 @@
       ]
     },
     {
-      "h2": "Good for study groups and class review",
+      "h2": "Good for study groups and review days",
       "paras": [
-        "Use Live for a study group, a family quiz, or a review round before a test. In a class, open a room from a class deck (see [classes](/features/classes)). Low-stakes quizzes in class raised scores on chapter and semester exams in three experiments with sixth graders (Roediger and colleagues, 2011), and the retrieval practice guide from Agarwal and colleagues advises keeping them low-stakes. So keep the points for fun, not for grades."
+        "Use Live for a study group, a family quiz, a review round before a test, or a review day at school. A teacher can open a room from any deck of theirs and show the code on the big screen. Low-stakes quizzes in school lessons raised scores on chapter and semester exams in three experiments with sixth graders (Roediger and colleagues, 2011), and the retrieval practice guide from Agarwal and colleagues advises keeping them low-stakes. So keep the points for fun, not for grades."
       ]
     },
     {
@@ -156,7 +156,6 @@
     }
   ],
   "related": [
-    "features/classes",
     "features/learn-mode",
     "features/shared-decks",
     "for/teachers",
@@ -170,10 +169,10 @@
     "quizlet live alternative",
     "live quiz game flashcards",
     "play flashcards with friends",
-    "classroom review games",
+    "review games for teachers",
     "live quiz for study groups",
     "join with code quiz",
     "free live quiz game",
-    "classroom review games like kahoot"
+    "review games like kahoot for teachers"
   ]
 }

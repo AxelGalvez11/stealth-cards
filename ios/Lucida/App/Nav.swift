@@ -4,9 +4,9 @@ import SwiftUI
 
 /// Pages pushed on a tab: Settings, a deck, a folder, Check AI cards, someone's profile (yours is the Profile tab, not a
 /// page: see `profile`), News, a shared deck's page, its suggestions (`suggestions("")`: every deck of yours), its History,
-/// a class (by its code), Settings › Theme with a theme's page (its key), Settings › Connect AI, and a deck's Guide editor
-/// (its deck, and the page it opens on: "" for the Guide itself).
-enum Route: Hashable { case settings, deck(String), folder(String), inbox, profile(String), news, publicDeck(DeckAddress), suggestions(String), history(DeckAddress), classPage(String), themes, theme(String), connect, guide(String, String) }
+/// Settings › Theme with a theme's page (its key), Settings › Connect AI, and a deck's Guide editor (its deck, and the page it
+/// opens on: "" for the Guide itself).
+enum Route: Hashable { case settings, deck(String), folder(String), inbox, profile(String), news, publicDeck(DeckAddress), suggestions(String), history(DeckAddress), themes, theme(String), connect, guide(String, String) }
 enum SheetKind: Identifiable, Equatable {
   case newDeck, newCard(deckId: String?, cardId: String?), deckSettings(String), learnStart(String)
   /// The start of a practice test, over a deck's page or a folder's.
@@ -17,9 +17,8 @@ enum SheetKind: Identifiable, Equatable {
   case editProfile, deckUpdates(String)
   /// A shared deck's Make a copy, and its Suggest a change (`start`: the card it opens on, "new", or "1").
   case copyDeck(DeckAddress), suggest(DeckAddress, start: String)
-  /// Classes: the New class, Join a class, or Rename popup; a class's Add a deck and Assign sheets (by its code); Report a
-  /// deck, a person, or a suggestion (its kind, id, and name); and Get verified.
-  case classForm(ClassForm), classAdd(String), classAssign(String), report(kind: String, id: String, name: String), verify
+  /// Report a deck, a person, or a suggestion (its kind, id, and name); and Get verified (Settings › Account).
+  case report(kind: String, id: String, name: String), verify
   /// Go Pro (the paywall: Lucida Pro with the App Store), over any page or full screen.
   case goPro
   /// Delete account's question (Settings → Account), and Block's (someone's handle and name).
@@ -46,9 +45,6 @@ enum SheetKind: Identifiable, Equatable {
     case .deckUpdates(let d): return "updates-" + d
     case .copyDeck(let a): return "copy-" + a.key
     case .suggest(let a, _): return "suggest-" + a.key
-    case .classForm(let f): return "classForm-" + f.id
-    case .classAdd(let c): return "classAdd-" + c
-    case .classAssign(let c): return "classAssign-" + c
     case .report(let k, let i, _): return "report-\(k)-\(i)"
     case .verify: return "verify"
     case .goPro: return "goPro"
@@ -91,11 +87,10 @@ struct DeckWant: Equatable {
 final class Nav: ObservableObject {
   /// The app opens on the Library (there is no Today page).
   @Published var tab: Tab = .library
-  /// The Library shows All cards instead of your folders and decks, or (`libClasses`) your classes.
+  /// The Library shows All cards instead of your folders and decks.
   @Published var libCards = false
   /// A filter for All cards to start on, from the Stats page: "leech" (or "paused").
   var libFilter: String? = nil
-  @Published var libClasses = false
   @Published var path: [Route] = []
   @Published var sheet: SheetKind?
   /// A list to pick from, over everything (Discover's filters, Edit profile's school, a deck's labels): see PickSheet.swift.
@@ -119,12 +114,12 @@ final class Nav: ObservableObject {
   @Published var asking = false
   /// A question over everything, in Lucida's own sheet (Design/Question.swift): the system's confirmation dialog and alert never show.
   @Published var question: AskRequest?
-  /// A calendar open under a button (an exam date, a class's due date): Lucida's own, never the system's date picker (Design/CalendarPicker.swift).
+  /// A calendar open under a button (a deck's exam date): Lucida's own, never the system's date picker (Design/CalendarPicker.swift).
   @Published var calendar: CalendarRequest?
   /// Lucida's own camera, over everything (Screens/Camera.swift), never the system's camera sheet.
   @Published var camera: CameraRequest?
   /// Back to the Library with nothing open (signed out, or the account is gone).
-  func reset() { sheet = nil; full = nil; boardFull = nil; path = []; tab = .library; libCards = false; libClasses = false; asking = false; barHidden = false; question = nil; calendar = nil; camera = nil }
+  func reset() { sheet = nil; full = nil; boardFull = nil; path = []; tab = .library; libCards = false; asking = false; barHidden = false; question = nil; calendar = nil; camera = nil }
   func push(_ r: Route) { path.append(r) }
   func back() { if !path.isEmpty { path.removeLast() } }
   func study(deckId: String?, pile: String? = nil) { withAnimation(Motion.sheet) { full = .review(deckId: deckId, pile: pile) } }
@@ -208,8 +203,6 @@ final class Nav: ObservableObject {
   }
   /// A deck's Notes page, on a page of it ("" for the Guide itself), with the caret at a place in it (`at`, "block:offset": where its words were tapped).
   func guide(deckId: String, page: String = "", at: String = "") { guideAt = at; push(.guide(deckId, page)) }
-  /// A class's page, by its code.
-  func classPage(_ code: String) { push(.classPage(code)) }
-  /// A page on another site (Google Classroom's share page), in Safari.
+  /// A page on another site (Help, the Terms, lucida.cards/connect), in Safari.
   func open(_ url: URL?) { if let url { UIApplication.shared.open(url) } }
 }

@@ -168,7 +168,7 @@ export const ogFile = slug => 'og/' + ogKey(slug).replace(/\//g, '-') + '.png';
 // A page file may say `"picture": { "scene": "…", "style": "…", "grad": "…", "other": "…" }` to choose its own; a page that says
 // nothing gets its kind's scene and a style and palette picked from its address. design/check-site.mjs says when two pictures are alike
 // and when two neighbors on the blog's grid share a style.
-export const SCENES = ['blog', 'cards', 'versus0', 'versus1', 'versus2', 'versus3', 'switch', 'intervals', 'occlusion', 'quiz', 'live', 'shared', 'class', 'import', 'chat', 'mcat', 'med', 'words', 'teach', 'week', 'question', 'grid', 'plans', 'lock', 'terms', 'link'];
+export const SCENES = ['blog', 'cards', 'versus0', 'versus1', 'versus2', 'versus3', 'switch', 'intervals', 'occlusion', 'quiz', 'live', 'shared', 'import', 'chat', 'mcat', 'med', 'words', 'teach', 'week', 'question', 'grid', 'plans', 'lock', 'terms', 'link'];
 // A scene drawn in several arrangements (`v` picks one), so pages of the same kind don't look alike.
 export const SCENE_ARRANGEMENTS = { versus: 4 };
 export const STYLES = ['mesh', 'radial', 'blurred', 'edgy', 'bands', 'multi', 'retro', 'duo', 'tri', 'volume', 'banding', 'swirl', 'grainy'];
@@ -197,7 +197,7 @@ const PICTURES = {
   'vs/kahoot': { scene: 'versus', v: 1, style: 'radial', grad: 'Magenta', other: 'Kahoot' }, 'vs/gizmo': { scene: 'versus', v: 2, style: 'volume', grad: 'Lemon', other: 'Gizmo' },
   'anki-alternative': { scene: 'switch', style: 'bands', grad: 'Berry', other: 'Anki' }, 'quizlet-alternative': { scene: 'switch', style: 'swirl', grad: 'Apricot', other: 'Quizlet' },
   features: { scene: 'grid', style: 'blurred', grad: 'Lime' }, 'features/spaced-repetition': { scene: 'intervals', style: 'edgy', grad: 'Sunset' }, 'features/ai-flashcards': { scene: 'chat', style: 'swirl', grad: 'Ocean' },
-  'features/learn-mode': { scene: 'quiz', style: 'bands', grad: 'Tropic' }, 'features/shared-decks': { scene: 'shared', style: 'swirl', grad: 'Dusk' }, 'features/classes': { scene: 'class', style: 'tri', grad: 'Grove' },
+  'features/learn-mode': { scene: 'quiz', style: 'bands', grad: 'Tropic' }, 'features/shared-decks': { scene: 'shared', style: 'swirl', grad: 'Dusk' },
   'features/live-games': { scene: 'live', style: 'volume', grad: 'Crimson' }, 'features/image-occlusion': { scene: 'occlusion', style: 'tri', grad: 'Lime' }, 'features/import': { scene: 'import', style: 'edgy', grad: 'Magenta' },
   'for/students': { scene: 'week', style: 'duo', grad: 'Mint' }, 'for/med-school': { scene: 'med', style: 'retro', grad: 'Plum' }, 'for/mcat': { scene: 'mcat', style: 'radial', grad: 'Cobalt' },
   'for/language-learning': { scene: 'words', style: 'multi', grad: 'Cherry' }, 'for/teachers': { scene: 'teach', style: 'blurred', grad: 'Tropic' },

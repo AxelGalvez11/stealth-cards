@@ -15,7 +15,6 @@ import { createConnect } from './connect.js';
 import { createLive } from './live.js';
 import { createMake } from './make.js';
 import { createDiagrams } from './diagrams.js';
-import { progressOf, doneOf } from './progress.js';
 import { loadTheme } from './themes/load.js';
 import { schoolSearch } from './school.js';
 import { sideView, readSide, writeSide, SIDE_KEY } from './side.js';
@@ -266,22 +265,14 @@ export async function createDb({ onChange, go, ask = async () => false, say = ()
   // A public deck's page is at its owner's name and its own; every other deck's only at its lasting link, /d/<id> (the server
   // opens a Link only deck nowhere else, so that link is the one to share).
   const shareOf = d => {
-    const sh = d.share && d.share.vis !== 'private' ? { vis: d.share.vis, id: d.share.id, url: handle() && d.share.vis === 'public' ? '/@' + handle() + '/' + d.share.slug : '/d/' + d.share.id, label: { public: 'Public', link: 'Link only', class: 'Class' }[d.share.vis] || 'Link only' } : null;
+    // (A deck someone put in a class before the app stopped showing classes is shared as 'class', web/classes.mjs: here it's private.)
+    const sh = d.share && d.share.vis !== 'private' && d.share.vis !== 'class' ? { vis: d.share.vis, id: d.share.id, url: handle() && d.share.vis === 'public' ? '/@' + handle() + '/' + d.share.slug : '/d/' + d.share.id, label: d.share.vis === 'public' ? 'Public' : 'Link only' } : null;
     const k = d.link ? { mode: d.link.mode, gone: !!d.link.gone, id: d.link.id, owner: d.link.owner || { name: '', handle: '' }, url: d.link.vis === 'public' && d.link.owner && d.link.owner.handle ? '/@' + d.link.owner.handle + '/' + d.link.slug : '/d/' + d.link.id,
       pending: d.link.gone ? 0 : (d.link.pending || []).length, updates: !!d.link.updates } : null;
     return { shared: sh, link: k, readOnly: !!(k && k.mode === 'study' && !k.gone) };
   };
   // A card of a deck you study as it is: fixing it means suggesting the fix to its owner, on the deck's page.
   const suggestHref = (d, c) => shareOf(d).link.url + '?suggest=' + encodeURIComponent((c && c.origin) || '1');
-  // Classes (web/classes.mjs). The classes you're in come with your library (S.classes, brought up to date when the app
-  // opens), so the Library shows your assignments right away; your progress on each is worked out here, from your own cards
-  // (web/progress.js), the same way the server sends it to a class you share it with.
-  const classDeck = sharedId => S.decks.find(d => d.link && d.link.id === sharedId && !d.link.gone);
-  const classProgress = sharedId => { const d = classDeck(sharedId); return d ? { deckId: d.id, ...progressOf(d, S.cards, S.logs) } : null; };
-  // After a study session, a class you share your progress with hears how far you got, without waiting for the app to
-  // open again.
-  const classSync = () => { if ((S.classes || []).some(k => k.role === 'member' && k.share && k.assignments.length))
-    fetch('/api/social', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ type: 'class.sync' }) }).catch(() => {}); };
   const deckRow = d => {
     const st = deckStat(d);
     return { id: d.id, name: d.name, tags: d.tags, seed: d.cover.seed || d.name, style: d.cover.style, round: d.cover.round, image: d.cover.image, paused: d.paused,
@@ -657,7 +648,6 @@ export async function createDb({ onChange, go, ask = async () => false, say = ()
     if (L.graded) return;
     L.graded = true; saveLearn();
     for (const cid of L.ids) { const c = cardById(cid); if (c && c.srs.state === 'new') { try { await send('review.grade', { cardId: cid, rating: L.st[cid].misses ? 2 : 3 }); } catch { /* shown already */ } } }
-    classSync();
   }
   // Spelling that's close enough counts: case, accents, a missing "the", and a typo or two in a longer word.
   const norm = x => String(x).toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/\([^)]*\)/g, ' ').replace(/[^\p{L}\p{N}]+/gu, ' ').replace(/\b(the|a|an)\b/g, ' ').replace(/\s+/g, ' ').trim();
@@ -961,14 +951,14 @@ export async function createDb({ onChange, go, ask = async () => false, say = ()
       const entry = { cardId, rating, was: c.srs.state };
       session.graded.push(entry);
       entry.logId = (await send('review.grade', { cardId, rating, ms: shownFor(cardId) })).logId;
-      if (!queue(session.deckId, session.pile, session.set).length) { classSync(); go('/review/done'); }
+      if (!queue(session.deckId, session.pile, session.set).length) go('/review/done');
     },
     pile: async (cardId, name) => {
       if (!session) return;
       const entry = { cardId, pile: name, was: 'pile' };
       session.graded.push(entry);
       entry.logId = (await send('review.grade', { cardId, pile: name, ms: shownFor(cardId) })).logId;
-      if (!queue(session.deckId, session.pile, session.set).length) { classSync(); go('/review/done'); }
+      if (!queue(session.deckId, session.pile, session.set).length) go('/review/done');
     },
     addPile: (id, name) => { const d = deckById(id); if (d) act.updateDeck(id, { piles: [...(d.piles || []), { name }] }); },
     undo: async () => { const e = session && session.graded[session.graded.length - 1]; if (!e || !e.logId) return; session.graded.pop(); await send('review.undo', { logId: e.logId }); },
@@ -1230,25 +1220,12 @@ export async function createDb({ onChange, go, ask = async () => false, say = ()
       if (on && !(t && t.w)) return act.tune();
       return saveNow('settings.update', { patch: { tune: { on: !!on } } }, s => { if (s.settings.tune) s.settings.tune = { ...s.settings.tune, on: !!on }; });
     },
-    // Classes (web/classes.mjs). Like the network's actions, each gives back what the server said (the pages show its
-    // errors); making or joining a class goes to it, and leaving or deleting one goes back to your classes.
-    makeClass: async o => { const r = await net.act('class.make', o); if (r && r.code) go('/class/' + r.code); return r; },
-    joinClass: async code => { const r = await net.act('class.join', { code }); if (r && r.code) go('/class/' + r.code); return r; },
-    leaveClass: async (id, name) => { if (!(await ask({ title: 'Leave “' + name + '”?', line: 'The decks you study from it stay in your library.', action: 'Leave class' }))) return null; const r = await net.act('class.leave', { id }); go('/library/classes'); return r; },
-    deleteClass: async (id, name) => { if (!(await ask({ title: 'Delete “' + name + '”?', line: 'Everyone in it keeps the decks they study.', action: 'Delete class', danger: true }))) return null; const r = await net.act('class.delete', { id }); go('/library/classes'); return r; },
-    updateClass: (id, patch) => net.act('class.update', { id, patch }),
-    setMember: async (id, handle, o) => ((o && o.remove && o.name && !(await ask({ title: 'Take ' + o.name + ' out of the class?', action: 'Take out' }))) ? null : net.act('class.member', { id, handle, role: o && o.role, remove: !!(o && o.remove) })),
-    shareProgress: (id, on) => net.act('class.share', { id, on }),
-    addClassDeck: (id, deckId) => net.act('class.addDeck', { id, deckId }),
-    removeClassDeck: (id, sharedId) => net.act('class.removeDeck', { id, sharedId }),
-    assign: (id, o) => net.act('class.assign', { id, ...o }),
-    unassign: (id, assignment) => net.act('class.unassign', { id, assignment }),
+    // Get verified (Settings › Account), a report (a deck, a person or a suggestion), and the admin page's decisions (web/classes.mjs). Each gives back
+    // what the server said, like the network's actions (the pages show its errors).
     askVerify: o => net.act('verify.ask', o),
     report: o => net.act('report.send', o),
     adminVerify: (id, pick) => net.act('admin.verify', { id, pick }),
     adminReport: (id, pick) => net.act('admin.report', { id, pick }),
-    // Google Classroom's own share page, in a new tab: a class's invite link, or a class deck's page.
-    classroom: (url, title) => window.open('https://classroom.google.com/share?url=' + encodeURIComponent(url) + '&title=' + encodeURIComponent(title || ''), '_blank', 'noopener'),
     go
   };
   // Tuned once, it keeps up with you: when a quarter more reviews have come in since, it tunes again quietly.
@@ -1264,18 +1241,6 @@ export async function createDb({ onChange, go, ask = async () => false, say = ()
     // Lucida's own question and message, for a screen's logic to use (never the browser's confirm() or alert()).
     ask, say,
     raw: () => S,
-    // Your classes as your library has them; your progress on a class's deck (null until you study it); and what the
-    // Library's Assigned lists: the assignments of the classes you're a member of, soonest first. A done one stays until its date passes,
-    // one that isn't done until two weeks after.
-    classes: () => S.classes || [],
-    classProgress,
-    assignments: () => {
-      const t0 = dayAt(now());
-      return (S.classes || []).filter(k => k.role === 'member').flatMap(k => k.assignments.map(a => {
-        const [y, mo, dd] = String(a.due).split('-').map(Number), at = new Date(y, (mo || 1) - 1, dd || 1).getTime(), p = classProgress(a.sharedId);
-        return { ...a, classId: k.id, className: k.name, code: k.code, progress: p, done: doneOf(a.goal, p), at };
-      })).filter(a => a.at >= t0 || (!a.done && a.at >= t0 - 14 * DAY)).sort((x, y) => x.at - y.at);
-    },
     // You on the study network: your handle and your profile's page (once you have one).
     me: () => ({ handle: handle(), url: handle() ? '/@' + handle() : '', name: S.settings.name || (S.me && S.me.name) || 'You' }),
     // A clip's waveform and where it's at (sound.js), and the recording under way, if there is one.

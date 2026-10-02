@@ -5,7 +5,7 @@
   "description": "Compare Lucida with Anki, Quizlet, Knowt, RemNote, Brainscape, Mochi, Kahoot and Gizmo on price, spaced repetition, AI and importing, with dated sources.",
   "h1": "Lucida compared with other flashcard apps",
   "lead": "These pages compare Lucida with Anki, Quizlet, Knowt, RemNote, Brainscape, Mochi, Kahoot and Gizmo on price, spaced repetition, AI, importing, sharing and games, with a source and a date for every fact. Each page says plainly where the other app is better.",
-  "updated": "2026-10-01",
+  "updated": "2026-10-02",
   "published": "2026-09-30",
   "table": {
     "columns": [
@@ -39,7 +39,7 @@
         "Yes, on the website only",
         "Built in, plus ChatGPT and Claude connectors",
         "In the mobile apps",
-        "A huge library, classes and phone apps"
+        "A huge library, teacher tools and phone apps"
       ],
       [
         "Knowt",
@@ -79,7 +79,7 @@
         "Flashcards and Learn mode",
         "Built in, paid",
         "In the app",
-        "Live quiz games for classes and events"
+        "Live quiz games for schools and events"
       ],
       [
         "Gizmo",
@@ -96,12 +96,12 @@
       "h2": "Pick by what you need",
       "bullets": [
         "**Full control, add-ons and offline study:** Anki. It is free on computers and Android, and [Lucida vs Anki](https://lucida.cards/vs/anki) shows the trade-offs.",
-        "**The biggest library and classroom tools:** Quizlet. See [Lucida vs Quizlet](https://lucida.cards/vs/quizlet) for what its free plan covers.",
+        "**The biggest library and teacher tools:** Quizlet. See [Lucida vs Quizlet](https://lucida.cards/vs/quizlet) for what its free plan covers.",
         "**AI built into the app:** Knowt, RemNote, Brainscape, Mochi or Gizmo. Their free plans limit it. Lucida’s own AI makes cards too, up to 3 makes a day on Free.",
         "**Notes and cards in one place:** RemNote. See [Lucida vs RemNote](https://lucida.cards/vs/remnote).",
         "**Markdown, local-first and offline:** Mochi. See [Lucida vs Mochi](https://lucida.cards/vs/mochi).",
         "**Expert-made decks and a simple 1 to 5 rating:** Brainscape. See [Lucida vs Brainscape](https://lucida.cards/vs/brainscape).",
-        "**Live games for a class or event:** Kahoot. See [Lucida vs Kahoot](https://lucida.cards/vs/kahoot).",
+        "**Live games for a school or event:** Kahoot. See [Lucida vs Kahoot](https://lucida.cards/vs/kahoot).",
         "**A quick start in a browser, cards made from your files or by your own AI, and free Learn mode and live games:** Lucida."
       ]
     },
@@ -114,7 +114,7 @@
         "[Lucida vs RemNote](https://lucida.cards/vs/remnote): notes plus cards against flashcards only.",
         "[Lucida vs Brainscape](https://lucida.cards/vs/brainscape): Certified decks and confidence ratings against free pictures and export.",
         "[Lucida vs Mochi](https://lucida.cards/vs/mochi): local-first Markdown against a browser app with free sync.",
-        "[Lucida vs Kahoot](https://lucida.cards/vs/kahoot): live games for classes against flashcards with a game mode.",
+        "[Lucida vs Kahoot](https://lucida.cards/vs/kahoot): live games for schools against flashcards with a game mode.",
         "[Lucida vs Gizmo](https://lucida.cards/vs/gizmo): AI flashcards on your phone against export and no hearts.",
         "[Anki alternatives](https://lucida.cards/anki-alternative) and [Quizlet alternatives](https://lucida.cards/quizlet-alternative): side-by-side tables of the options."
       ]
@@ -145,11 +145,11 @@
   "faq": [
     {
       "q": "What is the best flashcard app?",
-      "a": "It depends on what you need. Anki is best for control, add-ons and offline study. Quizlet is best for a huge library and classroom tools. Knowt, RemNote, Brainscape, Mochi and Gizmo each build in AI in different ways. Lucida is for a quick start in a browser with cards made from your files or by your own AI, plus free Learn mode and live games."
+      "a": "It depends on what you need. Anki is best for control, add-ons and offline study. Quizlet is best for a huge library and teacher tools. Knowt, RemNote, Brainscape, Mochi and Gizmo each build in AI in different ways. Lucida is for a quick start in a browser with cards made from your files or by your own AI, plus free Learn mode and live games."
     },
     {
       "q": "Anki vs Quizlet: which is better?",
-      "a": "Anki is built for long-term memory and control: it is free on computers and Android, works offline and has more than 1,600 add-ons. Quizlet has a huge library of shared sets, classroom tools and live games, and limits Learn and Test on its free plan. Pick Anki for control and long-term study, and Quizlet for shared sets and class use."
+      "a": "Anki is built for long-term memory and control: it is free on computers and Android, works offline and has more than 1,600 add-ons. Quizlet has a huge library of shared sets, teacher tools and live games, and limits Learn and Test on its free plan. Pick Anki for control and long-term study, and Quizlet for shared sets and use in school."
     },
     {
       "q": "Which flashcard apps use FSRS?",

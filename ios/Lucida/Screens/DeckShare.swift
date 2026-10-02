@@ -15,7 +15,7 @@ struct DeckSharing {
   var readOnly: Bool { link.map { $0.mode == "study" && !$0.gone } ?? false }
   var linked: Bool { link.map { !$0.gone } ?? false }
   var isCopy: Bool { link.map { $0.mode == "copy" && !$0.gone } ?? false }
-  /// The Library's mark: "Public", "Link only", or "Class" (shared with a class alone) for yours, "From <name>" for someone else's.
+  /// The Library's mark: "Public" or "Link only" for yours, "From <name>" for someone else's.
   var whose: String { link.map { "From " + ($0.owner.name.nilIfEmpty ?? "someone") } ?? shared?.label ?? "" }
   /// The owner's picture: their initial on pink (fromWho on the canvas).
   var ownerFace: NetPerson { NetPerson(handle: link?.owner.handle ?? "", name: link?.owner.name ?? "", color: 3) }
@@ -31,9 +31,10 @@ struct UpdateRow: Identifiable {
 extension Store {
   func sharing(_ d: Deck) -> DeckSharing {
     var s = DeckSharing()
-    if let sh = d.share, sh.vis != "private" {
+    // (A deck someone put in a class before the app stopped showing classes is shared as "class", web/classes.mjs: here it's private.)
+    if let sh = d.share, sh.vis != "private", sh.vis != "class" {
       let h = myHandle
-      s.shared = .init(vis: sh.vis, id: sh.id, url: h.isEmpty || sh.vis != "public" ? "/d/" + sh.id : "/@" + h + "/" + sh.slug, label: sh.vis == "public" ? "Public" : sh.vis == "class" ? "Class" : "Link only")
+      s.shared = .init(vis: sh.vis, id: sh.id, url: h.isEmpty || sh.vis != "public" ? "/d/" + sh.id : "/@" + h + "/" + sh.slug, label: sh.vis == "public" ? "Public" : "Link only")
     }
     if let l = d.link {
       s.link = .init(mode: l.mode, gone: l.gone, id: l.id, owner: l.owner, url: "/d/" + l.id,
@@ -94,8 +95,7 @@ struct DeckShareTab: View {
   var body: some View {
     let s = d.sharing, shr = s.shared, lk = s.link
     let row = store.demo ? store.demoMine().decks.first : shr.flatMap { sh in store.netMine()?.decks.first { $0.id == sh.id } }
-    // A deck that's only in classes (visibility "class") is Private here, and its classes see it (like the web's Sharing).
-    let vis0 = shr?.vis ?? "private", vis = vis0 == "class" ? "private" : vis0
+    let vis = shr?.vis ?? "private"
     let helpers = row?.helpers ?? []
     let openN = row?.open ?? 0
     ScrollViewReader { proxy in
@@ -108,7 +108,7 @@ struct DeckShareTab: View {
               Segmented(options: [("private", "Private"), ("link", "Link only"), ("public", "Public")], current: vis, hPad: 10) { id in
                 if id != vis { set(["visibility": id]) }
               }
-              Text(vis0 == "class" ? "Only you and your classes." : ["private": "Only you.", "link": "Anyone with the link.", "public": "On your profile and in Discover."][vis] ?? "").css(12).foregroundStyle(t.muted).line(12)
+              Text(["private": "Only you.", "link": "Anyone with the link.", "public": "On your profile and in Discover."][vis] ?? "").css(12).foregroundStyle(t.muted).line(12)
             }
             if let shr { sharedParts(shr, row: row, helpers: helpers, openN: openN, proxy: proxy) }
             else if !shareErr.isEmpty { CSSText(shareErr, 13, color: t.again) }

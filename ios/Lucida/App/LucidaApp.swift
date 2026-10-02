@@ -18,7 +18,7 @@ struct LucidaApp: App {
     let store = Store(demo: Board.requested != nil), nav = Nav(), drag = DragCenter()
     nav.mine = { [weak store] in store?.myHandle ?? "" }
     // The daily reminder's notice opens the Library (Data/Reminder.swift), from a cold start too, so the phone hears about taps from here on.
-    ReminderTap.shared.open = { [weak nav] in guard let nav else { return }; nav.libCards = false; nav.libClasses = false; nav.pick(.library) }
+    ReminderTap.shared.open = { [weak nav] in guard let nav else { return }; nav.libCards = false; nav.pick(.library) }
     UNUserNotificationCenter.current().delegate = ReminderTap.shared
     // A design screen starts where its board is, before anything draws.
     if let b = Board.requested { Board.setUp(b, store: store, nav: nav, drag: drag) }
@@ -161,12 +161,12 @@ struct RootView: View {
           // Connect AI is a page inside Settings: Settings › Connect AI.
           case "connect": nav.path = [.settings, .connect]
           case "settings": nav.path = [.settings]
+          // Get verified, over Settings (the web's /verify).
+          case "verify": nav.path = [.settings]; nav.sheet = .verify
           // The Go Pro sheet over the page you're on.
           case "gopro": nav.goPro()
           case "discover": nav.tab = .discover
           case "news": nav.path = [.news]
-          // Your classes (the Library's third view), or one class's page by its code (`class:<CODE>`).
-          case "classes": nav.tab = .library; nav.libClasses = true
           case "profile": nav.tab = .profile
           // `deckpage:<path>`: a shared deck's page (/@maria/mcat-biochemistry); `history:<path>`: its History;
           // `suggestions`: every deck's suggestions.
@@ -186,7 +186,6 @@ struct RootView: View {
           case "welcome": store.welcoming = true
           // `profile:<handle>`: someone's profile; `deck:<name>`: the deck with that name.
           case let o where o.hasPrefix("profile:"): nav.path = [.profile(String(o.dropFirst(8)))]
-          case let o where o.hasPrefix("class:"): nav.tab = .library; nav.libClasses = true; nav.path = [.classPage(String(o.dropFirst(6)))]
           case let o where o.hasPrefix("deck:"):
             if let d = store.lib.decks.first(where: { $0.name == String(o.dropFirst(5)) }) { nav.tab = .library; nav.path = [.deck(d.id)] }
           // `folder:<name>`: the folder with that name.
@@ -290,6 +289,8 @@ extension Board {
     case "PhoneGoProSoon": store.props.plan = "Free"; store.props.goPro = "Not yet"; nav.path = [.settings]; nav.sheet = .goPro
     // A verified teacher's Settings: Get verified says Verified teacher (the board's `verified`: -verified "Waiting for review" or School).
     case "PhoneSettingsVerified": store.props.verified = "Teacher"; nav.path = [.settings]
+    // Get verified's sheet over Settings (the canvas's PhoneSettingsGetVerified; -verified "Waiting for review" shows it sent).
+    case "PhoneSettingsGetVerified": nav.path = [.settings]; nav.sheet = .verify
     case "PhoneNewDeck": nav.sheet = .newDeck
     // Import cards over the Library, in one of the canvas's states (`-state Pasted`, "A file picked", "No cards", Empty, Importing, Error; "Deck chosen" when it's left out).
     case "PhoneImport": nav.tab = .library; nav.sheet = .importCards("")
@@ -371,23 +372,6 @@ extension Board {
       if name.hasSuffix("Dark") { store.demoNet.pages.openVersion = 14 }
       nav.tab = .library; nav.path = [.history(Board.sampleDeck().plain)]
     case "PhoneHistoryOpen": store.demoNet.pages.openVersion = 14; nav.tab = .library; nav.path = [.history(Board.sampleDeck().plain)]
-    // Classes: your classes, a class's page (yours, one you joined, or an invite you haven't taken) with its sheets, the
-    // popups over your classes, and the Library with assignments.
-    case "PhoneClasses": nav.tab = .library; nav.libClasses = true
-    case "PhoneClassesEmpty": store.props.netEmpty = true; nav.tab = .library; nav.libClasses = true
-    case "PhoneClassesNew": store.props.classForm = "new"; nav.tab = .library; nav.libClasses = true
-    case "PhoneClassesJoin": store.props.classForm = "join"; nav.tab = .library; nav.libClasses = true
-    case "PhoneClass": classBoard("BIOKTZ", store: store, nav: nav)
-    case "PhoneClassMember": classBoard("ORGCHM", store: store, nav: nav)
-    case "PhoneClassNew": store.props.netEmpty = true; classBoard("BIOKTZ", store: store, nav: nav)
-    case "PhoneClassAddDeck": store.props.classPanel = "add"; classBoard("BIOKTZ", store: store, nav: nav)
-    case "PhoneClassAssign": store.props.classPanel = "assign"; classBoard("BIOKTZ", store: store, nav: nav)
-    case "PhoneClassReport": store.props.classSharing = true; store.props.classReport = true; classBoard("ORGCHM", store: store, nav: nav)
-    case "PhoneClassVerify": store.props.classVerify = true; classBoard("BIOKTZ", store: store, nav: nav)
-    case "PhoneClassInvite": classBoard("PREMED", store: store, nav: nav)
-    case "PhoneClassLoading": store.props.netLoading = true; classBoard("BIOKTZ", store: store, nav: nav)
-    case "PhoneClassMissing": store.props.missing = true; classBoard("BIOKTZ", store: store, nav: nav)
-    case "PhoneLibraryAssigned": store.props.assignments = true; nav.tab = .library
     case "PhoneSignIn": store.phase = .signedOut
     case "PhoneSignInCode": store.phase = .signedOut; store.signInStep = .code
     // Settings › Theme (on Pro with Rubber hose in use, and on Free), and a theme's page (Frutiger Aero, not yet in use).
@@ -402,9 +386,8 @@ extension Board {
       }
     }
     if let k = Board.arg("-goPro") { store.props.goPro = k }
-    // The Library boards' Tweaks: `-caughtUp` (nothing due) and `-assignments` (what your classes assigned).
+    // The Library boards' Tweak: `-caughtUp` (nothing due).
     if ProcessInfo.processInfo.arguments.contains("-caughtUp") { store.props.caughtUp = true }
-    if ProcessInfo.processInfo.arguments.contains("-assignments") { store.props.assignments = true }
     // Settings' Flip animation on a design screen: `-flip Off` (on when it's left out).
     if Board.arg("-flip") == "Off" { store.props.flip = false }
     // Settings' Daily reminder: `-reminder Off|"6:00 PM"|...`, and `-reminderNote` (Off, with the line about allowing notifications).
@@ -467,10 +450,6 @@ extension Board {
     if let v = arg("-sourceAt") { store.props.sourceAt = v }
     if let v = arg("-madeFrom") { store.props.madeFrom = !["no", "false", "off", "0"].contains(v.lowercased()) }
   }
-  /// A class's page on a design screen: the Library's Classes with this class opened over it.
-  @MainActor static func classBoard(_ code: String, store: Store, nav: Nav) {
-    nav.tab = .library; nav.libClasses = true; nav.path = [.classPage(code)]
-  }
 }
 
 /// The tabs, with pages pushed on top of them.
@@ -515,7 +494,6 @@ struct MainView: View {
               case .publicDeck(let a): PublicDeckScreen(addr: a)
               case .suggestions(let id): SuggestionsScreen(deckId: id)
               case .history(let a): HistoryScreen(addr: a)
-              case .classPage(let code): ClassScreen(code: code)
               case .themes: ThemePickerScreen(shop: store.shop)
               case .theme(let key): ThemePageScreen(key: key)
               case .connect: ConnectScreen()
@@ -587,7 +565,7 @@ struct MainView: View {
   /// themes, and Connect AI (a page inside Settings).
   private var showsTabBar: Bool {
     switch nav.path.last {
-    case .none, .deck, .folder, .profile, .publicDeck, .history, .classPage: return true
+    case .none, .deck, .folder, .profile, .publicDeck, .history: return true
     case .suggestions: return !nav.barHidden
     default: return false
     }
@@ -624,9 +602,6 @@ struct SheetHost: View {
     case .deckUpdates(let id): SheetOverlay(top: 56, close: nav.close) { DeckUpdatesSheet(deckId: id) }
     case .copyDeck(let a): SheetOverlay(top: nil, radius: 32, close: nav.close) { CopyDeckSheet(addr: a) }
     case .suggest(let a, let start): SheetOverlay(top: 56, radius: 32, close: nav.close) { SuggestSheet(addr: a, start: start) }
-    case .classForm(let f): ClassPopup(form: f)
-    case .classAdd(let code): SheetOverlay(top: 56, close: nav.close) { ClassAddSheet(code: code) }
-    case .classAssign(let code): SheetOverlay(top: 56, close: nav.close) { ClassAssignSheet(code: code) }
     case .report(let kind, let id, let name): SheetOverlay(top: nil, close: nav.close) { ReportSheet(kind: kind, id: id, name: name) }
     case .verify: SheetOverlay(top: nil, close: nav.close) { VerifySheet() }
     case .goPro: SheetOverlay(top: 56, radius: 32, close: nav.close) { GoProSheet(shop: store.shop) }

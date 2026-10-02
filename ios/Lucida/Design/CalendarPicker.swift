@@ -1,5 +1,5 @@
 // Lucida's own calendar (design/ui.mjs dateMarkup, DATE_JS), never the system's DatePicker: a small popover under what opens it, for one day (a deck's
-// exam date, a class's due date): the month and its arrows, the days of the week, the days of the month (today has a ring, the day picked is filled,
+// exam date): the month and its arrows, the days of the week, the days of the month (today has a ring, the day picked is filled,
 // days before `min` are dimmed and can't be picked). A tap on a day picks it and closes the calendar; a tap outside closes it.
 import SwiftUI
 

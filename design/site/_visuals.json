@@ -58,7 +58,7 @@
    },
    {
     "q": "Which Lucida features are free?",
-    "a": "Learn mode, live games, classes and sharing are free. Lucida Pro costs $5.99 a month."
+    "a": "Learn mode, live games and sharing are free. Lucida Pro costs $5.99 a month."
    },
    {
     "q": "Which apps keep your Anki review history when you switch?",
@@ -103,61 +103,6 @@
    {
     "q": "How many cards can your AI add in one request?",
     "a": "Up to 500. On the free plan, there is no cap on the number of cards."
-   }
-  ]
- },
- "features/classes": {
-  "figs": [
-   {
-    "kind": "class",
-    "at": "Set up a class, step by step",
-    "pos": "before",
-    "caption": "Example: a class has a name, a six-letter code and its people, and a few steps set it up",
-    "name": "BIO 201",
-    "sub": "Six-letter code and an invite link",
-    "code": "BIOKTZ",
-    "codeLabel": "An example class code: six letters",
-    "people": [
-     "Alex",
-     "Dev",
-     "Maria",
-     "Sam",
-     "Priya"
-    ]
-   },
-   {
-    "kind": "screen",
-    "id": "class",
-    "at": "What teachers see, and never see",
-    "pos": "after",
-    "caption": "A class: its assignments, how far each student who shares has got, and the invite code"
-   }
-  ],
-  "tables": [
-   {
-    "at": "What an assignment means",
-    "columns": [
-     "Goal",
-     "When it counts as done"
-    ]
-   }
-  ],
-  "test": [
-   {
-    "q": "Is a student’s progress shared with the teacher by default?",
-    "a": "No. Sharing is off until the student says yes, and teachers never see individual answers."
-   },
-   {
-    "q": "What can a class owner do that a helper can’t?",
-    "a": "Rename or delete the class, make helpers, take out any deck, and take out helpers."
-   },
-   {
-    "q": "What goals can you pick when you assign a deck?",
-    "a": "Learn every card, or Review what’s due each day. You also set a due date."
-   },
-   {
-    "q": "What should you know before using classes with students?",
-    "a": "Students must be 13 or older and need an account to join. Lucida doesn’t connect to Google Classroom."
    }
   ]
  },
@@ -690,28 +635,28 @@
    },
    {
     "kind": "screen",
-    "id": "class",
-    "at": "Run a unit, step by step",
+    "id": "live",
+    "at": "Live games for review days",
     "pos": "after",
-    "caption": "A class: assignments, and how far each student who shares has got"
+    "caption": "A live question on the big screen, and on a player’s phone"
    }
   ],
   "test": [
    {
     "q": "Is Lucida free for teachers?",
-    "a": "Yes. Classes, shared decks and live games are free, and the pricing page has no separate school plan."
+    "a": "Yes. Shared decks and live games are free, and the pricing page has no separate school plan."
    },
    {
-    "q": "What codes do classes and live games use?",
-    "a": "Classes use a six-letter code and an invite link. Live games use a 6-digit code."
+    "q": "What do students need to join a live game?",
+    "a": "A 6-digit code and a name. They need no account."
    },
    {
-    "q": "Can teachers see a student’s individual answers?",
-    "a": "No. Teachers see numbers only, for students who share, and sharing is off until a student says yes."
+    "q": "What can a teacher see about how students are doing?",
+    "a": "Not a student’s schedule, streak or scores. On Pro, a deck you share shows which cards people miss most, as percentages without names."
    },
    {
     "q": "What does Lucida not do for teachers?",
-    "a": "No gradebook, roster import, or link to Google Classroom. Live games aren’t graded, and it isn’t for students under 13."
+    "a": "No gradebook, roster import, or link to school systems. Live games aren’t graded, and it isn’t for students under 13."
    }
   ]
  },
@@ -725,7 +670,7 @@
     "cards": [
      {
       "name": "Quizlet",
-      "line": "The biggest library and classroom tools"
+      "line": "The biggest library and teacher tools"
      },
      {
       "name": "Lucida",
@@ -785,11 +730,11 @@
    },
    {
     "q": "What does Lucida’s free plan include?",
-    "a": "Unlimited decks and cards, FSRS reviews, Learn mode, live games for up to 60 friends, sharing, classes, and import and export."
+    "a": "Unlimited decks and cards, FSRS reviews, Learn mode, live games for up to 60 friends, sharing, and import and export."
    },
    {
     "q": "When is Quizlet still the right pick?",
-    "a": "When you need the biggest library of ready-made sets, Google Classroom, offline iPhone and Android apps, or Classic Quizlet Live."
+    "a": "When you need the biggest library of ready-made sets, teacher tools, offline iPhone and Android apps, or Classic Quizlet Live."
    },
    {
     "q": "Which Quizlet sets can you export?",
@@ -984,7 +929,7 @@
      },
      {
       "t": "Use Kahoot",
-      "d": "For a big class, a hall or an event"
+      "d": "For a large group, a hall or an event"
      }
     ]
    },

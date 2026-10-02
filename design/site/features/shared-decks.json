@@ -5,7 +5,7 @@
   "description": "Share a deck as private, link only or public. Others study it as it is or copy it, and can suggest fixes that you take or skip. Free in Lucida.",
   "h1": "Shared decks",
   "lead": "Share any deck with a link or make it public, and other people can study it, copy it or suggest changes, while you decide which changes go in and everyone keeps their own schedule. You can also study anyone’s shared deck, find decks in Discover, and go back to any earlier version of a deck you share.",
-  "updated": "2026-10-01",
+  "updated": "2026-10-02",
   "table": {
     "columns": [
       "",
@@ -82,7 +82,7 @@
     {
       "h2": "Your progress stays yours",
       "bullets": [
-        "The cards are shared. Your progress never is: nobody sees your schedule, streak or scores. The one exception is a class, where you choose whether to tell your teacher how far you are (see [classes](/features/classes)).",
+        "The cards are shared. Your progress never is: nobody sees your schedule, streak or scores.",
         "On Pro, a deck’s owner can see which cards people miss most, as percentages without names.",
         "Pictures and sounds in a public deck are public links. Pictures and sounds in decks you study don’t count toward your 100 on Free.",
         "You can report a deck for being wrong or harmful, spam, or someone else’s work."
@@ -132,7 +132,7 @@
       "a": "A small fix, like a typo, keeps your schedule for that card. A new answer brings the card back as a new card, so you learn the right thing."
     },
     {
-      "q": "How do I find flashcards for my class?",
+      "q": "How do I find flashcards for my course?",
       "a": "Search Discover by topic or by words, or ask your teacher or classmates for their deck’s link. Lucida has no official textbook decks, so check what you find."
     },
     {
@@ -174,7 +174,6 @@
     }
   ],
   "related": [
-    "features/classes",
     "features/live-games",
     "features/ai-flashcards",
     "for/students",
@@ -189,8 +188,8 @@
     "share flashcards with friends",
     "share anki deck",
     "public flashcard sets",
-    "flashcards for class",
-    "find flashcards for my class",
+    "flashcards for school",
+    "find flashcards for my course",
     "shared decks",
     "study sets",
     "share deck link",

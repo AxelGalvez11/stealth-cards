@@ -170,6 +170,17 @@
       ],
       "destination": "/:page",
       "permanent": true
+    },
+    {
+      "source": "/features/classes",
+      "has": [
+        {
+          "type": "host",
+          "value": "lucida.cards"
+        }
+      ],
+      "destination": "/features",
+      "permanent": true
     }
   ],
   "rewrites": [
@@ -323,10 +334,6 @@
     },
     {
       "source": "/sitemap.xml",
-      "destination": "/api/index"
-    },
-    {
-      "source": "/class/:code",
       "destination": "/api/index"
     },
     {

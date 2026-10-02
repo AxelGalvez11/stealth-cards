@@ -2,7 +2,7 @@
 # The Library as the app's first page, end to end (LucidaUITests/HomeTests.swift): the four tabs and the Library opening first, with nothing to make
 # cards (no Make box, row or due line; its + is New deck and Import cards), a deck's page (Make cards and New card on its cover, no tiles, Practice
 # test or exam line, its tabs Sources, Cards, Notes, Diagrams right under Flashcards and Learn, and its Make cards set to it), an empty deck, New deck,
-# a brand-new account's three tiles, Assigned, News in Discover's header, and a folder's page. It starts web/server.mjs on PORT (3953) with an empty
+# a brand-new account's three tiles, no Classes anywhere (a class still on the server shows nothing), News in Discover's header, and a folder's page. It starts web/server.mjs on PORT (3953) with an empty
 # data folder and the stand-in AI on STUB_PORT (3954), runs the test on a simulator, prints each check, and stops both.
 #   ios/tools/e2e-home.sh [simulator id]      (DD=<folder> keeps the build somewhere else; the ports must be free;
 #                                              ONLY=HomeTests/test2Deck runs just that flow; STUB_AI=<stub-ai.mjs> points at the stand-in;

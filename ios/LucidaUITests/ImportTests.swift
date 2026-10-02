@@ -135,7 +135,7 @@ final class ImportTests: AppCase {
     check(isOpen(app), "+ → Import cards opens Import cards")
     let b = box(app)
     b.tap()
-    b.typeText("Notes from class")
+    b.typeText("Notes from the lecture")
     check(says(app, "No cards yet. Put the front and back on one line, split by a tab or comma."), "words that aren't cards say how to write them (\(found(app)))")
     check(go(app).label == "Import cards", "and Import says “Import cards”")
     go(app).tap()

@@ -205,114 +205,6 @@ export default [
   "h": 844
  },
  {
-  "name": "PhoneClass",
-  "title": "iPhone · Class · yours",
-  "w": 390,
-  "h": 844
- },
- {
-  "name": "PhoneClassAddDeck",
-  "title": "iPhone · Class · Add a deck",
-  "w": 390,
-  "h": 844
- },
- {
-  "name": "PhoneClassAssign",
-  "title": "iPhone · Class · Assign a deck",
-  "w": 390,
-  "h": 844
- },
- {
-  "name": "PhoneClassDark",
-  "title": "iPhone · Class (dark)",
-  "w": 390,
-  "h": 844
- },
- {
-  "name": "PhoneClassGray",
-  "title": "iPhone · Class (dark, gray)",
-  "w": 390,
-  "h": 844
- },
- {
-  "name": "PhoneClassInvite",
-  "title": "iPhone · Class · its invite link",
-  "w": 390,
-  "h": 844
- },
- {
-  "name": "PhoneClassInviteSignedOut",
-  "title": "iPhone · Class · its invite link, signed out",
-  "w": 390,
-  "h": 844
- },
- {
-  "name": "PhoneClassLoading",
-  "title": "iPhone · Class · loading",
-  "w": 390,
-  "h": 844
- },
- {
-  "name": "PhoneClassMember",
-  "title": "iPhone · Class · one you joined (asked once: share your progress?)",
-  "w": 390,
-  "h": 844
- },
- {
-  "name": "PhoneClassMissing",
-  "title": "iPhone · Class · no class has that code",
-  "w": 390,
-  "h": 844
- },
- {
-  "name": "PhoneClassNew",
-  "title": "iPhone · Class · just made",
-  "w": 390,
-  "h": 844
- },
- {
-  "name": "PhoneClassReport",
-  "title": "iPhone · Class · Report a deck",
-  "w": 390,
-  "h": 844
- },
- {
-  "name": "PhoneClassVerify",
-  "title": "iPhone · Class · Get verified",
-  "w": 390,
-  "h": 844
- },
- {
-  "name": "PhoneClasses",
-  "title": "iPhone · Library · Classes",
-  "w": 390,
-  "h": 844
- },
- {
-  "name": "PhoneClassesDark",
-  "title": "iPhone · Library · Classes (dark)",
-  "w": 390,
-  "h": 844
- },
- {
-  "name": "PhoneClassesEmpty",
-  "title": "iPhone · Library · Classes · none yet",
-  "w": 390,
-  "h": 844
- },
- {
-  "name": "PhoneClassesJoin",
-  "title": "iPhone · Library · Classes · Join a class",
-  "w": 390,
-  "h": 844
- },
- {
-  "name": "PhoneClassesNew",
-  "title": "iPhone · Library · Classes · New class",
-  "w": 390,
-  "h": 844
- },
- {
   "name": "PhoneConnect",
   "title": "iPhone · Connect AI",
   "w": 390,
@@ -513,12 +405,6 @@ export default [
  {
   "name": "PhoneLibrary",
   "title": "iPhone · Library",
-  "w": 390,
-  "h": 844
- },
- {
-  "name": "PhoneLibraryAssigned",
-  "title": "iPhone · Library · with assignments from your classes",
   "w": 390,
   "h": 844
  },
@@ -855,6 +741,12 @@ export default [
  {
   "name": "PhoneSettingsFree",
   "title": "iPhone · Settings · on Free (Tune to you is Pro)",
+  "w": 390,
+  "h": 2134
+ },
+ {
+  "name": "PhoneSettingsGetVerified",
+  "title": "iPhone · Settings · Get verified (a teacher or a school asks)",
   "w": 390,
   "h": 2134
  },
@@ -1915,132 +1807,6 @@ export default [
   "h": 900
  },
  {
-  "name": "WebClass",
-  "title": "Web · Class · yours (assignments, progress, decks, people)",
-  "w": 1440,
-  "h": 900
- },
- {
-  "name": "WebClassAddDeck",
-  "title": "Web · Class · Add a deck",
-  "w": 1440,
-  "h": 900
- },
- {
-  "name": "WebClassAssign",
-  "title": "Web · Class · Assign a deck",
-  "w": 1440,
-  "h": 900
- },
- {
-  "name": "WebClassDark",
-  "title": "Web · Class (dark)",
-  "w": 1440,
-  "h": 900
- },
- {
-  "name": "WebClassGray",
-  "title": "Web · Class (dark, gray)",
-  "w": 1440,
-  "h": 900
- },
- {
-  "name": "WebClassInvite",
-  "title": "Web · Class · its invite link (join with a tap)",
-  "w": 1440,
-  "h": 900
- },
- {
-  "name": "WebClassInviteSignedOut",
-  "title": "Web · Class · its invite link, signed out",
-  "w": 1440,
-  "h": 900
- },
- {
-  "name": "WebClassLoading",
-  "title": "Web · Class · loading",
-  "w": 1440,
-  "h": 900
- },
- {
-  "name": "WebClassMember",
-  "title": "Web · Class · one you joined (asked once: share your progress?)",
-  "w": 1440,
-  "h": 900
- },
- {
-  "name": "WebClassMemberDark",
-  "title": "Web · Class · one you joined (dark)",
-  "w": 1440,
-  "h": 900
- },
- {
-  "name": "WebClassMemberSharing",
-  "title": "Web · Class · one you joined, sharing your progress",
-  "w": 1440,
-  "h": 900
- },
- {
-  "name": "WebClassMissing",
-  "title": "Web · Class · no class has that code",
-  "w": 1440,
-  "h": 900
- },
- {
-  "name": "WebClassNew",
-  "title": "Web · Class · just made (no decks or people yet)",
-  "w": 1440,
-  "h": 900
- },
- {
-  "name": "WebClassReport",
-  "title": "Web · Class · Report a deck",
-  "w": 1440,
-  "h": 900
- },
- {
-  "name": "WebClassVerify",
-  "title": "Web · Class · Get verified",
-  "w": 1440,
-  "h": 900
- },
- {
-  "name": "WebClasses",
-  "title": "Web · Library · Classes",
-  "w": 1440,
-  "h": 900
- },
- {
-  "name": "WebClassesDark",
-  "title": "Web · Library · Classes (dark)",
-  "w": 1440,
-  "h": 900
- },
- {
-  "name": "WebClassesEmpty",
-  "title": "Web · Library · Classes · none yet",
-  "w": 1440,
-  "h": 900
- },
- {
-  "name": "WebClassesJoin",
-  "title": "Web · Library · Classes · Join a class (with its code)",
-  "w": 1440,
-  "h": 900
- },
- {
-  "name": "WebClassesLoading",
-  "title": "Web · Library · Classes · loading",
-  "w": 1440,
-  "h": 900
- },
- {
-  "name": "WebClassesNew",
-  "title": "Web · Library · Classes · New class",
-  "w": 1440,
-  "h": 900
- },
- {
   "name": "WebConnect",
   "title": "Web · Connect AI",
   "w": 1440,
@@ -2319,12 +2085,6 @@ export default [
  {
   "name": "WebImport",
   "title": "Web · Import cards",
-  "w": 1440,
-  "h": 900
- },
- {
-  "name": "WebLibraryAssigned",
-  "title": "Web · Library · with assignments from your classes",
   "w": 1440,
   "h": 900
  },
@@ -2703,6 +2463,12 @@ export default [
  {
   "name": "WebSettingsFree",
   "title": "Web · Settings · on Free (Tune to you is Pro)",
+  "w": 1440,
+  "h": 900
+ },
+ {
+  "name": "WebSettingsGetVerified",
+  "title": "Web · Settings · Get verified (a teacher or a school asks; /verify)",
   "w": 1440,
   "h": 900
  },

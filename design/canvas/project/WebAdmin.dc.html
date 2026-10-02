@@ -83,21 +83,8 @@ renderVals() {
     const badge = d.checked ? 'Checked' : d.owner && (d.owner.kind === 'school' || d.owner.verified === 'school') ? 'Official · ' + d.owner.name : d.pinned ? 'Pinned' : '';
     const cardsLine = kfmt(d.cards) + (d.cards === 1 ? ' card' : ' cards');
     return { ...pal, id: d.id || '', name: d.name || '', href: goTo(d.url, 'WebPublicDeck'), stats: kfmt(d.stars) + '   ' + cardsLine, cardsLine, stars: kfmt(d.stars),
-      owner: person(d.owner), photo, hasPhoto: !!photo, badge, hasBadge: !!badge, badgeShield: !!d.checked || (!!d.owner && d.owner.kind === 'school') }; };const DAYS7 = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'], MON3 = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-  const todayAt = db.mock ? new Date(2026, 8, 28).getTime() : new Date(new Date().getFullYear(), new Date().getMonth(), new Date().getDate()).getTime();
-  const addDays = n => { const d = new Date(todayAt); return new Date(d.getFullYear(), d.getMonth(), d.getDate() + n).getTime(); };
-  const dateAt = v => { const x = String(v || '').split('-').map(Number); return new Date(x[0] || 2026, (x[1] || 1) - 1, x[2] || 1).getTime(); };
-  const isoDay = at => { const d = new Date(at); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); };
-  const dayWord = v => { const at = dateAt(v), n = Math.round((at - todayAt) / 86400000), d = new Date(at);
-    return n === 0 ? 'today' : n === 1 ? 'tomorrow' : n === -1 ? 'yesterday' : Math.abs(n) < 7 ? DAYS7[d.getDay()] : MON3[d.getMonth()] + ' ' + d.getDate(); };
-  const dueWord = (goal, v) => (dateAt(v) < todayAt ? 'was due ' : goal === 'daily' ? 'until ' : 'due ') + dayWord(v);
-  const goalWord = g => (g === 'daily' ? 'Review what’s due' : 'Learn every card');
+      owner: person(d.owner), photo, hasPhoto: !!photo, badge, hasBadge: !!badge, badgeShield: !!d.checked || (!!d.owner && d.owner.kind === 'school') }; };
   const nOf = (n, w, ws) => n + ' ' + (n === 1 ? w : ws || w + 's');
-  const andList = a => (a.length < 2 ? a.join('') : a.length === 2 ? a.join(' and ') : a.slice(0, -1).join(', ') + ', and ' + a[a.length - 1]);
-  // What's left for you on an assignment, from your own cards: 12 cards left, 4 to review, Caught up, Done.
-  const leftWord = (a, pr) => (!pr ? (a.goal === 'daily' ? 'Not started' : nOf(a.cards || 0, 'card'))
-    : a.goal === 'daily' ? (!pr.learned ? 'Not started' : pr.due ? pr.due + ' to review' : 'Caught up') : pr.total && pr.learned >= pr.total ? 'Done' : nOf(Math.max(0, pr.total - pr.learned), 'card') + ' left');
-  const isDone = (a, pr) => !!pr && (a.goal === 'daily' ? pr.learned > 0 && !pr.due : pr.total > 0 && pr.learned >= pr.total);
   const p = this.props, s = this.state, tab = s.tab || (p.tab === 'Reports' ? 'reports' : 'verify');
   const data = db.net.admin(), loading = data === undefined, denied = !loading && !!(data && (data.missing || data.offline || data.error));
   const d = !loading && !denied && data ? data : { requests: [], reports: [] }, gone = s.gone || {}, busy = s.busy || {};
