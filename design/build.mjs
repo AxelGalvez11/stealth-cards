@@ -494,7 +494,8 @@ const ASSIGNED_PHONE = `<sc-if value="{{hasAssignments}}" hint-placeholder-val="
   </div></sc-if>`;
 
 // Decks
-// Tags: each has a color. Decks are tagged; filter by tag on Decks, edit tags in New deck and Deck settings.
+// Tags: each has a color. Cards are tagged (decks were too, until 2026-10-02: "remove 'tags' from decks, only cards have tags"); the card
+// editor edits them, and the deck page, Edit cards and All cards filter by them.
 const TAG_JS = `const tagC = { Biology: '#30A46C', Chemistry: '#F76B15', Languages: '#3E63DD', MCAT: '#8E4EC6', History: '#AD7F58', 'Computer science': '#12A594', Exam: '#E5484D', 'Year 1': '#0090FF',
     Energy: '#D6409F', Organelles: '#12A594', 'Exam 1': '#E5484D', 'Exam 2': '#F76B15', Diagrams: '#3E63DD', Proteins: '#8E4EC6', Pronunciation: '#0090FF', Cells: '#3E63DD',
     'BIO 201': '#05A2C2', 'Fall 2026': '#AD7F58', Midterm: '#F76B15', 'Final exam': '#E5484D', 'Pre-med': '#E93D82', Lab: '#12A594', 'Must know': '#AB4ABA', Mitochondria: '#30A46C', Tricky: '#F76B15' };
@@ -534,17 +535,6 @@ const TAG_EDIT = (list, pk, phone = false, up = false) => `<div style="${phone ?
   ? `<sc-if value="{{${pk}.open}}" hint-placeholder-val="{{ false }}"><div role="dialog" aria-label="Tags" style="position: absolute; inset: 0; z-index: 30; box-sizing: border-box; padding: 16px 20px 34px; border-radius: 32px 32px 0 0; background: {{t.bg}}; display: flex; flex-direction: column; gap: 12px;"><div style="display: flex; align-items: center; justify-content: space-between;"><span style="font-size: 18px; font-weight: 600;">Tags<span style="margin-left: 8px; font-family: ${MONO}; font-size: 13px; font-weight: 500; color: {{t.muted}};">{{${pk}.count}}</span></span><button type="button" onClick="{{${pk}.close}}" style="height: 36px; padding: 0 16px; border: 0; border-radius: 999px; background: {{t.inv}}; color: {{t.invText}}; font: inherit; font-size: 14px; font-weight: 600; cursor: pointer;">Done</button></div>${tagSearch(pk + '.query', pk + '.setQuery', 'Find or make a tag', 44)}<div style="flex-grow: 1; min-height: 0; overflow-y: auto; scrollbar-width: none; display: flex; flex-direction: column;">${makeRow(pk, 48)}<sc-for list="{{${pk}.options}}" as="o" hint-placeholder-count="8">${tagRow('o', { h: 48, line: true })}</sc-for></div></div></sc-if>`
   : `<sc-if value="{{${pk}.open}}" hint-placeholder-val="{{ false }}"><div role="dialog" aria-label="Add a tag" data-sc-pop style="position: absolute; left: 0; ${up ? 'bottom' : 'top'}: calc(100% + 8px); z-index: 30; width: 320px; ${popBox}">${tagSearch(pk + '.query', pk + '.setQuery', 'Find or make a tag')}<div style="max-height: 190px; overflow-y: auto; scrollbar-width: thin; display: flex; flex-direction: column;">${makeRow(pk)}<sc-for list="{{${pk}.options}}" as="o" hint-placeholder-count="5">${tagRow('o')}</sc-for></div></div></sc-if>`}</div>`;
 const viewBtn = (key, handler, label, icon) => `<button type="button" onClick="{{${handler}}}" aria-label="${label}" aria-pressed="{{${key}.pressed}}" style="width: 42px; height: 36px; border: 0; border-radius: 999px; background: {{${key}.bg}}; color: {{${key}.fg}}; box-shadow: {{${key}.sh}}; display: flex; align-items: center; justify-content: center; cursor: pointer;">${svg(I[icon], 16, 2)}</button>`;
-// One glass chip per tag on a deck's gradient card (a chip in list view). Clicking one shows every deck with that tag,
-// like the chips in the +N menu, instead of opening the deck.
-const glassTag = k => `<sc-if value="{{d.${k}.show}}" hint-placeholder-val="{{ true }}"><button type="button" onClick="{{d.${k}.pick}}" data-tip="Every deck tagged {{d.${k}.label}}" style="height: 26px; padding: 0 11px; display: inline-flex; align-items: center; border: 0; border-radius: 999px; background: {{d.glass}}; box-shadow: inset 0 0 0 1px {{d.glassLine}}; color: inherit; font: inherit; font-size: 12px; font-weight: 600; white-space: nowrap; text-shadow: none; cursor: pointer; pointer-events: auto;">{{d.${k}.label}}</button></sc-if>`;
-const tagSlot = k => `<sc-if value="{{d.${k}.show}}" hint-placeholder-val="{{ true }}"><button type="button" onClick="{{d.${k}.pick}}" data-tip="Every deck tagged {{d.${k}.label}}" style="height: 24px; padding: 0 10px; display: inline-flex; align-items: center; border: 0; border-radius: 999px; background: {{d.${k}.bg}}; color: {{d.${k}.fg}}; font: inherit; font-size: 12px; font-weight: 600; white-space: nowrap; cursor: pointer; pointer-events: auto;">{{d.${k}.label}}</button></sc-if>`;
-// A deck's +N chip opens a menu with all of its tags; pick one to see every deck that has it.
-const deckTagsPop = pos => `<sc-if value="{{d.tagsOpen}}" hint-placeholder-val="{{ false }}"><div role="dialog" aria-label="Tags on {{d.name}}" data-sc-pop style="position: absolute; ${pos} z-index: 20; pointer-events: auto; width: 320px; box-sizing: border-box; padding: 16px; border-radius: 24px; background: {{t.bg}}; color: {{t.text}}; box-shadow: 0 18px 48px rgba(0,0,0,.2), 0 0 0 1px {{t.line}}; display: flex; flex-direction: column; gap: 12px; text-shadow: none;">
-  <div style="display: flex; align-items: center; justify-content: space-between;"><span style="font-size: 14px; font-weight: 600;">{{d.tagCount}}</span><button type="button" onClick="{{d.toggleTags}}" aria-label="Close" style="width: 28px; height: 28px; border: 0; border-radius: 14px; background: {{t.surf}}; color: {{t.text}}; display: flex; align-items: center; justify-content: center; cursor: pointer;">${svg(I.close, 10, 2.4)}</button></div>
-  <div style="display: flex; flex-wrap: wrap; gap: 6px;"><sc-for list="{{d.allTags}}" as="g" hint-placeholder-count="6"><button type="button" onClick="{{g.pick}}" style="height: 28px; padding: 0 11px; display: inline-flex; align-items: center; border: 0; border-radius: 999px; background: {{g.bg}}; color: {{g.fg}}; font: inherit; font-size: 12px; font-weight: 600; white-space: nowrap; cursor: pointer;">{{g.label}}</button></sc-for></div>
-  <a href="{{d.settingsHref}}" style="align-self: flex-start; font-size: 13px; font-weight: 600; color: {{t.muted}};">Edit tags</a>
-</div></sc-if>`;
-const moreTag = (bg, h) => `<sc-if value="{{d.more.show}}" hint-placeholder-val="{{ false }}"><button type="button" onClick="{{d.toggleTags}}" aria-expanded="{{d.expanded}}" aria-label="Show all {{d.tagCount}}" style="height: ${h}px; padding: 0 10px; flex-shrink: 0; display: inline-flex; align-items: center; border: 0; border-radius: 999px; ${bg} font: inherit; font-size: 12px; font-weight: 600; white-space: nowrap; text-shadow: none; cursor: pointer; pointer-events: auto;">{{d.more.label}}</button></sc-if>`;
 // A card's tag as a small chip; `k` names the row's tag slot (c1, c2).
 const cardTag = k => `<sc-if value="{{r.${k}.show}}" hint-placeholder-val="{{ true }}"><span style="height: 22px; padding: 0 9px; display: inline-flex; align-items: center; border-radius: 999px; background: {{r.${k}.bg}}; color: {{r.${k}.fg}}; font-size: 11px; font-weight: 600; white-space: nowrap;">{{r.${k}.label}}</span></sc-if>`;
 // Cards show up to two tags; with more, the first one and a +N (hover it to read the rest).
@@ -727,9 +717,10 @@ const SKIN_COVER_JS = `const coverSkin = C => (C ? { plain: false, skin: true, a
     : { plain: true, skin: false, art: null, titleCss: '', btnBg: '#FFFFFF', btnFg: '#000000', coverShadow: 'none', coverCls: '' });`;
 const SKIN_THUMB = `<sc-if value="{{d.skin}}" hint-placeholder-val="{{ false }}"><span ref="{{d.thumb}}" data-sc-own aria-hidden="true" style="position: relative; display: block; width: 100%; height: 100%;"></span></sc-if>`;
 // The owner (V96): "rename decks to library", folders for decks, and every card in one place to filter by tags and
-// difficulty. One board is the whole Library: your folders and decks, one folder's decks (prop `folder`), or all your
-// cards (prop `mode`). The app gives each its own address: /library, /library/folder/<id>, /library/cards.
-const LIST_COLS = 'display: grid; grid-template-columns: 44px minmax(0, 1.5fr) minmax(0, 1.3fr) 70px 80px 120px 164px; gap: 16px; align-items: center;';
+// difficulty (and 2026-10-02, of the Difficulty filter: "remove the 4 grades"; All cards filters by tags, and each row
+// still says how hard its card is). One board is the whole Library: your folders and decks, one folder's decks (prop
+// `folder`), or all your cards (prop `mode`). The app gives each its own address: /library, /library/folder/<id>, /library/cards.
+const LIST_COLS = 'display: grid; grid-template-columns: 44px minmax(0, 1fr) 70px 80px 120px 164px; gap: 16px; align-items: center;';
 const CARD_COLS = 'display: grid; grid-template-columns: 36px minmax(0, 1.5fr) minmax(0, 1fr) minmax(0, .9fr) 170px 80px 96px; gap: 16px; align-items: center;';
 // Decks or All cards: two links, since each is its own page.
 const libModes = (h, fs = 13, grow = false) => `<div role="group" aria-label="Show" style="display: flex; gap: 2px; padding: 4px; border-radius: 999px; background: {{t.surf}};"><sc-for list="{{modes}}" as="m" hint-placeholder-count="2"><a href="{{m.href}}" aria-current="{{m.current}}" style="height: ${h}px; padding: 0 16px; ${grow ? 'flex: 1 1 0; ' : ''}display: inline-flex; align-items: center; justify-content: center; border-radius: 999px; background: {{m.bg}}; color: {{m.fg}}; box-shadow: {{m.sh}}; font-size: ${fs}px; font-weight: 600; white-space: nowrap;">{{m.label}}</a></sc-for></div>`;
@@ -772,7 +763,6 @@ const moveMenu = pos => `<sc-if value="{{d.moveOpen}}" hint-placeholder-val="{{ 
 const moveBtn = (bg, size = 32) => `<button type="button" onClick="{{d.toggleMove}}" aria-label="Move {{d.name}} to a folder" aria-expanded="{{d.moveExpanded}}" style="width: ${size}px; height: ${size}px; flex-shrink: 0; border: 0; border-radius: ${size / 2}px; ${bg} display: flex; align-items: center; justify-content: center; cursor: pointer; pointer-events: auto;">${svg(I.more, 16, 2)}</button>`;
 // All cards: how hard each one is, as a colored dot and word.
 const levelTag = `<span style="display: inline-flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 600; color: {{r.levelFg}};"><span style="width: 8px; height: 8px; border-radius: 4px; background: {{r.levelFg}};"></span>{{r.level}}</span>`;
-const levelSeg = (h, fs = 13, tight = false) => `<div role="group" aria-label="Difficulty" style="display: flex; gap: 2px; padding: 4px; border-radius: 999px; background: {{t.surf}}; max-width: 100%; overflow-x: auto; scrollbar-width: none;"><sc-for list="{{levels}}" as="l" hint-placeholder-count="5"><button type="button" onClick="{{l.pick}}" aria-pressed="{{l.pressed}}" style="height: ${h}px; ${tight ? 'flex: 1 1 auto; padding: 0 6px; justify-content: center; gap: 4px;' : 'flex-shrink: 0; padding: 0 12px; gap: 7px;'} display: inline-flex; align-items: center; border: 0; border-radius: 999px; background: {{l.bg}}; color: {{l.fg}}; box-shadow: {{l.sh}}; font: inherit; font-size: ${fs}px; font-weight: 600; white-space: nowrap; cursor: pointer;"><span style="width: {{l.dotW}}; height: 8px; border-radius: 4px; background: {{l.dot}};"></span>{{l.label}}<span style="font-family: ${MONO}; font-size: 11px; opacity: .6;">{{l.count}}</span></button></sc-for></div>`;
 // All cards: the cards you keep forgetting, and the ones you paused, each a filter of its own (shown once there are
 // some); and, filtered to one of them, pausing or unpausing them all.
 const stateChips = h => `<sc-for list="{{states}}" as="x" hint-placeholder-count="2"><button type="button" onClick="{{x.pick}}" aria-pressed="{{x.pressed}}" style="height: ${h}px; flex-shrink: 0; padding: 0 14px 0 12px; display: inline-flex; align-items: center; gap: 7px; border: 0; border-radius: 999px; background: {{x.bg}}; color: {{x.fg}}; font: inherit; font-size: 13px; font-weight: 600; white-space: nowrap; cursor: pointer;"><sc-if value="{{x.isLeech}}" hint-placeholder-val="{{ true }}">${svg(I.again, 14, 2)}</sc-if><sc-if value="{{x.isPaused}}" hint-placeholder-val="{{ false }}">${svg(I.pauseRing, 14, 2)}</sc-if><span>{{x.label}}</span><span style="font-family: ${MONO}; font-size: 11px; opacity: .6;">{{x.count}}</span></button></sc-for>`;
@@ -797,11 +787,7 @@ const webDecks = webRoot(`${sidebar('Library')}
   ${TEST.folderLine}
   <sc-if value="{{deckView}}" hint-placeholder-val="{{ true }}">
     <sc-if value="{{atTop}}" hint-placeholder-val="{{ true }}">${ASSIGNED_WEB}</sc-if>
-    <div style="display: flex; align-items: center; gap: 16px;">
-      <div role="group" aria-label="Filter by tag" style="flex-grow: 1; display: flex; flex-wrap: wrap; gap: 8px;">
-        <sc-for list="{{tagFilters}}" as="g" hint-placeholder-count="6"><button type="button" onClick="{{g.pick}}" aria-pressed="{{g.pressed}}" style="height: 36px; padding: 0 14px; display: inline-flex; align-items: center; border: 0; border-radius: 999px; background: {{g.bg}}; color: {{g.fg}}; font: inherit; font-size: 13px; font-weight: 500; cursor: pointer;"><span style="width: {{g.dotW}}; height: 8px; margin-right: {{g.dotM}}; border-radius: 4px; background: {{g.dot}};"></span>{{g.label}}<span style="margin-left: 8px; font-family: ${MONO}; font-size: 11px; opacity: .6;">{{g.count}}</span></button></sc-for>
-        <sc-if value="{{moreMenu.show}}" hint-placeholder-val="{{ true }}"><div style="position: relative;"><button type="button" onClick="{{moreMenu.toggle}}" aria-expanded="{{moreMenu.expanded}}" style="height: 36px; padding: 0 12px 0 14px; display: inline-flex; align-items: center; gap: 6px; border: 0; border-radius: 999px; background: {{t.surf}}; color: {{t.text}}; font: inherit; font-size: 13px; font-weight: 500; cursor: pointer;">More${svg(I.chevDown, 14, 2)}</button>${tagMenu('moreMenu', 'left: 0; top: 44px;')}</div></sc-if>
-      </div>
+    <div style="display: flex; align-items: center; justify-content: flex-end;">
       <div role="group" aria-label="View" style="display: flex; gap: 2px; padding: 4px; border-radius: 999px; background: {{t.surf}};">${viewBtn('vCards', 'showCards', 'Card view', 'grid')}${viewBtn('vList', 'showList', 'List view', 'list')}</div>
     </div>
     <sc-if value="{{showFolders}}" hint-placeholder-val="{{ true }}">
@@ -811,10 +797,9 @@ const webDecks = webRoot(`${sidebar('Library')}
     <sc-if value="{{cardView}}" hint-placeholder-val="{{ true }}">
       <div data-sc-list="decks" ref="{{dragList}}" onPointerDown="{{grabDeck}}" style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px;">
         <sc-for list="{{decks}}" as="d" hint-placeholder-count="6"><div data-sc-item="{{d.id}}" class="sc-drag" style="position: relative;">
-          ${meshCard('d', 'border-radius: 20px; height: 240px; --sk-shadow: {{d.coverShadow}};', 'height: 100%; box-sizing: border-box; padding: 22px; display: flex; flex-direction: column; justify-content: space-between;', `
+          ${meshCard('d', 'border-radius: 20px; height: 240px; --sk-shadow: {{d.coverShadow}};', 'height: 100%; box-sizing: border-box; padding: 22px; display: flex; flex-direction: column; justify-content: flex-end;', `
             <sc-if value="{{d.hasPhoto}}" hint-placeholder-val="{{ false }}"><img src="{{d.photo}}" alt="" draggable="false" style="position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover;"><span style="position: absolute; inset: 0; background: linear-gradient(180deg, rgba(0,0,0,.18) 0%, rgba(0,0,0,0) 35%, rgba(0,0,0,.55) 100%);"></span></sc-if>
             <a href="{{d.href}}" aria-label="{{d.name}}" draggable="false" class="sc-hit" style="position: absolute; inset: 0; border-radius: 20px;"></a>
-            <div style="position: relative; display: flex; flex-wrap: wrap; gap: 6px; padding-right: 40px; pointer-events: none;">${glassTag('t1')}${glassTag('t2')}${glassTag('t3')}${moreTag('background: {{d.glass}}; box-shadow: inset 0 0 0 1px {{d.glassLine}}; color: inherit;', 26)}</div>
             <div style="position: relative; display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; pointer-events: none;">
               <span style="display: flex; flex-direction: column; gap: 4px; min-width: 0;">
                 <span style="font-size: 44px; font-weight: 500; letter-spacing: -.035em; line-height: 1;">{{d.due}}<span style="font-size: 15px; letter-spacing: 0; margin-left: 6px; opacity: .85;">due</span></span>
@@ -825,19 +810,17 @@ const webDecks = webRoot(`${sidebar('Library')}
             </div>`, 'div', ' class="sc-lift {{d.coverCls}}"', true)}
           <span style="position: absolute; top: 16px; right: 16px; z-index: 2; color: {{d.ink}};">${moveBtn('background: {{d.glass}}; box-shadow: inset 0 0 0 1px {{d.glassLine}}; color: inherit;')}</span>
           ${moveMenu('right: 12px; top: 56px;')}
-          ${deckTagsPop('left: 12px; top: 58px;')}
         </div></sc-for>
       </div>
     </sc-if>
     <sc-if value="{{listView}}" hint-placeholder-val="{{ false }}">
       <div style="display: flex; flex-direction: column;">
-        <div style="${LIST_COLS} height: 36px; font-size: 12px; font-weight: 600; letter-spacing: .05em; text-transform: uppercase; color: {{t.muted}}; border-bottom: 1px solid {{t.line}};"><span></span><span>Deck</span><span>Tags</span><span style="text-align: right;">Due</span><span style="text-align: right;">Cards</span><span style="text-align: right;">Remembered</span><span></span></div>
+        <div style="${LIST_COLS} height: 36px; font-size: 12px; font-weight: 600; letter-spacing: .05em; text-transform: uppercase; color: {{t.muted}}; border-bottom: 1px solid {{t.line}};"><span></span><span>Deck</span><span style="text-align: right;">Due</span><span style="text-align: right;">Cards</span><span style="text-align: right;">Remembered</span><span></span></div>
         <div data-sc-list="decks" ref="{{dragList}}" onPointerDown="{{grabDeck}}" style="display: flex; flex-direction: column;"><sc-for list="{{decks}}" as="d" hint-placeholder-count="6">
           <div data-sc-item="{{d.id}}" class="sc-row sc-drag" style="${LIST_COLS} position: relative; height: 64px; border-bottom: 1px solid {{t.line}}; font-size: 14px;">
             <a href="{{d.href}}" aria-label="{{d.name}}" draggable="false" class="sc-hit" style="position: absolute; inset: 0;"></a>
             <span style="width: 36px; height: 36px; border-radius: 12px; background: {{d.base}}; overflow: hidden;"><sc-if value="{{d.hasPhoto}}" hint-placeholder-val="{{ false }}"><img src="{{d.photo}}" alt="" draggable="false" style="width: 100%; height: 100%; object-fit: cover;"></sc-if>${SKIN_THUMB}</span>
             <span style="min-width: 0; display: flex; flex-direction: column; gap: 2px;"><span style="font-size: 15px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{d.name}}</span><sc-if value="{{d.hasWhose}}" hint-placeholder-val="{{ false }}"><span style="font-size: 12px; color: {{t.muted}}; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{d.whose}}</span></sc-if></span>
-            <span style="position: relative; min-width: 0; pointer-events: none;"><span style="display: flex; gap: 6px; min-width: 0; overflow: hidden;">${tagSlot('t1')}${tagSlot('t2')}${tagSlot('t3')}${moreTag('background: {{t.surf}}; color: {{t.muted}};', 24)}</span>${deckTagsPop('left: -12px; top: 34px;')}</span>
             <span style="text-align: right; font-family: ${MONO}; font-size: 15px; color: {{d.dueColor}};">{{d.due}}</span>
             <span style="text-align: right; font-family: ${MONO}; font-size: 14px; color: {{t.muted}};">{{d.total}}</span>
             <span style="text-align: right; font-family: ${MONO}; font-size: 14px; font-weight: 600; color: {{d.retColor}};">{{d.ret}}</span>
@@ -851,7 +834,6 @@ const webDecks = webRoot(`${sidebar('Library')}
   </sc-if>
   <sc-if value="{{cardsView}}" hint-placeholder-val="{{ false }}">
     <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
-      ${levelSeg(32)}
       <div style="position: relative;">${menuBtn('tagPick', 'Tags', 40)}${tagMenu('tagPick', 'left: 0; top: 48px;')}</div>
       ${pickedTags(32)}
       <div style="position: relative;">${menuBtn('deckPick', '{{deckPick.label}}', 40)}${tagMenu('deckPick', 'left: 0; top: 48px;', { label: 'Filter by deck', find: 'Find a deck or folder', none: 'No decks match' })}</div>
@@ -883,8 +865,8 @@ ${moveTray('tray', false)}`, true);
 // The Library's logic, for the web and iPhone boards.
 const libraryLogic = phone => `
 ${MAKE_BOX_METHOD}
-constructor(props) { super(props); this.state = { tag: 'All', view: props.view === 'List' ? 'list' : 'cards', openDeck: props.openTags ? 'cell' : null, moreOpen: !!props.moreTags, moreQ: '', q: '',
-  level: ['new', 'easy', 'medium', 'hard'].includes(props.level) ? props.level : 'all', state: ['leech', 'paused'].includes(props.level) ? props.level : '', cardTags: [], deck: '', tagPickOpen: false, tagPickQ: '', deckPickOpen: false, deckPickQ: '', shown: 60, naming: props.naming ? 'new' : null, name: props.naming ? 'Biology' : '', namingAt: 0,
+constructor(props) { super(props); this.state = { view: props.view === 'List' ? 'list' : 'cards', q: '',
+  state: ['leech', 'paused'].includes(props.level) ? props.level : '', cardTags: [], deck: '', tagPickOpen: false, tagPickQ: '', deckPickOpen: false, deckPickQ: '', shown: 60, naming: props.naming ? 'new' : null, name: props.naming ? 'Biology' : '', namingAt: 0,
   moveDeck: props.moveOpen ? ({ f1: 'jlpt', f2: 'orgo' }[props.folder] || 'cell') : null, moveAfter: null }; }
 renderVals() {
   ${T}${DB_JS}
@@ -893,7 +875,7 @@ renderVals() {
   ${LIFT_JS}${phone ? `
   ${KB_JS}` : ''}
   ${SKIN_COVER_JS}
-  const p = this.props, s = this.state, tag = s.tag, view = s.view, act = db.act, S = this.skin(db);
+  const p = this.props, s = this.state, view = s.view, act = db.act, S = this.skin(db);
   const board = n => '${phone ? 'Phone' : 'Web'}' + n + '.dc.html';
   const folders = db.folders(), folder = p.folder ? folders.find(f => f.id === p.folder) || null : null;
   const cards = p.mode === 'cards' && !folder, atTop = !folder;
@@ -911,30 +893,22 @@ renderVals() {
   };
   // Dragging (drag.mjs): a deck to another spot, onto a folder, or (in a folder) onto the Library link to take it out;
   // in All cards, a card onto another deck. Menus close when something lifts.
-  const quiet = () => (s.moveDeck || s.openDeck || s.moreOpen || s.tagPickOpen || s.deckPickOpen) && this.setState({ moveDeck: null, openDeck: null, moreOpen: false, tagPickOpen: false, deckPickOpen: false });
-  // Decks: in a folder, its decks. At the top, folders and the decks in none, unless a tag or search looks everywhere.
-  const hits = q && !cards ? db.searchDecks(q) : null, looking = tag !== 'All' || !!hits;
+  const quiet = () => (s.moveDeck || s.tagPickOpen || s.deckPickOpen) && this.setState({ moveDeck: null, tagPickOpen: false, deckPickOpen: false });
+  // Decks: in a folder, its decks. At the top, folders and the decks in none, unless a search looks everywhere. (Decks have no tags in
+  // the app since 2026-10-02, the owner: "remove 'tags' from decks, only cards have tags"; what the server keeps is left as it is.)
+  const hits = q && !cards ? db.searchDecks(q) : null, looking = !!hits;
   const scope = folder ? all.filter(d => d.folder === folder.id) : looking || !folders.length ? all : all.filter(d => !d.folder);
-  const uses = {}; (folder ? scope : all).forEach(d => d.tags.forEach(g => { uses[g] = (uses[g] || 0) + 1; }));
-  const byUse = Object.keys(uses).sort((a, b) => uses[b] - uses[a]);
-  const top = byUse.slice(0, ${phone ? 3 : 5}), shownTags = tag === 'All' || top.includes(tag) ? top : [...top, tag];
-  const pickTag = g => this.setState({ tag: g, openDeck: null, moreOpen: false, moreQ: '' });
-  const mq = (s.moreQ || '').trim().toLowerCase(), found = byUse.filter(g => !mq || g.toLowerCase().includes(mq));
-  const decks = scope.filter(d => (tag === 'All' || d.tags.includes(tag)) && (!hits || hits.includes(d.id))).map(d => {
-    const tg = d.tags, fit = tagFit(tg, 3), open = s.openDeck === d.id, moving = s.moveDeck === d.id, photo = d.image && d.image !== 'mock' ? d.image : '';
-    const slot = i => (fit.vis[i] ? { show: true, ...tagChip(fit.vis[i]), pick: () => pickTag(fit.vis[i]) } : { show: false, label: '', bg: 'transparent', fg: t.text, pick: () => {} });
+  const decks = scope.filter(d => !hits || hits.includes(d.id)).map(d => {
+    const moving = s.moveDeck === d.id, photo = d.image && d.image !== 'mock' ? d.image : '';
     const move = f => () => { act.moveDeck(d.id, f); this.setState({ moveDeck: null }); };
     // A photo cover takes white words on a dark wash, whatever the gradient would have used.
     const onPhoto = photo ? { ink: '#FFFFFF', glass: 'rgba(0,0,0,.28)', glassLine: 'rgba(255,255,255,.35)', shadow: '0 1px 12px rgba(0,0,0,.35)' } : {};
     // Whose it is: a deck you share says how (Public, Link only), a deck from someone says whose.
     const whose = d.link ? 'From ' + (d.link.owner.name || 'someone') : d.shared ? d.shared.label : '';
     const C = S && !photo ? S.coverOf(d, 'wide', 19) : null;
-    return { ...d, ...grad(d), ...onPhoto, ...coverSkin(C), thumb: C ? C.artAs('square', ${phone ? 14 : 12}) : null, t1: slot(0), t2: slot(1), t3: slot(2), hasPhoto: !!photo, photo,
+    return { ...d, ...grad(d), ...onPhoto, ...coverSkin(C), thumb: C ? C.artAs('square', ${phone ? 14 : 12}) : null, hasPhoto: !!photo, photo,
       href: db.mock ? board('Deck') : d.href, studyHref: db.mock ? board('Review') : d.studyHref,
-      more: { show: fit.more > 0, label: '+' + fit.more }, tagCount: tg.length + (tg.length === 1 ? ' tag' : ' tags'), tagsOpen: open, expanded: open ? 'true' : 'false',
-      toggleTags: () => this.setState({ openDeck: open ? null : d.id, moreOpen: false, moveDeck: null }),
-      allTags: tg.map(g => ({ ...tagChip(g), pick: () => pickTag(g) })),
-      moveOpen: moving, moveExpanded: moving ? 'true' : 'false', toggleMove: () => this.setState({ moveDeck: moving ? null : d.id, openDeck: null }),
+      moveOpen: moving, moveExpanded: moving ? 'true' : 'false', toggleMove: () => this.setState({ moveDeck: moving ? null : d.id }),
       // "Remove from folder" only shows for a deck that's in one (a deck in none just doesn't get it); it isn't ticked, the folder the deck is in is.
       moveTo: [...(d.folder ? [{ id: null, name: 'Remove from folder' }] : []), ...folders].map(f => ({ label: f.name, on: (d.folder || null) === f.id, pressed: (d.folder || null) === f.id ? 'true' : 'false', pick: move(f.id) })),
       newFolder: () => openNaming('new', d.id),
@@ -949,17 +923,16 @@ renderVals() {
     line: f.n + (f.n === 1 ? ' deck' : ' decks') + (f.due ? ' · ' + f.due + ' due' : ''),
     swatches: f.decks.slice(0, 3).map((d, i) => { const C = S && !(d.image && d.image !== 'mock') ? S.coverOf(d, 'wide', 12, 12) : null;
       return { base: C ? C.base : grad(d).base, skin: !!C, art: C ? C.art : null, x: fanned[i][0], y: fanned[i][1], r: fanned[i][2] }; }) }));
-  // All cards, filtered by how hard, by tags (every picked one), by deck or folder, and by the search.
+  // All cards, filtered by tags (every picked one), by deck or folder, and by the search. Each row says how hard its card is.
   const LV = { new: ['New', t.easy], easy: ['Easy', t.good], medium: ['Medium', t.hard], hard: ['Hard', t.again] };
   const every = cards ? db.allCards() : [];
   const picked = s.cardTags || [], pick = s.deck || '';
   const inPick = c => !pick || (pick.startsWith('f:') ? c.folder === pick.slice(2) : c.deckId === pick);
   const base = every.filter(c => inPick(c) && picked.every(g => c.tags.includes(g)) && (!q || [c.front, c.back, c.deckName, ...c.tags].join(' ').toLowerCase().includes(q)));
-  // Cards you keep forgetting, and cards you paused, filter on top of how hard they are.
-  const inState = (c, k) => (k === 'leech' ? !!c.leech : k === 'paused' ? !!c.paused : true), lvOk = c => s.level === 'all' || c.level === s.level;
-  const count = k => base.filter(c => (k === 'all' || c.level === k) && inState(c, s.state)).length;
-  const stateCount = k => base.filter(c => lvOk(c) && inState(c, k)).length;
-  const matched = base.filter(c => lvOk(c) && inState(c, s.state));
+  // Cards you keep forgetting, and cards you paused, filter on top of those.
+  const inState = (c, k) => (k === 'leech' ? !!c.leech : k === 'paused' ? !!c.paused : true);
+  const stateCount = k => base.filter(c => inState(c, k)).length;
+  const matched = base.filter(c => inState(c, s.state));
   const toPause = s.state === 'leech' ? matched.filter(c => !c.paused) : s.state === 'paused' ? matched : [];
   const glyphs = { text: 'Aa', blank: '_', image: '▢', audio: '♪' };
   const rows = matched.slice(0, s.shown).map(c => ({ ...c, glyph: glyphs[c.icon], level: LV[c.level][0], levelFg: LV[c.level][1], swatch: grad(c).base,
@@ -998,19 +971,12 @@ renderVals() {
       drop: (id, w) => (w.to ? act.moveDeck(id, w.to.slice(7) || null) : act.reorderDeck(id, w.before)) }),
     grabCard: e => this.drag(e, { drops: ['deck:'], reorder: false, keep: true, tray: all.length > 1, ink: t.text, bg: t.bg, lifted: liftRow, bottom: ${phone ? 92 : 0}, start: quiet,
       drop: (id, w) => w.to && act.moveCard(id, w.to.slice(5)) }),
-    tagFilters: ['All', ...shownTags].map(n => { const on = n === tag, isAll = n === 'All'; return { label: isAll ? (folder ? 'All' : 'All decks') : n, dot: isAll ? 'transparent' : tagCol(n), dotW: isAll ? '0px' : '8px', dotM: isAll ? '0px' : '8px',
-      count: String(isAll ? (folder ? scope.length : all.length) : uses[n] || 0), pressed: on ? 'true' : 'false', bg: on ? t.inv : t.surf, fg: on ? t.invText : t.text, pick: () => pickTag(n) }; }),
-    moreMenu: { show: byUse.length > top.length, open: !!s.moreOpen, expanded: s.moreOpen ? 'true' : 'false', query: s.moreQ || '',
-      toggle: () => this.setState({ moreOpen: !s.moreOpen, moreQ: '', openDeck: null }), setQuery: e => this.setState({ moreQ: e && e.target ? e.target.value : '' }),
-      rows: found.map(g => ({ ...tagChip(g), count: String(uses[g]), on: g === tag, pressed: g === tag ? 'true' : 'false', pick: () => pickTag(g === tag ? 'All' : g) })), none: found.length === 0 },
     cardView: view === 'cards', listView: view === 'list',
     vCards: seg(view === 'cards'), vList: seg(view === 'list'),
     showCards: () => this.setState({ view: 'cards' }), showList: () => this.setState({ view: 'list' }),
     states: [['leech', 'Keep forgetting'], ['paused', 'Paused']].filter(([k]) => s.state === k || stateCount(k) > 0).map(([k, label]) => { const on = s.state === k;
       return { label, count: String(stateCount(k)), isLeech: k === 'leech', isPaused: k === 'paused', pressed: on ? 'true' : 'false', bg: on ? t.inv : t.surf, fg: on ? t.invText : t.text, pick: () => this.setState({ state: on ? '' : k, shown: 60 }) }; }),
     bulk: { show: toPause.length > 0, label: s.state === 'paused' ? 'Unpause all' : 'Pause all', go: () => act.pauseCards(toPause.map(c => c.id), s.state !== 'paused') },
-    levels: ['all', 'new', 'easy', 'medium', 'hard'].map(k => { const on = s.level === k; return { label: k === 'all' ? 'All' : LV[k][0], count: String(count(k)), dot: k === 'all' ? 'transparent' : LV[k][1], dotW: k === 'all' ? '0px' : '8px',
-      pick: () => this.setState({ level: k, shown: 60 }), ...seg(on) }; }),
     tagPick: { open: !!s.tagPickOpen, expanded: s.tagPickOpen ? 'true' : 'false', query: s.tagPickQ || '', toggle: () => this.setState({ tagPickOpen: !s.tagPickOpen, tagPickQ: '', deckPickOpen: false }),
       setQuery: e => this.setState({ tagPickQ: e && e.target ? e.target.value : '' }), none: cardTagNames.length === 0,
       rows: cardTagNames.map(g => ({ ...tagChip(g), count: String(cardUses[g]), on: picked.includes(g), pressed: picked.includes(g) ? 'true' : 'false',
@@ -1122,7 +1088,6 @@ const COVER_LOGIC = `
   const up = (patch, typing) => db.act.updateDeck(dk.id, patch, typing);
   ${TEST.deckJs}
   ${NUM_JS}
-  const tagList = dk.tags;
   const segOf = (id, cur) => ({ pressed: id === cur ? 'true' : 'false', bg: id === cur ? t.bg : 'transparent', fg: id === cur ? t.text : t.muted, sh: id === cur ? '0 1px 3px rgba(0,0,0,.14)' : 'none' });
   const style = dk.cover.style || 'mix';
   const gradient = this.gen(dk.seed + (dk.cover.round ? ' #' + dk.cover.round : ''), style);
@@ -1245,8 +1210,6 @@ const COVER_LOGIC = `
     dsTabs: [['general', 'General'], ['study', 'Studying'], ['share', 'Sharing']].map(([id, label]) => ({ label, ...segOf(id, dsTab), pick: () => this.setState({ dsTab: id }) })),
     tiles: [{ label: 'Due now', value: String(dk.due), color: t.text }, { label: 'New', value: String(dk.fresh), color: t.text },
       { label: 'Remembered', value: dk.ret == null ? '—' : dk.ret + '%', color: dk.ret == null ? t.muted : dk.ret >= goal ? t.good : dk.ret >= goal - 5 ? t.hard : t.again }],
-    deckTags: tagList.map(g => ({ ...tagChip(g), remove: () => up({ tags: tagList.filter(x => x !== g) }) })),
-    deckPick: tagPicker(tagList, next => up({ tags: next }), 'dp', db.mock ? null : db.tags()),
     exportDeck: () => db.act.exportDeck(dk.id), deleteDeck: () => db.act.deleteDeck(dk.id), deleteLabel: lk && !lk.gone ? 'Remove from library' : 'Delete deck',
     // The deck's folder, and its background for Learn mode, flashcards, and Live.
     folderChips: [...(dk.folder ? [{ id: null, name: 'Remove from folder' }] : []), ...db.folders()].map(f => { const on = (dk.folder || null) === f.id; return { label: f.name, pressed: on ? 'true' : 'false', bg: on ? t.inv : t.surf, fg: on ? t.invText : t.text, pick: () => db.act.moveDeck(dk.id, f.id) }; }),
@@ -1327,14 +1290,13 @@ const deckSettingsBody = phone => `<div style="display: flex; align-items: cente
           <sc-if value="{{coverPlain}}" hint-placeholder-val="{{ true }}"><div role="group" aria-label="Gradient style" style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 4px; padding: 4px; border-radius: 999px; background: {{t.surf}};">
             <sc-for list="{{coverStyles}}" as="m" hint-placeholder-count="3"><button type="button" onClick="{{m.pick}}" aria-pressed="{{m.pressed}}" style="height: 34px; border: 0; border-radius: 999px; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; background: {{m.bg}}; color: {{m.fg}}; box-shadow: {{m.sh}};">{{m.label}}</button></sc-for>
           </div></sc-if>
-        </div></sc-if>
+        </div>
+        <label style="display: flex; flex-direction: column; gap: 8px;"><span style="font-size: 13px; font-weight: 600;">Name</span><input type="text" value="{{deckName}}" onChange="{{setDeckName}}" style="height: 46px; box-sizing: border-box; padding: 0 16px; border: 0; outline: 0; border-radius: 16px; background: {{t.surf}}; color: {{t.text}}; font: inherit; font-size: 15px;"></label></sc-if>
         ${bgChooser(phone)}
         <div style="display: flex; flex-direction: column; gap: 8px;"><span style="font-size: 13px; font-weight: 600;">Folder</span>
           <div style="display: flex; flex-wrap: wrap; gap: 6px;"><sc-for list="{{folderChips}}" as="f" hint-placeholder-count="3"><button type="button" onClick="{{f.pick}}" aria-pressed="{{f.pressed}}" style="height: 32px; padding: 0 12px; display: inline-flex; align-items: center; gap: 6px; border: 0; border-radius: 999px; background: {{f.bg}}; color: {{f.fg}}; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer;">${svg(I.folder, 14, 1.8)}{{f.label}}</button></sc-for></div>
           <sc-if value="{{noFolders}}" hint-placeholder-val="{{ false }}"><span style="font-size: 12px; color: {{t.muted}};">Make folders on the Library page.</span></sc-if>
         </div>
-        <sc-if value="{{canEdit}}" hint-placeholder-val="{{ true }}"><label style="display: flex; flex-direction: column; gap: 8px;"><span style="font-size: 13px; font-weight: 600;">Name</span><input type="text" value="{{deckName}}" onChange="{{setDeckName}}" style="height: 46px; box-sizing: border-box; padding: 0 16px; border: 0; outline: 0; border-radius: 16px; background: {{t.surf}}; color: {{t.text}}; font: inherit; font-size: 15px;"></label>
-        <div style="display: flex; flex-direction: column; gap: 8px;"><span style="font-size: 13px; font-weight: 600;">Tags</span>${TAG_EDIT('deckTags', 'deckPick', phone)}</div></sc-if>
         <div style="display: flex; align-items: center; gap: 12px; min-height: 44px;"><span style="flex-grow: 1; display: flex; flex-direction: column; gap: 2px;"><span style="font-size: 14px; font-weight: 600;">Pause this deck</span><span style="font-size: 12px; line-height: 1.35; color: {{t.muted}};">No reminders, and nothing from it is due until you turn it back on.</span></span>${SWITCH('pause', 'togglePause', 'Pause this deck')}</div>
         <div style="display: flex; gap: 8px; margin-top: auto;"><button type="button" onClick="{{exportDeck}}" style="flex-grow: 1; height: 44px; border: 0; border-radius: 999px; background: {{t.surf}}; color: {{t.text}}; font: inherit; font-size: 14px; font-weight: 600; cursor: pointer;">Export cards</button><button type="button" onClick="{{deleteDeck}}" style="flex-grow: 1; height: 44px; border: 0; border-radius: 999px; background: {{t.againTint}}; color: {{t.again}}; font: inherit; font-size: 14px; font-weight: 600; cursor: pointer;">{{deleteLabel}}</button></div>
       </div></sc-if>
@@ -2340,7 +2302,7 @@ const EDITOR_LOGIC = editorLogic();
 const cardThumb = `<sc-if value="{{r.thumb.show}}" hint-placeholder-val="{{ false }}"><span aria-hidden="true" style="flex-shrink: 0; align-self: center; padding: 4px; border-radius: 10px; background: {{t.bg}}; box-shadow: inset 0 0 0 1px {{t.line}}; line-height: 0;"><span style="position: relative; display: inline-block; line-height: 0; border-radius: 4px; overflow: hidden;"><sc-if value="{{r.thumb.mock}}" hint-placeholder-val="{{ true }}">${CELL(48, 33, false, 4)}</sc-if><sc-if value="{{r.thumb.url}}" hint-placeholder-val="{{ false }}"><img src="{{r.thumb.url}}" alt="" style="display: block; max-width: 56px; max-height: 40px;"></sc-if><sc-for list="{{r.thumb.boxes}}" as="b" hint-placeholder-count="3"><span style="position: absolute; left: {{b.x}}; top: {{b.y}}; width: {{b.w}}; height: {{b.h}}; box-sizing: border-box; border-radius: 2px; background: {{t.surf2}}; box-shadow: 0 0 0 1px {{t.bg}};"></span></sc-for></span></span></sc-if>`;
 const cardRow = `<button type="button" onClick="{{r.pick}}" aria-current="{{r.current}}" class="sc-card-row" style="flex-shrink: 0; width: 100%; box-sizing: border-box; padding: 12px; display: flex; align-items: flex-start; gap: 12px; border: 0; border-radius: 16px; background: {{r.bg}}; color: {{t.text}}; font: inherit; text-align: left; cursor: pointer;">
           <span style="width: 32px; height: 32px; flex-shrink: 0; border-radius: 16px; background: {{r.chip}}; display: flex; align-items: center; justify-content: center; font-size: 14px;">{{r.glyph}}</span>
-          <span style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px;"><span style="font-size: 14px; font-weight: 500; line-height: 1.35; overflow-wrap: anywhere; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden;">{{r.title}}</span><span style="font-size: 13px; line-height: 1.35; color: {{r.subFg}}; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{r.sub}}</span><sc-if value="{{r.hasTags}}" hint-placeholder-val="{{ true }}"><span style="margin-top: 5px; display: flex; gap: 6px; min-width: 0; overflow: hidden;">${cardTag('c1')}${cardTag('c2')}${cardMore}</span></sc-if></span>
+          <span style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px;"><span style="font-size: 14px; font-weight: 500; line-height: 1.35; overflow-wrap: anywhere; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden;">{{r.title}}</span><span style="font-size: 13px; line-height: 1.35; color: {{r.subFg}}; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{r.sub}}</span></span>
           ${cardThumb}
         </button>`;
 const CARDS_CSS = '.sc-card-row[aria-current="false"]:hover{background-color:color-mix(in srgb,currentColor 4%,transparent)!important}.sc-card-row:active{transform:scale(.985)}@media (prefers-reduced-motion:reduce){.sc-card-row:active{transform:none}}';
@@ -2355,7 +2317,11 @@ const webCards = `<div style="width: 1440px; height: 900px; box-sizing: border-b
       <div style="padding: 20px 16px 8px; display: flex; flex-direction: column; gap: 12px;">
         <div style="display: flex; gap: 8px;"><label style="flex-grow: 1; min-width: 0; height: 36px; padding: 0 14px; box-sizing: border-box; display: flex; align-items: center; gap: 8px; border-radius: 999px; background: {{t.surf}}; color: {{t.muted}};">${svg(I.search, 15)}<span style="position: absolute; left: -9999px;">Search cards</span><input value="{{listQuery}}" onChange="{{setListQuery}}" placeholder="Search cards" style="flex-grow: 1; min-width: 0; border: 0; outline: 0; background: transparent; font: inherit; font-size: 13px; color: {{t.text}};"></label><button type="button" onClick="{{newCard}}" style="height: 36px; flex-shrink: 0; padding: 0 16px 0 12px; display: inline-flex; align-items: center; gap: 6px; border: 0; border-radius: 999px; background: {{t.inv}}; color: {{t.invText}}; font: inherit; font-size: 14px; font-weight: 600; cursor: pointer;">${svg(I.plus, 15, 2.2)}New card</button></div>
         <div role="group" aria-label="Kind of card" style="display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 2px; padding: 3px; border-radius: 999px; background: {{t.surf}};"><sc-for list="{{listKinds}}" as="k" hint-placeholder-count="5"><button type="button" onClick="{{k.pick}}" aria-pressed="{{k.pressed}}" style="height: 30px; padding: 0; border: 0; border-radius: 999px; background: {{k.bg}}; color: {{k.fg}}; box-shadow: {{k.sh}}; font: inherit; font-size: 13px; font-weight: 600; white-space: nowrap; cursor: pointer;">{{k.label}}</button></sc-for></div>
-        <span style="padding: 0 12px; font-size: 12px; color: {{t.muted}};">{{countLabel}}</span>
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <div style="position: relative; flex: 0 1 auto; min-width: 0; display: flex;"><button type="button" onClick="{{listTags.toggle}}" aria-expanded="{{listTags.expanded}}" aria-pressed="{{listTagBtn.pressed}}" style="min-width: 0; height: 34px; padding: 0 10px 0 14px; display: inline-flex; align-items: center; border: 0; border-radius: 999px; background: {{listTagBtn.bg}}; color: {{listTagBtn.fg}}; font: inherit; font-size: 13px; font-weight: 600; white-space: nowrap; cursor: pointer;"><span style="width: {{listTagBtn.dotW}}; height: 8px; flex-shrink: 0; margin-right: {{listTagBtn.dotW}}; border-radius: 4px; background: {{listTagBtn.dot}};"></span><span style="min-width: 0; overflow: hidden; text-overflow: ellipsis;">{{listTagBtn.label}}</span><span style="display: flex; flex-shrink: 0; margin-left: 6px;">${svg(I.chevDown, 14, 2)}</span></button>${tagMenu('listTags', 'left: 0; top: 42px;', { none: '{{listTags.noneLabel}}' })}</div>
+          <span style="flex-grow: 1;"></span>
+          <span style="flex-shrink: 0; padding-right: 12px; font-size: 12px; color: {{t.muted}};">{{countLabel}}</span>
+        </div>
       </div>
       <div ref="{{listRef}}" style="flex-grow: 1; min-height: 0; overflow-y: auto; scrollbar-width: thin; box-sizing: border-box; padding: 0 16px 16px; display: flex; flex-direction: column; gap: 2px;">
         <sc-for list="{{rows}}" as="r" hint-placeholder-count="6">${cardRow}</sc-for>
@@ -2382,7 +2348,7 @@ const webCards = `<div style="width: 1440px; height: 900px; box-sizing: border-b
 // left it; 'new' is the new card. In the app a saved card saves itself as you change it (see save), and Add card and
 // Delete change the deck right away. On the canvas, cards added or deleted here, and what you change, stay on this
 // screen, like the rest of the sample.
-const CARDS_LOGIC = editorLogic('this.openCard(db)', ',\n    ...this.listVals({ db, t, saved, missing, R, tagChip, tagFit, backHref })') + `
+const CARDS_LOGIC = editorLogic('this.openCard(db)', ',\n    ...this.listVals({ db, t, saved, missing, R, tagChip, backHref })') + `
 fresh(o) { return { ...${ED0}, ...o }; }
 // The sample has no saved cards, so on the canvas each one opens with what its row says (and the sample picture or sound).
 sampleCard(db, r) {
@@ -2631,8 +2597,7 @@ closing() {
   if (this.eds) this.saveAll(false);
 }
 listVals(o) {
-  const { db, t, saved, missing, R, tagChip, tagFit, backHref } = o, s = this.state, id = this.pick, e = this.ed;
-  ${CARD_TAGS_JS}
+  const { db, t, saved, missing, R, tagChip, backHref } = o, s = this.state, id = this.pick, e = this.ed;
   const kinds = { Basic: 'basic', Blank: 'cloze', Image: 'image', Audio: 'audio' }, glyphs = { basic: 'Aa', cloze: '_', image: '▢', audio: '♪' };
   const flat = md => R.plain(md || '', { join: ' ', math: 'show' }), pct = v => +(v * 100).toFixed(3) + '%';
   // What a card's row says, like the deck page's list: its front (a blank card's text, with ____ for its blanks) over
@@ -2645,12 +2610,18 @@ listVals(o) {
   const needs = { front: 'its front', back: 'its back', text: 'a blank', image: 'a picture', speak: 'a sound' };
   const heldWhy = (rid, c) => { const x = this.eds[rid]; if (!x || x.hold !== 'missing') return ''; const m = this.missingOf({ basic: 'Basic', cloze: 'Blank', image: 'Image', audio: 'Audio' }[c.kind], c); return m ? 'Not saved: needs ' + (m === 'back' && c.kind !== 'basic' ? 'its answer' : needs[m]) : ''; };
   const row = (rid, c, title, sub) => { const on = rid === id, bx = c.kind === 'image' && c.image ? c.boxes || [] : null, why = heldWhy(rid, c);
-    return { title, sub: why || (c.paused ? 'Paused' + (sub ? ' · ' + sub : '') : sub), subFg: why ? t.again : t.muted, glyph: glyphs[c.kind], hasTags: !!(c.tags || []).length, ...cardFit(c.tags), current: on ? 'true' : 'false', bg: on ? t.surf : 'transparent', chip: on ? t.bg : t.surf,
+    return { title, sub: why || (c.paused ? 'Paused' + (sub ? ' · ' + sub : '') : sub), subFg: why ? t.again : t.muted, glyph: glyphs[c.kind], current: on ? 'true' : 'false', bg: on ? t.surf : 'transparent', chip: on ? t.bg : t.surf,
       thumb: { show: !!bx, mock: c.image === 'mock', url: bx && c.image !== 'mock' ? c.image : '', boxes: (bx || []).map(b => ({ x: pct(b.x), y: pct(b.y), w: pct(b.w), h: pct(b.h) })) },
       pick: () => this.pickCard(rid) }; };
-  const q = (s.listQ || '').trim().toLowerCase(), kf = s.listKind || 'all';
+  // The list's filters work together: the kind of card, one of the deck's tags (Tags ▾, like the deck page's), and the search.
+  const q = (s.listQ || '').trim().toLowerCase(), kf = s.listKind || 'all', tf = s.listTag || '';
   const all = this.cardIds(db).map(r => { const c = latest(r.id, this.cardOf(db, r.id)), [front, back] = words(c); return { id: r.id, c, front, back }; });
-  const shown = all.filter(x => (kf === 'all' || x.c.kind === kf) && (!q || [x.front, x.back, ...(x.c.tags || [])].join(' ').toLowerCase().includes(q))), ids = shown.map(x => x.id);
+  const shown = all.filter(x => (kf === 'all' || x.c.kind === kf) && (!tf || (x.c.tags || []).includes(tf)) && (!q || [x.front, x.back, ...(x.c.tags || [])].join(' ').toLowerCase().includes(q))), ids = shown.map(x => x.id);
+  // Tags ▾: the deck's tags as its cards have them now, most used first (the one picked stays in it, to pick it off again).
+  const uses = {}; all.forEach(x => (x.c.tags || []).forEach(g => { uses[g] = (uses[g] || 0) + 1; }));
+  const tagNames = Object.keys(uses).sort((a, b) => uses[b] - uses[a] || a.localeCompare(b)).concat(tf && !uses[tf] ? [tf] : []);
+  const tq = (s.listTagQ || '').trim().toLowerCase(), found = tagNames.filter(g => !tq || g.toLowerCase().includes(tq));
+  const tagsOpen = s.listTagOpen == null ? !!this.props.tagsOpen : s.listTagOpen;
   // The new card sits on top while it's open, or while it has words in it.
   const nd = this.eds.new, draft = nd && (id === 'new' || this.hasWords(nd.edits)) ? latest('new', db.draft(nd.type || 'Basic')) : null;
   // Changing a saved card shows Saving… until it's saved, then Saved; adding one shows Added. (The canvas shows Saving…
@@ -2669,6 +2640,10 @@ listVals(o) {
     listQuery: s.listQ || '', setListQuery: ev => this.setState({ listQ: ev && ev.target ? ev.target.value : '', listCap: 200 }),
     listKinds: [['all', 'All'], ['basic', 'Basic'], ['cloze', 'Blank'], ['image', 'Image'], ['audio', 'Audio']].map(([k, label]) => { const on = k === kf;
       return { label, pressed: on ? 'true' : 'false', bg: on ? t.bg : 'transparent', fg: on ? t.text : t.muted, sh: on ? '0 1px 3px rgba(0,0,0,.12)' : 'none', pick: () => this.setState({ listKind: k, listCap: 200 }) }; }),
+    listTagBtn: { label: tf || 'Tags', pressed: tf ? 'true' : 'false', bg: tf ? t.inv : t.surf, fg: tf ? t.invText : t.text, dot: tf ? tagChip(tf).dot : 'transparent', dotW: tf ? '8px' : '0px' },
+    listTags: { open: tagsOpen, expanded: tagsOpen ? 'true' : 'false', query: s.listTagQ || '', none: found.length === 0, noneLabel: tagNames.length ? 'No tags match' : 'No tags yet',
+      toggle: () => this.setState({ listTagOpen: !tagsOpen, listTagQ: '' }), setQuery: ev => this.setState({ listTagQ: ev && ev.target ? ev.target.value : '' }),
+      rows: found.map(g => ({ ...tagChip(g), count: String(uses[g] || 0), on: g === tf, pressed: g === tf ? 'true' : 'false', pick: () => this.setState({ listTag: g === tf ? '' : g, listTagOpen: false, listTagQ: '', listCap: 200 }) })) },
     listRef: el => { this.listEl = el; },
     note: { show: !!saved || added, done: !busy && !held && !waits && !failed, label: busy ? 'Saving…' : !saved ? 'Added' : held ? ask[missing] : waits ? 'Saves when you leave this card' : failed ? 'Not saved yet' : 'Saved' },
     isNew: !saved, canDelete: !!saved && !this.temp(id), newCard: () => this.openNew(), addCard: ev => { if (ev && ev.preventDefault) ev.preventDefault(); this.addNew(missing); },
@@ -3087,7 +3062,7 @@ const WEB_DEEP = `<sc-if value="{{isMemory}}" hint-placeholder-val="{{ false }}"
   <sc-if value="{{isWeak}}" hint-placeholder-val="{{ false }}">
     <div style="display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); gap: 12px; flex-shrink: 0;">
       ${statBox(boxHead('Weakest tags', 'Remembered least') + boxEmpty('weak.tags') + `<div style="display: flex; flex-direction: column; gap: 2px;"><sc-for list="{{weak.tags.rows}}" as="g" hint-placeholder-count="6">${tagBar(true, false)}</sc-for></div>`, 'height: 372px;')}
-      ${statBox(`<div style="display: flex; align-items: center; justify-content: space-between; gap: 12px;"><span style="font-size: 16px; font-weight: 600;">Hardest cards</span><sc-if value="{{weak.hard.some}}" hint-placeholder-val="{{ true }}"><span style="display: flex; gap: 8px;">${smallPill('See all', '{{weak.hard.allHref}}')}${smallPill('Study these', '{{weak.hard.studyHref}}', true)}</span></sc-if></div>` + boxEmpty('weak.hard') + `<div style="display: flex; flex-direction: column;"><sc-for list="{{weak.hard.rows}}" as="h" hint-placeholder-count="5">${hardRow}</sc-for></div>`, 'height: 372px;')}
+      ${statBox(`<div style="display: flex; align-items: center; justify-content: space-between; gap: 12px;"><span style="font-size: 16px; font-weight: 600;">Hardest cards</span><sc-if value="{{weak.hard.some}}" hint-placeholder-val="{{ true }}"><span style="display: flex; gap: 8px;">${smallPill('Study these', '{{weak.hard.studyHref}}', true)}</span></sc-if></div>` + boxEmpty('weak.hard') + `<div style="display: flex; flex-direction: column;"><sc-for list="{{weak.hard.rows}}" as="h" hint-placeholder-count="5">${hardRow}</sc-for></div>`, 'height: 372px;')}
     </div>
     <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; flex-grow: 1; min-height: 0;">
       ${statBox(boxHead('Forgotten often') + boxEmpty('weak.forgot') + `<sc-if value="{{weak.forgot.some}}" hint-placeholder-val="{{ true }}">${bigNum('{{weak.forgot.big}}', '{{weak.forgot.sub}}')}<div style="margin-top: auto;">${miniHist('weak.forgot.bars', 6, 120)}</div><span style="font-size: 12px; color: {{t.muted}};">Cards by times forgotten</span></sc-if>`)}
@@ -3114,7 +3089,7 @@ const PHONE_DEEP = `<sc-if value="{{isMemory}}" hint-placeholder-val="{{ false }
   </sc-if>
   <sc-if value="{{isWeak}}" hint-placeholder-val="{{ false }}">
     ${statBox(boxHead('Weakest tags', 'Remembered least', true) + boxEmpty('weak.tags') + `<div style="display: flex; flex-direction: column;"><sc-for list="{{weak.tags.rows}}" as="g" hint-placeholder-count="5">${tagBar(true, true)}</sc-for></div>`, '', true)}
-    ${statBox(boxHead('Hardest cards', '', true) + boxEmpty('weak.hard') + `<div style="display: flex; flex-direction: column;"><sc-for list="{{weak.hard.rows}}" as="h" hint-placeholder-count="4">${hardRow}</sc-for></div><sc-if value="{{weak.hard.some}}" hint-placeholder-val="{{ true }}"><div style="display: flex; gap: 8px;">${smallPill('Study these', '{{weak.hard.studyHref}}', true)}${smallPill('See all', '{{weak.hard.allHref}}')}</div></sc-if>`, '', true)}
+    ${statBox(boxHead('Hardest cards', '', true) + boxEmpty('weak.hard') + `<div style="display: flex; flex-direction: column;"><sc-for list="{{weak.hard.rows}}" as="h" hint-placeholder-count="4">${hardRow}</sc-for></div><sc-if value="{{weak.hard.some}}" hint-placeholder-val="{{ true }}"><div style="display: flex; gap: 8px;">${smallPill('Study these', '{{weak.hard.studyHref}}', true)}</div></sc-if>`, '', true)}
     ${statBox(boxHead('Cards you keep forgetting', '', true) + `${bigNum('{{weak.leech.big}}', '{{weak.leech.sub}}')}<sc-if value="{{weak.leech.some}}" hint-placeholder-val="{{ true }}">${LEECH_DECKS}<div style="display: flex; gap: 8px;"><sc-if value="{{weak.leech.canStudy}}" hint-placeholder-val="{{ true }}">${smallPill('Study them', '{{weak.leech.studyHref}}', true)}</sc-if>${smallPill('See them', '{{weak.leech.seeHref}}')}</div></sc-if>`, '', true)}
     ${statBox(boxHead('Forgotten often', '', true) + boxEmpty('weak.forgot') + `<sc-if value="{{weak.forgot.some}}" hint-placeholder-val="{{ true }}">${bigNum('{{weak.forgot.big}}', '{{weak.forgot.sub}}')}${miniHist('weak.forgot.bars', 6, 60)}<span style="font-size: 12px; color: {{t.muted}};">Cards by times forgotten</span></sc-if>`, '', true)}
     ${statBox(boxHead('How hard your cards are', '', true) + boxEmpty('weak.diff') + `<sc-if value="{{weak.diff.some}}" hint-placeholder-val="{{ true }}">${miniHist('weak.diff.bars', 9, 70)}<div style="display: flex; justify-content: space-between; font-size: 12px; color: {{t.muted}};"><span>Easy</span><span>Hard</span></div></sc-if>`, '', true)}
@@ -3168,7 +3143,7 @@ const DEEP_JS = phone => `
     const hmax = Math.max(1, ...w.lapseDist.map(b => b.n)), dmax = Math.max(1, ...w.diffDist.map(b => b.n)), paused = w.leeches.filter(c => c.paused).length;
     Object.assign(deepVals, { weak: {
       tags: { empty: !w.weakTags.length, emptyLine: 'Tag your cards to see which topics are weakest.', rows: w.weakTags.slice(0, ${phone ? 5 : 6}).map(tagRow) },
-      hard: { some: w.hardest.length > 0, empty: !w.hardest.length, emptyLine: 'None yet. Cards show up here once you forget them.', studyHref: db.mock ? board('Review') : '/review?set=hard', allHref: db.mock ? board('LibraryCards') : '/library/cards?level=hard',
+      hard: { some: w.hardest.length > 0, empty: !w.hardest.length, emptyLine: 'None yet. Cards show up here once you forget them.', studyHref: db.mock ? board('Review') : '/review?set=hard',
         rows: w.hardest.slice(0, ${phone ? 4 : 5}).map(h => ({ front: h.front, sub: h.deck + ' · ' + (h.lapses ? 'forgot ' + h.lapses + (h.lapses === 1 ? ' time' : ' times') : 'difficulty ' + h.d), href: db.mock ? board('${phone ? 'Editor' : 'CardsScreen'}') : h.href })) },
       forgot: { some: w.forgot.of > 0, empty: !w.forgot.of, emptyLine: 'Shows up once you review cards you’ve learned.', big: w.forgot.pct == null ? '—' : w.forgot.pct + '%', sub: 'of ' + num(w.forgot.of) + ' reviews',
         bars: w.lapseDist.map(b => ({ label: b.label, title: b.label + ': ' + num(b.n) + ' cards', h: Math.max(3, Math.round(b.n / hmax * ${phone ? 60 : 120})) + 'px', c: b.label === '0' ? t.surf2 : shade(b.n, hmax) })) },
@@ -3703,7 +3678,6 @@ const phoneLibrary = phone(`<div style="padding: 64px 20px 120px; display: flex;
     <sc-if value="{{noDecks}}" hint-placeholder-val="{{ false }}"><div style="padding: 36px 20px; border-radius: 20px; background: {{t.surf}}; text-align: center; font-size: 15px; line-height: 1.4; color: {{t.muted}};">{{noDecksLine}}</div></sc-if>
   </sc-if>
   <sc-if value="{{cardsView}}" hint-placeholder-val="{{ false }}">
-    ${levelSeg(34, 12, true)}
     <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
       <div style="position: relative;">${menuBtn('tagPick', 'Tags', 36)}${tagMenu('tagPick', 'left: 0; top: 44px;')}</div>
       <div style="position: relative;">${menuBtn('deckPick', '{{deckPick.label}}', 36)}${tagMenu('deckPick', 'left: 0; top: 44px;', { label: 'Filter by deck', find: 'Find a deck or folder', none: 'No decks match' })}</div>
@@ -4597,18 +4571,16 @@ renderVals() { ${T}${DB_JS}
 // New deck. The cover starts white. Its colors (generated from the name) fade in over 2 s once you stop typing the name
 // or press Shuffle, and each later change fades the new colors in over the old ones the same way. A picture you upload
 // fills the cover, with white words over it, until Shuffle brings the colors back.
-const COVER_FADE_CSS = '@keyframes scCoverA{from{opacity:0}to{opacity:1}}@keyframes scCoverB{from{opacity:0}to{opacity:1}}@media (prefers-reduced-motion:reduce){.sc-cover-in{animation:none!important}}';
+const COVER_FADE_CSS = '@keyframes scCoverA{from{opacity:0}to{opacity:1}}@keyframes scCoverB{from{opacity:0}to{opacity:1}}@media (prefers-reduced-motion:reduce){.sc-cover-in{animation:none!important}}'
+  + '.sc-cover-name::placeholder{color:currentColor;opacity:.5}';
 // Both layers stay in the page and hide when unused, so clearing the old one never restarts the new one's fade.
 const coverLayer = (key, extra = '') => `<div${extra ? ' class="sc-cover-in"' : ''} style="position: absolute; inset: 0; display: {{${key}Show}}; background: {{${key}.base}};${extra}">${flowLayer(key)}${GRAIN_LAYER}</div>`;
 const newDeckBody = (phone, back, done) => `<div style="display: flex; align-items: center; justify-content: space-between;"><span style="font-size: 22px; font-weight: 600; letter-spacing: -.02em;">New deck</span><a href="${back}" aria-label="Close" style="width: 40px; height: 40px; border-radius: 20px; background: {{t.surf}}; display: flex; align-items: center; justify-content: center;">${svg(I.close, 16, 2)}</a></div>
     <div style="position: relative; height: ${phone ? 132 : 150}px; border-radius: 26px; flex-shrink: 0; overflow: hidden; background: {{t.bg}}; box-shadow: inset 0 0 0 1px {{t.line}}; color: {{coverInk}}; transition: color 2s ease;">
       ${coverLayer('prev')}${coverLayer('cover', ' animation: {{coverFade}};')}<sc-if value="{{skinCover.on}}" hint-placeholder-val="{{ false }}"><div ref="{{skinCover.art}}" data-sc-own aria-hidden="true" style="position: absolute; inset: 0; overflow: hidden;"></div></sc-if>${coverPicture}
-      <div style="position: relative; height: 100%; box-sizing: border-box; padding: 14px 16px 16px 18px; display: flex; flex-direction: column; justify-content: space-between; text-shadow: {{coverShadow}};"><div style="display: flex; justify-content: flex-end; gap: 8px;">${coverBtn('Shuffle', 'shuffle', 'shuffle')}${coverBtn(phone ? 'Image' : 'Upload image', 'pickCover', 'image')}</div><span style="font-size: ${phone ? 22 : 26}px; font-weight: 600; letter-spacing: -.02em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; {{${phone ? 'coverTitleS' : 'coverTitle'}}}">{{title}}</span></div>
+      <div style="position: relative; height: 100%; box-sizing: border-box; padding: 14px 16px 16px 18px; display: flex; flex-direction: column; justify-content: space-between; text-shadow: {{coverShadow}};"><div style="display: flex; justify-content: flex-end; gap: 8px;">${coverBtn('Shuffle', 'shuffle', 'shuffle')}${coverBtn(phone ? 'Image' : 'Upload image', 'pickCover', 'image')}</div><label style="display: block; min-width: 0; margin: -2px -8px; padding: 2px 8px; border-radius: 12px;"><span style="position: absolute; left: -9999px;">Deck name</span><input type="text" value="{{name}}" onChange="{{setName}}"${phone ? '' : ' ref="{{nameRef}}"'} placeholder="Untitled deck" maxlength="120" autocomplete="off" class="sc-cover-name" style="display: block; width: 100%; box-sizing: border-box; margin: 0; padding: 0; border: 0; outline: 0; background: transparent; color: inherit; font: inherit; font-size: ${phone ? 22 : 26}px; font-weight: 600; letter-spacing: -.02em; line-height: 1.25; text-shadow: inherit; text-overflow: ellipsis; {{${phone ? 'coverTitleS' : 'coverTitle'}}}"></label></div>
     </div>
-    <label style="display: flex; flex-direction: column; gap: 8px;"><span style="font-size: 13px; font-weight: 600;">Name</span><input type="text" value="{{name}}" onChange="{{setName}}" placeholder="Name your deck" style="height: 48px; box-sizing: border-box; padding: 0 16px; border: 0; outline: 0; border-radius: 16px; background: {{t.surf}}; color: {{t.text}}; font: inherit; font-size: 16px;"></label>
-    <div style="display: flex; flex-direction: column; gap: 8px;"><span style="font-size: 13px; font-weight: 600;">Tags</span>${TAG_EDIT('deckTags', 'deckPick', phone)}</div>
     <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px;">${stepper('New cards a day', 'perDay', 'lessDay', 'moreDay', true, 'perDayIn')}${stepper('Remember goal', 'goal', 'lessGoal', 'moreGoal', true)}</div>
-    <div style="display: flex; flex-direction: column; gap: 8px;"><span style="font-size: 13px; font-weight: 600;">Grade with</span>${modeSeg(true)}</div>
     <div style="display: flex; gap: 10px;"><a href="${back}" style="flex-grow: 1; height: 52px; border-radius: 999px; background: {{t.surf}}; display: flex; align-items: center; justify-content: center; font-size: 15px; font-weight: 600;">Cancel</a><a href="${done}" onClick="{{create}}" style="flex-grow: 2; height: 52px; border-radius: 999px; background: {{t.inv}}; color: {{t.invText}}; display: flex; align-items: center; justify-content: center; font-size: 15px; font-weight: 600;">Create deck</a></div>`;
 // New deck and Import open over the Library, above its deck tiles' ⋯ buttons (they showed through the dialog).
 const webNewDeck = `<div style="position: relative; width: 1440px; height: 900px; overflow: hidden; font-family: ${FONT}; color: {{t.text}};">
@@ -4724,7 +4696,7 @@ const phoneNewDeck = `<div style="position: relative; width: 390px; height: 844p
   </div>
 </div>`;
 const NEW_DECK_LOGIC = `
-constructor(props) { super(props); this.state = { name: 'Pharmacology', round: 0, tags: ['MCAT'], shown: null, prev: null, k: 0 }; }
+constructor(props) { super(props); this.state = { name: 'Pharmacology', round: 0, shown: null, prev: null, k: 0 }; }
 renderVals() {
   ${T}${DB_JS}
   const s = this.state, st = db.settings();
@@ -4736,20 +4708,18 @@ renderVals() {
     this.setState({ ...more, prev: this.state.shown, shown: seed, k });
     clearTimeout(this.faded); this.faded = setTimeout(() => { if (this.state.k === k) this.setState({ prev: null }); }, 2100);
   };
-  ${TAG_JS}
-  // A new deck starts from your Settings (new cards a day, goal, grading) until you change them here.
+  // A new deck starts from your Settings (new cards a day, goal; and its grading, which Deck settings → Studying changes) until you change them
+  // here. Its name is typed on the cover itself (the owner, 2026-10-02: "remove 'name' section, allow users to directly edit the name in the box
+  // above"); decks have no tags, only cards do.
   const name = db.mock ? s.name : s.name === 'Pharmacology' && s.typed == null ? '' : s.name;
-  const grading = s.grading || st.grading, perDay = s.perDay ?? st.perDay, goal = s.goal ?? st.goal;
-  const tags = db.mock || s.typedTags ? s.tags : [];
+  const perDay = s.perDay ?? st.perDay, goal = s.goal ?? st.goal;
   const title = (name || '').trim() || 'Untitled deck';
-  const seg = (id, cur) => ({ pressed: id === cur ? 'true' : 'false', bg: id === cur ? t.bg : 'transparent', fg: id === cur ? t.text : t.muted, sh: id === cur ? '0 1px 3px rgba(0,0,0,.14)' : 'none' });
-  const setTags = next => this.setState({ tags: next, typedTags: true });
   const img = s.image || '', photo = img !== 'mock' ? img : '';
-  const S = this.skin(db), C = S && !img ? S.coverOf({ seed: s.shown ? s.shown.replace(/ #\d+$/, '') : title, name: title, round: s.round, tags }, 'wide', 26) : null;
+  const S = this.skin(db), C = S && !img ? S.coverOf({ seed: s.shown ? s.shown.replace(/ #\d+$/, '') : title, name: title, round: s.round, tags: [] }, 'wide', 26) : null;
   ${NUM_JS}
   return {
     t, dark: !!this.props.dark, dim: !!this.props.dim, grain: String(this.props.grain ?? 0.7),
-    name, title,
+    name,
     coverShow: s.shown ? 'block' : 'none', prevShow: s.prev ? 'block' : 'none', cover: this.gen(s.shown || seedOf(title, s.round), st.grads), prev: this.gen(s.prev || seedOf(title, s.round), st.grads),
     coverFade: s.k % 2 ? 'scCoverA 2s ease-in-out both' : 'scCoverB 2s ease-in-out both',
     coverIsImage: img === 'mock', coverHasPhoto: !!photo, coverPhoto: photo,
@@ -4765,13 +4735,12 @@ renderVals() {
     },
     shuffle: () => show(seedOf(name, s.round + 1), { round: s.round + 1, image: null }), noop: () => {},
     pickCover: () => (db.mock ? Promise.resolve('mock') : db.act.pickFile('image')).then(url => url && this.setState({ image: url })),
-    modes: [['four', 'Forgot · Hard · Good · Easy', '4 grades'], ['binary', 'Check or X', '✓ / ✗'], ['piles', 'Piles', 'Piles']].map(([id, long, short]) => ({ label: short, long, ...seg(id, grading), pick: () => this.setState({ grading: id }) })),
+    // On a computer the name field is ready to type in when New deck opens (in the app; a phone's keyboard waits for a tap).
+    nameRef: el => { if (!el || db.mock || this.nameFocused) return; this.nameFocused = true; el.focus(); },
     perDay: String(perDay), goal: goal + '%', perDayIn: typed('perDay', perDay, n => this.setState({ perDay: n }), 'New cards a day'),
     lessDay: () => this.setState({ perDay: Math.max(0, perDay - 5) }), moreDay: () => this.setState({ perDay: Math.min(999, perDay + 5) }),
     lessGoal: () => this.setState({ goal: Math.max(70, goal - 1) }), moreGoal: () => this.setState({ goal: Math.min(97, goal + 1) }),
-    deckTags: tags.map(g => ({ ...tagChip(g), remove: () => setTags(tags.filter(x => x !== g)) })),
-    deckPick: tagPicker(tags, setTags, 'dp', db.mock ? null : db.tags()),
-    create: e => { if (db.mock) return; e.preventDefault(); db.act.addDeck({ name: title, tags, perDay, goal, grading, style: st.grads, round: s.round, image: s.image || null }); }
+    create: e => { if (db.mock) return; e.preventDefault(); db.act.addDeck({ name: title, perDay, goal, style: st.grads, round: s.round, image: s.image || null }); }
   };
 }`;
 
@@ -9030,7 +8999,7 @@ const PRO_DECK_PROPS = { free: FREE_PROP, stepGoal: { editor: 'boolean', default
 // The deck page's Guide and Sources: with both, with the Guide's extra pages, a long Guide, a source opened, nothing yet, or a deck you only study.
 const GUIDE_STATE = { section: { editor: 'enum', default: 'Cards', options: ['Cards', 'Notes', 'Diagrams', 'Sources'] }, guide: { editor: 'enum', default: 'Guide and sources', options: GUIDE_STATES }, sourceOpen: { editor: 'string', default: '' }, sourceAt: { editor: 'string', default: '' } };
 const STATS_PROPS = { tab: { editor: 'enum', default: 'Overview', options: ['Overview', 'Memory', 'Weak spots', 'Pace'] }, free: FREE_PROP };
-const LEVEL_PROP = { editor: 'enum', default: 'all', options: ['all', 'new', 'easy', 'medium', 'hard', 'leech', 'paused'] };
+const LEVEL_PROP = { editor: 'enum', default: 'all', options: ['all', 'leech', 'paused'] };
 const TUNE_PROP = { editor: 'enum', default: 'On', options: ['On', 'Off', 'Not enough reviews', 'Tuning'] };
 const EDITOR_CSS = RICH_CSS + OCC_EDIT_CSS;
 // Settings' plan on the canvas (Tweaks): Free, Pro (billed by Stripe), Pro ending, or Pro billed by Apple (the plan line says so, and
@@ -9156,15 +9125,13 @@ const files = {
   'WebImport': ['Web · Import cards', webImport, { props: { ...DARK, grain: MESH('Iris').grain }, logic: importLogic, w: W, h: H }],
   // The Library, the app's first page. Its Tweaks: nothing due (caughtUp), what your classes assigned (assignments), and the sidebar as the rail of icons
   // (collapsed: any board with the sidebar shows it so if it has the Tweak, and the sidebar's button collapses it on the board).
-  'WebDecks': ['Web · Library', webDecks, { props: { ...DARK, grain: MESH('Iris').grain, caughtUp: BOOL, assignments: BOOL, collapsed: BOOL, mode: LIB_MODE, folder: LIB_FOLDER, level: LEVEL_PROP, view: { editor: 'enum', default: 'Cards', options: ['Cards', 'List'] }, openTags: { editor: 'boolean', default: false }, moreTags: { editor: 'boolean', default: false } }, logic: decksLogic, css: DRAG_CSS, w: W, h: H }],
-  'WebLibraryCards': ['Web · Library · all cards (filter by tags and difficulty)', attrOf('WebDecks', W, H, 'mode="cards"'), { logic: darkLogic, css: DRAG_CSS, w: W, h: H }],
+  'WebDecks': ['Web · Library', webDecks, { props: { ...DARK, grain: MESH('Iris').grain, caughtUp: BOOL, assignments: BOOL, collapsed: BOOL, mode: LIB_MODE, folder: LIB_FOLDER, level: LEVEL_PROP, view: { editor: 'enum', default: 'Cards', options: ['Cards', 'List'] } }, logic: decksLogic, css: DRAG_CSS, w: W, h: H }],
+  'WebLibraryCards': ['Web · Library · all cards (filter by tags)', attrOf('WebDecks', W, H, 'mode="cards"'), { logic: darkLogic, css: DRAG_CSS, w: W, h: H }],
   'WebLibraryLeeches': ['Web · Library · all cards · cards you keep forgetting (Pause all)', attrOf('WebDecks', W, H, 'mode="cards" level="leech"'), { logic: darkLogic, css: DRAG_CSS, w: W, h: H }],
   'WebLibraryFolder': ['Web · Library · a folder', attrOf('WebDecks', W, H, 'folder="f1"'), { logic: darkLogic, css: DRAG_CSS, w: W, h: H }],
   'WebLibraryNewFolder': ['Web · Library · New folder popup', attrOf('WebDecks', W, H, 'naming="{{yes}}"'), { logic: darkLogic, css: DRAG_CSS, w: W, h: H }],
   'WebLibraryMove': ['Web · Library · a deck’s ⋯ menu (move it to a folder, or take it out of one)', attrOf('WebDecks', W, H, 'folder="f1" move-open="{{yes}}"'), { logic: darkLogic, css: DRAG_CSS, w: W, h: H }],
   'WebDeckMoveTray': ['Web · Deck · Move to tray (while a card is dragged)', attrOf('WebDeck', W, H, 'tray-open="{{yes}}"'), { logic: darkLogic, css: NUM_CSS + DRAG_CSS, w: W, h: H }],
-  'WebDecksTags': ['Web · Library · a deck with 11 tags (+9 shows them all)', attrOf('WebDecks', W, H, 'open-tags="{{yes}}"'), { logic: darkLogic, css: DRAG_CSS, w: W, h: H }],
-  'WebDecksMoreTags': ['Web · Library · More (find any tag)', attrOf('WebDecks', W, H, 'more-tags="{{yes}}"'), { logic: darkLogic, css: DRAG_CSS, w: W, h: H }],
   'WebDecksList': ['Web · Library · list view', listOf('WebDecks', W, H), { logic: 'renderVals() { return {}; }', css: DRAG_CSS, w: W, h: H }],
   'WebSettings': ['Web · Settings', webSettings, { props: { ...DARK, grain: MESH('Iris').grain, passwordOpen: BOOL, photo: PHOTO_PROP, plan: SETTINGS_PLAN_PROP, tune: TUNE_PROP, verified: VERIFIED_PROP, section: WEB_SECTION_PROP, ...ACCOUNT_PROPS }, logic: webSettingsLogic, css: NUM_CSS, w: W, h: H }],
   'WebSettingsDelete': ['Web · Settings · Delete account (the question)', attrOf('WebSettings', W, H, 'delete-open="Asking" section="Account"'), { logic: darkLogic, css: NUM_CSS, w: W, h: H }],
@@ -9174,8 +9141,7 @@ const files = {
   'WebDecksEmpty': ['Web · Library · no decks yet', webDecksEmpty, { props: { ...DARK, grain: MESH('Iris').grain }, logic: emptyLogic(), w: W, h: H }],
   'WebDeckEmpty': ['Web · Deck · no cards yet', webDeckEmpty, { props: { ...DARK, grain: MESH('Iris').grain }, logic: emptyLogic('Pharmacology'), w: W, h: H }],
   'WebStatsEmpty': ['Web · Stats · no reviews yet', webStatsEmpty, { props: { ...DARK, grain: MESH('Iris').grain }, logic: emptyLogic(), w: W, h: H }],
-  'WebDeck': ['Web · Deck page', webDeck, { props: { ...DARK, grain: MESH('Iris').grain, calendar: { editor: 'enum', default: '', options: ['', 'Exam date'] }, settingsOpen: { editor: 'boolean', default: false }, settingsTab: { editor: 'enum', default: 'General', options: ['General', 'Studying', 'Sharing'] }, tagPicker: { editor: 'boolean', default: false }, ...SHARE_PROPS, ...PRO_DECK_PROPS, tests: { editor: 'boolean', default: true }, ...GUIDE_STATE }, logic: deckLogic, css: NUM_CSS + PARALLAX_CSS + DRAG_CSS + GUIDE_CSS + DIAGRAM_CSS, w: W, h: H }],
-  'WebDeckTagPicker': ['Web · Deck settings · Add tag', attrOf('WebDeck', W, H, 'settings-open="{{yes}}" tag-picker="{{yes}}"'), { logic: darkLogic, css: NUM_CSS + DRAG_CSS, w: W, h: H }],
+  'WebDeck': ['Web · Deck page', webDeck, { props: { ...DARK, grain: MESH('Iris').grain, calendar: { editor: 'enum', default: '', options: ['', 'Exam date'] }, settingsOpen: { editor: 'boolean', default: false }, settingsTab: { editor: 'enum', default: 'General', options: ['General', 'Studying', 'Sharing'] }, ...SHARE_PROPS, ...PRO_DECK_PROPS, tests: { editor: 'boolean', default: true }, ...GUIDE_STATE }, logic: deckLogic, css: NUM_CSS + PARALLAX_CSS + DRAG_CSS + GUIDE_CSS + DIAGRAM_CSS, w: W, h: H }],
   'WebEditor': ['Web · Card editor', webEditor, { props: { ...DARK, cardType: { editor: 'enum', default: 'Basic', options: ['Basic', 'Blank', 'Image', 'Audio'] }, recording: { editor: 'boolean', default: false }, slashDemo: { editor: 'boolean', default: false } }, logic: EDITOR_LOGIC, css: EDITOR_CSS, w: W, h: H }],
   'WebEditorSlash': ['Web · Card editor · / menu', attrOf('WebEditor', W, H, 'slash-demo="{{yes}}"'), { logic: darkLogic, css: EDITOR_CSS, w: W, h: H }],
   'WebSignIn': ['Web · Sign in', webSignIn, { props: { ...DARK, grain: MESH('Iris').grain, passwordMode: BOOL }, logic: signInLogic('', [64, 78, 70, 84]), css: WALL_CSS, w: W, h: H }],
@@ -9192,7 +9158,7 @@ const files = {
   'WebEditorBigDark': ['Web · Bigger card editor (dark, mockup)', darkOf('WebEditorBig', W, H), { logic: darkLogic, css: EDITOR_CSS, w: W, h: H }],
   'WebEditorBigImageDark': ['Web · Bigger card editor · image with boxes (dark, mockup)', attrOf('WebEditorBig', W, H, 'card-type="Image" dark="{{yes}}"'), { logic: darkLogic, css: EDITOR_CSS, w: W, h: H }],
   // The cards screen: the deck's cards on a screen of their own (cardType: which card it opens on).
-  'WebCardsScreen': ['Web · Edit cards', webCards, { props: { ...DARK, cardType: { editor: 'enum', default: 'Basic', options: ['Basic', 'Blank', 'Image', 'Audio'] }, newCard: { editor: 'boolean', default: false }, recording: { editor: 'boolean', default: false }, paused: { editor: 'boolean', default: false }, madeFrom: { editor: 'boolean', default: true } }, logic: CARDS_LOGIC, css: EDITOR_CSS + CARDS_CSS, w: W, h: H }],
+  'WebCardsScreen': ['Web · Edit cards', webCards, { props: { ...DARK, cardType: { editor: 'enum', default: 'Basic', options: ['Basic', 'Blank', 'Image', 'Audio'] }, newCard: { editor: 'boolean', default: false }, recording: { editor: 'boolean', default: false }, paused: { editor: 'boolean', default: false }, madeFrom: { editor: 'boolean', default: true }, tagsOpen: { editor: 'boolean', default: false } }, logic: CARDS_LOGIC, css: EDITOR_CSS + CARDS_CSS, w: W, h: H }],
   'WebCardsScreenNew': ['Web · Edit cards · writing a new card', attrOf('WebCardsScreen', W, H, 'new-card="{{yes}}"'), { logic: darkLogic, css: EDITOR_CSS + CARDS_CSS, w: W, h: H }],
   'WebCardsScreenImage': ['Web · Edit cards · image with boxes', typeOf('WebCardsScreen', W, H, 'Image'), { logic: darkLogic, css: EDITOR_CSS + CARDS_CSS, w: W, h: H }],
   'WebCardsScreenBlank': ['Web · Edit cards · fill in the blank', typeOf('WebCardsScreen', W, H, 'Blank'), { logic: darkLogic, css: EDITOR_CSS + CARDS_CSS, w: W, h: H }],
@@ -9263,8 +9229,7 @@ const files = {
   'PhoneNewDeck': ['iPhone · New deck', phoneNewDeck, { props: { ...DARK, grain: MESH('Iris').grain }, logic: NEW_DECK_LOGIC, css: NUM_CSS + COVER_FADE_CSS, w: PW, h: PH }],
   'PhoneImport': ['iPhone · Import cards (paste or choose a file, the deck, Import; its Tweak shows each state)', phoneImport, { props: { ...DARK, grain: MESH('Iris').grain, state: { editor: 'enum', default: 'Deck chosen', options: IMPORT_STATES } }, logic: IMPORT_LOGIC(true), w: PW, h: PH }],
   'PhoneInbox': ['iPhone · Check AI cards', phoneInbox, { props: DARK, logic: phoneInboxLogic, css: REVIEW_CSS, w: PW, h: PH }],
-  'PhoneDeck': ['iPhone · Deck page', phoneDeck, { props: { ...DARK, grain: MESH('Iris').grain, calendar: { editor: 'enum', default: '', options: ['', 'Exam date'] }, settingsOpen: { editor: 'boolean', default: false }, settingsTab: { editor: 'enum', default: 'General', options: ['General', 'Studying', 'Sharing'] }, tagPicker: { editor: 'boolean', default: false }, ...SHARE_PROPS, ...PRO_DECK_PROPS, tests: { editor: 'boolean', default: true }, ...GUIDE_STATE }, logic: phoneDeckLogic, css: NUM_CSS + PARALLAX_CSS + DRAG_CSS + GUIDE_CSS + DIAGRAM_CSS, w: PW, h: PH }],
-  'PhoneDeckTagPicker': ['iPhone · Deck settings · Add tag', attrOf('PhoneDeck', PW, PH, 'settings-open="{{yes}}" tag-picker="{{yes}}"'), { logic: darkLogic, css: NUM_CSS + DRAG_CSS, w: PW, h: PH }],
+  'PhoneDeck': ['iPhone · Deck page', phoneDeck, { props: { ...DARK, grain: MESH('Iris').grain, calendar: { editor: 'enum', default: '', options: ['', 'Exam date'] }, settingsOpen: { editor: 'boolean', default: false }, settingsTab: { editor: 'enum', default: 'General', options: ['General', 'Studying', 'Sharing'] }, ...SHARE_PROPS, ...PRO_DECK_PROPS, tests: { editor: 'boolean', default: true }, ...GUIDE_STATE }, logic: phoneDeckLogic, css: NUM_CSS + PARALLAX_CSS + DRAG_CSS + GUIDE_CSS + DIAGRAM_CSS, w: PW, h: PH }],
   'PhoneDeckSettingsStudy': ['iPhone · Deck settings · Studying (FSRS)', studyOf('PhoneDeck', PW, PH), { logic: darkLogic, css: NUM_CSS + DRAG_CSS, w: PW, h: PH }],
   'PhoneDeckSettingsGoal': ['iPhone · Deck settings · Studying · goal raised to 95% (reviews a day)', attrOf('PhoneDeck', PW, PH, 'settings-open="{{yes}}" settings-tab="Studying" step-goal="{{yes}}"'), { logic: darkLogic, css: NUM_CSS + DRAG_CSS, w: PW, h: PH }],
   'PhoneDeckSettingsStudyFree': ['iPhone · Deck settings · Studying · on Free (what Pro adds)', attrOf('PhoneDeck', PW, PH, 'settings-open="{{yes}}" settings-tab="Studying" free="{{yes}}"'), { logic: darkLogic, css: NUM_CSS + DRAG_CSS, w: PW, h: PH }],

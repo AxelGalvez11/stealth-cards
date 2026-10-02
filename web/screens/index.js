@@ -397,12 +397,6 @@ export default [
   "h": 844
  },
  {
-  "name": "PhoneDeckTagPicker",
-  "title": "iPhone · Deck settings · Add tag",
-  "w": 390,
-  "h": 844
- },
- {
   "name": "PhoneDeckUpdates",
   "title": "iPhone · Deck page · your copy · the owner’s changes (take or skip)",
   "w": 390,
@@ -2149,12 +2143,6 @@ export default [
   "h": 900
  },
  {
-  "name": "WebDeckTagPicker",
-  "title": "Web · Deck settings · Add tag",
-  "w": 1440,
-  "h": 900
- },
- {
   "name": "WebDeckUpdates",
   "title": "Web · Deck page · your copy · the owner’s changes (take or skip)",
   "w": 1440,
@@ -2175,18 +2163,6 @@ export default [
  {
   "name": "WebDecksList",
   "title": "Web · Library · list view",
-  "w": 1440,
-  "h": 900
- },
- {
-  "name": "WebDecksMoreTags",
-  "title": "Web · Library · More (find any tag)",
-  "w": 1440,
-  "h": 900
- },
- {
-  "name": "WebDecksTags",
-  "title": "Web · Library · a deck with 11 tags (+9 shows them all)",
   "w": 1440,
   "h": 900
  },
@@ -2354,7 +2330,7 @@ export default [
  },
  {
   "name": "WebLibraryCards",
-  "title": "Web · Library · all cards (filter by tags and difficulty)",
+  "title": "Web · Library · all cards (filter by tags)",
   "w": 1440,
   "h": 900
  },

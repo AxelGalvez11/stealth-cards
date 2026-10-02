@@ -39,7 +39,6 @@ struct DemoProps {
   var grading = "four"
   /// A deck's settings sheet open on this tab ("general" or "study").
   var deckSettings: String? = nil
-  var tagPicker = false
   /// Review: which sample card (0 basic, 1 fill in the blank, 2 image, 3 audio), shown flipped or not, the progress
   /// style, and what's open.
   var cardIndex = 0

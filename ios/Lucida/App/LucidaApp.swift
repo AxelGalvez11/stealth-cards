@@ -254,7 +254,6 @@ extension Board {
     // The goal already stepped up to 95% (its cost counts from 90%), and the Free app's Studying (what Pro adds).
     case "PhoneDeckSettingsGoal": store.props.deckSettings = "study"; store.props.stepGoal = true; store.demoDeck.goal = 95; nav.tab = .library; nav.path = [.deck("cell")]
     case "PhoneDeckSettingsStudyFree": store.props.deckSettings = "study"; store.props.free = true; nav.tab = .library; nav.path = [.deck("cell")]
-    case "PhoneDeckTagPicker": store.props.deckSettings = "general"; store.props.tagPicker = true; nav.tab = .library; nav.path = [.deck("cell")]
     case "PhoneReview": nav.full = .review(deckId: "cell", pile: nil)
     case "PhoneReviewFour": store.props.revealed = true; nav.full = .review(deckId: "cell", pile: nil)
     case "PhoneReviewCheck": store.props.revealed = true; store.props.grading = "binary"; nav.full = .review(deckId: "cell", pile: nil)
@@ -648,13 +647,12 @@ struct DeckSettingsHost: View {
   @EnvironmentObject private var nav: Nav
   let id: String
   @State private var tab = "general"
-  @State private var tagPicker = false
   var body: some View {
     let d = store.deck(id)
     SheetOverlay(top: 56, close: nav.close) {
-      DeckSettingsSheet(d: d, tab: $tab, tagPicker: $tagPicker, close: nav.close)
+      DeckSettingsSheet(d: d, tab: $tab, close: nav.close)
     }
-    .onAppear { if store.demo { tab = store.props.deckSettings ?? "general"; tagPicker = store.props.tagPicker } }
+    .onAppear { if store.demo { tab = store.props.deckSettings ?? "general" } }
   }
 }
 

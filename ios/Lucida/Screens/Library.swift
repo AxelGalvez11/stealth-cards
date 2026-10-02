@@ -1,7 +1,7 @@
 // iPhone · Library (PhoneLibrary, PhoneLibraryCards, PhoneLibraryFolder, PhoneLibraryAssigned, PhoneDecksEmpty): it was called Decks, and the app
 // opens on it. Its top is where decks are made and material goes in (LibraryTop.swift: the Make box and its row, what's due, and what your
 // classes assigned). Then your folders and decks, or one folder's decks, with a search and a ⋯ menu on each deck to move it between folders; or
-// every card in one list (All cards), to filter by how hard it is, its tags, and its deck or folder. Tap a deck to open
+// every card in one list (All cards), to filter by its tags and its deck or folder (each card says how hard it is). Tap a deck to open
 // it; hold one to drag it to another spot, onto a folder, or (in a folder) onto the Library button to take it out. In
 // All cards, hold a card to drag it onto another deck in the Move to tray (Drag.swift).
 import SwiftUI
@@ -175,7 +175,6 @@ extension Store {
 
 /// How hard a card is, as a word and its color (New blue, Easy green, Medium amber, Hard red).
 enum Level {
-  static let all = ["new", "easy", "medium", "hard"]
   static func name(_ k: String) -> String { ["new": "New", "easy": "Easy", "medium": "Medium", "hard": "Hard"][k] ?? "New" }
   static func color(_ k: String, _ t: Theme) -> Color { k == "easy" ? t.good : k == "medium" ? t.hard : k == "hard" ? t.again : t.easy }
 }
@@ -200,16 +199,12 @@ struct LibraryScreen: View {
   /// The open menu (see MenuAnchors), and what's typed in its search.
   @State private var menu: String? = nil
   @State private var menuQ = ""
-  // All cards: how hard, the tags every card must have, a deck or folder ("f:<id>"), and how many are shown.
-  @State private var level = "all"
-  /// Cards you keep forgetting ("leech"), or cards you paused ("paused"), on top of how hard they are.
+  // All cards: the tags every card must have, a deck or folder ("f:<id>"), and how many are shown.
+  /// Cards you keep forgetting ("leech"), or cards you paused ("paused"), on top of those.
   @State private var state = ""
   @State private var cardTags: [String] = []
   @State private var pick = ""
   @State private var shown = 60
-  /// The difficulty control's sliding pill, and its taps.
-  @Namespace private var levelPill
-  @State private var levelTaps = 0
   /// The + menu (New deck, Make cards, Import cards) is open, and the Make box's More.
   @State private var addOpen = false
   @State private var moreOpen = false
@@ -230,8 +225,8 @@ struct LibraryScreen: View {
     .onAppear {
       if store.demo, let n = store.props.naming { store.props.naming = nil; nav.sheet = .nameFolder(rename: nil, deck: nil, name: n) }
       if store.demo, !store.props.libState.isEmpty { state = store.props.libState; store.props.libState = "" }
-      // Stats sends you here to see your hardest cards or the ones you keep forgetting.
-      if let want = nav.libFilter { nav.libFilter = nil; if want == "hard" { level = "hard"; state = "" } else { state = want; level = "all" } }
+      // Stats sends you here to see the cards you keep forgetting.
+      if let want = nav.libFilter { nav.libFilter = nil; if ["leech", "paused"].contains(want) { state = want } }
     }
   }
 
@@ -483,20 +478,18 @@ struct LibraryScreen: View {
   }
 
   // ---------- all cards ----------
-  // Filtered by how hard, by tags (a card must have every picked one), by deck or folder, and by the search.
+  // Filtered by tags (a card must have every picked one), by deck or folder, and by the search.
   @ViewBuilder private func allCards(_ ql: String, _ decks: [LibDeck], _ folders: [LibFolder]) -> some View {
     let base = store.libraryCards().filter { c in
       (pick.isEmpty || (pick.hasPrefix("f:") ? c.folder == String(pick.dropFirst(2)) : c.deckId == pick))
         && cardTags.allSatisfy(c.tags.contains)
         && (ql.isEmpty || ([c.front, c.back, c.deckName] + c.tags).joined(separator: " ").lowercased().contains(ql))
     }
-    // Cards you keep forgetting, and cards you paused, filter on top of how hard they are.
+    // Cards you keep forgetting, and cards you paused, filter on top of those.
     let inState = { (c: LibCard, k: String) -> Bool in k == "leech" ? c.leech : k == "paused" ? c.paused : true }
-    let lvOk = { (c: LibCard) in level == "all" || c.level == level }
-    let stateCount = { (k: String) in base.filter { lvOk($0) && inState($0, k) }.count }
-    let matched = base.filter { lvOk($0) && inState($0, state) }
+    let stateCount = { (k: String) in base.filter { inState($0, k) }.count }
+    let matched = base.filter { inState($0, state) }
     let toPause = state == "leech" ? matched.filter { !$0.paused } : state == "paused" ? matched : []
-    levels(base.filter { inState($0, state) })
     FlowLayout(spacing: 8, lineSpacing: 8) {
       menuButton("tags", "Tags")
       menuButton("decks", deckOptions(decks, folders).first { $0.id == pick }?.label ?? "All decks")
@@ -545,33 +538,6 @@ struct LibraryScreen: View {
       .frame(maxWidth: .infinity)
     }
     if matched.isEmpty { emptyBox("No cards match. Try fewer filters.") }
-  }
-
-  /// All · New · Easy · Medium · Hard, each with how many cards (levelSeg, tight: they share the row's width).
-  private func levels(_ base: [LibCard]) -> some View {
-    FlexRow(spacing: 2) {
-      ForEach(["all"] + Level.all, id: \.self) { k in
-        let on = level == k, n = k == "all" ? base.count : base.filter { $0.level == k }.count
-        Button { if !on { levelTaps += 1 }; level = k; shown = 60 } label: {
-          HStack(spacing: 4) {
-            Circle().fill(k == "all" ? .clear : Level.color(k, t)).frame(width: k == "all" ? 0 : 8, height: 8)
-            Text(k == "all" ? "All" : Level.name(k)).css(12, .semibold).lineLimit(1)
-            Text("\(n)").css(11, .semibold, mono: true).opacity(0.6)
-          }
-          .foregroundStyle(on ? t.text : t.muted)
-          .padding(.horizontal, 6).frame(maxWidth: .infinity).frame(height: 34)
-          .background { if on { Capsule().fill(t.bg).shadow(color: .black.opacity(0.14), radius: 1.5, x: 0, y: 1).matchedGeometryEffect(id: "pill", in: levelPill) } }
-          .contentShape(Capsule())
-        }
-        .buttonStyle(.plain)
-        .accessibilityLabel((k == "all" ? "All" : Level.name(k)) + ", \(n)")
-        .accessibilityAddTraits(on ? .isSelected : [])
-      }
-    }
-    .animation(Motion.knob, value: level)
-    .padding(4)
-    .background(Capsule().fill(t.surf))
-    .haptic(.selection, on: levelTaps, "segmented")
   }
 
   private func menuButton(_ key: String, _ label: String) -> some View {

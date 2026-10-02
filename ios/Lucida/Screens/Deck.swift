@@ -1,4 +1,4 @@
-// iPhone · Deck page (PhoneDeck, PhoneDeckEmpty, PhoneDeckSettings, PhoneDeckSettingsStudy, PhoneDeckTagPicker,
+// iPhone · Deck page (PhoneDeck, PhoneDeckEmpty, PhoneDeckSettings, PhoneDeckSettingsStudy,
 // PhoneDeckMoveTray): the deck's gradient header, its numbers, studying, its cards, and its settings in a sheet. Hold a
 // card to drag it to another spot, or onto another deck in the Move to tray that rises while you drag (Drag.swift).
 import SwiftUI
@@ -21,8 +21,8 @@ struct DeckVM {
   var studyLabel = "Flashcards", studyCount = 0
   var learnLabel = "Learn", resume = false
   var rows: [CardRowVM] = []
+  /// Its tags (the server keeps them; decks show none since 2026-10-02, only cards have tags): a theme reads them to pick its cover's picture.
   var tags: [String] = []
-  var allTags: [String] = []
   var paused = false, grading = "four", fsrs = true, goal = 90, gapIdx = 3, steps = ["1m", "10m"], perDay = 20
   /// Its exam (Pro): the day it was set for ("" for none), and its line, like "Exam in 12 days · 84 cards to review first" (nil
   /// without one, and once the day has passed); and the rule for cards you keep forgetting.
@@ -65,7 +65,7 @@ extension Store {
                      lineShort: "412 cards · 38 from your AI", due: 28, fresh: 10, ret: 91, studyCount: 28,
                      rows: demoCardOrder.compactMap { id in X.CARDS.first { $0.id == id } }.filter { (demoCardDeck[$0.id] ?? "cell") == "cell" }
                        .map { CardRowVM(id: $0.id, front: $0.front, meta: $0.kind + " · " + (isPaused($0.id) ? "Paused" : $0.next), tags: $0.tags) },
-                     tags: e.tags ?? X.TAGS["cell"] ?? [], allTags: Array(Generated.tagColors.keys),
+                     tags: e.tags ?? X.TAGS["cell"] ?? [],
                      paused: e.paused, grading: e.grading ?? props.grading, fsrs: e.fsrs, goal: e.goal, gapIdx: e.gapIdx, steps: e.steps, perDay: e.perDay,
                      exam: Store.demoExam(day: examDay), examDay: examDay ?? "", leechAt: e.leechAt, leechAct: e.leechAct,
                      folder: demoFolderOf("cell"), folders: demoFolders.map { ($0.id, $0.name) }, bg: e.bg, sharing: demoSharing())
@@ -80,7 +80,7 @@ extension Store {
                   lineShort: total + (st.aiCount > 0 ? " · \(st.aiCount) from your AI" : ""), due: st.due, fresh: st.fresh, ret: st.ret,
                   studyCount: st.due > 0 ? st.due : st.fresh, resume: learnOn(id),
                   rows: cards.map { c in CardRowVM(id: c.id, front: Store.listFront(c), meta: (KIND_LABEL[c.kind] ?? "Basic") + " · " + E.nextLabel(c), tags: c.tags, origin: c.origin) },
-                  tags: d.tags, allTags: E.tags, paused: d.paused, grading: d.grading, fsrs: d.fsrs, goal: d.goal, gapIdx: d.gapIdx, steps: d.steps, perDay: d.perDay,
+                  tags: d.tags, paused: d.paused, grading: d.grading, fsrs: d.fsrs, goal: d.goal, gapIdx: d.gapIdx, steps: d.steps, perDay: d.perDay,
                   exam: st.exam, examDay: d.exam ?? "", leechAt: Sched.leechAt(d), leechAct: Sched.leechAct(d),
                   folder: d.folder, folders: lib.folders.map { ($0.id, $0.name) }, bg: d.bg, sharing: sharing(d))
   }
@@ -462,9 +462,9 @@ struct DeckScreen: View {
   }
 }
 
-/// Deck settings (deckSettingsBody, phone): General (header, name, tags, pause, export, delete), Studying (grading,
+/// Deck settings (deckSettingsBody, phone): General (header, name, background, folder, pause, export, delete), Studying (grading,
 /// FSRS, goal, longest gap, learning steps, new cards a day), and Sharing (DeckShare.swift). A deck you study from
-/// someone keeps its name, tags, and header theirs, and leaves your library instead of being deleted.
+/// someone keeps its name and header theirs, and leaves your library instead of being deleted.
 struct DeckSettingsSheet: View {
   @Environment(\.theme) private var t
   @EnvironmentObject private var store: Store
@@ -472,7 +472,6 @@ struct DeckSettingsSheet: View {
   @EnvironmentObject private var nav: Nav
   let d: DeckVM
   @Binding var tab: String
-  @Binding var tagPicker: Bool
   let close: () -> Void
   @State private var name: String? = nil
   @State private var pickingCover = false
@@ -482,27 +481,21 @@ struct DeckSettingsSheet: View {
   private let stepPool = ["1m", "10m", "1h", "1d"]
 
   var body: some View {
-    ZStack {
-      VStack(alignment: .leading, spacing: 14) {
-        HStack {
-          Text("Deck settings").css(18, .semibold, ls: -0.01)
-          Spacer()
-          SheetDone(action: close)
-        }
-        Segmented(options: [("general", "General"), ("study", "Studying"), ("share", "Sharing")], current: tab, height: 36, size: 14) { tab = $0 }
-        switch tab {
-        case "study": studying
-        case "share": DeckShareTab(d: d)
-        default: general
-        }
+    VStack(alignment: .leading, spacing: 14) {
+      HStack {
+        Text("Deck settings").css(18, .semibold, ls: -0.01)
+        Spacer()
+        SheetDone(action: close)
       }
-      .padding(.top, 16).padding(.horizontal, 20).padding(.bottom, 34)
-      .foregroundStyle(t.text)
-      if tagPicker {
-        TagPicker(all: d.allTags, current: d.tags, set: { store.updateDeck(d.id, ["tags": $0]) }, close: { tagPicker = false })
-          .background(UnevenRoundedRectangle(topLeadingRadius: 32, topTrailingRadius: 32, style: .continuous).fill(t.bg))
+      Segmented(options: [("general", "General"), ("study", "Studying"), ("share", "Sharing")], current: tab, height: 36, size: 14) { tab = $0 }
+      switch tab {
+      case "study": studying
+      case "share": DeckShareTab(d: d)
+      default: general
       }
     }
+    .padding(.top, 16).padding(.horizontal, 20).padding(.bottom, 34)
+    .foregroundStyle(t.text)
   }
 
   private func label(_ s: String) -> some View { Text(s).css(13, .semibold) }
@@ -526,21 +519,13 @@ struct DeckSettingsSheet: View {
     GeometryReader { g in
       ScrollView(showsIndicators: false) {
         VStack(alignment: .leading, spacing: 14) {
-          if !d.sharing.readOnly { header }
+          // The deck's name sits right under its header (the owner, 2026-10-02: "naming section should be moved below header section").
+          if !d.sharing.readOnly {
+            header
+            nameField
+          }
           BgChooser(deckId: d.id)
           folder
-          if !d.sharing.readOnly {
-            VStack(alignment: .leading, spacing: 8) {
-              label("Name")
-              TextField("", text: Binding(get: { name ?? d.name }, set: { name = $0; store.renameDeck(d.id, $0) }))
-                .font(.geist(15)).padding(.horizontal, 16).frame(height: 46)
-                .background(RoundedRectangle(cornerRadius: 16, style: .continuous).fill(t.surf))
-            }
-            VStack(alignment: .leading, spacing: 8) {
-              label("Tags")
-              TagEditor(tags: d.tags, remove: { g in store.updateDeck(d.id, ["tags": d.tags.filter { $0 != g }]) }, add: { tagPicker = true })
-            }
-          }
           HStack(spacing: 12) {
             VStack(alignment: .leading, spacing: 2) {
               Text("Pause this deck").css(14, .semibold)
@@ -570,6 +555,16 @@ struct DeckSettingsSheet: View {
       .clipped()
     }
     .photoPicker($pickingCover) { store.setCover(d.id, $0) }
+  }
+
+  // Its name, saved as it's typed.
+  private var nameField: some View {
+    VStack(alignment: .leading, spacing: 8) {
+      label("Name")
+      TextField("", text: Binding(get: { name ?? d.name }, set: { name = $0; store.renameDeck(d.id, $0) }))
+        .font(.geist(15)).padding(.horizontal, 16).frame(height: 46)
+        .background(RoundedRectangle(cornerRadius: 16, style: .continuous).fill(t.surf))
+    }
   }
 
   // The header: its gradient or photo, Shuffle, Upload image, and the gradient's style.

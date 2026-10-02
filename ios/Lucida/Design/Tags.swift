@@ -39,41 +39,6 @@ struct MoreChip: View {
   }
 }
 
-/// Tags you can take off (x), then "Add tag" (TAG_EDIT).
-struct TagEditor: View {
-  @Environment(\.theme) private var t
-  @State private var taps = 0
-  let tags: [String]
-  let remove: (String) -> Void
-  let add: () -> Void
-  var body: some View {
-    FlowLayout(spacing: 6, lineSpacing: 6) {
-      ForEach(tags, id: \.self) { g in
-        let c = Tags.color(g)
-        Button { taps += 1; remove(g) } label: {
-          HStack(spacing: 6) {
-            Text(g).css(13, .semibold).lineLimit(1)
-            Icon("close", 10, 2.4).opacity(0.7)
-          }
-          .foregroundStyle(c.color)
-          .padding(.leading, 12).padding(.trailing, 10).frame(height: 32)
-          .background(Capsule().fill(c.opacity(0.149).color))
-        }
-        .buttonStyle(.press)
-        .accessibilityLabel("Remove tag \(g)")
-      }
-      Button(action: add) {
-        HStack(spacing: 6) { Icon("plus", 12, 2.4); Text("Add tag").css(13, .semibold) }
-          .foregroundStyle(t.muted)
-          .padding(.horizontal, 12).frame(height: 32)
-          .overlay(Capsule().strokeBorder(t.muted, style: StrokeStyle(lineWidth: 1.5, dash: [4, 3])))
-      }
-      .buttonStyle(.press)
-    }
-    .haptic(.light, on: taps, "tag removed")
-  }
-}
-
 /// Lays children out in rows, wrapping like CSS flex-wrap.
 struct FlowLayout: Layout {
   var spacing: CGFloat = 6
