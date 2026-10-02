@@ -152,8 +152,16 @@ final class MakeTests: XCTestCase {
   }
   private func typeInto(_ field: XCUIElement, _ text: String, clear: Int = 0) {
     guard wait(field, 10) else { check(false, "found the field to type “\(text)” in"); return }
-    // (To clear what is there, a tap at the far right of the box puts the cursor at the end.)
-    if clear > 0 { field.coordinate(withNormalizedOffset: CGVector(dx: 0.97, dy: 0.5)).tap() } else { field.tap() }
+    // (A sheet still sliding in moves the field: it is tapped once it stays put.)
+    var at = field.frame
+    for _ in 0..<20 { Thread.sleep(forTimeInterval: 0.15); if field.frame == at { break }; at = field.frame }
+    // (To clear what is there, a tap right of the words puts the cursor at the end; tried a little further in if the box
+    // didn't take the keyboard.)
+    for dx in clear > 0 ? [0.97, 0.75, 0.6] : [0.5] {
+      if clear > 0 { field.coordinate(withNormalizedOffset: CGVector(dx: dx, dy: 0.5)).tap() } else { field.tap() }
+      if (field.value(forKey: "hasKeyboardFocus") as? Bool) == true { break }
+      Thread.sleep(forTimeInterval: 0.4)
+    }
     if clear > 0 { field.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: clear)) }
     field.typeText(text)
   }

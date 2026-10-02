@@ -192,7 +192,7 @@ final class GuideTests: XCTestCase {
   private func tool(_ app: XCUIApplication, _ label: String) {
     let b = app.buttons[label].firstMatch
     guard wait(b, 6) else { check(false, "found the toolbar button " + label); return }
-    if !b.isHittable { app.otherElements["Formatting"].firstMatch.swipeLeft() }
+    if !b.isHittable { app.descendants(matching: .any)["Formatting"].firstMatch.swipeLeft() }
     b.tap()
   }
   private func openEditor(_ who: String, deck name: String, page: String = "", extra: [String] = []) -> XCUIApplication {
@@ -251,10 +251,11 @@ final class GuideTests: XCTestCase {
     person(who, deck: name)
     let app = openEditor(who, deck: name)
     // with the keyboard up the page keeps its place: the header under the status bar, the text field with room, Make cards and Done above the keyboard
+    let back = app.buttons["backButton"], done = app.buttons["doneButton"], top = back.frame.minY
     field(app).tap()
     Thread.sleep(forTimeInterval: 1.5)
-    let kb = app.keyboards.firstMatch, back = app.buttons["backButton"], done = app.buttons["doneButton"]
-    check(kb.exists && back.frame.minY >= 62, "the header stays under the status bar while the keyboard is up (the back button is \(pt(back.frame.minY)) points down)")
+    let kb = app.keyboards.firstMatch
+    check(kb.exists && top > 40 && abs(back.frame.minY - top) <= 1, "the header stays under the status bar while the keyboard is up (the back button is \(pt(back.frame.minY)) points down, as before: \(pt(top)))")
     check(kb.exists && done.frame.maxY <= kb.frame.minY && field(app).frame.height > 100, "and Make cards and Done sit above the keyboard, with the text field still tall (\(pt(field(app).frame.height)) points)")
     func press(_ label: String, on start: String, expect: String, exact: Bool = true) {
       write(app, start); selectAll(app); tool(app, label)
@@ -532,6 +533,13 @@ final class GuideTests: XCTestCase {
     check(wait(text(app, "SOURCES")) && selected(buttonStarting(app, "Sources")), "?tab=sources opens the Sources tab")
     check(button(app, "Make cards").exists, "with a Make cards button")
     func row(_ name: String) -> XCUIElement { app.buttons["Open " + name] }
+    // A row is tapped once it's clear of the floating tab bar: under it, the tap would land on a tab (on a shorter phone the
+    // list sits that low once the page is back at its top).
+    func open(_ name: String, _ what: String) {
+      let r = row(name), bottom = app.windows.firstMatch.frame.maxY - 150
+      for _ in 0..<4 where !(r.exists && r.frame.maxY < bottom) { app.swipeUp(); Thread.sleep(forTimeInterval: 0.4) }
+      tap(r, what)
+    }
     for (key, name) in [("doc", "Lecture 2 handout"), ("pdf", "Lecture 3 slides"), ("recording", "Lecture 4 recording"), ("video", "Mitochondria explained"), ("photo", "Whiteboard"), ("text", "Study notes"), ("topic", "The Krebs cycle")] {
       let s = src(key == "pdf" ? "file" : key), cs = s["cards"] as? Int ?? 0, pages = s["pages"] as? Int ?? 0
       let n = "\(cs) card\(cs == 1 ? "" : "s")"
@@ -551,32 +559,32 @@ final class GuideTests: XCTestCase {
     snap("sources")
     app.swipeDown(); app.swipeDown()
     // a topic: its words
-    tap(row("The Krebs cycle"), "The Krebs cycle")
+    open("The Krebs cycle", "The Krebs cycle")
     check(wait(button(app, "Close")) && button(app, "More cards").exists && button(app, "Delete").exists && !button(app, "Open the file").exists, "a topic opens with More cards and Delete (nothing to open)")
     check(app.staticTexts.matching(NSPredicate(format: "label == %@", "The Krebs cycle")).count >= 2, "and its words")
     tap(button(app, "Close"), "Close")
     check(gone(button(app, "More cards")), "Close closes it")
     // pictures
-    tap(row("Whiteboard"), "Whiteboard")
+    open("Whiteboard", "Whiteboard")
     check(wait(app.buttons["IMG_1.png"]) && app.buttons["IMG_2.jpg"].exists, "photos open as pictures")
     app.buttons["IMG_1.png"].tap()
     check(wait(button(app, "Close the photo")), "a picture opens full screen")
     tap(button(app, "Close the photo"), "Close the photo")
     tap(button(app, "Close"), "Close")
     // a video
-    tap(row("Mitochondria explained"), "the video")
+    open("Mitochondria explained", "the video")
     check(wait(button(app, "Open the video")), "a video opens with Open the video")
     check((button(app, "Open the video").value as? String ?? "") == "https://www.youtube.com/watch?v=dQw4w9WgXcQ", "which goes to the video’s own page: " + (button(app, "Open the video").value as? String ?? ""))
     check(wait(textHas(app, "Welcome to the lecture on enzymes today")) && textHas(app, "The active site binds the substrate").exists, "and what was said, with the times")
     check(text(app, "0:00").exists || textHas(app, "0:00").exists, "(the time of each part)")
     tap(button(app, "Close"), "Close")
     // a PDF
-    tap(row("Lecture 3 slides"), "the file")
+    open("Lecture 3 slides", "the file")
     check(wait(button(app, "Open the file")) && button(app, "More cards").exists, "a file opens with Open the file and More cards")
     check(textHas(app, "3 pages. The cards from it say which page they came from.").exists, "and says how many pages it has, and where its cards say they came from")
     tap(button(app, "Close"), "Close")
     // the recording of thirteen files
-    tap(row("Lecture 4 recording"), "the recording")
+    open("Lecture 4 recording", "the recording")
     let player = app.otherElements["recordingPlayer"]
     check(wait(player) && wait(button(app, "Open the recording")), "a recording opens with its player and Open the recording")
     check((player.value as? String ?? "").hasPrefix("part 1 of 13"), "and with no card it starts at the beginning of the first part: " + (player.value as? String ?? ""))

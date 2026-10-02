@@ -50,7 +50,7 @@ struct StatsScreen: View {
       }
       if s.empty || tab == "Overview" { overview(s) }
       else if store.isPro { DeepStats(tab: tab, goal: s.goal) }
-      else { StatsUpgrade() }
+      else { StatsUpgrade(shop: store.shop) }
     }
     .foregroundStyle(t.text)
     .padding(.horizontal, 20).padding(.top, Screen.top(64)).padding(.bottom, 120)

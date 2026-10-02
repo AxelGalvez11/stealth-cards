@@ -422,9 +422,11 @@ struct StatsUpgrade: View {
   @Environment(\.theme) private var t
   @EnvironmentObject private var nav: Nav
   @EnvironmentObject private var store: Store
+  /// The App Store's offers, watched: they often arrive after the card is up, and its prices show then.
+  @ObservedObject var shop: Shop
   var body: some View {
     // (The canvas shows its sample prices; the app shows the App Store's own, once it has them, and Go Pro until then.)
-    let shop = store.shop, offers = store.demo ? [] : shop.offers.sorted { $0.id == "monthly" && $1.id != "monthly" }
+    let offers = store.demo ? [] : shop.offers.sorted { $0.id == "monthly" && $1.id != "monthly" }
     let sky = t.gray ? (top: 0x1B2A48, mid: 0x1F2B45, low: 0x212637) : t.dark ? (top: 0x081733, mid: 0x0D2148, low: 0x0A1530) : (top: 0x86BDF3, mid: 0xC9E2FB, low: 0xEDF5FE)
     let stops: [Gradient.Stop] = [.init(color: Color(hex: UInt32(sky.top)), location: 0), .init(color: Color(hex: UInt32(sky.mid)), location: 0.58),
                                   .init(color: Color(hex: UInt32(sky.low)), location: 0.82), .init(color: t.bg, location: 1)]

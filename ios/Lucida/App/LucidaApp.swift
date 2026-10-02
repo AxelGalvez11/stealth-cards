@@ -492,7 +492,7 @@ struct MainView: View {
               case .suggestions(let id): SuggestionsScreen(deckId: id)
               case .history(let a): HistoryScreen(addr: a)
               case .classPage(let code): ClassScreen(code: code)
-              case .themes: ThemePickerScreen()
+              case .themes: ThemePickerScreen(shop: store.shop)
               case .theme(let key): ThemePageScreen(key: key)
               case .connect: ConnectScreen()
               case .guide(let id, let page): GuideScreen(deckId: id, page: page)

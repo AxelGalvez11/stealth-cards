@@ -395,8 +395,8 @@ struct MakeSheet: View {
       VStack(alignment: .leading, spacing: 14) {
         Text(plural(keep, "card") + (from.isEmpty ? "" : " from " + from)).css(14).foregroundStyle(t.muted)
         notesPanel(m)
-        CappedList(max: 520) {
-          VStack(spacing: 8) { ForEach(m.cards) { card($0, editing: m.editing == $0.key) } }
+        CappedList(max: 520, show: m.editing) {
+          VStack(spacing: 8) { ForEach(m.cards) { card($0, editing: m.editing == $0.key).id($0.key) } }
         }
       }
       if let e = m.error, e.soft { CSSText(e.message, 14, lh: 1.4, color: t.again) }
@@ -425,16 +425,16 @@ struct MakeSheet: View {
         } else if audio {
           VStack(spacing: 6) {
             MakeInput(text: Binding(get: { c.speak }, set: { v in flow.edit(c.key) { $0.speak = v } }), placeholder: "", label: "Words to say", height: 40, size: 15, radius: 12, fill: t.bg,
-                      focus: $focus, field: .question(c.key))
+                      focus: $focus, field: .question(c.key)).id(MakeSheet.Field.question(c.key))
             MakeInput(text: Binding(get: { c.back }, set: { v in flow.edit(c.key) { $0.back = v } }), placeholder: "", label: "What it means", height: 40, size: 15, radius: 12, fill: t.bg,
-                      focus: $focus, field: .answer(c.key))
+                      focus: $focus, field: .answer(c.key)).id(MakeSheet.Field.answer(c.key))
           }
         } else if !cloze {
           VStack(spacing: 6) {
             MakeInput(text: Binding(get: { c.front }, set: { v in flow.edit(c.key) { $0.front = v } }), placeholder: "", label: "Question", height: 40, size: 15, radius: 12, fill: t.bg,
-                      focus: $focus, field: .question(c.key))
+                      focus: $focus, field: .question(c.key)).id(MakeSheet.Field.question(c.key))
             MakeInput(text: Binding(get: { c.back }, set: { v in flow.edit(c.key) { $0.back = v } }), placeholder: "", label: "Answer", height: 40, size: 15, radius: 12, fill: t.bg,
-                      focus: $focus, field: .answer(c.key))
+                      focus: $focus, field: .answer(c.key)).id(MakeSheet.Field.answer(c.key))
           }
         } else {
           MakeTextArea(text: Binding(get: { c.text }, set: { v in flow.edit(c.key) { $0.text = v } }), placeholder: "", label: "Sentence with a blank in [[double brackets]]", rows: 2,
@@ -716,14 +716,24 @@ private struct GrowWrap: Layout {
 private struct CappedListHeight: PreferenceKey { static let defaultValue: CGFloat = 0; static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) { value = nextValue() } }
 private struct CappedList<Content: View>: View {
   let max: CGFloat
+  /// A row to bring into view whenever it changes (its id): the card opened for editing, whose fields would otherwise be
+  /// out of sight below the list's edge, where a tap can't reach them.
+  var show = ""
   @ViewBuilder var content: Content
   @State private var height: CGFloat = 0
   var body: some View {
-    ScrollView(showsIndicators: false) {
-      content.background(GeometryReader { g in Color.clear.preference(key: CappedListHeight.self, value: g.size.height) })
+    ScrollViewReader { proxy in
+      ScrollView(showsIndicators: false) {
+        content.background(GeometryReader { g in Color.clear.preference(key: CappedListHeight.self, value: g.size.height) })
+      }
+      .frame(height: height > 0 ? Swift.min(height, max) : max)
+      .onPreferenceChange(CappedListHeight.self) { height = $0 }
+      .onChange(of: show) { _, id in
+        guard !id.isEmpty else { return }
+        // (Once the card has opened into its fields.)
+        DispatchQueue.main.async { withAnimation(.out(0.25)) { proxy.scrollTo(id, anchor: .center) } }
+      }
     }
-    .frame(height: height > 0 ? Swift.min(height, max) : max)
-    .onPreferenceChange(CappedListHeight.self) { height = $0 }
   }
 }
 

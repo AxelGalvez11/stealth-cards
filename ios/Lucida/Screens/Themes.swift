@@ -43,6 +43,8 @@ struct ThemeDeck {
 }
 
 struct ThemePickerScreen: View {
+  /// The App Store's offers, watched, so the price line on Free shows once they arrive.
+  @ObservedObject var shop: Shop
   @Environment(\.theme) private var t
   @EnvironmentObject private var store: Store
   @EnvironmentObject private var nav: Nav
@@ -113,7 +115,7 @@ struct ThemePickerScreen: View {
       VStack(alignment: .leading, spacing: 3) {
         HStack(spacing: 8) { Text("Themes are part of Pro").css(15, .semibold); ProBadge() }
         // (What a year comes to a month is the App Store's own price, divided; the canvas shows its sample.)
-        let line = store.demo ? "Yearly works out to $4.17 a month. Cancel anytime." : store.shop.yearlyLine
+        let line = store.demo ? "Yearly works out to $4.17 a month. Cancel anytime." : shop.yearlyLine
         if !line.isEmpty { WebText(text: line, size: 13, lh: 1.4, color: t.muted) }
       }
       .frame(maxWidth: .infinity, alignment: .leading)
