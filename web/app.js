@@ -15,8 +15,7 @@ import OVERLAYS from './ui-templates.js';
 // (the owner, 2026-10-01): the app opens on the Library, and "/", "/today" and any old link to them land there.
 // /b (every canvas board with sample data) is for working on the design, so it only opens on your own computer.
 const DESIGN = ['localhost', '127.0.0.1'].includes(location.hostname);
-// Phones get the iPhone boards, which fill the screen (design/to-web.mjs). Importing cards has no iPhone board, so phones
-// get the web's.
+// Phones get the iPhone boards, which fill the screen (design/to-web.mjs).
 const narrow = matchMedia('(max-width: 760px)');
 // Settings' own sidebar replaces the app's on Settings' pages (computer width), with a Back row to the page you came from, or to the Library when
 // Settings was opened directly. That page is kept for this tab (sessionStorage), so reloading Settings keeps it; an address typed in, or a
@@ -119,14 +118,14 @@ function resolve(path, q) {
   // the cards go, `from` is a kept source to make more cards from, `guide` (with `page`) is a deck's Guide to make cards from, and `folder`
   // is where a new deck made this way goes (the Library's Make box on a folder's page).
   if (path === '/make') return { name: P + 'Make', props: { kind: q.get('source') || '', deckId: q.get('deck') || '', from: q.get('from') || '', guide: q.get('guide') || '', page: q.get('page') || '', folder: q.get('folder') || '' } };
-  if (path === '/decks/import') return { name: 'WebImport' };
+  if (path === '/decks/import') return { name: P + 'Import' };
   if (deck) {
     const id = deck[1];
     if (!db.raw().decks.some(d => d.id === id)) return { redirect: '/library' };
     // A deck you study as it is can't be edited here: fixing a card is suggesting it on the deck's page.
     const dRow = db.decks().find(x => x.id === id);
     if (dRow && dRow.readOnly && deck[2] && /^\/card/.test(deck[2])) { const c = deck[3] && db.raw().cards.find(x => x.id === deck[3]); return { redirect: dRow.link.url + '?suggest=' + encodeURIComponent((c && c.origin) || '1') }; }
-    if (deck[2] === '/import') return dRow && dRow.readOnly ? { redirect: '/deck/' + id } : { name: 'WebImport', props: { deckId: id } };
+    if (deck[2] === '/import') return dRow && dRow.readOnly ? { redirect: '/deck/' + id } : { name: P + 'Import', props: { deckId: id } };
     // Suggestions people sent for this deck (it's shared), to take or skip.
     if (deck[2] === '/suggestions') return { name: P + 'Suggestions', props: { deckId: id } };
     // A deck's Notes (its Guide and pages), written here: ?page= one of its pages, ?at=<line>:<place> where a press on the Notes tab put the caret. A deck you study as it is

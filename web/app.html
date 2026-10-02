@@ -40,8 +40,6 @@ body { font-family: Geist, -apple-system, system-ui, sans-serif; }
 /* Pages rise in once, when the app opens (web/app.js adds sc-calm after the first page). */
 html.sc-calm #app main > * { animation: none !important; }
 @media (max-width: 760px) {
-  /* Importing cards has no iPhone board, so on a phone the web's Import dialog spans the screen. */
-  #app [role="dialog"][aria-label="Import cards"] { left: 12px !important; right: 12px; width: auto !important; padding: 20px !important; border-radius: 28px !important; }
   /* A phone zooms in on a field whose text is under 16px when it's tapped, so fields there use 16px. */
   #app .sc-rich, #app input[type="text"]:not(.sc-num), #app textarea { font-size: 16px !important; }
 }
