@@ -579,10 +579,10 @@ struct WelcomeScreen: View {
   private func readFile(_ url: URL) {
     let scoped = url.startAccessingSecurityScopedResource()
     defer { if scoped { url.stopAccessingSecurityScopedResource() } }
-    guard let data = try? Data(contentsOf: url) else { store.error = "That file couldn’t be read."; return }
-    let text = String(data: data, encoding: .utf8) ?? String(data: data, encoding: .utf16) ?? String(decoding: data, as: UTF8.self)
+    // (UTF-8, UTF-16 or Latin-1, as Import cards reads a file: ReadCards.text.)
+    guard let data = try? Data(contentsOf: url), let text = ReadCards.text(data) else { store.error = "That file couldn’t be read."; return }
     let base = url.deletingPathExtension().lastPathComponent
-    let decks = ReadCards.read(text.hasPrefix("\u{FEFF}") ? String(text.dropFirst()) : text, name: base.isEmpty ? "My cards" : base)
+    let decks = ReadCards.read(text, name: base.isEmpty ? "My cards" : base)
     go(.found) { off = []; file = (url.lastPathComponent, decks) }
   }
 

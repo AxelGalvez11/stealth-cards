@@ -26,6 +26,8 @@ enum SheetKind: Identifiable, Equatable {
   case deleteAccount, block(handle: String, name: String)
   /// Make cards from a file, pictures, a recording, text, a link, or a topic (Screens/Make.swift), starting where the MakeStart says.
   case make(MakeStart)
+  /// Import cards (Screens/Import.swift), with the deck it starts on ("" for none).
+  case importCards(String)
   /// A deck's source opened (Screens/DeckMaterials.swift): the deck, the source, and the place in it a card pointed at ("p. 4", "12:40", or "").
   case source(deckId: String, id: String, at: String)
   /// A deck's diagram opened (Screens/Diagrams.swift): the deck and the diagram; and the Make diagram sheet, for a deck.
@@ -53,6 +55,7 @@ enum SheetKind: Identifiable, Equatable {
     case .deleteAccount: return "deleteAccount"
     case .block(let h, _): return "block-" + h
     case .make: return "make"
+    case .importCards(let d): return "import-" + d
     case .source(let d, let i, _): return "source-\(d)-\(i)"
     case .diagram(let d, let i): return "diagram-\(d)-\(i)"
     case .makeDiagram(let d): return "makeDiagram-" + d
@@ -131,7 +134,8 @@ final class Nav: ObservableObject {
   func newDeck() { withAnimation(Motion.sheet) { sheet = .newDeck } }
   /// Go Pro: the paywall opens over whatever is showing.
   func goPro() { withAnimation(Motion.sheet) { sheet = .goPro } }
-  func importCards() { /* Import comes with the card editor. */ }
+  /// Import cards from text or a file (the web's /decks/import, and /deck/<id>/import with `deckId`, whose deck it starts on).
+  func importCards(deckId: String = "") { withAnimation(Motion.sheet) { sheet = .importCards(deckId) } }
   /// Make cards from anything (the web's /make?source=&deck=&from=&guide=&page=): `kind` opens one kind's page (file, photo, record, paste,
   /// video, or topic; "" for the list), `deckId` is where the cards go, `from` is a kept source (its id) to make more cards from, and
   /// `guide` (a deck's id, with its `page`: "" or "main" for the Guide itself) is a Guide to make cards from. `text` starts it on Paste

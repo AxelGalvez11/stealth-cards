@@ -4,7 +4,8 @@
 #   ios/tests/run.sh parity
 #       The app's Swift ports against the web app's own code (web/db.js, fsrs.js, sched.js, insights.js, tune.js), on a seeded
 #       library and on made-up variations of it: exam dates near and far, goals, piles, FSRS off, paused and waiting cards.
-#       Same numbers to 1e-9 (the tune fit to 1e-6). The Guide's engine (web/guide.js in JavaScriptCore) answers like node on the web's own cases (guide-check.sh).
+#       Same numbers to 1e-9 (the tune fit to 1e-6). The Guide's engine (web/guide.js in JavaScriptCore) answers like node on the web's own cases (guide-check.sh),
+#       and Import cards' reader (Data/ReadCards.swift) gives the web's cards for the same texts, run in Chrome (import-check.sh).
 #       Needs node and swiftc; no simulator.
 #   ios/tests/run.sh e2e [pause exam grade learn tune free]
 #       The app in the simulator against a local server on a fresh copy of the seeded library, through the app's own code
@@ -48,6 +49,9 @@ parity() {
   WT=$REPO node $H/js/tune-js.mjs $S $W/tune-js.json > /dev/null; $W/parity tune $S $W/tune-swift.json > /dev/null
   say "the Tune to you fit (19 numbers, loss, gain)" "$(node $H/js/compare.mjs $W/tune-js.json $W/tune-swift.json 1e-6 | head -1)"
   say "the Guide's engine against node (the web test's 341 texts, the toolbar, Enter and Tab; the app's guide.js is web/guide.js)" "$(TESTDIR=$TESTDIR $H/guide-check.sh 2>&1 | grep -E 'Guide parity|differs from' | head -1)"
+  local imp="$(TESTDIR=$TESTDIR $H/import-check.sh 2>&1)"
+  say "Import cards against the web in Chrome (its samples, quotes, empty lines, a BOM, CRLF, tabs inside quotes, Anki's headers, HTML, 1,200 made up)" "$(print -r -- "$imp" | grep -E 'Import parity|differs from the web' | head -1)"
+  say "reading text files (UTF-8, UTF-16 with and without its mark, Latin-1, Windows-1252, not text)" "$(print -r -- "$imp" | grep -E '^Text files' | head -1)"
   say "the mind map layout against node (414 trees: every box and link, and the count of ideas)" "$(TESTDIR=$TESTDIR $H/diagram-check.sh 2>&1 | grep -E 'Diagram layout' | sed -E 's/every one the same as node/0 differ/' | head -1)"
   echo; [[ $bad -eq 0 ]] && echo "parity: every check agrees" || { echo "parity: $bad checks differ"; return 1 }
 }

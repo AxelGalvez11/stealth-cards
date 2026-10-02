@@ -146,6 +146,10 @@ struct RootView: View {
           case "newdeck": nav.tab = .library; nav.sheet = .newDeck
           // Make cards from anything (`-makeFile`, `-makePhoto`, `-makeRecording`, `-makeTopic`, `-makeText`, `-makeVideo` open it with that already in).
           case "make": nav.sheet = .make(MakeStart())
+          // Import cards (`-importFile <path>` reads that file into it as if it was chosen), or `import:<deck name>` over that deck, with it chosen.
+          case "import": nav.tab = .library; nav.sheet = .importCards("")
+          case let o where o.hasPrefix("import:"):
+            if let d = store.lib.decks.first(where: { $0.name == String(o.dropFirst(7)) }) { nav.tab = .library; nav.path = [.deck(d.id)]; nav.sheet = .importCards(d.id) }
           // Learn mode on the first deck's questions (multiple choice and true or false), started as Start learning would.
           case "learnq": if store.startLearn(first, set: "all", kinds: ["mc", "tf", "blank"]) { nav.tab = .library; nav.path = [.deck(first)]; nav.full = .learn(first) }
           case "themes": nav.path = [.settings, .themes]
@@ -192,6 +196,7 @@ struct RootView: View {
           }
         }
         if let s = MakeDebug.start { nav.sheet = .make(s) }
+        if ImportDebug.file != nil && nav.sheet == nil { nav.sheet = .importCards("") }
         // `-deckTab notes|sources` (with `-deckSource <id>` and `-deckAt "p. 4"`): the deck page that is open asks for that section, and a source open at that place (like the web's
         // /deck/<id>?tab=sources&source=<id>&at=p.%204).
         if let tab = Board.arg("-deckTab"), case .deck(let did)? = nav.path.last { nav.deckWants = DeckWant(deckId: did, tab: tab, source: Board.arg("-deckSource") ?? "", at: Board.arg("-deckAt") ?? "") }
@@ -287,6 +292,8 @@ extension Board {
     // A verified teacher's Settings: Get verified says Verified teacher (the board's `verified`: -verified "Waiting for review" or School).
     case "PhoneSettingsVerified": store.props.verified = "Teacher"; nav.path = [.settings]
     case "PhoneNewDeck": nav.sheet = .newDeck
+    // Import cards over the Library, in one of the canvas's states (`-state Pasted`, "A file picked", "No cards", Empty, Importing, Error; "Deck chosen" when it's left out).
+    case "PhoneImport": nav.tab = .library; nav.sheet = .importCards("")
     // Make cards over the Library, on one of the canvas's steps (`-state Review`, or any name in MakeSample.steps; Pick when it's left out).
     case "PhoneMake": nav.tab = .library; nav.sheet = .make(MakeStart(demo: MakeSample.name(Board.arg("-state"))))
     case "PhoneEditor": store.props.editorTyping = true; nav.tab = .library; nav.path = [.deck("cell")]; nav.sheet = .newCard(deckId: "cell", cardId: nil)
@@ -563,7 +570,7 @@ struct MainView: View {
   private var covering: Bool {
     guard let s = nav.sheet else { return false }
     switch s {
-    case .make, .source, .diagram, .makeDiagram, .publicDiagram: return true
+    case .make, .importCards, .source, .diagram, .makeDiagram, .publicDiagram: return true
     default: return false
     }
   }
@@ -627,6 +634,7 @@ struct SheetHost: View {
     case .deleteAccount: SheetOverlay(top: nil, close: { if !nav.asking { nav.close() } }) { DeleteAccountSheet() }
     case .block(let handle, let name): SheetOverlay(top: nil, close: { if !nav.asking { nav.close() } }) { BlockSheet(handle: handle, name: name) }
     case .make(let s): MakeHost(start: s, store: store, nav: nav)
+    case .importCards(let d): ImportHost(deckId: d, store: store, nav: nav)
     case .source(let d, let i, let at): SourceHost(deckId: d, id: i, at: at)
     case .diagram(let d, let i): DiagramHost(deckId: d, id: i)
     case .makeDiagram(let d): MakeDiagramHost(deckId: d)

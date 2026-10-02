@@ -1,10 +1,10 @@
-// Made from design/canvas/project/PhoneDeckEmpty.dc.html by design/to-web.mjs. Change the design, not this file.
+// Made from design/canvas/project/PhoneImport.dc.html by design/to-web.mjs. Change the design, not this file.
 export default {
-  name: "PhoneDeckEmpty", title: "iPhone · Deck · no cards yet", w: 390, h: 844, fill: true,
-  props: {"dark":false,"dim":false,"grain":0.7},
-  imports: [],
+  name: "PhoneImport", title: "iPhone · Import cards (paste or choose a file, the deck, Import; its Tweak shows each state)", w: 390, h: 844, fill: false,
+  props: {"dark":false,"dim":false,"grain":0.7,"state":"Deck chosen"},
+  imports: ["PhoneLibrary"],
   css: "body{margin:0;font-family:Geist, -apple-system, system-ui, sans-serif}\na{color:inherit;text-decoration:none}a:hover{opacity:.8}\n@keyframes scRise{from{opacity:0;transform:translateY(14px)}}main>*{animation:scRise .5s cubic-bezier(.2,.8,.2,1) backwards}main>*:nth-child(2){animation-delay:0.06s}main>*:nth-child(3){animation-delay:0.12s}main>*:nth-child(4){animation-delay:0.18s}main>*:nth-child(5){animation-delay:0.24s}main>*:nth-child(n+6){animation-delay:.3s}button,.sc-press{transition:transform .1s ease}button:active,.sc-press:active{transform:scale(.96)}@keyframes scPopIn{from{opacity:0;transform:translateY(10px)}}.sc-pop,[data-sc-pop],.sc-tray{animation:scPopIn .22s cubic-bezier(0.2,0.8,0.2,1) backwards}@keyframes scFade{from{opacity:0}}.sc-fade{animation:scFade .18s ease-out backwards}@keyframes scScrimIn{from{opacity:0}}@keyframes scScrimOut{to{opacity:0}}.sc-scrim{animation:scScrimIn .25s ease backwards}.sc-scrim.sc-gone{animation:scScrimOut .18s ease forwards}@keyframes scPanelIn{from{opacity:0;transform:translateX(calc(100% + 12px))}}@keyframes scPanelOut{to{opacity:0;transform:translateX(calc(100% + 12px))}}.sc-panel{animation:scPanelIn .25s cubic-bezier(0.2,0.8,0.2,1) backwards}.sc-panel.sc-gone{animation:scPanelOut .18s cubic-bezier(.4,0,1,1) forwards}@keyframes scSheetIn{from{transform:translateY(100%)}}@keyframes scSheetOut{to{transform:translateY(100%)}}.sc-sheet{animation:scSheetIn .25s cubic-bezier(0.2,0.8,0.2,1) backwards}.sc-sheet.sc-gone{animation:scSheetOut .18s cubic-bezier(.4,0,1,1) forwards}.sc-sw{transition:background-color .2s ease,transform .1s ease}.sc-sw>span{transition:transform .2s cubic-bezier(0.2,0.8,0.2,1),background-color .2s ease}[role=\"group\"]>button,[role=\"tablist\"]>button{transition:color .2s ease,transform .1s ease}@media (prefers-reduced-motion:reduce){.sc-pop,[data-sc-pop],.sc-tray,.sc-fade,.sc-scrim,.sc-panel,.sc-sheet{animation:none!important}.sc-sw>span,[role=\"group\"]>button,[role=\"tablist\"]>button{transition:none}.sc-sw{transition:background-color .2s ease}}.sc-lift{transition:transform 0.2s ease-out,box-shadow 0.2s ease-out}.sc-lift:hover{transform:translateY(-4px);box-shadow:0 24px 48px -24px rgba(0,0,0,.45)}.sk-cover{box-shadow:var(--sk-shadow)}.sk-cover.sc-lift:hover{box-shadow:var(--sk-shadow),0 24px 48px -24px rgba(0,0,0,.45)}@keyframes scFloat{50%{transform:translateY(-6px)}}@keyframes scSwayA{50%{transform:rotate(-13deg) translateX(-3px)}}@keyframes scSwayB{50%{transform:rotate(10deg) translateX(3px)}}@keyframes scGlow{50%{opacity:.55}}@keyframes scSheen{0%,58%{transform:translateX(-160%) skewX(-18deg)}86%,100%{transform:translateX(260%) skewX(-18deg)}}.sc-float{animation:scFloat 6s ease-in-out infinite}.sc-sway-a{animation:scSwayA 6s ease-in-out infinite}.sc-sway-b{animation:scSwayB 6s ease-in-out infinite}.sc-glow{animation:scGlow 6s ease-in-out infinite}.sc-sheen{position:absolute;top:0;bottom:0;left:0;width:45%;background:linear-gradient(90deg,transparent,rgba(255,255,255,.4),transparent);animation:scSheen 5s cubic-bezier(.4,0,.2,1) infinite;pointer-events:none}@keyframes scDraw{from{stroke-dashoffset:1.02}}.sc-draw{stroke-dasharray:1 2;animation:scDraw .9s cubic-bezier(.2,.8,.2,1) backwards}@keyframes scKnob{from{opacity:0;transform:scale(.3)}}.sc-knob{transform-box:fill-box;transform-origin:center;animation:scKnob .35s .75s cubic-bezier(.34,1.56,.64,1) backwards}@keyframes scGrow{from{transform:scaleY(0)}}.sc-grow{transform-origin:bottom;animation:scGrow .6s cubic-bezier(.2,.8,.2,1) backwards}:nth-child(2)>.sc-grow{animation-delay:0.04s}:nth-child(3)>.sc-grow{animation-delay:0.08s}:nth-child(4)>.sc-grow{animation-delay:0.12s}:nth-child(5)>.sc-grow{animation-delay:0.16s}:nth-child(6)>.sc-grow{animation-delay:0.20s}:nth-child(7)>.sc-grow{animation-delay:0.24s}:nth-child(8)>.sc-grow{animation-delay:0.28s}:nth-child(9)>.sc-grow{animation-delay:0.32s}:nth-child(10)>.sc-grow{animation-delay:0.36s}:nth-child(11)>.sc-grow{animation-delay:0.40s}:nth-child(12)>.sc-grow{animation-delay:0.44s}:nth-child(13)>.sc-grow{animation-delay:0.48s}:nth-child(14)>.sc-grow{animation-delay:0.52s}.sc-side{width:240px;transition:width .2s ease}.sc-side[data-collapsed=\"true\"]{width:78px}.sc-side-head{padding:0 4px 20px 12px;display:flex;align-items:center;justify-content:space-between;gap:4px}.sc-side-btns{display:flex;align-items:center;gap:4px}.sc-side[data-collapsed=\"true\"] .sc-side-head{padding:0 0 12px;justify-content:center}.sc-side[data-collapsed=\"true\"] .sc-side-btns{flex-direction:column-reverse;gap:6px}.sc-side[data-collapsed=\"true\"] :is(.sc-logo,.sc-lab){display:none}@media (prefers-reduced-motion:reduce){.sc-side{transition:none}}a:focus-visible,button:focus-visible,summary:focus-visible,[role=\"button\"]:focus-visible,[role=\"tab\"]:focus-visible,[role=\"radio\"]:focus-visible,[role=\"switch\"]:focus-visible,[role=\"menuitem\"]:focus-visible,[role=\"option\"]:focus-visible,[tabindex]:focus-visible{outline:2px solid currentColor;outline-offset:2px}[role=\"option\"]:focus-visible,[role=\"menuitem\"]:focus-visible{outline-offset:-2px}label:has(input:focus-visible,textarea:focus-visible):not([style*=\"box-shadow\"]){box-shadow:0 0 0 2px color-mix(in srgb,currentColor 45%,transparent)}*{scrollbar-width:thin;scrollbar-color:color-mix(in srgb,currentColor 30%,transparent) transparent}::-webkit-scrollbar{width:8px;height:8px}::-webkit-scrollbar-thumb{border-radius:8px;background:color-mix(in srgb,currentColor 30%,transparent)}::-webkit-scrollbar-track,::-webkit-scrollbar-corner{background:transparent}@media (prefers-reduced-motion:reduce){main>*,.sc-float,.sc-sway-a,.sc-sway-b,.sc-glow,.sc-draw,.sc-knob,.sc-grow{animation:none!important}.sc-sheen{display:none}button:active,.sc-press:active,.sc-lift:hover{transform:none}}",
-  template: "<div style=\"position: relative; width: 100%; height: 100vh; height: 100dvh; min-height: 100%; max-height: 100%; box-sizing: border-box; font-family: Geist, -apple-system, system-ui, sans-serif; background: {{t.bg}}; color: {{t.text}}; overflow: hidden;\">\n<div style=\"height: 100%; overflow-x: hidden; overflow-y: auto; scrollbar-width: none;\"><div style=\"height: 100%; box-sizing: border-box; padding: 0 0 120px; display: flex; flex-direction: column;\">\n  <div style=\"position: relative; height: 232px; flex-shrink: 0; overflow: hidden; container-type: inline-size;\">\n    <div style=\"position: relative; overflow: hidden; color: {{cover.ink}}; background: {{cover.base}}; position: absolute; inset: 0;\"><sc-if value=\"{{cover.plain}}\" hint-placeholder-val=\"{{ true }}\"><svg aria-hidden=\"true\" viewBox=\"0 0 100 100\" preserveAspectRatio=\"none\" width=\"100%\" height=\"100%\" style=\"position: absolute; inset: 0; pointer-events: none;\"><defs><filter id=\"{{cover.fid}}\" x=\"-60%\" y=\"-60%\" width=\"220%\" height=\"220%\" color-interpolation-filters=\"sRGB\"><feTurbulence type=\"fractalNoise\" baseFrequency=\".018\" numOctaves=\"2\" seed=\"7\" result=\"n\"/><feDisplacementMap in=\"SourceGraphic\" in2=\"n\" scale=\"{{cover.disp}}\" xChannelSelector=\"R\" yChannelSelector=\"G\"/><feGaussianBlur stdDeviation=\"{{cover.blur}}\"/></filter><filter id=\"{{cover.sid}}\" x=\"-60%\" y=\"-60%\" width=\"220%\" height=\"220%\" color-interpolation-filters=\"sRGB\"><feGaussianBlur stdDeviation=\"{{cover.sblur}}\"/></filter></defs><g filter=\"url(#{{cover.fid}})\"><ellipse cx=\"{{cover.b0.x}}\" cy=\"{{cover.b0.y}}\" rx=\"{{cover.b0.rx}}\" ry=\"{{cover.b0.ry}}\" fill=\"{{cover.b0.c}}\" transform=\"rotate({{cover.b0.r}} {{cover.b0.x}} {{cover.b0.y}})\"/><ellipse cx=\"{{cover.b1.x}}\" cy=\"{{cover.b1.y}}\" rx=\"{{cover.b1.rx}}\" ry=\"{{cover.b1.ry}}\" fill=\"{{cover.b1.c}}\" transform=\"rotate({{cover.b1.r}} {{cover.b1.x}} {{cover.b1.y}})\"/><ellipse cx=\"{{cover.b2.x}}\" cy=\"{{cover.b2.y}}\" rx=\"{{cover.b2.rx}}\" ry=\"{{cover.b2.ry}}\" fill=\"{{cover.b2.c}}\" transform=\"rotate({{cover.b2.r}} {{cover.b2.x}} {{cover.b2.y}})\"/><ellipse cx=\"{{cover.b3.x}}\" cy=\"{{cover.b3.y}}\" rx=\"{{cover.b3.rx}}\" ry=\"{{cover.b3.ry}}\" fill=\"{{cover.b3.c}}\" transform=\"rotate({{cover.b3.r}} {{cover.b3.x}} {{cover.b3.y}})\"/><ellipse cx=\"{{cover.b4.x}}\" cy=\"{{cover.b4.y}}\" rx=\"{{cover.b4.rx}}\" ry=\"{{cover.b4.ry}}\" fill=\"{{cover.b4.c}}\" transform=\"rotate({{cover.b4.r}} {{cover.b4.x}} {{cover.b4.y}})\"/><ellipse cx=\"{{cover.b5.x}}\" cy=\"{{cover.b5.y}}\" rx=\"{{cover.b5.rx}}\" ry=\"{{cover.b5.ry}}\" fill=\"{{cover.b5.c}}\" transform=\"rotate({{cover.b5.r}} {{cover.b5.x}} {{cover.b5.y}})\"/></g><g filter=\"url(#{{cover.sid}})\"><ellipse cx=\"{{cover.s0.x}}\" cy=\"{{cover.s0.y}}\" rx=\"{{cover.s0.rx}}\" ry=\"{{cover.s0.ry}}\" fill=\"{{cover.s0.c}}\" transform=\"rotate({{cover.s0.r}} {{cover.s0.x}} {{cover.s0.y}})\"/><ellipse cx=\"{{cover.s1.x}}\" cy=\"{{cover.s1.y}}\" rx=\"{{cover.s1.rx}}\" ry=\"{{cover.s1.ry}}\" fill=\"{{cover.s1.c}}\" transform=\"rotate({{cover.s1.r}} {{cover.s1.x}} {{cover.s1.y}})\"/></g></svg><svg aria-hidden=\"true\" width=\"100%\" height=\"100%\" style=\"position: absolute; inset: 0; mix-blend-mode: soft-light; opacity: {{grain}}; pointer-events: none;\"><filter id=\"sc-grain\" x=\"0\" y=\"0\" width=\"100%\" height=\"100%\" color-interpolation-filters=\"sRGB\"><feTurbulence type=\"fractalNoise\" baseFrequency=\"0.85\" numOctaves=\"3\" stitchTiles=\"stitch\"/><feColorMatrix type=\"saturate\" values=\"0\"/><feComponentTransfer><feFuncR type=\"linear\" slope=\"3.4\" intercept=\"-1.2\"/><feFuncG type=\"linear\" slope=\"3.4\" intercept=\"-1.2\"/><feFuncB type=\"linear\" slope=\"3.4\" intercept=\"-1.2\"/></feComponentTransfer></filter><rect width=\"100%\" height=\"100%\" filter=\"url(#sc-grain)\"/></svg></sc-if><sc-if value=\"{{cover.skin}}\" hint-placeholder-val=\"{{ false }}\"><div ref=\"{{cover.art}}\" data-sc-own aria-hidden=\"true\" style=\"position: absolute; inset: 0; border-radius: inherit; overflow: hidden;\"></div></sc-if><div style=\"position: relative; text-shadow: {{cover.shadow}}; height: 100%;\"></div></div><sc-if value=\"{{coverIsImage}}\" hint-placeholder-val=\"{{ false }}\"><div style=\"position: absolute; inset: 0; background: repeating-linear-gradient(135deg, {{t.surf}} 0 14px, {{t.surf2}} 14px 28px); display: flex; align-items: center; justify-content: center; gap: 8px; color: {{t.muted}}; font-size: 14px; font-weight: 500;\"><svg width=\"18\" height=\"18\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><rect x=\"3\" y=\"4\" width=\"18\" height=\"16\" rx=\"3\"/><circle cx=\"9\" cy=\"10\" r=\"2\"/><path d=\"M21 16l-5-5-9 9\"/></svg>[Your header image]</div></sc-if>\n    <sc-if value=\"{{coverHasPhoto}}\" hint-placeholder-val=\"{{ false }}\"><img src=\"{{coverPhoto}}\" alt=\"\" style=\"position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover;\"></sc-if>\n    <div style=\"position: absolute; inset: 0; box-sizing: border-box; padding: 54px 16px 18px 20px; display: flex; flex-direction: column; justify-content: space-between; color: {{cover.ink}};\">\n      <div style=\"display: flex; justify-content: space-between;\"><a href=\"PhoneLibrary.dc.html\" aria-label=\"Back\" style=\"width: 44px; height: 44px; border-radius: 22px; background: rgba(255,255,255,.62); color: #000000; box-shadow: inset 0 0 0 1px rgba(0,0,0,.08); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); display: flex; align-items: center; justify-content: center;\"><svg width=\"18\" height=\"18\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M15 18l-6-6 6-6\"/></svg></a><div style=\"display: flex; gap: 8px;\"><button type=\"button\" aria-label=\"Deck settings\" onClick=\"{{openSettings}}\" style=\"width: 44px; height: 44px; border: 0; border-radius: 22px; background: rgba(255,255,255,.62); color: #000000; box-shadow: inset 0 0 0 1px rgba(0,0,0,.08); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); display: flex; align-items: center; justify-content: center; cursor: pointer;\"><svg width=\"18\" height=\"18\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><circle cx=\"12\" cy=\"12\" r=\"3\"/><path d=\"M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z\"/></svg></button><a href=\"PhoneEditor.dc.html\" aria-label=\"New card\" style=\"width: 44px; height: 44px; border-radius: 22px; background: rgba(255,255,255,.62); color: #000000; box-shadow: inset 0 0 0 1px rgba(0,0,0,.08); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); display: flex; align-items: center; justify-content: center;\"><svg width=\"18\" height=\"18\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M12 5v14M5 12h14\"/></svg></a></div></div>\n      <div style=\"display: flex; flex-direction: column; gap: 4px; text-shadow: {{cover.shadow}};\"><div style=\"font-size: 32px; font-weight: 700; letter-spacing: -.03em; line-height: 1.05; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; {{coverTitleS}}\">{{deckName}}</div><div style=\"font-size: 14px; opacity: .8;\">No cards yet</div></div>\n    </div>\n  </div>\n  <div style=\"box-sizing: border-box; padding: 20px 20px 0; display: flex; flex-direction: column; gap: 14px;\"><div data-make-drop=\"1\" onDragOver=\"{{mk.over}}\" onDragLeave=\"{{mk.leave}}\" onDrop=\"{{mk.drop}}\" style=\"box-sizing: border-box; padding: 16px 12px 12px 18px; border-radius: 24px; background: {{t.surf}}; box-shadow: {{mk.ring}}; display: flex; flex-direction: column; gap: 6px;\">\n    <textarea rows=\"2\" onChange=\"{{mk.set}}\" onKeyDown=\"{{mk.key}}\" placeholder=\"What do you want to study?\" aria-label=\"What do you want to study?\" autocomplete=\"off\" style=\"resize: none; height: 50px; margin: 0; padding: 0; border: 0; outline: 0; background: transparent; color: {{t.text}}; font: inherit; font-size: 17px; line-height: 1.45;\">{{mk.text}}</textarea>\n    <div style=\"display: flex; align-items: center; justify-content: space-between; gap: 12px;\"><a href=\"{{mk.uploadHref}}\" aria-label=\"Upload\" data-tip=\"Upload\" class=\"sc-press\" style=\"width: 36px; height: 36px; flex-shrink: 0; border-radius: 18px; background: {{t.bg}}; color: {{t.text}}; display: flex; align-items: center; justify-content: center;\"><svg width=\"18\" height=\"18\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M12 5v14M5 12h14\"/></svg></a><button type=\"button\" onClick=\"{{mk.go}}\" aria-label=\"Make cards\" aria-disabled=\"{{mk.off}}\" class=\"sc-press\" style=\"width: 36px; height: 36px; flex-shrink: 0; padding: 0; border: 0; border-radius: 18px; background: {{mk.goBg}}; color: {{mk.goFg}}; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: background-color .15s, color .15s;\"><svg width=\"18\" height=\"18\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M12 19V5M6 11l6-6 6 6\"/></svg></button></div>\n  </div>\n    <div role=\"group\" aria-label=\"Add cards from\" style=\"display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px;\"><a href=\"{{mk.fileHref}}\" class=\"sc-press\" style=\"height: 64px; box-sizing: border-box; border-radius: 18px; background: transparent; box-shadow: inset 0 0 0 1px {{t.surf2}}; color: {{t.text}}; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px; font-size: 13px; font-weight: 600; white-space: nowrap;\"><svg width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M12 15V4M7 9l5-5 5 5\"/><path d=\"M4 15v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3\"/></svg><span>Upload</span></a><a href=\"{{mk.pasteHref}}\" class=\"sc-press\" style=\"height: 64px; box-sizing: border-box; border-radius: 18px; background: transparent; box-shadow: inset 0 0 0 1px {{t.surf2}}; color: {{t.text}}; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px; font-size: 13px; font-weight: 600; white-space: nowrap;\"><svg width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><rect x=\"5.5\" y=\"4.5\" width=\"13\" height=\"16\" rx=\"2.5\"/><path d=\"M9 4.5v-.3a1.7 1.7 0 0 1 1.7-1.7h2.6A1.7 1.7 0 0 1 15 4.2v.3\"/><path d=\"M9 11h6M9 15h4\"/></svg><span>Paste</span></a><a href=\"{{mk.videoHref}}\" class=\"sc-press\" style=\"height: 64px; box-sizing: border-box; border-radius: 18px; background: transparent; box-shadow: inset 0 0 0 1px {{t.surf2}}; color: {{t.text}}; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px; font-size: 13px; font-weight: 600; white-space: nowrap;\"><svg width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><rect x=\"2.5\" y=\"5\" width=\"19\" height=\"14\" rx=\"4.5\"/><path d=\"M10 9.2v5.6l4.8-2.8z\" fill=\"currentColor\"/></svg><span>YouTube</span></a><div style=\"position: relative; display: flex; flex-direction: column;\"><button type=\"button\" onClick=\"{{mk.more.toggle}}\" aria-haspopup=\"menu\" aria-expanded=\"{{mk.more.expanded}}\" class=\"sc-press\" style=\"height: 64px; box-sizing: border-box; border-radius: 18px; background: transparent; box-shadow: inset 0 0 0 1px {{t.surf2}}; color: {{t.text}}; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px; font-size: 13px; font-weight: 600; white-space: nowrap; flex-grow: 1; border: 0; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer;\"><svg width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M6 9l6 6 6-6\"/></svg><span>More</span></button>\n    <sc-if value=\"{{mk.more.open}}\" hint-placeholder-val=\"{{ false }}\"><div role=\"menu\" aria-label=\"More ways to add cards\" data-sc-pop style=\"position: absolute; right: 0; top: calc(100% + 8px); z-index: 30; width: 220px; box-sizing: border-box; padding: 8px; border-radius: 22px; background: {{t.bg}}; color: {{t.text}}; box-shadow: 0 18px 48px rgba(0,0,0,.2), 0 0 0 1px {{t.line}}; display: flex; flex-direction: column; gap: 2px;\">\n      <a href=\"{{mk.photoHref}}\" role=\"menuitem\" onClick=\"{{mk.more.close}}\" style=\"height: 44px; flex-shrink: 0; box-sizing: border-box; padding: 0 12px; display: flex; align-items: center; gap: 12px; border-radius: 12px; color: {{t.text}}; font-size: 14px; font-weight: 600;\"><span style=\"display: flex; color: {{t.muted}};\"><svg width=\"17\" height=\"17\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><rect x=\"3\" y=\"4\" width=\"18\" height=\"16\" rx=\"3\"/><circle cx=\"9\" cy=\"10\" r=\"2\"/><path d=\"M21 16l-5-5-9 9\"/></svg></span>Photos</a><a href=\"{{mk.recordHref}}\" role=\"menuitem\" onClick=\"{{mk.more.close}}\" style=\"height: 44px; flex-shrink: 0; box-sizing: border-box; padding: 0 12px; display: flex; align-items: center; gap: 12px; border-radius: 12px; color: {{t.text}}; font-size: 14px; font-weight: 600;\"><span style=\"display: flex; color: {{t.muted}};\"><svg width=\"17\" height=\"17\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><rect x=\"9\" y=\"3\" width=\"6\" height=\"11\" rx=\"3\"/><path d=\"M5 11a7 7 0 0 0 14 0M12 18v3\"/></svg></span>Record a lecture</a><a href=\"{{mk.topicHref}}\" role=\"menuitem\" onClick=\"{{mk.more.close}}\" style=\"height: 44px; flex-shrink: 0; box-sizing: border-box; padding: 0 12px; display: flex; align-items: center; gap: 12px; border-radius: 12px; color: {{t.text}}; font-size: 14px; font-weight: 600;\"><span style=\"display: flex; color: {{t.muted}};\"><svg width=\"17\" height=\"17\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M11 3l1.9 5.1L18 10l-5.1 1.9L11 17l-1.9-5.1L4 10l5.1-1.9z\"/><path d=\"M18.5 15l.8 2.2 2.2.8-2.2.8-.8 2.2-.8-2.2-2.2-.8 2.2-.8z\"/></svg></span>A topic</a><a href=\"{{mk.importHref}}\" role=\"menuitem\" onClick=\"{{mk.more.close}}\" style=\"height: 44px; flex-shrink: 0; box-sizing: border-box; padding: 0 12px; display: flex; align-items: center; gap: 12px; border-radius: 12px; color: {{t.text}}; font-size: 14px; font-weight: 600;\"><span style=\"display: flex; color: {{t.muted}};\"><svg width=\"17\" height=\"17\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M14 4h3.5A2.5 2.5 0 0 1 20 6.5v11a2.5 2.5 0 0 1-2.5 2.5H14\"/><path d=\"M9.5 16l4-4-4-4M13.5 12H4\"/></svg></span>Import cards</a><sc-if value=\"{{mk.newDeck}}\" hint-placeholder-val=\"{{ true }}\"><a href=\"{{mk.newDeckHref}}\" role=\"menuitem\" onClick=\"{{mk.more.close}}\" style=\"height: 44px; flex-shrink: 0; box-sizing: border-box; padding: 0 12px; display: flex; align-items: center; gap: 12px; border-radius: 12px; color: {{t.text}}; font-size: 14px; font-weight: 600;\"><span style=\"display: flex; color: {{t.muted}};\"><svg width=\"17\" height=\"17\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><rect x=\"3\" y=\"7\" width=\"14\" height=\"14\" rx=\"3\"/><path d=\"M7 3h11a3 3 0 0 1 3 3v11\"/></svg></span>New deck</a></sc-if>\n    </div></sc-if></div></div></div>\n</div></div>\n<nav style=\"position: absolute; left: 16px; right: 16px; bottom: 28px; height: 64px; box-sizing: border-box; padding: 6px; border-radius: 999px; background: {{t.surf}}; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 4px;\">\n  <a href=\"PhoneLibrary.dc.html\" style=\"display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; border-radius: 999px; font-size: 11px; font-weight: 600; background: {{t.inv}}; color: {{t.invText}};\"><svg width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><rect x=\"3\" y=\"7\" width=\"14\" height=\"14\" rx=\"3\"/><path d=\"M7 3h11a3 3 0 0 1 3 3v11\"/></svg>Library</a>\n  <a href=\"PhoneDiscover.dc.html\" style=\"display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; border-radius: 999px; font-size: 11px; font-weight: 600; color: {{t.muted}};\"><svg width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><circle cx=\"12\" cy=\"12\" r=\"9\"/><path d=\"M15.5 8.5l-2 5-5 2 2-5z\"/></svg>Discover</a>\n  <a href=\"PhoneStats.dc.html\" style=\"display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; border-radius: 999px; font-size: 11px; font-weight: 600; color: {{t.muted}};\"><svg width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><rect x=\"3\" y=\"3\" width=\"18\" height=\"18\" rx=\"4\"/><path d=\"M8 16v-4M12 16V8M16 16v-6\"/></svg>Stats</a>\n  <a href=\"PhoneProfile.dc.html\" style=\"display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; border-radius: 999px; font-size: 11px; font-weight: 600; color: {{t.muted}};\"><span style=\"width: 20px; height: 20px; display: flex; align-items: center; justify-content: center;\"><span style=\"position: relative; width: 22px; height: 22px; flex-shrink: 0; display: flex;\"><span style=\"position: relative; width: 22px; height: 22px; flex-shrink: 0; border-radius: 11px; overflow: hidden; background: {{me.bg}}; color: #FFFFFF; display: flex; align-items: center; justify-content: center; font-size: 9px; font-weight: 600;\"><sc-if value=\"{{me.color}}\" hint-placeholder-val=\"{{ true }}\">{{me.initial}}</sc-if><sc-if value=\"{{me.photo}}\" hint-placeholder-val=\"{{ false }}\"><img src=\"{{me.photo}}\" alt=\"\" referrerpolicy=\"no-referrer\" style=\"position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover;\"></sc-if><sc-if value=\"{{me.sampleGoogle}}\" hint-placeholder-val=\"{{ false }}\"><span role=\"img\" aria-label=\"Google profile photo\" style=\"width: 22px; height: 22px; flex-shrink: 0; border-radius: 11px; overflow: hidden; background: linear-gradient(160deg, #FFD9A8 0%, #F59E6B 55%, #D9677A 100%); display: flex;\"><svg width=\"22\" height=\"22\" viewBox=\"0 0 64 64\" aria-hidden=\"true\"><circle cx=\"32\" cy=\"26\" r=\"11\" fill=\"rgba(255,255,255,.92)\"/><path d=\"M11 64c1.5-12 10-19 21-19s19.5 7 21 19z\" fill=\"rgba(255,255,255,.92)\"/></svg></span></sc-if><sc-if value=\"{{me.sampleYours}}\" hint-placeholder-val=\"{{ false }}\"><span role=\"img\" aria-label=\"Your profile photo\" style=\"width: 22px; height: 22px; flex-shrink: 0; border-radius: 11px; overflow: hidden; background: linear-gradient(160deg, #B8F0D8 0%, #4FC3B0 50%, #3A7BD5 100%); display: flex;\"><svg width=\"22\" height=\"22\" viewBox=\"0 0 64 64\" aria-hidden=\"true\"><circle cx=\"32\" cy=\"26\" r=\"11\" fill=\"rgba(255,255,255,.92)\"/><path d=\"M11 64c1.5-12 10-19 21-19s19.5 7 21 19z\" fill=\"rgba(255,255,255,.92)\"/></svg></span></sc-if></span><sc-if value=\"{{me.skinned}}\" hint-placeholder-val=\"{{ false }}\"><span ref=\"{{me.art}}\" data-sc-own aria-hidden=\"true\" style=\"position: absolute; inset: 0; border-radius: 50%; pointer-events: none;\"></span></sc-if></span></span>Profile</a>\n</nav>\n\n</div>",
+  template: "<div style=\"position: relative; width: 390px; height: 844px; overflow: hidden; font-family: Geist, -apple-system, system-ui, sans-serif; color: {{t.text}};\">\n  <dc-import name=\"PhoneLibrary\" dark=\"{{dark}}\" dim=\"{{dim}}\" hint-size=\"390px,844px\"></dc-import>\n  <div style=\"position: absolute; inset: 0; background: {{t.dim}};\"></div>\n  <div role=\"dialog\" aria-label=\"Import cards\" style=\"position: absolute; left: 0; right: 0; bottom: 0; box-sizing: border-box; padding: 16px 20px 34px; border-radius: 36px 36px 0 0; background: {{t.bg}}; display: flex; flex-direction: column; gap: 16px;\">\n    <div style=\"display: flex; align-items: center; justify-content: space-between;\"><span style=\"font-size: 22px; font-weight: 600; letter-spacing: -.02em;\">Import cards</span><a href=\"{{backHref}}\" aria-label=\"Close\" style=\"width: 40px; height: 40px; border-radius: 20px; background: {{t.surf}}; display: flex; align-items: center; justify-content: center;\"><svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M6 6l12 12M18 6L6 18\"/></svg></a></div>\n    <label style=\"display: flex; flex-direction: column; gap: 8px;\"><span style=\"font-size: 13px; font-weight: 600;\">Cards</span><textarea rows=\"8\" onChange=\"{{setText}}\" placeholder=\"One card per line: front, then back\" style=\"resize: none; border: 0; outline: 0; border-radius: 20px; padding: 14px 16px; background: {{t.surf}}; color: {{t.text}}; font-family: 'Geist Mono', ui-monospace, monospace; font-size: 13px; line-height: 1.6;\">{{text}}</textarea></label>\n    <div style=\"display: flex; align-items: center; gap: 12px;\"><span style=\"flex-shrink: 0; display: flex;\"><button type=\"button\" onClick=\"{{pickText}}\" style=\"height: 34px; padding: 0 12px; display: inline-flex; align-items: center; gap: 6px; border: 0; border-radius: 999px; background: {{t.surf}}; color: {{t.text}}; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer;\"><svg width=\"14\" height=\"14\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M12 15V4M7 9l5-5 5 5\"/><path d=\"M4 15v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3\"/></svg>Choose a file</button></span><span style=\"font-size: 13px; line-height: 1.4; color: {{t.muted}};\">{{foundLine}}</span></div>\n    <div style=\"display: flex; flex-direction: column; gap: 8px;\"><span style=\"font-size: 13px; font-weight: 600;\">Into deck</span><input type=\"text\" value=\"{{deckName}}\" onChange=\"{{setDeck}}\" placeholder=\"New deck name\" style=\"height: 40px; box-sizing: border-box; padding: 0 16px; border: 0; outline: 0; border-radius: 16px; background: {{t.surf}}; color: {{t.text}}; font: inherit; font-size: 16px;\">\n      <div style=\"display: flex; flex-wrap: wrap; gap: 6px;\"><sc-for list=\"{{deckChips}}\" as=\"d\" hint-placeholder-count=\"4\"><button type=\"button\" onClick=\"{{d.pick}}\" aria-pressed=\"{{d.pressed}}\" style=\"height: 32px; padding: 0 12px; border: 0; border-radius: 999px; background: {{d.bg}}; color: {{d.fg}}; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer;\">{{d.name}}</button></sc-for></div></div>\n    <sc-if value=\"{{hasError}}\" hint-placeholder-val=\"{{ false }}\"><span role=\"status\" style=\"font-size: 13px; line-height: 1.4; color: {{t.again}};\">{{errorLine}}</span></sc-if>\n    <div style=\"display: flex; gap: 10px;\"><a href=\"{{backHref}}\" style=\"flex-grow: 1; height: 52px; border-radius: 999px; background: {{t.surf}}; display: flex; align-items: center; justify-content: center; font-size: 15px; font-weight: 600;\">Cancel</a><a href=\"{{backHref}}\" onClick=\"{{doImport}}\" style=\"flex-grow: 2; height: 52px; border-radius: 999px; background: {{importBg}}; color: {{importFg}}; display: flex; align-items: center; justify-content: center; font-size: 15px; font-weight: 600;\">{{importLabel}}</a></div>\n  </div>\n</div>",
   Logic: DCLogic => {
 class Component extends DCLogic {
 // Dark mode has two looks, picked in Settings → Dark mode: black (the first one, and still the default) or gray (the
@@ -416,78 +416,584 @@ mock() {
     }
   };
 }
+rich() { return Component._rich || (Component._rich = (function makeRich() {
+  const ORDER = 'khsuibm', WS = /\s/, WORD = /[\p{L}\p{N}_]/u, PUNCT = /[!-/:-@[-`{-~]/;
+  const norm = m => [...new Set(m)].filter(c => ORDER.includes(c)).sort((a, b) => ORDER.indexOf(a) - ORDER.indexOf(b)).join('');
+  const tidy = runs => {
+    const out = [];
+    for (const r of runs) { if (!r.t) continue; const p = out[out.length - 1]; if (p && p.m === r.m) p.t += r.t; else out.push({ t: r.t, m: r.m }); }
+    return out;
+  };
 
-makeBox(t, db, { deckId = '', folder = '', board = 'Web', newDeck = true } = {}) {
-  const s = this.state, mock = !!db.mock, text = s.mkText || '', words = text.trim(), ready = words.length >= 2;
-  const at = k => '/make?source=' + k + (deckId ? '&deck=' + encodeURIComponent(deckId) : '') + (folder ? '&folder=' + encodeURIComponent(folder) : '');
-  const href = k => (mock ? board + 'Make.dc.html' : at(k));
-  // A YouTube link, a long paste (more than one line, or longer than a topic holds), or a topic in a few words.
-  const kindOf = v => { const w = String(v || '').trim(); return /^(https?:\/\/)?([\w-]+\.)*(youtube\.com|youtu\.be|youtube-nocookie\.com)\/\S+$/i.test(w) ? 'video' : /\n/.test(w) || w.length > 200 ? 'paste' : 'topic'; };
-  // The Make flow opens on that kind with the words already in, and the flow's own deck choice says where the cards go.
-  const begin = v => { const w = String(v || '').trim(), k = kindOf(w); if (mock || w.length < 2) return; this.setState({ mkText: '' });
-    db.make.begin({ kind: k, ...(k === 'video' ? { url: w } : k === 'paste' ? { text: w } : { topic: w }), opts: { deckId, folder } }); };
-  const upload = list => { this.setState({ mkOver: false }); if (mock || !list || !list.length) return; db.make.begin({ kind: 'file', opts: { deckId, folder } }); db.make.addFiles([...list]); };
-  const files = e => { const ty = e && e.dataTransfer && e.dataTransfer.types; return !!ty && [...ty].includes('Files'); };
-  const open = !!s.mkMore, close = () => this.setState({ mkMore: false });
+  // ---------- reading ----------
+  const TAGS = [['b', /^<(?:b|strong)>/i, /^<\/(?:b|strong)>/i], ['i', /^<(?:i|em)>/i, /^<\/(?:i|em)>/i], ['u', /^<u>/i, /^<\/u>/i],
+    ['s', /^<(?:s|del|strike)>/i, /^<\/(?:s|del|strike)>/i], ['h', /^<mark>/i, /^<\/mark>/i]];
+  // $x$ is math when the $ hugs the formula: "$5 and $6" stays money.
+  function mathEnd(s, i) {
+    if (!s[i + 1] || WS.test(s[i + 1]) || s[i + 1] === '$') return -1;
+    for (let j = i + 1; j < s.length; j++) {
+      if (s[j] === '\\') { j++; continue; }
+      if (s[j] === '$' && !WS.test(s[j - 1]) && !/\d/.test(s[j + 1] || '')) return j;
+    }
+    return -1;
+  }
+  function inline(s, cloze) {
+    const toks = [];
+    let buf = '';
+    const flush = () => { if (buf) toks.push({ k: 'x', v: buf }); buf = ''; };
+    for (let i = 0; i < s.length;) {
+      const c = s[i], two = s.substr(i, 2);
+      if (two === '\\(') { const j = s.indexOf('\\)', i + 2); if (j > i + 2) { flush(); toks.push({ k: 'm', v: s.slice(i + 2, j) }); i = j + 2; continue; } }
+      if (c === '\\' && i + 1 < s.length && PUNCT.test(s[i + 1])) { buf += s[i + 1]; i += 2; continue; }
+      if (c === '$') { const j = mathEnd(s, i); if (j > 0) { flush(); toks.push({ k: 'm', v: s.slice(i + 1, j).replace(/\\\$/g, '$') }); i = j + 1; continue; } }
+      if (c === '<') {
+        const rest = s.slice(i);
+        let hit = null;
+        for (const [m, o, cl] of TAGS) { const r = rest.match(o) || rest.match(cl); if (r) { hit = { m, role: o.test(r[0]) ? 'open' : 'close', raw: r[0] }; break; } }
+        if (hit) { flush(); toks.push({ k: 'd', ...hit }); i += hit.raw.length; continue; }
+      }
+      if (cloze && (two === '[[' || two === ']]')) { flush(); toks.push({ k: 'd', m: 'k', role: two === '[[' ? 'open' : 'close', raw: two }); i += 2; continue; }
+      const d = two === '**' ? 'b' : two === '~~' ? 's' : two === '==' ? 'h' : c === '*' ? 'i' : '';
+      if (d) { const n = d === 'i' ? 1 : 2; flush(); toks.push({ k: 'd', m: d, role: 'tog', raw: s.substr(i, n), pre: s[i - 1] || '', post: s[i + n] || '' }); i += n; continue; }
+      buf += c; i++;
+    }
+    flush();
+    // Pair each style's start with its end. A start with no end is just text ("5 * 3").
+    const open = {};
+    toks.forEach((t, n) => {
+      if (t.k !== 'd') return;
+      const o = open[t.m];
+      if (t.role === 'open') { if (o == null) open[t.m] = n; return; }
+      if (t.role === 'close') { if (o != null) { t.on = toks[o].on = true; open[t.m] = null; } return; }
+      if (o == null) { if (t.post && !WS.test(t.post)) open[t.m] = n; }
+      else if (t.pre && !WS.test(t.pre)) { t.on = toks[o].on = true; open[t.m] = null; }
+    });
+    const runs = [], on = new Set();
+    for (const t of toks) {
+      const m = [...on].join('');
+      if (t.k === 'x') runs.push({ t: t.v, m: norm(m) });
+      else if (t.k === 'm') runs.push({ t: t.v, m: norm(m + 'm') });
+      else if (!t.on) runs.push({ t: t.raw, m: norm(m) });
+      else if (on.has(t.m)) on.delete(t.m);
+      else on.add(t.m);
+    }
+    return tidy(runs);
+  }
+  const LEAD = [[/^#\s+/, 'h1'], [/^##\s+/, 'h2'], [/^###\s+/, 'h3'], [/^\s*[-*+]\s+/, 'li'], [/^\s*\d{1,3}[.)]\s+/, 'ol']];
+  function parse(md, cloze) {
+    return String(md == null ? '' : md).replace(/\r\n?/g, '\n').split('\n').map(line => {
+      for (const [re, kind] of LEAD) { const b = re.exec(line); if (b) return { kind, runs: inline(line.slice(b[0].length), !!cloze) }; }
+      return { kind: '', runs: inline(line, !!cloze) };
+    });
+  }
+
+  // ---------- writing ----------
+  const MD = { b: ['**', '**'], i: ['*', '*'], s: ['~~', '~~'], h: ['==', '=='], u: ['<u>', '</u>'], k: ['[[', ']]'] };
+  const TAG = { b: ['<b>', '</b>'], i: ['<i>', '</i>'], s: ['<s>', '</s>'], h: ['<mark>', '</mark>'], u: ['<u>', '</u>'], k: ['[[', ']]'] };
+  const escText = (t, safe) => {
+    const s = t.replace(/[\\*$]/g, '\\$&');
+    return safe ? s.replace(/[~=<[\]]/g, '\\$&') : s.replace(/~~/g, '\\~\\~').replace(/==/g, '\\=\\=').replace(/<(?=\/?(?:b|strong|i|em|u|s|del|strike|mark)>)/gi, '\\<');
+  };
+  const mathOut = (t, safe) => (!safe && /^[^\s$](?:[^$]*[^\s$])?$/.test(t) ? '$' + t + '$' : '\\(' + t + '\\)');
+  function writeLine(l, safe) {
+    // Open and close styles around the runs, closing only what has to close. A blank is always
+    // outermost, so a style changing inside it never splits it in two.
+    const ev = [];
+    let stack = [];
+    for (const r of l.runs) {
+      const has = [...r.m.replace('m', '')];
+      const want = [...has.filter(m => m === 'k'), ...stack.filter(m => m !== 'k' && has.includes(m)), ...has.filter(m => m !== 'k' && !stack.includes(m))];
+      let p = 0;
+      while (p < stack.length && p < want.length && stack[p] === want[p]) p++;
+      for (let q = stack.length - 1; q >= p; q--) ev.push({ close: stack[q] });
+      stack = stack.slice(0, p);
+      for (const m of want.slice(p)) { ev.push({ open: m }); stack.push(m); }
+      ev.push({ run: r });
+    }
+    for (let q = stack.length - 1; q >= 0; q--) ev.push({ close: stack[q] });
+    // A style that starts or ends on a space is written as a tag: "**x **" wouldn't read back.
+    const form = [], opens = [];
+    ev.forEach((e, n) => {
+      if (e.open) opens.push(n);
+      else if (e.close) {
+        const o = opens.pop(), txt = ev.slice(o + 1, n).filter(x => x.run).map(x => x.run.t).join('');
+        form[o] = form[n] = safe || /^\s|\s$/.test(txt) ? TAG : MD;
+      }
+    });
+    return ev.map((e, n) => (e.open ? form[n][e.open][0] : e.close ? form[n][e.close][1] : e.run.m.includes('m') ? mathOut(e.run.t, safe) : escText(e.run.t, safe))).join('');
+  }
+  const same = (a, b) => a.length === b.length && a.every((l, i) => (l.kind || '') === (b[i].kind || '') && JSON.stringify(tidy(l.runs)) === JSON.stringify(tidy(b[i].runs)));
+  // Text that only looks like a heading or a list ("# 1" or "1. ") gets a backslash so it stays text.
+  const plainStart = s => s.replace(/^(\s*)([-+]|#{1,3})(?=\s)/, (m, sp, x) => sp + '\\' + x).replace(/^(\s*\d{1,3})([.)])(?=\s)/, (m, d, x) => d + '\\' + x);
+  function write(lines, cloze) {
+    const go = safe => { let n = 0; return lines.map(l => { n = l.kind === 'ol' ? n + 1 : 0; const body = writeLine(l, safe); return l.kind ? prefix(l.kind, n) + body : plainStart(body); }).join('\n'); };
+    const md = go(false);
+    return same(parse(md, cloze), lines) ? md : go(true);
+  }
+  const prefix = (kind, n) => ({ h1: '# ', h2: '## ', h3: '### ', li: '- ', ol: n + '. ' })[kind] || '';
+
+  // ---------- plain text ----------
+  // Runs grouped into blanks and the text between them.
+  function groups(runs) {
+    const out = [];
+    for (const r of runs) {
+      const k = r.m.includes('k'), p = out[out.length - 1];
+      if (p && p.blank === k) { p.runs.push(r); p.text += r.t; } else out.push({ blank: k, runs: [r], text: r.t });
+    }
+    return out;
+  }
+  // o.blank replaces each blank (like "____"); o.join joins the lines (default a line break);
+  // o.math: 'show' writes formulas as they look (π r²) instead of as typed (\pi r^2).
+  const runText = (r, o) => (o.math === 'show' && r.m.includes('m') ? mathText(r.t) : r.t);
+  const plain = (md, o = {}) => parse(md, !!o.cloze).map(l => groups(l.runs).map(g => (g.blank && o.blank != null ? o.blank : g.runs.map(r => runText(r, o)).join(''))).join('')).join(o.join == null ? '\n' : o.join);
+  const blanks = (md, o = {}) => parse(md, true).flatMap(l => groups(l.runs).filter(g => g.blank).map(g => g.runs.map(r => runText(r, o)).join('')));
+  const plainLines = lines => { let n = 0; return lines.map(l => { n = l.kind === 'ol' ? n + 1 : 0; return prefix(l.kind, n) + l.runs.map(r => r.t).join(''); }).join('\n'); };
+
+  // ---------- showing ----------
+  // How each kind of line looks. Headings are sized from the text around them.
+  const LINE = { li: 'display: list-item; list-style: disc outside; margin-left: 1.15em;',
+    h1: 'font-size: 1.35em; font-weight: 700; line-height: 1.25; letter-spacing: -.02em;', h2: 'font-size: 1.18em; font-weight: 700; line-height: 1.3; letter-spacing: -.015em;',
+    h3: 'font-size: 1.05em; font-weight: 600; line-height: 1.35;' };
+  const lineCss = (kind, n) => (kind === 'ol' ? "display: list-item; list-style-type: '" + n + ". '; margin-left: 1.5em;" : LINE[kind] || '');
+  const numbered = lines => { let n = 0; return lines.map(l => (n = l.kind === 'ol' ? n + 1 : 0)); };
+  const MATH_FONT = "font-family: Georgia, 'Times New Roman', serif;";
+  const hl = o => (o.dark ? '#2F3D9A' : '#DCE0FD');
+  function css(m, o, edit) {
+    let s = '';
+    if (m.includes('b')) s += 'font-weight: 700; ';
+    if (m.includes('i')) s += 'font-style: italic; ';
+    const d = [m.includes('u') && 'underline', m.includes('s') && 'line-through'].filter(Boolean).join(' ');
+    if (d) s += 'text-decoration: ' + d + '; text-underline-offset: .15em; ';
+    if (m.includes('h')) s += 'background: ' + hl(o) + '; ';
+    if (m.includes('m') && edit) s += MATH_FONT + ' background: ' + (o.t ? o.t.surf2 : '#E8E8E8') + '; border-radius: 6px; padding: 0 4px; ';
+    return s.trim();
+  }
+  // Math reads like a formula on the card: x^2 → x², \frac{a}{b} → a⁄b, \alpha → α, <= → ≤.
+  const SYM = { alpha: 'α', beta: 'β', gamma: 'γ', delta: 'δ', epsilon: 'ε', varepsilon: 'ε', zeta: 'ζ', eta: 'η', theta: 'θ', vartheta: 'ϑ', iota: 'ι', kappa: 'κ', lambda: 'λ', mu: 'μ',
+    nu: 'ν', xi: 'ξ', pi: 'π', rho: 'ρ', sigma: 'σ', tau: 'τ', upsilon: 'υ', phi: 'φ', varphi: 'φ', chi: 'χ', psi: 'ψ', omega: 'ω', Gamma: 'Γ', Delta: 'Δ', Theta: 'Θ', Lambda: 'Λ',
+    Xi: 'Ξ', Pi: 'Π', Sigma: 'Σ', Upsilon: 'Υ', Phi: 'Φ', Psi: 'Ψ', Omega: 'Ω', times: '×', div: '÷', cdot: '·', pm: '±', mp: '∓', le: '≤', leq: '≤', ge: '≥', geq: '≥', ne: '≠',
+    neq: '≠', approx: '≈', equiv: '≡', sim: '∼', propto: '∝', infty: '∞', partial: '∂', nabla: '∇', sum: '∑', prod: '∏', int: '∫', oint: '∮', to: '→', rightarrow: '→', leftarrow: '←',
+    gets: '←', Rightarrow: '⇒', Leftarrow: '⇐', leftrightarrow: '↔', Leftrightarrow: '⇔', implies: '⇒', iff: '⇔', in: '∈', notin: '∉', ni: '∋', subset: '⊂', subseteq: '⊆',
+    supset: '⊃', supseteq: '⊇', cup: '∪', cap: '∩', emptyset: '∅', varnothing: '∅', forall: '∀', exists: '∃', neg: '¬', land: '∧', wedge: '∧', lor: '∨', vee: '∨', angle: '∠',
+    circ: '∘', degree: '°', perp: '⊥', parallel: '∥', ldots: '…', cdots: '⋯', dots: '…', prime: '′', hbar: 'ℏ', ell: 'ℓ', aleph: 'ℵ', langle: '⟨', rangle: '⟩', mid: '∣',
+    star: '⋆', oplus: '⊕', otimes: '⊗', quad: '\u2003', qquad: '\u2003\u2003', ',': '\u2009', ';': '\u2005', ':': '\u2005', ' ': ' ', '!': '', '{': '{', '}': '}', '%': '%',
+    $: '$', '#': '#', '&': '&', _: '_', '\\': '\\' };
+  const WORDS = ['sin', 'cos', 'tan', 'log', 'ln', 'exp', 'lim', 'min', 'max', 'det', 'sec', 'csc', 'cot', 'arcsin', 'arccos', 'arctan', 'sinh', 'cosh', 'tanh', 'gcd', 'mod'];
+  const ASCII = { '<=': '≤', '>=': '≥', '!=': '≠', '->': '→', '<-': '←', '=>': '⇒', '+-': '±' };
+  function mathBits(s, pos, over, out) {
+    for (let i = 0; i < s.length;) {
+      const arg = () => {
+        while (s[i] === ' ') i++;
+        if (s[i] === '{') { let d = 1, j = i + 1; for (; j < s.length && d; j++) d += s[j] === '{' ? 1 : s[j] === '}' ? -1 : 0; const r = s.slice(i + 1, d ? j : j - 1); i = j; return r; }
+        if (s[i] === '\\') { const m = /^\\([A-Za-z]+|.)/.exec(s.slice(i)); i += m ? m[0].length : 1; return m ? m[0] : ''; }
+        return s[i++] || '';
+      };
+      const c = s[i];
+      if (c === '^' || c === '_') { i++; mathBits(arg(), pos || (c === '^' ? 'sup' : 'sub'), over, out); continue; }
+      if (c === '{' || c === '}') { i++; continue; }
+      if (c === '\\') {
+        const m = /^\\([A-Za-z]+|.)/.exec(s.slice(i)) || ['\\', ''];
+        i += m[0].length;
+        const n = m[1];
+        if (n === 'sqrt') { out.push({ t: '√', pos, over }); mathBits(arg(), pos, true, out); continue; }
+        if (n === 'frac') { const a = arg(), b = arg(); mathBits(a, pos || 'sup', over, out); out.push({ t: '⁄', pos, over }); mathBits(b, pos || 'sub', over, out); continue; }
+        if (/^(text|mathrm|textrm|operatorname)$/.test(n)) { out.push({ t: arg(), pos, over }); continue; }
+        if (/^(mathbf|textbf|boldsymbol)$/.test(n)) { const from = out.length; mathBits(arg(), pos, over, out); for (let q = from; q < out.length; q++) out[q].bold = true; continue; }
+        if (/^(left|right|displaystyle|big|Big)$/.test(n)) continue;
+        if (n in SYM) { out.push({ t: SYM[n], pos, over }); continue; }
+        if (WORDS.includes(n)) { out.push({ t: n, pos, over }); continue; }
+        out.push({ t: '\\' + n, pos, over });
+        continue;
+      }
+      const two = s.substr(i, 2);
+      if (ASCII[two]) { out.push({ t: ASCII[two], pos, over }); i += 2; continue; }
+      if (c === '*') { out.push({ t: '×', pos, over }); i++; continue; }
+      if (c === '-') { out.push({ t: '−', pos, over }); i++; continue; }
+      out.push({ t: c, pos, over, it: /[A-Za-z]/.test(c) });
+      i++;
+    }
+    return out;
+  }
+  // A formula as plain text, with ² and ₂ where there are such letters.
+  const SUP = { 0: '⁰', 1: '¹', 2: '²', 3: '³', 4: '⁴', 5: '⁵', 6: '⁶', 7: '⁷', 8: '⁸', 9: '⁹', '+': '⁺', '−': '⁻', '=': '⁼', '(': '⁽', ')': '⁾', n: 'ⁿ', i: 'ⁱ' };
+  const SUB = { 0: '₀', 1: '₁', 2: '₂', 3: '₃', 4: '₄', 5: '₅', 6: '₆', 7: '₇', 8: '₈', 9: '₉', '+': '₊', '−': '₋', '=': '₌', '(': '₍', ')': '₎' };
+  function mathText(src) {
+    const parts = [];
+    for (const x of mathBits(src, '', false, [])) { const p = parts[parts.length - 1]; if (p && p.pos === x.pos) p.t += x.t; else parts.push({ pos: x.pos, t: x.t }); }
+    return parts.map(x => {
+      if (!x.pos) return x.t;
+      const map = x.pos === 'sup' ? SUP : SUB;
+      if ([...x.t].every(c => map[c])) return [...x.t].map(c => map[c]).join('');
+      return (x.pos === 'sup' ? '^' : '_') + (x.t.length > 1 ? '(' + x.t + ')' : x.t);
+    }).join('');
+  }
+  function mathItems(src, base) {
+    const items = [];
+    for (const x of mathBits(src, '', false, [])) {
+      if (!x.t) continue;
+      const c = [base, MATH_FONT, x.it ? 'font-style: italic;' : '', x.bold ? 'font-weight: 700;' : '',
+        x.pos === 'sup' ? 'font-size: .7em; vertical-align: super; line-height: 0;' : x.pos === 'sub' ? 'font-size: .7em; vertical-align: sub; line-height: 0;' : '',
+        x.over ? 'text-decoration: overline;' : ''].filter(Boolean).join(' ');
+      const p = items[items.length - 1];
+      if (p && p.css === c) p.t += x.t; else items.push({ plain: true, blank: false, t: x.t, css: c, runs: [] });
+    }
+    return items;
+  }
+  const showRun = (r, o) => (r.m.includes('m') ? mathItems(r.t, css(r.m.replace('m', ''), o)) : [{ plain: true, blank: false, t: r.t, css: css(r.m, o), runs: [] }]);
+  // Lines for a card. Fill-in-the-blank: o.ask is the blank being asked (-1 for all of them) and
+  // o.hide hides it; the other blanks read as normal text.
+  function view(md, o = {}) {
+    let n = -1;
+    const lines = parse(md, !!o.cloze), nums = numbered(lines);
+    return lines.map((l, li) => {
+      const items = [];
+      for (const g of groups(l.runs)) {
+        const inner = g.runs.flatMap(r => showRun({ t: r.t, m: r.m.replace('k', '') }, o));
+        if (!g.blank) { items.push(...inner); continue; }
+        n++;
+        if (o.ask != null && o.ask >= 0 && o.ask !== n) { items.push(...inner); continue; }
+        items.push({ plain: false, blank: true, t: '', css: '', runs: o.hide ? [{ plain: true, blank: false, t: '\u2003\u2003\u2003\u2003', css: '', runs: [] }] : inner });
+      }
+      if (!items.length) items.push({ plain: true, blank: false, t: '\u200b', css: '', runs: [] });
+      return { css: lineCss(l.kind, nums[li]), items };
+    });
+  }
+  // Lines for the editor: blanks as pills and math as its formula, so every letter can be edited.
+  const editView = (md, o = {}) => { const lines = parse(md, !!o.cloze), nums = numbered(lines); return lines.map((l, li) => {
+    const items = groups(l.runs).flatMap(g => (g.blank
+      ? [{ plain: false, blank: true, t: '', css: '', edge: '1', runs: g.runs.map(r => ({ t: r.t, css: css(r.m.replace('k', ''), o, true) })) }]
+      : g.runs.map(r => ({ plain: true, blank: false, t: r.t, css: css(r.m, o, true), edge: r.m.includes('m') ? '1' : '', runs: [] }))));
+    return { css: lineCss(l.kind, nums[li]), items, empty: !items.length };
+  }); };
+
+  // ---------- editing ----------
+  // A position counts characters, with one for each line break.
+  const lineLen = l => l.runs.reduce((n, r) => n + r.t.length, 0);
+  const size = lines => lines.reduce((n, l) => n + lineLen(l), 0) + lines.length - 1;
+  const text = lines => lines.map(l => l.runs.map(r => r.t).join('')).join('\n');
+  function at(lines, pos) {
+    let i = 0;
+    while (i < lines.length - 1 && pos > lineLen(lines[i])) { pos -= lineLen(lines[i]) + 1; i++; }
+    return [i, Math.max(0, Math.min(pos, lineLen(lines[i])))];
+  }
+  const posOf = (lines, i, col) => lines.slice(0, i).reduce((n, l) => n + lineLen(l) + 1, 0) + col;
+  const lineAt = (lines, pos) => lines[at(lines, pos)[0]];
+  function cut(runs, col) {
+    const a = [], b = [];
+    let n = 0;
+    for (const r of runs) {
+      const L = r.t.length;
+      if (n + L <= col) a.push(r);
+      else if (n >= col) b.push(r);
+      else { a.push({ t: r.t.slice(0, col - n), m: r.m }); b.push({ t: r.t.slice(col - n), m: r.m }); }
+      n += L;
+    }
+    return [a, b];
+  }
+  function markAt(l, col) {
+    let n = 0;
+    for (const r of l.runs) { if (col < n + r.t.length) return r.m; n += r.t.length; }
+    return null;
+  }
+  // Text to put in: one line per line break, all with the marks m. New lines take kind (bullets and numbers carry on; headings don't).
+  const carry = kind => (kind === 'li' || kind === 'ol' ? kind : '');
+  const frag = (t, m, kind) => String(t).split('\n').map((x, n) => ({ kind: n ? carry(kind) : undefined, runs: x ? [{ t: x, m: norm(m || '') }] : [] }));
+  function replace(lines, a, b, part) {
+    const [i, c] = at(lines, a), [j, d] = at(lines, b);
+    const head = cut(lines[i].runs, c)[0], tail = cut(lines[j].runs, d)[1];
+    const out = part.map((l, n) => ({ kind: n ? l.kind || '' : lines[i].kind, runs: n ? l.runs.slice() : [...head, ...l.runs] }));
+    const last = out[out.length - 1];
+    last.runs = [...last.runs, ...tail];
+    out.forEach(l => { l.runs = tidy(l.runs); });
+    return [...lines.slice(0, i), ...out, ...lines.slice(j + 1)];
+  }
+  function slice(lines, a, b) {
+    const [i, c] = at(lines, a), [j, d] = at(lines, b);
+    return lines.slice(i, j + 1).map((l, n) => {
+      let runs = l.runs;
+      if (n + i === j) runs = cut(runs, d)[0];
+      if (n === 0) runs = cut(runs, c)[1];
+      return { kind: l.kind, runs: tidy(runs) };
+    });
+  }
+  function eachIn(lines, a, b, fn) {
+    const [i, c] = at(lines, a), [j, d] = at(lines, b);
+    return lines.map((l, n) => {
+      if (n < i || n > j) return l;
+      const s = n === i ? c : 0, e = n === j ? d : lineLen(l), [x, rest] = cut(l.runs, s), [y, z] = cut(rest, e - s);
+      return { kind: l.kind, runs: tidy([...x, ...y.map(fn), ...z]) };
+    });
+  }
+  const setMark = (lines, a, b, mark, on) => eachIn(lines, a, b, r => ({ t: r.t, m: norm(on ? r.m + mark : r.m.replace(mark, '')) }));
+  // The marks every character in the range has.
+  function marksIn(lines, a, b) {
+    let common = null;
+    eachIn(lines, a, b, r => { common = common == null ? r.m : [...common].filter(c => r.m.includes(c)).join(''); return r; });
+    return common || '';
+  }
+  // The marks new letters get: the letter before's (blanks and math only carry on inside them).
+  function typingMarks(lines, a, b) {
+    const [i, c] = at(lines, a), l = lines[i];
+    if (a !== b) return markAt(l, c) || '';
+    const before = c > 0 ? markAt(l, c - 1) : null, after = markAt(l, c), base = before != null ? before : after || '';
+    return [...base].filter(ch => !'km'.includes(ch) || ((before || '').includes(ch) && (after || '').includes(ch))).join('');
+  }
+  function wordAt(lines, pos) {
+    const [i, c] = at(lines, pos), t = lines[i].runs.map(r => r.t).join('');
+    if (!(c > 0 && c < t.length && WORD.test(t[c - 1]) && WORD.test(t[c]))) return null;
+    let s = c, e = c;
+    while (s > 0 && WORD.test(t[s - 1])) s--;
+    while (e < t.length && WORD.test(t[e])) e++;
+    const base = posOf(lines, i, 0);
+    return [base + s, base + e];
+  }
+  const allKind = (lines, a, b, kind) => { const [i] = at(lines, a), [j] = at(lines, b); return lines.slice(i, j + 1).every(l => l.kind === kind); };
+  const setKind = (lines, a, b, kind) => { const [i] = at(lines, a), [j] = at(lines, b); return lines.map((l, n) => (n >= i && n <= j ? { kind, runs: l.runs } : l)); };
+  // Shortcuts like a notes app. At the start of a line: "# " heading (## and ### smaller), "- " bullet, "1. " numbers.
+  const LINE_KEYS = [[/^#$/, 'h1'], [/^##$/, 'h2'], [/^###$/, 'h3'], [/^[-*+]$/, 'li'], [/^\d{1,3}[.)]$/, 'ol']];
+  function lineRule(lines, caret) {
+    const [i, c] = at(lines, caret), l = lines[i], t = l.runs.map(r => r.t).join('');
+    if (t[c - 1] !== ' ') return { lines, caret };
+    const hit = LINE_KEYS.find(([re]) => re.test(t.slice(0, c - 1)));
+    if (!hit) return { lines, caret };
+    const base = posOf(lines, i, 0), out = replace(lines, base, base + c, [{ runs: [] }]);
+    out[i] = { kind: hit[1], runs: out[i].runs };
+    return { lines: out, caret: caret - c };
+  }
+  // And as you type: **bold**, *italic* or _italic_, ~~strikethrough~~ or ~strikethrough~, ==highlight==, $math$.
+  const INLINE_KEYS = [[/\*\*([^*\s](?:[^*]*[^*\s])?)\*\*$/, 'b', 2], [/(?:^|[^*\w])\*([^*\s](?:[^*]*[^*\s])?)\*$/, 'i', 1], [/(?:^|[^_\w])_([^_\s](?:[^_]*[^_\s])?)_$/, 'i', 1],
+    [/~~([^~\s](?:[^~]*[^~\s])?)~~$/, 's', 2], [/(?:^|[^~])~([^~\s](?:[^~]*[^~\s])?)~$/, 's', 1], [/==([^=\s](?:[^=]*[^=\s])?)==$/, 'h', 2], [/(?:^|[^$\w\\])\$([^$\s](?:[^$]*[^$\s])?)\$$/, 'm', 1]];
+  function inlineRule(lines, caret) {
+    const [i, c] = at(lines, caret), l = lines[i], t = l.runs.map(r => r.t).join('').slice(0, c);
+    for (const [re, mark, n] of INLINE_KEYS) {
+      const hit = re.exec(t);
+      if (!hit) continue;
+      const w = hit[1].length, s = c - 2 * n - w;
+      if ((markAt(l, s) || '').includes('m') || (markAt(l, c - 1) || '').includes('m')) continue;
+      const base = posOf(lines, i, 0);
+      let out = replace(lines, base + c - n, base + c, [{ runs: [] }]);
+      out = replace(out, base + s, base + s + n, [{ runs: [] }]);
+      return { lines: setMark(out, base + s, base + s + w, mark, true), caret: caret - 2 * n, done: mark };
+    }
+    return { lines, caret };
+  }
+  // On fill-in-the-blank cards, typing [[words]] makes a blank.
+  function autoBlank(lines, caret) {
+    for (let i = 0; i < lines.length; i++) {
+      for (let guard = 0; guard < 20; guard++) {
+        const l = lines[i], t = l.runs.map(r => r.t).join(''), m = /\[\[([^[\]]+?)\]\]/.exec(t);
+        if (!m || (markAt(l, m.index) || '').includes('k')) break;
+        const s = posOf(lines, i, m.index), e = s + m[0].length;
+        lines = replace(lines, e - 2, e, [{ runs: [] }]);
+        lines = replace(lines, s, s + 2, [{ runs: [] }]);
+        lines = setMark(lines, s, e - 4, 'k', true);
+        caret = caret >= e ? caret - 4 : caret > s ? Math.max(s, caret - 2) : caret;
+      }
+    }
+    return { lines, caret };
+  }
+  // One letter before or after a position (whole emoji and accents), or the word next to it.
+  const seg = typeof Intl !== 'undefined' && Intl.Segmenter ? new Intl.Segmenter() : null;
+  function prevChar(t, pos) {
+    if (pos <= 0) return 0;
+    if (seg) { let last = 0; for (const x of seg.segment(t.slice(0, pos))) last = x.index; return last; }
+    const lo = t.charCodeAt(pos - 1);
+    return pos - (lo >= 0xdc00 && lo <= 0xdfff && pos > 1 ? 2 : 1);
+  }
+  function nextChar(t, pos) {
+    if (pos >= t.length) return t.length;
+    if (seg) { const it = seg.segment(t.slice(pos))[Symbol.iterator]().next(); return pos + (it.done ? 1 : it.value.segment.length); }
+    const hi = t.charCodeAt(pos);
+    return pos + (hi >= 0xd800 && hi <= 0xdbff ? 2 : 1);
+  }
+  function wordStart(t, pos) {
+    let p = pos;
+    while (p > 0 && t[p - 1] !== '\n' && WS.test(t[p - 1])) p--;
+    if (p > 0 && WORD.test(t[p - 1])) { while (p > 0 && WORD.test(t[p - 1])) p--; } else if (p > 0) p--;
+    return p;
+  }
+  function wordEnd(t, pos) {
+    let p = pos;
+    while (p < t.length && t[p] !== '\n' && WS.test(t[p])) p++;
+    if (p < t.length && WORD.test(t[p])) { while (p < t.length && WORD.test(t[p])) p++; } else if (p < t.length) p++;
+    return p;
+  }
+
+  // ---------- copy and paste ----------
+  const escHtml = s => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  function toHtml(lines) {
+    const WRAP = { b: 'b', i: 'i', u: 'u', s: 's', h: 'mark' };
+    const run = r => {
+      let h = escHtml(r.t);
+      for (const m of [...r.m].reverse()) h = m === 'm' ? '<span data-sc="m">' + h + '</span>' : m === 'k' ? '<span data-sc="k">' + h + '</span>' : '<' + WRAP[m] + '>' + h + '</' + WRAP[m] + '>';
+      return h;
+    };
+    let out = '', list = '';
+    for (const l of lines) {
+      const body = l.runs.map(run).join('') || '<br>', want = l.kind === 'li' ? 'ul' : l.kind === 'ol' ? 'ol' : '';
+      if (list !== want) { out += (list ? '</' + list + '>' : '') + (want ? '<' + want + '>' : ''); list = want; }
+      out += want ? '<li>' + body + '</li>' : /^h[123]$/.test(l.kind) ? '<' + l.kind + '>' + body + '</' + l.kind + '>' : '<div>' + body + '</div>';
+    }
+    return out + (list ? '</' + list + '>' : '');
+  }
+  // A background that marks words: not white, and not see-through (rgba with alpha 0).
+  const isHl = c => !!c && !/transparent|inherit|initial|none/.test(c) && !/^(#fff(fff)?|white)$/i.test(c.trim()) && !/^rgba?\(\s*255\s*,\s*255\s*,\s*255/.test(c)
+    && !/^rgba\([^,]+,[^,]+,[^,]+,\s*0(\.0+)?\s*\)$/.test(c.trim());
+  // Pasted or imported HTML (web pages, Google Docs, Anki) turned into card text. Keeps the styles cards have.
+  function fromHtml(html, cloze) {
+    if (typeof DOMParser === 'undefined') return String(html).replace(/<br\s*\/?>/gi, '\n').replace(/<[^>]+>/g, '').replace(/&nbsp;/g, ' ').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&');
+    const doc = new DOMParser().parseFromString(String(html), 'text/html');
+    const lines = [{ kind: '', runs: [] }];
+    const cur = () => lines[lines.length - 1];
+    const next = kind => { if (cur().runs.length) lines.push({ kind, runs: [] }); else cur().kind = kind; };
+    const BLOCK = /^(P|DIV|H[1-6]|LI|UL|OL|BLOCKQUOTE|PRE|TR|TABLE|SECTION|ARTICLE|HEADER|FOOTER)$/;
+    const kindOf = node => (node.tagName === 'LI' ? (node.parentElement && node.parentElement.tagName === 'OL' ? 'ol' : 'li') : /^H[123]$/.test(node.tagName) ? node.tagName.toLowerCase() : '');
+    const walk = (node, m) => {
+      if (node.nodeType === 3) { const t = node.nodeValue.replace(/\s+/g, ' '); if (t) cur().runs.push({ t, m: norm(m) }); return; }
+      if (node.nodeType !== 1 || /^(SCRIPT|STYLE|HEAD|TITLE|META|TEMPLATE)$/.test(node.tagName)) return;
+      const tag = node.tagName, st = node.style || {}, fw = st.fontWeight || '';
+      if (tag === 'BR') { lines.push({ kind: '', runs: [] }); return; }
+      let mm = m;
+      if (fw) mm = fw === 'bold' || fw === 'bolder' || +fw >= 600 ? mm + 'b' : mm.replace('b', '');
+      else if (/^(B|STRONG)$/.test(tag)) mm += 'b';
+      if (st.fontStyle) mm = st.fontStyle === 'italic' || st.fontStyle === 'oblique' ? mm + 'i' : mm.replace('i', '');
+      else if (/^(I|EM)$/.test(tag)) mm += 'i';
+      const dec = (st.textDecoration || '') + ' ' + (st.textDecorationLine || '');
+      if (tag === 'U' || /underline/.test(dec)) mm += 'u';
+      if (/^(S|DEL|STRIKE)$/.test(tag) || /line-through/.test(dec)) mm += 's';
+      if (tag === 'MARK' || (tag !== 'BODY' && !BLOCK.test(tag) && isHl(st.backgroundColor))) mm += 'h';
+      const sc = node.getAttribute('data-sc');
+      if (sc === 'm') mm += 'm';
+      if (sc === 'k' && cloze) mm += 'k';
+      const block = BLOCK.test(tag);
+      if (block) next(kindOf(node));
+      node.childNodes.forEach(ch => walk(ch, mm));
+      if (block) next('');
+    };
+    walk(doc.body, '');
+    // Spaces at the edges of lines go, and so do empty lines at the start and end.
+    for (const l of lines) {
+      l.runs = tidy(l.runs);
+      if (l.runs[0]) l.runs[0].t = l.runs[0].t.replace(/^\s+/, '');
+      const z = l.runs[l.runs.length - 1];
+      if (z) z.t = z.t.replace(/\s+$/, '');
+      l.runs = tidy(l.runs);
+    }
+    while (lines.length > 1 && !lines[0].runs.length) lines.shift();
+    while (lines.length > 1 && !lines[lines.length - 1].runs.length) lines.pop();
+    return write(lines, cloze);
+  }
+  const looksHtml = s => /<\/?(b|strong|i|em|u|s|del|strike|mark|br|div|p|span|ul|ol|li|sub|sup|font)\b[^>]*>|&(nbsp|amp|lt|gt|quot|#\d+);/i.test(String(s || ''));
+
+  // ---------- the editor's DOM ----------
+  // The editor draws each line as a <div> of spans (an empty line holds a <br>). Pills and math are marked data-edge="1".
+  function domPos(root, node, off) {
+    const lines = [...root.children];
+    if (node === root) {
+      let n = 0;
+      for (let i = 0; i < Math.min(off, lines.length); i++) n += lines[i].textContent.length + 1;
+      return Math.max(0, off >= lines.length ? n - 1 : n);
+    }
+    let ln = node;
+    while (ln && ln.parentNode !== root) ln = ln.parentNode;
+    if (!ln) return 0;
+    let n = 0;
+    for (const l of lines) { if (l === ln) break; n += l.textContent.length + 1; }
+    const r = document.createRange();
+    try { r.setStart(ln, 0); r.setEnd(node, off); } catch (e) { return n; }
+    return n + r.toString().length;
+  }
+  function inLine(ln, col) {
+    const ts = [], w = document.createTreeWalker(ln, NodeFilter.SHOW_TEXT);
+    for (let t = w.nextNode(); t; t = w.nextNode()) ts.push(t);
+    if (!ts.length) return [ln, 0];
+    const edge = t => t.parentElement && t.parentElement.closest('[data-edge="1"]');
+    const spot = (e, d) => [e.parentNode, [...e.parentNode.childNodes].indexOf(e) + d];
+    for (let n = 0; n < ts.length; n++) {
+      const t = ts[n], L = t.nodeValue.length, e = edge(t);
+      if (n === 0 && col === 0 && e) return spot(e, 0);
+      if (col < L) return [t, col];
+      if (col === L) return !e || (ts[n + 1] && edge(ts[n + 1]) === e) ? [t, L] : spot(e, 1);
+      col -= L;
+    }
+    const t = ts[ts.length - 1];
+    return [t, t.nodeValue.length];
+  }
+  function point(root, pos) {
+    const lines = [...root.children];
+    for (let i = 0; i < lines.length; i++) {
+      const L = lines[i].textContent.length;
+      if (pos <= L || i === lines.length - 1) return inLine(lines[i], Math.max(0, Math.min(pos, L)));
+      pos -= L + 1;
+    }
+    return [root, 0];
+  }
+  function setSel(root, a, b) {
+    const s = document.getSelection(), [n1, o1] = point(root, a), [n2, o2] = point(root, b == null ? a : b);
+    try { s.setBaseAndExtent(n1, o1, n2, o2); } catch (e) { /* the field was redrawn meanwhile */ }
+  }
+
+  return { parse, write, plain, mathText, blanks, plainLines, view, editView, groups, lineLen, size, text, at, posOf, lineAt, frag, carry, replace, slice, setMark, marksIn,
+    typingMarks, wordAt, allKind, setKind, lineRule, inlineRule, autoBlank, prevChar, nextChar, wordStart, wordEnd, toHtml, fromHtml, looksHtml, domPos, pointAt: point, setSel };
+})()); }
+
+constructor(props) { super(props); this.state = {}; }
+renderVals() {
+  const t = this.theme(!!this.props.dark, !!this.props.dim);const db = this.props.db || this.mock(); const chrome = db.chrome();
+  const s = this.state, decks = db.decks();
+  // (The canvas's states: what was pasted or picked, the deck chosen, Import on its way, and the line when it didn't go.)
+  const ST = db.mock ? (["Deck chosen","Empty","Pasted","A file picked","No cards","Importing","Error"].includes(this.props.state) ? this.props.state : 'Deck chosen') : '', chosen = ['Deck chosen', 'Importing', 'Error'].includes(ST);
+  const sample = { Empty: '', 'A file picked': "#separator:tab\n#html:false\nWhat organelle makes most of the cell’s ATP?\tThe mitochondria\nWhat do ribosomes do?\tThey build proteins\nWhich organelle packages and ships proteins?\tThe Golgi apparatus\nWhat surrounds and protects a cell?\tThe plasma membrane\nWhat do lysosomes do?\tBreak down waste\nWhere does photosynthesis happen?\tIn the chloroplasts\nWhat does rough ER have that smooth ER lacks?\tRibosomes\nWhere is DNA kept?\tIn the nucleus\nWhat is the cytoplasm?\tThe gel that fills the cell\nWhat do mitochondria have of their own?\tTheir own DNA\nWhat is the cytoskeleton?\tA network of protein fibers\nWhat do vacuoles store?\tWater, food and waste", 'No cards': 'Notes from Tuesday’s class' }[ST];
+  const text = s.text ?? (db.mock ? sample ?? 'でんしゃ\ttrain\nねこ\tcat\nみず\twater' : '');
+  const splitAt = (l, seps) => { const out = []; let cur = '', q = false, start = true;
+    for (let i = 0; i < l.length; i++) { const ch = l[i];
+      if (q) { if (ch !== '"') cur += ch; else if (l[i + 1] === '"') { cur += '"'; i++; } else q = false; }
+      else if (ch === '"' && start) { q = true; start = false; }
+      else if (seps.includes(ch)) { out.push(cur); cur = ''; start = true; }
+      else { cur += ch; start = false; } }
+    out.push(cur); return out; };
+  const cells = (l, sep) => sep ? splitAt(l, sep) : l.includes('\t') ? l.split('\t') : l.includes(' - ') ? l.split(' - ') : splitAt(l, ',;');
+  const R = this.rich(), cell = x => (R.looksHtml(x) ? R.fromHtml(x) : x.trim());
+  const toCard = ([front, ...rest]) => {
+    const back = rest.filter(Boolean).join(', ');
+    return /\{\{c\d+::/.test(front) ? { kind: 'cloze', text: front.replace(/\{\{c\d+::([\s\S]+?)(?:::[^}]*)?\}\}/g, '[[$1]]'), note: back } : { front, back };
+  };
+  const readCards = (text, name) => {
+    const lines = String(text || '').split(/\r?\n/), head = {};
+    for (const l of lines) { const m = /^#([a-z ]+):(.*)$/i.exec(l.trim()); if (m) head[m[1].toLowerCase()] = m[2].trim(); }
+    const sep = { tab: '\t', comma: ',', semicolon: ';', pipe: '|', colon: ':', space: ' ' }[String(head.separator || '').toLowerCase()] || '';
+    const col = k => (parseInt(head[k + ' column'], 10) || 0) - 1, deckCol = col('deck');
+    const skip = new Set([deckCol, col('notetype'), col('tags'), col('guid')].filter(i => i >= 0));
+    const decks = new Map();
+    for (const l of lines) {
+      if (!l.trim() || l.trim().startsWith('#')) continue;
+      const cs = cells(sep === '\t' ? l : l.trim(), sep), card = toCard(cs.filter((x, i) => !skip.has(i)).map(cell));
+      if (card.kind === 'cloze' ? !R.blanks(card.text).length : !(card.front && card.back)) continue;
+      const deck = (deckCol >= 0 && String(cs[deckCol] || '').split('::').pop().trim()) || name;
+      if (!decks.has(deck)) decks.set(deck, []);
+      decks.get(deck).push(card);
+    }
+    return [...decks];
+  };
+  const cards = readCards(text, '').flatMap(([, cs]) => cs);
+  const here = db.mock ? (chosen ? { name: 'Japanese · JLPT N4' } : null) : this.props.deckId ? db.deck(this.props.deckId) : null;
+  const deckName = s.deck ?? (here ? here.name : '');
+  const plural = (n, w) => n + ' ' + w + (n === 1 ? '' : 's');
   return {
-    text, off: ready ? 'false' : 'true', goBg: ready ? t.inv : t.surf2, goFg: ready ? t.invText : t.muted,
-    set: e => { const v = e && e.target ? e.target.value : '', how = e && (e.inputType || (e.nativeEvent && e.nativeEvent.inputType));
-      if (how === 'insertFromPaste' && kindOf(v) !== 'topic') return begin(v);
-      this.setState({ mkText: v }); },
-    key: e => { if (!e || e.key !== 'Enter' || e.shiftKey || e.isComposing || (e.nativeEvent && e.nativeEvent.isComposing)) return; if (e.preventDefault) e.preventDefault(); begin(e.target && typeof e.target.value === 'string' ? e.target.value : text); },
-    go: () => begin(text),
-    uploadHref: href('file'), fileHref: href('file'), pasteHref: href('paste'), videoHref: href('video'), photoHref: href('photo'), recordHref: href('record'), topicHref: href('topic'),
-    importHref: mock ? board + 'Import.dc.html' : db.href('import', deckId), newDeckHref: mock ? board + 'NewDeck.dc.html' : db.href('newDeck'), newDeck,
-    more: { open, expanded: open ? 'true' : 'false', toggle: () => this.setState({ mkMore: !open }), close },
-    // A file over the page rings the box; dropped, it goes to Upload.
-    ring: s.mkOver ? 'inset 0 0 0 2px ' + t.text : 'none',
-    over: e => { if (!files(e)) return; e.preventDefault(); if (!s.mkOver) this.setState({ mkOver: true }); },
-    leave: e => { const el = e && e.target && e.target.closest ? e.target.closest('[data-make-drop]') || e.target : null, r = el && el.getBoundingClientRect ? el.getBoundingClientRect() : null;
-      if (s.mkOver && (!r || e.clientX <= r.left || e.clientX >= r.right || e.clientY <= r.top || e.clientY >= r.bottom)) this.setState({ mkOver: false }); },
-    drop: e => { if (!files(e)) return; e.preventDefault(); upload(e.dataTransfer.files); }
+    t, ...chrome, dark: !!this.props.dark, dim: !!this.props.dim, text, deckName,
+    setText: e => this.setState({ text: e && e.target ? e.target.value : '' }), setDeck: e => this.setState({ deck: e && e.target ? e.target.value : '' }),
+    pickText: () => db.act.pickText().then(txt => txt != null && this.setState({ text: txt })),
+    foundLine: cards.length ? plural(cards.length, 'card') + ' found' : text.trim() ? 'No cards yet. Put the front and back on one line, split by a tab or comma.' : '',
+    deckChips: decks.slice(0, 6).map(d => { const on = d.name === deckName; return { name: d.name, pressed: on ? 'true' : 'false', bg: on ? t.inv : t.surf, fg: on ? t.invText : t.text, pick: () => this.setState({ deck: d.name }) }; }),
+    importLabel: ST === 'Importing' ? 'Importing…' : cards.length ? 'Import ' + plural(cards.length, 'card') : 'Import cards', importBg: cards.length ? t.inv : t.surf2, importFg: cards.length ? t.invText : t.muted,
+    backHref: db.mock ? 'PhoneLibrary.dc.html' : here && !db.mock ? here.href : db.href('decks'),
+    hasError: ST === 'Error', errorLine: 'Couldn’t reach Lucida. Check your connection and try again.',
+    // Into the deck with that name (this deck first), or a new deck when no deck has it.
+    doImport: e => { if (db.mock) return; e.preventDefault(); if (!cards.length) return;
+      const name = deckName.trim() || 'Imported cards', same = here && here.id && here.name === name ? here : decks.find(d => d.name.trim().toLowerCase() === name.toLowerCase());
+      db.act.importCards({ deckId: same ? same.id : '', deckName: name, cards }); }
   };
 }
-// What's due, for the due line: how many cards, about how long, and the review of every deck.
-dueLine(db, board = 'Web') {
-  const td = db.today(), n = td.due || 0;
-  return { show: n > 0, count: n + (n === 1 ? ' card' : ' cards') + ' due', time: 'About ' + Math.max(1, td.minutes || 1) + ' min', href: db.mock ? board + 'Review.dc.html' : td.studyHref };
-}
-renderVals() { const t = this.theme(!!this.props.dark, !!this.props.dim);const db = this.props.db || this.mock(); const chrome = db.chrome();
-  // The Library with no decks yet still has its switch, so Classes are there before the first deck (web/classes.mjs).
-  const modes = [['Decks', 'PhoneLibrary', '/library'], ['All cards', 'PhoneLibraryCards', '/library/cards'], ['Classes', 'PhoneClasses', '/library/classes']]
-    .map(([label, b, href], i) => ({ label, href: db.mock ? b + '.dc.html' : href, current: !i ? 'page' : 'false', bg: !i ? t.bg : 'transparent', fg: !i ? t.text : t.muted, sh: !i ? '0 1px 3px rgba(0,0,0,.14)' : 'none' }));
-  // On the canvas these boards show a brand-new account, so there is no news yet.
-  const dk = db.mock ? { id: '', name: 'Pharmacology', seed: 'Pharmacology', cover: { style: null, round: 0, image: null } } : (db.deck(this.props.deckId) || { id: '', name: '', seed: '', cover: {} });
-  // A new deck's picture shows on its empty page too, with white words over it.
-  const pic = dk.cover.image || '', photo = pic !== 'mock' ? pic : '';
-  // With a theme on (Pro), the theme draws the cover, and letters the deck's name.
-  const S = this.skin(db), C = S && !pic && dk.name ? S.coverOf({ ...dk, round: dk.cover.round }, 'head', 34) : null;
-  const DAYS7 = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'], MON3 = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-  const todayAt = db.mock ? new Date(2026, 8, 28).getTime() : new Date(new Date().getFullYear(), new Date().getMonth(), new Date().getDate()).getTime();
-  const addDays = n => { const d = new Date(todayAt); return new Date(d.getFullYear(), d.getMonth(), d.getDate() + n).getTime(); };
-  const dateAt = v => { const x = String(v || '').split('-').map(Number); return new Date(x[0] || 2026, (x[1] || 1) - 1, x[2] || 1).getTime(); };
-  const isoDay = at => { const d = new Date(at); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); };
-  const dayWord = v => { const at = dateAt(v), n = Math.round((at - todayAt) / 86400000), d = new Date(at);
-    return n === 0 ? 'today' : n === 1 ? 'tomorrow' : n === -1 ? 'yesterday' : Math.abs(n) < 7 ? DAYS7[d.getDay()] : MON3[d.getMonth()] + ' ' + d.getDate(); };
-  const dueWord = (goal, v) => (dateAt(v) < todayAt ? 'was due ' : goal === 'daily' ? 'until ' : 'due ') + dayWord(v);
-  const goalWord = g => (g === 'daily' ? 'Review what’s due' : 'Learn every card');
-  const nOf = (n, w, ws) => n + ' ' + (n === 1 ? w : ws || w + 's');
-  const andList = a => (a.length < 2 ? a.join('') : a.length === 2 ? a.join(' and ') : a.slice(0, -1).join(', ') + ', and ' + a[a.length - 1]);
-  // What's left for you on an assignment, from your own cards: 12 cards left, 4 to review, Caught up, Done.
-  const leftWord = (a, pr) => (!pr ? (a.goal === 'daily' ? 'Not started' : nOf(a.cards || 0, 'card'))
-    : a.goal === 'daily' ? (!pr.learned ? 'Not started' : pr.due ? pr.due + ' to review' : 'Caught up') : pr.total && pr.learned >= pr.total ? 'Done' : nOf(Math.max(0, pr.total - pr.learned), 'card') + ' left');
-  const isDone = (a, pr) => !!pr && (a.goal === 'daily' ? pr.learned > 0 && !pr.due : pr.total > 0 && pr.learned >= pr.total);
-  const assignRows = (db.assignments ? db.assignments() : []).map(a => { const g = this.gen((a.cover && a.cover.seed) || a.name, (a.cover && a.cover.style) || 'mix'), left = leftWord(a, a.progress), done = isDone(a, a.progress), when = dueWord(a.goal, a.due);
-    return { name: a.name, className: a.className, text: a.name + ' · ' + when + ' · ' + left, sub: when + ' · ' + a.className, left, dot: g.base, textColor: done ? t.muted : t.text, leftColor: done ? t.good : t.text,
-      href: db.mock ? 'PhoneDeck.dc.html' : a.progress ? '/deck/' + a.progress.deckId : '/class/' + a.code }; });
-  return { hero: this.mesh(this.props.gradient ?? 'Iris'), grain: String(this.props.grain ?? 0.7), t, ...chrome, modes, assignments: assignRows, hasAssignments: false, nav: db.mock ? { ...chrome.nav, news: '', hasNews: false } : chrome.nav, art: this.mesh('Iris'), art2: this.mesh('Mint'), art3: this.mesh('Apricot'), noop: () => {},
-    mk: this.makeBox(t, db, { deckId: dk.id, board: 'Phone', newDeck: false }),
-    deckName: dk.name, cover: { ...this.gen(dk.seed + (dk.cover.round ? ' #' + dk.cover.round : ''), dk.cover.style), ...(photo ? { ink: '#FFFFFF', shadow: '0 1px 14px rgba(0,0,0,.45)' } : {}),
-      ...(C ? { base: C.base, ink: C.ink, shadow: 'none', plain: false, skin: true, art: C.art } : { plain: true, skin: false, art: null }) },
-    coverTitle: C ? C.titleAt(34) : '', coverTitleS: C ? C.titleHead(32, dk.name) : '',
-    coverIsImage: pic === 'mock', coverHasPhoto: !!photo, coverPhoto: photo,
-    newCardHref: db.mock ? 'PhoneEditor.dc.html' : dk.newCardHref, importHref: db.mock ? 'PhoneImport.dc.html' : db.href('import', dk.id), connectHref: db.mock ? 'PhoneConnect.dc.html' : db.href('connect'),
-    openSettings: () => { if (!db.mock) db.act.go(dk.settingsHref); } }; }
 }
 return Component;
   }
