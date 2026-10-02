@@ -151,7 +151,7 @@ final class HomeTests: AppCase {
     app = launch(as: who)
     tap(button(app, "Add"), "the Library's +")
     tap(button(app, "New deck"), "New deck")
-    let name = app.textFields.firstMatch
+    let name = app.textFields["Deck name"].firstMatch   // (the name is typed on New deck's cover)
     if wait(name, 8) { name.tap(); name.typeText("Fresh " + run) } else { check(false, "found the deck's name field") }
     let done = app.keyboards.buttons.matching(NSPredicate(format: "label IN {'Done','done','return','Return'}")).firstMatch
     if done.exists { done.tap(); Thread.sleep(forTimeInterval: 0.6) }

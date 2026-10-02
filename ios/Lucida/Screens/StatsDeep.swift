@@ -302,7 +302,6 @@ struct DeepStats: View {
       if !w.hardest.isEmpty {
         HStack(spacing: 8) {
           StatsPill(label: "Study these", solid: true) { studySet("hard") }
-          StatsPill(label: "See all") { showCards("hard") }
         }
       }
     }

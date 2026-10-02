@@ -264,5 +264,6 @@ struct Engine {
   func workload(_ id: String, _ goal: Int) -> Double { deck(id).map { Sched.workload(cards(of: id), $0, Double(goal) / 100) } ?? 0 }
 
   /// Every tag in use.
-  var tags: [String] { Array(NSOrderedSet(array: S.decks.flatMap(\.tags) + S.cards.flatMap(\.tags))) as? [String] ?? [] }
+  /// Every tag on your cards, for the card editor's Add tag (only cards have tags; a deck's old ones aren't offered).
+  var tags: [String] { Array(NSOrderedSet(array: S.cards.flatMap(\.tags))) as? [String] ?? [] }
 }

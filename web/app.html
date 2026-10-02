@@ -40,8 +40,8 @@ body { font-family: Geist, -apple-system, system-ui, sans-serif; }
 /* Pages rise in once, when the app opens (web/app.js adds sc-calm after the first page). */
 html.sc-calm #app main > * { animation: none !important; }
 @media (max-width: 760px) {
-  /* A phone zooms in on a field whose text is under 16px when it's tapped, so fields there use 16px. */
-  #app .sc-rich, #app input[type="text"]:not(.sc-num), #app textarea { font-size: 16px !important; }
+  /* A phone zooms in on a field whose text is under 16px when it's tapped, so fields there use 16px (New deck's name on its cover is bigger already). */
+  #app .sc-rich, #app input[type="text"]:not(.sc-num):not(.sc-cover-name), #app textarea { font-size: 16px !important; }
 }
 </style>
 <script type="module" src="/app.js"></script>

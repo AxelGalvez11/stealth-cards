@@ -54,7 +54,6 @@
     <sc-if value="{{noDecks}}" hint-placeholder-val="{{ false }}"><div style="padding: 36px 20px; border-radius: 20px; background: {{t.surf}}; text-align: center; font-size: 15px; line-height: 1.4; color: {{t.muted}};">{{noDecksLine}}</div></sc-if>
   </sc-if>
   <sc-if value="{{cardsView}}" hint-placeholder-val="{{ false }}">
-    <div role="group" aria-label="Difficulty" style="display: flex; gap: 2px; padding: 4px; border-radius: 999px; background: {{t.surf}}; max-width: 100%; overflow-x: auto; scrollbar-width: none;"><sc-for list="{{levels}}" as="l" hint-placeholder-count="5"><button type="button" onClick="{{l.pick}}" aria-pressed="{{l.pressed}}" style="height: 34px; flex: 1 1 auto; padding: 0 6px; justify-content: center; gap: 4px; display: inline-flex; align-items: center; border: 0; border-radius: 999px; background: {{l.bg}}; color: {{l.fg}}; box-shadow: {{l.sh}}; font: inherit; font-size: 12px; font-weight: 600; white-space: nowrap; cursor: pointer;"><span style="width: {{l.dotW}}; height: 8px; border-radius: 4px; background: {{l.dot}};"></span>{{l.label}}<span style="font-family: 'Geist Mono', ui-monospace, monospace; font-size: 11px; opacity: .6;">{{l.count}}</span></button></sc-for></div>
     <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
       <div style="position: relative;"><button type="button" onClick="{{tagPick.toggle}}" aria-expanded="{{tagPick.expanded}}" style="height: 36px; flex-shrink: 0; padding: 0 12px 0 14px; display: inline-flex; align-items: center; gap: 6px; border: 0; border-radius: 999px; background: {{t.surf}}; color: {{t.text}}; font: inherit; font-size: 13px; font-weight: 600; white-space: nowrap; cursor: pointer;">Tags<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></button><sc-if value="{{tagPick.open}}" hint-placeholder-val="{{ false }}"><div role="dialog" aria-label="Filter by tag" data-sc-pop style="position: absolute; left: 0; top: 44px; z-index: 30; width: 300px; box-sizing: border-box; padding: 8px; border-radius: 22px; background: {{t.bg}}; color: {{t.text}}; box-shadow: 0 18px 48px rgba(0,0,0,.2), 0 0 0 1px {{t.line}}; display: flex; flex-direction: column; gap: 4px;"><label style="display: flex; align-items: center; gap: 8px; height: 40px; flex-shrink: 0; padding: 0 14px; box-sizing: border-box; border-radius: 999px; background: {{t.surf}}; color: {{t.muted}};"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg><span style="position: absolute; left: -9999px;">Find a tag</span><input value="{{tagPick.query}}" onChange="{{tagPick.setQuery}}" placeholder="Find a tag" style="flex-grow: 1; min-width: 0; border: 0; outline: 0; background: transparent; font: inherit; font-size: 14px; color: {{t.text}};"></label><div style="max-height: 304px; overflow-y: auto; scrollbar-width: thin; display: flex; flex-direction: column;"><sc-for list="{{tagPick.rows}}" as="o" hint-placeholder-count="6"><button type="button" onClick="{{o.pick}}" aria-pressed="{{o.pressed}}" style="height: 38px; flex-shrink: 0; padding: 0 12px; display: flex; align-items: center; gap: 10px; border: 0; border-radius: 12px; background: transparent; color: {{t.text}}; font: inherit; font-size: 14px; text-align: left; cursor: pointer;"><span style="width: 8px; height: 8px; flex-shrink: 0; border-radius: 5px; background: {{o.dot}};"></span><span style="flex-grow: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{o.label}}</span><span style="font-family: 'Geist Mono', ui-monospace, monospace; font-size: 12px; color: {{t.muted}};">{{o.count}}</span><sc-if value="{{o.on}}" hint-placeholder-val="{{ false }}"><span style="display: flex;"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5 9-10"/></svg></span></sc-if></button></sc-for><sc-if value="{{tagPick.none}}" hint-placeholder-val="{{ false }}"><span style="padding: 10px 12px; font-size: 13px; color: {{t.muted}};">No tags match</span></sc-if></div></div></sc-if></div>
       <div style="position: relative;"><button type="button" onClick="{{deckPick.toggle}}" aria-expanded="{{deckPick.expanded}}" style="height: 36px; flex-shrink: 0; padding: 0 12px 0 14px; display: inline-flex; align-items: center; gap: 6px; border: 0; border-radius: 999px; background: {{t.surf}}; color: {{t.text}}; font: inherit; font-size: 13px; font-weight: 600; white-space: nowrap; cursor: pointer;">{{deckPick.label}}<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></button><sc-if value="{{deckPick.open}}" hint-placeholder-val="{{ false }}"><div role="dialog" aria-label="Filter by deck" data-sc-pop style="position: absolute; left: 0; top: 44px; z-index: 30; width: 300px; box-sizing: border-box; padding: 8px; border-radius: 22px; background: {{t.bg}}; color: {{t.text}}; box-shadow: 0 18px 48px rgba(0,0,0,.2), 0 0 0 1px {{t.line}}; display: flex; flex-direction: column; gap: 4px;"><label style="display: flex; align-items: center; gap: 8px; height: 40px; flex-shrink: 0; padding: 0 14px; box-sizing: border-box; border-radius: 999px; background: {{t.surf}}; color: {{t.muted}};"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg><span style="position: absolute; left: -9999px;">Find a deck or folder</span><input value="{{deckPick.query}}" onChange="{{deckPick.setQuery}}" placeholder="Find a deck or folder" style="flex-grow: 1; min-width: 0; border: 0; outline: 0; background: transparent; font: inherit; font-size: 14px; color: {{t.text}};"></label><div style="max-height: 304px; overflow-y: auto; scrollbar-width: thin; display: flex; flex-direction: column;"><sc-for list="{{deckPick.rows}}" as="o" hint-placeholder-count="6"><button type="button" onClick="{{o.pick}}" aria-pressed="{{o.pressed}}" style="height: 38px; flex-shrink: 0; padding: 0 12px; display: flex; align-items: center; gap: 10px; border: 0; border-radius: 12px; background: transparent; color: {{t.text}}; font: inherit; font-size: 14px; text-align: left; cursor: pointer;"><span style="width: 8px; height: 8px; flex-shrink: 0; border-radius: 5px; background: {{o.dot}};"></span><span style="flex-grow: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{o.label}}</span><span style="font-family: 'Geist Mono', ui-monospace, monospace; font-size: 12px; color: {{t.muted}};">{{o.count}}</span><sc-if value="{{o.on}}" hint-placeholder-val="{{ false }}"><span style="display: flex;"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5 9-10"/></svg></span></sc-if></button></sc-for><sc-if value="{{deckPick.none}}" hint-placeholder-val="{{ false }}"><span style="padding: 10px 12px; font-size: 13px; color: {{t.muted}};">No decks match</span></sc-if></div></div></sc-if></div>
@@ -110,11 +109,11 @@
     <div style="display: flex; gap: 10px; margin-top: 6px;"><button type="button" data-key="escape" onClick="{{ask.no}}" class="sc-press" style="flex: 1 1 0; height: 48px; border: 0; border-radius: 999px; background: {{t.surf}}; color: {{t.text}}; font: inherit; font-size: 15px; font-weight: 600; cursor: pointer;">Cancel</button><button type="button" onClick="{{ask.yes}}" class="sc-press" style="flex: 1 1 0; height: 48px; border: 0; border-radius: 999px; background: {{ask.bg}}; color: {{ask.fg}}; font: inherit; font-size: 15px; font-weight: 600; cursor: pointer;">{{ask.action}}</button></div>
   </div></div></sc-if></div>
 </x-dc>
-<script type="text/x-dc" data-dc-script data-props='{"dark":{"editor":"boolean","default":false},"dim":{"editor":"boolean","default":false},"grain":{"editor":"range","default":0.7,"min":0,"max":1,"step":0.05},"caughtUp":{"editor":"boolean","default":false},"assignments":{"editor":"boolean","default":false},"mode":{"editor":"enum","default":"decks","options":["decks","cards"]},"folder":{"editor":"string","default":""},"level":{"editor":"enum","default":"all","options":["all","new","easy","medium","hard","leech","paused"]},"ask":{"editor":"enum","default":"","options":["","Remove folder"]},"$preview":{"width":390,"height":844}}'>
+<script type="text/x-dc" data-dc-script data-props='{"dark":{"editor":"boolean","default":false},"dim":{"editor":"boolean","default":false},"grain":{"editor":"range","default":0.7,"min":0,"max":1,"step":0.05},"caughtUp":{"editor":"boolean","default":false},"assignments":{"editor":"boolean","default":false},"mode":{"editor":"enum","default":"decks","options":["decks","cards"]},"folder":{"editor":"string","default":""},"level":{"editor":"enum","default":"all","options":["all","leech","paused"]},"ask":{"editor":"enum","default":"","options":["","Remove folder"]},"$preview":{"width":390,"height":844}}'>
 class Component extends LucidaLogic(DCLogic, 2) {
 
-constructor(props) { super(props); this.state = { tag: 'All', view: props.view === 'List' ? 'list' : 'cards', openDeck: props.openTags ? 'cell' : null, moreOpen: !!props.moreTags, moreQ: '', q: '',
-  level: ['new', 'easy', 'medium', 'hard'].includes(props.level) ? props.level : 'all', state: ['leech', 'paused'].includes(props.level) ? props.level : '', cardTags: [], deck: '', tagPickOpen: false, tagPickQ: '', deckPickOpen: false, deckPickQ: '', shown: 60, naming: props.naming ? 'new' : null, name: props.naming ? 'Biology' : '', namingAt: 0,
+constructor(props) { super(props); this.state = { view: props.view === 'List' ? 'list' : 'cards', q: '',
+  state: ['leech', 'paused'].includes(props.level) ? props.level : '', cardTags: [], deck: '', tagPickOpen: false, tagPickQ: '', deckPickOpen: false, deckPickQ: '', shown: 60, naming: props.naming ? 'new' : null, name: props.naming ? 'Biology' : '', namingAt: 0,
   moveDeck: props.moveOpen ? ({ f1: 'jlpt', f2: 'orgo' }[props.folder] || 'cell') : null, moveAfter: null }; }
 renderVals() { const v = this.renderVals0(); return { ...v, ask: this.askPreview(v.t || this.theme(!!this.props.dark, !!this.props.dim), {"Remove folder":{"title":"Remove the folder “Languages”?","line":"Its decks stay in your library.","action":"Remove folder","danger":true}}) }; }
 askPreview(t, samples) {
@@ -156,7 +155,7 @@ renderVals0() {
     : { panel: '#E3E4E9', key: '#FFFFFF', ink: '#000000', edge: '0 1px 0 rgba(0,0,0,.08)', bar: '#FFFFFF', barInk: '#3C3C43', barLine: 'rgba(60,60,67,.16)', on: '#ECECF1', barShadow: '0 8px 28px rgba(0,0,0,.1), 0 0 0 .5px rgba(0,0,0,.06)' };
   const coverSkin = C => (C ? { plain: false, skin: true, art: C.art, base: C.base, ink: C.ink, glass: C.glass, glassLine: C.glassLine, shadow: 'none', titleCss: C.title, btnBg: C.btnBg, btnFg: C.btnFg, coverShadow: C.shadow, coverCls: 'sk-cover' }
     : { plain: true, skin: false, art: null, titleCss: '', btnBg: '#FFFFFF', btnFg: '#000000', coverShadow: 'none', coverCls: '' });
-  const p = this.props, s = this.state, tag = s.tag, view = s.view, act = db.act, S = this.skin(db);
+  const p = this.props, s = this.state, view = s.view, act = db.act, S = this.skin(db);
   const board = n => 'Phone' + n + '.dc.html';
   const folders = db.folders(), folder = p.folder ? folders.find(f => f.id === p.folder) || null : null;
   const cards = p.mode === 'cards' && !folder, atTop = !folder;
@@ -174,30 +173,22 @@ renderVals0() {
   };
   // Dragging (drag.mjs): a deck to another spot, onto a folder, or (in a folder) onto the Library link to take it out;
   // in All cards, a card onto another deck. Menus close when something lifts.
-  const quiet = () => (s.moveDeck || s.openDeck || s.moreOpen || s.tagPickOpen || s.deckPickOpen) && this.setState({ moveDeck: null, openDeck: null, moreOpen: false, tagPickOpen: false, deckPickOpen: false });
-  // Decks: in a folder, its decks. At the top, folders and the decks in none, unless a tag or search looks everywhere.
-  const hits = q && !cards ? db.searchDecks(q) : null, looking = tag !== 'All' || !!hits;
+  const quiet = () => (s.moveDeck || s.tagPickOpen || s.deckPickOpen) && this.setState({ moveDeck: null, tagPickOpen: false, deckPickOpen: false });
+  // Decks: in a folder, its decks. At the top, folders and the decks in none, unless a search looks everywhere. (Decks have no tags in
+  // the app since 2026-10-02, the owner: "remove 'tags' from decks, only cards have tags"; what the server keeps is left as it is.)
+  const hits = q && !cards ? db.searchDecks(q) : null, looking = !!hits;
   const scope = folder ? all.filter(d => d.folder === folder.id) : looking || !folders.length ? all : all.filter(d => !d.folder);
-  const uses = {}; (folder ? scope : all).forEach(d => d.tags.forEach(g => { uses[g] = (uses[g] || 0) + 1; }));
-  const byUse = Object.keys(uses).sort((a, b) => uses[b] - uses[a]);
-  const top = byUse.slice(0, 3), shownTags = tag === 'All' || top.includes(tag) ? top : [...top, tag];
-  const pickTag = g => this.setState({ tag: g, openDeck: null, moreOpen: false, moreQ: '' });
-  const mq = (s.moreQ || '').trim().toLowerCase(), found = byUse.filter(g => !mq || g.toLowerCase().includes(mq));
-  const decks = scope.filter(d => (tag === 'All' || d.tags.includes(tag)) && (!hits || hits.includes(d.id))).map(d => {
-    const tg = d.tags, fit = tagFit(tg, 3), open = s.openDeck === d.id, moving = s.moveDeck === d.id, photo = d.image && d.image !== 'mock' ? d.image : '';
-    const slot = i => (fit.vis[i] ? { show: true, ...tagChip(fit.vis[i]), pick: () => pickTag(fit.vis[i]) } : { show: false, label: '', bg: 'transparent', fg: t.text, pick: () => {} });
+  const decks = scope.filter(d => !hits || hits.includes(d.id)).map(d => {
+    const moving = s.moveDeck === d.id, photo = d.image && d.image !== 'mock' ? d.image : '';
     const move = f => () => { act.moveDeck(d.id, f); this.setState({ moveDeck: null }); };
     // A photo cover takes white words on a dark wash, whatever the gradient would have used.
     const onPhoto = photo ? { ink: '#FFFFFF', glass: 'rgba(0,0,0,.28)', glassLine: 'rgba(255,255,255,.35)', shadow: '0 1px 12px rgba(0,0,0,.35)' } : {};
     // Whose it is: a deck you share says how (Public, Link only), a deck from someone says whose.
     const whose = d.link ? 'From ' + (d.link.owner.name || 'someone') : d.shared ? d.shared.label : '';
     const C = S && !photo ? S.coverOf(d, 'wide', 19) : null;
-    return { ...d, ...grad(d), ...onPhoto, ...coverSkin(C), thumb: C ? C.artAs('square', 14) : null, t1: slot(0), t2: slot(1), t3: slot(2), hasPhoto: !!photo, photo,
+    return { ...d, ...grad(d), ...onPhoto, ...coverSkin(C), thumb: C ? C.artAs('square', 14) : null, hasPhoto: !!photo, photo,
       href: db.mock ? board('Deck') : d.href, studyHref: db.mock ? board('Review') : d.studyHref,
-      more: { show: fit.more > 0, label: '+' + fit.more }, tagCount: tg.length + (tg.length === 1 ? ' tag' : ' tags'), tagsOpen: open, expanded: open ? 'true' : 'false',
-      toggleTags: () => this.setState({ openDeck: open ? null : d.id, moreOpen: false, moveDeck: null }),
-      allTags: tg.map(g => ({ ...tagChip(g), pick: () => pickTag(g) })),
-      moveOpen: moving, moveExpanded: moving ? 'true' : 'false', toggleMove: () => this.setState({ moveDeck: moving ? null : d.id, openDeck: null }),
+      moveOpen: moving, moveExpanded: moving ? 'true' : 'false', toggleMove: () => this.setState({ moveDeck: moving ? null : d.id }),
       // "Remove from folder" only shows for a deck that's in one (a deck in none just doesn't get it); it isn't ticked, the folder the deck is in is.
       moveTo: [...(d.folder ? [{ id: null, name: 'Remove from folder' }] : []), ...folders].map(f => ({ label: f.name, on: (d.folder || null) === f.id, pressed: (d.folder || null) === f.id ? 'true' : 'false', pick: move(f.id) })),
       newFolder: () => openNaming('new', d.id),
@@ -212,17 +203,16 @@ renderVals0() {
     line: f.n + (f.n === 1 ? ' deck' : ' decks') + (f.due ? ' · ' + f.due + ' due' : ''),
     swatches: f.decks.slice(0, 3).map((d, i) => { const C = S && !(d.image && d.image !== 'mock') ? S.coverOf(d, 'wide', 12, 12) : null;
       return { base: C ? C.base : grad(d).base, skin: !!C, art: C ? C.art : null, x: fanned[i][0], y: fanned[i][1], r: fanned[i][2] }; }) }));
-  // All cards, filtered by how hard, by tags (every picked one), by deck or folder, and by the search.
+  // All cards, filtered by tags (every picked one), by deck or folder, and by the search. Each row says how hard its card is.
   const LV = { new: ['New', t.easy], easy: ['Easy', t.good], medium: ['Medium', t.hard], hard: ['Hard', t.again] };
   const every = cards ? db.allCards() : [];
   const picked = s.cardTags || [], pick = s.deck || '';
   const inPick = c => !pick || (pick.startsWith('f:') ? c.folder === pick.slice(2) : c.deckId === pick);
   const base = every.filter(c => inPick(c) && picked.every(g => c.tags.includes(g)) && (!q || [c.front, c.back, c.deckName, ...c.tags].join(' ').toLowerCase().includes(q)));
-  // Cards you keep forgetting, and cards you paused, filter on top of how hard they are.
-  const inState = (c, k) => (k === 'leech' ? !!c.leech : k === 'paused' ? !!c.paused : true), lvOk = c => s.level === 'all' || c.level === s.level;
-  const count = k => base.filter(c => (k === 'all' || c.level === k) && inState(c, s.state)).length;
-  const stateCount = k => base.filter(c => lvOk(c) && inState(c, k)).length;
-  const matched = base.filter(c => lvOk(c) && inState(c, s.state));
+  // Cards you keep forgetting, and cards you paused, filter on top of those.
+  const inState = (c, k) => (k === 'leech' ? !!c.leech : k === 'paused' ? !!c.paused : true);
+  const stateCount = k => base.filter(c => inState(c, k)).length;
+  const matched = base.filter(c => inState(c, s.state));
   const toPause = s.state === 'leech' ? matched.filter(c => !c.paused) : s.state === 'paused' ? matched : [];
   const glyphs = { text: 'Aa', blank: '_', image: '▢', audio: '♪' };
   const rows = matched.slice(0, s.shown).map(c => ({ ...c, glyph: glyphs[c.icon], level: LV[c.level][0], levelFg: LV[c.level][1], swatch: grad(c).base,
@@ -278,19 +268,12 @@ renderVals0() {
       drop: (id, w) => (w.to ? act.moveDeck(id, w.to.slice(7) || null) : act.reorderDeck(id, w.before)) }),
     grabCard: e => this.drag(e, { drops: ['deck:'], reorder: false, keep: true, tray: all.length > 1, ink: t.text, bg: t.bg, lifted: liftRow, bottom: 92, start: quiet,
       drop: (id, w) => w.to && act.moveCard(id, w.to.slice(5)) }),
-    tagFilters: ['All', ...shownTags].map(n => { const on = n === tag, isAll = n === 'All'; return { label: isAll ? (folder ? 'All' : 'All decks') : n, dot: isAll ? 'transparent' : tagCol(n), dotW: isAll ? '0px' : '8px', dotM: isAll ? '0px' : '8px',
-      count: String(isAll ? (folder ? scope.length : all.length) : uses[n] || 0), pressed: on ? 'true' : 'false', bg: on ? t.inv : t.surf, fg: on ? t.invText : t.text, pick: () => pickTag(n) }; }),
-    moreMenu: { show: byUse.length > top.length, open: !!s.moreOpen, expanded: s.moreOpen ? 'true' : 'false', query: s.moreQ || '',
-      toggle: () => this.setState({ moreOpen: !s.moreOpen, moreQ: '', openDeck: null }), setQuery: e => this.setState({ moreQ: e && e.target ? e.target.value : '' }),
-      rows: found.map(g => ({ ...tagChip(g), count: String(uses[g]), on: g === tag, pressed: g === tag ? 'true' : 'false', pick: () => pickTag(g === tag ? 'All' : g) })), none: found.length === 0 },
     cardView: view === 'cards', listView: view === 'list',
     vCards: seg(view === 'cards'), vList: seg(view === 'list'),
     showCards: () => this.setState({ view: 'cards' }), showList: () => this.setState({ view: 'list' }),
     states: [['leech', 'Keep forgetting'], ['paused', 'Paused']].filter(([k]) => s.state === k || stateCount(k) > 0).map(([k, label]) => { const on = s.state === k;
       return { label, count: String(stateCount(k)), isLeech: k === 'leech', isPaused: k === 'paused', pressed: on ? 'true' : 'false', bg: on ? t.inv : t.surf, fg: on ? t.invText : t.text, pick: () => this.setState({ state: on ? '' : k, shown: 60 }) }; }),
     bulk: { show: toPause.length > 0, label: s.state === 'paused' ? 'Unpause all' : 'Pause all', go: () => act.pauseCards(toPause.map(c => c.id), s.state !== 'paused') },
-    levels: ['all', 'new', 'easy', 'medium', 'hard'].map(k => { const on = s.level === k; return { label: k === 'all' ? 'All' : LV[k][0], count: String(count(k)), dot: k === 'all' ? 'transparent' : LV[k][1], dotW: k === 'all' ? '0px' : '8px',
-      pick: () => this.setState({ level: k, shown: 60 }), ...seg(on) }; }),
     tagPick: { open: !!s.tagPickOpen, expanded: s.tagPickOpen ? 'true' : 'false', query: s.tagPickQ || '', toggle: () => this.setState({ tagPickOpen: !s.tagPickOpen, tagPickQ: '', deckPickOpen: false }),
       setQuery: e => this.setState({ tagPickQ: e && e.target ? e.target.value : '' }), none: cardTagNames.length === 0,
       rows: cardTagNames.map(g => ({ ...tagChip(g), count: String(cardUses[g]), on: picked.includes(g), pressed: picked.includes(g) ? 'true' : 'false',

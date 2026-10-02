@@ -93,7 +93,7 @@ final class Nav: ObservableObject {
   @Published var tab: Tab = .library
   /// The Library shows All cards instead of your folders and decks, or (`libClasses`) your classes.
   @Published var libCards = false
-  /// A filter for All cards to start on, from the Stats page: "hard", "leech", or "paused".
+  /// A filter for All cards to start on, from the Stats page: "leech" (or "paused").
   var libFilter: String? = nil
   @Published var libClasses = false
   @Published var path: [Route] = []
