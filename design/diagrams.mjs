@@ -32,12 +32,8 @@ export const DIAGRAM_CSS = [
 // ---------- the pieces of the deck page ----------
 export function diagramBlocks(H, phone) {
   const { svg, I, MONO } = H;
-  const EXTRA = {
-    table: '<rect x="3.5" y="4.5" width="17" height="15" rx="2.5"/><path d="M3.5 9.5h17M9.5 9.5v10"/>',
-    mindmap: '<circle cx="6" cy="12" r="2.5"/><circle cx="18" cy="6" r="2"/><circle cx="18" cy="12" r="2"/><circle cx="18" cy="18" r="2"/><path d="M8.4 11.1 16 6.9M8.6 12h7.4M8.4 12.9 16 17.1"/>'
-  };
-  const icon = (name, size = 16, w = 2) => svg(I[name] || EXTRA[name], size, w);
-  const small = (label, handler, ic, attrs = '') => `<button type="button" onClick="{{${handler}}}" ${attrs} class="sc-press" style="height: 34px; padding: 0 14px; display: inline-flex; align-items: center; gap: 6px; border: 0; border-radius: 999px; background: {{t.bg}}; color: {{t.text}}; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer;">${ic ? icon(ic, 14, 2) : ''}${label}</button>`;
+  const icon = (name, size = 16, w = 2) => svg(I[name], size, w);
+  const small = (label, handler, ic, attrs = '', bg = '{{t.bg}}') => `<button type="button" onClick="{{${handler}}}" ${attrs} class="sc-press" style="height: 34px; padding: 0 14px; display: inline-flex; align-items: center; gap: 6px; border: 0; border-radius: 999px; background: ${bg}; color: {{t.text}}; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer;">${ic ? icon(ic, 14, 2) : ''}${label}</button>`;
   const big = (label, handler, { inv = false, danger = false, grow = 1, attrs = '', ic = '' } = {}) => `<button type="button" onClick="{{${handler}}}" ${attrs} class="sc-press" style="flex: ${grow} 1 0; min-width: ${phone ? 120 : 140}px; height: 48px; padding: 0 20px; border: 0; border-radius: 999px; background: ${inv ? '{{t.inv}}' : '{{t.surf}}'}; color: ${inv ? '{{t.invText}}' : danger ? '{{t.again}}' : '{{t.text}}'}; font: inherit; font-size: 15px; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer;">${ic ? icon(ic, 16, 2) : ''}${label}</button>`;
   const alertLine = (has, text) => `<sc-if value="{{${has}}}" hint-placeholder-val="{{ false }}"><span role="alert" style="font-size: 14px; line-height: 1.4; color: {{t.again}};">{{${text}}}</span></sc-if>`;
 
@@ -65,7 +61,7 @@ export function diagramBlocks(H, phone) {
 
   // ----- a diagram opened: the picture with its labels, the table, or the mind map; and what can be done with it
   const head = `<div style="display: flex; align-items: flex-start; gap: 12px;">
-      <sc-if value="{{dg.v.renaming}}" hint-placeholder-val="{{ false }}"><span style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 8px;"><input type="text" value="{{dg.v.draft}}" onChange="{{dg.v.setDraft}}" aria-label="Name" maxlength="80" autocomplete="off" style="height: 48px; box-sizing: border-box; padding: 0 16px; border: 0; outline: 0; border-radius: 16px; background: {{t.surf}}; color: {{t.text}}; font: inherit; font-size: 17px; font-weight: 600;"><span style="display: flex; gap: 8px;">${small('Save', 'dg.v.saveRename', 'check')}${small('Cancel', 'dg.v.cancelRename', '')}</span></span></sc-if>
+      <sc-if value="{{dg.v.renaming}}" hint-placeholder-val="{{ false }}"><span style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 8px;"><input type="text" value="{{dg.v.draft}}" onChange="{{dg.v.setDraft}}" aria-label="Name" maxlength="80" autocomplete="off" style="height: 48px; box-sizing: border-box; padding: 0 16px; border: 0; outline: 0; border-radius: 16px; background: {{t.surf}}; color: {{t.text}}; font: inherit; font-size: 17px; font-weight: 600;"><span style="display: flex; gap: 8px;">${small('Save', 'dg.v.saveRename', 'check', '', '{{t.surf}}')}${small('Cancel', 'dg.v.cancelRename', '', '', '{{t.surf}}')}</span></span></sc-if>
       <sc-if value="{{dg.v.showName}}" hint-placeholder-val="{{ true }}"><span style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px;"><span style="font-size: 22px; font-weight: 600; letter-spacing: -.02em; overflow-wrap: anywhere;">{{dg.v.name}}</span><span style="font-size: 13px; color: {{t.muted}};">{{dg.v.line}}</span></span></sc-if>
       <button type="button" onClick="{{dg.v.close}}" aria-label="Close" class="sc-press" style="width: 40px; height: 40px; flex-shrink: 0; border: 0; border-radius: 20px; background: {{t.surf}}; color: {{t.text}}; display: flex; align-items: center; justify-content: center; cursor: pointer;">${icon('close', 16, 2)}</button>
     </div>`;
@@ -73,7 +69,7 @@ export function diagramBlocks(H, phone) {
   const viewBody = `<div style="flex-grow: 1; min-height: 0; overflow-y: auto; scrollbar-width: none; display: flex; flex-direction: column; gap: 14px;">
       <sc-if value="{{dg.v.isPicture}}" hint-placeholder-val="{{ true }}">
         <div style="position: relative; align-self: stretch; border-radius: 14px; overflow: hidden; background: #FFFFFF; box-shadow: inset 0 0 0 1px {{t.line}};"><img src="{{dg.v.picture}}" alt="{{dg.v.alt}}" draggable="false" style="width: 100%; height: auto; display: block;"><sc-if value="{{dg.v.labelsOn}}" hint-placeholder-val="{{ true }}"><div aria-hidden="true" style="position: absolute; inset: 0; pointer-events: none;"><sc-for list="{{dg.v.boxes}}" as="b" hint-placeholder-count="4">${box}</sc-for></div></sc-if></div>
-        <sc-if value="{{dg.v.hasLabels}}" hint-placeholder-val="{{ true }}"><div style="display: flex; flex-direction: column; gap: 10px;"><div style="display: flex; align-items: center; gap: 10px;"><span style="font-size: 13px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: {{t.muted}};">{{dg.v.labelsTitle}}</span><span style="flex-grow: 1;"></span>${small('{{dg.v.labelsToggle}}', 'dg.v.toggleLabels', '', 'aria-pressed="{{dg.v.labelsOn}}"')}</div><div style="display: flex; flex-wrap: wrap; gap: 6px;"><sc-for list="{{dg.v.labelList}}" as="l" hint-placeholder-count="5"><span style="height: 30px; padding: 0 12px; display: inline-flex; align-items: center; border-radius: 999px; background: {{t.surf}}; font-size: 13px; font-weight: 500;">{{l.text}}</span></sc-for></div></div></sc-if>
+        <sc-if value="{{dg.v.hasLabels}}" hint-placeholder-val="{{ true }}"><div style="display: flex; flex-direction: column; gap: 10px;"><div style="display: flex; align-items: center; gap: 10px;"><span style="font-size: 13px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: {{t.muted}};">{{dg.v.labelsTitle}}</span><span style="flex-grow: 1;"></span>${small('{{dg.v.labelsToggle}}', 'dg.v.toggleLabels', '', 'aria-pressed="{{dg.v.labelsOn}}"', '{{t.surf}}')}</div><div style="display: flex; flex-wrap: wrap; gap: 6px;"><sc-for list="{{dg.v.labelList}}" as="l" hint-placeholder-count="5"><span style="height: 30px; padding: 0 12px; display: inline-flex; align-items: center; border-radius: 999px; background: {{t.surf}}; font-size: 13px; font-weight: 500;">{{l.text}}</span></sc-for></div></div></sc-if>
         <sc-if value="{{dg.v.hasNote}}" hint-placeholder-val="{{ false }}"><span style="font-size: 13px; line-height: 1.5; color: {{t.muted}};">{{dg.v.note}}</span></sc-if>
       </sc-if>
       <sc-if value="{{dg.v.isTable}}" hint-placeholder-val="{{ false }}"><div ref="{{dg.v.tableRef}}" data-sc-own style="min-height: 0;"></div></sc-if>
@@ -126,11 +122,7 @@ export function diagramBlocks(H, phone) {
 // ---------- what the shared deck page shows: the tables and mind maps made from its cards, read only ----------
 export function publicDiagramBlocks(H, phone) {
   const { svg, I, MONO } = H;
-  const EXTRA = {
-    table: '<rect x="3.5" y="4.5" width="17" height="15" rx="2.5"/><path d="M3.5 9.5h17M9.5 9.5v10"/>',
-    mindmap: '<circle cx="6" cy="12" r="2.5"/><circle cx="18" cy="6" r="2"/><circle cx="18" cy="12" r="2"/><circle cx="18" cy="18" r="2"/><path d="M8.4 11.1 16 6.9M8.6 12h7.4M8.4 12.9 16 17.1"/>'
-  };
-  const icon = (name, size = 16, w = 2) => svg(I[name] || EXTRA[name], size, w);
+  const icon = (name, size = 16, w = 2) => svg(I[name], size, w);
   const card = `<sc-if value="{{pdg.show}}" hint-placeholder-val="{{ true }}"><section aria-label="Diagrams" style="min-width: 0; box-sizing: border-box; padding: ${phone ? '18px 18px 16px' : '20px 24px 20px'}; border-radius: ${phone ? 22 : 24}px; background: {{t.surf}}; display: flex; flex-direction: column; gap: 12px;">
       <div style="display: flex; align-items: center; gap: 10px;"><span style="font-size: 13px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: {{t.muted}};">Diagrams</span><span style="font-family: ${MONO}; font-size: 12px; color: {{t.muted}};">{{pdg.count}}</span></div>
       <div style="display: grid; grid-template-columns: repeat(${phone ? 1 : 'auto-fill'}, ${phone ? 'minmax(0, 1fr)' : 'minmax(240px, 1fr)'}); gap: 8px;"><sc-for list="{{pdg.items}}" as="x" hint-placeholder-count="2">

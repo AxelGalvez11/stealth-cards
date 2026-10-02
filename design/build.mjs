@@ -214,7 +214,10 @@ const I = {
   flag: '<path d="M5.5 21V4.5M5.5 4.5h11l-2.2 4 2.2 4h-11"/>',
   // The sidebar's button (collapse it to a rail, open it again), and Settings' Help & legal.
   sidebar: '<rect x="3" y="4.5" width="18" height="15" rx="4"/><path d="M9.5 4.5v15"/>',
-  help: '<circle cx="12" cy="12" r="9"/><path d="M9.6 9.4a2.5 2.5 0 1 1 3.4 2.3c-.6.3-1 .8-1 1.5M12 17h.01"/>'
+  help: '<circle cx="12" cy="12" r="9"/><path d="M9.6 9.4a2.5 2.5 0 1 1 3.4 2.3c-.6.3-1 .8-1 1.5M12 17h.01"/>',
+  // A deck's Diagrams: a table, and a mind map.
+  table: '<rect x="3.5" y="4.5" width="17" height="15" rx="2.5"/><path d="M3.5 9.5h17M9.5 9.5v10"/>',
+  mindmap: '<circle cx="6" cy="12" r="2.5"/><circle cx="18" cy="6" r="2"/><circle cx="18" cy="12" r="2"/><circle cx="18" cy="18" r="2"/><path d="M8.4 11.1 16 6.9M8.6 12h7.4M8.4 12.9 16 17.1"/>'
 };
 
 // The mark: three dots, two above and one below, in the text color. The viewBox hugs the ink, so `h` is its real height.

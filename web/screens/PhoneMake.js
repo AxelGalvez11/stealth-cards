@@ -2376,11 +2376,11 @@ mockMaterials() {
     const talk = '<<0:00>>\nWelcome back. Today we finish the electron transport chain and see how it makes ATP.\n\n<<1:00>>\nThe chain pumps protons across the inner membrane, and ATP synthase lets them flow back.\n\n<<2:00>>\nWithout oxygen as the last acceptor, the chain backs up and ATP production stops.';
     return { text, pages, sources, talk };
   })();
-  const GMODE = p.guide || 'Guide and sources';
+  const GMODE = p.guide || 'Guide and sources', RO = GMODE === 'Studying (read only)' || GMODE === 'Diagrams (studying)';
   return { make: MK, diagrams: this.diagramsMock(),
     publicGuide: () => (GMODE === 'No guide yet' ? { pages: [], sources: 0 } : { pages: [{ id: 'main', title: 'Guide', text: GD.text }, ...(GMODE === 'Guide pages' ? GD.pages : [])], sources: 5, diagrams: this.diagramsMock().rows().filter(r => r.group === 'Made').map(r => ({ id: r.id, kind: r.kind, name: r.name, at: r.at, ...(r.table ? { table: r.table } : { tree: r.tree }) })) }),
-    guide: () => ({ deckId: 'cell', text: GMODE === 'No guide yet' ? '' : GMODE === 'Long guide' ? GD.text + '\n\n' + GD.text.replace('# Cell Biology: Exam 1', '## More for the exam') : GD.text, at: 0, pages: GMODE === 'Guide pages' ? GD.pages : [], can: GMODE !== 'Studying (read only)', studying: GMODE === 'Studying (read only)' }),
-    sources: () => (['No guide yet', 'Studying (read only)'].includes(GMODE) ? [] : GD.sources),
+    guide: () => ({ deckId: 'cell', text: GMODE === 'No guide yet' ? '' : GMODE === 'Long guide' ? GD.text + '\n\n' + GD.text.replace('# Cell Biology: Exam 1', '## More for the exam') : GD.text, at: 0, pages: GMODE === 'Guide pages' ? GD.pages : [], can: !RO, studying: RO }),
+    sources: () => (GMODE === 'No guide yet' || RO ? [] : GD.sources),
     sourceText: name => (/^sx2/.test(name) || /^sx3/.test(name) ? GD.talk : ''),
     guideHistory: () => Promise.resolve([{ at: day(8, 21), saved: 0, text: GD.text.replace('- [x] The electron transport chain', '- [ ] The electron transport chain') }, { at: day(8, 18), saved: 0, text: '# Cell Biology: Exam 1\n\nEverything for the first exam.' }]),
     saveGuide: () => Promise.resolve({}), addGuidePage: () => Promise.resolve('g9'), renameGuidePage: () => Promise.resolve({}), deleteGuidePage: () => Promise.resolve({}), restoreGuide: () => Promise.resolve({}), deleteSource: () => Promise.resolve({}) };
@@ -2447,7 +2447,8 @@ renderVals() {
   const noteAts = N ? N.sections.map(x => x.at).filter(Boolean) : [];
   const notesLine = N ? (full ? 'This deck has every page a Guide can have, so these notes can’t be added. Delete a page in its Guide to make room.'
     : plural(N.sections.length, 'note') + (noteAts.length > 1 ? ' · ' + noteAts[0] + ' to ' + noteAts[noteAts.length - 1] : noteAts.length ? ' · ' + noteAts[0] : '') + (keepN ? ' · saved with the cards' : ' · not saved')) : '';
-  const keep = cards.filter(c => !c.gone).length, err = v.error;
+  // (A picture is one row to keep or leave out, and makes a card for each label hidden in it.)
+  const keep = v.cards.filter(c => !c.gone).reduce((n, c) => n + (c.kind === 'image' ? Math.max(1, (c.parts || []).length) : 1), 0), err = v.error;
   const into = chosen ? chosen.name : (o.deckName.trim() || v.title || v.name || 'a new deck');
   const LANGS = [['', 'Same as the material'], ['en', 'English'], ['es', 'Spanish'], ['fr', 'French'], ['de', 'German'], ['it', 'Italian'], ['pt', 'Portuguese'], ['zh', 'Chinese'], ['ja', 'Japanese'], ['ko', 'Korean'], ['ar', 'Arabic'], ['hi', 'Hindi']];
   const files = v.files.map(f => ({ ...f, isDoc: f.fam === 'doc', isImage: f.fam === 'image', isAudio: f.fam === 'audio', remove: () => M.removeFile(f.i) }));
