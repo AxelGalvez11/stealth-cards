@@ -144,7 +144,7 @@ const TOOLS = [
     inputSchema: { type: 'object', properties: { deck: { type: 'string', description: 'Deck name or id.' }, name: { type: 'string' }, tags: { type: 'array', items: { type: 'string' } },
       folder: { type: 'string', description: 'A folder name, made if there isn’t one yet. An empty string takes the deck out of its folder.' },
       cover_image: { type: 'string', description: 'The deck’s cover picture. ' + SOURCE + ' An empty string goes back to the deck’s own gradient.' },
-      background: { type: 'string', enum: BG_KINDS, description: 'Behind Learn mode, flashcards, and Live: deck (the deck’s own colors, faint; the default), plain, sky, sunset, or photo (needs background_image, or uses the cover picture).' },
+      background: { type: 'string', enum: BG_KINDS, description: 'Behind Learn mode, flashcards, and Live: deck (the deck’s own colors, faint), plain (what a deck shows until one is picked), sky, sunset, or photo (needs background_image, or uses the cover picture).' },
       background_image: { type: 'string', description: 'A picture for the background (sets background to photo). ' + SOURCE }, files: FILES }, required: ['deck'] },
     meta: { 'openai/fileParams': ['files'] },
     run: async (a, who, ctx) => {

@@ -172,8 +172,8 @@ private struct LearnBody: View {
     .padding(.top, 10).padding(.horizontal, 20).padding(.bottom, 34)
   }
 
-  /// Learn mode's colors: the sky style (canvas V82), light or at night.
-  private var look: LearnLook { LearnLook.of(t.dark, gray: t.gray) }
+  /// Learn mode's colors: the sky style (canvas V82), light or at night; on a plain white page the chips are its light gray.
+  private var look: LearnLook { LearnLook.of(t.dark, gray: t.gray, plainChip: !t.dark && store.studyBgKind(deckId) == "plain" ? t.surf : nil) }
 
   // The canvas's sample screens.
   @ViewBuilder private var demoBody: some View {
@@ -201,10 +201,16 @@ private struct LearnBody: View {
     }
   }
 
-  // After an answer, the AI can explain it: Explain, then the explanation in its place (under the line that says why).
-  @ViewBuilder private func explain(_ v: LearnView, answered: Bool) -> some View {
+  /// What a question's explanation looks like right now (the canvas's sample on a design screen).
+  private func explanation(_ v: LearnView) -> ExplainVM {
     let sample = v.type == "type" ? Store.demoExplain.type : Store.demoExplain.learn
-    let ex = store.demo ? ExplainVM(on: true, text: exMock ? sample : "", note: exMock ? "2 free explanations left today" : "") : store.explainOf(v.id)
+    return store.demo ? ExplainVM(on: true, text: exMock ? sample : "", note: exMock ? "2 free explanations left today" : "") : store.explainOf(v.id)
+  }
+
+  // After an answer, the AI can explain it: Explain (the round button by the gear), then the explanation in its place (under the
+  // line that says why).
+  @ViewBuilder private func explain(_ v: LearnView, answered: Bool) -> some View {
+    let ex = explanation(v)
     if answered && ex.on && !v.id.isEmpty {
       // (it opens in the same place for every question: under the answers and the line that says why, never over them; it
       // fades in, nothing slides)
@@ -215,14 +221,32 @@ private struct LearnBody: View {
             .background(RoundedRectangle(cornerRadius: 18, style: .continuous).fill(look.card).learnShadow(look.shadow))
             .id("explanation")
             .transition(.opacity)
-        } else {
-          ExplainButton(label: ex.label, look: .learn(look)) {
-            exFor = v.id
-            if store.demo { exMock = true } else if ex.text.isEmpty { Task { await store.explain(v.id, question: v.text) } }
-          }
         }
       }
       .animation(Motion.fade, value: exFor)
+    }
+  }
+
+  /// Explain, a round button just after the gear and its size (the owner, 2026-10-02, as on a flashcard: "move it upper right
+  /// similar shape to the flashcard settings"), once the question is answered: pressed while the explanation is open, and pressing
+  /// it again closes it. Its place is kept while the question waits for its answer, so the bar beside it doesn't move. (Matching
+  /// has no explanation.)
+  @ViewBuilder private func explainButton(_ v: LearnView) -> some View {
+    let ex = explanation(v), answered = v.type == "type" ? v.checked : v.pick != nil
+    if v.type != "match" && ex.on && !v.id.isEmpty {
+      if answered {
+        let open = exFor == v.id, k = look
+        Button {
+          if open { exFor = nil; return }
+          exFor = v.id
+          if store.demo { exMock = true } else if ex.text.isEmpty { Task { await store.explain(v.id, question: v.text) } }
+        } label: {
+          Icon("sparkle", 18, 2).foregroundStyle(open ? k.btnFg : k.ink).frame(width: 44, height: 44).background(Circle().fill(open ? k.btn : k.chip))
+        }
+        .buttonStyle(.press).accessibilityLabel("Explain").accessibilityAddTraits(open ? .isSelected : [])
+      } else {
+        Color.clear.frame(width: 44, height: 44)
+      }
     }
   }
 
@@ -233,10 +257,13 @@ private struct LearnBody: View {
     return HStack(spacing: 12) {
       Button { nav.leave(to: deckId) } label: { Icon("close", 18, 2).foregroundStyle(k.ink).frame(width: 44, height: 44).background(Circle().fill(k.chip)) }
         .buttonStyle(.press).accessibilityLabel("Stop for now")
-      Button { withAnimation(Motion.sheet) { settingsOpen.toggle() } } label: {
-        Icon("gear", 18, 2).foregroundStyle(settingsOpen ? k.btnFg : k.ink).frame(width: 44, height: 44).background(Circle().fill(settingsOpen ? k.btn : k.chip))
+      HStack(spacing: 8) {
+        Button { withAnimation(Motion.sheet) { settingsOpen.toggle() } } label: {
+          Icon("gear", 18, 2).foregroundStyle(settingsOpen ? k.btnFg : k.ink).frame(width: 44, height: 44).background(Circle().fill(settingsOpen ? k.btn : k.chip))
+        }
+        .buttonStyle(.press).accessibilityLabel("Learn settings")
+        explainButton(v)
       }
-      .buttonStyle(.press).accessibilityLabel("Learn settings")
       GeometryReader { g in
         HStack(spacing: 0) {
           k.bar.frame(width: g.size.width * CGFloat(v.learned) / CGFloat(max(1, v.total)))
@@ -551,7 +578,8 @@ struct LearnLook {
   let shadow: LearnShadow, lift: LearnShadow
   /// The answers' number colors (they skip green and red, which mean right and wrong here).
   static let colors: [UInt32] = [0x4F60E6, 0xF2701D, 0x0E8FB0, 0xE5407E]
-  static func of(_ dark: Bool, gray: Bool = false) -> LearnLook {
+  /// `plainChip`: the chips' color on a plain page in light mode (the page's light gray: white glass wouldn't show on white).
+  static func of(_ dark: Bool, gray: Bool = false, plainChip: Color? = nil) -> LearnLook {
     let navy = Color(hex: 0x0D1542)
     if dark && gray {
       return LearnLook(ink: Color(hex: 0xF2F3F7), ink2: Color(hex: 0xF2F3F7).opacity(0.7), card: Color(hex: 0x2D2F36), gray: Color(hex: 0x393C45), grayInk: Color(hex: 0xA3A9B6),
@@ -565,7 +593,7 @@ struct LearnLook {
                   bar: Color(hex: 0x8C9AFC), part: Color(hex: 0x8C9AFC).opacity(0.4), check: Color(hex: 0x16C64A),
                   shadow: LearnShadow(color: .black.opacity(0.5), radius: 10, y: 8), lift: LearnShadow(color: .black.opacity(0.6), radius: 18, y: 20))
       : LearnLook(ink: navy, ink2: navy.opacity(0.68), card: .white, gray: Color(hex: 0xC4CBD5), grayInk: Color(hex: 0x5D6677),
-                  chip: .white.opacity(0.72), track: navy.opacity(0.08), btn: navy, btnFg: .white, other: navy.opacity(0.12), wrong: navy,
+                  chip: plainChip ?? .white.opacity(0.72), track: navy.opacity(0.08), btn: navy, btnFg: .white, other: navy.opacity(0.12), wrong: navy,
                   bar: Color(hex: 0x4F60E6), part: Color(hex: 0x4F60E6).opacity(0.38), check: Color(hex: 0x16C64A),
                   shadow: LearnShadow(color: navy.opacity(0.16), radius: 10, y: 8), lift: LearnShadow(color: navy.opacity(0.3), radius: 18, y: 20))
   }

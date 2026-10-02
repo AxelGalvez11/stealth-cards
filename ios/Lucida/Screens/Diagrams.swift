@@ -134,7 +134,8 @@ private struct DiagramBoxes: View {
     GeometryReader { g in
       ZStack(alignment: .topLeading) {
         ForEach(boxes) { b in
-          RoundedRectangle(cornerRadius: 3, style: .continuous).fill(Color.white.opacity(0.32))
+          // See-through yellow, as a picture card's boxes will hide these labels (Generated.occ), with its black edge.
+          RoundedRectangle(cornerRadius: 3, style: .continuous).fill(Generated.occ.picked.color)
             .overlay(RoundedRectangle(cornerRadius: 3, style: .continuous).strokeBorder(Color.black, lineWidth: 1.5))
             .background(RoundedRectangle(cornerRadius: 4, style: .continuous).fill(Color.white.opacity(0.9)).padding(-1))
             .frame(width: b.w * g.size.width, height: b.h * g.size.height)

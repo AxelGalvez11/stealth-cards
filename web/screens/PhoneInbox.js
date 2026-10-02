@@ -363,8 +363,8 @@ mock() {
       reorderDeck: (id, b) => set({ deckOrder: before(order, id, b) }),
       reorderCard: (id, b) => set({ cardOrder: before(cardOrder, id, b) }),
       moveCard: (id, deckId) => set({ cardDeck: { ...cardDeck, [id]: deckId } }),
-      setBg: (id, kind) => set({ deck: { ...ed, bg: { ...(ed.bg || { kind: 'deck', image: null }), kind } } }),
-      pickBg: () => set({ deck: { ...ed, bg: { kind: 'photo', image: 'mock' } } }),
+      setBg: (id, kind, chosen = true) => set({ deck: { ...ed, bg: { ...(ed.bg || { kind: 'deck', image: null }), kind, chosen } } }),
+      pickBg: () => set({ deck: { ...ed, bg: { kind: 'photo', image: 'mock', chosen: true } } }),
       addDeck: noop, deleteDeck: noop, exportDeck: noop, saveCard: noop, deleteCard: noop, copy: noop, speak: noop, play: noop, importCards: noop, exportAll: noop, resetAll: noop,
       pickFile: () => Promise.resolve(null), pickText: () => Promise.resolve(null), pickSound: () => Promise.resolve(null),
       record: () => { set((p.recording && !m.recStop) || m.rec ? { rec: false, recStop: true } : { rec: true }); return Promise.resolve(null); },
@@ -958,8 +958,8 @@ renderVals() { const t = this.theme(!!this.props.dark, !!this.props.dim);
   const occView = (boxes, ask, mode, shown, c) => (boxes || []).map((b, i) => {
     const asked = i === ask, hide = asked || mode === 'all', pct = v => +(v * 100).toFixed(3) + '%';
     return { n: hide ? String(i + 1) : '', x: pct(b.x), y: pct(b.y), w: pct(b.w), h: pct(b.h), z: asked ? '2' : '1',
-      bg: asked ? (shown ? 'transparent' : c.ask) : hide ? c.cover : 'transparent', fg: asked ? (shown ? 'transparent' : c.askText) : c.coverText,
-      ring: asked ? 'inset 0 0 0 2.5px ' + c.ask + ', 0 0 0 2px ' + c.ring : hide ? '0 0 0 2px ' + c.ring : 'none',
+      bg: asked ? (shown ? 'transparent' : '#FFD60A') : hide ? '#FFD60A' : 'transparent', fg: asked ? (shown ? 'transparent' : '#000000') : 'rgba(0,0,0,.6)',
+      ring: asked ? 'inset 0 0 0 2.5px ' + c.edge + ', 0 0 0 2px ' + c.ring : hide ? '0 0 0 2px ' + c.ring : 'none',
       // Only showing the answer fades; covering a new card's box is instant, so its answer never shows through.
       tr: asked && shown ? 'background-color .45s cubic-bezier(.2,.8,.2,1), color .3s ease' : 'none' };
   });
@@ -976,7 +976,7 @@ renderVals() { const t = this.theme(!!this.props.dark, !!this.props.dim);
     // A picture with boxes asks one box (c.box); a picture without is a plain image card, as before.
     const oi = c.kind === 'image' && c.image && Array.isArray(c.boxes) ? c.boxes.findIndex(b => b.id === c.box) : -1, ob = oi < 0 ? null : c.boxes[oi], ratio = ob ? ratioOf(c.image) : 0;
     return { ...c, isBasic: c.kind === 'basic', isCloze: c.kind === 'cloze', isImage: c.kind === 'image' && !ob, isOcc: !!ob, isAudio: c.kind === 'audio',
-      occ: ob ? occView(c.boxes, oi, c.occ, rev, { ask: t.inv, askText: t.invText, cover: t.surf2, coverText: t.muted, ring: t.bg }).map(b => (flipOn ? b : { ...b, tr: 'none' })) : [],
+      occ: ob ? occView(c.boxes, oi, c.occ, rev, { edge: t.inv, ring: t.bg }).map(b => (flipOn ? b : { ...b, tr: 'none' })) : [],
       occAsk: ob ? show(R.plain(c.front || '').trim() ? c.front : 'What’s under box ' + (oi + 1) + '?') : [], occRatio: String(+(ratio || 4 / 3).toFixed(4)), occVis: ratio ? 'visible' : 'hidden',
       occLabel: ob ? ob.label || '' : '', hasOccLabel: !!(ob && ob.label), occLabelCls: rev && flipOn ? 'sc-fade-a' : '', occLabelVis: rev ? 'visible' : 'hidden',
       occAlt: ob ? 'The picture, with box ' + (oi + 1) + (rev ? ' showing' : ' hidden') : '',

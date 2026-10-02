@@ -266,7 +266,7 @@ renderVals() { ${DB_JS}
     kindLabel: q.kindLabel, question: q.text, hasClaim: !!q.claim, claim: q.claim || '', isChoice: q.type === 'choice', isType: q.type === 'type', isMatch: q.type === 'match', typed: q.typed || '', type: act.type,
     qAnim: (V.number % 2 ? 'scTA' : 'scTB') + ' .2s cubic-bezier(.2,.8,.2,1) both', colWidth: q.type === 'match' ? '${phone ? '100%' : '960px'}' : '720px',
     hasImage: !!q.image || !!(q.occ && mock), imageMock: q.image === 'mock', imageUrl: q.image && q.image !== 'mock' ? q.image : '', occInset: q.image === 'mock' ? '10px 14px' : '0',
-    occBoxes: q.image && q.occ ? occView(q.occ.boxes, q.occ.ask, q.occ.mode, false, { ask: t.inv, askText: t.invText, cover: t.surf2, coverText: t.muted, ring: t.bg }) : [],
+    occBoxes: q.image && q.occ ? occView(q.occ.boxes, q.occ.ask, q.occ.mode, false, { edge: t.inv, ring: t.bg }) : [],
     options: (q.options || []).map((o, j) => ({ label: o.label, letter: LETTERS[j], key: String(j + 1), pressed: o.picked ? 'true' : 'false', ring: o.picked ? 'inset 0 0 0 2px ' + t.text : 'none',
       badge: o.picked ? t.inv : t.surf2, badgeFg: o.picked ? t.invText : t.muted, pick: () => act.choose(j) })),
     terms: (q.terms || []).map((m, mi) => ({ n: m.n, label: m.label, chips: m.chips.map((x, di) => ({ letter: x.letter, pressed: x.on ? 'true' : 'false', aria: 'Answer ' + x.letter + ' for ' + m.label, bg: x.on ? t.inv : t.bg, fg: x.on ? t.invText : t.muted, pick: () => act.match(m.id, x.id, mi, di) })) })),

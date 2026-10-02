@@ -363,8 +363,8 @@ mock() {
       reorderDeck: (id, b) => set({ deckOrder: before(order, id, b) }),
       reorderCard: (id, b) => set({ cardOrder: before(cardOrder, id, b) }),
       moveCard: (id, deckId) => set({ cardDeck: { ...cardDeck, [id]: deckId } }),
-      setBg: (id, kind) => set({ deck: { ...ed, bg: { ...(ed.bg || { kind: 'deck', image: null }), kind } } }),
-      pickBg: () => set({ deck: { ...ed, bg: { kind: 'photo', image: 'mock' } } }),
+      setBg: (id, kind, chosen = true) => set({ deck: { ...ed, bg: { ...(ed.bg || { kind: 'deck', image: null }), kind, chosen } } }),
+      pickBg: () => set({ deck: { ...ed, bg: { kind: 'photo', image: 'mock', chosen: true } } }),
       addDeck: noop, deleteDeck: noop, exportDeck: noop, saveCard: noop, deleteCard: noop, copy: noop, speak: noop, play: noop, importCards: noop, exportAll: noop, resetAll: noop,
       pickFile: () => Promise.resolve(null), pickText: () => Promise.resolve(null), pickSound: () => Promise.resolve(null),
       record: () => { set((p.recording && !m.recStop) || m.rec ? { rec: false, recStop: true } : { rec: true }); return Promise.resolve(null); },
@@ -1498,12 +1498,12 @@ renderVals() {
   // Image occlusion: the boxes as they are now (while one is dragged, where it is), the picked one, and each one's answer.
   // A picture with boxes needs no Answer: each box's label is its card's answer.
   const bx = this.boxes(), picked = bx.some(b => b.id === s.occSel) ? s.occSel : null, pct = v => +(v * 100).toFixed(3) + '%';
-  const tint = this.props.dark ? 'rgba(255,255,255,.14)' : 'rgba(0,0,0,.08)';
   const occ = { ref: this.occRef(), has: bx.length > 0, none: !bx.length, canAdd: !!f.image && bx.length < 30, tip: !!f.image && f.image !== 'mock' && !bx.length,
     hint: f.occ === 'all' ? 'Every box stays hidden while one is asked.' : 'Only the box being asked is hidden.',
     // The picked box sits on top of the others, so its corners can always be reached.
     boxes: bx.map((b, i) => { const on = b.id === picked; return { id: b.id, n: String(i + 1), num: on ? '' : String(i + 1), sel: on, pressed: on ? 'true' : 'false', z: on ? '2' : '1',
-      x: pct(b.x), y: pct(b.y), w: pct(b.w), h: pct(b.h), bg: on ? tint : t.surf2, fg: t.text, ring: on ? 'inset 0 0 0 2px ' + t.inv + ', 0 0 0 2px ' + t.bg : '0 0 0 2px ' + t.bg,
+      // Yellow, like the boxes on a card; the picked one lets the picture show through while it's moved or sized.
+      x: pct(b.x), y: pct(b.y), w: pct(b.w), h: pct(b.h), bg: on ? 'rgba(255,214,10,.32)' : '#FFD60A', fg: '#000000', ring: on ? 'inset 0 0 0 2px ' + t.inv + ', 0 0 0 2px ' + t.bg : '0 0 0 2px ' + t.bg,
       // The × floats over the middle of the box, clear of its corners: above it, or below it near the picture's top
       // (inside a box that fills the picture's height).
       delAt: b.y >= .16 ? 'left: 50%; margin-left: -12px; bottom: calc(100% + 8px);' : b.y + b.h <= .84 ? 'left: 50%; margin-left: -12px; top: calc(100% + 8px);' : 'right: 8px; top: 8px;',

@@ -1,8 +1,9 @@
 // Study backgrounds (design/build.mjs STUDY_BG_JS and studyBgLayer): what shows behind Learn mode and flashcards. By
-// default it's the deck's own colors under film grain: in light mode one pale hue, the deck's main color as a pastel
-// wash; at night nearly black with a faint hint of its colors (under a gray wash in gray dark mode). Or, picked in the
-// deck's settings or in the settings of flashcards and Learn mode (BgChooser), a plain page, the sky, the sunset, or a
-// photo, softened so the words stay easy to read.
+// default a plain page, white or dark at night (the owner, 2026-10-02: "default background should be plain white"), or the
+// theme's own with a theme on (Pro). Or, picked in the deck's settings or in the settings of flashcards and Learn mode
+// (BgChooser): the deck's own colors under film grain (in light mode one pale hue, the deck's main color as a pastel wash; at
+// night nearly black with a faint hint of its colors, under a gray wash in gray dark mode), the sky, the sunset, or a photo,
+// softened so the words stay easy to read.
 import SwiftUI
 
 /// A deck's study background, worked out: which kind, the deck's gradient, and its photo.
@@ -17,26 +18,46 @@ struct StudyBg {
 }
 
 extension Store {
-  /// What shows behind studying a deck: its own choice, or its colors when there's none (or Photo with no photo). A deck's
-  /// header photo counts as its photo.
+  /// What shows behind studying a deck (design/build.mjs bgKindOf): the background picked for it; or, for a deck nobody picked
+  /// one for (every deck is made with "deck", and a pick is `chosen`), a plain page, or the theme's own with a theme on. Plain,
+  /// Sky, Sunset and Photo were always picks; Photo with no photo falls back the same way.
+  static func bgKind(_ b: DeckBg, image: String?, themed: Bool) -> String {
+    let k = ["deck", "plain", "sky", "sunset", "photo"].contains(b.kind) && !(b.kind == "photo" && image == nil) ? b.kind : ""
+    return !k.isEmpty && (k != "deck" || b.chosen) ? k : themed ? "deck" : "plain"
+  }
+
+  /// Only which background shows behind studying a deck (no gradient worked out): Learn's chips are gray on a plain page.
+  func studyBgKind(_ deckId: String?) -> String {
+    let theme = skin(ThemeArt.shared) != nil
+    if demo { let e = demoDeck; return Store.bgKind(e.bg, image: (e.bg.image ?? e.image).flatMap { $0.isEmpty ? nil : $0 }, themed: theme) }
+    guard let x = engine.deck(deckId) else { return theme ? "deck" : "plain" }
+    return Store.bgKind(x.bg, image: (x.bg.image ?? x.cover.image).flatMap { $0.isEmpty ? nil : $0 }, themed: theme)
+  }
+
+  /// What shows behind studying a deck (Store.bgKind). A deck's header photo counts as its photo.
   func studyBg(_ deckId: String?) -> StudyBg {
     let d: (seed: String, round: Int, style: String?, image: String?, bg: DeckBg)
     if demo { let e = demoDeck; d = ("Cell Biology", e.round, e.style ?? "mix", e.image, e.bg) }
     else if let x = engine.deck(deckId) { d = (x.cover.seed ?? x.name, x.cover.round, x.cover.style, x.cover.image, x.bg) }
     else { d = ("Lucida", 0, "mix", nil, DeckBg()) }
-    let img = (d.bg.image ?? d.image).flatMap { $0.isEmpty ? nil : $0 }
-    let kind = ["deck", "plain", "sky", "sunset", "photo"].contains(d.bg.kind) && !(d.bg.kind == "photo" && img == nil) ? d.bg.kind : "deck"
+    let img = (d.bg.image ?? d.image).flatMap { $0.isEmpty ? nil : $0 }, theme = skin(ThemeArt.shared)
+    let kind = Store.bgKind(d.bg, image: img, themed: theme != nil)
     let photo = kind == "photo" && img != "mock" ? img : nil
     return StudyBg(kind: kind, mesh: Mesh.deck(seed: d.seed, round: d.round, style: d.style), photo: photo, sample: kind == "photo" && photo == nil,
-                   skin: kind == "deck" ? skin(ThemeArt.shared) : nil)
+                   skin: kind == "deck" ? theme : nil)
   }
 
-  /// What the background tiles show for a deck (BG_PICK_JS): its choice as it's saved, the photo it would use (its own,
-  /// or the header's), and its colors.
+  /// What the background tiles show for a deck (BG_PICK_JS): the one that shows (Store.bgKind: Plain, or the theme's tile, for a
+  /// deck nobody picked one for), the photo it would use (its own, or the header's), and its colors.
   func bgChoice(_ deckId: String) -> (kind: String, image: String?, mesh: Mesh) {
-    if demo { let e = demoDeck; return (e.bg.kind, e.bg.image ?? e.image, Mesh.deck(seed: "Cell Biology", round: e.round, style: e.style ?? "mix")) }
-    guard let x = engine.deck(deckId) else { return ("deck", nil, Mesh.deck(seed: "Lucida")) }
-    return (x.bg.kind, x.bg.image ?? x.cover.image, Mesh.deck(seed: x.cover.seed ?? x.name, round: x.cover.round, style: x.cover.style))
+    let themed = skin(ThemeArt.shared) != nil
+    if demo {
+      let e = demoDeck, img = (e.bg.image ?? e.image).flatMap { $0.isEmpty ? nil : $0 }
+      return (Store.bgKind(e.bg, image: img, themed: themed), img, Mesh.deck(seed: "Cell Biology", round: e.round, style: e.style ?? "mix"))
+    }
+    guard let x = engine.deck(deckId) else { return (themed ? "deck" : "plain", nil, Mesh.deck(seed: "Lucida")) }
+    let img = (x.bg.image ?? x.cover.image).flatMap { $0.isEmpty ? nil : $0 }
+    return (Store.bgKind(x.bg, image: img, themed: themed), img, Mesh.deck(seed: x.cover.seed ?? x.name, round: x.cover.round, style: x.cover.style))
   }
 }
 
@@ -171,10 +192,11 @@ extension RGBA {
   }
 }
 
-/// Picking a deck's background (design/build.mjs bgChooser): Colors, Plain, Sky, Sunset, or Photo, the chosen one
-/// ringed. In Deck settings, and in the settings of flashcards and Learn mode; it's saved with the deck, so a page behind
-/// changes as soon as one is picked. Photo with no picture yet (the header's photo counts) opens the photo picker. The
-/// Colors tile shows light mode's look, like the Sky and Sunset tiles.
+/// Picking a deck's background (design/build.mjs bgChooser): Colors, Plain, Sky, Sunset, or Photo, the one that shows
+/// ringed (Plain for a deck nobody picked one for). In Deck settings, and in the settings of flashcards and Learn mode; it's
+/// saved with the deck, so a page behind changes as soon as one is picked. Photo with no picture yet (the header's photo
+/// counts) opens the photo picker. The Colors tile shows light mode's look, like the Sky and Sunset tiles. With a theme on, its
+/// tile (the first) is the default again: picking it means plain once the theme is off.
 struct BgChooser: View {
   @Environment(\.theme) private var t
   @EnvironmentObject private var store: Store
@@ -193,7 +215,7 @@ struct BgChooser: View {
       HStack(spacing: 8) {
         ForEach([("deck", skin != nil ? "Theme" : "Colors"), ("plain", "Plain"), ("sky", "Sky"), ("sunset", "Sunset"), ("photo", "Photo")], id: \.0) { id, label in
           let on = d.kind == id
-          Button { id == "photo" && d.image == nil ? (picking = true) : store.setBg(deckId, id) } label: {
+          Button { id == "photo" && d.image == nil ? (picking = true) : store.setBg(deckId, id, chosen: !(skin != nil && id == "deck")) } label: {
             VStack(spacing: 6) {
               ZStack {
                 switch id {

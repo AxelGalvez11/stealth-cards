@@ -7,6 +7,9 @@
 //   2  Another device: the choice made on the web (Off, then On) is what this phone shows, in Settings and in Review.
 //   3  Settings' sections: the list is grouped into the same seven sections as the web's Settings page, in the same order (Account, Plan,
 //      Studying, Appearance, Connect AI, Privacy, Help & legal), each with its rows.
+//   4  Review settings (the owner, 2026-10-02: "add a way for user to toggle flaschard flip animation on or off"): the review's own sheet
+//      has the same switch, On to start with; Off there saves it, the card's other side then just appears, and Settings says Off too;
+//      On again from the sheet, the card turns.
 // Run it with ios/tools/e2e-flip.sh (it starts a fresh server). It only runs when LUCIDA_FLIP is set.
 import XCTest
 
@@ -97,6 +100,42 @@ final class FlipTests: AppCase {
     check(seen == titles, "the sections are " + titles.joined(separator: ", ") + ", in that order (saw: " + seen.joined(separator: ", ") + ")")
     for t in titles { check((found[t] ?? []).count == (rows[t] ?? []).count, t + " has " + (rows[t] ?? []).joined(separator: ", ") + " (saw: " + (found[t] ?? []).joined(separator: ", ") + ")") }
     app.terminate()
+  }
+
+  // ---------- 4: the switch in Review settings ----------
+  func test4ReviewSettings() throws {
+    try XCTSkipIf(api("x", "GET", "/api/rev").status != 200, "No server at " + Self.server)
+    let who = "flipd" + run
+    name(who, "Flip Dove")
+    makeDeck(who)
+    let r = review(who)
+    check(r.mode == "turns", "to start with, the card turns over")
+    tap(button(r.app, "Review settings"), "Review settings")
+    let sw = button(r.app, "Flip animation")
+    check(wait(sw) && (sw.value as? String) == "On", "Review settings has the Flip animation switch, On")
+    snap("iphone-review-settings-flip-on")
+    tap(sw, "Flip animation")
+    check(eventually(5) { (sw.value as? String) == "Off" }, "pressing it turns it Off at once")
+    check(eventually { saved(who) == false }, "and the server keeps it with the other study settings")
+    snap("iphone-review-settings-flip-off")
+    tap(button(r.app, "Done"), "Done")
+    check(eventually(5) { audit(r.app) == "appears" }, "the sheet closed, the card's other side now just appears (no turn)")
+    tap(button(r.app, "Flip card"), "the card")
+    check(wait(button(r.app, "Flip back")) && any(r.app, "Protons").exists, "pressing the card shows the answer at once")
+    r.app.terminate()
+    let app = settings(who)
+    check(wait(row(app)) && rowValue(app) == "Off", "Settings › Studying says Off too (it is the same setting)")
+    app.terminate()
+    let r2 = review(who)
+    check(r2.mode == "appears", "opened again, the card still doesn't turn")
+    tap(button(r2.app, "Review settings"), "Review settings")
+    let sw2 = button(r2.app, "Flip animation")
+    check(wait(sw2) && (sw2.value as? String) == "Off", "and the review's switch says Off")
+    tap(sw2, "Flip animation")
+    check(eventually(5) { (sw2.value as? String) == "On" } && eventually { saved(who) == true }, "pressing it again turns it On and saves")
+    tap(button(r2.app, "Done"), "Done")
+    check(eventually(5) { audit(r2.app) == "turns" }, "and the card turns over again")
+    r2.app.terminate()
   }
 
   // ---------- 2: another device ----------

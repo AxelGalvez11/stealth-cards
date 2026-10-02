@@ -61,9 +61,13 @@ class Component extends LucidaLogic(DCLogic, 0) {
 
 constructor(props) { super(props); this.state = { done: [0, 3], sel: 1, wrong: null }; }
 renderVals() { const db = this.props.db || this.mock(); const chrome = db.chrome();
+  const bgKindOf = (b, img, S) => {
+    const k = b && ['deck', 'plain', 'sky', 'sunset', 'photo'].includes(b.kind) && !(b.kind === 'photo' && !img) ? b.kind : '';
+    return k && (k !== 'deck' || b.chosen) ? k : S ? 'deck' : 'plain';
+  };
   const studyBg = (dk, dark, dim, S, phone) => {
     const b = (dk && dk.bg) || {}, img = b.image || (dk && dk.image) || '';
-    const kind = ['deck', 'plain', 'sky', 'sunset', 'photo'].includes(b.kind) && !(b.kind === 'photo' && !img) ? b.kind : 'deck';
+    const kind = bgKindOf(b, img, S);
     const mesh = this.gen(((dk && dk.seed) || 'Lucida') + (dk && dk.round ? ' #' + dk.round : ''), (dk && dk.style) || 'mix');
     const skin = !!S && kind === 'deck';
     // On the canvas a photo is a placeholder, so it shows the deck's colors at full strength instead.
@@ -73,7 +77,7 @@ renderVals() { const db = this.props.db || this.mock(); const chrome = db.chrome
     // the gradient), light and soft, a pastel wash under the words. Dark and gray keep theirs.
     const mono = faint && !dark, hue = parseInt(mesh.base.split('hsl(')[2]) || 0;
     const pale = c => c.replace(/hsl\((\d+) (\d+)% (\d+)%\)/g, (_, h, s, l) => 'hsl(' + hue + ' 50% ' + Math.round(84 + l * .12) + '%)');
-    return { isDeck: faint || sample, isPhoto: !!photo, isSky: kind === 'sky', isSunset: kind === 'sunset', photo, skin, art: skin ? S.bg(!!phone) : null, dark: skin ? S.dark : dark,
+    return { isDeck: faint || sample, isPhoto: !!photo, isSky: kind === 'sky', isSunset: kind === 'sunset', isPlain: kind === 'plain', photo, skin, art: skin ? S.bg(!!phone) : null, dark: skin ? S.dark : dark,
       mesh: mono ? Object.fromEntries(Object.entries(mesh).map(([k, v]) => [k, typeof v === 'string' ? pale(v) : v && v.c ? { ...v, c: pale(v.c) } : v])) : mesh,
       filter: sample || !dark ? 'none' : gray ? 'saturate(.16) brightness(.34)' : 'saturate(.16) brightness(.42)',
       veil: faint ? (gray ? 'rgba(30,30,32,.45)' : dark ? 'rgba(0,0,0,.3)' : 'rgba(255,255,255,.35)') : photo || sample ? (gray ? 'rgba(30,30,32,.55)' : dark ? 'rgba(0,0,0,.5)' : 'rgba(255,255,255,.38)') : 'rgba(0,0,0,0)',
@@ -87,13 +91,14 @@ renderVals() { const db = this.props.db || this.mock(); const chrome = db.chrome
     ? { ink: '#F2F3F7', ink2: 'rgba(242,243,247,.7)', card: '#2D2F36', shadow: '0 10px 24px -16px rgba(0,0,0,.6)', lift: '0 26px 48px -20px rgba(0,0,0,.75)', gray: '#393C45', grayInk: '#A3A9B6', chip: 'rgba(255,255,255,.12)', track: 'rgba(255,255,255,.16)', btn: '#F2F3F7', btnFg: '#0D1542', other: 'rgba(255,255,255,.16)', wrong: '#5A606E', bar: '#8C9AFC', part: 'rgba(140,154,252,.42)', check: '#16C64A' }
     : sd
     ? { ink: '#F2F3F7', ink2: 'rgba(242,243,247,.66)', card: '#1B1D24', shadow: '0 10px 24px -16px rgba(0,0,0,.7)', lift: '0 26px 48px -20px rgba(0,0,0,.85)', gray: '#2A2D35', grayInk: '#8E95A3', chip: 'rgba(255,255,255,.1)', track: 'rgba(255,255,255,.14)', btn: '#F2F3F7', btnFg: '#0D1542', other: 'rgba(255,255,255,.14)', wrong: '#4A4F5C', bar: '#8C9AFC', part: 'rgba(140,154,252,.4)', check: '#16C64A' }
-    : { ink: '#0D1542', ink2: 'rgba(13,21,66,.68)', card: '#FFFFFF', shadow: '0 10px 24px -16px rgba(13,21,66,.35)', lift: '0 26px 48px -20px rgba(13,21,66,.5)', gray: '#C4CBD5', grayInk: '#5D6677', chip: 'rgba(255,255,255,.72)', track: 'rgba(13,21,66,.08)', btn: '#0D1542', btnFg: '#FFFFFF', other: 'rgba(13,21,66,.12)', wrong: '#0D1542', bar: '#4F60E6', part: 'rgba(79,96,230,.38)', check: '#16C64A' };
+    : { ink: '#0D1542', ink2: 'rgba(13,21,66,.68)', card: '#FFFFFF', shadow: '0 10px 24px -16px rgba(13,21,66,.35)', lift: '0 26px 48px -20px rgba(13,21,66,.5)', gray: '#C4CBD5', grayInk: '#5D6677', chip: bg.isPlain ? t.surf : 'rgba(255,255,255,.72)', track: 'rgba(13,21,66,.08)', btn: '#0D1542', btnFg: '#FFFFFF', other: 'rgba(13,21,66,.12)', wrong: '#0D1542', bar: '#4F60E6', part: 'rgba(79,96,230,.38)', check: '#16C64A' };
   const bgPick = (dk, S) => {
-    const kind = (dk.bg && dk.bg.kind) || 'deck', image = (dk.bg && dk.bg.image) || (dk.cover && dk.cover.image) || '', photo = image && image !== 'mock' ? image : '', tile = studyBg({ ...dk, bg: { kind: 'deck' } }, false);
+    const image = (dk.bg && dk.bg.image) || (dk.cover && dk.cover.image) || '', photo = image && image !== 'mock' ? image : '', tile = studyBg({ ...dk, bg: { kind: 'deck', chosen: true } }, false);
+    const kind = bgKindOf(dk.bg, image, S);
     return { bgTile: { base: tile.mesh.base, veil: tile.veil, skin: !!S, art: S ? S.ref('bg') : null }, hasBgPhoto: !!photo, bgPhoto: photo, bgIsPhoto: kind === 'photo', uploadBg: () => db.act.pickBg(dk.id),
       bgOptions: [['deck', S ? 'Theme' : 'Colors'], ['plain', 'Plain'], ['sky', 'Sky'], ['sunset', 'Sunset'], ['photo', 'Photo']].map(([id, label]) => { const on = kind === id;
         return { label, pressed: on ? 'true' : 'false', ring: on ? '0 0 0 2px ' + t.text : 'inset 0 0 0 1px ' + t.line, isDeck: id === 'deck', isPlain: id === 'plain', isSky: id === 'sky', isSunset: id === 'sunset', isPhoto: id === 'photo',
-          pick: () => (id === 'photo' && !image ? db.act.pickBg(dk.id) : db.act.setBg(dk.id, id)) }; }) };
+          pick: () => (id === 'photo' && !image ? db.act.pickBg(dk.id) : db.act.setBg(dk.id, id, !(S && id === 'deck'))) }; }) };
   };
   const settingsOpen = this.state.settings ?? !!this.props.settingsOpen;
   const view = (learned, total, part, n, just) => ({ k: K, sky: (this.props.dark && this.props.dim ? { top: '#1B2A48', mid: '#1F2B45', low: '#212637', glow: 'rgba(120,150,255,.16)', cloud: 'rgba(150,170,230,.12)' }

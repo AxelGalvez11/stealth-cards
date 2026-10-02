@@ -484,7 +484,8 @@ so a cold start counts too); the third flow lets a real notice come (`-reminderI
 with their switch, `-flip Off` on a design screen). Off, the card's other side just appears in Review and Cards to check: no 3D turn, no blank's pop,
 no note or box fade (and the welcome's card doesn't turn between steps). It is one of the person's study settings on the server, so the web app and every
 phone follow the same choice; the web app's Review reads it the same way (`flipTrans` in the Review boards). Reduce Motion changes nothing about it.
-`ios/tools/e2e-flip.sh <simulator id>` is the end-to-end test (`LucidaUITests/FlipTests`, reading what the card does through `-flipAudit`'s invisible element, and checking the seven sections).
+Review settings (the review's sheet, `PhoneReviewSettings`) has the same switch (the owner, 2026-10-02: "add a way for user to toggle flaschard flip animation on or off").
+`ios/tools/e2e-flip.sh <simulator id>` is the end-to-end test (`LucidaUITests/FlipTests`, reading what the card does through `-flipAudit`'s invisible element, checking the seven sections, and the review sheet's switch).
 
 **Sign in with Apple** sends the token Apple made for this app (audience `cards.lucida.app`) and its nonce to `/api/auth/token`; the server
 forwards both to Supabase, which accepts the audiences in the Apple provider's "Client IDs". That list already holds both the app's and the
@@ -557,7 +558,18 @@ when a check fails) and then lists every haptic in the app.
   question answered), Explain offers the AI's explanation of the answer. On a flashcard it opens UNDER the card, never over it: the card gets a
   little shorter (60% of the room, at least 250 pt; a theme's face is drawn for that height too, `ThemeLayout.reviewCardOpen`) and the explanation
   takes what is left, scrolling inside itself when it is longer. In Learn mode it opens under the answers and the line that says why, and comes into
-  view without sliding. A short fade, none with Reduce Motion. (The web app does the same on a phone; on a computer it opens beside the card.)
+  view without sliding. A short fade, none with Reduce Motion. (The web app does the same on a phone; on a computer it opens beside the card.) On a
+  flashcard its button is round, in the top bar just left of Review settings and the same size (the owner, 2026-10-02: "move it upper right similar
+  shape to the flashcard settings"): it shows once the card is turned over (its place is kept meanwhile, so the progress bar doesn't move), is
+  pressed while the explanation is open, and closes it when pressed again. Learn mode has the same round button, just after its gear (`Screens/Learn.swift`);
+  the practice test's results keep the small `ExplainButton` on each question.
+- **The study screen** (the owner's comments, 2026-10-02): behind flashcards and Learn mode a deck shows a plain page (white, black at night) until a
+  background is picked for it (`Store.bgKind` in `Design/StudyBackground.swift`, like the web's `bgKindOf`: the server marks a pick `bg.chosen`,
+  `DeckBg.chosen`, since every deck is made with kind "deck"); with a theme on the default is the theme's own, and its tile in `BgChooser` puts a deck
+  back to the default. The boxes over a picture are yellow (`Generated.occ`, from design/build.mjs `OCC`: #FFD60A with black numbers) in review, Cards to
+  check, Learn, the practice test and the card editor (`Design/Occlusion.swift`); the asked box has an edge in the outline color, which stays when its
+  yellow fades. The boxes that only mark where a card's boxes go (Make's picture-card thumbnails, a diagram's Show boxes) are see-through yellow with a black
+  edge. PolishTests' ninth flow reads the yellow from screenshots.
 - **The deck cover's parallax** (`Design/Parallax.swift`): scrolling up, the cover on a deck's page and on a shared deck's page moves at
   half the page's speed; pulled down it stretches. Reduce Motion keeps it still. `-parallaxAudit` writes the numbers the test reads.
 

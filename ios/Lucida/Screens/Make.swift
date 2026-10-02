@@ -979,7 +979,8 @@ private struct MakeThumb: View {
       GeometryReader { g in
         ZStack(alignment: .topLeading) {
           ForEach(card.boxes) { b in
-            Rectangle().fill(Color.white.opacity(0.4)).overlay(Rectangle().strokeBorder(Color.black, lineWidth: 1))
+            // See-through yellow, like the boxes the card will have (Generated.occ), with its black edge.
+            Rectangle().fill(Generated.occ.picked.color).overlay(Rectangle().strokeBorder(Color.black, lineWidth: 1))
               .frame(width: b.w * g.size.width, height: b.h * g.size.height).offset(x: b.x * g.size.width, y: b.y * g.size.height)
           }
         }

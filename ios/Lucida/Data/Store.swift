@@ -339,6 +339,7 @@ final class Store: ObservableObject {
         let b = v as? [String: Any] ?? [:]
         if let k = b["kind"] as? String { d.bg.kind = k }
         if b.keys.contains("image") { d.bg.image = b["image"] as? String }
+        if let ch = b["chosen"] as? Bool { d.bg.chosen = ch }
       default: break
       }
     }

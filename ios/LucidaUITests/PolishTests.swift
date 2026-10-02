@@ -14,8 +14,14 @@
 //      (Pulled down past the top it stretches: that was already there and its bounce is over before a test can ask.)
 //   7  Explain on a flashcard (the owner, later that day: "in ios just make it open below questions and flashcards"): the explanation
 //      opens UNDER the card, which gets a little shorter and stays whole; closing puts it back; a saved one shows again without
-//      asking the AI; a failing AI says so; Free's fourth of the day offers Go Pro. The AI is a stand-in (ios/tools/explain-stub.mjs).
-//   8  Explain in Learn mode: under the answers and the line that says why, in view, for a choice question and a typed answer.
+//      asking the AI; a failing AI says so; Free's fourth of the day offers Go Pro. Its button (the owner, 2026-10-02: "move it upper
+//      right similar shape to the flashcard settings") is round, in the top bar just left of Review settings and its size; it is
+//      pressed while the explanation is open, and pressing it again closes it. The AI is a stand-in (ios/tools/explain-stub.mjs).
+//   8  Explain in Learn mode: under the answers and the line that says why, in view, for a choice question and a typed answer. Its
+//      button is the same round one, just after Learn's gear and its size, pressed while the explanation is open.
+//   9  Yellow boxes (the owner, 2026-10-02: "for hidden boxes can you make the box color yellow?"): the boxes over a picture are #FFD60A in
+//      review and the card editor, light and dark (read from screenshots, pixel by pixel), and on a real picture card the asked box
+//      fades to its outline once the answer shows while the other stays yellow.
 //
 // Run it with ios/tools/e2e-polish.sh (it starts a fresh server on port 3914). It only runs when LUCIDA_POLISH is set, so the other
 // scripts keep running their own checks alone.
@@ -535,8 +541,10 @@ final class PolishTests: XCTestCase {
     let app = launch(as: eve, ["-open", "review"])
     check(wait(button(app, "Flip card")), "a flashcard comes up")
     check(!button(app, "Explain").exists, "before it is turned over, there is no Explain")
-    check(flip(app) && wait(button(app, "Explain")), "once it is turned over, Explain is in its corner")
-    let screen = app.frame, card0 = button(app, "Flip back").frame
+    check(flip(app) && wait(button(app, "Explain")), "once it is turned over, Explain is there")
+    let screen = app.frame, card0 = button(app, "Flip back").frame, ex = button(app, "Explain").frame, gear = button(app, "Review settings").frame
+    check(abs(ex.width - gear.width) <= 1 && abs(ex.height - gear.height) <= 1 && abs(ex.width - 44) <= 1, "it is round and the size of Review settings (44 points)", "explain \(ex) settings \(gear)")
+    check(abs(ex.minY - gear.minY) <= 1 && abs(ex.maxX + 8 - gear.minX) <= 1 && ex.maxY <= card0.minY, "in the top bar, just left of Review settings, above the card", "explain \(ex) settings \(gear) card \(card0)")
     tap(button(app, "Explain"), "Explain")
     check(wait(explanation(app)) && wait(words(app, "Because Answer 1")), "the explanation opens, with its words")
     let card = button(app, "Flip back").frame, panel = explanation(app).frame, grade = buttonStarting(app, "Good").frame
@@ -544,14 +552,18 @@ final class PolishTests: XCTestCase {
     check(card.height >= 250 && card.height < card0.height && abs(card.minY - card0.minY) <= 1, "the card is a little shorter (\(Int(card0.height)) to \(Int(card.height))) and still whole", "\(card0) \(card)")
     check(card.minY >= 0 && panel.maxY <= screen.maxY && grade.minY >= panel.maxY, "the card, the explanation and the grade buttons all fit, in that order", "card \(card) panel \(panel) grade \(grade)")
     check(abs(panel.minX - card.minX) <= 30 && panel.width >= card.width - 70, "the explanation is as wide as the card", "card \(card) panel \(panel)")
-    check(!button(app, "Explain").exists && button(app, "Close the explanation").exists, "Explain gives way to the panel, which has its close button")
+    check(button(app, "Explain").isSelected && button(app, "Close the explanation").exists, "Explain stays, pressed, and the panel has its close button")
     snap("explain-review-open")
-    tap(button(app, "Close the explanation"), "Close")
-    check(gone(explanation(app)) && wait(button(app, "Explanation")), "closing it takes the panel away, and the button now says Explanation")
+    tap(button(app, "Explain"), "Explain")
+    check(gone(explanation(app)) && !button(app, "Explain").isSelected, "pressing Explain again closes the explanation")
     check(abs(button(app, "Flip back").frame.height - card0.height) <= 1, "and the card has its whole height back", "\(button(app, "Flip back").frame) \(card0)")
+    tap(button(app, "Explain"), "Explain")
+    check(wait(explanation(app), 4), "pressed again, it opens again")
+    tap(button(app, "Close the explanation"), "Close")
+    check(gone(explanation(app)) && wait(button(app, "Explain")) && !button(app, "Explain").isSelected, "the panel's close button takes it away too, and Explain is no longer pressed")
     // saved: it shows again at once, and the AI isn't asked again
     let before = asked()
-    tap(button(app, "Explanation"), "Explanation")
+    tap(button(app, "Explain"), "Explain")
     check(wait(explanation(app), 4) && wait(words(app, "Because Answer 1"), 4) && asked() == before, "a saved explanation shows again, and the AI isn’t asked again", "asked \(before) then \(asked())")
     check(!words(app, "**").exists, "its words have no ** marks")
 
@@ -565,7 +577,7 @@ final class PolishTests: XCTestCase {
     check(wait(words(app2, "didn’t answer"), 15) && wait(explanation(app2), 4), "the AI fails: the panel says so")
     check(!button(app2, "Go Pro").exists, "and offers no Go Pro (a Pro person)")
     tap(button(app2, "Close the explanation"), "Close")
-    check(wait(button(app2, "Explain")), "the button still says Explain: nothing was saved")
+    check(wait(button(app2, "Explain")) && !button(app2, "Explain").isSelected, "Explain is there again, not pressed: nothing was saved")
 
     // Free: three a day, then Go Pro
     let fre = "free" + run
@@ -588,14 +600,18 @@ final class PolishTests: XCTestCase {
   func test8ExplainInLearnMode() throws {
     // The canvas's sample question (no server): answered, then Explain.
     let b = launchBoard("PhoneQuizAnswered")
+    check(wait(button(b, "Explain")), "Learn: an answered question offers Explain")
+    let lx = button(b, "Explain").frame, gear = button(b, "Learn settings").frame
+    check(abs(lx.width - gear.width) <= 1 && abs(lx.minX - gear.maxX - 8) <= 1 && abs(lx.minY - gear.minY) <= 1, "round, the gear's size, just after the gear in the top bar", "explain \(lx) gear \(gear)")
     tap(button(b, "Explain"), "Explain")
     check(wait(explanation(b)) && wait(words(b, "It drops. ATP synthase")), "Learn: the explanation opens")
     let panel = explanation(b).frame, last = buttonHaving(b, "Only glycolysis").frame, why = words(b, "Not quite").frame, next = button(b, "Next question").frame
     check(panel.minY >= last.maxY && panel.minY >= why.maxY, "it is under the answers and under the line that says why", "answers \(last) why \(why) panel \(panel)")
     check(panel.minY >= 0 && panel.maxY <= next.minY + 1, "and it is in view, above Next question", "panel \(panel) next \(next)")
     snap("explain-learn-open")
-    tap(button(b, "Close the explanation"), "Close")
-    check(gone(explanation(b)) && wait(button(b, "Explanation")), "closing it brings the button back (it says Explanation: there is one to read)")
+    check(button(b, "Explain").isSelected, "Explain is pressed while the explanation is open")
+    tap(button(b, "Explain"), "Explain")
+    check(gone(explanation(b)) && !button(b, "Explain").isSelected, "pressing it again closes the explanation")
     // a typed answer, for real: any answer is checked, and Explain is offered
     let lea = "lea" + run
     person(lea, "Lea Learn", deck: nil)
@@ -607,8 +623,9 @@ final class PolishTests: XCTestCase {
     tap(button(app, "Start learning"), "Start learning")
     let field = app.textFields.firstMatch
     if wait(field, 15) { field.tap(); field.typeText("zzz") } else { check(false, "found the answer box") }
+    check(!button(app, "Explain").exists, "before the answer is checked, there is no Explain")
     tap(button(app, "Check"), "Check")
-    check(wait(button(app, "Explain"), 10), "a checked answer: Explain is offered under the line that says why")
+    check(wait(button(app, "Explain"), 10), "a checked answer: Explain is offered, by the gear")
     let asked0 = asked()
     tap(button(app, "Explain"), "Explain")
     check(wait(explanation(app), 15) && wait(words(app, "Because Answer"), 15), "the explanation opens, with its words")
@@ -616,13 +633,60 @@ final class PolishTests: XCTestCase {
     check(p.minY >= box.maxY && p.minY >= 0 && p.maxY <= nxt.minY + 1, "under the answer box, in view", "box \(box) panel \(p) next \(nxt)")
     check(asked() == asked0 + 1, "the AI was asked once", "\(asked0) then \(asked())")
     tap(button(app, "Close the explanation"), "Close")
-    check(wait(button(app, "Explanation")), "closed: the button says Explanation now (there is one to read)")
+    check(gone(explanation(app)) && wait(button(app, "Explain")) && !button(app, "Explain").isSelected, "closed: Explain is there, not pressed")
     let again = asked()
-    tap(button(app, "Explanation"), "Explanation")
+    tap(button(app, "Explain"), "Explain")
     check(wait(explanation(app), 4) && asked() == again, "saved: it shows again, and the AI isn’t asked again")
     // the next question starts with it closed
     tap(button(app, "Next question"), "Next question")
     check(gone(explanation(app)), "the next question starts with the explanation closed")
+  }
+
+  // ---------- 9: yellow boxes ----------
+  /// How much of a screenshot is the boxes' yellow (#FFD60A, read in sRGB), as a share of its pixels.
+  private func yellow(_ shot: XCUIScreenshot) -> Double {
+    guard let cg = shot.image.cgImage, let space = CGColorSpace(name: CGColorSpace.sRGB) else { return -1 }
+    let w = cg.width, h = cg.height
+    var px = [UInt8](repeating: 0, count: w * h * 4)
+    let n: Int = px.withUnsafeMutableBytes { buf in
+      guard let ctx = CGContext(data: buf.baseAddress, width: w, height: h, bitsPerComponent: 8, bytesPerRow: w * 4, space: space, bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue) else { return -1 }
+      ctx.draw(cg, in: CGRect(x: 0, y: 0, width: w, height: h))
+      let b = buf.bindMemory(to: UInt8.self)
+      var k = 0
+      for i in stride(from: 0, to: w * h * 4, by: 4) where b[i] >= 240 && b[i + 1] >= 195 && b[i + 1] <= 230 && b[i + 2] <= 60 { k += 1 }
+      return k
+    }
+    return n < 0 ? -1 : Double(n) / Double(w * h)
+  }
+
+  func test9YellowBoxes() throws {
+    // The canvas's sample (no server): the review's picture card and the card editor, light and dark.
+    for (board, what) in [("PhoneReviewImage", "review"), ("PhoneReviewImageDark", "review, dark"), ("PhoneEditorImage", "the card editor"), ("PhoneEditorImageDark", "the card editor, dark")] {
+      let b = launchBoard(board)
+      Thread.sleep(forTimeInterval: 2)
+      let y = yellow(XCUIScreen.main.screenshot())
+      check(y > 0.004, "\(board): the boxes over the picture are yellow (\(what))", "yellow \(y)")
+      snap("yellow-" + board)
+      b.terminate()
+    }
+    // A real picture card: its boxes are yellow, and once the answer shows the asked box fades to its outline.
+    let yo = "yel" + run
+    person(yo, "Yuri Yellow", deck: nil)
+    let id = act(yo, "deck.add", ["name": "Boxes"])["id"] as? String ?? ""
+    act(yo, "card.add", ["deckId": id, "kind": "image", "front": "", "image": "/icons/icon-512.png", "occ": "all",
+                         "boxes": [["x": 0.1, "y": 0.1, "w": 0.35, "h": 0.25, "label": "Alpha"], ["x": 0.5, "y": 0.6, "w": 0.35, "h": 0.25, "label": "Beta"]]])
+    let app = launch(as: yo, ["-open", "review"])
+    let card = button(app, "Show what’s under the box")
+    check(wait(card, 20), "a picture card with boxes comes up")
+    Thread.sleep(forTimeInterval: 2)
+    let y0 = yellow(XCUIScreen.main.screenshot())
+    check(y0 > 0.01, "its boxes are yellow", "yellow \(y0)")
+    snap("yellow-review-real")
+    tap(card, "the card")
+    Thread.sleep(forTimeInterval: 1.2)
+    let y1 = yellow(XCUIScreen.main.screenshot())
+    check(y1 > 0.002 && y1 < y0 * 0.75, "the answer shows: the asked box fades to its outline, the other stays yellow", "yellow \(y0) then \(y1)")
+    app.terminate()
   }
 
   private func check(_ ok: Bool, _ name: String, _ extra: String) { check(ok, ok ? name : name + "  → " + extra) }
