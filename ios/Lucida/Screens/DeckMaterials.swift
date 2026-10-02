@@ -11,7 +11,7 @@ import PDFKit
 /// it has to (Cards, Notes, Sources, and room for another).
 struct DeckTabs: View {
   @Environment(\.theme) private var t
-  struct Item: Identifiable { let id: String; let label: String; let count: String }
+  struct Item: Identifiable { let id: String; let label: String }
   let items: [Item]
   let selected: String
   let pick: (String) -> Void
@@ -25,7 +25,6 @@ struct DeckTabs: View {
             Button { pick(x.id) } label: {
               HStack(spacing: 7) {
                 Text(x.label).css(15, .semibold).lineLimit(1).fixedSize()
-                if !x.count.isEmpty { Text(x.count).css(12, .medium, mono: true).foregroundStyle(t.muted).fixedSize() }
               }
               .foregroundStyle(on ? t.text : t.muted)
               .frame(height: 44)
@@ -35,7 +34,7 @@ struct DeckTabs: View {
               .contentShape(Rectangle())
             }
             .buttonStyle(.flat)
-            .accessibilityLabel(x.label + (x.count.isEmpty ? "" : " " + x.count)).accessibilityAddTraits(on ? [.isSelected, .isButton] : .isButton)
+            .accessibilityLabel(x.label).accessibilityAddTraits(on ? [.isSelected, .isButton] : .isButton)
           }
         }
       }

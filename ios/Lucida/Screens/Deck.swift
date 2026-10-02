@@ -286,10 +286,10 @@ struct DeckScreen: View {
     // Cards): Sources (what the cards were made from: only its owner's), Cards (the cards), Notes (the Guide: its owner's, or one that has words), Diagrams
     // (the diagrams of its lectures and the tables and mind maps made from it: its owner's, or a deck that has some made ones).
     let notesTab = g.hasAny || g.can, diagramsTab = g.can || !dgs.isEmpty, sourcesTab = g.can
-    let items = (sourcesTab ? [DeckTabs.Item(id: "sources", label: "Sources", count: srcs.isEmpty ? "" : String(srcs.count))] : [])
-      + [DeckTabs.Item(id: "cards", label: "Cards", count: String(d.rows.count))]
-      + (notesTab ? [DeckTabs.Item(id: "notes", label: "Notes", count: "")] : [])
-      + (diagramsTab ? [DeckTabs.Item(id: "diagrams", label: "Diagrams", count: dgs.isEmpty ? "" : String(dgs.count))] : [])
+    let items = (sourcesTab ? [DeckTabs.Item(id: "sources", label: "Sources")] : [])
+      + [DeckTabs.Item(id: "cards", label: "Cards")]
+      + (notesTab ? [DeckTabs.Item(id: "notes", label: "Notes")] : [])
+      + (diagramsTab ? [DeckTabs.Item(id: "diagrams", label: "Diagrams")] : [])
     let want = tab ?? "cards", section = want == "notes" && notesTab ? "notes" : want == "diagrams" && diagramsTab ? "diagrams" : want == "sources" && sourcesTab ? "sources" : "cards"
     return ScrollViewReader { proxy in ScrollView(showsIndicators: false) {
       VStack(spacing: 16) {

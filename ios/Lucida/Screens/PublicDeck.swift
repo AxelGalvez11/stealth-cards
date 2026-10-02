@@ -167,7 +167,7 @@ struct PublicDeckScreen: View {
         guideBlock(p)
         diagramsBlock(p)
         VStack(spacing: 0) {
-          tabs(p, people: people.count)
+          tabs(p)
           switch tab {
           case "History": historyTab(p)
           case "People": peopleTab(people)
@@ -288,14 +288,13 @@ struct PublicDeckScreen: View {
     return rows
   }
 
-  private func tabs(_ p: PublicDeckPage, people: Int) -> some View {
+  private func tabs(_ p: PublicDeckPage) -> some View {
     HStack(spacing: 28) {
-      ForEach([("Cards", NetFmt.k(p.deck.cards)), ("History", ""), ("People", people > 0 ? String(people) : "")], id: \.0) { id, count in
+      ForEach(["Cards", "History", "People"], id: \.self) { id in
         let on = tab == id
         Button { tab = id } label: {
           HStack(spacing: 8) {
             Text(id).css(14, .semibold)
-            if !count.isEmpty { Text(count).css(12, .medium, mono: true).foregroundStyle(t.muted) }
           }
           .foregroundStyle(on ? t.text : t.muted)
           .frame(height: 44)
@@ -303,7 +302,7 @@ struct PublicDeckScreen: View {
           .contentShape(Rectangle())
         }
         .buttonStyle(.flat)
-        .accessibilityLabel(id).accessibilityValue(count)
+        .accessibilityLabel(id)
         .accessibilityAddTraits(on ? .isSelected : [])
       }
       Spacer(minLength: 0)
