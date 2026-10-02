@@ -4,8 +4,9 @@ import Foundation
 
 enum MakeSample {
   /// The names the board's step setting offers (MAKE_STEPS).
-  static let steps = ["Pick", "Upload", "Upload (a file added)", "Photos", "Record", "Recording", "Paused", "Paste", "Paste (a language set)", "YouTube", "YouTube transcript", "Topic", "More from a source",
-                      "Making", "Making a recording", "Review", "Review (notes open)", "Review (notes off)", "Review (no room for notes)", "Review (audio cards)", "Review (editing a card)", "Limit reached", "File too big", "Error"]
+  static let steps = ["Pick", "Upload", "Upload (a file added)", "Upload (picture cards on)", "Photos", "Record", "Recording", "Paused", "Paste", "Paste (a language set)", "YouTube", "YouTube transcript", "Topic",
+                      "More from a source", "Making", "Making a recording", "Review", "Review (notes open)", "Review (notes off)", "Review (no room for notes)", "Review (audio cards)", "Review (picture cards)",
+                      "Review (editing a card)", "Limit reached", "File too big", "Error"]
 
   /// A step by its name (case doesn't matter), or Pick.
   static func name(_ s: String?) -> String { steps.first { $0.lowercased() == (s ?? "").lowercased() } ?? "Pick" }
@@ -45,6 +46,12 @@ enum MakeSample {
     MakeCard(key: "k3", kind: "basic", front: "When do you use “usted”?", back: "To be formal or polite with someone, like a teacher or a stranger.", text: "", at: ""),
     MakeCard(key: "k4", kind: "audio", front: "", back: "Where is the library?", text: "", at: "", speak: "¿Dónde está la biblioteca?", lang: "es"),
     MakeCard(key: "k5", kind: "cloze", front: "", back: "", text: "Ella [[tiene]] dos hermanos.", at: "")]
+  /// Two of the slides' diagrams as picture cards: a box over each label (the Review (picture cards) step), with the pictures of the Diagrams boards.
+  private static let pictures: [MakeCard] = [
+    MakeCard(key: "k7", kind: "image", front: "Animal cell", back: "", text: "", at: "Slide 4", pic: "f1", image: "demo-cell.png", parts: ["Nucleus", "Mitochondrion", "Mitochondrion"],
+             boxes: [OccBox(id: "b1", x: 0.41, y: 0.03, w: 0.12, h: 0.06), OccBox(id: "b2", x: 0.012, y: 0.785, w: 0.17, h: 0.06), OccBox(id: "b3", x: 0.8, y: 0.083, w: 0.17, h: 0.06)]),
+    MakeCard(key: "k8", kind: "image", front: "The Krebs cycle", back: "", text: "", at: "Slide 9", pic: "f2", image: "demo-flow.png", parts: ["Acetyl-CoA", "Citrate", "Isocitrate"],
+             boxes: [OccBox(id: "b1", x: 0.11, y: 0.12, w: 0.125, h: 0.05), OccBox(id: "b2", x: 0.47, y: 0.12, w: 0.07, h: 0.05), OccBox(id: "b3", x: 0.79, y: 0.12, w: 0.1, h: 0.05)])]
   private static let video = "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
 
   /// What a step shows: the flow's memory, the plan's limits, and the recorder (its state, the time, and the meter).
@@ -56,6 +63,7 @@ enum MakeSample {
     case "Pick": m.step = "pick"
     case "Upload": m.kind = "file"
     case "Upload (a file added)": m.kind = "file"; m.files = [slides]
+    case "Upload (picture cards on)": m.kind = "file"; m.files = [slides]; m.opts.image = true
     case "Photos":
       m.kind = "photo"
       m.files = ["IMG_2041.jpg", "IMG_2042.jpg", "IMG_2043.jpg"].enumerated().map { i, n in file(n, 1_100_000 + i * 300_000, .image, "image/jpeg") }
@@ -81,6 +89,7 @@ enum MakeSample {
     case "Review (notes open)": m.step = "review"; m.kind = "file"; m.cards = cards; m.name = "Lecture 3 slides"; m.notes = notes; m.notesOpen = true
     case "Review (notes off)": m.step = "review"; m.kind = "file"; m.cards = cards; m.name = "Lecture 3 slides"; m.notes = notes; m.keepNotes = false
     case "Review (no room for notes)": m.step = "review"; m.kind = "file"; m.cards = cards; m.name = "Lecture 3 slides"; m.notes = notes; m.guideFull = true
+    case "Review (picture cards)": m.step = "review"; m.kind = "file"; m.cards = Array(cards.prefix(3)) + pictures; m.name = "Lecture 3 slides"; m.notes = notes; m.figures = 3
     case "Review (audio cards)": m.step = "review"; m.kind = "paste"; m.cards = spanish; m.name = "Spanish words"; m.notes = spanishNotes
     case "Review (editing a card)": m.step = "review"; m.kind = "file"; m.cards = cards; m.name = "Lecture 3 slides"; m.notes = notes; m.editing = "k2"
     case "Limit reached":
