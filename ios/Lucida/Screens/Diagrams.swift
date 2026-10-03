@@ -17,7 +17,7 @@ private struct DgPill: View {
   var body: some View {
     Button(action: action) {
       HStack(spacing: 6) { if let icon { Icon(icon, 14, 2) }; Text(label).css(13, .semibold).lineLimit(1).fixedSize() }
-        .foregroundStyle(t.text).padding(.horizontal, 14).frame(height: 34).background(Capsule().fill(fill ?? t.bg))
+        .foregroundStyle(t.text).padding(.horizontal, 14).frame(height: 34).background(Capsule().fill(fill ?? t.surf))
     }
     .buttonStyle(.press).accessibilityLabel(label)
   }
@@ -102,11 +102,72 @@ private struct DiagramThumb: View {
         Color.white
         if let ui { Image(uiImage: ui).resizable().scaledToFit() }
         Color.clear.task(id: f.name) { ui = await DiagramArt.thumb(f) }
+      } else if vm.info.kind == "table", let tb = vm.info.table, !tb.columns.isEmpty {
+        DiagramTableThumb(table: tb)
+      } else if vm.info.kind == "mindmap", let tree = vm.info.tree {
+        DiagramMapThumb(tree: tree)
       } else {
         Icon(vm.info.kind == "table" ? "table" : "mindmap", 34, 1.5).foregroundStyle(t.muted)
       }
     }
   }
+}
+
+/// A table's small copy, as the web draws it (design/diagrams.mjs dgThumb): on white, the first 3 columns and 4 rows, a gray header row, thin
+/// lines, cut with "…". Drawn in the web's 320 × 240 and scaled to the tile.
+private struct DiagramTableThumb: View {
+  let table: DiagramTable
+  var body: some View {
+    Canvas { cx, size in
+      let k = size.width / 320, cols = Array(table.columns.prefix(3)), rows = Array(table.rows.prefix(4)), w = 320 / CGFloat(cols.count)
+      func line(_ a: CGPoint, _ b: CGPoint) { var p = Path(); p.move(to: CGPoint(x: a.x * k, y: a.y * k)); p.addLine(to: CGPoint(x: b.x * k, y: b.y * k)); cx.stroke(p, with: .color(Color(hex: 0xE4E4E7)), lineWidth: max(0.5, k)) }
+      func text(_ s: String, _ x: CGFloat, _ y: CGFloat, _ bold: Bool, _ color: UInt32) {
+        cx.draw(Text(DiagramThumbs.cut(s, 14)).font(.system(size: 13 * k, weight: bold ? .semibold : .regular)).foregroundColor(Color(hex: color)), at: CGPoint(x: x * k, y: y * k), anchor: .leading)
+      }
+      cx.fill(Path(CGRect(origin: .zero, size: size)), with: .color(.white))
+      cx.fill(Path(CGRect(x: 0, y: 0, width: size.width, height: 40 * k)), with: .color(Color(hex: 0xF4F4F5)))
+      for (i, c) in cols.enumerated() { text(c, CGFloat(i) * w + 10, 20, true, 0x18181B) }
+      for (j, r) in rows.enumerated() {
+        let y = 40 + CGFloat(j) * 44
+        line(CGPoint(x: 0, y: y), CGPoint(x: 320, y: y))
+        for i in cols.indices { text(i < r.count ? r[i] : "", CGFloat(i) * w + 10, y + 22, false, 0x3F3F46) }
+      }
+      for i in 1..<max(1, cols.count) { line(CGPoint(x: CGFloat(i) * w, y: 0), CGPoint(x: CGFloat(i) * w, y: 240)) }
+    }
+    .accessibilityHidden(true)
+  }
+}
+
+/// A mind map's small copy (dgThumb): a dark pill for the root in the middle and up to 4 of its branches on curved lines.
+private struct DiagramMapThumb: View {
+  let tree: DiagramNode
+  var body: some View {
+    Canvas { cx, size in
+      let k = size.width / 320, kids = Array(tree.children.prefix(4)), pos: [CGPoint] = [.init(x: 78, y: 52), .init(x: 242, y: 52), .init(x: 78, y: 188), .init(x: 242, y: 188)]
+      func pt(_ x: CGFloat, _ y: CGFloat) -> CGPoint { CGPoint(x: x * k, y: y * k) }
+      func pill(_ at: CGPoint, _ s: String, root: Bool) {
+        let t = DiagramThumbs.cut(s, root ? 16 : 13), w = min(150, 20 + CGFloat(t.count) * 7.4)
+        let r = Path(roundedRect: CGRect(x: (at.x - w / 2) * k, y: (at.y - 15) * k, width: w * k, height: 30 * k), cornerRadius: 15 * k)
+        cx.fill(r, with: .color(Color(hex: root ? 0x18181B : 0xF4F4F5)))
+        if !root { cx.stroke(r, with: .color(Color(hex: 0xD4D4D8)), lineWidth: max(0.5, k)) }
+        cx.draw(Text(t).font(.system(size: 13 * k, weight: root ? .semibold : .regular)).foregroundColor(root ? .white : Color(hex: 0x18181B)), at: pt(at.x, at.y))
+      }
+      cx.fill(Path(CGRect(origin: .zero, size: size)), with: .color(.white))
+      for i in kids.indices {
+        let x = pos[i].x, y = pos[i].y
+        var p = Path(); p.move(to: pt(160, 120)); p.addCurve(to: pt(x, y), control1: pt((160 + x) / 2, 120), control2: pt((160 + x) / 2, y))
+        cx.stroke(p, with: .color(Color(hex: 0xA1A1AA)), lineWidth: 1.6 * k)
+      }
+      for (i, c) in kids.enumerated() { pill(pos[i], c.text, root: false) }
+      pill(CGPoint(x: 160, y: 120), tree.text, root: true)
+    }
+    .accessibilityHidden(true)
+  }
+}
+
+enum DiagramThumbs {
+  /// At most `n` characters, the last one an ellipsis when cut (dgCut).
+  static func cut(_ s: String, _ n: Int) -> String { s.count > n ? String(s.prefix(n - 1)) + "…" : s }
 }
 
 /// A diagram's picture at the width it is given, all of it, with a box over each label when `boxes` are shown (their places are fractions of the picture, like a card's).
@@ -184,7 +245,7 @@ struct DiagramsCard: View {
           DriftBar()
         }
         .padding(.horizontal, 14).padding(.vertical, 12).frame(maxWidth: .infinity, alignment: .leading)
-        .background(RoundedRectangle(cornerRadius: 16, style: .continuous).fill(t.bg))
+        .background(RoundedRectangle(cornerRadius: 16, style: .continuous).fill(t.surf))
         .accessibilityElement(children: .combine).accessibilityLabel("Sending " + name)
       }
       if !bad.isEmpty {
@@ -194,7 +255,7 @@ struct DiagramsCard: View {
             .buttonStyle(.flat).accessibilityLabel("Dismiss")
         }
         .padding(.horizontal, 14).padding(.vertical, 12)
-        .background(RoundedRectangle(cornerRadius: 16, style: .continuous).fill(t.bg))
+        .background(RoundedRectangle(cornerRadius: 16, style: .continuous).fill(t.surf))
       }
       if rows.isEmpty && can {
         // (Just the one plain line: Make diagram and Upload say what to do, the owner's rule of no tips.)
@@ -211,9 +272,7 @@ struct DiagramsCard: View {
         }
       }
     }
-    .padding(.horizontal, 18).padding(.top, 18).padding(.bottom, 20)
     .frame(maxWidth: .infinity, alignment: .leading)
-    .background(RoundedRectangle(cornerRadius: 22, style: .continuous).fill(t.surf))
     .accessibilityElement(children: .contain).accessibilityLabel("Diagrams")
     .photosPicker(isPresented: $pickingPhoto, selection: $photo, matching: .images)
     .onChange(of: photo) { _, item in
@@ -270,6 +329,7 @@ private struct DiagramTile: View {
       .frame(maxHeight: .infinity, alignment: .top)
       .foregroundStyle(t.text)
       .background(RoundedRectangle(cornerRadius: 18, style: .continuous).fill(t.bg))
+      .overlay(RoundedRectangle(cornerRadius: 18, style: .continuous).strokeBorder(t.line, lineWidth: 1))
       .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
     }
     .buttonStyle(.press)

@@ -3670,7 +3670,7 @@ mockMaterials() {
       '1. NADH gives up its electrons.', '2. Protons are pumped out of the matrix.', '3. They flow back through ATP synthase.', ':::', '', '## Mnemonics', '', '| Phase | Remember it as |', '| --- | --- |',
       '| Prophase | **P**ut your chromosomes in **P**lace |', '| Metaphase | **M**iddle of the cell |', '| Anaphase | **A**part they go |', '| Telophase | **T**wo new cells |', '',
       '> The mitochondrion makes most of the cell’s ATP.', '', 'Questions? Ask in [office hours](https://example.edu/office-hours).', ''].join('\n');
-    const pages = [{ id: 'g1', title: 'Lecture 3 summary', text: '## Lecture 3\n\n:::toggle The **electron transport chain** pumps protons across the inner membrane\n1. NADH gives up its electrons.\n2. Protons are pumped out of the matrix.\n3. ATP synthase lets them flow back and makes ATP.\n:::\n', at: 0 }, { id: 'g2', parent: 'g1', title: 'Mnemonics', text: '- **PMAT** for the phases of mitosis\n- *Please Do Not Throw Sausage Pizza Away* for the layers\n', at: 0 }];
+    const pages = [{ id: 'g1', title: 'Lecture 3 summary', text: '## Lecture 3\n\n:::toggle The **electron transport chain** pumps protons across the inner membrane\n1. NADH gives up its electrons.\n2. Protons are pumped out of the matrix.\n3. ATP synthase lets them flow back and makes ATP.\n:::\n', at: 0 }, { id: 'g2', parent: 'g1', title: 'Mnemonics', text: '- **PMAT** for the phases of mitosis\n- *Please Do Not Throw Sausage Pizza Away* for the layers\n', at: 0 }, { id: 'g3', parent: 'g2', title: 'Mitosis phases', text: '- **Prophase**: the chromosomes condense\n- **Metaphase**: they line up in the middle\n- **Anaphase**: they pull apart\n- **Telophase**: two new nuclei form\n', at: 0 }];
     const file = (name, type, size, f) => ({ name, href: '/media/' + name, type, size, file: f });
     const sources = [
       { id: 'x1', kind: 'file', name: 'Lecture 3 slides', cards: 24, at: day(8, 18), url: '', text: '', textName: '', seconds: 0, pages: 32, files: [file('sx1-0.pdf', 'application/pdf', 4200000, 'Lecture 3 slides.pdf')], href: '/media/sx1-0.pdf' },
@@ -3725,10 +3725,11 @@ constructor(props) { super(props); this.state = { histOpen: props.view === 'Olde
 componentWillUnmount() { clearTimeout(this._t); if (this._nbc) this._nbc.flush(); if (this._pending) this._flush(); }
 componentDidMount() { this.newNote(); }
 async newNote() {
-  // New note (the deck's Notes list, ?new=1): the main note while it has no words, otherwise a new note at the top.
+  // New note (the deck's Notes list, ?new=1): the main note while it has no words, otherwise a new note at the top; a row's + (&parent=) makes a
+  // page inside that note.
   const p = this.props, db = p.db; if (!p.newPage || !db || db.mock || this._newDone) return; this._newDone = true;
   const G = db.guide(p.deckId); if (!G.can) return;
-  const id = G.text.trim() ? await db.act.addGuidePage(p.deckId, 'New page', '').catch(() => '') : 'main';
+  const id = p.newParent || G.text.trim() ? await db.act.addGuidePage(p.deckId, 'New page', p.newParent || '').catch(() => '') : 'main';
   if (id && id !== 'main') this.setState({ page: id });
   db.act.go(db.href('guide', p.deckId) + (id && id !== 'main' ? '?page=' + encodeURIComponent(id) : ''), true);
 }

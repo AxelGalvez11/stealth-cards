@@ -129,7 +129,7 @@ function resolve(path, q) {
     if (deck[2] === '/suggestions') return { name: P + 'Suggestions', props: { deckId: id } };
     // A deck's Notes (its Guide and pages), written here: ?page= one of its pages, ?at=<line>:<place> where a press on the Notes tab put the caret, or ?at=end (the deck page's
     // + › Notes: ready to type at the end of what is written). A deck you study as it is shows its owner's, which is theirs to change.
-    if (deck[2] === '/guide') return dRow && dRow.readOnly ? { redirect: '/deck/' + id } : { name: P + 'Guide', props: { deckId: id, page: q.get('page') || '', newPage: q.get('new') === '1', at: /^(\d{1,5}:\d{1,6}|end)$/.test(q.get('at') || '') ? q.get('at') : '' } };
+    if (deck[2] === '/guide') return dRow && dRow.readOnly ? { redirect: '/deck/' + id } : { name: P + 'Guide', props: { deckId: id, page: q.get('page') || '', newPage: q.get('new') === '1', newParent: q.get('parent') || '', at: /^(\d{1,5}:\d{1,6}|end)$/.test(q.get('at') || '') ? q.get('at') : '' } };
     // Playing a deck live needs a big screen, so it starts from a computer.
     if (deck[2] === '/live') return narrow.matches ? { redirect: '/deck/' + id } : { name: 'LiveSetup', props: { deckId: id } };
     // Learn mode starts from a sheet over the deck, and so does a practice test.
