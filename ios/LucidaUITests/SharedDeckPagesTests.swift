@@ -285,11 +285,24 @@ final class SharedDeckPagesTests: XCTestCase {
   // ---------- 3: Maria suggests changes ----------
   /// The card editor's sheet in its suggest mode is up (its Why? at the bottom).
   private func suggesting(_ app: XCUIApplication) -> Bool { wait(app.textFields["Why? (optional)"].firstMatch) && button(app, "Send").exists }
-  /// The why, at the bottom of the sheet: the phone's keyboard (up for a card's field) covers it, so it goes down first (the bar's
-  /// Hide keyboard), as a person would.
+  /// The why, at the bottom of the sheet (canvas V194): while a card's field is typed in, the phone's keyboard may cover the bottom row,
+  /// so it goes down first (the bar's Hide keyboard), as a person would; focusing the why brings the keyboard back, and the row (the why,
+  /// and Suggest removing it beside it) rides above it, so nothing is typed in unseen.
   private func writeWhy(_ app: XCUIApplication, _ words: String) {
     if button(app, "Hide keyboard").exists { tap(button(app, "Hide keyboard")); _ = gone(button(app, "Hide keyboard"), 3) }
-    typeInto(app.textFields["Why? (optional)"].firstMatch, words)
+    Thread.sleep(forTimeInterval: 0.6)
+    let why = app.textFields["Why? (optional)"].firstMatch, keys = app.keyboards.firstMatch, head = button(app, "Cancel").frame.minY
+    tap(why, "the why")
+    check(wait(keys, 6), "focusing the why brings up the keyboard")
+    // (the keyboard and the row finish moving)
+    Thread.sleep(forTimeInterval: 1)
+    let remove = button(app, "Suggest removing it"), top = keys.frame.minY
+    check(abs(button(app, "Cancel").frame.minY - head) <= 1, "and the sheet stays where it is (its Cancel doesn’t move)")
+    print("Why: \(Int(why.frame.minY))–\(Int(why.frame.maxY)), Suggest removing it: \(Int(remove.frame.maxY)), keyboard top: \(Int(top))")
+    check(keys.exists && why.isHittable && why.frame.maxY <= top && (!remove.exists || remove.frame.maxY <= top), "the why (and Suggest removing it) sit above the keyboard")
+    snap("pages-why-above-keyboard")
+    why.typeText(words)
+    check((why.value as? String) == words && why.frame.maxY <= keys.frame.minY, "what’s typed is in it, still above the keyboard")
   }
   /// Lucida's quiet message (the toast) says these words.
   private func says(_ app: XCUIApplication, _ words: String) -> Bool { wait(app.descendants(matching: .any).matching(NSPredicate(format: "identifier == 'toast' AND label CONTAINS %@", words)).firstMatch) }

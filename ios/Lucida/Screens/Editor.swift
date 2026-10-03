@@ -228,11 +228,17 @@ struct EditorSheet: View {
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) { withAnimation(.out(0.3)) { proxy.scrollTo(f, anchor: UnitPoint(x: 0.5, y: 0.3)) } }
           }
         }
-        // Suggesting: the why, and Suggest removing it for a card the deck has (SUGGEST_FOOTER).
-        if suggest != nil { SuggestFooter(why: $why, removing: $removing, canRemove: sgCard != nil, focused: $whyFocus) }
+        // Suggesting: the why, and Suggest removing it for a card the deck has (SUGGEST_FOOTER). While the why is typed in, the row rides
+        // just above the keyboard (canvas V194: nothing is typed in unseen), over the bottom of the fields, which scroll above it; the
+        // sheet itself stays where it is. (While a card's field is typed in, the keyboard may cover the row.)
+        if suggest != nil {
+          SuggestFooter(why: $why, removing: $removing, canRemove: sgCard != nil, focused: $whyFocus)
+            .background(alignment: .top) { t.bg.padding(.bottom, -46) }
+            .offset(y: whyFocus && keyboard.height > 0 ? 34 - 12 - keyboard.height : 0)
+        }
       }
       .foregroundStyle(t.text)
-      .padding(.top, 10).padding(.horizontal, 20).padding(.bottom, whyFocus && keyboard.height > 0 ? keyboard.height + 12 : 34)
+      .padding(.top, 10).padding(.horizontal, 20).padding(.bottom, 34)
       if focus != nil && keyboard.height > 0 { formatBar.padding(.horizontal, 10).padding(.bottom, keyboard.height + 12) }
       if tagPicker {
         TagPicker(all: store.demo ? Array(Generated.tagColors.keys) : suggest != nil ? Array(Set((page?.cardsList ?? []).flatMap(\.tags))) : store.engine.tags,

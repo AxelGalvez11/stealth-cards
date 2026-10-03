@@ -115,7 +115,7 @@ A shared deck's pages are drawn natively too (`Screens/PublicDeck.swift`, `Sugge
 `History.swift`; their data and words are in `Data/NetPages.swift`, like web/social.mjs deckPage, historyPage, and
 suggestionsFor): the deck's page (`PhonePublicDeck`, and `Studying`, `Owner`, `Copy` for its Make a copy sheet, `Suggest` and
 `SuggestNew` for Suggest a change: the card editor's sheet in its suggest mode over the page, `EditorSheet(suggest:start:)` in
-`Screens/Editor.swift`, whose Send sends its one card's change), a deck's `PhoneSuggestions` (`Open`, `Empty`), and its `PhoneHistory` (`Open`),
+`Screens/Editor.swift`, whose Send sends its one card's change; while the why is typed in, its row rides just above the keyboard), a deck's `PhoneSuggestions` (`Open`, `Empty`), and its `PhoneHistory` (`Open`),
 with their Dark and Gray twins. Every deck tile, profile, From row, Sharing link, and News row opens them (nothing opens
 Safari). A debug build opens them against a server with `-open deckpage:/@maria/mcat-biochemistry` (add `?copy=1` or
 `?suggest=<card id>` like the web's links), `-open history:/@maria/mcat-biochemistry`, `-open suggestions` (every deck of
