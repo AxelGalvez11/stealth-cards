@@ -143,6 +143,10 @@ private struct LearnBody: View {
   @State private var exMock = false
   /// Learn settings (the gear by X): the deck's background, in a sheet.
   @State private var settingsOpen = false
+  /// A question is being typed about the card (the explanation's composer has the keyboard): Next waits under the keyboard and the page
+  /// ends at it, so the composer sits on top of it.
+  @State private var asking = false
+  @StateObject private var keyboard = Keyboard()
 
   var body: some View {
     ZStack {
@@ -158,7 +162,19 @@ private struct LearnBody: View {
       }
     }
     .background(t.bg)
-    .onAppear { if store.demo { settingsOpen = store.props.learnSettings } }
+    .onAppear {
+      guard store.demo else { return }
+      settingsOpen = store.props.learnSettings
+      // (a design screen with its explanation open, and a question asked about it: the boards' explainOpen and followUp Tweaks)
+      if store.props.explainOpen {
+        let typed = store.demoLearn.screen == "type", id = typed ? "typeq" : "q0"
+        exFor = id; exMock = true
+        if store.props.followUp, let q = Generated.chatSample[typed ? "type" : "learn"] { store.chats[id] = [ChatTurn(q: q.q, a: q.a)] }
+      }
+    }
+    // Closing the explanation, the next question, or leaving Learn forgets its questions.
+    .onChange(of: exFor) { old, new in if let old, old != new { store.followUpClear(old) } }
+    .onDisappear { if let id = exFor { store.followUpClear(id) } }
   }
 
   // The deck's background, as in Deck settings: it changes behind the questions as soon as one is picked.
@@ -204,7 +220,7 @@ private struct LearnBody: View {
   /// What a question's explanation looks like right now (the canvas's sample on a design screen).
   private func explanation(_ v: LearnView) -> ExplainVM {
     let sample = v.type == "type" ? Store.demoExplain.type : Store.demoExplain.learn
-    return store.demo ? ExplainVM(on: true, text: exMock ? sample : "", note: exMock ? "2 free explanations left today" : "") : store.explainOf(v.id)
+    return store.demo ? store.demoExplainOf(v.id, text: sample, asked: exMock) : store.explainOf(v.id)
   }
 
   // After an answer, the AI can explain it: Explain (the round button by the gear), then the explanation in its place (under the
@@ -216,8 +232,8 @@ private struct LearnBody: View {
       // fades in, nothing slides)
       Group {
         if exFor == v.id {
-          ExplainPanel(ex: ex, look: .learn(look)) { exFor = nil }
-            .padding(.vertical, 14).padding(.horizontal, 16)
+          ExplainPanel(ex: ex, look: .learn(look), pad: (16, 14), onFocus: { asking = $0 }, close: { exFor = nil },
+                       ask: { q in Task { await store.followUp(v.id, q: q, question: v.text, sample: Generated.chatSample[v.type == "type" ? "type" : "learn"]?.a ?? "") } })
             .background(RoundedRectangle(cornerRadius: 18, style: .continuous).fill(look.card).learnShadow(look.shadow))
             .id("explanation")
             .transition(.opacity)
@@ -345,12 +361,16 @@ private struct LearnBody: View {
       ScrollViewReader { proxy in
         ScrollView(showsIndicators: false) { inner.frame(maxWidth: .infinity, alignment: .leading) }
           .scrollBounceBehavior(.basedOnSize)
+          .scrollDismissesKeyboard(.interactively)
           .onChange(of: exFor) { _, open in if open != nil { reveal(proxy) } }
           .onChange(of: store.explaining) { _, _ in if exFor != nil { reveal(proxy) } }
+          // (a question sent, its answer come, or the keyboard up: the explanation's end, where the composer is, stays in view)
+          .onChange(of: store.chats) { _, _ in if exFor != nil { reveal(proxy) } }
+          .onChange(of: keyboard.height) { _, h in if exFor != nil && asking && h > 0 { reveal(proxy) } }
       }
-      bottom()
+      if !(asking && keyboard.height > 0) { bottom() }
     }
-    .padding(.top, Screen.top(60)).padding(.horizontal, 16).padding(.bottom, 34)
+    .padding(.top, Screen.top(60)).padding(.horizontal, 16).padding(.bottom, asking && keyboard.height > 0 ? keyboard.height + 8 : 34)
     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
     .background(StudyBackground(bg: store.studyBg(deckId)))
     .ignoresSafeArea(.container)

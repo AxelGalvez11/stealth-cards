@@ -127,6 +127,14 @@ final class API {
     return (http.statusCode, (try? JSONSerialization.jsonObject(with: data)) as? [String: Any] ?? [:])
   }
 
+  /// A question about a card in Explain (web/handler.mjs askReq): the question, the conversation so far (`turns`, each `q` and `a`) and how
+  /// Learn mode or the test asked the card. 200 has the answer (and on Free how many are left today, and `limit` once none are); 402 is past
+  /// today's (`pro`: Pro would help); anything else, an error.
+  func explainAsk(_ cardId: String, q: String, turns: [[String: String]], question: String) async throws -> (status: Int, body: [String: Any]) {
+    let (data, http) = try await raw("api/explain/ask", method: "POST", json: ["cardId": cardId, "q": q, "turns": turns, "question": question])
+    return (http.statusCode, (try? JSONSerialization.jsonObject(with: data)) as? [String: Any] ?? [:])
+  }
+
   /// Signed transactions from StoreKit (Pro bought with the App Store), for the person who is signed in (web/handler.mjs
   /// iapReq). The server's own words come back as the error when it won't take one.
   func iap(_ signed: [String]) async throws {

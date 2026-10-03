@@ -279,6 +279,8 @@ extension Board {
       nav.tab = .library; nav.path = [.deck("cell")]
       drag.showTray(Sample.shared.DECKS.filter { $0.id != "cell" }.map { TrayDeck(id: $0.id, name: $0.name, mesh: Mesh.deck(seed: $0.name)) })
     case "PhoneReviewExplain": store.props.revealed = true; store.props.explainOpen = true; nav.full = .review(deckId: "cell", pile: nil)
+    // One question asked about the card and answered (the canvas's WebReviewExplainAsk / PhoneReviewExplainAsk).
+    case "PhoneReviewExplainAsk": store.props.revealed = true; store.props.explainOpen = true; store.props.followUp = true; nav.full = .review(deckId: "cell", pile: nil)
     case "PhoneConnect": nav.path = [.settings, .connect]
     case "PhoneSettings": nav.path = [.settings]
     case "PhoneSettingsFree": store.props.plan = "Free"; nav.path = [.settings]
@@ -391,6 +393,10 @@ extension Board {
     if ProcessInfo.processInfo.arguments.contains("-caughtUp") { store.props.caughtUp = true }
     // Settings' Flip animation on a design screen: `-flip Off` (on when it's left out).
     if Board.arg("-flip") == "Off" { store.props.flip = false }
+    // The boards' explainOpen and followUp Tweaks on Learn (PhoneQuizAnswered, PhoneQuizType) and the practice test's results: the explanation
+    // open, and a question asked about it and answered.
+    if Board.arg("-explainOpen") == "true" { store.props.explainOpen = true }
+    if Board.arg("-followUp") == "true" { store.props.followUp = true }
     // Settings' Daily reminder: `-reminder Off|"6:00 PM"|...`, and `-reminderNote` (Off, with the line about allowing notifications).
     if let k = Board.arg("-reminder") { store.props.reminder = k }
     if ProcessInfo.processInfo.arguments.contains("-reminderNote") { store.props.reminderNote = true; store.props.reminder = "Off" }

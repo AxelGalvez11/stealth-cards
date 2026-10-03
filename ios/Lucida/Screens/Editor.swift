@@ -12,15 +12,44 @@ import UniformTypeIdentifiers
 final class Keyboard: ObservableObject {
   @Published var height: CGFloat = 0
   private var tokens: [NSObjectProtocol] = []
+  #if DEBUG
+  /// `-fakeKeyboard <points>` (the end-to-end tests): with a hardware keyboard, as on a simulator here, the phone's own keyboard stays below
+  /// the screen; this counts a keyboard that comes up as that tall, so a screen's room for the phone's keyboard can be checked.
+  static let fake: CGFloat? = Board.arg("-fakeKeyboard").flatMap(Double.init).map { CGFloat($0) }
+  private var showing = false
+  #endif
   init() {
     let nc = NotificationCenter.default
+    #if DEBUG
+    if let fake = Keyboard.fake {
+      tokens.append(nc.addObserver(forName: UIResponder.keyboardWillShowNotification, object: nil, queue: .main) { [weak self] n in
+        let f = (n.userInfo?[UIResponder.keyboardFrameEndUserInfoKey] as? NSValue)?.cgRectValue, h = f.map { max(0, UIScreen.main.bounds.height - $0.minY) } ?? 0
+        Task { @MainActor in guard let self else { return }; self.showing = true; let to = h > 0 ? h : fake; if self.height != to { withAnimation(.out(0.3)) { self.height = to } } }
+      })
+    }
+    #endif
+    // (only a real change is published: a screen drawn again can make the keyboard say its frame again, and saying the same height would
+    // draw the screen again, and so on)
     tokens.append(nc.addObserver(forName: UIResponder.keyboardWillChangeFrameNotification, object: nil, queue: .main) { [weak self] n in
       guard let f = (n.userInfo?[UIResponder.keyboardFrameEndUserInfoKey] as? NSValue)?.cgRectValue else { return }
       let h = max(0, UIScreen.main.bounds.height - f.minY)
-      Task { @MainActor in withAnimation(.out(0.3)) { self?.height = h } }
+      Task { @MainActor in
+        guard let self else { return }
+        var to = h
+        #if DEBUG
+        if let fake = Keyboard.fake, h == 0 { to = self.showing ? fake : 0 }
+        #endif
+        if self.height != to { withAnimation(.out(0.3)) { self.height = to } }
+      }
     })
     tokens.append(nc.addObserver(forName: UIResponder.keyboardWillHideNotification, object: nil, queue: .main) { [weak self] _ in
-      Task { @MainActor in withAnimation(.out(0.3)) { self?.height = 0 } }
+      Task { @MainActor in
+        guard let self else { return }
+        #if DEBUG
+        self.showing = false
+        #endif
+        if self.height != 0 { withAnimation(.out(0.3)) { self.height = 0 } }
+      }
     })
   }
 }

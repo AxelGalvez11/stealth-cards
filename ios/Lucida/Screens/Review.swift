@@ -192,18 +192,24 @@ private struct ReviewBody: View {
   /// The card whose explanation is open, and (on a design screen) whether the sample one was asked for.
   @State private var exFor: String? = nil
   @State private var exMock = false
+  /// A question is being typed about the card (its composer has the keyboard): the explanation then takes the room above the keyboard.
+  @State private var asking = false
+  @StateObject private var keyboard = Keyboard()
   /// The sound card that last played on its own, and its start (a moment after the card comes up).
   @State private var spoken: String? = nil
   @State private var autoplaying: Task<Void, Never>? = nil
 
   var body: some View {
+    // (while a question is typed, the composer sits on top of the keyboard: the screen ends at the keyboard, the card steps aside for the
+    // explanation and its questions, and the grade buttons wait under the keyboard)
+    let typing = asking && keyboard.height > 0 && isOpen(rv)
     ZStack {
       VStack(spacing: 16) {
         topBar(rv)
-        middle(rv)
-        grading(rv).frame(height: 76)
+        middle(rv, typing: typing)
+        if !typing { grading(rv).frame(height: 76) }
       }
-      .padding(.top, Screen.top(60)).padding(.horizontal, 16).padding(.bottom, 34)
+      .padding(.top, Screen.top(60)).padding(.horizontal, 16).padding(.bottom, typing ? keyboard.height + 8 : 34)
       .ignoresSafeArea()
       if settingsOpen {
         SheetOverlay(top: nil, close: { withAnimation(Motion.leave) { settingsOpen = false } }) { settingsSheet(rv) }.zIndex(2)
@@ -216,11 +222,16 @@ private struct ReviewBody: View {
       if store.demo {
         revealed = store.props.revealed; settingsOpen = store.props.reviewSettings; if store.props.newPile { pileDraft = "Tricky ones" }
         if store.props.explainOpen { exFor = rv.card.id; exMock = true }
+        if store.props.followUp, let q = Generated.chatSample["review"] { store.chats[rv.card.id] = [ChatTurn(q: q.q, a: q.a)] }
       }
       // Nothing to study here: back to where you were.
       else if rv.empty { nav.finishReview(graded: !(store.session?.graded.isEmpty ?? true)) }
     }
     .onChange(of: rv.empty) { _, empty in if empty { nav.finishReview() } }
+    // Closing the explanation, the next card coming up, or leaving the review forgets its questions.
+    .onChange(of: exFor) { old, new in if let old, old != new { store.followUpClear(old) } }
+    .onChange(of: rv.card.id) { old, _ in store.followUpClear(old) }
+    .onDisappear { if let id = exFor { store.followUpClear(id) } }
     .haptic(.light, on: flips, "flip")
     .haptic(.light, on: grades, "grade")
     // A sound card plays on its own when it comes up (unless it's set not to).
@@ -238,7 +249,7 @@ private struct ReviewBody: View {
 
   /// What the card's explanation looks like right now (the canvas's sample on a design screen).
   private func explanation(_ rv: ReviewVM) -> ExplainVM {
-    store.demo ? ExplainVM(on: true, text: exMock ? Store.demoExplain.review : "", note: exMock ? "2 free explanations left today" : "") : store.explainOf(rv.card.id)
+    store.demo ? store.demoExplainOf(rv.card.id, text: Store.demoExplain.review, asked: exMock) : store.explainOf(rv.card.id)
   }
   /// The explanation is open: the card is turned over, it can be explained, and this card's was asked for.
   private func isOpen(_ rv: ReviewVM) -> Bool { revealed && explanation(rv).on && !rv.card.id.isEmpty && exFor == rv.card.id }
@@ -246,19 +257,21 @@ private struct ReviewBody: View {
   /// The card, and once its explanation is open, the explanation UNDER it (the owner, 2026-10-01: "in ios just make it open below
   /// questions and flashcards"): the card gets a little shorter to make room (60% of the room, at least 250 pt), and the
   /// explanation takes what's left, scrolling inside itself when it is longer. Only a short fade, none with Reduce Motion.
-  private func middle(_ rv: ReviewVM) -> some View {
+  private func middle(_ rv: ReviewVM, typing: Bool) -> some View {
     let open = isOpen(rv), ex = explanation(rv)
     return GeometryReader { g in
       let cardH = open ? min(g.size.height, ThemeLayout.reviewCardOpen.height) : g.size.height
-      VStack(spacing: 12) {
+      VStack(spacing: typing ? 0 : 12) {
+        // (it stays where it is while it steps aside, so it comes back as it was)
         FlipCard(card: rv.card, revealed: revealed, moved: moved, done: rv.done, tap: { flips += 1; withAnimation(nil) { moved = false }; revealed.toggle() }, compact: open)
-          .frame(height: cardH)
+          .frame(height: typing ? 0 : cardH).opacity(typing ? 0 : 1).clipped().accessibilityHidden(typing)
         Group {
-          if open { panel(ex, max: max(0, g.size.height - cardH - 12)).transition(.opacity) }
+          if open { panel(rv, ex, max: typing ? g.size.height : max(0, g.size.height - cardH - 12), fill: typing).transition(.opacity) }
         }
         .animation(Motion.fade, value: open)
       }
       .frame(width: g.size.width, height: g.size.height, alignment: .top)
+      .animation(Motion.fade, value: typing)
     }
   }
 
@@ -284,12 +297,12 @@ private struct ReviewBody: View {
     }
   }
 
-  /// The explanation: a card of its own like the flashcard (its color, line and shadow), as tall as its words or `max`.
-  private func panel(_ ex: ExplainVM, max cap: CGFloat) -> some View {
-    CappedScroll(max: cap) {
-      ExplainPanel(ex: ex, look: .card(t)) { exFor = nil }
-        .padding(.vertical, 14).padding(.horizontal, 16)
-    }
+  /// The explanation: a card of its own like the flashcard (its color, line and shadow), as tall as its words or `max`, with the composer at
+  /// its bottom (all of `max` while a question is typed).
+  private func panel(_ rv: ReviewVM, _ ex: ExplainVM, max cap: CGFloat, fill: Bool) -> some View {
+    let id = rv.card.id
+    return ExplainPanel(ex: ex, look: .card(t), pad: (16, 14), cap: cap, fill: fill, onFocus: { asking = $0 }, close: { exFor = nil },
+                        ask: { q in Task { await store.followUp(id, q: q, question: "", sample: Generated.chatSample["review"]?.a ?? "") } })
     .frame(maxWidth: .infinity)
     .background(RoundedRectangle(cornerRadius: 24, style: .continuous).fill(t.card))
     .overlay(RoundedRectangle(cornerRadius: 24, style: .continuous).strokeBorder(t.line, lineWidth: 1))

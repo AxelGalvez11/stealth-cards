@@ -548,6 +548,15 @@ when a check fails) and then lists every haptic in the app.
   shape to the flashcard settings"): it shows once the card is turned over (its place is kept meanwhile, so the progress bar doesn't move), is
   pressed while the explanation is open, and closes it when pressed again. Learn mode has the same round button, just after its gear (`Screens/Learn.swift`);
   the practice test's results keep the small `ExplainButton` on each question.
+- **Asking about the card** (`Screens/Explain.swift`: `ExplainComposer`, `ExplainTurns`, `Store.followUp`; the web's design/chat.mjs): every explanation ends
+  with "Ask about this card" and a round Send. Return sends (on a hardware keyboard Shift+Return is a new line); the question is a short bubble on the right
+  and its answer comes under it in the explanation's text style, "Thinking…" meanwhile, or what went wrong in the quiet red line. While a question is typed
+  the composer sits on top of the keyboard: in Review the card steps aside and the grade buttons wait under the keyboard, and in Learn mode and the test's
+  results the page ends at the keyboard and scrolls the composer up to it. Each question is one of the day's explanations (`POST api/explain/ask`); once
+  they're used up the composer is the server's upgrade line with Go Pro (`Library.explainLimit`). Closing the explanation, the next card or question, or
+  leaving the page forgets the conversation (`Store.chats` is never saved). Design screens: `PhoneReviewExplainAsk`, and `-explainOpen true -followUp true`
+  on `PhoneQuizAnswered`, `PhoneQuizType` and `PhoneTest -screen Results` (a question typed there gets the sample answer). `ios/tools/e2e-ask.sh <simulator id>`
+  runs `LucidaUITests/AskTests` (a fresh server on port 3976 and the stand-in AI on 3977).
 - **The study screen** (the owner's comments, 2026-10-02): behind flashcards and Learn mode a deck shows a plain page (white, black at night) until a
   background is picked for it (`Store.bgKind` in `Design/StudyBackground.swift`, like the web's `bgKindOf`: the server marks a pick `bg.chosen`,
   `DeckBg.chosen`, since every deck is made with kind "deck"); with a theme on the default is the theme's own, and its tile in `BgChooser` puts a deck
