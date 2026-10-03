@@ -463,12 +463,6 @@ export default [
   "h": 844
  },
  {
-  "name": "PhoneLibraryLeeches",
-  "title": "iPhone · Library · all cards · cards you keep forgetting (Pause all)",
-  "w": 390,
-  "h": 844
- },
- {
   "name": "PhoneLibraryNewFolder",
   "title": "iPhone · Library · New folder popup",
   "w": 390,
@@ -2175,12 +2169,6 @@ export default [
  {
   "name": "WebLibraryGray",
   "title": "Web · Library (dark, gray)",
-  "w": 1440,
-  "h": 900
- },
- {
-  "name": "WebLibraryLeeches",
-  "title": "Web · Library · all cards · cards you keep forgetting (Pause all)",
   "w": 1440,
   "h": 900
  },
