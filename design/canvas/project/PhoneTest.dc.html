@@ -14,7 +14,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&amp;family=Geist+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
 <style>
 @import url("./lucida.css");
-@keyframes scTA{from{opacity:0;transform:translateY(6px)}}@keyframes scTB{from{opacity:0;transform:translateY(6px)}}.sc-topt{transition:background-color .15s,box-shadow .15s,opacity .15s}.sc-tdot{transition:background-color .15s,color .15s,box-shadow .15s}.sc-tnum{transition:background-color .15s,color .15s}.sc-tfield:focus{box-shadow:inset 0 0 0 2px var(--tf,currentColor)!important;outline:0}@media (prefers-reduced-motion:reduce){.sc-tq,.sc-topt,.sc-tdot,.sc-tnum,.sc-sheet,.sc-scrim{animation:none!important;transition:none!important}}
+.sc-ask-in{transition:box-shadow .15s}.sc-ask-in:focus-within{box-shadow:inset 0 0 0 1.5px var(--ask-ring)}.sc-ask-ta::placeholder{color:var(--ask-ph);opacity:1}.sc-ask-ta{scrollbar-width:thin}@media (prefers-reduced-motion:reduce){.sc-ask-in{transition:none}}@keyframes scTA{from{opacity:0;transform:translateY(6px)}}@keyframes scTB{from{opacity:0;transform:translateY(6px)}}.sc-topt{transition:background-color .15s,box-shadow .15s,opacity .15s}.sc-tdot{transition:background-color .15s,color .15s,box-shadow .15s}.sc-tnum{transition:background-color .15s,color .15s}.sc-tfield:focus{box-shadow:inset 0 0 0 2px var(--tf,currentColor)!important;outline:0}@media (prefers-reduced-motion:reduce){.sc-tq,.sc-topt,.sc-tdot,.sc-tnum,.sc-sheet,.sc-scrim{animation:none!important;transition:none!important}}
 </style>
 </helmet>
 <div style="position: relative; isolation: isolate; width: 390px; height: 844px; box-sizing: border-box; display: flex; flex-direction: column; overflow: hidden; font-family: Geist, -apple-system, system-ui, sans-serif; background: {{t.bg}}; color: {{t.text}};">
@@ -73,18 +73,87 @@
       <sc-if value="{{r.isPairs}}" hint-placeholder-val="{{ false }}"><div style="display: flex; flex-direction: column; gap: 8px;"><sc-for list="{{r.pairs}}" as="p" hint-placeholder-count="4"><div style="display: flex; align-items: flex-start; gap: 10px; font-size: 15px; line-height: 1.4;"><span style="width: 20px; height: 20px; margin-top: 1px; flex-shrink: 0; border-radius: 10px; display: flex; align-items: center; justify-content: center; background: {{p.markBg}}; color: {{p.markFg}};"><sc-if value="{{p.ok}}" hint-placeholder-val="{{ true }}"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5 9-10"/></svg></sc-if><sc-if value="{{p.bad}}" hint-placeholder-val="{{ false }}"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M6 6l12 12M18 6L6 18"/></svg></sc-if></span><span style="flex-grow: 1; min-width: 0;"><span style="font-weight: 600;">{{p.q}}</span> <span style="color: {{t.muted}};">→</span> <span>{{p.a}}</span><sc-if value="{{p.bad}}" hint-placeholder-val="{{ false }}"><span style="display: block; color: {{t.muted}};">Right answer: <span style="color: {{t.text}}; font-weight: 500;">{{p.r}}</span></span></sc-if></span></div></sc-for></div></sc-if>
       <sc-if value="{{r.isSingle}}" hint-placeholder-val="{{ true }}"><div style="display: flex; flex-direction: column; gap: 6px;"><div style="display: flex; gap: 12px; font-size: 15px; line-height: 1.4;"><span style="width: 104px; flex-shrink: 0; color: {{t.muted}};">Your answer</span><span style="flex-grow: 1; min-width: 0; color: {{r.aColor}}; font-weight: 500; overflow-wrap: anywhere;">{{r.a}}</span></div><sc-if value="{{r.bad}}" hint-placeholder-val="{{ false }}"><div style="display: flex; gap: 12px; font-size: 15px; line-height: 1.4;"><span style="width: 104px; flex-shrink: 0; color: {{t.muted}};">Right answer</span><span style="flex-grow: 1; min-width: 0; color: {{t.text}}; font-weight: 500; overflow-wrap: anywhere;">{{r.r}}</span></div></sc-if></div></sc-if>
       <sc-if value="{{r.hasActions}}" hint-placeholder-val="{{ false }}"><div style="display: flex; flex-wrap: wrap; gap: 8px;"><sc-if value="{{r.canCount}}" hint-placeholder-val="{{ false }}"><button type="button" onClick="{{r.count}}" class="sc-press" style="height: 34px; padding: 0 14px; border: 0; border-radius: 999px; background: {{t.inv}}; color: {{t.invText}}; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer;">Count it as right</button></sc-if><sc-if value="{{r.canExplain}}" hint-placeholder-val="{{ false }}"><sc-if value="{{r.exClosed}}" hint-placeholder-val="{{ true }}"><button type="button" onClick="{{r.ask}}" class="sc-press" style="height: 34px; padding: 0 14px 0 12px; display: inline-flex; align-items: center; gap: 6px; border: 0; border-radius: 999px; background: {{t.surf}}; color: {{t.text}}; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 3l1.9 5.1L18 10l-5.1 1.9L11 17l-1.9-5.1L4 10l5.1-1.9z"/><path d="M18.5 15l.8 2.2 2.2.8-2.2.8-.8 2.2-.8-2.2-2.2-.8 2.2-.8z"/></svg>{{r.exLabel}}</button></sc-if></sc-if></div></sc-if>
-      <sc-if value="{{r.exOpen}}" hint-placeholder-val="{{ false }}"><div role="region" aria-label="Explanation" class="sc-tq" style="box-sizing: border-box; padding: 14px 16px; border-radius: 16px; background: {{t.surf}}; display: flex; flex-direction: column; gap: 6px; animation: scTA .2s cubic-bezier(.2,.8,.2,1) both;"><div style="display: flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 600; color: {{t.muted}};"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 3l1.9 5.1L18 10l-5.1 1.9L11 17l-1.9-5.1L4 10l5.1-1.9z"/><path d="M18.5 15l.8 2.2 2.2.8-2.2.8-.8 2.2-.8-2.2-2.2-.8 2.2-.8z"/></svg><span style="flex-grow: 1;">Explained by AI</span><button type="button" onClick="{{r.closeEx}}" aria-label="Close the explanation" style="width: 28px; height: 28px; border: 0; border-radius: 14px; background: {{t.bg}}; color: {{t.text}}; display: flex; align-items: center; justify-content: center; cursor: pointer;"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
-        <sc-if value="{{r.exBusy}}" hint-placeholder-val="{{ false }}"><span style="font-size: 15px; color: {{t.muted}};">Thinking…</span></sc-if><sc-if value="{{r.exText}}" hint-placeholder-val="{{ true }}"><span style="font-size: 15px; line-height: 1.5;">{{r.exText}}</span></sc-if><sc-if value="{{r.exError}}" hint-placeholder-val="{{ false }}"><span style="font-size: 14px; line-height: 1.4; color: {{t.again}};">{{r.exError}}</span></sc-if></div></sc-if>
+      <sc-if value="{{r.exOpen}}" hint-placeholder-val="{{ false }}"><div role="region" aria-label="Explanation" class="sc-tq" style="box-sizing: border-box; border-radius: 16px; background: {{t.surf}}; display: flex; flex-direction: column; overflow: hidden; animation: scTA .2s cubic-bezier(.2,.8,.2,1) both;"><div style="flex-shrink: 0; padding: 14px 16px 0; display: flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 600; color: {{t.muted}};"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 3l1.9 5.1L18 10l-5.1 1.9L11 17l-1.9-5.1L4 10l5.1-1.9z"/><path d="M18.5 15l.8 2.2 2.2.8-2.2.8-.8 2.2-.8-2.2-2.2-.8 2.2-.8z"/></svg><span style="flex-grow: 1;">Explained by AI</span><button type="button" onClick="{{r.closeEx}}" aria-label="Close the explanation" style="width: 28px; height: 28px; border: 0; border-radius: 14px; background: {{t.bg}}; color: {{t.text}}; display: flex; align-items: center; justify-content: center; cursor: pointer;"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+        <div ref="{{r.chat.end}}" style="box-sizing: border-box; padding: 6px 16px; display: flex; flex-direction: column; gap: 6px;"><sc-if value="{{r.exBusy}}" hint-placeholder-val="{{ false }}"><span style="font-size: 15px; color: {{t.muted}};">Thinking…</span></sc-if><sc-if value="{{r.exText}}" hint-placeholder-val="{{ true }}"><span style="font-size: 15px; line-height: 1.5;">{{r.exText}}</span></sc-if><sc-if value="{{r.exError}}" hint-placeholder-val="{{ false }}"><span style="font-size: 14px; line-height: 1.4; color: {{t.again}};">{{r.exError}}</span></sc-if>
+        <sc-if value="{{r.chat.hasTurns}}" hint-placeholder-val="{{ false }}"><div role="log" aria-label="Your questions" style="display: flex; flex-direction: column; gap: 12px; padding-top: 2px;"><sc-for list="{{r.chat.turns}}" as="qa" hint-placeholder-count="1"><div style="display: flex; flex-direction: column; gap: 6px;">
+      <div class="sc-ask-q" style="align-self: flex-end; max-width: 85%; box-sizing: border-box; padding: 8px 14px; border-radius: 18px; background: {{t.bg}}; color: {{t.text}}; font-size: 15px; line-height: 1.4; white-space: pre-wrap; overflow-wrap: anywhere;">{{qa.q}}</div>
+      <sc-if value="{{qa.busy}}" hint-placeholder-val="{{ false }}"><span style="font-size: 15px; color: {{t.muted}};">Thinking…</span></sc-if>
+      <sc-if value="{{qa.hasA}}" hint-placeholder-val="{{ true }}"><span style="font-size: 15px; line-height: 1.5; overflow-wrap: anywhere;">{{qa.a}}</span></sc-if>
+      <sc-if value="{{qa.hasError}}" hint-placeholder-val="{{ false }}"><span style="font-size: 14px; line-height: 1.4; color: {{t.again}};">{{qa.error}}</span></sc-if>
+    </div></sc-for></div></sc-if>
+        <sc-if value="{{r.hasNote}}" hint-placeholder-val="{{ false }}"><span style="font-size: 12px; color: {{t.muted}};">{{r.note}}</span></sc-if></div>
+        <div class="sc-ask" ref="{{r.chat.slotRef}}" style="flex-shrink: 0; box-sizing: border-box; padding: 0 6px 6px; {{r.chat.slot}}">
+      <sc-if value="{{r.chat.open}}" hint-placeholder-val="{{ true }}"><div class="sc-ask-in" style="--ask-ring: {{t.muted}}; --ask-ph: {{t.muted}}; box-sizing: border-box; display: flex; align-items: flex-end; gap: 8px; padding: 4px 4px 4px 16px; border-radius: 22px; background: {{t.bg}}; color: {{t.text}}; {{r.chat.float}}"><textarea rows="1" class="sc-ask-ta" value="{{r.chat.draft}}" ref="{{r.chat.grow}}" onChange="{{r.chat.set}}" onKeyDown="{{r.chat.key}}" onFocus="{{r.chat.focus}}" onBlur="{{r.chat.blur}}" placeholder="Ask about this card" aria-label="Ask about this card" maxlength="500" enterkeyhint="send" autocomplete="off" style="flex: 1 1 auto; min-width: 0; box-sizing: border-box; height: 36px; max-height: 102px; margin: 0; padding: 7px 0; border: 0; outline: 0; resize: none; background: transparent; color: {{t.text}}; font: inherit; font-size: 16px; line-height: 22px;">{{r.chat.draft}}</textarea><button type="button" onClick="{{r.chat.send}}" onMouseDown="{{r.chat.hold}}" aria-label="Send" data-tip="Send" aria-disabled="{{r.chat.off}}" class="sc-press" style="width: 36px; height: 36px; flex-shrink: 0; padding: 0; border: 0; border-radius: 18px; background: {{r.chat.goBg}}; color: {{r.chat.goFg}}; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: background-color .15s, color .15s;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M6 11l6-6 6 6"/></svg></button></div></sc-if>
+      <sc-if value="{{r.chat.limited}}" hint-placeholder-val="{{ false }}"><div style="box-sizing: border-box; padding: 0 10px; display: flex; flex-direction: column; align-items: flex-start; gap: 8px;"><span style="font-size: 14px; line-height: 1.4; color: {{t.again}};">{{r.chat.limitText}}</span><sc-if value="{{r.chat.goPro}}" hint-placeholder-val="{{ true }}"><a href="{{r.chat.proHref}}" style="height: 34px; padding: 0 16px; display: inline-flex; align-items: center; border-radius: 999px; background: {{t.inv}}; color: {{t.invText}}; font-size: 13px; font-weight: 600;">Go Pro</a></sc-if></div></sc-if>
+    </div></div></sc-if>
     </div></sc-for>
     </div></sc-if>
 </div>
 </x-dc>
-<script type="text/x-dc" data-dc-script data-props='{"dark":{"editor":"boolean","default":false},"dim":{"editor":"boolean","default":false},"screen":{"editor":"enum","default":"Set up","options":["Set up","Multiple choice","True or false","Fill in the blank","Written","Matching","Submit","Leave","Results","Results · missed"]},"timed":{"editor":"boolean","default":true},"$preview":{"width":390,"height":844}}'>
+<script type="text/x-dc" data-dc-script data-props='{"dark":{"editor":"boolean","default":false},"dim":{"editor":"boolean","default":false},"screen":{"editor":"enum","default":"Set up","options":["Set up","Multiple choice","True or false","Fill in the blank","Written","Matching","Submit","Leave","Results","Results · missed"]},"timed":{"editor":"boolean","default":true},"explainOpen":{"editor":"boolean","default":false},"followUp":{"editor":"boolean","default":false},"$preview":{"width":390,"height":844}}'>
 class Component extends LucidaLogic(DCLogic, 0) {
 
 constructor(props) { super(props); this.state = {}; }
 renderVals() { const db = this.props.db || this.mock(); const chrome = db.chrome();
   const t = this.theme(!!this.props.dark, !!this.props.dim);
+  const chatView = (key, id, question, exv, o) => {
+    exv = exv || {};
+    const mock = !!db.mock, st = this.state, draft = (st.chatDraft || {})[key] || '';
+    const own = mock ? (o.asked && o.sample ? [{ q: o.sample.q, a: o.sample.a }] : []).concat((st.chatMock || {})[key] || []) : exv.turns || [];
+    const turns = own.map(m => ({ q: m.q || '', a: String(m.a || '').replace(/\*\*/g, ''), busy: !!m.busy, hasA: !!m.a && !m.busy, error: m.error || '', hasError: !!m.error && !m.busy }));
+    const lim = mock ? null : exv.limit || null, waiting = turns.some(m => m.busy), ready = !!draft.trim() && !waiting;
+    const setDraft = v => this.setState({ chatDraft: { ...(this.state.chatDraft || {}), [key]: v } });
+    const send = (v, field) => {
+      const q = String(v == null ? draft : v).trim().slice(0, 500);
+      if (!q || waiting || lim || !id) return;
+      if (field) { field.value = ''; field.style.height = ''; }
+      setDraft('');
+      if (mock) this.setState({ chatMock: { ...(this.state.chatMock || {}), [key]: [...((this.state.chatMock || {})[key] || []), { q, a: o.sample ? o.sample.a : '' }] } });
+      else db.act.followUp(id, q, question);
+    };
+    // A phone's web page: while the field would be under the keyboard, it rides on it (the visible part of the page is visualViewport's, which
+    // changes as the keyboard comes and goes and as the phone moves the view), and its place in the panel keeps its height.
+    const vv = () => (typeof window !== 'undefined' && window.visualViewport) || null;
+    const unlisten = () => { const v = vv(); if (v && this.chatOnVv) { v.removeEventListener('resize', this.chatOnVv); v.removeEventListener('scroll', this.chatOnVv); } this.chatOnVv = null; };
+    const place = () => {
+      const v = vv(), slot = this.chatSlot && this.chatSlot[key];
+      let f = null;
+      if (v && slot && slot.isConnected && this.chatFocus === key) {
+        const r = slot.getBoundingClientRect(), low = v.offsetTop + v.height, pill = slot.querySelector('.sc-ask-in'), ph = pill ? pill.offsetHeight : 44, sp = parseFloat(getComputedStyle(slot).paddingLeft) || 0;
+        if (r.bottom > low + 1) f = { top: Math.round(low - ph - 8), left: Math.round(r.left + sp), width: Math.round(r.width - 2 * sp), h: Math.round(r.height) };
+      } else unlisten();
+      if (JSON.stringify(f) !== JSON.stringify(this.chatFloat || null)) { this.chatFloat = f; this.setState({ chatAt: Date.now() }); }
+    };
+    const fl = this.chatFocus === key && this.chatFloat ? this.chatFloat : null;
+    // (the newest question and its answer come into view: the panel scrolls so the question is at its top, or as far as it goes, and a panel
+    // in a page that scrolls is brought up)
+    const last = turns[turns.length - 1], endKey = id + '|' + turns.length + '|' + (last ? (last.busy ? 'busy' : last.a.length + ':' + last.error) : '') + '|' + !!lim;
+    return {
+      open: !!o.show && !lim, limited: !!o.show && !!lim, limitText: lim ? lim.text || '' : '', goPro: !!(lim && lim.goPro), proHref: o.proHref,
+      turns, hasTurns: turns.length > 0, draft, off: ready ? 'false' : 'true', goBg: ready ? o.pal.on : o.pal.off, goFg: ready ? o.pal.onFg : o.pal.offFg,
+      float: fl ? 'position: fixed; z-index: 60; top: ' + fl.top + 'px; left: ' + fl.left + 'px; width: ' + fl.width + 'px; box-shadow: 0 8px 28px rgba(0,0,0,.16);' : '',
+      slot: fl ? 'min-height: ' + fl.h + 'px;' : '',
+      set: e => setDraft(e && e.target ? e.target.value : ''),
+      // Enter sends; Shift+Enter is a new line (and nothing happens while a word is being composed, or an answer is on its way).
+      key: e => { if (!e || e.key !== 'Enter' || e.shiftKey || e.isComposing || (e.nativeEvent && e.nativeEvent.isComposing) || e.keyCode === 229) return; if (e.preventDefault) e.preventDefault(); send(e.target && typeof e.target.value === 'string' ? e.target.value : draft, e.target); },
+      send: e => { const s = e && e.target && e.target.closest ? e.target.closest('.sc-ask') : null; const f = s ? s.querySelector('textarea') : null; send(f ? f.value : draft, f); if (f && !mock && f.focus) f.focus(); },
+      // (pressing send keeps the cursor in the field, so a phone's keyboard stays up)
+      hold: e => { if (e && e.preventDefault) e.preventDefault(); },
+      // The field grows with what's typed, up to four lines, then scrolls.
+      grow: el => { if (!el || !el.style || !el.isConnected) return; el.style.height = 'auto'; el.style.height = Math.min(el.scrollHeight, o.phone ? 102 : 92) + 'px'; },
+      slotRef: el => { if (!el) return; this.chatSlot = { ...(this.chatSlot || {}), [key]: el }; },
+      end: el => {
+        if (!el || !el.isConnected) return; this.chatEnd = this.chatEnd || {};
+        if (this.chatEnd[key] === endKey) return; this.chatEnd[key] = endKey;
+        if (!turns.length) return;
+        const qs = el.querySelectorAll('.sc-ask-q'), b = qs[qs.length - 1];
+        if (b) el.scrollTop += b.getBoundingClientRect().top - el.getBoundingClientRect().top - (parseFloat(getComputedStyle(el).paddingTop) || 0); else el.scrollTop = el.scrollHeight;
+        if (!mock) setTimeout(() => { const s = this.chatSlot && this.chatSlot[key]; if (s && s.isConnected && s.scrollIntoView && !this.chatFloat) s.scrollIntoView({ block: 'nearest' }); }, 60);
+      },
+      focus: () => { this.chatFocus = key; if (mock || !o.phone || !vv()) return; unlisten(); this.chatOnVv = place; vv().addEventListener('resize', place); vv().addEventListener('scroll', place); setTimeout(place, 0); setTimeout(place, 350); },
+      blur: () => { if (this.chatFocus === key) this.chatFocus = null; unlisten(); if (this.chatFloat) { this.chatFloat = null; this.setState({ chatAt: Date.now() }); } }
+    };
+  };
   const occView = (boxes, ask, mode, shown, c) => (boxes || []).map((b, i) => {
     const asked = i === ask, hide = asked || mode === 'all', pct = v => +(v * 100).toFixed(3) + '%';
     return { n: hide ? String(i + 1) : '', x: pct(b.x), y: pct(b.y), w: pct(b.w), h: pct(b.h), z: asked ? '2' : '1',
@@ -196,7 +265,7 @@ renderVals() { const db = this.props.db || this.mock(); const chrome = db.chrome
       const counted = s.counted || {}, ok = n => !X.wrong.includes(n) || !!counted[n];
       const rows = X.rows.map((r, j) => { const n = j + 1, pairs = r[5] ? r[5].map(p => ({ q: p[0], a: p[1], r: p[2], ok: p[1] === p[2] })) : null, bad = !ok(n);
         return { n, k: r[0], kindLabel: { mc: 'Multiple choice', tf: 'True or false', blank: 'Fill in the blank', match: 'Matching', type: 'Written' }[r[0]], q: r[1], claim: r[2], a: r[3], r: r[4], ok: !bad, counted: !!counted[n], pairs, notAnswered: !r[3] && !pairs,
-          canCount: r[0] === 'type' && bad && !!r[3], ex: { on: n === 3, text: (s.exOn || {})[n] ? X.explain : '' } }; });
+          canCount: r[0] === 'type' && bad && !!r[3], ex: { on: n === 3, text: (s.exOn || {})[n] || (P.explainOpen && n === 3) ? X.explain : '', note: (s.exOn || {})[n] || (P.explainOpen && n === 3) ? '2 free explanations left today' : '' } }; });
       const right = rows.filter(r => r.ok).length;
       R = { phase: 'results', name: X.name, n: 20, right, pct: Math.round(right / 20 * 100), tookLabel: '14:32', timeUp: false, missed: 20 - right, rows };
     }
@@ -206,15 +275,19 @@ renderVals() { const db = this.props.db || this.mock(); const chrome = db.chrome
     name: R.name, pct: R.pct, right: R.right, n: R.n, tookLabel: R.tookLabel, timeUp: !!R.timeUp, hasMissed: R.missed > 0, noMissed: R.missed === 0,
     filters: [['all', 'All ' + R.n], ['missed', 'Missed ' + R.missed]].map(([k, label]) => ({ label, ...seg((k === 'missed') === onlyMissed), pick: () => this.setState({ only: k }) })),
     rows: R.rows.filter(r => !onlyMissed || !r.ok).map(r => {
-      const open = !!(s.exOpen || {})[r.n], ex = r.ex || { on: false };
+      const opened = (s.exOpen || {})[r.n], open = opened != null ? !!opened : mock && !!P.explainOpen && r.n === 3, ex = r.ex || { on: false };
+      // The conversation about this question (design/chat.mjs): closing its explanation forgets it.
+      const chat = chatView('r' + r.n, r.card || 'q' + r.n, r.q, ex, { show: open && !!ex.on && !!ex.text && !ex.busy, sample: {"q":"How does it make the ATP?","a":"It runs the electron transport chain on its inner membrane, which pumps protons out and builds a gradient. ATP synthase lets them flow back in and uses that flow to make ATP."}, asked: !!P.followUp && r.n === 3,
+        pal: { on: t.inv, onFg: t.invText, off: t.surf2, offFg: t.muted }, phone: true, proHref: mock ? 'Pricing.dc.html' : 'https://lucida.cards/pricing' });
       return { n: r.n, kindLabel: r.kindLabel, ok: r.ok, bad: !r.ok, markBg: r.ok ? t.goodTint : t.againTint, markFg: r.ok ? t.good : t.again,
         hasText: !!r.q && !(r.k === 'tf' && r.q === 'True or false?' && r.claim), q: r.q, hasClaim: !!r.claim, claim: r.claim || '', isPairs: !!r.pairs, isSingle: !r.pairs, a: r.a || 'No answer', aColor: r.a ? t.text : t.muted, r: r.r,
         pairs: (r.pairs || []).map(p => ({ q: p.q, a: p.a || 'No answer', r: p.r, ok: p.ok, bad: !p.ok, markBg: p.ok ? t.goodTint : t.againTint, markFg: p.ok ? t.good : t.again })),
         canCount: !!r.canCount, count: () => { if (live) db.act.testCount(r.n); else this.setState({ counted: { ...(s.counted || {}), [r.n]: true } }); },
         canExplain: !!ex.on && !r.pairs, exClosed: !open, exLabel: ex.text ? 'Explanation' : 'Explain', hasActions: !!r.canCount || (!!ex.on && !r.pairs),
         ask: () => { this.setState({ exOpen: { ...(s.exOpen || {}), [r.n]: true } }); if (mock) this.setState({ exOn: { ...(s.exOn || {}), [r.n]: true } }); else if (!ex.text && r.card) db.act.explain(r.card, r.q); },
-        closeEx: () => this.setState({ exOpen: { ...(s.exOpen || {}), [r.n]: false } }),
-        exOpen: open && !!ex.on, exBusy: !!ex.busy, exText: ex.busy ? '' : ex.text || '', exError: ex.busy ? '' : ex.error || '' };
+        closeEx: () => { const k = 'r' + r.n; this.setState({ exOpen: { ...(this.state.exOpen || {}), [r.n]: false }, chatDraft: { ...(this.state.chatDraft || {}), [k]: '' }, chatMock: { ...(this.state.chatMock || {}), [k]: [] } }); if (live && r.card) db.act.followUpClear(r.card); },
+        exOpen: open && !!ex.on, exBusy: !!ex.busy, exText: ex.busy ? '' : ex.text || '', exError: ex.busy ? '' : ex.error || '',
+        hasNote: !!ex.note && !!ex.text && !ex.busy && !chat.limited, note: ex.note || '', chat };
     }),
     retake: () => { if (live) db.act.testRetake(); else go('Multiple choice'); }, study: () => { if (live) db.act.testStudy(); },
     done: () => { if (live) Promise.resolve(db.act.go(R.back)).then(() => db.act.testLeave()); else go('Set up'); }

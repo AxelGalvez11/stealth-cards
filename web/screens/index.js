@@ -805,6 +805,12 @@ export default [
   "h": 844
  },
  {
+  "name": "PhoneReviewExplainAsk",
+  "title": "iPhone · Review · Explain · a question about the card, asked and answered",
+  "w": 390,
+  "h": 844
+ },
+ {
   "name": "PhoneReviewFour",
   "title": "iPhone · Review · 4 grades",
   "w": 390,
@@ -2649,6 +2655,12 @@ export default [
  {
   "name": "WebReviewExplain",
   "title": "Web · Review · Explain (AI explains the answer)",
+  "w": 1440,
+  "h": 900
+ },
+ {
+  "name": "WebReviewExplainAsk",
+  "title": "Web · Review · Explain · a question about the card, asked and answered",
   "w": 1440,
   "h": 900
  },

@@ -25,7 +25,7 @@
 .sc-fade-b{animation:scFadeB .4s cubic-bezier(.2,.8,.2,1) both}
 .sc-in-a{animation:scInA .32s cubic-bezier(.2,.8,.2,1) both}
 .sc-in-b{animation:scInB .32s cubic-bezier(.2,.8,.2,1) both}
-@media (prefers-reduced-motion:reduce){.sc-blank,.sc-fade-a,.sc-fade-b,.sc-in-a,.sc-in-b,[data-anim]{animation:none!important}}@media (prefers-reduced-motion:reduce){.sc-occ{transition:none!important}}.sc-xg{width:100%;display:grid;grid-template-columns:minmax(0,780px);justify-content:center;align-items:start;gap:28px 24px}.sc-xc{min-width:0}@container (min-width:944px){.sc-xg.sc-xo{grid-template-columns:minmax(560px,780px) 360px}.sc-xg.sc-xo>.sc-xx{max-height:480px}}.sc-px.sc-xo>.sc-pc{flex:0 0 max(250px,60%)}.sc-px>.sc-xx{flex:0 1 auto;overflow-y:auto;max-height:min(calc(100% - 262px),calc(40% - 12px))}
+@media (prefers-reduced-motion:reduce){.sc-blank,.sc-fade-a,.sc-fade-b,.sc-in-a,.sc-in-b,[data-anim]{animation:none!important}}@media (prefers-reduced-motion:reduce){.sc-occ{transition:none!important}}.sc-xg{width:100%;display:grid;grid-template-columns:minmax(0,780px);justify-content:center;align-items:start;gap:28px 24px}.sc-xc{min-width:0}@container (min-width:944px){.sc-xg.sc-xo{grid-template-columns:minmax(560px,780px) 360px}.sc-xg.sc-xo>.sc-xx{max-height:480px}}.sc-px.sc-xo>.sc-pc{flex:0 0 max(250px,60%)}.sc-px>.sc-xx{flex:0 1 auto;max-height:min(calc(100% - 262px),calc(40% - 12px))}.sc-ask-in{transition:box-shadow .15s}.sc-ask-in:focus-within{box-shadow:inset 0 0 0 1.5px var(--ask-ring)}.sc-ask-ta::placeholder{color:var(--ask-ph);opacity:1}.sc-ask-ta{scrollbar-width:thin}@media (prefers-reduced-motion:reduce){.sc-ask-in{transition:none}}
 </style>
 </helmet>
 <div style="position: relative; isolation: isolate; width: 390px; height: 844px; box-sizing: border-box; padding: 60px 16px 34px; display: flex; flex-direction: column; gap: 16px; overflow: hidden; font-family: Geist, -apple-system, system-ui, sans-serif; background: {{t.bg}}; color: {{t.text}};">
@@ -87,12 +87,24 @@
 </div>
   </div>
 </button></div>
-    <sc-if value="{{ex.panel}}" hint-placeholder-val="{{ false }}"><div role="region" aria-label="Explanation" class="sc-fade sc-xx" style="box-sizing: border-box; min-width: 0; overflow-y: auto; padding: 14px 16px; border-radius: 24px; background: {{cp.card}}; border: 1px solid {{cp.line}}; box-shadow: {{cp.shadow}}; color: {{cp.text}}; display: flex; flex-direction: column; gap: 8px; text-align: left;">
-    <div style="display: flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 600; color: {{cp.muted}};"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 3l1.9 5.1L18 10l-5.1 1.9L11 17l-1.9-5.1L4 10l5.1-1.9z"/><path d="M18.5 15l.8 2.2 2.2.8-2.2.8-.8 2.2-.8-2.2-2.2-.8 2.2-.8z"/></svg><span style="flex-grow: 1;">Explained by AI</span><button type="button" onClick="{{ex.close}}" aria-label="Close the explanation" style="width: 28px; height: 28px; border: 0; border-radius: 14px; background: {{cp.surf}}; color: {{cp.text}}; display: flex; align-items: center; justify-content: center; cursor: pointer;"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+    <sc-if value="{{ex.panel}}" hint-placeholder-val="{{ false }}"><div role="region" aria-label="Explanation" class="sc-fade sc-xx" style="box-sizing: border-box; min-width: 0; overflow: hidden; border-radius: 24px; background: {{cp.card}}; border: 1px solid {{cp.line}}; box-shadow: {{cp.shadow}}; color: {{cp.text}}; display: flex; flex-direction: column; text-align: left;">
+    <div style="flex-shrink: 0; padding: 14px 16px 0; display: flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 600; color: {{cp.muted}};"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 3l1.9 5.1L18 10l-5.1 1.9L11 17l-1.9-5.1L4 10l5.1-1.9z"/><path d="M18.5 15l.8 2.2 2.2.8-2.2.8-.8 2.2-.8-2.2-2.2-.8 2.2-.8z"/></svg><span style="flex-grow: 1;">Explained by AI</span><button type="button" onClick="{{ex.close}}" aria-label="Close the explanation" style="width: 28px; height: 28px; border: 0; border-radius: 14px; background: {{cp.surf}}; color: {{cp.text}}; display: flex; align-items: center; justify-content: center; cursor: pointer;"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+    <div class="sc-xs" ref="{{ex.chat.end}}" style="flex: 0 1 auto; min-height: 0; overflow-y: auto; box-sizing: border-box; padding: 8px 16px; display: flex; flex-direction: column; gap: 8px;">
     <sc-if value="{{ex.busy}}" hint-placeholder-val="{{ false }}"><span style="font-size: 15px; color: {{cp.muted}};">Thinking…</span></sc-if>
     <sc-if value="{{ex.hasText}}" hint-placeholder-val="{{ true }}"><span style="font-size: 15px; line-height: 1.5;">{{ex.text}}</span></sc-if>
     <sc-if value="{{ex.hasError}}" hint-placeholder-val="{{ false }}"><span style="font-size: 14px; line-height: 1.4; color: {{cp.again}};">{{ex.error}}</span><sc-if value="{{ex.goPro}}" hint-placeholder-val="{{ false }}"><a href="{{ex.proHref}}" style="align-self: flex-start; height: 34px; padding: 0 16px; display: inline-flex; align-items: center; border-radius: 999px; background: {{cp.inv}}; color: {{cp.invText}}; font-size: 13px; font-weight: 600;">Go Pro</a></sc-if></sc-if>
+    <sc-if value="{{ex.chat.hasTurns}}" hint-placeholder-val="{{ false }}"><div role="log" aria-label="Your questions" style="display: flex; flex-direction: column; gap: 14px; padding-top: 2px;"><sc-for list="{{ex.chat.turns}}" as="qa" hint-placeholder-count="1"><div style="display: flex; flex-direction: column; gap: 8px;">
+      <div class="sc-ask-q" style="align-self: flex-end; max-width: 85%; box-sizing: border-box; padding: 8px 14px; border-radius: 18px; background: {{cp.surf}}; color: {{cp.text}}; font-size: 15px; line-height: 1.4; white-space: pre-wrap; overflow-wrap: anywhere;">{{qa.q}}</div>
+      <sc-if value="{{qa.busy}}" hint-placeholder-val="{{ false }}"><span style="font-size: 15px; color: {{cp.muted}};">Thinking…</span></sc-if>
+      <sc-if value="{{qa.hasA}}" hint-placeholder-val="{{ true }}"><span style="font-size: 15px; line-height: 1.5; overflow-wrap: anywhere;">{{qa.a}}</span></sc-if>
+      <sc-if value="{{qa.hasError}}" hint-placeholder-val="{{ false }}"><span style="font-size: 14px; line-height: 1.4; color: {{cp.again}};">{{qa.error}}</span></sc-if>
+    </div></sc-for></div></sc-if>
     <sc-if value="{{ex.hasNote}}" hint-placeholder-val="{{ false }}"><span style="font-size: 12px; color: {{cp.muted}};">{{ex.note}}</span></sc-if>
+    </div>
+    <div class="sc-ask" ref="{{ex.chat.slotRef}}" style="flex-shrink: 0; box-sizing: border-box; padding: 0 6px 6px; {{ex.chat.slot}}">
+      <sc-if value="{{ex.chat.open}}" hint-placeholder-val="{{ true }}"><div class="sc-ask-in" style="--ask-ring: {{cp.muted}}; --ask-ph: {{cp.muted}}; box-sizing: border-box; display: flex; align-items: flex-end; gap: 8px; padding: 4px 4px 4px 16px; border-radius: 22px; background: {{cp.surf}}; color: {{cp.text}}; {{ex.chat.float}}"><textarea rows="1" class="sc-ask-ta" value="{{ex.chat.draft}}" ref="{{ex.chat.grow}}" onChange="{{ex.chat.set}}" onKeyDown="{{ex.chat.key}}" onFocus="{{ex.chat.focus}}" onBlur="{{ex.chat.blur}}" placeholder="Ask about this card" aria-label="Ask about this card" maxlength="500" enterkeyhint="send" autocomplete="off" style="flex: 1 1 auto; min-width: 0; box-sizing: border-box; height: 36px; max-height: 102px; margin: 0; padding: 7px 0; border: 0; outline: 0; resize: none; background: transparent; color: {{cp.text}}; font: inherit; font-size: 16px; line-height: 22px;">{{ex.chat.draft}}</textarea><button type="button" onClick="{{ex.chat.send}}" onMouseDown="{{ex.chat.hold}}" aria-label="Send" data-tip="Send" aria-disabled="{{ex.chat.off}}" class="sc-press" style="width: 36px; height: 36px; flex-shrink: 0; padding: 0; border: 0; border-radius: 18px; background: {{ex.chat.goBg}}; color: {{ex.chat.goFg}}; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: background-color .15s, color .15s;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M6 11l6-6 6 6"/></svg></button></div></sc-if>
+      <sc-if value="{{ex.chat.limited}}" hint-placeholder-val="{{ false }}"><div style="box-sizing: border-box; padding: 0 10px; display: flex; flex-direction: column; align-items: flex-start; gap: 8px;"><span style="font-size: 14px; line-height: 1.4; color: {{cp.again}};">{{ex.chat.limitText}}</span><sc-if value="{{ex.chat.goPro}}" hint-placeholder-val="{{ true }}"><a href="{{ex.chat.proHref}}" style="height: 34px; padding: 0 16px; display: inline-flex; align-items: center; border-radius: 999px; background: {{cp.inv}}; color: {{cp.invText}}; font-size: 13px; font-weight: 600;">Go Pro</a></sc-if></div></sc-if>
+    </div>
   </div></sc-if>
   </div>
   <div style="height: 76px; display: flex;">
@@ -170,7 +182,7 @@
   </sc-if>
 </div>
 </x-dc>
-<script type="text/x-dc" data-dc-script data-props='{"dark":{"editor":"boolean","default":false},"dim":{"editor":"boolean","default":false},"playing":{"editor":"boolean","default":false},"explainOpen":{"editor":"boolean","default":false},"explained":{"editor":"boolean","default":false},"grading":{"editor":"enum","default":"Four buttons","options":["Four buttons","Check or X","Piles"]},"card":{"editor":"enum","default":"Basic","options":["Basic","Fill in the blank","Image","Audio"]},"startRevealed":{"editor":"boolean","default":false},"fsrs":{"editor":"boolean","default":true},"progress":{"editor":"enum","default":"Bar","options":["Bar","Counts","None"]},"settingsOpen":{"editor":"boolean","default":false},"newPileOpen":{"editor":"boolean","default":false},"radius":{"editor":"range","default":32,"min":12,"max":48,"step":2,"unit":"px"},"$preview":{"width":390,"height":844}}'>
+<script type="text/x-dc" data-dc-script data-props='{"dark":{"editor":"boolean","default":false},"dim":{"editor":"boolean","default":false},"playing":{"editor":"boolean","default":false},"explainOpen":{"editor":"boolean","default":false},"explained":{"editor":"boolean","default":false},"followUp":{"editor":"boolean","default":false},"grading":{"editor":"enum","default":"Four buttons","options":["Four buttons","Check or X","Piles"]},"card":{"editor":"enum","default":"Basic","options":["Basic","Fill in the blank","Image","Audio"]},"startRevealed":{"editor":"boolean","default":false},"fsrs":{"editor":"boolean","default":true},"progress":{"editor":"enum","default":"Bar","options":["Bar","Counts","None"]},"settingsOpen":{"editor":"boolean","default":false},"newPileOpen":{"editor":"boolean","default":false},"radius":{"editor":"range","default":32,"min":12,"max":48,"step":2,"unit":"px"},"$preview":{"width":390,"height":844}}'>
 class Component extends LucidaLogic(DCLogic, 1) {
 
 constructor(props) { super(props); this.state = { revealed: !!props.startRevealed, settings: null, pileDraft: props.newPileOpen ? 'Tricky ones' : null, exOpen: !!props.explainOpen, exFor: props.explainOpen ? 'r0' : null }; }
@@ -253,7 +265,65 @@ renderVals() {
         return { label, pressed: on ? 'true' : 'false', ring: on ? '0 0 0 2px ' + t.text : 'inset 0 0 0 1px ' + t.line, isDeck: id === 'deck', isPlain: id === 'plain', isSky: id === 'sky', isSunset: id === 'sunset', isPhoto: id === 'photo',
           pick: () => (id === 'photo' && !image ? db.act.pickBg(dk.id) : db.act.setBg(dk.id, id, !(S && id === 'deck'))) }; }) };
   };
-  const explainView = (exv, id, question, answered, sample) => {
+  const chatView = (key, id, question, exv, o) => {
+    exv = exv || {};
+    const mock = !!db.mock, st = this.state, draft = (st.chatDraft || {})[key] || '';
+    const own = mock ? (o.asked && o.sample ? [{ q: o.sample.q, a: o.sample.a }] : []).concat((st.chatMock || {})[key] || []) : exv.turns || [];
+    const turns = own.map(m => ({ q: m.q || '', a: String(m.a || '').replace(/\*\*/g, ''), busy: !!m.busy, hasA: !!m.a && !m.busy, error: m.error || '', hasError: !!m.error && !m.busy }));
+    const lim = mock ? null : exv.limit || null, waiting = turns.some(m => m.busy), ready = !!draft.trim() && !waiting;
+    const setDraft = v => this.setState({ chatDraft: { ...(this.state.chatDraft || {}), [key]: v } });
+    const send = (v, field) => {
+      const q = String(v == null ? draft : v).trim().slice(0, 500);
+      if (!q || waiting || lim || !id) return;
+      if (field) { field.value = ''; field.style.height = ''; }
+      setDraft('');
+      if (mock) this.setState({ chatMock: { ...(this.state.chatMock || {}), [key]: [...((this.state.chatMock || {})[key] || []), { q, a: o.sample ? o.sample.a : '' }] } });
+      else db.act.followUp(id, q, question);
+    };
+    // A phone's web page: while the field would be under the keyboard, it rides on it (the visible part of the page is visualViewport's, which
+    // changes as the keyboard comes and goes and as the phone moves the view), and its place in the panel keeps its height.
+    const vv = () => (typeof window !== 'undefined' && window.visualViewport) || null;
+    const unlisten = () => { const v = vv(); if (v && this.chatOnVv) { v.removeEventListener('resize', this.chatOnVv); v.removeEventListener('scroll', this.chatOnVv); } this.chatOnVv = null; };
+    const place = () => {
+      const v = vv(), slot = this.chatSlot && this.chatSlot[key];
+      let f = null;
+      if (v && slot && slot.isConnected && this.chatFocus === key) {
+        const r = slot.getBoundingClientRect(), low = v.offsetTop + v.height, pill = slot.querySelector('.sc-ask-in'), ph = pill ? pill.offsetHeight : 44, sp = parseFloat(getComputedStyle(slot).paddingLeft) || 0;
+        if (r.bottom > low + 1) f = { top: Math.round(low - ph - 8), left: Math.round(r.left + sp), width: Math.round(r.width - 2 * sp), h: Math.round(r.height) };
+      } else unlisten();
+      if (JSON.stringify(f) !== JSON.stringify(this.chatFloat || null)) { this.chatFloat = f; this.setState({ chatAt: Date.now() }); }
+    };
+    const fl = this.chatFocus === key && this.chatFloat ? this.chatFloat : null;
+    // (the newest question and its answer come into view: the panel scrolls so the question is at its top, or as far as it goes, and a panel
+    // in a page that scrolls is brought up)
+    const last = turns[turns.length - 1], endKey = id + '|' + turns.length + '|' + (last ? (last.busy ? 'busy' : last.a.length + ':' + last.error) : '') + '|' + !!lim;
+    return {
+      open: !!o.show && !lim, limited: !!o.show && !!lim, limitText: lim ? lim.text || '' : '', goPro: !!(lim && lim.goPro), proHref: o.proHref,
+      turns, hasTurns: turns.length > 0, draft, off: ready ? 'false' : 'true', goBg: ready ? o.pal.on : o.pal.off, goFg: ready ? o.pal.onFg : o.pal.offFg,
+      float: fl ? 'position: fixed; z-index: 60; top: ' + fl.top + 'px; left: ' + fl.left + 'px; width: ' + fl.width + 'px; box-shadow: 0 8px 28px rgba(0,0,0,.16);' : '',
+      slot: fl ? 'min-height: ' + fl.h + 'px;' : '',
+      set: e => setDraft(e && e.target ? e.target.value : ''),
+      // Enter sends; Shift+Enter is a new line (and nothing happens while a word is being composed, or an answer is on its way).
+      key: e => { if (!e || e.key !== 'Enter' || e.shiftKey || e.isComposing || (e.nativeEvent && e.nativeEvent.isComposing) || e.keyCode === 229) return; if (e.preventDefault) e.preventDefault(); send(e.target && typeof e.target.value === 'string' ? e.target.value : draft, e.target); },
+      send: e => { const s = e && e.target && e.target.closest ? e.target.closest('.sc-ask') : null; const f = s ? s.querySelector('textarea') : null; send(f ? f.value : draft, f); if (f && !mock && f.focus) f.focus(); },
+      // (pressing send keeps the cursor in the field, so a phone's keyboard stays up)
+      hold: e => { if (e && e.preventDefault) e.preventDefault(); },
+      // The field grows with what's typed, up to four lines, then scrolls.
+      grow: el => { if (!el || !el.style || !el.isConnected) return; el.style.height = 'auto'; el.style.height = Math.min(el.scrollHeight, o.phone ? 102 : 92) + 'px'; },
+      slotRef: el => { if (!el) return; this.chatSlot = { ...(this.chatSlot || {}), [key]: el }; },
+      end: el => {
+        if (!el || !el.isConnected) return; this.chatEnd = this.chatEnd || {};
+        if (this.chatEnd[key] === endKey) return; this.chatEnd[key] = endKey;
+        if (!turns.length) return;
+        const qs = el.querySelectorAll('.sc-ask-q'), b = qs[qs.length - 1];
+        if (b) el.scrollTop += b.getBoundingClientRect().top - el.getBoundingClientRect().top - (parseFloat(getComputedStyle(el).paddingTop) || 0); else el.scrollTop = el.scrollHeight;
+        if (!mock) setTimeout(() => { const s = this.chatSlot && this.chatSlot[key]; if (s && s.isConnected && s.scrollIntoView && !this.chatFloat) s.scrollIntoView({ block: 'nearest' }); }, 60);
+      },
+      focus: () => { this.chatFocus = key; if (mock || !o.phone || !vv()) return; unlisten(); this.chatOnVv = place; vv().addEventListener('resize', place); vv().addEventListener('scroll', place); setTimeout(place, 0); setTimeout(place, 350); },
+      blur: () => { if (this.chatFocus === key) this.chatFocus = null; unlisten(); if (this.chatFloat) { this.chatFloat = null; this.setState({ chatAt: Date.now() }); } }
+    };
+  };
+  const explainView = (exv, id, question, answered, sample, chat = {}) => {
     exv = db.mock ? { on: true, text: this.state.exMock || this.props.explained ? sample : '', note: this.state.exMock || this.props.explained ? '2 free explanations left today' : '' } : exv || { on: false };
     const open = !!this.state.exOpen && this.state.exFor === id;
     const show = !!(answered && exv.on && id);
@@ -263,18 +333,26 @@ renderVals() {
       const key = id + '|' + (exv.busy ? 'busy' : exv.text || exv.error || '');
       if (this.exKey !== key) { this.exKey = key; setTimeout(() => { const e = [...document.querySelectorAll('[role="region"][aria-label="Explanation"]')].find(x => x.offsetParent !== null); if (e && e.scrollIntoView) e.scrollIntoView({ block: 'nearest' }); }, 60); }
     }
-    const ask = () => { this.setState({ exOpen: true, exFor: id }); if (db.mock) this.setState({ exMock: true }); else if (!exv.text) db.act.explain(id, question); };
-    const close = () => this.setState({ exOpen: false });
+    // The conversation belongs to the explanation that's open: closing it, or the next card coming up, forgets it (and what was typed).
+    if (!db.mock) {
+      const here = show && open ? id : null;
+      if (this.chatFor && this.chatFor !== here) { const was = this.chatFor; this.chatFor = null; setTimeout(() => { db.act.followUpClear(was); this.setState({ chatDraft: {} }); }, 0); }
+      if (here) this.chatFor = here;
+    }
+    const ask = () => { this.setState({ exOpen: true, exFor: id, ...(this.state.exFor !== id ? { chatDraft: {}, chatMock: {} } : {}) }); if (db.mock) this.setState({ exMock: true }); else if (!exv.text) db.act.explain(id, question); };
+    const close = () => { this.setState({ exOpen: false, chatDraft: {}, chatMock: {} }); if (!db.mock && id) db.act.followUpClear(id); };
+    const proHref = db.mock ? 'Pricing.dc.html' : 'https://lucida.cards/pricing';
+    const talk = chatView('x', id, question, exv, { show: show && open && !!exv.text && !exv.busy, sample: chat.sample, asked: !!this.props.followUp, pal: chat.pal || { on: '#000000', onFg: '#FFFFFF', off: '#E8E8E8', offFg: '#666666' }, phone: !!chat.phone, proHref });
     // avail: the card can be explained once it's turned over (the review's button keeps its place on a phone meanwhile);
     // toggle: the review's round button, which closes the explanation when it's open.
     return { show, avail: !!(exv.on && id), closed: !open, open, panel: show && open, side: show && open ? 'sc-xo' : '', label: exv.text ? 'Explanation' : 'Explain', expanded: show && open ? 'true' : 'false',
       busy: !!exv.busy, hasText: !!exv.text && !exv.busy, text: exv.text || '', hasError: !!exv.error && !exv.busy, error: exv.error || '', goPro: !!exv.goPro,
-      proHref: db.mock ? 'Pricing.dc.html' : 'https://lucida.cards/pricing', hasNote: !!exv.note && !!exv.text, note: exv.note || '',
+      proHref, hasNote: !!exv.note && !!exv.text && !talk.limited, note: exv.note || '', chat: talk,
       ask, close, toggle: () => (show && open ? close() : ask()) };
   };
   const sw = (on, enabled = true) => ({ checked: on ? 'true' : 'false', track: on ? t.inv : t.surf2, knob: on ? 'translateX(20px)' : 'translateX(0)', knobColor: on ? t.invText : t.bg, op: enabled ? '1' : '.4', disabled: enabled ? 'false' : 'true' });
   const rev = this.state.revealed;
-  const ex = explainView(rv.ex, rv.card && rv.card.id, '', rev, "It pumps protons (H⁺) out of the matrix into the space between the two membranes. That builds a gradient, like water held behind a dam, and ATP synthase uses the flow back in to make ATP. Remember it as pump uphill first, then cash in on the way down.");
+  const ex = explainView(rv.ex, rv.card && rv.card.id, '', rev, "It pumps protons (H⁺) out of the matrix into the space between the two membranes. That builds a gradient, like water held behind a dam, and ATP synthase uses the flow back in to make ATP. Remember it as pump uphill first, then cash in on the way down.", { sample: {"q":"Why does it need oxygen at the end?","a":"Oxygen is the last stop for the electrons. It takes them at the end of the chain and joins with protons to make water. Without it the electrons back up, the pumping stops, and so does most of the cell’s ATP."}, pal: { on: cp.inv, onFg: cp.invText, off: cp.surf2, offFg: cp.muted }, phone: true });
   // Explain's round button, top right beside the settings: pressed while the explanation is open, like the settings button; on a
   // phone it keeps its place, unseen, until the card is turned over.
   const exBtn = { bg: ex.panel ? t.inv : t.surf, fg: ex.panel ? t.invText : t.text, vis: ex.show ? 'visible' : 'hidden' };
