@@ -481,6 +481,12 @@ export default [
   "h": 844
  },
  {
+  "name": "PhoneGuideOutline",
+  "title": "iPhone · Notes page · its outline open",
+  "w": 390,
+  "h": 844
+ },
+ {
   "name": "PhoneHistory",
   "title": "iPhone · History",
   "w": 390,
@@ -2277,6 +2283,12 @@ export default [
  {
   "name": "WebGuide",
   "title": "Web · Notes page (pick the view)",
+  "w": 1440,
+  "h": 900
+ },
+ {
+  "name": "WebGuideOutline",
+  "title": "Web · Notes page · its outline open",
   "w": 1440,
   "h": 900
  },
