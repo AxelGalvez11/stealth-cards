@@ -12,17 +12,34 @@ import UniformTypeIdentifiers
 final class Keyboard: ObservableObject {
   @Published var height: CGFloat = 0
   private var tokens: [NSObjectProtocol] = []
+  #if DEBUG
+  /// `-fakeKeyboard <points>` (the end-to-end tests): with a hardware keyboard, as on the simulators here, the phone's own keyboard never comes
+  /// up; then a field being written in counts as a keyboard that tall, so a screen's room for the phone's keyboard can be checked.
+  static let fake: CGFloat? = Board.arg("-fakeKeyboard").flatMap(Double.init).map { CGFloat($0) }
+  #endif
   init() {
     let nc = NotificationCenter.default
+    #if DEBUG
+    if let fake = Keyboard.fake {
+      for (name, on) in [(UITextField.textDidBeginEditingNotification, true), (UITextView.textDidBeginEditingNotification, true),
+                         (UITextField.textDidEndEditingNotification, false), (UITextView.textDidEndEditingNotification, false)] {
+        tokens.append(nc.addObserver(forName: name, object: nil, queue: .main) { [weak self] _ in Task { @MainActor in self?.set(on ? fake : 0) } })
+      }
+      return
+    }
+    #endif
+    // (only a real change is published: a screen drawn again can make the keyboard say its frame again, and saying the same height would
+    // draw the screen again, and so on)
     tokens.append(nc.addObserver(forName: UIResponder.keyboardWillChangeFrameNotification, object: nil, queue: .main) { [weak self] n in
       guard let f = (n.userInfo?[UIResponder.keyboardFrameEndUserInfoKey] as? NSValue)?.cgRectValue else { return }
       let h = max(0, UIScreen.main.bounds.height - f.minY)
-      Task { @MainActor in withAnimation(.out(0.3)) { self?.height = h } }
+      Task { @MainActor in self?.set(h) }
     })
     tokens.append(nc.addObserver(forName: UIResponder.keyboardWillHideNotification, object: nil, queue: .main) { [weak self] _ in
-      Task { @MainActor in withAnimation(.out(0.3)) { self?.height = 0 } }
+      Task { @MainActor in self?.set(0) }
     })
   }
+  private func set(_ h: CGFloat) { if height != h { withAnimation(.out(0.3)) { height = h } } }
 }
 
 /// A card as the editor holds it.

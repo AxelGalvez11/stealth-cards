@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Web · Review · Explain · a question about the card, asked and answered</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./lucida.css">
+<script src="./lucida-logic.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&amp;family=Geist+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>
+@import url("./lucida.css");
+.sc-wave{outline:0;-webkit-tap-highlight-color:transparent}.sc-wave:focus-visible{box-shadow:0 0 0 2px currentColor;border-radius:8px}.sc-wave span{transition:height .35s cubic-bezier(.2,.8,.2,1)}button:has(.sc-hold:active,.sc-wave:active){transform:none}@keyframes scRecDot{50%{opacity:.25}}.sc-rec-dot{animation:scRecDot 1.2s ease-in-out infinite}@keyframes scPlayed{from{clip-path:inset(0 100% 0 0)}to{clip-path:inset(0 0 0 0)}}@media (prefers-reduced-motion:reduce){.sc-wave span{transition:none}.sc-rec-dot{animation:none}}
+@keyframes scBlank{0%{transform:scale(.6) translateY(4px);opacity:0}60%{transform:scale(1.08);opacity:1}100%{transform:none;opacity:1}}
+@keyframes scFadeA{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+@keyframes scFadeB{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+@keyframes scInA{from{opacity:0;transform:translateY(14px) scale(.98)}to{opacity:1;transform:none}}
+@keyframes scInB{from{opacity:0;transform:translateY(14px) scale(.98)}to{opacity:1;transform:none}}
+.sc-blank{animation:scBlank .5s cubic-bezier(.34,1.56,.64,1) both}
+.sc-fade-a{animation:scFadeA .4s cubic-bezier(.2,.8,.2,1) both}
+.sc-fade-b{animation:scFadeB .4s cubic-bezier(.2,.8,.2,1) both}
+.sc-in-a{animation:scInA .32s cubic-bezier(.2,.8,.2,1) both}
+.sc-in-b{animation:scInB .32s cubic-bezier(.2,.8,.2,1) both}
+@media (prefers-reduced-motion:reduce){.sc-blank,.sc-fade-a,.sc-fade-b,.sc-in-a,.sc-in-b,[data-anim]{animation:none!important}}@media (prefers-reduced-motion:reduce){.sc-occ{transition:none!important}}.sc-xg{width:100%;display:grid;grid-template-columns:minmax(0,780px);justify-content:center;align-items:start;gap:28px 24px}.sc-xc{min-width:0}@container (min-width:944px){.sc-xg.sc-xo{grid-template-columns:minmax(560px,780px) 360px}.sc-xg.sc-xo>.sc-xx{max-height:480px}}.sc-px.sc-xo>.sc-pc{flex:0 0 max(250px,60%)}.sc-px>.sc-xx{flex:0 1 auto;max-height:min(calc(100% - 262px),calc(40% - 12px))}.sc-ask-in{transition:box-shadow .15s}.sc-ask-in:focus-within{box-shadow:inset 0 0 0 1.5px var(--ask-ring)}.sc-ask-ta::placeholder{color:var(--ask-ph);opacity:1}.sc-ask-ta{scrollbar-width:thin}@media (prefers-reduced-motion:reduce){.sc-ask-in{transition:none}}
+</style>
+</helmet>
+<div style="width: 1440px; height: 900px; overflow: hidden;"><dc-import name="WebReview" start-revealed="{{yes}}" explain-open="{{yes}}" explained="{{yes}}" follow-up="{{yes}}" hint-size="1440px,900px"></dc-import></div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends LucidaLogic(DCLogic, 0) {
+renderVals() { return { yes: true }; }
+}
+</script>
+</body>
+</html>

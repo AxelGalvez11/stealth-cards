@@ -331,7 +331,7 @@ installTips();
 // A board that shows a theme loads its code the first time (on /b too, where boards have no database).
 globalThis.LucidaLoadTheme = key => loadTheme(key, schedule);
 const dark = matchMedia('(prefers-color-scheme: dark)');
-let db = null, current = null, queued = false, navs = 0, lastPath = '';
+let db = null, current = null, queued = false, navs = 0, lastPath = '', painting = false;
 // Props every app screen gets: the database, dark mode (from Settings: System, Light, or Dark), and whether dark mode
 // is gray (Settings → Dark mode: Gray or Black). On /b, ?dark shows a board dark and ?gray shows it dark and gray.
 const base = () => {
@@ -361,7 +361,10 @@ function paint() {
   const over = drawn[0] && !current.design ? render(OVERLAYS[narrow.matches ? 'phone' : 'web'], ui.vals(drawn[0].theme(props.dark, props.dim)), 'lu') : '';
   tpl.innerHTML = page + over;
   const was = tpl.content.querySelector('.sc-panel, .sc-sheet') ? [] : panels(), pills = snapPills(app);
-  morphChildren(app, tpl.content);
+  // (A field that has the cursor and is drawn as something else this time fires a blur on its way out, still carrying its handler's number
+  // from the drawing before: focus events are ignored while the page is redrawn, so they can't call whatever has that number now.)
+  painting = true;
+  try { morphChildren(app, tpl.content); } finally { painting = false; }
   const fns = refs, done = drawn;
   app.querySelectorAll('[data-ref]').forEach(el => fns[el.getAttribute('data-ref')]?.(el));
   for (const c of done) {
@@ -502,6 +505,7 @@ app.addEventListener('input', e => {
 // onFocus, onBlur, and onKeyDown on a field, like on the canvas, and onDragOver, onDragLeave and onDrop where a file can be dropped.
 for (const [type, attr] of [['focusin', 'data-on-focus'], ['focusout', 'data-on-blur'], ['keydown', 'data-on-keydown'], ['dragover', 'data-on-dragover'], ['dragleave', 'data-on-dragleave'], ['drop', 'data-on-drop']]) {
   app.addEventListener(type, e => {
+    if (painting && (type === 'focusin' || type === 'focusout')) return;
     const el = e.target.closest && e.target.closest('[' + attr + ']');
     if (el) handlers[el.getAttribute(attr)]?.(e);
   });

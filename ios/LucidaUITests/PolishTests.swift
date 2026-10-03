@@ -579,7 +579,9 @@ final class PolishTests: XCTestCase {
     for i in 1...4 {
       check(flip(app3) && wait(button(app3, "Explain")), "Free, card \(i): turned over")
       tap(button(app3, "Explain"), "Explain")
-      if i < 4 { check(wait(words(app3, "\(3 - i) free explanation"), 15), "Free, explanation \(i): the panel says \(3 - i) left today") }
+      // (the day's last one says so with the upgrade line in its composer's place, not "0 left": the composer, canvas WebReviewExplainAsk)
+      if i < 3 { check(wait(words(app3, "\(3 - i) free explanation"), 15), "Free, explanation \(i): the panel says \(3 - i) left today") }
+      else if i == 3 { check(wait(words(app3, "That’s today’s 3 free explanations"), 15) && !words(app3, "0 free explanations").exists, "Free, explanation 3, the day’s last: the upgrade line in its composer’s place") }
       else {
         check(wait(words(app3, "free explanations"), 15) && wait(button(app3, "Go Pro"), 4), "Free’s fourth is turned away, with Go Pro")
         snap("explain-review-gopro")
@@ -594,7 +596,7 @@ final class PolishTests: XCTestCase {
     let b = launchBoard("PhoneQuizAnswered")
     check(wait(button(b, "Explain")), "Learn: an answered question offers Explain")
     let lx = button(b, "Explain").frame, gear = button(b, "Learn settings").frame
-    check(abs(lx.width - gear.width) <= 1 && abs(lx.minX - gear.maxX - 8) <= 1 && abs(lx.minY - gear.minY) <= 1, "round, the gear's size, just after the gear in the top bar", "explain \(lx) gear \(gear)")
+    check(abs(lx.width - gear.width) <= 1 && abs(gear.minX - lx.maxX - 8) <= 1 && abs(lx.minY - gear.minY) <= 1, "round, the gear's size, just before the gear at the end of the top bar (canvas V179)", "explain \(lx) gear \(gear)")
     tap(button(b, "Explain"), "Explain")
     check(wait(explanation(b)) && wait(words(b, "It drops. ATP synthase")), "Learn: the explanation opens")
     let panel = explanation(b).frame, last = buttonHaving(b, "Only glycolysis").frame, why = words(b, "Not quite").frame, next = button(b, "Next question").frame
@@ -615,7 +617,7 @@ final class PolishTests: XCTestCase {
     tap(button(app, "Start learning"), "Start learning")
     let field = app.textFields.firstMatch
     if wait(field, 15) { field.tap(); field.typeText("zzz") } else { check(false, "found the answer box") }
-    check(!button(app, "Explain").exists, "before the answer is checked, there is no Explain")
+    check(button(app, "Explain").exists && !button(app, "Explain").isEnabled, "before the answer is checked, Explain is there but faded and disabled (canvas V179)")
     tap(button(app, "Check"), "Check")
     check(wait(button(app, "Explain"), 10), "a checked answer: Explain is offered, by the gear")
     let asked0 = asked()

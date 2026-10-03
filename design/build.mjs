@@ -22,6 +22,7 @@ import { LEVELS, YEARS, SUBJECTS } from '../web/school.js';
 import testKit from './test-boards.mjs';
 import { makeBoards, deckBlocks, publicGuideBlocks, PUBLIC_GUIDE_JS, deckMaterialsJs, NOTE_TREE_CSS, MAKE_STEPS, GUIDE_CSS, GUIDE_STATES, MATERIALS_MOCK, LIVE_FROM, LIVE_TOPIC_STATES } from './materials.mjs';
 import { DIAGRAM_METHOD, DIAGRAM_CSS, PUBLIC_DIAGRAMS_JS, publicDiagramBlocks } from './diagrams.mjs';
+import { CHAT_SAMPLE, chatMarkup, CHAT_CSS, CHAT_JS, CHAT_METHOD } from './chat.mjs';
 import { askMarkup, toastMarkup, ASK_SAMPLES, ASK_JS, askProp, dateMarkup, DATE_JS, dropMarkup, dropSheet, dropPill, DROP_JS, PLAYER_JS } from './ui.mjs';
 // The themes (Pro), for boards' logic: key, board name, short and full names.
 const THEME_LIST = JSON.stringify(THEMES.map(({ key, board, short, name }) => ({ key, board: board || '', short, name })));
@@ -2706,6 +2707,7 @@ const CARD_VIEW_JS = `const R = this.rich(), ro = this.cardPal || { t, dark: !!t
 const BLANK_JS = `rev ? { text: c.back, bg: t.inv, fg: t.invText, cls: flipOn ? 'sc-blank' : '' } : { text: '\\u2003\\u2003\\u2003\\u2003', bg: t.surf2, fg: 'transparent', cls: '' }`;
 const REVIEW_LOGIC = (total, phone = false) => `
 constructor(props) { super(props); this.state = { revealed: !!props.startRevealed, settings: null, pileDraft: props.newPileOpen ? 'Tricky ones' : null, exOpen: !!props.explainOpen, exFor: props.explainOpen ? 'r0' : null }; }
+${CHAT_METHOD}
 renderVals() {
   ${DB_JS}
   // Settings › Studying › Flip animation: off, and the other side just appears (no turn, no pop, no fade).
@@ -2723,7 +2725,7 @@ renderVals() {
   ${EXPLAIN_JS}
   ${SW_JS}
   const rev = this.state.revealed;
-  const ex = explainView(rv.ex, rv.card && rv.card.id, '', rev, ${JSON.stringify('It pumps protons (H⁺) out of the matrix into the space between the two membranes. That builds a gradient, like water held behind a dam, and ATP synthase uses the flow back in to make ATP. Remember it as pump uphill first, then cash in on the way down.')});
+  const ex = explainView(rv.ex, rv.card && rv.card.id, '', rev, ${JSON.stringify('It pumps protons (H⁺) out of the matrix into the space between the two membranes. That builds a gradient, like water held behind a dam, and ATP synthase uses the flow back in to make ATP. Remember it as pump uphill first, then cash in on the way down.')}, { sample: ${JSON.stringify(CHAT_SAMPLE.review)}, pal: cp.card === cp.surf ? { on: cp.inv, onFg: cp.invText, off: 'rgba(255,255,255,.12)', offFg: cp.muted, fill: cp.surf2 } : { on: cp.inv, onFg: cp.invText, off: cp.surf2, offFg: cp.muted, fill: cp.surf }, phone: ${phone} });
   // Explain's round button, top right beside the settings: pressed while the explanation is open, like the settings button; on a
   // phone it keeps its place, unseen, until the card is turned over.
   const exBtn = { bg: ex.panel ? t.inv : t.surf, fg: ex.panel ? t.invText : t.text, vis: ex.show ? 'visible' : 'hidden' };
@@ -2848,16 +2850,28 @@ const FACE_SKIN_JS = at => `const Fs = S ? S.faceOf('front', '${at}') : null, Bs
 // Closing it puts everything back. Only a short fade (none with reduced motion).
 // What these classes do is in REVIEW_CSS (.sc-xg is the group, .sc-xo says the explanation is open).
 const explainButton = phone => `<sc-if value="{{${phone ? 'ex.avail' : 'ex.show'}}}" hint-placeholder-val="{{ false }}"><button type="button" onClick="{{ex.toggle}}" aria-label="Explain" data-tip="Explain" aria-expanded="{{ex.expanded}}" style="width: 44px; height: 44px; flex-shrink: 0; border: 0; border-radius: 22px; background: {{exBtn.bg}}; color: {{exBtn.fg}}; display: flex; align-items: center; justify-content: center; cursor: pointer;${phone ? ' visibility: {{exBtn.vis}};' : ''}">${svg(I.sparkle, 18, 2)}</button></sc-if>`;
-const explainPanel = phone => `<sc-if value="{{ex.panel}}" hint-placeholder-val="{{ false }}"><div role="region" aria-label="Explanation" class="sc-fade sc-xx" style="box-sizing: border-box; min-width: 0; overflow-y: auto; padding: ${phone ? '14px 16px' : '22px 24px'}; border-radius: ${phone ? 24 : 28}px; background: {{cp.card}}; border: 1px solid {{cp.line}}; box-shadow: {{cp.shadow}}; color: {{cp.text}}; display: flex; flex-direction: column; gap: ${phone ? 8 : 10}px; text-align: left;">
-    <div style="display: flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 600; color: {{cp.muted}};">${svg(I.sparkle, 13, 2)}<span style="flex-grow: 1;">Explained by AI</span><button type="button" onClick="{{ex.close}}" aria-label="Close the explanation" style="width: 28px; height: 28px; border: 0; border-radius: 14px; background: {{cp.surf}}; color: {{cp.text}}; display: flex; align-items: center; justify-content: center; cursor: pointer;">${svg(I.close, 10, 2.4)}</button></div>
+// The panel is a header (Explained by AI and its close button), the explanation and the conversation under it, which scroll together when
+// they're taller than the panel, and the composer at the bottom (design/chat.mjs).
+const explainPanel = phone => {
+  const pad = phone ? 16 : 24, gap = phone ? 8 : 10;
+  const chat = chatMarkup({ svg, I }, 'ex.chat', { text: '{{cp.text}}', muted: '{{cp.muted}}', bubble: '{{ex.chat.fill}}', field: '{{ex.chat.fill}}', again: '{{cp.again}}', btn: '{{cp.inv}}', btnFg: '{{cp.invText}}' }, { phone, fs: phone ? 15 : 17, gap, pad });
+  return `<sc-if value="{{ex.panel}}" hint-placeholder-val="{{ false }}"><div role="region" aria-label="Explanation" class="sc-fade sc-xx" style="box-sizing: border-box; min-width: 0; overflow: hidden; border-radius: ${phone ? 24 : 28}px; background: {{cp.card}}; border: 1px solid {{cp.line}}; box-shadow: {{cp.shadow}}; color: {{cp.text}}; display: flex; flex-direction: column; text-align: left;">
+    <div style="flex-shrink: 0; padding: ${phone ? 14 : 22}px ${pad}px 0; display: flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 600; color: {{cp.muted}};">${svg(I.sparkle, 13, 2)}<span style="flex-grow: 1;">Explained by AI</span><button type="button" onClick="{{ex.close}}" aria-label="Close the explanation" style="width: 28px; height: 28px; border: 0; border-radius: 14px; background: {{cp.surf}}; color: {{cp.text}}; display: flex; align-items: center; justify-content: center; cursor: pointer;">${svg(I.close, 10, 2.4)}</button></div>
+    <div class="sc-xs" ref="{{ex.chat.end}}" style="flex: 0 1 auto; min-height: 0; overflow-y: auto; box-sizing: border-box; padding: ${gap}px ${pad}px; display: flex; flex-direction: column; gap: ${gap}px;">
     <sc-if value="{{ex.busy}}" hint-placeholder-val="{{ false }}"><span style="font-size: 15px; color: {{cp.muted}};">Thinking…</span></sc-if>
     <sc-if value="{{ex.hasText}}" hint-placeholder-val="{{ true }}"><span style="font-size: ${phone ? 15 : 17}px; line-height: 1.5;">{{ex.text}}</span></sc-if>
     <sc-if value="{{ex.hasError}}" hint-placeholder-val="{{ false }}"><span style="font-size: 14px; line-height: 1.4; color: {{cp.again}};">{{ex.error}}</span><sc-if value="{{ex.goPro}}" hint-placeholder-val="{{ false }}"><a href="{{ex.proHref}}" style="align-self: flex-start; height: 34px; padding: 0 16px; display: inline-flex; align-items: center; border-radius: 999px; background: {{cp.inv}}; color: {{cp.invText}}; font-size: 13px; font-weight: 600;">Go Pro</a></sc-if></sc-if>
+    ${chat.turns}
     <sc-if value="{{ex.hasNote}}" hint-placeholder-val="{{ false }}"><span style="font-size: 12px; color: {{cp.muted}};">{{ex.note}}</span></sc-if>
+    </div>
+    ${chat.composer}
   </div></sc-if>`;
+};
 // The explanation's state for a screen (review or Learn): `exv` is db's view of it, `id` the card, `question` how it
 // was asked, `answered` whether the answer is showing.
-const EXPLAIN_JS = `const explainView = (exv, id, question, answered, sample) => {
+// `chat` is the conversation's look (design/chat.mjs): the canvas's sample question (`sample`), the send button's colors (`pal`) and `phone`.
+const EXPLAIN_JS = `${CHAT_JS}
+  const explainView = (exv, id, question, answered, sample, chat = {}) => {
     exv = db.mock ? { on: true, text: this.state.exMock || this.props.explained ? sample : '', note: this.state.exMock || this.props.explained ? '2 free explanations left today' : '' } : exv || { on: false };
     const open = !!this.state.exOpen && this.state.exFor === id;
     const show = !!(answered && exv.on && id);
@@ -2867,13 +2881,24 @@ const EXPLAIN_JS = `const explainView = (exv, id, question, answered, sample) =>
       const key = id + '|' + (exv.busy ? 'busy' : exv.text || exv.error || '');
       if (this.exKey !== key) { this.exKey = key; setTimeout(() => { const e = [...document.querySelectorAll('[role="region"][aria-label="Explanation"]')].find(x => x.offsetParent !== null); if (e && e.scrollIntoView) e.scrollIntoView({ block: 'nearest' }); }, 60); }
     }
-    const ask = () => { this.setState({ exOpen: true, exFor: id }); if (db.mock) this.setState({ exMock: true }); else if (!exv.text) db.act.explain(id, question); };
-    const close = () => this.setState({ exOpen: false });
+    // The conversation belongs to the explanation that's open: closing it, or the next card coming up, forgets it (and what was typed).
+    if (!db.mock) {
+      const here = show && open ? id : null;
+      if (this.chatFor && this.chatFor !== here) { const was = this.chatFor; this.chatFor = null; setTimeout(() => { db.act.followUpClear(was); this.setState({ chatDraft: {} }); }, 0); }
+      if (here) this.chatFor = here;
+    }
+    const ask = () => { this.setState({ exOpen: true, exFor: id, ...(this.state.exFor !== id ? { chatDraft: {}, chatMock: {} } : {}) }); if (db.mock) this.setState({ exMock: true }); else if (!exv.text) db.act.explain(id, question); };
+    const close = () => { this.setState({ exOpen: false, chatDraft: {}, chatMock: {} }); if (!db.mock && id) db.act.followUpClear(id); };
+    const proHref = db.mock ? 'Pricing.dc.html' : 'https://lucida.cards/pricing';
+    const talk = chatView('x', id, question, exv, { show: show && open && !!exv.text && !exv.busy, sample: chat.sample, asked: !!this.props.followUp, pal: chat.pal || { on: '#000000', onFg: '#FFFFFF', off: '#E8E8E8', offFg: '#666666' }, phone: !!chat.phone, proHref });
     // avail: the card can be explained once it's turned over (the review's button keeps its place on a phone meanwhile);
     // toggle: the review's round button, which closes the explanation when it's open.
     return { show, avail: !!(exv.on && id), closed: !open, open, panel: show && open, side: show && open ? 'sc-xo' : '', label: exv.text ? 'Explanation' : 'Explain', expanded: show && open ? 'true' : 'false',
       busy: !!exv.busy, hasText: !!exv.text && !exv.busy, text: exv.text || '', hasError: !!exv.error && !exv.busy, error: exv.error || '', goPro: !!exv.goPro,
-      proHref: db.mock ? 'Pricing.dc.html' : 'https://lucida.cards/pricing', hasNote: !!exv.note && !!exv.text, note: exv.note || '',
+      proHref, hasNote: !!exv.note && !!exv.text && !talk.limited, note: exv.note || '', chat: talk,
+      // (a phone's Learn page is taller than its board once the explanation is open: on the canvas it shows the page's end, where the app
+      // brings the explanation and its composer into view)
+      pageEnd: el => { if (!el || !db.mock) return; const at = show && open ? 'end' : 'top'; if (this.pageAt === at) return; this.pageAt = at; el.scrollTop = at === 'end' ? el.scrollHeight : 0; },
       ask, close, toggle: () => (show && open ? close() : ask()) };
   };`;
 const flipCard = (w, h, pad, big) => `<button type="button" onClick="{{reveal}}" aria-label="{{flipLabel}}" data-key="Space" class="{{cardIn}}" style="width: ${w}; height: ${h}; padding: 0; border: 0; background: transparent; perspective: 1600px; font: inherit; color: inherit; cursor: pointer; flex-grow: ${h === 'auto' ? 1 : 0};">
@@ -3496,8 +3521,8 @@ const cardTypesCss = `${WAVE_CSS}
 // card, scrolling inside itself when it is longer.
 const EXPLAIN_SIDE_CSS = '.sc-xg{width:100%;display:grid;grid-template-columns:minmax(0,780px);justify-content:center;align-items:start;gap:28px 24px}.sc-xc{min-width:0}'
   + '@container (min-width:944px){.sc-xg.sc-xo{grid-template-columns:minmax(560px,780px) 360px}.sc-xg.sc-xo>.sc-xx{max-height:480px}}'
-  + '.sc-px.sc-xo>.sc-pc{flex:0 0 max(250px,60%)}.sc-px>.sc-xx{flex:0 1 auto;overflow-y:auto;max-height:min(calc(100% - 262px),calc(40% - 12px))}';
-const REVIEW_CSS = cardTypesCss + OCC_VIEW_CSS + EXPLAIN_SIDE_CSS;
+  + '.sc-px.sc-xo>.sc-pc{flex:0 0 max(250px,60%)}.sc-px>.sc-xx{flex:0 1 auto;max-height:min(calc(100% - 262px),calc(40% - 12px))}';
+const REVIEW_CSS = cardTypesCss + OCC_VIEW_CSS + EXPLAIN_SIDE_CSS + CHAT_CSS;
 const cardTypesLogic = `
 constructor(props) { super(props); this.state = { basic: false, blanks: 0, image: false, audio: false, playing: false }; }
 renderVals() {
@@ -4773,7 +4798,7 @@ const LEARN_KINDS = [['mc', 'Multiple choice'], ['match', 'Matching'], ['tf', 'T
 // open and there is room (a column at least 560 px wide, a 24 px gap, a 360 px panel); narrower, only the copy under the answers shows.
 const LEARN_SIDE_CSS = '.sc-lg{width:100%;display:grid;grid-template-columns:minmax(0,720px);justify-content:center;align-items:start;gap:24px}.sc-lx-side{display:none}'
   + '@container (min-width:944px){.sc-lg.sc-xo{grid-template-columns:minmax(560px,720px) 360px}.sc-lg.sc-xo>.sc-lx-side{display:flex}.sc-lg.sc-xo .sc-lx-in{display:none!important}}';
-const LEARN_CSS = OCC_VIEW_CSS + LEARN_SIDE_CSS + '@keyframes scQuizIn{from{opacity:0;transform:translateY(6px)}}@keyframes scQA{from{opacity:0;transform:translateY(12px)}}@keyframes scQB{from{opacity:0;transform:translateY(12px)}}'
+const LEARN_CSS = OCC_VIEW_CSS + LEARN_SIDE_CSS + CHAT_CSS + '@keyframes scQuizIn{from{opacity:0;transform:translateY(6px)}}@keyframes scQA{from{opacity:0;transform:translateY(12px)}}@keyframes scQB{from{opacity:0;transform:translateY(12px)}}'
   + '@keyframes scShake{0%,100%{transform:none}25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}@keyframes scPop{40%{transform:scale(1.025)}}'
   + '@keyframes scPlusA{0%{opacity:0;transform:translateY(6px)}25%{opacity:1}100%{opacity:0;transform:translateY(-16px)}}@keyframes scPlusB{0%{opacity:0;transform:translateY(6px)}25%{opacity:1}100%{opacity:0;transform:translateY(-16px)}}'
   + '.sc-tick path{stroke-dasharray:24;stroke-dashoffset:24;animation:scTick .32s .06s ease forwards}@keyframes scTick{to{stroke-dashoffset:0}}'
@@ -4795,15 +4820,16 @@ const LEARN_K = `const K = sd && this.props.dim
 // Progress through the set: learned (purple), still learning (light purple), not yet (track), with "+1" when one is learned.
 const learnBar = w => `<div style="${w ? `width: ${w}px;` : 'flex-grow: 1;'} height: 10px; border-radius: 5px; background: {{k.track}}; overflow: hidden; display: flex;"><div style="width: {{doneW}}; background: {{k.bar}}; transition: width .5s cubic-bezier(.2,.8,.2,1);"></div><div style="width: {{partW}}; background: {{k.part}}; transition: width .5s cubic-bezier(.2,.8,.2,1);"></div></div>`;
 const learnPlus = `<sc-if value="{{plusOne}}" hint-placeholder-val="{{ false }}"><span class="sc-plus" aria-hidden="true" style="position: absolute; left: 100%; top: -3px; margin-left: 6px; font-size: 13px; font-weight: 700; color: {{k.bar}}; animation: {{plusAnim}};">+1</span></sc-if>`;
-// The top: stop, settings, progress, and the set, on soft glass chips over the deck's background (on a plain white page, the
-// page's light gray, like flashcards' buttons, or they wouldn't show).
-// Settings (a gear by X) open a panel on the web and a sheet on the iPhone with the deck's background, as flashcards' do.
+// The top (canvas V179): Stop on the left, the progress in the middle, and Explain and the settings gear on the right (on a phone the row is
+// Stop, the progress, N/M, Explain and the gear), on soft glass chips over the deck's background (on a plain white page, the page's light
+// gray, like flashcards' buttons, or they wouldn't show). Matching has no Explain, only the gear.
+// Settings (the gear) open a panel on the web and a sheet on the iPhone with the deck's background, as flashcards' do.
 const learnGear = size => `<button type="button" onClick="{{toggleSettings}}" aria-label="Learn settings" data-tip="Learn settings" aria-expanded="{{settingsExpanded}}" style="width: ${size}px; height: ${size}px; flex-shrink: 0; border: 0; border-radius: ${size / 2}px; background: {{settingsBtnBg}}; color: {{settingsBtnFg}}; display: flex; align-items: center; justify-content: center; cursor: pointer;">${svg(I.gear, size > 40 ? 18 : 16, 2)}</button>`;
 // Learn's Explain (the owner, 2026-10-02, as on a flashcard: "move it upper right similar shape to the flashcard settings"): a round
-// button just after Learn's settings gear and its size, once a question is answered, with Lucida's tooltip "Explain"; pressed
-// while the explanation is open, and pressing it again closes it. On a phone its place is kept while the question waits for its
-// answer, so the bar beside it doesn't move. The explanation opens where it did: beside the question, or under the answers.
-const learnExplainBtn = (size, phone) => `<sc-if value="{{${phone ? 'ex.avail' : 'ex.show'}}}" hint-placeholder-val="{{ false }}"><button type="button" onClick="{{ex.toggle}}" aria-label="Explain" data-tip="Explain" aria-expanded="{{ex.expanded}}" style="width: ${size}px; height: ${size}px; flex-shrink: 0; border: 0; border-radius: ${size / 2}px; background: {{exBtn.bg}}; color: {{exBtn.fg}}; display: flex; align-items: center; justify-content: center; cursor: pointer;${phone ? ' visibility: {{exBtn.vis}};' : ''}">${svg(I.sparkle, size > 40 ? 18 : 16, 2)}</button></sc-if>`;
+// button just before Learn's settings gear and its size, with Lucida's tooltip "Explain". It shows whenever the card can be explained, faded
+// and disabled until the question is answered (canvas V179); pressed while the explanation is open, and pressing it again closes it. The
+// explanation opens where it did: beside the question, or under the answers.
+const learnExplainBtn = size => `<sc-if value="{{ex.avail}}" hint-placeholder-val="{{ true }}"><button type="button" onClick="{{exBtn.click}}" aria-disabled="{{exBtn.dis}}" aria-label="Explain" data-tip="Explain" aria-expanded="{{ex.expanded}}" style="width: ${size}px; height: ${size}px; flex-shrink: 0; border: 0; border-radius: ${size / 2}px; background: {{exBtn.bg}}; color: {{exBtn.fg}}; display: flex; align-items: center; justify-content: center; cursor: pointer; opacity: {{exBtn.op}};">${svg(I.sparkle, size > 40 ? 18 : 16, 2)}</button></sc-if>`;
 const learnSettings = phone => phone ? `<sc-if value="{{settingsOpen}}" hint-placeholder-val="{{ false }}">
     <div style="position: absolute; inset: 0; z-index: 5; background: {{t.dim}};"></div>
     <div role="dialog" aria-label="Learn settings" style="position: absolute; left: 0; right: 0; bottom: 0; z-index: 5; box-sizing: border-box; padding: 10px 20px 34px; border-radius: 32px 32px 0 0; background: {{t.bg}}; color: {{t.text}}; display: flex; flex-direction: column; gap: 18px;">
@@ -4818,11 +4844,11 @@ const learnSettings = phone => phone ? `<sc-if value="{{settingsOpen}}" hint-pla
     </div>
   </sc-if>`;
 const learnTop = (back, explain = false) => `<header style="height: 76px; flex-shrink: 0; box-sizing: border-box; padding: 0 32px; display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: center; gap: 16px;">
-    <div style="display: flex; gap: 8px;"><a href="${back}" aria-label="Stop for now" data-tip="Stop for now" style="width: 40px; height: 40px; border-radius: 20px; background: {{k.chip}}; display: flex; align-items: center; justify-content: center;">${svg(I.close, 16, 2.2)}</a>${learnGear(40)}${explain ? learnExplainBtn(40, false) : ''}</div>
+    <div style="display: flex; gap: 8px;"><a href="${back}" aria-label="Stop for now" data-tip="Stop for now" style="width: 40px; height: 40px; border-radius: 20px; background: {{k.chip}}; display: flex; align-items: center; justify-content: center;">${svg(I.close, 16, 2.2)}</a></div>
     <div style="display: flex; align-items: center; gap: 14px;">${learnBar(360)}<span role="status" style="position: relative; font-size: 14px; white-space: nowrap;"><span style="font-weight: 700;">{{learned}}</span> of {{total}} learned${learnPlus}</span></div>
-    <div style="display: flex; justify-content: flex-end; min-width: 0;"><span style="height: 34px; padding: 0 14px; display: inline-flex; align-items: center; gap: 6px; border-radius: 999px; background: {{k.chip}}; font-size: 13px; font-weight: 600; white-space: nowrap;">${svg(I.sparkle, 14, 1.8)}<span>Learn · {{setName}}</span></span></div>
+    <div style="display: flex; justify-content: flex-end; gap: 8px; min-width: 0;">${explain ? learnExplainBtn(40) : ''}${learnGear(40)}</div>
   </header>`;
-const learnTopPhone = (back, explain = false) => `<div style="display: flex; align-items: center; gap: 12px;"><a href="${back}" aria-label="Stop for now" style="width: 44px; height: 44px; flex-shrink: 0; border-radius: 22px; background: {{k.chip}}; display: flex; align-items: center; justify-content: center;">${svg(I.close, 18, 2)}</a>${explain ? `<div style="display: flex; gap: 8px;">${learnGear(44)}${learnExplainBtn(44, true)}</div>` : learnGear(44)}${learnBar(0)}<span role="status" style="position: relative; font-size: 13px; white-space: nowrap;"><span style="font-weight: 700;">{{learned}}</span>/{{total}}${learnPlus}</span></div>`;
+const learnTopPhone = (back, explain = false) => `<div style="display: flex; align-items: center; gap: 12px;"><a href="${back}" aria-label="Stop for now" style="width: 44px; height: 44px; flex-shrink: 0; border-radius: 22px; background: {{k.chip}}; display: flex; align-items: center; justify-content: center;">${svg(I.close, 18, 2)}</a>${learnBar(0)}<span role="status" style="position: relative; font-size: 13px; white-space: nowrap;"><span style="font-weight: 700;">{{learned}}</span>/{{total}}${learnPlus}</span><div style="display: flex; gap: 8px; flex-shrink: 0;">${explain ? learnExplainBtn(44) : ''}${learnGear(44)}</div></div>`;
 const quizSeg = list => `<div role="group" style="display: flex; padding: 4px; border-radius: 999px; background: {{t.surf}};"><sc-for list="{{${list}}}" as="o" hint-placeholder-count="4"><button type="button" onClick="{{o.pick}}" aria-pressed="{{o.pressed}}" style="flex: 1 1 0; min-width: 0; height: 38px; padding: 0 6px; border: 0; border-radius: 999px; background: {{o.bg}}; color: {{o.fg}}; box-shadow: {{o.sh}}; font: inherit; font-size: 13px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: pointer;">{{o.label}}</button></sc-for></div>`;
 const quizField = (label, body) => `<div style="display: flex; flex-direction: column; gap: 8px;"><span style="font-size: 13px; font-weight: 600;">${label}</span>${body}</div>`;
 const quizBtn = (label, href, inv, grow, icon = '', click = '') => `<a href="${href}"${click ? ` onClick="{{${click}}}"` : ''} style="flex-grow: ${grow}; height: 52px; border-radius: 999px; background: ${inv ? '{{t.inv}}' : '{{t.surf}}'}; color: ${inv ? '{{t.invText}}' : '{{t.text}}'}; display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 15px; font-weight: 600;">${icon ? svg(I[icon], 16, 2) : ''}${label}</a>`;
@@ -4931,16 +4957,26 @@ const EX_SAMPLE_LEARN = 'It drops. ATP synthase makes ATP only as protons flow b
 // opens as a panel to the RIGHT of the question, top-aligned with it, the two sitting side by side as one centered group; when
 // there isn't room for that (a question column under 560 px next to a 360 px panel) it opens under the answers like on a phone.
 // (Both panels are in the page, one hidden: REVIEW_CSS's neighbor LEARN_CSS says which shows. Only a short fade.)
-const learnPanel = (fs, cls, box) => `<div role="region" aria-label="Explanation" class="sc-fade ${cls}" style="box-sizing: border-box; min-width: 0; ${box} background: {{k.card}}; box-shadow: {{k.shadow}}; flex-direction: column; text-align: left;">
-    <div style="display: flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 600; color: {{k.ink2}};">${svg(I.sparkle, 13, 2)}<span style="flex-grow: 1;">Explained by AI</span><button type="button" onClick="{{ex.close}}" aria-label="Close the explanation" style="width: 26px; height: 26px; border: 0; border-radius: 13px; background: {{k.track}}; color: {{k.ink}}; display: flex; align-items: center; justify-content: center; cursor: pointer;">${svg(I.close, 10, 2.4)}</button></div>
+// Each panel is a header, the explanation and the conversation under it (scrolling inside the panel beside the question, which has a
+// height of its own), and the composer at the bottom (design/chat.mjs).
+const learnPanel = (fs, cls, box, phone, side) => {
+  const pad = side ? 20 : 16, gap = side ? 8 : 6;
+  const chat = chatMarkup({ svg, I }, 'ex.chat', { text: '{{k.ink}}', muted: '{{k.ink2}}', bubble: '{{k.track}}', field: '{{k.track}}', again: '{{t.again}}', btn: '{{k.btn}}', btnFg: '{{k.btnFg}}' }, { phone, fs, gap, pad });
+  return `<div role="region" aria-label="Explanation" class="sc-fade ${cls}" style="box-sizing: border-box; min-width: 0; ${box} overflow: hidden; background: {{k.card}}; box-shadow: {{k.shadow}}; flex-direction: column; text-align: left;">
+    <div style="flex-shrink: 0; padding: ${side ? 18 : 14}px ${pad}px 0; display: flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 600; color: {{k.ink2}};">${svg(I.sparkle, 13, 2)}<span style="flex-grow: 1;">Explained by AI</span><button type="button" onClick="{{ex.close}}" aria-label="Close the explanation" style="width: 26px; height: 26px; border: 0; border-radius: 13px; background: {{k.track}}; color: {{k.ink}}; display: flex; align-items: center; justify-content: center; cursor: pointer;">${svg(I.close, 10, 2.4)}</button></div>
+    <div class="sc-xs" ref="{{ex.chat.end}}" style="flex: 0 1 auto; min-height: 0; ${side ? 'overflow-y: auto; ' : ''}box-sizing: border-box; padding: ${gap}px ${pad}px; display: flex; flex-direction: column; gap: ${gap}px;">
     <sc-if value="{{ex.busy}}" hint-placeholder-val="{{ false }}"><span style="font-size: ${fs}px; color: {{k.ink2}};">Thinking…</span></sc-if>
     <sc-if value="{{ex.hasText}}" hint-placeholder-val="{{ true }}"><span style="font-size: ${fs}px; line-height: 1.5;">{{ex.text}}</span></sc-if>
     <sc-if value="{{ex.hasError}}" hint-placeholder-val="{{ false }}"><span style="font-size: 14px; line-height: 1.4; color: {{t.again}};">{{ex.error}}</span><sc-if value="{{ex.goPro}}" hint-placeholder-val="{{ false }}"><a href="{{ex.proHref}}" style="align-self: flex-start; height: 34px; padding: 0 16px; display: inline-flex; align-items: center; border-radius: 999px; background: {{k.btn}}; color: {{k.btnFg}}; font-size: 13px; font-weight: 600;">Go Pro</a></sc-if></sc-if>
+    ${chat.turns}
     <sc-if value="{{ex.hasNote}}" hint-placeholder-val="{{ false }}"><span style="font-size: 12px; color: {{k.ink2}};">{{ex.note}}</span></sc-if>
+    </div>
+    ${chat.composer}
   </div>`;
-const learnExplain = fs => `<sc-if value="{{ex.panel}}" hint-placeholder-val="{{ false }}">${learnPanel(fs, 'sc-lx-in', 'display: flex; padding: 14px 16px; border-radius: 18px; gap: 6px;')}</sc-if>`;
+};
+const learnExplain = (fs, phone) => `<sc-if value="{{ex.panel}}" hint-placeholder-val="{{ false }}">${learnPanel(fs, 'sc-lx-in', 'display: flex; border-radius: 18px;', phone, false)}</sc-if>`;
 // The panel beside the question (a computer wide enough for it): a grid child after the question's column.
-const learnExplainSide = `<sc-if value="{{ex.panel}}" hint-placeholder-val="{{ false }}">${learnPanel(16, 'sc-lx-side', 'max-height: 560px; overflow-y: auto; padding: 18px 20px; border-radius: 22px; gap: 8px;')}</sc-if>`;
+const learnExplainSide = `<sc-if value="{{ex.panel}}" hint-placeholder-val="{{ false }}">${learnPanel(16, 'sc-lx-side', 'max-height: 560px; border-radius: 22px;', false, true)}</sc-if>`;
 // The card a question came from, as a small bubble at the end of the verdict (it was a "From your card" box: the owner's comment, the status
 // chat's canvas V175); its full text is in Lucida's tooltip.
 const learnFrom = maxw => `<span data-tip="From your card: {{cardFront}} → {{cardBack}}" style="display: inline-flex; align-items: center; gap: 5px; max-width: ${maxw}; height: 24px; margin-left: 6px; padding: 0 10px; box-sizing: border-box; border-radius: 999px; background: {{k.card}}; box-shadow: {{k.shadow}}; color: {{k.ink2}}; font-size: 12px; font-weight: 500; line-height: 1; white-space: nowrap; vertical-align: 2px;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex-shrink: 0;"><rect x="3" y="6" width="14" height="13" rx="2.5"/><path d="M7 6V4.5A1.5 1.5 0 0 1 8.5 3h11A1.5 1.5 0 0 1 21 4.5v10a1.5 1.5 0 0 1-1.5 1.5H17"/></svg><span style="min-width: 0; overflow: hidden; text-overflow: ellipsis;">{{cardFront}} → {{cardBack}}</span></span>`;
@@ -4964,7 +5000,7 @@ const webQuizOf = bg => `<div style="position: relative; isolation: isolate; wid
       <div style="display: flex; flex-direction: column; gap: 12px;"><sc-for list="{{options}}" as="o" hint-placeholder-count="4">${learnOption(64, 22, 18)}</sc-for></div>
       <div style="min-height: 150px;"><sc-if value="{{answered}}" hint-placeholder-val="{{ false }}"><div class="sc-quiz-in" style="display: flex; flex-direction: column; gap: 14px; animation: scQuizIn .3s cubic-bezier(.2,.8,.2,1) both;">
         ${learnWhy()}
-        ${learnExplain(16)}
+        ${learnExplain(16, false)}
         <div style="display: flex; align-items: flex-end; justify-content: flex-end; gap: 20px;"><div style="flex-shrink: 0; width: 180px;">${learnNext(52, 15)}</div></div>
       </div></sc-if></div>
     </div>
@@ -4974,13 +5010,13 @@ const webQuizOf = bg => `<div style="position: relative; isolation: isolate; wid
   ${learnSettings(false)}
 </div>`;
 const webQuiz = webQuizOf(studyBgLayer);
-const phoneQuizOf = bg => `<div style="position: relative; isolation: isolate; width: 390px; height: 844px; box-sizing: border-box; padding: 60px 16px 34px; display: flex; flex-direction: column; gap: 18px; overflow: hidden; font-family: ${FONT}; background: {{t.bg}}; color: {{k.ink}};">
+const phoneQuizOf = bg => `<div ref="{{ex.pageEnd}}" style="position: relative; isolation: isolate; width: 390px; height: 844px; box-sizing: border-box; padding: 60px 16px 34px; display: flex; flex-direction: column; gap: 18px; overflow: hidden; font-family: ${FONT}; background: {{t.bg}}; color: {{k.ink}};">
   ${bg}
   ${learnTopPhone('PhoneDeck.dc.html', true)}
   <div class="sc-q" style="display: flex; flex-direction: column; gap: 16px; animation: {{qAnim}};">
     <div style="position: relative; display: flex; flex-direction: column; gap: 10px; padding: 8px 4px 0; {{qc.css}}">${learnCardDeco}<div style="position: relative; font-size: 24px; font-weight: 700; line-height: 1.2; letter-spacing: -.025em; text-wrap: pretty; {{qc.a}}">{{question}}</div>${learnImage(180)}${learnClaim(18)}</div>
     <div style="display: flex; flex-direction: column; gap: 8px;"><sc-for list="{{options}}" as="o" hint-placeholder-count="4">${learnOption(54, 20, 16, 34)}</sc-for></div>
-    <sc-if value="{{answered}}" hint-placeholder-val="{{ false }}"><div class="sc-quiz-in" style="display: flex; flex-direction: column; gap: 12px; padding: 0 4px; animation: scQuizIn .3s cubic-bezier(.2,.8,.2,1) both;">${learnWhy(16, '200px')}${learnExplain(15)}</div></sc-if>
+    <sc-if value="{{answered}}" hint-placeholder-val="{{ false }}"><div class="sc-quiz-in" style="display: flex; flex-direction: column; gap: 12px; padding: 0 4px; animation: scQuizIn .3s cubic-bezier(.2,.8,.2,1) both;">${learnWhy(16, '200px')}${learnExplain(15, true)}</div></sc-if>
   </div>
   <div style="flex-grow: 1;"></div>
   <sc-if value="{{answered}}" hint-placeholder-val="{{ false }}"><div style="display: flex; flex-direction: column;">${learnNext(56, 17)}</div></sc-if>
@@ -4989,6 +5025,7 @@ const phoneQuizOf = bg => `<div style="position: relative; isolation: isolate; w
 const phoneQuiz = phoneQuizOf(studyBgLayer);
 const QUIZ_LOGIC = phone => `
 constructor(props) { super(props); this.state = { i: 0, pick: props && props.answered ? 1 : null, gained: 0, exOpen: !!(props && props.explainOpen), exMock: !!(props && props.explainOpen), exFor: props && props.explainOpen ? 'q0' : null }; }
+${CHAT_METHOD}
 renderVals() { ${DB_JS}
   ${LEARN_VIEW_JS(phone)}
   ${EXPLAIN_JS}
@@ -5015,10 +5052,10 @@ renderVals() { ${DB_JS}
     next = () => this.setState({ i: Math.min(Q.length - 1, s.i + 1), pick: null });
   }
   const done = pick != null, ok = pick === q.right;
-  const ex = explainView(L && L.ex, L ? L.id : 'q' + (this.state.i || 0), q.q, done, ${JSON.stringify(EX_SAMPLE_LEARN)});
+  const ex = explainView(L && L.ex, L ? L.id : 'q' + (this.state.i || 0), q.q, done, ${JSON.stringify(EX_SAMPLE_LEARN)}, { sample: ${JSON.stringify(CHAT_SAMPLE.learn)}, pal: { on: K.btn, onFg: K.btnFg, off: K.track, offFg: K.ink2 }, phone: ${phone} });
   ${LEARN_IMG_JS}
   // Explain's round button beside the gear, in Learn's colors: pressed while the explanation is open.
-  const exBtn = { bg: ex.panel ? K.btn : K.chip, fg: ex.panel ? K.btnFg : K.ink, vis: ex.show ? 'visible' : 'hidden' };
+  const exBtn = { bg: ex.panel ? K.btn : K.chip, fg: ex.panel ? K.btnFg : K.ink, vis: ex.show ? 'visible' : 'hidden', op: ex.show ? '1' : '.4', dis: ex.show ? 'false' : 'true', click: e => { if (ex.show) ex.toggle(e); } };
   return { t, ex, exBtn, qc, dark: !!this.props.dark, ...v, kind: q.kind, question: q.q, hasClaim: !!q.claim, claim: q.claim || '', ...learnImg(L ? L.image : q.image, L ? L.occ : q.occ, done),
     options: q.options.map((label, j) => {
       const right = done && j === q.right, wrong = done && j === pick && j !== q.right, other = done && !right && !wrong;
@@ -5098,7 +5135,7 @@ const webQuizType = `<div style="position: relative; isolation: isolate; width: 
       ${typeRow(64, 18)}
       <span style="font-size: 13px; color: {{k.ink2}};">Close spelling counts.</span>
       <div style="min-height: 150px;"><sc-if value="{{checked}}" hint-placeholder-val="{{ true }}"><div class="sc-quiz-in" style="display: flex; flex-direction: column; gap: 14px; animation: scQuizIn .3s cubic-bezier(.2,.8,.2,1) both;">
-        ${learnWhy()}${typeOverride}${learnExplain(16)}
+        ${learnWhy()}${typeOverride}${learnExplain(16, false)}
         <div style="display: flex; align-items: flex-end; justify-content: flex-end; gap: 20px;"><div style="flex-shrink: 0; width: 180px;">${learnNext(52, 15)}</div></div>
       </div></sc-if></div>
     </div>
@@ -5107,14 +5144,14 @@ const webQuizType = `<div style="position: relative; isolation: isolate; width: 
   </main>
   ${learnSettings(false)}
 </div>`;
-const phoneQuizType = `<div style="position: relative; isolation: isolate; width: 390px; height: 844px; box-sizing: border-box; padding: 60px 16px 34px; display: flex; flex-direction: column; gap: 16px; overflow: hidden; font-family: ${FONT}; background: {{t.bg}}; color: {{k.ink}};">
+const phoneQuizType = `<div ref="{{ex.pageEnd}}" style="position: relative; isolation: isolate; width: 390px; height: 844px; box-sizing: border-box; padding: 60px 16px 34px; display: flex; flex-direction: column; gap: 16px; overflow: hidden; font-family: ${FONT}; background: {{t.bg}}; color: {{k.ink}};">
   ${studyBgLayer}
   ${learnTopPhone('PhoneDeck.dc.html', true)}
   <div class="sc-q" style="display: flex; flex-direction: column; gap: 16px; animation: {{qAnim}};">
     <div style="position: relative; display: flex; flex-direction: column; gap: 10px; padding: 8px 4px 0; {{qc.css}}">${learnCardDeco}<div style="position: relative; font-size: 24px; font-weight: 700; line-height: 1.2; letter-spacing: -.025em; {{qc.a}}">{{question}}</div>${learnImage(180)}</div>
     ${typeRow(56, 16)}
     <span style="padding: 0 4px; font-size: 13px; color: {{k.ink2}};">Close spelling counts.</span>
-    <sc-if value="{{checked}}" hint-placeholder-val="{{ true }}"><div class="sc-quiz-in" style="display: flex; flex-direction: column; gap: 12px; padding: 0 4px; animation: scQuizIn .3s cubic-bezier(.2,.8,.2,1) both;">${learnWhy(16, '200px')}${typeOverride}${learnExplain(15)}</div></sc-if>
+    <sc-if value="{{checked}}" hint-placeholder-val="{{ true }}"><div class="sc-quiz-in" style="display: flex; flex-direction: column; gap: 12px; padding: 0 4px; animation: scQuizIn .3s cubic-bezier(.2,.8,.2,1) both;">${learnWhy(16, '200px')}${typeOverride}${learnExplain(15, true)}</div></sc-if>
   </div>
   <div style="flex-grow: 1;"></div>
   <sc-if value="{{checked}}" hint-placeholder-val="{{ true }}"><div style="display: flex; flex-direction: column;">${learnNext(56, 17)}</div></sc-if>
@@ -5122,6 +5159,7 @@ const phoneQuizType = `<div style="position: relative; isolation: isolate; width
 </div>`;
 const TYPE_LOGIC = phone => `
 constructor(props) { super(props); this.state = { typed: 'golgi body', checked: true, qid: null, exOpen: !!(props && props.explainOpen), exMock: !!(props && props.explainOpen), exFor: props && props.explainOpen ? 'typeq' : null }; }
+${CHAT_METHOD}
 renderVals() { ${DB_JS}
   ${LEARN_VIEW_JS(phone)}
   ${EXPLAIN_JS}
@@ -5143,9 +5181,9 @@ renderVals() { ${DB_JS}
     check = () => { if ((this.state.typed || '').trim()) this.setState({ checked: true }); }; override = () => this.setState({ typed: 'Golgi apparatus' }); next = () => {};
     v = view(learnedNow ? 19 : 18, 40, 9, 2, learnedNow ? 1 : 0);
   }
-  const ex = explainView(L && L.ex, L ? L.id : 'typeq', question, checked, ${JSON.stringify("The Golgi apparatus takes proteins from the rough ER, finishes them with sugar tags, and ships them out in little bubbles called vesicles. Think of it as the cell’s post office: sort, label, send.")});
+  const ex = explainView(L && L.ex, L ? L.id : 'typeq', question, checked, ${JSON.stringify("The Golgi apparatus takes proteins from the rough ER, finishes them with sugar tags, and ships them out in little bubbles called vesicles. Think of it as the cell’s post office: sort, label, send.")}, { sample: ${JSON.stringify(CHAT_SAMPLE.type)}, pal: { on: K.btn, onFg: K.btnFg, off: K.track, offFg: K.ink2 }, phone: ${phone} });
   ${LEARN_IMG_JS}
-  const exBtn = { bg: ex.panel ? K.btn : K.chip, fg: ex.panel ? K.btnFg : K.ink, vis: ex.show ? 'visible' : 'hidden' };
+  const exBtn = { bg: ex.panel ? K.btn : K.chip, fg: ex.panel ? K.btnFg : K.ink, vis: ex.show ? 'visible' : 'hidden', op: ex.show ? '1' : '.4', dis: ex.show ? 'false' : 'true', click: e => { if (ex.show) ex.toggle(e); } };
   return { t, ex, exBtn, qc, dark: !!this.props.dark, ...v, kind: 'Type the answer', question, ...learnImg(L && L.image, L && L.occ, checked), 
     typed, checked, notChecked: !checked, canOverride: checked && !ok, check, override, next,
     setTyped: e => { const x = e && e.target ? e.target.value : ''; if (L) this.state.typed = x; else this.setState({ typed: x, checked: false }); },
@@ -8732,7 +8770,7 @@ const files = {
   'WebCardsScreenBlank': ['Web · Edit cards · fill in the blank', typeOf('WebCardsScreen', W, H, 'Blank'), { logic: darkLogic, css: EDITOR_CSS + CARDS_CSS, w: W, h: H }],
   'WebCardsScreenDark': ['Web · Edit cards (dark)', darkOf('WebCardsScreen', W, H), { logic: darkLogic, css: EDITOR_CSS + CARDS_CSS, w: W, h: H }],
   'WebCardsScreenPaused': ['Web · Edit cards · a paused card (Unpause)', attrOf('WebCardsScreen', W, H, 'paused="{{yes}}"'), { logic: darkLogic, css: EDITOR_CSS + CARDS_CSS, w: W, h: H }],
-  'WebReview': ['Web · Review', webReview, { props: { ...DARK, playing: { editor: 'boolean', default: false }, explainOpen: { editor: 'boolean', default: false }, explained: { editor: 'boolean', default: false }, grading: { editor: 'enum', default: 'Four buttons', options: ['Four buttons', 'Check or X', 'Piles'] }, card: { editor: 'enum', default: 'Basic', options: ['Basic', 'Fill in the blank', 'Image', 'Audio'] }, startRevealed: { editor: 'boolean', default: false }, fsrs: { editor: 'boolean', default: true }, progress: { editor: 'enum', default: 'Bar', options: ['Bar', 'Counts', 'None'] }, settingsOpen: { editor: 'boolean', default: false }, newPileOpen: { editor: 'boolean', default: false }, radius: { editor: 'range', default: 32, min: 12, max: 48, step: 2, unit: 'px' } }, logic: REVIEW_LOGIC(64), css: REVIEW_CSS, w: W, h: H }],
+  'WebReview': ['Web · Review', webReview, { props: { ...DARK, playing: { editor: 'boolean', default: false }, explainOpen: { editor: 'boolean', default: false }, explained: { editor: 'boolean', default: false }, followUp: { editor: 'boolean', default: false }, grading: { editor: 'enum', default: 'Four buttons', options: ['Four buttons', 'Check or X', 'Piles'] }, card: { editor: 'enum', default: 'Basic', options: ['Basic', 'Fill in the blank', 'Image', 'Audio'] }, startRevealed: { editor: 'boolean', default: false }, fsrs: { editor: 'boolean', default: true }, progress: { editor: 'enum', default: 'Bar', options: ['Bar', 'Counts', 'None'] }, settingsOpen: { editor: 'boolean', default: false }, newPileOpen: { editor: 'boolean', default: false }, radius: { editor: 'range', default: 32, min: 12, max: 48, step: 2, unit: 'px' } }, logic: REVIEW_LOGIC(64), css: REVIEW_CSS, w: W, h: H }],
   'WebDone': ['Web · Session done', webDone, { props: DARK, logic: doneLogic(300, 22), w: W, h: H }],
   'WebDonePiles': ['Web · Session done · piles', webDonePiles, { props: DARK, logic: donePilesLogic(false), w: W, h: H }],
   'WebStats': ['Web · Stats', webStats, { props: { ...DARK, ...STATS_PROPS }, logic: statsLogic, w: W, h: H }],
@@ -8746,6 +8784,7 @@ const files = {
   'WebReviewFour': ['Web · Review · 4 grades', styleOf('WebReview', W, H, 'Four buttons'), { logic: darkLogic, css: REVIEW_CSS, w: W, h: H }],
   'WebReviewCheck': ['Web · Review · ✓ or ✗', styleOf('WebReview', W, H, 'Check or X'), { logic: darkLogic, css: REVIEW_CSS, w: W, h: H }],
   'WebReviewExplain': ['Web · Review · Explain (AI explains the answer)', attrOf('WebReview', W, H, 'start-revealed="{{yes}}" explain-open="{{yes}}" explained="{{yes}}"'), { logic: darkLogic, css: REVIEW_CSS, w: W, h: H }],
+  'WebReviewExplainAsk': ['Web · Review · Explain · a question about the card, asked and answered', attrOf('WebReview', W, H, 'start-revealed="{{yes}}" explain-open="{{yes}}" explained="{{yes}}" follow-up="{{yes}}"'), { logic: darkLogic, css: REVIEW_CSS, w: W, h: H }],
   'WebReviewSettings': ['Web · Review · settings', settingsOf('WebReview', W, H), { logic: darkLogic, css: REVIEW_CSS, w: W, h: H }],
   'WebReviewPiles': ['Web · Review · Piles', styleOf('WebReview', W, H, 'Piles'), { logic: darkLogic, css: REVIEW_CSS, w: W, h: H }],
   'WebReviewNewPile': ['Web · Review · New pile popup', pileOf('WebReview', W, H), { logic: darkLogic, css: REVIEW_CSS, w: W, h: H }],
@@ -8826,24 +8865,24 @@ const files = {
   'PhoneEditorAudio': ['iPhone · Card editor · audio', attrOf('PhoneEditor', PW, PH, 'card-type="Audio" keyboard="{{no}}"'), { logic: yesNoLogic, css: EDITOR_CSS, w: PW, h: PH }],
   'PhoneEditorRecording': ['iPhone · Card editor · recording audio', attrOf('PhoneEditor', PW, PH, 'card-type="Audio" keyboard="{{no}}" recording="{{yes}}"'), { logic: yesNoLogic, css: EDITOR_CSS, w: PW, h: PH }],
   'PhoneEditorPaused': ['iPhone · Card editor · editing a paused card (Unpause card)', attrOf('PhoneEditor', PW, PH, 'card-id="k1" paused="{{yes}}" keyboard="{{no}}"'), { logic: yesNoLogic, css: EDITOR_CSS, w: PW, h: PH }],
-  'PhoneReview': ['iPhone · Review', phoneReview, { props: { ...DARK, playing: { editor: 'boolean', default: false }, explainOpen: { editor: 'boolean', default: false }, explained: { editor: 'boolean', default: false }, grading: { editor: 'enum', default: 'Four buttons', options: ['Four buttons', 'Check or X', 'Piles'] }, card: { editor: 'enum', default: 'Basic', options: ['Basic', 'Fill in the blank', 'Image', 'Audio'] }, startRevealed: { editor: 'boolean', default: false }, fsrs: { editor: 'boolean', default: true }, progress: { editor: 'enum', default: 'Bar', options: ['Bar', 'Counts', 'None'] }, settingsOpen: { editor: 'boolean', default: false }, newPileOpen: { editor: 'boolean', default: false }, radius: { editor: 'range', default: 32, min: 12, max: 48, step: 2, unit: 'px' } }, logic: REVIEW_LOGIC(64, true), css: REVIEW_CSS, w: PW, h: PH }],
+  'PhoneReview': ['iPhone · Review', phoneReview, { props: { ...DARK, playing: { editor: 'boolean', default: false }, explainOpen: { editor: 'boolean', default: false }, explained: { editor: 'boolean', default: false }, followUp: { editor: 'boolean', default: false }, grading: { editor: 'enum', default: 'Four buttons', options: ['Four buttons', 'Check or X', 'Piles'] }, card: { editor: 'enum', default: 'Basic', options: ['Basic', 'Fill in the blank', 'Image', 'Audio'] }, startRevealed: { editor: 'boolean', default: false }, fsrs: { editor: 'boolean', default: true }, progress: { editor: 'enum', default: 'Bar', options: ['Bar', 'Counts', 'None'] }, settingsOpen: { editor: 'boolean', default: false }, newPileOpen: { editor: 'boolean', default: false }, radius: { editor: 'range', default: 32, min: 12, max: 48, step: 2, unit: 'px' } }, logic: REVIEW_LOGIC(64, true), css: REVIEW_CSS, w: PW, h: PH }],
   'PhoneDone': ['iPhone · Session done', phoneDone, { props: DARK, logic: doneLogic(260, 20, true), w: PW, h: PH }],
   'PhoneDonePiles': ['iPhone · Session done · piles', phoneDonePiles, { props: DARK, logic: donePilesLogic(true), w: PW, h: PH }],
   'PhoneSignIn': ['iPhone · Sign in', phoneSignIn, { props: { ...DARK, grain: MESH('Iris').grain, passwordMode: BOOL }, logic: signInLogic('', [50, 60, 55, 65], PHONE_K), css: WALL_CSS, w: PW, h: PH }],
   'PhoneSignInCode': ['iPhone · Sign in · code from email', phoneSignInCode, { props: DARK, logic: signInLogic('482'), w: PW, h: PH }],
   'Landing': ['Landing page · lucida.cards', landing(LAND.web, W, LANDING_H), { props: { ...DARK, grain: MESH('Iris').grain }, logic: landingLogic(false), css: WALL_CSS + DEMO_CSS + SKY_CSS + HEAD_CSS + NO_RISE, w: W, h: LANDING_H }],
   'WebQuizStart': ['Web · Learn mode · start', webQuizStart(), { props: DARK, logic: QUIZ_START_LOGIC(false, true), w: W, h: H }],
-  'WebQuiz': ['Web · Learn mode · choice question', webQuiz, { props: { ...DARK, answered: { editor: 'boolean', default: false }, explainOpen: { editor: 'boolean', default: false }, settingsOpen: { editor: 'boolean', default: false } }, logic: QUIZ_LOGIC(false), css: LEARN_CSS, w: W, h: H }],
+  'WebQuiz': ['Web · Learn mode · choice question', webQuiz, { props: { ...DARK, answered: { editor: 'boolean', default: false }, explainOpen: { editor: 'boolean', default: false }, followUp: { editor: 'boolean', default: false }, settingsOpen: { editor: 'boolean', default: false } }, logic: QUIZ_LOGIC(false), css: LEARN_CSS, w: W, h: H }],
   'WebQuizAnswered': ['Web · Learn mode · answered', attrOf('WebQuiz', W, H, 'answered="{{yes}}"'), { logic: darkLogic, css: LEARN_CSS, w: W, h: H }],
   'WebQuizMatch': ['Web · Learn mode · matching', webQuizMatch, { props: DARK, logic: MATCH_LOGIC(false), css: LEARN_CSS, w: W, h: H }],
-  'WebQuizType': ['Web · Learn mode · type the answer', webQuizType, { props: { ...DARK, explainOpen: { editor: 'boolean', default: false } }, logic: TYPE_LOGIC(false), css: LEARN_CSS, w: W, h: H }],
+  'WebQuizType': ['Web · Learn mode · type the answer', webQuizType, { props: { ...DARK, explainOpen: { editor: 'boolean', default: false }, followUp: { editor: 'boolean', default: false } }, logic: TYPE_LOGIC(false), css: LEARN_CSS, w: W, h: H }],
   'WebQuizDone': ['Web · Learn mode · all learned', webQuizDone, { props: DARK, logic: QUIZ_DONE_LOGIC(false), css: LEARN_CSS, w: W, h: H }],
   'WebQuizSettings': ['Web · Learn mode · settings (the deck’s background)', attrOf('WebQuiz', W, H, 'settings-open="{{yes}}"'), { logic: darkLogic, css: LEARN_CSS, w: W, h: H }],
   'PhoneQuizStart': ['iPhone · Learn mode · start', phoneQuizStart(), { props: DARK, logic: QUIZ_START_LOGIC(true, true), w: PW, h: PH }],
-  'PhoneQuiz': ['iPhone · Learn mode · choice question', phoneQuiz, { props: { ...DARK, answered: { editor: 'boolean', default: false }, explainOpen: { editor: 'boolean', default: false }, settingsOpen: { editor: 'boolean', default: false } }, logic: QUIZ_LOGIC(true), css: LEARN_CSS, w: PW, h: PH }],
+  'PhoneQuiz': ['iPhone · Learn mode · choice question', phoneQuiz, { props: { ...DARK, answered: { editor: 'boolean', default: false }, explainOpen: { editor: 'boolean', default: false }, followUp: { editor: 'boolean', default: false }, settingsOpen: { editor: 'boolean', default: false } }, logic: QUIZ_LOGIC(true), css: LEARN_CSS, w: PW, h: PH }],
   'PhoneQuizAnswered': ['iPhone · Learn mode · answered', attrOf('PhoneQuiz', PW, PH, 'answered="{{yes}}"'), { logic: darkLogic, css: LEARN_CSS, w: PW, h: PH }],
   'PhoneQuizMatch': ['iPhone · Learn mode · matching', phoneQuizMatch, { props: DARK, logic: MATCH_LOGIC(true), css: LEARN_CSS, w: PW, h: PH }],
-  'PhoneQuizType': ['iPhone · Learn mode · type the answer', phoneQuizType, { props: { ...DARK, explainOpen: { editor: 'boolean', default: false } }, logic: TYPE_LOGIC(true), css: LEARN_CSS, w: PW, h: PH }],
+  'PhoneQuizType': ['iPhone · Learn mode · type the answer', phoneQuizType, { props: { ...DARK, explainOpen: { editor: 'boolean', default: false }, followUp: { editor: 'boolean', default: false } }, logic: TYPE_LOGIC(true), css: LEARN_CSS, w: PW, h: PH }],
   'PhoneQuizDone': ['iPhone · Learn mode · all learned', phoneQuizDone, { props: DARK, logic: QUIZ_DONE_LOGIC(true), css: LEARN_CSS, w: PW, h: PH }],
   'PhoneQuizSettings': ['iPhone · Learn mode · settings (the deck’s background)', attrOf('PhoneQuiz', PW, PH, 'settings-open="{{yes}}"'), { logic: darkLogic, css: LEARN_CSS, w: PW, h: PH }],
   // Practice test: one board each, with the state picker (Tweaks) on the canvas: Set up, each kind of question, its two questions
@@ -8889,6 +8928,7 @@ const files = {
   'PhoneReviewFour': ['iPhone · Review · 4 grades', styleOf('PhoneReview', PW, PH, 'Four buttons'), { logic: darkLogic, css: REVIEW_CSS, w: PW, h: PH }],
   'PhoneReviewCheck': ['iPhone · Review · ✓ or ✗', styleOf('PhoneReview', PW, PH, 'Check or X'), { logic: darkLogic, css: REVIEW_CSS, w: PW, h: PH }],
   'PhoneReviewExplain': ['iPhone · Review · Explain (AI explains the answer)', attrOf('PhoneReview', PW, PH, 'start-revealed="{{yes}}" explain-open="{{yes}}" explained="{{yes}}"'), { logic: darkLogic, css: REVIEW_CSS, w: PW, h: PH }],
+  'PhoneReviewExplainAsk': ['iPhone · Review · Explain · a question about the card, asked and answered', attrOf('PhoneReview', PW, PH, 'start-revealed="{{yes}}" explain-open="{{yes}}" explained="{{yes}}" follow-up="{{yes}}"'), { logic: darkLogic, css: REVIEW_CSS, w: PW, h: PH }],
   'PhoneReviewSettings': ['iPhone · Review · settings', settingsOf('PhoneReview', PW, PH), { logic: darkLogic, css: REVIEW_CSS, w: PW, h: PH }],
   'PhoneReviewPiles': ['iPhone · Review · Piles', styleOf('PhoneReview', PW, PH, 'Piles'), { logic: darkLogic, css: REVIEW_CSS, w: PW, h: PH }],
   'PhoneReviewNewPile': ['iPhone · Review · New pile popup', pileOf('PhoneReview', PW, PH), { logic: darkLogic, css: REVIEW_CSS, w: PW, h: PH }],

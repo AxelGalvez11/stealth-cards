@@ -114,6 +114,8 @@ struct TestScreen: View {
   @State private var list = false
   @State private var only = "all"
   @State private var open: Set<Int> = []
+  /// The question whose explanation's composer has the keyboard (its results scroll it into view above the keyboard).
+  @State private var asking: Int? = nil
   @FocusState private var typing: Bool
   /// The keyboard's height: this page reaches the bottom of the screen (under the keyboard), so Back and Next are lifted above it.
   @StateObject private var keyboard = Keyboard()
@@ -138,7 +140,14 @@ struct TestScreen: View {
     #endif
     .onAppear {
       if store.demo { confirm = store.demoTest.screen == "Submit" ? "submit" : store.demoTest.screen == "Leave" ? "leave" : ""; only = store.demoTest.screen == "Results · missed" ? "missed" : "all" }
+      // (the board's explainOpen and followUp Tweaks: question 3's explanation open, and a question asked about it)
+      if store.demo && store.props.explainOpen {
+        open.insert(3); store.demoTest.exOn.insert(3)
+        if store.props.followUp, let q = Generated.chatSample["test"] { store.chats["test3"] = [ChatTurn(q: q.q, a: q.a)] }
+      }
     }
+    // Leaving the results forgets the questions asked about them.
+    .onDisappear { for r in store.testView()?.rows ?? [] { store.followUpClear(chatKey(r)) } }
     .onChange(of: store.demoTest.screen) { _, s in if store.demo { confirm = s == "Submit" ? "submit" : s == "Leave" ? "leave" : ""; only = s == "Results · missed" ? "missed" : "all" } }
   }
 
@@ -340,7 +349,7 @@ struct TestScreen: View {
   // ---------- the results ----------
   private func results(_ v: TestView) -> some View {
     let rows = only == "missed" ? v.rows.filter { !$0.ok } : v.rows
-    return ScrollView(showsIndicators: false) {
+    return ScrollViewReader { proxy in ScrollView(showsIndicators: false) {
       VStack(alignment: .leading, spacing: 18) {
         HStack(spacing: 12) {
           (Text("Practice test").fontWeight(.semibold) + Text(" · " + v.name).foregroundStyle(t.muted)).css(15).lineLimit(1).frame(maxWidth: .infinity, alignment: .leading)
@@ -380,6 +389,16 @@ struct TestScreen: View {
       }
       .padding(.horizontal, 16).padding(.top, Screen.top(58)).padding(.bottom, 40)
     }
+    .scrollDismissesKeyboard(.interactively)
+    // (while a question is typed the results end at the keyboard, which this page otherwise runs under, and the composer being typed in
+    // stays in sight above it, and so does the answer coming in)
+    .padding(.bottom, asking != nil ? keyboard.height : 0)
+    .onChange(of: keyboard.height) { _, h in if h > 0, let n = asking { showAsk(proxy, n) } }
+    .onChange(of: asking) { _, n in if let n, keyboard.height > 0 { showAsk(proxy, n) } }
+    .onChange(of: store.chats) { _, _ in if let n = asking { showAsk(proxy, n) } }
+    // (a design screen with question 3's explanation open starts there, as the board's Tweak does)
+    .onAppear { if store.demo && store.props.explainOpen { DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { proxy.scrollTo("ask3", anchor: .bottom) } } }
+    }
   }
 
   private func done(_ v: TestView) {
@@ -399,7 +418,7 @@ struct TestScreen: View {
   }
 
   private func row(_ r: TestRowView) -> some View {
-    let ex = r.pairs == nil && !r.card.isEmpty ? store.explainOf(r.card) : (store.demo && r.n == 3 ? ExplainVM(on: true, text: store.demoTest.exOn.contains(3) ? TestSample.shared.explain : "") : ExplainVM())
+    let ex = r.pairs == nil && !r.card.isEmpty ? store.explainOf(r.card) : (store.demo && r.n == 3 ? store.demoExplainOf("test3", text: TestSample.shared.explain, asked: store.demoTest.exOn.contains(3)) : ExplainVM())
     let showEx = open.contains(r.n) && ex.on
     return VStack(alignment: .leading, spacing: 10) {
       HStack(spacing: 12) {
@@ -446,9 +465,12 @@ struct TestScreen: View {
         }
       }
       if showEx {
-        ExplainPanel(ex: ex, look: ExplainLook(bg: t.surf, ink: t.text, ink2: t.muted, closeBg: t.bg, btn: t.inv, btnFg: t.invText, closeSize: 28, gap: 6, radius: 16)) { withAnimation(curve(0.25)) { _ = open.remove(r.n) } }
-          .padding(.horizontal, 16).padding(.vertical, 14)
+        let key = chatKey(r)
+        ExplainPanel(ex: ex, look: .test(t), pad: (16, 14), onFocus: { on in if on { asking = r.n } else if asking == r.n { asking = nil } },
+                     close: { withAnimation(curve(0.25)) { _ = open.remove(r.n) }; store.followUpClear(key) },
+                     ask: { q in Task { await store.followUp(key, q: q, question: r.q, sample: Generated.chatSample["test"]?.a ?? "") } })
           .background(RoundedRectangle(cornerRadius: 16, style: .continuous).fill(t.surf))
+          .id("ask\(r.n)")
           .transition(still ? .identity : .opacity.combined(with: .offset(y: 6)))
       }
     }
@@ -457,6 +479,15 @@ struct TestScreen: View {
     .accessibilityElement(children: .contain)
     .accessibilityIdentifier("testRow\(r.n)")
   }
+
+  /// Brings question `n`'s composer to the bottom of what shows, at once and again once the page has made room for the keyboard.
+  private func showAsk(_ proxy: ScrollViewProxy, _ n: Int) {
+    let go = { withAnimation(curve(0.25)) { proxy.scrollTo("ask\(n)", anchor: .bottom) } }
+    DispatchQueue.main.async(execute: go)
+    DispatchQueue.main.asyncAfter(deadline: .now() + 0.4, execute: go)
+  }
+  /// Where a question's conversation is kept: its card's (the design screen's sample question has no card).
+  private func chatKey(_ r: TestRowView) -> String { r.card.isEmpty ? "test\(r.n)" : r.card }
 
   private func answerLine(_ label: String, _ value: String, muted: Bool) -> some View {
     HStack(alignment: .top, spacing: 12) {
