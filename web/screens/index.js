@@ -836,7 +836,7 @@ export default [
  },
  {
   "name": "PhoneStatsUpgrade",
-  "title": "iPhone · Stats · on Free: go Pro for deep stats",
+  "title": "iPhone · Stats · on Free (all of Stats is Pro)",
   "w": 390,
   "h": 844
  },
@@ -2576,7 +2576,7 @@ export default [
  },
  {
   "name": "WebStatsUpgrade",
-  "title": "Web · Stats · on Free: go Pro for deep stats",
+  "title": "Web · Stats · on Free (all of Stats is Pro)",
   "w": 1440,
   "h": 900
  },

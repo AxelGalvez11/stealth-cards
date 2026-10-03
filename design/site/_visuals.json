@@ -467,7 +467,7 @@
     "load": [
      "20 new cards a day to start",
      "No daily review limit",
-     "Stats shows the cards due each day this week"
+     "Stats (Pro) shows the cards due each day this week"
     ]
    },
    {
@@ -475,7 +475,7 @@
     "id": "stats",
     "at": "Your daily load",
     "pos": "after",
-    "caption": "Stats: how many cards are due each day"
+    "caption": "Stats (Pro): how many cards are due each day"
    }
   ],
   "tables": [
@@ -593,7 +593,7 @@
     "id": "stats",
     "at": "On your phone and your laptop",
     "pos": "after",
-    "caption": "Stats: your streak, reviews and how much you remember"
+    "caption": "Stats (Pro): your streak, reviews and how much you remember"
    }
   ],
   "tables": [

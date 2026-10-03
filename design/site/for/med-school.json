@@ -37,7 +37,7 @@
         "**Tag your cards** by system or topic (cardio, renal, biostatistics). Tags give you Learn mode sets, and on Pro the Stats page ranks tags by how much you remember (a tag needs about 8 reviews first) and lists your hardest cards and the cards you keep forgetting.",
         "**Put an exam date on each deck (Pro).** From 30 days out, cards you’d probably forget by exam day come up early, and Stats shows how much of the deck you’d likely remember on the day.",
         "**Let your AI quiz you on weak spots (Pro).** It can read your weak tags and hardest cards and write new questions for them.",
-        "**On Free,** the Stats page shows your streak, your reviews, how much you remember, and how many cards are due each day this week, which is enough to pick a pace."
+        "**On Free,** your Library shows what’s due and how long it takes, which is enough to pick a pace. The Stats page is part of Pro."
       ]
     },
     {
@@ -89,7 +89,7 @@
     },
     {
       "q": "Is Lucida free for medical students?",
-      "a": "Yes. Unlimited decks and cards, FSRS, Learn mode, image occlusion, sharing and live games are free. Pro ($5.99 a month or $49.99 a year, as of September 2026) adds exam dates, weak-spot stats and more."
+      "a": "Yes. Unlimited decks and cards, FSRS, Learn mode, image occlusion, sharing and live games are free. Pro ($5.99 a month or $49.99 a year, as of September 2026) adds Stats, exam dates and more."
     },
     {
       "q": "Can I share decks with classmates?",

@@ -3042,8 +3042,8 @@ const priceBtn = (label, href, inv) => `<a href="${href}" class="sc-press" style
 // The sky behind it (Learn mode's on Free has the same one): day, night, or dusk for gray dark mode.
 const STATS_SKY = `(this.props.dark && this.props.dim ? { top: '${SKY_DUSK.top}', mid: '${SKY_DUSK.mid}', low: '${SKY_DUSK.low}' } : this.props.dark ? { top: '#081733', mid: '#0D2148', low: '#0A1530' } : { top: '#86BDF3', mid: '#C9E2FB', low: '#EDF5FE' })`;
 const statsUpgradeBody = (pad, fs = 26) => `<div style="box-sizing: border-box; padding: 0 ${pad}px ${pad}px; margin-top: -6px; display: flex; flex-direction: column; gap: 18px;">
-      <div style="display: flex; flex-direction: column; gap: 8px;"><span style="display: flex; align-items: center; gap: 10px; font-size: ${fs}px; font-weight: 600; letter-spacing: -.03em; white-space: nowrap;">See what you’re weak at${PRO_BADGE}</span><span style="font-size: 15px; line-height: 1.5; color: {{t.muted}};">What you remember, what you’re weak at and why, and what to study next.</span></div>
-      <div style="display: flex; flex-direction: column; gap: 10px; font-size: 15px;">${['Memory by deck, tag, and week', 'Your weakest tags and hardest cards', 'Time per card and exam readiness'].map(x => `<span style="display: flex; align-items: center; gap: 10px;"><span style="width: 22px; height: 22px; flex-shrink: 0; border-radius: 11px; background: linear-gradient(135deg, #7E94FB, #2CB2EA); color: #FFFFFF; display: flex; align-items: center; justify-content: center;">${svg(I.check, 13, 2.6)}</span>${x}</span>`).join('')}</div>
+      <div style="display: flex; flex-direction: column; gap: 8px;"><span style="display: flex; align-items: center; gap: 10px; font-size: ${fs}px; font-weight: 600; letter-spacing: -.03em; white-space: nowrap;">See how you’re doing${PRO_BADGE}</span><span style="font-size: 15px; line-height: 1.5; color: {{t.muted}};">Your streak and reviews, what you remember, what you’re weak at and why, and what to study next.</span></div>
+      <div style="display: flex; flex-direction: column; gap: 10px; font-size: 15px;">${['Your streak, reviews and what you remember', 'Your weakest tags and hardest cards', 'Time per card and exam readiness'].map(x => `<span style="display: flex; align-items: center; gap: 10px;"><span style="width: 22px; height: 22px; flex-shrink: 0; border-radius: 11px; background: linear-gradient(135deg, #7E94FB, #2CB2EA); color: #FFFFFF; display: flex; align-items: center; justify-content: center;">${svg(I.check, 13, 2.6)}</span>${x}</span>`).join('')}</div>
       <div style="font-size: 14px; color: {{t.muted}};">Yearly works out to $4.17 a month. Cancel anytime.</div>
       <div style="display: flex; gap: 10px;">${priceBtn('$5.99 a month', '{{monthlyHref}}', false)}${priceBtn('$49.99 a year', '{{yearlyHref}}', true)}</div>
     </div>`;
@@ -3076,7 +3076,7 @@ const WEB_DEEP = `<sc-if value="{{isMemory}}" hint-placeholder-val="{{ false }}"
     </div>
     ${statBox(boxHead('Exams') + boxEmpty('pace.exams') + `<sc-for list="{{pace.exams.rows}}" as="e" hint-placeholder-count="1">${examBlock(false)}</sc-for>`, 'flex-shrink: 0;')}
   </sc-if>
-  <sc-if value="{{upgrade}}" hint-placeholder-val="{{ false }}"><div style="flex-grow: 1; display: flex; align-items: center; justify-content: center;"><div role="region" aria-label="Deep stats" style="width: 560px; border-radius: 36px; overflow: hidden; background: {{t.bg}}; box-shadow: 0 0 0 1px {{t.line}}, 0 24px 64px -28px rgba(0,0,0,.3);">${statsSky(220, 1)}${statsUpgradeBody(32)}</div></div></sc-if>`;
+  <sc-if value="{{upgrade}}" hint-placeholder-val="{{ false }}"><div style="flex-grow: 1; display: flex; align-items: center; justify-content: center;"><div role="region" aria-label="Stats" style="width: 560px; border-radius: 36px; overflow: hidden; background: {{t.bg}}; box-shadow: 0 0 0 1px {{t.line}}, 0 24px 64px -28px rgba(0,0,0,.3);">${statsSky(220, 1)}${statsUpgradeBody(32)}</div></div></sc-if>`;
 
 // The deep tabs, on the iPhone: the same boxes, one under another.
 const PHONE_DEEP = `<sc-if value="{{isMemory}}" hint-placeholder-val="{{ false }}">
@@ -3098,7 +3098,7 @@ const PHONE_DEEP = `<sc-if value="{{isMemory}}" hint-placeholder-val="{{ false }
     ${statBox(boxHead('How your gaps are growing', '{{pace.gapSub}}', true) + boxEmpty('pace.gaps') + `<sc-if value="{{pace.gaps.some}}" hint-placeholder-val="{{ true }}">${vBars('pace.gaps.bars', 8, 6, 90)}</sc-if>`, '', true)}
     ${statBox(boxHead('Exams', '', true) + boxEmpty('pace.exams') + `<sc-for list="{{pace.exams.rows}}" as="e" hint-placeholder-count="1">${examBlock(true)}</sc-for>`, '', true)}
   </sc-if>
-  <sc-if value="{{upgrade}}" hint-placeholder-val="{{ false }}"><div role="region" aria-label="Deep stats" style="border-radius: 32px; overflow: hidden; background: {{t.bg}}; box-shadow: 0 0 0 1px {{t.line}};">${statsSky(170, .66)}${statsUpgradeBody(20, 22)}</div></sc-if>`;
+  <sc-if value="{{upgrade}}" hint-placeholder-val="{{ false }}"><div role="region" aria-label="Stats" style="border-radius: 32px; overflow: hidden; background: {{t.bg}}; box-shadow: 0 0 0 1px {{t.line}};">${statsSky(170, .66)}${statsUpgradeBody(20, 22)}</div></sc-if>`;
 
 // Their values: the tabs, and each deep tab's numbers in words (db.insights, or the canvas's sample).
 const DEEP_JS = phone => `
@@ -3168,8 +3168,8 @@ const DEEP_JS = phone => `
         rows: p.exams.map(e => ({ name: e.name, line: e.line, stats: [['Seen', e.total ? e.seen / e.total : 0], ['Learned', e.total ? e.learned / e.total : 0], ['Likely to remember', e.likely]]
           .map(([label, v]) => ({ label, pct: Math.round(v * 100) + '%', w: Math.round(v * 100) + '%', c: label === 'Likely to remember' ? bar(Math.round(v * 100)) : '#7282F0' })) })) } } });
   }
-  const upgrade = deep && !pro;
-  Object.assign(deepVals, { tabs, tab, isOverview: !deep, isMemory: deep && pro && tab === 'Memory', isWeak: deep && pro && tab === 'Weak spots', isPace: deep && pro && tab === 'Pace', upgrade,
+  const upgrade = !pro;
+  Object.assign(deepVals, { tabs, tab, isOverview: !deep && pro, isMemory: deep && pro && tab === 'Memory', isWeak: deep && pro && tab === 'Weak spots', isPace: deep && pro && tab === 'Pace', upgrade,
     sky: ${STATS_SKY}, monthlyHref: db.mock ? '${phone ? 'PricingPhone' : 'Pricing'}.dc.html' : '/pro?plan=monthly', yearlyHref: db.mock ? '${phone ? 'PricingPhone' : 'Pricing'}.dc.html' : '/pro?plan=yearly' });`;
 const webStats = webRoot(`${sidebar('Stats')}
 <main style="flex-grow: 1; box-sizing: border-box; padding: 36px 48px; display: flex; flex-direction: column; gap: 24px; min-width: 0;">
@@ -3980,7 +3980,7 @@ const sNamed = (title, items, hole = '') => `<div style="display: flex; flex-dir
 // Settings › Look › Theme: the theme you use, and on Free, that themes are part of Pro.
 const THEME_ROW = board => sRow(`<span style="display: inline-flex; align-items: center; gap: 8px;"><span>Theme</span><sc-if value="{{themeLocked}}" hint-placeholder-val="{{ false }}">${PRO_BADGE}</sc-if></span>`, sVal('{{themeName}}'), { href: board + '.dc.html' });
 const PRO_PILL = `<a href="{{proHref}}" style="height: 36px; padding: 0 16px; display: inline-flex; align-items: center; border-radius: 999px; background: {{t.inv}}; color: {{t.invText}}; font-size: 14px; font-weight: 600; white-space: nowrap;">Go Pro</a>`;
-const planGroups = group => `<sc-if value="{{planFree}}" hint-placeholder-val="{{ false }}">${group([sRow('Free', PRO_PILL, { sub: 'Pro adds exam tools, deeper stats, and more' })])}</sc-if>
+const planGroups = group => `<sc-if value="{{planFree}}" hint-placeholder-val="{{ false }}">${group([sRow('Free', PRO_PILL, { sub: 'Pro adds Stats, exam tools, and more' })])}</sc-if>
       <sc-if value="{{planWebOnly}}" hint-placeholder-val="{{ false }}">${group([sRow(`<span style="display: inline-flex; align-items: center; gap: 8px;">Lucida ${PRO_BADGE}</span>`, '', { sub: '{{planSub}}' })])}</sc-if>
       <sc-if value="{{planPro}}" hint-placeholder-val="{{ true }}">${group([
         sRow(`<span style="display: inline-flex; align-items: center; gap: 8px;">Lucida ${PRO_BADGE}</span>`, '', { sub: '{{planSub}}' }),
@@ -5519,7 +5519,7 @@ const REASONS = [
   ['connect', 'You stay in charge', 'Choose what your AI may do, and check its cards before they join a deck.'],
   ['upload', 'Bring your cards', 'Import from Anki, Quizlet, or a CSV file.'],
   ['decks', 'Decks with their own look', 'Every deck gets its own gradient, or a photo of your choice.'],
-  ['today', 'A few minutes a day', 'Your Library shows what’s due and how long it takes, and Stats keeps your streak.'],
+  ['today', 'A few minutes a day', 'Your Library shows what’s due and how long it takes, and Stats (Pro) keeps your streak.'],
   ['list', 'Your cards stay yours', 'Export every deck, card, and review whenever you want.']
 ];
 const landing = (L, w, hgt) => { const phone = L === LAND.phone; return `<div class="sp-c" style="position: relative; isolation: isolate; width: ${w}px; height: ${hgt}px; box-sizing: border-box; font-family: ${FONT}; background: {{t.bg}}; color: {{t.text}}; overflow: hidden; ${HEAD_VARS}">
@@ -8748,7 +8748,7 @@ const files = {
   'WebStatsMemory': ['Web · Stats · Memory (Pro)', attrOf('WebStats', W, H, 'tab="Memory"'), { logic: darkLogic, w: W, h: H }],
   'WebStatsWeak': ['Web · Stats · Weak spots (Pro)', attrOf('WebStats', W, H, 'tab="Weak spots"'), { logic: darkLogic, w: W, h: H }],
   'WebStatsPace': ['Web · Stats · Pace (Pro)', attrOf('WebStats', W, H, 'tab="Pace"'), { logic: darkLogic, w: W, h: H }],
-  'WebStatsUpgrade': ['Web · Stats · on Free: go Pro for deep stats', attrOf('WebStats', W, H, 'tab="Weak spots" free="{{yes}}"'), { logic: darkLogic, w: W, h: H }],
+  'WebStatsUpgrade': ['Web · Stats · on Free (all of Stats is Pro)', attrOf('WebStats', W, H, 'free="{{yes}}"'), { logic: darkLogic, w: W, h: H }],
   'WebConnectConsent': ['Web · An AI app asks to connect (Allow or Cancel)', webConnectConsent, { props: CONSENT_PROPS, logic: consentLogic, w: W, h: H }],
   'WebConnect': ['Web · Connect AI', webConnect, { props: { ...DARK, ...MESH('Apricot'), noApps: BOOL }, logic: connectLogic, w: W, h: H }],
   'WebReviewDark': ['Web · Review (dark)', darkOf('WebReview', W, H), { logic: darkLogic, css: REVIEW_CSS, w: W, h: H }],
@@ -8879,7 +8879,7 @@ const files = {
   'PhoneStatsMemory': ['iPhone · Stats · Memory (Pro)', attrOf('PhoneStats', PW, PH, 'tab="Memory"'), { logic: darkLogic, w: PW, h: PH }],
   'PhoneStatsWeak': ['iPhone · Stats · Weak spots (Pro)', attrOf('PhoneStats', PW, PH, 'tab="Weak spots"'), { logic: darkLogic, w: PW, h: PH }],
   'PhoneStatsPace': ['iPhone · Stats · Pace (Pro)', attrOf('PhoneStats', PW, PH, 'tab="Pace"'), { logic: darkLogic, w: PW, h: PH }],
-  'PhoneStatsUpgrade': ['iPhone · Stats · on Free: go Pro for deep stats', attrOf('PhoneStats', PW, PH, 'tab="Weak spots" free="{{yes}}"'), { logic: darkLogic, w: PW, h: PH }],
+  'PhoneStatsUpgrade': ['iPhone · Stats · on Free (all of Stats is Pro)', attrOf('PhoneStats', PW, PH, 'free="{{yes}}"'), { logic: darkLogic, w: PW, h: PH }],
   'PhoneStatsWeakDark': ['iPhone · Stats · Weak spots (dark)', `<div style="width: ${PW}px; height: ${PH}px; overflow: hidden; background: #000000;"><dc-import name="PhoneStats" tab="Weak spots" dark="{{yes}}" hint-size="${PW}px,${PH}px"></dc-import></div>`, { logic: darkLogic, w: PW, h: PH }],
   'PhoneStatsPaceGray': ['iPhone · Stats · Pace (dark, gray)', `<div style="width: ${PW}px; height: ${PH}px; overflow: hidden; background: #1E1E20;"><dc-import name="PhoneStats" tab="Pace" dark="{{yes}}" dim="{{yes}}" hint-size="${PW}px,${PH}px"></dc-import></div>`, { logic: darkLogic, w: PW, h: PH }],
   'PhoneConnectConsent': ['iPhone · An AI app asks to connect (Allow or Cancel)', phoneConnectConsent, { props: CONSENT_PROPS, logic: consentLogic, w: PW, h: PH }],

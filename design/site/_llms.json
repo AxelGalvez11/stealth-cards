@@ -1,6 +1,6 @@
 {
   "_about": "What llms.txt and llms-full.txt say about the site: the intro paragraph, one line and a name for each page (in the order they are listed), and quick facts. Written by hand (research, 2026-09-30); design/check-site.mjs checks that every page has a line.",
-  "intro": "Lucida is a flashcard app that runs in the browser at app.lucida.cards, on phones, tablets and computers. It plans every review with FSRS spaced repetition. Lucida makes cards itself from a PDF, slides, a Word file, caption files, pictures, a recording, a YouTube link, pasted text or a topic, and your own AI (Claude, ChatGPT, Cursor or any app that supports MCP) can also make and edit your cards through Lucida’s MCP link (app.lucida.cards/mcp: the app signs in to Lucida). Studying itself doesn’t need an AI subscription. Cards can be question and answer, fill in the blank, a picture with hidden parts (image occlusion) or sound, and Learn mode quizzes you on them. The free plan has unlimited decks and cards, FSRS reviews, Learn mode, shared decks, live games with friends, up to 100 pictures and sounds, 3 card makes a day, and import and export. Pro costs $5.99 a month or $49.99 a year and adds exam dates, weak-spot stats, unlimited pictures and sounds, themes, 30 card makes a day and more. There is no App Store app yet. Support: team@lucida.cards.",
+  "intro": "Lucida is a flashcard app that runs in the browser at app.lucida.cards, on phones, tablets and computers. It plans every review with FSRS spaced repetition. Lucida makes cards itself from a PDF, slides, a Word file, caption files, pictures, a recording, a YouTube link, pasted text or a topic, and your own AI (Claude, ChatGPT, Cursor or any app that supports MCP) can also make and edit your cards through Lucida’s MCP link (app.lucida.cards/mcp: the app signs in to Lucida). Studying itself doesn’t need an AI subscription. Cards can be question and answer, fill in the blank, a picture with hidden parts (image occlusion) or sound, and Learn mode quizzes you on them. The free plan has unlimited decks and cards, FSRS reviews, Learn mode, shared decks, live games with friends, up to 100 pictures and sounds, 3 card makes a day, and import and export. Pro costs $5.99 a month or $49.99 a year and adds Stats, exam dates, unlimited pictures and sounds, themes, 30 card makes a day and more. There is no App Store app yet. Support: team@lucida.cards.",
   "pages": {
     "": {
       "label": "Lucida",
@@ -8,7 +8,7 @@
     },
     "pricing": {
       "label": "Pricing",
-      "line": "Free has unlimited decks and cards, Learn mode, sharing, live games and 3 card makes a day; Pro is $5.99 a month or $49.99 a year and adds 30 makes a day, exam dates, weak-spot stats and themes."
+      "line": "Free has unlimited decks and cards, Learn mode, sharing, live games and 3 card makes a day; Pro is $5.99 a month or $49.99 a year and adds Stats, 30 makes a day, exam dates and themes."
     },
     "blog": {
       "label": "Blog",
@@ -134,7 +134,7 @@
     "Every deck keeps its Sources (what its cards were made from), which stay private even on a shared deck, with room for 500 files and 500 MB on Free and 5,000 files and 5 GB on Pro. A deck can also have a Guide written in Markdown, which shows on its public page when the deck is shared.",
     "Your own AI app connects at app.lucida.cards/mcp (it signs in to Lucida) and can add up to 500 cards per request, with no limit from Lucida on the free plan.",
     "Free: unlimited decks and cards, FSRS, Learn mode, shared decks, live games (up to 60 players, no account to join), 3 card makes a day, up to 100 pictures and sounds, import and export.",
-    "Pro: $5.99 a month or $49.99 a year. Adds exam dates, weak-spot stats, unlimited pictures and sounds, themes, hardest cards on decks you share, photo covers, natural voices for sound cards, more AI explanations, 30 card makes a day with more pages, longer recordings and more room for Sources, and tuning to your own reviews.",
+    "Pro: $5.99 a month or $49.99 a year. Adds Stats, exam dates, unlimited pictures and sounds, themes, hardest cards on decks you share, photo covers, natural voices for sound cards, more AI explanations, 30 card makes a day with more pages, longer recordings and more room for Sources, and tuning to your own reviews.",
     "Import: Anki’s Notes in Plain Text export, Quizlet’s Export, CSV, TSV and pasted text. Not .apkg files. Imported cards start as new cards.",
     "Export: one deck as CSV, or everything (decks, cards and review history) as lucida.json.",
     "Privacy: no ads, no selling data, and cards aren’t used to train AI models, per the privacy policy. When you make cards, the text, pictures, audio or topic you give Lucida go to an AI service (a YouTube link goes to Google’s Gemini). Lucida asks for services that say they don’t keep it or train on it, and uploaded files are deleted after the make unless you keep them as the deck’s Source."
