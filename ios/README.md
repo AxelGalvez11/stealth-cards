@@ -57,7 +57,8 @@ The Library makes no cards itself (the owner, 2026-10-02: "remove the library co
 "remove the 'make cards from library'"): no Make box, no Upload, Paste, YouTube and More row, no line of what's due, and its + is New deck and Import
 cards. Its switch is Decks and All cards (no Classes: the owner took them out on 2026-10-02). A brand-new account's Library is three plain tiles
 side by side, New deck, Import cards and Connect AI, with no other words (`StartTiles`, `Screens/LibraryTop.swift`). Cards are made from a
-deck: its cover's + (New card, Make cards, Source, Notes, Upload diagram, Make diagram; an empty deck, where New deck opens, is its cover and nothing under it). News is the bell in Discover's
+deck: its cover's + (New card, Make cards, Source, Notes, Upload diagram, Make diagram). A new deck, where New deck opens, is the same deck page with its four tabs and
+nothing in them yet (the owner, 2026-10-02: "creating new deck should already have the tabs"): its Cards say "No cards yet", with New card and Make cards. News is the bell in Discover's
 header. While a sheet covers the page (Make cards, a source, a diagram, Make diagram), the page under it is hidden from VoiceOver, so only the
 sheet's buttons are found. Boards: `PhoneLibrary` (`-caughtUp`, `-menu open`), `PhoneLibraryFolder`, `PhoneDecksEmpty`, `PhoneDeckEmpty`,
 `PhoneDiscover`.
@@ -240,7 +241,9 @@ parts go up one after another in the same make ("Lecture (part 3 of 12).m4a", wi
 each one's length to the next one's times. A recording longer than the plan makes from is turned away at once with the server's own words (nothing
 is cut or sent); one that can't be cut and is over 25 MB says so. Take a photo shows only on a phone with a camera (the iOS 26 simulator says it can use the camera but has none).
 
-It opens from a deck cover's + › Make cards and + › Source (at Upload; an empty deck's too), a source's More cards, a Guide's Make cards and a diagram's Make cards. Any screen
+It opens from a deck cover's + › Make cards and + › Source (at Upload), an empty deck's Cards (its Make cards), a source's More cards, a Guide's Make cards and a diagram's
+Make cards. Opened from a deck's page it sits over that page, Into deck starts on the deck, and closing or saving comes back to it with no other tab or page in between (the
+owner, 2026-10-02: "pressing '+' should not take user back to the library page"; cards put into another deck open its page on top; the board is `PhoneDeckMake`). Any screen
 opens it with `nav.make(kind:deckId:from:guide:page:text:title:)`, like the web's `/make?source=&deck=&from=&guide=&page=`: `kind` (file, photo,
 record, paste, video, topic, or none), the deck the cards go to, a kept source's id to make more cards from, a deck's id (and its page) to make
 cards from its Guide, and words already in hand (a Guide's selection, which gets no notes).

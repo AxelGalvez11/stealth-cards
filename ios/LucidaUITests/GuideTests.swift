@@ -265,7 +265,8 @@ final class GuideTests: XCTestCase {
     let bare = "Only a guide " + run, bid = person(who, deck: bare, cards: 0)
     act(who, "guide.save", ["deckId": bid, "text": "# Plan\n\nWrite the cards later."])
     let app3 = launch(as: who, ["-open", "deck:" + bare])
-    check(wait(button(app3, "Cards")) && button(app3, "Notes").exists && wait(text(app3, "No cards in this deck yet.")), "a deck with no cards but a Guide keeps its tabs, and says so on Cards")
+    check(wait(button(app3, "Cards")) && button(app3, "Notes").exists && wait(text(app3, "No cards yet")) && button(app3, "New card").exists && button(app3, "Make cards").exists,
+          "a deck with no cards but a Guide keeps its tabs, and says so on Cards (No cards yet, with New card and Make cards)")
     tap(button(app3, "Notes"), "Notes")
     check(wait(line(app3, "Plan")) && line(app3, "Write the cards later.").exists, "and its Notes show the Guide")
   }

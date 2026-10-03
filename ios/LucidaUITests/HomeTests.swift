@@ -8,8 +8,9 @@
 //      count, Learn: the owner, 2026-10-02); no sparkle or New card button, no Due, New and Remembered tiles, no Practice test, no exam line, and the
 //      line under its name says only how many cards; its tabs are Sources, Cards, Notes, Diagrams, right under Study, open on Cards. Its + › Make
 //      cards opens the maker set to the deck, and the cards go into it (and the line still says only how many).
-//   3  An empty deck: its cover ("No cards yet" and +, no Study) and nothing under it; its + › Make cards is set to it; New deck opens a new deck
-//      there.
+//   3  An empty deck is the deck page (the owner, 2026-10-02: "creating new deck should already have the tabs"): its cover's + (no Study), its four
+//      tabs, and Cards' "No cards yet" with New card and Make cards; Make cards opens over the deck and comes back to it, set to it, and the cards go in;
+//      New deck opens a new deck on that page.
 //   4  A brand-new account: the welcome, whose end is the Library: three plain tiles side by side, New deck, Import cards and Connect AI, and no
 //      other words; each opens its page.
 //   5  No Classes (the owner, 2026-10-02: "remove the 'classes' page everywhere"): with a class still on the server (older apps use it), a
@@ -148,17 +149,28 @@ final class HomeTests: AppCase {
     _ = person(who, decks: [("Anatomy", 3)])
     act(who, "deck.add", ["name": empty])
     var app = launch(as: who, ["-open", "deck:" + empty])
-    check(wait(text(app, "No cards yet")) && wait(deckButton(app, "Add")) && !deckButton(app, "Study").exists, "an empty deck's cover has No cards yet and +, and no Study")
-    check(noMaking(app), "and nothing under it: no Make box, no row")
+    check(wait(deckButton(app, "Add")) && !deckButton(app, "Study").exists, "an empty deck's cover has its +, and no Study (nothing to study)")
+    let tabs = deckTabs(app)
+    check(tabs == ["Sources", "Cards", "Notes", "Diagrams"] && button(app, "Cards").isSelected, "it is the deck page, with its four tabs, on Cards (\(tabs))")
+    check(wait(text(app, "No cards yet")) && button(app, "New card").exists && button(app, "Make cards").exists, "Cards says No cards yet, with New card and Make cards")
+    check(noMaking(app), "and no Make box or row")
     snap("home-deck-empty")
-    fromDeckMenu(app, "Add", "Make cards")
+    tap(button(app, "New card"), "New card")
+    check(wait(text(app, "New card")) && (app.textViews.count > 0 || app.textFields.count > 0), "its New card opens the card editor")
+    tap(button(app, "Cancel"), "Cancel")
+    tap(button(app, "Make cards"), "Make cards (the Cards tab's)")
     check(wait(button(app, "A topic")), "its Make cards opens the maker")
+    tap(button(app, "Close"), "Close")
+    check(gone(button(app, "A topic"), 6) && wait(deckButton(app, "Add")) && wait(text(app, "No cards yet")) && !button(app, "New folder").exists, "closing it comes back to the deck, not the Library")
+    fromDeckMenu(app, "Add", "Make cards")
+    check(wait(button(app, "A topic")), "its + › Make cards opens the maker")
     button(app, "A topic").tap()
     check(opened(app, "A topic") && wait(button(app, empty)) && button(app, empty).isSelected, "set to the deck")
     typeInto(app.textFields["Topic"], "Bones of the arm")
     let saved = makeAndSave(app)
     let eid = deck(who, empty)?["id"] as? String ?? ""
     check(saved.hasSuffix(" to " + empty) && cardCount(who, eid) > 0, "the cards go into that deck: “\(saved)”")
+    check(wait(deckButton(app, "Study")) && deckButton(app, "Add").exists && !button(app, "New folder").exists, "and the deck’s page is there with them (Study now), not the Library")
     app.terminate()
     app = launch(as: who)
     tap(button(app, "Add"), "the Library's +")
@@ -168,7 +180,8 @@ final class HomeTests: AppCase {
     let done = app.keyboards.buttons.matching(NSPredicate(format: "label IN {'Done','done','return','Return'}")).firstMatch
     if done.exists { done.tap(); Thread.sleep(forTimeInterval: 0.6) }
     tap(button(app, "Create deck"), "Create deck")
-    check(wait(text(app, "Fresh " + run)) && wait(text(app, "No cards yet")) && wait(deckButton(app, "Add")), "New deck opens the new deck on its empty page, with its +")
+    check(wait(text(app, "Fresh " + run)) && wait(text(app, "No cards yet")) && wait(deckButton(app, "Add")), "New deck opens the new deck’s page, with its +")
+    check(deckTabs(app) == ["Sources", "Cards", "Notes", "Diagrams"], "with its four tabs already there (\(deckTabs(app)))")
   }
 
   // ---------- 4: a brand-new account ----------

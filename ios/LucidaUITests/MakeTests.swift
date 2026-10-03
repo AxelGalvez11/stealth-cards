@@ -15,8 +15,9 @@
 //   11  the recorder: its timer, Pause, Resume, Stop, Discard
 //   12  the recorder stops at the plan's minutes, and a long one is several files (one for every ten minutes)
 //   13  when the AI fails, Try again goes on
-//   14  the ways in: a deck cover's + › Make cards and + › Source (the maker at Upload), set to the deck (the Library's + is New deck and Import cards:
-//       it makes no cards), an empty deck's + (set to that deck), and a new person's +
+//   14  the ways in: a deck cover's + › Make cards and + › Source (the maker at Upload), set to the deck and over it: closing or saving comes back to the
+//       deck, never the Library, and a deck in a folder keeps its way Back to the folder (the owner, 2026-10-02); the Library's + is New deck and Import
+//       cards (it makes no cards); an empty deck's + (set to that deck); and a new person's +
 //   15  the flow opens like the web's /make link (a kind, a deck, a kept source, a Guide)
 //   16  the file picker and the photo picker open
 //   17  a long recording picked from Files (70 minutes, 33 MB) is cut into seven parts of ten minutes, goes up as seven files in order, and its
@@ -590,6 +591,7 @@ final class MakeTests: XCTestCase {
     check(wait(button(app, "Alpha " + run)) && button(app, "Alpha " + run).isSelected, "set to the deck it came from")
     button(app, "Close").tap()
     check(gone(button(app, "Close")), "the X closes it")
+    check(wait(deckButton(app, "Add")) && !button(app, "New folder").exists, "and the deck’s page is there again, not the Library")
     // + › Source: the maker at Upload, set to the deck (a source comes in with the cards made from it)
     fromDeckMenu(app, "Add", "Source")
     check(wait(text(app, "Upload")) && !button(app, "Record a lecture").exists && wait(button(app, "Alpha " + run)) && button(app, "Alpha " + run).isSelected, "+ › Source opens the maker at Upload, set to the deck")
@@ -610,6 +612,21 @@ final class MakeTests: XCTestCase {
     save(app, into: empty, count: n)
     check(decks(who).filter { $0["name"] as? String == empty }.count == 1 && cards(who, in: eid).count == n && decks(who).count == 2, "the cards went into that deck (\(n)), and no new deck was made")
     check(sources(deck(who, empty)).first?["kind"] as? String == "topic", "which keeps the topic as its source")
+    check(wait(deckButton(app, "Study")) && !button(app, "New folder").exists, "saving comes back to that deck’s page, now with its cards (and Study), not the Library")
+    // a deck in a folder: saving stays on its page, and Back still goes to the folder
+    let shelf = "Shelf " + run, fid = act(who, "folder.add", ["name": shelf])["id"] as? String ?? ""
+    act(who, "deck.move", ["id": did, "folder": fid])
+    app = launch(as: who, ["-open", "folder:" + shelf])
+    tap(buttonStarting(app, "Alpha " + run), "the deck in the folder")
+    fromDeckMenu(app, "Add", "Make cards")
+    tap(button(app, "A topic"), "A topic")
+    typeInto(app.textFields["Topic"], "More fun facts")
+    guard makeIt(app, "from a deck in a folder") else { return }
+    let n2 = edits(app).count
+    save(app, into: "Alpha " + run, count: n2)
+    check(wait(deckButton(app, "Study")) && !button(app, "New folder").exists, "saving stays on the deck’s page")
+    tap(button(app, "Back"), "Back")
+    check(wait(button(app, "Rename")) && text(app, shelf).exists, "and Back goes to the folder it was opened from")
     // a brand-new person's +
     app = launch(as: "mkz" + run)
     check(wait(button(app, "New deck")), "a person with no decks has a + that makes a deck, as the canvas has it")
