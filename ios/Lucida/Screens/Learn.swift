@@ -243,43 +243,33 @@ private struct LearnBody: View {
     }
   }
 
-  /// Explain, a round button just after the gear and its size (the owner, 2026-10-02, as on a flashcard: "move it upper right
-  /// similar shape to the flashcard settings"), once the question is answered: pressed while the explanation is open, and pressing
-  /// it again closes it. Its place is kept while the question waits for its answer, so the bar beside it doesn't move. (Matching
-  /// has no explanation.)
+  /// Explain, a round button just before the gear and its size (the owner, 2026-10-02, as on a flashcard: "move it upper right similar shape
+  /// to the flashcard settings"; canvas V179 put the two at the row's end). It shows whenever the card can be explained, faded and disabled
+  /// until the question is answered; pressed while the explanation is open, and pressing it again closes it. (Matching has no explanation.)
   @ViewBuilder private func explainButton(_ v: LearnView) -> some View {
     let ex = explanation(v), answered = v.type == "type" ? v.checked : v.pick != nil
     if v.type != "match" && ex.on && !v.id.isEmpty {
-      if answered {
-        let open = exFor == v.id, k = look
-        Button {
-          if open { exFor = nil; return }
-          exFor = v.id
-          if store.demo { exMock = true } else if ex.text.isEmpty { Task { await store.explain(v.id, question: v.text) } }
-        } label: {
-          Icon("sparkle", 18, 2).foregroundStyle(open ? k.btnFg : k.ink).frame(width: 44, height: 44).background(Circle().fill(open ? k.btn : k.chip))
-        }
-        .buttonStyle(.press).accessibilityLabel("Explain").accessibilityAddTraits(open ? .isSelected : [])
-      } else {
-        Color.clear.frame(width: 44, height: 44)
+      let open = answered && exFor == v.id, k = look
+      Button {
+        guard answered else { return }
+        if open { exFor = nil; return }
+        exFor = v.id
+        if store.demo { exMock = true } else if ex.text.isEmpty { Task { await store.explain(v.id, question: v.text) } }
+      } label: {
+        Icon("sparkle", 18, 2).foregroundStyle(open ? k.btnFg : k.ink).frame(width: 44, height: 44).background(Circle().fill(open ? k.btn : k.chip))
       }
+      .buttonStyle(.press).disabled(!answered).opacity(answered ? 1 : 0.4)
+      .accessibilityLabel("Explain").accessibilityAddTraits(open ? .isSelected : [])
     }
   }
 
-  // The top: stop (back to the deck's page; you can pick up where you stopped), settings, progress through the set
-  // (learned purple, still learning light purple), and the count, on soft glass chips over the sky.
+  // The top (canvas V179): stop (back to the deck's page; you can pick up where you stopped), progress through the set (learned purple,
+  // still learning light purple), the count, then Explain and settings, on soft glass chips over the sky.
   private func top(_ v: LearnView) -> some View {
     let k = look
     return HStack(spacing: 12) {
       Button { nav.leave(to: deckId) } label: { Icon("close", 18, 2).foregroundStyle(k.ink).frame(width: 44, height: 44).background(Circle().fill(k.chip)) }
         .buttonStyle(.press).accessibilityLabel("Stop for now")
-      HStack(spacing: 8) {
-        Button { withAnimation(Motion.sheet) { settingsOpen.toggle() } } label: {
-          Icon("gear", 18, 2).foregroundStyle(settingsOpen ? k.btnFg : k.ink).frame(width: 44, height: 44).background(Circle().fill(settingsOpen ? k.btn : k.chip))
-        }
-        .buttonStyle(.press).accessibilityLabel("Learn settings")
-        explainButton(v)
-      }
       GeometryReader { g in
         HStack(spacing: 0) {
           k.bar.frame(width: g.size.width * CGFloat(v.learned) / CGFloat(max(1, v.total)))
@@ -295,6 +285,14 @@ private struct LearnBody: View {
         .overlay(alignment: .topTrailing) {
           if v.justLearned > 0 { PlusOne(color: k.bar).offset(x: 24, y: -3) }
         }
+      // (canvas V179: Explain, then the gear, at the end of the row)
+      HStack(spacing: 8) {
+        explainButton(v)
+        Button { withAnimation(Motion.sheet) { settingsOpen.toggle() } } label: {
+          Icon("gear", 18, 2).foregroundStyle(settingsOpen ? k.btnFg : k.ink).frame(width: 44, height: 44).background(Circle().fill(settingsOpen ? k.btn : k.chip))
+        }
+        .buttonStyle(.press).accessibilityLabel("Learn settings")
+      }
     }
   }
 
@@ -366,7 +364,8 @@ private struct LearnBody: View {
           .onChange(of: store.explaining) { _, _ in if exFor != nil { reveal(proxy) } }
           // (a question sent, its answer come, or the keyboard up: the explanation's end, where the composer is, stays in view)
           .onChange(of: store.chats) { _, _ in if exFor != nil { reveal(proxy) } }
-          .onChange(of: keyboard.height) { _, h in if exFor != nil && asking && h > 0 { reveal(proxy) } }
+          .onChange(of: keyboard.height) { _, h in if exFor != nil && asking && h > 0 { reveal(proxy, settle: true) } }
+          .onChange(of: asking) { _, on in if exFor != nil && on && keyboard.height > 0 { reveal(proxy, settle: true) } }
       }
       if !(asking && keyboard.height > 0) { bottom() }
     }
@@ -377,11 +376,11 @@ private struct LearnBody: View {
   }
 
   /// Scrolls the open explanation (the one place it opens: `.id("explanation")`) to the bottom of the screen, at once.
-  private func reveal(_ proxy: ScrollViewProxy) {
-    DispatchQueue.main.async {
-      var tx = Transaction(); tx.disablesAnimations = true
-      withTransaction(tx) { proxy.scrollTo("explanation", anchor: .bottom) }
-    }
+  /// (`settle`: again once the page has made room for the keyboard, which takes a moment)
+  private func reveal(_ proxy: ScrollViewProxy, settle: Bool = false) {
+    let go = { var tx = Transaction(); tx.disablesAnimations = true; withTransaction(tx) { proxy.scrollTo("explanation", anchor: .bottom) } }
+    DispatchQueue.main.async(execute: go)
+    if settle { DispatchQueue.main.asyncAfter(deadline: .now() + 0.4, execute: go) }
   }
 
   // A choice question (multiple choice, true or false, fill in the blank). A question the learner's AI wrote brings its

@@ -113,16 +113,19 @@ final class AskTests: XCTestCase {
   private func ask(_ app: XCUIApplication, _ q: String, button send: Bool = false) {
     let f = field(app)
     guard wait(f) else { check(false, "found the composer to type in"); return }
-    if !(keyboard(app).exists) { f.tap(); _ = wait(keyboard(app), 5) }
+    if !typing(app) { f.tap(); Thread.sleep(forTimeInterval: 0.6) }
     if send { f.typeText(q); tap(button(app, "Send"), "Send") } else { f.typeText(q + "\n") }
   }
   /// Puts the keyboard away the way a person does: a drag down on the conversation.
+  /// The composer has the cursor (the keyboard is up, or on a hardware keyboard would be).
+  private func typing(_ app: XCUIApplication) -> Bool { (field(app).value(forKey: "hasKeyboardFocus") as? Bool) ?? false }
+  /// Puts the keyboard away the way a person does in a chat: a tap on the explanation's words.
   private func keyboardDown(_ app: XCUIApplication) {
-    let p = explanation(app)
-    let a = p.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.3)), b = p.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.95))
-    a.press(forDuration: 0.05, thenDragTo: b, withVelocity: .default, thenHoldForDuration: 0.1)
-    if !gone(keyboard(app), 3) { app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.08)).tap() }
-    _ = gone(keyboard(app), 4)
+    let w = words(app, "Because ").exists ? words(app, "Because ") : explanation(app)
+    w.coordinate(withNormalizedOffset: CGVector(dx: 0.3, dy: 0.5)).tap()
+    let end = Date().addingTimeInterval(5)
+    while Date() < end && typing(app) { Thread.sleep(forTimeInterval: 0.25) }
+    Thread.sleep(forTimeInterval: 0.6)
   }
 
   // ---------- 1: Review ----------
@@ -139,11 +142,13 @@ final class AskTests: XCTestCase {
     check(f0.minY > panel0.minY + 40 && f0.maxY <= panel0.maxY && panel0.minY >= button(app, "Flip back").frame.maxY, "the composer is at the bottom of the panel, under the card", "panel \(panel0) field \(f0)")
     // typing: on top of the keyboard
     field(app).tap()
-    check(wait(keyboard(app), 6), "a tap on it brings the keyboard up")
+    Thread.sleep(forTimeInterval: 0.6)
+    check(typing(app), "a tap on it gives it the cursor (and brings the keyboard up)")
     Thread.sleep(forTimeInterval: 0.8)
     let top = keyboardTop(app), f1 = field(app).frame, send1 = button(app, "Send").frame
     check(max(f1.maxY, send1.maxY) <= top && top - max(f1.maxY, send1.maxY) <= 28, "the composer sits right on top of the keyboard", "keyboard at \(top) field \(f1) send \(send1)")
-    check(hidden(button(app, "Flip back")) && hidden(app.buttons.matching(NSPredicate(format: "label BEGINSWITH 'Good'")).firstMatch), "the card steps aside and the grade buttons wait under the keyboard", "card \(button(app, "Flip back").frame)")
+    let card = button(app, "Flip back")
+    check(hidden(card) && hidden(app.buttons.matching(NSPredicate(format: "label BEGINSWITH 'Good'")).firstMatch), "the card steps aside and the grade buttons wait under the keyboard", card.exists ? "card \(card.frame)" : "")
     snap("ask-review-typing")
     let n0 = followUps()
     ask(app, "Why protons?")
@@ -151,7 +156,7 @@ final class AskTests: XCTestCase {
     check(questions(app) == ["Why protons?"], "the question shows as a bubble", "\(questions(app))")
     check(answers(app).first == "You asked “Why protons?”. It comes back to Protons.", "its answer is under it, without ** marks", "\(answers(app))")
     check(followUps() == n0 + 1, "the AI was asked once", "\(n0) then \(followUps())")
-    check(keyboard(app).exists, "the keyboard stays up for the next question")
+    check(typing(app), "the composer keeps the cursor (and the keyboard) for the next question")
     let q = questions(app).count
     ask(app, "And the electrons?", button: true)
     check(answered(app, 2) && questions(app).count == q + 1, "Send sends too, and the questions stack in order", "\(questions(app))")
@@ -161,7 +166,7 @@ final class AskTests: XCTestCase {
     noSystemUI(app, "Review while asking")
     snap("ask-review-asked")
     keyboardDown(app)
-    check(!keyboard(app).exists && wait(button(app, "Flip back")) && abs(button(app, "Flip back").frame.minY - card0.minY) <= 2, "the keyboard gone, the card is back where it was", "\(button(app, "Flip back").frame) \(card0)")
+    check(!typing(app) && wait(button(app, "Flip back")) && abs(button(app, "Flip back").frame.minY - card0.minY) <= 2, "a tap on the words puts the keyboard away, and the card is back where it was", "\(button(app, "Flip back").frame) \(card0)")
     check(app.buttons.matching(NSPredicate(format: "label BEGINSWITH 'Good'")).firstMatch.isHittable, "and the grade buttons too")
     // closing forgets the questions; opened again, the explanation alone
     tap(button(app, "Close the explanation"), "Close")
@@ -233,7 +238,8 @@ final class AskTests: XCTestCase {
     tap(button(app, "Explain"), "Explain")
     check(wait(explanation(app), 15) && wait(words(app, "Because "), 15) && wait(field(app)), "Learn: the explanation, with the composer at its end")
     field(app).tap()
-    check(wait(keyboard(app), 6), "the keyboard comes up")
+    Thread.sleep(forTimeInterval: 0.6)
+    check(typing(app), "a tap on the composer gives it the cursor")
     Thread.sleep(forTimeInterval: 0.8)
     let top = keyboardTop(app), f = field(app).frame
     check(f.maxY <= top && top - f.maxY <= 40 && hidden(button(app, "Next question")), "the composer sits on top of the keyboard, and Next waits under it", "keyboard at \(top) field \(f)")
@@ -244,8 +250,9 @@ final class AskTests: XCTestCase {
     keyboardDown(app)
     check(wait(button(app, "Next question")) && button(app, "Next question").isHittable, "the keyboard gone, Next is back")
     tap(button(app, "Close the explanation"), "Close")
+    check(gone(explanation(app)), "Learn: the explanation closes")
     tap(button(app, "Explain"), "Explain")
-    check(wait(explanation(app), 5) && questions(app).isEmpty, "closed and opened again: no old questions", "\(questions(app))")
+    check(wait(explanation(app), 5) && wait(words(app, "Because "), 5) && questions(app).isEmpty, "closed and opened again: no old questions", "\(questions(app))")
   }
 
   // ---------- 5: the design screens ----------

@@ -171,22 +171,32 @@ struct ExplainPanel: View {
   var ask: (String) -> Void = { _ in }
   var body: some View {
     let talk = !ex.text.isEmpty && !ex.busy, side = max(6, pad.h - 10)
-    let core = VStack(alignment: .leading, spacing: 0) {
-      header.padding(.horizontal, pad.h).padding(.top, pad.v)
-      if cap != nil { ExplainScroll(fill: fill, last: ex.turns.last?.id) { words.padding(.horizontal, pad.h).padding(.vertical, look.gap) } }
-      else { words.padding(.horizontal, pad.h).padding(.vertical, look.gap) }
+    let bottom = Group {
       if talk {
         if let l = ex.limit { ExplainLimitLine(limit: l, look: look).padding(.horizontal, pad.h).padding(.bottom, pad.v) }
         else { ExplainComposer(look: look, busy: ex.turns.contains { $0.busy }, onFocus: onFocus, send: ask).padding(.horizontal, side).padding(.bottom, side) }
       } else { Color.clear.frame(height: max(0, pad.v - look.gap)) }
     }
+    Group {
+      if let cap {
+        // (Review: the header and the composer stay, and the explanation and its questions scroll between them once they're taller than the
+        // room; while a question is typed the panel takes all of it)
+        ExplainPanelLayout(cap: cap, fill: fill) {
+          header.padding(.horizontal, pad.h).padding(.top, pad.v)
+          ExplainScroll(last: ex.turns.last?.id) { words.padding(.horizontal, pad.h).padding(.vertical, look.gap) }
+          bottom
+        }
+      } else {
+        VStack(alignment: .leading, spacing: 0) {
+          header.padding(.horizontal, pad.h).padding(.top, pad.v)
+          words.padding(.horizontal, pad.h).padding(.vertical, look.gap)
+          bottom
+        }
+      }
+    }
     .frame(maxWidth: .infinity, alignment: .topLeading)
     .accessibilityElement(children: .contain)
     .accessibilityLabel("Explanation")
-    Group {
-      if let cap, !fill { AtMost(height: cap) { core } }
-      else { core.frame(maxHeight: fill ? .infinity : nil, alignment: .top) }
-    }
   }
 
   private var header: some View {
@@ -222,30 +232,51 @@ struct ExplainPanel: View {
       if !ex.note.isEmpty && !ex.text.isEmpty && ex.limit == nil { Text(ex.note).css(12).foregroundStyle(look.ink2) }
     }
     .frame(maxWidth: .infinity, alignment: .leading)
+    // (a tap on the explanation or its questions puts the keyboard away, as in a chat)
+    .contentShape(Rectangle())
+    .onTapGesture { Keyboard.hide() }
   }
 }
 
-/// The explanation and the conversation in Review: as tall as they are, or scrolling in the room the header and the composer leave (all of it
-/// while a question is typed), the newest question brought up.
+/// The explanation and the conversation in Review, in the room the panel's layout gives them (scrolling once they're taller), the newest
+/// question brought up.
 private struct ExplainScroll<Content: View>: View {
-  let fill: Bool
   let last: UUID?
   @ViewBuilder var content: Content
   var body: some View {
     ScrollViewReader { proxy in
-      Group {
-        if fill { ScrollView(showsIndicators: false) { content }.scrollDismissesKeyboard(.interactively) }
-        else { ViewThatFits(in: .vertical) { content; ScrollView(showsIndicators: false) { content } } }
-      }
-      // (also when it opens with questions in it: a design screen, or the room changing while a question is typed)
-      .onChange(of: last, initial: true) { _, id in
-        guard let id else { return }
-        let go = { var tx = Transaction(); tx.disablesAnimations = true; withTransaction(tx) { proxy.scrollTo(id, anchor: .top) } }
-        DispatchQueue.main.async(execute: go)
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3, execute: go)
-      }
-      .onChange(of: fill) { _, _ in if let id = last { DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) { var tx = Transaction(); tx.disablesAnimations = true; withTransaction(tx) { proxy.scrollTo(id, anchor: .top) } } } }
+      ScrollView(showsIndicators: false) { content }
+        .scrollBounceBehavior(.basedOnSize)
+        .scrollDismissesKeyboard(.interactively)
+        .onAppear { if let id = last { DispatchQueue.main.async { proxy.scrollTo(id, anchor: .top) } } }
+        .onChange(of: last) { _, id in
+          guard let id else { return }
+          DispatchQueue.main.async { var tx = Transaction(); tx.disablesAnimations = true; withTransaction(tx) { proxy.scrollTo(id, anchor: .top) } }
+        }
     }
+  }
+}
+
+/// Review's panel: the header on top and the composer at the bottom, at their own heights, and the scrolling middle between them, the whole
+/// as tall as all three or `cap` (all of `cap` with `fill`).
+private struct ExplainPanelLayout: Layout {
+  let cap: CGFloat
+  let fill: Bool
+  private func heights(_ width: CGFloat?, _ subviews: Subviews) -> (top: CGFloat, middle: CGFloat, bottom: CGFloat) {
+    guard subviews.count == 3 else { return (0, 0, 0) }
+    let p = ProposedViewSize(width: width, height: nil)
+    return (subviews[0].sizeThatFits(p).height, subviews[1].sizeThatFits(p).height, subviews[2].sizeThatFits(p).height)
+  }
+  func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
+    let h = heights(proposal.width, subviews), room = min(cap, proposal.height ?? cap)
+    return CGSize(width: proposal.width ?? 0, height: fill ? room : min(room, h.top + h.middle + h.bottom))
+  }
+  func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) {
+    guard subviews.count == 3 else { return }
+    let h = heights(bounds.width, subviews), middle = max(0, bounds.height - h.top - h.bottom)
+    subviews[0].place(at: bounds.origin, proposal: ProposedViewSize(width: bounds.width, height: h.top))
+    subviews[1].place(at: CGPoint(x: bounds.minX, y: bounds.minY + h.top), proposal: ProposedViewSize(width: bounds.width, height: middle))
+    subviews[2].place(at: CGPoint(x: bounds.minX, y: bounds.maxY - h.bottom), proposal: ProposedViewSize(width: bounds.width, height: h.bottom))
   }
 }
 

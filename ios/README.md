@@ -546,7 +546,7 @@ when a check fails) and then lists every haptic in the app.
   view without sliding. A short fade, none with Reduce Motion. (The web app does the same on a phone; on a computer it opens beside the card.) On a
   flashcard its button is round, in the top bar just left of Review settings and the same size (the owner, 2026-10-02: "move it upper right similar
   shape to the flashcard settings"): it shows once the card is turned over (its place is kept meanwhile, so the progress bar doesn't move), is
-  pressed while the explanation is open, and closes it when pressed again. Learn mode has the same round button, just after its gear (`Screens/Learn.swift`);
+  pressed while the explanation is open, and closes it when pressed again. Learn mode has the same round button at the end of its top row, just before its gear (the row is Stop, the progress, N/M, Explain and the gear: canvas V179), faded and disabled until the question is answered (`Screens/Learn.swift`);
   the practice test's results keep the small `ExplainButton` on each question.
 - **Asking about the card** (`Screens/Explain.swift`: `ExplainComposer`, `ExplainTurns`, `Store.followUp`; the web's design/chat.mjs): every explanation ends
   with "Ask about this card" and a round Send. Return sends (on a hardware keyboard Shift+Return is a new line); the question is a short bubble on the right

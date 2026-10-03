@@ -261,9 +261,12 @@ private struct ReviewBody: View {
     return GeometryReader { g in
       let cardH = open ? min(g.size.height, ThemeLayout.reviewCardOpen.height) : g.size.height
       VStack(spacing: typing ? 0 : 12) {
-        // (it stays where it is while it steps aside, so it comes back as it was)
-        FlipCard(card: rv.card, revealed: revealed, moved: moved, done: rv.done, tap: { flips += 1; withAnimation(nil) { moved = false }; revealed.toggle() }, compact: open)
-          .frame(height: typing ? 0 : cardH).opacity(typing ? 0 : 1).clipped().accessibilityHidden(typing)
+        // (it steps aside while a question is typed, and comes back as it was: which side shows is the review's, not the card's)
+        if !typing {
+          FlipCard(card: rv.card, revealed: revealed, moved: moved, done: rv.done, tap: { flips += 1; withAnimation(nil) { moved = false }; revealed.toggle() }, compact: open)
+            .frame(height: cardH)
+            .transition(.opacity)
+        }
         Group {
           if open { panel(rv, ex, max: typing ? g.size.height : max(0, g.size.height - cardH - 12), fill: typing).transition(.opacity) }
         }

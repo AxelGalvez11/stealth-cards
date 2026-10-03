@@ -400,12 +400,15 @@ struct TestScreen: View {
         }
         ForEach(rows) { r in row(r) }
       }
-      .padding(.horizontal, 16).padding(.top, Screen.top(58)).padding(.bottom, asking != nil && keyboard.height > 0 ? keyboard.height + 12 : 40)
+      .padding(.horizontal, 16).padding(.top, Screen.top(58)).padding(.bottom, 40)
     }
     .scrollDismissesKeyboard(.interactively)
-    // (the composer being typed in stays in sight above the keyboard, and so does the answer coming in)
-    .onChange(of: keyboard.height) { _, h in if h > 0, let n = asking { DispatchQueue.main.async { withAnimation(curve(0.25)) { proxy.scrollTo("ask\(n)", anchor: .bottom) } } } }
-    .onChange(of: store.chats) { _, _ in if let n = asking { DispatchQueue.main.async { withAnimation(curve(0.25)) { proxy.scrollTo("ask\(n)", anchor: .bottom) } } } }
+    // (while a question is typed the results end at the keyboard, which this page otherwise runs under, and the composer being typed in
+    // stays in sight above it, and so does the answer coming in)
+    .padding(.bottom, asking != nil ? keyboard.height : 0)
+    .onChange(of: keyboard.height) { _, h in if h > 0, let n = asking { showAsk(proxy, n) } }
+    .onChange(of: asking) { _, n in if let n, keyboard.height > 0 { showAsk(proxy, n) } }
+    .onChange(of: store.chats) { _, _ in if let n = asking { showAsk(proxy, n) } }
     // (a design screen with question 3's explanation open starts there, as the board's Tweak does)
     .onAppear { if store.demo && store.props.explainOpen { DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { proxy.scrollTo("ask3", anchor: .bottom) } } }
     }
@@ -490,6 +493,12 @@ struct TestScreen: View {
     .accessibilityIdentifier("testRow\(r.n)")
   }
 
+  /// Brings question `n`'s composer to the bottom of what shows, at once and again once the page has made room for the keyboard.
+  private func showAsk(_ proxy: ScrollViewProxy, _ n: Int) {
+    let go = { withAnimation(curve(0.25)) { proxy.scrollTo("ask\(n)", anchor: .bottom) } }
+    DispatchQueue.main.async(execute: go)
+    DispatchQueue.main.asyncAfter(deadline: .now() + 0.4, execute: go)
+  }
   /// Where a question's conversation is kept: its card's (the design screen's sample question has no card).
   private func chatKey(_ r: TestRowView) -> String { r.card.isEmpty ? "test\(r.n)" : r.card }
 
