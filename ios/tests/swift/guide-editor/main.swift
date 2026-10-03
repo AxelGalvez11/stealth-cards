@@ -13,7 +13,7 @@ struct Down: LocalizedError { var errorDescription: String? { "Couldn’t reach 
 /// What the stand-in server saw: every save (deck, page, text, when it began and ended), and how it should behave.
 @MainActor final class Spy {
   var saves: [(deck: String, page: String, text: String, began: Double, ended: Double)] = []
-  var renames: [(String, String, String)] = [], restores: [(String, String, Double)] = [], deletes: [(String, String)] = [], adds: [String] = [], histories = 0
+  var renames: [(String, String, String)] = [], restores: [(String, String, Double)] = [], deletes: [(String, String)] = [], adds: [String] = [], addParents: [String] = [], histories = 0
   var failNext = 0, saveTime = 0.0
   var t0 = Date()
   var now: Double { Date().timeIntervalSince(t0) }
@@ -25,7 +25,7 @@ struct Down: LocalizedError { var errorDescription: String? { "Couldn’t reach 
       if saveTime > 0 { await sleep(saveTime) }
       saves.append((d, p, text, began, now))
     }
-    e.addPage = { [unowned self] d, title in adds.append(title); return "g9" }
+    e.addPage = { [unowned self] d, title, parent in adds.append(title); addParents.append(parent); return "g9" }
     // (Like a real request, it stops if the task it runs in was cancelled.)
     e.rename = { [unowned self] d, p, title in try Task.checkCancellation(); renames.append((d, p, title)) }
     e.delete = { [unowned self] d, p in deletes.append((d, p)) }
@@ -101,8 +101,8 @@ struct Down: LocalizedError { var errorDescription: String? { "Couldn’t reach 
     let spy = Spy()
     let m = make(spy, delay: 5)
     m.type("words")
-    await m.addPage()
-    check(spy.saves.count == 1 && spy.adds == ["New page"] && m.page == "g9" && !m.historyOpen, "Add page sends what is waiting, makes the page, and writes on it")
+    await m.addPage(inside: "main")
+    check(spy.saves.count == 1 && spy.adds == ["New page"] && spy.addParents == ["main"] && m.page == "g9" && !m.historyOpen, "Add a page inside sends what is waiting, makes the page inside the open one, and writes on it")
     m.type("page"); await m.flush()
     await m.deletePage()
     check(spy.deletes.count == 1 && spy.deletes[0] == ("d1", "g9") && m.page == "main" && m.drafts["d1|g9"] == nil, "deleting a page goes back to the Guide and forgets what was typed for it")

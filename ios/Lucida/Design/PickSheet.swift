@@ -1,5 +1,5 @@
 // A list to pick from, in a sheet over the page (the boards' pickSheet): Discover's Level, Subject, and School filters, Edit profile's
-// School, and a deck's labels in its Sharing settings. A short list (the five levels) is a short sheet; a long one (the thirty
+// School, a deck's labels in its Sharing settings, and a page of notes' outline (its headings as a tree: `tree`). A short list (the five levels) is a short sheet; a long one (the thirty
 // subjects) or a search (the school list: nothing shows until something is typed) is a tall one. Picking a row closes it.
 import SwiftUI
 
@@ -8,6 +8,8 @@ struct PickRow: Identifiable, Hashable {
   /// Its words, and a line under them (a school's city and state).
   let words: String
   var sub = ""
+  /// How far in it is, in a tree (an outline's subheading: 1, then 2).
+  var level = 0
 }
 
 /// What a screen asks to pick from. `choose` gets the row (nil for the "any" row: nothing picked).
@@ -22,6 +24,8 @@ struct PickRequest: Identifiable {
   var any = ""
   var placeholder = "Search schools", noneLine = "Nothing matches"
   var full = false
+  /// A tree (a page of notes' outline, web/notes.js's sheet): a row further in by its level, and the one now in bold instead of a check.
+  var tree = false
   /// What's typed to start with (a design screen).
   var query = ""
   /// A search may offer what was typed as it is ("Other: “…”"): the words of that row, and what picking it does.
@@ -109,13 +113,13 @@ struct PickSheet: View {
     return Button { r.choose(row.id.isEmpty ? nil : row); close() } label: {
       HStack(spacing: 10) {
         VStack(alignment: .leading, spacing: 1) {
-          Text(row.words).css(16).lineLimit(1).line(16)
+          Text(row.words).css(16, r.tree && on ? .semibold : .regular).lineLimit(1).line(16)
           if !row.sub.isEmpty { Text(row.sub).css(13).foregroundStyle(t.muted).lineLimit(1).line(13) }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        if on { Icon("check", 15, 2.4) }
+        if on && !r.tree { Icon("check", 15, 2.4) }
       }
-      .padding(.horizontal, 4).padding(.vertical, 8).frame(minHeight: 52)
+      .padding(.leading, r.tree ? 4 + CGFloat(min(2, max(0, row.level))) * 18 : 4).padding(.trailing, 4).padding(.vertical, 8).frame(minHeight: 52)
       .overlay(alignment: .bottom) { Rectangle().fill(t.line).frame(height: 1) }
       .contentShape(Rectangle())
     }

@@ -9,7 +9,7 @@ import { diagramBlocks, publicDiagramBlocks, DIAGRAMS_JS, DIAGRAMS_MOCK, DIAGRAM
 
 // What the Make boards' "step" picker offers on the canvas (the app's own flow follows web/make.js).
 import { dropMarkup, dropSheet, dropPill, DROP_JS, playerMarkup } from './ui.mjs';
-import { MOTION, EASE } from './motion.mjs';
+import { MOTION, EASE, EASE_OUT } from './motion.mjs';
 export const MAKE_STEPS = ['Pick', 'Upload', 'Upload (a file added)', 'Upload (picture cards on)', 'Photos', 'Camera', 'Record', 'Recording', 'Paused', 'Paste', 'Paste (a language set)', 'Paste (language list)', 'YouTube', 'YouTube transcript', 'Topic', 'More from a source',
   'Making', 'Making a recording', 'Review', 'Review (notes open)', 'Review (notes off)', 'Review (no room for notes)', 'Review (audio cards)', 'Review (picture cards)', 'Review (editing a card)', 'Limit reached', 'File too big', 'Error'];
 
@@ -329,10 +329,37 @@ export const NOTES_CSS = [
   '.nb-phone>.nb-doc{padding-bottom:calc(8px + var(--nb-kb, 0px))}',
   '.nb-kb{height:40px;min-width:46px;flex-shrink:0;padding:0 8px;border:0;border-radius:10px;background:transparent;color:var(--gd-text);font:inherit;font-size:17px;display:flex;align-items:center;justify-content:center;cursor:pointer}.nb-kb.nb-on{background:var(--nb-surf)}.nb-kb b{font-weight:800}.nb-kb i{font-family:Georgia,serif}',
   '.nb-kt{font-size:15px;font-weight:600}.nb-aa{font-size:17px;font-weight:700;letter-spacing:-.02em}.nb-kgap{flex-grow:1}',
-  '@media (prefers-reduced-motion:reduce){.nb-in,.nb-menu.nb-show,.nb-bar.nb-show{animation:none}.nb-tg svg,.nb-fold svg,.nb-fold{transition:none}}'
+  // the outline (web/notes.js): a box that stays in view at the top of the note (--nb-otl-top below the top of what scrolls it) with the rail at its right
+  // (--nb-otl-x past the note's edge): a short line for each heading, a subheading's shorter and further in, the one being read in the words' color; the card of
+  // headings opens over the rail, toward the note, in a quick fade; on a phone the lines are smaller and the tree is a sheet from the bottom
+  '.nb-otlw{position:sticky;top:var(--nb-otl-top,24px);height:0;z-index:20}.nb-otlw.nb-otl-off{display:none}.nb-otl{position:absolute;top:0;right:calc(-1 * var(--nb-otl-x, 40px))}',
+  '.nb-otl-rail{display:flex;flex-direction:column;align-items:flex-end;gap:8px;margin:0;padding:8px 6px;border:0;border-radius:8px;background:transparent;cursor:pointer;-webkit-tap-highlight-color:transparent}',
+  `.nb-otl-line{display:block;width:16px;height:2px;border-radius:1px;background:var(--gd-muted);opacity:.35;transition:opacity ${s3(MOTION.fade)} ease,background-color ${s3(MOTION.fade)} ease}.nb-otl-line.nb-i1{width:12px}.nb-otl-line.nb-i2{width:8px}.nb-otl-line.nb-cur{background:var(--gd-text);opacity:1}.nb-otl-still>.nb-otl-line{transition:none}`,
+  `.nb-otl-panel{position:absolute;top:-6px;right:0;width:264px;max-height:min(440px,calc(100vh - 160px));overflow-y:auto;scrollbar-width:thin;box-sizing:border-box;padding:6px;border-radius:16px;background:var(--nb-bg);box-shadow:0 0 0 1px var(--gd-line),0 18px 44px rgba(0,0,0,.18);display:flex;flex-direction:column;gap:1px;text-shadow:none;opacity:0;visibility:hidden;transition:opacity ${s3(MOTION.fade)} ease,visibility 0s linear ${s3(MOTION.fade)}}`,
+  `.nb-otl.nb-otl-open>.nb-otl-panel{opacity:1;visibility:visible;transition:opacity ${s3(MOTION.fade)} ease}`,
+  '.nb-otl-item{flex-shrink:0;display:block;width:100%;box-sizing:border-box;padding:6px 10px;border:0;border-radius:10px;background:transparent;color:var(--gd-text);font:inherit;font-size:14px;font-weight:400;line-height:1.35;text-align:left;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer}',
+  '.nb-otl-item.nb-i1{padding-left:24px}.nb-otl-item.nb-i2{padding-left:38px}.nb-otl-item:hover{background:var(--nb-surf)}.nb-otl-item.nb-cur{font-weight:600}',
+  '.nb-phone .nb-otl-rail{gap:6px;padding:8px 4px}.nb-phone .nb-otl-line{width:12px}.nb-phone .nb-otl-line.nb-i1{width:9px}.nb-phone .nb-otl-line.nb-i2{width:6px}',
+  '.nb-otl-sheetw{position:absolute;inset:0;z-index:70;line-height:1.3;overflow-wrap:normal;pointer-events:auto}.nb-otl-sheetw.nb-otl-fixed{position:fixed;z-index:90}',
+  `@keyframes nbScrimIn{from{opacity:0}}@keyframes nbSheetIn{from{transform:translateY(100%)}}@keyframes nbScrimOut{to{opacity:0}}@keyframes nbSheetOut{to{transform:translateY(100%)}}`,
+  `.nb-otl-scrim{position:absolute;inset:0;background:var(--nb-dim,rgba(0,0,0,.28));animation:nbScrimIn ${s3(MOTION.sheet)} ease backwards}.nb-otl-gone>.nb-otl-scrim{animation:nbScrimOut ${s3(MOTION.leave)} ease forwards}`,
+  `.nb-otl-sheet{position:absolute;left:0;right:0;bottom:0;max-height:calc(100% - 56px);box-sizing:border-box;padding:20px 20px 34px;border-radius:32px 32px 0 0;background:var(--nb-bg);color:var(--gd-text);display:flex;flex-direction:column;gap:14px;overflow:hidden;animation:nbSheetIn ${s3(MOTION.sheet)} ${EASE} backwards}.nb-otl-gone>.nb-otl-sheet{animation:nbSheetOut ${s3(MOTION.leave)} ${EASE_OUT} forwards}`,
+  '.nb-otl-shead{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-shrink:0}.nb-otl-stitle{font-size:20px;font-weight:600;letter-spacing:-.02em}',
+  '.nb-otl-x{width:36px;height:36px;flex-shrink:0;padding:0;border:0;border-radius:18px;background:var(--nb-surf);color:var(--gd-text);display:flex;align-items:center;justify-content:center;cursor:pointer}',
+  '.nb-otl-list{min-height:0;overflow-y:auto;scrollbar-width:none;display:flex;flex-direction:column}',
+  '.nb-otl-row{flex-shrink:0;min-height:52px;box-sizing:border-box;padding:8px 4px;border:0;border-bottom:1px solid var(--gd-line);background:transparent;color:var(--gd-text);font:inherit;font-size:16px;font-weight:400;text-align:left;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer}',
+  '.nb-otl-row.nb-i1{padding-left:22px}.nb-otl-row.nb-i2{padding-left:40px}.nb-otl-row.nb-cur{font-weight:600}',
+  // (a tap puts the keyboard's focus on the sheet itself, which shows no ring; a key, on a row, whose ring sits inside it so the list's edge doesn't cut it)
+  '.nb-otl-sheetw .nb-otl-sheet:focus{outline:none}.nb-otl-sheetw .nb-otl-row:focus-visible{outline-offset:-2px}',
+  '@media (prefers-reduced-motion:reduce){.nb-in,.nb-menu.nb-show,.nb-bar.nb-show{animation:none}.nb-tg svg,.nb-fold svg,.nb-fold{transition:none}',
+  '.nb-otl-line,.nb-otl-panel,.nb-otl.nb-otl-open>.nb-otl-panel{transition:none}.nb-otl-scrim,.nb-otl-sheet,.nb-otl-gone>.nb-otl-scrim,.nb-otl-gone>.nb-otl-sheet{animation:none}}'
 ].join('');
-// The colors a page of notes is drawn in, from a board's theme (`code`: what code sits on, the other color of the page it is on).
-export const NOTES_VARS = (code = 't.surf') => `--gd-text: {{t.text}}; --gd-muted: {{t.muted}}; --gd-line: {{t.line}}; --nb-code: {{${code}}}; --nb-bg: {{t.bg}}; --nb-surf: {{t.surf}}; --nb-surf2: {{t.surf2}};`;
+// The colors a page of notes is drawn in, from a board's theme (`code`: what code sits on, the other color of the page it is on; `dim`: behind a phone's sheet).
+export const NOTES_VARS = (code = 't.surf') => `--gd-text: {{t.text}}; --gd-muted: {{t.muted}}; --gd-line: {{t.line}}; --nb-code: {{${code}}}; --nb-bg: {{t.bg}}; --nb-surf: {{t.surf}}; --nb-surf2: {{t.surf2}}; --nb-dim: {{t.dim}};`;
+// Where a page's outline rail sits (web/notes.js): how far right of the note (in the room its box keeps there) and where it stays as the page scrolls (under the
+// top of what scrolls the page, past that box's own room at its top: a shared deck's page has 36 px, so its own is 0). It is on the Notes page and a shared deck's
+// Notes; the deck page's Notes tab has none (it becomes a list of notes: main, 2026-10-02).
+const OUTLINE_AT = (x, top) => ` --nb-otl-x: ${x}px; --nb-otl-top: ${top}px;`;
 // Every board that shows a page of notes carries this (it was the rendered Guide's .gd look; a page is drawn by web/notes.js now).
 export const GUIDE_CSS = NOTES_CSS;
 
@@ -581,15 +608,16 @@ export const MATERIALS_MOCK = MATERIALS_MOCK_BASE + '\n' + DIAGRAMS_MOCK;
 // On a phone, the back arrow and the deck's name, and Lucida's bar for formatting rides on top of the keyboard (the owner: "formatting buttons should be in
 // toolbar above keyboard in iphones"): the board draws a plain keyboard under it while a line is written (on the canvas only; the app never draws one), and
 // the web app places the bar above the phone's own keyboard (web/notes.js, from visualViewport), or at the bottom with no keyboard on screen.
-// The canvas's `view` shows its states.
-export const GUIDE_VIEWS = ['Writing', 'Block menu', 'Format bar', 'Toggle open', 'Toggle closed', 'Section folded', 'Blank note', 'Reading on a shared deck', 'Older versions', 'A new page'];
+// The canvas's `view` shows its states (Outline open: the outline's card of headings open on a computer, its sheet on a phone; the owner, 2026-10-02:
+// "add that thing notion has where it shows a rail tree of sections").
+export const GUIDE_VIEWS = ['Writing', 'Block menu', 'Format bar', 'Toggle open', 'Toggle closed', 'Section folded', 'Blank note', 'Reading on a shared deck', 'Older versions', 'A new page', 'Outline open'];
 // What each state shows (web/notes.js `demo`; the sample's blocks: 0 title, 1 its line, 2 Checklist, 7 The mitochondrion, 8 its first toggle, ...).
 const GUIDE_DEMOS = phone => ({
   'Writing': { open: 'first', keys: phone },
   'Block menu': phone ? { open: 'first', keys: true, aa: true, caret: 1 } : { open: 'first', emptyAt: 7, caret: 7, menu: true },
   'Format bar': { open: 'first', bar: { i: 1, a: 19, b: 29 }, keys: phone },
   'Toggle open': { open: 'all' }, 'Toggle closed': { open: 'none' }, 'Section folded': { open: 'none', fold: [2] },
-  'Blank note': { keys: phone }, 'Reading on a shared deck': { open: 'first' }, 'A new page': { keys: phone }
+  'Blank note': { keys: phone }, 'Reading on a shared deck': { open: 'first' }, 'A new page': { keys: phone }, 'Outline open': { open: 'first', outline: true }
 });
 // The keyboard the iPhone board draws under the bar while a line is written: a plain panel with rows of rounded keys in the theme's colors (no letters, no
 // logos), only so the canvas shows where the bar goes. The app never draws one (the phone has its own).
@@ -617,7 +645,7 @@ function guideBoards(H) {
   const page = phone => `<sc-if value="{{showPage}}" hint-placeholder-val="{{ true }}"><div style="flex-grow: 1; min-height: 0; overflow-y: auto; scrollbar-width: ${phone ? 'none' : 'thin'};">
       <div style="box-sizing: border-box; ${phone ? 'padding: 10px 20px 120px 30px;' : 'max-width: 728px; margin: 0 auto; padding: 30px 54px 140px;'}">
         <sc-if value="{{renaming}}" hint-placeholder-val="{{ false }}"><input type="text" value="{{pageTitle}}" onChange="{{setPageTitle}}" onKeyDown="{{renameKey}}" onBlur="{{endRename}}" ref="{{renameRef}}" aria-label="Page name" placeholder="Page name" autocomplete="off" style="display: block; width: 100%; box-sizing: border-box; margin: 0 0 14px; padding: 8px 12px; border: 0; outline: 0; border-radius: 12px; background: {{t.surf}}; color: {{t.text}}; font: inherit; font-size: 16px; font-weight: 600;"></sc-if>
-        <div ref="{{nbRef}}" data-sc-own style="${NOTES_VARS()}"></div>${inside(phone)}
+        <div ref="{{nbRef}}" data-sc-own style="${NOTES_VARS()}${phone ? OUTLINE_AT(20, 12) : OUTLINE_AT(41, 30)}"></div>${inside(phone)}
       </div>
     </div></sc-if>`;
   // Older versions, in place of the page: each with when it was written, how long it is, the start of it, and Restore.
@@ -657,6 +685,7 @@ ${sidebar('Library')}
       <sc-if value="{{canEdit}}" hint-placeholder-val="{{ true }}">${more}</sc-if>
     </div>
     <div ref="{{keysRef}}" data-sc-own style="position: absolute; left: 0; right: 0; bottom: {{kb.bottom}}; ${NOTES_VARS()}"></div>
+    <div ref="{{olRef}}" data-sc-own style="position: absolute; inset: 0; z-index: 80; pointer-events: none; ${NOTES_VARS()}"></div>
     ${path(true)}
     ${page(true)}${history(true)}
     ${keyboard}
@@ -753,15 +782,21 @@ renderVals() {
     deletePage: async () => { this.setState({ moreOpen: false }); if (!mock && !(await db.ask({ title: 'Delete the page “' + cur.title + '”?', action: 'Delete page', danger: true }))) return; await am.deleteGuidePage(deckId, pageId); this.setState({ page: 'main', drafts: Object.fromEntries(Object.entries(this.state.drafts).filter(([k]) => k !== key)) }); },
     showPage: !histOpen, histOpen, versions: histNow, noVersions: histOpen && st.hist !== null && !versions.length, histTitle: 'Older versions of ' + (pageId === 'main' ? 'the Guide' : cur.title),
     // the page (web/notes.js): the same for writing and reading; on the canvas, its states
-    nbRef: el => { if (!el) return; this._nbc = this.notes().mount(el, { md: text, key: (mock ? 'canvas|' + view + '|' : '') + key, editable: canEdit, phone: ${phone ? 'true' : 'false'}, image, demo,
-      onChange: setText, onPicture: canEdit ? pickPicture : undefined, focusAt: at ? { i: +at[1], off: +at[2] } : !mock && !text.trim() ? { i: 0, off: 0 } : !mock && p.at === 'end' ? 'end' : undefined, keysHost: mock ? this._keys : undefined }); },
-    keysRef: el => { this._keys = el || this._keys; }
+    nbRef: el => { if (!el) return; this._nbc = this.notes().mount(el, { md: text, key: (mock ? 'canvas|' + view + '|' : '') + key, editable: canEdit, phone: ${phone ? 'true' : 'false'}, image, demo, outline: true,
+      onChange: setText, onPicture: canEdit ? pickPicture : undefined, focusAt: at ? { i: +at[1], off: +at[2] } : !mock && !text.trim() ? { i: 0, off: 0 } : !mock && p.at === 'end' ? 'end' : undefined, keysHost: mock ? this._keys : undefined, sheetHost: mock ? this._olHost : undefined }); },
+    keysRef: el => { this._keys = el || this._keys; },
+    // (on the canvas a phone's outline sheet is drawn over the whole board, in this box)
+    olRef: el => { this._olHost = el || this._olHost; }
   };
 }`;
   const props = { ...DARK, grain: MESH('Iris').grain, view: { editor: 'enum', default: 'Writing', options: GUIDE_VIEWS }, deckId: { editor: 'string', default: '' }, page: { editor: 'string', default: '' }, at: { editor: 'string', default: '' } };
+  const outlineOf = (name, w, h) => `<div style="width: ${w}px; height: ${h}px; overflow: hidden;"><dc-import name="${name}" view="Outline open" hint-size="${w}px,${h}px"></dc-import></div>`;
   return {
     'WebGuide': ['Web · Notes page (pick the view)', webGuide, { props, logic: logic(false), css: GUIDE_CSS, w: W, h: HH }],
-    'PhoneGuide': ['iPhone · Notes page (pick the view)', phoneGuide, { props, logic: logic(true), css: GUIDE_CSS, w: PW, h: PH }]
+    'PhoneGuide': ['iPhone · Notes page (pick the view)', phoneGuide, { props, logic: logic(true), css: GUIDE_CSS, w: PW, h: PH }],
+    // The outline open (its view): the card of headings beside the rail on a computer, the sheet on a phone.
+    'WebGuideOutline': ['Web · Notes page · its outline open', outlineOf('WebGuide', W, HH), { logic: 'renderVals() { return {}; }', css: GUIDE_CSS, w: W, h: HH }],
+    'PhoneGuideOutline': ['iPhone · Notes page · its outline open', outlineOf('PhoneGuide', PW, PH), { logic: 'renderVals() { return {}; }', css: GUIDE_CSS, w: PW, h: PH }]
   };
 }
 
@@ -774,7 +809,7 @@ export function publicGuideBlocks(H, phone) {
     <section aria-label="Notes" style="min-width: 0; box-sizing: border-box; padding: ${phone ? '18px 18px 16px 20px' : '22px 26px 20px 26px'}; border-radius: ${phone ? 22 : 26}px; background: {{t.surf}}; display: flex; flex-direction: column; gap: 12px; margin-bottom: ${phone ? 4 : 20}px;">
       <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;"><span style="font-size: 13px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: {{t.muted}};">Notes</span>
         <sc-if value="{{gd.hasTabs}}" hint-placeholder-val="{{ false }}"><div role="group" aria-label="Guide pages" style="display: flex; gap: 4px; flex-wrap: wrap;"><sc-for list="{{gd.tabs}}" as="g" hint-placeholder-count="3"><button type="button" onClick="{{g.pick}}" aria-pressed="{{g.pressed}}" style="height: 28px; max-width: 180px; padding: 0 12px; border: 0; border-radius: 999px; background: {{g.bg}}; color: {{g.fg}}; font: inherit; font-size: 12.5px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: pointer;">{{g.title}}</button></sc-for></div></sc-if></div>
-      <div style="position: relative; margin-left: -${phone ? 20 : 26}px; padding-left: ${phone ? 26 : 30}px; {{gd.clip}}"><div ref="{{gd.ref}}" data-sc-own data-phone="${phone ? 'yes' : ''}" style="${NOTES_VARS('t.bg')}"></div></div>
+      <div style="position: relative; margin-left: -${phone ? 20 : 26}px; padding-left: ${phone ? 26 : 30}px; {{gd.clip}}"><div ref="{{gd.ref}}" data-sc-own data-phone="${phone ? 'yes' : ''}" style="${NOTES_VARS('t.bg')}${phone ? OUTLINE_AT(18, 16) : OUTLINE_AT(26, 0)}"></div></div>
       <sc-if value="{{gd.long}}" hint-placeholder-val="{{ true }}"><button type="button" onClick="{{gd.toggle}}" aria-expanded="{{gd.expanded}}" style="align-self: flex-start; padding: 0; border: 0; background: transparent; color: {{t.text}}; font: inherit; font-size: 14px; font-weight: 600; text-decoration: underline; cursor: pointer;">{{gd.toggleLabel}}</button></sc-if>
     </section>
   </sc-if>`;
@@ -793,8 +828,9 @@ export const PUBLIC_GUIDE_JS = String.raw`
     return { show: !!text, hasTabs: pages.length > 1, tabs: pages.map(x => ({ title: x.id === 'main' ? 'Guide' : x.title, pressed: x.id === id ? 'true' : 'false', bg: x.id === id ? t.bg : 'transparent', fg: x.id === id ? t.text : t.muted, pick: () => this.setState({ gpage: x.id, gopen: false }) })),
       long, expanded: open ? 'true' : 'false', toggle: () => this.setState({ gopen: !open }), toggleLabel: open ? 'Show less' : 'Show more',
       clip: long && !open ? 'max-height: 230px; overflow: hidden; -webkit-mask-image: linear-gradient(180deg, #000 62%, transparent); mask-image: linear-gradient(180deg, #000 62%, transparent);' : '',
-      // read as the page of notes it is: a reader opens and closes its toggles and folds its sections (this device remembers)
-      ref: el => { if (el) this.notes().mount(el, { md: text, key: 'shared|' + (d.id || d.slug || '') + '|' + id, editable: false, phone: el.getAttribute('data-phone') === 'yes', image }); },
+      // read as the page of notes it is: a reader opens and closes its toggles and folds its sections (this device remembers); the outline once it shows in
+      // full (cut short, its Show more comes first: the part cut off can't be scrolled to)
+      ref: el => { if (el) this.notes().mount(el, { md: text, key: 'shared|' + (d.id || d.slug || '') + '|' + id, editable: false, phone: el.getAttribute('data-phone') === 'yes', image, outline: !long || open }); },
       hasMade: n > 0, madeLine: 'Made from ' + n + (n === 1 ? ' source' : ' sources') };
   })();`;
 

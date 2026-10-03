@@ -321,7 +321,7 @@ final class PolishTests: XCTestCase {
 
     // ----- between tabs -----
     flick(app, from: 0.9, to: 0.1)
-    check(litIs(app, "Discover") && wait(button(app, "News")), "a swipe left on the Library moves to Discover (and the tab bar follows)")
+    check(litIs(app, "Discover") && wait(button(app, "Notifications")), "a swipe left on the Library moves to Discover (and the tab bar follows)")
     // A row of chips that scrolls sideways keeps its own swipe.
     let chip = buttonStarting(app, "For you")
     if wait(chip, 8) {
@@ -354,20 +354,21 @@ final class PolishTests: XCTestCase {
 
     // ----- not while studying -----
     tap(buttonStarting(app, "Biology"), "the Biology deck")
-    tap(buttonStarting(app, "Flashcards"), "Flashcards")
+    tap(app.buttons["deck.study"].firstMatch, "Study")
+    tap(app.otherElements.matching(NSPredicate(format: "identifier BEGINSWITH %@", "menu.")).buttons.matching(NSPredicate(format: "label == %@", "Flashcards")).firstMatch, "Study › Flashcards")
     check(wait(button(app, "End review")), "a review opens over everything")
     flick(app, from: 0.9, to: 0.1, y: 0.45)
     check(button(app, "End review").exists, "a swipe on the study card doesn't change tab")
     button(app, "End review").tap()
-    check(wait(button(app, "Deck settings")) && litIs(app, "Library"), "(and leaving the review lands on the deck, the Library still lit)")
+    check(wait(button(app, "Deck settings")) && lit(app) == nil, "(and leaving the review lands on the deck, which has no tab bar: the owner, \"inside a deck remove this\")")
 
     // ----- back, from the left edge, on every pushed page -----
     edgeBack(app)
     check(wait(button(app, "New folder")) && gone(button(app, "Deck settings")), "a deck's page: the edge swipe goes back")
     tap(buttonHaving(app, "Languages"), "the Languages folder")
-    check(wait(button(app, "Rename")), "a folder's page opens")
+    check(wait(button(app, "Folder options")), "a folder's page opens")
     edgeBack(app)
-    check(gone(button(app, "Rename")) && wait(button(app, "New folder")), "a folder's page: the edge swipe goes back")
+    check(gone(button(app, "Folder options")) && wait(button(app, "New folder")), "a folder's page: the edge swipe goes back")
     tap(button(app, "Profile"), "the Profile tab")
     tap(button(app, "Settings"), "the gear")
     check(wait(app.staticTexts["Settings"]), "Settings opens")
@@ -381,10 +382,11 @@ final class PolishTests: XCTestCase {
     edgeBack(app)
     check(wait(button(app, "Share profile")), "and once more to your profile")
     tap(button(app, "Discover"), "the Discover tab")
-    tap(button(app, "News"), "the bell")
-    check(wait(app.staticTexts["News"]) || wait(button(app, "Back")), "News opens")
+    // (The bell and its page are Notifications since canvas V18x, c0338eb6; they were News.)
+    tap(button(app, "Notifications"), "the bell")
+    check(wait(app.staticTexts["Notifications"]) || wait(button(app, "Back")), "Notifications opens")
     edgeBack(app)
-    check(wait(button(app, "News")) && gone(button(app, "Back")), "News: the edge swipe goes back (to Discover)")
+    check(wait(button(app, "Notifications")) && gone(button(app, "Back")), "Notifications: the edge swipe goes back (to Discover)")
     let app2 = launch(as: ivy, ["-open", "profile:" + otherHandle, "-popAudit"])
     check(wait(app2.staticTexts["@" + otherHandle]) && wait(button(app2, "Back")), "someone else's profile opens")
     edgeBack(app2)
@@ -428,12 +430,16 @@ final class PolishTests: XCTestCase {
     tap(button(app, "Deck settings"), "Deck settings")
     tap(app.buttons["Studying"].firstMatch, "the Studying tab")
     check(buzzed(app, "selection:segmented"), "(Deck settings' tabs are segmented controls too)")
-    let sw = button(app, "Schedule with FSRS")
-    tap(sw, "the FSRS switch")
+    // (Deck settings' switch is General's Pause this deck since Studying lost Schedule with FSRS; it's turned off again, so the deck can be studied.)
+    tap(app.buttons["General"].firstMatch, "the General tab")
+    let sw = button(app, "Pause this deck")
+    tap(sw, "the Pause this deck switch")
     check(buzzed(app, "selection:toggle"), "a switch gives a selection tap")
+    tap(sw, "the Pause this deck switch, off again")
     tap(button(app, "Done"), "Done")
     // flipping and grading a card
-    tap(buttonStarting(app, "Flashcards"), "Flashcards")
+    tap(app.buttons["deck.study"].firstMatch, "Study")
+    tap(app.otherElements.matching(NSPredicate(format: "identifier BEGINSWITH %@", "menu.")).buttons.matching(NSPredicate(format: "label == %@", "Flashcards")).firstMatch, "Study › Flashcards")
     check(wait(button(app, "End review")), "the review opens")
     app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.4)).tap()
     check(buzzed(app, "light:flip"), "flipping a card gives a light tap")
@@ -442,7 +448,7 @@ final class PolishTests: XCTestCase {
     button(app, "End review").tap()
     // a deck made, and a delete
     _ = wait(button(app, "Deck settings"))
-    tap(button(app, "Library"), "the Library tab")
+    tap(button(app, "Back"), "the deck page's Back (no tab bar inside a deck)")
     // (The Library's + is a menu: New deck is one of its rows.)
     tap(button(app, "Add"), "the Library's + menu")
     tap(button(app, "New deck"), "New deck")

@@ -206,9 +206,11 @@ final class ThemesTests: XCTestCase {
     // (The Library's + is a menu now: New deck, Make cards, Import cards.)
     check(wait(button(app, "Add")), "back on the Library")
     check(openDeck(app, "Cell Biology"), "Cell Biology opens")
-    let study = buttonStarting(app, "Flashcards")
-    check(wait(study), "Cell Biology has Flashcards")
+    let study = app.buttons["deck.study"].firstMatch
+    check(wait(study), "Cell Biology has Study")
     study.tap()
+    check(wait(app.otherElements.matching(NSPredicate(format: "identifier BEGINSWITH %@", "menu.")).buttons.matching(NSPredicate(format: "label == %@", "Flashcards")).firstMatch), "Study opens its menu, with Flashcards")
+    app.otherElements.matching(NSPredicate(format: "identifier BEGINSWITH %@", "menu.")).buttons.matching(NSPredicate(format: "label == %@", "Flashcards")).firstMatch.tap()
     check(wait(button(app, "Flip card"), 12), "flashcards open")
     check(drawing(app, "bg=aero") && drawing(app, "face=aero"), "the study background and the card are the theme's")
     Thread.sleep(forTimeInterval: 1.0)
@@ -223,10 +225,12 @@ final class ThemesTests: XCTestCase {
     check(wait(button(app, "Flip card")), "grading brings the next card")
     check(drawing(app, "bg=aero") && drawing(app, "face=aero"), "the theme stays on the next card")
     button(app, "End review").tap()
-    check(wait(button(app, "Learn")), "X goes back to the deck's page")
+    check(wait(app.buttons["deck.study"].firstMatch), "X goes back to the deck's page")
 
     // ---------- Learn mode ----------
-    button(app, "Learn").tap()
+    app.buttons["deck.study"].firstMatch.tap()
+    check(wait(app.otherElements.matching(NSPredicate(format: "identifier BEGINSWITH %@", "menu.")).buttons.matching(NSPredicate(format: "label == %@", "Learn")).firstMatch), "Study's menu has Learn")
+    app.otherElements.matching(NSPredicate(format: "identifier BEGINSWITH %@", "menu.")).buttons.matching(NSPredicate(format: "label == %@", "Learn")).firstMatch.tap()
     let start = button(app, "Start learning")
     check(wait(start), "Learn opens its start sheet")
     start.tap()
@@ -234,7 +238,7 @@ final class ThemesTests: XCTestCase {
     check(drawing(app, "bg=aero"), "Learn's background is the theme's")
     check(drawing(app, "face=aero", 30), "and its question sits on the theme's card")
     button(app, "Stop for now").tap()
-    check(wait(button(app, "Learn")), "stopping goes back to the deck's page")
+    check(wait(app.buttons["deck.study"].firstMatch), "stopping goes back to the deck's page")
 
     // ---------- New deck ----------
     button(app, "Back").tap()

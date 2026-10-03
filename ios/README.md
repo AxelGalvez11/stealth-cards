@@ -51,13 +51,14 @@ The background's shader is compiled when the app first shows it (Design/Aura.swi
 
 There is no Today page (the owner, 2026-10-01: "could we just get rid of the 'today' page so users just focus on the library and deck creation in there?").
 The tab bar is Library, Discover, Stats and Profile, the app opens on the Library, and everything that went to Today goes there: the welcome's end, a
-review of every deck's X and Done, a practice test opened again, `-open today`, and the daily reminder's notice.
+review of every deck's X and Done, `-open today`, and the daily reminder's notice.
 
 The Library makes no cards itself (the owner, 2026-10-02: "remove the library composer, upload buttons, cards due accross all canvas screens", then
 "remove the 'make cards from library'"): no Make box, no Upload, Paste, YouTube and More row, no line of what's due, and its + is New deck and Import
 cards. Its switch is Decks and All cards (no Classes: the owner took them out on 2026-10-02). A brand-new account's Library is three plain tiles
 side by side, New deck, Import cards and Connect AI, with no other words (`StartTiles`, `Screens/LibraryTop.swift`). Cards are made from a
-deck: its cover's Make cards and New card (an empty deck, where New deck opens, is its cover and nothing under it). News is the bell in Discover's
+deck: its cover's + (New card, Make cards, Source, Notes, Upload diagram, Make diagram). A new deck, where New deck opens, is the same deck page with its four tabs and
+nothing in them yet (the owner, 2026-10-02: "creating new deck should already have the tabs"): its Cards say "No cards yet", with New card and Make cards. News is the bell in Discover's
 header. While a sheet covers the page (Make cards, a source, a diagram, Make diagram), the page under it is hidden from VoiceOver, so only the
 sheet's buttons are found. Boards: `PhoneLibrary` (`-caughtUp`, `-menu open`), `PhoneLibraryFolder`, `PhoneDecksEmpty`, `PhoneDeckEmpty`,
 `PhoneDiscover`.
@@ -65,7 +66,7 @@ sheet's buttons are found. Boards: `PhoneLibrary` (`-caughtUp`, `-menu open`), `
     ios/tools/e2e-home.sh <simulator id>
 
 starts a fresh server on port 3953 and the stand-in AI on 3954, and runs `LucidaUITests/HomeTests`: the first page (no box, row or due line, the +
-menu), a deck's Make cards and New card, an empty deck, a brand-new account's three tiles, no Classes (a class still on the server shows
+menu), a deck's + and Study, an empty deck, a brand-new account's three tiles, no Classes (a class still on the server shows
 nothing), and News on Discover.
 
 ## Import cards
@@ -155,39 +156,16 @@ More launch arguments (debug builds): `-open statsdeep -tab Memory` (or `Weak sp
 `tests/run.sh parity` checks the ports against the web app's own code on a seeded library and made-up variations of it (no
 simulator), and `tests/run.sh e2e` runs the `-check`s in the simulator against a local server (`DEVICE=<simulator id>`).
 
-## Practice test
+## No practice tests
 
-**Practice test** is on a folder's page (every deck in it that isn't paused); a deck's page has none (the owner, 2026-10-02: "remove practice
-tests"). It opens
-a sheet (how many questions, which kinds, a time limit, and "Tests don’t change your review schedule."), then the test: numbered
-questions you can go back through and flag, a list of all the questions, a quiet clock when you asked for one, and nothing about right or
-wrong until Submit (which asks first when some are unanswered). The results show the score, the time, every question with your answer
-and the right one, Explain where the card has it, **Count it as right** on a written answer the spelling check missed, **Retake the ones I
-missed**, and **Study the missed cards now** (a normal review of just those cards, then back to the results). `Data/TestEngine.swift` is a
-port of the web's engine (`web/db.js`, "Practice test": Learn's `choiceQuestion`, a card of its own for each question, matching as four
-or five pairs, the kinds in sections); `Data/TestDemo.swift` is the design screens' sample test; `Screens/PracticeTest.swift` has the
-pieces (`TestStartButton`, `TestFolderBits`, `TestStartSheet`, `TestScreen`). A test never changes a schedule or logs a
-review. The test in progress is kept on the phone (`UserDefaults`, `lucida.test`) and is open again, where it was, when the app opens; its
-clock counts only while it shows. A finished test is saved with the library (`test.save`, and `test.fix` for Count it as right), and the
-folder's page says how its last one went.
-
-The board is `PhoneTest` (the folder's pieces are states of `PhoneLibrary`); with it, `-screen "Set up"`,
-`Multiple choice`, `True or false`, `Fill in the blank`, `Written`, `Matching`, `Submit`, `Leave`, `Results` or `"Results · missed"` picks the
-screen and `-timed false` takes the clock off. More launch arguments (debug builds): `-open folder:<name>` (the folder with that name),
-`-testAudit` (an invisible element tells the end-to-end test which answer is right for the question on screen) and `-testSpent <ms>` (the
-test in progress has already been open that long, to check the clock without waiting).
-
-    ios/tools/e2e-test.sh <simulator id>
-
-It starts a fresh server on port 3947 and runs `LucidaUITests/PracticeTestTests` (which only runs when that script asks for it): the
-set-up, a test of choices and true-or-false (numbers, back, flags, the list, Submit asking, the results, Retake the ones I missed, past
-results on the deck page), written answers with typos, Count it as right and Study the missed cards now, matching, the clock (the test
-open again after the app closes, running out by itself, leaving), a folder's test, and fill in the blank; a test changes no schedule.
+There are no practice tests (the owner, 2026-10-03: "remove practices tests altogether, just live mode, learn mode, and flashcard mode"): a deck is
+studied with Flashcards and Learn (and played live from a computer). The app has no test screens, routes or design screens; a library from before
+keeps its old results on the server, unused (`/api/state` leaves them out). `-open folder:<name>` (debug builds) opens the folder with that name.
 
 ## Questions Lucida writes for Learn mode
 
 When Learn mode starts and the next cards have no question yet, the app asks the server's Lucida AI for 20 at once (`Store.wantQuiz` in `Data/LearnEngine.swift`, `API.quizBatch`, `POST /api/quiz`, like the web's), and again about 5 questions from the end;
-the questions are saved on the cards (marked `by: "Lucida"`; a fill-in-the-blank one is `kind: "blank"`) and Learn mode and the practice test use them with the card's own words. Nobody waits: until
+the questions are saved on the cards (marked `by: "Lucida"`; a fill-in-the-blank one is `kind: "blank"`) and Learn mode uses them with the card's own words. Nobody waits: until
 they arrive Learn mode asks with its builders, and when the AI is off or the day's batches are used (Free 3, Pro 30) it goes on with them without a word. `tools/e2e-quiz.sh <simulator id>` is the
 end-to-end test (`LucidaUITests/QuizTests.swift`), with a pretend OpenRouter (`tools/stub-openrouter.mjs`) and a second server that has no AI.
 
@@ -241,7 +219,9 @@ parts go up one after another in the same make ("Lecture (part 3 of 12).m4a", wi
 each one's length to the next one's times. A recording longer than the plan makes from is turned away at once with the server's own words (nothing
 is cut or sent); one that can't be cut and is over 25 MB says so. Take a photo shows only on a phone with a camera (the iOS 26 simulator says it can use the camera but has none).
 
-It opens from a deck cover's Make cards (an empty deck's too), a source's More cards, a Guide's Make cards and a diagram's Make cards. Any screen
+It opens from a deck cover's + › Make cards and + › Source (at Upload), an empty deck's Cards (its Make cards), a source's More cards, a Guide's Make cards and a diagram's
+Make cards. Opened from a deck's page it sits over that page, Into deck starts on the deck, and closing or saving comes back to it with no other tab or page in between (the
+owner, 2026-10-02: "pressing '+' should not take user back to the library page"; cards put into another deck open its page on top; the board is `PhoneDeckMake`). Any screen
 opens it with `nav.make(kind:deckId:from:guide:page:text:title:)`, like the web's `/make?source=&deck=&from=&guide=&page=`: `kind` (file, photo,
 record, paste, video, topic, or none), the deck the cards go to, a kept source's id to make more cards from, a deck's id (and its page) to make
 cards from its Guide, and words already in hand (a Guide's selection, which gets no notes).
@@ -267,7 +247,7 @@ AVSpeechSynthesizer, in the card's language), "Read aloud · es-ES", and two fie
 The boards: `PhoneMake` (and `PhoneMakeDark`, `PhoneMakeGray`); `-state <the canvas's step>` shows any of its 24 states (`Pick`, `Upload`,
 `Upload (a file added)`, `Photos`, `Record`, `Recording`, `Paused`, `Paste`, `Paste (a language set)`, `YouTube`, `YouTube transcript`, `Topic`,
 `More from a source`, `Making`, `Making a recording`, `Review`, `Review (notes open)`, `Review (notes off)`, `Review (no room for notes)`, `Review (audio cards)`,
-`Review (editing a card)`, `Limit reached`, `File too big`, `Error`), with the sample in `Design/MakeSample.swift`. Also changed: `PhoneLibrary` (its + menu; `-menu open` opens it) and `PhoneDeckEmpty` (its cover's Make cards).
+`Review (editing a card)`, `Limit reached`, `File too big`, `Error`), with the sample in `Design/MakeSample.swift`. Also changed: `PhoneLibrary` (its + menu; `-menu open` opens it) and `PhoneDeckEmpty` (its cover's +).
 
 More launch arguments (debug builds): `-makeFile <path>`, `-makePhoto <path>` (several: paths with commas between), `-makeRecording <path>` (a
 file for the microphone, which the simulator doesn't have: the timer, Pause, Resume and Stop run as they do for real, and Stop uses that file;
@@ -289,10 +269,11 @@ with no cookie, what can be picked, a long recording cut into parts and sent in 
 ## A deck's Guide and Sources
 
 Every deck can have **Notes** (the Guide: a page like Apple Notes, with extra pages and a short history of versions) and **Sources** (what its cards were made from:
-a file, pictures, a recording, a video, pasted text, a topic). The deck page has tabs right under Flashcards and Learn, **Sources | Cards | Notes | Diagrams** (the owner, 2026-10-02;
+a file, pictures, a recording, a video, pasted text, a topic). The deck page has tabs right under Study, **Sources | Cards | Notes | Diagrams** (the owner, 2026-10-02;
 `Screens/DeckMaterials.swift` `DeckTabs`: plain underlined tabs, a small count on Sources, Cards and Diagrams; the page still opens on Cards): Sources only shows on a deck of yours (a deck you only study has Cards, and Notes when it has a Guide, read only; an address
-for a tab that isn't there falls back to Cards). The cover has **Make cards** (the Make flow, into this deck) and **New card**, plainly, and
-the line under the deck's name says how many cards ("412 cards"). The page has no numbers of its own (the Flashcards button keeps its count) and no exam line (the exam date is in
+for a tab that isn't there falls back to Cards). The cover's **+** (Lucida's own menu, `Screens/AddMenu.swift`: New card, Make cards, Source, Notes, Upload diagram, Make diagram) and the full-width
+**Study** under it (Flashcards with what waits today, and Learn) are the deck's buttons (the owner, 2026-10-02; `-menu Study|Add`, or the boards PhoneDeckStudyMenu and PhoneDeckAddMenu,
+open one on a design screen), and the line under the deck's name says how many cards ("412 cards"). The page has no numbers of its own (Study's Flashcards says what waits) and no exam line (the exam date is in
 Deck settings → Studying).
 
 **The page** (`Design/NotesViews.swift`; its memory and rules are `NotesPage` in `Data/Notes.swift`; web/notes.js on the web) is always formatted: a row for each block
@@ -313,10 +294,27 @@ table and every call the web's own test makes to both node and the engine and co
 checks the app's `guide.js` is the same file as `web/guide.js`, runs the page's saving logic against a stand-in server, and the page's rules (`ios/tests/swift/notes`: a blank
 note, the shortcuts, Enter, Backspace, Tab, Aa, the marks, links, pasting, toggles and folds and what this Mac remembers, and what is saved: 101 checks), and that its icons are web/notes.js's.
 
-**The Notes page** (`Screens/Guide.swift`, the canvas's `PhoneGuide`; opened by a tap on the deck page's Notes, `Route.guide` with `nav.guideAt` for the caret): back, the deck's name,
-the quiet saving line and ⋯ (Make cards from this page or what is selected, Older versions, Rename page, Delete page, which asks first), the pages as pills and + for a new one
-(a new page is called by its first heading until it's renamed). It saves as it is typed (`Data/GuideEditor.swift`: 700 ms after the last key, one save after another, Saving… and
-Saved at the top, what went wrong in the same place, "This page is full." over 40,000 characters). Pictures go up like a card's.
+**The deck page's Notes tab** (V176, V185: `NotesTree` in `Screens/DeckMaterials.swift`, the canvas's `PhoneDeckNotes`) is a list of the deck's notes, a tree like Notion's pages:
+the main note once it has words, then every page that isn't inside another; the pages inside a note sit under it, 20 points further in, with an arrow on the note that hides or
+shows them (open to start; a hidden note says "N pages inside"). A row is the page glyph on a gray circle, the title (the Guide's first heading) and its first words (`NoteText`,
+the board's nbHead and nbPreview). A tap opens that page; for the deck's owner, + on a row makes a page inside it, and New note ends the list (the main note while it has no words,
+otherwise a note at the top: `nav.newNote(deckId:inside:)`, made by the Notes page on arrival). "No notes yet" when there are none. A guide page has a `parent` ("main", a page's
+id, or "" at the top; `MakeGuidePage.parent`, `Store.guideAddPage(parent:)`).
+
+**The Notes page** (`Screens/Guide.swift`, the canvas's `PhoneGuide`, `PhoneGuidePages` and `PhoneGuideNested`; opened from the deck page's Notes, `Route.guide` with `nav.guideAt` for
+the caret): back, the deck's name, the quiet saving line and ⋯ (Make cards from this page or what is selected, Add a page inside, Older versions, Rename page, Delete page, which
+asks first), and the page's path (`GuidePath`: the notes it sits inside, then itself in bold, each a tap away). Under the note, the pages inside it and Add a page inside
+(`GuidePagesInside`), which makes a page inside the open one (a new page is called by its first heading until it's renamed); deleting a page moves the pages inside it up to
+where it was. A deck you only study opens its Notes page to read (no ⋯, no Add a page inside, nothing to write in). It saves as it is typed (`Data/GuideEditor.swift`: 700 ms after
+the last key, one save after another, Saving… and Saved at the top, what went wrong in the same place, "This page is full." over 40,000 characters). Pictures go up like a card's.
+
+**The outline** (`NotesRail` and `NotesOutline` in `Design/NotesViews.swift`; web/notes.js's `outline` on the web; the owner, 2026-10-02: "add that thing notion has where it shows a
+rail tree of sections"): with two headings or more, a quiet rail of short lines sits at the page's right (12, 9 and 6 points wide by level, 2 tall, 6 apart; the section being read
+in the words' color), 12 points under the top of the Notes page as it scrolls. A tap opens the headings as a tree in Lucida's own sheet (PickSheet's `tree`: a row further in by
+its level, the one being read in bold); a heading scrolls there (`GuideAnchors.bring`, at once with Reduce Motion) and closes it, opening a folded section or closed toggle it is
+in, as its ▸ does. The headings come from the page's own blocks (`NotesPage.outline`), so a heading typed joins it at once; each heading's line registers itself with the outline
+(`NotesLine`, by its block), which finds the one being read and scrolls to one. The rail is hidden while the keyboard is up. A shared deck's Notes (`GuideCard` with `shared`)
+have it once they show in full, staying a little under the top of the screen as the page scrolls by; the deck page's Notes tab (a list) has none.
 
 **Sources** (`Data/GuideData.swift`, `Screens/DeckMaterials.swift`): the list (name, kind, pages or minutes, cards, date, newest first) and a source opened as a sheet: a recording
 plays at the card's time (a long one is kept as several files: the viewer walks their seconds, as the web does, and plays the part that covers the time at the second inside it:
@@ -327,7 +325,8 @@ source at that place (the deck's Sources, viewer open; plain words once the sour
 
 Library data: each deck's `guide` and `sources` and each card's `src` come with `/api/state` and are all optional (`MakeModels.swift`), so an older library still opens. The acts are
 `guide.save`, `guide.page.add`, `.rename`, `.delete`, `guide.restore`, `source.delete` (`Store.guide*`); History is `GET /api/guide/history`. The boards: `PhoneGuide` (and Dark, Gray;
-`-state Writing|"Block menu"|"Format bar"|"Toggle open"|"Toggle closed"|"Section folded"|"Blank note"|"Reading on a shared deck"|"Older versions"|"A new page"`), `PhoneDeck` (`-state Cards|Notes|Sources` or `-state "Guide and sources"|"Guide pages"|"Long guide"|"A source
+`-state Writing|"Block menu"|"Format bar"|"Toggle open"|"Toggle closed"|"Section folded"|"Blank note"|"Reading on a shared deck"|"Older versions"|"A new page"|"Outline open"`;
+`PhoneGuideOutline` is the last, the outline's sheet open), `PhoneDeck` (`-state Cards|Notes|Sources` or `-state "Guide and sources"|"Guide pages"|"Long guide"|"A source
 open"|"No guide yet"|"Studying (read only)"`; or `-section`, `-guide`, `-sourceOpen <id>`, `-sourceAt "p. 4"`), `PhonePublicDeck` (`-state` is the Guide setting) and `PhoneEditor`
 (`-madeFrom no` leaves the line out), with the sample in `Design/GuideSample.swift`. More launch arguments (debug builds): `-open guide[:<deck name>[:<page id>]]` opens the Notes page, and
 `-deckTab notes|sources` (with `-deckSource <id>` and `-deckAt "1:30:00"`) asks the open deck page for a section, and a source open at that place (like the web's `?tab=&source=&at=`).
@@ -335,10 +334,11 @@ open"|"No guide yet"|"Studying (read only)"`; or `-section`, `-guide`, `-sourceO
     ios/tools/e2e-guide.sh <simulator id>
 
 starts a fresh server on port 3934 and the stand-in AI on 3939, makes the Sources with the server's own make steps (`ios/tests/js/guide-seed.mjs`: a PDF, a recording of thirteen files, a
-video, pictures, text, a topic, under a Guide with sections, toggles and two pages), and runs `LucidaUITests/GuideTests` in thirteen flows (no Guide and the blank note, writing: the
+video, pictures, text, a topic, under a Guide with sections, toggles and two pages), and runs `LucidaUITests/GuideTests` in fourteen flows (no Guide and the blank note, writing: the
 shortcuts, Enter, Backspace, Aa, To-do, Bullets, Bold and a link from the bar; reading and the hostile text, Older versions and Restore, pages, Make cards from the page, the Notes
 on the deck page (toggles, folds, a link to a heading, a tap that opens the page there), a deck you only study, the Sources and each viewer, "Made from", More cards and Delete, a
-shared deck's page, the Add cards menu and dark mode, and a toggle and a section folding, remembered and never saved into the note). Ports and the simulator: `PORT=3960
+shared deck's page, the deck cover's + (New card, Make cards, Notes at the end of the Guide) and dark mode, a toggle and a section folding, remembered and never saved into the note, and the outline: its rail, its sheet, going to a
+heading (in a closed toggle, in a folded section), a heading typed, no rail while writing, and a shared deck's once shown in full). Ports and the simulator: `PORT=3960
 STUB_PORT=3969 ios/tools/e2e-guide.sh <simulator id>` runs it beside other servers.
 
 Two things worth knowing when writing flows like these: a tap on a card row right after the page was scrolled is ignored on purpose (`HoldOrTap` fails a touch that lands on a
@@ -377,7 +377,7 @@ Library data: each deck's `diagrams` come with `/api/state` and are optional (`M
 
 The first lays out mind maps of every shape in node and in Swift and compares every box and link (no simulator). The second starts a fresh server on port 3908 and the stand-in AI on 3909 (it needs
 the Diagrams answers: `STUB_AI=<stub-ai.mjs>`), makes seven owners with their lectures, tables, maps and uploads, a shared deck and someone who studies it (`ios/tests/js/diagrams-seed.mjs`),
-and runs `LucidaUITests/DiagramsTests` in nine flows (the tab, a picture and Make cards, Rename and Delete, Make diagram, the Free limit, Upload, the Image kind, a shared and a studied deck, dark mode).
+and runs `LucidaUITests/DiagramsTests` in ten flows (the tab, a picture and Make cards, Rename and Delete, Make diagram, the Free limit, Upload, the Image kind, a shared and a studied deck, dark mode, and the deck cover's + › Make diagram and Upload diagram).
 
 
 ## Classes (taken out)
@@ -547,22 +547,21 @@ when a check fails) and then lists every haptic in the app.
   view without sliding. A short fade, none with Reduce Motion. (The web app does the same on a phone; on a computer it opens beside the card.) On a
   flashcard its button is round, in the top bar just left of Review settings and the same size (the owner, 2026-10-02: "move it upper right similar
   shape to the flashcard settings"): it shows once the card is turned over (its place is kept meanwhile, so the progress bar doesn't move), is
-  pressed while the explanation is open, and closes it when pressed again. Learn mode has the same round button at the end of its top row, just before its gear (the row is Stop, the progress, N/M, Explain and the gear: canvas V179), faded and disabled until the question is answered (`Screens/Learn.swift`);
-  the practice test's results keep the small `ExplainButton` on each question.
+  pressed while the explanation is open, and closes it when pressed again. Learn mode has the same round button at the end of its top row, just before its gear (the row is Stop, the progress, N/M, Explain and the gear: canvas V179), faded and disabled until the question is answered (`Screens/Learn.swift`).
 - **Asking about the card** (`Screens/Explain.swift`: `ExplainComposer`, `ExplainTurns`, `Store.followUp`; the web's design/chat.mjs): every explanation ends
   with "Ask about this card" and a round Send. Return sends (on a hardware keyboard Shift+Return is a new line); the question is a short bubble on the right
   and its answer comes under it in the explanation's text style, "Thinking…" meanwhile, or what went wrong in the quiet red line. While a question is typed
-  the composer sits on top of the keyboard: in Review the card steps aside and the grade buttons wait under the keyboard, and in Learn mode and the test's
-  results the page ends at the keyboard and scrolls the composer up to it. Each question is one of the day's explanations (`POST api/explain/ask`); once
+  the composer sits on top of the keyboard: in Review the card steps aside and the grade buttons wait under the keyboard, and in Learn mode
+  the page ends at the keyboard and scrolls the composer up to it. Each question is one of the day's explanations (`POST api/explain/ask`); once
   they're used up the composer is the server's upgrade line with Go Pro (`Library.explainLimit`). Closing the explanation, the next card or question, or
   leaving the page forgets the conversation (`Store.chats` is never saved). Design screens: `PhoneReviewExplainAsk`, and `-explainOpen true -followUp true`
-  on `PhoneQuizAnswered`, `PhoneQuizType` and `PhoneTest -screen Results` (a question typed there gets the sample answer). `ios/tools/e2e-ask.sh <simulator id>`
+  on `PhoneQuizAnswered` and `PhoneQuizType` (a question typed there gets the sample answer). `ios/tools/e2e-ask.sh <simulator id>`
   runs `LucidaUITests/AskTests` (a fresh server on port 3976 and the stand-in AI on 3977).
 - **The study screen** (the owner's comments, 2026-10-02): behind flashcards and Learn mode a deck shows a plain page (white, black at night) until a
   background is picked for it (`Store.bgKind` in `Design/StudyBackground.swift`, like the web's `bgKindOf`: the server marks a pick `bg.chosen`,
   `DeckBg.chosen`, since every deck is made with kind "deck"); with a theme on the default is the theme's own, and its tile in `BgChooser` puts a deck
   back to the default. The boxes over a picture are yellow (`Generated.occ`, from design/build.mjs `OCC`: #FFD60A with black numbers) in review, Cards to
-  check, Learn, the practice test and the card editor (`Design/Occlusion.swift`); the asked box has an edge in the outline color, which stays when its
+  check, Learn and the card editor (`Design/Occlusion.swift`); the asked box has an edge in the outline color, which stays when its
   yellow fades. The boxes that only mark where a card's boxes go (Make's picture-card thumbnails, a diagram's Show boxes) are see-through yellow with a black
   edge. PolishTests' ninth flow reads the yellow from screenshots.
 - **The deck cover's parallax** (`Design/Parallax.swift`): scrolling up, the cover on a deck's page and on a shared deck's page moves at

@@ -1,4 +1,4 @@
-// iPhone · Deck page (PhoneDeck, PhoneDeckEmpty, PhoneDeckSettings, PhoneDeckSettingsStudy,
+// iPhone · Deck page (PhoneDeck, PhoneDeckEmpty: a new deck, the same page with nothing in it yet, PhoneDeckSettings, PhoneDeckSettingsStudy,
 // PhoneDeckMoveTray): the deck's gradient header, studying, its sections (Sources, Cards, Notes, Diagrams), and its settings in a sheet. Hold a
 // card to drag it to another spot, or onto another deck in the Move to tray that rises while you drag (Drag.swift).
 import SwiftUI
@@ -60,7 +60,7 @@ extension Store {
     if demo {
       let X = Sample.shared, e = demoDeck, empty = props.emptyDeck
       let examDay: String? = { if case .some(let v) = e.exam { return v }; return props.free ? nil : Store.sampleExamDay }()
-      if empty { return DeckVM(id: "pharm", name: "Pharmacology", seed: "Pharmacology", lineShort: "No cards yet") }
+      if empty { return DeckVM(id: "pharm", name: "Pharmacology", seed: "Pharmacology", lineShort: "0 cards") }
       let d = DeckVM(id: "cell", name: e.name ?? "Cell Biology", seed: "Cell Biology", style: e.style ?? "mix", round: e.round, image: e.image,
                      lineShort: "412 cards", due: 28, fresh: 10,
                      rows: demoCardOrder.compactMap { id in X.CARDS.first { $0.id == id } }.filter { (demoCardDeck[$0.id] ?? "cell") == "cell" }
@@ -194,20 +194,16 @@ struct DeckScreen: View {
   let id: String
   /// This page, for dragging its cards.
   @State private var board = UUID().uuidString
-  /// Which section of the page shows (Sources, Cards, Notes or Diagrams; nil: Cards, unless an address or a board says another), which page of the
-  /// Guide, and whether it's unfolded (Show more).
+  /// Which section of the page shows (Sources, Cards, Notes or Diagrams; nil: Cards, unless an address or a board says another).
   @State private var tab: String? = nil
-  @State private var gpage = "main"
-  @State private var gopen = false
   /// Study's menu (Flashcards, Learn) or +'s (New card, Make cards, Source, Notes, Upload diagram, Make diagram) is open: Lucida's own menu (AddMenu.swift).
   @State private var studyOpen = false
   @State private var addOpen = false
   var body: some View {
     let d = store.deck(id), g = store.guide(id), srcs = store.sources(id), dgs = store.diagramRows(id)
-    Group {
-      // (A deck with no cards but a Guide, Sources or Diagrams has its page, like the web's, and so does an empty one whose Diagrams its + opened.)
-      if d.rows.isEmpty && store.cardCount(id) == 0 && !g.hasAny && srcs.isEmpty && dgs.isEmpty && tab != "diagrams" { empty(d, g) } else { page(d, g, srcs, dgs) }
-    }
+    // A new deck is this same page, its tabs there from the start with nothing in them yet (the owner, 2026-10-02: "creating new deck should already
+    // have the tabs"); its Cards say "No cards yet", with New card and Make cards.
+    Group { page(d, g, srcs, dgs) }
     .toolbar(.hidden, for: .navigationBar)
     .onAppear { if store.demo { demoOpen() } }
     // Something asked for a section (the Guide editor's Done: Notes; a card's "Made from" line: Sources, with that source open).
@@ -250,9 +246,9 @@ struct DeckScreen: View {
           // A deck you share: its page. One you study from someone: Suggest a change instead of New card.
           if let sh = d.sharing.shared { CoverButton(icon: "globe", label: sh.label, size: 40) { nav.deckPage(sh.url) } }
           CoverButton(icon: "gear", label: "Deck settings") { withAnimation(Motion.sheet) { nav.sheet = .deckSettings(d.id) } }
-          if !d.rows.isEmpty { CoverButton(icon: "search", label: "Search") {} }
+          CoverButton(icon: "search", label: "Search") {}
           // Your own deck takes material: + opens New card, Make cards, Source, Notes, Upload diagram and Make diagram (addRows).
-          if !d.sharing.readOnly { CoverButton(icon: "plus", label: "Add") { studyOpen = false; addOpen.toggle() }.addMenuAnchor("deck-add") }
+          if !d.sharing.readOnly { CoverButton(icon: "plus", label: "Add") { studyOpen = false; addOpen.toggle() }.accessibilityIdentifier("deck.add").addMenuAnchor("deck-add") }
           if d.sharing.readOnly, let lk = d.sharing.link { CoverButton(icon: "message", label: "Suggest a change", size: 40) { nav.deckPage(lk.url, suggest: "1") } }
         }
         .padding(.top, Screen.top(54))
@@ -318,7 +314,7 @@ struct DeckScreen: View {
           if section == "diagrams" { DiagramsCard(flow: store.diagrams, deckId: d.id, rows: dgs, can: g.can) }
           if section == "sources" { SourcesCard(deckId: d.id, rows: srcs, can: g.can) { s in withAnimation(Motion.sheet) { nav.sheet = .source(deckId: d.id, id: s.id, at: "") } } }
           let list = board + "/cards", ids = d.rows.map(\.id)
-          if section == "cards" && d.rows.isEmpty { Text("No cards in this deck yet.").css(14).foregroundStyle(t.muted).frame(maxWidth: .infinity, alignment: .leading) }
+          if section == "cards" && d.rows.isEmpty { cardsEmpty(d) }
           if section == "cards" { VStack(spacing: 0) {
             ForEach(d.rows) { r in
               // A card of a deck you study as it is opens Suggest a change on it (on its deck's page).
@@ -358,6 +354,7 @@ struct DeckScreen: View {
     }
     .buttonStyle(.press)
     .accessibilityLabel("Study")
+    .accessibilityIdentifier("deck.study")
     .addMenuAnchor("deck-study")
   }
   /// Study's menu: Flashcards (with what waits today) and Learn, each as its old button did (the iPhone never had Play live: it needs a big screen).
@@ -389,12 +386,8 @@ struct DeckScreen: View {
     #endif
   }
 
-  /// The Notes: the deck's Guide as a card (its pages as tabs when it has some).
-  private func notes(_ d: DeckVM, _ g: GuideVM) -> some View {
-    let pageId = g.pages.contains { $0.id == gpage } ? gpage : "main"
-    let tabs = g.pages.isEmpty ? [] : [(id: "main", title: "Guide")] + g.pages.map { (id: $0.id, title: $0.title) }
-    return GuideCard(deckId: d.id, tabs: tabs, page: Binding(get: { pageId }, set: { gpage = $0 }), text: g.page(pageId).text, open: $gopen, canEdit: g.can, hasAny: g.hasAny)
-  }
+  /// The Notes: a list of the deck's notes, a tree (V176, V185: Screens/DeckMaterials.swift NotesTree); each opens as its own page.
+  private func notes(_ d: DeckVM, _ g: GuideVM) -> some View { NotesTree(deckId: d.id, g: g) }
 
   /// Whose deck it is: their picture and name (tap: its page).
   private func fromRow(_ d: DeckVM, _ lk: DeckSharing.Linked) -> some View {
@@ -433,14 +426,27 @@ struct DeckScreen: View {
     .contentShape(Rectangle())
   }
 
-  // PhoneDeckEmpty (a new deck opens here): the header, with "No cards yet" under the name and its + on it (New card, Make cards, Source, Notes, Upload diagram,
-  // Make diagram), and nothing under it (the owner, 2026-10-02: no Make box or row, and no Study: there is nothing to study).
-  private func empty(_ d: DeckVM, _ g: GuideVM) -> some View {
-    ScrollView(showsIndicators: false) {
-      header(d, sub: "No cards yet").padding(.bottom, 120)
+  /// Cards with no cards in them (a new deck, PhoneDeckEmpty): "No cards yet", and for a deck of yours New card (light) and Make cards (dark), the same as
+  /// its + menu's (the board's Cards empty state, 2026-10-02).
+  private func cardsEmpty(_ d: DeckVM) -> some View {
+    VStack(alignment: .leading, spacing: 14) {
+      Text("No cards yet").css(15).foregroundStyle(t.muted)
+      if !d.sharing.readOnly {
+        HStack(spacing: 10) {
+          emptyButton("plus", "New card", fg: t.text, bg: t.surf) { nav.newCard(deckId: d.id) }
+          emptyButton("sparkle", "Make cards", fg: t.invText, bg: t.inv) { nav.make(deckId: d.id) }
+        }
+      }
     }
-    .ignoresSafeArea(edges: .top)
-    .addMenu(open: $addOpen, rows: addRows(d, g), id: "deck-add", width: 260, label: "Add")
+    .padding(.top, 16).padding(.bottom, 8)
+    .frame(maxWidth: .infinity, alignment: .leading)
+  }
+  private func emptyButton(_ icon: String, _ label: String, fg: Color, bg: Color, _ action: @escaping () -> Void) -> some View {
+    Button(action: action) {
+      HStack(spacing: 8) { Icon(icon, 16, 2); Text(label).css(15, .semibold).lineLimit(1) }
+        .foregroundStyle(fg).padding(.horizontal, 14).frame(maxWidth: .infinity).frame(height: 44).background(Capsule().fill(bg))
+    }
+    .buttonStyle(.press)
   }
 }
 
@@ -457,7 +463,6 @@ struct DeckSettingsSheet: View {
   let close: () -> Void
   @State private var name: String? = nil
   @State private var pickingCover = false
-  /// The goal the settings opened with (the cost of a goal counts from there).
 
   var body: some View {
     VStack(alignment: .leading, spacing: 14) {

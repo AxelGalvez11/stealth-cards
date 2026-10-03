@@ -7,7 +7,7 @@ enum GuideSample {
   /// The deck page's `guide` setting (the canvas's GUIDE_STATES): what the Guide and the Sources hold.
   static let states = ["Guide and sources", "Guide pages", "Long guide", "A source open", "No guide yet", "Studying (read only)"]
   /// The PhoneGuide board's `view` (design/materials.mjs GUIDE_VIEWS).
-  static let views = ["Writing", "Block menu", "Format bar", "Toggle open", "Toggle closed", "Section folded", "Blank note", "Reading on a shared deck", "Older versions", "A new page"]
+  static let views = ["Writing", "Block menu", "Format bar", "Toggle open", "Toggle closed", "Section folded", "Blank note", "Reading on a shared deck", "Older versions", "A new page", "Outline open"]
   static let deckId = "cell"
 
   static let text = [
@@ -22,7 +22,8 @@ enum GuideSample {
   static var longText: String { text + "\n\n" + text.replacingOccurrences(of: "# Cell Biology: Exam 1", with: "## More for the exam") }
   static let pages = [
     MakeGuidePage(id: "g1", title: "Lecture 3 summary", text: "## Lecture 3\n\n:::toggle The **electron transport chain** pumps protons across the inner membrane\n1. NADH gives up its electrons.\n2. Protons are pumped out of the matrix.\n3. ATP synthase lets them flow back and makes ATP.\n:::\n"),
-    MakeGuidePage(id: "g2", title: "Mnemonics", text: "- **PMAT** for the phases of mitosis\n- *Please Do Not Throw Sausage Pizza Away* for the layers\n")]
+    MakeGuidePage(id: "g2", title: "Mnemonics", text: "- **PMAT** for the phases of mitosis\n- *Please Do Not Throw Sausage Pizza Away* for the layers\n", parent: "g1"),
+    MakeGuidePage(id: "g3", title: "Mitosis phases", text: "- **Prophase**: the chromosomes condense\n- **Metaphase**: they line up in the middle\n- **Anaphase**: they pull apart\n- **Telophase**: two new nuclei form\n", parent: "g2")]
 
   /// A day of September 2026 at ten in the morning, in this phone's time (the canvas's day(8, d)).
   static func day(_ d: Int) -> Double {

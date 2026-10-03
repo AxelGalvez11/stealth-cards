@@ -24,7 +24,7 @@ enum Pictures {
 /// sets the boxes off the picture. The boxes themselves are always yellow (Generated.occ).
 struct OccColors { var edge, ring: Color }
 
-/// Boxes over a picture (review, Cards to check, Learn and the practice test): every box that hides a part is yellow (the owner,
+/// Boxes over a picture (review, Cards to check and Learn): every box that hides a part is yellow (the owner,
 /// 2026-10-02: "for hidden boxes can you make the box color yellow?"), with black numbers; the asked box has an edge inside it in
 /// the screen's outline color (black on a light card, white on a dark one), and with Hide all the others have softer numbers.
 /// Once the answer shows, its yellow fades and the edge stays as its outline (at once with Reduce Motion; covering a new card's

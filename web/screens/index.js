@@ -409,6 +409,12 @@ export default [
   "h": 844
  },
  {
+  "name": "PhoneGuideOutline",
+  "title": "iPhone · Notes page · its outline open",
+  "w": 390,
+  "h": 844
+ },
+ {
   "name": "PhoneGuidePages",
   "title": "iPhone · Notes page · a note with pages inside",
   "w": 390,
@@ -909,12 +915,6 @@ export default [
  {
   "name": "PhoneSuggestionsReport",
   "title": "iPhone · Suggestions · Report",
-  "w": 390,
-  "h": 844
- },
- {
-  "name": "PhoneTest",
-  "title": "iPhone · Practice test",
   "w": 390,
   "h": 844
  },
@@ -2131,6 +2131,12 @@ export default [
   "h": 900
  },
  {
+  "name": "WebGuideOutline",
+  "title": "Web · Notes page · its outline open",
+  "w": 1440,
+  "h": 900
+ },
+ {
   "name": "WebGuidePages",
   "title": "Web · Notes page · a note with pages inside",
   "w": 1440,
@@ -2691,12 +2697,6 @@ export default [
  {
   "name": "WebSuggestionsReport",
   "title": "Web · Suggestions · Report",
-  "w": 1440,
-  "h": 900
- },
- {
-  "name": "WebTest",
-  "title": "Web · Practice test",
   "w": 1440,
   "h": 900
  },

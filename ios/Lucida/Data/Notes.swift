@@ -124,6 +124,10 @@ struct NotesEntry: Identifiable, Equatable {
 /// Where the caret is asked to go: a block (and a table cell), and a place in its words.
 struct NotesFocus: Equatable { var id: String; var at: Int; var cell: [Int]? = nil; var length = 0 }
 
+/// A heading in the page's outline (the rail at its right, and the tree a tap on it opens): its block, its words, and how far in it is (0 for the page's highest
+/// level, then 1 and 2), as web/notes.js outlineHeads makes them.
+struct NotesHead: Equatable, Identifiable { let id: String; let words: String; let ind: Int }
+
 // ---------- the page ----------
 @MainActor
 final class NotesPage: ObservableObject {
@@ -214,6 +218,16 @@ final class NotesPage: ObservableObject {
       if b.k == "toggle" && isOpen && !kids && editable { var vb = NoteBlock("p", d: b.d + 1); vb.id = "v" + b.id; var v = NotesEntry(block: vb, index: i); v.virtualFor = b.id; out.append(v) }
     }
     return out
+  }
+  /// The outline: every heading with words, in page order (one in a folded section or a closed toggle too: going to it opens what it is in).
+  var outline: [NotesHead] {
+    var out: [(id: String, words: String, level: Int)] = []
+    for b in blocks where b.k == "h" {
+      let w = Notes.plain(b.r).split(whereSeparator: { $0.isWhitespace }).joined(separator: " ")
+      if !w.isEmpty { out.append((b.id, String(w.prefix(200)), min(max(b.level, 1), 3))) }
+    }
+    let top = out.map(\.level).min() ?? 3
+    return out.map { NotesHead(id: $0.id, words: $0.words, ind: min(2, $0.level - top)) }
   }
   func index(_ id: String) -> Int? { blocks.firstIndex { $0.id == id } }
   func block(_ id: String) -> NoteBlock? { index(id).map { blocks[$0] } }
@@ -667,7 +681,7 @@ struct NotesDemo: Equatable {
     case "Toggle closed": return NotesDemo(open: "none")
     case "Section folded": return NotesDemo(open: "none", fold: [2])
     case "Blank note", "A new page": return NotesDemo(open: "first", keys: true)
-    case "Reading on a shared deck": return NotesDemo(open: "first")
+    case "Reading on a shared deck", "Outline open": return NotesDemo(open: "first")
     default: return nil
     }
   }

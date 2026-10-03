@@ -1,8 +1,9 @@
 // iPhone · A deck's Notes page (PhoneGuide: Writing, Block menu, Format bar, Toggle open, Toggle closed, Section folded, Blank note, Reading on a shared deck,
 // Older versions, A new page, and the Dark and Gray twins): the Guide and its extra pages as one page that is always formatted, where you tap and type
 // (Design/NotesViews.swift; its rules in Data/Notes.swift), opened from the deck page's Notes (a tap on the words opens it there). At the top: back, the deck's
-// name, the quiet saving line and ⋯ (Make cards from this page, New page, Older versions, Rename page, Delete page); under it the pages as pills once there
-// are two or more (no Guide pill on its own: the owner, 2026-10-02).
+// name, the quiet saving line and ⋯ (Make cards from this page, Add a page inside, Older versions, Rename page, Delete page); under it the page's path (the notes
+// it sits inside, then itself, each a tap away: V176, pages nest like Notion's); under the note the pages inside it, then Add a page inside. At the page's right,
+// the outline's rail (NotesRail: a line for each heading, a tap opens their tree in Lucida's own sheet), hidden while a line is written.
 // It saves as it's typed (a moment after the last key, one save after another: GuideEditorModel), and Done (the back arrow) sends what is waiting first.
 // What is saved is Markdown, written from the page's blocks by web/guide.js itself (GuideEngine), so the iPhone keeps exactly what the web keeps.
 import SwiftUI
@@ -11,8 +12,18 @@ import SwiftUI
 struct GuideNow {
   var deckName = "", pages: [MakeGuidePage] = [], pageId = "main", title = "Guide", text = ""
   var canEdit = false, reading = false, canAdd = false, hist = false, view = ""
+  /// The Guide's own words (its name in the path is its first heading).
+  var mainText = ""
   var key: String { pageId }
-  var tabs: [MakeGuidePage] { [MakeGuidePage(id: "main", title: "Guide")] + pages }
+  var all: [MakeGuidePage] { [MakeGuidePage(id: "main", title: "Guide", text: mainText)] + pages }
+  /// Where the page is: the notes it sits inside, then itself (twelve at most, as the web's).
+  var path: [MakeGuidePage] {
+    var out: [MakeGuidePage] = [], cur = all.first { $0.id == pageId }, guard_ = 0
+    while let c = cur, guard_ < 12 { out.insert(c, at: 0); guard_ += 1; cur = c.parent.isEmpty ? nil : all.first { $0.id == c.parent } }
+    return out
+  }
+  /// The pages inside it.
+  var inside: [MakeGuidePage] { pages.filter { $0.parent == pageId } }
 }
 
 struct GuideScreen: View {
@@ -24,6 +35,8 @@ struct GuideScreen: View {
   @StateObject private var notes = NotesPage()
   @StateObject private var scroll = NotesScroll()
   @State private var hooks = NotesHooks()
+  /// (only the rail watches it: the page isn't drawn again as the heading being read changes)
+  @State private var outline = NotesOutline()
   let deckId: String
   @State private var picking = false
   @State private var pictureAfter: String? = nil
@@ -49,6 +62,7 @@ struct GuideScreen: View {
     let page = n.pageId == "main" ? nil : n.pages.first { $0.id == n.pageId }
     let cur: (title: String, text: String) = page.map { (title: $0.title, text: $0.text) } ?? (title: "Guide", text: g.text)
     n.title = cur.title
+    n.mainText = g.text
     n.text = model.drafts[model.key(n.pageId)] ?? (view == "Blank note" ? "" : cur.text)
     n.reading = view == "Reading on a shared deck"
     n.canEdit = g.can && !n.reading
@@ -66,10 +80,11 @@ struct GuideScreen: View {
       ZStack(alignment: .bottom) {
         VStack(spacing: 0) {
           GuideTopBar(model: model, name: n.deckName, canEdit: n.canEdit, reading: n.reading, more: $more) { Task { await done() } }
-          if n.tabs.count > 1 { GuidePagesRow(tabs: n.tabs, pageId: n.pageId, pick: pick) }
+          if !n.hist { GuidePath(path: n.path, pick: pick) }
           if n.hist { GuideHistory(model: model, title: "Older versions of " + (n.pageId == "main" ? "the Guide" : n.title)) { Task { await model.toggleHistory() } } }
           else {
-            GuidePageArea(notes: notes, scroll: scroll, setup: setup(n), renaming: $renaming, title: n.title, hl: store.demo ? NotesDemo.of(n.view)?.bar : nil) { model.rename($0) }
+            GuidePageArea(notes: notes, scroll: scroll, outline: outline, rail: !keys && !renaming && keyboard.height == 0, setup: setup(n), renaming: $renaming, title: n.title,
+                          hl: store.demo ? NotesDemo.of(n.view)?.bar : nil, inside: n.inside, canAdd: n.canAdd, open: pick, add: addPage) { model.rename($0) }
           }
         }
         .padding(.top, Screen.top(52))
@@ -101,7 +116,7 @@ struct GuideScreen: View {
   private func start(_ n: GuideNow) {
     model.env = GuideEditorModel.Env(
       save: { [store] d, p, text in try await store.guideSave(d, page: p, text: text) },
-      addPage: { [store] d, title in try await store.guideAddPage(d, title: title) },
+      addPage: { [store] d, title, parent in try await store.guideAddPage(d, title: title, parent: parent) },
       rename: { [store] d, p, title in try await store.guideRenamePage(d, page: p, title: title) },
       delete: { [store] d, p in try await store.guideDeletePage(d, page: p) },
       restore: { [store] d, p, at in try await store.guideRestore(d, page: p, at: at) },
@@ -112,11 +127,24 @@ struct GuideScreen: View {
       if n.view == "Older versions" { model.versions = GuideSample.versions }
       aa = NotesDemo.of(n.view)?.aa ?? false
     }
-    if !store.demo && !store.guide(deckId).can { nav.back(); return }
+    // (the canvas's Outline open: the outline's sheet over the page)
+    if store.demo && n.view == "Outline open" {
+      DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { [notes, outline, scroll, nav] in
+        outline.refresh(notes.outline, top: scroll.viewport.minY, scrolled: false)
+        NotesRail.open(nav: nav, heads: notes.outline, outline: outline, page: notes)
+      }
+    }
+    // (a deck you only study opens its Notes page to read, as the web's: no ⋯, no Add a page inside, nothing to write in)
     load(n)
-    // the caret where the page was tapped on the deck page, or at the end of what is written (the deck page's + › Notes)
+    // the caret where the page was tapped on the deck page, or at the end of what is written (the deck page's + › Notes); or a new note (the Notes list's New note,
+    // or + on a row: a page inside that note), which opens as a blank note with the caret in its title
     let want = nav.guideAt, at = want.split(separator: ":").compactMap { Int($0) }
     nav.guideAt = ""
+    if want.hasPrefix("new:") && n.canEdit && !store.demo {
+      let parent = String(want.dropFirst(4))
+      if !parent.isEmpty || !n.mainText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty { Task { await model.addPage(inside: parent) } }
+      return
+    }
     if n.canEdit && !store.demo && at.count == 2 { notes.focusAt(at[0], at[1]) }
     else if n.canEdit && !store.demo && want == "end" && !n.text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty { notes.focusEnd() }
   }
@@ -138,7 +166,8 @@ struct GuideScreen: View {
   }
 
   private func pick(_ id: String) { notes.flush(); renaming = false; Task { await model.pick(id) } }
-  private func addPage() { notes.flush(); renaming = false; Task { await model.addPage() } }
+  /// Add a page inside (⋯, and the row under the note): a page inside the open one.
+  private func addPage() { notes.flush(); renaming = false; let parent = now().pageId; Task { await model.addPage(inside: parent) } }
 
   /// Done: what's waiting is saved, and the deck's Notes are on screen again (if it can't be saved, the page says why and stays).
   private func done() async {
@@ -194,27 +223,28 @@ struct GuideTopBar: View {
   }
 }
 
-/// A pill for the Guide and for each extra page, once there are two or more (New page is in ⋯).
-struct GuidePagesRow: View {
+/// Where the page is (V176): the notes it sits inside, then itself in bold, a "/" between, each a tap away (design/materials.mjs path: 14 points, the open one
+/// semibold, the others medium and quiet).
+struct GuidePath: View {
   @Environment(\.theme) private var t
-  let tabs: [MakeGuidePage]
-  let pageId: String
+  let path: [MakeGuidePage]
   let pick: (String) -> Void
   var body: some View {
     ScrollView(.horizontal, showsIndicators: false) {
-      HStack(spacing: 4) {
-        ForEach(tabs) { x in
-          let on = x.id == pageId
+      HStack(spacing: 0) {
+        ForEach(Array(path.enumerated()), id: \.element.id) { i, x in
+          let last = i == path.count - 1
+          if i > 0 { Text("/").css(14).foregroundStyle(t.muted).padding(.horizontal, 2).accessibilityHidden(true) }
           Button { pick(x.id) } label: {
-            Text(x.title).css(13, .semibold).lineLimit(1).foregroundStyle(on ? t.text : t.muted).padding(.horizontal, 13).frame(height: 32).frame(maxWidth: 220)
-              .background(Capsule().fill(on ? t.surf : .clear))
+            Text(NoteText.title(x)).css(14, last ? .semibold : .medium).lineLimit(1).foregroundStyle(last ? t.text : t.muted).padding(.horizontal, 8).frame(height: 32).frame(maxWidth: 240)
           }
-          .buttonStyle(.press).accessibilityLabel(x.title).accessibilityAddTraits(on ? .isSelected : [])
+          .buttonStyle(.press).accessibilityLabel(NoteText.title(x)).accessibilityAddTraits(last ? .isSelected : [])
         }
       }
-      .padding(.horizontal, 16)
+      .padding(.horizontal, 12)
     }
     .frame(height: 32).padding(.bottom, 4)
+    .accessibilityElement(children: .contain).accessibilityLabel("Page path").accessibilityIdentifier("notes.path")
   }
 }
 
@@ -233,7 +263,7 @@ struct GuideMoreMenu: View {
       Color.black.opacity(0.001).contentShape(Rectangle()).onTapGesture(perform: close)
       VStack(spacing: 2) {
         item("sparkle", "Make cards from this " + (n.pageId == "main" ? "guide" : "page"), action: make)
-        if n.canAdd { item("plus", "New page", action: add) }
+        if n.canAdd { item("plus", "Add a page inside", action: add) }
         item("history", "Older versions", action: history)
         if n.pageId != "main" {
           item("pencil", "Rename page", action: rename)
@@ -263,20 +293,29 @@ struct GuideMoreMenu: View {
 }
 
 // ---------- the page ----------
-/// The page itself (and, for an extra page being renamed, its name above it), scrolling, with the caret kept above the bar.
+/// The page itself (and, for an extra page being renamed, its name above it), scrolling, with the caret kept above the bar, and the outline's rail at its right
+/// (`rail`: not while the keyboard is up, so it never covers what is being written), 12 points under its top as it scrolls.
 struct GuidePageArea: View {
   @Environment(\.theme) private var t
   @ObservedObject var notes: NotesPage
   @ObservedObject var scroll: NotesScroll
+  let outline: NotesOutline
+  let rail: Bool
   let setup: NotesSetup
   @Binding var renaming: Bool
   let title: String
   let hl: (i: Int, a: Int, b: Int)?
+  /// The pages inside this one (V176), whether one can be added, and what a tap on them does.
+  var inside: [MakeGuidePage] = []
+  var canAdd = false
+  var open: (String) -> Void = { _ in }
+  var add: () -> Void = {}
   let rename: (String) -> Void
   @State private var pos = ScrollPosition(edge: .top)
   @State private var name = ""
   @FocusState private var nameOn: Bool
   var body: some View {
+    let heads = notes.outline, railOn = rail && heads.count >= 2
     ScrollView(showsIndicators: false) {
       VStack(alignment: .leading, spacing: 0) {
         if renaming {
@@ -290,17 +329,72 @@ struct GuidePageArea: View {
             .accessibilityLabel("Page name")
             .onAppear { name = title; nameOn = true }
         }
-        NotesView(page: notes, setup: setup, hl: hl, below: setup.editable ? 120 : 0)
+        // (under the note: a tap there writes at its end, then the pages inside it and Add a page inside, 32 points on as the web's)
+        NotesView(page: notes, setup: setup, hl: hl, below: setup.editable ? 32 : 0)
+        GuidePagesInside(inside: inside, canAdd: canAdd, gap: setup.editable ? 0 : 32, open: open, add: add)
       }
-      .padding(.top, 10).padding(.trailing, 20).padding(.leading, 30).padding(.bottom, setup.editable ? 0 : 120)
+      .padding(.top, 10).padding(.trailing, 20).padding(.leading, 30).padding(.bottom, 120)
       .environment(\.notesScroll, scroll)
+      .environment(\.notesOutline, outline)
     }
     .scrollPosition($pos)
-    .onScrollGeometryChange(for: CGFloat.self, of: { $0.contentOffset.y + $0.contentInsets.top }) { _, y in scroll.offset = y }
+    .onScrollGeometryChange(for: CGFloat.self, of: { $0.contentOffset.y + $0.contentInsets.top }) { _, y in scroll.offset = y; outline.refresh(heads, top: scroll.viewport.minY) }
     .onGeometryChange(for: CGRect.self) { $0.frame(in: .global) } action: { scroll.viewport = $0 }
-    .onAppear { let p = $pos; scroll.go = { y in p.wrappedValue.scrollTo(y: y) } }
+    .overlay(alignment: .topTrailing) { if railOn { NotesRail(heads: heads, outline: outline, page: notes).padding(.top, 12).transition(.opacity) } }
+    .animation(Motion.fade, value: railOn)
+    .onAppear { let p = $pos; scroll.go = { y in p.wrappedValue.scrollTo(y: y) }; DispatchQueue.main.async { outline.refresh(heads, top: scroll.viewport.minY, scrolled: false) } }
+    .onChange(of: heads) { _, h in DispatchQueue.main.async { outline.refresh(h, top: scroll.viewport.minY, scrolled: false) } }
     .scrollDismissesKeyboard(.interactively)
     .frame(maxHeight: .infinity)
+  }
+}
+
+/// Under the note (V176, design/materials.mjs inside): the pages inside it, each its name and first words (a tap opens it), then Add a page inside (for its owner).
+struct GuidePagesInside: View {
+  @Environment(\.theme) private var t
+  let inside: [MakeGuidePage]
+  let canAdd: Bool
+  /// The room above (none when the note's own tap-to-write room is already there).
+  let gap: CGFloat
+  let open: (String) -> Void
+  let add: () -> Void
+  var body: some View {
+    VStack(alignment: .leading, spacing: 0) {
+      if !inside.isEmpty {
+        VStack(spacing: 0) {
+          ForEach(inside) { x in
+            let pv = NoteText.preview(x.text).isEmpty ? "Empty" : NoteText.preview(x.text)
+            Button { open(x.id) } label: {
+              HStack(spacing: 12) {
+                NoteGlyph().foregroundStyle(t.muted).frame(width: 32, height: 32).background(Circle().fill(t.surf))
+                VStack(alignment: .leading, spacing: 2) {
+                  Text(NoteText.title(x)).css(15, .medium).lineLimit(1).foregroundStyle(t.text)
+                  Text(pv).css(12).lineLimit(1).foregroundStyle(t.muted)
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+              }
+              .padding(.vertical, 8).frame(minHeight: 64).contentShape(Rectangle())
+              .overlay(alignment: .bottom) { t.line.frame(height: 1) }
+            }
+            .buttonStyle(.flat).accessibilityLabel(NoteText.title(x)).accessibilityValue(pv).accessibilityIdentifier("notes.inside")
+          }
+        }
+        .overlay(alignment: .top) { t.line.frame(height: 1) }
+        .padding(.top, gap)
+        .accessibilityElement(children: .contain).accessibilityLabel("Pages inside")
+      }
+      if canAdd {
+        Button(action: add) {
+          HStack(spacing: 12) {
+            NotesIcon("plus", 16, 2).frame(width: 32, height: 32).overlay(Circle().strokeBorder(t.line, style: StrokeStyle(lineWidth: 1, dash: [3, 3])))
+            Text("Add a page inside").css(14, .medium)
+          }
+          .foregroundStyle(t.muted).frame(height: 48).frame(maxWidth: .infinity, alignment: .leading).contentShape(Rectangle())
+        }
+        .buttonStyle(.flat).padding(.top, inside.isEmpty ? gap : 0)
+        .accessibilityLabel("Add a page inside").accessibilityIdentifier("notes.addPage")
+      }
+    }
   }
 }
 

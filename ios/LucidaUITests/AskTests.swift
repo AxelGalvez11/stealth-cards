@@ -7,7 +7,7 @@
 //   2 Free: each question is one of the day's three explanations, then the composer is the upgrade line (Go Pro), also when opened again later
 //   3 the AI failing: the question's answer says so, in Lucida's quiet line
 //   4 Learn mode: the same composer under the explanation; Next waits under the keyboard while a question is typed
-//   5 the design screens: PhoneReviewExplainAsk, and Learn and the practice test's results with a question asked (-explainOpen -followUp)
+//   5 the design screens: PhoneReviewExplainAsk, and Learn's with a question asked (-explainOpen -followUp)
 // No system alert, sheet or menu in any of them. Run it with ios/tools/e2e-ask.sh; it only runs when LUCIDA_ASK is set.
 import XCTest
 
@@ -269,13 +269,6 @@ final class AskTests: XCTestCase {
     l.terminate()
     let ty = launchBoard("PhoneQuizType", ["-explainOpen", "true", "-followUp", "true"])
     check(wait(explanation(ty)) && wait(field(ty)) && questions(ty) == ["Where do the vesicles go next?"], "PhoneQuizType with -explainOpen -followUp", "\(questions(ty))")
-    ty.terminate()
-    let t = launchBoard("PhoneTest", ["-screen", "Results", "-explainOpen", "true", "-followUp", "true", "-fakeKeyboard", "300"])
-    check(wait(explanation(t)) && wait(field(t)) && questions(t) == ["How does it make the ATP?"], "PhoneTest’s results with -explainOpen -followUp: question 3’s explanation, a question and the composer", "\(questions(t))")
-    field(t).tap()
-    Thread.sleep(forTimeInterval: 1)
-    let top = keyboardTop(t), f = field(t).frame
-    check(f.maxY <= top && top - f.maxY <= 60, "the test’s composer is brought up on top of the keyboard", "keyboard at \(top) field \(f)")
-    noSystemUI(t, "the test's results")
+    noSystemUI(ty, "PhoneQuizType")
   }
 }

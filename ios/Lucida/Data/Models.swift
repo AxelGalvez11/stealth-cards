@@ -22,8 +22,6 @@ struct Library: Decodable {
   var profile: ProfileRef?
   /// False on a server started as the Free app (LUCIDA_PLAN=free, or a made-up person on Free); the Pro tools are off.
   var pro = true
-  /// Your finished practice tests, newest first (web/store.mjs test.save).
-  var tests: [PastTest]
   /// How many batches of Lucida's own Learn mode questions are left today (nil from a server that doesn't say; Learn mode asks for none at 0).
   var quizLeft: Int? = nil
   /// What making cards can do for you (your plan's limits), and what each deck kept of what it was made from and of its Guide,
@@ -32,13 +30,13 @@ struct Library: Decodable {
   var materials: [String: DeckMaterials] = [:]
   /// What Explain shows in its composer's place once the day's explanations are used up (the server's words), or nil while some are left.
   var explainLimit: ExplainLimit? = nil
-  enum CodingKeys: String, CodingKey { case rev, settings, ai, folders, decks, cards, logs, me, aiOn, profile, pro, tests, quizLeft, make, explainLimit }
+  enum CodingKeys: String, CodingKey { case rev, settings, ai, folders, decks, cards, logs, me, aiOn, profile, pro, quizLeft, make, explainLimit }
   init(from d: Decoder) throws {
     let c = try d.container(keyedBy: CodingKeys.self)
     rev = c.v(.rev, 0); settings = c.v(.settings, UserSettings()); ai = c.v(.ai, AIState()); folders = c.v(.folders, [])
     decks = c.v(.decks, []); cards = c.v(.cards, []); logs = c.v(.logs, []); me = c.v(.me, nil); aiOn = c.v(.aiOn, false); profile = c.v(.profile, nil)
     pro = c.v(.pro, true)
-    tests = c.v(.tests, []); quizLeft = c.v(.quizLeft, nil)
+    quizLeft = c.v(.quizLeft, nil)
     make = c.v(.make, MakeInfo())
     explainLimit = c.v(.explainLimit, nil)
     // (Each deck's sources and Guide are read from the same list of decks, apart from Deck itself.)
@@ -46,20 +44,6 @@ struct Library: Decodable {
   }
   init(rev: Int = 0, settings: UserSettings = UserSettings(), ai: AIState = AIState(), folders: [Folder] = [], decks: [Deck] = [], cards: [Card] = [], logs: [ReviewLog] = [], me: Me? = nil, aiOn: Bool = false) {
     self.rev = rev; self.settings = settings; self.ai = ai; self.folders = folders; self.decks = decks; self.cards = cards; self.logs = logs; self.me = me; self.aiOn = aiOn
-    tests = []
-  }
-}
-
-/// A finished practice test as the library keeps it (web/store.mjs test.save): when, of which deck or folder, and how it went.
-struct PastTest: Decodable, Identifiable {
-  var id = "", at: Double = 0, deckId: String? = nil, folderId: String? = nil, name = "", n = 0, right = 0, pct = 0
-  enum CodingKeys: String, CodingKey { case id, at, deckId, folderId, name, n, right, pct }
-  init(id: String = "", at: Double = 0, deckId: String? = nil, folderId: String? = nil, name: String = "", n: Int = 0, right: Int = 0, pct: Int = 0) {
-    self.id = id; self.at = at; self.deckId = deckId; self.folderId = folderId; self.name = name; self.n = n; self.right = right; self.pct = pct
-  }
-  init(from d: Decoder) throws {
-    let c = try d.container(keyedBy: CodingKeys.self)
-    id = c.v(.id, ""); at = c.v(.at, 0); deckId = c.v(.deckId, nil); folderId = c.v(.folderId, nil); name = c.v(.name, ""); n = c.v(.n, 0); right = c.v(.right, 0); pct = c.v(.pct, 0)
   }
 }
 

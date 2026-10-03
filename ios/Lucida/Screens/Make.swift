@@ -1,7 +1,9 @@
-// iPhone · Make cards (PhoneMake, and its Dark and Gray twins; `-board PhoneMake -state Review` shows any of the canvas's states): a sheet
-// over the page it came from, where cards are made from a file, pictures, a recording, pasted text, a YouTube link, or a topic. Pick a
-// source, add it (with a few options under it), watch it work (and Cancel), check the new cards (edit, remove, or keep each one), and
-// Add them to a deck, which then opens. What it does is Data/MakeData.swift (web/make.js, ported); this file only draws it, like the board.
+// iPhone · Make cards (PhoneMake, and its Dark and Gray twins; `-board PhoneMake -state Review` shows any of the canvas's states; PhoneDeckMake is the
+// same over a deck's page): a sheet over the page it came from, where cards are made from a file, pictures, a recording, pasted text, a YouTube link,
+// or a topic. Pick a source, add it (with a few options under it), watch it work (and Cancel), check the new cards (edit, remove, or keep each one),
+// and Add them to a deck, which then opens; opened from a deck's page (its + menu, its Sources' Make cards, More from a source) the cards go into that
+// deck, Into deck starts on it, and closing or saving comes back to it (the owner, 2026-10-02: "pressing '+' should not take user back to the library
+// page"). What it does is Data/MakeData.swift (web/make.js, ported); this file only draws it, like the board.
 import SwiftUI
 import PhotosUI
 import AVFoundation
@@ -31,10 +33,15 @@ extension MakeFlow {
       signedOut: { store.phase = .signedOut },
       leave: { id in
         guard !store.demo else { return }
-        if let id { withAnimation(.out(0.3)) { nav.openDeck(id) } } else { nav.close() }
+        guard let id else { nav.close(); return }
+        // Over a deck's page the cards are on it when the sheet goes, and no other tab or page opens; cards put into another deck open its page on top.
+        if case .deck(let here)? = nav.path.last {
+          if here == id { nav.close() } else { withAnimation(.out(0.3)) { nav.sheet = nil; nav.push(.deck(id)) } }
+        } else { withAnimation(.out(0.3)) { nav.openDeck(id) } }
       },
       demo: store.demo))
-    if s.isDemo { MakeSample.apply(MakeSample.name(s.demo), to: f); return f }
+    // (PhoneDeckMake: the canvas's states over Cell Biology's page, with Into deck on it.)
+    if s.isDemo { MakeSample.apply(MakeSample.name(s.demo), to: f); if !s.deckId.isEmpty && f.m.opts.deckId.isEmpty { f.m.opts.deckId = s.deckId }; return f }
     f.enter(s)
     #if DEBUG
     f.debugFill(s)

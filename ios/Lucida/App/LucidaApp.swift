@@ -111,10 +111,6 @@ struct RootView: View {
         await store.load()
         // A theme in use is warmed up (its details, background, card faces, pictures, and covers), so nothing flashes.
         if let k = store.skinKey { ThemeArt.shared.warm(k, store) }
-        // A practice test that was open when the app closed is open again, where it was (its deck's or folder's page under it).
-        if let T = store.testing {
-          nav.tab = .library; nav.path = [T.scope.folderId.map { Route.folder($0) } ?? .deck(T.deckId ?? "")]; nav.full = .test(T.scope)
-        }
         Task { try? await Task.sleep(nanoseconds: 5_000_000_000); await store.retuneWhenDue() }
         #if DEBUG
         // `-reminderIn <seconds>`: the daily reminder's notice, once, that many seconds from now (for the test that taps it).
@@ -244,9 +240,15 @@ extension Board {
     if name.hasSuffix("Gray") { store.props.darkMode = "gray" }
     switch name.replacingOccurrences(of: "Dark", with: "").replacingOccurrences(of: "Gray", with: "") {
     case "PhoneDeck": nav.tab = .library; nav.path = [.deck("cell")]
+    // The deck page on its Notes tab (the tree of notes, with the sample's pages inside pages: V176, V185) and on its Sources tab, as the canvas's boards.
+    case "PhoneDeckNotes": store.props.section = "Notes"; store.props.guideState = "Guide pages"; nav.tab = .library; nav.path = [.deck("cell")]
+    case "PhoneDeckSources": store.props.section = "Sources"; nav.tab = .library; nav.path = [.deck("cell")]
     // A deck's Notes page (its view: -state Writing, "Block menu", "Format bar", "Toggle open", "Toggle closed", "Section folded", "Blank note",
-    // "Reading on a shared deck", "Older versions" or "A new page").
-    case "PhoneGuide": nav.tab = .library; nav.path = [.guide(Board.sampleDeckId, "")]
+    // "Reading on a shared deck", "Older versions", "A new page" or "Outline open"); PhoneGuideOutline is the last.
+    case "PhoneGuide", "PhoneGuideOutline": nav.tab = .library; nav.path = [.guide(Board.sampleDeckId, "")]
+    // A note with pages inside (Lecture 3 summary) and a page inside another (Mnemonics), as the canvas's PhoneGuidePages and PhoneGuideNested (V176).
+    case "PhoneGuidePages": store.props.guideState = "Guide pages"; nav.tab = .library; nav.path = [.guide(Board.sampleDeckId, "g1")]
+    case "PhoneGuideNested": store.props.guideState = "Guide pages"; nav.tab = .library; nav.path = [.guide(Board.sampleDeckId, "g2")]
     case "PhoneDeckEmpty": store.props.emptyDeck = true; nav.tab = .library; nav.path = [.deck("pharm")]
     case "PhoneDeckSettings": store.props.deckSettings = "general"; nav.tab = .library; nav.path = [.deck("cell")]
     case "PhoneDeckSettingsStudy": store.props.deckSettings = "study"; nav.tab = .library; nav.path = [.deck("cell")]
@@ -297,6 +299,8 @@ extension Board {
     case "PhoneImport": nav.tab = .library; nav.sheet = .importCards("")
     // Make cards over the Library, on one of the canvas's steps (`-state Review`, or any name in MakeSample.steps; Pick when it's left out).
     case "PhoneMake": nav.tab = .library; nav.sheet = .make(MakeStart(demo: MakeSample.name(Board.arg("-state"))))
+    // Make cards opened from a deck (its + menu, Sources' Make cards, More from a source): the same states over Cell Biology's page, Into deck on it.
+    case "PhoneDeckMake": nav.tab = .library; nav.path = [.deck("cell")]; nav.sheet = .make(MakeStart(deckId: "cell", demo: MakeSample.name(Board.arg("-state"))))
     case "PhoneEditor": store.props.editorTyping = true; nav.tab = .library; nav.path = [.deck("cell")]; nav.sheet = .newCard(deckId: "cell", cardId: nil)
     // Editing a card that's paused (Unpause card), from the sample's first card.
     case "PhoneEditorPaused": store.props.editCard = "k1"; store.demoPaused["k1"] = true; nav.tab = .library; nav.path = [.deck("cell")]; nav.sheet = .newCard(deckId: "cell", cardId: "k1")
@@ -313,12 +317,6 @@ extension Board {
     case "PhoneQuizType": store.demoLearn.screen = "type"; nav.full = .learn("cell")
     case "PhoneQuizDone": store.demoLearn.screen = "done"; nav.full = .learn("cell")
     case "PhoneQuizSettings": store.props.learnSettings = true; nav.full = .learn("cell")
-    // The practice test: its screen is the board's `screen` Tweak (-screen "Results · missed", -screen Matching, ...), and its timer the
-    // `timed` Tweak (-timed false).
-    case "PhoneTest":
-      store.props.testScreen = Board.arg("-screen") ?? "Set up"; store.props.testTimed = Board.arg("-timed") != "false"; store.demoTest.screen = store.props.testScreen
-      nav.tab = .library; nav.path = [.deck("cell")]
-      if store.props.testScreen == "Set up" { nav.sheet = .testStart(.deck("cell")) } else { nav.full = .test(.deck("cell")) }
     // The onboarding, open on one of its steps (the canvas's PhoneWelcome with its `step`).
     case "PhoneWelcome": store.welcoming = true
     case "PhoneWelcomeClaude": store.welcoming = true; store.props.welcomeStep = "Steps"
@@ -395,8 +393,8 @@ extension Board {
     if ProcessInfo.processInfo.arguments.contains("-caughtUp") { store.props.caughtUp = true }
     // Settings' Flip animation on a design screen: `-flip Off` (on when it's left out).
     if Board.arg("-flip") == "Off" { store.props.flip = false }
-    // The boards' explainOpen and followUp Tweaks on Learn (PhoneQuizAnswered, PhoneQuizType) and the practice test's results: the explanation
-    // open, and a question asked about it and answered.
+    // The boards' explainOpen and followUp Tweaks on Learn (PhoneQuizAnswered, PhoneQuizType): the explanation open, and a question asked about
+    // it and answered.
     if Board.arg("-explainOpen") == "true" { store.props.explainOpen = true }
     if Board.arg("-followUp") == "true" { store.props.followUp = true }
     // Settings' Daily reminder: `-reminder Off|"6:00 PM"|...`, and `-reminderNote` (Off, with the line about allowing notifications).
@@ -450,7 +448,7 @@ extension Board {
   /// The launch arguments that set the Guide and Sources boards (see setUp).
   @MainActor static func guideSettings(_ board: String, store: Store) {
     let st = arg("-state") ?? ""
-    if board.hasPrefix("PhoneGuide") { store.props.guideView = GuideSample.views.contains(st) ? st : "Writing" }
+    if board.hasPrefix("PhoneGuide") { store.props.guideView = GuideSample.views.contains(st) ? st : board.hasPrefix("PhoneGuideOutline") ? "Outline open" : "Writing" }
     else if ["Cards", "Notes", "Diagrams", "Sources"].contains(st) { store.props.section = st }
     else if GuideSample.states.contains(st) || DiagramSample.isState(st) { store.props.guideState = st }
     if let v = arg("-section") { store.props.section = v }
@@ -606,7 +604,6 @@ struct SheetHost: View {
     case .newCard(let deckId, let cardId): SheetOverlay(top: 56, radius: 36, close: nav.close) { EditorSheet(deckId: deckId ?? store.lib.decks.first?.id, cardId: cardId) }
     // Learn mode is free for everyone (the owner, 2026-09-29).
     case .learnStart(let id): SheetOverlay(top: nil, radius: 36, close: nav.close) { LearnStartSheet(deckId: id) }
-    case .testStart(let s): SheetOverlay(top: nil, radius: 32, close: nav.close) { TestStartSheet(scope: s) }
     case .nameFolder(let rename, let deck, let name): FolderPopup(rename: rename, deck: deck, start: name)
     case .editProfile: SheetOverlay(top: 56, radius: 36, close: nav.close) { EditProfileSheet() }
     case .deckUpdates(let id): SheetOverlay(top: 56, close: nav.close) { DeckUpdatesSheet(deckId: id) }
@@ -653,7 +650,6 @@ struct FullHost: View {
       case .reviewSet(let set): ReviewScreen(deckId: nil, pile: nil, set: set)
       case .done: DoneScreen()
       case .learn(let id): LearnScreen(deckId: id)
-      case .test(let s): TestScreen(scope: s)
       }
     }
     .background(t.bg.ignoresSafeArea())

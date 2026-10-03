@@ -9,8 +9,6 @@ import SwiftUI
 enum Route: Hashable { case settings, deck(String), folder(String), inbox, profile(String), news, publicDeck(DeckAddress), suggestions(String), history(DeckAddress), themes, theme(String), connect, guide(String, String) }
 enum SheetKind: Identifiable, Equatable {
   case newDeck, newCard(deckId: String?, cardId: String?), deckSettings(String), learnStart(String)
-  /// The start of a practice test, over a deck's page or a folder's.
-  case testStart(TestScope)
   /// The New folder popup (maybe for a deck that goes in it), or Rename on a folder's page; `name`: what's typed to start.
   case nameFolder(rename: String?, deck: String?, name: String)
   /// Edit profile (on your profile), and a copy's changes from the deck it came from (take or skip each).
@@ -40,7 +38,6 @@ enum SheetKind: Identifiable, Equatable {
     case .newCard(let d, let c): return "card-\(d ?? "")-\(c ?? "")"
     case .deckSettings(let d): return "settings-" + d
     case .learnStart(let d): return "learn-" + d
-    case .testStart(let s): return "test-" + s.key
     case .nameFolder(let f, let d, _): return "folder-\(f ?? "")-\(d ?? "")"
     case .editProfile: return "editProfile"
     case .deckUpdates(let d): return "updates-" + d
@@ -62,8 +59,6 @@ enum SheetKind: Identifiable, Equatable {
 }
 enum FullKind: Identifiable, Equatable {
   case review(deckId: String?, pile: String?), done, learn(String)
-  /// A practice test (or its results), of a deck or a folder.
-  case test(TestScope)
   /// Going over cards picked on the Stats page: "hard", "leech", or "tag:Organelles".
   case reviewSet(String)
   var id: String {
@@ -72,7 +67,6 @@ enum FullKind: Identifiable, Equatable {
     case .reviewSet(let s): return "review-set-" + s
     case .done: return "done"
     case .learn(let d): return "learn-" + d
-    case .test(let s): return "test-" + s.key
     }
   }
 }
@@ -97,8 +91,6 @@ final class Nav: ObservableObject {
   @Published var full: FullKind?
   /// A design screen's full screen, waiting for the page under it to be drawn (see MainView).
   var boardFull: FullKind?
-  /// Where a review of the cards missed in a practice test goes when it ends: back to the test's results.
-  var afterSet: FullKind?
   /// A page hides the tab bar (Suggestions, once one is opened).
   @Published var barHidden = false
   /// Edit profile opens once your profile is showing (Settings → Edit profile).
@@ -143,8 +135,8 @@ final class Nav: ObservableObject {
   /// A review that ran out of cards: the session's summary if anything was graded.
   func finishReview(graded: Bool = true) { withAnimation(Motion.sheet) { full = graded ? .done : nil } }
   func closeFull() { withAnimation(Motion.sheet) { full = nil } }
-  /// The end of a review of a set of cards: the page it was started from, or (cards missed in a test) the test's results.
-  func endSet() { let back = afterSet; afterSet = nil; withAnimation(Motion.sheet) { full = back } }
+  /// The end of a review of a set of cards: the page it was started from (the Stats page).
+  func endSet() { withAnimation(Motion.sheet) { full = nil } }
   /// Leaving flashcards or Learn mode (X, or Done on the summary): straight to the deck's page, or to the Library after a
   /// review of every deck (the web's endHref and doneHref). Every grade is saved already.
   func leave(to deckId: String?) {
@@ -156,17 +148,6 @@ final class Nav: ObservableObject {
     var now = Transaction(); now.disablesAnimations = true
     withTransaction(now) { if let id = deckId { path.append(.deck(id)) } else { pick(.library) } }
     DispatchQueue.main.async { withAnimation(Motion.sheet) { self.full = nil } }
-  }
-  /// Leaving a practice test (Leave, or Done on its results): the page it was started from, a deck's or a folder's.
-  func leave(test scope: TestScope) {
-    switch scope {
-    case .deck(let id): leave(to: id)
-    case .folder(let id):
-      if path.last == .folder(id) { withAnimation(Motion.sheet) { full = nil }; return }
-      var now = Transaction(); now.disablesAnimations = true
-      withTransaction(now) { tab = .library; path = [.folder(id)] }
-      DispatchQueue.main.async { withAnimation(Motion.sheet) { self.full = nil } }
-    }
   }
   func pick(_ t: Tab) { path = []; tab = t }
   /// Someone's profile (`handle` "": yours). Yours is the Profile tab (`mine` says your handle), so opening it goes there

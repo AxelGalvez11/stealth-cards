@@ -81,6 +81,12 @@ final class StudyNetworkTests: XCTestCase {
     }
     Thread.sleep(forTimeInterval: 0.8)
   }
+  /// The Library tab (a deck's page and a shared deck's have no tab bar since 2026-10-02: Back first, until it shows).
+  private func toLibrary(_ app: XCUIApplication) {
+    var n = 0
+    while !(button(app, "Library").exists && button(app, "Library").isHittable) && n < 5 && button(app, "Back").exists { button(app, "Back").tap(); Thread.sleep(forTimeInterval: 0.8); n += 1 }
+    button(app, "Library").tap()
+  }
   private func button(_ app: XCUIApplication, _ label: String) -> XCUIElement { app.buttons[label].firstMatch }
   /// A button whose label starts with these words (a row's label has its value after it).
   private func buttonStarting(_ app: XCUIApplication, _ words: String) -> XCUIElement {
@@ -158,13 +164,14 @@ final class StudyNetworkTests: XCTestCase {
     check(wait(button(app, "From Maria Santos"), 12), "Study adds the deck to the learner's library and opens it")
     let studied = ((state(learner)["decks"] as? [[String: Any]]) ?? []).first { ($0["link"] as? [String: Any])?["id"] as? String == sharedId }?["id"] as? String ?? ""
     check(!studied.isEmpty, "studying the deck adds it to the learner's library")
-    button(app, "Library").tap()
-    let row = any(app, "From Maria Santos")
-    check(wait(row, 12), "the Library says whose it is (From Maria Santos)")
-    check(any(app, "3 cards").exists, "with its cards")
+    toLibrary(app)
+    let row = buttonStarting(app, "MCAT Biochemistry")
+    check(wait(row, 12), "the Library lists it")
+    // (A Library row is a deck's name and what's due, with no line under it: the owner, "remove thse things under title", d8127447.)
+    check(!any(app, "From Maria Santos").exists && !any(app, "3 cards").exists, "by its name and what's due, with no From or card count under it")
     row.tap()
     check(wait(button(app, "Suggest a change")), "the studied deck has Suggest a change")
-    check(!button(app, "New card").exists && !button(app, "Add cards").exists, "and no New card or Add cards")
+    check(!button(app, "New card").exists && !button(app, "Add cards").exists && !app.buttons["deck.add"].exists && app.buttons["deck.study"].exists, "and no New card, Add cards or + (Study stays)")
     check(wait(button(app, "From Maria Santos")), "its page says whose it is")
     button(app, "Deck settings").tap()
     check(wait(button(app, "Remove from library")), "its settings say Remove from library")
@@ -198,7 +205,7 @@ final class StudyNetworkTests: XCTestCase {
     app = launch(as: copier, ["-open", "deck:MCAT Biochemistry"])
     let banner = any(app, "Maria Santos changed 2 cards")
     check(wait(banner, 12), "the copy shows the owner's changes (Maria Santos changed 2 cards)")
-    check(button(app, "Make cards").exists && button(app, "New card").exists && !button(app, "Suggest a change").exists, "a copy is yours to edit (its cover has Make cards and New card)")
+    check(app.buttons["deck.add"].exists && !button(app, "Suggest a change").exists, "a copy is yours to edit (its cover has its +)")
     banner.tap()
     check(wait(app.staticTexts["Changes from Maria Santos"]), "See changes opens the changes")
     check(button(app, "Take all 2").exists, "with Take all 2")
@@ -220,7 +227,7 @@ final class StudyNetworkTests: XCTestCase {
     // ---------- the owner: News of the follow, a pin, Share, who can see the deck ----------
     app = launch(as: owner)
     button(app, "Discover").tap()
-    let bell = button(app, "News, 1 new")
+    let bell = button(app, "Notifications, 1 new")
     check(wait(bell, 10), "the bell in Discover's header counts the news")
     bell.tap()
     let news = any(app, "Bob Stone followed you")
@@ -231,7 +238,7 @@ final class StudyNetworkTests: XCTestCase {
     check(wait(app.staticTexts["@" + learnerAt]), "a follow opens the follower's profile")
     button(app, "Back").tap()
     button(app, "Back").tap()
-    check(wait(button(app, "News"), 10), "News is read a moment after opening it (the count goes)")
+    check(wait(button(app, "Notifications"), 10), "Notifications are read a moment after opening them (the count goes)")
     check(!button(app, "Your profile").exists, "and there is no profile picture there (Profile is a tab)")
     button(app, "Profile").tap()
     check(wait(app.staticTexts["@" + ownerHandle]), "the Profile tab opens your profile")
@@ -247,9 +254,11 @@ final class StudyNetworkTests: XCTestCase {
     button(app, "Share profile").tap()
     check(shareSheetUp(app) && !button(app, "Link copied").exists, "Share opens the phone's share sheet (it used to say Link copied)")
     closeShareSheet(app)
-    button(app, "Library").tap()
-    check(wait(any(app, "Public · 3 cards"), 10), "the Library marks the deck Public")
-    any(app, "Public · 3 cards").tap()
+    toLibrary(app)
+    // (A Library row has no line under its name, so no "Public · 3 cards" either: d8127447.)
+    let mine = buttonStarting(app, "MCAT Biochemistry")
+    check(wait(mine, 10) && !any(app, "Public · 3 cards").exists, "the Library lists the deck by its name, with no Public line under it")
+    mine.tap()
     check(wait(button(app, "Public")), "a deck you share has its page's button")
     button(app, "Deck settings").tap()
     lowest(app, "Sharing").tap()
@@ -301,9 +310,9 @@ final class StudyNetworkTests: XCTestCase {
     Thread.sleep(forTimeInterval: 0.8)
 
     // The learner takes the studied deck out of the library (Deck settings: Remove from library, then its confirm).
-    button(app, "Library").tap()
+    toLibrary(app)
     if !wait(button(app, "New folder"), 3) { button(app, "Library").tap() }
-    let studiedRow = any(app, "From Maria Santos")
+    let studiedRow = buttonStarting(app, "MCAT Biochemistry")   // (a Library row has no From line: d8127447)
     check(wait(studiedRow), "the studied deck is in the Library")
     studiedRow.tap()
     button(app, "Deck settings").tap()
@@ -311,7 +320,7 @@ final class StudyNetworkTests: XCTestCase {
     check(wait(app.staticTexts["Remove “MCAT Biochemistry” from your library?"]) && app.staticTexts["Your progress on it goes too."].exists, "Remove from library asks first, in plain words")
     check(app.alerts.count == 0 && app.sheets.count == 0, "in Lucida’s own question, not the system’s")
     app.buttons["question.go"].tap()
-    check(gone(any(app, "From Maria Santos"), 10), "and the deck leaves the Library")
+    check(gone(buttonStarting(app, "MCAT Biochemistry"), 10), "and the deck leaves the Library")
     check(!((state(learner)["decks"] as? [[String: Any]]) ?? []).contains { $0["id"] as? String == studied }, "the server has it gone too")
 
     print("Study network: \(passed) passed, \(failed) failed")

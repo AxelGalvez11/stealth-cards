@@ -123,8 +123,7 @@ extension Store {
     return out.filter { $0.2 > 0 || $0.0 == "all" }
   }
 
-  /// A deck's cards that can be asked (until the library changes), with their answers: building many questions at once (a
-  /// practice test) asks for these again and again.
+  /// A deck's cards that can be asked (until the library changes), with their answers.
   func learnIn(_ id: String) -> [(c: Card, a: String)] {
     if let m = learnMemo["l" + id] { return m }
     let m = engine.cards(of: id).filter(learnable).map { (c: $0, a: answerOf($0)) }
@@ -133,9 +132,8 @@ extension Store {
   }
 
   /// Wrong answers that look like the right one: other cards' answers of about the same length, from the same deck. A
-  /// box of a picture gets the picture's other labels first. `cap`: of a long list of other answers, only this many
-  /// (picked at random) are looked through.
-  func distractors(_ c: Card, _ n: Int, cap: Int = .max) -> [String] {
+  /// box of a picture gets the picture's other labels first.
+  func distractors(_ c: Card, _ n: Int) -> [String] {
     let right = answerOf(c).lowercased(), deck = learnIn(c.deckId).filter { $0.c.id != c.id }, same = deck.filter { $0.c.kind == c.kind }
     var near: [String] = []
     for b in Occ(c)?.boxes ?? [] {
@@ -144,7 +142,6 @@ extension Store {
     }
     var seen = Set<String>(), pool: [String] = []
     for e in (same.count > n ? same : deck) where !e.a.isEmpty && e.a.lowercased() != right && !near.contains(e.a) && seen.insert(e.a).inserted { pool.append(e.a) }
-    if pool.count > cap { pool = Array(pool.shuffled().prefix(cap)) }
     pool.sort { abs($0.count - right.count) < abs($1.count - right.count) }
     return Array((near.shuffled() + Array(pool.prefix(n * 2)).shuffled()).prefix(n))
   }
@@ -183,7 +180,7 @@ extension Store {
   func aiQuiz(_ c: Card, _ kind: String) -> [QuizQuestion] { c.quiz.filter { $0.kind == kind } }
 
   /// Lucida's own questions (web/quizai.mjs, POST /api/quiz): when the cards coming up have no question yet, up to 20 are written at
-  /// once and saved on the cards, where Learn mode and the practice test find them. Nobody waits: until they arrive the question
+  /// once and saved on the cards, where Learn mode finds them. Nobody waits: until they arrive the question
   /// builders ask as always, and when the AI is off or the day's batches are used up nothing is asked and nothing is shown. About 5
   /// questions from the end of the ones written, the next 20 are asked for.
   private func wantQuiz(_ L: LearnSession) {
@@ -265,11 +262,11 @@ extension Store {
 
   /// A choice question for a card (multiple choice or true or false): an AI-written one when the card has one of this kind
   /// (most of the time; now and then the card's own words), else the card's words with other cards' answers. A
-  /// fill-in-the-blank card is a "blank" question when `blank` is on. Learn mode and the practice test both ask this way.
-  func choiceQuestion(_ c: Card, kind: String, blank: Bool, cap: Int = .max) -> LearnQuestion {
+  /// fill-in-the-blank card is a "blank" question when `blank` is on.
+  func choiceQuestion(_ c: Card, kind: String, blank: Bool) -> LearnQuestion {
     let ai = kind == "tf" ? aiQuiz(c, "true_false") : kind == "mc" ? aiQuiz(c, "choice") : kind == "blank" ? aiQuiz(c, "blank") : []
     // (A blank that isn't a fill-in-the-blank card exists only as the written question, so that is always the one asked.)
-    if let x = ai.randomElement(), Double.random(in: 0..<1) < 0.8 || distractors(c, 1, cap: cap).isEmpty || (kind == "blank" && c.kind != "cloze") {
+    if let x = ai.randomElement(), Double.random(in: 0..<1) < 0.8 || distractors(c, 1).isEmpty || (kind == "blank" && c.kind != "cloze") {
       if kind == "tf" {
         return LearnQuestion(type: "choice", kind: "tf", id: c.id, text: "True or false?", why: x.why, ai: true, claim: x.question, options: ["True", "False"], right: x.answer == "true" ? 0 : 1)
       }
@@ -277,10 +274,10 @@ extension Store {
       return LearnQuestion(type: "choice", kind: kind, id: c.id, text: x.question, why: x.why, ai: true, options: options, right: options.firstIndex(of: x.answer))
     }
     if kind == "tf" {
-      let truth = Bool.random(), claim = truth ? answerOf(c) : (distractors(c, 1, cap: cap).first ?? answerOf(c))
+      let truth = Bool.random(), claim = truth ? answerOf(c) : (distractors(c, 1).first ?? answerOf(c))
       return LearnQuestion(type: "choice", kind: "tf", id: c.id, claim: claim, options: ["True", "False"], right: truth ? 0 : 1)
     }
-    let options = ([answerOf(c)] + distractors(c, 3, cap: cap)).shuffled()
+    let options = ([answerOf(c)] + distractors(c, 3)).shuffled()
     return LearnQuestion(type: "choice", kind: c.kind == "cloze" && blank ? "blank" : kind, id: c.id, options: options, right: options.firstIndex(of: answerOf(c)))
   }
 

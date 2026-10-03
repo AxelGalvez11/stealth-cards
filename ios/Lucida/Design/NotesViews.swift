@@ -157,6 +157,95 @@ struct NotesIcon: View {
 private struct NotesScrollKey: EnvironmentKey { static let defaultValue: NotesScroll? = nil }
 extension EnvironmentValues { var notesScroll: NotesScroll? { get { self[NotesScrollKey.self] } set { self[NotesScrollKey.self] = newValue } } }
 
+// ---------- the outline (web/notes.js THE OUTLINE; the owner, 2026-10-02: "add that thing notion has where it shows a rail tree of sections") ----------
+/// A page's outline: the heading being read, the one just gone to (it stays the one being read while the page scrolls there), and each heading's line on the
+/// screen (its field: to find the one being read, and to scroll to one); on a deck page's card, where its rail sits as the page scrolls by.
+@MainActor final class NotesOutline: ObservableObject {
+  @Published private(set) var current = ""
+  /// The rail's top inside a deck page's card (`stick`).
+  @Published private(set) var railY: CGFloat = 0
+  /// Where the card's page of notes starts in it (its rail starts there too), the card on the screen, and how tall its rail is.
+  private var notesTop: CGFloat = 0, card: CGRect = .zero, rail: CGFloat = 0
+  private var pin = "", pinUntil = Date.distantPast
+  private let fields = NSMapTable<NSString, UIView>.strongToWeakObjects()
+  /// A heading's field, as it is drawn (NotesLine).
+  func register(_ v: UIView, _ id: String) { if fields.object(forKey: id as NSString) !== v { fields.setObject(v, forKey: id as NSString) } }
+  private func field(_ id: String) -> UIView? { fields.object(forKey: id as NSString).flatMap { $0.window == nil ? nil : $0 } }
+  /// The one being read: the last heading whose words have come up to a line just under `top` (the top of what scrolls the page, on the screen), the first before
+  /// any has. A scroll that isn't the one going to a heading lets that heading go.
+  func refresh(_ heads: [NotesHead], top: CGFloat, scrolled: Bool = true) {
+    if scrolled && !pin.isEmpty { if Date() <= pinUntil { pinUntil = Date().addingTimeInterval(0.25) } else { pin = "" } }
+    var cur = heads.contains { $0.id == pin } ? pin : ""
+    if cur.isEmpty {
+      var first = ""
+      for h in heads {
+        guard let f = field(h.id) else { continue }
+        if first.isEmpty { first = h.id }
+        if f.convert(f.bounds, to: nil).minY <= top + 48 { cur = h.id } else { break }
+      }
+      if cur.isEmpty { cur = first.isEmpty ? heads.first?.id ?? "" : first }
+    }
+    if cur != current { current = cur }
+  }
+  /// To a heading: what it is folded or closed in opens (and this phone remembers it, as its ▸ does), then the page brings it a little under its top.
+  func go(_ id: String, page: NotesPage) {
+    let opened = page.revealForJump(id)
+    pin = id; pinUntil = Date().addingTimeInterval(0.9); current = id
+    DispatchQueue.main.asyncAfter(deadline: .now() + (opened ? 0.3 : 0)) { [weak self] in
+      guard let self, let f = self.field(id), let sv = GuideAnchors.page(of: f) else { return }
+      self.pinUntil = Date().addingTimeInterval(0.9)
+      GuideAnchors.bring(f, in: sv)
+    }
+  }
+  /// A deck page's card: its rail starts at the top of its notes, and once they scroll up past the top of the screen it stays a little under it, to the card's end.
+  /// (Placed again whenever the card moves or its notes do, whichever is measured first.)
+  func stick(card: CGRect, rail: CGFloat) { self.card = card; self.rail = rail; place() }
+  func notes(at top: CGFloat) { notesTop = top; place() }
+  private func place() {
+    let want = Screen.safeTop + 16 - card.minY, y = min(max(notesTop, want), max(notesTop, card.height - rail - 8))
+    if abs(y - railY) > 0.5 { railY = y }
+  }
+}
+private struct NotesOutlineKey: EnvironmentKey { static let defaultValue: NotesOutline? = nil }
+extension EnvironmentValues { var notesOutline: NotesOutline? { get { self[NotesOutlineKey.self] } set { self[NotesOutlineKey.self] = newValue } } }
+
+/// The rail at the right of a page of notes, small and quiet: a short line for each heading (a subheading's shorter and further in), the one being read in the
+/// words' color (web/notes.js's phone look: 12, 9 and 6 points wide, 2 tall, 6 apart). A tap opens the tree in Lucida's own sheet (PickSheet's `tree`): a heading
+/// scrolls there and closes it. `sticky`: on a deck page's card, it moves down the card as the page scrolls (NotesOutline.stick).
+struct NotesRail: View {
+  @Environment(\.theme) private var t
+  @EnvironmentObject private var nav: Nav
+  let heads: [NotesHead]
+  @ObservedObject var outline: NotesOutline
+  let page: NotesPage
+  var sticky = false
+  /// The room between the lines: 6 points, closer past 40 headings so the rail stays about as tall as 40 would make it (web/notes.js's rule).
+  static func gap(_ n: Int) -> CGFloat { n > 40 ? max(2, (320 / CGFloat(n)).rounded(.down) - 2) : 6 }
+  static func height(_ n: Int) -> CGFloat { CGFloat(n) * 2 + CGFloat(max(0, n - 1)) * gap(n) + 16 }
+  var body: some View {
+    Button { Self.open(nav: nav, heads: heads, outline: outline, page: page) } label: {
+      VStack(alignment: .trailing, spacing: Self.gap(heads.count)) {
+        ForEach(heads) { h in
+          RoundedRectangle(cornerRadius: 1).fill(h.id == outline.current ? t.text : t.muted.opacity(0.35)).frame(width: [12, 9, 6][min(2, max(0, h.ind))], height: 2)
+        }
+      }
+      .animation(Motion.fade, value: outline.current)
+      .padding(.vertical, 8).padding(.horizontal, 4)
+      .contentShape(Rectangle().inset(by: -8))
+    }
+    .buttonStyle(.flat)
+    .offset(y: sticky ? outline.railY : 0)
+    .accessibilityLabel("Outline").accessibilityIdentifier("notes.outline")
+  }
+  /// The tree, in Lucida's own sheet: each heading (further in by its level), the one being read in bold.
+  static func open(nav: Nav, heads: [NotesHead], outline: NotesOutline, page: NotesPage) {
+    let rows = heads.map { PickRow(id: $0.id, words: $0.words, level: $0.ind) }
+    withAnimation(Motion.sheet) {
+      nav.picker = PickRequest(title: "Outline", rows: rows, value: outline.current, full: heads.count > 8, tree: true) { row in if let row { outline.go(row.id, page: page) } }
+    }
+  }
+}
+
 // ---------- a line's words ----------
 /// A line's text field: the older text system (whose backgrounds can be drawn by hand: inline code's rounded box), the page's own Backspace at the start of a line,
 /// Tab and Shift+Tab, a paste of more than one line, and a quiet placeholder.
@@ -215,6 +304,7 @@ final class NotesField: GuideWords {
 /// (a kind, marks, an older version) is put back in the field. `focus`: the page asks for the caret here.
 struct NotesLine: UIViewRepresentable {
   @Environment(\.notesScroll) private var scroll
+  @Environment(\.notesOutline) private var outline
   let id: String
   var cell: [Int]? = nil
   let kind: String
@@ -248,6 +338,8 @@ struct NotesLine: UIViewRepresentable {
     let c = context.coordinator
     c.line = self; c.scroll = scroll; c.expand = expand
     v.anchorID = anchor
+    // (a heading's line is where the outline finds it)
+    if kind == "h" { outline?.register(v, id) }
     if v.isEditable != editable { v.isEditable = editable }
     if v.isSelectable != (editable || tap == nil) { v.isSelectable = editable || tap == nil }
     c.tapper?.isEnabled = !editable

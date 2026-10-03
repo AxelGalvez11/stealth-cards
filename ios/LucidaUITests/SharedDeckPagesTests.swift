@@ -198,8 +198,7 @@ final class SharedDeckPagesTests: XCTestCase {
     check(button(app, "Study").exists && button(app, "Make a copy").exists && button(app, "Save").exists && button(app, "Suggest a change").exists && button(app, "Get updates").exists,
           "and Study, Make a copy, Save, Suggest a change, Get updates")
     check(button(app, "Back").exists && button(app, "Share").exists, "the cover has Back and Share")
-    // (Tabs show no counts since 5d27d04e: how many is on the cover.)
-    check(any(app, "5 cards").exists && button(app, "Cards").exists, "the cards are listed, with how many")
+    check(any(app, "5 cards").exists && ((button(app, "Cards").value as? String) ?? "").isEmpty, "the cards are listed, with how many on the cover (its tab has no count: 5d27d04e)")
     check(buttonStarting(app, "Where does glycolysis happen?").exists, "each card shows its question")
     tap(buttonStarting(app, "Where does glycolysis happen?"))
     check(wait(text(app, "In the mitochondria")), "pressing a card shows its answer")
@@ -599,7 +598,6 @@ final class SharedDeckPagesTests: XCTestCase {
     // News: a suggestion on his deck opens its suggestions.
     app = launch(as: w.alex)
     tap(button(app, "Discover"))
-    // (The bell is Notifications since c0338eb6.)
     tap(buttonStarting(app, "Notifications"))
     let news = buttonStarting(app, "Maria Santos suggested")
     check(wait(news, 10), "News has Maria’s suggestions")
