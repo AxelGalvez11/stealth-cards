@@ -38,13 +38,15 @@ export function createMake({ state, reload, changed, go, sniff, shrink }) {
   // Opens the flow. `from`: more cards from a source ({ deckId, id }); `guide`: the words of a Guide page to make cards from.
   // Called again with the same address it changes nothing, so a page can ask on every draw.
   function enter(o = {}) {
-    const key = JSON.stringify([o.kind || '', o.deckId || '', o.from || '', o.guide || '', o.page || '']);
+    const key = JSON.stringify([o.kind || '', o.deckId || '', o.from || '', o.guide || '', o.page || '', o.onDeck ? 'deck' : '']);
     // A flow begun with words in hand (begin) is kept as it is when its page opens.
     if (M.hold) { M.hold = false; M.key = key; return; }
     if (M.key === key) return;
     if (M.step === 'making' || M.step === 'review') { M.key = key; return; }
     M = fresh(); M.key = key;
     if (o.deckId) M.opts.deckId = o.deckId;
+    // Opened from a deck (on=deck: its + menu, Sources' Make cards): closing goes back to that deck, not the Library (the owner, 2026-10-02).
+    if (o.onDeck && o.deckId) M.onDeck = o.deckId;
     const decks = (state() || {}).decks || [];
     if (o.from && o.deckId) {
       const d = decks.find(x => x.id === o.deckId), s = d && (d.sources || []).find(x => x.id === o.from);
@@ -307,8 +309,8 @@ export function createMake({ state, reload, changed, go, sniff, shrink }) {
       const id = r.deckId; M = fresh(); await reload(); bump(); go('/deck/' + id);
     } catch (e) { M.saving = false; M.error = { message: e.message, pro: !!e.pro, code: e.code || '', soft: true }; bump(); }
   }
-  async function discard() { await cancel(); M = fresh(); bump(); go('/library'); }
-  const close = () => { if (M.step === 'making') return; if (rec) recEnd(true); const was = M.from; M = fresh(); bump(); go(was ? '/deck/' + was.deckId : '/library'); };
+  async function discard() { const on = M.onDeck; await cancel(); M = fresh(); bump(); go(on ? '/deck/' + on : '/library'); }
+  const close = () => { if (M.step === 'making') return; if (rec) recEnd(true); const was = M.from, on = M.onDeck; M = fresh(); bump(); go(was ? '/deck/' + was.deckId : on ? '/deck/' + on : '/library'); };
 
   // ---------- questions for a Live game, about a topic ----------
   // The same steps as making cards (so the same limits count: today's makes), with nothing to check: the page that asked opens the room

@@ -69,7 +69,7 @@
         <a href="{{r.href}}" data-sc-item="{{r.id}}" draggable="false" class="sc-drag" style="display: flex; flex-direction: column; gap: 3px; padding: 12px 0; border-bottom: 1px solid {{t.line}};"><span style="font-size: 15px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{r.front}}</span><span style="font-size: 13px; color: {{t.muted}}; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{r.kind}}{{r.stateNote}}</span></a>
       </sc-for>
     </div>
-    <sc-if value="{{gs.noCards}}" hint-placeholder-val="{{ false }}"><span style="font-size: 14px; color: {{t.muted}};">No cards in this deck yet.</span></sc-if>
+    <sc-if value="{{gs.noCards}}" hint-placeholder-val="{{ false }}"><div style="padding: 16px 0 8px; display: flex; flex-direction: column; gap: 14px;"><span style="font-size: 15px; color: {{t.muted}};">No cards yet</span><sc-if value="{{canEdit}}" hint-placeholder-val="{{ true }}"><div style="display: flex; gap: 10px;"><a href="{{addMenu.newCardHref}}" class="sc-press" style="flex: 1 1 0; height: 44px; padding: 0 14px; display: flex; align-items: center; justify-content: center; gap: 8px; border-radius: 999px; font-size: 15px; font-weight: 600; background: {{t.surf}}; color: {{t.text}};"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>New card</a><a href="{{addMenu.makeHref}}" class="sc-press" style="flex: 1 1 0; height: 44px; padding: 0 14px; display: flex; align-items: center; justify-content: center; gap: 8px; border-radius: 999px; font-size: 15px; font-weight: 600; background: {{t.inv}}; color: {{t.invText}};"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 3l1.9 5.1L18 10l-5.1 1.9L11 17l-1.9-5.1L4 10l5.1-1.9z"/><path d="M18.5 15l.8 2.2 2.2.8-2.2.8-.8 2.2-.8-2.2-2.2-.8 2.2-.8z"/></svg>Make cards</a></div></sc-if></div></sc-if>
     </sc-if>
   </div>
 </div></div></div>
@@ -3877,6 +3877,13 @@ notes() { return Component._nb || (Component._nb = (function makeNotes(G) {
   }
   return { mount };
 })(this.md())); }
+// A brand-new deck on the canvas (prop empty: the "new deck" boards): this same page, its tabs there from the start and nothing in them yet
+// (the owner, 2026-10-02: "creating new deck should already have the tabs").
+newDeckDb(db0) {
+  const d0 = db0.deck();
+  return { ...db0, cards: () => [], deck: () => ({ ...d0, id: 'new', name: 'Pharmacology', seed: 'Pharmacology', tags: [], cover: { style: null, round: 0, image: null },
+    total: 0, totalLabel: '0', due: 0, fresh: 0, ret: 0, aiCount: 0, forecast: (d0.forecast || []).map(() => 0), piles: (d0.piles || []).map(q => ({ ...q, n: 0 })), shared: null, linked: null }) };
+}
 mockMaterials() {
   const p = this.props, noop = () => {};
   const day = (m, d) => new Date(2026, m, d, 10).getTime();
@@ -3960,8 +3967,8 @@ mockMaterials() {
   const GMODE = p.guide || 'Guide and sources', RO = GMODE === 'Studying (read only)' || GMODE === 'Diagrams (studying)';
   return { make: MK, diagrams: this.diagramsMock(),
     publicGuide: () => (GMODE === 'No guide yet' ? { pages: [], sources: 0 } : { pages: [{ id: 'main', title: 'Guide', text: GD.text }, ...(GMODE === 'Guide pages' ? GD.pages : [])], sources: 5, diagrams: this.diagramsMock().rows().filter(r => r.group === 'Made').map(r => ({ id: r.id, kind: r.kind, name: r.name, at: r.at, ...(r.table ? { table: r.table } : { tree: r.tree }) })) }),
-    guide: () => ({ deckId: 'cell', text: GMODE === 'No guide yet' ? '' : GMODE === 'Long guide' ? GD.text + '\n\n' + GD.text.replace('# Cell Biology: Exam 1', '## More for the exam') : GD.text, at: 0, pages: GMODE === 'Guide pages' ? GD.pages : [], can: !RO, studying: RO }),
-    sources: () => (GMODE === 'No guide yet' || RO ? [] : GD.sources),
+    guide: () => ({ deckId: 'cell', text: p.empty || GMODE === 'No guide yet' ? '' : GMODE === 'Long guide' ? GD.text + '\n\n' + GD.text.replace('# Cell Biology: Exam 1', '## More for the exam') : GD.text, at: 0, pages: GMODE === 'Guide pages' && !p.empty ? GD.pages : [], can: !RO, studying: RO }),
+    sources: () => (GMODE === 'No guide yet' || RO || p.empty ? [] : GD.sources),
     sourceText: name => (/^sx2/.test(name) || /^sx3/.test(name) ? GD.talk : ''),
     guideHistory: () => Promise.resolve([{ at: day(8, 21), saved: 0, text: GD.text.replace('- [x] The electron transport chain', '- [ ] The electron transport chain') }, { at: day(8, 18), saved: 0, text: '# Cell Biology: Exam 1\n\nEverything for the first exam.\n' }]),
     saveGuide: () => Promise.resolve({}), addGuidePage: () => Promise.resolve('g9'), renameGuidePage: () => Promise.resolve({}), deleteGuidePage: () => Promise.resolve({}), restoreGuide: () => Promise.resolve({}), deleteSource: () => Promise.resolve({}) };
@@ -3988,7 +3995,7 @@ diagramsMock() {
     lecture('g5', 'Enzyme reaction rates', 'Lecture 3 slides', 'Slide 14', CHART, 600, 400, [], 'chart'),
     { id: 'g6', kind: 'upload', name: 'Whiteboard, Sep 22', group: 'Uploaded', at: day(8, 22), src: null, picture: FLOW, w: 720, h: 480, labels: null, figure: '', table: null, tree: null, from: null, cards: 0, size: 0 }
   ];
-  const none = G === 'Diagrams (none yet)', study = G === 'Diagrams (studying)';
+  const none = G === 'Diagrams (none yet)' || !!p.empty, study = G === 'Diagrams (studying)';
   const list = none ? [] : study ? rows.filter(r => r.group === 'Made') : rows;
   const open = { 'A picture open': 'g3', 'An uploaded picture open': 'g6', 'A table open': 'g1', 'A mind map open': 'g2', 'Renaming a diagram': 'g3', 'Delete asked': 'g3' }[G] || '';
   const view = { open, sheet: /^Make diagram|^Making a diagram/.test(G), type: 'table', scope: { kind: 'all', value: '' }, making: G === 'Making a diagram', error: G === 'Make diagram (it didn’t work)' ? { message: 'That’s today’s 3 free diagrams. Go Pro for 30 a day.', pro: true, code: 'day', again: false } : null,
@@ -4108,7 +4115,7 @@ askPreview(t, samples) {
   const q = samples[this.props.ask || ''];
   return q ? { show: true, title: q.title, line: q.line, hasLine: !!q.line, action: q.action, danger: q.danger ? 'yes' : '', bg: q.danger ? t.againTint : t.inv, fg: q.danger ? t.again : t.invText, yes: () => {}, no: () => {} } : { show: false };
 }
-renderVals0() { const t = this.theme(!!this.props.dark, !!this.props.dim);const db = this.props.db || this.mock(); const chrome = db.chrome();
+renderVals0() { const t = this.theme(!!this.props.dark, !!this.props.dim);const db0 = this.props.db || this.mock(), db = db0.mock && this.props.empty ? this.newDeckDb(db0) : db0; const chrome = db.chrome();
   const cs = this.state;
   const tagC = { Biology: '#30A46C', Chemistry: '#F76B15', Languages: '#3E63DD', MCAT: '#8E4EC6', History: '#AD7F58', 'Computer science': '#12A594', Exam: '#E5484D', 'Year 1': '#0090FF',
     Energy: '#D6409F', Organelles: '#12A594', 'Exam 1': '#E5484D', 'Exam 2': '#F76B15', Diagrams: '#3E63DD', Proteins: '#8E4EC6', Pronunciation: '#0090FF', Cells: '#3E63DD',
@@ -4359,7 +4366,7 @@ renderVals0() { const t = this.theme(!!this.props.dark, !!this.props.dim);const 
     dsTabs: [['general', 'General'], ['study', 'Studying'], ['share', 'Sharing']].map(([id, label]) => ({ label, ...segOf(id, dsTab), pick: () => this.setState({ dsTab: id }) })),
     exportDeck: () => db.act.exportDeck(dk.id), deleteDeck: () => db.act.deleteDeck(dk.id), deleteLabel: lk && !lk.gone ? 'Remove from library' : 'Delete deck',
     // The deck's folder, and its background for Learn mode, flashcards, and Live.
-    folderChips: [...(dk.folder ? [{ id: null, name: 'Remove from folder' }] : []), ...db.folders()].map(f => { const on = (dk.folder || null) === f.id; return { label: f.name, pressed: on ? 'true' : 'false', bg: on ? t.inv : t.surf, fg: on ? t.invText : t.text, pick: () => db.act.moveDeck(dk.id, f.id) }; }),
+    folderChips: [...(dk.folder ? [{ id: null, name: 'Remove from folder' }] : []), ...db.folders()].map(f => { const on = (dk.folder || null) === f.id; return { label: f.name, pressed: on ? 'true' : 'false', bg: on ? t.inv : t.surf, fg: on ? t.invText : f.id === null ? t.again : t.text, pick: () => db.act.moveDeck(dk.id, f.id) }; }),
     noFolders: !db.folders().length, ...bgPick(dk, S),
     // How many cards, and whose deck it is when it's someone else's (the owner, 2026-10-02: "remove the '38 added by ai'").
     deckLine: plural(dk.total, 'card').replace(String(dk.total), dk.totalLabel) + (lk ? ' · from ' + lk.owner.name : ''),
@@ -4397,7 +4404,7 @@ renderVals0() { const t = this.theme(!!this.props.dark, !!this.props.dim);const 
       noTextLine: kind === 'file' ? (vs.pages ? plural(vs.pages, 'page') + '. ' : '') + 'The cards from it say which page they came from.' : 'Nothing to show.',
       hasOpen: kind === 'video' ? !!vs.url : (kind === 'file' || kind === 'recording') && !!fileHref,
       openHref: kind === 'video' ? vs.url + (secs ? (/\?/.test(vs.url) ? '&' : '?') + 't=' + secs + 's' : '') : kind === 'file' && pageNo ? fileHref + '#page=' + pageNo : kind === 'recording' && secsIn ? fileHref + '#t=' + secsIn : fileHref, openLabel: kind === 'video' ? 'Open the video' : kind === 'recording' ? 'Open the recording' : 'Open the file',
-      canEdit: G.can, moreHref: mock ? 'WebMake.dc.html' : '/make?from=' + encodeURIComponent(vs.id) + '&deck=' + encodeURIComponent(dk.id), remove: () => { if (mock) return; db.act.deleteSource(dk.id, vs.id).then(() => this.setState({ viewing: '' })); } }
+      canEdit: G.can, moreHref: mock ? 'PhoneDeckMake.dc.html' : '/make?from=' + encodeURIComponent(vs.id) + '&deck=' + encodeURIComponent(dk.id) + '&on=deck', remove: () => { if (mock) return; db.act.deleteSource(dk.id, vs.id).then(() => this.setState({ viewing: '' })); } }
       : { open: false, name: '', line: '', close: () => {}, hasAudio: false, player: null, hasPhotos: false, photos: [], hasTopic: false, topic: '', hasParts: false, parts: [], loading: false, noText: false, noTextLine: '', hasOpen: false, openHref: '', openLabel: '', canEdit: false, moreHref: '', remove: () => {} };
     // The section on show (Cards unless the address or a tap says another, and only a section that is there): ?tab= in the address, a source opened from a card, or the canvas's setting.
     const cardsN = db.cards(dk.id).length, notesTab = hasAny || G.can, sourcesTab = !!G.can, dgTab = !!G.can || dgRows.length > 0;
@@ -4428,7 +4435,7 @@ renderVals0() { const t = this.theme(!!this.props.dark, !!this.props.dim);const 
           href: mock ? (n ? 'PhoneGuidePages.dc.html' : depth ? 'PhoneGuideNested.dc.html' : 'PhoneGuide.dc.html') : db.href('guide', dk.id) + (x.id === 'main' ? '' : '?page=' + encodeURIComponent(x.id)) });
         if (open) kids.forEach(k => walk(k, depth + 1)); };
       top.forEach(x => walk(x, 0)); return out; })(), notesNone: !(G.text.trim() || G.pages.length), newNoteHref: mock ? 'PhoneGuide.dc.html' : db.href('guide', dk.id) + '?new=1', hasText: !!text.trim(), canEdit: G.can, canMake: G.can && !!text.trim(), hasBar: G.pages.length > 0 || (G.can && !!text.trim()),
-      makeHref: mock ? 'WebMake.dc.html' : '/make?deck=' + encodeURIComponent(dk.id), guideText: !!G.text.trim(),
+      makeHref: mock ? 'PhoneDeckMake.dc.html' : '/make?deck=' + encodeURIComponent(dk.id) + '&on=deck', guideText: !!G.text.trim(),
       hasTabs: G.pages.length > 0, tabs: [{ id: 'main', title: 'Guide' }, ...G.pages].map(x => ({ title: x.title, pressed: x.id === pageId ? 'true' : 'false', bg: x.id === pageId ? t.bg : 'transparent', fg: x.id === pageId ? t.text : t.muted, pick: () => this.setState({ gpage: x.id }) })),
       // the page as it reads; the owner's opens to write in where it was pressed (and an empty one is a blank note)
       ref: el => { if (!el) return; const href = (mock ? 'WebGuide.dc.html' : db.href('guide', dk.id)), q = (pageId === 'main' ? '' : 'page=' + pageId);
@@ -4513,7 +4520,9 @@ renderVals0() { const t = this.theme(!!this.props.dark, !!this.props.dim);const 
       drop: (id, w) => (w.to ? db.act.moveCard(id, w.to.slice(5)) : db.act.reorderCard(id, w.before)) }) };
   const menuIs = this.state.deckMenu !== undefined ? this.state.deckMenu : this.props.menu || '', shutMenu = () => this.setState({ deckMenu: '' });
   const menuOf = (k, more) => ({ open: menuIs === k, expanded: menuIs === k ? 'true' : 'false', close: shutMenu, toggle: () => this.setState({ deckMenu: menuIs === k ? '' : k, tagMenuOpen: false }), ...more });
-  const boardOf = n => 'Phone' + n + '.dc.html', gMake = db.mock ? boardOf('Make') : '/make?deck=' + encodeURIComponent(dk.id);
+  // Make cards and Source open over this deck and close back to it, never to the Library (the owner, 2026-10-02: "pressing '+' should not take
+  // user back to the library page"); the cards go into this deck.
+  const boardOf = n => 'Phone' + n + '.dc.html', gMake = db.mock ? boardOf('DeckMake') : '/make?deck=' + encodeURIComponent(dk.id) + '&on=deck';
   const toDiagrams = run => () => { this.setState({ deckMenu: '', tab: 'diagrams' }); run(); };
   const deckMenus = {
     // (A phone's cover holds its + menu; while that is open the cover sits above what comes after it.)

@@ -18,7 +18,7 @@
 </style>
 </helmet>
 <div style="position: relative; width: 390px; height: 844px; overflow: hidden; font-family: Geist, -apple-system, system-ui, sans-serif; color: {{t.text}};">
-  <dc-import name="PhoneLibrary" dark="{{dark}}" dim="{{dim}}" hint-size="390px,844px"></dc-import>
+  <sc-if value="{{overLibrary}}" hint-placeholder-val="{{ true }}"><dc-import name="PhoneLibrary" dark="{{dark}}" dim="{{dim}}" hint-size="390px,844px"></dc-import></sc-if><sc-if value="{{overDeck}}" hint-placeholder-val="{{ false }}"><dc-import name="PhoneDeck" deck-id="{{behindDeck}}" dark="{{dark}}" dim="{{dim}}" hint-size="390px,844px"></dc-import></sc-if>
   <div style="position: absolute; inset: 0; background: {{t.dim}};"></div>
   <div role="dialog" aria-label="Make cards" style="position: absolute; left: 0; right: 0; bottom: 0; top: 46px; box-sizing: border-box; padding: 16px 20px 30px; border-radius: 36px 36px 0 0; background: {{t.bg}}; display: flex; flex-direction: column; gap: 16px;">
     
@@ -140,7 +140,7 @@
   </div></sc-if>
 </div>
 </x-dc>
-<script type="text/x-dc" data-dc-script data-props='{"dark":{"editor":"boolean","default":false},"dim":{"editor":"boolean","default":false},"grain":{"editor":"range","default":0.7,"min":0,"max":1,"step":0.05},"step":{"editor":"enum","default":"Pick","options":["Pick","Upload","Upload (a file added)","Upload (picture cards on)","Photos","Camera","Record","Recording","Paused","Paste","Paste (a language set)","Paste (language list)","YouTube","YouTube transcript","Topic","More from a source","Making","Making a recording","Review","Review (notes open)","Review (notes off)","Review (no room for notes)","Review (audio cards)","Review (picture cards)","Review (editing a card)","Limit reached","File too big","Error"]},"$preview":{"width":390,"height":844}}'>
+<script type="text/x-dc" data-dc-script data-props='{"dark":{"editor":"boolean","default":false},"dim":{"editor":"boolean","default":false},"grain":{"editor":"range","default":0.7,"min":0,"max":1,"step":0.05},"step":{"editor":"enum","default":"Pick","options":["Pick","Upload","Upload (a file added)","Upload (picture cards on)","Photos","Camera","Record","Recording","Paused","Paste","Paste (a language set)","Paste (language list)","YouTube","YouTube transcript","Topic","More from a source","Making","Making a recording","Review","Review (notes open)","Review (notes off)","Review (no room for notes)","Review (audio cards)","Review (picture cards)","Review (editing a card)","Limit reached","File too big","Error"]},"onDeck":{"editor":"boolean","default":false},"$preview":{"width":390,"height":844}}'>
 class Component extends DCLogic {
 // Dark mode has two looks, picked in Settings → Dark mode: black (the first one, and still the default) or gray (the
 // owner: "add a darkmode option that is grayish not fully blackedout"). g asks for gray; it only counts when d is on.
@@ -4140,8 +4140,8 @@ mockMaterials() {
   const GMODE = p.guide || 'Guide and sources', RO = GMODE === 'Studying (read only)' || GMODE === 'Diagrams (studying)';
   return { make: MK, diagrams: this.diagramsMock(),
     publicGuide: () => (GMODE === 'No guide yet' ? { pages: [], sources: 0 } : { pages: [{ id: 'main', title: 'Guide', text: GD.text }, ...(GMODE === 'Guide pages' ? GD.pages : [])], sources: 5, diagrams: this.diagramsMock().rows().filter(r => r.group === 'Made').map(r => ({ id: r.id, kind: r.kind, name: r.name, at: r.at, ...(r.table ? { table: r.table } : { tree: r.tree }) })) }),
-    guide: () => ({ deckId: 'cell', text: GMODE === 'No guide yet' ? '' : GMODE === 'Long guide' ? GD.text + '\n\n' + GD.text.replace('# Cell Biology: Exam 1', '## More for the exam') : GD.text, at: 0, pages: GMODE === 'Guide pages' ? GD.pages : [], can: !RO, studying: RO }),
-    sources: () => (GMODE === 'No guide yet' || RO ? [] : GD.sources),
+    guide: () => ({ deckId: 'cell', text: p.empty || GMODE === 'No guide yet' ? '' : GMODE === 'Long guide' ? GD.text + '\n\n' + GD.text.replace('# Cell Biology: Exam 1', '## More for the exam') : GD.text, at: 0, pages: GMODE === 'Guide pages' && !p.empty ? GD.pages : [], can: !RO, studying: RO }),
+    sources: () => (GMODE === 'No guide yet' || RO || p.empty ? [] : GD.sources),
     sourceText: name => (/^sx2/.test(name) || /^sx3/.test(name) ? GD.talk : ''),
     guideHistory: () => Promise.resolve([{ at: day(8, 21), saved: 0, text: GD.text.replace('- [x] The electron transport chain', '- [ ] The electron transport chain') }, { at: day(8, 18), saved: 0, text: '# Cell Biology: Exam 1\n\nEverything for the first exam.\n' }]),
     saveGuide: () => Promise.resolve({}), addGuidePage: () => Promise.resolve('g9'), renameGuidePage: () => Promise.resolve({}), deleteGuidePage: () => Promise.resolve({}), restoreGuide: () => Promise.resolve({}), deleteSource: () => Promise.resolve({}) };
@@ -4168,7 +4168,7 @@ diagramsMock() {
     lecture('g5', 'Enzyme reaction rates', 'Lecture 3 slides', 'Slide 14', CHART, 600, 400, [], 'chart'),
     { id: 'g6', kind: 'upload', name: 'Whiteboard, Sep 22', group: 'Uploaded', at: day(8, 22), src: null, picture: FLOW, w: 720, h: 480, labels: null, figure: '', table: null, tree: null, from: null, cards: 0, size: 0 }
   ];
-  const none = G === 'Diagrams (none yet)', study = G === 'Diagrams (studying)';
+  const none = G === 'Diagrams (none yet)' || !!p.empty, study = G === 'Diagrams (studying)';
   const list = none ? [] : study ? rows.filter(r => r.group === 'Made') : rows;
   const open = { 'A picture open': 'g3', 'An uploaded picture open': 'g6', 'A table open': 'g1', 'A mind map open': 'g2', 'Renaming a diagram': 'g3', 'Delete asked': 'g3' }[G] || '';
   const view = { open, sheet: /^Make diagram|^Making a diagram/.test(G), type: 'table', scope: { kind: 'all', value: '' }, making: G === 'Making a diagram', error: G === 'Make diagram (it didn’t work)' ? { message: 'That’s today’s 3 free diagrams. Go Pro for 30 a day.', pro: true, code: 'day', again: false } : null,
@@ -4188,8 +4188,10 @@ dropPick(key, { title = 'Pick one', rows = [], value = '', choose, shown = false
 renderVals() {
   const t = this.theme(!!this.props.dark, !!this.props.dim);const db = this.props.db || this.mock(); const chrome = db.chrome();
   const p = this.props, R = this.rich(), md = this.md(), M = db.mock ? this.mockMaterials().make : db.make, plural = (n, w) => n + ' ' + w + (n === 1 ? '' : 's');
-  M.enter({ kind: p.kind, deckId: p.deckId, from: p.from, guide: p.guide, page: p.page, step: p.step });
-  const v = M.view(), step = v.step, kind = v.kind, o = v.opts, lim = v.limits, mock = !!db.mock;
+  M.enter({ kind: p.kind, deckId: p.deckId, from: p.from, guide: p.guide, page: p.page, step: p.step, onDeck: !!p.onDeck });
+  // Opened from a deck (prop onDeck: its + menu, Sources' Make cards, More from this source), Make sits over that deck, its cards go into it,
+  // and closing comes back to it, not to the Library (the owner, 2026-10-02). On the canvas that deck is Cell Biology.
+  const v = M.view(), step = v.step, kind = v.kind, o = db.mock && p.onDeck && !v.opts.deckId ? { ...v.opts, deckId: 'cell' } : v.opts, lim = v.limits, mock = !!db.mock;
   const TITLES = { file: 'Upload', photo: 'Photos', record: 'Record a lecture', paste: 'Paste', video: 'YouTube', topic: 'A topic' };
   const title = step === 'add' ? (v.from ? 'More cards' : TITLES[kind] || 'Make cards') : step === 'making' ? 'Making your cards' : step === 'review' ? 'Check your cards' : 'Make cards';
   const mmss = s => { s = Math.max(0, Math.floor(s)); const h = Math.floor(s / 3600), m = Math.floor(s % 3600 / 60); return (h ? h + ':' + String(m).padStart(2, '0') : m) + ':' + String(s % 60).padStart(2, '0'); };
@@ -4225,7 +4227,7 @@ renderVals() {
   return {
     t, ...chrome, dark: !!p.dark, dim: !!p.dim,
     isPick: step === 'pick', isAdd: step === 'add', isMaking: step === 'making', isReview: step === 'review', isError: step === 'error', title,
-    canBack: (step === 'add' && !live) || step === 'error', canClose: step !== 'making' && !live, showFooter: step === 'add' && !live,
+    overDeck: !!p.onDeck, overLibrary: !p.onDeck, behindDeck: o.deckId || p.deckId || '', canBack: (step === 'add' && !live) || step === 'error', canClose: step !== 'making' && !live, showFooter: step === 'add' && !live,
     back: () => M.back(), close: () => (mock ? null : M.close()), cancel: () => M.cancel(), discard: () => M.discard(), retry: () => M.retry(), save: () => M.save(), make: () => M.make(),
     pickFile: () => M.choose('file'), pickPhoto: () => M.choose('photo'), pickRecord: () => M.choose('record'), pickPaste: () => M.choose('paste'), pickVideo: () => M.choose('video'), pickTopic: () => M.choose('topic'),
     // A topic can also be a live game (it needs a big screen, so only the web offers it): the setup opens with the topic filled in.

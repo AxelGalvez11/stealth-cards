@@ -271,6 +271,8 @@ extension Board {
     case "PhoneLibrary": nav.tab = .library
     case "PhoneLibraryCards": nav.tab = .library; nav.libCards = true
     case "PhoneLibraryFolder": nav.tab = .library; nav.path = [.folder("f1")]
+    // A folder's ⋯ menu open (New deck, Rename, Remove folder).
+    case "PhoneLibraryFolderMenu": nav.tab = .library; nav.path = [.folder("f1")]; store.props.folderMenu = true
     // The New folder popup, with a name typed (the phone's own keyboard is up); it opens once the Library is showing.
     case "PhoneLibraryNewFolder": nav.tab = .library; store.props.naming = "Biology"
     // A deck's page while a card is dragged: the Move to tray, with its first deck lit.

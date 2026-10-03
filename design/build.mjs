@@ -20,7 +20,7 @@ import { THEMES } from '../web/themes/index.js';
 import { THEME_KEYS, themeCss, themeFonts, themeStatic } from './themes.mjs';
 import { LEVELS, YEARS, SUBJECTS } from '../web/school.js';
 import testKit from './test-boards.mjs';
-import { makeBoards, deckBlocks, publicGuideBlocks, PUBLIC_GUIDE_JS, deckMaterialsJs, NOTE_TREE_CSS, GUIDE_CSS, GUIDE_STATES, MATERIALS_MOCK, LIVE_FROM, LIVE_TOPIC_STATES } from './materials.mjs';
+import { makeBoards, deckBlocks, publicGuideBlocks, PUBLIC_GUIDE_JS, deckMaterialsJs, NOTE_TREE_CSS, MAKE_STEPS, GUIDE_CSS, GUIDE_STATES, MATERIALS_MOCK, LIVE_FROM, LIVE_TOPIC_STATES } from './materials.mjs';
 import { DIAGRAM_METHOD, DIAGRAM_CSS, PUBLIC_DIAGRAMS_JS, publicDiagramBlocks } from './diagrams.mjs';
 import { askMarkup, toastMarkup, ASK_SAMPLES, ASK_JS, askProp, dateMarkup, DATE_JS, dropMarkup, dropSheet, dropPill, DROP_JS, PLAYER_JS } from './ui.mjs';
 // The themes (Pro), for boards' logic: key, board name, short and full names.
@@ -93,7 +93,7 @@ skinFor(k) {
 }
 ${GEN_METHOD}
 ${MOCK_METHOD}
-${logic.includes('this.rich(') ? RICH_METHOD : ''}${logic.includes('this.drag(') ? '\n' + DRAG_METHOD : ''}${logic.includes('this.shareOrCopy(') ? '\n' + SHARE_METHOD : ''}${logic.includes('this.md(') || logic.includes('this.notes(') ? '\n' + GUIDE_METHOD : ''}${logic.includes('this.notes(') ? '\n' + NOTES_METHOD : ''}${logic.includes('this.mockMaterials(') ? '\n' + MATERIALS_MOCK : ''}${logic.includes('this.dg(') ? '\n' + DIAGRAM_METHOD : ''}
+${logic.includes('this.rich(') ? RICH_METHOD : ''}${logic.includes('this.drag(') ? '\n' + DRAG_METHOD : ''}${logic.includes('this.shareOrCopy(') ? '\n' + SHARE_METHOD : ''}${logic.includes('this.md(') || logic.includes('this.notes(') ? '\n' + GUIDE_METHOD : ''}${logic.includes('this.notes(') ? '\n' + NOTES_METHOD : ''}${logic.includes('this.mockMaterials(') ? '\n' + (logic.includes('this.newDeckDb(') ? NEW_DECK_METHOD : '') + MATERIALS_MOCK : ''}${logic.includes('this.dg(') ? '\n' + DIAGRAM_METHOD : ''}
 ${logic}
 }
 </script>
@@ -146,6 +146,16 @@ const DARK = { dark: { editor: 'boolean', default: false }, dim: { editor: 'bool
 const T = 'const t = this.theme(!!this.props.dark, !!this.props.dim);';
 // Data: the web app passes its database as props.db; on the canvas, boards use the sample in mock.mjs.
 const DB_JS = 'const db = this.props.db || this.mock(); const chrome = db.chrome();';
+// The deck page's: on the canvas, prop empty shows a brand-new deck (newDeckDb) on this same page.
+const DECK_DB_JS = 'const db0 = this.props.db || this.mock(), db = db0.mock && this.props.empty ? this.newDeckDb(db0) : db0; const chrome = db.chrome();';
+const NEW_DECK_METHOD = `// A brand-new deck on the canvas (prop empty: the "new deck" boards): this same page, its tabs there from the start and nothing in them yet
+// (the owner, 2026-10-02: "creating new deck should already have the tabs").
+newDeckDb(db0) {
+  const d0 = db0.deck();
+  return { ...db0, cards: () => [], deck: () => ({ ...d0, id: 'new', name: 'Pharmacology', seed: 'Pharmacology', tags: [], cover: { style: null, round: 0, image: null },
+    total: 0, totalLabel: '0', due: 0, fresh: 0, ret: 0, aiCount: 0, forecast: (d0.forecast || []).map(() => 0), piles: (d0.piles || []).map(q => ({ ...q, n: 0 })), shared: null, linked: null }) };
+}
+`;
 
 // ---------- icons (stroke, currentColor) ----------
 const svg = (p, s = 18, w = 1.8) => `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round">${p}</svg>`;
@@ -497,7 +507,11 @@ const makeRow = (pk, h = 38) => `<sc-if value="{{${pk}.canMake}}" hint-placehold
 const TAG_EDIT = (list, pk, phone = false, up = false) => `<div style="${phone ? '' : 'position: relative; '}display: flex; flex-wrap: wrap; gap: 6px;"><sc-for list="{{${list}}}" as="g" hint-placeholder-count="2"><button type="button" onClick="{{g.remove}}" aria-label="Remove tag {{g.label}}" style="height: 32px; padding: 0 10px 0 12px; display: inline-flex; align-items: center; gap: 6px; border: 0; border-radius: 999px; background: {{g.bg}}; color: {{g.fg}}; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer;">{{g.label}}<span style="display: flex; opacity: .7;">${svg(I.close, 10, 2.4)}</span></button></sc-for><button type="button" onClick="{{${pk}.toggle}}" aria-expanded="{{${pk}.expanded}}" style="height: 32px; padding: 0 12px; display: inline-flex; align-items: center; gap: 6px; box-sizing: border-box; border: 1.5px dashed {{t.muted}}; border-radius: 999px; background: transparent; color: {{t.muted}}; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer;">${svg(I.plus, 12, 2.4)}Add tag</button>${phone
   ? `<sc-if value="{{${pk}.open}}" hint-placeholder-val="{{ false }}"><div role="dialog" aria-label="Tags" style="position: absolute; inset: 0; z-index: 30; box-sizing: border-box; padding: 16px 20px 34px; border-radius: 32px 32px 0 0; background: {{t.bg}}; display: flex; flex-direction: column; gap: 12px;"><div style="display: flex; align-items: center; justify-content: space-between;"><span style="font-size: 18px; font-weight: 600;">Tags<span style="margin-left: 8px; font-family: ${MONO}; font-size: 13px; font-weight: 500; color: {{t.muted}};">{{${pk}.count}}</span></span><button type="button" onClick="{{${pk}.close}}" style="height: 36px; padding: 0 16px; border: 0; border-radius: 999px; background: {{t.inv}}; color: {{t.invText}}; font: inherit; font-size: 14px; font-weight: 600; cursor: pointer;">Done</button></div>${tagSearch(pk + '.query', pk + '.setQuery', 'Find or make a tag', 44)}<div style="flex-grow: 1; min-height: 0; overflow-y: auto; scrollbar-width: none; display: flex; flex-direction: column;">${makeRow(pk, 48)}<sc-for list="{{${pk}.options}}" as="o" hint-placeholder-count="8">${tagRow('o', { h: 48, line: true })}</sc-for></div></div></sc-if>`
   : `<sc-if value="{{${pk}.open}}" hint-placeholder-val="{{ false }}"><div role="dialog" aria-label="Add a tag" data-sc-pop style="position: absolute; left: 0; ${up ? 'bottom' : 'top'}: calc(100% + 8px); z-index: 30; width: 320px; ${popBox}">${tagSearch(pk + '.query', pk + '.setQuery', 'Find or make a tag')}<div style="max-height: 190px; overflow-y: auto; scrollbar-width: thin; display: flex; flex-direction: column;">${makeRow(pk)}<sc-for list="{{${pk}.options}}" as="o" hint-placeholder-count="5">${tagRow('o')}</sc-for></div></div></sc-if>`}</div>`;
-const viewBtn = (key, handler, label, icon) => `<button type="button" onClick="{{${handler}}}" aria-label="${label}" aria-pressed="{{${key}.pressed}}" style="width: 42px; height: 36px; border: 0; border-radius: 999px; background: {{${key}.bg}}; color: {{${key}.fg}}; box-shadow: {{${key}.sh}}; display: flex; align-items: center; justify-content: center; cursor: pointer;">${svg(I[icon], 16, 2)}</button>`;
+// A folder's own actions in one ⋯ menu ("Folder options"): New deck, Rename, and Remove folder in red (the owner, 2026-10-02, V188).
+const FOLDER_MENU = phone => phone
+  ? '<div style="position: relative; flex-shrink: 0;"><button type="button" onClick="{{folderMenu.toggle}}" aria-label="Folder options" data-tip="Folder options" aria-haspopup="menu" aria-expanded="{{folderMenu.expanded}}" class="sc-press" style="width: 40px; height: 40px; border-radius: 20px; flex-shrink: 0; border: 0; background: {{t.surf}}; color: {{t.text}}; display: flex; align-items: center; justify-content: center; cursor: pointer;"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="5" cy="12" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="19" cy="12" r="1.8"/></svg></button><sc-if value="{{folderMenu.open}}" hint-placeholder-val="{{ false }}"><div role="menu" aria-label="Folder options" data-sc-pop style="position: absolute; right: 0; top: calc(100% + 8px); z-index: 30; width: 220px; box-sizing: border-box; padding: 8px; border-radius: 22px; background: {{t.bg}}; color: {{t.text}}; box-shadow: 0 18px 48px rgba(0,0,0,.2), 0 0 0 1px {{t.line}}; display: flex; flex-direction: column; gap: 4px;"><a href="PhoneNewDeck.dc.html" role="menuitem" onClick="{{folderMenu.close}}" class="sc-press" style="height: 44px; flex-shrink: 0; box-sizing: border-box; padding: 0 12px; display: flex; align-items: center; gap: 10px; border: 0; border-radius: 12px; background: transparent; font: inherit; font-size: 15px; font-weight: 500; text-align: left; cursor: pointer; color: {{t.text}};"><span style="display: flex; flex-shrink: 0; color: {{t.muted}};"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></span>New deck</a><button type="button" role="menuitem" onClick="{{folderMenu.rename}}" class="sc-press" style="height: 44px; flex-shrink: 0; box-sizing: border-box; padding: 0 12px; display: flex; align-items: center; gap: 10px; border: 0; border-radius: 12px; background: transparent; font: inherit; font-size: 15px; font-weight: 500; text-align: left; cursor: pointer; color: {{t.text}};"><span style="display: flex; flex-shrink: 0; color: {{t.muted}};"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15.5 5.5l3 3L9 18H6v-3z"/><path d="M13.5 7.5l3 3"/></svg></span>Rename</button><button type="button" role="menuitem" onClick="{{folderMenu.remove}}" class="sc-press" style="height: 44px; flex-shrink: 0; box-sizing: border-box; padding: 0 12px; display: flex; align-items: center; gap: 10px; border: 0; border-radius: 12px; background: transparent; font: inherit; font-size: 15px; font-weight: 500; text-align: left; cursor: pointer; color: {{t.again}};"><span style="display: flex; flex-shrink: 0; color: {{t.again}};"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7.5A2.5 2.5 0 0 1 5.5 5h3.6l2 2.2h7.4A2.5 2.5 0 0 1 21 9.7v7.8a2.5 2.5 0 0 1-2.5 2.5h-13A2.5 2.5 0 0 1 3 17.5z"/></svg></span>Remove folder</button></div></sc-if></div>'
+  : '<div style="position: relative; flex-shrink: 0;"><button type="button" onClick="{{folderMenu.toggle}}" aria-label="Folder options" data-tip="Folder options" aria-haspopup="menu" aria-expanded="{{folderMenu.expanded}}" class="sc-press" style="width: 36px; height: 36px; border-radius: 18px; flex-shrink: 0; border: 0; background: {{t.surf}}; color: {{t.text}}; display: flex; align-items: center; justify-content: center; cursor: pointer;"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="5" cy="12" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="19" cy="12" r="1.8"/></svg></button><sc-if value="{{folderMenu.open}}" hint-placeholder-val="{{ false }}"><div role="menu" aria-label="Folder options" data-sc-pop style="position: absolute; right: 0; top: calc(100% + 8px); z-index: 30; width: 220px; box-sizing: border-box; padding: 8px; border-radius: 22px; background: {{t.bg}}; color: {{t.text}}; box-shadow: 0 18px 48px rgba(0,0,0,.2), 0 0 0 1px {{t.line}}; display: flex; flex-direction: column; gap: 4px;"><a href="WebNewDeck.dc.html" role="menuitem" onClick="{{folderMenu.close}}" class="sc-press" style="height: 40px; flex-shrink: 0; box-sizing: border-box; padding: 0 12px; display: flex; align-items: center; gap: 10px; border: 0; border-radius: 12px; background: transparent; font: inherit; font-size: 14px; font-weight: 500; text-align: left; cursor: pointer; color: {{t.text}};"><span style="display: flex; flex-shrink: 0; color: {{t.muted}};"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></span>New deck</a><button type="button" role="menuitem" onClick="{{folderMenu.rename}}" class="sc-press" style="height: 40px; flex-shrink: 0; box-sizing: border-box; padding: 0 12px; display: flex; align-items: center; gap: 10px; border: 0; border-radius: 12px; background: transparent; font: inherit; font-size: 14px; font-weight: 500; text-align: left; cursor: pointer; color: {{t.text}};"><span style="display: flex; flex-shrink: 0; color: {{t.muted}};"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15.5 5.5l3 3L9 18H6v-3z"/><path d="M13.5 7.5l3 3"/></svg></span>Rename</button><button type="button" role="menuitem" onClick="{{folderMenu.remove}}" class="sc-press" style="height: 40px; flex-shrink: 0; box-sizing: border-box; padding: 0 12px; display: flex; align-items: center; gap: 10px; border: 0; border-radius: 12px; background: transparent; font: inherit; font-size: 14px; font-weight: 500; text-align: left; cursor: pointer; color: {{t.again}};"><span style="display: flex; flex-shrink: 0; color: {{t.again}};"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7.5A2.5 2.5 0 0 1 5.5 5h3.6l2 2.2h7.4A2.5 2.5 0 0 1 21 9.7v7.8a2.5 2.5 0 0 1-2.5 2.5h-13A2.5 2.5 0 0 1 3 17.5z"/></svg></span>Remove folder</button></div></sc-if></div>';
+const viewBtn = (key, handler, label, icon, size = 'width: 42px; height: 36px;') => `<button type="button" onClick="{{${handler}}}" aria-label="${label}" aria-pressed="{{${key}.pressed}}" style="${size} border: 0; border-radius: 999px; background: {{${key}.bg}}; color: {{${key}.fg}}; box-shadow: {{${key}.sh}}; display: flex; align-items: center; justify-content: center; cursor: pointer;">${svg(I[icon], 16, 2)}</button>`;
 // A card's tag as a small chip, in All cards' Tags column (the other card lists show none); `k` names the row's tag slot (c1, c2).
 const cardTag = k => `<sc-if value="{{r.${k}.show}}" hint-placeholder-val="{{ true }}"><span style="height: 22px; padding: 0 9px; display: inline-flex; align-items: center; border-radius: 999px; background: {{r.${k}.bg}}; color: {{r.${k}.fg}}; font-size: 11px; font-weight: 600; white-space: nowrap;">{{r.${k}.label}}</span></sc-if>`;
 // Cards show up to two tags; with more, the first one and a +N (hover it to read the rest).
@@ -722,7 +736,7 @@ const LIFT_JS = `const liftTile = 'border-radius:20px!important;box-shadow:0 30p
   const liftRow = 'background:' + t.bg + '!important;border-radius:12px!important;border-bottom-color:transparent!important;box-shadow:0 0 0 12px ' + t.bg + ',0 0 0 13px ' + t.line + ',0 24px 48px -12px rgba(0,0,0,' + (this.props.dark ? '.8' : '.25') + ')!important;';
   const dragKey = this.dragKey || (this.dragKey = 'b' + Math.random().toString(36).slice(2, 8)), dragList = el => this.dragList(el);`;
 // A deck's folder menu: into a folder, out of one, or into a new one.
-const moveMenu = pos => `<sc-if value="{{d.moveOpen}}" hint-placeholder-val="{{ false }}"><div role="dialog" aria-label="Move {{d.name}}" data-sc-pop style="position: absolute; ${pos} z-index: 25; width: 240px; ${popBox} text-shadow: none;"><span style="padding: 8px 12px 4px; font-size: 12px; font-weight: 600; color: {{t.muted}};">Move to</span><sc-for list="{{d.moveTo}}" as="o" hint-placeholder-count="3"><button type="button" onClick="{{o.pick}}" aria-pressed="{{o.pressed}}" style="height: 38px; flex-shrink: 0; padding: 0 12px; display: flex; align-items: center; gap: 10px; border: 0; border-radius: 12px; background: transparent; color: {{t.text}}; font: inherit; font-size: 14px; text-align: left; cursor: pointer;"><span style="display: flex; color: {{t.muted}};">${svg(I.folder, 16, 1.8)}</span><span style="flex-grow: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{o.label}}</span><sc-if value="{{o.on}}" hint-placeholder-val="{{ false }}"><span style="display: flex;">${svg(I.check, 14, 2.4)}</span></sc-if></button></sc-for><button type="button" onClick="{{d.newFolder}}" style="height: 38px; flex-shrink: 0; padding: 0 12px; display: flex; align-items: center; gap: 10px; border: 0; border-radius: 12px; background: {{t.surf}}; color: {{t.text}}; font: inherit; font-size: 14px; font-weight: 600; text-align: left; cursor: pointer;">${svg(I.plus, 13, 2.4)}New folder</button></div></sc-if>`;
+const moveMenu = pos => `<sc-if value="{{d.moveOpen}}" hint-placeholder-val="{{ false }}"><div role="dialog" aria-label="Move {{d.name}}" data-sc-pop style="position: absolute; ${pos} z-index: 25; width: 240px; ${popBox} text-shadow: none;"><span style="padding: 8px 12px 4px; font-size: 12px; font-weight: 600; color: {{t.muted}};">Move to</span><sc-for list="{{d.moveTo}}" as="o" hint-placeholder-count="3"><button type="button" onClick="{{o.pick}}" aria-pressed="{{o.pressed}}" style="height: 38px; flex-shrink: 0; padding: 0 12px; display: flex; align-items: center; gap: 10px; border: 0; border-radius: 12px; background: transparent; color: {{o.fg}}; font: inherit; font-size: 14px; text-align: left; cursor: pointer;"><span style="display: flex; color: {{o.ic}};">${svg(I.folder, 16, 1.8)}</span><span style="flex-grow: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{o.label}}</span><sc-if value="{{o.on}}" hint-placeholder-val="{{ false }}"><span style="display: flex;">${svg(I.check, 14, 2.4)}</span></sc-if></button></sc-for><button type="button" onClick="{{d.newFolder}}" style="height: 38px; flex-shrink: 0; padding: 0 12px; display: flex; align-items: center; gap: 10px; border: 0; border-radius: 12px; background: {{t.surf}}; color: {{t.text}}; font: inherit; font-size: 14px; font-weight: 600; text-align: left; cursor: pointer;">${svg(I.plus, 13, 2.4)}New folder</button></div></sc-if>`;
 const moveBtn = (bg, size = 32) => `<button type="button" onClick="{{d.toggleMove}}" aria-label="Move {{d.name}} to a folder" aria-expanded="{{d.moveExpanded}}" style="width: ${size}px; height: ${size}px; flex-shrink: 0; border: 0; border-radius: ${size / 2}px; ${bg} display: flex; align-items: center; justify-content: center; cursor: pointer; pointer-events: auto;">${svg(I.more, 16, 2)}</button>`;
 // All cards: how hard each one is, as a colored dot and word.
 // Picked tags, each with an x; and the menus to add a tag or pick a deck.
@@ -739,14 +753,12 @@ const webDecks = webRoot(`${sidebar('Library')}
     <sc-if value="{{atTop}}" hint-placeholder-val="{{ true }}"><span style="margin-left: 10px; display: flex;">${libModes(32)}</span></sc-if>
     <span style="flex-grow: 1;"></span>
     <label style="display: flex; align-items: center; gap: 10px; width: 280px; height: 36px; padding: 0 16px; box-sizing: border-box; border-radius: 999px; background: {{t.surf}}; color: {{t.muted}};">${svg(I.search, 16)}<span style="position: absolute; left: -9999px;">{{searchHint}}</span><input value="{{query}}" onChange="{{setQuery}}" placeholder="{{searchHint}}" style="flex-grow: 1; min-width: 0; border: 0; outline: 0; background: transparent; font: inherit; font-size: 14px; color: {{t.text}};"></label>
-    <sc-if value="{{inFolder}}" hint-placeholder-val="{{ false }}">${TEST.folderWebPill}${pill('Rename', { onClick: '{{renameFolder}}' })}${pill('Remove folder', { onClick: '{{removeFolder}}' })}</sc-if>
+    <sc-if value="{{deckView}}" hint-placeholder-val="{{ true }}"><div role="group" aria-label="View" style="display: flex; gap: 2px; padding: 4px; border-radius: 999px; background: {{t.surf}};">${viewBtn('vCards', 'showCards', 'Card view', 'grid', 'width: 40px; height: 28px;')}${viewBtn('vList', 'showList', 'List view', 'list', 'width: 40px; height: 28px;')}</div></sc-if>
+    <sc-if value="{{inFolder}}" hint-placeholder-val="{{ false }}">${FOLDER_MENU(false)}</sc-if>
     <sc-if value="{{deckView}}" hint-placeholder-val="{{ true }}"><sc-if value="{{atTop}}" hint-placeholder-val="{{ true }}">${pill('New folder', { icon: 'folder', onClick: '{{newFolder}}' })}</sc-if></sc-if>
-    ${pill('New deck', { inv: true, icon: 'plus', href: 'WebNewDeck.dc.html' })}
+    <sc-if value="{{notInFolder}}" hint-placeholder-val="{{ true }}">${pill('New deck', { inv: true, icon: 'plus', href: 'WebNewDeck.dc.html' })}</sc-if>
   </div>
   <sc-if value="{{deckView}}" hint-placeholder-val="{{ true }}">
-    <div style="display: flex; align-items: center; justify-content: flex-end;">
-      <div role="group" aria-label="View" style="display: flex; gap: 2px; padding: 4px; border-radius: 999px; background: {{t.surf}};">${viewBtn('vCards', 'showCards', 'Card view', 'grid')}${viewBtn('vList', 'showList', 'List view', 'list')}</div>
-    </div>
     <sc-if value="{{showFolders}}" hint-placeholder-val="{{ true }}">
       <div style="display: flex; flex-direction: column; gap: 12px;"><span style="font-size: 13px; font-weight: 600; color: {{t.muted}};">Folders</span><div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px;"><sc-for list="{{folders}}" as="f" hint-placeholder-count="2">${folderTile(150, 76)}</sc-for></div></div>
       <span style="margin-bottom: -10px; font-size: 13px; font-weight: 600; color: {{t.muted}};">Decks</span>
@@ -861,7 +873,9 @@ renderVals() {
       href: db.mock ? board('Deck') : d.href, studyHref: db.mock ? board('Review') : d.studyHref,
       moveOpen: moving, moveExpanded: moving ? 'true' : 'false', toggleMove: () => this.setState({ moveDeck: moving ? null : d.id }),
       // "Remove from folder" only shows for a deck that's in one (a deck in none just doesn't get it); it isn't ticked, the folder the deck is in is.
-      moveTo: [...(d.folder ? [{ id: null, name: 'Remove from folder' }] : []), ...folders].map(f => ({ label: f.name, on: (d.folder || null) === f.id, pressed: (d.folder || null) === f.id ? 'true' : 'false', pick: move(f.id) })),
+      moveTo: [...(d.folder ? [{ id: null, name: 'Remove from folder' }] : []), ...folders].map(f => ({ label: f.name, on: (d.folder || null) === f.id, pressed: (d.folder || null) === f.id ? 'true' : 'false', pick: move(f.id),
+        // Remove from folder is red (the owner, 2026-10-02).
+        fg: f.id === null ? t.again : t.text, ic: f.id === null ? t.again : t.muted })),
       newFolder: () => openNaming('new', d.id),
       total: d.totalLabel, ret: d.ret == null ? '—' : d.ret + '%', whose, hasWhose: !!whose,
       line: (whose ? whose + ' · ' : '') + d.totalLabel + (d.total === 1 ? ' card · ' : ' cards · ') + d.fresh + ' new' + (d.ret == null ? '' : ' · ' + d.ret + '%'),
@@ -899,7 +913,12 @@ renderVals() {
     folders: folderRows, showFolders: atTop && !cards && !looking && folders.length > 0,
     noDecks: !cards && decks.length === 0, noDecksLine: folder ? 'No decks in this folder yet. Drag a deck onto the folder, or use its ⋯ button.' : 'No decks match.',
     newFolder: () => openNaming('new'), renameFolder: () => openNaming('rename'),
-    removeFolder: () => folder && act.deleteFolder(folder.id),
+    removeFolder: () => folder && act.deleteFolder(folder.id), notInFolder: !folder,
+    // A folder's own actions sit in one ⋯ menu: New deck, Rename, and Remove folder in red (the owner, 2026-10-02: "collapse new deck, remove
+    // folder, and rename into one dropdown menu"); its practice test is gone from the folder page. Prop folderMenu draws the menu open.
+    folderMenu: (() => { const open = s.folderMenu != null ? !!s.folderMenu : !!this.props.folderMenu, shut = () => this.setState({ folderMenu: false });
+      return { open, expanded: open ? 'true' : 'false', toggle: () => this.setState({ folderMenu: !open }), close: shut,
+        rename: () => { shut(); openNaming('rename'); }, remove: () => { shut(); if (folder) act.deleteFolder(folder.id); } }; })(),
     naming: { show: !!naming, title: naming === 'rename' ? 'Rename folder' : 'New folder', action: naming === 'rename' ? 'Save' : 'Create', value: s.name || '',
       hasHint: naming !== 'rename', hint: mover ? '“' + mover.name + '” goes in it.' : 'Then drag decks onto it.',
       off: typed ? 'false' : 'true', bg: typed ? t.inv : t.surf2, fg: typed ? t.invText : t.muted,
@@ -1152,7 +1171,7 @@ const COVER_LOGIC = `
     dsTabs: [['general', 'General'], ['study', 'Studying'], ['share', 'Sharing']].map(([id, label]) => ({ label, ...segOf(id, dsTab), pick: () => this.setState({ dsTab: id }) })),
     exportDeck: () => db.act.exportDeck(dk.id), deleteDeck: () => db.act.deleteDeck(dk.id), deleteLabel: lk && !lk.gone ? 'Remove from library' : 'Delete deck',
     // The deck's folder, and its background for Learn mode, flashcards, and Live.
-    folderChips: [...(dk.folder ? [{ id: null, name: 'Remove from folder' }] : []), ...db.folders()].map(f => { const on = (dk.folder || null) === f.id; return { label: f.name, pressed: on ? 'true' : 'false', bg: on ? t.inv : t.surf, fg: on ? t.invText : t.text, pick: () => db.act.moveDeck(dk.id, f.id) }; }),
+    folderChips: [...(dk.folder ? [{ id: null, name: 'Remove from folder' }] : []), ...db.folders()].map(f => { const on = (dk.folder || null) === f.id; return { label: f.name, pressed: on ? 'true' : 'false', bg: on ? t.inv : t.surf, fg: on ? t.invText : f.id === null ? t.again : t.text, pick: () => db.act.moveDeck(dk.id, f.id) }; }),
     noFolders: !db.folders().length, ...bgPick(dk, S),
     // How many cards, and whose deck it is when it's someone else's (the owner, 2026-10-02: "remove the '38 added by ai'").
     deckLine: plural(dk.total, 'card').replace(String(dk.total), dk.totalLabel) + (lk ? ' · from ' + lk.owner.name : ''),
@@ -1292,9 +1311,13 @@ const STUDY_BTN = phone => `<div style="position: relative;"><button type="butto
 const ADD_BTN = phone => `<div style="position: relative;"><button type="button" onClick="{{addMenu.toggle}}" aria-label="Add" data-tip="Add" aria-haspopup="menu" aria-expanded="{{addMenu.expanded}}" class="sc-press" style="width: ${phone ? 44 : 36}px; height: ${phone ? 44 : 36}px; flex-shrink: 0; border: 0; border-radius: ${phone ? 22 : 18}px; ${onCover} display: flex; align-items: center; justify-content: center; cursor: pointer;">${svg(I.plus, phone ? 18 : 16, phone ? 2 : 2.2)}</button>${ADD_MENU(phone)}</div>`;
 // What they read, for the deck page (after DECK_MATERIALS_JS: gs and dg) and an empty deck. Only one is open at a time; a board's `menu` Tweak opens one.
 // Upload diagram and Make diagram show the Diagrams tab, where the upload and the diagram appear (an empty deck goes to its page's Diagrams tab for them).
+// A deck with no cards: its Cards tab offers New card and Make cards (the owner, 2026-10-02: "creating new deck should already have the tabs").
+const NEW_CARD_PLUS = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>', NEW_CARD_SPARK = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 3l1.9 5.1L18 10l-5.1 1.9L11 17l-1.9-5.1L4 10l5.1-1.9z"/><path d="M18.5 15l.8 2.2 2.2.8-2.2.8-.8 2.2-.8-2.2-2.2-.8 2.2-.8z"/></svg>';
 const DECK_MENUS_JS = (phone, empty = false) => `const menuIs = this.state.deckMenu !== undefined ? this.state.deckMenu : this.props.menu || '', shutMenu = () => this.setState({ deckMenu: '' });
   const menuOf = (k, more) => ({ open: menuIs === k, expanded: menuIs === k ? 'true' : 'false', close: shutMenu, toggle: () => this.setState({ deckMenu: menuIs === k ? '' : k${empty ? '' : ', tagMenuOpen: false'} }), ...more });
-  const boardOf = n => '${phone ? 'Phone' : 'Web'}' + n + '.dc.html', gMake = db.mock ? boardOf('Make') : '/make?deck=' + encodeURIComponent(dk.id);
+  // Make cards and Source open over this deck and close back to it, never to the Library (the owner, 2026-10-02: "pressing '+' should not take
+  // user back to the library page"); the cards go into this deck.
+  const boardOf = n => '${phone ? 'Phone' : 'Web'}' + n + '.dc.html', gMake = db.mock ? boardOf('DeckMake') : '/make?deck=' + encodeURIComponent(dk.id) + '&on=deck';
   ${empty
     ? `const dgm = db.mock ? null : db.diagrams, toDiagrams = run => () => { shutMenu(); if (!dgm) return; run(); db.act.go('/deck/' + dk.id + '?tab=diagrams'); };`
     : `const toDiagrams = run => () => { this.setState({ deckMenu: '', tab: 'diagrams' }); run(); };`}
@@ -1353,7 +1376,7 @@ const webDeck = webRoot(`${sidebar('Library')}
       </a>
     </sc-for>
   </div>
-  <sc-if value="{{gs.noCards}}" hint-placeholder-val="{{ false }}"><span style="font-size: 14px; color: {{t.muted}};">No cards in this deck yet.</span></sc-if>
+  <sc-if value="{{gs.noCards}}" hint-placeholder-val="{{ false }}"><div style="padding: 20px 0 8px; display: flex; flex-direction: column; align-items: flex-start; gap: 14px;"><span style="font-size: 15px; color: {{t.muted}};">No cards yet</span><sc-if value="{{canEdit}}" hint-placeholder-val="{{ true }}"><div style="display: flex; gap: 8px;"><a href="{{addMenu.newCardHref}}" class="sc-press" style="height: 40px; padding: 0 16px; display: inline-flex; align-items: center; gap: 8px; border-radius: 999px; font-size: 14px; font-weight: 600; background: {{t.surf}}; color: {{t.text}};">${NEW_CARD_PLUS}New card</a><a href="{{addMenu.makeHref}}" class="sc-press" style="height: 40px; padding: 0 16px; display: inline-flex; align-items: center; gap: 8px; border-radius: 999px; font-size: 14px; font-weight: 600; background: {{t.inv}}; color: {{t.invText}};">${NEW_CARD_SPARK}Make cards</a></div></sc-if></div></sc-if>
   </sc-if>
 </main>
 ${moveTray('tray', false)}
@@ -1381,7 +1404,7 @@ const CARD_DRAG_JS = phone => `const others = db.decks().filter(d => d.id !== dk
 const deckLogic = `
 constructor(props) { super(props); this.state = { filter: 'All', tagMenuOpen: false, tagQ: '', q: '' }; }
 renderVals() {
-  ${T}${DB_JS}${COVER_LOGIC}${deckMaterialsJs(false)}
+  ${T}${DECK_DB_JS}${COVER_LOGIC}${deckMaterialsJs(false)}
   ${LIFT_JS}
   ${CARD_DRAG_JS(false)}
   ${DECK_MENUS_JS(false)}
@@ -3651,10 +3674,9 @@ const phoneLibrary = phone(`<div style="padding: 64px 20px 120px; display: flex;
   </div></sc-if>
   <sc-if value="{{inFolder}}" hint-placeholder-val="{{ false }}"><div style="display: flex; align-items: center; gap: 8px;">
     ${libRound('back', 'Library', { href: '{{libraryHref}}', attrs: ' data-sc-drop="folder:" data-sc-look="chip" draggable="false"' })}<span style="flex-grow: 1;"></span>
-    <button type="button" onClick="{{renameFolder}}" class="sc-press" style="height: 40px; padding: 0 16px; border: 0; border-radius: 20px; background: {{t.surf}}; color: {{t.text}}; font: inherit; font-size: 14px; font-weight: 600; cursor: pointer;">Rename</button>
-    ${libRound('plus', 'New deck', { href: 'PhoneNewDeck.dc.html', inv: true })}
+    ${FOLDER_MENU(true)}
   </div>
-  <h1 style="margin: 0; font-size: 32px; font-weight: 700; letter-spacing: -.03em; overflow-wrap: anywhere;">{{title}}</h1>${TEST.folderPhoneButton}</sc-if>
+  <h1 style="margin: 0; font-size: 32px; font-weight: 700; letter-spacing: -.03em; overflow-wrap: anywhere;">{{title}}</h1></sc-if>
   <sc-if value="{{atTop}}" hint-placeholder-val="{{ true }}">${libModes(36, 14, true)}</sc-if>
   <label style="display: flex; align-items: center; gap: 10px; height: 44px; padding: 0 16px; box-sizing: border-box; border-radius: 999px; background: {{t.surf}}; color: {{t.muted}};">${svg(I.search, 16)}<span style="position: absolute; left: -9999px;">{{searchHint}}</span><input value="{{query}}" onChange="{{setQuery}}" placeholder="{{searchHint}}" style="flex-grow: 1; min-width: 0; border: 0; outline: 0; background: transparent; font: inherit; font-size: 16px; color: {{t.text}};"></label>
   <sc-if value="{{deckView}}" hint-placeholder-val="{{ true }}">
@@ -3666,7 +3688,6 @@ const phoneLibrary = phone(`<div style="padding: 64px 20px 120px; display: flex;
     <div data-sc-list="decks" ref="{{dragList}}" onPointerDown="{{grabDeck}}" style="display: flex; flex-direction: column;">
       <sc-for list="{{decks}}" as="d" hint-placeholder-count="4"><div data-sc-item="{{d.id}}" class="sc-drag" style="position: relative; display: flex; align-items: center; gap: 8px; min-height: 68px; border-bottom: 1px solid {{t.line}};">${phoneLibRow}${moveBtn('background: transparent; color: {{t.muted}};', 36)}${moveMenu('right: 0; top: 60px;')}</div></sc-for>
     </div>
-    <sc-if value="{{inFolder}}" hint-placeholder-val="{{ false }}"><button type="button" onClick="{{removeFolder}}" style="align-self: center; height: 40px; padding: 0 16px; border: 0; border-radius: 999px; background: transparent; color: {{t.again}}; font: inherit; font-size: 14px; font-weight: 600; cursor: pointer;">Remove folder</button></sc-if>
     <sc-if value="{{noDecks}}" hint-placeholder-val="{{ false }}"><div style="padding: 36px 20px; border-radius: 20px; background: {{t.surf}}; text-align: center; font-size: 15px; line-height: 1.4; color: {{t.muted}};">{{noDecksLine}}</div></sc-if>
   </sc-if>
   <sc-if value="{{cardsView}}" hint-placeholder-val="{{ false }}">
@@ -3770,7 +3791,7 @@ const phoneDeck = phone(`<div style="height: 100%; overflow-y: auto; scrollbar-w
         <a href="{{r.href}}" data-sc-item="{{r.id}}" draggable="false" class="sc-drag" style="display: flex; flex-direction: column; gap: 3px; padding: 12px 0; border-bottom: 1px solid {{t.line}};"><span style="font-size: 15px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{r.front}}</span><span style="font-size: 13px; color: {{t.muted}}; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{r.kind}}{{r.stateNote}}</span></a>
       </sc-for>
     </div>
-    <sc-if value="{{gs.noCards}}" hint-placeholder-val="{{ false }}"><span style="font-size: 14px; color: {{t.muted}};">No cards in this deck yet.</span></sc-if>
+    <sc-if value="{{gs.noCards}}" hint-placeholder-val="{{ false }}"><div style="padding: 16px 0 8px; display: flex; flex-direction: column; gap: 14px;"><span style="font-size: 15px; color: {{t.muted}};">No cards yet</span><sc-if value="{{canEdit}}" hint-placeholder-val="{{ true }}"><div style="display: flex; gap: 10px;"><a href="{{addMenu.newCardHref}}" class="sc-press" style="flex: 1 1 0; height: 44px; padding: 0 14px; display: flex; align-items: center; justify-content: center; gap: 8px; border-radius: 999px; font-size: 15px; font-weight: 600; background: {{t.surf}}; color: {{t.text}};">${NEW_CARD_PLUS}New card</a><a href="{{addMenu.makeHref}}" class="sc-press" style="flex: 1 1 0; height: 44px; padding: 0 14px; display: flex; align-items: center; justify-content: center; gap: 8px; border-radius: 999px; font-size: 15px; font-weight: 600; background: {{t.inv}}; color: {{t.invText}};">${NEW_CARD_SPARK}Make cards</a></div></sc-if></div></sc-if>
     </sc-if>
   </div>
 </div></div>`, '', `${moveTray('tray', true)}
@@ -3790,7 +3811,7 @@ ${pickSheet('lbLevel')}${pickSheet('lbSubject', true)}${pickSheet('lbSchool', tr
 ${DBP.viewer}${DBP.dgViewer}${DBP.dgSheet}`);
 const phoneDeckLogic = `
 constructor(props) { super(props); this.state = {}; }
-renderVals() { ${T}${DB_JS}${COVER_LOGIC}${deckMaterialsJs(true)}
+renderVals() { ${T}${DECK_DB_JS}${COVER_LOGIC}${deckMaterialsJs(true)}
   ${LIFT_JS}
   ${CARD_DRAG_JS(true)}
   ${DECK_MENUS_JS(true)}
@@ -4500,18 +4521,6 @@ const webDecksEmpty = webRoot(`${sidebar('Library')}
   <div style="display: flex; align-items: center; gap: 12px;"><h1 style="margin: 0; font-size: 32px; font-weight: 600; letter-spacing: -.03em;">Library</h1><span style="margin-left: 10px; display: flex;">${libModes(32)}</span><span style="flex-grow: 1;"></span>${pill('New deck', { inv: true, icon: 'plus', href: 'WebNewDeck.dc.html' })}</div>
   ${startTiles(false)}
 </main>`);
-// A deck with no cards yet (a new deck opens here): its cover, with "No cards yet" under the name and its + (New card, Make cards, Source, Notes, Upload diagram
-// and Make diagram: ADD_MENU) on it, and nothing under it (the owner, 2026-10-02: no Make box or row; no Study, as there is nothing to study).
-const webDeckEmpty = webRoot(`${sidebar('Library')}
-<main style="flex-grow: 1; box-sizing: border-box; padding: 24px 48px 20px; display: flex; flex-direction: column; gap: 20px; min-width: 0;">
-  <div style="position: relative; height: 184px; flex-shrink: 0; border-radius: 20px;">
-    <div style="position: absolute; inset: 0; border-radius: inherit; overflow: hidden;">${meshCard('cover', 'position: absolute; inset: 0;', 'height: 100%;', '', 'div', '', true)}${coverPicture}</div>
-    <div style="position: absolute; inset: 0; box-sizing: border-box; padding: 20px 24px 24px 28px; display: flex; flex-direction: column; justify-content: space-between; color: {{cover.ink}};">
-      <div style="display: flex; align-items: center; justify-content: space-between;"><a href="WebDecks.dc.html" style="height: 36px; padding: 0 14px 0 10px; display: inline-flex; align-items: center; gap: 4px; border-radius: 999px; ${onCover} font-size: 13px; font-weight: 600;">${svg(I.back, 14, 2.2)}Library</a>${coverBtn('Deck settings', 'openSettings', 'gear')}</div>
-      <div style="display: flex; align-items: flex-end; justify-content: space-between; gap: 16px;"><div style="display: flex; flex-direction: column; gap: 6px; min-width: 0; text-shadow: {{cover.shadow}};"><h1 style="margin: 0; font-size: 34px; font-weight: 600; letter-spacing: -.035em; line-height: 1; {{coverTitle}}">{{deckName}}</h1><div style="font-size: 14px; opacity: .8;">No cards yet</div></div><div style="display: flex; gap: 10px; flex-shrink: 0;">${ADD_BTN(false)}</div></div>
-    </div>
-  </div>
-</main>`);
 const emptyKpis = (list, big) => `<div style="display: grid; grid-template-columns: repeat(${big ? 4 : 2}, minmax(0, 1fr)); gap: ${big ? 12 : 8}px;">${list.map(([l, v]) => `<div style="background: {{t.surf}}; border-radius: ${big ? 28 : 24}px; padding: ${big ? 22 : 16}px; display: flex; flex-direction: column; gap: ${big ? 6 : 2}px;"><span style="font-size: ${big ? 13 : 12}px; color: {{t.muted}};">${l}</span><span style="font-size: ${big ? 40 : 28}px; font-weight: ${big ? 600 : 700}; letter-spacing: -.035em; line-height: 1.05; color: {{t.muted}};">${v}</span></div>`).join('')}</div>`;
 const webStatsEmpty = webRoot(`${sidebar('Stats')}
 <main style="flex-grow: 1; box-sizing: border-box; padding: 36px 48px; display: flex; flex-direction: column; gap: 24px; min-width: 0;">
@@ -4521,15 +4530,6 @@ const webStatsEmpty = webRoot(`${sidebar('Stats')}
     ${emptyBlock({ art: EMPTY_ART(150, 'stats'), title: 'No stats yet', body: 'Your streak, study days, and how much you remember show up here after your first review.', actions: webActions(pill('Make a deck', { inv: true, icon: 'plus', href: 'WebNewDeck.dc.html' })) })}
   </div>
 </main>`);
-const phoneDeckEmpty = phone(`<div style="height: 100%; box-sizing: border-box; padding: 0 0 120px; display: flex; flex-direction: column;">
-  <div style="position: relative; z-index: {{coverZ}}; height: 232px; flex-shrink: 0; container-type: inline-size;">
-    <div style="position: absolute; inset: 0; overflow: hidden;">${meshCard('cover', 'position: absolute; inset: 0;', 'height: 100%;', '', 'div', '', true)}${coverPicture}</div>
-    <div style="position: absolute; inset: 0; box-sizing: border-box; padding: 54px 16px 18px 20px; display: flex; flex-direction: column; justify-content: space-between; color: {{cover.ink}};">
-      <div style="display: flex; justify-content: space-between;">${coverRound('back', 'Back', 'PhoneLibrary.dc.html')}<div style="display: flex; gap: 8px;">${coverRound('gear', 'Deck settings', '', '{{openSettings}}')}${ADD_BTN(true)}</div></div>
-      <div style="display: flex; flex-direction: column; gap: 4px; text-shadow: {{cover.shadow}};"><div style="font-size: 32px; font-weight: 700; letter-spacing: -.03em; line-height: 1.05; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; {{coverTitleS}}">{{deckName}}</div><div style="font-size: 14px; opacity: .8;">No cards yet</div></div>
-    </div>
-  </div>
-</div>`, '');
 // The Library before there are any decks: the three tiles.
 const phoneDecksEmpty = phone(`<div style="padding: 64px 20px 120px; display: flex; flex-direction: column; gap: 14px;">
   ${pTitle('Library', roundBtn('plus', 'New deck', 'PhoneNewDeck.dc.html'))}
@@ -8689,6 +8689,7 @@ const files = {
   'WebDecks': ['Web · Library', webDecks, { props: { ...DARK, grain: MESH('Iris').grain, caughtUp: BOOL, collapsed: BOOL, mode: LIB_MODE, folder: LIB_FOLDER, view: { editor: 'enum', default: 'Cards', options: ['Cards', 'List'] } }, logic: decksLogic, css: DRAG_CSS, w: W, h: H }],
   'WebLibraryCards': ['Web · Library · all cards (filter by tags)', attrOf('WebDecks', W, H, 'mode="cards"'), { logic: darkLogic, css: DRAG_CSS, w: W, h: H }],
   'WebLibraryFolder': ['Web · Library · a folder', attrOf('WebDecks', W, H, 'folder="f1"'), { logic: darkLogic, css: DRAG_CSS, w: W, h: H }],
+  'WebLibraryFolderMenu': ['Web · Library · a folder · its ⋯ menu open (New deck, Rename, Remove folder)', attrOf('WebDecks', W, H, 'folder="f1" folder-menu="{{yes}}"'), { logic: darkLogic, w: W, h: H }],
   'WebLibraryNewFolder': ['Web · Library · New folder popup', attrOf('WebDecks', W, H, 'naming="{{yes}}"'), { logic: darkLogic, css: DRAG_CSS, w: W, h: H }],
   'WebLibraryMove': ['Web · Library · a deck’s ⋯ menu (move it to a folder, or take it out of one)', attrOf('WebDecks', W, H, 'folder="f1" move-open="{{yes}}"'), { logic: darkLogic, css: DRAG_CSS, w: W, h: H }],
   'WebDeckMoveTray': ['Web · Deck · Move to tray (while a card is dragged)', attrOf('WebDeck', W, H, 'tray-open="{{yes}}"'), { logic: darkLogic, css: NUM_CSS + DRAG_CSS, w: W, h: H }],
@@ -8700,7 +8701,7 @@ const files = {
   'WebSettingsGetVerified': ['Web · Settings · Get verified (a teacher or a school asks; /verify)', attrOf('WebSettings', W, H, 'verify-open="{{yes}}" section="Account"'), { logic: darkLogic, css: NUM_CSS, w: W, h: H }],
   'IconOptions': ['Web · Icon options', iconOptions, { props: DARK, logic: iconOptionsLogic, w: W, h: H }],
   'WebDecksEmpty': ['Web · Library · no decks yet', webDecksEmpty, { props: { ...DARK, grain: MESH('Iris').grain }, logic: emptyLogic(), w: W, h: H }],
-  'WebDeckEmpty': ['Web · Deck · no cards yet', webDeckEmpty, { props: { ...DARK, grain: MESH('Iris').grain, menu: EMPTY_MENU_PROP }, logic: emptyLogic('Pharmacology'), w: W, h: H }],
+  'WebDeckEmpty': ['Web · Deck page · a new deck, nothing in it yet', attrOf('WebDeck', W, H, 'empty="{{yes}}" menu="{{menu}}" dark="{{dark}}" dim="{{dim}}" grain="{{grain}}"'), { props: { ...DARK, grain: MESH('Iris').grain, menu: EMPTY_MENU_PROP }, logic: `renderVals() { return { yes: true, menu: this.props.menu || '', dark: !!this.props.dark, dim: !!this.props.dim, grain: String(this.props.grain ?? 0.7) }; }`, w: W, h: H }],
   'WebStatsEmpty': ['Web · Stats · no reviews yet (Pro)', webStatsEmpty, { props: { ...DARK, grain: MESH('Iris').grain }, logic: emptyLogic(), w: W, h: H }],
   'WebDeck': ['Web · Deck page', webDeck, { props: { ...DARK, grain: MESH('Iris').grain, menu: DECK_MENU_PROP, calendar: { editor: 'enum', default: '', options: ['', 'Exam date'] }, settingsOpen: { editor: 'boolean', default: false }, settingsTab: { editor: 'enum', default: 'General', options: ['General', 'Studying', 'Sharing'] }, ...SHARE_PROPS, ...PRO_DECK_PROPS, ...GUIDE_STATE }, logic: deckLogic, css: NOTE_TREE_CSS + NUM_CSS + PARALLAX_CSS + DRAG_CSS + GUIDE_CSS + DIAGRAM_CSS, w: W, h: H }],
   'WebEditor': ['Web · Card editor', webEditor, { props: { ...DARK, cardType: { editor: 'enum', default: 'Basic', options: ['Basic', 'Blank', 'Image', 'Audio'] }, recording: { editor: 'boolean', default: false }, slashDemo: { editor: 'boolean', default: false } }, logic: EDITOR_LOGIC, css: EDITOR_CSS, w: W, h: H }],
@@ -8758,6 +8759,8 @@ const files = {
   'WebDeckSources': ['Web · Deck page · Sources tab', attrOf('WebDeck', W, H, 'section="Sources"'), { logic: darkLogic, css: NUM_CSS + DRAG_CSS, w: W, h: H }],
   'WebDeckDiagrams': ['Web · Deck page · Diagrams tab', attrOf('WebDeck', W, H, 'section="Diagrams" guide="Diagrams"'), { logic: darkLogic, css: NUM_CSS + DRAG_CSS, w: W, h: H }],
   'WebDeckAddMenu': ['Web · Deck page · + menu open', attrOf('WebDeck', W, H, 'menu="Add"'), { logic: darkLogic, css: NUM_CSS + DRAG_CSS, w: W, h: H }],
+  // Make cards opened from the deck sits over it (V186: "pressing '+' should not take user back to the library page")
+  'WebDeckMake': ['Web · Deck page · Make cards, opened from the deck (it stays behind)', attrOf('WebMake', W, H, 'on-deck="{{yes}}" step="{{step}}"'), { props: { step: { editor: 'enum', default: 'Pick', options: MAKE_STEPS } }, logic: `renderVals() { return { yes: true, step: this.props.step || 'Pick' }; }`, w: W, h: H }],
   'WebDeckShared': ['Web · Deck page · shared (public, with suggestions waiting)', attrOf('WebDeck', W, H, 'shared="Public"'), { logic: darkLogic, css: NUM_CSS + DRAG_CSS, w: W, h: H }],
   'WebDeckStudied': ['Web · Deck page · a deck you study from someone else', attrOf('WebDeck', W, H, 'linked="study"'), { logic: darkLogic, css: NUM_CSS + DRAG_CSS, w: W, h: H }],
   'WebDeckCopy': ['Web · Deck page · your copy, with the owner’s changes waiting', attrOf('WebDeck', W, H, 'linked="copy"'), { logic: darkLogic, css: NUM_CSS + DRAG_CSS, w: W, h: H }],
@@ -8786,11 +8789,12 @@ const files = {
   'Generated': ['Generated gradients', generatedBoard, { props: { grain: MESH('Iris').grain }, logic: generatedLogic, w: W, h: H }],
   'Gallery': ['Gradient cards', galleryBoard, { props: { grain: MESH('Iris').grain }, logic: galleryLogic, w: W, h: H }],
   'Motion': ['Motion', motion(), { props: { grain: MESH('Iris').grain }, logic: `renderVals() { return { t: this.theme(false), grain: String(this.props.grain ?? 0.7), hero: this.mesh('Iris'), art: this.mesh('Iris'), art2: this.mesh('Mint'), art3: this.mesh('Apricot') }; }`, css: motionCss, w: W, h: MOTION_H }],
-  'PhoneDeckEmpty': ['iPhone · Deck · no cards yet', phoneDeckEmpty, { props: { ...DARK, grain: MESH('Iris').grain, menu: EMPTY_MENU_PROP }, logic: emptyLogic('Pharmacology', true), w: PW, h: PH }],
+  'PhoneDeckEmpty': ['iPhone · Deck page · a new deck, nothing in it yet', attrOf('PhoneDeck', PW, PH, 'empty="{{yes}}" menu="{{menu}}" dark="{{dark}}" dim="{{dim}}" grain="{{grain}}"'), { props: { ...DARK, grain: MESH('Iris').grain, menu: EMPTY_MENU_PROP }, logic: `renderVals() { return { yes: true, menu: this.props.menu || '', dark: !!this.props.dark, dim: !!this.props.dim, grain: String(this.props.grain ?? 0.7) }; }`, w: PW, h: PH }],
   'PhoneDecksEmpty': ['iPhone · Library · no decks yet', phoneDecksEmpty, { props: { ...DARK, grain: MESH('Iris').grain }, logic: emptyLogic('', true), w: PW, h: PH }],
   'PhoneLibrary': ['iPhone · Library', phoneLibrary, { props: { ...DARK, grain: MESH('Iris').grain, caughtUp: BOOL, mode: LIB_MODE, folder: LIB_FOLDER }, logic: libraryLogic(true), css: DRAG_CSS, w: PW, h: PH }],
   'PhoneLibraryCards': ['iPhone · Library · all cards', attrOf('PhoneLibrary', PW, PH, 'mode="cards"'), { logic: darkLogic, css: DRAG_CSS, w: PW, h: PH }],
   'PhoneLibraryFolder': ['iPhone · Library · a folder', attrOf('PhoneLibrary', PW, PH, 'folder="f1"'), { logic: darkLogic, css: DRAG_CSS, w: PW, h: PH }],
+  'PhoneLibraryFolderMenu': ['iPhone · Library · a folder · its ⋯ menu open (New deck, Rename, Remove folder)', attrOf('PhoneLibrary', PW, PH, 'folder="f1" folder-menu="{{yes}}"'), { logic: darkLogic, w: PW, h: PH }],
   'PhoneLibraryNewFolder': ['iPhone · Library · New folder popup', attrOf('PhoneLibrary', PW, PH, 'naming="{{yes}}"'), { logic: darkLogic, css: DRAG_CSS, w: PW, h: PH }],
   'PhoneDeckMoveTray': ['iPhone · Deck · Move to tray (while a card is dragged)', attrOf('PhoneDeck', PW, PH, 'tray-open="{{yes}}"'), { logic: darkLogic, css: NUM_CSS + DRAG_CSS, w: PW, h: PH }],
   'PhoneStatsEmpty': ['iPhone · Stats · no reviews yet (Pro)', phoneStatsEmpty, { props: { ...DARK, grain: MESH('Iris').grain }, logic: emptyLogic(), w: PW, h: PH }],
@@ -8808,6 +8812,7 @@ const files = {
   'PhoneDeckSources': ['iPhone · Deck page · Sources tab', attrOf('PhoneDeck', PW, PH, 'section="Sources"'), { logic: darkLogic, css: NUM_CSS + DRAG_CSS, w: PW, h: PH }],
   'PhoneDeckDiagrams': ['iPhone · Deck page · Diagrams tab', attrOf('PhoneDeck', PW, PH, 'section="Diagrams" guide="Diagrams"'), { logic: darkLogic, css: NUM_CSS + DRAG_CSS, w: PW, h: PH }],
   'PhoneDeckAddMenu': ['iPhone · Deck page · + menu open', attrOf('PhoneDeck', PW, PH, 'menu="Add"'), { logic: darkLogic, css: NUM_CSS + DRAG_CSS, w: PW, h: PH }],
+  'PhoneDeckMake': ['iPhone · Deck page · Make cards, opened from the deck (it stays behind)', attrOf('PhoneMake', PW, PH, 'on-deck="{{yes}}" step="{{step}}"'), { props: { step: { editor: 'enum', default: 'Pick', options: MAKE_STEPS } }, logic: `renderVals() { return { yes: true, step: this.props.step || 'Pick' }; }`, w: PW, h: PH }],
   'PhoneDeckStudied': ['iPhone · Deck page · a deck you study from someone else', attrOf('PhoneDeck', PW, PH, 'linked="study"'), { logic: darkLogic, css: NUM_CSS + DRAG_CSS, w: PW, h: PH }],
   'PhoneDeckCopy': ['iPhone · Deck page · your copy, with the owner’s changes waiting', attrOf('PhoneDeck', PW, PH, 'linked="copy"'), { logic: darkLogic, css: NUM_CSS + DRAG_CSS, w: PW, h: PH }],
   'PhoneDeckUpdates': ['iPhone · Deck page · your copy · the owner’s changes (take or skip)', attrOf('PhoneDeck', PW, PH, 'linked="copy" updates-open="{{yes}}"'), { logic: darkLogic, css: NUM_CSS + DRAG_CSS, w: PW, h: PH }],

@@ -591,7 +591,8 @@ struct DeckSettingsSheet: View {
           let on = d.folder == f.id
           Button { store.moveDeck(d.id, to: f.id) } label: {
             HStack(spacing: 6) { Icon("folder", 14, 1.8); Text(f.name).css(13, .semibold).lineLimit(1) }
-              .foregroundStyle(on ? t.invText : t.text).padding(.horizontal, 12).frame(height: 32).background(Capsule().fill(on ? t.inv : t.surf))
+              // (Remove from folder is red: the owner, 2026-10-02.)
+              .foregroundStyle(on ? t.invText : f.id == nil ? t.again : t.text).padding(.horizontal, 12).frame(height: 32).background(Capsule().fill(on ? t.inv : t.surf))
           }
           .buttonStyle(.press)
           .accessibilityAddTraits(on ? .isSelected : [])
